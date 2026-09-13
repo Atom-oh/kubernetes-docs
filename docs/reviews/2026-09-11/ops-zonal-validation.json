@@ -1,0 +1,107 @@
+{
+  "status": "passed",
+  "date": "2026-09-11",
+  "checks": [
+    {
+      "locale": "ko",
+      "fence": 0,
+      "language": "yaml",
+      "status": "passed"
+    },
+    {
+      "locale": "ko",
+      "fence": 1,
+      "language": "bash",
+      "status": "passed"
+    },
+    {
+      "locale": "ko",
+      "fence": 2,
+      "language": "yaml",
+      "status": "passed"
+    },
+    {
+      "locale": "ko",
+      "fence": 3,
+      "language": "python",
+      "status": "passed"
+    },
+    {
+      "locale": "ko",
+      "fence": 4,
+      "language": "bash",
+      "status": "passed"
+    },
+    {
+      "locale": "en",
+      "fence": 0,
+      "language": "yaml",
+      "status": "passed"
+    },
+    {
+      "locale": "en",
+      "fence": 1,
+      "language": "bash",
+      "status": "passed"
+    },
+    {
+      "locale": "en",
+      "fence": 2,
+      "language": "yaml",
+      "status": "passed"
+    },
+    {
+      "locale": "en",
+      "fence": 3,
+      "language": "python",
+      "status": "passed"
+    },
+    {
+      "locale": "en",
+      "fence": 4,
+      "language": "bash",
+      "status": "passed"
+    },
+    {
+      "case": "valid",
+      "status": "passed",
+      "liveAwsCalls": 0
+    },
+    {
+      "case": "reverse",
+      "status": "passed",
+      "liveAwsCalls": 0
+    },
+    {
+      "case": "wrong-group",
+      "status": "passed",
+      "liveAwsCalls": 0
+    },
+    {
+      "case": "extra-action",
+      "status": "passed",
+      "liveAwsCalls": 0
+    },
+    {
+      "case": "empty",
+      "status": "passed",
+      "liveAwsCalls": 0
+    },
+    {
+      "case": "same-group",
+      "status": "passed",
+      "liveAwsCalls": 0
+    },
+    {
+      "case": "describe-fails",
+      "status": "passed",
+      "liveAwsCalls": 0
+    }
+  ],
+  "localLinks": {
+    "files": 6,
+    "failures": 0
+  },
+  "sourceCodeParity": true,
+  "scope": "Static YAML/Bash, real GLIDE 2.5.2 configuration construction, seven mocked AWS CLI cases. No live AWS, cache, Kafka, JDBC, cutover or failure injection."
+}

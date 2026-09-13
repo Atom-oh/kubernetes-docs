@@ -17,7 +17,7 @@
 **Answer: B) A unique identifier that correlates all spans in a request across services**
 
 **Explanation:**
-A Trace ID is a unique identifier assigned when a request enters the system and propagated through all downstream service calls. It allows connecting logs, spans, and metrics from different services that handled the same request.
+A service continues a valid incoming trace context or creates a new trace. Participating spans can share its Trace ID; asynchronous designs can also start new traces connected by span links. It allows connecting logs, spans, and metrics from different services that handled the same request.
 
 </details>
 
@@ -85,7 +85,7 @@ The USE method measures resource health through Utilization (percentage busy), S
 **Answer: B) Trace IDs attached to metric samples enabling metric-to-trace correlation**
 
 **Explanation:**
-Exemplars are trace IDs stored alongside metric samples at specific points in time. When viewing a histogram or counter in Grafana, exemplars let you click directly to the trace that generated a specific metric data point.
+Exemplars attach contextual labels, often a trace ID, to selected metric observations. When viewing a histogram or counter in Grafana, configured exemplar links can open the associated retained trace. They do not guarantee every observation is traced or identify the exact P99 request.
 
 </details>
 
@@ -102,7 +102,7 @@ Exemplars are trace IDs stored alongside metric samples at specific points in ti
 **Answer: B) `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))`**
 
 **Explanation:**
-`histogram_quantile()` calculates quantiles from histogram bucket counts. The first argument (0.95) is the percentile, and it operates on the rate of the `_bucket` metric. This gives the latency below which 95% of requests complete.
+`histogram_quantile()` calculates quantiles from histogram bucket counts. The first argument (0.95) is the percentile, and it operates on the rate of the `_bucket` metric. The result estimates the quantile from bucket boundaries. To combine instances, aggregate rates while preserving le and intended service/cluster labels; missing or zero traffic needs separate handling.
 
 </details>
 
@@ -136,7 +136,7 @@ TraceQL is Tempo's query language for searching traces. It supports filtering by
 **Answer: B) <code v-pre>{app="myapp"} | json | line_format "{{.fieldname}}"</code>**
 
 **Explanation:**
-The `| json` parser extracts JSON fields from log lines into labels. You can then use `| line_format` with Go template syntax to format output, or filter with extracted fields like `| status_code >= 500`.
+The `| json` parser extracts JSON fields from log lines into labels. You can format output or filter extracted fields. Check parser/conversion errors with __error__ filters, especially before metric aggregation and after unwrap.
 
 </details>
 
@@ -160,16 +160,16 @@ Applications must emit trace IDs in their logs. In Grafana, you configure Loki's
 ### 10. What is the purpose of span attributes in distributed tracing?
 
 - A) To style the trace visualization
-- B) To attach contextual metadata (user ID, request parameters) to spans
+- B) To attach bounded contextual metadata such as route and operation
 - C) To encrypt trace data
 - D) To compress trace storage
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) To attach contextual metadata (user ID, request parameters) to spans**
+**Answer: B) To attach bounded contextual metadata such as route and operation**
 
 **Explanation:**
-Span attributes are key-value pairs that add context to spans, such as `http.method`, `http.status_code`, `user.id`, or `db.statement`. They enable filtering traces by business context and help identify which requests are problematic.
+Span attributes add context, for example http.route or the demo's app.operation. Match queries to the actual semantic-convention schema. Bound cardinality and avoid indiscriminately recording credentials, raw request bodies or sensitive database statements.
 
 </details>

@@ -1,0 +1,85 @@
+apiVersion: backstage.io/v1alpha1
+kind: Domain
+metadata:
+  name: commerce
+spec:
+  owner: group:default/platform-team
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: order-system
+spec:
+  owner: group:default/backend-team
+  domain: commerce
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: order-api
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    backstage.io/kubernetes-id: order-api
+    backstage.io/kubernetes-namespace: production
+    github.com/project-slug: replace-approved-org/order-api
+    argocd/app-name: order-api
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/backend-team
+  system: order-system
+  providesApis:
+  - order-rest-api
+  dependsOn:
+  - resource:default/order-db
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: order-rest-api
+spec:
+  type: openapi
+  lifecycle: production
+  owner: group:default/backend-team
+  system: order-system
+  definition: "openapi: 3.0.3\ninfo:\n  title: Order API\n  version: 1.0.0\npaths:\n\
+    \  /orders:\n    get:\n      responses:\n        \"200\":\n          description:\
+    \ Orders returned\n"
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: order-db
+spec:
+  type: database
+  owner: group:default/backend-team
+  system: order-system
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: platform-team
+spec:
+  type: team
+  children: []
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: backend-team
+spec:
+  type: team
+  children: []
+  members:
+  - alice
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: alice
+spec:
+  profile:
+    displayName: Alice
+    email: alice@example.com
+  memberOf:
+  - backend-team

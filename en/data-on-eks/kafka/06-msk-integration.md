@@ -1,172 +1,341 @@
 # Part 6: MSK Integration
 
-> **Supported Versions**: Amazon MSK (Provisioned & Serverless), MSK Connect\
-> **Last Updated**: July 9, 2026
+> **Review baseline**: MSK Standard/Express Provisioned, MSK Serverless, MSK Connect; Java IAM helper 2.3.8\
+> **Last reviewed**: September 12, 2026
 
-## Lab Environment Setup
+## Responsibilities and prerequisites
 
-To follow along with the examples in this document, you will need the following tools and environment:
+Amazon MSK runs Kafka brokers outside your EKS cluster on AWS-managed infrastructure.
+Strimzi runs them as Kubernetes workloads that your team operates. Both require
+application, topic, access-control, retention and recovery decisions. A managed
+broker does not remove the need to understand Kafka behavior.
 
-### Required Tools
+Use AWS CLI v2 and kubectl compatible with the EKS cluster. An IAM client needs a
+supported authentication helper and a functioning workload credential chain.
+EKS Pod Identity or IRSA can supply temporary credentials; External Secrets
+Operator is optional for other secret-management workflows, not an IAM prerequisite.
 
-* AWS CLI v2 (for managing the MSK cluster and IAM policies)
-* kubectl v1.28 or later, a working EKS cluster
-* The `aws-msk-iam-auth` client library (for Kafka clients using IAM authentication)
-* An EKS cluster with External Secrets Operator or IRSA configured (for credential injection)
+## Compare the actual MSK variants
 
-Earlier parts covered running Kafka yourself on EKS with Strimzi. This part covers connecting EKS workloads to Amazon MSK — AWS's fully managed Kafka service — and the trade-offs against the self-managed Strimzi approach. It also clears up a common point of confusion: how Kafka relates to Kinesis Data Streams, a completely separate AWS streaming service.
+| Option | Capacity and configuration | Costs to include |
+| --- | --- | --- |
+| MSK Provisioned Standard | Choose brokers and storage; configure storage autoscaling if needed; only supported broker settings are editable | Broker hours, provisioned storage, optional throughput/tiered storage and network |
+| MSK Provisioned Express | Choose broker compute; storage scales automatically and is billed as used; enforced configuration/throughput guardrails | Broker hours, data-in, used storage and applicable network charges |
+| MSK Serverless | AWS manages broker capacity; users still plan topics, partitions, retention and service quotas | **Cluster hours**, partition hours, data-in/out, used storage and applicable network charges |
+| Strimzi on EKS | Operate nodes, disks, broker/controller topology and supported Operator configuration | EKS/EC2/EBS, networking, spare capacity, observability and operational effort |
 
-## Amazon MSK vs. Self-Managed Strimzi
+Express is a **Provisioned broker type**, not Serverless. Its current documentation
+requires three AZs and lists API/feature constraints, including incomplete KStreams
+support and no KIP-932 support. Check the supported broker/version combination
+instead of assuming every Kafka feature works identically.
 
-Both approaches get an EKS workload talking to Kafka, but they differ in where the brokers actually run and who operates them. MSK runs brokers on AWS-managed infrastructure outside your cluster; Strimzi runs brokers as Pods inside your EKS cluster.
+Serverless requires IAM authentication/authorization; Kafka ACLs are not supported.
+It permits only listed topic settings. For example, retention is configurable,
+while `cleanup.policy` can be set only at topic creation. Its default retention
+also includes a **250 GiB limit per partition**, not just seven days. More traffic can reach
+that size before the time limit. Capacity autoscaling does not make arbitrary
+partition counts or burst rates unlimited.
 
-| Aspect | Amazon MSK (Provisioned) | Amazon MSK Serverless | Strimzi (self-managed on EKS) |
-| --- | --- | --- | --- |
-| **Operational burden** | AWS handles broker patching, hardware replacement, and storage expansion | AWS removes broker sizing entirely (fully auto-scaling) | The Operator automates rolling upgrades/reconciliation, but you still own upgrade timing, capacity planning, and incident response |
-| **Cost model** | Per-broker-hour + storage (GB-month) + data transfer | Throughput-based (per partition, per GB in/out) | Direct EC2/EBS cost — usually cheaper at scale, but you carry the operational headcount cost separately |
-| **Autoscaling** | Storage auto-expansion supported; broker scaling is manual/API-driven | Fully automatic per-partition scaling; brokers aren't exposed as a concept | Semi-automated via tools like Cruise Control, but you generally trigger it |
-| **Custom configuration** | Broker configuration (`server.properties`) can be customized | No custom broker config; some APIs/features are restricted (e.g., certain ACL types, connector types) | Nearly everything is tunable — listeners, interceptors, KRaft controller settings |
-| **Version support** | AWS curates a supported Kafka version list, which can lag upstream | Fixed version, no version choice | Adopt any Kafka version Strimzi supports, whenever upstream ships it |
-| **Multi-tenancy** | Isolation via cluster/resource policies; fine-grained customization is limited | Tenant isolation is delegated to AWS's internal implementation | Fine-grained tenancy via namespaces, `KafkaUser` ACLs, and custom listeners |
-| **Observability/GitOps fit** | Integrates via CloudWatch/Prometheus exporters; AWS console is the primary management surface | Same | Fits naturally into the same GitOps/observability pipeline (Argo CD, Prometheus Operator) as the rest of the platform |
+CloudWatch metrics exist for these offerings, but Serverless monitoring is not
+the same broker-level Prometheus/open-monitoring interface as Provisioned.
+IAM topic/group policies remain your responsibility for Serverless multi-tenancy.
+In Strimzi, Kubernetes namespaces alone do not authorize Kafka topic access.
 
-### Why choose MSK
+MSK can be managed with APIs and infrastructure as code; GitOps is not exclusive
+to Strimzi. Portability of a Strimzi deployment still depends on storage, networking,
+identity and supported Operator versions. Compare measured total cost and recovery
+requirements; neither “self-managed is always cheaper at scale” nor “Serverless
+is cheapest for spikes” is a sound default.
 
-* Your team lacks deep Kafka broker operations expertise, or you don't want Kafka operations to be a core competency
-* You're already heavily invested in AWS-native operations tooling (console, IAM, CloudWatch)
-* Traffic is hard to predict, and MSK Serverless lets you eliminate broker capacity planning altogether
+## Network connectivity from EKS
 
-### Why run Kafka yourself on EKS with Strimzi anyway (even though MSK exists)
+The client must reach **all broker endpoints advertised in metadata**, not just
+the bootstrap address. Validate DNS, routes, security groups, NACLs, pod/node source
+identity and egress. Sharing a VPC is not sufficient by itself.
 
-* You want to manage Kafka with the **same tools and same deployment pipeline** as the rest of your platform — other workloads, GitOps, Prometheus/Grafana — without adding a second AWS console/IAM surface to operate
-* You need **portability** that isn't tied to a single cloud (on-prem, multi-cloud migration potential)
-* At very large scale, managing EC2/EBS directly is more cost-efficient than per-broker-hour pricing
-* You need the latest Kafka features (new KIPs, custom interceptors, specific KRaft tuning options) that MSK hasn't caught up to yet
+For different VPCs, options include routed peering/Transit Gateway and supported
+MSK **multi-VPC private connectivity** using PrivateLink. The managed multi-VPC
+feature is same-Region and has cluster/authentication/AZ-subnet requirements.
+Public endpoints are an explicit supported-cluster option, not a prerequisite
+for cross-VPC access.
 
-## Connecting to MSK from EKS
+| Direct endpoint example | Port |
+| --- | --- |
+| Private IPv4 TLS | 9094 |
+| Private IPv4 SASL/SCRAM | 9096 |
+| Private IPv4 IAM | 9098 |
+| Public TLS / SCRAM / IAM, when supported and enabled | 9194 / 9196 / 9198 |
 
-For an EKS workload to reach MSK brokers, you need both a network path and an authentication mechanism.
-
-### Network path
-
-* **Same VPC**: If the EKS cluster and the MSK cluster live in the same VPC, subnet routing alone gets you connectivity — simplest and lowest latency.
-* **Different VPC**: You'll need VPC peering or an AWS Transit Gateway to connect the two VPCs. MSK does support public access (public broker endpoints), but production setups typically favor private connectivity.
-* **Security groups**: The MSK cluster's security group must explicitly allow inbound traffic from the EKS node (or pod, if pods have their own security groups) security group on the relevant broker ports — plaintext 9092, TLS 9094, SASL/SCRAM 9096, IAM 9098. Nothing is allowed by default.
+IPv6 and managed multi-VPC endpoints can use different ports. Retrieve the actual
+bootstrap response and select the field for the intended network/authentication
+path; do not rewrite every endpoint to 9098.
 
 ```bash
-# Allow the IAM auth port on the MSK security group from the EKS node security group
+: "${DOCS_AWS_REGION:?Set the MSK region}"
+: "${DOCS_MSK_CLUSTER_ARN:?Set the exact existing cluster ARN}"
+aws kafka get-bootstrap-brokers \
+  --region "$DOCS_AWS_REGION" \
+  --cluster-arn "$DOCS_MSK_CLUSTER_ARN"
+```
+
+For direct private IPv4 IAM access in the same VPC, a network administrator can
+apply this narrowly scoped example after checking existing rules:
+
+```bash
+: "${DOCS_AWS_REGION:?Set the MSK region}"
+: "${DOCS_MSK_SG_ID:?Set the existing MSK security group ID}"
+: "${DOCS_EKS_SOURCE_SG_ID:?Set the actual EKS source security group ID}"
+# Example: same-VPC, direct private IPv4 IAM endpoint on port 9098.
 aws ec2 authorize-security-group-ingress \
-  --group-id sg-0abcd1234msk \
+  --region "$DOCS_AWS_REGION" \
+  --group-id "$DOCS_MSK_SG_ID" \
   --protocol tcp --port 9098 \
-  --source-group sg-0efgh5678eksnode
+  --source-group "$DOCS_EKS_SOURCE_SG_ID"
 ```
 
-### Comparing authentication mechanisms
+The command **changes** a security group. Use the actual node/pod source SG for the
+network path; different-VPC SG references have their own support rules. Existing
+SGs may already contain rules, including self-reference rules. IAM authentication
+cannot succeed before TCP/TLS connectivity is established.
 
-| Mechanism | How it works | EKS integration point |
-| --- | --- | --- |
-| **IAM authentication (`AWS_MSK_IAM`)** | The client authenticates with a SigV4-signed request using `AWS_MSK_IAM`, a dedicated custom SASL mechanism (not an OAUTHBEARER extension); IAM policies control per-topic permissions | Grant the pod an IAM role via IRSA — no credentials to distribute at all |
-| **SASL/SCRAM** | Username/password based; credentials stored in AWS Secrets Manager | Sync SCRAM credentials from Secrets Manager into a Kubernetes Secret via External Secrets Operator |
-| **Mutual TLS (mTLS)** | Client certificates issued by AWS Private CA; identity verified via certificate | Mount certificates/keys into pods via cert-manager or External Secrets Operator |
+## IAM authentication and workload identity
 
-IAM authentication is the most natural fit for EKS. With IRSA (IAM Roles for Service Accounts), you grant a pod a scoped IAM role and express topic-level access control purely through IAM policy — no passwords or certificates to distribute or rotate.
+| Client | Supported IAM mechanism |
+| --- | --- |
+| Java | `AWS_MSK_IAM` or `OAUTHBEARER` using the AWS Java helper |
+| Python, JavaScript, Go, .NET | `OAUTHBEARER` with the corresponding official AWS signer/helper |
 
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "kafka-cluster:Connect",
-        "kafka-cluster:AlterCluster",
-        "kafka-cluster:DescribeCluster"
-      ],
-      "Resource": "arn:aws:kafka:us-east-1:111122223333:cluster/my-msk-cluster/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "kafka-cluster:*Topic*",
-        "kafka-cluster:WriteData",
-        "kafka-cluster:ReadData"
-      ],
-      "Resource": "arn:aws:kafka:us-east-1:111122223333:topic/my-msk-cluster/*/orders"
+`AWS_MSK_IAM` is not a generic mechanism provided by every language's Kafka client.
+The non-Java helpers are official AWS projects, not merely community equivalents.
+For Provisioned clusters, SCRAM or mutual TLS may also be available; configure
+their supported secret/certificate and Kafka ACL workflow. They are not alternatives
+to IAM on Serverless.
+
+Configure the workload role association/trust and temporary-credential refresh
+before testing Kafka. Do not assume an inherited node role is the intended pod
+identity. Private environments must also reach the identity services required by
+their chosen credential provider. Test re-authentication after credentials refresh.
+The Java helper documents a session-name consistency issue with some providers,
+including Pod Identity; apply its documented workaround if that issue occurs.
+
+### Separate producer and consumer policies
+
+The following script derives exact resource ARNs from the existing cluster ARN.
+Save it as `policies.py`; it writes policies locally and does not attach them.
+It omits the old `AlterCluster` and `*Topic*` administration grants, includes
+consumer-group actions, and distinguishes cluster-scoped idempotent-write permission
+from topic-scoped writes.
+
+```python
+import json
+import re
+import sys
+from pathlib import Path
+
+def policies(cluster_arn, topic="orders", group="orders-consumer"):
+    match = re.fullmatch(
+        r"arn:(aws(?:-[a-z-]+)?):kafka:([a-z0-9-]+):(\d{12}):cluster/([A-Za-z0-9_-]+)/([A-Za-z0-9-]+)",
+        cluster_arn,
+    )
+    if not match:
+        raise ValueError("Supply an exact MSK cluster ARN, including its cluster UUID.")
+    for name in [topic, group]:
+        if not re.fullmatch(r"[A-Za-z0-9._-]{1,249}", name) or name in [".", ".."]:
+            raise ValueError("Use an explicit topic/group name without wildcards.")
+    partition, region, account, cluster_name, uuid = match.groups()
+    prefix = f"arn:{partition}:kafka:{region}:{account}:"
+    identity = f"{cluster_name}/{uuid}"
+    topic_arn = prefix + f"topic/{identity}/{topic}"
+    group_arn = prefix + f"group/{identity}/{group}"
+    def statement(actions, resource):
+        return {"Effect": "Allow", "Action": ["kafka-cluster:" + a for a in actions], "Resource": resource}
+    return {
+        "producer": {"Version": "2012-10-17", "Statement": [
+            statement(["Connect", "WriteDataIdempotently"], cluster_arn),
+            statement(["DescribeTopic", "WriteData"], topic_arn),
+        ]},
+        "consumer": {"Version": "2012-10-17", "Statement": [
+            statement(["Connect"], cluster_arn),
+            statement(["DescribeTopic", "ReadData"], topic_arn),
+            statement(["DescribeGroup", "AlterGroup"], group_arn),
+        ]},
     }
-  ]
-}
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        raise SystemExit("Usage: python3 policies.py EXACT_MSK_CLUSTER_ARN")
+    for name, policy in policies(sys.argv[1]).items():
+        Path(f"msk-{name}-policy.json").write_text(json.dumps(policy, indent=2) + "\n")
 ```
 
-On the client side, add the `aws-msk-iam-auth` library to your classpath (or the equivalent package for your language), then configure the Kafka client with:
+```bash
+: "${DOCS_MSK_CLUSTER_ARN:?Set the exact existing MSK cluster ARN}"
+python3 policies.py "$DOCS_MSK_CLUSTER_ARN"
+# Review msk-producer-policy.json and msk-consumer-policy.json,
+# then attach each to the appropriate workload role through your IAM workflow.
+```
+
+The existing topic is `orders`, and the consumer must use group
+`orders-consumer`. Topic creation belongs to a separate administrative identity.
+The producer policy covers **non-transactional idempotent** writes using the
+documented IAM action set. A transactional producer additionally needs scoped
+transactional-ID actions and compatible broker support; IAM supports
+`WriteTxnMarkers` on MSK Kafka 3.8 and later. Do not grant every transactional ID
+or disable idempotence merely to conceal an authorization error.
+
+Effective access also depends on other attached policies, explicit denies, SCPs,
+permission boundaries and cross-account resource policies. These documents are
+not a complete authorization boundary by themselves. MSK control-plane actions
+such as `kafka:GetBootstrapBrokers` are separate from `kafka-cluster:*` data-plane
+actions and can belong to the deployment/operator identity.
+
+### Java client configuration
+
+Add `software.amazon.msk:aws-msk-iam-auth:2.3.8` and its dependencies, or use the
+verified release's all-in-one JAR. Save this as `iam.properties`:
 
 ```properties
 security.protocol=SASL_SSL
 sasl.mechanism=AWS_MSK_IAM
 sasl.jaas.config=software.amazon.msk.auth.iam.IAMLoginModule required;
 sasl.client.callback.handler.class=software.amazon.msk.auth.iam.IAMClientCallbackHandler
+ssl.endpoint.identification.algorithm=https
 ```
 
-## MSK Connect
+For Java's OAuth mechanism, use this alternative rather than combining the two:
 
-MSK Connect is AWS's fully managed Kafka Connect offering. AWS handles provisioning, scaling, and patching the Connect worker infrastructure; you register connector plugins (JAR bundles) by uploading them to S3.
+```properties
+security.protocol=SASL_SSL
+sasl.mechanism=OAUTHBEARER
+sasl.jaas.config=org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required;
+sasl.login.callback.handler.class=software.amazon.msk.auth.iam.IAMOAuthBearerLoginCallbackHandler
+sasl.client.callback.handler.class=software.amazon.msk.auth.iam.IAMOAuthBearerLoginCallbackHandler
+ssl.endpoint.identification.algorithm=https
+```
 
-The important detail: MSK Connect is **not limited to MSK clusters**. As long as it has network reachability to the bootstrap brokers, MSK Connect can also run connectors against a self-managed Kafka cluster running on EKS via Strimzi.
+Add the selected `bootstrap.servers`, key/value serializers or deserializers,
+and consumer `group.id` in the application. The JVM must trust the broker's TLS
+certificate chain; keep hostname verification enabled. These properties configure
+the mechanism but cannot create missing workload credentials or IAM permissions.
+
+## MSK Connect: compatibility before deployment
+
+MSK Connect runs managed Kafka Connect workers and can target an independently
+hosted Kafka cluster. **Network reachability alone is insufficient.** The current
+`KafkaClusterClientAuthentication` API accepts `NONE` or `IAM`; broker trust,
+authentication and supported worker settings must match. The TLS/SCRAM Strimzi
+listener from Part 2 is not a drop-in target merely because its hostname resolves.
+Do not remove its authentication to force an integration.
+
+The service's documented Connect runtimes are **2.7.1 / Java 11** and
+**3.7.x / Java 17**. They are distinct from the Kafka broker version and from the
+Kafka 4.3.1 Connect runtime used in Part 5. Check plugin bytecode, dependencies,
+Connect APIs and the vendor support matrix. A JAR that loads on Java 17 still needs
+integration testing on the selected managed runtime.
+
+The Part 5 artifacts contain no base class above Java 17, but that does **not**
+certify MSK Connect compatibility. The following registers the Aiven 3.4.3 ZIP
+after that compatibility review. It assumes an existing private S3 bucket in the
+target Region and permission to upload/register the plugin.
 
 ```bash
-# Upload a custom connector plugin to S3 and register it as an MSK Connect custom plugin
+: "${DOCS_AWS_REGION:?Set the target region}"
+: "${DOCS_PLUGIN_BUCKET:?Set an existing private S3 bucket in that region}"
+DOCS_PLUGIN_ZIP="s3-sink-connector-for-apache-kafka-3.4.3.zip"
+DOCS_PLUGIN_KEY="plugins/aiven-s3/3.4.3/${DOCS_PLUGIN_ZIP}"
+# Download the reviewed release artifact and verify its published digest first.
+aws s3 cp "$DOCS_PLUGIN_ZIP" "s3://${DOCS_PLUGIN_BUCKET}/${DOCS_PLUGIN_KEY}" \
+  --region "$DOCS_AWS_REGION"
+export DOCS_PLUGIN_BUCKET DOCS_PLUGIN_KEY
+python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+Path("custom-plugin.json").write_text(json.dumps({
+    "name": "aiven-s3-3-4-3-reviewed",
+    "contentType": "ZIP",
+    "location": {"s3Location": {
+        "bucketArn": "arn:aws:s3:::" + os.environ["DOCS_PLUGIN_BUCKET"],
+        "fileKey": os.environ["DOCS_PLUGIN_KEY"]
+    }}
+}, indent=2) + "\n")
+PY
 aws kafkaconnect create-custom-plugin \
-  --name debezium-postgres-plugin \
-  --content-type ZIP \
-  --location s3Location='{bucketArn=arn:aws:s3:::my-connect-plugins,fileKey=debezium-postgres-2.7.zip}'
+  --region "$DOCS_AWS_REGION" \
+  --cli-input-json file://custom-plugin.json
 ```
 
-| Aspect | MSK Connect | Strimzi `KafkaConnect` (self-operated on EKS) |
+This uploads and registers a **plugin**, not a running connector. Creating the
+connector still requires a service execution role, Kafka/network settings, source/
+destination permissions, capacity and converter configuration. MSK Connect's default
+key/value converters are StringConverter; the CDC example's JSON schema-envelope
+settings must be configured deliberately.
+
+MSK Connect copies the S3 object at plugin creation. Overwriting the object does
+not update the plugin, and custom plugins cannot be edited in place. Use a new
+versioned plugin resource and a tested connector transition plan; preserve and
+verify offsets before replacing an active data pipeline. Autoscaling also has
+configured limits and does not parallelize a single-task source.
+
+## Kafka and Kinesis Data Streams
+
+Kinesis Data Streams has its own APIs; replacing `bootstrap.servers` with a Kinesis
+endpoint does not convert a Kafka client. A connector or explicit stream-processing
+bridge must translate records, keys, retry behavior and checkpoints.
+
+| Aspect | Kafka / MSK / Strimzi | Kinesis Data Streams |
 | --- | --- | --- |
-| **Operational burden** | AWS manages worker infrastructure; you only manage connector configuration | You manage worker pod scaling, monitoring, and resource tuning yourself |
-| **Flexibility** | Limited to the connector framework AWS supports | Full freedom for arbitrary connectors, custom SMTs (Single Message Transforms), sidecars |
-| **Portability** | AWS-only service, hard to move elsewhere | Portable as-is to any other Kubernetes cluster |
-| **Observability** | Connector status via CloudWatch Logs/Metrics | Integrates into the same Prometheus/Grafana pipeline as the rest of your EKS workloads |
+| Parallelism | Topic partitions; increasing count does not redistribute old records or provide an in-place decrease | Shards; manual sizing in Provisioned or service-managed capacity in on-demand modes |
+| Capacity choices | Depend on Standard, Express, Serverless or self-managed deployment | Provisioned, On-demand Standard and On-demand Advantage |
+| Retention | Topic/service settings, storage and cleanup policy; time and size limits both matter | Default 24 hours; configurable up to 365 days |
+| AWS integrations | Includes native Lambda and Firehose integration with MSK, plus connectors | Native Lambda, Firehose and Managed Service for Apache Flink integrations |
 
-## Comparing and Bridging with Kinesis Data Streams
+“Kafka only integrates with AWS through Connect” is incorrect. Also use the current
+**Amazon Managed Service for Apache Flink** name rather than Kinesis Data Analytics.
+For bridging, a Kinesis sink writes Kafka records to Kinesis and a source does the
+reverse. Select a maintained plugin compatible with the chosen runtime and test
+ordering, partition-key behavior, record-size limits and duplicate handling.
+Protocol differences do not prescribe one universal bridging product.
 
-Kinesis Data Streams and Kafka are often mentioned in the same breath, but they are **not compatible protocols**. Kinesis is an AWS-native streaming service with its own API/SDK, and it has no understanding of Kafka's producer/consumer protocol. The fact that MSK is described as "Kafka-compatible" does not mean it interoperates with Kinesis — MSK is a managed implementation of the Apache Kafka protocol, and Kinesis is an entirely separate service.
+## Choosing an option
 
-| Aspect | Apache Kafka (MSK/Strimzi) | Kinesis Data Streams |
-| --- | --- | --- |
-| **Protocol** | Open-source Kafka protocol, compatible with a broad client/tooling ecosystem | AWS-proprietary API, not compatible with Kafka clients |
-| **Scaling unit** | Partitions (defined at topic creation, can be repartitioned) | Shards (read/write capacity units, adjusted via split/merge) |
-| **Operational complexity** | Requires operating brokers/controllers (MSK offloads this to AWS) | Fully managed, no server concept at all |
-| **AWS service integration** | Indirect, via connectors (Kafka Connect, MSK Connect) | Native, direct integration with Lambda triggers, Firehose, Kinesis Data Analytics |
-| **Ecosystem** | Broad open-source ecosystem: Kafka Streams, ksqlDB, Flink, Debezium | Smaller, AWS-service-centric ecosystem, but simpler to integrate |
-| **Retention** | Effectively unlimited (pay for storage only; default 7 days) | Default 24 hours, extendable up to 365 days (at increasing cost) |
+Start with required Kafka APIs, data rates and skew, partition/retention limits,
+latency, recovery objectives, compliance, team operations and full cost. Verify
+current regional and broker-version support. IaC/GitOps can be used with either
+MSK or Strimzi. Changing services later requires an explicit data, schema,
+identity and consumer-offset migration; it is not automatically a simple or common
+next step.
 
-### The real bridging pattern
+## References and validation
 
-If you need to actually connect Kafka and Kinesis — for migration, or to bridge with legacy Kinesis consumers — the practical pattern is a **Kinesis connector running under Kafka Connect (or MSK Connect)**, not any built-in protocol compatibility.
+Policy generation, Java class/JAAS configuration, plugin bytecode and CLI request
+shapes can be checked locally. Those checks do not prove effective IAM authorization,
+workload credential refresh, broker access, a managed connector deployment or delivery.
 
-* **Kinesis Sink connector**: reads messages from a Kafka topic and writes them to a Kinesis stream — useful for feeding a Kafka-based pipeline's output into the Kinesis consumption ecosystem (Lambda, Firehose)
-* **Kinesis Source connector**: reads records from a Kinesis stream and writes them to a Kafka topic — useful for keeping existing Kinesis producers in place while incrementally migrating consumers to Kafka
+- [MSK Express brokers](https://docs.aws.amazon.com/msk/latest/developerguide/msk-broker-types-express.html)
+- [MSK Serverless](https://docs.aws.amazon.com/msk/latest/developerguide/serverless.html)
+- [Serverless configuration](https://docs.aws.amazon.com/msk/latest/developerguide/serverless-config.html)
+- [MSK pricing dimensions](https://aws.amazon.com/msk/pricing/)
+- [MSK multi-VPC private connectivity](https://docs.aws.amazon.com/msk/latest/developerguide/aws-access-mult-vpc.html)
+- [MSK port information](https://docs.aws.amazon.com/msk/latest/developerguide/port-info.html)
+- [IAM client mechanisms and official language helpers](https://docs.aws.amazon.com/msk/latest/developerguide/configure-clients-for-iam-access-control.html)
+- [MSK IAM action/resource dependencies](https://docs.aws.amazon.com/msk/latest/developerguide/kafka-actions.html)
+- [IAM use cases](https://docs.aws.amazon.com/msk/latest/developerguide/iam-access-control-use-cases.html)
+- [aws-msk-iam-auth 2.3.8](https://github.com/aws/aws-msk-iam-auth/tree/v2.3.8)
+- [MSK Connect](https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect.html)
+- [MSK Connect plugin packaging and Java versions](https://docs.aws.amazon.com/msk/latest/developerguide/msk-connect-plugins.html)
+- [MSK Connect client authentication API](https://docs.aws.amazon.com/MSKC/latest/mskc/API_KafkaClusterClientAuthentication.html)
+- [Lambda with MSK](https://docs.aws.amazon.com/lambda/latest/dg/with-msk.html)
+- [Firehose with MSK](https://docs.aws.amazon.com/msk/latest/developerguide/integrations-kinesis-data-firehose.html)
+- [Kinesis capacity modes](https://docs.aws.amazon.com/streams/latest/dev/how-do-i-size-a-stream.html)
+- [Kinesis retention](https://docs.aws.amazon.com/streams/latest/dev/kinesis-extended-retention.html)
 
-These connectors can be deployed on MSK Connect or run directly on EKS via Strimzi's `KafkaConnect`/`KafkaConnector` CRs — the same MSK Connect vs. Strimzi trade-offs from the previous section apply here too.
+## Next steps
 
-## Decision Guide
+[Part 7: Monitoring](./07-monitoring.md)
 
-Use this checklist to narrow down between self-managed Strimzi, MSK Provisioned, MSK Serverless, and Kinesis.
-
-* **Does your team have Kafka operations expertise and need fine-grained tuning/custom configuration?** → Yes: Strimzi (self-managed on EKS) / No: consider MSK
-* **Is multi-cloud/on-prem portability a hard requirement?** → Yes: Strimzi / No: MSK is worth evaluating
-* **Is traffic unpredictable or spiky, and do you want to eliminate broker capacity planning entirely?** → Yes: MSK Serverless / No: MSK Provisioned or Strimzi
-* **Are you already deeply invested in AWS-native event processing (Lambda, Firehose) and don't need the Kafka ecosystem (Kafka Streams, ksqlDB, etc.)?** → Yes: evaluate Kinesis Data Streams / No: stick with Kafka (MSK/Strimzi)
-* **Do you want to manage Kafka through the same GitOps pipeline as the rest of your EKS platform, without adding an AWS console/IAM surface?** → Yes: Strimzi / No: MSK
-
-In practice the answer is often "both" — starting a new service on MSK Serverless for speed, then migrating to Strimzi once you need custom tuning, is a common trajectory.
-
-## Next Steps
-
-Whether you run MSK or Strimzi, you need continuous visibility into broker metrics and consumer lag to know the cluster is healthy. That's the subject of [Part 7: Monitoring](./07-monitoring.md).
-
-[Return to Main Page](./README.md)
+[Return to main page](./README.md)
 
 ## Quiz
 
-To test what you've learned in this chapter, try the [Topic Quiz](../../quizzes/data-on-eks/kafka/06-msk-integration-quiz.md).
+[Topic quiz](../../quizzes/data-on-eks/kafka/06-msk-integration-quiz.md)

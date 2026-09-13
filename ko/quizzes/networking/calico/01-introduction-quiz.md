@@ -1,7 +1,7 @@
 # Calico 소개 퀴즈
 
 > **관련 문서**: [Calico 소개](../../../networking/calico/01-introduction.md)
-> **마지막 업데이트**: 2026년 2월 22일
+> **마지막 업데이트**: 2026년 9월 12일
 
 ## 퀴즈
 
@@ -17,7 +17,7 @@
 **정답: C) 2014년**
 
 **설명:**
-Project Calico는 2014년 Metaswitch에서 시작되었습니다. 이후 2016년 Tigera가 설립되어 Calico를 상업화했습니다.
+Project Calico의 시작은 2014년 Metaswitch이며 Tigera는 2016년에 설립되었습니다. 프로젝트 시작과 이후 제품 출시·Calico 버전 공개 날짜를 구분해야 합니다.
 
 </details>
 
@@ -33,39 +33,39 @@ Project Calico는 2014년 Metaswitch에서 시작되었습니다. 이후 2016년
 **정답: B) Tigera**
 
 **설명:**
-Tigera는 2016년에 설립되어 Calico를 상업화했으며, Calico Enterprise와 Calico Cloud 서비스를 제공합니다.
+Tigera가 커뮤니티 기여자와 Calico를 유지관리하며 Enterprise·Cloud 제품을 제공합니다. CNCF Landscape 등재는 CNCF가 프로젝트를 관리하거나 졸업시켰다는 뜻이 아닙니다.
 
 </details>
 
-3. Calico의 주요 특징으로 올바르지 않은 것은?
+3. Calico 기본 설치에 대한 설명으로 올바르지 않은 것은?
    - A) BGP 기반 라우팅
    - B) eBPF 데이터플레인 지원
-   - C) Service Mesh 기본 내장
+   - C) 모든 Pod에 Istio 사이드카를 자동 주입한다
    - D) 멀티 환경 지원 (클라우드, 온프레미스, 하이브리드)
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) Service Mesh 기본 내장**
+**정답: C) 모든 Pod에 Istio 사이드카를 자동 주입한다**
 
 **설명:**
-Calico는 Service Mesh를 기본 내장하지 않습니다. Service Mesh 기능은 Calico Enterprise에서 별도로 제공됩니다. Cilium과 달리 Calico 오픈소스 버전에는 Service Mesh가 포함되어 있지 않습니다.
+네트워킹·정책·데이터플레인 선택은 Calico의 기능이지만 이 실습 설치가 모든 Pod에 Istio 사이드카를 자동 주입하지는 않습니다. 메시 통합은 별도 기능과 구성이 필요하며 Cilium 역시 모든 메시 기능이 기본 활성화되는 것은 아닙니다.
 
 </details>
 
-4. Calico가 지원하는 데이터플레인 옵션은 무엇입니까?
+4. Calico가 지원하는 Linux 데이터플레인 선택지를 포함한 것은?
    - A) iptables만
    - B) eBPF만
-   - C) iptables와 eBPF 모두
+   - C) iptables·nftables·eBPF
    - D) nftables만
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) iptables와 eBPF 모두**
+**정답: C) iptables·nftables·eBPF**
 
 **설명:**
-Calico는 전통적인 iptables 기반 데이터플레인과 최신 eBPF 기반 데이터플레인을 모두 지원합니다. eBPF 모드는 2020년에 도입되었으며, 더 나은 성능과 확장성을 제공합니다.
+Calico는 이 Linux 데이터플레인 선택지를 지원합니다. VXLAN·IPIP 캡슐화 방식은 다른 선택 축입니다. 커널·플랫폼·기능 요구사항에 맞춰 선택해야 하며 이 실습은 iptables를 명시합니다. eBPF가 모든 환경에서 항상 더 빠르다는 보장은 없습니다.
 
 </details>
 
@@ -81,23 +81,23 @@ Calico는 전통적인 iptables 기반 데이터플레인과 최신 eBPF 기반 
 **정답: B) Calico 리소스 관리 및 상태 확인**
 
 **설명:**
-calicoctl은 Calico 리소스(NetworkPolicy, IPPool, BGPPeer 등)를 관리하고, 노드 상태, IPAM 정보, BGP 피어링 상태 등을 확인하는 CLI 도구입니다.
+calicoctl은 정책·IPPool·BGPPeer 등의 Calico 리소스와 진단 기능을 제공하는 CLI입니다. 일치하는 버전을 사용해야 하며 API 서버가 있으면 많은 일반 작업은 kubectl로도 가능합니다. calicoctl node status에는 적절한 노드 환경이 필요합니다.
 
 </details>
 
-6. Calico Enterprise가 오픈소스 버전과 비교하여 추가로 제공하는 기능으로 올바른 것은?
+6. 현재 Open Source와 비교해 해당 Enterprise/Cloud 에디션에서 추가로 제공하는 기능은?
    - A) 기본 Network Policy
    - B) BGP 라우팅
-   - C) L7 Network Policy 및 Service Mesh
+   - C) 애플리케이션 계층 정책과 DNS/FQDN 정책 등 에디션별 추가 기능
    - D) IPIP 캡슐화
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) L7 Network Policy 및 Service Mesh**
+**정답: C) 애플리케이션 계층 정책과 DNS/FQDN 정책 등 에디션별 추가 기능**
 
 **설명:**
-Calico 오픈소스는 L3-L4 Network Policy를 제공하지만, L7 Network Policy와 Service Mesh 기능은 Calico Enterprise에서만 제공됩니다.
+현재 에디션 표에서 애플리케이션 계층·DNS/FQDN 정책은 해당 Enterprise/Cloud 기능입니다. 정책 tier와 Goldmane/Whisker 관측성은 Open Source에도 있습니다. WireGuard도 지원되는 Open Source Linux 구성에 제공되므로 모든 고급 기능을 유료로 분류하면 안 됩니다.
 
 </details>
 
@@ -113,27 +113,27 @@ Calico 오픈소스는 L3-L4 Network Policy를 제공하지만, L7 Network Polic
 **정답: B) eBPF 데이터플레인**
 
 **설명:**
-2020년에 Calico는 eBPF 데이터플레인을 도입했습니다. 이는 기존 iptables 기반 방식보다 더 나은 성능과 확장성을 제공합니다.
+2020년 2월 25일 공식 발표는 Calico 3.13용 eBPF tech preview 소개이며 GA 발표가 아닙니다. eBPF는 Linux 커널 안에서 실행됩니다. 기존 패킷 처리 일부를 대체할 수 있지만 커널 자체를 우회하거나 모든 부하의 성능 우위를 보장하지 않습니다.
 
 </details>
 
-8. Calico와 Cilium을 비교할 때, Calico의 강점으로 올바른 것은?
+8. Calico와 Cilium의 Windows 지원을 정확하게 비교한 것은?
    - A) 기본 내장 Service Mesh
    - B) Hubble을 통한 관측성
-   - C) 완전한 Windows 지원
+   - C) Calico는 제약이 있는 Windows IPv4 구성을 지원하며 Cilium 1.20 에이전트는 Linux를 요구한다
    - D) L7 Network Policy 기본 제공
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 완전한 Windows 지원**
+**정답: C) Calico는 제약이 있는 Windows IPv4 구성을 지원하며 Cilium 1.20 에이전트는 Linux를 요구한다**
 
 **설명:**
-Calico는 Windows 워크로드를 완전히 지원하는 반면, Cilium의 Windows 지원은 베타 단계입니다. 또한 Calico는 더 성숙한 솔루션으로, BGP 기반 온프레미스 환경에서 강점을 가집니다.
+Calico의 Windows 지원은 명시된 IPv4 VXLAN·BGP 구성에 한정되며 Linux eBPF·IPIP·IPv6/dual stack·WireGuard를 모두 제공하지 않습니다. Cilium 1.20은 Linux 에이전트이며 Windows beta라고 설명하면 안 됩니다. 지원 범위와 운영 복잡도를 실제 요구사항으로 비교해야 합니다.
 
 </details>
 
-9. Calico를 선택해야 하는 환경으로 가장 적합한 것은?
+9. Calico의 BGP 라우팅 기능과 직접 관련된 요구사항은?
    - A) L7 Network Policy가 필수인 환경
    - B) Service Mesh 내장이 필요한 환경
    - C) BGP 기반 온프레미스 환경
@@ -145,15 +145,15 @@ Calico는 Windows 워크로드를 완전히 지원하는 반면, Cilium의 Windo
 **정답: C) BGP 기반 온프레미스 환경**
 
 **설명:**
-Calico는 BGP 기반 온프레미스 환경, Windows 워크로드가 필요한 환경, 성숙한 솔루션을 선호하는 환경에서 적합합니다. L7 Policy, Service Mesh, 고급 관측성이 필요한 경우 Cilium이 더 적합할 수 있습니다.
+BGP 인프라와 Pod 라우트를 연동하는 요구는 Calico BGP 기능의 직접적인 사용 사례입니다. 이것만으로 Calico가 모든 환경에서 최선이라고 결론 내릴 수는 없습니다. L7 정책·관측성도 에디션별로 제공되므로 기존의 단순한 제품 순위는 적절하지 않습니다.
 
 </details>
 
-10. EKS에서 Calico를 사용할 때 일반적인 구성 방식은 무엇입니까?
-    - A) Calico로 네트워킹과 Policy 모두 처리
-    - B) AWS VPC CNI로 네트워킹, Calico로 Network Policy
-    - C) Calico로 네트워킹, AWS VPC CNI로 Policy
-    - D) Calico와 VPC CNI를 동시에 네트워킹에 사용
+10. 기존 AWS VPC CNI의 Pod 네트워킹을 유지하면서 Calico 정책을 추가하려는 EKS 구성은?
+   - A) Calico로 네트워킹과 Policy 모두 처리
+   - B) AWS VPC CNI로 네트워킹, Calico로 Network Policy
+   - C) Calico로 네트워킹, AWS VPC CNI로 Policy
+   - D) Calico와 VPC CNI를 동시에 네트워킹에 사용
 
 <details>
 <summary>정답 보기</summary>
@@ -161,6 +161,10 @@ Calico는 BGP 기반 온프레미스 환경, Windows 워크로드가 필요한 �
 **정답: B) AWS VPC CNI로 네트워킹, Calico로 Network Policy**
 
 **설명:**
-EKS에서는 AWS VPC CNI로 Pod 네트워킹을 처리하고, Calico는 Network Policy만 담당하는 "Policy only" 모드로 구성하는 것이 일반적입니다. 이렇게 하면 AWS 네이티브 네트워킹의 이점과 Calico의 강력한 정책 기능을 함께 활용할 수 있습니다.
+이 목표에는 AmazonVPC CNI가 네트워킹·IPAM을 유지하고 Calico가 정책을 맡는 policy-only 구성이 맞습니다. VPC CNI 기본 정책 엔진과 Calico를 동시에 실행하면 충돌합니다. Pod IP annotation과 patch 권한 등 공식 전제도 필요합니다. 전체 Calico CNI는 별도 새 클러스터 설계이며 기존 VPC CNI 위에 겹치는 방식이 아닙니다.
 
 </details>
+
+---
+
+[학습 자료로 돌아가기](../../../networking/calico/01-introduction.md) | [다음 퀴즈: 아키텍처](02-architecture-quiz.md)

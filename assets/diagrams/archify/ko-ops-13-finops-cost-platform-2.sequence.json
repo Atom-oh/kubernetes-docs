@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "자동 리소스 조정 파이프라인 — VPA 추천값에서 PR 리뷰를 거쳐 ArgoCD 배포까지",
+    "title": "VPA 제안과 담당자 검토를 거치는 리소스 변경",
     "quality_profile": "showcase",
     "column_fit": "spread",
     "viewBox": [
@@ -29,8 +29,8 @@
     {
       "id": "cronjob",
       "type": "cloud",
-      "label": "CronJob",
-      "sublabel": "매주 실행"
+      "label": "수집 실행",
+      "sublabel": "조회 전용"
     },
     {
       "id": "vpa",
@@ -42,7 +42,7 @@
       "id": "script",
       "type": "backend",
       "label": "스크립트",
-      "sublabel": "추천값·현재 requests 비교"
+      "sublabel": "제안 JSON 출력"
     },
     {
       "id": "gitci",
@@ -53,8 +53,8 @@
     {
       "id": "lead",
       "type": "external",
-      "label": "팀 리더",
-      "sublabel": "리뷰어"
+      "label": "담당자",
+      "sublabel": "manifest·SLO 검토"
     },
     {
       "id": "argocd",
@@ -67,17 +67,17 @@
     {
       "from": 160,
       "to": 260,
-      "label": "주간 자동 실행"
+      "label": "조회·계산"
     },
     {
       "from": 275,
       "to": 425,
-      "label": "PR 기반 리뷰"
+      "label": "담당자의 변경 준비와 리뷰"
     },
     {
       "from": 440,
       "to": 505,
-      "label": "안전한 적용"
+      "label": "승인 후 배포·관측"
     }
   ],
   "messages": [
@@ -86,39 +86,38 @@
       "from": "cronjob",
       "to": "vpa",
       "y": 190,
-      "label": "추천값 조회 (kubectl get vpa)"
+      "label": "권장값·workload 조회"
     },
     {
       "id": "recs",
       "from": "vpa",
       "to": "script",
       "y": 235,
-      "label": "추천 데이터 반환",
+      "label": "이름으로 컨테이너 매칭",
       "variant": "return"
     },
     {
-      "id": "pr",
+      "id": "proposal",
       "from": "script",
-      "to": "gitci",
+      "to": "lead",
       "y": 295,
-      "label": "20% 이상 변경 PR 생성",
+      "label": "20% 이상 감소 후보 JSON",
       "variant": "emphasis",
-      "note": "현재 requests와 비교 · 변경 임계값 20%"
+      "note": "자동 PR 생성 없음"
     },
     {
-      "id": "review",
-      "from": "gitci",
-      "to": "lead",
+      "id": "prepare",
+      "from": "lead",
+      "to": "gitci",
       "y": 355,
-      "label": "PR 리뷰 요청",
-      "note": "CI 트리거 · 린트 검증 통과 후"
+      "label": "manifest 수정·PR·성능 검증"
     },
     {
       "id": "approve",
       "from": "lead",
       "to": "gitci",
       "y": 400,
-      "label": "승인 + 머지",
+      "label": "리뷰 승인·merge",
       "variant": "emphasis"
     },
     {
@@ -126,7 +125,7 @@
       "from": "gitci",
       "to": "argocd",
       "y": 465,
-      "label": "머지된 매니페스트 동기화"
+      "label": "동기화 후 SLO 관측"
     }
   ],
   "activations": [
@@ -137,15 +136,15 @@
       "type": "backend"
     },
     {
-      "participant": "gitci",
+      "participant": "lead",
       "from": 290,
-      "to": 470,
+      "to": 405,
       "type": "external"
     },
     {
-      "participant": "lead",
+      "participant": "gitci",
       "from": 350,
-      "to": 405,
+      "to": 470,
       "type": "external"
     },
     {

@@ -6,7 +6,7 @@
     "locale": "en",
     "output": "en-ai-ml-05-model-training-1.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "legend": {
       "entries": {
         "database": {
@@ -39,7 +39,7 @@
           "tp-gpus",
           "tp-combine"
         ],
-        "note": "A single layer's weights are split by columns across GPUs, then the partial results are combined."
+        "note": "Partition layer tensors with a supported method; verify shapes and communication."
       },
       {
         "id": "pp",
@@ -82,7 +82,7 @@
       "id": "dp-replicas",
       "type": "backend",
       "label": "Model Replicas 1-3",
-      "sublabel": "full model per GPU",
+      "sublabel": "basic DDP replica example",
       "pos": [
         250,
         90
@@ -124,7 +124,7 @@
       "id": "tp-gpus",
       "type": "backend",
       "label": "GPU 1 / GPU 2",
-      "sublabel": "columns 0-N/2 · N/2-N",
+      "sublabel": "selected tensor partition",
       "pos": [
         920,
         90
@@ -288,7 +288,11 @@
       "id": "tp-split",
       "from": "tp-layer",
       "to": "tp-gpus",
-      "label": "by column"
+      "label": "tensor split",
+      "labelAt": [
+        890,
+        75
+      ]
     },
     {
       "id": "tp-merge",
@@ -320,6 +324,17 @@
       "to": "ep-output",
       "label": "outputs",
       "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Global batch calculation",
+      "items": [
+        "microbatch × accumulation × DP replicas",
+        "TP8 × PP4 × DP2 =64ranks; batch1 ×accum32 ×DP2 =64samples",
+        "Account separately for FSDP/ZeRO and activation memory."
+      ]
     }
   ]
 }

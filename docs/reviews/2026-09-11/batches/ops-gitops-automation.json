@@ -1,0 +1,170 @@
+[
+  {
+    "path": "ko/ops/05-gitops-automation.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reworked complete guides/quizzes with current Atlantis chart/server policy, HCP dynamic credentials/approval settings, tested Sentinel policies, current Flux APIs and advisory-only metrics analysis. Removed fictional APIs, unenforced controls and unsafe automatic mutations.",
+    "findings": [
+      "Atlantischartkeys/Secretwiring/serviceport/Ingress/storage/securitycontext mismatched;IRSAannotationwithPI;writabledataoverlaidreadonly;toolsnotinstalled;untrustedPRplanalreadyexecutescodewithAWSrole.",
+      "ServerrepoConfigschemawrong(autoplan/projectfields/nestedworkflows/danglinglist);allowcustomworkflows+apply_requirementoverride bypassserverpolicy;branchregex/patternsemantics;approvednot2latestdistinctreviews;hooksubstringauthnotvalid;unsupportedallowed_regexp_prefixesforusers.",
+      "Atlantis uses savedPLANFILE;duplicate-out=tfplanandapply-varfilewrong;shellpostcheckalwayssuccess;fmtwarningmasksfailure;unknownlock_config/lock_groups/prioritykeys and lockcommands/API needverify;AtlantisPRlocksnotTerraformstatebackendlocks;mergeisnotautoapply.",
+      "Broadeks/ec2/IAMrolecreationPassRole notleastprivilege;s3lockfilepolicyseparatestateDelete;PI trustawsSourceconditionsneedcurrentverify. SecretsinCLI/TFstate andproviderkeycredentials avoid.",
+      "TerraformCloudnowHCP Terraform;providerTFEAPIcurrentworkspace settings/providerorganization/runtriggersauto_apply_run_trigger requirevalidation;sharedlongtermAWSkeys replaceOIDCplan/applyroles;remote_stategivesfullstateaccessvs tfe_outputs;pricing/airgap/registryclaimsqualify.",
+      "Sentinelwronglang/syntaxappend/contains/missingtags/nullunknown/defaulttags/EKSnodegroupchecksnotinmain;tfplan.workspace nonexistent;costdecimalmethod and missingestimatesfailopen;sentinel.hclenforcementmissing.",
+      "Flux2.9.5reviewreuse;v1image/sourceAPIs,currentcharts;HelmRelease test.enable/test.timeoutAREVALIDininstalledv2CRD;imagerepoauthdoublechoice/noPI;messageTemplate.ChangedISVALID(v1.2.5);Updatedisremoved;updatepathinconsistent/digest/SHAsemver mismatch;Gitmainpushbranchprotection;BucketTerraformstateleak;optionalcontrollers/UIstaleclaims;sourceignore!.gitunsafe.",
+      "AIOpsfakeCopilotendpoint/nonexistentClaudeaction,unsafeJSONdiff/shell&JSinterpolation/untrustedforksecrets/APIhandling/promptinjection/modeldeprecation;donotexecuteexternalAI. SuggestconfigurednativeCodereviewratherfakeAPI.",
+      "HPA counteraverage/RPShistogramwrongunits;labelselectors/nameassumptionandseriesjoinbad;queryrangeRFC3339 UTC/currentvalues/missingfinite/stale/coverage;targetdirectionfeedbacknotoptimized;patchliveconflictsGitOps;CronJobmissingdeps/SA/scripts.",
+      "AnomalywrongCWRequestCountTGdimension/defaultdescendinglatestoldest/NextToken/status;trainoncurrent/samplethresholdandzeroVariance wrong;npboolserialization;missingos/TGglobals;alllistenersunsafe modification/stickinessunsupportedNLB/writerconflict/nohealth/ownership/rollback/cooldown. ReuseOPS02proposalguardedflow.",
+      "ArgoRolloutsanalysisargsmissing/namespace/globalmetrics/noemptyNaNgate/outdatedIngressNGINX/noALBroot/service routing;fakeworkflowundefinedtemplates/wrongoutputs;guardrailconfigunenforced/freezewindowalwaysfalse/approvalSlacknoreceiver/authpersistence/deniedstillprintsapplied. Clearlyseparateproposalfromexecutor."
+    ],
+    "sources": [
+      "https://github.com/runatlantis/atlantis/releases/tag/v0.47.1",
+      "https://github.com/runatlantis/helm-charts/releases/tag/atlantis-6.15.0",
+      "https://www.runatlantis.io/docs/server-side-repo-config.html",
+      "https://www.runatlantis.io/docs/security.html",
+      "https://registry.terraform.io/providers/hashicorp/tfe/0.80.0/docs/resources/workspace",
+      "https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers",
+      "https://developer.hashicorp.com/terraform/cloud-docs/dynamic-provider-credentials/aws-configuration",
+      "https://developer.hashicorp.com/terraform/cloud-docs/policy-enforcement/import-reference/tfrun",
+      "https://github.com/fluxcd/image-automation-controller/blob/v1.2.5/docs/spec/v1/imageupdateautomations.md",
+      "https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review"
+    ],
+    "validation": [
+      "See ops-automation-validation.json",
+      "Atlantis chart6.15.0 schema/render: existing Secrets, Pod Identity SA, writable claim, protected plan/apply and all-base-branch server policy",
+      "Four Flux2.9.5 v1 CRDs, consistent source/markers, dedicated push branch and actual Go commit-template rendering",
+      "Sentinel0.41.0: three policies, nineteen allowed/denied/boundary/missing/unknown/non-finite cases",
+      "KO/EN fixture parity, 32 fences, two PromQL recording expressions, Python AST, local links and both ten-question quizzes",
+      "20 analysis-tool cases recorded separately, including reverse chronology, missing/gapped/stale/future/non-finite data and CLI JSON",
+      "TFE0.80.0 init/validate plus two mock-provider plans passed: explicit approvals and required per-workspace roles",
+      "Final Atlantis server config accepted by real0.47.1 with synthetic credentials and downloads disabled; sandbox prevented listener binding; process stopped"
+    ],
+    "reviewedSha256": "92deaa2b90ad9910927c23af8e658c8363aa78b475be5f550351c9bca7522eb0"
+  },
+  {
+    "path": "ko/quizzes/ops/05-gitops-automation-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reworked complete guides/quizzes with current Atlantis chart/server policy, HCP dynamic credentials/approval settings, tested Sentinel policies, current Flux APIs and advisory-only metrics analysis. Removed fictional APIs, unenforced controls and unsafe automatic mutations.",
+    "findings": [
+      "Atlantischartkeys/Secretwiring/serviceport/Ingress/storage/securitycontext mismatched;IRSAannotationwithPI;writabledataoverlaidreadonly;toolsnotinstalled;untrustedPRplanalreadyexecutescodewithAWSrole.",
+      "ServerrepoConfigschemawrong(autoplan/projectfields/nestedworkflows/danglinglist);allowcustomworkflows+apply_requirementoverride bypassserverpolicy;branchregex/patternsemantics;approvednot2latestdistinctreviews;hooksubstringauthnotvalid;unsupportedallowed_regexp_prefixesforusers.",
+      "Atlantis uses savedPLANFILE;duplicate-out=tfplanandapply-varfilewrong;shellpostcheckalwayssuccess;fmtwarningmasksfailure;unknownlock_config/lock_groups/prioritykeys and lockcommands/API needverify;AtlantisPRlocksnotTerraformstatebackendlocks;mergeisnotautoapply.",
+      "Broadeks/ec2/IAMrolecreationPassRole notleastprivilege;s3lockfilepolicyseparatestateDelete;PI trustawsSourceconditionsneedcurrentverify. SecretsinCLI/TFstate andproviderkeycredentials avoid.",
+      "TerraformCloudnowHCP Terraform;providerTFEAPIcurrentworkspace settings/providerorganization/runtriggersauto_apply_run_trigger requirevalidation;sharedlongtermAWSkeys replaceOIDCplan/applyroles;remote_stategivesfullstateaccessvs tfe_outputs;pricing/airgap/registryclaimsqualify.",
+      "Sentinelwronglang/syntaxappend/contains/missingtags/nullunknown/defaulttags/EKSnodegroupchecksnotinmain;tfplan.workspace nonexistent;costdecimalmethod and missingestimatesfailopen;sentinel.hclenforcementmissing.",
+      "Flux2.9.5reviewreuse;v1image/sourceAPIs,currentcharts;HelmRelease test.enable/test.timeoutAREVALIDininstalledv2CRD;imagerepoauthdoublechoice/noPI;messageTemplate.ChangedISVALID(v1.2.5);Updatedisremoved;updatepathinconsistent/digest/SHAsemver mismatch;Gitmainpushbranchprotection;BucketTerraformstateleak;optionalcontrollers/UIstaleclaims;sourceignore!.gitunsafe.",
+      "AIOpsfakeCopilotendpoint/nonexistentClaudeaction,unsafeJSONdiff/shell&JSinterpolation/untrustedforksecrets/APIhandling/promptinjection/modeldeprecation;donotexecuteexternalAI. SuggestconfigurednativeCodereviewratherfakeAPI.",
+      "HPA counteraverage/RPShistogramwrongunits;labelselectors/nameassumptionandseriesjoinbad;queryrangeRFC3339 UTC/currentvalues/missingfinite/stale/coverage;targetdirectionfeedbacknotoptimized;patchliveconflictsGitOps;CronJobmissingdeps/SA/scripts.",
+      "AnomalywrongCWRequestCountTGdimension/defaultdescendinglatestoldest/NextToken/status;trainoncurrent/samplethresholdandzeroVariance wrong;npboolserialization;missingos/TGglobals;alllistenersunsafe modification/stickinessunsupportedNLB/writerconflict/nohealth/ownership/rollback/cooldown. ReuseOPS02proposalguardedflow.",
+      "ArgoRolloutsanalysisargsmissing/namespace/globalmetrics/noemptyNaNgate/outdatedIngressNGINX/noALBroot/service routing;fakeworkflowundefinedtemplates/wrongoutputs;guardrailconfigunenforced/freezewindowalwaysfalse/approvalSlacknoreceiver/authpersistence/deniedstillprintsapplied. Clearlyseparateproposalfromexecutor."
+    ],
+    "sources": [
+      "https://github.com/runatlantis/atlantis/releases/tag/v0.47.1",
+      "https://github.com/runatlantis/helm-charts/releases/tag/atlantis-6.15.0",
+      "https://www.runatlantis.io/docs/server-side-repo-config.html",
+      "https://www.runatlantis.io/docs/security.html",
+      "https://registry.terraform.io/providers/hashicorp/tfe/0.80.0/docs/resources/workspace",
+      "https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers",
+      "https://developer.hashicorp.com/terraform/cloud-docs/dynamic-provider-credentials/aws-configuration",
+      "https://developer.hashicorp.com/terraform/cloud-docs/policy-enforcement/import-reference/tfrun",
+      "https://github.com/fluxcd/image-automation-controller/blob/v1.2.5/docs/spec/v1/imageupdateautomations.md",
+      "https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review"
+    ],
+    "validation": [
+      "See ops-automation-validation.json",
+      "Atlantis chart6.15.0 schema/render: existing Secrets, Pod Identity SA, writable claim, protected plan/apply and all-base-branch server policy",
+      "Four Flux2.9.5 v1 CRDs, consistent source/markers, dedicated push branch and actual Go commit-template rendering",
+      "Sentinel0.41.0: three policies, nineteen allowed/denied/boundary/missing/unknown/non-finite cases",
+      "KO/EN fixture parity, 32 fences, two PromQL recording expressions, Python AST, local links and both ten-question quizzes",
+      "20 analysis-tool cases recorded separately, including reverse chronology, missing/gapped/stale/future/non-finite data and CLI JSON",
+      "TFE0.80.0 init/validate plus two mock-provider plans passed: explicit approvals and required per-workspace roles",
+      "Final Atlantis server config accepted by real0.47.1 with synthetic credentials and downloads disabled; sandbox prevented listener binding; process stopped"
+    ],
+    "reviewedSha256": "cb2b139fbc337e858b7ed53a9cfc4d419f2d10f8aec307d2e6fd1852a4324ec8"
+  },
+  {
+    "path": "en/ops/05-gitops-automation.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reworked complete guides/quizzes with current Atlantis chart/server policy, HCP dynamic credentials/approval settings, tested Sentinel policies, current Flux APIs and advisory-only metrics analysis. Removed fictional APIs, unenforced controls and unsafe automatic mutations.",
+    "findings": [
+      "Atlantischartkeys/Secretwiring/serviceport/Ingress/storage/securitycontext mismatched;IRSAannotationwithPI;writabledataoverlaidreadonly;toolsnotinstalled;untrustedPRplanalreadyexecutescodewithAWSrole.",
+      "ServerrepoConfigschemawrong(autoplan/projectfields/nestedworkflows/danglinglist);allowcustomworkflows+apply_requirementoverride bypassserverpolicy;branchregex/patternsemantics;approvednot2latestdistinctreviews;hooksubstringauthnotvalid;unsupportedallowed_regexp_prefixesforusers.",
+      "Atlantis uses savedPLANFILE;duplicate-out=tfplanandapply-varfilewrong;shellpostcheckalwayssuccess;fmtwarningmasksfailure;unknownlock_config/lock_groups/prioritykeys and lockcommands/API needverify;AtlantisPRlocksnotTerraformstatebackendlocks;mergeisnotautoapply.",
+      "Broadeks/ec2/IAMrolecreationPassRole notleastprivilege;s3lockfilepolicyseparatestateDelete;PI trustawsSourceconditionsneedcurrentverify. SecretsinCLI/TFstate andproviderkeycredentials avoid.",
+      "TerraformCloudnowHCP Terraform;providerTFEAPIcurrentworkspace settings/providerorganization/runtriggersauto_apply_run_trigger requirevalidation;sharedlongtermAWSkeys replaceOIDCplan/applyroles;remote_stategivesfullstateaccessvs tfe_outputs;pricing/airgap/registryclaimsqualify.",
+      "Sentinelwronglang/syntaxappend/contains/missingtags/nullunknown/defaulttags/EKSnodegroupchecksnotinmain;tfplan.workspace nonexistent;costdecimalmethod and missingestimatesfailopen;sentinel.hclenforcementmissing.",
+      "Flux2.9.5reviewreuse;v1image/sourceAPIs,currentcharts;HelmRelease test.enable/test.timeoutAREVALIDininstalledv2CRD;imagerepoauthdoublechoice/noPI;messageTemplate.ChangedISVALID(v1.2.5);Updatedisremoved;updatepathinconsistent/digest/SHAsemver mismatch;Gitmainpushbranchprotection;BucketTerraformstateleak;optionalcontrollers/UIstaleclaims;sourceignore!.gitunsafe.",
+      "AIOpsfakeCopilotendpoint/nonexistentClaudeaction,unsafeJSONdiff/shell&JSinterpolation/untrustedforksecrets/APIhandling/promptinjection/modeldeprecation;donotexecuteexternalAI. SuggestconfigurednativeCodereviewratherfakeAPI.",
+      "HPA counteraverage/RPShistogramwrongunits;labelselectors/nameassumptionandseriesjoinbad;queryrangeRFC3339 UTC/currentvalues/missingfinite/stale/coverage;targetdirectionfeedbacknotoptimized;patchliveconflictsGitOps;CronJobmissingdeps/SA/scripts.",
+      "AnomalywrongCWRequestCountTGdimension/defaultdescendinglatestoldest/NextToken/status;trainoncurrent/samplethresholdandzeroVariance wrong;npboolserialization;missingos/TGglobals;alllistenersunsafe modification/stickinessunsupportedNLB/writerconflict/nohealth/ownership/rollback/cooldown. ReuseOPS02proposalguardedflow.",
+      "ArgoRolloutsanalysisargsmissing/namespace/globalmetrics/noemptyNaNgate/outdatedIngressNGINX/noALBroot/service routing;fakeworkflowundefinedtemplates/wrongoutputs;guardrailconfigunenforced/freezewindowalwaysfalse/approvalSlacknoreceiver/authpersistence/deniedstillprintsapplied. Clearlyseparateproposalfromexecutor."
+    ],
+    "sources": [
+      "https://github.com/runatlantis/atlantis/releases/tag/v0.47.1",
+      "https://github.com/runatlantis/helm-charts/releases/tag/atlantis-6.15.0",
+      "https://www.runatlantis.io/docs/server-side-repo-config.html",
+      "https://www.runatlantis.io/docs/security.html",
+      "https://registry.terraform.io/providers/hashicorp/tfe/0.80.0/docs/resources/workspace",
+      "https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers",
+      "https://developer.hashicorp.com/terraform/cloud-docs/dynamic-provider-credentials/aws-configuration",
+      "https://developer.hashicorp.com/terraform/cloud-docs/policy-enforcement/import-reference/tfrun",
+      "https://github.com/fluxcd/image-automation-controller/blob/v1.2.5/docs/spec/v1/imageupdateautomations.md",
+      "https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review"
+    ],
+    "validation": [
+      "See ops-automation-validation.json",
+      "Atlantis chart6.15.0 schema/render: existing Secrets, Pod Identity SA, writable claim, protected plan/apply and all-base-branch server policy",
+      "Four Flux2.9.5 v1 CRDs, consistent source/markers, dedicated push branch and actual Go commit-template rendering",
+      "Sentinel0.41.0: three policies, nineteen allowed/denied/boundary/missing/unknown/non-finite cases",
+      "KO/EN fixture parity, 32 fences, two PromQL recording expressions, Python AST, local links and both ten-question quizzes",
+      "20 analysis-tool cases recorded separately, including reverse chronology, missing/gapped/stale/future/non-finite data and CLI JSON",
+      "TFE0.80.0 init/validate plus two mock-provider plans passed: explicit approvals and required per-workspace roles",
+      "Final Atlantis server config accepted by real0.47.1 with synthetic credentials and downloads disabled; sandbox prevented listener binding; process stopped"
+    ],
+    "reviewedSha256": "8d1ab9541b230571174126ae39841bef1b1289118e15aaa855015374fc7e92eb"
+  },
+  {
+    "path": "en/quizzes/ops/05-gitops-automation-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reworked complete guides/quizzes with current Atlantis chart/server policy, HCP dynamic credentials/approval settings, tested Sentinel policies, current Flux APIs and advisory-only metrics analysis. Removed fictional APIs, unenforced controls and unsafe automatic mutations.",
+    "findings": [
+      "Atlantischartkeys/Secretwiring/serviceport/Ingress/storage/securitycontext mismatched;IRSAannotationwithPI;writabledataoverlaidreadonly;toolsnotinstalled;untrustedPRplanalreadyexecutescodewithAWSrole.",
+      "ServerrepoConfigschemawrong(autoplan/projectfields/nestedworkflows/danglinglist);allowcustomworkflows+apply_requirementoverride bypassserverpolicy;branchregex/patternsemantics;approvednot2latestdistinctreviews;hooksubstringauthnotvalid;unsupportedallowed_regexp_prefixesforusers.",
+      "Atlantis uses savedPLANFILE;duplicate-out=tfplanandapply-varfilewrong;shellpostcheckalwayssuccess;fmtwarningmasksfailure;unknownlock_config/lock_groups/prioritykeys and lockcommands/API needverify;AtlantisPRlocksnotTerraformstatebackendlocks;mergeisnotautoapply.",
+      "Broadeks/ec2/IAMrolecreationPassRole notleastprivilege;s3lockfilepolicyseparatestateDelete;PI trustawsSourceconditionsneedcurrentverify. SecretsinCLI/TFstate andproviderkeycredentials avoid.",
+      "TerraformCloudnowHCP Terraform;providerTFEAPIcurrentworkspace settings/providerorganization/runtriggersauto_apply_run_trigger requirevalidation;sharedlongtermAWSkeys replaceOIDCplan/applyroles;remote_stategivesfullstateaccessvs tfe_outputs;pricing/airgap/registryclaimsqualify.",
+      "Sentinelwronglang/syntaxappend/contains/missingtags/nullunknown/defaulttags/EKSnodegroupchecksnotinmain;tfplan.workspace nonexistent;costdecimalmethod and missingestimatesfailopen;sentinel.hclenforcementmissing.",
+      "Flux2.9.5reviewreuse;v1image/sourceAPIs,currentcharts;HelmRelease test.enable/test.timeoutAREVALIDininstalledv2CRD;imagerepoauthdoublechoice/noPI;messageTemplate.ChangedISVALID(v1.2.5);Updatedisremoved;updatepathinconsistent/digest/SHAsemver mismatch;Gitmainpushbranchprotection;BucketTerraformstateleak;optionalcontrollers/UIstaleclaims;sourceignore!.gitunsafe.",
+      "AIOpsfakeCopilotendpoint/nonexistentClaudeaction,unsafeJSONdiff/shell&JSinterpolation/untrustedforksecrets/APIhandling/promptinjection/modeldeprecation;donotexecuteexternalAI. SuggestconfigurednativeCodereviewratherfakeAPI.",
+      "HPA counteraverage/RPShistogramwrongunits;labelselectors/nameassumptionandseriesjoinbad;queryrangeRFC3339 UTC/currentvalues/missingfinite/stale/coverage;targetdirectionfeedbacknotoptimized;patchliveconflictsGitOps;CronJobmissingdeps/SA/scripts.",
+      "AnomalywrongCWRequestCountTGdimension/defaultdescendinglatestoldest/NextToken/status;trainoncurrent/samplethresholdandzeroVariance wrong;npboolserialization;missingos/TGglobals;alllistenersunsafe modification/stickinessunsupportedNLB/writerconflict/nohealth/ownership/rollback/cooldown. ReuseOPS02proposalguardedflow.",
+      "ArgoRolloutsanalysisargsmissing/namespace/globalmetrics/noemptyNaNgate/outdatedIngressNGINX/noALBroot/service routing;fakeworkflowundefinedtemplates/wrongoutputs;guardrailconfigunenforced/freezewindowalwaysfalse/approvalSlacknoreceiver/authpersistence/deniedstillprintsapplied. Clearlyseparateproposalfromexecutor."
+    ],
+    "sources": [
+      "https://github.com/runatlantis/atlantis/releases/tag/v0.47.1",
+      "https://github.com/runatlantis/helm-charts/releases/tag/atlantis-6.15.0",
+      "https://www.runatlantis.io/docs/server-side-repo-config.html",
+      "https://www.runatlantis.io/docs/security.html",
+      "https://registry.terraform.io/providers/hashicorp/tfe/0.80.0/docs/resources/workspace",
+      "https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers",
+      "https://developer.hashicorp.com/terraform/cloud-docs/dynamic-provider-credentials/aws-configuration",
+      "https://developer.hashicorp.com/terraform/cloud-docs/policy-enforcement/import-reference/tfrun",
+      "https://github.com/fluxcd/image-automation-controller/blob/v1.2.5/docs/spec/v1/imageupdateautomations.md",
+      "https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review"
+    ],
+    "validation": [
+      "See ops-automation-validation.json",
+      "Atlantis chart6.15.0 schema/render: existing Secrets, Pod Identity SA, writable claim, protected plan/apply and all-base-branch server policy",
+      "Four Flux2.9.5 v1 CRDs, consistent source/markers, dedicated push branch and actual Go commit-template rendering",
+      "Sentinel0.41.0: three policies, nineteen allowed/denied/boundary/missing/unknown/non-finite cases",
+      "KO/EN fixture parity, 32 fences, two PromQL recording expressions, Python AST, local links and both ten-question quizzes",
+      "20 analysis-tool cases recorded separately, including reverse chronology, missing/gapped/stale/future/non-finite data and CLI JSON",
+      "TFE0.80.0 init/validate plus two mock-provider plans passed: explicit approvals and required per-workspace roles",
+      "Final Atlantis server config accepted by real0.47.1 with synthetic credentials and downloads disabled; sandbox prevented listener binding; process stopped"
+    ],
+    "reviewedSha256": "a6b913a81f2730a9040f045bab55c4efc684aae4799da06b1affaf872e3c5042"
+  }
+]

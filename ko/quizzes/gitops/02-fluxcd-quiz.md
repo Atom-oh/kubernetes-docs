@@ -78,7 +78,7 @@ HelmRelease CRD는 Helm 차트 릴리스를 선언적으로 관리하는 데 사
 **정답: B) 새 버전이 감지되면 Git에서 이미지 태그 자동 업데이트**
 
 **설명:**
-ImageUpdateAutomation은 ImageRepository 및 ImagePolicy와 함께 작동하여 새 컨테이너 이미지 태그를 감지하고 Git 리포지토리에 업데이트를 자동으로 커밋하여 자동 배포를 가능하게 합니다.
+image-reflector-controller가 ImageRepository의 태그를 스캔하고 ImagePolicy를 평가합니다. image-automation-controller는 선택 결과와 YAML policy marker를 이용해 Git을 수정합니다. 두 controller, Git 쓰기 권한, marker가 필요하며 별도 브랜치로 push할 경우 PR/병합은 추가 절차입니다.
 
 </details>
 
@@ -110,7 +110,7 @@ ImageUpdateAutomation은 ImageRepository 및 ImagePolicy와 함께 작동하여 
 **정답: B) 네임스페이스 격리 및 Kubernetes RBAC 사용**
 
 **설명:**
-FluxCD는 각 테넌트가 Flux 리소스가 있는 자체 네임스페이스를 갖는 네임스페이스 격리와 접근 제어를 위한 Kubernetes 네이티브 RBAC를 결합하여 멀티 테넌시를 지원합니다.
+테넌트 namespace와 Kubernetes RBAC를 결합합니다. namespace만 분리해도 격리가 완성되는 것은 아닙니다. spec.serviceAccountName 기반 impersonation 권한과 controller의 cross-namespace 참조 제한을 함께 구성해야 합니다.
 
 </details>
 

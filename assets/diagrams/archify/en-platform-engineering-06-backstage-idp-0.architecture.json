@@ -1,0 +1,346 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Backstage application architecture",
+    "output": "en-platform-engineering-06-backstage-idp-0.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "user-path",
+        "label": "User path",
+        "focus": [
+          "dev",
+          "pm",
+          "ui",
+          "api"
+        ],
+        "note": "Users call the backend through Backstage UI"
+      },
+      {
+        "id": "plugins",
+        "label": "Plugins",
+        "focus": [
+          "plugin-ui",
+          "plugin-be"
+        ],
+        "note": "Register frontend/backend extensions"
+      },
+      {
+        "id": "integrations",
+        "label": "Integrations",
+        "focus": [
+          "plugin-be",
+          "pg",
+          "s3",
+          "gh",
+          "eks",
+          "argo",
+          "oidc"
+        ],
+        "note": "Backends access storage and external systems"
+      }
+    ],
+    "legend": {
+      "mode": "auto"
+    },
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "dev",
+      "type": "external",
+      "label": "Developer",
+      "sublabel": "Self-service user",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "pm",
+      "type": "external",
+      "label": "Platform engineer",
+      "sublabel": "Portal operations",
+      "pos": [
+        40,
+        330
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "ui",
+      "type": "frontend",
+      "label": "Backstage UI",
+      "sublabel": "React application",
+      "pos": [
+        250,
+        200
+      ],
+      "size": [
+        260,
+        60
+      ]
+    },
+    {
+      "id": "plugin-ui",
+      "type": "frontend",
+      "label": "Plugin UI",
+      "sublabel": "Catalog / TechDocs / Scaffolder / Kubernetes",
+      "pos": [
+        250,
+        330
+      ],
+      "size": [
+        260,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Backstage Backend API",
+      "sublabel": "Node.js",
+      "pos": [
+        600,
+        200
+      ],
+      "size": [
+        300,
+        60
+      ]
+    },
+    {
+      "id": "plugin-be",
+      "type": "backend",
+      "label": "Plugin backends",
+      "sublabel": "Catalog / TechDocs / Scaffolder / Auth",
+      "pos": [
+        600,
+        330
+      ],
+      "size": [
+        300,
+        64
+      ]
+    },
+    {
+      "id": "pg",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "RDS / plugin data",
+      "pos": [
+        990,
+        40
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3",
+      "sublabel": "TechDocs artifacts",
+      "pos": [
+        990,
+        130
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "gh",
+      "type": "external",
+      "label": "GitHub / GitLab",
+      "sublabel": "Catalog / Scaffolder integration",
+      "pos": [
+        990,
+        250
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "eks",
+      "type": "cloud",
+      "label": "EKS cluster",
+      "sublabel": "Kubernetes plugin",
+      "pos": [
+        990,
+        340
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "argo",
+      "type": "external",
+      "label": "ArgoCD",
+      "sublabel": "ArgoCD plugin / GitOps",
+      "pos": [
+        990,
+        430
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "oidc",
+      "type": "security",
+      "label": "Cognito / Okta",
+      "sublabel": "Auth / OIDC",
+      "pos": [
+        990,
+        520
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Users",
+      "wraps": [
+        "dev",
+        "pm"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Frontend",
+      "wraps": [
+        "ui",
+        "plugin-ui"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Backend",
+      "wraps": [
+        "api",
+        "plugin-be"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Data stores",
+      "wraps": [
+        "pg",
+        "s3"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "External integrations",
+      "wraps": [
+        "gh",
+        "eks",
+        "argo",
+        "oidc"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dev-ui",
+      "from": "dev",
+      "to": "ui",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pm-ui",
+      "from": "pm",
+      "to": "ui"
+    },
+    {
+      "id": "ui-api",
+      "from": "ui",
+      "to": "api",
+      "variant": "emphasis"
+    },
+    {
+      "id": "pui-pbe",
+      "from": "plugin-ui",
+      "to": "plugin-be"
+    },
+    {
+      "id": "pbe-pg",
+      "from": "plugin-be",
+      "to": "pg"
+    },
+    {
+      "id": "pbe-s3",
+      "from": "plugin-be",
+      "to": "s3"
+    },
+    {
+      "id": "pbe-gh",
+      "from": "plugin-be",
+      "to": "gh"
+    },
+    {
+      "id": "pbe-eks",
+      "from": "plugin-be",
+      "to": "eks"
+    },
+    {
+      "id": "pbe-argo",
+      "from": "plugin-be",
+      "to": "argo"
+    },
+    {
+      "id": "pbe-oidc",
+      "from": "plugin-be",
+      "to": "oidc",
+      "variant": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Plugin architecture",
+      "items": [
+        "Frontend and backend modules compose the portal",
+        "Plugins need explicit registration and configuration"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Storage",
+      "items": [
+        "PostgreSQL stores plugin data; S3 stores TechDocs output",
+        "Backends call configured integrations"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Authorization",
+      "items": [
+        "OIDC sign-in and permission policy are separate",
+        "Shared Kubernetes credentials are not per-user RBAC",
+        "Review external permissions and file-based credentials"
+      ]
+    }
+  ]
+}

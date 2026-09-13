@@ -23,7 +23,7 @@
           "flagd-provider",
           "flagd-server"
         ],
-        "note": "App code's evaluation request passes through the API/Client, Hooks, and Provider Interface to the active provider and flagd server."
+        "note": "RPC example: the application and SDK call flagd through the provider."
       },
       {
         "id": "provider-swap",
@@ -35,7 +35,7 @@
           "flagsmith-provider",
           "inmemory-provider"
         ],
-        "note": "Replacing only the provider behind the Provider Interface switches the feature flag backend without touching application code."
+        "note": "A stable API reduces coupling; keys, rules, credentials, and operations still need migration."
       },
       {
         "id": "backends",
@@ -48,7 +48,7 @@
           "ld-saas",
           "flagsmith-server"
         ],
-        "note": "Each provider is an adapter that talks to its own backend. The In-Memory Provider has no external backend."
+        "note": "Providers connect to backends; in-process and file modes use a different evaluation path."
       }
     ]
   },
@@ -85,7 +85,7 @@
       "id": "hooks",
       "type": "backend",
       "label": "Hooks",
-      "sublabel": "Before → After → Error → Finally",
+      "sublabel": "Before / After / Error / Finally",
       "pos": [
         230,
         190
@@ -316,9 +316,9 @@
       "dot": "orange",
       "title": "Provider model",
       "items": [
-        "A provider is the adapter between the SDK and a feature flag backend",
-        "Swapping the provider alone changes the entire feature flag system",
-        "Choose vendor-neutrally among flagd, LaunchDarkly, Flagsmith, In-Memory, and more"
+        "Adapts the SDK to its backend",
+        "Migrate keys, rules, context, and operational behavior",
+        "Verify readiness and error/default behavior"
       ]
     }
   ]

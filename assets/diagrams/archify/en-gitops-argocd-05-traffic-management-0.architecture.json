@@ -17,6 +17,9 @@
         },
         "external": {
           "label": "Analysis provider"
+        },
+        "frontend": {
+          "label": "Kubernetes Service"
         }
       }
     },
@@ -38,19 +41,19 @@
         "focus": [
           "bluegreen",
           "canary",
-          "ingress",
-          "mesh"
+          "services",
+          "router"
         ],
-        "note": "Blue-green switches traffic at once through the ingress; canary shifts weights gradually via the ingress or service mesh."
+        "note": "Blue-green updates the active Service selector; canary manages Service selectors and router weights."
       },
       {
         "id": "analysis",
-        "label": "Analysis and rollback",
+        "label": "Analysis outcomes",
         "focus": [
           "controller",
           "analysis"
         ],
-        "note": "The controller queries metrics through an AnalysisRun and promotes or rolls back automatically based on the result."
+        "note": "Successful advances, Failed/Error aborts, and Inconclusive pauses. Git and data are not reverted."
       }
     ]
   },
@@ -73,7 +76,7 @@
       "id": "bluegreen",
       "type": "backend",
       "label": "Blue-Green",
-      "sublabel": "Full environment switch",
+      "sublabel": "Service selector switch",
       "pos": [
         120,
         250
@@ -101,7 +104,7 @@
       "id": "experiment",
       "type": "backend",
       "label": "Experiment",
-      "sublabel": "A/B testing",
+      "sublabel": "Separate replicas / metrics",
       "pos": [
         740,
         250
@@ -112,10 +115,10 @@
       ]
     },
     {
-      "id": "ingress",
-      "type": "cloud",
-      "label": "Ingress Controller",
-      "sublabel": "ALB / NGINX",
+      "id": "services",
+      "type": "frontend",
+      "label": "Service selectors",
+      "sublabel": "active / stable / canary",
       "pos": [
         120,
         440
@@ -126,10 +129,10 @@
       ]
     },
     {
-      "id": "mesh",
+      "id": "router",
       "type": "cloud",
-      "label": "Service Mesh",
-      "sublabel": "Istio / SMI",
+      "label": "Traffic Router",
+      "sublabel": "ALB / Gateway API / Istio",
       "pos": [
         430,
         440
@@ -143,7 +146,7 @@
       "id": "analysis",
       "type": "external",
       "label": "Analysis Provider",
-      "sublabel": "Prometheus / Datadog / New Relic",
+      "sublabel": "Metrics / HTTP / Jobs",
       "pos": [
         1010,
         440
@@ -175,8 +178,8 @@
       "kind": "region",
       "label": "Integrations",
       "wraps": [
-        "ingress",
-        "mesh",
+        "services",
+        "router",
         "analysis"
       ]
     }
@@ -204,20 +207,20 @@
     {
       "id": "bluegreen-ingress",
       "from": "bluegreen",
-      "to": "ingress",
-      "label": "switch traffic",
+      "to": "services",
+      "label": "update selector",
       "labelDy": 24
     },
     {
       "id": "canary-ingress",
       "from": "canary",
-      "to": "ingress",
-      "label": "weighted routing"
+      "to": "services",
+      "label": "select Pod hash"
     },
     {
       "id": "canary-mesh",
       "from": "canary",
-      "to": "mesh",
+      "to": "router",
       "label": "weighted routing",
       "variant": "emphasis",
       "labelDy": 24
@@ -234,7 +237,7 @@
       "id": "analysis-ctrl",
       "from": "analysis",
       "to": "controller",
-      "label": "Pass / Fail",
+      "label": "result",
       "variant": "dashed",
       "fromSide": "right",
       "toSide": "top"
@@ -245,17 +248,18 @@
       "dot": "orange",
       "title": "Deployment strategies",
       "items": [
-        "Blue-green: keep two environments and switch traffic at once",
-        "Canary: shift traffic gradually through weighted steps",
-        "Experiment: run several versions side by side for A/B tests"
+        "Blue-green: change the active Service selector",
+        "Canary: manage weights and ReplicaSet capacity",
+        "Experiment: separate ReplicaSets; supply test traffic separately"
       ]
     },
     {
       "dot": "cyan",
       "title": "Analysis",
       "items": [
-        "AnalysisTemplate defines the metric queries",
-        "Pass promotes automatically, Fail rolls back automatically"
+        "Successful: next step; manual gates still apply",
+        "Failed/Error: abort and return traffic to stable",
+        "Inconclusive: pause and investigate"
       ]
     }
   ]

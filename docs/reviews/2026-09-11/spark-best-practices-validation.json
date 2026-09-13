@@ -1,0 +1,830 @@
+{
+  "schemaObjects": [
+    {
+      "source": "serviceaccounts.yaml",
+      "kind": "ServiceAccount",
+      "name": "spark-data-driver"
+    },
+    {
+      "source": "serviceaccounts.yaml",
+      "kind": "ServiceAccount",
+      "name": "spark-data-executor"
+    },
+    {
+      "source": "serviceaccounts.yaml",
+      "kind": "ServiceAccount",
+      "name": "spark-data-history"
+    },
+    {
+      "source": "driver-rbac.yaml",
+      "kind": "Role",
+      "name": "spark-data-driver"
+    },
+    {
+      "source": "driver-rbac.yaml",
+      "kind": "RoleBinding",
+      "name": "spark-data-driver"
+    },
+    {
+      "source": "history-server.yaml",
+      "kind": "ConfigMap",
+      "name": "spark-history-config"
+    },
+    {
+      "source": "history-server.yaml",
+      "kind": "Deployment",
+      "name": "spark-history"
+    },
+    {
+      "source": "history-server.yaml",
+      "kind": "Service",
+      "name": "spark-history"
+    },
+    {
+      "source": "history-server.yaml",
+      "kind": "NetworkPolicy",
+      "name": "spark-history-ingress"
+    },
+    {
+      "source": "podmonitor.yaml",
+      "kind": "PodMonitor",
+      "name": "spark-drivers"
+    },
+    {
+      "source": "generated per-run policies",
+      "kind": "NetworkPolicy",
+      "name": "spark-review-a-driver"
+    },
+    {
+      "source": "generated per-run policies",
+      "kind": "NetworkPolicy",
+      "name": "spark-review-a-executor"
+    },
+    {
+      "source": "ko/data-on-eks/spark/05-best-practices.md",
+      "kind": "ServiceAccount",
+      "name": "spark-data-driver"
+    },
+    {
+      "source": "ko/data-on-eks/spark/05-best-practices.md",
+      "kind": "ServiceAccount",
+      "name": "spark-data-executor"
+    },
+    {
+      "source": "ko/data-on-eks/spark/05-best-practices.md",
+      "kind": "ServiceAccount",
+      "name": "spark-data-history"
+    },
+    {
+      "source": "ko/data-on-eks/spark/05-best-practices.md",
+      "kind": "Role",
+      "name": "spark-data-driver"
+    },
+    {
+      "source": "ko/data-on-eks/spark/05-best-practices.md",
+      "kind": "RoleBinding",
+      "name": "spark-data-driver"
+    },
+    {
+      "source": "ko/data-on-eks/spark/05-best-practices.md",
+      "kind": "PodMonitor",
+      "name": "spark-drivers"
+    },
+    {
+      "source": "ko/data-on-eks/spark/05-best-practices.md",
+      "kind": "ConfigMap",
+      "name": "spark-history-config"
+    },
+    {
+      "source": "ko/data-on-eks/spark/05-best-practices.md",
+      "kind": "Deployment",
+      "name": "spark-history"
+    },
+    {
+      "source": "ko/data-on-eks/spark/05-best-practices.md",
+      "kind": "Service",
+      "name": "spark-history"
+    },
+    {
+      "source": "ko/data-on-eks/spark/05-best-practices.md",
+      "kind": "NetworkPolicy",
+      "name": "spark-history-ingress"
+    },
+    {
+      "source": "en/data-on-eks/spark/05-best-practices.md",
+      "kind": "ServiceAccount",
+      "name": "spark-data-driver"
+    },
+    {
+      "source": "en/data-on-eks/spark/05-best-practices.md",
+      "kind": "ServiceAccount",
+      "name": "spark-data-executor"
+    },
+    {
+      "source": "en/data-on-eks/spark/05-best-practices.md",
+      "kind": "ServiceAccount",
+      "name": "spark-data-history"
+    },
+    {
+      "source": "en/data-on-eks/spark/05-best-practices.md",
+      "kind": "Role",
+      "name": "spark-data-driver"
+    },
+    {
+      "source": "en/data-on-eks/spark/05-best-practices.md",
+      "kind": "RoleBinding",
+      "name": "spark-data-driver"
+    },
+    {
+      "source": "en/data-on-eks/spark/05-best-practices.md",
+      "kind": "PodMonitor",
+      "name": "spark-drivers"
+    },
+    {
+      "source": "en/data-on-eks/spark/05-best-practices.md",
+      "kind": "ConfigMap",
+      "name": "spark-history-config"
+    },
+    {
+      "source": "en/data-on-eks/spark/05-best-practices.md",
+      "kind": "Deployment",
+      "name": "spark-history"
+    },
+    {
+      "source": "en/data-on-eks/spark/05-best-practices.md",
+      "kind": "Service",
+      "name": "spark-history"
+    },
+    {
+      "source": "en/data-on-eks/spark/05-best-practices.md",
+      "kind": "NetworkPolicy",
+      "name": "spark-history-ingress"
+    }
+  ],
+  "fences": [
+    {
+      "path": "ko/data-on-eks/spark/05-best-practices.md",
+      "language": "xml"
+    },
+    {
+      "path": "ko/data-on-eks/spark/05-best-practices.md",
+      "language": "dockerfile"
+    },
+    {
+      "path": "ko/data-on-eks/spark/05-best-practices.md",
+      "language": "bash"
+    },
+    {
+      "path": "ko/data-on-eks/spark/05-best-practices.md",
+      "language": "yaml"
+    },
+    {
+      "path": "ko/data-on-eks/spark/05-best-practices.md",
+      "language": "yaml"
+    },
+    {
+      "path": "ko/data-on-eks/spark/05-best-practices.md",
+      "language": "properties"
+    },
+    {
+      "path": "ko/data-on-eks/spark/05-best-practices.md",
+      "language": "python"
+    },
+    {
+      "path": "ko/data-on-eks/spark/05-best-practices.md",
+      "language": "bash"
+    },
+    {
+      "path": "ko/data-on-eks/spark/05-best-practices.md",
+      "language": "bash"
+    },
+    {
+      "path": "ko/data-on-eks/spark/05-best-practices.md",
+      "language": "yaml"
+    },
+    {
+      "path": "ko/data-on-eks/spark/05-best-practices.md",
+      "language": "yaml"
+    },
+    {
+      "path": "ko/data-on-eks/spark/05-best-practices.md",
+      "language": "bash"
+    },
+    {
+      "path": "en/data-on-eks/spark/05-best-practices.md",
+      "language": "xml"
+    },
+    {
+      "path": "en/data-on-eks/spark/05-best-practices.md",
+      "language": "dockerfile"
+    },
+    {
+      "path": "en/data-on-eks/spark/05-best-practices.md",
+      "language": "bash"
+    },
+    {
+      "path": "en/data-on-eks/spark/05-best-practices.md",
+      "language": "yaml"
+    },
+    {
+      "path": "en/data-on-eks/spark/05-best-practices.md",
+      "language": "yaml"
+    },
+    {
+      "path": "en/data-on-eks/spark/05-best-practices.md",
+      "language": "properties"
+    },
+    {
+      "path": "en/data-on-eks/spark/05-best-practices.md",
+      "language": "python"
+    },
+    {
+      "path": "en/data-on-eks/spark/05-best-practices.md",
+      "language": "bash"
+    },
+    {
+      "path": "en/data-on-eks/spark/05-best-practices.md",
+      "language": "bash"
+    },
+    {
+      "path": "en/data-on-eks/spark/05-best-practices.md",
+      "language": "yaml"
+    },
+    {
+      "path": "en/data-on-eks/spark/05-best-practices.md",
+      "language": "yaml"
+    },
+    {
+      "path": "en/data-on-eks/spark/05-best-practices.md",
+      "language": "bash"
+    }
+  ],
+  "quizQuestions": 36,
+  "relativeLinks": 8,
+  "networkPolicyCases": [
+    {
+      "case": "same-run executor to driver 7078",
+      "allowed": true
+    },
+    {
+      "case": "other-run executor denied driver 7078",
+      "allowed": false
+    },
+    {
+      "case": "other namespace denied driver 7078",
+      "allowed": false
+    },
+    {
+      "case": "same-run executor to driver 7079",
+      "allowed": true
+    },
+    {
+      "case": "other-run executor denied driver 7079",
+      "allowed": false
+    },
+    {
+      "case": "other namespace denied driver 7079",
+      "allowed": false
+    },
+    {
+      "case": "executor cannot reach driver extra port 4040",
+      "allowed": false
+    },
+    {
+      "case": "executor cannot reach driver extra port 18080",
+      "allowed": false
+    },
+    {
+      "case": "executor cannot reach driver extra port 15002",
+      "allowed": false
+    },
+    {
+      "case": "same-run driver to executor block manager",
+      "allowed": true
+    },
+    {
+      "case": "same-run driver denied executor RPC port",
+      "allowed": false
+    },
+    {
+      "case": "same-run executor to executor block manager",
+      "allowed": true
+    },
+    {
+      "case": "same-run executor denied executor RPC port",
+      "allowed": false
+    },
+    {
+      "case": "other job denied executor",
+      "allowed": false
+    },
+    {
+      "case": "UDP denied",
+      "allowed": false
+    },
+    {
+      "case": "monitoring namespace and pod label allow UI scrape",
+      "allowed": true
+    },
+    {
+      "case": "namespace alone insufficient for UI scrape",
+      "allowed": false
+    },
+    {
+      "case": "pod label alone insufficient for UI scrape",
+      "allowed": false
+    },
+    {
+      "case": "collector cannot use driver RPC",
+      "allowed": false
+    },
+    {
+      "case": "old role-only selector admits another job",
+      "allowed": true
+    }
+  ],
+  "invalidRunIdsRejected": 5,
+  "runtimeDependencies": [
+    "org.apache.hadoop:hadoop-aws:3.5.0",
+    "software.amazon.awssdk:bundle:2.35.4",
+    "software.amazon.s3.analyticsaccelerator:analyticsaccelerator-s3:1.3.1",
+    "org.wildfly.openssl:wildfly-openssl:2.2.5.Final"
+  ],
+  "nativeAuth": {
+    "checks": 8,
+    "results": [
+      {
+        "command": [
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-openfeature/java-sdk/jdk/amazon-corretto-21.0.12.9.1-linux-aarch64/bin/javac",
+          "-proc:none",
+          "-cp",
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-spark-best-practices/classes:/tmp/kubernetes-docs-full-review/spark-runtime/jars/*:/tmp/kubernetes-docs-full-review/spark-best-practices-sources/hadoop-aws-3.5.0.jar:/tmp/kubernetes-docs-full-review/spark-best-practices-sources/bundle-2.35.4.jar",
+          "-d",
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-spark-best-practices/classes",
+          "/tmp/kubernetes-docs-full-review/spark-best-practices-fixtures/S3AChecks.java"
+        ],
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-openfeature/java-sdk/jdk/amazon-corretto-21.0.12.9.1-linux-aarch64/bin/java",
+          "-cp",
+          "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-spark-best-practices/classes:/tmp/kubernetes-docs-full-review/spark-runtime/jars/*:/tmp/kubernetes-docs-full-review/spark-best-practices-sources/hadoop-aws-3.5.0.jar:/tmp/kubernetes-docs-full-review/spark-best-practices-sources/bundle-2.35.4.jar",
+          "S3AChecks"
+        ],
+        "stdout": "PASS explicit SDK v2 web identity provider loads\nPASS explicit Pod Identity container provider loads\nPASS default chain lacks web identity provider\nPASS default chain includes IAM container/instance wrapper\nExpected legacy-provider rejection: InstantiationIOException\nPASS legacy v1 web identity name is not automatically mapped\nPASS supported legacy aliases are still mapped\nPASS S3A filesystem class available\nPASS STS web identity implementation available\nPASS 8 provider/class checks; no resolveCredentials or S3/STS calls\n",
+        "stderr": "SLF4J: Failed to load class \"org.slf4j.impl.StaticLoggerBinder\".\nSLF4J: Defaulting to no-operation (NOP) logger implementation\nSLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.\n"
+      }
+    ],
+    "limits": "Provider construction/class loading only. No credential resolution, S3, STS, metadata or Kubernetes requests. Dummy token is an invalid non-credential placeholder."
+  },
+  "nativeObservation": {
+    "status": "passed",
+    "runtime": "upstream Spark 4.2.0 / Python 3.12 / local[2]",
+    "application": {
+      "applicationId": "local-1789199442841",
+      "ui": "http://127.0.0.1:35019",
+      "result": 499500
+    },
+    "metrics": {
+      "driver": {
+        "path": "/metrics/prometheus/",
+        "metricNames": [
+          "metrics_docs_review_driver_BlockManager_disk_diskSpaceUsed_MB_Number",
+          "metrics_docs_review_driver_BlockManager_disk_diskSpaceUsed_MB_Value",
+          "metrics_docs_review_driver_BlockManager_memory_maxMem_MB_Number",
+          "metrics_docs_review_driver_BlockManager_memory_maxMem_MB_Value",
+          "metrics_docs_review_driver_BlockManager_memory_maxOffHeapMem_MB_Number",
+          "metrics_docs_review_driver_BlockManager_memory_maxOffHeapMem_MB_Value",
+          "metrics_docs_review_driver_BlockManager_memory_maxOnHeapMem_MB_Number",
+          "metrics_docs_review_driver_BlockManager_memory_maxOnHeapMem_MB_Value",
+          "metrics_docs_review_driver_BlockManager_memory_memUsed_MB_Number",
+          "metrics_docs_review_driver_BlockManager_memory_memUsed_MB_Value",
+          "metrics_docs_review_driver_BlockManager_memory_offHeapMemUsed_MB_Number",
+          "metrics_docs_review_driver_BlockManager_memory_offHeapMemUsed_MB_Value",
+          "metrics_docs_review_driver_BlockManager_memory_onHeapMemUsed_MB_Number",
+          "metrics_docs_review_driver_BlockManager_memory_onHeapMemUsed_MB_Value",
+          "metrics_docs_review_driver_BlockManager_memory_remainingMem_MB_Number",
+          "metrics_docs_review_driver_BlockManager_memory_remainingMem_MB_Value",
+          "metrics_docs_review_driver_BlockManager_memory_remainingOffHeapMem_MB_Number",
+          "metrics_docs_review_driver_BlockManager_memory_remainingOffHeapMem_MB_Value",
+          "metrics_docs_review_driver_BlockManager_memory_remainingOnHeapMem_MB_Number",
+          "metrics_docs_review_driver_BlockManager_memory_remainingOnHeapMem_MB_Value",
+          "metrics_docs_review_driver_CodeGenerator_compilationTime_50thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_compilationTime_75thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_compilationTime_95thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_compilationTime_98thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_compilationTime_999thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_compilationTime_99thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_compilationTime_Count",
+          "metrics_docs_review_driver_CodeGenerator_compilationTime_Max",
+          "metrics_docs_review_driver_CodeGenerator_compilationTime_Mean",
+          "metrics_docs_review_driver_CodeGenerator_compilationTime_Min",
+          "metrics_docs_review_driver_CodeGenerator_compilationTime_StdDev",
+          "metrics_docs_review_driver_CodeGenerator_generatedClassSize_50thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_generatedClassSize_75thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_generatedClassSize_95thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_generatedClassSize_98thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_generatedClassSize_999thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_generatedClassSize_99thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_generatedClassSize_Count",
+          "metrics_docs_review_driver_CodeGenerator_generatedClassSize_Max",
+          "metrics_docs_review_driver_CodeGenerator_generatedClassSize_Mean",
+          "metrics_docs_review_driver_CodeGenerator_generatedClassSize_Min",
+          "metrics_docs_review_driver_CodeGenerator_generatedClassSize_StdDev",
+          "metrics_docs_review_driver_CodeGenerator_generatedMethodSize_50thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_generatedMethodSize_75thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_generatedMethodSize_95thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_generatedMethodSize_98thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_generatedMethodSize_999thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_generatedMethodSize_99thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_generatedMethodSize_Count",
+          "metrics_docs_review_driver_CodeGenerator_generatedMethodSize_Max",
+          "metrics_docs_review_driver_CodeGenerator_generatedMethodSize_Mean",
+          "metrics_docs_review_driver_CodeGenerator_generatedMethodSize_Min",
+          "metrics_docs_review_driver_CodeGenerator_generatedMethodSize_StdDev",
+          "metrics_docs_review_driver_CodeGenerator_sourceCodeSize_50thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_sourceCodeSize_75thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_sourceCodeSize_95thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_sourceCodeSize_98thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_sourceCodeSize_999thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_sourceCodeSize_99thPercentile",
+          "metrics_docs_review_driver_CodeGenerator_sourceCodeSize_Count",
+          "metrics_docs_review_driver_CodeGenerator_sourceCodeSize_Max",
+          "metrics_docs_review_driver_CodeGenerator_sourceCodeSize_Mean",
+          "metrics_docs_review_driver_CodeGenerator_sourceCodeSize_Min",
+          "metrics_docs_review_driver_CodeGenerator_sourceCodeSize_StdDev",
+          "metrics_docs_review_driver_DAGScheduler_job_activeJobs_Number",
+          "metrics_docs_review_driver_DAGScheduler_job_activeJobs_Value",
+          "metrics_docs_review_driver_DAGScheduler_job_allJobs_Number",
+          "metrics_docs_review_driver_DAGScheduler_job_allJobs_Value",
+          "metrics_docs_review_driver_DAGScheduler_messageProcessingTime_50thPercentile",
+          "metrics_docs_review_driver_DAGScheduler_messageProcessingTime_75thPercentile",
+          "metrics_docs_review_driver_DAGScheduler_messageProcessingTime_95thPercentile",
+          "metrics_docs_review_driver_DAGScheduler_messageProcessingTime_98thPercentile",
+          "metrics_docs_review_driver_DAGScheduler_messageProcessingTime_999thPercentile",
+          "metrics_docs_review_driver_DAGScheduler_messageProcessingTime_99thPercentile",
+          "metrics_docs_review_driver_DAGScheduler_messageProcessingTime_Count",
+          "metrics_docs_review_driver_DAGScheduler_messageProcessingTime_FifteenMinuteRate",
+          "metrics_docs_review_driver_DAGScheduler_messageProcessingTime_FiveMinuteRate",
+          "metrics_docs_review_driver_DAGScheduler_messageProcessingTime_Max",
+          "metrics_docs_review_driver_DAGScheduler_messageProcessingTime_Mean",
+          "metrics_docs_review_driver_DAGScheduler_messageProcessingTime_MeanRate",
+          "metrics_docs_review_driver_DAGScheduler_messageProcessingTime_Min",
+          "metrics_docs_review_driver_DAGScheduler_messageProcessingTime_OneMinuteRate",
+          "metrics_docs_review_driver_DAGScheduler_messageProcessingTime_StdDev",
+          "metrics_docs_review_driver_DAGScheduler_stage_failedStages_Number",
+          "metrics_docs_review_driver_DAGScheduler_stage_failedStages_Value",
+          "metrics_docs_review_driver_DAGScheduler_stage_runningStages_Number",
+          "metrics_docs_review_driver_DAGScheduler_stage_runningStages_Value",
+          "metrics_docs_review_driver_DAGScheduler_stage_waitingStages_Number",
+          "metrics_docs_review_driver_DAGScheduler_stage_waitingStages_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_ConcurrentGCCount_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_ConcurrentGCCount_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_ConcurrentGCTime_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_ConcurrentGCTime_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_DirectPoolMemory_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_DirectPoolMemory_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_JVMHeapMemory_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_JVMHeapMemory_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_JVMOffHeapMemory_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_JVMOffHeapMemory_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_MajorGCCount_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_MajorGCCount_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_MajorGCTime_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_MajorGCTime_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_MappedPoolMemory_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_MappedPoolMemory_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_MinorGCCount_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_MinorGCCount_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_MinorGCTime_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_MinorGCTime_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_OffHeapExecutionMemory_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_OffHeapExecutionMemory_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_OffHeapStorageMemory_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_OffHeapStorageMemory_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_OffHeapUnifiedMemory_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_OffHeapUnifiedMemory_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_OnHeapExecutionMemory_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_OnHeapExecutionMemory_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_OnHeapStorageMemory_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_OnHeapStorageMemory_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_OnHeapUnifiedMemory_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_OnHeapUnifiedMemory_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_ProcessTreeJVMRSSMemory_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_ProcessTreeJVMRSSMemory_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_ProcessTreeJVMVMemory_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_ProcessTreeJVMVMemory_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_ProcessTreeOtherRSSMemory_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_ProcessTreeOtherRSSMemory_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_ProcessTreeOtherVMemory_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_ProcessTreeOtherVMemory_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_ProcessTreePythonRSSMemory_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_ProcessTreePythonRSSMemory_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_ProcessTreePythonVMemory_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_ProcessTreePythonVMemory_Value",
+          "metrics_docs_review_driver_ExecutorMetrics_TotalGCTime_Number",
+          "metrics_docs_review_driver_ExecutorMetrics_TotalGCTime_Value",
+          "metrics_docs_review_driver_HiveExternalCatalog_fileCacheHits_Count",
+          "metrics_docs_review_driver_HiveExternalCatalog_filesDiscovered_Count",
+          "metrics_docs_review_driver_HiveExternalCatalog_hiveClientCalls_Count",
+          "metrics_docs_review_driver_HiveExternalCatalog_parallelListingJobCount_Count",
+          "metrics_docs_review_driver_HiveExternalCatalog_partitionsFetched_Count",
+          "metrics_docs_review_driver_JVMCPU_jvmCpuTime_Number",
+          "metrics_docs_review_driver_JVMCPU_jvmCpuTime_Value",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_HeartbeatReceiver_50thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_HeartbeatReceiver_75thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_HeartbeatReceiver_95thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_HeartbeatReceiver_98thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_HeartbeatReceiver_999thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_HeartbeatReceiver_99thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_HeartbeatReceiver_Count",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_HeartbeatReceiver_FifteenMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_HeartbeatReceiver_FiveMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_HeartbeatReceiver_Max",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_HeartbeatReceiver_Mean",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_HeartbeatReceiver_MeanRate",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_HeartbeatReceiver_Min",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_HeartbeatReceiver_OneMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_HeartbeatReceiver_StdDev",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_scheduler_EventLoggingListener_50thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_scheduler_EventLoggingListener_75thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_scheduler_EventLoggingListener_95thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_scheduler_EventLoggingListener_98thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_scheduler_EventLoggingListener_999thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_scheduler_EventLoggingListener_99thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_scheduler_EventLoggingListener_Count",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_scheduler_EventLoggingListener_FifteenMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_scheduler_EventLoggingListener_FiveMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_scheduler_EventLoggingListener_Max",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_scheduler_EventLoggingListener_Mean",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_scheduler_EventLoggingListener_MeanRate",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_scheduler_EventLoggingListener_Min",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_scheduler_EventLoggingListener_OneMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_scheduler_EventLoggingListener_StdDev",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_sql_execution_ui_SQLAppStatusListener_50thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_sql_execution_ui_SQLAppStatusListener_75thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_sql_execution_ui_SQLAppStatusListener_95thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_sql_execution_ui_SQLAppStatusListener_98thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_sql_execution_ui_SQLAppStatusListener_999thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_sql_execution_ui_SQLAppStatusListener_99thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_sql_execution_ui_SQLAppStatusListener_Count",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_sql_execution_ui_SQLAppStatusListener_FifteenMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_sql_execution_ui_SQLAppStatusListener_FiveMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_sql_execution_ui_SQLAppStatusListener_Max",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_sql_execution_ui_SQLAppStatusListener_Mean",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_sql_execution_ui_SQLAppStatusListener_MeanRate",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_sql_execution_ui_SQLAppStatusListener_Min",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_sql_execution_ui_SQLAppStatusListener_OneMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_sql_execution_ui_SQLAppStatusListener_StdDev",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_status_AppStatusListener_50thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_status_AppStatusListener_75thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_status_AppStatusListener_95thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_status_AppStatusListener_98thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_status_AppStatusListener_999thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_status_AppStatusListener_99thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_status_AppStatusListener_Count",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_status_AppStatusListener_FifteenMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_status_AppStatusListener_FiveMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_status_AppStatusListener_Max",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_status_AppStatusListener_Mean",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_status_AppStatusListener_MeanRate",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_status_AppStatusListener_Min",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_status_AppStatusListener_OneMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_listenerProcessingTime_org_apache_spark_status_AppStatusListener_StdDev",
+          "metrics_docs_review_driver_LiveListenerBus_numEventsPosted_Count",
+          "metrics_docs_review_driver_LiveListenerBus_queue_appStatus_listenerProcessingTime_50thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_queue_appStatus_listenerProcessingTime_75thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_queue_appStatus_listenerProcessingTime_95thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_queue_appStatus_listenerProcessingTime_98thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_queue_appStatus_listenerProcessingTime_999thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_queue_appStatus_listenerProcessingTime_99thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_queue_appStatus_listenerProcessingTime_Count",
+          "metrics_docs_review_driver_LiveListenerBus_queue_appStatus_listenerProcessingTime_FifteenMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_queue_appStatus_listenerProcessingTime_FiveMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_queue_appStatus_listenerProcessingTime_Max",
+          "metrics_docs_review_driver_LiveListenerBus_queue_appStatus_listenerProcessingTime_Mean",
+          "metrics_docs_review_driver_LiveListenerBus_queue_appStatus_listenerProcessingTime_MeanRate",
+          "metrics_docs_review_driver_LiveListenerBus_queue_appStatus_listenerProcessingTime_Min",
+          "metrics_docs_review_driver_LiveListenerBus_queue_appStatus_listenerProcessingTime_OneMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_queue_appStatus_listenerProcessingTime_StdDev",
+          "metrics_docs_review_driver_LiveListenerBus_queue_appStatus_numDroppedEvents_Count",
+          "metrics_docs_review_driver_LiveListenerBus_queue_appStatus_size_Number",
+          "metrics_docs_review_driver_LiveListenerBus_queue_appStatus_size_Value",
+          "metrics_docs_review_driver_LiveListenerBus_queue_eventLog_listenerProcessingTime_50thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_queue_eventLog_listenerProcessingTime_75thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_queue_eventLog_listenerProcessingTime_95thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_queue_eventLog_listenerProcessingTime_98thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_queue_eventLog_listenerProcessingTime_999thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_queue_eventLog_listenerProcessingTime_99thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_queue_eventLog_listenerProcessingTime_Count",
+          "metrics_docs_review_driver_LiveListenerBus_queue_eventLog_listenerProcessingTime_FifteenMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_queue_eventLog_listenerProcessingTime_FiveMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_queue_eventLog_listenerProcessingTime_Max",
+          "metrics_docs_review_driver_LiveListenerBus_queue_eventLog_listenerProcessingTime_Mean",
+          "metrics_docs_review_driver_LiveListenerBus_queue_eventLog_listenerProcessingTime_MeanRate",
+          "metrics_docs_review_driver_LiveListenerBus_queue_eventLog_listenerProcessingTime_Min",
+          "metrics_docs_review_driver_LiveListenerBus_queue_eventLog_listenerProcessingTime_OneMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_queue_eventLog_listenerProcessingTime_StdDev",
+          "metrics_docs_review_driver_LiveListenerBus_queue_eventLog_numDroppedEvents_Count",
+          "metrics_docs_review_driver_LiveListenerBus_queue_eventLog_size_Number",
+          "metrics_docs_review_driver_LiveListenerBus_queue_eventLog_size_Value",
+          "metrics_docs_review_driver_LiveListenerBus_queue_executorManagement_listenerProcessingTime_50thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_queue_executorManagement_listenerProcessingTime_75thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_queue_executorManagement_listenerProcessingTime_95thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_queue_executorManagement_listenerProcessingTime_98thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_queue_executorManagement_listenerProcessingTime_999thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_queue_executorManagement_listenerProcessingTime_99thPercentile",
+          "metrics_docs_review_driver_LiveListenerBus_queue_executorManagement_listenerProcessingTime_Count",
+          "metrics_docs_review_driver_LiveListenerBus_queue_executorManagement_listenerProcessingTime_FifteenMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_queue_executorManagement_listenerProcessingTime_FiveMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_queue_executorManagement_listenerProcessingTime_Max",
+          "metrics_docs_review_driver_LiveListenerBus_queue_executorManagement_listenerProcessingTime_Mean",
+          "metrics_docs_review_driver_LiveListenerBus_queue_executorManagement_listenerProcessingTime_MeanRate",
+          "metrics_docs_review_driver_LiveListenerBus_queue_executorManagement_listenerProcessingTime_Min",
+          "metrics_docs_review_driver_LiveListenerBus_queue_executorManagement_listenerProcessingTime_OneMinuteRate",
+          "metrics_docs_review_driver_LiveListenerBus_queue_executorManagement_listenerProcessingTime_StdDev",
+          "metrics_docs_review_driver_LiveListenerBus_queue_executorManagement_numDroppedEvents_Count",
+          "metrics_docs_review_driver_LiveListenerBus_queue_executorManagement_size_Number",
+          "metrics_docs_review_driver_LiveListenerBus_queue_executorManagement_size_Value",
+          "metrics_docs_review_driver_appStatus_jobDuration_Number",
+          "metrics_docs_review_driver_appStatus_jobDuration_Value",
+          "metrics_docs_review_driver_appStatus_jobs_failedJobs_Count",
+          "metrics_docs_review_driver_appStatus_jobs_succeededJobs_Count",
+          "metrics_docs_review_driver_appStatus_stages_completedStages_Count",
+          "metrics_docs_review_driver_appStatus_stages_failedStages_Count",
+          "metrics_docs_review_driver_appStatus_stages_skippedStages_Count",
+          "metrics_docs_review_driver_appStatus_tasks_blackListedExecutors_Count",
+          "metrics_docs_review_driver_appStatus_tasks_completedTasks_Count",
+          "metrics_docs_review_driver_appStatus_tasks_excludedExecutors_Count",
+          "metrics_docs_review_driver_appStatus_tasks_failedTasks_Count",
+          "metrics_docs_review_driver_appStatus_tasks_killedTasks_Count",
+          "metrics_docs_review_driver_appStatus_tasks_skippedTasks_Count",
+          "metrics_docs_review_driver_appStatus_tasks_unblackListedExecutors_Count",
+          "metrics_docs_review_driver_appStatus_tasks_unexcludedExecutors_Count",
+          "metrics_docs_review_driver_executor_bytesRead_Count",
+          "metrics_docs_review_driver_executor_bytesWritten_Count",
+          "metrics_docs_review_driver_executor_cpuTime_Count",
+          "metrics_docs_review_driver_executor_deserializeCpuTime_Count",
+          "metrics_docs_review_driver_executor_deserializeTime_Count",
+          "metrics_docs_review_driver_executor_diskBytesSpilled_Count",
+          "metrics_docs_review_driver_executor_filesystem_file_largeRead_ops_Number",
+          "metrics_docs_review_driver_executor_filesystem_file_largeRead_ops_Value",
+          "metrics_docs_review_driver_executor_filesystem_file_read_bytes_Number",
+          "metrics_docs_review_driver_executor_filesystem_file_read_bytes_Value",
+          "metrics_docs_review_driver_executor_filesystem_file_read_ops_Number",
+          "metrics_docs_review_driver_executor_filesystem_file_read_ops_Value",
+          "metrics_docs_review_driver_executor_filesystem_file_write_bytes_Number",
+          "metrics_docs_review_driver_executor_filesystem_file_write_bytes_Value",
+          "metrics_docs_review_driver_executor_filesystem_file_write_ops_Number",
+          "metrics_docs_review_driver_executor_filesystem_file_write_ops_Value",
+          "metrics_docs_review_driver_executor_filesystem_hdfs_largeRead_ops_Number",
+          "metrics_docs_review_driver_executor_filesystem_hdfs_largeRead_ops_Value",
+          "metrics_docs_review_driver_executor_filesystem_hdfs_read_bytes_Number",
+          "metrics_docs_review_driver_executor_filesystem_hdfs_read_bytes_Value",
+          "metrics_docs_review_driver_executor_filesystem_hdfs_read_ops_Number",
+          "metrics_docs_review_driver_executor_filesystem_hdfs_read_ops_Value",
+          "metrics_docs_review_driver_executor_filesystem_hdfs_write_bytes_Number",
+          "metrics_docs_review_driver_executor_filesystem_hdfs_write_bytes_Value",
+          "metrics_docs_review_driver_executor_filesystem_hdfs_write_ops_Number",
+          "metrics_docs_review_driver_executor_filesystem_hdfs_write_ops_Value",
+          "metrics_docs_review_driver_executor_jvmGCTime_Count",
+          "metrics_docs_review_driver_executor_memoryBytesSpilled_Count",
+          "metrics_docs_review_driver_executor_recordsRead_Count",
+          "metrics_docs_review_driver_executor_recordsWritten_Count",
+          "metrics_docs_review_driver_executor_resultSerializationTime_Count",
+          "metrics_docs_review_driver_executor_resultSize_Count",
+          "metrics_docs_review_driver_executor_runTime_Count",
+          "metrics_docs_review_driver_executor_shuffleBytesWritten_Count",
+          "metrics_docs_review_driver_executor_shuffleCorruptMergedBlockChunks_Count",
+          "metrics_docs_review_driver_executor_shuffleFetchWaitTime_Count",
+          "metrics_docs_review_driver_executor_shuffleLocalBlocksFetched_Count",
+          "metrics_docs_review_driver_executor_shuffleLocalBytesRead_Count",
+          "metrics_docs_review_driver_executor_shuffleMergedFetchFallbackCount_Count",
+          "metrics_docs_review_driver_executor_shuffleMergedLocalBlocksFetched_Count",
+          "metrics_docs_review_driver_executor_shuffleMergedLocalBytesRead_Count",
+          "metrics_docs_review_driver_executor_shuffleMergedLocalChunksFetched_Count",
+          "metrics_docs_review_driver_executor_shuffleMergedRemoteBlocksFetched_Count",
+          "metrics_docs_review_driver_executor_shuffleMergedRemoteBytesRead_Count",
+          "metrics_docs_review_driver_executor_shuffleMergedRemoteChunksFetched_Count",
+          "metrics_docs_review_driver_executor_shuffleMergedRemoteReqsDuration_Count",
+          "metrics_docs_review_driver_executor_shuffleRecordsRead_Count",
+          "metrics_docs_review_driver_executor_shuffleRecordsWritten_Count",
+          "metrics_docs_review_driver_executor_shuffleRemoteBlocksFetched_Count",
+          "metrics_docs_review_driver_executor_shuffleRemoteBytesReadToDisk_Count",
+          "metrics_docs_review_driver_executor_shuffleRemoteBytesRead_Count",
+          "metrics_docs_review_driver_executor_shuffleRemoteReqsDuration_Count",
+          "metrics_docs_review_driver_executor_shuffleTotalBytesRead_Count",
+          "metrics_docs_review_driver_executor_shuffleWriteTime_Count",
+          "metrics_docs_review_driver_executor_succeededTasks_Count",
+          "metrics_docs_review_driver_executor_threadpool_activeTasks_Number",
+          "metrics_docs_review_driver_executor_threadpool_activeTasks_Value",
+          "metrics_docs_review_driver_executor_threadpool_completeTasks_Number",
+          "metrics_docs_review_driver_executor_threadpool_completeTasks_Value",
+          "metrics_docs_review_driver_executor_threadpool_currentPool_size_Number",
+          "metrics_docs_review_driver_executor_threadpool_currentPool_size_Value",
+          "metrics_docs_review_driver_executor_threadpool_maxPool_size_Number",
+          "metrics_docs_review_driver_executor_threadpool_maxPool_size_Value",
+          "metrics_docs_review_driver_executor_threadpool_startedTasks_Number",
+          "metrics_docs_review_driver_executor_threadpool_startedTasks_Value"
+        ],
+        "bytes": 34769
+      },
+      "executors": {
+        "path": "/metrics/executors/prometheus/",
+        "metricNames": [
+          "metrics_executor_ConcurrentGCCount_total",
+          "metrics_executor_ConcurrentGCTime_seconds_total",
+          "metrics_executor_DirectPoolMemory_bytes",
+          "metrics_executor_JVMHeapMemory_bytes",
+          "metrics_executor_JVMOffHeapMemory_bytes",
+          "metrics_executor_MajorGCCount_total",
+          "metrics_executor_MajorGCTime_seconds_total",
+          "metrics_executor_MappedPoolMemory_bytes",
+          "metrics_executor_MinorGCCount_total",
+          "metrics_executor_MinorGCTime_seconds_total",
+          "metrics_executor_OffHeapExecutionMemory_bytes",
+          "metrics_executor_OffHeapStorageMemory_bytes",
+          "metrics_executor_OffHeapUnifiedMemory_bytes",
+          "metrics_executor_OnHeapExecutionMemory_bytes",
+          "metrics_executor_OnHeapStorageMemory_bytes",
+          "metrics_executor_OnHeapUnifiedMemory_bytes",
+          "metrics_executor_ProcessTreeJVMRSSMemory_bytes",
+          "metrics_executor_ProcessTreeJVMVMemory_bytes",
+          "metrics_executor_ProcessTreeOtherRSSMemory_bytes",
+          "metrics_executor_ProcessTreeOtherVMemory_bytes",
+          "metrics_executor_ProcessTreePythonRSSMemory_bytes",
+          "metrics_executor_ProcessTreePythonVMemory_bytes",
+          "metrics_executor_activeTasks",
+          "metrics_executor_completedTasks_total",
+          "metrics_executor_diskUsed_bytes",
+          "metrics_executor_failedTasks_total",
+          "metrics_executor_maxMemory_bytes",
+          "metrics_executor_maxTasks",
+          "metrics_executor_memoryUsed_bytes",
+          "metrics_executor_rddBlocks",
+          "metrics_executor_totalCores",
+          "metrics_executor_totalDuration_seconds_total",
+          "metrics_executor_totalGCTime_seconds_total",
+          "metrics_executor_totalInputBytes_bytes_total",
+          "metrics_executor_totalOffHeapStorageMemory_bytes",
+          "metrics_executor_totalOnHeapStorageMemory_bytes",
+          "metrics_executor_totalShuffleRead_bytes_total",
+          "metrics_executor_totalShuffleWrite_bytes_total",
+          "metrics_executor_totalTasks_total",
+          "metrics_executor_usedOffHeapStorageMemory_bytes",
+          "metrics_executor_usedOnHeapStorageMemory_bytes",
+          "spark_info"
+        ],
+        "bytes": 6162
+      }
+    },
+    "history": {
+      "application": {
+        "id": "local-1789199442841",
+        "name": "docs-observation-review",
+        "attempts": [
+          {
+            "startTime": "2026-09-12T07:50:42.229GMT",
+            "endTime": "2026-09-12T07:50:47.221GMT",
+            "lastUpdated": "2026-09-12T07:50:47.213GMT",
+            "duration": 4992,
+            "sparkUser": "atomoh",
+            "completed": true,
+            "appSparkVersion": "4.2.0",
+            "logSourceName": "file:///tmp/kubernetes-docs-full-review/spark-best-practices-fixtures/observation-1789199440745002591/events",
+            "logSourceFullPath": "file:///tmp/kubernetes-docs-full-review/spark-best-practices-fixtures/observation-1789199440745002591/events",
+            "startTimeEpoch": 1789199442229,
+            "endTimeEpoch": 1789199447221,
+            "lastUpdatedEpoch": 1789199447213
+          }
+        ]
+      },
+      "successfulJobs": 3,
+      "configLoaded": "/tmp/kubernetes-docs-full-review/spark-best-practices-fixtures/observation-1789199440745002591/history.properties",
+      "driverProcessAlreadyStopped": true
+    },
+    "artifacts": "/tmp/kubernetes-docs-full-review/spark-best-practices-fixtures/observation-1789199440745002591",
+    "limits": "Loopback-only live UI and History Server with local filesystem event logs. No S3, Kubernetes, IAM or STS access; no remote executor/JMX comparison test."
+  },
+  "artifactIntegrity": [
+    {
+      "name": "hadoop-aws-3.5.0.jar",
+      "url": "https://repo.maven.apache.org/maven2/org/apache/hadoop/hadoop-aws/3.5.0/hadoop-aws-3.5.0.jar",
+      "bytes": 938071,
+      "sha1": "9e594525d264c0db653c7f68da98b245f7d61ea5",
+      "sha256": "66bd9eefb938b1a1657487324b63c13df2d8b17164a1dd24e0ef37b905bc5baa",
+      "publishedChecksum": "sha1 matched official Maven Central artifact checksum"
+    },
+    {
+      "name": "bundle-2.35.4.jar",
+      "url": "https://repo.maven.apache.org/maven2/software/amazon/awssdk/bundle/2.35.4/bundle-2.35.4.jar",
+      "bytes": 686119507,
+      "sha1": "7252265e3970b214708e68a8b74a8fa8c875af1e",
+      "sha256": "db4b55f24ad1b4e70f17eb1717a4de76a8dadc5a27d764be7c44ff67b2c1c677",
+      "publishedChecksum": "sha1 matched official Maven Central artifact checksum"
+    }
+  ],
+  "limits": "No EKS deployment, S3/STS/metadata credential request, image build/push, or remote-executor/CNI enforcement test. Network cases model the published selectors/ports, not additive external policies, host traffic, pod self-traffic or CNI behavior."
+}

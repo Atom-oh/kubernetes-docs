@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "lifecycle",
   "meta": {
-    "title": "Feature Flag Lifecycle",
+    "title": "Temporary release flag lifecycle",
     "locale": "en",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -17,7 +17,7 @@
           "rollout",
           "stable"
         ],
-        "note": "A flag request starts planning; after development and testing it rolls out 5% → 25% → 100%, then enters a stabilization period."
+        "note": "Example for a temporary release flag; audience and observation windows are team policy."
       },
       {
         "id": "cleanup-path",
@@ -27,27 +27,14 @@
           "cleanup",
           "removed"
         ],
-        "note": "After stabilization, a removal PR hardcodes the default and updates tests so the flag never becomes technical debt."
+        "note": "Check consumers and rollback needs, retain the chosen behavior, then remove code and definitions."
       }
     ],
     "legend": {
-      "entries": {
-        "start": {
-          "label": "Flag request (start)"
-        },
-        "active": {
-          "label": "Work in progress"
-        },
-        "waiting": {
-          "label": "Waiting period"
-        },
-        "success": {
-          "label": "Flag removed (end of life)"
-        }
-      }
+      "mode": "hidden"
     },
     "viewBox": [
-      980,
+      1080,
       640
     ]
   },
@@ -62,7 +49,7 @@
     },
     {
       "id": "terminal",
-      "label": "End of life"
+      "label": "Retired"
     }
   ],
   "states": [
@@ -70,7 +57,7 @@
       "id": "plan",
       "type": "start",
       "label": "Plan",
-      "sublabel": "name, type, owner, expiry",
+      "sublabel": "owner / review date",
       "lane": "main",
       "col": 0,
       "step": "01",
@@ -100,7 +87,7 @@
       "id": "rollout",
       "type": "active",
       "label": "Rollout",
-      "sublabel": "5% → 25% → 100%",
+      "sublabel": "validated cohort stages",
       "lane": "main",
       "col": 3,
       "step": "04",
@@ -110,7 +97,7 @@
       "id": "stable",
       "type": "waiting",
       "label": "Stable",
-      "sublabel": "flag on 100%, stabilizing",
+      "sublabel": "rollback window",
       "lane": "main",
       "col": 4,
       "step": "05",
@@ -122,16 +109,16 @@
       "label": "Cleanup",
       "sublabel": "flag removal PR",
       "lane": "retire",
-      "col": 2,
+      "col": 1,
       "step": "06"
     },
     {
       "id": "removed",
       "type": "success",
       "label": "Removed",
-      "sublabel": "default hardcoded",
+      "sublabel": "chosen behavior",
       "lane": "terminal",
-      "col": 2,
+      "col": 1,
       "step": "07"
     }
   ],
@@ -160,16 +147,19 @@
       "id": "t-stable-cleanup",
       "from": "stable",
       "to": "cleanup",
-      "label": "Stabilization period over",
-      "labelDy": 24
+      "label": "after consumer checks",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "channelY": 242
     },
     {
       "id": "t-cleanup-removed",
       "from": "cleanup",
       "to": "removed",
-      "label": "Code removed",
       "variant": "emphasis",
-      "labelDy": 24
+      "fromSide": "bottom",
+      "toSide": "top",
+      "route": "auto"
     }
   ],
   "cards": [
@@ -177,18 +167,18 @@
       "dot": "cyan",
       "title": "Decided at planning",
       "items": [
-        "Define flag name, type and owner",
-        "Set an expiry date",
-        "List the affected services"
+        "Define name, type, and owner",
+        "Review dates are operational metadata",
+        "Identify consumers and rollback needs"
       ]
     },
     {
       "dot": "emerald",
       "title": "Done at cleanup",
       "items": [
-        "Open a PR that removes the flag code",
-        "Hardcode the default value",
-        "Update the related tests"
+        "Retain the chosen final behavior",
+        "Check old consumers and rollback window",
+        "Clean up branches, definitions, and tests together"
       ]
     }
   ]

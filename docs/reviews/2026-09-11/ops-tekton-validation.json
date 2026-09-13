@@ -1,0 +1,141 @@
+{
+  "reviewedAt": "2026-09-12",
+  "versions": {
+    "pipelines": "1.16.0",
+    "triggers": "0.37.0",
+    "chains": "0.29.0",
+    "dashboard": "0.72.0",
+    "tkn": "0.46.0",
+    "cosign": "3.1.3",
+    "buildkit": "0.33.0",
+    "trivy": "0.74.0"
+  },
+  "validation": {
+    "fences": 38,
+    "schemaObjects": 44,
+    "taskTests": {
+      "schemaObjects": 12,
+      "tasks": 6,
+      "embeddedSteps": 11,
+      "pipelineGraph": {
+        "clone": [],
+        "lint": [
+          "clone"
+        ],
+        "test": [
+          "clone"
+        ],
+        "build": [
+          "clone",
+          "lint",
+          "test"
+        ],
+        "scan": [
+          "build"
+        ]
+      },
+      "cases": {
+        "invalidCheckoutInputs": 5,
+        "validCheckoutReachesGit": 1,
+        "ecrConfig": 3,
+        "buildDigest": 3,
+        "scannerExitPropagation": 3
+      },
+      "scope": "Native syntax/JSON execution, fake Git and scanner. No cluster execution, registry access or AWS calls."
+    },
+    "gates": {
+      "runGateCases": [
+        "condition selected by type, full source and digest accepted",
+        "failed rejected",
+        "unknown rejected",
+        "wrong-source rejected",
+        "wrong-image rejected",
+        "missing-digest rejected",
+        "duplicate rejected",
+        "unsigned rejected",
+        "wrong-pipeline rejected",
+        "wrong-namespace rejected"
+      ],
+      "cleanupCases": [
+        "old succeeded run after archive and Chains",
+        "failed-recent preserved",
+        "running preserved",
+        "hold preserved",
+        "unarchived preserved",
+        "unsigned preserved",
+        "wrong-namespace preserved",
+        "bad-time preserved",
+        "exact-cutoff preserved"
+      ],
+      "limitations": "Run metadata checks are not cryptographic verification. Cleanup only prints candidates; no deletion."
+    },
+    "monitoringCalculations": 4,
+    "monitoringResult": "promtool SUCCESS",
+    "cliHelp": [
+      "tkn pr delete/logs",
+      "cosign verify/verify-attestation/login"
+    ],
+    "quizQuestions": 16,
+    "diagrams": 12,
+    "mobileCases": 30
+  },
+  "sources": [
+    "https://api.github.com/repos/tektoncd/pipeline/releases/latest",
+    "https://api.github.com/repos/tektoncd/triggers/releases/latest",
+    "https://api.github.com/repos/tektoncd/chains/releases/latest",
+    "https://api.github.com/repos/tektoncd/dashboard/releases/latest",
+    "https://api.github.com/repos/tektoncd/cli/releases/latest",
+    "https://api.github.com/repos/moby/buildkit/releases/latest",
+    "https://api.github.com/repos/sigstore/cosign/releases/latest",
+    "https://api.github.com/repos/aquasecurity/trivy/releases/latest",
+    "https://api.github.com/repos/GoogleContainerTools/kaniko",
+    "https://tekton.dev/docs/pipelines/install/",
+    "https://tekton.dev/docs/chains/config/",
+    "https://tekton.dev/docs/chains/slsa-provenance/",
+    "https://infra.tekton.dev/tekton-releases/pipeline/previous/v1.16.0/release.yaml",
+    "https://infra.tekton.dev/tekton-releases/triggers/previous/v0.37.0/release.yaml",
+    "https://infra.tekton.dev/tekton-releases/chains/previous/v0.29.0/release.yaml",
+    "https://infra.tekton.dev/tekton-releases/dashboard/previous/v0.72.0/release.yaml",
+    "https://infra.tekton.dev/tekton-releases/triggers/previous/v0.37.0/interceptors.yaml",
+    "https://raw.githubusercontent.com/tektoncd/pipeline/v1.16.0/docs/tasks.md",
+    "https://raw.githubusercontent.com/tektoncd/pipeline/v1.16.0/docs/pipelines.md",
+    "https://raw.githubusercontent.com/tektoncd/pipeline/v1.16.0/docs/pipelineruns.md",
+    "https://raw.githubusercontent.com/tektoncd/pipeline/v1.16.0/docs/workspaces.md",
+    "https://raw.githubusercontent.com/tektoncd/pipeline/v1.16.0/docs/auth.md",
+    "https://raw.githubusercontent.com/tektoncd/pipeline/v1.16.0/docs/install.md",
+    "https://raw.githubusercontent.com/tektoncd/pipeline/v1.16.0/docs/metrics.md",
+    "https://raw.githubusercontent.com/tektoncd/chains/v0.29.0/docs/config.md",
+    "https://raw.githubusercontent.com/tektoncd/chains/v0.29.0/docs/slsa-provenance.md",
+    "https://raw.githubusercontent.com/tektoncd/chains/v0.29.0/docs/signing.md",
+    "https://raw.githubusercontent.com/tektoncd/pipeline/v1.16.0/config/config-feature-flags.yaml",
+    "https://raw.githubusercontent.com/tektoncd/pipeline/v1.16.0/config/config-defaults.yaml",
+    "https://raw.githubusercontent.com/moby/buildkit/v0.33.0/docs/rootless.md",
+    "https://raw.githubusercontent.com/tektoncd/triggers/v0.37.0/docs/eventlisteners.md",
+    "https://raw.githubusercontent.com/tektoncd/triggers/v0.37.0/docs/interceptors.md",
+    "https://raw.githubusercontent.com/tektoncd/dashboard/v0.72.0/docs/install.md",
+    "https://raw.githubusercontent.com/tektoncd/triggers/v0.37.0/pkg/apis/triggers/v1beta1/event_listener_types.go",
+    "https://raw.githubusercontent.com/tektoncd/chains/v0.29.0/pkg/config/config.go",
+    "https://api.github.com/repos/tektoncd/pipeline/contents/docs?ref=v1.16.0",
+    "https://github.com/tektoncd/pipeline/blob/v1.16.0/docs/security/README.md",
+    "https://github.com/tektoncd/pipeline/blob/v1.16.0/docs/affinityassistants.md",
+    "https://github.com/tektoncd/chains/blob/v0.29.0/vendor/github.com/google/go-containerregistry/pkg/authn/k8schain/k8schain.go"
+  ],
+  "findings": [
+    "Replaced stale releases and nonexistent Helm repository with pinned official1.16/0.37/0.29/0.72 manifests; corrected Dashboard readonly/full and current feature flags.",
+    "Corrected definition-vs-execution, typed Results, namespace-local references and PVC/trust-boundary guidance.",
+    "Replaced archived Kaniko/broken CLI images with six fully connected Tasks; explicit BuildKit rootless prerequisites and candidate-only publishing.",
+    "Removed direct parameter substitution into shell, arbitrary webhook repos/commands and privileged external-PR path; fixed full-SHA/repository filters and per-Task IAM identities.",
+    "Corrected scan error propagation, emitted image digest/results, missing Task references, RWO scheduling and finally skip/timeout semantics.",
+    "Corrected SLSA formatter mapping, real Chains KMS/ECR identity chain, async Pipeline provenance and separate CI/cryptographic/policy approval checks.",
+    "Replaced unsafe GitOps auto-push claims and unverified-key placeholders with explicit reviewed digest promotion; distinguished ArgoCD synchronization from kubelet image pulls.",
+    "Replaced destructive all-cluster cleanup snippets with scope/terminal/completion/retention/archive-aware review; documented actualPVCautocleanupmodes.",
+    "Updated metric names/statuses/port, weighted duration calculation, noncancelled failure ratio and absence alerts; removed false no-webhook-event outage claims.",
+    "Updated both quizzes and12diagrams; fixed mobile toolbar clipping insharedproductionbuildnormalizer."
+  ],
+  "limitations": [
+    "No EKS installation or CIexecution; no imagebuild/push/pull, KMSsigning, notification orGitpush occurred.",
+    "IAMroles/OIDC, builderkernel/securityprofiles, registrycredentials, provenancepolicies andrealartifactarchival remain explicitdeploymentprerequisites.",
+    "Runmetadatahelperisnotcryptographicverification; cleanuphelperdoesnotdelete.",
+    "Fullrepositoryaudit/build/merge remains ongoing."
+  ]
+}

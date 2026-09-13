@@ -1,0 +1,100 @@
+[
+  {
+    "path": "en/eks/02-eks-cluster-creation.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully audited and corrected EKS creation methods, credentials/networking, native Auto Mode IaC, access, validation, upgrades and cleanup in both languages.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_eks_v2-readme.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html",
+      "https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html",
+      "https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html",
+      "https://github.com/hashicorp/terraform-provider-aws/blob/v6.64.0/website/docs/r/eks_cluster.html.markdown",
+      "https://github.com/hashicorp/terraform-provider-aws/blob/v6.64.0/website/docs/r/eks_node_group.html.markdown",
+      "https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode-learn-instances.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-console.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html",
+      "https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html",
+      "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html",
+      "https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/",
+      "https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/",
+      "https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/",
+      "https://github.com/eksctl-io/eksctl/releases/tag/v0.230.0"
+    ],
+    "findings": [
+      "Read all original 1368 lines in each language; preserved all twelve top-level sections and paired code content.",
+      "Replaced mandatory wildcard-admin policy with scoped provisioning guidance; corrected architecture-specific client installation, checksum gates, SSO guidance and EKS-compatible client baseline.",
+      "Fixed legacy VPC-tag/internet requirements, eksctl fargateProfiles shape, AL2023 selection, overlapping Auto Mode add-ons and unscoped kubeconfig handling.",
+      "Corrected AWS create-cluster field names and all three required Auto Mode capability flags, bootstrap settings, IAM roles and asynchronous readiness steps.",
+      "Replaced broken Lambda-based CDK custom resource with native aws-eks-v2. Explicit roles use current BlockStoragePolicyV2; no old policy is injected.",
+      "Completed Terraform configuration for Auto Mode and conventional MNG alternatives, IAM dependencies, access entries and network preconditions; marked runtime assumptions unverified.",
+      "Corrected NodePool expiration vs upgrade cycles; retained p3 because current AWS support catalog includes it. Fixed ContainerInsights metric namespace and removed unverified automatic-collection claims.",
+      "Replaced aws-auth overwrite/system:masters example with scoped reader access entry/RBAC; added namespace ownership guards, readiness checks and ClusterIP validation.",
+      "Updated upgrade/conditional seven-day rollback guidance and cleanup ordering, ownership checks, waiters, remaining-resource checks and failure gates. No force bypass or fabricated runtime/benchmark results."
+    ],
+    "validation": [
+      "/tmp/eks-creation-overview-audit/final-validation.json",
+      "Across both locales: 70 Bash blocks, 8 native Kubernetes objects, 8 eksctl configs, 2 NodePool CRDs, 6 HCL blocks and 4 TypeScript blocks; normalized code parity passed.",
+      "CDK library2.269.0/TypeScript5.9.3 compile and offline six-resource synthesis passed. Both files also compile under CLI2.1141.0 NodeNext/isolatedModules options; no init/bootstrap/deploy executed.",
+      "Terraform1.15.7 + signed AWS provider6.64.0 validate passed with zero errors/warnings. No plan/apply or AWS resource API calls.",
+      "Eight mocked installer cases and seven mocked cleanup cases passed, including corrupt/missing hashes, failed namespace deletion, mismatched identities, remaining resources and failed listing.",
+      "Korean H2/H3 replacement collision was detected and repaired before completion. Original HEAD hash matched the full-read baseline; all twelve H2 sections and every code block were restored and checked against English.",
+      "Scoped git diff --check passed. No actual client installation, cluster provisioning, application/load test, upgrade/rollback or deletion was performed."
+    ]
+  },
+  {
+    "path": "ko/eks/02-eks-cluster-creation.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully audited and corrected EKS creation methods, credentials/networking, native Auto Mode IaC, access, validation, upgrades and cleanup in both languages.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_eks_v2-readme.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-cluster-iam-role.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html",
+      "https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateCluster.html",
+      "https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html",
+      "https://github.com/hashicorp/terraform-provider-aws/blob/v6.64.0/website/docs/r/eks_cluster.html.markdown",
+      "https://github.com/hashicorp/terraform-provider-aws/blob/v6.64.0/website/docs/r/eks_node_group.html.markdown",
+      "https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode-learn-instances.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-console.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html",
+      "https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html",
+      "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html",
+      "https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/",
+      "https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/",
+      "https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/",
+      "https://github.com/eksctl-io/eksctl/releases/tag/v0.230.0"
+    ],
+    "findings": [
+      "Read all original 1368 lines in each language; preserved all twelve top-level sections and paired code content.",
+      "Replaced mandatory wildcard-admin policy with scoped provisioning guidance; corrected architecture-specific client installation, checksum gates, SSO guidance and EKS-compatible client baseline.",
+      "Fixed legacy VPC-tag/internet requirements, eksctl fargateProfiles shape, AL2023 selection, overlapping Auto Mode add-ons and unscoped kubeconfig handling.",
+      "Corrected AWS create-cluster field names and all three required Auto Mode capability flags, bootstrap settings, IAM roles and asynchronous readiness steps.",
+      "Replaced broken Lambda-based CDK custom resource with native aws-eks-v2. Explicit roles use current BlockStoragePolicyV2; no old policy is injected.",
+      "Completed Terraform configuration for Auto Mode and conventional MNG alternatives, IAM dependencies, access entries and network preconditions; marked runtime assumptions unverified.",
+      "Corrected NodePool expiration vs upgrade cycles; retained p3 because current AWS support catalog includes it. Fixed ContainerInsights metric namespace and removed unverified automatic-collection claims.",
+      "Replaced aws-auth overwrite/system:masters example with scoped reader access entry/RBAC; added namespace ownership guards, readiness checks and ClusterIP validation.",
+      "Updated upgrade/conditional seven-day rollback guidance and cleanup ordering, ownership checks, waiters, remaining-resource checks and failure gates. No force bypass or fabricated runtime/benchmark results."
+    ],
+    "validation": [
+      "/tmp/eks-creation-overview-audit/final-validation.json",
+      "Across both locales: 70 Bash blocks, 8 native Kubernetes objects, 8 eksctl configs, 2 NodePool CRDs, 6 HCL blocks and 4 TypeScript blocks; normalized code parity passed.",
+      "CDK library2.269.0/TypeScript5.9.3 compile and offline six-resource synthesis passed. Both files also compile under CLI2.1141.0 NodeNext/isolatedModules options; no init/bootstrap/deploy executed.",
+      "Terraform1.15.7 + signed AWS provider6.64.0 validate passed with zero errors/warnings. No plan/apply or AWS resource API calls.",
+      "Eight mocked installer cases and seven mocked cleanup cases passed, including corrupt/missing hashes, failed namespace deletion, mismatched identities, remaining resources and failed listing.",
+      "Korean H2/H3 replacement collision was detected and repaired before completion. Original HEAD hash matched the full-read baseline; all twelve H2 sections and every code block were restored and checked against English.",
+      "Scoped git diff --check passed. No actual client installation, cluster provisioning, application/load test, upgrade/rollback or deletion was performed."
+    ]
+  }
+]

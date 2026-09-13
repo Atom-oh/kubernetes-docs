@@ -1,0 +1,234 @@
+{
+  "status": "passed",
+  "date": "2026-09-11",
+  "checks": [
+    "Atlantis chart6.15.0 schema/render: existing Secrets, Pod Identity SA, writable claim, protected plan/apply and all-base-branch server policy",
+    "Four Flux2.9.5 v1 CRDs, consistent source/markers, dedicated push branch and actual Go commit-template rendering",
+    "Sentinel0.41.0: three policies, nineteen allowed/denied/boundary/missing/unknown/non-finite cases",
+    "KO/EN fixture parity, 32 fences, two PromQL recording expressions, Python AST, local links and both ten-question quizzes",
+    "20 analysis-tool cases recorded separately, including reverse chronology, missing/gapped/stale/future/non-finite data and CLI JSON",
+    "TFE0.80.0 init/validate plus two mock-provider plans passed: explicit approvals and required per-workspace roles",
+    "Final Atlantis server config accepted by real0.47.1 with synthetic credentials and downloads disabled; sandbox prevented listener binding; process stopped"
+  ],
+  "files": [
+    {
+      "path": "ko/ops/05-gitops-automation.md",
+      "sha256": "92deaa2b90ad9910927c23af8e658c8363aa78b475be5f550351c9bca7522eb0"
+    },
+    {
+      "path": "ko/quizzes/ops/05-gitops-automation-quiz.md",
+      "sha256": "cb2b139fbc337e858b7ed53a9cfc4d419f2d10f8aec307d2e6fd1852a4324ec8"
+    },
+    {
+      "path": "en/ops/05-gitops-automation.md",
+      "sha256": "8d1ab9541b230571174126ae39841bef1b1289118e15aaa855015374fc7e92eb"
+    },
+    {
+      "path": "en/quizzes/ops/05-gitops-automation-quiz.md",
+      "sha256": "a6b913a81f2730a9040f045bab55c4efc684aae4799da06b1affaf872e3c5042"
+    }
+  ],
+  "limitations": [
+    "No live Atlantis PR execution, HCP resources, cloud apply, cluster deployment or external AI invocation.",
+    "Atlantis server config accepted by actual0.47.1 startup with synthetic credentials; listener binding blocked by sandbox and process stopped after4seconds. Repository-level config reviewed against upstream raw schema; no PR execution.",
+    "PromQL syntax checked, not validated against a user's actual metric labels or collection pipeline.",
+    "Anomaly margins are illustrative and produce advice only, not an SLO or approved action."
+  ],
+  "evidence": {
+    "anomaly-tests.json": [
+      {
+        "name": "steady",
+        "status": "within_baseline"
+      },
+      {
+        "name": "spike-outside-baseline",
+        "status": "review_required"
+      },
+      {
+        "name": "drop-outside-baseline",
+        "status": "review_required"
+      },
+      {
+        "name": "reverse-chronological-source",
+        "status": "within_baseline"
+      },
+      {
+        "name": "stale",
+        "status": "insufficient_data"
+      },
+      {
+        "name": "future",
+        "status": "insufficient_data"
+      },
+      {
+        "name": "invalid-clock",
+        "status": "invalid_data"
+      },
+      {
+        "name": "nan",
+        "status": "invalid_data"
+      },
+      {
+        "name": "infinity",
+        "status": "invalid_data"
+      },
+      {
+        "name": "boolean",
+        "status": "invalid_data"
+      },
+      {
+        "name": "negative",
+        "status": "invalid_data"
+      },
+      {
+        "name": "insufficient-history",
+        "status": "insufficient_data"
+      },
+      {
+        "name": "duplicate-timestamp",
+        "status": "insufficient_data"
+      },
+      {
+        "name": "collection-gap",
+        "status": "insufficient_data"
+      },
+      {
+        "name": "wrong-unit",
+        "status": "invalid_data"
+      },
+      {
+        "name": "percent-is-not-ratio",
+        "status": "invalid_data"
+      },
+      {
+        "name": "boolean-period",
+        "status": "invalid_data"
+      },
+      {
+        "name": "wrong-top-level-type",
+        "status": "invalid_data"
+      },
+      {
+        "name": "CLI-valid",
+        "exitCode": 0
+      },
+      {
+        "name": "CLI-malformed",
+        "exitCode": 2
+      }
+    ],
+    "sentinel-cases.json": [
+      {
+        "policy": "required-tags",
+        "name": "valid",
+        "expected": true
+      },
+      {
+        "policy": "required-tags",
+        "name": "missing",
+        "expected": false
+      },
+      {
+        "policy": "required-tags",
+        "name": "null",
+        "expected": false
+      },
+      {
+        "policy": "required-tags",
+        "name": "empty",
+        "expected": false
+      },
+      {
+        "policy": "required-tags",
+        "name": "unknown-map",
+        "expected": false
+      },
+      {
+        "policy": "required-tags",
+        "name": "unknown-all",
+        "expected": false
+      },
+      {
+        "policy": "required-tags",
+        "name": "delete",
+        "expected": true
+      },
+      {
+        "policy": "instance-types",
+        "name": "ec2-ok",
+        "expected": true
+      },
+      {
+        "policy": "instance-types",
+        "name": "ec2-denied",
+        "expected": false
+      },
+      {
+        "policy": "instance-types",
+        "name": "eks-ok",
+        "expected": true
+      },
+      {
+        "policy": "instance-types",
+        "name": "eks-denied",
+        "expected": false
+      },
+      {
+        "policy": "instance-types",
+        "name": "eks-missing",
+        "expected": false
+      },
+      {
+        "policy": "cost-limit",
+        "name": "below",
+        "expected": true
+      },
+      {
+        "policy": "cost-limit",
+        "name": "boundary",
+        "expected": true
+      },
+      {
+        "policy": "cost-limit",
+        "name": "above",
+        "expected": false
+      },
+      {
+        "policy": "cost-limit",
+        "name": "missing",
+        "expected": false
+      },
+      {
+        "policy": "cost-limit",
+        "name": "negative",
+        "expected": false
+      },
+      {
+        "policy": "cost-limit",
+        "name": "nan",
+        "expected": false
+      },
+      {
+        "policy": "cost-limit",
+        "name": "infinite",
+        "expected": false
+      }
+    ],
+    "atlantis-parser-final.log": {
+      "sha256": "893348a93192fc35b7130b4ea25489c81cbac5cb9dfac47148a1c134a0f2b1cf",
+      "path": "/tmp/kubernetes-docs-full-review/automation-fixtures/atlantis-parser-final.log"
+    }
+  },
+  "sources": [
+    "https://github.com/runatlantis/atlantis/releases/tag/v0.47.1",
+    "https://github.com/runatlantis/helm-charts/releases/tag/atlantis-6.15.0",
+    "https://www.runatlantis.io/docs/server-side-repo-config.html",
+    "https://www.runatlantis.io/docs/security.html",
+    "https://registry.terraform.io/providers/hashicorp/tfe/0.80.0/docs/resources/workspace",
+    "https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers",
+    "https://developer.hashicorp.com/terraform/cloud-docs/dynamic-provider-credentials/aws-configuration",
+    "https://developer.hashicorp.com/terraform/cloud-docs/policy-enforcement/import-reference/tfrun",
+    "https://github.com/fluxcd/image-automation-controller/blob/v1.2.5/docs/spec/v1/imageupdateautomations.md",
+    "https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review"
+  ]
+}

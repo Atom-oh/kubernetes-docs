@@ -1,0 +1,22 @@
+{
+  "fences": {
+    "bash": 32,
+    "output": 24,
+    "yaml": 2,
+    "promql": 2
+  },
+  "uniqueJqQueries": 3,
+  "podCases": 9,
+  "endpointCases": 5,
+  "credentialCases": 2,
+  "promqlCases": 3,
+  "status": "passed",
+  "scope": "Parsed Bash after replacing documented placeholders; ran actual jq and promtool on synthetic data. No kubectl/AWS calls, cluster restarts, or historical-output reproduction.",
+  "date": "2026-09-11",
+  "localLinks": {
+    "files": 4,
+    "errors": 0
+  },
+  "gatewayEvidence": "LBCv3.2.1 controllerConfig.featureGates verified in tagged values.yaml; GatewayAPI1.5standard manifest includes ListenerSet. No Helm/cloud deployment.",
+  "sourcesReceipt": "/tmp/kubernetes-docs-full-review/ops-sources/troubleshooting-receipts.json"
+}

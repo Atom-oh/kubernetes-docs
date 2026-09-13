@@ -1,0 +1,426 @@
+{
+  "date": "2026-09-11",
+  "reviewedAtUTC": "2026-09-12T02:12:57.899459+00:00",
+  "files": [
+    {
+      "path": "en/networking/calico/README.md",
+      "sha256": "343071a49813d2e9c648a47372d1aecf3c6ef4c661d631c15595111277453bea"
+    },
+    {
+      "path": "ko/networking/calico/README.md",
+      "sha256": "a5d09db83da27af9fbd0b82ca019a8f3a1163ab8a502c83f1ec4ac0d2f06ce57"
+    }
+  ],
+  "sources": {
+    "release": {
+      "url": "https://api.github.com/repos/projectcalico/calico/releases/latest",
+      "key": "7bc4068c9f42"
+    },
+    "requirements": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements",
+      "key": "6f94a8862c24"
+    },
+    "EKS": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks",
+      "key": "8b9a045ccc34"
+    },
+    "helm": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/helm",
+      "key": "11cf4ba2419c"
+    },
+    "editions": {
+      "url": "https://docs.tigera.io/calico/latest/about/calico-product-editions",
+      "key": "4115652e6e42"
+    },
+    "architecture": {
+      "url": "https://docs.tigera.io/calico/latest/reference/architecture/overview",
+      "key": "13138c565fbe"
+    },
+    "Windows": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations",
+      "key": "d784db9e78d6"
+    },
+    "MTU": {
+      "url": "https://docs.tigera.io/calico/latest/networking/configuring/mtu",
+      "key": "dca46d8d81f4"
+    },
+    "overlays": {
+      "url": "https://docs.tigera.io/calico/latest/networking/configuring/vxlan-ipip",
+      "key": "db51c23ce2ae"
+    },
+    "ebpf": {
+      "url": "https://docs.tigera.io/calico/latest/operations/ebpf/install",
+      "key": "e0b3156ff702"
+    },
+    "FelixMetrics": {
+      "url": "https://docs.tigera.io/calico/latest/reference/felix/prometheus",
+      "key": "b299dee33cd8"
+    },
+    "TyphaMetrics": {
+      "url": "https://docs.tigera.io/calico/latest/reference/typha/prometheus",
+      "key": "e9c383f722b2"
+    },
+    "metricsSetup": {
+      "url": "https://docs.tigera.io/calico/latest/operations/monitor/monitor-component-metrics",
+      "key": "84f7a45d1395"
+    },
+    "FelixConfiguration": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/felixconfig",
+      "key": "43fe47250f7c"
+    },
+    "NetworkPolicy": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/networkpolicy",
+      "key": "72c09bf8ede0"
+    },
+    "GlobalNetworkPolicy": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/globalnetworkpolicy",
+      "key": "7b7de74c5e4b"
+    },
+    "installationAPI": {
+      "url": "https://docs.tigera.io/calico/latest/reference/installation/api",
+      "key": "71a9d6b0ffba"
+    },
+    "releasedCRDs": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/v1_crd_projectcalico_org.yaml",
+      "key": "366be3352d5d"
+    },
+    "releasedOperator": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/tigera-operator.yaml",
+      "key": "cdde707b47cc"
+    },
+    "VMAnnouncement": {
+      "url": "https://www.tigera.io/news/tigera-launches-ebpf-powered-calico-for-vms-on-kubernetes-vm-migration-that-doesnt-require-rebuilding-the-network/",
+      "key": "9ba868c99ef1"
+    },
+    "VMDate": {
+      "url": "https://www.tigera.io/wp-json/wp/v2/news/69357",
+      "key": "ce253d32794c"
+    },
+    "EnterpriseRelease": {
+      "url": "https://docs.tigera.io/calico-enterprise/latest/release-notes/",
+      "key": "b3bf237be7e9"
+    },
+    "CiliumRequirements": {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/system_requirements.rst",
+      "key": "47d0fa2d6ec0"
+    },
+    "onprem": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/self-managed-onprem/onpremises",
+      "key": "02568f8010ac"
+    },
+    "VPCPolicyDisable": {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/network-policy-disable.html",
+      "key": "434a09656a49"
+    },
+    "flowlogs": {
+      "url": "https://docs.tigera.io/calico/latest/observability/view-flow-logs",
+      "key": "6fac19fcc17d"
+    },
+    "domainPolicy": {
+      "url": "https://docs.tigera.io/calico-enterprise/latest/network-policy/domain-based-policy",
+      "key": "eb4790c977ec"
+    },
+    "vpcAnnotation": {
+      "url": "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md",
+      "key": "79a74010bf7d"
+    },
+    "kubernetesSchemas": {
+      "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.0/api/openapi-spec/swagger.json",
+      "key": "b0fb38bb7c6c"
+    }
+  },
+  "findings": [
+    "Replaced unsupported3.29+/K8s1.28+range with3.32.2 release and testedK8s1.34–1.36; keptlatestvscompatibility distinction.",
+    "EKS quickstart now preservesVPC-CNI(AmazonVPC/Iptables/BGPDisabled), documentsNPenginehandover/ANNOTATE_POD_IP/RBAC/IPv6egressexception; separateCRDinstallation/APIaggregation explicit.",
+    "Releasedschema proves originalENdestination.domains andKOflowLogsFileEnabled invalidforOpenSource; replacedwithsupportedfeature/editionguidance.",
+    "ScopedglobalDNSegressdenytoonlycalico-demo namespaceandtrustedCoreDNSnamespace/labels; originalcoulddenyallclusterworkloads/allowarbitraryDNSIPs.",
+    "CorrectedCiliumWindowsBeta/CalicoFullWindowsclaims,Typha/BIRD/confdoptionalplacement,MTUassumptions,unverifiedresource/maturityrankings,andmetricsemantics.",
+    "OfficialVMannouncementisJuly23notJuly21; Enterprise3.23KubeVirtlive-migrationisstilltechpreviewdespitemarketingplatformGA.",
+    "Viewedall6figures;removedENmodeandKO4inaccurate/redundantfiguresincludingTyphaper-node,unverifiedFortune80%,fixedMTU/defaults/performanceandbiasedselection;retainedENschematicwithscopecaption."
+  ],
+  "checks": {
+    "originalSchemaErrors": [
+      {
+        "language": "en",
+        "kind": "NetworkPolicy",
+        "name": "allow-external-api",
+        "errors": [
+          "Additional properties are not allowed ('domains' was unexpected)"
+        ]
+      },
+      {
+        "language": "ko",
+        "kind": "FelixConfiguration",
+        "name": "default",
+        "errors": [
+          "Additional properties are not allowed ('flowLogsFileEnabled' was unexpected)"
+        ]
+      }
+    ],
+    "schemaObjects": 38,
+    "bashBlocks": 8,
+    "helm": {
+      "en": {
+        "objects": 11,
+        "operatorImage": "quay.io/tigera/operator:v1.42.6",
+        "VPC_CNI_preserved": true,
+        "BGPDisabled": true,
+        "APIServer": true,
+        "Goldmane": true,
+        "Whisker": true
+      },
+      "ko": {
+        "objects": 11,
+        "operatorImage": "quay.io/tigera/operator:v1.42.6",
+        "VPC_CNI_preserved": true,
+        "BGPDisabled": true,
+        "APIServer": true,
+        "Goldmane": true,
+        "Whisker": true
+      }
+    },
+    "policyModelCases": [
+      {
+        "language": "en",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "kube-system",
+        "destinationLabels": {
+          "k8s-app": "kube-dns"
+        },
+        "protocol": "UDP",
+        "port": 53,
+        "result": "Allow",
+        "modelOnly": true
+      },
+      {
+        "language": "en",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "kube-system",
+        "destinationLabels": {
+          "k8s-app": "kube-dns"
+        },
+        "protocol": "TCP",
+        "port": 53,
+        "result": "Allow",
+        "modelOnly": true
+      },
+      {
+        "language": "en",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "other",
+        "destinationLabels": {
+          "k8s-app": "kube-dns"
+        },
+        "protocol": "UDP",
+        "port": 53,
+        "result": "Deny",
+        "modelOnly": true
+      },
+      {
+        "language": "en",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "kube-system",
+        "destinationLabels": {
+          "k8s-app": "untrusted"
+        },
+        "protocol": "UDP",
+        "port": 53,
+        "result": "Deny",
+        "modelOnly": true
+      },
+      {
+        "language": "en",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "kube-system",
+        "destinationLabels": {
+          "k8s-app": "kube-dns"
+        },
+        "protocol": "TCP",
+        "port": 443,
+        "result": "Deny",
+        "modelOnly": true
+      },
+      {
+        "language": "en",
+        "sourceNamespace": "kube-system",
+        "destinationNamespace": "other",
+        "destinationLabels": {},
+        "protocol": "UDP",
+        "port": 53,
+        "result": "unselected",
+        "modelOnly": true
+      },
+      {
+        "language": "en",
+        "sourceNamespace": "production",
+        "destinationNamespace": "other",
+        "destinationLabels": {},
+        "protocol": "TCP",
+        "port": 443,
+        "result": "unselected",
+        "modelOnly": true
+      },
+      {
+        "language": "en",
+        "sourceNamespace": "",
+        "destinationNamespace": "kube-system",
+        "destinationLabels": {
+          "k8s-app": "kube-dns"
+        },
+        "protocol": "UDP",
+        "port": 53,
+        "result": "unselected",
+        "modelOnly": true
+      },
+      {
+        "language": "ko",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "kube-system",
+        "destinationLabels": {
+          "k8s-app": "kube-dns"
+        },
+        "protocol": "UDP",
+        "port": 53,
+        "result": "Allow",
+        "modelOnly": true
+      },
+      {
+        "language": "ko",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "kube-system",
+        "destinationLabels": {
+          "k8s-app": "kube-dns"
+        },
+        "protocol": "TCP",
+        "port": 53,
+        "result": "Allow",
+        "modelOnly": true
+      },
+      {
+        "language": "ko",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "other",
+        "destinationLabels": {
+          "k8s-app": "kube-dns"
+        },
+        "protocol": "UDP",
+        "port": 53,
+        "result": "Deny",
+        "modelOnly": true
+      },
+      {
+        "language": "ko",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "kube-system",
+        "destinationLabels": {
+          "k8s-app": "untrusted"
+        },
+        "protocol": "UDP",
+        "port": 53,
+        "result": "Deny",
+        "modelOnly": true
+      },
+      {
+        "language": "ko",
+        "sourceNamespace": "calico-demo",
+        "destinationNamespace": "kube-system",
+        "destinationLabels": {
+          "k8s-app": "kube-dns"
+        },
+        "protocol": "TCP",
+        "port": 443,
+        "result": "Deny",
+        "modelOnly": true
+      },
+      {
+        "language": "ko",
+        "sourceNamespace": "kube-system",
+        "destinationNamespace": "other",
+        "destinationLabels": {},
+        "protocol": "UDP",
+        "port": 53,
+        "result": "unselected",
+        "modelOnly": true
+      },
+      {
+        "language": "ko",
+        "sourceNamespace": "production",
+        "destinationNamespace": "other",
+        "destinationLabels": {},
+        "protocol": "TCP",
+        "port": 443,
+        "result": "unselected",
+        "modelOnly": true
+      },
+      {
+        "language": "ko",
+        "sourceNamespace": "",
+        "destinationNamespace": "kube-system",
+        "destinationLabels": {
+          "k8s-app": "kube-dns"
+        },
+        "protocol": "UDP",
+        "port": 53,
+        "result": "unselected",
+        "modelOnly": true
+      }
+    ],
+    "limits": [
+      "No cluster provisioning, policy-engine handover, EKS network traffic or production validation.",
+      "v3 public policy fields checked using equivalent released internal v1 CRD schemas; API aggregation/admission not executed.",
+      "Policy model checks only these namespace/label/protocol/port clauses in isolation; it is not a Calico dataplane or full tier/order interpreter.",
+      "The native-v3 CRD path and commercial FQDN policy example are deliberately not used in the Open Source installation.",
+      "Removed five semantically inaccurate/redundant figure references; underlying parent-owned assets remain unchanged."
+    ]
+  },
+  "chart": {
+    "version": "v3.32.2",
+    "url": "https://github.com/projectcalico/calico/releases/download/v3.32.2/tigera-operator-v3.32.2.tgz",
+    "sha256": "bb572d59ce6dc004ca51082b50dc62759715f77801acc3684e80235b7d5bc872",
+    "verifiedAgainstGitHubReleaseDigest": true
+  },
+  "render": {
+    "results": [
+      {
+        "path": "en/networking/calico/README.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/networking/calico/README.md",
+        "passed": true,
+        "errors": []
+      }
+    ],
+    "passed": 2,
+    "total": 2
+  },
+  "batchValidation": {
+    "documents": 2,
+    "yamlBlocks": 10,
+    "shellBlocks": 8,
+    "errors": []
+  },
+  "docsTest": {
+    "tests": 118,
+    "passed": 118,
+    "failed": 0,
+    "log": "/tmp/networking-calico-readme-validation/docs-test.log",
+    "environment": "login:false env-i OTELoff"
+  },
+  "scopeDiffCheck": "passed",
+  "images": {
+    "viewed": 6,
+    "retained": 1,
+    "removedReferences": [
+      "en-networking-calico-readme-1",
+      "ko-networking-calico-readme-0",
+      "ko-networking-calico-readme-1",
+      "ko-networking-calico-readme-2",
+      "ko-networking-calico-readme-3"
+    ],
+    "underlyingAssetsEdited": false,
+    "externalFollowup": "Parent-ownedarchmapregenerationneededbeforeinaccuratefigurescanbereintroduced."
+  },
+  "artifacts": "/tmp/networking-calico-readme-validation"
+}

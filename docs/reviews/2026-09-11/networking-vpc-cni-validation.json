@@ -1,0 +1,233 @@
+{
+  "date": "2026-09-11",
+  "originalFullRead": {
+    "guideLinesPerLocale": 473,
+    "quizLinesPerLocale": 147,
+    "quizQuestionsPerLocale": 8
+  },
+  "validation": {
+    "helm": {
+      "prefix": {
+        "objects": 5,
+        "agentImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.23.0",
+        "policyImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon/aws-network-policy-agent:v1.4.1"
+      },
+      "warm_low": {
+        "objects": 5,
+        "agentImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.23.0",
+        "policyImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon/aws-network-policy-agent:v1.4.1"
+      },
+      "warm_high": {
+        "objects": 5,
+        "agentImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.23.0",
+        "policyImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon/aws-network-policy-agent:v1.4.1"
+      },
+      "warm_prefix": {
+        "objects": 5,
+        "agentImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.23.0",
+        "policyImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon/aws-network-policy-agent:v1.4.1"
+      },
+      "custom": {
+        "objects": 5,
+        "agentImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.23.0",
+        "policyImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon/aws-network-policy-agent:v1.4.1"
+      },
+      "np_config": {
+        "objects": 5,
+        "agentImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.23.0",
+        "policyImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon/aws-network-policy-agent:v1.4.1"
+      },
+      "np_strict": {
+        "objects": 5,
+        "agentImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.23.0",
+        "policyImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon/aws-network-policy-agent:v1.4.1"
+      },
+      "sg_config": {
+        "objects": 5,
+        "agentImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.23.0",
+        "policyImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon/aws-network-policy-agent:v1.4.1"
+      },
+      "windows_helm": {
+        "objects": 5,
+        "agentImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.23.0",
+        "policyImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon/aws-network-policy-agent:v1.4.1"
+      },
+      "monitor": {
+        "objects": 6,
+        "agentImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.23.0",
+        "policyImage": "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon/aws-network-policy-agent:v1.4.1"
+      }
+    },
+    "eksctlSchema": {
+      "version": "0.229.0",
+      "IPv6ConfigValid": true,
+      "ipFamilyValue": "IPv6"
+    },
+    "schemaObjects": 12,
+    "shellBlocks": 36,
+    "codeParity": true,
+    "legacyRows": [
+      {
+        "instance": "t3.medium",
+        "legacyPods": 17
+      },
+      {
+        "instance": "t3.large",
+        "legacyPods": 35
+      },
+      {
+        "instance": "m5.large",
+        "legacyPods": 29
+      },
+      {
+        "instance": "m5.xlarge",
+        "legacyPods": 58
+      },
+      {
+        "instance": "m5.2xlarge",
+        "legacyPods": 58
+      },
+      {
+        "instance": "c5.4xlarge",
+        "legacyPods": 234
+      },
+      {
+        "instance": "m5.8xlarge",
+        "legacyPods": 234
+      }
+    ],
+    "eniQueryRegression": {
+      "fixture": {
+        "Reservations": [
+          {
+            "Instances": [
+              {
+                "InstanceId": "i-example-a",
+                "NetworkInterfaces": [
+                  {
+                    "NetworkInterfaceId": "eni-a"
+                  },
+                  {
+                    "NetworkInterfaceId": "eni-b"
+                  },
+                  {
+                    "NetworkInterfaceId": "eni-c"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "originalQuery": "Reservations[].Instances[].NetworkInterfaces | length(@)",
+      "originalResult": 1,
+      "correctedQuery": "Reservations[].Instances[].{InstanceId:InstanceId,AttachedENIs:length(NetworkInterfaces)}",
+      "correctedResult": [
+        {
+          "InstanceId": "i-example-a",
+          "AttachedENIs": 3
+        }
+      ]
+    },
+    "limits": [
+      "No AWS/EKS provisioning, cluster rollout, node CLI or live policy/Multus test.",
+      "EKS build configuration schema must still be selected/queried for the actual cluster; Helm values are not assumed universally identical to managed-add-on configuration.",
+      "SGPolicy shape checked against published example, not live service admission; IDs are placeholders.",
+      "Native Helm, public resource schemas, local eksctl0.229 schema and JMESPath checks do not guarantee production capacity or connectivity."
+    ]
+  },
+  "prometheus": {
+    "promtool": "3.14.0",
+    "scenarios": 12,
+    "expressionAssertions": 12,
+    "alertAssertions": 36,
+    "exit": 0
+  },
+  "render": {
+    "results": [
+      {
+        "path": "en/networking/01-vpc-cni.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/networking/01-vpc-cni.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "en/quizzes/networking/01-vpc-cni-quiz.md",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "path": "ko/quizzes/networking/01-vpc-cni-quiz.md",
+        "passed": true,
+        "errors": []
+      }
+    ],
+    "passed": 4,
+    "total": 4
+  },
+  "batch": {
+    "batch": "networking-foundation",
+    "documents": 8,
+    "yamlBlocks": 26,
+    "shellBlocks": 46,
+    "errors": []
+  },
+  "chartArtifact": {
+    "url": "https://aws.github.io/eks-charts/aws-vpc-cni-1.23.0.tgz",
+    "sha256": "cfbba8ecdd3f99471ac76283bbd4cac05d79c83640019fe1d979ba2716a99214",
+    "version": "1.23.0",
+    "appVersion": "v1.23.0"
+  },
+  "tests": {
+    "passed": 118,
+    "failed": 0,
+    "log": "/tmp/kubernetes-docs-full-review/docs-test-networking-vpc-cni-clean.log"
+  },
+  "sources": {
+    "cniREADME": "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md",
+    "cniValues": "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/charts/aws-vpc-cni/values.yaml",
+    "cniChart": "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/charts/aws-vpc-cni/Chart.yaml",
+    "cniManifest": "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/config/master/aws-k8s-cni.yaml",
+    "cniIpamd": "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/pkg/ipamd/ipamd.go",
+    "cniIntrospection": "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/pkg/ipamd/introspect.go",
+    "cniDatastore": "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/pkg/ipamd/datastore/data_store.go",
+    "cniMetrics": "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/utils/prometheusmetrics/prometheusmetrics.go",
+    "nodeAgent": "https://github.com/aws/aws-network-policy-agent/blob/v1.4.1/README.md",
+    "helmIndex": "https://aws.github.io/eks-charts/index.yaml",
+    "sgpp": "https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html",
+    "sgppBest": "https://docs.aws.amazon.com/eks/latest/best-practices/sgpp.html",
+    "multus": "https://docs.aws.amazon.com/eks/latest/userguide/pod-multus.html",
+    "windows": "https://docs.aws.amazon.com/eks/latest/userguide/windows-support.html",
+    "ipv6": "https://docs.aws.amazon.com/eks/latest/userguide/cni-ipv6.html",
+    "eksctlIPv6": "https://docs.aws.amazon.com/eks/latest/eksctl/vpc-ip-family.html",
+    "iam": "https://docs.aws.amazon.com/eks/latest/userguide/cni-iam-role.html",
+    "cniManage": "https://docs.aws.amazon.com/eks/latest/userguide/managing-vpc-cni.html",
+    "networkPolicy": "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html",
+    "networkPolicySetup": "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html",
+    "prefix": "https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses-procedure.html"
+  },
+  "images": {
+    "visuallyReviewed": 2,
+    "removedPerLocale": [
+      0
+    ],
+    "reason": "Obsolete directkubelet→CNI textembeddedinbothfigures;correctruntime/componentrolesandENIillustrationpreserved. Parentownssemanticdiagramregeneration/foreignbackfill."
+  },
+  "finalHashes": {
+    "en/networking/01-vpc-cni.md": "cbf584397abd53bc6fa8683c1d41eb8526d91f1531ba72d3e2e1d264f2c5c808",
+    "ko/networking/01-vpc-cni.md": "098531c68b5721510bd61e46e0f4d75ac4615a9319690f2bf4da5cac407c1fa5",
+    "en/quizzes/networking/01-vpc-cni-quiz.md": "ae290981219e9738798b8e0440768ef0f03fe179f775c4c77b503bd9c8680976",
+    "ko/quizzes/networking/01-vpc-cni-quiz.md": "49677bb5dc894cea5452026fbe943bda0dbeb0e3972f04be0203e3927121a9e9"
+  },
+  "limits": [
+    "NoAWSorclustercreation/update/rollout,podpolicyexecution,WindowsdeploymentorMultusnetworkprovisioning.",
+    "Nativeeksctl0.229schema/helpvalidationnotanunverifiedclaimof0.230runtimebehavior.",
+    "Managedadd-onbuildschemamustbequeriedforactualcluster;Helmvaluesnotassumedacceptedadd-onproperties.",
+    "IPAMDpoolratioisanIPv4tuningmetric,notVPCsubnetcapacity;actualassignment-failurecounterandNoDataboundariesseparate."
+  ],
+  "artifacts": "/tmp/networking-vpc-cni-validation"
+}

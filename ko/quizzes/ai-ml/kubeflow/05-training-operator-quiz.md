@@ -64,7 +64,7 @@ v1 Training Operator는 `PyTorchJob`, `TFJob`, `MPIJob` 등 프레임워크당 �
 **정답: B) `ClusterTrainingRuntime`**
 
 **설명:**
-`ClusterTrainingRuntime`(또는 네임스페이스 범위의 `TrainingRuntime`)은 플랫폼 팀이 한 번 정의해두는 재사용 가능한 템플릿으로, 컨테이너 이미지와 분산 실행 메커니즘을 담습니다. 개별 `TrainJob`은 이름으로 이를 참조하고 실행별 스크립트, 인자, 워커 수만 채워 넣습니다.
+`ClusterTrainingRuntime`(또는 네임스페이스 범위의 `TrainingRuntime`)은 플랫폼 팀이 한 번 정의해두는 재사용 가능한 템플릿으로, 컨테이너 이미지와 분산 실행 메커니즘을 담습니다. 개별 TrainJob은 kind/name으로 참조하고 허용된 실행별 설정을 지정합니다. numNodes는 학습 Pod 수이며 EC2 인스턴스 수와 동일하지 않습니다.
 
 </details>
 
@@ -80,39 +80,39 @@ v1 Training Operator는 `PyTorchJob`, `TFJob`, `MPIJob` 등 프레임워크당 �
 **정답: B) JAX와 XGBoost**
 
 **설명:**
-Kubeflow Trainer의 [릴리스 노트](https://github.com/kubeflow/trainer/releases)에 따르면, 2026년 3월경 출시된 v2.2는 기존 PyTorch 지원에 더해 JAX와 XGBoost 학습 런타임을 정식으로 추가했고, 관측성 강화와 HPC 스타일 워크로드를 위한 Flux Framework 연동도 함께 추가했습니다.
+Kubeflow Trainer의 [릴리스 노트](https://github.com/kubeflow/trainer/releases)에 따르면, 2026년 3월 20일 출시된 v2.2는 기존 PyTorch 지원에 더해 JAX와 XGBoost 학습 런타임을 정식으로 추가했고, Flux 정책·통합도 추가했습니다. trainerStatus는 alpha TrainJobStatus gate가 기본 false이며 학습 코드의 명시적 보고가 필요합니다.
 
 </details>
 
-6. Kubeflow Community Distribution 26.03 릴리스 기준으로, v1에서 Trainer v2로의 마이그레이션 현황을 가장 정확하게 설명한 것은 무엇입니까?
+6. Kubeflow Community Distribution 26.03.1 릴리스 기준으로, v1에서 Trainer v2로의 마이그레이션 현황을 가장 정확하게 설명한 것은 무엇입니까?
    - A) 마이그레이션은 완전히 끝났고 모든 배포판에서 레거시 Training Operator가 제거되었다
-   - B) 26.03 배포판에는 레거시 Training Operator(1.9.2)가 Trainer v2와 함께 여전히 포함되어 있으며, 기존 작업을 `TrainJob`으로 옮기는 것은 많은 팀에서 현재진행형 전환이다
+   - B) 26.03.1 배포판에는 레거시 Training Operator(1.9.2)가 Trainer v2와 함께 여전히 포함되어 있으며, 기존 API와 TrainJob은 별도로 검증해 이전해야 한다
    - C) Kubeflow Trainer v2는 폐기되었고 v1 CRD로 되돌아갔다
    - D) `TrainJob`과 `PyTorchJob`은 단순히 동일한 CRD의 다른 이름일 뿐이다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 26.03 배포판에는 레거시 Training Operator(1.9.2)가 Trainer v2와 함께 여전히 포함되어 있으며, 기존 작업을 `TrainJob`으로 옮기는 것은 많은 팀에서 현재진행형 전환이다**
+**정답: B) 26.03.1 배포판에는 레거시 Training Operator(1.9.2)가 Trainer v2와 함께 여전히 포함되어 있으며, 기존 API와 TrainJob은 별도로 검증해 이전해야 한다**
 
 **설명:**
-Kubeflow Community Distribution 26.03은 Trainer v2와 함께 레거시 Training Operator 1.9.2를 여전히 배포하며, 이는 두 시스템이 공존하고 있고 많은 팀이 아직 `TrainJob`으로의 완전한 전환을 마치지 못했음을 보여줍니다.
+Kubeflow Community Distribution 26.03.1은 Trainer v2와 함께 레거시 Training Operator 1.9.2를 여전히 배포하며, 이는 두 API가 함께 제공된다는 뜻이며 특정 팀의 이전 진행률은 알 수 없습니다.
 
 </details>
 
-7. 분산 학습 작업이 일반적으로 갱 스케줄링(gang scheduling)을 필요로 하는 이유는 무엇입니까?
+7. 동기식 분산 학습에서 선택적 갱 스케줄링이 도움이 되는 이유는 무엇입니까?
    - A) Kubernetes는 기본적으로 네임스페이스 내 모든 Pod를 갱 스케줄링하도록 요구한다
-   - B) 학습을 시작하기 전에 일반적으로 모든 워커가 함께 스케줄되어 실행 중이어야 하며, 일부만 스케줄되면 GPU 자원이 낭비되고 데드락이 발생할 수 있다
+   - B) 통신에 필요한 워커를 확보하지 못해 일부 자원만 점유하는 상황을 줄일 수 있다
    - C) 갱 스케줄링은 스테이트리스 웹 워크로드에만 필요하다
    - D) 클라우드 제공업체가 부과하는 과금 요건이다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 학습을 시작하기 전에 일반적으로 모든 워커가 함께 스케줄되어 실행 중이어야 하며, 일부만 스케줄되면 GPU 자원이 낭비되고 데드락이 발생할 수 있다**
+**정답: B) 통신에 필요한 워커를 확보하지 못해 일부 자원만 점유하는 상황을 줄일 수 있다**
 
 **설명:**
-필요한 워커 중 일부만 스케줄된 분산 학습 작업은 나머지를 무한정 기다리며 확보된 GPU 자원을 낭비하고 데드락에 빠질 수 있습니다. 갱 스케줄링 메커니즘은 작업의 Pod들을 all-or-nothing 단위로 묶어 이를 방지합니다.
+고정 크기 동기식 작업은 필요한 프로세스가 rendezvous에 참여해야 합니다. 그러나 Trainer 설치만으로 gang scheduling이 켜지지 않으며 기본 Torch runtime에는 podGroupPolicy가 없습니다. 별도 scheduler·CRD·정책이 필요하고, 순차 프로비저닝도 timeout 안에 준비되면 가능합니다.
 
 </details>
 
@@ -126,7 +126,7 @@ Kubeflow Community Distribution 26.03은 Trainer v2와 함께 레거시 Training
 **정답:** 재스케줄링 시 바뀔 수 있는 Pod IP에 의존하지 않고, 각 워커 Pod에 안정적이고 조회 가능한 DNS 이름을 부여해 다른 워커들이 그것을 찾을 수 있게 합니다.
 
 **설명:**
-분산 학습 워커들은 서로를 안정적으로 찾아야 합니다. 워커 Pod 앞에 둔 헤드리스 Service는 개별 Pod의 재스케줄링에도 유지되는 DNS 기반 탐색을 제공합니다.
+분산 학습 워커들은 서로를 안정적으로 찾아야 합니다. 워커 Pod 앞에 둔 헤드리스 Service는 Pod 이름·hostname/subdomain과 네트워크 설정이 맞을 때 DNS 기반 탐색을 제공합니다. 상태나 IP의 영구 보존은 아닙니다.
 
 </details>
 
@@ -135,7 +135,7 @@ Kubeflow Community Distribution 26.03은 Trainer v2와 함께 레거시 Training
 <details>
 <summary>정답 보기</summary>
 
-**정답:** Katib은 보통 각 Trial의 실제 학습 작업으로 `TrainJob`을 템플릿화하여, 해당 Trial에서 선택된 하이퍼파라미터 값을 스크립트 인자로 주입하고, 보고된 메트릭을 읽어 탐색 방향을 결정합니다.
+**정답:** 호환되는 Trial 템플릿·런타임·상태 조건·메트릭 수집이 설정된 경우 Katib은 `TrainJob`을 생성하여, 해당 Trial에서 선택된 하이퍼파라미터 값을 스크립트 인자로 주입하고, 보고된 메트릭을 읽어 탐색 방향을 결정합니다.
 
 **설명:**
 Katib 자체는 분산 실행 메커니즘을 알 필요가 없습니다 — 플랫폼 팀이 이미 정의해둔 런타임을 대상으로 Trial마다 `TrainJob`을 찍어내며, 하이퍼파라미터 탐색 로직과 학습 실행 메커니즘을 분리해 둡니다.
@@ -150,7 +150,7 @@ Katib 자체는 분산 실행 메커니즘을 알 필요가 없습니다 — 플
 **정답:** kubeflow.org의 "Migrating to Kubeflow Trainer v2" 가이드입니다.
 
 **설명:**
-이 문서는 개념적 전환과 메커니즘을 개괄적으로 다루지만 모든 마이그레이션 단계를 의도적으로 다시 나열하지 않습니다. 구체적인 필드 단위 매핑에 대한 공식적이고 권위 있는 출처는 kubeflow.org의 마이그레이션 가이드입니다.
+이 문서는 개념적 전환과 메커니즘을 개괄적으로 다루지만 모든 마이그레이션 단계를 의도적으로 다시 나열하지 않습니다. [공식 마이그레이션 문서](https://github.com/kubeflow/trainer/blob/v2.3.0/docs/operator-guides/migration.md)는 PyTorchJob 예제를 제공하지만 모든 프레임워크·필드의 완전한 매핑은 아닙니다. 실제 명령, 역할, 재시도, 스토리지·네트워크를 비교해야 합니다.
 
 </details>
 

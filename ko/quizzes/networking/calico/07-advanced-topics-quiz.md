@@ -1,11 +1,11 @@
 # Calico 고급 주제 퀴즈
 
 > **관련 문서**: [Calico 고급 주제](../../../networking/calico/07-advanced-topics.md)
-> **마지막 업데이트**: 2026년 2월 22일
+> **마지막 업데이트**: 2026년 9월 12일
 
 ## 퀴즈
 
-1. Calico Block-based IPAM의 기본 블록 크기는 얼마입니까?
+1. Calico IPAM의 기본 IPv4 블록 크기는 얼마입니까?
    - A) /24 (256 IPs)
    - B) /26 (64 IPs)
    - C) /28 (16 IPs)
@@ -17,7 +17,7 @@
 **정답: B) /26 (64 IPs)**
 
 **설명:**
-Calico IPAM은 기본적으로 /26 크기의 블록(64개 IP 주소)을 각 노드에 할당합니다. 이 블록 기반 접근 방식은 라우팅 테이블 크기를 줄이고 IP 할당 효율성을 높입니다. 블록 크기는 IPPool 설정에서 `blockSize` 파라미터로 조정할 수 있습니다.
+IPv4 기본 /26에는 주소 64개가 있습니다. 모든 플랫폼에서 Pod 주소 64개가 사용 가능한 것은 아니며 Windows는 블록당 네 개를 예약합니다. IPv6 기본은 /122로 역시 주소 64개입니다. blockSize는 풀 생성 시 정하며 기존 풀에서 변경하지 못합니다.
 
 </details>
 
@@ -33,7 +33,7 @@ Calico IPAM은 기본적으로 /26 크기의 블록(64개 IP 주소)을 각 노�
 **정답: B) IP 블록이 특정 노드에 우선적으로 할당되어 해당 노드의 Pod에 IP 제공**
 
 **설명:**
-블록 어피니티는 IP 블록을 특정 노드에 연결하여 해당 노드에서 생성되는 Pod에 해당 블록의 IP를 할당합니다. 이를 통해 노드별로 연속된 IP 범위를 사용하게 되어 라우팅이 단순해지고 효율적인 BGP 광고가 가능합니다.
+노드는 어피니티 블록을 우선 사용하지만 여러 블록을 가질 수 있고 허용된 차용에는 more-specific 경로가 필요할 수 있습니다. BlockAffinity가 Node.spec.podCIDR과 같거나 한 노드의 모든 Pod가 단일 접두사를 공유한다는 보장은 아닙니다.
 
 </details>
 
@@ -49,27 +49,27 @@ Calico IPAM은 기본적으로 /26 크기의 블록(64개 IP 주소)을 각 노�
 **정답: A) wireguardEnabled: true**
 
 **설명:**
-FelixConfiguration에서 `wireguardEnabled: true`를 설정하면 노드 간 Pod 트래픽이 WireGuard로 암호화됩니다. WireGuard는 현대적인 암호화 프로토콜로, 설정이 간단하고 성능이 우수합니다. 추가로 `wireguardInterfaceName`으로 인터페이스 이름을 지정할 수 있습니다.
+wireguardEnabled는 지원되는 IPv4 경로를 활성화하고 IPv6는 wireguardEnabledV6로 별도 제어합니다. 양쪽 peer의 커널·네트워크 조건이 필요하며 공개 키 정보를 배포합니다. 같은 노드 트래픽이나 지원하지 않는 peer가 자동으로 암호화되는 것은 아닙니다.
 
 </details>
 
-4. WireGuard와 IPsec 비교에서 WireGuard의 장점이 아닌 것은?
-   - A) 더 간단한 설정
-   - B) 더 나은 성능
-   - C) 더 오래된 검증된 기술
-   - D) 더 작은 코드베이스
+4. WireGuard/IPsec 비교에서 올바른 설명은?
+   - A) WireGuard가 모든 하드웨어에서 항상 빠름
+   - B) 25초 keepalive가 identity 키 교체 간격임
+   - C) WireGuard는 제한된 암호 설계를 사용하며 성능은 실제 구현·부하에서 평가
+   - D) 프로토콜 이름만으로 FIPS 준수 판단
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 더 오래된 검증된 기술**
+**정답: C) WireGuard는 제한된 암호 설계를 사용하며 성능은 실제 구현·부하에서 평가**
 
 **설명:**
-IPsec이 더 오래되고 검증된 기술입니다. WireGuard는 비교적 새로운 프로토콜로, 간단한 설정, 더 나은 성능, 더 작은 코드베이스(약 4,000줄)가 장점입니다. IPsec은 복잡하지만 오랜 기간 검증되었고 FIPS 준수가 필요한 환경에서 선호됩니다.
+WireGuard는 암호 선택을 제한한 설계를 사용합니다. CPU·처리량·roaming·가속은 구현과 부하에 따라 다릅니다. 25초 keepalive는 NAT 상태 유지이며 키 로테이션이 아닙니다. 버전 없는 코드 줄 수나 검증되지 않은 성능 범위로 보편적인 순위를 정하지 않습니다.
 
 </details>
 
-5. Calico Egress Gateway의 주요 사용 사례는 무엇입니까?
+5. 문서화된 Calico Enterprise Egress Gateway의 주요 사용 사례는 무엇입니까?
    - A) 클러스터로 들어오는 트래픽 로드밸런싱
    - B) 특정 Pod의 외부 통신을 고정 IP로 SNAT하여 방화벽 규칙 단순화
    - C) DNS 쿼리 캐싱
@@ -81,75 +81,75 @@ IPsec이 더 오래되고 검증된 기술입니다. WireGuard는 비교적 새�
 **정답: B) 특정 Pod의 외부 통신을 고정 IP로 SNAT하여 방화벽 규칙 단순화**
 
 **설명:**
-Egress Gateway는 특정 워크로드의 외부 트래픽이 지정된 게이트웨이 노드를 통해 나가도록 하여 고정된 소스 IP를 사용하게 합니다. 이를 통해 외부 방화벽에서 클러스터 트래픽을 쉽게 식별하고 제어할 수 있으며, 규정 준수 요구사항을 충족할 수 있습니다.
+Transit gateway Pod가 선택한 클라이언트 흐름을 SNAT하여 통제한 소스 주소 집합을 사용합니다. 외부에서 보이는 주소는 풀·upstream NAT와 가용성에 영향을 받습니다. NetworkPolicy Allow나 BGP serviceExternalIPs만으로 이 기능을 만들지 못하며 고정 IP가 규정 준수 전체를 보장하지 않습니다.
 
 </details>
 
-6. 멀티클러스터 Federation에서 Calico가 지원하는 기능이 아닌 것은?
-   - A) 클러스터 간 Pod IP 라우팅
-   - B) 클러스터 간 Network Policy 적용
-   - C) 자동 데이터베이스 복제
-   - D) 클러스터 간 Service 연결
+6. 현재 Calico Enterprise Federation에 대한 잘못된 설명은?
+   - A) 원격 endpoint 정보를 로컬 정책 계산에 사용
+   - B) 별도 controller가 원격 Service 정보를 읽음
+   - C) 원격 네트워크 정책이 로컬 endpoint에 자동 복제·적용됨
+   - D) Pod IP 도달성과 소스 보존을 별도로 확보해야 함
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 자동 데이터베이스 복제**
+**정답: C) 원격 네트워크 정책이 로컬 endpoint에 자동 복제·적용됨**
 
 **설명:**
-Calico Federation은 여러 클러스터 간 네트워크 연결과 정책 관리를 지원합니다. Pod IP 라우팅, 클러스터 간 Network Policy 적용, Service 연결이 가능하지만, 데이터베이스 복제와 같은 애플리케이션 레벨 기능은 Calico의 범위가 아닙니다.
+Federated endpoint identity는 원격 정보를 로컬 정책 계산에 사용하며 정책 객체 자체를 복제하지 않습니다. Federated Services Controller는 원격 Kubernetes API를 읽습니다. Typha 기반 공유 Federation Controller나 자동 라우팅/애플리케이션 failover를 가정하지 마세요.
 
 </details>
 
 7. Calico의 Windows 컨테이너 지원 상태로 올바른 것은?
    - A) 지원하지 않음
    - B) 베타 지원
-   - C) 완전 지원 (GA)
+   - C) HNS로 지원하지만 버전·플랫폼·기능 제약이 있음
    - D) 실험적 기능만 지원
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 완전 지원 (GA)**
+**정답: C) HNS로 지원하지만 버전·플랫폼·기능 제약이 있음**
 
 **설명:**
-Calico는 Windows 컨테이너를 완전히 지원합니다(GA). Windows Server 2019 이상에서 동작하며, HNS(Host Networking Service)와 통합됩니다. Linux 노드와 Windows 노드가 혼합된 클러스터에서도 Network Policy를 일관되게 적용할 수 있습니다.
+현재 Windows 가이드는 IPv4 VXLAN 또는 지원되는 비캡슐화 BGP를 제공하지만 IPv6/dual stack, eBPF, WireGuard, HostEndpoint 정책과 Service 광고를 제외합니다. Operator HostProcess와 OS/container build, provider 조건을 함께 맞춰야 합니다. 지원 여부를 모든 기능의 완전 지원으로 해석하지 않습니다.
 
 </details>
 
-8. Calico Enterprise와 OSS의 핵심 차이점이 아닌 것은?
-   - A) L7 Network Policy 지원
-   - B) 플로우 로그 시각화 UI
-   - C) Pod 네트워킹 기능
-   - D) 컴플라이언스 보고서
+8. Calico Open Source 3.32에도 이미 제공되는 기능 묶음은?
+   - A) 모든 환경에 자동 고정 egress와 SaaS 관리
+   - B) 설정 없이 원격 정책을 인증·복제하는 기능
+   - C) Pod 네트워킹, Tier, Whisker, staged policy
+   - D) 계약 없는 24/7 기업 SLA
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) Pod 네트워킹 기능**
+**정답: C) Pod 네트워킹, Tier, Whisker, staged policy**
 
 **설명:**
-기본 Pod 네트워킹은 OSS와 Enterprise 모두 동일하게 제공됩니다. Enterprise 버전은 L7 Network Policy, 플로우 로그 시각화 UI, 컴플라이언스 보고서, 위협 탐지, 다중 테넌시 RBAC 등 고급 보안 및 관측성 기능을 추가로 제공합니다.
+Open Source 3.32는 Tier, Whisker/flow 가시성, staged policy와 Istio/Dikastes를 통한 HTTP 정책을 지원합니다. DNS 도메인 정책, 지원되는 gateway/federated identity·Service, 보고·지원 상품은 제품별 조건을 확인해야 합니다.
 
 </details>
 
-9. 1000개 이상 노드 클러스터에서 권장되는 Typha 레플리카 수 공식은?
-   - A) 노드 수 / 100
-   - B) 노드 수 / 200, 최소 3
-   - C) 노드 수 / 50
-   - D) 고정 5개
+9. Tigera Operator 1.42.6이 집계한 노드 1,000개에서 계산하는 Typha 목표 수는?
+   - A) 5개
+   - B) 7개
+   - C) 10개
+   - D) 3개
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 노드 수 / 200, 최소 3**
+**정답: B) 7개**
 
 **설명:**
-Typha 레플리카 수는 일반적으로 노드 수 / 200으로 계산하며, 최소 3개를 권장합니다. 예를 들어 1000개 노드 클러스터에서는 약 5개의 Typha 인스턴스가 필요합니다. 이는 각 Typha가 약 200개의 Felix 연결을 효율적으로 처리할 수 있기 때문입니다.
+N>4에서 max(3, floor(N/200)+2)를 사용하므로 1,000개이면 7개입니다. N<=2는 1개, N<=4는 2개입니다. 구현의 집계·배치 조건이 있는 목표값이지 Typha 하나가 항상 200노드를 처리한다는 용량 보장이 아닙니다.
 
 </details>
 
-10. Calico에서 IPv6 / 듀얼스택을 설정할 때 필요한 리소스는?
+10. Calico IPAM에서 IPv6를 추가할 때 필요한 주소 풀은?
     - A) IPv6용 별도의 IPPool 생성
     - B) 특별한 설정 없이 자동 지원
     - C) IPv6 전용 Calico 버전 설치
@@ -161,7 +161,7 @@ Typha 레플리카 수는 일반적으로 노드 수 / 200으로 계산하며, �
 **정답: A) IPv6용 별도의 IPPool 생성**
 
 **설명:**
-듀얼스택을 사용하려면 IPv4와 IPv6 각각에 대한 IPPool을 생성해야 합니다. IPv6 IPPool은 `cidr` 필드에 IPv6 주소 범위를 지정합니다. Kubernetes 클러스터도 듀얼스택 모드로 구성되어 있어야 하며, FelixConfiguration에서 `ipv6Support: Enabled`를 설정합니다.
+IPv6 주소 범위의 풀을 만들며 dual stack에는 IPv4 풀도 필요합니다. Kubernetes/CNI/노드/underlay 조건을 함께 구성해야 합니다. ipv6Support는 Enabled가 아닌 boolean true이며 풀이나 flag만으로 기존 클러스터의 IP family를 바꾸지 못합니다.
 
 </details>
 
@@ -177,22 +177,22 @@ Typha 레플리카 수는 일반적으로 노드 수 / 200으로 계산하며, �
 **정답: B) calicoctl ipam show**
 
 **설명:**
-`calicoctl ipam show` 명령어는 IP 할당 현황을 보여주며, `--show-blocks` 옵션을 추가하면 노드별 블록 할당 상태를 확인할 수 있습니다. IP 풀의 사용률이 높으면 새로운 Pod에 IP를 할당할 수 없으므로 IP 풀 확장이나 정리가 필요합니다.
+ipam show와 --show-blocks로 사용량·블록을 확인하고 BlockAffinity에서 노드 연결을 확인합니다. 풀 자격, 예약, affinity·host 제한 때문에 다른 곳에 여유 주소가 있어도 할당에 실패할 수 있습니다. 해제는 새 보고서와 실제 소유 상태를 검증한 후 수행해야 합니다.
 
 </details>
 
 12. 대규모 클러스터에서 etcd 대신 Kubernetes datastore를 선택해야 하는 이유가 아닌 것은?
     - A) 별도의 etcd 클러스터 운영 불필요
     - B) Kubernetes API를 통한 통합 관리
-    - C) 더 빠른 읽기 성능
+    - C) 전용 etcd보다 언제나 빠른 읽기 성능 보장
     - D) 운영 복잡성 감소
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 더 빠른 읽기 성능**
+**정답: C) 전용 etcd보다 언제나 빠른 읽기 성능 보장**
 
 **설명:**
-Kubernetes datastore는 별도 etcd 운영이 불필요하고 Kubernetes와 통합 관리되어 운영이 단순합니다. 그러나 읽기 성능 면에서는 전용 etcd가 더 빠를 수 있습니다. 대부분의 경우 Kubernetes datastore로 충분하지만, 수천 개 이상의 정책이 있는 극대규모 환경에서는 전용 etcd를 고려할 수 있습니다.
+Kubernetes datastore는 별도 Calico etcd 운영을 줄이지만 고정된 읽기 속도 순위를 보장하지 않습니다. 배포 기능·운영·복구·실제 측정으로 선택하며 현재 eBPF는 Kubernetes datastore가 필요합니다. 노드 수만으로 전용 etcd를 선택하지 않습니다.
 
 </details>

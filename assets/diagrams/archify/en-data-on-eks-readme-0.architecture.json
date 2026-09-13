@@ -13,10 +13,9 @@
         "label": "Job scheduling",
         "focus": [
           "airflow",
-          "kafka",
           "spark"
         ],
-        "note": "Airflow defines the dependencies and schedules of Kafka and Spark jobs and manages their execution."
+        "note": "Airflow coordinates jobs such as Spark workloads; it is not the Kafka broker scheduler."
       },
       {
         "id": "dataflow",
@@ -26,7 +25,7 @@
           "flink",
           "spark"
         ],
-        "note": "Kafka streams events into Flink and lands raw data into Spark for batch processing."
+        "note": "Spark and Flink process Kafka events. Design durable raw-data retention in a separate storage layer."
       }
     ]
   },
@@ -65,7 +64,7 @@
       "id": "spark",
       "type": "backend",
       "label": "Apache Spark",
-      "sublabel": "Batch / analytics",
+      "sublabel": "batch / Structured Streaming",
       "pos": [
         740,
         260
@@ -104,13 +103,6 @@
   ],
   "connections": [
     {
-      "id": "airflow-kafka",
-      "from": "airflow",
-      "to": "kafka",
-      "label": "schedule jobs",
-      "variant": "dashed"
-    },
-    {
       "id": "airflow-spark",
       "from": "airflow",
       "to": "spark",
@@ -121,7 +113,7 @@
       "id": "kafka-spark",
       "from": "kafka",
       "to": "spark",
-      "label": "raw data load"
+      "label": "read events"
     },
     {
       "id": "kafka-flink",
@@ -137,22 +129,21 @@
       "dot": "violet",
       "title": "Orchestration",
       "items": [
-        "Airflow defines dependencies and schedules across data jobs and manages their execution"
+        "Job dependencies, schedules and retries"
       ]
     },
     {
       "dot": "orange",
-      "title": "Streaming and stream processing",
+      "title": "Events / state",
       "items": [
-        "Kafka publishes and subscribes to events in real time and connects asynchronous communication between systems",
-        "Flink performs real-time aggregation, transformation, and stateful computation on streaming data"
+        "Kafka retention/replay and Flink state recovery"
       ]
     },
     {
       "dot": "cyan",
-      "title": "Batch / analytics",
+      "title": "Processing",
       "items": [
-        "Spark processes large datasets in a distributed way for ETL, aggregation, and ML pipelines"
+        "Spark supports batch and streaming"
       ]
     }
   ]

@@ -2,24 +2,13 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "flagd Deployment Topology on Kubernetes",
+    "title": "flagd placement on Kubernetes",
     "locale": "en",
     "output": "en-gitops-05-feature-flags-3.html",
     "quality_profile": "showcase",
     "animation": "trace",
     "legend": {
-      "mode": "auto",
-      "entries": {
-        "external": {
-          "label": "Flag sources"
-        },
-        "backend": {
-          "label": "flagd evaluation engine"
-        },
-        "frontend": {
-          "label": "Application"
-        }
-      }
+      "mode": "hidden"
     },
     "views": [
       {
@@ -30,7 +19,7 @@
           "sidecar",
           "app"
         ],
-        "note": "flagd runs as a sidecar in the same pod as the application, which evaluates flags over localhost."
+        "note": "RPC placement: the application calls flagd in its own Pod."
       },
       {
         "id": "standalone-path",
@@ -42,7 +31,7 @@
           "svc-b",
           "svc-c"
         ],
-        "note": "A single standalone flagd Deployment is shared by several services, which receive evaluations over gRPC / HTTP."
+        "note": "Shared flagd serves calls behind a Service; in-process evaluation is a separate choice."
       }
     ]
   },
@@ -51,7 +40,7 @@
       "id": "flagsrc",
       "type": "external",
       "label": "Flag sources",
-      "sublabel": "CRD · ConfigMap · file · HTTP",
+      "sublabel": "CRs · files · sync APIs",
       "pos": [
         40,
         260
@@ -92,8 +81,8 @@
     {
       "id": "flagd-deploy",
       "type": "backend",
-      "label": "flagd Deployment",
-      "sublabel": "standalone flagd",
+      "label": "Shared flagd",
+      "sublabel": "Service + Deployment",
       "pos": [
         340,
         400
@@ -189,27 +178,27 @@
     },
     {
       "id": "sidecar-to-app",
-      "from": "sidecar",
-      "to": "app",
-      "label": "gRPC / HTTP",
+      "from": "app",
+      "to": "sidecar",
+      "label": "RPC :8013",
       "variant": "emphasis",
       "labelDy": -26
     },
     {
       "id": "deploy-to-a",
-      "from": "flagd-deploy",
-      "to": "svc-a",
-      "label": "gRPC / HTTP"
+      "from": "svc-a",
+      "to": "flagd-deploy",
+      "label": "RPC :8013"
     },
     {
       "id": "deploy-to-b",
-      "from": "flagd-deploy",
-      "to": "svc-b"
+      "from": "svc-b",
+      "to": "flagd-deploy"
     },
     {
       "id": "deploy-to-c",
-      "from": "flagd-deploy",
-      "to": "svc-c"
+      "from": "svc-c",
+      "to": "flagd-deploy"
     }
   ],
   "cards": [
@@ -217,24 +206,24 @@
       "dot": "slate",
       "title": "Flag sources",
       "items": [
-        "Reads flag configuration from FeatureFlag CRDs, ConfigMaps, files, or HTTP endpoints",
-        "Watches sources for changes and updates flag state instantly"
+        "Explicit source and permission settings",
+        "Asynchronous updates; verify freshness"
       ]
     },
     {
       "dot": "orange",
       "title": "Sidecar mode",
       "items": [
-        "A flagd sidecar managed by the OpenFeature Operator runs in the same pod as the application",
-        "The application evaluates flags over localhost (default port 8013)"
+        "One daemon per application Pod",
+        "Local RPC on port 8013"
       ]
     },
     {
       "dot": "cyan",
       "title": "Standalone mode",
       "items": [
-        "A flagd Deployment installed with Helm is shared by multiple services",
-        "Serves evaluation results over gRPC / HTTP endpoints"
+        "Operator-owned Flagd Deployment",
+        "Shared Service; scale replicas"
       ]
     }
   ]

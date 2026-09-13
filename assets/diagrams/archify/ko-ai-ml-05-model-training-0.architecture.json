@@ -5,7 +5,7 @@
     "title": "훈련 파이프라인 개요",
     "output": "ko-ai-ml-05-model-training-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "viewBox": [
       1200,
       560
@@ -30,7 +30,7 @@
           "ps",
           "allreduce"
         ],
-        "note": "Job 스케줄러가 배치한 워커 Pods가 파라미터 서버와 AllReduce로 동기화한다."
+        "note": "DDP collective는 parameter server가 필수는 아닙니다. 선택한 알고리즘·데이터 분할을 검증합니다."
       },
       {
         "id": "checkpointing",
@@ -40,7 +40,7 @@
           "fsx",
           "ckptmgr"
         ],
-        "note": "워커가 FSx for Lustre에 체크포인트를 저장하고 체크포인트 관리자가 관리한다."
+        "note": "모든 state의 완성·원격 전송·실제 복구를 확인해야 합니다."
       },
       {
         "id": "evaluation",
@@ -120,7 +120,8 @@
       "size": [
         170,
         60
-      ]
+      ],
+      "sublabel": "선택한 알고리즘의 경로"
     },
     {
       "id": "allreduce",
@@ -133,7 +134,8 @@
       "size": [
         170,
         60
-      ]
+      ],
+      "sublabel": "DDP 등의 collective"
     },
     {
       "id": "workers",
@@ -165,8 +167,8 @@
     {
       "id": "fsx",
       "type": "database",
-      "label": "FSx for Lustre",
-      "sublabel": "체크포인트 저장",
+      "label": "체크포인트 저장소",
+      "sublabel": "선택한 FS / object 경로",
       "pos": [
         760,
         240
@@ -179,7 +181,7 @@
     {
       "id": "ckptmgr",
       "type": "backend",
-      "label": "체크포인트 관리자",
+      "label": "저장 완료·복구 검증",
       "pos": [
         760,
         400
@@ -297,7 +299,12 @@
       "id": "workers-ps",
       "from": "workers",
       "to": "ps",
-      "label": "파라미터 동기화"
+      "label": "해당 방식에서",
+      "variant": "dashed",
+      "labelAt": [
+        385,
+        180
+      ]
     },
     {
       "id": "workers-allreduce",
@@ -333,6 +340,16 @@
       "from": "metrics",
       "to": "registry",
       "label": "등록"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "복구의 단위",
+      "items": [
+        "model + optimizer + scheduler + RNG + data cursor + shard state",
+        "원자적 local 교체와 remote durability는 다릅니다."
+      ]
     }
   ]
 }

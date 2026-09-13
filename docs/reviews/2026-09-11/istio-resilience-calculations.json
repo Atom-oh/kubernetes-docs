@@ -1,0 +1,55 @@
+{
+  "date": "2026-09-11",
+  "kind": "Illustrative quiz arithmetic, not current AWS pricing or measured savings",
+  "costs": [
+    {
+      "trafficTB": 1,
+      "decimalGBPerTB": 1000,
+      "assumedEffectiveUSDPerGB": 0.01,
+      "baselineCrossAZFraction": "2/3",
+      "afterCrossAZFraction": "3/10",
+      "baselineCostExact": "20/3",
+      "afterCostExact": "3",
+      "monthlySavingExact": "11/3",
+      "annualSavingExact": "44",
+      "savingPercent": 55.0
+    },
+    {
+      "trafficTB": 100,
+      "decimalGBPerTB": 1000,
+      "assumedEffectiveUSDPerGB": 0.01,
+      "baselineCrossAZFraction": "2/3",
+      "afterCrossAZFraction": "3/10",
+      "baselineCostExact": "2000/3",
+      "afterCostExact": "300",
+      "monthlySavingExact": "1100/3",
+      "annualSavingExact": "4400",
+      "savingPercent": 55.0
+    },
+    {
+      "trafficTB": 500,
+      "decimalGBPerTB": 1000,
+      "assumedEffectiveUSDPerGB": 0.015,
+      "baselineCrossAZFraction": "2/3",
+      "afterCrossAZFraction": "1/5",
+      "baselineCostExact": "5000",
+      "afterCostExact": "1500",
+      "monthlySavingExact": "3500",
+      "annualSavingExact": "42000",
+      "savingPercent": 70.0
+    }
+  ],
+  "latency": {
+    "sameAZAssumptionMs": "0.3",
+    "crossAZAssumptionMs": "1.5",
+    "baselineWeightedMs": "11/10",
+    "afterWeightedMs": "27/50",
+    "note": "Hypothetical network component only; no prediction of end-to-end150ms response time."
+  },
+  "sources": [
+    "https://docs.aws.amazon.com/eks/latest/best-practices/cost-opt-networking.html"
+  ],
+  "validation": [
+    "Computed with exact Fraction arithmetic; round only displayed currency.100TB example annual savings=$4400, not$4404 from premature rounding."
+  ]
+}

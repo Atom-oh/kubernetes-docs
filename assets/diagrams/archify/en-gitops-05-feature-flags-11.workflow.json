@@ -1,0 +1,181 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "OpenFeature evaluation and hook branches",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1200,
+      470
+    ],
+    "views": [
+      {
+        "id": "success",
+        "label": "Success path",
+        "focus": [
+          "request",
+          "before",
+          "provider",
+          "after",
+          "finally",
+          "result"
+        ],
+        "note": "Successful Before/provider stages lead to After, then Finally and the result."
+      },
+      {
+        "id": "errors",
+        "label": "Error path",
+        "focus": [
+          "before",
+          "provider",
+          "after",
+          "error",
+          "finally",
+          "result"
+        ],
+        "note": "Errors from Before, provider, or After lead to Error; Finally receives evaluation details."
+      }
+    ],
+    "legend": {
+      "mode": "hidden"
+    },
+    "locale": "en"
+  },
+  "lanes": [
+    {
+      "id": "normal",
+      "label": "SDK evaluation"
+    },
+    {
+      "id": "failure",
+      "label": "Error handling",
+      "variant": "exception"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "normal",
+      "col": 0,
+      "type": "frontend",
+      "width": 145,
+      "label": "Evaluation call",
+      "sublabel": "application"
+    },
+    {
+      "id": "before",
+      "lane": "normal",
+      "col": 1,
+      "type": "security",
+      "width": 145,
+      "label": "Before Hook",
+      "sublabel": "context enrichment"
+    },
+    {
+      "id": "provider",
+      "lane": "normal",
+      "col": 2,
+      "type": "backend",
+      "width": 145,
+      "label": "Provider resolves",
+      "sublabel": "typed evaluation"
+    },
+    {
+      "id": "after",
+      "lane": "normal",
+      "col": 3,
+      "type": "security",
+      "width": 145,
+      "label": "After Hook",
+      "sublabel": "success path"
+    },
+    {
+      "id": "finally",
+      "lane": "normal",
+      "col": 4,
+      "type": "security",
+      "width": 145,
+      "label": "Finally Hook",
+      "sublabel": "evaluation details"
+    },
+    {
+      "id": "result",
+      "lane": "normal",
+      "col": 5,
+      "type": "frontend",
+      "width": 145,
+      "label": "Return result",
+      "sublabel": "apply fallback policy"
+    },
+    {
+      "id": "error",
+      "lane": "failure",
+      "col": 2,
+      "type": "security",
+      "width": 145,
+      "label": "Error Hook",
+      "sublabel": "record / handle error"
+    }
+  ],
+  "edges": [
+    {
+      "from": "request",
+      "to": "before",
+      "variant": "emphasis"
+    },
+    {
+      "from": "before",
+      "to": "provider",
+      "variant": "emphasis"
+    },
+    {
+      "from": "provider",
+      "to": "after",
+      "variant": "emphasis"
+    },
+    {
+      "from": "after",
+      "to": "finally",
+      "variant": "emphasis"
+    },
+    {
+      "from": "finally",
+      "to": "result",
+      "variant": "emphasis"
+    },
+    {
+      "from": "before",
+      "to": "error",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "provider",
+      "to": "error",
+      "label": "error",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "after",
+      "to": "error",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "error",
+      "to": "finally",
+      "variant": "dashed",
+      "label": "cleanup"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "before",
+    "provider",
+    "after",
+    "finally",
+    "result"
+  ]
+}

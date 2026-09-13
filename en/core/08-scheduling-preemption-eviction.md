@@ -1,16 +1,16 @@
 # Kubernetes Scheduling, Preemption, and Eviction
 
-> **Supported Versions**: Kubernetes 1.32 - 1.34
+> **Supported Versions**: Kubernetes 1.34 - 1.36 (Descheduler v0.36 example)
 > **Last Updated**: September 9, 2026
 
-In Kubernetes, scheduling is the process of placing pods on appropriate nodes. Preemption is the process of removing lower-priority pods to make room for higher-priority pods, and eviction is the process of safely moving pods when node issues occur. In this chapter, we will learn about Kubernetes scheduling mechanisms, node selection, preemption, eviction, and scheduling optimization methods in Amazon EKS.
+In Kubernetes, scheduling is the process of placing pods on appropriate nodes. Preemption is the process of removing lower-priority pods to make room for higher-priority pods, and eviction terminates a Pod; its workload controller may create a replacement that the scheduler places separately. In this chapter, we will learn about Kubernetes scheduling mechanisms, node selection, preemption, eviction, and scheduling optimization methods in Amazon EKS.
 
 ## Lab Environment Setup
 
 To follow the examples in this document, you need the following tools and environment:
 
 ### Required Tools
-- kubectl v1.34 or higher
+- kubectl within one minor version of the API server
 - A working Kubernetes cluster (EKS, minikube, kind, etc.)
 - A cluster with multiple nodes (for scheduling tests)
 
@@ -30,6 +30,8 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: nginx-ssd
+  labels:
+    app: nginx
 spec:
   affinity:
     nodeAffinity:
@@ -136,7 +138,7 @@ The Kubernetes scheduler is a control plane component that places pods on approp
 3. **Affinity/Anti-Affinity Specifications**: Placement relationships with other pods
 4. **Data Locality**: Placing pods close to data
 5. **Inter-Workload Interference**: Minimizing interference between different workloads
-6. **Deadlines**: Considering time-constrained workloads
+6. **Custom objectives**: Deadline-aware or workload-interference-aware scheduling requires suitable custom logic; the default scheduler does not infer application deadlines
 
 ### Scheduling Process
 
@@ -222,10 +224,16 @@ spec:
     gpu: "true"
   containers:
   - name: gpu-container
-    image: nvidia/cuda
+    image: busybox:1.36
+    command: ["sh", "-c", "sleep 3600"]
+    resources:
+      limits:
+        nvidia.com/gpu: 1
 ```
 
 In the example above, the pod is only placed on nodes with the `gpu=true` label.
+
+The GPU example tests scheduling only: the node must actually have a GPU and a working device plugin that advertises `nvidia.com/gpu`. A `gpu=true` label alone does not allocate GPU resources.
 
 ### nodeName
 
@@ -422,11 +430,11 @@ spec:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
         - matchExpressions:
-          - key: kubernetes.io/e2e-az-name
+          - key: topology.kubernetes.io/zone
             operator: In
             values:
-            - e2e-az1
-            - e2e-az2
+            - us-west-2a
+            - us-west-2b
       preferredDuringSchedulingIgnoredDuringExecution:
       - weight: 1
         preference:
@@ -440,7 +448,7 @@ spec:
     image: nginx
 ```
 
-In the example above, the pod is only placed on nodes where the `kubernetes.io/e2e-az-name` label is `e2e-az1` or `e2e-az2`. Additionally, it is preferably placed on nodes with the `another-node-label-key=another-node-label-value` label.
+In the example above, the pod is only placed on nodes where the `topology.kubernetes.io/zone` label is `us-west-2a` or `us-west-2b`. Additionally, it is preferably placed on nodes with the `another-node-label-key=another-node-label-value` label.
 
 ### Operators
 
@@ -500,7 +508,7 @@ Preemption is the process of removing lower-priority pods to schedule higher-pri
 Preemption process:
 1. Scheduler cannot find a node to schedule a higher-priority pod
 2. Scheduler selects a node to remove lower-priority pods through preemption
-3. Sends termination signal to lower-priority pods on the selected node
+3. Requests deletion of selected lower-priority Pods through the API; kubelet/runtime perform termination
 4. When pods terminate gracefully, schedules the higher-priority pod on that node
 
 ### Preemption Considerations
@@ -508,14 +516,14 @@ Preemption process:
 Things to consider when using preemption:
 
 1. **Graceful Termination Period**: Preempted pods go through the graceful termination process for the time specified in `terminationGracePeriodSeconds`
-2. **PodDisruptionBudget**: Preemption does not respect PodDisruptionBudget
+2. **PodDisruptionBudget**: The scheduler tries to avoid violations, but preemption may violate a PDB when no suitable victims avoid it
 3. **System Priority Classes**: Kubernetes provides priority classes for system components
    - `system-cluster-critical`: Pods critical for cluster operation
    - `system-node-critical`: Pods critical for node operation
 
 ## Pod Eviction
 
-Pod eviction is the process of safely moving pods when node issues occur. Eviction can happen for various reasons.
+Pod eviction terminates a Pod; its workload controller may create a replacement that the scheduler places separately. Eviction can happen for various reasons.
 
 ![Diagram grouping pod eviction into three sources -- the controller manager evicting pods from NotReady or Unreachable nodes, kubelet evicting pods on resource shortage or hardware issues while monitoring the memory, nodefs, imagefs, and pid eviction signals, and users draining nodes for maintenance.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-6.png)
 
@@ -524,12 +532,12 @@ Pod eviction is the process of safely moving pods when node issues occur. Evicti
 ### Eviction Types
 
 1. **Eviction by kube-controller-manager**:
-   - When a node remains in NotReady state for the `pod-eviction-timeout` period (default 5 minutes)
+   - The taint-eviction-controller handles NoExecute taints. Pods normally receive 300-second not-ready/unreachable tolerations; eviction follows their toleration settings
    - When a node is in Unreachable state
 
 2. **Eviction by kubelet**:
    - Node resource shortage (memory, disk, etc.)
-   - Hardware issues
+   - Hardware failures can lead to node unavailability; they are not a generic kubelet pressure-eviction signal
 
 3. **Eviction by user**:
    - Executing `kubectl drain` command
@@ -558,22 +566,20 @@ evictionHard:
   nodefs.available: "10%"
   nodefs.inodesFree: "5%"
   imagefs.available: "15%"
+  imagefs.inodesFree: "5%"
 evictionSoft:
   memory.available: "200Mi"
   nodefs.available: "15%"
 evictionSoftGracePeriod:
   memory.available: "1m"
   nodefs.available: "2m"
+evictionMaxPodGracePeriod: 30
 evictionPressureTransitionPeriod: "30s"
 ```
 
 ### Eviction Priority
 
-kubelet evicts pods in the following order:
-
-1. Pods with BestEffort QoS class
-2. Pods with Burstable QoS class (starting with pods whose resource usage exceeds requests)
-3. Pods with Guaranteed QoS class (pods with equal requests and limits)
+The kubelet ranks candidates by whether usage exceeds requests, then Pod priority, then usage relative to requests. It does not simply evict all BestEffort, then all Burstable, then all Guaranteed Pods. Disk/PID pressure has different accounting constraints; QoS is not a universal eviction ordering.
 
 ## Pod Disruption Budget (PDB)
 
@@ -622,11 +628,13 @@ In the examples above:
 2. If PDB conditions are met, proceed with pod eviction
 3. If PDB conditions are not met, deny pod eviction
 
+PDBs gate Eviction API requests such as normal drain/descheduler operations. Direct Pod deletion, controller rollouts, and node-pressure eviction bypass this gate. `minAvailable: 2` and `maxUnavailable: 1` are equivalent only for a workload with three desired replicas; neither creates replacement capacity.
+
 ### PDB Best Practices
 
 1. **Set PDB for all critical workloads**: Set PDB for all workloads requiring high availability
 2. **Choose appropriate values**: Select `minAvailable` or `maxUnavailable` values appropriate for workload characteristics
-3. **Consider replica count**: PDB value must be less than replica count
+3. **Consider replica count**: `minAvailable` may equal replicas to block voluntary evictions, but maintenance can then stall; configure a deliberate disruption allowance
 4. **Regular testing**: Test PDB operation through node drain and similar tasks
 
 ## Node Pressure Eviction
@@ -654,6 +662,7 @@ evictionHard:
   nodefs.available: "10%"
   nodefs.inodesFree: "5%"
   imagefs.available: "15%"
+  imagefs.inodesFree: "5%"
 evictionSoft:
   memory.available: "200Mi"
   nodefs.available: "15%"
@@ -663,6 +672,7 @@ evictionSoftGracePeriod:
 evictionMinimumReclaim:
   memory.available: "50Mi"
   nodefs.available: "5%"
+evictionMaxPodGracePeriod: 30
 evictionPressureTransitionPeriod: "30s"
 ```
 
@@ -674,7 +684,7 @@ In the example above:
 
 TopologySpreadConstraints provide fine-grained control over how pods are distributed across topology domains such as availability zones, nodes, or regions. This feature offers more flexibility than Pod anti-affinity for achieving high availability and efficient resource utilization.
 
-![Diagram showing TopologySpreadConstraints controlling pod spread across availability zones through the four required fields maxSkew, topologyKey, whenUnsatisfiable and labelSelector, the DoNotSchedule and ScheduleAnyway options of whenUnsatisfiable, and an EKS example where a new pod with maxSkew=1 lands in ap-northeast-2b, the zone holding the fewest pods.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-8.png)
+![Diagram showing TopologySpreadConstraints controlling pod spread across availability zones through maxSkew, topologyKey, whenUnsatisfiable and the usual labelSelector, the DoNotSchedule and ScheduleAnyway options of whenUnsatisfiable, and an EKS example where a new pod with maxSkew=1 lands in ap-northeast-2b, the zone holding the fewest pods.](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-8.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-8.html)
 
@@ -682,11 +692,11 @@ TopologySpreadConstraints provide fine-grained control over how pods are distrib
 
 | Field | Description | Required |
 |-------|-------------|----------|
-| **maxSkew** | Maximum allowed difference in pod count between any two topology domains | Yes |
+| **maxSkew** | For DoNotSchedule, allowed difference between a target domain and the global minimum; ScheduleAnyway uses skew as a preference | Yes |
 | **topologyKey** | Node label key that defines topology domains | Yes |
 | **whenUnsatisfiable** | Action when constraints cannot be satisfied: `DoNotSchedule` or `ScheduleAnyway` | Yes |
-| **labelSelector** | Selects which pods to count for spread calculation | Yes |
-| **minDomains** | Minimum number of topology domains required (1.27+) | No |
+| **labelSelector** | Selects Pods to count; normally specify it and matching Pod labels | No (null matches no Pods) |
+| **minDomains** | Minimum eligible-domain count for skew calculation (stable since v1.30) | No |
 | **matchLabelKeys** | Pod label keys to match for spread calculation (1.27+) | No |
 
 ### whenUnsatisfiable Options
@@ -726,7 +736,7 @@ spec:
             app: web
       containers:
       - name: web
-        image: nginx:1.25
+        image: nginx:1.30.4
         resources:
           requests:
             cpu: 100m
@@ -737,7 +747,7 @@ This configuration ensures:
 1. Pods are evenly distributed across availability zones (hard constraint)
 2. Pods are preferably distributed across nodes within each zone (soft constraint)
 
-### minDomains and matchLabelKeys (Kubernetes 1.27+)
+### minDomains and matchLabelKeys
 
 ```yaml
 apiVersion: apps/v1
@@ -770,7 +780,7 @@ spec:
         image: myapp:v1
 ```
 
-- **minDomains**: Ensures pods are spread across at least 3 zones. If fewer zones are available, scheduling is blocked.
+- **minDomains**: If fewer than 3 eligible domains exist, the global minimum becomes zero. With maxSkew 1, one matching Pod per eligible domain can still schedule; further Pods can remain Pending. It does not block every Pod immediately.
 - **matchLabelKeys**: Automatically uses the pod's `version` label value in the selector, enabling per-revision spread without modifying the selector.
 
 ### Advantages Over Pod Anti-Affinity
@@ -785,7 +795,7 @@ spec:
 
 ## Pod Deletion Cost
 
-Pod Deletion Cost is a feature that allows you to control which pods are removed first during scale-down operations. By setting the `controller.kubernetes.io/pod-deletion-cost` annotation, you can influence the order in which pods are terminated.
+Pod Deletion Cost is a best-effort preference used by the ReplicaSet controller when scaling down. HPA changes the desired replica count; it does not choose individual victim Pods. The annotation does not protect Jobs/StatefulSets, prevent eviction, or guarantee deletion order.
 
 ### How It Works
 
@@ -833,12 +843,12 @@ spec:
     spec:
       containers:
       - name: web
-        image: nginx:1.25
+        image: nginx:1.30.4
 ```
 
 ### Cache Protection Pattern
 
-Protect pods with warm caches by dynamically adjusting deletion cost:
+Run the cache with explicit CPU requests if it will be scaled using CPU-utilization HPA. The following is a scheduling example, not a complete Redis production configuration:
 
 ```yaml
 apiVersion: apps/v1
@@ -855,38 +865,32 @@ spec:
       labels:
         app: cache
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: cache
         image: redis:7
-      - name: cost-updater
-        image: bitnami/kubectl:latest
-        command:
-        - /bin/sh
-        - -c
-        - |
-          # Update deletion cost based on cache warmth
-          while true; do
-            CACHE_SIZE=$(redis-cli DBSIZE | awk '{print $2}')
-            # Higher cache size = higher cost = less likely to be deleted
-            kubectl annotate pod $POD_NAME \
-              controller.kubernetes.io/pod-deletion-cost="$CACHE_SIZE" \
-              --overwrite
-            sleep 60
-          done
-        env:
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
 ```
+
+After measuring actual cache warmth, an authorized operator/controller can annotate a selected ReplicaSet-owned Pod once before scale-down:
+
+```bash
+kubectl -n default annotate pod "$CACHE_POD" \
+  controller.kubernetes.io/pod-deletion-cost="1000" --overwrite
+```
+
+Set `CACHE_POD` to an actual cache Pod. Frequent annotation writes create API load. A custom updater would need both Redis and Kubernetes client tooling plus narrowly scoped Pod patch permissions; elapsed time alone is not proof of a warm cache. No updater is installed by this example.
 
 ### Practical Use Cases
 
-1. **Stateful workloads**: Protect pods with accumulated state
+1. **Stateful caches managed by a ReplicaSet**: Prefer retaining warm replicas
 2. **Leader election**: Keep leader pods running longer
 3. **Connection draining**: Give time for long-running connections
 4. **Cache warming**: Preserve pods with warm caches
-5. **Batch processing**: Keep pods processing large jobs
+5. **Limitations**: Job and StatefulSet controllers do not use this preference
 
 ## Descheduler
 
@@ -918,30 +922,29 @@ The Descheduler is a Kubernetes component that evicts pods from nodes to allow t
 
 ### Helm Installation
 
-```bash
-# Add the descheduler Helm repository
-helm repo add descheduler https://kubernetes-sigs.github.io/descheduler/
+Descheduler v0.36.0 is the verified example release, targeting Kubernetes v1.36 and the preceding two minor versions in its test window. Check the compatibility matrix before applying it to another release. Save reviewed Helm values in `descheduler-values.yaml` with `schedule` and `deschedulerPolicy.profiles` (the policy profiles shown below); the old `strategies.*.enabled` values do not configure this API.
 
-# Install descheduler
-helm install descheduler descheduler/descheduler \
-  --namespace kube-system \
-  --set schedule="*/5 * * * *" \
-  --set deschedulerPolicy.strategies.RemoveDuplicates.enabled=true \
-  --set deschedulerPolicy.strategies.LowNodeUtilization.enabled=true
+```bash
+helm repo add descheduler https://kubernetes-sigs.github.io/descheduler/
+helm upgrade --install descheduler descheduler/descheduler \
+  --version 0.36.0 --namespace kube-system \
+  --values descheduler-values.yaml
 ```
 
 ### DeschedulerPolicy Configuration
 
 ```yaml
-apiVersion: "descheduler/v1alpha2"
-kind: "DeschedulerPolicy"
+apiVersion: descheduler/v1alpha2
+kind: DeschedulerPolicy
 profiles:
 - name: default
   pluginConfig:
+  - name: DefaultEvictor
+    args:
+      nodeFit: true
   - name: RemoveDuplicates
     args:
-      excludeOwnerKinds:
-      - DaemonSet
+      excludeOwnerKinds: [StatefulSet]
   - name: LowNodeUtilization
     args:
       thresholds:
@@ -952,28 +955,33 @@ profiles:
         cpu: 50
         memory: 50
         pods: 50
-      useDeviationThresholds: false
   - name: RemovePodsHavingTooManyRestarts
     args:
-      podRestartThreshold: 10
+      podRestartThreshold: 100
       includingInitContainers: true
   - name: PodLifeTime
     args:
-      maxPodLifeTimeSeconds: 86400  # 24 hours
-      podStatusPhases:
-      - Running
+      maxPodLifeTimeSeconds: 86400
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/lifecycle: ephemeral
+  - name: RemovePodsViolatingNodeAffinity
+    args:
+      nodeAffinityType: [requiredDuringSchedulingIgnoredDuringExecution]
   - name: RemovePodsViolatingTopologySpreadConstraint
     args:
-      constraints:
-      - DoNotSchedule
+      constraints: [DoNotSchedule]
   plugins:
-    deschedule:
+    balance:
       enabled:
       - RemoveDuplicates
       - LowNodeUtilization
+      - RemovePodsViolatingTopologySpreadConstraint
+    deschedule:
+      enabled:
       - RemovePodsHavingTooManyRestarts
       - PodLifeTime
-      - RemovePodsViolatingTopologySpreadConstraint
+      - RemovePodsViolatingNodeAffinity
 ```
 
 ### PDB Respect
@@ -994,6 +1002,8 @@ spec:
 
 With this PDB in place, the descheduler will ensure at least 2 pods with `app: web` label remain available during descheduling operations.
 
+The policy above is a Descheduler configuration file, not an API object for kubectl apply. It uses Balance plugins for group redistribution and Deschedule plugins for per-Pod decisions. LowNodeUtilization normally evaluates resource requests rather than live CPU usage, and eviction does not guarantee the replacement Pod lands elsewhere. Review safeguards and test in dry-run before enabling recurring eviction.
+
 ### Descheduler CronJob Example
 
 ```yaml
@@ -1004,6 +1014,7 @@ metadata:
   namespace: kube-system
 spec:
   schedule: "*/30 * * * *"
+  concurrencyPolicy: Forbid
   jobTemplate:
     spec:
       template:
@@ -1011,7 +1022,7 @@ spec:
           serviceAccountName: descheduler
           containers:
           - name: descheduler
-            image: registry.k8s.io/descheduler/descheduler:v0.28.0
+            image: registry.k8s.io/descheduler/descheduler:v0.36.0
             args:
             - --policy-config-file=/policy/policy.yaml
             - --v=3
@@ -1024,6 +1035,8 @@ spec:
               name: descheduler-policy
           restartPolicy: OnFailure
 ```
+
+The standalone CronJob is an alternative to Helm, not an additional installation. It requires the `descheduler` ServiceAccount/RBAC and a `descheduler-policy` ConfigMap with key `policy.yaml`; use the official chart/manifests to supply these prerequisites.
 
 > **Deep Dive**: For detailed information on custom schedulers, see:
 > - [Custom Scheduler Part 1: Basic Concepts](../scheduling/01-custom-scheduler-part1.md)
@@ -1048,14 +1061,30 @@ In EKS, you can provide resources appropriate for workloads by utilizing various
 
 You can use node labels and taints to place specific workloads on specific node groups:
 
+Use a reviewed eksctl configuration for the existing cluster, with matching Region, supported GPU instance/AMI, and required IAM permissions:
+
+```yaml
+# gpu-nodegroup.yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: gpu-nodes
+  instanceType: p3.2xlarge
+  desiredCapacity: 1
+  privateNetworking: true
+  labels:
+    workload-type: gpu
+  taints:
+  - key: gpu
+    value: "true"
+    effect: NoSchedule
+```
+
 ```bash
-# Set labels and taints when creating node group
-eksctl create nodegroup \
-  --cluster my-cluster \
-  --name gpu-nodes \
-  --node-labels="workload-type=gpu" \
-  --node-type=p3.2xlarge \
-  --taints="gpu=true:NoSchedule"
+eksctl create nodegroup --config-file=gpu-nodegroup.yaml
 ```
 
 ### Availability Zone Distribution
@@ -1159,7 +1188,7 @@ spec:
     kind: Deployment
     name: frontend
   updatePolicy:
-    updateMode: "Auto"
+    updateMode: "Recreate"
 ```
 
 ## Scheduling Best Practices

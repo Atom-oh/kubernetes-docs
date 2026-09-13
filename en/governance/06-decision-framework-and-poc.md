@@ -1,6 +1,6 @@
 # Decision Framework and PoC Design
 
-> **Last Updated**: September 9, 2026
+> **Last Updated**: September 13, 2026
 
 The Landing Zone, Account/IAM, EKS, VPC, and Data/Security boundaries covered so far should each be judged independently — but in practice, they all need to be reproducible from a single decision matrix. This document covers how to design that matrix, and how to validate the parts that require real measurement through PoCs.
 
@@ -27,26 +27,28 @@ Even with security, quota, cost, lifecycle, and blast radius all factored into b
 
 The `trafficDistribution` field values, Karpenter's ARC zonal shift integration (1.12+), whether EKS Auto Mode is adopted (who owns node lifecycle), and the add-on compatibility matrix all depend on the EKS version. If the reason for running A/B EKS Runtime is upgrade isolation, you must formalize the allowed version skew, the rule for always upgrading one side first, and whether extended support is used.
 
-### ALB weighted target group's fail-open behavior
+<span id="alb-weighted-target-group-s-fail-open-behavior"></span>
 
-The claim that "it won't automatically fail over to unhealthy targets" is only half true — in reality, **if there aren't enough healthy targets, ALB sends traffic to all registered targets, including unhealthy ones (fail-open).** There are two mitigation settings:
+### Separate weighted forwarding from target-group fail-open
+
+A weighted forward action does not automatically fail over to another target group because a weighted group is empty or unhealthy. **Fail-open within the selected group** is separate: below its healthy-target threshold, a load-balancer node may route to accessible unhealthy targets. Review DNS and routing failover through these attributes:
 
 - `target_group_health.unhealthy_state_routing.minimum_healthy_targets.count` (or `.percentage`)
 - `target_group_health.dns_failover.minimum_healthy_targets.count` (or `.percentage`)
 
-AWS recommends "Unified configuration" — setting the same threshold on both. The default is "1 healthy target is enough to be considered healthy," which means a large target group can be judged healthy with only one member alive. We recommend gating traffic weight increases not on target health itself, but on whether **`minimum_healthy_targets.percentage`** (based on the CUJ's N-1 capacity) passes.
+Unified configuration applies the same threshold to both actions. DNS failover thresholds must be at least routing-failover thresholds; either count or percentage can trigger an action when both are set. Percentages use registered-target counts, not proven CUJ throughput or N-1 SLO capacity. Gate weight changes on actual load, error rate, and latency as well.
 
 ### Controlling unused Regions
 
 Separate from your single-Region decision, you still need to address:
 
 - **Prevention**: SCP `aws:RequestedRegion` Deny (with an exception list for global services)
-- **Detection**: Security Hub CSPM and GuardDuty only process findings in Regions where they're enabled and don't retroactively collect — if you don't disable an unused Region, its activity simply isn't detected.
-- **The strongest control**: disabling Region opt-in
+- **Detection**: Review CloudTrail, GuardDuty, and Security Hub CSPM coverage in allowed/usable Regions. Disabling one product does not make all activity undetectable.
+- **Opt-in Regions**: Unused opt-in Regions can be disabled; Regions enabled by default cannot. Disabling a Region does not delete existing resources or stop their charges. Combine cleanup, SCPs, and detection.
 
 ### Cost observability and when tag enforcement happens
 
-Attributing cross-AZ cost to a workload pair requires tags down to the ENI level, and they must be **enforced at resource creation time.** Tag Policy checks and enforces compliance, but doesn't cover every resource type. We recommend a triple structure: IaC template enforcement + SCP `aws:RequestTag` conditions + Tag Policy checks. Also account for the fact that owner tags aren't visible to participants in a Shared VPC ([Chapter 4](./04-shared-vpc-and-connectivity.md)) when designing cost attribution.
+Validate cross-AZ attribution by joining Flow Logs, ENI/IP mappings, Kubernetes workload identity, and CUR billing categories. Not every ENI supports user tags or RequestTag conditions at creation. Apply tag policies, IaC, and supported SCP conditions according to service-specific coverage.
 
 ## 2. Designing the Decision Matrix
 
@@ -57,9 +59,9 @@ Recommended columns for the decision matrix:
 | Column | Purpose |
 |---|---|
 | Does this need EKS? | Determines whether the EKS boundary is subordinate to the VPC boundary |
-| Does this need cross-account resource access? | Determines whether the Pod Identity two-hop structure is needed |
+| Cross-account resource access | Choose target-role chaining, resource policy, or IRSA as appropriate |
 | Does this use a service unsupported in shared subnets? | Determines exclusion from the Shared VPC locality strategy |
-| Estimated number of groups accessing this Account | ABAC adoption / Account split threshold (50-group benchmark) |
+| Groups per permission-set/Account pair | Check the actual 100 limit and growth;50 is an optional local warning |
 | Primary responder / escalation path | A boundary with more than one primary responder is a split candidate |
 | CUJ RTO/RPO | The basis for judgments across data and availability design |
 
@@ -71,17 +73,17 @@ Some items can't be finalized on paper and require real measurement. The PoCs be
 
 - **Inputs**: 10–15 representative workloads (including CUJs, at least one PII workload, at least one common domain workload, at least two small internal tools, at least one external partner integration)
 - **Procedure**: Have two people independently apply the decision matrix and compare results
-- **Success criteria**: Disagreement rate under 20%, exception rate under 15%
+- **Example success criteria**: Disagreement under 20%, exceptions under 15%; tune these local hypotheses
 - **By-product**: The judged results yield estimated counts of Accounts/VPCs/clusters, which determine the quota measurement targets for the rest of the PoCs
 
 ### PoC-1: Shared Cluster + Workload Account
 
 | Measurement | Success criteria |
 |---|---|
-| Number of permission paths in the Pod Identity two-hop structure (association → target role) | Confirm 2 roles + 2 trust policies per workload, scaling linearly with workload count |
+| Pod Identity/resource-policy/IRSA permission paths | Validate source/target reuse, scope, revocation, KMS, and resource policy; no fixed 2-role formula |
 | ALB Controller subnet auto-discovery on a shared subnet | Whether tag-based auto-discovery fails → if so, standardize on explicit annotation |
 | Access entry growth rate | (Increase per added workload) × target workload count < 3,000 |
-| Managed node group count | Headroom against the 30-group limit when applying a tenant isolation strategy |
+| Managed node group count | Headroom against default 30 and applied quota; distinguish placement from security isolation |
 | Primary-response time between Cluster Account and Workload Account | Time to determine "CNI issue vs. application issue" |
 | Detection/blocking time for overly broad participant SG Allow rules | Detection-to-block time via Firewall Manager audit policy |
 
@@ -92,8 +94,8 @@ Some items can't be finalized on paper and require real measurement. The PoCs be
 | Inject 3+ failures from the list in [Chapter 3](./03-eks-multi-account-multi-cluster.md) | Confirm each failure is actually contained to one cluster |
 | ARC zonal autoshift practice run | Confirm each of A/B clusters can independently handle N-1 AZ peak load |
 | CoreDNS N-1 throughput/latency | Latency increase rate, whether the 1,024 packet/s per ENI limit is reached |
-| CUJ service graph AZ coverage | Every hop exists in every AZ (including pod affinity) |
-| Stateful workload PV rebinding | Whether the Pod actually comes up in the healthy AZ |
+| CUJ service graph AZ coverage | Validate dependency reachability, capacity, and fallback from surviving AZs |
+| Stateful recovery | Validate EBS AZ constraints, alternative storage/replication, recovery time, and data loss |
 | A→B failover end-to-end time | Measure edge failover and Route 53 record change separately |
 | Rollback time | Measured separately from failover time |
 | Cross-AZ bytes | Based on Flow Logs, before/after optimization comparison |
@@ -103,7 +105,7 @@ Some items can't be finalized on paper and require real measurement. The PoCs be
 
 | Measurement | Success criteria |
 |---|---|
-| **Number of propagated TGW prefixes (current / projected in 3 years)** | Whether under 100; if exceeded, whether default-route fallback is viable |
+| **TGW/VPC routes(current/3-year projection)** | Separate TGW table total 10,000 from VPC non-propagated 500/adjustable 1,000; distinguish VGW 100 |
 | Participant Account growth rate | Against the 100 limit, for target team count |
 | Shared subnets per Account | AZ × trust zone × purpose combinations vs. 100 |
 | NAU usage | Reflecting Pod density, when the 64,000 → 256,000 adjustment becomes necessary |
@@ -122,9 +124,9 @@ This framework isn't limited to topology choices like Account/VPC/EKS — it can
 - **Agent-direct MCP/CLI/API**: An approved agent makes changes directly, then verifies. Fastest, but carries risks of overly broad permissions, partial failures, and prompt injection.
 - **Risk-tiered Hybrid**: IaC for high-risk, persistent configuration changes; limited direct agent execution for low-risk, reversible work. This is the realistic direction for most organizations.
 
-Whichever execution path you choose, at minimum it should satisfy: machine-readable intent, a pre-execution snapshot, a plan, deterministic policy checks, approval, a scoped temporary identity, a post-check, CloudTrail logging, actual state reconciliation, and a recovery contract.
+For each execution path, define controls appropriate to its risk: machine-readable intent, a pre-execution snapshot, a plan, deterministic policy checks, approval, a scoped temporary identity, a post-check, CloudTrail logging, actual state reconciliation, and a recovery contract.
 
-> **Confirmed facts about AWS MCP Server**: AWS API calls are authorized using existing IAM credentials plus downstream service permissions, and are logged to CloudTrail. MCP condition context keys let you distinguish this access path. However, as of this writing, AWS MCP Server's service endpoint only exists in US East and Frankfurt — **the fact that it's absent from the Seoul Region is itself a decision factor.** You need to work with your security team to judge (a) whether this counts as a data-movement concern from a regulatory standpoint, and (b) whether relying on recovery tooling hosted in another Region during a Regional outage is a benefit or a risk.
+> **AWS MCP Server scope**: The current endpoint table lists us-east-1 and eu-central-1. Endpoint location differs from the Region of a managed resource. API execution uses IAM and downstream permissions, with CloudTrail records available for review. Assess endpoint, authentication, logging, and data paths against organizational requirements; absence of a Seoul endpoint alone does not establish a regulatory violation.
 
 ## Related documents
 
@@ -138,9 +140,11 @@ Whichever execution path you choose, at minimum it should satisfy: machine-reada
 ## References
 
 - [ALB target group attributes](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-target-group-attributes.html)
-- [ALB target group health](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health.html)
+- [ALB target group health](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html#target-group-health)
 - [ALB rule action types (weighted)](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/rule-action-types.html)
 - [Route 53 weighted routing](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-weighted.html)
 - [Route 53 failover routing](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-failover.html)
 - [AWS MCP Server](https://docs.aws.amazon.com/agent-toolkit/latest/userguide/mcp-server.html)
 - [AWS MCP Server IAM](https://docs.aws.amazon.com/agent-toolkit/latest/userguide/security_iam_service-with-iam.html)
+- [AWS MCP regional endpoints](https://docs.aws.amazon.com/general/latest/gr/aws-mcp.html)
+- [Charges in disabled Regions](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/checklistforunwantedcharges.html)

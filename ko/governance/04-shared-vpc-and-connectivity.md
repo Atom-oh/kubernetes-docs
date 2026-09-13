@@ -1,6 +1,6 @@
 # Shared VPC와 Connectivity
 
-> **마지막 업데이트**: 2026년 9월 9일
+> **마지막 업데이트**: 2026년 9월 13일
 
 ## 1. Shared VPC의 owner/participant 권한 — 흔히 오해하는 부분
 
@@ -20,34 +20,38 @@ Shared VPC(AWS RAM으로 subnet을 여러 Account에 공유)를 도입할 때 �
 
 이 표에서 두 가지 실무적 함의가 나옵니다.
 
-**Flow Logs 가시성이 양방향으로 비대칭적입니다.** SG·NACL·route·NetworkPolicy·Flow Logs로 VPC 내부 통신을 통제하려면, **owner가 subnet 단위 flow log를 소유하고 participant의 개별 flow log 생성을 SCP로 금지**해야 합니다. 그렇지 않으면 비용이 중복으로 발생하면서도 전체 트래픽 그림은 어느 Account에서도 완전하게 보이지 않습니다.
+**Flow Logs 소유권은 비대칭적입니다.** owner의 subnet/VPC 로그를 중앙 증거로 수집하고 participant ENI 로그의 목적·보존·비용을 함께 관리할 수 있습니다. participant의 개별 로그를 모두 SCP로 금지해야 한다는 AWS 요구사항은 없습니다. Flow Logs는 관측 자료이며 트래픽 차단 수단은 아닙니다.
 
-**VPC·subnet의 태그는 participant에게 공유되지 않습니다.** AWS Load Balancer Controller의 subnet 자동 탐색은 `kubernetes.io/role/elb`, `kubernetes.io/role/internal-elb` 태그에 의존하는데, Shared VPC에서 이 태그는 owner 소유이므로 participant Account에서 보인다고 보장할 수 없습니다. **Shared VPC + EKS 조합에서는 subnet 자동 탐색에 의존하지 말고, Ingress/Service 리소스에 subnet ID를 명시적으로 annotation하는 것을 표준으로** 두는 것이 안전합니다.
+**VPC·subnet 태그는 participant에게 공유되지 않습니다.** Load Balancer Controller의 버전·discovery 모드·IAM 권한에 따라 탐색 결과를 검증하세요. 명시적 subnet ID annotation은 선택할 수 있는 예측 가능한 방식이며, 모든 버전의 자동 탐색이 반드시 실패한다는 뜻은 아닙니다.
 
-Security Group은 allow rule만 지원하고, 여러 SG의 rule은 합쳐집니다 — 다른 SG의 넓은 Allow를 중앙 SG로 상쇄할 수 없습니다. SG당 rule은 60개(inbound/outbound × IPv4/IPv6 각각), ENI당 SG는 5개이며, **"rule 수 × ENI당 SG 수 ≤ 1,000"** 제약이 있습니다. Firewall Manager의 공통 SG 정책도 이 예산을 소비합니다.
+Security Group은 allow rule만 지원하고, 여러 SG의 rule은 합쳐집니다 — 다른 SG의 넓은 Allow를 중앙 SG로 상쇄할 수 없습니다. 기본 SG당 rule은 60개(inbound/outbound × IPv4/IPv6 각각), ENI당 SG는 5개이며 두 quota는 조정 가능하고, **"rule 수 × ENI당 SG 수 ≤ 1,000"** 제약이 있습니다. Firewall Manager의 공통 SG 정책도 이 예산을 소비합니다.
 
-Participant가 만든 리소스의 quota(ENI: AZ당 5,000, SG: Region당 2,500)는 **participant Account에 계산**됩니다. 즉 Shared VPC라도 이 두 quota는 병목이 되지 않습니다. "participant가 SG를 통제하는 게 걱정된다"는 우려는 quota 문제가 아니라 권한 문제로 좁혀서 다뤄야 합니다(Firewall Manager audit policy로 위반을 탐지).
+Participant의 ENI·SG quota는 해당 participant Account에 계산됩니다. 기본 ENI 5,000/AZ와 SG 2,500/Region은 각 Account에서 여전히 병목이 될 수 있으며 조정 가능합니다. quota 용량과 SG 권한 통제는 별도로 검토합니다.
 
-## 2. Shared VPC의 실제 상한 — CIDR이 아니다
+<span id="_2-shared-vpc의-실제-상한-—-cidr이-아니다"></span>
 
-Shared VPC를 설계할 때 "IPv4 CIDR을 몇 개까지 붙일 수 있는가"에 집중하기 쉽지만, 실제로는 **다른 quota가 훨씬 먼저 막힙니다.** 대표적인 대규모 hub-and-spoke 구성(중앙 Transit Gateway + Shared VPC)에서 도달하는 순서는 다음과 같습니다.
+## 2. Shared VPC quota는 적용 범위를 나눠 계산한다
 
-| 순위 | Quota | 기본값 | 조정 | 왜 먼저 막히는가 |
-|---|---|---|---|---|
-| **1** | **VPC 라우팅 테이블당 전파(propagated) route** | **100** | **불가** | 중앙 TGW hub에서 route propagation을 켜면 VPC + on-prem prefix 합계가 100을 넘는 순간 정지. **유일한 조정 불가 항목이자 실제 첫 병목** |
-| 2 | VPC당 participant Account 수 | 100 | 가능 | 팀×환경 조합이면 조기 도달 |
-| 3 | Account당 공유받을 수 있는 subnet 수 | 100 | 가능 | AZ×trust zone×용도별로 증가 |
-| 4 | VPC당 NAU(Network Address Usage) | 64,000 | 256,000까지 | EKS Pod는 ENI가 아니지만 IP는 NAU로 계산됨. Pod 밀도가 높으면 도달 |
-| 5 | VPC당 subnet·route table 수 | 각 200 | 가능 | |
-| 6 | VPC당 IPv4 CIDR 수 | 5 | 50까지 | 실제로는 **가장 늦게** 도달 |
+병목 순서는 workload에 따라 달라집니다. 기본값과 승인된 값을 구분하고 현재·성장 예상치를 각 범위에 적용합니다.
 
-즉 CIDR 부족보다 훨씬 먼저, **전파 route 100개**에서 막힙니다. 회피 수단으로 default route(`0.0.0.0/0`) 광고나 static route를 쓸 수 있지만, 그러면 route 기반 세분화 통제(중앙 inspection 강제 경로)와 충돌합니다. **Shared VPC를 도입하는 POC의 첫 측정 항목은 "현재 및 3년 후 예상 전파 prefix 수"로 잡아야 합니다.**
+| 범위 | 기본 quota | 판단 |
+|---|---|---|
+| VPC route table의 non-propagated route | IPv4/IPv6 각각500, 최대1,000까지 조정 | TGW 방향 static route도 여기서 계산 |
+| VPC route table의 propagated route | 100, 조정 불가 | VGW 전파 경로의 제한이며 TGW route-table 총량과 다름 |
+| 모든 TGW route table의 static+dynamic route 합계 | TGW당10,000 | 증설은 SA/TAM 문의 |
+| Participant Account / VPC | 100, 조정 가능 | 공유 대상 수 |
+| 공유받는 subnet / Account | 100, 조정 가능 | AZ·용도 조합 |
+| NAU / VPC | 64,000, 최대256,000 | Pod IP·ENI·prefix-list 항목 등 |
+| Subnet·route table / VPC | 각각200, 조정 가능 | 구성 수 |
+| IPv4 CIDR / VPC | 5, 최대50 | 실제 주소 소모와 단편화 함께 확인 |
+
+**TGW route는 VPC route table로 자동 전파되지 않습니다.** VPC owner가 TGW를 대상으로 static route를 만들고, attachment propagation은 TGW route table에서 관리합니다. 따라서 “TGW prefix가100개를 넘으면 Shared VPC가 멈춘다”는 판정은 잘못입니다. default route가 inspection을 보장하거나 우회하는지도 실제 route association·return path에 따라 확인해야 합니다.
 
 ### 최소 Shared VPC Pool vs Workload별 전용 Shared VPC
 
 "모든 워크로드를 하나의 Shared VPC에 몰아넣는 최소 구성"과 "워크로드 그룹별로 전용 Shared VPC를 여러 개 두는 구성"을 비교할 때, 흔히 놓치는 관점이 하나 있습니다.
 
-- **동일 VPC에 TGW attachment는 1개만 허용됩니다(조정 불가).** attachment 하나는 AZ당 최대 100 Gbps(양방향 각각)/7,500,000 PPS의 처리량 상한을 가집니다.
+- **동일 TGW–VPC 쌍에는 VPC attachment1개만 허용됩니다.** 한 VPC는 최대5개의 TGW에 연결할 수 있습니다. attachment의 기본 처리량은 AZ당 각 방향 최대100Gbps/7.5MPPS이며 추가 용량은 SA/TAM과 확인합니다.
 - 최소 구성에서는 여러 워크로드의 on-prem·외부 트래픽이 이 attachment 하나로 집약됩니다 — 장애 영향뿐 아니라 **대역폭·PPS 상한까지 공유**하게 됩니다.
 - 워크로드 그룹별 전용 Shared VPC 구성은 VPC마다 별도 attachment를 가지므로, 이 처리량 상한을 나눠 갖습니다. **TGW 처리량 상한을 분리할 수 있다는 점이 "여러 개의 전용 Shared VPC"를 선택하는 실질적인 이유**입니다.
 
@@ -62,17 +66,17 @@ Shared VPC를 설계할 때 "IPv4 CIDR을 몇 개까지 붙일 수 있는가"에
 | **TGW / VPC** | **5** | **불가** |
 | TGW route table / TGW | 20 | 가능 |
 | 전체 route / TGW | 10,000 | SA/TAM 문의 |
-| **동일 VPC에 대한 VPC attachment 수** | **1** | **불가** |
+| **동일 TGW–VPC 쌍의 attachment** | **1** | **불가** |
 
-**MTU 불일치도 확인이 필요합니다.** TGW의 MTU는 8,500바이트지만 VPN 경로는 1,500바이트입니다. on-prem VPN 연결을 VPC Peering에서 TGW로 옮기는 구간에서 이 불일치 때문에 비대칭적인 패킷 드롭이 발생할 수 있습니다 — 양쪽 VPC를 동시에 변경해야 하며, TGW는 모든 패킷에 MSS clamping을 적용합니다.
+**MTU는 경로 전체에서 확인합니다.** TGW의 VPC·DX·Connect·peering 구간은8,500바이트이며 VPN에는 별도 터널 MTU 제한이 있습니다. VPC peering에서 TGW로 바꿀 때 양쪽 endpoint의 jumbo-frame 설정과 PMTUD를 함께 시험합니다. MSS clamping은 TCP에 관한 동작이며 UDP 등 모든 packet의 MTU 문제를 해결한다고 가정하지 않습니다.
 
-VPC Peering을 쓰는 경우 Peered NAU 한도는 128,000(최대 512,000)이며, 이는 **동일 Region 내 모든 peered VPC의 합계**에 적용됩니다(Cross-Region peering은 포함되지 않습니다).
+Peered NAU는 기준 VPC와 직접 peering된 같은 Region VPC의 합계에 적용됩니다(기본128,000, 최대512,000). 모든 조직 내 VPC나 전이적으로 연결된 그래프 전체의 합계는 아닙니다.
 
 ## 3. AZ ID와 Shared VPC
 
 AZ 이름(`ap-northeast-2a` 등)은 Account마다 실제 물리 AZ에 대한 mapping이 다를 수 있습니다. cross-account로 리소스를 배치할 때는 **AZ 이름이 아니라 AZ ID(`apne2-az*`)로 관리**해야 합니다.
 
-VPC CNI의 custom networking을 쓰면 이건 원칙이 아니라 **동작 요구사항**이 됩니다 — `ENIConfig`를 중앙 네트워크 Account가 게시한 AZ ID mapping 기준으로 만들어야 하기 때문입니다. 개인정보 경계를 분리하려고 secondary CIDR을 쓰는 경우 custom networking을 함께 쓰게 될 가능성이 높으므로, 이 관계를 미리 확인해두는 것이 좋습니다.
+VPC CNI custom networking은 AZ ID로 owner subnet과 participant node의 물리 AZ를 대응시킵니다. ENIConfig 이름은 선택한 node annotation/label과 일치해야 합니다. `ENI_CONFIG_LABEL_DEF=topology.kubernetes.io/zone`이면 이름에는 node의 AZ 이름을 사용하고, 해당 AZ ID에 맞는 subnet ID를 spec에 넣습니다. AZ ID를 이름에 무조건 복사하면 이 lookup과 맞지 않을 수 있습니다. secondary CIDR 자체는 보안 경계가 아닙니다.
 
 ## 4. Regional NAT Gateway
 
@@ -101,7 +105,7 @@ AWS 관점에서 중앙 inspection이 무조건 필수인 조건은 없습니다
 
 ## 6. AWS API와 VPC endpoint
 
-서비스·Region·기능별로 endpoint(Gateway/Interface) 지원 여부와 endpoint policy 지원 여부가 다릅니다. Endpoint policy를 지정하지 않으면 기본적으로 full-access policy가 적용됩니다. 이 coverage matrix는 사람이 주기적으로 조사하는 대신 `aws ec2 describe-vpc-endpoint-services`를 정기적으로 자동 대조하는 방식으로 유지하는 것을 권장합니다.
+서비스·Region·기능별 endpoint와 endpoint-policy 지원을 대조합니다. 기본 full-access endpoint policy도 IAM 권한을 새로 부여하지는 않습니다. describe-vpc-endpoint-services로 inventory를 수집하고 서비스 문서·private DNS·실제 승인/거부 검증을 함께 사용합니다.
 
 ## 7. Route 53 Profiles와 Hybrid DNS
 
@@ -124,9 +128,9 @@ Route 53 Profile에는 Private Hosted Zone, Resolver rule(forwarding/system), DN
 | 선택지 | 적합한 상황 | 제약 |
 |---|---|---|
 | VPC Peering | 소수 VPC 간 직접 양방향 연결 | Peered NAU 128,000(→512,000) 한도, CIDR overlap 불가, non-transitive |
-| Transit Gateway | 다수 VPC·on-prem·중앙 inspection | 전파 route 100(불가), VPC당 attachment 1개(불가), AZ당 100 Gbps/7.5M PPS |
+| Transit Gateway | 다수 VPC·on-prem·중앙 inspection | TGW table 총량·VPC static route·동일 TGW–VPC 쌍 attachment 및 처리량을 각각 계산 |
 | PrivateLink | 특정 서비스를 단방향으로 노출 | endpoint 비용, provider/consumer 양쪽의 반복 운영 |
-| **VPC Lattice** | 애플리케이션 단위 service network·인증, **CIDR이 겹치는 VPC 간 연결**(대체 수단 없음) | 아래 표 참고 |
+| **VPC Lattice** | 애플리케이션 service/resource 연결, 겹치는 CIDR 환경도 검토 가능 | PrivateLink·NAT 등 대안과 protocol·인증·비용 비교 |
 | Same-VPC local routing | 같은 trust zone, 동일 VPC에 배치 가능한 경우 | route·DNS·IP 장애를 공유 |
 
 ### VPC Lattice 제약
@@ -136,7 +140,7 @@ Lattice는 종종 실제보다 가볍게 설명되지만, 확인된 제약은 �
 | 항목 | 값 | 영향 |
 |---|---|---|
 | VPC당 service network association | **1개만** | 여러 network가 필요하면 service-network 유형 VPC endpoint 필요 |
-| **Lattice service의 최대 연결 수명** | **10분** | **장기 연결(gRPC streaming, WebSocket, 긴 배치 호출)이 10분마다 강제로 끊김** — 애플리케이션이 재연결을 처리해야 함 |
+| **Lattice service의 최대 연결 수명** | **10분** | 재연결·재시도·중복 처리 검증; resource 연결과 구분 |
 | Lattice service idle timeout | 기본 60초 (60~600초) | |
 | Lattice resource idle timeout | 350초, 연결 수명 제한 없음 | TCP resource는 제약이 적음 |
 | Service당 AZ당 대역폭/RPS | 10 Gbps / 10,000 RPS (증가 가능) | |
@@ -144,7 +148,7 @@ Lattice는 종종 실제보다 가볍게 설명되지만, 확인된 제약은 �
 | Service network / Region | 50 | |
 | MTU | 8,500바이트 | |
 
-**장기 연결을 쓰는 구간은 Lattice 대상에서 제외해야 합니다.** 반대로 CIDR이 겹치는 레거시·인수 환경 연결에는 Lattice가 Private NAT나 CNI custom networking보다 나은 선택일 수 있습니다(link-local 주소 공간에서 동작하기 때문입니다).
+장기 연결을 일괄 제외하지 말고 service와 resource 연결을 구분합니다. service의10분 lifetime과 resource의350초 idle timeout은 다른 제한입니다. WebSocket은 HTTP/HTTPS listener에서 기본 지원되지 않지만 TLS listener 또는 Lattice resource 경로를 검토할 수 있습니다. protocol·재연결·SNI·인증 요구와 실제 부하를 확인한 뒤 선택합니다.
 
 ## 9. East-west inspection 선택지
 
@@ -155,7 +159,7 @@ Lattice는 종종 실제보다 가볍게 설명되지만, 확인된 제약은 �
 | TGW 중앙 inspection | Transit Gateway 경로에서 일괄 검사 |
 | **Hybrid** | trust zone 내부는 분산, trust zone 간·규제 경로는 중앙 |
 
-Shared VPC를 쓴다면, 분산 정책 통제 방식에도 앞서 언급한 "owner가 subnet flow log 소유 + participant 개별 flow log 생성 SCP 금지" 규칙이 함께 필요합니다.
+Shared VPC의 로그 소유권·열람 경로·보존 기간·중복 비용을 명시합니다. owner와 participant의 로그를 중앙으로 수집하는 설계도 가능하며 개별 로그 생성 금지가 전제는 아닙니다.
 
 ## 다음
 
@@ -184,3 +188,6 @@ VPC 경계가 정해졌다면, 그 위에서 데이터와 보안 경계를 어�
 - [Centralized VPC inspection](https://docs.aws.amazon.com/whitepapers/latest/building-scalable-secure-multi-vpc-network-infrastructure/centralized-network-security-for-vpc-to-vpc-and-on-premises-to-vpc-traffic.html)
 - [Route 53 Profiles](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/profiles.html)
 - [Route 53 Resolver hybrid DNS](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html)
+- [TGW route propagation FAQ](https://aws.amazon.com/transit-gateway/faqs/)
+- [ENIConfig label mapping](https://docs.aws.amazon.com/eks/latest/best-practices/custom-networking.html)
+- [Lattice listener protocols](https://docs.aws.amazon.com/vpc-lattice/latest/ug/listeners.html)

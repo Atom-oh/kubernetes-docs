@@ -1,0 +1,121 @@
+{
+  "status": "passed",
+  "date": "2026-09-11",
+  "checks": [
+    "GitLab amd64: rendered manager/job selectors, TOML, RBAC, cache identity and existing Secret",
+    "ARC amd64: rendered scale-set identity, no-permission account, native DinD sidecar and shared volumes",
+    "GitLab arm64: rendered manager/job selectors, TOML, RBAC, cache identity and existing Secret",
+    "ARC arm64: rendered scale-set identity, no-permission account, native DinD sidecar and shared volumes",
+    "GitLab 19.3.1 schema and fail-closed scan/publish dependencies",
+    "GitHub push-only OIDC jobs and architecture-specific runner selection",
+    "18 extracted workflow-shell cases: digest/repository/platform gates and failed push",
+    "ko: 14 embedded files match tested fixtures, 20 fences parse, local links and 10 quiz answers",
+    "en: 14 embedded files match tested fixtures, 20 fences parse, local links and 10 quiz answers",
+    "Terraform init/validate and two mock-provider tests passed; no AWS calls",
+    "Five versioned Helm chart renders: two GitLab runners, ARC controller and two scale sets",
+    "actionlint 1.7.12 passed; pinned action input names and runtime definitions inspected",
+    "Next 16.3.5 / React 19.3.0 standalone app and static file returned HTTP 200 using Node 24.21.0"
+  ],
+  "files": [
+    {
+      "path": "ko/ops/03-ci-pipelines.md",
+      "sha256": "8e59e609d21b5bad3b9f625241399fbbda7a57e3e968a9b759a48ef2ed29543c"
+    },
+    {
+      "path": "ko/quizzes/ops/03-ci-pipelines-quiz.md",
+      "sha256": "23e4fbd938b76f4d503db098952f81b609095fc60c0c6010ec35424feadefc90"
+    },
+    {
+      "path": "en/ops/03-ci-pipelines.md",
+      "sha256": "9fecb0c4a630d1a2603d33b9ac4f95798062c3b45f1a3f1f7c67556602f5be1c"
+    },
+    {
+      "path": "en/quizzes/ops/03-ci-pipelines-quiz.md",
+      "sha256": "a563392975e22d08288c3bec41871c0c3fcc0b92bdcb2a4e25222fd071862a30"
+    }
+  ],
+  "limitations": [
+    "No live CI jobs, Docker image build, registry push, Kubernetes deployment, or AWS mutation. Helm checks render templates; Terraform tests use mock providers."
+  ],
+  "toolchain": {
+    "terraform": "1.15.7",
+    "awsProvider": "6.64.0",
+    "gitlabChart": "0.92.1",
+    "gitlabRunner": "19.3.1",
+    "arc": "0.14.2",
+    "githubRunner": "2.337.0",
+    "actionlint": "1.7.12",
+    "node": "24.21.0"
+  },
+  "evidence": {
+    "final-validation.json": {
+      "sha256": "d1e40a0e75cafab3ae4bb748da1d967fde615ff74568cd0ebcf8c6736c2293c5",
+      "content": {
+        "status": "passed",
+        "date": "2026-09-11",
+        "checks": [
+          "GitLab amd64: rendered manager/job selectors, TOML, RBAC, cache identity and existing Secret",
+          "ARC amd64: rendered scale-set identity, no-permission account, native DinD sidecar and shared volumes",
+          "GitLab arm64: rendered manager/job selectors, TOML, RBAC, cache identity and existing Secret",
+          "ARC arm64: rendered scale-set identity, no-permission account, native DinD sidecar and shared volumes",
+          "GitLab 19.3.1 schema and fail-closed scan/publish dependencies",
+          "GitHub push-only OIDC jobs and architecture-specific runner selection",
+          "18 extracted workflow-shell cases: digest/repository/platform gates and failed push",
+          "ko: 14 embedded files match tested fixtures, 20 fences parse, local links and 10 quiz answers",
+          "en: 14 embedded files match tested fixtures, 20 fences parse, local links and 10 quiz answers"
+        ],
+        "files": [
+          {
+            "path": "ko/ops/03-ci-pipelines.md",
+            "sha256": "8e59e609d21b5bad3b9f625241399fbbda7a57e3e968a9b759a48ef2ed29543c"
+          },
+          {
+            "path": "ko/quizzes/ops/03-ci-pipelines-quiz.md",
+            "sha256": "23e4fbd938b76f4d503db098952f81b609095fc60c0c6010ec35424feadefc90"
+          },
+          {
+            "path": "en/ops/03-ci-pipelines.md",
+            "sha256": "9fecb0c4a630d1a2603d33b9ac4f95798062c3b45f1a3f1f7c67556602f5be1c"
+          },
+          {
+            "path": "en/quizzes/ops/03-ci-pipelines-quiz.md",
+            "sha256": "a563392975e22d08288c3bec41871c0c3fcc0b92bdcb2a4e25222fd071862a30"
+          }
+        ],
+        "limitations": [
+          "No live CI jobs, Docker image build, registry push, Kubernetes deployment, or AWS mutation. Helm checks render templates; Terraform tests use mock providers."
+        ]
+      }
+    },
+    "gitlab-static-validation.json": {
+      "sha256": "1d14e6ea7ea37cd74f5cdbdd4c17c97acf33c9fd954468400df666c0d94377ed",
+      "content": {
+        "schemaVersion": "GitLab19.3.1",
+        "schemaErrors": 0,
+        "matrixChains": "1:1 build/scan/publish, combined unique per-arch digest artifacts",
+        "securityGate": "scan failure blocks publish",
+        "scope": "Schema and shell/dependency checks only; no live GitLab lint API or jobs."
+      }
+    },
+    "terraform-tests.log": {
+      "sha256": "416c2d83e2b902108c6979052c58a61f530d1b92d9c87f0650363646c1b31fce",
+      "content": "tests/review.tftest.hcl... in progress\n  run \"separate_cache_and_publish_permissions\"... pass\n  run \"wildcard_repository_rejected\"... pass\ntests/review.tftest.hcl... tearing down\ntests/review.tftest.hcl... pass\n\nSuccess! 2 passed, 0 failed.\n"
+    },
+    "terraform-validate.log": {
+      "sha256": "4cd9eddc4d07c5aff74dadb6b3544f98186f6705ac60e0d94d545fc42b45b9b6",
+      "content": "{\n  \"format_version\": \"1.0\",\n  \"valid\": true,\n  \"error_count\": 0,\n  \"warning_count\": 0,\n  \"diagnostics\": []\n}\n"
+    },
+    "next-validation.json": {
+      "sha256": "302fc8597fd03af0a5f6f06720af9dd69ae5a70acc7d977778926be9ea194236",
+      "content": {
+        "node": "24.21.0",
+        "next": "16.3.5",
+        "react": "19.3.0",
+        "standalonePage": 200,
+        "staticFile": 200,
+        "rootIsolation": "Fixture lives below another npm project; fixture-only turbopack/outputFileTracingRoot set explicitly. Dockerfile assumes a standalone app root; monorepos require adjusted tracing/COPY paths.",
+        "containerBuild": "Not executed; actual Next standalone build/server and COPY source paths validated."
+      }
+    }
+  }
+}

@@ -1,0 +1,710 @@
+{
+  "date": "2026-09-11",
+  "reviewedAtUTC": "2026-09-12T06:32:53.071150+00:00",
+  "files": [
+    {
+      "path": "en/networking/calico/07-advanced-topics.md",
+      "sha256": "c0c864246965e5766548e001f788d6a8cc2fcb419b5f85391200264a98f36d40"
+    },
+    {
+      "path": "en/quizzes/networking/calico/07-advanced-topics-quiz.md",
+      "sha256": "1f476262d1e73be8c5a5111b7d5c74b9c9aa4a628cc3284c02939bc5ecb88e0a"
+    },
+    {
+      "path": "ko/networking/calico/07-advanced-topics.md",
+      "sha256": "dba752c120bef6d6bf5b9d81fcd700b8280cdff64e129f877f33bc4d085ffe53"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/07-advanced-topics-quiz.md",
+      "sha256": "4430dcb2fc9575546f891973e72b9a0bb93152706fc6b45a8217488167e345cd"
+    }
+  ],
+  "sources": {
+    "6416838432bd": {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html",
+      "key": "6416838432bd",
+      "rawSHA256": "abbaee5b778369f2b9b2315ff3fc2b392fc167970c3a45c4c0c236939ef34cc8",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "5de8b84ade1f": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/ipamconfig",
+      "key": "5de8b84ade1f",
+      "rawSHA256": "bfc4c9bbe0046d6bcdda7ac767659074b3edeea028f709b2c04b6804d3ecc472",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "ebacbcbbb6a4": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/blockaffinity",
+      "key": "ebacbcbbb6a4",
+      "rawSHA256": "f964f5d67811ad6894364281a4e15ba1205f69e242da10cfa9278c44c53570cb",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "d784db9e78d6": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations",
+      "key": "d784db9e78d6",
+      "rawSHA256": "c009618bb6ee8590a5621ee05768ca7031c96eb181d75da9608a4aa2356ea866",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "ea34838493fa": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/operator",
+      "key": "ea34838493fa",
+      "rawSHA256": "89d2931eefac382aaca235cc73ea190f4640ebc02349e04c5e222b9cfb8da695",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "4552bd9b21e9": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/api/pkg/apis/projectcalico/v3/ipamconfig.go",
+      "key": "4552bd9b21e9",
+      "rawSHA256": "2216ba969d0b0110f1784fcb09276cb05ccd28e8fd8f468fde623e9d236c1bce",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "5e3130341632": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/api/pkg/apis/projectcalico/v3/blockaffinity.go",
+      "key": "5e3130341632",
+      "rawSHA256": "29895c6f68ccfe38b16d682e684929cf449499e333c90cf0ca7a6f37dae41240",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "b87bc693eaa6": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/calicoctl/calicoctl/commands/ipam/check.go",
+      "key": "b87bc693eaa6",
+      "rawSHA256": "05a9e12a71469c487cf1d17d90c8464941eec4f4367140fa3a0e1a8e30ac6e0c",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "ab611e781555": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/calicoctl/calicoctl/commands/ipam/release.go",
+      "key": "ab611e781555",
+      "rawSHA256": "0e941e45e1c57a170f3cb68b07714c512aa16d8ec5f1a3220b96ac7791548766",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "04c66b4680d6": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/api/config/crd/projectcalico.org_ipamconfigurations.yaml",
+      "key": "04c66b4680d6",
+      "rawSHA256": "c41350f1e602010b49efed78e9751015857ddee7f846f0084c9e7f1c9a04c6dc",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "2b8c87e67bcb": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/api/config/crd/projectcalico.org_blockaffinities.yaml",
+      "key": "2b8c87e67bcb",
+      "rawSHA256": "f9304f06a422c11327bc0fe4533ed8a36e3f42297605f2c53c35bd0202c01832",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "e8b107481895": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/calicoctl/calicoctl/commands/node/status.go",
+      "key": "e8b107481895",
+      "rawSHA256": "6113b6759c777c9775887bb22cc86eee216356731ff304181333989b0df33260",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "421e40653af4": {
+      "url": "https://www.wireguard.com/protocol/",
+      "key": "421e40653af4",
+      "rawSHA256": "c8f084a0f72e362bad6d1bb65e3625fde4ee32a0b7ee97dcf940b19a7c225bf1",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "d41c4b487466": {
+      "url": "https://www.wireguard.com/quickstart/",
+      "key": "d41c4b487466",
+      "rawSHA256": "a6eaa9cc05e624223887464735fd9deaf5d421ef98e0145bdc67e4b5b1b29a26",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "899a2a037593": {
+      "url": "https://docs.tigera.io/calico-enterprise/latest/networking/egress/egress-gateway-on-prem",
+      "key": "899a2a037593",
+      "rawSHA256": "7419d684a777a0b5f6dd3a44dfdf9abfb054133bb259ab0090019624ffb8db79",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "7b15badd41b1": {
+      "url": "https://docs.tigera.io/calico-enterprise/latest/networking/egress/egress-gateway-aws",
+      "key": "7b15badd41b1",
+      "rawSHA256": "42e3ceae2e196dd32b70f9975622d6100cca08927fc38b0fe6d95b9bc08d1016",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "22e14b7887fd": {
+      "url": "https://docs.tigera.io/calico-enterprise/latest/multicluster/federation/overview",
+      "key": "22e14b7887fd",
+      "rawSHA256": "3f51de3bc6c473766b0137ee7672c23894b1f88d840cc85784769f7a08c5dd38",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "d0651efbf064": {
+      "url": "https://docs.tigera.io/calico-enterprise/latest/multicluster/federation/services-controller",
+      "key": "d0651efbf064",
+      "rawSHA256": "ef9df18b0034cc240ea44d84072798f8ae5096e53bf163060e6de30e1e197767",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "66416eda4c3b": {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/requirements",
+      "key": "66416eda4c3b",
+      "rawSHA256": "56dd472f9a3858b0ee805c264a5ce2b9e5850034207380a6723f3e6dbfa96cc6",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "d216e5431ec3": {
+      "url": "https://raw.githubusercontent.com/kubernetes/website/release-1.36/content/en/docs/concepts/windows/intro.md",
+      "key": "d216e5431ec3",
+      "rawSHA256": "2bbbb8d188d969e98ec998ca6be694035c14451afc3ce26ddf02f90e6baa8b67",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "IPPool": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/ippool",
+      "key": "785bcc7771cb"
+    },
+    "CNI": {
+      "url": "https://docs.tigera.io/calico/latest/reference/configure-cni-plugins",
+      "key": "2f30a04df192"
+    },
+    "IPAMSource": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/libcalico-go/lib/ipam/ipam.go",
+      "key": "45472e3ec04f"
+    },
+    "IPAMShow": {
+      "url": "https://docs.tigera.io/calico/latest/reference/calicoctl/ipam/show",
+      "key": "84b51a25ffe5"
+    },
+    "OperatorValidation": {
+      "url": "https://raw.githubusercontent.com/tigera/operator/v1.42.6/pkg/controller/installation/validation.go",
+      "key": "77173a7e6a83"
+    },
+    "FelixConfiguration": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/felixconfig",
+      "key": "43fe47250f7c"
+    },
+    "installationAPI": {
+      "url": "https://docs.tigera.io/calico/latest/reference/installation/api",
+      "key": "71a9d6b0ffba"
+    },
+    "FelixMetrics": {
+      "url": "https://docs.tigera.io/calico/latest/reference/felix/prometheus",
+      "key": "b299dee33cd8"
+    },
+    "TyphaMetrics": {
+      "url": "https://docs.tigera.io/calico/latest/reference/typha/prometheus",
+      "key": "e9c383f722b2"
+    },
+    "releasedOperator": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/tigera-operator.yaml",
+      "key": "cdde707b47cc"
+    },
+    "TyphaConfig": {
+      "url": "https://docs.tigera.io/calico/latest/reference/typha/configuration",
+      "key": "114771d254b1"
+    },
+    "CNIConfig": {
+      "url": "https://docs.tigera.io/calico/latest/reference/configure-cni-plugins",
+      "key": "2f30a04df192"
+    },
+    "CNIMain": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/cni-plugin/pkg/plugin/plugin.go",
+      "key": "7bd39f25e982"
+    },
+    "operatorTree": {
+      "url": "https://api.github.com/repos/tigera/operator/git/trees/v1.42.6?recursive=1",
+      "key": "633b3f9ecdaf"
+    },
+    "TyphaAutoscaler": {
+      "url": "https://raw.githubusercontent.com/tigera/operator/v1.42.6/pkg/controller/installation/typha_autoscaler.go",
+      "key": "1e0e9b9795e5"
+    },
+    "TyphaScaleFunction": {
+      "url": "https://raw.githubusercontent.com/tigera/operator/v1.42.6/pkg/common/autoscale.go",
+      "key": "ddc8289cc1af"
+    },
+    "TyphaRender": {
+      "url": "https://raw.githubusercontent.com/tigera/operator/v1.42.6/pkg/render/typha.go",
+      "key": "5ff9742e6fa2"
+    },
+    "TyphaConfigSource": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/typha/pkg/config/config_params.go",
+      "key": "dfe38a91b193"
+    },
+    "KubernetesCNI": {
+      "url": "https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/",
+      "key": "08a066cf82b7"
+    },
+    "Tier": {
+      "url": "https://docs.tigera.io/calico/latest/reference/resources/tier",
+      "key": "f764a1eb86af",
+      "rawSHA256": "3bc43f84a197676eb2c61523f53b426173f2e782f3a32fc6c96b24d69558233a"
+    },
+    "OpenSourceALP": {
+      "url": "https://docs.tigera.io/calico/latest/network-policy/istio/app-layer-policy",
+      "key": "840092fbe105",
+      "rawSHA256": "b44b3bd940171e01946c97fce0788df94bada4642b821c1a8271484bfec439b9"
+    },
+    "TierRBAC": {
+      "url": "https://docs.tigera.io/calico/latest/network-policy/policy-tiers/rbac-tiered-policies",
+      "key": "c801839725e9",
+      "rawSHA256": "9719021ed4de51b2a7b10b69c647b60a619319de17446574fb19dc8acb3452bf"
+    },
+    "TierGuide": {
+      "url": "https://docs.tigera.io/calico/latest/network-policy/policy-tiers/tiered-policy",
+      "key": "64f52e7e7420",
+      "rawSHA256": "b6bd08bdd8edc5e20d3826a539c231c29112ec032a0899e97f0816b625071d16"
+    },
+    "StagedPolicy": {
+      "url": "https://docs.tigera.io/calico/latest/network-policy/staged-network-policies",
+      "key": "23a56028a57a",
+      "rawSHA256": "a03174b927a7e41c0a93318427298977021c2d8ec59cd70ededdd50ba1e1400b"
+    },
+    "TierSource": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/api/pkg/apis/projectcalico/v3/tier.go",
+      "key": "cb878c6aba61",
+      "rawSHA256": "d8b1c496615b32341fc3bc0c4fee9b8aa9ab99866bdeb8b1d100a760a23b6d36"
+    },
+    "TierAuthorizer": {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/apiserver/pkg/registry/projectcalico/authorizer/authorizer.go",
+      "key": "722d1edcb8d7",
+      "rawSHA256": "097b8c78ac897f50524968b43e2692fd9c5473b6be306a192730246936426512"
+    },
+    "32ea21b1c9c1": {
+      "url": "https://raw.githubusercontent.com/tigera/operator/v1.42.6/pkg/imports/crds/operator/operator.tigera.io_egressgateways.yaml",
+      "key": "32ea21b1c9c1",
+      "rawSHA256": "7eb0f95bdc3a610d269a8314098263467c2cf8df42304daa2a6c74d4f6c33078",
+      "finalURL": "https://raw.githubusercontent.com/tigera/operator/v1.42.6/pkg/imports/crds/operator/operator.tigera.io_egressgateways.yaml",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "3013c3470834": {
+      "url": "https://raw.githubusercontent.com/tigera/operator/v1.42.6/api/v1/egressgateway_types.go",
+      "key": "3013c3470834",
+      "rawSHA256": "e66ab50def2a81e5a6f8de330548dad05f83acefacecf125aeb17ecebc366306",
+      "finalURL": "https://raw.githubusercontent.com/tigera/operator/v1.42.6/api/v1/egressgateway_types.go",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "63125670fcc0": {
+      "url": "https://learn.microsoft.com/en-us/virtualization/windowscontainers/container-networking/architecture",
+      "key": "63125670fcc0",
+      "rawSHA256": "65272d91fa406108e5e0768875f9a786e3ec0f93783d307216f90e6c67cab919",
+      "finalURL": "https://learn.microsoft.com/en-us/virtualization/windowscontainers/container-networking/architecture",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "ad62159f6c8e": {
+      "url": "https://docs.tigera.io/calico-cloud/",
+      "key": "ad62159f6c8e",
+      "rawSHA256": "05b9c7573950468baa67a12a8b20eca39ef113502a5da0c11d5799f7bd264863",
+      "finalURL": "https://docs.tigera.io/calico-cloud/about",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "9b2a509d9e2e": {
+      "url": "https://etcd.io/docs/v3.6/tuning/",
+      "key": "9b2a509d9e2e",
+      "rawSHA256": "57444865435c52e69b613738b6a8c90a7b769c3204fd626640bc8661fba27d23",
+      "finalURL": "https://etcd.io/docs/v3.6/tuning/",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    "37811b47e239": {
+      "url": "https://etcd.io/docs/v3.6/op-guide/configuration/",
+      "key": "37811b47e239",
+      "rawSHA256": "a04be7696372eb106bb0e7a7476dfca0e98c18fe03606dc98e0da9f8e2c2e66b",
+      "finalURL": "https://etcd.io/docs/v3.6/op-guide/configuration/",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    }
+  },
+  "findings": [
+    "Fully read original EN1186/KO911 guide lines and EN198/KO198 quiz lines; all24questions retained and answers aligned. All17 figures actually viewed;10 retained with scope captions,7 redundant/inaccurate references removed; assets unchanged.",
+    "Calico3.32.2 IPAM implementation/public schema default maxBlocksPerHost0 differs from reference prose20; explained default discrepancy and positive-cap strictAffinity constraint. IPPool CIDR/blockSize immutable; explicit pool selection bypasses selectors; BlockAffinity read-only/state/deletion/type filtering corrected. Removed unsafe invented release --block and private-key reads.",
+    "WireGuard peer/inter-node scope, real booleans/IPv6 and keepalive-vs-rekey distinction corrected. Both original differing EN/KO crypto benchmark records preserved in both languages as unverified historical data; no invented performance guarantee or protocol-level FIPS certification.",
+    "Commercial EgressGateway uses operator.tigera.io/v1 and released operator schema; namespace selection, Calico CNI prerequisites, routable owned address pool, SNAT source and L7/source-identity limits explicit. NetworkPolicy/BGP advertisement alone does not implement a gateway. Federation distributes remote endpoint identity, not policies; Service selector annotation and matching namespace/named port/protocol corrected.",
+    "Windows current operator/HPC/HNS, IPv4-only/VXLANAlways/BGP alternatives, four reserved addresses and platform exclusions documented. Published Kubernetes1.36 and Calico OS-list intersection is Server2022; no unsupported universal Windows compatibility assertion. StrictAffinity merge patch preserves existing settings.",
+    "Typha exact operator1.42.6 formula corrected; unsupported replicas/env overrides and unsafe generic tuning removed. Refresh interval is not API polling; NFT iptables backend is not native Nftables dataplane. etcd capacity/presets and product performance/pricing claims bounded to evidence.",
+    "Broken official Egress/performance URLs replaced with fetched primary references. Public BlockAffinity deleted defaulting/old API alias means original strict-schema candidates are not all proven runtime errors. NIST403 is access uncertainty, not proven missing content.",
+    "Followup2026-09-12:AWSgeneralalternate-CNIpage stillstatescoreCalico/CiliumsupportforHybrid; specializedHybridCNIpage listsAWSmaintainedCilium/movesCalicoexamples. Qualified prior wording: do notinferCalicosupportterminationfromexamplemove;exactdistribution/capabilitysupportrequiresconfirmation.4currentVuecompilationspass;no code changed."
+  ],
+  "checks": {
+    "schemaObjects": 36,
+    "bashBlocks": 14,
+    "quizAnswers": 24,
+    "commercialGatewayObjects": 2,
+    "mergePatches": 2,
+    "poolCases": [
+      {
+        "language": "en",
+        "CIDRs": [
+          "10.244.0.0/16"
+        ],
+        "nonoverlapWithinScenario": true
+      },
+      {
+        "language": "en",
+        "CIDRs": [
+          "10.244.0.0/18",
+          "10.244.64.0/18",
+          "10.244.128.0/18"
+        ],
+        "nonoverlapWithinScenario": true
+      },
+      {
+        "language": "en",
+        "CIDRs": [
+          "10.244.0.0/16",
+          "fd00:10:244::/48"
+        ],
+        "nonoverlapWithinScenario": true
+      },
+      {
+        "language": "en",
+        "CIDRs": [
+          "203.0.113.0/28"
+        ],
+        "nonoverlapWithinScenario": true
+      },
+      {
+        "language": "ko",
+        "CIDRs": [
+          "10.244.0.0/16"
+        ],
+        "nonoverlapWithinScenario": true
+      },
+      {
+        "language": "ko",
+        "CIDRs": [
+          "10.244.0.0/18",
+          "10.244.64.0/18",
+          "10.244.128.0/18"
+        ],
+        "nonoverlapWithinScenario": true
+      },
+      {
+        "language": "ko",
+        "CIDRs": [
+          "10.244.0.0/16",
+          "fd00:10:244::/48"
+        ],
+        "nonoverlapWithinScenario": true
+      },
+      {
+        "language": "ko",
+        "CIDRs": [
+          "203.0.113.0/28"
+        ],
+        "nonoverlapWithinScenario": true
+      }
+    ],
+    "affinityQueryCases": [
+      {
+        "language": "en",
+        "name": "good",
+        "included": true,
+        "actualJQ": true
+      },
+      {
+        "language": "en",
+        "name": "legacy",
+        "included": true,
+        "actualJQ": true
+      },
+      {
+        "language": "en",
+        "name": "legacy-empty",
+        "included": true,
+        "actualJQ": true
+      },
+      {
+        "language": "en",
+        "name": "pending",
+        "included": false,
+        "actualJQ": true
+      },
+      {
+        "language": "en",
+        "name": "deleted",
+        "included": false,
+        "actualJQ": true
+      },
+      {
+        "language": "en",
+        "name": "virtual",
+        "included": false,
+        "actualJQ": true
+      },
+      {
+        "language": "ko",
+        "name": "good",
+        "included": true,
+        "actualJQ": true
+      },
+      {
+        "language": "ko",
+        "name": "legacy",
+        "included": true,
+        "actualJQ": true
+      },
+      {
+        "language": "ko",
+        "name": "legacy-empty",
+        "included": true,
+        "actualJQ": true
+      },
+      {
+        "language": "ko",
+        "name": "pending",
+        "included": false,
+        "actualJQ": true
+      },
+      {
+        "language": "ko",
+        "name": "deleted",
+        "included": false,
+        "actualJQ": true
+      },
+      {
+        "language": "ko",
+        "name": "virtual",
+        "included": false,
+        "actualJQ": true
+      }
+    ],
+    "IPAMCases": [
+      {
+        "globalCap": 0,
+        "requestCap": 0,
+        "effectiveCap": 0,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "globalCap": 0,
+        "requestCap": 2,
+        "effectiveCap": 2,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "globalCap": 4,
+        "requestCap": 0,
+        "effectiveCap": 4,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "globalCap": 4,
+        "requestCap": 8,
+        "effectiveCap": 4,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "globalCap": 4,
+        "requestCap": 2,
+        "effectiveCap": 2,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "strictAffinity": false,
+        "positiveCap": 0,
+        "setterAllowsCombination": true,
+        "modelOnly": true
+      },
+      {
+        "strictAffinity": true,
+        "positiveCap": 0,
+        "setterAllowsCombination": true,
+        "modelOnly": true
+      },
+      {
+        "strictAffinity": true,
+        "positiveCap": 4,
+        "setterAllowsCombination": true,
+        "modelOnly": true
+      },
+      {
+        "strictAffinity": false,
+        "positiveCap": 4,
+        "setterAllowsCombination": false,
+        "modelOnly": true
+      }
+    ],
+    "TyphaCases": [
+      {
+        "countedNodes": 1,
+        "replicas": 1,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "countedNodes": 2,
+        "replicas": 1,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "countedNodes": 3,
+        "replicas": 2,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "countedNodes": 4,
+        "replicas": 2,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "countedNodes": 5,
+        "replicas": 3,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "countedNodes": 100,
+        "replicas": 3,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "countedNodes": 399,
+        "replicas": 3,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "countedNodes": 400,
+        "replicas": 4,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "countedNodes": 500,
+        "replicas": 4,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "countedNodes": 1000,
+        "replicas": 7,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "countedNodes": 2000,
+        "replicas": 12,
+        "sourceDerivedModelOnly": true
+      },
+      {
+        "countedNodes": 5000,
+        "replicas": 27,
+        "sourceDerivedModelOnly": true
+      }
+    ],
+    "WindowsCases": [
+      {
+        "IPv4Block": 26,
+        "totalAddresses": 64,
+        "reserved": 4,
+        "remaining": 60,
+        "arithmeticOnly": true
+      },
+      {
+        "IPv4Block": 24,
+        "totalAddresses": 256,
+        "reserved": 4,
+        "remaining": 252,
+        "arithmeticOnly": true
+      },
+      {
+        "IPv4Block": 28,
+        "totalAddresses": 16,
+        "reserved": 4,
+        "remaining": 12,
+        "arithmeticOnly": true
+      },
+      {
+        "documentedOSIntersection": [
+          "Server2022"
+        ],
+        "KubernetesSource": "release-1.36",
+        "doesNotClaimOthersUnsupportedForever": true
+      }
+    ],
+    "GatewayCases": [
+      {
+        "explicitGatewayNamespace": false,
+        "selectionMatches": false,
+        "modelOnly": true
+      },
+      {
+        "explicitGatewayNamespace": true,
+        "selectionMatches": true,
+        "modelOnly": true
+      },
+      {
+        "poolNATOutgoing": false,
+        "beforeUpstreamNAT": "gatewayPodIP",
+        "modelOnly": true
+      },
+      {
+        "poolNATOutgoing": true,
+        "beforeUpstreamNAT": "gatewayNodeIP",
+        "modelOnly": true
+      }
+    ],
+    "FederatedServiceCases": [
+      {
+        "namespace": "calico-demo",
+        "serviceLabel": "catalog",
+        "portName": "http",
+        "protocol": "TCP",
+        "matched": true,
+        "modelOnly": true
+      },
+      {
+        "namespace": "other",
+        "serviceLabel": "catalog",
+        "portName": "http",
+        "protocol": "TCP",
+        "matched": false,
+        "modelOnly": true
+      },
+      {
+        "namespace": "calico-demo",
+        "serviceLabel": "other",
+        "portName": "http",
+        "protocol": "TCP",
+        "matched": false,
+        "modelOnly": true
+      },
+      {
+        "namespace": "calico-demo",
+        "serviceLabel": "catalog",
+        "portName": "admin",
+        "protocol": "TCP",
+        "matched": false,
+        "modelOnly": true
+      },
+      {
+        "namespace": "calico-demo",
+        "serviceLabel": "catalog",
+        "portName": "http",
+        "protocol": "UDP",
+        "matched": false,
+        "modelOnly": true
+      }
+    ],
+    "benchmarkPreservation": {
+      "en": {
+        "EnglishRecordA": true,
+        "KoreanRecordB": true,
+        "differentUnverifiedRecords": true,
+        "rerun": false
+      },
+      "ko": {
+        "EnglishRecordA": true,
+        "KoreanRecordB": true,
+        "differentUnverifiedRecords": true,
+        "rerun": false
+      }
+    },
+    "figures": {
+      "viewed": 17,
+      "retained": 10,
+      "removedReferences": 7
+    },
+    "limitations": [
+      "No live Calico/IPAM cleanup, gateway, federation, Windows, WireGuard, Typha scaling or etcd deployment tested.",
+      "Published custom resource structures checked against released schemas; commercial operator schema validation is not an Enterprise/Kubernetes compatibility or license check.",
+      "Affinity query ran against offline fixtures; other models illustrate reviewed source/API semantics.",
+      "No specific FIPS module certification assessed; NIST HTML/PDF fetches returned403. Protocol-level certification claims removed; verification guidance retained.",
+      "Both original crypto performance records remain explicitly unverified."
+    ]
+  },
+  "validation": [
+    "36 released-schema object checks including2 commercial EgressGateway objects and2 merged IPAM configurations;14 bash -n blocks;24quiz answer/choice matches.",
+    "Actual jq query passed12 affinity fixtures;9IPAM/12Typha/4Windows/4Gateway/5federation source-derived models; models are not live deployment tests.",
+    "Both original crypto record sets numerically preserved in both locales;17figure semantic reviews recorded.",
+    "Current4 Markdown→Vue compilations passed; networking-calico30file mechanical scan:149YAML/101shell blocks,0errors; scoped git diff --check clean.",
+    "Clean-env docs:test118/118,0fail; earlier retry regression remains passing."
+  ],
+  "artifacts": "/tmp/networking-calico-advanced-validation",
+  "limitations": [
+    "No live Calico/IPAM cleanup, gateway, federation, Windows, WireGuard, Typha scaling or etcd deployment tested.",
+    "Published custom resource structures checked against released schemas; commercial operator schema validation is not an Enterprise/Kubernetes compatibility or license check.",
+    "Affinity query ran against offline fixtures; other models illustrate reviewed source/API semantics.",
+    "No specific FIPS module certification assessed; NIST HTML/PDF fetches returned403. Protocol-level certification claims removed; verification guidance retained.",
+    "Both original crypto performance records remain explicitly unverified."
+  ],
+  "followupSources": [
+    "https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html",
+    "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html"
+  ],
+  "followupValidatedAtUTC": "2026-09-12T07:24:51.611776+00:00"
+}

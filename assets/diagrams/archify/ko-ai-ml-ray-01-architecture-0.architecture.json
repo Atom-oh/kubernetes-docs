@@ -2,129 +2,214 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Ray 클러스터 아키텍처",
-    "output": "ko-ai-ml-ray-01-architecture-0.html",
+    "title": "Ray: 제어·ownership·노드별 object store",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
+    "viewBox": [
+      1160,
+      650
+    ],
     "legend": {
-      "mode": "auto",
       "entries": {
         "backend": {
-          "label": "백엔드 서비스"
+          "label": "프로세스"
         },
         "database": {
-          "label": "데이터 저장소"
+          "label": "메모리 저장소"
+        },
+        "external": {
+          "label": "Driver"
         }
       }
     }
   },
   "components": [
     {
-      "id": "head",
-      "type": "backend",
-      "label": "Head Node",
-      "sublabel": "GCS · Driver · Autoscaler",
+      "id": "driver",
+      "type": "external",
+      "label": "Driver",
+      "sublabel": "ObjectRef owner (example)",
       "pos": [
         40,
-        200
+        90
       ],
       "size": [
-        190,
+        220,
+        80
+      ]
+    },
+    {
+      "id": "gcs",
+      "type": "backend",
+      "label": "GCS",
+      "sublabel": "cluster metadata",
+      "pos": [
+        470,
+        90
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "wa",
+      "type": "backend",
+      "label": "Worker A",
+      "sublabel": "raylet + tasks / actors",
+      "pos": [
+        330,
+        340
+      ],
+      "size": [
+        240,
         70
       ]
     },
     {
-      "id": "worker1",
-      "type": "backend",
-      "label": "Worker Node",
-      "sublabel": "Task / Actor 실행",
-      "pos": [
-        380,
-        60
-      ],
-      "size": [
-        190,
-        60
-      ]
-    },
-    {
-      "id": "worker2",
-      "type": "backend",
-      "label": "Worker Node",
-      "sublabel": "Task / Actor 실행",
-      "pos": [
-        380,
-        360
-      ],
-      "size": [
-        190,
-        60
-      ]
-    },
-    {
-      "id": "object-store",
+      "id": "oa",
       "type": "database",
-      "label": "Object Store",
-      "sublabel": "분산 공유 저장소",
+      "label": "Object store A",
+      "sublabel": "local shared memory",
       "pos": [
-        690,
-        200
+        330,
+        490
       ],
       "size": [
-        190,
+        240,
         70
+      ]
+    },
+    {
+      "id": "wb",
+      "type": "backend",
+      "label": "Worker B",
+      "sublabel": "raylet + tasks / actors",
+      "pos": [
+        800,
+        340
+      ],
+      "size": [
+        240,
+        70
+      ]
+    },
+    {
+      "id": "ob",
+      "type": "database",
+      "label": "Object store B",
+      "sublabel": "local shared memory",
+      "pos": [
+        800,
+        490
+      ],
+      "size": [
+        240,
+        70
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Head: control shown",
+      "wraps": [
+        "gcs"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node A",
+      "wraps": [
+        "wa",
+        "oa"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Node B",
+      "wraps": [
+        "wb",
+        "ob"
       ]
     }
   ],
   "connections": [
     {
-      "id": "head-worker1",
-      "from": "head",
-      "to": "worker1",
-      "label": "태스크 스케줄링"
-    },
-    {
-      "id": "head-worker2",
-      "from": "head",
-      "to": "worker2",
-      "label": "태스크 스케줄링"
-    },
-    {
-      "id": "head-store",
-      "from": "head",
-      "to": "object-store",
-      "label": "GCS 메타데이터",
+      "id": "lookup",
+      "from": "driver",
+      "to": "gcs",
+      "label": "control lookup",
       "variant": "dashed"
     },
     {
-      "id": "worker1-store",
-      "from": "worker1",
-      "to": "object-store",
-      "label": "put / get"
+      "id": "submit",
+      "from": "driver",
+      "to": "wa",
+      "label": "submit + dependency",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "variant": "emphasis"
     },
     {
-      "id": "worker2-store",
-      "from": "worker2",
-      "to": "object-store",
-      "label": "put / get"
+      "id": "gcs-a",
+      "from": "gcs",
+      "to": "wa",
+      "label": "node / actor control",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "dashed"
+    },
+    {
+      "id": "gcs-b",
+      "from": "gcs",
+      "to": "wb",
+      "fromSide": "right",
+      "toSide": "top",
+      "variant": "dashed"
+    },
+    {
+      "id": "local-a",
+      "from": "wa",
+      "to": "oa",
+      "label": "local read / store",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        450,
+        450
+      ]
+    },
+    {
+      "id": "local-b",
+      "from": "wb",
+      "to": "ob",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "transfer",
+      "from": "oa",
+      "to": "ob",
+      "label": "transfer when needed",
+      "variant": "emphasis"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Head Node",
+      "title": "역할 경계",
       "items": [
-        "Global Control Store(GCS)가 클러스터 메타데이터를 관리한다",
-        "드라이버가 사용자 프로그램을 실행한다",
-        "오토스케일러가 워커 노드를 추가/제거한다"
+        "GCS의 cluster metadata와 ObjectRef owner metadata를 구분",
+        "Head의 raylet·local store·사용자 작업은 그림에서 생략"
       ]
     },
     {
-      "dot": "emerald",
-      "title": "Worker Node",
+      "dot": "amber",
+      "title": "자원·메모리",
       "items": [
-        "스케줄된 태스크와 액터를 실행한다",
-        "분산 Object Store를 통해 공유 객체를 읽고 쓴다"
+        "단일 task/actor는 한 노드에 들어가야 함",
+        "같은 노드 NumPy read-only view와 노드 간 복사 비용을 구분"
       ]
     }
   ]

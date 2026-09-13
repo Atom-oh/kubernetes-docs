@@ -1,237 +1,219 @@
 # EKS Auto Mode 비용 관리 퀴즈
 
 > **관련 문서**: [비용 관리](../../eks-auto-mode/06-cost-management.md)
+> **마지막 업데이트**: 2026년 9월 12일
 
 ## 객관식 문제
 
-### 1. 비용 최적화를 위해 Graviton(ARM) 인스턴스를 포함하면 약 몇 % 비용 절감이 가능한가요?
+### 1. ARM 노드를 허용할 때 이전 “Graviton 20% 절감” 수치는 어떻게 사용해야 하나요?
 
-- A) 5%
-- B) 10%
-- C) 20%
-- D) 50%
+- A) AWS의 보편적 보장
+- B) 전체 청구액 할인
+- C) 검증되지 않은 예시로 두고 호환 워크로드·실제 요율 비교
+- D) 모든 이미지의 ARM 실행 증거
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 20%**
+**정답: C) 검증되지 않은 예시로 두고 호환 워크로드·실제 요율 비교**
 
 **설명:**
-AWS Graviton 프로세서 기반 인스턴스(arm64)는 동급 x86 인스턴스 대비 약 20% 저렴하면서도 우수한 성능을 제공합니다.
-
-```yaml
-spec:
-  template:
-    spec:
-      requirements:
-        # Graviton (ARM) 인스턴스 포함
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64", "arm64"]
-```
-
-**비용 최적화 전략:**
-- Graviton(ARM) 인스턴스 사용: ~20% 절감
-- Spot 인스턴스 사용: 최대 70-90% 절감
-- 적극적인 Consolidation: 저사용률 노드 통합
-- 적절한 리소스 요청: 오버프로비저닝 방지
+이전 ARM ~20%, Spot 70–90%는 이 워크로드에서 검증한 비교가 아닌 계획 예시입니다. 다중 아키텍처 이미지·의존성·유효 작업당 성능·현재 리전 요율·Auto Mode/기타 요금을 확인합니다. `amd64`와 `arm64` 허용은 애플리케이션 호환성 검증이나 특정 아키텍처 선택 보장이 아닙니다.
 
 </details>
 
-### 2. NodePool의 `limits` 설정에서 CPU 제한을 500으로 설정한 경우의 의미는?
+### 2. 동적 NodePool의 `limits.cpu: 500`은 무엇을 제한하나요?
 
-- A) 각 노드의 최대 CPU가 500 코어
-- B) NodePool 전체에서 최대 500 vCPU까지 프로비저닝 가능
-- C) Pod당 최대 500m CPU 사용 가능
-- D) 클러스터 전체 CPU 제한
+- A) 각 노드를 500 core로 제한
+- B) 해당 pool이 프로비저닝한 CPU 리소스 합계
+- C) 각 Pod를 500m로 제한
+- D) 계정의 모든 AWS 지출
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) NodePool 전체에서 최대 500 vCPU까지 프로비저닝 가능**
+**정답: B) 해당 pool이 프로비저닝한 CPU 리소스 합계**
 
 **설명:**
-NodePool의 `limits`는 해당 NodePool이 프로비저닝할 수 있는 총 리소스 양을 제한합니다.
-
+Pool 수준 리소스 상한이며 급격한 프로비저닝에서는 eventual consistency로 일시 초과할 수 있습니다. `1Ti`는 1 TiB(1024 GiB)이며 십진수 1 TB가 아닙니다. 리소스 limits는 확장을 제한하지만 인스턴스 가격·다른 서비스 비용을 계산하거나 강제 금액 예산을 적용하지는 않습니다.
 ```yaml
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
   name: compute-optimized
 spec:
-  limits:
-    cpu: 500      # 최대 500 vCPU
-    memory: 1Ti   # 최대 1TB 메모리
   template:
     spec:
       requirements:
-        - key: eks.amazonaws.com/instance-category
-          operator: In
-          values: ["c"]
+      - key: eks.amazonaws.com/instance-category
+        operator: In
+        values:
+        - m
+        - c
+        - r
+        - i
+        - d
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
+        - arm64
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - spot
+        - on-demand
       nodeClassRef:
         group: eks.amazonaws.com
         kind: NodeClass
         name: default
+      taints:
+      - key: cost-lab
+        value: 'true'
+        effect: NoSchedule
+    metadata:
+      labels:
+        cost-lab: 'true'
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 1m
+    budgets:
+    - nodes: 10%
+  limits:
+    cpu: '500'
+    memory: 1Ti
 ```
 
-이를 통해 비용 폭주를 방지하고 예산을 관리할 수 있습니다.
 
 </details>
 
-### 3. 저사용률 노드를 자동으로 정리하여 비용을 최적화하는 Consolidation 정책은?
+### 3. 재배치·비용 제약이 허용할 때 빈 노드와 저활용 노드의 consolidation을 허용하는 정책은 무엇인가요?
 
-- A) `consolidationPolicy: WhenEmpty`
-- B) `consolidationPolicy: WhenEmptyOrUnderutilized`
-- C) `consolidationPolicy: Always`
-- D) `consolidationPolicy: Aggressive`
+- A) `WhenEmpty`
+- B) `WhenEmptyOrUnderutilized`
+- C) `Always`
+- D) `Aggressive`
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) `consolidationPolicy: WhenEmptyOrUnderutilized`**
+**정답: B) `WhenEmptyOrUnderutilized`**
 
 **설명:**
-`WhenEmptyOrUnderutilized` 정책은 빈 노드와 저사용률 노드 모두를 통합 대상으로 합니다.
-
-```yaml
-disruption:
-  consolidationPolicy: WhenEmptyOrUnderutilized
-  consolidateAfter: 5m
-```
-
-**정책 비교:**
-- `WhenEmpty`: 빈 노드만 제거 (보수적, 안정성 우선)
-- `WhenEmptyOrUnderutilized`: 적극적인 비용 최적화
-
-비용 절감 효과: 저사용률 노드를 통합하여 전체 노드 수를 줄이고 인프라 비용 절감
+Requests 기반 배치 가능성과 비용을 평가하며 실측 CPU 임계값 아래의 모든 노드를 삭제하지 않습니다. `consolidateAfter`는 debounce이고 PDB·budget·배치 제약이 consolidation을 막을 수 있습니다. `WhenEmpty`는 범위가 더 좁지만 두 정책 모두 절감이나 다른 모든 중단 비활성화를 보장하지는 않습니다.
 
 </details>
 
-### 4. Savings Plans를 EKS Auto Mode와 함께 사용할 때 권장되는 접근 방식은?
+### 4. 적격 EC2 사용량의 패밀리·리전이 바뀔 수 있을 때 청구 유연성을 제공하는 옵션은 무엇인가요?
 
-- A) Compute Savings Plans로 인스턴스 패밀리 유연성 확보
-- B) EC2 Instance Savings Plans로 특정 인스턴스 타입 고정
-- C) Reserved Instances만 사용
-- D) Savings Plans 사용하지 않음
+- A) Compute Savings Plans
+- B) 한 패밀리·리전에 고정된 EC2 Instance Savings Plan
+- C) 정확히 한 크기의 Standard RI만
+- D) 모든 약정 할인 제외
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: A) Compute Savings Plans로 인스턴스 패밀리 유연성 확보**
+**정답: A) Compute Savings Plans**
 
 **설명:**
-Auto Mode는 워크로드에 따라 다양한 인스턴스 타입을 사용하므로, Compute Savings Plans가 가장 적합합니다.
-
-**Savings Plans 비교:**
-| 유형 | 유연성 | 할인율 |
-|------|--------|--------|
-| Compute Savings Plans | 인스턴스 패밀리, 크기, 리전, OS 유연 | 최대 66% |
-| EC2 Instance Savings Plans | 특정 인스턴스 패밀리 고정 | 최대 72% |
-
-```
-권장 전략:
-1. 기본 워크로드 양 분석 (3개월 기준)
-2. 최소 사용량의 70%를 Compute Savings Plans로 커버
-3. 나머지는 Spot/On-Demand로 유연하게 운영
-```
+Compute Savings Plans는 패밀리·크기·리전·OS·tenancy 유연성을 제공합니다. EC2 Instance Savings Plans는 패밀리·리전 약정이며 그 안의 크기·OS·tenancy 유연성이 있습니다. 광고 최대는 각각 66%·72%이며 예상 요율이 아닙니다. USD/hour 약정을 지속되는 적격 미커버 사용량·기존 약정·향후 변경과 맞추세요. 이전 3개월/70% coverage 전략은 검증되지 않은 계획 예시입니다. Spot·별도 Auto Mode 요금은 EC2 Savings Plans 할인을 받지 않으며 별도 ARM plan이나 GPU 전체 제외 규칙도 없습니다.
 
 </details>
 
-### 5. Kubecost를 사용한 비용 분석에서 Pod 수준 비용 할당을 위해 필요한 것은?
+### 5. 유용한 Kubecost Pod 수준 비용 할당에 필요한 것은 무엇인가요?
 
-- A) 별도 설정 없이 자동 지원
-- B) Pod에 cost-center 레이블 추가
-- C) Kubecost 에이전트 설치 및 클러스터 통합
-- D) AWS Cost Explorer만으로 충분
+- A) 설정·데이터 소스 불필요
+- B) Pod cost-center label만
+- C) 구성된 agent/클러스터 연동과 적절한 비용 데이터
+- D) Kubernetes 할당 데이터 없이 Cost Explorer만
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) Kubecost 에이전트 설치 및 클러스터 통합**
+**정답: C) 구성된 agent/클러스터 연동과 적절한 비용 데이터**
 
 **설명:**
-Kubecost는 Kubernetes 네이티브 비용 모니터링 도구로, 상세한 비용 분석을 제공합니다.
+검토한 Kubecost 3.2.4 chart는 새 저장소의 `kubecost/kubecost`입니다. 버전 3의 FinOps agent/ClickHouse 구조는 이전 cost-analyzer 배포와 다릅니다. 라이선스·private 접근·스토리지/보존·워크로드 IAM·청구 대조를 구성하세요. 설치 전에 검토한 values를 렌더링하며 label만으로 실제 비용 데이터가 생성되지는 않습니다.
 
 ```bash
-# Kubecost 설치 (Helm)
-helm repo add kubecost https://kubecost.github.io/cost-analyzer/
-helm install kubecost kubecost/cost-analyzer \
-    --namespace kubecost \
-    --create-namespace
+: "${KUBECOST_VALUES:?Set the reviewed Kubecost 3.2.4 values file}"
+test -f "$KUBECOST_VALUES"
+helm repo add kubecost https://kubecost.github.io/kubecost/
+helm repo update kubecost
+helm show chart kubecost/kubecost --version 3.2.4
+helm template cost-review kubecost/kubecost --version 3.2.4 \
+  --namespace kubecost --values "$KUBECOST_VALUES" \
+  > "$WORK_DIR/kubecost-rendered.yaml"
 ```
 
-Kubecost 기능:
-- 네임스페이스/워크로드별 비용 분석
-- 리소스 효율성 권장 사항
-- 예산 알림 설정
-- AWS 통합으로 실제 비용 정확도 향상
 
 </details>
 
-### 6. 리소스 요청(requests) 설정 시 오버프로비저닝을 방지하기 위한 모범 사례는?
+### 6. Resource request 변경에 어떤 증거를 사용해야 하나요?
 
-- A) 항상 limits와 requests를 동일하게 설정
-- B) 실제 사용량 기반 VPA 권장값 참고
-- C) requests를 가능한 높게 설정
-- D) requests 설정 생략
+- A) 항상 request와 limit을 같게 함
+- B) VPA 권장값과 대표 워크로드/SLO 증거
+- C) 모든 request 최대화
+- D) Requests 제거
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 실제 사용량 기반 VPA 권장값 참고**
+**정답: B) VPA 권장값과 대표 워크로드/SLO 증거**
 
 **설명:**
-Vertical Pod Autoscaler(VPA)를 사용하여 실제 리소스 사용량을 분석하고 적절한 requests 값을 설정합니다.
-
+`Off`는 권장값을 적용하지 않으며 정상 VPA 컴포넌트·metrics가 필요합니다. 모든 컨테이너, 신뢰도/이력, 시작 peak, memory limit과 CPU throttling을 확인하세요. 권장값은 성능·모든 OOM 방지·절감의 보장이 아닙니다. Quantity 비교 시 Kubernetes 단위 접미사를 지우지 마세요.
 ```yaml
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
-  name: my-app-vpa
+  name: cost-app-vpa
+  namespace: cost-lab
 spec:
   targetRef:
-    apiVersion: "apps/v1"
+    apiVersion: apps/v1
     kind: Deployment
-    name: my-app
+    name: cost-efficient-app
   updatePolicy:
-    updateMode: "Off"  # 권장값만 제공, 자동 적용 안함
+    updateMode: 'Off'
+  resourcePolicy:
+    containerPolicies:
+    - containerName: '*'
+      minAllowed:
+        cpu: 100m
+        memory: 128Mi
+      maxAllowed:
+        cpu: '4'
+        memory: 8Gi
 ```
 
-권장값 확인:
-```bash
-kubectl describe vpa my-app-vpa
-```
-
-이를 통해:
-- 오버프로비저닝 방지 (비용 절감)
-- 언더프로비저닝 방지 (성능 보장)
 
 </details>
 
-### 7. 다중 티어 워크로드에서 비용 효율적인 NodePool 분리 전략은?
+### 7. 티어별 interruption·아키텍처 요구가 실제로 다를 때 이를 표현할 수 있는 설계는 무엇인가요?
 
-- A) 모든 워크로드를 단일 NodePool에 배치
-- B) 티어별 NodePool 분리 (프론트엔드/API/배치/ML)
-- C) 인스턴스 크기별 NodePool 분리
-- D) 가용영역별 NodePool 분리
+- A) 모든 티어에 같은 배치 강제
+- B) 적절한 티어 pool과 일치하는 워크로드 제약
+- C) 모든 인스턴스 크기마다 별도 pool
+- D) 각 AZ가 별도 청구 할인이라고 가정
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 티어별 NodePool 분리 (프론트엔드/API/배치/ML)**
+**정답: B) 적절한 티어 pool과 일치하는 워크로드 제약**
 
 **설명:**
-워크로드 특성에 맞게 NodePool을 분리하면 최적의 비용/성능 균형을 달성할 수 있습니다.
+별도 pool은 실제 제약을 표현하지만 분할이 idle cost를 늘릴 수도 있습니다. Spot 전용 batch pool에는 On-Demand fallback이 없으므로 호환되는 interruption-tolerant 작업과 복구에 사용하세요. Pool 이름만으로 워크로드가 배치되지는 않으며 본문처럼 selector/toleration이 필요합니다.
 
-| 티어 | 전략 | 예상 절감률 |
-|------|------|------------|
+| 티어 | 이전 전략 | 원래의 미검증 절감 |
+|------|-----------|---------------------|
 | 프론트엔드 | On-Demand + Graviton | ~20% |
 | API | Spot 혼합 + Graviton | ~40% |
-| 배치 | Spot 전용 + 다양화 | ~70% |
-| ML | 적절한 인스턴스 크기 선택 | ~30% |
+| 배치 | Spot + 다양성 | ~70% |
+| ML | 인스턴스 적정화 | ~30% |
 
 ```yaml
-# 배치 티어 예시 - 최대 비용 절감
 apiVersion: karpenter.sh/v1
 kind: NodePool
 metadata:
@@ -240,51 +222,66 @@ spec:
   template:
     spec:
       requirements:
-        - key: karpenter.sh/capacity-type
-          operator: In
-          values: ["spot"]  # Spot 전용
-        - key: kubernetes.io/arch
-          operator: In
-          values: ["amd64", "arm64"]  # Graviton 포함
+      - key: eks.amazonaws.com/instance-category
+        operator: In
+        values:
+        - m
+        - c
+        - r
+        - i
+        - d
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+        - amd64
+        - arm64
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+        - spot
       nodeClassRef:
         group: eks.amazonaws.com
         kind: NodeClass
         name: default
+      taints:
+      - key: cost-lab
+        value: 'true'
+        effect: NoSchedule
+    metadata:
+      labels:
+        cost-lab: 'true'
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 1m
+    budgets:
+    - nodes: 10%
+  limits:
+    cpu: '100'
+    memory: 400Gi
 ```
+
 
 </details>
 
-### 8. AWS Cost Explorer에서 EKS Auto Mode 비용을 태그별로 분류하려면?
+### 8. 커스텀 NodeClass 태그를 AWS 비용 할당에 사용하려면 무엇이 필요한가요?
 
-- A) 자동으로 모든 태그가 적용됨
-- B) NodeClass에 tags 필드 설정 필요
-- C) AWS Organizations에서 설정
-- D) 태그 기반 분류 불가능
+- A) 모든 Kubernetes label 자동 전파
+- B) 유효한 NodeClass·태깅 권한·실제 리소스 태그·Billing 활성화
+- C) AWS Organization 생성만
+- D) 태그 할당 불가능
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) NodeClass에 tags 필드 설정 필요**
+**정답: B) 유효한 NodeClass·태깅 권한·실제 리소스 태그·Billing 활성화**
 
 **설명:**
-NodeClass의 tags 필드를 통해 프로비저닝되는 노드에 비용 할당 태그를 적용합니다.
-
-```yaml
-apiVersion: eks.amazonaws.com/v1
-kind: NodeClass
-metadata:
-  name: production-nodeclass
-spec:
-  tags:
-    Environment: production
-    Team: platform
-    CostCenter: engineering-001
-    Project: kubernetes-platform
-```
-
-AWS Cost Explorer 설정:
-1. Billing Console에서 Cost Allocation Tags 활성화
-2. 원하는 태그 키 선택
-3. 24시간 후 Cost Explorer에서 확인 가능
+본문에는 identity/network selector가 있는 완전한 NodeClass가 있습니다. Node access entry·태그 권한을 검토하고 대상 pool에서 참조한 뒤 실제 태그·Billing key 활성화를 확인하세요. 사용자 정의 key는 표시까지 최대 24시간, 활성화에 추가 최대 24시간이 걸릴 수 있고 보고서 지연은 별도입니다. AWS 생성 EC2 클러스터 key는 `aws:eks:cluster-name`이며 control-plane 비용을 포함하지 않습니다. Namespace label만으로 모든 AWS 비용이 전파·할당되지는 않습니다.
 
 </details>
+
+## 참고 자료
+
+- [EKS pricing](https://aws.amazon.com/eks/pricing/)
+- [Savings Plans types](https://docs.aws.amazon.com/savingsplans/latest/userguide/plan-types.html)
+- [EKS billing tags](https://docs.aws.amazon.com/eks/latest/userguide/eks-using-tags.html)

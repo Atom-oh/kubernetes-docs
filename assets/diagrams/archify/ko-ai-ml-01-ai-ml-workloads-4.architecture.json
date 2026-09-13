@@ -5,7 +5,7 @@
     "title": "모델 서빙 아키텍처",
     "output": "ko-ai-ml-01-ai-ml-workloads-4.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "views": [
       {
         "id": "request-path",
@@ -24,7 +24,7 @@
           "inference",
           "storage"
         ],
-        "note": "추론 서비스는 Amazon S3, ECR, EFS에 보관된 모델과 이미지를 읽어 서빙한다."
+        "note": "모델 bytes 접근과 container image pull은 서로 다른 경로입니다."
       },
       {
         "id": "autoscale",
@@ -33,7 +33,7 @@
           "scaling",
           "inference"
         ],
-        "note": "HorizontalPodAutoscaler, KEDA, VerticalPodAutoscaler가 추론 서비스 파드를 확장한다."
+        "note": "HPA/KEDA는 replica, VPA는 요청 자원에 작용하며 지원 모드·메트릭이 필요합니다."
       }
     ],
     "legend": {
@@ -87,7 +87,7 @@
       "id": "inference",
       "type": "backend",
       "label": "추론 서비스",
-      "sublabel": "KServe · TorchServe · Triton Inference Server",
+      "sublabel": "KServe / 검증한 모델 서버",
       "pos": [
         560,
         60
@@ -101,7 +101,7 @@
       "id": "storage",
       "type": "database",
       "label": "모델 저장소",
-      "sublabel": "Amazon S3 · Amazon ECR · Amazon EFS",
+      "sublabel": "모델: S3/EFS; 이미지: ECR",
       "pos": [
         930,
         60
@@ -115,7 +115,7 @@
       "id": "scaling",
       "type": "backend",
       "label": "스케일링 옵션",
-      "sublabel": "HorizontalPodAutoscaler · KEDA · VerticalPodAutoscaler",
+      "sublabel": "Pod: HPA/KEDA; 자원: VPA",
       "pos": [
         560,
         240
@@ -172,11 +172,10 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "추론 서비스 배포 예시",
+      "title": "접근과 runtime",
       "items": [
-        "KServe: InferenceService, storageUri s3://로 모델 지정",
-        "TorchServe: Deployment + PVC model-store, LoadBalancer Service(8080/8081)",
-        "Triton Inference Server: Deployment + PVC model-repository, LoadBalancer Service(8000/8001/8002)"
+        "추론·관리·metrics 포트를 무인증 공개 LB로 함께 노출하지 않습니다.",
+        "URI·모델 형식·runtime·자격 증명·프로브를 함께 검증합니다."
       ]
     }
   ]

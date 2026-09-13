@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "Automated Resource Adjustment Pipeline — from VPA Recommendations through PR Review to ArgoCD Deploy",
+    "title": "Resource changes through VPA proposals and owner review",
     "locale": "en",
     "quality_profile": "showcase",
     "column_fit": "spread",
@@ -16,8 +16,8 @@
     {
       "id": "cronjob",
       "type": "cloud",
-      "label": "CronJob",
-      "sublabel": "runs weekly"
+      "label": "Collection",
+      "sublabel": "read-only"
     },
     {
       "id": "vpa",
@@ -29,7 +29,7 @@
       "id": "script",
       "type": "backend",
       "label": "Script",
-      "sublabel": "recs vs current requests"
+      "sublabel": "proposal JSON"
     },
     {
       "id": "gitci",
@@ -40,8 +40,8 @@
     {
       "id": "lead",
       "type": "external",
-      "label": "Team Lead",
-      "sublabel": "reviewer"
+      "label": "Owner",
+      "sublabel": "manifests and SLOs"
     },
     {
       "id": "argocd",
@@ -54,17 +54,17 @@
     {
       "from": 160,
       "to": 260,
-      "label": "Weekly automated run"
+      "label": "Read and calculate"
     },
     {
       "from": 275,
       "to": 425,
-      "label": "PR-based review"
+      "label": "Owner prepares and reviews changes"
     },
     {
       "from": 440,
       "to": 505,
-      "label": "Safe rollout"
+      "label": "Approved rollout and observation"
     }
   ],
   "messages": [
@@ -73,39 +73,38 @@
       "from": "cronjob",
       "to": "vpa",
       "y": 190,
-      "label": "query recommendations (kubectl get vpa)"
+      "label": "read recommendations and workloads"
     },
     {
       "id": "recs",
       "from": "vpa",
       "to": "script",
       "y": 235,
-      "label": "recommendation data",
+      "label": "match containers by name",
       "variant": "return"
     },
     {
-      "id": "pr",
+      "id": "proposal",
       "from": "script",
-      "to": "gitci",
+      "to": "lead",
       "y": 295,
-      "label": "open PR for changes over 20%",
+      "label": "JSON: request reduction at least 20%",
       "variant": "emphasis",
-      "note": "compared with current requests · change threshold 20%"
+      "note": "No automatic PR creation"
     },
     {
-      "id": "review",
-      "from": "gitci",
-      "to": "lead",
+      "id": "prepare",
+      "from": "lead",
+      "to": "gitci",
       "y": 355,
-      "label": "request PR review",
-      "note": "after CI trigger · lint checks pass"
+      "label": "edit manifests, PR and performance tests"
     },
     {
       "id": "approve",
       "from": "lead",
       "to": "gitci",
       "y": 400,
-      "label": "approve + merge",
+      "label": "review, approve and merge",
       "variant": "emphasis"
     },
     {
@@ -113,7 +112,7 @@
       "from": "gitci",
       "to": "argocd",
       "y": 465,
-      "label": "sync merged manifests"
+      "label": "sync, then observe SLOs"
     }
   ],
   "activations": [
@@ -124,15 +123,15 @@
       "type": "backend"
     },
     {
-      "participant": "gitci",
+      "participant": "lead",
       "from": 290,
-      "to": 470,
+      "to": 405,
       "type": "external"
     },
     {
-      "participant": "lead",
+      "participant": "gitci",
       "from": 350,
-      "to": 405,
+      "to": 470,
       "type": "external"
     },
     {

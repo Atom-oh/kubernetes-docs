@@ -2,7 +2,7 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "알림 라이프사이클",
+    "title": "규칙 상태와 해소 통지",
     "output": "ko-ops-07-observability-alerts-1.html",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -17,9 +17,6 @@
         },
         "security": {
           "label": "발생 상태"
-        },
-        "cloud": {
-          "label": "종료 상태"
         }
       }
     }
@@ -27,14 +24,13 @@
   "lanes": [
     {
       "id": "state",
-      "label": "알림 상태"
+      "label": "Prometheus 규칙 상태"
     }
   ],
   "mainPath": [
     "inactive",
     "pending",
-    "firing",
-    "resolved"
+    "firing"
   ],
   "nodes": [
     {
@@ -44,7 +40,7 @@
       "type": "external",
       "label": "Inactive",
       "sublabel": "조건 미충족",
-      "width": 160
+      "width": 220
     },
     {
       "id": "pending",
@@ -53,7 +49,7 @@
       "type": "backend",
       "label": "Pending",
       "sublabel": "for 기간 대기",
-      "width": 165
+      "width": 220
     },
     {
       "id": "firing",
@@ -61,17 +57,8 @@
       "col": 2,
       "type": "security",
       "label": "Firing",
-      "sublabel": "Alertmanager 전송",
-      "width": 175
-    },
-    {
-      "id": "resolved",
-      "lane": "state",
-      "col": 3,
-      "type": "cloud",
-      "label": "Resolved",
-      "sublabel": "조건 해소",
-      "width": 160
+      "sublabel": "전송 성공과 별개",
+      "width": 220
     }
   ],
   "edges": [
@@ -85,13 +72,7 @@
       "id": "t2",
       "from": "pending",
       "to": "firing",
-      "label": "for 기간 경과"
-    },
-    {
-      "id": "t3",
-      "from": "firing",
-      "to": "resolved",
-      "label": "조건 해소"
+      "label": "for 경과"
     },
     {
       "id": "t4",
@@ -103,9 +84,9 @@
     },
     {
       "id": "t5",
-      "from": "resolved",
+      "from": "firing",
       "to": "inactive",
-      "label": "다음 평가 주기",
+      "label": "조건 해소 · 선택적 유지 종료",
       "variant": "dashed",
       "role": "return"
     }
@@ -113,30 +94,29 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "상태 정의",
+      "title": "평가 상태",
       "items": [
-        "Inactive — 알림 조건이 충족되지 않은 상태",
-        "Pending — 조건은 충족됐지만 for 기간이 아직 지나지 않은 상태",
-        "Firing — 알림이 발생해 Alertmanager로 전송된 상태",
-        "Resolved — 조건이 해소되어 종료된 상태"
+        "Inactive: 현재 활성 alert instance가 없다",
+        "Pending: 조건이 유지되는지 for 기간을 확인한다",
+        "Firing: 조건이 충족되어 활성화된 규칙 상태다"
       ]
     },
     {
       "dot": "emerald",
-      "title": "for 기간이 하는 일",
+      "title": "시간과 누락된 데이터",
       "items": [
-        "일시적인 스파이크로 알림이 뜨는 것을 막아 준다",
-        "for 기간 안에 조건이 풀리면 Firing 없이 Inactive로 돌아간다",
-        "너무 길면 감지가 늦고 너무 짧으면 오탐이 늘어난다"
+        "for가 0이면 첫 평가에서 바로 Firing이 될 수 있다",
+        "keep_firing_for는 조건 해소 뒤의 선택적 유지 시간이다",
+        "누락된 시계열을 서비스가 복구됐다는 증거로 보지 않는다"
       ]
     },
     {
       "dot": "amber",
-      "title": "운영에서 볼 것",
+      "title": "Resolved는 전달 단계",
       "items": [
-        "Prometheus UI의 Alerts 화면에서 Pending·Firing 상태를 직접 확인한다",
-        "Resolved 알림도 Alertmanager로 전송되어 해소 통지를 보낼 수 있다",
-        "ALERTS 메트릭으로 알림 상태 자체를 시계열로 추적할 수 있다"
+        "Firing 종료 시 Alertmanager에 해소 갱신을 보낼 수 있다",
+        "외부 해소 통지는 수신기의 send_resolved와 라우팅에 따른다",
+        "ALERTS는 Pending·Firing을 관찰하는 메트릭이며 감사 이력을 대신하지 않는다"
       ]
     }
   ]

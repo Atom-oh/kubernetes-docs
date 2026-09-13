@@ -1,0 +1,147 @@
+{
+  "date": "2026-09-12",
+  "diagrams": [
+    {
+      "stem": "ko-ops-14-tekton-pipelines-0",
+      "specSha256": "eae917210075603e6380f398d109b071e7c103bc4785ad20bdd8a4e5c0f28e80",
+      "htmlSha256": "726ee5df05f6608e9083597e2e20e3570e1320f4dab3ee4c8481427785d8cf66",
+      "pngSha256": "4397a53f066280e7772511eebd585f30fc05e7bf047d1b8f2ef8fa38bfc959e4",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "ko-ops-14-tekton-pipelines-1",
+      "specSha256": "d27a82fe138c95eca230ee936a133bd1eca44ac248431104a619e564d197d58c",
+      "htmlSha256": "9c815060150f21b0a81fae4c0164b13ebfaec0598c98489017b40a819dc98fd6",
+      "pngSha256": "f83215a860b1cd9315aba6507bd03e4bd474a1abdfba0782a49f32ec3917e7bc",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "ko-ops-14-tekton-pipelines-2",
+      "specSha256": "05dfe3c68ad8d316ecde890e05d67892e6e1ddf17fb56da7103884ef849b0861",
+      "htmlSha256": "e52cf11d4e9f14ae7c5f85291b487922974a281d03d68f3f837618abc5ab3f3d",
+      "pngSha256": "72c38f8e70e3ce414d50a5c1f393740b72e371d285341637d971bce5ff9ae0a3",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "ko-ops-14-tekton-pipelines-3",
+      "specSha256": "a6e4637f145b898a794ea5198ee43a4d926f4588e883b3ae87913796fc526010",
+      "htmlSha256": "f96c816ba29d4848cbe815159494eeb8f7ab68532cbbb9bbb779926b1f8e65c8",
+      "pngSha256": "aaef2332af7fde6235bb0702b8ea624d19b844677f1fdbc3ee4667e79e957fbd",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "ko-ops-14-tekton-pipelines-4",
+      "specSha256": "6ab0d4767f125bfc68bd6b852039250e5d398622fe4943ae915004ae464cc343",
+      "htmlSha256": "0b56bae4248193f4dae748528ae9614cb0833e1bb51538de0330a27ce0766f8c",
+      "pngSha256": "9773b195966d2366a8ab7aa516891399c0148a6336379fd70b2e02e461d7e977",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "ko-ops-14-tekton-pipelines-5",
+      "specSha256": "c31f8b5e1294a0c204bb6f1b7148c5dabf7d0a270784d69121aca2d6b2479ca6",
+      "htmlSha256": "0e6a030b55b487cb16abe4221b38e14092d11c328cb87d5de13be9f10189ca46",
+      "pngSha256": "08dbfaa7ce0c3abd6249b1076395b8007ccd28553fdf4b5a0e37cac9266b4ed1",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "en-ops-14-tekton-pipelines-0",
+      "specSha256": "8a5bbda72e1bf42aeaef661937471b108df62c4f7389ad30ab228343f4bcbcd1",
+      "htmlSha256": "d958b5c732ce4dd0959d16bcdc0f9ed7250831b7d14a5435388a7b60cc578eb6",
+      "pngSha256": "1e584e48e0ae2c317fe4d75f714c99f70261f87556f131479e330f56428a0513",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "en-ops-14-tekton-pipelines-1",
+      "specSha256": "483ed5048ec1acdff6f62d1d37707e1deeac5931a434e69efb9aa3d961eaf49c",
+      "htmlSha256": "4142ad28cb8b5c6d5eac418126e516648eb519b9af9bbc8c0143dffecc57735b",
+      "pngSha256": "623d1a3563c98210272b206f414363568fb5d17bb12cc25ede5f32a29c9dae34",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "en-ops-14-tekton-pipelines-2",
+      "specSha256": "90ae2b1428a57574b7180630d05f3ab27401a143ae5f6694ca2fd75b2c3edec4",
+      "htmlSha256": "05646dbb38b208ecf0a3561659cfa7a1e4f4e1eb7a2a5c2ce222bcaeddb8d9fe",
+      "pngSha256": "ef187b2e7b942e8d3907cd2665b1f334c484ab841668d6bc677914ca6438852c",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "en-ops-14-tekton-pipelines-3",
+      "specSha256": "9ff300dcf9ad8833e56e4b5abb9686984b707cd60c796d205e22d888cefc31ee",
+      "htmlSha256": "24943dec2461ff3c8aeeacc2eafed2d6590b746496ff49fd9bcce4fb096a47e7",
+      "pngSha256": "65771276799e1be0b09699ebc460315f42219799146d1d6888cb7bbe27ab14e6",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "en-ops-14-tekton-pipelines-4",
+      "specSha256": "5c39df8a95c91a9613f1637d5780258e00d884e04617fc367f22de6e26a39689",
+      "htmlSha256": "b10d1e09a9ff666390cd91d99980d5ebe6162aaa35437e0b402a8b4f5bc74ba8",
+      "pngSha256": "4ea1d222685fbf00679b9578d04ca413690a609ab0c898b52100cd22dc1de6fb",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "en-ops-14-tekton-pipelines-5",
+      "specSha256": "17adb749e6538d33ab6ec5695260c05179b7dcc88dafb67e6c290b9cf318bece",
+      "htmlSha256": "9924b99ec58111b1980dfa68f311ff40634a6e8fbd6a3417485d0a037b9cf2d8",
+      "pngSha256": "fa49a85f890009be74417ff9dfba3a0bb1aba5ae7986a2a77e7f7199be1ebb05",
+      "composition": "9/9",
+      "containmentViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    }
+  ],
+  "mobile": {
+    "testedWidths": [
+      375,
+      768
+    ],
+    "cases": 30,
+    "types": [
+      "architecture",
+      "sequence",
+      "workflow",
+      "lifecycle"
+    ],
+    "checks": [
+      "horizontal page and toolbar containment",
+      "preset/export menu open-close",
+      "theme toggle",
+      "zoom/reset",
+      "presentation toggle/containment"
+    ],
+    "result": "passed"
+  },
+  "limitations": "Local artifact rendering; full audit merge/deployment still pending."
+}

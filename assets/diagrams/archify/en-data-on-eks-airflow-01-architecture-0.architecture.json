@@ -9,273 +9,360 @@
     "animation": "trace",
     "views": [
       {
-        "id": "shared-db",
-        "label": "Shared metadata DB",
+        "id": "control",
+        "label": "Metadata / control",
         "focus": [
+          "bundle",
+          "processor",
+          "db",
+          "triggerer",
           "api",
-          "dp",
-          "trg",
-          "sch",
-          "pg"
+          "scheduler"
         ],
-        "note": "All four services share one PostgreSQL. Only the dag-processor writes DAGs; the scheduler only reads serialized_dag."
+        "note": "Core roles and optional triggerer; prepare metadata storage and code delivery separately."
       },
       {
-        "id": "celery-path",
-        "label": "CeleryExecutor path",
+        "id": "kubernetes",
+        "label": "KubernetesExecutor",
         "focus": [
-          "sch",
-          "redis",
-          "w1",
-          "w2"
+          "scheduler",
+          "kpod",
+          "api"
         ],
-        "note": "The scheduler queues tasks on the Redis broker and warm Celery worker pods pull them. Only needed with CeleryExecutor."
+        "note": "Task pods are created through Kubernetes; supervisors call the Execution API."
       },
       {
-        "id": "k8s-path",
-        "label": "KubernetesExecutor path",
+        "id": "celery",
+        "label": "CeleryExecutor",
         "focus": [
-          "sch",
-          "kpod"
+          "scheduler",
+          "broker",
+          "worker",
+          "api"
         ],
-        "note": "The scheduler creates a dedicated pod per task instance; the pod is torn down on completion."
+        "note": "Workers receive broker tasks; task supervisors use the Execution API."
       }
     ]
   },
   "components": [
     {
+      "id": "bundle",
+      "type": "database",
+      "label": "DAG bundle / code",
+      "sublabel": "Processor + worker code",
+      "pos": [
+        40,
+        50
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "processor",
+      "type": "backend",
+      "label": "DAG processor",
+      "sublabel": "Parse and serialize",
+      "pos": [
+        290,
+        50
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Metadata DB",
+      "sublabel": "PostgreSQL / MySQL",
+      "pos": [
+        540,
+        50
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "triggerer",
+      "type": "backend",
+      "label": "Triggerer (optional)",
+      "sublabel": "Async triggers",
+      "pos": [
+        790,
+        50
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
       "id": "api",
       "type": "frontend",
-      "label": "airflow api-server",
-      "sublabel": "Deployment · UI + REST API v2",
+      "label": "API server",
+      "sublabel": "UI / REST / Execution API",
       "pos": [
-        60,
-        60
+        540,
+        230
       ],
       "size": [
-        200,
-        60
+        190,
+        64
       ]
     },
     {
-      "id": "dp",
+      "id": "scheduler",
       "type": "backend",
-      "label": "airflow dag-processor",
-      "sublabel": "Deployment · parses DAG files",
+      "label": "Scheduler + executor",
+      "sublabel": "State and task submission",
       "pos": [
-        330,
-        60
+        790,
+        230
       ],
       "size": [
-        200,
-        60
-      ]
-    },
-    {
-      "id": "trg",
-      "type": "backend",
-      "label": "airflow triggerer",
-      "sublabel": "Deployment · deferrable operators",
-      "pos": [
-        600,
-        60
-      ],
-      "size": [
-        200,
-        60
-      ]
-    },
-    {
-      "id": "pg",
-      "type": "database",
-      "label": "PostgreSQL",
-      "sublabel": "StatefulSet · metadata DB",
-      "pos": [
-        330,
-        220
-      ],
-      "size": [
-        200,
-        60
-      ]
-    },
-    {
-      "id": "sch",
-      "type": "backend",
-      "label": "airflow scheduler",
-      "sublabel": "Deployment · scheduling only",
-      "pos": [
-        870,
-        220
-      ],
-      "size": [
-        200,
-        60
-      ]
-    },
-    {
-      "id": "redis",
-      "type": "messagebus",
-      "label": "Redis broker",
-      "sublabel": "Celery task queue",
-      "pos": [
-        600,
-        380
-      ],
-      "size": [
-        200,
-        60
+        190,
+        64
       ]
     },
     {
       "id": "kpod",
       "type": "backend",
-      "label": "Per-task worker pod",
-      "sublabel": "KubernetesExecutor",
+      "label": "Kubernetes task pod",
+      "sublabel": "Task SDK + supervisor",
       "pos": [
-        870,
-        380
+        290,
+        410
       ],
       "size": [
-        200,
-        60
+        190,
+        64
       ]
     },
     {
-      "id": "w1",
+      "id": "worker",
       "type": "backend",
-      "label": "Celery worker 1",
-      "sublabel": "Pod · always running",
+      "label": "Celery worker pool",
+      "sublabel": "Task SDK + supervisor",
       "pos": [
-        330,
-        540
+        540,
+        410
       ],
       "size": [
-        200,
-        60
+        190,
+        64
       ]
     },
     {
-      "id": "w2",
-      "type": "backend",
-      "label": "Celery worker 2",
-      "sublabel": "Pod · always running",
+      "id": "broker",
+      "type": "messagebus",
+      "label": "Celery broker",
+      "sublabel": "Redis or alternative",
       "pos": [
-        600,
-        540
+        790,
+        410
       ],
       "size": [
-        200,
-        60
+        190,
+        64
       ]
     }
   ],
   "boundaries": [
     {
       "kind": "region",
-      "label": "Kubernetes Cluster",
+      "label": "Airflow 3: logical components",
       "wraps": [
+        "bundle",
+        "processor",
+        "db",
+        "triggerer",
         "api",
-        "dp",
-        "trg",
-        "pg",
-        "sch",
-        "redis",
+        "scheduler",
         "kpod",
-        "w1",
-        "w2"
-      ]
-    },
-    {
-      "kind": "security-group",
-      "label": "Optional — CeleryExecutor only",
-      "wraps": [
-        "redis",
-        "w1",
-        "w2"
+        "worker",
+        "broker"
       ]
     }
   ],
   "connections": [
     {
-      "id": "dp-writes-pg",
-      "from": "dp",
-      "to": "pg",
-      "label": "writes parsed DAGs",
-      "variant": "emphasis",
+      "id": "code-to-processor",
+      "from": "bundle",
+      "to": "processor",
+      "label": "DAG code",
       "labelAt": [
-        430,
-        170
+        260,
+        70
       ]
     },
     {
-      "id": "sch-reads-pg",
-      "from": "sch",
-      "to": "pg",
-      "label": "reads serialized_dag",
-      "variant": "emphasis",
+      "id": "processor-to-db",
+      "from": "processor",
+      "to": "db",
+      "label": "serialize",
       "labelAt": [
-        700,
-        236
+        510,
+        70
       ]
     },
     {
-      "id": "api-state-pg",
+      "id": "triggerer-to-db",
+      "from": "triggerer",
+      "to": "db",
+      "label": "trigger state",
+      "labelAt": [
+        760,
+        134
+      ]
+    },
+    {
+      "id": "api-to-db",
       "from": "api",
-      "to": "pg",
-      "label": "reads/writes state"
-    },
-    {
-      "id": "trg-state-pg",
-      "from": "trg",
-      "to": "pg",
-      "label": "reads/writes trigger state"
-    },
-    {
-      "id": "sch-queues-redis",
-      "from": "sch",
-      "to": "redis",
-      "label": "queues task via broker",
-      "variant": "dashed"
-    },
-    {
-      "id": "redis-to-w1",
-      "from": "redis",
-      "to": "w1",
-      "variant": "dashed"
-    },
-    {
-      "id": "redis-to-w2",
-      "from": "redis",
-      "to": "w2",
-      "variant": "dashed"
-    },
-    {
-      "id": "sch-creates-kpod",
-      "from": "sch",
-      "to": "kpod",
-      "label": "creates pod per task",
+      "to": "db",
+      "label": "state R/W",
+      "fromSide": "top",
+      "toSide": "bottom",
       "labelAt": [
-        970,
-        330
+        615,
+        184
+      ]
+    },
+    {
+      "id": "scheduler-to-db",
+      "from": "scheduler",
+      "to": "db",
+      "label": "DAG / state R/W",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          885,
+          180
+        ],
+        [
+          1000,
+          180
+        ],
+        [
+          1000,
+          5
+        ],
+        [
+          635,
+          5
+        ]
+      ],
+      "labelAt": [
+        925,
+        165
+      ]
+    },
+    {
+      "id": "scheduler-to-broker",
+      "from": "scheduler",
+      "to": "broker",
+      "label": "queue tasks",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        927,
+        357
+      ]
+    },
+    {
+      "id": "broker-to-worker",
+      "from": "broker",
+      "to": "worker",
+      "label": "task delivery",
+      "labelAt": [
+        760,
+        492
+      ]
+    },
+    {
+      "id": "worker-to-api",
+      "from": "worker",
+      "to": "api",
+      "label": "Execution API",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        677,
+        357
+      ]
+    },
+    {
+      "id": "kpod-to-api",
+      "from": "kpod",
+      "to": "api",
+      "label": "Execution API",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          510,
+          442
+        ],
+        [
+          510,
+          262
+        ]
+      ],
+      "labelAt": [
+        469,
+        352
+      ]
+    },
+    {
+      "id": "scheduler-to-kpod",
+      "from": "scheduler",
+      "to": "kpod",
+      "label": "Kubernetes API: create task pod",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          1030,
+          262
+        ],
+        [
+          1030,
+          515
+        ],
+        [
+          385,
+          515
+        ]
+      ],
+      "labelAt": [
+        910,
+        503
       ]
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Metadata DB",
+      "title": "DAG code",
       "items": [
-        "PostgreSQL is always required — stores DAG/task state, serialized_dag, connections, variables, XComs",
-        "DAG file access is isolated to the dag-processor pod(s); the scheduler and api-server never parse files directly"
+        "Bundles/code needed by processor and workers",
+        "Versioning depends on the bundle"
       ]
     },
     {
       "dot": "amber",
-      "title": "Executors",
+      "title": "Deployment choices",
       "items": [
-        "KubernetesExecutor: a fresh pod per task, near-zero idle cost",
-        "CeleryExecutor: warm worker pool + Redis (or RabbitMQ) broker required"
+        "Database/broker and workload kinds vary",
+        "Idle control-plane and node costs remain"
       ]
     }
   ]

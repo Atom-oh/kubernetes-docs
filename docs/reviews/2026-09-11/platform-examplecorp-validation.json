@@ -1,0 +1,379 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T23:38:38.212502+00:00",
+  "scope": {
+    "documents": 2,
+    "exampleFiles": 2,
+    "figures": 2
+  },
+  "originalFiles": [
+    {
+      "path": "ko/platform-engineering/05-example-corp-app.md",
+      "lines": 216,
+      "sha256": "2d393d357c74e1e49f082e9595b112caa70b64c9c4bc65c6082523b32a797359"
+    },
+    {
+      "path": "en/platform-engineering/05-example-corp-app.md",
+      "lines": 219,
+      "sha256": "aea0e765c6f236d092921bfb7b98f0f4ab794296024228cf0fe9cd1645dae681"
+    }
+  ],
+  "contentPreservation": "ACK/krointegration,4appresources,infrastructureinputs,Order/Payment,Aurorareplicas,BlueGreen/rollingtopicsretained;invalidRGDreplacedwithCELandexplicitfictionalappcontract. AddedmissingLBCcontrollerandService->TGB->Deploymentordering/credentialfiles/boundaries.",
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/platform-engineering/05-example-corp-app.md",
+        "sha256": "26f38ef4787e04cb7dfb69b84b359181d7d66b3f5a617485feb5d7094b56fa2b",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "examplecorp-주문-시스템-ack-kro-통합-구성"
+          },
+          {
+            "tag": "h2",
+            "id": "시나리오와-검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "인프라와-애플리케이션-전제"
+          },
+          {
+            "tag": "h2",
+            "id": "readiness-gate와-생성-순서"
+          },
+          {
+            "tag": "h2",
+            "id": "resourcegraphdefinition"
+          },
+          {
+            "tag": "h2",
+            "id": "인스턴스-입력"
+          },
+          {
+            "tag": "h2",
+            "id": "검증과-운영"
+          },
+          {
+            "tag": "h2",
+            "id": "수행한-검증"
+          }
+        ],
+        "renderedIds": [
+          "examplecorp-주문-시스템-ack-kro-통합-구성",
+          "시나리오와-검증-범위",
+          "인프라와-애플리케이션-전제",
+          "readiness-gate와-생성-순서",
+          "resourcegraphdefinition",
+          "인스턴스-입력",
+          "검증과-운영",
+          "수행한-검증"
+        ]
+      },
+      {
+        "path": "en/platform-engineering/05-example-corp-app.md",
+        "sha256": "afaf67e7352918428badc8ab73e094974a56ac2a57a0fc355937bd459094571d",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "examplecorp-order-system-ack-kro-integration"
+          },
+          {
+            "tag": "h2",
+            "id": "scenario-and-verification-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "infrastructure-and-application-prerequisites"
+          },
+          {
+            "tag": "h2",
+            "id": "readiness-gates-and-creation-order"
+          },
+          {
+            "tag": "h2",
+            "id": "resourcegraphdefinition"
+          },
+          {
+            "tag": "h2",
+            "id": "instance-inputs"
+          },
+          {
+            "tag": "h2",
+            "id": "verification-and-operations"
+          },
+          {
+            "tag": "h2",
+            "id": "checks-performed"
+          }
+        ],
+        "renderedIds": [
+          "examplecorp-order-system-ack-kro-integration",
+          "scenario-and-verification-scope",
+          "infrastructure-and-application-prerequisites",
+          "readiness-gates-and-creation-order",
+          "resourcegraphdefinition",
+          "instance-inputs",
+          "verification-and-operations",
+          "checks-performed"
+        ]
+      }
+    ]
+  },
+  "native": {
+    "status": "passed",
+    "kro": "0.9.4",
+    "awsLoadBalancerController": "3.5.0",
+    "resources": [
+      "Service",
+      "ConfigMap",
+      "TargetGroupBinding",
+      "Deployment"
+    ],
+    "uniqueCELExpressions": 21,
+    "expressions": [
+      "dbConfig.metadata.name",
+      "deployment.status.availableReplicas",
+      "deployment.status.availableReplicas >= deployment.spec.replicas",
+      "deployment.status.observedGeneration >= deployment.metadata.generation",
+      "schema.metadata.name",
+      "schema.metadata.name + \"-db\"",
+      "schema.metadata.name + \"-tgb\"",
+      "schema.metadata.namespace",
+      "schema.spec.aurora.dbName",
+      "schema.spec.aurora.readerEndpoint",
+      "schema.spec.aurora.writerEndpoint",
+      "schema.spec.credentialsSecretName",
+      "schema.spec.image",
+      "schema.spec.port",
+      "schema.spec.replicas",
+      "schema.spec.targetGroupARN",
+      "schema.spec.vpcID",
+      "service.metadata.name",
+      "service.spec.clusterIP",
+      "string(schema.spec.aurora.port)",
+      "targetGroupBinding.metadata.name"
+    ],
+    "resourceOrder": [
+      "service",
+      "dbConfig",
+      "targetGroupBinding",
+      "deployment"
+    ],
+    "checks": [
+      "RGDversionedstructure",
+      "actualCELcompile/eval",
+      "TGBv1beta1versionedstructure",
+      "ServicePodselector",
+      "TGBServiceRef",
+      "TGBexistsbeforeDeploymentbyCELannotationreference",
+      "ConfigMapenvreference",
+      "statusprojection",
+      "file-mountedSecret;noSecretEnv"
+    ],
+    "scope": "SyntheticnativeCELandstructuralschemaonly.NoAWS/Kubernetes/controller/OrderAPIimage/DB/targethealth/Podreadinessgatemutationexecuted."
+  },
+  "exactPublishedMatches": [
+    {
+      "document": "ko/platform-engineering/05-example-corp-app.md",
+      "example": "examples/platform/examplecorp/order-rgd.yaml",
+      "sha256": "8bfbe330d732e898b500916f80147301d73c698693e5a4bcd73d635f69f344d9"
+    },
+    {
+      "document": "ko/platform-engineering/05-example-corp-app.md",
+      "example": "examples/platform/examplecorp/order-instance.yaml",
+      "sha256": "79096c8d8c9e32ccdbbbba7b2b835e2fce667aef08215a98c426e51d9a430d78"
+    },
+    {
+      "document": "en/platform-engineering/05-example-corp-app.md",
+      "example": "examples/platform/examplecorp/order-rgd.yaml",
+      "sha256": "8bfbe330d732e898b500916f80147301d73c698693e5a4bcd73d635f69f344d9"
+    },
+    {
+      "document": "en/platform-engineering/05-example-corp-app.md",
+      "example": "examples/platform/examplecorp/order-instance.yaml",
+      "sha256": "79096c8d8c9e32ccdbbbba7b2b835e2fce667aef08215a98c426e51d9a430d78"
+    }
+  ],
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "d79afac21f1dbf7d5aca6b13f6ff2c5fd3a9a06b6e033f4e974db4d8eed19a04"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "d79afac21f1dbf7d5aca6b13f6ff2c5fd3a9a06b6e033f4e974db4d8eed19a04"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "d79afac21f1dbf7d5aca6b13f6ff2c5fd3a9a06b6e033f4e974db4d8eed19a04"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "218f56eab6d3289c17497e6003723725e33b798d7fa911ad712e49e00c8a903a"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "218f56eab6d3289c17497e6003723725e33b798d7fa911ad712e49e00c8a903a"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "218f56eab6d3289c17497e6003723725e33b798d7fa911ad712e49e00c8a903a"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "diagrams": [
+    {
+      "path": "assets/diagrams/archify/ko-platform-engineering-05-example-corp-app-0.architecture.json",
+      "sha256": "afa23f02c50faf9d90849594160bc3a3534d5ab811b00f97b6947fcf7811db44"
+    },
+    {
+      "path": "public/archmaps/ko-platform-engineering-05-example-corp-app-0.html",
+      "sha256": "d79afac21f1dbf7d5aca6b13f6ff2c5fd3a9a06b6e033f4e974db4d8eed19a04"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-platform-engineering-05-example-corp-app-0.png",
+      "sha256": "a70a0ec47eec73e22edf8d98b3dc234ad1600244f10cf2d1c3115e31aee60d92"
+    },
+    {
+      "path": "assets/diagrams/archify/en-platform-engineering-05-example-corp-app-0.architecture.json",
+      "sha256": "da439654406fea3962b03eb15fd1630bd94f47a1d05b88ec6d876048b171e401"
+    },
+    {
+      "path": "public/archmaps/en-platform-engineering-05-example-corp-app-0.html",
+      "sha256": "218f56eab6d3289c17497e6003723725e33b798d7fa911ad712e49e00c8a903a"
+    },
+    {
+      "path": "en/.gitbook/assets/en-platform-engineering-05-example-corp-app-0.png",
+      "sha256": "a21932ed759c7ef7608d8c8dc5f93a11995cc0b3767026c77cac2b5e976703b4"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/targetgroupbinding/targetgroupbinding.md",
+      "status": 200,
+      "sha256": "75c67f2642ab7c8459238515886efa7044d395746e8a90fe46ab3c957a36c7b0"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/deploy/pod_readiness_gate.md",
+      "status": 200,
+      "sha256": "61b1abfcfa8eb142bf02e9323b25daf83b1142d80e8c239681b14a493e221d52"
+    }
+  ],
+  "limits": [
+    "FictionalOrderAPIimage/endpointsareexplicitplaceholders;noapplicationimplementationorworkingprivateimageclaimed.",
+    "NoAWS/Kubernetes/cloudresourcemutations,DBaccess,app/imageexecution,targethealth/Podmutationorloadtest.",
+    "CELdynamicfixturesandversionedRGD/TGBstructuresonly;notactualkrographcompiler/admission/LBCruntime.",
+    "NamespacegateinjectionandService/TGBexistencerequirementscheckedagainstofficial3.5.0docs;actualinjectionremainsdeploymentvalidation.",
+    "No full local VitePress build;2MDand6standaloneviewerchecks."
+  ],
+  "reviewFixes": [
+    "PLATFORM-R1-003:guidedviewnotesuseOrderAppinbothlocales;HTML/PNGregeneratedand6responsivecasespassed"
+  ]
+}

@@ -1,36 +1,14 @@
 # Istio
 
-> **Last Updated**: August 31, 2026
+> **Last Updated**: September 11, 2026
 
 A practical guide for utilizing Istio Service Mesh on Amazon EKS.
 
-### August 2026 Update: Istio 1.30.4 / 1.29.7 Security Patch Releases
+### September 2026 review: supported releases
 
-On August 27, 2026, the Istio 1.30.4 and 1.29.7 patch releases were published. These releases **contain security fixes ([ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/)), so upgrading promptly is recommended**:
+Istio 1.31.0 is GA; its [release announcement](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/) was published on August 31, 2026. For new installations, this guide uses 1.31.0 with an EKS version in both support windows: Kubernetes 1.34–1.36. Istio 1.31 supports Kubernetes 1.32–1.36; EKS standard support currently covers 1.34–1.36. Recheck the [Istio support matrix](https://istio.io/latest/docs/releases/supported-releases/) and [EKS version lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) before installation.
 
-- **13 Envoy CVEs fixed**: including a heap use-after-free in HTTP/2 trailer handling (CVE-2026-73513), an RBAC bypass via `ignore_path_parameters_in_path_matching` (CVE-2026-73553), and HTTP/2 memory exhaustion via discarded duplicate Host headers (CVE-2026-73550)
-- **1 Istio CVE fixed**: `BackendTLSPolicy` failing open to plaintext on sidecar proxies when its CA reference is unresolved (GHSA-qm8v-g4f9-qhjx)
-- Plus numerous stability fixes, such as a multicluster bug where a remote cluster's network gateway/endpoints could disappear after credential rotation
-
-Meanwhile, release candidates for the next version, 1.31, continued from rc.2 through rc.4 between August 25-27, so the official release is close. See the [1.30.4 official announcement](https://istio.io/latest/news/releases/1.30.x/announcing-1.30.4/) for details.
-
-### August 2026 Update: Istio 1.31 Enters RC
-
-On August 19, 2026, 1.31.0-beta.2 was followed the same day by the first release candidate, [1.31.0-rc.0](https://github.com/istio/istio/releases), moving the next minor version, 1.31, into the release-candidate stage. An RC is a pre-release for final validation just before GA — a signal that the official release is close. Keep using GA releases in production.
-
-### August 2026 Update: Istio 1.31 Enters Beta
-
-The release process for the next minor version, Istio 1.31, is underway: 1.31.0-alpha.2 was published on August 11, 2026, followed by 1.31.0-beta.0 on August 13 and 1.31.0-beta.1 on August 14. Alpha/beta builds are pre-releases for early validation, not production use — only pick them up if you want to test new features ahead of the GA release. See the [Istio releases page](https://github.com/istio/istio/releases) for details.
-
-### July 2026 Update: Istio 1.30.3 / 1.29.6 Patch Releases
-
-On July 16, 2026, the Istio 1.30.3 and 1.29.6 patch releases were published. Highlights of 1.30.3:
-
-- Improved istiod scalability in ambient mode by scoping XDS pushes from workload/service address changes to only the affected waypoints
-- Fixed a bug where istiod did not pick up updated remote cluster secrets (e.g. during credential/token rotation) until restarted
-- The pilot node untaint controller's taint name is now customizable via the `PILOT_NODE_UNTAINT_CONTROLLERS_TAINT_NAME` environment variable
-
-See the [official announcement](https://istio.io/latest/news/releases/1.30.x/announcing-1.30.3/) for details.
+Istio 1.30 and 1.29 are also supported as of this review. Existing installations on those branches need at least 1.30.4 or 1.29.7 for [ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/), which covers Envoy vulnerabilities, a BackendTLSPolicy fail-open, and an EnvoyFilter control-plane denial of service. Istio 1.28 is out of support. Istio 1.31 charts use `https://blob.istio.io/istio-release/charts`; the previous Google-hosted repository no longer receives new releases.
 
 ## Table of Contents
 
@@ -57,7 +35,7 @@ Istio is an open-source service mesh platform for connecting, securing, controll
 
 <div align="center"><img src="https://istio.io/latest/img/service-mesh.svg" alt="Istio Service Mesh" width="800"></div>
 
-A service mesh is an infrastructure layer that manages communication between microservices. Istio deploys a Sidecar Proxy (Envoy) alongside each service to intercept and control all network traffic. This provides the following capabilities without modifying application code:
+A service mesh is an infrastructure layer that manages communication between microservices. Istio supports Envoy sidecars and ambient mode (node-level ztunnel plus optional L7 waypoints). Proxies handle traffic enrolled in the mesh; excluded traffic and unsupported protocols are outside that coverage. This provides the following capabilities without modifying application code:
 
 * **Traffic Routing**: Intelligent routing, load balancing, Canary deployments
 * **Security**: Automatic mTLS, authentication, authorization
@@ -70,9 +48,11 @@ A service mesh is an infrastructure layer that manages communication between mic
 
 <p align="center"><img src="https://istio.io/latest/docs/examples/bookinfo/withistio.svg" alt="Application with Istio"><br><em>Application with Istio - Envoy Proxy deployed as Sidecar to each service</em></p>
 
-When Istio is applied, an Envoy Proxy is automatically deployed as a sidecar container to each microservice, transparently intercepting and controlling all network traffic.
+These Bookinfo diagrams illustrate sidecar mode. Automatic injection adds Envoy only to newly created pods in namespaces or workloads that opt in; ambient mode does not inject a sidecar.
 
 ## Do You Really Need a Service Mesh?
+
+The service-count thresholds and checklist scores below are discussion prompts, not Istio requirements. A small mesh can still be justified by security needs. The decision diagrams use the same illustrative thresholds.
 
 A service mesh is a powerful tool, but it's not suitable for every situation. Careful consideration is needed before adoption.
 
@@ -104,7 +84,7 @@ A service mesh is a powerful tool, but it's not suitable for every situation. Ca
 * Automatic mTLS encryption between services
 * SPIFFE-based Identity management
 * Fine-grained authentication/authorization policies
-* Guaranteed encrypted communication
+* Encrypted mesh traffic when mTLS is enforced; automatic mTLS alone does not reject plaintext clients
 
 **Difficult to Achieve Without Alternatives**:
 
@@ -148,7 +128,7 @@ spec:
 **Service Mesh Advantages**:
 
 * Automatic metric collection without application code modification
-* Automatic Distributed Tracing implementation
+* Proxy-generated trace spans; applications must propagate trace headers to correlate requests
 * Unified logging format
 * Service topology visualization (Kiali)
 
@@ -162,7 +142,7 @@ spec:
 
 **Use Instead**:
 
-* Kubernetes Ingress Controller (NGINX, Traefik)
+* A maintained Kubernetes Gateway API or Ingress controller
 * Simple load balancer
 * Application-level implementation
 
@@ -172,12 +152,12 @@ spec:
 
 * Service Mesh operational complexity > benefits gained
 * 5-10 services can be managed manually
-* NetworkPolicy provides sufficient security
+* NetworkPolicy can provide L3/L4 isolation when the CNI enforces it; it does not provide mTLS or HTTP authorization
 
 **Alternative**:
 
 ```yaml
-# Kubernetes NetworkPolicy is sufficient
+# L3/L4 ingress isolation; requires a NetworkPolicy-capable CNI
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -212,13 +192,11 @@ spec:
 
 **Service Mesh Overhead**:
 
-* Latency: +1-3ms (P50), +5-10ms (P99)
-* CPU: +10-20% per pod
-* Memory: +50-100MB per pod (Sidecar mode)
+Measure latency, CPU, and memory with representative traffic, proxy configuration, and telemetry settings. The [official performance page](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/) records an Istio 1.24 benchmark; those historical results are not guarantees for other versions or workloads.
 
 **Consider Alternatives**:
 
-* Ambient Mode (90% reduction in resource usage)
+* Ambient mode (shared L4 proxies; savings depend on traffic and waypoint deployment)
 * CNI-based solutions (Cilium)
 * Application-level optimization
 
@@ -227,12 +205,12 @@ spec:
 | Feature                    | Service Mesh                                 | CNI (Cilium)    | Ingress Controller | App-level                |
 | -------------------------- | -------------------------------------------- | --------------- | ------------------ | ------------------------ |
 | **L7 Traffic Management**  | ✅ Full support                               | ⚠️ Limited      | ⚠️ Ingress only    | ✅ Possible               |
-| **mTLS Automation**        | ✅ Full support                               | ✅ Possible      | ❌ Not supported    | ❌ Manual implementation  |
-| **Distributed Tracing**    | ✅ Automatic                                  | ❌ Not supported | ❌ Not supported    | ⚠️ Manual implementation |
+| **mTLS Automation**        | ✅ Full support                               | ⚠️ Mutual authentication and encryption are separate      | ❌ Not supported    | ❌ Manual implementation  |
+| **Distributed Tracing**    | ⚠️ Requires trace-context propagation                                  | ❌ Not supported | ❌ Not supported    | ⚠️ Manual implementation |
 | **L3/L4 Policies**         | ✅ Supported                                  | ✅ Full support  | ❌ Not supported    | ❌ Not supported          |
 | **Operational Complexity** | 🔴 High                                      | 🟡 Medium       | 🟢 Low             | 🟡 Medium                |
 | **Resource Overhead**      | <p>🔴 High (Sidecar)<br>🟢 Low (Ambient)</p> | 🟢 Low          | 🟢 Low             | 🟢 None                  |
-| **Suitable Scale**         | 10+ services                                 | All scales      | Small scale        | Small scale              |
+| **Suitable Scale**         | Requirements-dependent                                 | All scales      | Small scale        | Small scale              |
 
 ### CNI-Based Solution (Cilium)
 
@@ -245,9 +223,13 @@ Cilium provides many features at the **network level** based on eBPF:
 **When Cilium is More Suitable**:
 
 * L3/L4 network policies are the main purpose
-* High performance is a core requirement
-* Avoiding Service Mesh operational burden
-* Only simple mTLS and observability needed
+* Measured performance under the required policy/encryption settings meets the workload's needs
+* Reusing an existing Cilium deployment whose supported features meet the requirements
+* Network policy and observability are primary needs; Cilium out-of-band mutual authentication requires separate WireGuard/IPsec encryption for payload confidentiality
+
+Cilium 1.20.1 also provides a separate [ztunnel transparent-encryption beta](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst), selected with `encryption.type: ztunnel`. It provides TCP workload mTLS with namespace enrollment; both endpoints must be enrolled. It excludes ClusterMesh and host-networked Pods, and the released guide warns that ordinary L4 policies do not work on this path except when targeting HBONE port 15008. This is a distinct deployment choice with its own CA/bootstrap requirements.
+
+The diagram emphasizes the CNI role; Cilium also has L7 Envoy features. Component count and operational cost depend on the selected mode.
 
 **Reference**: [Cilium Documentation](../../networking/cilium/README.md)
 
@@ -311,7 +293,7 @@ If you determine that a Service Mesh is needed, adopt it gradually:
 
 1.  **Traffic Management**
 
-    <div align="center"><img src="https://istio.io/latest/docs/concepts/traffic-management/request-routing.svg" alt="Traffic Routing" width="500"></div>
+    VirtualService selects routes; DestinationRule defines subsets and destination traffic policies.
 
     * Intelligent routing and load balancing
     * A/B testing, Canary deployment, Blue/Green deployment
@@ -329,7 +311,7 @@ If you determine that a Service Mesh is needed, adopt it gradually:
 
     <div align="center"><img src="https://istio.io/latest/docs/tasks/observability/kiali/kiali-graph.png" alt="Kiali Service Graph" width="700"></div>
 
-    * Automatic metrics, logs, and trace generation
+    * Proxy metrics and configurable access logs and tracing
     * Prometheus, Grafana, Jaeger, Kiali integration
     * Service topology visualization
     * Real-time traffic monitoring
@@ -351,13 +333,14 @@ Istio consists of a Control Plane and a Data Plane:
 
 **Control Plane (istiod)**:
 
-* **Pilot**: Service discovery, traffic routing rule management
-* **Citadel**: Certificate generation and management, mTLS enablement
-* **Galley**: Configuration validation and deployment
+* Service discovery and proxy configuration (historically Pilot)
+* Certificate authority and identity management (historically Citadel)
+* Configuration validation; Galley is a retired standalone component, not a separate current service
 
 **Data Plane**:
 
-* **Envoy Proxy**: Deployed as a sidecar to each pod, intercepting and controlling all network traffic
+* **Sidecar mode**: Envoy per enrolled pod
+* **Ambient mode**: ztunnel per node for L4 security and optional waypoint proxies for L7 processing
 
 ### Benefits of Using Istio on Amazon EKS
 
@@ -367,7 +350,7 @@ Istio consists of a Control Plane and a Data Plane:
    * Uses Kubernetes Native API
 2. **Enhanced Security**
    * Automatic encryption between services
-   * Authentication integrated with AWS IAM
+   * AWS API access through EKS Pod Identity or IRSA; Istio workload identity remains service-account based
    * Fine-grained permission control
 3. **Improved Observability**
    * Integration with Amazon CloudWatch
@@ -380,7 +363,7 @@ Istio consists of a Control Plane and a Data Plane:
 
 ### Getting Started
 
-<div align="center"><img src="https://istio.io/latest/docs/tasks/traffic-management/ingress/ingress-gateway-example/gateway-api-topology.svg" alt="Gateway API Architecture" width="600"></div>
+[Gateway API guide](https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/)
 
 If you're new to Istio, read the documents in the following order:
 
@@ -392,6 +375,8 @@ If you're new to Istio, read the documents in the following order:
 6. [**Best Practices**](best-practices.md): Recommendations for production environments
 
 ### Hands-on Examples
+
+These routing excerpts require matching Services and DestinationRule subsets (`v1`/`v2`); see the traffic-management chapters.
 
 Each section includes working YAML examples. All examples are structured to be click-to-copy:
 
@@ -415,8 +400,13 @@ spec:
 
 * [Istio Official Documentation](https://istio.io/latest/docs/)
 * [Istio GitHub](https://github.com/istio/istio)
-* [AWS EKS Workshop - Istio](https://www.eksworkshop.com/intermediate/330_servicemesh_using_istio/)
-* [Istio Community](https://discuss.istio.io/)
+* [Istio EKS platform guidance](https://istio.io/latest/docs/setup/platform-setup/amazon-eks/)
+* [Istio Community](https://istio.io/latest/get-involved/)
+
+
+* [Tracing and application header propagation](https://istio.io/latest/docs/tasks/observability/distributed-tracing/overview/)
+* [Kubernetes NetworkPolicy capabilities](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+* [Cilium mutual authentication](https://docs.cilium.io/en/stable/network/servicemesh/mutual-authentication/mutual-authentication/)
 
 ### Quizzes
 

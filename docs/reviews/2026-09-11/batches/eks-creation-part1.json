@@ -1,0 +1,178 @@
+[
+  {
+    "path": "en/eks/02-eks-cluster-creation-part1.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected prerequisite permissions, signed/checksummed architecture-aware tools, federation, VPC requirements and actual series navigation.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html",
+      "https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html",
+      "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html",
+      "https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/",
+      "https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/",
+      "https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/",
+      "https://github.com/eksctl-io/eksctl/releases/tag/v0.230.0"
+    ],
+    "findings": [
+      "TOC points to sections absent from this part instead of the matching part pages.",
+      "Broad admin IAM policy asserted mandatory; outdated installers, hardcoded x86 binaries and old kubectl1.26; legacy VPC tags and internet access asserted required.",
+      "Retain useful diagrams as examples; qualify NAT topology and tag requirements.",
+      "Repaired TOC routing to actual part2/part3/part4/part5 pages and the complete CDK guide; retained the NAT example with qualification."
+    ],
+    "validation": [
+      "Read every line: 179 lines. No operations executed.",
+      "Across locales: 4 Bash blocks passed syntax and exact code parity; relative page links resolve; scoped diff check passed.",
+      "Reused the same verified installer body from the overview, including eight passing mocked download/checksum failure cases. No installations/logins/cloud operations."
+    ]
+  },
+  {
+    "path": "ko/eks/02-eks-cluster-creation-part1.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected prerequisite permissions, signed/checksummed architecture-aware tools, federation, VPC requirements and actual series navigation.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html",
+      "https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html",
+      "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html",
+      "https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/",
+      "https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/",
+      "https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/",
+      "https://github.com/eksctl-io/eksctl/releases/tag/v0.230.0"
+    ],
+    "findings": [
+      "TOC points to sections absent from this part instead of the matching part pages.",
+      "Broad admin IAM policy asserted mandatory; outdated installers, hardcoded x86 binaries and old kubectl1.26; legacy VPC tags and internet access asserted required.",
+      "Retain useful diagrams as examples; qualify NAT topology and tag requirements.",
+      "Repaired TOC routing to actual part2/part3/part4/part5 pages and the complete CDK guide; retained the NAT example with qualification.",
+      "Parent asset followup: ko-eks-02-eks-cluster-creation-part1-10 PNG/archmap visibly asserts wildcard IAM, mandatory internet and legacy VPC ownership tags. Temporarily commented out its embed/link while retaining source references for repair."
+    ],
+    "validation": [
+      "Read every line: 183 lines. No operations executed.",
+      "Across locales: 4 Bash blocks passed syntax and exact code parity; relative page links resolve; scoped diff check passed.",
+      "Reused the same verified installer body from the overview, including eight passing mocked download/checksum failure cases. No installations/logins/cloud operations."
+    ]
+  },
+  {
+    "path": "en/quizzes/eks/02-eks-cluster-creation-part1-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed and fixed15questions and2exercises, including verified EKS CLI version flag and previously reported semantic/operational corrections.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/eks-ami-deprecation-faqs.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/al2023.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/windows-support.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html",
+      "https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/cas.html",
+      "https://github.com/kubernetes/autoscaler/tree/master/charts/cluster-autoscaler",
+      "https://github.com/kubernetes/autoscaler/releases/tag/cluster-autoscaler-1.36.1",
+      "https://aws.amazon.com/ec2/spot/",
+      "https://aws.amazon.com/fargate/pricing/",
+      "https://aws.amazon.com/ec2/graviton/",
+      "https://aws.amazon.com/savingsplans/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/vpc-interface-endpoints.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/managed-node-update-behavior.html",
+      "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+      "https://awslabs.github.io/amazon-eks-ami/nodeadm/doc/api/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cni-iam-role.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html",
+      "https://github.com/kubernetes-sigs/metrics-server#requirements",
+      "https://schema.eksctl.io/",
+      "https://nginx.org/en/CHANGES-1.30",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx",
+      "https://docs.aws.amazon.com/cli/latest/reference/eks/create-cluster.html"
+    ],
+    "findings": [
+      "Ambiguous kubectl/no-controller, node-role/compute, AMI and AZ-selection questions; unsupported AL2/newcluster1.28 guidance.",
+      "Invalid get-cluster-version-list and describe-update arguments, obsolete cluster version and raw YAML inside Bash. The create-cluster --kubernetes-version flag itself was valid.",
+      "Overbroad node IAM, unsafe role/cluster examples, no autoscaler/metrics-server prerequisites, unsupported production/security guarantees.",
+      "Public endpoint security-group claim wrong; private networking/egress/PrivateLink requirements conflated.",
+      "Launch-template AL2 bootstrap, invalid JSON volume fragment, AMI pinning and managed-update assumptions need correction.",
+      "Hands-on exercises require bounded identity/namespace and cleanup behavior; no runtime/benchmark evidence provided.",
+      "Final bootstrap section wrongly places CoreDNS in the AWS control plane, uses AL2 bootstrap/invalid flags, fabricates CNI configuration, hardcodes DNS/maxPods and overwrites provider-owned nodegroup/AZ labels. Requires AL2023 nodeadm and addon/host responsibility correction.",
+      "Resolved the recorded defects; clarified launch-template ImageId/NodeConfig rules, CoreDNS dataplane placement, DEFAULT/MINIMAL update behavior and PDB limits.",
+      "Corrected CA chart9.59.0 default1.35.0 with explicit controller1.36.1 for EKS1.36; require dedicated identity and ASG discovery tags.",
+      "Preserved example sizing and published up-to discount numbers as conditional examples, removed production/availability/cost guarantees; no measured performance asserted.",
+      "Replaced unsafe shared-namespace policy exercise and unguarded cleanup with unique lab resources, dedicated kubeconfig and cluster-ARN/namespace-UID checks.",
+      "Confirmed with official AWS CLI2.36.43 reference and local2.35.11 parser: create-cluster uses --kubernetes-version. --version is the global CLI version switch and exits0 printing the CLI version. The interim audit error was corrected in commands, prose and reports; API JSON field version and eksctl --version were preserved."
+    ],
+    "validation": [
+      "Sequential full read of1-350,351-700,701-1050,1051-1400,1401-1750,1751-1980. No cloud operations.",
+      "Paired final code/answer parity:15 questions and17 details per locale;72 Bash blocks,8 JSON documents,14 eksctl configs(0.230.0),6 native objects(Kubernetes1.36.0),2 YAML fragments and2 MIME user-data blocks checked.",
+      "Offline Helm9.59.0 render:7 native objects;imagev1.36.1,existing service account and ASG discovery verified.",
+      "14 local fixture cases passed:4 NodeConfig metadata/MIME cases,6 cleanup identity/lookup cases,4 IAM creation/attachment cases. jq and MIME parser exercised; AWS/kubectl mutations mocked.",
+      "Scoped git diff --check passed; artifacts /tmp/eks-creation-part1-audit/validation.json. No actual cloud provision, node bootstrap, traffic test or benchmark.",
+      "Follow-on paired canary image pin corrected to officially verified NGINX stable1.30.4; no measured benchmark changed or image executed.",
+      "Version-option correction independently checked with3distinct literal commands across6paired docs using the actual localAWSCLI2.35.11 input-skeleton parser. --kubernetes-version is required; wrong--version reproduced exit0/CLIversion-only. No AWS calls. Evidence:/tmp/eks-cli-flag-correction-2026-09-11.json."
+    ]
+  },
+  {
+    "path": "ko/quizzes/eks/02-eks-cluster-creation-part1-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed and fixed15questions and2exercises, including verified EKS CLI version flag and previously reported semantic/operational corrections.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/eks-ami-deprecation-faqs.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/al2023.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/windows-support.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html",
+      "https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/cas.html",
+      "https://github.com/kubernetes/autoscaler/tree/master/charts/cluster-autoscaler",
+      "https://github.com/kubernetes/autoscaler/releases/tag/cluster-autoscaler-1.36.1",
+      "https://aws.amazon.com/ec2/spot/",
+      "https://aws.amazon.com/fargate/pricing/",
+      "https://aws.amazon.com/ec2/graviton/",
+      "https://aws.amazon.com/savingsplans/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/vpc-interface-endpoints.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/managed-node-update-behavior.html",
+      "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+      "https://awslabs.github.io/amazon-eks-ami/nodeadm/doc/api/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cni-iam-role.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html",
+      "https://github.com/kubernetes-sigs/metrics-server#requirements",
+      "https://schema.eksctl.io/",
+      "https://nginx.org/en/CHANGES-1.30",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx",
+      "https://docs.aws.amazon.com/cli/latest/reference/eks/create-cluster.html"
+    ],
+    "findings": [
+      "Ambiguous kubectl/no-controller, node-role/compute, AMI and AZ-selection questions; unsupported AL2/newcluster1.28 guidance.",
+      "Invalid get-cluster-version-list and describe-update arguments, obsolete cluster version and raw YAML inside Bash. The create-cluster --kubernetes-version flag itself was valid.",
+      "Overbroad node IAM, unsafe role/cluster examples, no autoscaler/metrics-server prerequisites, unsupported production/security guarantees.",
+      "Public endpoint security-group claim wrong; private networking/egress/PrivateLink requirements conflated.",
+      "Launch-template AL2 bootstrap, invalid JSON volume fragment, AMI pinning and managed-update assumptions need correction.",
+      "Hands-on exercises require bounded identity/namespace and cleanup behavior; no runtime/benchmark evidence provided.",
+      "Final bootstrap section wrongly places CoreDNS in the AWS control plane, uses AL2 bootstrap/invalid flags, fabricates CNI configuration, hardcodes DNS/maxPods and overwrites provider-owned nodegroup/AZ labels. Requires AL2023 nodeadm and addon/host responsibility correction.",
+      "Korean question9 duplicated; multiple question/option blocks collapsed and section headings escaped.",
+      "Resolved the recorded defects; clarified launch-template ImageId/NodeConfig rules, CoreDNS dataplane placement, DEFAULT/MINIMAL update behavior and PDB limits.",
+      "Corrected CA chart9.59.0 default1.35.0 with explicit controller1.36.1 for EKS1.36; require dedicated identity and ASG discovery tags.",
+      "Preserved example sizing and published up-to discount numbers as conditional examples, removed production/availability/cost guarantees; no measured performance asserted.",
+      "Replaced unsafe shared-namespace policy exercise and unguarded cleanup with unique lab resources, dedicated kubeconfig and cluster-ARN/namespace-UID checks.",
+      "Confirmed with official AWS CLI2.36.43 reference and local2.35.11 parser: create-cluster uses --kubernetes-version. --version is the global CLI version switch and exits0 printing the CLI version. The interim audit error was corrected in commands, prose and reports; API JSON field version and eksctl --version were preserved."
+    ],
+    "validation": [
+      "Sequential full read1-350,351-700,701-1050,1051-1400,1401-1750,1751-2022. No operations executed.",
+      "Paired final code/answer parity:15 questions and17 details per locale;72 Bash blocks,8 JSON documents,14 eksctl configs(0.230.0),6 native objects(Kubernetes1.36.0),2 YAML fragments and2 MIME user-data blocks checked.",
+      "Offline Helm9.59.0 render:7 native objects;imagev1.36.1,existing service account and ASG discovery verified.",
+      "14 local fixture cases passed:4 NodeConfig metadata/MIME cases,6 cleanup identity/lookup cases,4 IAM creation/attachment cases. jq and MIME parser exercised; AWS/kubectl mutations mocked.",
+      "Scoped git diff --check passed; artifacts /tmp/eks-creation-part1-audit/validation.json. No actual cloud provision, node bootstrap, traffic test or benchmark.",
+      "Follow-on paired canary image pin corrected to officially verified NGINX stable1.30.4; no measured benchmark changed or image executed.",
+      "Version-option correction independently checked with3distinct literal commands across6paired docs using the actual localAWSCLI2.35.11 input-skeleton parser. --kubernetes-version is required; wrong--version reproduced exit0/CLIversion-only. No AWS calls. Evidence:/tmp/eks-cli-flag-correction-2026-09-11.json."
+    ]
+  }
+]

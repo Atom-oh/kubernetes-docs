@@ -1,0 +1,134 @@
+[
+  {
+    "path": "ko/data-on-eks/kafka/07-monitoring.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full guide/quiz review with real local Kafka/exporter, strict resource and Prometheus rule validation complete.",
+    "sources": [
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/examples/metrics/kafka-metrics.yaml",
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaExporter.java",
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/docker-images/kafka-based/kafka/Dockerfile",
+      "https://github.com/danielqsj/kafka_exporter/tree/v1.9.0",
+      "https://github.com/seglo/kafka-lag-exporter",
+      "https://keda.sh/docs/2.20/scalers/apache-kafka/",
+      "https://github.com/kedacore/keda/blob/v2.20.2/pkg/scalers/kafka_scaler.go",
+      "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/",
+      "https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/examples/metrics/grafana-dashboards",
+      "https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/examples/metrics/strimzi-metrics-reporter/grafana-dashboards"
+    ],
+    "findings": [
+      "Corrected supported JMX/StrimziMetricsReporter choices, JMX mapping versus target relabeling, CruiseControl nested configuration rather than CRD.",
+      "Replaced archived seglo/kafka-lag-exporter recommendation with Strimzi KafkaExporter1.9.0 automatic internal TLS; actual metric kafka_consumergroup_lag labelconsumergroup.",
+      "Added v1 mergepatch preserving baseline, scoped node/exporter PodMonitors and explicitnamespace/cluster/component/role labels, nofalseServiceMonitorunreliability.",
+      "Verified final JMX1.6/Kafka4.3.1 rules against isolatedrunningbroker andreal15records; committedoffsetsexportlag3/5/5; allstartedprocessesstopped.",
+      "Fixed counter/rate/gauge handling, perclustercontrolleraggregation/duplicateandmissingcases; no splitbrainordatalossclaimfromonecount.",
+      "Defined lagasnextoffsetdistancewithcompaction/transaction/businesscommitlimits; negative/missingoffsetsseparatefromzero.",
+      "Ninealerts108expectationsacross12scenariosinclallabsent, metricmissing, scrapedown, partialreplication, highlag, unknownoffset, transientandotherclusterisolation.",
+      "KEDA2.20.2TLS/SCRAMwithreadonlyKafkaUserandTriggerAuthsameNamespace; aggregateLagThreshold, min1nozero/cooldown andexplicitHPAstabilization; max10within12partitions.",
+      "Updated34quizquestionsandversionedKafka/KRaft/Exporter/Connect/CruiseControldashboardreferences; nofigures."
+    ],
+    "validation": [
+      "kafka-monitoring-validation.json"
+    ],
+    "reviewedSha256": "fb9f1666dbbfd47f8a6a9b08b48a02eb2c5bbbbf8e38b27385a4147eb4e2da92"
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/kafka/07-monitoring-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full guide/quiz review with real local Kafka/exporter, strict resource and Prometheus rule validation complete.",
+    "sources": [
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/examples/metrics/kafka-metrics.yaml",
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaExporter.java",
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/docker-images/kafka-based/kafka/Dockerfile",
+      "https://github.com/danielqsj/kafka_exporter/tree/v1.9.0",
+      "https://github.com/seglo/kafka-lag-exporter",
+      "https://keda.sh/docs/2.20/scalers/apache-kafka/",
+      "https://github.com/kedacore/keda/blob/v2.20.2/pkg/scalers/kafka_scaler.go",
+      "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/",
+      "https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/examples/metrics/grafana-dashboards",
+      "https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/examples/metrics/strimzi-metrics-reporter/grafana-dashboards"
+    ],
+    "findings": [
+      "Corrected supported JMX/StrimziMetricsReporter choices, JMX mapping versus target relabeling, CruiseControl nested configuration rather than CRD.",
+      "Replaced archived seglo/kafka-lag-exporter recommendation with Strimzi KafkaExporter1.9.0 automatic internal TLS; actual metric kafka_consumergroup_lag labelconsumergroup.",
+      "Added v1 mergepatch preserving baseline, scoped node/exporter PodMonitors and explicitnamespace/cluster/component/role labels, nofalseServiceMonitorunreliability.",
+      "Verified final JMX1.6/Kafka4.3.1 rules against isolatedrunningbroker andreal15records; committedoffsetsexportlag3/5/5; allstartedprocessesstopped.",
+      "Fixed counter/rate/gauge handling, perclustercontrolleraggregation/duplicateandmissingcases; no splitbrainordatalossclaimfromonecount.",
+      "Defined lagasnextoffsetdistancewithcompaction/transaction/businesscommitlimits; negative/missingoffsetsseparatefromzero.",
+      "Ninealerts108expectationsacross12scenariosinclallabsent, metricmissing, scrapedown, partialreplication, highlag, unknownoffset, transientandotherclusterisolation.",
+      "KEDA2.20.2TLS/SCRAMwithreadonlyKafkaUserandTriggerAuthsameNamespace; aggregateLagThreshold, min1nozero/cooldown andexplicitHPAstabilization; max10within12partitions.",
+      "Updated34quizquestionsandversionedKafka/KRaft/Exporter/Connect/CruiseControldashboardreferences; nofigures."
+    ],
+    "validation": [
+      "kafka-monitoring-validation.json"
+    ],
+    "reviewedSha256": "0b7caf998854b01626519345b58f5e380f5e89032e437d1eb0a7f5cfb6403b5d"
+  },
+  {
+    "path": "en/data-on-eks/kafka/07-monitoring.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full guide/quiz review with real local Kafka/exporter, strict resource and Prometheus rule validation complete.",
+    "sources": [
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/examples/metrics/kafka-metrics.yaml",
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaExporter.java",
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/docker-images/kafka-based/kafka/Dockerfile",
+      "https://github.com/danielqsj/kafka_exporter/tree/v1.9.0",
+      "https://github.com/seglo/kafka-lag-exporter",
+      "https://keda.sh/docs/2.20/scalers/apache-kafka/",
+      "https://github.com/kedacore/keda/blob/v2.20.2/pkg/scalers/kafka_scaler.go",
+      "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/",
+      "https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/examples/metrics/grafana-dashboards",
+      "https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/examples/metrics/strimzi-metrics-reporter/grafana-dashboards"
+    ],
+    "findings": [
+      "Corrected supported JMX/StrimziMetricsReporter choices, JMX mapping versus target relabeling, CruiseControl nested configuration rather than CRD.",
+      "Replaced archived seglo/kafka-lag-exporter recommendation with Strimzi KafkaExporter1.9.0 automatic internal TLS; actual metric kafka_consumergroup_lag labelconsumergroup.",
+      "Added v1 mergepatch preserving baseline, scoped node/exporter PodMonitors and explicitnamespace/cluster/component/role labels, nofalseServiceMonitorunreliability.",
+      "Verified final JMX1.6/Kafka4.3.1 rules against isolatedrunningbroker andreal15records; committedoffsetsexportlag3/5/5; allstartedprocessesstopped.",
+      "Fixed counter/rate/gauge handling, perclustercontrolleraggregation/duplicateandmissingcases; no splitbrainordatalossclaimfromonecount.",
+      "Defined lagasnextoffsetdistancewithcompaction/transaction/businesscommitlimits; negative/missingoffsetsseparatefromzero.",
+      "Ninealerts108expectationsacross12scenariosinclallabsent, metricmissing, scrapedown, partialreplication, highlag, unknownoffset, transientandotherclusterisolation.",
+      "KEDA2.20.2TLS/SCRAMwithreadonlyKafkaUserandTriggerAuthsameNamespace; aggregateLagThreshold, min1nozero/cooldown andexplicitHPAstabilization; max10within12partitions.",
+      "Updated34quizquestionsandversionedKafka/KRaft/Exporter/Connect/CruiseControldashboardreferences; nofigures."
+    ],
+    "validation": [
+      "kafka-monitoring-validation.json"
+    ],
+    "reviewedSha256": "6b3957477db224b04194451db786ff0cc86f82b057486e847ec0d6e579d9b9fe"
+  },
+  {
+    "path": "en/quizzes/data-on-eks/kafka/07-monitoring-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full guide/quiz review with real local Kafka/exporter, strict resource and Prometheus rule validation complete.",
+    "sources": [
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/examples/metrics/kafka-metrics.yaml",
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaExporter.java",
+      "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/docker-images/kafka-based/kafka/Dockerfile",
+      "https://github.com/danielqsj/kafka_exporter/tree/v1.9.0",
+      "https://github.com/seglo/kafka-lag-exporter",
+      "https://keda.sh/docs/2.20/scalers/apache-kafka/",
+      "https://github.com/kedacore/keda/blob/v2.20.2/pkg/scalers/kafka_scaler.go",
+      "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/",
+      "https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/examples/metrics/grafana-dashboards",
+      "https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/examples/metrics/strimzi-metrics-reporter/grafana-dashboards"
+    ],
+    "findings": [
+      "Corrected supported JMX/StrimziMetricsReporter choices, JMX mapping versus target relabeling, CruiseControl nested configuration rather than CRD.",
+      "Replaced archived seglo/kafka-lag-exporter recommendation with Strimzi KafkaExporter1.9.0 automatic internal TLS; actual metric kafka_consumergroup_lag labelconsumergroup.",
+      "Added v1 mergepatch preserving baseline, scoped node/exporter PodMonitors and explicitnamespace/cluster/component/role labels, nofalseServiceMonitorunreliability.",
+      "Verified final JMX1.6/Kafka4.3.1 rules against isolatedrunningbroker andreal15records; committedoffsetsexportlag3/5/5; allstartedprocessesstopped.",
+      "Fixed counter/rate/gauge handling, perclustercontrolleraggregation/duplicateandmissingcases; no splitbrainordatalossclaimfromonecount.",
+      "Defined lagasnextoffsetdistancewithcompaction/transaction/businesscommitlimits; negative/missingoffsetsseparatefromzero.",
+      "Ninealerts108expectationsacross12scenariosinclallabsent, metricmissing, scrapedown, partialreplication, highlag, unknownoffset, transientandotherclusterisolation.",
+      "KEDA2.20.2TLS/SCRAMwithreadonlyKafkaUserandTriggerAuthsameNamespace; aggregateLagThreshold, min1nozero/cooldown andexplicitHPAstabilization; max10within12partitions.",
+      "Updated34quizquestionsandversionedKafka/KRaft/Exporter/Connect/CruiseControldashboardreferences; nofigures."
+    ],
+    "validation": [
+      "kafka-monitoring-validation.json"
+    ],
+    "reviewedSha256": "b8786c030fffce94b208c46eadbd8a43f22dc85a0cc17e04f6cd0399c56ed12b"
+  }
+]

@@ -1,0 +1,434 @@
+{
+  "status": "passed",
+  "versions": {
+    "airflow": "3.3.1",
+    "cncfKubernetesProvider": "10.21.0"
+  },
+  "files": [
+    "ko/data-on-eks/airflow/03-dag-patterns.md",
+    "ko/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md",
+    "en/data-on-eks/airflow/03-dag-patterns.md",
+    "en/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md"
+  ],
+  "fences": 10,
+  "quizQuestions": 30,
+  "relativeLinks": 10,
+  "releasedMergeFunctions": {
+    "status": "passed",
+    "providerVersion": "10.21.0",
+    "cases": [
+      "nonempty image override wins",
+      "empty command does not erase base command",
+      "environment entries concatenate",
+      "resource object replacement drops unspecified requests",
+      "empty tolerations inherit base",
+      "nonempty node selector replaces the selector object",
+      "metadata labels merge by key",
+      "namespace override wins",
+      "input object is not mutated",
+      "falsy boolean can inherit a true template value",
+      "init containers merge by name rather than duplicate",
+      "container_resources is a declared KPO parameter",
+      "legacy deletion argument remains accepted but is unused in constructor"
+    ],
+    "sourceSha256": "77f852de07515c00e91cc75b84cc909b8db48c096c73225b7600d606ee5c7f55",
+    "method": "Executed unchanged released PodGenerator merge method ASTs with real Kubernetes Python models. Constructor assertions are static AST checks.",
+    "limits": "Not a full Airflow/KPO execution. No metadata DB, credential lookup or Kubernetes API call; no cluster-side mutation/admission test."
+  },
+  "markdownVueCompilation": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/data-on-eks/airflow/03-dag-patterns.md",
+        "sha256": "dee737feb082820aeacb2a24bc62235c602297020990c42b81b2243dfd411771",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-3-dag-패턴과-kubernetespodoperator"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-executor-kpo와-실제-pod-수"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-설정-우선순위에는-병합-규칙도-포함"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-실행-가능한-작은-dag-준비"
+          },
+          {
+            "tag": "h3",
+            "id": "삭제·중단·재시작"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-전용-노드와-aws-권한"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-dag-bundle와-재실행-코드-버전"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-spark·dbt와-asset-연결"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위"
+          }
+        ],
+        "renderedIds": [
+          "part-3-dag-패턴과-kubernetespodoperator",
+          "_1-executor-kpo와-실제-pod-수",
+          "_2-설정-우선순위에는-병합-규칙도-포함",
+          "_3-실행-가능한-작은-dag-준비",
+          "삭제·중단·재시작",
+          "_4-전용-노드와-aws-권한",
+          "_5-dag-bundle와-재실행-코드-버전",
+          "_6-spark·dbt와-asset-연결",
+          "검증-범위"
+        ]
+      },
+      {
+        "path": "en/data-on-eks/airflow/03-dag-patterns.md",
+        "sha256": "65721fec6a09e4f165ff45289c2a57ecaee371041667687f38cbbcd392a4edc1",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-3-dag-patterns-and-kubernetespodoperator"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-executors-kpo-and-physical-pod-count"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-precedence-includes-merge-behavior"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-prepare-a-small-runnable-dag"
+          },
+          {
+            "tag": "h3",
+            "id": "deletion-killing-and-restart"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-dedicated-nodes-and-aws-access"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-dag-bundles-and-rerun-code-versions"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-spark-dbt-and-asset-integration"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-scope"
+          }
+        ],
+        "renderedIds": [
+          "part-3-dag-patterns-and-kubernetespodoperator",
+          "_1-executors-kpo-and-physical-pod-count",
+          "_2-precedence-includes-merge-behavior",
+          "_3-prepare-a-small-runnable-dag",
+          "deletion-killing-and-restart",
+          "_4-dedicated-nodes-and-aws-access",
+          "_5-dag-bundles-and-rerun-code-versions",
+          "_6-spark-dbt-and-asset-integration",
+          "validation-scope"
+        ]
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md",
+        "sha256": "dc36870f05c0be086a8f9e0a3562b2f0668dbd3ed6db6659cbedb349f9f899b8",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "dag-패턴과-kubernetespodoperator-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "개념-확인"
+          },
+          {
+            "tag": "h2",
+            "id": "단답형-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "적용-문제"
+          }
+        ],
+        "renderedIds": [
+          "dag-패턴과-kubernetespodoperator-퀴즈",
+          "개념-확인",
+          "단답형-문제",
+          "적용-문제"
+        ]
+      },
+      {
+        "path": "en/quizzes/data-on-eks/airflow/03-dag-patterns-quiz.md",
+        "sha256": "3b3d55095a3e39708831aafbf2a03c2ad9e399f62add6e4af5f9402be32229e7",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "dag-patterns-and-kubernetespodoperator-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "concepts"
+          },
+          {
+            "tag": "h2",
+            "id": "short-answers"
+          },
+          {
+            "tag": "h2",
+            "id": "application"
+          }
+        ],
+        "renderedIds": [
+          "dag-patterns-and-kubernetespodoperator-quiz",
+          "concepts",
+          "short-answers",
+          "application"
+        ]
+      }
+    ]
+  },
+  "diagramDeliveries": [
+    {
+      "schemaVersion": 1,
+      "ok": true,
+      "command": "deliver",
+      "type": "architecture",
+      "input": "/home/atomoh/kubernetes-docs/assets/diagrams/archify/ko-data-on-eks-airflow-03-dag-patterns-0.architecture.json",
+      "output": "/home/atomoh/kubernetes-docs/public/archmaps/ko-data-on-eks-airflow-03-dag-patterns-0.html",
+      "specification": {
+        "sha256": "62aae6e1d2d0ddbc18fff599d2b7567fb652c12470d129dcf4b7f38247592493",
+        "bytes": 4470
+      },
+      "artifact": {
+        "sha256": "62c171cc72271aa8f8a3e1e56969a2fccd3e96ed9fb7186d6df42e470152ec30",
+        "bytes": 706896
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "ok": true,
+      "command": "deliver",
+      "type": "architecture",
+      "input": "/home/atomoh/kubernetes-docs/assets/diagrams/archify/en-data-on-eks-airflow-03-dag-patterns-0.architecture.json",
+      "output": "/home/atomoh/kubernetes-docs/public/archmaps/en-data-on-eks-airflow-03-dag-patterns-0.html",
+      "specification": {
+        "sha256": "21345a3bdc406394ba082c5f69470046ced943488ccc07b0a255888e692b1053",
+        "bytes": 4321
+      },
+      "artifact": {
+        "sha256": "57b5b6311daa1a81c8339fc077488e64d723af4e87f31be3d96fc48f07f8b70d",
+        "bytes": 708413
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  ],
+  "viewerChecks": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "62c171cc72271aa8f8a3e1e56969a2fccd3e96ed9fb7186d6df42e470152ec30"
+      },
+      {
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "62c171cc72271aa8f8a3e1e56969a2fccd3e96ed9fb7186d6df42e470152ec30"
+      },
+      {
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "62c171cc72271aa8f8a3e1e56969a2fccd3e96ed9fb7186d6df42e470152ec30"
+      },
+      {
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "57b5b6311daa1a81c8339fc077488e64d723af4e87f31be3d96fc48f07f8b70d"
+      },
+      {
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "57b5b6311daa1a81c8339fc077488e64d723af4e87f31be3d96fc48f07f8b70d"
+      },
+      {
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "57b5b6311daa1a81c8339fc077488e64d723af4e87f31be3d96fc48f07f8b70d"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "pngVisualInspection": "Both generated Korean and English PNGs inspected: readable labels and routing; no clipped nodes/cards.",
+  "validationLimits": "Native unchanged merge methods with real Kubernetes Python models, source/AST and bounded rendering checks. No full Airflow process, Kubernetes admission/task run, IAM/S3 or Spark cluster execution. Dry-run initialization claim is source-path verified, not an installed-Airflow execution.",
+  "sources": [
+    {
+      "name": "pod.py",
+      "url": "https://raw.githubusercontent.com/apache/airflow/providers-cncf-kubernetes/10.21.0/providers/cncf/kubernetes/src/airflow/providers/cncf/kubernetes/operators/pod.py",
+      "bytes": 82047,
+      "sha256": "9d6579b1dbac546edd41ee0eba7beced05907787abd9c8fb2287173afd5408a8"
+    },
+    {
+      "name": "pod_generator.py",
+      "url": "https://raw.githubusercontent.com/apache/airflow/providers-cncf-kubernetes/10.21.0/providers/cncf/kubernetes/src/airflow/providers/cncf/kubernetes/pod_generator.py",
+      "bytes": 23604,
+      "sha256": "77f852de07515c00e91cc75b84cc909b8db48c096c73225b7600d606ee5c7f55"
+    },
+    {
+      "name": "spark_kubernetes.py",
+      "url": "https://raw.githubusercontent.com/apache/airflow/providers-cncf-kubernetes/10.21.0/providers/cncf/kubernetes/src/airflow/providers/cncf/kubernetes/operators/spark_kubernetes.py",
+      "bytes": 19126,
+      "sha256": "c5c923ba0ebf7e5682dca45e2f1be5a26780a7995104135eacd44681d1e18bcc"
+    },
+    {
+      "name": "spark_launcher.py",
+      "url": "https://raw.githubusercontent.com/apache/airflow/providers-cncf-kubernetes/10.21.0/providers/cncf/kubernetes/src/airflow/providers/cncf/kubernetes/operators/custom_object_launcher.py",
+      "bytes": 15777,
+      "sha256": "655bb9a5650bc9c9b39a7c3eb5de3770bf3992fd6ed41f9256cfd7959873e49b"
+    },
+    {
+      "name": "bundles.html",
+      "url": "https://airflow.apache.org/docs/apache-airflow/3.3.1/administration-and-deployment/dag-bundles.html",
+      "bytes": 148135,
+      "sha256": "bb1f6ea467e15628ac3d853d44d49c75bbf8dcc8a4c9dcffa8a831d62bec1625"
+    },
+    {
+      "name": "kpo.html",
+      "url": "https://airflow.apache.org/docs/apache-airflow-providers-cncf-kubernetes/10.21.0/operators.html",
+      "bytes": 229669,
+      "sha256": "9dbe3f163afe7462a14618803f5a79426ee37a97dfaac3aada199d122d2ebd90"
+    },
+    {
+      "name": "spark.html",
+      "url": "https://airflow.apache.org/docs/apache-airflow-providers-cncf-kubernetes/10.21.0/operators.html#sparkkubernetesoperator",
+      "bytes": 229669,
+      "sha256": "9dbe3f163afe7462a14618803f5a79426ee37a97dfaac3aada199d122d2ebd90"
+    }
+  ]
+}

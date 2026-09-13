@@ -12,10 +12,9 @@
         "label": "작업 스케줄링",
         "focus": [
           "airflow",
-          "kafka",
           "spark"
         ],
-        "note": "Airflow가 Kafka와 Spark 작업의 의존성과 스케줄을 정의하고 실행을 관리한다."
+        "note": "Airflow는 Spark 같은 작업의 의존성과 일정을 관리합니다. Kafka 브로커의 스케줄러는 아닙니다."
       },
       {
         "id": "dataflow",
@@ -25,7 +24,7 @@
           "flink",
           "spark"
         ],
-        "note": "Kafka가 실시간 이벤트를 Flink에 공급하고, 원시 데이터를 Spark 배치 처리에 적재한다."
+        "note": "Spark와 Flink가 Kafka 이벤트를 처리합니다. 원본의 영구 보관은 별도 저장 계층에서 설계합니다."
       }
     ],
     "legend": {
@@ -75,7 +74,7 @@
       "id": "spark",
       "type": "backend",
       "label": "Apache Spark",
-      "sublabel": "배치 / 분석",
+      "sublabel": "배치 · Structured Streaming",
       "pos": [
         740,
         260
@@ -114,13 +113,6 @@
   ],
   "connections": [
     {
-      "id": "airflow-kafka",
-      "from": "airflow",
-      "to": "kafka",
-      "label": "작업 스케줄",
-      "variant": "dashed"
-    },
-    {
       "id": "airflow-spark",
       "from": "airflow",
       "to": "spark",
@@ -131,7 +123,7 @@
       "id": "kafka-spark",
       "from": "kafka",
       "to": "spark",
-      "label": "원시 데이터 적재"
+      "label": "이벤트 읽기"
     },
     {
       "id": "kafka-flink",
@@ -145,24 +137,23 @@
   "cards": [
     {
       "dot": "violet",
-      "title": "오케스트레이션",
+      "title": "Orchestration",
       "items": [
-        "Airflow가 여러 데이터 작업 간의 의존성과 스케줄을 정의하고 실행을 관리한다"
+        "작업 의존성 · 일정 · 재시도"
       ]
     },
     {
       "dot": "orange",
-      "title": "스트리밍 · 스트림 처리",
+      "title": "Events / state",
       "items": [
-        "Kafka가 이벤트를 실시간으로 발행·구독하고 시스템 간 비동기 통신을 연결한다",
-        "Flink가 스트리밍 데이터에 실시간 집계·변환·상태 기반 연산을 수행한다"
+        "Kafka 보존·재생과 Flink 상태 복구"
       ]
     },
     {
       "dot": "cyan",
-      "title": "배치 / 분석",
+      "title": "Processing",
       "items": [
-        "Spark가 대용량 데이터를 분산 처리하여 ETL, 집계, 머신러닝 파이프라인을 수행한다"
+        "Spark는 배치와 스트리밍 처리 지원"
       ]
     }
   ]

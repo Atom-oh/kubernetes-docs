@@ -1,0 +1,166 @@
+{
+  "reviewedAt": "2026-09-12",
+  "scope": [
+    "ko/ops/13-finops-cost-platform.md",
+    "en/ops/13-finops-cost-platform.md",
+    "ko/quizzes/ops/13-finops-cost-platform-quiz.md",
+    "en/quizzes/ops/13-finops-cost-platform-quiz.md"
+  ],
+  "versions": {
+    "opencost": "1.121.2",
+    "opencostChart": "2.5.31",
+    "kubecostChart": "3.2.4",
+    "kyverno": "1.19.1",
+    "terraformAWS": "6.64.0",
+    "pythonKubernetes": "36.0.3"
+  },
+  "validation": {
+    "fences": 56,
+    "nativeObjects": 48,
+    "nativeNormalization": "Optional null object fields omitted, numeric Quantity accepted and int-or-string union applied to match Kubernetes decoding; required fields retained.",
+    "vpaCRD": "1.7.1",
+    "helmRenders": 3,
+    "terraformMockTests": 2,
+    "kyvernoCases": [
+      {
+        "case": "good",
+        "exit": 0,
+        "output": "\nApplying 2 policy rule(s) to 1 resource(s)...\n\npass: 2, fail: 0, warn: 0, error: 0, skip: 0 \n"
+      },
+      {
+        "case": "bad-label",
+        "exit": 1,
+        "output": "\nApplying 2 policy rule(s) to 1 resource(s)...\npolicy finops-pod-labels -> resource team-backend/Pod/bad-label failed:\n1 -  Add team and cost-center labels to the Pod template.\n\npass: 1, fail: 1, warn: 0, error: 0, skip: 0 \n"
+      },
+      {
+        "case": "bad-sidecar",
+        "exit": 1,
+        "output": "\nApplying 2 policy rule(s) to 1 resource(s)...\npolicy finops-container-requests -> resource team-backend/Pod/bad-sidecar failed:\n1 -  Set positive CPU and memory requests for each regular container.\n\npass: 1, fail: 1, warn: 0, error: 0, skip: 0 \n"
+      },
+      {
+        "case": "outside",
+        "exit": 0,
+        "output": "\nApplying 2 policy rule(s) to 1 resource(s)...\n\npass: 0, fail: 0, warn: 0, error: 0, skip: 0 \n"
+      },
+      {
+        "case": "bad-template",
+        "exit": 1,
+        "output": "\nApplying 2 policy rule(s) to 1 resource(s)...\npolicy finops-pod-labels -> resource team-backend/Deployment/bad-template failed:\n1 -  Add team and cost-center labels to the Pod template.\n\npass: 1, fail: 1, warn: 0, error: 0, skip: 0 \n"
+      },
+      {
+        "case": "bad-cron",
+        "exit": 1,
+        "output": "\nApplying 2 policy rule(s) to 1 resource(s)...\npolicy finops-container-requests -> resource team-backend/CronJob/bad-cron failed:\n1 -  Set positive CPU and memory requests for each regular container.\n\npass: 1, fail: 1, warn: 0, error: 0, skip: 0 \n"
+      }
+    ],
+    "rightsizingCases": {
+      "passed": [
+        "container names, exact 20% boundary, no invented dollar savings",
+        "millicores, GiB, exponents and nanocores",
+        "invalid quantities",
+        "StatefulSet target",
+        "unsupported targets",
+        "missing readiness",
+        "unknown container",
+        "both duplicate targets rejected",
+        "target above current limit",
+        "init containers explicitly excluded"
+      ]
+    },
+    "reports": {
+      "allocation": "cent conservation, deterministic remainder, retained unallocated, invalid monetary inputs rejected",
+      "report": "Decimal totals, first-day previous month, leap month, unknown budgets, missing/nonfinite data rejection",
+      "http": "Two loopback GET cases including redirect rejection; server stopped",
+      "slack": "Plain-text dynamic fields and mocked POST only; no external notification",
+      "actualCosts": false
+    },
+    "prometheus": {
+      "recordingRules": 6,
+      "alertRules": 2,
+      "calculationCases": 4,
+      "result": "promtool test SUCCESS",
+      "includes": "duplicate scrape deduplication, CPU/RAM units, team join, missing metrics alert"
+    },
+    "quizQuestions": 16,
+    "diagrams": 6
+  },
+  "calculatedExample": {
+    "currency": "USD",
+    "policy": "Shared weighted by direct cost; idle split equally; unallocated retained",
+    "rounding": "Exact cents; largest remainder with lexical tie-break",
+    "teams": {
+      "team-a": {
+        "direct": "3000.00",
+        "shared": "1153.85",
+        "idle": "333.34",
+        "total": "4487.19"
+      },
+      "team-b": {
+        "direct": "2000.00",
+        "shared": "769.23",
+        "idle": "333.33",
+        "total": "3102.56"
+      },
+      "team-c": {
+        "direct": "1500.00",
+        "shared": "576.92",
+        "idle": "333.33",
+        "total": "2410.25"
+      }
+    },
+    "unallocated": "0.00",
+    "source_total": "10000.00",
+    "allocated_total": "10000.00",
+    "limits": [
+      "Use one reconciled pool; do not add overlapping Allocation and Cloud Cost totals.",
+      "This policy is an example, not an inherently fair or mandatory chargeback rule.",
+      "Refunds, credits, taxes and currency conversion require explicit separate policies."
+    ]
+  },
+  "sources": [
+    "https://api.github.com/repos/opencost/opencost/releases/latest",
+    "https://opencost.github.io/opencost-helm-chart/index.yaml",
+    "https://raw.githubusercontent.com/kubecost/cost-analyzer-helm-chart/master/README.md",
+    "https://api.github.com/repos/kyverno/kyverno/releases/latest",
+    "https://opencost.io/docs/installation/helm/",
+    "https://opencost.io/docs/integrations/api/",
+    "https://opencost.io/docs/configuration/aws/",
+    "https://kubecost.github.io/kubecost/index.yaml",
+    "https://raw.githubusercontent.com/opencost/opencost-helm-chart/opencost-2.5.31/charts/opencost/values.yaml",
+    "https://www.finops.org/introduction/what-is-finops/",
+    "https://docs.aws.amazon.com/cur/latest/userguide/data-protection.html",
+    "https://docs.aws.amazon.com/cur/latest/userguide/dataexports-s3-bucket.html",
+    "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-allocation-backfill.html",
+    "https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-controls.html",
+    "https://api.github.com/repos/opencost/opencost/contents/pkg/cloud/aws?ref=v1.121.2",
+    "https://api.github.com/repos/opencost/opencost/contents/pkg/costmodel?ref=v1.121.2",
+    "https://opencost.io/docs/integrations/api-examples/",
+    "https://opencost.io/docs/integrations/metrics/",
+    "https://docs.aws.amazon.com/aws-cost-management/latest/APIReference/API_AnomalyMonitor.html",
+    "https://docs.aws.amazon.com/aws-cost-management/latest/APIReference/API_AnomalySubscription.html",
+    "https://docs.aws.amazon.com/cost-management/latest/userguide/ad-SNS.html",
+    "https://kyverno.io/docs/guides/migration-to-cel/",
+    "https://kyverno.io/docs/policy-types/validating-policy/",
+    "https://cloud.google.com/resource-manager/docs/creating-managing-projects",
+    "https://raw.githubusercontent.com/hashicorp/terraform-provider-aws/v6.64.0/website/docs/r/bcmdataexports_export.html.markdown",
+    "https://raw.githubusercontent.com/hashicorp/terraform-provider-aws/v6.64.0/website/docs/r/ce_anomaly_subscription.html.markdown",
+    "https://raw.githubusercontent.com/hashicorp/terraform-provider-aws/v6.64.0/website/docs/r/glue_crawler.html.markdown",
+    "https://raw.githubusercontent.com/hashicorp/terraform-provider-aws/v6.64.0/website/docs/r/athena_workgroup.html.markdown"
+  ],
+  "findings": [
+    "Replaced stale OpenCost/Kubecost2 configuration with rendered current charts; corrected repository, values nesting, ServiceAccount identity and model architecture.",
+    "Separated CUR source from Athena result buckets; current CUR2 delivery service, scoped IRSA, BPA, SSE-S3 and explicit Glue prerequisites.",
+    "Distinguished model rates, calendar window cost, billing and projections; removed fabricated metrics and annotation-to-number PromQL.",
+    "Implemented Decimal cent-conserving shared/idle allocation with retained unattributed costs and explicit synthetic results.",
+    "Replaced unusable report image/shell snippets with tested stdlib Python, actual calendar periods, NoData errors, typed budgets, correct Cron timezone and optional Slack delivery.",
+    "Replaced inaccurate automatic PR claim with tested container-name-matched review proposals and null billing savings.",
+    "Migrated new cost policies to current CEL ValidatingPolicy; tested Pod, sidecar, Deployment, CronJob and namespace exclusion.",
+    "Clarified dashboard filtering is not authorization, anomaly SERVICE scope, EMAIL/SNS frequency, delayed budget actions and 12-month historical tag backfill.",
+    "Reviewed/rebuilt six diagrams, replaced unsupported maturity timelines and unexplained allocation numbers; updated both eight-question quizzes."
+  ],
+  "limitations": [
+    "No customer billing query, AWS infrastructure mutation, SNS/Slack delivery or production cluster deployment.",
+    "Optional Glue crawler creation, product entitlement checks and image pulls are explicit deployment prerequisites; local chart rendering does not prove them.",
+    "This batch is complete; full repository audit/build/merge remains ongoing."
+  ]
+}

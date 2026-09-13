@@ -76,6 +76,73 @@ test('locale build outputs are merged with a combined sitemap', async () => {
   }
 })
 
+test('indexed ko/en README URLs redirect to their live section without changing canonical pages', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'readme-redirects-'))
+  const source = path.join(root, 'source')
+  const dist = path.join(root, 'dist')
+  const cases = [
+    ['ko/index.html', 'ko/README.html', 'https://www.atomai.click/kubernetes-docs/ko/'],
+    ['en/index.html', 'en/README.html', 'https://www.atomai.click/kubernetes-docs/en/'],
+    ['ko/networking/cilium/index.html', 'ko/networking/cilium/README.html', 'https://www.atomai.click/kubernetes-docs/ko/networking/cilium/'],
+    ['en/networking/cilium/index.html', 'en/networking/cilium/README.html', 'https://www.atomai.click/kubernetes-docs/en/networking/cilium/'],
+    ['en/service-mesh/istio/advanced/index.html', 'en/service-mesh/istio/advanced/README.html', 'https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/']
+  ]
+
+  try {
+    for (const [page] of cases) {
+      await mkdir(path.dirname(path.join(source, page)), { recursive: true })
+      await writeFile(path.join(source, page), `Content of ${page}`)
+    }
+    await writeFile(path.join(source, 'en/networking/cilium/01-introduction.html'), 'Article')
+    await writeFile(path.join(source, 'sitemap.xml'), sitemap('https://www.atomai.click/kubernetes-docs/en/'))
+
+    await mergeLocaleOutputs([source], dist)
+
+    for (const [page, alias, target] of cases) {
+      const html = await readFile(path.join(dist, alias), 'utf8')
+      assert.equal(html.match(/http-equiv="refresh" content="0; url=([^"]+)"/)?.[1], target)
+      assert.equal(html.match(/rel="canonical" href="([^"]+)"/)?.[1], target)
+      assert.ok(html.includes(`<a href="${target}">`))
+      assert.equal(await readFile(path.join(dist, page), 'utf8'), `Content of ${page}`)
+    }
+    assert.equal(await readFile(path.join(dist, 'en/networking/cilium/01-introduction.html'), 'utf8'), 'Article')
+
+    // Retired-language redirects still point directly to the live English
+    // directory, rather than chaining through a newly generated README alias.
+    const retired = await readFile(path.join(dist, 'cn/networking/cilium/README.html'), 'utf8')
+    assert.equal(retired.match(/http-equiv="refresh" content="0; url=([^"]+)"/)?.[1],
+      'https://www.atomai.click/kubernetes-docs/en/networking/cilium/')
+
+    const items = await parseSitemap(createReadStream(path.join(dist, 'sitemap.xml')))
+    assert.deepEqual(items.map(({ url }) => url), ['https://www.atomai.click/kubernetes-docs/en/'])
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+test('README compatibility redirects preserve an existing page and tolerate a missing locale', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'readme-redirects-existing-'))
+  const source = path.join(root, 'source')
+  const dist = path.join(root, 'dist')
+
+  try {
+    await mkdir(path.join(source, 'ko/networking'), { recursive: true })
+    await writeFile(path.join(source, 'ko/index.html'), 'Korean home')
+    await writeFile(path.join(source, 'ko/README.html'), 'Existing page')
+    await writeFile(path.join(source, 'ko/networking/index.html'), 'Networking')
+    await writeFile(path.join(source, 'sitemap.xml'), sitemap('https://www.atomai.click/kubernetes-docs/ko/'))
+
+    await mergeLocaleOutputs([source], dist)
+
+    assert.equal(await readFile(path.join(dist, 'ko/README.html'), 'utf8'), 'Existing page')
+    const nested = await readFile(path.join(dist, 'ko/networking/README.html'), 'utf8')
+    assert.equal(nested.match(/http-equiv="refresh" content="0; url=([^"]+)"/)?.[1],
+      'https://www.atomai.click/kubernetes-docs/ko/networking/')
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
 test('archmap viewer pages are marked noindex after the merge', async () => {
   const root = await mkdtemp(path.join(tmpdir(), 'archmap-noindex-'))
   const dist = path.join(root, 'dist')
@@ -103,6 +170,44 @@ test('archmap viewer pages are marked noindex after the merge', async () => {
     // Already-marked pages are left byte-identical rather than double-tagged.
     const untouched = await readFile(path.join(archmaps, 'already.html'), 'utf8')
     assert.equal((untouched.match(/name="robots"/g) || []).length, 1)
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+test('merged diagram viewers normalize CJK fonts and mobile toolbars without changing ordinary pages', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'archmap-fonts-'))
+  const source = path.join(root, 'source')
+  const dist = path.join(root, 'dist')
+  const stack = "'JetBrains Mono', ui-monospace, monospace"
+  const viewer = `<html><head><style>body { font-family: ${stack}; }</style></head>
+<body><script id="archify-i18n-data" type="application/json">{}</script>
+<script>const exportFont = "600 12px ${stack}";
+if (paused && Archify.guidedViews && Archify.guidedViews.isPlaying()) { Archify.guidedViews.pause(); }
+</script>
+<p>Generator가 만든 파라미터 조합마다 Application 하나가 생성된다</p></body></html>`
+  try {
+    await mkdir(path.join(source, 'archmaps'), { recursive: true })
+    await writeFile(path.join(source, 'sitemap.xml'), sitemap('https://example.com/'))
+    await writeFile(path.join(source, 'archmaps', 'ko-example.html'), viewer)
+    await writeFile(path.join(source, 'archmaps', 'jp-example.html'), viewer)
+    await writeFile(path.join(source, 'ordinary.html'), viewer)
+
+    await mergeLocaleOutputs([source], dist)
+    const korean = await readFile(path.join(dist, 'archmaps', 'ko-example.html'), 'utf8')
+    const japanese = await readFile(path.join(dist, 'archmaps', 'jp-example.html'), 'utf8')
+    assert.equal((korean.match(/'JetBrains Mono', 'Noto Sans CJK KR'/g) || []).length, 2)
+    assert.equal((japanese.match(/'JetBrains Mono', 'Noto Sans CJK JP'/g) || []).length, 2)
+    assert.ok(korean.includes('Generator가 만든 파라미터 조합마다'))
+    assert.equal((korean.match(/id="docs-archmap-responsive"/g) || []).length, 1)
+    assert.equal((japanese.match(/id="docs-archmap-responsive"/g) || []).length, 1)
+    assert.ok(korean.includes("typeof Archify.guidedViews.isPlaying === 'function'"))
+    assert.ok(japanese.includes("typeof Archify.guidedViews.pause === 'function'"))
+    assert.equal(await readFile(path.join(dist, 'ordinary.html'), 'utf8'), viewer)
+
+    const second = path.join(root, 'second')
+    await mergeLocaleOutputs([dist], second)
+    assert.equal(await readFile(path.join(second, 'archmaps', 'ko-example.html'), 'utf8'), korean)
   } finally {
     await rm(root, { recursive: true, force: true })
   }

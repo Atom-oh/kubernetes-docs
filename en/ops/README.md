@@ -1,6 +1,6 @@
 # Operations Guide
 
-> **Last Updated**: February 23, 2026
+> **Last Updated**: September 12, 2026
 
 This section provides a production operations guide for EKS Auto Mode environments. It covers infrastructure provisioning with Terraform, CI/CD pipelines, GitOps-based deployment, scaling, observability, resource optimization, and upgrades.
 
@@ -40,9 +40,13 @@ Before starting this operations guide, ensure familiarity with:
 | 08 | [Observability Analysis](./08-observability-analysis.md) | Logs/Metrics/Traces correlation, PromQL, LogQL, TraceQL |
 | 09 | [Observability Stack Operations](./09-observability-stack.md) | Loki, Tempo, Prometheus/AMP installation and operations |
 | 10 | [Resource Optimization](./10-resource-optimization.md) | Requests/Limits, JVM tuning, framework-specific guide |
-| 11 | [EKS Upgrades](./11-upgrade-operations.md) | Auto Mode zero-downtime upgrade, blue/green strategy |
-| 15 | [Zonal Cluster Operations](./15-zonal-operations-guide.md) | TargetGroupBinding weight shifting, native rollback, Kafka/Redis/Aurora AZ-affine reads |
+| 11 | [EKS Upgrades](./11-upgrade-operations.md) | Staged Auto Mode upgrade, blue/green strategy |
+| 12 | [Event Capacity Planning](./12-event-capacity-planning.md) | Traffic events, capacity and recovery planning |
+| 13 | [FinOps Cost Management](./13-finops-cost-platform.md) | Cost visibility, allocation, optimization |
+| 14 | [Tekton Pipelines](./14-tekton-pipelines.md) | Kubernetes-native CI pipelines |
+| 15 | [Zonal Cluster Operations](./15-zonal-operations-guide.md) | LB weight shifting and TargetGroupBinding, native rollback, Kafka/Redis/Aurora AZ-affine reads |
 | 16 | [Troubleshooting Playbook](./16-troubleshooting-playbook.md) | Symptom → diagnosis → cause → fix: Pending/ImagePull/CrashLoop/NotReady/PVC, IRSA, VPC CNI, Karpenter, kubectl cheat sheet |
+| 17 | [EKS Spot Production Experiments](./17-spot-production-experiments.md) | Interruption, concurrent reclamation, fallback, result records, SLO/cost assessment, rollback |
 
 ---
 
@@ -55,7 +59,8 @@ Before starting this operations guide, ensure familiarity with:
 3. **Scaling** (06): Establish scaling strategies for workloads
 4. **Observability** (07-09): Build monitoring, alerting, and analysis systems
 5. **Optimization** (10): Resource efficiency and cost optimization
-6. **Upgrades** (11): Establish zero-downtime upgrade procedures
+6. **Upgrades** (11): Validate availability and recovery procedures
+7. **Specialized operations** (12–16): Capacity events, FinOps, Tekton, zonal operations, and troubleshooting
 
 ### By Role
 
@@ -104,9 +109,9 @@ This operations guide complements existing concept documentation with practical,
 | Scenario | Document | Section |
 |----------|----------|---------|
 | Rollback deployment | [04-gitops-multi-cluster](./04-gitops-multi-cluster.md) | Rollback |
-| Rollback EKS upgrade | [11-upgrade-operations](./11-upgrade-operations.md) | Blue/Green Rollback |
-| Scale down for cost | [06-scaling-strategies](./06-scaling-strategies.md) | Emergency Scale |
-| Debug failing pods | [08-observability-analysis](./08-observability-analysis.md) | Log Analysis |
+| Rollback EKS upgrade | [11-upgrade-operations](./11-upgrade-operations.md) | Native rollback eligibility or blue/green failback |
+| Adjust capacity after checking demand and availability | [06-scaling-strategies](./06-scaling-strategies.md) | Capacity and scaling policy |
+| Debug failing pods | [16-troubleshooting-playbook](./16-troubleshooting-playbook.md) | Symptom-based diagnosis |
 
 ---
 

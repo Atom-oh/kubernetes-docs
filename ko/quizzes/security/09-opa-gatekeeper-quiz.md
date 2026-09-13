@@ -504,6 +504,6 @@ spec:
 
 ## 관련 문서
 
-* [OPA Gatekeeper](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/quizzes/security/09-opa-gatekeeper.md)
-* [Kyverno 정책 관리](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/quizzes/security/01-kyverno-policy-management.md)
-* [Pod Security Standards](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/quizzes/security/03-pod-security-standards.md)
+* [OPA Gatekeeper](09-opa-gatekeeper-quiz.md)
+* [Kyverno 정책 관리](01-kyverno-policy-management-quiz.md)
+* [Pod Security Standards](03-pod-security-standards-quiz.md)

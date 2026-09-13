@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/ai-ml/02-vllm-deployment.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "4d31a9ab5c74340c417446b1662073446034e406c8cfe220140dac7d1f6b3041",
+    "summary": "Fullyread4originalfiles109uniquecodeblocks; pinned0.29cu129image/modelrevision; correctedCLI/memory/parallelism/metrics/security; preservedhistoricalL4tablewithprovenancelimits;22questions18figuresvalidated."
+  },
+  {
+    "path": "ko/quizzes/ai-ml/04-vllm-deployment-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "db04e64985f0cf4680184b199e57a560bd7aad9fcc48a9e4de58941d98ec6e18",
+    "summary": "Fullyread4originalfiles109uniquecodeblocks; pinned0.29cu129image/modelrevision; correctedCLI/memory/parallelism/metrics/security; preservedhistoricalL4tablewithprovenancelimits;22questions18figuresvalidated."
+  },
+  {
+    "path": "en/ai-ml/02-vllm-deployment.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "72e299ae1d6c4466954953bed9285e34cb2e0c8b84d027fe7a0307e4b014caff",
+    "summary": "Fullyread4originalfiles109uniquecodeblocks; pinned0.29cu129image/modelrevision; correctedCLI/memory/parallelism/metrics/security; preservedhistoricalL4tablewithprovenancelimits;22questions18figuresvalidated."
+  },
+  {
+    "path": "en/quizzes/ai-ml/04-vllm-deployment-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "864ce43a4f55e3dfae9e3f703e38b6e217696799500aea93332c80118cf4da6c",
+    "summary": "Fullyread4originalfiles109uniquecodeblocks; pinned0.29cu129image/modelrevision; correctedCLI/memory/parallelism/metrics/security; preservedhistoricalL4tablewithprovenancelimits;22questions18figuresvalidated."
+  }
+]

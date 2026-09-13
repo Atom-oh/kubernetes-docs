@@ -1,20 +1,23 @@
 # Istio Comparison 퀴즈
 
-> **지원 버전**: Istio 1.30 / EKS 1.36
-> **마지막 업데이트**: 2026년 8월 21일
+> **과거 실험 보고**: Istio 1.30.2 / EKS 1.36.2. 현재 지원 매트릭스가 아닙니다
+> **마지막 업데이트**: 2026년 9월 11일
 
-이 퀴즈는 Sidecar Mode와 Ambient Mode 선택 기준, 특히 EKS 1.36 실측 결과에 대한 이해도를 테스트합니다.
+이 퀴즈는 Sidecar Mode와 Ambient Mode 선택 기준, 특히 보고된 EKS 측정의 한계에 대한 이해도를 테스트합니다. 이번 감사에서 해당 실험을 재현하지 않았습니다.
 
 ## 객관식 문제 (1-6번)
 
-### 문제 1: Ambient waypoint 503의 근본 원인
+### 문제 1: Ambient waypoint 503의 원인 근거
 
-Ambient 모드에서 rollout 중 waypoint 경로로 간헐적 503이 발생하는 근본 원인으로 옳은 것은?
+보고된 롤아웃 집계만으로 waypoint 503의 원인에 대해 내릴 수 있는 결론은?
 
-A. Pod가 재시작될 때 IP가 중복 할당되기 때문
-B. waypoint가 목적지 IP:Port 기준 커넥션을 재사용하는데, ztunnel이 Pod 종료를 waypoint에 통지하지 않기 때문
-C. NetworkPolicy가 waypoint 트래픽을 차단하기 때문
-D. STRICT mTLS가 waypoint에서 지원되지 않기 때문
+A. IP 중복 할당이 입증되었다
+
+B. 연결 생명주기 경쟁은 가설이며 원인 확정에는 프록시 응답 플래그와 endpoint·연결 시간선이 필요하다
+
+C. NetworkPolicy가 모든 실패의 원인임이 입증되었다
+
+D. 집계는 STRICT mTLS 미지원을 입증한다
 
 <details>
 <summary>정답 및 해설</summary>
@@ -23,9 +26,10 @@ D. STRICT mTLS가 waypoint에서 지원되지 않기 때문
 
 **해설:**
 
-waypoint(Envoy)는 목적지 IP:Port 기준으로 커넥션 풀을 관리하며 재사용한다. ztunnel은 대상 Pod가 종료돼도 이를 상위 waypoint에 명시적으로 통지하지 않는다. 종료된 Pod와 동일한 IP가 새 Pod에 재할당되면, waypoint가 유효하지 않은 기존 연결을 재사용해 503이 발생할 수 있다. 이것이 우려의 근거가 되는 메커니즘이며 — IP 중복 할당이 아니라 **연결 생명주기 관리**다 — §4의 실측 503 비율이 이와 일관된다.
+HTTP 상태 집계만으로 근본 원인을 확정할 수 없습니다. Pod 종료, endpoint 전파, 애플리케이션·프록시 drain, timeout과 연결 풀이 모두 영향을 줄 수 있습니다. 원문의 IP 재사용·ztunnel 알림 설명에는 보관된 진단 시간선이 없었습니다. 가설을 확정된 원리로 가르치기보다 실제 upstream host, 응답 플래그, Pod UID와 연결 이벤트를 조사해야 합니다.
 
 **참고 자료:**
+
 - [Sidecar vs Ambient Mode 선택 가이드](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
 - [Ambient Mode: Waypoint Proxy](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 
@@ -33,14 +37,17 @@ waypoint(Envoy)는 목적지 IP:Port 기준으로 커넥션 풀을 관리하며 
 
 ---
 
-### 문제 2: EKS 1.36 실측 결과 해석
+### 문제 2: 보고된 EKS 결과 해석
 
-전용 단일 테넌트 EKS 1.36 클러스터에서 100qps × 600초(60,000건) 부하로 rollout을 반복한 실측 결과, sidecar는 503 비율 0.5%, ambient-L4(waypoint 미사용)는 실제 503 0건(대신 TCP 오류 0.3%), ambient-L7(waypoint 사용)은 503 2.6%였다. 이 결과에 대한 올바른 해석은?
+조정 전 sidecar는 60,000건 중 HTTP 503 324건·비HTTP 오류 2건, ambient L4는 60,000건 중 0건·195건, ambient L7은 59,913건 중 1,528건·84건을 기록했습니다. 근거가 뒷받침하는 해석은?
 
-A. ambient는 항상 sidecar보다 안정적이다
-B. waypoint를 경유하면 sidecar보다 503 비율이 높아지지만, waypoint 없이 L4만 쓰면 실제 503은 발생하지 않는다
-C. ambient-L4의 TCP 오류(0.3%)는 waypoint의 503과 동일한 현상이다
-D. 소켓 사용량이 가장 적은 모드가 가장 안정적이다
+A. Ambient가 언제나 더 안정적이다
+
+B. 이 표본에서 L7의 HTTP 503 비율이 높았으며 L4의 HTTP 503 0건에도 비HTTP 실패 195건은 남아 있다
+
+C. 모든 오류 범주의 동일한 근본 원인이 입증되었다
+
+D. Fortio SocketCount가 waypoint upstream 풀을 직접 측정한다
 
 <details>
 <summary>정답 및 해설</summary>
@@ -49,9 +56,10 @@ D. 소켓 사용량이 가장 적은 모드가 가장 안정적이다
 
 **해설:**
 
-실측 데이터는 "ambient가 무조건 좋다/나쁘다"가 아니라 **waypoint 경유 여부**가 핵심 변수임을 보여준다. waypoint(L7)를 쓰는 ambient-L7은 sidecar보다 503 비율이 약 5배 높았고(2.6% vs 0.5%), waypoint를 쓰지 않는 ambient-L4는 실제 503이 0건이었다. 다만 ambient-L4도 실패가 없는 것은 아니며, TCP 레벨 연결 끊김(0.3%)이라는 다른 형태로 나타난다 — 이는 waypoint의 "죽은 연결에 요청을 흘려보내는" 503과는 다른 실패 모드(C는 오답)다. 소켓 사용량은 안정성 지표가 아니라 커넥션 재생성 빈도를 보여주는 참고 수치다(D는 오답) — 실제로 ambient-L4는 소켓을 가장 많이 썼음에도 503이 0건이었다.
+HTTP 503 비율은 sidecar 0.54%, L7 약 2.55%이며 표본의 비율 차이는 약 4.72배입니다. 제품 고유의 배수가 아닙니다. HTTP 503 0건은 전체 실패 0건이 아닙니다. Fortio 비HTTP 코드 -1만으로 구체적인 reset/EOF/timeout 원인을 알 수 없습니다. SocketCount는 client 소켓이며 가장 많았던 것은 L4(1,652)가 아닌 L7(2,486)입니다. 요청 QPS × 시간으로 정확한 완료 호출 수가 보장되지 않고, 다른 롤아웃 횟수도 인과 비교를 제한합니다.
 
 **참고 자료:**
+
 - [Sidecar vs Ambient Mode 선택 가이드: 무중단 rollout 실측 결과](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
 
 </details>
@@ -60,12 +68,15 @@ D. 소켓 사용량이 가장 적은 모드가 가장 안정적이다
 
 ### 문제 3: NetworkPolicy와 ambient
 
-포트 기반 NetworkPolicy를 사용하는 클러스터에서 ambient 모드 Pod에 트래픽이 도달하지 않는 문제가 발생했다. 애플리케이션은 8080 포트를 사용한다. 가장 가능성이 높은 원인과 해결책은?
+보고된 VPC CNI 실험에서 정책 적용을 확인했고, 8080만 허용한 ingress 규칙이 관측한 HBONE 경로를 차단했습니다. 다음 확인 사항은?
 
-A. ambient는 NetworkPolicy를 지원하지 않으므로 NetworkPolicy를 제거해야 한다
-B. 실제 트래픽이 HBONE 터널(TCP 15008)로 도착하므로, NetworkPolicy에 15008 인바운드 허용 규칙을 추가해야 한다
-C. PeerAuthentication을 PERMISSIVE로 변경해야 한다
-D. istio-cni DaemonSet을 재시작해야 한다
+A. 모든 NetworkPolicy를 제거한다
+
+B. 필요한 TCP 15008 터널 경로를 적절한 범위로 허용하고 출발지·identity·내부 포트 정책 경계를 검증한다
+
+C. mTLS를 PERMISSIVE로 바꾼다
+
+D. CNI를 재시작한 뒤 정책이 맞다고 가정한다
 
 <details>
 <summary>정답 및 해설</summary>
@@ -74,23 +85,27 @@ D. istio-cni DaemonSet을 재시작해야 한다
 
 **해설:**
 
-ambient는 ztunnel이 Pod 트래픽을 HBONE(mTLS 터널)으로 감싸 포트 15008로 전달한다. 애플리케이션 포트(8080)만 허용하는 NetworkPolicy는 실제로 도착하는 15008 트래픽을 차단한다. 해결책은 대상 Pod에 TCP 15008 인바운드를 허용하는 규칙을 추가하는 것이다. sidecar는 사이드카가 애플리케이션과 동일한 Pod network namespace를 쓰므로 이런 추가 규칙이 필요 없다.
+보고된 경로는 TCP 15008 허용 뒤 복구되었습니다. 해당 경로의 근거이며 모든 CNI나 기존 정책이 동일하게 동작한다는 증거는 아닙니다. 외부 터널 허용만으로 내부 트래픽의 최소 권한 정책이 완성되지 않습니다. 출발지 선택자, waypoint 경유, DNS·컨트롤 플레인 의존성과 실제 적용을 확인하세요. Sidecar의 애플리케이션 포트 결과 역시 검사 범위 안의 관측입니다.
 
 **참고 자료:**
+
 - [Sidecar vs Ambient Mode 선택 가이드: NetworkPolicy](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
 
 </details>
 
 ---
 
-### 문제 4: 비멱등 API와 retry 정책
+### 문제 4: 비멱등 API와 retry
 
-주문 생성처럼 비멱등(non-idempotent)한 API 경로에 mesh 레벨 retry(예: waypoint retry, VirtualService retries)를 기본으로 적용하지 않는 것이 권장되는 이유는?
+주문 생성 같은 비멱등 명령 경로에서 mesh retry를 기본적으로 명시해 끄는 이유는?
 
-A. retry는 CPU 오버헤드가 너무 크기 때문
-B. waypoint가 죽은 연결에 요청을 흘려보내 503을 반환했을 때, retry가 이미 처리된 요청을 다시 실행시켜 중복 실행(예: 중복 주문)을 유발할 수 있기 때문
-C. retry는 STRICT mTLS와 호환되지 않기 때문
-D. retry는 ambient 모드에서 지원되지 않기 때문
+A. Retry가 언제나 애플리케이션보다 CPU를 많이 소비한다
+
+B. 실패·소실된 응답만으로 서버 결과를 알 수 없어 재전송이 이미 commit한 명령을 반복할 수 있다
+
+C. Retry는 STRICT mTLS와 호환되지 않는다
+
+D. Ambient에는 L7 retry 기능이 없다
 
 <details>
 <summary>정답 및 해설</summary>
@@ -99,23 +114,27 @@ D. retry는 ambient 모드에서 지원되지 않기 때문
 
 **해설:**
 
-503 자체는 클라이언트에 보이는 실패이지만, 그 이면에는 "요청이 서버에 도달해 처리가 끝났는데 응답만 유실된" 경우가 섞여 있을 수 있다(연결이 끊기는 시점과 애플리케이션 처리 완료 시점의 race). 이 경우 mesh retry는 같은 논리적 요청을 다른 커넥션으로 재전송하며, 서버가 멱등성을 보장하지 않는다면 요청이 두 번 처리된다. 주문 생성처럼 되돌릴 수 없는 작업에는 이 리스크가 특히 크므로, retry를 기본 적용하지 않고 별도로 검증하는 것이 안전하다. 후속 실측(T2)에서는 sidecar와 ambient-L7 waypoint retry 양쪽에 300초간 지속적인 rollout churn을 걸어봤지만 중복 실행은 0건이었다 — 이는 이 race가 *흔하다*는 확신을 낮출 뿐, *안전하다*는 것을 증명하지는 않는다. 매우 좁은 타이밍 창에서만 발생하는 문제라 더 길거나 더 높은 처리량의 테스트에서는 여전히 나타날 수 있다.
+Timeout, reset 또는 오류 응답이 항상 명령의 부작용이 없었음을 입증하지는 않습니다. 서버에 적절한 영속 멱등성·트랜잭션 처리가 없다면 미확정 쓰기의 재생이 작업을 중복시킬 수 있습니다. 특정 waypoint 경쟁 원인을 입증해야만 생기는 위험이 아닙니다. 과거 T2의 중복 0건으로 안전성이나 신뢰할 만한 빈도도 추정할 수 없습니다. Client가 무한 실행하고 요청 수가 명시한 시간·속도와 맞지 않으며 관측 오류를 숨길 수 있었기 때문입니다. 수정한 시간 제한 observer도 업무 트랜잭션 원장이 아닙니다. 완전한 관측으로 안정적인 명령 ID와 응답 소실 사례를 측정해야 합니다.
 
 **참고 자료:**
+
 - [Sidecar vs Ambient Mode 선택 가이드: Retry 완화책의 위험성](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
 
 </details>
 
 ---
 
-### 문제 5: Sidecar와 Ambient rollout의 공정한 비교
+### 문제 5: 데이터 플레인 동작의 공정한 비교
 
-Sidecar의 클라이언트 노출 503이 Ambient보다 적게 측정됐다. 이 결과가 데이터 플레인 자체의 안정성 차이인지 확인하는 가장 적절한 실험은?
+원시 실패와 retry로 숨겨진 실패를 구분하기 위한 필수 출발점은?
 
-A. 두 모드 모두 GET 요청만 보내고 최종 200 응답 수만 비교한다
-B. Sidecar에는 기본 retry를 유지하고 Ambient에는 retry를 끈다
-C. 쓰기 route의 retry를 `attempts: 0`으로 통일하고 raw HTTP/TCP 실패, retry 횟수, 최종 결과를 각각 기록한다
-D. 평균 CPU 사용량이 낮은 모드를 더 안정적이라고 판단한다
+A. 최종 GET 성공 수만 비교한다
+
+B. Sidecar retry는 유지하고 ambient에서만 끈다
+
+C. 양쪽 쓰기 route를 attempts: 0으로 맞추고 원시 HTTP·비HTTP 오류, retry counter, upstream 전달 수와 최종 결과를 수집한다
+
+D. 평균 CPU가 가장 낮은 모드를 선택한다
 
 <details>
 <summary>정답 및 해설</summary>
@@ -124,9 +143,10 @@ D. 평균 CPU 사용량이 낮은 모드를 더 안정적이라고 판단한다
 
 **해설:**
 
-Sidecar Envoy와 waypoint Envoy는 L7 retry로 원시 실패(raw failure)를 클라이언트에서 숨길 수 있지만 ztunnel은 L4 프록시라 HTTP 503을 해석하거나 HTTP 요청을 replay하지 않는다. 따라서 write retry를 동일하게 끄고 HTTP 503, TCP reset/EOF, `upstream_rq_retry`, 실제 upstream 전달 수, 최종 클라이언트 결과를 분리해야 한다. 그렇지 않으면 "장애가 적었다"와 "retry가 장애를 가렸다"를 구분할 수 없다.
+Sidecar와 waypoint Envoy는 L7 retry를 수행하지만 ztunnel은 HTTP 503을 해석하거나 HTTP 요청을 replay할 수 없습니다. 양쪽 쓰기 retry를 동일하게 끄고 upstream_rq_retry, 실제 전달 수, 안정적인 명령 ID와 client 집계를 기록하세요. 부하, 버전, 리소스와 롤아웃 노출도 통제하고 반복해야 합니다. 관측을 더 공정하게 분리하지만 한 번의 실행으로 제품 고유 안정성이 증명되지는 않습니다.
 
 **참고 자료:**
+
 - [Sidecar vs Ambient Mode 선택 가이드: 원시 실패 측정](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
 - [Retry 및 Timeout](../../../service-mesh/istio/traffic-management/05-retry-timeout.md)
 
@@ -136,12 +156,15 @@ Sidecar Envoy와 waypoint Envoy는 L7 retry로 원시 실패(raw failure)를 클
 
 ### 문제 6: Cilium 인증과 암호화
 
-Cilium mutual authentication을 `required`로 설정한 기존 데이터 플레인에 대한 올바른 설명은?
+문서화된 Cilium out-of-band mutual authentication에서 authentication을 required로 설정하면 무엇을 의미하나요?
 
-A. 모든 애플리케이션 payload가 자동으로 workload TLS로 암호화된다
-B. endpoint identity 인증과 payload 암호화는 별도이며, 기밀성에는 WireGuard/IPsec 또는 지원되는 native ztunnel mTLS가 필요하다
-C. Istio `PeerAuthentication STRICT`와 구현·성숙도·운영 의미가 완전히 동일하다
-D. 상호 인증을 켜면 CiliumNetworkPolicy가 필요 없다
+A. 모든 payload가 자동으로 workload TLS를 사용한다
+
+B. 데이터 경로 밖의 peer identity handshake와 payload 암호화는 별개이며 암호화를 따로 설정·검증해야 한다
+
+C. Istio PeerAuthentication STRICT와 구현·성숙도가 동일하다
+
+D. 인가 정책이 더 이상 필요 없다
 
 <details>
 <summary>정답 및 해설</summary>
@@ -150,9 +173,10 @@ D. 상호 인증을 켜면 CiliumNetworkPolicy가 필요 없다
 
 **해설:**
 
-기존 Cilium mutual authentication은 애플리케이션 데이터 경로 밖의 out-of-band handshake로 peer identity를 확인한다. 이 인증 정책만으로 payload 암호화가 자동 제공되는 것은 아니므로 WireGuard/IPsec을 별도로 선택하거나, 지원 플랫폼에서 native ztunnel mTLS preview를 검증해야 한다. Istio `STRICT` workload mTLS와 같은 것으로 간주하지 말고 identity 인가, 상대 인증, 전송 암호화를 각각 확인한다.
+릴리스 Cilium 1.20.1 문서는 이 방식을 Beta로 표시하고 애플리케이션 데이터 경로와 분리된 out-of-band handshake로 설명합니다. 인증 정책만으로 payload가 암호화되지는 않습니다. 지원되는 WireGuard/IPsec 암호화의 플랫폼·트래픽 범위 제한을 별도로 확인하세요. Cilium 1.20.1에는 namespace 등록, TCP 전용, 정책·플랫폼 제약을 가진 별도의 ztunnel 암호화 베타도 있습니다. 이 out-of-band 인증 정책 설정으로 활성화되는 기능은 아닙니다.
 
 **참고 자료:**
+
 - [Cilium Service Mesh 보안](../../../service-mesh/cilium-service-mesh/03-security.md)
 
 </details>
@@ -172,3 +196,8 @@ D. 상호 인증을 켜면 CiliumNetworkPolicy가 필요 없다
 - [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 - [mTLS](../../../service-mesh/istio/security/01-mtls.md)
 - [Cilium Service Mesh 보안](../../../service-mesh/cilium-service-mesh/03-security.md)
+
+## 공식 근거
+
+- [Istio ambient L7 feature status](https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/l7-features/index.md)
+- [Cilium 1.20.1 mutual authentication](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)

@@ -1,13 +1,13 @@
 # EKS Cluster Creation - Part 4: Creating Clusters Using Terraform
 
-> **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 23, 2026
+> **Example Versions**: Amazon EKS 1.36; Terraform 1.15.7; AWS provider 6.64.0; EKS module 21.25.0
+> **Last Updated**: September 11, 2026
 
-## Production Terraform Project Structure
+## Three-Layer Terraform Example
 
-Terraform is an infrastructure-as-code tool that enables you to define, provision, and manage EKS clusters in a repeatable and version-controlled manner. This guide uses the **AWS provider ~> 6.0** and the community **EKS module ~> 21.0**, which support the latest EKS features including Auto Mode, Hybrid Nodes, Pod Identity, and API-based Access Entries.
+Terraform manages infrastructure as code. This example uses AWS provider 6.x and pins EKS module **21.25.0** and VPC module **5.21.0**. The HCL was checked with Terraform 1.15.7 and AWS provider 6.64.0; AWS deployment and production behavior were not executed. The original v20-style `cluster_*` inputs are incompatible with module v21: use `name`, `kubernetes_version`, `addons` and the other v21 names shown below.
 
-In production environments, a single flat Terraform directory with one state file creates problems: a VPC change can accidentally destroy your cluster, every `terraform plan` takes longer as the project grows, and different teams cannot work independently. A **multi-layer architecture** solves this by splitting infrastructure into separate state files based on change frequency and ownership.
+Separate states can help teams divide ownership and review changes by lifecycle. They do not eliminate dependencies or operational impact: a network change can still interrupt a cluster, and an add-on or access-policy change can affect every workload. This is an example structure, not a tested production architecture.
 
 ### 3-Layer Architecture
 
@@ -15,20 +15,20 @@ In production environments, a single flat Terraform directory with one state fil
 eks-terraform/
 ├── 01-network/                   # Layer 1: VPC and networking
 │   ├── providers.tf
-│   ├── backend.tf                # S3 key: eks/network/terraform.tfstate
+│   ├── backend.tf                # S3 key: eks/dev/network/terraform.tfstate
 │   ├── variables.tf
 │   ├── main.tf                   # VPC module
 │   └── outputs.tf                # vpc_id, subnet_ids → remote state
 ├── 02-cluster/                   # Layer 2: EKS cluster and node groups
 │   ├── providers.tf
-│   ├── backend.tf                # S3 key: eks/cluster/terraform.tfstate
+│   ├── backend.tf                # S3 key: eks/dev/cluster/terraform.tfstate
 │   ├── data.tf                   # terraform_remote_state → 01-network
 │   ├── variables.tf
 │   ├── main.tf                   # EKS module, node groups, core add-ons
 │   └── outputs.tf                # cluster_name, endpoint → remote state
 └── 03-platform/                  # Layer 3: Add-ons, RBAC, Pod Identity
     ├── providers.tf
-    ├── backend.tf                # S3 key: eks/platform/terraform.tfstate
+    ├── backend.tf                # S3 key: eks/dev/platform/terraform.tfstate
     ├── data.tf                   # terraform_remote_state → 01-network, 02-cluster
     ├── variables.tf
     ├── addons.tf                 # EBS CSI driver, additional add-ons
@@ -40,42 +40,41 @@ eks-terraform/
 
 | Layer | Changes | Owner | Blast Radius |
 |-------|---------|-------|--------------|
-| 01-network | Rarely | Infra team | VPC, subnets only |
+| 01-network | Infrequent, as an example | Infra team | VPC/subnets and dependent connectivity |
 | 02-cluster | Monthly | Platform team | EKS cluster, nodes |
 | 03-platform | Weekly | Platform / App team | Add-ons, RBAC, Pod Identity |
 
-Each layer has its own S3 state file and can be planned/applied independently. A change to an add-on in `03-platform` never risks touching the VPC or the cluster itself.
+Each layer has a distinct state key and plan. Separate IAM permissions and CI ownership are still required, and cross-layer changes must be coordinated. State separation does not guarantee that an add-on change leaves cluster behavior unaffected.
 
 ### Shared S3 Backend
 
-All layers share a single S3 bucket with DynamoDB locking, but each layer writes to a **different state key**:
+The examples use S3 native locking with `use_lockfile = true` (Terraform 1.10+), with a distinct key per environment/layer. Create the backend bucket separately, enable versioning/encryption and Block Public Access, and replace every `REPLACE_WITH_YOUR_STATE_BUCKET` before initialization. Grant only the required state-key access and Get/Put/Delete on its `.tflock` object. DynamoDB locking is deprecated; coordinate all clients when migrating an existing backend rather than simply deleting its lock table.
 
 ```hcl
-# Example: 01-network/backend.tf
 terraform {
   backend "s3" {
-    bucket         = "my-terraform-state"
-    key            = "eks/network/terraform.tfstate"
-    region         = "ap-northeast-2"
-    dynamodb_table = "terraform-lock"
-    encrypt        = true
+    bucket       = "REPLACE_WITH_YOUR_STATE_BUCKET"
+    key          = "eks/dev/network/terraform.tfstate"
+    region       = "ap-northeast-2"
+    use_lockfile = true
+    encrypt      = true
   }
 }
 ```
 
-Layers reference each other through `terraform_remote_state` data sources, which read outputs from another layer's state file without creating a dependency on the Terraform code itself.
+`terraform_remote_state` exposes root outputs to HCL, but its reader can retrieve the **entire state snapshot**, including sensitive values. It does not create an apply-order dependency between separate projects. Publish selected values through a separately controlled interface when a consuming team must not read the full state.
 
 ---
 
 ## Layer 1: Network (01-network)
 
-This layer provisions the VPC, subnets, NAT gateways, and all networking prerequisites. It changes rarely and is typically owned by an infrastructure team.
+This example creates a three-AZ VPC with one NAT gateway to keep the lab small. A single NAT creates an AZ dependency and can incur cross-AZ transfer charges. Review an AZ-resilient egress design, subnet capacity, DNS and private endpoints before production use.
 
 ### 01-network/providers.tf
 
 ```hcl
 terraform {
-  required_version = ">= 1.3"
+  required_version = ">= 1.10, < 2.0"
 
   required_providers {
     aws = {
@@ -95,11 +94,11 @@ provider "aws" {
 ```hcl
 terraform {
   backend "s3" {
-    bucket         = "my-terraform-state"
-    key            = "eks/network/terraform.tfstate"
-    region         = "ap-northeast-2"
-    dynamodb_table = "terraform-lock"
-    encrypt        = true
+    bucket       = "REPLACE_WITH_YOUR_STATE_BUCKET"
+    key          = "eks/dev/network/terraform.tfstate"
+    region       = "ap-northeast-2"
+    use_lockfile = true
+    encrypt      = true
   }
 }
 ```
@@ -158,7 +157,7 @@ variable "tags" {
 ```hcl
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.0"
+  version = "5.21.0"
 
   name = "${var.cluster_name}-vpc"
   cidr = var.vpc_cidr
@@ -183,7 +182,7 @@ module "vpc" {
 }
 ```
 
-> **Note**: The `kubernetes.io/cluster/<cluster-name>` tag is no longer required on subnets when using EKS module ~> 21.0 with the AWS Load Balancer Controller. The `kubernetes.io/role/elb` and `kubernetes.io/role/internal-elb` tags are sufficient for subnet discovery.
+> **Subnet discovery** follows the Load Balancer Controller version, feature gates and subnet eligibility rules, not the Terraform EKS module version. The role tags shown help select public/private subnets; also verify AZ coverage, free addresses, routes and any cluster-tag filtering.
 
 ### 01-network/outputs.tf
 
@@ -208,13 +207,13 @@ output "public_subnet_ids" {
 
 ## Layer 2: EKS Cluster (02-cluster)
 
-This layer provisions the EKS cluster, managed node groups, and core add-ons. It reads network information from Layer 1 via `terraform_remote_state`.
+This layer creates a **new conventional EC2 cluster**, managed node groups and core add-ons. Set the existing `cluster_admin_role_arn` explicitly; the Terraform caller is not automatically granted Kubernetes administration. The operator must be able to assume that role. Private endpoint access requires a connected, routed management environment before kubectl or platform installation.
 
 ### 02-cluster/providers.tf
 
 ```hcl
 terraform {
-  required_version = ">= 1.3"
+  required_version = ">= 1.10, < 2.0"
 
   required_providers {
     aws = {
@@ -234,11 +233,11 @@ provider "aws" {
 ```hcl
 terraform {
   backend "s3" {
-    bucket         = "my-terraform-state"
-    key            = "eks/cluster/terraform.tfstate"
-    region         = "ap-northeast-2"
-    dynamodb_table = "terraform-lock"
-    encrypt        = true
+    bucket       = "REPLACE_WITH_YOUR_STATE_BUCKET"
+    key          = "eks/dev/cluster/terraform.tfstate"
+    region       = "ap-northeast-2"
+    use_lockfile = true
+    encrypt      = true
   }
 }
 ```
@@ -249,10 +248,16 @@ terraform {
 data "terraform_remote_state" "network" {
   backend = "s3"
   config = {
-    bucket = "my-terraform-state"
-    key    = "eks/network/terraform.tfstate"
+    bucket = "REPLACE_WITH_YOUR_STATE_BUCKET"
+    key    = "eks/dev/network/terraform.tfstate"
     region = "ap-northeast-2"
   }
+}
+
+data "aws_caller_identity" "current" {}
+
+locals {
+  cluster_arn = "arn:aws:eks:${var.region}:${data.aws_caller_identity.current.account_id}:cluster/${var.cluster_name}"
 }
 ```
 
@@ -268,7 +273,7 @@ variable "cluster_name" {
 variable "cluster_version" {
   description = "Kubernetes version for the EKS cluster"
   type        = string
-  default     = "1.33"
+  default     = "1.36"
 }
 
 variable "region" {
@@ -285,6 +290,11 @@ variable "tags" {
     Terraform   = "true"
   }
 }
+
+variable "cluster_admin_role_arn" {
+  description = "Existing approved IAM role for initial Kubernetes administration; not an STS session ARN"
+  type        = string
+}
 ```
 
 ### 02-cluster/main.tf
@@ -292,32 +302,51 @@ variable "tags" {
 ```hcl
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 21.0"
+  version = "21.25.0"
 
-  cluster_name    = var.cluster_name
-  cluster_version = var.cluster_version
+  name               = var.cluster_name
+  kubernetes_version = var.cluster_version
 
   vpc_id     = data.terraform_remote_state.network.outputs.vpc_id
   subnet_ids = data.terraform_remote_state.network.outputs.private_subnet_ids
 
+  encryption_config = null
+  create_kms_key    = false
+
   # Cluster endpoint access
-  cluster_endpoint_private_access = true
-  cluster_endpoint_public_access  = true
+  endpoint_private_access = true
+  endpoint_public_access  = false
 
   # Use API-based authentication (replaces aws-auth ConfigMap)
   authentication_mode = "API"
 
-  # Grant the Terraform caller cluster admin access
-  enable_cluster_creator_admin_permissions = true
+  # Use an explicitly selected existing administrator role
+  enable_cluster_creator_admin_permissions = false
+
+  access_entries = {
+    bootstrap_admin = {
+      principal_arn = var.cluster_admin_role_arn
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+  }
 
   # EKS Add-ons (core only — additional add-ons go in 03-platform)
-  cluster_addons = {
+  addons = {
     coredns = {
-      most_recent = true
+      most_recent                 = false
+      resolve_conflicts_on_update = "PRESERVE"
     }
     vpc-cni = {
-      most_recent    = true
-      before_compute = true
+      most_recent                 = false
+      resolve_conflicts_on_update = "PRESERVE"
+      before_compute              = true
       configuration_values = jsonencode({
         env = {
           ENABLE_PREFIX_DELEGATION = "true"
@@ -325,11 +354,13 @@ module "eks" {
       })
     }
     kube-proxy = {
-      most_recent = true
+      most_recent                 = false
+      resolve_conflicts_on_update = "PRESERVE"
     }
     eks-pod-identity-agent = {
-      most_recent    = true
-      before_compute = true
+      most_recent                 = false
+      resolve_conflicts_on_update = "PRESERVE"
+      before_compute              = true
     }
   }
 
@@ -343,7 +374,17 @@ module "eks" {
       max_size     = 5
       desired_size = 2
 
-      disk_size = 50
+      block_device_mappings = {
+        root = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_size           = 50
+            volume_type           = "gp3"
+            encrypted             = true
+            delete_on_termination = true
+          }
+        }
+      }
     }
 
     spot = {
@@ -355,16 +396,32 @@ module "eks" {
       max_size     = 5
       desired_size = 1
 
-      disk_size = 50
+      block_device_mappings = {
+        root = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_size           = 50
+            volume_type           = "gp3"
+            encrypted             = true
+            delete_on_termination = true
+          }
+        }
+      }
     }
   }
 
   # CloudWatch Logging
-  cluster_enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
   tags = var.tags
 }
 ```
+
+The node-group root disks use launch-template block-device mappings; `disk_size` is ignored when this module uses its default custom launch template. The example uses default AWS-owned Kubernetes API envelope encryption. A customer KMS key is a separate design choice.
+
+Review module defaults before deployment: this pinned module's managed-node IAM role includes ECR ReadOnly and IPv4 CNI permissions. Those defaults make this example functional but are not a claim of minimum production permissions. Prefer a dedicated CNI identity and an explicitly reviewed node role (including ECR PullOnly where sufficient). Node-group min/max values do not install an autoscaler.
+
+The default-compatible add-on build can change when Terraform reevaluates its data sources. Resolve and record compatible builds for the target cluster and use `addon_version` when reproducibility requires a pin. Preserve reviewed custom configuration on updates.
 
 ### 02-cluster/outputs.tf
 
@@ -398,19 +455,24 @@ output "region" {
   description = "AWS region"
   value       = var.region
 }
+
+output "cluster_arn" {
+  description = "EKS cluster ARN used to scope platform role trust"
+  value       = module.eks.cluster_arn
+}
 ```
 
 ---
 
 ## Layer 3: Platform (03-platform)
 
-This layer manages add-ons beyond the core set, Pod Identity associations, and access entries. It changes most frequently and can be applied independently without affecting the cluster or network.
+The standard EC2 platform layer manages additional add-ons, Pod Identity associations and developer/viewer access. Its state is separate, but its changes can affect cluster security and workload availability. The Auto Mode and Hybrid alternatives below require different platform file selections.
 
 ### 03-platform/providers.tf
 
 ```hcl
 terraform {
-  required_version = ">= 1.3"
+  required_version = ">= 1.10, < 2.0"
 
   required_providers {
     aws = {
@@ -430,11 +492,11 @@ provider "aws" {
 ```hcl
 terraform {
   backend "s3" {
-    bucket         = "my-terraform-state"
-    key            = "eks/platform/terraform.tfstate"
-    region         = "ap-northeast-2"
-    dynamodb_table = "terraform-lock"
-    encrypt        = true
+    bucket       = "REPLACE_WITH_YOUR_STATE_BUCKET"
+    key          = "eks/dev/platform/terraform.tfstate"
+    region       = "ap-northeast-2"
+    use_lockfile = true
+    encrypt      = true
   }
 }
 ```
@@ -445,8 +507,8 @@ terraform {
 data "terraform_remote_state" "network" {
   backend = "s3"
   config = {
-    bucket = "my-terraform-state"
-    key    = "eks/network/terraform.tfstate"
+    bucket = "REPLACE_WITH_YOUR_STATE_BUCKET"
+    key    = "eks/dev/network/terraform.tfstate"
     region = "ap-northeast-2"
   }
 }
@@ -454,8 +516,8 @@ data "terraform_remote_state" "network" {
 data "terraform_remote_state" "cluster" {
   backend = "s3"
   config = {
-    bucket = "my-terraform-state"
-    key    = "eks/cluster/terraform.tfstate"
+    bucket = "REPLACE_WITH_YOUR_STATE_BUCKET"
+    key    = "eks/dev/cluster/terraform.tfstate"
     region = "ap-northeast-2"
   }
 }
@@ -484,6 +546,21 @@ variable "tags" {
     Terraform   = "true"
   }
 }
+
+variable "developer_role_arn" {
+  description = "Existing approved IAM role for app-dev/app-staging Kubernetes access"
+  type        = string
+}
+
+variable "viewer_role_arn" {
+  description = "Existing approved IAM role for Kubernetes read access"
+  type        = string
+}
+
+variable "app_bucket_name" {
+  description = "Existing approved S3 bucket for the application's app/ prefix"
+  type        = string
+}
 ```
 
 ### 03-platform/addons.tf
@@ -504,6 +581,13 @@ resource "aws_iam_role" "ebs_csi" {
         "sts:AssumeRole",
         "sts:TagSession"
       ]
+      Condition = {
+        StringEquals = {
+          "aws:RequestTag/eks-cluster-arn"            = data.terraform_remote_state.cluster.outputs.cluster_arn
+          "aws:RequestTag/kubernetes-namespace"       = "kube-system"
+          "aws:RequestTag/kubernetes-service-account" = "ebs-csi-controller-sa"
+        }
+      }
     }]
   })
 
@@ -516,8 +600,11 @@ resource "aws_iam_role_policy_attachment" "ebs_csi" {
 }
 
 resource "aws_eks_addon" "ebs_csi" {
-  cluster_name = data.terraform_remote_state.cluster.outputs.cluster_name
-  addon_name   = "aws-ebs-csi-driver"
+  cluster_name                = data.terraform_remote_state.cluster.outputs.cluster_name
+  addon_name                  = "aws-ebs-csi-driver"
+  resolve_conflicts_on_create = "NONE"
+  resolve_conflicts_on_update = "PRESERVE"
+  depends_on                  = [aws_iam_role_policy_attachment.ebs_csi]
 
   pod_identity_association {
     role_arn        = aws_iam_role.ebs_csi.arn
@@ -531,7 +618,7 @@ resource "aws_eks_addon" "ebs_csi" {
 ### 03-platform/pod-identity.tf
 
 ```hcl
-# Example: S3 access for application pods
+# The Kubernetes namespace and ServiceAccount are managed separately.
 resource "aws_iam_role" "app_s3_access" {
   name = "${var.cluster_name}-app-s3-access"
 
@@ -542,57 +629,65 @@ resource "aws_iam_role" "app_s3_access" {
       Principal = {
         Service = "pods.eks.amazonaws.com"
       }
-      Action = [
-        "sts:AssumeRole",
-        "sts:TagSession"
-      ]
+      Action = ["sts:AssumeRole", "sts:TagSession"]
+      Condition = {
+        StringEquals = {
+          "aws:RequestTag/eks-cluster-arn"            = data.terraform_remote_state.cluster.outputs.cluster_arn
+          "aws:RequestTag/kubernetes-namespace"       = "app-dev"
+          "aws:RequestTag/kubernetes-service-account" = "app-sa"
+        }
+      }
     }]
   })
-
   tags = var.tags
 }
 
-resource "aws_iam_role_policy_attachment" "app_s3_access" {
-  role       = aws_iam_role.app_s3_access.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+resource "aws_iam_role_policy" "app_s3_access" {
+  name = "ReadApprovedAppPrefix"
+  role = aws_iam_role.app_s3_access.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "s3:ListBucket"
+        Resource = "arn:aws:s3:::${var.app_bucket_name}"
+        Condition = {
+          StringLike = { "s3:prefix" = ["app/", "app/*"] }
+        }
+      },
+      {
+        Effect   = "Allow"
+        Action   = "s3:GetObject"
+        Resource = "arn:aws:s3:::${var.app_bucket_name}/app/*"
+      }
+    ]
+  })
 }
 
-# Associate the role with a Kubernetes service account
 resource "aws_eks_pod_identity_association" "app_s3_access" {
   cluster_name    = data.terraform_remote_state.cluster.outputs.cluster_name
-  namespace       = "default"
+  namespace       = "app-dev"
   service_account = "app-sa"
   role_arn        = aws_iam_role.app_s3_access.arn
+  depends_on      = [aws_iam_role_policy.app_s3_access]
 }
 ```
+
+Create the new `app-dev` namespace and `app-sa` ServiceAccount through their Kubernetes/GitOps owner before testing the application. The EKS association does not create either object. The example grants read access only to the approved bucket's `app/` prefix; bucket policies, KMS encryption and cross-account access may require additional reviewed permissions. Verify the actual assumed role and handle IAM/association propagation before relying on it.
 
 ### 03-platform/access-entries.tf
 
 ```hcl
-resource "aws_eks_access_entry" "admin" {
-  cluster_name  = data.terraform_remote_state.cluster.outputs.cluster_name
-  principal_arn = "arn:aws:iam::123456789012:role/AdminRole"
-}
-
-resource "aws_eks_access_policy_association" "admin" {
-  cluster_name  = data.terraform_remote_state.cluster.outputs.cluster_name
-  principal_arn = "arn:aws:iam::123456789012:role/AdminRole"
-  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-
-  access_scope {
-    type = "cluster"
-  }
-}
-
 # Developer with namespace-scoped access
 resource "aws_eks_access_entry" "developer" {
   cluster_name  = data.terraform_remote_state.cluster.outputs.cluster_name
-  principal_arn = "arn:aws:iam::123456789012:role/DevRole"
+  principal_arn = var.developer_role_arn
 }
 
 resource "aws_eks_access_policy_association" "developer" {
   cluster_name  = data.terraform_remote_state.cluster.outputs.cluster_name
-  principal_arn = "arn:aws:iam::123456789012:role/DevRole"
+  principal_arn = aws_eks_access_entry.developer.principal_arn
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy"
 
   access_scope {
@@ -604,12 +699,12 @@ resource "aws_eks_access_policy_association" "developer" {
 # Read-only access
 resource "aws_eks_access_entry" "viewer" {
   cluster_name  = data.terraform_remote_state.cluster.outputs.cluster_name
-  principal_arn = "arn:aws:iam::123456789012:role/ViewerRole"
+  principal_arn = var.viewer_role_arn
 }
 
 resource "aws_eks_access_policy_association" "viewer" {
   cluster_name  = data.terraform_remote_state.cluster.outputs.cluster_name
-  principal_arn = "arn:aws:iam::123456789012:role/ViewerRole"
+  principal_arn = aws_eks_access_entry.viewer.principal_arn
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
 
   access_scope {
@@ -622,14 +717,14 @@ resource "aws_eks_access_policy_association" "viewer" {
 
 ## EKS Pod Identity
 
-EKS Pod Identity is the recommended approach for granting AWS permissions to Kubernetes workloads. It replaces IAM Roles for Service Accounts (IRSA) and does not require an OIDC provider.
+EKS Pod Identity is an option for supported workloads, not a universal replacement for IRSA. It needs no IAM OIDC provider. Conventional Linux EC2, Auto Mode and appropriately configured Hybrid Nodes have supported paths; Fargate and Windows require a different supported identity mechanism. IRSA remains supported.
 
 ### How Pod Identity Works
 
-1. The `eks-pod-identity-agent` add-on runs as a DaemonSet on every node (installed in Layer 2).
+1. Conventional supported nodes use the Pod Identity Agent DaemonSet. Auto Mode provides the capability; Hybrid Nodes need the documented credential-file and dedicated DaemonSet configuration.
 2. An IAM role with a Pod Identity trust policy is created (in Layer 3).
 3. The role is associated with a Kubernetes service account via `aws_eks_pod_identity_association`.
-4. Pods using that service account automatically receive temporary AWS credentials.
+4. A compatible SDK using its default credential chain retrieves temporary credentials. Existing static credentials earlier in that chain can override this path; verify the actual identity.
 
 The Pod Identity resources shown in `03-platform/pod-identity.tf` above follow this pattern. The IAM role's trust policy uses `pods.eks.amazonaws.com` as the principal, and `sts:TagSession` enables automatic session tagging with cluster, namespace, and service account metadata.
 
@@ -638,197 +733,250 @@ The Pod Identity resources shown in `03-platform/pod-identity.tf` above follow t
 | Feature | Pod Identity | IRSA |
 |---------|-------------|------|
 | OIDC provider required | No | Yes |
-| Cross-account support | Built-in via `sts:TagSession` | Requires OIDC trust per account |
+| Cross-account support | Explicit role delegation, including `targetRoleArn` where supported; requires trust/permissions | Target-account OIDC trust or explicit role chaining |
 | Setup complexity | Low — single association | Medium — OIDC, role, annotation |
-| Session tags | Automatic (cluster, namespace, SA) | Not available |
-| Re-usability | Same role for multiple clusters | One role per cluster OIDC |
+| Session tags | Automatic EKS context tags when enabled | No automatic EKS Pod Identity context tags |
+| Re-usability | A role can serve multiple reviewed associations | A role can trust multiple explicitly scoped OIDC issuers/subjects |
 
-> **Recommendation**: Use Pod Identity for all new workloads. IRSA remains supported for backward compatibility.
+> Choose an identity mechanism supported by the compute type and SDK. `sts:TagSession` adds tags; it does not itself establish cross-account trust. The trust policies above require session tags to stay enabled. The module may create an OIDC provider for optional IRSA use independently of Pod Identity.
 
 ---
 
 ## EKS Auto Mode Cluster
 
-EKS Auto Mode delegates node provisioning, scaling, and OS management entirely to AWS. There is no need to define managed node groups — EKS provisions and manages compute automatically. When using Auto Mode, replace the standard `02-cluster/main.tf` with the following variant:
+Choose this **new-cluster alternative before initial deployment**; replacing an already applied cluster configuration is not a migration procedure. Auto Mode manages compute and infrastructure capabilities. Its pure-Auto-Mode example does not define managed node groups and uses the module v21 `compute_config` input:
 
 ```hcl
-# 02-cluster/main.tf (Auto Mode variant)
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 21.0"
+  version = "21.25.0"
 
-  cluster_name    = var.cluster_name
-  cluster_version = var.cluster_version
+  name               = var.cluster_name
+  kubernetes_version = var.cluster_version
+  vpc_id             = data.terraform_remote_state.network.outputs.vpc_id
+  subnet_ids         = data.terraform_remote_state.network.outputs.private_subnet_ids
 
-  vpc_id     = data.terraform_remote_state.network.outputs.vpc_id
-  subnet_ids = data.terraform_remote_state.network.outputs.private_subnet_ids
-
+  endpoint_private_access                  = true
+  endpoint_public_access                   = false
   authentication_mode                      = "API"
-  enable_cluster_creator_admin_permissions = true
+  encryption_config                        = null
+  create_kms_key                           = false
+  enable_cluster_creator_admin_permissions = false
 
-  # Enable Auto Mode
-  cluster_compute_config = {
+  access_entries = {
+    bootstrap_admin = {
+      principal_arn = var.cluster_admin_role_arn
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+  }
+
+  compute_config = {
     enabled    = true
     node_pools = ["general-purpose", "system"]
   }
 
-  # Auto Mode manages these add-ons — do not bootstrap self-managed ones
-  bootstrap_self_managed_addons = false
-
-  tags = var.tags
+  enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  tags              = var.tags
 }
 ```
 
 ### Key Points
 
-- **`cluster_compute_config.enabled = true`** activates Auto Mode.
+- **`compute_config.enabled = true`** enables compute, load balancing and block storage through this module. Review the IAM policies the pinned module creates.
 - **`node_pools`** specifies which built-in node pools to enable (`general-purpose`, `system`).
-- **`bootstrap_self_managed_addons = false`** prevents conflicts — Auto Mode manages core add-ons (CoreDNS, kube-proxy, VPC CNI) automatically.
-- You do **not** define `eks_managed_node_groups` when using Auto Mode.
+- Module v21 hardcodes the underlying `bootstrap_self_managed_addons` to `false`; it is not a module input. Current Auto Mode includes cluster DNS as well as networking, storage and Pod Identity capabilities, so the equivalent traditional add-ons are redundant on Auto Mode compute.
+- This variant has no managed node groups. Mixed-compute clusters are supported, but non-Auto-Mode nodes still require their applicable add-ons and placement configuration.
 - Auto Mode provisions EC2 instances from the node pools and handles OS patching, scaling, and lifecycle.
 
 ---
 
+For pure Auto Mode, omit the standard `03-platform/addons.tf`: its traditional EBS CSI driver is not the Auto Mode storage controller. Use the Auto Mode provisioner `ebs.csi.eks.amazonaws.com` in a reviewed StorageClass. The application Pod Identity/access-entry files can still be used after their prerequisites are met.
+
 ## EKS Hybrid Nodes
 
-EKS Hybrid Nodes let you join on-premises or edge servers to an EKS cluster as worker nodes, keeping the EKS control plane in AWS. When using Hybrid Nodes, replace the standard `02-cluster/main.tf` with the following variant:
+This is a **new hybrid-only control-plane alternative**, not a complete host-provisioning recipe or an in-place conversion. Establish VPN/Direct Connect or another supported routed network, DNS, firewall rules, a supported OS and a credentials provider separately. After this cluster layer finishes, follow nodeadm/CNI setup and bring hybrid compute online before waiting for CoreDNS add-on readiness.
 
 ```hcl
-# 02-cluster/main.tf (Hybrid Nodes variant)
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 21.0"
+  version = "21.25.0"
 
-  cluster_name    = var.cluster_name
-  cluster_version = var.cluster_version
+  name               = var.cluster_name
+  kubernetes_version = var.cluster_version
+  vpc_id             = data.terraform_remote_state.network.outputs.vpc_id
+  subnet_ids         = data.terraform_remote_state.network.outputs.private_subnet_ids
 
-  vpc_id     = data.terraform_remote_state.network.outputs.vpc_id
-  subnet_ids = data.terraform_remote_state.network.outputs.private_subnet_ids
-
+  endpoint_private_access                  = true
+  endpoint_public_access                   = false
   authentication_mode                      = "API"
-  enable_cluster_creator_admin_permissions = true
+  encryption_config                        = null
+  create_kms_key                           = false
+  enable_cluster_creator_admin_permissions = false
 
-  # Hybrid Nodes network configuration
-  remote_network_config = {
-    remote_node_networks = [
-      {
-        cidrs = ["172.16.0.0/16"]
-      }
-    ]
-    remote_pod_networks = [
-      {
-        cidrs = ["192.168.0.0/16"]
-      }
-    ]
-  }
-
-  # Access entry for hybrid nodes
   access_entries = {
     hybrid_nodes = {
       principal_arn = aws_iam_role.hybrid_node_role.arn
       type          = "HYBRID_LINUX"
     }
+    bootstrap_admin = {
+      principal_arn = var.cluster_admin_role_arn
+      policy_associations = {
+        admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
   }
 
-  cluster_addons = {
-    coredns = {
-      most_recent = true
+  remote_network_config = {
+    remote_node_networks = { cidrs = ["172.16.0.0/16"] }
+    remote_pod_networks  = { cidrs = ["192.168.0.0/16"] }
+  }
+
+  security_group_additional_rules = {
+    hybrid_api = {
+      description = "Hybrid nodes to private Kubernetes API"
+      protocol    = "tcp"
+      from_port   = 443
+      to_port     = 443
+      type        = "ingress"
+      cidr_blocks = ["172.16.0.0/16"]
     }
-    kube-proxy = {
-      most_recent = true
+    hybrid_kubelet = {
+      description = "Control plane to hybrid kubelet"
+      protocol    = "tcp"
+      from_port   = 10250
+      to_port     = 10250
+      type        = "egress"
+      cidr_blocks = ["172.16.0.0/16"]
     }
   }
 
-  tags = var.tags
+  enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  tags              = var.tags
 }
 
 resource "aws_iam_role" "hybrid_node_role" {
   name = "${var.cluster_name}-hybrid-node-role"
-
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect = "Allow"
-      Principal = {
-        Service = "ssm.amazonaws.com"
+      Effect    = "Allow"
+      Principal = { Service = "ssm.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+      Condition = {
+        StringEquals = { "aws:SourceAccount" = data.aws_caller_identity.current.account_id }
+        ArnLike = {
+          "aws:SourceArn" = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:*"
+        }
       }
-      Action = "sts:AssumeRole"
     }]
   })
+  tags = var.tags
 }
 
-resource "aws_iam_role_policy_attachment" "hybrid_eks_node" {
+resource "aws_iam_role_policy_attachment" "hybrid_baseline" {
+  for_each = toset([
+    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly",
+    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+  ])
   role       = aws_iam_role.hybrid_node_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodeMinimalPolicy"
+  policy_arn = each.value
 }
 
-# Security group rules for hybrid node traffic
-resource "aws_security_group_rule" "hybrid_node_ingress" {
-  type              = "ingress"
-  from_port         = 443
-  to_port           = 443
-  protocol          = "tcp"
-  cidr_blocks       = ["172.16.0.0/16"]
-  security_group_id = module.eks.cluster_security_group_id
-  description       = "Allow hybrid nodes to communicate with the API server"
-}
-
-resource "aws_security_group_rule" "hybrid_node_kubelet" {
-  type              = "ingress"
-  from_port         = 10250
-  to_port           = 10250
-  protocol          = "tcp"
-  cidr_blocks       = ["172.16.0.0/16"]
-  security_group_id = module.eks.cluster_security_group_id
-  description       = "Allow kubelet communication from hybrid nodes"
+resource "aws_iam_role_policy" "hybrid_lifecycle" {
+  name = "ScopedHybridNodeLifecycle"
+  role = aws_iam_role.hybrid_node_role.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["eks:DescribeCluster", "eks:ListAccessEntries"]
+        Resource = local.cluster_arn
+      },
+      {
+        Effect    = "Allow"
+        Action    = "ssm:DescribeInstanceInformation"
+        Resource  = "*"
+        Condition = { StringEquals = { "aws:RequestedRegion" = var.region } }
+      },
+      {
+        Effect   = "Allow"
+        Action   = "ssm:DeregisterManagedInstance"
+        Resource = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:managed-instance/*"
+        Condition = {
+          StringEquals = { "ssm:resourceTag/EKSClusterARN" = local.cluster_arn }
+        }
+      }
+    ]
+  })
 }
 ```
 
 ### Key Points
 
-- **`remote_network_config`** defines the CIDR ranges of on-premises nodes and pods.
+- **`remote_network_config`** declares non-overlapping remote node/Pod CIDRs; it does not create VPNs, routes, firewalls or a CNI. Module v21 takes objects containing `cidrs`, not lists of those objects.
 - Hybrid nodes authenticate via an IAM role with access entry type `HYBRID_LINUX`.
-- Security group rules must allow traffic from on-premises CIDRs to the EKS API server (443) and kubelet (10250).
+- Hybrid nodes connect to the private API on TCP 443; the control plane connects **outbound to hybrid kubelets** on TCP 10250. Configure the corresponding on-premises firewall and required Pod/webhook paths; two SG rules are not a full network design.
 - VPC CNI is not used on hybrid nodes — you must configure an alternative CNI (e.g., Cilium) on the on-premises side.
 
 ---
 
+The SSM role above also supports scoped nodeadm deregistration. Tag the separate SSM activation/managed instances with `EKSClusterARN = local.cluster_arn` to match that policy. New SSM installations/upgrades require nodeadm 1.0.19 or later due to the signing-key change. Do not store activation secrets in Terraform source or publish state containing them.
+
+The standard EBS CSI platform file is not applicable to on-premises disks. After hybrid node/CNI setup, use a separately reviewed platform composition. The following replaces the standard core-add-on ownership for the hybrid-only variant; do not append it to a configuration already managing the same add-ons:
+
+```hcl
+# Hybrid-only platform alternative, after nodeadm/CNI and node readiness checks.
+resource "aws_eks_addon" "hybrid_core" {
+  for_each = toset(["coredns", "kube-proxy"])
+
+  cluster_name = data.terraform_remote_state.cluster.outputs.cluster_name
+  addon_name   = each.value
+  resolve_conflicts_on_create = "NONE"
+  resolve_conflicts_on_update = "PRESERVE"
+}
+```
+
+Before using application Pod Identity on hybrid nodes, configure the supported agent's hybrid DaemonSet, the node credentials file and `eks-auth:AssumeRoleForPodIdentity` node permission. The SSM baseline above does not grant that optional permission. Follow the specific Hybrid Nodes add-on guide; creating an association alone is insufficient.
+
 ## Add-on Management
 
-EKS add-ons are managed components that run on the cluster. In the multi-layer architecture, **core add-ons** (coredns, vpc-cni, kube-proxy, eks-pod-identity-agent) are defined in `02-cluster` because they are required for the cluster to function, while **additional add-ons** (EBS CSI, etc.) are managed in `03-platform`.
+For the conventional EC2 variant, the cluster layer manages CoreDNS, VPC CNI, kube-proxy and Pod Identity Agent. The platform layer manages EBS CSI and application identities. Auto Mode and Hybrid have different component requirements and installation order; do not apply the standard platform files unchanged to those variants.
 
 ### Key Options
 
 | Option | Description |
 |--------|-------------|
-| `most_recent` | Always use the latest compatible version for the cluster's Kubernetes version. |
-| `before_compute` | Install the add-on before provisioning node groups. Required for `vpc-cni` and `eks-pod-identity-agent` so nodes can start correctly. |
+| `most_recent` | Resolves the newest compatible build during Terraform evaluation when true; false selects the EKS default. It is not an autonomous upgrade service. Prefer a reviewed `addon_version` for reproducibility. |
+| `before_compute` | Orders module-managed add-on creation before node groups. Useful for VPC CNI initialization; not a universal requirement for every add-on. CoreDNS needs usable compute to become healthy. |
 | `configuration_values` | JSON string of add-on-specific settings (e.g., VPC CNI prefix delegation). |
-| `service_account_role_arn` | IAM role ARN for add-ons that need AWS API access (e.g., EBS CSI driver). Works with both IRSA and Pod Identity. |
-| `resolve_conflicts_on_create` | Set to `"OVERWRITE"` to replace existing self-managed versions during migration. |
-| `resolve_conflicts_on_update` | Set to `"OVERWRITE"` to force-update conflicting add-on configuration. |
+| `service_account_role_arn` | IRSA role ARN; Pod Identity uses `pod_identity_association` instead. |
+| `resolve_conflicts_on_create` | `NONE` exposes conflicts for review. Use `OVERWRITE` only in a reviewed migration from an existing installation. |
+| `resolve_conflicts_on_update` | `PRESERVE` retains conflicting customizations where supported; use the add-on schema/configurationValues for owned fields. `OVERWRITE` can discard changes. |
 
 ### Pod Identity for Add-ons
 
 Some add-ons support Pod Identity associations directly. The EBS CSI driver configuration in `03-platform/addons.tf` demonstrates this pattern using `pod_identity_association`:
 
-```hcl
-resource "aws_eks_addon" "ebs_csi" {
-  cluster_name = data.terraform_remote_state.cluster.outputs.cluster_name
-  addon_name   = "aws-ebs-csi-driver"
-
-  pod_identity_association {
-    role_arn        = aws_iam_role.ebs_csi.arn
-    service_account = "ebs-csi-controller-sa"
-  }
-}
-```
+Use the complete `03-platform/addons.tf` resource above. The nested `pod_identity_association` block is owned by the add-on; do not also create a separate association for that same ServiceAccount.
 
 ---
 
 ## Access Entry-Based Access Control
 
-EKS supports API-based authentication via Access Entries, replacing the legacy `aws-auth` ConfigMap. In the multi-layer architecture, the initial cluster admin access is configured in `02-cluster` (via `enable_cluster_creator_admin_permissions`), while additional access entries for developers and viewers are managed in `03-platform/access-entries.tf`.
+Initial Kubernetes administration is an explicit access entry in `02-cluster`; developer/viewer entries belong to `03-platform`. Policy associations reference their access-entry resources to establish Terraform ordering. API access mode changes are a migration decision: enabling the API cannot simply be reversed to a ConfigMap-only design.
 
 ### Authentication Mode
 
@@ -843,92 +991,94 @@ EKS supports API-based authentication via Access Entries, replacing the legacy `
 | Policy | ARN | Description |
 |--------|-----|-------------|
 | Cluster Admin | `arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy` | Full cluster access |
-| Admin | `arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy` | Admin access (no IAM management) |
+| Admin | `arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy` | Kubernetes administration within the selected access scope; no AWS IAM permissions |
 | Edit | `arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy` | Read/write to most resources |
-| View | `arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy` | Read-only access |
+| View | `arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy` | Read access to covered Kubernetes resources, not general Secret access |
 
 ---
 
 ## Deployment Workflow
 
-### Deploy in Layer Order
+These commands are for the **standard EC2 three-layer example**, after backend provisioning, role authorization and private-network prerequisites. Set the required Terraform variables (`cluster_admin_role_arn` in layer 2; `developer_role_arn`, `viewer_role_arn` and `app_bucket_name` in layer 3) through reviewed variable files or `TF_VAR_*` values. Use the intended AWS account and Region. The Auto Mode/Hybrid alternatives need the file and bootstrap changes described above.
 
-Each layer must be initialized and applied in sequence, since later layers depend on the state outputs of earlier layers:
+### Plan and Apply One Layer at a Time
+
+Use an absolute project path so changing a shell directory cannot select the wrong layer. First initialize and save the network plan:
 
 ```bash
-# Layer 1: Network
-cd eks-terraform/01-network
-terraform init
-terraform plan
-terraform apply
+set -euo pipefail
+umask 077
+: "${TF_PROJECT_DIR:?Set the absolute path to eks-terraform}"
+case "$TF_PROJECT_DIR" in /*) ;; *) printf '%s\n' 'An absolute project path is required.' >&2; exit 1 ;; esac
 
-# Layer 2: Cluster
-cd ../02-cluster
-terraform init
-terraform plan
-terraform apply
-
-# Layer 3: Platform
-cd ../03-platform
-terraform init
-terraform plan
-terraform apply
+# Repeat for 02-cluster and then 03-platform only after the previous layer succeeds.
+TF_LAYER=01-network
+terraform -chdir="$TF_PROJECT_DIR/$TF_LAYER" init
+terraform -chdir="$TF_PROJECT_DIR/$TF_LAYER" plan -out=reviewed.tfplan
+terraform -chdir="$TF_PROJECT_DIR/$TF_LAYER" show -no-color reviewed.tfplan
 ```
+Review resource creation, replacement/deletion, IAM, network exposure and cost in that saved plan. Protect plan files because they can contain sensitive data. Apply only the reviewed file:
 
-> **Note**: EKS cluster creation (Layer 2) typically takes 10-15 minutes. Layers 1 and 3 are faster.
+```bash
+# Run only after reviewing this saved plan; a saved-plan apply does not prompt again.
+: "${TF_PROJECT_DIR:?}" "${TF_LAYER:?}"
+terraform -chdir="$TF_PROJECT_DIR/$TF_LAYER" apply reviewed.tfplan
+```
+After success, repeat the plan/review/apply steps with `TF_LAYER=02-cluster`, then `TF_LAYER=03-platform`. A failure stops progression; do not apply a downstream state against missing or stale outputs. Commit reviewed provider lock files, but keep state, kubeconfigs, credentials and plan files out of the source repository.
+
+The previous guide estimated 10–15 minutes for cluster creation. That estimate was not measured or reproduced in this audit; capacity, add-ons, IAM and networking can change the duration.
 
 ### Configure kubeconfig
 
-After Layer 2 completes, configure `kubectl` access:
+After the cluster layer completes, use the explicitly selected admin role. The current AWS identity must be permitted to assume it; if you instead authenticate directly as an already authorized principal, use the corresponding reviewed credential path.
 
 ```bash
-cd eks-terraform/02-cluster
-
-aws eks update-kubeconfig \
-  --name $(terraform output -raw cluster_name) \
-  --region $(terraform output -raw region)
+set -euo pipefail
+: "${TF_PROJECT_DIR:?}"
+: "${EXAMPLE_KUBECONFIG:?Choose a private kubeconfig file}"
+: "${TF_VAR_cluster_admin_role_arn:?Set the approved role the operator can assume}"
+EKS_CLUSTER_NAME=$(terraform -chdir="$TF_PROJECT_DIR/02-cluster" output -raw cluster_name)
+EKS_REGION=$(terraform -chdir="$TF_PROJECT_DIR/02-cluster" output -raw region)
+aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" \
+  --role-arn "$TF_VAR_cluster_admin_role_arn" --kubeconfig "$EXAMPLE_KUBECONFIG"
 ```
+### Validate the Result
 
-### Verify the Cluster
+For the standard EC2 example, inspect actual nodes, system Pods and managed add-on status:
 
 ```bash
-# Check node status
-kubectl get nodes
-
-# Check system pods
-kubectl get pods -n kube-system
-
-# Verify EKS add-ons
-kubectl get daemonsets -n kube-system
+: "${EXAMPLE_KUBECONFIG:?}" "${EKS_CLUSTER_NAME:?}" "${EKS_REGION:?}"
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" get nodes
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" wait --for=condition=Ready nodes --all --timeout=5m
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n kube-system get pods
+aws eks list-addons --cluster-name "$EKS_CLUSTER_NAME" --region "$EKS_REGION"
+aws eks describe-addon --cluster-name "$EKS_CLUSTER_NAME" --region "$EKS_REGION" \
+  --addon-name coredns --query 'addon.{status:status,version:addonVersion,health:health}'
 ```
-
-Expected output for a healthy cluster:
-
-```
-NAME                              STATUS   ROLES    AGE   VERSION
-ip-10-0-1-xxx.ap-northeast-2...  Ready    <none>   5m    v1.33.x
-ip-10-0-2-xxx.ap-northeast-2...  Ready    <none>   5m    v1.33.x
-```
+Repeat `describe-addon` for the expected add-ons. DaemonSet listing alone does not prove EKS add-on health. Check API authentication, DNS, networking, storage and the application's actual AWS identity; no such live checks were executed during this audit. Pure Auto Mode and hybrid-only clusters need the corresponding validation paths and may not have the same system Pods.
 
 ### Destroy in Reverse Order
 
-To tear down all resources, destroy layers in reverse order so dependencies are removed before the resources they depend on:
+First back up data and remove Kubernetes-created load balancers and volume resources through their controllers, reviewing PVC/PV reclaim behavior. Retain the controllers and IAM permissions until that cleanup completes. Then save and review the platform destruction plan:
 
 ```bash
-# Layer 3: Platform
-cd eks-terraform/03-platform
-terraform destroy
-
-# Layer 2: Cluster
-cd ../02-cluster
-terraform destroy
-
-# Layer 1: Network
-cd ../01-network
-terraform destroy
+set -euo pipefail
+: "${TF_PROJECT_DIR:?Set the absolute project path}"
+case "$TF_PROJECT_DIR" in /*) ;; *) printf '%s\n' 'An absolute project path is required.' >&2; exit 1 ;; esac
+# After workload/data cleanup, handle one layer at a time in this order:
+# 03-platform, then 02-cluster, then 01-network.
+TF_LAYER=03-platform
+terraform -chdir="$TF_PROJECT_DIR/$TF_LAYER" plan -destroy -out=reviewed-destroy.tfplan
+terraform -chdir="$TF_PROJECT_DIR/$TF_LAYER" show -no-color reviewed-destroy.tfplan
 ```
+Apply only after verifying that the selected state and every proposed deletion belong to this environment:
 
-> **Caution**: `terraform destroy` deletes all resources managed by that layer's state. Ensure there are no critical workloads running before destroying the cluster layer.
+```bash
+# Run only after reviewing this exact destruction plan.
+: "${TF_PROJECT_DIR:?}" "${TF_LAYER:?}"
+terraform -chdir="$TF_PROJECT_DIR/$TF_LAYER" apply reviewed-destroy.tfplan
+```
+After success, repeat for `02-cluster` and finally `01-network`. Stop on errors and investigate remaining ENIs, load balancers, volumes and finalizers. A destruction plan can also schedule deletion of KMS keys managed in that state; retain keys required for retained encrypted data. Keep the independently managed backend, state versions and recovery evidence.
 
 ---
 
@@ -936,7 +1086,7 @@ terraform destroy
 
 ### State Management
 
-The multi-layer architecture already uses per-layer S3 state keys with DynamoDB locking. Additional recommendations:
+Use distinct S3 state keys and native locking. Locks protect concurrent writers to one state; they do not coordinate deployments across all three states.
 
 - **Enable versioning** on the S3 bucket to recover from accidental state corruption.
 - **Restrict bucket access** with IAM policies — only CI/CD pipelines and authorized operators should read/write state.
@@ -944,7 +1094,7 @@ The multi-layer architecture already uses per-layer S3 state keys with DynamoDB 
 
 ### Module Versioning
 
-- Pin module versions with `~>` (e.g., `~> 21.0`) to allow patch updates while preventing breaking changes.
+- `~> 21.0` permits both minor and patch releases below 22.0; `~> 21.0.0` restricts updates to 21.0.x. Neither guarantees compatibility. This example pins module versions explicitly; `.terraform.lock.hcl` locks providers, not remote module versions.
 - Review the module CHANGELOG before upgrading major versions.
 - Test upgrades in a non-production environment first.
 
@@ -956,7 +1106,7 @@ Separate environments using one of these approaches:
 |----------|------|------|
 | **Separate directories** | Clear isolation, independent state | Code duplication |
 | **Terraform workspaces** | Single codebase, easy switching | Shared backend, limited isolation |
-| **Terragrunt** | DRY configuration, strong isolation | Additional tooling dependency |
+| **Terragrunt** | Reusable configuration and orchestration | Additional tooling; isolation still needs separate states and permissions |
 
 With the multi-layer architecture, the most common approach is **separate directories per environment**, where each environment has its own `01-network/`, `02-cluster/`, `03-platform/` tree with different variable values and state keys.
 
@@ -1005,9 +1155,21 @@ variable "tags" {
 | **Hybrid Nodes** | An EKS feature allowing on-premises or edge servers to join an EKS cluster as worker nodes. |
 | **IAM** | Identity and Access Management — controls access to AWS resources. |
 | **VPC** | Virtual Private Cloud — a logically isolated virtual network within AWS. |
-| **IRSA** | IAM Roles for Service Accounts — the legacy method for granting AWS permissions to pods via OIDC. |
+| **IRSA** | IAM Roles for Service Accounts — a supported OIDC-based workload identity mechanism. |
 | **Remote State** | A Terraform feature that allows one configuration to read outputs from another configuration's state file. |
 
 ## Quiz
 
 To test what you learned in this chapter, try the [EKS Cluster Creation - Part 4 Quiz](../quizzes/eks/02-eks-cluster-creation-part4-quiz.md).
+
+
+## Verification References
+
+- [EKS module v21 migration](https://github.com/terraform-aws-modules/terraform-aws-eks/blob/v21.25.0/docs/UPGRADE-21.0.md)
+- [S3 backend locking](https://developer.hashicorp.com/terraform/language/backend/s3)
+- [Remote state access](https://developer.hashicorp.com/terraform/language/state/remote-state-data)
+- [Pod Identity role trust](https://docs.aws.amazon.com/eks/latest/userguide/pod-id-role.html)
+- [EKS add-ons and Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html)
+- [Hybrid credentials](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html)
+- [Hybrid networking](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-networking.html)
+- [Hybrid add-ons](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html)

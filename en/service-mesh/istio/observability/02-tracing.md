@@ -1,7 +1,9 @@
 # Istio Distributed Tracing
 
-> **Supported Versions**: Istio 1.28
-> **Last Updated**: February 19, 2026
+> **Supported Versions**: Istio 1.31
+> **Last Updated**: September 11, 2026
+
+> **Validation scope**: These lab configurations were checked against official references and offline validators, without deploying a cluster. Namespace, identity, storage, backend and load assumptions are stated with each example and must be verified for the target environment.
 
 Distributed tracing tracks and visualizes request flows between microservices, enabling latency bottleneck identification, error root cause analysis, and understanding of service dependencies.
 
@@ -22,7 +24,7 @@ Distributed tracing tracks and visualizes request flows between microservices, e
 
 ### W3C Trace Context
 
-Istio supports the W3C Trace Context standard to ensure standardized trace propagation.
+Istio supports W3C trace context with compatible tracing providers. Applications must still propagate context across their own requests; application spans in the diagram require an initialized SDK or agent. The examples cover sidecars/waypoints: ztunnel does not generate HTTP tracing spans.
 
 ![Sequence diagram showing a client request propagating W3C trace context through Envoy sidecars and app containers in Service A and Service B, with each Envoy sidecar and application exporting spans asynchronously to the Jaeger Collector.](../../../.gitbook/assets/en-service-mesh-istio-observability-02-tracing-0.png)
 
@@ -47,13 +49,15 @@ A unit representing the start and end of a specific operation
 
 #### Baggage
 
-Key-value pairs propagated throughout the entire trace
+Context key-value pairs propagated when the application/propagator supports baggage. Baggage is not automatically a span attribute and must not carry secrets.
 
 ## OpenTelemetry Integration
 
-OpenTelemetry is the modern observability standard and the recommended tracing backend for Istio 1.28.
+OpenTelemetry supplies instrumentation, protocols and collectors; it is not a trace storage backend. This example sends OTLP to a collector, then to Jaeger. Zipkin and Tempo are alternative backends.
 
 ### 1. Installing OpenTelemetry Collector
+
+Create namespace `observability` and deploy the Jaeger backend below before testing. This is a single-replica collector example with in-memory tail-sampling state. A plain Kubernetes Service across multiple tail samplers does not keep all spans of a trace together; production scaling needs trace-ID-based routing, capacity planning and late-span handling. Internal OTLP is plaintext in this lab: restrict network access or configure TLS/mTLS for deployment. The health extension and internal metrics listener are explicitly enabled.
 
 ```yaml
 apiVersion: v1
@@ -63,6 +67,9 @@ metadata:
   namespace: observability
 data:
   config.yaml: |
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
     receivers:
       otlp:
         protocols:
@@ -70,96 +77,76 @@ data:
             endpoint: 0.0.0.0:4317
           http:
             endpoint: 0.0.0.0:4318
-
     processors:
-      batch:
-        timeout: 10s
-        send_batch_size: 1024
-        send_batch_max_size: 2048
-
       memory_limiter:
         check_interval: 1s
         limit_mib: 1024
-
-      # Add span attributes
-      attributes:
-        actions:
-        - key: cluster.name
+      resource:
+        attributes:
+        - key: k8s.cluster.name
           value: production-k8s
-          action: insert
-        - key: deployment.environment
+          action: upsert
+        - key: deployment.environment.name
           value: production
-          action: insert
-
-      # Span filtering
-      filter:
-        spans:
-          include:
-            match_type: regexp
-            services:
-            - ".*"
-          exclude:
-            match_type: strict
-            span_names:
-            - /health
-            - /readiness
-            - /liveness
-
-      # Tail sampling (intelligent sampling)
+          action: upsert
+      filter/health:
+        error_mode: ignore
+        trace_conditions:
+        - span.name == "/health" or span.name == "/readiness" or span.name == "/liveness"
       tail_sampling:
+        decision_wait: 30s
+        num_traces: 50000
         policies:
-        # 100% sampling for traces with errors
-        - name: errors-policy
+        - name: errors
           type: status_code
           status_code:
             status_codes:
             - ERROR
-        # 100% sampling for slow requests
-        - name: slow-requests-policy
+        - name: slow
           type: latency
           latency:
             threshold_ms: 1000
-        # 10% sampling for normal requests
-        - name: probabilistic-policy
+        - name: baseline
           type: probabilistic
           probabilistic:
             sampling_percentage: 10
-
+      batch:
+        timeout: 10s
+        send_batch_size: 1024
+        send_batch_max_size: 2048
     exporters:
-      # Export to Jaeger
-      jaeger:
-        endpoint: jaeger-collector.observability.svc.cluster.local:14250
+      otlp_grpc/jaeger:
+        endpoint: jaeger-collector.observability.svc.cluster.local:4317
         tls:
           insecure: true
-
-      # Export to Zipkin
-      zipkin:
-        endpoint: http://zipkin.observability.svc.cluster.local:9411/api/v2/spans
-
-      # Export to Tempo (Grafana ecosystem)
-      otlp/tempo:
-        endpoint: tempo.observability.svc.cluster.local:4317
-        tls:
-          insecure: true
-
-      # Logging for debugging
-      logging:
-        loglevel: info
-        sampling_initial: 5
-        sampling_thereafter: 200
-
+      debug:
+        verbosity: basic
     service:
+      extensions:
+      - health_check
       pipelines:
         traces:
-          receivers: [otlp]
-          processors: [memory_limiter, batch, attributes, filter, tail_sampling]
-          exporters: [jaeger, otlp/tempo, logging]
-
+          receivers:
+          - otlp
+          processors:
+          - memory_limiter
+          - resource
+          - filter/health
+          - tail_sampling
+          - batch
+          exporters:
+          - otlp_grpc/jaeger
+          - debug
       telemetry:
         logs:
           level: info
         metrics:
-          address: :8888
+          readers:
+          - pull:
+              exporter:
+                prometheus:
+                  host: 0.0.0.0
+                  port: 8888
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -167,7 +154,7 @@ metadata:
   name: otel-collector
   namespace: observability
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: otel-collector
@@ -175,10 +162,12 @@ spec:
     metadata:
       labels:
         app: otel-collector
+      annotations:
+        sidecar.istio.io/inject: 'false'
     spec:
       containers:
       - name: otel-collector
-        image: otel/opentelemetry-collector-contrib:0.96.0
+        image: otel/opentelemetry-collector-contrib:0.160.0
         args:
         - --config=/etc/otel/config.yaml
         ports:
@@ -191,6 +180,8 @@ spec:
         - containerPort: 8888
           name: metrics
           protocol: TCP
+        - containerPort: 13133
+          name: health
         volumeMounts:
         - name: config
           mountPath: /etc/otel
@@ -200,7 +191,7 @@ spec:
             memory: 1Gi
           limits:
             cpu: 2000m
-            memory: 4Gi
+            memory: 2Gi
         livenessProbe:
           httpGet:
             path: /
@@ -219,6 +210,8 @@ kind: Service
 metadata:
   name: otel-collector
   namespace: observability
+  labels:
+    app: otel-collector
 spec:
   selector:
     app: otel-collector
@@ -235,36 +228,32 @@ spec:
   type: ClusterIP
 ```
 
+The retired `jaeger` exporter is replaced by OTLP/gRPC and `logging` by `debug`. The filter matches exact observed span names; adjust it to the instrumentation, and account for the effect of dropping spans on trace completeness. Tail policies retain eligible traces that actually arrive; they cannot recover spans dropped upstream. Remove diagnostic exporting after verification.
+
 ### 2. Enabling OpenTelemetry in Istio
 
 #### MeshConfig Configuration
 
+Merge this provider into existing install settings using `istioctl install -f`; do not overwrite the entire `istio` ConfigMap. `maxTagLength` limits the path tag, not every span attribute.
+
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: istio
-  namespace: istio-system
-data:
-  mesh: |
-    defaultConfig:
-      tracing:
-        sampling: 100.0  # Initially 100% sampling, tail sampling at collector
-        max_path_tag_length: 256
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  meshConfig:
+    enableTracing: true
     extensionProviders:
     - name: otel-tracing
       opentelemetry:
         service: otel-collector.observability.svc.cluster.local
         port: 4317
-        resource_detectors:
-          environment: {}
-          dynatrace: {}
+        maxTagLength: 256
 ```
 
 #### Enable Tracing with Telemetry API
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: otel-tracing
@@ -283,10 +272,12 @@ spec:
           value: "production"
 ```
 
+Use one applicable selector-free Telemetry resource per namespace; merge tracing and logging settings instead of applying conflicting examples. Header tags are untrusted request metadata, not authenticated identity. Use only approved pseudonymous user correlation values. Environment tags read the proxy environment, not application environment variables.
+
 ### 3. Per-Namespace Tracing Configuration
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: namespace-tracing
@@ -320,11 +311,52 @@ spec:
 
 ## Jaeger Integration
 
-Jaeger is the most widely used open-source distributed tracing system.
+### Jaeger 2 Development Deployment
 
-### Jaeger All-in-One Deployment (Dev/Test)
+Jaeger 2 uses the `jaegertracing/jaeger` image with an explicit configuration file. The following memory-backed instance is for development; restarting it loses traces. Query and OTLP endpoints stay inside the cluster; use port-forwarding to reach the UI.
 
 ```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jaeger-config
+  namespace: observability
+data:
+  config.yaml: |
+    extensions:
+      jaeger_storage:
+        backends:
+          traces:
+            memory:
+              max_traces: 50000
+      jaeger_query:
+        storage:
+          traces: traces
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      batch: {}
+    exporters:
+      jaeger_storage_exporter:
+        trace_storage: traces
+    service:
+      extensions:
+      - jaeger_storage
+      - jaeger_query
+      pipelines:
+        traces:
+          receivers:
+          - otlp
+          processors:
+          - batch
+          exporters:
+          - jaeger_storage_exporter
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -339,45 +371,36 @@ spec:
     metadata:
       labels:
         app: jaeger
+      annotations:
+        sidecar.istio.io/inject: 'false'
     spec:
       containers:
       - name: jaeger
-        image: jaegertracing/all-in-one:1.55
-        env:
-        - name: COLLECTOR_ZIPKIN_HOST_PORT
-          value: :9411
-        - name: COLLECTOR_OTLP_ENABLED
-          value: "true"
+        image: jaegertracing/jaeger:2.20.0
+        args:
+        - --config=/etc/jaeger/config.yaml
         ports:
-        - containerPort: 5775
-          protocol: UDP
-        - containerPort: 6831
-          protocol: UDP
-        - containerPort: 6832
-          protocol: UDP
-        - containerPort: 5778
-          protocol: TCP
+        - containerPort: 4317
+          name: otlp-grpc
+        - containerPort: 4318
+          name: otlp-http
         - containerPort: 16686
-          protocol: TCP
-        - containerPort: 14250
-          protocol: TCP
-        - containerPort: 14268
-          protocol: TCP
-        - containerPort: 14269
-          protocol: TCP
-        - containerPort: 4317  # OTLP gRPC
-          protocol: TCP
-        - containerPort: 4318  # OTLP HTTP
-          protocol: TCP
-        - containerPort: 9411
-          protocol: TCP
+          name: query-http
+        volumeMounts:
+        - name: config
+          mountPath: /etc/jaeger
+          readOnly: true
         resources:
           requests:
-            cpu: 100m
-            memory: 256Mi
+            cpu: 200m
+            memory: 512Mi
           limits:
-            cpu: 500m
-            memory: 1Gi
+            cpu: 1000m
+            memory: 2Gi
+      volumes:
+      - name: config
+        configMap:
+          name: jaeger-config
 ---
 apiVersion: v1
 kind: Service
@@ -388,21 +411,12 @@ spec:
   selector:
     app: jaeger
   ports:
-  - name: jaeger-collector-http
-    port: 14268
-    targetPort: 14268
-  - name: jaeger-collector-grpc
-    port: 14250
-    targetPort: 14250
   - name: otlp-grpc
     port: 4317
-    targetPort: 4317
+    targetPort: otlp-grpc
   - name: otlp-http
     port: 4318
-    targetPort: 4318
-  - name: zipkin
-    port: 9411
-    targetPort: 9411
+    targetPort: otlp-http
 ---
 apiVersion: v1
 kind: Service
@@ -415,157 +429,75 @@ spec:
   ports:
   - name: query-http
     port: 16686
-    targetPort: 16686
-  type: LoadBalancer
+    targetPort: query-http
+  type: ClusterIP
 ```
 
-### Jaeger Production Deployment (Elasticsearch Backend)
+### Production Storage and Scaling
+
+For durable storage, use a supported, managed Elasticsearch/OpenSearch deployment and the matching Jaeger storage driver. Jaeger 2.20's published Elasticsearch matrix lists **7.x/8.x**; do not infer support for a newer Elasticsearch major from its latest release. Existing ECK deployments also need their operator/cluster compatibility checked; EKS `gp3` storage requires the EBS CSI driver and an actual StorageClass.
+
+For Elasticsearch, replace the memory backend in `jaeger-config` with this fragment; preserve the receiver, exporter, query and pipeline settings using storage name `traces`. Create Secret `jaeger-es-client` with `password` for a restricted `jaeger` user and the public `ca.crt` matching the server certificate. Server hostname verification remains enabled.
 
 ```yaml
-# Elasticsearch (Storage Backend)
-apiVersion: elasticsearch.k8s.elastic.co/v1
-kind: Elasticsearch
-metadata:
-  name: jaeger-es
-  namespace: observability
-spec:
-  version: 8.12.0
-  nodeSets:
-  - name: default
-    count: 3
-    config:
-      node.store.allow_mmap: false
-    volumeClaimTemplates:
-    - metadata:
-        name: elasticsearch-data
-      spec:
-        accessModes:
-        - ReadWriteOnce
-        resources:
-          requests:
-            storage: 100Gi
-        storageClassName: gp3
----
-# Jaeger Collector (Collection)
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: jaeger-collector
-  namespace: observability
+extensions:
+  jaeger_storage:
+    backends:
+      traces:
+        elasticsearch:
+          server_urls:
+          - https://jaeger-es-es-http.observability.svc.cluster.local:9200
+          auth:
+            basic:
+              username: jaeger
+              password_file: /etc/jaeger/es/password
+          tls:
+            ca_file: /etc/jaeger/es/ca.crt
+          indices:
+            index_prefix: production
+```
+
+Merge the following Deployment fragment with the existing `jaeger` Deployment (preserve image, arguments, config mount and other fields). With shared durable storage, these combined collector/query instances are stateless and can run as replicas. Separate collector/query roles can be configured with the same Jaeger 2 binary when independent scaling is needed.
+
+```yaml
 spec:
   replicas: 3
-  selector:
-    matchLabels:
-      app: jaeger-collector
   template:
-    metadata:
-      labels:
-        app: jaeger-collector
     spec:
       containers:
-      - name: jaeger-collector
-        image: jaegertracing/jaeger-collector:1.55
-        env:
-        - name: SPAN_STORAGE_TYPE
-          value: elasticsearch
-        - name: ES_SERVER_URLS
-          value: https://jaeger-es-es-http:9200
-        - name: ES_USERNAME
-          value: elastic
-        - name: ES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: jaeger-es-elastic-user
-              key: elastic
-        - name: COLLECTOR_OTLP_ENABLED
-          value: "true"
-        - name: COLLECTOR_ZIPKIN_HOST_PORT
-          value: :9411
-        ports:
-        - containerPort: 14250
-          name: grpc
-        - containerPort: 14268
-          name: http
-        - containerPort: 4317
-          name: otlp-grpc
-        - containerPort: 4318
-          name: otlp-http
-        resources:
-          requests:
-            cpu: 500m
-            memory: 1Gi
-          limits:
-            cpu: 2000m
-            memory: 4Gi
----
-# Jaeger Query (UI)
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: jaeger-query
-  namespace: observability
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: jaeger-query
-  template:
-    metadata:
-      labels:
-        app: jaeger-query
-    spec:
-      containers:
-      - name: jaeger-query
-        image: jaegertracing/jaeger-query:1.55
-        env:
-        - name: SPAN_STORAGE_TYPE
-          value: elasticsearch
-        - name: ES_SERVER_URLS
-          value: https://jaeger-es-es-http:9200
-        - name: ES_USERNAME
-          value: elastic
-        - name: ES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: jaeger-es-elastic-user
-              key: elastic
-        ports:
-        - containerPort: 16686
-          name: query
-        resources:
-          requests:
-            cpu: 200m
-            memory: 512Mi
-          limits:
-            cpu: 1000m
-            memory: 2Gi
+      - name: jaeger
+        volumeMounts:
+        - name: es-client
+          mountPath: /etc/jaeger/es
+          readOnly: true
+      volumes:
+      - name: es-client
+        secret:
+          secretName: jaeger-es-client
 ```
 
-### Using Jaeger Directly with Istio
+Configure storage initialization, index rotation/retention, backups and storage-side permissions using the [Jaeger Elasticsearch guide](https://www.jaegertracing.io/docs/2.20/storage/elasticsearch/) and the released schema. The old 1.x environment-variable/image deployment is not a Jaeger 2 configuration. Review release notes before migrating existing stored traces.
+
+### Direct Istio → Jaeger OTLP Alternative
+
+This bypasses the separate collector and therefore its tail-sampling policies. Use head sampling suitable for the workload. It is an alternative provider selection: merge into the existing installation and select only the intended provider in the applicable Telemetry resource.
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: istio
-  namespace: istio-system
-data:
-  mesh: |
-    defaultConfig:
-      tracing:
-        sampling: 100.0
-        zipkin:
-          address: jaeger-collector.observability:9411
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  meshConfig:
+    enableTracing: true
     extensionProviders:
     - name: jaeger
-      zipkin:
+      opentelemetry:
         service: jaeger-collector.observability.svc.cluster.local
-        port: 9411
+        port: 4317
         maxTagLength: 256
 ```
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: jaeger-tracing
@@ -574,14 +506,14 @@ spec:
   tracing:
   - providers:
     - name: jaeger
-    randomSamplingPercentage: 100.0
+    randomSamplingPercentage: 1
 ```
 
 ## Zipkin Integration
 
-Zipkin is another popular distributed tracing system.
+### Zipkin Development Deployment
 
-### Zipkin Deployment
+This alternative uses Zipkin 3.6.1 with in-memory storage for testing; it loses data on restart. Production needs a supported persistent storage backend, authentication/TLS and configured network access. Select a backend using [Zipkin's server configuration](https://github.com/openzipkin/zipkin/blob/3.6.1/zipkin-server/README.md); do not point it at an undeployed `elasticsearch:9200`.
 
 ```yaml
 apiVersion: apps/v1
@@ -598,17 +530,18 @@ spec:
     metadata:
       labels:
         app: zipkin
+      annotations:
+        sidecar.istio.io/inject: 'false'
     spec:
       containers:
       - name: zipkin
-        image: openzipkin/zipkin:2.24
+        image: openzipkin/zipkin:3.6.1
         ports:
         - containerPort: 9411
+          name: http
         env:
         - name: STORAGE_TYPE
-          value: elasticsearch
-        - name: ES_HOSTS
-          value: elasticsearch:9200
+          value: mem
         resources:
           requests:
             cpu: 200m
@@ -626,15 +559,32 @@ spec:
   selector:
     app: zipkin
   ports:
-  - port: 9411
-    targetPort: 9411
-  type: LoadBalancer
+  - name: http
+    port: 9411
+    targetPort: http
+  type: ClusterIP
 ```
 
-### Configuring Zipkin in Istio
+### Configure the Istio Provider
+
+The provider must exist before Telemetry can reference it. Merge this install input and use this Telemetry as an alternative to the collector/Jaeger selection.
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  meshConfig:
+    enableTracing: true
+    extensionProviders:
+    - name: zipkin
+      zipkin:
+        service: zipkin.observability.svc.cluster.local
+        port: 9411
+        maxTagLength: 256
+```
+
+```yaml
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: zipkin-tracing
@@ -643,7 +593,7 @@ spec:
   tracing:
   - providers:
     - name: zipkin
-    randomSamplingPercentage: 100.0
+    randomSamplingPercentage: 1
 ```
 
 ## Context Propagation
@@ -652,7 +602,7 @@ The key to distributed tracing is correctly propagating trace context between se
 
 ### Required HTTP Headers
 
-Applications must propagate the following headers:
+Propagate the format configured for the proxy/backend; W3C and B3 are alternatives or explicitly configured multi-format propagation. Also forward `x-request-id`. B3 remains supported; a debug `X-B3-Flags: 1` must not be enabled indiscriminately.
 
 #### W3C Trace Context (Recommended)
 
@@ -661,7 +611,7 @@ traceparent: 00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01
 tracestate: congo=t61rcWkgMzE
 ```
 
-#### B3 Headers (Legacy)
+#### B3 Headers
 
 **Single Header Format (Recommended)**:
 ```
@@ -674,162 +624,237 @@ X-B3-TraceId: 80f198ee56343ba864fe8b2a57d3eff7
 X-B3-SpanId: e457b5a2e4d86bd1
 X-B3-ParentSpanId: 05e3ac9a4f6e3b90
 X-B3-Sampled: 1
-X-B3-Flags: 0
 ```
 
 ### Context Propagation by Application
 
+The following examples assume an existing collector and `service-b:8080/api/service-b` endpoint. Install compatible API/SDK/exporter/instrumentation dependencies and initialize the SDK **before handling requests**. These lab endpoints use plaintext OTLP inside the cluster; configure trusted TLS/mTLS and network restrictions for the real deployment. SDK auto-instrumentation and manual propagation should not create duplicate client spans. Preserve `x-request-id` separately for Istio's request correlation.
+
 #### Python (Flask + OpenTelemetry)
 
+Install Flask, requests, `opentelemetry-sdk`, `opentelemetry-exporter-otlp-proto-grpc`, `opentelemetry-instrumentation-flask`, and `opentelemetry-instrumentation-requests` in the application environment. Flask/requests instrumentation manages extraction and injection; for manual propagation the API is `opentelemetry.propagate.extract`, not the original malformed import.
+
 ```python
+import atexit
+import requests
 from flask import Flask, request
 from opentelemetry import trace
-from opentelemetry.propagators import extract
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
-from opentelemetry.propagate import inject
-import requests
+from opentelemetry.propagate import set_global_textmap
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
+provider = TracerProvider(resource=Resource.create({"service.name": "service-a"}))
+provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(
+    endpoint="otel-collector.observability.svc.cluster.local:4317", insecure=True
+)))
+trace.set_tracer_provider(provider)
+set_global_textmap(TraceContextTextMapPropagator())
+atexit.register(provider.shutdown)
 app = Flask(__name__)
-
-# Enable automatic instrumentation
+FlaskInstrumentor().instrument_app(app)
 RequestsInstrumentor().instrument()
+tracer = trace.get_tracer(__name__)
 
-@app.route('/api/service-a')
+@app.get("/api/service-a")
 def service_a():
-    # Extract incoming trace context
-    ctx = extract(request.headers)
-
-    with trace.get_tracer(__name__).start_as_current_span("process-request", context=ctx):
-        # Business logic
-        result = do_something()
-
-        # Call another service
+    # Flask instrumentation extracted the parent; requests instrumentation injects its child.
+    with tracer.start_as_current_span("process-request"):
         headers = {}
-        inject(headers)  # Automatically adds traceparent header
+        if request.headers.get("x-request-id"):
+            headers["x-request-id"] = request.headers["x-request-id"]
+        response = requests.get("http://service-b:8080/api/service-b",
+                                headers=headers, timeout=3)
+        response.raise_for_status()
+        return response.text, response.status_code, {
+            "Content-Type": response.headers.get("Content-Type", "text/plain")
+        }
 
-        response = requests.get(
-            'http://service-b:8080/api/service-b',
-            headers=headers
-        )
-
-    return result
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
 ```
 
+The Flask development server is only for local testing; deploy with the application's production server and SDK shutdown lifecycle.
+
 #### Go (Gin + OpenTelemetry)
+
+Initialize a real tracer provider and W3C propagator. Use the context returned by `Start` for the downstream request, handle errors and close the response body. Add the imported modules to the application's `go.mod`; do not discard context/error return values.
 
 ```go
 package main
 
 import (
-    "context"
-    "net/http"
+	"context"
+	"io"
+	"log"
+	"net/http"
+	"time"
 
-    "github.com/gin-gonic/gin"
-    "go.opentelemetry.io/otel"
-    "go.opentelemetry.io/otel/propagation"
-    "go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
-    "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
 func main() {
-    router := gin.Default()
-
-    // Add OpenTelemetry middleware (auto context extraction/propagation)
-    router.Use(otelgin.Middleware("service-a"))
-
-    router.GET("/api/service-a", func(c *gin.Context) {
-        ctx := c.Request.Context()
-
-        // Create child span
-        _, span := otel.Tracer("service-a").Start(ctx, "process-request")
-        defer span.End()
-
-        // Call another service (auto trace context propagation)
-        client := http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
-        req, _ := http.NewRequestWithContext(ctx, "GET", "http://service-b:8080/api/service-b", nil)
-        resp, _ := client.Do(req)
-
-        c.JSON(200, gin.H{"status": "ok"})
-    })
-
-    router.Run(":8080")
+	exporter, err := otlptracegrpc.New(context.Background(),
+		otlptracegrpc.WithEndpoint("otel-collector.observability.svc.cluster.local:4317"),
+		otlptracegrpc.WithInsecure())
+	if err != nil {
+		log.Fatal(err)
+	}
+	provider := sdktrace.NewTracerProvider(sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(resource.NewSchemaless(attribute.String("service.name", "service-a"))))
+	otel.SetTracerProvider(provider)
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := provider.Shutdown(ctx); err != nil {
+			log.Print(err)
+		}
+	}()
+	client := &http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport), Timeout: 3 * time.Second}
+	router := gin.Default()
+	router.Use(otelgin.Middleware("service-a"))
+	router.GET("/api/service-a", func(c *gin.Context) {
+		ctx, span := otel.Tracer("service-a").Start(c.Request.Context(), "process-request")
+		defer span.End()
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://service-b:8080/api/service-b", nil)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		if id := c.GetHeader("x-request-id"); id != "" {
+			req.Header.Set("x-request-id", id)
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, "downstream request failed")
+			c.Status(http.StatusBadGateway)
+			return
+		}
+		defer resp.Body.Close()
+		// Bound this demonstration response to 1 MiB.
+		body, err := io.ReadAll(io.LimitReader(resp.Body, (1<<20)+1))
+		if err != nil || len(body) > 1<<20 {
+			c.Status(http.StatusBadGateway)
+			return
+		}
+		c.Data(resp.StatusCode, resp.Header.Get("Content-Type"), body)
+	})
+	if err := router.Run(":8080"); err != nil {
+		log.Print(err)
+	}
 }
 ```
 
-#### Java (Spring Boot + OpenTelemetry)
+#### Java (Spring WebFlux + OpenTelemetry Java Agent)
+
+Launch the Spring WebFlux application with a compatible OpenTelemetry Java agent and OTLP endpoint. The agent instruments the reactive server/client lifecycle and context propagation. A `try (Scope ...) { return Mono... } finally { span.end(); }` ends a span before subscription completes and is incorrect for asynchronous work. This controller relies on the agent's supported WebFlux/Reactor instrumentation:
+
+```bash
+OTEL_SERVICE_NAME=service-a \
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc \
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector.observability.svc.cluster.local:4317 \
+java -javaagent:/opt/otel/opentelemetry-javaagent.jar -jar app.jar
+```
 
 ```java
+import java.time.Duration;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
 @RestController
-@RequestMapping("/api")
 public class ServiceAController {
+    private final WebClient webClient;
+    public ServiceAController(WebClient.Builder builder) {
+        this.webClient = builder.baseUrl("http://service-b:8080").build();
+    }
 
-    @Autowired
-    private WebClient webClient;
-
-    @Autowired
-    private Tracer tracer;
-
-    @GetMapping("/service-a")
-    public Mono<String> serviceA(@RequestHeader HttpHeaders headers) {
-        // Spring Boot + OpenTelemetry auto instrumentation automatically extracts and propagates context
-
-        Span span = tracer.spanBuilder("process-request")
-                .setSpanKind(SpanKind.INTERNAL)
-                .startSpan();
-
-        try (Scope scope = span.makeCurrent()) {
-            // WebClient automatically propagates trace context
-            return webClient.get()
-                    .uri("http://service-b:8080/api/service-b")
-                    .retrieve()
-                    .bodyToMono(String.class);
-        } finally {
-            span.end();
-        }
+    @GetMapping("/api/service-a")
+    public Mono<String> serviceA(@RequestHeader(value = "x-request-id", required = false) String requestId) {
+        return webClient.get().uri("/api/service-b")
+                .headers(headers -> { if (requestId != null) headers.set("x-request-id", requestId); })
+                .retrieve().bodyToMono(String.class)
+                .timeout(Duration.ofSeconds(3));
     }
 }
 ```
 
-#### Node.js (Express + OpenTelemetry)
+#### Node.js (CommonJS Express + OpenTelemetry)
+
+Install `express`, `axios`, `@opentelemetry/api`, `@opentelemetry/sdk-node`, `@opentelemetry/auto-instrumentations-node`, and `@opentelemetry/exporter-trace-otlp-grpc`. Load instrumentation before application imports; merely importing the API does not configure an SDK or exporter.
 
 ```javascript
-const express = require('express');
-const { trace, context, propagation } = require('@opentelemetry/api');
-const axios = require('axios');
+// instrumentation.cjs: load before Express, HTTP clients, or application modules.
+const { NodeSDK } = require('@opentelemetry/sdk-node');
+const { getNodeAutoInstrumentations } = require('@opentelemetry/auto-instrumentations-node');
+const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-grpc');
+const sdk = new NodeSDK({
+  traceExporter: new OTLPTraceExporter(),
+  instrumentations: [getNodeAutoInstrumentations()],
+});
+sdk.start();
+process.once('SIGTERM', () => sdk.shutdown().finally(() => process.exit(0)));
+```
 
+```javascript
+// app.cjs
+const express = require('express');
+const axios = require('axios');
+const { trace, SpanStatusCode } = require('@opentelemetry/api');
 const app = express();
 const tracer = trace.getTracer('service-a');
-
 app.get('/api/service-a', async (req, res) => {
-  // Express instrumentation automatically extracts context
-  const span = tracer.startSpan('process-request');
-
-  try {
-    await context.with(trace.setSpan(context.active(), span), async () => {
-      // Automatic trace context propagation on axios calls
-      const response = await axios.get('http://service-b:8080/api/service-b');
-      res.json({ result: response.data });
-    });
-  } finally {
-    span.end();
-  }
+  await tracer.startActiveSpan('process-request', async (span) => {
+    try {
+      const headers = {};
+      if (req.headers['x-request-id']) headers['x-request-id'] = req.headers['x-request-id'];
+      const response = await axios.get('http://service-b:8080/api/service-b', {headers, timeout: 3000});
+      res.json({result: response.data});
+    } catch (error) {
+      span.recordException(error);
+      span.setStatus({code: SpanStatusCode.ERROR});
+      res.status(502).json({error: 'Downstream request failed'});
+    } finally {
+      span.end();
+    }
+  });
 });
-
 app.listen(8080);
+```
+
+```bash
+OTEL_SERVICE_NAME=service-a \
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector.observability.svc.cluster.local:4317 \
+node --require ./instrumentation.cjs app.cjs
 ```
 
 ### Trace Context Verification
 
+Verify that a test request produces spans with the same trace ID and the intended parent-child relationships in the backend. Inspect incoming and outgoing headers in a controlled application test. Default Envoy access logs do not include every trace header; enabling proxy debug logging does not enable access logs or guarantee header output. Configure the access-log format explicitly if headers are needed, and avoid logging credentials/baggage.
+
 ```bash
-# 1. Verify trace context is included in request headers
-kubectl logs -n <namespace> <pod-name> -c istio-proxy --tail=50 | grep -i traceparent
-
-# 2. Check trace ID in Envoy access logs
-istioctl proxy-config log <pod-name> -n <namespace> --level debug
-kubectl logs -n <namespace> <pod-name> -c istio-proxy | grep "x-b3-traceid"
-
-# 3. Verify trace ID is included in application logs
-kubectl logs -n <namespace> <pod-name> -c <container-name>
+istioctl proxy-config listeners <pod-name> -n <namespace> -o json | \
+  jq '.. | objects | select(has("tracing")) | .tracing'
+istioctl proxy-config clusters <pod-name> -n <namespace> \
+  --fqdn otel-collector.observability.svc.cluster.local
+kubectl logs -n observability deployment/otel-collector --tail=100
 ```
 
 ## Sampling Strategies
@@ -838,25 +863,25 @@ kubectl logs -n <namespace> <pod-name> -c <container-name>
 
 #### 1. Head Sampling (Initial Sampling)
 
-Sampling decision made when request enters the system:
+Head sampling decides early. The percentages below are alternatives; upstream sampling decisions and SDK samplers also affect which spans arrive. If the collector must evaluate every trace for errors/latency, send all eligible spans to it rather than discarding 90% before tail sampling.
 
 **Mesh-wide Level**:
 ```yaml
-apiVersion: v1
-kind: ConfigMap
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
 metadata:
-  name: istio
+  name: mesh-head-sampling
   namespace: istio-system
-data:
-  mesh: |
-    defaultConfig:
-      tracing:
-        sampling: 10.0  # 10% sampling
+spec:
+  tracing:
+  - providers:
+    - name: otel-tracing
+    randomSamplingPercentage: 10.0
 ```
 
 **Namespace Level**:
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: sampling-config
@@ -870,7 +895,7 @@ spec:
 
 **Workload Level**:
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: critical-service-tracing
@@ -887,7 +912,7 @@ spec:
 
 #### 2. Tail Sampling (Post-hoc Sampling)
 
-Sampling decision made at the collector after trace completion:
+Tail sampling decides from spans accumulated during its decision window, not from a guaranteed complete trace. Size the window and buffers for expected duration/volume, route a trace to the same collector, and account for late spans, restarts and overflow. Policies below retain matching traces that reach the collector. Merge this processor into the traces pipeline before the batch processor.
 
 ```yaml
 # OpenTelemetry Collector's tail_sampling processor
@@ -922,6 +947,12 @@ processors:
       - name: http-errors
         type: numeric_attribute
         numeric_attribute:
+          key: http.response.status_code
+          min_value: 500
+          max_value: 599
+      - name: legacy-http-errors
+        type: numeric_attribute
+        numeric_attribute:
           key: http.status_code
           min_value: 500
           max_value: 599
@@ -933,15 +964,15 @@ processors:
           sampling_percentage: 5
 ```
 
-### Adaptive Sampling
+### Rate-Limited Sampling
 
-Automatically adjust sampling rate based on traffic patterns:
+The rate-limiting policy is a span-rate token bucket, not a self-tuning error/latency sampler. This is an alternative policy list; adding it next to other keep policies does not impose a global cap on traces those policies retain. Bursts and complete-trace decisions affect short intervals.
 
 ```yaml
 processors:
   tail_sampling:
     policies:
-      - name: adaptive-sampling
+      - name: rate-limited-sampling
         type: rate_limiting
         rate_limiting:
           spans_per_second: 1000  # Keep maximum 1000 spans per second
@@ -949,13 +980,14 @@ processors:
 
 ### Sampling Strategy Guide
 
-| Environment | Recommended Sampling Rate | Strategy |
-|-------------|---------------------------|----------|
-| Development | 100% | Head sampling |
-| Staging | 50% | Head sampling |
-| Production (low traffic) | 100% | Head sampling |
-| Production (high traffic) | 1-10% | Tail sampling |
-| Critical services | 100% | Tail sampling (keep all errors/slow requests) |
+| Goal | Head input | Collector/storage decision |
+|------|------------|----------------------------|
+| Small development test | 100% | Keep all, verify propagation |
+| Bounded production volume | Measured percentage | Store received samples |
+| Keep errors/slow traces | All eligible spans | Tail policies retain matching traces plus a baseline |
+| Limit retained volume | All eligible spans for tail decisions | Explicit rate/composite policy and capacity limits |
+
+These are design choices, not universal environment defaults. Low head sampling plus tail sampling cannot guarantee retaining all errors. Check actual span status and attribute names (`http.response.status_code` for current OpenTelemetry conventions, `http.status_code` for some proxy/legacy spans).
 
 ## Trace Analysis
 
@@ -999,7 +1031,7 @@ Min Duration: 1s
 #### 3. Track Specific User Requests
 
 ```
-Tags: user.id=12345
+Tags: user_id=12345
 ```
 
 #### 4. Analyze Specific API Endpoints
@@ -1008,29 +1040,33 @@ Tags: user.id=12345
 Operation: GET /api/products/{id}
 ```
 
-### Programmatic Analysis via Jaeger API
+### Jaeger UI API Diagnostics
+
+After the port-forward above, these UI query endpoints help interactive diagnostics. They are internal UI APIs, not a stable application contract; use Jaeger’s documented query APIs for durable integrations.
 
 ```bash
 # Query traces for a specific service
-curl "http://jaeger-query:16686/api/traces?service=productpage&limit=10"
+curl "http://localhost:16686/api/traces?service=productpage&limit=10"
 
 # Query specific trace ID
-curl "http://jaeger-query:16686/api/traces/0af7651916cd43dd8448eb211c80319c"
+curl "http://localhost:16686/api/traces/0af7651916cd43dd8448eb211c80319c"
 
 # Query service list
-curl "http://jaeger-query:16686/api/services"
+curl "http://localhost:16686/api/services"
 
 # Query operations for a specific service
-curl "http://jaeger-query:16686/api/services/productpage/operations"
+curl "http://localhost:16686/api/services/productpage/operations"
 ```
 
 ### Identifying Latency Bottlenecks
 
-1. **Find the longest span in Waterfall View**
+1. **Inspect the waterfall and exclusive time**: Parent spans include child time; the longest parent alone does not locate the bottleneck.
 2. **Check Critical Path**: The path that most affects overall request time
 3. **Parallel vs Sequential Execution**: Check if tasks that could run in parallel are running sequentially
 
 ### Grafana Tempo Integration
+
+Tempo is an alternative trace backend. Its default HTTP **query** port is 3200; OTLP ingestion uses separate configured receivers such as 4317. Mount the following file into Grafana's `provisioning/datasources` directory (or configure the chart's datasource provisioning). A ConfigMap alone is not loaded automatically.
 
 ```yaml
 apiVersion: v1
@@ -1043,27 +1079,31 @@ data:
     apiVersion: 1
     datasources:
     - name: Tempo
+      uid: tempo
       type: tempo
       access: proxy
-      url: http://tempo:3100
+      url: http://tempo.observability.svc.cluster.local:3200
       jsonData:
-        tracesToLogs:
-          datasourceUid: 'loki'
-          tags: ['job', 'instance', 'pod', 'namespace']
-          mappedTags: [{ key: 'service.name', value: 'service' }]
+        tracesToLogsV2:
+          datasourceUid: loki
+          tags:
+          - key: service.name
+            value: app
+          filterByTraceID: false
+          filterBySpanID: false
         tracesToMetrics:
-          datasourceUid: 'prometheus'
-          tags: [{ key: 'service.name', value: 'service' }]
+          datasourceUid: prometheus
+          tags:
+          - key: service.name
+            value: destination_canonical_service
           queries:
-          - name: 'Request rate'
-            query: 'sum(rate(istio_requests_total{$__tags}[5m]))'
-        serviceMap:
-          datasourceUid: 'prometheus'
-        search:
-          hide: false
+          - name: Request rate
+            query: sum(rate(istio_requests_total{reporter="destination",$$__tags}[5m]))
         nodeGraph:
           enabled: true
 ```
+
+The example requires existing datasource UIDs `loki` and `prometheus`. Align SDK `service.name`, Loki `app`, and Istio `destination_canonical_service`; if the actual values differ, change the mappings. Add namespace/cluster mappings when service names collide. Grafana provisioning turns `$$__tags` into the literal query variable `$__tags`. Enable trace-ID filtering only when logs contain the trace ID. A Tempo Service graph additionally requires generated service-graph/span metrics in Prometheus; ordinary Istio request metrics alone do not provide those series.
 
 ## Adding Custom Spans
 
@@ -1071,8 +1111,11 @@ Add custom spans in application code for more detailed tracing.
 
 ### Python Example
 
+This function belongs in an initialized application; `check_inventory`, `process_payment` and `PaymentError` are application-defined callbacks/types.
+
 ```python
 from opentelemetry import trace
+from opentelemetry.trace import Status, StatusCode
 
 tracer = trace.get_tracer(__name__)
 
@@ -1082,12 +1125,13 @@ def process_order(order_id):
         span.set_attribute("order.amount", 99.99)
 
         # Check inventory
-        with tracer.start_as_current_span("check-inventory"):
+        with tracer.start_as_current_span("check-inventory") as inventory_span:
             inventory = check_inventory(order_id)
-            span.set_attribute("inventory.available", inventory)
+            inventory_span.set_attribute("inventory.available", inventory)
 
         # Process payment
-        with tracer.start_as_current_span("process-payment") as payment_span:
+        with tracer.start_as_current_span("process-payment", record_exception=False,
+                                          set_status_on_exception=False) as payment_span:
             try:
                 payment_result = process_payment(order_id)
                 payment_span.set_attribute("payment.status", "success")
@@ -1098,14 +1142,15 @@ def process_order(order_id):
 
         # Record event
         span.add_event("Order processed successfully", {
-            "order.id": order_id,
-            "timestamp": time.time()
+            "order.id": order_id
         })
 
         return {"status": "success"}
 ```
 
 ### Go Example
+
+This function is an application fragment; `checkInventory` and `processPayment` are application functions. Both child spans use the parent process context, so payment is not accidentally parented by an already-ended inventory span.
 
 ```go
 import (
@@ -1127,8 +1172,8 @@ func processOrder(ctx context.Context, orderID string) error {
     )
 
     // Check inventory
-    ctx, inventorySpan := tracer.Start(ctx, "check-inventory")
-    inventory, err := checkInventory(ctx, orderID)
+    inventoryCtx, inventorySpan := tracer.Start(ctx, "check-inventory")
+    inventory, err := checkInventory(inventoryCtx, orderID)
     if err != nil {
         inventorySpan.RecordError(err)
         inventorySpan.SetStatus(codes.Error, err.Error())
@@ -1139,8 +1184,8 @@ func processOrder(ctx context.Context, orderID string) error {
     inventorySpan.End()
 
     // Process payment
-    ctx, paymentSpan := tracer.Start(ctx, "process-payment")
-    err = processPayment(ctx, orderID)
+    paymentCtx, paymentSpan := tracer.Start(ctx, "process-payment")
+    err = processPayment(paymentCtx, orderID)
     if err != nil {
         paymentSpan.RecordError(err)
         paymentSpan.SetStatus(codes.Error, err.Error())
@@ -1161,24 +1206,7 @@ func processOrder(ctx context.Context, orderID string) error {
 
 ### Trace Data Size Optimization
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: istio
-  namespace: istio-system
-data:
-  mesh: |
-    defaultConfig:
-      tracing:
-        sampling: 10.0
-        max_path_tag_length: 256  # Limit URL path length
-        custom_tags:
-          # Add only necessary tags
-          cluster_id:
-            literal:
-              value: "prod"
-```
+Use the provider `maxTagLength` and Telemetry custom tags already shown. Limit attributes/events at the SDK/collector where appropriate; truncating a path does not redact secrets in a URL or tag. Store only required attributes and use route templates instead of raw identifiers where possible.
 
 ### Collector Performance Tuning
 
@@ -1191,104 +1219,55 @@ processors:
 
   memory_limiter:
     check_interval: 1s
-    limit_mib: 2048
-    spike_limit_mib: 512
+    limit_mib: 1024
+    spike_limit_mib: 256
 ```
 
 ### Storage Optimization
 
-#### Elasticsearch Index Management
+For the persistent Jaeger deployment, configure a retention policy for the actual `production` index prefix and chosen rotation mode. Size shards/replicas for measured ingest and query load. Use Jaeger's version-compatible index initialization and Elasticsearch ILM (or the storage backend's lifecycle mechanism), and verify backups and query lookback before expiring data. Seven days is an example retention decision, not a universal default.
 
-```bash
-# Delete old indices (using Curator)
-curator --config curator.yml delete_indices.yml
-```
-
-```yaml
-# delete_indices.yml
-actions:
-  1:
-    action: delete_indices
-    description: Delete jaeger indices older than 7 days
-    options:
-      ignore_empty_list: True
-      disable_action: False
-    filters:
-    - filtertype: pattern
-      kind: prefix
-      value: jaeger-span-
-    - filtertype: age
-      source: name
-      direction: older
-      timestring: '%Y-%m-%d'
-      unit: days
-      unit_count: 7
-```
+The old standalone Curator recipe did not match the configured index prefix and omitted storage credentials/TLS and rotation prerequisites. Follow the [Jaeger 2.20 storage lifecycle procedure](https://www.jaegertracing.io/docs/2.20/storage/elasticsearch/) and released schema; do not run broad index deletion commands as a tracing diagnostic.
 
 ## Troubleshooting
 
-### When Traces Are Not Visible
+### Missing Traces
 
-#### 1. Check if Envoy Generates Traces
-
-```bash
-# Check Envoy access logs
-kubectl logs -n <namespace> <pod-name> -c istio-proxy | grep -i trace
-
-# Check tracing in Envoy config
-istioctl proxy-config bootstrap <pod-name> -n <namespace> -o json | jq '.bootstrap.tracing'
-```
-
-#### 2. Check if Collector Receives Traces
+Check the effective HTTP connection-manager tracing configuration and the provider cluster, then distinguish reception, export and backend storage. A `.bootstrap.tracing` check alone misses dynamically configured tracing. Use these read-only checks:
 
 ```bash
-# Check Collector logs
-kubectl logs -n observability deployment/otel-collector
-
-# Check Collector metrics
+istioctl proxy-config listeners <pod-name> -n <namespace> -o json | \
+  jq '.. | objects | select(has("tracing")) | .tracing'
+istioctl proxy-config clusters <pod-name> -n <namespace> \
+  --fqdn otel-collector.observability.svc.cluster.local
+kubectl logs -n observability deployment/otel-collector --tail=100
+kubectl logs -n observability deployment/jaeger --tail=100
+# Keep this running; use a second terminal for the curl command below.
 kubectl port-forward -n observability svc/otel-collector 8888:8888
-curl http://localhost:8888/metrics | grep otelcol_receiver_accepted_spans
 ```
 
-#### 3. Check if Traces Are Stored in Jaeger/Zipkin
-
 ```bash
-# Check Jaeger storage
-kubectl logs -n observability deployment/jaeger-query
-
-# Check Elasticsearch indices
-curl -X GET "elasticsearch:9200/_cat/indices/jaeger-*?v"
+curl -fsS http://localhost:8888/metrics | \
+  rg 'otelcol_(receiver_accepted|exporter_sent|exporter_send_failed)_spans'
 ```
 
-### When Trace Context Is Not Propagating
+Accepted spans do not prove export or durable storage. Inspect exporter errors, backend connectivity/authentication and stored trace IDs. Tail sampling and memory storage intentionally reduce retained data. Metric suffixes can vary with the collector telemetry configuration.
+
+### Broken Context Propagation
+
+Use a fresh test trace ID for each independent request and inspect application/server spans in the backend. The application must inject the active child context when making a new outbound call. Check that W3C/B3 formats match the configured provider and SDK propagators, and that instrumentation starts before the HTTP libraries are loaded. Proxy log level changes do not enable access logging; configure a Telemetry access-log provider explicitly when needed.
+
+### Unexpected Sampling
 
 ```bash
-# 1. Check headers in application logs
-kubectl logs -n <namespace> <pod-name> -c <container> | grep -i "traceparent\|x-b3"
-
-# 2. Enable Envoy access log
-kubectl exec -n <namespace> <pod-name> -c istio-proxy -- \
-  curl -X POST http://localhost:15000/logging?level=debug
-
-# 3. Test for header propagation verification
-kubectl run -it --rm debug --image=curlimages/curl --restart=Never -- \
-  curl -H "traceparent: 00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01" \
-  http://service-a:8080/api/test
-```
-
-### When Sampling Rate Is Not Being Applied
-
-```bash
-# 1. Check Telemetry resources
 kubectl get telemetry -A
-
-# 2. Check Telemetry configuration details
 kubectl describe telemetry <name> -n <namespace>
-
-# 3. Check if reflected in Envoy config
-istioctl proxy-config bootstrap <pod-name> -n <namespace> -o json | \
-  jq '.bootstrap.tracing.http.config.sampling'
+istioctl analyze -n <namespace>
+istioctl proxy-config listeners <pod-name> -n <namespace> -o json | \
+  jq '.. | objects | select(has("tracing")) | .tracing'
 ```
+
+Review root/namespace/workload policy inheritance, upstream sampled flags, SDK sampler and collector policy together. A collector cannot reconstruct a trace discarded by head sampling.
 
 ## References
 

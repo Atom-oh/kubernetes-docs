@@ -2,12 +2,12 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "Kubernetes에서 spark-submit이 동작하는 방식",
+    "title": "Spark cluster mode: Kubernetes 배치와 Spark task 분리",
     "quality_profile": "showcase",
     "column_fit": "spread",
     "viewBox": [
       1060,
-      620
+      670
     ],
     "animation": "trace",
     "views": [
@@ -17,9 +17,10 @@
         "focus": [
           "user",
           "api",
-          "driver"
+          "driver",
+          "placement"
         ],
-        "note": "spark-submit이 API 서버와 직접 통신해 드라이버 Pod를 곧바로 생성한다 — 중간 스케줄링 프로세스가 없다."
+        "note": "API 요청 이후 Kubernetes scheduler와 kubelet이 Pod를 배치·시작합니다. 별도의 Spark master가 없다는 뜻과 구분합니다."
       },
       {
         "id": "executors",
@@ -27,9 +28,10 @@
         "focus": [
           "driver",
           "api",
-          "exec"
+          "exec",
+          "placement"
         ],
-        "note": "드라이버 스스로가 Kubernetes API를 다시 호출해 executor Pod를 생성한다 (spark.executor.instances 또는 DRA 기준)."
+        "note": "Driver는 executor 개수를 요청하며 Kubernetes가 노드에 배치합니다."
       },
       {
         "id": "tasks",
@@ -39,7 +41,7 @@
           "exec",
           "api"
         ],
-        "note": "executor는 드라이버에 등록한 뒤 작업을 받아 실행하고 결과를 보고한다. 작업이 끝나면 드라이버가 executor Pod를 정리한다."
+        "note": "Task 조율은 Spark의 역할입니다. 정상 종료·실패와 owner-reference 설정에 따라 리소스 정리가 달라집니다."
       }
     ],
     "legend": {
@@ -68,13 +70,19 @@
       "id": "api",
       "type": "cloud",
       "label": "Kubernetes API 서버",
-      "sublabel": "EKS 컨트롤 플레인"
+      "sublabel": "API 객체 · admission"
+    },
+    {
+      "id": "placement",
+      "type": "backend",
+      "label": "Pod 배치·시작",
+      "sublabel": "scheduler + kubelets"
     },
     {
       "id": "driver",
       "type": "backend",
       "label": "Driver Pod",
-      "sublabel": "스케줄러 역할"
+      "sublabel": "Spark task 조율"
     },
     {
       "id": "exec",
@@ -86,18 +94,18 @@
   "segments": [
     {
       "from": 165,
-      "to": 262,
-      "label": "1. 드라이버 Pod 생성"
+      "to": 285,
+      "label": "1. Driver Pod 요청과 배치"
     },
     {
-      "from": 282,
-      "to": 375,
-      "label": "2. Executor Pod 생성"
+      "from": 305,
+      "to": 410,
+      "label": "2. Executor Pod 요청과 배치"
     },
     {
-      "from": 395,
-      "to": 555,
-      "label": "3-4. 작업 실행과 정리"
+      "from": 430,
+      "to": 610,
+      "label": "3. Spark task 실행과 정리"
     }
   ],
   "messages": [
@@ -105,88 +113,113 @@
       "id": "create-driver",
       "from": "user",
       "to": "api",
-      "y": 192,
-      "label": "Driver Pod 생성 요청 (k8s://<endpoint>)",
+      "y": 190,
+      "label": "Create driver Pod",
       "variant": "emphasis"
     },
     {
-      "id": "start-driver",
+      "id": "driver-spec",
       "from": "api",
+      "to": "placement",
+      "y": 230,
+      "label": "Pod spec / binding"
+    },
+    {
+      "id": "start-driver",
+      "from": "placement",
       "to": "driver",
-      "y": 240,
-      "label": "Driver Pod 스케줄링 및 시작"
+      "y": 265,
+      "label": "Pod 배치 · 시작"
     },
     {
       "id": "request-exec",
       "from": "driver",
       "to": "api",
-      "y": 305,
-      "label": "Executor Pod 생성 요청",
+      "y": 325,
+      "label": "Request executor Pods",
       "variant": "emphasis"
     },
     {
-      "id": "start-exec",
+      "id": "executor-spec",
       "from": "api",
+      "to": "placement",
+      "y": 355,
+      "label": "Pod specs / bindings"
+    },
+    {
+      "id": "start-exec",
+      "from": "placement",
       "to": "exec",
-      "y": 352,
-      "label": "Executor Pod 스케줄링 및 시작"
+      "y": 390,
+      "label": "Pod 배치 · 시작"
     },
     {
       "id": "register",
       "from": "exec",
       "to": "driver",
-      "y": 415,
-      "label": "드라이버에 등록",
+      "y": 450,
+      "label": "Register",
       "variant": "return"
     },
     {
       "id": "assign",
       "from": "driver",
       "to": "exec",
-      "y": 455,
-      "label": "작업(Task) 할당",
+      "y": 490,
+      "label": "Spark task 할당",
       "variant": "emphasis"
     },
     {
       "id": "report",
       "from": "exec",
       "to": "driver",
-      "y": 495,
-      "label": "상태 보고 · 작업 결과 전송",
+      "y": 530,
+      "label": "결과 · 상태",
       "variant": "return"
     },
     {
       "id": "cleanup",
       "from": "driver",
       "to": "api",
-      "y": 535,
-      "label": "작업 종료 시 Executor Pod 정리",
-      "variant": "default"
+      "y": 580,
+      "label": "정상 종료 시 executor 정리 요청"
     }
   ],
   "activations": [
     {
       "participant": "api",
-      "from": 187,
-      "to": 245,
+      "from": 185,
+      "to": 235,
       "type": "cloud"
     },
     {
+      "participant": "placement",
+      "from": 225,
+      "to": 270,
+      "type": "backend"
+    },
+    {
       "participant": "driver",
-      "from": 240,
-      "to": 542,
+      "from": 260,
+      "to": 588,
       "type": "backend"
     },
     {
       "participant": "api",
-      "from": 300,
-      "to": 357,
+      "from": 320,
+      "to": 360,
       "type": "cloud"
     },
     {
+      "participant": "placement",
+      "from": 350,
+      "to": 395,
+      "type": "backend"
+    },
+    {
       "participant": "exec",
-      "from": 352,
-      "to": 502,
+      "from": 385,
+      "to": 538,
       "type": "backend"
     }
   ]

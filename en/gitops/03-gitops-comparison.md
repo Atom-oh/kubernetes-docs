@@ -1,6 +1,6 @@
 # GitOps Tools Comparison
 
-> **Last Updated**: February 22, 2026
+> **Last Updated**: September 11, 2026
 
 This guide provides a comprehensive comparison of GitOps tools, with a focus on ArgoCD and FluxCD, the two most popular choices in the Kubernetes ecosystem.
 
@@ -19,32 +19,32 @@ Both are CNCF graduated projects, indicating maturity and wide adoption.
 
 | Aspect | ArgoCD | FluxCD |
 |--------|--------|--------|
-| **Architecture** | Monolithic application with UI | Modular toolkit of controllers |
+| **Architecture** | Separate API/Repo Servers, Application Controller and supporting components | Modular toolkit of controllers |
 | **Configuration** | Application-centric CRDs | Source-centric CRDs |
 | **User Interface** | Rich Web UI included | CLI-first, no built-in UI |
-| **Learning Curve** | Gentler for beginners | Steeper, more flexible |
+| **Learning Focus** | Applications, AppProjects and UI workflows | Source, Kustomization and HelmRelease controller relationships |
 | **Deployment Model** | Pull-based GitOps | Pull-based GitOps |
 
 ### Feature Comparison
 
 | Feature | ArgoCD | FluxCD |
 |---------|--------|--------|
-| **Web UI** | Built-in, feature-rich | Not included (use Weave GitOps) |
+| **Web UI** | Built-in, feature-rich | Not in core; evaluate maintained ecosystem UIs |
 | **CLI** | `argocd` CLI | `flux` CLI |
 | **Multi-tenancy** | Projects with RBAC | Namespace isolation |
 | **Multi-cluster** | Native support | Native support |
-| **Helm Support** | Full support | Full support via Helm Controller |
+| **Helm Support** | helm template; Argo CD owns lifecycle | Helm Controller manages Helm releases |
 | **Kustomize Support** | Full support | Full support via Kustomize Controller |
-| **OCI Support** | Helm charts only | Full OCI artifact support |
+| **OCI Support** | General OCI and OCI Helm sources; check version/media-type requirements | OCIRepository; check layer/verification support |
 | **Notifications** | Built-in notification system | Notification Controller |
 | **RBAC** | Comprehensive RBAC | Kubernetes native RBAC |
-| **SSO Integration** | OIDC, SAML, LDAP | Kubernetes authentication |
-| **Health Checks** | Built-in resource health | Custom health checks |
+| **SSO Integration** | Direct OIDC or supported Dex connectors | Kubernetes authentication |
+| **Health Checks** | Built-in/custom resource health | Controller-specific readiness, health checks and custom conditions |
 | **Progressive Delivery** | Via Argo Rollouts | Via Flagger |
-| **Image Automation** | Via Argo Image Updater | Built-in Image Automation |
+| **Image Automation** | Via Argo Image Updater | Optional Image Reflector/Automation |
 | **Diff Preview** | Visual diff in UI | CLI diff |
 | **Sync Waves** | Native support | Via dependencies |
-| **Hooks** | PreSync, Sync, PostSync | Not native (use Jobs) |
+| **Hooks** | Argo sync hooks | Helm hooks; separately design Kustomization dependencies/Jobs |
 
 ### Architecture Comparison
 
@@ -64,10 +64,9 @@ Both are CNCF graduated projects, indicating maturity and wide adoption.
 
 | Metric | ArgoCD | FluxCD |
 |--------|--------|--------|
-| **GitHub Stars** | ~17,000+ | ~6,500+ |
 | **CNCF Status** | Graduated (Dec 2022) | Graduated (Nov 2022) |
 | **First Release** | 2018 | 2016 (v1), 2020 (v2) |
-| **Primary Maintainer** | Intuit, Red Hat | Weaveworks, CNCF |
+| **Maintenance** | Check current governance and security support | Check current governance and security support |
 | **Ecosystem Tools** | Argo Workflows, Rollouts, Events | Flagger, Weave GitOps |
 
 ## When to Choose ArgoCD
@@ -116,15 +115,15 @@ FluxCD is ideal when you need:
 2. **CLI-First Workflows**: GitOps-native workflows without UI dependency
 3. **Image Automation**: Automatic container image updates in Git
 4. **OCI Artifacts**: Store and deploy from OCI registries
-5. **Lightweight Footprint**: Minimal resource consumption
+5. **Component Choice**: Select controllers and measure their real workload
 
 ### Advantages
 
 - **Modular Design**: Use only what you need
-- **Native Image Automation**: Built-in container image updates
+- **Native Image Automation**: Optional controllers for container image updates
 - **OCI Support**: First-class support for OCI artifacts
 - **Kubernetes Native**: Uses standard Kubernetes RBAC
-- **Lower Resource Usage**: Smaller memory and CPU footprint
+- **Resource Control**: Measure CPU/memory against installed components, sources, objects and reconcile intervals
 
 ### Example Scenario
 
@@ -144,6 +143,8 @@ Recommendation: FluxCD
 
 ## Can They Work Together?
 
+Separate resource ownership so two reconcilers do not mutate/prune the same objects. Managing a CR together with its operator differs from two tools competing over the same Deployment or Helm release.
+
 Yes, ArgoCD and FluxCD can be used together in complementary patterns:
 
 ### Pattern 1: FluxCD for Infrastructure, ArgoCD for Applications
@@ -152,7 +153,7 @@ Yes, ArgoCD and FluxCD can be used together in complementary patterns:
 Git Repository
 ├── infrastructure/     # Managed by FluxCD
 │   ├── cert-manager/
-│   ├── ingress-nginx/
+│   ├── ingress-controller/
 │   └── monitoring/
 └── applications/       # Managed by ArgoCD
     ├── app-a/
@@ -178,6 +179,8 @@ Git Repository
 - Development clusters: FluxCD (for rapid iteration)
 
 ## Migration Considerations
+
+These are design mappings, not automatic CRD renames. Compare resource inventory, Helm releases, hooks, prune/finalizers, secrets and permissions. Test stopping the old reconciler and transferring ownership without deletion in staging. Argo CD templating does not automatically adopt Flux Helm release history.
 
 ### From FluxCD to ArgoCD
 
@@ -213,9 +216,9 @@ While ArgoCD and FluxCD dominate the GitOps landscape, other tools exist:
 
 ### Weave GitOps
 
-- Commercial product built on FluxCD
+- Flux-based OSS UI project; validate commercial support separately
 - Adds UI and enterprise features to Flux
-- Best for: FluxCD users wanting a UI
+- Evaluate: Current releases, Flux compatibility and support owner
 
 ## Decision Matrix
 
@@ -223,11 +226,11 @@ While ArgoCD and FluxCD dominate the GitOps landscape, other tools exist:
 |-------------|-------------|
 | Need a Web UI | ArgoCD |
 | CLI-first workflow | FluxCD |
-| Image automation | FluxCD |
+| Image automation | Optional Flux controllers or Argo CD Image Updater |
 | Complex RBAC | ArgoCD |
 | SSO integration | ArgoCD |
-| Minimal resources | FluxCD |
-| OCI artifacts | FluxCD |
+| Resource limits | Benchmark the same real workload |
+| OCI artifacts | Both; compare format, verification and authentication needs |
 | Sync waves/hooks | ArgoCD |
 | Visual diff | ArgoCD |
 | Modular deployment | FluxCD |
@@ -246,3 +249,11 @@ Many organizations successfully use both tools for different purposes, leveragin
 ## Quiz
 
 To test what you've learned, try the [GitOps Tools Comparison quiz](../quizzes/gitops/03-gitops-comparison-quiz.md).
+
+## References
+
+- [Argo CD OCI](https://argo-cd.readthedocs.io/en/stable/user-guide/oci/)
+- [Argo CD Helm lifecycle](https://argo-cd.readthedocs.io/en/stable/user-guide/helm/)
+- [Flux HelmRelease lifecycle](https://fluxcd.io/flux/components/helm/helmreleases/)
+- [Flux multi-tenancy](https://fluxcd.io/flux/installation/configuration/multitenancy/)
+- [Flux ecosystem](https://fluxcd.io/ecosystem/)

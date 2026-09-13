@@ -4,8 +4,10 @@ const baseSrcExclude = [
   'README.md',
   'slide/**',
   'CLAUDE.md',
+  'aws-architecture-review-request.md', // review material, not a guidebook page
   '**/SUMMARY.md',
   'docs/**', // internal plans/specs — never publish
+  'assets/**', // diagram sources and maintenance READMEs are not articles
   'examples/**', // runnable code packages referenced by path, not pages; leaked into the sitemap
   'public/llms/**', // generated raw Markdown — copied as static files
   'cn/**',

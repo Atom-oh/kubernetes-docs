@@ -41,7 +41,7 @@ The learning-flow map shows the guidebook's fifteen domains "flowing from founda
 **Answer: D) GitOps (ArgoCD, Flux)**
 
 **Explanation:**
-The measured-benchmark series consists of "documents built on numbers measured on real AWS resources, not spec sheets": Istio sidecar vs ambient (P50/P99 latency per mTLS data plane and 503 rates during rollouts), the EBS gp2 vs gp3 benchmark (a 10x IOPS gap at identical capacity and the gp2 burst-credit cliff), the ClickHouse on EKS benchmark (100M-row ingest throughput, compression ratios, query latency), and the Kafka on EKS benchmark (RF3 ingest ceiling of ≈130–135 MiB/s, among others) — four documents. GitOps is a cross-cutting domain but has no measured page in the series.
+The measured-benchmark series consists of "documents built on numbers measured on real AWS resources, not spec sheets": Istio sidecar vs ambient (P50/P99 latency per mTLS data plane and 503 rates during rollouts), the EBS gp2 vs gp3 benchmark (a 10x IOPS gap at identical capacity and the gp2 burst-credit cliff), the ClickHouse on EKS benchmark (100M-row ingest throughput, compression ratios, query latency), and the Kafka on EKS benchmark (RF3 ingest ceiling of ≈130–135 MiB/s, among others) plus the Pod Network Benchmark — five entries in this list. GitOps is a cross-cutting domain but has no measured page in the series.
 
 </details>
 
@@ -86,7 +86,7 @@ Path ① reads "Linux Basics → Container Technology → Introduction to Kubern
 **Answer: B) Make sure the toolbar Live/Still toggle reads Live, then Export (`E`) → WebM to download the 6-second trace animation**
 
 **Explanation:**
-Every interactive diagram opens at `https://www.atomai.click/kubernetes-docs/archmaps/<name>.html`, and the **Export** button in the viewer toolbar (shortcut `E`) produces share-ready files on the spot — "No screenshot tooling — the diagram page is all you need." The recipe is: (1) open the diagram; (2) check that the **Live/Still** toggle reads Live, since the motion flowing along the arrows is what the recording captures; (3) **Export → WebM** for a moving post, or **Export → Share Card** for a static 1200×630 preview; (4) post it together with the source document's URL. WebM shows "Recording 6 seconds of motion…" before the file downloads, and it needs a trace-animated diagram plus MediaRecorder support in the browser. SVG is the dual-theme vector meant for slides.
+Every interactive diagram opens at `https://www.atomai.click/kubernetes-docs/archmaps/<name>.html`, and the **Export** button in the viewer toolbar (shortcut `E`) produces share-ready files on the spot ; availability depends on viewer version, browser support and current selection. The recipe is: (1) open the diagram; (2) check that the **Live/Still** toggle reads Live, since the motion flowing along the arrows is what the recording captures; (3) **Export → WebM** for a moving post, or **Export → Share Card** for a static 1200×630 preview; (4) post it together with the source document's URL. WebM shows "Recording 6 seconds of motion…" before the file downloads, and it needs a trace-animated diagram plus MediaRecorder support in the browser. SVG is the dual-theme vector meant for slides.
 
 </details>
 

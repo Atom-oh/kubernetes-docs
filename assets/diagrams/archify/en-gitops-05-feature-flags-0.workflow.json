@@ -2,7 +2,7 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "Traditional Deployment vs Feature Flag Deployment",
+    "title": "Deployment and feature exposure",
     "locale": "en",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -15,7 +15,7 @@
           "release_t",
           "all_users"
         ],
-        "note": "Deploying the code is the release: the moment the new version rolls out, every user sees the new feature."
+        "note": "Behavior follows the workload rollout; Pods do not all change simultaneously."
       },
       {
         "id": "flagged",
@@ -26,7 +26,7 @@
           "target_users",
           "existing"
         ],
-        "note": "Deployment and release are decoupled: the flag value alone controls when and to whom the feature is exposed, with no code change."
+        "note": "Flags control behavior supported by deployed code; SDK integration and validated rules are still required."
       },
       {
         "id": "decision",
@@ -36,7 +36,7 @@
           "target_users",
           "existing"
         ],
-        "note": "Only target users whose flag evaluates ON see the new feature; users with OFF keep the existing experience."
+        "note": "Evaluation selects new or existing behavior; authorization remains separate."
       }
     ],
     "legend": {
@@ -85,7 +85,7 @@
       "width": 160,
       "type": "backend",
       "label": "Release",
-      "sublabel": "exposed on deploy"
+      "sublabel": "behavior ships with code"
     },
     {
       "id": "all_users",
@@ -93,8 +93,8 @@
       "col": 2,
       "width": 160,
       "type": "cloud",
-      "label": "All Users",
-      "sublabel": "everyone gets the feature"
+      "label": "Rollout audience",
+      "sublabel": "follows rollout strategy"
     },
     {
       "id": "deploy_f",
@@ -138,7 +138,7 @@
       "id": "deploy_t-release_t",
       "from": "deploy_t",
       "to": "release_t",
-      "label": "immediately"
+      "label": "rollout"
     },
     {
       "id": "release_t-all_users",

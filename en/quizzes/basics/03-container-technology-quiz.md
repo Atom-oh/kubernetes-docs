@@ -2,6 +2,8 @@
 
 This quiz tests your understanding of container technology fundamentals, how they work, and their relationship with Kubernetes.
 
+Answer for ordinary Linux process-isolated containers. VM-backed runtimes such as Kata/Fargate and Windows support differ.
+
 ## Multiple Choice Questions
 
 1. Which of the following is NOT a key characteristic of containers?
@@ -113,7 +115,7 @@ bridge is Docker's default network driver, enabling communication between contai
 **Answer: B) Volume**
 
 **Explanation:**
-Volumes are an area of the host file system managed by Docker, which is the most suitable method for persistent data storage in containers. Ephemeral storage is the container's internal file system where data is lost when the container is deleted. Bind mounts mount a specific host path into the container, and tmpfs mounts store data only in memory.
+Volumes are an area of the host file system managed by Docker, which is the most suitable method for persistent data storage in containers. Ephemeral storage is the container's internal file system where data is lost when the container is deleted. Bind mounts mount a specific host path into the container, and tmpfs is memory-backed but may use swap.
 </details>
 
 8. Which is NOT a method for enhancing container security?
@@ -135,17 +137,17 @@ Granting administrator privileges to all containers is an action that weakens se
 9. Which AWS service provides a serverless container execution environment?
    - A) Amazon EC2
    - B) Amazon ECS
-   - C) Amazon Fargate
+   - C) AWS Fargate
    - D) Amazon ECR
    
 <details>
 
 <summary>Show Answer</summary>
 
-**Answer: C) Amazon Fargate**
+**Answer: C) AWS Fargate**
 
 **Explanation:**
-Amazon Fargate is AWS's serverless container execution environment, allowing you to run containers without managing servers. Amazon EC2 is a virtual server service, Amazon ECS is a container orchestration service, and Amazon ECR is a container image registry service.
+AWS Fargate is AWS's serverless container execution environment, allowing you to run containers without managing servers. Amazon EC2 is a virtual server service, Amazon ECS is a container orchestration service, and Amazon ECR is a container image registry service.
 </details>
 
 10. Which is NOT a main function of container orchestration tools?
@@ -164,7 +166,7 @@ Amazon Fargate is AWS's serverless container execution environment, allowing you
 Container image building is typically the role of CI/CD pipelines or container build tools like Docker. The main functions of container orchestration tools (Kubernetes, Docker Swarm, etc.) are automatic deployment and rollback, service discovery and load balancing, auto scaling, self-healing, configuration management, and storage orchestration.
 </details>
 
-11. Which state can a container NOT be in while not running?
+11. Which of the following is not a Docker container lifecycle state?
     - A) Created
     - B) Exited
     - C) Building
@@ -177,7 +179,7 @@ Container image building is typically the role of CI/CD pipelines or container b
 **Answer: C) Building**
 
 **Explanation:**
-Container lifecycle states include Created (created), Running (running), Paused (paused), Restarting (restarting), Exited (exited), and Dead (dead). Building is a state of the image build process and is not a container state. Containers are created after images are built.
+Container lifecycle states include Created, Running, Paused, Restarting, Exited, Removing, and Dead. Building is a state of the image build process and is not a container state. Containers are created after images are built.
 </details>
 
 12. Which container restart policy restarts the container when the Docker daemon starts but does not restart if the container was manually stopped?
@@ -193,7 +195,7 @@ Container lifecycle states include Created (created), Running (running), Paused 
 **Answer: D) unless-stopped**
 
 **Explanation:**
-The `unless-stopped` restart policy always restarts the container unless it was explicitly stopped. The container starts automatically even when the Docker daemon restarts, but if the user manually stopped it with the `docker stop` command, the container will not start after daemon restart. `always` restarts regardless of manual stop status.
+The `unless-stopped` restart policy always restarts the container unless it was explicitly stopped. The container starts automatically even when the Docker daemon restarts, but if the user manually stopped it with the `docker stop` command, the container will not start after daemon restart. A manual stop suppresses always until a daemon restart or an explicit container start; unlike unless-stopped, it starts again after a daemon restart.
 </details>
 
 13. Which Docker command checks the file system changes between a container and its original image?
@@ -223,7 +225,7 @@ The `docker diff` command shows the changes between the container's file system 
 **Answer: Digest**
 
 **Explanation:**
-A digest is the SHA256 hash of the container image contents, serving as a unique identifier for the image. Unlike tags, if the image contents change, the digest also changes, so it is used to accurately reference a specific image version. Example: `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`
+An image reference digest identifies manifest or multi-platform index bytes, commonly using SHA256; the manifest references layer/config digests. Unlike tags, if the image contents change, the digest also changes, so it is used to accurately reference a specific image version. Example: `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`
 </details>
 
 15. What is the Dockerfile directive that specifies the command to run when a container starts?
@@ -301,7 +303,7 @@ The `docker events` command shows real-time events from the Docker daemon as a s
 ## Hands-on Questions
 
 21. Write a Dockerfile that meets the following requirements:
-    - Use Node.js 14 Alpine image
+    - Use Node.js 24 Alpine image
     - Set working directory to /app
     - Copy package.json and package-lock.json files first
     - Install dependencies
@@ -315,15 +317,17 @@ The `docker events` command shows real-time events from the Docker daemon as a s
 
 **Answer:**
 ```dockerfile
-FROM node:14-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json package-lock.json ./
 
-RUN npm install
+RUN npm ci
 
-COPY . .
+COPY --chown=node:node . .
+
+USER node
 
 EXPOSE 3000
 
@@ -331,7 +335,7 @@ CMD ["node", "server.js"]
 ```
 
 **Explanation:**
-This Dockerfile shows a basic configuration for Node.js applications. By copying dependency files (package*.json) first and installing them before copying the remaining files, it optimizes Docker's layer caching. This way, even if source code changes, the npm install step can be reused if dependencies haven't changed.
+This Dockerfile shows a basic configuration for Node.js applications. By copying dependency files (package*.json) first and installing them before copying the remaining files, it optimizes Docker's layer caching. This way, even if source code changes, the npm ci step can be reused if dependencies haven't changed.
 </details>
 
 22. Analyze the following Docker command and explain its purpose:
@@ -349,8 +353,10 @@ This command is used for the following purposes:
     - `--name my-app`: Set the container name to "my-app"
     - `-p 8080:80`: Map host port 8080 to container port 80
     - `-v data:/app/data`: Mount a volume named "data" to the /app/data path in the container
-    - `--restart always`: Always automatically restart when container exits
-    - `nginx:latest`: Use the latest version of nginx image
+    - `--restart always`: Restart after exit; a manual stop suspends it until daemon restart or explicit start
+    - `nginx:latest`: Use the mutable tag named latest; freshness requires pulling
+
+The /app/data mount does not change NGINX’s document root. Port publishing binds all host addresses by default; use 127.0.0.1:8080:80 for local-only access.
 
 This command runs the nginx web server in the background, makes it accessible through host port 8080, sets up a volume for persistent data storage, and configures automatic restart when the container exits.
 </details>
@@ -364,20 +370,20 @@ This command runs the nginx web server in the background, makes it accessible th
 **Answer:**
 ```dockerfile
 # Build stage
-FROM node:14 AS build
+FROM node:24 AS build
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json package-lock.json ./
 
-RUN npm install
+RUN npm ci
 
 COPY . .
 
 RUN npm run build
 
 # Run stage
-FROM nginx:alpine
+FROM nginx:1.30.4-alpine
 
 # Copy build artifacts to nginx's service directory
 COPY --from=build /app/build /usr/share/nginx/html
@@ -405,14 +411,15 @@ The advantage of this approach is that the final image does not include Node.js 
 
 **Answer:**
 ```dockerfile
-FROM nginx:alpine
+FROM nginx:1.30.4-alpine
 
 # Copy application (example)
 COPY ./html /usr/share/nginx/html
+RUN printf 'ok\n' > /usr/share/nginx/html/health
 
 # Health check configuration
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost/health || exit 1
+  CMD wget -q -O /dev/null http://127.0.0.1/health || exit 1
 
 EXPOSE 80
 
@@ -423,11 +430,11 @@ CMD ["nginx", "-g", "daemon off;"]
 Meaning of each HEALTHCHECK directive option:
 - `--interval=30s`: Perform health check every 30 seconds
 - `--timeout=3s`: Health check command must complete within 3 seconds
-- `--start-period=10s`: Ignore health check failures for 10 seconds after container start (initialization time)
+- `--start-period=10s`: Allow initialization failures for up to 10 seconds; an early successful check ends the grace period
 - `--retries=3`: Mark container as unhealthy after 3 consecutive failures
 - `CMD`: Health check command to execute. Uses wget to check /health endpoint
 
-Health checks are used by container orchestration tools to determine container status for automatic recovery or traffic routing decisions.
+Docker marks unhealthy but does not restart a standalone container solely for that status. An orchestrator may react to supported health signals; Kubernetes requires its own probes and does not use Dockerfile HEALTHCHECK. The example must provide an HTTP 200 /health endpoint.
 </details>
 
 25. Write Docker commands to check the environment variables, network settings, and process list of a running container for debugging purposes.
@@ -481,6 +488,8 @@ When debugging containers, combine these commands to diagnose issues:
 Using these tools effectively helps understand container internal state and resolve issues.
 </details>
 
+Dockerfile exercises require the reader’s matching package-lock.json, server.js/static build script and html directory. Exclude node_modules/.git/.env via .dockerignore. React static output may be build or dist; use the actual tool’s output. SSR apps do not run by copying static files into NGINX. The /health example tests a static NGINX response, not backend readiness.
+
 ## Advanced Questions
 
 26. Compare the roles of namespaces and cgroups, the core components of container technology, and explain how each contributes to container isolation.
@@ -498,7 +507,7 @@ Using these tools effectively helps understand container internal state and reso
     - PID namespace: Process ID isolation
     - Network namespace: Network stack isolation
     - Mount namespace: File system mount point isolation
-    - UTS namespace: Hostname and domain name isolation
+    - UTS namespace: Hostname and NIS domain-name isolation
     - IPC namespace: Inter-process communication resource isolation
     - User namespace: User and group ID isolation
 
@@ -509,7 +518,7 @@ Using these tools effectively helps understand container internal state and reso
     - CPU time limiting
     - Memory usage limiting
     - Block I/O bandwidth limiting
-    - Network bandwidth limiting
+    - Network traffic control through tc/eBPF integration
     - Device access control
 
 **Contribution to container isolation**:
@@ -520,7 +529,7 @@ Namespaces and cgroups play complementary roles:
 
     - cgroups limit the system resources (CPU, memory, disk I/O, etc.) that containers can use, providing physical resource isolation. This prevents one container from using excessive resources and affecting other containers or the host system.
 
-These two technologies work together to allow containers to run in isolated environments with limited resource usage. This isolation is lighter than virtual machines but provides sufficient isolation for security and resource management.
+These two technologies work together to allow containers to run in isolated environments with limited resource usage. This isolation is lighter than virtual machines but security depends on kernel exposure, privileges and runtime configuration; it is not a complete isolation guarantee.
 </details>
 
 27. Explain how the container image layering system works and how the Copy-on-Write (CoW) strategy contributes to container efficiency.
@@ -533,7 +542,7 @@ These two technologies work together to allow containers to run in isolated envi
 
 **Container Image Layering System**:
 
-Container images consist of a stack of multiple layers. Each layer represents file system changes, and each Dockerfile command (FROM, RUN, COPY, etc.) creates a new layer. These layers are read-only and stack hierarchically to form the final image.
+Container images consist of a stack of multiple layers. Each layer represents file system changes, and RUN/COPY/ADD can create filesystem diffs, while metadata-only instructions such as ENV/CMD create no filesystem layer. These layers are read-only and stack hierarchically to form the final image.
 
 Key features of the layering system:
 1. **Incremental builds**: Only changed layers are regenerated during image builds
@@ -547,7 +556,7 @@ Copy-on-Write is an optimization strategy that delays copy operations until data
 1. **Container start**: When a container starts, a thin writable layer is added on top of existing image layers.
 2. **Read operations**: When reading a file, the system searches layers from top to bottom and uses the first version of the file found.
 3. **Write operations**: When modifying a file, the file is first copied to the writable layer then modified (Copy-on-Write). The original file remains unchanged.
-4. **Delete operations**: When deleting a file, the file is not actually deleted; instead, a "whiteout" file is created in the writable layer to make it appear deleted.
+4. **Delete operations**: Deleting a lower-layer file creates a whiteout in the writable layer; a file that exists only in the upper layer can be removed there.
 
 **Contribution to efficiency**:
 
@@ -592,18 +601,18 @@ Thanks to these efficiencies, containers can start lighter and faster than virtu
      - `docker pause` → Paused
      - `docker stop` → Exited
      - `docker kill` → Exited
-     - `docker restart` → Restarting → Running
+     - `docker restart` → stop/start → Running
      - On process termination → Exited
 
 3. **Paused**
-   - All processes paused with SIGSTOP
+   - Linux processes are frozen using the freezer cgroup, not by sending SIGSTOP
    - Entered via `docker pause` command
    - Memory maintained but no CPU usage
    - Transition: `docker unpause` → Running
 
 4. **Restarting**
    - Temporary state while container is restarting
-   - Occurs via `docker restart` or restart policy
+   - Indicates an automatic restart driven by restart policy; an explicit docker restart requests a stop/start sequence
    - Transition: Automatically transitions to Running or Exited
 
 5. **Exited**
@@ -639,7 +648,7 @@ docker rm <id>                  # Delete
 **Restart policies and lifecycle:**
 - `no`: No automatic restart
 - `on-failure[:max]`: Restart on abnormal exit, can specify max count
-- `always`: Always restart (including daemon restart)
+- `always`: Restart after exit/daemon restart; a manual stop suppresses restart until daemon restart or explicit start
 - `unless-stopped`: Always restart until manually stopped
 
 Understanding the container lifecycle helps ensure application availability and establish appropriate recovery strategies when issues occur.
@@ -648,3 +657,30 @@ Understanding the container lifecycle helps ensure application availability and 
 ---
 
 [Return to Learning Materials](../../basics/03-container-technology.md) | [Next Quiz: Kubernetes Introduction](./04-kubernetes-introduction-quiz.md)
+
+## Verification References
+
+- https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+- https://docs.docker.com/reference/cli/docker/container/pause/
+- https://docs.docker.com/reference/cli/docker/container/ls/
+- https://docs.docker.com/engine/containers/start-containers-automatically/
+- https://docs.docker.com/reference/cli/docker/system/prune/
+- https://docs.docker.com/reference/cli/docker/volume/prune/
+- https://docs.docker.com/reference/dockerfile/
+- https://docs.docker.com/engine/network/drivers/bridge/
+- https://docs.docker.com/engine/storage/containerd/
+- https://docs.docker.com/engine/storage/tmpfs/
+- https://docs.docker.com/engine/security/trust/
+- https://docs.docker.com/engine/swarm/secrets/
+- https://github.com/opencontainers/image-spec/blob/main/config.md
+- https://github.com/opencontainers/image-spec/blob/main/manifest.md
+- https://github.com/nodejs/Release/blob/main/schedule.json
+- https://github.com/docker-library/official-images/blob/master/library/node
+- https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
+- https://github.com/npm/cli/blob/latest/docs/lib/content/commands/npm-ci.md
+- https://cloud.google.com/artifact-registry/docs/transition/transition-from-gcr
+- https://man7.org/linux/man-pages/man7/cgroups.7.html
+- https://github.com/torvalds/linux/releases/tag/v2.6.24
+- https://docs.aws.amazon.com/eks/latest/userguide/fargate.html
+- https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html
+- https://aws.amazon.com/fargate/pricing/

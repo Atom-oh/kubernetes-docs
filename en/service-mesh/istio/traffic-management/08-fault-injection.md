@@ -14,6 +14,8 @@ Fault Injection is a technique that intentionally injects failures to test syste
 8. [Testing Strategies](#testing-strategies)
 9. [Best Practices](#best-practices)
 
+These are alternative HTTP-layer experiments. Start in an isolated namespace, preserve the full no-fault routing configuration, and define an independent cleanup path before scheduling a test. A percentage applies to matching requests, not a percentage of Pods. Tester headers are not authentication and must be propagated to the targeted downstream call. Native SQL/TCP, packet loss, Pod readiness and node failures require different tests.
+
 ## Why Fault Injection?
 
 ### Testing Resilience in Production Environments
@@ -22,7 +24,7 @@ In microservice architecture, numerous services depend on each other, and **a si
 
 #### 1. **Core Principle of Chaos Engineering**
 
-Chaos Engineering, which originated from Netflix's Chaos Monkey, aims to **experience failures proactively in production environments** and discover system weaknesses.
+Chaos Engineering, popularized by practices such as Netflix's Chaos Monkey, aims to **experience failures proactively in production environments** and discover system weaknesses.
 
 ![Side-by-side workflow showing how traditional testing moves from dev and staging into a production failure, while Chaos Engineering continuously injects faults to discover weaknesses, fix them proactively, and reach a resilient system.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-0.png)
 
@@ -42,11 +44,9 @@ In production environments, the following problems can occur:
 
 #### 3. **Verifying Circuit Breaker and Timeout Settings**
 
-Without Fault Injection, it's **difficult to confirm whether Circuit Breaker and Timeout settings actually work**.
+Fault injection tests how callers handle delays/errors. For proxy retries/timeouts or endpoint ejection, the failure must be produced at a layer that those mechanisms observe.
 
-![Diagram showing Service A sending a request to fault-injected Dependent Service B, receiving a delayed or failed response, and confirming Circuit Breaker activation through monitoring.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-1.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-08-fault-injection-1.html)
+Verify the caller’s behavior independently from proxy ejection: a locally injected abort is not an upstream endpoint failure. The order service’s actual responses determine what its callers observe.
 
 #### 4. **Validating Safe Deployments**
 
@@ -92,6 +92,9 @@ spec:
     - destination:
         host: payment-service
         subset: v2
+  - route:
+    - destination:
+        host: payment-service
 ```
 
 **Use Case**:
@@ -156,6 +159,9 @@ spec:
     route:
     - destination:
         host: recommendation-service
+  - route:
+    - destination:
+        host: recommendation-service
 ```
 
 **Use Case**:
@@ -164,6 +170,8 @@ spec:
 - **Note**: Start with very low rates (1-5%) and monitor impact
 
 ### 4. **Adjusting Timeout and Retry Policies**
+
+Istio does not enable timeout/retry handling on the same client-side route when faults are enabled. Removing the route timeout below is intentional; the caller must enforce the deadline for this test.
 
 #### Scenario: Finding Optimal Timeout Values
 
@@ -186,57 +194,40 @@ spec:
         percentage:
           value: 100.0
         fixedDelay: 10s  # 10 second delay
-    timeout: 5s  # 5 second timeout setting
     route:
+    - destination:
+        host: search-service
+  - route:
     - destination:
         host: search-service
 ```
 
 **Use Case**:
-- Test if current timeout setting (5 seconds) is appropriate
-- Verify timeout works when there's a 10 second delay
+- Test a 5-second application/client deadline while the proxy injects a 10-second delay
+- For an Istio route timeout, use a genuinely slow upstream or inject at a different hop
 - Find optimal value that doesn't harm user experience
 
-### 5. **Verifying Circuit Breaker Operation**
+### 5. **Verifying Outlier Detection**
 
-#### Scenario: Confirm Circuit Breaker Works Properly
+A local fault abort is returned before an upstream request is sent, so it does not exercise that proxy’s per-endpoint consecutive-error detector. Use a controlled HTTP backend that really returns 503, then observe its ejection. For example, after deploying the Istio httpbin sample in the test namespace:
 
 ```yaml
-# DestinationRule: Circuit Breaker configuration
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: reviews-circuit-breaker
+  name: httpbin-outlier-test
 spec:
-  host: reviews
+  host: httpbin
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
-      interval: 30s
+      consecutive5xxErrors: 5
+      interval: 5s
       baseEjectionTime: 30s
----
-# VirtualService: Fault injection
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: reviews-fault
-spec:
-  hosts:
-  - reviews
-  http:
-  - fault:
-      abort:
-        percentage:
-          value: 60.0  # 60% failure rate
-        httpStatus: 503
-    route:
-    - destination:
-        host: reviews
+      maxEjectionPercent: 100
+      minHealthPercent: 0
 ```
 
-**Use Case**:
-- Verify Circuit Breaker activates after 5 consecutive errors at 60% failure rate
-- Validate automatic recovery after 30 seconds
+Send requests from a mesh application client to `http://httpbin:8000/status/503`. This deliberately allows all test endpoints to be ejected; recovery depends on ejection history and subsequent health, not a guaranteed fixed 30 seconds. Keep this configuration out of unrelated workloads.
 
 ### 6. **Testing for Specific User Groups**
 
@@ -352,8 +343,8 @@ spec:
 
 **Result**:
 - 20% of requests get 3 second delay
-- 10% of requests get immediate 503 error
-- Remaining 70% processed normally
+- Abort can overlap with delay, so some aborted requests are delayed first
+- Do not add the two percentages as disjoint populations; measure their overlap
 
 ### 2. Conditional Fault Injection
 
@@ -398,7 +389,7 @@ Test by gradually increasing fault rate:
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: api-fault-stage1
+  name: api-fault
 spec:
   hosts:
   - api-service
@@ -411,12 +402,14 @@ spec:
     route:
     - destination:
         host: api-service
----
+```
+
+```yaml
 # Stage 2: 10% faults (apply after monitoring)
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: api-fault-stage2
+  name: api-fault
 spec:
   hosts:
   - api-service
@@ -429,12 +422,14 @@ spec:
     route:
     - destination:
         host: api-service
----
+```
+
+```yaml
 # Stage 3: 20% faults (apply after sufficient validation)
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: api-fault-stage3
+  name: api-fault
 spec:
   hosts:
   - api-service
@@ -509,7 +504,7 @@ spec:
 
 ## Real-World Scenarios
 
-### Scenario 1: Simulating Slow Database Queries
+### Scenario 1: Simulating a Slow HTTP Database Facade
 
 **Situation**: Database queries intermittently become slow
 
@@ -518,7 +513,7 @@ apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: database-slow-query
-  namespace: production
+  namespace: chaos-tests
 spec:
   hosts:
   - database-service
@@ -526,7 +521,7 @@ spec:
   - fault:
       delay:
         percentage:
-          value: 15.0  # 15% of queries are slow
+          value: 15.0  # 15% of HTTP requests are delayed
         fixedDelay: 8s   # 8 second delay
     route:
     - destination:
@@ -547,9 +542,7 @@ spec:
 
 **Situation**: Verify if one service failure propagates to other services
 
-![Cascade failure test showing a request path from frontend through order service to a fault-injected payment service, where a 30% failure rate trips a circuit breaker that protects the frontend and lets inventory service keep operating normally.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-08-fault-injection-3.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-08-fault-injection-3.html)
+Verify the caller’s behavior independently from proxy ejection: a locally injected abort is not an upstream endpoint failure. The order service’s actual responses determine what its callers observe.
 
 ```yaml
 # Inject faults into payment service
@@ -579,14 +572,14 @@ spec:
   host: order-service
   trafficPolicy:
     outlierDetection:
-      consecutiveErrors: 5
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
 
 **Test Objectives**:
 1. Does order service handle payment failure gracefully?
-2. Does Circuit Breaker activate so inventory service operates normally?
+2. Does the order service preserve its caller-facing behavior? Ejection depends on actual errors returned by order-service.
 3. Are appropriate user messages displayed on frontend?
 
 ### Scenario 3: Testing API Rate Limit Situation
@@ -612,6 +605,9 @@ spec:
           value: 40.0  # 40% of requests rate limited
         httpStatus: 429  # Too Many Requests
     route:
+    - destination:
+        host: external-api-service
+  - route:
     - destination:
         host: external-api-service
 ```
@@ -645,6 +641,9 @@ spec:
     route:
     - destination:
         host: us-east-service
+  - route:
+    - destination:
+        host: us-east-service
 ```
 
 **Test Objectives**:
@@ -672,7 +671,7 @@ spec:
     fault:
       abort:
         percentage:
-          value: 25.0  # 25% pods fail (1 out of 4)
+          value: 25.0  # 25% of matching requests fail; Pods remain running
         httpStatus: 503
       delay:
         percentage:
@@ -682,12 +681,15 @@ spec:
     - destination:
         host: app-service
         subset: v2
+  - route:
+    - destination:
+        host: app-service
 ```
 
 **Test Objectives**:
-1. Maintain availability during deployment (minimum 75%)
-2. Does Readiness Probe work properly?
-3. Does Load Balancer route traffic only to healthy pods?
+1. Measure caller behavior under injected request errors
+2. Test readiness separately using a controlled workload state change
+3. Verify healthy-endpoint routing separately; HTTP abort does not mark a Pod unready
 
 ## Testing Strategies
 
@@ -716,30 +718,53 @@ kubectl apply -f fault-injection-5percent.yaml
 
 ### 2. Time-Based Testing
 
+This is a scheduling template, suspended until its prerequisites are prepared: a test namespace, a built/pinned organization-owned runner image containing shell and a compatible kubectl, an existing `chaos-tester` ServiceAccount with only the needed access to the pre-created test VirtualService, and a `chaos-fixtures` ConfigMap containing full fault/no-fault manifests for that same resource. The example registry image is a placeholder. Traps cannot run after SIGKILL/node loss; provide an independent cleanup check.
+
 Inject faults only during specific time periods:
 
 ```yaml
-# Automate with CronJob
 apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: fault-injection-scheduler
+  namespace: chaos-tests
 spec:
-  schedule: "0 2 * * *"  # Every day at 2 AM
+  schedule: "0 2 * * *"
+  timeZone: "Etc/UTC"
+  suspend: true
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 300
   jobTemplate:
     spec:
+      activeDeadlineSeconds: 420
+      backoffLimit: 0
       template:
+        metadata:
+          labels:
+            sidecar.istio.io/inject: "false"
         spec:
+          serviceAccountName: chaos-tester
+          restartPolicy: Never
           containers:
           - name: apply-fault
-            image: bitnami/kubectl
-            command:
-            - /bin/sh
-            - -c
+            image: registry.example.com/ops/chaos-runner:1.0.0
+            command: ["/bin/sh", "-ec"]
+            args:
             - |
-              kubectl apply -f /config/fault-injection.yaml
-              sleep 3600  # Maintain for 1 hour
-              kubectl delete -f /config/fault-injection.yaml
+              cleanup() { kubectl apply -n chaos-tests -f /config/no-fault.yaml; }
+              trap cleanup EXIT
+              trap 'exit 130' INT
+              trap 'exit 143' TERM
+              kubectl apply -n chaos-tests -f /config/fault-injection.yaml
+              sleep 300
+            volumeMounts:
+            - name: fixtures
+              mountPath: /config
+              readOnly: true
+          volumes:
+          - name: fixtures
+            configMap:
+              name: chaos-fixtures
 ```
 
 ### 3. Automated Testing Pipeline
@@ -747,35 +772,39 @@ spec:
 Integrate into CI/CD pipeline:
 
 ```yaml
-# GitLab CI example
-stages:
-  - deploy
-  - fault-injection-test
-  - verify
-  - cleanup
+stages: [fault-injection-test]
 
 fault_injection_test:
   stage: fault-injection-test
   script:
-    # Apply Fault Injection
-    - kubectl apply -f tests/fault-injection.yaml
-
-    # Run load test
+    - kubectl apply -n chaos-tests -f tests/fault-injection.yaml
     - k6 run --vus 100 --duration 5m tests/load-test.js
-
-    # Validate metrics
-    - |
-      ERROR_RATE=$(curl -s "http://prometheus:9090/api/v1/query?query=rate(istio_requests_total{response_code=\"500\"}[5m])" | jq '.data.result[0].value[1]')
-      if [ $(echo "$ERROR_RATE > 0.05" | bc) -eq 1 ]; then
-        echo "Error rate too high: $ERROR_RATE"
-        exit 1
-      fi
+    - ./tests/check-fault-metrics.sh
   after_script:
-    # Remove Fault Injection
-    - kubectl delete -f tests/fault-injection.yaml
+    - kubectl apply -n chaos-tests -f tests/no-fault.yaml
+```
+
+Save the following as `tests/check-fault-metrics.sh` in the test project. The runner needs kubectl, k6, curl, and jq plus the reviewed manifests/load test. Choose the measured service and threshold from the test hypothesis: errors intentionally injected into a dependency are not automatically failures of the user-facing SLO. An absent/NaN response fails the check. GitLab after_script is not guaranteed after runner loss and has its own timeout; verify baseline restoration independently.
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+: "${PROMETHEUS_URL:?Set the Prometheus base URL}"
+: "${TEST_DESTINATION:?Set the exact destination_service label}"
+: "${ERROR_THRESHOLD:?Set the error-fraction limit for the hypothesis}"
+QUERY="sum(rate(istio_requests_total{reporter=\"source\",destination_service=\"${TEST_DESTINATION}\",response_code=~\"5..\"}[5m])) / sum(rate(istio_requests_total{reporter=\"source\",destination_service=\"${TEST_DESTINATION}\"}[5m]))"
+curl -fsSG "$PROMETHEUS_URL/api/v1/query" --data-urlencode "query=$QUERY" |
+  jq -e --argjson limit "$ERROR_THRESHOLD" '
+    .status == "success" and
+    (.data.result | length) == 1 and
+    (.data.result[0].value[1] as $v |
+      $v != "NaN" and $v != "+Inf" and $v != "-Inf" and
+      (($v | tonumber) <= $limit))'
 ```
 
 ### 4. Monitoring and Alerting
+
+Mount/load this rule file in Prometheus or use the installed operator’s PrometheusRule resource. A ConfigMap by itself does not activate alerts. Scope rules to the test services and enable the referenced Envoy stats.
 
 Monitor key metrics during fault injection:
 
@@ -792,7 +821,7 @@ data:
       rules:
       # Error rate increase
       - alert: HighErrorRate
-        expr: rate(istio_requests_total{response_code=~"5.."}[5m]) > 0.1
+        expr: sum by (destination_service) (rate(istio_requests_total{reporter="source",response_code=~"5.."}[5m])) / sum by (destination_service) (rate(istio_requests_total{reporter="source"}[5m])) > 0.1
         for: 2m
         annotations:
           summary: "High error rate during fault injection"
@@ -806,7 +835,7 @@ data:
 
       # Response time increase
       - alert: HighLatency
-        expr: histogram_quantile(0.95, rate(istio_request_duration_milliseconds_bucket[5m])) > 3000
+        expr: histogram_quantile(0.95, sum by (destination_service, le) (rate(istio_request_duration_milliseconds_bucket{reporter="source"}[5m]))) > 3000
         for: 5m
         annotations:
           summary: "95th percentile latency > 3s"
@@ -817,11 +846,10 @@ data:
 Inject faults into Blue environment and compare with Green environment:
 
 ```yaml
-# Blue environment: Fault Injection
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: app-blue-fault
+  name: app-blue-green-test
 spec:
   hosts:
   - app-service
@@ -839,21 +867,7 @@ spec:
     - destination:
         host: app-service
         subset: blue
----
-# Green environment: Normal
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: app-green-normal
-spec:
-  hosts:
-  - app-service
-  http:
-  - match:
-    - headers:
-        x-version:
-          exact: "green"
-    route:
+  - route:
     - destination:
         host: app-service
         subset: green
@@ -887,8 +901,7 @@ Prepare monitoring dashboard before applying Fault Injection:
 ### 3. Use Clear Labels
 
 ```yaml
-apiVersion: networking.istio.io/v1
-kind: VirtualService
+# Metadata excerpt for the existing reviewed fault VirtualService
 metadata:
   name: payment-fault
   labels:
@@ -903,25 +916,16 @@ metadata:
 ### 4. Automatic Rollback Mechanism
 
 ```bash
-#!/bin/bash
-# Apply Fault Injection
-kubectl apply -f fault-injection.yaml
-
-# Monitor for 5 minutes
+#!/usr/bin/env bash
+set -euo pipefail
+cleanup() { kubectl apply -n chaos-tests -f tests/no-fault.yaml; }
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+kubectl apply -n chaos-tests -f tests/fault-injection.yaml
 sleep 300
-
-# Check error rate
-ERROR_RATE=$(kubectl exec -it prometheus-pod -- \
-  promtool query instant \
-  'rate(istio_requests_total{response_code="500"}[5m])' | \
-  jq '.data.result[0].value[1]')
-
-# Rollback if threshold exceeded
-if [ $(echo "$ERROR_RATE > 0.1" | bc) -eq 1 ]; then
-  echo "Error rate too high, rolling back..."
-  kubectl delete -f fault-injection.yaml
-  exit 1
-fi
+./tests/check-fault-metrics.sh
+# EXIT restores the full baseline on success or normal failure.
 ```
 
 ### 5. Documentation
@@ -929,19 +933,18 @@ fi
 Document all Fault Injection tests:
 
 ```yaml
-apiVersion: networking.istio.io/v1
-kind: VirtualService
+# Metadata excerpt for the existing reviewed fault VirtualService
 metadata:
   name: api-fault-test
   annotations:
     # Test purpose
-    test-purpose: "Verify Circuit Breaker activation"
+    test-purpose: "Verify caller error handling; test upstream ejection separately"
 
     # Expected behavior
     expected-behavior: |
-      - Circuit Breaker opens after 5 consecutive errors
+      - Caller handles the injected error according to the test hypothesis
       - Requests fail fast with 503 error
-      - System recovers after 30 seconds
+      - Restore baseline and verify recovery
 
     # Success criteria
     success-criteria: |
@@ -950,7 +953,7 @@ metadata:
       - No cascading failures
 
     # Rollback plan
-    rollback-plan: "kubectl delete vs api-fault-test"
+    rollback-plan: "Restore the reviewed complete no-fault VirtualService"
 ```
 
 ### 6. Production Environment Precautions
@@ -963,27 +966,10 @@ metadata:
 
 ### 7. Regular Testing
 
-```yaml
-# Weekly automated Chaos Test
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: weekly-chaos-test
-spec:
-  schedule: "0 3 * * 0"  # Every Sunday at 3 AM
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          serviceAccountName: chaos-tester
-          containers:
-          - name: chaos-test
-            image: chaos-tester:latest
-            env:
-            - name: FAULT_PERCENTAGE
-              value: "5"
-            - name: DURATION
-              value: "1h"
+```bash
+# Change the prepared scheduler to weekly; suspension/prerequisites still apply
+kubectl patch cronjob fault-injection-scheduler -n chaos-tests --type=merge \
+  -p '{"spec":{"schedule":"0 3 * * 0","timeZone":"Etc/UTC"}}'
 ```
 
 ## References
@@ -992,3 +978,11 @@ spec:
 - [Principles of Chaos Engineering](https://principlesofchaos.org/)
 - [Netflix Chaos Engineering](https://netflix.github.io/chaosmonkey/)
 - [Google SRE - Testing for Reliability](https://sre.google/sre-book/testing-reliability/)
+
+- [Primary reference 1](https://istio.io/latest/docs/reference/config/networking/virtual-service/)
+- [Primary reference 2](https://istio.io/latest/docs/tasks/traffic-management/fault-injection/)
+- [Primary reference 3](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/fault_filter)
+- [Primary reference 4](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier)
+- [Primary reference 5](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/)
+- [Primary reference 6](https://docs.gitlab.com/ci/yaml/)
+- [Primary reference 7](https://raw.githubusercontent.com/prometheus/prometheus/v3.14.0/docs/configuration/configuration.md)

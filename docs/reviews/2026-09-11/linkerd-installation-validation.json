@@ -1,0 +1,106 @@
+{
+  "chartVersion": "2026.9.1",
+  "cliVersion": "edge-26.9.1",
+  "renderCases": [
+    {
+      "language": "en",
+      "case": "base",
+      "resources": 40,
+      "pdbs": 0,
+      "proxyPlacement": "Native except released Identity bootstrap exception"
+    },
+    {
+      "language": "en",
+      "case": "ha",
+      "resources": 43,
+      "pdbs": 3,
+      "proxyPlacement": "Native except released Identity bootstrap exception"
+    },
+    {
+      "language": "en",
+      "case": "cni",
+      "resources": 40,
+      "pdbs": 0,
+      "proxyPlacement": "Native except released Identity bootstrap exception"
+    },
+    {
+      "language": "en",
+      "case": "viz-persistence",
+      "resources": 57,
+      "pvcAccessMode": "ReadWriteOnce",
+      "prometheusStrategy": "Recreate"
+    },
+    {
+      "language": "en",
+      "case": "external-viz",
+      "resources": 49
+    },
+    {
+      "language": "en",
+      "case": "multicluster-nlb",
+      "resources": 30,
+      "ports": [
+        4143,
+        4191
+      ]
+    },
+    {
+      "language": "ko",
+      "case": "base",
+      "resources": 40,
+      "pdbs": 0,
+      "proxyPlacement": "Native except released Identity bootstrap exception"
+    },
+    {
+      "language": "ko",
+      "case": "ha",
+      "resources": 43,
+      "pdbs": 3,
+      "proxyPlacement": "Native except released Identity bootstrap exception"
+    },
+    {
+      "language": "ko",
+      "case": "cni",
+      "resources": 40,
+      "pdbs": 0,
+      "proxyPlacement": "Native except released Identity bootstrap exception"
+    },
+    {
+      "language": "ko",
+      "case": "viz-persistence",
+      "resources": 57,
+      "pvcAccessMode": "ReadWriteOnce",
+      "prometheusStrategy": "Recreate"
+    },
+    {
+      "language": "ko",
+      "case": "external-viz",
+      "resources": 49
+    },
+    {
+      "language": "ko",
+      "case": "multicluster-nlb",
+      "resources": 30,
+      "ports": [
+        4143,
+        4191
+      ]
+    },
+    {
+      "case": "cni-chart",
+      "resources": 5
+    },
+    {
+      "case": "crds-chart",
+      "resources": 10
+    }
+  ],
+  "bashBlocksPerLanguage": 26,
+  "quizQuestionsPerLanguage": 12,
+  "equalLanguageCode": true,
+  "actualJqRegularAndNativeCases": 2,
+  "limitations": [
+    "No live cluster, AWS provisioning, uninstall, Smallstep generation, PowerShell execution or storage/tracing end-to-end test.",
+    "Native renders used an isolated certificate fixture from a prior CLI render, not user/production credentials."
+  ]
+}

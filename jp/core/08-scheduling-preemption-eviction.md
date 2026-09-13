@@ -1,20 +1,20 @@
-# Kubernetes Scheduling, Preemption, and Eviction
+# Kubernetes スケジューリング、Preemption、Eviction
 
-> **Supported Versions**: Kubernetes 1.32 - 1.34
+> **サポート対象バージョン**: Kubernetes 1.32 - 1.34
 > **最終更新**: February 22, 2026
 
-Kubernetes において、scheduling は Pod を適切な Node に配置する process です。Preemption は高優先度 Pod のために低優先度 Pod を削除して空き容量を確保する process であり、eviction は Node に問題が発生した際に Pod を安全に移動する process です。この章では、Kubernetes の scheduling mechanism、Node 選択、preemption、eviction、そして Amazon EKS における scheduling 最適化方法について学びます。
+Kubernetes において、スケジューリングは Pod を適切な Node に配置するプロセスです。Preemption は、より優先度の高い Pod のために、より優先度の低い Pod を削除して場所を確保するプロセスです。Eviction は、Node の問題が発生した際に Pod を安全に移動するプロセスです。この章では、Kubernetes のスケジューリングの仕組み、Node 選択、Preemption、Eviction、および Amazon EKS におけるスケジューリング最適化の手法について学びます。
 
-## Lab Environment Setup
+## ラボ環境のセットアップ
 
-このドキュメントの例を試すには、次のツールと環境が必要です。
+このドキュメントの例に従うには、以下のツールと環境が必要です。
 
-### Required Tools
-- kubectl v1.34 以上
-- 稼働中の Kubernetes cluster（EKS、minikube、kind など）
-- 複数の Node を持つ cluster（scheduling test 用）
+### 必要なツール
+- kubectl v1.34 以降
+- 稼働中の Kubernetes クラスター（EKS、minikube、kind など）
+- 複数の Node を持つクラスター（スケジューリングテスト用）
 
-### Scheduling Example Setup
+### スケジューリング例のセットアップ
 
 ```bash
 # Create namespace
@@ -70,244 +70,121 @@ spec:
 EOF
 ```
 
-## Kubernetes Scheduling Architecture
+## Kubernetes スケジューリングアーキテクチャ
 
-```mermaid
-graph TD
-    subgraph "Kubernetes Scheduling System"
-        subgraph "Scheduling Components"
-            Scheduler["kube-scheduler"]
-            Queue["Scheduling Queue"]
-            Cache["Node & Pod Cache"]
-            Plugins["Scheduling Plugins"]
-        end
+![Kubernetes スケジューリングアーキテクチャ: kube-scheduler は、配置ポリシーによる制約の下で、Pod をキューイング、フィルタリング、スコアリング、バインディングに通し、優先度ベースの Preemption と Eviction がパイプラインにフィードバックされます。](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-0.png)
 
-        subgraph "Scheduling Phases"
-            QueueSort["Queue Sort"]
-            PreFilter["Pre-filtering"]
-            Filter["Filtering"]
-            PreScore["Pre-scoring"]
-            Score["Scoring"]
-            Bind["Binding"]
-            Reserve["Reserve"]
-            Permit["Permit"]
-        end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-0.html)
 
-        subgraph "Scheduling Constraints"
-            NodeSelector["Node Selector"]
-            NodeAffinity["Node Affinity"]
-            PodAffinity["Pod Affinity"]
-            PodAntiAffinity["Pod Anti-Affinity"]
-            Taints["Taints"]
-            Tolerations["Tolerations"]
-            TopologySpread["Topology Spread"]
-        end
+## スケジューリングの概念比較
 
-        subgraph "Preemption and Eviction"
-            Priority["Priority & Preemption"]
-            PDB["Pod Disruption Budget"]
-            Descheduler["Descheduler"]
-            TaintManager["Taint Manager"]
-        end
-    end
-
-    API[API Server] --> Queue
-    Queue --> Scheduler
-    Scheduler --> Cache
-    Scheduler --> Plugins
-
-    Plugins --> QueueSort
-    QueueSort --> PreFilter
-    PreFilter --> Filter
-    Filter --> PreScore
-    PreScore --> Score
-    Score --> Reserve
-    Reserve --> Permit
-    Permit --> Bind
-
-    NodeSelector --> Filter
-    NodeAffinity --> Filter
-    PodAffinity --> Filter
-    PodAntiAffinity --> Filter
-    Taints --> Filter
-    Tolerations --> Filter
-    TopologySpread --> Filter & Score
-
-    Priority --> Scheduler
-    PDB --> TaintManager
-    Descheduler --> API
-
-    %% Style definitions
-    classDef component fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef stage fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef constraint fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef disruption fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef api fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Scheduler,Queue,Cache,Plugins component;
-    class QueueSort,PreFilter,Filter,PreScore,Score,Reserve,Permit,Bind stage;
-    class NodeSelector,NodeAffinity,PodAffinity,PodAntiAffinity,Taints,Tolerations,TopologySpread constraint;
-    class Priority,PDB,Descheduler,TaintManager disruption;
-    class API api;
-```
-
-## Scheduling Concept Comparison
-
-| Concept | Purpose | Use Cases | Kubernetes Version |
+| 概念 | 目的 | ユースケース | Kubernetes バージョン |
 |---------|---------|-----------|-------------------|
-| **Node Selector** | Place pods on nodes with specific labels | Simple node selection | All versions |
-| **Node Affinity** | Define complex node selection rules | Advanced node selection | 1.6+ |
-| **Pod Affinity** | Place pods close to other pods | Co-locating related services | 1.6+ |
-| **Pod Anti-Affinity** | Place pods away from other pods | Ensuring high availability | 1.6+ |
-| **Taints and Tolerations** | Allow only specific pods on nodes | Dedicated nodes, node isolation | 1.6+ |
-| **Topology Spread Constraints** | Spread pods across topology domains | Distribution across availability zones | 1.16+ (GA in 1.19) |
-| **Priority and Preemption** | Prioritize important workloads | Critical service guarantees | 1.8+ (GA in 1.11) |
-| **Pod Disruption Budget** | Limit simultaneously disrupted pods | Ensuring high availability | 1.4+ (GA in 1.21) |
+| **Node Selector** | 特定のラベルを持つ Node に Pod を配置 | シンプルな Node 選択 | すべてのバージョン |
+| **Node Affinity** | 複雑な Node 選択ルールを定義 | 高度な Node 選択 | 1.6+ |
+| **Pod Affinity** | Pod を他の Pod の近くに配置 | 関連サービスの同一配置 | 1.6+ |
+| **Pod Anti-Affinity** | Pod を他の Pod から離して配置 | 高可用性の確保 | 1.6+ |
+| **Taints and Tolerations** | 特定の Pod だけを Node に許可 | 専用 Node、Node 分離 | 1.6+ |
+| **Topology Spread Constraints** | トポロジードメイン全体に Pod を分散 | Availability Zone 全体への分散 | 1.16+（1.19 で GA） |
+| **Priority and Preemption** | 重要なワークロードを優先 | クリティカルサービスの保証 | 1.8+（1.11 で GA） |
+| **Pod Disruption Budget** | 同時に中断される Pod を制限 | 高可用性の確保 | 1.4+（1.21 で GA） |
 
-## Basic Scheduling Concepts
+## 基本的なスケジューリングの概念
 
-> **Key Concept**: Kubernetes scheduler は、Pod を実行する最適な Node を選択する control plane component であり、filtering と scoring の 2 つの phase で動作します。
+> **重要な概念**: Kubernetes scheduler は、Pod を実行する最適な Node を選択する control plane コンポーネントであり、フィルタリングとスコアリングの 2 段階で動作します。
 
-### Scheduling Process
+### スケジューリングプロセス
 
-1. **Filtering Phase (Predicates)**
-   - Pod を実行できる適切な Node の集合を特定します
-   - Resource requirements、Node selectors、affinity rules、taints/tolerations などを考慮します
-   - いずれかの条件を満たさない場合、その Node を除外します
+1. **フィルタリングフェーズ（Predicates）**
+   - Pod を実行できる適切な Node のセットを特定します
+   - リソース要件、Node Selector、Affinity ルール、Taint/Toleration などを考慮します
+   - いずれかの条件が満たされない Node を除外します
 
-2. **Scoring Phase (Priorities)**
-   - Filtering を通過した Node に score を割り当てます
-   - Resource utilization、Pod distribution、affinity preferences などを考慮します
-   - 最も高い score を持つ Node を選択します
+2. **スコアリングフェーズ（Priorities）**
+   - フィルタリングを通過した Node にスコアを割り当てます
+   - リソース使用率、Pod 分散、Affinity の設定などを考慮します
+   - 最も高いスコアを持つ Node を選択します
 
-3. **Binding Phase**
-   - 選択された Node に Pod を割り当てます
-   - API server の binding information を更新します
+3. **バインディングフェーズ**
+   - 選択した Node に Pod を割り当てます
+   - API server のバインディング情報を更新します
 
-## Table of Contents
-1. [Scheduling Overview](#scheduling-overview)
-2. [How the Scheduler Works](#how-the-scheduler-works)
-3. [Node Selection](#node-selection)
-4. [Pod Affinity and Anti-Affinity](#pod-affinity-and-anti-affinity)
+## 目次
+1. [スケジューリングの概要](#scheduling-overview)
+2. [Scheduler の仕組み](#how-the-scheduler-works)
+3. [Node 選択](#node-selection)
+4. [Pod Affinity と Anti-Affinity](#pod-affinity-and-anti-affinity)
 5. [Taints and Tolerations](#taints-and-tolerations)
 6. [Node Affinity](#node-affinity)
-7. [Pod Priority and Preemption](#pod-priority-and-preemption)
+7. [Pod Priority と Preemption](#pod-priority-and-preemption)
 8. [Pod Eviction](#pod-eviction)
-9. [Pod Disruption Budget (PDB)](#pod-disruption-budget-pdb)
+9. [Pod Disruption Budget（PDB）](#pod-disruption-budget-pdb)
 10. [Node Pressure Eviction](#node-pressure-eviction)
 11. [TopologySpreadConstraints](#topologyspreadconstraints)
 12. [Pod Deletion Cost](#pod-deletion-cost)
 13. [Descheduler](#descheduler)
-14. [Scheduling Optimization in Amazon EKS](#scheduling-optimization-in-amazon-eks)
-15. [Scheduling Best Practices](#scheduling-best-practices)
-16. [Conclusion](#conclusion)
+14. [Amazon EKS におけるスケジューリング最適化](#scheduling-optimization-in-amazon-eks)
+15. [スケジューリングのベストプラクティス](#scheduling-best-practices)
+16. [まとめ](#conclusion)
 
-## Scheduling Overview
+## スケジューリングの概要
 
-Kubernetes scheduler は、Pod を適切な Node に配置する control plane component です。Scheduler は、Pod を配置する最適な Node を決定するためにさまざまな要素を考慮します。
+Kubernetes scheduler は、Pod を適切な Node に配置する control plane コンポーネントです。scheduler は、Pod を配置する最適な Node を決定するためにさまざまな要因を考慮します。
 
-1. **Resource Requirements**: Pod が要求する CPU、memory、その他の resources
-2. **Hardware/Software/Policy Constraints**: Node selectors、Node affinity、taints など
-3. **Affinity/Anti-Affinity Specifications**: 他の Pod との配置関係
-4. **Data Locality**: Pod を data の近くに配置すること
-5. **Inter-Workload Interference**: 異なる workload 間の干渉を最小化すること
-6. **Deadlines**: 時間制約のある workload の考慮
+1. **リソース要件**: Pod が要求する CPU、メモリ、その他のリソース
+2. **ハードウェア／ソフトウェア／ポリシー制約**: Node Selector、Node Affinity、Taint など
+3. **Affinity／Anti-Affinity の指定**: 他の Pod との配置関係
+4. **データ局所性**: データの近くに Pod を配置すること
+5. **ワークロード間の干渉**: 異なるワークロード間の干渉を最小化すること
+6. **期限**: 時間制約のあるワークロードの考慮
 
-### Scheduling Process
+### スケジューリングプロセス
 
-Scheduling process は大きく 2 つの phase に分かれます。
+スケジューリングプロセスは、大きく 2 つのフェーズに分かれます。
 
-1. **Filtering**: Pod を実行できる Node の集合を特定します
-   - Resource requirements が満たされているかを確認します
-   - Node selectors、affinity、taints などの constraints を確認します
+1. **フィルタリング**: Pod を実行できる Node のセットを特定します
+   - リソース要件が満たされているか確認します
+   - Node Selector、Affinity、Taint などの制約を確認します
 
-2. **Scoring**: Filtering された Node に score を付け、最適な Node を選択します
-   - Resource utilization balance
-   - Inter-pod affinity/anti-affinity
-   - Data locality
-   - Taints/tolerations
+2. **スコアリング**: フィルタリングされた Node をスコアリングし、最適な Node を選択します
+   - リソース使用率のバランス
+   - Pod 間 Affinity／Anti-Affinity
+   - データ局所性
+   - Taint／Toleration
 
-## How the Scheduler Works
+## Scheduler の仕組み
 
-Kubernetes scheduler は、次の process を通じて動作します。
+Kubernetes scheduler は、以下のプロセスで動作します。
 
-```mermaid
-graph TD
-    subgraph "Scheduler Operation Process"
-        API["API Server"] -->|1. Pod creation event| Queue["Scheduling Queue"]
-        Queue -->|2. Pod selection| Scheduler["kube-scheduler"]
-        Scheduler -->|3. Filtering| FilterPlugins["Filter Plugins"]
-        FilterPlugins -->|4. Filtered nodes| ScorePlugins["Score Plugins"]
-        ScorePlugins -->|5. Node scores| BestNode["Best Node Selection"]
-        BestNode -->|6. Binding| Binding["Binding Request to API Server"]
-        Binding -->|7. Pod binding| Node["Node"]
-    end
+![Pod 作成イベントがスケジューリングキュー、kube-scheduler、フィルタプラグイン、スコアプラグイン、最適 Node の選択、API server へのバインディングリクエストを経て、Pod が Node に配置されるまでを示すパイプライン図。](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-1.png)
 
-    subgraph "Filter Plugins"
-        FP1["NodeResourcesFit"]
-        FP2["NodeName"]
-        FP3["NodeUnschedulable"]
-        FP4["TaintToleration"]
-        FP5["NodeAffinity"]
-    end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-1.html)
 
-    subgraph "Score Plugins"
-        SP1["NodeResourcesBalancedAllocation"]
-        SP2["ImageLocality"]
-        SP3["InterPodAffinity"]
-        SP4["NodeAffinity"]
-        SP5["TaintToleration"]
-    end
+1. **Pod キューの監視**: scheduler は API server で未スケジュールの Pod を監視します。
+2. **Node フィルタリング**: Pod を実行できる Node のセットを特定します。
+3. **Node スコアリング**: フィルタリングされた Node をスコアリングします。
+4. **Node 選択**: 最も高いスコアを持つ Node を選択します。
+5. **バインディング**: 選択した Node に Pod をバインドします。
 
-    FilterPlugins --- FP1
-    FilterPlugins --- FP2
-    FilterPlugins --- FP3
-    FilterPlugins --- FP4
-    FilterPlugins --- FP5
+### スケジューリングプラグイン
 
-    ScorePlugins --- SP1
-    ScorePlugins --- SP2
-    ScorePlugins --- SP3
-    ScorePlugins --- SP4
-    ScorePlugins --- SP5
+Kubernetes scheduler は、プラグインアーキテクチャを使用して拡張可能に設計されています。スケジューリングプロセスのさまざまな段階で、多様なプラグインが動作します。
 
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef schedulerComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef pluginComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
+1. **フィルタプラグイン**: Pod を実行できない Node を除外します
+   - NodeResourcesFit: Node のリソース容量を確認
+   - NodeName: Pod の nodeName フィールドを確認
+   - NodeUnschedulable: Node がスケジュール可能か確認
+   - TaintToleration: Taint と Toleration を確認
 
-    %% Apply classes
-    class API,Node k8sComponent;
-    class Queue,Scheduler,FilterPlugins,ScorePlugins,BestNode,Binding schedulerComponent;
-    class FP1,FP2,FP3,FP4,FP5,SP1,SP2,SP3,SP4,SP5 pluginComponent;
-```
+2. **スコアプラグイン**: Node にスコアを割り当てます
+   - NodeResourcesBalancedAllocation: リソース使用量のバランスを考慮
+   - ImageLocality: イメージの局所性を考慮
+   - InterPodAffinity: Pod 間 Affinity を考慮
+   - NodeAffinity: Node Affinity を考慮
 
-1. **Pod Queue Watching**: Scheduler は API server を監視し、未 scheduling の Pod を検出します。
-2. **Node Filtering**: Pod を実行できる Node の集合を特定します。
-3. **Node Scoring**: Filtering された Node に score を付けます。
-4. **Node Selection**: 最も高い score を持つ Node を選択します。
-5. **Binding**: Pod を選択された Node に bind します。
+### 複数の Scheduler
 
-### Scheduling Plugins
-
-Kubernetes scheduler は、plugin architecture を使用して拡張可能に設計されています。さまざまな plugins が scheduling process の異なる stage で動作します。
-
-1. **Filter Plugins**: Pod を実行できない Node を除外します
-   - NodeResourcesFit: Node の resource capacity を確認します
-   - NodeName: Pod の nodeName field を確認します
-   - NodeUnschedulable: Node の schedulability を確認します
-   - TaintToleration: Taints と tolerations を確認します
-
-2. **Score Plugins**: Node に score を割り当てます
-   - NodeResourcesBalancedAllocation: Resource usage balance を考慮します
-   - ImageLocality: Image locality を考慮します
-   - InterPodAffinity: Inter-pod affinity を考慮します
-   - NodeAffinity: Node affinity を考慮します
-
-### Multiple Schedulers
-
-Kubernetes は複数の scheduler を同時に実行できます。これにより、特定の workload 向けの custom scheduling logic を実装できます。
+Kubernetes では複数の scheduler を同時に実行できます。これにより、特定のワークロード向けにカスタムスケジューリングロジックを実装できます。
 
 ```yaml
 apiVersion: v1
@@ -321,53 +198,19 @@ spec:
     image: nginx
 ```
 
-上記の例では、`schedulerName` field が Pod を scheduling する scheduler を指定します。
+上記の例では、`schedulerName` フィールドが Pod をスケジュールする scheduler を指定します。
 
-## Node Selection
+## Node 選択
 
-Kubernetes は、Pod を特定の Node に配置するための複数の mechanism を提供します。
+Kubernetes は、Pod を特定の Node に配置するための複数のメカニズムを提供します。
 
-```mermaid
-graph TD
-    subgraph "Node Selection Mechanisms"
-        NS["Node Selector<br>(nodeSelector)"]
-        NN["Node Name<br>(nodeName)"]
-        NA["Node Affinity<br>(nodeAffinity)"]
-    end
+![3 つの Node 配置メカニズムを比較する図: Node label に一致する nodeSelector、特定の Node に固定する nodeName、候補 Zone に対して式を評価する nodeAffinity。](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-2.png)
 
-    subgraph "Node Selector Example"
-        Pod1["Pod"] -->|nodeSelector| Label["Node Labels"]
-        Label -->|match| Node1["Node 1<br>gpu=true"]
-        Label -->|no match| Node2["Node 2<br>gpu=false"]
-    end
-
-    subgraph "Node Affinity Example"
-        Pod2["Pod"] -->|nodeAffinity| Expr["Expression<br>zone in (us-east-1a, us-east-1b)"]
-        Expr -->|match| Node3["Node 3<br>zone=us-east-1a"]
-        Expr -->|match| Node4["Node 4<br>zone=us-east-1b"]
-        Expr -->|no match| Node5["Node 5<br>zone=us-west-1a"]
-    end
-
-    NS -->|simple label matching| Pod1
-    NN -->|direct node specification| DirectNode["Specific Node"]
-    NA -->|complex expressions| Pod2
-
-    %% Style definitions
-    classDef selectionMechanism fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef matchComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef nodeComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class NS,NN,NA selectionMechanism;
-    class Pod1,Pod2 k8sComponent;
-    class Label,Expr matchComponent;
-    class Node1,Node2,Node3,Node4,Node5,DirectNode nodeComponent;
-```
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-2.html)
 
 ### Node Selector
 
-Node selector は、特定の label を持つ Node にのみ Pod を配置するよう制限する最も単純な方法です。
+Node Selector は、特定のラベルを持つ Node にのみ Pod を配置する、最もシンプルな方法です。
 
 ```yaml
 apiVersion: v1
@@ -382,11 +225,11 @@ spec:
     image: nvidia/cuda
 ```
 
-上記の例では、Pod は `gpu=true` label を持つ Node にのみ配置されます。
+上記の例では、Pod は `gpu=true` ラベルを持つ Node にのみ配置されます。
 
 ### nodeName
 
-`nodeName` field を使用して、Pod を特定の Node に直接配置できます。この方法は scheduler を bypass するため、一般には推奨されません。
+`nodeName` フィールドを使用すると、Pod を特定の Node に直接配置できます。この方法は scheduler をバイパスするため、一般的には推奨されません。
 
 ```yaml
 apiVersion: v1
@@ -402,66 +245,17 @@ spec:
 
 上記の例では、Pod は `worker-node-1` という名前の Node に直接配置されます。
 
-## Pod Affinity and Anti-Affinity
+## Pod Affinity と Anti-Affinity
 
-Pod affinity と anti-affinity は、Pod 間の関係に基づいて Pod を配置する方法を提供します。
+Pod Affinity と Anti-Affinity は、Pod 間の関係に基づいて Pod を配置する方法を提供します。
 
-```mermaid
-graph TD
-    subgraph "Pod Affinity"
-        PA["podAffinity"]
-        PA -->|place on same node/topology| Together["Co-location"]
+![Pod Affinity では web Pod と cache Pod を同じ Node に同一配置し、Pod Anti-Affinity では 2 つの web Pod レプリカを異なる Node に分離することを対比した図。どちらもハードまたはソフト要件として設定できます。](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-3.png)
 
-        subgraph "Affinity Example"
-            WebPod["Web Pod<br>app=web"]
-            CachePod["Cache Pod<br>app=cache"]
-            WebPod -->|co-locate| CachePod
-            Node1["Node 1"] -->|contains| WebPod
-            Node1 -->|contains| CachePod
-        end
-    end
-
-    subgraph "Pod Anti-Affinity"
-        PAA["podAntiAffinity"]
-        PAA -->|place on different node/topology| Apart["Separation"]
-
-        subgraph "Anti-Affinity Example"
-            WebPod1["Web Pod 1<br>app=web"]
-            WebPod2["Web Pod 2<br>app=web"]
-            WebPod1 -->|separate| WebPod2
-            Node2["Node 2"] -->|contains| WebPod1
-            Node3["Node 3"] -->|contains| WebPod2
-        end
-    end
-
-    subgraph "Affinity Types"
-        Required["requiredDuringSchedulingIgnoredDuringExecution<br>(hard requirement)"]
-        Preferred["preferredDuringSchedulingIgnoredDuringExecution<br>(soft requirement)"]
-    end
-
-    PA -->|type| Required
-    PA -->|type| Preferred
-    PAA -->|type| Required
-    PAA -->|type| Preferred
-
-    %% Style definitions
-    classDef affinityType fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef affinityResult fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef nodeComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef affinityKind fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class PA,PAA affinityType;
-    class Together,Apart affinityResult;
-    class WebPod,CachePod,WebPod1,WebPod2 k8sComponent;
-    class Node1,Node2,Node3 nodeComponent;
-    class Required,Preferred affinityKind;
-```
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-3.html)
 
 ### Pod Affinity
 
-Pod affinity は、特定の label を持つ Pod と同じ Node または topology domain に Pod を配置させます。
+Pod Affinity により、特定のラベルを持つ Pod と同じ Node またはトポロジードメインに Pod が配置されます。
 
 ```yaml
 apiVersion: v1
@@ -484,11 +278,11 @@ spec:
     image: nginx
 ```
 
-上記の例では、`frontend` Pod は `app=cache` label を持つ Pod と同じ host に配置されます。
+上記の例では、`frontend` Pod は `app=cache` ラベルを持つ Pod と同じホストに配置されます。
 
 ### Pod Anti-Affinity
 
-Pod anti-affinity は、特定の label を持つ Pod とは異なる Node または topology domain に Pod を配置させます。
+Pod Anti-Affinity により、特定のラベルを持つ Pod とは異なる Node またはトポロジードメインに Pod が配置されます。
 
 ```yaml
 apiVersion: v1
@@ -513,14 +307,14 @@ spec:
     image: nginx
 ```
 
-上記の例では、`frontend` Pod は `app=frontend` label を持つ他の Pod とは別の host に配置されます。これは、高可用性のために同じ application の instance を複数の Node に分散する場合に役立ちます。
+上記の例では、`frontend` Pod は `app=frontend` ラベルを持つ他の Pod とは異なるホストに配置されます。これは、高可用性のために同じアプリケーションのインスタンスを複数の Node に分散する際に役立ちます。
 
-### Affinity Types
+### Affinity の種類
 
-Pod affinity と anti-affinity には 2 つの type があります。
+Pod Affinity と Anti-Affinity には 2 種類あります。
 
-1. **requiredDuringSchedulingIgnoredDuringExecution**: Scheduling 中に必ず満たす必要がある hard requirement
-2. **preferredDuringSchedulingIgnoredDuringExecution**: 望ましいが必須ではない soft requirement
+1. **requiredDuringSchedulingIgnoredDuringExecution**: スケジューリング時に満たす必要があるハード要件
+2. **preferredDuringSchedulingIgnoredDuringExecution**: 優先されますが必須ではないソフト要件
 
 ```yaml
 # preferredDuringSchedulingIgnoredDuringExecution example
@@ -538,88 +332,34 @@ affinity:
         topologyKey: kubernetes.io/hostname
 ```
 
-上記の例では、`weight` field はこの preference の重みを示します。複数の preference がある場合、より高い weight の preference がより重要とみなされます。
+上記の例では、`weight` フィールドはこの設定の重みを示します。複数の設定がある場合、より重みの高い設定がより重要と見なされます。
 
 ## Taints and Tolerations
 
-Taints と tolerations は、Node が特定の Pod を拒否できるようにする mechanism です。
+Taint と Toleration は、Node が特定の Pod を拒否できるようにするメカニズムです。
 
-```mermaid
-graph TD
-    subgraph "Taints and Tolerations Mechanism"
-        Taint["Taint<br>(applied to node)"]
-        Toleration["Toleration<br>(applied to pod)"]
+![Node の Taint が一致する Toleration を持たない Pod を拒否すること、3 つの Taint effect である NoSchedule、PreferNoSchedule、NoExecute、および key=gpu:NoSchedule で Taint された GPU Node が通常の Pod を拒否し、一致する Toleration を持つ GPU Pod を許可する例を示す図。](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-4.png)
 
-        Taint -->|reject without| Pod["Pod"]
-        Pod -->|allow with| Toleration
-        Toleration -.->|matches| Taint
-    end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-4.html)
 
-    subgraph "Taint Effects"
-        NoSchedule["NoSchedule<br>(prevent scheduling)"]
-        PreferNoSchedule["PreferNoSchedule<br>(prefer not to schedule)"]
-        NoExecute["NoExecute<br>(evict running pods)"]
-    end
+### Taint
 
-    subgraph "Use Cases"
-        DedicatedNode["Dedicated Nodes"]
-        SpecialHW["Special Hardware"]
-        Maintenance["Node Maintenance"]
-        NodeIssue["Node Issues"]
-    end
-
-    Taint -->|effect type| NoSchedule
-    Taint -->|effect type| PreferNoSchedule
-    Taint -->|effect type| NoExecute
-
-    Taint -->|applied to| DedicatedNode
-    Taint -->|applied to| SpecialHW
-    Taint -->|applied to| Maintenance
-    Taint -->|applied to| NodeIssue
-
-    subgraph "Example"
-        GPUNode["GPU Node<br>key=gpu:NoSchedule"]
-        RegularPod["Regular Pod<br>(no toleration)"]
-        GPUPod["GPU Pod<br>(has toleration)"]
-
-        GPUNode -->|rejects| RegularPod
-        GPUNode -->|allows| GPUPod
-        GPUPod -->|toleration| GPUToleration["key=gpu,effect=NoSchedule"]
-    end
-
-    %% Style definitions
-    classDef taintComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef effectComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef useCaseComponent fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef nodeComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Taint,Toleration taintComponent;
-    class NoSchedule,PreferNoSchedule,NoExecute effectComponent;
-    class DedicatedNode,SpecialHW,Maintenance,NodeIssue useCaseComponent;
-    class Pod,RegularPod,GPUPod,GPUToleration k8sComponent;
-    class GPUNode nodeComponent;
-```
-
-### Taints
-
-Taints は、Pod が Node に scheduling されないよう制限するために Node に適用されます。
+Taint は、Pod が Node にスケジュールされることを制限するために Node に適用されます。
 
 ```bash
 # Add taint to node
 kubectl taint nodes node1 key=value:NoSchedule
 ```
 
-Taint effect には 3 つあります。
+Taint effect には 3 種類あります。
 
-1. **NoSchedule**: Toleration を持たない Pod はその Node に scheduling されません
-2. **PreferNoSchedule**: Toleration を持たない Pod は、その Node にできるだけ scheduling されないようにします
-3. **NoExecute**: Toleration を持たない Pod はその Node から evict されます
+1. **NoSchedule**: Toleration のない Pod は Node にスケジュールされません
+2. **PreferNoSchedule**: Toleration のない Pod を Node にスケジュールしないことを優先します
+3. **NoExecute**: Toleration のない Pod は Node から Eviction されます
 
-### Tolerations
+### Toleration
 
-Tolerations は、taint を持つ Node に Pod を scheduling できるようにするため Pod に適用されます。
+Toleration は Pod に適用され、Taint を持つ Node にスケジュールできるようにします。
 
 ```yaml
 apiVersion: v1
@@ -637,39 +377,39 @@ spec:
     image: nginx
 ```
 
-上記の例では、Pod は `key=value:NoSchedule` taint を持つ Node に scheduling できます。
+上記の例では、Pod は `key=value:NoSchedule` Taint を持つ Node にスケジュールできます。
 
-### Use Cases
+### ユースケース
 
-Taints と tolerations の一般的な use case は次のとおりです。
+Taint と Toleration の一般的なユースケース:
 
-1. **Dedicated Nodes**: 特定の workload のみを実行する Node を指定します
-2. **Special Hardware**: GPU などの特殊な hardware を持つ Node を管理します
-3. **Node Maintenance**: Maintenance 中の Node への新しい Pod scheduling を防止します
-4. **Node Issues**: 問題のある Node から Pod を evict します
+1. **専用 Node**: 特定のワークロードのみを実行する Node を指定
+2. **特殊ハードウェア**: GPU などの特殊ハードウェアを持つ Node を管理
+3. **Node メンテナンス**: メンテナンス中の Node への新規 Pod スケジューリングを防止
+4. **Node の問題**: 問題がある Node から Pod を Eviction
 
-### Default Taints
+### デフォルト Taint
 
-Kubernetes は一部の Node に default taint を適用します。
+Kubernetes は一部の Node にデフォルト Taint を適用します。
 
-- **node.kubernetes.io/not-ready**: Node が ready ではありません
-- **node.kubernetes.io/unreachable**: Node に到達できません
-- **node.kubernetes.io/memory-pressure**: Node に memory pressure があります
-- **node.kubernetes.io/disk-pressure**: Node に disk pressure があります
-- **node.kubernetes.io/pid-pressure**: Node に PID pressure があります
-- **node.kubernetes.io/network-unavailable**: Node network が利用できません
-- **node.kubernetes.io/unschedulable**: Node は unschedulable です
+- **node.kubernetes.io/not-ready**: Node が Ready ではない
+- **node.kubernetes.io/unreachable**: Node に到達できない
+- **node.kubernetes.io/memory-pressure**: Node にメモリプレッシャーがある
+- **node.kubernetes.io/disk-pressure**: Node にディスクプレッシャーがある
+- **node.kubernetes.io/pid-pressure**: Node に PID プレッシャーがある
+- **node.kubernetes.io/network-unavailable**: Node ネットワークが利用できない
+- **node.kubernetes.io/unschedulable**: Node がスケジュール不可である
 
 ## Node Affinity
 
-Node affinity は、特定の Node 集合に Pod を配置するための、より表現力の高い方法を提供します。Node selector より複雑な条件を指定できます。
+Node Affinity は、特定の Node セットに Pod を配置するための、より表現力の高い方法を提供します。Node Selector よりも複雑な条件を指定できます。
 
-### Node Affinity Types
+### Node Affinity の種類
 
-Node affinity には 2 つの type があります。
+Node Affinity には 2 種類あります。
 
-1. **requiredDuringSchedulingIgnoredDuringExecution**: Scheduling 中に必ず満たす必要がある hard requirement
-2. **preferredDuringSchedulingIgnoredDuringExecution**: 望ましいが必須ではない soft requirement
+1. **requiredDuringSchedulingIgnoredDuringExecution**: スケジューリング時に満たす必要があるハード要件
+2. **preferredDuringSchedulingIgnoredDuringExecution**: 優先されますが必須ではないソフト要件
 
 ```yaml
 apiVersion: v1
@@ -700,74 +440,30 @@ spec:
     image: nginx
 ```
 
-上記の例では、Pod は `kubernetes.io/e2e-az-name` label が `e2e-az1` または `e2e-az2` である Node にのみ配置されます。さらに、`another-node-label-key=another-node-label-value` label を持つ Node に優先的に配置されます。
+上記の例では、Pod は `kubernetes.io/e2e-az-name` ラベルが `e2e-az1` または `e2e-az2` である Node にのみ配置されます。さらに、`another-node-label-key=another-node-label-value` ラベルを持つ Node への配置が優先されます。
 
-### Operators
+### 演算子
 
-Node affinity はさまざまな operator をサポートします。
+Node Affinity はさまざまな演算子をサポートします。
 
-- **In**: Label value が指定された値のいずれかに一致します
-- **NotIn**: Label value が指定された値に一致しません
-- **Exists**: 指定された key の label が存在します
-- **DoesNotExist**: 指定された key の label が存在しません
-- **Gt**: Label value が指定された値より大きいです
-- **Lt**: Label value が指定された値より小さいです
+- **In**: ラベル値が指定された値のいずれかに一致する
+- **NotIn**: ラベル値が指定された値のいずれにも一致しない
+- **Exists**: 指定されたキーを持つラベルが存在する
+- **DoesNotExist**: 指定されたキーを持つラベルが存在しない
+- **Gt**: ラベル値が指定された値より大きい
+- **Lt**: ラベル値が指定された値より小さい
 
-## Pod Priority and Preemption
+## Pod Priority と Preemption
 
-Kubernetes は、重要な workload が cluster resources を確保できるようにするため、Pod priority と preemption features を提供します。
+Kubernetes は、重要なワークロードがクラスターリソースを確保できるように、Pod Priority と Preemption の機能を提供します。
 
-```mermaid
-graph TD
-    subgraph "Priority and Preemption Mechanism"
-        PC["PriorityClass"]
-        Pod["Pod"]
-        Preemption["Preemption"]
+![PriorityClass が Pod に優先度を割り当て、リソースが不足した場合に低優先度 Pod の Preemption をトリガーすること、高優先度 Pod のスケジューリング失敗からスケジューリングまでの 4 段階の Preemption プロセス、および組み込み PriorityClass の例を示す図。](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-5.png)
 
-        PC -->|assigns priority| Pod
-        Pod -->|when resources are insufficient| Preemption
-        Preemption -->|removes| LowPriorityPod["Lower-priority Pods"]
-    end
-
-    subgraph "Priority Class Examples"
-        SystemCritical["system-cluster-critical<br>(1000000000)"]
-        SystemNodeCritical["system-node-critical<br>(2000000000)"]
-        HighPriority["high-priority<br>(custom, e.g., 100000)"]
-        DefaultPriority["default<br>(0)"]
-    end
-
-    subgraph "Preemption Process"
-        Step1["1. Scheduling Failure<br>(resource shortage)"]
-        Step2["2. Select Preemption Targets"]
-        Step3["3. Terminate Preemption Targets"]
-        Step4["4. Schedule Higher-priority Pod"]
-
-        Step1 -->|triggers| Step2
-        Step2 -->|selects| Step3
-        Step3 -->|completes| Step4
-    end
-
-    PC --- SystemCritical
-    PC --- SystemNodeCritical
-    PC --- HighPriority
-    PC --- DefaultPriority
-
-    %% Style definitions
-    classDef priorityComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef priorityClass fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef preemptionStep fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class PC,Preemption priorityComponent;
-    class Pod,LowPriorityPod k8sComponent;
-    class SystemCritical,SystemNodeCritical,HighPriority,DefaultPriority priorityClass;
-    class Step1,Step2,Step3,Step4 preemptionStep;
-```
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-5.html)
 
 ### PriorityClass
 
-PriorityClass は Pod の相対的な重要度を定義します。Priority value が高いほど、その Pod はより重要です。
+PriorityClass は Pod の相対的な重要度を定義します。優先度の値が高いほど、Pod は重要になります。
 
 ```yaml
 apiVersion: scheduling.k8s.io/v1
@@ -779,11 +475,11 @@ globalDefault: false
 description: "This priority class should be used for critical workloads."
 ```
 
-上記の例では、`value` field が priority value を示します。Value が高いほど、priority が高くなります。`globalDefault` field が `true` に設定されている場合、この priority class は priority class が指定されていない Pod に適用されます。
+上記の例では、`value` フィールドは優先度の値を示します。値が高いほど、優先度も高くなります。`globalDefault` フィールドを `true` に設定すると、この PriorityClass は指定された PriorityClass がない Pod に適用されます。
 
-### Applying PriorityClass to Pods
+### Pod への PriorityClass の適用
 
-Priority class を Pod に適用するには、`priorityClassName` field を使用します。
+Pod に PriorityClass を適用するには、`priorityClassName` フィールドを使用します。
 
 ```yaml
 apiVersion: v1
@@ -799,106 +495,61 @@ spec:
 
 ### Preemption
 
-Preemption は、高優先度 Pod を scheduling するために低優先度 Pod を削除する process です。Scheduler が高優先度 Pod を scheduling する Node を見つけられない場合、低優先度 Pod を preempt して resources を確保します。
+Preemption は、より優先度の高い Pod をスケジュールするために、より優先度の低い Pod を削除するプロセスです。scheduler がより優先度の高い Pod をスケジュールする Node を見つけられない場合、リソースを確保するために優先度の低い Pod を Preemption します。
 
-Preemption process:
-1. Scheduler が高優先度 Pod を scheduling する Node を見つけられません
-2. Scheduler は preemption によって低優先度 Pod を削除する Node を選択します
-3. 選択された Node 上の低優先度 Pod に termination signal を送信します
-4. Pod が graceful に terminate すると、その Node に高優先度 Pod を scheduling します
+Preemption プロセス:
+1. scheduler がより優先度の高い Pod をスケジュールする Node を見つけられない
+2. scheduler が Preemption によって低優先度 Pod を削除する Node を選択する
+3. 選択した Node 上の低優先度 Pod に終了シグナルを送信する
+4. Pod が正常に終了すると、その Node に高優先度 Pod をスケジュールする
 
-### Preemption Considerations
+### Preemption に関する考慮事項
 
-Preemption を使用する際に考慮すべき点は次のとおりです。
+Preemption を使用する際の考慮事項:
 
-1. **Graceful Termination Period**: Preempted Pod は `terminationGracePeriodSeconds` で指定された時間、graceful termination process を経ます
+1. **Graceful Termination Period**: Preemption された Pod は、`terminationGracePeriodSeconds` で指定された時間、正常終了プロセスを経ます
 2. **PodDisruptionBudget**: Preemption は PodDisruptionBudget を尊重しません
-3. **System Priority Classes**: Kubernetes は system components 用の priority class を提供します
-   - `system-cluster-critical`: Cluster operation に重要な Pod
-   - `system-node-critical`: Node operation に重要な Pod
+3. **System Priority Classes**: Kubernetes はシステムコンポーネント用の PriorityClass を提供します
+   - `system-cluster-critical`: クラスター運用に不可欠な Pod
+   - `system-node-critical`: Node 運用に不可欠な Pod
 
 ## Pod Eviction
 
-Pod eviction は、Node に問題が発生した際に Pod を安全に移動する process です。Eviction はさまざまな理由で発生する可能性があります。
+Pod Eviction は、Node の問題が発生した際に Pod を安全に移動するプロセスです。Eviction はさまざまな理由で発生します。
 
-```mermaid
-graph TD
-    subgraph "Eviction Types"
-        ControllerEviction["kube-controller-manager<br>Eviction"]
-        KubeletEviction["kubelet Eviction"]
-        UserEviction["User Eviction"]
-    end
+![Pod Eviction の 3 つの発生元を示す図。controller manager は NotReady または Unreachable Node から Pod を Eviction し、kubelet はメモリ、nodefs、imagefs、pid の Eviction signal を監視しつつリソース不足やハードウェア問題時に Pod を Eviction し、ユーザーはメンテナンスのために Node を drain します。](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-6.png)
 
-    subgraph "Eviction Causes"
-        NodeNotReady["Node NotReady"]
-        NodeUnreachable["Node Unreachable"]
-        ResourcePressure["Resource Shortage<br>(memory, disk, etc.)"]
-        HardwareIssue["Hardware Issues"]
-        Maintenance["Maintenance"]
-    end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-6.html)
 
-    subgraph "kubelet Eviction Signals"
-        MemoryAvailable["memory.available"]
-        NodefsAvailable["nodefs.available"]
-        NodefsInodesFree["nodefs.inodesFree"]
-        ImagefsAvailable["imagefs.available"]
-        ImagefsInodesFree["imagefs.inodesFree"]
-        PidAvailable["pid.available"]
-    end
+### Eviction の種類
 
-    ControllerEviction -->|cause| NodeNotReady
-    ControllerEviction -->|cause| NodeUnreachable
-    KubeletEviction -->|cause| ResourcePressure
-    KubeletEviction -->|cause| HardwareIssue
-    UserEviction -->|cause| Maintenance
+1. **kube-controller-manager による Eviction**:
+   - Node が `pod-eviction-timeout` の期間（デフォルト 5 分）NotReady 状態のままである場合
+   - Node が Unreachable 状態である場合
 
-    KubeletEviction -->|monitors| MemoryAvailable
-    KubeletEviction -->|monitors| NodefsAvailable
-    KubeletEviction -->|monitors| NodefsInodesFree
-    KubeletEviction -->|monitors| ImagefsAvailable
-    KubeletEviction -->|monitors| ImagefsInodesFree
-    KubeletEviction -->|monitors| PidAvailable
+2. **kubelet による Eviction**:
+   - Node のリソース不足（メモリ、ディスクなど）
+   - ハードウェアの問題
 
-    %% Style definitions
-    classDef evictionType fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef evictionCause fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef evictionSignal fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class ControllerEviction,KubeletEviction,UserEviction evictionType;
-    class NodeNotReady,NodeUnreachable,ResourcePressure,HardwareIssue,Maintenance evictionCause;
-    class MemoryAvailable,NodefsAvailable,NodefsInodesFree,ImagefsAvailable,ImagefsInodesFree,PidAvailable evictionSignal;
-```
-
-### Eviction Types
-
-1. **Eviction by kube-controller-manager**:
-   - Node が `pod-eviction-timeout` period（default 5 分）の間 NotReady state のままの場合
-   - Node が Unreachable state の場合
-
-2. **Eviction by kubelet**:
-   - Node resource shortage（memory、disk など）
-   - Hardware issues
-
-3. **Eviction by user**:
-   - `kubectl drain` command の実行
-   - Node maintenance tasks
+3. **ユーザーによる Eviction**:
+   - `kubectl drain` コマンドの実行
+   - Node メンテナンスタスク
 
 ### kubelet Eviction Signals
 
-kubelet は次の eviction signal を監視します。
+kubelet は以下の Eviction signal を監視します。
 
-1. **memory.available**: Available memory
-2. **nodefs.available**: Node file system の available space
-3. **nodefs.inodesFree**: Node file system の available inodes
-4. **imagefs.available**: Image file system の available space
-5. **imagefs.inodesFree**: Image file system の available inodes
-6. **pid.available**: Available process IDs
+1. **memory.available**: 利用可能なメモリ
+2. **nodefs.available**: Node ファイルシステムの利用可能な領域
+3. **nodefs.inodesFree**: Node ファイルシステムの利用可能な inode
+4. **imagefs.available**: イメージファイルシステムの利用可能な領域
+5. **imagefs.inodesFree**: イメージファイルシステムの利用可能な inode
+6. **pid.available**: 利用可能なプロセス ID
 
-各 signal に soft threshold と hard threshold を設定できます。
+各 signal には soft および hard threshold を設定できます。
 
-- **Soft Threshold**: Threshold を超過した後、`grace-period` の後に Pod を evict します
-- **Hard Threshold**: Threshold を超過すると直ちに Pod を evict します
+- **Soft Threshold**: threshold を超えた後、`grace-period` 後に Pod を Eviction します
+- **Hard Threshold**: threshold を超えると、直ちに Pod を Eviction します
 
 ```yaml
 # kubelet configuration example
@@ -916,64 +567,23 @@ evictionSoftGracePeriod:
 evictionPressureTransitionPeriod: "30s"
 ```
 
-### Eviction Priority
+### Eviction の優先順位
 
-kubelet は次の順序で Pod を evict します。
+kubelet は以下の順序で Pod を Eviction します。
 
 1. BestEffort QoS class の Pod
-2. Burstable QoS class の Pod（resource usage が requests を超過している Pod から）
-3. Guaranteed QoS class の Pod（requests と limits が等しい Pod）
+2. Burstable QoS class の Pod（リソース使用量が request を超える Pod から開始）
+3. Guaranteed QoS class の Pod（request と limit が等しい Pod）
 
 ## Pod Disruption Budget (PDB)
 
-Pod Disruption Budget (PDB) は、voluntary disruption 中に application availability を維持するための方法です。PDB は、同時に disrupted される Pod の数を制限します。
+Pod Disruption Budget（PDB）は、自発的な中断中にアプリケーションの可用性を維持する方法です。PDB は同時に中断できる Pod の数を制限します。
 
-```mermaid
-graph TD
-    subgraph "PDB Components"
-        PDB["PodDisruptionBudget"]
-        PDB -->|setting| MinAvailable["minAvailable<br>(minimum available pods)"]
-        PDB -->|setting| MaxUnavailable["maxUnavailable<br>(maximum unavailable pods)"]
-        PDB -->|selects| Selector["selector<br>(target pod selection)"]
-    end
+![PodDisruptionBudget の minAvailable、maxUnavailable、selector の設定が Node drain などの自発的な中断を制御し、Eviction を許可または拒否すること、および同等の minAvailable と maxUnavailable の設定が同じ効果を生む Deployment の例を示す図。](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-7.png)
 
-    subgraph "PDB Operation"
-        Disruption["Voluntary Disruption<br>(node drain, etc.)"]
-        Check{{"PDB condition met?"}}
-        Allow["Allow Pod Eviction"]
-        Deny["Deny Pod Eviction"]
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-7.html)
 
-        Disruption -->|check| Check
-        Check -->|yes| Allow
-        Check -->|no| Deny
-    end
-
-    subgraph "PDB Example"
-        Deployment["Deployment<br>(replicas: 5)"]
-        PDB1["PDB<br>(minAvailable: 3)"]
-        PDB2["PDB<br>(maxUnavailable: 2)"]
-
-        Deployment -->|applies| PDB1
-        Deployment -->|applies| PDB2
-        PDB1 -.->|same effect| PDB2
-    end
-
-    %% Style definitions
-    classDef pdbComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef pdbSetting fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef disruptionFlow fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef resultComponent fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class PDB,Selector pdbComponent;
-    class MinAvailable,MaxUnavailable pdbSetting;
-    class Deployment,PDB1,PDB2 k8sComponent;
-    class Disruption,Check disruptionFlow;
-    class Allow,Deny resultComponent;
-```
-
-### PDB Definition
+### PDB の定義
 
 ```yaml
 apiVersion: policy/v1
@@ -987,7 +597,7 @@ spec:
       app: frontend
 ```
 
-or
+または
 
 ```yaml
 apiVersion: policy/v1
@@ -1001,41 +611,41 @@ spec:
       app: frontend
 ```
 
-上記の例では、次のようになります。
-- `minAvailable`: 常に available でなければならない Pod の最小数
-- `maxUnavailable`: 同時に unavailable になれる Pod の最大数
-- `selector`: PDB が適用される Pod を選択する label selector
+上記の例:
+- `minAvailable`: 常に利用可能でなければならない Pod の最小数
+- `maxUnavailable`: 同時に利用不可にできる Pod の最大数
+- `selector`: PDB が適用される Pod を選択する Label selector
 
-### PDB Operation
+### PDB の動作
 
-1. Node drain などの voluntary disruption が発生すると、Kubernetes は PDB を確認します
-2. PDB condition が満たされている場合、Pod eviction を進めます
-3. PDB condition が満たされていない場合、Pod eviction を拒否します
+1. Node drain などの自発的な中断が発生すると、Kubernetes は PDB を確認します
+2. PDB 条件が満たされている場合、Pod Eviction を続行します
+3. PDB 条件が満たされていない場合、Pod Eviction を拒否します
 
-### PDB Best Practices
+### PDB のベストプラクティス
 
-1. **Set PDB for all critical workloads**: 高可用性が必要なすべての workload に PDB を設定します
-2. **Choose appropriate values**: Workload characteristics に適した `minAvailable` または `maxUnavailable` values を選択します
-3. **Consider replica count**: PDB value は replica count より小さくする必要があります
-4. **Regular testing**: Node drain や同様の task を通じて PDB operation を test します
+1. **すべての重要なワークロードに PDB を設定**: 高可用性を必要とするすべてのワークロードに PDB を設定します
+2. **適切な値を選択**: ワークロードの特性に応じた `minAvailable` または `maxUnavailable` の値を選択します
+3. **レプリカ数を考慮**: PDB の値はレプリカ数より小さくなければなりません
+4. **定期的なテスト**: Node drain などのタスクを通じて PDB の動作をテストします
 
 ## Node Pressure Eviction
 
-Node pressure eviction は、Node resource shortage によって Pod が evict される mechanism です。
+Node Pressure Eviction は、Node のリソース不足により Pod が Eviction されるメカニズムです。
 
 ### Node Condition Status
 
-kubelet は次の Node condition status を報告します。
+kubelet は以下の Node condition status を報告します。
 
-1. **MemoryPressure**: Node の memory が不足しています
-2. **DiskPressure**: Node の disk space が不足しています
-3. **PIDPressure**: Node の process ID が不足しています
+1. **MemoryPressure**: Node のメモリが不足している
+2. **DiskPressure**: Node のディスク領域が不足している
+3. **PIDPressure**: Node のプロセス ID が不足している
 
-これらの condition が発生すると、kubelet は resources を確保するために Pod を evict します。
+これらの condition が発生すると、kubelet はリソースを確保するために Pod を Eviction します。
 
-### Eviction Policy Configuration
+### Eviction Policy の設定
 
-Eviction policy は kubelet configuration で設定できます。
+Eviction policy は kubelet 設定で設定できます。
 
 ```yaml
 # kubelet configuration example
@@ -1056,81 +666,35 @@ evictionMinimumReclaim:
 evictionPressureTransitionPeriod: "30s"
 ```
 
-上記の例では、次のようになります。
-- `evictionMinimumReclaim`: Eviction 後に reclaim する必要がある最小 resources
-- `evictionPressureTransitionPeriod`: Pressure state transition 間の待機時間
+上記の例:
+- `evictionMinimumReclaim`: Eviction 後に回収する必要がある最小リソース
+- `evictionPressureTransitionPeriod`: pressure 状態遷移間の待機時間
 
 ## TopologySpreadConstraints
 
-TopologySpreadConstraints は、availability zones、Node、region などの topology domain 全体で Pod がどのように分散されるかを細かく制御します。この feature は、高可用性と効率的な resource utilization を実現するうえで、Pod anti-affinity よりも高い柔軟性を提供します。
+TopologySpreadConstraints は、Availability Zone、Node、Region などのトポロジードメイン全体に Pod を分散する方法をきめ細かく制御します。この機能は、高可用性と効率的なリソース使用率を実現するために、Pod Anti-Affinity よりも高い柔軟性を提供します。
 
-```mermaid
-graph TD
-    subgraph "TopologySpreadConstraints Overview"
-        TSC["TopologySpreadConstraints"]
-        TSC -->|controls| Distribution["Pod Distribution"]
+![TopologySpreadConstraints が、必須の 4 フィールド maxSkew、topologyKey、whenUnsatisfiable、labelSelector を通じて Availability Zone 全体の Pod 分散を制御すること、whenUnsatisfiable の DoNotSchedule と ScheduleAnyway の選択肢、および maxSkew=1 の新しい Pod が最も少ない Pod 数の Zone である ap-northeast-2b に配置される EKS の例を示す図。](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-8.png)
 
-        subgraph "Key Fields"
-            MaxSkew["maxSkew<br>(max difference allowed)"]
-            TopologyKey["topologyKey<br>(topology domain)"]
-            WhenUnsatisfiable["whenUnsatisfiable<br>(scheduling action)"]
-            LabelSelector["labelSelector<br>(target pods)"]
-        end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-8.html)
 
-        subgraph "Optional Fields (1.27+)"
-            MinDomains["minDomains<br>(minimum topology domains)"]
-            MatchLabelKeys["matchLabelKeys<br>(dynamic label matching)"]
-            NodeAffinityPolicy["nodeAffinityPolicy<br>(Honor/Ignore)"]
-            NodeTaintsPolicy["nodeTaintsPolicy<br>(Honor/Ignore)"]
-        end
-    end
+### 主要フィールド
 
-    subgraph "Distribution Example"
-        Zone1["Zone A<br>2 pods"]
-        Zone2["Zone B<br>2 pods"]
-        Zone3["Zone C<br>1 pod"]
-
-        Zone1 -.->|maxSkew: 1| Zone3
-        Zone2 -.->|maxSkew: 1| Zone3
-    end
-
-    TSC --> MaxSkew
-    TSC --> TopologyKey
-    TSC --> WhenUnsatisfiable
-    TSC --> LabelSelector
-    TSC --> MinDomains
-    TSC --> MatchLabelKeys
-
-    %% Style definitions
-    classDef tscComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef fieldComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef optionalField fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef zoneComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class TSC,Distribution tscComponent;
-    class MaxSkew,TopologyKey,WhenUnsatisfiable,LabelSelector fieldComponent;
-    class MinDomains,MatchLabelKeys,NodeAffinityPolicy,NodeTaintsPolicy optionalField;
-    class Zone1,Zone2,Zone3 zoneComponent;
-```
-
-### Key Fields
-
-| Field | Description | Required |
+| フィールド | 説明 | 必須 |
 |-------|-------------|----------|
-| **maxSkew** | Maximum allowed difference in pod count between any two topology domains | Yes |
-| **topologyKey** | Node label key that defines topology domains | Yes |
-| **whenUnsatisfiable** | Action when constraints cannot be satisfied: `DoNotSchedule` or `ScheduleAnyway` | Yes |
-| **labelSelector** | Selects which pods to count for spread calculation | Yes |
-| **minDomains** | Minimum number of topology domains required (1.27+) | No |
-| **matchLabelKeys** | Pod label keys to match for spread calculation (1.27+) | No |
+| **maxSkew** | 任意の 2 つのトポロジードメイン間で許可される Pod 数の最大差 | はい |
+| **topologyKey** | トポロジードメインを定義する Node label key | はい |
+| **whenUnsatisfiable** | 制約を満たせない場合のアクション: `DoNotSchedule` または `ScheduleAnyway` | はい |
+| **labelSelector** | 分散計算でカウントする Pod を選択 | はい |
+| **minDomains** | 必要なトポロジードメインの最小数（1.27+） | いいえ |
+| **matchLabelKeys** | 分散計算で一致させる Pod label key（1.27+） | いいえ |
 
-### whenUnsatisfiable Options
+### whenUnsatisfiable のオプション
 
-- **DoNotSchedule**: Constraint を満たせない場合、scheduler は Pod を scheduling しません（hard constraint）
-- **ScheduleAnyway**: Scheduler は Pod を scheduling し、skew を最小化する Node に高い priority を与えます（soft constraint）
+- **DoNotSchedule**: 制約を満たせない場合、scheduler は Pod をスケジュールしません（ハード制約）
+- **ScheduleAnyway**: scheduler は Pod をスケジュールしますが、skew を最小化する Node により高い優先度を与えます（ソフト制約）
 
-### EKS Availability Zone Spread Example
+### EKS Availability Zone 分散の例
 
 ```yaml
 apiVersion: apps/v1
@@ -1169,11 +733,11 @@ spec:
             memory: 128Mi
 ```
 
-この configuration は次を保証します。
-1. Pod は availability zone 全体に均等に分散されます（hard constraint）
-2. Pod は各 zone 内の Node 全体に優先的に分散されます（soft constraint）
+この設定により、以下が保証されます。
+1. Pod は Availability Zone 全体に均等に分散される（ハード制約）
+2. Pod は各 Zone 内の Node 全体に優先的に分散される（ソフト制約）
 
-### minDomains and matchLabelKeys (Kubernetes 1.27+)
+### minDomains と matchLabelKeys（Kubernetes 1.27+）
 
 ```yaml
 apiVersion: apps/v1
@@ -1206,31 +770,31 @@ spec:
         image: myapp:v1
 ```
 
-- **minDomains**: Pod が少なくとも 3 つの zone に spread されることを保証します。利用可能な zone が少ない場合、scheduling は blocked されます。
-- **matchLabelKeys**: Selector で Pod の `version` label value を自動的に使用し、selector を変更せずに revision ごとの spread を可能にします。
+- **minDomains**: Pod が少なくとも 3 つの Zone に分散されることを保証します。利用可能な Zone がそれより少ない場合、スケジューリングはブロックされます。
+- **matchLabelKeys**: Pod の `version` label 値を selector で自動的に使用し、selector を変更せずにリビジョンごとの分散を可能にします。
 
-### Advantages Over Pod Anti-Affinity
+### Pod Anti-Affinity に対する利点
 
-| Aspect | TopologySpreadConstraints | Pod Anti-Affinity |
+| 観点 | TopologySpreadConstraints | Pod Anti-Affinity |
 |--------|---------------------------|-------------------|
-| **Flexibility** | Allows controlled skew (maxSkew > 1) | Binary: either same or different domain |
-| **Soft constraints** | `ScheduleAnyway` for best-effort | `preferredDuringScheduling` but less control |
-| **Multi-level** | Multiple constraints with different topologyKeys | Requires complex nested rules |
-| **Performance** | Better scheduler performance at scale | Can slow scheduling with many pods |
-| **Use case** | Even distribution with tolerance | Strict separation |
+| **柔軟性** | 制御された skew を許可（maxSkew > 1） | 二値: 同じドメインまたは異なるドメイン |
+| **ソフト制約** | ベストエフォートのための `ScheduleAnyway` | `preferredDuringScheduling` だが制御性は低い |
+| **マルチレベル** | 異なる topologyKey による複数の制約 | 複雑なネストルールが必要 |
+| **パフォーマンス** | 大規模環境でより優れた scheduler パフォーマンス | 多数の Pod ではスケジューリングが遅くなる可能性 |
+| **ユースケース** | 許容範囲を持つ均等分散 | 厳密な分離 |
 
 ## Pod Deletion Cost
 
-Pod Deletion Cost は、scale-down operation 中にどの Pod を先に削除するかを制御できる feature です。`controller.kubernetes.io/pod-deletion-cost` annotation を設定することで、Pod が terminate される順序に影響を与えることができます。
+Pod Deletion Cost は、scale-down 操作中にどの Pod を最初に削除するかを制御できる機能です。`controller.kubernetes.io/pod-deletion-cost` annotation を設定することで、Pod が終了される順序に影響を与えられます。
 
-### How It Works
+### 仕組み
 
-Controller（HPA や manual scale-down など）が replicas を減らす必要がある場合、次を考慮します。
-1. Deletion cost が低い Pod が先に削除されます
-2. Default deletion cost は 0 です
-3. Valid range: -2147483648 to 2147483647
+Controller（HPA や手動 scale-down など）がレプリカを減らす必要がある場合、以下を考慮します。
+1. deletion cost が低い Pod が先に削除されます
+2. デフォルトの deletion cost は 0 です
+3. 有効な範囲: -2147483648 ～ 2147483647
 
-### Basic Example
+### 基本例
 
 ```yaml
 apiVersion: v1
@@ -1245,9 +809,9 @@ spec:
     image: worker:latest
 ```
 
-### HPA Scale-Down Priority Control
+### HPA Scale-Down の優先順位制御
 
-HPA scale-down 中に重要な Pod を保護するために deletion cost を使用します。
+HPA scale-down 中に重要な Pod を保護するには deletion cost を使用します。
 
 ```yaml
 apiVersion: apps/v1
@@ -1272,9 +836,9 @@ spec:
         image: nginx:1.25
 ```
 
-### Cache Protection Pattern
+### Cache 保護パターン
 
-Deletion cost を動的に調整して、warm cache を持つ Pod を保護します。
+Cache がウォームな Pod を保護するために、deletion cost を動的に調整します。
 
 ```yaml
 apiVersion: apps/v1
@@ -1316,85 +880,43 @@ spec:
               fieldPath: metadata.name
 ```
 
-### Practical Use Cases
+### 実用的なユースケース
 
-1. **Stateful workloads**: 蓄積された state を持つ Pod を保護します
-2. **Leader election**: Leader Pod をより長く実行し続けます
-3. **Connection draining**: Long-running connection のための時間を確保します
-4. **Cache warming**: Warm cache を持つ Pod を保持します
-5. **Batch processing**: 大きな job を処理している Pod を維持します
+1. **Stateful ワークロード**: 蓄積された状態を持つ Pod を保護
+2. **Leader election**: Leader Pod をより長く実行し続ける
+3. **Connection draining**: 長時間接続を処理する時間を与える
+4. **Cache warming**: ウォームな Cache を持つ Pod を保持
+5. **Batch processing**: 大きな Job を処理する Pod を保持
 
 ## Descheduler
 
-Descheduler は、scheduler が Pod をより適切な Node に reschedule できるように、Node から Pod を evict する Kubernetes component です。新しい Pod だけを配置する scheduler とは異なり、descheduler は時間の経過とともに最適な Pod 配置を維持するのに役立ちます。
+Descheduler は、scheduler がより適切な Node に再スケジュールできるように、Node から Pod を Eviction する Kubernetes コンポーネントです。新しい Pod のみを配置する scheduler とは異なり、Descheduler は時間の経過に伴って最適な Pod 配置を維持するのに役立ちます。
 
-```mermaid
-graph TD
-    subgraph "Descheduler Operation"
-        Descheduler["Descheduler"]
+![Node の追加・削除または Pod の変更によって均等に分散されたクラスターのバランスが崩れた際、Descheduler が実行中の Pod を Eviction して scheduler に再配置させることでバランスを復元する方法と、RemoveDuplicates、LowNodeUtilization、PodLifeTime など 6 つの代表的な Descheduler 戦略を示す図。](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-9.png)
 
-        subgraph "Strategies"
-            RemoveDuplicates["RemoveDuplicates"]
-            LowNodeUtilization["LowNodeUtilization"]
-            RemovePodsHavingTooManyRestarts["RemovePodsHavingTooManyRestarts"]
-            PodLifeTime["PodLifeTime"]
-            RemovePodsViolatingInterPodAntiAffinity["RemovePodsViolatingInterPodAntiAffinity"]
-            RemovePodsViolatingNodeAffinity["RemovePodsViolatingNodeAffinity"]
-            RemovePodsViolatingTopologySpreadConstraint["RemovePodsViolatingTopologySpreadConstraint"]
-        end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-9.html)
 
-        subgraph "Process"
-            Analyze["Analyze Cluster State"]
-            Identify["Identify Pods to Evict"]
-            Evict["Evict Pods"]
-            Reschedule["Scheduler Reschedules"]
-        end
-    end
+### Descheduling が必要な理由
 
-    Descheduler --> RemoveDuplicates
-    Descheduler --> LowNodeUtilization
-    Descheduler --> RemovePodsHavingTooManyRestarts
-    Descheduler --> PodLifeTime
-    Descheduler --> RemovePodsViolatingInterPodAntiAffinity
-    Descheduler --> RemovePodsViolatingNodeAffinity
-    Descheduler --> RemovePodsViolatingTopologySpreadConstraint
+1. **クラスターの変更**: 新しい Node の追加、Node label の変更
+2. **Pod drift**: 初期配置が時間の経過とともに最適でなくなる
+3. **Affinity 違反**: クラスター変更後にルールが違反される
+4. **リソースの不均衡**: 一部の Node が過剰利用され、他が十分に利用されていない
+5. **失敗した Pod**: 再起動ループに陥った Pod
 
-    Analyze --> Identify
-    Identify --> Evict
-    Evict --> Reschedule
+### 主な戦略
 
-    %% Style definitions
-    classDef descheduler fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef strategy fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef process fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class Descheduler descheduler;
-    class RemoveDuplicates,LowNodeUtilization,RemovePodsHavingTooManyRestarts,PodLifeTime,RemovePodsViolatingInterPodAntiAffinity,RemovePodsViolatingNodeAffinity,RemovePodsViolatingTopologySpreadConstraint strategy;
-    class Analyze,Identify,Evict,Reschedule process;
-```
-
-### Why Descheduling Is Needed
-
-1. **Cluster changes**: 新しい Node の追加、Node label の変更
-2. **Pod drift**: 初期配置が時間の経過とともに最適でなくなります
-3. **Affinity violations**: Cluster の変更後に rule が violated されます
-4. **Resource imbalance**: 一部の Node が overutilized、他の Node が underutilized になります
-5. **Failed pods**: Pod が restart loop に stuck します
-
-### Key Strategies
-
-| Strategy | Description | Use Case |
+| 戦略 | 説明 | ユースケース |
 |----------|-------------|----------|
-| **RemoveDuplicates** | Removes duplicate pods from the same node | Ensure HA after node failures |
-| **LowNodeUtilization** | Moves pods from overutilized to underutilized nodes | Balance cluster resources |
-| **RemovePodsHavingTooManyRestarts** | Evicts pods with excessive restarts | Clean up problematic pods |
-| **PodLifeTime** | Evicts pods older than specified age | Force fresh scheduling |
-| **RemovePodsViolatingInterPodAntiAffinity** | Evicts pods violating anti-affinity rules | Restore affinity compliance |
-| **RemovePodsViolatingNodeAffinity** | Evicts pods violating node affinity | Restore affinity compliance |
-| **RemovePodsViolatingTopologySpreadConstraint** | Evicts pods violating spread constraints | Restore even distribution |
+| **RemoveDuplicates** | 同じ Node から重複する Pod を削除 | Node 障害後の HA を確保 |
+| **LowNodeUtilization** | 過剰利用された Node から低利用率 Node へ Pod を移動 | クラスターリソースのバランス |
+| **RemovePodsHavingTooManyRestarts** | 過度に再起動している Pod を Eviction | 問題のある Pod をクリーンアップ |
+| **PodLifeTime** | 指定された経過時間より古い Pod を Eviction | 新たなスケジューリングを強制 |
+| **RemovePodsViolatingInterPodAntiAffinity** | Anti-Affinity ルールに違反する Pod を Eviction | Affinity 準拠を復元 |
+| **RemovePodsViolatingNodeAffinity** | Node Affinity に違反する Pod を Eviction | Affinity 準拠を復元 |
+| **RemovePodsViolatingTopologySpreadConstraint** | 分散制約に違反する Pod を Eviction | 均等分散を復元 |
 
-### Helm Installation
+### Helm インストール
 
 ```bash
 # Add the descheduler Helm repository
@@ -1408,7 +930,7 @@ helm install descheduler descheduler/descheduler \
   --set deschedulerPolicy.strategies.LowNodeUtilization.enabled=true
 ```
 
-### DeschedulerPolicy Configuration
+### DeschedulerPolicy の設定
 
 ```yaml
 apiVersion: "descheduler/v1alpha2"
@@ -1454,9 +976,9 @@ profiles:
       - RemovePodsViolatingTopologySpreadConstraint
 ```
 
-### PDB Respect
+### PDB の尊重
 
-Descheduler は Pod Disruption Budgets (PDBs) を尊重します。Pod を evict すると PDB に違反する場合、descheduler はその Pod を evict しません。
+descheduler は Pod Disruption Budget（PDB）を尊重します。Pod を Eviction すると PDB に違反する場合、descheduler はその Pod を Eviction しません。
 
 ```yaml
 apiVersion: policy/v1
@@ -1470,9 +992,9 @@ spec:
       app: web
 ```
 
-この PDB が設定されている場合、descheduler は descheduling operation 中に `app: web` label を持つ少なくとも 2 つの Pod が available のままであることを保証します。
+この PDB を設定すると、descheduler は descheduling 操作中に `app: web` label を持つ Pod が少なくとも 2 つ利用可能な状態を維持します。
 
-### Descheduler CronJob Example
+### Descheduler CronJob の例
 
 ```yaml
 apiVersion: batch/v1
@@ -1503,81 +1025,28 @@ spec:
           restartPolicy: OnFailure
 ```
 
-> **Deep Dive**: Custom scheduler の詳細については、次を参照してください。
-> - [Custom Scheduler Part 1: Basic Concepts](../scheduling/01-custom-scheduler-part1.md)
-> - [Custom Scheduler Part 2: Implementation](../scheduling/02-custom-scheduler-part2.md)
-> - [Custom Scheduler Part 3: Advanced Features](../scheduling/03-custom-scheduler-part3.md)
+> **詳細**: カスタム scheduler の詳細については、以下を参照してください:
+> - [Custom Scheduler Part 1: 基本概念](../scheduling/01-custom-scheduler-part1.md)
+> - [Custom Scheduler Part 2: 実装](../scheduling/02-custom-scheduler-part2.md)
+> - [Custom Scheduler Part 3: 高度な機能](../scheduling/03-custom-scheduler-part3.md)
 
-## Scheduling Optimization in Amazon EKS
+## Amazon EKS におけるスケジューリング最適化
 
-Amazon EKS では、Kubernetes scheduling features を使用して workload を最適化できます。
+Amazon EKS では、Kubernetes のスケジューリング機能を使用してワークロードを最適化できます。
 
-```mermaid
-graph TD
-    subgraph "EKS Scheduling Optimization"
-        NodeGroups["Node Groups &<br>Instance Types"]
-        AZSpread["Availability Zone Distribution"]
-        Karpenter["Karpenter<br>Auto Scaling"]
-        ResourceOpt["Resource Request &<br>Limit Optimization"]
-    end
+![4 つの EKS スケジューリング最適化手段を示す図。Node group と instance type の選択、Availability Zone 分散、Karpenter の auto scaling、リソース request と limit のチューニングが、それぞれ Cluster Autoscaler、multi-AZ Deployment、Karpenter NodePool、Vertical Pod Autoscaler の実装メカニズムまたは自動化ツールに接続されています。](../.gitbook/assets/en-core-08-scheduling-preemption-eviction-11.png)
 
-    subgraph "Node Group Strategies"
-        ComputeOpt["Compute Optimized<br>Instances"]
-        MemoryOpt["Memory Optimized<br>Instances"]
-        SpotInst["Spot Instances"]
-        GPUInst["GPU Instances"]
-    end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-08-scheduling-preemption-eviction-11.html)
 
-    subgraph "Availability Strategies"
-        PodAntiAffinity["Pod Anti-Affinity"]
-        TopologySpread["Topology Spread<br>Constraints"]
-        MultiAZ["Multi-AZ<br>Deployment"]
-    end
+### Node Group と Instance Type
 
-    subgraph "Automation Tools"
-        VPA["Vertical Pod<br>Autoscaler"]
-        HPA["Horizontal Pod<br>Autoscaler"]
-        CA["Cluster<br>Autoscaler"]
-        KarpenterProv["Karpenter<br>Provisioner"]
-    end
+EKS では、さまざまな Node group と instance type を利用して、ワークロードに適したリソースを提供できます。
 
-    NodeGroups -->|type| ComputeOpt
-    NodeGroups -->|type| MemoryOpt
-    NodeGroups -->|type| SpotInst
-    NodeGroups -->|type| GPUInst
+1. **さまざまな Instance Type**: Compute optimized、memory optimized、storage optimized など
+2. **Spot Instance**: コスト効率の高いワークロードのための Spot Instance
+3. **GPU Instance**: AI/ML ワークロードのための GPU Instance
 
-    AZSpread -->|method| PodAntiAffinity
-    AZSpread -->|method| TopologySpread
-    AZSpread -->|result| MultiAZ
-
-    Karpenter -->|uses| KarpenterProv
-    ResourceOpt -->|tool| VPA
-    ResourceOpt -->|tool| HPA
-    NodeGroups -->|tool| CA
-
-    %% Style definitions
-    classDef eksComponent fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef strategyComponent fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef instanceType fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef availabilityStrategy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef autoTool fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    %% Apply classes
-    class NodeGroups,AZSpread,Karpenter,ResourceOpt eksComponent;
-    class ComputeOpt,MemoryOpt,SpotInst,GPUInst strategyComponent;
-    class PodAntiAffinity,TopologySpread,MultiAZ availabilityStrategy;
-    class VPA,HPA,CA,KarpenterProv autoTool;
-```
-
-### Node Groups and Instance Types
-
-EKS では、さまざまな Node group と instance type を活用することで、workload に適した resources を提供できます。
-
-1. **Various Instance Types**: Compute optimized、memory optimized、storage optimized など
-2. **Spot Instances**: Cost-effective な workload 向けの Spot instances
-3. **GPU Instances**: AI/ML workload 向けの GPU instances
-
-Node label と taint を使用して、特定の workload を特定の Node group に配置できます。
+Node label と Taint を使用すると、特定のワークロードを特定の Node group に配置できます。
 
 ```bash
 # Set labels and taints when creating node group
@@ -1589,9 +1058,9 @@ eksctl create nodegroup \
   --taints="gpu=true:NoSchedule"
 ```
 
-### Availability Zone Distribution
+### Availability Zone 分散
 
-EKS では、Pod anti-affinity と topology spread constraints を使用して、workload を複数の availability zone に分散できます。
+EKS では、Pod Anti-Affinity と topology spread constraints を使用して、複数の Availability Zone にワークロードを分散できます。
 
 ```yaml
 apiVersion: apps/v1
@@ -1620,11 +1089,11 @@ spec:
         image: nginx
 ```
 
-上記の例では、`topologySpreadConstraints` が複数の availability zone 全体に Pod を均等に分散します。
+上記の例では、`topologySpreadConstraints` が複数の Availability Zone に Pod を均等に分散します。
 
-### Auto Scaling with Karpenter
+### Karpenter による Auto Scaling
 
-Amazon EKS では、Karpenter を使用して workload に適した Node を自動的に provision できます。
+Amazon EKS では、Karpenter を使用してワークロードに適した Node を自動的にプロビジョニングできます。
 
 ```yaml
 apiVersion: karpenter.sh/v1
@@ -1661,15 +1130,15 @@ spec:
     karpenter.sh/discovery: my-cluster
 ```
 
-Karpenter は、Pod の resource requirements に最適な instance type を選択することで cost を最適化します。
+Karpenter は Pod のリソース要件に最適な instance type を選択することでコストを最適化します。
 
-### Resource Request and Limit Optimization
+### リソース Request と Limit の最適化
 
-EKS で workload resource requests と limits を最適化することは重要です。
+EKS におけるワークロードのリソース request と limit の最適化は重要です。
 
-1. **Vertical Pod Autoscaler (VPA)**: 実際の workload resource usage に基づいて resource requests を最適化します
-2. **Goldilocks**: VPA recommendations を可視化し、resource request optimization を支援します
-3. **Resource Quotas**: Namespace ごとの resource usage を制限します
+1. **Vertical Pod Autoscaler（VPA）**: 実際のワークロードリソース使用量に基づいてリソース request を最適化
+2. **Goldilocks**: VPA の推奨事項を可視化してリソース request の最適化を支援
+3. **Resource Quotas**: namespace ごとのリソース使用量を制限
 
 ```yaml
 # VPA example
@@ -1686,46 +1155,46 @@ spec:
     updateMode: "Auto"
 ```
 
-## Scheduling Best Practices
+## スケジューリングのベストプラクティス
 
-Kubernetes と EKS における scheduling 最適化の best practices は次のとおりです。
+Kubernetes と EKS におけるスケジューリング最適化のベストプラクティス:
 
-1. **Set appropriate resource requests and limits**:
-   - 実際の workload resource usage に基づいて resource requests を設定します
-   - 重要な workload に適切な resource limits を設定します
-   - VPA を使用して resource requests を自動的に最適化します
+1. **適切なリソース request と limit を設定する**:
+   - 実際のワークロードリソース使用量に基づいてリソース request を設定する
+   - 重要なワークロードに適切なリソース limit を設定する
+   - VPA を使用してリソース request を自動的に最適化する
 
-2. **Workload distribution**:
-   - Pod anti-affinity を使用して重要な workload を複数の Node に分散します
-   - Topology spread constraints を使用して workload を複数の availability zone に分散します
-   - Node affinity を使用して特定の workload を特定の Node に配置します
+2. **ワークロード分散**:
+   - Pod Anti-Affinity を使用して重要なワークロードを複数の Node に分散する
+   - topology spread constraints を使用してワークロードを複数の Availability Zone に分散する
+   - Node Affinity を使用して特定のワークロードを特定の Node に配置する
 
-3. **Node resource optimization**:
-   - さまざまな instance type を使用して workload に適した resources を提供します
-   - Cost optimization のために Spot instances を使用します
-   - Karpenter を使用して workload に適した Node provisioning を自動化します
+3. **Node リソースの最適化**:
+   - さまざまな instance type を使用してワークロードに適切なリソースを提供する
+   - コスト最適化のために Spot Instance を使用する
+   - Karpenter を使用してワークロードに適した Node を自動プロビジョニングする
 
-4. **PDB configuration**:
-   - 重要な workload に PDB を設定します
-   - Workload characteristics に適した `minAvailable` または `maxUnavailable` values を選択します
-   - PDB operation を定期的に test します
+4. **PDB 設定**:
+   - 重要なワークロードに PDB を設定する
+   - ワークロードの特性に適した `minAvailable` または `maxUnavailable` の値を選択する
+   - PDB の動作を定期的にテストする
 
-5. **Priority and preemption configuration**:
-   - 重要な workload に high priority class を設定します
-   - System components には `system-cluster-critical` または `system-node-critical` priority class を使用します
-   - Preemption の影響を理解し、test します
+5. **Priority と Preemption の設定**:
+   - 重要なワークロードに高い PriorityClass を設定する
+   - システムコンポーネントには `system-cluster-critical` または `system-node-critical` PriorityClass を使用する
+   - Preemption の影響を理解してテストする
 
-6. **Node taints and tolerations**:
-   - Specialized workload 用に dedicated Node を設定します
-   - Maintenance 中の Node に taint を適用します
-   - 適切な toleration を設定します
+6. **Node の Taint と Toleration**:
+   - 専門ワークロード用の専用 Node を設定する
+   - メンテナンス中の Node に Taint を適用する
+   - 適切な Toleration を設定する
 
-## Conclusion
+## まとめ
 
-Kubernetes scheduling、preemption、eviction mechanisms は、cluster resources を効率的に管理し、workload availability を維持するうえで重要な役割を果たします。これらの feature を理解して活用することで、Amazon EKS cluster で workload を最適化し、信頼性高く運用できます。
+Kubernetes のスケジューリング、Preemption、Eviction のメカニズムは、クラスターリソースを効率的に管理し、ワークロードの可用性を維持するうえで重要な役割を果たします。これらの機能を理解して活用することで、Amazon EKS クラスターでワークロードを最適化し、信頼性高く運用できます。
 
-Scheduling optimization は継続的な process であり、workload characteristics と cluster state に応じて継続的に調整する必要があります。Monitoring tools を使用して cluster resource usage を追跡し、必要に応じて scheduling policies を調整することが重要です。
+スケジューリングの最適化は継続的なプロセスであり、ワークロードの特性とクラスターの状態に応じて継続的に調整する必要があります。監視ツールを使用してクラスターのリソース使用量を追跡し、必要に応じてスケジューリングポリシーを調整することが重要です。
 
-## Quiz
+## クイズ
 
-この章で学んだ内容を確認するには、[Scheduling, Preemption, and Eviction Quiz](../quizzes/core/08-scheduling-preemption-eviction-quiz.md) に挑戦してください。
+この章で学んだ内容をテストするには、[スケジューリング、Preemption、Eviction クイズ](../quizzes/core/08-scheduling-preemption-eviction-quiz.md)に挑戦してください。

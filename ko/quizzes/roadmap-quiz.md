@@ -41,7 +41,7 @@
 **정답: D) GitOps (ArgoCD·Flux)**
 
 **설명:**
-실측 벤치마크 시리즈는 "스펙 시트가 아니라 실제 AWS 리소스에서 직접 측정한 숫자를 담은 문서들"로, Istio sidecar vs ambient 실측(mTLS 데이터플레인별 P50/P99 레이턴시와 rollout 중 503 비율), EBS gp2 vs gp3 실측 벤치마크(IOPS 10배 차이와 gp2 버스트 크레딧 절벽), ClickHouse on EKS 실측 벤치마크(1억 행 ingest 처리량·압축률·쿼리 레이턴시), Kafka on EKS 실측 벤치마크(RF3 ingest 상한 ≈130–135 MiB/s 등) 네 편입니다. GitOps는 횡단 도메인이지만 이 시리즈에 실측 문서가 없습니다.
+실측 벤치마크 시리즈는 "스펙 시트가 아니라 실제 AWS 리소스에서 직접 측정한 숫자를 담은 문서들"로, Istio sidecar vs ambient 실측(mTLS 데이터플레인별 P50/P99 레이턴시와 rollout 중 503 비율), EBS gp2 vs gp3 실측 벤치마크(IOPS 10배 차이와 gp2 버스트 크레딧 절벽), ClickHouse on EKS 실측 벤치마크(1억 행 ingest 처리량·압축률·쿼리 레이턴시), Kafka on EKS 실측 벤치마크(RF3 ingest 상한 ≈130–135 MiB/s 등) 및 Pod 네트워크 벤치마크까지 다섯 편을 이 목록에 소개합니다. GitOps는 횡단 도메인이지만 이 시리즈에 실측 문서가 없습니다.
 
 </details>
 
@@ -86,7 +86,7 @@
 **정답: B) 뷰어 툴바의 Live/Still 토글이 Live인지 확인하고, Export(`E`) → WebM으로 트레이스 애니메이션 6초를 내려받는다**
 
 **설명:**
-모든 인터랙티브 다이어그램은 `https://www.atomai.click/kubernetes-docs/archmaps/<이름>.html`에서 열리고, 툴바의 **Export** 버튼(단축키 `E`)이 공유용 파일을 바로 만들어 주므로 "별도 캡처 도구 없이 다이어그램 페이지 하나로 끝납니다". 레시피는 ① 다이어그램 열기 → ② **Live/Still** 토글이 Live인지 확인(화살표를 따라 흐르는 모션이 영상에 담기는 내용) → ③ **Export → WebM**(움직이는 포스트) 또는 **Export → Share Card**(1200×630 정적 미리보기) → ④ 원문 문서 URL과 함께 포스트, 순서입니다. WebM은 "Recording 6 seconds of motion…" 표시 후 내려오며, 트레이스 애니메이션이 있는 다이어그램과 브라우저의 MediaRecorder 지원이 필요합니다. SVG는 라이트·다크 겸용 벡터로 발표 자료용입니다.
+모든 인터랙티브 다이어그램은 `https://www.atomai.click/kubernetes-docs/archmaps/<이름>.html`에서 열리고, 툴바의 **Export** 버튼(단축키 `E`)이 공유용 파일을 바로 만들어 주므로 뷰어 버전·브라우저 지원·현재 선택 상태에 따라 메뉴가 달라질 수 있습니다. 레시피는 ① 다이어그램 열기 → ② **Live/Still** 토글이 Live인지 확인(화살표를 따라 흐르는 모션이 영상에 담기는 내용) → ③ **Export → WebM**(움직이는 포스트) 또는 **Export → Share Card**(1200×630 정적 미리보기) → ④ 원문 문서 URL과 함께 포스트, 순서입니다. WebM은 "Recording 6 seconds of motion…" 표시 후 내려오며, 트레이스 애니메이션이 있는 다이어그램과 브라우저의 MediaRecorder 지원이 필요합니다. SVG는 라이트·다크 겸용 벡터로 발표 자료용입니다.
 
 </details>
 

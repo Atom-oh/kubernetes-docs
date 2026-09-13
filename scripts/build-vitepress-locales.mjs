@@ -18,6 +18,9 @@ import {
 
 import { supportedLocales } from '../.vitepress/site-scope.mjs'
 import { generateLlmsFiles } from './generate-llms-txt.mjs'
+import { normalizeArchmapFontsInDirectory } from './lib/archmap-fonts.mjs'
+import { normalizeArchmapResponsiveLayoutsInDirectory } from './lib/archmap-responsive.mjs'
+import { normalizeArchmapMotionInDirectory } from './lib/archmap-motion.mjs'
 
 const scriptPath = fileURLToPath(import.meta.url)
 const projectRoot = path.resolve(path.dirname(scriptPath), '..')
@@ -166,6 +169,37 @@ export async function writeLegacyLocaleRedirects(destination, sourceLocale = 'en
   return written
 }
 
+// Search results still link to README.html from before the README→index
+// rewrite, including in the ko/en locales that are still published.
+async function writeReadmeRedirects(destination) {
+  let written = 0
+  for (const locale of supportedLocales) {
+    let pages
+    try {
+      pages = await listHtmlFiles(path.join(destination, locale))
+    } catch (error) {
+      if (error.code === 'ENOENT') continue
+      throw error
+    }
+    for (const page of pages) {
+      if (page !== 'index.html' && !page.endsWith('/index.html')) continue
+      const directory = page.slice(0, -'index.html'.length)
+      const target = `${SITE_ROOT}${locale}/${directory}`
+      try {
+        await writeFile(
+          path.join(destination, locale, directory, 'README.html'),
+          redirectStub(target),
+          { flag: 'wx' }
+        )
+        written += 1
+      } catch (error) {
+        if (error.code !== 'EEXIST') throw error
+      }
+    }
+  }
+  return written
+}
+
 export async function mergeLocaleOutputs(localeOutputs, destination) {
   await rm(destination, { recursive: true, force: true })
   await mkdir(destination, { recursive: true })
@@ -179,12 +213,28 @@ export async function mergeLocaleOutputs(localeOutputs, destination) {
     path.join(destination, 'sitemap.xml')
   )
 
+  const fontsUpdated = await normalizeArchmapFontsInDirectory(path.join(destination, 'archmaps'))
+  if (fontsUpdated > 0) console.log(`Normalized CJK fonts in ${fontsUpdated} archmap viewers`)
+
+  const layoutsUpdated = await normalizeArchmapResponsiveLayoutsInDirectory(path.join(destination, 'archmaps'))
+  if (layoutsUpdated > 0) console.log(`Updated mobile toolbars in ${layoutsUpdated} archmap viewers`)
+
+  const motionUpdated = await normalizeArchmapMotionInDirectory(path.join(destination, 'archmaps'))
+  if (motionUpdated > 0) console.log(`Updated optional motion controls in ${motionUpdated} archmap viewers`)
+
   const marked = await markArchmapsNoindex(destination)
   if (marked > 0) console.log(`Marked ${marked} archmap pages noindex`)
 
   const redirected = await writeLegacyLocaleRedirects(destination)
   if (redirected > 0) {
     console.log(`Wrote ${redirected} legacy ${LEGACY_LOCALES.join('/')} redirect stubs`)
+  }
+
+  // Generate these after retired-locale redirects so compatibility aliases
+  // are not mistaken for canonical English pages when those targets are built.
+  const readmesRedirected = await writeReadmeRedirects(destination)
+  if (readmesRedirected > 0) {
+    console.log(`Wrote ${readmesRedirected} ko/en README redirect stubs`)
   }
 }
 

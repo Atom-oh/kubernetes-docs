@@ -1,0 +1,80 @@
+app:
+  title: Example Developer Portal
+  baseUrl: https://backstage.example.com
+backend:
+  baseUrl: https://backstage.example.com
+  listen:
+    port: 7007
+  cors:
+    origin: https://backstage.example.com
+    credentials: true
+  database:
+    client: pg
+    pluginDivisionMode: schema
+    ensureExists: false
+    ensureSchemaExists: false
+    connection:
+      host: backstage-db.example.invalid
+      port: 5432
+      database: backstage
+      user: backstage
+      password:
+        $file: /var/run/backstage-secrets/postgres-password
+      ssl:
+        rejectUnauthorized: true
+        ca:
+          $file: /var/run/backstage-public/rds-ca.pem
+    knexConfig:
+      pool:
+        min: 0
+        max: 10
+  auditor:
+    severityLogLevelMappings:
+      low: debug
+      medium: info
+      high: warn
+      critical: error
+auth:
+  environment: production
+  session:
+    secret:
+      $file: /var/run/backstage-secrets/auth-session-secret
+  providers:
+    oidc:
+      production:
+        metadataUrl: https://issuer.example.invalid/.well-known/openid-configuration
+        clientId: replace-with-approved-client-id
+        clientSecret:
+          $file: /var/run/backstage-secrets/oidc-client-secret
+        additionalScopes: [profile, email]
+        signIn:
+          resolvers:
+            - resolver: emailMatchingUserEntityProfileEmail
+permission:
+  enabled: true
+integrations:
+  github:
+    - host: github.com
+      token:
+        $file: /var/run/backstage-secrets/github-token
+catalog:
+  providers:
+    github:
+      approvedOrg:
+        organization: replace-approved-org
+        catalogPath: /catalog-info.yaml
+        filters:
+          branch: main
+          repository: "^approved-.*$"
+        schedule:
+          frequency: {minutes: 30}
+          timeout: {minutes: 3}
+  rules:
+    - allow: [Component, API, Resource, System, Domain, Group, User, Template, Location]
+techdocs:
+  builder: external
+  publisher:
+    type: awsS3
+    awsS3:
+      bucketName: replace-approved-techdocs-bucket
+      region: us-west-2

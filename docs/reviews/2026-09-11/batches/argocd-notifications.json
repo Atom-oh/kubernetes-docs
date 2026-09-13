@@ -1,0 +1,110 @@
+[
+  {
+    "path": "ko/gitops/argocd/08-notifications.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed full article/quiz; aligned Notifications3.5.2 services, actual expressions/templates, subscription wiring and native AWS SQS integration.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/tree/v3.5.2/docs/operator-manual/notifications",
+      "https://github.com/argoproj/notifications-engine/tree/0cff13b8a717/pkg",
+      "https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html",
+      "https://www.atlassian.com/software/opsgenie"
+    ],
+    "findings": [
+      "Teams Workflows/PagerDutyv2 service names; existing Opsgenie end-of-support context.",
+      "Removed invalid array/filter/regex expressions, false rollback inference and stale-operation deployment notifications.",
+      "Connected every send reference, configured context, safe missing/multi-source status and JSON/HTML escaping; correct GitHub label and actual result revision.",
+      "Semicolon recipients; custom webhook service name; defaultTriggers versus global subscriptions; metadata fragments explicitly not standalone CRDs.",
+      "Replaced unsigned SNS/EventBridge/Lambda webhook claims with native SQS Standard and separately provisioned SDK bridge; controller scoped permissions;10sdelay/FIFO limitation.",
+      "Fixed quiz ambiguity and diagram automatic-broadcast implication."
+    ],
+    "validation": [
+      "180 actual ArgoCD3.5.2 CLI cases pass:170trigger evaluations,10console-only template renders;local AppProjectmock,emptysecret,no provider delivery.",
+      "40fences35YAML3Bash,0errors;22catalogentries/localematchCLI-testedinputs;all sendrefsresolve.",
+      "4actualPromQL time-seriescasespasswithpromtool3.14.0(29mfalse,30mtrue,resetfalse,missingfalse).",
+      "2diagrams9/9composition,4viewportcontainmenteach;KOlight+ENdark screenshotsinspected;PNGsregeneratedwithCJK/fullPagefix."
+    ],
+    "reviewedSha256": "df3bc882d280e4ba82158ae4ff2c86320910d80e861b8b042df5a40b63d9e2e1"
+  },
+  {
+    "path": "ko/quizzes/gitops/argocd/08-notifications-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed full article/quiz; aligned Notifications3.5.2 services, actual expressions/templates, subscription wiring and native AWS SQS integration.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/tree/v3.5.2/docs/operator-manual/notifications",
+      "https://github.com/argoproj/notifications-engine/tree/0cff13b8a717/pkg",
+      "https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html",
+      "https://www.atlassian.com/software/opsgenie"
+    ],
+    "findings": [
+      "Teams Workflows/PagerDutyv2 service names; existing Opsgenie end-of-support context.",
+      "Removed invalid array/filter/regex expressions, false rollback inference and stale-operation deployment notifications.",
+      "Connected every send reference, configured context, safe missing/multi-source status and JSON/HTML escaping; correct GitHub label and actual result revision.",
+      "Semicolon recipients; custom webhook service name; defaultTriggers versus global subscriptions; metadata fragments explicitly not standalone CRDs.",
+      "Replaced unsigned SNS/EventBridge/Lambda webhook claims with native SQS Standard and separately provisioned SDK bridge; controller scoped permissions;10sdelay/FIFO limitation.",
+      "Fixed quiz ambiguity and diagram automatic-broadcast implication."
+    ],
+    "validation": [
+      "180 actual ArgoCD3.5.2 CLI cases pass:170trigger evaluations,10console-only template renders;local AppProjectmock,emptysecret,no provider delivery.",
+      "40fences35YAML3Bash,0errors;22catalogentries/localematchCLI-testedinputs;all sendrefsresolve.",
+      "4actualPromQL time-seriescasespasswithpromtool3.14.0(29mfalse,30mtrue,resetfalse,missingfalse).",
+      "2diagrams9/9composition,4viewportcontainmenteach;KOlight+ENdark screenshotsinspected;PNGsregeneratedwithCJK/fullPagefix."
+    ],
+    "reviewedSha256": "da714d09646659929cdd56670ed11746d19d0d3e09b983f58202ed49f0764f6c"
+  },
+  {
+    "path": "en/gitops/argocd/08-notifications.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed full article/quiz; aligned Notifications3.5.2 services, actual expressions/templates, subscription wiring and native AWS SQS integration.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/tree/v3.5.2/docs/operator-manual/notifications",
+      "https://github.com/argoproj/notifications-engine/tree/0cff13b8a717/pkg",
+      "https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html",
+      "https://www.atlassian.com/software/opsgenie"
+    ],
+    "findings": [
+      "Teams Workflows/PagerDutyv2 service names; existing Opsgenie end-of-support context.",
+      "Removed invalid array/filter/regex expressions, false rollback inference and stale-operation deployment notifications.",
+      "Connected every send reference, configured context, safe missing/multi-source status and JSON/HTML escaping; correct GitHub label and actual result revision.",
+      "Semicolon recipients; custom webhook service name; defaultTriggers versus global subscriptions; metadata fragments explicitly not standalone CRDs.",
+      "Replaced unsigned SNS/EventBridge/Lambda webhook claims with native SQS Standard and separately provisioned SDK bridge; controller scoped permissions;10sdelay/FIFO limitation.",
+      "Fixed quiz ambiguity and diagram automatic-broadcast implication."
+    ],
+    "validation": [
+      "180 actual ArgoCD3.5.2 CLI cases pass:170trigger evaluations,10console-only template renders;local AppProjectmock,emptysecret,no provider delivery.",
+      "40fences35YAML3Bash,0errors;22catalogentries/localematchCLI-testedinputs;all sendrefsresolve.",
+      "4actualPromQL time-seriescasespasswithpromtool3.14.0(29mfalse,30mtrue,resetfalse,missingfalse).",
+      "2diagrams9/9composition,4viewportcontainmenteach;KOlight+ENdark screenshotsinspected;PNGsregeneratedwithCJK/fullPagefix."
+    ],
+    "reviewedSha256": "0982e8821aec4aa719ef4dce31fd3dcbe69007e88c0d940dbbaa0c372df125cb"
+  },
+  {
+    "path": "en/quizzes/gitops/argocd/08-notifications-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed full article/quiz; aligned Notifications3.5.2 services, actual expressions/templates, subscription wiring and native AWS SQS integration.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/tree/v3.5.2/docs/operator-manual/notifications",
+      "https://github.com/argoproj/notifications-engine/tree/0cff13b8a717/pkg",
+      "https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html",
+      "https://www.atlassian.com/software/opsgenie"
+    ],
+    "findings": [
+      "Teams Workflows/PagerDutyv2 service names; existing Opsgenie end-of-support context.",
+      "Removed invalid array/filter/regex expressions, false rollback inference and stale-operation deployment notifications.",
+      "Connected every send reference, configured context, safe missing/multi-source status and JSON/HTML escaping; correct GitHub label and actual result revision.",
+      "Semicolon recipients; custom webhook service name; defaultTriggers versus global subscriptions; metadata fragments explicitly not standalone CRDs.",
+      "Replaced unsigned SNS/EventBridge/Lambda webhook claims with native SQS Standard and separately provisioned SDK bridge; controller scoped permissions;10sdelay/FIFO limitation.",
+      "Fixed quiz ambiguity and diagram automatic-broadcast implication."
+    ],
+    "validation": [
+      "180 actual ArgoCD3.5.2 CLI cases pass:170trigger evaluations,10console-only template renders;local AppProjectmock,emptysecret,no provider delivery.",
+      "40fences35YAML3Bash,0errors;22catalogentries/localematchCLI-testedinputs;all sendrefsresolve.",
+      "4actualPromQL time-seriescasespasswithpromtool3.14.0(29mfalse,30mtrue,resetfalse,missingfalse).",
+      "2diagrams9/9composition,4viewportcontainmenteach;KOlight+ENdark screenshotsinspected;PNGsregeneratedwithCJK/fullPagefix."
+    ],
+    "reviewedSha256": "6df9ce31017e732930e52b198f0cbf3b5238248767279c6e0c8f0090e13de92f"
+  }
+]

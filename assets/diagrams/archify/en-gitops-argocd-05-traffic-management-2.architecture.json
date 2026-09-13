@@ -13,41 +13,38 @@
           "label": "Client requests"
         },
         "cloud": {
-          "label": "Load balancer / Ingress"
+          "label": "Traffic router"
         },
         "frontend": {
           "label": "Service"
         },
         "backend": {
-          "label": "Pod"
+          "label": "ReplicaSet capacity"
         }
       }
     },
     "views": [
       {
         "id": "stable-path",
-        "label": "Stable path 80%",
+        "label": "Stable path 90%",
         "focus": [
           "client",
           "lb",
           "svc-stable",
-          "s1",
-          "s2",
-          "s3",
-          "s4"
+          "s1"
         ],
-        "note": "80% of requests go through the myapp-stable Service to the four v1.0.0 pods."
+        "note": "At the example’s 10% step, stable retains 10 Pods with relative weight 90/100."
       },
       {
         "id": "canary-path",
-        "label": "Canary path 20%",
+        "label": "Canary path 10%",
         "focus": [
           "client",
           "lb",
           "svc-canary",
           "c1"
         ],
-        "note": "With the canary weight at 20%, only 20% of requests flow through the myapp-canary Service to the single v2.0.0 pod."
+        "note": "At setWeight: 10, the default canary capacity is 1 of 10. Request percentages vary with samples and connections."
       }
     ],
     "locale": "en"
@@ -70,8 +67,8 @@
     {
       "id": "lb",
       "type": "cloud",
-      "label": "Load Balancer",
-      "sublabel": "trafficRouting (Ingress)",
+      "label": "Traffic Router",
+      "sublabel": "Gateway API / ALB / Istio",
       "pos": [
         240,
         270
@@ -112,72 +109,30 @@
     {
       "id": "s1",
       "type": "backend",
-      "label": "Pod 1",
-      "sublabel": "v1.0.0",
+      "label": "Stable ReplicaSet",
+      "sublabel": "v1.0.0 · 10 Pods",
       "pos": [
         740,
-        40
+        120
       ],
       "size": [
-        130,
-        56
-      ]
-    },
-    {
-      "id": "s2",
-      "type": "backend",
-      "label": "Pod 2",
-      "sublabel": "v1.0.0",
-      "pos": [
-        910,
-        40
-      ],
-      "size": [
-        130,
-        56
-      ]
-    },
-    {
-      "id": "s3",
-      "type": "backend",
-      "label": "Pod 3",
-      "sublabel": "v1.0.0",
-      "pos": [
-        740,
-        190
-      ],
-      "size": [
-        130,
-        56
-      ]
-    },
-    {
-      "id": "s4",
-      "type": "backend",
-      "label": "Pod 4",
-      "sublabel": "v1.0.0",
-      "pos": [
-        910,
-        190
-      ],
-      "size": [
-        130,
-        56
+        230,
+        66
       ]
     },
     {
       "id": "c1",
       "type": "backend",
-      "label": "Pod 1",
-      "sublabel": "v2.0.0",
+      "label": "Canary ReplicaSet",
+      "sublabel": "v2.0.0 · 1 Pod",
       "tag": "canary",
       "pos": [
         740,
         430
       ],
       "size": [
-        130,
-        56
+        230,
+        66
       ]
     }
   ],
@@ -186,10 +141,7 @@
       "kind": "region",
       "label": "Stable (v1.0.0)",
       "wraps": [
-        "s1",
-        "s2",
-        "s3",
-        "s4"
+        "s1"
       ]
     },
     {
@@ -212,35 +164,20 @@
       "id": "lb-to-stable",
       "from": "lb",
       "to": "svc-stable",
-      "label": "80%",
+      "label": "90%",
       "variant": "emphasis"
     },
     {
       "id": "lb-to-canary",
       "from": "lb",
       "to": "svc-canary",
-      "label": "20%",
+      "label": "10%",
       "variant": "dashed"
     },
     {
       "id": "stable-s1",
       "from": "svc-stable",
       "to": "s1"
-    },
-    {
-      "id": "stable-s2",
-      "from": "svc-stable",
-      "to": "s2"
-    },
-    {
-      "id": "stable-s3",
-      "from": "svc-stable",
-      "to": "s3"
-    },
-    {
-      "id": "stable-s4",
-      "from": "svc-stable",
-      "to": "s4"
     },
     {
       "id": "canary-c1",
@@ -257,6 +194,15 @@
         "setWeight: 5 → pause 2m → setWeight: 10 → analysis (success-rate)",
         "setWeight: 25 → pause 5m → setWeight: 50 → pause 5m",
         "setWeight: 75 → analysis (success-rate, latency-check) → setWeight: 100"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Capacity and traffic differ",
+      "items": [
+        "Example: replicas: 10, dynamicStableScale: false",
+        "Default stable 10 + canary 1; explicit scale settings can differ",
+        "Default maxTrafficWeight: 100; request percentages are not exact"
       ]
     }
   ]

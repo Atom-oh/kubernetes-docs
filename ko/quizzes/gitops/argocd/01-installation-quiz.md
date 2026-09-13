@@ -2,7 +2,7 @@
 
 이 퀴즈는 ArgoCD 설치 및 구성에 대한 이해도를 테스트합니다.
 
-1. 프로덕션 환경에서 ArgoCD를 설치하는 권장 방법은 무엇인가요?
+1. Chart values로 HA와 설정을 버전 관리하려는 팀에 맞는 설치 방식은 무엇인가요?
    - A) GitHub URL에서 kubectl apply 사용
    - B) 커스텀 values를 사용한 Helm 차트
    - C) Docker Compose
@@ -14,7 +14,7 @@
 **정답: B) 커스텀 values를 사용한 Helm 차트**
 
 **설명:**
-ArgoCD는 공식 매니페스트에서 kubectl apply를 사용하여 설치할 수 있지만, 프로덕션 환경에서는 Helm 차트를 사용하는 것이 권장됩니다. 더 쉬운 사용자 정의, 업그레이드 및 구성 값 관리가 가능하기 때문입니다.
+Helm values로 구성을 관리하려는 팀에는 Helm이 맞습니다. 공식 HA manifest와 Kustomize도 가능한 방식이며 어느 한 방식만 프로덕션용인 것은 아닙니다. 설치 주체를 하나로 정하고 같은 방식으로 업그레이드합니다.
 
 </details>
 
@@ -62,7 +62,7 @@ Repo Server는 Git 리포지토리를 클론하고 다양한 소스(Helm, Kustom
 **정답: B) argocd-initial-admin-secret이라는 Secret에서**
 
 **설명:**
-초기 관리자 비밀번호는 자동 생성되어 `argocd-initial-admin-secret`이라는 Kubernetes Secret에 저장됩니다. 다음 명령으로 가져올 수 있습니다: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d`
+일반적인 자동 생성 bootstrap 비밀번호는 `argocd-initial-admin-secret`이라는 Kubernetes Secret에 저장됩니다. 다음 명령으로 가져올 수 있습니다: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d`
 
 </details>
 
@@ -78,6 +78,6 @@ Repo Server는 Git 리포지토리를 클론하고 다양한 소스(Helm, Kustom
 **정답: B) Core 모드**
 
 **설명:**
-ArgoCD Core 모드는 필수 컴포넌트(Application Controller 및 Repo Server)만 설치하며 API Server, UI 또는 Dex는 포함되지 않습니다. 이 모드는 ArgoCD가 Git과 CLI를 통해서만 관리되는 환경에 적합합니다.
+ArgoCD Core는 Application Controller·Repo Server 등 headless 운영에 필요한 구성 요소를 설치하며 API Server, UI 또는 Dex는 포함되지 않습니다. 이 모드는 ArgoCD가 Git과 CLI를 통해서만 관리되는 환경에 적합합니다.
 
 </details>

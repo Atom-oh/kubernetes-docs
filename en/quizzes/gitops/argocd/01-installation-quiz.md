@@ -2,7 +2,7 @@
 
 This quiz tests your understanding of ArgoCD installation and configuration.
 
-1. What is the recommended method for installing ArgoCD in a production environment?
+1. Which installation method fits a team that wants to version HA/settings through chart values?
    - A) kubectl apply from the raw GitHub URL
    - B) Helm chart with custom values
    - C) Docker Compose
@@ -14,7 +14,7 @@ This quiz tests your understanding of ArgoCD installation and configuration.
 **Answer: B) Helm chart with custom values**
 
 **Explanation:**
-While ArgoCD can be installed using kubectl apply from the official manifests, using a Helm chart is recommended for production environments because it allows for easier customization, upgrades, and management of configuration values.
+Helm fits a chart-values workflow. Official HA manifests and Kustomize are also viable production installation methods. Choose one owner and keep upgrades under that owner.
 
 </details>
 
@@ -62,7 +62,7 @@ The Repo Server is responsible for cloning Git repositories and generating Kuber
 **Answer: B) From a Secret named argocd-initial-admin-secret**
 
 **Explanation:**
-The initial admin password is auto-generated and stored in a Kubernetes Secret named `argocd-initial-admin-secret`. You can retrieve it using: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d`
+In the normal generated-bootstrap-password flow, the initial admin password is generated and stored in a Kubernetes Secret named `argocd-initial-admin-secret`. You can retrieve it using: `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d`
 
 </details>
 
@@ -78,6 +78,6 @@ The initial admin password is auto-generated and stored in a Kubernetes Secret n
 **Answer: B) Core mode**
 
 **Explanation:**
-ArgoCD Core mode installs only the essential components (Application Controller and Repo Server) without the API Server, UI, or Dex. This mode is suitable for environments where ArgoCD is managed entirely through Git and the CLI.
+ArgoCD Core installs the components needed for headless operation, including the Application Controller and Repo Server without the API Server, UI, or Dex. This mode is suitable for environments where ArgoCD is managed entirely through Git and the CLI.
 
 </details>

@@ -18,15 +18,15 @@ When query conditions line up with the partition key (daily) and the sorting key
 2. In the per-column compression results, trace_id compressed at 1.0× (incompressible) while namespace compressed about 201×. What explains the difference?
    - A) Only the trace_id column was missing a compression codec
    - B) namespace strings are shorter
-   - C) trace_id is high-entropy (32 random hex chars) with nothing to compress, while namespace is low-cardinality and the first ORDER BY key, so identical values run in long streaks
+   - C) trace_id had few repeat patterns and barely compressed with LZ4 in this run, while namespace is low-cardinality and the first ORDER BY key, so identical values run in long streaks
    - D) Only namespace gets a separate dictionary file
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) trace_id is high-entropy (32 random hex chars) with nothing to compress, while namespace is low-cardinality and the first ORDER BY key, so identical values run in long streaks**
+**Answer: C) trace_id had few repeat patterns and barely compressed with LZ4 in this run, while namespace is low-cardinality and the first ORDER BY key, so identical values run in long streaks**
 
 **Explanation:**
-Random IDs have high information entropy, so no general-purpose compressor can shrink them (3.08 GiB → 3.07 GiB). namespace has only 10 distinct values and is the first sort key, so identical values are stored in contiguous runs: 95.72 MiB collapsed to 488.63 KiB (201×). This is why "how do we store IDs" is the biggest storage-cost lever in a log schema.
+This LZ4 result was about 3.07 GiB raw → 3.08 GiB compressed. Hex stores only four bits of information per byte, so other codecs or binary representations can still reduce it. namespace has only 10 distinct values and is the first sort key, so identical values are stored in contiguous runs: 95.72 MiB collapsed to 488.63 KiB (201×). This is why "how do we store IDs" is the biggest storage-cost lever in a log schema.
 
 </details>
 
@@ -41,22 +41,22 @@ Random IDs have high information entropy, so no general-purpose compressor can s
 **Answer: B) ZSTD(3) storage was 47% smaller, but the CPU-bound full scan was about 1.9× slower than LZ4**
 
 **Explanation:**
-Measured: LZ4 7.82 GiB (1.97×) vs ZSTD(3) 4.16 GiB (3.7×) — 47% less storage — while the warm `LIKE '%timeout%'` full scan slowed from 2.63 s to 4.9 s. Hence the canonical log-workload recipe: LZ4 for recent partitions, TTL-driven ZSTD recompression for old ones.
+Measured: LZ4 7.82 GiB (1.97×) vs ZSTD(3) 4.16 GiB (3.7×) — 47% less storage — while the warm `LIKE '%timeout%'` full scan slowed from 2.63 s to 4.9 s. LZ4 for recent partitions plus TTL-driven ZSTD recompression is an option to validate against the real data and CPU/I/O balance.
 
 </details>
 
 4. The `LIKE '%timeout%'` full scan (Q3) took 31.5 s when bypassing the page cache. What bottleneck does this number point to?
    - A) ClickHouse's string-search algorithm is inefficient
-   - B) Reading the ~4 GiB compressed message column ÷ 31.5 s ≈ 130 MiB/s — pinned at the gp3 baseline throughput (125 MiB/s)
+   - B) Reading the ~4 GiB compressed message column ÷ 31.5 s ≈ 130 MiB/s — consistent with a volume/instance EBS throughput constraint, but not enough to identify the sole bottleneck
    - C) The m5.xlarge's 4 vCPUs were saturated
    - D) EBS CSI driver overhead dominated
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Reading the ~4 GiB compressed message column ÷ 31.5 s ≈ 130 MiB/s — pinned at the gp3 baseline throughput (125 MiB/s)**
+**Answer: B) Reading the ~4 GiB compressed message column ÷ 31.5 s ≈ 130 MiB/s — consistent with a volume/instance EBS throughput constraint, but not enough to identify the sole bottleneck**
 
 **Explanation:**
-The same query served from the page cache finished in 2.63 s (CPU-bound, ~38M rows/s). The 12× slowdown on direct disk reads is measured evidence that full-scan performance can be a volume-throughput setting rather than a database property — gp3 throughput can be provisioned up to 2,000 MiB/s for an extra fee (reaching it requires at least 8,000 IOPS as well) — but on this m5.xlarge the instance's own EBS baseline of about 137 MiB/s would bind first, so the node has to grow with the volume.
+The same query served from the page cache finished in 2.63 s (CPU-bound, ~38M rows/s). The 12× slowdown on direct disk reads is measured evidence that full-scan performance can be a volume-throughput setting rather than a database property — gp3 throughput can be provisioned up to 2,000 MiB/s for an extra fee (reaching it requires at least 8,000 IOPS as well) — but on this m5.xlarge the instance's approximately 137 MiB/s baseline and burst state must also be checked. Review node and volume capacity together for sustained demand.
 
 </details>
 
@@ -71,29 +71,29 @@ The same query served from the page cache finished in 2.63 s (CPU-bound, ~38M ro
 **Answer: A) Lookup time 1.13 s → 0.036 s (31×), rows read 100M → 1.08M (98.9% skipped), index size about 1.5% of the table**
 
 **Explanation:**
-The `bloom_filter(0.01) GRANULARITY 4` skip index probabilistically proves "this value is not here" per granule group, letting ClickHouse skip most of them. Data read dropped from 3.82 GiB to 42.6 MiB; the index itself is 119.7 MiB (1.5% of the table) and MATERIALIZE took about 20 seconds.
+The `bloom_filter(0.01) GRANULARITY 4` skip index has no false negatives for membership: a negative result permits skipping the group, while a positive may be a false positive requiring extra reads. Data read dropped from 3.82 GiB to 42.6 MiB; the index itself is 119.7 MiB (1.5% of the table) and MATERIALIZE took about 20 seconds.
 
 </details>
 
 6. What caveat must accompany the benchmark's ingest figure (~940K rows/s)?
    - A) It was measured with three replicas
-   - B) It was measured via in-server INSERT…SELECT, so network transfer and text parsing are absent — it is an upper bound
+   - B) It was measured via in-server INSERT…SELECT, so it does not directly measure external network/parsing ingestion throughput
    - C) It wrote to memory only, never to disk
    - D) Compression was disabled during the measurement
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) It was measured via in-server INSERT…SELECT, so network transfer and text parsing are absent — it is an upper bound**
+**Answer: B) It was measured via in-server INSERT…SELECT, so it does not directly measure external network/parsing ingestion throughput**
 
 **Explanation:**
-The rows were generated inside the server and inserted directly, which is more favorable than an external client pushing TSV/Native data. Sorting, compression, and disk writes are all included, but the number should be read as the ceiling for external ingest throughput.
+The rows were generated inside the server and inserted directly, which is more favorable than an external client pushing TSV/Native data. Sorting, compression, and disk writes are all included, but data-generation CPU is included too, so the number is not a mathematical ceiling for external ingestion. Measure the intended client, batching, concurrency and format separately.
 
 </details>
 
 7. Q4 (duration p50/p99 per namespace) scans all 100M rows yet finishes in about 1 second warm. Which property makes that possible?
    - A) The result was precomputed in a materialized view
    - B) Column-oriented storage — it reads only duration_ms (289 MiB) and namespace (0.5 MiB), not the table's full 7.8 GiB
-   - C) The quantile function uses sampling
+   - C) The quantile function reads only 8,192 disk rows and never processes the remaining rows
    - D) Partition pruning limited it to one day of data
 <details>
 <summary>Show Answer</summary>
@@ -101,7 +101,7 @@ The rows were generated inside the server and inserted directly, which is more f
 **Answer: B) Column-oriented storage — it reads only duration_ms (289 MiB) and namespace (0.5 MiB), not the table's full 7.8 GiB**
 
 **Explanation:**
-A row-oriented database would have to read entire rows for this query; a columnar engine reads only the columns the aggregation needs. The scan covered the whole time range (so no partition pruning — D is wrong), and the quantiles were computed over the actual values.
+A row-oriented database would have to read entire rows for this query; a columnar engine reads only the columns the aggregation needs. The scan covered the whole time range (so no partition pruning — D is wrong), and `quantile` processes all input rows while using a reservoir of at most 8,192 samples for an approximation. Sampling does not remove the input-column scan. Evaluate quantileExact separately when exact values are required.
 
 </details>
 
@@ -116,6 +116,6 @@ A row-oriented database would have to read entire rows for this query; a columna
 **Answer: C) When managed offerings are limited or carry a large cost multiple, and a platform team can own operator-based operations including backup and restore rehearsals**
 
 **Explanation:**
-This is the managed-vs-self-hosted framework from the [Database section overview](../../database/README.md), not from the benchmark article itself. ClickHouse is Apache-2.0 with a mature community operator (Altinity), which is what makes self-hosting a realistic option — the precondition is that operator plus a team to run it. Conversely, with scarce operations staffing or an adequate managed option, managed wins — and operating a raw StatefulSet is not one of the options at all.
+This is the managed-vs-self-hosted framework from the [Database section overview](../../database/README.md), not from the benchmark article itself. ClickHouse is Apache-2.0 with a mature community operator (Altinity), which is what makes self-hosting a realistic option — the precondition is that operator plus a team to run it. Conversely, with scarce operations staffing or an adequate managed option, managed wins — and a team operating a raw StatefulSet must implement the same lifecycle and recovery responsibilities itself.
 
 </details>

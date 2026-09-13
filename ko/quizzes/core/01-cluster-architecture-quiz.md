@@ -20,7 +20,7 @@
 kube-proxy는 노드 구성 요소로, 컨트롤 플레인의 구성 요소가 아닙니다. 컨트롤 플레인의 핵심 구성 요소는 kube-apiserver, etcd, kube-scheduler, kube-controller-manager, cloud-controller-manager입니다. kube-proxy는 각 노드에서 실행되며 네트워크 규칙을 유지하고 연결 포워딩을 수행합니다.
 </details>
 
-2. Kubernetes에서 모든 클러스터 데이터를 저장하는 "소스 오브 트루스(source of truth)"로 작동하는 구성 요소는 무엇인가요?
+2. Kubernetes에서 Kubernetes API 상태를 저장하는 "소스 오브 트루스(source of truth)"로 작동하는 구성 요소는 무엇인가요?
    - A) kube-apiserver
    - B) etcd
    - C) kube-controller-manager
@@ -33,7 +33,7 @@ kube-proxy는 노드 구성 요소로, 컨트롤 플레인의 구성 요소가 �
 **정답: B) etcd**
 
 **설명:**
-etcd는 모든 클러스터 데이터를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소로, Kubernetes의 "소스 오브 트루스"로 작동합니다. 모든 클러스터 상태, 구성, 메타데이터가 etcd에 저장되며, 다른 모든 컨트롤 플레인 구성 요소는 etcd에서 정보를 읽고 쓰기 위해 kube-apiserver를 통해 상호 작용합니다.
+etcd는 Kubernetes API 상태를 저장하는 일관성 있고 고가용성을 갖춘 키-값 저장소로, Kubernetes의 "소스 오브 트루스"로 작동합니다. 모든 클러스터 상태, 구성, 메타데이터가 etcd에 저장되며, 다른 모든 컨트롤 플레인 구성 요소는 etcd에서 정보를 읽고 쓰기 위해 kube-apiserver를 통해 상호 작용합니다.
 </details>
 
 3. 다음 중 Kubernetes 노드 구성 요소가 아닌 것은 무엇인가요?
@@ -81,7 +81,7 @@ kube-scheduler는 새로 생성된 파드를 실행할 노드를 선택하는 �
 **정답: C) cloud-controller-manager**
 
 **설명:**
-cloud-controller-manager는 클라우드별 컨트롤 로직을 포함하는 컨트롤 플레인 구성 요소로, 클라우드 제공업체 API와 상호 작용합니다. 이를 통해 Kubernetes 코어와 클라우드 제공업체의 API를 분리할 수 있습니다. cloud-controller-manager는 노드 컨트롤러, 라우트 컨트롤러, 서비스 컨트롤러, 볼륨 컨트롤러 등 클라우드 특화 컨트롤러를 실행합니다.
+cloud-controller-manager는 클라우드별 컨트롤 로직을 포함하는 컨트롤 플레인 구성 요소로, 클라우드 제공업체 API와 상호 작용합니다. 이를 통해 Kubernetes 코어와 클라우드 제공업체의 API를 분리할 수 있습니다. cloud-controller-manager는 노드, 라우트, 서비스 컨트롤러를 실행합니다. 스토리지 프로비저닝·연결·마운트는 CSI 컨트롤러와 노드 플러그인이 담당합니다.
 </details>
 
 6. 각 노드에서 실행되며 파드 내 컨테이너가 실행되도록 관리하는 에이전트는 무엇인가요?
@@ -113,7 +113,7 @@ kubelet은 각 노드에서 실행되는 에이전트로, 파드 내 컨테이�
 **정답: B) kube-proxy**
 
 **설명:**
-kube-proxy는 각 노드에서 실행되는 네트워크 프록시로, Kubernetes 서비스 개념의 구현을 담당합니다. 노드의 네트워크 규칙을 유지하고 연결 포워딩을 수행합니다. 주요 기능으로는 서비스 IP 및 포트에 대한 네트워크 규칙 유지, 연결 포워딩, 로드 밸런싱 구현, 서비스 디스커버리 지원 등이 있습니다. kube-proxy는 userspace 모드, iptables 모드, IPVS 모드 등 여러 작동 모드를 지원합니다.
+kube-proxy는 각 노드에서 실행되는 네트워크 프록시로, Kubernetes 서비스 개념의 구현을 담당합니다. 노드의 네트워크 규칙을 유지하고 연결 포워딩을 수행합니다. 주요 기능으로는 서비스 IP 및 포트에 대한 네트워크 규칙 유지, 연결 포워딩, 로드 밸런싱 구현, 서비스 디스커버리 지원 등이 있습니다. kube-proxy는 Linux의 iptables·nftables와 Windows의 kernelspace 모드를 지원합니다. IPVS는 v1.35부터 사용 중단되었고 userspace 모드는 제거되었습니다.
 </details>
 
 8. Kubernetes에서 컨테이너를 실행하기 위한 표준 인터페이스는 무엇인가요?
@@ -145,7 +145,7 @@ CRI(Container Runtime Interface)는 Kubernetes에서 컨테이너를 실행하�
 **정답: B) CNI (Container Network Interface)**
 
 **설명:**
-CNI(Container Network Interface)는 Kubernetes에서 파드 네트워킹을 구현하기 위한 표준 인터페이스입니다. CNI 플러그인은 파드에 네트워크 인터페이스를 연결하고 IP 주소를 할당하는 역할을 합니다. Calico, Cilium, Flannel, Weave Net 등 다양한 CNI 플러그인이 있으며, 각각 다른 기능과 성능 특성을 가집니다. CNI를 통해 Kubernetes는 다양한 네트워킹 솔루션을 지원할 수 있습니다.
+CNI(Container Network Interface)는 Kubernetes에서 파드 네트워킹을 구현하기 위한 표준 인터페이스입니다. CNI 플러그인은 파드에 네트워크 인터페이스를 연결하고 IP 주소를 할당하는 역할을 합니다. Calico, Cilium, Flannel 등 다양한 CNI 플러그인이 있으며, 각각 다른 기능과 성능 특성을 가집니다. CNI를 통해 Kubernetes는 다양한 네트워킹 솔루션을 지원할 수 있습니다.
 </details>
 
 10. Kubernetes 클러스터에서 스토리지 시스템과의 표준 인터페이스를 제공하는 것은 무엇인가요?
@@ -190,7 +190,7 @@ kube-controller-manager는 여러 컨트롤러 프로세스를 실행하는 컨�
 etcd는 Raft 합의 알고리즘을 사용하여 분산 시스템에서 데이터의 강한 일관성을 보장합니다. Raft는 리더 선출, 로그 복제, 안전성을 통해 분산 시스템에서 합의를 이루는 알고리즘입니다. etcd 클러스터는 일반적으로 3개 또는 5개의 노드로 구성되며, 과반수(quorum)의 노드가 정상 작동하는 한 클러스터는 계속 작동할 수 있습니다.
 </details>
 
-13. Kubernetes에서 kube-proxy의 기본 작동 모드는 무엇인가요?
+13. Linux에서 모드를 명시하지 않았을 때 kube-proxy의 기본 모드는 무엇인가요?
 
 <details>
 
@@ -199,7 +199,7 @@ etcd는 Raft 합의 알고리즘을 사용하여 분산 시스템에서 데이�
 **정답: iptables**
 
 **설명:**
-kube-proxy의 기본 작동 모드는 iptables 모드입니다. 이 모드에서 kube-proxy는 리눅스 iptables를 사용하여 NAT를 구현하고 서비스 IP에 대한 트래픽을 파드로 라우팅합니다. 다른 작동 모드로는 userspace 모드(레거시)와 IPVS 모드(고성능)가 있습니다. IPVS 모드는 대규모 클러스터에서 더 나은 성능을 제공하지만, 리눅스 커널에 IPVS 모듈이 필요합니다.
+kube-proxy의 기본 작동 모드는 iptables 모드입니다. 이 모드에서 kube-proxy는 리눅스 iptables를 사용하여 NAT를 구현하고 서비스 IP에 대한 트래픽을 파드로 라우팅합니다. nftables도 Linux에서 사용할 수 있으며 v1.33부터 Stable입니다. 전환 전 커널·CNI 호환성을 확인하세요. IPVS는 v1.35부터 사용 중단되었고 userspace는 제거되었습니다. Windows는 kernelspace 모드를 사용합니다.
 </details>
 
 14. Kubernetes 클러스터에서 API 서버와 통신하기 위한 구성 파일의 이름은 무엇인가요?
@@ -250,7 +250,7 @@ ETCDCTL_API=3 etcdctl snapshot save /backup/etcd-snapshot-$(date +%Y%m%d).db \
     - 스케줄러 이름: custom-scheduler
     - 리더 선출 활성화
     - 스코어링 플러그인: NodeResourcesBalancedAllocation 가중치를 2로 설정
-    - 필터링 플러그인: NodeUnschedulable 비활성화
+    - 필터링 플러그인: cordon된 노드를 제외하도록 NodeUnschedulable 활성 상태 유지
 
 <details>
 
@@ -269,14 +269,12 @@ profiles:
       score:
         enabled:
           - name: NodeResourcesBalancedAllocation
+            weight: 2
         disabled: []
-      filter:
-        disabled:
-          - name: NodeUnschedulable
 ```
 
 **설명:**
-이 YAML 파일은 KubeSchedulerConfiguration 객체를 정의합니다. leaderElection.leaderElect: true는 리더 선출을 활성화하고, profiles 섹션에서 custom-scheduler라는 이름의 스케줄러 프로필을 정의합니다. plugins 섹션에서는 score 플러그인 중 NodeResourcesBalancedAllocation의 가중치를 2로 설정하고, filter 플러그인 중 NodeUnschedulable을 비활성화합니다.
+이 YAML 파일은 KubeSchedulerConfiguration 객체를 정의합니다. leaderElection.leaderElect: true는 리더 선출을 활성화하고, profiles 섹션에서 custom-scheduler라는 이름의 스케줄러 프로필을 정의합니다. plugins 섹션에서는 score 플러그인 중 NodeResourcesBalancedAllocation의 가중치를 2로 설정하고, 기본 NodeUnschedulable 필터는 활성 상태로 유지합니다. 이를 비활성화하면 cordon된 노드에도 스케줄링될 수 있습니다.
 </details>
 
 18. 다음 요구사항을 충족하는 고가용성 etcd 클러스터 구성을 위한 etcd 시작 명령어를 작성하세요:
@@ -307,9 +305,11 @@ etcd \
 --cert-file=/etc/kubernetes/pki/etcd/server.crt \
 --key-file=/etc/kubernetes/pki/etcd/server.key \
 --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt \
+--client-cert-auth=true \
 --peer-cert-file=/etc/kubernetes/pki/etcd/peer.crt \
 --peer-key-file=/etc/kubernetes/pki/etcd/peer.key \
---peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+--peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt \
+--peer-client-cert-auth=true
 ```
 
 **설명:**
@@ -336,12 +336,12 @@ etcd \
 2. **etcd 배포 방식**:
   - 스택형 토폴로지: etcd를 컨트롤 플레인 노드와 함께 배포
   - 외부 토폴로지: etcd를 별도의 노드에 배포 (더 높은 격리성과 확장성)
-  - 최소 3개의 etcd 노드를 여러 가용 영역에 분산 배치 (5개 권장)
+  - 최소 3개의 etcd 노드를 여러 가용 영역에 분산 배치 (장애 허용 수준과 지연 시간을 고려해 3개 또는 5개 선택)
   - etcd 클러스터는 Raft 합의 알고리즘을 사용하여 데이터 일관성 보장
 
 3. **로드 밸런서 구성**:
   - kube-apiserver 앞에 로드 밸런서 배치
-  - 로드 밸런서는 L4(TCP) 또는 L7(HTTP/HTTPS) 레벨에서 작동 가능
+  - 종단 간 TLS와 클라이언트 인증서 인증을 유지하도록 L4 TCP 패스스루 사용
   - 헬스 체크를 통해 비정상 kube-apiserver 인스턴스 감지 및 트래픽 제외
   - 클라우드 환경에서는 클라우드 제공업체의 관리형 로드 밸런서 사용 (AWS ELB, GCP Cloud Load Balancer 등)
   - 온프레미스 환경에서는 HAProxy, NGINX, keepalived 등 사용
@@ -358,7 +358,7 @@ etcd \
 
   - **네트워크 파티션**:
   - etcd는 과반수 기반으로 작동하여 네트워크 파티션 시 "스플릿 브레인" 방지
-  - 소수 파티션의 etcd 노드는 읽기 전용 모드로 전환
+  - 소수 파티션은 쓰기 커밋과 선형화 가능한 읽기를 수행할 수 없으며, 명시적으로 요청한 serializable 읽기는 오래된 로컬 데이터를 반환할 수 있음
 
   - **etcd 데이터 손상/손실**:
   - 정기적인 etcd 백업 수행
@@ -390,7 +390,7 @@ etcd \
   - 파드 내부의 컨테이너는 localhost를 통해 통신
 
 2. **파드 간 통신**:
-  - **같은 노드의 파드 간 통신**: 노드의 로컬 브리지 네트워크를 통해 통신
+  - **같은 노드의 파드 간 통신**: 로컬 데이터 플레인으로 통신 (플러그인에 따라 브리지·라우팅·eBPF 사용)
   - **다른 노드의 파드 간 통신**: 오버레이 네트워크 또는 라우팅 테이블을 통해 통신
   - CNI 플러그인이 파드 IP 주소 할당 및 라우팅 담당
 
@@ -398,7 +398,7 @@ etcd \
   - **ClusterIP**: 클러스터 내부에서만 접근 가능한 가상 IP
   - **kube-proxy**: 서비스 IP에 대한 트래픽을 파드로 라우팅
   - iptables 모드: 리눅스 iptables 규칙을 사용하여 NAT 구현
-  - IPVS 모드: 리눅스 커널의 IP Virtual Server를 사용하여 고성능 로드 밸런싱 제공
+  - nftables 모드: Linux nftables 데이터 플레인 설정; IPVS는 사용 중단됨
   - **CoreDNS**: 서비스 이름을 ClusterIP로 해석하는 DNS 서비스
   - **서비스 디스커버리**: 환경 변수 또는 DNS를 통해 서비스 발견
 

@@ -1,0 +1,423 @@
+{
+  "date": "2026-09-11",
+  "reviewedAtUTC": "2026-09-12T06:43:58.517267+00:00",
+  "files": [
+    {
+      "path": "en/networking/calico/08-eks-integration.md",
+      "sha256": "e925632636c4960992b7df5c99a0f5e047a2fb317c10b0708cb7e37e15810c3a"
+    },
+    {
+      "path": "en/quizzes/networking/calico/08-eks-integration-quiz.md",
+      "sha256": "1429983915f0a78eb88c4f052364aacac1f546de0b797ee30f134506be5a724d"
+    },
+    {
+      "path": "ko/networking/calico/08-eks-integration.md",
+      "sha256": "532a2ccc80333aafab746267249b7db3dfce47884d34c7c5dc2fd71de056b81c"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/08-eks-integration-quiz.md",
+      "sha256": "a228c5d559609df6d683124ed16a48d687bebe3b5bf452cb6ef1a1b2f9079d69"
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks",
+      "key": "8b9a045ccc34",
+      "finalURL": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks",
+      "sha256": "668b2c96f53df614031b27118fc2156a5d6d7a69199c9ee9f2b44db3d5f272b1",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements",
+      "key": "6f94a8862c24",
+      "sha256": "7fa25ebe3ea0cad2e3308daf97694b165ee24d0769c8e45b6a54cef21764278b",
+      "raw": "/tmp/istio-foundation-sources/6f94a8862c24.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/helm",
+      "key": "11cf4ba2419c",
+      "finalURL": "https://docs.tigera.io/calico/latest/getting-started/kubernetes/helm",
+      "sha256": "e60e6bc19466c4ecd4b30c9b4812c26700877f0a631570bdbf0791979f7f228c",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/operations/upgrading/kubernetes-upgrade",
+      "key": "dd7cf2c86b2a",
+      "finalURL": "https://docs.tigera.io/calico/latest/operations/upgrading/kubernetes-upgrade",
+      "sha256": "a8158098f7c0fcf3e431495fb1aafea4bcd3e44d4016f6b503290e66ce6a9752",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/reference/installation/api",
+      "key": "71a9d6b0ffba",
+      "sha256": "32a485a3b17f70904b788b45b8320fcd5454be32bddd4462aa1fd061d7acfc30",
+      "raw": "/tmp/istio-foundation-sources/71a9d6b0ffba.html"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/v1_crd_projectcalico_org.yaml",
+      "key": "366be3352d5d",
+      "sha256": "cb46786692404fb7955c6d31329c667d0dd8f1ff4821dc7869d0156c93d3a859",
+      "raw": "/tmp/istio-foundation-sources/366be3352d5d.html"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/tigera-operator.yaml",
+      "key": "cdde707b47cc",
+      "finalURL": "https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/tigera-operator.yaml",
+      "sha256": "4e372754e4e1c3a61cf7c0ceb9bc9fff2f78aa6575dcadcb5ea4e716bb00dffa",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md",
+      "key": "79a74010bf7d",
+      "sha256": "94dc1ad3874c6d4d4bc038b16fc793eb6c8576ab1d9122750ee8d40779670861",
+      "raw": "/tmp/istio-foundation-sources/79a74010bf7d.html"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html",
+      "key": "87050528ccc6",
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html",
+      "sha256": "4da7c590679f937b2cf4b43b1e0948885c3e1eace14d7b7f7dfed42e9eb210ab",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html",
+      "key": "b2b0dfe277a3",
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html",
+      "sha256": "c53a59155e9a346f653e3c86fa96aca4aff09c172eb5525561a4eae2553ee850",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/network-policy-disable.html",
+      "key": "434a09656a49",
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/network-policy-disable.html",
+      "sha256": "85fcbd7f7fd3222995c430b55f18621ea2f5fdbea1e63355c8388f83d41378f2",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html",
+      "key": "9dd190836af9",
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html",
+      "sha256": "d52a88f59626facc3a0f11d7692340fa42479b32df0ccc3307f158dca9bd77d2",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html",
+      "key": "6e8f49a19d70",
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html",
+      "sha256": "c88ab82c58090610d4e25c9fab1619884b1570ded4545c95eef3b68d38075f0f",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html",
+      "key": "6416838432bd",
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html",
+      "sha256": "abbaee5b778369f2b9b2315ff3fc2b392fc167970c3a45c4c0c236939ef34cc8",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html",
+      "key": "0e3364f011ee",
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html",
+      "sha256": "fc66d38fe28f4a11bb8e82926aef7931764d52e7d2529b52cdd0ff34ae2e1b62",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/updating-an-add-on.html",
+      "key": "ecceae0dd855",
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/updating-an-add-on.html",
+      "sha256": "92c62f5d7801da7a6aa2dcf2b0808dbcc5c01e0a7f768cc30e29cae335150cff",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html",
+      "key": "c294557122a8",
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html",
+      "sha256": "cb807731467ed854d968a1403235cd8a6422399f4af6a26f59cf7b16d07e0a1d",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "key": "87a44d5404a5",
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "sha256": "036d5379bc2e7a1dbbd766f9ad9e6004236ee2d6e112f18421251f2a75594af7",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "key": "8a7356ed413b",
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html",
+      "sha256": "9400b53bb5dc7449b92c149273b66dd3be18ea16ea925d252eb6d13d9c4c5ae0",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses-procedure.html",
+      "key": "32e470053ddd",
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses-procedure.html",
+      "sha256": "2a5fda96bae4e9c779e13db6c5a165129cc2506fa19a236e2f0528a796598397",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/cni-iam-role.html",
+      "key": "59fa4f83f7fc",
+      "sha256": "754eab439a072127fe3d611e17db735c9afb73e19370b56828e76acf85eb0bfe",
+      "raw": "/tmp/istio-foundation-sources/59fa4f83f7fc.html"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "key": "231ba2678238",
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "sha256": "4e90c68d514f556e88e5f862e619d0cd3884e1454c02d1d3c9a219ff1bb31d2e",
+      "database": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/operations/ebpf/install",
+      "key": "e0b3156ff702",
+      "sha256": "f77d811b04ff9e5b4b0ebabfb5ff2a4a92c764337a78b860f9424edd2d88f4de",
+      "raw": "/tmp/istio-foundation-sources/e0b3156ff702.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/operations/ebpf/enabling-ebpf",
+      "key": "e67705f5cb65",
+      "sha256": "293fd6379fc6ebb79863aadfa5a43cd88f1fc4f88f5af1ebd10bd2d9cce7ea91",
+      "raw": "/tmp/istio-foundation-sources/e67705f5cb65.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico/latest/network-policy/istio/app-layer-policy",
+      "key": "840092fbe105",
+      "sha256": "b44b3bd940171e01946c97fce0788df94bada4642b821c1a8271484bfec439b9",
+      "raw": "/tmp/istio-foundation-sources/840092fbe105.html"
+    },
+    {
+      "url": "https://docs.tigera.io/calico-enterprise/latest/network-policy/domain-based-policy",
+      "key": "eb4790c977ec",
+      "sha256": "390b67015e7a9b19925bf05697e1b3d5ac4d5759ccd8fa677869c16e03cb0d05",
+      "raw": "/tmp/istio-foundation-sources/eb4790c977ec.html"
+    }
+  ],
+  "findings": [
+    "Original EN891/KO783 guide lines and EN166/KO166 quiz lines fully read; all20questions retained, corrected and aligned.",
+    "Pinned Calico3.32.2/operator1.42.6; distinguishes Calico Kubernetes1.34–36 tested range from EKS standard1.34–36/extended1.31–33 and upstream1.37. Removed fabricated historical minimum/LTS compatibility tables.",
+    "Separated AWS native policy from Calico installation and corrected automatic EKS add-on update claim; native standard support started in VPC CNI1.14, not EKS1.14. Current VPC CNI1.21+ admin ClusterNetworkPolicy included without equating it with Calico tiers.",
+    "Added required ANNOTATE_POD_IP and additive Pod-patch RBAC verification; preserve existing add-on values with actual jq-tested candidate, handle null/empty JSON values, reject malformed/YAML inputs until explicitly converted. Do not leave AWS policy startup mode when its agent is absent or use toggling as a migration procedure.",
+    "Fixed real Helm keys/API server OSS availability and separate CRDs; removed unsupported Typha replicas/top-level FelixConfiguration/flow-log fields and nodeMetadata credential claim. One installation owner and CRD migration limits explicit.",
+    "Fargate native/Calico policy exclusions, AutoMode alternate-plugin ban and node-local DNS, Hybrid AWS-maintained Cilium build support, Windows HNS boundaries added. Full CNI is separate from native-policy disable and requires control-plane/webhook reachability planning.",
+    "Removed broad unnecessary calico-node IAM policy; identity belongs to actual AWS-calling components. SG-for-Pods Calico requires standard mode/VPC CNI1.11+; branch ENI and node-SNAT security-group behavior documented.",
+    "Original EN duplicate destination mapping discarded backend selector. Replaced with single namespace-scoped selector+port mapping, explicit TCP/UDP resolver destinations and same-namespace gateway prerequisite; no cluster-wide default deny or ALB-as-Pod-label assumption.",
+    "Current official EKS rollback supports previous minor within7days after eligible in-place upgrade; add-ons/Calico not automatically reverted. Removed unconditional older-operator rollback and destructive node cleanup recipes.",
+    "Prefix delegation uses env values, not invented ConfigMap keys; IP targets override warm prefix target. Removed ungrounded component dollar prices/sysctl/resource-limit and production-ready guarantees. eBPF kept as separate documented procedure with both kube-proxy coexistence settings and DSR limits.",
+    "All10figures actually viewed;4retained with corrected captions,6references removed for Felix packet-path/drop-return, obsolete product comparison and AWS control-plane boundary/Typha sizing errors. Source assets and foreign prose untouched.",
+    "Followup2026-09-12:AWSgeneralalternate-CNIpage stillstatescoreCalico/CiliumsupportforHybrid; specializedHybridCNIpage listsAWSmaintainedCilium/movesCalicoexamples. Qualified prior wording: do notinferCalicosupportterminationfromexamplemove;exactdistribution/capabilitysupportrequiresconfirmation.4currentVuecompilationspass;no code changed."
+  ],
+  "checks": {
+    "schemaObjects": 27,
+    "eksctlConfigurations": 2,
+    "bashBlocks": 18,
+    "quizAnswers": 20,
+    "actualJQCases": [
+      {
+        "language": "en",
+        "fixture": 0,
+        "passed": true,
+        "unrelatedSettingsPreserved": true
+      },
+      {
+        "language": "en",
+        "fixture": 1,
+        "passed": true,
+        "unrelatedSettingsPreserved": true
+      },
+      {
+        "language": "en",
+        "fixture": 2,
+        "passed": true,
+        "unrelatedSettingsPreserved": true
+      },
+      {
+        "language": "en",
+        "fixture": 3,
+        "passed": true,
+        "unrelatedSettingsPreserved": true
+      },
+      {
+        "language": "en",
+        "fixture": 4,
+        "passed": true,
+        "unrelatedSettingsPreserved": true
+      },
+      {
+        "language": "en",
+        "invalidInput": "not-json",
+        "rejected": true
+      },
+      {
+        "language": "en",
+        "invalidInput": "env:\n  ANNOTATE_POD_IP: \"false\"",
+        "rejected": true
+      },
+      {
+        "language": "ko",
+        "fixture": 0,
+        "passed": true,
+        "unrelatedSettingsPreserved": true
+      },
+      {
+        "language": "ko",
+        "fixture": 1,
+        "passed": true,
+        "unrelatedSettingsPreserved": true
+      },
+      {
+        "language": "ko",
+        "fixture": 2,
+        "passed": true,
+        "unrelatedSettingsPreserved": true
+      },
+      {
+        "language": "ko",
+        "fixture": 3,
+        "passed": true,
+        "unrelatedSettingsPreserved": true
+      },
+      {
+        "language": "ko",
+        "fixture": 4,
+        "passed": true,
+        "unrelatedSettingsPreserved": true
+      },
+      {
+        "language": "ko",
+        "invalidInput": "not-json",
+        "rejected": true
+      },
+      {
+        "language": "ko",
+        "invalidInput": "env:\n  ANNOTATE_POD_IP: \"false\"",
+        "rejected": true
+      }
+    ],
+    "originalDuplicateKeyRegression": {
+      "en": [
+        "('duplicate key', 'destination')"
+      ],
+      "ko": []
+    },
+    "helm": {
+      "version": "v3.32.2",
+      "operator": "v1.42.6",
+      "bothLocaleValuesIdentical": true,
+      "renderedObjects": 11,
+      "schemaValidatedObjects": [
+        "ServiceAccount/tigera-operator",
+        "ClusterRole/tigera-operator-secrets",
+        "ClusterRole/tigera-operator",
+        "ClusterRoleBinding/tigera-operator",
+        "RoleBinding/tigera-operator-secrets",
+        "Deployment/tigera-operator",
+        "APIServer/default",
+        "Goldmane/default",
+        "Installation/default",
+        "Whisker/default",
+        "Job/tigera-operator-uninstall"
+      ],
+      "sha256": "0f339148d7489bdcab580c2dcb520f07a2677fd27e09d8fae2247568624998d4"
+    },
+    "figureReview": [
+      {
+        "path": "en/.gitbook/assets/en-networking-calico-08-eks-integration-0.png",
+        "actuallyViewed": true,
+        "retained": true,
+        "finding": "Retained component overview with control-vs-packet-path and alternative-dataplane caption.",
+        "assetModified": false
+      },
+      {
+        "path": "en/.gitbook/assets/en-networking-calico-08-eks-integration-1.png",
+        "actuallyViewed": true,
+        "retained": false,
+        "finding": "Removed: puts Felix in packet path and returns dropped packet.",
+        "assetModified": false
+      },
+      {
+        "path": "en/.gitbook/assets/en-networking-calico-08-eks-integration-2.png",
+        "actuallyViewed": true,
+        "retained": false,
+        "finding": "Removed: obsolete L7 Enterprise-only comparison and controller/agent conflation.",
+        "assetModified": false
+      },
+      {
+        "path": "en/.gitbook/assets/en-networking-calico-08-eks-integration-3.png",
+        "actuallyViewed": true,
+        "retained": true,
+        "finding": "Retained conceptual security layers; caption corrects fixed policy order and CloudTrail-vs-flow-log distinction.",
+        "assetModified": false
+      },
+      {
+        "path": "en/.gitbook/assets/en-networking-calico-08-eks-integration-4.png",
+        "actuallyViewed": true,
+        "retained": false,
+        "finding": "Removed: locates Typha/controllers inside AWS-managed control plane, fixed3replicas and50-node threshold.",
+        "assetModified": false
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-networking-calico-08-eks-integration-0.png",
+        "actuallyViewed": true,
+        "retained": true,
+        "finding": "Retained component overview with control-vs-packet-path and alternative-dataplane caption.",
+        "assetModified": false
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-networking-calico-08-eks-integration-1.png",
+        "actuallyViewed": true,
+        "retained": false,
+        "finding": "Removed: puts Felix in packet path and returns dropped packet.",
+        "assetModified": false
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-networking-calico-08-eks-integration-2.png",
+        "actuallyViewed": true,
+        "retained": false,
+        "finding": "Removed: obsolete L7 Enterprise-only comparison and controller/agent conflation.",
+        "assetModified": false
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-networking-calico-08-eks-integration-3.png",
+        "actuallyViewed": true,
+        "retained": true,
+        "finding": "Retained conceptual security layers; caption corrects fixed policy order and CloudTrail-vs-flow-log distinction.",
+        "assetModified": false
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-networking-calico-08-eks-integration-4.png",
+        "actuallyViewed": true,
+        "retained": false,
+        "finding": "Removed: locates Typha/controllers inside AWS-managed control plane, fixed3replicas and50-node threshold.",
+        "assetModified": false
+      }
+    ],
+    "limitations": [
+      "Offline JSON-schema, Helm rendering, Bash parsing, actual jq fixtures and answer consistency only; no EKS, IAM, node, dataplane or live policy deployment.",
+      "Managed EKS build configuration schema must still be retrieved for the real selected add-on version; the upstream chart is not assumed identical.",
+      "Eligibility checks, topology and application compatibility for EKS rollback remain environment-specific.",
+      "Removed figure references need semantic regeneration if reused; original images/foreign prose untouched."
+    ]
+  },
+  "validation": [
+    "27 released-schema object checks plus2eksctl0.229 configurations;18bash -n blocks;20quiz answer matches;code parity across locales except region/comments.",
+    "Actual Helm3 rendering of cached digest-verified Calico3.32.2 chart:11objects,all11schema-checked; both locale values identical.",
+    "Actual jq14fixtures:preserve unrelated settings,null/empty handling,remove incompatible AWS-agent mode,and reject malformed/YAML inputs. Original EN duplicate destination red→green with duplicate-key-rejecting YAML parser.",
+    "Four current Markdown→Vue compilations passed; networking-calico34file mechanical scan159YAML/119shell blocks0errors; scopedgitdiffcheckclean.",
+    "Clean-env docs:test118/118,0fail; existing retry regression remains passing."
+  ],
+  "originals": "/tmp/kubernetes-docs-full-review/mesh-primary-cache.sqlite3 document_snapshots table",
+  "artifacts": "/home/atomoh/kubernetes-docs/.vitepress/cache/calico-eks-audit",
+  "limitations": [
+    "Offline JSON-schema, Helm rendering, Bash parsing, actual jq fixtures and answer consistency only; no EKS, IAM, node, dataplane or live policy deployment.",
+    "Managed EKS build configuration schema must still be retrieved for the real selected add-on version; the upstream chart is not assumed identical.",
+    "Eligibility checks, topology and application compatibility for EKS rollback remain environment-specific.",
+    "Removed figure references need semantic regeneration if reused; original images/foreign prose untouched."
+  ],
+  "followupSources": [
+    "https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html",
+    "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html"
+  ],
+  "followupValidatedAtUTC": "2026-09-12T07:24:51.612662+00:00"
+}

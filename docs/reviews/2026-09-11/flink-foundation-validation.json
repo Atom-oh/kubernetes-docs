@@ -1,0 +1,756 @@
+{
+  "status": "passed",
+  "files": 6,
+  "fences": 2,
+  "quizQuestions": 16,
+  "relativeLinks": 22,
+  "baseline": {
+    "flink": "2.2.1",
+    "operator": "1.15.0",
+    "java": "17"
+  },
+  "currentStableFlink": "2.3.0",
+  "sourceChecks": [
+    "Released CLI supports run action rather than removed run-application",
+    "Current image.ref key with deprecated container.image alias",
+    "StateMachineExample named by released build-helper POM and copied into examples/streaming by distribution assembly",
+    "Official Docker image metadata lists2.2.1-java17 for amd64/arm64",
+    "Operator1.15.0 documentation explicitly supports Native and Standalone",
+    "Java11 image variants exist;Java17recommended;Java21experimental in2.2docs"
+  ],
+  "sourceCaveats": [
+    "Moving operator stable compatibility URL redirected to1.16 documentation while dist index and tags showed latest stable1.15.0 and1.16.0-rc3; pinned released references used.",
+    "Operator1.15.0 enum contains newer versions than the published download compatibility table; enum acceptance is not claimed as tested support."
+  ],
+  "markdownVueCompilation": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/data-on-eks/flink/README.md",
+        "sha256": "5a98178d50e8435c9a7174a21d57e53a6fe83434ec8a981069bb9b46b069c4da",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "flink-on-eks-딥다이브"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes에서-누가-무엇을-관리하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "시리즈-구성"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "flink-on-eks-딥다이브",
+          "kubernetes에서-누가-무엇을-관리하나요",
+          "시리즈-구성",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/data-on-eks/flink/README.md",
+        "sha256": "74030331c2c7247a38f133a2a37ab8720f620434d6876da2e1e6cf4d767fc3b1",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "flink-on-eks-deep-dive"
+          },
+          {
+            "tag": "h2",
+            "id": "who-manages-what-on-kubernetes"
+          },
+          {
+            "tag": "h2",
+            "id": "chapters"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "flink-on-eks-deep-dive",
+          "who-manages-what-on-kubernetes",
+          "chapters",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/data-on-eks/flink/01-architecture.md",
+        "sha256": "400fa1fda96ffdb7791d838da67d6e24b68359a6a32cc3b80516e116fa28a01d",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-1-kubernetes에서의-flink-아키텍처"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-jobmanager-taskmanager와-client"
+          },
+          {
+            "tag": "h3",
+            "id": "slot·operator-chaining·slot-sharing"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-application-session은-cluster-수명과-공유의-선택"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-native-standalone은-자원-관리-주체의-별도-축"
+          },
+          {
+            "tag": "h3",
+            "id": "현재-cli-제출-형태"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-runtime과-검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "part-1-kubernetes에서의-flink-아키텍처",
+          "_1-jobmanager-taskmanager와-client",
+          "slot·operator-chaining·slot-sharing",
+          "_2-application-session은-cluster-수명과-공유의-선택",
+          "_3-native-standalone은-자원-관리-주체의-별도-축",
+          "현재-cli-제출-형태",
+          "_4-runtime과-검증-범위",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/data-on-eks/flink/01-architecture.md",
+        "sha256": "73436cb9a240a7cb86e14fc363fdb0d5bb1b5d0e64f3f7f3b712a6fbea829927",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-1-flink-architecture-on-kubernetes"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-jobmanager-taskmanager-and-client"
+          },
+          {
+            "tag": "h3",
+            "id": "slots-operator-chaining-and-slot-sharing"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-application-session-selects-cluster-lifecycle-and-sharing"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-native-standalone-is-a-separate-resource-management-axis"
+          },
+          {
+            "tag": "h3",
+            "id": "current-cli-submission-form"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-runtime-and-validation-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "part-1-flink-architecture-on-kubernetes",
+          "_1-jobmanager-taskmanager-and-client",
+          "slots-operator-chaining-and-slot-sharing",
+          "_2-application-session-selects-cluster-lifecycle-and-sharing",
+          "_3-native-standalone-is-a-separate-resource-management-axis",
+          "current-cli-submission-form",
+          "_4-runtime-and-validation-scope",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/flink/01-architecture-quiz.md",
+        "sha256": "3ecfa467f68049e43a65515f4cfdd41b88a6f214e0c8e51ca898c2ba78f6bfc4",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubernetes에서의-flink-아키텍처-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "kubernetes에서의-flink-아키텍처-퀴즈"
+        ]
+      },
+      {
+        "path": "en/quizzes/data-on-eks/flink/01-architecture-quiz.md",
+        "sha256": "261e946bb7a6926713c3a06656817c0ead2cbd19663bef911979003c64eab47b",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "flink-architecture-on-kubernetes-quiz"
+          }
+        ],
+        "renderedIds": [
+          "flink-architecture-on-kubernetes-quiz"
+        ]
+      }
+    ]
+  },
+  "viewerChecks": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "chapter": "readme",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "8c5c4892c8912968ea6d2a8d5d79cccf8bafc29e8eca5e8320899e0dbecedb23"
+      },
+      {
+        "locale": "ko",
+        "chapter": "readme",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "8c5c4892c8912968ea6d2a8d5d79cccf8bafc29e8eca5e8320899e0dbecedb23"
+      },
+      {
+        "locale": "ko",
+        "chapter": "readme",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "8c5c4892c8912968ea6d2a8d5d79cccf8bafc29e8eca5e8320899e0dbecedb23"
+      },
+      {
+        "locale": "ko",
+        "chapter": "01-architecture",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "d6e19f0d54c098d7ee4fd2832c1fa7fc8c59b232a9f5e9348629f24d7e26006c"
+      },
+      {
+        "locale": "ko",
+        "chapter": "01-architecture",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "d6e19f0d54c098d7ee4fd2832c1fa7fc8c59b232a9f5e9348629f24d7e26006c"
+      },
+      {
+        "locale": "ko",
+        "chapter": "01-architecture",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "d6e19f0d54c098d7ee4fd2832c1fa7fc8c59b232a9f5e9348629f24d7e26006c"
+      },
+      {
+        "locale": "en",
+        "chapter": "readme",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "8bb2fcb70c4e0b2147e8eab35f6fc40cd7a665d7d9bda5437062e86a9300b576"
+      },
+      {
+        "locale": "en",
+        "chapter": "readme",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "8bb2fcb70c4e0b2147e8eab35f6fc40cd7a665d7d9bda5437062e86a9300b576"
+      },
+      {
+        "locale": "en",
+        "chapter": "readme",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "8bb2fcb70c4e0b2147e8eab35f6fc40cd7a665d7d9bda5437062e86a9300b576"
+      },
+      {
+        "locale": "en",
+        "chapter": "01-architecture",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "88f246065da6ec19476e26468ba936a30e39fa7ecd0f25984adf2b99cee9e093"
+      },
+      {
+        "locale": "en",
+        "chapter": "01-architecture",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "88f246065da6ec19476e26468ba936a30e39fa7ecd0f25984adf2b99cee9e093"
+      },
+      {
+        "locale": "en",
+        "chapter": "01-architecture",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "88f246065da6ec19476e26468ba936a30e39fa7ecd0f25984adf2b99cee9e093"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "diagramDeliveries": [
+    {
+      "schemaVersion": 1,
+      "ok": true,
+      "command": "deliver",
+      "type": "architecture",
+      "input": "/home/atomoh/kubernetes-docs/assets/diagrams/archify/en-data-on-eks-flink-01-architecture-0.architecture.json",
+      "output": "/home/atomoh/kubernetes-docs/public/archmaps/en-data-on-eks-flink-01-architecture-0.html",
+      "specification": {
+        "sha256": "6a830707e2c021f2205288eb61e84db07c40bea287d6e2a6fab8b25269771eac",
+        "bytes": 5882
+      },
+      "artifact": {
+        "sha256": "88f246065da6ec19476e26468ba936a30e39fa7ecd0f25984adf2b99cee9e093",
+        "bytes": 715430
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "ok": true,
+      "command": "deliver",
+      "type": "architecture",
+      "input": "/home/atomoh/kubernetes-docs/assets/diagrams/archify/en-data-on-eks-flink-readme-0.architecture.json",
+      "output": "/home/atomoh/kubernetes-docs/public/archmaps/en-data-on-eks-flink-readme-0.html",
+      "specification": {
+        "sha256": "447362d26c71405373d1ce3bcb87871fdccf015e1a6614cbca676401682c21e4",
+        "bytes": 4804
+      },
+      "artifact": {
+        "sha256": "8bb2fcb70c4e0b2147e8eab35f6fc40cd7a665d7d9bda5437062e86a9300b576",
+        "bytes": 708784
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "ok": true,
+      "command": "deliver",
+      "type": "architecture",
+      "input": "/home/atomoh/kubernetes-docs/assets/diagrams/archify/ko-data-on-eks-flink-01-architecture-0.architecture.json",
+      "output": "/home/atomoh/kubernetes-docs/public/archmaps/ko-data-on-eks-flink-01-architecture-0.html",
+      "specification": {
+        "sha256": "6643865be700490d0031993f773c228389c42aa508d8def31cc06563ba27ee22",
+        "bytes": 5953
+      },
+      "artifact": {
+        "sha256": "d6e19f0d54c098d7ee4fd2832c1fa7fc8c59b232a9f5e9348629f24d7e26006c",
+        "bytes": 715787
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "ok": true,
+      "command": "deliver",
+      "type": "architecture",
+      "input": "/home/atomoh/kubernetes-docs/assets/diagrams/archify/ko-data-on-eks-flink-readme-0.architecture.json",
+      "output": "/home/atomoh/kubernetes-docs/public/archmaps/ko-data-on-eks-flink-readme-0.html",
+      "specification": {
+        "sha256": "54b952f8e4d7025f00d1716eaa6cb4ff97fcc8c965c98d8acb052eaa8dee972e",
+        "bytes": 4892
+      },
+      "artifact": {
+        "sha256": "8c5c4892c8912968ea6d2a8d5d79cccf8bafc29e8eca5e8320899e0dbecedb23",
+        "bytes": 709189
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  ],
+  "pngVisualInspection": "All four current ko/en overview/architecture PNGs inspected. Shared slots and Native-mode scope visible; no clipped labels or cards.",
+  "sources": [
+    {
+      "name": "downloads",
+      "url": "https://flink.apache.org/downloads/",
+      "resolvedUrl": "https://flink.apache.org/downloads/",
+      "bytes": 163102,
+      "sha256": "2e9eb31c4f05371e434db77d6e3953d1f008d0dc3cd6be2e01ee21bcc5dddb10"
+    },
+    {
+      "name": "operator-release",
+      "url": "https://api.github.com/repos/apache/flink-kubernetes-operator/releases/latest",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "name": "flink-release",
+      "url": "https://api.github.com/repos/apache/flink/releases/latest",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "name": "flink23overview",
+      "url": "https://nightlies.apache.org/flink/flink-docs-release-2.3/docs/deployment/overview/",
+      "resolvedUrl": "https://nightlies.apache.org/flink/flink-docs-release-2.3/docs/deployment/overview/",
+      "bytes": 111862,
+      "sha256": "cf7aefc189a05a625d1331e281a35d853477aa8bf18d4af407824e9d4d7621da"
+    },
+    {
+      "name": "flink23architecture",
+      "url": "https://nightlies.apache.org/flink/flink-docs-release-2.3/docs/concepts/flink-architecture/",
+      "resolvedUrl": "https://nightlies.apache.org/flink/flink-docs-release-2.3/docs/concepts/flink-architecture/",
+      "bytes": 105950,
+      "sha256": "bee752eb8816a7f5984f044c144545285a583d2f4e6606415ed6f1edaae06041"
+    },
+    {
+      "name": "operatorstable",
+      "url": "https://nightlies.apache.org/flink/flink-kubernetes-operator-docs-stable/docs/operations/compatibility/",
+      "resolvedUrl": "https://nightlies.apache.org/flink/flink-kubernetes-operator-docs-stable/docs/operations/compatibility/",
+      "bytes": 556,
+      "sha256": "5ad1d73620ebb36c028d9b81688a2cba8e9688967463805e71d5c9238ad756a7"
+    },
+    {
+      "name": "dist-index",
+      "url": "https://downloads.apache.org/flink/",
+      "resolvedUrl": "https://downloads.apache.org/flink/",
+      "bytes": 14626,
+      "sha256": "5053afd6906a6819f709c2ef44e3871b732d8809f446c6abc8aa20a0ae35346e"
+    },
+    {
+      "name": "operator116compat",
+      "url": "https://nightlies.apache.org/flink/flink-kubernetes-operator-docs-release-1.16/docs/deployment/compatibility/",
+      "resolvedUrl": "https://nightlies.apache.org/flink/flink-kubernetes-operator-docs-release-1.16/docs/deployment/compatibility/",
+      "bytes": 33843,
+      "sha256": "952829c1572742a82eb17c08e63fc443f74ffd7dcda2e60125c9321d8e73d34d"
+    },
+    {
+      "name": "operator115compat",
+      "url": "https://nightlies.apache.org/flink/flink-kubernetes-operator-docs-release-1.15/docs/deployment/compatibility/",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "name": "operator-tags",
+      "url": "https://api.github.com/repos/apache/flink-kubernetes-operator/git/matching-refs/tags/release-1.1",
+      "resolvedUrl": "https://api.github.com/repos/apache/flink-kubernetes-operator/git/matching-refs/tags/release-1.1",
+      "bytes": 3494,
+      "sha256": "cc55f6fc6fb83a67e0d38943c083bb0b473bf78cce71564963793c246efd5684"
+    },
+    {
+      "name": "operatorstandalone",
+      "url": "https://nightlies.apache.org/flink/flink-kubernetes-operator-docs-release-1.15/docs/custom-resource/overview/",
+      "resolvedUrl": "https://nightlies.apache.org/flink/flink-kubernetes-operator-docs-release-1.15/docs/custom-resource/overview/",
+      "bytes": 37343,
+      "sha256": "5a389fc87a7740da400d8cdc820e228b1c274713b24e14eb49985103f249475e"
+    },
+    {
+      "name": "flink22java",
+      "url": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/java_compatibility/",
+      "resolvedUrl": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/java_compatibility/",
+      "bytes": 100918,
+      "sha256": "f40c7b808c0ac583f2c0ddf2d9443f931073fbe8032b7cb8172c6a57c1f29d35"
+    },
+    {
+      "name": "native22",
+      "url": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/resource-providers/native_kubernetes/",
+      "resolvedUrl": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/resource-providers/native_kubernetes/",
+      "bytes": 155587,
+      "sha256": "1f5d7d48b9749908baeacc1a16594a1e0a36fcde7b538fe0fb6e9c4e1b8dd19f"
+    },
+    {
+      "name": "operator115tree",
+      "url": "https://api.github.com/repos/apache/flink-kubernetes-operator/git/trees/release-1.15.0?recursive=1",
+      "bytes": 375968,
+      "sha256": "85457cbfeebbc529e42881e4b15037c05241afe010c2d75e699cd4980b583dc4"
+    },
+    {
+      "name": "compat115raw",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/docs/content/docs/operations/compatibility.md",
+      "bytes": 3364,
+      "sha256": "22986b6a554ef54e02fdb82a2715cc623b1088cb1975a6bfff97e7d6873aa862"
+    },
+    {
+      "name": "version115raw",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/flink-kubernetes-operator-api/src/main/java/org/apache/flink/kubernetes/operator/api/spec/FlinkVersion.java",
+      "bytes": 3270,
+      "sha256": "11ebb3313bc37b5f8d71162bdde66a2eeeed935294e6064b6dcfb886e88954dc"
+    },
+    {
+      "name": "operator115overview",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/docs/content/docs/custom-resource/overview.md",
+      "bytes": 10411,
+      "sha256": "f08e8ef2777832e79e546f8523f7df1e944123d7b5102b046ffe911728939ba4"
+    },
+    {
+      "name": "chart115",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/helm/flink-kubernetes-operator/Chart.yaml",
+      "bytes": 1190,
+      "sha256": "edb3c2576b4f6d966667a95aba4696f8d261d7898efab8ce23ca4090952291f6"
+    },
+    {
+      "name": "flink22overview",
+      "url": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/overview/",
+      "bytes": 114581,
+      "sha256": "4f9c6de006eb273789f42770066e9d65dfa25b4b50f20319474563af0b21a777"
+    },
+    {
+      "name": "flink22arch",
+      "url": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/concepts/flink-architecture/",
+      "bytes": 110284,
+      "sha256": "19e1c8ccc160f3d24dabb454a240249e1d98b98c5f72473dbecfe33fe6f2cb0f"
+    },
+    {
+      "name": "quickstart115",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/docs/content/docs/try-flink-kubernetes-operator/quick-start.md",
+      "sha256": "01b66efab674aeec0662f354fba9f9e03184cc78af84991a10d044ae33c349a7",
+      "bytes": 6146
+    },
+    {
+      "name": "cli221",
+      "url": "https://raw.githubusercontent.com/apache/flink/release-2.2.1/flink-clients/src/main/java/org/apache/flink/client/cli/CliFrontend.java",
+      "bytes": 61996,
+      "sha256": "d6bf424462365326214ecc97072f7dd2341a9dc4f1bcbfdc042f83798c64179f"
+    },
+    {
+      "name": "kubeopts221",
+      "url": "https://raw.githubusercontent.com/apache/flink/release-2.2.1/flink-kubernetes/src/main/java/org/apache/flink/kubernetes/configuration/KubernetesConfigOptions.java",
+      "bytes": 39390,
+      "sha256": "042a7a4de03da2b57de237b2f4e970f349f7384f5575c1c1dc55084b744af3bf"
+    },
+    {
+      "name": "rmopts221",
+      "url": "https://raw.githubusercontent.com/apache/flink/release-2.2.1/flink-core/src/main/java/org/apache/flink/configuration/ResourceManagerOptions.java",
+      "bytes": 16825,
+      "sha256": "fd2385ad2865656219a6a2e076e983a42a70a1f63069e0954d16c5b7968aefbf"
+    },
+    {
+      "name": "official-images",
+      "url": "https://raw.githubusercontent.com/docker-library/official-images/master/library/flink",
+      "bytes": 3008,
+      "sha256": "e8d546df4bdf868fc1c10fe15144186413633b70209b73973038262afc2ad512"
+    },
+    {
+      "name": "examples221pom",
+      "url": "https://raw.githubusercontent.com/apache/flink/release-2.2.1/flink-examples/flink-examples-streaming/pom.xml",
+      "bytes": 13786,
+      "sha256": "53d77cd122befa2fc8abb872f3a2840e70a63269708fc5a56366f9555d736d50"
+    },
+    {
+      "name": "examples221root",
+      "url": "https://raw.githubusercontent.com/apache/flink/release-2.2.1/flink-examples/pom.xml",
+      "bytes": 3224,
+      "sha256": "8b2be0d9d80acd9ac05ef670b0a2c6b78d84165bd059856b910f0b49632cf18e"
+    },
+    {
+      "name": "dist221assembly",
+      "url": "https://raw.githubusercontent.com/apache/flink/release-2.2.1/flink-dist/src/main/assemblies/bin.xml",
+      "bytes": 9092,
+      "sha256": "4f2f6acb1b07b85f7b86473253e239dd9e8fb90610c8fe7c8a9e17c18329ada4"
+    },
+    {
+      "name": "statemachine221pom",
+      "url": "https://raw.githubusercontent.com/apache/flink/release-2.2.1/flink-examples/flink-examples-build-helper/flink-examples-streaming-state-machine/pom.xml",
+      "bytes": 3770,
+      "sha256": "3f0d71a3b0dd142635f8b9cec9c0f9bb2487881e779b6b1dc8983f9a728df93c"
+    }
+  ],
+  "limits": "Source/CLI/config/package-layout/image metadata and bounded document/viewer checks. No full Flink runtime download, job submission, Kubernetes deployment, load/HA test or image pull."
+}

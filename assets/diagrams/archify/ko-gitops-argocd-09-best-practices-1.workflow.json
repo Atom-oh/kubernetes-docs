@@ -25,7 +25,7 @@
           "staging",
           "staging_env"
         ],
-        "note": "Dev와 Staging Application은 syncPolicy.automated로 브랜치 변경을 즉시 반영한다."
+        "note": "Dev/Staging은 변경을 감지하고 조건이 충족되면 자동 sync한다."
       },
       {
         "id": "manual-gate",
@@ -201,7 +201,7 @@
       "title": "자동 동기화 (Dev/Staging)",
       "items": [
         "syncPolicy.automated에 prune: true, selfHeal: true 설정",
-        "브랜치에 머지되면 Argo CD가 즉시 배포"
+        "변경 감지와 sync 조건 평가 후 자동 동기화"
       ]
     },
     {
@@ -209,7 +209,7 @@
       "title": "수동 동기화 (Prod)",
       "items": [
         "syncPolicy에 automated를 두지 않아 수동 Sync가 필요",
-        "syncOptions: CreateNamespace=true만 지정"
+        "프로젝트 권한과 대상 namespace를 미리 준비"
       ]
     }
   ]

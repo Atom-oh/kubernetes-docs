@@ -617,6 +617,7 @@
     * [보안 퀴즈](quizzes/gitops/argocd/07-security-quiz.md)
     * [알림 퀴즈](quizzes/gitops/argocd/08-notifications-quiz.md)
     * [모범 사례 퀴즈](quizzes/gitops/argocd/09-best-practices-quiz.md)
+    * [Rollouts Experiment 심층 분석 퀴즈](quizzes/gitops/argocd/10-rollouts-experiment-quiz.md)
   * [FluxCD 퀴즈](quizzes/gitops/02-fluxcd-quiz.md)
   * [GitOps 도구 비교 퀴즈](quizzes/gitops/03-gitops-comparison-quiz.md)
   * [Flagger Progressive Delivery 퀴즈](quizzes/gitops/04-flagger-quiz.md)

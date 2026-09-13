@@ -1,0 +1,3 @@
+Inspect the rendered resources and prepare namespace/image compatibility before installation.
+Release: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}

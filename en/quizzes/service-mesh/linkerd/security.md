@@ -1,209 +1,195 @@
 # Linkerd Security Quiz
 
-This quiz tests your understanding of Linkerd security features.
+Based on the [security guide](../../../service-mesh/linkerd/04-security.md), reviewed September 11, 2026.
 
-## Quiz Questions
+### 1. How does Linkerd enable mesh mTLS?
 
-### 1. How is mTLS enabled in Linkerd?
-
-A. Manual configuration required for each service
-B. Automatically applied to all mesh traffic
-C. Configuration via Kubernetes Secrets required
-D. Must be enabled per namespace
+- A. Every service must implement Linkerd TLS itself
+- B. Automatically for eligible TCP traffic between participating meshed Pods
+- C. Any Kubernetes Secret encrypts every network path
+- D. All UDP traffic is automatically protected
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Automatically applied to all mesh traffic**
+**Answer: B**
 
-**Explanation:**
-One of Linkerd's core values is "security by default." All traffic between services in the mesh automatically has mTLS applied without any configuration.
+**Explanation:** Both proxies must participate and trust the chain. Unmeshed endpoints and skipped ports do not automatically receive Linkerd mTLS. The default can still accept plaintext inbound traffic; require authenticated access with appropriate policy.
 
 </details>
 
-### 2. What is the role of the Server resource?
+### 2. What does a Server resource select?
 
-A. Define external server connections
-B. Define inbound traffic port and protocol
-C. Store server certificates
-D. Configure load balancers
+- A. External DNS records
+- B. An inbound port/protocol on matching Pods in its namespace
+- C. A certificate Secret
+- D. An outbound load-balancer algorithm
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Define inbound traffic port and protocol**
+**Answer: B**
 
-**Explanation:**
-The Server resource defines inbound traffic for specific Pods. It specifies target Pods with podSelector, port with port, and protocol (HTTP/1, HTTP/2, gRPC, opaque) with proxyProtocol.
+**Explanation:** Server selects a Pod/port target. Declare application ports and avoid overlapping Servers. Unmatched traffic defaults to deny unless accessPolicy changes that behavior. A Server on proxy admin port 4191 does not undo the admin port’s interception bypass.
 
 </details>
 
-### 3. What does meshTLS.serviceAccounts specify in ServerAuthorization?
+### 3. What does meshTLS.serviceAccounts in ServerAuthorization describe?
 
-A. ServiceAccount for the server to use
-B. Client ServiceAccounts allowed to access
-C. ServiceAccount with certificate issuance permission
-D. ServiceAccount with metrics collection permission
+- A. The server’s serviceAccountName
+- B. Allowed authenticated client ServiceAccounts
+- C. The account used to issue every certificate
+- D. Only metric-collection accounts
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Client ServiceAccounts allowed to access**
+**Answer: B**
 
-**Explanation:**
-ServerAuthorization's meshTLS.serviceAccounts specifies which client ServiceAccounts can access the Server. Only workloads with the specified ServiceAccounts are allowed access.
+**Explanation:** This grant accepts matching mesh client identities. Other grants may also broaden access. The selected release serves ServerAuthorization/v1beta1; AuthorizationPolicy can also directly reference a ServiceAccount without requiring this legacy grant.
 
 </details>
 
-### 4. How is traffic allowed in default-deny policy mode?
+### 4. How can intended business traffic be allowed under default-deny?
 
-A. All traffic is automatically allowed
-B. Explicit ServerAuthorization definition required
-C. Allow via namespace labels
-D. Configure whitelist in ConfigMap
+- A. Every request remains automatically allowed
+- B. Define the target and matching authorization grants
+- C. A generic namespace label grants any caller access
+- D. An arbitrary ConfigMap whitelist is sufficient
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Explicit ServerAuthorization definition required**
+**Answer: B**
 
-**Explanation:**
-In default-deny mode, all traffic is denied by default. To allow traffic, Server and ServerAuthorization must be explicitly defined. This is a zero-trust security model.
+**Explanation:** Server plus AuthorizationPolicy is a current pattern; ServerAuthorization is an older alternative. They are not a mandatory sequential pipeline. Multiple requiredAuthenticationRefs within one AuthorizationPolicy all need to match, and probe access needs appropriate treatment.
 
 </details>
 
-### 5. What is the recommended validity period for Trust Anchor?
+### 5. How should a trust anchor lifetime be chosen?
 
-A. 24 hours
-B. 1 year
-C. 1-10 years
-D. Unlimited
+- A. Always exactly 24 hours
+- B. Always unlimited
+- C. From CA policy, planned rotation and recovery requirements; the CLI default is one year
+- D. A universal mandatory 1–10 year recommendation applies to every cluster
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. 1-10 years**
+**Answer: C**
 
-**Explanation:**
-Trust Anchor (Root CA) should be valid for a long period. 1-10 years is generally recommended. Since Trust Anchor replacement is complex, set a sufficiently long validity period, adjusting for security requirements.
+**Explanation:** A manually supplied ten-year root is possible, not an automatic best practice. Track all chain expirations and ensure the issuer’s renewal/lifetime fits its CA. Root rotation requires overlap and distribution to every consumer, including linked clusters.
 
 </details>
 
-### 6. What ServerAuthorization setting allows unauthenticated clients (outside mesh)?
+### 6. What does client.unauthenticated:true permit in a ServerAuthorization?
 
-A. `meshTLS.identities: ["*"]`
-B. `unauthenticated: true`
-C. `external: allowed`
-D. `client: any`
+- A. Only authenticated identities matched by a wildcard
+- B. Clients without requiring mesh authentication
+- C. Only callers using a special external header
+- D. Only the declared readiness URL, regardless of the target
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. `unauthenticated: true`**
+**Answer: B**
 
-**Explanation:**
-Setting `client.unauthenticated: true` allows access from clients without mTLS authentication (outside mesh). This is used for traffic from health checks or ingress.
+**Explanation:** The setting permits access without mesh authentication across its target scope. It is not automatically limited to a health path. meshTLS.identities:["*"] is different: it broadly accepts meshed identities while still requiring mesh authentication.
 
 </details>
 
-### 7. What is required when renewing the Identity Issuer certificate?
+### 7. What normally happens when a valid issuer is renewed under the same trusted root?
 
-A. All proxies must be restarted
-B. Trust Anchor must also be replaced
-C. Update Kubernetes Secret and restart Identity Controller
-D. Full cluster restart required
+- A. Every proxy must immediately restart
+- B. The root must always change too
+- C. The owner updates the issuer Secret; Identity validates/reloads its files and proxies renew leaves normally
+- D. The entire cluster restarts
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Update Kubernetes Secret and restart Identity Controller**
+**Answer: C**
 
-**Explanation:**
-When renewing Identity Issuer: 1) Update Secret with new certificate, 2) Restart Identity Controller. Proxies automatically renew with the new certificate. No Trust Anchor replacement needed if it remains the same.
+**Explanation:** Check IssuerUpdated and investigate skipped/invalid updates. Existing leaves can remain under the old issuer until normal renewal while the chain stays valid. A blanket Identity restart is not mandatory for each issuer update; trust-anchor rotation is a separate staged process.
 
 </details>
 
-### 8. Which policy mode allows only mTLS traffic from within the mesh?
+### 8. Which default policy requires authenticated mesh clients, including appropriately trusted multicluster clients?
 
-A. deny
-B. all-unauthenticated
-C. all-authenticated
-D. cluster-unauthenticated
+- A. deny
+- B. all-unauthenticated
+- C. all-authenticated
+- D. cluster-unauthenticated
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. all-authenticated**
+**Answer: C**
 
-**Explanation:**
-`all-authenticated` mode allows only mTLS-authenticated traffic from within the mesh. Unauthenticated traffic from outside the mesh is denied.
+**Explanation:** all-authenticated requires mesh authentication. It is not a narrow allowlist of specific callers. Explicit Server policies and authorization grants still matter, and namespace default annotations are applied when proxies are initialized.
 
 </details>
 
-### 9. What setting is required in cert-manager Certificate resource for Linkerd integration?
+### 9. Which is required when cert-manager issues Linkerd’s signing issuer certificate?
 
-A. isCA: false
-B. isCA: true
-C. usages: [digital signature]
-D. algorithm: RSA
+- A. isCA:false
+- B. isCA:true, with suitable ECDSA P-256 credentials and a valid chain
+- C. Only a digital-signature usage on an arbitrary leaf
+- D. Always an RSA private key
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. isCA: true**
+**Answer: B**
 
-**Explanation:**
-The Linkerd Identity Issuer acts as an intermediate CA, so cert-manager Certificate must have `isCA: true`. This certificate signs workload certificates.
+**Explanation:** Identity requires an intermediate CA capable of signing workload certificates. Also make rotationPolicy explicit, verify Secret format/ownership and CA lifetime, and confirm Identity loads the result. A generic Vault leaf-signing path is not proven to supply a CA merely because the request says isCA:true.
 
 </details>
 
-### 10. What can be verified with the linkerd viz edges command?
+### 10. What can linkerd viz edges show?
 
-A. Network edge router status
-B. Service-to-service mTLS connection status
-C. Cluster boundary policies
-D. DNS edge cache status
+- A. Every edge router’s hardware state
+- B. Observed resource edges and their mTLS/security state
+- C. Proof that every possible or idle path is encrypted
+- D. The complete end-user authentication audit
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Service-to-service mTLS connection status**
+**Answer: B**
 
-**Explanation:**
-`linkerd viz edges` shows connections (edges) between services, with the SECURED column indicating mTLS status. Traffic from outside the mesh shows X in SECURED.
+**Explanation:** The SECURED view is evidence about observed edges, not a complete network inventory. Use linkerd identity for public certificates and policy diagnostics/metrics for access decisions. Do not equate the CLI display with literal Prometheus TLS label values.
 
 </details>
 
-### 11. What is the correct relationship between Linkerd security and application security?
+### 11. How do Linkerd and application security fit together?
 
-A. Linkerd handles all security so application security is unnecessary
-B. Linkerd handles transport layer, applications handle business logic security
-C. Application security alone is sufficient, Linkerd security is optional
-D. Both securities are completely independent with no interaction
+- A. Mesh mTLS removes the need for application security
+- B. Mesh workload/transport controls complement user, tenant and business authorization
+- C. A permitted ServiceAccount proves every caller is an administrator
+- D. Input validation is performed automatically by the mesh
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Linkerd handles transport layer, applications handle business logic security**
+**Answer: B**
 
-**Explanation:**
-Following defense-in-depth principles, Linkerd handles transport encryption (mTLS) and service authorization, while applications handle business logic security like user authentication (JWT), RBAC, and input validation.
+**Explanation:** Linkerd contributes workload authentication, eligible transport encryption and inbound authorization. Applications still validate user credentials, permissions and input. Network/admission controls also cover proxy bypass or missing enrollment.
 
 </details>
 
-### 12. Which is NOT a Linkerd security metric to monitor with Prometheus alerts?
+### 12. Which metric requires application-level instrumentation or another application-aware source?
 
-A. Certificate expiration time
-B. Non-mTLS traffic ratio
-C. Application login failure count
-D. Authorization denied request count
+- A. Proxy workload-certificate expiration
+- B. Observed HTTP responses lacking mesh client identity
+- C. Application login failures
+- D. Proxy inbound authorization-denial counters
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Application login failure count**
+**Answer: C**
 
-**Explanation:**
-Linkerd security metrics include: certificate expiration time, non-mTLS traffic ratio, authorization denied request count. Application login failures are application-level metrics outside Linkerd's scope.
+**Explanation:** Linkerd does not automatically know application login outcomes. For its own alerts, distinguish leaf expiration timestamps from issuer TTL duration, use rate-based scoped traffic ratios, retain identity labels and treat missing/idle telemetry separately.
 
 </details>

@@ -13,7 +13,7 @@
         "focus": [
           "api"
         ],
-        "note": "애플리케이션은 벤더 중립 API 계층만 호출하고 백엔드를 직접 알지 못한다."
+        "note": "표준 평가 API를 호출하되 Provider별 능력과 동작을 확인합니다."
       },
       {
         "id": "provider-swap",
@@ -24,7 +24,7 @@
           "launchdarkly",
           "inmemory"
         ],
-        "note": "환경에 맞는 Provider를 SetProvider()로 등록하기만 하면 Flag 시스템 전체가 바뀐다."
+        "note": "등록만으로 규칙·인증·운영 상태가 자동 이관되지는 않습니다."
       }
     ],
     "viewBox": [
@@ -62,7 +62,7 @@
       "id": "flagd",
       "type": "backend",
       "label": "flagd Provider",
-      "sublabel": "개발 / 스테이징",
+      "sublabel": "직접 운영하는 평가 서비스",
       "pos": [
         620,
         60
@@ -76,7 +76,7 @@
       "id": "launchdarkly",
       "type": "external",
       "label": "LaunchDarkly Provider",
-      "sublabel": "프로덕션",
+      "sublabel": "관리형 백엔드 예시",
       "pos": [
         620,
         220
@@ -111,7 +111,7 @@
     },
     {
       "kind": "region",
-      "label": "Provider 선택 (환경별)",
+      "label": "Provider 선택 예시",
       "wraps": [
         "flagd",
         "launchdarkly",
@@ -124,7 +124,7 @@
       "id": "api-flagd",
       "from": "api",
       "to": "flagd",
-      "label": "SetProvider()",
+      "label": "등록 + 준비 확인",
       "variant": "emphasis"
     },
     {
@@ -145,9 +145,9 @@
       "dot": "amber",
       "title": "Provider 모델",
       "items": [
-        "Provider는 OpenFeature SDK와 구체적인 Feature Flag 백엔드를 연결하는 어댑터다",
-        "openfeature.SetProvider(provider) 한 줄로 Provider를 등록한다",
-        "Provider만 교체해도 애플리케이션 코드 변경 없이 Flag 시스템 전체가 바뀐다"
+        "Provider별 생성자와 인증 설정 확인",
+        "준비 상태를 확인한 뒤 Client 재사용",
+        "이관 후 규칙·기본값·오류 동작 테스트"
       ]
     }
   ]

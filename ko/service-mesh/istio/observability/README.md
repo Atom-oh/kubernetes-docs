@@ -1,9 +1,9 @@
 # Observability
 
-> **지원 버전**: Istio 1.28
-> **마지막 업데이트**: 2026년 2월 19일
+> **지원 버전**: Istio 1.31
+> **마지막 업데이트**: 2026년 9월 11일
 
-Istio는 서비스 메시 내에서 포괄적인 관찰성(Observability)을 제공합니다. 애플리케이션 코드를 변경하지 않고도 모든 서비스 간 통신에 대한 메트릭, 로그, 트레이스를 자동으로 수집합니다.
+Istio 프록시는 관측한 트래픽의 텔레메트리를 생성합니다. 메트릭 스크레이프, access log, 추적 제공자와 저장소를 구성해야 합니다. Span을 연결하려면 애플리케이션이 수신·송신 요청 사이에 trace context를 전파해야 하며 애플리케이션 내부 span과 예외는 별도 계측·로깅이 필요합니다.
 
 ## 목차
 
@@ -21,11 +21,7 @@ Istio는 서비스 메시 내에서 포괄적인 관찰성(Observability)을 제
   <img src="https://istio.io/latest/docs/tasks/observability/metrics/using-istio-dashboard/grafana-istio-dashboard.png" alt="Istio Observability Dashboard" width="900">
 </p>
 
-Istio의 관찰성 기능은 **Zero Instrumentation** 원칙을 따릅니다:
-- ✅ 애플리케이션 코드 변경 불필요
-- ✅ 자동 메트릭 수집 및 전송
-- ✅ 분산 추적 자동 생성
-- ✅ 표준화된 로그 포맷
+사이드카·waypoint는 애플리케이션에 프록시 계측 코드를 추가하지 않고 HTTP 메트릭·span·access log를 제공할 수 있습니다. Ambient ztunnel은 L4 텔레메트리를 제공하며 HTTP 관측에는 waypoint가 필요합니다. CPU·메모리·호스트 패킷 메트릭은 Istio 요청 메트릭이 아닌 Kubernetes·노드 exporter에서 수집합니다. 위 화면은 구성된 대시보드 예시이며 Istio가 자동 설치하는 구성 요소가 아닙니다.
 
 ## Three Pillars of Observability
 
@@ -66,8 +62,8 @@ Istio의 관찰성 기능은 **Zero Instrumentation** 원칙을 따릅니다:
 ### 3. 로깅 (Logging)
 
 **무엇을 기록하는가?**
-- 모든 HTTP 요청/응답
-- 에러 및 예외 상황
+- 설정한 HTTP access 메타데이터(전체 요청·응답 본문이 아님)
+- 프록시 오류(애플리케이션 예외는 애플리케이션 로그 필요)
 - 보안 이벤트
 
 **언제 사용하는가?**
@@ -96,10 +92,10 @@ App → Envoy (메트릭 생성)
 
 **2. 분산 추적 흐름**:
 ```
-App → Envoy (Span 생성)
-    → Jaeger/Zipkin (트레이스 수집)
-    → Tempo (장기 저장)
-    → Grafana (트레이스 시각화)
+App의 context 전파 → Envoy span 생성
+    → 설정한 수집기·프로토콜(예: OpenTelemetry/OTLP)
+    → 선택한 백엔드: Jaeger, Zipkin 또는 Tempo
+    → 백엔드 UI 또는 설정한 Grafana datasource
 ```
 
 **3. 로깅 흐름**:
@@ -112,24 +108,24 @@ App → Envoy (Access Log 생성)
 
 ## Golden Signals
 
-Google SRE 원칙에 따른 핵심 메트릭:
+Google SRE 원칙의 핵심 신호입니다. HTTP 쿼리는 같은 메시 홉의 송신·수신 관측을 중복 집계하지 않도록 `reporter="destination"`을 선택합니다. 이는 서비스 홉 수치이며 고유 사용자 트랜잭션 수가 아닙니다. 수신 reporter가 없는 외부·게이트웨이 트래픽은 별도로 분석하고 gRPC 오류는 `grpc_response_status`도 확인합니다. 아래 지연 단위는 밀리초입니다.
 
 ### 1. Latency (지연시간)
 
 ```promql
 # P50 레이턴시
 histogram_quantile(0.50,
-  sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le)
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])) by (le)
 )
 
 # P95 레이턴시
 histogram_quantile(0.95,
-  sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le)
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])) by (le)
 )
 
 # P99 레이턴시
 histogram_quantile(0.99,
-  sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le)
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])) by (le)
 )
 ```
 
@@ -137,38 +133,47 @@ histogram_quantile(0.99,
 
 ```promql
 # 초당 요청 수 (RPS)
-sum(rate(istio_requests_total[5m]))
+sum(rate(istio_requests_total{reporter="destination"}[5m]))
 
 # 서비스별 트래픽
-sum(rate(istio_requests_total[5m])) by (destination_service)
+sum(rate(istio_requests_total{reporter="destination"}[5m])) by (destination_service)
 ```
 
 ### 3. Errors (에러)
 
 ```promql
 # 에러율 (%)
-sum(rate(istio_requests_total{response_code=~"5.."}[5m]))
+sum(rate(istio_requests_total{reporter="destination",response_code=~"5.."}[5m]))
 /
-sum(rate(istio_requests_total[5m]))
+sum(rate(istio_requests_total{reporter="destination"}[5m]))
 * 100
 
 # 4xx vs 5xx 에러
-sum(rate(istio_requests_total{response_code=~"4.."}[5m])) by (response_code)
-sum(rate(istio_requests_total{response_code=~"5.."}[5m])) by (response_code)
+sum(rate(istio_requests_total{reporter="destination",response_code=~"4.."}[5m])) by (response_code)
+sum(rate(istio_requests_total{reporter="destination",response_code=~"5.."}[5m])) by (response_code)
 ```
 
 ### 4. Saturation (포화도)
 
 ```promql
-# CPU 사용률
-rate(container_cpu_usage_seconds_total{pod=~".*"}[5m])
+# CPU consumption in cores (not percent), one series per application container.
+sum by (namespace, pod, container) (
+  rate(container_cpu_usage_seconds_total{container!="",container!="POD"}[5m])
+)
 
-# 메모리 사용률
-container_memory_working_set_bytes{pod=~".*"}
-/
-container_spec_memory_limit_bytes{pod=~".*"}
-* 100
+# Memory working set / configured limit (%); containers without limits omitted.
+100 * max by (namespace, pod, container) (
+  container_memory_working_set_bytes{container!="",container!="POD"}
+)
+/ on (namespace, pod, container)
+(max by (namespace, pod, container) (
+  kube_pod_container_resource_limits{resource="memory",unit="byte"}
+) > 0)
 ```
+
+이 쿼리는 kubelet/cAdvisor와 kube-state-metrics 스크레이프가 필요하며 Istio 메트릭이 아닙니다. 중복 스크레이프 대상을 피하고 멀티 클러스터 집계에는 cluster 레이블도 포함합니다. 제한 대비 사용량 외에 throttling·대기열·미처리 작업도 확인합니다.
+
+
 
 ## 관찰성 베스트 프랙티스
 
@@ -187,27 +192,43 @@ container_spec_memory_limit_bytes{pod=~".*"}
 
 프로덕션 환경에서는 적절한 샘플링 비율 설정:
 
+아래 주소의 OTLP collector Service와 선택한 백엔드로의 export 설정이 먼저 필요합니다. 제공자를 기존 설치 설정에 병합한 뒤 Telemetry API로 샘플링을 구성합니다:
+
 ```yaml
+# istioctl install -f input, not kubectl apply
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
   meshConfig:
-    defaultConfig:
-      tracing:
-        sampling: 1.0  # Dev: 100%, Prod: 1-10%
+    enableTracing: true
+    extensionProviders:
+    - name: otel
+      opentelemetry:
+        service: otel-collector.observability.svc.cluster.local
+        port: 4317
 ```
 
-**권장 샘플링 비율**:
-- 개발: 100%
-- 스테이징: 10-50%
-- 프로덕션: 1-10%
+```yaml
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: mesh-tracing
+  namespace: istio-system
+spec:
+  tracing:
+  - providers:
+    - name: otel
+    randomSamplingPercentage: 1.0
+```
+
+`1.0`은 100%가 아닌 **1%**입니다. 트래픽량·조사 목적·수집기와 백엔드 용량에 맞춰 선택합니다. 작은 테스트 환경은 100%를 사용할 수 있지만 운영의 낮은 비율도 유효성을 검증해야 합니다. Context 전파는 여전히 필요합니다. 같은 네임스페이스에 selector 없는 Telemetry를 둘 이상 생성하지 말고 아래 로깅 예제와 함께 사용할 때는 하나에 병합합니다.
 
 ### 3. Access Log 최적화
 
-필요한 필드만 선택적으로 기록:
+다음은 필드가 아니라 요청을 필터링합니다. 필드 선택·마스킹은 access-log 제공자에 구성합니다. 이 HTTP 필터는 성공 요청을 생략하므로 전체 접근 감사 기록으로 사용할 수 없습니다:
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: mesh-default
@@ -222,13 +243,17 @@ spec:
 
 ### 4. 메트릭 보관 정책
 
-데이터 보관 기간 설정:
+운영 필요·저장 비용·실제 보존 요구에 맞춰 조정할 예시 범위입니다(규정의 기본값이 아님):
 - **실시간 메트릭**: 1-7일 (고해상도)
 - **장기 메트릭**: 30-90일 (다운샘플링)
 - **트레이스**: 7-30일
-- **로그**: 규정에 따라 (30-365일)
+- **로그**: 실제 보존 정책으로 결정하며 30–365일은 예시일 뿐입니다
+
+Prometheus 로컬 TSDB는 오래된 데이터를 자동 다운샘플링하지 않습니다. 필요하면 다운샘플링·장기 저장을 지원하는 백엔드를 명시적으로 구성합니다.
 
 ### 5. 알림 설정
+
+아래 임계치는 예시입니다. 서비스 SLO와 지속적인 오류 예산 소진을 기준으로 하고 최소 트래픽 조건을 두어 불필요한 알림을 줄입니다.
 
 **Critical Alerts** (즉시 대응):
 - 에러율 > 5%
@@ -256,7 +281,7 @@ spec:
 **주요 내용**:
 - `istio_requests_total`: 총 요청 수
 - `istio_request_duration_milliseconds`: 요청 지연시간
-- `istio_request_bytes`: 요청/응답 크기
+- `istio_request_bytes` / `istio_response_bytes`: 요청 / 응답 크기 히스토그램
 - Circuit Breaker 메트릭
 - Telemetry API 커스터마이징
 

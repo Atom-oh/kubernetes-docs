@@ -2,13 +2,13 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "KIP-392 Follower Fetching — 동일 AZ 팔로워로 리다이렉트",
+    "title": "KIP-392: 선호 replica 힌트와 로컬 읽기",
     "quality_profile": "showcase",
     "animation": "trace",
     "column_fit": "spread",
     "viewBox": [
-      900,
-      560
+      1080,
+      600
     ],
     "legend": {
       "entries": {
@@ -48,12 +48,12 @@
     {
       "from": 165,
       "to": 300,
-      "label": "1. 리더에 Fetch — 선호 replica 확인"
+      "label": "1. 리더가 선호 replica 정보를 제공"
     },
     {
       "from": 325,
       "to": 470,
-      "label": "2. 동일 AZ 팔로워에서 Fetch — cross-AZ 비용 없음"
+      "label": "2. 로컬 replica에서 읽기 · 없으면 leader 폴백"
     }
   ],
   "messages": [
@@ -70,9 +70,9 @@
       "from": "leader",
       "to": "consumer",
       "y": 265,
-      "label": "\"AZ-a의 팔로워로 가라\" (선호 replica 지시)",
+      "label": "선호 replica 힌트 (사용 가능한 경우)",
       "variant": "return",
-      "note": "RackAwareReplicaSelector가 broker.rack과 client.rack을 비교"
+      "note": "broker.rack과 client.rack 일치 여부 확인"
     },
     {
       "id": "fetch-follower",
@@ -87,7 +87,7 @@
       "from": "follower",
       "to": "consumer",
       "y": 430,
-      "label": "데이터 반환 (동일 AZ, cross-AZ 비용 없음)",
+      "label": "데이터 반환 · 복제 트래픽은 별도",
       "variant": "emphasis"
     }
   ],

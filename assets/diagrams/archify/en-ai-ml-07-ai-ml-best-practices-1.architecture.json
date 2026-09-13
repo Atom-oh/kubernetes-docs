@@ -6,7 +6,7 @@
     "locale": "en",
     "output": "en-ai-ml-07-ai-ml-best-practices-1.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "legend": {
       "entries": {
         "backend": {
@@ -26,7 +26,7 @@
           "e2e",
           "responsiveness"
         ],
-        "note": "TTFT and E2E latency decide how responsive the service feels. Interactive apps should target TTFT < 500ms."
+        "note": "Distinguish first byte/token and define workload-specific SLOs."
       },
       {
         "id": "streaming",
@@ -36,7 +36,7 @@
           "tps",
           "streaming"
         ],
-        "note": "With ITL < 50ms and TPS > 20, tokens stream smoothly without stutter."
+        "note": "Chunks can contain multiple tokens; nonstreaming cannot measure actual ITL."
       },
       {
         "id": "capacity",
@@ -58,8 +58,7 @@
       "id": "ttft",
       "type": "backend",
       "label": "TTFT",
-      "sublabel": "Request to first token",
-      "tag": "< 500ms",
+      "sublabel": "first nonempty output received",
       "pos": [
         60,
         60
@@ -74,7 +73,6 @@
       "type": "backend",
       "label": "E2E Latency",
       "sublabel": "Total time from request to completion",
-      "tag": "Depends on output length",
       "pos": [
         60,
         160
@@ -88,8 +86,7 @@
       "id": "itl",
       "type": "backend",
       "label": "ITL",
-      "sublabel": "Average time between consecutive tokens",
-      "tag": "< 50ms",
+      "sublabel": "token / chunk intervals",
       "pos": [
         60,
         260
@@ -102,9 +99,8 @@
     {
       "id": "tps",
       "type": "backend",
-      "label": "TPS",
-      "sublabel": "Tokens generated per second per request",
-      "tag": "> 20 TPS",
+      "label": "TPOT / TPS",
+      "sublabel": "specify window / token count",
       "pos": [
         60,
         360
@@ -118,8 +114,7 @@
       "id": "throughput",
       "type": "backend",
       "label": "Throughput",
-      "sublabel": "Requests processed per second",
-      "tag": "Maximize within SLOs",
+      "sublabel": "successful completions / time",
       "pos": [
         60,
         460
@@ -161,7 +156,7 @@
       "id": "capacity",
       "type": "frontend",
       "label": "System Capacity",
-      "sublabel": "Concurrent requests served",
+      "sublabel": "goodput meeting SLOs",
       "pos": [
         720,
         460
@@ -220,6 +215,16 @@
       "id": "throughput-capacity",
       "from": "throughput",
       "to": "capacity"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Aggregation boundaries",
+      "items": [
+        "Average TPOT/ITL is undefined for one or fewer tokens.",
+        "Aggregate TPS differs from an unweighted request-TPS mean."
+      ]
     }
   ]
 }

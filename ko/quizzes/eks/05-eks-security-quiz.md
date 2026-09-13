@@ -1,5 +1,7 @@
 # Amazon EKS 보안 퀴즈
 
+> **마지막 업데이트**: 2026년 9월 11일
+
 이 퀴즈는 Amazon EKS의 보안 기능, 모범 사례 및 구성에 대한 이해를 테스트합니다.
 
 ## 퀴즈 개요
@@ -12,1291 +14,1085 @@
 
 ## 객관식 문제
 
-### 1. Amazon EKS에서 Kubernetes API 서버에 대한 액세스를 제어하는 가장 효과적인 방법은 무엇인가요?
+### 1. IAM 사용자·역할에 대해 신원 인증과 Kubernetes 권한 부여를 올바르게 결합하는 EKS 구성은 무엇인가요?
 
-A. IAM 사용자 및 역할만 사용  
-B. Kubernetes RBAC만 사용  
-C. IAM 및 Kubernetes RBAC 통합 사용  
-D. API 서버에 대한 네트워크 액세스 제한만 사용  
+- A) IAM 관리 권한만 사용
+- B) 신원 인증 경로 없이 RBAC 규칙만 생성
+- C) IAM 클러스터 접근과 적절한 RBAC·EKS access policy 구성
+- D) API endpoint 네트워크 제한만 사용
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: C. IAM 및 Kubernetes RBAC 통합 사용**
+**정답: C) IAM 클러스터 접근과 적절한 RBAC·EKS access policy 구성**
 
 **설명:**
-Amazon EKS에서 Kubernetes API 서버에 대한 액세스를 제어하는 가장 효과적인 방법은 AWS IAM과 Kubernetes RBAC(역할 기반 액세스 제어)를 통합하여 사용하는 것입니다. 이 접근 방식은 AWS의 강력한 ID 관리 기능과 Kubernetes의 세분화된 권한 제어를 결합하여 포괄적인 보안 모델을 제공합니다.
 
-**IAM 및 RBAC 통합의 주요 이점:**
+IAM은 구성한 EKS 접근 경로에서 의도한 사람·자동화 신원을 인증합니다. Kubernetes RBAC와 EKS access policy는 Kubernetes 작업 권한을 부여하며 grant는 합산됩니다. 네트워크 제한은 별도 계층이며 권한 부여를 대체하지 않습니다. Pod의 Kubernetes 인증은 일반적으로 ServiceAccount token을 사용하고 IRSA·Pod Identity는 워크로드 AWS 자격 증명을 제공합니다.
 
-1. **다중 계층 인증 및 권한 부여**:
-   - IAM은 "누가" API 서버에 연결할 수 있는지 제어 (인증)
-   - RBAC은 인증된 사용자가 "무엇을" 할 수 있는지 제어 (권한 부여)
+EKS cluster 서비스 역할과 개발자 역할의 목적은 다릅니다. 개발자에게 AmazonEKSClusterPolicy를 붙여도 Kubernetes 접근 권한이 생기지 않으며 DescribeCluster·ListClusters나 kubeconfig 파일만으로 workload 작업이 허용되지는 않습니다.
 
-2. **AWS 서비스와의 원활한 통합**:
-   - 기존 AWS IAM 정책 및 역할 활용
-   - AWS 서비스 계정 및 워크로드 ID 활용
+**범위가 있는 구현:** 권한 있는 플랫폼 운영자가 승인된 기존 개발자 IAM 역할을 위해 아래 namespace·RBAC를 준비합니다. 클러스터는 access entry를 이미 지원해야 합니다. 관리자·노드 매핑을 보존하고 authentication mode migration을 검토하며 sample ConfigMap으로 aws-auth를 덮어쓰지 않습니다.
 
-3. **세분화된 권한 제어**:
-   - 네임스페이스, 리소스 유형, 특정 리소스에 대한 세부적인 권한 정의
-   - 최소 권한 원칙 구현
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security-demo
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.36
+```
 
-**구현 방법:**
 
-1. **aws-auth ConfigMap 구성**:
-   ```yaml
-   apiVersion: v1
-   kind: ConfigMap
-   metadata:
-     name: aws-auth
-     namespace: kube-system
-   data:
-     mapRoles: |
-       - rolearn: arn:aws:iam::123456789012:role/EKSAdminRole
-         username: admin
-         groups:
-         - system:masters
-       - rolearn: arn:aws:iam::123456789012:role/EKSDeveloperRole
-         username: developer
-         groups:
-         - developers
-     mapUsers: |
-       - userarn: arn:aws:iam::123456789012:user/security-auditor
-         username: security-auditor
-         groups:
-         - security-auditors
-   ```
 
-2. **Kubernetes RBAC 역할 및 바인딩 정의**:
-   ```yaml
-   # 개발자 역할 정의
-   apiVersion: rbac.authorization.k8s.io/v1
-   kind: Role
-   metadata:
-     namespace: dev
-     name: developer
-   rules:
-   - apiGroups: ["", "apps", "batch"]
-     resources: ["pods", "deployments", "jobs"]
-     verbs: ["get", "list", "watch", "create", "update", "patch"]
-   ---
-   # 개발자 역할 바인딩
-   apiVersion: rbac.authorization.k8s.io/v1
-   kind: RoleBinding
-   metadata:
-     name: developer-binding
-     namespace: dev
-   subjects:
-   - kind: Group
-     name: developers
-     apiGroup: rbac.authorization.k8s.io
-   roleRef:
-     kind: Role
-     name: developer
-     apiGroup: rbac.authorization.k8s.io
-   ```
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?Set the verified cluster name}"
+: "${AWS_REGION:?Set its Region}"
+: "${DEVELOPER_ROLE_ARN:?Set a prepared IAM role ARN, not an STS session ARN}"
+MODE=$(aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query cluster.accessConfig.authenticationMode --output text)
+case "$MODE" in
+  API|API_AND_CONFIG_MAP) ;;
+  *) echo "Access entries are not enabled; review the migration first"; exit 1 ;;
+esac
+aws eks list-access-entries --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --output json > security-access-entries.json
+python3 - "$DEVELOPER_ROLE_ARN" <<'PY'
+import json, sys
+with open("security-access-entries.json") as stream:
+    existing = json.load(stream)["accessEntries"]
+if sys.argv[1] in existing:
+    raise SystemExit("Entry already exists; inspect its groups/policies instead of overwriting")
+PY
+aws eks create-access-entry --cluster-name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --principal-arn "$DEVELOPER_ROLE_ARN" --type STANDARD \
+  --kubernetes-groups security-demo-developers
+```
 
-3. **IAM 정책 예시**:
-   ```json
-   {
-     "Version": "2012-10-17",
-     "Statement": [
-       {
-         "Effect": "Allow",
-         "Action": [
-           "eks:DescribeCluster",
-           "eks:ListClusters"
-         ],
-         "Resource": "*"
-       }
-     ]
-   }
-   ```
 
-**모범 사례:**
 
-1. **최소 권한 원칙 적용**:
-   - 필요한 최소한의 권한만 부여
-   - 정기적인 권한 검토 및 감사
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: developer
+  namespace: security-demo
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: developer
+  namespace: security-demo
+subjects:
+- kind: Group
+  name: security-demo-developers
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: developer
+  apiGroup: rbac.authorization.k8s.io
+```
 
-2. **역할 기반 액세스 구현**:
-   - 직무 기능에 따른 역할 정의
-   - 개인이 아닌 역할에 권한 할당
+Access entry의 그룹 이름과 RoleBinding subject가 일치해야 합니다. 이 Role은 security-demo 안에서 표시한 작업을 허용하지만 기존 다른 grant가 접근 범위를 넓힐 수 있습니다. Deployment·Job 생성자는 namespace의 Secret·PVC·ServiceAccount를 간접 사용할 수 있으므로 Secret 직접 읽기 규칙이 없다는 사실만으로 tenant 경계가 되지는 않습니다. Tenant를 분리하고 admission·소유권 제어로 workload 신원·리소스 사용을 제한합니다.
 
-3. **임시 자격 증명 사용**:
-   - 장기 자격 증명 대신 임시 자격 증명 사용
-   - AWS STS(Security Token Service) 활용
+별도 검토한 viewer는 namespace 범위 AmazonEKSViewPolicy association을 사용할 수도 있습니다. 추가 전에 기존 access policy를 확인하며 이 grant가 더 넓은 RBAC·다른 access policy 권한을 취소하지는 않습니다. `eks:namespaces`는 일반 kubectl 요청이 아닌 access policy association 요청을 필터링합니다.
 
-4. **정기적인 감사 및 모니터링**:
-   - CloudTrail을 통한 API 호출 로깅
-   - Kubernetes 감사 로그 활성화 및 분석
+**실제 로그인 검증:** 호출자는 cluster 조회와 승인된 역할 assume 권한이 있어야 합니다. 다음은 기본 context를 대체하지 않고 임시 kubeconfig를 만듭니다:
 
-**실제 구현 예시:**
+```bash
+set -euo pipefail
+umask 077
+: "${CLUSTER_NAME:?Set the reviewed cluster name}"
+: "${AWS_REGION:?Set the cluster Region}"
+: "${DEVELOPER_ROLE_ARN:?Set the intended IAM role ARN}"
+review_dir=$(mktemp -d "${TMPDIR:-/tmp}/eks-login-check.XXXXXXXX")
+trap 'rm -rf -- "$review_dir"' EXIT
+aws eks update-kubeconfig --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --role-arn "$DEVELOPER_ROLE_ARN" --kubeconfig "$review_dir/config"
+kubectl --kubeconfig "$review_dir/config" auth can-i list pods -n security-demo
+kubectl --kubeconfig "$review_dir/config" auth can-i create jobs -n security-demo
+kubectl --kubeconfig "$review_dir/config" auth can-i list pods -n another-team
+```
 
-1. **EKS 클러스터 액세스를 위한 IAM 역할 생성**:
-   ```bash
-   aws iam create-role \
-     --role-name EKSDevRole \
-     --assume-role-policy-document file://trust-policy.json
+의도한 grant와 결과를 비교하고 예상하지 못한 다른 namespace 권한을 조사합니다. `--as`는 impersonation·RBAC를 검사하며 IAM access policy 경로의 동작 증명이 아닙니다. 이 퀴즈에서 실제 IAM 로그인·Kubernetes 권한 시험은 실행하지 않았으며 로컬 증거는 schema·shell 검사와 mocked access entry 흐름입니다.
 
-   aws iam attach-role-policy \
-     --role-name EKSDevRole \
-     --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
-   ```
+참고: [EKS access entry](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html), [EKS access policy](https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html), [Kubernetes RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/).
 
-2. **kubeconfig 업데이트**:
-   ```bash
-   aws eks update-kubeconfig \
-     --name my-cluster \
-     --role-arn arn:aws:iam::123456789012:role/EKSDevRole \
-     --region us-west-2
-   ```
-
-3. **RBAC 구성 적용**:
-   ```bash
-   kubectl apply -f rbac-config.yaml
-   ```
-
-다른 옵션들의 문제점:
-- **A. IAM 사용자 및 역할만 사용**: IAM은 클러스터 액세스를 제어할 수 있지만, Kubernetes 리소스에 대한 세분화된 권한을 제공하지 않습니다.
-- **B. Kubernetes RBAC만 사용**: RBAC은 클러스터 내 권한을 제어하지만, AWS 서비스와의 통합이 부족하고 AWS 인프라 수준의 보안을 제공하지 않습니다.
-- **D. API 서버에 대한 네트워크 액세스 제한만 사용**: 네트워크 수준의 제어는 중요하지만, 인증된 사용자의 권한을 제한하지 않으며 세분화된 액세스 제어를 제공하지 않습니다.
 </details>
-### 2. Amazon EKS에서 파드 간 네트워크 트래픽을 제한하는 가장 효과적인 방법은 무엇인가요?
 
-A. 보안 그룹만 사용  
-B. Kubernetes 네트워크 정책 사용  
-C. VPC 엔드포인트 정책 사용  
-D. 호스트 기반 방화벽 사용  
+### 2. 정책 시행을 지원하는 EKS 네트워크에서 label 기반 Pod 트래픽 규칙을 표현하는 Kubernetes 기능은 무엇인가요?
+
+- A) 인스턴스 security group만 사용
+- B) 시행 가능한 네트워크 구현과 NetworkPolicy resource
+- C) VPC endpoint policy만 사용
+- D) 호스트 firewall 명령만 사용
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: B. Kubernetes 네트워크 정책 사용**
+**정답: B) 시행 가능한 네트워크 구현과 NetworkPolicy resource**
 
 **설명:**
-Amazon EKS에서 파드 간 네트워크 트래픽을 제한하는 가장 효과적인 방법은 Kubernetes 네트워크 정책을 사용하는 것입니다. 네트워크 정책은 파드 수준에서 마이크로세그멘테이션을 제공하여 파드 간의 통신을 세밀하게 제어할 수 있습니다.
 
-**Kubernetes 네트워크 정책의 주요 이점:**
+NetworkPolicy는 Kubernetes label·namespace로 Pod와 허용 트래픽을 선택하며 정책을 시행하는 네트워크 구현이 필요합니다. 지원되는 Pod용 보안 그룹을 포함한 security group도 유용한 AWS 제어이며 전체 인스턴스에만 한정되지 않습니다. VPC endpoint policy는 지원 AWS 서비스 접근을 제어하며 임의 label 기반 Pod 트래픽 정책이 아닙니다.
 
-1. **파드 수준의 세분화된 제어**:
-   - IP 주소, 포트, 프로토콜 기반 필터링
-   - 레이블 기반 선택기를 통한 동적 정책 적용
-   - 인그레스 및 이그레스 트래픽 모두 제어
+**완전한 정책 예제:** 아래 manifest는 격리된 데모 namespace의 정책이며 앱 설치나 CNI 교체 절차가 아닙니다. 지원되는 enforcing CNI가 있는 일반 Linux EC2 노드와 통상적인 CoreDNS Deployment·Pod label을 전제로 합니다. Auto Mode·node-local DNS는 실제 resolver 경로에 맞는 규칙이 필요합니다. CoreDNS ingress가 제한되어 있다면 그 소유자도 질의를 허용해야 합니다.
 
-2. **선언적 구성**:
-   - Kubernetes 리소스로 관리
-   - GitOps 및 IaC 워크플로우와 통합
-   - 버전 제어 및 감사 가능
+Namespace 소유자를 통해 저장·적용합니다. Default deny는 양방향을 격리하며 frontend → API, API → database에는 송신 egress와 수신 ingress를 각각 허용합니다. DNS에는 UDP·TCP가 모두 필요합니다:
 
-3. **CNI 플러그인과의 통합**:
-   - Amazon VPC CNI, Calico, Cilium 등과 통합
-   - 네트워크 정책 시행을 위한 다양한 옵션
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security-network-demo
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.36
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security-monitoring-demo
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: security-network-demo
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: security-network-demo
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend-to-api
+  namespace: security-network-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: api
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-ingress
+  namespace: security-network-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: frontend
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-to-database
+  namespace: security-network-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: database
+    ports:
+    - protocol: TCP
+      port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: database-ingress
+  namespace: security-network-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: database
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: api
+    ports:
+    - protocol: TCP
+      port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: monitor-api
+  namespace: security-network-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: api
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: security-monitoring-demo
+      podSelector:
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 9090
+```
 
-**구현 방법:**
+Monitoring peer의 namespaceSelector와 podSelector를 같은 peer에 두어 **AND**로 평가하므로 security-monitoring-demo의 matching Prometheus Pod만 선택합니다. 이 client가 egress 격리 상태라면 송신 연결도 허용해야 합니다:
 
-1. **기본 거부 정책 구현**:
-   ```yaml
-   apiVersion: networking.k8s.io/v1
-   kind: NetworkPolicy
-   metadata:
-     name: default-deny
-     namespace: prod
-   spec:
-     podSelector: {}
-     policyTypes:
-     - Ingress
-     - Egress
-   ```
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: prometheus-to-demo-api
+  namespace: security-monitoring-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: security-network-demo
+      podSelector:
+        matchLabels:
+          app: api
+    ports:
+    - protocol: TCP
+      port: 9090
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+```
 
-2. **특정 애플리케이션 간 통신 허용**:
-   ```yaml
-   apiVersion: networking.k8s.io/v1
-   kind: NetworkPolicy
-   metadata:
-     name: api-allow
-     namespace: prod
-   spec:
-     podSelector:
-       matchLabels:
-         app: api
-     policyTypes:
-     - Ingress
-     ingress:
-     - from:
-       - podSelector:
-           matchLabels:
-             app: frontend
-       ports:
-       - protocol: TCP
-         port: 8080
-   ```
+| 흐름 | 이 정책에서 의도한 결과 |
+|---|---|
+| frontend → api TCP 8080 | 허용 |
+| api → database TCP 5432 | 허용 |
+| frontend → database TCP 5432 | 거부 |
+| 무관한 Pod → api TCP 8080 | 거부 |
+| 선택한 Prometheus → api TCP 9090 | 허용 |
+| monitoring namespace의 다른 Pod → api TCP 9090 | 거부 |
+| workload → matching CoreDNS Pod UDP·TCP 53 | Resolver 측 제어를 충족하면 허용 |
+| 임의 외부 목적지 | 명시적 egress 규칙 추가 전 거부 |
 
-3. **네임스페이스 간 통신 제어**:
-   ```yaml
-   apiVersion: networking.k8s.io/v1
-   kind: NetworkPolicy
-   metadata:
-     name: allow-from-monitoring
-     namespace: prod
-   spec:
-     podSelector: {}
-     policyTypes:
-     - Ingress
-     ingress:
-     - from:
-       - namespaceSelector:
-           matchLabels:
-             purpose: monitoring
-       ports:
-       - protocol: TCP
-         port: 9090
-   ```
+정책은 순서 없이 합산되므로 다른 광범위한 allow가 결과를 넓힐 수 있고 default deny가 이를 덮어쓰지 않습니다. 대상 CNI에서 실제 전체 정책·DNS·새 허용·거부 연결을 시험합니다. 기존 연결, hostNetwork·node 트래픽과 NAT에는 구현별 제약이 있으며 단순 NetworkPolicy를 보편적인 IMDS·host firewall 경계로 볼 수 없습니다.
 
-**EKS에서의 네트워크 정책 구현:**
+외부 서비스에는 실제 목적지 주소·port 또는 선택한 구현이 지원하는 DNS 기반 제어를 사용합니다. 모든 목적지의 443 port나 전체 10.0.0.0/8 허용은 서비스 allowlist가 아닙니다. 임의 Calico·Cilium 교체 manifest나 일부 kube-proxy replacement flag를 기존 EKS 네트워크에 적용하는 것은 안전한 정책 활성화 절차가 아닙니다.
 
-1. **호환되는 CNI 플러그인 선택**:
-   - Amazon VPC CNI + Calico
-   - Cilium
-   - Antrea
+대응 본문의 selector·port 합성 사례 18개를 로컬에서 확인했으며 실제 packet·CNI 시험은 실행하지 않았습니다. 참고: [Kubernetes NetworkPolicy 동작](https://kubernetes.io/docs/concepts/services-networking/network-policies/).
 
-2. **Calico 설치 예시**:
-   ```bash
-   kubectl apply -f https://docs.projectcalico.org/manifests/calico-vxlan.yaml
-   ```
-
-3. **Cilium 설치 예시**:
-   ```bash
-   helm repo add cilium https://helm.cilium.io/
-   helm install cilium cilium/cilium \
-     --namespace kube-system \
-     --set nodeinit.enabled=true \
-     --set kubeProxyReplacement=partial \
-     --set hostServices.enabled=false \
-     --set externalIPs.enabled=true \
-     --set nodePort.enabled=true \
-     --set hostPort.enabled=true \
-     --set bpf.masquerade=false \
-     --set image.pullPolicy=IfNotPresent
-   ```
-
-**모범 사례:**
-
-1. **기본 거부 정책으로 시작**:
-   - 모든 트래픽을 기본적으로 차단
-   - 필요한 통신만 명시적으로 허용
-
-2. **최소 권한 원칙 적용**:
-   - 필요한 최소한의 통신만 허용
-   - 특정 포트 및 프로토콜로 제한
-
-3. **레이블 기반 정책 사용**:
-   - IP 주소 대신 레이블 사용
-   - 동적 환경에서 유연성 제공
-
-4. **정책 테스트 및 검증**:
-   - 비프로덕션 환경에서 정책 테스트
-   - 네트워크 정책 시뮬레이터 도구 활용
-
-**실제 구현 예시:**
-
-1. **마이크로서비스 아키텍처의 네트워크 정책**:
-   ```yaml
-   # 프론트엔드에서 API로의 통신만 허용
-   apiVersion: networking.k8s.io/v1
-   kind: NetworkPolicy
-   metadata:
-     name: api-backend
-     namespace: prod
-   spec:
-     podSelector:
-       matchLabels:
-         app: api
-     policyTypes:
-     - Ingress
-     - Egress
-     ingress:
-     - from:
-       - podSelector:
-           matchLabels:
-             app: frontend
-       ports:
-       - protocol: TCP
-         port: 8080
-     egress:
-     - to:
-       - podSelector:
-           matchLabels:
-             app: database
-       ports:
-       - protocol: TCP
-         port: 5432
-   ```
-
-2. **외부 서비스 액세스 제한**:
-   ```yaml
-   apiVersion: networking.k8s.io/v1
-   kind: NetworkPolicy
-   metadata:
-     name: limit-external
-     namespace: prod
-   spec:
-     podSelector:
-       matchLabels:
-         app: backend
-     policyTypes:
-     - Egress
-     egress:
-     - to:
-       - ipBlock:
-           cidr: 10.0.0.0/8
-     - to:
-       - ipBlock:
-           cidr: 0.0.0.0/0
-           except:
-           - 169.254.0.0/16
-           - 10.0.0.0/8
-       ports:
-       - protocol: TCP
-         port: 443
-   ```
-
-다른 옵션들의 문제점:
-- **A. 보안 그룹만 사용**: 보안 그룹은 인스턴스 수준에서 작동하며 파드 간의 세분화된 트래픽 제어를 제공하지 않습니다.
-- **C. VPC 엔드포인트 정책 사용**: VPC 엔드포인트 정책은 AWS 서비스에 대한 액세스를 제어하지만, 파드 간 통신을 제어하지 않습니다.
-- **D. 호스트 기반 방화벽 사용**: 호스트 기반 방화벽은 노드 수준에서 작동하며, 동일한 노드에서 실행되는 파드 간의 통신을 효과적으로 제어하지 못합니다.
 </details>
-### 3. Amazon EKS에서 컨테이너 이미지 보안을 강화하기 위한 가장 효과적인 접근 방식은 무엇인가요?
 
-A. 모든 이미지에 대해 수동 보안 검사 수행  
-B. 신뢰할 수 있는 공식 이미지만 사용  
-C. 이미지 스캔, 서명 확인 및 허용 정책을 포함한 통합 파이프라인 구현  
-D. 컨테이너 내에서 바이러스 백신 소프트웨어 실행  
+### 3. EKS 컨테이너 이미지 보안에 상호 보완적인 제어를 결합하는 방법은 무엇인가요?
+
+- A) 수동 이미지 검사에만 의존
+- B) 모든 공식 이미지에 취약점이 없다고 가정
+- C) 스캔·서명·검증·admission 제어 결합
+- D) 컨테이너 내부 antivirus에만 의존
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: C. 이미지 스캔, 서명 확인 및 허용 정책을 포함한 통합 파이프라인 구현**
+**정답: C) 스캔·서명·검증·admission 제어 결합**
 
 **설명:**
-Amazon EKS에서 컨테이너 이미지 보안을 강화하기 위한 가장 효과적인 접근 방식은 이미지 스캔, 서명 확인 및 허용 정책을 포함한 통합 파이프라인을 구현하는 것입니다. 이 종합적인 접근 방식은 이미지 빌드부터 배포까지 전체 수명 주기에 걸쳐 보안을 보장합니다.
 
-**통합 이미지 보안 파이프라인의 주요 구성 요소:**
+Scanner는 규칙·취약점 DB가 다루는 문제를 식별하며 모든 backdoor·미래 취약점 부재를 증명하지는 않습니다. 서명은 구성한 trust policy 아래의 무결성·신원을 확인하며 서명한 소프트웨어가 안전하다는 보장은 아닙니다. Admission 제어는 선택한 배포 정책을 시행합니다. 유지 관리되는 작은 base image를 사용하고 패치 시 rebuild하며 예외와 적절한 ECR basic·enhanced 또는 다른 scan 방식을 관리합니다.
 
-1. **이미지 스캔**:
-   - 알려진 취약점(CVE) 검사
-   - 악성 코드 및 백도어 탐지
-   - 구성 오류 및 보안 모범 사례 위반 식별
+**AWS Signer와 Notation:** 컨테이너 서명 platform은 `Notation-OCI-SHA384-ECDSA`입니다. 먼저 push된 이미지의 digest를 Notation AWS Signer plugin으로 서명합니다. `Aws::ECR::Image` platform이나 `start-signing-job --source-image`는 지원 절차가 아니며 검토한 AWS CLI도 해당 옵션을 거부합니다.
 
-2. **이미지 서명 및 확인**:
-   - 이미지 무결성 보장
-   - 신뢰할 수 있는 출처 확인
-   - 변조 방지
+현재 ECR managed signing도 registry signing rule에 따라 push 시 서명하는 지원 대안입니다. 이를 선택한다면 profile·권한을 구성하고 실제 signing status를 확인한 뒤 승격합니다. 이미지가 push되었다는 사실만으로 비동기 서명이 완료되었다고 가정하지 않습니다.
 
-3. **허용 정책**:
-   - 승인된 이미지만 배포 허용
-   - 최소 기본 이미지 요구 사항 적용
-   - 취약점 심각도 임계값 설정
+**Trust 구성:** 검증한 Notation·Signer plugin 설치, 올바른 partition의 AWS Signer root trust store와 검토한 strict trust policy를 준비합니다. 아래 commercial Region 예제는 repository 하나와 승인 profile로 trust를 제한합니다. 계정·Region·repository·profile을 일관되게 바꾸며 인증서가 AWS root로 연결된다는 이유만으로 모든 서명자를 신뢰하지 않습니다.
 
-**구현 방법:**
+```json
+{
+  "version": "1.0",
+  "trustPolicies": [
+    {
+      "name": "reviewed-eks-repository",
+      "registryScopes": [
+        "123456789012.dkr.ecr.us-west-2.amazonaws.com/team/app"
+      ],
+      "signatureVerification": {
+        "level": "strict"
+      },
+      "trustStores": [
+        "signingAuthority:aws-signer-ts"
+      ],
+      "trustedIdentities": [
+        "arn:aws:signer:us-west-2:123456789012:/signing-profiles/eks_images"
+      ]
+    }
+  ]
+}
+```
 
-1. **Amazon ECR 이미지 스캔 구성**:
-   ```bash
-   # 리포지토리 생성 시 스캔 활성화
-   aws ecr create-repository \
-     --repository-name my-app \
-     --image-scanning-configuration scanOnPush=true
-   
-   # 기존 리포지토리에 스캔 활성화
-   aws ecr put-image-scanning-configuration \
-     --repository-name my-app \
-     --image-scanning-configuration scanOnPush=true
-   ```
+`notation policy import notation-trust-policy.json`으로 build 환경이 소유한 Notation 구성에 policy를 import합니다. 기존 policy를 대체하기 전에 검토하며 검토하지 않은 script로 개발자의 공유 trust 구성을 덮어쓰지 않습니다. Build 역할에는 repository 범위 ECR pull·push, ECR 인증과 필요한 SignPayload·GetRevocationStatus 권한이 필요합니다. Signing profile 생성은 별도 provisioning 책임이며 기존 승인 profile 사용만을 위해 build에 PutSigningProfile을 줄 필요는 없습니다.
 
-2. **AWS Signer를 사용한 이미지 서명**:
-   ```bash
-   # 서명 프로필 생성
-   aws signer put-signing-profile \
-     --profile-name MyAppSigningProfile \
-     --platform-id Aws::ECR::Image
-   
-   # 이미지 서명
-   aws signer start-signing-job \
-     --source "s3={bucketName=my-bucket,key=my-image.tar}" \
-     --destination "s3={bucketName=my-bucket,prefix=signed/}" \
-     --profile-name MyAppSigningProfile
-   ```
+**CodeBuild 예제:** 다음은 CodePipeline 정의가 아닌 buildspec입니다. Bash·Python·Docker와 daemon 접근·AWS CLI·Trivy·Notation·AWS Signer plugin을 설치하고 버전을 고정한 소유 Linux build image가 필요합니다. Project runtime 권한, 네트워크·scanner DB, IAM 역할·trust store·policy와 기존 ECR repository는 별도로 구성합니다. Dockerfile·source는 이 build 역할에 대해 신뢰하는 입력입니다. 예제는 Git commit과 commercial AWS 계정·Region 하나를 전제로 하며 cross-account 서명 설계가 아닙니다.
 
-3. **Kyverno를 사용한 이미지 정책 적용**:
-   ```yaml
-   apiVersion: kyverno.io/v1
-   kind: ClusterPolicy
-   metadata:
-     name: require-signed-images
-   spec:
-     validationFailureAction: enforce
-     rules:
-     - name: verify-image-signature
-       match:
-         resources:
-           kinds:
-           - Pod
-       verifyImages:
-       - image: "*.dkr.ecr.*.amazonaws.com/*"
-         key: "https://my-keystore.com/keys/my-key.pub"
-   ```
+```yaml
+version: 0.2
+env:
+  shell: bash
+phases:
+  build:
+    commands:
+      - |
+        set -euo pipefail
+        umask 077
+        # Reserve this generated artifact name; remove stale output before any build step.
+        rm -f -- verified-image.json
+        : "${AWS_REGION:?Set the commercial AWS Region}"
+        : "${AWS_ACCOUNT_ID:?Set the expected ECR/signing account ID}"
+        : "${ECR_REPOSITORY:?Set the complete repository name, including any path}"
+        : "${SIGNING_PROFILE_ARN:?Set the approved AWS Signer profile ARN}"
+        : "${CODEBUILD_RESOLVED_SOURCE_VERSION:?This example requires a resolved Git commit}"
+        python3 - <<'PY'
+        import os, re
+        checks = {
+            "AWS_ACCOUNT_ID": r"[0-9]{12}",
+            "AWS_REGION": r"[a-z0-9-]+",
+            "ECR_REPOSITORY": r"[a-z0-9]+(?:[._/-][a-z0-9]+)*",
+            "CODEBUILD_RESOLVED_SOURCE_VERSION": r"(?:[0-9a-f]{40}|[0-9a-f]{64})",
+        }
+        for name, pattern in checks.items():
+            if not re.fullmatch(pattern, os.environ[name]):
+                raise SystemExit("Invalid example input: " + name)
+        prefix = f"arn:aws:signer:{os.environ['AWS_REGION']}:{os.environ['AWS_ACCOUNT_ID']}:/signing-profiles/"
+        profile = os.environ["SIGNING_PROFILE_ARN"]
+        if not profile.startswith(prefix) or not re.fullmatch(r"[A-Za-z0-9_/]+", profile[len(prefix):]):
+            raise SystemExit("Use an approved signing profile in this example's account/Region")
+        PY
+        REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        IMAGE_URI="${REGISTRY}/${ECR_REPOSITORY}:${CODEBUILD_RESOLVED_SOURCE_VERSION}"
+        ACTUAL_ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
+        if [[ "$ACTUAL_ACCOUNT" != "$AWS_ACCOUNT_ID" ]]; then
+          printf '%s\n' 'Unexpected build-role account' >&2
+          exit 1
+        fi
+        aws ecr get-login-password --region "$AWS_REGION" |
+          docker login --username AWS --password-stdin "$REGISTRY"
+        docker build --tag "$IMAGE_URI" .
+        trivy image --image-src docker --scanners vuln --severity HIGH,CRITICAL \
+          --exit-code 1 --no-progress "$IMAGE_URI"
+        docker push "$IMAGE_URI"
+        DIGESTS_JSON=$(docker image inspect --format '{{json .RepoDigests}}' "$IMAGE_URI")
+        IMAGE_REFERENCE=$(python3 - "$REGISTRY/$ECR_REPOSITORY" "$DIGESTS_JSON" <<'PY'
+        import json, re, sys
+        digests = json.loads(sys.argv[2])
+        if not isinstance(digests, list):
+            raise SystemExit("Expected Docker RepoDigests array")
+        pattern = re.escape(sys.argv[1]) + r"@sha256:[0-9a-f]{64}"
+        matching = {d for d in digests if isinstance(d, str) and re.fullmatch(pattern, d)}
+        if len(matching) != 1:
+            raise SystemExit("Expected exactly one pushed digest for this repository")
+        print(matching.pop())
+        PY
+        )
+        notation sign --plugin com.amazonaws.signer.notation.plugin \
+          --id "$SIGNING_PROFILE_ARN" "$IMAGE_REFERENCE"
+        notation verify "$IMAGE_REFERENCE"
+        python3 - "$IMAGE_REFERENCE" "$CODEBUILD_RESOLVED_SOURCE_VERSION" <<'PY'
+        import json, sys
+        with open("verified-image.json", "x") as stream:
+            json.dump({"image": sys.argv[1], "sourceCommit": sys.argv[2]}, stream)
+            stream.write("\n")
+        PY
+artifacts:
+  files:
+    - verified-image.json
+```
 
-4. **OPA Gatekeeper를 사용한 이미지 정책 적용**:
-   ```yaml
-   apiVersion: constraints.gatekeeper.sh/v1beta1
-   kind: K8sTrustedImages
-   metadata:
-     name: trusted-repos
-   spec:
-     match:
-       kinds:
-       - apiGroups: [""]
-         kinds: ["Pod"]
-     parameters:
-       repos:
-       - "123456789012.dkr.ecr.us-west-2.amazonaws.com/*"
-       - "docker.io/library/*"
-   ```
+검토한 project 구성에 `AWS_ACCOUNT_ID`, `AWS_REGION`, `ECR_REPOSITORY`(예: `team/app`), `SIGNING_PROFILE_ARN`을 설정합니다. Registry hostname으로 인증하고 중첩 repository 경로를 유지하며 로컬 build 이미지를 push 전에 scan합니다. 임의의 첫 RepoDigest나 mutable tag 대신 해당 repository의 push digest를 선택합니다. Trivy 예제는 HIGH·CRITICAL 취약점 finding을 gate하며 secret·구성·provenance에는 별도로 설계한 검사를 추가합니다.
 
-**통합 파이프라인 구축:**
+승격 단계는 모두 `set -euo pipefail`을 적용한 Bash build block 하나에 있습니다. Login·build·scan·push·sign·verify 실패는 새 artifact 작성 전에 중단됩니다. CodeBuild post_build는 build 실패 후에도 실행될 수 있으므로 별도 post_build의 무조건적인 push·sign은 안전하지 않습니다. 예약한 artifact 경로를 먼저 지워 이전 결과 재사용을 막습니다. 후속 배포도 build 성공과 artifact 검증을 요구해야 하며 JSON 파일 자체가 권한 부여나 서명된 attestation은 아닙니다.
 
-1. **CI/CD 파이프라인 통합**:
-   ```yaml
-   # AWS CodePipeline 예시
-   version: 0.2
-   phases:
-     pre_build:
-       commands:
-         - echo Logging in to Amazon ECR...
-         - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REPOSITORY_URI
-     build:
-       commands:
-         - echo Building the Docker image...
-         - docker build -t $ECR_REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION .
-     post_build:
-       commands:
-         - echo Running security scan...
-         - trivy image --exit-code 1 --severity HIGH,CRITICAL $ECR_REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION
-         - echo Signing the image...
-         - aws signer start-signing-job --profile-name MyAppSigningProfile --source-image $ECR_REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION
-         - echo Pushing the Docker image...
-         - docker push $ECR_REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION
-   ```
+`verified-image.json`은 EKS 배포·GitOps consumer가 사용할 정확한 digest reference를 담습니다. ECS의 `imagedefinitions.json`이 아니며 그 자체로 배포하지 않습니다. 실제 서명·검증은 registry 접근, trust, revocation 검사와 AWS Signer 가용성에 의존합니다.
 
-2. **이미지 허용 컨트롤러 배포**:
-   ```bash
-   # Kyverno 설치
-   kubectl create -f https://github.com/kyverno/kyverno/releases/download/v1.8.0/install.yaml
-   
-   # 정책 적용
-   kubectl apply -f image-policy.yaml
-   ```
+**Admission:** 운영 signature verifier는 선택한 Notation·Signer 서명과 trust policy를 이해해야 합니다. AWS는 Gatekeeper+Ratify와 AWS Signer·Notation 통합을 사용하는 Kyverno 방식을 문서화합니다. 일반 policy engine 설치, ConstraintTemplate이 없는 Gatekeeper constraint, 다른 서명 방식의 public-key 필드만으로 해당 통합이 완성되지는 않습니다. 시행 전에 승인·비승인 profile, unsigned image, digest 불일치, revoke·expiry, verifier 장애와 admission failure policy를 검증합니다.
 
-**모범 사례:**
+다음 별도 Kyverno 1.19.1 규칙은 security-demo의 **image reference 문법과 repository**만 제한하며 일반·init·ephemeral container를 모두 검사합니다. 서명 검증을 수행한다는 주장이 아닙니다:
 
-1. **최소 기본 이미지 사용**:
-   - 공격 표면 최소화
-   - 필요한 구성 요소만 포함
-   - 디스트로리스 또는 경량 이미지 사용
+```yaml
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: demo-approved-image-reference
+spec:
+  validationActions:
+  - Deny
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      resources:
+      - pods
+      - pods/ephemeralcontainers
+      operations:
+      - CREATE
+      - UPDATE
+      scope: Namespaced
+  matchConditions:
+  - name: demo-namespace
+    expression: has(object.metadata.namespace) && object.metadata.namespace == 'security-demo'
+  validations:
+  - expression: object.spec.containers.all(c, c.image.matches('^123456789012[.]dkr[.]ecr[.]us-west-2[.]amazonaws[.]com/team/app@sha256:[0-9a-f]{64}$'))
+      && (!has(object.spec.initContainers) || object.spec.initContainers.all(c, c.image.matches('^123456789012[.]dkr[.]ecr[.]us-west-2[.]amazonaws[.]com/team/app@sha256:[0-9a-f]{64}$')))
+      && (!has(object.spec.ephemeralContainers) || object.spec.ephemeralContainers.all(c, c.image.matches('^123456789012[.]dkr[.]ecr[.]us-west-2[.]amazonaws[.]com/team/app@sha256:[0-9a-f]{64}$')))
+    message: Use a sha256 digest from the approved team/app repository in security-demo.
+```
 
-2. **다중 계층 방어 구현**:
-   - 빌드 시간 스캔
-   - 배포 전 검증
-   - 런타임 모니터링
+검증: pipeline 실패·순서·artifact mocked 사례 20개와 실제 Kyverno CLI 문자열 정책 사례 9개를 확인했습니다. Buildspec·Bash·Python·JSON과 배포 policy CRD도 검사했습니다. 이미지를 build·scan·push하거나 실제 AWS 서명을 생성·검증하지 않았고 admission webhook도 배포하지 않았습니다. 환경 전제를 명시하고 검토한 교육용 흐름이며 운영 준비 완료 검증이 아닙니다.
 
-3. **정기적인 이미지 업데이트**:
-   - 최신 보안 패치 적용
-   - 기본 이미지 정기 업데이트
-   - 취약점 지속적 모니터링
+참고: [Signer 서명](https://docs.aws.amazon.com/signer/latest/developerguide/image-signing-steps.html), [Signer 검증](https://docs.aws.amazon.com/signer/latest/developerguide/image-verification.html), [ECR managed signing](https://docs.aws.amazon.com/AmazonECR/latest/userguide/managed-signing.html), [EKS admission 검증](https://docs.aws.amazon.com/eks/latest/userguide/image-verification.html), [CodeBuild buildspec](https://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html), [Trivy image flag](https://trivy.dev/docs/latest/references/configuration/cli/trivy_image/).
 
-4. **불변 이미지 사용**:
-   - 배포 후 이미지 수정 금지
-   - 변경 필요 시 새 이미지 빌드 및 배포
-   - 버전 관리 및 롤백 지원
-
-**실제 구현 예시:**
-
-1. **Amazon ECR, AWS CodePipeline 및 Kyverno 통합**:
-   ```yaml
-   # buildspec.yml
-   version: 0.2
-   phases:
-     pre_build:
-       commands:
-         - echo Logging in to Amazon ECR...
-         - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REPOSITORY_URI
-         - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-         - IMAGE_TAG=${COMMIT_HASH:=latest}
-     build:
-       commands:
-         - echo Building the Docker image...
-         - docker build -t $ECR_REPOSITORY_URI:$IMAGE_TAG .
-     post_build:
-       commands:
-         - echo Running Trivy security scan...
-         - trivy image --exit-code 1 --severity HIGH,CRITICAL $ECR_REPOSITORY_URI:$IMAGE_TAG
-         - echo Pushing the Docker image...
-         - docker push $ECR_REPOSITORY_URI:$IMAGE_TAG
-         - echo Creating image definition file...
-         - aws ecr describe-images --repository-name $(echo $ECR_REPOSITORY_URI | cut -d'/' -f2) --image-ids imageTag=$IMAGE_TAG --query 'imageDetails[].imageTags[0]' --output text
-   artifacts:
-     files:
-       - imagedefinitions.json
-   ```
-
-2. **Kyverno 이미지 정책**:
-   ```yaml
-   apiVersion: kyverno.io/v1
-   kind: ClusterPolicy
-   metadata:
-     name: restrict-image-registries
-   spec:
-     validationFailureAction: enforce
-     background: true
-     rules:
-     - name: allowed-registries
-       match:
-         resources:
-           kinds:
-           - Pod
-       validate:
-         message: "Only images from approved registries are allowed"
-         pattern:
-           spec:
-             containers:
-             - image: "{{ regex_match('123456789012.dkr.ecr.*.amazonaws.com/*|docker.io/library/*', '@@') }}"
-   ```
-
-다른 옵션들의 문제점:
-- **A. 모든 이미지에 대해 수동 보안 검사 수행**: 수동 검사는 확장성이 떨어지고, 일관성이 부족하며, 지속적인 배포 환경에서 실용적이지 않습니다.
-- **B. 신뢰할 수 있는 공식 이미지만 사용**: 공식 이미지도 취약점이 있을 수 있으며, 사용자 지정 이미지가 필요한 경우가 많습니다.
-- **D. 컨테이너 내에서 바이러스 백신 소프트웨어 실행**: 컨테이너 내 바이러스 백신은 리소스를 많이 사용하고, 컨테이너 설계 원칙에 위배되며, 이미지 빌드 단계에서의 보안 문제를 해결하지 못합니다.
 </details>
-### 4. Amazon EKS에서 파드 보안을 강화하기 위한 가장 효과적인 방법은 무엇인가요?
 
-A. 모든 파드에 대해 특권 모드 비활성화  
-B. 파드 보안 표준(PSS) 및 파드 보안 정책(PSP) 구현  
-C. 모든 파드를 루트가 아닌 사용자로 실행  
-D. 모든 파드에 대해 읽기 전용 파일 시스템 사용  
+### 4. EKS에서 일관된 현재 Pod 보안 기준을 적용하는 방법은 무엇인가요?
+
+- A) privileged mode만 비활성화
+- B) PSA로 버전이 있는 PSS profile을 시행하고 필요한 admission policy 검토
+- C) non-root UID만 설정
+- D) root filesystem만 읽기 전용으로 설정
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: B. 파드 보안 표준(PSS) 및 파드 보안 정책(PSP) 구현**
+**정답: B) PSA로 버전이 있는 PSS profile을 시행하고 필요한 admission policy 검토**
 
 **설명:**
-Amazon EKS에서 파드 보안을 강화하기 위한 가장 효과적인 방법은 파드 보안 표준(Pod Security Standards, PSS)과 파드 보안 정책(Pod Security Policy, PSP) 또는 그 대체 메커니즘을 구현하는 것입니다. 이러한 메커니즘은 파드의 보안 컨텍스트를 제어하고 클러스터 전체에 일관된 보안 표준을 적용합니다.
 
-**참고**: Kubernetes 1.25부터 PSP(Pod Security Policy)는 더 이상 사용되지 않으며, 대신 PSS(Pod Security Standards)와 PSA(Pod Security Admission)가 권장됩니다. EKS에서는 Kyverno, OPA Gatekeeper와 같은 정책 엔진을 사용하여 유사한 기능을 구현할 수 있습니다.
+Pod Security Standards는 Privileged·Baseline·Restricted profile을 정의하고 Pod Security Admission은 namespace에서 선택한 profile을 시행합니다. PSA는 Kubernetes 1.25부터 stable이며 PodSecurityPolicy는 1.21에서 deprecated, **1.25에서 제거**되었습니다. 현재 클러스터에 제거된 API를 배포할 수 없습니다. 과거 constraint 이름에 “PSP”가 있더라도 Kyverno·Gatekeeper 정책은 별도 resource입니다.
 
-**파드 보안 표준 및 정책의 주요 이점:**
+검토한 v1.36 profile을 사용하는 격리된 Linux 데모는 다음과 같습니다:
 
-1. **일관된 보안 표준 적용**:
-   - 클러스터 전체에 일관된 보안 제어 적용
-   - 권한 에스컬레이션 방지
-   - 컨테이너 이스케이프 위험 감소
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security-demo
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.36
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: v1.36
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: v1.36
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: security-context-demo
+  namespace: security-demo
+spec:
+  automountServiceAccountToken: false
+  nodeSelector:
+    kubernetes.io/os: linux
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: app
+    image: busybox:1.37.0
+    command:
+    - sh
+    - -c
+    args:
+    - id && sleep 3600
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
+    resources:
+      requests:
+        cpu: 10m
+        memory: 16Mi
+      limits:
+        cpu: 100m
+        memory: 64Mi
+```
 
-2. **다양한 보안 수준 지원**:
-   - Privileged: 제한 없음
-   - Baseline: 기본적인 제한 적용
-   - Restricted: 엄격한 보안 제어 적용
+Namespace enforce는 Pod admission에 적용됩니다. Audit·warn이 controller template 위반을 보고할 수 있지만 Deployment·Job apply 성공이 Pod의 enforce 통과를 의미하지는 않습니다. Label 변경이 기존 Pod를 소급 eviction하지도 않습니다. 실제 클러스터에 맞는 policy version을 선택하고 기존 워크로드를 검토한 뒤 enforce합니다.
 
-3. **세분화된 보안 제어**:
-   - 특권 에스컬레이션 제한
-   - 호스트 네임스페이스 액세스 제한
-   - 볼륨 유형 제한
-   - 사용자 및 그룹 ID 제한
+runAsNonRoot·runAsUser와 seccomp는 allowPrivilegeEscalation·capability와 별개입니다. fsGroup은 Pod 수준 volume 소유권 설정이며 container capability가 아닙니다. Read-only root는 앱과 호환되어야 하는 유용한 추가 강화지만 PSS Restricted의 보편적 필수 요건이 아니고 mounted PVC까지 읽기 전용으로 만들지 않습니다. 실제 앱에는 호환 UID·GID와 쓰기 가능한 임시·cache·socket 경로가 필요하며 일반적인 root 중심 nginx에 필드만 추가하면 동작하는 것은 아닙니다.
 
-**구현 방법:**
+**추가하는 제한된 admission 규칙:** 아래 Kyverno 1.19.1 ValidatingPolicy는 security-demo의 일반·init·ephemeral container를 모두 검사합니다. privileged 생략은 false로 허용하고 true를 거부합니다. 오래된 설치 manifest 대신 현재 v1 policy API를 사용합니다:
 
-1. **Pod Security Standards(PSS) 적용**:
-   ```yaml
-   # 네임스페이스에 PSS 레이블 적용
-   apiVersion: v1
-   kind: Namespace
-   metadata:
-     name: secure-ns
-     labels:
-       pod-security.kubernetes.io/enforce: restricted
-       pod-security.kubernetes.io/audit: restricted
-       pod-security.kubernetes.io/warn: restricted
-   ```
+```yaml
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: demo-disallow-privileged
+spec:
+  validationActions:
+  - Deny
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      resources:
+      - pods
+      - pods/ephemeralcontainers
+      operations:
+      - CREATE
+      - UPDATE
+      scope: Namespaced
+  matchConditions:
+  - name: demo-namespace
+    expression: has(object.metadata.namespace) && object.metadata.namespace == 'security-demo'
+  validations:
+  - expression: object.spec.containers.all(c, !has(c.securityContext) || !has(c.securityContext.privileged)
+      || c.securityContext.privileged == false) && (!has(object.spec.initContainers)
+      || object.spec.initContainers.all(c, !has(c.securityContext) || !has(c.securityContext.privileged)
+      || c.securityContext.privileged == false)) && (!has(object.spec.ephemeralContainers)
+      || object.spec.ephemeralContainers.all(c, !has(c.securityContext) || !has(c.securityContext.privileged)
+      || c.securityContext.privileged == false))
+    message: Privileged containers, including init and ephemeral containers, are not
+      allowed in security-demo.
+```
 
-2. **Kyverno를 사용한 파드 보안 정책 구현**:
-   ```yaml
-   apiVersion: kyverno.io/v1
-   kind: ClusterPolicy
-   metadata:
-     name: restrict-privileged
-   spec:
-     validationFailureAction: enforce
-     rules:
-     - name: no-privileged-pods
-       match:
-         resources:
-           kinds:
-           - Pod
-       validate:
-         message: "Privileged mode is not allowed"
-         pattern:
-           spec:
-             containers:
-             - name: "*"
-               securityContext:
-                 privileged: false
-   ```
+이 규칙 하나가 전체 PSS profile이나 이미지 검증을 대체하지는 않습니다. Privileged CSI·monitoring agent와 의도한 예외는 플랫폼 소유자가 관리하며 kube-system에 데모 정책을 일괄 적용하지 않습니다. Gatekeeper 대안도 실제 ConstraintTemplate·대응 constraint·동작 검증이 필요합니다.
 
-3. **OPA Gatekeeper를 사용한 파드 보안 정책 구현**:
-   ```yaml
-   apiVersion: constraints.gatekeeper.sh/v1beta1
-   kind: K8sPSPPrivilegedContainer
-   metadata:
-     name: no-privileged-containers
-   spec:
-     match:
-       kinds:
-       - apiGroups: [""]
-         kinds: ["Pod"]
-   ```
+Manifest·schema와 실제 Kyverno CLI 사례 6개로 생략·false, 일반·init·ephemeral privileged와 다른 namespace를 검사했습니다. Ephemeral container는 Pod 생성이 아닌 합성 UPDATE 객체로 시험했습니다. 실제 admission webhook·Pod 배포는 실행하지 않았습니다.
 
-**주요 파드 보안 제어:**
+참고: [Pod Security Admission](https://kubernetes.io/docs/concepts/security/pod-security-admission/), [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/).
 
-1. **특권 모드 제한**:
-   ```yaml
-   securityContext:
-     privileged: false
-   ```
-
-2. **루트가 아닌 사용자로 실행**:
-   ```yaml
-   securityContext:
-     runAsUser: 1000
-     runAsGroup: 3000
-     fsGroup: 2000
-   ```
-
-3. **기능 제한**:
-   ```yaml
-   securityContext:
-     capabilities:
-       drop:
-       - ALL
-       add:
-       - NET_BIND_SERVICE
-   ```
-
-4. **읽기 전용 루트 파일 시스템**:
-   ```yaml
-   securityContext:
-     readOnlyRootFilesystem: true
-   ```
-
-5. **seccomp 프로필 적용**:
-   ```yaml
-   securityContext:
-     seccompProfile:
-       type: RuntimeDefault
-   ```
-
-**모범 사례:**
-
-1. **최소 권한 원칙 적용**:
-   - 필요한 최소한의 권한만 부여
-   - 특권 모드 사용 제한
-   - 필요한 기능만 허용
-
-2. **다중 방어 계층 구현**:
-   - 네임스페이스 수준 정책
-   - 클러스터 수준 정책
-   - 런타임 보안 모니터링
-
-3. **보안 컨텍스트 명시적 정의**:
-   - 기본값에 의존하지 않음
-   - 모든 컨테이너에 보안 컨텍스트 지정
-   - 정기적인 보안 구성 검토
-
-4. **정책 예외 관리**:
-   - 예외가 필요한 경우 명확한 프로세스 정의
-   - 예외 정기적 검토 및 감사
-   - 예외 최소화
-
-**실제 구현 예시:**
-
-1. **보안이 강화된 파드 정의**:
-   ```yaml
-   apiVersion: v1
-   kind: Pod
-   metadata:
-     name: secure-pod
-   spec:
-     securityContext:
-       fsGroup: 2000
-       runAsNonRoot: true
-       runAsUser: 1000
-       seccompProfile:
-         type: RuntimeDefault
-     containers:
-     - name: app
-       image: my-secure-app:1.0
-       securityContext:
-         allowPrivilegeEscalation: false
-         capabilities:
-           drop:
-           - ALL
-         readOnlyRootFilesystem: true
-         runAsNonRoot: true
-         runAsUser: 1000
-         seccompProfile:
-           type: RuntimeDefault
-   ```
-
-2. **Kyverno 정책 모음**:
-   ```yaml
-   apiVersion: kyverno.io/v1
-   kind: ClusterPolicy
-   metadata:
-     name: pod-security
-   spec:
-     validationFailureAction: enforce
-     rules:
-     - name: no-privileged
-       match:
-         resources:
-           kinds:
-           - Pod
-       validate:
-         message: "Privileged containers are not allowed"
-         pattern:
-           spec:
-             containers:
-             - name: "*"
-               securityContext:
-                 privileged: false
-     - name: no-privilege-escalation
-       match:
-         resources:
-           kinds:
-           - Pod
-       validate:
-         message: "Privilege escalation is not allowed"
-         pattern:
-           spec:
-             containers:
-             - name: "*"
-               securityContext:
-                 allowPrivilegeEscalation: false
-     - name: require-non-root
-       match:
-         resources:
-           kinds:
-           - Pod
-       validate:
-         message: "Running as root is not allowed"
-         pattern:
-           spec:
-             containers:
-             - name: "*"
-               securityContext:
-                 runAsNonRoot: true
-   ```
-
-다른 옵션들의 문제점:
-- **A. 모든 파드에 대해 특권 모드 비활성화**: 특권 모드 비활성화는 중요하지만, 파드 보안의 한 측면일 뿐이며 포괄적인 보안 전략을 제공하지 않습니다.
-- **C. 모든 파드를 루트가 아닌 사용자로 실행**: 루트가 아닌 사용자로 실행하는 것은 좋은 관행이지만, 다른 중요한 보안 제어(예: 기능, 볼륨 마운트, 호스트 네임스페이스 액세스)를 다루지 않습니다.
-- **D. 모든 파드에 대해 읽기 전용 파일 시스템 사용**: 읽기 전용 파일 시스템은 유용한 보안 제어이지만, 모든 애플리케이션에 적합하지 않으며 다른 중요한 보안 측면을 다루지 않습니다.
 </details>
-### 5. Amazon EKS에서 보안 규정 준수를 모니터링하고 감사하기 위한 가장 효과적인 접근 방식은 무엇인가요?
 
-A. 수동 보안 검토 수행  
-B. AWS Config 규칙만 사용  
-C. AWS GuardDuty만 사용  
-D. AWS Security Hub, GuardDuty, CloudTrail 및 Kubernetes 감사 로그의 통합 사용  
+### 5. EKS 워크로드에 상호 보완적인 보안 증거를 제공하는 접근 방식은 무엇인가요?
+
+- A) 가끔 수행하는 수동 검토만 사용
+- B) AWS Config 검사만 사용
+- C) GuardDuty만 사용
+- D) Posture finding·audit log·runtime coverage·검증한 대응 경로 결합
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: D. AWS Security Hub, GuardDuty, CloudTrail 및 Kubernetes 감사 로그의 통합 사용**
+**정답: D) Posture finding·audit log·runtime coverage·검증한 대응 경로 결합**
 
 **설명:**
-Amazon EKS에서 보안 규정 준수를 모니터링하고 감사하기 위한 가장 효과적인 접근 방식은 AWS Security Hub, GuardDuty, CloudTrail 및 Kubernetes 감사 로그를 통합하여 사용하는 것입니다. 이 통합 접근 방식은 인프라, 클러스터 및 애플리케이션 수준에서 포괄적인 보안 가시성을 제공합니다.
 
-**통합 보안 모니터링 및 감사의 주요 이점:**
+| 증거·제어 | 제공 범위와 한계 |
+|---|---|
+| Security Hub CSPM·AWS Config | 지원하는 구성 control·finding이며 전체 Kubernetes·규제 인증이 아님 |
+| GuardDuty EKS Protection | 독립된 stream을 이용하는 Kubernetes audit 기반 위협 분석 |
+| GuardDuty Runtime Monitoring | 지원 노드의 agent 기반 runtime event이며 enabled 상태만으로 coverage가 증명되지 않음 |
+| CloudTrail | AWS API 활동이며 Kubernetes audit·앱 데이터 접근 log를 대체하지 않음 |
+| Kubernetes audit log | Audit policy·level이 선택한 요청이며 모든 앱 작업·본문이 아님 |
+| CloudWatch·인시던트 전달 | Log 분석·담당자 전달이며 전달·보존·대응 검증 필요 |
 
-1. **다중 계층 보안 가시성**:
-   - AWS 인프라 수준 모니터링
-   - Kubernetes 클러스터 수준 감사
-   - 컨테이너 및 애플리케이션 수준 보안 이벤트
+Security Hub CSPM의 FSBP는 CIS Kubernetes Benchmark가 아닙니다. 지원 CIS AWS Foundations control도 전체 CIS Kubernetes 감사가 아닙니다. 적용 benchmark·버전, 수동 검사, 관리형 서비스 예외와 실제 워크로드 요건에 필요한 증거를 기록합니다.
 
-2. **자동화된 규정 준수 검사**:
-   - 산업 표준 및 모범 사례 준수 확인
-   - 구성 드리프트 감지
-   - 지속적인 규정 준수 모니터링
+Detector·CSPM standard·Config recorder·CloudTrail은 기존 조직·Region 소유권 아래 관리합니다. 준비된 bucket policy·암호화·event selector·보존 기간 없이 새 regional detector를 만들거나 중앙 구성을 덮어쓰고 trail을 시작하지 않습니다. CloudTrail data event는 기본 management event 범위와 별개입니다. 이번 검토에서 계정 수준 모니터링 리소스는 provisioning하지 않았습니다.
 
-3. **중앙 집중식 보안 관리**:
-   - 단일 대시보드에서 보안 상태 확인
-   - 통합된 알림 및 대응
-   - 포괄적인 보안 보고서
+**EKS별 검사:** 본문처럼 필요한 control plane log type·update 완료·log 도착을 확인합니다. `eks-cluster-logging-enabled`(모든 유형·주기 검사)와 `eks-cluster-log-enabled`(선택 유형·구성 변경 검사)는 모두 유효한 Config 규칙입니다. 자동 현재 버전 catalog라고 가정하지 말고 `oldestVersionSupported` parameter를 관리합니다. 명시적 encryptionConfig control의 finding이 EKS 1.28+ API 데이터의 기본 envelope encryption 부재를 의미하지는 않습니다.
 
-**구현 방법:**
+GuardDuty audit 분석은 별도의 고객 CloudWatch audit export를 요구하지 않습니다. Runtime Monitoring에는 지원 security agent·data endpoint와 실제 coverage가 필요하며 현재 EKS에서는 EC2·Auto Mode를 지원하고 Fargate·Hybrid Nodes는 지원하지 않습니다. 현재 RUNTIME_MONITORING feature를 사용하고 이전 EKS_RUNTIME_MONITORING migration을 검토합니다. EKS_AUDIT_LOGS를 runtime monitoring으로 혼동하지 마세요.
 
-1. **AWS Security Hub 활성화**:
-   ```bash
-   # Security Hub 활성화
-   aws securityhub enable-security-hub \
-     --enable-default-standards \
-     --tags Environment=Production
-   ```
+**CSPM 이벤트 전달 예제:** 다음을 `security-event-pattern.json`으로 저장합니다. NEW·NOTIFIED workflow 상태의 ACTIVE HIGH·CRITICAL ASFF finding을 선택하며 다른 schema인 `Findings Imported V2` OCSF 이벤트는 선택하지 않습니다:
 
-2. **Amazon GuardDuty EKS Protection 활성화**:
-   ```bash
-   # GuardDuty 활성화
-   aws guardduty create-detector \
-     --enable \
-     --finding-publishing-frequency FIFTEEN_MINUTES
-   
-   # EKS Protection 활성화
-   aws guardduty update-detector \
-     --detector-id $(aws guardduty list-detectors --query 'DetectorIds[0]' --output text) \
-     --features '[{"Name": "EKS_RUNTIME_MONITORING", "Status": "ENABLED"}]'
-   ```
+```json
+{
+  "source": [
+    "aws.securityhub"
+  ],
+  "detail-type": [
+    "Security Hub Findings - Imported"
+  ],
+  "detail": {
+    "findings": {
+      "Severity": {
+        "Label": [
+          "HIGH",
+          "CRITICAL"
+        ]
+      },
+      "Workflow": {
+        "Status": [
+          "NEW",
+          "NOTIFIED"
+        ]
+      },
+      "RecordState": [
+        "ACTIVE"
+      ]
+    }
+  }
+}
+```
 
-3. **CloudTrail 로깅 구성**:
-   ```bash
-   # CloudTrail 트레일 생성
-   aws cloudtrail create-trail \
-     --name eks-audit-trail \
-     --s3-bucket-name my-eks-audit-logs \
-     --is-multi-region-trail \
-     --enable-log-file-validation
-   
-   # 트레일 로깅 활성화
-   aws cloudtrail start-logging \
-     --name eks-audit-trail
-   ```
+다음 합성 이벤트는 pattern 검사 전용이며 실제 finding이나 완전한 ASFF import payload가 아닙니다. `synthetic-security-event.json`으로 저장합니다:
 
-4. **EKS 감사 로그 활성화**:
-   ```bash
-   # 클러스터 생성 시 감사 로그 활성화
-   aws eks create-cluster \
-     --name my-cluster \
-     --role-arn arn:aws:iam::123456789012:role/EKSClusterRole \
-     --resources-vpc-config subnetIds=subnet-12345,subnet-67890,securityGroupIds=sg-12345 \
-     --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-   
-   # 기존 클러스터에 감사 로그 활성화
-   aws eks update-cluster-config \
-     --name my-cluster \
-     --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-   ```
+```json
+{
+  "version": "0",
+  "id": "00000000-0000-0000-0000-000000000001",
+  "account": "123456789012",
+  "region": "us-west-2",
+  "time": "2026-09-11T00:00:00Z",
+  "source": "aws.securityhub",
+  "detail-type": "Security Hub Findings - Imported",
+  "resources": [],
+  "detail": {
+    "findings": [
+      {
+        "Id": "synthetic-example-not-a-real-finding",
+        "Severity": {
+          "Label": "HIGH"
+        },
+        "Workflow": {
+          "Status": "NEW"
+        },
+        "RecordState": "ACTIVE"
+      }
+    ]
+  }
+}
+```
 
-**주요 모니터링 및 감사 구성 요소:**
+승인된 AWS 시험에서 `aws events test-event-pattern --event-pattern file://security-event-pattern.json --event file://synthetic-security-event.json --region us-west-2`는 matching되어야 합니다. LOW severity, RESOLVED·SUPPRESSED workflow, ARCHIVED 상태, 필드 누락과 V2 type은 이 pattern에 matching되지 않는지도 확인합니다. 이번 검토는 JSON·출처 schema를 확인했으며 EventBridge 서비스 matcher·실제 이벤트 전달을 실행한 것은 아닙니다.
 
-1. **AWS Security Hub**:
-   - EKS 모범 사례 표준 적용
-   - CIS Kubernetes 벤치마크 검사
-   - 보안 결과 중앙 집중화
+현재 EventBridge 문서가 지원하는 방식으로, 소유한 SNS topic의 publish 권한이 있는 **기존 검토된 EventBridge 실행 역할**을 target에 사용할 수 있습니다. 소유 ARN으로 바꾼 뒤 `security-event-targets.json`으로 저장합니다:
 
-2. **Amazon GuardDuty**:
-   - EKS 런타임 모니터링
-   - 컨테이너 위협 탐지
-   - 이상 행동 감지
+```json
+[
+  {
+    "Id": "SecurityAlerts",
+    "Arn": "arn:aws:sns:us-west-2:123456789012:eks-security-alerts",
+    "RoleArn": "arn:aws:iam::123456789012:role/EventBridgeSecurityAlerts"
+  }
+]
+```
 
-3. **AWS CloudTrail**:
-   - EKS 컨트롤 플레인 API 호출 로깅
-   - 관리 이벤트 추적
-   - 사용자 활동 감사
+역할에는 올바른 EventBridge trust와 최소 범위 sns:Publish 권한이 필요하며 해당 topic·key policy와 명시적 Deny도 확인합니다. 실행 역할을 쓰지 않는 target은 지원 resource-based 권한 경로가 필요합니다. Target JSON 자체가 권한을 주거나 rule·topic·role·subscription을 생성하지는 않습니다.
 
-4. **Kubernetes 감사 로그**:
-   - 클러스터 내 활동 로깅
-   - API 서버 요청 추적
-   - 권한 변경 모니터링
+`aws events put-targets --rule eks-security-alerts --targets file://security-event-targets.json --region us-west-2` 사용 전에 기존 rule·target 소유권을 확인합니다. 명령 종료 상태뿐 아니라 FailedEntryCount·FailedEntries를 검사합니다. SNS subscription, 암호화 권한, retry·dead-letter 동작과 통제된 전체 전달 시험을 확인합니다. 이번 감사에서 알림은 전송하지 않았습니다.
 
-5. **Amazon CloudWatch**:
-   - 로그 중앙 집중화
-   - 메트릭 모니터링
-   - 알림 구성
+**감사 조사:** 실제 EKS log group에서 다음 Logs Insights 예제는 Kubernetes audit JSON field discovery를 전제로 합니다. RBAC 변경 요청을 찾아 responseStatus.code로 성공·거부 요청을 구분합니다:
 
-**모범 사례:**
+```text
+fields @timestamp, verb, user.username, objectRef.resource, objectRef.namespace, responseStatus.code
+| filter @logStream like /kube-apiserver-audit/
+| filter verb in ["create", "update", "patch", "delete", "deletecollection"]
+| filter objectRef.resource in ["roles", "rolebindings", "clusterroles", "clusterrolebindings"]
+| sort @timestamp desc
+| limit 100
+```
 
-1. **포괄적인 로깅 전략 구현**:
-   - 모든 관련 로그 소스 활성화
-   - 적절한 로그 보존 정책 설정
-   - 로그 무결성 보장
+Query에 의존하기 전에 표본 record의 필드·stream 이름을 확인합니다. 필요한 증거를 보존하고 소유권·severity·escalation을 정하여 대응 절차를 시험합니다. Finding dashboard와 서비스 enabled 상태만으로 조치 완료·규제 요건 충족이 증명되지는 않습니다.
 
-2. **자동화된 규정 준수 검사 구성**:
-   - 정기적인 규정 준수 스캔 일정 설정
-   - 중요한 위반에 대한 알림 구성
-   - 규정 준수 보고서 자동화
+참고: [CSPM 표준](https://docs.aws.amazon.com/securityhub/latest/userguide/standards-view-manage.html), [ASFF 이벤트](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cwe-event-formats.html), [V2 이벤트](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-v2-cwe-event-formats.html), [EventBridge target 권한](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html), [EKS audit log](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html).
 
-3. **보안 이벤트에 대한 대응 계획 수립**:
-   - 명확한 에스컬레이션 경로 정의
-   - 자동화된 대응 구현
-   - 정기적인 대응 계획 테스트
-
-4. **최소 권한 원칙 적용**:
-   - 감사 로그에 대한 액세스 제한
-   - 보안 도구에 대한 역할 기반 액세스 제어
-   - 권한 정기적 검토
-
-**실제 구현 예시:**
-
-1. **AWS Security Hub 및 GuardDuty 통합**:
-   ```bash
-   # Security Hub 결과를 SNS 주제로 전송
-   aws events put-rule \
-     --name SecurityHubFindings \
-     --event-pattern '{"source":["aws.securityhub"],"detail-type":["Security Hub Findings - Imported"]}'
-   
-   aws events put-targets \
-     --rule SecurityHubFindings \
-     --targets 'Id"="1","Arn"="arn:aws:sns:us-west-2:123456789012:security-alerts"'
-   ```
-
-2. **CloudWatch Logs Insights를 사용한 감사 로그 분석**:
-   ```
-   fields @timestamp, @message
-   | filter @logStream like /kube-apiserver-audit/
-   | filter @message like "system:serviceaccount"
-   | filter @message like "create" or @message like "update" or @message like "delete"
-   | sort @timestamp desc
-   | limit 100
-   ```
-
-3. **AWS Config 규칙을 사용한 EKS 구성 모니터링**:
-   ```bash
-   # EKS 클러스터 엔드포인트 공개 여부 확인하는 Config 규칙 생성
-   aws configservice put-config-rule \
-     --config-rule file://eks-endpoint-rule.json
-   ```
-
-4. **Terraform을 사용한 보안 모니터링 인프라 구성**:
-   ```hcl
-   # GuardDuty 활성화
-   resource "aws_guardduty_detector" "main" {
-     enable = true
-     finding_publishing_frequency = "FIFTEEN_MINUTES"
-   }
-   
-   # EKS Protection 활성화
-   resource "aws_guardduty_detector_feature" "eks_runtime" {
-     detector_id = aws_guardduty_detector.main.id
-     name        = "EKS_RUNTIME_MONITORING"
-     status      = "ENABLED"
-   }
-   
-   # Security Hub 활성화
-   resource "aws_securityhub_account" "main" {}
-   
-   # EKS 표준 활성화
-   resource "aws_securityhub_standards_subscription" "cis_eks" {
-     depends_on    = [aws_securityhub_account.main]
-     standards_arn = "arn:aws:securityhub:${data.aws_region.current.name}::standards/aws-foundational-security-best-practices/v/1.0.0"
-   }
-   ```
-
-다른 옵션들의 문제점:
-- **A. 수동 보안 검토 수행**: 수동 검토는 확장성이 떨어지고, 실시간 위협 탐지를 제공하지 않으며, 인적 오류에 취약합니다.
-- **B. AWS Config 규칙만 사용**: AWS Config는 구성 규정 준수를 모니터링하는 데 유용하지만, 런타임 위협 탐지나 포괄적인 로깅을 제공하지 않습니다.
-- **C. AWS GuardDuty만 사용**: GuardDuty는 위협 탐지에 중점을 두지만, 구성 규정 준수 검사나 포괄적인 감사 로깅을 제공하지 않습니다.
 </details>
-### 6. Amazon EKS에서 비밀(Secrets) 관리를 위한 가장 안전한 접근 방식은 무엇인가요?
 
-A. Kubernetes Secrets를 기본 설정으로 사용  
-B. 환경 변수로 비밀 전달  
-C. AWS Secrets Manager 또는 AWS Parameter Store와 통합  
-D. 컨테이너 이미지에 비밀 하드코딩  
+### 6. 중앙에서 통제하는 AWS 접근·수명 주기 관리가 필요한 앱 credential에 적합한 접근 방식은 무엇인가요?
+
+- A) 접근·rotation·reload 계획 없이 값 저장
+- B) 환경 변수를 암호화 수단으로 간주
+- C) 범위를 제한한 신원과 명시적인 전달·수명 주기 설계로 적절한 AWS secret·parameter backend 사용
+- D) 운영 credential을 이미지에 하드코딩
 
 <details>
-<summary>정답 및 설명</summary>
+<summary>정답 보기</summary>
 
-**정답: C. AWS Secrets Manager 또는 AWS Parameter Store와 통합**
+**정답: C) 범위를 제한한 신원과 명시적인 전달·수명 주기 설계로 적절한 AWS secret·parameter backend 사용**
 
 **설명:**
-Amazon EKS에서 비밀(Secrets) 관리를 위한 가장 안전한 접근 방식은 AWS Secrets Manager 또는 AWS Parameter Store와 같은 전용 비밀 관리 서비스와 통합하는 것입니다. 이러한 서비스는 암호화, 액세스 제어, 자동 교체 및 감사와 같은 고급 보안 기능을 제공합니다.
 
-**AWS 비밀 관리 서비스 통합의 주요 이점:**
+Secrets Manager·Parameter Store는 AWS 접근 제어·감사를 중앙화할 수 있지만 workload identity·최소 권한·전달·reload 제어 없이 외부 backend만 사용한다고 자동으로 안전해지지는 않습니다. Secrets Manager는 지원 credential에 구성한 rotation을 제공하지만 Parameter Store는 같은 내장 credential rotation 절차를 제공하지 않습니다. SecureString의 KMS 암호화·version 관리는 대상 database·서비스의 credential 변경과 다릅니다.
 
-1. **강력한 암호화**:
-   - AWS KMS를 사용한 저장 데이터 암호화
-   - 전송 중 데이터 암호화
-   - 세분화된 암호화 키 관리
+EKS 1.28+는 이미 모든 Kubernetes API 데이터를 기본 KMS v2 envelope encryption으로 암호화합니다. Secret manifest의 Base64는 여전히 encoding일 뿐이며 API·Pod 접근으로 값이 노출될 수 있습니다. 환경 변수는 전달 방식이지 암호화가 아니며 Secret 변경 시 기존 process 환경이 갱신되지는 않습니다.
 
-2. **세분화된 액세스 제어**:
-   - IAM 정책을 통한 액세스 제어
-   - 최소 권한 원칙 적용
-   - 임시 자격 증명 지원
+**소유권·전달 방식을 선택합니다:** ESO는 Kubernetes Secret을 기록합니다. ASCP+Secrets Store CSI Driver는 파일을 mount하고 선택적으로 Kubernetes Secret과 동기화할 수 있습니다. 두 controller가 같은 target Secret을 관리하지 않도록 합니다. 파일 전용 CSI도 workload·node 접근 제어가 필요하며 선택적 동기화는 값을 Kubernetes API에도 복제합니다.
 
-3. **비밀 자동 교체**:
-   - 정기적인 비밀 교체 자동화
-   - 애플리케이션 중단 없는 교체
-   - 교체 일정 및 정책 관리
+**ASCP 예제:** 검토한 EKS 1.36용 신규 소유 Linux EC2 설치이며 알 수 없는 기존 클러스터로의 rollout이 아닙니다. 먼저 기존 release·CSIDriver 소유권, 노드 호환성, privileged 플랫폼 agent admission, 네트워크·scheduling을 확인합니다. Fargate는 CSI node DaemonSet을 실행할 수 없습니다. Hybrid·Auto Mode에는 현재 provider·node 선행 요건이 필요하며 아래 로컬 render로 검증된 것이 아닙니다.
 
-4. **포괄적인 감사 및 로깅**:
-   - 비밀 액세스 감사
-   - CloudTrail과의 통합
-   - 규정 준수 요구 사항 충족
+별도로 관리하는 CSI 1.6.1 driver의 `secrets-csi-values.yaml`은 두 AWS token audience와 선택적 Secret 동기화·rotation을 명시합니다:
 
-**구현 방법:**
+```yaml
+tokenRequests:
+- audience: sts.amazonaws.com
+- audience: pods.eks.amazonaws.com
+syncSecret:
+  enabled: true
+enableSecretRotation: true
+rotationPollInterval: 2m
+```
 
-1. **AWS Secrets Manager와 통합**:
+ASCP chart 3.1.3은 기본적으로 driver를 dependency로 설치하고 token audience를 구성합니다. 이 예제에서는 driver를 별도 설치하므로 두 번째 driver를 만들지 않도록 다음을 `ascp-values.yaml`로 저장합니다:
 
-   a. **ASCP(AWS Secrets and Configuration Provider) 설치**:
-   ```bash
-   helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
-   helm install -n kube-system csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver
-   
-   kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml
-   ```
+```yaml
+secrets-store-csi-driver:
+  install: false
+```
 
-   b. **SecretProviderClass 생성**:
-   ```yaml
-   apiVersion: secrets-store.csi.x-k8s.io/v1
-   kind: SecretProviderClass
-   metadata:
-     name: aws-secrets
-   spec:
-     provider: aws
-     parameters:
-       objects: |
-         - objectName: "prod/myapp/db-creds"
-           objectType: "secretsmanager"
-           objectAlias: "db-creds.json"
-     secretObjects:
-     - secretName: db-credentials
-       type: Opaque
-       data:
-       - objectName: db-creds.json
-         key: username
-         property: username
-       - objectName: db-creds.json
-         key: password
-         property: password
-   ```
 
-   c. **파드에 비밀 마운트**:
-   ```yaml
-   apiVersion: v1
-   kind: Pod
-   metadata:
-     name: app
-   spec:
-     containers:
-     - name: app
-       image: myapp:1.0
-       volumeMounts:
-       - name: secrets-store
-         mountPath: "/mnt/secrets"
-         readOnly: true
-       env:
-       - name: DB_USERNAME
-         valueFrom:
-           secretKeyRef:
-             name: db-credentials
-             key: username
-       - name: DB_PASSWORD
-         valueFrom:
-           secretKeyRef:
-             name: db-credentials
-             key: password
-     volumes:
-     - name: secrets-store
-       csi:
-         driver: secrets-store.csi.k8s.io
-         readOnly: true
-         volumeAttributes:
-           secretProviderClass: aws-secrets
-   ```
 
-2. **AWS Parameter Store와 통합**:
+```bash
+helm repo add secrets-store-csi-driver https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
+helm repo add aws-secrets-manager https://aws.github.io/secrets-store-csi-driver-provider-aws
+helm repo update secrets-store-csi-driver aws-secrets-manager
+helm install csi-secrets-store secrets-store-csi-driver/secrets-store-csi-driver \
+  --version 1.6.1 --namespace kube-system -f secrets-csi-values.yaml --wait --timeout 5m
+helm install secrets-provider-aws aws-secrets-manager/secrets-store-csi-driver-provider-aws \
+  --version 3.1.3 --namespace kube-system -f ascp-values.yaml --wait --timeout 5m
+```
 
-   a. **External Secrets Operator 설치**:
-   ```bash
-   helm repo add external-secrets https://charts.external-secrets.io
-   helm install external-secrets external-secrets/external-secrets \
-     -n external-secrets \
-     --create-namespace
-   ```
+기존 설치에는 소유자의 버전·CRD upgrade 절차가 필요하며 신규 설치 명령이나 일부 값만 지정한 `helm upgrade`로 기존 구성을 덮어쓰지 않습니다. Chart 고정·render 성공만으로 node plugin 호환성·연결·secret 접근이 증명되지는 않습니다.
 
-   b. **SecretStore 생성**:
-   ```yaml
-   apiVersion: external-secrets.io/v1beta1
-   kind: SecretStore
-   metadata:
-     name: aws-parameter-store
-   spec:
-     provider:
-       aws:
-         service: ParameterStore
-         region: us-west-2
-         auth:
-           jwt:
-             serviceAccountRef:
-               name: external-secrets-sa
-   ```
+username·password 필드가 있는 소유 Secrets Manager JSON secret과 해당 secret으로 권한을 제한한 `ASCPSecretReader` 역할을 준비하고 필요한 경우 customer key decrypt 권한도 부여합니다. 아래 IRSA trust는 정확한 ServiceAccount subject를 사용하며 OIDC issuer·provider 전체와 계정을 일관되게 바꿔야 합니다:
 
-   c. **ExternalSecret 생성**:
-   ```yaml
-   apiVersion: external-secrets.io/v1beta1
-   kind: ExternalSecret
-   metadata:
-     name: db-credentials
-   spec:
-     refreshInterval: 1h
-     secretStoreRef:
-       name: aws-parameter-store
-       kind: SecretStore
-     target:
-       name: db-credentials
-     data:
-     - secretKey: username
-       remoteRef:
-         key: /prod/myapp/db/username
-     - secretKey: password
-       remoteRef:
-         key: /prod/myapp/db/password
-   ```
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::123456789012:oidc-provider/oidc.eks.us-west-2.amazonaws.com/id/EXAMPLEOIDCID"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "oidc.eks.us-west-2.amazonaws.com/id/EXAMPLEOIDCID:aud": "sts.amazonaws.com",
+          "oidc.eks.us-west-2.amazonaws.com/id/EXAMPLEOIDCID:sub": "system:serviceaccount:security-secrets-demo:ascp-reader"
+        }
+      }
+    }
+  ]
+}
+```
 
-**비밀 관리 모범 사례:**
+아래 Namespace·ServiceAccount·SecretProviderClass·Pod는 파일 전달 예제입니다. 실제 클러스터에 맞는 PSS 버전을 선택합니다. JMESPath로 필드를 alias에 추출하고 `secretObjects.data.objectName`에는 해당 mounted alias를 지정합니다. secretObjects.data 안의 `property` 필드는 지원하지 않습니다. 0444 권한은 이 non-root 데모 process가 파일을 읽게 합니다. Mount·Pod 생성 권한을 제한하고 실제 앱에는 호환 UID·GID·파일 권한을 선택하세요.
 
-1. **최소 권한 원칙 적용**:
-   - 필요한 비밀에만 액세스 권한 부여
-   - 서비스 계정별 IAM 역할 사용
-   - 정기적인 권한 검토
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security-secrets-demo
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.36
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ascp-reader
+  namespace: security-secrets-demo
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ASCPSecretReader
+automountServiceAccountToken: false
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: db-secrets-files
+  namespace: security-secrets-demo
+spec:
+  provider: aws
+  parameters:
+    region: us-west-2
+    usePodIdentity: 'false'
+    objects: |
+      - objectName: arn:aws:secretsmanager:us-west-2:123456789012:secret:training/db-credentials-ABC123
+        objectType: secretsmanager
+        objectAlias: credentials
+        filePermission: '0444'
+        jmesPath:
+        - path: username
+          objectAlias: db_username
+        - path: password
+          objectAlias: db_password
+  secretObjects:
+  - secretName: csi-db-credentials
+    type: Opaque
+    data:
+    - objectName: db_username
+      key: username
+    - objectName: db_password
+      key: password
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: secret-file-check
+  namespace: security-secrets-demo
+spec:
+  serviceAccountName: ascp-reader
+  automountServiceAccountToken: false
+  nodeSelector:
+    kubernetes.io/os: linux
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: check
+    image: busybox:1.37
+    command:
+    - sh
+    - -c
+    - test -s /mnt/secrets/db_username && test -s /mnt/secrets/db_password && sleep 3600
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
+    volumeMounts:
+    - name: secrets
+      mountPath: /mnt/secrets
+      readOnly: true
+  volumes:
+  - name: secrets
+    csi:
+      driver: secrets-store.csi.k8s.io
+      readOnly: true
+      volumeAttributes:
+        secretProviderClass: db-secrets-files
+```
 
-2. **비밀 자동 교체 구현**:
-   ```bash
-   # AWS Secrets Manager 자동 교체 구성
-   aws secretsmanager rotate-secret \
-     --secret-id prod/myapp/db-creds \
-     --rotation-lambda-arn arn:aws:lambda:us-west-2:123456789012:function:RotateDBCreds \
-     --rotation-rules '{"AutomaticallyAfterDays": 30}'
-   ```
+Pod는 파일 내용을 출력하지 않고 존재 여부만 검사합니다. `automountServiceAccountToken: false`는 자동 Kubernetes API token mount를 끄며 CSI driver의 명시적 token 요청을 끄는 설정은 아닙니다. 이 IRSA 예제 대신 Pod Identity를 사용하려면 workload ServiceAccount의 지원 agent·association과 `usePodIdentity: "true"`를 구성합니다. IRSA annotation이 association을 제공한다고 가정하지 않습니다.
 
-3. **비밀 암호화 강화**:
-   ```bash
-   # 고객 관리형 KMS 키로 비밀 암호화
-   aws secretsmanager create-secret \
-     --name prod/myapp/api-key \
-     --secret-string '{"api-key": "abcdef12345"}' \
-     --kms-key-id arn:aws:kms:us-west-2:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab
-   ```
+선택적인 csi-db-credentials Secret은 Pod가 volume을 mount한 후에만 동기화됩니다. 수명 주기는 소비 Pod를 따르며 모든 소비자가 삭제되면 제거될 수 있습니다. SecretProviderClass 생성만으로 독립적인 Secret 생성기가 되지는 않습니다. 값을 출력하지 말고 SecretProviderClassPodStatus와 controller·node 이벤트를 확인합니다.
 
-4. **비밀 액세스 감사**:
-   ```bash
-   # CloudTrail 이벤트 필터링
-   aws cloudtrail lookup-events \
-     --lookup-attributes AttributeKey=EventName,AttributeValue=GetSecretValue
-   ```
+Parameter Store라면 objects 값에 다음 항목을 사용할 수 있습니다. 소유 parameter의 provider 필수 SSM 읽기 권한과 SecureString의 적절한 KMS 권한이 필요합니다. 이는 전체 SecretProviderClass가 아닌 objects 조각입니다:
 
-**실제 구현 예시:**
+```yaml
+- objectName: /training/app/config
+  objectType: ssmparameter
+  objectAlias: app_config
+  filePermission: "0444"
+```
 
-1. **AWS Secrets Manager와 IRSA(IAM Roles for Service Accounts) 통합**:
-   ```yaml
-   # 서비스 계정 생성
-   apiVersion: v1
-   kind: ServiceAccount
-   metadata:
-     name: app-sa
-     namespace: default
-     annotations:
-       eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/app-role
-   ---
-   # 배포 구성
-   apiVersion: apps/v1
-   kind: Deployment
-   metadata:
-     name: app
-   spec:
-     selector:
-       matchLabels:
-         app: myapp
-     template:
-       metadata:
-         labels:
-           app: myapp
-       spec:
-         serviceAccountName: app-sa
-         containers:
-         - name: app
-           image: myapp:1.0
-           volumeMounts:
-           - name: secrets-store
-             mountPath: "/mnt/secrets"
-             readOnly: true
-         volumes:
-         - name: secrets-store
-           csi:
-             driver: secrets-store.csi.k8s.io
-             readOnly: true
-             volumeAttributes:
-               secretProviderClass: aws-secrets
-   ```
+**ESO 대안:** 본문처럼 정확한 eso-reader ServiceAccount에 맞는 EKSSecretReader IRSA 역할·trust를 준비합니다. 소유자가 ESO 2.10.0·v1 CRD를 설치한 상태에서 다음은 다른 target인 eso-db-credentials를 기록합니다. Backend ARN·namespace·role·JSON 속성은 실제 준비한 secret을 가리켜야 합니다:
 
-2. **Terraform을 사용한 비밀 관리 인프라 구성**:
-   ```hcl
-   # AWS Secrets Manager 비밀 생성
-   resource "aws_secretsmanager_secret" "db_credentials" {
-     name                    = "prod/myapp/db-creds"
-     recovery_window_in_days = 7
-     kms_key_id              = aws_kms_key.secrets_key.arn
-   }
-   
-   resource "aws_secretsmanager_secret_version" "db_credentials" {
-     secret_id     = aws_secretsmanager_secret.db_credentials.id
-     secret_string = jsonencode({
-       username = "dbuser",
-       password = random_password.db_password.result
-     })
-   }
-   
-   # IAM 역할 및 정책
-   resource "aws_iam_role" "app_role" {
-     name = "app-role"
-     assume_role_policy = jsonencode({
-       Version = "2012-10-17",
-       Statement = [{
-         Effect = "Allow",
-         Principal = {
-           Federated = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${module.eks.oidc_provider}"
-         },
-         Action = "sts:AssumeRoleWithWebIdentity",
-         Condition = {
-           StringEquals = {
-             "${module.eks.oidc_provider}:sub" = "system:serviceaccount:default:app-sa"
-           }
-         }
-       }]
-     })
-   }
-   
-   resource "aws_iam_policy" "secrets_access" {
-     name = "secrets-access"
-     policy = jsonencode({
-       Version = "2012-10-17",
-       Statement = [{
-         Effect = "Allow",
-         Action = [
-           "secretsmanager:GetSecretValue",
-           "secretsmanager:DescribeSecret"
-         ],
-         Resource = aws_secretsmanager_secret.db_credentials.arn
-       }]
-     })
-   }
-   
-   resource "aws_iam_role_policy_attachment" "secrets_access" {
-     role       = aws_iam_role.app_role.name
-     policy_arn = aws_iam_policy.secrets_access.arn
-   }
-   ```
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: security-secrets-demo
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.36
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: eso-reader
+  namespace: security-secrets-demo
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/EKSSecretReader
+automountServiceAccountToken: false
+---
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: aws-secretsmanager
+  namespace: security-secrets-demo
+spec:
+  provider:
+    aws:
+      service: SecretsManager
+      region: us-west-2
+      auth:
+        jwt:
+          serviceAccountRef:
+            name: eso-reader
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: db-credentials
+  namespace: security-secrets-demo
+spec:
+  refreshPolicy: Periodic
+  refreshInterval: 1h
+  secretStoreRef:
+    name: aws-secretsmanager
+    kind: SecretStore
+  target:
+    name: eso-db-credentials
+    creationPolicy: Owner
+    deletionPolicy: Retain
+  data:
+    - secretKey: username
+      remoteRef:
+        key: arn:aws:secretsmanager:us-west-2:123456789012:secret:training/db-credentials-ABC123
+        property: username
+    - secretKey: password
+      remoteRef:
+        key: arn:aws:secretsmanager:us-west-2:123456789012:secret:training/db-credentials-ABC123
+        property: password
+```
 
-다른 옵션들의 문제점:
-- **A. Kubernetes Secrets를 기본 설정으로 사용**: 기본 Kubernetes Secrets는 base64로 인코딩되어 있을 뿐 암호화되지 않으며, 자동 교체나 세분화된 액세스 제어 기능이 부족합니다.
-- **B. 환경 변수로 비밀 전달**: 환경 변수는 로그에 노출되거나 프로세스 정보를 통해 액세스될 수 있으며, 자동 교체나 감사 기능이 없습니다.
-- **D. 컨테이너 이미지에 비밀 하드코딩**: 이미지에 비밀을 하드코딩하는 것은 심각한 보안 위험을 초래하며, 비밀 교체 시 이미지를 다시 빌드하고 배포해야 합니다.
+Owner는 target Secret을 ExternalSecret에 연결하므로 owner 삭제 시 garbage collection될 수 있습니다. Retain은 backend 소실에 관한 설정이며 owner 삭제 방지가 아닙니다. ESO의 serviceAccountRef JWT 방식은 IRSA입니다. Controller Pod Identity는 controller ServiceAccount를 연결하고 store auth block을 생략하는 별도 설계이며 ESO가 serviceAccountRef로 다른 Pod Identity account를 impersonate할 수는 없습니다.
+
+**Rotation·reload:** CSI 1.6+는 kubelet의 RequiresRepublish 요청을 rotation에 사용합니다. requiresRepublish만으로 rotation이 켜지지 않으며 driver의 enableSecretRotation도 필요합니다. 예제의 rotationPollInterval 2분은 최소 cache 유지 기간이지 전체 갱신이 2분 내 완료된다는 보장이 아닙니다. 실제 시점은 kubelet republish에 영향을 받으며 ESO refresh interval도 별도 reconciliation 일정입니다. 앱은 갱신 파일을 다시 열거나 감시하고 통제된 rollout을 수행해야 합니다. subPath mount와 기존 환경 변수는 자동 갱신되지 않습니다.
+
+Secrets Manager rotate-secret은 기본적으로 즉시 rotation합니다. --no-rotate-immediately도 Lambda rotation 함수를 시험하며 AWSPENDING을 생성·제거할 수 있고 기존 rate·day 기반 일정이 실행될 수도 있습니다. 단순 일정 변경 전용·읽기 전용 검사가 아닙니다. 실행 전에 대상 credential 변경, 중첩 유효 기간, 앱 reload와 복구를 검토하세요.
+
+**Secret 값이 없는 Terraform 예제:** Terraform sensitive는 일부 표시를 숨길 뿐 일반적인 secret_string·random_password 값은 state에 남을 수 있습니다. 아래는 승인된 기존 KMS key를 사용해 secret metadata만 관리합니다. 이미 존재하는 secret은 소유자를 통해 state·소유권을 조정하거나 import한 뒤 이 구성으로 관리합니다:
+
+```hcl
+terraform {
+  required_version = ">= 1.5.0, < 2.0.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "6.64.0"
+    }
+  }
+}
+
+variable "aws_region" {
+  type    = string
+  default = "us-west-2"
+}
+
+variable "kms_key_arn" {
+  type        = string
+  description = "Existing approved Secrets Manager encryption key ARN in this Region"
+}
+
+provider "aws" {
+  region = var.aws_region
+}
+
+resource "aws_secretsmanager_secret" "credentials" {
+  name                    = "training/db-credentials"
+  kms_key_id              = var.kms_key_arn
+  recovery_window_in_days = 30
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+output "secret_arn" {
+  value = aws_secretsmanager_secret.credentials.arn
+}
+```
+
+이 구성은 secret version·값을 생성하거나 rotation을 활성화하지 않습니다. 초기 값은 하드코딩한 Terraform 문자열·평문 명령 인수 대신 승인한 secret 입력 경로로 전달합니다. Metadata만 예상하더라도 state·plan을 보호하세요. prevent_destroy는 Terraform 구성의 제어이며 되돌릴 수 없는 서비스 보호가 아닙니다. Resource 구성을 제거하거나 Terraform 밖에서 작업하면 보호 맥락이 달라집니다.
+
+Kubernetes 기본·배포 SecretProviderClass·ESO CRD, 공개 chart checksum, CSI·ASCP render 객체 22개와 합성 데이터의 실제 JMESPath 추출을 검증했습니다. 생성된 null creationTimestamp는 Swagger schema 검사에서만 생략했습니다. Terraform fmt는 통과했으며 init·plan·apply는 실행하지 않았습니다. 실제 AWS secret 조회·mount·동기화·rotation·앱 reload는 시험하지 않았습니다.
+
+참고: [ASCP 구성](https://github.com/aws/secrets-store-csi-driver-provider-aws), [CSI 1.6.1](https://github.com/kubernetes-sigs/secrets-store-csi-driver/releases/tag/v1.6.1), [CSI Secret 동기화](https://secrets-store-csi-driver.sigs.k8s.io/topics/sync-as-kubernetes-secret), [CSI rotation](https://secrets-store-csi-driver.sigs.k8s.io/topics/secret-auto-rotation), [ESO AWS 인증](https://github.com/external-secrets/external-secrets/blob/v2.10.0/docs/provider/aws-access.md), [EKS envelope encryption](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html), [Secrets Manager rotation](https://docs.aws.amazon.com/cli/latest/reference/secretsmanager/rotate-secret.html).
+
 </details>

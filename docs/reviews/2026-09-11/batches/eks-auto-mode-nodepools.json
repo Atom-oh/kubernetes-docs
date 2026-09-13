@@ -1,0 +1,148 @@
+[
+  {
+    "path": "en/eks-auto-mode/02-nodepool-configuration.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Completed full paired NodePool/NodeClass review; removed invented defaults and unsupported EC2NodeClass fields while preserving current supported T families, instance profiles, kernel tuning, KMS/CA and Pod-network customization.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/set-builtin-node-pools.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode-learn-instances.html",
+      "https://docs.aws.amazon.com/whitepapers/latest/security-overview-amazon-eks-auto-mode/eks-auto-mode-data-plane.html",
+      "https://karpenter.sh/docs/concepts/nodepools/",
+      "https://karpenter.sh/docs/concepts/scheduling/#weighted-nodepools",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/apis/crds/karpenter.sh_nodepools.yaml",
+      "https://aws.amazon.com/blogs/containers/new-amazon-eks-auto-mode-features-for-enhanced-security-network-control-and-performance/"
+    ],
+    "findings": [
+      "Purported AWS-managed default pool specs may be invented/outdated (architectures/capacity types/generation/size/disruption settings); verify current docs rather than apply these defaults.",
+      "System-pool CoreDNS/kube-proxy explanation conflicts with Auto Mode node system services.",
+      "Auto NodeClass borrows amiFamily, blockDeviceMappings, userData and metadataOptions from self-managed EC2NodeClass; needs actual AWS NodeClass schema.",
+      "Extended NodeClass uses top-level kmsKeyID and certificateBundles.content with fake PEM; wrong EBS/instance-store encryption claim and missing role/instance profile in second example.",
+      "Resource limits are vCPU/memory, not maximum node count; 4000Gi is not exactly4TB; weight is provisioning preference, not scheduler priority/security isolation.",
+      "Check actual current burstable-instance support for dev t-family; preserve supported customization via current fields rather than deleting valid recent features.",
+      "Current built-ins both use On-Demand C/M/R generation>=5; general-purposeAMD64, systemAMD64+ARM64. Replaced guessed default manifests with read-only inspection and documented removal/drain semantics.",
+      "Auto Mode IMDSv2/hop1 are fixed; hostNetwork is a distinct exposure case. Corrected false AL2023/Bottlerocket choice and metadataOptions settings.",
+      "instanceProfile is valid (eks prefix, mutually exclusive with role); T-family burstables are currently supported above size/CPU minima. Retained these legitimate options.",
+      "Replaced blockDeviceMappings/userData with ephemeralStorage and supported advancedCompute.kernel.sysctl. KMS applies to root/data EBS, not arbitrary local-NVMe/PVC encryption.",
+      "CA bundles use base64 certificateBundles.data; real PEM validation, private-key rejection and account/region checking replace fake certificate content. Pod subnet/SG selectors paired, with per-NodeClass/SNAT/hostNetwork limitations.",
+      "Clarified aggregate resource quantities, no hard spending cap, provisioning weights, and selector+toleration placement rather than tenant-security guarantees. No numeric benchmark rerun or cloud execution."
+    ],
+    "validation": [
+      "Fully read lines1–240 and241–438; original snapshot/hash in .vitepress/cache/core-audit/eks-auto-mode-nodepools/scope.json.",
+      "All four originals fully read: EN438/KO398 source lines plus191quiz lines per locale; snapshots/hashes preserved.",
+      "Five NodePool templates passed released Karpenter1.14.1 structural CRD validation; one placement Pod passed Kubernetes1.36.2 strict OpenAPI. AWS NodeClass checked field-by-field against current primary reference; no live admission test claimed.",
+      "Five actual local CA/KMS generator cases passed: valid public PEM; wrong account; wrong region; truncated PEM; private-key-containing bundle. OpenSSL generated only a synthetic local CA.",
+      "YAML duplicate-key/Bash syntax, matching executable fences, local links, selector/toleration consistency and quiz keysBBBBBB in both locales passed; git diff --check passed. Evidence: .vitepress/cache/core-audit/eks-auto-mode-nodepools/final-validation.json."
+    ]
+  },
+  {
+    "path": "ko/eks-auto-mode/02-nodepool-configuration.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Completed full paired NodePool/NodeClass review; removed invented defaults and unsupported EC2NodeClass fields while preserving current supported T families, instance profiles, kernel tuning, KMS/CA and Pod-network customization.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/set-builtin-node-pools.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode-learn-instances.html",
+      "https://docs.aws.amazon.com/whitepapers/latest/security-overview-amazon-eks-auto-mode/eks-auto-mode-data-plane.html",
+      "https://karpenter.sh/docs/concepts/nodepools/",
+      "https://karpenter.sh/docs/concepts/scheduling/#weighted-nodepools",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/apis/crds/karpenter.sh_nodepools.yaml",
+      "https://aws.amazon.com/blogs/containers/new-amazon-eks-auto-mode-features-for-enhanced-security-network-control-and-performance/"
+    ],
+    "findings": [
+      "Same unsupported self-managed NodeClass fields and misplaced KMS/CA fields; preserve valid modern customization through actual AWS settings.",
+      "CoreDNS/kube-proxy system-pool characterization and default NodePool architectures/capacity/disruption need current primary verification.",
+      "Korean lacks English resource-limit/weight/label-taint explanation; align final semantic guidance and workload-selection example.",
+      "Current built-ins both use On-Demand C/M/R generation>=5; general-purposeAMD64, systemAMD64+ARM64. Replaced guessed default manifests with read-only inspection and documented removal/drain semantics.",
+      "Auto Mode IMDSv2/hop1 are fixed; hostNetwork is a distinct exposure case. Corrected false AL2023/Bottlerocket choice and metadataOptions settings.",
+      "instanceProfile is valid (eks prefix, mutually exclusive with role); T-family burstables are currently supported above size/CPU minima. Retained these legitimate options.",
+      "Replaced blockDeviceMappings/userData with ephemeralStorage and supported advancedCompute.kernel.sysctl. KMS applies to root/data EBS, not arbitrary local-NVMe/PVC encryption.",
+      "CA bundles use base64 certificateBundles.data; real PEM validation, private-key rejection and account/region checking replace fake certificate content. Pod subnet/SG selectors paired, with per-NodeClass/SNAT/hostNetwork limitations.",
+      "Clarified aggregate resource quantities, no hard spending cap, provisioning weights, and selector+toleration placement rather than tenant-security guarantees. No numeric benchmark rerun or cloud execution."
+    ],
+    "validation": [
+      "Fully read lines1–230 and231–398; original snapshot/hash saved.",
+      "All four originals fully read: EN438/KO398 source lines plus191quiz lines per locale; snapshots/hashes preserved.",
+      "Five NodePool templates passed released Karpenter1.14.1 structural CRD validation; one placement Pod passed Kubernetes1.36.2 strict OpenAPI. AWS NodeClass checked field-by-field against current primary reference; no live admission test claimed.",
+      "Five actual local CA/KMS generator cases passed: valid public PEM; wrong account; wrong region; truncated PEM; private-key-containing bundle. OpenSSL generated only a synthetic local CA.",
+      "YAML duplicate-key/Bash syntax, matching executable fences, local links, selector/toleration consistency and quiz keysBBBBBB in both locales passed; git diff --check passed. Evidence: .vitepress/cache/core-audit/eks-auto-mode-nodepools/final-validation.json."
+    ]
+  },
+  {
+    "path": "en/quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Six questions reconciled with current Auto Mode defaults and APIs: fixed IMDS, managed Bottlerocket, GPU labels, generation semantics and route-aware subnet selection.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/set-builtin-node-pools.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode-learn-instances.html",
+      "https://docs.aws.amazon.com/whitepapers/latest/security-overview-amazon-eks-auto-mode/eks-auto-mode-data-plane.html",
+      "https://karpenter.sh/docs/concepts/nodepools/",
+      "https://karpenter.sh/docs/concepts/scheduling/#weighted-nodepools",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/apis/crds/karpenter.sh_nodepools.yaml",
+      "https://aws.amazon.com/blogs/containers/new-amazon-eks-auto-mode-features-for-enhanced-security-network-control-and-performance/"
+    ],
+    "findings": [
+      "Q1 repeats suspected wrong default Spot/architecture and system-pool component claims.",
+      "Q2 teaches metadataOptions/httpTokens on AWS NodeClass and overstates hoplimit1 as universal Pod isolation.",
+      "Q3 wrongly offers AL2023/Bottlerocket selection in Auto Mode.",
+      "Q5 answer says In but code uses Gt; distinguish exact generation from strict lower bound.",
+      "Q6 tag selection is not proof of private routing and manifest omits required role/profile/security groups.",
+      "Q4 GPU manufacturer key appears plausible; verify current supported labels before changing.",
+      "Current built-ins both use On-Demand C/M/R generation>=5; general-purposeAMD64, systemAMD64+ARM64. Replaced guessed default manifests with read-only inspection and documented removal/drain semantics.",
+      "Auto Mode IMDSv2/hop1 are fixed; hostNetwork is a distinct exposure case. Corrected false AL2023/Bottlerocket choice and metadataOptions settings.",
+      "instanceProfile is valid (eks prefix, mutually exclusive with role); T-family burstables are currently supported above size/CPU minima. Retained these legitimate options.",
+      "Replaced blockDeviceMappings/userData with ephemeralStorage and supported advancedCompute.kernel.sysctl. KMS applies to root/data EBS, not arbitrary local-NVMe/PVC encryption.",
+      "CA bundles use base64 certificateBundles.data; real PEM validation, private-key rejection and account/region checking replace fake certificate content. Pod subnet/SG selectors paired, with per-NodeClass/SNAT/hostNetwork limitations.",
+      "Clarified aggregate resource quantities, no hard spending cap, provisioning weights, and selector+toleration placement rather than tenant-security guarantees. No numeric benchmark rerun or cloud execution."
+    ],
+    "validation": [
+      "Full read lines1–191; six questions; original snapshot/hash saved.",
+      "All four originals fully read: EN438/KO398 source lines plus191quiz lines per locale; snapshots/hashes preserved.",
+      "Five NodePool templates passed released Karpenter1.14.1 structural CRD validation; one placement Pod passed Kubernetes1.36.2 strict OpenAPI. AWS NodeClass checked field-by-field against current primary reference; no live admission test claimed.",
+      "Five actual local CA/KMS generator cases passed: valid public PEM; wrong account; wrong region; truncated PEM; private-key-containing bundle. OpenSSL generated only a synthetic local CA.",
+      "YAML duplicate-key/Bash syntax, matching executable fences, local links, selector/toleration consistency and quiz keysBBBBBB in both locales passed; git diff --check passed. Evidence: .vitepress/cache/core-audit/eks-auto-mode-nodepools/final-validation.json."
+    ]
+  },
+  {
+    "path": "ko/quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Six questions reconciled with current Auto Mode defaults and APIs: fixed IMDS, managed Bottlerocket, GPU labels, generation semantics and route-aware subnet selection.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/set-builtin-node-pools.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/automode-learn-instances.html",
+      "https://docs.aws.amazon.com/whitepapers/latest/security-overview-amazon-eks-auto-mode/eks-auto-mode-data-plane.html",
+      "https://karpenter.sh/docs/concepts/nodepools/",
+      "https://karpenter.sh/docs/concepts/scheduling/#weighted-nodepools",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/pkg/apis/crds/karpenter.sh_nodepools.yaml",
+      "https://aws.amazon.com/blogs/containers/new-amazon-eks-auto-mode-features-for-enhanced-security-network-control-and-performance/"
+    ],
+    "findings": [
+      "Q1 default Spot/system components; Q2 unsupported metadataOptions and hoplimit isolation; Q3 false AL2023 choice.",
+      "Q5 In-answer vs Gt-example mismatch; Q6 tags do not prove subnet routing/privacy and partial NodeClass lacks required identity/SG configuration.",
+      "GPU-manufacturer label must be checked against current AWS supported labels.",
+      "Current built-ins both use On-Demand C/M/R generation>=5; general-purposeAMD64, systemAMD64+ARM64. Replaced guessed default manifests with read-only inspection and documented removal/drain semantics.",
+      "Auto Mode IMDSv2/hop1 are fixed; hostNetwork is a distinct exposure case. Corrected false AL2023/Bottlerocket choice and metadataOptions settings.",
+      "instanceProfile is valid (eks prefix, mutually exclusive with role); T-family burstables are currently supported above size/CPU minima. Retained these legitimate options.",
+      "Replaced blockDeviceMappings/userData with ephemeralStorage and supported advancedCompute.kernel.sysctl. KMS applies to root/data EBS, not arbitrary local-NVMe/PVC encryption.",
+      "CA bundles use base64 certificateBundles.data; real PEM validation, private-key rejection and account/region checking replace fake certificate content. Pod subnet/SG selectors paired, with per-NodeClass/SNAT/hostNetwork limitations.",
+      "Clarified aggregate resource quantities, no hard spending cap, provisioning weights, and selector+toleration placement rather than tenant-security guarantees. No numeric benchmark rerun or cloud execution."
+    ],
+    "validation": [
+      "Fully read lines1–191; original snapshot/hash saved.",
+      "All four originals fully read: EN438/KO398 source lines plus191quiz lines per locale; snapshots/hashes preserved.",
+      "Five NodePool templates passed released Karpenter1.14.1 structural CRD validation; one placement Pod passed Kubernetes1.36.2 strict OpenAPI. AWS NodeClass checked field-by-field against current primary reference; no live admission test claimed.",
+      "Five actual local CA/KMS generator cases passed: valid public PEM; wrong account; wrong region; truncated PEM; private-key-containing bundle. OpenSSL generated only a synthetic local CA.",
+      "YAML duplicate-key/Bash syntax, matching executable fences, local links, selector/toleration consistency and quiz keysBBBBBB in both locales passed; git diff --check passed. Evidence: .vitepress/cache/core-audit/eks-auto-mode-nodepools/final-validation.json."
+    ]
+  }
+]

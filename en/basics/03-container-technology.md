@@ -1,6 +1,6 @@
 # Container Technology
 
-> **Supported Versions**: Docker 20.10+, containerd 1.6+, CRI-O 1.24+ **Last Updated**: February 11, 2026
+> **Supported Versions**: Maintained Linux Docker/CRI releases; Kubernetes CRI v1; Node.js 24 build examples **Last Updated**: September 11, 2026
 
 Containers are a technology that packages applications and their dependencies together, enabling consistent execution across various environments. This document explains the fundamental concepts of containers, how they work, and their relationship with Kubernetes.
 
@@ -19,6 +19,8 @@ Containers are a technology that packages applications and their dependencies to
 * [Container Orchestration](03-container-technology.md#container-orchestration)
 * [Containers on AWS](03-container-technology.md#containers-on-aws)
 
+> Linux commands below assume a Linux Docker host. Docker Desktop runs its daemon in a VM, so host PID/filesystem paths cannot be inspected directly from the desktop OS. Images require compatible CPU architecture, OS and kernel features. VM-backed environments such as Kata/Fargate differ from the basic process-isolation model described here.
+
 ## What is a Container?
 
 A container is a standardized unit of software that includes everything needed to run an application (code, runtime, system tools, system libraries, settings). Containers run in isolated environments while sharing the host operating system's kernel.
@@ -28,14 +30,14 @@ A container is a standardized unit of software that includes everything needed t
 1. **Portability**: Provides consistent execution environment across development, test, and production
 2. **Lightweight**: Uses fewer resources than virtual machines
 3. **Isolation**: Isolated execution environment from other containers and host system
-4. **Fast Start and Stop**: Quick startup time in milliseconds
+4. **Fast Start and Stop**: Often starts quickly; image pulling and application initialization determine readiness
 5. **Scalability**: Easy to replicate for horizontal scaling
 6. **Version Control**: Application lifecycle management through image versioning
 
 ### History of Container Technology
 
 * **Early 2000s**: Early container technologies like Linux VServer and OpenVZ emerge
-* **2007**: cgroups (Control Groups) integrated into Linux kernel
+* **2008**: Linux 2.6.24 releases the initial cgroups implementation
 * **2008**: LXC (Linux Containers) project begins
 * **2013**: Docker release popularizes container technology
 * **2015**: Open Container Initiative (OCI) established, standardizing containers
@@ -47,14 +49,16 @@ A container is a standardized unit of software that includes everything needed t
 
 ### Key Differences
 
+This is an architecture comparison, not a measured performance/startup benchmark. Image size, initialization and VM restore mechanisms affect results.
+
 | Characteristic      | Container                        | Virtual Machine                                           |
 | ------------------- | -------------------------------- | --------------------------------------------------------- |
-| Size                | Typically tens of MB             | Typically several GB                                      |
-| Startup Time        | Seconds or less                  | Minutes                                                   |
+| Size                | Application/userspace layers; varies             | Guest OS plus application; varies                                      |
+| Startup Time        | Often fast once image is local                  | Depends on boot/restore strategy                                                   |
 | Isolation Level     | Process-level isolation          | Hardware-level isolation                                  |
 | OS                  | Shares host OS kernel            | Each VM requires full OS                                  |
 | Performance         | Nearly native                    | Some overhead                                             |
-| Security            | Relatively lower (shared kernel) | Relatively higher (complete isolation)                    |
+| Security            | Shared kernel; hardening required | Hypervisor boundary; hardening still required                    |
 | Resource Efficiency | High                             | Medium                                                    |
 | Use Cases           | Microservices, CI/CD, dev/test   | Legacy apps, diverse OS requirements, high security needs |
 
@@ -64,7 +68,7 @@ Containers are implemented using several Linux kernel features. These technologi
 
 ### Isolation Through Namespaces
 
-Containers use Linux namespaces to isolate processes. Each container has its own set of namespaces, providing an independent execution environment.
+Containers use Linux namespaces to isolate processes. Namespace sharing is configurable; for example, containers in one Kubernetes Pod share a network namespace.
 
 ```bash
 # Check container namespaces
@@ -101,9 +105,13 @@ docker stats <container-id>
 # Check container cgroup settings
 docker inspect <container-id> | grep -A 20 "Cgroup"
 
-# Check container cgroup from host
-cat /sys/fs/cgroup/system.slice/docker-<container-id>.scope/cpu.max
-cat /sys/fs/cgroup/system.slice/docker-<container-id>.scope/memory.max
+# On a Linux cgroup v2 host, inspect a running container's actual path.
+CONTAINER_PID=$(docker inspect -f '{{.State.Pid}}' <container-id>)
+if [ "$CONTAINER_PID" -gt 0 ]; then
+  CGROUP_PATH=$(awk -F: '$1 == "0" {print $3}' "/proc/$CONTAINER_PID/cgroup")
+  cat "/sys/fs/cgroup$CGROUP_PATH/cpu.max"
+  cat "/sys/fs/cgroup$CGROUP_PATH/memory.max"
+fi
 ```
 
 **cgroup Resource Controls Used by Containers**:
@@ -111,19 +119,22 @@ cat /sys/fs/cgroup/system.slice/docker-<container-id>.scope/memory.max
 * **CPU**: CPU time limiting and CPU core allocation
 * **Memory**: Memory usage limiting and OOM behavior control
 * **Block I/O**: Disk I/O bandwidth limiting
-* **Network**: Network bandwidth limiting (combined with tc)
+* **Network**: Traffic classification integrated with tc/eBPF
 * **PIDs**: Process count limit within container
 
 ### Layer Management Through OverlayFS
 
-Container images use OverlayFS to efficiently manage multiple layers.
+Fresh Docker Engine 29.0+ installations default to the containerd image store and snapshotters. Upgrades may retain classic overlay2; inspect docker info. GraphDriver.Data paths are not available on every installation.
+
+OCI images describe filesystem layers independently of the storage implementation. OverlayFS is a common Linux backend; runtimes may use other storage drivers or snapshotters.
 
 ```bash
 # Check image layers
 docker history <image-name>
 
 # Check container file system layers
-docker inspect <container-id> | grep -A 10 "GraphDriver"
+docker info --format '{{.Driver}} {{json .DriverStatus}}'
+docker image inspect <image-name> --format '{{json .RootFS.Layers}}'
 
 # Check OverlayFS mount information
 mount | grep overlay
@@ -180,6 +191,8 @@ A container runtime is software that manages the lifecycle of containers. It run
 
 Kubernetes integrates with various container runtimes through CRI (Container Runtime Interface). CRI provides a standardized interface between Kubernetes and container runtimes.
 
+Kubernetes 1.26+ requires CRI v1. Use a supported containerd/CRI-O release and align its cgroup driver with kubelet. Docker Engine does not itself implement CRI; built-in dockershim was removed in 1.24. Docker Engine needs a separate CRI adapter such as cri-dockerd. OCI images built with Docker still work. CRI is the kubelet/runtime API contract, not necessarily a separately deployed middle service.
+
 ## Container Images
 
 Container images are immutable templates containing applications and their dependencies. Images consist of multiple layers, each representing file system changes.
@@ -198,47 +211,46 @@ Container images are stored and shared in registries. Major registries include:
 
 * **Docker Hub**: Largest public registry
 * **Amazon ECR**: AWS container registry service
-* **Google Container Registry**: Google Cloud registry
+* **Google Artifact Registry**: Current Google Cloud registry; Container Registry shut down in 2025, while gcr.io repositories backed by Artifact Registry remain supported.
 * **Azure Container Registry**: Microsoft Azure registry
 * **GitHub Container Registry**: GitHub container registry
 * **Harbor**: Open-source enterprise-grade registry
 
 ### Image Tags and Digests
 
-* **Tag**: Human-readable name identifying a specific version of an image (e.g., `nginx:1.21.0`)
-* **Digest**: SHA256 hash of image contents, unique identifier for an image (e.g., `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`)
+* **Tag**: Human-readable mutable reference; it can be reassigned unless registry immutability is enforced (e.g., `nginx:1.30.4`)
+* **Digest**: Content digest of an image manifest or multi-platform index (commonly SHA256); it references config/layer digests (e.g., `nginx@sha256:2834dc507516af02784808c5f48b7cbe38b8ed5d0f4837f16e78d00deb7e7767`)
 
 ## Dockerfile
 
-A Dockerfile is a text file containing instructions for building a container image. Each instruction adds a new layer to the image.
+A Dockerfile is a text file containing instructions for building a container image. Filesystem-changing instructions can create layers; ENV, CMD and other metadata-only instructions do not add a filesystem diff.
 
 ### Key Dockerfile Instructions
 
 ```dockerfile
-# Specify base image
-FROM node:14-alpine
-
-# Set working directory
+FROM node:24-alpine
 WORKDIR /app
-
-# Set environment variables
 ENV NODE_ENV=production
-
-# Copy files
-COPY package*.json ./
-COPY . .
-
-# Run commands
-RUN npm install --production
-
-# Expose port
+# Requires a committed package-lock.json matching package.json.
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+COPY --chown=node:node . .
+RUN mkdir -p /app/data && chown node:node /app/data
+USER node
 EXPOSE 3000
-
-# Define volume
 VOLUME /app/data
-
-# Command to run when container starts
 CMD ["node", "server.js"]
+```
+
+Node.js 14 is end-of-life; these examples use the supported Node.js 24 line. Check Alpine musl compatibility for native modules. Prepare .dockerignore so host node_modules or credentials are not copied into the image. EXPOSE is metadata and does not publish a port; publishing needs docker run -p or orchestrator configuration.
+
+```text
+# .dockerignore
+node_modules
+.git
+.env
+.env.*
+npm-debug.log
 ```
 
 ### Multi-stage Builds
@@ -246,16 +258,15 @@ CMD ["node", "server.js"]
 Multi-stage builds use multiple build stages to reduce final image size.
 
 ```dockerfile
-# Build stage
-FROM node:14 AS build
+FROM node:24 AS build
 WORKDIR /app
-COPY package*.json ./
+COPY package.json package-lock.json ./
+RUN npm ci
 COPY . .
-RUN npm install
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine
+FROM nginx:1.30.4-alpine
+# This example assumes a static build written to dist/.
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
@@ -265,7 +276,7 @@ CMD ["nginx", "-g", "daemon off;"]
 
 1. **Choose appropriate base image**: Use lightweight images like Alpine
 2. **Use multi-stage builds**: Exclude build tools and intermediate files
-3. **Minimize layers**: Combine RUN, COPY, and other commands
+3. **Optimize layer contents and cache**: Combine package installation/cleanup in one RUN; fewer layers alone do not guarantee a smaller image.
 4. **Exclude unnecessary files**: Use .dockerignore file
 5. **Leverage cache**: Place frequently changing layers later
 
@@ -278,10 +289,10 @@ Container networking enables communication between containers and between contai
 Docker provides various network drivers:
 
 1. **bridge**: Default network driver, communication between containers on the same host
-2. **host**: Directly uses host network, no isolation
+2. **host**: Shares the host network namespace; other container isolation still applies
 3. **overlay**: Container communication across multiple hosts
 4. **macvlan**: Assigns MAC address to container, appears as physical network device
-5. **none**: Disables all networking
+5. **none**: Leaves only loopback networking
 
 ### Port Mapping
 
@@ -292,22 +303,24 @@ Map container internal ports to host ports for external access.
 docker run -p 8080:80 nginx
 ```
 
+Port publishing binds all host addresses by default. Use `-p 127.0.0.1:8080:80` for a local-only lab.
+
 ### Container-to-Container Communication
 
-1. **Same network**: Containers on the same network can communicate by container name
+1. **Same network**: Containers on the same user-defined bridge can resolve each other by name; the default bridge lacks automatic name DNS
 2. **Links**: Legacy method, direct link setup between containers
 3. **External network**: Communication through host ports
 
 ## Container Storage
 
-Containers are stateless by default, but there are several options for persistent data storage.
+A Docker container’s writable layer survives stop/start but is removed with that container. Keep durable data in volumes or other external storage.
 
 ### Storage Types
 
 1. **Ephemeral storage**: Container internal file system, data lost when container is deleted
 2. **Volumes**: Host file system areas managed by Docker
 3. **Bind mounts**: Mount specific host paths to container
-4. **tmpfs mounts**: Store data only in memory, used when high I/O performance is needed
+4. **tmpfs mounts**: Memory-backed temporary storage; pages may be swapped to disk
 
 ### Volume Usage Examples
 
@@ -340,7 +353,7 @@ Container security must be considered at multiple layers including images, conta
 1. **Vulnerability scanning**: Scan images for vulnerabilities with tools like Trivy, Clair
 2. **Trusted base images**: Use official or verified images
 3. **Principle of least privilege**: Include only necessary packages and permissions
-4. **Image signing**: Sign and verify images with Docker Content Trust or Cosign
+4. **Image signing**: Use a maintained image-signing workflow such as Cosign. Docker Content Trust is being retired; Docker’s Notary v1 service is scheduled to shut down on December 8, 2026.
 
 ### Runtime Security
 
@@ -354,7 +367,7 @@ Container security must be considered at multiple layers including images, conta
 
 1. **Regular updates**: Regularly update container images and host systems
 2. **Network isolation**: Restrict container communication with appropriate network policies
-3. **Secret management**: Use Docker Secrets or external secret management tools instead of environment variables
+3. **Secret management**: Use the platform’s secret mechanism or an external secret manager. Docker Swarm secrets apply to services, not standalone docker run containers; Compose file secrets have different guarantees.
 4. **Resource limits**: Limit CPU, memory, and other resource usage
 5. **Monitoring and logging**: Monitor container activity and centralize logs
 
@@ -368,10 +381,11 @@ Containers can have several states:
 
 * **Created**: Container created but not yet started
 * **Running**: Container is running
-* **Paused**: All processes in container are paused
+* **Paused**: Linux processes are frozen with the freezer cgroup
 * **Restarting**: Container is restarting
 * **Exited**: Container has terminated
-* **Dead**: Container daemon tried to remove but failed
+* **Removing**: Container removal is in progress
+* **Dead**: Partially removed/defunct container; cannot restart and needs cleanup
 
 ```bash
 # Check container status
@@ -429,7 +443,7 @@ docker ps
 # List all containers (including stopped)
 docker ps -a
 
-# Stop container (SIGTERM then SIGKILL)
+# Stop with configured signal (default SIGTERM), then SIGKILL after timeout
 docker stop <container-id>
 
 # Force kill container (SIGKILL)
@@ -490,10 +504,10 @@ docker inspect <container-id>
 # Remove all stopped containers
 docker container prune
 
-# Remove all unused resources (containers, images, networks, volumes)
+# Remove stopped containers, unused networks, dangling images and build cache; no volumes
 docker system prune
 
-# Remove all resources including volumes
+# Additionally prune unused anonymous volumes; running resources are not removed
 docker system prune --volumes
 
 # Check disk usage
@@ -502,13 +516,13 @@ docker system df
 # Remove image
 docker rmi <image-id>
 
-# Remove unused images
+# Remove dangling images; -a includes all unused images
 docker image prune
 
 # Remove volume
 docker volume rm <volume-name>
 
-# Remove unused volumes
+# Remove unused anonymous volumes; --all includes unused named volumes
 docker volume prune
 
 # Remove network
@@ -520,24 +534,24 @@ docker network prune
 
 ### Health Checks
 
-Monitor container health status for automatic recovery.
+HEALTHCHECK records Docker health status. Standalone Docker restart policies react to process exit, not health status alone. Kubernetes ignores Dockerfile HEALTHCHECK and uses liveness/readiness/startup probes.
 
 ```dockerfile
-FROM nginx:alpine
+FROM nginx:1.30.4-alpine
 
 # Define health check in Dockerfile
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
+  CMD wget -q -O /dev/null http://127.0.0.1/ || exit 1
 ```
 
 ```bash
 # Define health check at runtime
 docker run -d \
-  --health-cmd="curl -f http://localhost/ || exit 1" \
+  --health-cmd="wget -q -O /dev/null http://127.0.0.1/ || exit 1" \
   --health-interval=30s \
   --health-timeout=3s \
   --health-retries=3 \
-  nginx
+  nginx:1.30.4-alpine
 
 # Check health check status
 docker inspect <container-id> | jq '.[0].State.Health'
@@ -551,7 +565,7 @@ Configure containers to automatically restart when they exit.
 # Restart policy options
 # - no: Don't restart (default)
 # - on-failure: Restart only on failure
-# - always: Always restart
+# - always: Restart after exit; manual stop suppresses it until daemon restart or explicit start
 # - unless-stopped: Always restart unless explicitly stopped
 
 # Restart on failure (max 3 times)
@@ -568,6 +582,8 @@ docker update --restart=always <container-id>
 ```
 
 ### Debugging Containers
+
+bash/ip/netstat/ps must be installed in the image. For minimal images, use host-side docker inspect/top or an approved debug image. env/inspect output may contain secrets; do not paste it into shared logs.
 
 ```bash
 # Explore container internal file system
@@ -647,7 +663,7 @@ Serverless container execution environment that allows running containers withou
 **Key Features**:
 
 * No server management needed
-* Per-container billing
+* Billing uses requested task resources (ECS) or Pod resources (EKS), not a separate fee per application container
 * Integration with ECS and EKS
 * Security isolation
 
@@ -673,7 +689,7 @@ AWS's managed container image registry service.
 | **Container Runtime** | Software that runs containers. (e.g., Docker, containerd, CRI-O)                                                              |
 | **Namespace**         | A Linux kernel feature that isolates processes so they cannot see other parts of the system.                                  |
 | **cgroups**           | A Linux kernel feature that limits and monitors resource usage (CPU, memory, etc.) of process groups.                         |
-| **Layer**             | Container images consist of multiple layers, each corresponding to a Dockerfile instruction.                                  |
+| **Layer**             | Container images consist of multiple layers, representing filesystem diffs; metadata-only instructions need no filesystem layer.                                  |
 | **Volume**            | A mechanism for persistently storing container data.                                                                          |
 | **Orchestration**     | The process of automating the deployment, management, scaling, and networking of multiple containers.                         |
 | **ECS**               | Amazon Elastic Container Service, AWS's container orchestration service.                                                      |
@@ -695,5 +711,32 @@ To test what you've learned in this chapter, take the [Container Technology Quiz
 * [Docker Official Documentation](https://docs.docker.com/)
 * [OCI (Open Container Initiative)](https://opencontainers.org/)
 * [containerd Project](https://containerd.io/)
-* [CNCF Container Runtime Overview](https://www.cncf.io/blog/2019/06/27/an-introduction-to-container-runtimes/)
+* [Kubernetes Container Runtime Overview](https://kubernetes.io/docs/setup/production-environment/container-runtimes/)
 * [AWS Container Services](https://aws.amazon.com/containers/)
+
+## Verification References
+
+- https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+- https://docs.docker.com/reference/cli/docker/container/pause/
+- https://docs.docker.com/reference/cli/docker/container/ls/
+- https://docs.docker.com/engine/containers/start-containers-automatically/
+- https://docs.docker.com/reference/cli/docker/system/prune/
+- https://docs.docker.com/reference/cli/docker/volume/prune/
+- https://docs.docker.com/reference/dockerfile/
+- https://docs.docker.com/engine/network/drivers/bridge/
+- https://docs.docker.com/engine/storage/containerd/
+- https://docs.docker.com/engine/storage/tmpfs/
+- https://docs.docker.com/engine/security/trust/
+- https://docs.docker.com/engine/swarm/secrets/
+- https://github.com/opencontainers/image-spec/blob/main/config.md
+- https://github.com/opencontainers/image-spec/blob/main/manifest.md
+- https://github.com/nodejs/Release/blob/main/schedule.json
+- https://github.com/docker-library/official-images/blob/master/library/node
+- https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
+- https://github.com/npm/cli/blob/latest/docs/lib/content/commands/npm-ci.md
+- https://cloud.google.com/artifact-registry/docs/transition/transition-from-gcr
+- https://man7.org/linux/man-pages/man7/cgroups.7.html
+- https://github.com/torvalds/linux/releases/tag/v2.6.24
+- https://docs.aws.amazon.com/eks/latest/userguide/fargate.html
+- https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html
+- https://aws.amazon.com/fargate/pricing/

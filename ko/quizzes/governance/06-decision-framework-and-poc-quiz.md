@@ -22,19 +22,19 @@ CUJ별 RTO/RPO가 정의되어 있지 않으면 A/B EKS Runtime 전환 속도가
 
 ---
 
-2. ALB weighted target group의 "fail open" 동작을 올바르게 설명한 것은?
-   - A) unhealthy target에는 절대 트래픽을 보내지 않는다
-   - B) healthy target이 부족하면 등록된 모든 target(unhealthy 포함)에 트래픽을 보낸다
-   - C) target group 전체가 즉시 서비스 불가 상태가 된다
-   - D) 자동으로 다른 리전으로 failover한다
+2. ALB weighted forwarding과 fail-open의 관계는?
+   - A) Unhealthy group이면 항상 다른 group으로 자동 전환
+   - B) Weighted group 간 자동 failover와 group 내부 unhealthy-target routing은 별개
+   - C) Weight가 RTO 보장
+   - D) 모든 Region으로 자동 복제
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) healthy target이 부족하면 등록된 모든 target(unhealthy 포함)에 트래픽을 보낸다**
+**정답: B) Weighted group 간 자동 failover와 group 내부 unhealthy-target routing은 별개**
 
 **설명:**
-"unhealthy target으로 자동 failover하지 않는다"는 설명은 절반만 맞습니다. 실제로는 healthy target이 부족하면 ALB가 fail open 동작을 하며, `minimum_healthy_targets` 설정으로 완화해야 합니다. 기본값은 "healthy target 1개면 healthy"이므로 대규모 target group에서 위험할 수 있습니다.
+Weighted forward는 빈/unhealthy group의 weight를 다른 group에 자동 이관하지 않습니다. 선택 group 내부의 DNS/routing health threshold는 별도로 평가합니다.
 
 </details>
 
@@ -52,24 +52,24 @@ CUJ별 RTO/RPO가 정의되어 있지 않으면 A/B EKS Runtime 전환 속도가
 **정답: B) 경계 독립 판정, Hybrid 구성 등 다른 모든 선택지가 "판정표로 재현 가능"을 성립 조건으로 두므로, 판정표 없이는 POC 결과가 표준으로 전환되지 않기 때문이다**
 
 **설명:**
-판정표 dry-run은 대표 워크로드 10~15개에 두 사람이 독립적으로 판정표를 적용해 불일치율 20% 미만, 예외 처리율 15% 미만을 성공 기준으로 검증합니다. 그 결과로 나온 Account/VPC/클러스터 수 추정치가 나머지 POC의 목표값을 결정합니다.
+판정표 dry-run은 대표 워크로드 10~15개에 두 사람이 독립적으로 판정표를 적용해 불일치율 20% 미만, 예외 처리율 15% 미만 같은 조직별 예시 기준을 검증합니다. 그 결과로 나온 Account/VPC/클러스터 수 추정치가 나머지 POC의 목표값을 결정합니다.
 
 </details>
 
 ---
 
-4. 미사용 리전을 통제할 때 가장 강한 통제 수단은?
-   - A) SCP `aws:RequestedRegion` Deny
-   - B) Security Hub CSPM 활성화
-   - C) Region opt-in 비활성화
-   - D) GuardDuty 활성화
+4. 미사용 Region 통제에 대한 맞는 설명은?
+   - A) Opt-in 비활성화가 모든 기본 Region에도 가능
+   - B) SCP·탐지·지원되는 opt-in 비활성화를 조합하고 기존 resource 비용도 확인
+   - C) GuardDuty만으로 API 차단
+   - D) Region 비활성화가 모든 resource를 삭제
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) Region opt-in 비활성화**
+**정답: B) SCP·탐지·지원되는 opt-in 비활성화를 조합하고 기존 resource 비용도 확인**
 
 **설명:**
-SCP Deny는 예방 통제이고 Security Hub CSPM·GuardDuty는 탐지 통제(활성화한 리전의 finding만 처리하고 소급 수집하지 않음)이지만, Region opt-in을 비활성화하는 것이 가장 강한 통제 수단입니다.
+기본 활성화 Region은 비활성화할 수 없습니다. Opt-in 비활성화도 기존 resource 삭제·과금 중지를 보장하지 않으므로 cleanup과 접근 정책을 함께 설계합니다.
 
 </details>

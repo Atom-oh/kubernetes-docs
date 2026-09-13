@@ -18,7 +18,7 @@
           "provision_node",
           "pods_running"
         ],
-        "note": "DRA sees a task backlog and requests executor pods; Karpenter sees the Pending pods and adds an EC2 node."
+        "note": "DRA chooses executor count; the Kubernetes allocator requests pods. Karpenter supplies nodes matching scheduling constraints."
       },
       {
         "id": "scale-in",
@@ -30,7 +30,7 @@
           "deprovision_node",
           "pending_tasks"
         ],
-        "note": "Once tasks drain, DRA releases idle executors; Karpenter deprovisions the empty node after consolidateAfter."
+        "note": "Idle/cache/shuffle rules release executors. WhenEmpty eligibility, delay and disruption checks govern node cleanup."
       }
     ],
     "legend": {
@@ -104,7 +104,7 @@
       "col": 1,
       "type": "backend",
       "label": "Request more executors",
-      "sublabel": "DRA sees backlog",
+      "sublabel": "DRA → K8s allocator",
       "width": 180
     },
     {
@@ -141,7 +141,7 @@
       "col": 4,
       "type": "backend",
       "label": "Release idle executors",
-      "sublabel": "executorIdleTimeout",
+      "sublabel": "idle / cache / shuffle",
       "width": 180
     },
     {
@@ -149,8 +149,8 @@
       "lane": "k8s",
       "col": 5,
       "type": "frontend",
-      "label": "Node becomes empty",
-      "sublabel": "zero executor pods",
+      "label": "Node cleanup candidate",
+      "sublabel": "WhenEmpty criteria",
       "width": 180
     },
     {
@@ -159,7 +159,7 @@
       "col": 5,
       "type": "cloud",
       "label": "Reclaim the empty node",
-      "sublabel": "consolidates the empty node",
+      "sublabel": "delay + disruption checks",
       "width": 180
     }
   ],
@@ -202,7 +202,7 @@
     {
       "from": "node_empty",
       "to": "deprovision_node",
-      "label": "consolidateAfter elapses",
+      "label": "policy / delay / budget",
       "variant": "dashed"
     },
     {
@@ -225,7 +225,8 @@
           24,
           120
         ]
-      ]
+      ],
+      "label": "new work arrives"
     }
   ]
 }

@@ -1,0 +1,34 @@
+[
+  {
+    "path": "ko/platform-engineering/03-kro.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "5715e2fcfdf0351dfcffd5c5e16556b64caa268d31b885fc20c6cef095b2cbb8",
+    "summary": "All504guide423quizlines/16uniqueblocksread;40quiztopicsretained;official0.9.4chart/RGDschema/nativeCEL14expressions4cases/4MD/6exactguidefilematchespassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-kro-validation.json"
+  },
+  {
+    "path": "ko/quizzes/platform-engineering/03-kro-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "945c1b4cfd5ec89b38e3c691b1def8bb161491e337b322a63cc973ffa53e03ef",
+    "summary": "All504guide423quizlines/16uniqueblocksread;40quiztopicsretained;official0.9.4chart/RGDschema/nativeCEL14expressions4cases/4MD/6exactguidefilematchespassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-kro-validation.json"
+  },
+  {
+    "path": "en/platform-engineering/03-kro.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "b79497bac0f9856a30c2cb5af8d0ac5e98a0007611ec8d96a80cd3ccb69570f5",
+    "summary": "All504guide423quizlines/16uniqueblocksread;40quiztopicsretained;official0.9.4chart/RGDschema/nativeCEL14expressions4cases/4MD/6exactguidefilematchespassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-kro-validation.json"
+  },
+  {
+    "path": "en/quizzes/platform-engineering/03-kro-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "67a24190e8bb879deedddc7ad39f4dbc7274b6250effe66a6c9eb81dbb19a4b9",
+    "summary": "All504guide423quizlines/16uniqueblocksread;40quiztopicsretained;official0.9.4chart/RGDschema/nativeCEL14expressions4cases/4MD/6exactguidefilematchespassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-kro-validation.json"
+  }
+]

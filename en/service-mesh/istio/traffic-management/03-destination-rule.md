@@ -1,8 +1,8 @@
 # DestinationRule
 
-> **Supported Version**: Istio 1.28+
+> **Reviewed Version**: Istio 1.31.0
 > **API Version**: `networking.istio.io/v1`
-> **Last Updated**: February 19, 2026
+> **Last Updated**: September 11, 2026
 
 DestinationRule is a core Istio resource that defines how to handle traffic after VirtualService routes it to the destination.
 
@@ -20,6 +20,8 @@ DestinationRule is a core Istio resource that defines how to handle traffic afte
 10. [Troubleshooting](#troubleshooting)
 
 ## What is DestinationRule?
+
+The examples are independent sidecar configuration patterns. DestinationRule and VirtualService are configuration inputs compiled by istiod, not separate traffic-processing hops. DestinationRule also applies when no VirtualService exists. Subsets only select endpoints already discovered for the Service; they do not create workloads, isolate environments, or assign traffic percentages. Use matching pod-template labels and explicit routes to subsets.
 
 DestinationRule defines **traffic policies after routing**. If VirtualService determines "where" to send traffic, DestinationRule determines "how" to handle it.
 
@@ -130,9 +132,7 @@ spec:
 ```
 
 ```yaml
-# Pod labels
-apiVersion: v1
-kind: Pod
+# Pod-template label excerpt
 metadata:
   labels:
     app: reviews
@@ -359,7 +359,7 @@ See [Circuit Breaker](07-circuit-breaker.md) for details
 ```yaml
 trafficPolicy:
   outlierDetection:
-    consecutiveErrors: 5
+    consecutive5xxErrors: 5
     interval: 30s
     baseEjectionTime: 30s
     maxEjectionPercent: 50
@@ -397,6 +397,8 @@ trafficPolicy:
 VirtualService and DestinationRule work together to provide complete traffic control.
 
 ### Basic Pattern: Canary Deployment
+
+For a live rollout, apply the DestinationRule first, confirm its new subset appears in proxy cluster configuration, then update the VirtualService. A single multi-document apply does not guarantee propagation order. Remove route references before deleting a subset.
 
 ```yaml
 # DestinationRule: Subset definition
@@ -566,6 +568,8 @@ spec:
 
 ### Example 2: Multi-Region Deployment
 
+This assumes the mesh can already discover and reach endpoints in each region. Custom `region` pod labels select subsets; node topology labels supply Envoy locality separately. Region subsets need explicit routing, and locality failover requires outlier detection plus healthy reachable capacity.
+
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -624,7 +628,7 @@ spec:
           http1MaxPendingRequests: 10
           maxRequestsPerConnection: 1
       outlierDetection:
-        consecutiveErrors: 3
+        consecutive5xxErrors: 3
         interval: 10s
         baseEjectionTime: 60s
 
@@ -639,7 +643,7 @@ spec:
         http:
           http1MaxPendingRequests: 20
       outlierDetection:
-        consecutiveErrors: 5
+        consecutive5xxErrors: 5
         interval: 30s
         baseEjectionTime: 30s
 
@@ -654,7 +658,7 @@ spec:
         http:
           http1MaxPendingRequests: 100
       outlierDetection:
-        consecutiveErrors: 10
+        consecutive5xxErrors: 10
         interval: 60s
         baseEjectionTime: 30s
 ```
@@ -671,9 +675,10 @@ spec:
   hosts:
   - api.payment-gateway.com
   ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
+  - number: 80
+    name: http
+    protocol: HTTP
+    targetPort: 443
   location: MESH_EXTERNAL
   resolution: DNS
 ---
@@ -692,12 +697,17 @@ spec:
         http1MaxPendingRequests: 5
         maxRequestsPerConnection: 1
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 30s
       baseEjectionTime: 120s
     tls:
       mode: SIMPLE
+      sni: api.payment-gateway.com
+      subjectAltNames:
+      - api.payment-gateway.com
 ```
+
+This variant expects the application to send HTTP to the registered port 80; the sidecar originates verified TLS to port 443. Replace the example host with your endpoint. If the application already sends HTTPS, omit TLS origination and HTTP-only policy settings for that opaque TLS path to avoid double encryption.
 
 ### Example 5: Database Connection Pool
 
@@ -716,11 +726,8 @@ spec:
         tcpKeepalive:
           time: 7200s
           interval: 75s
-      http:
-        http1MaxPendingRequests: 10
-        maxRequestsPerConnection: 100
     outlierDetection:
-      consecutiveErrors: 3
+      consecutive5xxErrors: 3
       interval: 60s
       baseEjectionTime: 120s
   subsets:
@@ -736,6 +743,8 @@ spec:
           maxConnections: 100  # More for replicas
 ```
 
+TCP connection limits above are applied by each proxy; they are not a global database connection budget. PostgreSQL does not use HTTP connection settings. Primary/replica subsets must both be present in the selected Service endpoints, and the application must choose read/write destinations correctly.
+
 ## Best Practices
 
 ### 1. Subset Naming Conventions
@@ -749,7 +758,9 @@ subsets:
 - name: canary
 - name: us-west
 - name: production
+```
 
+```yaml
 # ❌ Bad example: Vague names
 subsets:
 - name: subset1
@@ -783,10 +794,10 @@ spec:
         simple: ROUND_ROBIN
 ```
 
-### 3. Circuit Breaker is Essential
+### 3. Tune Failure Isolation
 
 ```yaml
-# ✅ Always set outlierDetection
+# Tune outlierDetection for the service and failure model
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
@@ -796,8 +807,8 @@ spec:
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
-    outlierDetection:  # Required
-      consecutiveErrors: 5
+    outlierDetection:  # Optional policy
+      consecutive5xxErrors: 5
       interval: 30s
       baseEjectionTime: 30s
 ```
@@ -891,24 +902,26 @@ kubectl get destinationrule reviews -o yaml
 kubectl get pods --show-labels | grep reviews
 
 # 4. Verify pods have version=v2 label
-kubectl label pod reviews-v2-xxx version=v2
+kubectl get deployment reviews-v2 -o jsonpath='{.spec.template.metadata.labels}'
 ```
 
 ### Traffic Policy Not Applied
 
 ```bash
 # Check Envoy configuration
-istioctl proxy-config cluster <pod-name> --fqdn reviews.default.svc.cluster.local -o json
+istioctl proxy-config clusters <pod-name> --fqdn reviews.default.svc.cluster.local -o json
 
 # Check Circuit Breaker settings
-istioctl proxy-config cluster <pod-name> -o json | jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .circuitBreakers'
+istioctl proxy-config clusters <pod-name> -o json | jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .circuitBreakers'
 ```
 
 ### Subset Conflicts
 
+Istio can merge applicable DestinationRule fragments for one host. The two distinct subsets below do not inherently conflict. Duplicate subset names use the first definition without merging, and multiple top-level trafficPolicy blocks also keep only the first processed one. Namespace lookup/visibility still matters; a single owner-managed rule is easier to reason about.
+
 **Problem**:
 ```yaml
-# Multiple DestinationRules for the same host cause conflicts
+# Same-host DestinationRule fragments can merge with restrictions
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
@@ -920,7 +933,7 @@ spec:
     labels:
       version: v1
 ---
-# ❌ Conflict occurs
+# Unique subset names can merge; duplicate names/policies are the problem
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
@@ -961,7 +974,7 @@ istioctl analyze
 istioctl analyze -n production
 
 # Example output
-# Error [IST0101] (DestinationRule reviews.default) Referenced host not found: "reviews"
+# Inspect actual analyzer messages and confirm subset clusters in proxy-config output
 ```
 
 ## Next Steps
@@ -978,3 +991,6 @@ After understanding DestinationRule, move on to these topics:
 - [Istio DestinationRule Reference](https://istio.io/latest/docs/reference/config/networking/destination-rule/)
 - [Istio Traffic Management](https://istio.io/latest/docs/concepts/traffic-management/)
 - [Envoy Cluster Configuration](https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/upstream)
+
+- [DestinationRule merging and safe subset rollout](https://istio.io/latest/docs/ops/best-practices/traffic-management/)
+- [TLS origination](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/)

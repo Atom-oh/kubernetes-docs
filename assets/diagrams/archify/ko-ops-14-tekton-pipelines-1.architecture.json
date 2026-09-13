@@ -37,7 +37,7 @@
           "pod2",
           "pvc"
         ],
-        "note": "생성된 TaskRun Pod들은 같은 Workspace PVC를 공유해 데이터를 주고받는다."
+        "note": "실행별 volumeClaimTemplate을 사용합니다. RWO/RWX는 신뢰 경계가 아닙니다."
       }
     ],
     "legend": {
@@ -105,7 +105,7 @@
       "id": "controller",
       "type": "backend",
       "label": "tekton-pipelines-controller",
-      "sublabel": "CRD 감시 · Pod 생성",
+      "sublabel": "API를 통해 Run·Pod 조정",
       "pos": [
         550,
         130
@@ -132,8 +132,8 @@
     {
       "id": "resolver",
       "type": "backend",
-      "label": "tekton-pipelines-resolver",
-      "sublabel": "원격 리소스 해석",
+      "label": "Remote resolvers",
+      "sublabel": "원격 Task/Pipeline 해석",
       "pos": [
         550,
         390
@@ -175,7 +175,7 @@
       "id": "pvc",
       "type": "database",
       "label": "PVC",
-      "sublabel": "Workspace",
+      "sublabel": "실행별 Workspace",
       "pos": [
         1160,
         195
@@ -244,7 +244,7 @@
       "id": "controller-to-pod1",
       "from": "controller",
       "to": "pod1",
-      "label": "Pod 생성",
+      "label": "API로 생성",
       "variant": "emphasis"
     },
     {
@@ -257,7 +257,7 @@
       "id": "webhook-to-api",
       "from": "webhook",
       "to": "apiserver",
-      "label": "유효성 검증",
+      "label": "admission 응답",
       "variant": "security",
       "labelDy": -18
     },
@@ -287,13 +287,12 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "컨트롤러 동작 원리",
+      "title": "컨트롤러와 실행",
       "items": [
-        "사용자가 PipelineRun 또는 TaskRun 리소스를 생성한다",
-        "tekton-pipelines-webhook이 CRD의 유효성을 검증한다",
-        "tekton-pipelines-controller가 리소스 변경을 감지하고 각 Task에 대해 Pod을 생성한다",
-        "각 Pod 내에서 Step 컨테이너가 순서대로 실행된다",
-        "실행 결과(상태, Results, 아티팩트)가 CRD 상태에 기록된다"
+        "API admission 이후 실행 인스턴스를 조정",
+        "TaskRun Pod의 Step이 순차 실행",
+        "같은 실행의 Task는 PVC를 공유할 수 있음",
+        "서로 다른 신뢰 수준의 실행은 PVC를 공유하지 않음"
       ]
     }
   ]

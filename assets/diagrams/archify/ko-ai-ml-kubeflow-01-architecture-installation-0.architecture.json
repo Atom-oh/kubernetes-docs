@@ -2,145 +2,158 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Kubeflow 컴포넌트 아키텍처",
-    "output": "ko-ai-ml-kubeflow-01-architecture-installation-0.html",
+    "title": "Kubeflow 접근과 제어 경계",
     "quality_profile": "showcase",
-    "animation": "trace",
-    "legend": {
-      "mode": "auto",
-      "entries": {
-        "backend": {
-          "label": "백엔드 서비스"
-        },
-        "security": {
-          "label": "보안 구성 요소"
-        }
-      }
-    }
+    "animation": "none",
+    "viewBox": [
+      1200,
+      600
+    ]
   },
   "components": [
     {
-      "id": "gateway",
+      "id": "identity",
       "type": "security",
-      "label": "Istio Ingress Gateway",
-      "sublabel": "AuthN / AuthZ",
+      "label": "인증·게이트웨이",
+      "sublabel": "IdP / oauth2-proxy / Istio",
       "pos": [
         30,
-        220
+        70
       ],
       "size": [
-        190,
-        60
+        270,
+        78
       ]
     },
     {
-      "id": "dashboard",
-      "type": "backend",
-      "label": "Central Dashboard",
-      "sublabel": "단일 UI 진입점",
+      "id": "ui",
+      "type": "frontend",
+      "label": "대시보드·웹앱",
+      "sublabel": "UI 탐색과 컴포넌트 요청",
       "pos": [
-        290,
-        220
+        445,
+        70
       ],
       "size": [
-        190,
-        60
+        270,
+        78
+      ]
+    },
+    {
+      "id": "apps",
+      "type": "backend",
+      "label": "컴포넌트 API",
+      "sublabel": "KFP API / 인가 / 저장소",
+      "pos": [
+        885,
+        70
+      ],
+      "size": [
+        270,
+        78
       ]
     },
     {
       "id": "profile",
       "type": "backend",
-      "label": "Profile Controller",
-      "sublabel": "team-a / team-b 네임스페이스",
+      "label": "Profile Controller / KFAM",
+      "sublabel": "소유권 / 접근 / 선택적 쿼터",
       "pos": [
-        550,
-        60
+        30,
+        370
       ],
       "size": [
-        210,
-        60
+        270,
+        78
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Kubernetes API Server",
+      "sublabel": "RBAC / 리소스 상태",
+      "pos": [
+        445,
+        370
+      ],
+      "size": [
+        270,
+        78
       ]
     },
     {
       "id": "controllers",
       "type": "backend",
-      "label": "컴포넌트 컨트롤러",
-      "sublabel": "Pipelines · Notebook · Katib · Trainer · KServe",
+      "label": "워크로드 컨트롤러",
+      "sublabel": "Notebook / Katib / Trainer / KServe",
       "pos": [
-        550,
-        360
+        875,
+        370
       ],
       "size": [
-        220,
-        70
-      ]
-    },
-    {
-      "id": "apiserver",
-      "type": "backend",
-      "label": "Kubernetes API Server",
-      "sublabel": "공유 컨트롤 플레인",
-      "pos": [
-        840,
-        220
-      ],
-      "size": [
-        190,
-        60
+        290,
+        78
       ]
     }
   ],
   "connections": [
     {
-      "id": "gateway-dashboard",
-      "from": "gateway",
-      "to": "dashboard",
-      "label": "인증된 요청",
+      "id": "authenticated",
+      "from": "identity",
+      "to": "ui",
+      "label": "인증된 UI 요청"
+    },
+    {
+      "id": "component-requests",
+      "from": "ui",
+      "to": "apps",
+      "label": "컴포넌트별 요청"
+    },
+    {
+      "id": "profile-reconcile",
+      "from": "profile",
+      "to": "api",
+      "label": "네임스페이스·정책 조정",
       "labelAt": [
-        255,
-        216
+        373,
+        480
       ]
     },
     {
-      "id": "dashboard-profile",
-      "from": "dashboard",
-      "to": "profile",
-      "label": "네임스페이스 라우팅"
-    },
-    {
-      "id": "dashboard-controllers",
-      "from": "dashboard",
-      "to": "controllers",
-      "label": "컴포넌트 호출"
-    },
-    {
-      "id": "profile-api",
-      "from": "profile",
-      "to": "apiserver",
-      "label": "조정(reconcile)"
-    },
-    {
-      "id": "controllers-api",
+      "id": "workload-reconcile",
       "from": "controllers",
-      "to": "apiserver",
-      "label": "조정(reconcile)"
+      "to": "api",
+      "label": "지원 리소스 조정",
+      "labelAt": [
+        795,
+        480
+      ]
+    },
+    {
+      "id": "app-kubernetes",
+      "from": "apps",
+      "to": "api",
+      "label": "구현별 K8s 요청",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "variant": "dashed"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "멀티테넌시",
+      "title": "Profile의 범위",
       "items": [
-        "Profile Controller가 팀별 네임스페이스, RBAC, 쿼터, AuthorizationPolicy를 조정한다",
-        "Central Dashboard가 단일 UI 진입점을 제공한다"
+        "resourceQuotaSpec.hard가 있을 때만 관리 쿼터를 만듭니다.",
+        "NetworkPolicy, 스토리지, AWS IAM, 앱 인가는 별도입니다."
       ]
     },
     {
-      "dot": "emerald",
-      "title": "컴포넌트",
+      "dot": "amber",
+      "title": "API와 데이터",
       "items": [
-        "Pipelines, Notebook, Katib, Trainer, KServe가 각각 자체 컨트롤러를 실행한다",
-        "모든 컨트롤러는 공유 Kubernetes API 서버를 통해 상태를 조정한다"
+        "KFP Run/Experiment가 항상 CRD인 것은 아닙니다.",
+        "대시보드가 모든 컨트롤러에 작업을 배분하지 않습니다."
       ]
     }
   ]

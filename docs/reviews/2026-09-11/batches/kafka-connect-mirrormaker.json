@@ -1,0 +1,122 @@
+[
+  {
+    "path": "ko/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full guide/quiz review and native config/codec/provider/MM2 validation complete.",
+    "sources": [
+      "https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/install/cluster-operator",
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://debezium.io/documentation/reference/3.6/connectors/postgresql.html",
+      "https://github.com/Aiven-Open/cloud-storage-connectors-for-apache-kafka/blob/v3.4.3/s3-sink-connector/README.md",
+      "https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_GetAuthorizationToken.html",
+      "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorSourceConnector.java",
+      "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorCheckpointTask.java",
+      "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorHeartbeatTask.java",
+      "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorSourceTask.java"
+    ],
+    "findings": [
+      "Corrected Connect broker group coordination versus worker leader assignment, standalone Kubernetes claim and source/sink offset storage.",
+      "Migrated actual Strimzi v1 Connect identity/topic fields and MM2 target/mirrors[].source structure; removed obsolete heartbeatConnector field and old API mappings.",
+      "Pinned checksum-verified Debezium3.6.2/Aiven3.4.3 artifacts; fixed absent Aiven class and unsupported flush.size/rotate.schedule.interval.ms keys using actual JAR definitions.",
+      "Added TLS/SCRAM, scoped internal/data ACLs, precreated compacted internal topics, safe mounted-directory config provider, PostgreSQL TLS/publication and concrete dependency requirements.",
+      "Separated ECR Buildah push identity/token expiry from runtime S3 workload identity; aligned JSON converter envelopes and CDC archive semantics.",
+      "Verified native default-policy cycle detection allows legitimate multi-hop, Identity loses cycle provenance, heartbeat generation needs no source connection; corrected DR/ACL/offset/freshness/compression claims.",
+      "Revised all36quizquestions and all20fences; native2connectorconfig validations/10MM2-provider-codec cases/strict22schemaobjects pass; nofigures."
+    ],
+    "validation": [
+      "kafka-connect-mirrormaker-validation.json"
+    ],
+    "reviewedSha256": "3a1b3e0ec9a5b055f0ac439cb9acbed49ccb4496efde3fc38b66c0a5e402f6cb"
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full guide/quiz review and native config/codec/provider/MM2 validation complete.",
+    "sources": [
+      "https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/install/cluster-operator",
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://debezium.io/documentation/reference/3.6/connectors/postgresql.html",
+      "https://github.com/Aiven-Open/cloud-storage-connectors-for-apache-kafka/blob/v3.4.3/s3-sink-connector/README.md",
+      "https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_GetAuthorizationToken.html",
+      "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorSourceConnector.java",
+      "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorCheckpointTask.java",
+      "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorHeartbeatTask.java",
+      "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorSourceTask.java"
+    ],
+    "findings": [
+      "Corrected Connect broker group coordination versus worker leader assignment, standalone Kubernetes claim and source/sink offset storage.",
+      "Migrated actual Strimzi v1 Connect identity/topic fields and MM2 target/mirrors[].source structure; removed obsolete heartbeatConnector field and old API mappings.",
+      "Pinned checksum-verified Debezium3.6.2/Aiven3.4.3 artifacts; fixed absent Aiven class and unsupported flush.size/rotate.schedule.interval.ms keys using actual JAR definitions.",
+      "Added TLS/SCRAM, scoped internal/data ACLs, precreated compacted internal topics, safe mounted-directory config provider, PostgreSQL TLS/publication and concrete dependency requirements.",
+      "Separated ECR Buildah push identity/token expiry from runtime S3 workload identity; aligned JSON converter envelopes and CDC archive semantics.",
+      "Verified native default-policy cycle detection allows legitimate multi-hop, Identity loses cycle provenance, heartbeat generation needs no source connection; corrected DR/ACL/offset/freshness/compression claims.",
+      "Revised all36quizquestions and all20fences; native2connectorconfig validations/10MM2-provider-codec cases/strict22schemaobjects pass; nofigures."
+    ],
+    "validation": [
+      "kafka-connect-mirrormaker-validation.json"
+    ],
+    "reviewedSha256": "a6fe12be0bec3adb3bc056a7a4b0a28910bba44b384bdd576a192ea3d8ac59f2"
+  },
+  {
+    "path": "en/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full guide/quiz review and native config/codec/provider/MM2 validation complete.",
+    "sources": [
+      "https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/install/cluster-operator",
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://debezium.io/documentation/reference/3.6/connectors/postgresql.html",
+      "https://github.com/Aiven-Open/cloud-storage-connectors-for-apache-kafka/blob/v3.4.3/s3-sink-connector/README.md",
+      "https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_GetAuthorizationToken.html",
+      "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorSourceConnector.java",
+      "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorCheckpointTask.java",
+      "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorHeartbeatTask.java",
+      "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorSourceTask.java"
+    ],
+    "findings": [
+      "Corrected Connect broker group coordination versus worker leader assignment, standalone Kubernetes claim and source/sink offset storage.",
+      "Migrated actual Strimzi v1 Connect identity/topic fields and MM2 target/mirrors[].source structure; removed obsolete heartbeatConnector field and old API mappings.",
+      "Pinned checksum-verified Debezium3.6.2/Aiven3.4.3 artifacts; fixed absent Aiven class and unsupported flush.size/rotate.schedule.interval.ms keys using actual JAR definitions.",
+      "Added TLS/SCRAM, scoped internal/data ACLs, precreated compacted internal topics, safe mounted-directory config provider, PostgreSQL TLS/publication and concrete dependency requirements.",
+      "Separated ECR Buildah push identity/token expiry from runtime S3 workload identity; aligned JSON converter envelopes and CDC archive semantics.",
+      "Verified native default-policy cycle detection allows legitimate multi-hop, Identity loses cycle provenance, heartbeat generation needs no source connection; corrected DR/ACL/offset/freshness/compression claims.",
+      "Revised all36quizquestions and all20fences; native2connectorconfig validations/10MM2-provider-codec cases/strict22schemaobjects pass; nofigures."
+    ],
+    "validation": [
+      "kafka-connect-mirrormaker-validation.json"
+    ],
+    "reviewedSha256": "d18f304bc17847ad345ee82aea5cf788f979535441bf04b40bf01da840798b64"
+  },
+  {
+    "path": "en/quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full guide/quiz review and native config/codec/provider/MM2 validation complete.",
+    "sources": [
+      "https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/install/cluster-operator",
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://debezium.io/documentation/reference/3.6/connectors/postgresql.html",
+      "https://github.com/Aiven-Open/cloud-storage-connectors-for-apache-kafka/blob/v3.4.3/s3-sink-connector/README.md",
+      "https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_GetAuthorizationToken.html",
+      "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorSourceConnector.java",
+      "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorCheckpointTask.java",
+      "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorHeartbeatTask.java",
+      "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorSourceTask.java"
+    ],
+    "findings": [
+      "Corrected Connect broker group coordination versus worker leader assignment, standalone Kubernetes claim and source/sink offset storage.",
+      "Migrated actual Strimzi v1 Connect identity/topic fields and MM2 target/mirrors[].source structure; removed obsolete heartbeatConnector field and old API mappings.",
+      "Pinned checksum-verified Debezium3.6.2/Aiven3.4.3 artifacts; fixed absent Aiven class and unsupported flush.size/rotate.schedule.interval.ms keys using actual JAR definitions.",
+      "Added TLS/SCRAM, scoped internal/data ACLs, precreated compacted internal topics, safe mounted-directory config provider, PostgreSQL TLS/publication and concrete dependency requirements.",
+      "Separated ECR Buildah push identity/token expiry from runtime S3 workload identity; aligned JSON converter envelopes and CDC archive semantics.",
+      "Verified native default-policy cycle detection allows legitimate multi-hop, Identity loses cycle provenance, heartbeat generation needs no source connection; corrected DR/ACL/offset/freshness/compression claims.",
+      "Revised all36quizquestions and all20fences; native2connectorconfig validations/10MM2-provider-codec cases/strict22schemaobjects pass; nofigures."
+    ],
+    "validation": [
+      "kafka-connect-mirrormaker-validation.json"
+    ],
+    "reviewedSha256": "d56f12e4bfe2b3e7387cdded9ece6743a7e294806b4a66de03c2c42086f264df"
+  }
+]

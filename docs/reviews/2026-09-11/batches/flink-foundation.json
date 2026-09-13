@@ -1,0 +1,44 @@
+[
+  {
+    "path": "ko/data-on-eks/flink/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed Flink2.2.1/Operator1.15 baseline versus latest2.3.0 and moving docs; corrected slot sharing/chaining/noCPUisolation,application versus job lifecycle and sharednode limits,NativeANDStandaloneOperator support,Java11/17/21 nuance,CLIrun target/currentimagekey and packagedexample path;16questions/4regeneratedfigures. READMEfollowupnamesseparateIceberg2.1profileandSDKsupportlimits;compiledwithoperationsbatch.",
+    "reviewedSha256": "f633747ef275bf6c9cd1ef030f0e5edf725e87bee9a2fc3060aee0e7db389f76"
+  },
+  {
+    "path": "ko/data-on-eks/flink/01-architecture.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed Flink2.2.1/Operator1.15 baseline versus latest2.3.0 and moving docs; corrected slot sharing/chaining/noCPUisolation,application versus job lifecycle and sharednode limits,NativeANDStandaloneOperator support,Java11/17/21 nuance,CLIrun target/currentimagekey and packagedexample path;16questions/4regeneratedfigures.",
+    "reviewedSha256": "400fa1fda96ffdb7791d838da67d6e24b68359a6a32cc3b80516e116fa28a01d"
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/flink/01-architecture-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed Flink2.2.1/Operator1.15 baseline versus latest2.3.0 and moving docs; corrected slot sharing/chaining/noCPUisolation,application versus job lifecycle and sharednode limits,NativeANDStandaloneOperator support,Java11/17/21 nuance,CLIrun target/currentimagekey and packagedexample path;16questions/4regeneratedfigures.",
+    "reviewedSha256": "3ecfa467f68049e43a65515f4cfdd41b88a6f214e0c8e51ca898c2ba78f6bfc4"
+  },
+  {
+    "path": "en/data-on-eks/flink/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed Flink2.2.1/Operator1.15 baseline versus latest2.3.0 and moving docs; corrected slot sharing/chaining/noCPUisolation,application versus job lifecycle and sharednode limits,NativeANDStandaloneOperator support,Java11/17/21 nuance,CLIrun target/currentimagekey and packagedexample path;16questions/4regeneratedfigures. READMEfollowupnamesseparateIceberg2.1profileandSDKsupportlimits;compiledwithoperationsbatch.",
+    "reviewedSha256": "0ff647675f675ec2bde00c9da0f8d40eb2b021a2b2345078c5c1758aef1e0ae5"
+  },
+  {
+    "path": "en/data-on-eks/flink/01-architecture.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed Flink2.2.1/Operator1.15 baseline versus latest2.3.0 and moving docs; corrected slot sharing/chaining/noCPUisolation,application versus job lifecycle and sharednode limits,NativeANDStandaloneOperator support,Java11/17/21 nuance,CLIrun target/currentimagekey and packagedexample path;16questions/4regeneratedfigures.",
+    "reviewedSha256": "73436cb9a240a7cb86e14fc363fdb0d5bb1b5d0e64f3f7f3b712a6fbea829927"
+  },
+  {
+    "path": "en/quizzes/data-on-eks/flink/01-architecture-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed Flink2.2.1/Operator1.15 baseline versus latest2.3.0 and moving docs; corrected slot sharing/chaining/noCPUisolation,application versus job lifecycle and sharednode limits,NativeANDStandaloneOperator support,Java11/17/21 nuance,CLIrun target/currentimagekey and packagedexample path;16questions/4regeneratedfigures.",
+    "reviewedSha256": "261e946bb7a6926713c3a06656817c0ead2cbd19663bef911979003c64eab47b"
+  }
+]

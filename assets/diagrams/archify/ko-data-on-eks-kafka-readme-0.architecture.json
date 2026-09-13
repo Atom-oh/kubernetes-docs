@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Strimzi 기반 Kafka 클러스터 조정 흐름",
+    "title": "Strimzi 조정 흐름 — 축약 관계도",
     "output": "ko-data-on-eks-kafka-readme-0.html",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -30,7 +30,7 @@
           "broker2",
           "controller"
         ],
-        "note": "Operator가 브로커 Pod와 KRaft 컨트롤러 Pod를 생성·조정한다. ZooKeeper는 없다."
+        "note": "일부 Pod만 표시한 도식입니다. 실제 broker 복제 수와 controller quorum은 별도로 설계합니다."
       },
       {
         "id": "storage",
@@ -43,7 +43,7 @@
           "pvc2",
           "pvc3"
         ],
-        "note": "각 Pod는 EBS CSI가 프로비저닝한 gp3 PVC에 로그와 메타데이터를 저장한다."
+        "note": "이 도식은 Pod별 영구 볼륨 패턴을 보여줍니다. CSI/Auto Mode 등 실제 provisioner와 StorageClass를 맞춥니다."
       }
     ],
     "legend": {
@@ -97,7 +97,7 @@
       "id": "strimzi",
       "type": "backend",
       "label": "Strimzi Operator",
-      "sublabel": "CRD 감시 · 조정",
+      "sublabel": "커스텀 리소스 조정",
       "pos": [
         470,
         310
@@ -140,7 +140,7 @@
       "id": "controller",
       "type": "messagebus",
       "label": "Controller Pod",
-      "sublabel": "kraft-controller",
+      "sublabel": "quorum 구성원 예시",
       "pos": [
         820,
         480
@@ -154,7 +154,7 @@
       "id": "pvc1",
       "type": "database",
       "label": "EBS gp3 PVC",
-      "sublabel": "ebs-csi",
+      "sublabel": "StorageClass에 따른 공급",
       "pos": [
         120,
         630
@@ -168,7 +168,7 @@
       "id": "pvc2",
       "type": "database",
       "label": "EBS gp3 PVC",
-      "sublabel": "ebs-csi",
+      "sublabel": "StorageClass에 따른 공급",
       "pos": [
         470,
         630
@@ -182,7 +182,7 @@
       "id": "pvc3",
       "type": "database",
       "label": "EBS gp3 PVC",
-      "sublabel": "ebs-csi",
+      "sublabel": "StorageClass에 따른 공급",
       "pos": [
         820,
         630
@@ -266,25 +266,24 @@
   "cards": [
     {
       "dot": "orange",
-      "title": "선언적 관리",
+      "title": "Strimzi 1.2",
       "items": [
-        "Kafka, KafkaNodePool CRD에 원하는 상태를 선언한다",
-        "Strimzi Operator가 Pod, PVC, Service, Secret을 생성·조정한다"
+        "Kafka / KafkaNodePool API: v1",
+        "기존 beta API는 먼저 변환"
       ]
     },
     {
       "dot": "violet",
-      "title": "KRaft 모드",
+      "title": "KRaft",
       "items": [
-        "ZooKeeper 없이 컨트롤러 쿼럼이 메타데이터를 관리한다",
-        "Kafka 4.0부터 KRaft가 유일한 메타데이터 관리 방식이다"
+        "HA replica 수를 제시하는 명세가 아님"
       ]
     },
     {
       "dot": "slate",
-      "title": "스토리지",
+      "title": "Storage",
       "items": [
-        "브로커·컨트롤러 Pod마다 EBS gp3 PVC를 사용한다"
+        "상태·스토리지·복구 정책은 운영자가 설계"
       ]
     }
   ]

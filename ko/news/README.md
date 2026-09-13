@@ -1,7 +1,9 @@
 # 소식
-> **마지막 업데이트**: 2026년 8월 31일
+> **마지막 검토**: 2026년 9월 12일
 
-Kubernetes, Amazon EKS, CNCF 생태계의 뉴스는 별도 다이제스트 문서로 쌓이지 않습니다. 매주 GitHub Actions가 관련 뉴스를 관련된 기존 문서에 직접 반영하고, 아래 갱신 로그에 어떤 문서가 왜 바뀌었는지만 남깁니다. 매칭되는 문서가 없는 뉴스는 원문 링크만 기록됩니다.
+Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. GitHub Actions는 매주 월요일 09:00 KST에 갱신안을 만들고 품질 검사를 통과하면 PR을 엽니다. 실제 사이트에는 PR 검토·머지와 배포가 완료된 뒤 반영됩니다.
+
+아래 주차는 로그에 기록한 주차이며 원문의 발표일과 다를 수 있습니다. 당시의 변경 기록이므로 현재 지원 버전·보안 패치·운영 조건은 연결된 문서와 공식 자료에서 확인하세요. “매칭 문서 없음”도 당시 자동 매칭 결과입니다.
 
 ## 갱신 로그
 
@@ -27,7 +29,7 @@ Kubernetes, Amazon EKS, CNCF 생태계의 뉴스는 별도 다이제스트 문�
 - 2026-W34: 매칭 문서 없음 — Cloud Native Buildpacks, CNCF 졸업(graduated) 프로젝트 승격 ([원문](https://www.cncf.io/announcements/2026/08/11/cncf-announces-graduation-of-cloud-native-buildpacks-advancing-the-standard-for-container-builds/))
 - 2026-W34: 매칭 문서 없음 — KubeCon + CloudNativeCon North America 2026 일정 공개, AI Inference + Agentic 트랙 신설 ([원문](https://www.cncf.io/announcements/2026/08/10/cncf-reveals-kubecon-cloudnativecon-north-america-2026-schedule-adds-new-ai-inference-agentic-track/))
 - 2026-W34: 매칭 문서 없음 — Kubernetes YAML을 KYAML로 예쁘게 출력하기, Kubernetes 블로그 ([원문](https://kubernetes.io/blog/2026/08/11/how-to-pretty-print-kubernetes-yaml-as-kyaml/))
-- 2026-W33: [networking/04-gateway-api.md](../networking/04-gateway-api.md) — Gateway API v1.6(TCPRoute/UDPRoute Standard v1 승격, 실험적 리소스의 x-k8s.io API 그룹 분리) 반영
+- 2026-W33: [networking/04-gateway-api.md](../networking/04-gateway-api.md) — Gateway API v1.6(TCPRoute/UDPRoute Standard v1 승격, 채널별 deprecated API 제공 여부 변경) 반영
 - 2026-W33: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCD v3.5.0 GA(Helm 4 마이그레이션, 소스 무결성 검증 알파, ApplicationSet 개선) 반영
 - 2026-W33: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.20.0 GA(Gateway API v1.6.1, KCNP, multi-pool IPAM 마이그레이션) 및 1.21.0-pre.0 반영
 - 2026-W33: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37 스니크 픽, 문서 프리즈 발효, v1.38.0-alpha.0 태그 반영
@@ -49,7 +51,7 @@ Kubernetes, Amazon EKS, CNCF 생태계의 뉴스는 별도 다이제스트 문�
 - 2026-W30: [service-mesh/linkerd/README.md](../service-mesh/linkerd/README.md) — Linkerd edge-26.7.1(미정의 서비스 포트 요청 차단, breaking) 반영
 - 2026-W30: [eks-auto-mode/README.md](../eks-auto-mode/README.md) — EKS Auto Mode의 ARC zonal shift/autoshift 지원 반영
 - 2026-W30: [ops/15-zonal-operations-guide.md](../ops/15-zonal-operations-guide.md) — EKS Auto Mode의 ARC zonal shift 지원 반영
-- 2026-W30: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter 전 유지 라인 일괄 패치 릴리스(v1.3.8~v1.11.3) 반영
+- 2026-W30: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter 구버전 라인의 패치 릴리스(v1.3.8~v1.11.3) 반영
 - 2026-W30: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37.0-beta.0 및 v1.37 릴리스 일정 반영
 - 2026-W30: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCon Japan 2026과 Argo CD 3.5 로드맵 공유 예정 소식 반영
 - 2026-W30: [observability/metrics/01-prometheus.md](../observability/metrics/01-prometheus.md) — Kubernetes 블로그의 커스텀 메트릭 익스포터 작성 가이드 반영

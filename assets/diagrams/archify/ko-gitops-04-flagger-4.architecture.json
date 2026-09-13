@@ -9,52 +9,44 @@
     "views": [
       {
         "id": "before",
-        "label": "전환 전",
+        "label": "분석",
         "focus": [
           "lb1",
           "blue1",
           "green1"
         ],
-        "note": "실제 트래픽은 전부 Blue v1(Primary)로 가고, Green v2(Canary)는 준비만 된 상태다."
+        "note": "Primary v1이 live 요청을 처리하며 Canary v2를 검증한다. mirror는 선택 기능이다."
       },
       {
         "id": "testing",
-        "label": "테스트 단계",
+        "label": "Primary 갱신",
         "focus": [
           "lb2",
           "blue2",
           "green2"
         ],
-        "note": "실제 트래픽은 여전히 Blue로 가고, 미러 트래픽만 Green으로 보내 iterations 동안 메트릭을 검증한다."
+        "note": "검사 후 canary로 서비스하며 primary를 v2로 갱신하고 Ready를 기다린다."
       },
       {
         "id": "after",
-        "label": "전환 후",
+        "label": "완료",
         "focus": [
           "lb3",
           "blue3",
           "green3"
         ],
-        "note": "검증을 통과하면 트래픽을 한 번에 Green v2로 전환하고 Blue v1은 대기 상태가 된다."
+        "note": "준비된 Primary v2로 돌아가며 canary는 축소한다. 이전 v1 standby를 유지하는 모델이 아니다."
       }
     ],
     "legend": {
-      "mode": "auto",
-      "entries": {
-        "backend": {
-          "label": "백엔드 서비스"
-        },
-        "cloud": {
-          "label": "클라우드 서비스"
-        }
-      }
+      "mode": "hidden"
     }
   },
   "components": [
     {
       "id": "lb1",
       "type": "cloud",
-      "label": "Load Balancer",
+      "label": "Traffic router",
       "sublabel": "라우팅",
       "pos": [
         130,
@@ -68,8 +60,8 @@
     {
       "id": "blue1",
       "type": "backend",
-      "label": "Blue · v1",
-      "sublabel": "활성 (Primary)",
+      "label": "Primary",
+      "sublabel": "v1 · live",
       "pos": [
         40,
         260
@@ -82,8 +74,8 @@
     {
       "id": "green1",
       "type": "backend",
-      "label": "Green · v2",
-      "sublabel": "준비 중 (Canary)",
+      "label": "Canary",
+      "sublabel": "v2 · 검증",
       "pos": [
         220,
         260
@@ -96,7 +88,7 @@
     {
       "id": "lb2",
       "type": "cloud",
-      "label": "Load Balancer",
+      "label": "Traffic router",
       "sublabel": "라우팅",
       "pos": [
         530,
@@ -110,8 +102,8 @@
     {
       "id": "blue2",
       "type": "backend",
-      "label": "Blue · v1",
-      "sublabel": "활성 (Primary)",
+      "label": "Primary",
+      "sublabel": "v1 → v2 · 갱신",
       "pos": [
         440,
         260
@@ -124,8 +116,8 @@
     {
       "id": "green2",
       "type": "backend",
-      "label": "Green · v2",
-      "sublabel": "테스트 (Canary)",
+      "label": "Canary",
+      "sublabel": "v2 · 임시 live",
       "pos": [
         620,
         260
@@ -138,7 +130,7 @@
     {
       "id": "lb3",
       "type": "cloud",
-      "label": "Load Balancer",
+      "label": "Traffic router",
       "sublabel": "라우팅",
       "pos": [
         930,
@@ -152,8 +144,8 @@
     {
       "id": "blue3",
       "type": "backend",
-      "label": "Blue · v1",
-      "sublabel": "대기",
+      "label": "Primary",
+      "sublabel": "v2 · live",
       "pos": [
         840,
         260
@@ -166,8 +158,8 @@
     {
       "id": "green3",
       "type": "backend",
-      "label": "Green · v2",
-      "sublabel": "활성",
+      "label": "Canary",
+      "sublabel": "v2 · replicas 0",
       "pos": [
         1020,
         260
@@ -181,7 +173,7 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "1. 전환 전",
+      "label": "1. 분석",
       "wraps": [
         "lb1",
         "blue1",
@@ -190,7 +182,7 @@
     },
     {
       "kind": "region",
-      "label": "2. 테스트 단계",
+      "label": "2. Primary 갱신",
       "wraps": [
         "lb2",
         "blue2",
@@ -199,7 +191,7 @@
     },
     {
       "kind": "region",
-      "label": "3. 전환 후",
+      "label": "3. 완료",
       "wraps": [
         "lb3",
         "blue3",
@@ -220,27 +212,26 @@
     {
       "id": "testing-live",
       "from": "lb2",
-      "to": "blue2",
-      "label": "실제 트래픽 100%",
+      "to": "green2",
+      "label": "temporary live 100%",
       "variant": "emphasis",
       "fromSide": "bottom",
       "toSide": "top"
     },
     {
       "id": "testing-mirror",
-      "from": "lb2",
-      "to": "green2",
-      "label": "미러 트래픽 (mirror)",
+      "from": "lb1",
+      "to": "green1",
+      "label": "optional mirror",
       "variant": "dashed",
       "fromSide": "bottom",
-      "toSide": "top",
-      "labelDx": 40
+      "toSide": "top"
     },
     {
       "id": "after-live",
       "from": "lb3",
-      "to": "green3",
-      "label": "전환된 트래픽 100%",
+      "to": "blue3",
+      "label": "live 100%",
       "variant": "emphasis",
       "fromSide": "bottom",
       "toSide": "top"
@@ -249,19 +240,18 @@
   "cards": [
     {
       "dot": "emerald",
-      "title": "Blue-Green 분석 설정",
+      "title": "분석과 승격",
       "items": [
-        "iterations: Green 환경 검증 반복 횟수 (stepWeight/maxWeight 대신 사용)",
-        "mirror: true 이면 실제 트래픽을 Green으로 미러링해 사전 검증",
-        "mirrorWeight: 미러 트래픽 비율 (100이면 전체 미러링)"
+        "iterations 전략: stepWeight/stepWeights와 혼합하지 않음",
+        "실패 한도는 누적 검사 수"
       ]
     },
     {
       "dot": "amber",
-      "title": "전환과 롤백",
+      "title": "운영 제약",
       "items": [
-        "모든 iteration 통과 시 트래픽을 한 번에 100% 전환",
-        "threshold 횟수만큼 실패하면 자동 롤백"
+        "Mirror 응답을 버려도 쓰기·부하 부작용은 남음",
+        "승격 중 primary 장애는 별도 복구 경로"
       ]
     }
   ]

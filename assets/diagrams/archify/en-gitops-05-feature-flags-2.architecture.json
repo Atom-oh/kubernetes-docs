@@ -13,7 +13,7 @@
         "focus": [
           "api"
         ],
-        "note": "The application calls only the vendor-neutral API layer and never knows the backend directly."
+        "note": "Use a standard API while checking provider-specific capabilities and behavior."
       },
       {
         "id": "provider-swap",
@@ -24,7 +24,7 @@
           "launchdarkly",
           "inmemory"
         ],
-        "note": "Register the provider that fits the environment with SetProvider() and the whole flag system changes."
+        "note": "Registration does not automatically migrate rules, credentials, or operational state."
       }
     ],
     "locale": "en",
@@ -52,7 +52,7 @@
       "id": "flagd",
       "type": "backend",
       "label": "flagd Provider",
-      "sublabel": "dev / staging",
+      "sublabel": "self-managed evaluation",
       "pos": [
         620,
         60
@@ -66,7 +66,7 @@
       "id": "launchdarkly",
       "type": "external",
       "label": "LaunchDarkly Provider",
-      "sublabel": "production",
+      "sublabel": "hosted backend example",
       "pos": [
         620,
         220
@@ -101,7 +101,7 @@
     },
     {
       "kind": "region",
-      "label": "Provider selection (per environment)",
+      "label": "Provider examples",
       "wraps": [
         "flagd",
         "launchdarkly",
@@ -114,7 +114,7 @@
       "id": "api-flagd",
       "from": "api",
       "to": "flagd",
-      "label": "SetProvider()",
+      "label": "register + initialize",
       "variant": "emphasis"
     },
     {
@@ -135,9 +135,9 @@
       "dot": "amber",
       "title": "Provider model",
       "items": [
-        "A provider is the adapter that connects the OpenFeature SDK to a concrete feature flag backend",
-        "One line, openfeature.SetProvider(provider), registers the provider",
-        "Swapping only the provider changes the entire flag system with no application code change"
+        "Check each provider constructor and credentials",
+        "Await readiness and reuse the client",
+        "Test rules, defaults, and errors after migration"
       ]
     }
   ]

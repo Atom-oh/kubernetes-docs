@@ -1,6 +1,6 @@
 # 의사결정 프레임워크와 POC 설계
 
-> **마지막 업데이트**: 2026년 9월 9일
+> **마지막 업데이트**: 2026년 9월 13일
 
 지금까지 다룬 Landing Zone, Account/IAM, EKS, VPC, Data/Security 경계는 각각 독립적으로 판정하되, 실제로는 하나의 판정표로 재현 가능해야 합니다. 이 문서는 그 판정표를 어떻게 설계하고, 실측이 필요한 항목을 어떻게 POC로 검증할지 다룹니다.
 
@@ -27,26 +27,28 @@ CUJ(critical user journey)별 RTO(Recovery Time Objective)/RPO(Recovery Point Ob
 
 `trafficDistribution` 필드값, Karpenter의 ARC zonal shift 연동(1.12 이상), EKS Auto Mode 채택 여부(node lifecycle 소유권), add-on 호환성 매트릭스는 모두 EKS 버전에 의존합니다. A/B EKS Runtime의 존재 이유가 업그레이드 격리라면, 버전 스큐 허용 범위·A/B 순차 업그레이드 규칙·extended support 사용 여부를 명문화해야 합니다.
 
-### ALB weighted target group의 fail open 동작
+<span id="alb-weighted-target-group의-fail-open-동작"></span>
 
-"unhealthy target으로는 자동 failover하지 않는다"는 설명은 절반만 맞습니다. 실제로는 **healthy target이 부족하면 ALB가 등록된 모든 target(unhealthy 포함)에 트래픽을 보냅니다(fail open).** 완화 설정은 두 가지입니다.
+### ALB weighted forwarding과 target-group fail-open 구분
+
+Weighted forward action은 weight가 있는 target group이 비거나 unhealthy하다고 다른 group으로 자동 failover하지 않습니다. **선택된 group 내부의 fail-open**은 별도 동작으로, healthy-target 기준이 부족하면 해당 LB node가 접근 가능한 unhealthy target에도 라우팅할 수 있습니다. 다음 속성의 DNS failover와 routing failover를 함께 검토합니다.
 
 - `target_group_health.unhealthy_state_routing.minimum_healthy_targets.count`(또는 `.percentage`)
 - `target_group_health.dns_failover.minimum_healthy_targets.count`(또는 `.percentage`)
 
-AWS 권고는 "Unified configuration" — 양쪽에 동일한 임계값을 설정하는 것입니다. 기본값은 "healthy target 1개면 healthy"이므로, 대규모 target group에서 1개만 살아 있어도 정상으로 판단됩니다. 트래픽 weight를 올리는 게이트는 target health 자체가 아니라 **`minimum_healthy_targets.percentage`(CUJ의 N-1 capacity 기준)** 통과 여부로 설정하는 것을 권장합니다.
+Unified configuration은 두 action에 같은 임계값을 적용합니다. DNS failover 기준은 routing failover 기준 이상이어야 하며 count와 percentage를 함께 설정하면 어느 하나를 위반해도 동작합니다. 비율은 등록 target 수를 기준으로 하므로 그 자체가 CUJ 처리 용량이나 N-1 SLO를 증명하지 않습니다. weight 변경 gate에는 실제 부하·오류율·지연을 함께 사용합니다.
 
 ### 미사용 리전 통제
 
 단일 리전 운영을 결정했다면, 그 결정과 별개로 다음을 챙겨야 합니다.
 
 - **예방**: SCP `aws:RequestedRegion` Deny (global 서비스는 예외 목록 필요)
-- **탐지**: Security Hub CSPM·GuardDuty는 활성화한 리전의 finding만 처리하고 소급 수집하지 않습니다 — 미사용 리전을 비활성화하지 않으면 그 리전의 활동은 탐지되지 않습니다.
-- **가장 강한 통제**: Region opt-in 비활성화
+- **탐지**: 허용·사용 가능한 Region의 CloudTrail·GuardDuty·Security Hub CSPM coverage를 확인합니다. 한 제품이 꺼져 있다고 모든 활동이 탐지 불가능한 것은 아닙니다.
+- **Opt-in Region**: 사용하지 않는 opt-in Region은 비활성화할 수 있지만 기본 활성화 Region은 이 방법으로 끌 수 없습니다. 비활성화가 기존 resource를 삭제하거나 요금을 중지하지도 않습니다. cleanup·SCP·탐지를 함께 설계합니다.
 
 ### 비용 관측성과 태그 강제 시점
 
-cross-AZ 비용을 워크로드 pair 단위로 귀속하려면 ENI 수준까지 태그가 필요하고, **리소스 생성 시점에 강제**되어야 합니다. Tag Policy는 준수 검사·강제는 하지만 모든 리소스를 덮지는 않습니다. IaC 템플릿 강제 + SCP `aws:RequestTag` 조건 + Tag Policy 검사의 3중 구조를 권장합니다. Shared VPC에서 owner의 태그가 participant에게 보이지 않는다는 점([04장](./04-shared-vpc-and-connectivity.md))도 비용 귀속 설계에 반영해야 합니다.
+cross-AZ 비용 귀속은 Flow Logs·ENI/IP·Kubernetes workload identity와 CUR의 과금 항목을 연결해 검증합니다. 모든 ENI가 사용자 태그를 지원하거나 생성 시점의 RequestTag 조건을 제공하는 것은 아닙니다. 태그 정책·IaC·지원 API의 SCP 조건은 서비스별 coverage를 확인해 적용합니다.
 
 ## 2. 판정표 설계
 
@@ -57,9 +59,9 @@ cross-AZ 비용을 워크로드 pair 단위로 귀속하려면 ENI 수준까지 
 | 열 | 목적 |
 |---|---|
 | EKS 필요 여부 | EKS 경계가 VPC 경계에 종속되는지 판단 |
-| Cross-account 리소스 접근 필요 여부 | Pod Identity 2단 구조 필요성 판단 |
+| Cross-account 리소스 접근 | target-role chaining, resource policy, IRSA 중 적합한 경로 확인 |
 | Shared subnet 미지원 서비스 사용 여부 | Shared VPC locality 대상 제외 판단 |
-| 이 Account에 접근할 group 수 예상치 | ABAC 전환·Account 분리 threshold (50개 기준) |
+| Permission Set–Account별 group 할당 수 | 실제100개 한도와 성장률 확인;50경고는 조직별 예시 |
 | 1차 대응 주체 / escalation 경로 | 복구 주체가 둘 이상이면 분리 후보 |
 | CUJ RTO/RPO | 데이터·가용성 설계 전반의 판정 근거 |
 
@@ -71,17 +73,17 @@ cross-AZ 비용을 워크로드 pair 단위로 귀속하려면 ENI 수준까지 
 
 - **입력**: 대표 워크로드 10~15개 (CUJ 포함, 개인정보 취급 1개 이상, 공통 도메인 1개 이상, 작은 사내 도구 2개 이상, 외부 파트너 연동 1개 이상)
 - **절차**: 판정표를 두 사람이 독립적으로 적용하고 결과를 대조
-- **성공 기준**: 불일치율 20% 미만, 예외 처리율 15% 미만
+- **성공 기준 예시**: 불일치율 20% 미만, 예외 처리율 15% 미만(조직이 조정할 가설)
 - **부수 산출물**: 판정 결과로부터 Account/VPC/클러스터 수 추정치가 나오고, 이 값이 나머지 POC의 quota 측정 목표값을 결정
 
 ### POC-1. Shared Cluster + Workload Account
 
 | 측정 항목 | 판정 기준 |
 |---|---|
-| Pod Identity 2단 구조(association → target role)의 권한 경로 수 | 워크로드 1개당 role 2개 + trust policy 2개, 워크로드 수에 선형 증가하는지 확인 |
+| Pod Identity·resource policy·IRSA의 권한 경로 | source/target role 재사용·scope·회수·KMS와 resource-policy 검증; 고정2role산식 금지 |
 | Shared subnet에서 ALB Controller의 subnet 자동 탐색 | 태그 자동 탐색 실패 여부 → 실패 시 명시적 annotation을 표준으로 전환 |
 | Access entry 수 증가율 | 워크로드 1개 추가 시 증가량 × 목표 워크로드 수 < 3,000 |
-| Managed node group 수 | tenant 격리 전략 적용 시 30개 한도 대비 여유 |
+| Managed node group 수 | 기본30과 승인 quota 대비 여유; node placement와 보안 격리 구분 |
 | Cluster Account/Workload Account 간 장애 1차 대응 시간 | "CNI 문제 vs 애플리케이션 문제" 판별 소요 시간 측정 |
 | Participant SG의 넓은 Allow 탐지·차단 시간 | Firewall Manager audit policy 위반 탐지 → 차단 시간 |
 
@@ -92,8 +94,8 @@ cross-AZ 비용을 워크로드 pair 단위로 귀속하려면 ENI 수준까지 
 | [3장](./03-eks-multi-account-multi-cluster.md)의 장애 목록 중 3개 이상 실제 주입 | 각 장애가 한쪽 클러스터로 격리되는지 확인 |
 | ARC zonal autoshift practice run | A/B 각 클러스터가 단독으로 N-1 AZ peak를 처리하는지 |
 | CoreDNS N-1 처리량/지연 | 지연 증가율, ENI당 1,024 packet/s 한도 도달 여부 |
-| CUJ 서비스 그래프의 AZ 커버리지 | 모든 hop이 모든 AZ에 존재하는지 (pod affinity 포함) |
-| Stateful 워크로드의 PV 재바인딩 | 정상 AZ에서 Pod가 실제로 뜨는지 |
+| CUJ 서비스 그래프의 AZ 커버리지 | surviving AZ에서 모든 dependency의 도달성·용량·fallback 검증 |
+| Stateful 복구 | EBS의 AZ 제약, 대체 storage/replication, 복구 시간·데이터 손실 검증 |
 | A→B 전환 end-to-end 시간 | edge 전환과 Route 53 record 변경을 각각 분리 측정 |
 | Rollback 시간 | 전환 시간과 별도로 측정 |
 | cross-AZ bytes | Flow Logs 기반, 최적화 전후 비교 |
@@ -103,7 +105,7 @@ cross-AZ 비용을 워크로드 pair 단위로 귀속하려면 ENI 수준까지 
 
 | 측정 항목 | 판정 기준 |
 |---|---|
-| **TGW 전파 prefix 수(현재/3년 후 예상)** | 100 미달 여부, 초과 시 default route 전환 가능 여부 |
+| **TGW와 VPC route 수(현재/3년 예상)** | TGW table 합계10,000과 VPC non-propagated500/조정1,000을 별도 계산; VGW100과 구분 |
 | Participant Account 수 증가율 | 목표 팀 수 대비 100 한도 |
 | Account당 공유 subnet 수 | AZ×trust zone×용도 조합 vs 100 |
 | NAU 사용량 | Pod 밀도 반영, 64,000 → 256,000 조정 필요 시점 |
@@ -122,9 +124,9 @@ cross-AZ 비용을 워크로드 pair 단위로 귀속하려면 ENI 수준까지 
 - **Agent-direct MCP/CLI/API**: 승인된 agent가 직접 변경 후 검증. 속도가 가장 빠르지만 넓은 권한·부분 실패·prompt injection 위험이 있습니다.
 - **위험 등급별 Hybrid**: 고위험·지속적인 형상 변경은 IaC로, 저위험·가역적인 작업은 제한된 agent 직접 실행으로 처리. 대부분의 조직에 현실적인 방향입니다.
 
-어떤 실행 경로를 택하든 최소한 다음 조건은 만족해야 합니다: machine-readable intent, 실행 직전 snapshot, plan, deterministic policy 검사, 승인, 제한된 임시 identity, post-check, CloudTrail 기록, 실제 상태 대조, 복구 contract.
+어떤 실행 경로를 택하든 작업 위험에 맞춰 다음 조건을 정의합니다: machine-readable intent, 실행 직전 snapshot, plan, deterministic policy 검사, 승인, 제한된 임시 identity, post-check, CloudTrail 기록, 실제 상태 대조, 복구 contract.
 
-> **AWS MCP Server 관련 확인 사실**: AWS API 호출은 기존 IAM credential과 downstream service permission으로 authorize되고 CloudTrail에 기록됩니다. MCP condition context key로 접근 경로를 구분할 수 있습니다. 다만 이 글 작성 시점 기준 AWS MCP Server의 서비스 endpoint는 미국 동부와 프랑크푸르트에만 존재합니다 — **서울 리전에 없다는 사실 자체가 결정 조건**이 됩니다. (a) 규제 관점에서 데이터 이동 검토 대상이 되는지, (b) 리전 장애 시 복구 도구가 타 리전에 의존하는 것이 이점인지 위험인지를 보안팀과 함께 판단해야 합니다.
+> **AWS MCP Server 확인 범위**: 현재 endpoint 목록은 us-east-1과 eu-central-1을 제시합니다. endpoint 위치와 조작 대상 resource Region은 구분합니다. API 실행은 IAM 및 downstream permission으로 제한되고 CloudTrail 기록을 검토할 수 있습니다. endpoint·인증·로그 범위·데이터 경로는 조직 요구에 맞게 확인하며, 서울 endpoint 부재만으로 규제 위반 여부를 결론내리지 않습니다.
 
 ## 관련 문서
 
@@ -138,9 +140,11 @@ cross-AZ 비용을 워크로드 pair 단위로 귀속하려면 ENI 수준까지 
 ## 참고 자료
 
 - [ALB target group attributes](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-target-group-attributes.html)
-- [ALB target group health](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health.html)
+- [ALB target group health](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html#target-group-health)
 - [ALB rule action types (weighted)](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/rule-action-types.html)
 - [Route 53 weighted routing](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-weighted.html)
 - [Route 53 failover routing](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-failover.html)
 - [AWS MCP Server](https://docs.aws.amazon.com/agent-toolkit/latest/userguide/mcp-server.html)
 - [AWS MCP Server IAM](https://docs.aws.amazon.com/agent-toolkit/latest/userguide/security_iam_service-with-iam.html)
+- [AWS MCP regional endpoints](https://docs.aws.amazon.com/general/latest/gr/aws-mcp.html)
+- [Charges in disabled Regions](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/checklistforunwantedcharges.html)

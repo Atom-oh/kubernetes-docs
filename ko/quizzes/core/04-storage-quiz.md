@@ -4,7 +4,7 @@
 
 ## 객관식 문제
 
-1. Kubernetes에서 포드가 재시작되어도 데이터가 유지되는 스토리지 리소스는 무엇인가요?
+1. 일반 파드가 삭제·재생성되어도 독립된 수명 주기로 애플리케이션 데이터를 유지하는 스토리지 리소스는 무엇인가요?
    - A) ConfigMap
    - B) Secret
    - C) PersistentVolume
@@ -52,20 +52,20 @@ PersistentVolumeClaim(PVC)은 사용자가 PersistentVolume을 요청하는 방�
 StorageClass는 관리자가 제공하는 스토리지의 "클래스"를 설명하는 방법을 제공합니다. 다른 클래스는 서비스 수준, 백업 정책, 클러스터 관리자가 결정한 임의의 정책에 매핑될 수 있습니다. StorageClass를 사용하면 PVC가 생성될 때 동적으로 PV를 프로비저닝할 수 있습니다.
 </details>
 
-4. Kubernetes에서 포드가 삭제될 때 PersistentVolumeClaim을 자동으로 삭제하는 정책은 무엇인가요?
+4. 일반 파드를 삭제하면 그 파드가 참조하는 별도 생성 PVC도 자동 삭제되나요?
    - A) Delete
    - B) Retain
    - C) Recycle
-   - D) 이러한 기능은 제공되지 않음
+   - D) 아니요. 별도 생성 PVC는 유지됨
    
 <details>
 
 <summary>정답 보기</summary>
 
-**정답: D) 이러한 기능은 제공되지 않음**
+**정답: D) 아니요. 별도 생성 PVC는 유지됨**
 
 **설명:**
-Kubernetes에서는 포드가 삭제될 때 PVC를 자동으로 삭제하는 기능을 기본적으로 제공하지 않습니다. PVC는 포드와 독립적으로 존재하며, 포드가 삭제되어도 PVC는 유지됩니다. 이는 데이터 손실을 방지하기 위한 설계입니다. StatefulSet의 경우 `persistentVolumeClaimRetentionPolicy`를 사용하여 PVC 삭제 정책을 구성할 수 있습니다.
+별도 생성 PVC는 파드 소유가 아니므로 해당 파드가 삭제되어도 유지됩니다. 반면 generic ephemeral volume PVC는 파드 소유이므로 함께 가비지 수집됩니다. StatefulSet의 `persistentVolumeClaimRetentionPolicy`는 세트 삭제·축소 시 템플릿 PVC 삭제를 제어하며 이후 스토리지 정리는 PV 회수 정책을 따릅니다.
 </details>
 
 5. 다음 중 PersistentVolume의 접근 모드가 아닌 것은 무엇인가요?
@@ -81,7 +81,7 @@ Kubernetes에서는 포드가 삭제될 때 PVC를 자동으로 삭제하는 기
 **정답: D) WriteOnlyMany**
 
 **설명:**
-Kubernetes에서 PersistentVolume의 접근 모드는 ReadWriteOnce(RWO), ReadOnlyMany(ROX), ReadWriteMany(RWX)입니다. WriteOnlyMany는 존재하지 않는 접근 모드입니다. ReadWriteOnce는 단일 노드에 의한 읽기-쓰기 마운트를 허용하고, ReadOnlyMany는 여러 노드에 의한 읽기 전용 마운트를 허용하며, ReadWriteMany는 여러 노드에 의한 읽기-쓰기 마운트를 허용합니다.
+Kubernetes에서 PersistentVolume의 접근 모드는 ReadWriteOnce(RWO), ReadOnlyMany(ROX), ReadWriteMany(RWX), ReadWriteOncePod(RWOP, CSI 전용)입니다. WriteOnlyMany는 존재하지 않는 접근 모드입니다. ReadWriteOnce는 단일 노드에 의한 읽기-쓰기 마운트를 허용하고, ReadOnlyMany는 여러 노드에 의한 읽기 전용 마운트를 허용하며, ReadWriteMany는 여러 노드에 의한 읽기-쓰기 마운트를 허용합니다.
 </details>
 
 6. PersistentVolume의 Reclaim Policy 중, 볼륨을 삭제하지 않고 리소스만 해제하는 정책은 무엇인가요?
@@ -104,7 +104,7 @@ Retain 정책은 PVC가 삭제된 후에도 PV와 그 데이터를 유지합니�
    - A) hostPath
    - B) emptyDir
    - C) nfs
-   - D) awsElasticBlockStore
+   - D) persistentVolumeClaim
    
 <details>
 
@@ -116,8 +116,8 @@ Retain 정책은 PVC가 삭제된 후에도 PV와 그 데이터를 유지합니�
 emptyDir 볼륨은 포드가 노드에 할당될 때 처음 생성되며, 해당 노드에서 포드가 실행되는 동안에만 존재합니다. 이름에서 알 수 있듯이 볼륨은 처음에 비어 있습니다. 포드 내의 모든 컨테이너는 emptyDir 볼륨의 동일한 파일을 읽고 쓸 수 있지만, 볼륨은 각 컨테이너에서 동일하거나 다른 경로에 마운트될 수 있습니다. 포드가 어떤 이유로든 노드에서 제거되면 emptyDir의 데이터는 영구적으로 삭제됩니다.
 </details>
 
-8. AWS EKS에서 기본적으로 사용되는 스토리지 프로비저너는 무엇인가요?
-   - A) kubernetes.io/aws-ebs
+8. 표준 Amazon EBS CSI 드라이버의 프로비저너 이름은 무엇인가요? (EKS Auto Mode 제외)
+   - A) ebs.csi.aws.com
    - B) kubernetes.io/gce-pd
    - C) kubernetes.io/azure-disk
    - D) kubernetes.io/nfs
@@ -126,10 +126,10 @@ emptyDir 볼륨은 포드가 노드에 할당될 때 처음 생성되며, 해당
 
 <summary>정답 보기</summary>
 
-**정답: A) kubernetes.io/aws-ebs**
+**정답: A) ebs.csi.aws.com**
 
 **설명:**
-AWS EKS에서는 기본적으로 AWS EBS(Elastic Block Store)를 사용하여 영구 스토리지를 제공합니다. 프로비저너 이름은 'kubernetes.io/aws-ebs'입니다. 이 프로비저너는 PVC가 생성될 때 자동으로 EBS 볼륨을 생성하고 관리합니다. AWS EKS에서는 gp2, gp3, io1, sc1, st1 등 다양한 EBS 볼륨 유형을 지원합니다.
+표준 EBS CSI 드라이버는 `ebs.csi.aws.com`을 사용하며 드라이버 설치와 IAM 권한 구성이 필요합니다. 클러스터에 적절한 기본 StorageClass가 자동으로 있다고 가정하면 안 됩니다. EKS Auto Mode는 `ebs.csi.eks.amazonaws.com`을 사용하며 새 예시에 레거시 인트리 프로비저너를 사용하지 않습니다.
 </details>
 
 9. 다음 중 StatefulSet에서 사용하는 볼륨 클레임 템플릿의 올바른 필드 이름은 무엇인가요?
@@ -214,7 +214,7 @@ deletionPolicy: Delete
 
 3. **고급 스토리지 기능**: 볼륨 스냅샷, 복제, 크기 조정 등의 고급 기능을 표준화된 방식으로 지원합니다.
 
-4. **보안 향상**: CSI 드라이버는 제한된 권한으로 실행되며, 필요한 권한만 부여받을 수 있습니다.
+4. **보안 향상**: 컨트롤러 IAM/RBAC는 필요한 작업으로 제한하세요. CSI 노드 플러그인은 볼륨 마운트를 위해 특권 호스트 접근이 필요한 경우가 많으므로 별도로 검토해야 합니다.
 
 5. **다양한 스토리지 옵션**: 클라우드 제공업체, 오픈 소스 및 상용 스토리지 솔루션을 쉽게 통합할 수 있습니다.
 
@@ -223,13 +223,8 @@ deletionPolicy: Delete
 **실제 구현 예시 (AWS EBS CSI 드라이버):**
 
 ```bash
-# AWS EBS CSI 드라이버 설치 (Helm 사용)
-helm repo add aws-ebs-csi-driver https://kubernetes-sigs.github.io/aws-ebs-csi-driver
-helm install aws-ebs-csi-driver aws-ebs-csi-driver/aws-ebs-csi-driver \
-  --namespace kube-system \
-  --set enableVolumeScheduling=true \
-  --set enableVolumeResizing=true \
-  --set enableVolumeSnapshot=true
+# 공식 문서에 따라 IAM 역할과 EKS EBS CSI 애드온을 먼저 설치합니다.
+# 스냅샷 기능에는 스냅샷 CRD와 스냅샷 컨트롤러도 필요합니다.
 
 # StorageClass 생성
 kubectl apply -f - <<EOF
@@ -248,203 +243,23 @@ EOF
 CSI는 Kubernetes 스토리지 에코시스템의 핵심 부분으로, 다양한 스토리지 솔루션을 통합하고 고급 스토리지 기능을 활용할 수 있게 해줍니다.
 </details>
 
-2. StatefulSet과 PersistentVolume을 사용하여 고가용성 데이터베이스 클러스터를 설계하고, 데이터 지속성과 백업 전략을 설명하세요.
+2. StatefulSet과 영구 스토리지를 사용하는 고가용성 DB 클러스터를 설계하세요. Kubernetes의 역할과 DB 복제를 구분하고 백업·복구 요구사항을 설명하세요.
 
 <details>
-
 <summary>정답 보기</summary>
 
 **정답:**
 
-**고가용성 데이터베이스 클러스터 설계:**
+1. 안정적인 파드 식별자, 헤드리스 Service, DB 멤버별 PVC를 사용하고 멤버를 노드·영역에 분산합니다. EBS 볼륨은 한 가용 영역에 남으므로 다른 영역의 복구에는 새 볼륨 복원이나 DB 복제가 필요합니다.
+2. DB 오퍼레이터 또는 별도로 검증된 복제 시스템으로 고유 server ID, 초기 동기화, primary 선출, 이전 primary 차단, 복제 자격 증명, 클라이언트 라우팅을 구성합니다. StatefulSet 복제본 3개만으로 HA 데이터베이스가 되지는 않습니다.
+3. `ebs.csi.aws.com`, `WaitForFirstConsumer`, 적절한 gp3 `iops`, 의도한 회수 정책으로 암호화 볼륨을 프로비저닝합니다. `Retain`은 클레임 삭제 후 스토리지를 보존하지만 백업이 아니며 모든 삭제 경로를 차단하지 않습니다.
+4. ConfigMap은 `${HOSTNAME##*-}` 같은 셸 표현식을 치환하지 않습니다. 인스턴스별 구성은 init 컨테이너로 생성하고 SQL은 MySQL 시작 후 실행하세요. Exec 프로브도 셸 없이 `${VARIABLE}`을 치환하지 않습니다.
+5. CSI 스냅샷에는 CRD·컨트롤러와 EBS용 `VolumeSnapshotClass`가 필요합니다. 일관된 복구 시점을 위해 쓰기를 중지하거나 DB 인식 백업을 사용하고 복원 크기·드라이버 호환성을 검증합니다.
+6. 논리 백업에는 호환 DB 도구와 업로드 도구를 포함한 이미지를 사용합니다(기본 MySQL 이미지에는 AWS CLI가 없음). 전용 DB 백업 사용자와 제한된 AWS 권한을 사용하고 dump·업로드 실패 시 Job을 실패시킵니다. 성공한 백업은 파드 외부에 보존하고 복원 테스트를 수행하세요. Job 이력 보존은 백업 파일 보존이 아닙니다.
+7. 복제 지연, 스토리지 사용량, 백업 경과 시간·실패, 복원 테스트를 모니터링합니다. RPO·RTO를 문서화하고 노드·영역 손실 시 장애 조치를 검증하세요.
 
-1. **아키텍처 개요**:
-  - 3개 이상의 복제본을 가진 StatefulSet으로 데이터베이스 클러스터 구성
-  - 각 포드에 고유한 PersistentVolume 할당
-  - 헤드리스 서비스를 통한 안정적인 네트워크 식별자 제공
-  - 리더 선출 메커니즘을 통한 마스터-슬레이브 구성
+[EBS CSI 설치 문서](https://docs.aws.amazon.com/eks/latest/userguide/ebs-csi.html)와 본문의 스냅샷·보존 예시를 참고하세요.
 
-2. **StorageClass 설정**:
-```yaml
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: fast-storage
-provisioner: kubernetes.io/aws-ebs
-parameters:
-  type: gp3
-  iopsPerGB: "3000"
-  encrypted: "true"
-reclaimPolicy: Retain
-allowVolumeExpansion: true
-volumeBindingMode: WaitForFirstConsumer
-```
-
-3. **헤드리스 서비스 생성**:
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: db-cluster
-spec:
-  clusterIP: None
-  selector:
-    app: database
-    ports:
-      - port: 3306
-    name: db
-```
-
-4. **ConfigMap으로 구성 관리**:
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: db-config
-data:
-  my.cnf: |
-    [mysqld]
-    server-id = ${HOSTNAME##*-}
-    log_bin = /var/lib/mysql/mysql-bin.log
-    binlog_format = ROW
-    sync_binlog = 1
-    innodb_flush_log_at_trx_commit = 1
-```
-
-5. **StatefulSet 정의**:
-```yaml
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: db-cluster
-spec:
-  serviceName: db-cluster
-  replicas: 3
-  selector:
-    matchLabels:
-      app: database
-  template:
-    metadata:
-      labels:
-        app: database
-    spec:
-      initContainers:
-        - name: init-config
-          image: busybox
-          command: ['sh', '-c', 'cp /config-map/my.cnf /etc/mysql/conf.d/']
-          volumeMounts:
-            - name: config-map
-              mountPath: /config-map
-            - name: config-dir
-              mountPath: /etc/mysql/conf.d/
-      containers:
-        - name: mysql
-          image: mysql:8.0
-          env:
-            - name: MYSQL_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mysql-secret
-                  key: password
-          ports:
-            - containerPort: 3306
-              name: db
-          volumeMounts:
-            - name: data
-              mountPath: /var/lib/mysql
-            - name: config-dir
-              mountPath: /etc/mysql/conf.d/
-          readinessProbe:
-            exec:
-              command: ["mysql", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}", "-e", "SELECT 1"]
-            initialDelaySeconds: 30
-            periodSeconds: 10
-      volumes:
-        - name: config-map
-          configMap:
-            name: db-config
-        - name: config-dir
-          emptyDir: {}
-  volumeClaimTemplates:
-    - metadata:
-        name: data
-      spec:
-        accessModes: [ "ReadWriteOnce" ]
-        storageClassName: "fast-storage"
-        resources:
-          requests:
-            storage: 50Gi
-```
-
-**데이터 지속성 및 백업 전략:**
-
-1. **데이터 지속성 보장**:
-  - `reclaimPolicy: Retain`을 사용하여 PV가 실수로 삭제되지 않도록 보호
-  - 데이터베이스 엔진의 내구성 설정 활성화 (예: MySQL의 `sync_binlog=1`, `innodb_flush_log_at_trx_commit=1`)
-  - 복제를 통한 데이터 중복성 확보
-
-2. **백업 전략**:
-  - **정기적인 VolumeSnapshot 생성**:
-```yaml
-apiVersion: snapshot.storage.k8s.io/v1
-kind: VolumeSnapshot
-metadata:
-  name: db-snapshot-{{date}}
-spec:
-  volumeSnapshotClassName: csi-snapshot-class
-  source:
-    persistentVolumeClaimName: data-db-cluster-0
-```
-
-  - **데이터베이스 논리적 백업**:
-```yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: db-backup
-spec:
-  schedule: "0 2 * * *"  # 매일 02:00에 실행
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-            - name: backup
-              image: mysql:8.0
-              command:
-                - /bin/sh
-                - -c
-                - |
-                  mysqldump -h db-cluster-0.db-cluster -u root -p"${MYSQL_ROOT_PASSWORD}" --all-databases > /backup/full-backup-$(date +%Y%m%d).sql
-                  aws s3 cp /backup/full-backup-$(date +%Y%m%d).sql s3://my-backup-bucket/
-              env:
-                - name: MYSQL_ROOT_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: mysql-secret
-                      key: password
-              volumeMounts:
-                - name: backup-volume
-                  mountPath: /backup
-          volumes:
-            - name: backup-volume
-              emptyDir: {}
-          restartPolicy: OnFailure
-```
-
-  - **백업 검증 및 복원 테스트**: 정기적으로 백업에서 복원 테스트를 수행하여 백업의 유효성 검증
-
-3. **재해 복구 전략**:
-  - 다중 가용 영역에 포드 분산 배치
-  - 지역 간 백업 복제
-  - 자동화된 복구 절차 구현
-
-4. **모니터링 및 알림**:
-  - 백업 작업 성공/실패 알림 설정
-  - 스토리지 사용량 모니터링
-  - 복제 지연 모니터링
-
-이 설계는 StatefulSet의 안정적인 네트워크 식별자와 PersistentVolume의 데이터 지속성을 결합하여 고가용성 데이터베이스 클러스터를 제공합니다. 다중 계층의 백업 전략은 다양한 장애 시나리오에서 데이터 손실을 방지합니다.
 </details>
 
 ## 결론

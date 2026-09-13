@@ -1,0 +1,493 @@
+{
+  "reviewedAt": "2026-09-12",
+  "scope": [
+    "ko/data-on-eks/kafka/README.md",
+    "ko/data-on-eks/kafka/01-kafka-fundamentals.md",
+    "ko/quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md",
+    "en/data-on-eks/kafka/README.md",
+    "en/data-on-eks/kafka/01-kafka-fundamentals.md",
+    "en/quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md"
+  ],
+  "versions": {
+    "kafka": "4.3.1",
+    "strimzi": "1.2.0"
+  },
+  "nativeBinary": {
+    "version": "4.3.1",
+    "url": "https://archive.apache.org/dist/kafka/4.3.1/kafka_2.13-4.3.1.tgz",
+    "sha512": "c7d7b2318cb51aa0c61d3246a51c349210073c5c9b754947ef965a439f2f939e8600f204e134a75ac31faf3829c9370960ef7c6a9886c8a1dbf0339a21f4c54c",
+    "verifiedAgainst": "Strimzi1.2.0kafka-versions.yaml",
+    "archiveBytes": 135852628,
+    "extractedEntries": 207,
+    "directory": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-kafka/kafka_2.13-4.3.1"
+  },
+  "supportedMatrix": [
+    {
+      "version": "4.2.0",
+      "metadata": "4.2-IV1",
+      "url": "https://archive.apache.org/dist/kafka/4.2.0/kafka_2.13-4.2.0.tgz",
+      "checksum": "16CE46E590BA915F01B720EA514445E49C88BF129CF4CEAB88878B122D54EF24F0DEDB88D0EB178957F58057A6C6A9ADBEA8B8059307585DAEA13129B85BA1D8",
+      "third-party-libs": "4.2.0",
+      "supported": true,
+      "default": false
+    },
+    {
+      "version": "4.2.1",
+      "metadata": "4.2-IV1",
+      "url": "https://archive.apache.org/dist/kafka/4.2.1/kafka_2.13-4.2.1.tgz",
+      "checksum": "F643E31266268E920AA98EAD9A061026C98DAC2886932AD468565BA59BCB7FB4F98A4C4F62727367E1BD87515F3B016E6F6CCCCAD8B12BDEF8B091B0FB577170",
+      "third-party-libs": "4.2.1",
+      "supported": true,
+      "default": false
+    },
+    {
+      "version": "4.3.0",
+      "metadata": "4.3-IV0",
+      "url": "https://archive.apache.org/dist/kafka/4.3.0/kafka_2.13-4.3.0.tgz",
+      "checksum": "EE36CF508B519769E253ACDFA13ADD23F405AB42B241CA641589843DF6A5C7BC72289301EB410A645CE7CD1CD0FE20921143B9074DFBFE72605943140D4E8CB1",
+      "third-party-libs": "4.3.x",
+      "supported": true,
+      "default": false
+    },
+    {
+      "version": "4.3.1",
+      "maven-version": "4.3.1",
+      "metadata": "4.3-IV0",
+      "url": "https://archive.apache.org/dist/kafka/4.3.1/kafka_2.13-4.3.1.tgz",
+      "checksum": "C7D7B2318CB51AA0C61D3246A51C349210073C5C9B754947EF965A439F2F939E8600F204E134A75AC31FAF3829C9370960EF7C6A9886C8A1DBF0339A21F4C54C",
+      "third-party-libs": "4.3.x",
+      "supported": true,
+      "default": true
+    }
+  ],
+  "validation": {
+    "fences": [
+      {
+        "path": "ko/data-on-eks/kafka/01-kafka-fundamentals.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/01-kafka-fundamentals.md",
+        "language": "properties"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/01-kafka-fundamentals.md",
+        "language": "properties"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/01-kafka-fundamentals.md",
+        "language": "properties"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/01-kafka-fundamentals.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md",
+        "language": "properties"
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md",
+        "language": "properties"
+      },
+      {
+        "path": "en/data-on-eks/kafka/01-kafka-fundamentals.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/01-kafka-fundamentals.md",
+        "language": "properties"
+      },
+      {
+        "path": "en/data-on-eks/kafka/01-kafka-fundamentals.md",
+        "language": "properties"
+      },
+      {
+        "path": "en/data-on-eks/kafka/01-kafka-fundamentals.md",
+        "language": "properties"
+      },
+      {
+        "path": "en/data-on-eks/kafka/01-kafka-fundamentals.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md",
+        "language": "properties"
+      },
+      {
+        "path": "en/quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md",
+        "language": "properties"
+      }
+    ],
+    "relativeLinks": 36,
+    "quizQuestions": 34,
+    "nativeKafkaConfigCases": 19,
+    "nativeLogSha256": "0a5056c5f5188a33f150830e94599da78a2dcc58dd63d894e6ceb365f3def5c7",
+    "cliHelpFlagsVerified": [
+      "topics: create,partitions,replication-factor,config",
+      "configs: alter,entity-type,entity-name,add-config",
+      "metadata-quorum: bootstrap-controller",
+      "storage format: standalone,initial-controllers,no-initial-controllers"
+    ],
+    "limitations": "Syntax and configuration checks only; no Kafka broker, topic or AWS resource was created."
+  },
+  "images": [
+    {
+      "file": "ko/.gitbook/assets/ko-data-on-eks-kafka-readme-0.png",
+      "size": [
+        1600,
+        1080
+      ],
+      "sha256": "c5e1d1476fcd5dbd6f914af172c7a319b8fd1cd957e9390a692691887f1e2b54"
+    },
+    {
+      "file": "ko/.gitbook/assets/ko-data-on-eks-kafka-01-kafka-fundamentals-0.png",
+      "size": [
+        1600,
+        1080
+      ],
+      "sha256": "87eecfbdfd386a23501e7bd48e8bf32a7f97e27051f301ad460291f09bd65852"
+    },
+    {
+      "file": "en/.gitbook/assets/en-data-on-eks-kafka-readme-0.png",
+      "size": [
+        1600,
+        1080
+      ],
+      "sha256": "58940caddfafb7e2bcd2d0465a3a1d94a34167ed6c2b4a4a84675f46b5cc4245"
+    },
+    {
+      "file": "en/.gitbook/assets/en-data-on-eks-kafka-01-kafka-fundamentals-0.png",
+      "size": [
+        1600,
+        1080
+      ],
+      "sha256": "b8ec0d7fb45603dac97cf2d6b4c522b1bad6de7a835239cbac244edf3305a8d3"
+    }
+  ],
+  "diagrams": [
+    {
+      "stem": "ko-data-on-eks-kafka-readme-0",
+      "specSha256": "5b3f5ab612526865ae38b7152500ee2f2761ea32f4a6579b5323163f2d1d9387",
+      "htmlSha256": "4f4e82bf7ceab294f0554d06d3e8c05f482233b11b61bba85d54fb9817b43bd3",
+      "composition": "9/9",
+      "desktopViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "ko-data-on-eks-kafka-01-kafka-fundamentals-0",
+      "specSha256": "bddd78345e2b9e5c50d45206dc37c752307975fe36b3fc2f13b510bf3598cb0f",
+      "htmlSha256": "05f7ad54290f4c91620f7657107a1b25f8bfa7326f62f1d2ea0d225f640d632b",
+      "composition": "9/9",
+      "desktopViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "en-data-on-eks-kafka-readme-0",
+      "specSha256": "37ccb12ac729a2cb169b0e496d06d92cc7122651895ea56b9f83ce0ee323fda6",
+      "htmlSha256": "8e026257d718dd7740b223999cc706cc11064d3ea01dd9284b9b36ca67957454",
+      "composition": "9/9",
+      "desktopViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    },
+    {
+      "stem": "en-data-on-eks-kafka-01-kafka-fundamentals-0",
+      "specSha256": "0d2cfb20862226303ca9ace5bdafec5fc60da1eba743d84dfd5f9afeb86808fa",
+      "htmlSha256": "ee9752bf43dcebf87b3bebb9aa4dc78a7c092285f91b37a35b453fcec51e3c85",
+      "composition": "9/9",
+      "desktopViewports": 4,
+      "themeCaptures": 4,
+      "assistantVisualInspection": true
+    }
+  ],
+  "mobile": [
+    {
+      "name": "en-data-on-eks-kafka-01-kafka-fundamentals-0.html",
+      "width": 375,
+      "sourceSha256": "ee9752bf43dcebf87b3bebb9aa4dc78a7c092285f91b37a35b453fcec51e3c85",
+      "viewerSha256": "7bdd2de095f5efc2e5d3729a278454fe5692b5ec47e53e3bdf1fe43e5b352048",
+      "viewport": 375,
+      "scrollWidth": 375,
+      "bodyWidth": 375,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "ko-data-on-eks-kafka-01-kafka-fundamentals-0.html",
+      "width": 375,
+      "sourceSha256": "05f7ad54290f4c91620f7657107a1b25f8bfa7326f62f1d2ea0d225f640d632b",
+      "viewerSha256": "345880783d8e64f4f6188618d47624bf914191554a1f433c3b8a80116ea46d19",
+      "viewport": 375,
+      "scrollWidth": 375,
+      "bodyWidth": 375,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "ko-data-on-eks-kafka-readme-0.html",
+      "width": 375,
+      "sourceSha256": "4f4e82bf7ceab294f0554d06d3e8c05f482233b11b61bba85d54fb9817b43bd3",
+      "viewerSha256": "8a1f6a895b46bb7c246bef4a69952979d7465db83bb81abbafaf3d152530b106",
+      "viewport": 375,
+      "scrollWidth": 375,
+      "bodyWidth": 375,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "en-data-on-eks-kafka-01-kafka-fundamentals-0.html",
+      "width": 768,
+      "sourceSha256": "ee9752bf43dcebf87b3bebb9aa4dc78a7c092285f91b37a35b453fcec51e3c85",
+      "viewerSha256": "7bdd2de095f5efc2e5d3729a278454fe5692b5ec47e53e3bdf1fe43e5b352048",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "bodyWidth": 768,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "ko-data-on-eks-kafka-01-kafka-fundamentals-0.html",
+      "width": 768,
+      "sourceSha256": "05f7ad54290f4c91620f7657107a1b25f8bfa7326f62f1d2ea0d225f640d632b",
+      "viewerSha256": "345880783d8e64f4f6188618d47624bf914191554a1f433c3b8a80116ea46d19",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "bodyWidth": 768,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "ko-data-on-eks-kafka-readme-0.html",
+      "width": 768,
+      "sourceSha256": "4f4e82bf7ceab294f0554d06d3e8c05f482233b11b61bba85d54fb9817b43bd3",
+      "viewerSha256": "8a1f6a895b46bb7c246bef4a69952979d7465db83bb81abbafaf3d152530b106",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "bodyWidth": 768,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "en-data-on-eks-kafka-readme-0.html",
+      "width": 375,
+      "sourceSha256": "8e026257d718dd7740b223999cc706cc11064d3ea01dd9284b9b36ca67957454",
+      "viewerSha256": "8334be04a3f1aa4b8ae7679bb0c423a70196c4741af69a972ba4f6538c9096d9",
+      "viewport": 375,
+      "scrollWidth": 375,
+      "bodyWidth": 375,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    },
+    {
+      "name": "en-data-on-eks-kafka-readme-0.html",
+      "width": 768,
+      "sourceSha256": "8e026257d718dd7740b223999cc706cc11064d3ea01dd9284b9b36ca67957454",
+      "viewerSha256": "8334be04a3f1aa4b8ae7679bb0c423a70196c4741af69a972ba4f6538c9096d9",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "bodyWidth": 768,
+      "visibleButtons": 5,
+      "buttonOverflow": 0,
+      "svgCount": 2,
+      "interactions": [
+        {
+          "button": "#btn-preset",
+          "contained": true
+        },
+        {
+          "button": "#btn-export",
+          "contained": true
+        }
+      ],
+      "themeChanged": true,
+      "zoomWorked": true,
+      "presentation": {
+        "active": true,
+        "overflow": false,
+        "scrollHeight": 900,
+        "viewportHeight": 900
+      },
+      "passed": true
+    }
+  ],
+  "sources": [
+    "https://api.github.com/repos/strimzi/strimzi-kafka-operator/releases/latest",
+    "https://kafka.apache.org/downloads/",
+    "https://strimzi.io/docs/operators/latest/overview",
+    "https://strimzi.io/docs/operators/latest/deploying",
+    "https://kafka.apache.org/43/operations/kraft/",
+    "https://kafka.apache.org/43/configuration/producer-configs/",
+    "https://kafka.apache.org/43/configuration/consumer-configs/",
+    "https://kafka.apache.org/43/operations/consumer-rebalance-protocol/",
+    "https://kafka.apache.org/community/downloads/",
+    "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/kafka-versions.yaml",
+    "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+    "https://raw.githubusercontent.com/apache/kafka/4.3.1/config/server.properties",
+    "https://raw.githubusercontent.com/apache/kafka/4.3.1/config/controller.properties"
+  ],
+  "findings": [
+    "Pinned supportedStrimzi1.2.0/Kafka4.3.1 baseline andv1-onlyCRDmigrationrequirement; keptstaticquorumassupported.",
+    "Qualifiedsame-keyroutingwithpartitioncount/serialization/partitioner; distinguishedappendlogretention,followerfetch,andKafkaConsumersubscribeassignmentfromShareGroups.",
+    "Correctedclassicversusconsumerprotocoltimeouts/assignors,staticmembershipmaxpolldelay,andbusinesscompletionversuscommittedoffset.",
+    "SeparatedproducerretryidempotencefromE2EEOS;requiredatomicoutput+inputoffsets/read_committed/fencing;correctedacksconflicts/retrydeadlines.",
+    "Replacedincompletecustomlistenerconfigurationwithnative-validatedlabconfig;clarifieddynamicquorumseedsversusinitialmembershipandstorageformat.",
+    "RemovedRF3unconditionaltwofailure/durabilityandacksperformanceguarantees;conditionedonefailurewriteavailabilityonhealthyISR/quorum.",
+    "Updated34quizquestions/explanationsandfourdiagramrelationships/captions;fixed404KIPreferencewithcurrentofficialKRaftguide."
+  ],
+  "limitations": [
+    "ActualKafkaConfig/ProducerConfig/ConsumerConfigclassesexecuted19checks; no broker/topic/AWSresourcecreated.",
+    "CLIhelptopics/configsreturn1bydesignbutprintedrecognizedusage/flags;metadata-quorum/storagehelpcheckedwithoutconnecting.",
+    "ConfigurationacceptanceisnotHA/bootstrap/network/end-to-enddeliveryvalidation."
+  ]
+}

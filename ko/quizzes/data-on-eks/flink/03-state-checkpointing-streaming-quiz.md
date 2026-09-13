@@ -1,247 +1,170 @@
-# 상태 관리, 체크포인팅, 스트리밍 패턴 퀴즈
+# 상태·체크포인트·스트리밍 패턴 퀴즈
 
-이 퀴즈는 HashMap과 RocksDB 상태 백엔드의 트레이드오프, 체크포인트와 세이브포인트의 차이, Flink의 2단계 커밋 프로토콜을 통한 Kafka 정확히 한 번 전달 방식, 그리고 Flink SQL/Table API가 DataStream API보다 적합한 상황에 대한 이해도를 테스트합니다.
+본문의 Flink/Kafka와 Flink/Iceberg 버전 조합을 구분해 답하세요.
 
-## 객관식 문제
-
-1. `HashMapStateBackend`와 `EmbeddedRocksDBStateBackend`의 핵심 트레이드오프는 무엇인가요?
-   - A) HashMap은 힙 밖에 있고 RocksDB는 힙 위에 있음
-   - B) HashMap은 빠르지만 힙 메모리에 제한되고, RocksDB는 접근당 느리지만 상태를 디스크로 스필해 메모리 이상으로 확장 가능함
-   - C) RocksDB는 체크포인팅을 전혀 지원하지 않음
-   - D) 기능적 차이는 없고 이름만 다름
+1. RocksDB를 선택하면 heap과 GC, memory sizing을 신경 쓰지 않아도 되나요?
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) HashMap은 빠르지만 힙 메모리에 제한되고, RocksDB는 접근당 느리지만 상태를 디스크로 스필해 메모리 이상으로 확장 가능함**
+**정답:** 아니요. Native cache·managed memory·사용자 객체·operator state·buffer 등도 자원을 사용합니다.
 
-**설명:**
-HashMapStateBackend는 상태를 JVM 힙 위의 순수 Java 객체로 유지하므로 빠르지만 가용 메모리에 제한되고 상태가 커질수록 GC 부담이 늘어납니다. EmbeddedRocksDBStateBackend는 로컬 RocksDB 인스턴스에 상태를 힙 밖에 저장하고 디스크로 스필하여, 레코드당 지연(직렬화 오버헤드)을 조금 희생하는 대신 메모리보다 훨씬 큰 상태를 다룰 수 있습니다.
+**설명:** Keyed operator별 backend 인스턴스가 slot memory budget을 공유할 수 있습니다. 고정 MB 기준 대신 부하·state·checkpoint/restore를 측정합니다.
+
 </details>
 
-2. 증분 체크포인트를 사용하려면 어떤 상태 백엔드가 필요한가요?
-   - A) HashMapStateBackend
-   - B) EmbeddedRocksDBStateBackend
-   - C) 둘 다 설정 차이 없이 가능
-   - D) 둘 다 아니며, 증분 체크포인트는 항상 켜져 있음
+2. Flink 2.2에서 incremental snapshot은 RocksDB만 가능한가요?
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) EmbeddedRocksDBStateBackend**
+**정답:** 아니요. Experimental ForSt도 async incremental snapshot을 사용합니다.
 
-**설명:**
-증분 체크포인트(`execution.checkpointing.incremental: true`)는 이전 체크포인트 이후 변경된 RocksDB SSTable 파일만 저장하는 방식에 의존합니다. HashMapStateBackend에는 이렇게 비교할 수 있는 디스크 파일 구조가 없으므로 전체 체크포인트만 지원합니다.
+**설명:** ForSt는 remote SST/local cache 모델과 API/snapshot 제한을 확인해야 합니다. 이 장의 실제 설정 예제는 RocksDB입니다.
+
 </details>
 
-3. 증분 체크포인트가 실제로 저장하는 것은 무엇인가요?
-   - A) 모든 키의 현재 값 전체 복사본
-   - B) 마지막 체크포인트 이후 변경된 RocksDB SSTable 파일과, 여전히 유효한 이전 파일들을 참조하는 매니페스트
-   - C) 상태가 아닌 잡의 설정 값만
-   - D) 이전 체크포인트의 모든 키를 다시 읽어 계산한 차이값
+3. Incremental checkpoint 업로드량은 논리적 key 변경량에만 비례하나요?
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) 마지막 체크포인트 이후 변경된 RocksDB SSTable 파일과, 여전히 유효한 이전 파일들을 참조하는 매니페스트**
+**정답:** 아니요. 새로운 SST와 metadata를 저장하며 compaction이 큰 파일을 다시 만들 수 있습니다.
 
-**설명:**
-전체 상태를 다시 업로드하는 대신, 증분 체크포인트는 이전 체크포인트 이후 생성된 SSTable 델타만 저장하고, 복원 시 전체 상태를 재구성하는 데 여전히 필요한 이전 SSTable 파일들을 기록한 매니페스트를 함께 남깁니다.
+**설명:** 재사용 shared SST는 참조됩니다. 아직 참조 중인 파일을 storage lifecycle로 임의 삭제하면 복구가 깨질 수 있습니다.
+
 </details>
 
-4. 증분 체크포인트로부터의 복구가 전체 체크포인트 복구보다 실제로 더 느려질 수 있는 조건은 무엇인가요?
-   - A) 어떤 조건에서도 느려지지 않음
-   - B) 체크포인트 스토리지 접근이 네트워크에 병목이 있을 때 — 복구 시 가져와야 할 개별 파일 수가 훨씬 많아질 수 있기 때문
-   - C) 잡에 상태가 전혀 없을 때
-   - D) `execution.checkpointing.mode`가 `AT_LEAST_ONCE`로 설정됐을 때
+4. Incremental restore는 모든 이전 checkpoint를 순서대로 재생하나요?
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) 체크포인트 스토리지 접근이 네트워크에 병목이 있을 때 — 복구 시 가져와야 할 개별 파일 수가 훨씬 많아질 수 있기 때문**
+**정답:** 아니요. 선택한 checkpoint가 참조하는 파일들을 복원합니다.
 
-**설명:**
-증분 체크포인트에서 복원하려면 최신 델타뿐 아니라 매니페스트가 여전히 참조하는 이전 파일들까지 모두 가져와야 하므로, 전체 체크포인트의 단일 스냅숏보다 더 많은 개별 파일 요청이 필요합니다. 스토리지(예: S3)까지의 경로가 네트워크에 병목이 있으면 이 추가 요청 수 때문에 복구가 느려질 수 있습니다. 반대로 병목이 TaskManager의 CPU/IOPS라면, RocksDB에 다시 써야 할 전체 데이터양이 적어 증분 체크포인트가 보통 더 빨리 복구됩니다.
+**설명:** Full checkpoint도 반드시 하나의 파일은 아닙니다. Network·파일 수·I/O와 canonical state 재구축 비용에 따라 복구 속도가 달라집니다.
+
 </details>
 
-5. 체크포인트와 세이브포인트의 근본적인 차이는 무엇인가요?
-   - A) 이름만 다른 동일한 메커니즘
-   - B) 체크포인트는 자동으로 트리거되어 장애 복구에 쓰이고, 세이브포인트는 명시적으로 트리거되어 계획된 업그레이드·마이그레이션에 쓰임
-   - C) 세이브포인트는 메모리에, 체크포인트는 디스크에 저장됨
-   - D) 체크포인트는 잡의 생애주기 동안 단 한 번만 찍을 수 있음
+5. Savepoint는 항상 수동 삭제 전까지 영구 보관되나요?
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) 체크포인트는 자동으로 트리거되어 장애 복구에 쓰이고, 세이브포인트는 명시적으로 트리거되어 계획된 업그레이드·마이그레이션에 쓰임**
+**정답:** 아니요. Operator retention/dispose 설정과 CLAIM/NO_CLAIM 소유권에 따라 달라집니다.
 
-**설명:**
-둘 다 같은 파일시스템 기반 체크포인트 스토리지 백엔드를 사용하지만 목적이 다릅니다. 체크포인트는 Flink가 일정 주기로 자동 트리거해 장애 복구에 사용하고, 세이브포인트는 사용자나 Operator의 `FlinkStateSnapshot`이 명시적으로 트리거하며 의도적인 업그레이드·마이그레이션·버전 업그레이드를 위한 영구 산출물로 보존됩니다.
+**설명:** Checkpoint도 explicit trigger와 externalized retention을 사용할 수 있습니다. 저장소·파일 참조 관계·삭제 책임을 확인합니다.
+
 </details>
 
-6. Flink Kubernetes Operator의 `last-state` 업그레이드 모드는 어떤 산출물로부터 복원하나요?
-   - A) 가장 최근 세이브포인트
-   - B) 가장 최근 체크포인트
-   - C) 소스 토픽을 처음부터 전체 재읽기
-   - D) 수동으로 내보낸 상태 파일
+6. Operator last-state는 항상 마지막 checkpoint 하나만 사용하나요?
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) 가장 최근 체크포인트**
+**정답:** 접근 가능한 HA metadata나 마지막 checkpoint/savepoint 등 복구 경로에 따릅니다.
 
-**설명:**
-`last-state` 업그레이드 모드는 세이브포인트가 아니라 가장 최근에 완료된 체크포인트에서 복원합니다. 그래서 빠르고 완전히 자동화될 수 있지만, 그 체크포인트를 만든 특정 잡 그래프에 묶이게 되는 대가가 있습니다. 의도적인 버전 업그레이드나 마이그레이션에는 명시적인 세이브포인트를 사용해야 합니다.
+**설명:** State compatibility·UID·serializer·유효한 metadata가 필요합니다. 이름만으로 자동 복구나 migration 안전성을 보장하지 않습니다.
+
 </details>
 
-7. Flink `KafkaSink`의 정확히 한 번 전달을 위한 2단계 커밋 프로토콜에서 **KafkaCommitter**의 역할은 무엇인가요?
-   - A) 열려 있는 트랜잭션 안에서 Kafka에 레코드를 씀
-   - B) 대응하는 Flink 체크포인트가 성공적으로 완료된 뒤에만 Kafka 트랜잭션을 커밋함
-   - C) S3에서 오래된 체크포인트를 삭제함
-   - D) 브로커와의 최초 TCP 연결을 협상함
+7. Kafka EXACTLY_ONCE는 checkpoint와 consumer에 어떤 조건이 있나요?
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) 대응하는 Flink 체크포인트가 성공적으로 완료된 뒤에만 Kafka 트랜잭션을 커밋함**
+**정답:** Checkpoint 완료와 transaction commit이 연동되며 downstream은 read_committed를 사용해야 합니다.
 
-**설명:**
-KafkaWriter는 체크포인트 사이에 열려 있는 Kafka 트랜잭션 안에서 레코드를 쓰고, 이 레코드는 `read_committed` 컨슈머에게 아직 보이지 않습니다. 이를 감싸는 Flink 체크포인트가 완료돼야 KafkaCommitter가 해당 트랜잭션을 커밋하고, 그때야 레코드가 다운스트림에 노출됩니다.
+**설명:** 재생 가능한 source와 복구 가능한 state도 필요합니다. 서로 다른 sink나 모든 subtask의 commit이 하나의 전역 transaction이 되는 것은 아닙니다.
+
 </details>
 
-8. `EXACTLY_ONCE`로 설정한 `KafkaSink`가 안정적인 `transactionalIdPrefix`를 요구하는 이유는 무엇인가요?
-   - A) 로그에만 표시되는 순전히 장식적인 값이기 때문
-   - B) Flink가 이 prefix로부터 각 서브태스크의 트랜잭션 ID를 파생시키는데, 복원 시 이전 ID와 일치해야 장애 전에 열려 있던 트랜잭션을 올바르게 해소할 수 있기 때문
-   - C) Kafka 토픽의 복제 팩터를 설정하기 때문
-   - D) 싱크 토픽의 파티션 수를 결정하기 때문
+8. transactionalIdPrefix는 언제 고유하고 언제 안정적이어야 하나요?
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) Flink가 이 prefix로부터 각 서브태스크의 트랜잭션 ID를 파생시키는데, 복원 시 이전 ID와 일치해야 장애 전에 열려 있던 트랜잭션을 올바르게 해소할 수 있기 때문**
+**정답:** 독립적인 동시 sink/job 사이에는 고유하고, 같은 논리적 실행의 재시작 동안에는 안정적으로 유지합니다.
 
-**설명:**
-각 싱크 서브태스크의 실제 Kafka 트랜잭션 ID는 설정된 prefix로부터 파생됩니다. 실행 사이에 이 prefix가 바뀌면 Flink는 재시작 전에 사용한 ID와 재시작 후 사용하는 ID를 맞출 수 없게 되어, 장애로 열려 있던 트랜잭션을 올바르게 중단하거나 해소하는 능력이 깨집니다.
+**설명:** 충돌은 fencing을 일으킬 수 있고 prefix 변경은 lingering transaction 정리와 consumer 진행을 지연할 수 있습니다.
+
 </details>
 
-9. `DeliveryGuarantee.EXACTLY_ONCE`로 설정한 `KafkaSink`를 사용할 때 직접적으로 발생하는 지연 비용은 무엇인가요?
-   - A) 없음 — 출력 지연에 영향이 없음
-   - B) 커밋이 체크포인트 완료 후에만 일어나므로, `read_committed` 컨슈머에게는 출력이 대략 체크포인트 주기만큼 늦게 보임
-   - C) 필요한 Kafka 파티션 수가 두 배가 됨
-   - D) 체크포인팅을 완전히 꺼야 함
+9. 60초 checkpoint interval이면 Kafka 출력 추가 지연은 최대 60초인가요?
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) 커밋이 체크포인트 완료 후에만 일어나므로, `read_committed` 컨슈머에게는 출력이 대략 체크포인트 주기만큼 늦게 보임**
+**정답:** 아니요. Checkpoint 소요·commit·실패/복구와 consumer 지연도 더해집니다.
 
-**설명:**
-Kafka 트랜잭션은 이를 감싸는 Flink 체크포인트가 완료돼야 커밋되므로, `read_committed`로 읽는 다운스트림 컨슈머는 대략 체크포인트 주기만큼 지연된 출력을 보게 됩니다. 체크포인트 주기가 60초라면 종단 간 지연이 최대 60초 정도 추가된다는 뜻입니다.
+**설명:** Transaction timeout은 broker 최대값과 worst-case checkpoint/recovery 시간에 맞춰야 합니다. 5.0.0 builder 기본값은 1시간입니다.
+
 </details>
 
-10. 정확히 한 번 시맨틱의 `KafkaSink`를 사용할 때 체크포인트 주기를 너무 짧게 잡으면 어떤 위험이 있나요?
-    - A) 단점이 없으며 짧을수록 항상 좋음
-    - B) 체크포인트 주기마다 싱크 서브태스크별로 새 트랜잭션이 열리므로, Kafka 브로커의 트랜잭션 코디네이터가 추적해야 하는 트랜잭션 ID가 넘쳐날 수 있음
-    - C) 증분 체크포인트가 자동으로 꺼짐
-    - D) 잡이 강제로 `AT_LEAST_ONCE` 모드로 전환됨
+10. 모든 Kafka connector transaction naming 방식이 매번 새 ID를 만드나요?
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) 체크포인트 주기마다 싱크 서브태스크별로 새 트랜잭션이 열리므로, Kafka 브로커의 트랜잭션 코디네이터가 추적해야 하는 트랜잭션 ID가 넘쳐날 수 있음**
+**정답:** 아니요. 기본 INCREMENTING과 달리 선택적 POOLING은 이름을 재사용합니다.
 
-**설명:**
-체크포인트 주기마다 싱크 서브태스크별로 새 트랜잭션이 열립니다. 병렬 서브태스크가 많은 상태에서 체크포인트 주기를 몇 초 단위로 줄이면 코디네이터가 추적해야 하는 트랜잭션 ID가 크게 늘어나 부담이 커집니다. 체크포인트 주기는 순수하게 복구 속도만을 위해서가 아니라 출력 지연과 코디네이터 부담 사이의 균형으로 조정해야 합니다.
+**설명:** POOLING에는 Kafka 3+·추가 topic read 권한과 migration 조건이 있습니다. 짧은 주기의 commit 부하는 별도로 측정합니다.
+
 </details>
 
-11. Flink의 Dynamic Iceberg Sink가 표준 Iceberg 싱크에 비해 추가로 제공하는 기능은 무엇인가요?
-    - A) 정적으로 정의된 테이블 하나에만 쓸 수 있음
-    - B) 하나의 싱크에서 여러 Iceberg 테이블에 쓸 수 있으며, 레코드마다 대상 테이블을 선택하고 레코드 내용에 따라 스키마를 자동으로 진화시킴
-    - C) 스키마 자체가 필요 없어짐
-    - D) Kafka 소스가 필요 없어짐
+11. 실제 DynamicIcebergSink API와 이 장에서 검증한 runtime 조합은 무엇인가요?
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) 하나의 싱크에서 여러 Iceberg 테이블에 쓸 수 있으며, 레코드마다 대상 테이블을 선택하고 레코드 내용에 따라 스키마를 자동으로 진화시킴**
+**정답:** forInput → generator → catalogLoader → append이며 Iceberg 1.11.0 / Flink 2.1.3입니다.
 
-**설명:**
-Dynamic Iceberg Sink는 표준 Iceberg 싱크를 확장해 각 레코드를 그 내용에 따라 런타임에 결정된 테이블로 라우팅하고, 필요에 따라 해당 테이블의 스키마를 자동으로 진화시킵니다. 여러 소스 테이블을 공유 Kafka 토픽으로 받는 CDC 팬아웃에 특히 적합합니다.
+**설명:** Generator는 Collector에 DynamicRecord를 내보냅니다. 2.1 runtime JAR를 Flink 2.2.1과 검증된 조합으로 취급하지 않습니다.
+
 </details>
 
-12. 더 단순한 커넥터 기반 파이프라인(예: MSK → Data Firehose → S3 Tables/Iceberg, 또는 Iceberg 싱크 커넥터를 쓰는 MSK Connect)이 EKS의 Flink보다 나은 선택이 되는 상황은 언제인가요?
-    - A) 항상 Flink가 더 나은 선택임
-    - B) 파이프라인이 단순 패스스루이거나 실제 연산이 필요 없는 포맷 변환에 그칠 때
-    - C) Table API 대신 DataStream API를 쓸 때만
-    - D) 소스가 Kafka가 아닐 때만
+12. Insert-only Dynamic Iceberg helper를 그대로 Debezium CDC 처리기로 써도 되나요?
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) 파이프라인이 단순 패스스루이거나 실제 연산이 필요 없는 포맷 변환에 그칠 때**
+**정답:** 아니요. RowKind·equality fields·upsert·table format과 schema 변경 제약을 검증해야 합니다.
 
-**설명:**
-Flink는 조인, 윈도우 집계, 레코드별 라우팅, 복잡한 이벤트 타임 처리, 동적 멀티 테이블 팬아웃처럼 실제 연산이 필요할 때 그 운영 비용을 감당할 가치가 있습니다. 단순 패스스루나 포맷 변환이라면 완전관리형 Firehose 파이프라인이나 MSK Connect 싱크 커넥터가 구축·운영 부담이 훨씬 적습니다.
+**설명:** 관리형 Firehose/MSK Connect 대안도 source·권한·key·format·buffering과 오류 처리 조건을 확인해야 합니다.
+
 </details>
 
-13. Flink SQL/Table API가 권장되는 시작점인 용도는 무엇인가요?
-    - A) 선언적으로 표현 가능한 일반적인 ETL, 집계, 윈도우
-    - B) 세밀한 체크포인트 제어가 필요한 커스텀 오퍼레이터 작업만
-    - C) 상태가 전혀 없는 작업만
-    - D) Table API는 Kafka나 Iceberg에 연결할 수 없음
+13. SQL window query에서 event_time TIMESTAMP 컬럼만 선언하면 충분한가요?
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: A) 선언적으로 표현 가능한 일반적인 ETL, 집계, 윈도우**
+**정답:** Streaming event-time window에는 time attribute가 필요하며 예제는 WATERMARK를 선언합니다.
 
-**설명:**
-Flink SQL/Table API는 코드량이 훨씬 적고 Kafka, Iceberg, JDBC 등의 커넥터가 기본 제공되므로 대부분의 작업에서 권장되는 시작점입니다. 커스텀 오퍼레이터, 복잡한 이벤트 타임/상태 로직, 또는 Table API 플래너가 노출하지 않는 체크포인팅·백프레셔 제어가 필요할 때는 DataStream API가 필요합니다.
+**설명:** 검토한 Flink planner는 watermark를 뺀 일반 timestamp 변형을 거부했습니다. Connector/format JAR도 별도로 필요합니다.
+
 </details>
 
-14. 어떤 경우에 Flink SQL/Table API 대신 DataStream API로 내려가야 하나요?
-    - A) DataStream API는 모든 워크로드에서 항상 더 빠름
-    - B) 커스텀 오퍼레이터, 복잡한 이벤트 타임/상태 로직, 또는 SQL 플래너가 노출하지 않는 체크포인팅/백프레셔에 대한 세밀한 제어가 필요할 때
-    - C) SQL은 Kafka를 읽을 수 없음
-    - D) DataStream API는 모든 경우에 코드량이 더 적음
+14. 이 장의 S3 plugin과 bundled demo에 어떤 버전 제약이 있나요?
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) 커스텀 오퍼레이터, 복잡한 이벤트 타임/상태 로직, 또는 SQL 플래너가 노출하지 않는 체크포인팅/백프레셔에 대한 세밀한 제어가 필요할 때**
+**정답:** Plugin은 지원 종료된 AWS SDK v1.12.779를 포함하고, StateMachineExample은 코드에서 2초 checkpoint interval을 설정합니다.
 
-**설명:**
-Table API 플래너는 오퍼레이터 동작을 대신 결정해 주는데, 이는 표준 ETL/집계 로직에는 충분하지만 직접 작성한 오퍼레이터, 커스텀 상태에 대한 직접 접근, 또는 체크포인트 정렬·백프레셔에 대한 수동 제어가 필요한 경우에는 한계가 됩니다. 이런 경우에는 DataStream API의 더 낮은 수준의 제어가 필요합니다.
+**설명:** v2 provider class를 그대로 섞지 않습니다. Config의 interval만 보고 실행 주기를 단정하지 말고 min-pause와 application override를 확인합니다.
+
 </details>
 
-15. 이벤트 타임 윈도우에서 워터마크가 하는 역할은 무엇인가요?
-    - A) 윈도우의 파티션 수를 설정함
-    - B) 워터마크보다 오래된 레코드는 더 이상 오지 않는다는 것을 알려주는 휴리스틱 신호로, 윈도우가 언제 결과를 닫고 내보내도 안전한지 판단하게 해줌
-    - C) 어떤 상태 백엔드를 쓸지 결정함
-    - D) Kafka 트랜잭션 ID prefix를 결정함
+15. Watermark 이후의 늦은 record는 항상 버리거나 자동 side output으로 보내나요?
 
 <details>
-
 <summary>정답 보기</summary>
 
-**정답: B) 워터마크보다 오래된 레코드는 더 이상 오지 않는다는 것을 알려주는 휴리스틱 신호로, 윈도우가 언제 결과를 닫고 내보내도 안전한지 판단하게 해줌**
+**정답:** 아니요. Watermark는 진행 추정치이고 allowed lateness 동안 window가 다시 발행될 수 있습니다.
 
-**설명:**
-워터마크는 스트림에 주기적으로 삽입되며, 이보다 오래된 이벤트 타임 타임스탬프를 가진 레코드는 더 이상 도착하지 않을 것이라고 알려줍니다. 윈도우는 벽시계(처리) 시간이 아니라 이 신호를 기준으로 언제 닫고 결과를 내보낼지 판단하는데, 이렇게 해야 컨슈머 지연이나 과거 데이터 재처리 상황에서도 결과가 일관되게 유지됩니다.
+**설명:** Cleanup 이후 side output에는 명시적 설정이 필요합니다. Timestamp 추출·idleness·SQL과 DataStream의 차이를 확인합니다.
+
 </details>
 
 ---

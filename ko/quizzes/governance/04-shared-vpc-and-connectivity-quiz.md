@@ -4,27 +4,27 @@
 
 ---
 
-1. 대규모 hub-and-spoke 구성의 Shared VPC에서 실제로 가장 먼저 도달하는 quota는?
-   - A) VPC당 IPv4 CIDR 수 (5개, 50개까지 조정 가능)
-   - B) VPC 라우팅 테이블당 전파(propagated) route 수 (100개, 조정 불가)
-   - C) VPC당 subnet 수 (200개)
-   - D) VPC당 NAU (64,000, 256,000까지 조정 가능)
+1. TGW route propagation과 VPC route table의 관계는?
+   - A) TGW prefix100개가 Shared VPC 전체 고정 한도
+   - B) TGW route는 VPC table에 자동 전파되지 않으며 owner가 TGW 방향 static route를 구성
+   - C) 모든 table이 하나의 quota 공유
+   - D) CIDR quota는 절대 먼저 도달하지 않음
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) VPC 라우팅 테이블당 전파(propagated) route 수 (100개, 조정 불가)**
+**정답: B) TGW route는 VPC table에 자동 전파되지 않으며 owner가 TGW 방향 static route를 구성**
 
 **설명:**
-중앙 TGW hub에서 route propagation을 켜면 VPC + on-prem prefix 합계가 100을 넘는 순간 정지됩니다. 이는 유일한 조정 불가 항목이자 실제 첫 병목이며, IPv4 CIDR 수 한도는 오히려 가장 늦게 도달합니다.
+TGW table 총량은 기본10,000이고 VPC non-propagated route는 기본500입니다. VGW propagated-route100을 TGW 총량으로 혼동하지 않습니다.
 
 </details>
 
 ---
 
-2. Shared VPC에서 participant Account가 전혀 describe할 수 없는 리소스는?
+2. Shared VPC participant가 owner resource 중 describe할 수 없는 것은?
    - A) Subnet
-   - B) Security Group (자기 것)
+   - B) 자기 Security Group
    - C) NAT Gateway
    - D) Route table
 
@@ -34,43 +34,43 @@
 **정답: C) NAT Gateway**
 
 **설명:**
-participant는 NAT Gateway를 describe조차 할 수 없습니다. 이 때문에 개인정보 계층이 participant Account이고 VPC가 중앙 소유라면, 데이터 소유팀이 자기 데이터의 egress 경로를 스스로 검증할 수 없다는 감사 가능성 문제가 생깁니다.
+Owner NAT Gateway는 participant가 describe할 수 없습니다. 다만 중앙 inventory·로그·위임된 읽기 경로로 감사 증거를 구성할 수 있습니다.
 
 </details>
 
 ---
 
-3. Shared VPC + EKS 조합에서 AWS Load Balancer Controller의 subnet 자동 탐색과 관련해 권장되는 것은?
-   - A) 자동 탐색에 항상 의존해도 안전하다
-   - B) VPC·subnet 태그는 participant에게 공유되지 않으므로, Ingress/Service에 subnet ID를 명시적으로 annotation하는 것을 표준으로 둔다
-   - C) owner Account에서 Ingress를 직접 생성해야 한다
-   - D) NAT Gateway를 통해서만 subnet을 탐색할 수 있다
+3. Shared VPC에서 LBC subnet discovery를 설계하는 적절한 방법은?
+   - A) 모든 버전에서 자동 성공을 가정
+   - B) 실제 controller 모드·권한·태그 가시성을 검증하고 explicit subnet ID도 검토
+   - C) 반드시 owner가 Ingress 생성
+   - D) NAT Gateway만으로 discovery 수행
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) VPC·subnet 태그는 participant에게 공유되지 않으므로, Ingress/Service에 subnet ID를 명시적으로 annotation하는 것을 표준으로 둔다**
+**정답: B) 실제 controller 모드·권한·태그 가시성을 검증하고 explicit subnet ID도 검토**
 
 **설명:**
-`kubernetes.io/role/elb` 등의 태그는 owner 소유이므로 participant Account에서 보인다고 보장할 수 없습니다. 자동 탐색에 의존하지 말고 명시적 annotation을 표준으로 삼는 것이 안전합니다.
+Owner tag는 자동 공유되지 않습니다. 명시적 subnet은 예측 가능한 선택이며 모든 controller discovery가 실패한다는 뜻은 아닙니다.
 
 </details>
 
 ---
 
-4. VPC Lattice의 제약 중 장기 연결(gRPC streaming, WebSocket 등)에 특히 문제가 되는 것은?
-   - A) VPC당 service network association이 1개로 제한된다
-   - B) Lattice service의 최대 연결 수명이 10분이다
-   - C) MTU가 8,500바이트로 제한된다
-   - D) Region당 service network가 50개로 제한된다
+4. VPC Lattice의 장기 연결 제한을 올바르게 설명한 것은?
+   - A) Service와 resource는 모두10분 제한
+   - B) Service lifetime10분과 resource idle350초를 구분하고 protocol/reconnect를 검증
+   - C) 모든 WebSocket이 HTTP listener에서 기본 지원
+   - D) 장기 연결은 어떤 경로도 불가능
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Lattice service의 최대 연결 수명이 10분이다**
+**정답: B) Service lifetime10분과 resource idle350초를 구분하고 protocol/reconnect를 검증**
 
 **설명:**
-Lattice service는 최대 연결 수명이 10분이라, 장기 연결이 10분마다 강제로 끊기고 애플리케이션이 재연결을 처리해야 합니다. 이 때문에 장기 연결을 쓰는 구간은 Lattice 대상에서 제외하는 것이 권장되며, 반대로 CIDR이 겹치는 레거시 환경 연결에는 Lattice가 적합할 수 있습니다.
+Resource에는 같은 lifetime 제한이 없습니다. WebSocket은 TLS listener나 resource 경로를 검토할 수 있으며 각 protocol·인증 조건을 확인해야 합니다.
 
 </details>
 

@@ -1,20 +1,23 @@
 # Istio Comparison Quiz
 
-> **Supported Versions**: Istio 1.30 / EKS 1.36
-> **Last Updated**: August 21, 2026
+> **Historical report**: Istio 1.30.2 / EKS 1.36.2; not a current support matrix
+> **Last Updated**: September 11, 2026
 
-This quiz tests your understanding of the sidecar vs. ambient mode selection criteria, especially the EKS 1.36 test results.
+This quiz tests your understanding of the sidecar vs. ambient mode selection criteria, especially the limitations of the reported EKS measurements. The audit did not recreate those experiments.
 
 ## Multiple Choice Questions (1-6)
 
-### Question 1: Root cause of ambient waypoint 503s
+### Question 1: Evidence for ambient waypoint 503s
 
-What is the root cause of intermittent 503s on the waypoint path during rollouts in ambient mode?
+What can be concluded about the cause of the reported waypoint 503s from the aggregate rollout counts alone?
 
-A. Duplicate IP assignment when a pod restarts
-B. The waypoint reuses connections keyed by destination IP:Port, and ztunnel does not notify the waypoint when a pod terminates
-C. NetworkPolicy blocks waypoint traffic
-D. STRICT mTLS is not supported on the waypoint
+A. Duplicate IP assignment was proven
+
+B. A connection-lifecycle race is a hypothesis; proxy response flags and endpoint/connection timelines are needed to establish the cause
+
+C. NetworkPolicy was proven to cause every failure
+
+D. The counts prove that STRICT mTLS is unsupported
 
 <details>
 <summary>Answer & Explanation</summary>
@@ -23,9 +26,10 @@ D. STRICT mTLS is not supported on the waypoint
 
 **Explanation:**
 
-The waypoint (Envoy) manages and reuses a connection pool keyed by destination IP:Port. ztunnel does not explicitly notify the waypoint when a target pod terminates. If the terminated pod's IP is reassigned to a new pod, the waypoint may reuse a now-invalid connection and return a 503. This is the mechanism behind the concern — **connection lifecycle management**, not duplicate IP assignment — and the measured 503 rates in §4 are consistent with it.
+Aggregate HTTP status counts do not establish a root cause. Pod termination, endpoint propagation, application/proxy draining, timeouts and connection pools can all contribute. The original IP-reuse/ztunnel-notification explanation was not backed by a retained diagnostic timeline. Investigate actual upstream hosts, response flags, Pod UIDs and connection events rather than teaching that hypothesis as a proven mechanism.
 
 **References:**
+
 - [Sidecar vs Ambient Mode Selection Guide](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
 - [Ambient Mode: Waypoint Proxy](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 
@@ -33,14 +37,17 @@ The waypoint (Envoy) manages and reuses a connection pool keyed by destination I
 
 ---
 
-### Question 2: Interpreting the EKS 1.36 test results
+### Question 2: Interpreting the reported EKS results
 
-Under a 100 qps x 600s (60,000 request) load with repeated rollouts on a dedicated single-tenant EKS 1.36 cluster, sidecar showed a 503 rate of 0.5%, ambient-L4 (no waypoint) showed zero actual 503s (but 0.3% TCP errors instead), and ambient-L7 (with waypoint) showed 2.6%. What is the correct interpretation?
+The untuned samples recorded 324 HTTP 503s and 2 non-HTTP errors out of 60,000 calls for sidecar; 0 and 195 out of 60,000 for ambient L4; and 1,528 and 84 out of 59,913 for ambient L7. Which interpretation is supported?
 
-A. Ambient is always more stable than sidecar
-B. Routing through a waypoint produces a higher 503 rate than sidecar, but using L4 only (no waypoint) produces no actual 503s
-C. Ambient-L4's TCP errors (0.3%) are the same phenomenon as the waypoint's 503s
-D. The mode with the lowest socket usage is the most stable
+A. Ambient is always more stable
+
+B. The L7 sample had a higher observed HTTP 503 fraction, while zero L4 HTTP 503s still left 195 non-HTTP failures
+
+C. The same underlying cause was proven for all error categories
+
+D. Fortio SocketCount directly measures the waypoint's upstream pool
 
 <details>
 <summary>Answer & Explanation</summary>
@@ -49,9 +56,10 @@ D. The mode with the lowest socket usage is the most stable
 
 **Explanation:**
 
-The data shows that "ambient" is neither universally better nor worse than sidecar — whether traffic goes through a **waypoint** is the deciding variable. Ambient-L7 (with a waypoint) had roughly 5x sidecar's 503 rate (2.6% vs 0.5%), while ambient-L4 (no waypoint) had zero actual 503s. That doesn't mean ambient-L4 is failure-free, though — it surfaced a different failure mode instead: TCP-level connection drops (0.3%), which is not the same as the waypoint forwarding a request onto a dead connection and returning a 503 (making C incorrect). Socket usage is not a stability metric, just a proxy for how often connections were re-established (making D incorrect) — in fact, ambient-L4 consumed the *most* sockets yet had zero 503s.
+The measured fractions are 0.54% for sidecar and about 2.55% for L7, a ratio of about 4.72 in these samples. This is not an intrinsic product multiplier. Zero HTTP 503s is not zero total failures. Fortio's non-HTTP code -1 does not identify a specific reset/EOF/timeout cause without the error details. SocketCount concerns client sockets; L7 had the most sockets (2,486), not L4 (1,652). Requested QPS multiplied by duration does not guarantee an exact completed-call count, and different rollout counts limit a causal comparison.
 
 **References:**
+
 - [Sidecar vs Ambient Mode Selection Guide: Zero-Downtime Rollout Results](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
 
 </details>
@@ -60,12 +68,15 @@ The data shows that "ambient" is neither universally better nor worse than sidec
 
 ### Question 3: NetworkPolicy and ambient
 
-In a cluster using port-based NetworkPolicies, traffic is not reaching ambient-mode pods. The application listens on port 8080. What is the most likely cause and fix?
+In the reported VPC CNI experiment, enforcement was verified and an ingress rule allowing only 8080 blocked the observed HBONE path. What should be checked next?
 
-A. Ambient doesn't support NetworkPolicy, so the NetworkPolicy should be removed
-B. Real traffic arrives over the HBONE tunnel (TCP 15008), so the NetworkPolicy needs an inbound allow rule for 15008
-C. PeerAuthentication should be changed to PERMISSIVE
-D. The istio-cni DaemonSet needs to be restarted
+A. Remove all NetworkPolicies
+
+B. Allow the required TCP 15008 tunnel path with appropriate scope, then verify source, identity and inner-port policy boundaries
+
+C. Change mTLS to PERMISSIVE
+
+D. Restart the CNI and assume the policy is correct
 
 <details>
 <summary>Answer & Explanation</summary>
@@ -74,23 +85,27 @@ D. The istio-cni DaemonSet needs to be restarted
 
 **Explanation:**
 
-In ambient mode, ztunnel wraps pod traffic in an HBONE (mTLS) tunnel and delivers it on port 15008. A NetworkPolicy that only allows the application port (8080) blocks the 15008 traffic that actually arrives. The fix is to add an inbound allow rule for TCP 15008 on the target pods. Sidecar doesn't need this extra rule because the sidecar shares the same pod network namespace as the application.
+The reported flow recovered after TCP 15008 was allowed. This is evidence for that tested path, not proof that every CNI or existing policy behaves identically. An outer-tunnel allowance is not a complete least-privilege policy for traffic inside the tunnel. Verify source selectors, waypoint traversal, DNS/control-plane dependencies and actual enforcement. Sidecar's observed application-port result is likewise a scoped observation.
 
 **References:**
+
 - [Sidecar vs Ambient Mode Selection Guide: NetworkPolicy](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
 
 </details>
 
 ---
 
-### Question 4: Non-idempotent APIs and retry policies
+### Question 4: Non-idempotent APIs and retry
 
-Why is it recommended not to enable mesh-level retry (e.g., waypoint retry, VirtualService retries) by default on non-idempotent API paths like order creation?
+Why should mesh retries be explicitly disabled by default on non-idempotent command paths such as order creation?
 
-A. Retry adds too much CPU overhead
-B. When a waypoint forwards a request onto a dead connection and returns a 503, a retry can re-execute a request that had already completed server-side, causing duplicate execution (e.g., a duplicate order)
-C. Retry is incompatible with STRICT mTLS
-D. Retry is not supported in ambient mode
+A. Retries always consume more CPU than the application
+
+B. A failed or lost response can leave the server-side outcome unknown, so replay may repeat an already committed command
+
+C. Retries are incompatible with STRICT mTLS
+
+D. Ambient has no L7 retry capability
 
 <details>
 <summary>Answer & Explanation</summary>
@@ -99,23 +114,27 @@ D. Retry is not supported in ambient mode
 
 **Explanation:**
 
-A 503 is a client-visible failure, but hidden inside that failure category are cases where the request actually reached the server and finished processing — only the *response* was lost, due to a race between the connection dropping and the application completing its work. In that case, a mesh retry resends the same logical request over a different connection, and if the server doesn't guarantee idempotency, the request gets processed twice. This risk is especially severe for irreversible operations like order creation, so it's safer not to enable retry by default and to verify it separately. A follow-up test (T2) ran 300s of continuous rollout churn against both sidecar and ambient-L7 waypoint retry and found zero duplicate executions in that run — which lowers confidence that the race is *common*, but does not establish that it is *safe*, since it requires a very narrow timing window that a longer or higher-throughput test could still catch.
+A timeout, reset or error response does not always prove that the command had no effect. Replaying an ambiguous write can duplicate work unless the server provides suitable durable idempotency/transaction semantics. This risk does not depend on proving one particular waypoint race. The old T2 report's zero duplicate count cannot establish safety or even a reliable frequency estimate: the client was unbounded, reported counts conflicted with the stated duration/rate, and observer errors could be hidden. A revised bounded observer is still not a business transaction ledger. Measure stable command IDs and response-loss cases with complete observation.
 
 **References:**
+
 - [Sidecar vs Ambient Mode Selection Guide: The Risk of Retry as a Mitigation](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
 
 </details>
 
 ---
 
-### Question 5: Fairly comparing sidecar and ambient rollouts
+### Question 5: Comparing data-plane behavior fairly
 
-Sidecar produced fewer client-visible 503s than ambient in a rollout test. Which experiment best determines whether that reflects an inherently more stable data plane?
+Which experiment is a necessary starting point for separating failures from failures hidden by retries?
 
-A. Send only GET requests and compare final 200 counts
-B. Keep the default retry on sidecar but disable retry on ambient
-C. Set write-route retry to `attempts: 0` in both modes and separately record raw HTTP/TCP failures, retry counts, and final outcomes
-D. Treat the mode with lower average CPU usage as more stable
+A. Compare only final GET success counts
+
+B. Keep sidecar retries but disable ambient retries
+
+C. Set write routes to attempts: 0 in both modes and collect raw HTTP/non-HTTP errors, retry counters, upstream deliveries and final outcomes
+
+D. Choose the mode with the lowest average CPU
 
 <details>
 <summary>Answer & Explanation</summary>
@@ -124,9 +143,10 @@ D. Treat the mode with lower average CPU usage as more stable
 
 **Explanation:**
 
-Sidecar Envoy and waypoint Envoy can hide a raw failure from the client through an L7 retry, while ztunnel is an L4 proxy that cannot interpret an HTTP 503 or replay an HTTP request. Disable write retries equivalently and record HTTP 503, TCP reset/EOF, `upstream_rq_retry`, actual upstream deliveries, and final client outcomes separately. Otherwise the test cannot distinguish "fewer failures occurred" from "retry hid more failures."
+Sidecar and waypoint Envoy can perform L7 retries; ztunnel cannot interpret HTTP 503 or replay HTTP requests. Disable write retries equivalently and record upstream_rq_retry, actual deliveries, stable command IDs and client accounting. Also control load, versions, resources and rollout exposure, and repeat the experiment. This separates observations more fairly; one run still does not prove inherent product stability.
 
 **References:**
+
 - [Sidecar vs Ambient Mode Selection Guide: raw failure measurement](../../../service-mesh/istio/comparison/03-sidecar-vs-ambient.md)
 - [Retry and Timeout](../../../service-mesh/istio/traffic-management/05-retry-timeout.md)
 
@@ -136,12 +156,15 @@ Sidecar Envoy and waypoint Envoy can hide a raw failure from the client through 
 
 ### Question 6: Cilium authentication and encryption
 
-Which statement is correct for an established Cilium data plane with mutual authentication set to `required`?
+For Cilium's documented out-of-band mutual-authentication mechanism, what does setting authentication to required imply?
 
-A. Every application payload is automatically encrypted with workload TLS
-B. Endpoint identity authentication and payload encryption are separate; confidentiality requires WireGuard/IPsec or supported native ztunnel mTLS
-C. It is identical to Istio `PeerAuthentication STRICT` in implementation, maturity, and operational semantics
-D. Enabling mutual authentication removes the need for CiliumNetworkPolicy
+A. Every payload automatically uses workload TLS
+
+B. The out-of-band peer-identity handshake and payload encryption are separate; encryption must be configured and verified separately
+
+C. It is identical to Istio PeerAuthentication STRICT in implementation and maturity
+
+D. Authorization policy is no longer needed
 
 <details>
 <summary>Answer & Explanation</summary>
@@ -150,9 +173,10 @@ D. Enabling mutual authentication removes the need for CiliumNetworkPolicy
 
 **Explanation:**
 
-Established Cilium mutual authentication verifies peer identity through an out-of-band handshake separate from the application data path. The authentication policy alone does not automatically encrypt payloads, so select WireGuard/IPsec separately or validate the native ztunnel mTLS preview on a supported platform. Evaluate identity authorization, peer authentication, and encryption in transit separately instead of treating the result as identical to Istio `STRICT` workload mTLS.
+The released Cilium 1.20.1 documentation labels this mechanism Beta and describes an out-of-band handshake separate from the application data path. The authentication policy alone does not encrypt application payloads. Evaluate supported WireGuard/IPsec encryption separately, including its platform and traffic-coverage limits. Cilium 1.20.1 also has a separate ztunnel encryption beta with namespace enrollment, TCP-only and policy/platform restrictions. It is not activated by this out-of-band authentication policy setting.
 
 **References:**
+
 - [Cilium Service Mesh Security](../../../service-mesh/cilium-service-mesh/03-security.md)
 
 </details>
@@ -172,3 +196,8 @@ Established Cilium mutual authentication verifies peer identity through an out-o
 - [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md)
 - [mTLS](../../../service-mesh/istio/security/01-mtls.md)
 - [Cilium Service Mesh Security](../../../service-mesh/cilium-service-mesh/03-security.md)
+
+## Official evidence
+
+- [Istio ambient L7 feature status](https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/l7-features/index.md)
+- [Cilium 1.20.1 mutual authentication](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)

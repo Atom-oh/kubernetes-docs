@@ -1,9 +1,9 @@
 # Observability
 
-> **Supported Versions**: Istio 1.28
-> **Last Updated**: February 19, 2026
+> **Supported Versions**: Istio 1.31
+> **Last Updated**: September 11, 2026
 
-Istio provides comprehensive observability within the service mesh. It automatically collects metrics, logs, and traces for all service-to-service communication without requiring any changes to application code.
+Istio proxies generate telemetry for traffic they observe. Metrics scraping, access logging, trace providers and storage must be configured. Applications must propagate trace context between incoming and outgoing requests to connect spans; application-internal spans and exceptions need application instrumentation/logging.
 
 ## Table of Contents
 
@@ -21,11 +21,7 @@ Istio provides comprehensive observability within the service mesh. It automatic
   <img src="https://istio.io/latest/docs/tasks/observability/metrics/using-istio-dashboard/grafana-istio-dashboard.png" alt="Istio Observability Dashboard" width="900">
 </p>
 
-Istio's observability features follow the **Zero Instrumentation** principle:
-- No application code changes required
-- Automatic metric collection and transmission
-- Automatic distributed trace generation
-- Standardized log formats
+Sidecars and waypoints can report HTTP metrics, spans and access logs without adding proxy instrumentation to application code. Ambient ztunnel provides L4 telemetry; HTTP-level observation requires a waypoint. CPU, memory and packet-level host metrics come from Kubernetes/node exporters rather than Istio request metrics. The screenshot illustrates a configured dashboard, not a component installed automatically with Istio.
 
 ## Three Pillars of Observability
 
@@ -66,8 +62,8 @@ Istio's observability features follow the **Zero Instrumentation** principle:
 ### 3. Logging
 
 **What is recorded?**
-- All HTTP requests/responses
-- Errors and exceptions
+- Configured HTTP access metadata (not full request/response bodies)
+- Proxy errors; application exceptions need application logs
 - Security events
 
 **When to use?**
@@ -96,10 +92,10 @@ App → Envoy (metric generation)
 
 **2. Distributed Tracing Flow**:
 ```
-App → Envoy (Span generation)
-    → Jaeger/Zipkin (trace collection)
-    → Tempo (long-term storage)
-    → Grafana (trace visualization)
+App propagates context → Envoy generates spans
+    → configured collector/protocol (for example OpenTelemetry/OTLP)
+    → one chosen backend: Jaeger, Zipkin or Tempo
+    → backend UI or configured Grafana datasource
 ```
 
 **3. Logging Flow**:
@@ -112,24 +108,24 @@ App → Envoy (Access Log generation)
 
 ## Golden Signals
 
-Core metrics following Google SRE principles:
+Core signals following Google SRE principles. The HTTP queries select `reporter="destination"` to avoid counting both source and destination observations of the same mesh hop. They measure service hops, not unique user transactions. Analyze external/gateway traffic without a destination reporter separately; gRPC application failures also require `grpc_response_status`. Latency values below are milliseconds.
 
 ### 1. Latency
 
 ```promql
 # P50 latency
 histogram_quantile(0.50,
-  sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le)
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])) by (le)
 )
 
 # P95 latency
 histogram_quantile(0.95,
-  sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le)
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])) by (le)
 )
 
 # P99 latency
 histogram_quantile(0.99,
-  sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le)
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])) by (le)
 )
 ```
 
@@ -137,38 +133,47 @@ histogram_quantile(0.99,
 
 ```promql
 # Requests per second (RPS)
-sum(rate(istio_requests_total[5m]))
+sum(rate(istio_requests_total{reporter="destination"}[5m]))
 
 # Traffic by service
-sum(rate(istio_requests_total[5m])) by (destination_service)
+sum(rate(istio_requests_total{reporter="destination"}[5m])) by (destination_service)
 ```
 
 ### 3. Errors
 
 ```promql
 # Error rate (%)
-sum(rate(istio_requests_total{response_code=~"5.."}[5m]))
+sum(rate(istio_requests_total{reporter="destination",response_code=~"5.."}[5m]))
 /
-sum(rate(istio_requests_total[5m]))
+sum(rate(istio_requests_total{reporter="destination"}[5m]))
 * 100
 
 # 4xx vs 5xx errors
-sum(rate(istio_requests_total{response_code=~"4.."}[5m])) by (response_code)
-sum(rate(istio_requests_total{response_code=~"5.."}[5m])) by (response_code)
+sum(rate(istio_requests_total{reporter="destination",response_code=~"4.."}[5m])) by (response_code)
+sum(rate(istio_requests_total{reporter="destination",response_code=~"5.."}[5m])) by (response_code)
 ```
 
 ### 4. Saturation
 
 ```promql
-# CPU utilization
-rate(container_cpu_usage_seconds_total{pod=~".*"}[5m])
+# CPU consumption in cores (not percent), one series per application container.
+sum by (namespace, pod, container) (
+  rate(container_cpu_usage_seconds_total{container!="",container!="POD"}[5m])
+)
 
-# Memory utilization
-container_memory_working_set_bytes{pod=~".*"}
-/
-container_spec_memory_limit_bytes{pod=~".*"}
-* 100
+# Memory working set / configured limit (%); containers without limits omitted.
+100 * max by (namespace, pod, container) (
+  container_memory_working_set_bytes{container!="",container!="POD"}
+)
+/ on (namespace, pod, container)
+(max by (namespace, pod, container) (
+  kube_pod_container_resource_limits{resource="memory",unit="byte"}
+) > 0)
 ```
+
+These require kubelet/cAdvisor and kube-state-metrics scraping; they are not Istio metrics. Avoid duplicate scrape targets and include cluster labels in multi-cluster aggregations. Usage relative to a limit is only one capacity signal; also inspect throttling, queueing and pending work.
+
+
 
 ## Observability Best Practices
 
@@ -187,27 +192,43 @@ container_spec_memory_limit_bytes{pod=~".*"}
 
 Set appropriate sampling rates for production environments:
 
+An OTLP collector Service must already exist at the address below and export to the selected backend. Merge the provider into existing installation settings, then configure sampling through the Telemetry API:
+
 ```yaml
+# istioctl install -f input, not kubectl apply
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
   meshConfig:
-    defaultConfig:
-      tracing:
-        sampling: 1.0  # Dev: 100%, Prod: 1-10%
+    enableTracing: true
+    extensionProviders:
+    - name: otel
+      opentelemetry:
+        service: otel-collector.observability.svc.cluster.local
+        port: 4317
 ```
 
-**Recommended Sampling Rates**:
-- Development: 100%
-- Staging: 10-50%
-- Production: 1-10%
+```yaml
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: mesh-tracing
+  namespace: istio-system
+spec:
+  tracing:
+  - providers:
+    - name: otel
+    randomSamplingPercentage: 1.0
+```
+
+`1.0` means **1%**, not 100%. Choose sampling based on traffic volume, investigation needs and collector/backend capacity; 100% may suit a small test environment, while lower rates need validation in production. Context propagation is still required. Do not add a second selector-free Telemetry resource in the same namespace: merge tracing/access logging into one resource when using both examples.
 
 ### 3. Access Log Optimization
 
-Selectively record only necessary fields:
+The following filters requests, not fields. Configure field selection/redaction in the access-log provider. This HTTP filter omits successful requests, so it cannot serve as a complete access audit:
 
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: mesh-default
@@ -222,13 +243,17 @@ spec:
 
 ### 4. Metrics Retention Policy
 
-Set data retention periods:
+Example retention ranges to adapt to operational needs, storage cost and actual retention requirements (not regulatory defaults):
 - **Real-time metrics**: 1-7 days (high resolution)
 - **Long-term metrics**: 30-90 days (downsampled)
 - **Traces**: 7-30 days
-- **Logs**: As per regulations (30-365 days)
+- **Logs**: Defined by the actual retention policy; 30–365 days is only an example
+
+Prometheus local TSDB does not automatically downsample old data. Use an explicitly configured backend supporting downsampling/long-term storage if needed.
 
 ### 5. Alert Configuration
+
+Thresholds below are examples; prefer service SLOs and sustained error-budget burn with minimum traffic volume to reduce noise.
 
 **Critical Alerts** (immediate response):
 - Error rate > 5%
@@ -256,7 +281,7 @@ Learn the following in the **[Metrics Guide](01-metrics.md)**:
 **Key Topics**:
 - `istio_requests_total`: Total request count
 - `istio_request_duration_milliseconds`: Request latency
-- `istio_request_bytes`: Request/response size
+- `istio_request_bytes` / `istio_response_bytes`: Request / response size histograms
 - Circuit Breaker metrics
 - Telemetry API customization
 

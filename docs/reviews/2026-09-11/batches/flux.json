@@ -1,0 +1,134 @@
+[
+  {
+    "path": "ko/gitops/02-fluxcd.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed complete Flux article/quiz against2.9.5; corrected removed APIs, automation prerequisites, dependency/auth scope and architecture.",
+    "sources": [
+      "https://github.com/fluxcd/flux2/releases/tag/v2.9.5",
+      "https://github.com/fluxcd/source-controller/tree/v1.9.5/docs/spec/v1",
+      "https://github.com/fluxcd/kustomize-controller/blob/v1.9.5/internal/features/features.go",
+      "https://github.com/fluxcd/image-automation-controller/blob/v1.2.5/docs/spec/v1/imageupdateautomations.md",
+      "https://github.com/fluxcd/notification-controller/blob/v1.9.4/docs/spec/v1beta3/providers.md",
+      "https://fluxcd.io/flux/integrations/aws/"
+    ],
+    "findings": [
+      "Moved removedOCI/Bucket/imagev1beta2APIs to servedv1; keptProviderv1beta3/Receiverv1/HelmReleasev2. Flux2.9.5minimumCLIprecheckK8s1.33qualifiedassupportwindowseparate.",
+      "Replaced old BitnamiNGINX/>=15chartandLoadBalancerexamplewithverifiedPodinfo6.15.0/ClusterIP, addedreleaseName andmissingKustomizationprune.",
+      "ImageReflector vsAutomationroles,extra-controllerinstall,YAMLpolicymarker,scopedImagePolicyselector/digestreflection,ownedpushbranchandseparatePRworkflow. ExistingChangedGo templateiscurrent;notblindlyrewritten.",
+      "Correctedsame-control-plane dependsOn,waithealth andbootstrapSourceRefflux-system. Scopedplatform/tenantpermissions,namespacecreation andvaluesprecedence.",
+      "StrictPostBuildSubstitutions defaultTRUEin1.9.5(sourcecode,despitegenericspecdocempty-stringwording). Kubeconfiglocalfilereferencesnowrejected.",
+      "ModernSlackBot token/address,FluxmsteamsWorkflows(notArgoservice-name),eventMetadata summary,Receiverexposure/HMACprereqs,Opsgenielifecycle.",
+      "Controller-specificIRSA/PodIdentity; scopedECRtokenregion/contentARN, separateS3permissions, CodeCommitHTTPSprovideraws;SSHkeygenerationdoesnotcreateIAMregistration;sourceartifactvsPodimagepullclarified.",
+      "TwofiguresmissingReflector/wrongeventarrowdirection/wrongGitboundaryfixed;quizzesclarified."
+    ],
+    "validation": [
+      "60fences44YAML8Bash6JSON;36servedFluxCRDexamples+6specfragmentsvalidateagainst2.9.5releaseJSONschemas.",
+      "ActualFlux2.9.5 envsubst numeric/substitutionandmissing-varrejectioncasespass.",
+      "ActualFluxinstall--export generatesexact6controllers;Kustomize5.8.1ARM64IRSApatchmatchesonlysource-controllerSA. Explicitofflinekubeconfig;noAPIapply.",
+      "Podinfo6.15.0 chartlocalHelm3.21.3render verifiesreplicas2/ClusterIP. NativeFluxARM64binaryandpublishedschemas/installassethashesverified.",
+      "2diagrams9/9composition+4viewports,KOlight/ENdarkinspected,PNGsregenerated.",
+      "No realcloud/Git/provideroperation performed."
+    ],
+    "reviewedSha256": "f78627072e1788b36b402e89809ee1984bbda4afee28c61671f58d2fafa6232e"
+  },
+  {
+    "path": "ko/quizzes/gitops/02-fluxcd-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed complete Flux article/quiz against2.9.5; corrected removed APIs, automation prerequisites, dependency/auth scope and architecture.",
+    "sources": [
+      "https://github.com/fluxcd/flux2/releases/tag/v2.9.5",
+      "https://github.com/fluxcd/source-controller/tree/v1.9.5/docs/spec/v1",
+      "https://github.com/fluxcd/kustomize-controller/blob/v1.9.5/internal/features/features.go",
+      "https://github.com/fluxcd/image-automation-controller/blob/v1.2.5/docs/spec/v1/imageupdateautomations.md",
+      "https://github.com/fluxcd/notification-controller/blob/v1.9.4/docs/spec/v1beta3/providers.md",
+      "https://fluxcd.io/flux/integrations/aws/"
+    ],
+    "findings": [
+      "Moved removedOCI/Bucket/imagev1beta2APIs to servedv1; keptProviderv1beta3/Receiverv1/HelmReleasev2. Flux2.9.5minimumCLIprecheckK8s1.33qualifiedassupportwindowseparate.",
+      "Replaced old BitnamiNGINX/>=15chartandLoadBalancerexamplewithverifiedPodinfo6.15.0/ClusterIP, addedreleaseName andmissingKustomizationprune.",
+      "ImageReflector vsAutomationroles,extra-controllerinstall,YAMLpolicymarker,scopedImagePolicyselector/digestreflection,ownedpushbranchandseparatePRworkflow. ExistingChangedGo templateiscurrent;notblindlyrewritten.",
+      "Correctedsame-control-plane dependsOn,waithealth andbootstrapSourceRefflux-system. Scopedplatform/tenantpermissions,namespacecreation andvaluesprecedence.",
+      "StrictPostBuildSubstitutions defaultTRUEin1.9.5(sourcecode,despitegenericspecdocempty-stringwording). Kubeconfiglocalfilereferencesnowrejected.",
+      "ModernSlackBot token/address,FluxmsteamsWorkflows(notArgoservice-name),eventMetadata summary,Receiverexposure/HMACprereqs,Opsgenielifecycle.",
+      "Controller-specificIRSA/PodIdentity; scopedECRtokenregion/contentARN, separateS3permissions, CodeCommitHTTPSprovideraws;SSHkeygenerationdoesnotcreateIAMregistration;sourceartifactvsPodimagepullclarified.",
+      "TwofiguresmissingReflector/wrongeventarrowdirection/wrongGitboundaryfixed;quizzesclarified."
+    ],
+    "validation": [
+      "60fences44YAML8Bash6JSON;36servedFluxCRDexamples+6specfragmentsvalidateagainst2.9.5releaseJSONschemas.",
+      "ActualFlux2.9.5 envsubst numeric/substitutionandmissing-varrejectioncasespass.",
+      "ActualFluxinstall--export generatesexact6controllers;Kustomize5.8.1ARM64IRSApatchmatchesonlysource-controllerSA. Explicitofflinekubeconfig;noAPIapply.",
+      "Podinfo6.15.0 chartlocalHelm3.21.3render verifiesreplicas2/ClusterIP. NativeFluxARM64binaryandpublishedschemas/installassethashesverified.",
+      "2diagrams9/9composition+4viewports,KOlight/ENdarkinspected,PNGsregenerated.",
+      "No realcloud/Git/provideroperation performed."
+    ],
+    "reviewedSha256": "57f888e53054fc5b68f18a36fc5c5a9c9b4fb888fa857b4058681dd89e0c64f7"
+  },
+  {
+    "path": "en/gitops/02-fluxcd.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed complete Flux article/quiz against2.9.5; corrected removed APIs, automation prerequisites, dependency/auth scope and architecture.",
+    "sources": [
+      "https://github.com/fluxcd/flux2/releases/tag/v2.9.5",
+      "https://github.com/fluxcd/source-controller/tree/v1.9.5/docs/spec/v1",
+      "https://github.com/fluxcd/kustomize-controller/blob/v1.9.5/internal/features/features.go",
+      "https://github.com/fluxcd/image-automation-controller/blob/v1.2.5/docs/spec/v1/imageupdateautomations.md",
+      "https://github.com/fluxcd/notification-controller/blob/v1.9.4/docs/spec/v1beta3/providers.md",
+      "https://fluxcd.io/flux/integrations/aws/"
+    ],
+    "findings": [
+      "Moved removedOCI/Bucket/imagev1beta2APIs to servedv1; keptProviderv1beta3/Receiverv1/HelmReleasev2. Flux2.9.5minimumCLIprecheckK8s1.33qualifiedassupportwindowseparate.",
+      "Replaced old BitnamiNGINX/>=15chartandLoadBalancerexamplewithverifiedPodinfo6.15.0/ClusterIP, addedreleaseName andmissingKustomizationprune.",
+      "ImageReflector vsAutomationroles,extra-controllerinstall,YAMLpolicymarker,scopedImagePolicyselector/digestreflection,ownedpushbranchandseparatePRworkflow. ExistingChangedGo templateiscurrent;notblindlyrewritten.",
+      "Correctedsame-control-plane dependsOn,waithealth andbootstrapSourceRefflux-system. Scopedplatform/tenantpermissions,namespacecreation andvaluesprecedence.",
+      "StrictPostBuildSubstitutions defaultTRUEin1.9.5(sourcecode,despitegenericspecdocempty-stringwording). Kubeconfiglocalfilereferencesnowrejected.",
+      "ModernSlackBot token/address,FluxmsteamsWorkflows(notArgoservice-name),eventMetadata summary,Receiverexposure/HMACprereqs,Opsgenielifecycle.",
+      "Controller-specificIRSA/PodIdentity; scopedECRtokenregion/contentARN, separateS3permissions, CodeCommitHTTPSprovideraws;SSHkeygenerationdoesnotcreateIAMregistration;sourceartifactvsPodimagepullclarified.",
+      "TwofiguresmissingReflector/wrongeventarrowdirection/wrongGitboundaryfixed;quizzesclarified."
+    ],
+    "validation": [
+      "60fences44YAML8Bash6JSON;36servedFluxCRDexamples+6specfragmentsvalidateagainst2.9.5releaseJSONschemas.",
+      "ActualFlux2.9.5 envsubst numeric/substitutionandmissing-varrejectioncasespass.",
+      "ActualFluxinstall--export generatesexact6controllers;Kustomize5.8.1ARM64IRSApatchmatchesonlysource-controllerSA. Explicitofflinekubeconfig;noAPIapply.",
+      "Podinfo6.15.0 chartlocalHelm3.21.3render verifiesreplicas2/ClusterIP. NativeFluxARM64binaryandpublishedschemas/installassethashesverified.",
+      "2diagrams9/9composition+4viewports,KOlight/ENdarkinspected,PNGsregenerated.",
+      "No realcloud/Git/provideroperation performed."
+    ],
+    "reviewedSha256": "efbd8f263e40c58d802fc419badbc037fb01e3f514f23052d5a55401795b794d"
+  },
+  {
+    "path": "en/quizzes/gitops/02-fluxcd-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed complete Flux article/quiz against2.9.5; corrected removed APIs, automation prerequisites, dependency/auth scope and architecture.",
+    "sources": [
+      "https://github.com/fluxcd/flux2/releases/tag/v2.9.5",
+      "https://github.com/fluxcd/source-controller/tree/v1.9.5/docs/spec/v1",
+      "https://github.com/fluxcd/kustomize-controller/blob/v1.9.5/internal/features/features.go",
+      "https://github.com/fluxcd/image-automation-controller/blob/v1.2.5/docs/spec/v1/imageupdateautomations.md",
+      "https://github.com/fluxcd/notification-controller/blob/v1.9.4/docs/spec/v1beta3/providers.md",
+      "https://fluxcd.io/flux/integrations/aws/"
+    ],
+    "findings": [
+      "Moved removedOCI/Bucket/imagev1beta2APIs to servedv1; keptProviderv1beta3/Receiverv1/HelmReleasev2. Flux2.9.5minimumCLIprecheckK8s1.33qualifiedassupportwindowseparate.",
+      "Replaced old BitnamiNGINX/>=15chartandLoadBalancerexamplewithverifiedPodinfo6.15.0/ClusterIP, addedreleaseName andmissingKustomizationprune.",
+      "ImageReflector vsAutomationroles,extra-controllerinstall,YAMLpolicymarker,scopedImagePolicyselector/digestreflection,ownedpushbranchandseparatePRworkflow. ExistingChangedGo templateiscurrent;notblindlyrewritten.",
+      "Correctedsame-control-plane dependsOn,waithealth andbootstrapSourceRefflux-system. Scopedplatform/tenantpermissions,namespacecreation andvaluesprecedence.",
+      "StrictPostBuildSubstitutions defaultTRUEin1.9.5(sourcecode,despitegenericspecdocempty-stringwording). Kubeconfiglocalfilereferencesnowrejected.",
+      "ModernSlackBot token/address,FluxmsteamsWorkflows(notArgoservice-name),eventMetadata summary,Receiverexposure/HMACprereqs,Opsgenielifecycle.",
+      "Controller-specificIRSA/PodIdentity; scopedECRtokenregion/contentARN, separateS3permissions, CodeCommitHTTPSprovideraws;SSHkeygenerationdoesnotcreateIAMregistration;sourceartifactvsPodimagepullclarified.",
+      "TwofiguresmissingReflector/wrongeventarrowdirection/wrongGitboundaryfixed;quizzesclarified."
+    ],
+    "validation": [
+      "60fences44YAML8Bash6JSON;36servedFluxCRDexamples+6specfragmentsvalidateagainst2.9.5releaseJSONschemas.",
+      "ActualFlux2.9.5 envsubst numeric/substitutionandmissing-varrejectioncasespass.",
+      "ActualFluxinstall--export generatesexact6controllers;Kustomize5.8.1ARM64IRSApatchmatchesonlysource-controllerSA. Explicitofflinekubeconfig;noAPIapply.",
+      "Podinfo6.15.0 chartlocalHelm3.21.3render verifiesreplicas2/ClusterIP. NativeFluxARM64binaryandpublishedschemas/installassethashesverified.",
+      "2diagrams9/9composition+4viewports,KOlight/ENdarkinspected,PNGsregenerated.",
+      "No realcloud/Git/provideroperation performed."
+    ],
+    "reviewedSha256": "067d76e8e7191580b24d86c5edf012912fe5174f8568e3a827db323840b8c816"
+  }
+]

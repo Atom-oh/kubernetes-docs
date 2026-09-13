@@ -1,6 +1,6 @@
 # Kubernetes 네트워킹
 
-> **마지막 업데이트**: 2026년 2월 22일
+> **마지막 업데이트**: 2026년 9월 11일. 기능 근거는 Cilium 1.20.1, Calico Open Source 3.32, Flannel 0.28.9, AWS VPC CNI 1.23.0을 포함합니다. 설치 전 제품별 Kubernetes·플랫폼 지원 범위를 확인합니다. 이 버전들을 하나의 클러스터에서 함께 검증했다는 의미는 아닙니다.
 
 ## 개요
 
@@ -8,44 +8,56 @@ Kubernetes 네트워킹은 컨테이너화된 애플리케이션 간의 통신�
 
 ## Kubernetes 네트워킹 모델
 
-Kubernetes는 다음과 같은 네트워킹 요구사항을 기반으로 설계되었습니다:
+현재 Kubernetes 모델의 Pod 네트워크는 **의도적인 네트워크 분리를 고려하면서**, 노드 경계를 넘어 주소 변환이나 프록시 없이 Pod끼리 직접 통신할 수 있는 기반을 제공합니다. kubelet 같은 노드 에이전트는 자기 노드의 Pod에 접근할 수 있어야 합니다. 개별 연결의 성공 여부는 정책, 라우팅, 애플리케이션 리스너에도 달려 있습니다.
 
-1. **모든 Pod는 NAT 없이 다른 모든 Pod와 통신할 수 있어야 함**
-2. **모든 노드는 NAT 없이 모든 Pod와 통신할 수 있어야 함**
-3. **Pod가 자신을 보는 IP와 다른 Pod가 그 Pod를 보는 IP가 동일해야 함**
+일반 Pod는 자체 네트워크 네임스페이스와 클러스터 범위 주소를 가지며, 같은 Pod의 컨테이너는 그 네임스페이스와 localhost를 공유합니다. host-network Pod는 노드 네트워크를 공유하고 dual-stack·다중 네트워크 구성에서는 주소를 더 세밀하게 구분해야 합니다. Pod를 재생성하면 IP가 달라질 수 있지만 같은 Pod 내부 컨테이너를 재시작한다고 네트워크 sandbox까지 반드시 재생성되지는 않습니다.
 
-![Pod 네트워킹, Service 네트워킹, Ingress 네트워킹, Network Policy 순으로 쌓이는 Kubernetes 네트워킹 4단계 계층과 각 계층의 역할을 보여준다.](../.gitbook/assets/ko-networking-readme-0.png)
+| 구성 요소 | 역할 |
+|---|---|
+| Pod 네트워크 | 워크로드 네트워크 네임스페이스의 주소와 연결 제공 |
+| Service·discovery | 바뀌는 엔드포인트에 안정적인 서비스 이름이나 가상 주소 제공 |
+| Ingress/Gateway 구현 | 설정한 외부 진입점과 애플리케이션 라우팅 제공 |
+| 네트워크 정책 엔진 | 선택한 구현이 지원하는 정책 강제 |
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-0.html)
+이 역할이 반드시 순서대로 지나는 패킷 경로를 뜻하지는 않습니다. Service 주소 변환, L7 프록시, 워크로드 정책에 따라 실제 요청 경로가 달라집니다.
 
 ### Pod 네트워킹
 
-Pod 네트워킹은 Kubernetes 네트워킹의 가장 기본적인 계층입니다. 각 Pod는 고유한 IP 주소를 가지며, 클러스터 내의 다른 모든 Pod와 직접 통신할 수 있습니다.
+Pod 네트워킹은 통신에 필요한 주소와 라우팅을 제공합니다. 아래 그림은 일반 IPv4 Pod 예제이며 해당 정책과 네트워크 제어가 연결을 허용한다고 가정합니다.
 
-![Node 1의 Pod A, B와 Node 2의 Pod C, D가 각자 고유한 IP를 가지고 같은 노드 안에서든 노드 경계를 넘어서든 NAT 없이 서로 직접 통신하는 모습을 보여준다.](../.gitbook/assets/ko-networking-readme-1.png)
+![정책과 라우팅이 허용하는 두 노드 간 일반 IPv4 Pod 직접 경로 예제.](../.gitbook/assets/ko-networking-readme-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-1.html)
+
+주소는 설명용 일반 Pod 주소입니다. 의도적인 격리나 host-network·다중 네트워크 구성에서는 별도의 해석이 필요합니다.
 
 #### Pod 네트워킹 구현 방식
 
 | 방식 | 설명 | 예시 CNI |
 |------|------|----------|
-| **Overlay 네트워크** | 기존 네트워크 위에 가상 네트워크 구성 | Flannel (VXLAN), Calico (IPIP), Weave Net |
-| **언더레이 네트워크** | 물리 네트워크에 직접 라우팅 | AWS VPC CNI, Calico (BGP), Cilium (Native Routing) |
-| **하이브리드** | 환경에 따라 오버레이/언더레이 선택 | Cilium, Calico |
+| **Overlay 네트워크** | 기존 네트워크 위에서 트래픽 캡슐화 | Flannel VXLAN, Calico VXLAN/IPIP, Cilium VXLAN/Geneve |
+| **Native Routing** | 해당 overlay 캡슐화 없이 하부 네트워크의 경로 사용 | AWS VPC CNI, Calico routing/BGP, Cilium native routing |
+| **조건부 캡슐화** | 설정한 토폴로지에 따라 직접 경로나 캡슐화 선택 | 제품별 전제가 다른 Calico/Flannel/Cilium 지원 모드 |
 
 ### Service 네트워킹
 
-Service는 Pod 집합에 대한 안정적인 네트워크 엔드포인트를 제공합니다.
+Service는 보통 Pod로 이루어진 논리적 엔드포인트 집합과 접근 방법을 정의합니다. 기본 ClusterIP는 안정적인 가상 IP를 제공하고, headless Service는 가상 IP를 생략하며, ExternalName은 DNS CNAME을 사용합니다. Pod 선택자 없이 관리하는 엔드포인트도 참조할 수 있습니다.
 
-![클러스터 내부 클라이언트, 인터넷 외부 트래픽, 클러스터 내 애플리케이션이 각각 ClusterIP, NodePort와 LoadBalancer, ExternalName Service로 진입하는 경로를 보여준다.](../.gitbook/assets/ko-networking-readme-2.png)
+![ClusterIP, NodePort, LoadBalancer, ExternalName의 일반적인 진입 방식. DNS 별칭은 패킷 전달과 구분된다.](../.gitbook/assets/ko-networking-readme-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-2.html)
 
+일반적인 노출 방식이며 보안 보장이 아닙니다. NodePort 범위와 접근 가능한 노드 주소를 설정할 수 있고 LoadBalancer는 내부용일 수도 있습니다. ExternalName은 DNS 별칭을 반환하며 전달 프록시를 만들지 않습니다.
+
 #### Service 유형별 특징
 
+`default`에 표시된 target port를 수신하는 `app: my-app` Pod를 준비합니다. NodePort의 기본 할당 범위는 30000–32767이며 변경할 수 있습니다. 외부 접근은 주소, 라우팅, 접근 제어에도 달려 있습니다.
+
+LoadBalancer 예제는 **AWS Load Balancer Controller**를 명시적으로 선택하고 EC2 instance 대상과 할당된 NodePort를 사용합니다. 먼저 해당 컨트롤러와 IAM·서브넷 전제를 구성합니다. EKS Auto Mode는 다른 컨트롤러·class를 사용합니다. 여기서 포트 443은 TCP 포트 선택일 뿐이며, 백엔드 8443에서 TLS를 제공하거나 로드 밸런서에 별도로 설정해야 합니다.
+
+포트 변환은 일반 Kubernetes Service API를 설명합니다. 현재 AWS 문서의 EKS 네이티브 네트워크 정책에는 Service 포트와 컨테이너 포트 일치, 안정적인 강제를 위한 `metadata.ownerReferences`가 있는 컨트롤러 관리 Pod라는 추가 전제가 있습니다. 해당 정책 구현을 시험하기 전에 예제를 이 조건에 맞춥니다.
+
 ```yaml
-# ClusterIP Service 예시
 apiVersion: v1
 kind: Service
 metadata:
@@ -56,239 +68,210 @@ spec:
   selector:
     app: my-app
   ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 8080
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
 ---
-# NodePort Service 예시
 apiVersion: v1
 kind: Service
 metadata:
   name: my-nodeport-service
+  namespace: default
 spec:
   type: NodePort
   selector:
     app: my-app
   ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 8080
-      nodePort: 30080  # 30000-32767 범위
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+    nodePort: 30080
 ---
-# LoadBalancer Service 예시
 apiVersion: v1
 kind: Service
 metadata:
   name: my-loadbalancer-service
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: instance
+  namespace: default
 spec:
   type: LoadBalancer
   selector:
     app: my-app
   ports:
-    - protocol: TCP
-      port: 443
-      targetPort: 8443
+  - protocol: TCP
+    port: 443
+    targetPort: 8443
+  loadBalancerClass: service.k8s.aws/nlb
+  allocateLoadBalancerNodePorts: true
 ```
 
 ### Ingress 네트워킹
 
+Ingress 리소스에는 컨트롤러와 데이터 플레인이 필요합니다. 이 HTTP 예제는 AWS LBC, `spec.ingressClassName: alb`, IP 대상을 사용합니다. `api-v1`, `api-v2`, `web-frontend` Service가 `default`에 존재하고 포트 80 및 VPC에서 라우팅 가능한 준비된 Pod 엔드포인트를 제공해야 합니다. 필요한 HTTPS·인증서는 별도로 구성합니다. 설치·대상 전제는 [LBC 가이드](03-aws-lb-controller.md)를 확인합니다.
+
 Ingress는 HTTP/HTTPS 트래픽을 클러스터 내부 Service로 라우팅하는 규칙을 정의합니다.
 
-![인터넷에서 들어온 HTTP 트래픽이 Ingress Controller의 호스트/경로 규칙에 따라 세 개의 Service로 라우팅되고, 각 Service가 자신이 속한 Pod로 트래픽을 다시 전달하는 흐름을 보여준다.](../.gitbook/assets/ko-networking-readme-3.png)
+![Ingress의 논리적 호스트·경로 라우팅과 Service 백엔드·Pod 관계.](../.gitbook/assets/ko-networking-readme-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-3.html)
 
+상자는 Ingress 데이터 플레인 기능을 나타냅니다. AWS LBC는 ALB를 설정하며 애플리케이션 트래픽이 컨트롤러 조정 프로세스를 통과하지 않습니다. 대상 모드에 따라 Service 가상 IP를 실제 추가 홉으로 거치지 않고 Pod IP나 NodePort에 도달할 수 있습니다.
+
 ```yaml
-# Ingress 예시
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: my-ingress
   annotations:
-    kubernetes.io/ingress.class: "alb"
-    alb.ingress.kubernetes.io/scheme: "internet-facing"
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+  namespace: default
 spec:
   rules:
-    - host: api.example.com
-      http:
-        paths:
-          - path: /v1
-            pathType: Prefix
-            backend:
-              service:
-                name: api-v1
-                port:
-                  number: 80
-          - path: /v2
-            pathType: Prefix
-            backend:
-              service:
-                name: api-v2
-                port:
-                  number: 80
-    - host: web.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: web-frontend
-                port:
-                  number: 80
+  - host: api.example.com
+    http:
+      paths:
+      - path: /v1
+        pathType: Prefix
+        backend:
+          service:
+            name: api-v1
+            port:
+              number: 80
+      - path: /v2
+        pathType: Prefix
+        backend:
+          service:
+            name: api-v2
+            port:
+              number: 80
+  - host: web.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web-frontend
+            port:
+              number: 80
+  ingressClassName: alb
 ```
 
 ## CNI (Container Network Interface)
 
-CNI는 컨테이너 네트워크 연결을 위한 표준 인터페이스입니다. Kubernetes는 CNI 플러그인을 통해 Pod 네트워킹을 구현합니다.
+CNI는 런타임이 컨테이너 네트워크를 설정하는 인터페이스를 표준화합니다. 현재 Kubernetes에서는 kubelet이 CRI로 Pod sandbox 작업을 요청하고 **컨테이너 런타임이 CNI를 관리**합니다. 과거 kubelet의 직접 CNI 관리 플래그는 Kubernetes 1.24에서 제거되었습니다.
 
-### CNI 동작 방식
+### 런타임과 플러그인의 역할
 
-![Kubelet의 ADD 호출에 CNI Plugin이 네트워크 인터페이스 생성, IP 주소 할당, 라우팅 설정을 마치고 IP를 반환하며, Pod 삭제 시 DEL 호출로 리소스를 정리하는 순서를 보여준다.](../.gitbook/assets/ko-networking-readme-4.png)
+| 주체 | 역할 |
+|---|---|
+| kubelet | 컨테이너 런타임 인터페이스로 sandbox 생성·제거 요청 |
+| 컨테이너 런타임 | 네트워크 설정 선택과 CNI 플러그인 체인 호출 |
+| CNI 플러그인 | 설정을 받아 ADD/DEL 등 지원 작업을 수행하고 결과 반환 |
+| IPAM 구현 | 주소 할당·반환, 위임한 플러그인이나 공급자별 에이전트로 구현 가능 |
+| 선택적 노드 에이전트 | 공급자별 라우팅·정책·IP pool·데이터 플레인 상태 유지 |
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-4.html)
+런타임이 CNI 인터페이스로 플러그인에 설정을 전달합니다. 모든 플러그인에 별도 장기 실행 에이전트나 IPAM 바이너리가 필수인 것은 아닙니다. veth pair가 흔하지만 다른 인터페이스 구현도 있습니다.
 
-### CNI 플러그인 구성 요소
+## CNI 비교
 
-![Kubelet과 CNI Agent가 각 노드의 CNI Binary를 호출하고, CNI Binary가 CNI Config와 IPAM Plugin을 참조해 IP 주소와 네트워크 설정을 처리하는 구조를 보여준다.](../.gitbook/assets/ko-networking-readme-5.png)
+| 프로젝트·범위 | 네트워킹과 정책 | 구분할 기능·제약 |
+|---|---|---|
+| **Cilium 1.20.1** | eBPF 네트워킹, 해당 L7 기능에 Envoy 사용, Cilium 네트워크 정책·Hubble | Linux 워커 데이터 플레인과 AMD64/Arm64 전제. Windows CLI 제공은 Windows CNI 지원이 아님. WireGuard/IPsec과 Beta ztunnel mTLS의 범위가 다름. |
+| **Calico Open Source 3.32** | 라우팅·캡슐화 선택, iptables·nftables·eBPF 옵션, 순서 있는 정책 tier와 호스트·워크로드 정책 | Windows에는 Linux eBPF·WireGuard 데이터 플레인 미지원 등 별도 제약이 있음. Whisker/Goldmane 흐름 관측은 Tech Preview. 유료 기능은 제품 edition 표 확인. |
+| **Flannel 0.28.9** | 호스트 subnet 할당과 노드 간 전달, VXLAN·host-gw 등 백엔드 | `flanneld` 자체는 NetworkPolicy를 강제하지 않지만 차트의 선택적 `netpol.enabled`가 SIGs 정책 컨트롤러를 배포함. WireGuard 백엔드가 문서화되어 있고 IPsec은 실험 기능. Windows VXLAN은 별도 설정·제약 적용. |
+| **AWS VPC CNI 1.23.0 / EKS** | VPC 주소·EC2 ENI/prefix 할당, 지원되는 Linux EC2 노드에서 EKS 표준·Admin 정책 | EKS Auto Mode는 DNS 정책 기능도 가진 관리형 네트워킹 구현. Windows, Fargate, custom networking, prefix delegation, multi-NIC는 각각 조건이 다름. |
+| **원래 Weave Net 프로젝트** | 과거 overlay 네트워킹 구현 | 원래 `weaveworks/weave` 저장소가 archived 상태이므로 신규 클러스터의 활성·지원 기본 선택으로 설명하지 않음. |
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-5.html)
+### 정책·암호화·관측성
 
-## CNI 비교 매트릭스
+- Cilium은 해당 L7 구성 요소를 통해 HTTP/DNS 인식 정책과 클러스터 범위·호스트 정책을 제공합니다. deny/allow 의미는 Calico의 순서 있는 Tier API와 구분합니다.
+- Calico Open Source에는 계층적 정책 tier와 호스트 정책이 있습니다. 현재 제품 표의 application-layer 정책, DNS/FQDN 정책, Cluster Mesh는 Cloud/Enterprise 기능이므로 오픈소스 edition 기능으로 혼동하지 않습니다. 문서화된 전송 암호화는 WireGuard입니다.
+- Amazon EKS는 Auto Mode와 지원되는 EC2/VPC-CNI 설치에 `ClusterNetworkPolicy` Admin/Baseline 제어를 제공합니다. AWS가 설명하는 DNS/FQDN `ApplicationNetworkPolicy`는 **Auto Mode** 기능입니다. 이름만으로 현재 HTTP 메서드·본문 검사까지 지원한다고 해석하지 않습니다.
+- Flannel의 선택적 정책 컨트롤러에는 자체 전제가 있으며 네트워킹 백엔드 선택만으로 정책이 활성화되지는 않습니다.
+- 노드 간 암호화, 인증된 워크로드 신원, 애플리케이션 mTLS는 서로 다른 제어입니다. 네트워크 흐름 관측도 애플리케이션 추적이나 프로세스·파일 강제와 다릅니다.
 
-### 주요 CNI 솔루션 비교
+### 라우팅과 성능
 
-| 기능 | Cilium | Calico | Flannel | AWS VPC CNI | Weave Net |
-|------|--------|--------|---------|-------------|-----------|
-| **기반 기술** | eBPF | iptables/eBPF | VXLAN/host-gw | AWS ENI | VXLAN |
-| **Network Policy** | ✅ 고급 (L3-L7) | ✅ 고급 (L3-L4) | ❌ | ✅ 기본 (L3-L4) | ✅ 기본 |
-| **암호화** | ✅ WireGuard/IPsec | ✅ WireGuard/IPsec | ❌ | ❌ | ✅ 내장 |
-| **Service Mesh** | ✅ 내장 | ❌ | ❌ | ❌ | ❌ |
-| **Observability** | ✅ Hubble | ⚠️ 제한적 | ❌ | ❌ | ❌ |
-| **BGP 지원** | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **멀티클러스터** | ✅ ClusterMesh | ✅ Federation | ❌ | ❌ | ✅ |
-| **Windows 지원** | ⚠️ 베타 | ✅ | ✅ | ✅ | ✅ |
-| **성능** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
-| **복잡도** | 중간-높음 | 중간 | 낮음 | 낮음 | 낮음 |
-| **커뮤니티** | 활발 | 매우 활발 | 활발 | AWS 지원 | 보통 |
+Calico와 Cilium은 BGP로 경로를 광고할 수 있지만 이것만으로 멀티클러스터 서비스 검색, 정책 동기화, 암호화가 제공되지는 않습니다. Flannel host-gw는 직접 경로와 적절한 L2 연결이 필요합니다. overlay에는 캡슐화·MTU 고려가 추가되지만 CNI 이름만으로 보편적인 성능 순위를 정할 수 없습니다.
 
-### 상세 기능 비교
-
-#### 네트워킹 모드
-
-| CNI | Overlay | Native Routing | BGP | Direct Routing |
-|-----|---------|----------------|-----|----------------|
-| **Cilium** | VXLAN, Geneve | ✅ | ✅ | ✅ |
-| **Calico** | VXLAN, IPIP | ✅ | ✅ | ✅ |
-| **Flannel** | VXLAN | host-gw | ❌ | ❌ |
-| **AWS VPC CNI** | ❌ | VPC Native | ❌ | ✅ |
-| **Weave Net** | VXLAN | ❌ | ❌ | ❌ |
-
-#### Network Policy 기능
-
-| 기능 | Cilium | Calico | AWS VPC CNI |
-|------|--------|--------|-------------|
-| **Ingress Policy** | ✅ | ✅ | ✅ |
-| **Egress Policy** | ✅ | ✅ | ✅ |
-| **L7 Policy (HTTP)** | ✅ | ❌ | ❌ |
-| **DNS-based Policy** | ✅ | ✅ | ❌ |
-| **FQDN Policy** | ✅ | ✅ | ❌ |
-| **Host Policy** | ✅ | ✅ | ❌ |
-| **Global Policy** | ✅ | ✅ | ❌ |
-| **Policy Tiers** | ✅ | ✅ | ❌ |
-
-#### 성능 벤치마크 (상대적 비교)
-
-![Cilium eBPF 모드를 100% 기준으로 두고 AWS VPC CNI 98%, Calico eBPF 95%가 상위권을, Calico iptables 85%, Flannel 80%, Weave 75%가 하위권을 이루는 CNI 상대 처리량 순위를 보여준다.](../.gitbook/assets/ko-networking-readme-6.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-6.html)
+이전 100/98/95/85/80/75% 처리량 그림에는 재현할 워크로드, 버전, 측정 출처가 없었습니다. 비교 가능한 하드웨어·커널·패킷/요청 크기·동시성·암호화/정책 설정·처리량·손실·꼬리 지연을 사용합니다. 별도 [Pod 벤치마크](06-pod-network-benchmark.md)의 실제 과거 환경과 측정은 해당 문서에 유지합니다.
 
 ## CNI 선택 가이드
 
-### 의사결정 플로우차트
+필요한 라우팅, 정책, 운영체제, 지원 모델을 먼저 선택하고 그 조합을 시험합니다.
 
-![AWS EKS 사용 여부를 먼저 확인한 뒤, EKS 환경에서는 필요한 Network Policy 수준에 따라 AWS VPC CNI, Calico, Cilium 중 하나를, 비EKS 환경에서는 환경 특성에 따라 Flannel, Calico, Cilium 중 하나를 권장하는 CNI 선택 흐름을 보여준다.](../.gitbook/assets/ko-networking-readme-7.png)
+| 요구 | 검토 경로 |
+|---|---|
+| 표준 EKS VPC 주소와 지원 네트워크 정책 | 두 번째 정책 엔진을 추가하기 전에 AWS VPC CNI/EKS 기능 검토 |
+| 순서 있는 정책 tier, 호스트 정책, 인프라 BGP | 해당 Calico edition·데이터 플레인과 라우팅 전제 검토 |
+| Cilium 정책, Hubble, 선택적 메시 기능 | Linux·커널·플랫폼 호환성과 [Cilium 메시 가이드](../service-mesh/cilium-service-mesh/README.md) 확인. 해당 L7 경로에는 Envoy가 계속 포함됨. |
+| 제한된 기능이 필요한 작은 네트워크 | 실제 요구에 맞는 Flannel 백엔드·선택적 정책 컨트롤러 검토 |
+| 프로세스·시스템 호출·파일 제어 | 네트워크 정책과 별도로 Tetragon 같은 런타임 보안 구성 요소 검토 |
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-7.html)
+### EKS 관리형 Add-on 설정
 
-### 사용 사례별 권장 CNI
+다음은 **설정 payload** 예제이며 같은 워크로드에 Calico와 VPC CNI 정책 엔진을 함께 설치하라는 의미가 아닙니다.
 
-#### 1. AWS EKS 프로덕션 환경
-
-**권장: AWS VPC CNI + Calico (Network Policy)**
-
-```yaml
-# eksctl 클러스터 구성 예시
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-metadata:
-  name: production-cluster
-  region: ap-northeast-2
-vpc:
-  cidr: "10.0.0.0/16"
-addons:
-  - name: vpc-cni
-    version: latest
-    configurationValues: |
-      enableNetworkPolicy: "true"
-  - name: coredns
-  - name: kube-proxy
+```json
+{
+  "enableNetworkPolicy": "true"
+}
 ```
 
-#### 2. 고급 보안 요구사항
+문자열 `"true"`는 공식 문서의 값 타입과 일치합니다. 기존 Kubernetes 버전에 호환되는 EKS add-on build를 선택하고 해당 build의 설정 스키마를 확인합니다.
 
-**권장: Cilium**
+```bash
+EKS_REGION=ap-northeast-2
+KUBERNETES_MINOR=1.35  # Replace with the existing cluster's minor version
+aws eks describe-addon-versions --region "$EKS_REGION" --addon-name vpc-cni \
+  --kubernetes-version "$KUBERNETES_MINOR"
+: "${VPC_CNI_ADDON_VERSION:?Set the compatible eksbuild version selected from metadata}"
+aws eks describe-addon-configuration --region "$EKS_REGION" --addon-name vpc-cni \
+  --addon-version "$VPC_CNI_ADDON_VERSION"
+```
 
-- L7 Network Policy 지원
-- DNS 기반 정책
-- 프로세스/파일 수준 보안 정책
-- 암호화된 통신 (WireGuard)
-
-#### 3. 온프레미스/베어메탈 환경
-
-**권장: Calico (BGP 모드)**
-
-- 기존 네트워크 인프라와 통합
-- ToR 스위치와 BGP 피어링
-- 높은 성능 (오버레이 없음)
-
-#### 4. 개발/테스트 환경
-
-**권장: Flannel**
-
-- 간단한 설치 및 구성
-- 낮은 리소스 사용량
-- 충분한 기본 기능
-
-#### 5. Service Mesh 통합 환경
-
-**권장: Cilium (Sidecar-less Service Mesh)**
-
-- Istio/Envoy 대체 가능
-- mTLS, 트래픽 관리
-- 낮은 오버헤드
+업스트림 1.23.0 릴리스 번호와 EKS `eksbuild` 버전은 다른 식별자입니다. 의도한 기존 add-on 설정과 변경을 합치고, 무조건 `latest`를 선택하거나 다른 값을 덮어쓰지 않습니다. 기존 타사 정책 구현에서 전환한다면 남아 있는 정책 적용 상태 제거와 검증한 노드·워크로드 전환 계획도 필요합니다.
 
 ## EKS 네트워킹 기본 사항
 
 ### EKS 기본 네트워킹 아키텍처
 
-![인터넷 트래픽이 VPC 안의 Internet Gateway를 거쳐 ALB로, 또는 곧바로 NLB로 진입한 뒤 EKS 클러스터의 Worker Node로 전달되며, VPC 안에는 가용영역 A·B마다 퍼블릭/프라이빗 서브넷이 있고 NAT Gateway와 AWS 관리형 Control Plane이 함께 구성되어 있음을 보여준다.](../.gitbook/assets/ko-networking-readme-8.png)
+| 위치·구성 요소 | 역할 |
+|---|---|
+| EKS 관리 VPC | AWS가 여러 가용 영역에서 관리형 Kubernetes 제어 평면 실행 |
+| 고객 클러스터 VPC | 워커 네트워킹, 선택한 서브넷, EKS 관리 cross-account ENI가 설정한 제어 평면 연결 제공 |
+| 선택한 고객 VPC 서브넷의 ALB/NLB | 선택한 공개·내부 애플리케이션 진입점 제공. Internet Gateway/NAT Gateway만으로 해당 라우팅이 대체되지는 않음. |
+| NAT Gateway·프라이빗 서비스 엔드포인트 | 워크로드 설계에 필요한 특정 아웃바운드 경로 제공 |
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-8.html)
+이전 그림은 제어 평면을 고객 VPC 안에, 로드 밸런서를 밖에 표시하여 위 소유 경계로 대체했습니다.
+
+### 컴퓨팅 모드별 DNS와 네트워킹
+
+| 컴퓨팅 모드 | DNS·구성 요소 위치 |
+|---|---|
+| 표준 EC2 노드 | 일반적으로 설정한 CoreDNS Deployment와 설치한 네트워킹 구성 요소를 사용하며 대체 구현은 별도 지원 설정 필요 |
+| 순수 EKS Auto Mode | CoreDNS, VPC CNI, kube-proxy 기능이 관리형 노드 systemd 서비스로 실행되므로 이 노드에는 CoreDNS Deployment/add-on 불필요 |
+| Auto Mode와 비 Auto 노드 혼합 | 다른 노드의 Auto Mode DNS 서비스를 사용할 수 없는 비 Auto 노드를 위해 CoreDNS Deployment 유지 |
+
+Auto Mode의 첫 DNS resolver는 노드 로컬입니다. 업스트림 전달과 제어 평면 통신에는 여전히 네트워크 접근이 필요할 수 있으므로 모든 DNS 관련 패킷이 노드 안에 머문다는 보장은 아닙니다. AWS는 Auto Mode의 Admin·DNS 정책을 문서화하고 있으며 표준 EC2 VPC-CNI Admin 정책에는 별도 버전·활성화 전제가 있습니다.
 
 ### VPC CNI 동작 방식
 
-AWS VPC CNI는 각 Pod에 VPC의 실제 IP 주소를 할당합니다.
+AWS VPC CNI는 선택한 IPAM 모드로 일반 Pod에 VPC에서 라우팅 가능한 주소를 제공합니다. 보조 IPv4 주소, 위임 prefix, branch ENI, multi-NIC 구성은 서로 다르며 host-network Pod는 노드 네트워크를 공유합니다.
 
-![Worker Node의 Primary ENI가 Pod 1과 Pod 2에, Secondary ENI(eth1)가 Pod 3과 Pod 4에 각각 보조 IP를 할당하고 eth2는 여유 용량으로 대기하는 AWS VPC CNI의 ENI-Pod IP 매핑 구조를 보여준다.](../.gitbook/assets/ko-networking-readme-9.png)
+![EC2 ENI의 보조 IPv4 주소를 Pod에 할당하는 예제와 선택적인 warm 인터페이스.](../.gitbook/assets/ko-networking-readme-9.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-networking-readme-9.html)
 
+secondary-IP 모드만 나타냅니다. warm ENI는 설정 가능한 할당 전략이며 모든 노드가 반드시 하나씩 예약한다는 의미가 아닙니다. prefix delegation, custom networking, branch ENI는 할당 규칙이 다릅니다.
+
 #### ENI 및 IP 제한
 
-| 인스턴스 유형 | 최대 ENI | ENI당 IPv4 | 최대 Pod (권장) |
+| 인스턴스 유형 | 최대 ENI | ENI당 IPv4 슬롯 | 과거 secondary-IP bootstrap 값 |
 |--------------|----------|------------|----------------|
 | t3.medium | 3 | 6 | 17 |
 | t3.large | 3 | 12 | 35 |
@@ -297,35 +280,58 @@ AWS VPC CNI는 각 Pod에 VPC의 실제 IP 주소를 할당합니다.
 | m5.2xlarge | 4 | 15 | 58 |
 | c5.4xlarge | 8 | 30 | 234 |
 
+VPC CNI 1.23.0의 인스턴스 한계와 과거 max-Pods 표로 확인한 값입니다. 과거 공식은 `ENI 수 × (ENI당 IPv4 슬롯 − 1) + 2`이며 현재 모든 환경의 권장값이 아닙니다. prefix delegation, custom networking, branch ENI, 다중 네트워크 카드는 주소 용량을 바꿉니다. Kubernetes 스케줄링은 kubelet `maxPods`와 리소스에도 제한됩니다. EKS 관리형 노드 그룹은 vCPU 30개 미만에서 `maxPods` 상한 110, 그 외에는 250을 적용하며 사용 가능한 IP 수만으로 상한이 바뀌지 않습니다.
+
 ### EKS 네트워킹 고려사항
 
 #### IP 주소 관리
 
-```yaml
-# VPC CNI 구성 - IP 프리픽스 위임
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: amazon-vpc-cni
-  namespace: kube-system
-data:
-  enable-prefix-delegation: "true"
-  warm-prefix-target: "1"
-  minimum-ip-target: "5"
-  warm-ip-target: "2"
+**Linux VPC CNI**에서는 선택한 add-on/Helm/DaemonSet 관리 방식으로 공식 환경 변수를 구성합니다. 아래는 EKS add-on 설정 조각입니다. 이전 `amazon-vpc-cni` ConfigMap의 `enable-prefix-delegation`은 Linux IPAMD를 이렇게 설정하지 않습니다. 변경 시 의도한 다른 add-on 값도 보존합니다.
+
+```json
+{
+  "env": {
+    "ENABLE_PREFIX_DELEGATION": "true",
+    "WARM_PREFIX_TARGET": "1"
+  }
+}
+```
+
+대신 전체 할당 하한과 여유 IP 목표를 조정할 수 있습니다. `MINIMUM_IP_TARGET` 또는 `WARM_IP_TARGET`을 설정하면 `WARM_PREFIX_TARGET`보다 우선하므로 네 가지 독립적인 목표를 더하는 방식이 아닙니다. 실제 할당은 prefix 단위로 이루어집니다. Nitro 지원, IPv4의 연속된 `/28` 공간, 적절한 kubelet Pod 상한은 별도 전제입니다.
+
+Windows prefix 할당은 별도 경로입니다. AWS는 `amazon-vpc-cni` ConfigMap의 `enable-windows-prefix-delegation`과 warm-target 키를 문서화합니다. Linux 환경 변수 절차를 Windows에 그대로 복사하지 않습니다.
+
+```json
+{
+  "env": {
+    "ENABLE_PREFIX_DELEGATION": "true",
+    "MINIMUM_IP_TARGET": "5",
+    "WARM_IP_TARGET": "2"
+  }
+}
 ```
 
 #### 사용자 정의 네트워킹
 
+이 IPv4 예제에는 의도한 AZ·VPC의 실제 서브넷·보안 그룹 ID가 필요합니다. custom networking을 켜고 노드의 zone 레이블로 ENIConfig를 선택합니다. 명시적인 ENIConfig 노드 어노테이션이 있으면 레이블보다 우선합니다. 영문·한글 예제는 같은 리전 이름을 사용하며 실제 노드 zone으로 교체합니다. ENIConfig 객체만 설치한다고 custom networking이 활성화되지는 않습니다.
+
+```json
+{
+  "env": {
+    "AWS_VPC_K8S_CNI_CUSTOM_NETWORK_CFG": "true",
+    "ENI_CONFIG_LABEL_DEF": "topology.kubernetes.io/zone"
+  }
+}
+```
+
 ```yaml
-# ENIConfig를 사용한 사용자 정의 서브넷
 apiVersion: crd.k8s.amazonaws.com/v1alpha1
 kind: ENIConfig
 metadata:
   name: ap-northeast-2a
 spec:
   securityGroups:
-    - sg-0123456789abcdef0
+  - sg-0123456789abcdef0
   subnet: subnet-0123456789abcdef0
 ---
 apiVersion: crd.k8s.amazonaws.com/v1alpha1
@@ -334,7 +340,7 @@ metadata:
   name: ap-northeast-2b
 spec:
   securityGroups:
-    - sg-0123456789abcdef0
+  - sg-0123456789abcdef0
   subnet: subnet-fedcba9876543210f
 ```
 
@@ -343,7 +349,7 @@ spec:
 이 섹션에서는 다음 주제들을 상세히 다룹니다:
 
 ### [VPC CNI](01-vpc-cni.md)
-EKS 기본 CNI. 각 Pod에 VPC IP를 할당하여 네이티브 VPC 네트워킹 제공.
+일반 Pod의 VPC 주소와 모드별 IPAM·정책 전제를 다루는 EKS 네트워킹.
 
 ### [Cilium 딥다이브](cilium/README.md)
 eBPF 기반의 고성능 CNI 솔루션. L7 Network Policy, Service Mesh, 관측성(Hubble) 등 고급 기능 제공.
@@ -370,79 +376,136 @@ Kubernetes Service와 Ingress를 AWS ELB(ALB/NLB)와 통합.
 #### Pod 간 통신 실패
 
 ```bash
-# 1. Pod IP 확인
-kubectl get pods -o wide
-
-# 2. 네트워크 연결 테스트
-kubectl exec -it <pod-name> -- ping <target-pod-ip>
-
-# 3. DNS 해석 테스트
-kubectl exec -it <pod-name> -- nslookup <service-name>
-
-# 4. CNI 로그 확인
-kubectl logs -n kube-system -l k8s-app=aws-node
-kubectl logs -n kube-system -l k8s-app=cilium
+NAMESPACE=default
+POD_NAME=iperf-client  # An existing diagnostic Pod with nslookup/curl
+SERVICE_NAME=my-service
+kubectl -n "$NAMESPACE" get pods -o wide
+kubectl -n "$NAMESPACE" exec "$POD_NAME" -- nslookup "$SERVICE_NAME"
+kubectl -n "$NAMESPACE" exec "$POD_NAME" -- \
+  curl --connect-timeout 3 --max-time 5 -v "http://$SERVICE_NAME:80/"
+kubectl -n kube-system logs -l k8s-app=aws-node -c aws-node --tail=100
+kubectl -n kube-system logs -l k8s-app=cilium -c cilium-agent --tail=100
 ```
+
+표시한 도구가 있는 기존 Pod에서 진단합니다. 설치된 CNI의 로그만 조회하며 Auto Mode 시스템 서비스는 해당 DaemonSet이 아닙니다. DNS 성공, TCP 도달성, 애플리케이션 HTTP 응답은 서로 다른 검사입니다. ICMP가 차단되거나 추가 권한이 필요할 수 있으므로 ping 실패만으로 TCP Service에 접근할 수 없다고 단정하지 않습니다.
 
 #### Service 접근 불가
 
 ```bash
-# 1. Service 상태 확인
-kubectl get svc <service-name> -o yaml
-
-# 2. Endpoints 확인
-kubectl get endpoints <service-name>
-
-# 3. kube-proxy 로그 확인
-kubectl logs -n kube-system -l k8s-app=kube-proxy
+NAMESPACE=default
+SERVICE_NAME=my-service
+kubectl -n "$NAMESPACE" get service "$SERVICE_NAME" -o yaml
+kubectl -n "$NAMESPACE" get endpointslices \
+  -l "kubernetes.io/service-name=$SERVICE_NAME" -o yaml
+kubectl -n kube-system logs -l k8s-app=kube-proxy --tail=100
 ```
+
+현재 엔드포인트 진단에는 EndpointSlice를 사용합니다. Service 선택자, target port, 엔드포인트 준비 상태, 주소 계열, 적용 정책을 확인합니다. kube-proxy가 실제 Service 전달을 담당할 때만 해당 로그를 확인하고, eBPF 대체 구현이나 Auto Mode는 자체 진단을 사용합니다.
 
 #### Network Policy 디버깅
 
 ```bash
-# Cilium의 경우
-kubectl exec -n kube-system -it <cilium-pod> -- cilium policy get
-kubectl exec -n kube-system -it <cilium-pod> -- cilium endpoint list
-
-# Calico의 경우
-kubectl get networkpolicy -A
-kubectl get globalnetworkpolicy
-calicoctl get policy -o yaml
+kubectl get networkpolicies.networking.k8s.io -A
+kubectl -n kube-system exec ds/cilium -c cilium-agent -- cilium-dbg policy get
+kubectl -n kube-system exec ds/cilium -c cilium-agent -- cilium-dbg endpoint list
+# For a Calico installation using its standard CRD datastore:
+kubectl get networkpolicies.crd.projectcalico.org -A
+kubectl get globalnetworkpolicies.crd.projectcalico.org
 ```
+
+Cilium 명령은 DaemonSet 참조로 선택한 Agent 하나를 조사하므로 장애 시 해당 노드의 Agent를 지정합니다. Calico native API 설치는 다른 API group을 노출할 수 있으니 실제 제공되는 리소스를 확인합니다. Kubernetes, Calico, AWS 확장 정책은 별도 리소스이며 우선순위가 다를 수 있습니다.
 
 ### 네트워크 성능 테스트
 
+이 제한된 TCP 실습은 게시자의 고정 Netshoot v0.16 이미지 index를 사용합니다. Linux AMD64·Arm64 이미지를 포함하고 Dockerfile에 `iperf3`가 명시되어 있습니다. TCP 5201이 허용된 테스트 환경에서 Pod를 생성합니다. 설명용 워크로드이며 측정된 CNI 비교 결과가 아닙니다.
+
 ```yaml
-# iperf3를 사용한 네트워크 성능 테스트
 apiVersion: v1
 kind: Pod
 metadata:
   name: iperf-server
+  namespace: default
   labels:
     app: iperf-server
 spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  nodeSelector:
+    kubernetes.io/os: linux
   containers:
-  - name: iperf
-    image: networkstatic/iperf3
-    command: ["iperf3", "-s"]
+  - name: netshoot
+    image: nicolaka/netshoot:v0.16@sha256:b09d9b21381f47a79b3cbcb30da25266dc17186ea00ae65e99fdc51396f48e70
+    command:
+    - iperf3
+    - -s
+    workingDir: /tmp
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      seccompProfile:
+        type: RuntimeDefault
     ports:
     - containerPort: 5201
+      protocol: TCP
 ---
 apiVersion: v1
 kind: Pod
 metadata:
   name: iperf-client
+  namespace: default
+  labels:
+    app: iperf-client
 spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  nodeSelector:
+    kubernetes.io/os: linux
   containers:
-  - name: iperf
-    image: networkstatic/iperf3
-    command: ["sleep", "infinity"]
+  - name: netshoot
+    image: nicolaka/netshoot:v0.16@sha256:b09d9b21381f47a79b3cbcb30da25266dc17186ea00ae65e99fdc51396f48e70
+    command:
+    - sleep
+    - '3600'
+    workingDir: /tmp
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      seccompProfile:
+        type: RuntimeDefault
 ```
 
 ```bash
-# 테스트 실행
-kubectl exec -it iperf-client -- iperf3 -c <iperf-server-ip> -t 30
+kubectl -n default wait --for=condition=Ready pod/iperf-server pod/iperf-client --timeout=120s
+IPERF_SERVER_IP="$(kubectl -n default get pod iperf-server -o jsonpath='{.status.podIP}')"
+test -n "$IPERF_SERVER_IP"
+kubectl -n default exec iperf-client -- iperf3 -c "$IPERF_SERVER_IP" -t 10 -b 10M
 ```
+
+클라이언트는 1시간 대기하고 명령은 10초 동안 송신 부하를 10 Mbit/s로 제한합니다. 최대 처리량이 아닌 선택한 경로를 검사합니다. 해석 전에 실제 Pod·노드·AZ 위치, 리소스 제한, 정책을 기록합니다. Windows 노드에는 해당 플랫폼의 도구를 선택합니다. 완료 후 직접 만든 테스트 리소스만 정리합니다.
+
+이 독립 진단 Pod는 연결 검사 용도입니다. EKS 네이티브 네트워크 정책을 시험할 때는 Deployment/Job 관리 Pod와 문서화된 Service·컨테이너 포트 조건을 사용합니다.
 
 ## 모범 사례
 
@@ -454,22 +517,23 @@ kubectl exec -it iperf-client -- iperf3 -c <iperf-server-ip> -t 30
 
 ### 2. Network Policy 적용
 
+먼저 격리된 `networking-demo` 네임스페이스를 생성합니다. 예제는 표준 Kubernetes NetworkPolicy 의미에 따라 그 안의 모든 Pod의 ingress·egress를 격리하므로 필요한 DNS·애플리케이션 흐름에는 명시적 allow가 필요합니다. 지원하는 정책 엔진이 있어야 강제되며, 추가 cluster/admin 정책 API는 우선순위를 바꿀 수 있습니다. 이 매니페스트 하나가 전체 zero-trust 아키텍처는 아닙니다.
+
 - 기본 거부 정책 적용 (Zero Trust)
 - 필요한 트래픽만 명시적으로 허용
 - 네임스페이스 간 격리
 
 ```yaml
-# 기본 거부 정책 예시
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: default-deny-all
-  namespace: production
+  namespace: networking-demo
 spec:
   podSelector: {}
   policyTypes:
-    - Ingress
-    - Egress
+  - Ingress
+  - Egress
 ```
 
 ### 3. 성능 최적화
@@ -480,9 +544,9 @@ spec:
 
 ### 4. 보안 강화
 
-- 암호화된 통신 (WireGuard, IPsec)
-- mTLS 적용
-- 정기적인 보안 감사
+- 지원되는 전송 암호화를 선택하고 실제 보호 트래픽 범위를 검증합니다.
+- 필요한 워크로드·애플리케이션 신원과 mTLS를 구성하고 DNS/IP allowlist와 구분합니다.
+- 정책, 인증서, 접근 제어 변경을 정기적으로 검토합니다.
 
 ### 5. 관측성 확보
 
@@ -494,7 +558,7 @@ spec:
 
 1. [VPC CNI](01-vpc-cni.md) - EKS 기본 CNI
 2. [Cilium 딥다이브](cilium/README.md) - eBPF 기반 네트워킹
-3. [Calico 딥다이브](calico/README.md) - 엔터프라이즈 CNI
+3. [Calico 딥다이브](calico/README.md) - 라우팅·정책·데이터 플레인
 4. [VPC Lattice](02-vpc-lattice.md) - AWS 관리형 네트워킹
 5. [AWS Load Balancer Controller](03-aws-lb-controller.md) - ELB 통합
 6. [Gateway API](04-gateway-api.md) - 차세대 인그레스
@@ -505,7 +569,28 @@ spec:
 
 ## 참고 자료
 
-- [Kubernetes 네트워킹 모델](https://kubernetes.io/docs/concepts/cluster-administration/networking/)
-- [CNI 명세](https://github.com/containernetworking/cni/blob/master/SPEC.md)
-- [AWS VPC CNI 문서](https://docs.aws.amazon.com/eks/latest/userguide/pod-networking.html)
-- [Network Policy 가이드](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Kubernetes network model](https://kubernetes.io/docs/concepts/services-networking/)
+- [Kubernetes Services](https://kubernetes.io/docs/concepts/services-networking/service/)
+- [Container runtime and CNI](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/)
+- [Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [CNI specification](https://raw.githubusercontent.com/containernetworking/cni/main/SPEC.md)
+- [Calico product editions](https://docs.tigera.io/calico/latest/about)
+- [Calico policy tiers](https://docs.tigera.io/calico/latest/network-policy/policy-tiers/tiered-policy)
+- [Calico Whisker flow logs](https://docs.tigera.io/calico/latest/observability/view-flow-logs)
+- [Calico Windows limitations](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations)
+- [Flannel 0.28.9 networking and policy](https://raw.githubusercontent.com/flannel-io/flannel/v0.28.9/README.md)
+- [Flannel backends](https://raw.githubusercontent.com/flannel-io/flannel/v0.28.9/Documentation/backends.md)
+- [Original Weave repository status](https://api.github.com/repos/weaveworks/weave)
+- [AWS VPC CNI 1.23.0](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md)
+- [EKS network policy configuration](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)
+- [EKS standard and Admin network policies](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
+- [EKS prefix delegation and maxPods](https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses-procedure.html)
+- [EKS Admin and DNS policy deployment models](https://aws.amazon.com/blogs/containers/enhance-amazon-eks-network-security-posture-with-dns-and-admin-network-policies/)
+- [EKS Auto Mode networking](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)
+- [EKS add-on requirements](https://docs.aws.amazon.com/eks/latest/userguide/workloads-add-ons-available-eks.html)
+- [EKS control plane architecture](https://docs.aws.amazon.com/eks/latest/best-practices/control-plane.html)
+- [Netshoot v0.16 image metadata](https://hub.docker.com/v2/repositories/nicolaka/netshoot/tags/v0.16)
+- [Netshoot v0.16 Dockerfile](https://raw.githubusercontent.com/nicolaka/netshoot/v0.16/Dockerfile)
+- [Tetragon runtime security](https://tetragon.io/docs/overview/)
+- [AWS LBC 3.5 NLB configuration](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/nlb.md)
+- [AWS LBC 3.5 Ingress configuration](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/ingress/annotations.md)

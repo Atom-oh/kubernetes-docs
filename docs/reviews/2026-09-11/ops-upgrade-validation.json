@@ -1,0 +1,138 @@
+{
+  "status": "passed_with_live_environment_limits",
+  "reviewDate": "2026-09-12",
+  "fences": 50,
+  "quizQuestions": 20,
+  "queries": 10,
+  "manifests": [
+    "backup-schedule.yaml",
+    "applicationset.yaml",
+    "pdb.yaml"
+  ],
+  "renderedApplications": 2,
+  "templateMissingKeyRejected": true,
+  "helperCases": {
+    "assessments": 12,
+    "collections": 5,
+    "updateStates": 5,
+    "routing": 13
+  },
+  "promql": {
+    "status": "passed",
+    "cases": 7,
+    "covers": [
+      "duplicate node info",
+      "Ready false+unknown values",
+      "Pending zero-valued gauges",
+      "missing error series with traffic",
+      "10% error ratio",
+      "zero traffic omitted",
+      "classic P99=.19s within1e-12 floating-point tolerance",
+      "unrelated service excluded"
+    ]
+  },
+  "velero": {
+    "version": "1.18.2",
+    "outputCases": 2,
+    "outputDoesNotCreate": true,
+    "requiresApiReads": true,
+    "requests": [
+      {
+        "method": "GET",
+        "path": "/api"
+      },
+      {
+        "method": "GET",
+        "path": "/apis"
+      },
+      {
+        "method": "GET",
+        "path": "/apis/velero.io/v1"
+      },
+      {
+        "method": "GET",
+        "path": "/apis/velero.io/v1/namespaces/velero/backups/review-backup"
+      },
+      {
+        "method": "GET",
+        "path": "/api"
+      },
+      {
+        "method": "GET",
+        "path": "/apis"
+      },
+      {
+        "method": "GET",
+        "path": "/apis/velero.io/v1"
+      },
+      {
+        "method": "GET",
+        "path": "/apis/velero.io/v1/namespaces/velero/backupstoragelocations/default"
+      }
+    ],
+    "scope": "Synthetic loopback Kubernetes discovery and Backup; server stopped."
+  },
+  "awsModel": {
+    "botocore": "1.43.92",
+    "validated": [
+      "traffic-action-0.json",
+      "traffic-action-1.json",
+      "traffic-action-2.json",
+      "traffic-action-3.json",
+      "traffic-action-4.json",
+      "DescribeClusterVersions",
+      "ListInsights",
+      "UpdateClusterVersion",
+      "CancelUpdate"
+    ],
+    "liveApiCalls": 0,
+    "nlbStickiness": "Enabled only;DurationSeconds API documents ALB-only"
+  },
+  "awsCli": {
+    "version": "2.36.44",
+    "zipSha256": "42092fbf9459b4716807ffc9ffeab0a616b5eff0ceed2d59a16f977ad0d7608e",
+    "signingFingerprint": "FB5DB77FD5C118B80511ADA8A6310ACC4672475C",
+    "parserChecks": [
+      "rollback-config",
+      "cancel-update"
+    ],
+    "globalCliChanged": false
+  },
+  "pluto": {
+    "version": "5.24.3",
+    "cleanExit": 0,
+    "deprecatedExit": 2,
+    "removedExit": 3,
+    "cleanItemsMayBeOmitted": true
+  },
+  "findings": [
+    "ReplacedstaleN-3/fourreleasepolicy,2025matrix/featuretimelines,incorrectdeprecationpolicyandextendedfee;officialupstream3minor,EKS14+12months,extended$.60TOTAL.",
+    "SeparatedpureAutoModeDNSsystemserviceandservice-managedcapabilitiesfromstandard/mixednodes;removedEC2NodeClassAMIcontrolandmandatoryaws-node/kube-proxy/CoreDNSDeployment checks.",
+    "NativeEKSrollbackreal:previousminor/initiatewithin7days/eligibility/extendedpolicy,AutoNodesfirstwhileclusterACTIVE;data/apps/addonsnotrestored,MNGseparateUpdateNodegroupVersion.",
+    "ActualCLI2.35.11doesnotrecognize rollback-config;privateofficialPGPverifiedAWSCLI2.36.44 supportsrollbackConfigandCancelUpdate;globalCLIunchanged. No rollback-clustercommand.",
+    "Upgradeinsightforceenforcementtemporarilysuspendedperofficialguide;differentfromROLLBACK_READINESSERROR/UNKNOWNblockingandWARNINGadvisory. Forcecannotbypasseligibility/disruption.",
+    "AutoRollbackdefault720min,120..10080range/minimumbound;UpdateIDnotclusterACTIVEwait;cancelonlynodephase,besteffort;timeout/cancelnodesdriftcurrentagain;IaCtimeoutnotservercancel.",
+    "Replacedfailopenpreflightwithreadonlyexplicitregion/cluster/contextendpointmatch,JSONReadyconditions,kubeletalignmentreview,PodReady,Deploymentgeneration,scaledzero/PDBcases,exactaddonversions/metadataandAPIerrorsunknown.",
+    "Pluto5.24.3 allfourdetectcommandsvalid;native0cleanitemsomitted,2deprecated,3removed;originaljq length/objectandmisinstalledfallbackwrong;Git/render/APIconversioncoverageexplained.",
+    "Velero1.18.2 restorecreateNOdryrun;outputJSONperformsK8sGETdiscovery/BackupreadswithoutPOST;ScheduleoutputalsoBSLGET. Defaultbackupincludes[*],notautomaticvelerons exclusion. BackupCompletednotdataconsistencyproof.",
+    "NLBweights0..999relative;0transitionclosesexistingconnectionsafterdelay. ForwardTGstickinesssupportednonTLS,DurationSecondsdocumentedALB-only;helperusesEnabledonlyandvalidatesprotocol/weights/ARNs.",
+    "ArgoAppSetGoTemplate/manualsync/labels/Projectprereqs/native2renders+missingkey;preserveResourcesOnDeletionpreventsselectorchangecascadebutownershiphandoffrequired;app rollback historyIDnotSHA.",
+    "BlueGreenstateful/dualwriter/consumer/DNSrisks,sharedNLBtargetregistrationandAutoTGBdeletionownership;noimmediatedestroy/forceddrainautomation/zero-downtimeguarantees.",
+    "PromQLgaugevaluesnotcounts,Readyfalse+unknown,Pendingzeros,missingerrors/zerotraffic/crossclusterP99;[30m]offset1his90–60minago,72hnotweeklycoverage."
+  ],
+  "fixtureSha256": {
+    ".vitepress/cache/content-review-upgrade/preflight.py": "e6e8ab3319970676a9b01237311e04052d94813fb7bfc84cf2c827f386f39c2f",
+    ".vitepress/cache/content-review-upgrade/wait_update.py": "75e5cac832e851e5207d2544a1971175850f7b246b7b889b04617b568ec515f5",
+    ".vitepress/cache/content-review-upgrade/traffic_action.py": "bc8ae81370e31d030550c8f2875534219463814d6112fcab4e9b59aec8e2d551",
+    ".vitepress/cache/content-review-upgrade/backup-schedule.yaml": "2b1bce4f9c2d3435d000221dcb6018959cc782ac4cea4ac55e1de3c4c52595c9",
+    ".vitepress/cache/content-review-upgrade/pdb.yaml": "3782cad023b7ec2a98e46d97cd7502159ae654446ff2b1e0a7027c3529689829",
+    ".vitepress/cache/content-review-upgrade/applicationset.yaml": "6147ce644f646e2706bf548b5f083af03151d64fd849881a33c20374e1d18b53"
+  },
+  "limitations": [
+    "No actual EKS readiness assessment/upgrade/rollback, NLB change, snapshot/restore, GitOps deployment or application load test.",
+    "CLI skeleton/SDKshape validation does not prove live AWS service behavior/permissions.",
+    "CRD/OpenAPI/template checks do not execute Kubernetes CEL/admission or cloud ownership transitions.",
+    "All synthetic API servers were loopback-only and stopped; no outbound collector or user telemetry.",
+    "No source image references in this chapter."
+  ]
+}

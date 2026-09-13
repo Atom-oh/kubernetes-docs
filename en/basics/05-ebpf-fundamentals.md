@@ -1,7 +1,7 @@
 # eBPF Fundamentals and Kubernetes Applications
 
-> **Supported versions**: Linux Kernel 4.18+, Kubernetes 1.25+
-> **Last updated**: February 2025
+> **Supported versions**: Feature-specific kernel/BTF/helper requirements; match tool and Kubernetes compatibility matrices
+> **Last updated**: September 11, 2026
 
 eBPF is a revolutionary technology that allows sandboxed programs to run within the Linux kernel. This document covers everything from basic eBPF concepts to practical applications in Kubernetes environments.
 
@@ -23,22 +23,26 @@ eBPF is a revolutionary technology that allows sandboxed programs to run within 
 To follow along with the examples in this document, you need the following environment.
 
 ### Prerequisites
-- Linux kernel 4.18 or higher (5.10+ recommended)
+- A maintained distribution kernel with the BTF, helpers and attach types required by each example
 - bpftool, bcc-tools
 - Kubernetes cluster (optional)
+
+bpftrace examples were checked against the official0.27 language syntax (args.field). Distribution packages may be older; use their matching syntax/features. Verify tracepoint fields with bpftrace -lv or tracefs format files. Function probes depend on kernel/library versions and architecture. No tracing/attachment was executed during this audit.
 
 ### Environment Setup
 
 ```bash
 # Install required packages on Ubuntu/Debian
 sudo apt-get update
-sudo apt-get install -y linux-tools-common linux-tools-generic bpfcc-tools
+sudo apt-get install -y bpfcc-tools python3-bpfcc bpftrace
+# Install bpftool for this distribution/kernel separately:
+# Debian provides the bpftool package; Ubuntu uses matching linux-tools packages.
 
 # Check kernel version
 uname -r
 
 # Verify eBPF feature support
-sudo bpftool feature
+sudo bpftool feature probe kernel
 ```
 
 ---
@@ -61,7 +65,7 @@ sudo bpftool feature
 - Developed at UC Berkeley
 - Dedicated to network packet capture and filtering
 - 2 32-bit registers
-- Maximum 4,096 instruction limit
+- Linux classic BPF commonly limits programs to4096 instructions; this is not a universal historical BPF specification
 
 **eBPF (2014~)**:
 - 64-bit architecture support
@@ -73,23 +77,23 @@ sudo bpftool feature
 | Feature | Traditional BPF | eBPF |
 |---------|-----------------|------|
 | Registers | 2 (32-bit) | 11 (64-bit) |
-| Instruction count | 4,096 | 1 million+ |
+| Instruction limits | Common Linux limit4096 | Kernel/privilege dependent; program size and verifier complexity are distinct |
 | Map support | None | Various map types |
 | Use case | Packet filtering | General-purpose kernel programming |
 | Call capabilities | None | Helper functions, BPF-to-BPF calls |
-| State storage | Not possible | Possible through maps |
+| Persistent state | No persistent maps (scratch storage exists within one run) | Possible through maps |
 
 ### 1.3 Why eBPF is Revolutionary
 
 eBPF is revolutionary for the following reasons:
 
 1. **Feature extension without kernel modification**: Extend kernel features without changing kernel source code
-2. **Safe execution**: Verifier guarantees program safety
+2. **Safe execution**: Verifier checks defined memory/control-flow safety properties
 3. **High performance**: Native code-level performance through JIT compilation
 4. **Dynamic loading**: Load/unload programs without reboot
-5. **Production stability**: Safe execution without crashes or infinite loops
+5. **Production stability**: Bounded execution checks reduce risk; correctness, kernel/JIT bugs and operational impact still require validation
 
-![A side-by-side comparison showing the traditional kernel-module path, which requires per-kernel recompilation and risks system instability, against the eBPF path, which loads and verifies code at runtime for guaranteed safe execution.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-1.png)
+![A side-by-side comparison showing the traditional kernel-module path, which requires per-kernel recompilation and risks system instability, against the eBPF path, which loads and verifies code at runtime for verifier checks; correctness and host stability still require testing.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-05-ebpf-fundamentals-1.html)
 
@@ -97,10 +101,10 @@ eBPF is revolutionary for the following reasons:
 
 | Aspect | eBPF | Kernel Module |
 |--------|------|---------------|
-| **Safety** | Verifier guarantees safety | Can crash kernel |
-| **Portability** | Kernel version independent with CO-RE | Requires recompilation per kernel version |
+| **Safety** | Verifier safety checks within its model | Can crash kernel |
+| **Portability** | CO-RE relocates compatible kernel types; helpers, hooks, semantics and BTF still constrain portability | Requires recompilation per kernel version |
 | **Loading** | Dynamic load/unload | Requires insmod/rmmod |
-| **Privileges** | CAP_BPF or CAP_SYS_ADMIN | Root privileges required |
+| **Privileges** | CAP_BPF/CAP_SYS_ADMIN plus hook-specific permissions | Root privileges required |
 | **Debugging** | Limited | Full kernel debugging possible |
 | **Performance** | Optimized through JIT compilation | Native performance |
 | **Feature scope** | Only designated hook points | Unlimited |
@@ -121,29 +125,28 @@ eBPF is revolutionary for the following reasons:
 The verifier is a core security mechanism of eBPF. It verifies the following before a program runs in the kernel:
 
 **Verification Items**:
-- No infinite loops (DAG structure check)
+- Termination/bounded control flow; bounded loops are supported on suitable kernels
 - No out-of-bounds memory access
 - No use of uninitialized variables
 - Correct helper function calls
 - Program termination guaranteed
 
 ```c
-// Example rejected by verifier
-int bad_example(void *ctx) {
-    int i;
-    for (i = 0; i < 1000000; i++) {  // Potential infinite loop
-        // ...
-    }
-    return 0;
+// XDP fragments; compile as separate programs with linux/bpf.h and bpf_helpers.h.
+SEC("xdp")
+int bad_example(struct xdp_md *ctx) {
+    unsigned char *data = (void *)(long)ctx->data;
+    // No data_end check: the verifier cannot prove this packet byte exists.
+    return data[0] == 0 ? XDP_DROP : XDP_PASS;
 }
 
-// Example allowed by verifier
-int good_example(void *ctx) {
-    #pragma unroll
-    for (int i = 0; i < 10; i++) {  // Unrolled at compile time
-        // ...
-    }
-    return 0;
+SEC("xdp")
+int good_example(struct xdp_md *ctx) {
+    unsigned char *data = (void *)(long)ctx->data;
+    void *data_end = (void *)(long)ctx->data_end;
+    if ((void *)(data + 1) > data_end)
+        return XDP_PASS;
+    return data[0] == 0 ? XDP_DROP : XDP_PASS;
 }
 ```
 
@@ -159,8 +162,10 @@ cat /proc/sys/net/core/bpf_jit_enable
 echo 1 | sudo tee /proc/sys/net/core/bpf_jit_enable
 ```
 
+Some kernels enforce CONFIG_BPF_JIT_ALWAYS_ON; availability/writability of this sysctl depends on kernel configuration. Debug mode2 writes kernel log traces and is not a production default.
+
 **JIT Compilation Benefits**:
-- 4-5x performance improvement over interpreter
+- The original 4–5x speedup claim is unsourced here; actual speedup depends on program, architecture and kernel
 - Direct execution as native CPU instructions
 - Architecture-specific optimizations applied
 
@@ -177,7 +182,7 @@ eBPF maps are data structures for sharing data between kernel and user space and
 | `BPF_MAP_TYPE_PERF_EVENT_ARRAY` | Event array | Send events to user space |
 | `BPF_MAP_TYPE_RINGBUF` | Ring buffer | High-performance event streaming |
 | `BPF_MAP_TYPE_LRU_HASH` | LRU hash | Cache, automatic entry eviction |
-| `BPF_MAP_TYPE_PERCPU_ARRAY` | Per-CPU array | Lock-free statistics collection |
+| `BPF_MAP_TYPE_PERCPU_ARRAY` | Per-CPU array | Reduced cross-CPU contention for statistics |
 | `BPF_MAP_TYPE_LPM_TRIE` | LPM trie | IP address matching, routing |
 
 ```c
@@ -196,27 +201,30 @@ eBPF programs access kernel functions through helper functions provided by the k
 
 **Key Helper Functions**:
 
-```c
+These are simplified API reference signatures. Include libbpf bpf_helpers.h in real programs instead of redeclaring them. Helper availability depends on program type/kernel.
+
+```text
 // Map manipulation
-void *bpf_map_lookup_elem(struct bpf_map *map, const void *key);
-int bpf_map_update_elem(struct bpf_map *map, const void *key, const void *value, u64 flags);
-int bpf_map_delete_elem(struct bpf_map *map, const void *key);
+void *bpf_map_lookup_elem(void *map, const void *key);
+long bpf_map_update_elem(void *map, const void *key, const void *value, u64 flags);
+long bpf_map_delete_elem(void *map, const void *key);
 
 // Time-related
-u64 bpf_ktime_get_ns(void);  // Current time in nanoseconds
+u64 bpf_ktime_get_ns(void);  // Monotonic nanoseconds since boot, excluding suspend; not wall-clock time
 
 // Packet manipulation
-int bpf_skb_load_bytes(const struct sk_buff *skb, u32 offset, void *to, u32 len);
-int bpf_xdp_adjust_head(struct xdp_md *xdp_md, int delta);
+long bpf_skb_load_bytes(const void *skb, u32 offset, void *to, u32 len);
+long bpf_xdp_adjust_head(struct xdp_md *xdp_md, int delta);
 
 // Tracing
-int bpf_probe_read(void *dst, u32 size, const void *src);
-int bpf_trace_printk(const char *fmt, u32 fmt_size, ...);
+long bpf_probe_read_kernel(void *dst, u32 size, const void *src);
+long bpf_probe_read_user(void *dst, u32 size, const void *src);
+long bpf_trace_printk(const char *fmt, u32 fmt_size, ...);
 
 // Process information
 u64 bpf_get_current_pid_tgid(void);    // Get PID/TGID
 u64 bpf_get_current_uid_gid(void);     // Get UID/GID
-int bpf_get_current_comm(void *buf, u32 size);  // Process name
+long bpf_get_current_comm(void *buf, u32 size);  // Process name
 ```
 
 ### 2.6 Program Lifecycle
@@ -226,6 +234,8 @@ int bpf_get_current_comm(void *buf, u32 size);  // Process name
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-05-ebpf-fundamentals-3.html)
 
 ---
+
+C examples are separate programs/fragments. Supply vmlinux.h or the relevant UAPI types and libbpf bpf_helpers.h, bpf_endian.h, bpf_tracing.h and bpf_core_read.h as needed. BPF_KPROBE/BPF_UPROBE require the correct target architecture and actual attachment ABI. Validate loading/attachment in an isolated environment; neither was performed in this audit. Path-based LSM examples fail open on read errors and do not cover aliases/hardlinks/other protocols; they are educational, not complete access controls.
 
 ## 3. eBPF Program Types
 
@@ -240,41 +250,50 @@ XDP is the fastest way to process packets at the network driver level.
 **XDP Operation Modes**:
 | Mode | Description | Performance |
 |------|-------------|-------------|
-| Native XDP | Runs directly in NIC driver | Highest |
-| Offloaded XDP | Runs on smart NIC | Highest+ |
-| Generic XDP | Software emulation | For testing |
+| Native XDP | Runs in the supported driver receive path | Low overhead; driver/workload dependent |
+| Offloaded XDP | Runs on supported NIC hardware | Hardware/instruction limitations; benchmark the workload |
+| Generic XDP | skb-based fallback in the stack | More overhead than native in common cases |
 
 ```c
-// XDP program example: Drop traffic on specific port
+#include <linux/bpf.h>
+#include <linux/if_ether.h>
+#include <linux/ip.h>
+#include <linux/tcp.h>
+#include <linux/in.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_endian.h>
+
+// Demonstration only: untagged, non-fragmented IPv4 TCP.
+// VLAN, IPv6 and fragments pass through; this is not a complete firewall.
+static __always_inline int packet_action(void *data, void *data_end) {
+    struct ethhdr *eth = data;
+    if ((void *)(eth + 1) > data_end || eth->h_proto != bpf_htons(ETH_P_IP))
+        return XDP_PASS;
+    struct iphdr *ip = (void *)(eth + 1);
+    if ((void *)(ip + 1) > data_end || ip->version != 4 || ip->ihl < 5)
+        return XDP_PASS;
+    __u32 ihl = (__u32)ip->ihl * 4;
+    __u32 ip_len = bpf_ntohs(ip->tot_len);
+    if ((void *)ip + ihl > data_end || ip_len < ihl || (void *)ip + ip_len > data_end)
+        return XDP_PASS;
+    if (ip->protocol != IPPROTO_TCP || (bpf_ntohs(ip->frag_off) & 0x3fffU))
+        return XDP_PASS;
+    if (ip_len < ihl + sizeof(struct tcphdr))
+        return XDP_PASS;
+    struct tcphdr *tcp = (void *)ip + ihl;
+    if ((void *)(tcp + 1) > data_end || tcp->doff < 5)
+        return XDP_PASS;
+    __u32 tcp_len = (__u32)tcp->doff * 4;
+    if (ihl + tcp_len > ip_len || (void *)tcp + tcp_len > data_end)
+        return XDP_PASS;
+    return tcp->dest == bpf_htons(8080) ? XDP_DROP : XDP_PASS;
+}
+
 SEC("xdp")
 int xdp_drop_port(struct xdp_md *ctx) {
-    void *data = (void *)(long)ctx->data;
-    void *data_end = (void *)(long)ctx->data_end;
-
-    struct ethhdr *eth = data;
-    if ((void *)(eth + 1) > data_end)
-        return XDP_PASS;
-
-    if (eth->h_proto != htons(ETH_P_IP))
-        return XDP_PASS;
-
-    struct iphdr *ip = (void *)(eth + 1);
-    if ((void *)(ip + 1) > data_end)
-        return XDP_PASS;
-
-    if (ip->protocol != IPPROTO_TCP)
-        return XDP_PASS;
-
-    struct tcphdr *tcp = (void *)ip + (ip->ihl * 4);
-    if ((void *)(tcp + 1) > data_end)
-        return XDP_PASS;
-
-    // Drop port 8080 traffic
-    if (tcp->dest == htons(8080))
-        return XDP_DROP;
-
-    return XDP_PASS;
+    return packet_action((void *)(long)ctx->data, (void *)(long)ctx->data_end);
 }
+char LICENSE[] SEC("license") = "GPL";
 ```
 
 ### 3.2 TC (Traffic Control)
@@ -283,9 +302,16 @@ TC programs run at the traffic control layer of the network stack.
 
 ```bash
 # TC program attachment example
-tc qdisc add dev eth0 clsact
-tc filter add dev eth0 ingress bpf da obj tc_prog.o sec classifier
-tc filter add dev eth0 egress bpf da obj tc_prog.o sec classifier
+set -e
+: "${LAB_IFACE:?Select an isolated test veth interface, never a production interface}"
+tc qdisc show dev "$LAB_IFACE"
+# This assumes a fresh lab interface with no clsact qdisc.
+sudo tc qdisc add dev "$LAB_IFACE" clsact
+sudo tc filter add dev "$LAB_IFACE" ingress pref 49152 bpf da obj tc_prog.o sec classifier
+sudo tc filter add dev "$LAB_IFACE" egress pref 49152 bpf da obj tc_prog.o sec classifier
+# Cleanup only the filters created by this example, after the exercise:
+# sudo tc filter del dev "$LAB_IFACE" ingress pref 49152
+# sudo tc filter del dev "$LAB_IFACE" egress pref 49152
 ```
 
 **TC vs XDP Comparison**:
@@ -311,12 +337,13 @@ int BPF_KPROBE(trace_tcp_connect, struct sock *sk) {
     u32 daddr = BPF_CORE_READ(sk, __sk_common.skc_daddr);
     u16 dport = BPF_CORE_READ(sk, __sk_common.skc_dport);
 
-    bpf_printk("PID %d connecting to %pI4:%d\n", pid, &daddr, ntohs(dport));
+    bpf_printk("PID %d connecting to %pI4:%d\n", pid, &daddr, bpf_ntohs(dport));
     return 0;
 }
 
 // Uprobe example: Trace malloc function
-SEC("uprobe/libc.so.6:malloc")
+// The userspace loader must select the real libc path, PID and malloc symbol.
+SEC("uprobe")
 int BPF_UPROBE(trace_malloc, size_t size) {
     u32 pid = bpf_get_current_pid_tgid() >> 32;
     bpf_printk("PID %d malloc(%zu)\n", pid, size);
@@ -330,11 +357,11 @@ Tracepoints are static trace points predefined in the kernel.
 
 ```bash
 # Check available tracepoints
-sudo ls /sys/kernel/debug/tracing/events/
+sudo ls /sys/kernel/tracing/events/
 
 # Tracepoints in specific categories
-sudo ls /sys/kernel/debug/tracing/events/sched/
-sudo ls /sys/kernel/debug/tracing/events/syscalls/
+sudo ls /sys/kernel/tracing/events/sched/
+sudo ls /sys/kernel/tracing/events/syscalls/
 ```
 
 ```c
@@ -363,7 +390,8 @@ int BPF_PROG(restrict_file_open, struct file *file, int ret) {
         return ret;
 
     char path[256];
-    bpf_d_path(&file->f_path, path, sizeof(path));
+    if (bpf_d_path(&file->f_path, path, sizeof(path)) < 0)
+        return 0;  // Demo fails open on unresolved paths; not a complete access policy.
 
     // Block access to /etc/shadow
     if (bpf_strncmp(path, 11, "/etc/shadow") == 0)
@@ -382,7 +410,7 @@ Filters packets at the socket level.
 SEC("socket")
 int socket_filter(struct __sk_buff *skb) {
     // Allow only IPv4 packets
-    if (skb->protocol != htons(ETH_P_IP))
+    if (skb->protocol != bpf_htons(ETH_P_IP))
         return 0;  // Drop
 
     return skb->len;  // Return packet length (allow)
@@ -398,10 +426,10 @@ Controls container resources and networking.
 SEC("cgroup/connect4")
 int restrict_connect(struct bpf_sock_addr *ctx) {
     // Block connections that are not to local network
-    __u32 dst = ctx->user_ip4;
+    __u32 dst = bpf_ntohl(ctx->user_ip4);
 
     // Allow only 10.0.0.0/8 range
-    if ((dst & 0xFF) != 10)
+    if ((dst & 0xff000000U) != 0x0a000000U)
         return 0;  // Deny connection
 
     return 1;  // Allow connection
@@ -414,7 +442,7 @@ int restrict_connect(struct bpf_sock_addr *ctx) {
 
 ### 4.1 bpftool
 
-bpftool is the official tool for managing eBPF programs and maps.
+bpftool manages BPF programs/maps. Only update maps created for this lab; live CNI/security maps affect running workloads. The hex update below assumes a little-endian u32 key/u64 value matching the earlier map example.
 
 ```bash
 # List loaded eBPF programs
@@ -436,10 +464,10 @@ sudo bpftool map list
 sudo bpftool map dump id <MAP_ID>
 
 # Add value to map
-sudo bpftool map update id <MAP_ID> key 0x01 0x00 0x00 0x00 value 0xFF 0x00 0x00 0x00
+sudo bpftool map update id <MAP_ID> key hex 01 00 00 00 value hex ff 00 00 00 00 00 00 00
 
 # Check kernel eBPF features
-sudo bpftool feature
+sudo bpftool feature probe kernel
 
 # BTF (BPF Type Format) information
 sudo bpftool btf list
@@ -457,10 +485,10 @@ sudo apt-get install -y bpftrace
 sudo bpftrace -e 'tracepoint:raw_syscalls:sys_enter { @[comm] = count(); }'
 
 # Read bytes per process
-sudo bpftrace -e 'tracepoint:syscalls:sys_exit_read /args->ret > 0/ { @bytes[comm] = sum(args->ret); }'
+sudo bpftrace -e 'tracepoint:syscalls:sys_exit_read /args.ret > 0/ { @bytes[comm] = sum(args.ret); }'
 
 # File open tracing
-sudo bpftrace -e 'tracepoint:syscalls:sys_enter_openat { printf("%s opened %s\n", comm, str(args->filename)); }'
+sudo bpftrace -e 'tracepoint:syscalls:sys_enter_openat { printf("%s opened %s\n", comm, str(args.filename)); }'
 
 # TCP connection tracing
 sudo bpftrace -e 'kprobe:tcp_connect { printf("%s -> %s\n", ntop(((struct sock *)arg0)->__sk_common.skc_rcv_saddr), ntop(((struct sock *)arg0)->__sk_common.skc_daddr)); }'
@@ -476,25 +504,25 @@ sudo bpftrace -e 'kprobe:vfs_read { @start[tid] = nsecs; } kretprobe:vfs_read /@
 sudo bpftrace -e 'profile:hz:99 { @[comm] = count(); }'
 
 # Block I/O latency
-sudo bpftrace -e 'tracepoint:block:block_rq_issue { @start[args->dev, args->sector] = nsecs; } tracepoint:block:block_rq_complete /@start[args->dev, args->sector]/ { @usecs = hist((nsecs - @start[args->dev, args->sector]) / 1000); delete(@start[args->dev, args->sector]); }'
+sudo biolatency-bpfcc 1 10  # Maintained request correlation; avoids dev/sector collisions
 
 # New process tracing
 sudo bpftrace -e 'tracepoint:sched:sched_process_exec { printf("%-10d %-16s\n", pid, comm); }'
 
 # Memory allocation tracing
-sudo bpftrace -e 'tracepoint:kmem:kmalloc { @bytes = hist(args->bytes_alloc); }'
+sudo bpftrace -e 'tracepoint:kmem:kmalloc { @bytes = hist(args.bytes_alloc); }'
 ```
 
 ### 4.3 BCC (BPF Compiler Collection)
 
-BCC is a toolkit that allows writing eBPF programs through Python and Lua.
+BCC provides BPF C compilation/loading and commonly embeds BPF C in Python tracing tools.
 
 ```bash
 # Installation
 sudo apt-get install -y bpfcc-tools python3-bpfcc
 
 # Included tools
-ls /usr/share/bcc/tools/
+dpkg -L bpfcc-tools | head -40
 ```
 
 **Key BCC Tools**:
@@ -514,10 +542,10 @@ ls /usr/share/bcc/tools/
 
 ```bash
 # Usage examples
-sudo /usr/share/bcc/tools/execsnoop    # Trace process execution
-sudo /usr/share/bcc/tools/tcpconnect   # Trace TCP connections
-sudo /usr/share/bcc/tools/biolatency   # Disk I/O latency
-sudo /usr/share/bcc/tools/profile -F 99 10  # CPU profiling for 10 seconds
+sudo execsnoop-bpfcc    # Trace process execution
+sudo tcpconnect-bpfcc   # Trace TCP connections
+sudo biolatency-bpfcc   # Disk I/O latency
+sudo profile-bpfcc -F 99 10  # CPU profiling for 10 seconds
 ```
 
 ### 4.4 libbpf and CO-RE
@@ -530,22 +558,21 @@ libbpf is a C library for loading eBPF programs and supports CO-RE (Compile Once
 - Reduced kernel header dependencies
 
 ```c
-// Example using CO-RE
+// Independent tracing program. Generate vmlinux.h from the target kernel's BTF.
 #include "vmlinux.h"
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_core_read.h>
 
-SEC("kprobe/do_sys_open")
-int BPF_KPROBE(do_sys_open, int dfd, const char *filename) {
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-
+SEC("tracepoint/syscalls/sys_enter_openat")
+int trace_openat(struct trace_event_raw_sys_enter *ctx) {
+    const char *filename = (const char *)BPF_CORE_READ(ctx, args[1]);
     char fname[256];
-    bpf_probe_read_user_str(fname, sizeof(fname), filename);
-
-    bpf_printk("PID %d opened: %s\n", pid, fname);
+    if (bpf_probe_read_user_str(fname, sizeof(fname), filename) < 0)
+        return 0;
+    __u32 tgid = bpf_get_current_pid_tgid() >> 32;
+    bpf_printk("TGID %u opened: %s", tgid, fname);
     return 0;
 }
-
 char LICENSE[] SEC("license") = "GPL";
 ```
 
@@ -576,7 +603,7 @@ Cilium is the most representative Kubernetes CNI (Container Network Interface) u
 
 #### kube-proxy Replacement
 
-Cilium can completely replace kube-proxy using eBPF.
+Cilium can replace kube-proxy in a supported configuration. The sketches below describe new-flow backend selection; established flows can use connection tracking. Routing/tunneling/NAT still depend on the chosen datapath.
 
 **Traditional kube-proxy (iptables mode)**:
 ```
@@ -585,25 +612,30 @@ Packet → Netfilter → iptables rule evaluation → DNAT → Routing
 
 **Cilium eBPF mode**:
 ```
-Packet → eBPF map lookup → Direct routing
+New flow → eBPF backend lookup → Configured routing/tunneling/NAT
 ```
 
 ```bash
-# Install Cilium (kube-proxy replacement mode)
-helm install cilium cilium/cilium --version 1.14.0 \
-  --namespace kube-system \
-  --set kubeProxyReplacement=strict \
-  --set k8sServiceHost=${API_SERVER_IP} \
-  --set k8sServicePort=${API_SERVER_PORT}
+# New, isolated self-managed lab only: configure the cluster for the selected
+# CNI/proxy mode before bootstrap. Do not delete kube-proxy on a live cluster.
+helm repo add cilium https://helm.cilium.io
+helm repo update cilium
+: "${CILIUM_CHART_VERSION:?Select a chart compatible with this Kubernetes/kernel}"
+: "${CILIUM_VALUES_FILE:?Provide reviewed IPAM/routing/platform values}"
+: "${API_SERVER_IP:?Set a directly reachable API endpoint, not the Service IP}"
+: "${API_SERVER_PORT:?Set the API endpoint port}"
+helm install cilium cilium/cilium --version "$CILIUM_CHART_VERSION" \
+  --namespace kube-system -f "$CILIUM_VALUES_FILE" \
+  --set kubeProxyReplacement=true \
+  --set k8sServiceHost="$API_SERVER_IP" --set k8sServicePort="$API_SERVER_PORT"
+cilium status --wait
+# Existing clusters require the Cilium migration procedure and a tested rollback plan.
 
-# Remove kube-proxy
-kubectl -n kube-system delete ds kube-proxy
-kubectl -n kube-system delete cm kube-proxy
 ```
 
 #### Network Policy
 
-Cilium applies L3/L4/L7 network policies using eBPF.
+Cilium uses eBPF for L3/L4 enforcement; HTTP/L7 policies require supported proxy processing (for example Envoy). DNS visibility uses the DNS proxy. Hubble HTTP/DNS records require those corresponding visibility settings.
 
 ```yaml
 # Cilium network policy example
@@ -638,7 +670,7 @@ kind: Service
 metadata:
   name: my-service
   annotations:
-    io.cilium/lb-ipam-ips: "192.168.1.100"
+    lbipam.cilium.io/ips: "192.168.1.100"
 spec:
   type: LoadBalancer
   selector:
@@ -648,9 +680,11 @@ spec:
       targetPort: 8080
 ```
 
+The requested IP must belong to an administrator-owned CiliumLoadBalancerIPPool. LB IPAM only allocates addresses; external reachability requires BGP/L2 advertisement or another load-balancer setup.
+
 ### 5.2 Calico eBPF Mode
 
-Calico also supports eBPF dataplane.
+Calico supports an eBPF dataplane. The patch below assumes an existing compatible Calico Operator installation and is only one step of its migration procedure. Configure direct API access and validate routing/rollback before changing any Service proxy.
 
 ```bash
 # Enable Calico eBPF mode
@@ -661,20 +695,22 @@ kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{
 - Source IP preservation
 - Direct Server Return (DSR) support
 - Host endpoint policies
-- Encrypted inter-node communication
+- Optional WireGuard encryption when separately configured and supported; not enabled merely by selecting eBPF
 
 ### 5.3 Performance Comparison: iptables vs eBPF
 
 | Aspect | iptables | eBPF |
 |--------|----------|------|
-| **Scalability** | O(n) - proportional to service count | O(1) - map lookup |
-| **Latency** | Increases with rule count | Constant |
-| **CPU usage** | High | Low |
-| **Updates** | Full table rewrite | Map entry update |
+| **Scalability** | O(n) - proportional to service count | Average O(1) for hash lookup; map type matters |
+| **Latency** | Rule structure and workload dependent | Map type, workload and datapath dependent |
+| **CPU usage** | Workload/configuration dependent | Workload/configuration dependent |
+| **Updates** | Modern kube-proxy can update changed Service/endpoint rules | Map updates; cost depends on implementation |
 | **Observability** | Limited | Hubble integration |
-| **Memory** | Memory per rule | Optimized map structure |
+| **Memory** | Rules, endpoints and conntrack state | Maps, endpoints and conntrack state |
 
 **Benchmark Results** (based on 1000 services):
+
+The original figures below have no cited source, hardware, kernel/CNI versions or methodology. They have not been rerun and cannot establish current performance or a general speedup. Reproduction requires the original method and environment.
 
 ```
 | Metric                  | iptables    | eBPF      | Improvement |
@@ -690,11 +726,11 @@ kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{
 cilium status
 
 # Check eBPF maps
-cilium bpf lb list
-cilium bpf ct list global
+kubectl -n kube-system exec ds/cilium -c cilium-agent -- cilium-dbg bpf lb list
+kubectl -n kube-system exec ds/cilium -c cilium-agent -- cilium-dbg bpf ct list global
 
 # Network policy status
-cilium policy get
+kubectl get ciliumnetworkpolicies,ciliumclusterwidenetworkpolicies -A
 ```
 
 ---
@@ -705,20 +741,24 @@ eBPF enables deep observation of system and application behavior. Unlike traditi
 
 ### 6.1 Hubble: Cilium Network Observability
 
-Hubble is a network observability platform built into Cilium.
+Hubble provides Cilium network observability. Install a compatible Hubble CLI, enable Relay, and establish the port-forward before the CLI examples. L7 visibility requires the relevant proxy configuration.
 
-![An architecture diagram showing Cilium's eBPF dataplane collecting network flow, DNS, HTTP, and policy data that Hubble Observer and Relay aggregate for the Hubble CLI and UI.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-6.png)
+![An architecture diagram showing Cilium combining eBPF network/policy events with supported DNS/HTTP proxy observations that Hubble Observer and Relay aggregate for the Hubble CLI and UI.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-6.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-05-ebpf-fundamentals-6.html)
 
 ```bash
+# Use the installed, reviewed chart version; this is not a chart-version upgrade.
+: "${CILIUM_CHART_VERSION:?Set the installed compatible chart version}"
 # Install Hubble
-helm upgrade cilium cilium/cilium --version 1.14.0 \
+helm upgrade cilium cilium/cilium --version "$CILIUM_CHART_VERSION" \
   --namespace kube-system \
   --reuse-values \
+  --set hubble.enabled=true \
   --set hubble.relay.enabled=true \
   --set hubble.ui.enabled=true
 
+# First run cilium hubble port-forward in a separate terminal.
 # Use Hubble CLI
 hubble observe --pod my-pod
 hubble observe --namespace default
@@ -732,7 +772,7 @@ hubble observe --from-pod default/frontend --to-pod default/backend
 hubble observe -f --type trace
 
 # Generate service map
-hubble observe --namespace default -o jsonpb | hubble relay --serviceMap
+# Service maps are provided by Hubble UI; use the UI port-forward below.
 ```
 
 **Accessing Hubble UI**:
@@ -761,16 +801,17 @@ px deploy
 
 # Pixie CLI query examples
 # HTTP request latency
-px script run px/http_data
+px run px/http_data
 
 # Traffic between services
-px script run px/service_stats
+px run px/service_stats
 
 # Slow request analysis
-px script run px/slow_requests -- start_time=-5m latency_ns=100000000
+px run px/slow_http_requests --help
+# Use the parameters advertised by the installed script bundle.
 
 # Pod resource usage
-px script run px/pod_stats
+px run px/pods
 ```
 
 **PxL (Pixie Query Language) Example**:
@@ -780,23 +821,31 @@ px script run px/pod_stats
 import px
 
 df = px.DataFrame(table='http_events', start_time='-5m')
+df.namespace = df.ctx['namespace']
+df.pod = df.ctx['pod']
 df = df[df.latency > 100000000]  # Over 100ms
-df = df.groupby(['service', 'req_path']).agg(
+df = df.groupby(['namespace', 'pod', 'req_path']).agg(
     count=('latency', px.count),
     avg_latency=('latency', px.mean),
-    p99_latency=('latency', px.quantiles, 0.99)
+    latency_quantiles=('latency', px.quantiles)
 )
+df.p99_latency_ns = px.pluck_float64(df.latency_quantiles, 'p99')
 px.display(df)
 ```
 
 ### 6.3 Coroot: "No-Code" Monitoring
 
-Coroot uses eBPF to automatically monitor systems without additional configuration.
+Coroot uses eBPF to automatically monitor systems for supported applications after configuring agents, storage, permissions and data sources.
 
 ```bash
 # Install Coroot with Helm
 helm repo add coroot https://coroot.github.io/helm-charts
-helm install coroot coroot/coroot -n coroot --create-namespace
+# The old coroot/coroot chart is deprecated; use the operator and CE resource chart.
+: "${COROOT_OPERATOR_VERSION:?Select a reviewed operator chart version}"
+: "${COROOT_CE_VERSION:?Select a compatible CE chart version}"
+helm install coroot-operator coroot/coroot-operator -n coroot --create-namespace \
+  --version "$COROOT_OPERATOR_VERSION"
+helm install coroot coroot/coroot-ce -n coroot --version "$COROOT_CE_VERSION"
 ```
 
 **Coroot Features**:
@@ -808,32 +857,35 @@ helm install coroot coroot/coroot -n coroot --create-namespace
 
 ### 6.4 Kepler: Energy Consumption Monitoring
 
-Kepler (Kubernetes-based Efficient Power Level Exporter) uses eBPF to monitor container energy consumption.
+Early Kepler used eBPF, but it was **rewritten starting in 0.10.0** around read-only host /proc and /sys access, RAPL/powercap and CPU-usage-based power attribution. CAP_BPF is no longer required, so current Kepler is not an example that depends on eBPF instrumentation. Versions0.9 and earlier are frozen legacy code with different metrics/deployment methods.
+
+Check that the hardware/VM exposes power sensors. Container/Pod values attribute measured node energy rather than directly measuring each container with a power meter. Summing nested RAPL zones double-counts energy. Verify version-specific experimental GPU/HWMon/platform support.
 
 ```bash
-# Install Kepler
-kubectl apply -f https://raw.githubusercontent.com/sustainable-computing-io/kepler/main/manifests/kubernetes/deployment.yaml
-
-# Check Prometheus metrics
-curl localhost:9103/metrics | grep kepler
+: "${KEPLER_CHART_VERSION:?Select a reviewed current Kepler chart}"
+helm install kepler oci://quay.io/sustainable_computing_io/charts/kepler \
+  --version "$KEPLER_CHART_VERSION" --namespace kepler --create-namespace
+kubectl get pods -n kepler
+# Run port-forward in a separate terminal; then query metrics from this machine.
+kubectl port-forward -n kepler service/kepler 28282:28282
+# curl --fail http://localhost:28282/metrics | grep kepler_node_cpu_watts
 ```
 
-**Kepler Metrics**:
-- `kepler_container_joules_total`: Energy consumption per container
-- `kepler_container_gpu_joules_total`: GPU energy consumption
-- `kepler_node_core_joules_total`: Node CPU energy
+Current CPU metric examples: `kepler_node_cpu_joules_total`, `kepler_container_cpu_joules_total`, `kepler_pod_cpu_watts`. Verify actual sensor coverage and zone labels.
 
 ### 6.5 Traditional Agents vs eBPF Instrumentation Comparison
+
+The 5–15% and <1% values retain the original unsourced claims; they are not verified overhead ranges. eBPF still needs userspace agents, buffers and protocol parsers. Traditional agents do not all require code changes, and eBPF tools do not automatically cover every application/protocol.
 
 | Aspect | Traditional Agents | eBPF Instrumentation |
 |--------|-------------------|---------------------|
 | **Overhead** | High (5-15%) | Low (<1%) |
-| **Code modification** | Required (SDK/library) | Not required |
-| **Coverage** | Only instrumented parts | Entire system |
-| **Deployment** | Per application | Per node |
-| **Privileges** | Normal privileges | CAP_BPF required |
-| **Data depth** | Application level | Kernel level |
-| **Protocol support** | Explicit support needed | Automatic parsing |
+| **Code modification** | Depends on SDK/agent model | Often unnecessary for supported data sources |
+| **Coverage** | Instrumentation and agent dependent | Supported hooks/protocols/visibility; not automatically complete |
+| **Deployment** | Application, node or collector dependent | Usually node agents; application compatibility still matters |
+| **Privileges** | Agent-dependent | Program/hook-dependent capabilities and host access |
+| **Data depth** | Application/host dependent | Kernel and supported userspace probes |
+| **Protocol support** | Tool-dependent | Automatic only for supported parsers/libraries/visibility |
 
 ![A side-by-side comparison showing traditional monitoring, which requires an in-process SDK or agent, against eBPF-based monitoring, which observes an unmodified application from a kernel-side hook.](../.gitbook/assets/en-basics-05-ebpf-fundamentals-7.png)
 
@@ -854,60 +906,69 @@ Tetragon is an eBPF-based runtime security solution provided by the Cilium proje
 ```bash
 # Install Tetragon
 helm repo add cilium https://helm.cilium.io
-helm install tetragon cilium/tetragon -n kube-system
+: "${TETRAGON_CHART_VERSION:?Select a compatible reviewed chart version}"
+helm install tetragon cilium/tetragon -n kube-system --version "$TETRAGON_CHART_VERSION"
 
 # Observe events
 kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon -c export-stdout -f | tetra getevents -o compact
 ```
 
+Create ebpf-lab and app=ebpf-demo test Pods. These examples use Post-only observation instead of sending SIGKILL across the host. Preventive denial requires separately tested supported LSM/Override behavior.
+
 **TracingPolicy Examples**:
 
 ```yaml
-# Monitor sensitive file access
 apiVersion: cilium.io/v1alpha1
-kind: TracingPolicy
+kind: TracingPolicyNamespaced
 metadata:
   name: sensitive-file-access
+  namespace: ebpf-lab
 spec:
   kprobes:
-    - call: security_file_open
-      syscall: false
-      args:
-        - index: 0
-          type: file
-      selectors:
-        - matchArgs:
-            - index: 0
-              operator: Prefix
-              values:
-                - /etc/shadow
-                - /etc/passwd
-                - /etc/sudoers
-          matchActions:
-            - action: Sigkill  # Terminate process
+  - call: security_file_open
+    syscall: false
+    args:
+    - index: 0
+      type: file
+    selectors:
+    - matchArgs:
+      - index: 0
+        operator: Prefix
+        values:
+        - /etc/shadow
+        - /etc/passwd
+        - /etc/sudoers
+      matchActions:
+      - action: Post
+  podSelector:
+    matchLabels:
+      app: ebpf-demo
 ```
 
 ```yaml
-# Network connection control
 apiVersion: cilium.io/v1alpha1
-kind: TracingPolicy
+kind: TracingPolicyNamespaced
 metadata:
-  name: restrict-outbound
+  name: observe-outbound
+  namespace: ebpf-lab
 spec:
   kprobes:
-    - call: tcp_connect
-      syscall: false
-      args:
-        - index: 0
-          type: sock
-      selectors:
-        - matchArgs:
-            - index: 0
-              operator: NotEqual
-              values:
-                - "10.0.0.0/8"  # Internal network
-          matchActions:
-            - action: Sigkill
+  - call: tcp_connect
+    syscall: false
+    args:
+    - index: 0
+      type: sock
+    selectors:
+    - matchArgs:
+      - index: 0
+        operator: NotDAddr
+        values:
+        - 10.0.0.0/8
+      matchActions:
+      - action: Post
+  podSelector:
+    matchLabels:
+      app: ebpf-demo
 ```
 
 ### 7.2 Falco: eBPF-based Anomaly Detection
@@ -917,16 +978,19 @@ Falco is a CNCF project that uses eBPF to detect runtime anomalous behavior.
 ```bash
 # Install Falco (eBPF driver)
 helm repo add falcosecurity https://falcosecurity.github.io/charts
-helm install falco falcosecurity/falco \
+# Save the following Falco rule examples as ./ebpf-lab-rules.yaml before installation.
+: "${FALCO_CHART_VERSION:?Select a compatible reviewed chart version}"
+helm install falco falcosecurity/falco --version "$FALCO_CHART_VERSION" \
   --namespace falco --create-namespace \
-  --set driver.kind=modern_ebpf
+  --set driver.kind=modern_ebpf \
+  --set-file 'customRules.ebpf-lab-rules\.yaml=./ebpf-lab-rules.yaml'
 ```
 
 **Falco Rule Examples**:
 
 ```yaml
 # Detect reading of /etc/shadow
-- rule: Read sensitive file
+- rule: eBPF lab read sensitive file
   desc: Detect reading of sensitive files
   condition: >
     open_read and
@@ -938,7 +1002,7 @@ helm install falco falcosecurity/falco \
   priority: WARNING
 
 # Detect shell execution in container
-- rule: Shell in container
+- rule: eBPF lab shell in container
   desc: Detect shell execution in container
   condition: >
     spawned_process and
@@ -951,7 +1015,7 @@ helm install falco falcosecurity/falco \
   priority: NOTICE
 
 # Detect privilege escalation
-- rule: Privilege escalation
+- rule: eBPF lab privilege escalation
   desc: Detect privilege escalation attempts
   condition: >
     spawned_process and
@@ -965,7 +1029,7 @@ helm install falco falcosecurity/falco \
 
 ### 7.3 seccomp-bpf: System Call Filtering
 
-seccomp-bpf uses BPF to restrict which system calls a process can make.
+seccomp filters use the classic BPF userspace ABI, not ordinary eBPF program helpers/maps. OCI JSON profiles are interpreted by the container runtime to build syscall filters.
 
 ```yaml
 # Apply seccomp profile in Kubernetes Pod
@@ -979,18 +1043,28 @@ spec:
       type: RuntimeDefault  # or Localhost
   containers:
     - name: app
-      image: nginx
+      image: nginx:1.30.4
 ```
 
 **Custom seccomp Profile**:
 
+The following is a **format sketch** for a minimal x86-64 example, not a profile that can run NGINX or a general application. Prefer RuntimeDefault; derive and regression-test a custom allowlist for the actual architecture/runtime/workload. A broad allowlist of mount/reboot/module/BPF calls is not a safe default.
+
 ```json
 {
   "defaultAction": "SCMP_ACT_ERRNO",
-  "architectures": ["SCMP_ARCH_X86_64"],
+  "architectures": [
+    "SCMP_ARCH_X86_64"
+  ],
   "syscalls": [
     {
-      "names": ["read", "write", "open", "close", "stat", "fstat", "mmap", "mprotect", "munmap", "brk", "rt_sigaction", "rt_sigprocmask", "ioctl", "access", "pipe", "select", "sched_yield", "mremap", "msync", "mincore", "madvise", "shmget", "shmat", "shmctl", "dup", "dup2", "pause", "nanosleep", "getitimer", "alarm", "setitimer", "getpid", "socket", "connect", "accept", "sendto", "recvfrom", "bind", "listen", "getsockname", "getpeername", "socketpair", "setsockopt", "getsockopt", "clone", "fork", "vfork", "execve", "exit", "wait4", "kill", "uname", "fcntl", "flock", "fsync", "fdatasync", "truncate", "ftruncate", "getdents", "getcwd", "chdir", "rename", "mkdir", "rmdir", "creat", "link", "unlink", "symlink", "readlink", "chmod", "fchmod", "chown", "fchown", "lchown", "umask", "gettimeofday", "getrlimit", "getrusage", "sysinfo", "times", "ptrace", "getuid", "syslog", "getgid", "setuid", "setgid", "geteuid", "getegid", "setpgid", "getppid", "getpgrp", "setsid", "setreuid", "setregid", "getgroups", "setgroups", "setresuid", "getresuid", "setresgid", "getresgid", "getpgid", "setfsuid", "setfsgid", "getsid", "capget", "capset", "rt_sigpending", "rt_sigtimedwait", "rt_sigqueueinfo", "rt_sigsuspend", "sigaltstack", "utime", "mknod", "personality", "ustat", "statfs", "fstatfs", "sysfs", "getpriority", "setpriority", "sched_setparam", "sched_getparam", "sched_setscheduler", "sched_getscheduler", "sched_get_priority_max", "sched_get_priority_min", "sched_rr_get_interval", "mlock", "munlock", "mlockall", "munlockall", "vhangup", "pivot_root", "prctl", "arch_prctl", "adjtimex", "setrlimit", "chroot", "sync", "acct", "settimeofday", "mount", "umount2", "swapon", "swapoff", "reboot", "sethostname", "setdomainname", "ioperm", "iopl", "create_module", "init_module", "delete_module", "get_kernel_syms", "query_module", "quotactl", "nfsservctl", "getpmsg", "putpmsg", "afs_syscall", "tuxcall", "security", "gettid", "readahead", "setxattr", "lsetxattr", "fsetxattr", "getxattr", "lgetxattr", "fgetxattr", "listxattr", "llistxattr", "flistxattr", "removexattr", "lremovexattr", "fremovexattr", "tkill", "time", "futex", "sched_setaffinity", "sched_getaffinity", "set_thread_area", "io_setup", "io_destroy", "io_getevents", "io_submit", "io_cancel", "get_thread_area", "lookup_dcookie", "epoll_create", "epoll_ctl_old", "epoll_wait_old", "remap_file_pages", "getdents64", "set_tid_address", "restart_syscall", "semtimedop", "fadvise64", "timer_create", "timer_settime", "timer_gettime", "timer_getoverrun", "timer_delete", "clock_settime", "clock_gettime", "clock_getres", "clock_nanosleep", "exit_group", "epoll_wait", "epoll_ctl", "tgkill", "utimes", "vserver", "mbind", "set_mempolicy", "get_mempolicy", "mq_open", "mq_unlink", "mq_timedsend", "mq_timedreceive", "mq_notify", "mq_getsetattr", "kexec_load", "waitid", "add_key", "request_key", "keyctl", "ioprio_set", "ioprio_get", "inotify_init", "inotify_add_watch", "inotify_rm_watch", "migrate_pages", "openat", "mkdirat", "mknodat", "fchownat", "futimesat", "newfstatat", "unlinkat", "renameat", "linkat", "symlinkat", "readlinkat", "fchmodat", "faccessat", "pselect6", "ppoll", "unshare", "set_robust_list", "get_robust_list", "splice", "tee", "sync_file_range", "vmsplice", "move_pages", "utimensat", "epoll_pwait", "signalfd", "timerfd_create", "eventfd", "fallocate", "timerfd_settime", "timerfd_gettime", "accept4", "signalfd4", "eventfd2", "epoll_create1", "dup3", "pipe2", "inotify_init1", "preadv", "pwritev", "rt_tgsigqueueinfo", "perf_event_open", "recvmmsg", "fanotify_init", "fanotify_mark", "prlimit64", "name_to_handle_at", "open_by_handle_at", "clock_adjtime", "syncfs", "sendmmsg", "setns", "getcpu", "process_vm_readv", "process_vm_writev", "kcmp", "finit_module", "sched_setattr", "sched_getattr", "renameat2", "seccomp", "getrandom", "memfd_create", "kexec_file_load", "bpf"],
+      "names": [
+        "read",
+        "write",
+        "exit",
+        "exit_group",
+        "rt_sigreturn"
+      ],
       "action": "SCMP_ACT_ALLOW"
     }
   ]
@@ -1005,8 +1079,11 @@ LSM BPF combines Linux Security Module with eBPF to dynamically apply security p
 // LSM BPF example: Restrict executable files
 SEC("lsm/bprm_check_security")
 int BPF_PROG(restrict_exec, struct linux_binprm *bprm, int ret) {
+    if (ret != 0)
+        return ret;
     char filename[256];
-    bpf_probe_read_kernel_str(filename, sizeof(filename), bprm->filename);
+    if (bpf_probe_read_kernel_str(filename, sizeof(filename), bprm->filename) < 0)
+        return 0;  // Demo fails open on read error; define a real policy explicitly.
 
     // Block execution from /tmp
     if (bpf_strncmp(filename, 5, "/tmp/") == 0)
@@ -1021,10 +1098,12 @@ int BPF_PROG(restrict_connect, struct socket *sock, struct sockaddr *address, in
     if (ret != 0)
         return ret;
 
+    if (addrlen < sizeof(struct sockaddr_in) || address->sa_family != AF_INET)
+        return 0;  // This example handles IPv4 only.
     struct sockaddr_in *addr = (struct sockaddr_in *)address;
 
     // Block connection to specific port
-    if (ntohs(addr->sin_port) == 6666)
+    if (bpf_ntohs(addr->sin_port) == 6666)
         return -EACCES;
 
     return 0;
@@ -1042,11 +1121,12 @@ int BPF_PROG(restrict_connect, struct socket *sock, struct sockaddr *address, in
 ```bash
 # TCP connection tracing
 sudo bpftrace -e '
-tracepoint:tcp:tcp_connect {
-    printf("%s -> %s:%d\n",
-        ntop(args->saddr),
-        ntop(args->daddr),
-        args->dport);
+tracepoint:sock:inet_sock_set_state /args.protocol == 6 && args.newstate == 1/ {
+    if (args.family == 2) {
+        printf("IPv4 %s:%d -> %s:%d established\n", ntop(args.saddr), args.sport, ntop(args.daddr), args.dport);
+    } else if (args.family == 10) {
+        printf("IPv6 %s:%d -> %s:%d established\n", ntop(args.saddr_v6), args.sport, ntop(args.daddr_v6), args.dport);
+    }
 }'
 ```
 
@@ -1070,17 +1150,12 @@ sudo bpftrace -e '
 tracepoint:block:block_rq_issue {
     printf("%s %s %d\n",
         comm,
-        args->rwbs,
-        args->bytes / 1024);
+        str(args.rwbs),
+        args.nr_sector / 2);
 }'
 
 # I/O latency histogram
-sudo bpftrace -e '
-tracepoint:block:block_rq_issue { @start[args->dev, args->sector] = nsecs; }
-tracepoint:block:block_rq_complete /@start[args->dev, args->sector]/ {
-    @us = hist((nsecs - @start[args->dev, args->sector]) / 1000);
-    delete(@start[args->dev, args->sector]);
-}'
+sudo biolatency-bpfcc 1 10
 ```
 
 ### 8.2 Network Flow Observation with Cilium Hubble
@@ -1107,8 +1182,9 @@ hubble observe --from-pod default/frontend --to-pod default/backend
 # Detailed analysis with JSON output
 hubble observe --namespace default -o json | jq '.flow.destination.pod_name'
 
-# Flow statistics
-hubble observe --namespace default -o jsonpb | \
+# Count retained flow observations, not unique connections or all traffic.
+# Relay returns up to the requested count per Hubble instance.
+hubble observe --namespace default --last 1000 -o jsonpb | \
   jq -r '.flow | "\(.source.pod_name // .source.identity) -> \(.destination.pod_name // .destination.identity)"' | \
   sort | uniq -c | sort -rn | head -20
 ```
@@ -1122,7 +1198,7 @@ kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon -c export-stdout 
 
 # Filter process execution events only
 kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon -c export-stdout -f | \
-  tetra getevents -o compact --process-filter
+  tetra getevents -o compact --event-types PROCESS_EXEC
 
 # Events from specific namespace
 kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon -c export-stdout -f | \
@@ -1133,54 +1209,48 @@ kubectl logs -n kube-system -l app.kubernetes.io/name=tetragon -c export-stdout 
 
 ```yaml
 apiVersion: cilium.io/v1alpha1
-kind: TracingPolicy
+kind: TracingPolicyNamespaced
 metadata:
   name: file-access-monitor
+  namespace: ebpf-lab
 spec:
   kprobes:
-    - call: security_file_open
-      syscall: false
-      return: false
-      args:
-        - index: 0
-          type: file
-      selectors:
-        - matchArgs:
-            - index: 0
-              operator: Prefix
-              values:
-                - /etc/
-                - /var/run/secrets/
-          matchActions:
-            - action: Post
+  - call: security_file_open
+    syscall: false
+    return: false
+    args:
+    - index: 0
+      type: file
+    selectors:
+    - matchArgs:
+      - index: 0
+        operator: Prefix
+        values:
+        - /etc/
+        - /var/run/secrets/
+      matchActions:
+      - action: Post
+  podSelector:
+    matchLabels:
+      app: ebpf-demo
 ```
 
 ### 8.4 Latency Analysis with eBPF
 
-**Service Response Time Measurement**:
+**Function, Connection and Name-Resolution Latency**:
 
 ```bash
-# HTTP request latency tracing (BCC)
-sudo /usr/share/bcc/tools/funclatency 'c:read' -i 1
+# libc read() function duration; this is not an HTTP-request latency metric
+sudo funclatency-bpfcc 'c:read' -i 1
 
 # TCP handshake latency
-sudo bpftrace -e '
-kprobe:tcp_v4_connect { @start[tid] = nsecs; }
-kretprobe:tcp_v4_connect /@start[tid]/ {
-    @connect_latency_us = hist((nsecs - @start[tid]) / 1000);
-    delete(@start[tid]);
-}'
+sudo tcpconnlat-bpfcc  # Active TCP connection establishment latency
 
 # DNS lookup latency
-sudo bpftrace -e '
-tracepoint:net:net_dev_xmit /args->protocol == 0x0800/ {
-    @dns_start[args->skbaddr] = nsecs;
-}
-tracepoint:net:netif_receive_skb /args->protocol == 0x0800 && @dns_start[args->skbaddr]/ {
-    @dns_latency = hist((nsecs - @dns_start[args->skbaddr]) / 1000);
-    delete(@dns_start[args->skbaddr]);
-}'
+sudo gethostlatency-bpfcc  # libc name-resolution latency; includes cache/NSS work
 ```
+
+The following is an x86-64 glibc path example. Resolve the target process/library path first (container mount namespaces may differ). malloc/tcp_sendmsg duration is function latency, not end-to-end request latency.
 
 **Application Performance Analysis Script**:
 
@@ -1229,18 +1299,19 @@ END {
 | Limitation | Value | Description |
 |------------|-------|-------------|
 | **Stack size** | 512 bytes | Local variable storage space limit |
-| **Max instructions** | 1 million | Program complexity limit |
+| **Instruction limits** | Privilege/kernel dependent | Separate program-length and verifier processed-instruction limits; upstream complexity budget is1million |
 | **Max nested calls** | 8 levels | BPF-to-BPF function call depth |
 | **Map entry count** | Varies by map type | Depends on memory limits |
-| **Program size** | Varies by map type | Limited after JIT compilation |
+| **Program size** | Kernel/verifier/JIT limits | Not determined by map type |
 
 **Stack Size Limit Workaround**:
 
 ```c
 // Bad example: Exceeds stack size
 int bad_function(void *ctx) {
-    char buffer[1024];  // Exceeds stack size!
-    return 0;
+    volatile char buffer[1024] = {};  // Exceeds stack size!
+    buffer[0] = 1;
+    return buffer[1023];
 }
 
 // Good example: Use map
@@ -1266,8 +1337,8 @@ int good_function(void *ctx) {
 The eBPF verifier limits loops to guarantee program termination.
 
 ```c
-// Rejected by verifier: Unbounded loop
-for (int i = 0; i < n; i++) {  // n is determined at runtime
+// Potential verifier-complexity problem if n has no small proven bound.
+for (int i = 0; i < n; i++) {  // Runtime values can still have provable bounds
     // ...
 }
 
@@ -1302,7 +1373,7 @@ int main_prog(void *ctx) {
 | Basic eBPF | 3.18 |
 | XDP | 4.8 |
 | BTF | 4.18 |
-| CO-RE | 5.2 |
+| CO-RE | Compatible BTF/libbpf/helpers; no universal kernel-only minimum |
 | BPF ring buffer | 5.8 |
 | BPF loops | 5.3 |
 | LSM BPF | 5.7 |
@@ -1329,8 +1400,11 @@ Debugging eBPF programs differs from traditional methods:
 // bpf_printk (for debugging, impacts performance)
 bpf_printk("value = %d\n", value);
 
-// Check debug messages
-sudo cat /sys/kernel/debug/tracing/trace_pipe
+```
+
+```bash
+# Read tracefs (mount/location is distribution-specific).
+sudo cat /sys/kernel/tracing/trace_pipe
 ```
 
 ```bash
@@ -1338,7 +1412,8 @@ sudo cat /sys/kernel/debug/tracing/trace_pipe
 sudo bpftool prog load my_prog.o /sys/fs/bpf/my_prog -d
 
 # Check program statistics
-sudo bpftool prog show id <ID> --json | jq '.run_time_ns, .run_cnt'
+sudo bpftool -j prog show id <ID> | jq '.run_time_ns, .run_cnt'
+# Runtime statistics require kernel.bpf_stats_enabled or a BPF stats FD; disabled by default and adds overhead.
 
 # Dump map contents
 sudo bpftool map dump id <MAP_ID>
@@ -1360,6 +1435,8 @@ capsh --print
 # Run program with specific privileges
 sudo setcap cap_bpf,cap_perfmon+ep ./my_bpf_loader
 ```
+
+The Pod below illustrates capability fields, not a validated complete agent. Check kernel/BTF/program type, seccomp permission for bpf/perf_event_open, LSM/lockdown, hostPath mounts/ownership, PSS and any required RBAC separately. Adding capabilities alone does not make every program loadable.
 
 **Privilege Configuration in Kubernetes**:
 
@@ -1404,12 +1481,14 @@ While eBPF is a powerful tool, security risks exist:
 **Security Best Practices**:
 
 ```bash
-# Disable unprivileged eBPF
-echo 0 | sudo tee /proc/sys/kernel/unprivileged_bpf_disabled
-
-# BPF security lockdown
-echo 1 | sudo tee /proc/sys/kernel/bpf_spec_v1
-echo 2 | sudo tee /proc/sys/kernel/bpf_spec_v4
+# Inspect first. 0 enables unprivileged bpf(); 1 disables until reboot; 2 disables reversibly.
+sysctl kernel.unprivileged_bpf_disabled
+# On a kernel supporting value 2, disable only if currently enabled.
+if [ "$(sysctl -n kernel.unprivileged_bpf_disabled)" = 0 ]; then
+  sudo sysctl -w kernel.unprivileged_bpf_disabled=2
+fi
+# Inspect the real JIT-hardening setting; choose changes through host configuration management.
+sysctl net.core.bpf_jit_harden
 ```
 
 ---
@@ -1435,8 +1514,8 @@ To verify your understanding of this document, try the following quiz:
 - [bpftrace Tutorial](https://github.com/iovisor/bpftrace/blob/master/docs/tutorial_one_liners.md) - bpftrace one-liner tutorial
 
 **Community**:
-- [eBPF Summit](https://ebpf.io/summit/) - Annual eBPF conference
-- [Cilium Slack](https://cilium.io/slack) - Cilium community
+- [eBPF Summit](https://ebpf.io/events/?conference=eBPF%20Summit) - Annual eBPF conference
+- [Cilium Slack](https://slack.cilium.io/) - Cilium community
 
 ### 10.3 Related Documents
 
@@ -1479,3 +1558,45 @@ eBPF is a revolutionary technology that allows safe extension and observation of
 8. **Limitations**: Consider stack size, loops, kernel version compatibility
 
 eBPF is a core technology leading the future of networking, security, and observability in cloud-native environments.
+
+> Falco examples depend on open_read/open_write/spawned_process/container macros from the default ruleset. Load the additional file through the installed chart’s customRules/falco.rules_files configuration. Falco detects and alerts; these rules do not deny access. Container/Kubernetes metadata may be delayed, and legitimate ServiceAccount-token reads also match, so test appropriate allowances.
+
+## Verification References
+
+- https://www.kernel.org/doc/html/latest/admin-guide/sysctl/kernel.html
+- https://www.kernel.org/doc/html/latest/admin-guide/sysctl/net.html
+- https://github.com/torvalds/linux/blob/master/include/linux/bpf.h
+- https://github.com/torvalds/linux/blob/master/include/linux/filter.h
+- https://github.com/torvalds/linux/blob/master/include/uapi/linux/bpf.h
+- https://github.com/torvalds/linux/blob/master/kernel/bpf/syscall.c
+- https://docs.kernel.org/bpf/prog_lsm.html
+- https://docs.kernel.org/userspace-api/seccomp_filter.html
+- https://github.com/torvalds/linux/blob/master/include/trace/events/sock.h
+- https://github.com/bpftrace/bpftrace/blob/v0.27.0/docs/language.md
+- https://github.com/bpftrace/bpftrace/blob/v0.27.0/docs/stdlib.md
+- https://packages.debian.org/trixie/arm64/bpfcc-tools/filelist
+- https://github.com/iovisor/bcc/blob/master/tools/tcpconnlat.py
+- https://github.com/iovisor/bcc/blob/master/tools/gethostlatency.py
+- https://github.com/libbpf/bpftool/blob/main/docs/bpftool-map.rst
+- https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst
+- https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/lb-ipam.rst
+- https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml
+- https://github.com/cilium/cilium/blob/v1.20.1/hubble/cmd/observe/observe.go
+- https://github.com/cilium/cilium/blob/v1.20.1/hubble/pkg/printer/printer_test.go
+- https://github.com/cilium/tetragon/blob/main/docs/content/en/docs/concepts/enforcement/_index.md
+- https://github.com/cilium/tetragon/blob/main/docs/content/en/docs/concepts/tracing-policy/selectors.md
+- https://github.com/cilium/tetragon/blob/main/pkg/k8s/apis/cilium.io/v1alpha1/tracing_policy_types.go
+- https://github.com/cilium/tetragon/blob/main/cmd/tetra/getevents/getevents.go
+- https://github.com/cilium/tetragon/blob/main/examples/tracingpolicy/lsm_file_open.yaml
+- https://github.com/cilium/tetragon/blob/main/install/kubernetes/tetragon/crds-yaml/cilium.io_tracingpoliciesnamespaced.yaml
+- https://github.com/sustainable-computing-io/kepler/blob/main/README.md
+- https://github.com/sustainable-computing-io/kepler/blob/main/docs/user/metrics.md
+- https://github.com/coroot/helm-charts/blob/main/charts/coroot/Chart.yaml
+- https://github.com/coroot/helm-charts/blob/main/charts/operator/Chart.yaml
+- https://github.com/coroot/helm-charts/blob/main/charts/coroot-ce/Chart.yaml
+- https://docs.px.dev/reference/pxl/udf/quantiles/
+- https://github.com/pixie-io/pixie/blob/main/src/pixie_cli/pkg/cmd/run.go
+- https://github.com/pixie-io/pixie/blob/main/src/pxl_scripts/px/http_data/data.pxl
+- https://falco.org/docs/reference/rules/supported-fields/
+- https://github.com/falcosecurity/charts/blob/master/charts/falco/values.yaml
+- https://github.com/falcosecurity/rules/blob/main/rules/falco_rules.yaml

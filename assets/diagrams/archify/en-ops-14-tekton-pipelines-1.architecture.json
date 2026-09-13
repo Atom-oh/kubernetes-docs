@@ -38,7 +38,7 @@
           "pod2",
           "pvc"
         ],
-        "note": "The TaskRun Pods exchange data through the same Workspace PVC."
+        "note": "Use per-run volumeClaimTemplate; RWO/RWX access modes are not trust boundaries."
       }
     ]
   },
@@ -89,7 +89,7 @@
       "id": "controller",
       "type": "backend",
       "label": "tekton-pipelines-controller",
-      "sublabel": "Watches CRDs, creates Pods",
+      "sublabel": "reconcile runs/Pods via API",
       "pos": [
         550,
         130
@@ -116,8 +116,8 @@
     {
       "id": "resolver",
       "type": "backend",
-      "label": "tekton-pipelines-resolver",
-      "sublabel": "Remote resolution",
+      "label": "Remote resolvers",
+      "sublabel": "resolve remote definitions",
       "pos": [
         550,
         390
@@ -159,7 +159,7 @@
       "id": "pvc",
       "type": "database",
       "label": "PVC",
-      "sublabel": "Workspace",
+      "sublabel": "per-run Workspace",
       "pos": [
         1160,
         195
@@ -228,7 +228,7 @@
       "id": "controller-to-pod1",
       "from": "controller",
       "to": "pod1",
-      "label": "creates Pods",
+      "label": "create via API",
       "variant": "emphasis"
     },
     {
@@ -241,7 +241,7 @@
       "id": "webhook-to-api",
       "from": "webhook",
       "to": "apiserver",
-      "label": "validates CRDs",
+      "label": "admission response",
       "variant": "security",
       "labelDy": -18
     },
@@ -271,13 +271,12 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "How the controller works",
+      "title": "Controller and execution",
       "items": [
-        "A user creates a PipelineRun or TaskRun resource",
-        "tekton-pipelines-webhook validates the CRD",
-        "tekton-pipelines-controller detects the change and creates a Pod for each Task",
-        "Inside each Pod the Step containers run in order",
-        "Status, Results and artifacts are written back to the CRD status"
+        "Reconcile executions after API admission",
+        "Steps run sequentially within a TaskRun Pod",
+        "Tasks in one execution can share its PVC",
+        "Different trust levels must not share writable PVCs"
       ]
     }
   ]

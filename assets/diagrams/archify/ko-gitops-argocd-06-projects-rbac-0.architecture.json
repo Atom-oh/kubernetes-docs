@@ -9,7 +9,7 @@
     "views": [
       {
         "id": "ownership",
-        "label": "팀별 프로젝트 소유",
+        "label": "팀의 앱 관리 권한",
         "focus": [
           "team-frontend",
           "team-backend",
@@ -18,7 +18,7 @@
           "proj-backend",
           "proj-platform"
         ],
-        "note": "각 팀의 SSO 그룹이 자신의 AppProject를 소유한다."
+        "note": "SSO 그룹을 프로젝트의 앱 관리 역할에 연결합니다. AppProject 정책 변경 권한은 별도로 관리합니다."
       },
       {
         "id": "destinations",
@@ -31,20 +31,19 @@
           "ns-backend",
           "ns-platform"
         ],
-        "note": "AppProject의 destinations가 배포 가능한 네임스페이스를 제한한다."
+        "note": "destinations는 Argo CD 배포의 허용 범위입니다. Namespace 독점 소유나 런타임 격리를 자동으로 만들지 않습니다."
       }
     ],
     "legend": {
-      "mode": "auto",
       "entries": {
         "backend": {
-          "label": "백엔드 서비스"
+          "label": "Namespace 범위"
         },
         "external": {
-          "label": "외부 시스템"
+          "label": "SSO 그룹"
         },
         "security": {
-          "label": "보안 구성 요소"
+          "label": "AppProject"
         }
       }
     }
@@ -138,7 +137,7 @@
       "id": "ns-frontend",
       "type": "backend",
       "label": "Namespace: frontend-*",
-      "sublabel": "Frontend 앱만 배포",
+      "sublabel": "허용된 배포 대상",
       "pos": [
         720,
         70
@@ -152,7 +151,7 @@
       "id": "ns-backend",
       "type": "backend",
       "label": "Namespace: backend-*",
-      "sublabel": "Backend 앱만 배포",
+      "sublabel": "허용된 배포 대상",
       "pos": [
         720,
         210
@@ -198,7 +197,7 @@
     },
     {
       "kind": "region",
-      "label": "Kubernetes 클러스터",
+      "label": "허용 클러스터의 Namespace",
       "wraps": [
         "ns-frontend",
         "ns-backend",
@@ -211,20 +210,20 @@
       "id": "own-frontend",
       "from": "team-frontend",
       "to": "proj-frontend",
-      "label": "소유",
+      "label": "앱 역할",
       "variant": "emphasis"
     },
     {
       "id": "own-backend",
       "from": "team-backend",
       "to": "proj-backend",
-      "label": "소유"
+      "label": "앱 역할"
     },
     {
       "id": "own-platform",
       "from": "team-platform",
       "to": "proj-platform",
-      "label": "소유"
+      "label": "앱 역할"
     },
     {
       "id": "deploy-frontend",
@@ -258,10 +257,10 @@
     },
     {
       "dot": "slate",
-      "title": "기본 프로젝트 (default)",
+      "title": "추가 격리 계층",
       "items": [
-        "모든 저장소·대상·리소스를 허용한다",
-        "프로덕션 환경에서는 권장하지 않는다"
+        "Namespace는 플랫폼에서 사전 생성",
+        "Kubernetes RBAC · Pod Security · NetworkPolicy · Quota 별도"
       ]
     }
   ]

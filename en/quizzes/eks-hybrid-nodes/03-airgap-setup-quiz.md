@@ -1,428 +1,195 @@
-# EKS Hybrid Nodes Air-Gap Environment Setup Quiz
+# EKS Hybrid Nodes Restricted-internet Setup Quiz
 
-> **Related Document**: [Air-Gap Environment Setup](../../eks-hybrid-nodes/03-airgap-setup.md)
+> **Related Document**: [Restricted-internet Setup](../../eks-hybrid-nodes/03-airgap-setup.md)
+> **Last Updated**: September 12, 2026
 
-## Multiple Choice Questions
+### 1. Which connectivity statement is correct for EKS Hybrid Nodes?
 
-### 1. Which is NOT a valid replication policy type in Harbor?
+A. Physical image transfer removes the need for AWS connectivity
 
-A. Push-based
-B. Pull-based
-C. Event-based
-D. Sync-based
+B. Nodes still need EKS control-plane and credential-service connectivity
+
+C. A private S3 bucket hosts the EKS control plane
+
+D. VPN connectivity is the same as physical isolation
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: D. Sync-based**
+**Answer: B. Nodes still need EKS control-plane and credential-service connectivity**
 
-**Explanation:**
-Harbor supports Push-based, Pull-based, and Event-based replication policies. "Sync-based" is not an official Harbor term.
-
-**Harbor Replication Policy Types:**
-1. **Push-based**: Push from source Harbor to target registry
-2. **Pull-based**: Target Harbor pulls images from source
-3. **Event-based**: Automatic replication on image push events
-
-```yaml
-# Harbor Replication Policy API Example
-POST /api/v2.0/replication/policies
-{
-  "name": "ecr-replication",
-  "trigger": {
-    "type": "event_based"
-  },
-  "filters": [
-    {"type": "name", "value": "myapp/**"},
-    {"type": "tag", "value": "v*"}
-  ]
-}
-```
+**Explanation:** Restricted public internet access can coexist with private AWS connectivity. A physically disconnected network cannot provide the live control-plane and credential-service paths Hybrid Nodes require.
 
 </details>
 
-### 2. What Secret type is used when integrating Harbor private registry with Kubernetes?
+### 2. Why is a PHZ alias from hybrid-assets.eks.amazonaws.com to S3 insufficient?
 
-A. Opaque
-B. kubernetes.io/dockerconfigjson
-C. kubernetes.io/tls
-D. kubernetes.io/service-account-token
+A. S3 never supports private DNS
+
+B. ECR must be installed before DNS
+
+C. DNS does not provide the original TLS hostname, object routing or authorization
+
+D. All HTTPS requests automatically use an IAM role
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. kubernetes.io/dockerconfigjson**
+**Answer: C. DNS does not provide the original TLS hostname, object routing or authorization**
 
-**Explanation:**
-Docker/Container registry authentication information is stored as a `kubernetes.io/dockerconfigjson` type Secret.
-
-```bash
-# Create Harbor Registry Secret
-kubectl create secret docker-registry harbor-secret \
-  --docker-server=harbor.example.com \
-  --docker-username=admin \
-  --docker-password=Harbor12345 \
-  --docker-email=admin@example.com
-```
-
-```yaml
-# Use imagePullSecrets in Pod
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-app
-spec:
-  containers:
-  - name: app
-    image: harbor.example.com/project/my-app:v1
-  imagePullSecrets:
-  - name: harbor-secret
-```
+**Explanation:** S3 interface endpoints do support private DNS. However, an alias does not rewrite TLS SNI, the HTTP Host header, object paths or authentication. Use approved image preparation or real custom-manifest URLs; do not disable certificate verification.
 
 </details>
 
-### 3. What is the default vulnerability scanner provided in Harbor for image scanning?
+### 3. What does nodeadm v1.0.20 private installation mode do?
 
-A. Clair
-B. Trivy
-C. Anchore
-D. Snyk
+A. Installs every OS dependency from a local manifest
+
+B. Skips OS package installation but still installs credential and EKS artifacts
+
+C. Makes all AWS API calls optional
+
+D. Automatically signs every S3 artifact download
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Trivy**
+**Answer: B. Skips OS package installation but still installs credential and EKS artifacts**
 
-**Explanation:**
-Since Harbor 2.0, Trivy is included as the default vulnerability scanner. Clair can also be optionally used.
-
-```bash
-# Harbor Vulnerability Scan API
-POST /api/v2.0/projects/{project_name}/repositories/{repository_name}/artifacts/{reference}/scan
-
-# Get Scan Results
-GET /api/v2.0/projects/{project_name}/repositories/{repository_name}/artifacts/{reference}/additions/vulnerabilities
-```
-
-**Harbor Scan Policy Settings:**
-- Projects > Configuration > Vulnerability scanning
-- Automatically scan images on push: enabled
-- Prevent vulnerable images from running: enabled (CVE severity threshold)
+**Explanation:** The released source requires --manifest-override with --private-mode. Prepare the runtime and OS dependencies separately. SSM's installer/signature source is separately constructed, and a file:// manifest does not imply file:// artifact support.
 
 </details>
 
-### 4. What is the most accurate definition of an air-gap environment?
+### 4. What should an artifact preparation script do when a checksum is missing or mismatched?
 
-A. An environment with slow internet connection
-B. An environment physically isolated from external networks
-C. An environment connected only via VPN
-D. An environment with firewalls installed
+A. Warn and publish the remaining files
+
+B. Accept the run if at least one file passed
+
+C. Generate a new expected checksum from the downloaded file
+
+D. Stop and retain the failed candidate for investigation
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. An environment physically isolated from external networks**
+**Answer: D. Stop and retain the failed candidate for investigation**
 
-**Explanation:**
-An air-gap environment is physically separated from the internet or external networks for security reasons. It is commonly used in:
-
-- Military/defense facilities
-- Financial institution core systems
-- Nuclear power plant control systems
-- Healthcare institution sensitive data processing systems
-
-```
-Air-gap environment characteristics:
-+------------------+     Physical isolation     +------------------+
-|   External       | <---- No connection ---->  |   Air-gap        |
-|   Network        |                            |   Environment    |
-| (Internet, Cloud)|                            | (On-premises DC) |
-+------------------+                            +------------------+
-```
-
-In air-gap environments, all software and images must be transferred offline.
+**Explanation:** Every required file must match a trusted, reviewed checksum record. Generating a replacement expected value defeats that check. Hash agreement alone is not independent publisher authentication.
 
 </details>
 
-### 5. What is the correct sequence for mirroring container images to Harbor in an air-gap environment?
+### 5. Which is the correct scope of the IAM Roles Anywhere update service?
 
-A. Install Harbor -> Tag image -> Push image -> Pull image
-B. Pull image -> Save image -> Offline transfer -> Load and push to Harbor
-C. Install Harbor -> Direct ECR connection -> Auto sync
-D. Build image -> Direct deploy -> Skip Harbor
+A. It exists in every installation, including SSM
+
+B. It is used when enableCredentialsFile is enabled; ordinary credential-process use is a separate path
+
+C. The service is fictional and should always be removed
+
+D. It removes the need to renew certificates
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Pull image -> Save image -> Offline transfer -> Load and push to Harbor**
+**Answer: B. It is used when enableCredentialsFile is enabled; ordinary credential-process use is a separate path**
 
-**Explanation:**
-In air-gap environments, there is no internet connection, so images must be manually transferred:
-
-```bash
-# 1. Pull image on internet-connected system
-docker pull nginx:1.25
-
-# 2. Save image to tar file
-docker save nginx:1.25 -o nginx-1.25.tar
-
-# 3. Offline transfer (USB, external hard drive, etc.)
-# Physically move media to air-gap environment
-
-# 4. Load image in air-gap environment
-docker load -i nginx-1.25.tar
-
-# 5. Tag and push to Harbor
-docker tag nginx:1.25 harbor.airgap.local/library/nginx:1.25
-docker push harbor.airgap.local/library/nginx:1.25
-```
-
-For managing large numbers of images, tools like `skopeo` or `crane` are more efficient.
+**Explanation:** aws_signing_helper_update.service is real in the credentials-file mode. Configure the appropriate service and invoking process environments, including nodeadm's proxy detection/--with-proxy behavior. Certificate lifecycle and AWS connectivity remain required.
 
 </details>
 
-### 6. What is the correct method for offline installation of nodeadm in an air-gap environment?
+### 6. Which images should be included in the Hybrid Nodes delivery inventory?
 
-A. Download directly from GitHub using curl
-B. apt-get install nodeadm
-C. Pre-download binaries and dependencies for offline installation
-D. pip install nodeadm
+A. A fixed list of VPC CNI images for every node
+
+B. Only kubelet, because it is the CNI image
+
+C. The actual supported CNI, DNS, datapath, sandbox and workload images, including init containers and platforms
+
+D. Any tag constructed by appending -eksbuild.1 to a Kubernetes patch
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Pre-download binaries and dependencies for offline installation**
+**Answer: C. The actual supported CNI, DNS, datapath, sandbox and workload images, including init containers and platforms**
 
-**Explanation:**
-In air-gap environments, internet access is not possible, so all necessary files must be prepared in advance:
-
-```bash
-# Prepare on internet-connected system
-# 1. Download nodeadm binary
-curl -L -o nodeadm https://github.com/awslabs/amazon-eks-ami/releases/download/nodeadm-v0.1.0/nodeadm-linux-amd64
-
-# 2. Download required dependency packages (e.g., Ubuntu)
-apt-get download containerd.io kubelet kubectl
-
-# 3. Transfer all files to air-gap environment
-
-# Install in air-gap environment
-# 4. Install nodeadm
-chmod +x nodeadm
-sudo mv nodeadm /usr/local/bin/
-
-# 5. Install dependency packages
-sudo dpkg -i containerd.io_*.deb kubelet_*.deb kubectl_*.deb
-
-# 6. Run nodeadm
-sudo nodeadm init --config-source file://nodeadm-config.yaml
-```
+**Explanation:** VPC CNI is not the Hybrid Nodes CNI. Use actual deployed manifests and approved digests. Private ECR pulls also need the S3 layer path and workload image-pull credentials; listing repositories is insufficient.
 
 </details>
 
-### 7. Which is NOT an environment variable that needs to be set when configuring a proxy server in an air-gap environment?
+### 7. What is a valid pre-bootstrap nodeadm configuration check?
 
-A. HTTP_PROXY
-B. HTTPS_PROXY
-C. NO_PROXY
-D. FTP_PROXY
+A. nodeadm init --dry-run
+
+B. nodeadm config check --config-source file:///etc/eks/nodeconfig.yaml
+
+C. curl -k followed by reporting readiness
+
+D. Skip a missing config file and return success
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: D. FTP_PROXY**
+**Answer: B. nodeadm config check --config-source file:///etc/eks/nodeconfig.yaml**
 
-**Explanation:**
-The proxy environment variables commonly used in container and Kubernetes environments are HTTP_PROXY, HTTPS_PROXY, and NO_PROXY. FTP_PROXY is rarely used.
-
-```bash
-# Set proxy environment variables
-export HTTP_PROXY=http://proxy.company.local:8080
-export HTTPS_PROXY=http://proxy.company.local:8080
-export NO_PROXY=localhost,127.0.0.1,.cluster.local,10.0.0.0/8
-
-# containerd proxy configuration
-sudo mkdir -p /etc/systemd/system/containerd.service.d
-cat <<EOF | sudo tee /etc/systemd/system/containerd.service.d/proxy.conf
-[Service]
-Environment="HTTP_PROXY=http://proxy.company.local:8080"
-Environment="HTTPS_PROXY=http://proxy.company.local:8080"
-Environment="NO_PROXY=localhost,127.0.0.1,.cluster.local"
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl restart containerd
-```
-
-**Addresses to include in NO_PROXY:**
-- Cluster internal services (*.cluster.local)
-- Pod/Service CIDR
-- Node IP range
-- Harbor registry address
+**Explanation:** Use a populated, protected configuration file. config check validates configuration; it does not prove private network operation or register the node. The inspected init command has no --dry-run flag.
 
 </details>
 
-### 8. Which is NOT a valid checklist item for verifying air-gap environment readiness?
+### 8. Which proxy change best preserves an existing kube-proxy DaemonSet?
 
-A. Harbor registry accessibility
-B. Required container images presence
-C. Internet connection speed test
-D. DNS resolution capability
+A. Replace /containers/0/env with a new JSON Patch array
+
+B. Delete NODE_NAME because proxies do not need it
+
+C. Use a reviewed strategic merge by container/env name and retain existing arguments and NODE_NAME
+
+D. Always exclude .eks.amazonaws.com from the proxy
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Internet connection speed test**
+**Answer: C. Use a reviewed strategic merge by container/env name and retain existing arguments and NODE_NAME**
 
-**Explanation:**
-By definition, an air-gap environment has no internet connection, so internet speed testing is meaningless. Air-gap readiness verification checklist:
-
-```bash
-# 1. Verify Harbor registry access
-curl -k https://harbor.airgap.local/api/v2.0/health
-
-# 2. Verify required images exist
-docker pull harbor.airgap.local/library/pause:3.9
-
-# 3. Verify DNS resolution
-nslookup harbor.airgap.local
-
-# 4. Verify nodeadm binary
-nodeadm version
-
-# 5. Verify dependency packages
-dpkg -l | grep -E "containerd|kubelet"
-
-# 6. Verify TLS certificates
-openssl s_client -connect harbor.airgap.local:443 -showcerts
-```
-
-**Verification script example:**
-```bash
-#!/bin/bash
-echo "=== Air-gap Environment Verification ==="
-
-# Harbor connection
-if curl -sk https://harbor.airgap.local/api/v2.0/health | grep -q "healthy"; then
-  echo "[OK] Harbor is healthy"
-else
-  echo "[FAIL] Harbor connection failed"
-fi
-
-# Required images check
-REQUIRED_IMAGES="pause:3.9 coredns:v1.10.1"
-for img in $REQUIRED_IMAGES; do
-  if docker manifest inspect harbor.airgap.local/library/$img > /dev/null 2>&1; then
-    echo "[OK] $img exists"
-  else
-    echo "[FAIL] $img missing"
-  fi
-done
-```
+**Explanation:** A JSON Patch add targeting an existing env member can replace the entire array. Scope the patch to kube-proxy and preserve other values. The broad .eks.amazonaws.com bypass also matches the public hybrid-assets download host.
 
 </details>
 
-### 9. What is the recommended method for updating container images when operating EKS Hybrid Nodes in an air-gap environment?
+### 9. What is required before using a transferred OCI image archive?
 
-A. Run docker pull directly on nodes
-B. Establish a periodic image mirroring and offline transfer process
-C. Use only fixed versions without image updates
-D. Temporarily allow internet connection
+A. Only a successful tar import
+
+B. Verification of the approved hash, digest/platform content, destination references and eventual runtime pull behavior
+
+C. Disabling source registry TLS to avoid certificate failures
+
+D. Assuming the builder's architecture is the only one needed
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Establish a periodic image mirroring and offline transfer process**
+**Answer: B. Verification of the approved hash, digest/platform content, destination references and eventual runtime pull behavior**
 
-**Explanation:**
-Air-gap environments require a systematic image management process:
-
-```
-Image Update Workflow:
-
-[Internet-connected Environment]    [Air-gap Environment]
-+-----------------------+           +-----------------------+
-| 1. Check/download     |           | 4. Load images        |
-|    image list         |           |                       |
-| 2. Vulnerability scan | --------> | 5. Push to Harbor     |
-| 3. Package as tar     | Offline   | 6. Update deployments |
-+-----------------------+ Transfer  +-----------------------+
-```
-
-```bash
-# Image list management (images.txt)
-public.ecr.aws/eks-distro/kubernetes/pause:3.9
-public.ecr.aws/eks-distro/coredns/coredns:v1.10.1
-docker.io/library/nginx:1.25
-
-# Batch download script
-#!/bin/bash
-while read -r image; do
-  echo "Pulling $image..."
-  docker pull "$image"
-  name=$(echo "$image" | tr '/:' '_')
-  docker save "$image" -o "${name}.tar"
-done < images.txt
-
-# Batch upload script (air-gap environment)
-#!/bin/bash
-for tarfile in *.tar; do
-  docker load -i "$tarfile"
-  # Retag and push to Harbor
-done
-```
-
-**Recommendations:**
-- Set monthly or quarterly image update cycles
-- Establish emergency update procedures for security vulnerability patches
-- Image signing and integrity verification
+**Explanation:** Skopeo --all preserves the platform list and --preserve-digests fails if a digest cannot be retained. Import names, the containerd k8s.io namespace, imagePullPolicy and garbage collection still affect whether the real Pod can start.
 
 </details>
 
-### 10. What is the correct method to optimize bandwidth when mirroring images in Harbor?
+### 10. Which update practice is appropriate for the private artifact repository?
 
-A. Retransfer entire images every time
-B. Use layer-based incremental transfer and compression
-C. Process identically regardless of image size
-D. Rebuild every time instead of mirroring
+A. Automatically overwrite production latest keys every week
+
+B. Treat AccessDenied from head-object as a missing object
+
+C. Approve a new immutable candidate after provenance, compatibility and representative-node validation
+
+D. Promise 50–80% bandwidth savings for every environment
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Use layer-based incremental transfer and compression**
+**Answer: C. Approve a new immutable candidate after provenance, compatibility and representative-node validation**
 
-**Explanation:**
-Container images are composed of layers, and transferring only changed layers can significantly save bandwidth:
-
-```bash
-# Efficient image copy using skopeo
-skopeo copy \
-  --src-tls-verify=false \
-  docker://source-registry.com/myapp:v1 \
-  docker://harbor.airgap.local/myapp:v1
-
-# Layer-based copy using crane
-crane copy source-registry.com/myapp:v1 harbor.airgap.local/myapp:v1
-```
-
-**Optimization Strategies:**
-
-| Method | Description | Savings |
-|--------|-------------|---------|
-| Layer caching | Transfer only changed layers | 50-80% |
-| Compression | Apply gzip/zstd compression | 30-50% |
-| Multi-architecture | Mirror only required architectures | 50% |
-| Tag filtering | Mirror only required tags | Variable |
-
-```yaml
-# Filtering in Harbor replication policy
-{
-  "filters": [
-    {"type": "tag", "value": "v*"},
-    {"type": "label", "value": "production=true"}
-  ]
-}
-```
+**Explanation:** Use an owned bucket, explicit expected owner, separate publisher/reader permissions and stop on unknown errors. Conditional object writes do not make a whole upload atomic. Earlier bandwidth percentages are unverified historical illustrations, not guaranteed measurements.
 
 </details>
 

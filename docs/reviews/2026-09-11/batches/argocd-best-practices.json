@@ -1,0 +1,126 @@
+[
+  {
+    "path": "ko/gitops/argocd/09-best-practices.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed complete article/quiz; corrected current-version operational guidance, runnable promotion/config examples and staged recovery.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/tree/v3.5.2",
+      "https://github.com/argoproj/argo-helm/tree/argo-cd-10.8.4/charts/argo-cd",
+      "https://github.com/kubernetes-sigs/kustomize/releases/tag/kustomize/v5.8.1",
+      "https://github.com/peter-evans/create-pull-request/tree/v8.1.1",
+      "https://github.com/vmware-tanzu/velero/blob/main/config/crd/v1/bases/velero.io_schedules.yaml"
+    ],
+    "findings": [
+      "Argo3.5.2/chart10.8.4/Kustomize5.8.1; all Applications have project/destination/namespace; image transformations fixed after reproducing unchanged v1.0.0 instead of v1.2.3.",
+      "Promotion workflow uses validated digest env, pinned actions, verified Kustomize and explicit PR token/required-check prerequisites; no script injection/raw version interpolation.",
+      "Removed unsupported app-count sizing thresholds, wrong env/CM keys and resource patch container names; chart-coordinated cluster sharding, optional HPA and scoped ignoreDifferences.",
+      "Encryption-first backups include separate namespace-config snapshot; export scope excludes many custom settings. Staged isolated DR with paused controllers, reviewed policies/operations and original replica restoration.",
+      "Removed kubectl rename namespace, namespace deletion, global sync and generic force/pod-delete recovery. Pinned ownership-preserving upgrades and full migration qualification.",
+      "EKS role prerequisites/internalHTTPS ALB/grpc-web, original autosync policy restoration and actual cluster upgrade scope.",
+      "Quiz ambiguity/self-management misconception; wrong English repository image placement; diagram immediate sync/CreateNamespace claims."
+    ],
+    "validation": [
+      "43fences20YAML18Bash5fullArgoCRDs pass.",
+      "3actualHelm10.8.4 renders pass:resources+tuning/HPA/sharding; correct container, env,CM keys,replicas and CPU-onlyHPA.",
+      "Actual Kustomize5.8.1 ARM64 overlay image/name/selector/replicas validated; exact digest promotion and5input guardcases pass. OfficialAMD64+ARM64archives hashes verified.",
+      "actionlint workflow, VeleroScheduleofficialv1schema and9ArgoCLI commandhelp/flagschecks pass.",
+      "3diagrams9/9composition+4viewportcontainment,KO2light+ENdark inspected;PNGsregenerated.",
+      "No live cluster upgrade/DR,GitHubPR,registryimagepullorAWSoperation performed."
+    ],
+    "reviewedSha256": "05db3813964165d647fc3bec0ec1ab98cb8e13ebcbaac5a3e8e933d6e7397233"
+  },
+  {
+    "path": "ko/quizzes/gitops/argocd/09-best-practices-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed complete article/quiz; corrected current-version operational guidance, runnable promotion/config examples and staged recovery.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/tree/v3.5.2",
+      "https://github.com/argoproj/argo-helm/tree/argo-cd-10.8.4/charts/argo-cd",
+      "https://github.com/kubernetes-sigs/kustomize/releases/tag/kustomize/v5.8.1",
+      "https://github.com/peter-evans/create-pull-request/tree/v8.1.1",
+      "https://github.com/vmware-tanzu/velero/blob/main/config/crd/v1/bases/velero.io_schedules.yaml"
+    ],
+    "findings": [
+      "Argo3.5.2/chart10.8.4/Kustomize5.8.1; all Applications have project/destination/namespace; image transformations fixed after reproducing unchanged v1.0.0 instead of v1.2.3.",
+      "Promotion workflow uses validated digest env, pinned actions, verified Kustomize and explicit PR token/required-check prerequisites; no script injection/raw version interpolation.",
+      "Removed unsupported app-count sizing thresholds, wrong env/CM keys and resource patch container names; chart-coordinated cluster sharding, optional HPA and scoped ignoreDifferences.",
+      "Encryption-first backups include separate namespace-config snapshot; export scope excludes many custom settings. Staged isolated DR with paused controllers, reviewed policies/operations and original replica restoration.",
+      "Removed kubectl rename namespace, namespace deletion, global sync and generic force/pod-delete recovery. Pinned ownership-preserving upgrades and full migration qualification.",
+      "EKS role prerequisites/internalHTTPS ALB/grpc-web, original autosync policy restoration and actual cluster upgrade scope.",
+      "Quiz ambiguity/self-management misconception; wrong English repository image placement; diagram immediate sync/CreateNamespace claims."
+    ],
+    "validation": [
+      "43fences20YAML18Bash5fullArgoCRDs pass.",
+      "3actualHelm10.8.4 renders pass:resources+tuning/HPA/sharding; correct container, env,CM keys,replicas and CPU-onlyHPA.",
+      "Actual Kustomize5.8.1 ARM64 overlay image/name/selector/replicas validated; exact digest promotion and5input guardcases pass. OfficialAMD64+ARM64archives hashes verified.",
+      "actionlint workflow, VeleroScheduleofficialv1schema and9ArgoCLI commandhelp/flagschecks pass.",
+      "3diagrams9/9composition+4viewportcontainment,KO2light+ENdark inspected;PNGsregenerated.",
+      "No live cluster upgrade/DR,GitHubPR,registryimagepullorAWSoperation performed."
+    ],
+    "reviewedSha256": "cbe96467924fdc2e6e80283891f03f72545fdcee97b746a352d846eeec3250d8"
+  },
+  {
+    "path": "en/gitops/argocd/09-best-practices.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed complete article/quiz; corrected current-version operational guidance, runnable promotion/config examples and staged recovery.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/tree/v3.5.2",
+      "https://github.com/argoproj/argo-helm/tree/argo-cd-10.8.4/charts/argo-cd",
+      "https://github.com/kubernetes-sigs/kustomize/releases/tag/kustomize/v5.8.1",
+      "https://github.com/peter-evans/create-pull-request/tree/v8.1.1",
+      "https://github.com/vmware-tanzu/velero/blob/main/config/crd/v1/bases/velero.io_schedules.yaml"
+    ],
+    "findings": [
+      "Argo3.5.2/chart10.8.4/Kustomize5.8.1; all Applications have project/destination/namespace; image transformations fixed after reproducing unchanged v1.0.0 instead of v1.2.3.",
+      "Promotion workflow uses validated digest env, pinned actions, verified Kustomize and explicit PR token/required-check prerequisites; no script injection/raw version interpolation.",
+      "Removed unsupported app-count sizing thresholds, wrong env/CM keys and resource patch container names; chart-coordinated cluster sharding, optional HPA and scoped ignoreDifferences.",
+      "Encryption-first backups include separate namespace-config snapshot; export scope excludes many custom settings. Staged isolated DR with paused controllers, reviewed policies/operations and original replica restoration.",
+      "Removed kubectl rename namespace, namespace deletion, global sync and generic force/pod-delete recovery. Pinned ownership-preserving upgrades and full migration qualification.",
+      "EKS role prerequisites/internalHTTPS ALB/grpc-web, original autosync policy restoration and actual cluster upgrade scope.",
+      "Quiz ambiguity/self-management misconception; wrong English repository image placement; diagram immediate sync/CreateNamespace claims."
+    ],
+    "validation": [
+      "43fences20YAML18Bash5fullArgoCRDs pass.",
+      "3actualHelm10.8.4 renders pass:resources+tuning/HPA/sharding; correct container, env,CM keys,replicas and CPU-onlyHPA.",
+      "Actual Kustomize5.8.1 ARM64 overlay image/name/selector/replicas validated; exact digest promotion and5input guardcases pass. OfficialAMD64+ARM64archives hashes verified.",
+      "actionlint workflow, VeleroScheduleofficialv1schema and9ArgoCLI commandhelp/flagschecks pass.",
+      "3diagrams9/9composition+4viewportcontainment,KO2light+ENdark inspected;PNGsregenerated.",
+      "No live cluster upgrade/DR,GitHubPR,registryimagepullorAWSoperation performed."
+    ],
+    "reviewedSha256": "c3ce2cbb4827ba5872ebb8836d480f39bea5ac40e35e5e015ed95e53ab9708aa"
+  },
+  {
+    "path": "en/quizzes/gitops/argocd/09-best-practices-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed complete article/quiz; corrected current-version operational guidance, runnable promotion/config examples and staged recovery.",
+    "sources": [
+      "https://github.com/argoproj/argo-cd/tree/v3.5.2",
+      "https://github.com/argoproj/argo-helm/tree/argo-cd-10.8.4/charts/argo-cd",
+      "https://github.com/kubernetes-sigs/kustomize/releases/tag/kustomize/v5.8.1",
+      "https://github.com/peter-evans/create-pull-request/tree/v8.1.1",
+      "https://github.com/vmware-tanzu/velero/blob/main/config/crd/v1/bases/velero.io_schedules.yaml"
+    ],
+    "findings": [
+      "Argo3.5.2/chart10.8.4/Kustomize5.8.1; all Applications have project/destination/namespace; image transformations fixed after reproducing unchanged v1.0.0 instead of v1.2.3.",
+      "Promotion workflow uses validated digest env, pinned actions, verified Kustomize and explicit PR token/required-check prerequisites; no script injection/raw version interpolation.",
+      "Removed unsupported app-count sizing thresholds, wrong env/CM keys and resource patch container names; chart-coordinated cluster sharding, optional HPA and scoped ignoreDifferences.",
+      "Encryption-first backups include separate namespace-config snapshot; export scope excludes many custom settings. Staged isolated DR with paused controllers, reviewed policies/operations and original replica restoration.",
+      "Removed kubectl rename namespace, namespace deletion, global sync and generic force/pod-delete recovery. Pinned ownership-preserving upgrades and full migration qualification.",
+      "EKS role prerequisites/internalHTTPS ALB/grpc-web, original autosync policy restoration and actual cluster upgrade scope.",
+      "Quiz ambiguity/self-management misconception; wrong English repository image placement; diagram immediate sync/CreateNamespace claims."
+    ],
+    "validation": [
+      "43fences20YAML18Bash5fullArgoCRDs pass.",
+      "3actualHelm10.8.4 renders pass:resources+tuning/HPA/sharding; correct container, env,CM keys,replicas and CPU-onlyHPA.",
+      "Actual Kustomize5.8.1 ARM64 overlay image/name/selector/replicas validated; exact digest promotion and5input guardcases pass. OfficialAMD64+ARM64archives hashes verified.",
+      "actionlint workflow, VeleroScheduleofficialv1schema and9ArgoCLI commandhelp/flagschecks pass.",
+      "3diagrams9/9composition+4viewportcontainment,KO2light+ENdark inspected;PNGsregenerated.",
+      "No live cluster upgrade/DR,GitHubPR,registryimagepullorAWSoperation performed."
+    ],
+    "reviewedSha256": "18fdaee950215280e953c52c390a68ad8c19345576770322c2222de24a89be19"
+  }
+]

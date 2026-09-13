@@ -1,6 +1,6 @@
 # EKS 멀티 계정·멀티 클러스터 아키텍처
 
-> **마지막 업데이트**: 2026년 9월 9일
+> **마지막 업데이트**: 2026년 9월 13일
 
 ## 1. 클러스터 수용 방식
 
@@ -13,19 +13,19 @@
 | Domain별 EKS | 도메인마다 전용 클러스터 |
 | **Shared + Dedicated** | 일반 워크로드는 공용 클러스터, 강한 tenant·quota·SLO 요구가 있는 워크로드만 전용 클러스터로 분리 |
 
-Shared + Dedicated 조합이 대부분의 조직에 현실적인 시작점입니다. 문제는 "언제 전용 클러스터로 분리할 것인가"를 감으로 판단하지 않고, 측정 가능한 신호로 정의하는 것입니다.
+Shared + Dedicated는 검토할 시작점입니다. 아래 임계값은 조직별 운영 예시이며 AWS의 자동 분리 기준이 아닙니다. 기본 quota와 승인된 실제 quota를 구분하고 SLO·성장률·운영 역량을 함께 평가합니다.
 
 | 신호 | 측정 방법 | 분리 threshold |
 |---|---|---|
 | Managed node group 수 | EKS API | 25 / 30 |
 | Access entry 수 | EKS API | 2,000 / 3,000 |
 | Control plane API throttling | CloudWatch, 429 로그 | 지속적 429 발생 |
-| etcd 크기·객체 수 | `apiserver_storage_size_bytes` | AWS 권고 한도 접근 시 |
+| etcd 크기·객체 수 | 해당 EKS 버전이 제공하는 control-plane metric과 객체 inventory | 제공 metric·권고 한도 확인 후 경고값 결정 |
 | NAU (Network Address Usage) per VPC | VPC 콘솔·CloudWatch | 50,000 / 64,000 (또는 200,000 / 256,000) |
 | Upgrade blast radius | 클러스터에 배포된 CUJ 수 | CUJ 2개 이상이면 분리 검토 |
 | Add-on 변경 주기 충돌 | 팀별 add-on 버전 요구 차이 | 상충 요구 발생 시 분리 |
 
-이 표의 상한값에 근접했을 때 분리하는 것이 아니라, **분리 결정 자체를 이 지표들의 threshold로 자동화**하는 것이 목표입니다.
+임계값 도달은 검토를 시작하는 신호입니다. quota 조정·불필요한 리소스 정리·분할 비용을 비교하고, 클러스터 분리는 검증된 계획과 rollback 절차로 진행합니다.
 
 ## 2. A/B EKS Runtime: 두 클러스터로 장애 경계 나누기
 
@@ -33,7 +33,7 @@ Shared + Dedicated 조합이 대부분의 조직에 현실적인 시작점입니
 
 ### 무엇으로부터 보호하는가를 먼저 정의한다
 
-EKS managed control plane은 이미 Multi-AZ로 동작하고, ARC(Application Recovery Controller)의 zonal shift/autoshift는 **data plane에만** 작용합니다. 즉 A/B 이중화의 가치는 "AZ 장애 대비"가 아니라 **조직이 직접 만들어내는 장애**에 대한 방어입니다.
+EKS managed control plane은 Multi-AZ이며 ARC zonal shift/autoshift는 data plane에 작용합니다. A/B 구성은 아래와 같은 클러스터별 장애를 격리할 수 있습니다. 같은 VPC·DNS·계정·Region·데이터 계층을 공유하면 해당 공통 장애는 남으므로 AZ 또는 Region 장애 보호를 자동으로 보장하지 않습니다.
 
 - 클러스터 업그레이드 실패
 - Add-on(CNI/CoreDNS/CSI) 회귀
@@ -43,15 +43,17 @@ EKS managed control plane은 이미 Multi-AZ로 동작하고, ARC(Application Re
 
 이 장애 목록을 명문화하고, "A/B로 나눈 뒤 이 목록의 장애가 실제로 한쪽으로 격리되는가"를 POC의 성공 기준으로 삼아야 합니다. "가용성이 향상됐다"는 추상적 표현으로는 검증할 수 없습니다.
 
-### CoreDNS가 가장 흔한 단일 실패 지점
+<span id="coredns가-가장-흔한-단일-실패-지점"></span>
 
-A/B 구조와 AZ 이중화 모두에서, CoreDNS가 가장 흔한 단일 실패 지점입니다. 확인해야 할 항목:
+### DNS의 공통 장애와 용량 확인
+
+DNS는 공통 의존성이므로 replica·AZ 분산·용량을 확인합니다. 장애 빈도 자료 없이 CoreDNS를 “가장 흔한” 단일 장애 지점으로 단정하지 않습니다. Auto Mode 및 혼합 노드는 실제 사용 중인 DNS 경로를 먼저 확인합니다.
 
 - `replicaCount`와 `topologySpreadConstraints`가 AZ에 실제로 분산되어 있는가
 - CoreDNS add-on의 autoscaling(`{"autoScaling":{"enabled":true}}`) 또는 HPA / cluster-proportional-autoscaler 적용 여부
 - 한 AZ를 제거했을 때 QPS·지연 변화
 
-**EC2 인스턴스의 ENI 하나가 Route 53 Resolver로 보낼 수 있는 패킷은 초당 1,024개(조정 불가)**입니다. Pod 밀도가 높은 노드에서는 이 한도가 DNS 실패의 실제 원인이 될 수 있습니다. NodeLocal DNS 도입을 검토하세요.
+**EC2 link-local 서비스에는 초당 1,024 packet 한도가 있으며 DNS·IMDS·NTP 등의 트래픽이 합산됩니다.** VPC DNS 문서의 ENI 한도와 실제 ENA `linklocal_allowance_exceeded`를 함께 확인하세요. 캐시와 DNS replica 배치를 검토하되, 고밀도 노드라는 이유만으로 DNS 장애 원인을 확정하지 않습니다.
 
 ### ARC zonal shift는 사전 확보된 여유 capacity 없이는 오히려 장애를 유발한다
 
@@ -70,27 +72,27 @@ AWS 문서가 명시적으로 경고하는 부분입니다. zonal shift가 발�
 - **EKS Fargate에서는 동작하지 않습니다.**
 - Self-managed Karpenter는 **1.12 이상**에서 지원합니다.
 - EKS Auto Mode는 추가 설정 없이 연동되며, node provisioning 중단과 consolidation/drift 같은 voluntary disruption까지 자동으로 처리합니다.
-- Stateful 워크로드는 별도 판단이 필요합니다 — 정상 AZ의 새 Pod는 장애 AZ에 바인딩된 EBS 볼륨(PV)에 attach할 수 없습니다. **AZ 수와 무관하게 PVC를 쓰는 워크로드는 zonal EBS에 묶여 있습니다.**
+- Stateful 워크로드는 storage별로 검토합니다. EBS PV는 AZ에 종속되어 다른 AZ에 직접 attach할 수 없습니다. 모든 PVC가 EBS인 것은 아니며 EFS 등 다른 저장소는 가용성·복구 특성이 다릅니다.
 
-> **설계 규칙 권장**: "ARC zonal autoshift 대상 클러스터에는 1-AZ 워크로드를 두지 않는다"를 명문 규칙으로 두세요. 같은 클러스터에 1-AZ 워크로드가 섞여 있으면, autoshift practice run이 그 워크로드를 중단시킵니다.
+> **설계 제안**: autoshift 전에 각 서비스와 DNS·스토리지의 N-1 동작을 검증하세요. single-AZ endpoint는 fail-safe로 남을 수 있으므로 practice run이 항상 중단시킨다고 단정하지 않습니다. 이 동작은 장애 AZ가 정상 서비스를 제공한다는 보장도 아닙니다.
 
 ### 사전 capacity 배수 계산의 함정
 
 "2-AZ면 약 2배, 3-AZ(N-1 기준)면 약 1.5배의 사전 capacity가 필요하다"는 계산은 산술적으로는 맞지만, 세 가지를 놓치기 쉽습니다.
 
-1. **노드 추가 소요 시간(scaling lag)** — Pod priority와 over-provisioning(placeholder Pod)으로 스케줄링 지연을 제거하는 것이 표준 해법입니다.
+1. **노드 추가 지연** — placeholder Pod와 우선순위로 이미 확보된 capacity를 활용할 수 있지만 node provisioning·이미지 pull·애플리케이션 startup 지연까지 제거하지는 않습니다.
 2. **정상 AZ의 신규 capacity 확보가 다른 고객 수요로 제약될 수 있다는 위험** — 이건 가설이 아니라 AWS 문서가 "zonal impairment 시 healthy AZ에 신규 노드가 추가되지 못하는 compute capacity constraint 위험"을 실제로 명시하고 있는 사항입니다.
-3. **상호 의존하는 Pod의 AZ 공존(co-location)** — topology spread만으로는 부족하고 pod affinity를 병행해야 합니다. CUJ 서비스 그래프의 모든 hop이 모든 AZ에 존재하는지 확인해야 합니다.
+3. **서비스 의존성과 AZ 배치** — surviving AZ에서 CUJ의 모든 필수 hop에 도달하고 부하를 처리할 수 있어야 합니다. topology spread·affinity·cross-zone fallback을 요구에 맞게 조합합니다. strict affinity가 오히려 복구를 막지 않는지도 시험합니다.
 
 ### cross-AZ 비용 최적화
 
 측정 → 최적화 → 잔여 비용 비교의 순서로 접근합니다.
 
 1. Flow Logs와 ENI/AZ mapping으로 상위 비용 경로를 특정합니다(CUR만으로는 source/destination AZ pair를 확인할 수 없습니다).
-2. same-zone routing, `trafficDistribution`(최신 Kubernetes 버전에서는 필드명·값이 `PreferSameZone`/`PreferSameNode`로 바뀌었으므로 **목표 EKS 버전을 먼저 고정한 뒤 그 버전의 필드명으로 기술**), topology spread, ALB IP target, NAT/endpoint의 zonal locality, data locality를 순서대로 적용합니다.
+2. same-zone routing, Service의 `spec.trafficDistribution`, topology spread, ALB IP target, NAT/endpoint locality와 data locality를 검토합니다. `trafficDistribution` 필드 자체가 이름을 바꾼 것은 아닙니다. `PreferClose`, `PreferSameZone`, `PreferSameNode`의 지원 여부와 feature gate는 목표 Kubernetes/EKS 버전에서 확인합니다.
 3. 적용 후 잔여 cross-AZ 비용을 비교합니다.
 
-ALB target group의 cross-zone load balancing을 비활성화하면 비용을 줄일 수 있지만 제약이 큽니다 — sticky session 불가, Lambda target 불가, **target group의 특정 AZ에 healthy target이 하나도 없으면 그 AZ로 들어온 요청이 전부 503**이 됩니다. AZ별 capacity를 확실히 보장할 수 없다면 기본값(활성화 상태) 유지가 AWS 권고입니다.
+ALB 자체의 cross-zone regional data transfer에는 추가 전송 요금이 없으므로 이를 끄면 무조건 비용이 줄어든다고 계산하지 않습니다. target group 수준에서 끄면 target stickiness·Lambda target이 지원되지 않습니다. target이 없는 AZ의 요청은 503이 될 수 있고, target이 있으나 unhealthy인 경우에는 DNS·routing failover 조건이 적용됩니다. 이 둘을 구분하고 AZ별 capacity를 보장할 수 없다면 기본 활성화 설정을 유지합니다.
 
 ### 업그레이드 전략은 A/B의 존재 이유와 직결된다
 
@@ -124,4 +126,7 @@ EKS 가용성 설계는 그 위에 올라가는 VPC 구조와 분리해서 생�
 - [Static stability using Availability Zones](https://aws.amazon.com/builders-library/static-stability-using-availability-zones/)
 - [Well-Architected: Multi-AZ](https://docs.aws.amazon.com/wellarchitected/latest/framework/rel_fault_isolation_multiaz_region_system.html)
 - [ALB target group attributes](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-target-group-attributes.html)
-- [ALB target group health](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health.html)
+- [ALB target group health](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html#target-group-health)
+- [ALB cross-zone data transfer](https://aws.amazon.com/elasticloadbalancing/faqs/)
+- [Amazon DNS quotas](https://docs.aws.amazon.com/vpc/latest/userguide/AmazonDNS-concepts.html)
+- [Kubernetes Service traffic distribution](https://kubernetes.io/docs/concepts/services-networking/service/#traffic-distribution)

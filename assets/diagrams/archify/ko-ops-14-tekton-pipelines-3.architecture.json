@@ -16,7 +16,7 @@
           "github-interceptor",
           "cel-interceptor"
         ],
-        "note": "Webhook을 EventListener가 받고, GitHub Interceptor가 Secret을 검증한 뒤 CEL Interceptor가 브랜치·액션을 필터링한다."
+        "note": "HMAC 후 승인 저장소·main·삭제 아님·40자리 SHA를 확인합니다."
       },
       {
         "id": "map-create",
@@ -50,7 +50,7 @@
       "id": "webhook",
       "type": "external",
       "label": "GitHub Webhook",
-      "sublabel": "push / PR 이벤트",
+      "sublabel": "보호된 main push",
       "pos": [
         40,
         90
@@ -78,7 +78,7 @@
       "id": "github-interceptor",
       "type": "security",
       "label": "GitHub Interceptor",
-      "sublabel": "Webhook Secret 검증",
+      "sublabel": "HMAC · push 타입",
       "pos": [
         460,
         90
@@ -92,7 +92,7 @@
       "id": "cel-interceptor",
       "type": "security",
       "label": "CEL Interceptor",
-      "sublabel": "브랜치·액션 필터",
+      "sublabel": "저장소 · ref · SHA",
       "pos": [
         670,
         90
@@ -106,7 +106,7 @@
       "id": "triggerbinding",
       "type": "backend",
       "label": "TriggerBinding",
-      "sublabel": "페이로드 파라미터 추출",
+      "sublabel": "전체 커밋 SHA",
       "pos": [
         670,
         280
@@ -120,7 +120,7 @@
       "id": "triggertemplate",
       "type": "backend",
       "label": "TriggerTemplate",
-      "sublabel": "PipelineRun 템플릿",
+      "sublabel": "고정된 실행·권한",
       "pos": [
         880,
         280
@@ -210,19 +210,18 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "수신과 검증",
+      "title": "요청 검증",
       "items": [
-        "EventListener는 Webhook을 받는 HTTP 서버를 Kubernetes에 배포한다",
-        "GitHub Interceptor는 Webhook Secret과 eventTypes를 검증한다",
-        "CEL Interceptor는 main 브랜치 push, PR opened/synchronize만 통과시킨다"
+        "GitHub HMAC과 push eventTypes",
+        "승인 저장소·브랜치·SHA·삭제 여부 검사"
       ]
     },
     {
       "dot": "emerald",
-      "title": "매핑과 생성",
+      "title": "실행 범위",
       "items": [
-        "TriggerBinding은 body.after, body.ref 등 페이로드 값을 파라미터로 추출한다",
-        "TriggerTemplate은 파라미터를 채워 PipelineRun을 생성한다"
+        "Git URL·이미지·SA는 신뢰된 정의에 고정",
+        "외부 PR에는 별도 권한·실행 환경"
       ]
     }
   ]

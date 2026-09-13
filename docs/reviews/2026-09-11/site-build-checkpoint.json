@@ -1,0 +1,130 @@
+{
+  "status": "passed_checkpoint",
+  "scope": "Frozen build snapshot, not a claim that the remaining full-content review is complete",
+  "buildLog": "/tmp/kubernetes-docs-full-review/build-checkpoint-final-retry.log",
+  "preview": "http://127.0.0.1:4193/kubernetes-docs/",
+  "site": {
+    "sitemapUrls": 1189,
+    "uniqueSitemapUrls": 1189,
+    "localeHtml": {
+      "ko": 594,
+      "en": 594
+    },
+    "rawManifestDocuments": 642,
+    "outsideLocaleSitemapEntries": [
+      "site root"
+    ],
+    "unexpectedLocaleHtml": 0
+  },
+  "browser": [
+    {
+      "path": "ko/service-mesh/istio/01-installation",
+      "width": 1920,
+      "status": 200,
+      "title": "설치 및 초기 설정 ​",
+      "viewport": 1920,
+      "scrollWidth": 1920,
+      "articleWidth": 952,
+      "visibleBrokenImages": [],
+      "pageErrors": [],
+      "screenshot": "ko-service-mesh-istio-01-installation-1920.png"
+    },
+    {
+      "path": "en/container-registry/01-docker-hub",
+      "width": 1920,
+      "status": 200,
+      "title": "Docker Hub ​",
+      "viewport": 1920,
+      "scrollWidth": 1920,
+      "articleWidth": 952,
+      "visibleBrokenImages": [],
+      "literalTemplate": 1,
+      "pageErrors": [],
+      "screenshot": "en-container-registry-01-docker-hub-1920.png"
+    },
+    {
+      "path": "ko/gitops/argocd/01-installation",
+      "width": 1920,
+      "status": 200,
+      "title": "ArgoCD 설치 및 구성 ​",
+      "viewport": 1920,
+      "scrollWidth": 1920,
+      "articleWidth": 952,
+      "visibleBrokenImages": [],
+      "pageErrors": [],
+      "screenshot": "ko-gitops-argocd-01-installation-1920.png"
+    },
+    {
+      "path": "en/storage/01-ebs-gp2-gp3-benchmark",
+      "width": 1920,
+      "status": 200,
+      "title": "EBS gp2 vs gp3 Measured Benchmark ​",
+      "viewport": 1920,
+      "scrollWidth": 1920,
+      "articleWidth": 952,
+      "visibleBrokenImages": [],
+      "pageErrors": [],
+      "screenshot": "en-storage-01-ebs-gp2-gp3-benchmark-1920.png"
+    },
+    {
+      "path": "ko/service-mesh/istio/01-installation",
+      "width": 390,
+      "status": 200,
+      "title": "설치 및 초기 설정 ​",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "articleWidth": 342,
+      "visibleBrokenImages": [],
+      "pageErrors": [],
+      "screenshot": "ko-service-mesh-istio-01-installation-390.png"
+    },
+    {
+      "path": "en/container-registry/01-docker-hub",
+      "width": 390,
+      "status": 200,
+      "title": "Docker Hub ​",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "articleWidth": 342,
+      "visibleBrokenImages": [],
+      "literalTemplate": 1,
+      "pageErrors": [],
+      "screenshot": "en-container-registry-01-docker-hub-390.png"
+    },
+    {
+      "path": "ko/gitops/argocd/01-installation",
+      "width": 390,
+      "status": 200,
+      "title": "ArgoCD 설치 및 구성 ​",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "articleWidth": 342,
+      "visibleBrokenImages": [],
+      "pageErrors": [],
+      "screenshot": "ko-gitops-argocd-01-installation-390.png"
+    },
+    {
+      "path": "en/storage/01-ebs-gp2-gp3-benchmark",
+      "width": 390,
+      "status": 200,
+      "title": "EBS gp2 vs gp3 Measured Benchmark ​",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "articleWidth": 342,
+      "visibleBrokenImages": [],
+      "pageErrors": [],
+      "screenshot": "en-storage-01-ebs-gp2-gp3-benchmark-390.png"
+    }
+  ],
+  "visualInspection": [
+    "ko Istio installation at1920px",
+    "en Docker Hub at390px"
+  ],
+  "testResult": "109/109 document tests passed, including2 inline-code regression tests",
+  "environment": "login=false, allowlisted env, no OTel attributes/endpoints, SDK and exporters disabled,8GiB Node heap matchesCI; browser blocked analytics/ads",
+  "limitations": [
+    "Four pages at two viewports; visible-image checks, not a screenshot review of every page",
+    "No production deployment or infrastructure example execution",
+    "Working-tree source review continues after this snapshot"
+  ]
+}

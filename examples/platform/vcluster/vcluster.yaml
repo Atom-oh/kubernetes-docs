@@ -1,0 +1,64 @@
+controlPlane:
+  distro:
+    k8s:
+      enabled: true
+      image:
+        tag: v1.36.3
+  backingStore:
+    database:
+      embedded:
+        enabled: true
+  statefulSet:
+    highAvailability:
+      replicas: 1
+    resources:
+      requests:
+        cpu: 200m
+        memory: 512Mi
+        ephemeral-storage: 1Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+        ephemeral-storage: 10Gi
+    persistence:
+      volumeClaim:
+        enabled: true
+        storageClass: gp3
+        size: 10Gi
+        retentionPolicy: Retain
+  service:
+    spec:
+      type: ClusterIP
+  ingress:
+    enabled: false
+sync:
+  fromHost:
+    nodes:
+      enabled: false
+    storageClasses:
+      enabled: true
+  toHost:
+    pods:
+      enabled: true
+    services:
+      enabled: true
+    configMaps:
+      enabled: true
+      all: false
+    secrets:
+      enabled: true
+      all: false
+    persistentVolumeClaims:
+      enabled: true
+    ingresses:
+      enabled: false
+    serviceAccounts:
+      enabled: false
+    networkPolicies:
+      enabled: false
+privateNodes:
+  enabled: false
+policies:
+  podSecurityStandard: restricted
+telemetry:
+  enabled: false

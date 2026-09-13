@@ -6,7 +6,7 @@
     "locale": "en",
     "output": "en-ai-ml-04-inference-frameworks-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "legend": {
       "entries": {
         "frontend": {
@@ -33,7 +33,7 @@
           "vllm",
           "sglang"
         ],
-        "note": "The LiteLLM gateway integrates 100+ model providers with cost tracking and routes requests to the NIM, vLLM and SGLang backends."
+        "note": "Adapt provider formats/authentication and verify supported features."
       },
       {
         "id": "dynamo",
@@ -45,7 +45,7 @@
           "vllm",
           "sglang"
         ],
-        "note": "NVIDIA Dynamo orchestrates vLLM, SGLang and TensorRT-LLM with disaggregated serving and intelligent routing; NIM runs on TensorRT-LLM."
+        "note": "Dynamo coordinates compatible backends; NIM2.0.12 documents vLLM0.27.1."
       },
       {
         "id": "distributed",
@@ -57,7 +57,7 @@
           "vllm",
           "sglang"
         ],
-        "note": "Ray Serve (managed by the KubeRay Operator) and AIBrix add distributed inference at scale and LoRA multi-tenancy on top of vLLM and SGLang."
+        "note": "KubeRay, Ray Serve and AIBrix have distinct roles; enforce tenant permissions separately."
       },
       {
         "id": "provision",
@@ -68,7 +68,7 @@
           "rayserve",
           "neuron"
         ],
-        "note": "Karpenter provisions the nodes needed by the NVIDIA stack, the open-source frameworks and AWS Neuron / Inferentia2 workloads."
+        "note": "Karpenter provisions supported nodes; it does not directly manage engines or model replicas."
       }
     ]
   },
@@ -91,7 +91,7 @@
       "id": "ollama",
       "type": "external",
       "label": "Ollama",
-      "sublabel": "Local runtime on llama.cpp",
+      "sublabel": "local runtime choices",
       "pos": [
         60,
         400
@@ -119,7 +119,7 @@
       "id": "aibrix",
       "type": "backend",
       "label": "AIBrix",
-      "sublabel": "LoRA · heterogeneous GPUs",
+      "sublabel": "adapter / routing / scaling",
       "pos": [
         480,
         280
@@ -217,7 +217,7 @@
       "id": "karpenter",
       "type": "cloud",
       "label": "Karpenter",
-      "sublabel": "GPU node autoscaling",
+      "sublabel": "node provisioning / reclamation",
       "pos": [
         780,
         640
@@ -305,11 +305,6 @@
       "to": "nim"
     },
     {
-      "id": "nim-trt",
-      "from": "nim",
-      "to": "trt"
-    },
-    {
       "id": "dynamo-trt",
       "from": "dynamo",
       "to": "trt"
@@ -346,21 +341,6 @@
       "to": "rayserve"
     },
     {
-      "id": "karpenter-rayserve",
-      "from": "karpenter",
-      "to": "rayserve",
-      "variant": "dashed"
-    },
-    {
-      "id": "karpenter-dynamo",
-      "from": "karpenter",
-      "to": "dynamo",
-      "variant": "dashed",
-      "label": "GPU node provisioning",
-      "fromSide": "top",
-      "toSide": "bottom"
-    },
-    {
       "id": "karpenter-neuron",
       "from": "karpenter",
       "to": "neuron",
@@ -369,13 +349,12 @@
   ],
   "cards": [
     {
-      "dot": "emerald",
-      "title": "Framework Selection Guide",
+      "dot": "cyan",
+      "title": "Selection criteria",
       "items": [
-        "Enterprise production with NVIDIA GPUs → NVIDIA NIM (optimized containers, support, monitoring)",
-        "High throughput with KV cache optimization → NVIDIA Dynamo (disaggregated serving, intelligent routing)",
-        "Distributed inference at scale → Ray Serve + vLLM / LoRA multi-tenancy → AIBrix",
-        "Cost optimization with AWS silicon → AWS Neuron + Inferentia2 (40-70% cheaper than GPUs)"
+        "No fixed speedup or savings is guaranteed by a feature.",
+        "Neuron:distinguish Inf2 NxD from the new Trn2/3 beta.",
+        "TGI is in maintenance mode; assess migration for existing systems."
       ]
     }
   ]

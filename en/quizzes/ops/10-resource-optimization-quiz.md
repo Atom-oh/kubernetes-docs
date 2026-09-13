@@ -1,175 +1,163 @@
-# Resource Optimization Quiz
+# Resource optimization quiz
 
-> **Related Document**: [Resource Optimization](../../ops/10-resource-optimization.md)
+> **Related document**: [Resource optimization](../../ops/10-resource-optimization.md)
 
-## Multiple Choice Questions
+## 1. Which statement correctly describes eviction under memory pressure?
 
-### 1. What is the difference between resource requests and limits in Kubernetes?
-
-- A) Requests are for CPU only, limits are for memory only
-- B) Requests are guaranteed resources for scheduling; limits are maximum allowed
-- C) Requests and limits are the same thing
-- D) Limits are guaranteed, requests are optional
+- A) QoS class alone determines the order
+- B) Usage above requests, Pod Priority and relative usage matter
+- C) Guaranteed pods can never be evicted
+- D) PDBs prevent every node-pressure eviction
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Requests are guaranteed resources for scheduling; limits are maximum allowed**
+**Answer: B**
 
-**Explanation:**
-Requests are the resources Kubernetes guarantees to a container and uses for scheduling decisions. Limits are the maximum resources a container can use. Exceeding CPU limits causes throttling; exceeding memory limits can cause OOM kills.
+QoS is useful but not an absolute eviction ordering. Distinguish container-limit OOM, memory-pressure eviction and DiskPressure.
 
 </details>
 
-### 2. Which QoS class gets the highest priority during node resource pressure?
+## 2. What does the CPU throttled-period ratio measure?
 
-- A) BestEffort
-- B) Burstable
-- C) Guaranteed
-- D) All classes have equal priority
+- A) The exact fraction of lost CPU time
+- B) The fraction of quota periods containing throttling
+- C) CPU request utilization
+- D) Average memory utilization
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) Guaranteed**
+**Answer: B**
 
-**Explanation:**
-Guaranteed pods (requests=limits for both CPU and memory) have the highest priority and are last to be evicted during resource pressure. BestEffort pods (no requests/limits) are evicted first, followed by Burstable pods.
+Threads share the quota. The period ratio alone does not determine lost time or prove that a higher limit is the right fix.
 
 </details>
 
-### 3. What causes CPU throttling in Kubernetes containers?
+## 3. Which statement about JVM heap and container memory is correct?
 
-- A) Not enough memory
-- B) Container exceeding its CPU limit during a CFS period
-- C) Network congestion
-- D) Disk I/O bottleneck
+- A) 75% is always optimal
+- B) Measure non-heap memory and RSS when choosing a ratio
+- C) MaxRAMPercentage always follows live Pod limit changes immediately
+- D) Kernel SIGKILL always produces a heap dump
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Container exceeding its CPU limit during a CFS period**
+**Answer: B**
 
-**Explanation:**
-The Linux CFS (Completely Fair Scheduler) enforces CPU limits over 100ms periods. If a container uses its quota early in the period, it's throttled (paused) until the next period begins. This is tracked in `cpu.cfs_throttled_us`.
+Metaspace, stacks, direct buffers and JNI need memory. Distinguish JVM ergonomics from cgroup limits, and Java OOME from SIGKILL.
 
 </details>
 
-### 4. What is the recommended JVM MaxRAMPercentage setting for containers?
+## 4. Why might setting JAVA_OPTS not apply JVM options?
 
-- A) 100%
-- B) 90%
-- C) 75%
-- D) 50%
+- A) It is a security option the JVM must reject
+- B) The JVM does not automatically read it unless the entrypoint passes it
+- C) Kubernetes does not support environment variables
+- D) Java 21 cannot run in containers
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) 75%**
+**Answer: B**
 
-**Explanation:**
-Setting MaxRAMPercentage to 75% leaves 25% of container memory for non-heap usage: metaspace, thread stacks, native memory, and OS overhead. Using higher values risks OOM kills when non-heap memory grows unexpectedly.
+Use JAVA_TOOL_OPTIONS or explicit java arguments and verify the actual VM.flags output.
 
 </details>
 
-### 5. In VPA, what does the "Initial" update mode do?
+## 5. Which statement about VPA upperBound is correct?
 
-- A) Updates pods continuously
-- B) Only sets resources when pods are first created
-- C) Deletes all existing pods
-- D) Disables VPA completely
+- A) Always copy it to the container memory limit
+- B) It is part of the request recommendation range, not the container limit
+- C) It is the HPA maximum replica count
+- D) It is the amount of memory that guarantees no OOM
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Only sets resources when pods are first created**
+**Answer: B**
 
-**Explanation:**
-"Initial" mode applies VPA recommendations only at pod creation time, not to running pods. This is useful with HPA since it avoids conflicts - VPA sets initial sizing, HPA handles scaling, and existing pods aren't disrupted.
+Distinguish target, lowerBound, upperBound and uncappedTarget. Initial mode can still affect HPA's denominator through new requests.
 
 </details>
 
-### 6. What Go runtime setting should be configured based on container CPU limits?
+## 6. Which statement about Go 1.25+ default GOMAXPROCS is correct?
 
-- A) GOGC
-- B) GOMAXPROCS
-- C) GOPATH
-- D) GOROOT
+- A) It always uses host CPUs and requires an external library
+- B) Subject to language-version/compatibility defaults, it considers quota and affinity; explicit settings disable automatic updates
+- C) It uses CPU requests alone
+- D) 500m always produces 1 in every environment
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) GOMAXPROCS**
+**Answer: B**
 
-**Explanation:**
-GOMAXPROCS controls the number of OS threads executing Go code. By default, Go uses all host CPUs, not container limits. Setting GOMAXPROCS to match container CPU limits (using automaxprocs library) prevents excessive context switching.
+The example was tested with Go 1.27.1 and go.mod 1.25+. Quota rounding and minimum-value conditions matter.
 
 </details>
 
-### 7. What is GOMEMLIMIT used for in Go applications?
+## 7. What limitation do GOMEMLIMIT and Node's old-space limit share?
 
-- A) Setting minimum memory allocation
-- B) Providing a soft memory limit hint to the garbage collector
-- C) Limiting the number of goroutines
-- D) Configuring swap memory
+- A) They do not completely bound process RSS
+- B) They forcibly free all native memory
+- C) They guarantee prevention of container OOM
+- D) They automatically change Pod requests
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Providing a soft memory limit hint to the garbage collector**
+**Answer: A**
 
-**Explanation:**
-GOMEMLIMIT tells the Go garbage collector the target memory ceiling. The GC triggers earlier as memory approaches this limit, reducing the risk of OOM kills while still utilizing available memory efficiently.
+Go's value is a runtime-managed soft limit; Node's option controls V8 old space. Account separately for native allocations and multiple workers.
 
 </details>
 
-### 8. For Python Gunicorn workers in containers, what's the recommended worker count formula?
+## 8. How should Gunicorn/Tokio worker counts be chosen?
 
-- A) 2 * CPU_CORES + 1
-- B) Based on container CPU limit, not host cores
-- C) Always use 1 worker
-- D) Use 100 workers for maximum throughput
+- A) A fixed multiple of host CPU count is sufficient
+- B) Verify actual settings and test quota, memory and workload behavior
+- C) Rust needs no concurrency limits because it has no GC
+- D) Thread/process counts do not affect memory
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Based on container CPU limit, not host cores**
+**Answer: B**
 
-**Explanation:**
-The classic formula (2*cores+1) uses host CPU count, which oversubscribes in containers. Worker count should be based on container CPU limits (e.g., 2-4 workers per CPU limit) to avoid resource contention and OOM issues.
+The configuration must actually read WEB_CONCURRENCY. Explicit Tokio worker_threads overrides the environment; the blocking pool is separate.
 
 </details>
 
-### 9. What happens to a container that exceeds its memory limit?
+## 9. How should OOM reason and Pending phase metrics be interpreted?
 
-- A) It gets CPU throttled
-- B) It is OOM killed by the kernel
-- C) It automatically scales horizontally
-- D) Memory is borrowed from other containers
+- A) Apply increase to the reason gauge for an exact OOM count
+- B) Count all Pending series to obtain the current Pending count
+- C) Evaluate 0/1 values and preserve the last-state limitation of reason gauges
+- D) Pending always means insufficient CPU
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) It is OOM killed by the kernel**
+**Answer: C**
 
-**Explanation:**
-Unlike CPU (which is throttled), memory limits are hard enforced. When a container exceeds its memory limit, the Linux OOM killer terminates processes in the container. Kubernetes then restarts the container based on its restart policy.
+Zero-valued Pending series exist. Combining recent restarts and the last OOM reason does not reconstruct every OOM in the interval.
 
 </details>
 
-### 10. What is the purpose of the VPA Recommender component?
+## 10. Which statement about Auto Mode bin-packing and placeholder pods is correct?
 
-- A) To restart pods with new resources
-- B) To analyze resource usage and generate resource recommendations
-- C) To manage node scaling
-- D) To validate resource configurations
+- A) A 4-vCPU instance always fits four CPU of application requests
+- B) A placeholder is an EC2 Capacity Reservation
+- C) Account for allocatable, overhead and scheduling constraints; placeholders do not guarantee capacity
+- D) preemptionPolicy Never prevents the pod from being preempted
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) To analyze resource usage and generate resource recommendations**
+**Answer: C**
 
-**Explanation:**
-The VPA Recommender watches actual resource usage of containers over time and generates recommendations for requests and limits. It considers CPU and memory usage patterns, peaks, and variance to suggest appropriate values.
+Never prevents this pod from preempting others. NodePool uses karpenter.sh/v1; the Auto Mode NodeClass group is eks.amazonaws.com.
 
 </details>

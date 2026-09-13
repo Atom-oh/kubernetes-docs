@@ -1,20 +1,20 @@
-# Storage
+# Almacenamiento
 
 > **Versiones compatibles**: Kubernetes 1.32, 1.33, 1.34
 > **Última actualización**: February 19, 2026
 
-En Kubernetes, el storage (almacenamiento) es una parte importante para almacenar y gestionar datos de aplicaciones en contenedores. En este capítulo, exploraremos en detalle los conceptos de storage de Kubernetes, incluidos Volumes, Persistent Volumes, Persistent Volume Claims y Storage Classes.
+En Kubernetes, el almacenamiento es una parte importante para guardar y administrar datos de aplicaciones en contenedores. En este capítulo, exploraremos en detalle los conceptos de almacenamiento de Kubernetes, incluidos Volumes, Persistent Volumes, Persistent Volume Claims y Storage Classes.
 
-## Lab Environment Setup
+## Configuración del entorno de laboratorio
 
 Para seguir los ejemplos de este documento, necesitarás las siguientes herramientas y entorno:
 
-### Required Tools
+### Herramientas requeridas
 - kubectl v1.34 o superior
-- Un cluster Kubernetes funcional (EKS, minikube, kind, etc.)
-- Storage provisioner (EBS CSI driver para EKS)
+- Un clúster de Kubernetes en funcionamiento (EKS, minikube, kind, etc.)
+- Proveedor de almacenamiento (controlador EBS CSI para EKS)
 
-### Storage Example Setup
+### Configuración del ejemplo de almacenamiento
 
 ```bash
 # Create namespace
@@ -55,97 +55,52 @@ EOF
 kubectl -n storage-demo get pvc,pod
 ```
 
-## Table of Contents
+## Tabla de contenido
 
 1. [Volumes](#volumes)
 2. [Persistent Volumes](#persistent-volumes)
 3. [Persistent Volume Claims](#persistent-volume-claims)
 4. [Storage Classes](#storage-classes)
-5. [Dynamic Provisioning](#dynamic-provisioning)
-6. [Volume Snapshots](#volume-snapshots)
-7. [Volume Expansion](#volume-expansion)
+5. [Aprovisionamiento dinámico](#dynamic-provisioning)
+6. [Snapshots de Volume](#volume-snapshots)
+7. [Expansión de Volume](#volume-expansion)
 8. [Projected Volumes](#projected-volumes)
 9. [Generic Ephemeral Volumes](#generic-ephemeral-volumes)
-10. [Block Volume Mode](#block-volume-mode)
-11. [Volume Cloning](#volume-cloning)
-12. [Storage ResourceQuota](#storage-resourcequota)
-13. [Storage Options in EKS](#storage-options-in-eks)
+10. [Modo Block Volume](#block-volume-mode)
+11. [Clonación de Volume](#volume-cloning)
+12. [ResourceQuota de almacenamiento](#storage-resourcequota)
+13. [Opciones de almacenamiento en EKS](#storage-options-in-eks)
 
 ## Volumes
 
-> **Concepto clave**: Los Volumes de Kubernetes son directorios donde los contenedores dentro de un Pod pueden almacenar y compartir datos, manteniendo los datos independientemente de los reinicios de contenedores.
+> **Concepto clave**: Los Volumes de Kubernetes son directorios donde los contenedores dentro de un Pod pueden almacenar y compartir datos, manteniendo los datos independientemente de los reinicios del contenedor.
 
-Los Volumes de Kubernetes son directorios donde los contenedores dentro de un Pod pueden almacenar y compartir datos. Los Volumes están vinculados al ciclo de vida del Pod y, cuando se elimina el Pod, el volume también se elimina (excepto en algunos tipos de volume).
+Los Volumes de Kubernetes son directorios donde los contenedores dentro de un Pod pueden almacenar y compartir datos. Los Volumes están vinculados al ciclo de vida del Pod y, cuando se elimina el Pod, el Volume también se elimina (excepto para algunos tipos de Volume).
 
-### Kubernetes Storage Architecture
+### Arquitectura de almacenamiento de Kubernetes
 
-```mermaid
-flowchart TD
-    subgraph "Kubernetes Storage Architecture"
-        subgraph "Application Layer"
-            Pod1[Pod]
-            Pod2[Pod]
-            Pod3[Pod]
+![Los Pods solicitan almacenamiento mediante un PersistentVolumeClaim, que se vincula a un PersistentVolume aprovisionado por una StorageClass; el CSI Driver conecta ese Volume al almacenamiento subyacente de nube, local o NFS.](../.gitbook/assets/en-core-04-storage-0.png)
 
-            Pod1 --> PVC1[PersistentVolumeClaim]
-            Pod2 --> PVC2[PersistentVolumeClaim]
-            Pod3 --> PVC3[PersistentVolumeClaim]
-        end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-0.html)
 
-        subgraph "Storage Abstraction Layer"
-            PVC1 --> PV1[PersistentVolume]
-            PVC2 --> PV2[PersistentVolume]
-            PVC3 --> PV3[PersistentVolume]
+### Por qué se necesitan los Volumes
 
-            SC[StorageClass] --> PV1
-            SC --> PV2
-            SC --> PV3
-        end
+1. **Persistencia de datos tras el reinicio del contenedor**: Cuando un contenedor se reinicia, su sistema de archivos se restablece, pero el uso de Volumes permite que los datos persistan.
+2. **Compartición de datos entre contenedores**: Varios contenedores en el mismo Pod pueden compartir datos mediante Volumes.
 
-        subgraph "Physical Storage Layer"
-            PV1 --> CSI[CSI Driver]
-            PV2 --> CSI
-            PV3 --> CSI
+### Comparación de los principales tipos de Volume
 
-            CSI --> Cloud[Cloud Storage\nEBS, EFS, Azure Disk, etc.]
-            CSI --> Local[Local Storage]
-            CSI --> NFS[NFS Server]
-        end
-    end
-
-    classDef pod fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef pvc fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef pv fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef sc fill:#E83E8C,stroke:#333,stroke-width:1px,color:white;
-    classDef driver fill:#6c757d,stroke:#333,stroke-width:1px,color:white;
-    classDef storage fill:#28a745,stroke:#333,stroke-width:1px,color:white;
-
-    class Pod1,Pod2,Pod3 pod;
-    class PVC1,PVC2,PVC3 pvc;
-    class PV1,PV2,PV3 pv;
-    class SC sc;
-    class CSI driver;
-    class Cloud,Local,NFS storage;
-```
-
-### Why Volumes Are Needed
-
-1. **Persistencia de datos al reiniciar contenedores**: Cuando un contenedor se reinicia, su filesystem se restablece, pero el uso de volumes permite que los datos persistan.
-2. **Uso compartido de datos entre contenedores**: Varios contenedores en el mismo Pod pueden compartir datos mediante volumes.
-
-### Main Volume Type Comparison
-
-| Volume Type | Lifecycle | Data Persistence | Use Case | Features |
+| Tipo de Volume | Ciclo de vida | Persistencia de datos | Caso de uso | Características |
 |------------|----------|-----------------|----------|----------|
-| **emptyDir** | Pod | Temporary | Temporary data, cache, checkpoints | Data deleted when Pod is deleted |
-| **hostPath** | Node | Node-level | Node filesystem access, monitoring | Security risk - use with caution |
-| **configMap** | Configuration | Configuration data | Application configuration | Mount configuration data as volume |
-| **secret** | Configuration | Sensitive data | Certificates, passwords | Mount sensitive data as volume |
-| **persistentVolumeClaim** | Cluster | Permanent | Databases, file storage | Data persists after Pod restart and rescheduling |
+| **emptyDir** | Pod | Temporal | Datos temporales, caché, puntos de control | Los datos se eliminan cuando se elimina el Pod |
+| **hostPath** | Node | Nivel de Node | Acceso al sistema de archivos del Node, monitoreo | Riesgo de seguridad: úselo con precaución |
+| **configMap** | Configuración | Datos de configuración | Configuración de aplicaciones | Monta datos de configuración como Volume |
+| **secret** | Configuración | Datos confidenciales | Certificados, contraseñas | Monta datos confidenciales como Volume |
+| **persistentVolumeClaim** | Clúster | Permanente | Bases de datos, almacenamiento de archivos | Los datos persisten después del reinicio y la reprogramación del Pod |
 
 ### emptyDir
 
-Un volume `emptyDir` se crea cuando un Pod se asigna a un node y persiste mientras el Pod se ejecuta en ese node. Cuando el Pod se elimina del node, los datos en `emptyDir` se eliminan permanentemente.
+Un Volume `emptyDir` se crea cuando se asigna un Pod a un Node y persiste mientras el Pod se ejecuta en ese Node. Cuando el Pod se elimina del Node, los datos de `emptyDir` se eliminan permanentemente.
 
 ```yaml
 apiVersion: v1
@@ -166,7 +121,7 @@ spec:
 
 ### hostPath
 
-Un volume `hostPath` monta un archivo o directorio desde el filesystem del node al Pod. Esto es útil para Pods que necesitan acceso al filesystem del node, pero debe usarse con cautela debido a los riesgos de seguridad.
+Un Volume `hostPath` monta un archivo o directorio del sistema de archivos del Node en el Pod. Esto es útil para los Pods que necesitan acceso al sistema de archivos del Node, pero debe usarse con precaución debido a los riesgos de seguridad.
 
 ```yaml
 apiVersion: v1
@@ -208,7 +163,7 @@ spec:
 
 #### configMap
 
-Un volume `configMap` monta datos de ConfigMap en un Pod. Los ConfigMaps se usan para almacenar datos de configuración en pares clave-valor.
+Un Volume `configMap` monta datos de ConfigMap en un Pod. Los ConfigMaps se utilizan para almacenar datos de configuración en pares clave-valor.
 
 ```yaml
 apiVersion: v1
@@ -233,7 +188,7 @@ spec:
 
 #### secret
 
-Un volume `secret` monta datos de Secret en un Pod. Los Secrets se usan para almacenar información sensible, como contraseñas, tokens y claves.
+Un Volume `secret` monta datos de Secret en un Pod. Los Secrets se utilizan para almacenar información confidencial como contraseñas, tokens y claves.
 
 ```yaml
 apiVersion: v1
@@ -259,7 +214,7 @@ spec:
 
 #### nfs
 
-Un volume `nfs` monta un recurso compartido NFS (Network File System) existente en un Pod.
+Un Volume `nfs` monta un recurso compartido de NFS (Network File System) existente en un Pod.
 
 ```yaml
 apiVersion: v1
@@ -282,7 +237,7 @@ spec:
 
 #### persistentVolumeClaim
 
-Un volume `persistentVolumeClaim` monta un PersistentVolumeClaim en un Pod. Este es uno de los tipos de volume más usados.
+Un Volume `persistentVolumeClaim` monta un PersistentVolumeClaim en un Pod. Este es uno de los tipos de Volume más utilizados.
 
 ```yaml
 apiVersion: v1
@@ -304,7 +259,7 @@ spec:
 
 #### CSI (Container Storage Interface)
 
-Los CSI volumes proporcionan una interfaz estándar entre Kubernetes y los sistemas de storage externos. Con CSI, los proveedores de storage pueden desarrollar sus propios storage drivers sin modificar el código de Kubernetes.
+Los Volumes CSI proporcionan una interfaz estándar entre Kubernetes y los sistemas de almacenamiento externos. Con CSI, los proveedores de almacenamiento pueden desarrollar sus propios controladores de almacenamiento sin modificar el código de Kubernetes.
 
 ```yaml
 apiVersion: v1
@@ -330,31 +285,13 @@ spec:
 
 ## Persistent Volumes
 
-Un Persistent Volume (PV) es storage del cluster aprovisionado por un administrador o aprovisionado dinámicamente mediante una Storage Class. Los PVs tienen un ciclo de vida independiente de los Pods, y los PVs se conservan incluso cuando se eliminan los Pods.
+Un Persistent Volume (PV) es almacenamiento del clúster aprovisionado por un administrador o aprovisionado dinámicamente mediante una Storage Class. Los PV tienen un ciclo de vida independiente de los Pods y se conservan incluso cuando se eliminan los Pods.
 
-```mermaid
-graph TD
-    Admin[Cluster Administrator] -->|Creates| PV[Persistent Volume]
-    User[User] -->|Creates| PVC[Persistent Volume Claim]
-    PVC -->|Binds| PV
-    Pod[Pod] -->|Uses| PVC
-    PV -->|Connects| Storage[(Physical Storage)]
+![Un administrador del clúster crea un PersistentVolume conectado al almacenamiento físico, el PersistentVolumeClaim de un usuario se vincula a ese Volume y un Pod usa la reclamación como su Volume en el flujo de aprovisionamiento estático.](../.gitbook/assets/en-core-04-storage-1.png)
 
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-1.html)
 
-    %% Apply classes
-    class Admin,User user;
-    class PV,PVC k8sComponent;
-    class Pod userApp;
-    class Storage storage;
-```
-
-### PV Creation
+### Creación de PV
 
 ```yaml
 apiVersion: v1
@@ -377,37 +314,37 @@ spec:
     server: 172.17.0.2
 ```
 
-### PV Access Modes
+### Modos de acceso de PV
 
-Los PVs admiten los siguientes access modes:
+Los PV admiten los siguientes modos de acceso:
 
-- **ReadWriteOnce (RWO)**: El volume puede montarse como lectura-escritura por un solo node.
-- **ReadOnlyMany (ROX)**: El volume puede montarse como solo lectura por varios nodes.
-- **ReadWriteMany (RWX)**: El volume puede montarse como lectura-escritura por varios nodes.
-- **ReadWriteOncePod (RWOP)**: El volume puede montarse como lectura-escritura por un solo Pod (Kubernetes 1.22+).
+- **ReadWriteOnce (RWO)**: El Volume puede montarse como lectura-escritura por un solo Node.
+- **ReadOnlyMany (ROX)**: El Volume puede montarse como solo lectura por varios Nodes.
+- **ReadWriteMany (RWX)**: El Volume puede montarse como lectura-escritura por varios Nodes.
+- **ReadWriteOncePod (RWOP)**: El Volume puede montarse como lectura-escritura por un solo Pod (Kubernetes 1.22+).
 
-### PV Reclaim Policies
+### Políticas de recuperación de PV
 
-Los PVs pueden tener las siguientes reclaim policies:
+Los PV pueden tener las siguientes políticas de recuperación:
 
-- **Retain**: Cuando se elimina el PVC, el PV y los datos se conservan. El administrador debe limpiar manualmente.
-- **Delete**: Cuando se elimina el PVC, el PV y los activos de storage externos se eliminan automáticamente.
-- **Recycle**: Cuando se elimina el PVC, los datos del PV se eliminan y el PV vuelve a estar disponible (obsoleto).
+- **Retain**: Cuando se elimina el PVC, se conservan el PV y los datos. El administrador debe limpiarlos manualmente.
+- **Delete**: Cuando se elimina el PVC, el PV y los recursos de almacenamiento externos se eliminan automáticamente.
+- **Recycle**: Cuando se elimina el PVC, se eliminan los datos del PV y el PV vuelve a estar disponible (en desuso).
 
-### PV Status
+### Estado de PV
 
-Los PVs pueden tener los siguientes estados:
+Los PV pueden tener los siguientes estados:
 
-- **Available**: Recurso disponible que aún no está vinculado a un claim.
-- **Bound**: Vinculado a un claim.
-- **Released**: El claim se eliminó, pero el recurso aún no ha sido reclamado por el cluster.
-- **Failed**: La reclamación automática falló.
+- **Available**: Recurso disponible que todavía no está vinculado a una reclamación.
+- **Bound**: Vinculado a una reclamación.
+- **Released**: La reclamación se ha eliminado, pero el clúster aún no ha recuperado el recurso.
+- **Failed**: La recuperación automática falló.
 
 ## Persistent Volume Claims
 
-Un Persistent Volume Claim (PVC) es una solicitud de storage de un usuario. Los PVCs son similares a los PVs, pero los PVCs son la forma en que los usuarios solicitan storage, mientras que los PVs son la forma en que los administradores proporcionan storage.
+Un Persistent Volume Claim (PVC) es una solicitud de almacenamiento de un usuario. Los PVC son similares a los PV, pero los PVC son la forma en que los usuarios solicitan almacenamiento, mientras que los PV son la forma en que los administradores proporcionan almacenamiento.
 
-### PVC Creation
+### Creación de PVC
 
 ```yaml
 apiVersion: v1
@@ -429,13 +366,13 @@ spec:
       - {key: environment, operator: In, values: [dev]}
 ```
 
-### PVC and PV Binding
+### Vinculación de PVC y PV
 
-Cuando se crea un PVC, Kubernetes busca y vincula un PV que cumpla los requisitos del PVC (tamaño de storage, access modes, storage class, selector, etc.). Si no existe un PV apropiado, el PVC permanece en estado Pending.
+Cuando se crea un PVC, Kubernetes encuentra y vincula un PV que cumple los requisitos del PVC (tamaño de almacenamiento, modos de acceso, Storage Class, selector, etc.). Si no existe un PV adecuado, el PVC permanece en estado Pending.
 
-### Using PVC
+### Uso de PVC
 
-Los PVCs pueden usarse como volumes en Pods:
+Los PVC pueden utilizarse como Volumes en Pods:
 
 ```yaml
 apiVersion: v1
@@ -457,33 +394,13 @@ spec:
 
 ## Storage Classes
 
-Las Storage Classes describen las "classes" de storage proporcionadas por los administradores. Las Storage Classes se usan para aprovisionar dinámicamente PVs.
+Las Storage Classes describen las "clases" de almacenamiento proporcionadas por los administradores. Las Storage Classes se utilizan para aprovisionar PV de forma dinámica.
 
-```mermaid
-graph TD
-    Admin[Cluster Administrator] -->|Creates| SC[Storage Class]
-    User[User] -->|Creates| PVC[Persistent Volume Claim]
-    PVC -->|References| SC
-    SC -->|Dynamic Provisioning| PV[Persistent Volume]
-    PVC -->|Binds| PV
-    Pod[Pod] -->|Uses| PVC
-    PV -->|Connects| Storage[(Physical Storage)]
+![El PersistentVolumeClaim de un usuario hace referencia a una StorageClass, que aprovisiona dinámicamente un PersistentVolume al que se vincula la reclamación y que utiliza un Pod, conectándose en última instancia al almacenamiento físico.](../.gitbook/assets/en-core-04-storage-2.png)
 
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-2.html)
 
-    %% Apply classes
-    class Admin,User user;
-    class SC,PV,PVC k8sComponent;
-    class Pod userApp;
-    class Storage storage;
-```
-
-### Storage Class Creation
+### Creación de Storage Class
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -499,31 +416,31 @@ allowVolumeExpansion: true
 volumeBindingMode: WaitForFirstConsumer
 ```
 
-Este ejemplo crea una storage class que aprovisiona volumes AWS EBS gp3.
+Este ejemplo crea una clase de almacenamiento que aprovisiona Volumes gp3 de AWS EBS.
 
 ### Provisioners
 
-Las storage classes especifican un provisioner usado para aprovisionar volumes. Los provisioners comunes incluyen:
+Las Storage Classes especifican un provisioner utilizado para aprovisionar Volumes. Los provisioners comunes incluyen:
 
-- `kubernetes.io/aws-ebs`: AWS EBS volumes
-- `kubernetes.io/gce-pd`: GCE Persistent Disks
-- `kubernetes.io/azure-disk`: Azure Disks
-- `kubernetes.io/azure-file`: Azure File
-- `kubernetes.io/cinder`: OpenStack Cinder volumes
-- `kubernetes.io/glusterfs`: GlusterFS volumes
-- `kubernetes.io/rbd`: Ceph RBD volumes
-- `kubernetes.io/nfs`: NFS volumes
+- `kubernetes.io/aws-ebs`: Volumes de AWS EBS
+- `kubernetes.io/gce-pd`: Persistent Disks de GCE
+- `kubernetes.io/azure-disk`: Disks de Azure
+- `kubernetes.io/azure-file`: File de Azure
+- `kubernetes.io/cinder`: Volumes Cinder de OpenStack
+- `kubernetes.io/glusterfs`: Volumes GlusterFS
+- `kubernetes.io/rbd`: Volumes Ceph RBD
+- `kubernetes.io/nfs`: Volumes NFS
 
-### Volume Binding Modes
+### Modos de vinculación de Volume
 
-Las storage classes admiten los siguientes volume binding modes:
+Las Storage Classes admiten los siguientes modos de vinculación de Volume:
 
-- **Immediate**: Predeterminado; los volumes se aprovisionan inmediatamente cuando se crea el PVC.
-- **WaitForFirstConsumer**: Retrasa el aprovisionamiento del volume hasta que un Pod intenta usar el PVC. Esto es útil para garantizar que los volumes se aprovisionen en la misma zona que los Pods.
+- **Immediate**: Valor predeterminado; los Volumes se aprovisionan de inmediato cuando se crea el PVC.
+- **WaitForFirstConsumer**: Retrasa el aprovisionamiento del Volume hasta que un Pod intenta usar el PVC. Esto es útil para garantizar que los Volumes se aprovisionen en la misma zona que los Pods.
 
-### Default Storage Class
+### Storage Class predeterminada
 
-Se puede configurar una default storage class para el cluster. Si no se especifica ninguna storage class en un PVC, se usa la default storage class.
+Se puede establecer una Storage Class predeterminada para el clúster. Si no se especifica ninguna Storage Class en un PVC, se utiliza la Storage Class predeterminada.
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -537,11 +454,11 @@ parameters:
   type: gp3
 ```
 
-## Dynamic Provisioning
+## Aprovisionamiento dinámico
 
-Dynamic provisioning es una característica que crea automáticamente PVs cuando se crean PVCs. Esto permite a los usuarios solicitar storage cuando lo necesitan sin que los administradores creen PVs previamente.
+El aprovisionamiento dinámico es una función que crea automáticamente PV cuando se crean PVC. Esto permite a los usuarios solicitar almacenamiento cuando lo necesitan sin que los administradores creen previamente los PV.
 
-### Dynamic Provisioning Example
+### Ejemplo de aprovisionamiento dinámico
 
 1. Crear Storage Class:
 
@@ -592,33 +509,13 @@ spec:
         claimName: myclaim
 ```
 
-## Volume Snapshots
+## Snapshots de Volume
 
-Kubernetes admite volume snapshots para crear copias puntuales de PVs. Esto es útil en escenarios de backup y restauración.
+Kubernetes admite snapshots de Volume para crear copias de PV en un momento dado. Esto es útil para escenarios de respaldo y restauración.
 
-```mermaid
-graph TD
-    Admin[Cluster Administrator] -->|Creates| VSC[Volume Snapshot Class]
-    User[User] -->|Creates| VS[Volume Snapshot]
-    VS -->|References| VSC
-    VS -->|Creates Snapshot| PVC1[Existing PVC]
-    User -->|Creates| PVC2[New PVC]
-    PVC2 -->|Uses as Data Source| VS
-    PVC2 -->|Binds| PV2[New PV]
-    PV2 -->|Restores from Snapshot| Storage[(Physical Storage)]
+![Un Volume Snapshot hace referencia a una Volume Snapshot Class y captura un PersistentVolumeClaim existente; un nuevo PVC que utiliza ese snapshot como origen de datos se vincula a un nuevo PV restaurado a partir de él.](../.gitbook/assets/en-core-04-storage-3.png)
 
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    %% Apply classes
-    class Admin,User user;
-    class VSC,VS,PVC1,PVC2,PV2 k8sComponent;
-    class Storage storage;
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-3.html)
 
 ### Volume Snapshot Class
 
@@ -631,7 +528,7 @@ driver: hostpath.csi.k8s.io
 deletionPolicy: Delete
 ```
 
-### Create Volume Snapshot
+### Crear Volume Snapshot
 
 ```yaml
 apiVersion: snapshot.storage.k8s.io/v1
@@ -644,7 +541,7 @@ spec:
     persistentVolumeClaimName: myclaim
 ```
 
-### Create PVC from Snapshot
+### Crear PVC a partir de Snapshot
 
 ```yaml
 apiVersion: v1
@@ -664,33 +561,15 @@ spec:
       storage: 10Gi
 ```
 
-## Volume Expansion
+## Expansión de Volume
 
-Kubernetes admite la capacidad de expandir el tamaño de los PVCs. Para ello, se debe configurar `allowVolumeExpansion: true` en la storage class.
+Kubernetes admite la capacidad de expandir el tamaño de los PVC. Para ello, debe establecerse `allowVolumeExpansion: true` en la Storage Class.
 
-```mermaid
-graph TD
-    User[User] -->|Request PVC Size Increase| PVC[Persistent Volume Claim]
-    PVC -->|Expansion Request| SC[Storage Class]
-    SC -->|Check allowVolumeExpansion: true| PV[Persistent Volume]
-    PV -->|Expand Volume Size| Storage[(Physical Storage)]
-    PV -->|Expand File System| Pod[Pod]
+![La solicitud de un usuario para ampliar un PersistentVolumeClaim pasa por la StorageClass, que comprueba que allowVolumeExpansion está habilitado antes de que el PersistentVolume amplíe el disco subyacente y el sistema de archivos del Pod.](../.gitbook/assets/en-core-04-storage-4.png)
 
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef user fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef storage fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-4.html)
 
-    %% Apply classes
-    class User user;
-    class SC,PVC,PV k8sComponent;
-    class Pod userApp;
-    class Storage storage;
-```
-
-### PVC Expansion
+### Expansión de PVC
 
 ```yaml
 apiVersion: v1
@@ -708,16 +587,16 @@ spec:
 
 ## Projected Volumes
 
-Projected volumes permiten combinar varias fuentes de volume en un solo volume mount. Esto es útil cuando necesitas exponer secrets, configMaps, downwardAPI y serviceAccountToken juntos en un único directorio.
+Los Projected Volumes permiten combinar varias fuentes de Volume en un único montaje de Volume. Esto es útil cuando necesitas exponer secrets, configMaps, downwardAPI y serviceAccountToken juntos en un único directorio.
 
-### Supported Sources
+### Fuentes compatibles
 
-- **secret**: Montar datos de secret
-- **configMap**: Montar datos de configuración
-- **downwardAPI**: Exponer metadatos del pod y del contenedor
-- **serviceAccountToken**: Montar service account tokens con expiración configurable
+- **secret**: Monta datos de Secret
+- **configMap**: Monta datos de configuración
+- **downwardAPI**: Expone metadatos de Pod y contenedor
+- **serviceAccountToken**: Monta tokens de cuenta de servicio con expiración configurable
 
-### Projected Volume Example
+### Ejemplo de Projected Volume
 
 ```yaml
 apiVersion: v1
@@ -764,15 +643,15 @@ spec:
           audience: api
 ```
 
-Esta configuración crea un único volume en `/etc/projected` que contiene:
-- `/etc/projected/db/username` y `/etc/projected/db/password` desde el secret
-- `/etc/projected/config/app.yaml` desde el configMap
-- `/etc/projected/labels` y `/etc/projected/cpu-request` desde downwardAPI
-- `/etc/projected/token` con un service account token que rota automáticamente
+Esta configuración crea un único Volume en `/etc/projected` que contiene:
+- `/etc/projected/db/username` y `/etc/projected/db/password` del secret
+- `/etc/projected/config/app.yaml` del configMap
+- `/etc/projected/labels` y `/etc/projected/cpu-request` de downwardAPI
+- `/etc/projected/token` con un token de cuenta de servicio de rotación automática
 
-### Service Account Token Projection
+### Proyección de token de cuenta de servicio
 
-Service account token projection proporciona tokens con vida útil limitada y audience:
+La proyección de token de cuenta de servicio proporciona tokens con una duración y una audiencia limitadas:
 
 ```yaml
 apiVersion: v1
@@ -799,20 +678,20 @@ spec:
 
 ## Generic Ephemeral Volumes
 
-Generic ephemeral volumes proporcionan storage similar a PVC que está ligado al ciclo de vida del pod. A diferencia de emptyDir, usan toda la potencia de los PVCs y StorageClasses, incluido dynamic provisioning.
+Los Generic Ephemeral Volumes proporcionan almacenamiento similar a PVC vinculado al ciclo de vida del Pod. A diferencia de emptyDir, utilizan toda la capacidad de los PVC y las StorageClasses, incluido el aprovisionamiento dinámico.
 
-### Differences from emptyDir
+### Diferencias con emptyDir
 
-| Feature | emptyDir | Generic Ephemeral Volume |
+| Característica | emptyDir | Generic Ephemeral Volume |
 |---------|----------|--------------------------|
-| **Storage backend** | Node local storage or memory | Any CSI driver |
-| **Provisioning** | Automatic, simple | Uses StorageClass, dynamic provisioning |
-| **Size limits** | sizeLimit (soft) | Full PVC capacity management |
-| **Snapshots** | Not supported | Supported (if CSI driver supports) |
-| **Storage features** | Basic | Full CSI features (encryption, IOPS, etc.) |
-| **Persistence** | Lost when pod is deleted | Lost when pod is deleted |
+| **Backend de almacenamiento** | Almacenamiento local del Node o memoria | Cualquier controlador CSI |
+| **Aprovisionamiento** | Automático, sencillo | Usa StorageClass, aprovisionamiento dinámico |
+| **Límites de tamaño** | sizeLimit (flexible) | Administración completa de capacidad de PVC |
+| **Snapshots** | No compatibles | Compatibles (si el controlador CSI lo admite) |
+| **Características de almacenamiento** | Básicas | Funciones CSI completas (cifrado, IOPS, etc.) |
+| **Persistencia** | Se pierde cuando se elimina el Pod | Se pierde cuando se elimina el Pod |
 
-### Generic Ephemeral Volume Example
+### Ejemplo de Generic Ephemeral Volume
 
 ```yaml
 apiVersion: v1
@@ -843,14 +722,14 @@ spec:
               storage: 10Gi
 ```
 
-### Use Cases
+### Casos de uso
 
-1. **CI/CD pipelines**: Artefactos temporales de build con capacidad de storage garantizada
-2. **Procesamiento de datos**: Espacio temporal con requisitos de rendimiento específicos
-3. **Pruebas**: Bases de datos o cachés temporales con características CSI
-4. **Machine learning**: Checkpoints temporales de modelos con storage de alto rendimiento
+1. **Canalizaciones de CI/CD**: Artefactos de compilación temporales con capacidad de almacenamiento garantizada
+2. **Procesamiento de datos**: Espacio de trabajo temporal con requisitos específicos de rendimiento
+3. **Pruebas**: Bases de datos temporales o cachés con características CSI
+4. **Machine learning**: Puntos de control temporales de modelos con almacenamiento de alto rendimiento
 
-### Deployment with Generic Ephemeral Volumes
+### Deployment con Generic Ephemeral Volumes
 
 ```yaml
 apiVersion: apps/v1
@@ -886,21 +765,21 @@ spec:
                   storage: 50Gi
 ```
 
-## Block Volume Mode
+## Modo Block Volume
 
-Kubernetes admite raw block volumes además de filesystem volumes. Los block volumes presentan el storage como un dispositivo de bloque sin formato y sin filesystem, útil para aplicaciones que gestionan su propia disposición de datos.
+Kubernetes admite Volumes de bloques sin procesar además de Volumes de sistema de archivos. Los Volumes de bloques presentan el almacenamiento como un dispositivo de bloques sin procesar sin sistema de archivos, lo cual es útil para las aplicaciones que administran su propia disposición de datos.
 
-### Filesystem vs Block Mode
+### Modo Filesystem frente a Block
 
-| Aspect | Filesystem (default) | Block |
+| Aspecto | Filesystem (predeterminado) | Block |
 |--------|---------------------|-------|
 | **volumeMode** | `Filesystem` | `Block` |
-| **Mount type** | Mounted as directory | Exposed as device file |
-| **Filesystem** | ext4, xfs, etc. | None (raw) |
-| **Access in pod** | `/mnt/data/` | `/dev/xvda` |
-| **Use case** | General applications | Databases, specialized apps |
+| **Tipo de montaje** | Montado como directorio | Expuesto como archivo de dispositivo |
+| **Sistema de archivos** | ext4, xfs, etc. | Ninguno (sin procesar) |
+| **Acceso en el Pod** | `/mnt/data/` | `/dev/xvda` |
+| **Caso de uso** | Aplicaciones generales | Bases de datos, aplicaciones especializadas |
 
-### Block Volume PV and PVC
+### PV y PVC de Block Volume
 
 ```yaml
 # PersistentVolume with Block mode
@@ -935,7 +814,7 @@ spec:
       storage: 100Gi
 ```
 
-### Using Block Volumes in Pods
+### Uso de Block Volumes en Pods
 
 ```yaml
 apiVersion: v1
@@ -955,27 +834,27 @@ spec:
       claimName: block-pvc
 ```
 
-Nota: Los block volumes usan `volumeDevices` y `devicePath` en lugar de `volumeMounts` y `mountPath`.
+Nota: Los Block Volumes utilizan `volumeDevices` y `devicePath` en lugar de `volumeMounts` y `mountPath`.
 
-### Use Cases for Block Volumes
+### Casos de uso de Block Volumes
 
-1. **Databases**: MySQL, PostgreSQL o MongoDB que se benefician del acceso directo al disco sin formato
-2. **Filesystems personalizados**: Aplicaciones que usan filesystems especializados como ZFS o LVM
-3. **Storage de alto rendimiento**: Aplicaciones que requieren I/O directa sin sobrecarga del filesystem
-4. **Virtualización de storage**: Soluciones de software-defined storage
+1. **Bases de datos**: MySQL, PostgreSQL o MongoDB que se benefician del acceso directo al disco
+2. **Sistemas de archivos personalizados**: Aplicaciones que usan sistemas de archivos especializados como ZFS o LVM
+3. **Almacenamiento de alto rendimiento**: Aplicaciones que requieren I/O directo sin sobrecarga del sistema de archivos
+4. **Virtualización de almacenamiento**: Soluciones de almacenamiento definidas por software
 
-## Volume Cloning
+## Clonación de Volume
 
-Volume cloning crea un nuevo PVC con el contenido de un PVC existente. Esto es útil para crear entornos de prueba, duplicar datos o migrar workloads.
+La clonación de Volume crea un nuevo PVC con el contenido de un PVC existente. Esto es útil para crear entornos de prueba, duplicar datos o migrar cargas de trabajo.
 
-### Prerequisites
+### Requisitos previos
 
-- El CSI driver debe admitir volume cloning
-- Los PVCs de origen y destino deben estar en el mismo namespace
-- Origen y destino deben usar la misma StorageClass
-- Origen y destino deben tener el mismo volumeMode
+- El controlador CSI debe admitir la clonación de Volume
+- Los PVC de origen y destino deben estar en el mismo namespace
+- El origen y el destino deben usar la misma StorageClass
+- El origen y el destino deben tener el mismo volumeMode
 
-### PVC Cloning Example
+### Ejemplo de clonación de PVC
 
 ```yaml
 # Source PVC (existing)
@@ -1010,17 +889,17 @@ spec:
     name: source-pvc
 ```
 
-### Cloning vs Snapshots
+### Clonación frente a Snapshots
 
-| Feature | Volume Cloning | Volume Snapshots |
+| Característica | Clonación de Volume | Snapshots de Volume |
 |---------|---------------|------------------|
-| **Result** | New PVC with data | Snapshot object |
-| **Use case** | Duplicate live volume | Point-in-time backup |
-| **Performance** | May be slower (full copy) | Usually faster (copy-on-write) |
-| **Cross-namespace** | No | No |
-| **Storage overhead** | Full copy | Incremental |
+| **Resultado** | Nuevo PVC con datos | Objeto Snapshot |
+| **Caso de uso** | Duplicar Volume activo | Respaldo de un momento dado |
+| **Rendimiento** | Puede ser más lenta (copia completa) | Normalmente más rápido (copy-on-write) |
+| **Entre namespaces** | No | No |
+| **Sobrecarga de almacenamiento** | Copia completa | Incremental |
 
-### Clone for Testing
+### Clon para pruebas
 
 ```yaml
 apiVersion: v1
@@ -1057,20 +936,20 @@ spec:
       claimName: test-db-clone
 ```
 
-## Storage ResourceQuota
+## ResourceQuota de almacenamiento
 
-ResourceQuota puede limitar el consumo de storage dentro de un namespace, incluido el número de PVCs y la capacidad total de storage.
+ResourceQuota puede limitar el consumo de almacenamiento dentro de un namespace, incluido el número de PVC y la capacidad total de almacenamiento.
 
-### Storage-Related Quota Fields
+### Campos de cuota relacionados con el almacenamiento
 
-| Field | Description |
+| Campo | Descripción |
 |-------|-------------|
-| **persistentvolumeclaims** | Total number of PVCs allowed |
-| **requests.storage** | Total storage capacity across all PVCs |
-| **\<storage-class\>.storageclass.storage.k8s.io/requests.storage** | Storage capacity for specific StorageClass |
-| **\<storage-class\>.storageclass.storage.k8s.io/persistentvolumeclaims** | PVC count for specific StorageClass |
+| **persistentvolumeclaims** | Número total de PVC permitidos |
+| **requests.storage** | Capacidad total de almacenamiento de todos los PVC |
+| **\<storage-class\>.storageclass.storage.k8s.io/requests.storage** | Capacidad de almacenamiento para StorageClass específica |
+| **\<storage-class\>.storageclass.storage.k8s.io/persistentvolumeclaims** | Recuento de PVC para StorageClass específica |
 
-### ResourceQuota Example
+### Ejemplo de ResourceQuota
 
 ```yaml
 apiVersion: v1
@@ -1092,7 +971,7 @@ spec:
     efs-sc.storageclass.storage.k8s.io/persistentvolumeclaims: "5"
 ```
 
-### Checking ResourceQuota Status
+### Comprobación del estado de ResourceQuota
 
 ```bash
 # View quota status
@@ -1108,9 +987,9 @@ status:
     requests.storage: "150Gi"
 ```
 
-### LimitRange for Storage
+### LimitRange para almacenamiento
 
-LimitRange puede establecer valores predeterminados y límite para las solicitudes de PVC storage:
+LimitRange puede establecer valores predeterminados y límites para las solicitudes de almacenamiento de PVC:
 
 ```yaml
 apiVersion: v1
@@ -1129,54 +1008,24 @@ spec:
       storage: 10Gi
 ```
 
-Esto garantiza:
-- El tamaño mínimo del PVC es 1Gi
-- El tamaño máximo del PVC es 100Gi
+Esto garantiza lo siguiente:
+- El tamaño mínimo de PVC es 1Gi
+- El tamaño máximo de PVC es 100Gi
 - El tamaño predeterminado (si no se especifica) es 10Gi
 
-## Storage Options in EKS
+## Opciones de almacenamiento en EKS
 
-Hay varias opciones de storage disponibles en Amazon EKS. Cada opción tiene diferentes casos de uso y características de rendimiento, por lo que es importante elegir el storage adecuado para los requisitos de tu aplicación.
+Hay diversas opciones de almacenamiento disponibles en Amazon EKS. Cada opción tiene distintos casos de uso y características de rendimiento, por lo que es importante elegir el almacenamiento adecuado para los requisitos de tu aplicación.
 
-```mermaid
-graph TD
-    EKS["Amazon EKS"] --> EBS["Amazon EBS"]
-    EKS --> EFS["Amazon EFS"]
-    EKS --> FSx["Amazon FSx for Lustre"]
+![Los Pods de Amazon EKS consumen almacenamiento de bloques de EBS, almacenamiento de archivos compartidos de EFS y almacenamiento paralelo de alto rendimiento de FSx for Lustre, cada uno aprovisionado mediante su propio CSI driver, StorageClass y PersistentVolume.](../.gitbook/assets/en-core-04-storage-5.png)
 
-    EBS --> EBS_CSI["EBS CSI Driver"]
-    EFS --> EFS_CSI["EFS CSI Driver"]
-    FSx --> FSx_CSI["FSx CSI Driver"]
-
-    EBS_CSI --> EBS_SC["EBS Storage Class"]
-    EFS_CSI --> EFS_SC["EFS Storage Class"]
-    FSx_CSI --> FSx_SC["FSx Storage Class"]
-
-    EBS_SC --> EBS_PV["EBS Persistent Volume"]
-    EFS_SC --> EFS_PV["EFS Persistent Volume"]
-    FSx_SC --> FSx_PV["FSx Persistent Volume"]
-
-    EBS_PV --> Pod1["Pod (RWO)"]
-    EFS_PV --> Pod2["Pod (RWX)"]
-    FSx_PV --> Pod3["Pod (RWX, High Performance)"]
-
-    %% Style definitions
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black
-
-    %% Apply classes
-    class EKS,EBS_CSI,EFS_CSI,FSx_CSI,EBS_SC,EFS_SC,FSx_SC,EBS_PV,EFS_PV,FSx_PV k8sComponent
-    class Pod1,Pod2,Pod3 userApp
-    class EBS,EFS,FSx awsService
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-core-04-storage-5.html)
 
 ### Amazon EBS
 
-Amazon EBS (Elastic Block Store) proporciona block storage volumes que pueden adjuntarse a instancias EC2. En EKS, puedes usar el EBS CSI driver para montar EBS volumes en Kubernetes Pods.
+Amazon EBS (Elastic Block Store) proporciona Volumes de almacenamiento en bloques que se pueden conectar a instancias EC2. En EKS, puedes usar el controlador EBS CSI para montar Volumes EBS en Pods de Kubernetes.
 
-#### EBS CSI Driver Installation
+#### Instalación del controlador EBS CSI
 
 ```bash
 kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=master"
@@ -1197,19 +1046,19 @@ parameters:
 volumeBindingMode: WaitForFirstConsumer
 ```
 
-#### EBS Volume Types
+#### Tipos de Volume EBS
 
-Amazon EBS ofrece varios tipos de volume:
+Amazon EBS ofrece varios tipos de Volume:
 
-1. **gp3**: Volumes SSD de propósito general adecuados para la mayoría de workloads. Proporciona una base de 3,000 IOPS y 125MB/s de throughput, ampliable hasta 16,000 IOPS y 1,000MB/s por un costo adicional.
+1. **gp3**: Volumes SSD de uso general adecuados para la mayoría de las cargas de trabajo. Proporciona 3.000 IOPS y un rendimiento de 125 MB/s de base, ampliables hasta 16.000 IOPS y 1.000 MB/s con un costo adicional.
 
-2. **io2**: Volumes SSD de alto rendimiento adecuados para workloads que requieren IOPS altos. Proporciona hasta 500 IOPS por GiB, ampliable hasta 64,000 IOPS.
+2. **io2**: Volumes SSD de alto rendimiento adecuados para cargas de trabajo que requieren IOPS altos. Proporciona hasta 500 IOPS por GiB, ampliables hasta 64.000 IOPS.
 
-3. **st1**: Volumes HDD optimizados para throughput, adecuados para workloads intensivos en throughput como big data, data warehouses y procesamiento de logs.
+3. **st1**: Volumes HDD optimizados para rendimiento adecuados para cargas de trabajo intensivas en rendimiento, como big data, almacenes de datos y procesamiento de logs.
 
 4. **sc1**: Volumes HDD fríos adecuados para datos a los que se accede con poca frecuencia.
 
-#### EBS Storage Class Example (gp3)
+#### Ejemplo de EBS Storage Class (gp3)
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -1226,7 +1075,7 @@ parameters:
 volumeBindingMode: WaitForFirstConsumer
 ```
 
-#### EBS Storage Class Example (io2)
+#### Ejemplo de EBS Storage Class (io2)
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -1243,17 +1092,17 @@ volumeBindingMode: WaitForFirstConsumer
 
 ### Amazon EFS
 
-Amazon EFS (Elastic File System) proporciona file storage escalable al que pueden acceder simultáneamente varias instancias EC2. EFS admite el access mode ReadWriteMany, lo que lo hace útil cuando varios Pods necesitan compartir el mismo volume.
+Amazon EFS (Elastic File System) proporciona almacenamiento de archivos escalable al que pueden acceder simultáneamente varias instancias EC2. EFS admite el modo de acceso ReadWriteMany, lo que lo hace útil cuando varios Pods necesitan compartir el mismo Volume.
 
-#### EFS CSI Driver Installation
+#### Instalación del controlador EFS CSI
 
 ```bash
 kubectl apply -k "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/stable/?ref=master"
 ```
 
-#### Create EFS File System
+#### Crear un sistema de archivos EFS
 
-Para crear un EFS file system, puedes usar AWS Management Console, AWS CLI o AWS CloudFormation.
+Para crear un sistema de archivos EFS, puedes usar AWS Management Console, AWS CLI o AWS CloudFormation.
 
 Ejemplo de AWS CLI:
 
@@ -1292,7 +1141,7 @@ parameters:
   directoryPerms: "700"
 ```
 
-#### EFS Access Point with PV and PVC
+#### EFS Access Point con PV y PVC
 
 ```yaml
 # Persistent Volume
@@ -1326,35 +1175,35 @@ spec:
       storage: 5Gi
 ```
 
-#### EFS Performance Modes
+#### Modos de rendimiento de EFS
 
-EFS ofrece dos performance modes:
+EFS ofrece dos modos de rendimiento:
 
-1. **General Purpose**: Modo predeterminado recomendado para la mayoría de workloads de file system. Proporciona baja latencia.
+1. **General Purpose**: Modo predeterminado recomendado para la mayoría de las cargas de trabajo de sistemas de archivos. Proporciona baja latencia.
 
-2. **Max I/O**: Adecuado para workloads que requieren alto throughput y procesamiento paralelo. Tiene una latencia ligeramente mayor, pero proporciona mayor throughput.
+2. **Max I/O**: Adecuado para cargas de trabajo que requieren alto rendimiento y procesamiento paralelo. Tiene una latencia ligeramente mayor, pero proporciona mayor rendimiento.
 
-#### EFS Throughput Modes
+#### Modos de throughput de EFS
 
-EFS ofrece tres throughput modes:
+EFS ofrece tres modos de throughput:
 
-1. **Bursting**: El throughput base se asigna según el tamaño del file system, con burst credits que proporcionan temporalmente un throughput mayor.
+1. **Bursting**: El throughput base se asigna según el tamaño del sistema de archivos, y los créditos de ráfaga proporcionan temporalmente un throughput mayor.
 
-2. **Provisioned**: Proporciona el throughput especificado independientemente del tamaño del file system.
+2. **Provisioned**: Proporciona el throughput especificado independientemente del tamaño del sistema de archivos.
 
-3. **Elastic**: Escala automáticamente el throughput hacia arriba y hacia abajo según el workload.
+3. **Elastic**: Escala automáticamente el throughput hacia arriba y hacia abajo según la carga de trabajo.
 
 ### Amazon FSx for Lustre
 
-Amazon FSx for Lustre proporciona file systems de alto rendimiento para workloads de high-performance computing. FSx for Lustre es adecuado para procesamiento de datos a gran escala, machine learning y workloads de analítica.
+Amazon FSx for Lustre proporciona sistemas de archivos de alto rendimiento para cargas de trabajo de computación de alto rendimiento. FSx for Lustre es adecuado para el procesamiento de datos a gran escala, machine learning y cargas de trabajo de análisis.
 
-#### FSx for Lustre CSI Driver Installation
+#### Instalación del controlador FSx for Lustre CSI
 
 ```bash
 kubectl apply -k "github.com/kubernetes-sigs/aws-fsx-csi-driver/deploy/kubernetes/overlays/stable/?ref=master"
 ```
 
-#### Create FSx for Lustre File System
+#### Crear un sistema de archivos FSx for Lustre
 
 Ejemplo de AWS CLI:
 
@@ -1386,30 +1235,30 @@ parameters:
   weeklyMaintenanceStartTime: "7:09:00"
 ```
 
-#### FSx for Lustre Deployment Types
+#### Tipos de Deployment de FSx for Lustre
 
-FSx for Lustre ofrece tres deployment types:
+FSx for Lustre ofrece tres tipos de Deployment:
 
-1. **SCRATCH_1**: La opción más económica para storage temporal y procesamiento a corto plazo. No hay replicación de datos, por lo que la durabilidad es baja.
+1. **SCRATCH_1**: Opción más económica para almacenamiento temporal y procesamiento a corto plazo. No hay replicación de datos, por lo que la durabilidad es baja.
 
-2. **SCRATCH_2**: Proporciona mayor burst throughput que SCRATCH_1 y recupera automáticamente los datos ante fallos del servidor.
+2. **SCRATCH_2**: Proporciona mayor throughput en ráfaga que SCRATCH_1 y recupera automáticamente los datos cuando falla el servidor.
 
-3. **PERSISTENT**: Adecuado para workloads que requieren storage a largo plazo y throughput. Proporciona replicación de datos y recuperación automática.
+3. **PERSISTENT**: Adecuado para cargas de trabajo que requieren almacenamiento y throughput a largo plazo. Proporciona replicación de datos y recuperación automática.
 
-#### FSx for Lustre Storage Capacity and Throughput
+#### Capacidad de almacenamiento y throughput de FSx for Lustre
 
-La capacidad y el throughput de storage de FSx for Lustre se configuran de la siguiente manera:
+La capacidad de almacenamiento y el throughput de FSx for Lustre se configuran de la siguiente manera:
 
-- **Storage Capacity**: Comienza con un mínimo de 1.2 TiB y aumenta en incrementos de 2.4 TiB.
-- **Throughput**: Determinado por el deployment type y la capacidad de storage.
-  - SCRATCH_2: 200 MB/s o 1,000 MB/s por TiB de storage
-  - PERSISTENT: 50 MB/s, 100 MB/s o 200 MB/s por TiB de storage
+- **Capacidad de almacenamiento**: Comienza en un mínimo de 1,2 TiB y aumenta en incrementos de 2,4 TiB.
+- **Throughput**: Se determina mediante el tipo de Deployment y la capacidad de almacenamiento.
+  - SCRATCH_2: 200 MB/s o 1.000 MB/s por TiB de almacenamiento
+  - PERSISTENT: 50 MB/s, 100 MB/s o 200 MB/s por TiB de almacenamiento
 
-### FSx for Lustre Configuration for vLLM Workloads
+### Configuración de FSx for Lustre para cargas de trabajo vLLM
 
-Los workloads de modelos de AI a gran escala como vLLM (Vector Language Model) requieren storage con alto throughput y baja latencia. FSx for Lustre es una solución ideal que cumple estos requisitos.
+Las cargas de trabajo de modelos de AI a gran escala, como vLLM (Vector Language Model), requieren almacenamiento con alto throughput y baja latencia. FSx for Lustre es una solución ideal que cumple estos requisitos.
 
-#### FSx for Lustre Storage Class for vLLM
+#### FSx for Lustre Storage Class para vLLM
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -1428,7 +1277,7 @@ reclaimPolicy: Retain
 volumeBindingMode: Immediate
 ```
 
-#### PVC for vLLM Workloads
+#### PVC para cargas de trabajo vLLM
 
 ```yaml
 apiVersion: v1
@@ -1444,7 +1293,7 @@ spec:
   storageClassName: fsx-lustre-vllm
 ```
 
-#### vLLM Deployment Example
+#### Ejemplo de Deployment de vLLM
 
 ```yaml
 apiVersion: apps/v1
@@ -1482,72 +1331,72 @@ spec:
           claimName: vllm-model-storage
 ```
 
-#### vLLM Performance Optimization Tips
+#### Consejos de optimización del rendimiento de vLLM
 
-1. **Seleccionar el throughput adecuado**: Para workloads de vLLM, se recomienda elegir al menos 200 MB/s por TiB de throughput.
+1. **Seleccionar el throughput adecuado**: Para cargas de trabajo vLLM, se recomienda elegir al menos 200 MB/s por TiB de throughput.
 
-2. **Optimizar la capacidad de storage**: Asigna suficiente capacidad de storage considerando el tamaño del modelo y el tamaño del dataset.
+2. **Optimizar la capacidad de almacenamiento**: Asigna suficiente capacidad de almacenamiento teniendo en cuenta el tamaño del modelo y del conjunto de datos.
 
-3. **Optimización de red**: Asegúrate de que el file system FSx for Lustre y los nodes de EKS estén en la misma availability zone.
+3. **Optimización de red**: Asegúrate de que el sistema de archivos FSx for Lustre y los Nodes de EKS estén en la misma zona de disponibilidad.
 
-4. **Selección del tipo de instancia**: Usa instancias GPU (por ejemplo, g5.12xlarge) para optimizar el rendimiento de workloads de vLLM.
+4. **Selección de tipo de instancia**: Usa instancias de GPU (por ejemplo, g5.12xlarge) para optimizar el rendimiento de las cargas de trabajo vLLM.
 
 5. **Configuración de memoria**: Asigna memoria suficiente según el tamaño del modelo.
 
-6. **Opciones de montaje del file system**: Usa opciones de montaje adecuadas para un rendimiento óptimo.
+6. **Opciones de montaje del sistema de archivos**: Usa opciones de montaje adecuadas para un rendimiento óptimo.
 
    ```bash
    mount -t lustre -o noatime,flock fs-1234abcd.fsx.us-west-2.amazonaws.com@tcp:/fsx /mnt/fsx
    ```
 
-### Storage Option Comparison
+### Comparación de opciones de almacenamiento
 
-| Storage Option | Access Mode | Use Case | Performance | Cost | Scalability |
+| Opción de almacenamiento | Modo de acceso | Caso de uso | Rendimiento | Costo | Escalabilidad |
 |---------------|-------------|----------|-------------|------|-------------|
-| Amazon EBS | ReadWriteOnce | Block storage for single Pod | Medium-High | Medium | Limited (Single Node) |
-| Amazon EFS | ReadWriteMany | File storage shared by multiple Pods | Medium | Medium-High | High (Multiple Nodes) |
-| Amazon FSx for Lustre | ReadWriteMany | HPC, ML, Analytics | Very High | High | Very High (Parallel Access) |
+| Amazon EBS | ReadWriteOnce | Almacenamiento en bloques para un solo Pod | Medio-alto | Medio | Limitada (un solo Node) |
+| Amazon EFS | ReadWriteMany | Almacenamiento de archivos compartido por varios Pods | Medio | Medio-alto | Alta (varios Nodes) |
+| Amazon FSx for Lustre | ReadWriteMany | HPC, ML, análisis | Muy alto | Alto | Muy alta (acceso paralelo) |
 
-### EKS Storage Selection Guide
+### Guía de selección de almacenamiento de EKS
 
-1. **Cuando se necesita block storage para un solo Pod**: Amazon EBS
-   - Databases
-   - Stateful applications
-   - Workloads que se ejecutan en un solo node
+1. **Cuando se necesita almacenamiento en bloques para un solo Pod**: Amazon EBS
+   - Bases de datos
+   - Aplicaciones con estado
+   - Cargas de trabajo que se ejecutan en un solo Node
 
-2. **Cuando se necesita file storage compartido por varios Pods**: Amazon EFS
-   - Contenido de servidor web
+2. **Cuando se necesita almacenamiento de archivos compartido por varios Pods**: Amazon EFS
+   - Contenido de servidores web
    - Archivos de configuración compartidos
-   - Procesamiento de datos a mediana escala
+   - Procesamiento de datos a escala media
 
-3. **Cuando se necesita file storage de alto rendimiento**: Amazon FSx for Lustre
+3. **Cuando se necesita almacenamiento de archivos de alto rendimiento**: Amazon FSx for Lustre
    - Procesamiento de datos a gran escala
-   - Workloads de machine learning y AI (vLLM, etc.)
-   - High-performance computing (HPC)
-   - Analítica de big data
+   - Cargas de trabajo de machine learning y AI (vLLM, etc.)
+   - Computación de alto rendimiento (HPC)
+   - Análisis de big data
 
-## Conclusion
+## Conclusión
 
-En este capítulo, aprendimos sobre los conceptos de storage de Kubernetes. Los Volumes proporcionan una forma para que los contenedores dentro de un Pod almacenen y compartan datos, y los Persistent Volumes y Persistent Volume Claims proporcionan storage con un ciclo de vida independiente de los Pods. Las Storage Classes permiten a los usuarios solicitar storage cuando lo necesitan mediante dynamic provisioning.
+En este capítulo, aprendimos sobre los conceptos de almacenamiento de Kubernetes. Los Volumes proporcionan una forma para que los contenedores dentro de un Pod almacenen y compartan datos, y Persistent Volumes y Persistent Volume Claims proporcionan almacenamiento con un ciclo de vida independiente de los Pods. Las Storage Classes permiten a los usuarios solicitar almacenamiento cuando lo necesitan mediante el aprovisionamiento dinámico.
 
-En EKS, hay varias opciones de storage disponibles, incluidas Amazon EBS, Amazon EFS y Amazon FSx for Lustre, cada una con diferentes casos de uso y características de rendimiento. Para workloads de modelos de AI a gran escala como vLLM, FSx for Lustre, con su alto throughput y baja latencia, es una opción ideal. FSx for Lustre es un file system paralelo que permite el acceso a datos desde varios nodes simultáneamente, lo que lo hace adecuado para tareas de training e inference de modelos a gran escala.
+En EKS, hay diversas opciones de almacenamiento disponibles, entre ellas Amazon EBS, Amazon EFS y Amazon FSx for Lustre, cada una con distintos casos de uso y características de rendimiento. Para las cargas de trabajo de modelos de AI a gran escala como vLLM, FSx for Lustre, con su alto throughput y baja latencia, es una opción ideal. FSx for Lustre es un sistema de archivos paralelo que permite el acceso a los datos desde varios Nodes simultáneamente, lo que lo hace adecuado para tareas de entrenamiento e inferencia de modelos a gran escala.
 
-Es importante elegir la opción de storage adecuada para los requisitos de tu aplicación. Elige Amazon EBS cuando se necesite block storage para un solo Pod, Amazon EFS cuando se necesite file storage compartido por varios Pods, y Amazon FSx for Lustre cuando se necesite file storage de alto rendimiento.
+Es importante elegir la opción de almacenamiento adecuada para los requisitos de tu aplicación. Elige Amazon EBS cuando se necesite almacenamiento en bloques para un solo Pod, Amazon EFS cuando se necesite almacenamiento de archivos compartido por varios Pods y Amazon FSx for Lustre cuando se necesite almacenamiento de archivos de alto rendimiento.
 
 En el próximo capítulo, aprenderemos sobre la configuración y los secrets de Kubernetes.
 
-## Quiz
+## Cuestionario
 
-Para comprobar lo que aprendiste en este capítulo, intenta el [Storage Quiz](../quizzes/core/04-storage-quiz.md).
+Para comprobar lo que aprendiste en este capítulo, prueba el [Cuestionario de almacenamiento](../quizzes/core/04-storage-quiz.md).
 
-## References
+## Referencias
 
-- [Kubernetes Official Documentation - Volumes](https://kubernetes.io/docs/concepts/storage/volumes/)
-- [Kubernetes Official Documentation - Persistent Volumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
-- [Kubernetes Official Documentation - Storage Classes](https://kubernetes.io/docs/concepts/storage/storage-classes/)
-- [Kubernetes Official Documentation - Volume Snapshots](https://kubernetes.io/docs/concepts/storage/volume-snapshots/)
-- [AWS EBS CSI Driver](https://github.com/kubernetes-sigs/aws-ebs-csi-driver)
-- [AWS EFS CSI Driver](https://github.com/kubernetes-sigs/aws-efs-csi-driver)
-- [AWS FSx for Lustre CSI Driver](https://github.com/kubernetes-sigs/aws-fsx-csi-driver)
-- [AWS Blog - Scaling your LLM inference workloads: Multi-node deployment with TensorRT-LLM and Triton on Amazon EKS](https://aws.amazon.com/ko/blogs/hpc/scaling-your-llm-inference-workloads-multi-node-deployment-with-tensorrt-llm-and-triton-on-amazon-eks/)
-- [AWS Workshop - GenAI FSx EKS](https://catalog.workshops.aws/genaifsxeks/en-US/200-module2-genai/210-deploy)
+- [Documentación oficial de Kubernetes - Volumes](https://kubernetes.io/docs/concepts/storage/volumes/)
+- [Documentación oficial de Kubernetes - Persistent Volumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
+- [Documentación oficial de Kubernetes - Storage Classes](https://kubernetes.io/docs/concepts/storage/storage-classes/)
+- [Documentación oficial de Kubernetes - Volume Snapshots](https://kubernetes.io/docs/concepts/storage/volume-snapshots/)
+- [Controlador AWS EBS CSI](https://github.com/kubernetes-sigs/aws-ebs-csi-driver)
+- [Controlador AWS EFS CSI](https://github.com/kubernetes-sigs/aws-efs-csi-driver)
+- [Controlador AWS FSx for Lustre CSI](https://github.com/kubernetes-sigs/aws-fsx-csi-driver)
+- [Blog de AWS - Escalado de tus cargas de trabajo de inferencia de LLM: implementación multinodo con TensorRT-LLM y Triton en Amazon EKS](https://aws.amazon.com/ko/blogs/hpc/scaling-your-llm-inference-workloads-multi-node-deployment-with-tensorrt-llm-and-triton-on-amazon-eks/)
+- [Taller de AWS - GenAI FSx EKS](https://catalog.workshops.aws/genaifsxeks/en-US/200-module2-genai/210-deploy)

@@ -1,0 +1,385 @@
+{
+  "status": "passed",
+  "date": "2026-09-11",
+  "files": [
+    {
+      "path": "ko/ops/07-observability-alerts.md",
+      "sha256": "c7485c44911646573ffa6715ef92d50246ee01053a4cecd4d8cc0166a40cd68b"
+    },
+    {
+      "path": "ko/quizzes/ops/07-observability-alerts-quiz.md",
+      "sha256": "70334dcd02e793af43b1e6a640016019e85c382d1e0773e7a4370bba6ab26188"
+    },
+    {
+      "path": "en/ops/07-observability-alerts.md",
+      "sha256": "8a80850ef1fd89b52b2f323de005c48715ba1f45663eaf48dd1be200330db8f7"
+    },
+    {
+      "path": "en/quizzes/ops/07-observability-alerts-quiz.md",
+      "sha256": "2eac9958b0e4e4695ceeed8d1ead549ef35be8db8a8d493d5ef55484a852ffe5"
+    }
+  ],
+  "checks": [
+    "28sourcefencesparse;fixtureparity;20quizquestionsandlocallinks",
+    "PrometheusOperator0.93.1PrometheusRuleCRDschemaandnativerepresentationmatch",
+    "8diagnosticPromQLexpressionsparse",
+    "17ruleswith18Prometheus3.14evaluationscenarios",
+    "Alertmanager0.34strictUTF8config,10routingcases,2nativetemplaterenders",
+    "16nativeAlertmanagerinhibitionscopecases;zerooutboundintegrations;loopbackserverstopped",
+    "KPS90.1.1configSecret,credential/template mounting,ruleSelectorandHAalert-relabelSecretreferencesverified",
+    "Fourdiagrams9/9composition,4viewport/themechecks each,humaninspectionandPNGrefresh;seeops-alerts-diagrams-validation.json"
+  ],
+  "evidence": {
+    "chart-validation.json": {
+      "status": "passed",
+      "chart": "90.1.1",
+      "operator": "0.93.1",
+      "alertmanagerName": "monitoring-kube-prometheus-alertmanager",
+      "prometheusName": "monitoring-kube-prometheus-prometheus",
+      "checks": [
+        "existingconfigSecret",
+        "credentialsSecretmount",
+        "templateConfigMapmount",
+        "explicitAlertmanagerConfigselection",
+        "ruleSelectorrelease",
+        "clusterexternallabel",
+        "generatedrelabelSecretreferenceandcontent"
+      ]
+    },
+    "routing-template-tests.json": [
+      {
+        "labels": {
+          "severity": "critical",
+          "team": "network"
+        },
+        "receivers": [
+          "oncall",
+          "network-team"
+        ],
+        "exitCode": 0
+      },
+      {
+        "labels": {
+          "severity": "critical",
+          "team": "storage"
+        },
+        "receivers": [
+          "oncall",
+          "storage-team"
+        ],
+        "exitCode": 0
+      },
+      {
+        "labels": {
+          "severity": "critical",
+          "team": "platform"
+        },
+        "receivers": [
+          "oncall",
+          "default-slack"
+        ],
+        "exitCode": 0
+      },
+      {
+        "labels": {
+          "severity": "warning",
+          "team": "network"
+        },
+        "receivers": [
+          "network-team"
+        ],
+        "exitCode": 0
+      },
+      {
+        "labels": {
+          "severity": "warning",
+          "team": "storage"
+        },
+        "receivers": [
+          "storage-team"
+        ],
+        "exitCode": 0
+      },
+      {
+        "labels": {
+          "severity": "warning",
+          "team": "platform"
+        },
+        "receivers": [
+          "default-slack"
+        ],
+        "exitCode": 0
+      },
+      {
+        "labels": {
+          "severity": "info",
+          "team": "network"
+        },
+        "receivers": [
+          "low-priority"
+        ],
+        "exitCode": 0
+      },
+      {
+        "labels": {
+          "severity": "info"
+        },
+        "receivers": [
+          "low-priority"
+        ],
+        "exitCode": 0
+      },
+      {
+        "labels": {
+          "severity": "unknown"
+        },
+        "receivers": [
+          "default-slack"
+        ],
+        "exitCode": 0
+      },
+      {
+        "labels": {},
+        "receivers": [
+          "default-slack"
+        ],
+        "exitCode": 0
+      },
+      {
+        "templates": 2,
+        "mixedFiringResolved": "passed",
+        "optionalMissingLabels": "passed"
+      }
+    ],
+    "inhibition-tests.json": {
+      "status": "passed",
+      "cases": [
+        {
+          "id": "NodeCritical",
+          "labels": {
+            "alertname": "NodeCritical",
+            "severity": "critical",
+            "alert_family": "node_cpu",
+            "cluster": "a",
+            "instance": "node-a",
+            "job": "node-exporter"
+          },
+          "inhibited": false
+        },
+        {
+          "id": "NodeWarningSame",
+          "labels": {
+            "alertname": "NodeWarningSame",
+            "severity": "warning",
+            "alert_family": "node_cpu",
+            "cluster": "a",
+            "instance": "node-a",
+            "job": "node-exporter"
+          },
+          "inhibited": true
+        },
+        {
+          "id": "NodeWarningOtherNode",
+          "labels": {
+            "alertname": "NodeWarningOtherNode",
+            "severity": "warning",
+            "alert_family": "node_cpu",
+            "cluster": "a",
+            "instance": "node-b",
+            "job": "node-exporter"
+          },
+          "inhibited": false
+        },
+        {
+          "id": "NodeWarningOtherCluster",
+          "labels": {
+            "alertname": "NodeWarningOtherCluster",
+            "severity": "warning",
+            "alert_family": "node_cpu",
+            "cluster": "b",
+            "instance": "node-a",
+            "job": "node-exporter"
+          },
+          "inhibited": false
+        },
+        {
+          "id": "NodeWarningMissingCluster",
+          "labels": {
+            "alertname": "NodeWarningMissingCluster",
+            "severity": "warning",
+            "alert_family": "node_cpu",
+            "instance": "node-a",
+            "job": "node-exporter"
+          },
+          "inhibited": false
+        },
+        {
+          "id": "NodeWarningMissingInstance",
+          "labels": {
+            "alertname": "NodeWarningMissingInstance",
+            "severity": "warning",
+            "alert_family": "node_cpu",
+            "cluster": "a"
+          },
+          "inhibited": false
+        },
+        {
+          "id": "NodeWarningOtherFamily",
+          "labels": {
+            "alertname": "NodeWarningOtherFamily",
+            "severity": "warning",
+            "alert_family": "node_filesystem",
+            "cluster": "a",
+            "instance": "node-a",
+            "job": "node-exporter"
+          },
+          "inhibited": false
+        },
+        {
+          "id": "NoFamilyCritical",
+          "labels": {
+            "alertname": "NoFamilyCritical",
+            "severity": "critical",
+            "cluster": "a",
+            "instance": "node-z"
+          },
+          "inhibited": false
+        },
+        {
+          "id": "NoFamilyWarning",
+          "labels": {
+            "alertname": "NoFamilyWarning",
+            "severity": "warning",
+            "cluster": "a",
+            "instance": "node-z"
+          },
+          "inhibited": false
+        },
+        {
+          "id": "PodCritical",
+          "labels": {
+            "alertname": "PodCritical",
+            "severity": "critical",
+            "alert_family": "container_cpu_throttling",
+            "cluster": "a",
+            "namespace": "team-a",
+            "pod": "api",
+            "container": "app"
+          },
+          "inhibited": false
+        },
+        {
+          "id": "PodWarningSame",
+          "labels": {
+            "alertname": "PodWarningSame",
+            "severity": "warning",
+            "alert_family": "container_cpu_throttling",
+            "cluster": "a",
+            "namespace": "team-a",
+            "pod": "api",
+            "container": "app"
+          },
+          "inhibited": true
+        },
+        {
+          "id": "PodWarningOtherNamespace",
+          "labels": {
+            "alertname": "PodWarningOtherNamespace",
+            "severity": "warning",
+            "alert_family": "container_cpu_throttling",
+            "cluster": "a",
+            "namespace": "team-b",
+            "pod": "api",
+            "container": "app"
+          },
+          "inhibited": false
+        },
+        {
+          "id": "PodWarningOtherContainer",
+          "labels": {
+            "alertname": "PodWarningOtherContainer",
+            "severity": "warning",
+            "alert_family": "container_cpu_throttling",
+            "cluster": "a",
+            "namespace": "team-a",
+            "pod": "api",
+            "container": "sidecar"
+          },
+          "inhibited": false
+        },
+        {
+          "id": "PVCCritical",
+          "labels": {
+            "alertname": "PVCCritical",
+            "severity": "critical",
+            "alert_family": "pvc_usage",
+            "cluster": "a",
+            "namespace": "team-a",
+            "persistentvolumeclaim": "data"
+          },
+          "inhibited": false
+        },
+        {
+          "id": "PVCWarningSame",
+          "labels": {
+            "alertname": "PVCWarningSame",
+            "severity": "warning",
+            "alert_family": "pvc_usage",
+            "cluster": "a",
+            "namespace": "team-a",
+            "persistentvolumeclaim": "data"
+          },
+          "inhibited": true
+        },
+        {
+          "id": "PVCWarningOtherNamespace",
+          "labels": {
+            "alertname": "PVCWarningOtherNamespace",
+            "severity": "warning",
+            "alert_family": "pvc_usage",
+            "cluster": "a",
+            "namespace": "team-b",
+            "persistentvolumeclaim": "data"
+          },
+          "inhibited": false
+        }
+      ],
+      "observed": {
+        "NoFamilyCritical": false,
+        "PVCCritical": false,
+        "NodeCritical": false,
+        "PodWarningOtherNamespace": false,
+        "PodWarningOtherContainer": false,
+        "NodeWarningOtherFamily": false,
+        "NoFamilyWarning": false,
+        "PodCritical": false,
+        "NodeWarningOtherNode": false,
+        "NodeWarningMissingInstance": false,
+        "PVCWarningOtherNamespace": false,
+        "NodeWarningSame": true,
+        "PVCWarningSame": true,
+        "PodWarningSame": true,
+        "NodeWarningOtherCluster": false,
+        "NodeWarningMissingCluster": false
+      },
+      "outboundIntegrations": 0,
+      "listener": "loopback only"
+    }
+  },
+  "limitations": [
+    "No live cluster configuration, metric collection, CloudWatch query or external notification was executed.",
+    "Diagnostic metric queries require the installed exporter/version/mode and matching labels; parser success does not prove collection."
+  ],
+  "sources": [
+    "https://github.com/prometheus/prometheus/releases/tag/v3.14.0",
+    "https://github.com/prometheus/alertmanager/releases/tag/v0.34.0",
+    "https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/",
+    "https://prometheus.io/docs/alerting/latest/configuration/",
+    "https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-90.1.1",
+    "https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.1/utils/prometheusmetrics/prometheusmetrics.go",
+    "https://github.com/cilium/cilium/blob/v1.20.1/pkg/hubble/metrics/drop/handler.go",
+    "https://docs.aws.amazon.com/eks/latest/userguide/auto-troubleshoot.html",
+    "https://karpenter.sh/docs/reference/metrics/",
+    "https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/"
+  ]
+}

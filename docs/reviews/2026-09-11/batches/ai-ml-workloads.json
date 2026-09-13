@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/ai-ml/01-ai-ml-workloads.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "a2e713847d83d54903bda9167118639d40531eb9f16ab5338021eb2b8ca4a05a",
+    "summary": "Fullyread4originalfiles;correctedinvalidGPUfraction/MPSandAL2023operatorownership,brokenmultiworkerexamples,FSxstaticdynamicmix,HPA/monitoring/securityandall10quiztopics;14figuresupdated."
+  },
+  {
+    "path": "ko/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "0b9d67dbd0a206879183466416ab57daa81f2eb6c14c7b2037f725852ec91bec",
+    "summary": "Fullyread4originalfiles;correctedinvalidGPUfraction/MPSandAL2023operatorownership,brokenmultiworkerexamples,FSxstaticdynamicmix,HPA/monitoring/securityandall10quiztopics;14figuresupdated."
+  },
+  {
+    "path": "en/ai-ml/01-ai-ml-workloads.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "31f1f6b18b81001df45f7ab26c2c866483b01e3542c4695884d8a3c247e8476b",
+    "summary": "Fullyread4originalfiles;correctedinvalidGPUfraction/MPSandAL2023operatorownership,brokenmultiworkerexamples,FSxstaticdynamicmix,HPA/monitoring/securityandall10quiztopics;14figuresupdated."
+  },
+  {
+    "path": "en/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "01f62a1942fcfe94b8c8a7c478e35028c7b18a7db6fd15c4f57e9c0e34bdc0ab",
+    "summary": "Fullyread4originalfiles;correctedinvalidGPUfraction/MPSandAL2023operatorownership,brokenmultiworkerexamples,FSxstaticdynamicmix,HPA/monitoring/securityandall10quiztopics;14figuresupdated."
+  }
+]

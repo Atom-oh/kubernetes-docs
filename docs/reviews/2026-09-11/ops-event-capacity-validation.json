@@ -1,0 +1,141 @@
+{
+  "status": "passed_with_stated_limits",
+  "reviewDate": "2026-09-12",
+  "fences": 46,
+  "standaloneQueries": 8,
+  "quizQuestions": 20,
+  "manifests": 11,
+  "triggerMetadataChecks": 4,
+  "uniqueScaleTargets": 3,
+  "calculatorCases": 18,
+  "cronCases": 12,
+  "terraformMockRuns": 3,
+  "promql": {
+    "cases": 5,
+    "status": "passed",
+    "coverage": [
+      "RPS-to-RPM",
+      "missing error series with traffic",
+      "zero traffic omitted",
+      "unrelated service exclusion",
+      "Deployment desired/available and duplicate scrape labels"
+    ]
+  },
+  "prices": {
+    "observedDate": "2026-09-12",
+    "source": "AWS MCP Pricing GetProducts; selected raw OnDemand fields copied from successful tool response",
+    "apiRegion": "us-east-1",
+    "region": "ap-northeast-2",
+    "location": "Asia Pacific (Seoul)",
+    "operatingSystem": "Linux",
+    "tenancy": "Shared",
+    "preInstalledSw": "NA",
+    "capacitystatus": "Used",
+    "apiCalls": {
+      "successfulGetProducts": 4,
+      "productsPerCall": [
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    "products": [
+      {
+        "instanceType": "c5.2xlarge",
+        "sku": "3PJ9XNY2REM5NDKX",
+        "vcpu": "8",
+        "memory": "16 GiB",
+        "usdPerHour": "0.3840000000",
+        "unit": "Hrs",
+        "beginRange": "0",
+        "endRange": "Inf",
+        "effectiveDate": "2026-09-01T00:00:00Z",
+        "publicationDate": "2026-09-10T19:55:14Z"
+      },
+      {
+        "instanceType": "c5.4xlarge",
+        "sku": "TRZY7P9CKPQ9DJMF",
+        "vcpu": "16",
+        "memory": "32 GiB",
+        "usdPerHour": "0.7680000000",
+        "unit": "Hrs",
+        "beginRange": "0",
+        "endRange": "Inf",
+        "effectiveDate": "2026-09-01T00:00:00Z",
+        "publicationDate": "2026-09-10T19:55:14Z"
+      },
+      {
+        "instanceType": "c6i.4xlarge",
+        "sku": "8HR4UDJ5EET49ZCB",
+        "vcpu": "16",
+        "memory": "32 GiB",
+        "usdPerHour": "0.7680000000",
+        "unit": "Hrs",
+        "beginRange": "0",
+        "endRange": "Inf",
+        "effectiveDate": "2026-09-01T00:00:00Z",
+        "publicationDate": "2026-09-10T19:55:14Z"
+      },
+      {
+        "instanceType": "m5.4xlarge",
+        "sku": "TEKAB27S96DBYQ84",
+        "vcpu": "16",
+        "memory": "64 GiB",
+        "usdPerHour": "0.9440000000",
+        "unit": "Hrs",
+        "beginRange": "0",
+        "endRange": "Inf",
+        "effectiveDate": "2026-09-01T00:00:00Z",
+        "publicationDate": "2026-09-10T19:55:14Z"
+      }
+    ]
+  },
+  "ami": {
+    "source": "AWS MCP SSM GetParameter; successful read of public EKS parameter",
+    "observedDate": "2026-09-12",
+    "region": "ap-northeast-2",
+    "name": "/aws/service/eks/optimized-ami/1.36/amazon-linux-2023/x86_64/standard/recommended",
+    "image_id": "ami-04172ca62e798058d",
+    "image_name": "amazon-eks-node-al2023-x86_64-standard-1.36-v20260903",
+    "release_version": "1.36.3-20260903",
+    "parameterVersion": 17,
+    "lastModifiedDate": "2026-09-08T17:01:26.324000+00:00"
+  },
+  "findings": [
+    "Replacedunmeasuredtrafficmultipliers/instantReady/zeroColdStartclaimswithSLO/profile/allocatable/quotas/failureobjectives;actualappsReadyandnodeReadyseparated.",
+    "Decimalcalculator18cases:consistentRPMunits,ceil,CPU/memory/Podslots,AZsurvival,timezoneintervals,unusedreservationswithoutdoublecounting,unknownothercoststotalnull. Original26nodes15/11failsAZloss.",
+    "PublicAWSPriceList4successfulGetProductsreadsverifySeoulLinuxSharedc5.2xl.384,c5.4xl.768,c6i.4xl.768,m5.4xl.944;oldregionpriceswrong. Same26*4compute79.87,earlyreservation30days14456.83illustrative(notactualbill).",
+    "OneSOeachfororder-api/worker/frontend;KEDACron5fieldsnoyear,annualrecurrenceandNYEDT/ESTverified12cases;HPAownsmaxrecommendation/behavior/minmax,notReadyguarantee/metricsceiling.",
+    "Incomingrequestsnotcompletedordersalone;metriccontract/scope/singlevalue/nodata;CloudWatchmetricStatnotmetricStatType,minMetricValueisNoDatafallbacknotactivation,period/collectionoffsetexplicit;SQSvisibleinflightapprox/controlroleversusconsumerroles.",
+    "Karpenter1.14.1staticreplicasexistsandseparatefromASGWarmPool;dynamicweight/limitsnotprecreate. Staticreplicas0doesnotlaunch,immutablemode/no weight/onlylimits.nodes/noconsolidation/scalebypassesnodebudgetsbutPDBhonored.",
+    "SelfmanagedNodeClassAMIaliaspinnedverifiedpublicSSMEKS1.36Seoulrelease1.36.3-20260903;AutoModeNodeClassdifferentAPIbutCURRENTLYsupportsreservations—avoidedfalseunsupportedfinding.",
+    "ODCRtargetednotNodePoolsecurityACL;matchingactiveusage/PriorityreservedtypeNOTRI;immediatecreationversusfutureenddate/billingstart;3TFmockcasesrejectfractionalcountandpastdate.",
+    "Placementtags/taints/selectorsandPodcostlabelsexplicit;dynamic/staticalternativesnotblindlycombined;staticactivation/placement/GitOpsownershipsequence;placeholderreplenishmentcancreateextranodesandhandoffmustremoveitsdemand.",
+    "Removedgenericsh-echoimagecacheguarantee,blindHPA/Deploymentemergencyoverwrites,deleteSOrestoresbaselineassumptionandtimedNodePooldelete/targetdestroy;documentedbaselineCron/floorrestoreandrealcleanupverification.",
+    "Dashboarddesired/availablemetricscorrect,notHPAmetricthresholdnorcount0phasegauges;undefinedcost/exportermetricsqualified;APIwrapper/partialdashboardremoved,referencesFinOpschapter.",
+    "Sixexistingfiguressemanticallyrewritten:properplaceholderhandoff,HPAmetricownership,controller/scheduler/Karpenter/kubeletstageswithoutfixednodecounts/latency. All9/9/currentbrowserreceipts+assistantvisualinspection+PNGs."
+  ],
+  "fixtureSha256": {
+    ".vitepress/cache/content-review-event/capacity.py": "f94a2ec2143eb5ad2ca5eabdc1b7435bc52d059cf1d684a735ff931eb1458af4",
+    ".vitepress/cache/content-review-event/scenario.json": "5d544a2042d76bb140117389cc93f24a26b9381e3c2afc1ea92f3b8c7d12e732",
+    ".vitepress/cache/content-review-event/trigger-auth.yaml": "7c37a600c007b315ef87a9504988c5e5c84ae477bf756eb6aec5ff99a83fe8f9",
+    ".vitepress/cache/content-review-event/order-api-scaledobject.yaml": "5ae2e716e28aaf63e045c668ca4a35b7501fa6f82485c19f9feb10c383786d2b",
+    ".vitepress/cache/content-review-event/worker-scaledobject.yaml": "dadb3bf406ed30566931400ac657907bae99514754ba062075dbe2e7aadc6af3",
+    ".vitepress/cache/content-review-event/frontend-scaledobject.yaml": "c342591035cc7fe20b19907cfdddf7d8eedeeb8bf408c74651d830ac0cab17bc",
+    ".vitepress/cache/content-review-event/recording-rules.yaml": "f8a4dc9a053051e9288678f62b0483c9e67d3a1ee6754c53063cbff4ce881e24",
+    ".vitepress/cache/content-review-event/prometheus-rule.yaml": "50ac80ed9abc0009347e30efdb517a4fb67012febad4c81a3d1fca1e7778e73f",
+    ".vitepress/cache/content-review-event/nodeclass.yaml": "35c224e555549973c834fe36c4ff497be08bc34dfa5d5e0e208aa91b37c8c4f7",
+    ".vitepress/cache/content-review-event/dynamic-nodepool.yaml": "b4f7b762f746468c24a84b1713f3f32a79d4cd2384679dbed5b4e918fac18442",
+    ".vitepress/cache/content-review-event/static-nodepools.yaml": "cddb971bb769ab8bd551b1e722d66e096aa18e69039cb2fe4d7f70fdd1428803",
+    ".vitepress/cache/content-review-event/workload-placement-patch.yaml": "9537121b9da213e4f3e215edba2ea18ee37b64b42b8dcb9076e0ea978fab7149",
+    ".vitepress/cache/content-review-event/pdb.yaml": "cbed5f8bb6dc14bc8dddcb60af38846e5e4e29a4ed66f97dbf50eb86e4e87acd",
+    ".vitepress/cache/content-review-event/operator-read-policy.json": "dc418941ff0ce54b4241706bd4ea1f7346aeefd1efee6611a78098476e214ad1"
+  },
+  "limitations": [
+    "No real event benchmark, EC2 provisioning, reservation creation, SQS processing, HPA/KEDA live scaling or actual-bill validation.",
+    "Schema/metadata checks do not execute Kubernetes CEL/admission or prove IAM/region capacity.",
+    "Cron tests execute pinned parser and fixed-clock adaptation ofKEDA2.20.2logic,notfullcontroller.",
+    "All cost figures use explicitly illustrative workload/interval assumptions and public prices;actualdiscounts/otherresourcesareexcluded."
+  ]
+}

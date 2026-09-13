@@ -1,143 +1,135 @@
 # Tekton Pipelines Quiz
 
-1. What advantage does Tekton have over Jenkins or GitHub Actions in Kubernetes environments?
-   - A) Tekton provides more plugins
-   - B) CRD-based pipelines are managed as Kubernetes resources, enabling GitOps, RBAC, and namespace isolation
-   - C) Tekton provides faster execution speed
-   - D) Tekton is free while other tools are paid
+1. Which correctly describes Task, TaskRun and Workspace?
+   - A) A Task definition is already a running Pod
+   - B) A TaskRun executes a Task; a Workspace is a volume-binding field
+   - C) Workspace is always a separate CRD
+   - D) Steps in one Pod are completely isolated from each other
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) CRD-based pipelines are managed as Kubernetes resources, enabling GitOps, RBAC, and namespace isolation**
+**Answer: B) A TaskRun executes a Task; a Workspace is a volume-binding field**
 
-**Explanation:**
-Tekton defines Tasks, Pipelines, and PipelineRuns as Kubernetes CRDs. This enables declarative pipeline management in Git (GitOps), access control via Kubernetes RBAC, namespace-level isolation, and management via kubectl. Each Step runs in a separate container for strong isolation.
+Tasks/Pipelines are definitions and Runs are executions. Steps in one Pod share networking and volumes, so they are not a trust boundary.
 
 </details>
 
 ---
 
-2. How do you share data between Tasks in a Tekton Pipeline?
-   - A) Pass via environment variables
-   - B) Share file systems through Workspaces (PVC) and pass small data via Results
-   - C) Store in ConfigMaps
-   - D) Direct network communication between Tasks
+2. Which is correct when sharing source between TaskRuns?
+   - A) emptyDir shares the same files across Pods
+   - B) A per-run PVC can be used; RWO/RWX themselves are not trust boundaries
+   - C) Different subPaths make one PVC safe to share between external PRs and releases
+   - D) Results are always unlimited strings
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Share file systems through Workspaces (PVC) and pass small data via Results**
+**Answer: B) A per-run PVC can be used; RWO/RWX themselves are not trust boundaries**
 
-**Explanation:**
-Workspaces are PVC-based file system sharing between Tasks, ideal for patterns like cloning source code then building. Results pass small string data (image tags, commit SHAs, etc.) between Tasks, referenced as `$(tasks.task-name.results.result-name)`.
+Use volumeClaimTemplate for per-run storage and separate writable data across trust levels. Use Results for small values and artifact storage for large reports.
 
 </details>
 
 ---
 
-3. What does Tekton Triggers' EventListener do?
-   - A) Generate events and send them to external systems
-   - B) Receive webhook requests and automatically create PipelineRuns via TriggerBinding/TriggerTemplate
-   - C) Monitor pipeline execution results
-   - D) Periodically poll Git repositories
+3. How should an external PR be handled after GitHub HMAC verification?
+   - A) Use the release pipeline's IRSA and signing privileges
+   - B) Use a separate execution trust level with limited permissions
+   - C) Interpolate its shell commands directly into scripts because HMAC passed
+   - D) A verified request is always a main-branch push
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Receive webhook requests and automatically create PipelineRuns via TriggerBinding/TriggerTemplate**
+**Answer: B) Use a separate execution trust level with limited permissions**
 
-**Explanation:**
-The EventListener is an HTTP endpoint that receives webhook requests (GitHub Push, PR events, etc.). Interceptors validate/filter the request, TriggerBinding extracts parameters from the payload, and TriggerTemplate creates a PipelineRun with those parameters.
+HMAC validates delivery origin, not permission for code to deploy. This chapter's privileged CI path is limited to the approved repository's protected main push.
 
 </details>
 
 ---
 
-4. What Supply Chain Security feature does Tekton Chains provide?
-   - A) Scan container images for vulnerabilities
-   - B) Automatically sign TaskRun/PipelineRun artifacts (images) and generate SLSA Provenance
-   - C) Encrypt network traffic
-   - D) Auto-generate RBAC policies
+4. Which provenance version does Chains' slsa/v1 formatter produce?
+   - A) SLSA provenance v1.0
+   - B) SLSA provenance v0.2; v1.0 uses slsa/v2alpha3 or slsa/v2alpha4
+   - C) The signing key automatically chooses any version
+   - D) Always the same version as the Kubernetes v1 API
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Automatically sign TaskRun/PipelineRun artifacts (images) and generate SLSA Provenance**
+**Answer: B) SLSA provenance v0.2; v1.0 uses slsa/v2alpha3 or slsa/v2alpha4**
 
-**Explanation:**
-Tekton Chains automatically signs OCI images with Cosign/Sigstore after TaskRun completion and generates SLSA Provenance (build metadata, source information, build steps, etc.). This strengthens software supply chain security and enables verification of image origin and integrity.
+Formatter names and SLSA specification versions differ. Pipeline-level provenance is created after Pipeline completion and needs separate verification/promotion.
 
 </details>
 
 ---
 
-5. What is the purpose of `finally` Tasks in a Tekton Pipeline?
-   - A) Execute as the first Task in the pipeline
-   - B) Cleanup tasks that always run last regardless of pipeline success/failure
-   - C) Conditionally executed Tasks
-   - D) Tasks that run in parallel
+5. Which statement about finally Tasks is correct?
+   - A) They execute under every error, cancellation and timeout
+   - B) They run after ordinary Tasks but missing Results, cancellation or timeout can skip/prevent them
+   - C) They always execute sequentially in declaration order
+   - D) They automatically supply defaults for missing image Results
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Cleanup tasks that always run last regardless of pipeline success/failure**
+**Answer: B) They run after ordinary Tasks but missing Results, cancellation or timeout can skip/prevent them**
 
-**Explanation:**
-`finally` Tasks run after all other Tasks in the pipeline complete, regardless of success or failure. Since they execute even on build failures, they're ideal for temporary resource cleanup, notification sending, and test result reporting. Similar to a try-catch-finally pattern.
+The final report only references the run name and tasks.status. Do not assume ordering among finally Tasks; account for timeout behavior.
 
 </details>
 
 ---
 
-6. Why separate CI/CD in an ArgoCD + Tekton integration architecture?
-   - A) Because Tekton doesn't support CD
-   - B) Separating CI (build/test) and CD (deploy) concerns improves security, auditing, and rollback
-   - C) Because ArgoCD doesn't support CI
-   - D) Because the tools have different licenses
+6. What remains after CI succeeds and chains.tekton.dev/signed=true is observed?
+   - A) Immediately deploy an arbitrary tag to production
+   - B) Verify trusted key, digest, builder and source provenance, then review the GitOps change
+   - C) Only base64-decode signature JSON without verification
+   - D) Check that ArgoCD itself pulls the application image
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Separating CI (build/test) and CD (deploy) concerns improves security, auditing, and rollback**
+**Answer: B) Verify trusted key, digest, builder and source provenance, then review the GitOps change**
 
-**Explanation:**
-Tekton handles CI (source clone, test, build, image push) while ArgoCD handles CD (Git-based declarative deployment). CI commits the image tag to Git, and ArgoCD detects this change to deploy. This enables deployment permission separation, Git-based audit trails, and declarative rollback.
+The signed annotation is not cryptographic verification or approval. ArgoCD syncs manifests; kubelets/runtimes pull images.
 
 </details>
 
 ---
 
-7. What is a use case for the CEL Interceptor in Tekton?
-   - A) Verify GitHub signatures
-   - B) Filter and transform webhook payloads using CEL expressions (specific branches, file paths, etc.)
-   - C) Verify GitLab tokens
-   - D) Process Bitbucket events
+7. Which controller ServiceMonitor port and counter apply in Pipelines 1.16?
+   - A) metrics / pipelinerun_count
+   - B) http-metrics / tekton_pipelines_controller_pipelinerun_total
+   - C) http / automatic counters for every namespace
+   - D) 9097 / a running-duration histogram
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Filter and transform webhook payloads using CEL expressions (specific branches, file paths, etc.)**
+**Answer: B) http-metrics / tekton_pipelines_controller_pipelinerun_total**
 
-**Explanation:**
-The CEL (Common Expression Language) Interceptor performs filtering and transformation on webhook payloads using CEL expressions. For example, `body.ref == 'refs/heads/main'` filters only main branch pushes, or `body.commits.exists(c, c.modified.exists(f, f.startsWith('src/')))` triggers only on specific path changes.
+Match actual Service labels/ports and Prometheus selectors. The current completion counter carries status only, not a namespace label.
 
 </details>
 
 ---
 
-8. What is an appropriate cleanup strategy for Tekton PipelineRuns?
-   - A) Keep all PipelineRuns permanently
-   - B) Set TTL-based auto-deletion with different retention periods for success/failure to manage resources
-   - C) Delete manually only
-   - D) PipelineRuns are automatically deleted
+8. What is the default completion behavior for volumeClaimTemplate PVCs with coschedule=workspaces?
+   - A) Always immediately deleted
+   - B) Retained; the exact true auto-cleanup annotation can opt into completion cleanup
+   - C) Existing user-provided PVCs are always deleted too
+   - D) PipelineRuns have a default seven-day TTL
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Set TTL-based auto-deletion with different retention periods for success/failure to manage resources**
+**Answer: B) Retained; the exact true auto-cleanup annotation can opt into completion cleanup**
 
-**Explanation:**
-PipelineRuns and TaskRuns remain in etcd after execution, consuming storage. Use Tekton's cleanup settings (`keep`, `keep-since`) or CronJob-based cleanup scripts to automatically delete old execution records. Failed runs are typically retained longer for debugging purposes.
+Other coschedule modes and pre-existing PVCs have different lifecycles. Check completion time, retention and log/signature archives before deleting run records.
 
 </details>

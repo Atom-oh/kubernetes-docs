@@ -1,0 +1,624 @@
+{
+  "status": "passed",
+  "files": [
+    "ko/ai-ml/sagemaker-ai/README.md",
+    "ko/ai-ml/sagemaker-ai/01-platform-architecture.md",
+    "ko/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md",
+    "en/ai-ml/sagemaker-ai/README.md",
+    "en/ai-ml/sagemaker-ai/01-platform-architecture.md",
+    "en/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md",
+    "examples/ai-ml/qwen-pii-finetuning/README.md"
+  ],
+  "fences": 1,
+  "quizQuestions": 10,
+  "relativeLinks": 20,
+  "componentTests": {
+    "result": "30passed",
+    "logSha256": "3206bfb39d1f783b96b69bdc9c65411017d2d3bbf3b8bb20795099a32eed606c",
+    "scope": "Python3.12CPUonly;pytest8.4.2PyYAML6.0.3boto3=1.42.97;noGPU/weights/AWSAPI"
+  },
+  "modelMetadata": {
+    "id": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+    "observedRevision": "0d7cf23991f47feeb3a57ecb4c9cee8ea4a17bfe",
+    "totalParametersBillions": 30.5,
+    "activeParametersBillions": 3.3,
+    "loaderRevisionPinned": false
+  },
+  "markdownVueCompilation": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/sagemaker-ai/README.md",
+        "sha256": "fec0f382d8d0242e1719db6225c3a0b29b7ee81afb0605a631bf58a6f67f4249",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "sagemaker-ai로-qwen-pii-파인튜닝하기"
+          },
+          {
+            "tag": "h2",
+            "id": "_5부-학습-경로"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-기록"
+          },
+          {
+            "tag": "h2",
+            "id": "실험-정책과-한계"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "sagemaker-ai로-qwen-pii-파인튜닝하기",
+          "_5부-학습-경로",
+          "검증-기록",
+          "실험-정책과-한계",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/ai-ml/sagemaker-ai/README.md",
+        "sha256": "4ee7a01efce294053b714040bf6ea9d4ce8646721c2e7e5e7f166e4a9a4a29c5",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "fine-tuning-qwen-for-pii-with-sagemaker-ai"
+          },
+          {
+            "tag": "h2",
+            "id": "five-part-learning-path"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-record"
+          },
+          {
+            "tag": "h2",
+            "id": "experiment-policy-and-limits"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "fine-tuning-qwen-for-pii-with-sagemaker-ai",
+          "five-part-learning-path",
+          "validation-record",
+          "experiment-policy-and-limits",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/ai-ml/sagemaker-ai/01-platform-architecture.md",
+        "sha256": "a85e24dd6a970948e107dc5b69d0e8acc36b9bdca8854d75e894f9255839fbdf",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-1-sagemaker-qwen-pii-플랫폼-아키텍처"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-책임과-기록-경계"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-같은-계약-다른-실행-환경"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-모델과-제안된-qlora-설정"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-governance와-실행-준비"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "part-1-sagemaker-qwen-pii-플랫폼-아키텍처",
+          "_1-책임과-기록-경계",
+          "_2-같은-계약-다른-실행-환경",
+          "_3-모델과-제안된-qlora-설정",
+          "_4-governance와-실행-준비",
+          "검증-범위",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/ai-ml/sagemaker-ai/01-platform-architecture.md",
+        "sha256": "657e6135d7043cfd09760e4438b21f3a88c4ac4489c695f453742a939fabf288",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-1-sagemaker-qwen-pii-platform-architecture"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-responsibility-and-recording-boundaries"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-a-shared-contract-in-different-environments"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-model-and-proposed-qlora-settings"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-governance-and-execution-readiness"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "part-1-sagemaker-qwen-pii-platform-architecture",
+          "_1-responsibility-and-recording-boundaries",
+          "_2-a-shared-contract-in-different-environments",
+          "_3-model-and-proposed-qlora-settings",
+          "_4-governance-and-execution-readiness",
+          "validation-scope",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md",
+        "sha256": "fb9b081e888a540bb7229d6532a7639fc27fd1b596b0eced01174888c155f3a7",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "sagemaker-qwen-플랫폼-아키텍처-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "객관식-문제"
+          }
+        ],
+        "renderedIds": [
+          "sagemaker-qwen-플랫폼-아키텍처-퀴즈",
+          "객관식-문제"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md",
+        "sha256": "35e59d390af0c582c1216acaf05b1f3c338da91aa4085da14ce3e1f7c647ab6b",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "sagemaker-qwen-platform-architecture-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "multiple-choice-questions"
+          }
+        ],
+        "renderedIds": [
+          "sagemaker-qwen-platform-architecture-quiz",
+          "multiple-choice-questions"
+        ]
+      },
+      {
+        "path": "examples/ai-ml/qwen-pii-finetuning/README.md",
+        "sha256": "64f713398aa7b0561becdb8c31e926c54cf014465cf9da4dc1893eb2fa004015",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "qwen-pii-fine-tuning-experiment"
+          },
+          {
+            "tag": "h2",
+            "id": "safety-and-reproducibility"
+          },
+          {
+            "tag": "h2",
+            "id": "local-contract-test"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-result"
+          }
+        ],
+        "renderedIds": [
+          "qwen-pii-fine-tuning-experiment",
+          "safety-and-reproducibility",
+          "local-contract-test",
+          "validation-result"
+        ]
+      }
+    ]
+  },
+  "viewerChecks": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "777b126a9e7f7f9b18bda5605089f12a0acaba6988fb916bbfdd0b4e3e3a39c7"
+      },
+      {
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "777b126a9e7f7f9b18bda5605089f12a0acaba6988fb916bbfdd0b4e3e3a39c7"
+      },
+      {
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "777b126a9e7f7f9b18bda5605089f12a0acaba6988fb916bbfdd0b4e3e3a39c7"
+      },
+      {
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "71a05cdeecea451dc8ff2f38a9098f9c7bc21497c71734430bcffbf2f7532e55"
+      },
+      {
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "71a05cdeecea451dc8ff2f38a9098f9c7bc21497c71734430bcffbf2f7532e55"
+      },
+      {
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "71a05cdeecea451dc8ff2f38a9098f9c7bc21497c71734430bcffbf2f7532e55"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "diagramDeliveries": [
+    {
+      "schemaVersion": 1,
+      "ok": true,
+      "command": "deliver",
+      "type": "architecture",
+      "input": "/home/atomoh/kubernetes-docs/assets/diagrams/archify/ko-ai-ml-sagemaker-ai-01-platform-architecture-0.architecture.json",
+      "output": "/home/atomoh/kubernetes-docs/public/archmaps/ko-ai-ml-sagemaker-ai-01-platform-architecture-0.html",
+      "specification": {
+        "sha256": "9a4bccacd2a42a122a74926116b36f838e24057f840487343c3deec3c656531a",
+        "bytes": 7569
+      },
+      "artifact": {
+        "sha256": "777b126a9e7f7f9b18bda5605089f12a0acaba6988fb916bbfdd0b4e3e3a39c7",
+        "bytes": 720504
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      },
+      "evidence": {
+        "verified": true,
+        "repository": "https://github.com/Atom-oh/kubernetes-docs",
+        "revision": "621d86117748779acb762e1d84e1ff278986ad98",
+        "references": 13
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "ok": true,
+      "command": "deliver",
+      "type": "architecture",
+      "input": "/home/atomoh/kubernetes-docs/assets/diagrams/archify/en-ai-ml-sagemaker-ai-01-platform-architecture-0.architecture.json",
+      "output": "/home/atomoh/kubernetes-docs/public/archmaps/en-ai-ml-sagemaker-ai-01-platform-architecture-0.html",
+      "specification": {
+        "sha256": "b012fb1588555e07755eae6381c549812946a4095b6525167aadaa66b40eab89",
+        "bytes": 7598
+      },
+      "artifact": {
+        "sha256": "71a05cdeecea451dc8ff2f38a9098f9c7bc21497c71734430bcffbf2f7532e55",
+        "bytes": 720514
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      },
+      "evidence": {
+        "verified": true,
+        "repository": "https://github.com/Atom-oh/kubernetes-docs",
+        "revision": "621d86117748779acb762e1d84e1ff278986ad98",
+        "references": 13
+      }
+    }
+  ],
+  "pngVisualInspection": "Both current ko/en figures inspected;datedobservationsandtarget/unverifiedGPUstatusvisible;tokenizationboundary/privateinventoryupdated;sourceevidence13refsverifiedat621d8611.",
+  "sources": [
+    {
+      "name": "qwen-card",
+      "url": "https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507/raw/main/README.md",
+      "bytes": 15418,
+      "sha256": "5d25d4b43cdfaf83e3d71df8f3436703ab26d92c07305053be667f577a49bb9e"
+    },
+    {
+      "name": "qwen-metadata",
+      "url": "https://huggingface.co/api/models/Qwen/Qwen3-30B-A3B-Instruct-2507",
+      "bytes": 7679,
+      "sha256": "790c93bb8c6d768a82053341d32353622d6caf4f13d39aec5986af2c58da761b"
+    },
+    {
+      "name": "qlora",
+      "url": "https://arxiv.org/abs/2305.14314",
+      "bytes": 44173,
+      "sha256": "6388775a19989a46dfb02d9e30c0021d32095f6edd44d7f248181de8b517ccc5"
+    }
+  ],
+  "limits": "NoGPUtraining/inferencequality/memory/costvalidation;nocurrentAWSresidualquery. Proposedconfigurationandcomponenttestsarenotendtoendproof.",
+  "executionFollowup": {
+    "pythonTestsPassed": 125,
+    "runtimeGuard": "PyTorch2.8 end-of-patch2026-08-06; GPUexecutionblocked",
+    "diagramSourceCommit": "2ad43f6a0ee602874fc788c22fe0a225a68dc092",
+    "figures": {
+      "ko": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      },
+      "en": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      }
+    },
+    "responsive": {
+      "status": "passed",
+      "cases": [
+        {
+          "locale": "ko",
+          "width": 375,
+          "passed": true,
+          "innerWidth": 375,
+          "scrollWidth": 375,
+          "svg": 2,
+          "toolbar": {
+            "x": 16,
+            "y": 16,
+            "width": 343,
+            "height": 96,
+            "top": 16,
+            "right": 359,
+            "bottom": 112,
+            "left": 16
+          },
+          "sourceSha256": "c0ddeebd79e7372bb4ae5af9b4b174acefa6bdcfe8a494ac0a65088a76c47670"
+        },
+        {
+          "locale": "ko",
+          "width": 768,
+          "passed": true,
+          "innerWidth": 768,
+          "scrollWidth": 768,
+          "svg": 2,
+          "toolbar": {
+            "x": 32,
+            "y": 32,
+            "width": 704,
+            "height": 44,
+            "top": 32,
+            "right": 736,
+            "bottom": 76,
+            "left": 32
+          },
+          "sourceSha256": "c0ddeebd79e7372bb4ae5af9b4b174acefa6bdcfe8a494ac0a65088a76c47670"
+        },
+        {
+          "locale": "ko",
+          "width": 1920,
+          "passed": true,
+          "innerWidth": 1920,
+          "scrollWidth": 1920,
+          "svg": 2,
+          "toolbar": {
+            "x": 1496.359375,
+            "y": 16,
+            "width": 407.640625,
+            "height": 44,
+            "top": 16,
+            "right": 1904,
+            "bottom": 60,
+            "left": 1496.359375
+          },
+          "sourceSha256": "c0ddeebd79e7372bb4ae5af9b4b174acefa6bdcfe8a494ac0a65088a76c47670"
+        },
+        {
+          "locale": "en",
+          "width": 375,
+          "passed": true,
+          "innerWidth": 375,
+          "scrollWidth": 375,
+          "svg": 2,
+          "toolbar": {
+            "x": 16,
+            "y": 16,
+            "width": 343,
+            "height": 96,
+            "top": 16,
+            "right": 359,
+            "bottom": 112,
+            "left": 16
+          },
+          "sourceSha256": "c7d5e6f3e27f772ec1e8d5f977acf254dd2695b73c710b6d56bf5d840779ab63"
+        },
+        {
+          "locale": "en",
+          "width": 768,
+          "passed": true,
+          "innerWidth": 768,
+          "scrollWidth": 768,
+          "svg": 2,
+          "toolbar": {
+            "x": 32,
+            "y": 32,
+            "width": 704,
+            "height": 44,
+            "top": 32,
+            "right": 736,
+            "bottom": 76,
+            "left": 32
+          },
+          "sourceSha256": "c7d5e6f3e27f772ec1e8d5f977acf254dd2695b73c710b6d56bf5d840779ab63"
+        },
+        {
+          "locale": "en",
+          "width": 1920,
+          "passed": true,
+          "innerWidth": 1920,
+          "scrollWidth": 1920,
+          "svg": 2,
+          "toolbar": {
+            "x": 1496.359375,
+            "y": 16,
+            "width": 407.640625,
+            "height": 44,
+            "top": 16,
+            "right": 1904,
+            "bottom": 60,
+            "left": 1496.359375
+          },
+          "sourceSha256": "c7d5e6f3e27f772ec1e8d5f977acf254dd2695b73c710b6d56bf5d840779ab63"
+        }
+      ],
+      "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+    },
+    "pngVisualInspection": "Both current125test/source2ad43f6a PNGs visually reviewed"
+  },
+  "prReviewFollowup": {
+    "fixRecord": "sagemaker-review-fixes.json",
+    "codeCommit": "2ad43f6a0ee602874fc788c22fe0a225a68dc092",
+    "pythonTestsPassed": 125,
+    "newHeadReview": "pending"
+  }
+}

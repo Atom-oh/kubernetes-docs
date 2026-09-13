@@ -2,11 +2,11 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "vLLM Architecture",
+    "title": "vLLM capabilities and measurement",
     "locale": "en",
     "output": "en-ai-ml-03-agentic-ai-platform-2.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "viewBox": [
       900,
       540
@@ -18,7 +18,7 @@
           "label": "vLLM Core Technologies"
         },
         "external": {
-          "label": "Performance Benefits"
+          "label": "Measure per workload"
         }
       }
     }
@@ -82,8 +82,8 @@
     {
       "id": "memory",
       "type": "external",
-      "label": "Memory Efficiency 95%+",
-      "sublabel": "GPU memory allocated to KV cache",
+      "label": "KV fragmentation",
+      "sublabel": "separate weights / KV / workspace",
       "pos": [
         620,
         60
@@ -96,7 +96,7 @@
     {
       "id": "throughput",
       "type": "external",
-      "label": "Throughput 24x Improvement",
+      "label": "Throughput and queues",
       "pos": [
         620,
         160
@@ -104,13 +104,14 @@
       "size": [
         220,
         64
-      ]
+      ],
+      "sublabel": "concurrency / token budgets"
     },
     {
       "id": "latency",
       "type": "external",
-      "label": "Latency Minimization",
-      "sublabel": "TTFT reduced 50-80%",
+      "label": "Reusable prefixes",
+      "sublabel": "measure conditional TTFT",
       "pos": [
         620,
         260
@@ -123,8 +124,8 @@
     {
       "id": "context",
       "type": "external",
-      "label": "Long Context Support",
-      "sublabel": "stable latency for mixed prompts",
+      "label": "Prefill / decode scheduling",
+      "sublabel": "long-context memory budget",
       "pos": [
         620,
         360
@@ -148,7 +149,7 @@
     },
     {
       "kind": "region",
-      "label": "Performance Benefits",
+      "label": "Validate by measurement",
       "wraps": [
         "memory",
         "throughput",
@@ -162,45 +163,36 @@
       "id": "paged-to-memory",
       "from": "paged-attention",
       "to": "memory",
-      "label": "--gpu-memory-utilization 0.95",
+      "label": "block allocation",
       "variant": "emphasis"
     },
     {
       "id": "batching-to-throughput",
       "from": "continuous-batching",
-      "to": "throughput"
+      "to": "throughput",
+      "label": "workload dependent"
     },
     {
       "id": "prefix-to-latency",
       "from": "prefix-caching",
       "to": "latency",
-      "label": "caches repeated system prompts"
+      "label": "KV reuse conditions"
     },
     {
       "id": "chunked-to-context",
       "from": "chunked-prefill",
       "to": "context",
-      "label": "--max-num-batched-tokens 32768"
+      "label": "scheduler budget"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "vLLM tuning points",
+      "title": "No fixed speedup guarantee",
       "items": [
-        "KV cache management: allocate 95% of GPU memory to the KV cache, --block-size 16",
-        "Prefix caching: reduces TTFT by 50-80% for requests using identical system prompts",
-        "Chunked prefill: stabilizes response latency for workloads with mixed long and short prompts"
-      ]
-    },
-    {
-      "dot": "emerald",
-      "title": "Deployment flags",
-      "items": [
-        "--gpu-memory-utilization 0.95",
-        "--enable-prefix-caching",
-        "--enable-chunked-prefill",
-        "--max-num-batched-tokens 32768"
+        "gpu-memory-utilization is not a KV-only fraction.",
+        "Prefix KV caching differs from full-response caching.",
+        "Pin image, model and drivers; measure latency and throughput."
       ]
     }
   ]

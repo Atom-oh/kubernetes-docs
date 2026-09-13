@@ -1,0 +1,230 @@
+[
+  {
+    "path": "ko/llm-guide.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Read entire guide and roadmap; reconciled AI ingestion, publishing and export claims with local generator/MCP/site-scope implementation.",
+    "sources": [
+      "scripts/generate-llms-txt.mjs",
+      "scripts/docs-mcp.mjs",
+      "scripts/lib/docs-search.mjs",
+      ".vitepress/site-scope.mjs",
+      ".vitepress/seo.mjs"
+    ],
+    "findings": [
+      "llms.txt is a proposal, not guaranteed automatic full-book ingestion",
+      "Only ko/en are published; raw Markdown excludes quiz/lab/locale roots",
+      "Markdown alternate head link is only for eligible content pages",
+      "Successful deployment, not a local edit, updates public endpoints",
+      "Export availability depends on viewer/browser/state; benchmark reports retain their original limits"
+    ],
+    "validation": [
+      "MCP scopes/defaults/limits verified against implementation",
+      "Generator scope and Markdown alternate eligibility verified",
+      "Existing MCP/manifest unit tests passed at checkpoint; unrelated Istio retry tests pending owner fix"
+    ],
+    "reviewedSha256": "c88ff1f491323cca6bc10fbc4e3a6524ca2d4b582f7a729c8b6abbbf3b251c38"
+  },
+  {
+    "path": "ko/roadmap.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Read entire guide and roadmap; reconciled AI ingestion, publishing and export claims with local generator/MCP/site-scope implementation.",
+    "sources": [
+      "scripts/generate-llms-txt.mjs",
+      "scripts/docs-mcp.mjs",
+      "scripts/lib/docs-search.mjs",
+      ".vitepress/site-scope.mjs",
+      ".vitepress/seo.mjs"
+    ],
+    "findings": [
+      "llms.txt is a proposal, not guaranteed automatic full-book ingestion",
+      "Only ko/en are published; raw Markdown excludes quiz/lab/locale roots",
+      "Markdown alternate head link is only for eligible content pages",
+      "Successful deployment, not a local edit, updates public endpoints",
+      "Export availability depends on viewer/browser/state; benchmark reports retain their original limits"
+    ],
+    "validation": [
+      "MCP scopes/defaults/limits verified against implementation",
+      "Generator scope and Markdown alternate eligibility verified",
+      "Existing MCP/manifest unit tests passed at checkpoint; unrelated Istio retry tests pending owner fix"
+    ],
+    "reviewedSha256": "9123774a7abd0cb11869ba0be1541a3711afd8c7cd02cb038abad466d753c4d2"
+  },
+  {
+    "path": "en/llm-guide.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Read entire guide and roadmap; reconciled AI ingestion, publishing and export claims with local generator/MCP/site-scope implementation.",
+    "sources": [
+      "scripts/generate-llms-txt.mjs",
+      "scripts/docs-mcp.mjs",
+      "scripts/lib/docs-search.mjs",
+      ".vitepress/site-scope.mjs",
+      ".vitepress/seo.mjs"
+    ],
+    "findings": [
+      "llms.txt is a proposal, not guaranteed automatic full-book ingestion",
+      "Only ko/en are published; raw Markdown excludes quiz/lab/locale roots",
+      "Markdown alternate head link is only for eligible content pages",
+      "Successful deployment, not a local edit, updates public endpoints",
+      "Export availability depends on viewer/browser/state; benchmark reports retain their original limits"
+    ],
+    "validation": [
+      "MCP scopes/defaults/limits verified against implementation",
+      "Generator scope and Markdown alternate eligibility verified",
+      "Existing MCP/manifest unit tests passed at checkpoint; unrelated Istio retry tests pending owner fix"
+    ],
+    "reviewedSha256": "63e76d51d6a0d30e61f8bc419e8855cac60aa8e5e69334744d8dc80abe394a84"
+  },
+  {
+    "path": "en/roadmap.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Read entire guide and roadmap; reconciled AI ingestion, publishing and export claims with local generator/MCP/site-scope implementation.",
+    "sources": [
+      "scripts/generate-llms-txt.mjs",
+      "scripts/docs-mcp.mjs",
+      "scripts/lib/docs-search.mjs",
+      ".vitepress/site-scope.mjs",
+      ".vitepress/seo.mjs"
+    ],
+    "findings": [
+      "llms.txt is a proposal, not guaranteed automatic full-book ingestion",
+      "Only ko/en are published; raw Markdown excludes quiz/lab/locale roots",
+      "Markdown alternate head link is only for eligible content pages",
+      "Successful deployment, not a local edit, updates public endpoints",
+      "Export availability depends on viewer/browser/state; benchmark reports retain their original limits"
+    ],
+    "validation": [
+      "MCP scopes/defaults/limits verified against implementation",
+      "Generator scope and Markdown alternate eligibility verified",
+      "Existing MCP/manifest unit tests passed at checkpoint; unrelated Istio retry tests pending owner fix"
+    ],
+    "reviewedSha256": "a426d964014fb60ea59c7671fa544a46287ed588bc3ecac3a336b13a12bf769f"
+  },
+  {
+    "path": "ko/quizzes/llm-guide-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed every question/answer against the updated guide; corrected outdated endpoint counts, publishing claims, diagram interpretation limits and five-entry benchmark list.",
+    "sources": [
+      "ko/llm-guide.md",
+      "scripts/generate-llms-txt.mjs"
+    ],
+    "findings": [
+      "Endpoint catalog has more than the original three files",
+      "Build/deploy generation is not live editing or automatic AI discovery",
+      "Roadmap benchmark list has five entries rather than four",
+      "Viewer export and external-platform format support are separate"
+    ],
+    "validation": [
+      "Full question/answer read and source comparison; internal links validated"
+    ],
+    "reviewedSha256": "6bc75967ff020e1d78f72244d83fea767c13cf53d2b87e26c21206cedf267cc5"
+  },
+  {
+    "path": "ko/quizzes/roadmap-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed every question/answer against the updated guide; corrected outdated endpoint counts, publishing claims, diagram interpretation limits and five-entry benchmark list.",
+    "sources": [
+      "ko/roadmap.md",
+      "scripts/generate-llms-txt.mjs"
+    ],
+    "findings": [
+      "Endpoint catalog has more than the original three files",
+      "Build/deploy generation is not live editing or automatic AI discovery",
+      "Roadmap benchmark list has five entries rather than four",
+      "Viewer export and external-platform format support are separate"
+    ],
+    "validation": [
+      "Full question/answer read and source comparison; internal links validated"
+    ],
+    "reviewedSha256": "bd27cd561c48ecb6ea42a902c49f6022b0a1cd644afbe20fc125bede39973467"
+  },
+  {
+    "path": "en/quizzes/llm-guide-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed every question/answer against the updated guide; corrected outdated endpoint counts, publishing claims, diagram interpretation limits and five-entry benchmark list.",
+    "sources": [
+      "en/llm-guide.md",
+      "scripts/generate-llms-txt.mjs"
+    ],
+    "findings": [
+      "Endpoint catalog has more than the original three files",
+      "Build/deploy generation is not live editing or automatic AI discovery",
+      "Roadmap benchmark list has five entries rather than four",
+      "Viewer export and external-platform format support are separate"
+    ],
+    "validation": [
+      "Full question/answer read and source comparison; internal links validated"
+    ],
+    "reviewedSha256": "f962a354eb9e3dc94e4729f1036b8379335b03601c9678e4474e009d7b4f79ee"
+  },
+  {
+    "path": "en/quizzes/roadmap-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed every question/answer against the updated guide; corrected outdated endpoint counts, publishing claims, diagram interpretation limits and five-entry benchmark list.",
+    "sources": [
+      "en/roadmap.md",
+      "scripts/generate-llms-txt.mjs"
+    ],
+    "findings": [
+      "Endpoint catalog has more than the original three files",
+      "Build/deploy generation is not live editing or automatic AI discovery",
+      "Roadmap benchmark list has five entries rather than four",
+      "Viewer export and external-platform format support are separate"
+    ],
+    "validation": [
+      "Full question/answer read and source comparison; internal links validated"
+    ],
+    "reviewedSha256": "d942ebd54cc6e9773d6bf26eef4bd86308526d33b153ec85a9ae4d3008548f99"
+  },
+  {
+    "path": "ko/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full root navigation reviewed. Language switches use the same site canonical locale URLs to support separate locale builds; AI/catalog description and quiz parity aligned.",
+    "sources": [
+      "ko/SUMMARY.md",
+      "ko/llm-guide.md",
+      ".vitepress/site-scope.mjs"
+    ],
+    "findings": [
+      "Language switch sent readers to a different GitBook copy instead of the matching local-language source",
+      "AI full-book phrasing overpromised automatic ingestion",
+      "English logging overview was missing its existing quiz link",
+      "Not every topic has a hands-on lab"
+    ],
+    "validation": [
+      "Full README read; target paths checked against existing files and local link inventory",
+      "Relative cross-locale link failed frozen KO build; changed to actual canonical locale URL without disabling dead-link checking."
+    ],
+    "reviewedSha256": "939d2d72bbc306719946efb7951aca335ff3e1a8de296d3d1ed3b1ff3d7d7735"
+  },
+  {
+    "path": "en/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full root navigation reviewed. Language switches use the same site canonical locale URLs to support separate locale builds; AI/catalog description and quiz parity aligned.",
+    "sources": [
+      "en/SUMMARY.md",
+      "en/llm-guide.md",
+      ".vitepress/site-scope.mjs"
+    ],
+    "findings": [
+      "Language switch sent readers to a different GitBook copy instead of the matching local-language source",
+      "AI full-book phrasing overpromised automatic ingestion",
+      "English logging overview was missing its existing quiz link",
+      "Not every topic has a hands-on lab"
+    ],
+    "validation": [
+      "Full README read; target paths checked against existing files and local link inventory",
+      "Relative cross-locale link failed frozen KO build; changed to actual canonical locale URL without disabling dead-link checking."
+    ],
+    "reviewedSha256": "55c4bb2ae3432d3c78c511ddd84ce868d2a815dc6efa329a4ff74eef140ba754"
+  }
+]

@@ -9,256 +9,342 @@
     "animation": "trace",
     "views": [
       {
-        "id": "control-plane",
-        "label": "Four control-plane services",
+        "id": "control",
+        "label": "Metadata / control",
         "focus": [
-          "dag-processor",
-          "scheduler",
-          "api-server",
+          "bundle",
+          "processor",
+          "db",
           "triggerer",
-          "postgres"
+          "api",
+          "scheduler"
         ],
-        "note": "Four single-purpose services read and write the PostgreSQL metadata database as shared state."
+        "note": "Core roles and optional triggerer; prepare metadata storage and code delivery separately."
       },
       {
-        "id": "k8s-executor",
-        "label": "KubernetesExecutor path",
+        "id": "kubernetes",
+        "label": "KubernetesExecutor",
         "focus": [
           "scheduler",
-          "k8s-pod"
+          "kpod",
+          "api"
         ],
-        "note": "The scheduler creates one Kubernetes pod per task directly. No Redis is needed."
+        "note": "Task pods are created through Kubernetes; supervisors call the Execution API."
       },
       {
-        "id": "celery-executor",
-        "label": "CeleryExecutor path",
+        "id": "celery",
+        "label": "CeleryExecutor",
         "focus": [
           "scheduler",
-          "redis",
-          "celery-worker"
+          "broker",
+          "worker",
+          "api"
         ],
-        "note": "The scheduler queues tasks to the Redis broker and Celery worker pods consume them. Redis is required only here."
+        "note": "Workers receive broker tasks; task supervisors use the Execution API."
       }
     ]
   },
   "components": [
     {
-      "id": "user",
-      "type": "external",
-      "label": "User / UI",
-      "sublabel": "Browser · REST client",
+      "id": "bundle",
+      "type": "database",
+      "label": "DAG bundle / code",
+      "sublabel": "Processor + worker code",
       "pos": [
-        260,
-        20
+        40,
+        50
       ],
       "size": [
         190,
-        60
+        64
       ]
     },
     {
-      "id": "dag-processor",
+      "id": "processor",
       "type": "backend",
-      "label": "dag-processor",
-      "sublabel": "Parses DAG files",
+      "label": "DAG processor",
+      "sublabel": "Parse and serialize",
       "pos": [
-        50,
-        180
-      ],
-      "size": [
-        160,
-        60
-      ]
-    },
-    {
-      "id": "api-server",
-      "type": "backend",
-      "label": "api-server",
-      "sublabel": "UI · REST API v2 · auth",
-      "pos": [
-        260,
-        180
+        290,
+        50
       ],
       "size": [
         190,
-        60
+        64
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Metadata DB",
+      "sublabel": "PostgreSQL / MySQL",
+      "pos": [
+        540,
+        50
+      ],
+      "size": [
+        190,
+        64
       ]
     },
     {
       "id": "triggerer",
       "type": "backend",
-      "label": "triggerer",
-      "sublabel": "Runs deferrable operators",
+      "label": "Triggerer (optional)",
+      "sublabel": "Async triggers",
       "pos": [
-        480,
-        180
+        790,
+        50
       ],
       "size": [
         190,
-        60
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "frontend",
+      "label": "API server",
+      "sublabel": "UI / REST / Execution API",
+      "pos": [
+        540,
+        230
+      ],
+      "size": [
+        190,
+        64
       ]
     },
     {
       "id": "scheduler",
       "type": "backend",
-      "label": "scheduler",
-      "sublabel": "Evaluates deps · queues tasks",
+      "label": "Scheduler + executor",
+      "sublabel": "State and task submission",
       "pos": [
-        700,
-        180
+        790,
+        230
       ],
       "size": [
         190,
-        60
-      ]
-    },
-    {
-      "id": "postgres",
-      "type": "database",
-      "label": "PostgreSQL",
-      "sublabel": "Metadata DB (always required)",
-      "pos": [
-        50,
-        370
-      ],
-      "size": [
-        840,
         64
       ]
     },
     {
-      "id": "k8s-pod",
+      "id": "kpod",
       "type": "backend",
-      "label": "KubernetesExecutor Pod",
-      "sublabel": "One pod per task",
+      "label": "Kubernetes task pod",
+      "sublabel": "Task SDK + supervisor",
       "pos": [
-        1020,
-        180
+        290,
+        410
       ],
       "size": [
-        200,
-        60
+        190,
+        64
       ]
     },
     {
-      "id": "redis",
+      "id": "worker",
+      "type": "backend",
+      "label": "Celery worker pool",
+      "sublabel": "Task SDK + supervisor",
+      "pos": [
+        540,
+        410
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "broker",
       "type": "messagebus",
-      "label": "Redis",
-      "sublabel": "Celery broker (CeleryExecutor only)",
+      "label": "Celery broker",
+      "sublabel": "Redis or alternative",
       "pos": [
-        1020,
-        370
+        790,
+        410
       ],
       "size": [
-        200,
+        190,
         64
-      ]
-    },
-    {
-      "id": "celery-worker",
-      "type": "backend",
-      "label": "Celery worker pod",
-      "sublabel": "Consumes tasks from broker",
-      "pos": [
-        1020,
-        540
-      ],
-      "size": [
-        200,
-        60
       ]
     }
   ],
   "boundaries": [
     {
       "kind": "region",
-      "label": "Airflow 3 control plane",
+      "label": "Airflow 3: logical components",
       "wraps": [
-        "dag-processor",
-        "scheduler",
-        "api-server",
+        "bundle",
+        "processor",
+        "db",
         "triggerer",
-        "postgres"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "Execution backend (executor)",
-      "wraps": [
-        "k8s-pod",
-        "redis",
-        "celery-worker"
+        "api",
+        "scheduler",
+        "kpod",
+        "worker",
+        "broker"
       ]
     }
   ],
   "connections": [
     {
-      "id": "user-to-api",
-      "from": "user",
-      "to": "api-server",
-      "label": "UI / REST API",
-      "variant": "emphasis",
+      "id": "code-to-processor",
+      "from": "bundle",
+      "to": "processor",
+      "label": "DAG code",
       "labelAt": [
-        355,
-        130
+        260,
+        70
       ]
     },
     {
-      "id": "dagproc-to-db",
-      "from": "dag-processor",
-      "to": "postgres",
-      "label": "writes serialized_dag",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "scheduler-to-db",
-      "from": "scheduler",
-      "to": "postgres",
-      "label": "reads DAGs · queues tasks",
-      "fromSide": "bottom",
-      "toSide": "top",
-      "labelDx": 60
-    },
-    {
-      "id": "api-to-db",
-      "from": "api-server",
-      "to": "postgres",
-      "label": "state R/W",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "id": "processor-to-db",
+      "from": "processor",
+      "to": "db",
+      "label": "serialize",
+      "labelAt": [
+        510,
+        70
+      ]
     },
     {
       "id": "triggerer-to-db",
       "from": "triggerer",
-      "to": "postgres",
+      "to": "db",
       "label": "trigger state",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "scheduler-to-k8s",
-      "from": "scheduler",
-      "to": "k8s-pod",
-      "label": "creates pods",
-      "variant": "emphasis"
-    },
-    {
-      "id": "scheduler-to-redis",
-      "from": "scheduler",
-      "to": "redis",
-      "label": "queues tasks (Celery)",
-      "variant": "dashed"
-    },
-    {
-      "id": "redis-to-worker",
-      "from": "redis",
-      "to": "celery-worker",
-      "label": "consumes tasks",
-      "variant": "dashed",
       "labelAt": [
-        1120,
-        490
+        760,
+        134
+      ]
+    },
+    {
+      "id": "api-to-db",
+      "from": "api",
+      "to": "db",
+      "label": "state R/W",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        615,
+        184
+      ]
+    },
+    {
+      "id": "scheduler-to-db",
+      "from": "scheduler",
+      "to": "db",
+      "label": "DAG / state R/W",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [
+        [
+          885,
+          180
+        ],
+        [
+          1000,
+          180
+        ],
+        [
+          1000,
+          5
+        ],
+        [
+          635,
+          5
+        ]
+      ],
+      "labelAt": [
+        925,
+        165
+      ]
+    },
+    {
+      "id": "scheduler-to-broker",
+      "from": "scheduler",
+      "to": "broker",
+      "label": "queue tasks",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        927,
+        357
+      ]
+    },
+    {
+      "id": "broker-to-worker",
+      "from": "broker",
+      "to": "worker",
+      "label": "task delivery",
+      "labelAt": [
+        760,
+        492
+      ]
+    },
+    {
+      "id": "worker-to-api",
+      "from": "worker",
+      "to": "api",
+      "label": "Execution API",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        677,
+        357
+      ]
+    },
+    {
+      "id": "kpod-to-api",
+      "from": "kpod",
+      "to": "api",
+      "label": "Execution API",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          510,
+          442
+        ],
+        [
+          510,
+          262
+        ]
+      ],
+      "labelAt": [
+        469,
+        352
+      ]
+    },
+    {
+      "id": "scheduler-to-kpod",
+      "from": "scheduler",
+      "to": "kpod",
+      "label": "Kubernetes API: create task pod",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          1030,
+          262
+        ],
+        [
+          1030,
+          515
+        ],
+        [
+          385,
+          515
+        ]
+      ],
+      "labelAt": [
+        910,
+        503
       ]
     }
   ]

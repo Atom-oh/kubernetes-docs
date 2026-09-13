@@ -1,0 +1,86 @@
+# datadog 3.244.0: postrenderer required; replace example IRSA role ARNs.
+targetSystem: linux
+registry: gcr.io/datadoghq
+datadog:
+  apiKeyExistingSecret: must-use-secret-postrenderer
+  clusterName: my-eks-cluster
+  site: datadoghq.com
+  tags:
+  - env:demo
+  - team:platform
+  logs:
+    enabled: true
+    containerCollectAll: false
+    containerCollectUsingFiles: true
+  apm:
+    socketEnabled: true
+    portEnabled: false
+    instrumentation:
+      enabled: false
+  dogstatsd:
+    useSocketVolume: true
+    useHostPort: false
+    nonLocalTraffic: false
+  processAgent:
+    processCollection: false
+    processDiscovery: false
+    containerCollection: true
+  networkMonitoring:
+    enabled: false
+  discovery:
+    enabled: false
+    networkStats:
+      enabled: false
+  autoscaling:
+    workload:
+      enabled: false
+  profiling:
+    enabled: null
+  collectEvents: true
+  prometheusScrape:
+    enabled: false
+  kubeStateMetricsCore:
+    enabled: true
+    collectSecretMetrics: false
+    collectConfigMaps: false
+  operator:
+    enabled: false
+  secretBackend:
+    type: aws.secrets
+    config:
+      aws_session:
+        aws_region: ap-northeast-2
+    enableGlobalPermissions: false
+  env: &id001
+  - name: AWS_EC2_METADATA_DISABLED
+    value: 'true'
+  - name: DD_SECRET_REFRESH_INTERVAL
+    value: '0'
+  - name: DD_SECRET_REFRESH_ON_API_KEY_FAILURE_INTERVAL
+    value: '0'
+clusterAgent:
+  enabled: true
+  replicas: 2
+  image:
+    tag: 7.83.1
+    digest: sha256:8e420c81e68abec34ab792c72a6513b739dcba8f7682c52e1e7e276363827b1a
+  metricsProvider:
+    enabled: false
+    useDatadogMetrics: false
+  admissionController:
+    enabled: true
+    mutateUnlabelled: false
+  tokenExistingSecret: must-use-secret-postrenderer
+  rbac:
+    create: true
+    serviceAccountAnnotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/datadog-cluster-agent-secrets
+  env: *id001
+agents:
+  image:
+    tag: 7.83.1
+    digest: sha256:ed0bd588e955d82f661d1b8dd1cdf179c1023e74a2817e7a812c99d52f05c319
+  rbac:
+    create: true
+    serviceAccountAnnotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/datadog-agent-secrets

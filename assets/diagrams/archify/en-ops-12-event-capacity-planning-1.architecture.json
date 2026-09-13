@@ -2,177 +2,129 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "KEDA Composite Trigger Behavior",
-    "locale": "en",
-    "output": "en-ops-12-event-capacity-planning-1.html",
+    "title": "Metrics and HPA recommendations",
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1240,
-      460
-    ],
-    "views": [
-      {
-        "id": "triggers",
-        "label": "Three triggers",
-        "focus": [
-          "cron",
-          "prometheus",
-          "sqs",
-          "max"
-        ],
-        "note": "Cron sets the floor (100 Pods) while the Prometheus order rate and SQS queue depth each compute their own target replica count."
-      },
-      {
-        "id": "apply",
-        "label": "Applying MAX",
-        "focus": [
-          "max",
-          "hpa",
-          "pods"
-        ],
-        "note": "Only the maximum of the three values becomes the HPA's desiredReplicas, which drives the actual Pod scaling."
-      }
+      1040,
+      420
     ]
   },
   "components": [
     {
       "id": "cron",
       "type": "external",
-      "label": "Cron Trigger",
-      "sublabel": "Floor: 100 Pods",
+      "label": "Cron",
+      "sublabel": "Scheduled demand floor",
       "pos": [
-        60,
-        60
+        40,
+        85
       ],
       "size": [
-        200,
-        64
+        190,
+        70
       ]
     },
     {
-      "id": "prometheus",
+      "id": "demand",
       "type": "external",
-      "label": "Prometheus Trigger",
-      "sublabel": "Order rate based",
+      "label": "Prometheus",
+      "sublabel": "Incoming request demand",
       "pos": [
-        60,
-        190
+        40,
+        245
       ],
       "size": [
-        200,
-        64
+        190,
+        70
       ]
     },
     {
-      "id": "sqs",
+      "id": "keda",
       "type": "messagebus",
-      "label": "SQS Trigger",
-      "sublabel": "Queue depth based",
+      "label": "KEDA",
+      "sublabel": "Expose external metrics",
       "pos": [
-        60,
-        320
+        310,
+        165
       ],
       "size": [
-        200,
-        64
+        170,
+        80
       ]
-    },
-    {
-      "id": "max",
-      "type": "backend",
-      "label": "MAX Selection",
-      "sublabel": "Highest of three values",
-      "pos": [
-        420,
-        190
-      ],
-      "size": [
-        200,
-        64
-      ],
-      "tag": "KEDA"
     },
     {
       "id": "hpa",
       "type": "backend",
-      "label": "Apply to HPA",
-      "sublabel": "desiredReplicas",
+      "label": "HPA",
+      "sublabel": "Max recommendation / bounds",
       "pos": [
-        700,
-        190
+        550,
+        165
       ],
       "size": [
-        200,
-        64
+        210,
+        80
       ]
     },
     {
-      "id": "pods",
-      "type": "backend",
-      "label": "Pod Scaling",
-      "sublabel": "Final result",
+      "id": "app",
+      "type": "frontend",
+      "label": "Deployment",
+      "sublabel": "desired replicas",
       "pos": [
-        980,
-        190
+        835,
+        165
       ],
       "size": [
-        200,
-        64
+        170,
+        80
       ]
     }
   ],
   "boundaries": [
     {
       "kind": "region",
-      "label": "ScaledObject triggers",
+      "label": "Triggers for one API workload",
       "wraps": [
         "cron",
-        "prometheus",
-        "sqs"
+        "demand"
       ]
     }
   ],
   "connections": [
     {
-      "id": "cron-to-max",
+      "id": "cron-metric",
       "from": "cron",
-      "to": "max",
-      "label": "100"
+      "to": "keda"
     },
     {
-      "id": "prometheus-to-max",
-      "from": "prometheus",
-      "to": "max",
-      "variant": "emphasis"
+      "id": "demand-metric",
+      "from": "demand",
+      "to": "keda"
     },
     {
-      "id": "sqs-to-max",
-      "from": "sqs",
-      "to": "max"
-    },
-    {
-      "id": "max-to-hpa",
-      "from": "max",
+      "id": "metrics",
+      "from": "keda",
       "to": "hpa",
-      "label": "apply MAX",
+      "label": "metrics",
       "variant": "emphasis"
     },
     {
-      "id": "hpa-to-pods",
+      "id": "scale",
       "from": "hpa",
-      "to": "pods",
-      "label": "set replicas",
+      "to": "app",
+      "label": "scale",
       "variant": "emphasis"
     }
   ],
   "cards": [
     {
       "dot": "violet",
-      "title": "Selection rule",
+      "title": "Desired is not Ready",
       "items": [
-        "KEDA selects the highest replica count across all triggers",
-        "If cron requests 100 and Prometheus requests 150, 150 is applied"
+        "HPA combines recommendations and applies behavior/min/max.",
+        "A separate queue consumer uses its own ScaledObject."
       ]
     }
   ]

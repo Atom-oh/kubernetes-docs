@@ -1,1499 +1,633 @@
-# Operational Alert Configuration: Core Metrics Monitoring
+# Operational Alert Configuration
 
-> **Supported Versions**: Prometheus 2.50+, Alertmanager 0.27+, Karpenter 0.35+
-> **Last Updated**: February 23, 2026
+> **Review baseline**: Prometheus 3.14.0, Alertmanager 0.34.0, kube-prometheus-stack 90.1.1 / Prometheus Operator 0.93.1\
+> **Last reviewed**: September 11, 2026. Rule evaluation, templates, routing, inhibition scope and chart wiring were validated locally. No real cluster alert configuration or Slack/PagerDuty notification was performed.
 
-< [Previous: Scaling Strategies](./06-scaling-strategies.md) | [Table of Contents](./README.md) | [Next: Observability Analysis](./08-observability-analysis.md) >
+< [Previous: Scaling](06-scaling-strategies.md) | [Contents](README.md) | [Next: Observability Analysis](08-observability-analysis.md) >
 
----
+Alerting requires more than copying metric names. Verify the collector, metric type, labels, units and missing-data behavior, then choose thresholds from service impact and operational response requirements. The thresholds below are examples; select/adapt rules that overlap with existing kube-prometheus-stack defaults.
 
-## 1. Alert Architecture
+## Alert Architecture
 
-Effective alerting in Kubernetes requires a well-designed pipeline that minimizes noise while ensuring critical issues reach operators promptly. This section covers the foundational architecture for EKS operational alerts.
+![The Operator selects PrometheusRule resources and renders configuration; Prometheus evaluates rules and Alertmanager delivers updates to configured receivers.](../.gitbook/assets/en-ops-07-observability-alerts-0.png)
 
-### Prometheus to Alertmanager Flow
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-07-observability-alerts-0.html)
 
-The alerting pipeline follows a structured flow from metric collection to notification delivery:
+PrometheusRule is a Kubernetes resource. **Prometheus Operator selects resources by namespace/label selectors and renders rule configuration.** Prometheus evaluates the resulting rules against collected time series.
 
-![Alerting architecture diagram: Prometheus evaluates PrometheusRule CRDs and sends firing alerts to Alertmanager, which routes them to Slack, PagerDuty, email, and webhooks.](../.gitbook/assets/en-ops-07-observability-alerts-0.png)
+The example uses namespace and Helm release name `monitoring`, matching the Rule's `release: monitoring` label to the generated selector. Change both if the real release or selector differs.
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-07-observability-alerts-0.html)
+| Field/concept | Meaning |
+|---|---|
+| `labels` | Alert-instance identity and grouping/routing/inhibition inputs |
+| `annotations` | Summary, description and real runbook links |
+| `for` | Required duration for the condition on a particular label set |
+| `keep_firing_for` | Optional continued firing after the condition clears |
+| Severity | Organization-defined label values and response policy |
 
-```
-┌─────────────┐    ┌──────────────────┐    ┌───────────────┐    ┌──────────────┐
-│  Prometheus │───▶│ PrometheusRule   │───▶│ Alertmanager  │───▶│  Receivers   │
-│   (Metrics) │    │ (Alert Evaluate) │    │  (Route/Group)│    │ (Slack/PD)   │
-└─────────────┘    └──────────────────┘    └───────────────┘    └──────────────┘
-       │                   │                       │                    │
-       ▼                   ▼                       ▼                    ▼
-   Scrape targets    Evaluate rules          Deduplicate         Notify teams
-   every 15-30s      every 30-60s          Group by labels     Based on routing
-```
+`critical`, `warning` and `info` are common conventions, not a fixed enum or tool-enforced SLA. Evaluation intervals, `for`, transport, group_wait and receiver processing all affect notification time.
 
-### Severity Levels
+### Evaluation state and resolution
 
-Standardized severity levels ensure consistent response procedures:
+![Prometheus Inactive, Pending and Firing states, with optional holding time and separate resolution-notification semantics.](../.gitbook/assets/en-ops-07-observability-alerts-1.png)
 
-| Severity | Response Time | Examples | Notification |
-|----------|---------------|----------|--------------|
-| **critical** | Immediate (< 5 min) | Node down, API server unreachable, data loss risk | PagerDuty + Slack |
-| **warning** | Within 1 hour | High resource usage, degraded performance | Slack channel |
-| **info** | Next business day | Scaling events, maintenance notices | Slack (optional) |
+[State diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-07-observability-alerts-1.html)
 
-### Alert Lifecycle
+Distinguish rule evaluation from notification delivery. `Firing` does not establish that Slack received a message. When firing ends, a resolution update can be sent; external recovery messages depend on `send_resolved`, routing, muting and delivery.
 
-Understanding the alert lifecycle helps configure appropriate timing:
+Alerts activate for **returned vector elements**, including elements whose numeric value is zero. `Ready == 0` intentionally returns such elements. Do not accidentally retain false comparisons by adding `bool` to an alert expression.
 
-![Alert state transition diagram moving from Inactive through Pending and Firing to Resolved, returning to Inactive when the condition clears early.](../.gitbook/assets/en-ops-07-observability-alerts-1.png)
+A disappeared series can remove expression results without a real service recovery. `ALERTS` is useful for observing pending/firing state, but is not a complete history of node termination or operator actions.
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ops-07-observability-alerts-1.html)
+## Validated Baseline Rules
+
+These examples require actual node-exporter, kubelet/cAdvisor and kube-state-metrics collection. Check metric names, jobs, labels and the relevant node/volume mode. The baseline assumes one cluster per Prometheus; centralized queries need **cluster labels on the collected series themselves** to avoid mixing clusters.
 
 ```yaml
-# Alert state transitions
-Inactive → Pending → Firing → Resolved
-    │         │         │         │
-    │         │         │         └── Alert condition no longer true
-    │         │         └── for: duration exceeded, sent to Alertmanager
-    │         └── Condition true, waiting for 'for' duration
-    └── Condition false, no alert
-```
-
-### PrometheusRule CRD Overview
-
-The PrometheusRule CRD defines alerting and recording rules:
-
-```yaml
+# prometheusrule.yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: example-alerts
+  name: reviewed-operational-alerts
   namespace: monitoring
   labels:
-    release: prometheus  # Must match Prometheus selector
+    release: monitoring
 spec:
   groups:
-    - name: example.rules
-      interval: 30s  # Evaluation interval for this group
-      rules:
-        - alert: ExampleAlert
-          expr: vector(1) > 0
-          for: 5m
-          labels:
-            severity: warning
-            team: platform
-          annotations:
-            summary: "Example alert summary"
-            description: "Detailed description with {{ $labels.instance }}"
-            runbook_url: "https://wiki.example.com/runbooks/example"
+  - name: docs.network
+    rules:
+    - alert: NodeNetworkReceiveDropsHigh
+      expr: rate(node_network_receive_drop_total{device!~"lo|veth.*|docker.*|br-.*|cali.*"}[5m]) > 100
+      for: 5m
+      labels:
+        severity: warning
+        alert_family: network_receive_drop
+        team: network
+      annotations:
+        summary: Elevated receive drops on {{ $labels.instance }}
+        description: '{{ $labels.device }} reports {{ printf "%.2f" $value }} dropped packets/s. Correlate with
+          workload symptoms.'
+        runbook_url: https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook
+    - alert: NodeNetworkTransmitDropsHigh
+      expr: rate(node_network_transmit_drop_total{device!~"lo|veth.*|docker.*|br-.*|cali.*"}[5m]) > 100
+      for: 5m
+      labels:
+        severity: warning
+        alert_family: network_transmit_drop
+        team: network
+      annotations:
+        summary: Elevated transmit drops on {{ $labels.instance }}
+        description: '{{ $labels.device }} reports {{ printf "%.2f" $value }} dropped packets/s. Check the actual
+          interface and path.'
+        runbook_url: https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook
+  - name: docs.cpu
+    rules:
+    - alert: NodeCPUUsageHigh
+      expr: (1 - avg by (cluster, instance, job) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 0.85
+      for: 5m
+      labels:
+        severity: warning
+        alert_family: node_cpu
+        team: platform
+      annotations:
+        summary: Elevated CPU utilization on {{ $labels.instance }}
+        description: '{{ $value | humanizePercentage }} non-idle CPU time. This alone does not establish CPU pressure
+          or customer impact.'
+        runbook_url: https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook
+    - alert: NodeCPUUsageCritical
+      expr: (1 - avg by (cluster, instance, job) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 0.95
+      for: 5m
+      labels:
+        severity: critical
+        alert_family: node_cpu
+        team: platform
+      annotations:
+        summary: Elevated CPU utilization on {{ $labels.instance }}
+        description: '{{ $value | humanizePercentage }} non-idle CPU time. This alone does not establish CPU pressure
+          or customer impact.'
+        runbook_url: https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook
+    - alert: ContainerCPUThrottlingHigh
+      expr: (sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_throttled_periods_total{container!="",container!="POD"}[5m])))
+        / ((sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_periods_total{container!="",container!="POD"}[5m])))
+        > 0) > 0.25
+      for: 5m
+      labels:
+        severity: warning
+        alert_family: container_cpu_throttling
+        team: platform
+      annotations:
+        summary: CPU throttling on {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}
+        description: '{{ $value | humanizePercentage }} of observed CFS periods included throttling. Correlate with
+          latency and CPU quota before changing limits.'
+        runbook_url: https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook
+    - alert: ContainerCPUThrottlingCritical
+      expr: (sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_throttled_periods_total{container!="",container!="POD"}[5m])))
+        / ((sum by (cluster, namespace, pod, container) (rate(container_cpu_cfs_periods_total{container!="",container!="POD"}[5m])))
+        > 0) > 0.5
+      for: 5m
+      labels:
+        severity: critical
+        alert_family: container_cpu_throttling
+        team: platform
+      annotations:
+        summary: CPU throttling on {{ $labels.namespace }}/{{ $labels.pod }}/{{ $labels.container }}
+        description: '{{ $value | humanizePercentage }} of observed CFS periods included throttling. Correlate with
+          latency and CPU quota before changing limits.'
+        runbook_url: https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook
+    - alert: ContainerCPUAboveRequest
+      expr: (sum by (cluster, namespace, pod, container) (rate(container_cpu_usage_seconds_total{container!="",container!="POD"}[5m])))
+        / ((max by (cluster, namespace, pod, container) (kube_pod_container_resource_requests{resource="cpu",unit="core",container!=""}))
+        > 0) > 1.5
+      for: 30m
+      labels:
+        severity: info
+        alert_family: container_cpu_request
+        team: platform
+      annotations:
+        summary: CPU use exceeds request on {{ $labels.namespace }}/{{ $labels.pod }}
+        description: '{{ printf "%.2f" $value }} times the request. CPU requests are not a hard usage limit; review
+          sustained demand.'
+        runbook_url: https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook
+  - name: docs.storage
+    rules:
+    - alert: NodeFilesystemUsageHigh
+      expr: ((1 - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|nsfs|tracefs"} / (node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs|nsfs|tracefs"}
+        > 0)) > 0.85) and (node_filesystem_readonly{fstype!~"tmpfs|overlay|squashfs|nsfs|tracefs"} == 0)
+      for: 5m
+      labels:
+        severity: warning
+        alert_family: node_filesystem
+        team: storage
+      annotations:
+        summary: Filesystem usage on {{ $labels.instance }} {{ $labels.mountpoint }}
+        description: '{{ $value | humanizePercentage }} of reported capacity is unavailable. Check actual mount
+          layout and workload storage.'
+        runbook_url: https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook
+    - alert: NodeFilesystemUsageCritical
+      expr: ((1 - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|nsfs|tracefs"} / (node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs|nsfs|tracefs"}
+        > 0)) > 0.95) and (node_filesystem_readonly{fstype!~"tmpfs|overlay|squashfs|nsfs|tracefs"} == 0)
+      for: 5m
+      labels:
+        severity: critical
+        alert_family: node_filesystem
+        team: storage
+      annotations:
+        summary: Filesystem usage on {{ $labels.instance }} {{ $labels.mountpoint }}
+        description: '{{ $value | humanizePercentage }} of reported capacity is unavailable. Check actual mount
+          layout and workload storage.'
+        runbook_url: https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook
+    - alert: PVCUsageHigh
+      expr: (max by (cluster, namespace, persistentvolumeclaim) (kubelet_volume_stats_used_bytes{persistentvolumeclaim!=""}
+        / (kubelet_volume_stats_capacity_bytes{persistentvolumeclaim!=""} > 0))) > 0.85
+      for: 5m
+      labels:
+        severity: warning
+        alert_family: pvc_usage
+        team: storage
+      annotations:
+        summary: PVC usage on {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }}
+        description: '{{ $value | humanizePercentage }} filesystem usage. This is not an EBS IOPS/throughput measurement.'
+        runbook_url: https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook
+    - alert: PVCUsageCritical
+      expr: (max by (cluster, namespace, persistentvolumeclaim) (kubelet_volume_stats_used_bytes{persistentvolumeclaim!=""}
+        / (kubelet_volume_stats_capacity_bytes{persistentvolumeclaim!=""} > 0))) > 0.95
+      for: 5m
+      labels:
+        severity: critical
+        alert_family: pvc_usage
+        team: storage
+      annotations:
+        summary: PVC usage on {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }}
+        description: '{{ $value | humanizePercentage }} filesystem usage. This is not an EBS IOPS/throughput measurement.'
+        runbook_url: https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook
+    - alert: PVCInodesHigh
+      expr: max by (cluster, namespace, persistentvolumeclaim) (kubelet_volume_stats_inodes_used{persistentvolumeclaim!=""}
+        / (kubelet_volume_stats_inodes{persistentvolumeclaim!=""} > 0)) > 0.9
+      for: 5m
+      labels:
+        severity: warning
+        alert_family: pvc_inodes
+        team: storage
+      annotations:
+        summary: PVC inode usage on {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }}
+        description: '{{ $value | humanizePercentage }} of reported inodes are used. The driver/filesystem must
+          support these statistics.'
+        runbook_url: https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook
+    - alert: PVCGrowthProjectionHigh
+      expr: max by (cluster, namespace, persistentvolumeclaim) ((predict_linear(kubelet_volume_stats_used_bytes{persistentvolumeclaim!=""}[6h],
+        24*3600) / (kubelet_volume_stats_capacity_bytes{persistentvolumeclaim!=""} > 0)) and (kubelet_volume_stats_used_bytes{persistentvolumeclaim!=""}
+        / (kubelet_volume_stats_capacity_bytes{persistentvolumeclaim!=""} > 0) > 0.7)) > 1
+      for: 1h
+      labels:
+        severity: warning
+        alert_family: pvc_growth
+        team: storage
+      annotations:
+        summary: PVC growth projection on {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }}
+        description: A linear fit projects usage beyond current capacity within 24h. Check data coverage, resizing
+          and nonlinear changes.
+        runbook_url: https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook
+  - name: docs.nodes
+    rules:
+    - alert: NodeNotReady
+      expr: max by (cluster, node) (kube_node_status_condition{condition="Ready",status="true"}) == 0
+      for: 5m
+      labels:
+        severity: warning
+        alert_family: node_ready
+        team: platform
+      annotations:
+        summary: Node {{ $labels.node }} is not Ready
+        description: An observed Node has Ready=false or unknown. Inspect conditions and events; this is not proof
+          of termination.
+        runbook_url: https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook
+    - alert: NodeDiskPressure
+      expr: max by (cluster, node) (kube_node_status_condition{condition="DiskPressure",status="true"}) == 1
+      for: 5m
+      labels:
+        severity: critical
+        alert_family: node_disk_pressure
+        team: storage
+      annotations:
+        summary: Node {{ $labels.node }} reports DiskPressure
+        description: Kubelet reports disk pressure. Correlate filesystem space/inodes and eviction events.
+        runbook_url: https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook
+    - alert: PDBHealthyBelowDesired
+      expr: max by (cluster, namespace, poddisruptionbudget) (kube_poddisruptionbudget_status_desired_healthy -
+        kube_poddisruptionbudget_status_current_healthy) > 0
+      for: 5m
+      labels:
+        severity: warning
+        alert_family: pdb_health
+        team: platform
+      annotations:
+        summary: PDB healthy count below desired in {{ $labels.namespace }}
+        description: '{{ printf "%.0f" $value }} fewer healthy Pods than desired for {{ $labels.poddisruptionbudget
+          }}. This does not prove a policy was bypassed.'
+        runbook_url: https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook
+  - name: docs.collection
+    rules:
+    - alert: KnownScrapeTargetDown
+      expr: up == 0
+      for: 5m
+      labels:
+        severity: warning
+        alert_family: scrape
+        team: platform
+      annotations:
+        summary: Cannot scrape {{ $labels.job }} at {{ $labels.instance }}
+        description: A known target failed scraping. A target removed from discovery needs separate absence/inventory
+          monitoring.
+        runbook_url: https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook
 ```
 
-Key fields:
-- **expr**: PromQL expression that triggers the alert when true
-- **for**: Duration the condition must be true before firing
-- **labels**: Additional labels for routing and grouping
-- **annotations**: Human-readable information and runbook links
+Ratios use `humanizePercentage`. Prometheus alert annotations do not provide arbitrary Sprig `mul`/`div` functions. Do not format `0.96` as `0.96%` or read a nonexistent `$labels.used_bytes`. `$value` is the expression result; other operands do not automatically become labels.
 
----
+### Network
 
-## 2. Network Alerts
+Use `rate()` for packet-drop counters; its unit is packets/s. Do not interchange packets per second and per minute. Some policy rejections or transient drops are expected, so correlate persistence, traffic volume and service symptoms.
 
-Network issues in EKS can manifest as packet drops, bandwidth saturation, CNI failures, and DNS problems. These alerts provide early warning of connectivity issues.
-
-### Packet Drop Rate
-
-Monitor packet drops at both node and pod levels:
+Inspect bandwidth in bits/s:
 
 ```promql
-# Node-level packet drops (received)
-rate(node_network_receive_drop_total{device!~"lo|veth.*|docker.*|cali.*"}[5m]) > 100
-
-# Node-level packet drops (transmitted)
-rate(node_network_transmit_drop_total{device!~"lo|veth.*|docker.*|cali.*"}[5m]) > 100
-
-# Pod-level packet drops via eBPF metrics (if available)
-rate(pod_network_receive_packets_dropped_total[5m]) > 50
+rate(node_network_transmit_bytes_total{device!~"lo|veth.*|docker.*|br-.*"}[5m]) * 8
 ```
 
-### Bandwidth Saturation
+Compare against the actual EC2 baseline/burst contract, path and PPS limits. Distinguish `10^9` bits in Gbps from binary Gi units. `node_network_speed_bytes` may be zero/unknown or a virtual NIC's advertised speed. RX+TX is not universally a full-duplex saturation ratio. Do not assume every node has a 10-Gbps denominator.
 
-Detect network interface saturation before it impacts applications:
+### CPU
+
+The CFS throttled-period ratio is the **fraction of periods with throttling**, not lost CPU time. Throttled seconds divided by actual CPU use is not a simple percentage of wall time either. Use counter-aware functions and exclude zero denominators.
+
+Exceeding CPU requests can be legitimate burst usage. High utilization, throttling, iowait or steal alone does not prove customer impact or root cause. Evaluate limits/requests alongside service latency, quota, scheduling and HPA effects.
+
+An expression such as `process_cpu_seconds_total{job="containerd"}` needs that actual process exporter/job. Do not assume managed Auto Mode services expose the same Deployment/DaemonSet metrics as a conventional installation.
+
+### Filesystems, PVCs and inodes
+
+`kubelet_volume_stats_*` provides statistics for supported drivers/filesystems. PVC usage is not EBS IOPS/throughput saturation, and not every volume mode exposes the same statistics.
+
+Zero or missing capacity is not “0% used.” Exclude read-only/virtual filesystems according to purpose and inspect actual mounts; `/var/lib/kubelet` is not always its own mountpoint.
+
+`container_fs_limit_bytes` is not guaranteed to equal Kubernetes `resources.limits.ephemeral-storage`. Distinguish writable layers, logs, emptyDir and node filesystem accounting.
+
+`predict_linear` extrapolates a fitted trend. Resizing, deletion, missing samples and nonlinear growth change its interpretation. It does not guarantee exhaustion at a precise deadline or justify unconditional automated expansion.
+
+## Match CNI, DNS and Policy Metrics to the Installation
+
+### VPC CNI
+
+The conventional VPC CNI IPAM endpoint and cni-metrics-helper's CloudWatch aggregation use different paths/names. The following gauge/counter definitions are present in v1.23.1; verify the installed version and actual `/metrics` before use.
 
 ```promql
-# Network interface utilization (assuming 10Gbps NICs)
-(rate(node_network_receive_bytes_total{device=~"eth.*|ens.*"}[5m]) * 8)
-  / (10 * 1024 * 1024 * 1024) > 0.8
+# Spare addresses in the currently allocated pool
+awscni_total_ip_addresses - awscni_assigned_ip_addresses
 
-# Sustained high bandwidth (warning at 70%)
-avg_over_time(
-  (rate(node_network_transmit_bytes_total{device=~"eth.*|ens.*"}[5m]) * 8)[15m:1m]
-) / (10 * 1024 * 1024 * 1024) > 0.7
+# IPAM error counter
+rate(awscni_ipamd_error_count[5m])
+
+# Failure to obtain an available IP address
+rate(awscni_no_available_ip_addresses[5m])
 ```
 
-### VPC CNI Alerts
+Zero warm-pool headroom alone does not establish subnet exhaustion or prove that all new Pods are impossible. Check additional allocation, prefix delegation, ENI limits, actual errors and subnet capacity.
 
-Amazon VPC CNI specific alerts for IP and ENI management:
+Do not add an absent `status="failed"` label to `awscni_add_ip_req_count` or invent an ENI latency histogram. Distinguish original Prometheus names from cni-metrics-helper's renamed cluster-level CloudWatch aggregates.
+
+### DNS
+
+`NXDOMAIN` can be a legitimate negative lookup. Define failures and traffic thresholds deliberately. Where CoreDNS metrics are collected, this diagnostic expression calculates a SERVFAIL/REFUSED ratio:
 
 ```promql
-# IP address exhaustion per node
-awscni_assigned_ip_addresses / awscni_total_ip_addresses > 0.9
-
-# ENI allocation failures
-increase(awscni_eni_allocation_duration_seconds_count{error="true"}[5m]) > 0
-
-# IP allocation latency
-histogram_quantile(0.99, rate(awscni_ip_allocation_duration_seconds_bucket[5m])) > 5
-
-# Prefix delegation IP pool low
-awscni_ip_pool_available_addresses < 5
-```
-
-### DNS Failure Alerts
-
-CoreDNS failures can cause widespread application issues:
-
-```promql
-# DNS query failures
-sum(rate(coredns_dns_responses_total{rcode=~"SERVFAIL|REFUSED|NXDOMAIN"}[5m]))
-  / sum(rate(coredns_dns_responses_total[5m])) > 0.05
-
-# DNS latency
-histogram_quantile(0.99, sum(rate(coredns_dns_request_duration_seconds_bucket[5m])) by (le)) > 1
-
-# CoreDNS pod restarts
-increase(kube_pod_container_status_restarts_total{
-  namespace="kube-system",
-  container="coredns"
-}[1h]) > 2
-```
-
-### Network Policy Denials
-
-If using Cilium or Calico with policy metrics:
-
-```promql
-# Cilium policy denials
-rate(cilium_policy_verdict_total{verdict="denied"}[5m]) > 10
-
-# High policy denial rate
-sum(rate(cilium_policy_verdict_total{verdict="denied"}[5m]))
-  / sum(rate(cilium_policy_verdict_total[5m])) > 0.1
-```
-
-### Complete Network Alerts PrometheusRule
-
-```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: network-alerts
-  namespace: monitoring
-  labels:
-    release: prometheus
-    app: kube-prometheus-stack
-spec:
-  groups:
-    - name: network.alerts
-      interval: 30s
-      rules:
-        # Packet Drops
-        - alert: NodeNetworkPacketDropHigh
-          expr: |
-            rate(node_network_receive_drop_total{device!~"lo|veth.*|docker.*|cali.*"}[5m]) > 100
-            or
-            rate(node_network_transmit_drop_total{device!~"lo|veth.*|docker.*|cali.*"}[5m]) > 100
-          for: 5m
-          labels:
-            severity: warning
-            category: network
-          annotations:
-            summary: "High packet drop rate on {{ $labels.instance }}"
-            description: |
-              Node {{ $labels.instance }} is dropping packets on interface {{ $labels.device }}.
-              Current drop rate: {{ $value | printf "%.2f" }} packets/sec
-            runbook_url: "https://wiki.example.com/runbooks/network-packet-drops"
-
-        # Bandwidth Saturation
-        - alert: NodeNetworkBandwidthSaturation
-          expr: |
-            (rate(node_network_receive_bytes_total{device=~"eth.*|ens.*"}[5m]) * 8)
-            / (10 * 1024 * 1024 * 1024) > 0.85
-          for: 10m
-          labels:
-            severity: warning
-            category: network
-          annotations:
-            summary: "Network bandwidth saturation on {{ $labels.instance }}"
-            description: |
-              Network interface {{ $labels.device }} on {{ $labels.instance }} is at
-              {{ $value | printf "%.1f" }}% capacity.
-
-        - alert: NodeNetworkBandwidthCritical
-          expr: |
-            (rate(node_network_receive_bytes_total{device=~"eth.*|ens.*"}[5m]) * 8)
-            / (10 * 1024 * 1024 * 1024) > 0.95
-          for: 5m
-          labels:
-            severity: critical
-            category: network
-          annotations:
-            summary: "Critical network bandwidth on {{ $labels.instance }}"
-            description: |
-              Network interface {{ $labels.device }} on {{ $labels.instance }} is at
-              {{ $value | printf "%.1f" }}% capacity. Immediate action required.
-
-        # VPC CNI IP Exhaustion
-        - alert: VPCCNIIPAddressExhaustion
-          expr: awscni_assigned_ip_addresses / awscni_total_ip_addresses > 0.9
-          for: 5m
-          labels:
-            severity: warning
-            category: network
-          annotations:
-            summary: "VPC CNI IP pool running low on {{ $labels.instance }}"
-            description: |
-              Node {{ $labels.instance }} has used {{ $value | printf "%.1f" }}% of available
-              IP addresses. Consider adding subnets or adjusting WARM_IP_TARGET.
-
-        - alert: VPCCNIIPAddressCritical
-          expr: awscni_assigned_ip_addresses / awscni_total_ip_addresses > 0.95
-          for: 2m
-          labels:
-            severity: critical
-            category: network
-          annotations:
-            summary: "VPC CNI IP pool critical on {{ $labels.instance }}"
-            description: |
-              Node {{ $labels.instance }} has nearly exhausted IP addresses.
-              New pods may fail to schedule.
-
-        - alert: VPCCNIENIAllocationFailure
-          expr: increase(awscni_eni_allocation_duration_seconds_count{error="true"}[5m]) > 0
-          for: 1m
-          labels:
-            severity: critical
-            category: network
-          annotations:
-            summary: "ENI allocation failures on {{ $labels.instance }}"
-            description: |
-              ENI allocation is failing on {{ $labels.instance }}.
-              Check EC2 ENI limits and subnet availability.
-
-        # DNS Alerts
-        - alert: CoreDNSHighErrorRate
-          expr: |
-            sum(rate(coredns_dns_responses_total{rcode=~"SERVFAIL|REFUSED"}[5m]))
-            / sum(rate(coredns_dns_responses_total[5m])) > 0.05
-          for: 5m
-          labels:
-            severity: warning
-            category: dns
-          annotations:
-            summary: "High DNS error rate in CoreDNS"
-            description: |
-              CoreDNS is returning errors for {{ $value | printf "%.2f" }}% of queries.
-              Check CoreDNS logs and upstream DNS servers.
-
-        - alert: CoreDNSLatencyHigh
-          expr: |
-            histogram_quantile(0.99,
-              sum(rate(coredns_dns_request_duration_seconds_bucket[5m])) by (le)
-            ) > 1
-          for: 10m
-          labels:
-            severity: warning
-            category: dns
-          annotations:
-            summary: "High DNS latency in CoreDNS"
-            description: |
-              99th percentile DNS latency is {{ $value | printf "%.2f" }}s.
-              This may cause application timeouts.
-
-        - alert: CoreDNSFrequentRestarts
-          expr: |
-            increase(kube_pod_container_status_restarts_total{
-              namespace="kube-system",
-              container="coredns"
-            }[1h]) > 2
-          for: 5m
-          labels:
-            severity: warning
-            category: dns
-          annotations:
-            summary: "CoreDNS pods restarting frequently"
-            description: |
-              CoreDNS container {{ $labels.pod }} has restarted
-              {{ $value | printf "%.0f" }} times in the last hour.
-
-        # Network Policy Denials (Cilium)
-        - alert: CiliumHighPolicyDenialRate
-          expr: |
-            sum(rate(cilium_policy_verdict_total{verdict="denied"}[5m]))
-            / sum(rate(cilium_policy_verdict_total[5m])) > 0.1
-          for: 5m
-          labels:
-            severity: warning
-            category: network-policy
-          annotations:
-            summary: "High network policy denial rate"
-            description: |
-              {{ $value | printf "%.1f" }}% of network traffic is being denied by policies.
-              Review Cilium network policies for misconfigurations.
-```
-
----
-
-## 3. CPU Alerts
-
-CPU-related alerts help identify throttling, resource contention, and capacity issues before they impact application performance.
-
-### CPU Throttling
-
-Container CPU throttling indicates insufficient CPU limits:
-
-```promql
-# Container CPU throttling percentage
-sum(increase(container_cpu_cfs_throttled_periods_total{container!=""}[5m])) by (namespace, pod, container)
-/ sum(increase(container_cpu_cfs_periods_total{container!=""}[5m])) by (namespace, pod, container)
-> 0.25
-
-# High throttling with significant CPU usage
 (
-  sum(increase(container_cpu_cfs_throttled_periods_total{container!=""}[5m])) by (namespace, pod, container)
-  / sum(increase(container_cpu_cfs_periods_total{container!=""}[5m])) by (namespace, pod, container)
-  > 0.5
+  sum by (cluster) (rate(coredns_dns_responses_total{rcode=~"SERVFAIL|REFUSED"}[5m]))
+  or on (cluster)
+  (0 * sum by (cluster) (rate(coredns_dns_responses_total[5m])))
 )
-and
-(
-  sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (namespace, pod, container) > 0.5
-)
+/
+(sum by (cluster) (rate(coredns_dns_responses_total[5m])) > 0)
 ```
 
-### CFS Quota Exhaustion
+Failed scraping and failed DNS queries are different conditions. `absent(up{job="coredns"} == 1)` alone does not prove cluster DNS is impossible. **Pure EKS Auto Mode runs CoreDNS as a node system service**; do not impose conventional CoreDNS Deployment assumptions. Check the DNS architecture of mixed-node installations.
 
-Track when containers consistently hit their CPU quotas:
+### Network-policy drops
+
+With drop metrics enabled, Cilium 1.20.1 Hubble exports `hubble_drop_total` with reason/protocol and configured context labels.
 
 ```promql
-# Containers hitting CFS quota
-sum(rate(container_cpu_cfs_throttled_seconds_total{container!=""}[5m])) by (namespace, pod, container) > 1
-
-# Throttled time as percentage of total CPU time
-sum(rate(container_cpu_cfs_throttled_seconds_total{container!=""}[5m])) by (namespace, pod, container)
-/ sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (namespace, pod, container)
-> 0.5
-```
-
-### Node CPU Pressure
-
-Detect nodes under CPU pressure:
-
-```promql
-# Node CPU utilization
-100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
-
-# Sustained high CPU (warning)
-avg_over_time(
-  (100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100))[30m:1m]
-) > 80
-
-# CPU steal time (indicates noisy neighbors on shared infrastructure)
-avg by(instance) (rate(node_cpu_seconds_total{mode="steal"}[5m])) * 100 > 10
-```
-
-### Container CPU vs Request Ratio
-
-Identify containers that need request adjustments:
-
-```promql
-# CPU usage significantly higher than requests
-sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (namespace, pod, container)
-/ sum(kube_pod_container_resource_requests{resource="cpu", container!=""}) by (namespace, pod, container)
-> 2
-
-# CPU usage significantly lower than requests (over-provisioned)
-sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (namespace, pod, container)
-/ sum(kube_pod_container_resource_requests{resource="cpu", container!=""}) by (namespace, pod, container)
-< 0.1
-```
-
-### System Process CPU
-
-Monitor system-level CPU consumers:
-
-```promql
-# Kubelet CPU usage
-rate(process_cpu_seconds_total{job="kubelet"}[5m]) > 1
-
-# Container runtime CPU usage
-rate(process_cpu_seconds_total{job=~"containerd|docker"}[5m]) > 2
-
-# kube-proxy CPU usage
-sum(rate(container_cpu_usage_seconds_total{namespace="kube-system", container="kube-proxy"}[5m])) > 0.5
-```
-
-### Complete CPU Alerts PrometheusRule
-
-```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: cpu-alerts
-  namespace: monitoring
-  labels:
-    release: prometheus
-    app: kube-prometheus-stack
-spec:
-  groups:
-    - name: cpu.alerts
-      interval: 30s
-      rules:
-        # CPU Throttling
-        - alert: ContainerCPUThrottlingHigh
-          expr: |
-            sum(increase(container_cpu_cfs_throttled_periods_total{container!=""}[5m])) by (namespace, pod, container)
-            / sum(increase(container_cpu_cfs_periods_total{container!=""}[5m])) by (namespace, pod, container)
-            > 0.25
-          for: 15m
-          labels:
-            severity: warning
-            category: cpu
-          annotations:
-            summary: "Container {{ $labels.container }} is being CPU throttled"
-            description: |
-              Container {{ $labels.container }} in pod {{ $labels.namespace }}/{{ $labels.pod }}
-              is being throttled {{ $value | printf "%.1f" }}% of the time.
-              Consider increasing CPU limits or optimizing the application.
-            runbook_url: "https://wiki.example.com/runbooks/cpu-throttling"
-
-        - alert: ContainerCPUThrottlingCritical
-          expr: |
-            sum(increase(container_cpu_cfs_throttled_periods_total{container!=""}[5m])) by (namespace, pod, container)
-            / sum(increase(container_cpu_cfs_periods_total{container!=""}[5m])) by (namespace, pod, container)
-            > 0.5
-          for: 10m
-          labels:
-            severity: critical
-            category: cpu
-          annotations:
-            summary: "Severe CPU throttling on {{ $labels.container }}"
-            description: |
-              Container {{ $labels.container }} in pod {{ $labels.namespace }}/{{ $labels.pod }}
-              is being throttled {{ $value | printf "%.1f" }}% of the time.
-              This is severely impacting performance.
-
-        # Node CPU Pressure
-        - alert: NodeCPUHighUtilization
-          expr: |
-            100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
-          for: 15m
-          labels:
-            severity: warning
-            category: cpu
-          annotations:
-            summary: "High CPU utilization on {{ $labels.instance }}"
-            description: |
-              Node {{ $labels.instance }} CPU utilization is {{ $value | printf "%.1f" }}%.
-              Consider scaling horizontally or vertically.
-
-        - alert: NodeCPUCritical
-          expr: |
-            100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
-          for: 5m
-          labels:
-            severity: critical
-            category: cpu
-          annotations:
-            summary: "Critical CPU utilization on {{ $labels.instance }}"
-            description: |
-              Node {{ $labels.instance }} CPU utilization is {{ $value | printf "%.1f" }}%.
-              Immediate action required to prevent service degradation.
-
-        - alert: NodeCPUSustainedHigh
-          expr: |
-            avg_over_time(
-              (100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100))[30m:1m]
-            ) > 80
-          for: 5m
-          labels:
-            severity: warning
-            category: cpu
-          annotations:
-            summary: "Sustained high CPU on {{ $labels.instance }}"
-            description: |
-              Node {{ $labels.instance }} has maintained {{ $value | printf "%.1f" }}% CPU
-              utilization over the past 30 minutes.
-
-        # CPU Steal Time
-        - alert: NodeCPUStealTimeHigh
-          expr: |
-            avg by(instance) (rate(node_cpu_seconds_total{mode="steal"}[5m])) * 100 > 10
-          for: 10m
-          labels:
-            severity: warning
-            category: cpu
-          annotations:
-            summary: "High CPU steal time on {{ $labels.instance }}"
-            description: |
-              Node {{ $labels.instance }} is experiencing {{ $value | printf "%.1f" }}%
-              CPU steal time, indicating resource contention at the hypervisor level.
-              Consider using dedicated instances or different instance types.
-
-        # Container CPU vs Requests
-        - alert: ContainerCPUOverRequests
-          expr: |
-            sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (namespace, pod, container)
-            / sum(kube_pod_container_resource_requests{resource="cpu", container!=""}) by (namespace, pod, container)
-            > 2
-          for: 30m
-          labels:
-            severity: info
-            category: cpu
-          annotations:
-            summary: "Container {{ $labels.container }} using more CPU than requested"
-            description: |
-              Container {{ $labels.container }} in {{ $labels.namespace }}/{{ $labels.pod }}
-              is using {{ $value | printf "%.1f" }}x its CPU request.
-              Consider increasing resource requests.
-
-        # System Process CPU
-        - alert: KubeletHighCPU
-          expr: rate(process_cpu_seconds_total{job="kubelet"}[5m]) > 1
-          for: 15m
-          labels:
-            severity: warning
-            category: cpu
-          annotations:
-            summary: "Kubelet high CPU usage on {{ $labels.instance }}"
-            description: |
-              Kubelet on {{ $labels.instance }} is consuming {{ $value | printf "%.2f" }}
-              CPU cores. Check for excessive pod churn or API calls.
-
-        - alert: ContainerRuntimeHighCPU
-          expr: rate(process_cpu_seconds_total{job=~"containerd|docker"}[5m]) > 2
-          for: 15m
-          labels:
-            severity: warning
-            category: cpu
-          annotations:
-            summary: "Container runtime high CPU on {{ $labels.instance }}"
-            description: |
-              Container runtime on {{ $labels.instance }} is consuming
-              {{ $value | printf "%.2f" }} CPU cores.
-```
-
----
-
-## 4. Disk Alerts
-
-Storage alerts are critical for preventing data loss and ensuring application stability. EKS workloads commonly use EBS volumes, EFS, and ephemeral storage.
-
-### EBS Volume Saturation
-
-Monitor persistent volume usage:
-
-```promql
-# PVC usage percentage
-kubelet_volume_stats_used_bytes{persistentvolumeclaim!=""}
-/ kubelet_volume_stats_capacity_bytes{persistentvolumeclaim!=""}
-> 0.85
-
-# Volume approaching capacity with growth trend
-(
-  kubelet_volume_stats_used_bytes{persistentvolumeclaim!=""}
-  / kubelet_volume_stats_capacity_bytes{persistentvolumeclaim!=""}
-  > 0.7
-)
-and
-(
-  predict_linear(kubelet_volume_stats_used_bytes{persistentvolumeclaim!=""}[6h], 3600 * 24)
-  > kubelet_volume_stats_capacity_bytes{persistentvolumeclaim!=""}
+sum by (cluster, reason) (
+  rate(hubble_drop_total{reason="POLICY_DENIED"}[5m])
 )
 ```
 
-### Inode Exhaustion
+Namespace context exists only when configured. A policy drop is not inherently a misconfiguration. Check the actual Cilium/Calico distribution, features and metrics configuration rather than inventing a shared `denied_packets` metric. See the [reviewed Cilium observability chapter](../service-mesh/cilium-service-mesh/04-observability.md).
 
-Inode exhaustion can prevent file creation even with available space:
+## Auto Mode Node State and Termination Causes
 
-```promql
-# Inode usage percentage
-kubelet_volume_stats_inodes_used{persistentvolumeclaim!=""}
-/ kubelet_volume_stats_inodes{persistentvolumeclaim!=""}
-> 0.9
-
-# Node filesystem inode usage
-node_filesystem_files_free{fstype!~"tmpfs|overlay"}
-/ node_filesystem_files{fstype!~"tmpfs|overlay"}
-< 0.1
-```
-
-### PVC Usage Trending
-
-Predict when volumes will fill:
+`NodeNotReady` means an observed Node's Ready status is false/unknown. It does not independently prove termination, replacement or exhausted capacity. Distinguish missing inventory from a failed exporter too.
 
 ```promql
-# Predict volume exhaustion within 4 hours
-predict_linear(kubelet_volume_stats_used_bytes{persistentvolumeclaim!=""}[1h], 4 * 3600)
-> kubelet_volume_stats_capacity_bytes{persistentvolumeclaim!=""}
+# Previously observed Nodes missing from current inventory: diagnostic only
+max by (cluster, node) (kube_node_info offset 5m)
+unless on (cluster, node)
+max by (cluster, node) (kube_node_info)
 
-# Predict volume exhaustion within 24 hours
-predict_linear(kubelet_volume_stats_used_bytes{persistentvolumeclaim!=""}[6h], 24 * 3600)
-> kubelet_volume_stats_capacity_bytes{persistentvolumeclaim!=""}
+# Currently retained Evicted Pod state, not a historical event counter
+sum by (cluster, namespace) (kube_pod_status_reason{reason="Evicted"} == 1)
 ```
 
-### Node Disk Pressure
+Pod phase/reason and deletion timestamps are not event counters. Do not use `increase()` to turn them into a period eviction count, or add a nonexistent `reason="NodeDrain"` label. Preserve Kubernetes Events and audit/operational logs for history after Pod garbage collection.
 
-Monitor node-level disk conditions:
+A PDB currentHealthy count below desiredHealthy is a health shortfall, not proof someone violated its policy. Investigate involuntary failures, direct replica changes and other causes separately.
 
-```promql
-# Node root filesystem usage
-(node_filesystem_size_bytes{mountpoint="/"} - node_filesystem_avail_bytes{mountpoint="/"})
-/ node_filesystem_size_bytes{mountpoint="/"}
-> 0.85
+### Managed Auto Mode and self-managed Karpenter
 
-# Kubelet reporting disk pressure
-kube_node_status_condition{condition="DiskPressure", status="true"} == 1
+Do not assume Auto Mode exposes a self-managed Karpenter controller's scrape endpoint. Use supported Node conditions, NodeClaim/NodePool state and managed control-plane audit logs.
+
+AWS's Auto Mode troubleshooting guide describes events such as `DisruptionBlocked`, `DisruptionTerminating`, `FailedScheduling` and `FailedDraining` in control-plane audit logs. With audit logging enabled, scope a query to the actual cluster log group:
+
+```text
+fields @timestamp, @message
+| filter @logStream like /kube-apiserver-audit/
+| filter @message like /DisruptionBlocked|DisruptionTerminating|FailedScheduling|FailedDraining|NodeRepairBlocked/
+| sort @timestamp desc
+| limit 100
 ```
 
-### Ephemeral Storage
+For self-managed Karpenter, use the installed version's metric catalog. Current NodeClaim termination counters are aggregates, not a complete per-node/reason audit trail. Interruption-queue counters can include message types other than Spot.
 
-Monitor ephemeral storage for nodes and pods:
+`karpenter_nodepools_usage` measures **provisioned resources**, not busy CPU utilization. Check resource labels, units, cluster identity and missing/zero limits before comparing it to limits. Pending Pods plus spare-capacity metrics do not prove schedulability; affinity, taints, topology and volumes still matter.
 
-```promql
-# Node ephemeral storage usage
-(node_filesystem_size_bytes{mountpoint="/var/lib/kubelet"} - node_filesystem_avail_bytes{mountpoint="/var/lib/kubelet"})
-/ node_filesystem_size_bytes{mountpoint="/var/lib/kubelet"}
-> 0.85
+## Alertmanager Configuration and Chart Wiring
 
-# Container ephemeral storage (if available via cadvisor)
-container_fs_usage_bytes{container!=""}
-/ container_fs_limit_bytes{container!=""}
-> 0.8
-```
+The following is **native Alertmanager YAML**. Do not mix it with AlertmanagerConfig CRD structured matchers/camelCase fields. Native Alertmanager does not automatically substitute `${NAME}` environment placeholders.
 
-### Complete Disk Alerts PrometheusRule
+### Prepare files and Secrets
 
-```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: disk-alerts
-  namespace: monitoring
-  labels:
-    release: prometheus
-    app: kube-prometheus-stack
-spec:
-  groups:
-    - name: disk.alerts
-      interval: 60s
-      rules:
-        # PVC Usage
-        - alert: PVCUsageHigh
-          expr: |
-            kubelet_volume_stats_used_bytes{persistentvolumeclaim!=""}
-            / kubelet_volume_stats_capacity_bytes{persistentvolumeclaim!=""}
-            > 0.85
-          for: 5m
-          labels:
-            severity: warning
-            category: storage
-          annotations:
-            summary: "PVC {{ $labels.persistentvolumeclaim }} usage high"
-            description: |
-              PVC {{ $labels.persistentvolumeclaim }} in namespace {{ $labels.namespace }}
-              is {{ $value | printf "%.1f" }}% full.
-            runbook_url: "https://wiki.example.com/runbooks/pvc-usage"
+Prepare these objects in namespace `monitoring`:
 
-        - alert: PVCUsageCritical
-          expr: |
-            kubelet_volume_stats_used_bytes{persistentvolumeclaim!=""}
-            / kubelet_volume_stats_capacity_bytes{persistentvolumeclaim!=""}
-            > 0.95
-          for: 2m
-          labels:
-            severity: critical
-            category: storage
-          annotations:
-            summary: "PVC {{ $labels.persistentvolumeclaim }} nearly full"
-            description: |
-              PVC {{ $labels.persistentvolumeclaim }} in namespace {{ $labels.namespace }}
-              is {{ $value | printf "%.1f" }}% full. Immediate action required.
+| Object | Contents |
+|---|---|
+| Secret `reviewed-alertmanager-config` | `alertmanager.yaml` key |
+| ConfigMap `notification-templates` | `notifications.tmpl` key |
+| Secret `notification-credentials` | `slack-default`, `slack-network`, `slack-storage`, `slack-info`, `pagerduty-routing-key` |
 
-        # PVC Exhaustion Prediction
-        - alert: PVCExhaustionPredicted4h
-          expr: |
-            predict_linear(kubelet_volume_stats_used_bytes{persistentvolumeclaim!=""}[1h], 4 * 3600)
-            > kubelet_volume_stats_capacity_bytes{persistentvolumeclaim!=""}
-          for: 10m
-          labels:
-            severity: warning
-            category: storage
-          annotations:
-            summary: "PVC {{ $labels.persistentvolumeclaim }} predicted to fill within 4 hours"
-            description: |
-              Based on current growth rate, PVC {{ $labels.persistentvolumeclaim }}
-              will be exhausted within 4 hours.
+Use the approved secret-management workflow for credentials. Keep real URLs/keys out of Git, Helm values and PR logs. Modern Slack incoming webhooks are bound to the installation's selected channel; changing a `channel` field does not turn one URL into several channels. This example uses separate URL files.
 
-        - alert: PVCExhaustionPredicted1h
-          expr: |
-            predict_linear(kubelet_volume_stats_used_bytes{persistentvolumeclaim!=""}[30m], 3600)
-            > kubelet_volume_stats_capacity_bytes{persistentvolumeclaim!=""}
-          for: 5m
-          labels:
-            severity: critical
-            category: storage
-          annotations:
-            summary: "PVC {{ $labels.persistentvolumeclaim }} predicted to fill within 1 hour"
-            description: |
-              Based on current growth rate, PVC {{ $labels.persistentvolumeclaim }}
-              will be exhausted within 1 hour. Expand volume immediately.
-
-        # Inode Exhaustion
-        - alert: PVCInodeExhaustion
-          expr: |
-            kubelet_volume_stats_inodes_used{persistentvolumeclaim!=""}
-            / kubelet_volume_stats_inodes{persistentvolumeclaim!=""}
-            > 0.9
-          for: 5m
-          labels:
-            severity: warning
-            category: storage
-          annotations:
-            summary: "PVC {{ $labels.persistentvolumeclaim }} running out of inodes"
-            description: |
-              PVC {{ $labels.persistentvolumeclaim }} has used {{ $value | printf "%.1f" }}%
-              of available inodes. This can prevent file creation.
-
-        - alert: NodeInodeExhaustion
-          expr: |
-            node_filesystem_files_free{fstype!~"tmpfs|overlay",mountpoint="/"}
-            / node_filesystem_files{fstype!~"tmpfs|overlay",mountpoint="/"}
-            < 0.1
-          for: 5m
-          labels:
-            severity: warning
-            category: storage
-          annotations:
-            summary: "Node {{ $labels.instance }} running out of inodes"
-            description: |
-              Node {{ $labels.instance }} has only {{ $value | printf "%.1f" }}%
-              inodes remaining on root filesystem.
-
-        # Node Disk Pressure
-        - alert: NodeDiskUsageHigh
-          expr: |
-            (node_filesystem_size_bytes{mountpoint="/"} - node_filesystem_avail_bytes{mountpoint="/"})
-            / node_filesystem_size_bytes{mountpoint="/"}
-            > 0.85
-          for: 10m
-          labels:
-            severity: warning
-            category: storage
-          annotations:
-            summary: "High disk usage on {{ $labels.instance }}"
-            description: |
-              Node {{ $labels.instance }} root filesystem is {{ $value | printf "%.1f" }}% full.
-
-        - alert: NodeDiskPressure
-          expr: kube_node_status_condition{condition="DiskPressure", status="true"} == 1
-          for: 2m
-          labels:
-            severity: critical
-            category: storage
-          annotations:
-            summary: "Node {{ $labels.node }} is under disk pressure"
-            description: |
-              Kubernetes has detected disk pressure on node {{ $labels.node }}.
-              Pods may be evicted. Investigate and free disk space immediately.
-
-        # Ephemeral Storage
-        - alert: NodeEphemeralStorageHigh
-          expr: |
-            (node_filesystem_size_bytes{mountpoint=~"/var/lib/kubelet|/var/lib/containerd"}
-            - node_filesystem_avail_bytes{mountpoint=~"/var/lib/kubelet|/var/lib/containerd"})
-            / node_filesystem_size_bytes{mountpoint=~"/var/lib/kubelet|/var/lib/containerd"}
-            > 0.85
-          for: 10m
-          labels:
-            severity: warning
-            category: storage
-          annotations:
-            summary: "High ephemeral storage usage on {{ $labels.instance }}"
-            description: |
-              Node {{ $labels.instance }} ephemeral storage at {{ $labels.mountpoint }}
-              is {{ $value | printf "%.1f" }}% full.
-```
-
----
-
-## 5. Auto Mode Node Termination Alerts
-
-EKS Auto Mode with Karpenter dynamically provisions and terminates nodes. Monitoring these events is crucial for understanding cluster behavior and detecting issues.
-
-### Karpenter Disruption Events
-
-Monitor planned node disruptions by Karpenter:
-
-```promql
-# Node termination rate
-sum(increase(karpenter_nodes_terminated_total[1h])) > 10
-
-# Disruption by reason
-sum by (reason) (increase(karpenter_nodes_terminated_total[1h])) > 5
-
-# Voluntary disruption budget violations
-increase(karpenter_voluntary_disruption_blocked_total[1h]) > 0
-```
-
-### Spot Interruption Handling
-
-Track Spot instance interruption events:
-
-```promql
-# Spot interruption warnings received
-increase(karpenter_interruption_received_messages_total{message_type="SpotInterruption"}[1h]) > 0
-
-# Scheduled change notifications
-increase(karpenter_interruption_received_messages_total{message_type="ScheduledChange"}[1h]) > 0
-
-# Instance state changes (termination notices)
-increase(karpenter_interruption_received_messages_total{message_type="StateChange"}[1h]) > 0
-
-# Interruption handling latency
-histogram_quantile(0.99, rate(karpenter_interruption_actions_performed_bucket[5m]))
-```
-
-### Unexpected Node Terminations
-
-Detect nodes that terminate unexpectedly (not by Karpenter):
-
-```promql
-# Nodes terminated not by Karpenter
-increase(karpenter_nodes_terminated_total{reason!~"underutilized|empty|drift|consolidation"}[1h]) > 0
-
-# Node termination with no replacement
-(
-  increase(karpenter_nodes_terminated_total[15m]) > 0
-)
-unless
-(
-  increase(karpenter_nodes_created_total[15m]) > 0
-)
-```
-
-### Node NotReady Detection
-
-Monitor node readiness for early warning:
-
-```promql
-# Nodes in NotReady state
-kube_node_status_condition{condition="Ready", status="false"} == 1
-
-# Nodes transitioning to NotReady frequently
-changes(kube_node_status_condition{condition="Ready", status="true"}[1h]) > 3
-
-# Nodes with unknown status (often indicates termination in progress)
-kube_node_status_condition{condition="Ready", status="unknown"} == 1
-```
-
-### Pod Eviction Tracking
-
-Track pod evictions due to node issues:
-
-```promql
-# Pod eviction rate
-sum(increase(kube_pod_status_reason{reason="Evicted"}[1h])) > 10
-
-# Evictions by namespace
-sum by (namespace) (increase(kube_pod_status_reason{reason="Evicted"}[1h])) > 5
-
-# Node-initiated evictions (preemption)
-increase(kube_pod_status_reason{reason="Preempting"}[1h]) > 0
-```
-
-### NodePool Capacity Alerts
-
-Monitor Karpenter NodePool capacity:
-
-```promql
-# NodePool approaching CPU limit
-sum by (nodepool) (karpenter_nodepools_usage{resource_type="cpu"})
-/ sum by (nodepool) (karpenter_nodepools_limit{resource_type="cpu"})
-> 0.9
-
-# NodePool approaching memory limit
-sum by (nodepool) (karpenter_nodepools_usage{resource_type="memory"})
-/ sum by (nodepool) (karpenter_nodepools_limit{resource_type="memory"})
-> 0.9
-
-# Pending pods due to capacity constraints
-sum(kube_pod_status_phase{phase="Pending"}) > 10
-and
-sum(karpenter_nodepools_usage{resource_type="cpu"})
-/ sum(karpenter_nodepools_limit{resource_type="cpu"})
-> 0.8
-```
-
-### Complete Auto Mode Alerts PrometheusRule
-
-```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: karpenter-alerts
-  namespace: monitoring
-  labels:
-    release: prometheus
-    app: kube-prometheus-stack
-spec:
-  groups:
-    - name: karpenter.alerts
-      interval: 30s
-      rules:
-        # Node Termination Rate
-        - alert: KarpenterHighTerminationRate
-          expr: sum(increase(karpenter_nodes_terminated_total[1h])) > 10
-          for: 5m
-          labels:
-            severity: warning
-            category: karpenter
-          annotations:
-            summary: "High node termination rate"
-            description: |
-              Karpenter has terminated {{ $value | printf "%.0f" }} nodes in the past hour.
-              This may indicate excessive churn or aggressive consolidation settings.
-            runbook_url: "https://wiki.example.com/runbooks/karpenter-termination"
-
-        - alert: KarpenterUnexpectedTerminations
-          expr: |
-            increase(karpenter_nodes_terminated_total{
-              reason!~"underutilized|empty|drift|consolidation|expired"
-            }[1h]) > 0
-          for: 1m
-          labels:
-            severity: warning
-            category: karpenter
-          annotations:
-            summary: "Unexpected node terminations detected"
-            description: |
-              Nodes terminated for unexpected reason: {{ $labels.reason }}.
-              Investigate EC2 console and Karpenter logs.
-
-        # Spot Interruptions
-        - alert: SpotInterruptionReceived
-          expr: |
-            increase(karpenter_interruption_received_messages_total{
-              message_type="SpotInterruption"
-            }[5m]) > 0
-          for: 0m
-          labels:
-            severity: info
-            category: karpenter
-          annotations:
-            summary: "Spot interruption notice received"
-            description: |
-              AWS has issued a Spot interruption notice. Karpenter is handling
-              the graceful termination and pod migration.
-
-        - alert: HighSpotInterruptionRate
-          expr: |
-            sum(increase(karpenter_interruption_received_messages_total{
-              message_type="SpotInterruption"
-            }[1h])) > 5
-          for: 5m
-          labels:
-            severity: warning
-            category: karpenter
-          annotations:
-            summary: "High Spot interruption rate"
-            description: |
-              {{ $value | printf "%.0f" }} Spot interruptions in the past hour.
-              Consider diversifying instance types or using more On-Demand capacity.
-
-        # Node NotReady
-        - alert: NodeNotReady
-          expr: kube_node_status_condition{condition="Ready", status="false"} == 1
-          for: 5m
-          labels:
-            severity: warning
-            category: node
-          annotations:
-            summary: "Node {{ $labels.node }} is NotReady"
-            description: |
-              Node {{ $labels.node }} has been in NotReady state for more than 5 minutes.
-              Check node status and kubelet logs.
-
-        - alert: NodeStatusUnknown
-          expr: kube_node_status_condition{condition="Ready", status="unknown"} == 1
-          for: 3m
-          labels:
-            severity: critical
-            category: node
-          annotations:
-            summary: "Node {{ $labels.node }} status unknown"
-            description: |
-              Node {{ $labels.node }} status is unknown, likely indicating
-              communication issues or imminent termination.
-
-        - alert: NodeFlapping
-          expr: changes(kube_node_status_condition{condition="Ready", status="true"}[1h]) > 3
-          for: 5m
-          labels:
-            severity: warning
-            category: node
-          annotations:
-            summary: "Node {{ $labels.node }} is flapping"
-            description: |
-              Node {{ $labels.node }} Ready status has changed
-              {{ $value | printf "%.0f" }} times in the past hour.
-
-        # Pod Evictions
-        - alert: HighPodEvictionRate
-          expr: sum(increase(kube_pod_status_reason{reason="Evicted"}[1h])) > 10
-          for: 5m
-          labels:
-            severity: warning
-            category: karpenter
-          annotations:
-            summary: "High pod eviction rate"
-            description: |
-              {{ $value | printf "%.0f" }} pods have been evicted in the past hour.
-              Check for node pressure or disruption events.
-
-        - alert: NamespacePodEvictions
-          expr: |
-            sum by (namespace) (increase(kube_pod_status_reason{reason="Evicted"}[1h])) > 5
-          for: 5m
-          labels:
-            severity: warning
-            category: karpenter
-          annotations:
-            summary: "Pod evictions in namespace {{ $labels.namespace }}"
-            description: |
-              {{ $value | printf "%.0f" }} pods evicted in namespace {{ $labels.namespace }}.
-
-        # NodePool Capacity
-        - alert: NodePoolCPUCapacityHigh
-          expr: |
-            sum by (nodepool) (karpenter_nodepools_usage{resource_type="cpu"})
-            / sum by (nodepool) (karpenter_nodepools_limit{resource_type="cpu"})
-            > 0.9
-          for: 10m
-          labels:
-            severity: warning
-            category: karpenter
-          annotations:
-            summary: "NodePool {{ $labels.nodepool }} approaching CPU limit"
-            description: |
-              NodePool {{ $labels.nodepool }} is at {{ $value | printf "%.1f" }}%
-              CPU capacity. Consider increasing limits or adding NodePools.
-
-        - alert: NodePoolMemoryCapacityHigh
-          expr: |
-            sum by (nodepool) (karpenter_nodepools_usage{resource_type="memory"})
-            / sum by (nodepool) (karpenter_nodepools_limit{resource_type="memory"})
-            > 0.9
-          for: 10m
-          labels:
-            severity: warning
-            category: karpenter
-          annotations:
-            summary: "NodePool {{ $labels.nodepool }} approaching memory limit"
-            description: |
-              NodePool {{ $labels.nodepool }} is at {{ $value | printf "%.1f" }}%
-              memory capacity.
-
-        - alert: DisruptionBudgetBlocking
-          expr: increase(karpenter_voluntary_disruption_blocked_total[1h]) > 0
-          for: 1m
-          labels:
-            severity: info
-            category: karpenter
-          annotations:
-            summary: "Disruption budget blocking node operations"
-            description: |
-              Pod disruption budgets are preventing Karpenter from
-              proceeding with voluntary disruptions.
-
-        # Provisioning Issues
-        - alert: KarpenterProvisioningLatencyHigh
-          expr: |
-            histogram_quantile(0.99,
-              rate(karpenter_provisioner_scheduling_simulation_duration_seconds_bucket[5m])
-            ) > 10
-          for: 10m
-          labels:
-            severity: warning
-            category: karpenter
-          annotations:
-            summary: "High Karpenter scheduling simulation latency"
-            description: |
-              Karpenter provisioning simulation is taking {{ $value | printf "%.1f" }}s
-              at p99. This may delay pod scheduling.
-
-        - alert: PendingPodsWithCapacity
-          expr: |
-            (sum(kube_pod_status_phase{phase="Pending"}) > 10)
-            and
-            (sum(karpenter_nodepools_usage{resource_type="cpu"})
-            / sum(karpenter_nodepools_limit{resource_type="cpu"}) < 0.8)
-          for: 10m
-          labels:
-            severity: warning
-            category: karpenter
-          annotations:
-            summary: "Pending pods despite available capacity"
-            description: |
-              There are {{ $value | printf "%.0f" }} pending pods but NodePool
-              capacity is not exhausted. Check for scheduling constraints or
-              node affinity issues.
-```
-
----
-
-## 6. Alertmanager Configuration
-
-Alertmanager handles alert routing, grouping, deduplication, and notification delivery. A well-configured Alertmanager ensures alerts reach the right teams at the right time.
-
-### Complete Alertmanager Configuration
+PagerDuty uses an Events API v2 routing key here. `service_key`/`service_key_file` remains a supported separate v1 integration path; select credentials matching the actual integration type.
 
 ```yaml
 # alertmanager.yaml
 global:
-  # Global SMTP settings
-  smtp_smarthost: 'smtp.example.com:587'
-  smtp_from: 'alertmanager@example.com'
-  smtp_auth_username: 'alertmanager'
-  smtp_auth_password_file: '/etc/alertmanager/secrets/smtp_password'
-
-  # Global Slack settings
-  slack_api_url_file: '/etc/alertmanager/secrets/slack_webhook_url'
-
-  # Global PagerDuty settings
-  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
-
-  # Resolution timeout
   resolve_timeout: 5m
-
-# Routing tree
 route:
-  # Default receiver
-  receiver: 'platform-team-slack'
-
-  # Group alerts by these labels
-  group_by: ['alertname', 'namespace', 'severity']
-
-  # Wait before sending first notification for a group
+  receiver: default-slack
+  group_by: [cluster, alertname, namespace, severity]
   group_wait: 30s
-
-  # Wait before sending updated notifications
   group_interval: 5m
-
-  # Wait before resending a notification
   repeat_interval: 4h
-
-  # Child routes (evaluated in order, first match wins)
   routes:
-    # Critical alerts go to PagerDuty
-    - receiver: 'pagerduty-critical'
-      match:
-        severity: critical
-      continue: true  # Also send to Slack
-
-    # Security alerts
-    - receiver: 'security-team'
-      match:
-        category: security
-      group_by: ['alertname', 'namespace']
-
-    # Karpenter/Auto Mode alerts
-    - receiver: 'platform-team-slack'
-      match:
-        category: karpenter
-      group_by: ['alertname', 'nodepool']
-
-    # DNS alerts
-    - receiver: 'platform-team-slack'
-      match:
-        category: dns
+    - receiver: oncall
+      matchers: ['severity="critical"']
       group_wait: 10s
-      group_interval: 1m
+      repeat_interval: 1h
+      continue: true
+    - receiver: low-priority
+      matchers: ['severity="info"']
+      mute_time_intervals: [nightly-maintenance]
+    - receiver: network-team
+      matchers: ['team="network"']
+    - receiver: storage-team
+      matchers: ['team="storage"']
+    # Explicit sibling fallback: a matched critical route does not fall back
+    # to the root receiver merely because its continue flag is true.
+    - receiver: default-slack
 
-    # Storage alerts with longer repeat interval
-    - receiver: 'platform-team-slack'
-      match:
-        category: storage
-      repeat_interval: 12h
-
-    # Application team specific routing
-    - receiver: 'app-team-orders'
-      match_re:
-        namespace: 'orders|checkout'
-
-    - receiver: 'app-team-payments'
-      match_re:
-        namespace: 'payments|billing'
-
-    # Info alerts go to low-priority channel
-    - receiver: 'platform-team-low-priority'
-      match:
-        severity: info
-      repeat_interval: 24h
-
-# Inhibition rules (suppress lower severity when higher severity fires)
 inhibit_rules:
-  # Critical inhibits warning for same alert
-  - source_match:
-      severity: 'critical'
-    target_match:
-      severity: 'warning'
-    equal: ['alertname', 'namespace', 'pod']
+  - source_matchers: ['severity="critical"', 'cluster!=""', 'alert_family!=""', 'instance!=""']
+    target_matchers: ['severity="warning"', 'cluster!=""', 'alert_family!=""', 'instance!=""']
+    equal: [cluster, alert_family, instance, job, device, mountpoint, fstype]
+  - source_matchers: ['severity="critical"', 'cluster!=""', 'alert_family!=""', 'namespace!=""', 'pod!=""', 'container!=""']
+    target_matchers: ['severity="warning"', 'cluster!=""', 'alert_family!=""', 'namespace!=""', 'pod!=""', 'container!=""']
+    equal: [cluster, alert_family, namespace, pod, container]
+  - source_matchers: ['severity="critical"', 'cluster!=""', 'alert_family!=""', 'namespace!=""', 'persistentvolumeclaim!=""']
+    target_matchers: ['severity="warning"', 'cluster!=""', 'alert_family!=""', 'namespace!=""', 'persistentvolumeclaim!=""']
+    equal: [cluster, alert_family, namespace, persistentvolumeclaim]
 
-  # Node-level alerts inhibit pod-level alerts on same node
-  - source_match:
-      alertname: 'NodeNotReady'
-    target_match_re:
-      alertname: 'Pod.*|Container.*'
-    equal: ['node']
-
-  # Cluster-wide alerts inhibit namespace alerts
-  - source_match:
-      scope: 'cluster'
-    target_match:
-      scope: 'namespace'
-    equal: ['alertname']
-
-# Receivers configuration
 receivers:
-  # Slack - Platform team main channel
-  - name: 'platform-team-slack'
+  - name: default-slack
     slack_configs:
-      - channel: '#platform-alerts'
+      - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-default
         send_resolved: true
-        title: '{{ template "slack.title" . }}'
-        text: '{{ template "slack.text" . }}'
-        actions:
-          - type: button
-            text: 'Runbook'
-            url: '{{ (index .Alerts 0).Annotations.runbook_url }}'
-          - type: button
-            text: 'Dashboard'
-            url: 'https://grafana.example.com/d/alerts?var-alertname={{ (index .Alerts 0).Labels.alertname }}'
-          - type: button
-            text: 'Silence'
-            url: '{{ template "slack.silence_url" . }}'
-
-  # Slack - Low priority channel
-  - name: 'platform-team-low-priority'
+        title: '{{ template "docs.title" . }}'
+        text: '{{ template "docs.text" . }}'
+  - name: network-team
     slack_configs:
-      - channel: '#platform-alerts-low'
-        send_resolved: false
-        title: '{{ template "slack.title" . }}'
-        text: '{{ template "slack.text" . }}'
-
-  # PagerDuty for critical alerts
-  - name: 'pagerduty-critical'
+      - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-network
+        send_resolved: true
+        title: '{{ template "docs.title" . }}'
+        text: '{{ template "docs.text" . }}'
+  - name: storage-team
+    slack_configs:
+      - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-storage
+        send_resolved: true
+        title: '{{ template "docs.title" . }}'
+        text: '{{ template "docs.text" . }}'
+  - name: low-priority
+    slack_configs:
+      - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-info
+        send_resolved: true
+        title: '{{ template "docs.title" . }}'
+        text: '{{ template "docs.text" . }}'
+  - name: oncall
     pagerduty_configs:
-      - service_key_file: '/etc/alertmanager/secrets/pagerduty_service_key'
-        severity: '{{ if eq .Status "firing" }}critical{{ else }}info{{ end }}'
-        description: '{{ template "pagerduty.description" . }}'
+      - routing_key_file: /etc/alertmanager/secrets/notification-credentials/pagerduty-routing-key
+        send_resolved: true
+        severity: critical
+        description: '{{ template "docs.title" . }}'
         details:
-          firing: '{{ template "pagerduty.firing_alerts" . }}'
-          resolved: '{{ template "pagerduty.resolved_alerts" . }}'
-          num_firing: '{{ .Alerts.Firing | len }}'
-          num_resolved: '{{ .Alerts.Resolved | len }}'
+          alerts: '{{ template "docs.text" . }}'
 
-  # Security team
-  - name: 'security-team'
-    slack_configs:
-      - channel: '#security-alerts'
-        send_resolved: true
-        title: '{{ template "slack.title" . }}'
-        text: '{{ template "slack.text" . }}'
-    email_configs:
-      - to: 'security@example.com'
-        send_resolved: true
-        headers:
-          Subject: '[{{ .Status | toUpper }}] Security Alert: {{ .GroupLabels.alertname }}'
-
-  # Application team receivers
-  - name: 'app-team-orders'
-    slack_configs:
-      - channel: '#orders-team-alerts'
-        send_resolved: true
-        title: '{{ template "slack.title" . }}'
-        text: '{{ template "slack.text" . }}'
-
-  - name: 'app-team-payments'
-    slack_configs:
-      - channel: '#payments-team-alerts'
-        send_resolved: true
-        title: '{{ template "slack.title" . }}'
-        text: '{{ template "slack.text" . }}'
-    pagerduty_configs:
-      - service_key_file: '/etc/alertmanager/secrets/pagerduty_payments_key'
-        severity: 'critical'
-
-# Templates
 templates:
-  - '/etc/alertmanager/templates/*.tmpl'
+  - /etc/alertmanager/configmaps/notification-templates/*.tmpl
 
-# Time-based muting
 time_intervals:
-  - name: 'business-hours'
+  - name: nightly-maintenance
     time_intervals:
-      - weekdays: ['monday:friday']
+      - location: Asia/Seoul
         times:
-          - start_time: '09:00'
-            end_time: '17:00'
-        location: 'America/New_York'
-
-  - name: 'weekends'
-    time_intervals:
-      - weekdays: ['saturday', 'sunday']
-
-  - name: 'maintenance-window'
-    time_intervals:
-      - weekdays: ['sunday']
-        times:
-          - start_time: '02:00'
-            end_time: '06:00'
-        location: 'America/New_York'
+          - start_time: "02:00"
+            end_time: "04:00"
 ```
 
-### Slack Template
+Critical alerts reach oncall, then continue to the team-specific Slack path. The explicit final sibling fallback also sends critical alerts without a team to Slack. Once a child route matches, `continue: true` alone does not cause fallback to the root receiver.
 
-Create `/etc/alertmanager/templates/slack.tmpl`:
+Info uses a separate path, muted daily during **02:00–04:00 Asia/Seoul**. This does not accumulate a daily digest. Repetition/group delays do not replace a calendar-based digest process.
 
-```go
-{{ define "slack.title" }}
-{{ if eq .Status "firing" }}:fire:{{ else }}:white_check_mark:{{ end }} [{{ .Status | toUpper }}{{ if eq .Status "firing" }} {{ .Alerts.Firing | len }}{{ end }}] {{ .GroupLabels.alertname }}
-{{ end }}
+Inhibition requires actual cluster/entity identifiers. Warning and critical names may differ, but must share `alert_family` and the intended node/container/PVC scope. Missing labels can compare equal as empty values; an unqualified `equal: [node]` can suppress unrelated alerts.
 
-{{ define "slack.text" }}
-{{ range .Alerts }}
-*Alert:* {{ .Annotations.summary }}
-*Severity:* `{{ .Labels.severity }}`
-*Namespace:* `{{ .Labels.namespace }}`
-{{ if .Labels.pod }}*Pod:* `{{ .Labels.pod }}`{{ end }}
-{{ if .Labels.node }}*Node:* `{{ .Labels.node }}`{{ end }}
-*Description:* {{ .Annotations.description }}
-{{ if .Annotations.runbook_url }}*Runbook:* {{ .Annotations.runbook_url }}{{ end }}
-*Started:* {{ .StartsAt.Format "2006-01-02 15:04:05 MST" }}
-{{ if eq $.Status "resolved" }}*Resolved:* {{ .EndsAt.Format "2006-01-02 15:04:05 MST" }}{{ end }}
----
-{{ end }}
-{{ end }}
+`resolve_timeout` does not change `for` or the resolution delay of Prometheus alerts carrying EndsAt. Check actual receiver behavior, including `send_resolved`, separately.
 
-{{ define "slack.silence_url" }}
-{{ .ExternalURL }}/#/silences/new?filter=%7B
-{{- range .CommonLabels.SortedPairs -}}
-    {{- if ne .Name "alertname" -}}
-        {{- .Name }}%3D%22{{- .Value -}}%22%2C%20
-    {{- end -}}
-{{- end -}}
-alertname%3D%22{{ .CommonLabels.alertname }}%22%7D
-{{ end }}
+### Notification template
+
+`notifications.tmpl`:
+
+```text
+{{ define "docs.title" -}}
+[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }} — {{ .CommonLabels.cluster }}
+{{- end }}
+
+{{ define "docs.text" -}}
+{{ range .Alerts -}}
+[{{ .Status | toUpper }}] {{ .Annotations.summary }}
+{{ .Annotations.description }}
+{{ if .Labels.namespace }}Namespace: {{ .Labels.namespace }}
+{{ end -}}
+{{ if .Annotations.runbook_url }}Runbook: {{ .Annotations.runbook_url }}
+{{ end -}}
+{{ end -}}
+{{ if .ExternalURL }}Alertmanager: {{ .ExternalURL }}
+{{ end -}}
+{{- end }}
 ```
 
-### PagerDuty Template
+The template displays each alert's status even when firing/resolved alerts share a group. Avoid unconditional empty runbook buttons or manually assembled silence URLs containing unescaped label values. Use the authenticated Alertmanager UI to select and silence specific alerts.
 
-Create `/etc/alertmanager/templates/pagerduty.tmpl`:
-
-```go
-{{ define "pagerduty.description" }}
-[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }} - {{ .CommonAnnotations.summary }}
-{{ end }}
-
-{{ define "pagerduty.firing_alerts" }}
-{{ range .Alerts.Firing }}
-- {{ .Annotations.summary }} ({{ .Labels.namespace }}/{{ .Labels.pod }})
-{{ end }}
-{{ end }}
-
-{{ define "pagerduty.resolved_alerts" }}
-{{ range .Alerts.Resolved }}
-- {{ .Annotations.summary }} ({{ .Labels.namespace }}/{{ .Labels.pod }})
-{{ end }}
-{{ end }}
-```
-
-### Alert Grouping Strategy
-
-Effective grouping reduces notification noise:
-
-```yaml
-# Group by alertname to see all instances of the same issue
-group_by: ['alertname']
-
-# Group by namespace for team-based routing
-group_by: ['alertname', 'namespace']
-
-# Group by severity for escalation
-group_by: ['alertname', 'severity']
-
-# Group by node for infrastructure issues
-group_by: ['alertname', 'node']
-
-# Fine-grained grouping for debugging
-group_by: ['alertname', 'namespace', 'pod', 'container']
-```
-
-### Creating Silences
-
-Silence alerts during maintenance:
+For example, supply the configuration and template through these Kubernetes objects. This does not create the credentials Secret:
 
 ```bash
-# Create silence via amtool
-amtool silence add \
-  alertname="NodeNotReady" \
-  node="ip-10-0-1-100.ec2.internal" \
-  --duration=2h \
-  --comment="Planned node maintenance" \
-  --author="platform-team"
+kubectl --context "$TARGET_CONTEXT" -n monitoring create secret generic \
+  reviewed-alertmanager-config --from-file=alertmanager.yaml \
+  --dry-run=client -o yaml |
+  kubectl --context "$TARGET_CONTEXT" -n monitoring apply -f -
 
-# Create silence for namespace
-amtool silence add \
-  namespace="staging" \
-  --duration=4h \
-  --comment="Staging environment rebuild"
-
-# List active silences
-amtool silence query
-
-# Expire a silence early
-amtool silence expire <silence-id>
+kubectl --context "$TARGET_CONTEXT" -n monitoring create configmap \
+  notification-templates --from-file=notifications.tmpl \
+  --dry-run=client -o yaml |
+  kubectl --context "$TARGET_CONTEXT" -n monitoring apply -f -
 ```
 
-### Mute Timing Configuration
-
-Use mute timings to suppress non-critical alerts during specific periods:
+### kube-prometheus-stack values
 
 ```yaml
-route:
-  receiver: 'default'
-  routes:
-    # Mute info alerts during maintenance window
-    - receiver: 'dev-null'
-      match:
-        severity: info
-      mute_time_intervals:
-        - 'maintenance-window'
-
-    # Only alert during business hours for non-critical
-    - receiver: 'slack-alerts'
-      match:
-        severity: warning
-      active_time_intervals:
-        - 'business-hours'
+# alerting-values.yaml
+# Merge into the reviewed full values for the actual release named "monitoring".
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    useExistingSecret: true
+    configSecret: reviewed-alertmanager-config
+    secrets: [notification-credentials]
+    configMaps: [notification-templates]
+    externalUrl: https://alertmanager.example.com
+    # No AlertmanagerConfig object is supplied in this example.
+    # Adding one with this label is an explicit, separately reviewed choice.
+    alertmanagerConfigSelector:
+      matchLabels:
+        alertmanager-config: platform-approved
+    alertmanagerConfigNamespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: monitoring
+prometheus:
+  prometheusSpec:
+    externalLabels:
+      cluster: REPLACE_CLUSTER_NAME
+    additionalAlertRelabelConfigs:
+      - action: labeldrop
+        regex: prometheus_replica
 ```
 
----
+Merge this into the release's **complete reviewed values**, replacing the cluster name and access URL. Do not overwrite an existing installation with this fragment alone. Chart 90.1.1 renders additional alert relabeling into a Secret referenced by Prometheus.
 
-## Related Resources
+```bash
+helm template monitoring prometheus-community/kube-prometheus-stack \
+  --version 90.1.1 --namespace monitoring \
+  --values monitoring-values.yaml --values alerting-values.yaml \
+  > rendered-monitoring.yaml
+```
 
-- [Monitoring Stack](../observability/README.md) - Prometheus and Grafana setup
-- [Node Lifecycle Management](../eks-auto-mode/07-node-lifecycle.md) - Karpenter node management
-- [Observability Analysis](./08-observability-analysis.md) - Log, metric, and trace correlation
+Prepare the Helm repository and review CRD/chart upgrades first. Check duplicate default rules and assumptions about unavailable managed control-plane/Auto Mode jobs before applying through the operational deployment workflow.
 
----
+External labels identify outgoing alerts; they do not automatically label every local query sample. Remove per-replica identity when needed for HA deduplication while preserving real cluster identity.
 
-< [Previous: Scaling Strategies](./06-scaling-strategies.md) | [Table of Contents](./README.md) | [Next: Observability Analysis](./08-observability-analysis.md) >
+The example selects its base Secret and explicitly labeled additional AlertmanagerConfig resources. Adding a matching CRD is another configuration merge and requires deliberate review.
+
+## Validation and Maintenance
+
+With PyYAML available, extract the PrometheusRule spec as a native rule file:
+
+```bash
+python3 - <<'PY'
+from pathlib import Path
+import yaml
+resource = yaml.safe_load(Path("prometheusrule.yaml").read_text())
+Path("rules.yaml").write_text(yaml.safe_dump(resource["spec"], sort_keys=False))
+PY
+promtool check rules rules.yaml
+```
+
+Check Alertmanager using a validation copy with prepared template/credential paths:
+
+```bash
+amtool check-config alertmanager.yaml --enable-feature=utf8-strict-mode
+amtool config routes test --config.file=alertmanager.yaml \
+  --verify.receivers=oncall,network-team severity=critical team=network
+```
+
+Synthetic files can replace real credentials for local checks. This chapter validated 17 rules, 18 evaluation scenarios, ten routing cases, two native templates and sixteen inhibition cases on a local Alertmanager with all outbound integrations removed. Actual exporter data, channel authentication and delivery require separate validation after connecting the environment.
+
+Creating/expiring a silence changes notification policy. Confirm the Alertmanager URL, cluster/namespace/entity matchers, owner, reason and duration. Silences do not stop Prometheus evaluation, and a long-muted alert is not a resolved incident.
+
+An OOMKilled last-termination gauge can retain historical state. Correlate restart counts, termination times and Events rather than always increasing limits or declaring a memory leak.
+
+## References
+
+- [Prometheus alerting rules](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/)
+- [Alertmanager configuration](https://prometheus.io/docs/alerting/latest/configuration/)
+- [VPC CNI v1.23.1 metric definitions](https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.1/utils/prometheusmetrics/prometheusmetrics.go)
+- [Auto Mode troubleshooting](https://docs.aws.amazon.com/eks/latest/userguide/auto-troubleshoot.html)
+- [Karpenter metrics](https://karpenter.sh/docs/reference/metrics/)
+- [Slack incoming webhooks](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/)
+- [Chapter quiz](../quizzes/ops/07-observability-alerts-quiz.md)
+
+< [Previous: Scaling](06-scaling-strategies.md) | [Contents](README.md) | [Next: Observability Analysis](08-observability-analysis.md) >

@@ -20,7 +20,7 @@ This quiz tests your understanding of Kubernetes cluster architecture, main comp
 kube-proxy is a node component, not a control plane component. The core control plane components are kube-apiserver, etcd, kube-scheduler, kube-controller-manager, and cloud-controller-manager. kube-proxy runs on each node and maintains network rules and performs connection forwarding.
 </details>
 
-2. Which component in Kubernetes acts as the "source of truth" that stores all cluster data?
+2. Which component in Kubernetes acts as the "source of truth" that stores Kubernetes API state?
    - A) kube-apiserver
    - B) etcd
    - C) kube-controller-manager
@@ -33,7 +33,7 @@ kube-proxy is a node component, not a control plane component. The core control 
 **Answer: B) etcd**
 
 **Explanation:**
-etcd is a consistent and highly available key-value store that stores all cluster data and acts as Kubernetes' "source of truth". All cluster state, configuration, and metadata are stored in etcd, and all other control plane components interact through kube-apiserver to read and write information from etcd.
+etcd is a consistent and highly available key-value store that stores Kubernetes API state and acts as Kubernetes' "source of truth". All cluster state, configuration, and metadata are stored in etcd, and all other control plane components interact through kube-apiserver to read and write information from etcd.
 </details>
 
 3. Which of the following is NOT a Kubernetes node component?
@@ -81,7 +81,7 @@ kube-scheduler is the control plane component that selects nodes to run newly cr
 **Answer: C) cloud-controller-manager**
 
 **Explanation:**
-cloud-controller-manager is a control plane component that contains cloud-specific control logic and interacts with cloud provider APIs. This allows separation between the Kubernetes core and cloud provider APIs. cloud-controller-manager runs cloud-specific controllers such as node controller, route controller, service controller, and volume controller.
+cloud-controller-manager is a control plane component that contains cloud-specific control logic and interacts with cloud provider APIs. This allows separation between the Kubernetes core and cloud provider APIs. cloud-controller-manager runs cloud-specific controllers such as node, route, and service controllers. CSI controllers and node plugins handle storage provisioning, attachment, and mounting.
 </details>
 
 6. What is the agent that runs on each node and manages the execution of containers within pods?
@@ -113,7 +113,7 @@ kubelet is an agent that runs on each node and manages the execution of containe
 **Answer: B) kube-proxy**
 
 **Explanation:**
-kube-proxy is a network proxy that runs on each node and is responsible for implementing the Kubernetes service concept. It maintains network rules on nodes and performs connection forwarding. Key functions include maintaining network rules for service IPs and ports, connection forwarding, implementing load balancing, and supporting service discovery. kube-proxy supports several operating modes including userspace mode, iptables mode, and IPVS mode.
+kube-proxy is a network proxy that runs on each node and is responsible for implementing the Kubernetes service concept. It maintains network rules on nodes and performs connection forwarding. Key functions include maintaining network rules for service IPs and ports, connection forwarding, implementing load balancing, and supporting service discovery. kube-proxy supports several operating modes including iptables and nftables on Linux and kernelspace on Windows. IPVS is deprecated since v1.35, and userspace mode was removed.
 </details>
 
 8. What is the standard interface for running containers in Kubernetes?
@@ -145,7 +145,7 @@ CRI (Container Runtime Interface) is the standard interface for running containe
 **Answer: B) CNI (Container Network Interface)**
 
 **Explanation:**
-CNI (Container Network Interface) is the standard interface for implementing pod networking in Kubernetes. CNI plugins are responsible for connecting network interfaces to pods and assigning IP addresses. Various CNI plugins exist, including Calico, Cilium, Flannel, and Weave Net, each with different features and performance characteristics. Through CNI, Kubernetes can support various networking solutions.
+CNI (Container Network Interface) is the standard interface for implementing pod networking in Kubernetes. CNI plugins are responsible for connecting network interfaces to pods and assigning IP addresses. Various CNI plugins exist, including Calico, Cilium, and Flannel, each with different features and performance characteristics. Through CNI, Kubernetes can support various networking solutions.
 </details>
 
 10. What provides a standard interface with storage systems in Kubernetes clusters?
@@ -190,7 +190,7 @@ kube-controller-manager is the control plane component that runs multiple contro
 etcd uses the Raft consensus algorithm to ensure strong consistency of data in distributed systems. Raft achieves consensus in distributed systems through leader election, log replication, and safety. etcd clusters are typically composed of 3 or 5 nodes, and the cluster can continue to operate as long as a majority (quorum) of nodes are functioning normally.
 </details>
 
-13. What is the default operating mode of kube-proxy in Kubernetes?
+13. What is the default kube-proxy mode on Linux when no mode is explicitly selected?
 
 <details>
 
@@ -199,7 +199,7 @@ etcd uses the Raft consensus algorithm to ensure strong consistency of data in d
 **Answer: iptables**
 
 **Explanation:**
-The default operating mode of kube-proxy is iptables mode. In this mode, kube-proxy uses Linux iptables to implement NAT and route traffic to service IPs to pods. Other operating modes include userspace mode (legacy) and IPVS mode (high performance). IPVS mode provides better performance for large clusters but requires the IPVS module in the Linux kernel.
+The default operating mode of kube-proxy is iptables mode. In this mode, kube-proxy uses Linux iptables to implement NAT and route traffic to service IPs to pods. nftables is another Linux mode (stable since v1.33); check kernel and CNI compatibility before migration. IPVS is deprecated since v1.35; userspace mode is removed. Windows uses kernelspace mode.
 </details>
 
 14. What is the name of the configuration file for communicating with the API server in a Kubernetes cluster?
@@ -251,7 +251,7 @@ This command sets the ETCDCTL_API environment variable to 3 to use the etcdctl v
     - Scheduler name: custom-scheduler
     - Leader election enabled
     - Scoring plugin: Set NodeResourcesBalancedAllocation weight to 2
-    - Filtering plugin: Disable NodeUnschedulable
+    - Filtering plugin: Keep NodeUnschedulable enabled so cordoned nodes remain excluded
 
 <details>
 
@@ -270,14 +270,12 @@ profiles:
       score:
         enabled:
           - name: NodeResourcesBalancedAllocation
+            weight: 2
         disabled: []
-      filter:
-        disabled:
-          - name: NodeUnschedulable
 ```
 
 **Explanation:**
-This YAML file defines a KubeSchedulerConfiguration object. leaderElection.leaderElect: true enables leader election, and the profiles section defines a scheduler profile named custom-scheduler. In the plugins section, the weight of NodeResourcesBalancedAllocation is set to 2 in the score plugins, and NodeUnschedulable is disabled in the filter plugins.
+This YAML file defines a KubeSchedulerConfiguration object. leaderElection.leaderElect: true enables leader election, and the profiles section defines a scheduler profile named custom-scheduler. In the plugins section, the weight of NodeResourcesBalancedAllocation is set to 2 in the score plugins, and the default NodeUnschedulable filter remains enabled. Disabling it would allow scheduling onto cordoned nodes.
 </details>
 
 18. Write an etcd startup command for configuring a high availability etcd cluster that meets the following requirements:
@@ -308,9 +306,11 @@ etcd \
 --cert-file=/etc/kubernetes/pki/etcd/server.crt \
 --key-file=/etc/kubernetes/pki/etcd/server.key \
 --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt \
+--client-cert-auth=true \
 --peer-cert-file=/etc/kubernetes/pki/etcd/peer.crt \
 --peer-key-file=/etc/kubernetes/pki/etcd/peer.key \
---peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+--peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt \
+--peer-client-cert-auth=true
 ```
 
 **Explanation:**
@@ -338,12 +338,12 @@ This command starts an etcd node named etcd-1. --initial-advertise-peer-urls and
 2. **etcd Deployment Methods**:
   - Stacked topology: Deploy etcd together with control plane nodes
   - External topology: Deploy etcd on separate nodes (higher isolation and scalability)
-  - Distribute at least 3 etcd nodes across multiple availability zones (5 recommended)
+  - Distribute at least 3 etcd nodes across multiple availability zones (choose 3 or 5 based on failure tolerance and latency)
   - etcd cluster uses Raft consensus algorithm to ensure data consistency
 
 3. **Load Balancer Configuration**:
   - Place load balancer in front of kube-apiserver
-  - Load balancer can operate at L4 (TCP) or L7 (HTTP/HTTPS) level
+  - Use L4 TCP pass-through to preserve end-to-end TLS and client-certificate authentication
   - Detect unhealthy kube-apiserver instances through health checks and exclude traffic
   - In cloud environments, use cloud provider's managed load balancers (AWS ELB, GCP Cloud Load Balancer, etc.)
   - In on-premises environments, use HAProxy, NGINX, keepalived, etc.
@@ -360,7 +360,7 @@ This command starts an etcd node named etcd-1. --initial-advertise-peer-urls and
 
   - **Network partition**:
   - etcd operates on majority basis to prevent "split brain" during network partitions
-  - etcd nodes in minority partition switch to read-only mode
+  - The minority cannot commit writes or serve linearizable reads; explicitly requested serializable reads may return stale local data
 
   - **etcd data corruption/loss**:
   - Perform regular etcd backups
@@ -392,7 +392,7 @@ With this high availability architecture, the Kubernetes cluster can continue to
   - Containers within a pod communicate through localhost
 
 2. **Pod-to-Pod Communication**:
-  - **Between pods on the same node**: Communication through the node's local bridge network
+  - **Between pods on the same node**: Communication through the local data plane (bridge, routing, or eBPF depending on the plugin)
   - **Between pods on different nodes**: Communication through overlay network or routing tables
   - CNI plugins handle pod IP address assignment and routing
 
@@ -400,7 +400,7 @@ With this high availability architecture, the Kubernetes cluster can continue to
   - **ClusterIP**: Virtual IP accessible only within the cluster
   - **kube-proxy**: Routes traffic to service IPs to pods
   - iptables mode: Implements NAT using Linux iptables rules
-  - IPVS mode: Provides high-performance load balancing using Linux kernel's IP Virtual Server
+  - nftables mode: Programs the Linux nftables data plane; IPVS is deprecated
   - **CoreDNS**: DNS service that resolves service names to ClusterIPs
   - **Service discovery**: Discover services through environment variables or DNS
 

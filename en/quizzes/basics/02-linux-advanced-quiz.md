@@ -32,14 +32,14 @@ This quiz tests your understanding of Linux operations skills used in Kubernetes
 
 3. What does `${REPLICAS:-3}` mean?
    - A) Set REPLICAS to 3
-   - B) Use 3 if REPLICAS is not set
+   - B) Use 3 if REPLICAS is unset or empty
    - C) Subtract 3 from REPLICAS
    - D) Error
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Use 3 if REPLICAS is not set**
+**Answer: B) Use 3 if REPLICAS is unset or empty**
 
 </details>
 
@@ -179,6 +179,8 @@ This quiz tests your understanding of Linux operations skills used in Kubernetes
 
 **Answer: /var/run/secrets/kubernetes.io/serviceaccount/token**
 
+This is the default projected-token path; it may be absent if automount is disabled. Tokens rotate.
+
 </details>
 
 ## Practical Questions
@@ -190,19 +192,19 @@ This quiz tests your understanding of Linux operations skills used in Kubernetes
 
 ```bash
 #!/bin/bash
-: ${DATABASE_URL:?"DATABASE_URL required"}
+: "${DATABASE_URL:?DATABASE_URL required}"
 TIMEOUT=${TIMEOUT:-30}
 ```
 
 </details>
 
-17. Write a command to output Pods with 3+ restarts as JSON.
+17. Write a command to output Pods whose regular and init containers have at least 3 combined restarts as JSON.
 
 <details>
 <summary>Show Answer</summary>
 
 ```bash
-kubectl get pods -A -o json | jq '[.items[] | select([.status.containerStatuses[]?.restartCount] | add >= 3)]'
+kubectl get pods -A -o json | jq '[.items[] | select(([(.status.containerStatuses[]?, .status.initContainerStatuses[]?) | .restartCount] | add // 0) >= 3)]'
 ```
 
 </details>
@@ -213,7 +215,7 @@ kubectl get pods -A -o json | jq '[.items[] | select([.status.containerStatuses[
 <summary>Show Answer</summary>
 
 ```bash
-rsync -avzP --include='*.yaml' --exclude='*' -e "ssh -J bastion" /src/ user@host:/dest/
+rsync -avzP --prune-empty-dirs --include='*/' --include='*.yaml' --exclude='*' -e "ssh -J bastion" /src/ user@host:/dest/
 ```
 
 </details>
@@ -239,10 +241,24 @@ echo "=== kubelet ===" && systemctl status kubelet --no-pager
 <summary>Show Answer</summary>
 
 - Environment Variables: Loaded at Pod start, requires restart for changes
-- Volume Mount: Auto-updates (~1 min), no restart needed
+- Volume mount: Updates propagate eventually (kubelet sync period plus cache/watch delay). The application must reread/reload the file. subPath mounts do not receive updates.
 
 </details>
 
 ---
 
 [Return to Study Materials](../../basics/02-linux-advanced.md)
+
+## Verification References
+
+- https://kubernetes.io/docs/concepts/storage/volumes/#local
+- https://kubernetes.io/docs/concepts/storage/storage-classes/#local
+- https://kubernetes.io/docs/tasks/run-application/access-api-from-pod/
+- https://kubernetes.io/docs/concepts/configuration/configmap/
+- https://kubernetes.io/docs/reference/kubectl/generated/kubectl_wait/
+- https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html
+- https://www.gnu.org/software/bash/manual/html_node/Bash-Startup-Files.html
+- https://download.samba.org/pub/rsync/rsync.1
+- https://github.com/mikefarah/yq
+- https://busybox.net/downloads/BusyBox.html
+- https://github.com/docker-library/official-images/blob/master/library/busybox

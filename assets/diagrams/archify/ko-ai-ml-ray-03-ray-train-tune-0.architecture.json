@@ -2,208 +2,167 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Ray Train과 Ray Tune의 결합",
-    "output": "ko-ai-ml-ray-03-ray-train-tune-0.html",
+    "title": "Ray Tune 함수와 Train V2 실행",
     "quality_profile": "showcase",
-    "animation": "trace",
-    "legend": {
-      "mode": "auto",
-      "entries": {
-        "backend": {
-          "label": "백엔드 서비스"
-        },
-        "database": {
-          "label": "데이터 저장소"
-        }
-      }
-    }
+    "animation": "none",
+    "viewBox": [
+      1300,
+      580
+    ]
   },
   "components": [
     {
-      "id": "driver",
+      "id": "tuner",
       "type": "backend",
-      "label": "Ray Tune Driver",
-      "sublabel": "탐색 알고리즘",
-      "tag": "다음 라운드 trial 결정",
+      "label": "Tuner",
+      "sublabel": "searcher / trial scheduler",
       "pos": [
-        470,
-        50
+        40,
+        70
       ],
       "size": [
-        220,
-        64
+        240,
+        80
       ]
     },
     {
-      "id": "t1w1",
+      "id": "trial",
       "type": "backend",
-      "label": "Worker Actor 1",
-      "sublabel": "Ray Train",
+      "label": "Trial function",
+      "sublabel": "construct Trainer + fit()",
       "pos": [
-        60,
-        240
+        430,
+        70
       ],
       "size": [
-        150,
-        60
-      ]
-    },
-    {
-      "id": "t1w2",
-      "type": "backend",
-      "label": "Worker Actor 2",
-      "sublabel": "Ray Train",
-      "pos": [
         270,
-        240
-      ],
-      "size": [
-        150,
-        60
+        80
       ]
     },
     {
-      "id": "t1os",
-      "type": "database",
-      "label": "Object Store",
-      "sublabel": "trial 내 공유",
-      "pos": [
-        165,
-        380
-      ],
-      "size": [
-        150,
-        60
-      ]
-    },
-    {
-      "id": "t2w1",
+      "id": "workers",
       "type": "backend",
-      "label": "Worker Actor 1",
-      "sublabel": "Ray Train",
+      "label": "Train workers",
+      "sublabel": "model / data / collectives",
       "pos": [
-        740,
-        240
+        870,
+        70
       ],
       "size": [
-        150,
-        60
+        280,
+        80
       ]
     },
     {
-      "id": "t2w2",
-      "type": "backend",
-      "label": "Worker Actor 2",
-      "sublabel": "Ray Train",
-      "pos": [
-        950,
-        240
-      ],
-      "size": [
-        150,
-        60
-      ]
-    },
-    {
-      "id": "t2os",
+      "id": "store",
       "type": "database",
-      "label": "Object Store",
-      "sublabel": "trial 내 공유",
+      "label": "Persistent checkpoint store",
+      "sublabel": "user-authored state / shards",
       "pos": [
-        845,
-        380
+        870,
+        340
       ],
       "size": [
-        150,
-        60
-      ]
-    }
-  ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "Trial 1: Ray Train 실행",
-      "wraps": [
-        "t1w1",
-        "t1w2",
-        "t1os"
+        280,
+        80
       ]
     },
     {
-      "kind": "region",
-      "label": "Trial 2: Ray Train 실행",
-      "wraps": [
-        "t2w1",
-        "t2w2",
-        "t2os"
+      "id": "callback",
+      "type": "backend",
+      "label": "TuneReportCallback",
+      "sublabel": "metrics + checkpoint path",
+      "pos": [
+        400,
+        340
+      ],
+      "size": [
+        300,
+        80
       ]
     }
   ],
   "connections": [
     {
-      "id": "launch-a",
-      "from": "driver",
-      "to": "t1w1",
-      "label": "하이퍼파라미터 조합 A로 실행",
+      "id": "trial-config",
+      "from": "tuner",
+      "to": "trial",
+      "label": "trial config",
       "variant": "emphasis"
     },
     {
-      "id": "launch-b",
-      "from": "driver",
-      "to": "t2w2",
-      "label": "하이퍼파라미터 조합 B로 실행",
+      "id": "train-launch",
+      "from": "trial",
+      "to": "workers",
+      "label": "ScalingConfig",
       "variant": "emphasis"
     },
     {
-      "id": "report-1",
-      "from": "t1w2",
-      "to": "driver",
-      "label": "결과/체크포인트 보고",
+      "id": "checkpoint",
+      "from": "workers",
+      "to": "store",
+      "label": "checkpoint upload",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1010,
+        245
+      ]
+    },
+    {
+      "id": "report",
+      "from": "workers",
+      "to": "callback",
+      "label": "report callback",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "via": [
+        [
+          1010,
+          210
+        ],
+        [
+          550,
+          210
+        ]
+      ],
+      "variant": "dashed",
+      "labelAt": [
+        765,
+        195
+      ]
+    },
+    {
+      "id": "callback-to-tune",
+      "from": "callback",
+      "to": "tuner",
+      "label": "rank 0 metrics / path",
+      "fromSide": "left",
+      "toSide": "bottom",
+      "via": [
+        [
+          160,
+          380
+        ]
+      ],
       "variant": "dashed"
-    },
-    {
-      "id": "report-2",
-      "from": "t2w1",
-      "to": "driver",
-      "label": "결과/체크포인트 보고",
-      "variant": "dashed"
-    },
-    {
-      "id": "t1w1-os",
-      "from": "t1w1",
-      "to": "t1os",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "t1w2-os",
-      "from": "t1w2",
-      "to": "t1os",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "t2w1-os",
-      "from": "t2w1",
-      "to": "t2os",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "t2w2-os",
-      "from": "t2w2",
-      "to": "t2os",
-      "fromSide": "bottom",
-      "toSide": "top"
     }
   ],
   "cards": [
     {
-      "dot": "amber",
-      "title": "탐색 루프",
+      "dot": "cyan",
+      "title": "명시적 연동",
       "items": [
-        "Driver는 각 trial이 보고한 결과/체크포인트를 받아 다음 라운드 trial을 결정한다",
-        "각 trial은 별도의 분산 워커 집합을 가진 독립적인 Ray Train 실행이다"
+        "V2 Trainer instance를 Tuner에 직접 넘기지 않음",
+        "Trial마다 고유 Train run 이름과 자원 예산 필요"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "보고·복구 경계",
+      "items": [
+        "2.58.0 V2 report는 모든 worker가 참여하는 barrier",
+        "Callback은 checkpoint를 다시 업로드하거나 metric 평균을 계산하지 않음"
       ]
     }
   ]

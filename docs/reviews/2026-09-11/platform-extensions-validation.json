@@ -1,0 +1,835 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T23:33:59.978874+00:00",
+  "scope": {
+    "documents": 4,
+    "quizQuestions": 40,
+    "originalUniqueBlocks": 36,
+    "publishedExampleFiles": 6
+  },
+  "originalFiles": [
+    {
+      "path": "ko/platform-engineering/04-kubernetes-extensions.md",
+      "lines": 983,
+      "proseLines": 230,
+      "sha256": "a8752fe45ff9ad14ebc052b888d2d3914b863fef232a14c295fd420359cda755"
+    },
+    {
+      "path": "ko/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
+      "lines": 652,
+      "proseLines": 341,
+      "sha256": "e893fa98932ace1cd25834a874224c6ab687378550bfc2e158692ea0205781bc"
+    },
+    {
+      "path": "en/platform-engineering/04-kubernetes-extensions.md",
+      "lines": 987,
+      "proseLines": 230,
+      "sha256": "94f3aa60ddb26c8aece60985f3991d13aac3096aa16c9eac27d4199c1164fb62"
+    },
+    {
+      "path": "en/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
+      "lines": 652,
+      "proseLines": 341,
+      "sha256": "8604229ad6ccc1895e6e1e2086f31a078977866d14ca6324c2501883f9f538ec"
+    }
+  ],
+  "contentPreservation": "AllCRD/controller/Operator/aggregation/admission/scheduler/extender/CNI/CSIand20quiztopicsperlocale retained; brokenorunimplementedfake-successprogramsreplacedwithtestedwebhook/CRD/CELexamplesandexplicitpseudocode/implementationrequirements.",
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/platform-engineering/04-kubernetes-extensions.md",
+        "sha256": "0d36df6df7dd7a5598ac846677f87a09fd4ee7eb9b2bb878a276a860a495c013",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubernetes-확장-메커니즘"
+          },
+          {
+            "tag": "h2",
+            "id": "확장-지점-선택"
+          },
+          {
+            "tag": "h2",
+            "id": "crd와-인스턴스"
+          },
+          {
+            "tag": "h2",
+            "id": "client-go-controller-runtime과-operator"
+          },
+          {
+            "tag": "h2",
+            "id": "api-aggregation"
+          },
+          {
+            "tag": "h2",
+            "id": "admission-정책과-webhook"
+          },
+          {
+            "tag": "h3",
+            "id": "테스트한-webhook-코드"
+          },
+          {
+            "tag": "h2",
+            "id": "scheduler-framework와-extender"
+          },
+          {
+            "tag": "h2",
+            "id": "cni"
+          },
+          {
+            "tag": "h2",
+            "id": "csi"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위와-참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "kubernetes-확장-메커니즘",
+          "확장-지점-선택",
+          "crd와-인스턴스",
+          "client-go-controller-runtime과-operator",
+          "api-aggregation",
+          "admission-정책과-webhook",
+          "테스트한-webhook-코드",
+          "scheduler-framework와-extender",
+          "cni",
+          "csi",
+          "검증-범위와-참고-자료"
+        ]
+      },
+      {
+        "path": "ko/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
+        "sha256": "7afd30f8190ac3592dc1280c043e29f5e7109e8f9e7e9a145cadd233fd06382e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubernetes-확장-메커니즘-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-crd의-목적은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-reconciliation-loop는-무엇을-하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-operator의-핵심-구성과-한계는-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-mutating-webhook은-무엇을-반환하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-filter-plugin의-역할은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-aggregation과-crd는-어떻게-다른가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-finalizer는-무엇을-보장하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-postbind는-언제-실행되나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-현재-istio-pod별-주입-제어는-어디에-설정하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-score는-어떻게-사용되나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_11-crd의-schema와-required는-어디에-두나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_12-ownerreference는-무엇을-확인해야-하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_13-vap와-validating-webhook은-어떻게-다른가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_14-controller-runtime은-무엇을-제공하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_15-conversion-webhook의-역할은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_16-image가-필수이며-replica가-1-5인-webapp-crd를-작성하세요"
+          },
+          {
+            "tag": "h2",
+            "id": "_17-production-namespace의-deployment-검증-webhook을-어떻게-제한하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_18-안전한-reconcile-순서를-설명하세요"
+          },
+          {
+            "tag": "h2",
+            "id": "_19-분산-db-operator를-설계할-때-무엇이-필요한가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_20-custom-scheduler-구현과-검증-절차는-무엇인가요"
+          }
+        ],
+        "renderedIds": [
+          "kubernetes-확장-메커니즘-퀴즈",
+          "_1-crd의-목적은-무엇인가요",
+          "_2-reconciliation-loop는-무엇을-하나요",
+          "_3-operator의-핵심-구성과-한계는-무엇인가요",
+          "_4-mutating-webhook은-무엇을-반환하나요",
+          "_5-filter-plugin의-역할은-무엇인가요",
+          "_6-aggregation과-crd는-어떻게-다른가요",
+          "_7-finalizer는-무엇을-보장하나요",
+          "_8-postbind는-언제-실행되나요",
+          "_9-현재-istio-pod별-주입-제어는-어디에-설정하나요",
+          "_10-score는-어떻게-사용되나요",
+          "_11-crd의-schema와-required는-어디에-두나요",
+          "_12-ownerreference는-무엇을-확인해야-하나요",
+          "_13-vap와-validating-webhook은-어떻게-다른가요",
+          "_14-controller-runtime은-무엇을-제공하나요",
+          "_15-conversion-webhook의-역할은-무엇인가요",
+          "_16-image가-필수이며-replica가-1-5인-webapp-crd를-작성하세요",
+          "_17-production-namespace의-deployment-검증-webhook을-어떻게-제한하나요",
+          "_18-안전한-reconcile-순서를-설명하세요",
+          "_19-분산-db-operator를-설계할-때-무엇이-필요한가요",
+          "_20-custom-scheduler-구현과-검증-절차는-무엇인가요"
+        ]
+      },
+      {
+        "path": "en/platform-engineering/04-kubernetes-extensions.md",
+        "sha256": "033e63323208e1554a22e282e52505234b06ff729f898322a464c72ee7d19f0a",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubernetes-extension-mechanisms"
+          },
+          {
+            "tag": "h2",
+            "id": "choosing-an-extension-point"
+          },
+          {
+            "tag": "h2",
+            "id": "crds-and-instances"
+          },
+          {
+            "tag": "h2",
+            "id": "client-go-controller-runtime-and-operators"
+          },
+          {
+            "tag": "h2",
+            "id": "api-aggregation"
+          },
+          {
+            "tag": "h2",
+            "id": "admission-policies-and-webhooks"
+          },
+          {
+            "tag": "h3",
+            "id": "tested-webhook-code"
+          },
+          {
+            "tag": "h2",
+            "id": "scheduler-framework-and-extenders"
+          },
+          {
+            "tag": "h2",
+            "id": "cni"
+          },
+          {
+            "tag": "h2",
+            "id": "csi"
+          },
+          {
+            "tag": "h2",
+            "id": "verification-and-references"
+          }
+        ],
+        "renderedIds": [
+          "kubernetes-extension-mechanisms",
+          "choosing-an-extension-point",
+          "crds-and-instances",
+          "client-go-controller-runtime-and-operators",
+          "api-aggregation",
+          "admission-policies-and-webhooks",
+          "tested-webhook-code",
+          "scheduler-framework-and-extenders",
+          "cni",
+          "csi",
+          "verification-and-references"
+        ]
+      },
+      {
+        "path": "en/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
+        "sha256": "faab363fdb549182ebf48c795e6bcadad02ffe86bcb249f960abd2dc1161a08f",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubernetes-extension-mechanisms-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-what-is-a-crd-for"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-what-does-a-reconciliation-loop-do"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-what-defines-an-operator-and-what-are-its-limits"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-what-can-a-mutating-webhook-return"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-what-does-a-filter-plugin-do"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-how-do-aggregation-and-crds-differ"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-what-does-a-finalizer-provide"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-when-does-postbind-run"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-how-is-current-istio-per-pod-injection-controlled"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-how-are-score-results-used"
+          },
+          {
+            "tag": "h2",
+            "id": "_11-where-do-crd-schemas-and-required-fields-belong"
+          },
+          {
+            "tag": "h2",
+            "id": "_12-what-must-be-checked-for-ownerreferences"
+          },
+          {
+            "tag": "h2",
+            "id": "_13-how-do-vap-and-validating-webhooks-differ"
+          },
+          {
+            "tag": "h2",
+            "id": "_14-what-does-controller-runtime-provide"
+          },
+          {
+            "tag": "h2",
+            "id": "_15-what-is-a-conversion-webhook-for"
+          },
+          {
+            "tag": "h2",
+            "id": "_16-write-a-webapp-crd-requiring-image-and-replicas-between-1-and-5"
+          },
+          {
+            "tag": "h2",
+            "id": "_17-how-should-a-deployment-validation-webhook-be-scoped-to-production"
+          },
+          {
+            "tag": "h2",
+            "id": "_18-describe-a-robust-reconciliation-sequence"
+          },
+          {
+            "tag": "h2",
+            "id": "_19-what-is-needed-when-designing-a-distributed-database-operator"
+          },
+          {
+            "tag": "h2",
+            "id": "_20-how-should-a-custom-scheduler-be-implemented-and-verified"
+          }
+        ],
+        "renderedIds": [
+          "kubernetes-extension-mechanisms-quiz",
+          "_1-what-is-a-crd-for",
+          "_2-what-does-a-reconciliation-loop-do",
+          "_3-what-defines-an-operator-and-what-are-its-limits",
+          "_4-what-can-a-mutating-webhook-return",
+          "_5-what-does-a-filter-plugin-do",
+          "_6-how-do-aggregation-and-crds-differ",
+          "_7-what-does-a-finalizer-provide",
+          "_8-when-does-postbind-run",
+          "_9-how-is-current-istio-per-pod-injection-controlled",
+          "_10-how-are-score-results-used",
+          "_11-where-do-crd-schemas-and-required-fields-belong",
+          "_12-what-must-be-checked-for-ownerreferences",
+          "_13-how-do-vap-and-validating-webhooks-differ",
+          "_14-what-does-controller-runtime-provide",
+          "_15-what-is-a-conversion-webhook-for",
+          "_16-write-a-webapp-crd-requiring-image-and-replicas-between-1-and-5",
+          "_17-how-should-a-deployment-validation-webhook-be-scoped-to-production",
+          "_18-describe-a-robust-reconciliation-sequence",
+          "_19-what-is-needed-when-designing-a-distributed-database-operator",
+          "_20-how-should-a-custom-scheduler-be-implemented-and-verified"
+        ]
+      }
+    ]
+  },
+  "native": {
+    "status": "passed",
+    "webAppSchema": [
+      {
+        "case": "valid",
+        "expectedValid": true,
+        "passed": true
+      },
+      {
+        "case": "missing-spec",
+        "expectedValid": false,
+        "passed": true
+      },
+      {
+        "case": "missing-image",
+        "expectedValid": false,
+        "passed": true
+      },
+      {
+        "case": "zero-replicas",
+        "expectedValid": false,
+        "passed": true
+      },
+      {
+        "case": "empty-image",
+        "expectedValid": false,
+        "passed": true
+      },
+      {
+        "case": "invalid-port",
+        "expectedValid": false,
+        "passed": true
+      }
+    ],
+    "replicaPolicyCEL": [
+      {
+        "replicas": null,
+        "allowed": true,
+        "passed": true
+      },
+      {
+        "replicas": 1,
+        "allowed": true,
+        "passed": true
+      },
+      {
+        "replicas": 5,
+        "allowed": true,
+        "passed": true
+      },
+      {
+        "replicas": 6,
+        "allowed": false,
+        "passed": true
+      },
+      {
+        "replicas": 0,
+        "allowed": false,
+        "passed": true
+      },
+      {
+        "replicas": -1,
+        "allowed": false,
+        "passed": true
+      }
+    ],
+    "webhook": {
+      "goContractCases": 14,
+      "jsonPatch": {
+        "status": "passed",
+        "cases": [
+          {
+            "case": "missing-labels",
+            "passed": true,
+            "patchOperations": 1
+          },
+          {
+            "case": "null-labels",
+            "passed": true,
+            "patchOperations": 1
+          },
+          {
+            "case": "existing-labels",
+            "passed": true,
+            "patchOperations": 1
+          },
+          {
+            "case": "already-labeled",
+            "passed": true,
+            "patchOperations": 0
+          }
+        ],
+        "sourceSha256": "405fa1230d325c85106cdfdd1ddc82797aae7127fdddf71f6ecd57fdd33615bb",
+        "scope": "ActualGohttptestAdmissionReviewresponsesdecodedandRFC6902patchesappliedwithjsonpatch.NoTLSlistenerorKubernetesAPI."
+      }
+    },
+    "scope": "LocalOpenAPIschemavalidation/nativeCELsyntheticinput/GohttptestandactualRFC6902patchapplication.NoKubernetesAPI/admissioninstallation/TLSserver/network/driverexecution."
+  },
+  "exactPublishedMatches": [
+    {
+      "document": "ko/platform-engineering/04-kubernetes-extensions.md",
+      "example": "examples/platform/extensions/webapp-crd.yaml",
+      "sha256": "34b64700684559ed45829f4e7ec503677f1a567d1533cdca07a74c598fffd323"
+    },
+    {
+      "document": "ko/platform-engineering/04-kubernetes-extensions.md",
+      "example": "examples/platform/extensions/webapp-instance.yaml",
+      "sha256": "44e2482ff3b79526cb2cdc464f95b521aeb213fa929562b328cdddd196d4098e"
+    },
+    {
+      "document": "ko/platform-engineering/04-kubernetes-extensions.md",
+      "example": "examples/platform/extensions/replica-policy.yaml",
+      "sha256": "564f61f34d3e1e104c2b7bea0f59c00ee08e61d0d1cf2ee6baa12dfb66d84633"
+    },
+    {
+      "document": "ko/platform-engineering/04-kubernetes-extensions.md",
+      "example": "examples/platform/extensions/webhook/main.go",
+      "sha256": "405fa1230d325c85106cdfdd1ddc82797aae7127fdddf71f6ecd57fdd33615bb"
+    },
+    {
+      "document": "en/platform-engineering/04-kubernetes-extensions.md",
+      "example": "examples/platform/extensions/webapp-crd.yaml",
+      "sha256": "34b64700684559ed45829f4e7ec503677f1a567d1533cdca07a74c598fffd323"
+    },
+    {
+      "document": "en/platform-engineering/04-kubernetes-extensions.md",
+      "example": "examples/platform/extensions/webapp-instance.yaml",
+      "sha256": "44e2482ff3b79526cb2cdc464f95b521aeb213fa929562b328cdddd196d4098e"
+    },
+    {
+      "document": "en/platform-engineering/04-kubernetes-extensions.md",
+      "example": "examples/platform/extensions/replica-policy.yaml",
+      "sha256": "564f61f34d3e1e104c2b7bea0f59c00ee08e61d0d1cf2ee6baa12dfb66d84633"
+    },
+    {
+      "document": "en/platform-engineering/04-kubernetes-extensions.md",
+      "example": "examples/platform/extensions/webhook/main.go",
+      "sha256": "405fa1230d325c85106cdfdd1ddc82797aae7127fdddf71f6ecd57fdd33615bb"
+    }
+  ],
+  "localLinks": [
+    {
+      "source": "ko/platform-engineering/04-kubernetes-extensions.md",
+      "target": "../quizzes/platform-engineering/04-kubernetes-extensions-quiz.md"
+    },
+    {
+      "source": "ko/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
+      "target": "../../platform-engineering/04-kubernetes-extensions.md"
+    },
+    {
+      "source": "en/platform-engineering/04-kubernetes-extensions.md",
+      "target": "../quizzes/platform-engineering/04-kubernetes-extensions-quiz.md"
+    },
+    {
+      "source": "en/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
+      "target": "../../platform-engineering/04-kubernetes-extensions.md"
+    }
+  ],
+  "primaryLinks": [
+    {
+      "url": "https://github.com/container-storage-interface/spec/blob/v1.13.0/spec.md",
+      "status": 200,
+      "finalUrl": "https://github.com/container-storage-interface/spec/blob/v1.13.0/spec.md",
+      "sha256": "2a6f0e1ce4639dbaa51dc7c37336ab52902366dc24e7c906c894504a110fd335"
+    },
+    {
+      "url": "https://github.com/containernetworking/cni/blob/v1.3.1/SPEC.md",
+      "status": 200,
+      "finalUrl": "https://github.com/containernetworking/cni/blob/v1.3.1/SPEC.md",
+      "sha256": "ff06082f5714d29ddb4b1c0f02e9c2ec54e3b1ca3c3b0a2b9b93a73771eb42c4"
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/controller-runtime/tree/v0.25.0",
+      "status": 200,
+      "finalUrl": "https://github.com/kubernetes-sigs/controller-runtime/tree/v0.25.0",
+      "sha256": "17ab04531c9fe733e43cf42351b62af6f0ca0310d18aa2e3cf17eeeeff76681e"
+    },
+    {
+      "url": "https://github.com/kubernetes/kubernetes/blob/v1.36.2/staging/src/k8s.io/kube-scheduler/framework/interface.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kubernetes/kubernetes/blob/v1.36.2/staging/src/k8s.io/kube-scheduler/framework/interface.go",
+      "sha256": "50d90c824b689e20fb7b1fb0ab402aa02629857675a9861e985fcca9e3902460"
+    },
+    {
+      "url": "https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/",
+      "status": 200,
+      "finalUrl": "https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/",
+      "sha256": "ff79dd2d23bcf91e81eef68f134ef01e82b552ad2fe5fc3027bbf8bdb7b6076f"
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/",
+      "status": 200,
+      "finalUrl": "https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/",
+      "sha256": "6e347e73847544b4928f103207e62bdb5ef7848a6bfa6b5faf1b4f4b0ea09d83"
+    },
+    {
+      "url": "https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/",
+      "status": 200,
+      "finalUrl": "https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/",
+      "sha256": "d19bbba3723f07f37d0e2ccced2bed5f2b55afd5a4fe5583a739ea22fe7d248e"
+    },
+    {
+      "url": "https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/",
+      "status": 200,
+      "finalUrl": "https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/",
+      "sha256": "be312d8a14adab72ea356d94363dd38cd81934536f47c83e6d6ce8b54da76f44"
+    },
+    {
+      "url": "https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/",
+      "status": 200,
+      "finalUrl": "https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/",
+      "sha256": "50bb9da0928c337c07552605aaf5fed56d6be876130cb1749c367cceabf1ad52"
+    },
+    {
+      "url": "https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/",
+      "status": 200,
+      "finalUrl": "https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/",
+      "sha256": "9cba38ec322645bbe12fd12c17a8b743a739fb498bfdd976060bd3564ba5f0e8"
+    },
+    {
+      "url": "https://sdk.operatorframework.io/docs/installation/",
+      "status": 200,
+      "finalUrl": "https://sdk.operatorframework.io/docs/installation/",
+      "sha256": "dfa4bf23e3db017e87919d2ad8868328e4c2194f34f8217bba0548223dac7805"
+    }
+  ],
+  "sources": [
+    {
+      "file": "webhook.html",
+      "url": "https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/",
+      "finalUrl": "https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/",
+      "status": 200,
+      "sha256": "d19bbba3723f07f37d0e2ccced2bed5f2b55afd5a4fe5583a739ea22fe7d248e"
+    },
+    {
+      "file": "vap.html",
+      "url": "https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/",
+      "finalUrl": "https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/",
+      "status": 200,
+      "sha256": "be312d8a14adab72ea356d94363dd38cd81934536f47c83e6d6ce8b54da76f44"
+    },
+    {
+      "file": "crd.html",
+      "url": "https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/",
+      "finalUrl": "https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/",
+      "status": 200,
+      "sha256": "9cba38ec322645bbe12fd12c17a8b743a739fb498bfdd976060bd3564ba5f0e8"
+    },
+    {
+      "file": "aggregation.html",
+      "url": "https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/",
+      "finalUrl": "https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/",
+      "status": 200,
+      "sha256": "50bb9da0928c337c07552605aaf5fed56d6be876130cb1749c367cceabf1ad52"
+    },
+    {
+      "file": "scheduler.html",
+      "url": "https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/",
+      "finalUrl": "https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/",
+      "status": 200,
+      "sha256": "6e347e73847544b4928f103207e62bdb5ef7848a6bfa6b5faf1b4f4b0ea09d83"
+    },
+    {
+      "file": "schedulerconfig.html",
+      "url": "https://kubernetes.io/docs/reference/scheduling/config/",
+      "finalUrl": "https://kubernetes.io/docs/reference/scheduling/config/",
+      "status": 200,
+      "sha256": "2b36da1e0afc2ab90ee5bc1b190f85e6c9fc9ae412dbab17a8556457c0688a96"
+    },
+    {
+      "file": "cni.txt",
+      "url": "https://raw.githubusercontent.com/containernetworking/cni/v1.3.1/SPEC.md",
+      "finalUrl": "https://raw.githubusercontent.com/containernetworking/cni/v1.3.1/SPEC.md",
+      "status": 200,
+      "sha256": "e35d42e754107bee503b60cd83dfca8a45f092d8806c18554db01e05cd3f2d81"
+    },
+    {
+      "file": "csi.txt",
+      "url": "https://raw.githubusercontent.com/container-storage-interface/spec/v1.13.0/spec.md",
+      "finalUrl": "https://raw.githubusercontent.com/container-storage-interface/spec/v1.13.0/spec.md",
+      "status": 200,
+      "sha256": "9a3f19944802e92f9514c80265f1057fe82e254b9fe2d53ec44aea0d94c5d79a"
+    },
+    {
+      "file": "controller-runtime.txt",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.25.0/go.mod",
+      "finalUrl": "https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.25.0/go.mod",
+      "status": 200,
+      "sha256": "10dba1c4dc24e6d50b6fcd67ea94472ca321a10c7b27037c682b3594af4beba4"
+    },
+    {
+      "file": "scheduler-framework.txt",
+      "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.2/staging/src/k8s.io/kube-scheduler/framework/interface.go",
+      "finalUrl": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.2/staging/src/k8s.io/kube-scheduler/framework/interface.go",
+      "status": 200,
+      "sha256": "178590937431d85c1a08c4b8b81855e9fce31ee937f19ad5e242452b1800520c"
+    },
+    {
+      "file": "scheduler-plugins.txt",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/scheduler-plugins/v0.35.7/README.md",
+      "finalUrl": "https://raw.githubusercontent.com/kubernetes-sigs/scheduler-plugins/v0.35.7/README.md",
+      "status": 200,
+      "sha256": "7263b8519ddcc8c683592319bc354b066a1872ae61be9c408339737fe37eefc0"
+    },
+    {
+      "file": "istio-injection.html",
+      "url": "https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/",
+      "finalUrl": "https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/",
+      "status": 200,
+      "sha256": "ff79dd2d23bcf91e81eef68f134ef01e82b552ad2fe5fc3027bbf8bdb7b6076f"
+    },
+    {
+      "file": "operator-sdk.html",
+      "url": "https://sdk.operatorframework.io/docs/installation/",
+      "finalUrl": "https://sdk.operatorframework.io/docs/installation/",
+      "status": 200,
+      "sha256": "dfa4bf23e3db017e87919d2ad8868328e4c2194f34f8217bba0548223dac7805"
+    }
+  ],
+  "versions": [
+    {
+      "repo": "kubernetes-sigs/controller-runtime",
+      "version": "v0.25.0",
+      "publishedAt": "2026-09-03T15:08:50Z"
+    },
+    {
+      "repo": "operator-framework/operator-sdk",
+      "version": "v1.42.3",
+      "publishedAt": "2026-06-26T18:52:35Z"
+    },
+    {
+      "repo": "containernetworking/cni",
+      "version": "v1.3.1",
+      "publishedAt": "2026-09-03T20:19:08Z"
+    },
+    {
+      "repo": "container-storage-interface/spec",
+      "version": "v1.13.0",
+      "publishedAt": "2026-07-27T19:48:53Z"
+    },
+    {
+      "repo": "kubernetes-sigs/scheduler-plugins",
+      "version": "v0.35.7",
+      "publishedAt": "2026-09-08T17:08:51Z"
+    }
+  ],
+  "limits": [
+    "Go1.25stdlibhttptestonly;noTLSlistener/KubernetesAPI/webhookconfigurationinstallation.",
+    "CRD6cases/CEL6casesarelocalfixturechecks;noadmissionserver/generatedcontroller/runtimeexecution.",
+    "controller-runtime0.25.0usesGo1.26/Kubernetesmodules0.37.0;scheduler1.36.2interfaceinspectionnotcrossversioncompatibilityproof.",
+    "NoaggregatedAPIserver/scheduler/CNI/CSIdriverimplementedorexecuted;nohostnetwork/mount/cloudchanges.",
+    "Sixsourcefilesarepublishedincludingwebhooktests;testfixtureoutputisopt-inADMISSION_PATCH_FIXTURES.",
+    "No full local VitePress build."
+  ],
+  "scaleRequestValidation": {
+    "cases": [
+      {
+        "CELWouldAllow": true,
+        "bindingNamespaceMatches": true,
+        "inMemoryCorrectedRuleMatches": true,
+        "namespace": "production",
+        "publishedRuleMatches": true,
+        "replicas": 3,
+        "resource": "apps/v1/deployments",
+        "subresource": ""
+      },
+      {
+        "CELWouldAllow": false,
+        "bindingNamespaceMatches": true,
+        "inMemoryCorrectedRuleMatches": true,
+        "namespace": "production",
+        "publishedRuleMatches": true,
+        "replicas": 6,
+        "resource": "apps/v1/deployments",
+        "subresource": ""
+      },
+      {
+        "CELWouldAllow": true,
+        "bindingNamespaceMatches": true,
+        "inMemoryCorrectedRuleMatches": true,
+        "namespace": "production",
+        "publishedRuleMatches": true,
+        "replicas": 3,
+        "resource": "apps/v1/deployments",
+        "subresource": "scale"
+      },
+      {
+        "CELWouldAllow": false,
+        "bindingNamespaceMatches": true,
+        "inMemoryCorrectedRuleMatches": true,
+        "namespace": "production",
+        "publishedRuleMatches": true,
+        "replicas": 6,
+        "resource": "apps/v1/deployments",
+        "subresource": "scale"
+      }
+    ],
+    "engine": "Kubernetes apiserver v0.36.2 native rules.Matcher + cel-go",
+    "limits": "Exact current ROOT policy tested with native matcher and CEL; no live Kubernetes API.",
+    "source": "examples/platform/extensions/replica-policy.yaml",
+    "sourceSha256": "564f61f34d3e1e104c2b7bea0f59c00ee08e61d0d1cf2ee6baa12dfb66d84633"
+  },
+  "committedScaleRegression": {
+    "command": "go test -v ./...",
+    "workingDirectory": "examples/platform/extensions/policy-tests",
+    "tests": 25,
+    "passed": 25,
+    "baselineHead": "b5606718f5637123210428b19cf2d2cf0e7e212f",
+    "baselineFailures": [
+      "production/update-scale/0",
+      "production/update-scale/6"
+    ],
+    "matcher": "k8s.io/apiserver v0.36.2 rules.Matcher",
+    "evaluator": "github.com/google/cel-go v0.31.0",
+    "coverage": [
+      "Deployment CREATE and UPDATE",
+      "deployments/scale UPDATE with replicas 0,1,5,6",
+      "production and development namespace selection",
+      "status subresource excluded"
+    ],
+    "limits": [
+      "Offline contract verification; no API server, defaulting, authentication, authorization or live cluster exercised."
+    ],
+    "sourceSha256": {
+      "examples/platform/extensions/replica-policy.yaml": "564f61f34d3e1e104c2b7bea0f59c00ee08e61d0d1cf2ee6baa12dfb66d84633",
+      "examples/platform/extensions/policy-tests/policy_test.go": "e9a86597130835fee7065838b2e8be3c493b29ae1e742982c892cd8cb8d98125"
+    }
+  }
+}

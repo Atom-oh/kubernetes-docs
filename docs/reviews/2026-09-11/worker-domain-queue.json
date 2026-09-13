@@ -1,0 +1,127 @@
+{
+  "date": "2026-09-11",
+  "owner": "service-mesh/networking/observability content audit worker",
+  "sequence": [
+    {
+      "domain": "service-mesh",
+      "status": "complete",
+      "scope": [
+        "ko/service-mesh/**",
+        "en/service-mesh/**",
+        "ko/quizzes/service-mesh/**",
+        "en/quizzes/service-mesh/**"
+      ],
+      "progress": "docs/reviews/2026-09-11/service-mesh-progress.json",
+      "inventoryMarkdownCount": 170,
+      "inventoryByLanguage": {
+        "en": 85,
+        "ko": 85
+      },
+      "inventoryNote": "Path inventory only; not a full-read or semantic-review claim.",
+      "fullyRead": 170,
+      "fixedAndValidated": 170,
+      "coverage": "docs/reviews/2026-09-11/service-mesh-coverage.json"
+    },
+    {
+      "domain": "networking",
+      "status": "complete",
+      "scope": [
+        "ko/networking/**",
+        "en/networking/**",
+        "ko/quizzes/networking/**",
+        "en/quizzes/networking/**"
+      ],
+      "inventoryMarkdownCount": 108,
+      "inventoryByLanguage": {
+        "en": 54,
+        "ko": 54
+      },
+      "inventoryNote": "Path inventory only; not a full-read or semantic-review claim.",
+      "fullyRead": 108,
+      "fixedAndValidated": 108,
+      "currentBatch": null,
+      "progress": "docs/reviews/2026-09-11/networking-progress.json",
+      "coverage": "docs/reviews/2026-09-11/networking-coverage.json"
+    },
+    {
+      "domain": "observability",
+      "status": "active",
+      "scope": [
+        "ko/observability/**",
+        "en/observability/**",
+        "ko/quizzes/observability/**",
+        "en/quizzes/observability/**",
+        "ko/labs/observability/**",
+        "en/labs/observability/**"
+      ],
+      "inventoryMarkdownCount": 116,
+      "inventoryByLanguage": {
+        "en": 58,
+        "ko": 58
+      },
+      "inventoryNote": "Path inventory only; not a full-read or semantic-review claim.",
+      "fullyRead": 26,
+      "fixedAndValidated": 22,
+      "currentBatch": "observability-metrics Datadog",
+      "progress": "docs/reviews/2026-09-11/observability-domain-progress.json"
+    }
+  ],
+  "requirements": [
+    "Read each Markdown completely; one evidence row per file in per-subdirectory batch arrays.",
+    "Finish each sequential domain before starting the next; brief checkpoint per bounded batch.",
+    "Fix certain errors using primary sources; document complex unverified lab assumptions and never imply production or live-cluster validation.",
+    "Preserve actual historical benchmark versions and measurements.",
+    "No commits, pushes, further delegation, foreign prose edits, AWS provisioning, or destructive sample execution.",
+    "Parent handles registry/gitops/AI/data/ops and mechanical/translation work; structural networking links already repaired, prose still needs full review."
+  ],
+  "candidateReports": [
+    "docs/reviews/2026-09-11/external-links.json",
+    "docs/reviews/2026-09-11/code-syntax.json",
+    "/tmp/kubernetes-docs-full-review/internal-main-links.log"
+  ],
+  "extraAuthorizedWritePaths": [
+    "scripts/__tests__/service-mesh-mtls-retry-guidance.test.mjs"
+  ],
+  "parentCurrentOwnership": "ParentownsPR220onsitestatisticsremoval/GA4,latestHEADAIreview+CIandotherdomains;workerdoesnoteditstatsworktree.",
+  "networkingSteering": [
+    {
+      "topic": "EKS AutoMode node-local CoreDNS",
+      "sourceUrls": [
+        "https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html",
+        "https://docs.aws.amazon.com/eks/latest/userguide/workloads-add-ons-available-eks.html",
+        "https://aws.amazon.com/blogs/containers/faster-nodes-smarter-scaling-whats-new-inside-amazon-elastic-kubernetes-service-amazon-eks-auto-mode/"
+      ],
+      "parentVerified": "PureAuto noCoreDNSDeployment/addon; node-localCoreDNSsystemd. MixednonAuto requiresDeployment. Localfirstquerydoesnotpreventupstreamforwarding.",
+      "workerAction": "Verifycurrentprimarywhilefullyreadingassignednetworkingdocs; correctuniversalCoreDNSDeployment/network-localityclaims. NoOpsedits."
+    },
+    {
+      "topic": "NLB forward target-group stickiness",
+      "sourceUrls": [
+        "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html",
+        "https://docs.aws.amazon.com/elasticloadbalancing/latest/APIReference/API_TargetGroupStickinessConfig.html"
+      ],
+      "verified": "Non-TLSNLBforwardtarget-groupstickinesssupported;TLSexcluded.DurationSecondsisALB-only;NLBexamplemustnotinvent3600-secondtimer.Enabledbooleanonlyasapplicable.Weight0closesexistingconnectionsaftershortperiod.",
+      "sourceCache": [
+        "/tmp/istio-foundation-sources/650b0f39e45b.txt",
+        "/tmp/istio-foundation-sources/43fa51437f6a.txt"
+      ],
+      "currentScopeCheck": "No TargetGroupStickinessConfig/DurationSeconds use in currentLBC/Gatewaydocs/quizzes;existingALBcookieattributesremainALB-specific."
+    }
+  ],
+  "latestWorkerCheckpoint": {
+    "date": "2026-09-13",
+    "fullyRead": 304,
+    "fixedAndValidated": 300,
+    "current": "Current observability-metrics Datadog: 4/4 sources fully read; primary verification/fixes pending. Last completed read: ko/quizzes/observability/metrics/05-datadog-quiz.md.",
+    "remaining": {
+      "networkingPending": 0,
+      "networkingUnread": 0,
+      "observability": 94,
+      "observabilityUnread": 90,
+      "observabilityPending": 4
+    },
+    "blockers": []
+  },
+  "latestParentNote": "ParentOps13then14/data/AI/news;root~0.8GBfree.No large installs;onlyown-cachecleanup.",
+  "parentRendererSteering": "Parentownsarchmap-responsive.mjs;newmobileartifacttestsnormalizeArchmapFontsTHENnormalizeArchmapResponsiveLayout;productionnormalizationonly<=960pxnonembed/nonpresent."
+}

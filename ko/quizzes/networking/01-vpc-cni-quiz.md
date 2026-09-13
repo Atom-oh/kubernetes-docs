@@ -1,147 +1,131 @@
 # Amazon VPC CNI 퀴즈
 
-다음 문제들은 Amazon VPC CNI에 대한 이해도를 테스트합니다.
+2026년 9월 11일 [VPC CNI 본문](../../networking/01-vpc-cni.md)과 공식 근거에 맞춰 검토했습니다.
 
----
+## 1. 표준 EKS Linux EC2 노드에서 IPAMD의 역할은?
 
-1. VPC CNI에서 IPAMD(L-IPAM Daemon)의 주요 역할은 무엇인가요?
-   - A) Pod의 DNS 설정을 관리
-   - B) ENI와 IP 주소를 사전 할당하고 관리
-   - C) Network Policy를 적용
-   - D) 노드 간 트래픽을 암호화
+- A. 모든 Pod의 DNS 애플리케이션 설정 관리
+- B. Pod 네트워킹용 일반 ENI/IP 할당 pool 유지
+- C. 네트워크 정책 컨트롤러 대체
+- D. 모든 노드 간 트래픽 암호화
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) ENI와 IP 주소를 사전 할당하고 관리**
+**정답: B. Pod 네트워킹용 일반 ENI/IP 할당 pool 유지**
 
-**설명:**
-IPAMD(L-IPAM Daemon)는 각 노드에서 실행되는 데몬으로, ENI(Elastic Network Interface)를 관리하고 IP 주소를 사전 할당하여 Pod가 생성될 때 빠르게 IP를 할당할 수 있도록 합니다. CNI Binary는 kubelet이 호출하며 IPAMD에서 IP를 받아 Pod 네트워크 네임스페이스를 설정합니다.
+컨테이너 런타임이 CNI 바이너리를 호출하고 바이너리가 주소를 요청하여 Pod sandbox를 설정합니다. IPAMD는 관련 주소 pool을 유지합니다. Windows, Fargate, Auto Mode는 관리 경로가 다릅니다.
 
 </details>
 
----
+## 2. IPv4 secondary-IP와 prefix 모드의 할당 차이는?
 
-2. Secondary IP 모드와 Prefix Delegation 모드의 주요 차이점은 무엇인가요?
-   - A) Secondary IP는 IPv6만, Prefix Delegation은 IPv4만 지원
-   - B) Secondary IP는 개별 IP를 할당하고, Prefix Delegation은 /28 접두사(16 IPs)를 할당
-   - C) Secondary IP는 EKS에서만, Prefix Delegation은 자체 관리 클러스터에서만 사용 가능
-   - D) Secondary IP는 오버레이 네트워크를 사용하고, Prefix Delegation은 직접 라우팅을 사용
+- A. Secondary-IP만 IPv6 지원
+- B. Secondary-IP는 개별 주소, IPv4 prefix는 주소 16개의 /28 블록 할당
+- C. Prefix 모드는 kubelet Pod 상한 제거
+- D. Prefix 모드는 고갈된 서브넷에 새 공간 생성
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Secondary IP는 개별 IP를 할당하고, Prefix Delegation은 /28 접두사(16 IPs)를 할당**
+**정답: B. Secondary-IP는 개별 주소, IPv4 prefix는 주소 16개의 /28 블록 할당**
 
-**설명:**
-Secondary IP 모드는 각 ENI에 개별 IP 주소를 하나씩 할당하는 반면, Prefix Delegation 모드는 /28 IPv4 접두사(16개 IP)를 한 번에 할당합니다. 이를 통해 노드당 더 많은 Pod를 실행할 수 있으며, IP 할당 속도도 향상됩니다.
+Prefix에는 지원 하드웨어와 연속 블록이 필요합니다. 서브넷 공간을 사용하고 warm target이 미사용 주소를 예약할 수 있습니다. IPv6는 /80을 사용하며 EKS는 dual-stack Pod·Service를 제공하지 않습니다.
 
 </details>
 
----
+## 3. 과거 m5.large secondary-IPv4 bootstrap 공식에서 29가 나오는 계산은?
 
-3. m5.large 인스턴스에서 VPC CNI의 최대 Pod 수가 29개인 이유는 무엇인가요?
-   - A) Kubernetes의 기본 제한이 29개이기 때문
-   - B) 최대 3개 ENI × ENI당 10개 IP = 30에서 ENI 수(3)를 빼면 27이므로 (실제 공식 적용)
-   - C) AWS의 소프트 리미트로 제한되기 때문
-   - D) VPC 서브넷 크기에 의해 제한되기 때문
+- A. Kubernetes가 모든 노드를 항상 29개로 제한
+- B. 3 × (10 − 1) + 2 = 29
+- C. 3 × 10 − 3 = 29
+- D. 모든 서브넷의 크기가 29
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 최대 3개 ENI × ENI당 10개 IP = 30에서 ENI 수(3)를 빼면 27이므로 (실제 공식 적용)**
+**정답: B. 3 × (10 − 1) + 2 = 29**
 
-**설명:**
-VPC CNI에서 최대 Pod 수는 (ENI 수 × ENI당 IP 수) - ENI 수로 계산됩니다. m5.large는 최대 3개의 ENI를 지원하고 ENI당 10개의 IPv4 주소를 할당할 수 있습니다. 각 ENI의 Primary IP는 노드에 사용되므로 (3 × 10) - 3 = 27개입니다. 실제로는 호스트 네트워킹 Pod와 추가 요소로 인해 약간 다를 수 있습니다.
+IPv4 슬롯 10개인 ENI가 3개이고 각각의 primary 슬롯을 제외하면 일반 보조 주소는 27개입니다. 과거 공식은 host-network 시스템 Pod 2개를 더합니다. Prefix, SGPP, kubelet 상한, 리소스에 따라 해석이 달라지므로 현재 모든 환경의 용량 한계는 아닙니다.
 
 </details>
 
----
+## 4. WARM_IP_TARGET이 지정하는 것은?
 
-4. WARM_IP_TARGET 환경 변수의 목적은 무엇인가요?
-   - A) Pod에 할당할 수 있는 최대 IP 수를 설정
-   - B) 노드에서 사전 할당하여 대기시킬 여유 IP 수를 설정
-   - C) 클러스터 전체의 총 IP 수를 제한
-   - D) IP 주소의 TTL(Time To Live)을 설정
+- A. Pod 수의 강제 최대값
+- B. 일반 할당에 사용할 여유 주소 수의 목표
+- C. 클러스터 전체 주소 quota
+- D. 주소 TTL
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 노드에서 사전 할당하여 대기시킬 여유 IP 수를 설정**
+**정답: B. 일반 할당에 사용할 여유 주소 수의 목표**
 
-**설명:**
-WARM_IP_TARGET은 IPAMD가 각 노드에서 사전 할당하여 대기시킬 여유 IP 수를 제어합니다. 새로운 Pod가 생성될 때 즉시 IP를 할당할 수 있도록 미리 확보해 두는 것입니다. 값이 크면 Pod 시작이 빨라지지만 IP를 더 많이 사용하고, 값이 작으면 IP 효율성은 높아지지만 Pod 시작이 느려질 수 있습니다.
+MINIMUM_IP_TARGET은 전체 할당 주소의 하한입니다. IP target은 warm ENI/prefix 전략보다 우선하고 prefix 단위 할당은 계속 적용됩니다. 측정한 수요·변경 빈도·주소 공간·API 동작으로 값을 정합니다.
 
 </details>
 
----
+## 5. EKS 네이티브 네트워크 정책의 올바른 설명은?
 
-5. VPC CNI의 네이티브 Network Policy 지원에 대해 올바른 설명은?
-   - A) Calico를 내부적으로 사용하여 Network Policy를 적용
-   - B) v1.14부터 eBPF 기반의 네이티브 Network Policy를 지원
-   - C) Network Policy는 EKS에서 지원되지 않음
-   - D) iptables를 사용하여 Network Policy를 적용
+- A. VPC CNI가 내부적으로 Calico 실행
+- B. 표준 eBPF 정책은 1.14에서 도입되었지만 현재 플랫폼·버전·활성화 조건도 필요
+- C. Windows와 Fargate까지 자동으로 포함
+- D. 켜기만 하면 모든 독립 Pod에 안정적으로 적용 보장
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) v1.14부터 eBPF 기반의 네이티브 Network Policy를 지원**
+**정답: B. 표준 eBPF 정책은 1.14에서 도입되었지만 현재 플랫폼·버전·활성화 조건도 필요**
 
-**설명:**
-VPC CNI v1.14부터 eBPF 기반의 네이티브 Kubernetes Network Policy를 지원합니다. 이전에는 Calico와 같은 별도의 Network Policy 엔진이 필요했지만, 이제 VPC CNI 자체에서 표준 Kubernetes NetworkPolicy 리소스를 처리할 수 있습니다.
+검토한 1.23 구성은 설정된 정책 컨트롤러와 aws-eks-nodeagent를 사용합니다. 현재 EKS 안내에는 EC2 Linux, 컨트롤러 관리 Pod, Service·컨테이너 포트 조건이 있습니다. Standard 시작 모드는 규칙 해석 동안 허용하며 strict 시작 동작은 별도로 선택합니다.
 
 </details>
 
----
+## 6. ENIConfig custom networking의 역할은?
 
-6. Custom Networking(ENIConfig)을 사용하는 주요 목적은 무엇인가요?
-   - A) Pod의 DNS 서버를 커스텀 설정
-   - B) Pod에 노드와 다른 서브넷의 IP를 할당
-   - C) 커스텀 CNI 플러그인을 설치
-   - D) 노드의 네트워크 인터페이스 이름을 변경
+- A. DNS 서버 대체
+- B. 노드 기본 구성과 다른 선택 서브넷·보안 그룹에서 Pod 주소 할당
+- C. CIDR 추가 후 기존 Pod 자동 이동
+- D. 중복 경로 자동 제거
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Pod에 노드와 다른 서브넷의 IP를 할당**
+**정답: B. 노드 기본 구성과 다른 선택 서브넷·보안 그룹에서 Pod 주소 할당**
 
-**설명:**
-Custom Networking을 사용하면 ENIConfig CRD를 통해 Pod에 노드와 다른 서브넷의 IP를 할당할 수 있습니다. 이는 노드 서브넷의 IP가 부족하거나, Pod에 다른 보안 그룹을 적용해야 하거나, 노드와 Pod의 네트워크를 분리해야 할 때 유용합니다. 일반적으로 Secondary CIDR(예: 100.64.0.0/16)과 함께 사용됩니다.
+실제 같은 AZ의 리소스를 준비하고 custom networking을 켠 뒤 의도한 노드 레이블·어노테이션으로 ENIConfig를 선택합니다. 명시적 어노테이션이 레이블보다 우선합니다. CIDR·서브넷 생성만으로 기존 Pod 이동이나 모든 경로·권한이 준비되지는 않습니다.
 
 </details>
 
----
+## 7. 지원 EC2 노드의 SGPP에서 trunk·branch 인터페이스의 역할은?
 
-7. Pod별 Security Group 기능에서 사용되는 Trunk ENI와 Branch ENI의 역할은?
-   - A) Trunk ENI는 외부 트래픽용, Branch ENI는 내부 트래픽용
-   - B) Trunk ENI는 노드의 메인 ENI로 Branch ENI를 수용하고, Branch ENI는 각 Pod에 할당되는 가상 ENI
-   - C) Trunk ENI는 IPv4용, Branch ENI는 IPv6용
-   - D) Trunk ENI와 Branch ENI는 동일한 역할을 수행
+- A. Trunk는 항상 primary eth0
+- B. 컨트롤러가 추가 trunk ENI를 붙이고 선택 Pod의 branch 인터페이스를 연결
+- C. 각각 IPv4와 IPv6를 의미
+- D. Prefix delegation으로 branch Pod 상한이 16배 증가
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Trunk ENI는 노드의 메인 ENI로 Branch ENI를 수용하고, Branch ENI는 각 Pod에 할당되는 가상 ENI**
+**정답: B. 컨트롤러가 추가 trunk ENI를 붙이고 선택 Pod의 branch 인터페이스를 연결**
 
-**설명:**
-Pod별 Security Group은 Trunk/Branch ENI 아키텍처를 사용합니다. Trunk ENI는 노드에 연결된 메인 ENI로 여러 Branch ENI를 수용합니다. Branch ENI는 각 Pod에 할당되는 가상 네트워크 인터페이스로, 독립적인 AWS Security Group을 적용할 수 있습니다. 이를 통해 Pod 수준에서 세밀한 네트워크 보안 제어가 가능합니다.
+Trunk는 primary ENI가 아닌 추가 인터페이스입니다. 지원 인스턴스, 컨트롤러·IAM, 실제 SG 규칙이 필요합니다. Fargate는 별도 관리 경로를 따릅니다. Windows·Auto Mode SGPP는 미지원이고 EKS 문서는 조건에 따른 IPv6 지원을 명시합니다.
 
 </details>
 
----
+## 8. IP 고갈에 대한 기본 대응으로 부적절한 것은?
 
-8. IP 고갈 문제가 발생했을 때 가장 효과적인 대응 방법으로 적절하지 않은 것은?
-   - A) Prefix Delegation 활성화
-   - B) Secondary CIDR 추가
-   - C) 모든 Pod를 호스트 네트워크 모드로 전환
-   - D) Custom Networking으로 전용 Pod 서브넷 사용
+- A. Prefix delegation 검토 전에 연속 공간·하드웨어 확인
+- B. 용량 부족 시 CIDR·서브넷 추가와 워크로드 전환 계획
+- C. 일반 Pod 주소 할당을 피하려고 모든 워크로드를 hostNetwork로 전환
+- D. Custom networking과 측정 기반 warm target 검토
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 모든 Pod를 호스트 네트워크 모드로 전환**
+**정답: C. 일반 Pod 주소 할당을 피하려고 모든 워크로드를 hostNetwork로 전환**
 
-**설명:**
-호스트 네트워크 모드(`hostNetwork: true`)로 모든 Pod를 실행하면 IP 할당 문제는 해결될 수 있지만, Pod 간 네트워크 격리가 사라지고 포트 충돌이 발생할 수 있어 실질적인 해결책이 아닙니다. IP 고갈 문제의 적절한 대응 방법은 Prefix Delegation 활성화, Secondary CIDR 추가, Custom Networking 사용, WARM_IP_TARGET 조정 등입니다.
+모든 워크로드를 hostNetwork로 바꾸면 격리·포트 동작이 달라져 범용 용량 해결책이 아닙니다. 주소 고갈, prefix 단편화, ENI 한계, kubelet 용량, API 오류를 구분합니다. Prefix delegation도 부족한 서브넷 주소를 새로 만들지는 못합니다.
 
 </details>

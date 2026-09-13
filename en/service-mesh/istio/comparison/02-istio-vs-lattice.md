@@ -1,147 +1,123 @@
 # Istio vs VPC Lattice
 
-> **Last Updated**: February 23, 2026 **Istio Version**: 1.24 **VPC Lattice**: GA (Released 2023)
+> **Last reviewed**: September 11, 2026
+> **Istio API baseline**: 1.31.0; Kubernetes compatibility must be checked separately
 
-This document provides a comprehensive comparison between Kubernetes Service Mesh (Istio) and AWS native service networking (VPC Lattice).
+Compare the communication, identity, protocol and operating requirements of the application. Istio and VPC Lattice have different deployment and security boundaries; a feature-star table or unsupported “zero overhead” claim does not select the correct architecture.
 
-## Table of Contents
+The configuration examples assume existing, authorized resources and real application endpoints. They are alternatives for the appropriate environment, not one combined production deployment. Identifiers, roles, namespaces and identity-provider URLs must be replaced deliberately. The audit validated local configuration/input shapes and calculations, without deploying AWS or cluster resources.
 
-1. [Overview and Key Differences](02-istio-vs-lattice.md#overview-and-key-differences)
-2. [Architecture Comparison](02-istio-vs-lattice.md#architecture-comparison)
-3. [Traffic Management Features](02-istio-vs-lattice.md#traffic-management-features)
-4. [Security Model](02-istio-vs-lattice.md#security-model)
-5. [Observability and Monitoring](02-istio-vs-lattice.md#observability-and-monitoring)
-6. [Operational Complexity](02-istio-vs-lattice.md#operational-complexity)
-7. [Cost Analysis](02-istio-vs-lattice.md#cost-analysis)
-8. [Performance Comparison](02-istio-vs-lattice.md#performance-comparison)
-9. [Multi-Cloud Strategy](02-istio-vs-lattice.md#multi-cloud-strategy)
-10. [Hybrid Architecture](02-istio-vs-lattice.md#hybrid-architecture)
-11. [Selection Guide](02-istio-vs-lattice.md#selection-guide)
+## Contents
 
-## Overview and Key Differences
+1. [Architecture and Platforms](#architecture-and-platforms)
+2. [Traffic Management](#traffic-management)
+3. [Security and Identity](#security-and-identity)
+4. [Observability](#observability)
+5. [Installation and Operations](#installation-and-operations)
+6. [Cost and Historical Evidence](#cost-and-historical-evidence)
+7. [Hybrid and Multicloud Design](#hybrid-and-multicloud-design)
+8. [Selection Criteria](#selection-criteria)
 
-### Istio Service Mesh
+## Architecture and Platforms
 
-**Definition**: An open-source Service Mesh running in Kubernetes environments that manages, secures, and observes communication between microservices as an infrastructure layer
+### Istio
 
-**Key Features**:
+Istio provides a deployable control/data plane with Kubernetes and documented VM integration. Sidecar mode uses an Envoy proxy in enrolled workload Pods; ambient uses per-node ztunnel plus separately enrolled waypoints for supported L7 processing. Adding a sidecar adds a **container**, not another application Pod.
 
-* Self-managed (direct operation)
-* Kubernetes native (CRD-based)
-* Cloud neutral
-* Rich feature set
-* Envoy Proxy based
+![A sidecar-mode schematic: Istiod configures Envoy, proxies exchange mesh traffic, and configured observability backends collect/query telemetry.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-0.png)
 
-### AWS VPC Lattice
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-comparison-02-istio-vs-lattice-0.html)
 
-**Definition**: A fully managed application networking service provided by AWS that simplifies service connectivity and security across VPCs, accounts, and compute platforms
+The retained diagram describes sidecar mode. Its resource annotations are old illustrative estimates, not measured defaults or a current capacity recommendation. Kiali queries telemetry/backends; it is not itself a trace collector.
 
-**Key Features**:
+Ambient capture uses the documented Linux network-namespace/iptables mechanism, not an eBPF capture layer. Core ambient functionality became GA in 1.24, while individual features and multicluster topologies have separate status. Removing a sidecar, enrolling a workload and requiring waypoint traversal are distinct operations; a namespace label alone does not safely migrate every workload or guarantee 97–98% savings.
 
-* Fully managed
-* AWS native integration
-* Serverless architecture
-* EKS, ECS, EC2, Lambda support
-* Transparent cross-VPC/account connectivity
+### VPC Lattice
 
-### Quick Comparison Table
+VPC Lattice is AWS-managed application networking for **services and resources**. Its service model includes listeners, rules and target groups for supported IP/instance, Lambda and ALB targets; ECS/EKS integration manages applicable targets. Resource configurations/resource gateways provide a different private resource-access model, including TCP connectivity.
 
-| Aspect                       | Istio          | VPC Lattice           |
-| ---------------------------- | -------------- | --------------------- |
-| **Deployment Model**         | Self-managed   | Fully managed         |
-| **Platform**                 | Kubernetes     | EKS, ECS, EC2, Lambda |
-| **Architecture**             | Sidecar Proxy  | AWS managed           |
-| **Configuration Complexity** | High           | Low                   |
-| **Feature Richness**         | 5/5            | 3/5                   |
-| **Operational Overhead**     | High           | Almost none           |
-| **Vendor Lock-in**           | Low            | High (AWS Only)       |
-| **Cost Model**               | Resource-based | Usage-based           |
-| **Learning Curve**           | Steep          | Gentle                |
-| **Multi-cloud**              | Supported      | AWS Only              |
+A service network is a logical association/access boundary, not a sidecar or a Pod-level identity. A client can use a service-network VPC association or a service-network VPC endpoint. The endpoint path is powered by PrivateLink; it is inaccurate to describe every Lattice data path or the entire data plane simply as “AWS PrivateLink.”
 
-## Architecture Comparison
+VPC associations and endpoint associations have different addressing/connectivity behavior. Service-network endpoints can accept supported traffic arriving through peering, Transit Gateway, Direct Connect or VPN, including clients outside AWS. The AWS service remains operated in AWS; this is not deployment of Lattice into another cloud.
 
-### Istio Architecture
+| Dimension | Istio | VPC Lattice |
+|---|---|---|
+| Data plane | Sidecars or ambient components, plus chosen gateways | Managed service/resource networking and configured targets/endpoints |
+| Identity | Workload mesh identity and configured application/JWT policies | Service IAM/SigV4 authorization where enabled; resource access has separate controls |
+| Operations | Control/proxy lifecycle, certificates, capacity, policy and telemetry | AWS operates the service; users still manage IAM, DNS, associations, targets, controllers, quotas and applications |
+| Platform | Supported Kubernetes/VM deployments, mode-specific requirements | Supported AWS target types and documented client/network paths |
+| Cost | Actual infrastructure, telemetry, support and engineering | Applicable service/resource/traffic charges plus application infrastructure, logs and engineering |
 
-![Architecture diagram showing Istiod pushing xDS configuration to Envoy sidecars attached to each application pod, with sidecars exchanging mTLS traffic and exporting metrics and traces to Prometheus, Jaeger, and Kiali.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-0.png)
+“No required sidecar” is a deployment property, not proof of zero latency, CPU, signing/controller work or total infrastructure cost.
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-comparison-02-istio-vs-lattice-0.html)
+## Traffic Management
 
-**Features**:
+### Weighted and Conditional Routing
 
-* **Sidecar Pattern**: Envoy Proxy injected into all pods
-* **Resource Overhead**: 50-150MB memory, 100-500m CPU per pod
-* **Data Path**: App -> Envoy -> mTLS -> Envoy -> App
-* **Configuration**: Kubernetes CRD (VirtualService, DestinationRule, etc.)
-
-### VPC Lattice Architecture
-
-![Architecture diagram showing compute across an EKS pod, an ECS task, a Lambda function, and an EC2 instance all associating with a single AWS-managed VPC Lattice service network, which routes through services and target groups without any sidecar proxy.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-1.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-comparison-02-istio-vs-lattice-1.html)
-
-**Features**:
-
-* **Managed Service**: AWS operates the network infrastructure
-* **No Sidecar**: No additional containers in application pods
-* **Data Path**: App -> AWS PrivateLink -> VPC Lattice -> Target
-* **Configuration**: AWS Console, CLI, CloudFormation, Terraform
-
-### Architecture Differences Summary
-
-| Aspect                      | Istio                    | VPC Lattice             |
-| --------------------------- | ------------------------ | ----------------------- |
-| **Proxy Location**          | Inside Pod (Sidecar)     | AWS Managed (External)  |
-| **Memory Overhead**         | 50-150MB per pod         | 0MB (managed)           |
-| **CPU Overhead**            | 100-500m per pod         | 0 (managed)             |
-| **Control Plane**           | Self-managed (Istiod)    | AWS managed             |
-| **Data Plane**              | Envoy Proxy              | AWS PrivateLink         |
-| **Configuration Interface** | Kubernetes CRD           | AWS API                 |
-| **Upgrades**                | Manual (Canary possible) | Automatic (AWS managed) |
-
-## Traffic Management Features
-
-### Traffic Splitting (Canary Deployment)
-
-#### Istio
+Istio can match HTTP request properties and route to labeled subsets. The backend Service and matching v1/v2 workloads must already exist in `mesh-demo`:
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: frontend
+  name: backend-canary
+  namespace: mesh-demo
 spec:
   hosts:
-  - frontend
+  - backend
   http:
   - match:
     - headers:
-        user-agent:
-          regex: ".*Mobile.*"
+        x-release:
+          exact: canary
     route:
     - destination:
-        host: frontend
+        host: backend
+        port:
+          number: 8080
         subset: v2
       weight: 100
+    retries:
+      attempts: 0
   - route:
     - destination:
-        host: frontend
+        host: backend
+        port:
+          number: 8080
         subset: v1
       weight: 90
     - destination:
-        host: frontend
+        host: backend
+        port:
+          number: 8080
         subset: v2
       weight: 10
+    retries:
+      attempts: 0
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: frontend
+  name: backend
+  namespace: mesh-demo
 spec:
-  host: frontend
+  host: backend
   trafficPolicy:
     loadBalancer:
       simple: LEAST_REQUEST
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 2
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 60s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
   subsets:
   - name: v1
     labels:
@@ -151,299 +127,231 @@ spec:
       version: v2
 ```
 
-**Features**:
+The routes disable mesh retries explicitly. The resource limits are illustrative; `maxRequestsPerConnection: 2` intentionally limits reuse and is not a general performance recommendation. Outlier detection is evaluated by a proxy for its upstream endpoints. `minHealthPercent` is the panic/fail-open threshold, not a guarantee that at least that percentage remains healthy.
 
-* Header, URL, Source based routing
-* Fine-grained weight control (1% granularity)
-* Complex conditions (AND, OR, Regex)
-* Dynamic load balancing algorithms
+Lattice HTTP/HTTPS listener rules support method, header and path matching. This complete **CreateRule input** replaces the former missing service/name and malformed pathMatch example:
 
-#### VPC Lattice
-
-```yaml
-# Weight-based routing with AWS CLI
-aws vpc-lattice create-rule \
-  --listener-identifier $LISTENER_ID \
-  --priority 10 \
-  --match '{
+```json
+{
+  "serviceIdentifier": "svc-0123456789abcdef0",
+  "listenerIdentifier": "listener-0123456789abcdef0",
+  "name": "api-canary",
+  "priority": 10,
+  "match": {
     "httpMatch": {
-      "pathMatch": {"prefix": "/api"}
+      "method": "GET",
+      "pathMatch": {
+        "caseSensitive": true,
+        "match": {
+          "prefix": "/api/v1/"
+        }
+      }
     }
-  }' \
-  --action '{
+  },
+  "action": {
     "forward": {
       "targetGroups": [
         {
-          "targetGroupIdentifier": "'$TG_V1'",
+          "targetGroupIdentifier": "tg-0123456789abcdef0",
           "weight": 90
         },
         {
-          "targetGroupIdentifier": "'$TG_V2'",
+          "targetGroupIdentifier": "tg-0123456789abcdef1",
           "weight": 10
         }
       ]
     }
-  }'
+  }
+}
 ```
 
-**Features**:
+Save as `rule.json`, replace the identifiers with an existing service/listener and two eligible target groups, and verify that the rule name and priority are unused before creating it:
 
-* Path, Header, Method based routing
-* Weight-based splitting
-* Basic conditions
-* Round robin, least connections load balancing
+```bash
+AWS_REGION=us-east-1
+aws vpc-lattice create-rule --region "$AWS_REGION" --cli-input-json file://rule.json
+```
 
-**Comparison**:
+Lower numeric priority is evaluated first. The nested `pathMatch.match.prefix` shape is required. The shown rule matches GET under `/api/v1/`; it is not a full equivalent of every Istio match or an authentication policy. Weights do not deploy or scale the versions. Do not give an AWS controller and this CLI example competing ownership of the same rule/targets.
 
-* **Istio**: Very fine-grained control, complex scenarios possible
-* **VPC Lattice**: Basic features, simple usage
+Lattice documents round-robin target selection; this is separate from weights between target groups. The API does not expose the old claimed choice of “least connections” for this example.
 
-### Traffic Mirroring
+### Mirroring and Faults
 
-#### Istio
+For an isolated read-only mirror experiment, use a separate alternative VirtualService:
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: backend
+  name: backend-mirror
+  namespace: mesh-demo
 spec:
   hosts:
   - backend
   http:
-  - route:
+  - match:
+    - method:
+        exact: GET
+      uri:
+        prefix: /api/v1/
+    route:
     - destination:
         host: backend
+        port:
+          number: 8080
         subset: v1
       weight: 100
     mirror:
       host: backend
+      port:
+        number: 8080
       subset: v2
     mirrorPercentage:
-      value: 10.0  # Copy 10% traffic to v2
+      value: 10
+    retries:
+      attempts: 0
+  - route:
+    - destination:
+        host: backend
+        port:
+          number: 8080
+        subset: v1
+      weight: 100
+    retries:
+      attempts: 0
 ```
 
-**Use Cases**:
+Only matching GET requests are mirrored; other requests go to v1 without mirroring. Shadow responses are not the primary client response, and duplicate requests can still create side effects if an endpoint is not truly read-only. The destination versions and capacity must exist.
 
-* Test new version with production traffic
-* Performance comparison
-* Bug verification
-
-#### VPC Lattice
-
-**Not Supported**: VPC Lattice does not support traffic mirroring.
-
-**Alternatives**:
-
-* Application Load Balancer + Lambda@Edge
-* Separate log stream analysis
-
-### Fault Injection
-
-#### Istio
+An isolated fault experiment can use a deliberate request marker:
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: backend
+  name: backend-fault-lab
+  namespace: mesh-demo
 spec:
   hosts:
   - backend
   http:
-  - fault:
+  - match:
+    - method:
+        exact: GET
+      headers:
+        x-fault-lab:
+          exact: enabled
+    fault:
       delay:
         percentage:
-          value: 10.0
+          value: 10
         fixedDelay: 5s
       abort:
         percentage:
-          value: 5.0
+          value: 5
         httpStatus: 503
     route:
     - destination:
         host: backend
+        port:
+          number: 8080
+        subset: v1
+      weight: 100
+  - route:
+    - destination:
+        host: backend
+        port:
+          number: 8080
+        subset: v1
+      weight: 100
+    retries:
+      attempts: 0
 ```
 
-**Features**:
+The marker is not authorization; scope the test workload and callers. Fault injection and retry/timeout behavior on the same route are not interchangeable tests. Observe which proxy generates the error and measure raw versus retried outcomes separately.
 
-* Delay injection
-* Abort injection (error injection)
-* Percentage-based control
-* Chaos Engineering support
+The checked Lattice RuleAction API offers forwarding or a fixed response, not an Istio-equivalent mirror or percentage delay/abort action. A fixed response rule is not the same as percentage fault injection. Application/proxy test mechanisms or supported AWS FIS actions require their own explicit design. “ALB + Lambda@Edge” is not a valid built-in mirror feature: Lambda@Edge runs on CloudFront events.
 
-#### VPC Lattice
+### Health Checks and Failure Handling
 
-**Not Supported**: No built-in Fault Injection feature
+This **CreateTargetGroup input** assumes an existing, non-meshed HTTP backend and a real `/health` endpoint in the specified VPC. It is not the STRICT Istio backend from the security example:
 
-**Alternatives**:
-
-* Implement at application level
-* Use AWS FIS (Fault Injection Simulator)
-
-### Circuit Breaking & Outlier Detection
-
-#### Istio
-
-```yaml
-apiVersion: networking.istio.io/v1
-kind: DestinationRule
-metadata:
-  name: backend
-spec:
-  host: backend
-  trafficPolicy:
-    connectionPool:
-      tcp:
-        maxConnections: 100
-      http:
-        http1MaxPendingRequests: 50
-        http2MaxRequests: 100
-        maxRequestsPerConnection: 2
-    outlierDetection:
-      consecutiveErrors: 5
-      interval: 30s
-      baseEjectionTime: 60s
-      maxEjectionPercent: 50
-      minHealthPercent: 50
-```
-
-#### VPC Lattice
-
-**Limited Support**: Only basic health checks provided
-
-```yaml
-# Target Group health check
-aws vpc-lattice create-target-group \
-  --name backend-tg \
-  --health-check '{
-    "enabled": true,
+```json
+{
+  "name": "backend-v1",
+  "type": "IP",
+  "config": {
+    "port": 8080,
     "protocol": "HTTP",
-    "path": "/health",
-    "intervalSeconds": 30,
-    "timeoutSeconds": 5,
-    "healthyThresholdCount": 2,
-    "unhealthyThresholdCount": 3
-  }'
+    "protocolVersion": "HTTP1",
+    "vpcIdentifier": "vpc-0123456789abcdef0",
+    "ipAddressType": "IPV4",
+    "healthCheck": {
+      "enabled": true,
+      "protocol": "HTTP",
+      "protocolVersion": "HTTP1",
+      "port": 8080,
+      "path": "/health",
+      "healthCheckIntervalSeconds": 30,
+      "healthCheckTimeoutSeconds": 5,
+      "healthyThresholdCount": 2,
+      "unhealthyThresholdCount": 3,
+      "matcher": {
+        "httpCode": "200"
+      }
+    }
+  }
+}
 ```
 
-**Comparison**:
+```bash
+aws vpc-lattice create-target-group --region "$AWS_REGION"   --cli-input-json file://target-group.json
+```
 
-* **Istio**: Fine-grained Circuit Breaking, automatic Outlier Detection
-* **VPC Lattice**: Basic health checks, manual removal
+The file must contain the shown complete input with real values. Health checks belong inside config, with healthCheckIntervalSeconds and healthCheckTimeoutSeconds. There is no top-level `--health-check` flag for this operation. Register actual supported targets after creation; EKS Pod IP lifecycle should normally be managed through the appropriate AWS Gateway API Controller rather than a permanent handwritten Pod IP.
 
-### Feature Comparison Table
+Lattice automatically uses healthy targets. If all targets in the group are unhealthy, it **fails open** and routes to them; it does not simply wait for manual removal. Health checks do not repair the application. Lattice health routing is different from Istio's per-proxy connection-pool and outlier controls.
 
-| Feature               | Istio              | VPC Lattice     | Winner |
-| --------------------- | ------------------ | --------------- | ------ |
-| **Canary Deployment** | Very fine-grained  | Basic           | Istio  |
-| **A/B Testing**       | Header-based       | Path-based only | Istio  |
-| **Traffic Mirroring** | Yes                | No              | Istio  |
-| **Fault Injection**   | Yes                | No              | Istio  |
-| **Circuit Breaking**  | Fine-grained       | Basic           | Istio  |
-| **Retry**             | Advanced           | Basic           | Istio  |
-| **Timeout**           | Fine-grained       | Basic           | Istio  |
-| **Load Balancing**    | Various algorithms | Basic           | Istio  |
+Service idleTimeoutSeconds is configurable from 60 to 600 seconds. It is not the same control as a per-route request timeout or retry budget. Test connection/request limits and failure behavior for the selected HTTP, gRPC or TLS path rather than assigning a generic winner.
 
-**Conclusion**: In traffic management, **Istio has overwhelming advantage**
+## Security and Identity
 
-## Security Model
-
-### mTLS Configuration
-
-#### Istio
+### Istio: Require the Intended Conditions Together
 
 ```yaml
-# Global mTLS STRICT mode
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: default
-  namespace: istio-system
-spec:
-  mtls:
-    mode: STRICT
----
-# Namespace-level exception
-apiVersion: security.istio.io/v1
-kind: PeerAuthentication
-metadata:
-  name: legacy-permissive
-  namespace: legacy
-spec:
-  mtls:
-    mode: PERMISSIVE
----
-# Service-level port-level settings
-apiVersion: security.istio.io/v1
-kind: PeerAuthentication
-metadata:
-  name: backend
+  name: backend-strict
+  namespace: mesh-demo
 spec:
   selector:
     matchLabels:
       app: backend
   mtls:
     mode: STRICT
-  portLevelMtls:
-    8080:
-      mode: DISABLE  # Metrics port is plaintext
-```
-
-**Features**:
-
-* Automatic certificate issuance and renewal
-* Per-workload certificates
-* Automatic renewal every 15 minutes
-* SPIFFE standard compliant
-* External CA integration (Cert-manager, Vault)
-
-#### VPC Lattice
-
-```yaml
-# Create TLS Listener
-aws vpc-lattice create-listener \
-  --service-identifier $SERVICE_ID \
-  --protocol HTTPS \
-  --port 443 \
-  --default-action '{
-    "forward": {
-      "targetGroups": [{"targetGroupIdentifier": "'$TG_ID'"}]
-    }
-  }'
-
-# Apply Auth Policy
-aws vpc-lattice create-auth-policy \
-  --resource-identifier $SERVICE_ID \
-  --policy '{
-    "allowedPrincipals": [
-      "arn:aws:iam::123456789012:role/app-role"
-    ]
-  }'
-```
-
-**Features**:
-
-* AWS Certificate Manager (ACM) integration
-* IAM-based authentication
-* SigV4 signing
-* AWS PrivateLink encryption
-
-**Comparison**:
-
-* **Istio**: Automatic mTLS between workloads, fine-grained control
-* **VPC Lattice**: Client-service TLS, IAM integration
-
-### Authorization Policies
-
-#### Istio
-
-```yaml
-# L7 level fine-grained Authorization
+---
+apiVersion: security.istio.io/v1
+kind: RequestAuthentication
+metadata:
+  name: backend-jwt
+  namespace: mesh-demo
+spec:
+  selector:
+    matchLabels:
+      app: backend
+  jwtRules:
+  - issuer: https://issuer.example.com
+    jwksUri: https://issuer.example.com/.well-known/jwks.json
+    audiences:
+    - api.example.com
+---
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: backend-policy
+  name: backend-access
+  namespace: mesh-demo
 spec:
   selector:
     matchLabels:
@@ -452,73 +360,81 @@ spec:
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/frontend/sa/frontend"]
-        namespaces: ["frontend"]
+        principals:
+        - cluster.local/ns/mesh-demo/sa/frontend
+        requestPrincipals:
+        - https://issuer.example.com/*
     to:
     - operation:
-        methods: ["GET", "POST"]
-        paths: ["/api/v1/*"]
-        ports: ["8080"]
+        methods:
+        - GET
+        - POST
+        paths:
+        - /api/v1/*
+        ports:
+        - '8080'
     when:
-    - key: request.headers[user-role]
-      values: ["admin", "poweruser"]
-    - key: source.ip
-      notValues: ["10.0.0.0/8"]
----
-# JWT Authentication
-apiVersion: security.istio.io/v1
-kind: RequestAuthentication
-metadata:
-  name: jwt-auth
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  jwtRules:
-  - issuer: "https://auth.example.com"
-    jwksUri: "https://auth.example.com/.well-known/jwks.json"
-    audiences:
-    - "api.example.com"
----
-# JWT-based Authorization
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: jwt-policy
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  action: ALLOW
-  rules:
-  - when:
     - key: request.auth.claims[role]
-      values: ["admin"]
+      values:
+      - admin
 ```
 
-#### VPC Lattice
+The issuer/JWKS/audience are explicit identity-provider placeholders, and the caller must have the real frontend ServiceAccount identity. The **same ALLOW rule** requires the mesh principal, JWT principal from that issuer, allowed method/path/port and admin claim. Separate ALLOW policies are ORed and would not require both checks together. RequestAuthentication alone does not require a JWT, and a raw user-role header is not authenticated identity. Review other ALLOW policies targeting the workload, because a separate matching grant can still add access.
+
+Certificate rotation follows the issuer lifetime and proxy/CA configuration; there is no universal 15-minute renewal interval. External CA integration needs its actual supported issuer path. Port-level mTLS settings refer to workload ports and differ by proxy mode; labeling the main application port 8080 as a plaintext “metrics exception” can break this security contract.
+
+### Lattice: TLS Boundary and Service Authorization
+
+This **CreateListener input** creates HTTPS termination for an existing ready service and target group:
 
 ```json
-// Auth Policy (IAM-based)
+{
+  "serviceIdentifier": "svc-0123456789abcdef0",
+  "name": "https-main",
+  "protocol": "HTTPS",
+  "port": 443,
+  "defaultAction": {
+    "forward": {
+      "targetGroups": [
+        {
+          "targetGroupIdentifier": "tg-0123456789abcdef0",
+          "weight": 100
+        }
+      ]
+    }
+  }
+}
+```
+
+```bash
+aws vpc-lattice create-listener --region "$AWS_REGION" --cli-input-json file://listener.json
+```
+
+The generated service DNS name has an AWS-managed certificate; custom domains require the documented certificate/domain setup. Front-end HTTPS does not imply backend HTTPS or Istio SPIFFE mTLS. Target-group protocol is a separate choice. When Lattice establishes HTTPS to targets, the documented behavior does **not validate the target certificates**; do not describe that as application-level peer-certificate authentication.
+
+TLS_PASSTHROUGH can instead carry the application's own TLS/mTLS without terminating it in Lattice. It requires the custom-domain/SNI and TCP-target configuration, allows only the default forwarding rule, limits connections to ten minutes and supports only anonymous auth-policy principals. Lambda targets are not supported on that path. It does not provide HTTP IAM/header policy inspection over the encrypted stream.
+
+### Correct IAM Auth Policies
+
+Use `vpc-lattice-svcs:Invoke`, the service ARN plus path, and an explicitly selected role. A service/network auth policy example is:
+
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
     {
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::123456789012:role/frontend-role"
+        "AWS": "arn:aws:iam::123456789012:role/LatticeClient"
       },
-      "Action": "vpc-lattice:Invoke",
-      "Resource": "arn:aws:vpc-lattice:region:account:service/svc-xxx"
-    },
-    {
-      "Effect": "Deny",
-      "Principal": "*",
-      "Action": "vpc-lattice:Invoke",
-      "Resource": "*",
+      "Action": "vpc-lattice-svcs:Invoke",
+      "Resource": "arn:aws:vpc-lattice:us-east-1:123456789012:service/svc-0123456789abcdef0/api/v1/*",
       "Condition": {
-        "IpAddress": {
-          "aws:SourceIp": ["10.0.0.0/8"]
+        "StringEquals": {
+          "vpc-lattice-svcs:RequestMethod": [
+            "GET",
+            "POST"
+          ]
         }
       }
     }
@@ -526,588 +442,338 @@ spec:
 }
 ```
 
-**Comparison**:
-
-| Feature                       | Istio                     | VPC Lattice             | Winner              |
-| ----------------------------- | ------------------------- | ----------------------- | ------------------- |
-| **Authentication Mechanism**  | mTLS, JWT, Custom         | IAM, SigV4              | Istio (flexibility) |
-| **Authorization Granularity** | L7 (Method, Path, Header) | L4 (Service level)      | Istio               |
-| **Workload Identity**         | SPIFFE ID                 | IAM Role                | Equal               |
-| **Dynamic Policies**          | Real-time apply           | Propagation time needed | Istio               |
-| **Multi-tenancy**             | Namespace isolation       | VPC/Account isolation   | Equal               |
-
-**Conclusion**: In security, **Istio provides more fine-grained control**, VPC Lattice excels in AWS IAM integration
-
-## Observability and Monitoring
-
-### Metrics Collection
-
-#### Istio
-
-```yaml
-# Prometheus metrics (50+ provided by default)
-# Request metrics
-istio_requests_total{
-  destination_service="backend",
-  response_code="200",
-  source_app="frontend"
-}
-
-# Latency metrics (histogram)
-istio_request_duration_milliseconds_bucket{
-  destination_service="backend",
-  le="100"
-}
-
-# Connection Pool metrics
-envoy_cluster_upstream_cx_active{
-  cluster_name="outbound|8080||backend"
-}
-
-# Circuit Breaker metrics
-envoy_cluster_outlier_detection_ejections_active
-
-# Custom Metrics (Telemetry API)
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
-metadata:
-  name: custom-metrics
-spec:
-  metrics:
-  - providers:
-    - name: prometheus
-    dimensions:
-      request_method:
-        value: request.method
-      custom_header:
-        value: request.headers['x-custom-header'] | ''
-```
-
-**Features**:
-
-* 50+ default metrics
-* Prometheus format
-* OpenTelemetry integration
-* Custom metrics addition possible
-* Exemplar support (metrics-trace linking)
-
-#### VPC Lattice
-
-```bash
-# CloudWatch metrics
-aws cloudwatch get-metric-statistics \
-  --namespace AWS/VPCLattice \
-  --metric-name RequestCount \
-  --dimensions Name=ServiceName,Value=backend \
-  --start-time 2025-01-01T00:00:00Z \
-  --end-time 2025-01-01T23:59:59Z \
-  --period 300 \
-  --statistics Sum
-```
-
-**Default Metrics**:
-
-* `RequestCount`: Request count
-* `ActiveConnectionCount`: Active connections
-* `HealthyTargetCount`: Healthy targets
-* `UnhealthyTargetCount`: Unhealthy targets
-* `TargetResponseTime`: Response time
-* `HTTPCode_Target_4XX_Count`: 4xx errors
-* `HTTPCode_Target_5XX_Count`: 5xx errors
-
-**Features**:
-
-* CloudWatch integration
-* Only default metrics provided
-* Custom metrics not possible
-* 1 or 5 minute granularity
-
-### Distributed Tracing
-
-#### Istio
-
-```yaml
-# Tracing setup with Telemetry API
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
-metadata:
-  name: tracing
-  namespace: istio-system
-spec:
-  tracing:
-  - providers:
-    - name: jaeger
-    randomSamplingPercentage: 10.0
-    customTags:
-      environment:
-        literal:
-          value: "production"
-      user_id:
-        header:
-          name: "x-user-id"
-```
-
-**Supported Backends**:
-
-* Jaeger
-* Zipkin
-* Tempo
-* AWS X-Ray
-* Datadog APM
-* OpenTelemetry Collector
-
-**Features**:
-
-* W3C Trace Context standard
-* Automatic Span generation
-* Custom tag addition
-* Sampling control
-* Baggage propagation
-
-#### VPC Lattice
-
-```bash
-# Access Log to S3
-aws vpc-lattice create-access-log-subscription \
-  --resource-identifier $SERVICE_ID \
-  --destination-arn arn:aws:s3:::lattice-logs
-
-# Access Log to CloudWatch Logs
-aws vpc-lattice create-access-log-subscription \
-  --resource-identifier $SERVICE_ID \
-  --destination-arn arn:aws:logs:region:account:log-group:/aws/vpclattice
-```
-
-**Access Log Format** (JSON):
+Save the auth policy as auth-policy.json after replacing the example ARNs. The caller role separately needs a corresponding identity-based permission:
 
 ```json
 {
-  "timestamp": "2025-01-15T12:34:56.789Z",
-  "serviceNetworkArn": "arn:aws:vpc-lattice:...",
-  "serviceArn": "arn:aws:vpc-lattice:...",
-  "requestMethod": "GET",
-  "requestPath": "/api/users",
-  "requestProtocol": "HTTP/1.1",
-  "responseCode": 200,
-  "responseCodeDetails": "OK",
-  "requestHeaders": {},
-  "sourceVpcArn": "arn:aws:ec2:...",
-  "targetGroupArn": "arn:aws:vpc-lattice:...",
-  "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "vpc-lattice-svcs:Invoke",
+      "Resource": "arn:aws:vpc-lattice:us-east-1:123456789012:service/svc-0123456789abcdef0/api/v1/*",
+      "Condition": {
+        "StringEquals": {
+          "vpc-lattice-svcs:RequestMethod": [
+            "GET",
+            "POST"
+          ]
+        }
+      }
+    }
+  ]
 }
 ```
 
-**Features**:
+Replace the example ARNs and ensure every enabled service-network and service auth policy allows the request. An explicit deny anywhere wins. AWS_IAM activates evaluation; a policy attached while authType is NONE is inactive. Wildcard Principal plus only SourceVpc can allow anonymous traffic, so it is not proof of IAM authentication.
 
-* W3C Trace Context header (`traceparent`) support
-* Send to S3 or CloudWatch Logs
-* AWS X-Ray integration possible (requires application instrumentation)
-* No automatic tracing (manual instrumentation)
-
-**Comparison**:
-
-* **Istio**: Automatic tracing, all backends supported, fine-grained control
-* **VPC Lattice**: Access log based, X-Ray requires manual integration
-
-### Observability Comprehensive Comparison
-
-| Feature                   | Istio          | VPC Lattice            | Winner |
-| ------------------------- | -------------- | ---------------------- | ------ |
-| **Metrics**               | 50+ metrics    | \~10 metrics           | Istio  |
-| **Custom Metrics**        | Telemetry API  | No                     | Istio  |
-| **Distributed Tracing**   | Automatic      | Manual instrumentation | Istio  |
-| **Tracing Backends**      | 6+             | X-Ray only             | Istio  |
-| **Access Logs**           | Very detailed  | Basic                  | Istio  |
-| **Visualization**         | Kiali, Grafana | CloudWatch             | Istio  |
-| **Real-time Observation** | Yes            | Limited                | Istio  |
-| **Exemplars**             | Yes            | No                     | Istio  |
-
-**Conclusion**: In observability, **Istio has overwhelming advantage**
-
-## Operational Complexity
-
-### Real Challenges of Istio Operations
-
-Istio provides powerful features, but operating it in production environments presents significant challenges.
-
-#### Key Operational Challenges
-
-![Diagram mapping six recurring Istio operational challenges to three downstream impacts, showing increased failure risk as the most common consequence.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-3.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-comparison-02-istio-vs-lattice-3.html)
-
-### Installation and Initial Setup
-
-#### Istio
+The API operation is **PutAuthPolicy**. To preserve a compact policy string inside a complete CLI input without embedded newlines:
 
 ```bash
-# 1. Install Istioctl
-curl -L https://istio.io/downloadIstio | sh -
-cd istio-1.24.0
-export PATH=$PWD/bin:$PATH
-
-# 2. Install Istio (production profile)
-istioctl install --set profile=production
-
-# 3. Enable Sidecar injection for namespace
-kubectl label namespace default istio.io/injection=enabled
-
-# 4. Deploy gateway
-kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml
-
-# 5. Install observability tools
-kubectl apply -f samples/addons/prometheus.yaml
-kubectl apply -f samples/addons/grafana.yaml
-kubectl apply -f samples/addons/jaeger.yaml
-kubectl apply -f samples/addons/kiali.yaml
-
-# 6. Validate configuration
-istioctl analyze
+: "${SERVICE_ID:?Set the actual service ID}"
+jq -n --arg resource "$SERVICE_ID" --slurpfile policy auth-policy.json   '{resourceIdentifier:$resource, policy:($policy[0] | tojson)}' > put-auth-policy.json
+aws vpc-lattice put-auth-policy --region "$AWS_REGION"   --cli-input-json file://put-auth-policy.json
 ```
 
-**Time**: 30-60 minutes (including configuration) **Complexity**: 4/5 (High)
+This replaces nonexistent create-auth-policy/allowedPrincipals syntax. The management role applying configuration is distinct from the workload role invoking the service. The application or a supported signing component must sign the actual request using the documented SigV4 path and workload credentials; TLS settings alone do not produce the signature. Forwarding changes to signed request components can invalidate it; preserve them or sign after the intended transformations.
 
-#### VPC Lattice
+Lattice authorization is not limited to L4/service names. Documented conditions include method, path, headers and query strings, in addition to principal/VPC/service context. Their protocol and anonymous-caller availability differ. These service auth policies do not cover resource configurations in a service network.
+
+The current WAF AssociateWebACL resource list does not include a Lattice service/network. A supported WAF component can be part of a separately designed path, but the old diagram's direct “Lattice WAF integration” claim is not justified. IAM, WAF, network isolation and application authorization remain distinct controls.
+
+
+## Observability
+
+### Istio Metrics and Traces
+
+Use the actual metric family, labels and one reporter. For the example backend, total RPS, a 5xx/zero-status fraction and p95 latency in milliseconds can be queried separately:
+
+```promql
+sum(rate(istio_requests_total{reporter="source",destination_service_name="backend",destination_service_namespace="mesh-demo"}[5m]))
+
+(sum(rate(istio_requests_total{reporter="source",destination_service_name="backend",destination_service_namespace="mesh-demo",response_code=~"5..|0"}[5m])) or vector(0))
+/
+sum(rate(istio_requests_total{reporter="source",destination_service_name="backend",destination_service_namespace="mesh-demo"}[5m]))
+
+histogram_quantile(0.95, sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter="source",destination_service_name="backend",destination_service_namespace="mesh-demo"}[5m])))
+```
+
+The numerator fallback handles an absent 5xx series when real traffic exists; an absent denominator remains absent and idle traffic does not become evidence of health. Confirm metric labels and scrape scope. Proxy connection/outlier gauges and counters are separate Envoy families; do not invent fixed “50 default metrics” counts or a universal cache/retry interpretation.
+
+Current Telemetry configuration uses metric overrides/tagOverrides and a declared tracing provider:
+
+```yaml
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  meshConfig:
+    enableTracing: true
+    extensionProviders:
+    - name: otel-tracing
+      opentelemetry:
+        service: otel-collector.observability.svc.cluster.local
+        port: 4317
+---
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: backend-observability
+  namespace: mesh-demo
+spec:
+  selector:
+    matchLabels:
+      app: backend
+  metrics:
+  - providers:
+    - name: prometheus
+    overrides:
+    - match:
+        metric: REQUEST_COUNT
+      tagOverrides:
+        request_method:
+          value: request.method
+  tracing:
+  - providers:
+    - name: otel-tracing
+    randomSamplingPercentage: 10
+    customTags:
+      environment:
+        literal:
+          value: lab
+```
+
+The IstioOperator object is **input to istioctl**, to be merged with reviewed existing installation settings. Do not overwrite the live istio ConfigMap or discard other extension providers. The Collector Service must actually accept OTLP gRPC on 4317 and have a working backend/exporter pipeline; it is not installed by these objects. The provider name in Telemetry must match MeshConfig.
+
+Adding a metric dimension is not the same as producing an arbitrary business metric. Bound cardinality, collect application metrics where necessary, and configure compatible exemplar/tracing support. End-to-end traces require application context propagation, sampling and collector/backend delivery; neither “all backends” nor automatic baggage propagation is guaranteed by installing Istio.
+
+### VPC Lattice Metrics
+
+The documented CloudWatch namespace is **AWS/VpcLattice**, with exact case. Service dimensions include Service and AvailabilityZone; target-group dimensions include TargetGroup and AvailabilityZone. Discover the actual emitted metric/dimension combination:
 
 ```bash
-# 1. Create Service Network
-SERVICE_NETWORK_ID=$(aws vpc-lattice create-service-network \
-  --name production-network \
-  --auth-type AWS_IAM \
-  --query 'id' --output text)
-
-# 2. Associate VPC
-aws vpc-lattice create-service-network-vpc-association \
-  --service-network-identifier $SERVICE_NETWORK_ID \
-  --vpc-identifier vpc-xxx \
-  --security-group-ids sg-xxx
-
-# 3. Create Service
-SERVICE_ID=$(aws vpc-lattice create-service \
-  --name backend-service \
-  --auth-type AWS_IAM \
-  --query 'id' --output text)
-
-# 4. Associate Service to Network
-aws vpc-lattice create-service-network-service-association \
-  --service-network-identifier $SERVICE_NETWORK_ID \
-  --service-identifier $SERVICE_ID
-
-# 5. Create Target Group
-TG_ID=$(aws vpc-lattice create-target-group \
-  --name backend-tg \
-  --type IP \
-  --config '{
-    "port": 8080,
-    "protocol": "HTTP",
-    "vpcIdentifier": "vpc-xxx"
-  }' \
-  --query 'id' --output text)
-
-# 6. Register Targets
-aws vpc-lattice register-targets \
-  --target-group-identifier $TG_ID \
-  --targets id=10.0.1.10,port=8080
-
-# 7. Create Listener
-aws vpc-lattice create-listener \
-  --service-identifier $SERVICE_ID \
-  --protocol HTTP \
-  --port 80 \
-  --default-action '{
-    "forward": {
-      "targetGroups": [{"targetGroupIdentifier": "'$TG_ID'"}]
-    }
-  }'
+aws cloudwatch list-metrics --region "$AWS_REGION"   --namespace AWS/VpcLattice --metric-name TotalRequestCount
 ```
 
-**Time**: 10-20 minutes **Complexity**: 2/5 (Medium)
+| Documented signal | Interpretation |
+|---|---|
+| TotalRequestCount | Request count; Sum is useful |
+| RequestTime | Milliseconds; Average or a percentile, with the documented service/target-group measurement boundary |
+| HTTPCode_2XX_Count through HTTPCode_5XX_Count | Aggregate HTTP responses |
+| HTTPCode_VpcLattice_403_Count and other documented granular codes | Lattice-generated responses, useful alongside access-log reasons |
+| Target-group connection metrics | Protocol-specific connection counts/errors/bytes; distinct from application request metrics |
 
-### Upgrade: Istio's Biggest Challenge
+These metrics are published once a minute after the resource receives traffic. A five-minute query period is an aggregation choice. Use list-targets and health-check information for target health instead of assuming ALB metric names such as HealthyTargetCount or TargetResponseTime exist in this namespace.
 
-#### Complexity of Istio Upgrade
+For a current one-hour query, generate UTC timestamps once. This Bash/Python snippet does not call AWS:
 
-Istio upgrades are among the most risky and complex operations in production environments.
+```bash
+read -r START_TIME END_TIME START_EPOCH END_EPOCH < <(python3 - <<'PYTIME'
+from datetime import datetime, timedelta, timezone
+end = datetime.now(timezone.utc).replace(microsecond=0)
+start = end - timedelta(hours=1)
+print(start.strftime('%Y-%m-%dT%H:%M:%SZ'),
+      end.strftime('%Y-%m-%dT%H:%M:%SZ'),
+      int(start.timestamp()), int(end.timestamp()))
+PYTIME
+)
+```
 
-**Total Time Required**: **6-10 hours** (increases with number of namespaces)
+Choose the Service-only metric from list-metrics and copy its exact Service dimension value. If selecting an AZ-specific metric, include its complete dimension set as returned rather than dropping the AZ:
 
-**Major Challenges**:
+```bash
+: "${SERVICE_DIMENSION:?Copy the exact Service dimension value from list-metrics}"
+aws cloudwatch get-metric-statistics --region "$AWS_REGION"   --namespace AWS/VpcLattice --metric-name TotalRequestCount   --dimensions "Name=Service,Value=$SERVICE_DIMENSION"   --start-time "$START_TIME" --end-time "$END_TIME"   --period 60 --statistics Sum
+```
 
-* **Pros**: Zero-downtime possible, gradual rollout, rollback possible
-* **Cons**:
-  * Very complex manual process
-  * Expert knowledge required
-  * 6-10 hours of work time
-  * All pods require restart (workload impact)
-  * Two versions of Control Plane running simultaneously (2x resources)
+Missing metrics are not automatically zero traffic or a healthy service. Lattice's AWS namespace contains its published service metrics; applications can separately publish custom metrics or derive log metrics. “Custom metrics are impossible” is therefore not a useful general claim.
 
-#### VPC Lattice
+### Access Logs and Request Correlation
 
-**Automatic Upgrade**: AWS manages service updates
+Lattice can deliver access logs to CloudWatch Logs, S3 or Data Firehose. Delivery permissions, destination policies, retention and charges must be configured; delivery latency is best effort. This is a documented-fields **illustration**, not a captured production log:
 
-**User Action**: None
+```json
+{
+  "startTime": "2025-01-15T12:34:56Z",
+  "serviceArn": "arn:aws:vpc-lattice:us-east-1:123456789012:service/svc-0123456789abcdef0",
+  "requestMethod": "GET",
+  "requestPath": "/api/v1/items",
+  "protocol": "HTTP/1.1",
+  "responseCode": 200,
+  "duration": 12,
+  "requestId": "example-request-001"
+}
+```
 
-### Operational Complexity Summary
+Additional documented fields include authDeniedReason, failureReason, callerPrincipal/resolvedUser and target/source information. Use the actual log type: resource-access logs describe a different TCP/resource path. Do not assume generic timestamp/requestProtocol/responseCodeDetails/requestHeaders/traceparent fields.
 
-| Task                   | Istio                           | VPC Lattice           | Difference                  |
-| ---------------------- | ------------------------------- | --------------------- | --------------------------- |
-| **Initial Setup**      | 30-60min, CRD learning required | 10-20min, AWS Console | **Lattice 3x faster**       |
-| **Upgrade**            | 6-10 hours, manual Canary       | Automatic, 0 hours    | **Lattice fully automatic** |
-| **Daily Operations**   | 15-25h/month                    | 2-5h/month            | **Lattice 5-10x less**      |
-| **Sidecar Management** | All pods restart required       | N/A                   | **Lattice no management**   |
-| **Resource Overhead**  | CPU/Memory 2x                   | 0                     | **Lattice zero overhead**   |
-| **Troubleshooting**    | Complex, expert tools needed    | Simple, CloudWatch    | **Lattice easier**          |
-| **Learning Curve**     | Steep, 3-6 months               | Gentle, 1-2 weeks     | **Lattice 10x faster**      |
-| **Expert Staff**       | Service Mesh expert             | General AWS engineer  | **Lattice easier to staff** |
-| **Failure Risk**       | High, complex architecture      | Low, AWS managed      | **Lattice more stable**     |
+The requestId correlates with x-amzn-requestid, which a client can supply; it is not authenticated identity. A W3C trace header propagated by an application is distinct from a guaranteed native log field or an automatically generated distributed trace. Application instrumentation can use suitable tracing backends and is not restricted to X-Ray.
 
-**Conclusion**: In operational complexity, **VPC Lattice has overwhelming advantage**
+For a configured log group, use both time bounds and inspect the query status/results:
 
-## Cost Analysis
+```bash
+: "${LATTICE_LOG_GROUP:?Set the configured CloudWatch log group}"
+QUERY_ID=$(aws logs start-query --region "$AWS_REGION"   --log-group-name "$LATTICE_LOG_GROUP"   --start-time "$START_EPOCH" --end-time "$END_EPOCH"   --query-string 'fields @timestamp, requestId, requestMethod, requestPath, responseCode, authDeniedReason, failureReason | filter responseCode >= 500 | sort @timestamp desc | limit 20'   --query queryId --output text)
+aws logs get-query-results --region "$AWS_REGION" --query-id "$QUERY_ID"
+```
 
-### Istio Cost Model (Detailed)
+A query may still be Scheduled or Running; an immediate empty result is not proof that no errors occurred. Narrow access and time range to the investigation. Kiali/Grafana or CloudWatch dashboards require their real data sources and access configuration; dashboard names do not prove equivalent visibility.
 
-#### Infrastructure Cost (100 pod environment, EKS)
+## Installation and Operations
 
-**Computing Cost**:
+### Choose and Verify the Platform
 
-| Component                    | Resources       | Node Requirements           | Cost (Monthly) |
-| ---------------------------- | --------------- | --------------------------- | -------------- |
-| **Applications** (100 pods)  | 10 vCPU, 25GB   | 3 nodes (m5.xlarge)         | $420           |
-| **Envoy Sidecar** (100 pods) | 10 vCPU, 12.8GB | +2 nodes (Sidecar overhead) | $280           |
-| **Istiod** (Control Plane)   | 1 vCPU, 2GB     | Included                    | -              |
-| **Prometheus**               | 2 vCPU, 8GB     | Additional resources        | $80            |
-| **Jaeger**                   | 1 vCPU, 4GB     | Additional resources        | $50            |
-| **Kiali**                    | 0.5 vCPU, 1GB   | Additional resources        | $20            |
-| **Total Computing**          |                 | **5 nodes**                 | **$850/month** |
+Istio 1.31 supports Kubernetes 1.32–1.36; use the intersection with the actual managed platform and required proxy mode. There is no built-in production profile, and the old istio.io/injection label does not enable sidecar injection. Follow the [installation guide](../01-installation.md) for current artifacts, revision labels and prerequisites. Demo addons are not a production monitoring/HA stack.
 
-**Storage Cost**:
+For Lattice, define the service/resource model, actual client association or endpoint path, target lifecycle, listener protocol and authentication boundaries. A service does not have to be a Lambda function, and a meshed EKS application can call Lambda through a separately supported integration. Lambda cannot itself host an Istio sidecar; that is different from declaring every EKS-plus-Lambda architecture incompatible with Istio.
 
-* Prometheus metrics: 100GB SSD -> $10/month
-* Jaeger traces: 50GB SSD -> $5/month
-* Total storage: **$15/month**
+A complete service setup requires, in order appropriate to the owners:
 
-**Infrastructure Total**: **$875/month** = **$10,500/year**
+1. Existing network connectivity, DNS, security groups and authorized management/client roles.
+2. The service network and the intended client VPC association or service-network endpoint.
+3. The service and network/service association, with the intended authentication mode.
+4. Target group, supported target registration and verified health behavior.
+5. Listener/rules and domain/certificate configuration.
+6. Every required auth policy and caller identity permission, plus a working signer for authenticated requests.
+7. Logs/metrics, actual request/denial tests and a resource lifecycle/cleanup plan.
 
-#### Operational Cost (Annual)
+The operation inputs above cover parts of that workflow. They do not create its prerequisites or prove readiness. Check asynchronous resource status and existing ownership before subsequent operations. For Kubernetes, use the appropriate controller instead of maintaining stale Pod-IP registrations. Managed service updates do not remove responsibility for controllers, SDKs, IAM, DNS or application compatibility.
 
-| Task                             | Time (Annual) | Hourly Cost | Annual Cost      |
-| -------------------------------- | ------------- | ----------- | ---------------- |
-| **Initial Setup**                | 40h           | $100/h      | $4,000           |
-| **Daily Operations** (20h/month) | 240h          | $100/h      | $24,000          |
-| **Upgrades** (quarterly)         | 40h (4 times) | $100/h      | $4,000           |
-| **Emergency Response** (average) | 20h           | $150/h      | $3,000           |
-| **Training**                     | 40h           | $100/h      | $4,000           |
-| **Operations Total**             |               |             | **$39,000/year** |
+### Istio Upgrades and Ambient Enrollment
 
-#### Istio Total Cost
+Use the supported upgrade path from the installed release and preserve the complete reviewed values, trust and policy configuration. The old 1.23→1.24 diagram is historical, not a current target. Revision handoff does not justify jumping arbitrary minor versions.
 
-**Annual Total Cost**: **$10,500 + $39,000 = $49,500**
+Back up authoritative installation/GitOps configuration and relevant custom resources. `kubectl get all` does not include every object and is not a complete recoverable backup. Inspect the actual namespace/revision/Pod overrides, stage a workload cohort, check readiness, traffic, certificates and telemetry, and retain rollback capacity until the transition is accepted.
 
-### VPC Lattice Cost Model
+Do not force-restart every workload, reissue a CA for every certificate error, or manually delete hard-coded shared webhook names as routine cleanup. Use the release's supported retirement procedure only after confirming that all dependent proxies/gateways have moved. Removing a control plane changes recovery options; it is not a universal proof that rollback is forever impossible.
 
-**Usage-based Cost**:
+Ambient enrollment can add sidecar-free workloads without application restart, while removing existing sidecars requires workload replacement. The ambient/CNI/ztunnel prerequisites and waypoint enrollment/security controls still apply. Pod Ready counts are not universally 2/2, and native sidecars may be represented under initContainers.
 
-| Item                | Unit Price  | Expected Usage | Cost (Monthly) |
-| ------------------- | ----------- | -------------- | -------------- |
-| **Service Network** | $0.025/hour | 1 x 730 hours  | $18            |
-| **Service**         | $0.025/hour | 5 x 730 hours  | $91            |
-| **Data Processing** | $0.010/GB   | 10TB           | $100           |
-| **Total**           |             |                | **$209**       |
+### Diagnose the Actual Failure Boundary
 
-**Operational Cost**:
+| Layer | Checks relevant to the selected design |
+|---|---|
+| Application/target | Listening protocol/port, readiness, replicas/endpoints, dependencies and errors |
+| Mesh or Lattice routing | Effective routes, subsets/target groups, health/fail-open, timeouts and resource status |
+| Identity and policy | Certificate lifetime/trust, JWT or SigV4, every applicable auth policy and IAM denial |
+| Network/DNS | Correct association/endpoint, routes, security groups/NetworkPolicy and actual resolver path |
+| Control/telemetry | Revision/controller state, API/config propagation, real metrics and delivered logs |
 
-* Initial setup: 10 hours x $100/h = $1,000
-* Monthly operations: 3 hours x $100/h = $300
+For Istio, proxy-status/config commands and actual workload logs are useful. Do not assume the proxy image contains curl, tcpdump or a shell; use supported debugging methods with the needed permissions. Protect diagnostic archives and restore temporary debug settings. A zero-replica backend is a Deployment/endpoint fact, not a Service.spec.replicas field.
 
-**Annual Total Cost**: $209 x 12 + $300 x 12 + $1,000 = **$7,608**
+For Lattice, these read operations inspect actual resources:
 
-### Cost Comparison Summary
+```bash
+: "${SERVICE_NETWORK_ID:?Set the actual service-network ID}"
+: "${TG_ID:?Set the actual target-group ID}"
+aws vpc-lattice get-service --region "$AWS_REGION" --service-identifier "$SERVICE_ID"
+aws vpc-lattice list-service-network-service-associations --region "$AWS_REGION"   --service-network-identifier "$SERVICE_NETWORK_ID"
+aws vpc-lattice get-target-group --region "$AWS_REGION" --target-group-identifier "$TG_ID"
+aws vpc-lattice list-targets --region "$AWS_REGION" --target-group-identifier "$TG_ID"
+```
 
-| Item                        | Istio Sidecar | VPC Lattice | Difference (vs Istio) |
-| --------------------------- | ------------- | ----------- | --------------------- |
-| **Infrastructure (Annual)** | $10,500       | $2,508      | **76% cheaper**       |
-| **Operations (Annual)**     | $39,000       | $5,100      | **87% cheaper**       |
-| **Total (Annual)**          | **$49,500**   | **$7,608**  | **85% cheaper**       |
-| **5-Year TCO**              | **$297,500**  | **$38,040** | **87% cheaper**       |
+list-services does not take a service-network filter. Network analysis tools inspect their supported network resources; passing a Lattice service ID as an EC2 network-insights destination is not a complete application/IAM diagnostic. No fixed three-layer process, five-minute repair time or managed “auto healing” guarantee follows from these commands.
 
-**Conclusion**: VPC Lattice is **approximately $42,000 cheaper annually, $260,000 over 5 years**
 
-## Performance Comparison
+## Cost and Historical Evidence
 
-### Latency Overhead
+### Compare the Same Cost Boundary
 
-**Test Environment**: 2-node EKS, m5.xlarge, 1000 RPS
+Include the same applications, availability requirements, network traffic, logging/metrics retention and engineering scope on both sides. Lattice does not pay for or remove the application's EC2/EKS/ECS/Lambda compute. A managed networking bill alone cannot be compared with an entire Istio application fleet plus staff.
 
-| Scenario | Baseline | Istio          | VPC Lattice    |
-| -------- | -------- | -------------- | -------------- |
-| **P50**  | 1.0ms    | +1.0ms (2.0ms) | +0.5ms (1.5ms) |
-| **P95**  | 2.5ms    | +2.5ms (5.0ms) | +1.2ms (3.7ms) |
-| **P99**  | 5.0ms    | +3.5ms (8.5ms) | +2.0ms (7.0ms) |
+The former example contained several distinct issues:
 
-**Conclusion**: VPC Lattice has **slightly lower latency** (no Sidecar)
+- It modeled 24.5 vCPU in total: application 10 + sidecars 10 + Istiod 1 + Prometheus 2 + Jaeger 1 + Kiali 0.5. Five four-vCPU m5.xlarge nodes provide only 20 vCPU before reservations. Even the ideal CPU lower bound is seven nodes, before other constraints.
+- The English line items summed to $850 compute + $15 storage = **$865**, while the Korean text added an unsupported $10 “latency/network” charge to reach $875. Latency is not itself an AWS billing unit.
+- The original Lattice arithmetic was $209 ×12 + $300 ×12 + $1,000 = **$7,108**, not $7,608. Its setup-plus-operations amount was $4,600, not $5,100.
+- Using only those old assumptions, five years of $209/month infrastructure and $300/month operations plus setup once would be **$31,540**, not five copies of an annual number containing setup.
+- The Korean Istio five-year number added a $50,000 contingency only on that side, and repeatedly counted initial setup. This is an inconsistent comparison boundary, not evidence of an intrinsic product price difference.
 
-### Throughput
+The old $140/node-month, resource quantities and staffing estimates were hypothetical inputs without a substantiated quote or workload measurement. Mi and MB were also mixed: 100 × 128 Mi is 12,800 Mi = 12.5 Gi, not 12.8 decimal GB. A sidecar does not double the Pod count, and released resource headroom does not automatically remove billed nodes.
 
-| Metric           | Baseline | Istio       | VPC Lattice |
-| ---------------- | -------- | ----------- | ----------- |
-| **Max RPS**      | 10,000   | 8,500 (85%) | 9,200 (92%) |
-| **CPU Usage**    | 100%     | 115%        | 102%        |
-| **Memory Usage** | 1GB      | 1.5GB       | 1.05GB      |
+### Current Dated Service-Pricing Example
 
-**Conclusion**: VPC Lattice has **slightly higher throughput**
+The official US East (N. Virginia) service-pricing examples checked on September 11, 2026 use $0.025 per service-hour, $0.025 per GB processed, and request/connection charges after the documented per-service hourly allowance. Service-network VPC associations and service-network endpoints are listed at no additional cost. Resource configurations/resource endpoints have a **different** pricing model; their $0.01/GB tier is not the service data-processing rate. Do not add the old separate service-network-hour charge to this service-pricing model.
 
-### Resource Efficiency
+For an explicitly hypothetical HTTP/HTTPS service workload:
 
-**100 pod environment**:
+| Input | Calculation | Monthly networking charge |
+|---|---|---:|
+| Five services, 730 hours each |5 ×730 ×$0.025|$91.25|
+|10,000 billable GB across those services, including requests and responses |10,000 ×$0.025|$250.00|
+| Each service remains within 300,000 requests in every hour |No requests above the hourly allowance|$0.00|
+| Total for these stated inputs |$91.25 +$250.00|**$341.25**|
 
-| Resource              | Baseline | Istio          | VPC Lattice |
-| --------------------- | -------- | -------------- | ----------- |
-| **Additional CPU**    | -        | +10 vCPU       | 0           |
-| **Additional Memory** | -        | +15GB          | 0           |
-| **Additional Pods**   | -        | +100 (Sidecar) | 0           |
+Above that allowance, calculate request charges per service and hour using the published $0.10/million rate; do not use a monthly-average RPS to erase burst-hour charges. TLS-passthrough connection billing is a different counter. Include every billable service hop, actual Region, application infrastructure, logs and other relevant charges. These are dated illustrative inputs, not a quote, future price guarantee or a claimed saving against an unmeasured Istio fleet.
 
-**Conclusion**: VPC Lattice is **overwhelmingly efficient**
+Model one-time setup/migration separately from recurring operations. Discounting, purchase commitments, expected growth, uncertainty and equal HA/support requirements matter to a multi-year comparison. No generic $42,000/year or $260,000/five-year saving is established by the former table.
 
-## Multi-Cloud Strategy
+### Preserve Historical Measurements Honestly
 
-### Istio Multi-Cloud
+The previous performance section claimed a **two-node EKS, m5.xlarge,1,000-RPS** test with an Istio 1.24 context, but supplied no harness, raw samples, exact EKS/patch/proxy versions or matching configuration:
 
-![Diagram showing per-cloud Istiod control planes in AWS, Google Cloud, and Azure federating service discovery with each other, while their EKS, GKE, and AKS clusters exchange mTLS traffic directly across cloud boundaries.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-16.png)
+| Original unverified result | Baseline | Istio total | Lattice total |
+|---|---:|---:|---:|
+| p50 |1.0 ms|2.0 ms|1.5 ms|
+| p95 |2.5 ms|5.0 ms|3.7 ms|
+| p99 |5.0 ms|8.5 ms|7.0 ms|
+| Maximum RPS |10,000|8,500|9,200|
+| CPU claim |100%|115%|102%|
+| Memory claim |1 GB|1.5 GB|1.05 GB|
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-comparison-02-istio-vs-lattice-16.html)
+These values remain historical, unverified claims rather than new 1.31 measurements. They do not prove that removing a sidecar causes the entire latency/throughput difference. A meaningful test matches protocol, payload, TLS/authorization, placement, load, telemetry and failure behavior, and separates raw failures from retry-masked outcomes.
 
-**Advantages**:
+The original anonymous customer stories and alleged re:Invent satisfaction survey had no traceable publication or methodology. They can suggest questions about migration, staffing and hybrid ownership, but not measured success rates. The identified **CNCF 2024 Annual Survey** asks about container challenges, project usage and service-mesh usage; it does not substantiate the claimed “40% Istio adoption failure” or the listed failure-cause percentages. Use the actual question, sample and meaning when citing a survey.
 
-* Cloud neutral
-* Consistent policies and observability
-* Automatic Service Discovery
-* Federated identity
+## Hybrid and Multicloud Design
 
-### VPC Lattice Multi-Cloud
+![A possible hybrid layout uses Istio inside the cluster and a separately configured Lattice service path outside it. The signer, network, TLS and optional egress-gateway contracts must be completed.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-17.png)
 
-**Not Possible**: VPC Lattice is AWS-only
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-comparison-02-istio-vs-lattice-17.html)
 
-**Alternatives**:
+The diagram is a high-level option, not a complete egress configuration. Decide whether traffic uses a direct sidecar path or an explicitly configured egress gateway, and define every TLS/identity boundary. Lattice does not automatically originate Istio SPIFFE mTLS to a STRICT backend. A deliberate ingress boundary can authenticate the intended external path and use mesh mTLS downstream; the backend may then see the gateway identity rather than the original IAM caller.
 
-* AWS Transit Gateway + VPN
-* Application-level integration
-* API Gateway
+For an application that signs and initiates HTTPS, discover the **actual** Lattice service DNS name instead of inventing payment.vpclattice.aws:
 
-## Hybrid Architecture
+```bash
+aws vpc-lattice get-service --region "$AWS_REGION"   --service-identifier "$SERVICE_ID" > lattice-service.json
+LATTICE_HOST=$(jq -er '.dnsEntry.domainName | select(type == "string" and length > 0)' lattice-service.json) || exit 1
+jq -n --arg host "$LATTICE_HOST" '{
+  apiVersion:"networking.istio.io/v1",kind:"ServiceEntry",
+  metadata:{name:"payment-lattice",namespace:"mesh-demo"},
+  spec:{hosts:[$host],location:"MESH_EXTERNAL",resolution:"DNS",
+        ports:[{number:443,name:"https",protocol:"HTTPS"}]}
+}' > lattice-service-entry.json
+```
 
-### Using Istio + VPC Lattice Together
+This produces only a registry entry to review/apply through the workload's normal configuration owner. It neither provisions Lattice nor forces egress-gateway traversal, signs a request or bypasses IAM. Application HTTPS is opaque to the sidecar, so an HTTP VirtualService cannot inspect its path as shown in the former incomplete egress example. Do not add another SIMPLE TLS layer around an already encrypted application stream.
 
-![Architecture diagram showing an Istio mesh handling frontend-to-backend traffic inside an EKS cluster, then exiting through an egress gateway into a VPC Lattice service network that reaches an ECS payment service and a Lambda notification service in separate VPCs.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-17.png)
+Service-network endpoints can provide a supported entry path from on-premises or other connected networks. That requires routing, DNS, security groups and applicable service authorization; “AWS-operated” does not mean outside-AWS clients are categorically impossible. It also does not create a global service network or replicate application data across Regions/clouds.
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-comparison-02-istio-vs-lattice-17.html)
+For a migration, map APIs, identities, certificate trust, routes, telemetry and recovery ownership. Moving a namespace label is not a complete change from Lattice IAM to mesh identity. Refer to the [VPC Lattice guide](../../../networking/02-vpc-lattice.md), [AWS integration](../04-aws-integration.md) and [multicluster guide](../advanced/02-multi-cluster.md) for their specific contracts.
 
-**Use Cases**:
+## Selection Criteria
 
-* **Within Cluster**: Istio (rich features)
-* **Between Clusters/External**: VPC Lattice (simple connectivity)
+| Requirement | Decision evidence |
+|---|---|
+| Kubernetes/VM workload mesh | Required sidecar/ambient features, platform support, identity lifecycle and measured operating capacity |
+| AWS service/resource connectivity | Supported target/resource types, actual client path, auth/TLS model and owner responsibilities |
+| Fine-grained traffic behavior | Exact rule/filter APIs, protocol limits, retries, health and failure behavior rather than a feature-star score |
+| Strong security | End-to-end identity/encryption and application authorization across every termination point, including bypass paths |
+| Small team or quick delivery | The actual team's repeatable workflow and support plan, without invented minimum staffing or fixed install-time thresholds |
+| Cost and performance | Equal-scope bills, reproducible load/failure measurements and explicitly dated assumptions |
+| Hybrid/multicloud | Tested network and identity boundaries plus application/data recovery, not product names alone |
 
-## Selection Guide
+Evaluate a bounded proof of concept with real workloads and retain the evidence. Neither “Istio always expensive/complex” nor “Lattice always cheaper/safer” follows from architecture alone.
 
-### Decision Tree
+## Official References
 
-![Flowchart walking from platform choice through workload type, feature requirements, and operational resources to a recommendation of either Istio or VPC Lattice, with VPC Lattice reached by three different simpler paths.](../../../.gitbook/assets/en-service-mesh-istio-comparison-02-istio-vs-lattice-18.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-comparison-02-istio-vs-lattice-18.html)
-
-### Quick Recommendation Table
-
-| Situation                    | Istio       | VPC Lattice | Reason                     |
-| ---------------------------- | ----------- | ----------- | -------------------------- |
-| **AWS Only**                 | Limited     | Recommended | Management convenience     |
-| **Multi-cloud**              | Recommended | No          | Cloud neutrality           |
-| **K8s Only**                 | Yes         | Yes         | Both possible              |
-| **EKS + Lambda**             | No          | Recommended | Lambda integration         |
-| **Advanced Traffic Control** | Recommended | No          | Feature richness           |
-| **Simple Operations**        | No          | Recommended | Fully managed              |
-| **Rich Observability**       | Recommended | Limited     | Metrics/Tracing            |
-| **Low Cost**                 | No          | Recommended | Including operational cost |
-| **Quick Start**              | No          | Recommended | Learning curve             |
-| **Fine-grained Security**    | Recommended | Limited     | L7 Authorization           |
-
-### Final Recommendations
-
-**Choose VPC Lattice**:
-
-* AWS-centric architecture
-* Limited operational resources
-* Quick start needed
-* Mixed EKS + ECS + Lambda
-* Simple multi-VPC/account connectivity
-
-**Choose Istio**:
-
-* Multi-cloud strategy
-* Fine-grained traffic control needed
-* Strong observability requirements
-* Complex deployment strategies (Canary, A/B)
-* Team has Service Mesh experience
-
-**Hybrid (Istio + VPC Lattice)**:
-
-* Within cluster: Istio
-* Between clusters/external: VPC Lattice
-* Best features + simple external connectivity
-
-## Conclusion
-
-### Key Summary
-
-**Istio Strengths**:
-
-* Rich features (5/5)
-* Fine-grained control (5/5)
-* Strong observability (5/5)
-* Multi-cloud (5/5)
-
-**VPC Lattice Strengths**:
-
-* Operational simplicity (5/5)
-* Low cost (5/5)
-* Quick start (5/5)
-* AWS integration (5/5)
-
-### When to Choose What?
-
-**Choose Istio**:
-
-* Multi-cloud environment
-* Fine-grained traffic control needed
-* Strong observability requirements
-* Team has Service Mesh experience
-* Avoid cloud vendor lock-in
-
-**Choose VPC Lattice**:
-
-* AWS-centric architecture
-* Operational simplicity first
-* Mixed EKS + ECS + Lambda
-* Fast time-to-market
-* Low operational cost
-
-**Use Both** (Hybrid):
-
-* Within cluster: Istio
-* Between clusters/external: VPC Lattice
-* Optimal balance
-
-***
-
-**Next Steps**:
-
-1. Test both solutions in PoC environment
-2. Measure performance with actual workload patterns
-3. Evaluate team's learning curve
-4. Make selection aligned with long-term strategy
-
-**Related Documents**:
-
-* [Service Mesh Solution Comparison](01-service-mesh-comparison.md)
-* [Istio Architecture](../03-architecture.md)
-* [Istio Ambient Mode](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/istio/advanced/01-ambient-mode.md)
-* [VPC Lattice Detailed Guide](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/networking/02-vpc-lattice.md)
+- [Istio supported releases](https://istio.io/latest/docs/releases/supported-releases/), [ambient](https://istio.io/latest/docs/ambient/overview/), [security](https://istio.io/latest/docs/concepts/security/) and [Telemetry API](https://istio.io/latest/docs/reference/config/telemetry/)
+- [VPC Lattice components and responsibilities](https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html) and [network associations/endpoints](https://docs.aws.amazon.com/vpc-lattice/latest/ug/service-network-associations.html)
+- [CreateRule](https://docs.aws.amazon.com/vpc-lattice/latest/APIReference/API_CreateRule.html), [RuleAction](https://docs.aws.amazon.com/vpc-lattice/latest/APIReference/API_RuleAction.html), [CreateListener](https://docs.aws.amazon.com/vpc-lattice/latest/APIReference/API_CreateListener.html) and [CreateTargetGroup](https://docs.aws.amazon.com/vpc-lattice/latest/APIReference/API_CreateTargetGroup.html)
+- [Target groups](https://docs.aws.amazon.com/vpc-lattice/latest/ug/target-groups.html) and [health checks](https://docs.aws.amazon.com/vpc-lattice/latest/ug/target-group-health-checks.html)
+- [HTTPS listeners](https://docs.aws.amazon.com/vpc-lattice/latest/ug/https-listeners.html) and [TLS passthrough](https://docs.aws.amazon.com/vpc-lattice/latest/ug/tls-listeners.html)
+- [Auth policies](https://docs.aws.amazon.com/vpc-lattice/latest/ug/auth-policies.html), [PutAuthPolicy](https://docs.aws.amazon.com/vpc-lattice/latest/APIReference/API_PutAuthPolicy.html) and [SigV4 requests](https://docs.aws.amazon.com/vpc-lattice/latest/ug/sigv4-authenticated-requests.html)
+- [Lattice metrics](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-cloudwatch.html) and [access logs](https://docs.aws.amazon.com/vpc-lattice/latest/ug/monitoring-access-logs.html)
+- [Lattice pricing](https://aws.amazon.com/vpc/lattice/pricing/), [WAF association API](https://docs.aws.amazon.com/waf/latest/APIReference/API_AssociateWebACL.html) and [Lambda@Edge](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-at-the-edge.html)
+- [CNCF 2024 survey](https://www.cncf.io/reports/cncf-annual-survey-2024/) and [original report](https://www.cncf.io/wp-content/uploads/2025/04/cncf_annual_survey24_031225a.pdf), especially questions 22, 32, 47 (pages 12, 16, 22)
+- [Service-mesh comparison](01-service-mesh-comparison.md), [Istio architecture](../03-architecture.md) and [ambient guide](../advanced/01-ambient-mode.md)

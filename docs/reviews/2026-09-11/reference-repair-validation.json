@@ -1,0 +1,5054 @@
+{
+  "status": "passed-scoped-repairs",
+  "reviewedAt": "2026-09-13T01:20:06.823304+00:00",
+  "scope": "16ko/enreferencerepairsand5cn/jp/esMermaidsyntaxrepairs;notacompleted1194documentsemanticreview",
+  "changes": [
+    {
+      "path": "ko/core/06-security.md",
+      "oldUrl": "https://aws.amazon.com/blogs/containers/amazon-eks-security-best-practices/",
+      "newUrl": "https://docs.aws.amazon.com/eks/latest/best-practices/security.html",
+      "before": "3776a65a493c0f44d8e81032c26db99d474a6fbe06f925777aae1eb89811711b",
+      "after": "c78bebbb2aca10e8b20f7d1b8ba4bf053338385e5cfcbb3a2439690fee8b0f39",
+      "verification": "HTTP200"
+    },
+    {
+      "path": "en/core/06-security.md",
+      "oldUrl": "https://aws.amazon.com/blogs/containers/amazon-eks-security-best-practices/",
+      "newUrl": "https://docs.aws.amazon.com/eks/latest/best-practices/security.html",
+      "before": "c652c81b9b00828b512ae22f38da359bbeaad413fb76a3f10a3a8ea16092389f",
+      "after": "abff3075481bf99b13a18919bddb9bcdefa7f9b3d2dde59981ca9e9b70b599d5",
+      "verification": "HTTP200"
+    },
+    {
+      "path": "ko/autoscaling/02-karpenter.md",
+      "oldUrl": "https://aws.amazon.com/blogs/containers/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/",
+      "newUrl": "https://aws.amazon.com/blogs/aws/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/",
+      "before": "875893ac9e04215a5e776538cf0412dc87120a299569a84e6fd01b594ede15de",
+      "after": "8b17cc11d0f61852e755a58cb65d2c5358090c630902ae63a2de910f408ef6ec",
+      "verification": "HTTP200"
+    },
+    {
+      "path": "en/autoscaling/02-karpenter.md",
+      "oldUrl": "https://aws.amazon.com/blogs/containers/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/",
+      "newUrl": "https://aws.amazon.com/blogs/aws/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/",
+      "before": "24ea937749b37a032ff9ff0305bae8b060c91ced79dac0e86fcea592fada926b",
+      "after": "5a71fb826cf6e6c0840045a890ef9e8921eba5e0a3f7521a99c4abcf03e2fb3a",
+      "verification": "HTTP200"
+    },
+    {
+      "path": "ko/basics/05-ebpf-fundamentals.md",
+      "oldUrl": "https://cilium.io/slack",
+      "newUrl": "https://slack.cilium.io/",
+      "before": "37b410012bf688b814a97c8b561be3223f55fc4491d2d09003925509be5697ac",
+      "after": "a72f8f8c512b9fd011917ed7669c76cf3196cf35d9eb4be1dc78cf701ab43195",
+      "verification": "OfficialCiliumhomepageJSON-LDlinksnewSlackURL;target403accessblockednotmissing"
+    },
+    {
+      "path": "en/basics/05-ebpf-fundamentals.md",
+      "oldUrl": "https://cilium.io/slack",
+      "newUrl": "https://slack.cilium.io/",
+      "before": "a10b664439dec75452000b235e3e52f643d78ef044942a1428eacfb53dcc2775",
+      "after": "3ff744c485b5ae817583375a07d91c63e49c8fa66d40bb51a8e4f642f4a266a9",
+      "verification": "OfficialCiliumhomepageJSON-LDlinksnewSlackURL;target403accessblockednotmissing"
+    },
+    {
+      "path": "ko/container-registry/03-harbor.md",
+      "oldUrl": "https://docs.sigstore.dev/cosign/overview/",
+      "newUrl": "https://docs.sigstore.dev/quickstart/quickstart-cosign/",
+      "before": "d2e2ab921e6323c8520f783319393e1c9b3a620705a196e89d1c9d44e9556473",
+      "after": "619687db6f440b5e730ce51b229404fca4899da03c29a52d4bbdebabd4104f0f",
+      "verification": "HTTP200"
+    },
+    {
+      "path": "ko/container-registry/04-best-practices.md",
+      "oldUrl": "https://docs.sigstore.dev/cosign/overview/",
+      "newUrl": "https://docs.sigstore.dev/quickstart/quickstart-cosign/",
+      "before": "2a03fa12b33718b2743e972e6deffefb3a25509dbfdef30abe721ac30a666ecd",
+      "after": "151ea0fc8ae3a1ad5fd00638810d68c713bf3b63f21824f961e1c969962a2de4",
+      "verification": "HTTP200"
+    },
+    {
+      "path": "ko/basics/05-ebpf-fundamentals.md",
+      "oldUrl": "https://ebpf.io/summit/",
+      "newUrl": "https://ebpf.io/events/?conference=eBPF%20Summit",
+      "before": "a72f8f8c512b9fd011917ed7669c76cf3196cf35d9eb4be1dc78cf701ab43195",
+      "after": "00f9b691cbf4a032354c73bce4bfefe369f7770d52558bf2f0fe0ccf13dc6a00",
+      "verification": "HTTP200"
+    },
+    {
+      "path": "en/basics/05-ebpf-fundamentals.md",
+      "oldUrl": "https://ebpf.io/summit/",
+      "newUrl": "https://ebpf.io/events/?conference=eBPF%20Summit",
+      "before": "3ff744c485b5ae817583375a07d91c63e49c8fa66d40bb51a8e4f642f4a266a9",
+      "after": "dc34c85b7134b020b921bdad43e281ee59ff58d6c3099f96756cab39b49a0d70",
+      "verification": "HTTP200"
+    },
+    {
+      "path": "ko/service-mesh/istio/comparison/03-sidecar-vs-ambient.md",
+      "oldUrl": "https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/manage-traffic/index.md",
+      "newUrl": "https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/traffic-distribution/index.md",
+      "before": "71fd16c4906117865c92a4d048f29c274404ce19543f5c13a992e15b197e6466",
+      "after": "19f02a54c44bfeebc2239f9e717e1401b4c0e140b8d7775424bef49d350ea6f4",
+      "verification": "HTTP200"
+    },
+    {
+      "path": "en/service-mesh/istio/comparison/03-sidecar-vs-ambient.md",
+      "oldUrl": "https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/manage-traffic/index.md",
+      "newUrl": "https://github.com/istio/istio.io/blob/release-1.30/content/en/docs/ambient/usage/traffic-distribution/index.md",
+      "before": "83948b96afe9bcc35f4fe265fa4b4c8345a9681755a1c21ab19c8e97ab1ae5ff",
+      "after": "11610b4586fdad01a36aeb7af3b6d44337a1f94e2a91ff105cb4d7b515401505",
+      "verification": "HTTP200"
+    },
+    {
+      "path": "ko/quizzes/eks/02-eks-cluster-creation-part1-quiz.md",
+      "oldUrl": "https://github.com/kubernetes/autoscaler/tree/master/charts/cluster-autoscaler",
+      "newUrl": "https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/charts/cluster-autoscaler",
+      "before": "228892694945d3a44b1f230ecc360af495a17c793dc712048d2002a49bd8388d",
+      "after": "3e49f6874004cb980af401806104de46f00ed8c652c1798efdc7ee575a791f30",
+      "verification": "HTTP200"
+    },
+    {
+      "path": "en/quizzes/eks/02-eks-cluster-creation-part1-quiz.md",
+      "oldUrl": "https://github.com/kubernetes/autoscaler/tree/master/charts/cluster-autoscaler",
+      "newUrl": "https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/charts/cluster-autoscaler",
+      "before": "3409d0592436dcb89269dcadb258d997b75f7ddfc3e9708a964dc524c25cdc86",
+      "after": "3d875114624a792aa839624bd2c561675212ad4d68804110357bc123a6a7c758",
+      "verification": "HTTP200"
+    },
+    {
+      "path": "ko/container-registry/04-best-practices.md",
+      "oldUrl": "https://kyverno.io/docs/writing-policies/verify-images/",
+      "newUrl": "https://kyverno.io/docs/policy-types/cluster-policy/verify-images/overview/",
+      "before": "151ea0fc8ae3a1ad5fd00638810d68c713bf3b63f21824f961e1c969962a2de4",
+      "after": "3494fa8048a1ad52a4b78a03275b183c92e0d0fe05d7cb32fcdf34a739333019",
+      "verification": "OfficialKyvernodocumentnavigationandHTTP200redirectconfirmed"
+    },
+    {
+      "path": "ko/quizzes/service-mesh/linkerd/architecture.md",
+      "oldUrl": "https://linkerd.io/identity/my-pod",
+      "newUrl": null,
+      "before": "c84ee02bc131e69d235b77fb542f659341a5e620013105ddb5941373ca692091",
+      "after": "0ff5df029a97555e28364400b94bf6894c22aaf7c45c56386d43dd3aebfda2d2",
+      "verification": "QuizdistractorisillustrativeidentityURI;renderasinlinecodeinsteadofclickableautolink,wordingunchanged"
+    },
+    {
+      "path": "en/quizzes/service-mesh/linkerd/architecture.md",
+      "oldUrl": "https://linkerd.io/identity/my-pod",
+      "newUrl": null,
+      "before": "550eb3c4becd636feafbcf1f6abc9dc7ae288ad83c375aa21202a797c292d525",
+      "after": "c133b077ffb91ae1b15a8f5e2b0d145d600e7d84662f53baba62949def7b95fe",
+      "verification": "QuizdistractorisillustrativeidentityURI;renderasinlinecodeinsteadofclickableautolink,wordingunchanged"
+    },
+    {
+      "path": "ko/basics/03-container-technology.md",
+      "oldUrl": "https://www.cncf.io/blog/2019/06/27/an-introduction-to-container-runtimes/",
+      "newUrl": "https://kubernetes.io/docs/setup/production-environment/container-runtimes/",
+      "before": "1f991b06e76fe54be74cc2162656fa43360604ac74dfdd7dc255899749760e71",
+      "after": "d4ad433425ad62a93dd5b2d5bfa103cda15cc301e2785830b98529b5a531d68c",
+      "verification": "HTTP200officialKubernetesruntimeoverview;labelchangedtomatchsource",
+      "replacementSha256": "247fe93ad046ec08aa666355eb454620fc89737db037e02e82a4d75c4c2104cc"
+    },
+    {
+      "path": "en/basics/03-container-technology.md",
+      "oldUrl": "https://www.cncf.io/blog/2019/06/27/an-introduction-to-container-runtimes/",
+      "newUrl": "https://kubernetes.io/docs/setup/production-environment/container-runtimes/",
+      "before": "0e1ab441956c6e509035df611e34a623231c72b5b0db3695b18d9b362e466fa2",
+      "after": "cccec0afb9cd5416f4b3e40ceaf5518d2bb6843b3bdaaa15b644b0ca578fd0b1",
+      "verification": "HTTP200officialKubernetesruntimeoverview;labelchangedtomatchsource",
+      "replacementSha256": "247fe93ad046ec08aa666355eb454620fc89737db037e02e82a4d75c4c2104cc"
+    }
+  ],
+  "legacyChanges": [
+    {
+      "path": "cn/ai-ml/ray/03-ray-train-tune.md",
+      "before": "1d348e46d4cc6b695bec53d0304e1a25a38ea53c0f429e4246963d81be509d8b",
+      "after": "332b265b64ba60d1434c46bbfe4d51d85c0085ab5e1e09810e4dc3b9e6b8f3ea",
+      "fix": "RemoveextraMermaidcylinderparenthesesonly"
+    },
+    {
+      "path": "es/ai-ml/ray/03-ray-train-tune.md",
+      "before": "88706517b559edd5d2e890cdb54f927d40db01b767f0331a94e4e3a44e45426b",
+      "after": "33c5fe8c6d46c3c945025aacbd9c814a8e47bf6ad770e1e7d10b6decf885e3f3",
+      "fix": "RemoveextraMermaidcylinderparenthesesonly"
+    },
+    {
+      "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "before": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+      "after": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+      "fix": "QuoteMermaidlabelcontainingnestedbracketsonly"
+    },
+    {
+      "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "before": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+      "after": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+      "fix": "QuoteMermaidlabelcontainingnestedbracketsonly"
+    },
+    {
+      "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+      "before": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+      "after": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+      "fix": "QuoteMermaidlabelcontainingnestedbracketsonly"
+    }
+  ],
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/autoscaling/02-karpenter.md",
+        "sha256": "5a71fb826cf6e6c0840045a890ef9e8921eba5e0a3f7521a99c4abcf03e2fb3a",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "karpenter"
+          },
+          {
+            "tag": "h2",
+            "id": "table-of-contents"
+          },
+          {
+            "tag": "h2",
+            "id": "introduction"
+          },
+          {
+            "tag": "h3",
+            "id": "key-benefits-of-karpenter"
+          },
+          {
+            "tag": "h3",
+            "id": "comparison-with-existing-autoscalers"
+          },
+          {
+            "tag": "h2",
+            "id": "architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "karpenter-workflow"
+          },
+          {
+            "tag": "h3",
+            "id": "key-components"
+          },
+          {
+            "tag": "h3",
+            "id": "how-it-works"
+          },
+          {
+            "tag": "h2",
+            "id": "installation-and-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "prerequisites"
+          },
+          {
+            "tag": "h3",
+            "id": "installing-on-aws-eks"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-iam-role-and-policy-setup"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-installation-using-helm"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-verify-installation"
+          },
+          {
+            "tag": "h3",
+            "id": "basic-nodepool-and-ec2nodeclass-configuration"
+          },
+          {
+            "tag": "h2",
+            "id": "nodepool"
+          },
+          {
+            "tag": "h3",
+            "id": "basic-nodepool-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "requirements-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "limits-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "experimental-dra-allocation-tracking-v1-13"
+          },
+          {
+            "tag": "h3",
+            "id": "node-expiration-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "recognizing-nodereadinesscontroller-taints-v1-13"
+          },
+          {
+            "tag": "h3",
+            "id": "july-2026-update-v1-14-released"
+          },
+          {
+            "tag": "h3",
+            "id": "august-2026-update-v1-14-1-patch-release"
+          },
+          {
+            "tag": "h2",
+            "id": "node-classes"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-ec2nodeclass-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "subnet-and-security-group-selection"
+          },
+          {
+            "tag": "h3",
+            "id": "ami-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "block-device-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "user-data-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "node-consolidation-process"
+          },
+          {
+            "tag": "h2",
+            "id": "interruption-handling"
+          },
+          {
+            "tag": "h3",
+            "id": "integrated-interruption-handling"
+          },
+          {
+            "tag": "h3",
+            "id": "interruption-handling-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "draining-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "pdb-poddisruptionbudget-integration"
+          },
+          {
+            "tag": "h2",
+            "id": "integration"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes-integration"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-pod-topology-spread-constraints"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-pod-affinity-anti-affinity"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-taints-and-tolerations"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-integration"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-ec2-spot-instances"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-ec2-instance-profiles"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-replacing-launch-templates-ec2nodeclass"
+          },
+          {
+            "tag": "h2",
+            "id": "integration-with-amazon-eks"
+          },
+          {
+            "tag": "h3",
+            "id": "eks-cluster-preparation"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-cluster-tag-setup"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-iam-role-setup"
+          },
+          {
+            "tag": "h3",
+            "id": "installing-karpenter-on-eks-cluster"
+          },
+          {
+            "tag": "h3",
+            "id": "using-with-eks-managed-node-groups"
+          },
+          {
+            "tag": "h3",
+            "id": "using-with-eks-fargate"
+          },
+          {
+            "tag": "h3",
+            "id": "az-failure-response-amazon-arc-zonal-shift-integration-may-2026"
+          },
+          {
+            "tag": "h3",
+            "id": "eks-cost-optimization"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-using-spot-instances"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-using-diverse-instance-types"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-enabling-node-consolidation"
+          },
+          {
+            "tag": "h2",
+            "id": "best-practices"
+          },
+          {
+            "tag": "h3",
+            "id": "performance-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "cost-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "availability-improvement"
+          },
+          {
+            "tag": "h2",
+            "id": "troubleshooting"
+          },
+          {
+            "tag": "h3",
+            "id": "common-issues"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-node-provisioning-failure"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-node-removal-issues"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-instance-type-selection-issues"
+          },
+          {
+            "tag": "h3",
+            "id": "debugging-tools"
+          },
+          {
+            "tag": "h2",
+            "id": "conclusion"
+          },
+          {
+            "tag": "h3",
+            "id": "next-steps"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "karpenter",
+          "table-of-contents",
+          "introduction",
+          "key-benefits-of-karpenter",
+          "comparison-with-existing-autoscalers",
+          "architecture",
+          "karpenter-workflow",
+          "key-components",
+          "how-it-works",
+          "installation-and-configuration",
+          "prerequisites",
+          "installing-on-aws-eks",
+          "_1-iam-role-and-policy-setup",
+          "_2-installation-using-helm",
+          "_3-verify-installation",
+          "basic-nodepool-and-ec2nodeclass-configuration",
+          "nodepool",
+          "basic-nodepool-configuration",
+          "requirements-configuration",
+          "limits-configuration",
+          "experimental-dra-allocation-tracking-v1-13",
+          "node-expiration-configuration",
+          "recognizing-nodereadinesscontroller-taints-v1-13",
+          "july-2026-update-v1-14-released",
+          "august-2026-update-v1-14-1-patch-release",
+          "node-classes",
+          "aws-ec2nodeclass-configuration",
+          "subnet-and-security-group-selection",
+          "ami-configuration",
+          "block-device-configuration",
+          "user-data-configuration",
+          "node-consolidation-process",
+          "interruption-handling",
+          "integrated-interruption-handling",
+          "interruption-handling-configuration",
+          "draining-configuration",
+          "pdb-poddisruptionbudget-integration",
+          "integration",
+          "kubernetes-integration",
+          "_1-pod-topology-spread-constraints",
+          "_2-pod-affinity-anti-affinity",
+          "_3-taints-and-tolerations",
+          "aws-integration",
+          "_1-ec2-spot-instances",
+          "_2-ec2-instance-profiles",
+          "_3-replacing-launch-templates-ec2nodeclass",
+          "integration-with-amazon-eks",
+          "eks-cluster-preparation",
+          "_1-cluster-tag-setup",
+          "_2-iam-role-setup",
+          "installing-karpenter-on-eks-cluster",
+          "using-with-eks-managed-node-groups",
+          "using-with-eks-fargate",
+          "az-failure-response-amazon-arc-zonal-shift-integration-may-2026",
+          "eks-cost-optimization",
+          "_1-using-spot-instances",
+          "_2-using-diverse-instance-types",
+          "_3-enabling-node-consolidation",
+          "best-practices",
+          "performance-optimization",
+          "cost-optimization",
+          "availability-improvement",
+          "troubleshooting",
+          "common-issues",
+          "_1-node-provisioning-failure",
+          "_2-node-removal-issues",
+          "_3-instance-type-selection-issues",
+          "debugging-tools",
+          "conclusion",
+          "next-steps",
+          "references",
+          "quiz"
+        ]
+      },
+      {
+        "path": "en/basics/03-container-technology.md",
+        "sha256": "cccec0afb9cd5416f4b3e40ceaf5518d2bb6843b3bdaaa15b644b0ca578fd0b1",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "container-technology"
+          },
+          {
+            "tag": "h2",
+            "id": "table-of-contents"
+          },
+          {
+            "tag": "h2",
+            "id": "what-is-a-container"
+          },
+          {
+            "tag": "h3",
+            "id": "key-characteristics-of-containers"
+          },
+          {
+            "tag": "h3",
+            "id": "history-of-container-technology"
+          },
+          {
+            "tag": "h2",
+            "id": "container-vs-virtual-machine"
+          },
+          {
+            "tag": "h3",
+            "id": "virtual-machine-architecture-vs-container-architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "key-differences"
+          },
+          {
+            "tag": "h2",
+            "id": "technical-foundation-of-containers"
+          },
+          {
+            "tag": "h3",
+            "id": "isolation-through-namespaces"
+          },
+          {
+            "tag": "h3",
+            "id": "resource-limiting-through-cgroups"
+          },
+          {
+            "tag": "h3",
+            "id": "layer-management-through-overlayfs"
+          },
+          {
+            "tag": "h3",
+            "id": "lab-understanding-container-technical-foundation"
+          },
+          {
+            "tag": "h2",
+            "id": "container-runtime"
+          },
+          {
+            "tag": "h3",
+            "id": "container-runtime-hierarchy"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes-container-runtime-interface-cri"
+          },
+          {
+            "tag": "h2",
+            "id": "container-images"
+          },
+          {
+            "tag": "h3",
+            "id": "image-layers"
+          },
+          {
+            "tag": "h3",
+            "id": "image-registries"
+          },
+          {
+            "tag": "h3",
+            "id": "image-tags-and-digests"
+          },
+          {
+            "tag": "h2",
+            "id": "dockerfile"
+          },
+          {
+            "tag": "h3",
+            "id": "key-dockerfile-instructions"
+          },
+          {
+            "tag": "h3",
+            "id": "multi-stage-builds"
+          },
+          {
+            "tag": "h3",
+            "id": "image-optimization-techniques"
+          },
+          {
+            "tag": "h2",
+            "id": "container-networking"
+          },
+          {
+            "tag": "h3",
+            "id": "network-drivers"
+          },
+          {
+            "tag": "h3",
+            "id": "port-mapping"
+          },
+          {
+            "tag": "h3",
+            "id": "container-to-container-communication"
+          },
+          {
+            "tag": "h2",
+            "id": "container-storage"
+          },
+          {
+            "tag": "h3",
+            "id": "storage-types"
+          },
+          {
+            "tag": "h3",
+            "id": "volume-usage-examples"
+          },
+          {
+            "tag": "h3",
+            "id": "data-sharing-patterns"
+          },
+          {
+            "tag": "h2",
+            "id": "container-security"
+          },
+          {
+            "tag": "h3",
+            "id": "image-security"
+          },
+          {
+            "tag": "h3",
+            "id": "runtime-security"
+          },
+          {
+            "tag": "h3",
+            "id": "security-best-practices"
+          },
+          {
+            "tag": "h2",
+            "id": "container-lifecycle-management"
+          },
+          {
+            "tag": "h3",
+            "id": "container-states"
+          },
+          {
+            "tag": "h3",
+            "id": "creating-and-running-containers"
+          },
+          {
+            "tag": "h3",
+            "id": "controlling-containers"
+          },
+          {
+            "tag": "h3",
+            "id": "container-logging-and-monitoring"
+          },
+          {
+            "tag": "h3",
+            "id": "cleaning-up-containers"
+          },
+          {
+            "tag": "h3",
+            "id": "health-checks"
+          },
+          {
+            "tag": "h3",
+            "id": "restart-policies"
+          },
+          {
+            "tag": "h3",
+            "id": "debugging-containers"
+          },
+          {
+            "tag": "h2",
+            "id": "container-orchestration"
+          },
+          {
+            "tag": "h3",
+            "id": "major-orchestration-tools"
+          },
+          {
+            "tag": "h3",
+            "id": "key-features-of-orchestration"
+          },
+          {
+            "tag": "h2",
+            "id": "containers-on-aws"
+          },
+          {
+            "tag": "h3",
+            "id": "amazon-ecs-elastic-container-service"
+          },
+          {
+            "tag": "h3",
+            "id": "amazon-eks-elastic-kubernetes-service"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-fargate"
+          },
+          {
+            "tag": "h3",
+            "id": "amazon-ecr-elastic-container-registry"
+          },
+          {
+            "tag": "h2",
+            "id": "glossary"
+          },
+          {
+            "tag": "h2",
+            "id": "conclusion"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          },
+          {
+            "tag": "h2",
+            "id": "verification-references"
+          }
+        ],
+        "renderedIds": [
+          "container-technology",
+          "table-of-contents",
+          "what-is-a-container",
+          "key-characteristics-of-containers",
+          "history-of-container-technology",
+          "container-vs-virtual-machine",
+          "virtual-machine-architecture-vs-container-architecture",
+          "key-differences",
+          "technical-foundation-of-containers",
+          "isolation-through-namespaces",
+          "resource-limiting-through-cgroups",
+          "layer-management-through-overlayfs",
+          "lab-understanding-container-technical-foundation",
+          "container-runtime",
+          "container-runtime-hierarchy",
+          "kubernetes-container-runtime-interface-cri",
+          "container-images",
+          "image-layers",
+          "image-registries",
+          "image-tags-and-digests",
+          "dockerfile",
+          "key-dockerfile-instructions",
+          "multi-stage-builds",
+          "image-optimization-techniques",
+          "container-networking",
+          "network-drivers",
+          "port-mapping",
+          "container-to-container-communication",
+          "container-storage",
+          "storage-types",
+          "volume-usage-examples",
+          "data-sharing-patterns",
+          "container-security",
+          "image-security",
+          "runtime-security",
+          "security-best-practices",
+          "container-lifecycle-management",
+          "container-states",
+          "creating-and-running-containers",
+          "controlling-containers",
+          "container-logging-and-monitoring",
+          "cleaning-up-containers",
+          "health-checks",
+          "restart-policies",
+          "debugging-containers",
+          "container-orchestration",
+          "major-orchestration-tools",
+          "key-features-of-orchestration",
+          "containers-on-aws",
+          "amazon-ecs-elastic-container-service",
+          "amazon-eks-elastic-kubernetes-service",
+          "aws-fargate",
+          "amazon-ecr-elastic-container-registry",
+          "glossary",
+          "conclusion",
+          "quiz",
+          "references",
+          "verification-references"
+        ]
+      },
+      {
+        "path": "en/basics/05-ebpf-fundamentals.md",
+        "sha256": "dc34c85b7134b020b921bdad43e281ee59ff58d6c3099f96756cab39b49a0d70",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ebpf-fundamentals-and-kubernetes-applications"
+          },
+          {
+            "tag": "h2",
+            "id": "table-of-contents"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-environment-setup"
+          },
+          {
+            "tag": "h3",
+            "id": "prerequisites"
+          },
+          {
+            "tag": "h3",
+            "id": "environment-setup"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-introduction-to-ebpf"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-1-what-is-ebpf"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-2-evolution-from-traditional-bpf-to-ebpf"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-3-why-ebpf-is-revolutionary"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-4-ebpf-vs-kernel-module-comparison"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-ebpf-architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-1-ebpf-execution-flow"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-2-verifier"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-3-jit-compiler"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-4-ebpf-maps"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-5-helper-functions"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-6-program-lifecycle"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-ebpf-program-types"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-1-xdp-express-data-path"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-2-tc-traffic-control"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-3-kprobes-uprobes"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-4-tracepoints"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-5-lsm-linux-security-module-bpf"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-6-socket-filter"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-7-cgroup-programs"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-ebpf-development-tools"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-1-bpftool"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-2-bpftrace"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-3-bcc-bpf-compiler-collection"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-4-libbpf-and-co-re"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-ebpf-and-kubernetes-networking"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-1-cilium-ebpf-based-cni"
+          },
+          {
+            "tag": "h4",
+            "id": "kube-proxy-replacement"
+          },
+          {
+            "tag": "h4",
+            "id": "network-policy"
+          },
+          {
+            "tag": "h4",
+            "id": "load-balancing"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-2-calico-ebpf-mode"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-3-performance-comparison-iptables-vs-ebpf"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-ebpf-based-observability"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-1-hubble-cilium-network-observability"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-2-pixie-auto-instrumentation-observability"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-3-coroot-no-code-monitoring"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-4-kepler-energy-consumption-monitoring"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-5-traditional-agents-vs-ebpf-instrumentation-comparison"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-ebpf-based-security"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-1-tetragon-runtime-security"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-2-falco-ebpf-based-anomaly-detection"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-3-seccomp-bpf-system-call-filtering"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-4-lsm-bpf-dynamic-security-policies"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-practical-ebpf-examples"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-1-system-performance-analysis-with-bpftrace"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-2-network-flow-observation-with-cilium-hubble"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-3-process-security-monitoring-with-tetragon"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-4-latency-analysis-with-ebpf"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-ebpf-limitations-and-considerations"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-1-technical-limitations"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-2-loop-limitations"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-3-kernel-version-compatibility"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-4-debugging-challenges"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-5-privilege-requirements"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-6-security-considerations"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-next-steps"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-1-related-quiz"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-2-advanced-learning-resources"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-3-related-documents"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-4-hands-on-checklist"
+          },
+          {
+            "tag": "h2",
+            "id": "summary"
+          },
+          {
+            "tag": "h2",
+            "id": "verification-references"
+          }
+        ],
+        "renderedIds": [
+          "ebpf-fundamentals-and-kubernetes-applications",
+          "table-of-contents",
+          "lab-environment-setup",
+          "prerequisites",
+          "environment-setup",
+          "_1-introduction-to-ebpf",
+          "_1-1-what-is-ebpf",
+          "_1-2-evolution-from-traditional-bpf-to-ebpf",
+          "_1-3-why-ebpf-is-revolutionary",
+          "_1-4-ebpf-vs-kernel-module-comparison",
+          "_2-ebpf-architecture",
+          "_2-1-ebpf-execution-flow",
+          "_2-2-verifier",
+          "_2-3-jit-compiler",
+          "_2-4-ebpf-maps",
+          "_2-5-helper-functions",
+          "_2-6-program-lifecycle",
+          "_3-ebpf-program-types",
+          "_3-1-xdp-express-data-path",
+          "_3-2-tc-traffic-control",
+          "_3-3-kprobes-uprobes",
+          "_3-4-tracepoints",
+          "_3-5-lsm-linux-security-module-bpf",
+          "_3-6-socket-filter",
+          "_3-7-cgroup-programs",
+          "_4-ebpf-development-tools",
+          "_4-1-bpftool",
+          "_4-2-bpftrace",
+          "_4-3-bcc-bpf-compiler-collection",
+          "_4-4-libbpf-and-co-re",
+          "_5-ebpf-and-kubernetes-networking",
+          "_5-1-cilium-ebpf-based-cni",
+          "kube-proxy-replacement",
+          "network-policy",
+          "load-balancing",
+          "_5-2-calico-ebpf-mode",
+          "_5-3-performance-comparison-iptables-vs-ebpf",
+          "_6-ebpf-based-observability",
+          "_6-1-hubble-cilium-network-observability",
+          "_6-2-pixie-auto-instrumentation-observability",
+          "_6-3-coroot-no-code-monitoring",
+          "_6-4-kepler-energy-consumption-monitoring",
+          "_6-5-traditional-agents-vs-ebpf-instrumentation-comparison",
+          "_7-ebpf-based-security",
+          "_7-1-tetragon-runtime-security",
+          "_7-2-falco-ebpf-based-anomaly-detection",
+          "_7-3-seccomp-bpf-system-call-filtering",
+          "_7-4-lsm-bpf-dynamic-security-policies",
+          "_8-practical-ebpf-examples",
+          "_8-1-system-performance-analysis-with-bpftrace",
+          "_8-2-network-flow-observation-with-cilium-hubble",
+          "_8-3-process-security-monitoring-with-tetragon",
+          "_8-4-latency-analysis-with-ebpf",
+          "_9-ebpf-limitations-and-considerations",
+          "_9-1-technical-limitations",
+          "_9-2-loop-limitations",
+          "_9-3-kernel-version-compatibility",
+          "_9-4-debugging-challenges",
+          "_9-5-privilege-requirements",
+          "_9-6-security-considerations",
+          "_10-next-steps",
+          "_10-1-related-quiz",
+          "_10-2-advanced-learning-resources",
+          "_10-3-related-documents",
+          "_10-4-hands-on-checklist",
+          "summary",
+          "verification-references"
+        ]
+      },
+      {
+        "path": "en/core/06-security.md",
+        "sha256": "abff3075481bf99b13a18919bddb9bcdefa7f9b3d2dde59981ca9e9b70b599d5",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubernetes-security"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-environment-setup"
+          },
+          {
+            "tag": "h3",
+            "id": "required-tools"
+          },
+          {
+            "tag": "h3",
+            "id": "security-example-setup"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes-security-architecture"
+          },
+          {
+            "tag": "h2",
+            "id": "table-of-contents"
+          },
+          {
+            "tag": "h2",
+            "id": "security-overview"
+          },
+          {
+            "tag": "h3",
+            "id": "security-area-comparison"
+          },
+          {
+            "tag": "h3",
+            "id": "security-principles"
+          },
+          {
+            "tag": "h2",
+            "id": "authentication"
+          },
+          {
+            "tag": "h3",
+            "id": "x-509-certificates"
+          },
+          {
+            "tag": "h3",
+            "id": "service-account-tokens"
+          },
+          {
+            "tag": "h3",
+            "id": "openid-connect-oidc"
+          },
+          {
+            "tag": "h3",
+            "id": "webhook-token-authentication"
+          },
+          {
+            "tag": "h3",
+            "id": "authentication-proxy"
+          },
+          {
+            "tag": "h2",
+            "id": "authorization"
+          },
+          {
+            "tag": "h3",
+            "id": "rbac-role-based-access-control"
+          },
+          {
+            "tag": "h4",
+            "id": "role-and-clusterrole"
+          },
+          {
+            "tag": "h4",
+            "id": "rolebinding-and-clusterrolebinding"
+          },
+          {
+            "tag": "h3",
+            "id": "abac-attribute-based-access-control"
+          },
+          {
+            "tag": "h3",
+            "id": "node-authorization"
+          },
+          {
+            "tag": "h3",
+            "id": "webhook-authorization"
+          },
+          {
+            "tag": "h2",
+            "id": "security-context"
+          },
+          {
+            "tag": "h3",
+            "id": "pod-security-context"
+          },
+          {
+            "tag": "h3",
+            "id": "pod-security-standards"
+          },
+          {
+            "tag": "h2",
+            "id": "network-policy"
+          },
+          {
+            "tag": "h2",
+            "id": "secret-management"
+          },
+          {
+            "tag": "h3",
+            "id": "secret-encryption"
+          },
+          {
+            "tag": "h3",
+            "id": "external-secret-management"
+          },
+          {
+            "tag": "h2",
+            "id": "image-security"
+          },
+          {
+            "tag": "h3",
+            "id": "image-vulnerability-scanning"
+          },
+          {
+            "tag": "h3",
+            "id": "image-signing-and-verification"
+          },
+          {
+            "tag": "h3",
+            "id": "image-policies"
+          },
+          {
+            "tag": "h2",
+            "id": "audit"
+          },
+          {
+            "tag": "h2",
+            "id": "audit-policy"
+          },
+          {
+            "tag": "h2",
+            "id": "audit-log-backends"
+          },
+          {
+            "tag": "h2",
+            "id": "amazon-eks-security-enhancement"
+          },
+          {
+            "tag": "h3",
+            "id": "iam-roles-and-service-accounts-irsa"
+          },
+          {
+            "tag": "h3",
+            "id": "secret-encryption-with-aws-kms"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-security-groups"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-waf"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-guardduty"
+          },
+          {
+            "tag": "h2",
+            "id": "security-best-practices"
+          },
+          {
+            "tag": "h3",
+            "id": "cluster-security"
+          },
+          {
+            "tag": "h3",
+            "id": "workload-security"
+          },
+          {
+            "tag": "h3",
+            "id": "image-security-1"
+          },
+          {
+            "tag": "h2",
+            "id": "secret-management-1"
+          },
+          {
+            "tag": "h2",
+            "id": "conclusion"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "kubernetes-security",
+          "lab-environment-setup",
+          "required-tools",
+          "security-example-setup",
+          "kubernetes-security-architecture",
+          "table-of-contents",
+          "security-overview",
+          "security-area-comparison",
+          "security-principles",
+          "authentication",
+          "x-509-certificates",
+          "service-account-tokens",
+          "openid-connect-oidc",
+          "webhook-token-authentication",
+          "authentication-proxy",
+          "authorization",
+          "rbac-role-based-access-control",
+          "role-and-clusterrole",
+          "rolebinding-and-clusterrolebinding",
+          "abac-attribute-based-access-control",
+          "node-authorization",
+          "webhook-authorization",
+          "security-context",
+          "pod-security-context",
+          "pod-security-standards",
+          "network-policy",
+          "secret-management",
+          "secret-encryption",
+          "external-secret-management",
+          "image-security",
+          "image-vulnerability-scanning",
+          "image-signing-and-verification",
+          "image-policies",
+          "audit",
+          "audit-policy",
+          "audit-log-backends",
+          "amazon-eks-security-enhancement",
+          "iam-roles-and-service-accounts-irsa",
+          "secret-encryption-with-aws-kms",
+          "aws-security-groups",
+          "aws-waf",
+          "aws-guardduty",
+          "security-best-practices",
+          "cluster-security",
+          "workload-security",
+          "image-security-1",
+          "secret-management-1",
+          "conclusion",
+          "quiz",
+          "references"
+        ]
+      },
+      {
+        "path": "en/quizzes/eks/02-eks-cluster-creation-part1-quiz.md",
+        "sha256": "3d875114624a792aa839624bd2c561675212ad4d68804110357bc123a6a7c758",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "eks-cluster-creation-quiz-part-1"
+          },
+          {
+            "tag": "h2",
+            "id": "basic-concept-questions"
+          },
+          {
+            "tag": "h2",
+            "id": "hands-on-exercises"
+          },
+          {
+            "tag": "h3",
+            "id": "exercise-1-create-eks-cluster-using-eksctl"
+          },
+          {
+            "tag": "h3",
+            "id": "exercise-2-create-eks-cluster-using-aws-management-console"
+          },
+          {
+            "tag": "h2",
+            "id": "advanced-topics"
+          },
+          {
+            "tag": "h2",
+            "id": "official-references"
+          }
+        ],
+        "renderedIds": [
+          "eks-cluster-creation-quiz-part-1",
+          "basic-concept-questions",
+          "hands-on-exercises",
+          "exercise-1-create-eks-cluster-using-eksctl",
+          "exercise-2-create-eks-cluster-using-aws-management-console",
+          "advanced-topics",
+          "official-references"
+        ]
+      },
+      {
+        "path": "en/quizzes/service-mesh/linkerd/architecture.md",
+        "sha256": "c133b077ffb91ae1b15a8f5e2b0d145d600e7d84662f53baba62949def7b95fe",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "linkerd-architecture-quiz"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-which-is-not-a-linkerd-control-plane-component"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-which-language-is-linkerd2-proxy-written-in"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-which-is-not-a-primary-destination-responsibility"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-what-is-the-trust-basis-at-the-top-of-the-default-certificate-hierarchy"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-what-is-the-nominal-default-workload-certificate-lifetime"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-what-kubernetes-mechanism-performs-automatic-proxy-injection"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-what-does-linkerd-init-do-when-linkerd-cni-is-not-used"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-what-is-the-default-inbound-proxy-port"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-for-serviceaccount-web-service-in-my-app-what-is-the-default-kubernetes-identity-when-the-control-plane-namespace-is-linkerd-and-trust-domain-is-cluster-local"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-which-comparison-is-justified-without-a-matched-benchmark"
+          },
+          {
+            "tag": "h3",
+            "id": "_11-what-does-the-default-kubernetes-identity-validator-check"
+          },
+          {
+            "tag": "h3",
+            "id": "_12-how-are-dynamically-updated-routing-policy-settings-normally-delivered-to-the-proxy"
+          }
+        ],
+        "renderedIds": [
+          "linkerd-architecture-quiz",
+          "_1-which-is-not-a-linkerd-control-plane-component",
+          "_2-which-language-is-linkerd2-proxy-written-in",
+          "_3-which-is-not-a-primary-destination-responsibility",
+          "_4-what-is-the-trust-basis-at-the-top-of-the-default-certificate-hierarchy",
+          "_5-what-is-the-nominal-default-workload-certificate-lifetime",
+          "_6-what-kubernetes-mechanism-performs-automatic-proxy-injection",
+          "_7-what-does-linkerd-init-do-when-linkerd-cni-is-not-used",
+          "_8-what-is-the-default-inbound-proxy-port",
+          "_9-for-serviceaccount-web-service-in-my-app-what-is-the-default-kubernetes-identity-when-the-control-plane-namespace-is-linkerd-and-trust-domain-is-cluster-local",
+          "_10-which-comparison-is-justified-without-a-matched-benchmark",
+          "_11-what-does-the-default-kubernetes-identity-validator-check",
+          "_12-how-are-dynamically-updated-routing-policy-settings-normally-delivered-to-the-proxy"
+        ]
+      },
+      {
+        "path": "en/service-mesh/istio/comparison/03-sidecar-vs-ambient.md",
+        "sha256": "11610b4586fdad01a36aeb7af3b6d44337a1f94e2a91ff105cb4d7b515401505",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "sidecar-vs-ambient-mode-selection-guide-eks-1-36-test-results"
+          },
+          {
+            "tag": "h2",
+            "id": "decision-summary"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-mtls-—-test-results-eks-1-36-2-istio-1-30-2"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-networkpolicy-—-test-results"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-latency-—-test-results-t5"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-zero-downtime-rollout-—-503-test-results-core-finding"
+          },
+          {
+            "tag": "h3",
+            "id": "background"
+          },
+          {
+            "tag": "h3",
+            "id": "results"
+          },
+          {
+            "tag": "h3",
+            "id": "follow-up-after-graceful-shutdown-hardening"
+          },
+          {
+            "tag": "h3",
+            "id": "the-risk-of-retry-as-a-mitigation-—-test-results-t2"
+          },
+          {
+            "tag": "h3",
+            "id": "separate-raw-failures-from-failures-hidden-by-retry"
+          },
+          {
+            "tag": "h3",
+            "id": "a-note-on-test-isolation"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-recommendation-a-tiered-approach"
+          },
+          {
+            "tag": "h3",
+            "id": "l4-only-s-limitations-—-can-i-still-do-canary-deployments"
+          },
+          {
+            "tag": "h2",
+            "id": "appendix-reproducing-these-tests"
+          },
+          {
+            "tag": "h3",
+            "id": "a-cluster-provisioning-eksctl"
+          },
+          {
+            "tag": "h3",
+            "id": "b-istio-install-gateway-api-crds-ambient-profile"
+          },
+          {
+            "tag": "h3",
+            "id": "c-namespace-and-workload-manifests"
+          },
+          {
+            "tag": "h3",
+            "id": "d-mtls-—-peerauthentication-§1"
+          },
+          {
+            "tag": "h3",
+            "id": "e-networkpolicy-§2"
+          },
+          {
+            "tag": "h3",
+            "id": "f-rollout-503-test-t1-§4"
+          },
+          {
+            "tag": "h3",
+            "id": "g-latency-test-t5-§3"
+          },
+          {
+            "tag": "h3",
+            "id": "h-duplicate-execution-observation-t2-§4"
+          },
+          {
+            "tag": "h2",
+            "id": "references-and-verification-boundaries"
+          }
+        ],
+        "renderedIds": [
+          "sidecar-vs-ambient-mode-selection-guide-eks-1-36-test-results",
+          "decision-summary",
+          "_1-mtls-—-test-results-eks-1-36-2-istio-1-30-2",
+          "_2-networkpolicy-—-test-results",
+          "_3-latency-—-test-results-t5",
+          "_4-zero-downtime-rollout-—-503-test-results-core-finding",
+          "background",
+          "results",
+          "follow-up-after-graceful-shutdown-hardening",
+          "the-risk-of-retry-as-a-mitigation-—-test-results-t2",
+          "separate-raw-failures-from-failures-hidden-by-retry",
+          "a-note-on-test-isolation",
+          "_5-recommendation-a-tiered-approach",
+          "l4-only-s-limitations-—-can-i-still-do-canary-deployments",
+          "appendix-reproducing-these-tests",
+          "a-cluster-provisioning-eksctl",
+          "b-istio-install-gateway-api-crds-ambient-profile",
+          "c-namespace-and-workload-manifests",
+          "d-mtls-—-peerauthentication-§1",
+          "e-networkpolicy-§2",
+          "f-rollout-503-test-t1-§4",
+          "g-latency-test-t5-§3",
+          "h-duplicate-execution-observation-t2-§4",
+          "references-and-verification-boundaries"
+        ]
+      },
+      {
+        "path": "ko/autoscaling/02-karpenter.md",
+        "sha256": "8b17cc11d0f61852e755a58cb65d2c5358090c630902ae63a2de910f408ef6ec",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "karpenter"
+          },
+          {
+            "tag": "h2",
+            "id": "목차"
+          },
+          {
+            "tag": "h2",
+            "id": "소개"
+          },
+          {
+            "tag": "h3",
+            "id": "karpenter의-주요-이점"
+          },
+          {
+            "tag": "h3",
+            "id": "기존-오토스케일러와의-비교"
+          },
+          {
+            "tag": "h2",
+            "id": "아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "karpenter-워크플로우"
+          },
+          {
+            "tag": "h3",
+            "id": "주요-구성-요소"
+          },
+          {
+            "tag": "h3",
+            "id": "작동-방식"
+          },
+          {
+            "tag": "h2",
+            "id": "설치-및-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "사전-요구-사항"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-eks에-설치"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-iam-역할-및-정책-설정"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-helm을-사용한-설치"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-설치-확인"
+          },
+          {
+            "tag": "h3",
+            "id": "기본-nodepool-및-ec2nodeclass-구성"
+          },
+          {
+            "tag": "h2",
+            "id": "nodepool"
+          },
+          {
+            "tag": "h3",
+            "id": "기본-nodepool-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "요구-사항-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "제한-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "실험적인-dra-할당-추적-v1-13"
+          },
+          {
+            "tag": "h3",
+            "id": "노드-만료-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "nodereadinesscontroller-taint-인식-v1-13"
+          },
+          {
+            "tag": "h3",
+            "id": "_2026년-7월-업데이트-v1-14-릴리스"
+          },
+          {
+            "tag": "h3",
+            "id": "_2026년-8월-업데이트-v1-14-1-패치-릴리스"
+          },
+          {
+            "tag": "h2",
+            "id": "노드-클래스"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-ec2nodeclass-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "서브넷-및-보안-그룹-선택"
+          },
+          {
+            "tag": "h3",
+            "id": "ami-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "블록-디바이스-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "사용자-데이터-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "노드-통합-프로세스"
+          },
+          {
+            "tag": "h2",
+            "id": "인터럽션-처리"
+          },
+          {
+            "tag": "h3",
+            "id": "통합-인터럽션-처리"
+          },
+          {
+            "tag": "h3",
+            "id": "인터럽션-처리-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "드레이닝-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "pdb-poddisruptionbudget-통합"
+          },
+          {
+            "tag": "h2",
+            "id": "통합"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes-통합"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-pod-topology-spread-constraints"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-pod-affinity-anti-affinity"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-테인트-및-허용-오차"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-통합"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-ec2-spot-인스턴스"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-ec2-인스턴스-프로필"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-launch-template-대체-ec2nodeclass"
+          },
+          {
+            "tag": "h2",
+            "id": "amazon-eks와의-통합"
+          },
+          {
+            "tag": "h3",
+            "id": "eks-클러스터-준비"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-클러스터-태그-설정"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-iam-역할-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "eks-클러스터에-karpenter-설치"
+          },
+          {
+            "tag": "h3",
+            "id": "eks-관리형-노드-그룹과-함께-사용"
+          },
+          {
+            "tag": "h3",
+            "id": "eks-fargate와-함께-사용"
+          },
+          {
+            "tag": "h3",
+            "id": "az-장애-대응-amazon-arc-zonal-shift-통합-2026년-5월"
+          },
+          {
+            "tag": "h3",
+            "id": "eks-비용-최적화"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-스팟-인스턴스-사용"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-다양한-인스턴스-유형-사용"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-노드-통합-활성화"
+          },
+          {
+            "tag": "h2",
+            "id": "모범-사례"
+          },
+          {
+            "tag": "h3",
+            "id": "성능-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "비용-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "가용성-향상"
+          },
+          {
+            "tag": "h2",
+            "id": "문제-해결"
+          },
+          {
+            "tag": "h3",
+            "id": "일반적인-문제"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-노드-프로비저닝-실패"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-노드-제거-문제"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-인스턴스-유형-선택-문제"
+          },
+          {
+            "tag": "h3",
+            "id": "디버깅-도구"
+          },
+          {
+            "tag": "h2",
+            "id": "결론"
+          },
+          {
+            "tag": "h3",
+            "id": "다음-단계"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "karpenter",
+          "목차",
+          "소개",
+          "karpenter의-주요-이점",
+          "기존-오토스케일러와의-비교",
+          "아키텍처",
+          "karpenter-워크플로우",
+          "주요-구성-요소",
+          "작동-방식",
+          "설치-및-구성",
+          "사전-요구-사항",
+          "aws-eks에-설치",
+          "_1-iam-역할-및-정책-설정",
+          "_2-helm을-사용한-설치",
+          "_3-설치-확인",
+          "기본-nodepool-및-ec2nodeclass-구성",
+          "nodepool",
+          "기본-nodepool-구성",
+          "요구-사항-구성",
+          "제한-구성",
+          "실험적인-dra-할당-추적-v1-13",
+          "노드-만료-구성",
+          "nodereadinesscontroller-taint-인식-v1-13",
+          "_2026년-7월-업데이트-v1-14-릴리스",
+          "_2026년-8월-업데이트-v1-14-1-패치-릴리스",
+          "노드-클래스",
+          "aws-ec2nodeclass-구성",
+          "서브넷-및-보안-그룹-선택",
+          "ami-구성",
+          "블록-디바이스-구성",
+          "사용자-데이터-구성",
+          "노드-통합-프로세스",
+          "인터럽션-처리",
+          "통합-인터럽션-처리",
+          "인터럽션-처리-구성",
+          "드레이닝-구성",
+          "pdb-poddisruptionbudget-통합",
+          "통합",
+          "kubernetes-통합",
+          "_1-pod-topology-spread-constraints",
+          "_2-pod-affinity-anti-affinity",
+          "_3-테인트-및-허용-오차",
+          "aws-통합",
+          "_1-ec2-spot-인스턴스",
+          "_2-ec2-인스턴스-프로필",
+          "_3-launch-template-대체-ec2nodeclass",
+          "amazon-eks와의-통합",
+          "eks-클러스터-준비",
+          "_1-클러스터-태그-설정",
+          "_2-iam-역할-설정",
+          "eks-클러스터에-karpenter-설치",
+          "eks-관리형-노드-그룹과-함께-사용",
+          "eks-fargate와-함께-사용",
+          "az-장애-대응-amazon-arc-zonal-shift-통합-2026년-5월",
+          "eks-비용-최적화",
+          "_1-스팟-인스턴스-사용",
+          "_2-다양한-인스턴스-유형-사용",
+          "_3-노드-통합-활성화",
+          "모범-사례",
+          "성능-최적화",
+          "비용-최적화",
+          "가용성-향상",
+          "문제-해결",
+          "일반적인-문제",
+          "_1-노드-프로비저닝-실패",
+          "_2-노드-제거-문제",
+          "_3-인스턴스-유형-선택-문제",
+          "디버깅-도구",
+          "결론",
+          "다음-단계",
+          "참고-자료",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "ko/basics/03-container-technology.md",
+        "sha256": "d4ad433425ad62a93dd5b2d5bfa103cda15cc301e2785830b98529b5a531d68c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "컨테이너-기술"
+          },
+          {
+            "tag": "h2",
+            "id": "목차"
+          },
+          {
+            "tag": "h2",
+            "id": "컨테이너란"
+          },
+          {
+            "tag": "h3",
+            "id": "컨테이너의-주요-특징"
+          },
+          {
+            "tag": "h3",
+            "id": "컨테이너-기술의-역사"
+          },
+          {
+            "tag": "h2",
+            "id": "컨테이너-vs-가상-머신"
+          },
+          {
+            "tag": "h3",
+            "id": "가상-머신-아키텍처-vs-컨테이너-아키텍쳐"
+          },
+          {
+            "tag": "h3",
+            "id": "주요-차이점"
+          },
+          {
+            "tag": "h2",
+            "id": "컨테이너의-기술적-기반"
+          },
+          {
+            "tag": "h3",
+            "id": "네임스페이스를-통한-격리"
+          },
+          {
+            "tag": "h3",
+            "id": "cgroups를-통한-리소스-제한"
+          },
+          {
+            "tag": "h3",
+            "id": "overlayfs를-통한-레이어-관리"
+          },
+          {
+            "tag": "h3",
+            "id": "실습-컨테이너의-기술적-기반-이해하기"
+          },
+          {
+            "tag": "h2",
+            "id": "컨테이너-런타임"
+          },
+          {
+            "tag": "h3",
+            "id": "컨테이너-런타임-계층-구조"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes의-컨테이너-런타임-인터페이스-cri"
+          },
+          {
+            "tag": "h2",
+            "id": "컨테이너-이미지"
+          },
+          {
+            "tag": "h3",
+            "id": "이미지-레이어"
+          },
+          {
+            "tag": "h3",
+            "id": "이미지-레지스트리"
+          },
+          {
+            "tag": "h3",
+            "id": "이미지-태그와-다이제스트"
+          },
+          {
+            "tag": "h2",
+            "id": "dockerfile"
+          },
+          {
+            "tag": "h3",
+            "id": "주요-dockerfile-지시문"
+          },
+          {
+            "tag": "h3",
+            "id": "다단계-빌드"
+          },
+          {
+            "tag": "h3",
+            "id": "이미지-최적화-기법"
+          },
+          {
+            "tag": "h2",
+            "id": "컨테이너-네트워킹"
+          },
+          {
+            "tag": "h3",
+            "id": "네트워크-드라이버"
+          },
+          {
+            "tag": "h3",
+            "id": "포트-매핑"
+          },
+          {
+            "tag": "h3",
+            "id": "컨테이너-간-통신"
+          },
+          {
+            "tag": "h2",
+            "id": "컨테이너-스토리지"
+          },
+          {
+            "tag": "h3",
+            "id": "스토리지-유형"
+          },
+          {
+            "tag": "h3",
+            "id": "볼륨-사용-예시"
+          },
+          {
+            "tag": "h3",
+            "id": "데이터-공유-패턴"
+          },
+          {
+            "tag": "h2",
+            "id": "컨테이너-보안"
+          },
+          {
+            "tag": "h3",
+            "id": "이미지-보안"
+          },
+          {
+            "tag": "h3",
+            "id": "런타임-보안"
+          },
+          {
+            "tag": "h3",
+            "id": "보안-모범-사례"
+          },
+          {
+            "tag": "h2",
+            "id": "컨테이너-라이프사이클-관리"
+          },
+          {
+            "tag": "h3",
+            "id": "컨테이너-상태"
+          },
+          {
+            "tag": "h3",
+            "id": "컨테이너-생성-및-실행"
+          },
+          {
+            "tag": "h3",
+            "id": "컨테이너-제어"
+          },
+          {
+            "tag": "h3",
+            "id": "컨테이너-로깅-및-모니터링"
+          },
+          {
+            "tag": "h3",
+            "id": "컨테이너-정리"
+          },
+          {
+            "tag": "h3",
+            "id": "헬스-체크"
+          },
+          {
+            "tag": "h3",
+            "id": "재시작-정책"
+          },
+          {
+            "tag": "h3",
+            "id": "컨테이너-디버깅"
+          },
+          {
+            "tag": "h2",
+            "id": "컨테이너-오케스트레이션"
+          },
+          {
+            "tag": "h3",
+            "id": "주요-오케스트레이션-도구"
+          },
+          {
+            "tag": "h3",
+            "id": "오케스트레이션의-주요-기능"
+          },
+          {
+            "tag": "h2",
+            "id": "aws에서의-컨테이너"
+          },
+          {
+            "tag": "h3",
+            "id": "amazon-ecs-elastic-container-service"
+          },
+          {
+            "tag": "h3",
+            "id": "amazon-eks-elastic-kubernetes-service"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-fargate"
+          },
+          {
+            "tag": "h3",
+            "id": "amazon-ecr-elastic-container-registry"
+          },
+          {
+            "tag": "h2",
+            "id": "용어집"
+          },
+          {
+            "tag": "h2",
+            "id": "결론"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "컨테이너-기술",
+          "목차",
+          "컨테이너란",
+          "컨테이너의-주요-특징",
+          "컨테이너-기술의-역사",
+          "컨테이너-vs-가상-머신",
+          "가상-머신-아키텍처-vs-컨테이너-아키텍쳐",
+          "주요-차이점",
+          "컨테이너의-기술적-기반",
+          "네임스페이스를-통한-격리",
+          "cgroups를-통한-리소스-제한",
+          "overlayfs를-통한-레이어-관리",
+          "실습-컨테이너의-기술적-기반-이해하기",
+          "컨테이너-런타임",
+          "컨테이너-런타임-계층-구조",
+          "kubernetes의-컨테이너-런타임-인터페이스-cri",
+          "컨테이너-이미지",
+          "이미지-레이어",
+          "이미지-레지스트리",
+          "이미지-태그와-다이제스트",
+          "dockerfile",
+          "주요-dockerfile-지시문",
+          "다단계-빌드",
+          "이미지-최적화-기법",
+          "컨테이너-네트워킹",
+          "네트워크-드라이버",
+          "포트-매핑",
+          "컨테이너-간-통신",
+          "컨테이너-스토리지",
+          "스토리지-유형",
+          "볼륨-사용-예시",
+          "데이터-공유-패턴",
+          "컨테이너-보안",
+          "이미지-보안",
+          "런타임-보안",
+          "보안-모범-사례",
+          "컨테이너-라이프사이클-관리",
+          "컨테이너-상태",
+          "컨테이너-생성-및-실행",
+          "컨테이너-제어",
+          "컨테이너-로깅-및-모니터링",
+          "컨테이너-정리",
+          "헬스-체크",
+          "재시작-정책",
+          "컨테이너-디버깅",
+          "컨테이너-오케스트레이션",
+          "주요-오케스트레이션-도구",
+          "오케스트레이션의-주요-기능",
+          "aws에서의-컨테이너",
+          "amazon-ecs-elastic-container-service",
+          "amazon-eks-elastic-kubernetes-service",
+          "aws-fargate",
+          "amazon-ecr-elastic-container-registry",
+          "용어집",
+          "결론",
+          "퀴즈",
+          "참고-자료",
+          "검증-참고-자료"
+        ]
+      },
+      {
+        "path": "ko/basics/05-ebpf-fundamentals.md",
+        "sha256": "00f9b691cbf4a032354c73bce4bfefe369f7770d52558bf2f0fe0ccf13dc6a00",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ebpf-기초와-kubernetes-활용"
+          },
+          {
+            "tag": "h2",
+            "id": "목차"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "필수-환경"
+          },
+          {
+            "tag": "h3",
+            "id": "환경-설정"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-ebpf-소개"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-1-ebpf란-무엇인가"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-2-전통적인-bpf에서-ebpf로의-진화"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-3-ebpf가-혁신적인-이유"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-4-ebpf-vs-커널-모듈-비교"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-ebpf-아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-1-ebpf-실행-흐름"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-2-검증기-verifier"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-3-jit-컴파일러"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-4-ebpf-맵-maps"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-5-헬퍼-함수-helper-functions"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-6-프로그램-라이프사이클"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-ebpf-프로그램-유형"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-1-xdp-express-data-path"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-2-tc-traffic-control"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-3-kprobes-uprobes"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-4-tracepoints"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-5-lsm-linux-security-module-bpf"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-6-socket-filter"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-7-cgroup-프로그램"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-ebpf-개발-도구"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-1-bpftool"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-2-bpftrace"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-3-bcc-bpf-compiler-collection"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-4-libbpf와-co-re"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-ebpf와-kubernetes-네트워킹"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-1-cilium-ebpf-기반-cni"
+          },
+          {
+            "tag": "h4",
+            "id": "kube-proxy-대체"
+          },
+          {
+            "tag": "h4",
+            "id": "네트워크-정책"
+          },
+          {
+            "tag": "h4",
+            "id": "로드-밸런싱"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-2-calico-ebpf-모드"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-3-성능-비교-iptables-vs-ebpf"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-ebpf-기반-관찰성-observability"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-1-hubble-cilium-네트워크-관찰성"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-2-pixie-자동-계측-관찰성"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-3-coroot-no-code-모니터링"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-4-kepler-에너지-소비-모니터링"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-5-기존-에이전트-vs-ebpf-계측-비교"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-ebpf-기반-보안"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-1-tetragon-런타임-보안"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-2-falco-ebpf-기반-이상-탐지"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-3-seccomp-bpf-시스템-콜-필터링"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-4-lsm-bpf-동적-보안-정책"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-ebpf-실전-활용-예제"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-1-bpftrace로-시스템-성능-분석하기"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-2-cilium-hubble로-네트워크-흐름-관찰"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-3-tetragon으로-프로세스-보안-모니터링"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-4-ebpf를-사용한-지연-시간-분석"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-ebpf-제한-사항과-주의점"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-1-기술적-제한-사항"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-2-루프-제한"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-3-커널-버전-호환성"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-4-디버깅의-어려움"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-5-권한-요구사항"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-6-보안-고려사항"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-다음-단계"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-1-관련-퀴즈"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-2-심화-학습-자료"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-3-관련-문서"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-4-실습-체크리스트"
+          },
+          {
+            "tag": "h2",
+            "id": "요약"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "ebpf-기초와-kubernetes-활용",
+          "목차",
+          "실습-환경-설정",
+          "필수-환경",
+          "환경-설정",
+          "_1-ebpf-소개",
+          "_1-1-ebpf란-무엇인가",
+          "_1-2-전통적인-bpf에서-ebpf로의-진화",
+          "_1-3-ebpf가-혁신적인-이유",
+          "_1-4-ebpf-vs-커널-모듈-비교",
+          "_2-ebpf-아키텍처",
+          "_2-1-ebpf-실행-흐름",
+          "_2-2-검증기-verifier",
+          "_2-3-jit-컴파일러",
+          "_2-4-ebpf-맵-maps",
+          "_2-5-헬퍼-함수-helper-functions",
+          "_2-6-프로그램-라이프사이클",
+          "_3-ebpf-프로그램-유형",
+          "_3-1-xdp-express-data-path",
+          "_3-2-tc-traffic-control",
+          "_3-3-kprobes-uprobes",
+          "_3-4-tracepoints",
+          "_3-5-lsm-linux-security-module-bpf",
+          "_3-6-socket-filter",
+          "_3-7-cgroup-프로그램",
+          "_4-ebpf-개발-도구",
+          "_4-1-bpftool",
+          "_4-2-bpftrace",
+          "_4-3-bcc-bpf-compiler-collection",
+          "_4-4-libbpf와-co-re",
+          "_5-ebpf와-kubernetes-네트워킹",
+          "_5-1-cilium-ebpf-기반-cni",
+          "kube-proxy-대체",
+          "네트워크-정책",
+          "로드-밸런싱",
+          "_5-2-calico-ebpf-모드",
+          "_5-3-성능-비교-iptables-vs-ebpf",
+          "_6-ebpf-기반-관찰성-observability",
+          "_6-1-hubble-cilium-네트워크-관찰성",
+          "_6-2-pixie-자동-계측-관찰성",
+          "_6-3-coroot-no-code-모니터링",
+          "_6-4-kepler-에너지-소비-모니터링",
+          "_6-5-기존-에이전트-vs-ebpf-계측-비교",
+          "_7-ebpf-기반-보안",
+          "_7-1-tetragon-런타임-보안",
+          "_7-2-falco-ebpf-기반-이상-탐지",
+          "_7-3-seccomp-bpf-시스템-콜-필터링",
+          "_7-4-lsm-bpf-동적-보안-정책",
+          "_8-ebpf-실전-활용-예제",
+          "_8-1-bpftrace로-시스템-성능-분석하기",
+          "_8-2-cilium-hubble로-네트워크-흐름-관찰",
+          "_8-3-tetragon으로-프로세스-보안-모니터링",
+          "_8-4-ebpf를-사용한-지연-시간-분석",
+          "_9-ebpf-제한-사항과-주의점",
+          "_9-1-기술적-제한-사항",
+          "_9-2-루프-제한",
+          "_9-3-커널-버전-호환성",
+          "_9-4-디버깅의-어려움",
+          "_9-5-권한-요구사항",
+          "_9-6-보안-고려사항",
+          "_10-다음-단계",
+          "_10-1-관련-퀴즈",
+          "_10-2-심화-학습-자료",
+          "_10-3-관련-문서",
+          "_10-4-실습-체크리스트",
+          "요약",
+          "검증-참고-자료"
+        ]
+      },
+      {
+        "path": "ko/container-registry/03-harbor.md",
+        "sha256": "619687db6f440b5e730ce51b229404fca4899da03c29a52d4bbdebabd4104f0f",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "harbor"
+          },
+          {
+            "tag": "h2",
+            "id": "개요"
+          },
+          {
+            "tag": "h3",
+            "id": "아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "주요-컴포넌트"
+          },
+          {
+            "tag": "h2",
+            "id": "helm을-사용한-설치"
+          },
+          {
+            "tag": "h3",
+            "id": "사전-요구사항"
+          },
+          {
+            "tag": "h3",
+            "id": "초기-자격-증명"
+          },
+          {
+            "tag": "h3",
+            "id": "프로덕션-values-yaml"
+          },
+          {
+            "tag": "h3",
+            "id": "설치-확인"
+          },
+          {
+            "tag": "h3",
+            "id": "업그레이드"
+          },
+          {
+            "tag": "h2",
+            "id": "프로젝트-및-rbac"
+          },
+          {
+            "tag": "h3",
+            "id": "프로젝트-유형"
+          },
+          {
+            "tag": "h3",
+            "id": "프로젝트-생성"
+          },
+          {
+            "tag": "h3",
+            "id": "멤버-역할"
+          },
+          {
+            "tag": "h3",
+            "id": "멤버-추가"
+          },
+          {
+            "tag": "h3",
+            "id": "robot-accounts"
+          },
+          {
+            "tag": "h2",
+            "id": "이미지-복제"
+          },
+          {
+            "tag": "h3",
+            "id": "복제-모드"
+          },
+          {
+            "tag": "h3",
+            "id": "pull-replication-미러링"
+          },
+          {
+            "tag": "h3",
+            "id": "push-replication-dr-배포"
+          },
+          {
+            "tag": "h3",
+            "id": "스케줄된-복제"
+          },
+          {
+            "tag": "h2",
+            "id": "취약점-스캐닝"
+          },
+          {
+            "tag": "h3",
+            "id": "trivy-통합"
+          },
+          {
+            "tag": "h3",
+            "id": "수동-스캐닝"
+          },
+          {
+            "tag": "h3",
+            "id": "cve-allowlist"
+          },
+          {
+            "tag": "h3",
+            "id": "스캔-정책-적용"
+          },
+          {
+            "tag": "h2",
+            "id": "이미지-서명"
+          },
+          {
+            "tag": "h3",
+            "id": "cosign-통합-권장"
+          },
+          {
+            "tag": "h3",
+            "id": "notation-통합"
+          },
+          {
+            "tag": "h3",
+            "id": "harbor에서-서명-강제"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes-정책-적용"
+          },
+          {
+            "tag": "h2",
+            "id": "에어갭-환경에서의-harbor"
+          },
+          {
+            "tag": "h3",
+            "id": "오프라인-설치"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes용-에어갭-이미지-준비"
+          },
+          {
+            "tag": "h3",
+            "id": "이미지-반출·반입"
+          },
+          {
+            "tag": "h3",
+            "id": "trivy-데이터베이스-반입"
+          },
+          {
+            "tag": "h3",
+            "id": "에어갭-클러스터-containerd-설정"
+          },
+          {
+            "tag": "h2",
+            "id": "harbor-kubernetes-통합"
+          },
+          {
+            "tag": "h3",
+            "id": "imagepullsecrets-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "proxy-cache"
+          },
+          {
+            "tag": "h3",
+            "id": "garbage-collection"
+          },
+          {
+            "tag": "h3",
+            "id": "tag-retention-policy"
+          },
+          {
+            "tag": "h2",
+            "id": "모범-사례"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-고가용성-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-보안-강화"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-백업-전략"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-모니터링"
+          },
+          {
+            "tag": "h2",
+            "id": "요약"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          },
+          {
+            "tag": "h3",
+            "id": "검토한-버전별-근거"
+          }
+        ],
+        "renderedIds": [
+          "harbor",
+          "개요",
+          "아키텍처",
+          "주요-컴포넌트",
+          "helm을-사용한-설치",
+          "사전-요구사항",
+          "초기-자격-증명",
+          "프로덕션-values-yaml",
+          "설치-확인",
+          "업그레이드",
+          "프로젝트-및-rbac",
+          "프로젝트-유형",
+          "프로젝트-생성",
+          "멤버-역할",
+          "멤버-추가",
+          "robot-accounts",
+          "이미지-복제",
+          "복제-모드",
+          "pull-replication-미러링",
+          "push-replication-dr-배포",
+          "스케줄된-복제",
+          "취약점-스캐닝",
+          "trivy-통합",
+          "수동-스캐닝",
+          "cve-allowlist",
+          "스캔-정책-적용",
+          "이미지-서명",
+          "cosign-통합-권장",
+          "notation-통합",
+          "harbor에서-서명-강제",
+          "kubernetes-정책-적용",
+          "에어갭-환경에서의-harbor",
+          "오프라인-설치",
+          "kubernetes용-에어갭-이미지-준비",
+          "이미지-반출·반입",
+          "trivy-데이터베이스-반입",
+          "에어갭-클러스터-containerd-설정",
+          "harbor-kubernetes-통합",
+          "imagepullsecrets-설정",
+          "proxy-cache",
+          "garbage-collection",
+          "tag-retention-policy",
+          "모범-사례",
+          "_1-고가용성-구성",
+          "_2-보안-강화",
+          "_3-백업-전략",
+          "_4-모니터링",
+          "요약",
+          "참고-자료",
+          "검토한-버전별-근거"
+        ]
+      },
+      {
+        "path": "ko/container-registry/04-best-practices.md",
+        "sha256": "3494fa8048a1ad52a4b78a03275b183c92e0d0fe05d7cb32fcdf34a739333019",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "컨테이너-레지스트리-모범-사례"
+          },
+          {
+            "tag": "h2",
+            "id": "개요"
+          },
+          {
+            "tag": "h2",
+            "id": "태그-관리-전략"
+          },
+          {
+            "tag": "h3",
+            "id": "immutable-tags-사용"
+          },
+          {
+            "tag": "h3",
+            "id": "semantic-versioning"
+          },
+          {
+            "tag": "h3",
+            "id": "latest-태그-금지"
+          },
+          {
+            "tag": "h3",
+            "id": "tag-promotion-workflow"
+          },
+          {
+            "tag": "h2",
+            "id": "이미지-네이밍-컨벤션"
+          },
+          {
+            "tag": "h3",
+            "id": "표준-형식"
+          },
+          {
+            "tag": "h3",
+            "id": "환경-접두사"
+          },
+          {
+            "tag": "h3",
+            "id": "multi-arch-태그"
+          },
+          {
+            "tag": "h3",
+            "id": "메타데이터-태그"
+          },
+          {
+            "tag": "h2",
+            "id": "레지스트리-미러링-및-캐싱"
+          },
+          {
+            "tag": "h3",
+            "id": "containerd-레지스트리-미러-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "ecr-pull-through-cache"
+          },
+          {
+            "tag": "h3",
+            "id": "harbor-proxy-cache"
+          },
+          {
+            "tag": "h3",
+            "id": "외부-의존성-최소화"
+          },
+          {
+            "tag": "h2",
+            "id": "재해-복구"
+          },
+          {
+            "tag": "h3",
+            "id": "멀티-리전-복제"
+          },
+          {
+            "tag": "h3",
+            "id": "백업-전략과-rto-rpo"
+          },
+          {
+            "tag": "h2",
+            "id": "비용-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "비용-산정"
+          },
+          {
+            "tag": "h3",
+            "id": "lifecycle-policies"
+          },
+          {
+            "tag": "h3",
+            "id": "이미지-크기-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "전송-비용-절감"
+          },
+          {
+            "tag": "h2",
+            "id": "보안-체크리스트"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-이미지-스캐닝"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-admission-controller-서명된-이미지만-허용"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-최소-권한-원칙"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-네트워크-정책"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-자격-증명-관리"
+          },
+          {
+            "tag": "h2",
+            "id": "ci-cd-통합-패턴"
+          },
+          {
+            "tag": "h3",
+            "id": "github-actions-ecr"
+          },
+          {
+            "tag": "h3",
+            "id": "gitlab-ci-harbor"
+          },
+          {
+            "tag": "h3",
+            "id": "배포와-이미지-업데이트"
+          },
+          {
+            "tag": "h2",
+            "id": "skopeo를-활용한-이미지-관리"
+          },
+          {
+            "tag": "h3",
+            "id": "skopeo-설치"
+          },
+          {
+            "tag": "h3",
+            "id": "skopeo-inspect-—-원격-이미지-검사"
+          },
+          {
+            "tag": "h3",
+            "id": "skopeo-copy-—-레지스트리-간-이미지-복사"
+          },
+          {
+            "tag": "h3",
+            "id": "skopeo-sync-—-대량-레지스트리-동기화"
+          },
+          {
+            "tag": "h3",
+            "id": "에어갭-환경-이미지-전송"
+          },
+          {
+            "tag": "h3",
+            "id": "도구-비교"
+          },
+          {
+            "tag": "h2",
+            "id": "요약"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          },
+          {
+            "tag": "h3",
+            "id": "검토-근거"
+          }
+        ],
+        "renderedIds": [
+          "컨테이너-레지스트리-모범-사례",
+          "개요",
+          "태그-관리-전략",
+          "immutable-tags-사용",
+          "semantic-versioning",
+          "latest-태그-금지",
+          "tag-promotion-workflow",
+          "이미지-네이밍-컨벤션",
+          "표준-형식",
+          "환경-접두사",
+          "multi-arch-태그",
+          "메타데이터-태그",
+          "레지스트리-미러링-및-캐싱",
+          "containerd-레지스트리-미러-설정",
+          "ecr-pull-through-cache",
+          "harbor-proxy-cache",
+          "외부-의존성-최소화",
+          "재해-복구",
+          "멀티-리전-복제",
+          "백업-전략과-rto-rpo",
+          "비용-최적화",
+          "비용-산정",
+          "lifecycle-policies",
+          "이미지-크기-최적화",
+          "전송-비용-절감",
+          "보안-체크리스트",
+          "_1-이미지-스캐닝",
+          "_2-admission-controller-서명된-이미지만-허용",
+          "_3-최소-권한-원칙",
+          "_4-네트워크-정책",
+          "_5-자격-증명-관리",
+          "ci-cd-통합-패턴",
+          "github-actions-ecr",
+          "gitlab-ci-harbor",
+          "배포와-이미지-업데이트",
+          "skopeo를-활용한-이미지-관리",
+          "skopeo-설치",
+          "skopeo-inspect-—-원격-이미지-검사",
+          "skopeo-copy-—-레지스트리-간-이미지-복사",
+          "skopeo-sync-—-대량-레지스트리-동기화",
+          "에어갭-환경-이미지-전송",
+          "도구-비교",
+          "요약",
+          "참고-자료",
+          "검토-근거"
+        ]
+      },
+      {
+        "path": "ko/core/06-security.md",
+        "sha256": "c78bebbb2aca10e8b20f7d1b8ba4bf053338385e5cfcbb3a2439690fee8b0f39",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubernetes-보안"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "필수-도구"
+          },
+          {
+            "tag": "h3",
+            "id": "보안-예제-설정"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes-보안-아키텍처"
+          },
+          {
+            "tag": "h2",
+            "id": "목차"
+          },
+          {
+            "tag": "h2",
+            "id": "보안-개요"
+          },
+          {
+            "tag": "h3",
+            "id": "보안-영역-비교"
+          },
+          {
+            "tag": "h3",
+            "id": "보안-원칙"
+          },
+          {
+            "tag": "h2",
+            "id": "인증-authentication"
+          },
+          {
+            "tag": "h3",
+            "id": "x-509-인증서"
+          },
+          {
+            "tag": "h3",
+            "id": "서비스-계정-토큰"
+          },
+          {
+            "tag": "h3",
+            "id": "openid-connect-oidc"
+          },
+          {
+            "tag": "h3",
+            "id": "웹훅-토큰-인증"
+          },
+          {
+            "tag": "h3",
+            "id": "인증-프록시"
+          },
+          {
+            "tag": "h2",
+            "id": "권한-부여-authorization"
+          },
+          {
+            "tag": "h3",
+            "id": "rbac-role-based-access-control"
+          },
+          {
+            "tag": "h4",
+            "id": "role과-clusterrole"
+          },
+          {
+            "tag": "h4",
+            "id": "rolebinding과-clusterrolebinding"
+          },
+          {
+            "tag": "h3",
+            "id": "abac-attribute-based-access-control"
+          },
+          {
+            "tag": "h3",
+            "id": "node-권한-부여"
+          },
+          {
+            "tag": "h3",
+            "id": "웹훅-권한-부여"
+          },
+          {
+            "tag": "h2",
+            "id": "보안-컨텍스트-security-context"
+          },
+          {
+            "tag": "h3",
+            "id": "포드-보안-컨텍스트"
+          },
+          {
+            "tag": "h3",
+            "id": "포드-보안-표준-pod-security-standards"
+          },
+          {
+            "tag": "h2",
+            "id": "네트워크-정책-network-policy"
+          },
+          {
+            "tag": "h2",
+            "id": "시크릿-관리"
+          },
+          {
+            "tag": "h3",
+            "id": "시크릿-암호화"
+          },
+          {
+            "tag": "h3",
+            "id": "외부-시크릿-관리"
+          },
+          {
+            "tag": "h2",
+            "id": "이미지-보안"
+          },
+          {
+            "tag": "h3",
+            "id": "이미지-취약점-스캔"
+          },
+          {
+            "tag": "h3",
+            "id": "이미지-서명-및-검증"
+          },
+          {
+            "tag": "h3",
+            "id": "이미지-정책"
+          },
+          {
+            "tag": "h2",
+            "id": "감사-audit"
+          },
+          {
+            "tag": "h3",
+            "id": "감사-정책"
+          },
+          {
+            "tag": "h3",
+            "id": "감사-로그-백엔드"
+          },
+          {
+            "tag": "h2",
+            "id": "amazon-eks-보안-강화"
+          },
+          {
+            "tag": "h3",
+            "id": "iam-역할-및-서비스-계정-irsa"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-kms를-사용한-시크릿-암호화"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-security-groups"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-waf"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-guardduty"
+          },
+          {
+            "tag": "h2",
+            "id": "보안-모범-사례"
+          },
+          {
+            "tag": "h3",
+            "id": "클러스터-보안"
+          },
+          {
+            "tag": "h3",
+            "id": "워크로드-보안"
+          },
+          {
+            "tag": "h3",
+            "id": "이미지-보안-1"
+          },
+          {
+            "tag": "h2",
+            "id": "시크릿-관리-1"
+          },
+          {
+            "tag": "h2",
+            "id": "결론"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "kubernetes-보안",
+          "실습-환경-설정",
+          "필수-도구",
+          "보안-예제-설정",
+          "kubernetes-보안-아키텍처",
+          "목차",
+          "보안-개요",
+          "보안-영역-비교",
+          "보안-원칙",
+          "인증-authentication",
+          "x-509-인증서",
+          "서비스-계정-토큰",
+          "openid-connect-oidc",
+          "웹훅-토큰-인증",
+          "인증-프록시",
+          "권한-부여-authorization",
+          "rbac-role-based-access-control",
+          "role과-clusterrole",
+          "rolebinding과-clusterrolebinding",
+          "abac-attribute-based-access-control",
+          "node-권한-부여",
+          "웹훅-권한-부여",
+          "보안-컨텍스트-security-context",
+          "포드-보안-컨텍스트",
+          "포드-보안-표준-pod-security-standards",
+          "네트워크-정책-network-policy",
+          "시크릿-관리",
+          "시크릿-암호화",
+          "외부-시크릿-관리",
+          "이미지-보안",
+          "이미지-취약점-스캔",
+          "이미지-서명-및-검증",
+          "이미지-정책",
+          "감사-audit",
+          "감사-정책",
+          "감사-로그-백엔드",
+          "amazon-eks-보안-강화",
+          "iam-역할-및-서비스-계정-irsa",
+          "aws-kms를-사용한-시크릿-암호화",
+          "aws-security-groups",
+          "aws-waf",
+          "aws-guardduty",
+          "보안-모범-사례",
+          "클러스터-보안",
+          "워크로드-보안",
+          "이미지-보안-1",
+          "시크릿-관리-1",
+          "결론",
+          "퀴즈",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "ko/quizzes/eks/02-eks-cluster-creation-part1-quiz.md",
+        "sha256": "3e49f6874004cb980af401806104de46f00ed8c652c1798efdc7ee575a791f30",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "eks-클러스터-생성-퀴즈-part-1"
+          },
+          {
+            "tag": "h2",
+            "id": "기본-개념-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-문제"
+          },
+          {
+            "tag": "h3",
+            "id": "실습-1-eksctl을-사용하여-eks-클러스터-생성"
+          },
+          {
+            "tag": "h3",
+            "id": "실습-2-aws-management-console을-사용하여-eks-클러스터-생성"
+          },
+          {
+            "tag": "h2",
+            "id": "고급-주제"
+          },
+          {
+            "tag": "h2",
+            "id": "공식-참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "eks-클러스터-생성-퀴즈-part-1",
+          "기본-개념-문제",
+          "실습-문제",
+          "실습-1-eksctl을-사용하여-eks-클러스터-생성",
+          "실습-2-aws-management-console을-사용하여-eks-클러스터-생성",
+          "고급-주제",
+          "공식-참고-자료"
+        ]
+      },
+      {
+        "path": "ko/quizzes/service-mesh/linkerd/architecture.md",
+        "sha256": "0ff5df029a97555e28364400b94bf6894c22aaf7c45c56386d43dd3aebfda2d2",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "linkerd-아키텍처-퀴즈"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-linkerd-control-plane-구성-요소가-아닌-것은"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-linkerd2-proxy의-구현-언어는"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-destination의-주된-책임이-아닌-것은"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-기본-인증서-계층의-최상위-신뢰-기반은"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-workload-인증서의-명목-기본-유효기간은"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-자동-proxy-주입에-사용하는-kubernetes-메커니즘은"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-linkerd-cni가-없을-때-linkerd-init은-무엇을-하나요"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-기본-inbound-proxy-port는"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-control-plane-namespace가-linkerd-trust-domain이-cluster-local일-때-my-app의-web-service-serviceaccount에-대한-기본-kubernetes-identity는"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-동일-조건의-benchmark-없이-정당화할-수-있는-비교는"
+          },
+          {
+            "tag": "h3",
+            "id": "_11-기본-kubernetes-identity-validator가-확인하는-것은"
+          },
+          {
+            "tag": "h3",
+            "id": "_12-동적으로-갱신되는-routing-policy-설정은-보통-어떻게-proxy에-전달되나요"
+          }
+        ],
+        "renderedIds": [
+          "linkerd-아키텍처-퀴즈",
+          "_1-linkerd-control-plane-구성-요소가-아닌-것은",
+          "_2-linkerd2-proxy의-구현-언어는",
+          "_3-destination의-주된-책임이-아닌-것은",
+          "_4-기본-인증서-계층의-최상위-신뢰-기반은",
+          "_5-workload-인증서의-명목-기본-유효기간은",
+          "_6-자동-proxy-주입에-사용하는-kubernetes-메커니즘은",
+          "_7-linkerd-cni가-없을-때-linkerd-init은-무엇을-하나요",
+          "_8-기본-inbound-proxy-port는",
+          "_9-control-plane-namespace가-linkerd-trust-domain이-cluster-local일-때-my-app의-web-service-serviceaccount에-대한-기본-kubernetes-identity는",
+          "_10-동일-조건의-benchmark-없이-정당화할-수-있는-비교는",
+          "_11-기본-kubernetes-identity-validator가-확인하는-것은",
+          "_12-동적으로-갱신되는-routing-policy-설정은-보통-어떻게-proxy에-전달되나요"
+        ]
+      },
+      {
+        "path": "ko/service-mesh/istio/comparison/03-sidecar-vs-ambient.md",
+        "sha256": "19f02a54c44bfeebc2239f9e717e1401b4c0e140b8d7775424bef49d350ea6f4",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "sidecar-vs-ambient-모드-선택-가이드-eks-1-36-실험-보고"
+          },
+          {
+            "tag": "h2",
+            "id": "선택-요약"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-mtls-—-실험-결과-eks-1-36-2-istio-1-30-2"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-networkpolicy-—-실험-결과"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-latency-—-실험-결과-t5"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-무중단-롤아웃-—-503-실험-결과-핵심-관측"
+          },
+          {
+            "tag": "h3",
+            "id": "배경"
+          },
+          {
+            "tag": "h3",
+            "id": "결과"
+          },
+          {
+            "tag": "h3",
+            "id": "후속-실험-graceful-shutdown-조정-후"
+          },
+          {
+            "tag": "h3",
+            "id": "retry-완화의-위험-—-실험-결과-t2"
+          },
+          {
+            "tag": "h3",
+            "id": "원시-실패와-retry가-숨긴-실패를-분리해서-측정"
+          },
+          {
+            "tag": "h3",
+            "id": "테스트-격리에-관한-주의"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-권장-요구사항에-따른-계층별-접근"
+          },
+          {
+            "tag": "h3",
+            "id": "l4-only의-한계-—-canary-배포는-가능한가"
+          },
+          {
+            "tag": "h2",
+            "id": "부록-후속-실험-절차"
+          },
+          {
+            "tag": "h3",
+            "id": "a-클러스터-프로비저닝-eksctl"
+          },
+          {
+            "tag": "h3",
+            "id": "b-istio-설치-gateway-api-crd-ambient-profile"
+          },
+          {
+            "tag": "h3",
+            "id": "c-네임스페이스와-워크로드-매니페스트"
+          },
+          {
+            "tag": "h3",
+            "id": "d-mtls-—-peerauthentication-§1"
+          },
+          {
+            "tag": "h3",
+            "id": "e-networkpolicy-§2"
+          },
+          {
+            "tag": "h3",
+            "id": "f-롤아웃-503-실험-t1-§4"
+          },
+          {
+            "tag": "h3",
+            "id": "g-지연-시간-실험-t5-§3"
+          },
+          {
+            "tag": "h3",
+            "id": "h-중복-실행-관측-t2-§4"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료와-검증-경계"
+          }
+        ],
+        "renderedIds": [
+          "sidecar-vs-ambient-모드-선택-가이드-eks-1-36-실험-보고",
+          "선택-요약",
+          "_1-mtls-—-실험-결과-eks-1-36-2-istio-1-30-2",
+          "_2-networkpolicy-—-실험-결과",
+          "_3-latency-—-실험-결과-t5",
+          "_4-무중단-롤아웃-—-503-실험-결과-핵심-관측",
+          "배경",
+          "결과",
+          "후속-실험-graceful-shutdown-조정-후",
+          "retry-완화의-위험-—-실험-결과-t2",
+          "원시-실패와-retry가-숨긴-실패를-분리해서-측정",
+          "테스트-격리에-관한-주의",
+          "_5-권장-요구사항에-따른-계층별-접근",
+          "l4-only의-한계-—-canary-배포는-가능한가",
+          "부록-후속-실험-절차",
+          "a-클러스터-프로비저닝-eksctl",
+          "b-istio-설치-gateway-api-crd-ambient-profile",
+          "c-네임스페이스와-워크로드-매니페스트",
+          "d-mtls-—-peerauthentication-§1",
+          "e-networkpolicy-§2",
+          "f-롤아웃-503-실험-t1-§4",
+          "g-지연-시간-실험-t5-§3",
+          "h-중복-실행-관측-t2-§4",
+          "참고-자료와-검증-경계"
+        ]
+      }
+    ]
+  },
+  "mermaid": {
+    "before": {
+      "scope": "Sixlegacycn/jp/esfiles;nativebrowserMermaidparseonly",
+      "results": [
+        {
+          "path": "cn/ai-ml/ray/03-ray-train-tune.md",
+          "index": 0,
+          "line": 52,
+          "sourceSha256": "1d348e46d4cc6b695bec53d0304e1a25a38ea53c0f429e4246963d81be509d8b",
+          "passed": false,
+          "error": "Parse error on line 7:\n...r 2\"]        T1OS[((\"Object Store\"))] \n----------------------^\nExpecting 'TAGEND', 'STR', 'MD_STR', 'UNICODE_TEXT', 'TEXT', 'TAGSTART', got 'PS'"
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 0,
+          "line": 27,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 1,
+          "line": 82,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 2,
+          "line": 187,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 3,
+          "line": 243,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 4,
+          "line": 293,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 5,
+          "line": 354,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 6,
+          "line": 455,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 7,
+          "line": 494,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 8,
+          "line": 543,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 9,
+          "line": 598,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": false,
+          "error": "Parse error on line 25:\n...e Registry<br/>api: [Zone1, Zone2]<br/>d\n-----------------------^\nExpecting 'SQE', 'DOUBLECIRCLEEND', 'PE', '-)', 'STADIUMEND', 'SUBROUTINEEND', 'PIPE', 'CYLINDEREND', 'DIAMOND_STOP', 'TAGEND', 'TRAPEND', 'INVTRAPEND', 'UNICODE_TEXT', 'TEXT', 'TAGSTART', got 'SQS'"
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 10,
+          "line": 778,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 11,
+          "line": 839,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 12,
+          "line": 908,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 13,
+          "line": 1373,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 14,
+          "line": 1400,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 15,
+          "line": 1427,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 16,
+          "line": 1463,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 17,
+          "line": 1622,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 18,
+          "line": 1867,
+          "sourceSha256": "1fce0e7aa0c146b46231837e8ea727e89a25cbba10293558f4aac96791c3e0d7",
+          "passed": true
+        },
+        {
+          "path": "jp/ai-ml/ray/03-ray-train-tune.md",
+          "index": 0,
+          "line": 52,
+          "sourceSha256": "a649e8a84b8cb50528afb353d758cc0aeade9a522dd1e3ae0a91890026d7c387",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 0,
+          "line": 27,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 1,
+          "line": 82,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 2,
+          "line": 187,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 3,
+          "line": 243,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 4,
+          "line": 293,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 5,
+          "line": 354,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 6,
+          "line": 455,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 7,
+          "line": 494,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 8,
+          "line": 543,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 9,
+          "line": 598,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": false,
+          "error": "Parse error on line 25:\n...e Registry<br/>api: [Zone1, Zone2]<br/>d\n-----------------------^\nExpecting 'SQE', 'DOUBLECIRCLEEND', 'PE', '-)', 'STADIUMEND', 'SUBROUTINEEND', 'PIPE', 'CYLINDEREND', 'DIAMOND_STOP', 'TAGEND', 'TRAPEND', 'INVTRAPEND', 'UNICODE_TEXT', 'TEXT', 'TAGSTART', got 'SQS'"
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 10,
+          "line": 778,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 11,
+          "line": 839,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 12,
+          "line": 908,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 13,
+          "line": 1373,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 14,
+          "line": 1400,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 15,
+          "line": 1427,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 16,
+          "line": 1463,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 17,
+          "line": 1622,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 18,
+          "line": 1867,
+          "sourceSha256": "cc2a419d383fcaf27fd0dbc119fd500414bc98d57340f5aa5df940faee8b6695",
+          "passed": true
+        },
+        {
+          "path": "es/ai-ml/ray/03-ray-train-tune.md",
+          "index": 0,
+          "line": 52,
+          "sourceSha256": "88706517b559edd5d2e890cdb54f927d40db01b767f0331a94e4e3a44e45426b",
+          "passed": false,
+          "error": "Parse error on line 7:\n...r 2\"]        T1OS[((\"Object Store\"))] \n----------------------^\nExpecting 'TAGEND', 'STR', 'MD_STR', 'UNICODE_TEXT', 'TEXT', 'TAGSTART', got 'PS'"
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 0,
+          "line": 27,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 1,
+          "line": 82,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 2,
+          "line": 187,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 3,
+          "line": 243,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 4,
+          "line": 293,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 5,
+          "line": 354,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 6,
+          "line": 455,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 7,
+          "line": 494,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 8,
+          "line": 543,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 9,
+          "line": 598,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": false,
+          "error": "Parse error on line 25:\n...e Registry<br/>api: [Zone1, Zone2]<br/>d\n-----------------------^\nExpecting 'SQE', 'DOUBLECIRCLEEND', 'PE', '-)', 'STADIUMEND', 'SUBROUTINEEND', 'PIPE', 'CYLINDEREND', 'DIAMOND_STOP', 'TAGEND', 'TRAPEND', 'INVTRAPEND', 'UNICODE_TEXT', 'TEXT', 'TAGSTART', got 'SQS'"
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 10,
+          "line": 778,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 11,
+          "line": 839,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 12,
+          "line": 908,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 13,
+          "line": 1373,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 14,
+          "line": 1400,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 15,
+          "line": 1427,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 16,
+          "line": 1463,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 17,
+          "line": 1622,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 18,
+          "line": 1867,
+          "sourceSha256": "c26f33aaacef6e1f4f6511e20b85e04bc6e62caba653945be52364a3532828b5",
+          "passed": true
+        }
+      ]
+    },
+    "after": {
+      "scope": "Sixlegacycn/jp/esfiles;nativebrowserMermaidparseonly",
+      "results": [
+        {
+          "path": "cn/ai-ml/ray/03-ray-train-tune.md",
+          "index": 0,
+          "line": 52,
+          "sourceSha256": "332b265b64ba60d1434c46bbfe4d51d85c0085ab5e1e09810e4dc3b9e6b8f3ea",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 0,
+          "line": 27,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 1,
+          "line": 82,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 2,
+          "line": 187,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 3,
+          "line": 243,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 4,
+          "line": 293,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 5,
+          "line": 354,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 6,
+          "line": 455,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 7,
+          "line": 494,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 8,
+          "line": 543,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 9,
+          "line": 598,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 10,
+          "line": 778,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 11,
+          "line": 839,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 12,
+          "line": 908,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 13,
+          "line": 1373,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 14,
+          "line": 1400,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 15,
+          "line": 1427,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 16,
+          "line": 1463,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 17,
+          "line": 1622,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 18,
+          "line": 1867,
+          "sourceSha256": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+          "passed": true
+        },
+        {
+          "path": "jp/ai-ml/ray/03-ray-train-tune.md",
+          "index": 0,
+          "line": 52,
+          "sourceSha256": "a649e8a84b8cb50528afb353d758cc0aeade9a522dd1e3ae0a91890026d7c387",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 0,
+          "line": 27,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 1,
+          "line": 82,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 2,
+          "line": 187,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 3,
+          "line": 243,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 4,
+          "line": 293,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 5,
+          "line": 354,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 6,
+          "line": 455,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 7,
+          "line": 494,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 8,
+          "line": 543,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 9,
+          "line": 598,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 10,
+          "line": 778,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 11,
+          "line": 839,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 12,
+          "line": 908,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 13,
+          "line": 1373,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 14,
+          "line": 1400,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 15,
+          "line": 1427,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 16,
+          "line": 1463,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 17,
+          "line": 1622,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 18,
+          "line": 1867,
+          "sourceSha256": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+          "passed": true
+        },
+        {
+          "path": "es/ai-ml/ray/03-ray-train-tune.md",
+          "index": 0,
+          "line": 52,
+          "sourceSha256": "33c5fe8c6d46c3c945025aacbd9c814a8e47bf6ad770e1e7d10b6decf885e3f3",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 0,
+          "line": 27,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 1,
+          "line": 82,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 2,
+          "line": 187,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 3,
+          "line": 243,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 4,
+          "line": 293,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 5,
+          "line": 354,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 6,
+          "line": 455,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 7,
+          "line": 494,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 8,
+          "line": 543,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 9,
+          "line": 598,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 10,
+          "line": 778,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 11,
+          "line": 839,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 12,
+          "line": 908,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 13,
+          "line": 1373,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 14,
+          "line": 1400,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 15,
+          "line": 1427,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 16,
+          "line": 1463,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 17,
+          "line": 1622,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        },
+        {
+          "path": "es/service-mesh/istio/comparison/01-service-mesh-comparison.md",
+          "index": 18,
+          "line": 1867,
+          "sourceSha256": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+          "passed": true
+        }
+      ]
+    }
+  },
+  "externalImages": {
+    "http": [
+      {
+        "url": "https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1",
+        "status": 200,
+        "finalUrl": "https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1",
+        "contentType": "image/svg+xml;charset=utf-8",
+        "format": "svg",
+        "dimensions": null,
+        "bytes": 2717,
+        "sha256": "69d114bd420af2f3e99eecda677563a86456b234b8a6b6d687c588a4ce554e75",
+        "valid": true,
+        "cachePath": ".vitepress/cache/global-audit/external-images/ab73d3578932.svg"
+      },
+      {
+        "url": "https://istio.io/latest/docs/concepts/security/arch-sec.svg",
+        "status": 200,
+        "finalUrl": "https://istio.io/latest/docs/concepts/security/arch-sec.svg",
+        "contentType": "image/svg+xml",
+        "format": "svg",
+        "dimensions": "0 0 1127.8 536.22",
+        "bytes": 46051,
+        "sha256": "a9eedeb98a769f2e9ec83670a11d523f59017ed04e3c46f5f30bcbce62cca797",
+        "valid": true,
+        "cachePath": ".vitepress/cache/global-audit/external-images/cb6e78ec58ae.svg"
+      },
+      {
+        "url": "https://istio.io/latest/docs/concepts/security/authn.svg",
+        "status": 200,
+        "finalUrl": "https://istio.io/latest/docs/concepts/security/authn.svg",
+        "contentType": "image/svg+xml",
+        "format": "svg",
+        "dimensions": "0 0 820.41 570.5",
+        "bytes": 28390,
+        "sha256": "eabe6f9d3c1315e54265bd3136809541a1dc937539b91f7d0bfe5aee0a78897a",
+        "valid": true,
+        "cachePath": ".vitepress/cache/global-audit/external-images/824a407d7cc4.svg"
+      },
+      {
+        "url": "https://istio.io/latest/docs/concepts/security/authz.svg",
+        "status": 200,
+        "finalUrl": "https://istio.io/latest/docs/concepts/security/authz.svg",
+        "contentType": "image/svg+xml",
+        "format": "svg",
+        "dimensions": "0 0 682.76 343.99",
+        "bytes": 24484,
+        "sha256": "c39f7791d833b2a239fe18e9e4b7e318c7228c4bfecb38b30d2422c6f3dee9f6",
+        "valid": true,
+        "cachePath": ".vitepress/cache/global-audit/external-images/d501539af945.svg"
+      },
+      {
+        "url": "https://istio.io/latest/docs/concepts/security/id-prov.svg",
+        "status": 200,
+        "finalUrl": "https://istio.io/latest/docs/concepts/security/id-prov.svg",
+        "contentType": "image/svg+xml",
+        "format": "svg",
+        "dimensions": "0 0 481.76 441.23",
+        "bytes": 16580,
+        "sha256": "2b5acec1261b3e626db7e578312392adfcb0eb55c19b31a24d6f0e3b4edf92e7",
+        "valid": true,
+        "cachePath": ".vitepress/cache/global-audit/external-images/566dcc46ecf4.svg"
+      },
+      {
+        "url": "https://istio.io/latest/docs/examples/bookinfo/noistio.svg",
+        "status": 200,
+        "finalUrl": "https://istio.io/latest/docs/examples/bookinfo/noistio.svg",
+        "contentType": "image/svg+xml",
+        "format": "svg",
+        "dimensions": null,
+        "bytes": 49128,
+        "sha256": "7669a2dca0494114bd7b6c73846d6332c8375ca2b2faece3614e2a263f17019d",
+        "valid": true,
+        "cachePath": ".vitepress/cache/global-audit/external-images/2892f01bd5c6.svg"
+      },
+      {
+        "url": "https://istio.io/latest/docs/examples/bookinfo/withistio.svg",
+        "status": 200,
+        "finalUrl": "https://istio.io/latest/docs/examples/bookinfo/withistio.svg",
+        "contentType": "image/svg+xml",
+        "format": "svg",
+        "dimensions": null,
+        "bytes": 53861,
+        "sha256": "1ecabeedc2b15e1b6ac21e0ce7962f971ce6a2fc492ce723c81b522f44738fc6",
+        "valid": true,
+        "cachePath": ".vitepress/cache/global-audit/external-images/728b77ed75bb.svg"
+      },
+      {
+        "url": "https://istio.io/latest/docs/ops/deployment/architecture/arch.svg",
+        "status": 200,
+        "finalUrl": "https://istio.io/latest/docs/ops/deployment/architecture/arch.svg",
+        "contentType": "image/svg+xml",
+        "format": "svg",
+        "dimensions": "0.0 0.0 960.0 540.0",
+        "bytes": 124499,
+        "sha256": "085093b0ca0b746f0d2dd663bbb50624d23c2b0600f44804934582c6f1404dc0",
+        "valid": true,
+        "cachePath": ".vitepress/cache/global-audit/external-images/0ee94958c39a.svg"
+      },
+      {
+        "url": "https://istio.io/latest/docs/tasks/observability/kiali/kiali-graph.png",
+        "status": 200,
+        "finalUrl": "https://istio.io/latest/docs/tasks/observability/kiali/kiali-graph.png",
+        "contentType": "image/png",
+        "format": "png",
+        "dimensions": [
+          1576,
+          885
+        ],
+        "bytes": 143308,
+        "sha256": "07123a4a10073b93fc0c03c20db3d076aa84baf3d2f1bff005bfce81e9e7c5b7",
+        "valid": true,
+        "cachePath": ".vitepress/cache/global-audit/external-images/868ea1c14bd6.png"
+      },
+      {
+        "url": "https://istio.io/latest/docs/tasks/observability/metrics/using-istio-dashboard/grafana-istio-dashboard.png",
+        "status": 200,
+        "finalUrl": "https://istio.io/latest/docs/tasks/observability/metrics/using-istio-dashboard/grafana-istio-dashboard.png",
+        "contentType": "image/png",
+        "format": "png",
+        "dimensions": [
+          1911,
+          997
+        ],
+        "bytes": 44390,
+        "sha256": "e7726e6c59cef45172bbe352a93ed652ed989174009788e04f18a780fba435b2",
+        "valid": true,
+        "cachePath": ".vitepress/cache/global-audit/external-images/b601bca6541b.png"
+      },
+      {
+        "url": "https://istio.io/latest/img/service-mesh.svg",
+        "status": 200,
+        "finalUrl": "https://istio.io/latest/img/service-mesh.svg",
+        "contentType": "image/svg+xml",
+        "format": "svg",
+        "dimensions": "0 0 800 524",
+        "bytes": 113415,
+        "sha256": "1a499d9df5e78c8b4567e70f1dfc42f041c51340e63ef1661f18c7ee878ccec4",
+        "valid": true,
+        "cachePath": ".vitepress/cache/global-audit/external-images/fe75f2fbfc11.svg"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/traffic-management/istio-service-metrics.png",
+        "status": 200,
+        "finalUrl": "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/traffic-management/istio-service-metrics.png",
+        "contentType": "image/png",
+        "format": "png",
+        "dimensions": [
+          2446,
+          944
+        ],
+        "bytes": 272003,
+        "sha256": "6937e7384e874cf61cc059fff943937668bbdb1384122914ce7b42b12d861304",
+        "valid": true,
+        "cachePath": ".vitepress/cache/global-audit/external-images/3a5312807d03.png"
+      }
+    ],
+    "browser": {
+      "status": "passed",
+      "results": [
+        {
+          "url": "https://img.shields.io/static/v1?message=Documented%20on%20GitBook&logo=gitbook&logoColor=ffffff&label=%20&labelColor=5c5c5c&color=3F89A1",
+          "loaded": true,
+          "width": 169,
+          "height": 20
+        },
+        {
+          "url": "https://istio.io/latest/docs/concepts/security/arch-sec.svg",
+          "loaded": true,
+          "width": 300,
+          "height": 143
+        },
+        {
+          "url": "https://istio.io/latest/docs/concepts/security/authn.svg",
+          "loaded": true,
+          "width": 216,
+          "height": 150
+        },
+        {
+          "url": "https://istio.io/latest/docs/concepts/security/authz.svg",
+          "loaded": true,
+          "width": 298,
+          "height": 150
+        },
+        {
+          "url": "https://istio.io/latest/docs/concepts/security/id-prov.svg",
+          "loaded": true,
+          "width": 164,
+          "height": 150
+        },
+        {
+          "url": "https://istio.io/latest/docs/examples/bookinfo/noistio.svg",
+          "loaded": true,
+          "width": 662,
+          "height": 453
+        },
+        {
+          "url": "https://istio.io/latest/docs/examples/bookinfo/withistio.svg",
+          "loaded": true,
+          "width": 771,
+          "height": 456
+        },
+        {
+          "url": "https://istio.io/latest/docs/ops/deployment/architecture/arch.svg",
+          "loaded": true,
+          "width": 267,
+          "height": 150
+        },
+        {
+          "url": "https://istio.io/latest/docs/tasks/observability/kiali/kiali-graph.png",
+          "loaded": true,
+          "width": 1576,
+          "height": 885
+        },
+        {
+          "url": "https://istio.io/latest/docs/tasks/observability/metrics/using-istio-dashboard/grafana-istio-dashboard.png",
+          "loaded": true,
+          "width": 1911,
+          "height": 997
+        },
+        {
+          "url": "https://istio.io/latest/img/service-mesh.svg",
+          "loaded": true,
+          "width": 229,
+          "height": 150
+        },
+        {
+          "url": "https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/traffic-management/istio-service-metrics.png",
+          "loaded": true,
+          "width": 2446,
+          "height": 944
+        }
+      ],
+      "scope": "Onlythe12externalimageURLs;noanalyticsorpagevisits;actualcachedChromiumdecoding"
+    }
+  },
+  "linkSweep": {
+    "processed": 4187,
+    "total": 4187,
+    "counts": {
+      "missing": 26,
+      "access-blocked-or-unverified": 90,
+      "example-or-private": 1,
+      "dynamic-example-url": 3,
+      "unverified": 3,
+      "reachable": 4059,
+      "service-endpoint-not-documentation": 1,
+      "example-or-service-port": 4
+    },
+    "complete": true
+  },
+  "githubRetry": {
+    "total": 65,
+    "verified": 64,
+    "remaining": "SPIFFEcommunitywiki"
+  },
+  "redirectRetries": [
+    {
+      "url": "https://clickhouse.com/docs/optimize/skipping-indexes",
+      "status": 200,
+      "finalUrl": "https://clickhouse.com/docs/concepts/features/performance/skip-indexes/skipping-indexes",
+      "chain": [
+        {
+          "status": 308,
+          "from": "https://clickhouse.com/docs/optimize/skipping-indexes",
+          "to": "https://clickhouse.com/docs/concepts/features/performance/skip-indexes/skipping-indexes"
+        }
+      ],
+      "classification": "reachable"
+    },
+    {
+      "url": "https://clickhouse.com/docs/sql-reference/aggregate-functions/reference/quantile",
+      "status": 200,
+      "finalUrl": "https://clickhouse.com/docs/reference/functions/aggregate-functions/quantile",
+      "chain": [
+        {
+          "status": 308,
+          "from": "https://clickhouse.com/docs/sql-reference/aggregate-functions/reference/quantile",
+          "to": "https://clickhouse.com/docs/reference/functions/aggregate-functions/quantile"
+        }
+      ],
+      "classification": "reachable"
+    },
+    {
+      "url": "https://developer.hashicorp.com/terraform/language/settings/backends/s3",
+      "status": 200,
+      "finalUrl": "https://developer.hashicorp.com/terraform/language/backend/s3",
+      "chain": [
+        {
+          "status": 308,
+          "from": "https://developer.hashicorp.com/terraform/language/settings/backends/s3",
+          "to": "https://developer.hashicorp.com/terraform/language/backend/s3"
+        }
+      ],
+      "classification": "reachable"
+    },
+    {
+      "url": "https://grafana.com/grafana/dashboards/11829",
+      "status": 200,
+      "finalUrl": "https://grafana.com/grafana/dashboards/11829-istio-performance-dashboard/",
+      "chain": [
+        {
+          "status": 308,
+          "from": "https://grafana.com/grafana/dashboards/11829",
+          "to": "https://grafana.com/grafana/dashboards/11829/"
+        },
+        {
+          "status": 301,
+          "from": "https://grafana.com/grafana/dashboards/11829/",
+          "to": "https://grafana.com/grafana/dashboards/11829-istio-performance-dashboard/"
+        }
+      ],
+      "classification": "reachable"
+    },
+    {
+      "url": "https://grafana.com/grafana/dashboards/13277",
+      "status": 200,
+      "finalUrl": "https://grafana.com/grafana/dashboards/13277-istio-wasm-extension-dashboard/",
+      "chain": [
+        {
+          "status": 308,
+          "from": "https://grafana.com/grafana/dashboards/13277",
+          "to": "https://grafana.com/grafana/dashboards/13277/"
+        },
+        {
+          "status": 301,
+          "from": "https://grafana.com/grafana/dashboards/13277/",
+          "to": "https://grafana.com/grafana/dashboards/13277-istio-wasm-extension-dashboard/"
+        }
+      ],
+      "classification": "reachable"
+    },
+    {
+      "url": "https://grafana.com/grafana/dashboards/14876",
+      "status": 200,
+      "finalUrl": "https://grafana.com/grafana/dashboards/14876-grafana-loki-dashboard-for-istio-service-mesh/",
+      "chain": [
+        {
+          "status": 308,
+          "from": "https://grafana.com/grafana/dashboards/14876",
+          "to": "https://grafana.com/grafana/dashboards/14876/"
+        },
+        {
+          "status": 301,
+          "from": "https://grafana.com/grafana/dashboards/14876/",
+          "to": "https://grafana.com/grafana/dashboards/14876-grafana-loki-dashboard-for-istio-service-mesh/"
+        }
+      ],
+      "classification": "reachable"
+    },
+    {
+      "url": "https://grafana.com/grafana/dashboards/7630",
+      "status": 200,
+      "finalUrl": "https://grafana.com/grafana/dashboards/7630-istio-workload-dashboard/",
+      "chain": [
+        {
+          "status": 308,
+          "from": "https://grafana.com/grafana/dashboards/7630",
+          "to": "https://grafana.com/grafana/dashboards/7630/"
+        },
+        {
+          "status": 301,
+          "from": "https://grafana.com/grafana/dashboards/7630/",
+          "to": "https://grafana.com/grafana/dashboards/7630-istio-workload-dashboard/"
+        }
+      ],
+      "classification": "reachable"
+    },
+    {
+      "url": "https://www.chainguard.dev/chainguard-images",
+      "status": 200,
+      "finalUrl": "https://www.chainguard.dev/containers",
+      "chain": [
+        {
+          "status": 308,
+          "from": "https://www.chainguard.dev/chainguard-images",
+          "to": "https://www.chainguard.dev/containers"
+        }
+      ],
+      "classification": "reachable"
+    },
+    {
+      "url": "https://www.gitbook.com/preview?utm_source=gitbook_readme_badge&utm_medium=organic&utm_campaign=preview_documentation&utm_content=link",
+      "status": 200,
+      "finalUrl": "https://www.gitbook.com/enterprise?utm_source=gitbook_readme_badge&utm_medium=organic&utm_campaign=preview_documentation&utm_content=link",
+      "chain": [
+        {
+          "status": 308,
+          "from": "https://www.gitbook.com/preview?utm_source=gitbook_readme_badge&utm_medium=organic&utm_campaign=preview_documentation&utm_content=link",
+          "to": "https://www.gitbook.com/enterprise?utm_source=gitbook_readme_badge&utm_medium=organic&utm_campaign=preview_documentation&utm_content=link"
+        }
+      ],
+      "classification": "reachable"
+    },
+    {
+      "url": "https://www.vaultproject.io/",
+      "status": 200,
+      "finalUrl": "https://developer.hashicorp.com/vault",
+      "chain": [
+        {
+          "status": 308,
+          "from": "https://www.vaultproject.io/",
+          "to": "https://developer.hashicorp.com/vault"
+        }
+      ],
+      "classification": "reachable"
+    }
+  ],
+  "sourceHashes": {
+    "cn/ai-ml/ray/03-ray-train-tune.md": "332b265b64ba60d1434c46bbfe4d51d85c0085ab5e1e09810e4dc3b9e6b8f3ea",
+    "cn/service-mesh/istio/comparison/01-service-mesh-comparison.md": "a87ec1987ab38984d575cc0b429e1a1810f5fe5b5cb0c90329b294d4ef5f2b84",
+    "en/autoscaling/02-karpenter.md": "5a71fb826cf6e6c0840045a890ef9e8921eba5e0a3f7521a99c4abcf03e2fb3a",
+    "en/basics/03-container-technology.md": "cccec0afb9cd5416f4b3e40ceaf5518d2bb6843b3bdaaa15b644b0ca578fd0b1",
+    "en/basics/05-ebpf-fundamentals.md": "dc34c85b7134b020b921bdad43e281ee59ff58d6c3099f96756cab39b49a0d70",
+    "en/core/06-security.md": "abff3075481bf99b13a18919bddb9bcdefa7f9b3d2dde59981ca9e9b70b599d5",
+    "en/quizzes/eks/02-eks-cluster-creation-part1-quiz.md": "3d875114624a792aa839624bd2c561675212ad4d68804110357bc123a6a7c758",
+    "en/quizzes/service-mesh/linkerd/architecture.md": "c133b077ffb91ae1b15a8f5e2b0d145d600e7d84662f53baba62949def7b95fe",
+    "en/service-mesh/istio/comparison/03-sidecar-vs-ambient.md": "11610b4586fdad01a36aeb7af3b6d44337a1f94e2a91ff105cb4d7b515401505",
+    "es/ai-ml/ray/03-ray-train-tune.md": "33c5fe8c6d46c3c945025aacbd9c814a8e47bf6ad770e1e7d10b6decf885e3f3",
+    "es/service-mesh/istio/comparison/01-service-mesh-comparison.md": "d8e039f614788fcff0c82226d4b1579a3760f51d0a099602c7221574b3d6c683",
+    "jp/service-mesh/istio/comparison/01-service-mesh-comparison.md": "3defea1b587eaeab7befe5d811ac388780c1b5881e9030bb7a24d4822f0e234a",
+    "ko/autoscaling/02-karpenter.md": "8b17cc11d0f61852e755a58cb65d2c5358090c630902ae63a2de910f408ef6ec",
+    "ko/basics/03-container-technology.md": "d4ad433425ad62a93dd5b2d5bfa103cda15cc301e2785830b98529b5a531d68c",
+    "ko/basics/05-ebpf-fundamentals.md": "00f9b691cbf4a032354c73bce4bfefe369f7770d52558bf2f0fe0ccf13dc6a00",
+    "ko/container-registry/03-harbor.md": "619687db6f440b5e730ce51b229404fca4899da03c29a52d4bbdebabd4104f0f",
+    "ko/container-registry/04-best-practices.md": "3494fa8048a1ad52a4b78a03275b183c92e0d0fe05d7cb32fcdf34a739333019",
+    "ko/core/06-security.md": "c78bebbb2aca10e8b20f7d1b8ba4bf053338385e5cfcbb3a2439690fee8b0f39",
+    "ko/quizzes/eks/02-eks-cluster-creation-part1-quiz.md": "3e49f6874004cb980af401806104de46f00ed8c652c1798efdc7ee575a791f30",
+    "ko/quizzes/service-mesh/linkerd/architecture.md": "0ff5df029a97555e28364400b94bf6894c22aaf7c45c56386d43dd3aebfda2d2",
+    "ko/service-mesh/istio/comparison/03-sidecar-vs-ambient.md": "19f02a54c44bfeebc2239f9e717e1401b4c0e140b8d7775424bef49d350ea6f4"
+  },
+  "limits": [
+    "InitialHTTPsweepisdatedbeforetheserepairs;26missingincludes10unpublishedvClusterviewers(PR241),onequizURIandpendingsecurity/observabilitylinks.",
+    "A403/418orDNSfailureisnotclassifiedasadeadpage;64GitHubURLsverifiedwithofficialAPIand10308redirectsresolved.",
+    "CiliumSlackreplacementislinkedfromofficialhomepage;inviteendpointblocksautomatedHTTPwith403.",
+    "Legacytranslationsreceivedsyntax-onlyrepairs;theiroutdatedproseawaitstranslationautomation.",
+    "NoGA4events,cloudmutations,fullVitePressbuild,orsemanticrereviewofunchangedsections."
+  ]
+}

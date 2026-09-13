@@ -1,0 +1,88 @@
+[
+  {
+    "path": "en/service-mesh/istio/troubleshooting/common-errors.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full802-line original reviewed; fixed lifecycle/injection/TLS/routing/certificate/DNS errors and unsafe generic mitigations; retained all10 troubleshooting topics.",
+    "sources": [
+      "https://istio.io/latest/docs/ops/common-problems/injection/",
+      "https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/",
+      "https://istio.io/latest/docs/ops/common-problems/network-issues/",
+      "https://istio.io/latest/docs/ops/configuration/traffic-management/tls-configuration/",
+      "https://istio.io/latest/docs/reference/config/annotations/",
+      "https://github.com/istio/istio/blob/1.31.0/pkg/envoy/agent.go",
+      "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/",
+      "https://istio.io/latest/docs/ops/diagnostic-tools/proxy-cmd/",
+      "https://istio.io/latest/docs/tasks/security/cert-management/plugin-ca-cert/",
+      "https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/",
+      "https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/"
+    ],
+    "findings": [
+      "Replaced outdated1.28/contradictory2025–2026date labels with explicit1.31CLI/config review date and link to maintained compatibility guide; no live/prod verification claimed.",
+      "Corrected shutdown ordering: ordinary containers have no fixedorder; native initContainer sidecars terminate after app. Drain annotation is not preStop or wait-until-allrequests-complete; 30/60s are examples. Removed nonexistent terminationGracePeriod annotation, unbounded netstat/lifecycle loop, magic unread readiness file and blanket no-app-sleep/minimum60s advice.",
+      "Clarified startup-only holdApplicationUntilProxyStarts, new-Pod configuration effects and released1.31 EXIT_ON_ZERO branch that bypasses ordinary drain timer. IstioOperator remains istioctl input, not removed in-cluster controller.",
+      "Injection checks both containers/initContainers, intentional ambient no-proxy, webhook/platform/revision selection and Pod-template label vs deprecated annotation. Updated logs to app=istiod. OOM/restart/security-context errors no longer conflated.",
+      "Corrected inbound PeerAuthentication vs outbound DestinationRule/auto mTLS, namespaceapp vs root namespace mesh-wide scope, and ambientDISABLE limitation. Removed false diagram asserting clientSTRICT forcesoutboundTLS.",
+      "Corrected externalhost→internalService as valid ingress pattern, completed missing hosts/routes/ports/subset config, and explained Service endpoints/labels and gateway-vs-mesh route selection.",
+      "Gateway diagnostics cover real Deployment/Service names, IP/hostname, EKS target path and Kubernetes Gateway API status. Valid HTTPS/SIMPLE+HTTP route uses correct gateway reference; certificate existence does not imply client trust and Secret belongs to gateway credential context.",
+      "Sidecar is configuration scope, not firewall/ambient policy. Highlatency example no longer adds unsafe blanket retries; complete route uses attempts0 with deadline, actual load/latency diagnosis first.",
+      "Removed nonexistent istioctl x ca root and automatic CA-regeneration advice; inspect actual public trustchain, loaded certs, renewal/CA/SDS/clock and supportedrotation. ServiceEntry doesnotrepairDNS; complete startup/readiness probe actions with realappcontract.",
+      "Diagnosticcommands namespace-scoped; current-vs-previous logs distinct, Envoy/ztunnel tools distinct, loopbackadmin only and restorecustomloglevels. No assumptions about shell/netstat in proxyimage.",
+      "Visually reviewed all3PNG+interactive diagrams perlanguage. Removed wrong/redundant refs0/1/2 with replacement prose: fixedsimultaneousSIGTERM/SIGKILL30s, unconditionalsuccessfuldrain, and clientPeerAuthentication-as-outboundTLS were misleading. Assetfiles unchanged; parent-owned archmap sources need semanticregeneration if reused, not just font recapture.",
+      "Follow-up: actualapplication SIGTERM/probecontract, CNI/network path, gateway certificateowner and productionlatency remain deployment-specific; examples are diagnostic guidance and explicitly marked Deploymentmergefragments, not production-testedrecipes."
+    ],
+    "validation": [
+      "All802original lines perlanguage read including every codeblock/diagram/reference;6PNGfigures visually inspected.",
+      "Perlanguage:14YAMLresources parsed,8Istioresources passed native1.31+releasedCRDschemas,1installationrender confirmed30sdrain+startuphold.",
+      "Perlanguage:5nativekube-inject fixtures verified actualProxyConfig/nativeordering/resourcequantities/probeactions;13Bashblocks syntaxchecked. EN/KO YAML+Bash examples identical.",
+      "Native1.31CLI version+10commandhelp probes confirm command/alias availability and absenceofxca. No liveKubernetes/AWScommandexecuted.",
+      "Detailed evidence /tmp/mesh-troubleshooting-validation/report.json; originals /tmp/mesh-troubleshooting-original-{en,ko}.md.",
+      "Batch2documents:24YAMLblocks/26Bashblocks, duplicatekeys/fences/details/relative+own-mainlinks/known404/4100errors; scopedgitdiffcheckclean."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/troubleshooting/common-errors.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full802-line original reviewed; fixed lifecycle/injection/TLS/routing/certificate/DNS errors and unsafe generic mitigations; retained all10 troubleshooting topics.",
+    "sources": [
+      "https://istio.io/latest/docs/ops/common-problems/injection/",
+      "https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/",
+      "https://istio.io/latest/docs/ops/common-problems/network-issues/",
+      "https://istio.io/latest/docs/ops/configuration/traffic-management/tls-configuration/",
+      "https://istio.io/latest/docs/reference/config/annotations/",
+      "https://github.com/istio/istio/blob/1.31.0/pkg/envoy/agent.go",
+      "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/",
+      "https://istio.io/latest/docs/ops/diagnostic-tools/proxy-cmd/",
+      "https://istio.io/latest/docs/tasks/security/cert-management/plugin-ca-cert/",
+      "https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/",
+      "https://istio.io/latest/docs/ops/configuration/traffic-management/dns-proxy/"
+    ],
+    "findings": [
+      "Replaced outdated1.28/contradictory2025–2026date labels with explicit1.31CLI/config review date and link to maintained compatibility guide; no live/prod verification claimed.",
+      "Corrected shutdown ordering: ordinary containers have no fixedorder; native initContainer sidecars terminate after app. Drain annotation is not preStop or wait-until-allrequests-complete; 30/60s are examples. Removed nonexistent terminationGracePeriod annotation, unbounded netstat/lifecycle loop, magic unread readiness file and blanket no-app-sleep/minimum60s advice.",
+      "Clarified startup-only holdApplicationUntilProxyStarts, new-Pod configuration effects and released1.31 EXIT_ON_ZERO branch that bypasses ordinary drain timer. IstioOperator remains istioctl input, not removed in-cluster controller.",
+      "Injection checks both containers/initContainers, intentional ambient no-proxy, webhook/platform/revision selection and Pod-template label vs deprecated annotation. Updated logs to app=istiod. OOM/restart/security-context errors no longer conflated.",
+      "Corrected inbound PeerAuthentication vs outbound DestinationRule/auto mTLS, namespaceapp vs root namespace mesh-wide scope, and ambientDISABLE limitation. Removed false diagram asserting clientSTRICT forcesoutboundTLS.",
+      "Corrected externalhost→internalService as valid ingress pattern, completed missing hosts/routes/ports/subset config, and explained Service endpoints/labels and gateway-vs-mesh route selection.",
+      "Gateway diagnostics cover real Deployment/Service names, IP/hostname, EKS target path and Kubernetes Gateway API status. Valid HTTPS/SIMPLE+HTTP route uses correct gateway reference; certificate existence does not imply client trust and Secret belongs to gateway credential context.",
+      "Sidecar is configuration scope, not firewall/ambient policy. Highlatency example no longer adds unsafe blanket retries; complete route uses attempts0 with deadline, actual load/latency diagnosis first.",
+      "Removed nonexistent istioctl x ca root and automatic CA-regeneration advice; inspect actual public trustchain, loaded certs, renewal/CA/SDS/clock and supportedrotation. ServiceEntry doesnotrepairDNS; complete startup/readiness probe actions with realappcontract.",
+      "Diagnosticcommands namespace-scoped; current-vs-previous logs distinct, Envoy/ztunnel tools distinct, loopbackadmin only and restorecustomloglevels. No assumptions about shell/netstat in proxyimage.",
+      "Visually reviewed all3PNG+interactive diagrams perlanguage. Removed wrong/redundant refs0/1/2 with replacement prose: fixedsimultaneousSIGTERM/SIGKILL30s, unconditionalsuccessfuldrain, and clientPeerAuthentication-as-outboundTLS were misleading. Assetfiles unchanged; parent-owned archmap sources need semanticregeneration if reused, not just font recapture.",
+      "Follow-up: actualapplication SIGTERM/probecontract, CNI/network path, gateway certificateowner and productionlatency remain deployment-specific; examples are diagnostic guidance and explicitly marked Deploymentmergefragments, not production-testedrecipes."
+    ],
+    "validation": [
+      "All802original lines perlanguage read including every codeblock/diagram/reference;6PNGfigures visually inspected.",
+      "Perlanguage:14YAMLresources parsed,8Istioresources passed native1.31+releasedCRDschemas,1installationrender confirmed30sdrain+startuphold.",
+      "Perlanguage:5nativekube-inject fixtures verified actualProxyConfig/nativeordering/resourcequantities/probeactions;13Bashblocks syntaxchecked. EN/KO YAML+Bash examples identical.",
+      "Native1.31CLI version+10commandhelp probes confirm command/alias availability and absenceofxca. No liveKubernetes/AWScommandexecuted.",
+      "Detailed evidence /tmp/mesh-troubleshooting-validation/report.json; originals /tmp/mesh-troubleshooting-original-{en,ko}.md.",
+      "Batch2documents:24YAMLblocks/26Bashblocks, duplicatekeys/fences/details/relative+own-mainlinks/known404/4100errors; scopedgitdiffcheckclean."
+    ]
+  }
+]

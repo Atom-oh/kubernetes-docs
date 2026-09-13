@@ -27,7 +27,7 @@
       "id": "task-a",
       "type": "backend",
       "label": "Pod: task A",
-      "sublabel": "ephemeral pod",
+      "sublabel": "Airflow task runtime",
       "pos": [
         40,
         300
@@ -41,7 +41,7 @@
       "id": "task-b",
       "type": "backend",
       "label": "Pod: task B",
-      "sublabel": "ephemeral pod",
+      "sublabel": "Airflow task runtime",
       "pos": [
         240,
         300
@@ -55,7 +55,7 @@
       "id": "task-c",
       "type": "backend",
       "label": "Pod: task C",
-      "sublabel": "ephemeral pod",
+      "sublabel": "Airflow task runtime",
       "pos": [
         440,
         300
@@ -82,8 +82,8 @@
     {
       "id": "broker",
       "type": "messagebus",
-      "label": "Redis broker",
-      "sublabel": "task queue",
+      "label": "Celery broker",
+      "sublabel": "Redis / RabbitMQ etc.",
       "pos": [
         830,
         180
@@ -97,7 +97,7 @@
       "id": "worker-1",
       "type": "backend",
       "label": "Pod: celery worker 1",
-      "sublabel": "long-running warm pod",
+      "sublabel": "scalable worker pool",
       "pos": [
         720,
         300
@@ -111,7 +111,7 @@
       "id": "worker-2",
       "type": "backend",
       "label": "Pod: celery worker 2",
-      "sublabel": "long-running warm pod",
+      "sublabel": "scalable worker pool",
       "pos": [
         940,
         300
@@ -186,7 +186,7 @@
       "id": "broker-worker-1",
       "from": "broker",
       "to": "worker-1",
-      "label": "pulled by warm worker",
+      "label": "worker consumes",
       "fromSide": "bottom",
       "toSide": "top"
     },
@@ -203,18 +203,18 @@
       "dot": "cyan",
       "title": "KubernetesExecutor",
       "items": [
-        "One pod per task — torn down on completion",
-        "Cold start of roughly 1–2 min (pod scheduling, image pull, node scale-out)",
-        "No idle cost, strong isolation between tasks"
+        "Per-task worker pods; configurable failure retention",
+        "Measure startup against image/API/node availability",
+        "Control-plane, DB and node costs remain"
       ]
     },
     {
       "dot": "orange",
       "title": "CeleryExecutor",
       "items": [
-        "Warm worker pool runs continuously — dispatch in seconds",
-        "Requires a Redis/RabbitMQ broker + worker Deployment",
-        "Tasks on the same worker share resources/deps — weak isolation"
+        "Warm workers or KEDA scale-to-zero",
+        "Configure broker, result backend and concurrency",
+        "Deployment or StatefulSet; shared resources/dependencies"
       ]
     }
   ]

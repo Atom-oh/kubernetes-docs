@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/ai-ml/ray/04-ray-serve.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "7ddfc7a225cf3d4ad1f92fa79ed3aed436733e7beec5cb71cbf290ae34a4d377",
+    "summary": "Fullreview2.58ServeAPI/source/nativeconfigs+CPUHTTP/handle;proxy/defaults/backpressure/LLM/RayService/layeringcorrected;4MD/20questions/2figures/6responsive;noLLM/GPU/cloud."
+  },
+  {
+    "path": "ko/quizzes/ai-ml/ray/04-ray-serve-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "b877ccc170259d1b9365e1ae193d112f391fa70d61b32c994e9ac4a7e16ea021",
+    "summary": "Fullreview2.58ServeAPI/source/nativeconfigs+CPUHTTP/handle;proxy/defaults/backpressure/LLM/RayService/layeringcorrected;4MD/20questions/2figures/6responsive;noLLM/GPU/cloud."
+  },
+  {
+    "path": "en/ai-ml/ray/04-ray-serve.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "ff0056644ac060a67acc1b5458a7fe542e42e9bd422f12ef102a7153557f2484",
+    "summary": "Fullreview2.58ServeAPI/source/nativeconfigs+CPUHTTP/handle;proxy/defaults/backpressure/LLM/RayService/layeringcorrected;4MD/20questions/2figures/6responsive;noLLM/GPU/cloud."
+  },
+  {
+    "path": "en/quizzes/ai-ml/ray/04-ray-serve-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "cc83728674e1ac91c6fe439d7d8321ff01d70bb5a6ee286de6bb33c827eb7d13",
+    "summary": "Fullreview2.58ServeAPI/source/nativeconfigs+CPUHTTP/handle;proxy/defaults/backpressure/LLM/RayService/layeringcorrected;4MD/20questions/2figures/6responsive;noLLM/GPU/cloud."
+  }
+]

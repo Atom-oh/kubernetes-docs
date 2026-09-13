@@ -1,0 +1,553 @@
+{
+  "status": "passed",
+  "files": [
+    "ko/data-on-eks/flink/04-operations-ha.md",
+    "ko/quizzes/data-on-eks/flink/04-operations-ha-quiz.md",
+    "en/data-on-eks/flink/04-operations-ha.md",
+    "en/quizzes/data-on-eks/flink/04-operations-ha-quiz.md"
+  ],
+  "fences": 10,
+  "quizQuestions": 26,
+  "relativeLinks": 10,
+  "examples": {
+    "status": "passed",
+    "workloadCrdCases": 1,
+    "podMonitorCrdCases": 2,
+    "podMonitorSchema": "PrometheusOperator0.94.0",
+    "selectorAndNamedPortMatches": 2,
+    "helmObjects": 16,
+    "operatorPrometheusConfiguration": true,
+    "limits": "Source,CRD,template and selector/port checks only. No deployment, Prometheus scrape, HA recovery or cloud operations."
+  },
+  "nativeMemoryCalculations": {
+    "status": "passed",
+    "cases": [
+      {
+        "managedFraction": 0.4,
+        "processBytes": 4294967296,
+        "jvmHeapBytes": 1664299798,
+        "taskHeapBytes": 1530082070,
+        "managedBytes": 1438814063,
+        "networkBytes": 359703515,
+        "jvmDirectBytes": 493921243,
+        "metaspaceBytes": 268435456,
+        "overheadBytes": 429496736
+      },
+      {
+        "managedFraction": 0.5,
+        "processBytes": 4294967296,
+        "jvmHeapBytes": 1304596309,
+        "taskHeapBytes": 1170378581,
+        "managedBytes": 1798517552,
+        "networkBytes": 359703515,
+        "jvmDirectBytes": 493921243,
+        "metaspaceBytes": 268435456,
+        "overheadBytes": 429496736
+      }
+    ],
+    "scope": "Released Flink 2.2.1 memory calculation only; no task, cluster or 4GiB allocation."
+  },
+  "markdownVueCompilation": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/data-on-eks/flink/04-operations-ha.md",
+        "sha256": "6cd60d6079f21016230fa135dab4895c34217d2d226c8f39da4070313a37693b",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-4-운영-고가용성과-관리형-flink"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-reporter·pod-port·podmonitor를-함께-연결"
+          },
+          {
+            "tag": "h3",
+            "id": "operator-자신의-메트릭은-별도-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "rocksdb-지표의-단위와-비용"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-managed-memory와-network-memory는-다른-영역"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-kubernetes-ha-coordination과-durable-state"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-autoscaler와-node-capacity는-양방향으로-영향을-줌"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-amazon-managed-service-for-apache-flink와-비교"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-운영-인수-기준"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "part-4-운영-고가용성과-관리형-flink",
+          "_1-reporter·pod-port·podmonitor를-함께-연결",
+          "operator-자신의-메트릭은-별도-설정",
+          "rocksdb-지표의-단위와-비용",
+          "_2-managed-memory와-network-memory는-다른-영역",
+          "_3-kubernetes-ha-coordination과-durable-state",
+          "_4-autoscaler와-node-capacity는-양방향으로-영향을-줌",
+          "_5-amazon-managed-service-for-apache-flink와-비교",
+          "_6-운영-인수-기준",
+          "검증-범위",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/data-on-eks/flink/04-operations-ha.md",
+        "sha256": "ba6e0e8562d29667aa82e8261b31a9f3411d39ba7e15574d58da3926eef78e76",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-4-operations-high-availability-and-managed-flink"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-connect-reporters-pod-ports-and-podmonitors-together"
+          },
+          {
+            "tag": "h3",
+            "id": "the-operator-s-own-metrics-need-separate-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "rocksdb-metric-units-and-cost"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-managed-and-network-memory-are-separate-regions"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-kubernetes-ha-coordination-and-durable-state"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-autoscaling-and-node-capacity-affect-each-other"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-compare-amazon-managed-service-for-apache-flink"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-operational-acceptance"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "part-4-operations-high-availability-and-managed-flink",
+          "_1-connect-reporters-pod-ports-and-podmonitors-together",
+          "the-operator-s-own-metrics-need-separate-configuration",
+          "rocksdb-metric-units-and-cost",
+          "_2-managed-and-network-memory-are-separate-regions",
+          "_3-kubernetes-ha-coordination-and-durable-state",
+          "_4-autoscaling-and-node-capacity-affect-each-other",
+          "_5-compare-amazon-managed-service-for-apache-flink",
+          "_6-operational-acceptance",
+          "validation-scope",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/flink/04-operations-ha-quiz.md",
+        "sha256": "ae4aad51bff6eaf213d6301eb638a61180dbc8896e4dea40186d2553114a5319",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "운영·ha·관리형-flink-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "운영·ha·관리형-flink-퀴즈"
+        ]
+      },
+      {
+        "path": "en/quizzes/data-on-eks/flink/04-operations-ha-quiz.md",
+        "sha256": "763ed2fd780f0d6758e169877f07c467fb03fdb446e30d43d0ca70d6ecc0c02c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "operations-ha-and-managed-flink-quiz"
+          }
+        ],
+        "renderedIds": [
+          "operations-ha-and-managed-flink-quiz"
+        ]
+      },
+      {
+        "path": "ko/data-on-eks/flink/README.md",
+        "sha256": "5a98178d50e8435c9a7174a21d57e53a6fe83434ec8a981069bb9b46b069c4da",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "flink-on-eks-딥다이브"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes에서-누가-무엇을-관리하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "시리즈-구성"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "flink-on-eks-딥다이브",
+          "kubernetes에서-누가-무엇을-관리하나요",
+          "시리즈-구성",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/data-on-eks/flink/README.md",
+        "sha256": "74030331c2c7247a38f133a2a37ab8720f620434d6876da2e1e6cf4d767fc3b1",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "flink-on-eks-deep-dive"
+          },
+          {
+            "tag": "h2",
+            "id": "who-manages-what-on-kubernetes"
+          },
+          {
+            "tag": "h2",
+            "id": "chapters"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "flink-on-eks-deep-dive",
+          "who-manages-what-on-kubernetes",
+          "chapters",
+          "references"
+        ]
+      }
+    ]
+  },
+  "viewerChecks": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "7a14d721b5842bfc3fac02ab9c8bc603a37e99e8d46aaa9fa03cac112cf13276"
+      },
+      {
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "7a14d721b5842bfc3fac02ab9c8bc603a37e99e8d46aaa9fa03cac112cf13276"
+      },
+      {
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "7a14d721b5842bfc3fac02ab9c8bc603a37e99e8d46aaa9fa03cac112cf13276"
+      },
+      {
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "5ca61f5171d095a12999558f4eee4cf1cc22c9265520eecae999ddd394802fd3"
+      },
+      {
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "5ca61f5171d095a12999558f4eee4cf1cc22c9265520eecae999ddd394802fd3"
+      },
+      {
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "5ca61f5171d095a12999558f4eee4cf1cc22c9265520eecae999ddd394802fd3"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "diagramDeliveries": [
+    {
+      "schemaVersion": 1,
+      "ok": true,
+      "command": "deliver",
+      "type": "workflow",
+      "input": "/home/atomoh/kubernetes-docs/assets/diagrams/archify/ko-data-on-eks-flink-04-operations-ha-0.workflow.json",
+      "output": "/home/atomoh/kubernetes-docs/public/archmaps/ko-data-on-eks-flink-04-operations-ha-0.html",
+      "specification": {
+        "sha256": "40caf9102f342a812668ecc5bb7e47c2ae0f66ea0e81f4a762845d252dfc0691",
+        "bytes": 4914
+      },
+      "artifact": {
+        "sha256": "7a14d721b5842bfc3fac02ab9c8bc603a37e99e8d46aaa9fa03cac112cf13276",
+        "bytes": 710822
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "ok": true,
+      "command": "deliver",
+      "type": "workflow",
+      "input": "/home/atomoh/kubernetes-docs/assets/diagrams/archify/en-data-on-eks-flink-04-operations-ha-0.workflow.json",
+      "output": "/home/atomoh/kubernetes-docs/public/archmaps/en-data-on-eks-flink-04-operations-ha-0.html",
+      "specification": {
+        "sha256": "0f8dac6baae12450ef2b32ee9a84feadd80071a4164a2e0b58f5487386f3a2fc",
+        "bytes": 4784
+      },
+      "artifact": {
+        "sha256": "5ca61f5171d095a12999558f4eee4cf1cc22c9265520eecae999ddd394802fd3",
+        "bytes": 710429
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  ],
+  "pngVisualInspection": "Both current workflow PNGs inspected. Conditional capacity/disruption paths and feedback node are readable; captions shortened to pass1440desktop readability without relaxing gates. No clipped labels/cards.",
+  "sources": [
+    {
+      "name": "reporters",
+      "url": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/metric_reporters/",
+      "bytes": 136645,
+      "sha256": "206154e393bbd526718e1b418924f459434a098ffd9f7a58c15efd55cd105560"
+    },
+    {
+      "name": "tm-memory",
+      "url": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/memory/mem_setup_tm/",
+      "bytes": 116614,
+      "sha256": "530675b44149c47aad875d75bb500edb6f2ccd19623eb8de306faa4b79f21896"
+    },
+    {
+      "name": "memory-detail",
+      "url": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/memory/mem_setup/",
+      "bytes": 110084,
+      "sha256": "173550317c4c63d3e8699efc1d9d3e1bb523b473ec7ec6df39b9c24ff6affd9f"
+    },
+    {
+      "name": "kube-ha",
+      "url": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/ha/kubernetes_ha/",
+      "bytes": 102138,
+      "sha256": "ebd2cec6f62d6b94c03343637111038d56b1fce162d1350bd88ee33042a9fc9a"
+    },
+    {
+      "name": "metrics",
+      "url": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/ops/metrics/",
+      "bytes": 251343,
+      "sha256": "3d13030d9dd1d8ba87207e7a6213ae66d31b28ec9b9bb3cdca405c49246a8c42"
+    },
+    {
+      "name": "ha-options",
+      "url": "https://raw.githubusercontent.com/apache/flink/release-2.2.1/flink-core/src/main/java/org/apache/flink/configuration/HighAvailabilityOptions.java",
+      "bytes": 17316,
+      "sha256": "1982144c4d492d8673ade359e2b94bf884c7be9d59fbeb85cf9030a31dee76a0"
+    },
+    {
+      "name": "leader-elector",
+      "url": "https://raw.githubusercontent.com/apache/flink/release-2.2.1/flink-kubernetes/src/main/java/org/apache/flink/kubernetes/kubeclient/resources/KubernetesLeaderElector.java",
+      "bytes": 8838,
+      "sha256": "44fad48bd53422cc909cb432c83b78d873142d82ac0b132a3ae156ea94967f11"
+    },
+    {
+      "name": "operator-pom",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/flink-kubernetes-operator/pom.xml",
+      "bytes": 21153,
+      "sha256": "3d05145616cb284e4b9caf97dd89f17d271ad56f839453247841177262a1a001"
+    },
+    {
+      "name": "operator-docker",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/Dockerfile",
+      "bytes": 3862,
+      "sha256": "24e65943bd5134720f5b57c67ae8fb6f0dd7b3ed63d6e7af691deb577caba251"
+    },
+    {
+      "name": "managed23",
+      "url": "https://docs.aws.amazon.com/managed-flink/latest/java/flink-2-3.html",
+      "bytes": 22438,
+      "sha256": "519bfb487d6f6ea99c9e008da82fa578a9cce68b85515d3fc62826c067c27a1f"
+    },
+    {
+      "name": "prom-release",
+      "url": "https://api.github.com/repos/prometheus-operator/prometheus-operator/releases/latest",
+      "bytes": 7889,
+      "sha256": "bbc6720d9bb5908007e0c21c17d4b8de3ada36c19cad5652afaa60dffdde737b"
+    },
+    {
+      "name": "podmonitor094",
+      "url": "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.94.0/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml",
+      "bytes": 74742,
+      "sha256": "96fcdcd7f9b4e3f37d8fd1e0848d3cfd25de6691ca8412c4f5db294027574242"
+    },
+    {
+      "name": "dist221pom",
+      "url": "https://raw.githubusercontent.com/apache/flink/release-2.2.1/flink-dist/pom.xml",
+      "bytes": 23248,
+      "sha256": "fa28abd5fc4c327322b762b73b5d4ef6879f2031a092074e72cb6c493221b50a"
+    },
+    {
+      "name": "rocksdb-property",
+      "url": "https://raw.githubusercontent.com/apache/flink/release-2.2.1/flink-state-backends/flink-statebackend-rocksdb/src/main/java/org/apache/flink/state/rocksdb/RocksDBProperty.java",
+      "bytes": 5114,
+      "sha256": "a6b6b324c0d5a0579c40e27e282d423a5236ca26200dfdaa9349f28311d16492"
+    },
+    {
+      "name": "rocksdb-metrics",
+      "url": "https://raw.githubusercontent.com/apache/flink/release-2.2.1/flink-state-backends/flink-statebackend-rocksdb/src/main/java/org/apache/flink/state/rocksdb/RocksDBNativeMetricOptions.java",
+      "bytes": 31502,
+      "sha256": "4a6f9e5835c977bd2b38c7385be07d73a4b9d0085ed1748297565fe5e324895c"
+    }
+  ],
+  "awsPrimaryDocuments": [
+    "https://docs.aws.amazon.com/managed-flink/latest/java/flink-2-3.html",
+    "https://docs.aws.amazon.com/managed-flink/latest/java/disaster-recovery-resiliency.html",
+    "https://docs.aws.amazon.com/managed-flink/latest/java/how-scaling-auto.html",
+    "https://docs.aws.amazon.com/managed-flink/latest/java/how-scaling.html"
+  ],
+  "limits": "Native memory budget computation only with Corretto21/target17;no4GiBallocation,actualRSSmeasurement,Prometheusscrape,Kubernetesdeployment,HAfailover,managedappAPIoperationorcostmeasurement.",
+  "readmeCompilationScope": "README records freshly compiled from immutablePR234HEADdff67c7b;README filesareunchangedbythiscohort."
+}

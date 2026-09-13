@@ -617,6 +617,7 @@
     * [Security Quiz](quizzes/gitops/argocd/07-security-quiz.md)
     * [Notifications Quiz](quizzes/gitops/argocd/08-notifications-quiz.md)
     * [Best Practices Quiz](quizzes/gitops/argocd/09-best-practices-quiz.md)
+    * [Rollouts Experiment Deep Dive Quiz](quizzes/gitops/argocd/10-rollouts-experiment-quiz.md)
   * [FluxCD Quiz](quizzes/gitops/02-fluxcd-quiz.md)
   * [GitOps Tools Comparison Quiz](quizzes/gitops/03-gitops-comparison-quiz.md)
   * [Flagger Progressive Delivery Quiz](quizzes/gitops/04-flagger-quiz.md)

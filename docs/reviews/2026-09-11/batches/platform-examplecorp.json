@@ -1,0 +1,18 @@
+[
+  {
+    "path": "ko/platform-engineering/05-example-corp-app.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "26f38ef4787e04cb7dfb69b84b359181d7d66b3f5a617485feb5d7094b56fa2b",
+    "summary": "Alloriginal2MDreviewed;actualRGD/TGB/CEL21expr4resources/2MD2figures6responsivepassed;fictionalappandruntimeboundariesexplicit.",
+    "validationReport": "docs/reviews/2026-09-11/platform-examplecorp-validation.json"
+  },
+  {
+    "path": "en/platform-engineering/05-example-corp-app.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "afaf67e7352918428badc8ab73e094974a56ac2a57a0fc355937bd459094571d",
+    "summary": "Alloriginal2MDreviewed;actualRGD/TGB/CEL21expr4resources/2MD2figures6responsivepassed;fictionalappandruntimeboundariesexplicit.",
+    "validationReport": "docs/reviews/2026-09-11/platform-examplecorp-validation.json"
+  }
+]

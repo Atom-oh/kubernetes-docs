@@ -21,12 +21,11 @@
         "id": "reconcile-path",
         "label": "Controllers and Repo Server",
         "focus": [
-          "ctrl-leader",
-          "ctrl-standby",
+          "controllers",
           "repo",
           "redis-master"
         ],
-        "note": "The leader Application Controller pulls manifests from the Repo Server, compares state, and caches results in Redis."
+        "note": "Application Controller shards obtain manifests from Repo Server, reconcile their assigned clusters and use Redis cache."
       },
       {
         "id": "redis-ha",
@@ -49,7 +48,7 @@
       "sublabel": "ALB / Ingress",
       "pos": [
         60,
-        200
+        80
       ],
       "size": [
         170,
@@ -63,7 +62,7 @@
       "sublabel": "argocd-server · 2+ replicas",
       "pos": [
         330,
-        200
+        80
       ],
       "size": [
         200,
@@ -71,33 +70,18 @@
       ]
     },
     {
-      "id": "ctrl-standby",
+      "id": "controllers",
       "type": "backend",
-      "label": "Application Controller 2",
-      "sublabel": "standby",
+      "label": "Application Controllers",
+      "sublabel": "Cluster workload shards",
       "pos": [
         620,
-        60
+        80
       ],
       "size": [
         210,
         64
       ]
-    },
-    {
-      "id": "ctrl-leader",
-      "type": "backend",
-      "label": "Application Controller 1",
-      "sublabel": "leader (active)",
-      "pos": [
-        620,
-        200
-      ],
-      "size": [
-        210,
-        64
-      ],
-      "tag": "Leader"
     },
     {
       "id": "repo",
@@ -106,7 +90,7 @@
       "sublabel": "argocd-repo-server · 2+ replicas",
       "pos": [
         940,
-        200
+        80
       ],
       "size": [
         220,
@@ -120,7 +104,7 @@
       "sublabel": "single writer",
       "pos": [
         620,
-        480
+        360
       ],
       "size": [
         210,
@@ -134,7 +118,7 @@
       "sublabel": "replicated from Master",
       "pos": [
         620,
-        640
+        520
       ],
       "size": [
         210,
@@ -148,7 +132,7 @@
       "sublabel": "failure detection · auto failover",
       "pos": [
         940,
-        640
+        520
       ],
       "size": [
         220,
@@ -162,8 +146,7 @@
       "label": "ArgoCD HA (argocd namespace)",
       "wraps": [
         "api",
-        "ctrl-standby",
-        "ctrl-leader",
+        "controllers",
         "repo",
         "redis-master",
         "redis-replica",
@@ -172,10 +155,9 @@
     },
     {
       "kind": "security-group",
-      "label": "Application Controllers (leader election)",
+      "label": "Application Controllers (cluster sharding)",
       "wraps": [
-        "ctrl-standby",
-        "ctrl-leader"
+        "controllers"
       ]
     },
     {
@@ -204,18 +186,18 @@
     },
     {
       "id": "ctrl-to-repo",
-      "from": "ctrl-leader",
+      "from": "controllers",
       "to": "repo",
       "label": "manifest request"
     },
     {
       "id": "ctrl-to-redis",
-      "from": "ctrl-leader",
+      "from": "controllers",
       "to": "redis-master",
       "label": "app state cache",
       "labelAt": [
         725,
-        372
+        252
       ]
     },
     {
@@ -231,7 +213,7 @@
       "label": "replication",
       "labelAt": [
         725,
-        592
+        472
       ]
     }
   ],
@@ -240,8 +222,8 @@
       "dot": "violet",
       "title": "Application Controller",
       "items": [
-        "Runs with leader election; set the replica count via ARGOCD_CONTROLLER_REPLICAS",
-        "Large clusters shard with controller.sharding.algorithm: round-robin"
+        "Match ARGOCD_CONTROLLER_REPLICAS to the actual replica count to shard clusters",
+        "Validate sharding, redistribution and recovery; this is not a global leader/standby design"
       ]
     },
     {

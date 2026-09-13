@@ -1,0 +1,1145 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T22:54:26.544053+00:00",
+  "scope": {
+    "documents": 4,
+    "quizQuestions": 30,
+    "originalTopicsPerLocale": 15,
+    "figures": 6
+  },
+  "contentPreservation": {
+    "originalUniqueBlocksRead": 87,
+    "originalGuidesLinesEach": 1945,
+    "originalQuizLinesEach": 680,
+    "preserved": "All15quiztopicsand8best-practiceareas:benchmarking,startup,SOCI/Bottlerocket,devices,network/storage,observability,cost,security.",
+    "changes": "Currentinference-perf/SOCICLI;removeunmeasuredsavings;correctcacheintegrity/checkpointdeletion,PythonABI,DRA/metrics/VRAM,UTCcronwindow,placementGroupSelector,ESOv1/rotation/CloudTrailscope/NetworkPolicy/auditlogging."
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/07-ai-ml-best-practices.md",
+        "sha256": "5cb43ef54e097879c08669205ce89021dffc5c409d6e57cf4fef00a55ca080b0",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "eks에서의-ai-ml-모범-사례"
+          },
+          {
+            "tag": "h2",
+            "id": "llm-추론-벤치마킹"
+          },
+          {
+            "tag": "h3",
+            "id": "inference-perf와-genai-perf"
+          },
+          {
+            "tag": "h2",
+            "id": "컨테이너-시작-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "soci0-15"
+          },
+          {
+            "tag": "h3",
+            "id": "bottlerocket-bootstrap"
+          },
+          {
+            "tag": "h2",
+            "id": "gpu·neuron과-저장소-선택"
+          },
+          {
+            "tag": "h3",
+            "id": "모델-cache-검증"
+          },
+          {
+            "tag": "h2",
+            "id": "네트워킹과-scheduling"
+          },
+          {
+            "tag": "h3",
+            "id": "중단-예산과-spot"
+          },
+          {
+            "tag": "h2",
+            "id": "관측성과-비용"
+          },
+          {
+            "tag": "h2",
+            "id": "모델-접근과-secret-관리"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "eks에서의-ai-ml-모범-사례",
+          "llm-추론-벤치마킹",
+          "inference-perf와-genai-perf",
+          "컨테이너-시작-최적화",
+          "soci0-15",
+          "bottlerocket-bootstrap",
+          "gpu·neuron과-저장소-선택",
+          "모델-cache-검증",
+          "네트워킹과-scheduling",
+          "중단-예산과-spot",
+          "관측성과-비용",
+          "모델-접근과-secret-관리",
+          "검증-범위",
+          "참고-자료",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/ai-ml/07-ai-ml-best-practices.md",
+        "sha256": "4079a831c6c888adbae27470b7b49b7735704045a50100d023f3a368ef7426ba",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ai-ml-best-practices-on-eks"
+          },
+          {
+            "tag": "h2",
+            "id": "benchmarking-llm-inference"
+          },
+          {
+            "tag": "h3",
+            "id": "inference-perf-and-genai-perf"
+          },
+          {
+            "tag": "h2",
+            "id": "container-startup-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "soci0-15"
+          },
+          {
+            "tag": "h3",
+            "id": "bottlerocket-bootstrap"
+          },
+          {
+            "tag": "h2",
+            "id": "gpu-neuron-and-storage-selection"
+          },
+          {
+            "tag": "h3",
+            "id": "model-cache-verification"
+          },
+          {
+            "tag": "h2",
+            "id": "networking-and-scheduling"
+          },
+          {
+            "tag": "h3",
+            "id": "disruption-budgets-and-spot"
+          },
+          {
+            "tag": "h2",
+            "id": "observability-and-cost"
+          },
+          {
+            "tag": "h2",
+            "id": "model-access-and-secret-management"
+          },
+          {
+            "tag": "h2",
+            "id": "verification-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "ai-ml-best-practices-on-eks",
+          "benchmarking-llm-inference",
+          "inference-perf-and-genai-perf",
+          "container-startup-optimization",
+          "soci0-15",
+          "bottlerocket-bootstrap",
+          "gpu-neuron-and-storage-selection",
+          "model-cache-verification",
+          "networking-and-scheduling",
+          "disruption-budgets-and-spot",
+          "observability-and-cost",
+          "model-access-and-secret-management",
+          "verification-scope",
+          "references",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/07-ai-ml-best-practices-quiz.md",
+        "sha256": "ddedf32af03372663d3cb4626ecbceca1e254c25594cdce995230f0521b8221a",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ai-ml-모범-사례-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-ttft는-무엇을-측정하며-언제-측정할-수-없나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-시작-최적화를-조합하면-항상-80–95-빨라지나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-대규모-분산-훈련용-gpu는-어떻게-선택하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-efa와-placement-group은-항상-필수인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-dataset이-10tb를-넘으면-무조건-fsx를-선택하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-gpu-온도만으로-throttling이나-고장을-확정할-수-있나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-spot-추론에서-120초-grace-기간과-drain-호출이면-충분한가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-평균-itl은-어떻게-계산하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-포화-시험은-무엇을-보여주나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-soci-0-15-standalone은-어떤-입력을-사용하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_11-utc-09-17시-업무-시간-budget은-어떻게-설정하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_12-eso-refresh가-credential-발급·app-reload·모든-읽기-감사를-자동-수행하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_13-30b-fp16-모델에-필요한-gpu-memory를-어떻게-계산하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_14-현재-vllm-kv-cache-지표가-높으면-항상-요청을-거부하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_15-karpenter에서-placement-group은-tag로-지정하나요"
+          }
+        ],
+        "renderedIds": [
+          "ai-ml-모범-사례-퀴즈",
+          "_1-ttft는-무엇을-측정하며-언제-측정할-수-없나요",
+          "_2-시작-최적화를-조합하면-항상-80–95-빨라지나요",
+          "_3-대규모-분산-훈련용-gpu는-어떻게-선택하나요",
+          "_4-efa와-placement-group은-항상-필수인가요",
+          "_5-dataset이-10tb를-넘으면-무조건-fsx를-선택하나요",
+          "_6-gpu-온도만으로-throttling이나-고장을-확정할-수-있나요",
+          "_7-spot-추론에서-120초-grace-기간과-drain-호출이면-충분한가요",
+          "_8-평균-itl은-어떻게-계산하나요",
+          "_9-포화-시험은-무엇을-보여주나요",
+          "_10-soci-0-15-standalone은-어떤-입력을-사용하나요",
+          "_11-utc-09-17시-업무-시간-budget은-어떻게-설정하나요",
+          "_12-eso-refresh가-credential-발급·app-reload·모든-읽기-감사를-자동-수행하나요",
+          "_13-30b-fp16-모델에-필요한-gpu-memory를-어떻게-계산하나요",
+          "_14-현재-vllm-kv-cache-지표가-높으면-항상-요청을-거부하나요",
+          "_15-karpenter에서-placement-group은-tag로-지정하나요"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/07-ai-ml-best-practices-quiz.md",
+        "sha256": "84b7b5af9543d05f797f26ddf98e198d4f7facf06b4018bcb4f0483ab4fddb59",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ai-ml-best-practices-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-what-does-ttft-measure-and-when-is-it-unavailable"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-does-combining-startup-optimizations-always-improve-by-80–95"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-how-should-gpus-for-large-distributed-training-be-selected"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-are-efa-and-placement-groups-always-required"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-does-a-dataset-over10tb-always-require-fsx"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-can-temperature-alone-establish-throttling-or-hardware-failure"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-are-120-seconds-grace-and-a-drain-call-sufficient-for-spot-inference"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-how-is-mean-itl-calculated"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-what-does-a-saturation-test-demonstrate"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-what-input-does-soci-0-15-standalone-use"
+          },
+          {
+            "tag": "h2",
+            "id": "_11-how-is-a-09–17-utc-business-hour-budget-configured"
+          },
+          {
+            "tag": "h2",
+            "id": "_12-does-eso-refresh-automatically-issue-credentials-reload-apps-and-audit-every-read"
+          },
+          {
+            "tag": "h2",
+            "id": "_13-how-should-gpu-memory-for-a-30b-fp16-model-be-estimated"
+          },
+          {
+            "tag": "h2",
+            "id": "_14-does-high-current-vllm-kv-cache-occupancy-always-reject-requests"
+          },
+          {
+            "tag": "h2",
+            "id": "_15-is-a-karpenter-placement-group-configured-through-a-tag"
+          }
+        ],
+        "renderedIds": [
+          "ai-ml-best-practices-quiz",
+          "_1-what-does-ttft-measure-and-when-is-it-unavailable",
+          "_2-does-combining-startup-optimizations-always-improve-by-80–95",
+          "_3-how-should-gpus-for-large-distributed-training-be-selected",
+          "_4-are-efa-and-placement-groups-always-required",
+          "_5-does-a-dataset-over10tb-always-require-fsx",
+          "_6-can-temperature-alone-establish-throttling-or-hardware-failure",
+          "_7-are-120-seconds-grace-and-a-drain-call-sufficient-for-spot-inference",
+          "_8-how-is-mean-itl-calculated",
+          "_9-what-does-a-saturation-test-demonstrate",
+          "_10-what-input-does-soci-0-15-standalone-use",
+          "_11-how-is-a-09–17-utc-business-hour-budget-configured",
+          "_12-does-eso-refresh-automatically-issue-credentials-reload-apps-and-audit-every-read",
+          "_13-how-should-gpu-memory-for-a-30b-fp16-model-be-estimated",
+          "_14-does-high-current-vllm-kv-cache-occupancy-always-reject-requests",
+          "_15-is-a-karpenter-placement-group-configured-through-a-tag"
+        ]
+      }
+    ]
+  },
+  "benchmarkCLI": {
+    "status": "passed",
+    "package": "inference-perf0.6.1",
+    "sourceTagPyprojectVersion": "0.5.0(stalemetadata;notinstalledpackageversion)",
+    "nativeCLIConfig": true,
+    "workers": 1,
+    "mockRequestsSucceeded": 3,
+    "TTFT": null,
+    "TPOT": null,
+    "modelTokens": 0,
+    "configSha256": "0ed1537f0d1d9978d83397db52efcd6b6c65ae837c9964bfe41e69e4b10e25c5",
+    "scope": "ActualCLIwithinternalmockclient/data;noexternalHTTP/model/GPU/cloudcalls.Themockhasnotokenlatencymeasurement."
+  },
+  "soci": {
+    "status": "passed",
+    "version": "0.15.0",
+    "input": "Synthetic1layerOCIimage/arm64/noexecutable",
+    "inputLayerBytes": 143360,
+    "convertedBlobs": 8,
+    "allBlobDigestChecksPassed": true,
+    "scope": "ActualSOCIstandaloneconversionwithlocalOCIinput/output;noimagepull/push/containerdchange/containerexecutionorperformancebenchmark."
+  },
+  "cache": {
+    "status": "passed",
+    "cases": [
+      "complete-release-pass",
+      "wrong-revision-rejected",
+      "partial-weights-rejected",
+      "config-only-cache-rejected",
+      "path-traversal-rejected",
+      "symlink-escape-rejected"
+    ],
+    "sourceSha256": "e1e720c2b33047606d9d1129f906ed3c3939c6098ae4a23de9e9fa3763eaa64d",
+    "scope": "Localnon-modelbytefixtures;read-onlyvalidator.NoS3/HF/modeldownloads/deletions. Manifestmustalreadybetrusted;hashesarenotmanifestauthenticationandfilesmustbeimmutableafterverification."
+  },
+  "schemas": {
+    "status": "passed",
+    "checks": [
+      {
+        "kind": "NodePool",
+        "version": "v1",
+        "served": true,
+        "sha256": "b26adfda5fc7f26069be8c27c8bc3eccf51f301582c3aafbad5164e69c8673d2"
+      },
+      {
+        "kind": "EC2NodeClass",
+        "version": "v1",
+        "served": true,
+        "sha256": "396ecf23fc666d1989a7666b612e59f04d0384e0361e0ac1987c326174b05d16"
+      },
+      {
+        "kind": "ExternalSecret",
+        "version": "v1",
+        "served": true,
+        "sha256": "14c18ebdd2b3f7d0269d764eb0708b611c23b91afd57947bfb36fcbc5879cd08"
+      }
+    ],
+    "ESOv1beta1Served": false,
+    "scope": "PinnedKarpenter1.14.1/ESO2.10.0OpenAPIJSONschema;noCEL/admission/AWSresource/secretprovider/rotationtest. ExampleIDsandrolesareplaceholders."
+  },
+  "cron": {
+    "status": "passed",
+    "scope": "UTCcalendararithmeticforthedocumentedcronschedule;notKarpentercontrollerexecution",
+    "fixedSchedule": "0 9 * * 1-5",
+    "duration": "8h",
+    "cases": [
+      [
+        "2026-09-14T08:59:00+00:00",
+        false
+      ],
+      [
+        "2026-09-14T09:00:00+00:00",
+        true
+      ],
+      [
+        "2026-09-14T16:59:00+00:00",
+        true
+      ],
+      [
+        "2026-09-14T17:00:00+00:00",
+        false
+      ],
+      [
+        "2026-09-15T00:30:00+00:00",
+        false
+      ],
+      [
+        "2026-09-19T10:00:00+00:00",
+        false
+      ]
+    ],
+    "oldRepeatedHourlyWindowEnds": "01:00nextday"
+  },
+  "publishedExamples": {
+    "status": "passed",
+    "checks": [
+      {
+        "locale": "ko",
+        "fixture": "perf-example.yaml",
+        "sha256": "f8d2d0a6b53ad64a65fa6cfeba90df2e5c942c806a38388dbdfaeb745bf7a3f5"
+      },
+      {
+        "locale": "ko",
+        "fixture": "verify_model_cache.py",
+        "sha256": "e1e720c2b33047606d9d1129f906ed3c3939c6098ae4a23de9e9fa3763eaa64d"
+      },
+      {
+        "locale": "ko",
+        "fixture": "nodeclass.yaml",
+        "sha256": "396ecf23fc666d1989a7666b612e59f04d0384e0361e0ac1987c326174b05d16"
+      },
+      {
+        "locale": "ko",
+        "fixture": "nodepool.yaml",
+        "sha256": "b26adfda5fc7f26069be8c27c8bc3eccf51f301582c3aafbad5164e69c8673d2"
+      },
+      {
+        "locale": "ko",
+        "fixture": "external-secret.yaml",
+        "sha256": "14c18ebdd2b3f7d0269d764eb0708b611c23b91afd57947bfb36fcbc5879cd08"
+      },
+      {
+        "locale": "en",
+        "fixture": "perf-example.yaml",
+        "sha256": "f8d2d0a6b53ad64a65fa6cfeba90df2e5c942c806a38388dbdfaeb745bf7a3f5"
+      },
+      {
+        "locale": "en",
+        "fixture": "verify_model_cache.py",
+        "sha256": "e1e720c2b33047606d9d1129f906ed3c3939c6098ae4a23de9e9fa3763eaa64d"
+      },
+      {
+        "locale": "en",
+        "fixture": "nodeclass.yaml",
+        "sha256": "396ecf23fc666d1989a7666b612e59f04d0384e0361e0ac1987c326174b05d16"
+      },
+      {
+        "locale": "en",
+        "fixture": "nodepool.yaml",
+        "sha256": "b26adfda5fc7f26069be8c27c8bc3eccf51f301582c3aafbad5164e69c8673d2"
+      },
+      {
+        "locale": "en",
+        "fixture": "external-secret.yaml",
+        "sha256": "14c18ebdd2b3f7d0269d764eb0708b611c23b91afd57947bfb36fcbc5879cd08"
+      }
+    ],
+    "perfConfigEquivalentExceptOutputPath": true
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "e0fbb841ada0bff561ef6437dd5f5214db806f7dae46f9015b7502e3207ef0f6"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "e0fbb841ada0bff561ef6437dd5f5214db806f7dae46f9015b7502e3207ef0f6"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "e0fbb841ada0bff561ef6437dd5f5214db806f7dae46f9015b7502e3207ef0f6"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "dc215bab75c3119a50ce21f02e03cc9ff0f930ff094843908b08c5c61b2a9350"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "dc215bab75c3119a50ce21f02e03cc9ff0f930ff094843908b08c5c61b2a9350"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "dc215bab75c3119a50ce21f02e03cc9ff0f930ff094843908b08c5c61b2a9350"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "fbfef185e7359ea82917939e9470a48792893fa3e81584fef891249e5deca9e5"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "fbfef185e7359ea82917939e9470a48792893fa3e81584fef891249e5deca9e5"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "fbfef185e7359ea82917939e9470a48792893fa3e81584fef891249e5deca9e5"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "8038b0a70dc803c2b638e6b940f93241a5f3e4e8c3aed642f5464315e1526f9c"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "8038b0a70dc803c2b638e6b940f93241a5f3e4e8c3aed642f5464315e1526f9c"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "8038b0a70dc803c2b638e6b940f93241a5f3e4e8c3aed642f5464315e1526f9c"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "e51142aecf5c2d0b8ef9585cfaabde3139cbdbf61fc4998ef122fc6e262894f5"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "e51142aecf5c2d0b8ef9585cfaabde3139cbdbf61fc4998ef122fc6e262894f5"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "e51142aecf5c2d0b8ef9585cfaabde3139cbdbf61fc4998ef122fc6e262894f5"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "a6450e0f2eccee4ef21b0f4a2fc28707194ca5fddb2eefcb9cde57e6e375c662"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "a6450e0f2eccee4ef21b0f4a2fc28707194ca5fddb2eefcb9cde57e6e375c662"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "a6450e0f2eccee4ef21b0f4a2fc28707194ca5fddb2eefcb9cde57e6e375c662"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "pngs": [
+    {
+      "path": "ko/.gitbook/assets/ko-ai-ml-07-ai-ml-best-practices-0.png",
+      "sha256": "f42249d9dc810709e9541db77c4bf9df0ac33e0f0bf17424128a8269191fed40"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-ai-ml-07-ai-ml-best-practices-1.png",
+      "sha256": "2010a2a5c29a3567441e09adc9d461da99a8ce0984b528aa08739dfbe8086202"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-ai-ml-07-ai-ml-best-practices-2.png",
+      "sha256": "c64700abc9497210961e99df7174b11eb83c7189de26da6176b1b363de5e15fb"
+    },
+    {
+      "path": "en/.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-0.png",
+      "sha256": "7b76b1636e079b7502aec22b07238687adff2e8f64032d56b5d87aaf1445aa8b"
+    },
+    {
+      "path": "en/.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-1.png",
+      "sha256": "f94b18b859feb917c4540365e10f123f82bbe8a8cb3e189dedd7611eda3372d4"
+    },
+    {
+      "path": "en/.gitbook/assets/en-ai-ml-07-ai-ml-best-practices-2.png",
+      "sha256": "f4b3224cee6b16f0d7fd0bffd612e95812b56ca02b553f6d95004773152de9ab"
+    }
+  ],
+  "publishedLinks": [
+    {
+      "url": "https://bottlerocket.dev/en/os/1.64.x/api/settings/bootstrap-containers/",
+      "status": 200
+    },
+    {
+      "url": "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/aws/karpenter-provider-aws/tree/v1.14.1/pkg/apis/crds",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/awslabs/soci-snapshotter/blob/v0.15.0/docs/cli-usage.md",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/external-secrets/external-secrets/blob/helm-chart-2.10.0/config/crds/bases/external-secrets.io_externalsecrets.yaml",
+      "status": 200
+    },
+    {
+      "url": "https://github.com/kubernetes-sigs/inference-perf/tree/v0.6.1",
+      "status": 200
+    },
+    {
+      "url": "https://karpenter.sh/docs/concepts/disruption/",
+      "status": 200
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/configuration/secret/",
+      "status": 200
+    }
+  ],
+  "primarySources": [
+    {
+      "repo": "kubernetes-sigs/inference-perf",
+      "file": "inference-perf-release.json",
+      "version": "v0.6.1",
+      "publishedAt": "2026-07-23T20:33:10Z",
+      "source": "https://api.github.com/repos/kubernetes-sigs/inference-perf/releases/latest"
+    },
+    {
+      "repo": "awslabs/soci-snapshotter",
+      "file": "soci-release.json",
+      "version": "v0.15.0",
+      "publishedAt": "2026-07-30T21:03:12Z",
+      "source": "https://api.github.com/repos/awslabs/soci-snapshotter/releases/latest"
+    },
+    {
+      "repo": "external-secrets/external-secrets",
+      "file": "eso-release.json",
+      "version": "helm-chart-2.10.0",
+      "publishedAt": "2026-08-28T13:09:40Z",
+      "source": "https://api.github.com/repos/external-secrets/external-secrets/releases/latest"
+    },
+    {
+      "repo": "bottlerocket-os/bottlerocket",
+      "file": "bottlerocket-release.json",
+      "version": "v1.64.0",
+      "publishedAt": "2026-07-29T19:51:46Z",
+      "source": "https://api.github.com/repos/bottlerocket-os/bottlerocket/releases/latest"
+    },
+    {
+      "repo": "aws/karpenter-provider-aws",
+      "file": "karpenter-release.json",
+      "version": "v1.14.1",
+      "publishedAt": "2026-08-21T22:39:31Z",
+      "source": "https://api.github.com/repos/aws/karpenter-provider-aws/releases/latest"
+    },
+    {
+      "file": "perf-docs_config.md",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/inference-perf/v0.6.1/docs/config.md",
+      "status": 200,
+      "sha256": "493607fd3156f52edefdba18513f32b4fbca9a0fe7bafbaf5d56a830cc6615d6"
+    },
+    {
+      "file": "perf-docs_metrics.md",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/inference-perf/v0.6.1/docs/metrics.md",
+      "status": 200,
+      "sha256": "e909b53cb45021b93c6576f87374ffd97a548dc1366df5de2fff3c650783d619"
+    },
+    {
+      "file": "perf-docs_cli_flags.md",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/inference-perf/v0.6.1/docs/cli_flags.md",
+      "status": 200,
+      "sha256": "c95619df69e2dbfd9fad19edb3e1dde18e857e8bf17de4937047f19ca7e56f12"
+    },
+    {
+      "file": "perf-docs_reports.md",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/inference-perf/v0.6.1/docs/reports.md",
+      "status": 200,
+      "sha256": "8daaf53c2587c6d15fe98c773ce898dab1df2932e23228fa9698ec0601792fd0"
+    },
+    {
+      "file": "perf-inference_perf_config_config.py",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/inference-perf/v0.6.1/inference_perf/config/config.py",
+      "status": 200,
+      "sha256": "6a9454c5891995fc580fdc4a7e8c8c4f328c7b726a6f609e4ba6284b5b6db6c9"
+    },
+    {
+      "file": "perf-inference_perf_payloads_text_metrics.py",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/inference-perf/v0.6.1/inference_perf/payloads/text/metrics.py",
+      "status": 200,
+      "sha256": "8203943ac97e97b2d86e0cf9ef07e9eae2c36060fbc07293703b72674b262e60"
+    },
+    {
+      "file": "perf-pyproject.toml",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/inference-perf/v0.6.1/pyproject.toml",
+      "status": 200,
+      "sha256": "2949af7d17f4e3c18c326c8d4d83bee85d2ff5e805a2d9707ebb3b9c67183692"
+    },
+    {
+      "file": "soci-docs_getting-started.md",
+      "url": "https://raw.githubusercontent.com/awslabs/soci-snapshotter/v0.15.0/docs/getting-started.md",
+      "status": 200,
+      "sha256": "d35cc9a3cc0b24ce3e2bf1b64f041aa52afaa120286f208a2257e4d6dc41e8cb"
+    },
+    {
+      "file": "soci-cmd_soci_commands_create.go",
+      "url": "https://raw.githubusercontent.com/awslabs/soci-snapshotter/v0.15.0/cmd/soci/commands/create.go",
+      "status": 200,
+      "sha256": "7ad39fdcd025741a61f928a81f9c0a7f0934cc4d54abef37a749e7348dcbcff7"
+    },
+    {
+      "file": "soci-cmd_soci_commands_convert.go",
+      "url": "https://raw.githubusercontent.com/awslabs/soci-snapshotter/v0.15.0/cmd/soci/commands/convert.go",
+      "status": 200,
+      "sha256": "9f7b650b0673d45bf992f9948829dfcd9c3e06b81d0e33e988d8a20b2be79b90"
+    },
+    {
+      "file": "soci-cmd_soci_commands_push.go",
+      "url": "https://raw.githubusercontent.com/awslabs/soci-snapshotter/v0.15.0/cmd/soci/commands/push.go",
+      "status": 200,
+      "sha256": "0990faf2b80665d445d8627085b5a39891472c184aec4ba2c88908b050a9cd68"
+    },
+    {
+      "file": "eso-deploy_charts_external-secrets_Chart.yaml",
+      "url": "https://raw.githubusercontent.com/external-secrets/external-secrets/helm-chart-2.10.0/deploy/charts/external-secrets/Chart.yaml",
+      "status": 200,
+      "sha256": "5720c017be1ca67a945bb60c2f0c44827fe20c47fc372fa9eef765660f267a5c"
+    },
+    {
+      "file": "eso-config_crds_bases_external-secrets.io_externalsecrets.yaml",
+      "url": "https://raw.githubusercontent.com/external-secrets/external-secrets/helm-chart-2.10.0/config/crds/bases/external-secrets.io_externalsecrets.yaml",
+      "status": 200,
+      "sha256": "5044be5a610ca90a075f34f03ed20b462695c43387ba9410db7f4250e47b1e2f"
+    },
+    {
+      "file": "karpenter-charts_karpenter-crd_templates_karpenter.k8s.aws_ec2nodeclasses.yaml",
+      "url": "https://raw.githubusercontent.com/aws/karpenter-provider-aws/v1.14.1/charts/karpenter-crd/templates/karpenter.k8s.aws_ec2nodeclasses.yaml",
+      "status": 200,
+      "sha256": "59fc05920d5e32fe98c76cf93bf8977f35143c731206dbb407bc69861d93ccef"
+    },
+    {
+      "file": "karpenter-charts_karpenter-crd_templates_karpenter.sh_nodepools.yaml",
+      "url": "https://raw.githubusercontent.com/aws/karpenter-provider-aws/v1.14.1/charts/karpenter-crd/templates/karpenter.sh_nodepools.yaml",
+      "status": 200,
+      "sha256": "284cc77cc715b826a1ea0abecc7b4fd10a899d9bc69a13727aef090b80c1f803"
+    },
+    {
+      "file": "bottlerocket-bootstrap.html",
+      "url": "https://bottlerocket.dev/en/os/1.64.x/api/settings/bootstrap-containers/",
+      "status": 200,
+      "sha256": "257e5575d08dc0ad8d374ddd6a894343f4523d6ee2687677d7b04c2cc800803c"
+    },
+    {
+      "file": "bottlerocket-prefetch.html",
+      "url": "https://bottlerocket.dev/en/os/1.64.x/api/settings/prefetch/",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "karpenter-disruption.html",
+      "url": "https://karpenter.sh/docs/concepts/disruption/",
+      "status": 200,
+      "sha256": "4da44184ce253be10227c52fdbb993d6f695f1f2f7bb78babf59eeed637f3b71"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging-enable-abac.html",
+      "file": "s3-abac-enable.html",
+      "status": 200,
+      "sha256": "7e084a03157fb06004712d9c9f128cdfd88bb8eae124df66236c068c803ff747"
+    },
+    {
+      "url": "https://aws.amazon.com/blogs/aws/introducing-attribute-based-access-control-for-amazon-s3-general-purpose-buckets/",
+      "file": "s3-abac-launch.html",
+      "status": 200,
+      "sha256": "7c4a9e404e99ca94661de7b79254d89a832ccdf464987e9a083741594370abf3"
+    }
+  ],
+  "limitations": [
+    "NoGPU/model/realendpointload/cloudresource/secretprovider/containerstartupperformanceorhostSOCIinstallation.",
+    "Nativeinference-perfmockhas3requestsbutzerotokensandnoTTFT/TPOT;notmodelperformancedata.",
+    "SOCIstandaloneusedlocalsyntheticOCI;noimagepull/push/execution.",
+    "Cachemanifestmustbetrustedandfilesimmutableafterverification;notamanifestsignaturecheck.",
+    "Karpenter/ESOJSONschemaonly;noCEL/admission;placeholderAMI/role/subnet/SGmustbereplaced.",
+    "CronchecksareUTCcalendararithmetic,notKarpentercontrollerexecution.",
+    "No full local site build."
+  ],
+  "amiFamilySemanticValidation": {
+    "status": "passed",
+    "officialRule": {
+      "message": "must specify amiFamily if amiSelectorTerms does not contain an alias",
+      "rule": "self.amiSelectorTerms.exists(x, has(x.alias)) ? true : has(self.amiFamily)"
+    },
+    "publishedExamplePasses": true,
+    "previousExampleRejected": true,
+    "scope": "Exactpresence/aliaslogicsemanticassertionfortheidentifiedCELrule;notgeneralCEL/admissionexecution. AMIplaceholdermustresolveactualEKSAL2023image."
+  },
+  "s3ABACVerification": {
+    "status": "verified",
+    "sources": [
+      {
+        "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/buckets-tagging-enable-abac.html",
+        "file": "s3-abac-enable.html",
+        "status": 200,
+        "sha256": "7e084a03157fb06004712d9c9f128cdfd88bb8eae124df66236c068c803ff747"
+      },
+      {
+        "url": "https://aws.amazon.com/blogs/aws/introducing-attribute-based-access-control-for-amazon-s3-general-purpose-buckets/",
+        "file": "s3-abac-launch.html",
+        "status": 200,
+        "sha256": "7c4a9e404e99ca94661de7b79254d89a832ccdf464987e9a083741594370abf3"
+      }
+    ],
+    "fact": "General-purposebucketABACsupportsexplicitbucketenablementandaws:ResourceTagconditionsincludingGetObject/ListBucket;notenabledbydefault. NoAWSmutation."
+  }
+}

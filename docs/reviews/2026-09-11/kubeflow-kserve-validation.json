@@ -1,0 +1,675 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T21:07:18.518992+00:00",
+  "scope": {
+    "documents": 4,
+    "questions": 22,
+    "figures": 2
+  },
+  "baseline": "KServe0.18.0/ModelsWebApp0.18.0/Community26.03.1; latestinspected0.20.0",
+  "native": {
+    "status": "passed",
+    "charts": [
+      {
+        "chart": "kserve-crd",
+        "version": "v0.18.0",
+        "sha256": "9efce6bb835c9133bca4aea70f2bc8af74a09a956c51acb54deaede49f5f69a5",
+        "renderedKinds": {
+          "CustomResourceDefinition": 6
+        }
+      },
+      {
+        "chart": "kserve-resources",
+        "version": "v0.18.0",
+        "sha256": "90176d5d3aae5287ecbdb29a24401074dfef005795d93ddc83926e2556adaa8a",
+        "renderedKinds": {
+          "ServiceAccount": 1,
+          "Secret": 1,
+          "ConfigMap": 1,
+          "ClusterRole": 2,
+          "ClusterRoleBinding": 2,
+          "Role": 1,
+          "RoleBinding": 1,
+          "Service": 3,
+          "Deployment": 1,
+          "Certificate": 1,
+          "ClusterStorageContainer": 1,
+          "Issuer": 1,
+          "MutatingWebhookConfiguration": 1,
+          "ValidatingWebhookConfiguration": 5
+        }
+      },
+      {
+        "chart": "kserve-runtime-configs",
+        "version": "v0.18.0",
+        "sha256": "636e608a889aa23317e1016724162633f375aa1c60b087a71270b7e41b6c0275",
+        "renderedKinds": {}
+      }
+    ],
+    "inferenceServiceSchema": [
+      {
+        "mode": "Knative",
+        "autoscaler": null,
+        "minReplicas": 0,
+        "schemaPassed": true
+      },
+      {
+        "mode": "Standard",
+        "autoscaler": "hpa",
+        "minReplicas": 1,
+        "schemaPassed": true
+      },
+      {
+        "mode": "Standard",
+        "autoscaler": "keda",
+        "minReplicas": 0,
+        "schemaPassed": true
+      }
+    ],
+    "chartDefaultDeploymentMode": "Knative",
+    "runtimeChartDefaultEmitsNoResources": true,
+    "enabledRuntimeCount": 12,
+    "enabledRuntimeSchemaChecks": 12,
+    "runtimeNames": [
+      "kserve-huggingfaceserver",
+      "kserve-huggingfaceserver-multinode",
+      "kserve-lgbserver",
+      "kserve-mlserver",
+      "kserve-paddleserver",
+      "kserve-pmmlserver",
+      "kserve-predictiveserver",
+      "kserve-sklearnserver",
+      "kserve-tensorflow-serving",
+      "kserve-torchserve",
+      "kserve-tritonserver",
+      "kserve-xgbserver"
+    ],
+    "scope": "Official Helm render plus JSON Schema only; no admission/defaulting/controller/autoscaler/runtime image/cloud/serving execution. KEDA fixture demonstrates schema shape only, not a deployable scaler without triggers."
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/kubeflow/06-kserve.md",
+        "sha256": "8bea3586db52a65738d6d860c197bd9dec2427accdc622c018c436b5f022b351",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-6-kserve-—-kubernetes-위에서의-모델-서빙"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-준비"
+          },
+          {
+            "tag": "h2",
+            "id": "kserve와-kubeflow의-관계"
+          },
+          {
+            "tag": "h2",
+            "id": "inferenceservice-predictor-transformer-explainer"
+          },
+          {
+            "tag": "h2",
+            "id": "배포-모드-knative와-standard"
+          },
+          {
+            "tag": "h2",
+            "id": "오토스케일링과-메트릭"
+          },
+          {
+            "tag": "h2",
+            "id": "점진적-모델-업데이트와-캐너리"
+          },
+          {
+            "tag": "h2",
+            "id": "eks에서의-gpu-추론"
+          },
+          {
+            "tag": "h2",
+            "id": "검증과-근거"
+          },
+          {
+            "tag": "h2",
+            "id": "다음-단계"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "part-6-kserve-—-kubernetes-위에서의-모델-서빙",
+          "실습-환경-준비",
+          "kserve와-kubeflow의-관계",
+          "inferenceservice-predictor-transformer-explainer",
+          "배포-모드-knative와-standard",
+          "오토스케일링과-메트릭",
+          "점진적-모델-업데이트와-캐너리",
+          "eks에서의-gpu-추론",
+          "검증과-근거",
+          "다음-단계",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/ai-ml/kubeflow/06-kserve.md",
+        "sha256": "574c72a1888a979f035aa27ee6b39c807263b6db46e2a6f6bde95e6aa9d00fe4",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-6-kserve-—-model-serving-on-kubernetes"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-environment-setup"
+          },
+          {
+            "tag": "h2",
+            "id": "kserve-and-kubeflow"
+          },
+          {
+            "tag": "h2",
+            "id": "inferenceservice-predictor-transformer-explainer"
+          },
+          {
+            "tag": "h2",
+            "id": "deployment-modes-knative-and-standard"
+          },
+          {
+            "tag": "h2",
+            "id": "autoscaling-and-metrics"
+          },
+          {
+            "tag": "h2",
+            "id": "gradual-updates-and-canary-traffic"
+          },
+          {
+            "tag": "h2",
+            "id": "gpu-inference-on-eks"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-and-sources"
+          },
+          {
+            "tag": "h2",
+            "id": "next-steps"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "part-6-kserve-—-model-serving-on-kubernetes",
+          "lab-environment-setup",
+          "kserve-and-kubeflow",
+          "inferenceservice-predictor-transformer-explainer",
+          "deployment-modes-knative-and-standard",
+          "autoscaling-and-metrics",
+          "gradual-updates-and-canary-traffic",
+          "gpu-inference-on-eks",
+          "validation-and-sources",
+          "next-steps",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/kubeflow/06-kserve-quiz.md",
+        "sha256": "99006265a4d589929c383c9b83ed8b41c57fe2d764a64103bd8b250d6ed31f39",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kserve-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "객관식-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "단답형-문제"
+          }
+        ],
+        "renderedIds": [
+          "kserve-퀴즈",
+          "객관식-문제",
+          "단답형-문제"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/kubeflow/06-kserve-quiz.md",
+        "sha256": "f8158006b3f2716c9ca07930600abff23a37217a319aa44bf4eae696768eecaa",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kserve-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "multiple-choice-questions"
+          },
+          {
+            "tag": "h2",
+            "id": "short-answer-questions"
+          }
+        ],
+        "renderedIds": [
+          "kserve-quiz",
+          "multiple-choice-questions",
+          "short-answer-questions"
+        ]
+      }
+    ]
+  },
+  "responsive": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "b58806ab56f7ff1e90fdd047b4b18f11742a3c1c49fb83745447a32752ccf984"
+      },
+      {
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "b58806ab56f7ff1e90fdd047b4b18f11742a3c1c49fb83745447a32752ccf984"
+      },
+      {
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "b58806ab56f7ff1e90fdd047b4b18f11742a3c1c49fb83745447a32752ccf984"
+      },
+      {
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "86834c54f84b5e392623259ec52924a5f2811002cb144a7d503d85e0c762e849"
+      },
+      {
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "86834c54f84b5e392623259ec52924a5f2811002cb144a7d503d85e0c762e849"
+      },
+      {
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "86834c54f84b5e392623259ec52924a5f2811002cb144a7d503d85e0c762e849"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "sources": [
+    {
+      "path": "config/configmap/inferenceservice.yaml",
+      "file": "config_configmap_inferenceservice.yaml",
+      "url": "https://raw.githubusercontent.com/kserve/kserve/v0.18.0/config/configmap/inferenceservice.yaml",
+      "status": 200
+    },
+    {
+      "path": "pkg/controller/v1beta1/inferenceservice/reconcilers/keda/keda_reconciler.go",
+      "file": "pkg_controller_v1beta1_inferenceservice_reconcilers_keda_keda_reconciler.go",
+      "url": "https://raw.githubusercontent.com/kserve/kserve/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/keda/keda_reconciler.go",
+      "status": 200
+    },
+    {
+      "path": "pkg/apis/serving/v1beta1/inference_service_defaults.go",
+      "file": "pkg_apis_serving_v1beta1_inference_service_defaults.go",
+      "url": "https://raw.githubusercontent.com/kserve/kserve/v0.18.0/pkg/apis/serving/v1beta1/inference_service_defaults.go",
+      "status": 200
+    },
+    {
+      "path": "pkg/apis/serving/v1beta1/inference_service_validation.go",
+      "file": "pkg_apis_serving_v1beta1_inference_service_validation.go",
+      "url": "https://raw.githubusercontent.com/kserve/kserve/v0.18.0/pkg/apis/serving/v1beta1/inference_service_validation.go",
+      "status": 200
+    },
+    {
+      "path": "pkg/constants/constants.go",
+      "file": "pkg_constants_constants.go",
+      "url": "https://raw.githubusercontent.com/kserve/kserve/v0.18.0/pkg/constants/constants.go",
+      "status": 200
+    },
+    {
+      "path": "pkg/constants/constants_test.go",
+      "file": "pkg_constants_constants_test.go",
+      "url": "https://raw.githubusercontent.com/kserve/kserve/v0.18.0/pkg/constants/constants_test.go",
+      "status": 200
+    },
+    {
+      "path": "pkg/controller/v1beta1/inferenceservice/reconcilers/knative/ksvc_reconciler.go",
+      "file": "pkg_controller_v1beta1_inferenceservice_reconcilers_knative_ksvc_reconciler.go",
+      "url": "https://raw.githubusercontent.com/kserve/kserve/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/knative/ksvc_reconciler.go",
+      "status": 200
+    },
+    {
+      "path": "pkg/controller/v1beta1/inferenceservice/reconcilers/raw/raw_kube_reconciler.go",
+      "file": "pkg_controller_v1beta1_inferenceservice_reconcilers_raw_raw_kube_reconciler.go",
+      "url": "https://raw.githubusercontent.com/kserve/kserve/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/raw/raw_kube_reconciler.go",
+      "status": 200
+    }
+  ],
+  "publishedLinks": [
+    {
+      "url": "https://github.com/awslabs/kubeflow-manifests/releases/tag/v1.7.0-aws-b1.0.3",
+      "status": 200,
+      "finalUrl": "https://github.com/awslabs/kubeflow-manifests/releases/tag/v1.7.0-aws-b1.0.3"
+    },
+    {
+      "url": "https://github.com/kserve/kserve/blob/v0.18.0/pkg/constants/constants.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kserve/kserve/blob/v0.18.0/pkg/constants/constants.go"
+    },
+    {
+      "url": "https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/hpa/hpa_reconciler.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/hpa/hpa_reconciler.go"
+    },
+    {
+      "url": "https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/keda/keda_reconciler.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/keda/keda_reconciler.go"
+    },
+    {
+      "url": "https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/knative/ksvc_reconciler.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/knative/ksvc_reconciler.go"
+    },
+    {
+      "url": "https://github.com/kserve/kserve/releases/tag/v0.20.0",
+      "status": 200,
+      "finalUrl": "https://github.com/kserve/kserve/releases/tag/v0.20.0"
+    },
+    {
+      "url": "https://github.com/kubeflow/community-distribution/blob/26.03.1/README.md",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/community-distribution/blob/26.03.1/README.md"
+    },
+    {
+      "url": "https://github.com/kubeflow/community-distribution/blob/26.03.1/applications/workspaces/upstream/controller/base/manager/kustomization.yaml",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/community-distribution/blob/26.03.1/applications/workspaces/upstream/controller/base/manager/kustomization.yaml"
+    },
+    {
+      "url": "https://github.com/kubeflow/community-distribution/releases/tag/26.03.1",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/community-distribution/releases/tag/26.03.1"
+    },
+    {
+      "url": "https://github.com/kubeflow/dashboard/blob/v2.0.0/components/profile-controller/controllers/plugin_iam.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/dashboard/blob/v2.0.0/components/profile-controller/controllers/plugin_iam.go"
+    },
+    {
+      "url": "https://github.com/kubeflow/dashboard/blob/v2.0.0/components/profile-controller/controllers/profile_controller.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/dashboard/blob/v2.0.0/components/profile-controller/controllers/profile_controller.go"
+    },
+    {
+      "url": "https://github.com/kubeflow/katib/blob/v0.19.0/manifests/v1beta1/installs/katib-standalone/katib-config.yaml",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/katib/blob/v0.19.0/manifests/v1beta1/installs/katib-standalone/katib-config.yaml"
+    },
+    {
+      "url": "https://github.com/kubeflow/katib/blob/v0.19.0/pkg/controller.v1beta1/experiment/util/status_util.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/katib/blob/v0.19.0/pkg/controller.v1beta1/experiment/util/status_util.go"
+    },
+    {
+      "url": "https://github.com/kubeflow/katib/blob/v0.19.0/pkg/earlystopping/v1beta1/medianstop/service.py",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/katib/blob/v0.19.0/pkg/earlystopping/v1beta1/medianstop/service.py"
+    },
+    {
+      "url": "https://github.com/kubeflow/notebooks/blob/v1.11.0/components/crud-web-apps/jupyter/manifests/base/configs/spawner_ui_config.yaml",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/notebooks/blob/v1.11.0/components/crud-web-apps/jupyter/manifests/base/configs/spawner_ui_config.yaml"
+    },
+    {
+      "url": "https://github.com/kubeflow/notebooks/blob/v1.11.0/components/notebook-controller/controllers/culling_controller.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/notebooks/blob/v1.11.0/components/notebook-controller/controllers/culling_controller.go"
+    },
+    {
+      "url": "https://github.com/kubeflow/notebooks/blob/v1.11.0/components/notebook-controller/controllers/notebook_controller.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/notebooks/blob/v1.11.0/components/notebook-controller/controllers/notebook_controller.go"
+    },
+    {
+      "url": "https://github.com/kubeflow/pipelines/blob/2.16.1/backend/src/v2/cacheutils/cache.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/pipelines/blob/2.16.1/backend/src/v2/cacheutils/cache.go"
+    },
+    {
+      "url": "https://github.com/kubeflow/pipelines/blob/2.16.1/backend/src/v2/driver/cache.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/pipelines/blob/2.16.1/backend/src/v2/driver/cache.go"
+    },
+    {
+      "url": "https://github.com/kubeflow/pipelines/blob/2.16.1/backend/src/v2/objectstore/object_store.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/pipelines/blob/2.16.1/backend/src/v2/objectstore/object_store.go"
+    },
+    {
+      "url": "https://github.com/kubeflow/trainer/blob/v2.2.0/manifests/base/runtimes/torch_distributed.yaml",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/trainer/blob/v2.2.0/manifests/base/runtimes/torch_distributed.yaml"
+    },
+    {
+      "url": "https://github.com/kubeflow/trainer/blob/v2.2.0/pkg/apis/trainer/v1alpha1/trainjob_types.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/trainer/blob/v2.2.0/pkg/apis/trainer/v1alpha1/trainjob_types.go"
+    },
+    {
+      "url": "https://github.com/kubeflow/trainer/blob/v2.2.0/pkg/features/features.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/trainer/blob/v2.2.0/pkg/features/features.go"
+    },
+    {
+      "url": "https://github.com/kubeflow/trainer/blob/v2.2.0/pkg/runtime/framework/plugins/coscheduling/coscheduling.go",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/trainer/blob/v2.2.0/pkg/runtime/framework/plugins/coscheduling/coscheduling.go"
+    },
+    {
+      "url": "https://github.com/kubeflow/trainer/blob/v2.3.0/docs/operator-guides/migration.md",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/trainer/blob/v2.3.0/docs/operator-guides/migration.md"
+    },
+    {
+      "url": "https://github.com/kubeflow/trainer/releases/tag/v2.2.0",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/trainer/releases/tag/v2.2.0"
+    },
+    {
+      "url": "https://github.com/kubeflow/trainer/releases/tag/v2.3.0",
+      "status": 200,
+      "finalUrl": "https://github.com/kubeflow/trainer/releases/tag/v2.3.0"
+    },
+    {
+      "url": "https://github.com/pytorch/serve",
+      "status": 200,
+      "finalUrl": "https://github.com/pytorch/serve"
+    },
+    {
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-01-architecture-installation-0.html",
+      "status": 200,
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-01-architecture-installation-0.html"
+    },
+    {
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-02-pipelines-0.html",
+      "status": 200,
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-02-pipelines-0.html"
+    },
+    {
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-03-notebooks-0.html",
+      "status": 200,
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-03-notebooks-0.html"
+    },
+    {
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-04-katib-0.html",
+      "status": 200,
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-04-katib-0.html"
+    },
+    {
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-05-training-operator-0.html",
+      "status": 200,
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-05-training-operator-0.html"
+    },
+    {
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-06-kserve-0.html",
+      "status": 200,
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-06-kserve-0.html"
+    },
+    {
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-readme-0.html",
+      "status": 200,
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-kubeflow-readme-0.html"
+    },
+    {
+      "url": "https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/"
+    },
+    {
+      "url": "https://www.kubeflow.org/docs/components/katib/user-guides/early-stopping/",
+      "status": 200,
+      "finalUrl": "https://www.kubeflow.org/docs/components/katib/user-guides/early-stopping/"
+    },
+    {
+      "url": "https://www.kubeflow.org/docs/components/katib/user-guides/metrics-collector/",
+      "status": 200,
+      "finalUrl": "https://www.kubeflow.org/docs/components/katib/user-guides/metrics-collector/"
+    },
+    {
+      "url": "https://www.kubeflow.org/docs/components/pipelines/operator-guides/configure-object-store/",
+      "status": 200,
+      "finalUrl": "https://www.kubeflow.org/docs/components/pipelines/operator-guides/configure-object-store/"
+    },
+    {
+      "url": "https://www.kubeflow.org/docs/components/pipelines/user-guides/components/lightweight-python-components/",
+      "status": 200,
+      "finalUrl": "https://www.kubeflow.org/docs/components/pipelines/user-guides/components/lightweight-python-components/"
+    },
+    {
+      "url": "https://www.kubeflow.org/docs/components/pipelines/user-guides/core-functions/caching/",
+      "status": 200,
+      "finalUrl": "https://www.kubeflow.org/docs/components/pipelines/user-guides/core-functions/caching/"
+    }
+  ],
+  "diagrams": [
+    {
+      "name": "ko-ai-ml-kubeflow-06-kserve-0",
+      "layoutPassed": true,
+      "pngSha256": "16883bb93da865df753db7f707a928878d4f7d47a3e1224583ca90eaa1d27981",
+      "htmlSha256": "b58806ab56f7ff1e90fdd047b4b18f11742a3c1c49fb83745447a32752ccf984"
+    },
+    {
+      "name": "en-ai-ml-kubeflow-06-kserve-0",
+      "layoutPassed": true,
+      "pngSha256": "c27f2f36867ce90ded0a70893b4aea481f42486ad0617f4b62d0295d3dfeccf0",
+      "htmlSha256": "86834c54f84b5e392623259ec52924a5f2811002cb144a7d503d85e0c762e849"
+    }
+  ],
+  "limitations": [
+    "No API admission/defaulting, autoscaling/KEDAactivation, Knative routing, serving/GPU/model download or cloud execution.",
+    "KEDA schema shape does not prove deployment without metric triggers.",
+    "The mode comparison covers InferenceService, not all ModelMesh/LLMInferenceService behavior."
+  ]
+}

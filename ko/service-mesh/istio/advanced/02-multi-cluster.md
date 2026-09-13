@@ -1,6 +1,6 @@
 # Multi-cluster
 
-> **지원 버전**: Istio 1.18+ **마지막 업데이트**: 2026년 2월 23일 **Kubernetes 호환성**: 1.32+
+> **마지막 업데이트**: 2026년 9월 11일 · Istio1.31 · Kubernetes1.32–1.36. 아래 설치 예제는 **sidecar** 토폴로지의 독립적인 대안입니다. Ambient의 지원 범위는 다릅니다. 감사에서 클러스터·AWS 배포·운영 부하 시험을 실행하지 않았습니다.
 
 Multi-cluster Service Mesh는 여러 Kubernetes 클러스터를 하나의 통합된 서비스 메시로 연결합니다.
 
@@ -24,9 +24,8 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 
 ### 의사결정 흐름
 
-![다섯 가지 질문(클러스터 존재 여부, 지역 분리, DR/HA, 강력한 L7 기능, 운영 복잡도 감당 가능성)을 거쳐 Single-cluster Istio, AWS VPC Lattice, Hybrid(Istio + Lattice), 옵션인 Multi-cluster Istio 중 하나로 이어지는 Multi-cluster 도입 의사결정 흐름을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-0.png)
+아래 요구사항을 제약으로 사용합니다. 체크리스트 점수만으로 한 구성이 항상 우월해지지는 않습니다.
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-02-multi-cluster-0.html)
 
 ### Multi-cluster가 필요한 경우 ✅
 
@@ -39,7 +38,7 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 **필요한 경우**:
 
 * ✅ 글로벌 사용자 대상 서비스 (지연 시간 <100ms 목표)
-* ✅ 데이터 주권 규정 준수 (GDPR, 금융 데이터 로컬리제이션)
+* ✅ Workload별 데이터 배치 의무; mesh 자체가 규정 준수를 입증하지는 않음
 * ✅ 리전별 트래픽 라우팅 및 장애 격리
 
 #### 2. 재해 복구 (Disaster Recovery)
@@ -53,6 +52,8 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 * ✅ RTO (Recovery Time Objective) <1시간
 * ✅ RPO (Recovery Point Objective) <15분
 * ✅ 리전 장애 시 자동 Failover
+
+위 RTO/RPO는 요구 예시이며 mesh가 보장하는 결과가 아닙니다. DR 그림은 별도로 구현한 배포/데이터 복제·DNS health routing을 전제하며 client·cache·기존 연결이 전환에 영향을 줍니다.
 
 #### 3. 환경 분리 및 단계적 배포
 
@@ -68,7 +69,7 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 
 * ✅ 팀별/부서별 독립 클러스터 운영
 * ✅ 멀티 테넌시 (Multi-tenancy) 강화
-* ✅ 규제 준수를 위한 물리적 격리
+* ✅ 명시적으로 평가한 격리 경계; mesh 신뢰 공유는 별도 결정
 
 ### Multi-cluster가 불필요한 경우 ❌
 
@@ -88,7 +89,7 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 
 **Multi-cluster 운영 요구사항**:
 
-* 최소 2-3명의 Istio 전문가
+* 네트워크·PKI·upgrade·클러스터 간 장애를 운영할 책임 조직
 * East-West Gateway 관리 및 모니터링
 * 클러스터 간 인증서 관리
 * Cross-cluster 디버깅 능력
@@ -102,9 +103,9 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 
 **Multi-cluster 추가 비용**:
 
-* East-West Gateway용 LoadBalancer (리전당 $20-50/월)
-* Cross-region 데이터 전송 ($0.02/GB)
-* Control Plane 중복 (리소스 2-3배)
+* 선택 platform의 east-west LoadBalancer 시간·용량·처리 요금
+* 과금 대상 리전 간 byte·방향/리전별 단가
+* Control-plane/gateway replica·관찰성/스토리지 용량
 
 ### 체크리스트
 
@@ -135,23 +136,17 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 
 **결과**:
 
-* ✅ 9개 이상 체크: Multi-cluster Istio 권장
-* 🟡 5-8개 체크: VPC Lattice 또는 Hybrid 고려
-* ❌ 4개 이하 체크: Single-cluster Istio로 시작
+답변은 점수식 권장이 아닌 설계 입력입니다. 체크 수와 무관하게 리전·신뢰·API·복구·운영 제약 때문에 선택지가 배제될 수 있습니다.
 
 ## 아키텍처 선택 가이드
 
-### 상황별 최적 솔루션
-
-| 상황                   | Single-cluster | Multi-cluster Istio | VPC Lattice | Hybrid |
-| -------------------- | -------------- | ------------------- | ----------- | ------ |
-| **단일 리전, 소규모**       | ✅ 최적           | ❌ 과도함               | ❌ 불필요       | ❌ 불필요  |
-| **다중 리전, 강력한 L7 필요** | ❌ 불가능          | ✅ 최적                | ⚠️ 제한적      | ✅ 권장   |
-| **AWS 중심, 간단한 연결**   | ⚠️ 제한적         | ⚠️ 과도함              | ✅ 최적        | ⚠️ 불필요 |
-| **DR, 자동 Failover**  | ❌ 불가능          | ✅ 최적                | ⚠️ 수동       | ✅ 권장   |
-| **비용 최적화 우선**        | ✅ 최적           | ❌ 비쌈                | ✅ 권장        | ⚠️ 중간  |
-| **운영 단순화**           | ✅ 최적           | ❌ 복잡                | ✅ 최적        | ⚠️ 중간  |
-| **세밀한 트래픽 제어**       | ✅ 가능           | ✅ 최적                | ❌ 제한적       | ✅ 권장   |
+| 결정 | 필요한 근거 |
+|---|---|
+|리전 내 HA와 리전 장애 DR|Control-plane/workload 배치·데이터 복제·검증한 복구 절차|
+|Cross-cluster mesh|API/gateway 접근·공통 신뢰 설계·namespace/service 신원·별도로 배포한 설정|
+|리전 내 Lattice 연결|리전별 service network·VPC association/endpoint·listener/auth mode·target 접근|
+|리전 간 연결|명시적 global network/endpoint·앱/데이터 설계; 리전별 VPC association이 전역 망을 만들지는 않음|
+|비용·운영 인력|실측 workload·동일 트래픽 가정·실제 청구·운영 노력|
 
 ### 각 솔루션 비교
 
@@ -160,28 +155,28 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 **장점**:
 
 * ✅ 가장 간단한 관리
-* ✅ 낮은 비용
+* 구성 요소가 적어 비용 모델이 단순할 수 있음; 실제 workload로 산정
 * ✅ 빠른 디버깅
 * ✅ 모든 Istio 기능 사용 가능
 
 **단점**:
 
-* ❌ 단일 장애점
-* ❌ 리전 장애 시 전체 서비스 중단
-* ❌ 지리적 분산 불가능
+* Cluster 장애 도메인 공유; 리전 내 HA 구성은 가능
+* 별도 복구 구조가 없으면 리전 장애에 의존
+* EKS control plane은 리전 단위이며 더 넓은 장애 도메인 분산에는 추가 설계 필요
 
 **적합한 경우**:
 
 * 단일 리전 서비스
-* 소규모 팀 (<50명)
-* 높은 가용성이 필수 아닌 경우
+* 리전 내 신뢰성 목표를 이 운영 범위로 충족할 수 있는 팀
+* 리전 간 DR 없이 리전 내 HA 요구를 충족할 수 있는 경우
 
 #### Multi-cluster Istio
 
 **장점**:
 
 * ✅ 완전한 지리적 분산
-* ✅ 자동 DR 및 Failover
+* ✅ 명시적 트래픽 failover 기반; 앱/데이터 DR은 별도
 * ✅ 모든 L7 기능 (Retry, Timeout, Circuit Breaker)
 * ✅ 세밀한 트래픽 제어
 * ✅ 통합 관찰성
@@ -206,15 +201,15 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 * ✅ AWS 완전 관리형
 * ✅ 간단한 설정
 * ✅ 낮은 운영 부담
-* ✅ VPC 간 안전한 연결
-* ✅ 비용 효율적
+* ✅ 명시적인 association·접근 정책에 따른 VPC 간 연결
+* 실제 workload의 서비스/요청/데이터·운영 비용 산정
 
 **단점**:
 
-* ❌ L7 기능 제한적 (Retry, Circuit Breaker 없음)
+* ❌ 복원력 제어가 다르며 listener rule API에 같은 홉별 retry/outlier 설정은 없음
 * ❌ AWS에만 종속
-* ❌ 세밀한 트래픽 제어 불가
-* ❌ Istio 관찰성 부족
+* ❌ Header/method/path·가중치 target routing 지원; Istio와 match type·한도가 다름
+* ❌ 다른 metrics/log 인터페이스; 전체 trace에는 앱 통합 필요
 
 **적합한 경우**:
 
@@ -226,34 +221,22 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 
 ### 기능 비교
 
-| 기능              | Istio Multi-cluster | AWS VPC Lattice | Hybrid     |
-| --------------- | ------------------- | --------------- | ---------- |
-| **트래픽 라우팅**     |                     |                 |            |
-| 헤더 기반 라우팅       | ✅ 완벽 지원             | ⚠️ 제한적          | ✅ Istio 담당 |
-| Weighted 라우팅    | ✅ 지원                | ✅ 지원            | ✅ 둘 다 가능   |
-| Path 기반 라우팅     | ✅ 지원                | ✅ 지원            | ✅ 둘 다 가능   |
-| **복원력**         |                     |                 |            |
-| Retry           | ✅ 세밀한 제어            | ❌ 미지원           | ✅ Istio 담당 |
-| Timeout         | ✅ 세밀한 제어            | ⚠️ 기본만          | ✅ Istio 담당 |
-| Circuit Breaker | ✅ 지원                | ❌ 미지원           | ✅ Istio 담당 |
-| **보안**          |                     |                 |            |
-| mTLS            | ✅ 자동                | ✅ 지원            | ✅ 둘 다      |
-| 인증/인가           | ✅ 세밀한 정책            | ⚠️ IAM만         | ✅ Istio 담당 |
-| **관찰성**         |                     |                 |            |
-| 분산 추적           | ✅ Jaeger/Zipkin     | ❌ 제한적           | ✅ Istio 담당 |
-| 메트릭             | ✅ 상세                | ⚠️ 기본만          | ✅ Istio 담당 |
-| **운영**          |                     |                 |            |
-| 관리 복잡도          | 🔴 높음               | 🟢 낮음           | 🟡 중간      |
-| 비용              | 🔴 높음               | 🟢 낮음           | 🟡 중간      |
-| AWS 통합          | 🟡 수동               | 🟢 네이티브         | 🟢 우수      |
+| 영역 | Istio sidecar mesh | VPC Lattice 서비스 |
+|---|---|---|
+|Routing|VirtualService/DestinationRule 정책|HTTP header exact/prefix/contains·path exact/prefix·method·가중치 target-group 규칙|
+|복원력|홉별 retry/timeout·pool breaker·outlier detection|관리형 서비스/연결 한도; 같은 홉별 retry/outlier 설정 API는 아님|
+|TLS 신원|호환 mesh 신뢰의 workload mTLS|HTTPS는 Lattice에서 종료; TLS passthrough는 앱 mTLS를 운반할 수 있지만 관리형 SPIFFE 신원은 아님|
+|권한|Istio/앱 정책|필요 시 HTTP(S) auth policy·IAM/SigV4; SourceVpc만의 allow는 익명 호출도 포함 가능|
+|TLS passthrough 제한|설정한 gateway에 의존|Custom-domain SNI·TCP target group·기본 rule만 사용; HTTP-header IAM 인증이 아닌 익명 principal 정책|
+|관찰성|구성한 proxy/앱 메트릭·로그·trace|CloudWatch 메트릭·access log; 앱 trace/context는 별도 통합|
+|비용|Compute·gateway·전송·운영|서비스 시간·요청/데이터 처리·해당 resource/endpoint 요금; 항상 저렴한 선택지는 없음|
+
+Lattice 서비스·resource configuration·service network는 리전 단위입니다. 리전 간/온프레미스 client에는 지원되는 별도 network/endpoint 경로가 필요합니다. Peering/transit 트래픽은 association만이 아닌 적절한 service-network VPC endpoint를 사용해야 합니다. TLS passthrough와 HTTPS 종료는 routing/인증 계약이 다르므로 hybrid의 각 TLS·신원 경계를 명시합니다.
 
 ### 아키텍처 패턴 비교
 
 #### 패턴 1: Istio Multi-cluster만 사용
 
-![두 클러스터의 Istiod가 서비스 디스커버리를 동기화하고 East-West Gateway가 Cross-region mTLS로 연결되어 App Services의 Envoy 트래픽을 서로 라우팅하는 Istio Multi-cluster 단독 패턴을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-4.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-02-multi-cluster-4.html)
 
 **장점**:
 
@@ -283,9 +266,9 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 
 * Istio 기능 사용 불가
 * 제한적인 트래픽 제어
-* Kubernetes 네이티브 아님
+* Kubernetes 통합에는 AWS Gateway API Controller·지원 API 필요
 
-#### 패턴 3: Hybrid (권장)
+#### 패턴 3: Hybrid (리전 내 연결 선택지)
 
 ![두 클러스터 내부에서는 Istio Mesh가 Service A와 Service B 사이의 mTLS·Retry를 담당하고, 클러스터 간 통신은 AWS VPC Lattice Service Network가 담당하는 Hybrid 아키텍처를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-6.png)
 
@@ -296,7 +279,7 @@ Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합�
 * ✅ 클러스터 내부: Istio의 모든 고급 기능 (Retry, Circuit Breaker, 세밀한 라우팅)
 * ✅ 클러스터 간: VPC Lattice의 간단한 관리 및 안정성
 * ✅ 운영 복잡도 감소 (East-West Gateway 불필요)
-* ✅ 비용 최적화 (Cross-region 트래픽 최소화)
+* ✅ 비용은 실측 필요; Lattice 선택만으로 필요한 리전 간 byte가 줄지는 않음
 
 **단점**:
 
@@ -320,6 +303,11 @@ Multi-cluster Service Mesh를 사용하면:
 
 ## 토폴로지
 
+다음은 sidecar 토폴로지입니다. 현재 ambient multicluster는 별도 제한을 가진 Beta multi-primary/multi-network이며 primary/remote 절차를 재사용하지 않습니다. 각 primary는 허용된 Kubernetes API를 읽습니다. Istiod가 다른 primary로 Istio CRD·앱 설정·DB를 복제하지 않으므로 별도로 배포합니다. 공통 trust domain의 같은 namespace/ServiceAccount는 클러스터 간 같은 신원이므로 클러스터 분리 자체가 권한 격리는 아닙니다.
+
+하나의 primary 설치도 여러 replica로 구성할 수 있습니다. Primary 장애는 discovery·injection·인증서 작업에 영향을 주지만 기존 proxy는 설정을 유지할 수 있어 모든 트래픽의 즉시 장애를 뜻하지는 않습니다. Multi-primary가 그 의존성을 줄여도 모든 공유 장애 원인을 제거하지는 않습니다.
+
+
 ### Primary-Remote
 
 ![Primary 클러스터의 단일 Istiod Control Plane이 Remote 클러스터의 Service B, C에 구성을 푸시하고, Service A·B·C가 mTLS로 서로 통신하는 Primary-Remote 토폴로지를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-7.png)
@@ -331,13 +319,10 @@ Multi-cluster Service Mesh를 사용하면:
 * 하나의 Control Plane (Primary)
 * 여러 Data Plane (Remote)
 * 간단한 관리
-* 단일 장애점 (Primary)
+* Discovery/injection/인증서 작업의 primary 배포 의존성
 
 ### Multi-Primary
 
-![두 클러스터가 각각 독립적인 Istiod Control Plane을 두고 서로 동기화하며, Service A 인스턴스 사이에서 로드 밸런싱으로 트래픽을 분산하는 Multi-Primary 토폴로지를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-8.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-02-multi-cluster-8.html)
 
 **특징**:
 
@@ -346,7 +331,20 @@ Multi-cluster Service Mesh를 사용하면:
 * 복잡한 관리
 * 리전별 자율성
 
+### 공통 사전 조건
+
+Istio1.31 배포본 디렉터리에서 기존 호환 클러스터2개·검토한 kubeconfig context를 사용합니다. 예제는 default revision을 가정하며 다르면 namespace label·gateway 생성에도 원래 revision을 반영합니다. 두 Kubernetes API와 필요한 data/control-plane 경로가 접근 가능해야 합니다. 설치 전에 신뢰 체계를 준비합니다. Multi-primary 발급자는 공통 trusted root 또는 명시적으로 지원되는 신뢰 설계를 사용해야 하며 meshID 문자열만 같다고 인증서를 신뢰하지는 않습니다. [공식 사전 조건·CA 준비](https://istio.io/latest/docs/setup/install/multicluster/before-you-begin/)를 따르고 CA 개인키를 보호합니다. 앱/mesh 설정은 별도로 배포하며 remote secret이 이를 복제하지 않습니다.
+
+```bash
+export CTX_CLUSTER1=cluster1
+export CTX_CLUSTER2=cluster2
+kubectl --context="$CTX_CLUSTER1" get nodes
+kubectl --context="$CTX_CLUSTER2" get nodes
+```
+
 ## Primary-Remote 설정
+
+공식 **IP 기반·동일 network의 sidecar** 토폴로지입니다. Cluster 간 Pod 직접 연결과 primary→remote API 접근이 필요하며 EKS NLB hostname용 예제가 아닙니다. 1.31 chart는 DNS remotePilotAddress를 ExternalName Service로 표현할 수 있지만 이 절차의 IP 조회가 완전한 DNS 기반 EKS 설계는 아닙니다. [외부 control-plane 가이드](https://istio.io/latest/docs/setup/install/external-controlplane/)에 따라 injection URL·서명된 DNS 인증서·실제 control-plane 접근을 구성합니다. DNS 값의 render 성공이 배포 검증은 아닙니다. 아래 IstioOperator는 istioctl 입력이며 클러스터 내 operator 리소스가 아닙니다.
 
 ### 1. Primary 클러스터 설정
 
@@ -362,19 +360,20 @@ spec:
   values:
     global:
       meshID: mesh1
+      externalIstiod: true
       multiCluster:
         clusterName: cluster1
       network: network1
 EOF
 
 # East-West Gateway 설치
-samples/multicluster/gen-eastwest-gateway.sh \
-  --mesh mesh1 --cluster cluster1 --network network1 | \
-  istioctl install --context="${CTX_CLUSTER1}" -y -f -
+samples/multicluster/gen-eastwest-gateway.sh --network network1 > primary-eastwest.yaml
+# Review platform-specific L4 load balancer and access settings before applying
+istioctl install --context="${CTX_CLUSTER1}" -f primary-eastwest.yaml
 
 # Gateway 노출
 kubectl apply --context="${CTX_CLUSTER1}" -f \
-  samples/multicluster/expose-services.yaml
+  samples/multicluster/expose-istiod.yaml
 ```
 
 ### 2. Remote 클러스터 설정
@@ -383,18 +382,27 @@ kubectl apply --context="${CTX_CLUSTER1}" -f \
 # Context 설정
 export CTX_CLUSTER2=cluster2
 
-# Remote Secret 생성
-istioctl create-remote-secret \
-  --context="${CTX_CLUSTER1}" \
-  --name=cluster1 | \
-  kubectl apply -f - --context="${CTX_CLUSTER2}"
+# Prepare the remote namespace and identify its managing primary
+kubectl --context="$CTX_CLUSTER2" create namespace istio-system --dry-run=client -o yaml | kubectl --context="$CTX_CLUSTER2" apply -f -
+kubectl --context="$CTX_CLUSTER2" annotate namespace istio-system topology.istio.io/controlPlaneClusters=cluster1 --overwrite
+DISCOVERY_ADDRESS=$(kubectl --context="$CTX_CLUSTER1" -n istio-system get svc istio-eastwestgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+if [ -z "$DISCOVERY_ADDRESS" ]; then
+  echo "This IP-based lab requires a reachable LB IP; DNS-based EKS endpoints need the external-control-plane design." >&2
+  exit 1
+fi
+
+
+
 
 # Remote 구성으로 Istio 설치
 istioctl install --context="${CTX_CLUSTER2}" -f - <<EOF
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
+  profile: remote
   values:
+    istiodRemote:
+      injectionPath: /inject/cluster/cluster2/net/network1
     global:
       meshID: mesh1
       multiCluster:
@@ -402,9 +410,17 @@ spec:
       network: network1
       remotePilotAddress: ${DISCOVERY_ADDRESS}
 EOF
+
+# Give the primary access to the REMOTE API after remote components are configured
+istioctl create-remote-secret \
+  --context="${CTX_CLUSTER2}" \
+  --name=cluster2 | \
+  kubectl apply -f - --context="${CTX_CLUSTER1}"
 ```
 
 ## Multi-Primary 설정
+
+다른 network 토폴로지이므로 각 primary가 상대 API·east-west gateway에 접근해야 합니다. Istiod 설치 전에 해당 CA secret을 준비합니다. 실제 platform의 L4 LoadBalancer·gateway 접근·허용 범위를 설정하며 ALB 등 TLS를 종료하는 L7 홉은 AUTO_PASSTHROUGH와 호환되지 않습니다. EKS 조건은 [AWS 통합](../04-aws-integration.md)을 참고합니다.
 
 ### 1. 두 클러스터 모두 Primary로 설정
 
@@ -436,6 +452,19 @@ spec:
 EOF
 ```
 
+```bash
+# Both networks need their own gateway and service exposure
+kubectl --context="$CTX_CLUSTER1" label namespace istio-system topology.istio.io/network=network1 --overwrite
+kubectl --context="$CTX_CLUSTER2" label namespace istio-system topology.istio.io/network=network2 --overwrite
+samples/multicluster/gen-eastwest-gateway.sh --network network1 > eastwest-cluster1.yaml
+samples/multicluster/gen-eastwest-gateway.sh --network network2 > eastwest-cluster2.yaml
+# Review platform-specific LB/access settings in these generated inputs before installing
+istioctl install --context="$CTX_CLUSTER1" -f eastwest-cluster1.yaml
+istioctl install --context="$CTX_CLUSTER2" -f eastwest-cluster2.yaml
+kubectl --context="$CTX_CLUSTER1" apply -n istio-system -f samples/multicluster/expose-services.yaml
+kubectl --context="$CTX_CLUSTER2" apply -n istio-system -f samples/multicluster/expose-services.yaml
+```
+
 ### 2. Remote Secret 상호 등록
 
 ```bash
@@ -454,201 +483,144 @@ istioctl create-remote-secret \
 
 ## Cross-cluster 통신
 
-### Service Entry
+같은 Service/namespace 이름·필요한 DNS 가시성과 remote discovery를 사용합니다. Istiod가 Service·Deployment 객체를 클러스터 간 복사하지는 않습니다. 실습은 Service를 두 클러스터에 정의하고 backend는 cluster2에만 배포하여 cluster1의 주입된 client에서 호출합니다. 다른 network에서는 Istio가 east-west gateway·SNI/mTLS 경로를 선택하므로 HTTP ServiceEntry를15443으로 보내는 방식으로 대체하지 않습니다.
+
+다음을 `shared-httpbin-service.yaml`로 저장합니다:
 
 ```yaml
-apiVersion: networking.istio.io/v1
-kind: ServiceEntry
+apiVersion: v1
+kind: Service
 metadata:
-  name: httpbin-cluster2
+  name: httpbin
+  namespace: multicluster-demo
 spec:
-  hosts:
-  - httpbin.default.svc.cluster.local
-  location: MESH_INTERNAL
+  selector:
+    app: httpbin
   ports:
-  - number: 8000
-    name: http
-    protocol: HTTP
-  resolution: DNS
-  addresses:
-  - 240.0.0.1
-  endpoints:
-  - address: ${CLUSTER2_INGRESS_HOST}
-    ports:
-      http: 15443
+  - name: http
+    port: 8000
+    targetPort: 8080
 ```
+
+```bash
+for context in "$CTX_CLUSTER1" "$CTX_CLUSTER2"; do
+  kubectl --context="$context" create namespace multicluster-demo --dry-run=client -o yaml | kubectl --context="$context" apply -f -
+  # Default revision lab; use the recorded revision label if installed differently
+  kubectl --context="$context" label namespace multicluster-demo istio-injection=enabled --overwrite
+  kubectl --context="$context" apply -f shared-httpbin-service.yaml
+done
+kubectl --context="$CTX_CLUSTER2" apply -n multicluster-demo -f samples/httpbin/httpbin.yaml
+kubectl --context="$CTX_CLUSTER1" apply -n multicluster-demo -f samples/curl/curl.yaml
+kubectl --context="$CTX_CLUSTER2" rollout status deployment/httpbin -n multicluster-demo --timeout=120s
+kubectl --context="$CTX_CLUSTER1" rollout status deployment/curl -n multicluster-demo --timeout=120s
+istioctl proxy-config endpoints deployment/curl --context="$CTX_CLUSTER1" -n multicluster-demo --cluster 'outbound|8000||httpbin.multicluster-demo.svc.cluster.local'
+kubectl --context="$CTX_CLUSTER1" exec -n multicluster-demo deploy/curl -c curl -- curl -sS --max-time 5 http://httpbin:8000/headers
+```
+
+HTTP 응답은 앱 경로 시험이며 그 자체로 인증서 신뢰를 증명하지 않습니다. 보안 장처럼 호출자/수신자의 TLS 설정·신원 근거를 확인합니다. 추가 시나리오는 [공식 multicluster 검증](https://istio.io/latest/docs/setup/install/multicluster/verify/)을 참고합니다. 명령은 앞의 신뢰·네트워크·정책·discovery 전제를 만족한다고 가정합니다.
 
 ## VPC Lattice와 함께 사용하기
 
-### Hybrid 아키텍처 구현
+### Hybrid 구성 계약과 설정 조각
 
-Istio와 VPC Lattice를 함께 사용하여 최선의 조합을 만들 수 있습니다.
+독립적인 Istio mesh와 리전 내 Lattice 서비스 경로를 사용하는 대안입니다. `meshID` 변경이나 `multiCluster.enabled` 같은 switch만으로 이미 연결된 mesh를 안전하게 분리할 수는 없습니다. 토폴로지 변경에는 설치 가이드와 검토한 신뢰/remote-secret/정책 전환을 사용합니다.
 
-#### 1단계: Istio를 각 클러스터에 독립 설치
+다음은 운영 전체 배포가 아닌 설정 예제입니다. 허용된 관리 신원·실제 VPC/security-group ID·설치한 AWS Gateway API Controller/CRD·정상 HTTPS Lattice 서비스를 전제합니다. 명령 실행용 관리 자격 증명은 필요한 data-plane 권한만 가지는 앱 caller role과 별개입니다. Lattice 서비스/network는 리전 단위이며 peering/transit client에는 지원되는 service-network endpoint/network 경로가 필요합니다. 같은 리전 VPC2개의 직접 association으로3개 리전 망이 생기지는 않습니다.
 
-```bash
-# Cluster 1 (단일 클러스터 모드)
-export CTX_CLUSTER1=cluster1
-istioctl install --context="${CTX_CLUSTER1}" -f - <<EOF
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  values:
-    global:
-      meshID: mesh1-cluster1
-      multiCluster:
-        enabled: false  # Multi-cluster 비활성화
-      network: network1
-EOF
+#### 1. 리전별 Service Network 생성 또는 선택
 
-# Cluster 2 (독립 설치)
-export CTX_CLUSTER2=cluster2
-istioctl install --context="${CTX_CLUSTER2}" -f - <<EOF
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  values:
-    global:
-      meshID: mesh1-cluster2
-      multiCluster:
-        enabled: false  # Multi-cluster 비활성화
-      network: network2
-EOF
-```
-
-#### 2단계: VPC Lattice Service Network 생성
+새 network는 이름 조회 대신 반환한 ID를 사용합니다. 기존 network가 있으면 새로 만들지 말고 확인한 ID를 사용합니다. VPC association은 client 경로를 제공하며 Kubernetes Service 공개·모든 요청 허용을 자동으로 처리하지는 않습니다.
 
 ```bash
-# Service Network 생성
-aws vpc-lattice create-service-network \
-  --name my-service-network \
-  --auth-type AWS_IAM
-
-# Service Network ID 저장
-SERVICE_NETWORK_ID=$(aws vpc-lattice list-service-networks \
-  --query 'items[?name==`my-service-network`].id' \
-  --output text)
-
-# VPC 연결 (Cluster 1 VPC)
-aws vpc-lattice create-service-network-vpc-association \
-  --service-network-identifier $SERVICE_NETWORK_ID \
-  --vpc-identifier $VPC1_ID
-
-# VPC 연결 (Cluster 2 VPC)
-aws vpc-lattice create-service-network-vpc-association \
-  --service-network-identifier $SERVICE_NETWORK_ID \
-  --vpc-identifier $VPC2_ID
+# Both VPCs below are in this Region; use real reviewed VPC/security-group IDs
+LATTICE_REGION=us-east-1
+: "${VPC1_ID:?Set cluster1 VPC ID}"
+: "${VPC2_ID:?Set cluster2 VPC ID}"
+: "${LATTICE_SG1_ID:?Set cluster1 association security group}"
+: "${LATTICE_SG2_ID:?Set cluster2 association security group}"
+SERVICE_NETWORK_ID=$(aws vpc-lattice create-service-network   --region "$LATTICE_REGION" --name my-service-network --auth-type AWS_IAM   --query id --output text)
+aws vpc-lattice create-service-network-vpc-association --region "$LATTICE_REGION"   --service-network-identifier "$SERVICE_NETWORK_ID" --vpc-identifier "$VPC1_ID"   --security-group-ids "$LATTICE_SG1_ID"
+aws vpc-lattice create-service-network-vpc-association --region "$LATTICE_REGION"   --service-network-identifier "$SERVICE_NETWORK_ID" --vpc-identifier "$VPC2_ID"   --security-group-ids "$LATTICE_SG2_ID"
 ```
 
-#### 3단계: Kubernetes Service를 VPC Lattice에 등록
+#### 2. 명확한 Ingress 경계와 Controller로 서비스 공개
+
+Controller의 `amazon-vpc-lattice` GatewayClass·Gateway는 이름으로 service network를 참조합니다. `my-service-network` Gateway는 앞에서 별도 관리한 network를 가리킬 수 있습니다. 지원되는 HTTPRoute/GRPCRoute가 서비스/listener/target routing과 고유 endpoint를 제공하며 Gateway가 모든 서비스용 단일 DNS endpoint는 아닙니다.
+
+`ServiceExport`는 유효한 controller 전용 API지만 완전한 Lattice 서비스/network 연결이 아닌 **target group**을 만듭니다. 기존 `lattice-service-network` annotation은 그 과정을 구현하지 않았습니다. 다음 선택적 export는80번 port의 기존 `lattice-entry` ingress Service를 전제하며 이것만으로 완전한 route가 공개되지는 않습니다:
 
 ```yaml
-# Cluster 1의 서비스를 VPC Lattice에 등록
+# Optional target-group export only; assumes this ingress Service already exists
 apiVersion: application-networking.k8s.aws/v1alpha1
 kind: ServiceExport
 metadata:
-  name: my-service
-  namespace: default
-  annotations:
-    application-networking.k8s.aws/lattice-service-network: my-service-network
-spec: {}
----
-# Cluster 1에서 VPC Lattice로 라우팅
-apiVersion: networking.istio.io/v1
-kind: ServiceEntry
-metadata:
-  name: remote-service-via-lattice
-  namespace: default
+  name: lattice-entry
+  namespace: istio-system
 spec:
-  hosts:
-  - remote-service.lattice.svc.cluster.local
-  location: MESH_EXTERNAL
-  ports:
-  - number: 80
-    name: http
-    protocol: HTTP
-  resolution: DNS
-  endpoints:
-  - address: ${LATTICE_SERVICE_DNS}  # VPC Lattice DNS
-    ports:
-      http: 80
----
-# VPC Lattice 트래픽에 mTLS 적용 안 함
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: remote-service-via-lattice
-  namespace: default
-spec:
-  host: remote-service.lattice.svc.cluster.local
-  trafficPolicy:
-    tls:
-      mode: SIMPLE  # VPC Lattice가 TLS 처리
+  exportedPorts:
+  - port: 80
+    routeType: HTTP
 ```
 
-#### 4단계: IAM 정책 설정
+실제 공개에는 [Gateway](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/gateway/)·[HTTPRoute](https://www.gateway-api-controller.eks.aws.dev/latest/api-types/http-route/)·필요한 ServiceImport 설정을 완성합니다. 설치 controller/CRD 버전을 맞추며 exportedPorts는 v2.1.3 기준 확인했습니다.
 
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": "*"
-      },
-      "Action": "vpc-lattice-svcs:Invoke",
-      "Resource": "*",
-      "Condition": {
-        "StringEquals": {
-          "vpc-lattice-svcs:SourceVpc": [
-            "${VPC1_ID}",
-            "${VPC2_ID}"
-          ]
-        }
-      }
-    }
-  ]
-}
+Lattice는 STRICT backend에 Istio SPIFFE mTLS를 시작하지 않습니다. 의도한 Lattice 트래픽을 받고 우회를 제한하며 backend로 mesh mTLS를 시작하는 별도 ingress 경계 또는 명시적으로 설계한 지원 backend 보안 계약이 필요합니다. Backend 정책을 조용히 완화하지 않습니다. Backend가 원래 IAM 호출자 대신 ingress 신원을 볼 수 있어 신뢰한 신원 전달도 별도 설계가 필요합니다. 이 문서는 그 경계·IAM role·ACM 인증서·DNS를 생성하지 않습니다.
+
+#### 3. 실제 HTTPS Endpoint 검색과 호출
+
+Provider route·service-network 연결이 준비된 뒤 실제 DNS 이름을 얻습니다. 앱은 HTTPS·일치하는 인증서 검증을 사용하고 인증이 필요하면 실제 host/path/payload에 서명합니다. 임의 `.lattice.svc.cluster.local` 이름을 만들거나 앱 TLS 위에 SIMPLE TLS를 추가하지 않습니다.
+
+```bash
+# Obtain the real service ID from the reconciled provider configuration
+: "${LATTICE_SERVICE_ID:?Set the created and associated HTTPS Lattice service ID}"
+aws vpc-lattice get-service --region "$LATTICE_REGION"   --service-identifier "$LATTICE_SERVICE_ID" > lattice-service.json
+LATTICE_SERVICE_DNS=$(jq -er '.dnsEntry.domainName' lattice-service.json)
+LATTICE_SERVICE_ARN=$(jq -er '.arn' lattice-service.json)
+
+# JSON is also a valid Kubernetes manifest; this explicitly renders the hostname
+jq -n --arg host "$LATTICE_SERVICE_DNS" '{
+  apiVersion:"networking.istio.io/v1",kind:"ServiceEntry",
+  metadata:{name:"remote-service-via-lattice",namespace:"default"},
+  spec:{hosts:[$host],location:"MESH_EXTERNAL",resolution:"DNS",
+        ports:[{number:443,name:"https",protocol:"HTTPS"}]}
+}' > lattice-service-entry.json
+kubectl --context="$CTX_CLUSTER1" apply -f lattice-service-entry.json
 ```
 
-### 트래픽 흐름
+이 ServiceEntry는 호출자 Istio registry에 외부 서비스를 알릴 뿐 Lattice 연결·정책·signer를 만들지 않습니다. 앱 HTTPS는 sidecar에 불투명하므로 HTTP proxy routing/메트릭에는 별도로 설계한 TLS 종료 경로가 필요합니다.
 
-![Istio + VPC Lattice 트래픽 흐름 시퀀스 다이어그램: Cluster 1의 Service A가 Envoy 사이드카를 거쳐 VPC Lattice DNS로 라우팅되고, Lattice가 AWS 관리형 서비스 디스커버리로 Cluster 2의 Service B에 요청을 전달한 뒤 같은 경로로 응답이 돌아오며, 각 클러스터에서 Istio가 독립적으로 메트릭을 수집하는 구조를 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-9.png)
+#### 4. 의도한 IAM 호출자 요구
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-02-multi-cluster-9.html)
+`AWS_IAM`은 정책 평가를 켭니다. Wildcard Principal에 SourceVpc만 있으면 익명 호출을 허용할 수 있어 IAM 인증 증명이 아닙니다. 다음은 IAM role을 명시하고 서비스 하나·직접 연결한 VPC2개로 제한합니다.
 
-### 장점과 고려사항
+```bash
+: "${CALLER_ROLE_ARN:?Set the explicitly authorized caller IAM role ARN}"
+# Compact resource policy; explicit role requires an authenticated caller
+jq -cn --arg role "$CALLER_ROLE_ARN" --arg service "$LATTICE_SERVICE_ARN"   --arg vpc1 "$VPC1_ID" --arg vpc2 "$VPC2_ID" '{
+  Version:"2012-10-17",Statement:[{
+    Effect:"Allow",Principal:{AWS:$role},Action:"vpc-lattice-svcs:Invoke",
+    Resource:($service+"/*"),
+    Condition:{StringEquals:{"vpc-lattice-svcs:SourceVpc":[$vpc1,$vpc2]}}
+  }]
+}' > lattice-auth-policy.json
+aws vpc-lattice put-auth-policy --region "$LATTICE_REGION"   --resource-identifier "$SERVICE_NETWORK_ID" --policy file://lattice-auth-policy.json
+```
 
-**장점**:
+Caller role에도 적절한 identity-based Invoke 권한이 필요합니다. 활성화한 모든 service-network/service auth policy가 허용해야 하며 명시적 deny가 우선합니다. Service 인증을 켰다면 해당 정책도 관리하고 CLI/controller가 같은 정책을 경쟁해 변경하지 않게 합니다. Workload 자격 증명을 사용하는 지원 SDK/signer 또는 검증한 signing proxy가 필요합니다. Istio TLS 설정이 SigV4를 만들지는 않으며 서명 후 host/path/body 변경은 서명을 깨뜨릴 수 있습니다.
 
-* ✅ 클러스터 내부: Istio의 모든 기능 (Retry, Circuit Breaker, 세밀한 라우팅)
-* ✅ 클러스터 간: VPC Lattice의 간편한 관리
-* ✅ East-West Gateway 불필요 → 운영 부담 감소
-* ✅ AWS 네이티브 통합
+### 트래픽 흐름과 관찰성
 
-**고려사항**:
+의도한 흐름은 caller 서명·HTTPS → Lattice 권한 확인·HTTPS 종료 → 설정한 ingress 경계로 backend mesh 진입 → 앱 수신입니다. TLS passthrough는 custom-domain SNI/TCP target·기본 rule·익명 principal 정책이라는 다른 계약입니다. 앱 mTLS를 운반할 수 있지만 HTTP-header IAM 인증을 제공하지는 않습니다.
 
-* ⚠️ Cross-cluster 트래픽은 VPC Lattice 기능에 제한
-* ⚠️ VPC Lattice는 Retry, Timeout을 세밀하게 제어할 수 없음
-* ⚠️ Istio 분산 추적이 클러스터 경계에서 끊김 (각 클러스터에서 독립적으로 추적)
+앱 간 trace context·collector/backend 설정을 맞춥니다. Cluster·Lattice 경계 자체가 trace를 분리하지는 않습니다. 기존2-cluster 그림을 완전한 배포로 가정하지 말고 실제 신원·TLS·텔레메트리 경로를 검증합니다.
 
 ## 실전 예제
 
 ### 예제 1: 글로벌 전자상거래 (Multi-Primary + VPC Lattice)
 
-#### 아키텍처
+글로벌 앱에는 리전별 mesh·Lattice service network를 배포할 수 있습니다. 리전 내 Order는 정의한 Lattice/ingress 계약으로 같은 리전 Payment를 호출할 수 있습니다. 리전 간 호출에는 별도의 지원 network/endpoint 설계가 필요하며 삭제한 그림처럼 하나의 service network 주위에3개 리전을 놓는 것으로 경로가 생기지는 않습니다. 데이터 복제·리전 failover는 앱/인프라 책임입니다.
 
-![미국과 유럽 리전의 EKS 클러스터 안에서는 Frontend, Cart, Order 서비스가 Istio로 통신하고, 두 클러스터의 Order 서비스가 VPC Lattice Service Network를 거쳐 아시아 리전의 Payment 서비스로 라우팅되는 글로벌 전자상거래 구성을 보여준다.](../../../.gitbook/assets/ko-service-mesh-istio-advanced-02-multi-cluster-10.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-service-mesh-istio-advanced-02-multi-cluster-10.html)
-
-**의사결정**:
-
-* ✅ **클러스터 내부 (Frontend ↔ Cart ↔ Order)**: Istio 사용
-  * 이유: 빈번한 호출, 복잡한 라우팅, Circuit Breaker 필요
-* ✅ **클러스터 간 (Order → Payment)**: VPC Lattice 사용
-  * 이유: 비교적 단순한 호출, AWS IAM 인증 활용, 간단한 관리
+다음 클러스터 내부 예제는 실제 cart Service·일치하는 v1/v2 Pod 레이블을 전제합니다. user-type 헤더는 route 선택이며 인증이 아닙니다. Cart 작업에는 부작용이 있을 수 있어 mesh retry를 끕니다.
 
 #### 구성 예시
 
@@ -673,16 +645,21 @@ spec:
         host: cart.default.svc.cluster.local
         subset: v2
       weight: 100
+    retries:
+      attempts: 0
   - route:
     - destination:
         host: cart.default.svc.cluster.local
         subset: v1
       weight: 100
+    retries:
+      attempts: 0
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: cart-service
+  namespace: default
 spec:
   host: cart.default.svc.cluster.local
   trafficPolicy:
@@ -693,9 +670,10 @@ spec:
         http1MaxPendingRequests: 1024
         maxRequestsPerConnection: 10
     outlierDetection:
-      consecutiveErrors: 5
       interval: 10s
       baseEjectionTime: 30s
+      consecutive5xxErrors: 5
+      minHealthPercent: 0
   subsets:
   - name: v1
     labels:
@@ -705,178 +683,64 @@ spec:
       version: v2
 ```
 
-**Cluster 1/2: Order → Payment (VPC Lattice)**
+**리전 내 Order → Payment Lattice 경로**
 
-```yaml
-# ServiceEntry for VPC Lattice
-apiVersion: networking.istio.io/v1
-kind: ServiceEntry
-metadata:
-  name: payment-service-lattice
-  namespace: default
-spec:
-  hosts:
-  - payment.lattice.svc.cluster.local
-  location: MESH_EXTERNAL
-  ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
-  resolution: DNS
-  endpoints:
-  - address: payment-service-abc123.vpc-lattice.amazonaws.com
----
-# DestinationRule: VPC Lattice TLS
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: payment-service-lattice
-spec:
-  host: payment.lattice.svc.cluster.local
-  trafficPolicy:
-    tls:
-      mode: SIMPLE  # VPC Lattice가 TLS 처리
-```
+Hybrid 절차의 실제 HTTPS DNS·렌더링한 ServiceEntry와 정상 provider route·호환 ingress 경계·SigV4 caller를 사용합니다. 앱 HTTPS 위에 SIMPLE TLS를 추가하거나 임의 Kubernetes `.svc.cluster.local` alias를 만들지 않습니다. 리전 내 Lattice 경로만으로 글로벌 routing·데이터 복구가 해결되지는 않습니다.
 
 ### 예제 2: 재해 복구 (DR) 시나리오
 
-#### Active-Standby with Route53 Failover
+기존 리전별 NLB2개를 위한 **수동 Route53 alias-failover 설정**입니다. Workload·LoadBalancer·TLS listener·복제·health service를 배포하지 않습니다. 먼저 각 target group의 실제 앱 readiness/health를 구성합니다. 불완전했던 ExternalDNS annotation과 DNS 소유권을 섞거나 health-check ID를 만들어내지 않습니다.
 
-```yaml
-# Cluster 1 (Active): Health Check Endpoint
-apiVersion: v1
-kind: Service
-metadata:
-  name: health-check
-  namespace: istio-system
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-    external-dns.alpha.kubernetes.io/hostname: api.example.com
-    external-dns.alpha.kubernetes.io/set-identifier: "us-east-1-primary"
-    external-dns.alpha.kubernetes.io/aws-health-check-id: "health-check-primary"
-spec:
-  type: LoadBalancer
-  selector:
-    app: health-check
-  ports:
-  - port: 80
-    targetPort: 8080
----
-# Cluster 2 (Standby): Health Check Endpoint
-apiVersion: v1
-kind: Service
-metadata:
-  name: health-check
-  namespace: istio-system
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-    external-dns.alpha.kubernetes.io/hostname: api.example.com
-    external-dns.alpha.kubernetes.io/set-identifier: "us-west-2-standby"
-    external-dns.alpha.kubernetes.io/aws-health-check-id: "health-check-standby"
-spec:
-  type: LoadBalancer
-  selector:
-    app: health-check
-  ports:
-  - port: 80
-    targetPort: 8080
-```
-
-**Route53 Health Check 및 Failover 정책**:
+예제는 별도 public HTTPS health check 없이 NLB alias의 `EvaluateTargetHealth`를 사용합니다. 더 깊은 앱/데이터 건강이 필요하면 적절한 endpoint/alarm 신호를 설계합니다. 기존 HTTP80 Service와 HTTPS443 probe는 맞지 않았으며 private-only endpoint를 public Route53 HTTP checker로 단순 점검할 수는 없습니다.
 
 ```bash
-# Primary Health Check 생성
-aws route53 create-health-check \
-  --caller-reference "$(date +%s)" \
-  --health-check-config \
-    Type=HTTPS,ResourcePath=/healthz,FullyQualifiedDomainName=${PRIMARY_LB_DNS},Port=443
+# Existing, healthy NLBs and a DNS zone controlled by this workflow
+PRIMARY_REGION=us-east-1
+STANDBY_REGION=us-west-2
+RECORD_NAME=api.example.com
+: "${PRIMARY_LB_ARN:?Set the primary NLB ARN}"
+: "${STANDBY_LB_ARN:?Set the standby NLB ARN}"
+: "${ZONE_ID:?Set the Route53 hosted zone ID}"
+aws elbv2 describe-load-balancers --region "$PRIMARY_REGION" \
+  --load-balancer-arns "$PRIMARY_LB_ARN" > primary-nlb.json
+aws elbv2 describe-load-balancers --region "$STANDBY_REGION" \
+  --load-balancer-arns "$STANDBY_LB_ARN" > standby-nlb.json
 
-# Failover Routing Policy
-aws route53 change-resource-record-sets \
-  --hosted-zone-id ${ZONE_ID} \
+# Each regional load balancer supplies its own canonical hosted-zone ID
+jq -n --arg name "$RECORD_NAME" \
+  --slurpfile primary primary-nlb.json --slurpfile standby standby-nlb.json '
+  def record($id; $mode; $lb):
+    {Action:"UPSERT",ResourceRecordSet:{
+      Name:$name,Type:"A",SetIdentifier:$id,Failover:$mode,
+      AliasTarget:{HostedZoneId:$lb.CanonicalHostedZoneId,
+                   DNSName:$lb.DNSName,EvaluateTargetHealth:true}
+    }};
+  {Changes:[
+    record("primary";"PRIMARY";$primary[0].LoadBalancers[0]),
+    record("secondary";"SECONDARY";$standby[0].LoadBalancers[0])
+  ]}
+' > failover-config.json
+
+# Review the records/zone before applying; do not give another DNS controller ownership
+aws route53 change-resource-record-sets --hosted-zone-id "$ZONE_ID" \
   --change-batch file://failover-config.json
 ```
 
-**failover-config.json**:
-
-```json
-{
-  "Changes": [
-    {
-      "Action": "CREATE",
-      "ResourceRecordSet": {
-        "Name": "api.example.com",
-        "Type": "A",
-        "SetIdentifier": "Primary",
-        "Failover": "PRIMARY",
-        "AliasTarget": {
-          "HostedZoneId": "${NLB_ZONE_ID}",
-          "DNSName": "${PRIMARY_LB_DNS}",
-          "EvaluateTargetHealth": true
-        },
-        "HealthCheckId": "${PRIMARY_HEALTH_CHECK_ID}"
-      }
-    },
-    {
-      "Action": "CREATE",
-      "ResourceRecordSet": {
-        "Name": "api.example.com",
-        "Type": "A",
-        "SetIdentifier": "Secondary",
-        "Failover": "SECONDARY",
-        "AliasTarget": {
-          "HostedZoneId": "${NLB_ZONE_ID}",
-          "DNSName": "${STANDBY_LB_DNS}",
-          "EvaluateTargetHealth": true
-        }
-      }
-    }
-  ]
-}
-```
+DNS 변경 전에 기존 record·복원/rollback 계획을 확인합니다. Alias A만으로 IPv6 구성이 완성되지 않으며 dualstack에는 적절한 AAAA·접근 경로도 필요합니다. DNS cache·연결 재사용·target-group health 의미·모두 비정상일 때의 동작이 failover에 영향을 줍니다. 앱/데이터 복구와 함께 검증하며 DNS나 Istio만으로15분 RPO·1시간 RTO를 보장하지 않습니다.
 
 ## 성능 및 비용 비교
 
-### 성능 비교
+기존 지연/RPS/CPU/메모리 표에는 재현 가능한 benchmark 출처·release·하드웨어·부하 조건이 없었습니다. 비용 표도10TB와5TB라는 다른 트래픽량·임의 인력 예산을 비교했습니다. 더 저렴하거나 빠른 구성을 입증하지 못하므로 이를 현재 측정값으로 바꾸지 않습니다.
 
-| 메트릭            | Single-cluster | Multi-cluster Istio    | Hybrid (Istio + Lattice) |
-| -------------- | -------------- | ---------------------- | ------------------------ |
-| **클러스터 내부 지연** | \~2ms          | \~2ms                  | \~2ms                    |
-| **클러스터 간 지연**  | N/A            | +5-10ms (East-West GW) | +3-5ms (VPC Lattice)     |
-| **처리량 (RPS)**  | 10,000         | 8,500                  | 9,200                    |
-| **CPU 오버헤드**   | +10%           | +15%                   | +12%                     |
-| **메모리 사용**     | +50MB/pod      | +70MB/pod              | +55MB/pod                |
+| 구성 요소 | 명시적으로 측정·산정할 것 |
+|---|---|
+|앱 지연/처리량|동일 리전·payload·동시성·TLS·정책·앱 용량·백분위 정의|
+|Mesh compute|실제 Istiod/proxy/gateway/telemetry replica·사용량; Kubernetes/EKS 비용은 별도 포함|
+|네트워크|동일한 과금 byte/방향·리전 전송·LB/endpoint/TGW/peering 처리·용량|
+|Lattice 서비스|서비스 시간·요청·데이터 처리; resource configuration/endpoint는 별도 모델|
+|운영/DR|관측한 운영 노력·사고/복구 시험·비즈니스 영향 가정|
 
-### 비용 비교 (월간, 2개 클러스터 기준)
-
-| 항목                    | Single-cluster | Multi-cluster Istio | Hybrid     | VPC Lattice만 |
-| --------------------- | -------------- | ------------------- | ---------- | ------------ |
-| **Control Plane**     | $50            | $100 (×2)           | $100 (×2)  | $0           |
-| **East-West Gateway** | $0             | $100 (NLB ×2)       | $0         | $0           |
-| **Cross-region 전송**   | $0             | $200 (10TB)         | $100 (5TB) | $100 (5TB)   |
-| **VPC Lattice**       | $0             | $0                  | $30        | $50          |
-| **운영 인력**             | $10,000        | $15,000             | $12,000    | $8,000       |
-| **총 예상 비용**           | \~$10,050      | \~$15,400           | \~$12,230  | \~$8,150     |
-
-**비용 절감 팁**:
-
-* VPC Peering 사용 시 Cross-region 전송 비용 절감 가능
-* VPC Lattice는 처리량 기반 과금 → 트래픽 최적화 필수
-* Ambient Mode 사용 시 리소스 오버헤드 90% 절감
-
-### ROI 분석
-
-**Multi-cluster Istio 투자 가치**:
-
-* ✅ 다운타임 비용 > $1,000/시간 → 강력 권장
-* ✅ 글로벌 고객 경험 중요 → 권장
-* ⚠️ 소규모 스타트업 → 과도한 투자
-
-**Hybrid 접근의 sweet spot**:
-
-* AWS 중심 아키텍처
-* 클러스터 내부는 복잡한 로직
-* 클러스터 간은 단순 연결
+[Lattice 가격](https://aws.amazon.com/vpc/lattice/pricing/)과 실제 청구로 산정합니다. VPC peering이 리전 간 전송료를 자동 제거하지는 않습니다. Lattice의 추가 inter-AZ 전송료 없음과 데이터 처리 비용0은 다릅니다. Ambient가90% 리소스 절감을 보장하지 않으므로 같은 정책 조건에서 측정합니다. 고정 인원·시간당$1,000 장애 비용만으로 아키텍처를 선택하지 않습니다.
 
 ## 문제 해결
 
@@ -900,34 +764,25 @@ kubectl logs -n istio-system -l app=istiod --context="${CTX_CLUSTER1}"
 * [Multi-Primary](https://istio.io/latest/docs/setup/install/multicluster/multi-primary/)
 * [Primary-Remote](https://istio.io/latest/docs/setup/install/multicluster/primary-remote/)
 * [AWS VPC Lattice](https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html)
-* [AWS Gateway API Controller](https://www.gateway-api-controller.eks.aws.dev/)
+* [AWS Gateway API Controller](https://www.gateway-api-controller.eks.aws.dev/latest/)
+
+* [Lattice regional components and cross-Region patterns](https://aws.amazon.com/vpc/lattice/faqs/)
+* [Lattice auth policy and anonymous callers](https://docs.aws.amazon.com/vpc-lattice/latest/ug/auth-policies.html)
+* [Lattice SigV4 requests](https://docs.aws.amazon.com/vpc-lattice/latest/ug/sigv4-authenticated-requests.html)
+* [Lattice TLS passthrough](https://docs.aws.amazon.com/vpc-lattice/latest/ug/tls-listeners.html)
+* [Route53 failover aliases](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-values-failover-alias.html)
 
 ### 블로그 및 사례 연구
 
 * [Tetrate - Multi-cluster Istio](https://tetrate.io/blog/multicluster-istio/)
-* [Solo.io - Istio Multi-cluster Best Practices](https://www.solo.io/blog/istio-multicluster/)
 * [SKT Enterprise - Istio Ambient Mesh 소개](https://www.sktenterprise.com/bizInsight/blogDetail/dev/14768)
 
 ### 관련 문서
 
 * [Ambient Mode](01-ambient-mode.md) - 리소스 최적화
 * [mTLS](../security/01-mtls.md) - 클러스터 간 보안 통신
-* [VPC Lattice](https://github.com/Atom-oh/kubernetes-docs/blob/main/ko/service-mesh/networking/02-vpc-lattice.md) - AWS 관리형 서비스 네트워킹
+* [VPC Lattice](../../../networking/02-vpc-lattice.md) - AWS 관리형 서비스 네트워킹
 
 ## 요약
 
-Multi-cluster Service Mesh는 강력하지만 복잡도와 비용이 증가합니다. 의사결정 가이드:
-
-| 선택                      | 적합한 경우                  | 주요 장점               | 주요 단점               |
-| ----------------------- | ----------------------- | ------------------- | ------------------- |
-| **Single-cluster**      | 단일 리전, 소규모              | 간단한 관리, 낮은 비용       | 단일 장애점, 지리적 분산 불가   |
-| **Multi-cluster Istio** | 글로벌 서비스, 강력한 L7 필요      | 완전한 제어, 모든 Istio 기능 | 높은 복잡도, 높은 비용       |
-| **VPC Lattice**         | AWS 중심, 간단한 연결          | AWS 관리형, 낮은 운영 부담   | Istio 기능 제한, AWS 종속 |
-| **Hybrid**              | AWS 환경, 복잡한 내부 + 간단한 외부 | 균형잡힌 복잡도와 기능        | 두 기술 스택 이해 필요       |
-
-**권장 접근**:
-
-1. Single-cluster로 시작
-2. Multi-region 필요 시 → Hybrid (Istio + VPC Lattice) 고려
-3. 강력한 L7 제어 필수 시 → Multi-cluster Istio
-4. 운영 단순화 우선 시 → VPC Lattice만 사용
+실제 신뢰·네트워크·API·복구 요구로 토폴로지를 선택합니다. 단일 리전 클러스터도 multi-AZ HA를 제공할 수 있습니다. Sidecar multicluster는 전제를 충족하면 discovery·mesh mTLS를 확장하지만 앱 상태를 복제하지 않습니다. Lattice는 listener별 TLS/인증 계약을 가진 관리형 리전 앱 네트워킹입니다. Hybrid는 각 신원/종료 경계·리전 간 경로를 명시하고 동작·동일 workload 비용을 검증한 뒤 선택합니다.

@@ -1,35 +1,35 @@
-# Kubernetes Cluster Administration
+# Kubernetes クラスター管理
 
-> **Supported Versions**: Kubernetes 1.34 (Released 2025-11-24)
+> **サポート対象バージョン**: Kubernetes 1.34 (Released 2025-11-24)
 > **最終更新**: February 23, 2026
 
-Kubernetes cluster administration は、cluster のセットアップ、保守、monitoring、troubleshooting、upgrade を含む重要な作業です。この章では、Kubernetes cluster administration のさまざまな側面と、Amazon EKS における cluster management の best practices について学びます。
+Kubernetes クラスター管理は、クラスターのセットアップ、保守、監視、トラブルシューティング、アップグレードを含む重要な作業です。この章では、Kubernetes クラスター管理のさまざまな側面と、Amazon EKS でのクラスター管理のベストプラクティスを学びます。
 
-## Core Concepts
+## コアコンセプト
 
-- **Cluster Lifecycle Management**: cluster の作成から廃止までの全プロセス
-- **Control Plane Management**: API server、scheduler、controller manager などの core components の管理
-- **Node Management**: worker nodes の追加、削除、保守
-- **Resource Allocation**: CPU、memory、storage などの resource allocation と limit の設定
-- **Upgrade Strategy**: downtime を最小化するための cluster と application の upgrade strategy
+- **クラスターライフサイクル管理**: クラスター作成から廃止までの全プロセス
+- **Control Plane 管理**: API server、scheduler、controller manager などのコアコンポーネントの管理
+- **Node 管理**: worker node の追加、削除、保守
+- **リソース割り当て**: CPU、メモリ、ストレージなどのリソース割り当てと制限の設定
+- **アップグレード戦略**: ダウンタイムを最小化するためのクラスターおよびアプリケーションのアップグレード戦略
 
-## Table of Contents
-1. [Cluster Administration Overview](#cluster-administration-overview)
-2. [Cluster Component Management](#cluster-component-management)
-3. [Resource Management](#resource-management)
-4. [Cluster Networking](#cluster-networking)
-5. [Authentication and Authorization Management](#authentication-and-authorization-management)
-6. [Cluster Upgrades](#cluster-upgrades)
-7. [Backup and Recovery](#backup-and-recovery)
-8. [Monitoring and Logging](#monitoring-and-logging)
-9. [Troubleshooting](#troubleshooting)
-10. [Amazon EKS Cluster Administration](#amazon-eks-cluster-administration)
-11. [Cluster Administration Best Practices](#cluster-administration-best-practices)
-12. [Conclusion](#conclusion)
+## 目次
+1. [クラスター管理の概要](#cluster-administration-overview)
+2. [クラスターコンポーネント管理](#cluster-component-management)
+3. [リソース管理](#resource-management)
+4. [クラスターNetworking](#cluster-networking)
+5. [Authentication と Authorization 管理](#authentication-and-authorization-management)
+6. [クラスターアップグレード](#cluster-upgrades)
+7. [バックアップとリカバリ](#backup-and-recovery)
+8. [監視とロギング](#monitoring-and-logging)
+9. [トラブルシューティング](#troubleshooting)
+10. [Amazon EKS クラスター管理](#amazon-eks-cluster-administration)
+11. [クラスター管理のベストプラクティス](#cluster-administration-best-practices)
+12. [まとめ](#conclusion)
 
-## Environment Setup
+## 環境セットアップ
 
-cluster administration には、次の tools が必要です。
+クラスター管理には次のツールが必要です。
 
 ```bash
 # Install kubectl (Linux)
@@ -47,48 +47,31 @@ curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 curl -sS https://webinstall.dev/k9s | bash
 ```
 
-## Cluster Administration Overview
+## クラスター管理の概要
 
-Kubernetes cluster administration は、cluster の lifecycle 全体を管理するプロセスです。これには、次の主な領域が含まれます。
+Kubernetes クラスター管理とは、クラスターのライフサイクル全体を管理するプロセスです。主な領域は次のとおりです。
 
-1. **Cluster Setup and Configuration**: cluster の作成、node の追加、networking の設定、storage の設定など
-2. **Operations Management**: resource monitoring、performance optimization、capacity planning、troubleshooting
-3. **Security Management**: authentication、authorization、network policies、security contexts など
-4. **Upgrades and Patches**: cluster version upgrade、security patch の適用
-5. **Backup and Recovery**: cluster data backup、disaster recovery planning
+1. **クラスターのセットアップと設定**: クラスター作成、node の追加、networking のセットアップ、ストレージ設定など
+2. **運用管理**: リソース監視、パフォーマンス最適化、キャパシティ計画、トラブルシューティング
+3. **セキュリティ管理**: Authentication、Authorization、network policy、security context など
+4. **アップグレードとパッチ**: クラスターバージョンのアップグレード、セキュリティパッチの適用
+5. **バックアップとリカバリ**: クラスターデータのバックアップ、災害復旧計画
 
-次の図は、Kubernetes cluster administration の主な領域と関連 tools を示しています。
+次の図は、Kubernetes クラスター管理の主な領域と関連ツールを示します。
 
-## Cluster Component Management
+## クラスターコンポーネント管理
 
-Kubernetes cluster は control plane components と node components で構成されます。各 component の管理は、cluster の安定性と performance にとって重要です。
+Kubernetes クラスターは Control Plane コンポーネントと node コンポーネントで構成されます。各コンポーネントの管理は、クラスターの安定性とパフォーマンスにとって重要です。
 
-### Control Plane Component Management
+### Control Plane コンポーネント管理
 
-```mermaid
-graph TD
-    A[Control Plane] --> B[API Server]
-    A --> C[etcd]
-    A --> D[Scheduler]
-    A --> E[Controller Manager]
-    A --> F[Cloud Controller Manager]
+![Kubernetes Control Plane が 5 つのコンポーネント（API server、etcd、scheduler、controller manager、cloud controller manager）へ分岐し、それぞれが担当する運用上の関心事（Authentication と Authorization、データバックアップ、scheduling policy、controller state 監視、cloud resource 管理）と対応付けられているツリー図。](../.gitbook/assets/en-core-09-cluster-administration-0.png)
 
-    B --> G[Authentication and Authorization]
-    C --> H[Data Backup]
-    D --> I[Scheduling Policies]
-    E --> J[Controller State Monitoring]
-    F --> K[Cloud Resource Management]
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-0.html)
 
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef operation fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+#### API Server 管理
 
-    class A,B,C,D,E,F k8sComponent;
-    class G,H,I,J,K operation;
-```
-
-#### API Server Management
-
-API server は、Kubernetes API を公開する control plane の core component です。
+API server は Kubernetes API を公開する Control Plane のコアコンポーネントです。
 
 ```bash
 # Check API server logs
@@ -101,9 +84,9 @@ sudo cat /etc/kubernetes/manifests/kube-apiserver.yaml
 kubectl get --raw='/healthz'
 ```
 
-#### etcd Management
+#### etcd 管理
 
-etcd は、Kubernetes のすべての cluster data を保存する distributed key-value store です。
+etcd は Kubernetes のすべてのクラスターデータを格納する分散 key-value store です。
 
 ```bash
 # etcd backup
@@ -121,9 +104,9 @@ ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
   endpoint health
 ```
 
-### Node Management
+### Node 管理
 
-Nodes は containerized applications を実行する worker machines です。
+Node はコンテナ化アプリケーションを実行する worker machine です。
 
 ```bash
 # List nodes
@@ -142,7 +125,7 @@ kubectl drain <node-name> --ignore-daemonsets
 kubectl uncordon <node-name>
 ```
 
-### Component Status Monitoring
+### コンポーネントステータス監視
 
 ```bash
 # Check control plane component status
@@ -155,96 +138,46 @@ kubectl get pods -n kube-system
 kubectl top nodes
 ```
 
-```mermaid
-flowchart TD
-    Admin[Cluster Administrator] --> Setup[Cluster Setup and Configuration]
-    Admin --> Operations[Operations Management]
-    Admin --> Security[Security Management]
-    Admin --> Upgrade[Upgrades and Patches]
-    Admin --> Backup[Backup and Recovery]
+![クラスター管理者の 5 つの責務領域と、それぞれを実施するためのツールを対応付けた図。](../.gitbook/assets/en-core-09-cluster-administration-1.png)
 
-    Setup --> |Tools| SetupTools[kubeadm, kops, eksctl]
-    Operations --> |Tools| OpsTools[kubectl, Prometheus, Grafana]
-    Security --> |Tools| SecTools[RBAC, NetworkPolicy, PodSecurityPolicy]
-    Upgrade --> |Tools| UpgradeTools[kubeadm upgrade, EKS update]
-    Backup --> |Tools| BackupTools[etcd snapshot, Velero]
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-1.html)
 
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+### クラスター管理ツール
 
-    class Admin userApp;
-    class Setup,Operations,Security,Upgrade,Backup k8sComponent;
-    class SetupTools,OpsTools,SecTools,UpgradeTools,BackupTools default;
-```
+Kubernetes クラスター管理にはさまざまなツールを利用できます。
 
-### Cluster Administration Tools
-
-Kubernetes cluster administration には、さまざまな tools を利用できます。
-
-1. **kubectl**: Kubernetes clusters と対話するための command-line tool
-2. **kubeadm**: Kubernetes clusters を作成および管理するための tool
-3. **kops**: Kubernetes clusters を作成、upgrade、管理するための tool
-4. **eksctl**: Amazon EKS clusters を作成および管理するための tool
+1. **kubectl**: Kubernetes クラスターと対話する command-line tool
+2. **kubeadm**: Kubernetes クラスターを作成および管理するツール
+3. **kops**: Kubernetes クラスターを作成、アップグレード、管理するツール
+4. **eksctl**: Amazon EKS クラスターを作成および管理するツール
 5. **Helm**: Kubernetes application package manager
-6. **Kubernetes Dashboard**: Web-based Kubernetes user interface
-7. **Prometheus & Grafana**: monitoring と alerting の tools
-8. **Fluentd & Elasticsearch**: logging tools
+6. **Kubernetes Dashboard**: Web ベースの Kubernetes user interface
+7. **Prometheus & Grafana**: 監視およびアラートツール
+8. **Fluentd & Elasticsearch**: ロギングツール
 
-## Cluster Component Management
+## クラスターコンポーネント管理
 
-Kubernetes cluster は複数の components で構成されており、これらの components を効果的に管理することが重要です。
+Kubernetes クラスターは複数のコンポーネントで構成され、これらを効果的に管理することが重要です。
 
-### Control Plane Components
+### Control Plane コンポーネント
 
-Control plane components は cluster 全体の状態を管理します。
+Control Plane コンポーネントはクラスターの全体的な状態を管理します。
 
-1. **kube-apiserver**: Kubernetes API を公開する component
-2. **etcd**: cluster data を保存する key-value store
-3. **kube-scheduler**: pods を nodes に schedule する component
-4. **kube-controller-manager**: controllers を実行する component
-5. **cloud-controller-manager**: cloud providers と連携する component
+1. **kube-apiserver**: Kubernetes API を公開するコンポーネント
+2. **etcd**: クラスターデータを格納する key-value store
+3. **kube-scheduler**: Pod を node にスケジュールするコンポーネント
+4. **kube-controller-manager**: controller を実行するコンポーネント
+5. **cloud-controller-manager**: cloud provider と対話するコンポーネント
 
-次の図は、Kubernetes control plane components とその相互作用を示しています。
+次の図は Kubernetes Control Plane コンポーネントとその相互作用を示します。
 
-```mermaid
-flowchart TD
-    API[kube-apiserver] <--> ETCD[(etcd)]
-    API <--> SCH[kube-scheduler]
-    API <--> CM[kube-controller-manager]
-    API <--> CCM[cloud-controller-manager]
-    API <--> Kubelet[kubelet]
+![etcd、kube-scheduler、kube-controller-manager、cloud-controller-manager が中央の kube-apiserver と双方向に通信し、worker node の kubelet も API server と双方向に通信しながら kube-proxy と container runtime を管理するアーキテクチャ図。](../.gitbook/assets/en-core-09-cluster-administration-2.png)
 
-    subgraph "Control Plane"
-        API
-        ETCD
-        SCH
-        CM
-        CCM
-    end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-2.html)
 
-    subgraph "Worker Node"
-        Kubelet
-        Proxy[kube-proxy]
-        CRI[Container Runtime]
-    end
+#### Control Plane コンポーネント監視
 
-    Kubelet --> CRI
-    Kubelet --> Proxy
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class API,SCH,CM,CCM,Kubelet,Proxy,CRI k8sComponent;
-    class ETCD dataStore;
-```
-
-#### Control Plane Component Monitoring
-
-Control plane components の状態を monitor することは重要です。
+Control Plane コンポーネントのステータスを監視することは重要です。
 
 ```bash
 # Check control plane component status
@@ -257,9 +190,9 @@ kubectl logs -n kube-system kube-apiserver-<node-name>
 kubectl exec -it -n kube-system etcd-<node-name> -- etcdctl endpoint health
 ```
 
-#### Control Plane Component Configuration
+#### Control Plane コンポーネント設定
 
-Control plane component configuration の管理方法です。
+Control Plane コンポーネント設定の管理方法は次のとおりです。
 
 ```yaml
 # kube-apiserver configuration example
@@ -279,8 +212,8 @@ spec:
     - --enable-admission-plugins=NodeRestriction
     - --enable-bootstrap-token-auth=true
     - --etcd-cafile=/etc/kubernetes/pki/etcd/ca.crt
-    - --etcd-certfile=/etc/kubernetes/pki/apiserver-etcd-client.crt
-    - --etcd-keyfile=/etc/kubernetes/pki/apiserver-etcd-client.key
+    - --etcd-certfile=/etc/kubernetes/pki/etcd/server.crt
+    - --etcd-keyfile=/etc/kubernetes/pki/etcd/server.key
     - --etcd-servers=https://127.0.0.1:2379
     - --kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt
     - --kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key
@@ -294,17 +227,17 @@ spec:
     name: kube-apiserver
 ```
 
-### Node Components
+### Node コンポーネント
 
-Node components は各 node 上で実行され、pods を管理します。
+Node コンポーネントは各 node 上で実行され、Pod を管理します。
 
-1. **kubelet**: 各 node で実行され、pods と containers が稼働していることを保証する agent
-2. **kube-proxy**: network rules を維持し、connection forwarding を処理します
-3. **Container Runtime**: containers を実行する software（Docker、containerd、CRI-O など）
+1. **kubelet**: 各 node で実行され、Pod とコンテナの実行を保証する agent
+2. **kube-proxy**: network rule を維持し、接続転送を処理するコンポーネント
+3. **Container Runtime**: コンテナを実行する software（Docker、containerd、CRI-O など）
 
-#### Node Management
+#### Node 管理
 
-Node management の主要 commands です。
+Node 管理の主要コマンドは次のとおりです。
 
 ```bash
 # List nodes
@@ -326,9 +259,9 @@ kubectl cordon <node-name>
 kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
 ```
 
-#### Node Troubleshooting
+#### Node トラブルシューティング
 
-Node troubleshooting の commands です。
+Node のトラブルシューティング用コマンドです。
 
 ```bash
 # Check node status
@@ -345,13 +278,13 @@ systemctl status docker  # When using Docker
 systemctl status containerd  # When using containerd
 ```
 
-## Resource Management
+## リソース管理
 
-Kubernetes cluster 内の resources を効果的に管理することは、cluster の安定性と performance を維持するために重要です。
+Kubernetes クラスターでリソースを効果的に管理することは、クラスターの安定性とパフォーマンスの維持に重要です。
 
-### Resource Quotas
+### Resource Quota
 
-Resource quotas は namespace ごとの resource usage を制限します。
+Resource quota は namespace ごとのリソース使用量を制限します。
 
 ```yaml
 apiVersion: v1
@@ -368,11 +301,11 @@ spec:
     pods: "10"
 ```
 
-上記の例では、`dev` namespace は最大 10 pods、1 CPU と 1Gi memory の requests、2 CPU と 2Gi memory の limits を持つことができます。
+上記の例では、`dev` namespace には最大 10 個の Pod、1 CPU と 1Gi メモリの request、2 CPU と 2Gi メモリの limit を設定できます。
 
-### Limit Ranges
+### Limit Range
 
-Limit ranges は namespace 内の個々の resources に対する defaults と limits を設定します。
+Limit range は namespace 内の個々のリソースに default 値と制限を設定します。
 
 ```yaml
 apiVersion: v1
@@ -397,11 +330,11 @@ spec:
     type: Container
 ```
 
-上記の例では、`dev` namespace 内のすべての containers は、500m CPU と 512Mi memory の default limits、200m CPU と 256Mi memory の default requests、最大 1 CPU と 1Gi memory、最小 100m CPU と 128Mi memory を持ちます。
+上記の例では、`dev` namespace 内のすべてのコンテナに、500m CPU と 512Mi メモリの default limit、200m CPU と 256Mi メモリの default request、1 CPU と 1Gi メモリの最大値、100m CPU と 128Mi メモリの最小値が適用されます。
 
 ### Horizontal Pod Autoscaler (HPA)
 
-HPA は CPU usage または custom metrics に基づいて pods 数を自動的に調整します。
+HPA は CPU 使用率または custom metric に基づいて Pod 数を自動調整します。
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -424,11 +357,11 @@ spec:
         averageUtilization: 80
 ```
 
-上記の例では、`frontend` deployment は CPU utilization が 80% を超えると自動的に scale out し、80% を下回ると scale in します。最小 2、最大 10 replicas を維持します。
+上記の例では、`frontend` Deployment は CPU 使用率が 80% を超えると自動的に scale out し、80% 未満になると scale in します。replica 数は最小 2、最大 10 に維持されます。
 
 ### Vertical Pod Autoscaler (VPA)
 
-VPA は pod の CPU と memory requests を自動的に調整します。
+VPA は Pod の CPU およびメモリ request を自動調整します。
 
 ```yaml
 apiVersion: autoscaling.k8s.io/v1
@@ -444,65 +377,38 @@ spec:
     updateMode: "Auto"
 ```
 
-上記の例では、`frontend` deployment 内の pods は、実際の resource usage に基づいて CPU と memory requests が自動的に調整されます。
-## Cluster Networking
+上記の例では、`frontend` Deployment の Pod は実際のリソース使用量に基づいて CPU とメモリの request が自動調整されます。
+## クラスターNetworking
 
-Kubernetes cluster networking は、pods、services、nodes 間の通信を管理します。
+Kubernetes クラスターNetworking は Pod、Service、node 間の通信を管理します。
 
-### Cluster Network Model
+### クラスターネットワークモデル
 
-Kubernetes network model の基本要件です。
+Kubernetes network model の基本要件は次のとおりです。
 
-1. すべての pods は NAT なしですべての他の pods と通信できます
-2. Node agents（kubelet）はその node 上のすべての pods と通信できます
-3. NAT mode で実行されている pods は外部と通信できます
+1. すべての Pod が NAT なしで他のすべての Pod と通信できる
+2. Node agent（kubelet）がその node 上のすべての Pod と通信できる
+3. NAT mode で実行される Pod が外部と通信できる
 
-次の図は、Kubernetes networking components と communication flows を示しています。
+次の図は Kubernetes networking コンポーネントと通信フローを示します。
 
-```mermaid
-flowchart LR
-    Client[Client] --> Ingress[Ingress]
-    Ingress --> SVC[Service]
-    SVC --> Pod1[Pod 1]
-    SVC --> Pod2[Pod 2]
+![client traffic が Ingress を経由して Service に入り、Service が別々の node 上にある 2 つの Pod に load balance し、Pod 同士が通信して外部 service に到達するアーキテクチャ図。](../.gitbook/assets/en-core-09-cluster-administration-3.png)
 
-    subgraph "Cluster Internal"
-        Ingress
-        SVC
-        subgraph "Node 1"
-            Pod1
-        end
-        subgraph "Node 2"
-            Pod2
-        end
-    end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-3.html)
 
-    Pod1 <--> Pod2
-    Pod1 --> ExtSvc[External Service]
-    Pod2 --> ExtSvc
+### CNI (Container Network Interface) Plugin
 
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+Kubernetes は CNI plugin を通じて networking を実装します。一般的な CNI plugin は次のとおりです。
 
-    class Ingress,SVC k8sComponent;
-    class Pod1,Pod2 userApp;
-    class Client,ExtSvc default;
-```
-
-### CNI (Container Network Interface) Plugins
-
-Kubernetes は CNI plugins を通じて networking を実装します。一般的な CNI plugins は次のとおりです。
-
-1. **Calico**: network policy と security features を強化した CNI
-2. **Flannel**: simple overlay networking を提供
-3. **Cilium**: eBPF-based networking and security solution
+1. **Calico**: network policy と security 機能を強化した CNI
+2. **Flannel**: シンプルな overlay networking を提供
+3. **Cilium**: eBPF ベースの networking および security solution
 4. **AWS VPC CNI**: AWS VPC と統合された CNI
 5. **Weave Net**: multi-host container networking solution
 
-#### CNI Plugin Installation and Configuration
+#### CNI Plugin のインストールと設定
 
-CNI plugin installation example（Calico）:
+CNI plugin のインストール例（Calico）:
 
 ```bash
 # Install Calico
@@ -514,25 +420,25 @@ kubectl get pods -n kube-system -l k8s-app=calico-node
 
 ### Service Networking
 
-Kubernetes services は pod sets に安定した endpoints を提供します。
+Kubernetes Service は Pod set に安定した endpoint を提供します。
 
-1. **ClusterIP**: cluster 内でのみアクセス可能な Service
-2. **NodePort**: すべての nodes の特定 port を通じてアクセス可能な Service
-3. **LoadBalancer**: external load balancer を通じてアクセス可能な Service
-4. **ExternalName**: external services の CNAME record を提供
+1. **ClusterIP**: クラスター内からのみアクセス可能な Service
+2. **NodePort**: すべての node の特定 port を通じてアクセス可能な Service
+3. **LoadBalancer**: 外部 load balancer を通じてアクセス可能な Service
+4. **ExternalName**: 外部 Service の CNAME record を提供
 
-#### Service CIDR Configuration
+#### Service CIDR 設定
 
-Service CIDR は service IP address range を定義します。
+Service CIDR は Service IP address range を定義します。
 
 ```bash
 # Set service CIDR in kube-apiserver configuration
 --service-cluster-ip-range=10.96.0.0/12
 ```
 
-### CoreDNS Management
+### CoreDNS 管理
 
-CoreDNS は Kubernetes に DNS services を提供します。
+CoreDNS は Kubernetes に DNS service を提供します。
 
 ```bash
 # Check CoreDNS status
@@ -542,7 +448,7 @@ kubectl get pods -n kube-system -l k8s-app=kube-dns
 kubectl get configmap -n kube-system coredns -o yaml
 ```
 
-CoreDNS configuration example:
+CoreDNS の設定例:
 
 ```yaml
 apiVersion: v1
@@ -572,9 +478,9 @@ data:
     }
 ```
 
-### Network Policies
+### Network Policy
 
-Network policies は pods 間の通信を制御します。
+Network policy は Pod 間の通信を制御します。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -607,67 +513,31 @@ spec:
       port: 9090
 ```
 
-上記の例では、`role=db` label を持つ pods は、`role=frontend` label を持つ pods からの TCP port 3306 inbound traffic と、`role=monitoring` label を持つ pods への TCP port 9090 outbound traffic のみを許可します。
+上記の例では、`role=db` label を持つ Pod は、`role=frontend` label を持つ Pod からの TCP port 3306 の inbound traffic と、`role=monitoring` label を持つ Pod への TCP port 9090 の outbound traffic だけを許可します。
 
-## Authentication and Authorization Management
+## Authentication と Authorization 管理
 
-Kubernetes authentication and authorization management は、cluster security の core elements です。
+Kubernetes の Authentication と Authorization 管理は、クラスター security のコア要素です。
 
-次の図は、Kubernetes authentication and authorization flow を示しています。
+次の図は Kubernetes の Authentication と Authorization のフローを示します。
 
-```mermaid
-flowchart TD
-    User[User/Service Account] --> Auth[Authentication]
-    Auth --> Authz[Authorization]
-    Authz --> Admit[Admission Control]
-    Admit --> API[API Server]
+![request が Authentication、Authorization、admission control を経て API server に到達し、各段階でサポートされる具体的な Authentication method と Authorization mode を示すアーキテクチャ図。](../.gitbook/assets/en-core-09-cluster-administration-4.png)
 
-    subgraph "Authentication Methods"
-        Cert[X.509 Certificates]
-        Token[Service Account Tokens]
-        OIDC[OpenID Connect]
-        Webhook[Webhook Token Auth]
-    end
-
-    subgraph "Authorization Modes"
-        RBAC[RBAC]
-        ABAC[ABAC]
-        Node[Node]
-        WebhookAuthz[Webhook]
-    end
-
-    Auth --> Cert
-    Auth --> Token
-    Auth --> OIDC
-    Auth --> Webhook
-
-    Authz --> RBAC
-    Authz --> ABAC
-    Authz --> Node
-    Authz --> WebhookAuthz
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Auth,Authz,Admit,API k8sComponent;
-    class User userApp;
-    class Cert,Token,OIDC,Webhook,RBAC,ABAC,Node,WebhookAuthz default;
-```
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-4.html)
 
 ### Authentication
 
-Kubernetes はさまざまな authentication methods をサポートしています。
+Kubernetes はさまざまな Authentication method をサポートします。
 
-1. **X.509 Certificates**: client certificates を使用した authentication
-2. **Service Account Tokens**: service accounts に関連付けられた JWT tokens
-3. **OpenID Connect (OIDC)**: external identity providers を通じた authentication
-4. **Webhook Token Authentication**: external services を通じた token verification
-5. **Authentication Proxy**: authentication proxy を通じた request processing
+1. **X.509 Certificates**: client certificate を使用する Authentication
+2. **Service Account Tokens**: service account に関連付けられた JWT token
+3. **OpenID Connect (OIDC)**: 外部 identity provider を介した Authentication
+4. **Webhook Token Authentication**: 外部 service を介した token 検証
+5. **Authentication Proxy**: Authentication proxy を介した request 処理
 
-#### X.509 Certificate Management
+#### X.509 Certificate 管理
 
-X.509 certificate の作成と管理です。
+X.509 certificate の作成と管理:
 
 ```bash
 # Create Certificate Signing Request (CSR)
@@ -693,9 +563,9 @@ kubectl certificate approve user-csr
 kubectl get csr user-csr -o jsonpath='{.status.certificate}' | base64 --decode > user.crt
 ```
 
-#### OIDC Authentication Configuration
+#### OIDC Authentication 設定
 
-OIDC authentication configuration example:
+OIDC Authentication の設定例:
 
 ```bash
 # Add OIDC flags to kube-apiserver configuration
@@ -707,16 +577,16 @@ OIDC authentication configuration example:
 
 ### Authorization
 
-Kubernetes はさまざまな authorization modes をサポートしています。
+Kubernetes はさまざまな Authorization mode をサポートします。
 
-1. **RBAC (Role-Based Access Control)**: role-based access control
-2. **ABAC (Attribute-Based Access Control)**: attribute-based access control
-3. **Node**: node authorization
-4. **Webhook**: external services を通じた authorization
+1. **RBAC (Role-Based Access Control)**: role ベースの access control
+2. **ABAC (Attribute-Based Access Control)**: attribute ベースの access control
+3. **Node**: node Authorization
+4. **Webhook**: 外部 service を介した Authorization
 
-#### RBAC Configuration
+#### RBAC 設定
 
-RBAC は最も一般的な authorization mechanism です。
+RBAC は最も一般的な Authorization mechanism です。
 
 ```yaml
 # Role example
@@ -746,11 +616,11 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-上記の例では、`user` は `default` namespace 内の pods を表示する権限を持ちます。
+上記の例では、`user` には `default` namespace の Pod を表示する権限があります。
 
-#### ClusterRole and ClusterRoleBinding
+#### ClusterRole と ClusterRoleBinding
 
-cluster-wide resources の permissions を管理します。
+クラスター全体のリソースに対する権限を管理します。
 
 ```yaml
 # ClusterRole example
@@ -778,11 +648,11 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-上記の例では、`user` は cluster 内のすべての nodes を表示する権限を持ちます。
+上記の例では、`user` にはクラスター内のすべての node を表示する権限があります。
 
-### Service Account Management
+### Service Account 管理
 
-Service accounts は pods が API server と通信するために使用されます。
+Service account は Pod が API server と通信するために使用します。
 
 ```yaml
 # Create service account
@@ -821,7 +691,7 @@ spec:
 
 ### Security Context
 
-Security context は pods と containers の permissions と access control を定義します。
+Security context は Pod とコンテナの権限および access control を定義します。
 
 ```yaml
 apiVersion: v1
@@ -844,52 +714,31 @@ spec:
       readOnlyRootFilesystem: true
 ```
 
-上記の例では、pod は UID 1000 と GID 3000 で実行され、container は privilege escalation ができず、すべての Linux capabilities が drop され、root filesystem は read-only として mount されます。
+上記の例では、Pod は UID 1000 および GID 3000 で実行され、コンテナは特権昇格ができず、すべての Linux capability が削除され、root filesystem は read-only で mount されます。
 
-## Cluster Upgrades
+## クラスターアップグレード
 
-Kubernetes cluster upgrades は、新機能、performance improvements、security patches を適用するために必要です。
+Kubernetes クラスターのアップグレードは、新機能、パフォーマンス改善、security patch を適用するために必要です。
 
-次の図は、Kubernetes cluster upgrade process を示しています。
+次の図は Kubernetes クラスターアップグレードプロセスを示します。
 
-```mermaid
-flowchart TD
-    Start[Upgrade Planning] --> Plan[Check Version Compatibility]
-    Plan --> Backup[etcd Backup]
-    Backup --> CP1[Upgrade First Control Plane Node]
-    CP1 --> CPTest[Test Control Plane Functions]
-    CPTest --> CP2[Upgrade Additional Control Plane Nodes]
-    CP2 --> Worker[Upgrade Worker Nodes]
-    Worker --> Validate[Cluster Validation]
-    Validate --> End[Upgrade Complete]
+![Kubernetes クラスターアップグレードの workflow 図。計画とバージョン互換性確認、etcd backup、最初の Control Plane node のアップグレードと機能テスト、残りの Control Plane と worker node のアップグレード、クラスター検証を経てアップグレード完了となり、検証で問題が見つかった場合は backup から復元する rollback path がある。](../.gitbook/assets/en-core-09-cluster-administration-5.png)
 
-    Validate -- Problem Occurs --> Rollback[Rollback]
-    Rollback --> RestoreBackup[Restore from Backup]
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-5.html)
 
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+### アップグレード計画
 
-    class CP1,CP2,Worker,Validate k8sComponent;
-    class Backup,RestoreBackup dataStore;
-    class Rollback alerting;
-    class Start,Plan,CPTest,End default;
-```
+クラスターアップグレードを計画する際の考慮事項:
 
-### Upgrade Planning
+1. **バージョン互換性**: Kubernetes version 間の互換性を確認する
+2. **アップグレードパス**: サポートされているアップグレードパスを確認する
+3. **ダウンタイム**: アップグレード中に予想されるダウンタイムを計画する
+4. **Rollback Plan**: 問題発生時の rollback plan を策定する
+5. **アプリケーションへの影響**: アップグレードがアプリケーションに与える影響を評価する
 
-cluster upgrades を計画する際の考慮事項です。
+### Control Plane アップグレード
 
-1. **Version Compatibility**: Kubernetes versions 間の compatibility を確認
-2. **Upgrade Path**: supported upgrade paths を確認
-3. **Downtime**: upgrade 中に想定される downtime を計画
-4. **Rollback Plan**: 問題発生時の rollback plan を策定
-5. **Application Impact**: upgrades が applications に与える影響を評価
-
-### Control Plane Upgrade
-
-kubeadm を使用した control plane upgrade です。
+kubeadm を使用した Control Plane のアップグレード:
 
 ```bash
 # Check upgrade plan
@@ -913,9 +762,9 @@ sudo systemctl daemon-reload
 sudo systemctl restart kubelet
 ```
 
-### Worker Node Upgrade
+### Worker Node アップグレード
 
-Worker node upgrade process です。
+Worker node のアップグレードプロセス:
 
 ```bash
 # Drain node
@@ -938,9 +787,9 @@ sudo systemctl restart kubelet
 kubectl uncordon <node-name>
 ```
 
-### Upgrade Verification
+### アップグレード検証
 
-upgrade 後に cluster status を verify します。
+アップグレード後にクラスターのステータスを検証します。
 
 ```bash
 # Check node versions
@@ -957,45 +806,19 @@ kubectl create deployment nginx --image=nginx
 kubectl expose deployment nginx --port=80
 kubectl get svc nginx
 ```
-## Backup and Recovery
+## バックアップとリカバリ
 
-Kubernetes cluster backup and recovery は、disaster recovery planning の重要な部分です。
+Kubernetes クラスターのバックアップとリカバリは、災害復旧計画の重要な一部です。
 
-次の図は、Kubernetes cluster backup and recovery process を示しています。
+次の図は Kubernetes クラスターのバックアップおよびリカバリプロセスを示します。
 
-```mermaid
-flowchart TD
-    subgraph "Backup Process"
-        Schedule[Set Backup Schedule] --> ETCDBackup[Create etcd Snapshot]
-        Schedule --> ResourceBackup[Backup Resource YAMLs]
-        ETCDBackup --> Store[Backup Storage]
-        ResourceBackup --> Store
-    end
+![スケジュールされた etcd snapshot と resource-YAML backup の両方が backup storage に保存され、災害復旧時には etcd restore と resource restore に利用されるアーキテクチャ図。](../.gitbook/assets/en-core-09-cluster-administration-6.png)
 
-    subgraph "Recovery Process"
-        Disaster[Disaster Occurs] --> RestoreETCD[Restore etcd]
-        RestoreETCD --> RestartServices[Restart Kubernetes Services]
-        RestartServices --> ValidateCluster[Validate Cluster]
-        ValidateCluster --> RestoreResources[Restore Resources]
-    end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-6.html)
 
-    Store -.-> RestoreETCD
-    Store -.-> RestoreResources
+### etcd バックアップ
 
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef alerting fill:#EB6E85,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class ETCDBackup,ResourceBackup,RestoreETCD,RestartServices,ValidateCluster,RestoreResources k8sComponent;
-    class Store dataStore;
-    class Disaster alerting;
-    class Schedule default;
-```
-
-### etcd Backup
-
-etcd は Kubernetes cluster のすべての state information を保存するため、regular backups が重要です。
+etcd は Kubernetes クラスターのすべての状態情報を格納するため、定期的なバックアップが重要です。
 
 ```bash
 # Create etcd snapshot
@@ -1009,9 +832,9 @@ ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
 ETCDCTL_API=3 etcdctl --write-out=table snapshot status /backup/etcd-snapshot-2023-01-01-12-00-00.db
 ```
 
-### etcd Recovery
+### etcd リカバリ
 
-etcd snapshot から restore します。
+etcd snapshot から復元します。
 
 ```bash
 # Stop all Kubernetes services
@@ -1039,9 +862,9 @@ sudo systemctl start etcd
 sudo systemctl start kubelet kube-apiserver kube-controller-manager kube-scheduler
 ```
 
-### Resource Backup
+### Resource バックアップ
 
-Kubernetes resources を YAML files として backup します。
+Kubernetes resource を YAML file としてバックアップします。
 
 ```bash
 # Backup all resources in all namespaces
@@ -1059,9 +882,9 @@ for resource in $(kubectl api-resources --namespaced=false -o name); do
 done
 ```
 
-### Backup Automation
+### バックアップの自動化
 
-CronJob で backup tasks を自動化します。
+CronJob を使用してバックアップタスクを自動化します。
 
 ```yaml
 apiVersion: batch/v1
@@ -1104,61 +927,29 @@ spec:
               claimName: etcd-backup-pvc
 ```
 
-## Monitoring and Logging
+## 監視とロギング
 
-効果的な monitoring and logging は cluster administration の core element です。
+効果的な監視とロギングはクラスター管理のコア要素です。
 
-次の図は、Kubernetes cluster monitoring and logging architecture を示しています。
+次の図は Kubernetes クラスターの監視およびロギングアーキテクチャを示します。
 
-```mermaid
-flowchart LR
-    subgraph "Monitoring Stack"
-        Prom[Prometheus] --> Alert[Alertmanager]
-        Prom --> Grafana[Grafana]
-        KSM[kube-state-metrics] --> Prom
-        NE[Node Exporter] --> Prom
-        Alert --> Notify[Notification Channels]
-    end
+![API server と node metric が kube-state-metrics と Node Exporter を通じて Prometheus に流れ、さらに Alertmanager と Grafana に流れる一方で、Pod log が Fluentd/Fluent Bit を経由して Elasticsearch と Kibana、および Loki に流れ、Loki も Grafana に接続するアーキテクチャ図。](../.gitbook/assets/en-core-09-cluster-administration-7.png)
 
-    subgraph "Logging Stack"
-        Fluentd[Fluentd/Fluent Bit] --> ES[(Elasticsearch)]
-        ES --> Kibana[Kibana]
-        Fluentd --> Loki[(Loki)]
-        Loki --> Grafana
-    end
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-7.html)
 
-    subgraph "Kubernetes Cluster"
-        API[API Server] --> KSM
-        Node[Node] --> NE
-        Pod[Pod] --> Fluentd
-    end
+### 監視ツール
 
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef dataStore fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef prometheusComponent fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef grafana fill:#F8B52A,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+Kubernetes クラスター監視用のツール:
 
-    class API,Node,Pod k8sComponent;
-    class ES,Loki dataStore;
-    class Prom,Alert,KSM,NE prometheusComponent;
-    class Grafana,Kibana grafana;
-    class Fluentd,Notify default;
-```
+1. **Prometheus**: metric の収集と保存
+2. **Grafana**: metric の可視化
+3. **Alertmanager**: alert 管理
+4. **kube-state-metrics**: Kubernetes object metric の生成
+5. **metrics-server**: リソース使用量 metric の提供
 
-### Monitoring Tools
+#### Prometheus と Grafana のインストール
 
-Kubernetes cluster monitoring の tools です。
-
-1. **Prometheus**: metric collection and storage
-2. **Grafana**: metric visualization
-3. **Alertmanager**: alert management
-4. **kube-state-metrics**: Kubernetes object metrics の生成
-5. **metrics-server**: resource usage metrics の提供
-
-#### Prometheus and Grafana Installation
-
-Helm を使用して Prometheus と Grafana を install します。
+Helm を使用して Prometheus と Grafana をインストールします。
 
 ```bash
 # Add Helm repository
@@ -1171,29 +962,29 @@ helm install prometheus prometheus-community/kube-prometheus-stack \
   --create-namespace
 ```
 
-#### Key Monitoring Metrics
+#### 主要な監視 metric
 
-monitoring すべき key metrics です。
+監視する主要 metric:
 
-1. **Node Metrics**: CPU、memory、disk、network usage
-2. **Pod Metrics**: CPU、memory usage、restart count
-3. **Container Metrics**: CPU、memory usage、filesystem usage
+1. **Node Metrics**: CPU、メモリ、disk、network 使用量
+2. **Pod Metrics**: CPU、メモリ使用量、restart count
+3. **Container Metrics**: CPU、メモリ使用量、filesystem 使用量
 4. **API Server Metrics**: request latency、request count、error rate
-5. **etcd Metrics**: disk I/O、leader changes、commit latency
+5. **etcd Metrics**: disk I/O、leader change、commit latency
 
-### Logging Tools
+### ロギングツール
 
-Kubernetes cluster logging の tools です。
+Kubernetes クラスターロギング用のツール:
 
-1. **Elasticsearch**: log storage and search
-2. **Fluentd/Fluent Bit**: log collection and forwarding
-3. **Kibana**: log visualization
+1. **Elasticsearch**: log の保存と検索
+2. **Fluentd/Fluent Bit**: log の収集と転送
+3. **Kibana**: log の可視化
 4. **Loki**: log aggregation system
-5. **Grafana**: log visualization
+5. **Grafana**: log の可視化
 
-#### EFK (Elasticsearch, Fluentd, Kibana) Stack Installation
+#### EFK (Elasticsearch、Fluentd、Kibana) Stack のインストール
 
-Helm を使用して EFK stack を install します。
+Helm を使用して EFK stack をインストールします。
 
 ```bash
 # Install Elasticsearch
@@ -1211,9 +1002,9 @@ helm install kibana elastic/kibana \
   --set service.type=LoadBalancer
 ```
 
-#### Log Collection Configuration
+#### Log 収集設定
 
-Fluentd configuration example:
+Fluentd の設定例:
 
 ```yaml
 apiVersion: v1
@@ -1251,13 +1042,13 @@ data:
     </match>
 ```
 
-## Troubleshooting
+## トラブルシューティング
 
-Kubernetes cluster troubleshooting は cluster administration の重要な部分です。
+Kubernetes クラスターのトラブルシューティングは、クラスター管理の重要な一部です。
 
-### Pod Troubleshooting
+### Pod のトラブルシューティング
 
-Pod troubleshooting の commands です。
+Pod のトラブルシューティング用コマンドです。
 
 ```bash
 # Check pod status
@@ -1275,9 +1066,9 @@ kubectl logs <pod-name> --previous  # Logs from previous container
 kubectl exec -it <pod-name> -- /bin/sh
 ```
 
-### Node Troubleshooting
+### Node のトラブルシューティング
 
-Node troubleshooting の commands です。
+Node のトラブルシューティング用コマンドです。
 
 ```bash
 # Check node status
@@ -1301,9 +1092,9 @@ df -h
 free -m
 ```
 
-### Networking Troubleshooting
+### Networking のトラブルシューティング
 
-networking troubleshooting の commands です。
+Networking のトラブルシューティング用コマンドです。
 
 ```bash
 # Check service status
@@ -1326,9 +1117,9 @@ kubectl get networkpolicy
 kubectl describe networkpolicy <policy-name>
 ```
 
-### Control Plane Troubleshooting
+### Control Plane のトラブルシューティング
 
-control plane troubleshooting の commands です。
+Control Plane のトラブルシューティング用コマンドです。
 
 ```bash
 # Check component status
@@ -1347,49 +1138,19 @@ kubectl logs -n kube-system kube-scheduler-<node-name>
 kubectl logs -n kube-system etcd-<node-name>
 ```
 
-## Amazon EKS Cluster Administration
+## Amazon EKS クラスター管理
 
-Amazon EKS は managed Kubernetes service であり、cluster administration の多くの側面を自動化します。
+Amazon EKS は、クラスター管理の多くの側面を自動化する managed Kubernetes service です。
 
-次の図は、Amazon EKS cluster architecture と management components を示しています。
+次の図は Amazon EKS クラスターアーキテクチャと管理コンポーネントを示します。
 
-```mermaid
-flowchart TD
-    User[User] --> |Manage| AWS[AWS Management Console/CLI/API]
-    AWS --> |Manage| EKS[Amazon EKS]
+![user が AWS console、CLI、または API を通じて Amazon EKS を管理し、EKS が Control Plane、managed node group、Fargate を実行し、Control Plane が AWS IAM、VPC、CloudWatch を使用し、VPC CNI、CoreDNS、kube-proxy add-on を利用するアーキテクチャ図。](../.gitbook/assets/en-core-09-cluster-administration-8.png)
 
-    subgraph "AWS Cloud"
-        EKS --> CP[EKS Control Plane]
-        EKS --> NG[EKS Node Groups]
-        EKS --> Fargate[EKS Fargate]
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-8.html)
 
-        CP --> |Uses| AWSIAM[AWS IAM]
-        CP --> |Uses| AWSVPC[AWS VPC]
-        CP --> |Logging| CW[CloudWatch]
+### EKS クラスター設定
 
-        NG --> |Uses| EC2[EC2 Instances]
-        Fargate --> |Uses| FargateProfile[Fargate Profiles]
-    end
-
-    subgraph "Add-ons"
-        EKS --> CNI[Amazon VPC CNI]
-        EKS --> CoreDNS[CoreDNS]
-        EKS --> KubeProxy[kube-proxy]
-    end
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsService fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class CP,NG,Fargate,CNI,CoreDNS,KubeProxy k8sComponent;
-    class AWS,EKS,AWSIAM,AWSVPC,CW,EC2,FargateProfile awsService;
-    class User userApp;
-```
-
-### EKS Cluster Configuration
-
-EKS cluster configuration management です。
+EKS クラスター設定の管理:
 
 ```bash
 # Check EKS cluster information
@@ -1406,9 +1167,9 @@ aws eks update-cluster-version \
   --kubernetes-version 1.22
 ```
 
-### EKS Node Group Management
+### EKS Node Group 管理
 
-EKS node group management です。
+EKS node group の管理:
 
 ```bash
 # Check node group information
@@ -1428,9 +1189,9 @@ aws eks update-nodegroup-version \
   --nodegroup-name my-nodegroup
 ```
 
-### EKS Add-on Management
+### EKS Add-on 管理
 
-EKS add-on management です。
+EKS add-on の管理:
 
 ```bash
 # Check available add-ons
@@ -1455,18 +1216,18 @@ aws eks delete-addon \
   --addon-name vpc-cni
 ```
 
-### EKS Cluster Upgrade
+### EKS クラスターアップグレード
 
-EKS cluster upgrade process です。
+EKS クラスターのアップグレードプロセス:
 
-1. **Control Plane Upgrade**:
+1. **Control Plane アップグレード**:
    ```bash
    aws eks update-cluster-version \
      --name my-cluster \
      --kubernetes-version 1.22
    ```
 
-2. **Add-on Upgrade**:
+2. **Add-on アップグレード**:
    ```bash
    aws eks update-addon \
      --cluster-name my-cluster \
@@ -1474,23 +1235,23 @@ EKS cluster upgrade process です。
      --addon-version v1.10.2-eksbuild.1
    ```
 
-3. **Node Group Upgrade**:
+3. **Node Group アップグレード**:
    ```bash
    aws eks update-nodegroup-version \
      --cluster-name my-cluster \
      --nodegroup-name my-nodegroup
    ```
 
-### EKS Cluster Monitoring
+### EKS クラスター監視
 
-EKS cluster monitoring tools です。
+EKS クラスター監視ツール:
 
-1. **Amazon CloudWatch**: metrics、logs、alerts
+1. **Amazon CloudWatch**: metric、log、alert
 2. **AWS CloudTrail**: API call logging
-3. **Amazon Managed Grafana**: metric visualization
-4. **Amazon Managed Service for Prometheus**: metric collection and storage
+3. **Amazon Managed Grafana**: metric の可視化
+4. **Amazon Managed Service for Prometheus**: metric の収集と保存
 
-CloudWatch Container Insights を enable にします。
+CloudWatch Container Insights を有効にします。
 
 ```bash
 # Enable Container Insights
@@ -1500,86 +1261,71 @@ eksctl utils update-cluster-logging \
   --approve
 ```
 
-## Cluster Administration Best Practices
+## クラスター管理のベストプラクティス
 
-Kubernetes と EKS cluster administration の best practices です。
+Kubernetes および EKS クラスター管理のベストプラクティス:
 
-### Cluster Configuration Best Practices
+### クラスター設定のベストプラクティス
 
-1. **Infrastructure as Code (IaC)**: Terraform、AWS CDK、eksctl などを使用して cluster configuration を管理
-2. **Version Control**: cluster configuration を version control systems に保存
-3. **Multiple Environments**: development、staging、production environments を分離
-4. **Network Separation**: 適切な network separation と security groups を設定
-5. **Least Privilege Principle**: 必要最小限の permissions のみを付与
+1. **Infrastructure as Code (IaC)**: Terraform、AWS CDK、eksctl などを使用してクラスター設定を管理する
+2. **Version Control**: クラスター設定を version control system に保存する
+3. **複数環境**: development、staging、production 環境を分離する
+4. **ネットワーク分離**: 適切な network separation と security group を設定する
+5. **最小権限の原則**: 必要最小限の権限だけを付与する
 
-### Operations Best Practices
+### 運用のベストプラクティス
 
-1. **Regular Backups**: etcd と重要な resources の regular backup
-2. **Monitoring and Alerting**: comprehensive monitoring and alerting systems を構築
-3. **Centralized Logging**: logs を一元化して分析
-4. **Automation**: repetitive tasks を自動化
-5. **Disaster Recovery Planning**: 明確な disaster recovery plans を策定し、test する
+1. **定期的なバックアップ**: etcd と重要な resource を定期的にバックアップする
+2. **監視とアラート**: 包括的な監視および alert system を構築する
+3. **集中ロギング**: log を集約して分析する
+4. **自動化**: 繰り返し作業を自動化する
+5. **災害復旧計画**: 明確な災害復旧計画を策定してテストする
 
-### Security Best Practices
+### セキュリティのベストプラクティス
 
-1. **Regular Updates**: cluster と nodes の regular updates
-2. **Network Policies**: 適切な network policies を設定
-3. **Encryption**: data at rest と data in transit を暗号化
-4. **Security Context**: 適切な security contexts を設定
-5. **Image Scanning**: container images の vulnerabilities を scan
+1. **定期的な更新**: クラスターと node を定期的に更新する
+2. **Network Policy**: 適切な network policy を設定する
+3. **暗号化**: 保存中および転送中のデータを暗号化する
+4. **Security Context**: 適切な security context を設定する
+5. **Image Scanning**: container image の脆弱性を scan する
 
-### Resource Management Best Practices
+### リソース管理のベストプラクティス
 
-1. **Resource Requests and Limits**: すべての pods に適切な resource requests と limits を設定
-2. **Namespace Separation**: workloads を namespace ごとに分離
-3. **Resource Quotas**: namespace ごとに resource quotas を設定
-4. **HPA and VPA**: autoscaling を設定
-5. **Node Affinity and Taints**: workload placement を最適化
+1. **Resource Request と Limit**: すべての Pod に適切な resource request と limit を設定する
+2. **Namespace 分離**: workload を namespace ごとに分離する
+3. **Resource Quota**: namespace ごとに resource quota を設定する
+4. **HPA と VPA**: autoscaling を設定する
+5. **Node Affinity と Taint**: workload 配置を最適化する
 
-### EKS-Specific Best Practices
+### EKS 固有のベストプラクティス
 
-1. **Managed Node Groups**: 可能な場合は managed node groups を使用
-2. **Fargate**: serverless workloads には Fargate を使用
-3. **EKS Add-ons**: official EKS add-ons を使用
-4. **IAM Roles for Service Accounts (IRSA)**: pod ごとに IAM permissions を管理
-5. **VPC CNI Customization**: networking requirements に応じて VPC CNI を設定
+1. **Managed Node Group**: 可能な場合は managed node group を使用する
+2. **Fargate**: serverless workload には Fargate を使用する
+3. **EKS Add-on**: 公式 EKS add-on を使用する
+4. **IAM Roles for Service Accounts (IRSA)**: Pod ごとに IAM 権限を管理する
+5. **VPC CNI Customization**: networking 要件に応じて VPC CNI を設定する
 
-## Conclusion
+## まとめ
 
-Kubernetes cluster administration は、cluster の安定性、security、performance を維持するうえで重要な役割を果たします。この章では、cluster component management、resource management、networking、authentication and authorization management、upgrades、backup and recovery、monitoring and logging、troubleshooting など、cluster administration のさまざまな側面を扱いました。
+Kubernetes クラスター管理は、クラスターの安定性、security、パフォーマンスの維持に重要な役割を果たします。この章では、クラスターコンポーネント管理、リソース管理、networking、Authentication と Authorization 管理、アップグレード、バックアップとリカバリ、監視とロギング、トラブルシューティングを含む、クラスター管理のさまざまな側面を扱いました。
 
-Amazon EKS を使用すると、Kubernetes control plane management の複雑さが軽減され、AWS services との統合によって cluster administration が簡素化されます。ただし、効果的な cluster management のためには、基本的な Kubernetes concepts と best practices を理解することが依然として重要です。
+Amazon EKS を使用すると Kubernetes Control Plane 管理の複雑さを軽減でき、AWS service との統合を通じてクラスター管理を簡素化できます。ただし、効果的なクラスター管理には、基本的な Kubernetes の概念とベストプラクティスを理解することが依然として重要です。
 
-Cluster administration は、cluster requirements と workload characteristics に応じて継続的に調整する必要がある ongoing process です。monitoring tools を使用して cluster status を追跡し、automation によって repetitive tasks を最小化し、best practices に従って cluster stability と security を維持することが重要です。
+クラスター管理は、クラスター要件と workload の特性に応じて継続的に調整する必要がある継続的なプロセスです。監視ツールを使用してクラスター状態を追跡し、自動化で反復作業を最小化し、ベストプラクティスに従ってクラスターの安定性と security を維持することが重要です。
 
-## Cluster Networking
+## クラスターNetworking
 
-Kubernetes cluster networking は、pod-to-pod communication、service discovery、external access を管理します。
+Kubernetes クラスターNetworking は、Pod 間通信、service discovery、外部アクセスを管理します。
 
-### Network Architecture
+### ネットワークアーキテクチャ
 
-```mermaid
-graph TD
-    A[Cluster Networking] --> B[Pod Network]
-    A --> C[Service Network]
-    A --> D[Ingress]
-    A --> E[Network Policies]
+![クラスターNetworking を Pod network、Service network、Ingress、network policy に分け、それぞれを CNI plugin、Service type（ClusterIP、NodePort、LoadBalancer）、Ingress controller、network security で実現するアーキテクチャ図。](../.gitbook/assets/en-core-09-cluster-administration-9.png)
 
-    B --> F[CNI Plugin]
-    C --> G[ClusterIP, NodePort, LoadBalancer]
-    D --> H[Ingress Controller]
-    E --> I[Network Security]
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-9.html)
 
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef networkComponent fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+### CNI Plugin 管理
 
-    class A,B,C,D,E k8sComponent;
-    class F,G,H,I networkComponent;
-```
-
-### CNI Plugin Management
-
-CNI (Container Network Interface) plugins は Kubernetes clusters の networking を処理します。
+CNI (Container Network Interface) plugin は Kubernetes クラスターの networking を処理します。
 
 ```bash
 # Install Calico CNI
@@ -1593,17 +1339,17 @@ helm repo add cilium https://helm.cilium.io/
 helm install cilium cilium/cilium --version 1.14.0 --namespace kube-system
 ```
 
-### CNI Plugin Comparison
+### CNI Plugin 比較
 
-| CNI Plugin | Network Model | Network Policy Support | Performance | Features |
+| CNI Plugin | ネットワークモデル | Network Policy のサポート | パフォーマンス | 機能 |
 |-----------|---------------|----------------------|-------------|----------|
-| **Calico** | BGP | Yes | High | network policies と routing-based に強い |
-| **Flannel** | VXLAN/host-gateway | No | Medium | simple setup、限定的な features |
-| **Cilium** | eBPF | Yes | Very High | L3-L7 policies、高い performance |
-| **Weave Net** | VXLAN | Yes | Medium | encryption support、multi-cluster |
-| **AWS VPC CNI** | AWS VPC | No | High | AWS EKS 向けに最適化 |
+| **Calico** | BGP | はい | 高 | Network policy に強く、routing ベース |
+| **Flannel** | VXLAN/host-gateway | いいえ | 中 | シンプルなセットアップ、機能は限定的 |
+| **Cilium** | eBPF | はい | 非常に高 | L3-L7 policy、高パフォーマンス |
+| **Weave Net** | VXLAN | はい | 中 | encryption サポート、multi-cluster |
+| **AWS VPC CNI** | AWS VPC | いいえ | 高 | AWS EKS 用に最適化 |
 
-### Network Troubleshooting
+### ネットワークのトラブルシューティング
 
 ```bash
 # Test pod network connectivity
@@ -1625,21 +1371,21 @@ kubectl get endpoints <service-name>
 # Check network policies
 kubectl describe networkpolicy -n <namespace>
 ```
-## Authentication and Authorization Management
+## Authentication と Authorization 管理
 
-Kubernetes authentication and authorization management は cluster security の core elements です。RBAC (Role-Based Access Control) は users と service accounts の permissions を管理するために使用されます。
+Kubernetes の Authentication と Authorization 管理は、クラスター security のコア要素です。RBAC (Role-Based Access Control) は user と service account の権限管理に使用されます。
 
-### Authentication Methods
+### Authentication method
 
-Kubernetes はさまざまな authentication methods をサポートしています。
+Kubernetes はさまざまな Authentication method をサポートします。
 
-1. **X.509 Certificates**: client certificates を使用した authentication
-2. **Service Account Tokens**: pods 内から API server access に使用
-3. **OpenID Connect (OIDC)**: external identity providers との integration
-4. **Webhook Token Authentication**: external authentication services との integration
-5. **Authentication Proxy**: proxy を通じた authentication
+1. **X.509 Certificates**: client certificate を使用する Authentication
+2. **Service Account Tokens**: Pod 内から API server にアクセスするために使用
+3. **OpenID Connect (OIDC)**: 外部 identity provider との統合
+4. **Webhook Token Authentication**: 外部 Authentication service との統合
+5. **Authentication Proxy**: proxy を介した Authentication
 
-### RBAC Configuration
+### RBAC 設定
 
 ```yaml
 # role.yaml - namespace-scoped role
@@ -1699,7 +1445,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-### User Certificate Creation
+### User Certificate の作成
 
 ```bash
 # Generate private key
@@ -1720,7 +1466,7 @@ kubectl config set-credentials jane --client-certificate=jane.crt --client-key=j
 kubectl config set-context jane-context --cluster=kubernetes --user=jane
 ```
 
-### Service Account Management
+### Service Account 管理
 
 ```bash
 # Create service account
@@ -1735,7 +1481,7 @@ kubectl create rolebinding app-service-account-binding \
 kubectl describe serviceaccount app-service-account
 ```
 
-### Permission Verification
+### 権限の検証
 
 ```bash
 # Check user permissions
@@ -1744,40 +1490,25 @@ kubectl auth can-i get pods --as jane
 # Check permissions in a specific namespace
 kubectl auth can-i create deployments --as jane --namespace production
 ```
-## Cluster Upgrades
+## クラスターアップグレード
 
-Kubernetes cluster upgrades は、新機能、security patches、bug fixes を適用するために必要です。Upgrades は慎重に計画し、実行する必要があります。
+Kubernetes クラスターのアップグレードは、新機能、security patch、bug fix を適用するために必要です。アップグレードは慎重に計画して実行する必要があります。
 
-### Upgrade Planning
+### アップグレード計画
 
-```mermaid
-graph TD
-    A[Upgrade Planning] --> B[Check Version Compatibility]
-    A --> C[Create Backup]
-    A --> D[Choose Upgrade Strategy]
-    A --> E[Plan Downtime]
+![アップグレード計画を 4 つの作業（バージョン互換性の確認、backup の作成、アップグレード戦略の選択、ダウンタイムの計画）に分け、それぞれが API change の確認、etcd backup、in-place と blue/green の選択、user への連絡という具体的なアクションにつながるツリー図。](../.gitbook/assets/en-core-09-cluster-administration-10.png)
 
-    B --> F[Review API Changes]
-    C --> G[etcd Backup]
-    D --> H[In-place vs Blue/Green]
-    E --> I[User Communication]
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-10.html)
 
-    classDef planning fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef action fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+### アップグレード戦略の比較
 
-    class A,B,C,D,E planning;
-    class F,G,H,I action;
-```
-
-### Upgrade Strategy Comparison
-
-| Strategy | Description | Advantages | Disadvantages | Suitable Environment |
+| 戦略 | 説明 | 利点 | 欠点 | 適した環境 |
 |----------|-------------|------------|---------------|---------------------|
-| **In-place Upgrade** | existing cluster を直接 upgrade | resource efficient、手順が simple | rollback が複雑、downtime の可能性 | development、test environments |
-| **Blue/Green Deployment** | 新しい version の cluster を作成して切り替え | safe rollback、検証可能 | resource duplication、cost 増加 | production environments |
-| **Canary Deployment** | 一部の workloads のみを新 cluster に移動 | gradual verification、risk 低減 | management が複雑、dual operation | critical production environments |
+| **In-place Upgrade** | 既存クラスターを直接アップグレード | リソース効率がよく、手順がシンプル | rollback が複雑、ダウンタイムの可能性 | development、test 環境 |
+| **Blue/Green Deployment** | 新バージョンのクラスターを作成して切り替える | 安全な rollback、検証可能 | リソース重複、コスト増加 | production 環境 |
+| **Canary Deployment** | 一部の workload のみを新クラスターへ移行 | 段階的な検証、リスク低減 | 管理が複雑、二重運用 | 重要な production 環境 |
 
-### Upgrade Using kubeadm
+### kubeadm を使用したアップグレード
 
 ```bash
 # Check current version
@@ -1814,7 +1545,7 @@ sudo systemctl restart kubelet
 kubectl uncordon <node-name>
 ```
 
-### Post-Upgrade Verification
+### アップグレード後の検証
 
 ```bash
 # Check cluster version
@@ -1829,13 +1560,13 @@ kubectl get componentstatuses
 # Check workload status
 kubectl get pods -A
 ```
-## Backup and Recovery
+## バックアップとリカバリ
 
-Kubernetes cluster backup and recovery は、disaster recovery planning の重要な部分です。主な backup targets は etcd database、persistent volume data、Kubernetes resource definitions です。
+Kubernetes クラスターのバックアップとリカバリは、災害復旧計画の重要な一部です。主なバックアップ対象は etcd database、persistent volume data、Kubernetes resource definition です。
 
-### etcd Backup and Recovery
+### etcd のバックアップとリカバリ
 
-etcd は cluster のすべての state information を保存する core component です。
+etcd はクラスターのすべての状態情報を格納するコアコンポーネントです。
 
 ```bash
 # etcd backup
@@ -1867,7 +1598,7 @@ sudo mv /var/lib/etcd-restore /var/lib/etcd
 sudo systemctl start kubelet
 ```
 
-### Kubernetes Resource Backup
+### Kubernetes Resource バックアップ
 
 ```bash
 # Backup all resources in all namespaces
@@ -1882,9 +1613,9 @@ for resource in deployments services configmaps secrets; do
 done
 ```
 
-### Backup and Recovery Using Velero
+### Velero を使用したバックアップとリカバリ
 
-Velero は、Kubernetes cluster resources と persistent volumes を backup および recovery するための tool です。
+Velero は Kubernetes クラスター resource と persistent volume をバックアップおよびリカバリするツールです。
 
 ```bash
 # Install Velero (using AWS S3 backup storage)
@@ -1909,45 +1640,25 @@ velero backup describe full-cluster-backup
 velero restore create --from-backup full-cluster-backup
 ```
 
-### Backup Strategy Comparison
+### バックアップ戦略の比較
 
-| Backup Method | Backup Target | Advantages | Disadvantages | Recovery Time |
+| バックアップ方法 | バックアップ対象 | 利点 | 欠点 | リカバリ時間 |
 |--------------|---------------|------------|---------------|---------------|
-| **etcd Snapshot** | Cluster state | built-in feature、complete state preservation | volume data は含まれない、manual process | Medium |
-| **Resource YAML Backup** | Kubernetes objects | simple implementation、selective restore | volume data は含まれない、relationship complexity | Slow |
-| **Velero** | Resources and volumes | automation、scheduling、volume snapshots | additional tool installation が必要 | Fast |
-| **Cloud Provider Snapshots** | Entire cluster | complete recovery、cloud integration | cloud dependency、cost | Very Fast |
-## Monitoring and Logging
+| **etcd Snapshot** | クラスター状態 | 組み込み機能、完全な状態の保持 | volume data は含まれない、手動プロセス | 中 |
+| **Resource YAML Backup** | Kubernetes object | 実装が容易、選択的な復元 | volume data は含まれない、関係性が複雑 | 遅い |
+| **Velero** | resource と volume | 自動化、スケジュール、volume snapshot | 追加ツールのインストールが必要 | 速い |
+| **Cloud Provider Snapshots** | クラスター全体 | 完全なリカバリ、cloud 統合 | cloud 依存、コスト | 非常に速い |
+## 監視とロギング
 
-効果的な cluster management には、comprehensive monitoring and logging system が必要です。これにより、問題を早期に検出して解決できます。
+効果的なクラスター管理には包括的な監視およびロギング system が必要です。これにより問題を早期に検出して解決できます。
 
-### Monitoring Architecture
+### 監視アーキテクチャ
 
-```mermaid
-graph TD
-    A[Kubernetes Monitoring] --> B[Metric Collection]
-    A --> C[Log Collection]
-    A --> D[Alerting]
-    A --> E[Visualization]
+![Kubernetes 監視を metric 収集、log 収集、alert、可視化に分け、それぞれを kube-state-metrics と node-exporter を使用する Prometheus、log を Elasticsearch と Kibana に送信する Fluentd/Fluent Bit、Alertmanager、Grafana が担うアーキテクチャ図。](../.gitbook/assets/en-core-09-cluster-administration-11.png)
 
-    B --> F[Prometheus]
-    C --> G[Fluentd/Fluent Bit]
-    D --> H[Alertmanager]
-    E --> I[Grafana]
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-11.html)
 
-    F --> J[kube-state-metrics]
-    F --> K[node-exporter]
-    G --> L[Elasticsearch]
-    L --> M[Kibana]
-
-    classDef monitoring fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef component fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class A,B,C,D,E monitoring;
-    class F,G,H,I,J,K,L,M component;
-```
-
-### Prometheus and Grafana Installation
+### Prometheus と Grafana のインストール
 
 ```bash
 # Install Prometheus and Grafana using Helm
@@ -1968,7 +1679,7 @@ kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
 # Default username: admin, default password: prom-operator
 ```
 
-### EFK Stack Installation (Elasticsearch, Fluentd, Kibana)
+### EFK Stack のインストール (Elasticsearch、Fluentd、Kibana)
 
 ```bash
 # Install Elasticsearch and Kibana
@@ -1989,16 +1700,16 @@ helm install kibana elastic/kibana \
 kubectl apply -f https://raw.githubusercontent.com/fluent/fluentd-kubernetes-daemonset/master/fluentd-daemonset-elasticsearch.yaml
 ```
 
-### Key Monitoring Metrics
+### 主要な監視 metric
 
-| Metric Type | Description | Key Metrics | Monitoring Tools |
+| Metric Type | 説明 | 主要 metric | 監視ツール |
 |-------------|-------------|-------------|-----------------|
-| **Node Metrics** | Node-level resource usage | CPU、memory、disk、network | node-exporter、Prometheus |
-| **Pod Metrics** | Container resource usage | CPU、memory usage、limits | cAdvisor、Prometheus |
-| **Cluster Metrics** | Cluster state and resources | Pod count、node status、events | kube-state-metrics |
-| **Application Metrics** | Custom application metrics | Request count、latency、error rate | Prometheus client libraries |
+| **Node Metrics** | Node レベルのリソース使用量 | CPU、メモリ、disk、network | node-exporter、Prometheus |
+| **Pod Metrics** | Container リソース使用量 | CPU、メモリ使用量、limit | cAdvisor、Prometheus |
+| **Cluster Metrics** | クラスター状態と resource | Pod 数、node ステータス、event | kube-state-metrics |
+| **Application Metrics** | custom application metric | request count、latency、error rate | Prometheus client library |
 
-### Log Collection and Analysis
+### Log の収集と分析
 
 ```bash
 # Check logs for a specific pod
@@ -2017,9 +1728,9 @@ kubectl logs -f <pod-name> -n <namespace>
 kubectl logs -l app=nginx -n <namespace>
 ```
 
-### Alert Configuration
+### Alert 設定
 
-Prometheus Alertmanager を使用して alerts を設定できます。
+Prometheus Alertmanager を使用して alert を設定できます。
 
 ```yaml
 # alertmanager-config.yaml
@@ -2049,42 +1760,27 @@ data:
         title: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}"
         text: "{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"
 ```
-## Troubleshooting
+## トラブルシューティング
 
-Kubernetes cluster troubleshooting は、system administrators と operators にとって重要な skill です。効果的な troubleshooting には systematic approach が必要です。
+Kubernetes クラスターのトラブルシューティングは system administrator と operator にとって重要なスキルです。効果的なトラブルシューティングには体系的なアプローチが必要です。
 
-### Troubleshooting Methodology
+### トラブルシューティング方法論
 
-```mermaid
-graph TD
-    A[Problem Identification] --> B[Information Gathering]
-    B --> C[Root Cause Analysis]
-    C --> D[Apply Solution]
-    D --> E[Verification]
-    E --> F[Documentation]
+![問題の特定から文書化までの 6 段階のトラブルシューティング手順を示し、情報収集段階が log、event、resource status の確認に分岐する workflow 図。](../.gitbook/assets/en-core-09-cluster-administration-12.png)
 
-    B --> G[Check Logs]
-    B --> H[Check Events]
-    B --> I[Check Resource Status]
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-12.html)
 
-    classDef process fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef action fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+### 一般的な問題と解決策
 
-    class A,B,C,D,E,F process;
-    class G,H,I action;
-```
-
-### Common Problems and Solutions
-
-| Problem Type | Symptoms | Diagnostic Commands | Common Solutions |
+| 問題の種類 | 症状 | 診断コマンド | 一般的な解決策 |
 |-------------|----------|---------------------|-----------------|
-| **Pod Not Starting** | Pod が Pending または ContainerCreating state | `kubectl describe pod <pod-name>` | resource constraints、image availability、volume mounts を確認 |
-| **Service Connection Issues** | service 経由で pods にアクセスできない | `kubectl describe svc <service-name>`、`kubectl get endpoints <service-name>` | label selectors、pod status、network policies を確認 |
-| **Node Issues** | Node が NotReady state | `kubectl describe node <node-name>`、`kubectl get events` | kubelet status、system resources、network connectivity を確認 |
-| **DNS Issues** | service name で接続できない | `kubectl exec -it <pod-name> -- nslookup kubernetes.default` | CoreDNS pods、kube-dns service、network policies を確認 |
-| **Authentication Issues** | API server access denied | `kubectl auth can-i <verb> <resource>` | RBAC settings、certificate validity、service account を確認 |
+| **Pod Not Starting** | Pod が Pending または ContainerCreating 状態 | `kubectl describe pod <pod-name>` | リソース制約、image の可用性、volume mount を確認 |
+| **Service Connection Issues** | Service 経由で Pod にアクセスできない | `kubectl describe svc <service-name>`, `kubectl get endpoints <service-name>` | label selector、Pod status、network policy を確認 |
+| **Node Issues** | Node が NotReady 状態 | `kubectl describe node <node-name>`, `kubectl get events` | kubelet status、system resource、network connectivity を確認 |
+| **DNS Issues** | Service name で接続できない | `kubectl exec -it <pod-name> -- nslookup kubernetes.default` | CoreDNS Pod、kube-dns Service、network policy を確認 |
+| **Authentication Issues** | API server access が拒否される | `kubectl auth can-i <verb> <resource>` | RBAC 設定、certificate の有効性、service account を確認 |
 
-### Pod Troubleshooting
+### Pod のトラブルシューティング
 
 ```bash
 # Check pod status
@@ -2104,7 +1800,7 @@ kubectl exec -it <pod-name> -- /bin/sh
 kubectl get events --field-selector involvedObject.name=<pod-name>
 ```
 
-### Node Troubleshooting
+### Node のトラブルシューティング
 
 ```bash
 # Check node status
@@ -2121,7 +1817,7 @@ ssh <node-ip> 'sudo journalctl -u kubelet'
 ssh <node-ip> 'sudo systemctl status kubelet'
 ```
 
-### Networking Troubleshooting
+### Networking のトラブルシューティング
 
 ```bash
 # Check service and endpoints
@@ -2141,41 +1837,17 @@ ping <target-ip>
 traceroute <target-ip>
 curl <service-name>:<port>
 ```
-## Amazon EKS Cluster Administration
+## Amazon EKS クラスター管理
 
-Amazon EKS (Elastic Kubernetes Service) は、AWS が control plane を管理する AWS 上の managed Kubernetes service です。ただし、nodes、networking、security などの管理は user の責任です。
+Amazon EKS (Elastic Kubernetes Service) は AWS 上の managed Kubernetes service であり、AWS が Control Plane を管理します。ただし、node、networking、security などの管理は user の責任です。
 
-### EKS Cluster Architecture
+### EKS クラスターアーキテクチャ
 
-```mermaid
-graph TD
-    A[Amazon EKS Cluster] --> B[Control Plane]
-    A --> C[Data Plane]
-    A --> D[Networking]
-    A --> E[Security]
+![Amazon EKS クラスターを AWS 管理の Control Plane（API server、etcd、scheduler）と、data plane（EC2 Auto Scaling group を持つ managed node group、self-managed node、Fargate）、networking（VPC CNI と AWS VPC）、security（IAM role と policy による IAM Authentication）をカバーする customer responsibility 領域に分けたアーキテクチャ図。](../.gitbook/assets/en-core-09-cluster-administration-13.png)
 
-    B --> F[AWS Managed Components]
-    C --> G[Managed Node Groups]
-    C --> H[Self-Managed Nodes]
-    C --> I[Fargate]
-    D --> J[VPC CNI]
-    E --> K[IAM Authentication]
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-core-09-cluster-administration-13.html)
 
-    F --> L[API Server, etcd, Scheduler]
-    G --> M[EC2 Auto Scaling Groups]
-    J --> N[AWS VPC]
-    K --> O[IAM Roles and Policies]
-
-    classDef awsManaged fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef userManaged fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef network fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class A,B,F,L awsManaged;
-    class C,G,H,I,E,K,O userManaged;
-    class D,J,N network;
-```
-
-### EKS Cluster Creation
+### EKS クラスターの作成
 
 ```bash
 # Create cluster using eksctl
@@ -2197,7 +1869,7 @@ aws eks create-cluster \
   --resources-vpc-config subnetIds=subnet-12345,subnet-67890,securityGroupIds=sg-12345
 ```
 
-### Node Group Management
+### Node Group 管理
 
 ```bash
 # Create managed node group
@@ -2225,7 +1897,7 @@ eksctl update nodegroup \
   --max-pods-per-node 110
 ```
 
-### EKS Cluster Upgrade
+### EKS クラスターアップグレード
 
 ```bash
 # Check cluster version
@@ -2242,7 +1914,7 @@ aws eks update-nodegroup-version \
   --nodegroup-name my-nodegroup
 ```
 
-### EKS Cluster Authentication and Authorization
+### EKS クラスターの Authentication と Authorization
 
 ```bash
 # Map IAM user/role to cluster RBAC
@@ -2256,7 +1928,7 @@ eksctl create iamidentitymapping \
 kubectl describe configmap aws-auth -n kube-system
 ```
 
-### EKS Cluster Monitoring
+### EKS クラスター監視
 
 ```bash
 # Enable CloudWatch Container Insights
@@ -2271,84 +1943,84 @@ aws eks create-addon \
   --addon-name amazon-cloudwatch-observability \
   --addon-version v1.1.1-eksbuild.1
 ```
-## Cluster Administration Best Practices
+## クラスター管理のベストプラクティス
 
-効果的な Kubernetes cluster management の best practices は、stability、security、performance を確保するために重要です。
+効果的な Kubernetes クラスター管理のベストプラクティスは、安定性、security、パフォーマンスの確保に重要です。
 
-### Cluster Setup Best Practices
+### クラスターセットアップのベストプラクティス
 
-1. **Multi-Availability Zone Configuration**: high availability のために nodes を複数の availability zones に分散
-2. **Appropriate Sizing**: workloads に適した node types と counts を選択
-3. **Autoscaling Configuration**: cluster autoscaler と horizontal pod autoscaler を有効化
-4. **Apply Network Policies**: default deny policy から開始し、必要な communication のみを許可
-5. **Set Resource Quotas**: namespace ごとに resource limits を設定
+1. **Multi-Availability Zone Configuration**: 高可用性のために複数の availability zone に node を分散する
+2. **適切なサイズ設定**: workload に適した node type と数を選択する
+3. **Autoscaling 設定**: cluster autoscaler と horizontal pod autoscaler を有効化する
+4. **Network Policy の適用**: default deny policy から始め、必要な通信だけを許可する
+5. **Resource Quota の設定**: namespace ごとに resource limit を設定する
 
-### Operations Best Practices
+### 運用のベストプラクティス
 
-1. **Use Declarative Configuration**: すべての resources を YAML files として定義し、version control する
-2. **Adopt GitOps**: Git を single source of truth として使用し、automated deployment pipelines を構築
-3. **Regular Backups**: etcd data と persistent volume data の regular backup
-4. **Monitoring and Alerting**: comprehensive monitoring systems を構築し、key metrics に alerts を設定
-5. **Centralized Logging**: 分析しやすいよう、すべての logs を central logging system に収集
+1. **Declarative Configuration の使用**: すべての resource を YAML file として定義し、version control する
+2. **GitOps の採用**: Git を single source of truth として使用し、自動 deployment pipeline を構築する
+3. **定期的なバックアップ**: etcd data と persistent volume data を定期的にバックアップする
+4. **監視とアラート**: 包括的な監視 system を構築し、主要 metric に alert を設定する
+5. **集中ロギング**: すべての log を中央 logging system に収集して分析しやすくする
 
-### Security Best Practices
+### セキュリティのベストプラクティス
 
-1. **Least Privilege Principle**: RBAC を使用して必要最小限の permissions のみを付与
-2. **Network Segmentation**: network policies を使用して pod-to-pod communication を制限
-3. **Image Scanning**: vulnerability detection のために container image scanning を実装
-4. **Secret Management**: external secret management tools（例: AWS Secrets Manager、HashiCorp Vault）を使用
-5. **Regular Security Audits**: cluster configuration と permissions の regular audits を実施
+1. **最小権限の原則**: RBAC を使用して必要最小限の権限だけを付与する
+2. **ネットワークセグメンテーション**: network policy を使用して Pod 間通信を制限する
+3. **Image Scanning**: 脆弱性検出のために container image scanning を実装する
+4. **Secret 管理**: 外部 secret management tool（例: AWS Secrets Manager、HashiCorp Vault）を使用する
+5. **定期的な Security Audit**: クラスター設定と権限を定期的に監査する
 
-### Upgrade Best Practices
+### アップグレードのベストプラクティス
 
-1. **Gradual Upgrades**: 一度にすべてではなく段階的に upgrade
-2. **Test Environment First**: production の前に test environments で upgrades を検証
-3. **Create Backups**: upgrades 前に full backups を実行
-4. **Rollback Plan**: 問題発生時に previous versions へ rollback する計画を策定
-5. **Set Upgrade Windows**: usage が少ない時間帯に upgrades を実施
+1. **段階的なアップグレード**: 一度にすべてではなく段階的にアップグレードする
+2. **Test Environment を優先**: production の前に test environment でアップグレードを検証する
+3. **Backup の作成**: アップグレード前に完全なバックアップを実施する
+4. **Rollback Plan**: 問題発生時に以前の version に rollback する計画を策定する
+5. **アップグレード時間帯の設定**: 使用量が少ない時間帯にアップグレードを実施する
 
-### Cost Optimization Best Practices
+### コスト最適化のベストプラクティス
 
-1. **Select Appropriate Node Sizes**: workloads に最適な node types を選択
-2. **Utilize Spot Instances**: non-critical workloads には spot instances を使用
-3. **Configure Autoscaling**: demand に基づいて自動的な scale up/down を設定
-4. **Optimize Resource Requests and Limits**: actual usage に基づいて resource requests と limits を設定
-5. **Identify Idle Resources**: idle resources を定期的に特定し削除
+1. **適切な Node Size の選択**: workload に最適な node type を選択する
+2. **Spot Instance の活用**: 非重要 workload には spot instance を使用する
+3. **Autoscaling の設定**: 需要に応じた自動 scale up と scale down を設定する
+4. **Resource Request と Limit の最適化**: 実際の使用量に基づいて resource request と limit を設定する
+5. **Idle Resource の特定**: idle resource を定期的に特定して削除する
 
-### Documentation Best Practices
+### ドキュメントのベストプラクティス
 
-1. **Document Architecture**: cluster architecture、networking、security settings を document 化
-2. **Document Operations Procedures**: common operations tasks、troubleshooting procedures、emergency response plans を document 化
-3. **Change Management**: すべての cluster changes を記録し追跡
-4. **Create Runbooks**: common scenarios 向けの step-by-step guides を提供
-5. **Knowledge Sharing**: team 内で regular knowledge sharing と training sessions を実施
-## Conclusion
+1. **Architecture の文書化**: クラスター architecture、networking、security 設定を文書化する
+2. **運用手順の文書化**: 一般的な運用作業、トラブルシューティング手順、緊急対応計画を文書化する
+3. **Change Management**: すべてのクラスター変更を記録して追跡する
+4. **Runbook の作成**: 一般的な scenario 用の step-by-step guide を提供する
+5. **Knowledge Sharing**: チーム内で定期的に knowledge sharing と training session を実施する
+## まとめ
 
-Kubernetes cluster administration は、さまざまな側面を含む複雑な task です。cluster setup から operation、monitoring、troubleshooting、upgrades まで、systematic approach が必要です。
+Kubernetes クラスター管理は、さまざまな側面を含む複雑な作業です。クラスターのセットアップから運用、監視、トラブルシューティング、アップグレードまで、体系的なアプローチが必要です。
 
-効果的な cluster administration のために、次の key areas に注力してください。
+効果的なクラスター管理では、次の主要領域に注力してください。
 
-1. **Cluster Component Management**: control plane と node components の安定運用
-2. **Resource Management**: 効率的な resource allocation と usage
-3. **Networking**: secure で効率的な network configuration
-4. **Security**: 適切な authentication and authorization management
-5. **Backup and Recovery**: data loss prevention と disaster recovery planning
-6. **Monitoring and Logging**: cluster status と performance monitoring
-7. **Troubleshooting**: systematic troubleshooting approach
+1. **クラスターコンポーネント管理**: Control Plane と node コンポーネントの安定運用
+2. **リソース管理**: 効率的なリソース割り当てと使用
+3. **Networking**: 安全で効率的なネットワーク設定
+4. **セキュリティ**: 適切な Authentication と Authorization 管理
+5. **バックアップとリカバリ**: データ損失の防止と災害復旧計画
+6. **監視とロギング**: クラスター状態とパフォーマンスの監視
+7. **トラブルシューティング**: 体系的なトラブルシューティングアプローチ
 
-Amazon EKS のような managed Kubernetes services を使用する場合、service provider と user の shared responsibility model を理解することが重要です。AWS が control plane を管理する一方で、nodes、networking、security などの管理は引き続き user の責任です。
+Amazon EKS のような managed Kubernetes service を使用する場合は、service provider と user の shared responsibility model を理解することが重要です。AWS は Control Plane を管理しますが、node、networking、security などの管理は引き続き user の責任です。
 
-best practices に従い、適切な tools を活用することで、stable、secure、efficient な Kubernetes cluster を運用できます。cluster management capabilities を高めるための continuous learning and improvement が重要です。
+ベストプラクティスに従い、適切なツールを活用することで、安定的で安全かつ効率的な Kubernetes クラスターを運用できます。クラスター管理能力を高めるための継続的な学習と改善が重要です。
 
 ---
 
-> **References**:
-> - [Kubernetes Official Documentation: Cluster Administration](https://kubernetes.io/docs/tasks/administer-cluster/)
+> **参考資料**:
+> - [Kubernetes 公式ドキュメント: クラスター管理](https://kubernetes.io/docs/tasks/administer-cluster/)
 > - [Amazon EKS User Guide](https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html)
 > - [Kubernetes Best Practices: Cluster Administration](https://kubernetes.io/docs/setup/best-practices/)
 > - [etcd Documentation: Backup and Recovery](https://etcd.io/docs/v3.5/op-guide/recovery/)
 > - [Prometheus Documentation](https://prometheus.io/docs/introduction/overview/)
 
-## Quiz
+## クイズ
 
-この章で学んだ内容を確認するため、[Cluster Administration Quiz](../quizzes/core/09-cluster-administration-quiz.md) に挑戦してみてください。
+この章で学んだ内容を確認するには、[クラスター管理クイズ](../quizzes/core/09-cluster-administration-quiz.md)に挑戦してください。

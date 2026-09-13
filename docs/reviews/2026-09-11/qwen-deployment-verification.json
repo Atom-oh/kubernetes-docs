@@ -1,0 +1,110 @@
+{
+  "checkedAt": "2026-09-12T19:20:42.245186+00:00",
+  "pr": 226,
+  "reviewHead": "5da6883cf92c49d0662281f6de25ecb81e307424",
+  "mergeCommit": "8cce6f0aeae7dcf0225f5bdb7aa861e091f7f055",
+  "deploymentRun": 34713296051,
+  "deploymentStatus": "success",
+  "httpChecks": [
+    {
+      "name": "ko-execution",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution",
+      "status": 200,
+      "bytes": 441646,
+      "sha256": "e1208e546fc9153c083eba269bc406ac336294ab7bf86caf3a7a117bf4066b0d",
+      "checks": {
+        "previewPath": true,
+        "podIdentity": true,
+        "runtimePatchEnd": true
+      },
+      "passed": true
+    },
+    {
+      "name": "ko-diagram",
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-sagemaker-ai-01-platform-architecture-0.html",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-sagemaker-ai-01-platform-architecture-0.html",
+      "status": 200,
+      "bytes": 722006,
+      "sha256": "034c82de1881eca5e1d536bc4a7b9b24fd7d742c014d25bac9486221c785f529",
+      "checks": {
+        "sourceCommit": true,
+        "updatedTestCount": true,
+        "scopedSDK": true
+      },
+      "passed": true
+    },
+    {
+      "name": "en-execution",
+      "url": "https://www.atomai.click/kubernetes-docs/en/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/en/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution",
+      "status": 200,
+      "bytes": 438499,
+      "sha256": "8965141fab075a9237b499d3747193a8472647fc3deadf3785b5978634b96d2d",
+      "checks": {
+        "previewPath": true,
+        "podIdentity": true,
+        "runtimePatchEnd": true
+      },
+      "passed": true
+    },
+    {
+      "name": "en-diagram",
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-sagemaker-ai-01-platform-architecture-0.html",
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-sagemaker-ai-01-platform-architecture-0.html",
+      "status": 200,
+      "bytes": 722022,
+      "sha256": "54f0995f54182a8fa8a4df23f16c2e84bdbe66251eaa7174405b6511471ecfc1",
+      "checks": {
+        "sourceCommit": true,
+        "updatedTestCount": true,
+        "scopedSDK": true
+      },
+      "passed": true
+    },
+    {
+      "name": "ko-published-png",
+      "page": "https://www.atomai.click/kubernetes-docs/ko/ai-ml/sagemaker-ai/01-platform-architecture",
+      "url": "https://www.atomai.click/kubernetes-docs/assets/ko-ai-ml-sagemaker-ai-01-platform-architecture-0.CuqQUIy-.png",
+      "status": 200,
+      "sha256": "33c5b7e71d723508a56b26887eeff0566e071788b26cab7866d012e086940652",
+      "matchesLocalReviewedPng": true,
+      "passed": true
+    },
+    {
+      "name": "en-published-png",
+      "page": "https://www.atomai.click/kubernetes-docs/en/ai-ml/sagemaker-ai/01-platform-architecture",
+      "url": "https://www.atomai.click/kubernetes-docs/assets/en-ai-ml-sagemaker-ai-01-platform-architecture-0.DQ6lrw3m.png",
+      "status": 200,
+      "sha256": "ea35afd5ea653933f123d4433756f061ad730b0b86f4e8d2cb7bb035ec920a62",
+      "matchesLocalReviewedPng": true,
+      "passed": true
+    }
+  ],
+  "ga4SyntheticEventsSent": 0,
+  "scope": "HTTP content and image hash verification; responsive/JS rendering tested locally beforemerge",
+  "notes": "VitePress fingerprints source PNGs into /assets; validation uses actual rendered img src. Raw source paths are not published URLs.",
+  "passed": true,
+  "mergeStatus": "MERGED",
+  "independentReview": {
+    "head": "5da6883cf92c49d0662281f6de25ecb81e307424",
+    "coverage": "70/70",
+    "contentScore": "90/90",
+    "findings": 0
+  },
+  "ci": {
+    "run": 34712776516,
+    "conclusion": "success",
+    "pythonTests": 125,
+    "spotTests": 29,
+    "siteTests": 122
+  },
+  "branchGate": {
+    "base": "main",
+    "priorPR225": "MERGED",
+    "reviewedHeadMatchedMergeHead": true,
+    "protected": false,
+    "activeBranchRules": [],
+    "unresolvedGitHubInlineFeedback": 0
+  }
+}

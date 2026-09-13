@@ -1,0 +1,162 @@
+{
+  "updatedAt": "2026-09-12T18:42:29.329550+00:00",
+  "pr": 226,
+  "rejectedReviewHead": "ed7d220656866fae50703d242d9acf26967fad93",
+  "fixCodeCommit": "0a9f2ffcb92f8bfd95edec2d601f2c844d408051",
+  "priorReview": {
+    "coverage": "64/64",
+    "contentScore": "88.5/90",
+    "verdict": "changes_requested"
+  },
+  "fixes": {
+    "QWEN-001": "EKS Pod Identity scoped to five GetObject ARNs/account/cluster/namespace/SA; ConfigMapbootstrap/defaultSDKchain; no presignedbearer values",
+    "QWEN-002": "Restored existing Spot pathfilter+unittest step;29tests pass",
+    "QWEN-003": "Unique previews; exclusive request+job reservation; shared lifecycle flock throughacceptance; no overwrite of submitted/orphan evidence",
+    "QWEN-004": "Inventory-generatedcanonicalUUID/experiment/cluster provenance requiredinloggedparams/export/archiveverificationbeforeanydelete; wrongsame-modeexecutionrejected",
+    "QWEN-005": "Restored bilingualnine-label meanings withoutunsupportedidentifier-validityclaims"
+  },
+  "validation": {
+    "pythonTestsPassed": 121,
+    "spotTestsPassed": 29,
+    "markdownFilesCompiled": 19,
+    "nativeBoundArchive": {
+      "mlflowVersion": "3.1.4",
+      "artifactCount": 8,
+      "archiveHashesVerified": true,
+      "provenanceMatches": true,
+      "sameModeDifferentExecutionRejected": true,
+      "awsCalls": 0,
+      "gpu": false
+    },
+    "eksctlSchema": {
+      "eksctlVersion": "0.229.0",
+      "schemaValidation": "passed",
+      "podIdentityAssociation": "qwen-input-reader",
+      "s3ReadObjects": 5,
+      "awsCalls": 0,
+      "scope": "Nativeeksctlschema only, not AWS provisioning/IAM enforcement test"
+    }
+  },
+  "eksctlSourceEvidence": ".vitepress/cache/content-review-sagemaker/execution/qwen001-004/eksctl-source-evidence.json",
+  "limitations": [
+    "No live AWS/GPU execution",
+    "ExpiredDLCguard retained",
+    "Unknownpartialstate/manualrecoveryremainintentional",
+    "NewHEAD AIreview/CIrequired beforemerge"
+  ],
+  "sourceHashes": [
+    {
+      "path": ".github/workflows/pr-validate.yml",
+      "sha256": "0f87246d116d35ec2276caa199caac279d3d17a535c8134c1fb8ce0f955273b9"
+    },
+    {
+      "path": "en/ai-ml/sagemaker-ai/01-platform-architecture.md",
+      "sha256": "8eb4c25489f6921cabb3f3e230c92a997e69d0f9ff93e2068c243dcefb893b26"
+    },
+    {
+      "path": "en/ai-ml/sagemaker-ai/02-pii-data-tokenization.md",
+      "sha256": "c2f8c390ba8e5e1716b3603d2af83ff95bb256761dd4078bccf35b09ed80d212"
+    },
+    {
+      "path": "en/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md",
+      "sha256": "12549ad0987adc65707626e7fba1f0f17496591804e413efc233b76f9fcd41dd"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/README.md",
+      "sha256": "3c4c621883838ec1f5959bcb69b90b26f7388f0f8e4b8293470036b6730b9e1e"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/aws/lifecycle.py",
+      "sha256": "bce54c478d7687e66b0d3b0f98d56dcaa81a3bd82356016e43cc0af5c5a963bf"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/cluster.yaml",
+      "sha256": "2ed9702def3606e34e6344cccb072ef1559a95c76934a7740d3a87c9667f7aa1"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/download_inputs.py",
+      "sha256": "d936e5b66cdb02013a1d6320fe16dfdf1ff54377190fe3d5b458227f5e2a2bac"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/export_mlflow.py",
+      "sha256": "7404114e4fc844c0164d553f0ea62f81adfc00e6d8ef19d2d0e24a80cae08adf"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/run.sh",
+      "sha256": "b55cfc5b87132e1ab18d6c136c0d941ab2c0fcf920f161cc3659b0d4ffd54917"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/training-job.yaml",
+      "sha256": "238a2558c0addf85d74f0079efa89973028c238d2233dec2d4953ca26715857d"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/eks/verify_export.py",
+      "sha256": "5df4fe8b386ee04cc3dca870c26ae15d4d134c5c3de75a68147c0651ce2e7636"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/launch/sagemaker_train.py",
+      "sha256": "2b241536fe0ba46a87de6c9c4dbe18c0ee738bdd5d21f7beaf0dfd79f822cb33"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/src/train.py",
+      "sha256": "bdc961e07235984c4f87b6ba0b93eb559bad112a0d775c29ed317bc4c91a7a00"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_download_inputs.py",
+      "sha256": "836fb4216a04916a1bdad1c909efdd71a11dff3399ed5abc69bbbebfa08302a5"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_eks_lifecycle.py",
+      "sha256": "08707467edf0690586f1525ef59d19fe347c5d805541d9ca5a157cda8ed9b94a"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_eks_manifests.py",
+      "sha256": "729e00bce10f61229ba7bb783a5d9398cb65029afea40db5491b8db933a17e47"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_eks_workload_identity.py",
+      "sha256": "29532fc9fb88a0e40e4d9c5290b4e92d15c1988fb29da875617872c1de89ab1a"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_execution_safety.py",
+      "sha256": "a92a59af4de7ee4e2a8094300834b09015503fb7283f5d64b4e370d8fb11a93b"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_mlflow_export.py",
+      "sha256": "91611ec50283785ace12efbb2882f593be67466c77d84fcd0a62a08102fc61bd"
+    },
+    {
+      "path": "examples/ai-ml/qwen-pii-finetuning/tests/test_training_contract.py",
+      "sha256": "6c7cb3ee631d412c6ab9517f7b737c564581fd4a054a17847bfa59badc54c204"
+    },
+    {
+      "path": "ko/ai-ml/sagemaker-ai/01-platform-architecture.md",
+      "sha256": "5a03432de6e5ed7daa60b665f3c50e975ff1627ebe9f1f7a9eed6cdf45d1fd17"
+    },
+    {
+      "path": "ko/ai-ml/sagemaker-ai/02-pii-data-tokenization.md",
+      "sha256": "b008ee6536fa78dde16b41bbb144582295f40a800d2fdba8d4b4223ba5f9f18f"
+    },
+    {
+      "path": "ko/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md",
+      "sha256": "0c5056f0559667a52a69e0643e847fd366146b84a99ae43cba9eb59b1d1c92b6"
+    }
+  ],
+  "secondReview": {
+    "reviewedHead": "e1d4d0874f3afc17184384defd32750f5537b627",
+    "coverage": "70/70",
+    "contentScore": "88.5/90",
+    "remainingFinding": "QWEN-R2-001",
+    "fixCommit": "2ad43f6a0ee602874fc788c22fe0a225a68dc092",
+    "fix": "Accepted/terminal state and outer stop handler include post-acceptance journal writes and lock exit. Stop attempt precedes best-effort persistence; ambiguous create remains outside name-based stopping.",
+    "regressions": [
+      "OSError writing submitted",
+      "KeyboardInterrupt writing submitted",
+      "persistent post-acceptance write errors",
+      "terminal persistence error does not stop completed job"
+    ],
+    "pythonTestsPassed": 125,
+    "newHeadReview": "pending"
+  },
+  "sourceHashesCommit": "2ad43f6a0ee602874fc788c22fe0a225a68dc092"
+}

@@ -2,88 +2,54 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Software Catalog Entity Graph — payments example",
-    "locale": "en",
+    "title": "Backstage catalog example",
     "output": "en-platform-engineering-06-backstage-idp-1.html",
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1080,
-      600
+      1280,
+      610
     ],
     "legend": {
-      "mode": "auto",
-      "entries": {
-        "cloud": {
-          "label": "Domain / System"
-        },
-        "backend": {
-          "label": "Component"
-        },
-        "external": {
-          "label": "API"
-        },
-        "database": {
-          "label": "Resource (DB)"
-        },
-        "messagebus": {
-          "label": "Resource (Queue)"
-        },
-        "security": {
-          "label": "Group (Team)"
-        }
-      }
+      "mode": "auto"
     },
     "views": [
       {
-        "id": "hierarchy",
-        "label": "Domain → System → Component",
+        "id": "structure",
+        "label": "Structure",
         "focus": [
           "domain",
           "order-system",
-          "payment-system",
           "order-api",
-          "order-worker",
-          "payment-gateway"
+          "order-rest-api",
+          "order-db"
         ],
-        "note": "payments-domain groups two Systems, and each System contains its own Components."
+        "note": "Relationships in the published catalog example"
       },
       {
         "id": "ownership",
-        "label": "Ownership and membership",
+        "label": "Ownership",
         "focus": [
           "platform-team",
           "backend-team",
-          "order-system",
-          "payment-system"
+          "alice",
+          "domain",
+          "order-system"
         ],
-        "note": "A Group owns a System through the owns relation; Users (alice, bob) belong to a Group via memberOf."
-      },
-      {
-        "id": "api-resource",
-        "label": "APIs and Resources",
-        "focus": [
-          "order-api",
-          "order-worker",
-          "payment-gateway",
-          "order-rest-api",
-          "payment-grpc-api",
-          "order-db",
-          "payment-queue"
-        ],
-        "note": "Components provide/consume APIs and depend on Resources through dependsOn."
+        "note": "Ownership metadata and permissions are separate"
       }
-    ]
+    ],
+    "locale": "en"
   },
   "components": [
     {
       "id": "platform-team",
       "type": "security",
       "label": "platform-team",
-      "sublabel": "Group · alice memberOf",
+      "sublabel": "Group",
       "pos": [
-        40,
-        40
+        60,
+        60
       ],
       "size": [
         190,
@@ -93,11 +59,11 @@
     {
       "id": "domain",
       "type": "cloud",
-      "label": "payments-domain",
+      "label": "commerce",
       "sublabel": "Domain",
       "pos": [
-        430,
-        40
+        400,
+        60
       ],
       "size": [
         180,
@@ -108,10 +74,10 @@
       "id": "backend-team",
       "type": "security",
       "label": "backend-team",
-      "sublabel": "Group · bob memberOf",
+      "sublabel": "Group",
       "pos": [
-        850,
-        40
+        60,
+        260
       ],
       "size": [
         190,
@@ -124,39 +90,25 @@
       "label": "order-system",
       "sublabel": "System",
       "pos": [
-        210,
-        180
+        400,
+        260
       ],
       "size": [
-        160,
+        180,
         60
       ]
     },
     {
-      "id": "payment-system",
-      "type": "cloud",
-      "label": "payment-system",
-      "sublabel": "System",
+      "id": "alice",
+      "type": "frontend",
+      "label": "alice",
+      "sublabel": "User",
       "pos": [
-        660,
-        180
+        60,
+        460
       ],
       "size": [
-        170,
-        60
-      ]
-    },
-    {
-      "id": "order-worker",
-      "type": "backend",
-      "label": "order-worker",
-      "sublabel": "Component",
-      "pos": [
-        80,
-        330
-      ],
-      "size": [
-        160,
+        190,
         60
       ]
     },
@@ -166,39 +118,11 @@
       "label": "order-api",
       "sublabel": "Component",
       "pos": [
-        340,
-        330
+        730,
+        260
       ],
       "size": [
-        160,
-        60
-      ]
-    },
-    {
-      "id": "payment-gateway",
-      "type": "backend",
-      "label": "payment-gateway",
-      "sublabel": "Component",
-      "pos": [
-        660,
-        330
-      ],
-      "size": [
-        170,
-        60
-      ]
-    },
-    {
-      "id": "payment-queue",
-      "type": "messagebus",
-      "label": "payment-queue",
-      "sublabel": "Resource",
-      "pos": [
-        40,
-        480
-      ],
-      "size": [
-        160,
+        190,
         60
       ]
     },
@@ -208,11 +132,11 @@
       "label": "order-rest-api",
       "sublabel": "API",
       "pos": [
-        260,
-        480
+        1040,
+        160
       ],
       "size": [
-        160,
+        190,
         60
       ]
     },
@@ -222,127 +146,87 @@
       "label": "order-db",
       "sublabel": "Resource",
       "pos": [
-        480,
-        480
+        1040,
+        390
       ],
       "size": [
-        160,
-        60
-      ]
-    },
-    {
-      "id": "payment-grpc-api",
-      "type": "external",
-      "label": "payment-grpc-api",
-      "sublabel": "API",
-      "pos": [
-        700,
-        480
-      ],
-      "size": [
-        170,
+        190,
         60
       ]
     }
   ],
   "connections": [
     {
-      "id": "domain-order",
-      "from": "domain",
-      "to": "order-system",
-      "variant": "emphasis",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "domain-payment",
-      "from": "domain",
-      "to": "payment-system",
-      "variant": "emphasis",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "platform-owns-order",
+      "id": "owns-domain",
       "from": "platform-team",
+      "to": "domain",
+      "label": "owns",
+      "variant": "dashed"
+    },
+    {
+      "id": "domain-system",
+      "from": "domain",
       "to": "order-system",
-      "label": "owns",
-      "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "backend-owns-payment",
-      "from": "backend-team",
-      "to": "payment-system",
-      "label": "owns",
-      "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "order-system-worker",
-      "from": "order-system",
-      "to": "order-worker",
+      "label": "contains",
       "variant": "emphasis",
       "fromSide": "bottom",
-      "toSide": "top"
+      "toSide": "top",
+      "labelAt": [
+        490,
+        190
+      ]
     },
     {
-      "id": "order-system-api",
+      "id": "owns-system",
+      "from": "backend-team",
+      "to": "order-system",
+      "label": "owns",
+      "variant": "dashed"
+    },
+    {
+      "id": "member",
+      "from": "alice",
+      "to": "backend-team",
+      "label": "memberOf",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        155,
+        400
+      ]
+    },
+    {
+      "id": "system-component",
       "from": "order-system",
       "to": "order-api",
-      "variant": "emphasis",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "label": "contains",
+      "variant": "emphasis"
     },
     {
-      "id": "payment-system-gateway",
-      "from": "payment-system",
-      "to": "payment-gateway",
-      "variant": "emphasis",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "order-api-provides",
+      "id": "provides",
       "from": "order-api",
       "to": "order-rest-api",
-      "label": "provides",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "label": "providesApi",
+      "variant": "emphasis"
     },
     {
-      "id": "gateway-provides",
-      "from": "payment-gateway",
-      "to": "payment-grpc-api",
-      "label": "provides",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "order-api-consumes",
-      "from": "order-api",
-      "to": "payment-grpc-api",
-      "label": "consumes",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "order-api-db",
+      "id": "dependency",
       "from": "order-api",
       "to": "order-db",
       "label": "dependsOn",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
     {
-      "id": "worker-queue",
-      "from": "order-worker",
-      "to": "payment-queue",
-      "label": "dependsOn",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "dot": "amber",
+      "title": "Catalog boundaries",
+      "items": [
+        "Resource entities do not provision infrastructure",
+        "Owner/system/domain references match the fixture",
+        "Metadata ownership does not grant backend permission"
+      ]
     }
   ]
 }

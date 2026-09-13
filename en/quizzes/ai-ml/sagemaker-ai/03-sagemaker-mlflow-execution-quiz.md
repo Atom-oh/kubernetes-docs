@@ -41,12 +41,12 @@ Review smoke completion, logging safety, aggregate results, and adapter inventor
 
 **Answer: B**
 
-The Job exposes failure and terminates within the three-hour bound.
+These are retry and Job deadline settings. Controller or node failures can delay reclamation; they do not guarantee all resources disappear within three hours or cap total cost.
 </details>
 
 4. When must cleanup verification fail?
    - A) No resources remain
-   - B) Any App, project, bucket, role, or cluster remains
+   - B) Resources remain or errors prevent confirming their state
    - C) Smoke succeeds
    - D) Dataset hashes match
 
@@ -55,7 +55,7 @@ The Job exposes failure and terminates within the three-hour bound.
 
 **Answer: B**
 
-The remaining resource count must be zero.
+Zero remaining is insufficient when queries failed. Preserve unknown states and refuse name-only deletion from old inventories without ownership evidence.
 </details>
 
 5. What was actually exercised on September 1?
@@ -70,6 +70,48 @@ The remaining resource count must be zero.
 **Answer: C**
 
 Both GPU Jobs stopped before submission.
+</details>
+
+6. Why is GPU execution blocked as of September 12, 2026?
+   - A) The pinned PyTorch 2.8 DLC reached end of patch on August 6
+   - B) Source bundling is billable
+   - C) Every MLflow App was deleted
+   - D) Local unit tests require a GPU
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: A**
+
+Validate a supported DLC, torch, dependency cohort, and GPU smoke run. Removing the date check alone is not an upgrade.
+</details>
+
+7. What does the SageMaker launcher do without `--execute`?
+   - A) Submit the full Job immediately
+   - B) Write the request JSON only
+   - C) Delete existing Jobs
+   - D) Guarantee a cost estimate
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B**
+
+Request preview is the default. Actual submission requires the runtime support check and separate review.
+</details>
+
+8. Is saving EKS MLflow metric/parameter JSON enough?
+   - A) Yes, it automatically includes adapter weights
+   - B) Download final adapters and aggregate artifacts, then verify hashes
+   - C) `emptyDir` survives cluster deletion
+   - D) A log tail can reconstruct the model
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B**
+
+Metadata export is different from preserving files. A cluster retained after export failure also needs cost awareness and subsequent cleanup.
 </details>
 
 ---

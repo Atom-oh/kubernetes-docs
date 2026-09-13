@@ -1,0 +1,154 @@
+[
+  {
+    "path": "ko/ops/04-gitops-multi-cluster.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reworked complete guides and quizzes around validated Helm3/Argo3 installation, scoped target prerequisites, actual cluster discovery, safe NodePool ownership, valid ApplicationSets, documented Identity Center SAML/Dex and ESO Pod Identity.",
+    "findings": [
+      "Outdated ArgoCD2/chart6/7/ESO0.9/provider5 baselines; secrets/token in Terraform state; Helm values keys and duplicate ownership incorrect; metricsCRDs and custom init-tools architecture/PATH invalid. Reuse tested Argo3.5.2 install.",
+      "Hub failure and shared blast radius qualified; regional EKS not singleAZ; cluster add mutates remoteRBAC, kubeconfig context side effects, passwordargv unsafe. EN ExternalId never supplied by AWSAuthConfig, aws-auth forceoverwrite destroys existingentries; use AccessEntries plus scopedRBAC.",
+      "SSO KO DexdisabledyetSAML; rawPEM caData wrong; fakeOIDCissuer pointsSAML. EN fakecustomproviderARN anddata/resource mix; IdentityCenterOIDC support/claims mustverify. SAMLapplicationnotIAMAssumeRoleWithSAML. Group claimsnotautomaticallygroupmembership.",
+      "NodePool AutoModeproviderkeys and NodeClassschema invalid(AMI/blockDeviceMappings/instanceStore); missingbaseKustomization/dataNodeClass; nodepool ownership/prune/finalizer/forceddisruption caveats; defaultpoolsremain.",
+      "KO ApplicationSet boolean interpolationinvalid;EN conditionalYAMLkeyinvalid,typedlistbooleans;GoTemplatepath/nameparams;matrixexact2children/nestinglimited;syncwaveannotationsalonearenotcrossApplicationsequencing.",
+      "PRgeneratorautoexecutesuntrustedcodeonhubwithbroadproject;labelsnotsecurityboundary,mutableimage/noapproveddigest,infoisnotTTL,namespacesnotautomaticcleanup.",
+      "RBAC defaultreadonlyglobalgrant notoverridable;developeraction*/override broad;Chartconfigsrbac ownership duplicate;controller shardingnotstandbyleaderelection,statelessservernotrequiresstickysession.",
+      "ESO PI cannotauth.jwtserviceaccountref(IRSA),namespaceseparateaccountsnotperrequestPI;missingwriteIAMPushSecret;currentv1CRDs;DBURLescaping;AWSPREVIOUSmissingfailsentiresync;refreshnotrotation/Podrestart;IgnoreExtraneousnotexcludesmanagedresource;rotationLambdaundefined."
+    ],
+    "sources": [
+      "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/docs/operator-manual/user-management/identity-center.md",
+      "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/cmd/argocd-k8s-auth/commands/aws.go",
+      "https://raw.githubusercontent.com/dexidp/dex/v2.45.1/connector/saml/saml.go",
+      "https://docs.aws.amazon.com/singlesignon/latest/userguide/customermanagedapps-saml2-setup.html",
+      "https://docs.aws.amazon.com/singlesignon/latest/userguide/mapawsssoattributestoapp.html",
+      "https://external-secrets.io/v2.10.0/provider/aws-access/",
+      "https://registry.terraform.io/providers/hashicorp/helm/3.3.0/docs"
+    ],
+    "validation": [
+      "See ops-multicluster-validation.json",
+      "Helm 10.8.4 SAML/Dex enabled, no fictional OIDC issuer, email-scoped minimal default RBAC",
+      "ESO 2.10.0 chart and two exact v1 CRD schemas; actual controller SA/leader election and no IRSA annotation",
+      "Both full Kustomize NodePool overlays render with matching color/AZ and deletion confirmation",
+      "Eight ApplicationSet instances rendered by actual Go text/template + Sprig and validated as Application CRDs",
+      "7 registration-script mock cases: both clusters, invalid/missing inputs, AWS failure, insecure endpoint; no unintended context mutation or residual temp files",
+      "KO/EN embedded fixture parity, local links and both ten-question quizzes",
+      "Terraform1.15.7 init/validate and two mock AWS/Helm3.3.0 plan tests passed",
+      "34 fences,24 YAML blocks,4 Bash blocks,10 strict Argo3.5.2 CRDs passed",
+      "Six allow/deny cases passed with actual ArgoCD3.5.2 CLI and generated RBAC policy"
+    ],
+    "reviewedSha256": "d35d3a309877b0476fea8d14f1e16ae474a8753df6d7bf9bae38b3ba4662cc7e"
+  },
+  {
+    "path": "ko/quizzes/ops/04-gitops-multi-cluster-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reworked complete guides and quizzes around validated Helm3/Argo3 installation, scoped target prerequisites, actual cluster discovery, safe NodePool ownership, valid ApplicationSets, documented Identity Center SAML/Dex and ESO Pod Identity.",
+    "findings": [
+      "Outdated ArgoCD2/chart6/7/ESO0.9/provider5 baselines; secrets/token in Terraform state; Helm values keys and duplicate ownership incorrect; metricsCRDs and custom init-tools architecture/PATH invalid. Reuse tested Argo3.5.2 install.",
+      "Hub failure and shared blast radius qualified; regional EKS not singleAZ; cluster add mutates remoteRBAC, kubeconfig context side effects, passwordargv unsafe. EN ExternalId never supplied by AWSAuthConfig, aws-auth forceoverwrite destroys existingentries; use AccessEntries plus scopedRBAC.",
+      "SSO KO DexdisabledyetSAML; rawPEM caData wrong; fakeOIDCissuer pointsSAML. EN fakecustomproviderARN anddata/resource mix; IdentityCenterOIDC support/claims mustverify. SAMLapplicationnotIAMAssumeRoleWithSAML. Group claimsnotautomaticallygroupmembership.",
+      "NodePool AutoModeproviderkeys and NodeClassschema invalid(AMI/blockDeviceMappings/instanceStore); missingbaseKustomization/dataNodeClass; nodepool ownership/prune/finalizer/forceddisruption caveats; defaultpoolsremain.",
+      "KO ApplicationSet boolean interpolationinvalid;EN conditionalYAMLkeyinvalid,typedlistbooleans;GoTemplatepath/nameparams;matrixexact2children/nestinglimited;syncwaveannotationsalonearenotcrossApplicationsequencing.",
+      "PRgeneratorautoexecutesuntrustedcodeonhubwithbroadproject;labelsnotsecurityboundary,mutableimage/noapproveddigest,infoisnotTTL,namespacesnotautomaticcleanup.",
+      "RBAC defaultreadonlyglobalgrant notoverridable;developeraction*/override broad;Chartconfigsrbac ownership duplicate;controller shardingnotstandbyleaderelection,statelessservernotrequiresstickysession.",
+      "ESO PI cannotauth.jwtserviceaccountref(IRSA),namespaceseparateaccountsnotperrequestPI;missingwriteIAMPushSecret;currentv1CRDs;DBURLescaping;AWSPREVIOUSmissingfailsentiresync;refreshnotrotation/Podrestart;IgnoreExtraneousnotexcludesmanagedresource;rotationLambdaundefined."
+    ],
+    "sources": [
+      "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/docs/operator-manual/user-management/identity-center.md",
+      "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/cmd/argocd-k8s-auth/commands/aws.go",
+      "https://raw.githubusercontent.com/dexidp/dex/v2.45.1/connector/saml/saml.go",
+      "https://docs.aws.amazon.com/singlesignon/latest/userguide/customermanagedapps-saml2-setup.html",
+      "https://docs.aws.amazon.com/singlesignon/latest/userguide/mapawsssoattributestoapp.html",
+      "https://external-secrets.io/v2.10.0/provider/aws-access/",
+      "https://registry.terraform.io/providers/hashicorp/helm/3.3.0/docs"
+    ],
+    "validation": [
+      "See ops-multicluster-validation.json",
+      "Helm 10.8.4 SAML/Dex enabled, no fictional OIDC issuer, email-scoped minimal default RBAC",
+      "ESO 2.10.0 chart and two exact v1 CRD schemas; actual controller SA/leader election and no IRSA annotation",
+      "Both full Kustomize NodePool overlays render with matching color/AZ and deletion confirmation",
+      "Eight ApplicationSet instances rendered by actual Go text/template + Sprig and validated as Application CRDs",
+      "7 registration-script mock cases: both clusters, invalid/missing inputs, AWS failure, insecure endpoint; no unintended context mutation or residual temp files",
+      "KO/EN embedded fixture parity, local links and both ten-question quizzes",
+      "Terraform1.15.7 init/validate and two mock AWS/Helm3.3.0 plan tests passed",
+      "34 fences,24 YAML blocks,4 Bash blocks,10 strict Argo3.5.2 CRDs passed",
+      "Six allow/deny cases passed with actual ArgoCD3.5.2 CLI and generated RBAC policy"
+    ],
+    "reviewedSha256": "523c9e760379f5d469c8be9319aeea8bdda4f4b950ac8ae619f2bee30e128790"
+  },
+  {
+    "path": "en/ops/04-gitops-multi-cluster.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reworked complete guides and quizzes around validated Helm3/Argo3 installation, scoped target prerequisites, actual cluster discovery, safe NodePool ownership, valid ApplicationSets, documented Identity Center SAML/Dex and ESO Pod Identity.",
+    "findings": [
+      "Outdated ArgoCD2/chart6/7/ESO0.9/provider5 baselines; secrets/token in Terraform state; Helm values keys and duplicate ownership incorrect; metricsCRDs and custom init-tools architecture/PATH invalid. Reuse tested Argo3.5.2 install.",
+      "Hub failure and shared blast radius qualified; regional EKS not singleAZ; cluster add mutates remoteRBAC, kubeconfig context side effects, passwordargv unsafe. EN ExternalId never supplied by AWSAuthConfig, aws-auth forceoverwrite destroys existingentries; use AccessEntries plus scopedRBAC.",
+      "SSO KO DexdisabledyetSAML; rawPEM caData wrong; fakeOIDCissuer pointsSAML. EN fakecustomproviderARN anddata/resource mix; IdentityCenterOIDC support/claims mustverify. SAMLapplicationnotIAMAssumeRoleWithSAML. Group claimsnotautomaticallygroupmembership.",
+      "NodePool AutoModeproviderkeys and NodeClassschema invalid(AMI/blockDeviceMappings/instanceStore); missingbaseKustomization/dataNodeClass; nodepool ownership/prune/finalizer/forceddisruption caveats; defaultpoolsremain.",
+      "KO ApplicationSet boolean interpolationinvalid;EN conditionalYAMLkeyinvalid,typedlistbooleans;GoTemplatepath/nameparams;matrixexact2children/nestinglimited;syncwaveannotationsalonearenotcrossApplicationsequencing.",
+      "PRgeneratorautoexecutesuntrustedcodeonhubwithbroadproject;labelsnotsecurityboundary,mutableimage/noapproveddigest,infoisnotTTL,namespacesnotautomaticcleanup.",
+      "RBAC defaultreadonlyglobalgrant notoverridable;developeraction*/override broad;Chartconfigsrbac ownership duplicate;controller shardingnotstandbyleaderelection,statelessservernotrequiresstickysession.",
+      "ESO PI cannotauth.jwtserviceaccountref(IRSA),namespaceseparateaccountsnotperrequestPI;missingwriteIAMPushSecret;currentv1CRDs;DBURLescaping;AWSPREVIOUSmissingfailsentiresync;refreshnotrotation/Podrestart;IgnoreExtraneousnotexcludesmanagedresource;rotationLambdaundefined."
+    ],
+    "sources": [
+      "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/docs/operator-manual/user-management/identity-center.md",
+      "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/cmd/argocd-k8s-auth/commands/aws.go",
+      "https://raw.githubusercontent.com/dexidp/dex/v2.45.1/connector/saml/saml.go",
+      "https://docs.aws.amazon.com/singlesignon/latest/userguide/customermanagedapps-saml2-setup.html",
+      "https://docs.aws.amazon.com/singlesignon/latest/userguide/mapawsssoattributestoapp.html",
+      "https://external-secrets.io/v2.10.0/provider/aws-access/",
+      "https://registry.terraform.io/providers/hashicorp/helm/3.3.0/docs"
+    ],
+    "validation": [
+      "See ops-multicluster-validation.json",
+      "Helm 10.8.4 SAML/Dex enabled, no fictional OIDC issuer, email-scoped minimal default RBAC",
+      "ESO 2.10.0 chart and two exact v1 CRD schemas; actual controller SA/leader election and no IRSA annotation",
+      "Both full Kustomize NodePool overlays render with matching color/AZ and deletion confirmation",
+      "Eight ApplicationSet instances rendered by actual Go text/template + Sprig and validated as Application CRDs",
+      "7 registration-script mock cases: both clusters, invalid/missing inputs, AWS failure, insecure endpoint; no unintended context mutation or residual temp files",
+      "KO/EN embedded fixture parity, local links and both ten-question quizzes",
+      "Terraform1.15.7 init/validate and two mock AWS/Helm3.3.0 plan tests passed",
+      "34 fences,24 YAML blocks,4 Bash blocks,10 strict Argo3.5.2 CRDs passed",
+      "Six allow/deny cases passed with actual ArgoCD3.5.2 CLI and generated RBAC policy"
+    ],
+    "reviewedSha256": "ccaff1f932c1f8e9b82c1ce527a124ba49bdf208d87d997b53fa535d333e4164"
+  },
+  {
+    "path": "en/quizzes/ops/04-gitops-multi-cluster-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reworked complete guides and quizzes around validated Helm3/Argo3 installation, scoped target prerequisites, actual cluster discovery, safe NodePool ownership, valid ApplicationSets, documented Identity Center SAML/Dex and ESO Pod Identity.",
+    "findings": [
+      "Outdated ArgoCD2/chart6/7/ESO0.9/provider5 baselines; secrets/token in Terraform state; Helm values keys and duplicate ownership incorrect; metricsCRDs and custom init-tools architecture/PATH invalid. Reuse tested Argo3.5.2 install.",
+      "Hub failure and shared blast radius qualified; regional EKS not singleAZ; cluster add mutates remoteRBAC, kubeconfig context side effects, passwordargv unsafe. EN ExternalId never supplied by AWSAuthConfig, aws-auth forceoverwrite destroys existingentries; use AccessEntries plus scopedRBAC.",
+      "SSO KO DexdisabledyetSAML; rawPEM caData wrong; fakeOIDCissuer pointsSAML. EN fakecustomproviderARN anddata/resource mix; IdentityCenterOIDC support/claims mustverify. SAMLapplicationnotIAMAssumeRoleWithSAML. Group claimsnotautomaticallygroupmembership.",
+      "NodePool AutoModeproviderkeys and NodeClassschema invalid(AMI/blockDeviceMappings/instanceStore); missingbaseKustomization/dataNodeClass; nodepool ownership/prune/finalizer/forceddisruption caveats; defaultpoolsremain.",
+      "KO ApplicationSet boolean interpolationinvalid;EN conditionalYAMLkeyinvalid,typedlistbooleans;GoTemplatepath/nameparams;matrixexact2children/nestinglimited;syncwaveannotationsalonearenotcrossApplicationsequencing.",
+      "PRgeneratorautoexecutesuntrustedcodeonhubwithbroadproject;labelsnotsecurityboundary,mutableimage/noapproveddigest,infoisnotTTL,namespacesnotautomaticcleanup.",
+      "RBAC defaultreadonlyglobalgrant notoverridable;developeraction*/override broad;Chartconfigsrbac ownership duplicate;controller shardingnotstandbyleaderelection,statelessservernotrequiresstickysession.",
+      "ESO PI cannotauth.jwtserviceaccountref(IRSA),namespaceseparateaccountsnotperrequestPI;missingwriteIAMPushSecret;currentv1CRDs;DBURLescaping;AWSPREVIOUSmissingfailsentiresync;refreshnotrotation/Podrestart;IgnoreExtraneousnotexcludesmanagedresource;rotationLambdaundefined."
+    ],
+    "sources": [
+      "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/docs/operator-manual/user-management/identity-center.md",
+      "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/cmd/argocd-k8s-auth/commands/aws.go",
+      "https://raw.githubusercontent.com/dexidp/dex/v2.45.1/connector/saml/saml.go",
+      "https://docs.aws.amazon.com/singlesignon/latest/userguide/customermanagedapps-saml2-setup.html",
+      "https://docs.aws.amazon.com/singlesignon/latest/userguide/mapawsssoattributestoapp.html",
+      "https://external-secrets.io/v2.10.0/provider/aws-access/",
+      "https://registry.terraform.io/providers/hashicorp/helm/3.3.0/docs"
+    ],
+    "validation": [
+      "See ops-multicluster-validation.json",
+      "Helm 10.8.4 SAML/Dex enabled, no fictional OIDC issuer, email-scoped minimal default RBAC",
+      "ESO 2.10.0 chart and two exact v1 CRD schemas; actual controller SA/leader election and no IRSA annotation",
+      "Both full Kustomize NodePool overlays render with matching color/AZ and deletion confirmation",
+      "Eight ApplicationSet instances rendered by actual Go text/template + Sprig and validated as Application CRDs",
+      "7 registration-script mock cases: both clusters, invalid/missing inputs, AWS failure, insecure endpoint; no unintended context mutation or residual temp files",
+      "KO/EN embedded fixture parity, local links and both ten-question quizzes",
+      "Terraform1.15.7 init/validate and two mock AWS/Helm3.3.0 plan tests passed",
+      "34 fences,24 YAML blocks,4 Bash blocks,10 strict Argo3.5.2 CRDs passed",
+      "Six allow/deny cases passed with actual ArgoCD3.5.2 CLI and generated RBAC policy"
+    ],
+    "reviewedSha256": "19f6207b43cad39cfeec0cbf8c9472664a305ec1a9004dce5f679364f070eed5"
+  }
+]

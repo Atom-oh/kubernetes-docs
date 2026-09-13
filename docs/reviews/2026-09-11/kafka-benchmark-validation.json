@@ -1,0 +1,633 @@
+{
+  "reviewedAt": "2026-09-12",
+  "scope": [
+    "ko/data-on-eks/kafka/09-kafka-benchmark.md",
+    "ko/quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md",
+    "en/data-on-eks/kafka/09-kafka-benchmark.md",
+    "en/quizzes/data-on-eks/kafka/09-kafka-benchmark-quiz.md"
+  ],
+  "sources": [
+    "https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-kafka-09-kafka-benchmark-0.html",
+    "https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-kafka-09-kafka-benchmark-1.html",
+    "https://github.com/Atom-oh/kubernetes-docs/pull/166",
+    "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/ProducerPerformance.java",
+    "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/ConsumerPerformance.java",
+    "https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/server/ReplicaManager.scala",
+    "https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/cluster/Partition.scala",
+    "https://github.com/apache/kafka/blob/4.3.1/docker/jvm/Dockerfile",
+    "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-network-bandwidth.html",
+    "https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html",
+    "https://www.kernel.org/doc/html/latest/admin-guide/iostats.html"
+  ],
+  "findings": [
+    "Preserved14coremeasurementtables and attributedhistoricalsingle-runresults toPR166; rawtelemetry/payloadhashnotbundled and noAWSrerunclaimed.",
+    "Corrected30M×1024B=28.610GiB, F6+10.12percent, RF4/F1=2.507, CPUmidpoint39.19percent, E4drop44.49percent; costsasattributed730hplanningnotbill/currentpricequote.",
+    "Removedcertified130-135MiBsceiling/10GiBthreshold/noise/tail-only/codec-order-transfer/exclusiveIObottleneckclaims; controlledRFacks/defaultidempotence/duration/cache/sharedclient/ratetimebases discussed.",
+    "CorrectedEC2directionalnetworkcredits: F1rx136=1.141Gbps/tx108=.906Gbps EACHbelow1.25; sumwasnotburstevidence. m5xlargeEBSbaseline137.09/max566.24MiBs/currentgp3max2000conditional.",
+    "VerifiedperformanceCLIunits,payloadgenerationbeforelatency,periodicsampling,callbackfailurenotcounted,consumerpollovershoot; updateddeprecatedflagsandtested10nativecaseswithoutclients.",
+    "ReproducedpublishedAWKlocally20000valid1008BJSONrows/padding63.17percent; localzlib15.92/6.53differsreported18.5/7.8, preservedprovenanceanddidnotclaimhistoricalhash.",
+    "ReproductionmanifestnowexplicitAZ/gp3performance+encryption/headlessDNS/readiness/privatebenchmarkNetworkPolicy/tokenautomountfalse; changedtemplateclearlydisclosed. Scriptscreate/populatetopics,checksuccessfulcounts,finitewalltimeout,verifieddevice/actualmonotonicsampletiming; onlyreadonlylocalhostsamplertested.",
+    "Corrected4diagramsone-partitionversusclusteraggregate/FetchResponsedirection/backgroundwriteback/HW>=lastOffset+1; sourceKafkaReplicaManager/Partitionconfirmed.",
+    "4figures9of9delivery+desktopvisual+8mobilecases/menus/zoom/theme/presentation; PNGsregeneratedandpairedvisuallyinspected.",
+    "Updated16quizquestions;18schemaobjects16fences14preservedtables5successcountcases passed."
+  ],
+  "validation": {
+    "schemaObjects": [
+      {
+        "source": "benchmark manifest",
+        "kind": "Namespace",
+        "name": "bench-kafka"
+      },
+      {
+        "source": "benchmark manifest",
+        "kind": "StorageClass",
+        "name": "bench-kafka-gp3"
+      },
+      {
+        "source": "benchmark manifest",
+        "kind": "Service",
+        "name": "kafka-hs"
+      },
+      {
+        "source": "benchmark manifest",
+        "kind": "StatefulSet",
+        "name": "kafka"
+      },
+      {
+        "source": "benchmark manifest",
+        "kind": "Pod",
+        "name": "kafka-client"
+      },
+      {
+        "source": "benchmark manifest",
+        "kind": "NetworkPolicy",
+        "name": "benchmark-brokers"
+      },
+      {
+        "source": "ko/data-on-eks/kafka/09-kafka-benchmark.md",
+        "kind": "Namespace",
+        "name": "bench-kafka"
+      },
+      {
+        "source": "ko/data-on-eks/kafka/09-kafka-benchmark.md",
+        "kind": "StorageClass",
+        "name": "bench-kafka-gp3"
+      },
+      {
+        "source": "ko/data-on-eks/kafka/09-kafka-benchmark.md",
+        "kind": "Service",
+        "name": "kafka-hs"
+      },
+      {
+        "source": "ko/data-on-eks/kafka/09-kafka-benchmark.md",
+        "kind": "StatefulSet",
+        "name": "kafka"
+      },
+      {
+        "source": "ko/data-on-eks/kafka/09-kafka-benchmark.md",
+        "kind": "Pod",
+        "name": "kafka-client"
+      },
+      {
+        "source": "ko/data-on-eks/kafka/09-kafka-benchmark.md",
+        "kind": "NetworkPolicy",
+        "name": "benchmark-brokers"
+      },
+      {
+        "source": "en/data-on-eks/kafka/09-kafka-benchmark.md",
+        "kind": "Namespace",
+        "name": "bench-kafka"
+      },
+      {
+        "source": "en/data-on-eks/kafka/09-kafka-benchmark.md",
+        "kind": "StorageClass",
+        "name": "bench-kafka-gp3"
+      },
+      {
+        "source": "en/data-on-eks/kafka/09-kafka-benchmark.md",
+        "kind": "Service",
+        "name": "kafka-hs"
+      },
+      {
+        "source": "en/data-on-eks/kafka/09-kafka-benchmark.md",
+        "kind": "StatefulSet",
+        "name": "kafka"
+      },
+      {
+        "source": "en/data-on-eks/kafka/09-kafka-benchmark.md",
+        "kind": "Pod",
+        "name": "kafka-client"
+      },
+      {
+        "source": "en/data-on-eks/kafka/09-kafka-benchmark.md",
+        "kind": "NetworkPolicy",
+        "name": "benchmark-brokers"
+      }
+    ],
+    "fences": [
+      {
+        "path": "ko/data-on-eks/kafka/09-kafka-benchmark.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/09-kafka-benchmark.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/09-kafka-benchmark.md",
+        "language": "awk"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/09-kafka-benchmark.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/09-kafka-benchmark.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/09-kafka-benchmark.md",
+        "language": "sh"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/09-kafka-benchmark.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/09-kafka-benchmark.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/09-kafka-benchmark.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/09-kafka-benchmark.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/09-kafka-benchmark.md",
+        "language": "awk"
+      },
+      {
+        "path": "en/data-on-eks/kafka/09-kafka-benchmark.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/09-kafka-benchmark.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/09-kafka-benchmark.md",
+        "language": "sh"
+      },
+      {
+        "path": "en/data-on-eks/kafka/09-kafka-benchmark.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/09-kafka-benchmark.md",
+        "language": "bash"
+      }
+    ],
+    "relativeLinks": 20,
+    "quizQuestions": 16,
+    "images": [
+      "en/.gitbook/assets/en-data-on-eks-kafka-09-kafka-benchmark-0.png",
+      "en/.gitbook/assets/en-data-on-eks-kafka-09-kafka-benchmark-1.png",
+      "ko/.gitbook/assets/ko-data-on-eks-kafka-09-kafka-benchmark-0.png",
+      "ko/.gitbook/assets/ko-data-on-eks-kafka-09-kafka-benchmark-1.png"
+    ],
+    "measurementTablesPreserved": [
+      {
+        "locale": "ko",
+        "originalIndex": 2,
+        "sha256": "88812e9de948db93f18d2e20c6b73578ac80a309994a32dbc10561cb69b39c76"
+      },
+      {
+        "locale": "ko",
+        "originalIndex": 3,
+        "sha256": "8bf2330cf650ead1be2fc220260a6267a55eb26a45baa87fcfc8639ed6c309e0"
+      },
+      {
+        "locale": "ko",
+        "originalIndex": 4,
+        "sha256": "aa953948f785747b4430b52bcb97b31f468da6910b7ee2f55ee716afbf1f7c72"
+      },
+      {
+        "locale": "ko",
+        "originalIndex": 5,
+        "sha256": "126c9053a03fb1ed76da8680e8cf1c876aa80141ff01214d1c0ce7c834f62158"
+      },
+      {
+        "locale": "ko",
+        "originalIndex": 6,
+        "sha256": "da4254b5286f8a933e1c09ab842696edb7ea47a60674676ca0847e4a5becdb9b"
+      },
+      {
+        "locale": "ko",
+        "originalIndex": 7,
+        "sha256": "4615074fa8bde4582ce97aa72a1926c82119edcbea330b14c4e8770071a19d91"
+      },
+      {
+        "locale": "ko",
+        "originalIndex": 8,
+        "sha256": "7f9c138aa69bd2da430d68526999eb329e72abb56a41186d3d304c58eacf647f"
+      },
+      {
+        "locale": "en",
+        "originalIndex": 2,
+        "sha256": "70a02ff0d726c652cf3f0d26c0632e89ce89db9b3c83cb117a1b080e2543eabb"
+      },
+      {
+        "locale": "en",
+        "originalIndex": 3,
+        "sha256": "88ba0d9d9014621483a12cb17d89268f33fe9acb97db59a909322060eedbb488"
+      },
+      {
+        "locale": "en",
+        "originalIndex": 4,
+        "sha256": "aa953948f785747b4430b52bcb97b31f468da6910b7ee2f55ee716afbf1f7c72"
+      },
+      {
+        "locale": "en",
+        "originalIndex": 5,
+        "sha256": "126c9053a03fb1ed76da8680e8cf1c876aa80141ff01214d1c0ce7c834f62158"
+      },
+      {
+        "locale": "en",
+        "originalIndex": 6,
+        "sha256": "9d41e30809558ec0b47f6c610a3fb20f6516691c326962f1c9c91472e03c19de"
+      },
+      {
+        "locale": "en",
+        "originalIndex": 7,
+        "sha256": "64a87b7d1b4e975df014984611600db4ea1701df5a8047b9ad6f1bacec302103"
+      },
+      {
+        "locale": "en",
+        "originalIndex": 8,
+        "sha256": "c363b21ed28e54147e8ff9506f70b3dfce8d8f9b42762f76bb31eb04f1ac5262"
+      }
+    ],
+    "successCountCases": [
+      {
+        "fixture": "100 records sent, 2 records/sec, 4 ms 99.9th.",
+        "accepted": true
+      },
+      {
+        "fixture": "99 records sent, 2 records/sec, 4 ms 99.9th.",
+        "accepted": false
+      },
+      {
+        "fixture": "callback exception",
+        "accepted": false
+      },
+      {
+        "fixture": "100 records sent, 2 records/sec, 4 ms max latency.",
+        "accepted": false
+      },
+      {
+        "fixture": "warning\n100 records sent, 2 records/sec, 4 ms 99.9th.",
+        "accepted": true
+      }
+    ],
+    "arithmetic": {
+      "F4_over_F1": "2.507124833011726287665132848",
+      "F6_vs_F1_percent": "10.12320023749443372420958880",
+      "F6_CPU_midpoint_reduction_percent": "39.18918918918918918918918919",
+      "B1_p99_over_B2": "7.411764705882352941176470588",
+      "E4_producer_retained_percent": "55.50503095975232198142414861",
+      "E4_producer_drop_percent": "44.49496904024767801857585139",
+      "F1_RX_136MiBs_Gbps": "1.140850688",
+      "F1_TX_108MiBs_Gbps": "0.905969664",
+      "m5xlarge_EBS_baseline_MiBs": "137.0906829833984375",
+      "m5xlarge_EBS_maximum_MiBs": "566.2441253662109375",
+      "F4_client_Gbps": "2.83375566848",
+      "compute_50min_assumption_USD": "0.590",
+      "storage_39min_730h_assumption_USD": "0.02436164383561643835616438356",
+      "monthly_730h_compute_USD": "516.840",
+      "monthly_storage_USD": "27.3600",
+      "monthly_730h_partial_total_USD": "544.2000",
+      "F1_payload_GiB": "9.3877315521240234375",
+      "F1_reported_log_GiB": "9.4808638095855712890625",
+      "E2_payload_GiB": "28.6102294921875",
+      "E3_unweighted_mean_MiBs": "438.6153846153846153846153846"
+    },
+    "payload": {
+      "rows": 20000,
+      "byteLengths": {
+        "1008": 20000
+      },
+      "sha256": "6b52c07f043edccc4b871c25bd726a39f11e6577a1c89962efa5bbf65bc01723",
+      "paddingFraction": 0.6317225694444445,
+      "wholeFileZlib6Ratio": 15.922825583514747,
+      "withoutPaddingZlib6Ratio": 6.531871370794438,
+      "awkImplementation": "GNU Awk 5.1.0, API: 3.0 (GNU MPFR 4.1.0-p13, GNU MP 6.2.1)",
+      "limit": "Regenerated locally from published AWK; not the original experiment payload. rand implementations and image versions differ; hash is not historical evidence."
+    },
+    "nativeCLI": {
+      "status": "passed",
+      "stdout": "Reading payloads from: /home/atomoh/kubernetes-docs/.vitepress/cache/content-review-kafka-benchmark/payload-1k.txt\nNumber of records read: 20000\nPASS modern producer flags parse without a broker\nPASS payload lines exclude newline and are 1008 bytes\nPASS acks=all implicit idempotence is enabled\nPASS incompatible implicit acks disables default idempotence: 1\nPASS incompatible implicit acks disables default idempotence: 0\nPASS explicit later property values replace defaults\nPASS modern consumer num-records option parses\nPASS large producer run uses periodic latency samples\nPASS failed callback is not counted as successfully sent\nPASS successful callback increments count\nPASS 10 native performance-tool checks; no client/network created\n",
+      "limits": "Native CLI config/payload/Stats only; no Kafka client or network connection created."
+    },
+    "sampler": {
+      "status": "passed",
+      "fields": [
+        "device",
+        "interface",
+        "start_uptime_s",
+        "end_uptime_s",
+        "read_ios",
+        "read_sectors",
+        "write_ios",
+        "write_sectors",
+        "cpu_usage_usec",
+        "cpu_throttled_usec",
+        "net_tx_bytes",
+        "net_rx_bytes"
+      ],
+      "limits": "Read-only local host counters with explicitly selected interface; no Kafka/EBS writes or AWS calls. Not the original benchmark device."
+    },
+    "diagrams": [
+      {
+        "stem": "ko-data-on-eks-kafka-09-kafka-benchmark-0",
+        "deliveryChecks": 9,
+        "desktopVisual": "passed"
+      },
+      {
+        "stem": "ko-data-on-eks-kafka-09-kafka-benchmark-1",
+        "deliveryChecks": 9,
+        "desktopVisual": "passed"
+      },
+      {
+        "stem": "en-data-on-eks-kafka-09-kafka-benchmark-0",
+        "deliveryChecks": 9,
+        "desktopVisual": "passed"
+      },
+      {
+        "stem": "en-data-on-eks-kafka-09-kafka-benchmark-1",
+        "deliveryChecks": 9,
+        "desktopVisual": "passed"
+      }
+    ],
+    "mobile": [
+      {
+        "name": "en-data-on-eks-kafka-09-kafka-benchmark-0.html",
+        "width": 375,
+        "sourceSha256": "51a50fb52b84a0691cb3f6b2df715c28ac658e89d400e3f38649035bc5bf12d5",
+        "viewerSha256": "efc25fdee7624e76778fc893713fbd6a1bdf008c4499ede214c90784fb1a5e87",
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-data-on-eks-kafka-09-kafka-benchmark-1.html",
+        "width": 375,
+        "sourceSha256": "9b882599d2f891345262ea9bdd93478994e3190b0f80f1c9dd88d6f8daa4d726",
+        "viewerSha256": "6ffa893b4c997f0f6824f3c540ee1c12f9a906890784a8aef15006681d4b623d",
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-data-on-eks-kafka-09-kafka-benchmark-0.html",
+        "width": 375,
+        "sourceSha256": "d2f8603516a16a22f153828376780b29beea6b2d5218c403d9d2cd31680fb4ed",
+        "viewerSha256": "cab15d020a32117142a415d1e6c4d307c5332d4b9674c8541e40df2b280bdb94",
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-data-on-eks-kafka-09-kafka-benchmark-1.html",
+        "width": 375,
+        "sourceSha256": "4f0527388abce542cd52fa44cb7e9357e0cce4c23abac8cba1bab67607e22857",
+        "viewerSha256": "b96ca18f057abc8108fbe8254ad3ad4d9480e2d4b5668c843911a29474485402",
+        "viewport": 375,
+        "scrollWidth": 375,
+        "bodyWidth": 375,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-data-on-eks-kafka-09-kafka-benchmark-0.html",
+        "width": 768,
+        "sourceSha256": "51a50fb52b84a0691cb3f6b2df715c28ac658e89d400e3f38649035bc5bf12d5",
+        "viewerSha256": "efc25fdee7624e76778fc893713fbd6a1bdf008c4499ede214c90784fb1a5e87",
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "en-data-on-eks-kafka-09-kafka-benchmark-1.html",
+        "width": 768,
+        "sourceSha256": "9b882599d2f891345262ea9bdd93478994e3190b0f80f1c9dd88d6f8daa4d726",
+        "viewerSha256": "6ffa893b4c997f0f6824f3c540ee1c12f9a906890784a8aef15006681d4b623d",
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-data-on-eks-kafka-09-kafka-benchmark-0.html",
+        "width": 768,
+        "sourceSha256": "d2f8603516a16a22f153828376780b29beea6b2d5218c403d9d2cd31680fb4ed",
+        "viewerSha256": "cab15d020a32117142a415d1e6c4d307c5332d4b9674c8541e40df2b280bdb94",
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      },
+      {
+        "name": "ko-data-on-eks-kafka-09-kafka-benchmark-1.html",
+        "width": 768,
+        "sourceSha256": "4f0527388abce542cd52fa44cb7e9357e0cce4c23abac8cba1bab67607e22857",
+        "viewerSha256": "b96ca18f057abc8108fbe8254ad3ad4d9480e2d4b5668c843911a29474485402",
+        "viewport": 768,
+        "scrollWidth": 768,
+        "bodyWidth": 768,
+        "visibleButtons": 5,
+        "buttonOverflow": 0,
+        "svgCount": 2,
+        "interactions": [
+          {
+            "button": "#btn-preset",
+            "contained": true
+          },
+          {
+            "button": "#btn-export",
+            "contained": true
+          }
+        ],
+        "themeChanged": true,
+        "zoomWorked": true,
+        "presentation": {
+          "active": true,
+          "overflow": false,
+          "scrollHeight": 900,
+          "viewportHeight": 900
+        },
+        "passed": true
+      }
+    ],
+    "limits": "No AWS throughput rerun or resource creation. Historical results remain attributed reports. Local code/schema/arithmetic/payload/CLI/sampler and visual checks do not independently verify historical telemetry, cloud performance or costs."
+  },
+  "historicalProvenance": {
+    "commit": "c9345a53",
+    "pr": 166,
+    "review": "PRbodyandfilelistread; originalmeasurementclaims present, no bundledrawtelemetry inthatreport. No currentapprovalrejection; historicalPRpermissiondenialsnotpartofthisaudit."
+  },
+  "limits": "No AWS throughput rerun or resource creation. Historical results remain attributed reports. Local code/schema/arithmetic/payload/CLI/sampler and visual checks do not independently verify historical telemetry, cloud performance or costs."
+}

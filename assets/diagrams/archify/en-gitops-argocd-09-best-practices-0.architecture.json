@@ -29,7 +29,10 @@
         ],
         "note": "The same components are split into independent Git repositories per team, giving fine-grained access control."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {

@@ -2,7 +2,7 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "전통적 배포 vs Feature Flag 배포",
+    "title": "배포와 기능 노출",
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
@@ -14,7 +14,7 @@
           "release_t",
           "all_users"
         ],
-        "note": "코드 배포가 곧 릴리스다. 새 버전이 배포되는 순간 전체 사용자에게 새 기능이 노출된다."
+        "note": "새 동작은 워크로드의 배포 전략을 따라 전달됩니다. 모든 Pod가 동시에 바뀌는 것은 아닙니다."
       },
       {
         "id": "flagged",
@@ -25,7 +25,7 @@
           "target_users",
           "existing"
         ],
-        "note": "코드 배포(Deployment)와 기능 릴리스(Release)가 분리된다. 코드 변경 없이 플래그 값만으로 노출 시점과 대상을 제어한다."
+        "note": "배포된 코드의 기능 노출을 런타임 플래그로 제어합니다. SDK 통합과 규칙 검증이 필요합니다."
       },
       {
         "id": "decision",
@@ -35,7 +35,7 @@
           "target_users",
           "existing"
         ],
-        "note": "플래그가 ON인 대상 사용자에게만 새 기능이 노출되고, OFF인 사용자는 기존 경험을 그대로 유지한다."
+        "note": "평가 결과에 따라 새 기능 또는 기존 동작을 선택합니다. 인증·인가는 별도입니다."
       }
     ],
     "legend": {
@@ -84,7 +84,7 @@
       "width": 160,
       "type": "backend",
       "label": "릴리스",
-      "sublabel": "배포와 동시에 노출"
+      "sublabel": "코드와 함께 동작 변경"
     },
     {
       "id": "all_users",
@@ -92,8 +92,8 @@
       "col": 2,
       "width": 160,
       "type": "cloud",
-      "label": "전체 사용자",
-      "sublabel": "모두 새 기능 사용"
+      "label": "롤아웃 대상",
+      "sublabel": "배포 전략에 따라 반영"
     },
     {
       "id": "deploy_f",
@@ -137,7 +137,7 @@
       "id": "deploy_t-release_t",
       "from": "deploy_t",
       "to": "release_t",
-      "label": "즉시"
+      "label": "롤아웃"
     },
     {
       "id": "release_t-all_users",

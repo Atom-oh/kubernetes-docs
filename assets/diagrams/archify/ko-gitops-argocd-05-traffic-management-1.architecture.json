@@ -12,10 +12,7 @@
           "label": "로드 밸런서"
         },
         "backend": {
-          "label": "애플리케이션 버전"
-        },
-        "external": {
-          "label": "정리 대상"
+          "label": "버전 / 용량 조정"
         }
       }
     },
@@ -32,13 +29,13 @@
       },
       {
         "id": "switch",
-        "label": "즉시 전환",
+        "label": "선택기 전환",
         "focus": [
           "blue-before",
           "green-after",
           "lb-after"
         ],
-        "note": "activeService 셀렉터가 Green으로 바뀌면서 프로덕션 트래픽이 한 번에 v2.0.0으로 이동한다."
+        "note": "active Service selector를 Green으로 변경합니다. 데이터플레인 전파와 기존 연결 드레이닝에는 시간이 걸립니다."
       },
       {
         "id": "after",
@@ -49,7 +46,7 @@
           "blue-after",
           "scale-down"
         ],
-        "note": "이전 버전 Blue v1.0.0은 scaleDownDelaySeconds 동안 롤백용으로 남은 뒤 스케일 다운된다."
+        "note": "이전 ReplicaSet의 축소는 post-analysis와 지연 설정을 따릅니다. 축소 후에도 리비전 기록이 남을 수 있습니다."
       }
     ],
     "viewBox": [
@@ -144,9 +141,9 @@
     },
     {
       "id": "scale-down",
-      "type": "external",
+      "type": "backend",
       "label": "스케일 다운",
-      "sublabel": "scaleDownDelaySeconds 이후",
+      "sublabel": "분석 / 지연 조건 이후",
       "pos": [
         720,
         410
@@ -199,7 +196,7 @@
       "id": "switch",
       "from": "blue-before",
       "to": "green-after",
-      "label": "전환",
+      "label": "selector 변경",
       "variant": "emphasis"
     },
     {
@@ -222,7 +219,7 @@
       "id": "blue-to-scale-down",
       "from": "blue-after",
       "to": "scale-down",
-      "label": "삭제 예정",
+      "label": "replicas: 0",
       "variant": "dashed",
       "labelDy": 24
     }
@@ -241,9 +238,9 @@
       "dot": "orange",
       "title": "전환 후",
       "items": [
-        "autoPromotionEnabled 또는 수동 승격으로 트래픽 즉시 전환",
-        "postPromotionAnalysis로 전환 후 성공률 확인",
-        "Blue는 scaleDownDelaySeconds 후 스케일 다운"
+        "자동 또는 수동 승격으로 active selector 변경",
+        "postPromotionAnalysis로 전환 이후 상태 확인",
+        "분석 / 지연 조건 후 이전 ReplicaSet 축소"
       ]
     }
   ]

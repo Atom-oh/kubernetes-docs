@@ -1,54 +1,54 @@
 # Flink on EKS 딥다이브
 
-## 개요
+Apache Flink는 유한·무한 스트림을 처리하는 분산 stateful 엔진입니다.
+JobManager는 실행·복구를 조정하고, TaskManager는 operator task와 데이터 교환을
+담당합니다. Checkpoint의 상태 일관성과 외부 sink의 exactly-once 보장은 별도 조건을
+가집니다. Part 3에서 source·state·sink를 함께 검증합니다.
 
-Apache Flink는 무한/유한 데이터 스트림에 대한 상태 기반(stateful) 연산을 위한 분산 스트림 처리 엔진으로, 실시간 분석, 이벤트 기반 애플리케이션, 지속적인 ETL 파이프라인 등에 널리 사용됩니다. EKS 환경에서는 Flink CLI로 잡을 직접 제출하는 대신 **Flink Kubernetes Operator**를 통해 클러스터를 운영하는 것이 표준적인 방식입니다. Operator는 배포, 업그레이드, 세이브포인트 기반 재배포, 오토스케일링 등 Flink 클러스터의 전체 라이프사이클을 Kubernetes 네이티브 CRD(Custom Resource Definition) 기반으로 선언적으로 관리합니다.
+> 검토: 2026-09-12. 이 시리즈의 연동 기준은 **Flink 2.2.1 / Java 17 / Operator 1.15.0**입니다.
 
-> **지원 버전**: Apache Flink 2.2+, Flink Kubernetes Operator 1.15+, Kubernetes 1.21+
-> **마지막 업데이트**: 2026년 7월 15일
+Part 3의 Iceberg 예제는 호환 runtime에 맞춰 **Flink 2.1.3 / Iceberg 1.11.0**을 별도로 사용합니다.
+S3 플러그인의 SDK 지원 상태와 관리형 서비스의 차이는 각 장의 검증 제한을 확인합니다.
 
-## 핵심 아키텍처 개념
+Flink 최신 안정 릴리스는 2.3.0이지만, 공개 Operator·커넥터 지원 표와 함께 확인할
+예제 기준선을 2.2.1로 고정했습니다. 버전 문자열이 CRD enum에 들어 있다는 사실만으로
+그 조합의 통합 검증을 대신하지 않습니다. Kubernetes와 kubectl은 현재 EKS 지원 및
+version-skew 정책에 맞춥니다. “Kubernetes 1.21+”는 현재 EKS 지원 보장이 아닙니다.
 
-Flink 클러스터는 두 가지 Pod 역할로 구성됩니다. **JobManager**는 컨트롤 플레인 역할을 하며, 잡 그래프를 생성하고 체크포인트를 조율하며 작업을 스케줄링하지만 레코드를 직접 처리하지는 않습니다. 실제 오퍼레이터 서브태스크를 **태스크 슬롯(Task Slot)** 안에서 실행하는 워커는 **TaskManager** Pod입니다. YARN이 노드 매니저를 상시 데몬셋 형태로 유지하는 것과 달리, Flink의 네이티브 Kubernetes 배포 모드에서는 JobManager 내부의 **Kubernetes ResourceManager** 컴포넌트가 Kubernetes API 서버와 직접 통신하여, 잡에 슬롯이 더 필요할 때 TaskManager Pod를 동적으로 요청하고 병렬성이 줄거나 잡이 끝나면 반납합니다. 즉, 고정된 워커 풀을 미리 프로비저닝하거나 수동으로 관리할 필요가 없습니다.
+## Kubernetes에서 누가 무엇을 관리하나요?
 
-**Flink Kubernetes Operator**는 이 네이티브 배포 모델 한 단계 위에서 동작합니다. `flink run-application`으로 잡을 명령형으로 제출하는 대신, `FlinkDeployment`(Application/Session 모드 클러스터)와 `FlinkSessionJob`(실행 중인 Session 클러스터에 제출되는 잡) 커스텀 리소스로 원하는 클러스터 상태를 선언하면, Operator가 JobManager/TaskManager Pod를 그 상태에 맞춰 지속적으로 조정합니다. 여기에는 변경 사항을 어떻게 안전하게 적용할지(stateless 재시작, savepoint, last-state 업그레이드)와, 내장 오토스케일러를 통해 잡 그래프의 개별 vertex를 어떻게 재조정할지도 포함됩니다.
+- **FlinkDeployment**는 Application 또는 Session cluster를 정의합니다.
+- **FlinkSessionJob**은 이미 관리 중인 Session cluster에 제출하는 job을 정의합니다.
+- Operator는 cluster/job lifecycle을 조정합니다. **Native와 Standalone 모드를 모두 지원**합니다.
+- Native에서는 JobManager의 Kubernetes ResourceManager가 TaskManager Pod를 요청·해제합니다.
+  Standalone에서는 Operator 등 외부 관리자가 Kubernetes 자원을 관리합니다.
+- Task slot은 CPU core나 “서브태스크 정확히 하나”가 아닙니다. Chaining과 slot sharing으로
+  여러 operator가 slot을 공유할 수 있으며, 상태·메모리·CPU 용량을 별도로 산정합니다.
 
-![운영자가 FlinkDeployment/FlinkSessionJob CR을 적용하면 Kubernetes API Server를 거쳐 Flink Kubernetes Operator가 JobManager Pod를 생성·조정하고, JobManager 내부의 ResourceManager가 API Server에 TaskManager Pod를 요청·반납하며 두 TaskManager Pod에 서브태스크와 체크포인트를 배분하는 흐름을 보여준다.](../../.gitbook/assets/ko-data-on-eks-flink-readme-0.png)
+아래 그림은 **Native 모드의 논리적 제어 흐름**입니다. Pod 해제는 idle timeout·필요 용량·
+정리 정책에 따르며 job 종료 순간 node 비용까지 없어지는 것은 아닙니다.
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-flink-readme-0.html)
+![Flink Operator, Kubernetes API, JobManager and TaskManagers in Native mode.](../../.gitbook/assets/ko-data-on-eks-flink-readme-0.png)
 
-## 딥다이브 목차
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/ko-data-on-eks-flink-readme-0.html)
 
-**[1. Flink 아키텍처](01-architecture.md)**
-- JobManager/TaskManager 클러스터 모델과 태스크 슬롯
-- 배포 모드: Application, Session, 레거시 Per-Job
-- 네이티브 Kubernetes 배포 vs standalone-on-Kubernetes
+## 시리즈 구성
 
-**[2. Flink Kubernetes Operator](02-flink-kubernetes-operator.md)**
-- `FlinkDeployment`, `FlinkSessionJob` CRD 상세
-- 업그레이드 모드: stateless, savepoint, last-state
-- 내장 vertex 단위 오토스케일러
+1. [아키텍처](01-architecture.md): 프로세스·slot sharing, Application/Session, Native/Standalone의 두 축.
+2. [Flink Kubernetes Operator](02-flink-kubernetes-operator.md): CRD·설치·업그레이드와 autoscaler.
+3. [상태·체크포인트·스트리밍](03-state-checkpointing-streaming.md): backend·복구·connector의 실제 전달 보장.
+4. [운영과 HA](04-operations-ha.md): metrics·HA 저장소·node capacity·관리형 서비스 비교.
 
-**[3. 상태, 체크포인팅, 스트리밍 패턴](03-state-checkpointing-streaming.md)**
-- HashMap vs RocksDB 상태 백엔드, 증분(incremental) 체크포인트
-- 체크포인트 vs 세이브포인트
-- 2PC(2단계 커밋) 기반 Kafka Exactly-Once 전달, Dynamic Iceberg Sink
-- Flink SQL/Table API vs DataStream API
-
-**[4. 운영과 고가용성](04-operations-ha.md)**
-- Prometheus/RocksDB 메트릭 모니터링
-- ConfigMap 기반 Kubernetes 네이티브 HA (Zookeeper 불필요)
-- Flink 오토스케일러와 Karpenter의 2단계 오토스케일링
-- Amazon Managed Service for Apache Flink와 비교
+Operator를 통한 선언적 운영을 주 경로로 다루며, CLI는 그 아래의 runtime 동작을
+설명하는 데 사용합니다. Operator 없이 실행하는 방법도 지원되는 선택입니다.
 
 ## 참고 자료
 
-- [Apache Flink 공식 문서](https://nightlies.apache.org/flink/flink-docs-release-2.2/)
-- [Flink Kubernetes Operator](https://github.com/apache/flink-kubernetes-operator)
-- [Flink Kubernetes Operator 오토스케일러](https://nightlies.apache.org/flink/flink-kubernetes-operator-docs-main/docs/custom-resource/autoscaler/)
-- [Amazon Managed Service for Apache Flink](https://docs.aws.amazon.com/managed-flink/latest/java/what-is.html)
-- [AWS Data on EKS 프로젝트](https://awslabs.github.io/data-on-eks/)
+- [Flink releases and connector compatibility](https://flink.apache.org/downloads/)
+- [Flink 2.2 architecture](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/concepts/flink-architecture/)
+- [Flink 2.2 deployment modes](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/overview/)
+- [Native Kubernetes deployment](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/resource-providers/native_kubernetes/)
+- [Java compatibility](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/java_compatibility/)
+- [Operator 1.15.0 deployment modes](https://github.com/apache/flink-kubernetes-operator/blob/release-1.15.0/docs/content/docs/custom-resource/overview.md)
 
-## 퀴즈
-
-이 섹션에서 배운 내용을 테스트하려면 [Flink 아키텍처 퀴즈](../../quizzes/data-on-eks/flink/01-architecture-quiz.md)를 풀어보세요.
+[Quiz](../../quizzes/data-on-eks/flink/01-architecture-quiz.md)

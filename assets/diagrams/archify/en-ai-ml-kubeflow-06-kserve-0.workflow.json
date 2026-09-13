@@ -2,10 +2,10 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "KServe Inference Flow and Deployment Modes",
+    "title": "KServe configuration and inference requests",
     "locale": "en",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "legend": {
       "entries": {
         "external": {
@@ -25,13 +25,13 @@
     "views": [
       {
         "id": "entry",
-        "label": "Request entry",
+        "label": "Resource configuration",
         "focus": [
           "request",
           "isvc",
           "predictor"
         ],
-        "note": "A client request reaches the InferenceService, where the required predictor spec receives it."
+        "note": "Applying a spec is control-plane work; inference requests go to a running endpoint."
       },
       {
         "id": "optional",
@@ -52,18 +52,17 @@
           "knative",
           "rawdep"
         ],
-        "note": "Serverless lets Knative manage pods with scale-to-zero; Raw Deployment keeps a Deployment/Service + HPA always running."
+        "note": "Knative minReplicas defaults to 1; Standard uses the selected HPA/KEDA or external scaler."
       },
       {
         "id": "inference",
         "label": "Inference and response",
         "focus": [
-          "knative",
-          "rawdep",
+          "client-call",
           "model",
           "response"
         ],
-        "note": "In either mode the model server loads the artifact, runs inference, and returns the result to the client."
+        "note": "Client requests reach model servers through configured network routes."
       }
     ],
     "viewBox": [
@@ -74,7 +73,7 @@
   "lanes": [
     {
       "id": "client",
-      "label": "Client"
+      "label": "Operator / client"
     },
     {
       "id": "isvc",
@@ -86,11 +85,11 @@
     },
     {
       "id": "serverless",
-      "label": "Serverless mode (Knative)"
+      "label": "Knative"
     },
     {
       "id": "raw",
-      "label": "Raw Deployment mode"
+      "label": "Standard"
     }
   ],
   "mainPath": [
@@ -99,8 +98,7 @@
     "predictor",
     "mode",
     "knative",
-    "model",
-    "response"
+    "model"
   ],
   "nodes": [
     {
@@ -108,8 +106,8 @@
       "lane": "client",
       "col": 0,
       "type": "external",
-      "label": "Client request",
-      "sublabel": "inference request",
+      "label": "Apply definition",
+      "sublabel": "operator / API",
       "width": 136
     },
     {
@@ -118,7 +116,7 @@
       "col": 1,
       "type": "backend",
       "label": "InferenceService",
-      "sublabel": "KServe CRD",
+      "sublabel": "custom resource object",
       "width": 136
     },
     {
@@ -154,7 +152,7 @@
       "col": 3,
       "type": "security",
       "label": "Deployment mode",
-      "sublabel": "Serverless / Raw",
+      "sublabel": "Knative / Standard",
       "width": 148
     },
     {
@@ -162,8 +160,8 @@
       "lane": "serverless",
       "col": 4,
       "type": "cloud",
-      "label": "Knative-managed pod",
-      "sublabel": "scale-to-zero capable",
+      "label": "Knative Service",
+      "sublabel": "zero requires configuration",
       "width": 168
     },
     {
@@ -171,8 +169,8 @@
       "lane": "raw",
       "col": 3,
       "type": "cloud",
-      "label": "Deployment/Service + HPA",
-      "sublabel": "no scale-to-zero",
+      "label": "Deployment / scaler",
+      "sublabel": "HPA / KEDA / external",
       "width": 196
     },
     {
@@ -180,8 +178,8 @@
       "lane": "isvc",
       "col": 5,
       "type": "backend",
-      "label": "Model server inference",
-      "sublabel": "loads artifact, runs inference",
+      "label": "Ready model server",
+      "sublabel": "model load / inference",
       "width": 196
     },
     {
@@ -191,6 +189,15 @@
       "type": "external",
       "label": "Response to client",
       "sublabel": "inference result",
+      "width": 168
+    },
+    {
+      "id": "client-call",
+      "lane": "client",
+      "col": 4,
+      "type": "external",
+      "label": "Inference request",
+      "sublabel": "authenticated endpoint route",
       "width": 168
     }
   ],
@@ -230,14 +237,14 @@
       "id": "mode-knative",
       "from": "mode",
       "to": "knative",
-      "label": "Serverless",
+      "label": "Knative",
       "variant": "emphasis"
     },
     {
       "id": "mode-rawdep",
       "from": "mode",
       "to": "rawdep",
-      "label": "Raw Deployment",
+      "label": "Standard",
       "role": "branch"
     },
     {
@@ -258,34 +265,39 @@
       "to": "response",
       "label": "response",
       "role": "return"
+    },
+    {
+      "id": "client-model",
+      "from": "client-call",
+      "to": "model",
+      "label": "HTTP / gRPC",
+      "role": "branch",
+      "variant": "dashed"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "InferenceService components",
+      "title": "Control and request paths",
       "items": [
-        "Predictor (required): loads the model artifact and answers inference requests",
-        "Transformer (optional): pre/post-processing in front of the predictor",
-        "Explainer (optional): produces model explanations such as feature importance"
+        "Controllers process InferenceService specs; model servers run inference.",
+        "Transformer/explainer are optional and require protocol compatibility."
       ]
     },
     {
       "dot": "emerald",
-      "title": "Serverless mode (Knative)",
+      "title": "Knative",
       "items": [
-        "Knative Serving manages the pod lifecycle",
-        "Scales to zero pods when there is no traffic",
-        "Cold-start latency when scaling up from zero"
+        "minReplicas defaults to 1; zero needs additional conditions.",
+        "canaryTrafficPercent configures Knative revision traffic."
       ]
     },
     {
       "dot": "amber",
-      "title": "Raw Deployment mode",
+      "title": "Standard",
       "items": [
-        "Manages a plain Deployment · Service · HPA directly",
-        "No Knative dependency, no cold start",
-        "Minimum replicas always run, so no scale-to-zero"
+        "Default HPA minimum 1; KEDA zero needs suitable activation signals",
+        "Startup/model-loading latency and EC2 charges can remain."
       ]
     }
   ]

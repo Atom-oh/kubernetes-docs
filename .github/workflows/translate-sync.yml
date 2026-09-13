@@ -71,6 +71,8 @@ jobs:
           xargs -a /tmp/pairs.txt -P 2 -L 1 bash -c \
             'bash scripts/translate.sh "$0" "$1" "$2" || echo "$1" >> /tmp/translate-failures.txt'
           cat /tmp/translate-failures.txt
+          node scripts/restore-failed-translations.mjs /tmp/translate-failures.txt
+          node scripts/sync-translated-assets.mjs
 
       - name: Quality gate on the diff
         if: steps.diff.outputs.pair_count != '0'

@@ -46,7 +46,7 @@ The Cluster generator automatically generates Applications for each cluster regi
 **Answer: B) Creates Applications for each directory in a specified path**
 
 **Explanation:**
-The Git directory generator scans a specified directory in a Git repository and creates an Application for each subdirectory found. This is useful for monorepo setups.
+The Git directory generator scans a specified directory in a Git repository and creates an Application for each directory matching its configured glob and exclusion rules. This is useful for monorepo setups.
 
 </details>
 
@@ -62,7 +62,7 @@ The Git directory generator scans a specified directory in a Git repository and 
 **Answer: D) Both A and B**
 
 **Explanation:**
-The Matrix generator creates combinations (Cartesian product) of parameters from multiple generators. The Merge generator combines parameters from multiple generators, merging matching entries. Both can be used to combine generators.
+The Matrix generator creates combinations (Cartesian product) of parameters from exactly two child generators. The Merge generator combines parameters from multiple generators, merging matching entries. Both can be used to combine generators.
 
 </details>
 
@@ -78,7 +78,7 @@ The Matrix generator creates combinations (Cartesian product) of parameters from
 **Answer: B) To use Go template syntax for more complex templating**
 
 **Explanation:**
-Setting `goTemplate: true` enables Go template syntax, which provides more powerful templating capabilities like conditionals, loops, and functions compared to the default simple variable substitution.
+Setting `goTemplate: true` enables Go template syntax, which provides more powerful templating capabilities like conditionals, loops, and functions compared to default simple substitution. Each string field is evaluated independently; control statements cannot span YAML fields, and boolean/object fields cannot be templated directly.
 
 </details>
 
@@ -110,22 +110,22 @@ The Pull Request generator creates Applications for each open pull request in a 
 **Answer: B) All generated Applications are deleted**
 
 **Explanation:**
-By default, ApplicationSets have a cascading delete policy, meaning when you delete an ApplicationSet, all Applications it generated will also be deleted. This can be changed using the `preserveResourcesOnDeletion` policy.
+By default, ApplicationSets have a cascading delete policy, meaning when you delete an ApplicationSet, all Applications it generated will also be deleted. `preserveResourcesOnDeletion` controls deployed-resource cleanup, not whether Application objects are garbage-collected.
 
 </details>
 
 8. How can you prevent an ApplicationSet from deleting generated Applications when the ApplicationSet is removed?
-   - A) Set `syncPolicy.preserveResourcesOnDeletion: true`
-   - B) Use the `orphan` finalizer
+   - A) Delete with `kubectl delete applicationset NAME --cascade=orphan`
+   - B) Only set `syncPolicy.preserveResourcesOnDeletion: true`
    - C) Set the deletion policy annotation
-   - D) Remove the owner reference manually
+   - D) Scale the ApplicationSet controller to zero
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A) Set `syncPolicy.preserveResourcesOnDeletion: true`**
+**Answer: A) Delete with `kubectl delete applicationset NAME --cascade=orphan`**
 
 **Explanation:**
-Setting `preserveResourcesOnDeletion: true` in the ApplicationSet's syncPolicy ensures that generated Applications (and their deployed resources) are preserved when the ApplicationSet is deleted.
+`--cascade=orphan` leaves generated Application objects when removing their parent. `preserveResourcesOnDeletion: true` prevents adding the deployed-resource deletion finalizer; it does not preserve Application objects from garbage collection. An orphaned Application with an existing finalizer can still delete its resources when later removed.
 
 </details>

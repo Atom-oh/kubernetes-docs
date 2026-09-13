@@ -1,0 +1,122 @@
+{
+  "date": "2026-09-11",
+  "kustomize": "5.8.1 official ARM64 verified hash; CI AMD64 hash independently verified",
+  "chart": "10.8.4/Argo CD3.5.2",
+  "tests": [
+    {
+      "check": "document-fixtures",
+      "locale": "ko",
+      "helmFragments": 4,
+      "workflowMatches": true
+    },
+    {
+      "check": "document-fixtures",
+      "locale": "en",
+      "helmFragments": 4,
+      "workflowMatches": true
+    },
+    {
+      "check": "helm-render",
+      "variant": "resources-tuning",
+      "objects": 59,
+      "passed": true
+    },
+    {
+      "check": "helm-render",
+      "variant": "hpa",
+      "objects": 60,
+      "passed": true
+    },
+    {
+      "check": "helm-render",
+      "variant": "sharding",
+      "objects": 59,
+      "passed": true
+    },
+    {
+      "check": "kustomize-overlay",
+      "image": "my-registry/my-app:v1.2.3",
+      "selectorUnchanged": true,
+      "namespacePrefixReplicas": true
+    },
+    {
+      "check": "digest-promotion",
+      "renderedExactDigest": true,
+      "inputValidationCases": 5
+    },
+    {
+      "check": "actionlint",
+      "passed": true
+    },
+    {
+      "check": "velero-schedule-v1-schema",
+      "passed": true
+    },
+    {
+      "check": "cli-help",
+      "command": "admin export",
+      "flags": [
+        "--namespace",
+        "--application-namespaces",
+        "--applicationset-namespaces"
+      ],
+      "passed": true
+    },
+    {
+      "check": "cli-help",
+      "command": "admin import",
+      "flags": [
+        "--namespace",
+        "--dry-run",
+        "--stop-operation"
+      ],
+      "passed": true
+    },
+    {
+      "check": "cli-help",
+      "command": "app get",
+      "flags": [
+        "--refresh",
+        "--hard-refresh"
+      ],
+      "passed": true
+    },
+    {
+      "check": "cli-help",
+      "command": "app diff",
+      "flags": [],
+      "passed": true
+    },
+    {
+      "check": "cli-help",
+      "command": "app history",
+      "flags": [],
+      "passed": true
+    },
+    {
+      "check": "cli-help",
+      "command": "app resources",
+      "flags": [],
+      "passed": true
+    },
+    {
+      "check": "cli-help",
+      "command": "app manifests",
+      "flags": [],
+      "passed": true
+    },
+    {
+      "check": "cli-help",
+      "command": "cluster get",
+      "flags": [],
+      "passed": true
+    },
+    {
+      "check": "cli-help",
+      "command": "repo get",
+      "flags": [],
+      "passed": true
+    }
+  ],
+  "limitations": "No live cluster upgrade/DR, registry image pull, GitHub PR creation or AWS request was performed."
+}

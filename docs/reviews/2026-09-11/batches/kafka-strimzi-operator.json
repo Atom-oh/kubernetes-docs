@@ -1,0 +1,122 @@
+[
+  {
+    "path": "ko/data-on-eks/kafka/02-strimzi-operator.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full review complete; current v1 deployment, authentication, placement, storage and quizzes corrected and locally validated.",
+    "sources": [
+      "https://github.com/strimzi/strimzi-kafka-operator/releases/download/1.2.0/strimzi-kafka-operator-helm-3-chart-1.2.0.tgz",
+      "https://github.com/strimzi/strimzi-kafka-operator/releases/download/1.2.0/strimzi-crds-1.2.0.yaml",
+      "https://github.com/strimzi/strimzi-kafka-operator/releases/download/1.2.0/strimzi-cluster-operator-1.2.0.yaml",
+      "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/README.md",
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://strimzi.io/docs/operators/1.0.0/deploying.html#assembly-api-conversion-str",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/docker-images/kafka-based/kafka/Dockerfile"
+    ],
+    "validation": [
+      "kafka-strimzi-validation.json"
+    ],
+    "reviewedSha256": "5068aa2f89a53a6fcb0468488b1f49bd95fba3170ebbeb1cae462a952f879cc8",
+    "findings": [
+      "UpdatedtoStrimzi1.2.0/Kafka4.3.1/v1APIswithfresh-installscopeandexplicitbetaCRDmigration;minimumK8s1.30confirmed.",
+      "ValidatedHelmdefault/additionalnamespacewatchandcorrespondingRoleBindings;removedenv-onlywatchchangesandcurlsedapplypath.",
+      "ReplacedplainunauthenticatedtestpathwithTLS/SCRAMlisteners+simpleauthorizer+topic/group/IdempotentWriteACLs.",
+      "AddedmountedSecret/CAclientPodusingstdlibPythoninit;JavaPropertiesandKafkaJAASparsevalidatedASCII/quotes/backslash/Unicode/separatorswithoutactualcredentials.",
+      "UsedmatchedcustompodlabelsandminDomains3forbothcontroller/brokerAZconstraints;rackawareplacementseparate;avoidedper-poolnodeID0assumption.",
+      "SeparatedstandardEBSCSIandAutoModeStorageClasses;verifiedgp3baseline3000IOPS125MiBs;explicitretainandmetadatavolumeplacement.",
+      "CorrectedallbrokerNLBannotationcoverageandcontrollerclass;JSONmergepatchpreservesinternalTLSlistener;alladvertisedendpointsrequired.",
+      "QualifiedReadyTrue/observedGeneration/Podhealth,quorumodd-countreasoning,JBODbalanceandOperatorautomationclaims;updated40quizzes."
+    ]
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full review complete; current v1 deployment, authentication, placement, storage and quizzes corrected and locally validated.",
+    "sources": [
+      "https://github.com/strimzi/strimzi-kafka-operator/releases/download/1.2.0/strimzi-kafka-operator-helm-3-chart-1.2.0.tgz",
+      "https://github.com/strimzi/strimzi-kafka-operator/releases/download/1.2.0/strimzi-crds-1.2.0.yaml",
+      "https://github.com/strimzi/strimzi-kafka-operator/releases/download/1.2.0/strimzi-cluster-operator-1.2.0.yaml",
+      "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/README.md",
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://strimzi.io/docs/operators/1.0.0/deploying.html#assembly-api-conversion-str",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/docker-images/kafka-based/kafka/Dockerfile"
+    ],
+    "validation": [
+      "kafka-strimzi-validation.json"
+    ],
+    "reviewedSha256": "61f76ebad1af61298b78caec4edd9649019159c55b97875eb445110bd19e43e6",
+    "findings": [
+      "UpdatedtoStrimzi1.2.0/Kafka4.3.1/v1APIswithfresh-installscopeandexplicitbetaCRDmigration;minimumK8s1.30confirmed.",
+      "ValidatedHelmdefault/additionalnamespacewatchandcorrespondingRoleBindings;removedenv-onlywatchchangesandcurlsedapplypath.",
+      "ReplacedplainunauthenticatedtestpathwithTLS/SCRAMlisteners+simpleauthorizer+topic/group/IdempotentWriteACLs.",
+      "AddedmountedSecret/CAclientPodusingstdlibPythoninit;JavaPropertiesandKafkaJAASparsevalidatedASCII/quotes/backslash/Unicode/separatorswithoutactualcredentials.",
+      "UsedmatchedcustompodlabelsandminDomains3forbothcontroller/brokerAZconstraints;rackawareplacementseparate;avoidedper-poolnodeID0assumption.",
+      "SeparatedstandardEBSCSIandAutoModeStorageClasses;verifiedgp3baseline3000IOPS125MiBs;explicitretainandmetadatavolumeplacement.",
+      "CorrectedallbrokerNLBannotationcoverageandcontrollerclass;JSONmergepatchpreservesinternalTLSlistener;alladvertisedendpointsrequired.",
+      "QualifiedReadyTrue/observedGeneration/Podhealth,quorumodd-countreasoning,JBODbalanceandOperatorautomationclaims;updated40quizzes."
+    ]
+  },
+  {
+    "path": "en/data-on-eks/kafka/02-strimzi-operator.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full review complete; current v1 deployment, authentication, placement, storage and quizzes corrected and locally validated.",
+    "sources": [
+      "https://github.com/strimzi/strimzi-kafka-operator/releases/download/1.2.0/strimzi-kafka-operator-helm-3-chart-1.2.0.tgz",
+      "https://github.com/strimzi/strimzi-kafka-operator/releases/download/1.2.0/strimzi-crds-1.2.0.yaml",
+      "https://github.com/strimzi/strimzi-kafka-operator/releases/download/1.2.0/strimzi-cluster-operator-1.2.0.yaml",
+      "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/README.md",
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://strimzi.io/docs/operators/1.0.0/deploying.html#assembly-api-conversion-str",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/docker-images/kafka-based/kafka/Dockerfile"
+    ],
+    "validation": [
+      "kafka-strimzi-validation.json"
+    ],
+    "reviewedSha256": "475e7bf0812d1ee3e4ce70213a42878e3399c2e33f811d19d26fa7ffc4e6a216",
+    "findings": [
+      "UpdatedtoStrimzi1.2.0/Kafka4.3.1/v1APIswithfresh-installscopeandexplicitbetaCRDmigration;minimumK8s1.30confirmed.",
+      "ValidatedHelmdefault/additionalnamespacewatchandcorrespondingRoleBindings;removedenv-onlywatchchangesandcurlsedapplypath.",
+      "ReplacedplainunauthenticatedtestpathwithTLS/SCRAMlisteners+simpleauthorizer+topic/group/IdempotentWriteACLs.",
+      "AddedmountedSecret/CAclientPodusingstdlibPythoninit;JavaPropertiesandKafkaJAASparsevalidatedASCII/quotes/backslash/Unicode/separatorswithoutactualcredentials.",
+      "UsedmatchedcustompodlabelsandminDomains3forbothcontroller/brokerAZconstraints;rackawareplacementseparate;avoidedper-poolnodeID0assumption.",
+      "SeparatedstandardEBSCSIandAutoModeStorageClasses;verifiedgp3baseline3000IOPS125MiBs;explicitretainandmetadatavolumeplacement.",
+      "CorrectedallbrokerNLBannotationcoverageandcontrollerclass;JSONmergepatchpreservesinternalTLSlistener;alladvertisedendpointsrequired.",
+      "QualifiedReadyTrue/observedGeneration/Podhealth,quorumodd-countreasoning,JBODbalanceandOperatorautomationclaims;updated40quizzes."
+    ]
+  },
+  {
+    "path": "en/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full review complete; current v1 deployment, authentication, placement, storage and quizzes corrected and locally validated.",
+    "sources": [
+      "https://github.com/strimzi/strimzi-kafka-operator/releases/download/1.2.0/strimzi-kafka-operator-helm-3-chart-1.2.0.tgz",
+      "https://github.com/strimzi/strimzi-kafka-operator/releases/download/1.2.0/strimzi-crds-1.2.0.yaml",
+      "https://github.com/strimzi/strimzi-kafka-operator/releases/download/1.2.0/strimzi-cluster-operator-1.2.0.yaml",
+      "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/README.md",
+      "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+      "https://strimzi.io/docs/operators/1.0.0/deploying.html#assembly-api-conversion-str",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+      "https://raw.githubusercontent.com/strimzi/strimzi-kafka-operator/1.2.0/docker-images/kafka-based/kafka/Dockerfile"
+    ],
+    "validation": [
+      "kafka-strimzi-validation.json"
+    ],
+    "reviewedSha256": "a6f891f375dd33b192a4e54c2bcf95a6b3d39744e65efda72fda4ab849ac3ddc",
+    "findings": [
+      "UpdatedtoStrimzi1.2.0/Kafka4.3.1/v1APIswithfresh-installscopeandexplicitbetaCRDmigration;minimumK8s1.30confirmed.",
+      "ValidatedHelmdefault/additionalnamespacewatchandcorrespondingRoleBindings;removedenv-onlywatchchangesandcurlsedapplypath.",
+      "ReplacedplainunauthenticatedtestpathwithTLS/SCRAMlisteners+simpleauthorizer+topic/group/IdempotentWriteACLs.",
+      "AddedmountedSecret/CAclientPodusingstdlibPythoninit;JavaPropertiesandKafkaJAASparsevalidatedASCII/quotes/backslash/Unicode/separatorswithoutactualcredentials.",
+      "UsedmatchedcustompodlabelsandminDomains3forbothcontroller/brokerAZconstraints;rackawareplacementseparate;avoidedper-poolnodeID0assumption.",
+      "SeparatedstandardEBSCSIandAutoModeStorageClasses;verifiedgp3baseline3000IOPS125MiBs;explicitretainandmetadatavolumeplacement.",
+      "CorrectedallbrokerNLBannotationcoverageandcontrollerclass;JSONmergepatchpreservesinternalTLSlistener;alladvertisedendpointsrequired.",
+      "QualifiedReadyTrue/observedGeneration/Podhealth,quorumodd-countreasoning,JBODbalanceandOperatorautomationclaims;updated40quizzes."
+    ]
+  }
+]

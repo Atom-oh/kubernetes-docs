@@ -36,7 +36,7 @@ Kubernetes 集群由一组用于运行容器化应用程序的节点（虚拟机
 
 ### 集群架构图
 
-![展示控制平面的 kube-apiserver 协调 etcd、scheduler 和 controller manager，并连接到工作节点的 kubelet 与 kube-proxy；后两者进而驱动容器运行时和运行中的 Pod 的架构图。](../../.gitbook/assets/en-core-01-cluster-architecture-0.png)
+![展示控制平面的 kube-apiserver 协调 etcd、scheduler 和 controller manager，并连接到工作节点的 kubelet 与 kube-proxy；后两者进而驱动容器运行时和运行中的 Pod 的架构图。](../.gitbook/assets/en-core-01-cluster-architecture-0.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-core-01-cluster-architecture-0.html)
 

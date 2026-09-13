@@ -1,19 +1,19 @@
 # Docker Hub Quiz
-> **Last Updated**: February 25, 2026
+> **Last Updated**: September 11, 2026
 
-1. What is the anonymous pull rate limit for Docker Hub?
-   - A) 50 pulls per 6 hours per IP address
-   - B) 100 pulls per 6 hours per IP address
-   - C) 200 pulls per 6 hours per IP address
+1. Which boundary is used to attribute anonymous Docker Hub pulls from nodes behind NAT?
+   - A) Each Kubernetes Pod
+   - B) Source IPv4 address or IPv6 /64 subnet
+   - C) Kubernetes namespace
    - D) Unlimited pulls
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) 100 pulls per 6 hours per IP address**
+**Answer: B) Source IPv4 address or IPv6 /64 subnet**
 
 **Explanation:**
-Docker Hub enforces rate limits for anonymous users at 100 pulls per 6 hours based on IP address. Authenticated free users get 200 pulls per 6 hours, while paid subscriptions (Pro, Team, Business) have higher or unlimited limits.
+Nodes sharing a NAT address may consume the same anonymous allowance. Obtain the actual limit and reset window from current policy and response headers; authenticated account attribution and abuse controls are separate.
 
 </details>
 
@@ -45,11 +45,11 @@ Kubernetes uses Secrets of type `kubernetes.io/dockerconfigjson` to store regist
 **Answer: B) Configure a pull-through cache or registry mirror**
 
 **Explanation:**
-A pull-through cache (like Harbor's proxy cache or a registry mirror) caches images locally after the first pull. Subsequent pulls from cluster nodes hit the local cache instead of Docker Hub, dramatically reducing the number of requests to Docker Hub and avoiding rate limit issues.
+A pull-through cache reduces repeated layer downloads. Cache misses, mutable-tag checks and refreshes still contact upstream, so caching does not eliminate rate limits.
 
 </details>
 
-4. How do you configure imagePullSecrets to be automatically applied to all Pods in a namespace?
+4. How do you provide default pull credentials to new Pods using the namespace's default ServiceAccount?
    - A) Add the secret to the kube-system namespace
    - B) Patch the default ServiceAccount in the namespace with imagePullSecrets
    - C) Set a cluster-wide ConfigMap
@@ -61,12 +61,12 @@ A pull-through cache (like Harbor's proxy cache or a registry mirror) caches ima
 **Answer: B) Patch the default ServiceAccount in the namespace with imagePullSecrets**
 
 **Explanation:**
-By adding `imagePullSecrets` to the default ServiceAccount in a namespace, all Pods that don't explicitly specify a ServiceAccount will automatically inherit those credentials. This avoids having to specify imagePullSecrets in every Pod spec.
+Add `imagePullSecrets` to that ServiceAccount. Newly admitted Pods using it inherit the list if they do not have their own pull-secret list. Existing Pods, different ServiceAccounts and other namespaces are not retroactively updated.
 
 </details>
 
 5. What distinguishes Docker Official Images from other images on Docker Hub?
-   - A) They are maintained by Docker and follow best practices for security and documentation
+   - A) They belong to a curated program with reviewed upstream images and documentation
    - B) They are always free to use
    - C) They have no rate limits
    - D) They are automatically updated daily
@@ -74,10 +74,10 @@ By adding `imagePullSecrets` to the default ServiceAccount in a namespace, all P
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A) They are maintained by Docker and follow best practices for security and documentation**
+**Answer: A) They belong to a curated program with reviewed upstream images and documentation**
 
 **Explanation:**
-Docker Official Images are curated by Docker and maintained with specific security and documentation standards. They undergo regular security scans, have clear documentation, and follow Dockerfile best practices. However, they still follow the same rate limit and pricing rules as other images.
+Docker Official Images are curated with upstream/community maintainers and reviewed against program standards. The badge does not guarantee that a particular tag has no vulnerabilities; verify the selected digest and maintenance status.
 
 </details>
 
@@ -99,17 +99,17 @@ Docker Verified Publisher images come from commercial software vendors who have 
 
 7. Which Docker Hub subscription tier provides unlimited private repositories?
    - A) Free tier
-   - B) Pro tier
-   - C) Team tier
-   - D) Both Team and Business tiers
+   - B) Only Pro
+   - C) Only Team
+   - D) Pro, Team and Business under their plan policies
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: D) Both Team and Business tiers**
+**Answer: D) Pro, Team and Business under their plan policies**
 
 **Explanation:**
-Docker Hub Team and Business subscription tiers provide unlimited private repositories. The Free tier offers limited private repositories, and the Pro tier offers unlimited private repositories for individual users. Team and Business are designed for organizations requiring collaboration features.
+The usage table lists unlimited private repositories for Pro, Team and Business, subject to plan and fair-use conditions. Personal includes one.
 
 </details>
 
@@ -130,7 +130,7 @@ Public images on Docker Hub may contain known vulnerabilities, outdated dependen
 </details>
 
 9. What is the correct kubectl command to create a Docker Hub image pull secret?
-   - A) `kubectl create secret docker-registry my-secret --docker-server=docker.io --docker-username=USER --docker-password=PASS`
+   - A) `kubectl create secret docker-registry my-secret --docker-server=https://index.docker.io/v1/ --docker-username=USER --docker-password=TOKEN`
    - B) `kubectl create configmap my-secret --docker-server=docker.io`
    - C) `kubectl apply secret docker my-secret`
    - D) `kubectl set image secret my-secret`
@@ -138,25 +138,25 @@ Public images on Docker Hub may contain known vulnerabilities, outdated dependen
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A) `kubectl create secret docker-registry my-secret --docker-server=docker.io --docker-username=USER --docker-password=PASS`**
+**Answer: A) `kubectl create secret docker-registry my-secret --docker-server=https://index.docker.io/v1/ --docker-username=USER --docker-password=TOKEN`**
 
 **Explanation:**
-The `kubectl create secret docker-registry` command creates a Secret of type `kubernetes.io/dockerconfigjson` with the provided registry credentials. The `--docker-server` flag specifies the registry URL (docker.io for Docker Hub), and credentials are provided via `--docker-username` and `--docker-password` flags.
+The command creates a Secret of type `kubernetes.io/dockerconfigjson`. The example uses Docker Hub's standard `https://index.docker.io/v1/` credential key. Replace USER/TOKEN with appropriate credentials without committing them, and create the Secret in the consuming Pod's namespace.
 
 </details>
 
-10. When configuring automated builds on Docker Hub, which trigger source is NOT supported?
-    - A) GitHub repository webhooks
-    - B) Bitbucket repository webhooks
-    - C) GitLab repository webhooks
-    - D) Manual API triggers
+10. What is the appropriate guidance for Docker Hub Automated Builds as of September 2026?
+    - A) Use it as the default for every new CI pipeline
+    - B) It has no announced retirement
+    - C) Migrate from the deprecated feature before April 1, 2027
+    - D) It is available to all free accounts
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) GitLab repository webhooks**
+**Answer: C) Migrate from the deprecated feature before April 1, 2027**
 
 **Explanation:**
-Docker Hub's automated builds feature natively supports GitHub and Bitbucket as source repositories for webhook-triggered builds. GitLab is not directly supported for automated builds on Docker Hub. For GitLab repositories, you would typically use GitLab CI/CD to build and push images to Docker Hub or another registry.
+The official documentation marks Automated Builds deprecated and gives an April 1, 2027 retirement date. Legacy native integration uses GitHub/Bitbucket; GitLab CI can independently build and push images.
 
 </details>

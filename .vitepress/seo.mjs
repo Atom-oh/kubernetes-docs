@@ -18,6 +18,56 @@ export function normalizeReadmeHref(href) {
   return href.replace(README_HREF_RE, (_, prefix, hash) => `${prefix}index.md${hash ?? ''}`)
 }
 
+// Technical inline code often contains Go/Helm templates. Keep those literal
+// without disabling Vue bindings or components in the surrounding prose.
+export function preserveInlineCode(md) {
+  const render = md.renderer.rules.code_inline
+  md.renderer.rules.code_inline = (tokens, index, options, env, renderer) => {
+    tokens[index].attrSet('v-pre', '')
+    return render(tokens, index, options, env, renderer)
+  }
+}
+
+// VitePress decomposes Hangul in generated IDs, while hand-written TOCs
+// commonly use composed Hangul. Keep source Markdown portable for GitBook,
+// but make rendered same-page links target the actual IDs in this document.
+export function normalizeLocalAnchorLinks(tokens) {
+  const exact = new Set()
+  const normalized = new Map()
+  const add = id => {
+    if (!id) return
+    exact.add(id)
+    const key = id.normalize('NFC')
+    if (normalized.has(key) && normalized.get(key) !== id) normalized.set(key, null)
+    else normalized.set(key, id)
+  }
+  const walk = (items, visit) => {
+    for (const token of items) {
+      visit(token)
+      if (token.children) walk(token.children, visit)
+    }
+  }
+  walk(tokens, token => {
+    add(token.attrGet?.('id'))
+    if (token.type === 'html_block' || token.type === 'html_inline') {
+      const html = token.content.replace(/<!--[\s\S]*?-->/g, '')
+      for (const match of html.matchAll(/<[a-z][^>]*\bid\s*=\s*(?:"([^"]+)"|'([^']+)')/gi)) {
+        add(match[1] ?? match[2])
+      }
+    }
+  })
+  walk(tokens, token => {
+    if (token.type !== 'link_open') return
+    const href = token.attrGet('href')
+    if (!href?.startsWith('#')) return
+    let fragment
+    try { fragment = decodeURIComponent(href.slice(1)) } catch { return }
+    if (exact.has(fragment)) return
+    const id = normalized.get(fragment.normalize('NFC'))
+    if (id) token.attrSet('href', `#${encodeURIComponent(id)}`)
+  })
+}
+
 function stripInlineMarkdown(text) {
   return text
     .replace(/!\[[^\]]*\]\([^)]*\)/g, '') // images
@@ -160,8 +210,9 @@ export function canonicalUrl(relativePath) {
   return `${siteHostname}${cleanUrlPath(relativePath)}`
 }
 
-const KO_DATE_RE = /^>\s*\*\*마지막 업데이트\*\*\s*:\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/m
-const EN_DATE_RE = /^>\s*\*\*(?:Supported Versions|Last Updated)\*\*\s*:\s*([A-Z][a-z]+)\s+(\d{1,2}),\s*(\d{4})/m
+// Older pages put version metadata and the update date on one quote line.
+const KO_DATE_RE = /^>[^\r\n]*?\*\*마지막 업데이트\*\*\s*:\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/m
+const EN_DATE_RE = /^>[^\r\n]*?\*\*(?:Supported Versions|Last Updated)\*\*\s*:\s*([A-Z][a-z]+)\s+(\d{1,2}),\s*(\d{4})/m
 const EN_MONTHS = [
   'january', 'february', 'march', 'april', 'may', 'june',
   'july', 'august', 'september', 'october', 'november', 'december'

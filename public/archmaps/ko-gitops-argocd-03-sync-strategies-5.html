@@ -5139,7 +5139,7 @@
           <rect x="524" y="542" width="34" height="16" rx="3" class="c-mask"/>
           <text x="541" y="552" class="t-backend" font-size="9" text-anchor="middle">성공</text>
         </g>
-        <text data-detail="fine" x="176" y="580" class="t-dim" font-size="7">limit=5 도달 시 재시도 중단</text>
+        <text data-detail="fine" x="176" y="580" class="t-dim" font-size="7">성공하여 종료 (재시도 한도 소진 아님)</text>
         </g>
 
         <!-- Segment Labels -->
@@ -5160,8 +5160,8 @@
           <text x="62" y="416" class="t-dim" font-size="9" font-weight="600">시도 4 · 20초 대기 후 (10s × 2)</text>
         </g>
         <g data-graph-role="segment-label" data-segment-id="4">
-          <rect x="56" y="488" width="367.6" height="18" rx="3" class="c-mask"/>
-          <text x="62" y="501" class="t-dim" font-size="9" font-weight="600">시도 5 · 40초 대기 후 (20s × 2) · 성공 — limit=5 도달 시 재시도 중단</text>
+          <rect x="56" y="488" width="258.4" height="18" rx="3" class="c-mask"/>
+          <text x="62" y="501" class="t-dim" font-size="9" font-weight="600">시도 5 · 40초 대기 후 · 네 번째 재시도에서 성공</text>
         </g>
 
         <!-- Participants -->
@@ -5395,7 +5395,7 @@
           <h3>syncPolicy.retry 설정</h3>
         </div>
         <ul>
-          <li>&bull; limit: 5 — 최대 재시도 횟수 (-1은 무제한)</li>
+          <li>&bull; limit: 5 — 최초 시도 + 최대 5회 재시도, 총 최대 6회</li>
           <li>&bull; backoff.duration: 5s — 초기 대기 시간</li>
           <li>&bull; backoff.factor: 2 — 대기 시간 증가 배수</li>
           <li>&bull; backoff.maxDuration: 3m — 대기 시간 상한</li>
@@ -5410,7 +5410,7 @@
         <ul>
           <li>&bull; 5s → 10s → 20s → 40s: 실패마다 factor 배로 증가</li>
           <li>&bull; 계산값이 maxDuration(3m)을 넘으면 3m으로 고정</li>
-          <li>&bull; limit=5에 도달하면 더 이상 재시도하지 않는다</li>
+          <li>&bull; 이 예시는 네 번째 재시도에서 성공하여 남은 재시도를 실행하지 않음</li>
         </ul>
       </div>
     </div>

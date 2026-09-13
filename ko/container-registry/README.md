@@ -1,10 +1,10 @@
 # 컨테이너 레지스트리
 
-> **마지막 업데이트**: 2026년 2월 25일
+> **마지막 업데이트**: 2026년 9월 11일
 
 ## 개요
 
-컨테이너 레지스트리는 Kubernetes 에코시스템에서 컨테이너 이미지를 저장, 관리, 배포하는 핵심 인프라입니다. 모든 Kubernetes 워크로드는 컨테이너 이미지로 패키징되어 레지스트리에 저장된 후 클러스터로 배포됩니다.
+컨테이너 레지스트리는 Kubernetes 에코시스템에서 컨테이너 이미지를 저장, 관리, 배포하는 핵심 인프라입니다. 일반적인 배포는 레지스트리에서 이미지를 가져오지만, 망분리 환경 등에서는 노드에 미리 적재한 이미지를 사용할 수도 있습니다.
 
 ### 컨테이너 레지스트리의 역할
 
@@ -26,15 +26,17 @@
 | 특성 | Docker Hub | Amazon ECR | Harbor |
 |------|------------|------------|--------|
 | **유형** | SaaS (Public) | AWS 관리형 | 자체 호스팅 (CNCF) |
-| **비용** | Free 플랜 있음 | 사용량 기반 | 인프라 비용만 |
-| **Private 저장소** | 유료 플랜 | 기본 지원 | 기본 지원 |
-| **Rate Limit** | Free: 100 pulls/6h | 없음 | 없음 |
-| **취약점 스캐닝** | Pro 이상 | 기본 + Enhanced | Trivy 통합 |
-| **이미지 서명** | Content Trust | 미지원 (외부 도구) | Cosign/Notation |
+| **비용** | Personal + 유료 구독 | 사용량 기반 | 인프라·운영·백업 비용 |
+| **Private 저장소** | Personal 1개, 유료 플랜별 제공 | 서비스 쿼터 내 지원 | 운영자가 쿼터 설정 |
+| **Rate Limit** | 계정 유형별 pull 제한·공정 사용 정책 | API별 서비스 쿼터 | 운영자 설정·인프라 용량 |
+| **취약점 스캐닝** | Docker Scout의 플랜별 제공 범위 | Basic + Enhanced(Inspector) | Trivy 통합 |
+| **이미지 서명** | DCT 또는 별도 OCI 서명 도구 | AWS Signer 관리형/수동 서명 | Cosign/Notation |
 | **복제** | 미지원 | 멀티 리전 | Pull/Push 복제 |
-| **에어갭 지원** | 불가 | VPC 엔드포인트 | 완전 지원 |
+| **완전한 에어갭** | 외부 Hub 접속 필요 | AWS 서비스 연결 필요; VPC 엔드포인트는 사설 접속 | 이미지·스캔 DB·설치 의존성을 반입해 자체 운영 |
 | **IAM 통합** | 없음 | AWS IAM | LDAP/OIDC |
-| **Lifecycle 정책** | 수동 | 자동화 규칙 | 태그 보존 정책 |
+| **Lifecycle 정책** | 플랜·관리 기능 확인 | 자동화 규칙 | 태그 보존 정책 |
+
+ECR에도 API 요청률과 리포지터리 수 등의 [서비스 쿼터](https://docs.aws.amazon.com/AmazonECR/latest/userguide/service-quotas.html)가 있습니다. [AWS Signer 통합](https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-signing.html)은 현재 지원 기능이며, 서명 저장과 배포 시 검증 정책은 별도로 구성합니다. Docker Hub의 수치 제한은 [공식 사용 정책](https://docs.docker.com/docker-hub/usage/)과 실제 응답 헤더를 확인합니다.
 
 ---
 
@@ -61,7 +63,7 @@
 
 **장점:**
 - AWS 서비스와 네이티브 통합 (EKS, IAM, CloudWatch)
-- Rate limit 없음
+- IAM 기반 접근과 조정 가능한 API 서비스 쿼터
 - 관리형 서비스 (운영 부담 최소화)
 - Enhanced 스캐닝 (Amazon Inspector)
 
@@ -99,23 +101,22 @@
 
 ### 1. 팀 규모 및 조직 구조
 
-| 팀 규모 | 권장 레지스트리 | 이유 |
+| 팀의 환경 | 검토할 레지스트리 | 이유 |
 |---------|----------------|------|
-| 1-5명 | Docker Hub Pro | 간편함, 낮은 비용 |
-| 5-50명 | Amazon ECR | 관리형, 확장성 |
-| 50명+ | ECR 또는 Harbor | 거버넌스, 멀티팀 지원 |
+| 공개 이미지 중심, 운영 인력 제한 | Docker Hub | 관리 부담과 현재 플랜 요구 비교 |
+| AWS 워크로드 중심 | Amazon ECR | IAM·실행 환경 통합과 비용 경로 비교 |
+| 자체 운영 능력과 망분리/배포 통제 요구 | Harbor | 운영·복구 책임을 포함해 선택 |
+
+인원수만으로 제품을 결정하지 않고 네트워크, 권한, 지원 및 운영 요구를 먼저 확인합니다.
 
 ### 2. 보안 요구사항
 
-```
-낮음 ────────────────────────────────────────────── 높음
+레지스트리를 일렬로 나열해 보안 수준을 판단하지 않습니다. 다음 통제의 구현과 운영 책임을 비교합니다.
 
-Docker Hub Free → Docker Hub Team → ECR Basic → ECR Enhanced → Harbor + Notary
-```
-
-- **기본 보안**: Docker Hub Team (RBAC, 스캐닝)
-- **중간 보안**: ECR Enhanced (Inspector 통합, IAM)
-- **고급 보안**: Harbor (서명, 감사, 에어갭)
+- **접근 제어**: 계정/프로젝트 권한, IAM, 자격 증명 수명
+- **공급망 검증**: 취약점 스캔, 이미지 digest 고정, 서명과 admission 검증
+- **네트워크 경계**: 인터넷 접근, AWS 사설 연결, 완전한 망분리 여부
+- **운영 책임**: 관리형 서비스의 책임 범위와 자체 호스팅의 패치·백업·복구 체계
 
 ### 3. 클라우드 전략
 
@@ -128,19 +129,9 @@ Docker Hub Free → Docker Hub Team → ECR Basic → ECR Enhanced → Harbor + 
 
 ### 4. 비용 고려사항
 
-**소규모 (월 100GB 미만):**
-- Docker Hub Pro: ~$5/월
-- ECR: ~$10/월 (스토리지 + 전송)
-- Harbor: 인프라 비용 변동
-
-**중규모 (월 500GB):**
-- Docker Hub Team: ~$9/사용자/월
-- ECR: ~$50/월
-- Harbor: EC2 비용 ~$100/월+
-
-**대규모 (월 2TB+):**
-- ECR: 스토리지 비용 효율적
-- Harbor: 대규모에서 비용 절감 가능
+- **Docker Hub**: 사용자 수, 월간/연간 결제, 포함된 Scout/빌드 사용량을 [현재 요금표](https://www.docker.com/pricing/)로 비교합니다. 과거 Pro $5, Team $9 가격을 현재 예산으로 사용하지 않습니다.
+- **ECR**: 저장 용량 × 리전별 저장 단가에 데이터 전송, Inspector, AWS Signer, VPC 엔드포인트 비용을 합산합니다. 공식 요금 예제의 $0.10/GB-month를 적용하면 100GB의 **저장 비용만** $10/월이며 전체 비용은 아닙니다. [ECR 요금](https://aws.amazon.com/ecr/pricing/)을 확인합니다.
+- **Harbor**: 서버/DB/스토리지/로드 밸런서뿐 아니라 HA, 백업, 스캔 DB 갱신과 운영 인력을 포함합니다. 데이터가 많다는 이유만으로 항상 더 저렴한 것은 아닙니다.
 
 ---
 
@@ -165,6 +156,8 @@ Docker Hub Free → Docker Hub Team → ECR Basic → ECR Enhanced → Harbor + 
 
 ## 빠른 시작
 
+로컬에 `myapp:v1` 이미지가 준비돼 있어야 합니다. Docker Hub 리포지터리와 Harbor 프로젝트를 먼저 생성하고 push 권한이 있는 계정을 사용합니다. 아래 ECR 예제에는 리포지터리 생성도 포함됩니다.
+
 ### Docker Hub
 
 ```bash
@@ -180,6 +173,8 @@ docker push username/myapp:v1
 
 ```bash
 # 로그인 (AWS CLI v2)
+aws ecr create-repository --repository-name myapp \
+  --image-tag-mutability IMMUTABLE --region ap-northeast-2
 aws ecr get-login-password --region ap-northeast-2 | \
   docker login --username AWS --password-stdin 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com
 

@@ -1,0 +1,450 @@
+{
+  "reviewedAt": "2026-09-12T20:51:21.904058+00:00",
+  "status": "passed",
+  "scope": {
+    "documents": 4,
+    "questions": 26,
+    "figures": 2
+  },
+  "baseline": "KFP2.16.1; Community26.03.1; Python3.12; pandas2.3.3; scikit-learn1.7.2",
+  "native": {
+    "status": "passed",
+    "kfp": "2.16.1",
+    "cases": [
+      {
+        "locale": "ko",
+        "sourceSha256": "327a5e4cd36c7c91c0309d24707ff9aa75719703d3eb70c7f9a03383f736a1a4",
+        "irTasks": [
+          "prepare-data",
+          "train-model"
+        ],
+        "datasetRows": 4,
+        "predictions": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "declaredDependenciesPassed": true,
+        "artifactDependencyPassed": true,
+        "cacheDisabledIRPassed": true,
+        "clientCacheDefaultNone": true,
+        "pipelineSha256": "b513cddd133b4ecfae0e4cb5c5db8b11567f46a61eb7700b6470c276b586a9af"
+      },
+      {
+        "locale": "en",
+        "sourceSha256": "1ad6b7a5e73826926a7343772cf2fdbe58637e8c4df918e1b61a377bced76c4e",
+        "irTasks": [
+          "prepare-data",
+          "train-model"
+        ],
+        "datasetRows": 4,
+        "predictions": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "declaredDependenciesPassed": true,
+        "artifactDependencyPassed": true,
+        "cacheDisabledIRPassed": true,
+        "clientCacheDefaultNone": true,
+        "pipelineSha256": "40eee646955144b09aabeb760201cdbefb5fd88bac6388b0d4ae60a9fa49e15b"
+      }
+    ],
+    "scope": "Native SDK compilation and direct component Python body calls only. No KFP local runner/container, Argo, MLMD/cache server, AWS or Kubernetes invocation."
+  },
+  "quiz": {
+    "status": "passed",
+    "cases": [
+      {
+        "path": "ko/quizzes/ai-ml/kubeflow/02-pipelines-quiz.md",
+        "sourceSha256": "f290c1220d4b24b52dd0b89081439513d3b02bb517e7e48efb1123d5d02b7821",
+        "questions": 13,
+        "pythonBlocksCompiledTogether": 3,
+        "guideTrainComponentUsed": true,
+        "cacheDisabled": true
+      },
+      {
+        "path": "en/quizzes/ai-ml/kubeflow/02-pipelines-quiz.md",
+        "sourceSha256": "cc4800aeb2a61f237569864ff505a806745df2491e80b1951a45d619874c1102",
+        "questions": 13,
+        "pythonBlocksCompiledTogether": 3,
+        "guideTrainComponentUsed": true,
+        "cacheDisabled": true
+      }
+    ],
+    "scope": "Combined quiz snippets compiled using the guide train_model definition; no remote execution."
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/kubeflow/02-pipelines.md",
+        "sha256": "327a5e4cd36c7c91c0309d24707ff9aa75719703d3eb70c7f9a03383f736a1a4",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-2-kubeflow-pipelines"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-준비"
+          },
+          {
+            "tag": "h2",
+            "id": "kubeflow-pipelines란"
+          },
+          {
+            "tag": "h2",
+            "id": "kfp-v2-아키텍처-ir-yaml과-백엔드-실행"
+          },
+          {
+            "tag": "h2",
+            "id": "핵심-개념"
+          },
+          {
+            "tag": "h2",
+            "id": "파이프라인-실행이-시스템을-거치는-흐름"
+          },
+          {
+            "tag": "h2",
+            "id": "eks에서의-아티팩트-저장소"
+          },
+          {
+            "tag": "h2",
+            "id": "간단한-2단계-파이프라인"
+          },
+          {
+            "tag": "h2",
+            "id": "캐싱-동작"
+          },
+          {
+            "tag": "h2",
+            "id": "검증과-근거"
+          },
+          {
+            "tag": "h2",
+            "id": "다음-단계"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "part-2-kubeflow-pipelines",
+          "실습-환경-준비",
+          "kubeflow-pipelines란",
+          "kfp-v2-아키텍처-ir-yaml과-백엔드-실행",
+          "핵심-개념",
+          "파이프라인-실행이-시스템을-거치는-흐름",
+          "eks에서의-아티팩트-저장소",
+          "간단한-2단계-파이프라인",
+          "캐싱-동작",
+          "검증과-근거",
+          "다음-단계",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/ai-ml/kubeflow/02-pipelines.md",
+        "sha256": "1ad6b7a5e73826926a7343772cf2fdbe58637e8c4df918e1b61a377bced76c4e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-2-kubeflow-pipelines"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-environment-setup"
+          },
+          {
+            "tag": "h2",
+            "id": "what-kubeflow-pipelines-is"
+          },
+          {
+            "tag": "h2",
+            "id": "kfp-v2-architecture-ir-yaml-and-backend-execution"
+          },
+          {
+            "tag": "h2",
+            "id": "core-concepts"
+          },
+          {
+            "tag": "h2",
+            "id": "how-a-pipeline-run-flows-through-the-system"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-specific-artifact-storage"
+          },
+          {
+            "tag": "h2",
+            "id": "a-simple-two-step-pipeline"
+          },
+          {
+            "tag": "h2",
+            "id": "caching-behavior"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-and-sources"
+          },
+          {
+            "tag": "h2",
+            "id": "next-steps"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "part-2-kubeflow-pipelines",
+          "lab-environment-setup",
+          "what-kubeflow-pipelines-is",
+          "kfp-v2-architecture-ir-yaml-and-backend-execution",
+          "core-concepts",
+          "how-a-pipeline-run-flows-through-the-system",
+          "eks-specific-artifact-storage",
+          "a-simple-two-step-pipeline",
+          "caching-behavior",
+          "validation-and-sources",
+          "next-steps",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/kubeflow/02-pipelines-quiz.md",
+        "sha256": "f290c1220d4b24b52dd0b89081439513d3b02bb517e7e48efb1123d5d02b7821",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubeflow-pipelines-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "객관식-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "단답형-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-문제"
+          }
+        ],
+        "renderedIds": [
+          "kubeflow-pipelines-퀴즈",
+          "객관식-문제",
+          "단답형-문제",
+          "실습-문제"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/kubeflow/02-pipelines-quiz.md",
+        "sha256": "cc4800aeb2a61f237569864ff505a806745df2491e80b1951a45d619874c1102",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kubeflow-pipelines-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "multiple-choice-questions"
+          },
+          {
+            "tag": "h2",
+            "id": "short-answer-questions"
+          },
+          {
+            "tag": "h2",
+            "id": "hands-on-questions"
+          }
+        ],
+        "renderedIds": [
+          "kubeflow-pipelines-quiz",
+          "multiple-choice-questions",
+          "short-answer-questions",
+          "hands-on-questions"
+        ]
+      }
+    ]
+  },
+  "responsive": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "30ae8ca9deb0802691e7fc4f6a66eb1d7bf019c176217406a51d9c8873211d9f"
+      },
+      {
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "30ae8ca9deb0802691e7fc4f6a66eb1d7bf019c176217406a51d9c8873211d9f"
+      },
+      {
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "30ae8ca9deb0802691e7fc4f6a66eb1d7bf019c176217406a51d9c8873211d9f"
+      },
+      {
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "7dc029df409105376e57d14230bb7336503937fd396d0592d1614d7078d879b3"
+      },
+      {
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "7dc029df409105376e57d14230bb7336503937fd396d0592d1614d7078d879b3"
+      },
+      {
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "7dc029df409105376e57d14230bb7336503937fd396d0592d1614d7078d879b3"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "sources": [
+    {
+      "file": "backend_src_v2_cacheutils_cache.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/pipelines/2.16.1/backend/src/v2/cacheutils/cache.go",
+      "status": 200
+    },
+    {
+      "file": "backend_src_v2_driver_cache.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/pipelines/2.16.1/backend/src/v2/driver/cache.go",
+      "status": 200
+    },
+    {
+      "file": "backend_src_v2_cacheutils_cache_test.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/pipelines/2.16.1/backend/src/v2/cacheutils/cache_test.go",
+      "status": 200
+    },
+    {
+      "file": "backend_src_v2_compiler_argocompiler_argo.go",
+      "url": "https://raw.githubusercontent.com/kubeflow/pipelines/2.16.1/backend/src/v2/compiler/argocompiler/argo.go",
+      "status": 200
+    }
+  ],
+  "diagrams": [
+    {
+      "name": "ko-ai-ml-kubeflow-02-pipelines-0",
+      "layoutPassed": true,
+      "pngSha256": "93efe18fcefd7e223a865359f0c5c679085e37be0bfa58c738d9fcba5d2ce492",
+      "htmlSha256": "30ae8ca9deb0802691e7fc4f6a66eb1d7bf019c176217406a51d9c8873211d9f"
+    },
+    {
+      "name": "en-ai-ml-kubeflow-02-pipelines-0",
+      "layoutPassed": true,
+      "pngSha256": "cf18a9881d38866391b40416442cf515ca9a1e7cf280272bf7585d8270f5b1bb",
+      "htmlSha256": "7dc029df409105376e57d14230bb7336503937fd396d0592d1614d7078d879b3"
+    }
+  ],
+  "limitations": [
+    "Direct Python bodies and IR checks only: no containers, remote Argo/KFP, cache server/MLMD, Kubernetes or AWS execution.",
+    "Tiny training fixture is not a model-quality result.",
+    "Image tags and transitive package dependencies are not a fully locked deployment."
+  ]
+}

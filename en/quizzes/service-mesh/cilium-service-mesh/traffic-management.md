@@ -1,209 +1,195 @@
 # Cilium Service Mesh Traffic Management Quiz
 
-This quiz tests your understanding of L7 traffic management, CiliumEnvoyConfig, load balancing, traffic splitting, and Gateway API integration in Cilium Service Mesh.
-
-## Quiz Questions
+Reviewed against Cilium 1.20.1/Gateway API 1.6.1. See the [traffic guide](../../../service-mesh/cilium-service-mesh/02-traffic-management.md) for complete examples and primary references.
 
 ### 1. Which Envoy filter is used to define HTTP routing rules in CiliumEnvoyConfig?
 
-A. envoy.filters.network.tcp_proxy
-B. envoy.filters.network.http_connection_manager
-C. envoy.filters.http.fault
-D. envoy.filters.network.redis_proxy
+- **A.** envoy.filters.network.tcp_proxy
+- **B.** envoy.filters.network.http_connection_manager
+- **C.** envoy.filters.http.fault
+- **D.** envoy.filters.network.redis_proxy
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: B. envoy.filters.network.http_connection_manager**
 
-**Explanation:**
-The HTTP Connection Manager is the core Envoy filter for processing HTTP traffic. Within this filter, you can define path-based, header-based, and method-based routing rules through route_config.
+The HTTP Connection Manager handles HTTP traffic and obtains routes through inline route_config or RDS. The router HTTP filter and referenced Cluster resources are also needed; listing backend Services alone is insufficient.
 
 </details>
 
 ### 2. Which field is NOT available when defining L7 HTTP rules in CiliumNetworkPolicy?
 
-A. method
-B. path
-C. headers
-D. body
+- **A.** method
+- **B.** path
+- **C.** headers
+- **D.** body
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: D. body**
 
-**Explanation:**
-CiliumNetworkPolicy's HTTP L7 rules allow filtering based on method (HTTP method), path (URL path), and headers (HTTP headers). body (request body) is not supported in L7 rules.
+HTTP policy can match method, path and headers, including structured headerMatches. It does not authorize arbitrary request-body fields. Authentication and application-level authorization remain separate.
 
 </details>
 
-### 3. Which is NOT a valid apiKey when applying Kafka L7 policies in Cilium?
+### 3. How should Kafka topic-level access be controlled with Cilium 1.20.1?
 
-A. produce
-B. fetch
-C. delete
-D. metadata
+- **A.** Use Cilium rules.kafka unchanged
+- **B.** Use an HTTP body rule to inspect Kafka messages
+- **C.** Use Kafka broker ACLs, with L4 policy separately controlling reachability
+- **D.** Delete all rules and assume topic permissions remain
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. delete**
+**Answer: C. Use Kafka broker ACLs, with L4 policy separately controlling reachability**
 
-**Explanation:**
-Cilium's Kafka L7 policies support apiKeys including produce (message production), fetch (message consumption), metadata (metadata queries), offsetcommit, offsetfetch, joingroup, etc. 'delete' is not a supported Kafka API key.
+Cilium 1.20.1's L7 rules schema supports HTTP and DNS, and rejects the old rules.kafka object. Use L4 network policy for broker reachability and Kafka TLS/SASL plus broker ACLs for topics, groups and operations. Removing obsolete Kafka rules does not preserve topic-level authorization.
 
 </details>
 
-### 4. What is the advantage of Maglev hashing in Cilium's eBPF-based L4 load balancing?
+### 4. What does Maglev provide for applicable Cilium eBPF load balancing?
 
-A. Completely random distribution
-B. Session persistence even when backends change
-C. Lowest memory usage
-D. L7 routing support
+- **A.** Completely random distribution
+- **B.** Consistent backend selection with reduced reassignment when membership changes
+- **C.** Guaranteed survival of connections to removed backends
+- **D.** The lowest possible memory use
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Session persistence even when backends change**
+**Answer: B. Consistent backend selection with reduced reassignment when membership changes**
 
-**Explanation:**
-Maglev is a consistent hashing algorithm that maintains most existing connections to the same backend even when backend servers are added or removed. This is useful for stateful applications or when session affinity is required.
+Maglev minimizes flow reassignment when the backend set changes for applicable external load balancing. It is separate from ClientIP session affinity and cannot preserve connections to an unavailable backend. Cilium's socket-level east–west path is not subject to this Maglev selection.
 
 </details>
 
 ### 5. What is the correct way to configure weight-based traffic splitting in Gateway API HTTPRoute?
 
-A. Use the split field
-B. Specify weight field in backendRefs
-C. Use trafficPolicy
-D. Use destinationRule
+- **A.** Use the split field
+- **B.** Specify weight field in backendRefs
+- **C.** Use trafficPolicy
+- **D.** Use destinationRule
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: B. Specify weight field in backendRefs**
 
-**Explanation:**
-In Gateway API HTTPRoute, traffic splitting is configured by specifying the weight field for each backend in the backendRefs array. For example, using `weight: 90` and `weight: 10` splits traffic in a 90:10 ratio.
+backendRefs weights define relative selection probabilities. 90 and 10 express a 90:10 ratio, not an exact count in every ten requests or a per-user session guarantee. The Services, ports and parent listener must resolve and accept the route.
 
 </details>
 
 ### 6. Which is NOT a valid condition for the retry_on field when configuring retry policies in CiliumEnvoyConfig?
 
-A. 5xx
-B. reset
-C. timeout
-D. connect-failure
+- **A.** 5xx
+- **B.** reset
+- **C.** timeout
+- **D.** connect-failure
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: C. timeout**
 
-**Explanation:**
-Envoy's retry_on conditions include 5xx (server errors), reset (connection reset), connect-failure (connection failure), retriable-4xx, etc. 'timeout' is not a direct retry_on condition; per_try_timeout is used to set the timeout for each retry attempt.
+timeout is not a retry_on token. per_try_timeout limits each upstream attempt, including the first; it is not a backoff interval. The guide enables retries only for safe GET operations, explicitly disables non-GET retries and removes caller-supplied Envoy retry/timeout overrides before routing.
 
 </details>
 
 ### 7. What is the main benefit of using DNS L7 policies in Cilium?
 
-A. Improved DNS server performance
-B. Allow only DNS queries for specific domains
-C. DNS cache invalidation
-D. DNS over HTTPS support
+- **A.** Improved DNS server performance
+- **B.** Allow only DNS queries for specific domains
+- **C.** DNS cache invalidation
+- **D.** DNS over HTTPS support
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: B. Allow only DNS queries for specific domains**
 
-**Explanation:**
-DNS L7 policies allow restricting which domains workloads can query. Using matchPattern or matchName, you can ensure only allowed domains are queried, preventing data exfiltration or access to malicious domains.
+DNS rules constrain query names sent to the selected trusted resolver. They do not by themselves allow connections to the returned addresses or guarantee prevention of exfiltration/DoH. Add separate destination/port policies; include UDP/TCP and actual resolver/search-list behavior.
 
 </details>
 
 ### 8. Which filter is used to configure local Rate Limiting in CiliumEnvoyConfig?
 
-A. envoy.filters.http.ratelimit
-B. envoy.filters.http.local_ratelimit
-C. envoy.filters.http.bandwidth_limit
-D. envoy.filters.http.throttle
+- **A.** envoy.filters.http.ratelimit
+- **B.** envoy.filters.http.local_ratelimit
+- **C.** envoy.filters.http.bandwidth_limit
+- **D.** envoy.filters.http.throttle
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: B. envoy.filters.http.local_ratelimit**
 
-**Explanation:**
-Local Rate Limiting uses the envoy.filters.http.local_ratelimit filter. This filter limits request rates through token_bucket configuration. envoy.filters.http.ratelimit is used for global Rate Limiting that communicates with external Rate Limit services.
+envoy.filters.http.local_ratelimit uses a token bucket with explicit enabled/enforced fractions. Those fractions default to 0%, including route-level overrides. The examples use one bucket per Envoy process, shared by its worker threads, rather than a cluster-wide or per-user quota.
 
 </details>
 
 ### 9. Which filter type is used to configure HTTP -> HTTPS redirect in Gateway API?
 
-A. URLRewrite
-B. RequestMirror
-C. RequestRedirect
-D. ResponseHeaderModifier
+- **A.** URLRewrite
+- **B.** RequestMirror
+- **C.** RequestRedirect
+- **D.** ResponseHeaderModifier
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: C. RequestRedirect**
 
-**Explanation:**
-In Gateway API, the RequestRedirect filter is used to redirect from HTTP to HTTPS. Setting scheme: https and statusCode: 301 configures a permanent redirect.
+RequestRedirect can return a redirect with scheme:https. A 301 is permanent but may change the request method in clients. Configure the HTTP listener route separately, prepare a working HTTPS listener/certificate, and avoid silently redirecting writes with method-changing semantics.
 
 </details>
 
 ### 10. What is the purpose of traffic mirroring (shadowing) in Cilium Service Mesh?
 
-A. Traffic encryption
-B. Replicate production traffic to test environment
-C. Load balancing optimization
-D. Cache invalidation
+- **A.** Traffic encryption
+- **B.** Replicate production traffic to test environment
+- **C.** Load balancing optimization
+- **D.** Cache invalidation
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: B. Replicate production traffic to test environment**
 
-**Explanation:**
-Traffic mirroring sends a copy of production traffic to another service (e.g., a test environment with a new version). This allows testing new versions with real traffic without affecting users. It's configured through request_mirror_policies.
+request_mirror_policies sends a copy to a shadow backend while ignoring its response for the caller's result. It still copies data, consumes resources and can cause side effects. The guide mirrors approved GET/HEAD traffic to an isolated backend and leaves other methods unmirrored; zero user impact is not guaranteed.
 
 </details>
 
-### 11. What is the role of total_weight in canary deployment using weighted_clusters in CiliumEnvoyConfig?
+### 11. How does current Envoy determine the weight total for weighted_clusters?
 
-A. Limit total request count
-B. Define the reference value for weight sum
-C. Timeout setting
-D. Connection limit
+- **A.** It limits the total number of requests
+- **B.** It uses the sum of Cluster weights; total_weight is deprecated
+- **C.** It treats weights as timeouts
+- **D.** It requires every request to use the lowest-weight Cluster
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Define the reference value for weight sum**
+**Answer: B. It uses the sum of Cluster weights; total_weight is deprecated**
 
-**Explanation:**
-total_weight defines the reference value for the sum of individual cluster weights. For example, setting total_weight: 100 and assigning 90 to cluster A and 10 to cluster B results in 90% and 10% traffic respectively.
+Current Envoy uses the sum of individual Cluster weights. total_weight is deprecated and is omitted from the updated example. For weights 90 and 10 the relative selection ratio is 90:10; this does not implement automatic promotion, rollback or a strict per-window request quota.
 
 </details>
 
 ### 12. Which field is used in the matches section to configure header-based routing in Gateway API HTTPRoute?
 
-A. headerMatchers
-B. headers
-C. requestHeaders
-D. matchHeaders
+- **A.** headerMatchers
+- **B.** headers
+- **C.** requestHeaders
+- **D.** matchHeaders
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: B. headers**
 
-**Explanation:**
-In HTTPRoute's matches section, the headers field is used to configure header-based routing. By specifying name and value for each header, you can route requests with specific header values to different backends.
+HTTPRoute.matches.headers expresses header match conditions. Multiple headers in one match are ANDed; the Gateway API's path/header precedence rules determine selection. A client-supplied version/canary header is not authentication.
 
 </details>

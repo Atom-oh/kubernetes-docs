@@ -1,10 +1,12 @@
 # Part 4: BGP Deep Dive
 
-> **Supported Versions**: Calico v3.29+ / Kubernetes 1.28+ **Last Updated**: February 23, 2026
+> **Review baseline**: Calico 3.32.2; Calico 3.32 tests Kubernetes 1.34–1.36. **Last Updated**: September 12, 2026.
+>
+> Configuration examples assume a Linux Calico cluster with BGP enabled and the standard Calico API server installed (`projectcalico.org/v3`). They are separate topology alternatives, not one manifest to apply in sequence. Retain the installation's operator/GitOps ownership and merge intended fields into its existing configuration. The [installation guide](01-introduction.md) covers API prerequisites; the [networking modes guide](03-networking-modes.md) covers BGP-free routing alternatives. Router addresses, ASNs and CIDRs must match a network you control. No live fabric or cluster failover was tested for this review.
 
 ## Introduction
 
-Border Gateway Protocol (BGP) is the routing protocol that powers the internet, and Calico leverages it to provide highly scalable, standards-based networking for Kubernetes clusters. Unlike overlay networks that encapsulate traffic, Calico's BGP-based networking enables native IP routing, delivering superior performance and seamless integration with existing network infrastructure.
+Border Gateway Protocol (BGP) exchanges reachability information. Calico can use it to distribute workload routes and integrate with an existing routed fabric. BGP is a control-plane protocol: it can accompany unencapsulated routing or IP-in-IP, and it does not itself guarantee better performance. Calico 3.32 also supports Felix-managed cluster routing without BGP; external BGP advertisement still requires a BGP speaker.
 
 This deep dive covers BGP fundamentals, Calico's BGP architecture options, configuration resources, and advanced deployment patterns for enterprise environments.
 
@@ -21,7 +23,7 @@ BGP (Border Gateway Protocol) is a path-vector routing protocol designed to exch
 | Concept                    | Description                                                          |
 | -------------------------- | -------------------------------------------------------------------- |
 | **Autonomous System (AS)** | A collection of IP networks under a single administrative domain     |
-| **AS Number (ASN)**        | Unique identifier for an AS (16-bit: 1-65534, 32-bit: 1-4294967294)  |
+| **AS Number (ASN)**        | 16-bit or 32-bit identifier; allocation excludes special/reserved ranges  |
 | **iBGP**                   | Internal BGP - sessions between routers in the same AS               |
 | **eBGP**                   | External BGP - sessions between routers in different ASes            |
 | **NLRI**                   | Network Layer Reachability Information - the routes being advertised |
@@ -36,45 +38,45 @@ For internal use within organizations, IANA reserves the following private ASN r
 32-bit Private ASN Range: 4200000000 - 4294967294
 ```
 
-Calico typically uses ASNs in the `64512-65534` range for cluster-internal BGP.
+Calico's default cluster ASN is `64512`. Private ASNs must be removed from AS paths before those routes reach the global Internet; they are identifiers, not inherently unroutable IP addresses. Other special ranges include documentation ASNs `64496–64511` and `65536–65551`, and `23456` (AS_TRANS). Consult the [IANA registry](https://www.iana.org/assignments/as-numbers/as-numbers.xhtml) rather than treating every other integer as an allocated public ASN.
 
 ### BGP Route Selection Process
 
-When a BGP speaker receives multiple routes to the same destination, it selects the best route using the following criteria (in order):
+Compare the actual implementation and routing policy. Cisco `Weight` and administrative distances 20/200 are not universal BGP properties or Calico BIRD defaults.
 
-![A BGP speaker receiving multiple routes to the same destination compares eleven attributes in order, from Weight through LOCAL_PREF, AS_PATH, Origin, MED, eBGP over iBGP and IGP metric down to Router ID and Neighbor IP, moving to the next attribute on a tie until the first difference selects the best route.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-2.png)
+Calico 3.32.2 pins its BIRD fork to `v0.3.3-211-g9111ec3c`. For comparable eligible BGP routes, its selection function checks higher LOCAL_PREF, shorter AS_PATH (when enabled), lower ORIGIN, lower MED under the applicable neighbor-AS policy, eBGP over iBGP, and lower IGP metric. Remaining ties use router/ORIGINATOR_ID, CLUSTER_LIST length and peer IP; optional older-route preference changes the tie break. Suppression, next-hop reachability, stale-route handling and BIRD route preference also matter. This is not a universal eleven-step ladder.
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-2.html)
+Calico 3.32 translates its route priorities into LOCAL_PREF and kernel metrics. Therefore, do not assume every locally exported route retains the upstream BIRD default LOCAL_PREF of 100.
 
 ### iBGP vs eBGP Behavior
 
-| Attribute               | iBGP                               | eBGP                                   |
-| ----------------------- | ---------------------------------- | -------------------------------------- |
-| AS\_PATH modification   | Not modified                       | Prepends local AS                      |
-| Next-hop                | Not changed by default             | Changed to peering address             |
-| Default TTL             | 255                                | 1 (multihop required for non-adjacent) |
-| Route advertisement     | Only to eBGP peers (split-horizon) | To all peers                           |
-| Administrative Distance | 200                                | 20                                     |
+| Attribute | iBGP | eBGP |
+| --- | --- | --- |
+| AS relationship | Same AS | Different ASes |
+| AS_PATH | Normally preserved | Normally prepends the local AS |
+| Route propagation | An iBGP-learned route is normally not sent to another iBGP peer; RR is an exception | Export depends on policy and loop prevention |
+| Next hop | Often preserved; must remain reachable | Often changed; `nextHopMode` and topology affect this |
+| TTL and administrative distance | Implementation/configuration dependent | Implementation/configuration dependent |
+
+Locally originated or eBGP-learned routes can be sent to iBGP peers. Calico's generated external-peer configuration uses BIRD multihop; do not diagnose it from a generic “eBGP TTL 1” table. Inspect the generated configuration and negotiated session state.
 
 ***
 
 ## Calico BGP Architecture
 
-![Calico BGP topologies side by side: the default full mesh where four nodes peer with every other node (N(N−1)/2 sessions) versus a route-reflector design where nodes peer only with two mutually peered reflectors (2N+1 sessions).](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-9.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-9.html)
-
 ### BIRD: Calico's BGP Implementation
 
-Calico uses BIRD (BIRD Internet Routing Daemon) as its BGP implementation. BIRD runs as part of the `calico-node` DaemonSet on every node.
+When BGP is enabled, Calico runs its BIRD fork in `calico-node`; confd renders its configuration. BIRD is not required in a BGP-disabled deployment. Both BIRD and Felix have routing responsibilities depending on the selected mode.
 
-![Inside each calico-node pod, the Calico API feeds confd which configures BIRD, BIRD programs the routing table and peers over BGP with external routers and other Calico nodes, while Felix independently programs the iptables/eBPF dataplane.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-1.png)
+![BGP control-plane relationships: confd configures BIRD, which exchanges routes with peers, while Felix programs the dataplane.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-1.html)
 
+> The boundary is schematic: the Calico API server is a separate component, not a process inside each calico-node Pod. Felix also manages local workload routes and, in the selected mode, cluster routes. BIRD is present only when enabled.
+
 ### BGP Topology Options
 
-Calico supports two primary BGP topologies:
+Common internal BGP topology choices are:
 
 1. **Node-to-Node Mesh (Full Mesh)** - Default configuration
 2. **Route Reflectors** - Recommended for larger clusters
@@ -85,11 +87,13 @@ Calico supports two primary BGP topologies:
 
 ### How Full-Mesh Works
 
-In the default full-mesh configuration, every Calico node establishes a BGP peering session with every other node in the cluster.
+With BGP and the default node mesh enabled, participating non-RR nodes peer with each other. Nodes marked as route reflectors are excluded from the automatic mesh.
 
-![In the default full-mesh configuration every one of the five Calico nodes (AS 64512) peers directly with every other node; the sessions are enumerated as Node 1 to four peers, Node 2 to three, Node 3 to two and Node 4 to one, totalling N×(N-1)/2 = 10 iBGP sessions.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-3.png)
+![Ten sessions connect every pair of five nodes in a full mesh.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-3.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-3.html)
+
+> The arrows enumerate bidirectional sessions, not one-way traffic. This counts one session per pair for the address family under discussion.
 
 ### Session Count Formula
 
@@ -105,34 +109,17 @@ Examples:
 - 500 nodes:  500 × 499 / 2 = 124,750 sessions
 ```
 
-### Full-Mesh Scaling Limitations
+### Full-Mesh Scaling and Transition
 
-| Cluster Size  | BGP Sessions | Memory per Node | CPU Impact | Recommendation |
-| ------------- | ------------ | --------------- | ---------- | -------------- |
-| < 50 nodes    | < 1,225      | \~50 MB         | Minimal    | Full-mesh OK   |
-| 50-100 nodes  | 1,225-4,950  | \~100 MB        | Low        | Consider RR    |
-| 100-200 nodes | 4,950-19,900 | \~200 MB        | Moderate   | Use RR         |
-| > 200 nodes   | > 19,900     | > 400 MB        | High       | Require RR     |
+The formula assumes one session per node pair for the address family being counted. Each node has `N−1` peers. CPU and memory depend on route count, update churn, policy, hardware and convergence targets; the former per-node memory table and fixed 50/200-node limits were not measured capacity limits.
 
-### Enabling/Disabling Node-to-Node Mesh
-
-Check current status:
+Check the existing configuration:
 
 ```bash
-calicoctl get bgpconfiguration default -o yaml
+kubectl get bgpconfiguration.projectcalico.org default -o yaml
 ```
 
-Disable node-to-node mesh (when using Route Reflectors):
-
-```yaml
-apiVersion: projectcalico.org/v3
-kind: BGPConfiguration
-metadata:
-  name: default
-spec:
-  nodeToNodeMeshEnabled: false
-  asNumber: 64512
-```
+An absent `default` resource means defaults may be in use. Prepare and validate replacement RR or fabric sessions before disabling the automatic mesh. Follow the transition order below; merely creating an RR label does not provide a working replacement.
 
 ***
 
@@ -142,9 +129,11 @@ spec:
 
 Route Reflectors (RRs) solve the iBGP scalability problem by allowing a subset of nodes to reflect routes to other nodes. This eliminates the need for a full mesh.
 
-![Two route reflectors sharing one Cluster ID peer with each other in an RR mesh, and six client nodes (1–3 and 4–6) each hold iBGP sessions only with the two route reflectors, so routes are reflected to every node without a client-to-client full mesh.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-4.png)
+![Six clients each peer with two mutually peered route reflectors.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-4.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-4.html)
+
+> This drawing contains six clients plus two RRs: 13 sessions. In the figure’s 2N+1 expression N counts clients, while full-mesh N counts total nodes. Automatic mesh is disabled only after the explicit replacement topology is verified.
 
 ### Route Reflector Key Attributes
 
@@ -156,98 +145,78 @@ Route Reflectors (RRs) solve the iBGP scalability problem by allowing a subset o
 
 ### Session Count with Route Reflectors
 
-With 2 Route Reflectors and N client nodes:
+Let `T` be the total node count, `R` the number of reflectors, and `C=T−R` the number of clients. If every client peers with every RR and the RRs peer with each other:
 
+```text
+RR sessions = C×R + R×(R−1)/2
+T=100, R=2: 98×2 + 1 = 197 (full mesh of the same 100 nodes: 4,950)
+T=500, R=2: 498×2 + 1 = 997 (full mesh of the same 500 nodes: 124,750)
 ```
-Sessions = 2 × N + 1 (RR-to-RR peering)
 
-Examples:
-- 100 nodes: 2 × 100 + 1 = 201 sessions (vs 4,950 in full-mesh)
-- 500 nodes: 2 × 500 + 1 = 1,001 sessions (vs 124,750 in full-mesh)
-```
+If “100 nodes” instead means 100 clients plus two additional RRs, the count is 201, but that topology has 102 nodes. The two meanings must not be mixed.
 
 ### Configuring Route Reflector Nodes
 
-**Step 1: Label nodes designated as Route Reflectors**
+Use prepared, workload-free RR nodes for this transition. Setting a cluster ID immediately removes that node from the automatic mesh; changing a busy node in place can interrupt connectivity. This Kubernetes-datastore example preserves existing node IPs and other fields.
+
+**1. Label and annotate the prepared RR nodes**
 
 ```bash
-kubectl label node rr-node-1 calico-route-reflector=true
-kubectl label node rr-node-2 calico-route-reflector=true
+kubectl label node rr-node-1 rr-node-2 route-reflector=true
+kubectl annotate node rr-node-1 rr-node-2   projectcalico.org/RouteReflectorClusterID=244.0.0.1
 ```
 
-**Step 2: Configure Route Reflector cluster ID**
+The shared ID identifies this redundant RR cluster, not the Kubernetes cluster. Other RR clusters/hierarchy levels need an intentional ID design.
+
+**2. Create explicit peerings**
 
 ```yaml
-apiVersion: projectcalico.org/v3
-kind: Node
-metadata:
-  name: rr-node-1
-  labels:
-    calico-route-reflector: "true"
-spec:
-  bgp:
-    ipv4Address: 10.0.1.10/24
-    routeReflectorClusterID: 1.0.0.1
----
-apiVersion: projectcalico.org/v3
-kind: Node
-metadata:
-  name: rr-node-2
-  labels:
-    calico-route-reflector: "true"
-spec:
-  bgp:
-    ipv4Address: 10.0.1.11/24
-    routeReflectorClusterID: 1.0.0.1
-```
-
-**Step 3: Disable node-to-node mesh**
-
-```yaml
-apiVersion: projectcalico.org/v3
-kind: BGPConfiguration
-metadata:
-  name: default
-spec:
-  nodeToNodeMeshEnabled: false
-  asNumber: 64512
-```
-
-**Step 4: Configure BGP peering to Route Reflectors**
-
-```yaml
-# Peering from non-RR nodes to RR nodes
 apiVersion: projectcalico.org/v3
 kind: BGPPeer
 metadata:
-  name: peer-to-route-reflectors
+  name: peer-to-rr
 spec:
-  nodeSelector: "!has(calico-route-reflector)"
-  peerSelector: has(calico-route-reflector)
+  nodeSelector: "!has(route-reflector)"
+  peerSelector: "has(route-reflector)"
 ---
-# Peering between RR nodes
 apiVersion: projectcalico.org/v3
 kind: BGPPeer
 metadata:
-  name: route-reflector-mesh
+  name: rr-mesh
 spec:
-  nodeSelector: has(calico-route-reflector)
-  peerSelector: has(calico-route-reflector)
+  nodeSelector: "has(route-reflector)"
+  peerSelector: "has(route-reflector)"
 ```
+
+`peerSelector` selects Calico nodes, and reverse peering is automatic unless `reversePeering: Manual` is selected. It does not discover arbitrary external routers.
+
+**3. Verify before removing the old path**
+
+Verify Established sessions on both RRs and their clients, expected advertised/received workload prefixes, reachable next hops, and representative cross-node traffic. Confirm forwarding survives the planned loss of either RR. Ordinary client mesh sessions can remain during this transition.
+
+**4. Disable automatic mesh only after those checks**
+
+Update the owned `BGPConfiguration/default` manifest, preserving its ASN, communities and other settings. The equivalent merge patch for an existing resource is:
+
+```bash
+kubectl patch bgpconfiguration.projectcalico.org default --type=merge   -p '{"spec":{"nodeToNodeMeshEnabled":false}}'
+```
+
+If `default` does not exist, create it through the installation's configuration owner after the same checks. Recheck routes and traffic after the change; keep a rollback plan for the original topology.
 
 ### Route Reflector Redundancy Patterns
 
 **Pattern 1: Dual Route Reflectors (Small/Medium Clusters)**
 
-![Each availability zone hosts one route reflector, and every node in both zones peers with both route reflectors, so the loss of one zone's route reflector does not isolate any node.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-11.png)
+![Each zone’s clients peer with both route reflectors placed in separate zones.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-11.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-11.html)
 
-**Pattern 2: Hierarchical Route Reflectors (Large Clusters)**
+> This provides a redundant route-distribution path for surviving clients when one RR is lost, provided transport, forwarding and remaining capacity are healthy. It does not preserve workloads located in a failed zone.
 
-![A two-tier route-reflector hierarchy: two global route reflectors peer with each other and with every rack-level route reflector, and each rack's nodes peer only with their rack's route reflector, keeping session counts flat as the cluster grows.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-10.png)
+**Pattern 2: Hierarchical Route Reflectors**
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-10.html)
+Rack-level RRs can peer with global RRs to reduce per-node session fan-out. Total sessions still grow with clients and racks. A single RR per rack remains a failure point even if global RRs are redundant; evaluate each tier's redundancy, cluster IDs, reflection rules, reachability and convergence before adopting a hierarchy.
 
 ***
 
@@ -318,6 +287,8 @@ spec:
 
 ### Advanced BGPPeer Configuration
 
+Create the referenced Secret and the `tor-policy` BGPFilter from the security section first. This example assumes a directly connected peer with matching GTSM and authentication settings.
+
 ```yaml
 apiVersion: projectcalico.org/v3
 kind: BGPPeer
@@ -327,32 +298,29 @@ spec:
   node: specific-node-name
   peerIP: 192.168.1.1
   asNumber: 65100
-
-  # Authentication
   password:
     secretKeyRef:
       name: bgp-secrets
-      key: peer-password
-
-  # Timers (seconds)
-  keepAliveTime: 30
-  holdTime: 90
-
-  # Source address for BGP session
-  sourceAddress: 10.0.0.5
-
-  # Maximum number of hops for eBGP multihop
-  numAllowedLocalASNumbers: 2
-
-  # TTL security (GTSM)
+      key: datacenter-password
+  keepaliveTime: 30s
+  maxRestartTime: 120s
+  sourceAddress: UseNodeIP
+  nextHopMode: Auto
   ttlSecurity: 1
-
-  # Filters
   filters:
-    - action: Accept
-      matchOperator: In
-      cidr: 10.0.0.0/8
+    - tor-policy
 ```
+
+| Field | Meaning in Calico 3.32.2 |
+| --- | --- |
+| `keepaliveTime` | Duration string; the lowercase `a` is significant. Verified against the released CRD and renderer. |
+| `maxRestartTime` | Graceful-restart time advertised to the neighbor; not a connection-retry interval. |
+| `sourceAddress` | `UseNodeIP` or `None`; a literal source IP is not accepted. |
+| `filters` | Names of existing `BGPFilter` resources, not embedded rule objects. |
+| `ttlSecurity` | GTSM path length in edges; `1` means a directly connected peer. |
+| `numAllowedLocalASNumbers` | Allowed occurrences of the local ASN in a received AS_PATH; relaxes loop prevention, not a multihop setting. Leave unset unless the routing design requires it. |
+
+The current `BGPPeer` API has no `holdTime`, `keepAliveTime` or `restartTime` field. `nextHopMode` is `Auto`, `Self` or `Keep`; the older `keepOriginalNextHop` field is deprecated, not removed.
 
 ***
 
@@ -371,16 +339,14 @@ spec:
   # Cluster AS number
   asNumber: 64512
 
-  # Node-to-node mesh (disable for Route Reflectors)
-  nodeToNodeMeshEnabled: false
-
+  # Set topology separately after validating its peerings.
   # Log level for BIRD
   logSeverityScreen: Info
 ```
 
 ### Service IP Advertisement
 
-Calico can advertise Kubernetes Service IPs via BGP, enabling external clients to reach services directly.
+Calico can advertise existing Service IPs to an authorized routed network. Advertisement does not allocate the IP, create a cloud load balancer, or guarantee a reachable return path. The CIDRs below are examples: merge only the required ranges into the existing configuration and retain other settings.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -389,7 +355,6 @@ metadata:
   name: default
 spec:
   asNumber: 64512
-  nodeToNodeMeshEnabled: false
 
   # Advertise Service ClusterIPs
   serviceClusterIPs:
@@ -406,7 +371,7 @@ spec:
 
 ### BGP Communities Configuration
 
-BGP communities allow you to tag routes for policy-based routing on external routers:
+`prefixAdvertisements` adds communities to matching existing routes, including Pod routes in the current renderer. It does **not** originate the listed prefix or aggregate all Pod blocks into that prefix. Named communities take effect only when referenced; their names and arbitrary values do not implement a routing policy by themselves.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -426,7 +391,7 @@ spec:
       communities:
         - "64512:300"  # Service IPs community
 
-  # Named communities (referenced in other configs)
+  # Named aliases, referenced by prefixAdvertisements in this configuration
   communities:
     - name: pod-networks
       value: "64512:100"
@@ -438,65 +403,43 @@ spec:
 
 ### Node-Specific AS Number
 
-For complex topologies, you can assign different AS numbers per node:
+For a Kubernetes datastore, annotate the existing node to preserve its addresses and other fields. Changing an ASN resets affected peerings; coordinate both endpoints and the routing topology.
 
-```yaml
-apiVersion: projectcalico.org/v3
-kind: Node
-metadata:
-  name: border-node-1
-spec:
-  bgp:
-    ipv4Address: 10.0.1.10/24
-    asNumber: 65001  # Override cluster default
+```bash
+kubectl annotate node border-node-1 projectcalico.org/ASNumber=65001
 ```
+
+For an existing annotation, update it through the configuration owner after reviewing its current value. Other datastores use the Calico Node API; do not replace an existing Node with a partial example containing invented addresses.
 
 ***
 
 ## Service IP Advertisement
 
-### Advertisement Types
+### Advertisement Types and Forwarding
 
-| Type               | Description               | Use Case                |
-| ------------------ | ------------------------- | ----------------------- |
-| **ClusterIP**      | Internal service IP       | Internal load balancing |
-| **ExternalIP**     | User-assigned external IP | Direct external access  |
-| **LoadBalancerIP** | Cloud provider assigned   | Cloud integration       |
+| Type | Address owner and prerequisite |
+| --- | --- |
+| ClusterIP | Kubernetes allocates it; advertising the Service CIDR exposes a route into the service network. |
+| ExternalIP | The operator must already own and route the assigned address. `spec.externalIPs` is deprecated since Kubernetes 1.36; existing support is not removal. |
+| LoadBalancer IP | A compatible controller allocates it. Calico can allocate owned VIPs itself, or interoperate with an explicitly chosen allocator. A cloud LB hostname is not an IP prefix. |
 
-### ExternalIP Advertisement Example
+With the default aggregation behavior, Cluster-mode Services use configured aggregate advertisements, while Local-mode Services use host routes (`/32` or `/128`) from nodes with ready local endpoints. Explicit host-prefix ranges and Calico 3.32’s `serviceLoadBalancerAggregation` setting can change the advertised routes; inspect the actual RIB/export rather than inferring it solely from the Service type. Validate endpoints, the Service dataplane, upstream ECMP and return paths. This is distinct from Pod IPAM block advertisement.
+
+### Native Calico LoadBalancer IPAM
+
+Calico 3.32 includes a LoadBalancer controller in `calico-kube-controllers`. It requires an IPPool with `allowedUses: [LoadBalancer]`; the standard Pod pool does not supply those addresses automatically. Confirm that controller is enabled. This standalone bare-metal example also assumes an existing `calico-demo` namespace and ready `app=my-app` endpoints serving the stated port. Replace the documentation range with an owned, routable range.
 
 ```yaml
-# BGPConfiguration for ExternalIP advertisement
 apiVersion: projectcalico.org/v3
-kind: BGPConfiguration
+kind: IPPool
 metadata:
-  name: default
+  name: service-lb-pool
 spec:
-  serviceExternalIPs:
-    - cidr: 203.0.113.0/24
-
+  cidr: 198.51.100.0/24
+  allowedUses:
+    - LoadBalancer
+  assignmentMode: Automatic
 ---
-# Service with ExternalIP
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-external-service
-spec:
-  type: ClusterIP
-  externalIPs:
-    - 203.0.113.10
-  selector:
-    app: my-app
-  ports:
-    - port: 80
-      targetPort: 8080
-```
-
-### LoadBalancer IP Advertisement
-
-For bare-metal clusters without cloud provider integration:
-
-```yaml
 apiVersion: projectcalico.org/v3
 kind: BGPConfiguration
 metadata:
@@ -504,16 +447,18 @@ metadata:
 spec:
   serviceLoadBalancerIPs:
     - cidr: 198.51.100.0/24
-
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: my-lb-service
+  namespace: calico-demo
   annotations:
-    metallb.universe.tf/loadBalancerIPs: 198.51.100.50
+    projectcalico.org/loadBalancerIPs: '["198.51.100.50"]'
 spec:
   type: LoadBalancer
+  loadBalancerClass: calico
+  externalTrafficPolicy: Local
   selector:
     app: my-app
   ports:
@@ -521,153 +466,68 @@ spec:
       targetPort: 8443
 ```
 
+The explicit `projectcalico.org/loadBalancerIPs` request must belong to an eligible pool and be available; it does not fall back to another address if allocation fails. Allocation and BGP advertisement are separate. Review the controller's `assignIPs` mode before changing it: `RequestedServicesOnly` can unassign existing unannotated Services. Preserve existing pool and controller ownership.
+
+MetalLB is an alternative allocator: its current requested-IP annotation is `metallb.io/loadBalancerIPs`. Choose allocation and BGP-speaker ownership deliberately rather than running competing allocators/speakers for the same VIP. Do not advertise AWS-managed load balancer addresses as a locally owned pool.
+
 ### Selective Service Advertisement
 
-Use annotations to control which services are advertised:
+There is no documented Calico Service opt-out annotation named `projectcalico.org/bgp-advertise`. Select advertised ranges in `BGPConfiguration`, and apply peer-specific BGPFilters where needed. The supported node label `node.kubernetes.io/exclude-from-external-load-balancers=true` excludes a node; it is not a per-Service opt-out.
 
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: internal-only-service
-  annotations:
-    # Prevent BGP advertisement
-    projectcalico.org/bgp-advertise: "false"
-spec:
-  type: LoadBalancer
-  ...
-```
+Rejecting one `/32` does not make an IP unreachable if a covering Service aggregate is still advertised. For a Service that must remain internal, ensure no advertised range covers it and enforce access policy independently; route filtering is not an authorization boundary.
 
 ***
 
 ## Physical Network Integration
 
-### ToR Switch Configuration Examples
+### ToR Routing Policy and Vendor Adaptation
 
-**Cisco NX-OS Configuration:**
+Configure the router's ASN, node neighbors, address family, authentication, import/export policy and reachable next hops as one design. Decide whether nodes use a pre-existing underlay default route or receive a default from BGP. `network` originates an existing matching route; it is not a command to accept routes from a neighbor. Broad `redistribute connected` can leak unrelated networks.
 
-```
-! Configure BGP
-router bgp 65001
-  router-id 10.0.1.1
+| Platform | Adaptation required |
+| --- | --- |
+| Cisco IOS XE / NX-OS | Use the exact platform/release syntax. IOS XE dynamic neighbors use a peer group and `bgp listen range`; do not combine IOS and NX-OS command hierarchies. Define every referenced route map and prefix list. |
+| Arista EOS | Use the deployed release’s peer-group, address-family, secret and import/export policy configuration. The former unverified EOS command block is not a runnable recipe. |
+| Junos | A plain prefix-list match is exact. Use an explicit route-filter match type when more-specific routes are intended. |
 
-  ! Peer with Kubernetes nodes in rack
-  neighbor 10.0.1.0/24 remote-as 64512
+For example, this **Junos policy fragment**, attached as import policy on the ToR's intended node-facing BGP group, accepts planned Pod `/26`–`/32` routes and LoadBalancer `/32` routes, then rejects the rest:
 
-  address-family ipv4 unicast
-    ! Accept pod network routes
-    network 10.244.0.0/16
-    ! Redistribute connected for node networks
-    redistribute connected route-map KUBERNETES-NODES
-
-    ! Route map for prefix filtering
-    neighbor 10.0.1.0/24 route-map ACCEPT-K8S-ROUTES in
-    neighbor 10.0.1.0/24 route-map DENY-ALL out
-
-! Route map definitions
-route-map ACCEPT-K8S-ROUTES permit 10
-  match ip address prefix-list K8S-POD-NETS
-
-ip prefix-list K8S-POD-NETS seq 10 permit 10.244.0.0/16 le 26
-ip prefix-list K8S-POD-NETS seq 20 permit 10.96.0.0/12 le 32
-```
-
-**Arista EOS Configuration:**
-
-```
-! Configure BGP
-router bgp 65001
-  router-id 10.0.1.1
-
-  ! Peer group for Kubernetes nodes
-  neighbor K8S-NODES peer group
-  neighbor K8S-NODES remote-as 64512
-  neighbor K8S-NODES maximum-routes 10000
-  neighbor K8S-NODES password 7 <encrypted>
-
-  ! Dynamic neighbors from subnet
-  bgp listen range 10.0.1.0/24 peer-group K8S-NODES
-
-  address-family ipv4
-    neighbor K8S-NODES activate
-    neighbor K8S-NODES prefix-list K8S-PODS-IN in
-    neighbor K8S-NODES prefix-list DENY-ALL out
-
-! Prefix lists
-ip prefix-list K8S-PODS-IN seq 10 permit 10.244.0.0/16 le 26
-ip prefix-list K8S-PODS-IN seq 20 permit 10.96.0.0/12 le 32
-ip prefix-list DENY-ALL seq 10 deny 0.0.0.0/0 le 32
-```
-
-**Juniper Junos Configuration:**
-
-```
-protocols {
-    bgp {
-        group K8S-NODES {
-            type external;
-            peer-as 64512;
-            local-as 65001;
-
-            multipath multiple-as;
-
-            import K8S-IMPORT;
-            export DENY-ALL;
-
-            allow 10.0.1.0/24;
-
-            authentication-key "$9$encrypted";
-        }
-    }
-}
-
+```text
 policy-options {
-    prefix-list K8S-POD-NETS {
-        10.244.0.0/16;
-    }
-    prefix-list K8S-SVC-NETS {
-        10.96.0.0/12;
-    }
     policy-statement K8S-IMPORT {
-        term accept-pods {
+        term approved {
             from {
-                prefix-list K8S-POD-NETS;
-                prefix-length-range /26-/26;
+                route-filter 10.244.0.0/16 prefix-length-range /26-/32;
+                route-filter 198.51.100.0/24 prefix-length-range /32-/32;
             }
             then accept;
         }
-        term accept-services {
-            from {
-                prefix-list K8S-SVC-NETS;
-            }
-            then accept;
-        }
-        term reject-all {
+        term reject-rest {
             then reject;
         }
     }
-    policy-statement DENY-ALL {
-        then reject;
-    }
 }
 ```
 
+The minimum Pod length assumes `/26` IPAM blocks; adapt it to the actual pool and route inventory. Borrowed addresses and some mobility paths can require `/32` routes, so `le 26` is not a generally safe Pod filter. This fragment neither creates neighbors nor advertises a default route. Vendor device configuration and failover have not been runtime tested here; complete and validate export policy, limits and next-hop behavior on the exact router release before deployment.
+
 ### Spine-Leaf Architecture Integration
 
-![In a spine-leaf fabric each leaf switch peers with both spine switches for redundancy, and the Kubernetes nodes in each rack peer only with their rack's leaf switch, so BGP routes flow from nodes up through the leaf and spine layers.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-5.png)
+![Nodes peer with local leaf switches, which connect to the spine layer.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-5.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-5.html)
 
-Calico configuration for spine-leaf:
+> Grouped boxes summarize multiple sessions. The shared node ASN needs an explicit AS-loop/override design; dual spines alone do not provide leaf or node-uplink redundancy. Use the addresses and ASNs as an illustrative topology, not a complete deployable configuration.
+
+Calico peer fragments for a spine-leaf design follow. Confirm node labels, direct/recursive next-hop reachability, export policies and the return path first. Reusing ASN 64512 on nodes across racks can cause a route to be rejected when its AS_PATH contains the receiving node's ASN; design unique ASNs or a deliberately validated fabric AS-override/loop policy. Do not work around this by blindly raising `numAllowedLocalASNumbers`. Validate the replacement path before removing mesh sessions.
 
 ```yaml
-# Disable node-to-node mesh
+# Final topology alternative: establish fabric peerings before removing mesh.
 apiVersion: projectcalico.org/v3
 kind: BGPConfiguration
 metadata:
   name: default
 spec:
-  nodeToNodeMeshEnabled: false
   asNumber: 64512
 
 ---
@@ -708,12 +568,14 @@ spec:
 
 ### Community Design Patterns
 
+The private values below are a local convention requiring router policy; they are not built-in priority controls. Standard communities contain two 16-bit values. Large communities contain three 32-bit values and can represent a four-byte ASN without squeezing it into a standard community.
+
 | Community     | Meaning        | Action                           |
 | ------------- | -------------- | -------------------------------- |
 | `64512:100`   | Pod Networks   | Accept, normal routing           |
 | `64512:200`   | Service IPs    | Accept, may apply special policy |
 | `64512:300`   | Infrastructure | Higher priority routing          |
-| `65535:65281` | NO\_EXPORT     | Do not advertise outside AS      |
+| `65535:65281` | NO\_EXPORT | Do not advertise outside the AS confederation boundary (outside the AS when no confederation is used) |
 | `65535:65282` | NO\_ADVERTISE  | Do not advertise to any peer     |
 
 ### Community-Based Traffic Engineering
@@ -735,12 +597,12 @@ spec:
       value: "65535:65281"  # NO_EXPORT
 
   prefixAdvertisements:
-    # Production pod networks - advertise everywhere
+    # Tag existing production routes; actual propagation follows routing policy
     - cidr: 10.244.0.0/17
       communities:
         - production
 
-    # Staging pod networks - keep local
+    # Add NO_EXPORT to existing staging routes
     - cidr: 10.244.128.0/17
       communities:
         - staging
@@ -758,76 +620,78 @@ spec:
 
 ### MD5 Authentication
 
-Protect BGP sessions with MD5 authentication:
+Calico supports the TCP MD5 signature option for BGP. It authenticates traffic from peers sharing the secret; it does not encrypt traffic or validate the legitimacy of routes sent by an authenticated peer.
+
+Provision `bgp-secrets` through your secret-management process in the namespace where `calico-node` runs (`calico-system` for the operator installation used here; manifest installations may use `kube-system`). The example requires the `datacenter-password` key. Other examples referencing `mesh-password`, rack-specific or leaf-specific keys require those keys too. Configure matching credentials on the corresponding routers and confirm the Calico service account can read the Secret.
 
 ```yaml
-# Create secret for BGP password
-apiVersion: v1
-kind: Secret
-metadata:
-  name: bgp-auth
-  namespace: kube-system
-type: Opaque
-stringData:
-  bgp-password: "SuperSecretPassword123!"
-
----
-# Reference in BGPPeer
 apiVersion: projectcalico.org/v3
 kind: BGPPeer
 metadata:
   name: secure-peer
 spec:
-  peerIP: 10.0.1.1
-  asNumber: 65001
+  peerIP: 192.168.1.1
+  asNumber: 65100
   password:
     secretKeyRef:
-      name: bgp-auth
-      key: bgp-password
+      name: bgp-secrets
+      key: datacenter-password
 ```
 
 ### Prefix Filtering
 
-Limit which prefixes are accepted/advertised:
+Rules are evaluated in order; the first match executes immediately. Unmatched routes default to **Accept**, so a whitelist needs an unconditional final Reject. `Equal 0.0.0.0/0` matches only the default route; `In 0.0.0.0/0` matches every IPv4 route and `NotIn 0.0.0.0/0` matches none.
+
+The following external-peer example accepts only a default route and the planned underlay `10.0.0.0/16` on import. On export it allows actual Pod `/26`–`/32` routes and LoadBalancer `/32` routes. Adapt the CIDRs and lengths to the actual route inventory; do not attach this external policy indiscriminately to RR/client sessions.
 
 ```yaml
 apiVersion: projectcalico.org/v3
 kind: BGPFilter
 metadata:
-  name: allow-pod-nets-only
+  name: tor-policy
 spec:
+  importV4:
+    - action: Accept
+      matchOperator: Equal
+      cidr: 0.0.0.0/0
+    - action: Accept
+      matchOperator: In
+      cidr: 10.0.0.0/16
+    - action: Reject
   exportV4:
     - action: Accept
       matchOperator: In
       cidr: 10.244.0.0/16
-      prefixLength: "24-28"
-    - action: Reject
-      matchOperator: In
-      cidr: 0.0.0.0/0
-
-  importV4:
+      prefixLength:
+        min: 26
+        max: 32
+      operations:
+        - addCommunity:
+            value: "64512:100"
     - action: Accept
       matchOperator: In
-      cidr: 10.0.0.0/8
+      cidr: 198.51.100.0/24
+      prefixLength:
+        min: 32
+        max: 32
     - action: Reject
-      matchOperator: In
-      cidr: 0.0.0.0/0
-
 ---
 apiVersion: projectcalico.org/v3
 kind: BGPPeer
 metadata:
   name: filtered-peer
 spec:
-  peerIP: 10.0.1.1
-  asNumber: 65001
+  peerIP: 192.168.1.1
+  asNumber: 65100
   filters:
-    - allow-pod-nets-only
+    - tor-policy
 ```
+
+`prefixLength` is an object with `min` and `max`, not a range string. Calico 3.32 also supports accepted-route operations such as `addCommunity`. An explicit export Accept returns before the built-in Calico export/aggregation/`prefixAdvertisements` processing. It may therefore export more-specific routes already in the RIB, and this example adds its Pod tag directly in the rule. Inspect `show route export` before applying it to the fabric; a BGPFilter does not create missing routes.
 
 ### GTSM (TTL Security)
 
-Generalized TTL Security Mechanism prevents spoofed BGP packets:
+GTSM rejects packets arriving with a TTL below the expected path threshold; it reduces off-path spoofing exposure but does not authenticate the peer or stop an on-link attacker. Configure both endpoints consistently.
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -835,10 +699,12 @@ kind: BGPPeer
 metadata:
   name: gtsm-enabled-peer
 spec:
-  peerIP: 10.0.1.1
-  asNumber: 65001
-  ttlSecurity: 1  # Expect TTL of 254 or higher
+  peerIP: 192.168.1.1
+  asNumber: 65100
+  ttlSecurity: 1
 ```
+
+For the pinned BIRD implementation, GTSM sends TTL 255 and sets minimum receive TTL to `256−hops`. Thus `ttlSecurity: 1` requires 255, not 254; two edges require at least 254. Verify the actual path before enabling it. This setting is unrelated to the count of local ASNs allowed in AS_PATH.
 
 ***
 
@@ -852,38 +718,27 @@ kind: BGPPeer
 metadata:
   name: tuned-peer
 spec:
-  peerIP: 10.0.1.1
-  asNumber: 65001
-
-  # Keepalive interval (default: 60s)
-  keepAliveTime: 20
-
-  # Hold time (default: 180s, must be 3x keepalive)
-  holdTime: 60
+  peerIP: 192.168.1.1
+  asNumber: 65100
+  keepaliveTime: 20s
+  maxRestartTime: 120s
 ```
+
+The pinned BIRD fork proposes a 240-second Hold Time by default and negotiates the smaller value with the neighbor. If no keepalive interval is configured, it uses one third of that negotiated Hold Time. An explicit `keepaliveTime` overrides the interval; it does **not** automatically change Hold Time to three times that value. Inspect the actual negotiated timers and choose an interval that fits them.
+
+`BGPPeer` does not expose `holdTime`. The former 60/180, 10/30 and 3/9 recommendations were not verified Calico defaults or failure-detection guarantees. BIRD's standalone BFD capability does not imply a supported Calico BFD CRD or configuration field. Test any separate BFD integration against the exact supported deployment rather than adding an invented field.
 
 ### Route Aggregation
 
-Reduce the number of routes advertised by aggregating pod CIDRs:
+Calico normally aggregates local IPAM addresses into their allocated blocks; the current BIRD aggregation template also permits higher-priority more-specific routes. Borrowing and mobility may require host routes. `prefixAdvertisements` only tags existing matching routes and does not turn every `/26` into an originated `/16`.
 
-```yaml
-apiVersion: projectcalico.org/v3
-kind: BGPConfiguration
-metadata:
-  name: default
-spec:
-  asNumber: 64512
-
-  # Aggregate individual /26 pod CIDRs into /16
-  prefixAdvertisements:
-    - cidr: 10.244.0.0/16
-      communities:
-        - "64512:100"
-```
+Larger IPAM blocks trade fewer block routes against allocation granularity and address utilization. Existing IPPool `blockSize` is immutable; use the pool migration procedure in [networking modes](03-networking-modes.md) if a new pool is required. Do not apply a new block size over an existing default pool or advertise a covering aggregate from a router that cannot reach all covered destinations.
 
 ### Graceful Restart
 
-Enable BGP Graceful Restart to minimize traffic disruption during BIRD restarts:
+Calico's BIRD template enables Graceful Restart. Its benefit requires negotiated capability and a still-working forwarding path; retained stale routes can otherwise blackhole traffic. It does not guarantee interruption-free updates.
+
+For explicit peers, `BGPPeer.maxRestartTime` sets the advertised restart time. The following setting applies to **automatic node mesh** sessions, not every explicit peer:
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -891,71 +746,62 @@ kind: BGPConfiguration
 metadata:
   name: default
 spec:
-  asNumber: 64512
-
-  # Enable graceful restart (BIRD default is enabled)
-  # Stale route time in seconds
-  nodeMeshMaxRestartTime: 120
+  nodeMeshMaxRestartTime: 120s
 ```
+
+This is a duration string, not an integer or an enable switch. Change it through the existing configuration owner and validate actual peer capability and recovery behavior.
 
 ***
 
 ## Debugging BGP
 
-### birdcl Commands
+### Inspect BIRD from the Correct Node
 
-Access BIRD command-line interface from a calico-node pod:
-
-```bash
-# Enter calico-node pod
-kubectl exec -it -n kube-system calico-node-xxxxx -c calico-node -- /bin/sh
-
-# Show BGP protocol status
-birdcl -s /var/run/calico/bird.ctl show protocols all
-
-# Show BGP neighbors
-birdcl -s /var/run/calico/bird.ctl show protocols all bgp*
-
-# Show routing table
-birdcl -s /var/run/calico/bird.ctl show route
-
-# Show routes to specific prefix
-birdcl -s /var/run/calico/bird.ctl show route for 10.244.1.0/24
-
-# Show route export to specific peer
-birdcl -s /var/run/calico/bird.ctl show route export Mesh_10_0_1_11
-
-# Show BGP neighbor details
-birdcl -s /var/run/calico/bird.ctl show protocols all Mesh_10_0_1_11
-```
-
-### Common BGP Issues and Solutions
-
-| Issue                    | Symptoms                      | Solution                              |
-| ------------------------ | ----------------------------- | ------------------------------------- |
-| Sessions stuck in Active | No routes learned             | Check firewall (TCP 179), AS numbers  |
-| Routes not propagating   | Pods unreachable across racks | Verify node-to-node mesh or RR config |
-| Route flapping           | Intermittent connectivity     | Check BGP timers, network stability   |
-| Session resets           | Frequent Established->Active  | Check MTU, MD5 passwords              |
-
-### Diagnostic Commands
+Choose an actual node and the installation namespace. These read-only commands run from the operator's shell against the IPv4 BIRD control socket. For IPv6 use `birdcl6` and `/var/run/calico/bird6.ctl`. A BGP-disabled installation need not have either daemon.
 
 ```bash
-# Check Calico node status
-calicoctl node status
-
-# List all BGP peers
-calicoctl get bgppeers -o wide
-
-# Check BGP configuration
-calicoctl get bgpconfiguration default -o yaml
-
-# View BIRD logs
-kubectl logs -n kube-system calico-node-xxxxx -c calico-node | grep -i bird
-
-# Check IP routes on node
-ip route show | grep bird
+CALICO_NAMESPACE=calico-system
+CALICO_NODE=worker-1
+CALICO_POD="$(kubectl -n "$CALICO_NAMESPACE" get pods -l k8s-app=calico-node \
+  --field-selector "spec.nodeName=$CALICO_NODE" -o jsonpath='{.items[0].metadata.name}')"
+test -n "$CALICO_POD"
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  birdcl -s /var/run/calico/bird.ctl show protocols all
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  birdcl -s /var/run/calico/bird.ctl show route
 ```
+
+```bash
+CALICO_BGP_PROTOCOL=Global_192_168_1_1
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  birdcl -s /var/run/calico/bird.ctl show protocols all "$CALICO_BGP_PROTOCOL"
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  birdcl -s /var/run/calico/bird.ctl show route export "$CALICO_BGP_PROTOCOL"
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  birdcl -s /var/run/calico/bird.ctl show route protocol "$CALICO_BGP_PROTOCOL"
+kubectl -n "$CALICO_NAMESPACE" exec "$CALICO_POD" -c calico-node -- \
+  birdcl -s /var/run/calico/bird.ctl 'show route where net ~ [10.244.0.0/16+]'
+```
+
+```bash
+kubectl get bgpconfiguration.projectcalico.org default -o yaml
+kubectl get bgppeers.projectcalico.org -o wide
+kubectl get bgpfilters.projectcalico.org -o yaml
+kubectl -n "$CALICO_NAMESPACE" logs "$CALICO_POD" -c calico-node --tail=200
+```
+
+Replace `CALICO_BGP_PROTOCOL` with a name returned by `show protocols`; actual names include `Mesh_…`, `Global_…` and `Node_…`, not a universal `bgp*` prefix. Quote route expressions so the local shell does not expand them. `show protocols all` includes non-BGP protocols too.
+
+Container logs can show startup and confd errors, but absence of matching stdout lines does not prove BIRD is healthy. Inspect the installation's BIRD log destination and session state. `calicoctl node status` is a node-local diagnostic requiring the node environment, not just a workstation kubeconfig. Likewise, `ip route` must be inspected on the intended node/network namespace.
+
+| Symptom | Checks |
+| --- | --- |
+| Session remains Active | Peer address/ASN, TCP listener and firewall, source address, MD5/GTSM agreement, transport reachability |
+| Established but no useful routes | Import/export filters, RR roles, endpoint/IPAM state, next-hop reachability and AS-loop rejection |
+| Flapping or resets | Transport loss, MTU, authentication, negotiated timers, controller changes |
+| Route exists but traffic fails | Actual kernel/FIB path, return route, Service forwarding, access policy and covering aggregates |
+
+Established BGP alone does not prove workload connectivity.
 
 ***
 
@@ -963,17 +809,21 @@ ip route show | grep bird
 
 ### Multi-Rack with Route Reflectors
 
-![Two route reflectors in a management rack peer with each other and with every compute rack, so each compute rack's nodes reach every other rack's routes without a full mesh, and losing one route reflector does not isolate any rack.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-7.png)
+![Two route reflectors in one management rack each peer with compute nodes across racks.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-7.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-7.html)
 
+> A surviving RR can preserve route distribution only if its transport and capacity remain available. Both RRs in one management rack share that rack’s failure risk; separate failure domains for rack-level resilience.
+
 ### Multi-Datacenter BGP Design
 
-![Each datacenter runs its own AS with its own route reflectors peering internally with its nodes, and each datacenter's route reflectors peer over eBGP with a shared WAN edge, connecting the two datacenters.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-8.png)
+![Each datacenter has its own AS and route reflectors peering with WAN routers.](../../.gitbook/assets/en-networking-calico-04-bgp-deep-dive-8.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-04-bgp-deep-dive-8.html)
 
-Configuration for multi-datacenter:
+> The WAN group summarizes transit that must be separately configured; the visible links alone do not establish end-to-end reachability. DC1 origin tagging also requires the prefixAdvertisements reference shown in the text.
+
+DC1 configuration fragments follow, assuming its owned workload CIDR is `10.244.0.0/16` and its local RR topology is already working. A named community must also be referenced by `prefixAdvertisements` to tag matching routes. DC2 needs its own non-overlapping CIDRs, ASNs and peer definitions; the WAN needs explicit transit/return routing and policy. This fragment is not a complete two-DC deployment.
 
 ```yaml
 # DC1 Configuration
@@ -983,11 +833,14 @@ metadata:
   name: default
 spec:
   asNumber: 64512
-  nodeToNodeMeshEnabled: false
 
   communities:
     - name: dc1-origin
       value: "64512:1"
+  prefixAdvertisements:
+    - cidr: 10.244.0.0/16
+      communities:
+        - dc1-origin
 
 ---
 # Peer DC1 RRs with WAN routers
@@ -1007,18 +860,18 @@ spec:
 
 ### Design Recommendations
 
-1. **Cluster Size < 50 nodes**: Full-mesh is acceptable
-2. **Cluster Size 50-200 nodes**: Deploy 2-3 Route Reflectors
-3. **Cluster Size > 200 nodes**: Deploy hierarchical Route Reflectors
-4. **Multi-rack**: Use rack-aware Route Reflector placement
-5. **Multi-datacenter**: Use separate AS per DC with eBGP between DCs
+1. Size full mesh and RR deployments using measured route count, churn and convergence targets.
+2. Separate redundant RRs across failure domains and verify surviving capacity and transport.
+3. Use rack-aware labels and a documented ASN, CIDR and next-hop plan.
+4. Add a hierarchy only when its reflection/loop rules and per-tier redundancy are understood.
+5. Treat multiple datacenters as a complete routing and security design, not merely two BGPPeer objects.
 
 ### Security Recommendations
 
 1. Always enable MD5 authentication for external peers
 2. Implement prefix filtering to prevent route injection
 3. Use GTSM (TTL Security) where supported
-4. Limit maximum routes accepted per peer
+4. Configure supported prefix limits on the external routers; do not invent a Calico BGPPeer limit field.
 5. Monitor BGP sessions for anomalies
 
 ### Operational Recommendations
@@ -1027,7 +880,7 @@ spec:
 2. Document AS number allocation scheme
 3. Implement BGP monitoring and alerting
 4. Test failover scenarios regularly
-5. Keep BGP timers consistent across peers
+5. Inspect negotiated timers and test recovery; a shorter keepalive is not a guaranteed shorter Hold Time.
 
 ***
 
@@ -1035,6 +888,20 @@ spec:
 
 * [Calico BGP Documentation](https://docs.tigera.io/calico/latest/networking/configuring/bgp)
 * [BIRD Internet Routing Daemon](https://bird.network.cz/)
-* [RFC 4271 - BGP-4](https://tools.ietf.org/html/rfc4271)
-* [RFC 4456 - BGP Route Reflection](https://tools.ietf.org/html/rfc4456)
-* [RFC 5765 - GTSM for BGP](https://tools.ietf.org/html/rfc5082)
+* [RFC 4271 - BGP-4](https://www.rfc-editor.org/rfc/rfc4271)
+* [RFC 4456 - BGP Route Reflection](https://www.rfc-editor.org/rfc/rfc4456)
+* [RFC 5082 - GTSM](https://www.rfc-editor.org/rfc/rfc5082)
+
+* [Calico BGPPeer API](https://docs.tigera.io/calico/latest/reference/resources/bgppeer)
+* [Calico BGPConfiguration API](https://docs.tigera.io/calico/latest/reference/resources/bgpconfig)
+* [Calico BGPFilter API](https://docs.tigera.io/calico/latest/reference/resources/bgpfilter)
+* [Service IP advertisement](https://docs.tigera.io/calico/latest/networking/configuring/advertise-service-ips)
+* [Calico LoadBalancer IPAM](https://docs.tigera.io/calico/latest/networking/ipam/service-loadbalancer)
+* [Calico 3.32.2 BIRD configuration processing](https://github.com/projectcalico/calico/blob/v3.32.2/confd/pkg/backends/calico/bgp_processor.go)
+* [Calico 3.32.2 BIRD template](https://github.com/projectcalico/calico/blob/v3.32.2/confd/etc/calico/confd/templates/bird.cfg.template)
+* [Pinned BIRD best-path implementation](https://github.com/projectcalico/bird/blob/9111ec3c3ff3e769727a5940d3d829a0be8b5201/proto/bgp/attrs.c)
+* [Pinned BIRD timers and GTSM](https://github.com/projectcalico/bird/blob/9111ec3c3ff3e769727a5940d3d829a0be8b5201/proto/bgp/bgp.c)
+* [Cisco IOS XE dynamic neighbors](https://www.cisco.com/c/en/us/td/docs/routers/ios/config/17-x/ip-routing/b-ip-routing/m_irg-bgp-dynamic-neighbors.html)
+* [Junos route-filter match types](https://www.juniper.net/documentation/en_US/junos/topics/usage-guidelines/policy-configuring-route-lists-for-use-in-routing-policy-match-conditions.html)
+* [Kubernetes Service API and externalIPs deprecation](https://kubernetes.io/docs/concepts/services-networking/service/)
+* [Calico 3.32.2 Service route generation](https://github.com/projectcalico/calico/blob/v3.32.2/confd/pkg/backends/calico/routes.go)

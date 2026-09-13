@@ -1,0 +1,82 @@
+{
+  "files": [
+    {
+      "path": "en/service-mesh/linkerd/07-best-practices.md",
+      "yamlDocuments": 9,
+      "bashBlocks": 9
+    },
+    {
+      "path": "ko/service-mesh/linkerd/07-best-practices.md",
+      "yamlDocuments": 9,
+      "bashBlocks": 9
+    }
+  ],
+  "codeParity": true,
+  "nativeHelmRenders": [
+    {
+      "case": "packaged HA",
+      "objects": 43,
+      "replicas": 3,
+      "PDBs": 3,
+      "requiredNodePreferredZoneAndFailWebhook": true
+    },
+    {
+      "case": "proxy resources",
+      "objects": 40
+    },
+    {
+      "case": "runtime worker bounds",
+      "objects": 40
+    },
+    {
+      "case": "four stateless Viz components with external Prometheus",
+      "objects": 49,
+      "replicas": 2
+    },
+    {
+      "case": "single persistent Prometheus",
+      "objects": 57,
+      "replicas": 1,
+      "strategy": "Recreate",
+      "accessMode": "ReadWriteOnce"
+    }
+  ],
+  "nativeKubectlLocalPatches": [
+    "resources",
+    "opt-out",
+    "opaque"
+  ],
+  "checkExitRegression": {
+    "originalMasks42As0": true,
+    "corrected": [
+      {
+        "fixtureCLIExit": 0,
+        "wrapperExit": 0
+      },
+      {
+        "fixtureCLIExit": 42,
+        "wrapperExit": 42
+      }
+    ]
+  },
+  "originalCharacterization": "/tmp/mesh-linkerd-best-practices-validation/original-characterization.json",
+  "limits": [
+    "No live cluster/AWS upgrade, rollback, scheduling, migration or load test",
+    "Native chart/patched-manifest checks are not runtime availability/performance proof",
+    "Check wrapper regression uses a local stub command and no cluster credentials"
+  ],
+  "sources": [
+    "https://github.com/linkerd/linkerd2/blob/edge-26.9.1/charts/linkerd-control-plane/values-ha.yaml",
+    "https://github.com/linkerd/linkerd2/blob/edge-26.9.1/charts/partials/templates/_proxy.tpl",
+    "https://github.com/linkerd/linkerd2/blob/edge-26.9.1/viz/charts/linkerd-viz/values.yaml",
+    "https://linkerd.io/docs/reference/proxy-configuration/",
+    "https://linkerd.io/docs/reference/authorization-policy/",
+    "https://linkerd.io/docs/tasks/upgrade/",
+    "https://linkerd.io/docs/tasks/troubleshooting/",
+    "https://linkerd.io/docs/tasks/manually-rotating-control-plane-tls-credentials/",
+    "https://linkerd.io/docs/tasks/automatically-rotating-control-plane-tls-credentials/"
+  ],
+  "testLog": "/tmp/kubernetes-docs-full-review/docs-test-linkerd-complete-clean.log",
+  "fullSuiteTail": "adcrumbList with ordered positions\n  ---\n  duration_ms: 0.191826\n  type: 'test'\n  ...\n# Subtest: structuredData omits the breadcrumb node for a page with no trail\nok 118 - structuredData omits the breadcrumb node for a page with no trail\n  ---\n  duration_ms: 0.068457\n  type: 'test'\n  ...\n1..118\n# tests 118\n# suites 0\n# pass 118\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 2745.589288\n",
+  "artifacts": "/tmp/mesh-linkerd-best-practices-validation"
+}

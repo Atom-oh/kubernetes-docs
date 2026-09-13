@@ -1,16 +1,19 @@
 # Observability Quiz
 
-> **Supported Version**: Istio 1.28.0 **EKS Version**: 1.34 (Kubernetes 1.28+) **Last Updated**: February 19, 2026
+> **Last Updated**: September 11, 2026 · Istio 1.31 · Kubernetes 1.32–1.36. See the installation and dashboard chapters for EKS and Kiali compatibility limits.
 
-This quiz tests your understanding of Istio's observability features.
+This quiz covers configured sidecar/waypoint telemetry. Each worked example is independent and assumes the stated backends, namespaces, permissions and traffic exist. YAML/API/query checks are not production or live-cluster tests; ztunnel L4, native sidecars and HA deployments need their specific collection configuration.
 
 ## Multiple Choice Questions (1-5)
 
 ### Question 1: Prometheus Metrics
 
-Which metric is **NOT** collected by default by Prometheus in Istio?
+Which is **not an Istio standard service-metric name/family**?
 
-A. istio\_requests\_total (total request count) B. istio\_request\_duration\_milliseconds (request latency) C. istio\_request\_bytes (request size) D. istio\_pod\_cpu\_usage (Pod CPU usage)
+A. istio\_requests\_total (total request count)\
+B. istio\_request\_duration\_milliseconds (request latency)\
+C. istio\_request\_bytes (request size)\
+D. istio\_pod\_cpu\_usage (Pod CPU usage)
 
 <details>
 
@@ -18,7 +21,7 @@ A. istio\_requests\_total (total request count) B. istio\_request\_duration\_mil
 
 **Answer: D**
 
-Istio Envoy collects **traffic-related metrics** only, while Pod CPU usage is collected by **Kubernetes Metrics Server** or **cAdvisor**.
+Istio standard service metrics describe traffic; Envoy also exposes internal proxy statistics. Prometheus obtains container CPU usage from kubelet/cAdvisor (or the runtime resource pipeline). Metrics Server serves resource metrics for autoscaling and `kubectl top`; kube-state-metrics exposes object state and configured requests/limits, not measured CPU consumption.
 
 **Explanation:**
 
@@ -27,8 +30,8 @@ Istio Envoy collects **traffic-related metrics** only, while Pod CPU usage is co
 1. **istio\_requests\_total (A - O)**
 
 ```promql
-# Total requests by service
-sum(rate(istio_requests_total[5m])) by (destination_service_name)
+# Request rate by service (per second)
+sum(rate(istio_requests_total{reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 ```
 
 2. **istio\_request\_duration\_milliseconds (B - O)**
@@ -36,22 +39,22 @@ sum(rate(istio_requests_total[5m])) by (destination_service_name)
 ```promql
 # P95 latency
 histogram_quantile(0.95,
-  sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le)
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])) by (le)
 )
 ```
 
 3. **istio\_request\_bytes (C - O)**
 
 ```promql
-# Request size
-sum(rate(istio_request_bytes_sum[5m])) by (destination_service_name)
+# Request body byte rate (bytes/second), not mean request size
+sum(rate(istio_request_bytes_sum{reporter="destination"}[5m])) by (destination_service_name, destination_service_namespace)
 ```
 
 4. **istio\_pod\_cpu\_usage (D - X)**
 
 * This is not an Istio metric
 * Kubernetes metric: `container_cpu_usage_seconds_total`
-* Requires kube-state-metrics to collect in Prometheus
+* Scrape kubelet/cAdvisor; kube-state-metrics is useful when comparing usage with configured limits
 
 **Istio Metric Categories:**
 
@@ -68,37 +71,37 @@ sum(rate(istio_request_bytes_sum[5m])) by (destination_service_name)
 # 1. Latency
 histogram_quantile(0.95,
   sum(rate(
-    istio_request_duration_milliseconds_bucket{
-      destination_service_name="reviews"
+    istio_request_duration_milliseconds_bucket{reporter="destination",
+      destination_service_name="reviews", destination_service_namespace="default"
     }[5m]
   )) by (le)
 )
 
 # 2. Traffic
 sum(rate(
-  istio_requests_total{
-    destination_service_name="reviews"
+  istio_requests_total{reporter="destination",
+    destination_service_name="reviews", destination_service_namespace="default"
   }[5m]
 ))
 
 # 3. Errors (error rate)
 sum(rate(
-  istio_requests_total{
-    destination_service_name="reviews",
+  istio_requests_total{reporter="destination",
+    destination_service_name="reviews", destination_service_namespace="default",
     response_code=~"5.."
   }[5m]
 ))
 /
 sum(rate(
-  istio_requests_total{
-    destination_service_name="reviews"
+  istio_requests_total{reporter="destination",
+    destination_service_name="reviews", destination_service_namespace="default"
   }[5m]
 ))
 
 # 4. Saturation - Uses Kubernetes metrics
 sum(rate(
   container_cpu_usage_seconds_total{
-    pod=~"reviews-.*"
+    namespace="default", container="istio-proxy", pod=~"reviews-.*"
   }[5m]
 ))
 ```
@@ -107,8 +110,7 @@ sum(rate(
 
 ```bash
 # Check metrics via Envoy Admin API
-kubectl exec <pod-name> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus
+istioctl x envoy-stats <pod-name>.default --output prom
 
 # Check in Prometheus
 kubectl port-forward -n istio-system svc/prometheus 9090:9090
@@ -125,9 +127,12 @@ kubectl port-forward -n istio-system svc/prometheus 9090:9090
 
 ### Question 2: Distributed Tracing
 
-What is the **minimum configuration** required for distributed tracing in Istio?
+With a working tracing provider/backend, which application responsibility is required to join proxy spans across service calls?
 
-A. The application must generate trace IDs B. The application must propagate HTTP headers C. Jaeger client must be installed on all services D. Envoy automatically handles everything
+A. The application must generate trace IDs\
+B. The application must propagate HTTP headers\
+C. Jaeger client must be installed on all services\
+D. Envoy automatically handles everything
 
 <details>
 
@@ -135,34 +140,25 @@ A. The application must generate trace IDs B. The application must propagate HTT
 
 **Answer: B**
 
-Istio Envoy automatically generates trace IDs, but **the application must propagate HTTP headers** to the next service.
+Configured proxies can generate spans and trace IDs, but the application must propagate trace context to its outbound calls. An SDK should inject the active context, so child span IDs may change while the trace ID stays the same. Transparent applications without their own spans can forward the selected propagation headers.
 
 **Explanation:**
 
 **How Distributed Tracing Works:**
 
-![Diagram showing the Ingress Gateway minting trace headers on an incoming request, each downstream service (A, B, C) required to forward those headers unchanged to the next hop, and every hop also sending its span to Jaeger.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-observability-0.png)
+![Diagram showing the Ingress Gateway minting trace headers on an incoming request, each downstream service (A, B, C) propagating trace context to the next hop, and every hop also sending its span to Jaeger.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-observability-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-observability-0.html)
 
+The diagram illustrates B3 propagation to a configured Jaeger backend. W3C propagation and an intermediate OpenTelemetry Collector are also supported; instrumented applications inject their active span context instead of copying every header unchanged.
+
 **HTTP Headers to Propagate:**
 
-```yaml
-# Zipkin (B3) headers
-x-b3-traceid: Trace ID
-x-b3-spanid: Current Span ID
-x-b3-parentspanid: Parent Span ID
-x-b3-sampled: Sampling decision
-x-b3-flags: Flags
-
-# Or single header
-b3: {traceid}-{spanid}-{sampled}-{parentspanid}
-
-# Istio internal headers
-x-request-id: Unique request ID
-
-# Jaeger native headers (optional)
-uber-trace-id
+```text
+W3C: traceparent, tracestate
+B3 (if configured): b3 OR x-b3-traceid, x-b3-spanid, x-b3-parentspanid, x-b3-sampled
+Istio correlation: x-request-id
+B3 debug flag: x-b3-flags (do not force debug sampling on ordinary traffic)
 ```
 
 **Application Code Examples:**
@@ -178,7 +174,7 @@ app = Flask(__name__)
 def get_users():
     # 1. Extract received headers
     headers = {}
-    for header in ['x-request-id', 'x-b3-traceid', 'x-b3-spanid',
+    for header in ['x-request-id', 'traceparent', 'tracestate', 'b3', 'x-b3-traceid', 'x-b3-spanid',
                    'x-b3-parentspanid', 'x-b3-sampled', 'x-b3-flags']:
         if header in request.headers:
             headers[header] = request.headers[header]
@@ -186,9 +182,10 @@ def get_users():
     # 2. Propagate headers when calling next service
     response = requests.get(
         'http://user-service/users',
-        headers=headers  # Header propagation required
+        headers=headers, timeout=3  # Selected propagation format
     )
 
+    response.raise_for_status()
     return response.json()
 ```
 
@@ -201,7 +198,7 @@ const app = express();
 app.get('/api/users', async (req, res) => {
   // 1. Extract received headers
   const tracingHeaders = {};
-  ['x-request-id', 'x-b3-traceid', 'x-b3-spanid',
+  ['x-request-id', 'traceparent', 'tracestate', 'b3', 'x-b3-traceid', 'x-b3-spanid',
    'x-b3-parentspanid', 'x-b3-sampled', 'x-b3-flags'].forEach(header => {
     if (req.headers[header]) {
       tracingHeaders[header] = req.headers[header];
@@ -209,11 +206,14 @@ app.get('/api/users', async (req, res) => {
   });
 
   // 2. Propagate headers when calling next service
-  const response = await axios.get('http://user-service/users', {
-    headers: tracingHeaders  // Header propagation required
-  });
-
-  res.json(response.data);
+  try {
+    const response = await axios.get('http://user-service/users', {
+      headers: tracingHeaders, timeout: 3000
+    });
+    res.json(response.data);
+  } catch (error) {
+    res.status(502).json({error: 'Downstream request failed'});
+  }
 });
 ```
 
@@ -226,26 +226,30 @@ app.get('/api/users', async (req, res) => {
 
 **Sampling Configuration:**
 
+This assumes the `otel-tracing` provider from the tracing chapter. `1.0` means 1%, not 100%; provider/exporter setup and context propagation are separate requirements.
+
 ```yaml
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
+metadata:
+  name: tracing-sample
+  namespace: default
 spec:
-  meshConfig:
-    defaultConfig:
-      tracing:
-        sampling: 1.0  # 100% sampling (development)
-        # sampling: 10.0  # 10% sampling (production)
+  tracing:
+  - providers:
+    - name: otel-tracing
+    randomSamplingPercentage: 1.0
 ```
 
 **Accessing Jaeger:**
 
 ```bash
-istioctl dashboard jaeger
+kubectl port-forward -n observability svc/jaeger-query 16686:16686
 ```
 
 **Reference:**
 
-* [Distributed Tracing](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/02-distributed-tracing.md)
+* [Distributed Tracing](../../../service-mesh/istio/observability/02-tracing.md)
 
 </details>
 
@@ -255,7 +259,10 @@ istioctl dashboard jaeger
 
 Which feature is **NOT** provided by Kiali?
 
-A. Service topology visualization B. Traffic flow analysis C. Automatic Canary deployment execution D. Istio configuration validation
+A. Service topology visualization\
+B. Traffic flow analysis\
+C. Automatic Canary deployment execution\
+D. Istio configuration validation
 
 <details>
 
@@ -306,44 +313,23 @@ Kiali displays:
 
 **3. Automatic Canary Deployment Execution (C - X)**
 
-* Kiali does NOT execute deployments
-* Kiali only **visualizes** traffic split status
+* Kiali can display traffic and, with permission, edit Istio configuration/use traffic wizards
+* It does not replace an automated progressive-delivery controller
 * Deployment execution: Argo Rollouts, Flagger
 
 **4. Istio Configuration Validation (D - O)**
 
-```yaml
-# Items Kiali validates:
+Examples from the [Kiali validation catalog](https://kiali.io/docs/features/validations/):
 
-1. VirtualService errors:
-   - Non-existent host reference
-   - Invalid subset reference
-   - Weight sum not equal to 100
+- VirtualService: undefined subset (`KIA1107`).
+- DestinationRule: overlapping host/subset definitions (`KIA0201`).
+- AuthorizationPolicy: referenced namespace not found (`KIA0101`), or principal not associated with a discovered workload ServiceAccount (`KIA0106`).
 
-2. DestinationRule errors:
-   - Subset labels don't match Pods
-   - Duplicate subset names
-
-3. Gateway errors:
-   - Missing TLS certificate
-   - Invalid selector
-
-4. AuthorizationPolicy errors:
-   - Conflicting policies
-   - Invalid principal format
-```
+Checks depend on Kiali's version, discovery scope and access. Inspect the actual code/message and effective proxy policy; Kiali does not prove that arbitrary policies conflict or that every certificate and runtime route works.
 
 **Kiali Installation:**
 
-```bash
-# Install Kiali included in Istio samples
-kubectl apply -f samples/addons/kiali.yaml
-
-# Or install with Helm
-helm repo add kiali https://kiali.org/helm-charts
-helm install kiali-server kiali/kiali-server \
-  --namespace istio-system
-```
+Follow the [dashboard chapter](../../../service-mesh/istio/observability/04-dashboards.md) for the pinned operator, authentication and current compatibility limits. Kiali is installed separately; sample addons are demos, and a Helm install without backend/RBAC configuration is not a production setup.
 
 **Kiali Main Menus:**
 
@@ -358,7 +344,7 @@ helm install kiali-server kiali/kiali-server \
 
 **Kiali vs Other Tools:**
 
-| Tool              | Role                                | Deployment Execution |
+| Tool | Role | Automated progressive delivery |
 | ----------------- | ----------------------------------- | -------------------- |
 | **Kiali**         | Visualization, analysis, validation | No                   |
 | **Argo Rollouts** | Progressive Delivery                | Yes                  |
@@ -387,7 +373,7 @@ istioctl dashboard kiali
 
 **Reference:**
 
-* [Visualization](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/04-visualization.md)
+* [Visualization](../../../service-mesh/istio/observability/04-dashboards.md)
 * [Kiali Official Documentation](https://kiali.io/docs/)
 
 </details>
@@ -398,7 +384,10 @@ istioctl dashboard kiali
 
 How do you configure Access Log output in **JSON format** in Istio?
 
-A. Set meshConfig.accessLogEncoding to JSON in IstioOperator B. Directly modify Envoy ConfigMap C. Add annotation to each Pod D. Convert to JSON via Prometheus query
+A. Set meshConfig.accessLogEncoding to JSON in IstioOperator\
+B. Directly modify Envoy ConfigMap\
+C. Add annotation to each Pod\
+D. Convert to JSON via Prometheus query
 
 <details>
 
@@ -406,7 +395,7 @@ A. Set meshConfig.accessLogEncoding to JSON in IstioOperator B. Directly modify 
 
 **Answer: A**
 
-Set the **meshConfig.accessLogEncoding** field in IstioOperator to `JSON`.
+A is a valid MeshConfig method: use `accessLogEncoding: JSON` with logging enabled in an `istioctl install -f` input. This is not an in-cluster operator resource. A custom `envoyFileAccessLog.logFormat.labels` provider is another supported method, described in the logging chapter.
 
 **Explanation:**
 
@@ -426,9 +415,10 @@ spec:
     # Define custom JSON format
     accessLogFormat: |
       {
+        "log_type": "access",
         "start_time": "%START_TIME%",
         "method": "%REQ(:METHOD)%",
-        "path": "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%",
+        "path": "%REQ_WITHOUT_QUERY(X-ENVOY-ORIGINAL-PATH?:PATH)%",
         "protocol": "%PROTOCOL%",
         "response_code": "%RESPONSE_CODE%",
         "response_flags": "%RESPONSE_FLAGS%",
@@ -454,6 +444,7 @@ spec:
 
 ```json
 {
+  "log_type": "access",
   "start_time": "2025-01-20T10:30:00.123Z",
   "method": "GET",
   "path": "/api/users",
@@ -480,8 +471,10 @@ spec:
 
 **Per-Namespace Configuration:**
 
+For this alternative, define `mesh-json` as in the logging chapter first. Telemetry selects the provider/scope; it does not itself change a provider's format.
+
 ```yaml
-apiVersion: telemetry.istio.io/v1alpha1
+apiVersion: telemetry.istio.io/v1
 kind: Telemetry
 metadata:
   name: access-logging
@@ -489,13 +482,13 @@ metadata:
 spec:
   accessLogging:
   - providers:
-    - name: envoy
-    # Can configure JSON format for specific Namespace only
+    - name: mesh-json
+    # Select the already-defined JSON provider
 ```
 
 **Envoy Format Variables:**
 
-```yaml
+```text
 # Key variables:
 %START_TIME%: Request start time
 %REQ(HEADER)%: Request header
@@ -509,6 +502,8 @@ spec:
 ```
 
 **CloudWatch Logs Integration:**
+
+This is only an output fragment for an already-deployed Fluent Bit agent with matching input tags, CRI/JSON parsing, IAM credentials and log mounts. A ConfigMap alone does not collect logs. EKS Fargate needs its supported log-router configuration.
 
 ```yaml
 apiVersion: v1
@@ -534,11 +529,11 @@ data:
 kubectl logs <pod-name> -c istio-proxy
 
 # Real-time monitoring
-kubectl logs -f <pod-name> -c istio-proxy | jq .
+kubectl logs -f <pod-name> -c istio-proxy | jq -R 'fromjson?'
 
 # Filter specific response codes
 kubectl logs <pod-name> -c istio-proxy | \
-  jq 'select(.response_code == "500")'
+  jq -R 'fromjson? | select((.response_code | tonumber?) == 500)'
 ```
 
 **TEXT Format vs JSON Format:**
@@ -568,9 +563,12 @@ kubectl logs <pod-name> -c istio-proxy | \
 
 ### Question 5: Grafana Dashboards
 
-Which Grafana dashboard is **NOT** provided by default with Istio installation?
+Which dashboard is **not** part of Istio's published Grafana dashboard set?
 
-A. Istio Service Dashboard B. Istio Workload Dashboard C. Istio Performance Dashboard D. Istio Cost Dashboard
+A. Istio Service Dashboard\
+B. Istio Workload Dashboard\
+C. Istio Performance Dashboard\
+D. Istio Cost Dashboard
 
 <details>
 
@@ -578,147 +576,15 @@ A. Istio Service Dashboard B. Istio Workload Dashboard C. Istio Performance Dash
 
 **Answer: D**
 
-Istio does **not provide a Cost Dashboard** by default.
+D. Istio publishes traffic/control-plane dashboards, but Grafana itself is a separate addon; installing Istio does not automatically install these dashboards.
 
 **Explanation:**
 
-**Istio Default Grafana Dashboards:**
+The 1.31 catalog includes Service7636, Workload7630, Mesh7639, Performance11829, Control Plane7645, Wasm13277 and Ztunnel21306. Performance focuses on resource/data usage; xDS/webhook panels belong primarily to Control Plane. Mesh includes global traffic and component versions, not every latency panel previously listed here. Select the revision matching the installed Istio release.
 
-**1. Istio Service Dashboard (A - O)**
+Cost cannot be computed by multiplying `istio_requests_total` by a GB transfer price: requests are not bytes, and `source_cluster`/`destination_cluster` identify clusters rather than Availability Zones. Proxy memory is usage, not a bill. Network costing needs billable byte measurements and actual source/destination location/service rules; resource cost allocation needs node prices, time and an explicit allocation model. Reconcile estimates with AWS billing/CUR data and the applicable pricing instead of asserting a fixed formula.
 
-```
-Service-level metrics:
-- Request Volume (request count)
-- Request Duration (P50, P95, P99)
-- Request Size / Response Size
-- Success Rate
-- 4xx, 5xx error trends
-```
-
-**2. Istio Workload Dashboard (B - O)**
-
-```
-Workload (Pod) level metrics:
-- Incoming Request Volume
-- Incoming Success Rate
-- Incoming Request Duration
-- Incoming Request Size
-- Outgoing Request Volume
-- Outgoing Success Rate
-```
-
-**3. Istio Performance Dashboard (C - O)**
-
-```
-Istio's own performance metrics:
-- Pilot performance (xDS push time)
-- Envoy memory usage
-- Envoy CPU usage
-- Sidecar injection success rate
-- Configuration sync latency
-```
-
-**4. Istio Control Plane Dashboard**
-
-```
-Control Plane metrics:
-- Istiod resource usage
-- xDS connection count
-- Webhook performance
-- Certificate issuance statistics
-```
-
-**5. Istio Mesh Dashboard**
-
-```
-Overall mesh metrics:
-- Total request count
-- Overall success rate
-- Global P99 latency
-- Service count, Pod count
-```
-
-**Cost Dashboard Not Available (D - X)**
-
-You need to create a custom dashboard for cost-related metrics:
-
-```promql
-# Cross-AZ traffic cost estimation
-sum(rate(istio_requests_total{
-  source_cluster="us-east-1a",
-  destination_cluster!="us-east-1a"
-}[5m])) * 86400 * 30 * 0.01 / 1000000
-
-# Sidecar resource cost (memory basis)
-sum(container_memory_usage_bytes{
-  container="istio-proxy"
-}) / 1024 / 1024 / 1024 * 30 * 0.01
-```
-
-**Grafana Installation and Access:**
-
-```bash
-# Install Grafana
-kubectl apply -f samples/addons/grafana.yaml
-
-# Access Grafana
-istioctl dashboard grafana
-
-# Or port forwarding
-kubectl port-forward -n istio-system svc/grafana 3000:3000
-# http://localhost:3000
-```
-
-**Creating Custom Dashboard:**
-
-```json
-{
-  "dashboard": {
-    "title": "Istio Custom Metrics",
-    "panels": [
-      {
-        "title": "Request Rate",
-        "targets": [
-          {
-            "expr": "sum(rate(istio_requests_total[5m])) by (destination_service_name)"
-          }
-        ]
-      },
-      {
-        "title": "Error Rate",
-        "targets": [
-          {
-            "expr": "sum(rate(istio_requests_total{response_code=~\"5..\"}[5m])) / sum(rate(istio_requests_total[5m]))"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-**Using Dashboard Variables:**
-
-```yaml
-# Add Namespace variable
-variables:
-  - name: namespace
-    type: query
-    query: label_values(istio_requests_total, destination_workload_namespace)
-
-# Use variable in panel
-expr: |
-  sum(rate(
-    istio_requests_total{
-      destination_workload_namespace="$namespace"
-    }[5m]
-  )) by (destination_service_name)
-```
-
-**Reference:**
-
-* [Visualization](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/04-visualization.md)
-* [Grafana Official Documentation](https://grafana.com/docs/)
+Use the [dashboard chapter](../../../service-mesh/istio/observability/04-dashboards.md) for verified catalog revisions and complete custom JSON/provisioning examples. ConfigMaps and labels alone do not install a dashboard loader or resolve datasource inputs.
 
 </details>
 
@@ -734,366 +600,98 @@ Explain how to monitor Google SRE's **Golden Signals** (Latency, Traffic, Errors
 
 <summary>Show Answer</summary>
 
-**Answer:**
-
-**Golden Signals Monitoring Implementation:**
-
-***
-
-**1. Latency**
-
-**Prometheus Query:**
+Use one reporter per service-hop calculation and keep service namespace (plus cluster where relevant). Destination metrics measure requests received by the service; source metrics are needed for upstream failures that never arrive. HTTP5xx is only one error definition; gRPC failures require `grpc_response_status` and application-specific SLI rules. The following latency is milliseconds and rates are per second:
 
 ```promql
-# P95 latency
-histogram_quantile(0.95,
-  sum(rate(
-    istio_request_duration_milliseconds_bucket{
-      destination_service_name="reviews"
-    }[5m]
-  )) by (le)
-)
+histogram_quantile(0.95, sum by (destination_service_name, destination_service_namespace, le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])))
 
-# P99 latency
-histogram_quantile(0.99,
-  sum(rate(
-    istio_request_duration_milliseconds_bucket{
-      destination_service_name="reviews"
-    }[5m]
-  )) by (le)
-)
+histogram_quantile(0.99, sum by (destination_service_name, destination_service_namespace, le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])))
 
-# P50 latency (median)
-histogram_quantile(0.50,
-  sum(rate(
-    istio_request_duration_milliseconds_bucket{
-      destination_service_name="reviews"
-    }[5m]
-  )) by (le)
-)
+sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination"}[5m]))
+
+sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination",response_code=~"5.."}[5m])) / sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination"}[5m]))
 ```
 
-**Alerting Rules:**
+For a single-cluster classic sidecar deployment, usage/limit ratios require kubelet/cAdvisor and kube-state-metrics. Exclude absent/zero limits. Native sidecars may report declared limits in init-container resource series instead; confirm the actual metric family before using these expressions:
+
+```promql
+sum by (namespace, pod, container) (rate(container_cpu_usage_seconds_total{container="istio-proxy"}[5m])) / on (namespace, pod, container) (max by (namespace, pod, container) (kube_pod_container_resource_limits{container="istio-proxy",resource="cpu",unit="core"}) > 0)
+
+max by (namespace, pod, container) (container_memory_working_set_bytes{container="istio-proxy"}) / on (namespace, pod, container) (max by (namespace, pod, container) (kube_pod_container_resource_limits{container="istio-proxy",resource="memory",unit="byte"}) > 0)
+
+envoy_cluster_upstream_cx_active
+envoy_cluster_upstream_rq_pending_active
+envoy_cluster_circuit_breakers_default_cx_open
+```
+
+The `_cx_open` metric is a 0/1 state gauge; dividing active connections by it is not utilization. Inspect configured circuit-breaker thresholds when capacity ratios are needed. CPU rate is cores before division; memory working set is bytes before division. A method breakdown requires adding a bounded `request_method` Telemetry label first.
+
+The following PrometheusRule must be selected by the installed Prometheus Operator. Thresholds and comparison windows are illustrative; traffic seasonality, no-data, scrape failure and a minimum volume condition need environment-specific handling. A previous one-hour window is not a learned normal baseline.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: istio-latency-alerts
+  name: istio-golden-signals
   namespace: monitoring
 spec:
   groups:
-  - name: latency
-    interval: 30s
+  - name: golden-signals
     rules:
-    # P95 latency exceeds 500ms
     - alert: HighLatency
-      expr: |
-        histogram_quantile(0.95,
-          sum(rate(
-            istio_request_duration_milliseconds_bucket[5m]
-          )) by (le, destination_service_name)
-        ) > 500
+      expr: histogram_quantile(0.95, sum by (destination_service_name, destination_service_namespace,
+        le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m]))) > 500
       for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "High latency detected on {{ $labels.destination_service_name }}"
-        description: "P95 latency is {{ $value }}ms"
-
-    # P99 latency exceeds 1 second
-    - alert: CriticalLatency
-      expr: |
-        histogram_quantile(0.99,
-          sum(rate(
-            istio_request_duration_milliseconds_bucket[5m]
-          )) by (le, destination_service_name)
-        ) > 1000
-      for: 5m
-      labels:
-        severity: critical
-      annotations:
-        summary: "Critical latency on {{ $labels.destination_service_name }}"
-```
-
-***
-
-**2. Traffic**
-
-**Prometheus Query:**
-
-```promql
-# Requests per second (RPS)
-sum(rate(
-  istio_requests_total{
-    destination_service_name="reviews"
-  }[5m]
-))
-
-# RPS by service
-sum(rate(
-  istio_requests_total[5m]
-)) by (destination_service_name)
-
-# RPS by HTTP method
-sum(rate(
-  istio_requests_total[5m]
-)) by (request_method)
-```
-
-**Alerting Rules:**
-
-```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: istio-traffic-alerts
-spec:
-  groups:
-  - name: traffic
-    rules:
-    # Traffic spike (2x normal)
+        summary: P95 request duration exceeds500ms
     - alert: TrafficSpike
-      expr: |
-        sum(rate(istio_requests_total[5m])) by (destination_service_name)
-        >
-        sum(rate(istio_requests_total[1h] offset 1h)) by (destination_service_name) * 2
+      expr: sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination"}[5m]))
+        > 2 * sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination"}[1h]
+        offset 1h))
       for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "Traffic spike on {{ $labels.destination_service_name }}"
-
-    # Traffic drop (below 50% of normal)
-    - alert: TrafficDrop
-      expr: |
-        sum(rate(istio_requests_total[5m])) by (destination_service_name)
-        <
-        sum(rate(istio_requests_total[1h] offset 1h)) by (destination_service_name) * 0.5
-      for: 10m
-      labels:
-        severity: warning
-```
-
-***
-
-**3. Errors**
-
-**Prometheus Query:**
-
-```promql
-# Error rate (5xx)
-sum(rate(
-  istio_requests_total{
-    destination_service_name="reviews",
-    response_code=~"5.."
-  }[5m]
-))
-/
-sum(rate(
-  istio_requests_total{
-    destination_service_name="reviews"
-  }[5m]
-))
-
-# 4xx + 5xx error rate
-sum(rate(
-  istio_requests_total{
-    destination_service_name="reviews",
-    response_code=~"[45].."
-  }[5m]
-))
-/
-sum(rate(
-  istio_requests_total{
-    destination_service_name="reviews"
-  }[5m]
-))
-
-# Distribution by response code
-sum(rate(
-  istio_requests_total[5m]
-)) by (response_code, destination_service_name)
-```
-
-**Alerting Rules:**
-
-```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: istio-error-alerts
-spec:
-  groups:
-  - name: errors
-    rules:
-    # Error rate > 1%
+        summary: Traffic exceeds the previous comparison window
     - alert: HighErrorRate
-      expr: |
-        (
-          sum(rate(istio_requests_total{response_code=~"5.."}[5m])) by (destination_service_name)
-          /
-          sum(rate(istio_requests_total[5m])) by (destination_service_name)
-        ) > 0.01
+      expr: sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination",response_code=~"5.."}[5m]))
+        / sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination"}[5m]))
+        > 0.01
       for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "High error rate on {{ $labels.destination_service_name }}"
-        description: "Error rate is {{ $value | humanizePercentage }}"
-
-    # Error rate > 5%
-    - alert: CriticalErrorRate
-      expr: |
-        (
-          sum(rate(istio_requests_total{response_code=~"5.."}[5m])) by (destination_service_name)
-          /
-          sum(rate(istio_requests_total[5m])) by (destination_service_name)
-        ) > 0.05
-      for: 2m
-      labels:
-        severity: critical
-```
-
-***
-
-**4. Saturation**
-
-**Prometheus Query:**
-
-```promql
-# Envoy CPU usage
-sum(rate(
-  container_cpu_usage_seconds_total{
-    pod=~".*",
-    container="istio-proxy"
-  }[5m]
-)) by (pod)
-
-# Envoy memory usage
-sum(
-  container_memory_usage_bytes{
-    pod=~".*",
-    container="istio-proxy"
-  }
-) by (pod)
-
-# Envoy connection count
-sum(
-  envoy_cluster_upstream_cx_active
-) by (cluster_name)
-
-# Envoy pending requests
-sum(
-  envoy_cluster_upstream_rq_pending_active
-) by (cluster_name)
-```
-
-**Alerting Rules:**
-
-```yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: istio-saturation-alerts
-spec:
-  groups:
-  - name: saturation
-    rules:
-    # Envoy CPU > 80%
+        summary: HTTP5xx fraction exceeds1%
     - alert: HighEnvoyCPU
-      expr: |
-        sum(rate(
-          container_cpu_usage_seconds_total{
-            container="istio-proxy"
-          }[5m]
-        )) by (pod, namespace)
-        /
-        sum(
-          container_spec_cpu_quota{
-            container="istio-proxy"
-          } / 100000
-        ) by (pod, namespace)
-        > 0.8
+      expr: sum by (namespace, pod, container) (rate(container_cpu_usage_seconds_total{container="istio-proxy"}[5m]))
+        / on (namespace, pod, container) (max by (namespace, pod, container) (kube_pod_container_resource_limits{container="istio-proxy",resource="cpu",unit="core"})
+        > 0) > 0.8
       for: 5m
       labels:
         severity: warning
-
-    # Envoy Memory > 80%
+      annotations:
+        summary: Proxy CPU consumption exceeds80% of its configured limit
     - alert: HighEnvoyMemory
-      expr: |
-        sum(
-          container_memory_usage_bytes{
-            container="istio-proxy"
-          }
-        ) by (pod, namespace)
-        /
-        sum(
-          container_spec_memory_limit_bytes{
-            container="istio-proxy"
-          }
-        ) by (pod, namespace)
-        > 0.8
+      expr: max by (namespace, pod, container) (container_memory_working_set_bytes{container="istio-proxy"})
+        / on (namespace, pod, container) (max by (namespace, pod, container) (kube_pod_container_resource_limits{container="istio-proxy",resource="memory",unit="byte"})
+        > 0) > 0.8
       for: 5m
       labels:
         severity: warning
-
-    # Connection Pool Saturated
-    - alert: ConnectionPoolSaturated
-      expr: |
-        envoy_cluster_upstream_cx_active
-        /
-        envoy_cluster_circuit_breakers_default_cx_open
-        > 0.9
+      annotations:
+        summary: Proxy working set exceeds80% of its configured limit
+    - alert: ConnectionBreakerAtCapacity
+      expr: envoy_cluster_circuit_breakers_default_cx_open == 1
       for: 5m
       labels:
-        severity: critical
+        severity: warning
+      annotations:
+        summary: Connection breaker at capacity
 ```
 
-***
-
-**Grafana Dashboard Configuration:**
-
-```json
-{
-  "dashboard": {
-    "title": "Golden Signals",
-    "panels": [
-      {
-        "title": "Latency (P95, P99)",
-        "targets": [
-          {"expr": "histogram_quantile(0.95, sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le))"},
-          {"expr": "histogram_quantile(0.99, sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le))"}
-        ]
-      },
-      {
-        "title": "Traffic (RPS)",
-        "targets": [
-          {"expr": "sum(rate(istio_requests_total[5m])) by (destination_service_name)"}
-        ]
-      },
-      {
-        "title": "Errors (Rate)",
-        "targets": [
-          {"expr": "sum(rate(istio_requests_total{response_code=~\"5..\"}[5m])) / sum(rate(istio_requests_total[5m]))"}
-        ]
-      },
-      {
-        "title": "Saturation (CPU, Memory)",
-        "targets": [
-          {"expr": "sum(rate(container_cpu_usage_seconds_total{container=\"istio-proxy\"}[5m])) by (pod)"},
-          {"expr": "sum(container_memory_usage_bytes{container=\"istio-proxy\"}) by (pod)"}
-        ]
-      }
-    ]
-  }
-}
-```
-
-**Reference:**
-
-* [Metrics](../../../service-mesh/istio/observability/01-metrics.md)
-* [Google SRE Book - Monitoring](https://sre.google/sre-book/monitoring-distributed-systems/)
+Create separate panels for request rate, error fraction, latency and resource units using the [checked dashboard template](../../../service-mesh/istio/observability/04-dashboards.md). Do not place CPU cores and memory bytes on an unlabeled shared scale.
 
 </details>
 
@@ -1107,329 +705,44 @@ Explain how to use the distributed tracing tool Jaeger to find **performance bot
 
 <summary>Show Answer</summary>
 
-**Answer:**
+Start with the [Jaeger2/OTLP tracing setup](../../../service-mesh/istio/observability/02-tracing.md), a configured Telemetry provider and application context propagation. Do not assume an old Jaeger addon/Zipkin port or a sampling value alone deploys tracing. Application/database spans require SDK or agent instrumentation; proxy spans cannot reveal a database query's internals.
 
-**Performance Bottleneck Analysis with Jaeger:**
-
-***
-
-**1. Jaeger Installation and Configuration**
-
-```bash
-# Install Jaeger
-kubectl apply -f samples/addons/jaeger.yaml
-
-# Enable Tracing (100% sampling)
-istioctl install --set values.pilot.traceSampling=100.0
-```
-
-```yaml
-# Or configure with IstioOperator
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  meshConfig:
-    defaultConfig:
-      tracing:
-        sampling: 100.0  # Development: 100%, Production: 1-10%
-        zipkin:
-          address: jaeger-collector.istio-system:9411
-```
-
-***
-
-**2. Understanding Trace Structure**
-
-```
-Trace
-└─ Span 1: Ingress Gateway (total 150ms)
-   └─ Span 2: Frontend (total 140ms)
-      ├─ Span 3: Backend API (total 100ms)
-      │  ├─ Span 4: Database Query (80ms)  ← Bottleneck!
-      │  └─ Span 5: Cache Check (10ms)
-      └─ Span 6: External API (30ms)
-```
-
-**Span Information:**
-
-* **Duration**: Time spent in Span
-* **Tags**: Metadata (HTTP method, URL, response code)
-* **Logs**: Events (errors, warnings)
-* **Parent-Child Relationship**: Call hierarchy
-
-***
-
-**3. Practical Debugging Scenarios**
-
-**Scenario 1: High P99 Latency**
-
-**Symptoms:**
+1. Locate the affected service/time window with a namespace-scoped Prometheus latency query, then find representative slow and normal traces in Jaeger. A Prometheus histogram query returns aggregate statistics, not trace IDs.
+2. Follow the critical path and distinguish parent duration from exclusive time. A long parent includes its children; it is not automatically the cause.
+3. Compare errors, retries, connection wait, query execution and parallelism. Trace timing, sampling and missing spans limit conclusions.
 
 ```promql
-# P99 latency is 2 seconds
-histogram_quantile(0.99,
-  sum(rate(
-    istio_request_duration_milliseconds_bucket[5m]
-  )) by (le)
-) = 2000
+histogram_quantile(0.99, sum by (destination_service_name, destination_service_namespace, le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m]))) > 2000
 ```
-
-**Jaeger Analysis Steps:**
 
 ```bash
-# 1. Access Jaeger UI
-istioctl dashboard jaeger
-
-# 2. Set search criteria
-Service: productpage
-Lookback: Last 1 hour
-Min Duration: 2000ms  # Filter only 2+ seconds
-Limit Results: 20
-
-# 3. Analyze results
+kubectl port-forward -n observability svc/jaeger-query 16686:16686
 ```
 
-**Identified Problem:**
+These are hypothetical debugging scenarios, not benchmark results or literal Jaeger API responses:
 
-```
-Trace ID: abc-123-def
-Total Duration: 2.1 seconds
+| Observation | What to verify | Appropriate response |
+|---|---|---|
+|2.1s request, with1.8s instrumented database operation|Separate pool wait, query time, locks and network delay; verify DB execution plan|Fix the measured cause. A ConfigMap named `redis.conf` does not add application caching|
+|~10s request with connection-pool timeout|Inspect the application's DB client pool, concurrency and DB capacity|Tune the application/DB pool and fix leaks; an Envoy DestinationRule does not configure the application pool, and HTTP pool settings do not tune PostgreSQL|
+|Independent2s+2s+1s calls run sequentially|Confirm dependencies, load limits and tracing context|Parallelize only independent I/O with real async clients or bounded threads; expected time can approach the longest call plus overhead, not a guaranteed2s|
 
-├─ productpage (2.1s)
-   └─ reviews (2.0s)  ← Bottleneck!
-      └─ ratings (1.9s)  ← Actual bottleneck!
-         └─ MongoDB Query (1.8s)  ← Root cause!
-```
-
-**Resolution:**
-
-```yaml
-# 1. Optimize MongoDB query
-# - Add index
-# - Query tuning
-
-# 2. Add caching
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ratings-config
-data:
-  redis.conf: |
-    host: redis.default.svc.cluster.local
-    port: 6379
-    ttl: 300
-
-# 3. Set Timeout
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: ratings
-spec:
-  hosts:
-  - ratings
-  http:
-  - timeout: 500ms  # Set timeout
-    retries:
-      attempts: 3
-      perTryTimeout: 200ms
-```
-
-***
-
-**Scenario 2: Intermittent Timeouts**
-
-**Jaeger Analysis:**
-
-```
-# Normal Trace
-Trace ID: normal-001
-Duration: 120ms
-├─ frontend (120ms)
-   └─ backend (100ms)
-      └─ database (80ms)
-
-# Timeout Trace
-Trace ID: timeout-001
-Duration: 10,000ms  ← Abnormal!
-├─ frontend (10,000ms)
-   └─ backend (9,980ms)
-      └─ database (9,950ms)  ← Bottleneck!
-         └─ Error: Connection timeout
-```
-
-**Check Span Details:**
-
-```json
-{
-  "traceID": "timeout-001",
-  "spanID": "span-db",
-  "operationName": "database.query",
-  "duration": 9950000,
-  "tags": {
-    "db.statement": "SELECT * FROM users WHERE status = 'active'",
-    "db.type": "postgresql",
-    "error": true
-  },
-  "logs": [
-    {
-      "timestamp": 1234567890,
-      "fields": [
-        {"key": "event", "value": "error"},
-        {"key": "error.kind", "value": "ConnectionTimeout"},
-        {"key": "message", "value": "Connection pool exhausted"}
-      ]
-    }
-  ]
-}
-```
-
-**Resolution:**
-
-```yaml
-# Increase Connection Pool
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: database
-spec:
-  host: database
-  trafficPolicy:
-    connectionPool:
-      tcp:
-        maxConnections: 100  # 50 → 100
-      http:
-        http1MaxPendingRequests: 50
-        maxRequestsPerConnection: 2
-```
-
-***
-
-**Scenario 3: Cascading Latency**
-
-**Jaeger Analysis:**
-
-```
-Trace ID: cascade-001
-Total Duration: 5.2 seconds
-
-├─ frontend (5.2s)
-   ├─ backend-a (2.0s)
-   │  └─ database (1.9s)
-   ├─ backend-b (2.0s)  ← Sequential call issue!
-   │  └─ external-api (1.9s)
-   └─ backend-c (1.0s)
-      └─ cache (0.9s)
-
-Problem: Sequential execution of parallelizable calls
-```
-
-**Resolution (Application Modification):**
+For existing synchronous I/O callbacks, this Python3.9+ fragment preserves return ordering and uses worker threads. The application must provide callbacks and enforce their own timeouts; cancelling the awaiting task does not stop an already-running thread:
 
 ```python
-# Sequential calls (Before)
-def get_user_data(user_id):
-    profile = call_backend_a(user_id)      # 2 seconds
-    orders = call_backend_b(user_id)       # 2 seconds
-    recommendations = call_backend_c(user_id)  # 1 second
-    return merge(profile, orders, recommendations)
-
-# Total time: 5 seconds
-
-# Parallel calls (After)
 import asyncio
 
 async def get_user_data(user_id):
+    # Application-owned synchronous I/O functions; each must enforce its timeout.
     profile, orders, recommendations = await asyncio.gather(
-        call_backend_a(user_id),      # 2 seconds
-        call_backend_b(user_id),       # 2 seconds
-        call_backend_c(user_id)        # 1 second
+        asyncio.to_thread(call_backend_a, user_id),
+        asyncio.to_thread(call_backend_b, user_id),
+        asyncio.to_thread(call_backend_c, user_id),
     )
     return merge(profile, orders, recommendations)
-
-# Total time: 2 seconds (longest call)
 ```
 
-***
-
-**4. Jaeger UI Tips**
-
-**Service Dependencies (Service Dependency Graph):**
-
-```bash
-# Jaeger UI → Dependencies tab
-# - Visualize service call relationships
-# - Display error rates
-# - Display request counts
-```
-
-**Compare Traces:**
-
-```bash
-# 1. Select normal Trace
-# 2. Select slow Trace
-# 3. Click Compare button
-# 4. Check time differences per Span
-```
-
-**Deep Dependency Graph:**
-
-```bash
-# Check detailed dependencies for specific Trace
-# - Time spent per Span
-# - Parallel/sequential execution status
-# - Critical Path
-```
-
-***
-
-**5. Performance Optimization Checklist**
-
-```yaml
-# 1. Remove unnecessary calls
-# - N+1 query problem
-# - Duplicate API calls
-
-# 2. Parallel processing
-# - Execute independent calls in parallel
-# - Use asyncio, Promise.all, etc.
-
-# 3. Caching
-# - Redis, Memcached
-# - CDN (static resources)
-
-# 4. Connection Pool tuning
-# - Appropriate max connections
-# - Enable Keep-Alive
-
-# 5. Timeout settings
-# - Appropriate timeout (not too long)
-# - Fail Fast
-
-# 6. Database optimization
-# - Add indexes
-# - Query optimization
-# - Use read replicas
-```
-
-***
-
-**6. Prometheus + Jaeger Integration**
-
-```promql
-# Find Traces with high latency
-histogram_quantile(0.99,
-  sum(rate(
-    istio_request_duration_milliseconds_bucket[5m]
-  )) by (le, destination_service_name)
-) > 1000
-
-# After checking in Prometheus, search Traces in Jaeger for that time period
-```
-
-**Reference:**
-
-* [Distributed Tracing](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/02-distributed-tracing.md)
-* [Jaeger Official Documentation](https://www.jaegertracing.io/docs/)
+Timeouts bound waiting; they do not repair a slow database, and retries can amplify load. When showing a VirtualService timeout, include the actual route destination and use retries only with idempotency/load considerations. Persistent Jaeger dependency maps may require additional aggregation; a single trace waterfall and a global dependency map are different views. Validate a suspected fix with repeat traffic and metrics/traces, not only one attractive trace.
 
 </details>
 
@@ -1443,284 +756,35 @@ Explain how to diagnose and resolve **common problems** (configuration errors, t
 
 <summary>Show Answer</summary>
 
-**Answer:**
+Use Kiali's configuration checks, observed traffic, pod logs and traces as evidence, then verify the effective proxy configuration. The dashboard chapter documents version/authentication prerequisites. Do not invent a Kiali warning from a graph shape or treat a green icon as a runtime guarantee.
 
-**Service Mesh Troubleshooting with Kiali:**
+| Symptom | Correct interpretation and checks |
+|---|---|
+|Missing service/subset|In `default`, `reviews` and `reviews.default.svc.cluster.local` resolve to the same host. Shortening the name does not create a missing Service. KIA1107 identifies an undefined subset; check Service/EndpointSlice, DestinationRule and actual pod labels|
+|Subset label mismatch|The label value`1.0` is not inherently wrong; match the intended Deployment labels with the subset. Include metadata, host and document separators when writing complete DestinationRules|
+|Observed90/10 instead of configured50/50|Check effective weights, matching rules, connection affinity, retries, endpoint/ejection state and the time window. Fewer ready replicas alone do not redefine VirtualService subset weights or guarantee a later50/50 split|
+|A↔B cycle|A bidirectional graph is not proof of recursive calls, deadlock or an automatic Kiali alert. Use a trace to identify an actual unintended cycle before redesigning the application|
+|HTTP403|Inspect the enforcing proxy's policy, identity and response details. Empty-spec AuthorizationPolicy is an ALLOW policy with no matching rules; another ALLOW can provide an exception. It is not an overriding DENY|
+|mTLS failure|PeerAuthentication describes the receiver. Check sender TLS settings, receiver policy, enrollment, certificate/trust and port protocol for the specific direction. Different receiver modes are not automatically a conflict; blanket STRICT is a migration decision, not a generic fix|
 
-***
-
-**1. Configuration Error Diagnosis**
-
-**Problem 1: VirtualService Host Error**
-
-**Symptoms:**
-
-```bash
-# Service call failure
-curl http://reviews:9080
-# 503 Service Unavailable
-```
-
-**Kiali Diagnosis:**
-
-```bash
-# 1. Access Kiali dashboard
-istioctl dashboard kiali
-
-# 2. Istio Config → VirtualServices tab
-# 3. Warning indicator on reviews VirtualService
-
-# 4. Click for details
-```
-
-**Kiali Error Message:**
-
-```
-Warning: VirtualService 'reviews-vs' has issues:
-- Host 'reviews.default.svc.cluster.local' references service 'reviews'
-  but service does not exist
-- Subset 'v2' references DestinationRule 'reviews-dr'
-  but subset is not defined
-```
-
-**Resolution:**
+A scoped default-deny baseline with a frontend exception is valid, assuming mTLS supplies the named frontend principal and no earlier CUSTOM/DENY rejects the request:
 
 ```yaml
-# Incorrect configuration
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: reviews-vs
-spec:
-  hosts:
-  - reviews.default.svc.cluster.local  # Service doesn't exist!
-  http:
-  - route:
-    - destination:
-        host: reviews
-        subset: v2  # Not defined in DestinationRule!
-
----
-# Correct configuration
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: reviews-vs
-spec:
-  hosts:
-  - reviews  # Service name only
-  http:
-  - route:
-    - destination:
-        host: reviews
-        subset: v1  # Existing subset
-
----
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: reviews-dr
-spec:
-  host: reviews
-  subsets:
-  - name: v1
-    labels:
-      version: v1
-```
-
-***
-
-**Problem 2: DestinationRule Subset Label Mismatch**
-
-**Kiali Diagnosis:**
-
-```
-In Graph view:
-- No traffic being sent to reviews service
-- Kiali shows red dashed line
-
-In Istio Config tab:
-Warning: DestinationRule 'reviews-dr' has issues:
-- Subset 'v1' selects labels {version: v1}
-  but no pods match these labels
-```
-
-**Check Problem:**
-
-```bash
-# Check Pod labels
-kubectl get pods -l app=reviews --show-labels
-
-# Output:
-NAME            LABELS
-reviews-v1-xxx  app=reviews,version=1.0  ← version=1.0 (wrong)
-```
-
-**Resolution:**
-
-```yaml
-# Incorrect DestinationRule
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-spec:
-  subsets:
-  - name: v1
-    labels:
-      version: v1  # Pod has version=1.0
-
-# Corrected DestinationRule
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-spec:
-  subsets:
-  - name: v1
-    labels:
-      version: "1.0"  # Match Pod label
-```
-
-***
-
-**2. Traffic Anomaly Diagnosis**
-
-**Problem 3: Traffic Imbalance**
-
-**Check in Kiali Graph view:**
-
-```
-frontend → backend-v1 (90% traffic)  ← Expected: 50%
-frontend → backend-v2 (10% traffic)  ← Expected: 50%
-```
-
-**Root Cause Analysis:**
-
-```bash
-# Kiali → Workloads tab → backend
-# Check Pod status:
-
-backend-v1: 5 pods (all Ready)
-backend-v2: 5 pods (3 Ready, 2 Terminating)
-
-# Problem: backend-v2 Pods not starting normally
-```
-
-**Resolution:**
-
-```bash
-# 1. Check backend-v2 logs in Kiali
-Workloads → backend-v2 → Logs tab
-
-# 2. Analyze logs
-Error: Cannot connect to database
-Connection: postgresql://db:5432
-
-# 3. Fix
-kubectl edit deployment backend-v2
-# Fix database connection string
-
-# 4. Verify traffic balance in Kiali
-# After few minutes: 50% / 50% normalized
-```
-
-***
-
-**Problem 4: Circular Dependency**
-
-**Check in Kiali Graph view:**
-
-```
-service-a → service-b
-    ↑           ↓
-    └───────────┘
-
-Circular dependency detected!
-```
-
-**Kiali Alert:**
-
-```
-Warning: Circular dependency detected:
-service-a → service-b → service-a
-```
-
-**Resolution:**
-
-```yaml
-# Architecture redesign needed
-# Before:
-service-a ↔ service-b
-
-# After:
-service-a → service-c (common service)
-service-b → service-c
-```
-
-***
-
-**3. Security Policy Conflict Diagnosis**
-
-**Problem 5: AuthorizationPolicy Conflict**
-
-**Symptoms:**
-
-```bash
-# frontend → backend call fails
-curl http://backend:8080
-# 403 RBAC: access denied
-```
-
-**Kiali Diagnosis:**
-
-```bash
-# Kiali → Istio Config → Authorization Policies
-
-Policy 1:
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: deny-all
-spec: {}  # Deny all requests
-
-Policy 2:
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-frontend
-spec:
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals: ["cluster.local/ns/default/sa/frontend"]
-
-# Kiali warning:
-Warning: Policy conflict detected:
-- deny-all denies all traffic
-- allow-frontend allows traffic from frontend
-- Evaluation order: DENY policies are evaluated first
-```
-
-**Resolution:**
-
-```yaml
-# Correct configuration (per-Namespace separation)
----
-# deny-all applies only to specific service
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: backend-deny-all
+  name: backend-default-deny
+  namespace: default
 spec:
   selector:
     matchLabels:
       app: backend
-  # Empty rules = deny all requests
-
 ---
-# Explicit allow policy
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: backend-allow-frontend
+  namespace: default
 spec:
   selector:
     matchLabels:
@@ -1729,106 +793,24 @@ spec:
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/default/sa/frontend"]
+        principals:
+        - cluster.local/ns/default/sa/frontend
 ```
-
-***
-
-**Problem 6: mTLS Mode Mismatch**
-
-**Check in Kiali Security view:**
-
-```
-service-a: mTLS STRICT
-service-b: mTLS PERMISSIVE
-service-c: mTLS DISABLED
-
-Kiali warning:
-Warning: mTLS configuration mismatch detected
-- service-a requires mTLS but service-c has mTLS disabled
-- Connection may fail
-```
-
-**Resolution:**
-
-```yaml
-# Apply consistent mTLS policy across entire mesh
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: default
-  namespace: istio-system
-spec:
-  mtls:
-    mode: STRICT  # Apply STRICT to all services
-```
-
-***
-
-**4. Kiali Advanced Features**
-
-**Custom Time Range:**
 
 ```bash
-# Kiali → Graph view
-# Time Range: Last 1 hour
-# Refresh Interval: Every 15s
-
-# Analyze specific time period
-# - Check before/after incident
-# - Compare before/after deployment
+kubectl get service reviews -n default
+kubectl get endpointslice -n default -l kubernetes.io/service-name=reviews
+kubectl get pods -n default -l app=reviews --show-labels
+istioctl analyze -n default
+istioctl proxy-config clusters <source-pod> -n default --fqdn reviews.default.svc.cluster.local -o json
+istioctl x authz check <backend-pod>.default
 ```
 
-**Traffic Animation:**
+Traffic animation summarizes a selected window; it is not byte-accurate packet inspection. Repeat the diagnosis/configuration/test loop if the hypothesis fails rather than blindly restarting workloads.
 
-```bash
-# Kiali → Graph view
-# Display: Enable Traffic Animation
-
-# Real-time traffic flow visualization
-# - Request size shown as animation speed
-# - Errors shown in red
-```
-
-**Edge Labels:**
-
-```bash
-# Kiali → Graph view
-# Edge Labels:
-# - Request percentage
-# - Request per second
-# - Response time (95th percentile)
-
-# Check traffic split ratio
-frontend → backend-v1: 80% (8 rps)
-frontend → backend-v2: 20% (2 rps)
-```
-
-**Service Details:**
-
-```bash
-# Kiali → Services → backend
-
-Tabs:
-1. Overview: Summary information
-2. Traffic: Inbound/Outbound traffic
-3. Inbound Metrics: Metric charts
-4. Traces: Jaeger trace integration
-5. Envoy: Envoy configuration check
-```
-
-***
-
-**5. Troubleshooting Workflow**
-
-![Kiali troubleshooting loop that opens the Graph view, sorts the symptom into no traffic, errors, slow response or security denied, checks Istio config, logs, traces or security policy, then fixes and tests the configuration, restarting if unresolved.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-observability-1.png)
+![Kiali troubleshooting loop that opens the Graph view, sorts the symptom into no traffic, errors, slow response or security denied, checks Istio config, logs, traces or security policy, then fixes and tests the configuration, repeating diagnosis if unresolved.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-observability-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-observability-1.html)
-
-**Reference:**
-
-* [Visualization](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/04-visualization.md)
-* [Kiali Official Documentation](https://kiali.io/docs/)
 
 </details>
 
@@ -1842,24 +824,35 @@ Explain how to deploy the Istio observability stack (Prometheus, Grafana, Jaeger
 
 <summary>Show Answer</summary>
 
-**Answer:**
+A production HA stack is an environment-specific design and verification task. The following covers the main requirements; it is not a production-tested deployment bundle. Pin compatible Kubernetes/Istio/operator/chart/backend versions, review the chart values actually used, and validate failure and restore behavior before rollout. The [dashboard chapter](../../../service-mesh/istio/observability/04-dashboards.md) records the current Kiali compatibility gap; do not infer compatibility from latest releases.
 
-**Production Observability Stack Setup:**
+| Component | State and HA requirements |
+|---|---|
+|Prometheus|Run independent replicas with a PVC per replica, cluster labels shared by that cluster’s replicas and distinct replica labels (other labels must match for deduplication). Distribute failure domains and size retention for observed ingest. A load balancer does not merge their histories|
+|Thanos|Sidecars expose StoreAPI and optionally upload blocks; Query discovers real StoreAPI endpoints and deduplicates the configured replica label. Store Gateway reads object storage; Compactor handles block compaction/retention with appropriate single-writer/sharding ownership|
+|Grafana|Two replicas require a shared HA PostgreSQL/MySQL database, consistent provisioning/plugins/secret configuration and a load balancer. Two replicas sharing SQLite or one EBS ReadWriteOnce volume across nodes is not Grafana HA|
+|Alertmanager|Replicas need peer/notification deduplication configuration, persistent state and secured receiver credentials; placing a Slack webhook in chart values is not a complete secret/notification design|
+|Jaeger2/collector|Use stateless query/collector replicas with a supported durable backend and its own HA/TLS/credentials. Tail samplers need trace-ID affinity; multiple replicas behind a random Service do not receive complete traces|
+|Kiali|Use a compatible operator/server, shared configuration/session-secret behavior and appropriate pod placement. Protect backend APIs and user namespace permissions. Token strategy is single-cluster; choose documented multi-cluster authentication when needed|
 
-Due to the length of this answer, please refer to the Korean source file for the complete implementation details including:
+**Storage and object-store wiring**:
 
-1. **Prometheus HA Configuration** with Helm (kube-prometheus-stack)
-2. **Thanos for Long-term Metric Storage** with S3 backend
-3. **Jaeger HA Configuration** with Elasticsearch backend
-4. **Kiali HA Configuration**
-5. **Backup and Recovery Strategy** with Velero
-6. **Monitoring and Alerting** with PrometheusRules
+- Keep local Prometheus persistence even with object storage: recent head/WAL data may not yet have been uploaded. For sidecar uploads, follow the installed Thanos version's local-compaction/block-duration requirements.
+- S3 bucket, regional endpoint, encryption, retention and IAM permissions must exist. Bind the credential-bearing ServiceAccount to the pods that actually run sidecar/Store/Compactor. A YAML comment saying “IRSA” does not create credentials. Current Thanos S3 configuration can use `aws_sdk_auth: true` with the supported AWS SDK credential chain.
+- In current kube-prometheus-stack values, an existing object-store Secret is selected under `prometheus.prometheusSpec.thanos.objectStorageConfig.existingSecret` with the real name/key. Mounting key `thanos.yaml` does not create a file called `objstore.yaml`. Verify file paths, named gRPC Service ports and DNS-SRV targets.
+- Current Thanos Query uses `--endpoint` and `--query.replica-label` for its endpoint/deduplication configuration. Do not carry over an old `--store` example without checking the chosen release. Kiali querying a Prometheus-compatible backend may also need its documented `thanos_proxy` settings.
+- Each Deployment/StatefulSet needs matching selectors/pod labels and Services; the original incomplete resources could not form a working StoreAPI topology. On EKS, EBS-backed state needs supported EC2 placement/CSI configuration; Fargate does not mount EBS or run arbitrary DaemonSets.
 
-**Reference:**
+**Configuration, backup and proof**:
 
-* [Prometheus Operator](https://github.com/prometheus-operator/prometheus-operator)
-* [Thanos](https://thanos.io/tip/thanos/getting-started.md/)
-* [Jaeger Operator](https://www.jaegertracing.io/docs/latest/operator/)
+1. Configure actual monitor/rule selectors and scrape targets. In kube-prometheus-stack, `alertmanager.config` is a sibling of `alertmanager.alertmanagerSpec`; verify the pinned chart schema. Keep passwords/webhooks in supported Secret references.
+2. Back up Grafana's database/configuration/provisioned dashboards/plugins, Prometheus state as required, and Jaeger's storage using application-consistent procedures. Object-store retention alone is not a restore strategy for all components.
+3. Velero PVC/PV manifests alone do not prove volume data was captured. Configure the supported CSI snapshot/data-mover or filesystem backup path, snapshot classes/plugins, credentials and the resources needed to restore workloads. Inspect backup status and perform isolated restores.
+4. A backup Job must have a tested image containing its required tools, correct source URL, scoped identity, destination bucket and failure handling. The old AWS CLI image/assumed curl+jq/S3 CronJob was not a verified backup solution.
+5. Monitor receiver/exporter failures, queueing, scrape health and actual PVC capacity metrics. `prometheus_tsdb_storage_blocks_bytes_total` is not a valid capacity denominator. A stack cannot reliably report its own total outage; use an independent heartbeat/observer and handle missing-series/no-data separately from `up == 0`.
+6. Test loss of a replica/node/zone, storage interruption, backend/authentication failure, rollout and restoration. PDBs help planned disruption; they do not create database or zone-level HA. Record RPO/RTO and observed capacity rather than claiming them from replica counts.
+
+See [Grafana HA](https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/), [Thanos Sidecar](https://thanos.io/tip/components/sidecar.md/), [Thanos Query](https://thanos.io/tip/components/query.md/), [Thanos storage](https://thanos.io/tip/thanos/storage.md/), and [Velero CSI backup](https://velero.io/docs/main/csi/).
 
 </details>
 
@@ -1873,24 +866,338 @@ Explain how to collect **business metrics** (e.g., order count, payment success 
 
 <summary>Show Answer</summary>
 
-**Answer:**
+Define the business event and counting boundary before choosing metrics. Envoy knows requests, not whether an order was durably created or a payment settled. The following **integration fragments count completed processing attempts**, not unique orders or accounting revenue. The application must supply its processing functions/error contract, idempotency and validation. For a true payment-success metric, instrument payment outcomes at the payment boundary and derive a ratio from outcome counters; an unmaintained Gauge is not a success rate.
 
-**Custom Metrics and Dashboard Creation:**
+Use bounded category/status labels, a Counter for attempts and Histograms for nonnegative amounts/duration. Observe duration in `finally` so failures are included. Do not label metrics with order IDs, user IDs or raw URLs. These examples are single-process; multi-worker aggregation needs the client library's supported setup.
 
-Due to the length of this answer, please refer to the Korean source file for the complete implementation details including:
+**Python/Flask** (application supplies `process_order` and `PaymentException`):
 
-1. **Exposing Metrics from Application** (Python Flask and Node.js Express examples)
-2. **Kubernetes ServiceMonitor Configuration**
-3. **Prometheus Queries** for business metrics
-4. **Grafana Custom Dashboard** JSON configuration
-5. **Dashboard Provisioning** with ConfigMap
-6. **Alerting Configuration** with PrometheusRules
+```python
+from flask import Flask, request, jsonify, Response
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+import time
 
-**Reference:**
+# Integration fragment: your application supplies process_order and PaymentException.
+# process_order returns a validated nonnegative USD amount and category after processing.
+app = Flask(__name__)
+CATEGORIES = {"books", "electronics", "other"}
+STATUSES = ("success", "payment_failed", "error")
+orders_total = Counter("orders_total", "Completed order-processing attempts", ["status", "product_category"])
+order_amount = Histogram("order_amount_dollars", "Observed amounts of successful attempts in USD",
+                         buckets=[10, 50, 100, 500, 1000, 5000])
+order_duration = Histogram("order_processing_duration_seconds", "Order attempt duration, including failures",
+                           buckets=[0.1, 0.5, 1.0, 2.0, 5.0])
+for status in STATUSES:
+    for category in CATEGORIES:
+        orders_total.labels(status=status, product_category=category).inc(0)
 
-* [Metrics](../../../service-mesh/istio/observability/01-metrics.md)
-* [Prometheus Client Libraries](https://prometheus.io/docs/instrumenting/clientlibs/)
-* [Grafana Provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/)
+@app.post("/api/orders")
+def create_order():
+    payload = request.get_json()
+    started = time.perf_counter()
+    try:
+        order = process_order(payload)
+        category = order["category"] if order["category"] in CATEGORIES else "other"
+        orders_total.labels(status="success", product_category=category).inc()
+        order_amount.observe(order["amount"])
+        return jsonify(order), 201
+    except PaymentException:
+        orders_total.labels(status="payment_failed", product_category="other").inc()
+        return jsonify({"error": "Payment failed"}), 400
+    except Exception:
+        orders_total.labels(status="error", product_category="other").inc()
+        return jsonify({"error": "Order processing failed"}), 500
+    finally:
+        order_duration.observe(time.perf_counter() - started)
+
+@app.get("/metrics")
+def metrics():
+    return Response(generate_latest(), content_type=CONTENT_TYPE_LATEST)
+
+# Use the application's server lifecycle. Do not treat a Flask development server
+# or process-local counters as a production accounting system.
+```
+
+**Node.js/Express**: the maintained package is `@prometheus-io/client` (example API checked with 0.16.1 on Node 22). `prom-client` is deprecated in favor of this package; existing projects must review the migration changelog. Configure JSON middleware and await `register.metrics()`:
+
+```javascript
+const express = require('express');
+const client = require('@prometheus-io/client'); // Example verified with 0.16.1, Node 22
+const app = express();
+app.use(express.json());
+const register = new client.Registry();
+const categories = new Set(['books', 'electronics', 'other']);
+const ordersTotal = new client.Counter({
+  name: 'orders_total', help: 'Completed order-processing attempts',
+  labelNames: ['status', 'product_category'], registers: [register]
+});
+const orderAmount = new client.Histogram({
+  name: 'order_amount_dollars', help: 'Observed successful attempt amounts in USD',
+  buckets: [10, 50, 100, 500, 1000, 5000], registers: [register]
+});
+const orderDuration = new client.Histogram({
+  name: 'order_processing_duration_seconds', help: 'Order attempt duration, including failures',
+  buckets: [0.1, 0.5, 1, 2, 5], registers: [register]
+});
+for (const status of ['success', 'payment_failed', 'error']) {
+  for (const product_category of categories) ordersTotal.inc({status, product_category}, 0);
+}
+// The application supplies async processOrder with validated amount/category output.
+app.post('/api/orders', async (req, res) => {
+  const end = orderDuration.startTimer();
+  try {
+    const order = await processOrder(req.body);
+    const product_category = categories.has(order.category) ? order.category : 'other';
+    ordersTotal.inc({status: 'success', product_category});
+    orderAmount.observe(order.amount);
+    res.status(201).json(order);
+  } catch (error) {
+    const status = error.code === 'PAYMENT_FAILED' ? 'payment_failed' : 'error';
+    ordersTotal.inc({status, product_category: 'other'});
+    res.status(status === 'payment_failed' ? 400 : 500).json({error: 'Order processing failed'});
+  } finally {
+    end();
+  }
+});
+app.get('/metrics', async (req, res) => {
+  try {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  } catch (error) {
+    res.status(500).end();
+  }
+});
+// Integrate app.listen/shutdown with the application's server lifecycle.
+```
+
+**Kubernetes collection**: this sidecar lab uses Istio's merged endpoint so it does not assume a plaintext application scrape will pass STRICT mTLS. Merge these labels/annotations into the actual `order-service` Deployment in `default`; its image must contain the application and expose `/metrics` on8080. The mesh must have Prometheus merging enabled. The agent endpoint15020 is cleartext, so restrict network access. If an existing scraper already collects these business metrics, do not add a duplicate monitor.
+
+```yaml
+spec:
+  template:
+    metadata:
+      labels:
+        app: order-service
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/path: /metrics
+        prometheus.io/port: '8080'
+        prometheus.istio.io/merge-metrics: 'true'
+```
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: default
+  labels:
+    app: order-service
+spec:
+  selector:
+    app: order-service
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  - name: merged-metrics
+    port: 15020
+    targetPort: 15020
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: order-service-metrics
+  namespace: istio-system
+spec:
+  namespaceSelector:
+    matchNames:
+    - default
+  selector:
+    matchLabels:
+      app: order-service
+  targetLabels:
+  - app
+  endpoints:
+  - port: merged-metrics
+    path: /stats/prometheus
+    interval: 30s
+    metricRelabelings:
+    - sourceLabels:
+      - __name__
+      regex: orders_total|order_amount_dollars_(bucket|sum|count)|order_processing_duration_seconds_(bucket|sum|count)
+      action: keep
+```
+
+The Prometheus resource must select the ServiceMonitor in `istio-system`; it discovers the Service in `default`. Keeping only the business metric families avoids duplicating proxy metrics already scraped elsewhere. `targetLabels` explicitly adds the Service's `app` label. This is a sidecar example; ambient/direct TLS scraping needs its own supported design.
+
+**Queries** (in order: interval attempt count, attempts/second, success fraction, observed amount P95, duration P99, category rate, payment-failure fraction among order attempts):
+
+```promql
+sum(increase(orders_total{namespace="default",app="order-service"}[5m]))
+
+sum(rate(orders_total{namespace="default",app="order-service"}[5m]))
+
+sum(rate(orders_total{namespace="default",app="order-service",status="success"}[5m])) / sum(rate(orders_total{namespace="default",app="order-service"}[5m]))
+
+histogram_quantile(0.95, sum by (le) (rate(order_amount_dollars_bucket{namespace="default",app="order-service"}[5m])))
+
+histogram_quantile(0.99, sum by (le) (rate(order_processing_duration_seconds_bucket{namespace="default",app="order-service"}[5m])))
+
+sum by (product_category) (rate(orders_total{namespace="default",app="order-service"}[5m]))
+
+sum(rate(orders_total{namespace="default",app="order-service",status="payment_failed"}[5m])) / sum(rate(orders_total{namespace="default",app="order-service"}[5m]))
+```
+
+`increase` estimates the interval total; `rate` is per second. Process restarts, retries and missed scrapes mean operational counters/amount sums are not an accounting ledger. For unique committed orders or revenue, reconcile with the durable business system rather than assuming telemetry is exactly-once.
+
+**Grafana**: this complete dashboard object expects datasource UID `prometheus` and the labels from the monitor above. Save it without an API wrapper and use the [documented dashboard file provisioning](../../../service-mesh/istio/observability/04-dashboards.md). A ConfigMap label alone does not configure a provider.
+
+```json
+{
+  "uid": "order-business-metrics",
+  "title": "Order Processing Operational Metrics",
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Completed Attempts per Minute",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(orders_total{namespace=\"default\",app=\"order-service\"}[5m])) * 60",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      }
+    },
+    {
+      "id": 2,
+      "title": "Attempt Success Fraction",
+      "type": "gauge",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(orders_total{namespace=\"default\",app=\"order-service\",status=\"success\"}[5m])) / sum(rate(orders_total{namespace=\"default\",app=\"order-service\"}[5m]))",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Processing P95",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(order_processing_duration_seconds_bucket{namespace=\"default\",app=\"order-service\"}[5m])))",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Observed Successful Attempt Amount (Last Hour)",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(order_amount_dollars_sum{namespace=\"default\",app=\"order-service\"}[1h]))",
+          "refId": "A"
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        }
+      }
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "30s"
+}
+```
+
+**Alerts**: select this rule with the installed Prometheus Operator. The minimum traffic threshold avoids a ratio alert on no traffic; absence/scrape failure needs a separate signal. Thresholds are examples, not business SLO guarantees.
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: business-metrics-alerts
+  namespace: istio-system
+spec:
+  groups:
+  - name: business-metrics
+    rules:
+    - alert: LowOrderAttemptSuccessFraction
+      expr: (sum(rate(orders_total{namespace="default",app="order-service",status="success"}[5m])) / sum(rate(orders_total{namespace="default",app="order-service"}[5m]))
+        < 0.95) and (sum(rate(orders_total{namespace="default",app="order-service"}[5m])) > 0.1)
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: Order-processing attempt success fraction below95%
+    - alert: SlowOrderProcessing
+      expr: histogram_quantile(0.95, sum by (le) (rate(order_processing_duration_seconds_bucket{namespace="default",app="order-service"}[5m])))
+        > 2
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: P95 processing attempt duration exceeds2s
+```
+
+See the [Python client](https://prometheus.github.io/client_python/) and [JavaScript client](https://github.com/prometheus/client_js) documentation for metric types, exposition and process models.
 
 </details>
 
@@ -1904,8 +1211,8 @@ Due to the length of this answer, please refer to the Korean source file for the
 
 **Evaluation Criteria:**
 
-* 90-100 points: Excellent (Istio Observability Expert)
-* 80-89 points: Good (Capable of production monitoring)
+* 90-100 points: Excellent understanding of these topics
+* 80-89 points: Good understanding; deployment validation remains separate
 * 70-79 points: Average (Additional learning recommended)
 * 60-69 points: Below Average (Review of basic concepts needed)
 * 0-59 points: Re-learning needed
@@ -1913,6 +1220,6 @@ Due to the length of this answer, please refer to the Korean source file for the
 ## Learning Resources
 
 * [Metrics](../../../service-mesh/istio/observability/01-metrics.md)
-* [Distributed Tracing](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/02-distributed-tracing.md)
+* [Distributed Tracing](../../../service-mesh/istio/observability/02-tracing.md)
 * [Logging](../../../service-mesh/istio/observability/03-logging.md)
-* [Visualization](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/observability/04-visualization.md)
+* [Visualization](../../../service-mesh/istio/observability/04-dashboards.md)

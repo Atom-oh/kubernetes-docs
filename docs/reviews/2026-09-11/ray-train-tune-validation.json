@@ -1,0 +1,389 @@
+{
+  "reviewedAt": "2026-09-12T20:03:35.775937+00:00",
+  "version": "Ray2.58.0",
+  "fullyReadFiles": 4,
+  "quizQuestions": 20,
+  "findings": [
+    "TrainV2defaultTrueandseparateframeworkdependency/userprepare-model-data-responsibility",
+    "V2TrainerdirectTunerrejected;functiontrainable+explicitTuneReportCallback/RunConfigscopes",
+    "V2reportbarrierallworkerssamecount;rank0metricsnotautomaticmean;checkpointpayloaduserauthored",
+    "Failureclassesworkercap0vscontroller/preemption-1;notallretriesdisabled",
+    "Persistentstorage/checkpointuploadmode/shardcollision/recoverybounds",
+    "Resourcebundles/trialdriverconcurrency/KubeRayEC2capacitynotautomatic",
+    "Per-trialobjectstore/gradientroutingdiagramreplacedwithworkercollectives/persistentcheckpoint/callbackpaths"
+  ],
+  "nativeApi": {
+    "rayVersion": "2.58.0",
+    "checks": {
+      "v2_default": true,
+      "legacy_trainer_resources_rejected": true,
+      "v2_trainer_direct_tuner_rejected": "TuneError",
+      "callback_requires_tune_session": true,
+      "rank0_metric_not_worker_mean": true,
+      "checkpoint_payload_is_user_authored": true
+    },
+    "failureDefaults": {
+      "max_failures": 0,
+      "fail_fast": "DEPRECATED",
+      "controller_failure_limit": -1,
+      "max_preemption_failures": -1
+    },
+    "scope": "Native API/config/callback/checkpoint checks; callback session/queue injected. No Ray cluster, Torch, model weights, GPU or cloud calls."
+  },
+  "nativeTune": {
+    "rayVersion": "2.58.0",
+    "trials": 2,
+    "bestConfig": {
+      "x": 3
+    },
+    "bestScore": 0,
+    "maxConcurrentTrials": 1,
+    "logicalCPUs": 2,
+    "objectStoreMiB": 80,
+    "scope": "Scalar objective only; no model/framework training, GPU, cloud or distributed Train proof"
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/ray/03-ray-train-tune.md",
+        "sha256": "7efddbcd81f89ea3b1faea02491ff83925f0ec4d5ed0f4e899c1edaddf0f1642",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-3-ray-train과-ray-tune"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-준비"
+          },
+          {
+            "tag": "h2",
+            "id": "ray-train-v2와-학습-코드의-책임"
+          },
+          {
+            "tag": "h2",
+            "id": "scalingconfig와-자원-수요"
+          },
+          {
+            "tag": "h2",
+            "id": "체크포인트와-보고"
+          },
+          {
+            "tag": "h3",
+            "id": "실패-유형과-재시도"
+          },
+          {
+            "tag": "h2",
+            "id": "ray-tune-searcher와-scheduler"
+          },
+          {
+            "tag": "h2",
+            "id": "작은-tune-예제"
+          },
+          {
+            "tag": "h2",
+            "id": "train과-tune의-현재-연동-방식"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-운영-시-확인할-점"
+          },
+          {
+            "tag": "h2",
+            "id": "공식-근거"
+          }
+        ],
+        "renderedIds": [
+          "part-3-ray-train과-ray-tune",
+          "실습-환경-준비",
+          "ray-train-v2와-학습-코드의-책임",
+          "scalingconfig와-자원-수요",
+          "체크포인트와-보고",
+          "실패-유형과-재시도",
+          "ray-tune-searcher와-scheduler",
+          "작은-tune-예제",
+          "train과-tune의-현재-연동-방식",
+          "eks-운영-시-확인할-점",
+          "공식-근거"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/ray/03-ray-train-tune-quiz.md",
+        "sha256": "f510c298aeea307aa643764c624b75d18ac5cb4a6ba6c7e2eeb958a809f1a76c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ray-train-tune-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "객관식-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "서술형-문제"
+          }
+        ],
+        "renderedIds": [
+          "ray-train-tune-퀴즈",
+          "객관식-문제",
+          "서술형-문제"
+        ]
+      },
+      {
+        "path": "en/ai-ml/ray/03-ray-train-tune.md",
+        "sha256": "9ed2fe3ddb1f3ec97daca59ff2d18ed4e1f37ef8d927823b5311b00cd32f9277",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-3-ray-train-and-ray-tune"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-environment-setup"
+          },
+          {
+            "tag": "h2",
+            "id": "ray-train-v2-and-training-code-responsibilities"
+          },
+          {
+            "tag": "h2",
+            "id": "scalingconfig-and-resource-demand"
+          },
+          {
+            "tag": "h2",
+            "id": "checkpoints-and-reporting"
+          },
+          {
+            "tag": "h3",
+            "id": "failure-classes-and-retries"
+          },
+          {
+            "tag": "h2",
+            "id": "ray-tune-searchers-and-schedulers"
+          },
+          {
+            "tag": "h2",
+            "id": "small-tune-example"
+          },
+          {
+            "tag": "h2",
+            "id": "current-train-tune-integration"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-operational-checks"
+          },
+          {
+            "tag": "h2",
+            "id": "primary-sources"
+          }
+        ],
+        "renderedIds": [
+          "part-3-ray-train-and-ray-tune",
+          "lab-environment-setup",
+          "ray-train-v2-and-training-code-responsibilities",
+          "scalingconfig-and-resource-demand",
+          "checkpoints-and-reporting",
+          "failure-classes-and-retries",
+          "ray-tune-searchers-and-schedulers",
+          "small-tune-example",
+          "current-train-tune-integration",
+          "eks-operational-checks",
+          "primary-sources"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/ray/03-ray-train-tune-quiz.md",
+        "sha256": "87c30d435db681b0fe90d997736916e59ae83dafe7561de49afad79a310b77e4",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ray-train-tune-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "multiple-choice-questions"
+          },
+          {
+            "tag": "h2",
+            "id": "short-answer-questions"
+          }
+        ],
+        "renderedIds": [
+          "ray-train-tune-quiz",
+          "multiple-choice-questions",
+          "short-answer-questions"
+        ]
+      }
+    ]
+  },
+  "figures": {
+    "ko": {
+      "checksPassed": 9,
+      "checkCount": 9,
+      "compositionProfile": "showcase",
+      "compositionStatus": "pass",
+      "errors": 0,
+      "warnings": 0
+    },
+    "en": {
+      "checksPassed": 9,
+      "checkCount": 9,
+      "compositionProfile": "showcase",
+      "compositionStatus": "pass",
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  "responsive": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "71384c2e54b055d47f83b5fa7dcad9de370efbaaf97f31eacc03988e2ffef57a"
+      },
+      {
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "71384c2e54b055d47f83b5fa7dcad9de370efbaaf97f31eacc03988e2ffef57a"
+      },
+      {
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "71384c2e54b055d47f83b5fa7dcad9de370efbaaf97f31eacc03988e2ffef57a"
+      },
+      {
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "df51daa0b6889e605041f073cea76fe510222f1ed3630055816f3b1a2b822af3"
+      },
+      {
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "df51daa0b6889e605041f073cea76fe510222f1ed3630055816f3b1a2b822af3"
+      },
+      {
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "df51daa0b6889e605041f073cea76fe510222f1ed3630055816f3b1a2b822af3"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "pngVisualInspection": "Both finalimages inspected;return pathseparatedfromlaunchline",
+  "sources": [
+    "https://docs.ray.io/en/releases-2.58.0/train/overview.html",
+    "https://docs.ray.io/en/releases-2.58.0/train/user-guides/hyperparameter-optimization.html",
+    "https://docs.ray.io/en/releases-2.58.0/train/user-guides/checkpoints.html",
+    "https://docs.ray.io/en/releases-2.58.0/train/user-guides/persistent-storage.html",
+    "https://docs.ray.io/en/releases-2.58.0/train/user-guides/fault-tolerance.html",
+    "https://docs.ray.io/en/releases-2.58.0/train/getting-started-pytorch.html",
+    "https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/train/v2/api/train_fn_utils.py"
+  ],
+  "limits": [
+    "NoTorch/frameworktraining/GPU/cloud/EKSrun",
+    "NativeAPIcallbackusedinjectedTunesession/queue;scalarTune2trialsexecutedlocally",
+    "RayresourceconfigisnothardOSlimit;runtimeclosedwithray.shutdown",
+    "Publicationreview/CIpending"
+  ]
+}

@@ -5,7 +5,7 @@
     "title": "AI/ML 워크로드의 특성",
     "output": "ko-ai-ml-01-ai-ml-workloads-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "legend": {
       "mode": "auto",
       "entries": {
@@ -31,7 +31,7 @@
           "cpu",
           "network"
         ],
-        "note": "리소스 집약적 특성은 GPU 가속, 대용량 메모리, 고성능 CPU, 고속 네트워크 요구로 이어진다."
+        "note": "GPU·CPU·메모리·네트워크 요구는 모델과 단계에 따라 다릅니다."
       },
       {
         "id": "workload-types",
@@ -262,7 +262,7 @@
       "id": "resource-to-needs",
       "from": "resource",
       "to": "gpu",
-      "label": "필요 리소스",
+      "label": "조건에 따라",
       "variant": "emphasis"
     },
     {

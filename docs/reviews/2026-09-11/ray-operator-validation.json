@@ -1,0 +1,457 @@
+{
+  "reviewedAt": "2026-09-12T19:49:08.341061+00:00",
+  "versions": "KubeRay1.7.0/Ray2.58.0",
+  "fullyReadFiles": 4,
+  "quizQuestions": 20,
+  "findings": [
+    "4v1CRDs;RayCronJobgatefalse/deprecatedv1alpha1retained",
+    "Operatorinstallnotworkload/directPodreconciliation;headonlypossible",
+    "Autoscalerenablement/sidecar/explicitv2;numOfHostsreplicavspodcount",
+    "GPUstructuredresources>rayStartParams>containerlimits;logicalvaluesnothardware",
+    "RayJobshutdownfalse/TTL/deletionpolicies;notexternalartifact/EC2cleanup",
+    "RayServiceincrementalBetaenabledbutnewcluster/Gateway/capacity/readinessconditions;nozero-downtimeguarantee",
+    "K8sschedulingvsnodeprovider;Pendingnoncapacitycauses",
+    "HelmCRDlifecycle/version/image/auth/TLSboundaries"
+  ],
+  "helmAndSchema": {
+    "chart": "kuberay-operator1.7.0",
+    "crds": [
+      "rayclusters.ray.io",
+      "raycronjobs.ray.io",
+      "rayjobs.ray.io",
+      "rayservices.ray.io"
+    ],
+    "controllerImage": "quay.io/kuberay/operator:v1.7.0",
+    "args": [
+      "--log-stdout-encoder",
+      "json",
+      "--log-file-encoder",
+      "json",
+      "--enable-leader-election=true",
+      "--enable-metrics=true",
+      "--reconcile-concurrency=1",
+      "--qps=100",
+      "--burst=200",
+      "--feature-gates=RayClusterStatusConditions=true,RayJobDeletionPolicy=true,RayMultiHostIndexing=true,RayServiceIncrementalUpgrade=true,RayCronJob=false,RayClusterMTLS=false,RayClusterNetworkPolicy=false,RayClusterHistoryServer=false"
+    ],
+    "cpuRayClusterSchema": "passed",
+    "limits": "No API server/CEL admission/controller/reconciliation/runtime/AWS tests; schema only"
+  },
+  "nativeAutoscaler": {
+    "rayVersion": "2.58.0",
+    "cases": [
+      {
+        "case": "container limits",
+        "resources": {
+          "CPU": 2,
+          "GPU": 1,
+          "memory": 8589934592
+        },
+        "maxWorkers": 4,
+        "idleTimeoutMinutes": 1.0,
+        "groupIdleTimeout": null,
+        "passed": true
+      },
+      {
+        "case": "rayStartParams override",
+        "resources": {
+          "CPU": 2,
+          "GPU": 2,
+          "memory": 8589934592
+        },
+        "maxWorkers": 4,
+        "idleTimeoutMinutes": 1.0,
+        "groupIdleTimeout": null,
+        "passed": true
+      },
+      {
+        "case": "structured group resources override",
+        "resources": {
+          "CPU": 2,
+          "GPU": 3,
+          "memory": 8589934592
+        },
+        "maxWorkers": 4,
+        "idleTimeoutMinutes": 1.0,
+        "groupIdleTimeout": null,
+        "passed": true
+      },
+      {
+        "case": "multiple hosts per replica",
+        "resources": {
+          "CPU": 2,
+          "GPU": 1,
+          "memory": 8589934592
+        },
+        "maxWorkers": 8,
+        "idleTimeoutMinutes": 1.0,
+        "groupIdleTimeout": null,
+        "passed": true
+      },
+      {
+        "case": "global and group idle timeout",
+        "resources": {
+          "CPU": 2,
+          "GPU": 1,
+          "memory": 8589934592
+        },
+        "maxWorkers": 4,
+        "idleTimeoutMinutes": 2.0,
+        "groupIdleTimeout": 30.0,
+        "passed": true
+      }
+    ],
+    "scope": "Released pureconfiggenerator; no Ray runtime, K8s API or GPU/AWS calls"
+  },
+  "imageTagMetadata": {
+    "tag": "rayproject/ray:2.58.0-py312",
+    "platforms": [
+      "linux/amd64",
+      "linux/arm64"
+    ],
+    "scope": "registrymetadataonly;imagenotexecuted"
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/ray/02-kuberay-operator.md",
+        "sha256": "fbc08d7f392f953af5207f375ff250d78b8fc6b13fcba3b1b9886575070a0c5d",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-2-kuberay-오퍼레이터"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-준비"
+          },
+          {
+            "tag": "h2",
+            "id": "kuberay가-하는-일"
+          },
+          {
+            "tag": "h2",
+            "id": "crd와-기능-게이트"
+          },
+          {
+            "tag": "h3",
+            "id": "rayjob-정리"
+          },
+          {
+            "tag": "h3",
+            "id": "rayservice-업데이트"
+          },
+          {
+            "tag": "h2",
+            "id": "오토스케일링의-계층"
+          },
+          {
+            "tag": "h2",
+            "id": "cpu-gpu-자원-선언"
+          },
+          {
+            "tag": "h2",
+            "id": "오퍼레이터-설치와-업그레이드"
+          },
+          {
+            "tag": "h2",
+            "id": "최소-cpu-구성-예제"
+          },
+          {
+            "tag": "h2",
+            "id": "공식-근거"
+          }
+        ],
+        "renderedIds": [
+          "part-2-kuberay-오퍼레이터",
+          "실습-환경-준비",
+          "kuberay가-하는-일",
+          "crd와-기능-게이트",
+          "rayjob-정리",
+          "rayservice-업데이트",
+          "오토스케일링의-계층",
+          "cpu-gpu-자원-선언",
+          "오퍼레이터-설치와-업그레이드",
+          "최소-cpu-구성-예제",
+          "공식-근거"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/ray/02-kuberay-operator-quiz.md",
+        "sha256": "c7d9aac875299633869c19fbad3bce9c7434885c140cb67cf2a2609ad69d2e6b",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kuberay-오퍼레이터-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "객관식-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "서술형-문제"
+          }
+        ],
+        "renderedIds": [
+          "kuberay-오퍼레이터-퀴즈",
+          "객관식-문제",
+          "서술형-문제"
+        ]
+      },
+      {
+        "path": "en/ai-ml/ray/02-kuberay-operator.md",
+        "sha256": "fe12855851eb8df70e4f028eb59c0132eabede7d36b16b221c5e92ab8d8e0aa1",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-2-the-kuberay-operator"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-environment-setup"
+          },
+          {
+            "tag": "h2",
+            "id": "what-kuberay-does"
+          },
+          {
+            "tag": "h2",
+            "id": "crds-and-feature-gates"
+          },
+          {
+            "tag": "h3",
+            "id": "rayjob-cleanup"
+          },
+          {
+            "tag": "h3",
+            "id": "rayservice-upgrades"
+          },
+          {
+            "tag": "h2",
+            "id": "autoscaling-layers"
+          },
+          {
+            "tag": "h2",
+            "id": "cpu-gpu-resource-declarations"
+          },
+          {
+            "tag": "h2",
+            "id": "installing-and-upgrading-the-operator"
+          },
+          {
+            "tag": "h2",
+            "id": "minimal-cpu-configuration"
+          },
+          {
+            "tag": "h2",
+            "id": "primary-sources"
+          }
+        ],
+        "renderedIds": [
+          "part-2-the-kuberay-operator",
+          "lab-environment-setup",
+          "what-kuberay-does",
+          "crds-and-feature-gates",
+          "rayjob-cleanup",
+          "rayservice-upgrades",
+          "autoscaling-layers",
+          "cpu-gpu-resource-declarations",
+          "installing-and-upgrading-the-operator",
+          "minimal-cpu-configuration",
+          "primary-sources"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/ray/02-kuberay-operator-quiz.md",
+        "sha256": "cbb6499c86af98edf7c1b7c4a5e0bbb499cf4a927b473a666cb6eb8eb7243464",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "kuberay-operator-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "multiple-choice-questions"
+          },
+          {
+            "tag": "h2",
+            "id": "short-answer-questions"
+          }
+        ],
+        "renderedIds": [
+          "kuberay-operator-quiz",
+          "multiple-choice-questions",
+          "short-answer-questions"
+        ]
+      }
+    ]
+  },
+  "figures": {
+    "ko": {
+      "checksPassed": 9,
+      "checkCount": 9,
+      "compositionProfile": "showcase",
+      "compositionStatus": "pass",
+      "errors": 0,
+      "warnings": 0
+    },
+    "en": {
+      "checksPassed": 9,
+      "checkCount": 9,
+      "compositionProfile": "showcase",
+      "compositionStatus": "pass",
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  "responsive": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "c6244e2c40618a145f37bc3e26d37a048016bf3462593a483eb29ed4ce0076fe"
+      },
+      {
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "c6244e2c40618a145f37bc3e26d37a048016bf3462593a483eb29ed4ce0076fe"
+      },
+      {
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "c6244e2c40618a145f37bc3e26d37a048016bf3462593a483eb29ed4ce0076fe"
+      },
+      {
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "72a97a389d8ca275f47b1c08cb0879f9afb4755365016dac9bc8e1f13204c29f"
+      },
+      {
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "72a97a389d8ca275f47b1c08cb0879f9afb4755365016dac9bc8e1f13204c29f"
+      },
+      {
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "72a97a389d8ca275f47b1c08cb0879f9afb4755365016dac9bc8e1f13204c29f"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "visual": "BothPNGsexamined;removeddirectautoscaler-to-KarpenteredgeandseparatednodesfromPods;desktopreadability/routeclearancefixed",
+  "sources": [
+    "https://github.com/ray-project/kuberay/releases/tag/v1.7.0",
+    "https://github.com/ray-project/kuberay/blob/v1.7.0/helm-chart/kuberay-operator/values.yaml",
+    "https://github.com/ray-project/kuberay/blob/v1.7.0/ray-operator/controllers/ray/common/pod.go",
+    "https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/autoscaler/_private/kuberay/autoscaling_config.py",
+    "https://github.com/ray-project/kuberay/blob/v1.7.0/ray-operator/apis/ray/v1/rayjob_types.go",
+    "https://github.com/ray-project/kuberay/blob/v1.7.0/ray-operator/apis/ray/v1/rayservice_types.go",
+    "https://helm.sh/docs/chart_best_practices/custom_resource_definitions/"
+  ],
+  "limits": [
+    "NoK8sAPI/CELadmission/controller/runtime/AWS/GPUexecution",
+    "Pureconfiggenerator+schema/Helmvalidationarenotliveautoscalingvalidation",
+    "Publicationreview/CIpending"
+  ]
+}

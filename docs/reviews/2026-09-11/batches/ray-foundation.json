@@ -1,0 +1,44 @@
+[
+  {
+    "path": "ko/ai-ml/ray/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "d22dfbdaaf62d525bb473b1414e0fbe75ba5c02137983b550f72fbf9b9b658ef",
+    "summary": "FullreadandRay2.58/KubeRay1.7source+boundednativeCorechecks;task/actor/dependencies/resources/objectstore/ownership/GCS/recovery/layeringcorrected;6MD/20questions/4figures/12responsive."
+  },
+  {
+    "path": "ko/ai-ml/ray/01-architecture.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "defa03c602f971e65ff535b94ca75d045f4e2fc24f3beec6f7f4ab310f01683f",
+    "summary": "FullreadandRay2.58/KubeRay1.7source+boundednativeCorechecks;task/actor/dependencies/resources/objectstore/ownership/GCS/recovery/layeringcorrected;6MD/20questions/4figures/12responsive."
+  },
+  {
+    "path": "ko/quizzes/ai-ml/ray/01-architecture-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "71b6a88831f595b775f1f5ca1468c6dba942c7da39b651a53d0f92958d1f7021",
+    "summary": "FullreadandRay2.58/KubeRay1.7source+boundednativeCorechecks;task/actor/dependencies/resources/objectstore/ownership/GCS/recovery/layeringcorrected;6MD/20questions/4figures/12responsive."
+  },
+  {
+    "path": "en/ai-ml/ray/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "7ab6fccf2537f2030e927f062db531a64e433b3612e5606b5b914efb954b9ae9",
+    "summary": "FullreadandRay2.58/KubeRay1.7source+boundednativeCorechecks;task/actor/dependencies/resources/objectstore/ownership/GCS/recovery/layeringcorrected;6MD/20questions/4figures/12responsive."
+  },
+  {
+    "path": "en/ai-ml/ray/01-architecture.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "309dd696434978798b95f82badac5e9f6a03bb5fd3d64a7f148b26074d0c2782",
+    "summary": "FullreadandRay2.58/KubeRay1.7source+boundednativeCorechecks;task/actor/dependencies/resources/objectstore/ownership/GCS/recovery/layeringcorrected;6MD/20questions/4figures/12responsive."
+  },
+  {
+    "path": "en/quizzes/ai-ml/ray/01-architecture-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "110ef07be34981b2841c2953cff49a8dd6e53dc3fbc745ca2d9ce41badfb884c",
+    "summary": "FullreadandRay2.58/KubeRay1.7source+boundednativeCorechecks;task/actor/dependencies/resources/objectstore/ownership/GCS/recovery/layeringcorrected;6MD/20questions/4figures/12responsive."
+  }
+]

@@ -1,8 +1,8 @@
 # Security Quiz
 
-> **Supported Version**: Istio 1.28.0 **EKS Version**: 1.34 (Kubernetes 1.28+) **Last Updated**: February 23, 2026
+> **Last Updated**: September 11, 2026 · Istio 1.31 · Kubernetes 1.32–1.36 (EKS standard support: 1.34–1.36). See the [installation matrix](../../../service-mesh/istio/01-installation.md).
 
-This quiz tests your understanding of Istio's security features.
+This quiz tests Istio security with sidecar examples. Each question is an independent scenario; do not combine every ALLOW policy on the same workload. Ambient requires waypoint `targetRefs` for HTTP/JWT policy, and does not support PeerAuthentication `DISABLE`. Named workloads, ServiceAccounts, ports and identities must match the actual deployment.
 
 ## Multiple Choice Questions (1-5)
 
@@ -10,7 +10,10 @@ This quiz tests your understanding of Istio's security features.
 
 Which statement correctly describes the **PERMISSIVE** mTLS mode in PeerAuthentication?
 
-A. It allows both mTLS and plaintext traffic B. It only allows mTLS and rejects plaintext C. It rejects all traffic D. It disables mTLS
+A. It allows both mTLS and plaintext traffic\
+B. It only allows mTLS and rejects plaintext\
+C. It rejects all traffic\
+D. It disables mTLS
 
 <details>
 
@@ -28,12 +31,12 @@ PERMISSIVE mode **allows both mTLS and plaintext traffic** to support gradual mi
 | -------------- | ------------------------------ | ------------------------------------- |
 | **PERMISSIVE** | Allows both mTLS + plaintext   | Gradual migration, mixed environments |
 | **STRICT**     | Only allows mTLS               | Production security hardening         |
-| **DISABLE**    | Disables mTLS (plaintext only) | Debugging, legacy systems             |
+| **DISABLE**    | Disables mesh mTLS at the selected receiver | Explicit legacy exception             |
 
 **PERMISSIVE Mode Example:**
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
@@ -53,7 +56,7 @@ Client B (No Sidecar)    -> [Plaintext] -> Server (PERMISSIVE)  Allowed
 **Comparison with STRICT Mode:**
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: strict-mtls
@@ -80,7 +83,7 @@ Step 3: STRICT (Enforce mTLS)
 
 **Reference:**
 
-* [PeerAuthentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/04-peer-authentication.md)
+* [PeerAuthentication](../../../service-mesh/istio/security/01-mtls.md)
 * [mTLS](../../../service-mesh/istio/security/01-mtls.md)
 
 </details>
@@ -89,10 +92,10 @@ Step 3: STRICT (Enforce mTLS)
 
 ### Question 2: AuthorizationPolicy Action
 
-What does the following AuthorizationPolicy configuration mean?
+If this is the only AuthorizationPolicy selecting the workloads in its namespace, what does it mean?
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: deny-all
@@ -100,7 +103,10 @@ spec:
   {}
 ```
 
-A. It allows all requests B. It denies all requests C. It does not apply any policy D. It only allows mTLS
+A. It allows all requests\
+B. It denies all requests\
+C. It does not apply any policy\
+D. It only allows mTLS
 
 <details>
 
@@ -108,7 +114,7 @@ A. It allows all requests B. It denies all requests C. It does not apply any pol
 
 **Answer: B**
 
-An AuthorizationPolicy with an empty spec **denies all requests** (deny-by-default).
+An empty spec defaults to ALLOW with no matching rules, so this policy alone **denies all requests**. Other matching ALLOW policies can provide exceptions; an explicit DENY-all cannot be overridden by ALLOW.
 
 **Explanation:**
 
@@ -122,7 +128,7 @@ An AuthorizationPolicy with an empty spec **denies all requests** (deny-by-defau
 
 ```yaml
 # Step 1: Deny all requests
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: deny-all
@@ -131,7 +137,7 @@ spec: {}  # Empty spec = deny all requests
 
 ---
 # Step 2: Selectively allow only what's needed
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-frontend
@@ -150,26 +156,7 @@ spec:
         methods: ["GET", "POST"]
 ```
 
-**AuthorizationPolicy Action Types:**
-
-| action     | Description           | Priority    |
-| ---------- | --------------------- | ----------- |
-| **DENY**   | Explicit deny         | 1 (Highest) |
-| **ALLOW**  | Explicit allow        | 2           |
-| **AUDIT**  | Log only              | 3           |
-| **CUSTOM** | External auth service | 4           |
-
-**Evaluation Order:**
-
-```
-1. Evaluate DENY policies -> If matched, immediately deny
-   | (pass)
-2. Evaluate ALLOW policies -> If matched, allow
-   | (no match)
-3. Default behavior
-   - If any ALLOW policy exists -> Deny
-   - If no ALLOW policy exists -> Allow
-```
+**Evaluation:** CUSTOM → DENY → ALLOW. A matching CUSTOM provider must allow the request; then any matching DENY rejects it. If applicable ALLOW policies exist, at least one rule must match. Without an applicable ALLOW policy, this stage allows the request. Rules and ALLOW policies form a union, not an ordered list of additional restrictions. AUDIT marks matching requests for a configured audit plugin; it is not a fourth enforcement stage and does not log by itself.
 
 **Practical Example:**
 
@@ -177,7 +164,7 @@ spec:
 # Scenario: Restrict HTTP methods
 ---
 # DENY: Prohibit DELETE
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: deny-delete
@@ -193,7 +180,7 @@ spec:
 
 ---
 # ALLOW: Only allow GET, POST
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: allow-read-write
@@ -211,7 +198,7 @@ spec:
         methods: ["GET", "POST"]
 ```
 
-**Test:**
+**Test:** Run from the meshed frontend workload using ServiceAccount `frontend`; configure backend HTTP protocol/port detection.
 
 ```bash
 # GET request -> Matches ALLOW policy -> Allowed
@@ -229,7 +216,7 @@ curl -X PUT http://backend/api
 
 **Reference:**
 
-* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/02-authorization-policy.md)
+* [Authorization Policy](../../../service-mesh/istio/security/03-authorization.md)
 
 </details>
 
@@ -239,7 +226,10 @@ curl -X PUT http://backend/api
 
 Which fields are used to validate JWT tokens in RequestAuthentication?
 
-A. issuer and audiences B. principals and namespaces C. methods and paths D. hosts and ports
+A. issuer and audiences\
+B. principals and namespaces\
+C. methods and paths\
+D. hosts and ports
 
 <details>
 
@@ -250,6 +240,8 @@ A. issuer and audiences B. principals and namespaces C. methods and paths D. hos
 RequestAuthentication uses the **issuer** and **audiences** fields to validate JWT tokens.
 
 **Explanation:**
+
+A token, when present, must pass signature, issuer, audience and time checks. RequestAuthentication alone accepts a missing token; AuthorizationPolicy must require `requestPrincipals`. The timestamp values below are an expired historical illustration, not a usable token.
 
 **JWT Token Structure:**
 
@@ -269,7 +261,7 @@ Payload example:
 **RequestAuthentication Configuration:**
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: jwt-auth
@@ -292,11 +284,13 @@ spec:
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-security-0.html)
 
+The diagram describes validation of a present token, not authorization or missing-token handling. Provider examples below are alternatives; configure the token type and audience expected by the application.
+
 **Integration with OIDC Providers:**
 
 ```yaml
 # Google OAuth2 example
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: google-jwt
@@ -309,7 +303,7 @@ spec:
 
 ---
 # Keycloak example
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: keycloak-jwt
@@ -325,7 +319,7 @@ spec:
 
 ```yaml
 # 1. RequestAuthentication: Validate JWT
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: jwt-auth
@@ -336,10 +330,11 @@ spec:
   jwtRules:
   - issuer: "https://auth.example.com"
     jwksUri: "https://auth.example.com/.well-known/jwks.json"
+    audiences: ["api.example.com"]
 
 ---
 # 2. AuthorizationPolicy: Only allow authenticated requests
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: require-jwt
@@ -351,26 +346,11 @@ spec:
   rules:
   - from:
     - source:
-        requestPrincipals: ["*"]  # Only requests with JWT
+        requestPrincipals: ["https://auth.example.com/*"]  # Verified issuer + method in the same rule
     to:
     - operation:
         methods: ["GET", "POST"]
 
----
-# 3. AuthorizationPolicy: Only allow specific issuer
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: require-specific-issuer
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        requestPrincipals: ["https://auth.example.com/*"]
 ```
 
 **Test:**
@@ -378,17 +358,18 @@ spec:
 ```bash
 # Request without JWT -> Passes RequestAuthentication, denied by AuthorizationPolicy
 curl http://backend/api
-# 401 Unauthorized
+# 403 Forbidden
 
 # Request with valid JWT
-TOKEN="eyJhbGc..."
+read -rsp "Test access token: " TOKEN; echo
 curl -H "Authorization: Bearer $TOKEN" http://backend/api
+unset TOKEN
 # 200 OK
 ```
 
 **Reference:**
 
-* [Request Authentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/03-request-authentication.md)
+* [Request Authentication](../../../service-mesh/istio/security/02-authentication.md)
 
 </details>
 
@@ -398,7 +379,10 @@ curl -H "Authorization: Bearer $TOKEN" http://backend/api
 
 What is the default validity period for mTLS certificates in Istio?
 
-A. 1 hour B. 24 hours C. 7 days D. 90 days
+A. 1 hour\
+B. 24 hours\
+C. 7 days\
+D. 90 days
 
 <details>
 
@@ -410,69 +394,14 @@ The default validity period for mTLS certificates in Istio is **24 hours**, and 
 
 **Explanation:**
 
-**Istio Certificate Management:**
+The agent requests a 24-hour leaf by default and renews around half its lifetime, with jitter (`SECRET_GRACE_PERIOD_RATIO=0.5`). Istiod or the selected external CA signs the request; the agent delivers the result to Envoy through SDS. Root/intermediate lifetimes are separate. The default self-signed root signs workload leaves directly; an intermediate hierarchy is an administrator choice.
 
-```yaml
-# Istiod configuration (defaults)
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  meshConfig:
-    certificates:
-    - secretName: dns.example-service-account
-      dnsNames:
-      - example.com
-```
-
-**Default Settings:**
-
-* **Certificate validity period**: 24 hours (1 day)
-* **Renewal timing**: 8 hours before expiration
-* **Renewal method**: Automatic (managed by Istiod)
-* **Certificate format**: X.509
-
-**Certificate Lifecycle:**
-
-![Istiod issues a 24-hour X.509 mTLS certificate to an Envoy sidecar; eight hours before expiry Envoy requests renewal via CSR and hot-reloads the new certificate without downtime, so the old one expiring at hour 24 has no impact.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-security-1.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-security-1.html)
-
-**Checking Certificates:**
+Inspect the public certificate without assuming an on-disk `/etc/certs` file or fixed SDS array order:
 
 ```bash
-# Check pod's mTLS certificate
-istioctl proxy-config secret <pod-name> -o json
-
-# Example output:
-{
-  "name": "default",
-  "tlsCertificate": {
-    "certificateChain": {
-      "inlineBytes": "LS0tLS1CRU..."
-    },
-    "privateKey": {
-      "inlineBytes": "LS0tLS1CRU..."
-    }
-  },
-  "validationContext": {
-    "trustedCa": {
-      "inlineBytes": "LS0tLS1CRU..."
-    }
-  }
-}
-
-# Decode certificate contents
-kubectl exec <pod-name> -c istio-proxy -- \
-  openssl x509 -text -noout -in /etc/certs/cert-chain.pem
-
-# Example output:
-Certificate:
-    Validity
-        Not Before: Jan 20 00:00:00 2025 GMT
-        Not After : Jan 21 00:00:00 2025 GMT  # 24 hours later
-    Subject: O=cluster.local
-    X509v3 Subject Alternative Name:
-        URI:spiffe://cluster.local/ns/default/sa/myapp
+istioctl proxy-config secret <pod-name> -n <namespace> -o json | \
+  jq -r '.dynamicActiveSecrets[] | select(.secret.name == "default") | .secret.tlsCertificate.certificateChain.inlineBytes' | \
+  base64 -d | openssl x509 -noout -dates -issuer -ext subjectAltName
 ```
 
 **Customizing Validity Period:**
@@ -488,60 +417,9 @@ spec:
         SECRET_TTL: "48h"  # Extend to 48 hours
 ```
 
-**Certificate Renewal Failure Scenarios:**
+This is an `istioctl install -f` input fragment, not an in-cluster operator resource. The issuer may cap the requested 48-hour TTL; verify the issued certificate and rotate selected proxies when changing bootstrap settings.
 
-```bash
-# Check Istiod logs
-kubectl logs -n istio-system -l app=istiod
-
-# Common issues:
-# 1. Communication issues between Istiod and Envoy
-# 2. RBAC permission issues
-# 3. Blocked by network policies
-
-# Manually trigger certificate renewal
-kubectl delete pod <pod-name>  # Pod restart reissues certificate
-```
-
-**SPIFFE ID:**
-
-```
-Istio's mTLS certificates follow the SPIFFE (Secure Production Identity Framework For Everyone) standard.
-
-Format: spiffe://<trust-domain>/ns/<namespace>/sa/<service-account>
-Example: spiffe://cluster.local/ns/default/sa/frontend
-```
-
-**CA Hierarchy:**
-
-```
-Root CA (Istiod)
-  +- Intermediate CA (auto-generated)
-  |   +- frontend Pod certificate (24 hours)
-  |   +- backend Pod certificate (24 hours)
-  |   +- database Pod certificate (24 hours)
-  +- ...
-```
-
-**External CA Integration:**
-
-```yaml
-# Using external CA with Cert-Manager
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  components:
-    pilot:
-      k8s:
-        env:
-        - name: EXTERNAL_CA
-          value: ISTIOD_RA_KUBERNETES_API
-```
-
-**Reference:**
-
-* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-* [Certificate Management](../../../service-mesh/istio/03-architecture.md#certificate-management)
+For failed renewal, inspect the agent and istiod logs, CA connectivity, token authentication, clock synchronization and trust bundles before restarting workloads. A restart alone does not fix an expired CA. cert-manager integration requires **istio-csr** and its installation prerequisites; `EXTERNAL_CA=ISTIOD_RA_KUBERNETES_API` alone is not a cert-manager setup. See the [certificate lifecycle guide](../../../service-mesh/istio/security/01-mtls.md).
 
 </details>
 
@@ -551,7 +429,10 @@ spec:
 
 What identity is used for service-to-service authentication in Istio?
 
-A. Pod name B. Service name C. Service Account D. Namespace name
+A. Pod name\
+B. Service name\
+C. Service Account\
+D. Namespace name
 
 <details>
 
@@ -579,13 +460,20 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
+  namespace: default
 spec:
+  selector:
+    matchLabels:
+      app: frontend
   template:
+    metadata:
+      labels:
+        app: frontend
     spec:
       serviceAccountName: frontend  # Used as identity
       containers:
       - name: frontend
-        image: frontend:v1
+        image: registry.example.com/team/frontend:REPLACE_WITH_TESTED_TAG
 ```
 
 **SPIFFE ID Format:**
@@ -601,7 +489,7 @@ spiffe://cluster.local/ns/production/sa/backend
 **Using Service Account in AuthorizationPolicy:**
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: backend-policy
@@ -628,6 +516,8 @@ spec:
         principals:
         - "cluster.local/ns/default/sa/admin"
 ```
+
+The image above is an application placeholder. Kubernetes RBAC governs access to the Kubernetes API; it does not automatically grant mesh traffic permissions. Istio authorization uses the authenticated ServiceAccount identity separately. A principal also includes the namespace and trust domain.
 
 **Service Account vs Pod/Service Name:**
 
@@ -665,7 +555,7 @@ metadata:
 
 ---
 # Backend policy: Only allow Frontend access
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: backend-policy
@@ -682,7 +572,7 @@ spec:
 
 ---
 # Database policy: Only allow Backend access
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: database-policy
@@ -706,7 +596,7 @@ kubectl get pod <pod-name> -o jsonpath='{.spec.serviceAccountName}'
 
 # Check SPIFFE ID in mTLS certificate
 istioctl proxy-config secret <pod-name> -o json | \
-  jq -r '.dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes' | \
+  jq -r '.dynamicActiveSecrets[] | select(.secret.name == "default") | .secret.tlsCertificate.certificateChain.inlineBytes' | \
   base64 -d | openssl x509 -text -noout | grep URI
 
 # Output:
@@ -717,7 +607,7 @@ istioctl proxy-config secret <pod-name> -o json | \
 
 ```yaml
 # Allow production namespace's frontend -> staging namespace's backend access
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: backend-policy
@@ -739,7 +629,7 @@ spec:
 **Reference:**
 
 * [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/02-authorization-policy.md)
+* [Authorization Policy](../../../service-mesh/istio/security/03-authorization.md)
 
 </details>
 
@@ -755,115 +645,31 @@ Explain step by step how to implement a **deny-by-default** security policy usin
 
 <summary>Show Answer</summary>
 
-**Answer:**
-
-**Implementing Deny-by-default Security Policy:**
-
-***
-
-**Step 1: Enable mTLS STRICT Mode**
-
-Force all service-to-service communication to use mTLS:
+1. Inventory actual callers, ServiceAccounts, workload ports and application protocols. Enroll workloads in the mesh, then enforce namespace `STRICT` after checking compatibility. PeerAuthentication alone does not authorize callers.
+2. Apply an empty ALLOW policy as the namespace baseline; add explicit rules for the required call graph. Do not use `DENY` with `rules: [{}]` when exceptions are intended.
+3. The example assumes namespace `app`, meshed frontend/backend/database workloads with matching `app` labels and ServiceAccounts, HTTP port 8080, PostgreSQL port 5432, and gateway ServiceAccount `istio-ingressgateway` in `istio-system`. Verify that identity from the actual gateway pod. The gateway Service maps HTTPS 443 to **workload port 8443**, which is the AuthorizationPolicy port. Configure TLS termination and a VirtualService for `myapp.example.com/api/*` separately.
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
-  namespace: istio-system
+  namespace: app
 spec:
   mtls:
-    mode: STRICT  # Enforce mTLS
-```
-
-**Scope:**
-
-* Deployed in `istio-system` namespace -> Applies to entire mesh
-* Deployed in specific namespace -> Applies to that namespace only
-* Using selector -> Applies to specific workloads only
-
-***
-
-**Step 2: Deny All Traffic (Deny-by-default)**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
+    mode: STRICT
+---
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: deny-all
-  namespace: default
-spec: {}  # Empty spec = deny all requests
-```
-
-**After this policy:**
-
-* All inbound traffic denied
-* Service-to-service communication blocked
-* External access blocked
-
-***
-
-**Step 3: Selectively Allow Required Communication**
-
-**Example 1: Allow Frontend -> Backend Communication**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
+  name: default-deny
+  namespace: app
+spec: {}
+---
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-frontend-to-backend
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: backend  # Apply to Backend
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals:
-        - "cluster.local/ns/default/sa/frontend"  # Only allow Frontend
-    to:
-    - operation:
-        methods: ["GET", "POST"]
-        paths: ["/api/*"]
-```
-
-**Example 2: Allow Backend -> Database Communication**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-backend-to-database
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: database
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals:
-        - "cluster.local/ns/default/sa/backend"
-    to:
-    - operation:
-        ports: ["5432"]  # PostgreSQL port
-```
-
-***
-
-**Step 4: Ingress Gateway Policy**
-
-Policy is needed for Ingress Gateway to allow external traffic:
-
-```yaml
-# Allow traffic to Ingress Gateway
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-ingress
+  name: ingress-public-api
   namespace: istio-system
 spec:
   selector:
@@ -873,15 +679,21 @@ spec:
   rules:
   - to:
     - operation:
-        ports: ["80", "443"]
-
+        ports:
+        - '8443'
+        hosts:
+        - myapp.example.com
+        paths:
+        - /api/*
+        methods:
+        - GET
+        - POST
 ---
-# Allow Ingress Gateway -> Frontend
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-gateway-to-frontend
-  namespace: default
+  name: frontend-policy
+  namespace: app
 spec:
   selector:
     matchLabels:
@@ -891,124 +703,22 @@ spec:
   - from:
     - source:
         principals:
-        - "cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"
-```
-
-***
-
-**Step 5: Health Check and Readiness Probe Exceptions**
-
-Handle exceptions so Kubernetes health checks are not blocked:
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-health-checks
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  action: ALLOW
-  rules:
-  # Allow Kubernetes health checks
-  - to:
-    - operation:
-        paths: ["/health", "/ready"]
-        methods: ["GET"]
-```
-
-Or exclude specific ports in PeerAuthentication:
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: default
-  namespace: default
-spec:
-  mtls:
-    mode: STRICT
-  portLevelMtls:
-    8080:
-      mode: DISABLE  # Disable mTLS for health check port
-```
-
-***
-
-**Step 6: Monitoring and Logging Exceptions**
-
-Allow Prometheus to collect metrics:
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-prometheus
-  namespace: default
-spec:
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        namespaces: ["istio-system"]
-        principals: ["cluster.local/ns/istio-system/sa/prometheus"]
+        - cluster.local/ns/istio-system/sa/istio-ingressgateway
     to:
     - operation:
-        paths: ["/stats/prometheus"]
-        methods: ["GET"]
-```
-
-***
-
-**Complete Example: 3-Tier Application**
-
-```yaml
-# 1. mTLS STRICT
+        ports:
+        - '8080'
+        paths:
+        - /api/*
+        methods:
+        - GET
+        - POST
 ---
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: default
-  namespace: production
-spec:
-  mtls:
-    mode: STRICT
-
-# 2. Deny-by-default
----
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: deny-all
-  namespace: production
-spec: {}
-
-# 3. Ingress -> Frontend
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-ingress-to-frontend
-  namespace: production
-spec:
-  selector:
-    matchLabels:
-      app: frontend
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
-
-# 4. Frontend -> Backend
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-frontend-to-backend
-  namespace: production
+  name: backend-policy
+  namespace: app
 spec:
   selector:
     matchLabels:
@@ -1017,19 +727,23 @@ spec:
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/production/sa/frontend"]
+        principals:
+        - cluster.local/ns/app/sa/frontend
     to:
     - operation:
-        methods: ["GET", "POST", "PUT", "DELETE"]
-        paths: ["/api/*"]
-
-# 5. Backend -> Database
+        ports:
+        - '8080'
+        paths:
+        - /api/*
+        methods:
+        - GET
+        - POST
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-backend-to-database
-  namespace: production
+  name: database-policy
+  namespace: app
 spec:
   selector:
     matchLabels:
@@ -1038,88 +752,30 @@ spec:
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/production/sa/backend"]
-
-# 6. Health Checks
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-health-checks
-  namespace: production
-spec:
-  action: ALLOW
-  rules:
-  - to:
-    - operation:
-        paths: ["/health", "/ready", "/live"]
-
-# 7. Prometheus metrics
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-prometheus
-  namespace: production
-spec:
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        namespaces: ["istio-system"]
+        principals:
+        - cluster.local/ns/app/sa/backend
     to:
     - operation:
-        paths: ["/stats/prometheus"]
+        ports:
+        - '5432'
 ```
 
-***
-
-**Testing and Validation:**
+4. Keep Istio's default probe rewrite for sidecars: kubelet HTTP/TCP/gRPC probes are directed through the agent (typically 15020). An HTTP ALLOW path does not make plaintext pass STRICT. If a legacy health endpoint needs a plaintext exception, `portLevelMtls` requires a workload selector and the workload port; authorization/network restrictions must still constrain that endpoint. Do not disable mTLS on the application port as a generic health fix.
+5. Agent/Envoy metrics ports (15020/15090) are different from intercepted application metrics endpoints. For a protected application metrics endpoint, scope an ALLOW policy to the workload, actual port/path and an mTLS-authenticated Prometheus principal. For agent metrics, configure scraping and network access; an AuthorizationPolicy on application inbound traffic is not sufficient.
+6. Validate effective configuration and both allowed/denied traffic:
 
 ```bash
-# 1. Frontend -> Backend (allowed)
-kubectl exec -it <frontend-pod> -- curl http://backend/api
-# 200 OK
-
-# 2. Direct Database access (denied)
-kubectl exec -it <frontend-pod> -- curl http://database:5432
-# 403 RBAC: access denied
-
-# 3. External direct Backend access (denied)
-curl http://<ingress-gateway>/backend
-# 403 RBAC: access denied
-
-# 4. Normal path (allowed)
-curl http://<ingress-gateway>/frontend
-# 200 OK
+istioctl analyze -n app
+istioctl proxy-config secret <backend-pod> -n app
+istioctl proxy-config clusters <frontend-pod> -n app -o json
+istioctl x authz check <backend-pod>.app
+# Run from the indicated application containers with the test clients installed.
+kubectl exec <frontend-pod> -n app -c frontend -- curl -i http://backend:8080/api/users
+kubectl exec <frontend-pod> -n app -c frontend -- pg_isready -h database -p 5432
+kubectl exec <backend-pod> -n app -c backend -- pg_isready -h database -p 5432
 ```
 
-***
-
-**Best Practices:**
-
-1. **Gradual Application**:
-   * First enable mTLS in PERMISSIVE mode
-   * Verify all services have Sidecars injected
-   * Switch to STRICT mode
-   * Apply deny-by-default policy
-2. **Principle of Least Privilege**:
-   * Allow only minimum required communication
-   * Restrict HTTP methods (GET only, POST only, etc.)
-   * Restrict paths (/api/\* only, etc.)
-3. **Exception Handling**:
-   * Always handle health check exceptions
-   * Allow monitoring system access
-   * Configure Ingress Gateway policy
-4. **Testing**:
-   * Test after each policy is applied
-   * Check for side effects (logs, metrics)
-   * Prepare rollback plan
-
-**Reference:**
-
-* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/02-authorization-policy.md)
-* [PeerAuthentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/04-peer-authentication.md)
+Frontend → backend should reach the application; frontend → database should fail at the TCP layer, not return HTTP 403. Backend → database should reach PostgreSQL (database credentials are a separate check). Missing routing can produce 404 before an authorization test reaches the intended backend. Use namespace-qualified pods, application containers and real test clients. See [authorization](../../../service-mesh/istio/security/03-authorization.md) and [health checks](https://istio.io/latest/docs/ops/configuration/mesh/app-health-check/).
 
 </details>
 
@@ -1133,60 +789,30 @@ Implement a scenario where **end-user authentication (JWT)** and **service-to-se
 
 <summary>Show Answer</summary>
 
-**Answer:**
+Configure Keycloak realm `myrealm`, an OIDC client and an explicit API audience `myapp`. Use authorization code flow with PKCE and exact HTTPS redirect URIs. Client type/authentication depends on whether the application can keep a secret. Keycloak roles normally appear in `realm_access.roles`; use an audience mapper/client scope so the API token has the expected `aud`.
 
-**JWT + mTLS Dual Authentication Architecture:**
+Every proxy evaluating `requestPrincipals` or `request.auth.claims` needs its own RequestAuthentication. A verified JWT at the gateway does not establish the request identity at the frontend or backend. `forwardOriginalToken` preserves the token on that forwarded request, and **the frontend application must propagate Authorization to its new backend request**.
 
-```
-User
-  | (JWT Token)
-Ingress Gateway (Validate JWT with RequestAuthentication)
-  | (mTLS)
-Frontend (Validate mTLS with PeerAuthentication)
-  | (mTLS)
-Backend
-```
-
-***
-
-**Step 1: Keycloak Setup**
-
-```bash
-# Create Keycloak Realm
-Realm: myrealm
-
-# Create Client
-Client ID: myapp
-Access Type: confidential
-Valid Redirect URIs: http://myapp.example.com/*
-
-# Get JWKS URI
-https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs
-```
-
-***
-
-**Step 2: Enable mTLS (Service-to-Service Authentication)**
+The following replaces the related policies from Question 6. Do not retain a broader ALLOW policy beside the role-restricted backend rules: ALLOW policies form a union. The deployment and HTTPS gateway prerequisites are the same as Question 6.
 
 ```yaml
-# Apply STRICT mTLS to entire mesh
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
-  namespace: istio-system
+  namespace: app
 spec:
   mtls:
     mode: STRICT
-```
-
-***
-
-**Step 3: Configure JWT Authentication (End-User Authentication)**
-
-```yaml
-# Validate JWT at Ingress Gateway
-apiVersion: security.istio.io/v1beta1
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: default-deny
+  namespace: app
+spec: {}
+---
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
   name: jwt-ingress
@@ -1196,25 +822,16 @@ spec:
     matchLabels:
       istio: ingressgateway
   jwtRules:
-  - issuer: "https://keycloak.example.com/realms/myrealm"
-    jwksUri: "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs"
+  - issuer: https://keycloak.example.com/realms/myrealm
+    jwksUri: https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs
     audiences:
-    - "myapp"
-    forwardOriginalToken: true  # Forward JWT to backend
-    outputPayloadToHeader: "x-jwt-payload"  # Extract payload to header
-```
-
-***
-
-**Step 4: Configure AuthorizationPolicy**
-
-**Ingress Gateway Policy**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
+    - myapp
+    forwardOriginalToken: true
+---
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: ingress-jwt-policy
+  name: ingress-public-api
   namespace: istio-system
 spec:
   selector:
@@ -1222,205 +839,44 @@ spec:
       istio: ingressgateway
   action: ALLOW
   rules:
-  # Only allow requests with JWT
-  - from:
-    - source:
-        requestPrincipals: ["*"]
-    to:
-    - operation:
-        paths: ["/api/*", "/app/*"]
-
-  # Allow health checks without JWT
   - to:
     - operation:
-        paths: ["/health", "/ready"]
-```
-
-**Backend Policy**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: backend-jwt-mtls-policy
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  action: ALLOW
-  rules:
-  # 1. mTLS: Only allow Frontend Service Account
-  # 2. JWT: Must have valid JWT
-  - from:
+        ports:
+        - '8443'
+        hosts:
+        - myapp.example.com
+        paths:
+        - /api/*
+        methods:
+        - GET
+        - POST
+        - DELETE
+    from:
     - source:
-        principals: ["cluster.local/ns/default/sa/frontend"]
-        requestPrincipals: ["https://keycloak.example.com/realms/myrealm/*"]
-    to:
-    - operation:
-        methods: ["GET", "POST"]
-```
-
-***
-
-**Step 5: Role-Based Access Control**
-
-Fine-grained authorization based on JWT claims:
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: backend-rbac
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  action: ALLOW
-  rules:
-  # Only Admin role allowed for DELETE
-  - from:
-    - source:
-        principals: ["cluster.local/ns/default/sa/frontend"]
-        requestPrincipals: ["*"]
-    when:
-    - key: request.auth.claims[roles]
-      values: ["admin"]
-    to:
-    - operation:
-        methods: ["DELETE"]
-        paths: ["/api/admin/*"]
-
-  # User role only allowed GET, POST
-  - from:
-    - source:
-        principals: ["cluster.local/ns/default/sa/frontend"]
-        requestPrincipals: ["*"]
-    when:
-    - key: request.auth.claims[roles]
-      values: ["user"]
-    to:
-    - operation:
-        methods: ["GET", "POST"]
-        paths: ["/api/users/*"]
-```
-
-***
-
-**Step 6: Utilizing JWT Payload**
-
-Use JWT payload in Backend:
-
-```yaml
-# EnvoyFilter to pass JWT claims as headers
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: jwt-claim-to-header
-  namespace: istio-system
-spec:
-  workloadSelector:
-    labels:
-      istio: ingressgateway
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: GATEWAY
-      listener:
-        filterChain:
-          filter:
-            name: "envoy.filters.network.http_connection_manager"
-            subFilter:
-              name: "envoy.filters.http.jwt_authn"
-    patch:
-      operation: INSERT_AFTER
-      value:
-        name: envoy.lua
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_request(request_handle)
-              local payload = request_handle:headers():get("x-jwt-payload")
-              if payload then
-                -- Base64 decode and JSON parse
-                local json = require("json")
-                local decoded = json.decode(payload)
-
-                -- Pass user info as headers
-                request_handle:headers():add("x-user-id", decoded.sub)
-                request_handle:headers():add("x-user-email", decoded.email)
-                request_handle:headers():add("x-user-roles", table.concat(decoded.roles, ","))
-              end
-            end
-```
-
-***
-
-**Step 7: Complete Example**
-
-**Ingress Gateway**
-
-```yaml
+        requestPrincipals:
+        - https://keycloak.example.com/realms/myrealm/*
 ---
-# JWT validation
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: RequestAuthentication
 metadata:
-  name: jwt-ingress
-  namespace: istio-system
-spec:
-  selector:
-    matchLabels:
-      istio: ingressgateway
-  jwtRules:
-  - issuer: "https://keycloak.example.com/realms/myrealm"
-    jwksUri: "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs"
-    audiences: ["myapp"]
-    forwardOriginalToken: true
-
----
-# Require JWT
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: require-jwt
-  namespace: istio-system
-spec:
-  selector:
-    matchLabels:
-      istio: ingressgateway
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        requestPrincipals: ["*"]
-```
-
-**Frontend**
-
-```yaml
----
-# mTLS STRICT
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: frontend-mtls
-  namespace: default
+  name: jwt-frontend
+  namespace: app
 spec:
   selector:
     matchLabels:
       app: frontend
-  mtls:
-    mode: STRICT
-
+  jwtRules:
+  - issuer: https://keycloak.example.com/realms/myrealm
+    jwksUri: https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs
+    audiences:
+    - myapp
+    forwardOriginalToken: true
 ---
-# Only allow Ingress Gateway access
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: frontend-policy
-  namespace: default
+  namespace: app
 spec:
   selector:
     matchLabels:
@@ -1429,34 +885,42 @@ spec:
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"]
-        requestPrincipals: ["*"]
-```
-
-**Backend**
-
-```yaml
+        principals:
+        - cluster.local/ns/istio-system/sa/istio-ingressgateway
+        requestPrincipals:
+        - https://keycloak.example.com/realms/myrealm/*
+    to:
+    - operation:
+        ports:
+        - '8080'
+        paths:
+        - /api/*
+        methods:
+        - GET
+        - POST
+        - DELETE
 ---
-# mTLS STRICT
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
+apiVersion: security.istio.io/v1
+kind: RequestAuthentication
 metadata:
-  name: backend-mtls
-  namespace: default
+  name: jwt-backend
+  namespace: app
 spec:
   selector:
     matchLabels:
       app: backend
-  mtls:
-    mode: STRICT
-
+  jwtRules:
+  - issuer: https://keycloak.example.com/realms/myrealm
+    jwksUri: https://keycloak.example.com/realms/myrealm/protocol/openid-connect/certs
+    audiences:
+    - myapp
+    forwardOriginalToken: true
 ---
-# Only allow Frontend access + Require JWT
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: backend-policy
-  namespace: default
+  namespace: app
 spec:
   selector:
     matchLabels:
@@ -1465,58 +929,59 @@ spec:
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/default/sa/frontend"]
-        requestPrincipals: ["https://keycloak.example.com/realms/myrealm/*"]
+        principals:
+        - cluster.local/ns/app/sa/frontend
+        requestPrincipals:
+        - https://keycloak.example.com/realms/myrealm/*
+    to:
+    - operation:
+        ports:
+        - '8080'
+        paths:
+        - /api/users/*
+        methods:
+        - GET
+        - POST
+    when:
+    - key: request.auth.claims[realm_access][roles]
+      values:
+      - user
+      - admin
+  - from:
+    - source:
+        principals:
+        - cluster.local/ns/app/sa/frontend
+        requestPrincipals:
+        - https://keycloak.example.com/realms/myrealm/*
+    to:
+    - operation:
+        ports:
+        - '8080'
+        methods:
+        - DELETE
+        paths:
+        - /api/admin/*
+    when:
+    - key: request.auth.claims[realm_access][roles]
+      values:
+      - admin
 ```
 
-***
+For an application needing a scalar claim as a header, RequestAuthentication supports the experimental `outputClaimToHeaders` field, for example `header: x-user-id` with `claim: sub`. Use validated JWT claims for authorization; do not trust caller-supplied identity headers. `outputPayloadToHeader` contains an encoded payload, and Envoy's Lua runtime does not include an arbitrary `require("json")` module. Roles arrays should be matched as claims rather than blindly concatenated into headers.
 
-**Test:**
+Obtain a test token through the configured login flow, then test HTTPS. Do not embed passwords/client secrets in quiz commands:
 
 ```bash
-# 1. Get token from Keycloak
-TOKEN=$(curl -X POST \
-  "https://keycloak.example.com/realms/myrealm/protocol/openid-connect/token" \
-  -d "client_id=myapp" \
-  -d "client_secret=<secret>" \
-  -d "grant_type=password" \
-  -d "username=user@example.com" \
-  -d "password=password123" \
-  | jq -r '.access_token')
-
-# 2. Call API with JWT
-curl -H "Authorization: Bearer $TOKEN" \
-  http://myapp.example.com/api/users
-
-# 3. Call without JWT (fails)
-curl http://myapp.example.com/api/users
-# 401 Unauthorized
-
-# 4. Invalid JWT (fails)
-curl -H "Authorization: Bearer invalid-token" \
-  http://myapp.example.com/api/users
-# 401 Unauthorized
+read -rsp "Test access token: " TOKEN; echo
+curl -i -H "Authorization: Bearer $TOKEN" https://myapp.example.com/api/users/test
+unset TOKEN
+curl -i https://myapp.example.com/api/users/test
+# No JWT: 403 from AuthorizationPolicy.
+curl -i -H "Authorization: Bearer invalid-token" https://myapp.example.com/api/users/test
+# Invalid JWT: 401 from RequestAuthentication.
 ```
 
-***
-
-**Security Benefits:**
-
-1. **Dual Authentication**:
-   * JWT: Verify end-user identity
-   * mTLS: Verify service identity
-2. **Defense in Depth**:
-   * JWT validation at Gateway
-   * Encrypted communication with mTLS between services
-   * Fine-grained authorization with AuthorizationPolicy
-3. **Role-Based Access Control (RBAC)**:
-   * Authorization management based on JWT claims
-   * Dynamic permission updates (managed in Keycloak)
-
-**Reference:**
-
-* [Request Authentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/03-request-authentication.md)
-* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
+Also test a valid token from the wrong ServiceAccount, wrong audience and insufficient role. JWT role changes are not instantaneous revocation of already-issued tokens; token lifetime and issuer/application revocation mechanisms matter. See [authentication](../../../service-mesh/istio/security/02-authentication.md) and [Keycloak grant types](https://www.keycloak.org/securing-apps/oidc-layers).
 
 </details>
 
@@ -1530,223 +995,34 @@ Explain how to control **Egress traffic** in Istio to allow access only to speci
 
 <summary>Show Answer</summary>
 
-**Answer:**
+`ALLOW_ANY` forwards unknown destinations; `REGISTRY_ONLY` rejects unknown destinations in the proxy's registry. The registry includes Kubernetes services as well as ServiceEntry. Neither mode is a firewall, and an application can bypass the proxy without independent network restrictions. Apply mesh settings through the existing installation values; do not replace the entire `istio` ConfigMap with a one-field fragment.
 
-**Egress Traffic Control Strategy:**
+AuthorizationPolicy evaluates traffic received by its selected proxy. A namespace policy on client sidecars is not an outbound ACL. For identity/method/path control, route through an egress gateway that terminates mesh mTLS, authorize there, then originate TLS to the external server. The application sends HTTP to the sidecar; HTTPS passthrough would hide HTTP paths and methods.
 
-***
-
-**Step 1: Check Egress Traffic Default Mode**
-
-Istio supports two egress modes:
+Prerequisites: meshed clients in namespace `app`, a dedicated egress gateway labelled `istio: egressgateway`, Service `istio-egressgateway.istio-system.svc.cluster.local` mapping 443 to workload 8443, and no other broad gateway ALLOW policy. The installed proxy's public CA trust must validate GitHub's certificate.
 
 ```yaml
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  meshConfig:
-    outboundTrafficPolicy:
-      mode: REGISTRY_ONLY  # or ALLOW_ANY
-```
-
-**Mode Comparison:**
-
-| Mode               | Description                                    | Security |
-| ------------------ | ---------------------------------------------- | -------- |
-| **ALLOW\_ANY**     | Allow all external traffic (default)           | Low      |
-| **REGISTRY\_ONLY** | Only allow services registered in ServiceEntry | High     |
-
-**Switch to REGISTRY\_ONLY Mode:**
-
-```bash
-istioctl install --set meshConfig.outboundTrafficPolicy.mode=REGISTRY_ONLY
-```
-
-***
-
-**Step 2: Register External Services with ServiceEntry**
-
-**Example 1: HTTPS API (GitHub)**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: ServiceEntry
 metadata:
   name: github-api
-  namespace: default
+  namespace: app
 spec:
   hosts:
   - api.github.com
-  ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
   location: MESH_EXTERNAL
   resolution: DNS
-```
-
-**Example 2: HTTP API (httpbin)**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: ServiceEntry
-metadata:
-  name: httpbin-ext
-  namespace: default
-spec:
-  hosts:
-  - httpbin.org
   ports:
   - number: 80
+    targetPort: 443
     name: http
     protocol: HTTP
-  - number: 443
-    name: https
-    protocol: HTTPS
-  location: MESH_EXTERNAL
-  resolution: DNS
-```
-
-**Example 3: Specific IP Address**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: ServiceEntry
-metadata:
-  name: external-database
-  namespace: default
-spec:
-  hosts:
-  - database.external.com
-  addresses:
-  - 203.0.113.10  # Specific IP
-  ports:
-  - number: 5432
-    name: postgres
-    protocol: TCP
-  location: MESH_EXTERNAL
-  resolution: STATIC
-  endpoints:
-  - address: 203.0.113.10
-```
-
-***
-
-**Step 3: Control Traffic with VirtualService**
-
-**Timeout and Retry Settings**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: github-api-vs
-  namespace: default
-spec:
-  hosts:
-  - api.github.com
-  http:
-  - timeout: 10s
-    retries:
-      attempts: 3
-      perTryTimeout: 3s
-      retryOn: 5xx,reset,connect-failure
-    route:
-    - destination:
-        host: api.github.com
-```
-
-**Add Headers (API Key)**
-
-```yaml
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: external-api-vs
-  namespace: default
-spec:
-  hosts:
-  - api.example.com
-  http:
-  - headers:
-      request:
-        add:
-          X-API-Key: "my-secret-key"
-    route:
-    - destination:
-        host: api.example.com
-```
-
-***
-
-**Step 4: Access Control with AuthorizationPolicy**
-
-**Allow Only Specific Service Account**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-github-api
-  namespace: default
-spec:
-  action: ALLOW
-  rules:
-  # Only allow Backend Service Account to access GitHub API
-  - from:
-    - source:
-        principals: ["cluster.local/ns/default/sa/backend"]
-    to:
-    - operation:
-        hosts: ["api.github.com"]
-```
-
-**Allow Only Specific Paths**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-specific-api
-  namespace: default
-spec:
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals: ["cluster.local/ns/default/sa/backend"]
-    to:
-    - operation:
-        hosts: ["api.example.com"]
-        paths: ["/v1/data", "/v1/status"]
-        methods: ["GET"]
-```
-
-***
-
-**Step 5: Using Egress Gateway (Optional)**
-
-Centralized egress control:
-
-```yaml
-# Deploy Egress Gateway
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  components:
-    egressGateways:
-    - name: istio-egressgateway
-      enabled: true
-      k8s:
-        replicas: 2
-
 ---
-# Define Gateway
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: Gateway
 metadata:
-  name: egress-gateway
-  namespace: default
+  name: github-egress
+  namespace: istio-system
 spec:
   selector:
     istio: egressgateway
@@ -1758,199 +1034,113 @@ spec:
     hosts:
     - api.github.com
     tls:
-      mode: PASSTHROUGH  # Pass TLS traffic through
-
+      mode: ISTIO_MUTUAL
 ---
-# DestinationRule
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: egress-gateway-dr
-  namespace: default
+  name: to-egress
+  namespace: app
 spec:
   host: istio-egressgateway.istio-system.svc.cluster.local
-  subsets:
-  - name: github
-
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+      sni: api.github.com
 ---
-# VirtualService: Pod -> Egress Gateway
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: github-through-egress
-  namespace: default
+  namespace: app
 spec:
   hosts:
   - api.github.com
   gateways:
-  - mesh  # From Sidecar
-  - egress-gateway
+  - mesh
+  - istio-system/github-egress
   http:
   - match:
     - gateways:
-      - mesh  # Starting from Pod
-      port: 443
+      - mesh
+      port: 80
     route:
     - destination:
         host: istio-egressgateway.istio-system.svc.cluster.local
-        subset: github
         port:
           number: 443
   - match:
     - gateways:
-      - egress-gateway  # From Egress Gateway
+      - istio-system/github-egress
       port: 443
-    route:
-    - destination:
-        host: api.github.com
-        port:
-          number: 443
-```
-
-**Traffic Flow:**
-
-```
-Pod -> Sidecar -> Egress Gateway -> External Service
-```
-
-***
-
-**Step 6: Complete Example**
-
-**Scenario**: Only allow Backend service to access GitHub API
-
-```yaml
-# 1. Set REGISTRY_ONLY mode
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: istio
-  namespace: istio-system
-data:
-  mesh: |
-    outboundTrafficPolicy:
-      mode: REGISTRY_ONLY
-
-# 2. GitHub API ServiceEntry
----
-apiVersion: networking.istio.io/v1beta1
-kind: ServiceEntry
-metadata:
-  name: github-api
-  namespace: default
-spec:
-  hosts:
-  - api.github.com
-  ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
-  location: MESH_EXTERNAL
-  resolution: DNS
-
-# 3. VirtualService: Timeout and retry
----
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: github-api-vs
-  namespace: default
-spec:
-  hosts:
-  - api.github.com
-  http:
-  - timeout: 30s
+    timeout: 10s
     retries:
-      attempts: 3
-      perTryTimeout: 10s
-      retryOn: 5xx,reset,connect-failure
+      attempts: 2
+      perTryTimeout: 3s
+      retryOn: connect-failure,reset
     route:
     - destination:
         host: api.github.com
         port:
-          number: 443
-
-# 4. AuthorizationPolicy: Only allow Backend
+          number: 80
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: github-origin-tls
+  namespace: istio-system
+spec:
+  host: api.github.com
+  workloadSelector:
+    matchLabels:
+      istio: egressgateway
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+      sni: api.github.com
+      subjectAltNames:
+      - api.github.com
+---
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-backend-github
-  namespace: default
+  name: github-egress-allow
+  namespace: istio-system
 spec:
+  selector:
+    matchLabels:
+      istio: egressgateway
   action: ALLOW
   rules:
   - from:
     - source:
-        principals: ["cluster.local/ns/default/sa/backend"]
+        principals:
+        - cluster.local/ns/app/sa/backend
     to:
     - operation:
-        hosts: ["api.github.com"]
-        methods: ["GET", "POST"]
-
-# 5. Deny-by-default (block all other egress)
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: deny-all-egress
-  namespace: default
-spec:
-  action: DENY
-  rules:
-  - to:
-    - operation:
-        hosts: ["*"]
+        hosts:
+        - api.github.com
+        methods:
+        - GET
+        paths:
+        - /users/*
+        ports:
+        - '8443'
 ```
 
-***
-
-**Test:**
+The mesh client calls `http://api.github.com/users/octocat`. Its sidecar connects to the gateway with ISTIO_MUTUAL. The gateway's HTTP listener can enforce the backend ServiceAccount and GET `/users/*`, then sends HTTPS to GitHub using port 80 → targetPort 443. Retries shown are for this idempotent GET use case, not arbitrary side-effecting APIs.
 
 ```bash
-# 1. Call GitHub API from Backend (allowed)
-kubectl exec -it <backend-pod> -- \
-  curl -I https://api.github.com/users/octocat
-# 200 OK
-
-# 2. Call GitHub API from Frontend (denied)
-kubectl exec -it <frontend-pod> -- \
-  curl -I https://api.github.com/users/octocat
-# Connection refused
-
-# 3. Call other external service from Backend (denied)
-kubectl exec -it <backend-pod> -- \
-  curl -I https://google.com
-# Connection refused (No ServiceEntry)
+kubectl exec <backend-pod> -n app -c backend -- curl -i http://api.github.com/users/octocat
+kubectl exec <frontend-pod> -n app -c frontend -- curl -i http://api.github.com/users/octocat
+# Gateway should reject the second caller with HTTP 403.
+istioctl proxy-config clusters <egress-pod> -n istio-system --fqdn api.github.com -o json
+istioctl x authz check <egress-pod>.istio-system
 ```
 
-***
+For a private external database, use a STATIC ServiceEntry with explicit endpoints/address and TCP port 5432; TLS/database authentication must be designed for that protocol. An HTTP-only service can use an HTTP ServiceEntry, but sensitive data requires encryption. Store API credentials in the application or a supported secret-backed signing/authentication component; VirtualService header literals are readable configuration, not secret storage.
 
-**Monitoring:**
-
-```bash
-# Check egress traffic
-kubectl exec -it <backend-pod> -c istio-proxy -- \
-  curl localhost:15000/stats/prometheus | grep upstream_cx_total
-
-# Check ServiceEntry
-istioctl proxy-config clusters <backend-pod> | grep github
-```
-
-***
-
-**Security Benefits:**
-
-1. **Whitelist approach**: Only allow access to services registered in ServiceEntry
-2. **Service Account-based control**: Only specific services can call external APIs
-3. **Audit and logging**: Can log all egress traffic
-4. **Centralized management**: Monitor all external traffic through Egress Gateway
-
-**Reference:**
-
-* [ServiceEntry](https://istio.io/latest/docs/reference/config/networking/service-entry/)
-* [Egress Traffic](https://istio.io/latest/docs/tasks/traffic-management/egress/)
+Finally enforce the path with CNI NetworkPolicy/firewall controls: clients may reach required mesh services, DNS, istiod and the egress gateway, but not arbitrary internet IPs; the gateway gets the required external access. Account for IPv4/IPv6, bypass/excluded ports and privileged workloads. Standard NetworkPolicy does not filter DNS names; use a supported FQDN-aware control when required. Test direct-IP/HTTPS bypass as well as the approved path. See [egress control](../../../service-mesh/istio/traffic-management/11-egress-control.md) and [TLS origination](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway-tls-origination/).
 
 </details>
 
@@ -1964,356 +1154,103 @@ Explain how to **audit** and log security-related events in Istio. Include **Aut
 
 <summary>Show Answer</summary>
 
-**Answer:**
-
-**Istio Security Auditing and Logging Strategy:**
-
-***
-
-**1. AuthorizationPolicy AUDIT Action**
-
-AUDIT action logs traffic without blocking it.
-
-**Basic AUDIT Policy**
+`AUDIT` marks matching requests for an **installed audit plugin**. Without that plugin the policy has no logging effect, and it does not allow or deny traffic. This example audits a conjunction (DELETE and admin path), not two ordered conditions:
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: audit-all-requests
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  action: AUDIT
-  rules:
-  - {}  # Audit all requests
-```
-
-**Audit Only Specific Conditions**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: audit-sensitive-operations
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  action: AUDIT
-  rules:
-  # Audit DELETE operations
-  - to:
-    - operation:
-        methods: ["DELETE"]
-
-  # Audit Admin API access
-  - to:
-    - operation:
-        paths: ["/api/admin/*"]
-
-  # Audit external IP access
-  - from:
-    - source:
-        notNamespaces: ["default", "production"]
-```
-
-***
-
-**2. Enable Access Logging**
-
-**Enable Access Logging for Entire Mesh**
-
-```yaml
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  meshConfig:
-    accessLogFile: /dev/stdout
-    accessLogEncoding: JSON
-    accessLogFormat: |
-      {
-        "start_time": "%START_TIME%",
-        "method": "%REQ(:METHOD)%",
-        "path": "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%",
-        "protocol": "%PROTOCOL%",
-        "response_code": "%RESPONSE_CODE%",
-        "response_flags": "%RESPONSE_FLAGS%",
-        "bytes_received": "%BYTES_RECEIVED%",
-        "bytes_sent": "%BYTES_SENT%",
-        "duration": "%DURATION%",
-        "upstream_service_time": "%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%",
-        "x_forwarded_for": "%REQ(X-FORWARDED-FOR)%",
-        "user_agent": "%REQ(USER-AGENT)%",
-        "request_id": "%REQ(X-REQUEST-ID)%",
-        "authority": "%REQ(:AUTHORITY)%",
-        "upstream_host": "%UPSTREAM_HOST%",
-        "upstream_cluster": "%UPSTREAM_CLUSTER%",
-        "upstream_local_address": "%UPSTREAM_LOCAL_ADDRESS%",
-        "downstream_local_address": "%DOWNSTREAM_LOCAL_ADDRESS%",
-        "downstream_remote_address": "%DOWNSTREAM_REMOTE_ADDRESS%",
-        "requested_server_name": "%REQUESTED_SERVER_NAME%",
-        "route_name": "%ROUTE_NAME%"
-      }
-```
-
-**Apply Only to Specific Namespace**
-
-```yaml
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
-metadata:
-  name: access-logging
-  namespace: production
-spec:
-  accessLogging:
-  - providers:
-    - name: envoy
-```
-
-***
-
-**3. Custom Log Filters for Security Audit**
-
-**Include mTLS Information**
-
-```yaml
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  meshConfig:
-    accessLogFile: /dev/stdout
-    accessLogFormat: |
-      [%START_TIME%] "%REQ(:METHOD)% %REQ(X-ENVOY-ORIGINAL-PATH?:PATH)% %PROTOCOL%"
-      %RESPONSE_CODE% %RESPONSE_FLAGS%
-      %BYTES_RECEIVED% %BYTES_SENT% %DURATION%
-      "%REQ(X-FORWARDED-FOR)%" "%REQ(USER-AGENT)%"
-      "%REQ(X-REQUEST-ID)%" "%REQ(:AUTHORITY)%"
-      "%UPSTREAM_HOST%" "%DOWNSTREAM_REMOTE_ADDRESS%"
-      mtls=%DOWNSTREAM_PEER_ISSUER% peer=%DOWNSTREAM_PEER_URI_SAN%
-```
-
-**Include Authorization Information**
-
-```yaml
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
-metadata:
-  name: security-audit-logging
-  namespace: default
-spec:
-  accessLogging:
-  - providers:
-    - name: envoy
-    filter:
-      expression: response.code >= 400  # Log only errors
-```
-
-***
-
-**4. Integration with External Logging Systems**
-
-**Send to CloudWatch with FluentBit**
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluent-bit-config
-  namespace: istio-system
-data:
-  fluent-bit.conf: |
-    [SERVICE]
-        Flush         5
-        Log_Level     info
-
-    [INPUT]
-        Name              tail
-        Path              /var/log/containers/*istio-proxy*.log
-        Parser            docker
-        Tag               istio.proxy
-        Refresh_Interval  5
-
-    [FILTER]
-        Name    parser
-        Match   istio.proxy
-        Parser  istio-access-log
-
-    [OUTPUT]
-        Name cloudwatch_logs
-        Match   istio.proxy
-        region  us-east-1
-        log_group_name  /aws/eks/istio/access-logs
-        log_stream_prefix proxy-
-        auto_create_group true
-```
-
-**Elasticsearch Integration**
-
-```yaml
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
-metadata:
-  name: elasticsearch-logging
-  namespace: default
-spec:
-  accessLogging:
-  - providers:
-    - name: envoy
-    filter:
-      expression: |
-        response.code >= 400 ||
-        request.headers['x-audit'] == 'true'
-```
-
-***
-
-**5. Complete Security Audit Configuration**
-
-```yaml
-# 1. AUDIT Policy: Audit sensitive operations
----
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: audit-sensitive
-  namespace: production
+  namespace: app
 spec:
   selector:
     matchLabels:
       app: backend
   action: AUDIT
   rules:
-  # DELETE operations
   - to:
     - operation:
-        methods: ["DELETE"]
+        methods:
+        - DELETE
+        paths:
+        - /api/admin/*
+```
 
-  # Admin API
-  - to:
-    - operation:
-        paths: ["/api/admin/*"]
+Access logging is separate. Merge this custom provider into the existing Istio installation configuration with `istioctl install -f` (preserve other providers/settings), then enable it only for the selected backend. Query strings, bearer tokens and full JWT payloads are deliberately excluded from the format.
 
-  # Access from outside production
-  - from:
-    - source:
-        notNamespaces: ["production"]
+```yaml
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  meshConfig:
+    extensionProviders:
+    - name: security-json
+      envoyFileAccessLog:
+        path: /dev/stdout
+        logFormat:
+          labels:
+            start_time: '%START_TIME%'
+            method: '%REQ(:METHOD)%'
+            path: '%REQ_WITHOUT_QUERY(:PATH)%'
+            response_code: '%RESPONSE_CODE%'
+            response_code_details: '%RESPONSE_CODE_DETAILS%'
+            response_flags: '%RESPONSE_FLAGS%'
+            peer: '%DOWNSTREAM_PEER_URI_SAN%'
+            request_id: '%REQ(X-REQUEST-ID)%'
+```
 
-# 2. DENY Policy: Actually block
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
+```yaml
+apiVersion: telemetry.istio.io/v1
+kind: Telemetry
 metadata:
-  name: deny-unauthorized
-  namespace: production
+  name: backend-security
+  namespace: app
 spec:
   selector:
     matchLabels:
       app: backend
-  action: DENY
-  rules:
-  # Block admin access from outside production
-  - from:
-    - source:
-        notNamespaces: ["production"]
-    to:
-    - operation:
-        paths: ["/api/admin/*"]
-
-# 3. Access Logging: JSON format
----
-apiVersion: telemetry.istio.io/v1alpha1
-kind: Telemetry
-metadata:
-  name: security-logging
-  namespace: production
-spec:
   accessLogging:
   - providers:
-    - name: envoy
+    - name: security-json
     filter:
-      expression: |
-        response.code >= 400 ||
-        request.method == "DELETE" ||
-        request.url_path.startsWith("/api/admin")
+      expression: response.code >= 400 || request.method == "DELETE" || request.url_path.startsWith("/api/admin/")
+  metrics:
+  - providers:
+    - name: prometheus
+    overrides:
+    - match:
+        metric: REQUEST_COUNT
+        mode: SERVER
+      tagOverrides:
+        security_operation:
+          value: 'request.url_path.startsWith("/api/admin/") ? "admin" : "other"'
 ```
 
-***
+The Telemetry resource also adds a bounded `security_operation` dimension (`admin`/`other`) to request counts. `request_method` and raw URL path are not default Istio metric labels. Avoid full URL labels because of cardinality and sensitive data. Errors, DELETE requests and admin access are logged even if no AUDIT plugin is installed. To enable all requests omit the filter; to cover a namespace omit the selector; a selector-free root-namespace policy is mesh-wide.
 
-**6. Log Analysis Queries**
+For CloudWatch, deploy/configure the supported EKS logging agent or Fluent Bit DaemonSet with node log mounts, CRI/containerd parsing, JSON parsing of the `log` field, IAM credentials and a CloudWatch output. A ConfigMap alone does not start an agent. For Elasticsearch/OpenSearch use a collector output configured for that destination; Telemetry with provider `envoy` writes stdout and does not configure Elasticsearch. Fargate needs its supported logging mechanism instead of a node DaemonSet.
 
-**Prometheus Queries**
-
-```promql
-# Authorization deny count
-sum(rate(
-  envoy_http_rbac_denied_total[5m]
-)) by (namespace, pod)
-
-# AUDIT action trigger count
-sum(rate(
-  envoy_http_rbac_logged_total[5m]
-)) by (namespace, pod)
-
-# 403 Forbidden responses
-sum(rate(
-  istio_requests_total{
-    response_code="403"
-  }[5m]
-)) by (destination_service_name)
-```
-
-**CloudWatch Insights Queries**
+After ingesting the structured JSON fields, run each CloudWatch Logs Insights query separately:
 
 ```sql
-# Audit DELETE operations
-fields @timestamp, method, path, response_code, downstream_remote_address
+fields @timestamp, method, path, response_code, peer
 | filter method = "DELETE"
 | sort @timestamp desc
 | limit 100
-
-# Admin API access
-fields @timestamp, path, response_code, downstream_remote_address, user_agent
-| filter path like /api/admin/
-| sort @timestamp desc
-
-# Failed Authorization
-fields @timestamp, path, response_code, response_flags
-| filter response_code = 403
-| stats count() by bin(5m)
 ```
 
-***
-
-**7. Grafana Dashboard**
-
-```yaml
-# Panel 1: Authorization deny rate
-rate(envoy_http_rbac_denied_total[5m])
-
-# Panel 2: AUDIT log trend
-rate(envoy_http_rbac_logged_total[5m])
-
-# Panel 3: 403 response distribution
-sum by (destination_service_name) (
-  rate(istio_requests_total{response_code="403"}[5m])
-)
-
-# Panel 4: Sensitive operations (DELETE)
-sum by (destination_service_name) (
-  rate(istio_requests_total{request_method="DELETE"}[5m])
-)
+```sql
+fields @timestamp, path, response_code, response_code_details
+| filter path like /^\/api\/admin\//
+| filter response_code = "403"
+| stats count() by bin(5m), response_code_details
 ```
 
-***
+A 403 may come from the application, JWT authorization, or an external provider. Inspect `response_code_details`, proxy RBAC logs and effective policy before attributing it to Istio. Do not assume `envoy_http_rbac_logged_total` is a built-in AUDIT counter. Actual RBAC/experimental dry-run statistics depend on proxy configuration and naming; inspect the exported series.
 
-**8. Alert Configuration**
+Grafana can graph the standard destination-reported 403 rate and the custom admin dimension. A PrometheusRule selected by the installed Prometheus Operator can alert on the latter:
 
 ```yaml
-# PrometheusRule
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -2322,55 +1259,19 @@ metadata:
 spec:
   groups:
   - name: istio-security
-    interval: 30s
     rules:
-    # High Authorization deny rate
-    - alert: HighAuthorizationDenyRate
-      expr: |
-        sum(rate(envoy_http_rbac_denied_total[5m])) by (namespace)
-        > 10
+    - alert: AdminHTTP403Responses
+      expr: sum(rate(istio_requests_total{reporter="destination",security_operation="admin",response_code="403"}[5m]))
+        > 0
       for: 5m
       labels:
         severity: warning
       annotations:
-        summary: "High authorization deny rate in {{ $labels.namespace }}"
-        description: "{{ $value }} denials per second"
-
-    # Unauthorized Admin API access attempt
-    - alert: UnauthorizedAdminAccess
-      expr: |
-        sum(rate(istio_requests_total{
-          request_url_path=~"/api/admin/.*",
-          response_code="403"
-        }[5m])) > 0
-      for: 1m
-      labels:
-        severity: critical
-      annotations:
-        summary: "Unauthorized admin API access attempt"
+        summary: Admin API returned HTTP 403; inspect response_code_details to identify
+          the cause
 ```
 
-***
-
-**Best Practices:**
-
-1. **AUDIT First, DENY Later**:
-   * Start new policies with AUDIT
-   * Analyze logs then switch to DENY
-2. **Selective Logging**:
-   * Logging all traffic increases costs
-   * Log only sensitive operations
-3. **Log Retention**:
-   * Security audit: minimum 90 days
-   * Compliance: 1 year or more
-4. **Real-time Alerting**:
-   * Immediate alerts for unauthorized access attempts
-   * Detect abnormal patterns
-
-**Reference:**
-
-* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/02-authorization-policy.md)
-* [Access Logging](../../../service-mesh/istio/observability/03-logging.md)
+Before enforcing a new policy, the experimental `istio.io/dry-run: "true"` annotation on ALLOW/DENY can report shadow decisions; it is different from AUDIT and its diagnostic output is not a stable API. Set retention, access controls and redaction according to the actual organization/legal requirements; there is no universal 90-day/one-year retention mandate. See [access logging](https://istio.io/latest/docs/tasks/observability/logs/access-log/) and [authorization dry-run](https://istio.io/latest/docs/tasks/security/authorization/authz-dry-run/).
 
 </details>
 
@@ -2384,330 +1285,33 @@ Explain how to implement **Zero Trust Network** principles using Istio. Include 
 
 <summary>Show Answer</summary>
 
-**Answer:**
+Zero trust combines authenticated identities, explicit least-privilege authorization and controls that still hold when a workload is compromised. Istio secures traffic captured by its data plane; it does not replace Kubernetes RBAC, admission policy, network isolation or application authorization.
 
-**Zero Trust Network Principles:**
-
-1. **Never Trust, Always Verify**: Verify all communication
-2. **Least Privilege**: Grant only minimum required permissions
-3. **Assume Breach**: Design assuming compromise
-
-***
-
-**Istio Zero Trust Architecture:**
+1. Give frontend/backend/database separate ServiceAccounts and prevent workloads from freely assuming each other's accounts. Enroll workloads in the mesh; verify trust domain, certificate issuance and renewal.
+2. Apply STRICT to the target namespace and an empty ALLOW baseline there. A policy in `default` does not automatically cover `app`; a root-namespace baseline has wider effects and requires explicit gateway/operational exceptions.
+3. Permit only gateway → frontend → backend → database. For the same deployment prerequisites as Question 6, the complete traffic-policy set is:
 
 ```yaml
-# 1. mTLS STRICT (Only encrypted communication allowed)
-# 2. Deny-by-default (Deny all traffic by default)
-# 3. Explicit Allow (Explicitly allow required communication only)
-# 4. Identity-based (Based on Service Account)
-# 5. Fine-grained (Path/method level control)
-```
-
-***
-
-**Step 1: mTLS STRICT Mode**
-
-Encrypt all service-to-service communication:
-
-```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: default
-  namespace: istio-system
+  namespace: app
 spec:
   mtls:
     mode: STRICT
-```
-
-**Validation:**
-
-```bash
-# Check mTLS status
-istioctl authn tls-check <pod-name>.<namespace>
-
-# Output:
-# HOST:PORT                            STATUS     SERVER     CLIENT     AUTHN POLICY
-# backend.default.svc.cluster.local    OK         mTLS       mTLS       default/default
-```
-
-***
-
-**Step 2: Deny-by-default Policy**
-
-**Global Deny Policy**
-
-```yaml
-# Apply to all Namespaces
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: deny-all
-  namespace: default
-spec: {}
-
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: deny-all
-  namespace: production
-spec: {}
-```
-
-***
-
-**Step 3: Least Privilege**
-
-**Scenario: 3-Tier Web Application**
-
-```
-User -> Ingress Gateway -> Frontend -> Backend -> Database
-```
-
-**Create Service Accounts**
-
-```yaml
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: frontend
-  namespace: app
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: backend
-  namespace: app
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: database
-  namespace: app
-```
-
-**Ingress Gateway -> Frontend**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-ingress-to-frontend
-  namespace: app
-spec:
-  selector:
-    matchLabels:
-      app: frontend
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals:
-        - "cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"
-```
-
-**Frontend -> Backend**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-frontend-to-backend
-  namespace: app
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals:
-        - "cluster.local/ns/app/sa/frontend"
-    to:
-    - operation:
-        methods: ["GET", "POST", "PUT"]  # Exclude DELETE
-        paths: ["/api/v1/*"]  # Only v1 API
-        ports: ["8080"]  # Specific port only
-```
-
-**Backend -> Database**
-
-```yaml
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-backend-to-database
-  namespace: app
-spec:
-  selector:
-    matchLabels:
-      app: database
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals:
-        - "cluster.local/ns/app/sa/backend"
-    to:
-    - operation:
-        ports: ["5432"]  # PostgreSQL only
-```
-
-***
-
-**Step 4: Namespace Isolation**
-
-Block access from other Namespaces:
-
-```yaml
-# Block Production -> Staging
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: deny-cross-namespace
-  namespace: production
-spec:
-  action: DENY
-  rules:
-  - from:
-    - source:
-        notNamespaces: ["production", "istio-system"]
-```
-
-***
-
-**Step 5: Time-based Access Control**
-
-Implement time-based control with EnvoyFilter:
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: time-based-access
-  namespace: app
-spec:
-  workloadSelector:
-    labels:
-      app: backend
-  configPatches:
-  - applyTo: HTTP_FILTER
-    match:
-      context: SIDECAR_INBOUND
-    patch:
-      operation: INSERT_BEFORE
-      value:
-        name: envoy.filters.http.lua
-        typed_config:
-          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
-          inline_code: |
-            function envoy_on_request(request_handle)
-              local hour = tonumber(os.date("%H"))
-              -- Allow only business hours (9AM-6PM)
-              if hour < 9 or hour >= 18 then
-                request_handle:respond(
-                  {[":status"] = "403"},
-                  "Access denied outside business hours"
-                )
-              end
-            end
-```
-
-***
-
-**Step 6: Egress Traffic Control**
-
-Restrict external service access:
-
-```yaml
-# REGISTRY_ONLY mode
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  meshConfig:
-    outboundTrafficPolicy:
-      mode: REGISTRY_ONLY
-
----
-# Register only approved external services
-apiVersion: networking.istio.io/v1beta1
-kind: ServiceEntry
-metadata:
-  name: allowed-external-api
-  namespace: app
-spec:
-  hosts:
-  - api.approved-vendor.com
-  ports:
-  - number: 443
-    name: https
-    protocol: HTTPS
-  location: MESH_EXTERNAL
-  resolution: DNS
-
----
-# Only allow Backend to access external API
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-backend-egress
-  namespace: app
-spec:
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals: ["cluster.local/ns/app/sa/backend"]
-    to:
-    - operation:
-        hosts: ["api.approved-vendor.com"]
-```
-
-***
-
-**Step 7: Complete Zero Trust Configuration**
-
-```yaml
-# ========================================
-# 1. mTLS STRICT (Entire mesh)
-# ========================================
----
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: default
-  namespace: istio-system
-spec:
-  mtls:
-    mode: STRICT
-
-# ========================================
-# 2. Deny-by-default (Each Namespace)
-# ========================================
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: deny-all
+  name: default-deny
   namespace: app
 spec: {}
-
-# ========================================
-# 3. Ingress Gateway Policy
-# ========================================
 ---
-# Only allow external traffic to Gateway Pod
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-external
+  name: ingress-public-api
   namespace: istio-system
 spec:
   selector:
@@ -2717,13 +1321,17 @@ spec:
   rules:
   - to:
     - operation:
-        ports: ["80", "443"]
-
-# ========================================
-# 4. Frontend Policy (Least privilege)
-# ========================================
+        ports:
+        - '8443'
+        hosts:
+        - myapp.example.com
+        paths:
+        - /api/*
+        methods:
+        - GET
+        - POST
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: frontend-policy
@@ -2734,17 +1342,21 @@ spec:
       app: frontend
   action: ALLOW
   rules:
-  # Only allow Ingress Gateway
   - from:
     - source:
         principals:
-        - "cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"
-
-# ========================================
-# 5. Backend Policy (Fine-grained control)
-# ========================================
+        - cluster.local/ns/istio-system/sa/istio-ingressgateway
+    to:
+    - operation:
+        ports:
+        - '8080'
+        paths:
+        - /api/*
+        methods:
+        - GET
+        - POST
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: backend-policy
@@ -2755,21 +1367,21 @@ spec:
       app: backend
   action: ALLOW
   rules:
-  # Only allow Frontend
   - from:
     - source:
-        principals: ["cluster.local/ns/app/sa/frontend"]
+        principals:
+        - cluster.local/ns/app/sa/frontend
     to:
     - operation:
-        methods: ["GET", "POST", "PUT"]
-        paths: ["/api/v1/users/*", "/api/v1/data/*"]
-        ports: ["8080"]
-
-# ========================================
-# 6. Database Policy (Most restrictive)
-# ========================================
+        ports:
+        - '8080'
+        paths:
+        - /api/*
+        methods:
+        - GET
+        - POST
 ---
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: database-policy
@@ -2780,131 +1392,34 @@ spec:
       app: database
   action: ALLOW
   rules:
-  # Only allow Backend
   - from:
     - source:
-        principals: ["cluster.local/ns/app/sa/backend"]
+        principals:
+        - cluster.local/ns/app/sa/backend
     to:
     - operation:
-        ports: ["5432"]
-
-# ========================================
-# 7. Health Check Exception
-# ========================================
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-health-checks
-  namespace: app
-spec:
-  action: ALLOW
-  rules:
-  - to:
-    - operation:
-        paths: ["/health", "/ready", "/live"]
-        methods: ["GET"]
-
-# ========================================
-# 8. Prometheus Metrics Exception
-# ========================================
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-prometheus
-  namespace: app
-spec:
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        namespaces: ["istio-system"]
-        principals: ["cluster.local/ns/istio-system/sa/prometheus"]
-    to:
-    - operation:
-        paths: ["/stats/prometheus"]
-
-# ========================================
-# 9. Egress Control
-# ========================================
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: deny-all-egress
-  namespace: app
-spec:
-  action: DENY
-  rules:
-  - to:
-    - operation:
-        hosts: ["*"]
-
----
-apiVersion: security.istio.io/v1beta1
-kind: AuthorizationPolicy
-metadata:
-  name: allow-backend-egress
-  namespace: app
-spec:
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals: ["cluster.local/ns/app/sa/backend"]
-    to:
-    - operation:
-        hosts: ["api.approved-vendor.com"]
+        ports:
+        - '5432'
 ```
 
-***
-
-**Step 8: Validation and Monitoring**
+4. Where namespace isolation is needed, match authenticated namespaces/principals. A DENY selecting `production` with `notNamespaces: [production, istio-system]` blocks **other callers into production**, not production → staging. Account for gateways and operators; DENY overrides ALLOW.
+5. If access depends on business hours, use application authorization or a configured CUSTOM external authorization provider with an explicit timezone, clock source and failure policy. A Lua `os.date()` check with an unspecified insertion point/timezone is not a complete authorization design. CUSTOM permission must still pass DENY/ALLOW.
+6. Enforce egress through the gateway pattern from Question 8 plus network controls; neither REGISTRY_ONLY nor a sidecar policy named `deny-all-egress` is a firewall. An inbound DENY matching every host would instead block application traffic and cannot be undone by ALLOW.
+7. Preserve probe rewrite, design scraping for the correct ports, and add only necessary exceptions as explained in Question 6. Use JWT validation and per-hop token propagation from Question 7 for end-user authorization. Log and alert using Question 9, with certificate-expiry monitoring from the mTLS chapter.
+8. Check the actual policy and test the intended allow/deny matrix, TCP database access and egress bypass after each change:
 
 ```bash
-# 1. mTLS validation
-istioctl authn tls-check <pod-name>.<namespace>
-
-# 2. Authorization test
-# Frontend -> Backend (allowed)
-kubectl exec -it <frontend-pod> -n app -- \
-  curl http://backend:8080/api/v1/users
-
-# Frontend -> Database (denied)
-kubectl exec -it <frontend-pod> -n app -- \
-  curl http://database:5432
-
-# 3. Prometheus query
-# Authorization deny count
-sum(rate(envoy_http_rbac_denied_total[5m])) by (namespace, pod)
-
-# 4. Grafana dashboard
-# - mTLS connection count
-# - Authorization deny rate
-# - Service-to-service communication matrix
+istioctl analyze -n app
+istioctl proxy-config secret <backend-pod> -n app
+istioctl proxy-config clusters <frontend-pod> -n app -o json
+istioctl x authz check <backend-pod>.app
+# Run from the indicated application containers with the test clients installed.
+kubectl exec <frontend-pod> -n app -c frontend -- curl -i http://backend:8080/api/users
+kubectl exec <frontend-pod> -n app -c frontend -- pg_isready -h database -p 5432
+kubectl exec <backend-pod> -n app -c backend -- pg_isready -h database -p 5432
 ```
 
-***
-
-**Zero Trust Checklist:**
-
-* mTLS STRICT mode (Encrypt all communication)
-* Deny-by-default (Deny all by default)
-* Explicit Allow (Allow only what's needed)
-* Service Account-based identity
-* Least privilege (Restrict methods/paths/ports)
-* Namespace isolation
-* Egress traffic control
-* Health check exception handling
-* Monitoring and auditing
-* Regular policy review
-
-**Reference:**
-
-* [Zero Trust with Istio](https://istio.io/latest/blog/2021/zero-trust/)
-* [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/02-authorization-policy.md)
+A quiz score is not evidence of production readiness. Review workload identity assignment, network bypass paths, issuer trust, least-privilege rules, observability, rollback and the application's own permissions for the real environment. See [security concepts](https://istio.io/latest/docs/concepts/security/) and [authorization](../../../service-mesh/istio/security/03-authorization.md).
 
 </details>
 
@@ -2918,8 +1433,8 @@ sum(rate(envoy_http_rbac_denied_total[5m])) by (namespace, pod)
 
 **Evaluation Criteria:**
 
-* 90-100 points: Excellent (Istio Security Expert)
-* 80-89 points: Good (Production Security Configuration Ready)
+* 90-100 points: Excellent understanding of these quiz topics
+* 80-89 points: Good understanding; validate real deployments separately
 * 70-79 points: Average (Additional Study Recommended)
 * 60-69 points: Below Average (Basic Concept Review Needed)
 * 0-59 points: Needs Re-study
@@ -2927,6 +1442,6 @@ sum(rate(envoy_http_rbac_denied_total[5m])) by (namespace, pod)
 ## Learning Resources
 
 * [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-* [Authorization Policy](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/02-authorization-policy.md)
-* [Request Authentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/03-request-authentication.md)
-* [Peer Authentication](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/service-mesh/istio/security/04-peer-authentication.md)
+* [Authorization Policy](../../../service-mesh/istio/security/03-authorization.md)
+* [Request Authentication](../../../service-mesh/istio/security/02-authentication.md)
+* [Peer Authentication](../../../service-mesh/istio/security/01-mtls.md)

@@ -2,22 +2,12 @@
   "schema_version": 2,
   "diagram_type": "workflow",
   "meta": {
-    "title": "Autoscaler & Karpenter Interaction Flow",
+    "title": "Parallelism and node capacity: paths and feedback",
     "locale": "en",
     "quality_profile": "showcase",
     "animation": "trace",
     "legend": {
-      "entries": {
-        "external": {
-          "label": "Metric signals"
-        },
-        "backend": {
-          "label": "Flink autoscaler / TaskManager pods"
-        },
-        "cloud": {
-          "label": "Karpenter (EC2 capacity)"
-        }
-      }
+      "mode": "hidden"
     },
     "views": [
       {
@@ -27,7 +17,7 @@
           "metrics",
           "autoscaler"
         ],
-        "note": "The Flink autoscaler sets each operator's parallelism from per-vertex backpressure, busy time and lag alone; it knows nothing about nodes."
+        "note": "Evaluate rates, pressure, quotas and recovery constraints, rather than directly choosing node types."
       },
       {
         "id": "scale-up",
@@ -37,7 +27,7 @@
           "pods-add",
           "provision"
         ],
-        "note": "More TaskManager pods are requested; Karpenter sees the unschedulable (Pending) pods and provisions a new EC2 node."
+        "note": "New capacity may be needed when existing nodes cannot place pods and NodePool constraints can be met."
       },
       {
         "id": "scale-down",
@@ -45,9 +35,10 @@
         "focus": [
           "autoscaler",
           "pods-remove",
-          "consolidate"
+          "consolidate",
+          "feedback"
         ],
-        "note": "When parallelism decreases, TaskManager pods are removed; once a node goes empty, Karpenter consolidates and terminates it."
+        "note": "Evaluate eligible empty/underutilized nodes. Node changes can also happen first and alter lag/recovery."
       }
     ]
   },
@@ -68,20 +59,20 @@
   "phases": [
     {
       "id": "job-level",
-      "label": "Job-level decision (parallelism)",
+      "label": "Job decision",
       "fromCol": 0,
       "toCol": 1
     },
     {
       "id": "pod-level",
-      "label": "TaskManager pod change",
+      "label": "TM placement",
       "fromCol": 2,
       "toCol": 2,
       "variant": "dashed"
     },
     {
       "id": "node-level",
-      "label": "Node-level decision (EC2 capacity)",
+      "label": "Node capacity",
       "fromCol": 3,
       "toCol": 3,
       "variant": "emphasis"
@@ -100,7 +91,7 @@
       "col": 0,
       "type": "external",
       "label": "Vertex metrics",
-      "sublabel": "backpressure, busy time, lag",
+      "sublabel": "Rates / lag / pressure",
       "width": 150
     },
     {
@@ -109,7 +100,7 @@
       "col": 1,
       "type": "backend",
       "label": "Adjust parallelism",
-      "sublabel": "Flink autoscaler · per operator",
+      "sublabel": "Recommendations + constraints",
       "width": 196
     },
     {
@@ -118,7 +109,7 @@
       "col": 2,
       "type": "backend",
       "label": "Request TaskManager pods",
-      "sublabel": "new pods sit Pending",
+      "sublabel": "Check scheduling feasibility",
       "width": 196
     },
     {
@@ -126,8 +117,8 @@
       "lane": "up",
       "col": 3,
       "type": "cloud",
-      "label": "Provision new EC2 node",
-      "sublabel": "Karpenter · per NodePool",
+      "label": "Evaluate EC2 capacity",
+      "sublabel": "NodePool / quota / availability",
       "width": 192
     },
     {
@@ -135,8 +126,8 @@
       "lane": "down",
       "col": 2,
       "type": "backend",
-      "label": "TaskManager pods removed",
-      "sublabel": "node goes empty",
+      "label": "TM demand decreases",
+      "sublabel": "Idle / allocation policy",
       "width": 196
     },
     {
@@ -144,8 +135,17 @@
       "lane": "down",
       "col": 3,
       "type": "cloud",
-      "label": "Consolidate node",
-      "sublabel": "Karpenter · terminate after delay",
+      "label": "Evaluate disruption",
+      "sublabel": "Empty / underutilized nodes",
+      "width": 192
+    },
+    {
+      "id": "feedback",
+      "lane": "flink",
+      "col": 3,
+      "type": "external",
+      "label": "Recovery / lag changes",
+      "sublabel": "Next Flink evaluation",
       "width": 192
     }
   ],
@@ -154,13 +154,13 @@
       "id": "metrics-autoscaler",
       "from": "metrics",
       "to": "autoscaler",
-      "label": "autoscaler evaluates"
+      "label": "Evaluate"
     },
     {
       "id": "autoscaler-pods-add",
       "from": "autoscaler",
       "to": "pods-add",
-      "label": "parallelism increases",
+      "label": "Scale up",
       "variant": "emphasis"
     },
     {
@@ -173,33 +173,43 @@
       "id": "autoscaler-pods-remove",
       "from": "autoscaler",
       "to": "pods-remove",
-      "label": "parallelism decreases",
+      "label": "Scale down",
       "role": "branch"
     },
     {
       "id": "pods-remove-consolidate",
       "from": "pods-remove",
       "to": "consolidate",
-      "label": "node goes empty",
+      "label": "Policy permits",
       "role": "branch"
+    },
+    {
+      "id": "capacity-feedback",
+      "from": "consolidate",
+      "to": "feedback",
+      "label": "Affects workload",
+      "role": "return",
+      "route": "outside-right",
+      "fromSide": "right",
+      "toSide": "right",
+      "variant": "dashed"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Two loops reacting to different signals",
+      "title": "Coupled effects",
       "items": [
-        "Flink autoscaler: decides parallelism from per-vertex metrics — no knowledge of nodes",
-        "Karpenter: decides EC2 capacity from unschedulable pods or empty nodes — no knowledge of why the pods exist",
-        "The job-level decision always comes first; the node-level decision only reacts to its consequences"
+        "Flink: parallelism, state recovery and pressure",
+        "Node changes can precede job-level decisions"
       ]
     },
     {
       "dot": "amber",
-      "title": "Mismatches from tuning only one loop",
+      "title": "Timings and constraints",
       "items": [
-        "If parallelism grows faster than the NodePool can provision nodes, new pods sit Pending and stall the scale-up",
-        "Keep Karpenter's consolidation delay comfortably longer than the autoscaler's stabilization window"
+        "Provisioning + restore + backlog catch-up",
+        "One timer inequality does not prevent interruptions"
       ]
     }
   ]

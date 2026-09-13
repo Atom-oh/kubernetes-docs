@@ -1,252 +1,334 @@
 # Cilium 보안 및 가시성 퀴즈
 
-> **지원 버전**: Cilium 1.17  
-> **마지막 업데이트**: 2026년 2월 22일
+> **검토 기준**: Cilium 1.20.1; Hubble CLI 1.19.4.
+> **최종 검토**: 2026년 9월 12일.
+
+[본문으로 돌아가기](../../../networking/cilium/06-security-visibility.md)
 
 ## 네트워크 정책 기본
 
-1. **Kubernetes NetworkPolicy와 Cilium NetworkPolicy의 주요 차이점은 무엇인가요?**
-   - A) Cilium NetworkPolicy는 L7 정책을 지원하지 않음
-   - B) Kubernetes NetworkPolicy는 L7 정책을 지원하지 않음
-   - C) Cilium NetworkPolicy는 특정 노드에만 적용 가능
-   - D) Kubernetes NetworkPolicy는 더 높은 성능 제공
-   
+1. **CiliumNetworkPolicy는 표준 Kubernetes NetworkPolicy를 어떻게 확장하나요?**
+
+   - A) Pod를 선택할 수 없습니다
+   - B) 지원되는 L7 프로토콜 규칙을 추가할 수 있습니다
+   - C) 노드만 보호합니다
+   - D) 더 낮은 지연을 보장합니다
+
    <details>
    <summary>정답 보기</summary>
-   <p><strong>정답</strong>: B) Kubernetes NetworkPolicy는 L7 정책을 지원하지 않음</p>
-   <p><strong>설명</strong>: Kubernetes NetworkPolicy는 L3/L4 수준의 정책만 지원하는 반면, Cilium NetworkPolicy는 L3부터 L7까지 더 광범위한 정책을 지원합니다.</p>
+
+   **정답: B) 지원되는 L7 프로토콜 규칙을 추가할 수 있습니다**
+
+   표준 NetworkPolicy는 L3/L4 연결을 제어하며 Cilium은 HTTP·DNS 정책 등을 추가합니다. API 선택만으로 성능이 보장되지는 않습니다.
+
    </details>
 
-2. **Cilium NetworkPolicy의 API 그룹은 무엇인가요?**
-   - A) networking.k8s.io
-   - B) cilium.io
-   - C) policy.cilium.io
-   - D) network.cilium.io
-   
+2. **CiliumNetworkPolicy의 API 버전은 무엇인가요?**
+
+   - A) networking.k8s.io/v1
+   - B) cilium.io/v2
+   - C) policy.cilium.io/v1
+   - D) network.cilium.io/v1
+
    <details>
    <summary>정답 보기</summary>
-   <p><strong>정답</strong>: B) cilium.io</p>
-   <p><strong>설명</strong>: Cilium NetworkPolicy는 cilium.io API 그룹을 사용합니다.</p>
+
+   **정답: B) cilium.io/v2**
+
+   그룹은 cilium.io이며 이 장에서 사용하는 정책 버전은 v2입니다.
+
    </details>
 
-3. **Cilium NetworkPolicy에서 'endpointSelector'의 역할은 무엇인가요?**
-   - A) 정책이 적용될 대상 Pod 선택
-   - B) 정책이 적용될 대상 노드 선택
-   - C) 정책이 적용될 대상 네임스페이스 선택
-   - D) 정책이 적용될 대상 서비스 선택
-   
+3. **네임스페이스 범위의 CiliumNetworkPolicy에서 endpointSelector는 무엇을 선택하나요?**
+
+   - A) 정책 네임스페이스의 일치하는 엔드포인트
+   - B) 모든 Kubernetes 노드
+   - C) Prometheus 서버
+   - D) LoadBalancer Service만
+
    <details>
    <summary>정답 보기</summary>
-   <p><strong>정답</strong>: A) 정책이 적용될 대상 Pod 선택</p>
-   <p><strong>설명</strong>: endpointSelector는 정책이 적용될 대상 Pod(엔드포인트)를 선택하는 데 사용됩니다.</p>
+
+   **정답: A) 정책 네임스페이스의 일치하는 엔드포인트**
+
+   정책의 적용 대상 엔드포인트를 식별합니다. 노드 정책에는 별도의 클러스터 범위 nodeSelector 방식을 사용합니다.
+
    </details>
 
-4. **Cilium NetworkPolicy에서 'ingress' 규칙은 무엇을 제어하나요?**
-   - A) 선택된 Pod로 들어오는 트래픽
-   - B) 선택된 Pod에서 나가는 트래픽
-   - C) 선택된 Pod 내부의 트래픽
-   - D) 클러스터 외부로의 트래픽
-   
+4. **policyTypes: [Ingress]인 표준 NetworkPolicy에서 ingress 허용 규칙이 없는 값은 무엇인가요?**
+
+   - A) ingress: [{}]
+   - B) ingress: []
+   - C) ingress: [{from: [{}]}]
+   - D) 모든 출발지 주소에 대한 허용 규칙
+
    <details>
    <summary>정답 보기</summary>
-   <p><strong>정답</strong>: A) 선택된 Pod로 들어오는 트래픽</p>
-   <p><strong>설명</strong>: ingress 규칙은 선택된 Pod로 들어오는 트래픽을 제어합니다.</p>
+
+   **정답: B) ingress: []**
+
+   빈 목록에는 허용 규칙이 없으며 빈 규칙 객체는 모든 ingress를 허용합니다. 다른 적용 대상 정책의 허용은 여전히 합산됩니다.
+
    </details>
 
-5. **Cilium NetworkPolicy에서 'egress' 규칙은 무엇을 제어하나요?**
-   - A) 선택된 Pod로 들어오는 트래픽
-   - B) 선택된 Pod에서 나가는 트래픽
-   - C) 선택된 Pod 내부의 트래픽
-   - D) 클러스터 외부에서의 트래픽
-   
+5. **선택된 Pod의 egress 정책은 어느 방향을 제어하나요?**
+
+   - A) 들어오는 연결만
+   - B) 나가는 연결
+   - C) 프로세스 내부 트래픽만
+   - D) API 서버 응답만
+
    <details>
    <summary>정답 보기</summary>
-   <p><strong>정답</strong>: B) 선택된 Pod에서 나가는 트래픽</p>
-   <p><strong>설명</strong>: egress 규칙은 선택된 Pod에서 나가는 트래픽을 제어합니다.</p>
+
+   **정답: B) 나가는 연결**
+
+   Egress는 외부로 나가는 연결을 제어합니다. 격리된 Pod에는 실제 DNS 서버 등 의존성의 명시적 허용이 필요합니다.
+
    </details>
 
 ## L7 정책
 
-6. **Cilium의 L7 HTTP 정책에서 필터링할 수 있는 속성이 아닌 것은?**
-   - A) 경로(Path)
-   - B) 메서드(Method)
-   - C) 헤더(Headers)
-   - D) 응답 시간(Response Time)
-   
+6. **Cilium HTTP 정책의 요청 일치 필드가 아닌 것은 무엇인가요?**
+
+   - A) 경로
+   - B) 메서드
+   - C) 헤더
+   - D) 응답 지연
+
    <details>
    <summary>정답 보기</summary>
-   <p><strong>정답</strong>: D) 응답 시간(Response Time)</p>
-   <p><strong>설명</strong>: Cilium의 L7 HTTP 정책은 경로, 메서드, 헤더와 같은 HTTP 요청 속성을 필터링할 수 있지만 응답 시간은 필터링 대상이 아닙니다.</p>
+
+   **정답: D) 응답 지연**
+
+   HTTP 정책은 지원되는 요청 속성을 검사합니다. 응답 시간을 관측한다고 지연이 HTTP 허용 규칙 필드가 되는 것은 아닙니다.
+
    </details>
 
-7. **Cilium의 L7 Kafka 정책에서 필터링할 수 있는 속성은?**
-   - A) 토픽(Topic)
-   - B) 파티션(Partition)
-   - C) 오프셋(Offset)
-   - D) 위의 모든 것
-   
+7. **예제의 toFQDNs 정책이 DNS 응답을 학습하려면 무엇이 필요한가요?**
+
+   - A) TCP 443 규칙만
+   - B) 임의의 외부 IP만
+   - C) 접근 가능한 DNS 서버와 일치하는 DNS 프록시 규칙
+   - D) Kafka 토픽 규칙
+
    <details>
    <summary>정답 보기</summary>
-   <p><strong>정답</strong>: A) 토픽(Topic)</p>
-   <p><strong>설명</strong>: Cilium의 L7 Kafka 정책은 주로 토픽, API 키 등을 기반으로 필터링할 수 있습니다.</p>
+
+   **정답: C) 접근 가능한 DNS 서버와 일치하는 DNS 프록시 규칙**
+
+   DNS 허용·프록시 관측과 이후 목적지 IP 연결 허용은 별개입니다. 예제는 검증한 DNS 엔드포인트의 UDP/TCP DNS를 모두 다룹니다.
+
    </details>
 
-8. **Cilium의 L7 DNS 정책에서 'matchPattern' 규칙은 무엇을 허용하나요?**
-   - A) 정확한 도메인 이름 일치
-   - B) 와일드카드를 포함한 도메인 이름 패턴 일치
-   - C) IP 주소 일치
-   - D) 포트 번호 일치
-   
+8. **DNS matchPattern은 무엇을 제공하나요?**
+
+   - A) 포트 할당
+   - B) 도메인 이름 와일드카드 일치
+   - C) JWT 서명 검증
+   - D) 자동 악성 도메인 평판
+
    <details>
    <summary>정답 보기</summary>
-   <p><strong>정답</strong>: B) 와일드카드를 포함한 도메인 이름 패턴 일치</p>
-   <p><strong>설명</strong>: matchPattern 규칙은 와일드카드(*)를 포함한 도메인 이름 패턴을 일치시킬 수 있습니다. 예: *.example.com</p>
+
+   **정답: B) 도메인 이름 와일드카드 일치**
+
+   지원되는 와일드카드 문법으로 질의·도메인 이름을 검사합니다. 위협 인텔리전스 피드를 가져오지는 않습니다.
+
    </details>
 
-9. **Cilium의 L7 정책을 적용하기 위해 필요한 구성 요소는?**
+9. **이 장에서 설명한 HTTP 규칙은 어느 프록시가 구현하나요?**
+
    - A) kube-proxy
-   - B) Envoy 프록시
-   - C) NGINX 인그레스 컨트롤러
-   - D) HAProxy
-   
+   - B) Envoy
+   - C) Prometheus
+   - D) Hubble Relay
+
    <details>
    <summary>정답 보기</summary>
-   <p><strong>정답</strong>: B) Envoy 프록시</p>
-   <p><strong>설명</strong>: Cilium은 L7 정책을 적용하기 위해 Envoy 프록시를 사용합니다.</p>
+
+   **정답: B) Envoy**
+
+   Cilium은 HTTP 정책에 Envoy를 연동합니다. DNS 정책은 DNS 프록시를 사용하므로 모든 L7 규칙을 Envoy 규칙으로 설명하면 안 됩니다.
+
    </details>
 
-10. **Cilium의 L7 정책이 지원하는 프로토콜이 아닌 것은?**
-    - A) HTTP
-    - B) gRPC
-    - C) Kafka
-    - D) SMTP
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: D) SMTP</p>
-    <p><strong>설명</strong>: Cilium은 HTTP, gRPC, Kafka 등의 L7 프로토콜을 지원하지만, SMTP는 기본적으로 지원하지 않습니다.</p>
-    </details>
+10. **현재 API에 없는 과거 Cilium L7 정책 기능은 무엇인가요?**
+
+   - A) HTTP 메서드 검사
+   - B) HTTP 경로 검사
+   - C) Kafka 토픽 규칙
+   - D) DNS 이름 규칙
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: C) Kafka 토픽 규칙**
+
+   Kafka L7 정책은 제거되었습니다. 이전 kafka 규칙을 현재 CiliumNetworkPolicy에 복사하지 않습니다.
+
+   </details>
 
 ## 암호화 및 보안
 
-11. **Cilium에서 네트워크 트래픽 암호화에 사용할 수 있는 프로토콜은?**
-    - A) IPsec
-    - B) WireGuard
-    - C) A와 B 모두
-    - D) TLS
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: C) A와 B 모두</p>
-    <p><strong>설명</strong>: Cilium은 IPsec과 WireGuard 모두를 사용하여 노드 간 트래픽을 암호화할 수 있습니다.</p>
-    </details>
+11. **Cilium 노드 전송 암호화의 대안 모드를 나열한 것은 무엇인가요?**
 
-12. **Cilium의 암호화 기능이 보호하는 트래픽은?**
-    - A) 노드 간 트래픽만
-    - B) Pod 간 트래픽만
-    - C) 노드와 Pod 간 트래픽만
-    - D) 모든 클러스터 트래픽
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: B) Pod 간 트래픽만</p>
-    <p><strong>설명</strong>: Cilium의 암호화 기능은 주로 Pod 간 트래픽을 보호합니다.</p>
-    </details>
+   - A) IPsec와 WireGuard
+   - B) HTTP와 DNS
+   - C) Relay와 Grafana
+   - D) SYN과 ACK
 
-13. **Cilium의 Host Firewall 기능은 무엇을 보호하나요?**
-    - A) Pod 네트워크 인터페이스
-    - B) 호스트 네트워크 인터페이스
-    - C) 서비스 엔드포인트
-    - D) 컨테이너 런타임
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: B) 호스트 네트워크 인터페이스</p>
-    <p><strong>설명</strong>: Cilium의 Host Firewall은 호스트 자체의 네트워크 인터페이스를 보호하여 호스트 수준의 보안을 강화합니다.</p>
-    </details>
+   <details>
+   <summary>정답 보기</summary>
 
-14. **Cilium의 보안 기능 중 다음 설명에 해당하는 것은? "특정 애플리케이션 계층 프로토콜의 특정 필드나 패턴을 기반으로 트래픽을 필터링"**
-    - A) 네트워크 정책
-    - B) L7 정책
-    - C) 암호화
-    - D) 침입 탐지
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: B) L7 정책</p>
-    <p><strong>설명</strong>: L7(애플리케이션 계층) 정책은 HTTP, gRPC, Kafka 등의 프로토콜에서 특정 필드나 패턴을 기반으로 트래픽을 필터링할 수 있습니다.</p>
-    </details>
+   **정답: A) IPsec와 WireGuard**
 
-15. **Cilium의 Identity 기반 보안 모델에서 'Identity'는 무엇을 기반으로 하나요?**
-    - A) Pod 이름
-    - B) 노드 이름
-    - C) 레이블
-    - D) IP 주소
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: C) 레이블</p>
-    <p><strong>설명</strong>: Cilium의 Identity는 Pod의 레이블을 기반으로 하며, 이는 IP 주소가 변경되더라도 일관된 보안 정책을 적용할 수 있게 합니다.</p>
-    </details>
+   필요한 모드와 전제 조건을 선택합니다. SPIRE 상호 인증과 Beta ztunnel 워크로드 mTLS는 범위가 다른 별도 기능입니다.
+
+   </details>
+
+12. **이 장의 기본 WireGuard 노드 터널 프로필은 무엇을 보호하나요?**
+
+   - A) 임의의 외부 트래픽을 포함한 모든 패킷
+   - B) 노드를 가로지르는 지원 대상 Cilium 관리 Pod 트래픽
+   - C) 터널을 통과하는 모든 동일 노드 Pod 트래픽
+   - D) 예외 없는 모든 호스트 트래픽
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: B) 노드를 가로지르는 지원 대상 Cilium 관리 Pod 트래픽**
+
+   동일 노드 트래픽은 이 노드 터널을 사용하지 않습니다. 노드 간 암호화 확장은 컨트롤 플레인 제외 조건이 있는 별도 Beta 옵션이며 애플리케이션 TLS가 필요할 수 있습니다.
+
+   </details>
+
+13. **Cilium Host Firewall의 보호 대상은 무엇인가요?**
+
+   - A) 브라우저 JavaScript만
+   - B) 호스트의 네트워크 트래픽
+   - C) 모든 컨테이너 시스템 호출 자동 보호
+   - D) Grafana 비밀번호 데이터베이스
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: B) 호스트의 네트워크 트래픽**
+
+   호스트 정책은 네트워크 제어입니다. 프로세스·시스템 호출 집행에는 구성된 Tetragon 정책 등의 별도 수단이 필요하며 암호화 호환성도 확인해야 합니다.
+
+   </details>
+
+14. **Authorization 헤더를 일치시키면 해당 사용자가 인증되나요?**
+
+   - A) 예, 존재하는 모든 헤더는 검증된 JWT입니다
+   - B) 예, 정규식처럼 보이는 값이 서명을 검증합니다
+   - C) 아니요, 헤더 일치는 토큰을 검증하지 않습니다
+   - D) 예, HTTP가 8443 포트를 사용하면 됩니다
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: C) 아니요, 헤더 일치는 토큰을 검증하지 않습니다**
+
+   실제 인증·인가 로직을 사용합니다. 값을 가진 headers 문자열은 리터럴 일치이며 TLS 포트 번호가 페이로드를 복호화하지도 않습니다.
+
+   </details>
+
+15. **Cilium 보안 ID는 주로 무엇으로 결정되나요?**
+
+   - A) 영원히 고유한 Pod IP
+   - B) 보안 관련 레이블 집합
+   - C) 사용자의 브라우저 쿠키
+   - D) 마지막 HTTP 응답
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: B) 보안 관련 레이블 집합**
+
+   보안 관련 레이블이 같은 엔드포인트는 ID를 공유할 수 있습니다. ID 기반 정책만으로 최종 사용자 인증이나 트래픽 암호화가 제공되지는 않습니다.
+
+   </details>
 
 ## 가시성 및 모니터링
 
-16. **Hubble은 무엇인가요?**
-    - A) Cilium의 네트워크 가시성 도구
-    - B) Cilium의 로드 밸런서
-    - C) Cilium의 암호화 프로토콜
-    - D) Cilium의 DNS 서버
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: A) Cilium의 네트워크 가시성 도구</p>
-    <p><strong>설명</strong>: Hubble은 Cilium의 네트워크 가시성 도구로, eBPF를 기반으로 네트워크 흐름을 관찰하고 분석할 수 있습니다.</p>
-    </details>
+16. **Hubble의 주된 역할은 무엇인가요?**
 
-17. **Hubble UI에서 제공하는 기능이 아닌 것은?**
-    - A) 서비스 의존성 맵
-    - B) 네트워크 흐름 시각화
-    - C) 정책 위반 알림
-    - D) 코드 배포 관리
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: D) 코드 배포 관리</p>
-    <p><strong>설명</strong>: Hubble UI는 서비스 의존성 맵, 네트워크 흐름 시각화, 정책 위반 알림 등을 제공하지만 코드 배포 관리는 제공하지 않습니다.</p>
-    </details>
+   - A) 네트워크 흐름 관측
+   - B) 컨테이너 이미지 배포
+   - C) 규칙 없이 동작하는 완전한 WAF
+   - D) 모든 의심 Pod 자동 격리
 
-18. **Hubble CLI를 사용하여 특정 Pod의 네트워크 흐름을 관찰하는 명령어는?**
-    - A) `hubble observe --pod <pod-name>`
-    - B) `hubble watch --pod <pod-name>`
-    - C) `hubble monitor --pod <pod-name>`
-    - D) `hubble inspect --pod <pod-name>`
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: A) <code>hubble observe --pod &lt;pod-name&gt;</code></p>
-    <p><strong>설명</strong>: <code>hubble observe --pod &lt;pod-name&gt;</code> 명령어는 특정 Pod의 네트워크 흐름을 실시간으로 관찰할 수 있습니다.</p>
-    </details>
+   <details>
+   <summary>정답 보기</summary>
 
-19. **Hubble이 수집하는 메트릭이 아닌 것은?**
-    - A) HTTP 상태 코드
-    - B) TCP 연결 상태
-    - C) 드롭된 패킷 수
-    - D) 컨테이너 CPU 사용량
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: D) 컨테이너 CPU 사용량</p>
-    <p><strong>설명</strong>: Hubble은 네트워크 관련 메트릭(HTTP 상태 코드, TCP 연결 상태, 드롭된 패킷 수 등)을 수집하지만, 컨테이너 CPU 사용량과 같은 시스템 메트릭은 수집하지 않습니다.</p>
-    </details>
+   **정답: A) 네트워크 흐름 관측**
 
-20. **Cilium과 Prometheus를 통합하는 방법은?**
-    - A) Cilium Operator에 Prometheus 어노테이션 추가
-    - B) Prometheus 서버에 Cilium 플러그인 설치
-    - C) Cilium에 ServiceMonitor 리소스 생성
-    - D) Prometheus에 Cilium 대시보드 가져오기
-    
-    <details>
-    <summary>정답 보기</summary>
-    <p><strong>정답</strong>: C) Cilium에 ServiceMonitor 리소스 생성</p>
-    <p><strong>설명</strong>: Prometheus Operator를 사용하는 경우, Cilium에 ServiceMonitor 리소스를 생성하여 Cilium 메트릭을 수집할 수 있습니다.</p>
-    </details>
+   Hubble은 흐름 메타데이터, 판정과 지원되는 프로토콜 관측 결과를 제공합니다. 탐지 규칙과 대응 연동은 별도 구성이 필요합니다.
+
+   </details>
+
+17. **Hubble UI가 제공하는 기능은 무엇인가요?**
+
+   - A) 애플리케이션 자격 증명 교체
+   - B) 서비스 의존성 맵과 흐름 탐색
+   - C) Slack 장애 알림 자동 전송
+   - D) 런타임 시스템 호출 정책 설치
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: B) 서비스 의존성 맵과 흐름 탐색**
+
+   UI는 Relay를 통해 네트워크 관측 결과를 시각화합니다. 알림·배포·런타임 정책 컨트롤러는 아닙니다.
+
+   </details>
+
+18. **frontend Pod가 어느 쪽 엔드포인트인지와 관계없이 흐름 이벤트를 계속 관찰하는 명령은 무엇인가요?**
+
+   - A) `hubble observe --pod cilium-security-demo/frontend --follow`
+   - B) `hubble watch --pod frontend`
+   - C) `cilium hubble status`
+   - D) `hubble observe --pod app=frontend`
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: A) `hubble observe --pod cilium-security-demo/frontend --follow`**
+
+   네임스페이스가 포함된 Pod 이름과 스트리밍용 --follow를 사용합니다. Pod 이름은 레이블 선택자가 아니며 방향·레이블 필터는 별도 플래그입니다.
+
+   </details>
+
+19. **예제의 Hubble 메트릭 플러그인이 제공하지 않는 것은 무엇인가요?**
+
+   - A) HTTP 응답 상태별 수
+   - B) TCP 플래그 수
+   - C) 관측된 드롭 수
+   - D) 컨테이너 CPU 사용량
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: D) 컨테이너 CPU 사용량**
+
+   이 플러그인은 네트워크·프록시 이벤트를 관측합니다. TCP 플러그인은 일반적인 동시 연결 수나 RTT 메트릭을 제공하지 않으며 관측 부재·손실도 고려해야 합니다.
+
+   </details>
+
+20. **Prometheus Operator가 설치된 환경에서 ServiceMonitor로 Hubble을 수집하려면 무엇이 필요한가요?**
+
+   - A) Grafana 대시보드 가져오기만
+   - B) 공인 hubble-metrics.cilium.io:9091 정적 대상
+   - C) 메트릭 활성화와 Prometheus가 선택하는 ServiceMonitor
+   - D) 무관한 ConfigMap 생성만
+
+   <details>
+   <summary>정답 보기</summary>
+
+   **정답: C) 메트릭 활성화와 Prometheus가 선택하는 ServiceMonitor**
+
+   차트의 헤드리스 Service는 일반적으로 9965인 hubble-metrics 이름의 포트를 제공합니다. Prometheus 네임스페이스·레이블 선택자와 엔드포인트 접근성이 맞아야 합니다.
+
+   </details>

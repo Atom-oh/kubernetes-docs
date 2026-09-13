@@ -1,0 +1,247 @@
+{
+  "reviewedAt": "2026-09-12",
+  "scope": [
+    "ko/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+    "ko/quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md",
+    "en/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+    "en/quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md"
+  ],
+  "versions": {
+    "strimzi": "1.2.0",
+    "kafka": "4.3.1",
+    "debezium": "3.6.2.Final",
+    "aivenS3": "3.4.3"
+  },
+  "sources": [
+    "https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/install/cluster-operator",
+    "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+    "https://debezium.io/documentation/reference/3.6/connectors/postgresql.html",
+    "https://github.com/Aiven-Open/cloud-storage-connectors-for-apache-kafka/blob/v3.4.3/s3-sink-connector/README.md",
+    "https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_GetAuthorizationToken.html",
+    "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorSourceConnector.java",
+    "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorCheckpointTask.java",
+    "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorHeartbeatTask.java",
+    "https://github.com/apache/kafka/blob/4.3.1/connect/mirror/src/main/java/org/apache/kafka/connect/mirror/MirrorSourceTask.java"
+  ],
+  "findings": [
+    "Corrected Connect broker group coordination versus worker leader assignment, standalone Kubernetes claim and source/sink offset storage.",
+    "Migrated actual Strimzi v1 Connect identity/topic fields and MM2 target/mirrors[].source structure; removed obsolete heartbeatConnector field and old API mappings.",
+    "Pinned checksum-verified Debezium3.6.2/Aiven3.4.3 artifacts; fixed absent Aiven class and unsupported flush.size/rotate.schedule.interval.ms keys using actual JAR definitions.",
+    "Added TLS/SCRAM, scoped internal/data ACLs, precreated compacted internal topics, safe mounted-directory config provider, PostgreSQL TLS/publication and concrete dependency requirements.",
+    "Separated ECR Buildah push identity/token expiry from runtime S3 workload identity; aligned JSON converter envelopes and CDC archive semantics.",
+    "Verified native default-policy cycle detection allows legitimate multi-hop, Identity loses cycle provenance, heartbeat generation needs no source connection; corrected DR/ACL/offset/freshness/compression claims.",
+    "Revised all36quizquestions and all20fences; native2connectorconfig validations/10MM2-provider-codec cases/strict22schemaobjects pass; nofigures."
+  ],
+  "artifacts": {
+    "aiven": {
+      "url": "https://github.com/Aiven-Open/cloud-storage-connectors-for-apache-kafka/releases/download/v3.4.3/s3-sink-connector-for-apache-kafka-3.4.3.zip",
+      "sha256": "b92106a67e936b5c9ac5811cec9cabd53d3503ca15253ccbfc44cda88119371e",
+      "sha512": "d355c7d41713dab83384a51e28b6670f63775a0aa394eb0d9e99172d862f53d9e42c54534369cdcfefadfeb4f50e7ffac2029c65dd878f0def3db33058627758",
+      "verifiedGitHubReleaseDigest": true
+    },
+    "debezium": {
+      "version": "3.6.2.Final",
+      "sha512": "eabc5416446a32c3c763749262cd03115fbc2804bf48018348184f660222e9e5c8395306d9e795c9d52cbe246a5386142bdae376d418f6cf1bd5233e83e8ffe7",
+      "verifiedMavenSha512": true
+    }
+  },
+  "validation": {
+    "schemaObjects": [
+      {
+        "kind": "KafkaConnect",
+        "name": "connect-cluster"
+      },
+      {
+        "kind": "KafkaUser",
+        "name": "connect-cluster"
+      },
+      {
+        "kind": "KafkaConnector",
+        "name": "orders-db-source"
+      },
+      {
+        "kind": "KafkaConnector",
+        "name": "orders-s3-sink"
+      },
+      {
+        "kind": "KafkaMirrorMaker2",
+        "name": "primary-to-dr"
+      },
+      {
+        "kind": "KafkaTopic",
+        "name": "connect-cluster-configs"
+      },
+      {
+        "kind": "KafkaTopic",
+        "name": "connect-cluster-offsets"
+      },
+      {
+        "kind": "KafkaTopic",
+        "name": "connect-cluster-status"
+      },
+      {
+        "kind": "KafkaTopic",
+        "name": "orders-db.public.orders"
+      },
+      {
+        "kind": "KafkaTopic",
+        "name": "orders-db.public.order_items"
+      },
+      {
+        "kind": "KafkaUser",
+        "name": "connect-cluster"
+      },
+      {
+        "kind": "KafkaConnect",
+        "name": "connect-cluster"
+      },
+      {
+        "kind": "KafkaConnector",
+        "name": "orders-db-source"
+      },
+      {
+        "kind": "KafkaConnector",
+        "name": "orders-s3-sink"
+      },
+      {
+        "kind": "KafkaMirrorMaker2",
+        "name": "primary-to-dr"
+      },
+      {
+        "kind": "KafkaConnector",
+        "name": "orders-db-source"
+      },
+      {
+        "kind": "KafkaUser",
+        "name": "connect-cluster"
+      },
+      {
+        "kind": "KafkaConnect",
+        "name": "connect-cluster"
+      },
+      {
+        "kind": "KafkaConnector",
+        "name": "orders-db-source"
+      },
+      {
+        "kind": "KafkaConnector",
+        "name": "orders-s3-sink"
+      },
+      {
+        "kind": "KafkaMirrorMaker2",
+        "name": "primary-to-dr"
+      },
+      {
+        "kind": "KafkaConnector",
+        "name": "orders-db-source"
+      }
+    ],
+    "strictSpecFields": true,
+    "nativeConnectorConfigValidation": [
+      "PASS config definitions: io.debezium.connector.postgresql.PostgresConnector",
+      "PASS config definitions: io.aiven.kafka.connect.s3.AivenKafkaConnectS3SinkConnector"
+    ],
+    "nativeMM2": {
+      "status": "passed",
+      "stdout": "PASS 10 native checks\ndefault remote topic has source prefix\ncycle back to original alias detected\nmulti-hop topic allowed toward unrelated third cluster\nnested origin chain detects destination alias\nidentity preserves topic name\nidentity lacks equivalent cycle information\nheartbeat generated with no broker configuration or source connection\ndirectory provider reads allowed mounted-key fixture\ndirectory provider denies another directory\nmatching schema-envelope converters round trip CDC structure\n",
+      "noBrokerConnections": true
+    },
+    "nativeConfigKeys": [
+      {
+        "plugin": "aiven",
+        "class": "io.aiven.kafka.connect.s3.AivenKafkaConnectS3SinkConnector",
+        "output": "flush.size=false\nrotate.schedule.interval.ms=false\nformat.output.type=true\nfile.compression.type=true\naws.s3.bucket.name=true\naws.s3.region=true\nfile.max.records=true\nfile.name.template=true\nformat.output.fields=true\nrequired=[]\nconfigurationKeys=40\n"
+      },
+      {
+        "plugin": "debezium",
+        "class": "io.debezium.connector.postgresql.PostgresConnector",
+        "output": "database.sslmode=true\ndatabase.sslrootcert=true\npublication.autocreate.mode=true\nslot.name=true\ntopic.prefix=true\nschema.history.internal.kafka.topic=false\nsnapshot.mode=true\nrequired=[]\nconfigurationKeys=126\n"
+      }
+    ],
+    "fences": [
+      {
+        "path": "ko/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+        "language": "python"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+        "language": "sql"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+        "language": "python"
+      },
+      {
+        "path": "en/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+        "language": "sql"
+      },
+      {
+        "path": "en/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/05-kafka-connect-mirrormaker.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/quizzes/data-on-eks/kafka/05-kafka-connect-mirrormaker-quiz.md",
+        "language": "yaml"
+      }
+    ],
+    "relativeLinks": 12,
+    "quizQuestions": 36,
+    "limitations": "No broker, DB, ECR, S3 or cross-region connections. Native config/codec/provider/policy tests and strict released CRD shape validation, not live reconciliation or data-delivery proof."
+  }
+}

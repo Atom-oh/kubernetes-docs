@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Route active critical Inspector ECR findings to an encrypted SNS topic.
+Parameters:
+  RuleName:
+    Type: String
+    Default: image-security-findings
+    AllowedPattern: '[A-Za-z0-9._-]+'
+    MinLength: 1
+    MaxLength: 64
+    Description: Unique rule name used to scope the EventBridge role trust.
+  TopicKmsKeyArn:
+    Type: String
+    AllowedPattern: 'arn:[a-z0-9-]+:kms:[a-z0-9-]+:[0-9]{12}:key/[a-zA-Z0-9-]+'
+    Description: Existing same-account/Region symmetric CMK whose key policy permits IAM delegation.
+Resources:
+  AlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      KmsMasterKeyId: !Ref TopicKmsKeyArn
+  PublishRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnEquals:
+                aws:SourceArn: !Sub 'arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${RuleName}'
+      Policies:
+        - PolicyName: PublishEncryptedFindings
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: sns:Publish
+                Resource: !Ref AlertTopic
+              - Effect: Allow
+                Action: [kms:GenerateDataKey, kms:Decrypt]
+                Resource: !Ref TopicKmsKeyArn
+  InspectorFindingRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Ref RuleName
+      EventPattern:
+        source: [aws.inspector2]
+        detail-type: [Inspector2 Finding]
+        detail:
+          status: [ACTIVE]
+          severity: [CRITICAL]
+          resources:
+            type: [AWS_ECR_CONTAINER_IMAGE]
+      Targets:
+        - Id: EncryptedSns
+          Arn: !Ref AlertTopic
+          RoleArn: !GetAtt PublishRole.Arn
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 1800
+            MaximumRetryAttempts: 12
+Outputs:
+  TopicArn:
+    Description: Subscribe an approved notification consumer separately.
+    Value: !Ref AlertTopic
+  RuleArn:
+    Description: Rule scoped in the publisher role trust policy.
+    Value: !GetAtt InspectorFindingRule.Arn

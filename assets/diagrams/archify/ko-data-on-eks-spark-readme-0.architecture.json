@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Spark on Kubernetes 실행 구조",
+    "title": "Spark cluster mode: 요청·Pod 배치·task 조율",
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
@@ -12,9 +12,10 @@
         "focus": [
           "submit",
           "apiserver",
-          "driver"
+          "driver",
+          "placement"
         ],
-        "note": "spark-submit이 API Server에 요청해 드라이버 Pod 하나만 만든다. 상시 클러스터 매니저 데몬은 없다."
+        "note": "Cluster mode의 제출자는 driver Pod를 요청합니다. 노드 선택은 Kubernetes scheduler, 컨테이너 시작은 kubelet의 역할입니다."
       },
       {
         "id": "executors",
@@ -24,9 +25,10 @@
           "apiserver",
           "exec1",
           "exec2",
-          "exec3"
+          "exec3",
+          "placement"
         ],
-        "note": "드라이버가 spark.executor.instances 또는 DRA에 따라 Kubernetes API를 직접 호출해 Executor Pod를 만든다."
+        "note": "Driver는 executor Pod를 요청하고 Spark task를 조율합니다. Pod 배치는 여전히 Kubernetes가 담당합니다."
       },
       {
         "id": "report",
@@ -37,7 +39,7 @@
           "exec3",
           "driver"
         ],
-        "note": "Executor는 드라이버에 직접 연결해 등록하고 결과·상태를 보고한다. Kubernetes는 작업 조율에 개입하지 않는다."
+        "note": "Executor는 driver에 등록하고 task를 실행·보고합니다. 그림은 cluster mode이며 client mode도 지원됩니다."
       }
     ],
     "legend": {
@@ -63,7 +65,7 @@
       "id": "apiserver",
       "type": "backend",
       "label": "Kubernetes API Server",
-      "sublabel": "컨트롤 플레인",
+      "sublabel": "인증 · admission · API 상태",
       "pos": [
         460,
         170
@@ -77,7 +79,7 @@
       "id": "driver",
       "type": "cloud",
       "label": "Driver Pod",
-      "sublabel": "작업 동안 클러스터 매니저 역할",
+      "sublabel": "Spark stage/task 조율",
       "pos": [
         80,
         400
@@ -128,6 +130,20 @@
         150,
         60
       ]
+    },
+    {
+      "id": "placement",
+      "type": "backend",
+      "label": "Pod 배치와 시작",
+      "sublabel": "scheduler + node kubelets",
+      "pos": [
+        460,
+        270
+      ],
+      "size": [
+        220,
+        54
+      ]
     }
   ],
   "boundaries": [
@@ -139,7 +155,8 @@
         "driver",
         "exec1",
         "exec2",
-        "exec3"
+        "exec3",
+        "placement"
       ]
     }
   ],
@@ -157,19 +174,19 @@
     },
     {
       "id": "api-to-driver",
-      "from": "apiserver",
+      "from": "placement",
       "to": "driver",
-      "label": "드라이버 Pod 스케줄링",
+      "label": "배치 · 시작",
       "fromSide": "bottom",
       "toSide": "top",
       "via": [
         [
           570,
-          300
+          350
         ],
         [
           175,
-          300
+          350
         ]
       ]
     },
@@ -198,43 +215,43 @@
     },
     {
       "id": "api-to-exec1",
-      "from": "apiserver",
+      "from": "placement",
       "to": "exec1",
-      "label": "스케줄링",
+      "label": "배치 · 시작",
       "fromSide": "bottom",
       "toSide": "top",
       "via": [
         [
           570,
-          300
+          350
         ],
         [
           405,
-          300
+          350
         ]
       ]
     },
     {
       "id": "api-to-exec2",
-      "from": "apiserver",
+      "from": "placement",
       "to": "exec2",
       "fromSide": "bottom",
       "toSide": "top"
     },
     {
       "id": "api-to-exec3",
-      "from": "apiserver",
+      "from": "placement",
       "to": "exec3",
       "fromSide": "bottom",
       "toSide": "top",
       "via": [
         [
           570,
-          300
+          350
         ],
         [
           735,
-          300
+          350
         ]
       ]
     },
@@ -283,6 +300,16 @@
           175,
           545
         ]
+      ]
+    },
+    {
+      "id": "api-to-placement",
+      "from": "apiserver",
+      "to": "placement",
+      "label": "Pod specs / bindings",
+      "labelAt": [
+        705,
+        250
       ]
     }
   ]

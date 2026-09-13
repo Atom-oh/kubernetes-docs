@@ -1,0 +1,166 @@
+{
+  "date": "2026-09-11",
+  "scope": [
+    "ko/networking/**",
+    "en/networking/**",
+    "ko/quizzes/networking/**",
+    "en/quizzes/networking/**"
+  ],
+  "inventory": 108,
+  "fullyRead": 108,
+  "fixedAndValidated": 108,
+  "currentBatch": null,
+  "currentFiles": [],
+  "remaining": {
+    "root": 0,
+    "calico": 0,
+    "cilium": 0
+  },
+  "completedSubbatches": [
+    {
+      "name": "overview",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-overview-validation.json"
+    },
+    {
+      "name": "vpc-cni",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-vpc-cni-validation.json"
+    },
+    {
+      "name": "vpc-lattice",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-lattice-validation.json"
+    },
+    {
+      "name": "aws-load-balancer-controller",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-lbc-validation.json"
+    },
+    {
+      "name": "gateway-api",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-gateway-validation.json"
+    },
+    {
+      "name": "cross-organization-vpc-connectivity",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-crossorg-validation.json"
+    },
+    {
+      "name": "pod-network-benchmark",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-pod-benchmark-validation.json"
+    },
+    {
+      "name": "calico-readme",
+      "documents": 2,
+      "report": "docs/reviews/2026-09-11/networking-calico-readme-validation.json"
+    },
+    {
+      "name": "calico-introduction",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-calico-introduction-validation.json"
+    },
+    {
+      "name": "calico-architecture",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-calico-architecture-validation.json"
+    },
+    {
+      "name": "calico-networking-modes",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-calico-modes-validation.json"
+    },
+    {
+      "name": "calico-bgp-deep-dive",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-calico-bgp-validation.json"
+    },
+    {
+      "name": "calico-network-policy",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-calico-policy-validation.json"
+    },
+    {
+      "name": "calico-ebpf-dataplane",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-calico-ebpf-validation.json"
+    },
+    {
+      "name": "calico-advanced-topics",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-calico-advanced-validation.json"
+    },
+    {
+      "name": "calico-eks-integration",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-calico-eks-validation.json"
+    },
+    {
+      "name": "calico-operations",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-calico-operations-validation.json"
+    },
+    {
+      "name": "calico-glossary",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-calico-glossary-validation.json"
+    },
+    {
+      "name": "cilium-readme",
+      "documents": 2,
+      "report": "docs/reviews/2026-09-11/networking-cilium-readme-validation.json"
+    },
+    {
+      "name": "cilium-introduction",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-cilium-introduction-validation.json"
+    },
+    {
+      "name": "cilium-ebpf",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-cilium-ebpf-validation.json"
+    },
+    {
+      "name": "cilium-networking",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-cilium-networking-validation.json"
+    },
+    {
+      "name": "cilium-ipam-policy",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-cilium-ipam-policy-validation.json"
+    },
+    {
+      "name": "cilium-l2-l7",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-cilium-l2l7-validation.json"
+    },
+    {
+      "name": "cilium-security-visibility",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-cilium-security-validation.json"
+    },
+    {
+      "name": "cilium-advanced-topics",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-cilium-advanced-validation.json"
+    },
+    {
+      "name": "cilium-glossary",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-cilium-glossary-validation.json"
+    },
+    {
+      "name": "cilium-networking-concepts",
+      "documents": 4,
+      "report": "docs/reviews/2026-09-11/networking-cilium-concepts-validation.json"
+    }
+  ],
+  "perDocumentReport": "docs/reviews/2026-09-11/batches/networking-cilium.json",
+  "blockers": [],
+  "pendingValidation": [],
+  "status": "complete",
+  "coverage": "docs/reviews/2026-09-11/networking-coverage.json"
+}

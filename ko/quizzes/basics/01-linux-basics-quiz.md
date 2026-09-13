@@ -32,7 +32,7 @@ Linux 커널은 운영체제의 핵심으로, 하드웨어와 소프트웨어 �
 **정답: C) 메모리 네임스페이스**
 
 **설명:**
-Linux에는 다음과 같은 네임스페이스가 있습니다: PID(프로세스 ID), 네트워크, 마운트, UTS(호스트명), IPC(프로세스 간 통신), 사용자, cgroup 네임스페이스. 메모리 네임스페이스는 존재하지 않습니다. 메모리 격리는 주로 cgroups를 통해 관리됩니다.
+Linux에는 다음과 같은 네임스페이스가 있습니다: PID(프로세스 ID), 네트워크, 마운트, UTS(호스트명), IPC(프로세스 간 통신), 사용자, cgroup 및 시간 네임스페이스. 메모리 네임스페이스는 없으며 프로세스 가상 주소 공간이 메모리를 분리하고 cgroups는 사용량을 계측/제한합니다.
 
 </details>
 
@@ -49,7 +49,7 @@ Linux에는 다음과 같은 네임스페이스가 있습니다: PID(프로세�
 **정답: A) 프로세스 그룹의 자원 사용 제한 및 격리**
 
 **설명:**
-cgroups는 프로세스 그룹의 자원 사용을 제한하고 격리하는 Linux 커널 기능입니다. CPU 시간, 메모리, 블록 I/O, 네트워크 대역폭 등의 자원 사용을 제한하고 모니터링할 수 있습니다. 이는 컨테이너의 자원 제한을 구현하는 데 핵심적인 기술입니다.
+cgroups는 프로세스 그룹의 자원 사용을 제한하고 격리하는 Linux 커널 기능입니다. CPU 시간, 메모리, 블록 I/O를 제한/계측하며 네트워크 대역폭 제어는 tc/eBPF 연동이 필요합니다. 이는 컨테이너의 자원 제한을 구현하는 데 핵심적인 기술입니다.
 </details>
 
 4. 파일 권한 "rwxr-xr--"에서 그룹 사용자의 권한은 무엇인가요?
@@ -119,7 +119,7 @@ OverlayFS는 여러 디렉토리를 겹쳐서 단일 디렉토리로 표현하�
 **정답: B) net.ipv4.ip_forward**
 
 **설명:**
-`net.ipv4.ip_forward`는 Linux 커널에서 IP 패킷 포워딩을 활성화하는 설정입니다. 이 설정이 1로 활성화되어야 컨테이너 간, 그리고 컨테이너와 외부 네트워크 간의 통신이 가능합니다. Kubernetes 노드 설정 시 이 파라미터는 반드시 활성화되어야 하며, `sysctl -w net.ipv4.ip_forward=1` 명령으로 설정할 수 있습니다.
+`net.ipv4.ip_forward`는 Linux 커널에서 IP 패킷 포워딩을 활성화하는 설정입니다. 노드가 인터페이스 간 IPv4 패킷을 전달할 때 1로 설정합니다. 같은 네트워크 네임스페이스의 localhost 통신에는 포워딩이 필요하지 않습니다. Kubernetes 노드 설정 시 이 파라미터는 반드시 활성화되어야 하며, `sysctl -w net.ipv4.ip_forward=1` 명령으로 설정할 수 있습니다.
 </details>
 
 8. systemd 유닛 파일에서 서비스 간의 시작 순서를 정의할 때, 특정 서비스 이후에 시작되도록 설정하는 지시어는 무엇인가요?
@@ -135,10 +135,10 @@ OverlayFS는 여러 디렉토리를 겹쳐서 단일 디렉토리로 표현하�
 **정답: C) After**
 
 **설명:**
-systemd 유닛 파일에서 `After`는 현재 유닛이 지정된 유닛 이후에 시작되어야 함을 정의합니다. 예를 들어, `After=network-online.target`은 네트워크가 준비된 후에 서비스가 시작되도록 합니다. `Requires`는 강한 의존성을, `Wants`는 약한 의존성을 정의하며, `Before`는 현재 유닛이 다른 유닛보다 먼저 시작되어야 함을 나타냅니다.
+systemd 유닛 파일에서 `After`는 현재 유닛이 지정된 유닛 이후에 시작되어야 함을 정의합니다. After=는 두 유닛이 시작될 때 순서만 지정합니다. 부팅 시 네트워크 준비가 필요하면 Wants=network-online.target, After= 및 배포판의 wait-online 구현을 함께 사용하며 지속적인 네트워크 가용성을 보장하지는 않습니다. `Requires`는 강한 의존성을, `Wants`는 약한 의존성을 정의하며, `Before`는 현재 유닛이 다른 유닛보다 먼저 시작되어야 함을 나타냅니다.
 </details>
 
-9. CNI 플러그인이 정상적으로 작동하기 위해 필요한 커널 파라미터로, 브릿지 트래픽이 iptables를 통과하도록 하는 설정은 무엇인가요?
+9. 선택한 CNI가 bridge netfilter를 요구할 때 브릿지 IPv4 트래픽을 iptables로 전달하는 커널 설정은 무엇인가요?
    - A) net.ipv4.ip_forward
    - B) net.bridge.bridge-nf-call-iptables
    - C) net.core.netdev_max_backlog
@@ -151,7 +151,7 @@ systemd 유닛 파일에서 `After`는 현재 유닛이 지정된 유닛 이후�
 **정답: B) net.bridge.bridge-nf-call-iptables**
 
 **설명:**
-`net.bridge.bridge-nf-call-iptables`는 브릿지된 네트워크 트래픽이 iptables 규칙을 통과하도록 설정합니다. 이 설정은 Kubernetes CNI 플러그인(Calico, Flannel 등)이 네트워크 정책과 서비스 라우팅을 올바르게 적용하기 위해 필수적입니다. 이 설정을 활성화하려면 먼저 `br_netfilter` 커널 모듈을 로드해야 합니다.
+`net.bridge.bridge-nf-call-iptables`는 브릿지된 네트워크 트래픽이 iptables 규칙을 통과하도록 설정합니다. 필요 여부는 CNI/데이터 플레인에 따라 다르며 라우팅/eBPF 네트워크에 일괄 요구되는 것은 아닙니다. 이 설정을 활성화하려면 먼저 `br_netfilter` 커널 모듈을 로드해야 합니다.
 </details>
 
 10. 패키지 관리에서 Kubernetes 구성 요소의 자동 업그레이드를 방지하기 위해 Ubuntu/Debian에서 사용하는 명령은 무엇인가요?
@@ -167,7 +167,7 @@ systemd 유닛 파일에서 `After`는 현재 유닛이 지정된 유닛 이후�
 **정답: B) apt-mark hold**
 
 **설명:**
-`apt-mark hold`는 특정 패키지가 자동으로 업그레이드되지 않도록 고정합니다. Kubernetes 클러스터에서는 kubelet, kubeadm, kubectl의 버전 호환성이 중요하므로, `sudo apt-mark hold kubelet kubeadm kubectl` 명령으로 버전을 고정하는 것이 권장됩니다. RHEL/CentOS에서는 `yum versionlock` 명령을 사용합니다.
+`apt-mark hold`는 특정 패키지가 자동으로 업그레이드되지 않도록 고정합니다. Kubernetes 클러스터에서는 kubelet, kubeadm, kubectl의 버전 호환성이 중요하므로, `sudo apt-mark hold kubelet kubeadm kubectl` 명령으로 버전을 고정하는 것이 권장됩니다. RPM 기반 배포판은 설치된 DNF/YUM versionlock 플러그인 또는 배포판에 맞는 저장소 exclude 설정을 사용합니다.
 </details>
 
 ## 단답형 문제
@@ -241,7 +241,7 @@ veth 쌍은 가상 이더넷 인터페이스 쌍으로, 한쪽 끝은 컨테이�
 **정답: ulimit**
 
 **설명:**
-ulimit은 사용자 및 프로세스의 리소스 제한을 확인하고 설정하는 명령입니다. `ulimit -n`으로 열 수 있는 파일 디스크립터 수를 확인하고, `ulimit -n 65536`으로 제한을 변경할 수 있습니다. Kubernetes 노드에서는 많은 파일 핸들이 필요하므로, `/etc/security/limits.conf`에서 영구적으로 높은 값을 설정하는 것이 일반적입니다.
+ulimit은 사용자 및 프로세스의 리소스 제한을 확인하고 설정하는 명령입니다. `ulimit -n`으로 열 수 있는 파일 디스크립터 수를 확인하고, `ulimit -n 65536`으로 제한을 변경할 수 있습니다. 셸 제한은 자신과 이후 자식 프로세스에 적용됩니다. PAM 제한은 새 로그인 세션에 적용하며 kubelet 같은 시스템 서비스는 systemd LimitNOFILE을 사용합니다.
 </details>
 
 17. systemd의 로깅 시스템으로, 서비스 로그를 통합적으로 관리하는 데 사용되는 도구의 이름은 무엇인가요?
@@ -265,7 +265,7 @@ journald는 systemd의 통합 로깅 시스템으로, 시스템 및 서비스 �
 **정답: chronyd (또는 chrony)**
 
 **설명:**
-chronyd는 현대적인 NTP 클라이언트/서버로, 기존 ntpd보다 빠르게 시간을 동기화합니다. `chronyc tracking` 명령으로 동기화 상태를 확인하고, `chronyc sources`로 NTP 서버 목록을 볼 수 있습니다. Kubernetes 클러스터에서는 모든 노드의 시간이 정확하게 동기화되어야 인증, 로깅 등이 올바르게 작동합니다.
+chronyd는 NTP 클라이언트/서버이며 동기화 속도는 네트워크, 시간 소스 품질 및 설정에 따라 다릅니다. `chronyc tracking` 명령으로 동기화 상태를 확인하고, `chronyc sources`로 NTP 서버 목록을 볼 수 있습니다. Kubernetes 클러스터에서는 모든 노드의 시간이 정확하게 동기화되어야 인증, 로깅 등이 올바르게 작동합니다.
 </details>
 
 19. Linux에서 DNS 이름 해석 설정이 저장되는 파일의 경로는 무엇인가요?
@@ -291,10 +291,12 @@ chronyd는 현대적인 NTP 클라이언트/서버로, 기존 ntpd보다 빠르�
 **정답:**
 ```bash
 # 새로운 네트워크 네임스페이스 생성
-ip netns add mynetns
+sudo ip netns add mynetns
 
 # 해당 네임스페이스 내에서 네트워크 인터페이스 목록 확인
-ip netns exec mynetns ip link list
+sudo ip netns exec mynetns ip link list
+# After the exercise, when no processes use it:
+sudo ip netns delete mynetns
 ```
 
 **설명:**
@@ -386,7 +388,7 @@ ss -tulpn | grep :8080
   - `ss -tulpn | grep :8080`: `netstat`의 현대적인 대체 명령어로, 동일한 정보를 제공합니다.
 </details>
 
-25. Kubernetes 노드에 필요한 커널 모듈 br_netfilter와 overlay를 부팅 시 자동으로 로드하도록 설정하는 명령어를 작성하세요.
+25. 선택한 런타임/CNI가 요구하는 경우 커널 모듈 br_netfilter와 overlay를 부팅 시 자동으로 로드하도록 설정하는 명령어를 작성하세요.
 
 <details>
 
@@ -405,7 +407,7 @@ sudo modprobe br_netfilter
 ```
 
 **설명:**
-`/etc/modules-load.d/` 디렉토리에 `.conf` 파일을 생성하면 systemd-modules-load 서비스가 부팅 시 해당 모듈을 자동으로 로드합니다. `overlay` 모듈은 OverlayFS 파일 시스템을 지원하여 컨테이너 이미지 레이어에 사용되고, `br_netfilter` 모듈은 브릿지 트래픽이 iptables를 통과하도록 하여 Kubernetes 네트워킹에 필수적입니다.
+`/etc/modules-load.d/` 디렉토리에 `.conf` 파일을 생성하면 systemd-modules-load 서비스가 부팅 시 해당 모듈을 자동으로 로드합니다. `overlay` 모듈은 OverlayFS 파일 시스템을 지원하여 컨테이너 이미지 레이어에 사용되고, `br_netfilter` 모듈은 브릿지 트래픽이 iptables를 통과하도록 하여 선택한 CNI가 요구하는 경우 사용합니다.
 </details>
 
 26. kubelet 서비스의 실시간 로그를 확인하면서, 에러 수준 이상의 메시지만 필터링하는 journalctl 명령어를 작성하세요.
@@ -419,11 +421,7 @@ sudo modprobe br_netfilter
 journalctl -u kubelet -f -p err
 ```
 
-또는
-
-```bash
-journalctl -u kubelet -f -p warning
-```
+`-p warning`은 경고도 포함하므로 문제의 에러 이상 조건과 다릅니다.
 
 **설명:**
   - `-u kubelet`: kubelet 서비스의 로그만 표시
@@ -460,19 +458,19 @@ sudo timedatectl set-timezone Asia/Seoul
 <summary>정답 보기</summary>
 
 **정답:**
-```bash
+```text
 *               soft    nofile          65536
 *               hard    nofile          65536
 ```
 
-또는 특정 사용자/서비스에 대해:
-```bash
+또는 특정 PAM 로그인 사용자에 대해(systemd 서비스 설정은 아님):
+```text
 root            soft    nofile          65536
 root            hard    nofile          65536
 ```
 
 **설명:**
-`/etc/security/limits.conf`는 PAM(Pluggable Authentication Modules)이 사용하는 설정 파일로, 사용자별 리소스 제한을 정의합니다. `*`는 모든 사용자를, `soft`는 기본 제한을, `hard`는 최대 제한을 의미합니다. `nofile`은 열 수 있는 파일 디스크립터 수를 지정합니다. Kubernetes 노드에서는 많은 네트워크 연결과 파일 핸들이 필요하므로 이 값을 높게 설정해야 합니다.
+`/etc/security/limits.conf`는 PAM(Pluggable Authentication Modules)이 사용하는 설정 파일로, 사용자별 리소스 제한을 정의합니다. `*`는 일반 사용자(root는 명시 항목 필요)를, `soft`는 기본 제한을, `hard`는 최대 제한을 의미합니다. `nofile`은 열 수 있는 파일 디스크립터 수를 지정합니다. 워크로드 요구에 맞는 값을 선택합니다. PAM 설정은 실행 중인 프로세스나 일반 systemd 시스템 서비스에 적용되지 않으므로 서비스 drop-in의 LimitNOFILE을 구성합니다.
 </details>
 
 ## 심화 문제
@@ -502,7 +500,7 @@ root            hard    nofile          65536
   - CPU 시간 제한
   - 메모리 사용량 제한
   - 블록 I/O 대역폭 제한
-  - 네트워크 대역폭 제한
+  - tc/eBPF와 연동한 네트워크 트래픽 분류
   - 장치 접근 제어
 
 3. **기능(Capabilities)**:
@@ -600,7 +598,7 @@ Linux 기능은 전통적인 root 권한을 더 작은 권한 단위로 나눈 �
 실제 운영 환경에서는 컨테이너가 필요로 하는 기능을 정확히 파악하고, 그 외의 모든 기능은 제거하는 것이 좋은 보안 관행입니다. 이를 위해 Docker의 `--cap-drop`, `--cap-add` 옵션이나 Kubernetes의 `securityContext.capabilities` 필드를 사용할 수 있습니다.
 </details>
 
-32. systemd 서비스 유닛 파일의 구조와 주요 섹션([Unit], [Service], [Install])의 역할을 설명하고, Kubernetes kubelet 서비스를 위한 기본적인 유닛 파일 예시를 작성하세요.
+32. systemd 서비스 유닛 파일의 구조와 주요 섹션([Unit], [Service], [Install])의 역할을 설명하고, 실습용 서비스의 기본 유닛 예시와 kubelet 패키지 유닛/drop-in을 유지해야 하는 이유를 설명하세요.
 
 <details>
 
@@ -625,19 +623,18 @@ Linux 기능은 전통적인 root 권한을 더 작은 권한 단위로 나눈 �
 3. **[Install] 섹션**: 유닛 활성화(enable) 시 동작 정의
    - `WantedBy`: 이 유닛을 원하는 타겟
 
-**kubelet 서비스 유닛 파일 예시:**
+**실습 서비스 유닛 예시(linux-basics-demo.service):**
 
 ```ini
 [Unit]
-Description=kubelet: The Kubernetes Node Agent
-Documentation=https://kubernetes.io/docs/
+Description=Linux basics training service
+Documentation=man:systemd.service(5)
 Wants=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/kubelet
-Restart=always
-StartLimitInterval=0
+ExecStart=/usr/bin/sleep infinity
+Restart=on-failure
 RestartSec=10
 
 [Install]
@@ -645,7 +642,7 @@ WantedBy=multi-user.target
 ```
 
 **설명:**
-이 유닛 파일은 kubelet 서비스를 정의합니다. 네트워크가 준비된 후에 시작되며(`After=network-online.target`), 실패 시 항상 재시작하고(`Restart=always`), 10초 간격으로 재시작을 시도합니다(`RestartSec=10`). `WantedBy=multi-user.target`은 시스템이 다중 사용자 모드로 부팅될 때 이 서비스가 시작됨을 의미합니다.
+이 유닛은 무해한 실습 프로세스를 실행합니다. systemctl cat kubelet으로 배포판 유닛과 kubeadm drop-in을 확인하며 이 예제로 덮어쓰지 않습니다. 두 유닛이 활성화될 때 network-online.target 이후로 시작 순서를 지정하며, 실패 시 항상 재시작하고(`Restart=on-failure`), 10초 간격으로 재시작을 시도합니다(`RestartSec=10`). `WantedBy=multi-user.target`은 시스템이 다중 사용자 모드로 부팅될 때 이 서비스가 시작됨을 의미합니다.
 </details>
 
 33. Kubernetes 노드 설정에 필요한 sysctl 커널 파라미터들을 영구적으로 설정하는 방법과 각 파라미터의 역할을 설명하세요.
@@ -665,12 +662,11 @@ cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes.conf
 net.ipv4.ip_forward = 1
 net.ipv6.conf.all.forwarding = 1
 
-# 브릿지 트래픽이 iptables를 통과 - CNI 네트워크 정책에 필수
+# 브릿지 트래픽이 iptables를 통과 - CNI가 bridge netfilter를 사용하는 경우에만 필요
 net.bridge.bridge-nf-call-iptables = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 
-# 연결 추적 테이블 크기 (대규모 클러스터용)
-net.netfilter.nf_conntrack_max = 1000000
+# conntrack 크기는 실제 워크로드/메모리 요구를 측정한 후 별도 조정합니다.
 EOF
 
 # 설정 적용
@@ -686,8 +682,8 @@ sudo sysctl --system
 
 2. **net.bridge.bridge-nf-call-iptables = 1**
    - 브릿지를 통과하는 트래픽이 iptables 규칙을 적용받도록 설정
-   - Kubernetes 서비스(ClusterIP, NodePort)와 NetworkPolicy가 올바르게 작동하는 데 필수
-   - kube-proxy가 서비스 라우팅을 위해 iptables를 사용하므로 반드시 필요
+   - bridge netfilter에 의존하는 구현에서 필요
+   - kube-proxy는 iptables/nftables를 사용할 수 있으며 다른 데이터 플레인이 이를 대체할 수도 있음
 
 3. **net.ipv6.conf.all.forwarding = 1**
    - IPv6 환경에서의 패킷 포워딩 활성화
@@ -698,7 +694,7 @@ sudo sysctl --system
 2. sysctl 설정 파일 생성
 3. `sysctl --system`으로 모든 설정 적용
 
-이러한 설정 없이는 Kubernetes 클러스터의 네트워킹이 정상적으로 작동하지 않으며, 특히 Pod 간 통신과 서비스 디스커버리에 문제가 발생합니다.
+사용하는 IP 계열/CNI가 요구하는 설정만 격리된 실습 또는 검토한 노드 구성 절차로 적용합니다.
 </details>
 
 34. journald와 logrotate를 사용한 Linux 로그 관리 전략을 설명하고, Kubernetes 노드에서 효율적인 로그 관리를 위한 설정 방법을 제시하세요.
@@ -718,7 +714,7 @@ sudo sysctl --system
 
 **logrotate (전통적 로그 파일 관리):**
 - 텍스트 로그 파일의 순환, 압축, 삭제 관리
-- 크론잡으로 주기적 실행
+- 배포판의 systemd timer 또는 cron으로 주기적 실행
 
 **Kubernetes 노드 로그 관리 설정:**
 
@@ -741,10 +737,19 @@ SystemKeepFree=1G
 MaxRetentionSec=1month
 ```
 
-**2. 컨테이너 로그를 위한 logrotate 설정:**
-```bash
-# /etc/logrotate.d/containers
-/var/log/containers/*.log {
+**2. kubelet CRI 로그 회전:**
+
+기존 kubelet 설정에 아래 필드를 병합합니다. kubectl로 적용하거나 파일 전체를 덮어쓰지 않습니다.
+
+```yaml
+containerLogMaxSize: 10Mi
+containerLogMaxFiles: 5
+```
+
+kubelet이 관리하지 않는 일반 애플리케이션 텍스트 로그에는 다음 예제를 사용합니다:
+```text
+# /etc/logrotate.d/myapp
+/var/log/myapp/*.log {
     daily
     rotate 7
     compress
@@ -768,9 +773,11 @@ journalctl --disk-usage
 
 **Kubernetes 로그 관리 모범 사례:**
 
-1. **kubelet 로그**: journald가 관리, `/var/log/journal/`에 저장
-2. **컨테이너 로그**: `/var/log/containers/`에 저장, logrotate로 관리
+1. **kubelet 로그**: 일반적으로 journald가 관리하며 영속 저장은 /var/log/journal, 휘발성 저장은 /run/log/journal 사용
+2. **컨테이너 로그**: CRI 파일은 보통 /var/log/pods에 있으며 /var/log/containers는 심볼릭 링크입니다. kubelet이 회전하므로 이 링크에 logrotate를 적용하지 않습니다.
 3. **중앙 집중 로깅**: Fluentd/Fluent Bit으로 외부 시스템에 전송 권장
+
+copytruncate의 복사/잘라내기 사이에 기록이 유실될 수 있으므로 애플리케이션이 지원하는 파일 재열기 방식을 선호합니다. journal vacuum은 보관된 파일만 삭제합니다.
 
 적절한 로그 관리는 디스크 공간 부족으로 인한 노드 장애를 방지하고, 문제 해결을 위한 로그를 보존하는 균형을 유지합니다.
 </details>
@@ -778,3 +785,24 @@ journalctl --disk-usage
 ---
 
 [학습 자료로 돌아가기](../../basics/01-linux-basics.md) | [다음 퀴즈: Linux 실무 기술](./02-linux-advanced-quiz.md)
+
+## 검증 참고 자료
+
+- https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html
+- https://kubernetes.io/docs/concepts/architecture/cgroups/
+- https://man7.org/linux/man-pages/man7/time_namespaces.7.html
+- https://man7.org/linux/man-pages/man2/getrlimit.2.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html
+- https://www.freedesktop.org/software/systemd/man/latest/journalctl.html
+- https://kubernetes.io/docs/concepts/cluster-administration/logging/
+- https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+- https://ubuntu.com/about/release-cycle
+- https://www.debian.org/releases/
+- https://www.centos.org/centos-linux-eol/
+- https://documentation.ubuntu.com/server/how-to/networking/timedatectl-and-timesyncd/
+- https://aws.amazon.com/amazon-linux-2/faqs/
+- https://docs.aws.amazon.com/linux/al2023/ug/ec2.html
+- https://github.com/logrotate/logrotate/blob/main/logrotate.8.in
+- https://github.com/linux-pam/linux-pam/blob/master/modules/pam_limits/limits.conf.5.xml

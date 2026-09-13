@@ -6,7 +6,7 @@
     "locale": "en",
     "output": "en-ai-ml-05-model-training-2.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "views": [
       {
         "id": "user-access",
@@ -18,7 +18,7 @@
           "slurmctld",
           "slurmrestd"
         ],
-        "note": "Users SSH into the login pod through the NLB, or submit jobs from JupyterHub via the slurmrestd REST API."
+        "note": "Authenticate login/REST access; a public NLB is not required."
       },
       {
         "id": "job-scheduling",
@@ -30,7 +30,7 @@
           "slurmd",
           "fsx"
         ],
-        "note": "slurmctld dispatches jobs to the GPU slurmd pods, records accounting in slurmdbd, and keeps data and checkpoints on FSx for Lustre."
+        "note": "Controller/NodeSet manage execution; accounting DB and controller state are distinct."
       },
       {
         "id": "deploy-scale",
@@ -42,7 +42,7 @@
           "nodepool",
           "slurmd"
         ],
-        "note": "ArgoCD deploys the Slurm control plane via GitOps, Karpenter grows compute through the GPU NodePool, and images come from Amazon ECR."
+        "note": "GitOps deploys actual charts; NodeSet replicas and EC2 capacity have separate controllers."
       }
     ]
   },
@@ -50,8 +50,8 @@
     {
       "id": "nlb",
       "type": "external",
-      "label": "NLB",
-      "sublabel": "Network Load Balancer",
+      "label": "Approved user access",
+      "sublabel": "authentication / scope",
       "pos": [
         40,
         240
@@ -78,8 +78,8 @@
     {
       "id": "ecr",
       "type": "external",
-      "label": "Amazon ECR",
-      "sublabel": "AWS DLC images",
+      "label": "Approved image registry",
+      "sublabel": "pinned Slurm / job images",
       "pos": [
         40,
         560
@@ -106,8 +106,8 @@
     {
       "id": "login",
       "type": "frontend",
-      "label": "Login Pod",
-      "sublabel": "SSH via NLB",
+      "label": "LoginSet / login",
+      "sublabel": "bound user identity",
       "pos": [
         300,
         240
@@ -121,7 +121,7 @@
       "id": "slurmrestd",
       "type": "backend",
       "label": "slurmrestd",
-      "sublabel": "REST API",
+      "sublabel": "RestApi / auth",
       "pos": [
         560,
         100
@@ -135,7 +135,7 @@
       "id": "slurmctld",
       "type": "backend",
       "label": "slurmctld",
-      "sublabel": "Controller daemon",
+      "sublabel": "Controller / StateSave",
       "pos": [
         560,
         240
@@ -149,7 +149,7 @@
       "id": "slurmdbd",
       "type": "database",
       "label": "slurmdbd",
-      "sublabel": "Database daemon",
+      "sublabel": "Accounting / external DB",
       "pos": [
         820,
         240
@@ -162,8 +162,8 @@
     {
       "id": "slurmd",
       "type": "backend",
-      "label": "slurmd Pods ×4",
-      "sublabel": "8x A100 GPU each",
+      "label": "NodeSet / slurmd",
+      "sublabel": "StatefulSet / DaemonSet",
       "pos": [
         560,
         560
@@ -176,8 +176,8 @@
     {
       "id": "fsx",
       "type": "database",
-      "label": "FSx for Lustre",
-      "sublabel": "Shared storage",
+      "label": "Shared data storage",
+      "sublabel": "permissions / mount / lifecycle",
       "pos": [
         560,
         700
@@ -333,29 +333,19 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "Slurm Control Plane",
+      "title": "Actual APIs",
       "items": [
-        "slurmctld: central controller for jobs, partitions, and resources (StatefulSet with PVC)",
-        "slurmdbd: job accounting and cluster state (StatefulSet with MySQL/MariaDB)",
-        "slurmrestd: REST API for programmatic job submission (Deployment with Service)"
+        "Controller / NodeSet / Accounting / LoginSet / RestApi / Token",
+        "slinky.slurm.net/v1beta1 (1.2.2)"
       ]
     },
     {
-      "dot": "emerald",
-      "title": "Compute and Storage",
+      "dot": "cyan",
+      "title": "Execution and recovery",
       "items": [
-        "slurmd: compute daemon running on GPU nodes (DaemonSet)",
-        "SlurmNodeSet gpu-a100: 4x p4d.24xlarge, 8x A100 GPU each",
-        "FSx for Lustre mounted at /shared and shared by every compute pod"
-      ]
-    },
-    {
-      "dot": "amber",
-      "title": "Access and Operations",
-      "items": [
-        "Login Pod: SSH access point exposed through the NLB",
-        "JupyterHub submits jobs through the slurmrestd REST API",
-        "ArgoCD GitOps deployment, Karpenter GPU NodePool auto scaling"
+        "slurmctld state and accounting DB cannot replace each other.",
+        "NodeSet defaults to StatefulSet-style; DaemonSet mode ignores replicas.",
+        "Validate draining, job completion/requeue and node reclamation."
       ]
     }
   ]

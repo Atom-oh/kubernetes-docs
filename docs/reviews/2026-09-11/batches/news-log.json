@@ -1,0 +1,18 @@
+[
+  {
+    "path": "ko/news/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "f5054dfe4b13021d372ec32723e6508c1f5f535e39ddf2c8395e6f6879d2df8f",
+    "summary": "Readall62historicalentries;verified22linkedHTTPsources/30releaseentries/additionalofficialdetailsandtags;clarifiedPRpublishflowandlogweek,eventscope;correctedAPIgroup/maintained-lineoverclaims.",
+    "validationReport": "docs/reviews/2026-09-11/news-log-validation.json"
+  },
+  {
+    "path": "en/news/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "d5840f8289a552075af0361ff92258471f26a36841469bd59de8244f47ca204c",
+    "summary": "Readall62historicalentries;verified22linkedHTTPsources/30releaseentries/additionalofficialdetailsandtags;clarifiedPRpublishflowandlogweek,eventscope;correctedAPIgroup/maintained-lineoverclaims.",
+    "validationReport": "docs/reviews/2026-09-11/news-log-validation.json"
+  }
+]

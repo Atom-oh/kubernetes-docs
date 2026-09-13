@@ -1,0 +1,851 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-12T14:27:44.947903+00:00",
+  "scope": [
+    "en/networking/cilium/03-networking.md",
+    "en/quizzes/networking/cilium/03-networking-quiz.md",
+    "ko/networking/cilium/03-networking.md",
+    "ko/quizzes/networking/cilium/03-networking-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/networking/cilium/03-networking.md": {
+      "lines": 352,
+      "sha256": "942569e326157ef8b09a98fe7eed99f7261cae4f5234caacd6504ae5bee00bd7"
+    },
+    "en/quizzes/networking/cilium/03-networking-quiz.md": {
+      "lines": 433,
+      "sha256": "56bbaefc477077f4edb93474c1f8255b5c5929a3bd3e2aa99288bae491adab40"
+    },
+    "ko/networking/cilium/03-networking.md": {
+      "lines": 353,
+      "sha256": "b712a1f1d8c443c254934957bd2e8a1e1fc871089781b26eed12803c46502f17"
+    },
+    "ko/quizzes/networking/cilium/03-networking-quiz.md": {
+      "lines": 433,
+      "sha256": "3ea2a7dd3215922d17c91622f122156f5eafc77c87ba2b775edc0d345cfc526a"
+    }
+  },
+  "checks": {
+    "files": [
+      {
+        "path": "en/networking/cilium/03-networking.md",
+        "sha256": "3b09a0059bbb4b0e116c1b5ab1b30b51bb0ac3fa902b6818f8a9ed34c16e04df",
+        "localTargets": [
+          "README.md",
+          "../../.gitbook/assets/en-networking-cilium-03-networking-2.png",
+          "README.md",
+          "../../quizzes/networking/cilium/03-networking-quiz.md"
+        ],
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/networking/cilium/03-networking-quiz.md",
+        "sha256": "870d0c4340e9762bf531df6cee792ee1d3f46a65441422ecaf09005d8c915e68",
+        "localTargets": [
+          "../../../networking/cilium/03-networking.md",
+          "../../../networking/cilium/README.md",
+          "../../../networking/cilium/03-networking.md",
+          "../../../networking/cilium/03-networking.md"
+        ],
+        "passed": true
+      },
+      {
+        "path": "ko/networking/cilium/03-networking.md",
+        "sha256": "e552c34f3eef0d4aa90d6a422c571766bb30085e9a9875c5eb332e1056618a0c",
+        "localTargets": [
+          "../../basics/06-network-fundamentals-part1.md",
+          "README.md",
+          "../../.gitbook/assets/ko-networking-cilium-03-networking-2.png",
+          "README.md",
+          "../../quizzes/networking/cilium/03-networking-quiz.md"
+        ],
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/networking/cilium/03-networking-quiz.md",
+        "sha256": "9aadee19d5232ed424cd1f5556f9a61f35dcbf600376e72a09560abc5c2cd962",
+        "localTargets": [
+          "../../../networking/cilium/03-networking.md",
+          "../../../networking/cilium/README.md",
+          "../../../networking/cilium/03-networking.md",
+          "../../../networking/cilium/03-networking.md"
+        ],
+        "passed": true
+      }
+    ],
+    "publishedObjectsValidated": 10,
+    "bashBlocks": 36,
+    "guidedExercises": 16,
+    "helmValuesProfiles": [
+      {
+        "file": "mode-vxlan.yaml",
+        "schema": "passed",
+        "explicitModeContract": "passed"
+      },
+      {
+        "file": "mode-geneve.yaml",
+        "schema": "passed",
+        "explicitModeContract": "passed"
+      },
+      {
+        "file": "mode-native.yaml",
+        "schema": "passed",
+        "explicitModeContract": "passed"
+      }
+    ],
+    "mtuArithmeticCases": [
+      {
+        "underlay": 1450,
+        "family": "IPv4",
+        "overhead": 50,
+        "innerBudget": 1400
+      },
+      {
+        "underlay": 1450,
+        "family": "IPv6",
+        "overhead": 70,
+        "innerBudget": 1380
+      },
+      {
+        "underlay": 1500,
+        "family": "IPv4",
+        "overhead": 50,
+        "innerBudget": 1450
+      },
+      {
+        "underlay": 1500,
+        "family": "IPv6",
+        "overhead": 70,
+        "innerBudget": 1430
+      },
+      {
+        "underlay": 9000,
+        "family": "IPv4",
+        "overhead": 50,
+        "innerBudget": 8950
+      },
+      {
+        "underlay": 9000,
+        "family": "IPv6",
+        "overhead": 70,
+        "innerBudget": 8930
+      }
+    ],
+    "cliFlagAssertions": 13,
+    "negativeRequestFixtures": [
+      {
+        "mockExit": 0,
+        "scriptExit": 1,
+        "output": "Unexpected allowed request: inspect combined policy and realization\n",
+        "doesNotDeclarePolicyPass": true
+      },
+      {
+        "mockExit": 1,
+        "scriptExit": 0,
+        "output": "Outsider request failed with exit 1; correlate the flow before declaring a policy pass.\n",
+        "doesNotDeclarePolicyPass": true
+      },
+      {
+        "mockExit": 7,
+        "scriptExit": 0,
+        "output": "Outsider request failed with exit 7; correlate the flow before declaring a policy pass.\n",
+        "doesNotDeclarePolicyPass": true
+      },
+      {
+        "mockExit": 28,
+        "scriptExit": 0,
+        "output": "Outsider request failed with exit 28; correlate the flow before declaring a policy pass.\n",
+        "doesNotDeclarePolicyPass": true
+      }
+    ],
+    "cleanupFixtures": [
+      {
+        "label": "cilium-networking-03",
+        "lookupExit": 0,
+        "wouldDelete": true,
+        "exit": 0
+      },
+      {
+        "label": "someone-else",
+        "lookupExit": 0,
+        "wouldDelete": false,
+        "exit": 1
+      },
+      {
+        "label": "",
+        "lookupExit": 1,
+        "wouldDelete": false,
+        "exit": 1
+      },
+      {
+        "label": "cilium-networking-03",
+        "lookupExit": 1,
+        "wouldDelete": false,
+        "exit": 1
+      }
+    ],
+    "gitDiffCheck": "passed",
+    "imageDigests": "Matched official CLI0.20defaults; images not pulled/executed",
+    "notPerformed": [
+      "Helm render",
+      "live Kubernetes/Cilium admission or datapath",
+      "benchmark",
+      "cloud mutations"
+    ],
+    "schemaLimits": "Structural OpenAPI/JSONSchema checks; Kubernetes/Cilium admission/CEL is not emulated.",
+    "schemaRegression": "Valid CNP unions preserved; misspelled ingress rejected. Strictification applies only to typed full objects, not partial anyOf/oneOf branches."
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 1024,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/networking/cilium/03-networking.md",
+        "sha256": "3b09a0059bbb4b0e116c1b5ab1b30b51bb0ac3fa902b6818f8a9ed34c16e04df",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "networking-models-and-vxlan"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-environment-setup"
+          },
+          {
+            "tag": "h3",
+            "id": "network-analysis-tools"
+          },
+          {
+            "tag": "h2",
+            "id": "container-networking-model-comparison"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium-networking-modes"
+          },
+          {
+            "tag": "h2",
+            "id": "vxlan-technology-deep-dive"
+          },
+          {
+            "tag": "h3",
+            "id": "vxlan-packet-structure"
+          },
+          {
+            "tag": "h3",
+            "id": "mtu-budget"
+          },
+          {
+            "tag": "h3",
+            "id": "vxlan-vs-other-encapsulations"
+          },
+          {
+            "tag": "h2",
+            "id": "cilium-s-overlay-networking"
+          },
+          {
+            "tag": "h2",
+            "id": "routing-mechanisms"
+          },
+          {
+            "tag": "h3",
+            "id": "encapsulation"
+          },
+          {
+            "tag": "h3",
+            "id": "native-routing"
+          },
+          {
+            "tag": "h2",
+            "id": "performance-optimization-techniques"
+          },
+          {
+            "tag": "h2",
+            "id": "cloud-provider-specific-networking"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-cilium-networking-mode-configuration-and-performance-testing"
+          },
+          {
+            "tag": "h3",
+            "id": "select-one-mode-on-a-fresh-prepared-cluster"
+          },
+          {
+            "tag": "h3",
+            "id": "network-performance-testing"
+          },
+          {
+            "tag": "h2",
+            "id": "sources"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "networking-models-and-vxlan",
+          "lab-environment-setup",
+          "network-analysis-tools",
+          "container-networking-model-comparison",
+          "cilium-networking-modes",
+          "vxlan-technology-deep-dive",
+          "vxlan-packet-structure",
+          "mtu-budget",
+          "vxlan-vs-other-encapsulations",
+          "cilium-s-overlay-networking",
+          "routing-mechanisms",
+          "encapsulation",
+          "native-routing",
+          "performance-optimization-techniques",
+          "cloud-provider-specific-networking",
+          "lab-cilium-networking-mode-configuration-and-performance-testing",
+          "select-one-mode-on-a-fresh-prepared-cluster",
+          "network-performance-testing",
+          "sources",
+          "quiz"
+        ]
+      },
+      {
+        "path": "en/quizzes/networking/cilium/03-networking-quiz.md",
+        "sha256": "870d0c4340e9762bf531df6cee792ee1d3f46a65441422ecaf09005d8c915e68",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cilium-networking-validation-exercises"
+          },
+          {
+            "tag": "h2",
+            "id": "prerequisites"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-installation-and-basic-testing"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-network-policy-testing"
+          },
+          {
+            "tag": "h3",
+            "id": "create-an-isolated-test-namespace-and-workloads"
+          },
+          {
+            "tag": "h3",
+            "id": "apply-and-check-the-policy"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-hubble-visibility-testing"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-performance-testing"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-optional-advanced-feature-checks"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-compatibility-checks"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-troubleshooting"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-cleanup"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-limits-and-references"
+          }
+        ],
+        "renderedIds": [
+          "cilium-networking-validation-exercises",
+          "prerequisites",
+          "_1-installation-and-basic-testing",
+          "_2-network-policy-testing",
+          "create-an-isolated-test-namespace-and-workloads",
+          "apply-and-check-the-policy",
+          "_3-hubble-visibility-testing",
+          "_4-performance-testing",
+          "_5-optional-advanced-feature-checks",
+          "_6-compatibility-checks",
+          "_7-troubleshooting",
+          "_8-cleanup",
+          "validation-limits-and-references"
+        ]
+      },
+      {
+        "path": "ko/networking/cilium/03-networking.md",
+        "sha256": "e552c34f3eef0d4aa90d6a422c571766bb30085e9a9875c5eb332e1056618a0c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "네트워킹-모델-및-vxlan"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "네트워크-분석-도구"
+          },
+          {
+            "tag": "h2",
+            "id": "컨테이너-네트워킹-모델-비교"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium-네트워킹-모드"
+          },
+          {
+            "tag": "h2",
+            "id": "vxlan-기술-심층-분석"
+          },
+          {
+            "tag": "h3",
+            "id": "vxlan-패킷-구조"
+          },
+          {
+            "tag": "h3",
+            "id": "mtu-계산"
+          },
+          {
+            "tag": "h3",
+            "id": "vxlan과-다른-캡슐화-비교"
+          },
+          {
+            "tag": "h2",
+            "id": "cilium의-오버레이-네트워킹"
+          },
+          {
+            "tag": "h2",
+            "id": "라우팅-메커니즘"
+          },
+          {
+            "tag": "h3",
+            "id": "캡슐화"
+          },
+          {
+            "tag": "h3",
+            "id": "네이티브-라우팅"
+          },
+          {
+            "tag": "h2",
+            "id": "성능-최적화-기법"
+          },
+          {
+            "tag": "h2",
+            "id": "클라우드-제공업체별-네트워킹"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-cilium-네트워킹-모드-구성-및-성능-테스트"
+          },
+          {
+            "tag": "h3",
+            "id": "준비된-새-클러스터에서-한-모드-선택"
+          },
+          {
+            "tag": "h3",
+            "id": "네트워크-성능-테스트"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "네트워킹-모델-및-vxlan",
+          "실습-환경-설정",
+          "네트워크-분석-도구",
+          "컨테이너-네트워킹-모델-비교",
+          "cilium-네트워킹-모드",
+          "vxlan-기술-심층-분석",
+          "vxlan-기술-심층-분석",
+          "vxlan-패킷-구조",
+          "mtu-계산",
+          "vxlan과-다른-캡슐화-비교",
+          "cilium의-오버레이-네트워킹",
+          "라우팅-메커니즘",
+          "캡슐화",
+          "네이티브-라우팅",
+          "성능-최적화-기법",
+          "클라우드-제공업체별-네트워킹",
+          "실습-cilium-네트워킹-모드-구성-및-성능-테스트",
+          "준비된-새-클러스터에서-한-모드-선택",
+          "네트워크-성능-테스트",
+          "참고-자료",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "ko/quizzes/networking/cilium/03-networking-quiz.md",
+        "sha256": "9aadee19d5232ed424cd1f5556f9a61f35dcbf600376e72a09560abc5c2cd962",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cilium-네트워킹-검증-실습"
+          },
+          {
+            "tag": "h2",
+            "id": "사전-요구-사항"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-설치-및-기본-테스트"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-네트워크-정책-테스트"
+          },
+          {
+            "tag": "h3",
+            "id": "독립적인-namespace와-workload-생성"
+          },
+          {
+            "tag": "h3",
+            "id": "정책-적용과-확인"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-hubble-가시성-테스트"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-성능-테스트"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-선택적-고급-기능-확인"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-호환성-확인"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-문제-해결"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-정리"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-한계와-참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "cilium-네트워킹-검증-실습",
+          "사전-요구-사항",
+          "_1-설치-및-기본-테스트",
+          "_2-네트워크-정책-테스트",
+          "독립적인-namespace와-workload-생성",
+          "정책-적용과-확인",
+          "_3-hubble-가시성-테스트",
+          "_4-성능-테스트",
+          "_5-선택적-고급-기능-확인",
+          "_6-호환성-확인",
+          "_7-문제-해결",
+          "_8-정리",
+          "검증-한계와-참고-자료"
+        ]
+      }
+    ]
+  },
+  "findings": [
+    "Replaced removed tunnel/--config/IPAM ConfigMap examples with three current Helm values profiles; kube-proxy, CIDR and platform assumptions explicit.",
+    "Cilium1.20.1 startup source rejects tunnel routing plus autoDirectNodeRoutes; removed invalid automatic hybrid-fallback claims. BGP ControlPlane advertises routes but does not program local forwarding.",
+    "Corrected VXLAN standardized4789 versusCilium8472, Geneve6081, GREprotocol47, identifier-space and no-encryption/no-overlap-resolution claims.",
+    "MTU is the underlying-network override, not final Pod payload size. Source-calculated VXLAN overhead50IPv4/70IPv6, device-versus-route distinction and double-subtraction error explained.",
+    "Replaced absolute performance/security rankings and automatic conntrack/XDP/DSR/hugepage optimization claims with feature- and workload-specific reasoning.",
+    "Clarified EKS EC2/Fargate/Auto/Hybrid boundaries, upstream ENI versusVPC-CNI branchENI, managedGKE/anetd versusupstream, and managedAKS/delegatedIPAM versusAzureVMIPAM.",
+    "Quiz paths contain test guides, not MCQs. Preserved eight guided exercises per language with expected results, replacing repeated CNI uninstall/reinstall loops and obsolete flags.",
+    "Manual policy test uses official CLI0.20 image digests/pause/server8080 contract, readiness/EndpointSlice checks, cross-node anti-affinity, both-clients baseline and explicitnamespace CNP.",
+    "A failed request is not declared a policy pass: source/port/denied-flow corroboration required. Four native shell fixtures distinguish unexpectedallow from uncorroboratedfailure.",
+    "Maintained CLIperf replaces nonexistentnetperf workload assumptions; namespace sequence suffixes, case/sample duration and TCPcontrol+UDPdata distinction documented.",
+    "Updated version/CNI/endpoint diagnostics and current standalone cilium bgp peers; optional feature state is interpreted only when configured.",
+    "Cleanup only covers lab-owned namespaces; separate owner lookup preserves failure status. Four shellfixtures block mismatched/missing/error ownership, including valid-looking output with failing lookup.",
+    "Added invisible NFC anchor alias to KO VXLAN section, preserving generatedNFDheading and existing cross-pageEKSHybrid link without changing foreign or parent-owned prose."
+  ],
+  "primarySources": [
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/routing.rst",
+      "cacheKey": "93884cdf2b41",
+      "fetchedAt": "2026-09-12T14:02:08.083206+00:00",
+      "status": 200,
+      "sha256": "1dc7232f46a1839898013f567505c0a114e9418bfe98b9b59b816bb879473092"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/values.yaml",
+      "cacheKey": "ab96902e3fca",
+      "fetchedAt": "2026-09-12T14:02:08.604636+00:00",
+      "status": 200,
+      "sha256": "48e57492486c8672b85c7fca96b3d9ae48025f1913beea12f3d3dd11b7500ae1"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/values.schema.json",
+      "cacheKey": "f8f20476ed28",
+      "fetchedAt": "2026-09-12T14:02:08.816699+00:00",
+      "status": 200,
+      "sha256": "5e0d378b3748df1dea5704cf5cc985c5709f88123f8300694e56267891036abd"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/daemon/cmd/daemon_main.go",
+      "cacheKey": "b37c0cc321fc",
+      "fetchedAt": "2026-09-12T14:02:09.056646+00:00",
+      "status": 200,
+      "sha256": "e42c6cadc71d4a98f58ebc950a9bda259fe7f9d8d3f48e27cb6b31b412d0f7e8"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/mtu/mtu.go",
+      "cacheKey": "ada99c63c375",
+      "fetchedAt": "2026-09-12T14:04:20.848855+00:00",
+      "status": 200,
+      "sha256": "b4d3b456d5b7119f6f6e07e8818468343d454d0143dcf14d2ce942837b273eba"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/mtu/cell.go",
+      "cacheKey": "3aa67d187098",
+      "fetchedAt": "2026-09-12T14:04:52.559947+00:00",
+      "status": 200,
+      "sha256": "c917619e067a928e329b459cd2246e5924943e80dd6525972dfa0862a734b30f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane.rst",
+      "cacheKey": "32d588751973",
+      "fetchedAt": "2026-09-12T14:02:08.567856+00:00",
+      "status": 200,
+      "sha256": "2817d5068db658d64ab3175f7197eddbb61ffb5e9016759b9dd3ad617899579c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/ipam/eni.rst",
+      "cacheKey": "33e43f7a4651",
+      "fetchedAt": "2026-09-12T14:02:08.088850+00:00",
+      "status": 200,
+      "sha256": "f12cb835749bbf7468c79a4a1d06b7c9aa57224c8f3540769eb09f165c7529e9"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/ipam/gke.rst",
+      "cacheKey": "d07f7d7e986a",
+      "fetchedAt": "2026-09-12T14:02:08.327408+00:00",
+      "status": 200,
+      "sha256": "d196a078fec0fe48efd028e78380821e5a91da57f47720785b7c3ed4a9b37a2d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/ipam/azure.rst",
+      "cacheKey": "8e0364aa3d6c",
+      "fetchedAt": "2026-09-12T14:02:08.383005+00:00",
+      "status": 200,
+      "sha256": "d99cf5b59ca225e82f04e17146f6ca4c2653609eb46d893329063ec32a2a75a0"
+    },
+    {
+      "url": "https://www.rfc-editor.org/rfc/rfc7348.txt",
+      "cacheKey": "f96c7fe06a98",
+      "fetchedAt": "2026-09-12T14:02:09.149970+00:00",
+      "status": 200,
+      "sha256": "731475429b30bf4b29a102a0c9217cb0d3522c34fd546ba7b134fec931e83574"
+    },
+    {
+      "url": "https://www.rfc-editor.org/rfc/rfc8926.txt",
+      "cacheKey": "44765b91a030",
+      "fetchedAt": "2026-09-12T14:02:09.480924+00:00",
+      "status": 200,
+      "sha256": "23a9fcd3c23b93a103c0228128b2dce808323a7a9d15ea9cbb395fdb9f67e37d"
+    },
+    {
+      "url": "https://www.rfc-editor.org/rfc/rfc2784.txt",
+      "cacheKey": "c2da02a22ac6",
+      "fetchedAt": "2026-09-12T14:02:09.402172+00:00",
+      "status": 200,
+      "sha256": "dad757f9b5eb51478e768295eb39df4b54c1f299eeb6e5c7bea080eb45556d58"
+    },
+    {
+      "url": "https://www.rfc-editor.org/rfc/rfc7637.txt",
+      "cacheKey": "23b4b3385db0",
+      "fetchedAt": "2026-09-12T14:02:09.646338+00:00",
+      "status": 200,
+      "sha256": "d24b4b2c39fb5346d72cf6d8535df974a4b0e7d1df2667c948526fd20b31c9de"
+    },
+    {
+      "url": "https://docs.cloud.google.com/kubernetes-engine/docs/concepts/dataplane-v2",
+      "cacheKey": "68fdcc830f0e",
+      "fetchedAt": "2026-09-12T14:02:10.192950+00:00",
+      "status": 200,
+      "sha256": "bf6a86b4905d3c2bd809ad51f50fbe338e55f38129d0adef0da7cf32e2659bb0"
+    },
+    {
+      "url": "https://learn.microsoft.com/en-us/azure/aks/azure-cni-powered-by-cilium",
+      "cacheKey": "3b778922d1c0",
+      "fetchedAt": "2026-09-12T14:04:52.798418+00:00",
+      "status": 200,
+      "sha256": "beef1424547f6c0554aa529fb84531ebd3a2bbf41634845fa7bdd6edf95fc906"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html",
+      "cacheKey": "f8ab97c61343",
+      "fetchedAt": "2026-09-12T14:02:09.863620+00:00",
+      "status": 200,
+      "sha256": "11af91669e9aa0579305000f96034ab7fbd45b65131b0ea791ff578a8675da0c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium-cli/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/defaults/defaults.go",
+      "cacheKey": "cba013385c98",
+      "fetchedAt": "2026-09-12T14:04:52.287412+00:00",
+      "status": 200,
+      "sha256": "47a15dceeb90ce400faa57c8842138c8d69f6c2080f88046fe9f92a6b1479146"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium-cli/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/connectivity/check/deployment.go",
+      "cacheKey": "e2e880278f01",
+      "fetchedAt": "2026-09-12T14:04:52.313849+00:00",
+      "status": 200,
+      "sha256": "5d858fdbf408b1040a15edfa138c9a87b2b6186ce151f90492babfac3d784d3e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium-cli/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/cli/connectivity.go",
+      "cacheKey": "61f064654894",
+      "fetchedAt": "2026-09-12T14:04:52.541705+00:00",
+      "status": 200,
+      "sha256": "19cad47bc6756d815ed03bee098e2f964ac127390ff013c449b40ce8d7f8696d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium-cli/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/cli/install.go",
+      "cacheKey": "abd1e091fd99",
+      "fetchedAt": "2026-09-12T14:10:10.039852+00:00",
+      "status": 200,
+      "sha256": "8f4786b449a025f20ce944a1038a203fe1777679fc9644849f31597672f40deb"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.0/api/openapi-spec/swagger.json",
+      "cacheKey": "b0fb38bb7c6c",
+      "fetchedAt": "2026-09-12T14:09:04.173705+00:00",
+      "status": 200,
+      "sha256": "dcede2063da1d7ad62ecb5af8adb6d7fabd0b52385a7fa0048afb491dac90450"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml",
+      "cacheKey": "0fe7c551ccb3",
+      "fetchedAt": "2026-09-12T14:09:04.314427+00:00",
+      "status": 200,
+      "sha256": "62c6de8f358da125b94468d39187edb1cea157d79503fdc50ccec8a6aaa79a76"
+    },
+    {
+      "url": "https://kubernetes.io/releases/version-skew-policy/",
+      "cacheKey": "8a9bd073895e",
+      "fetchedAt": "2026-09-12T14:09:04.717219+00:00",
+      "status": 200,
+      "sha256": "d93ab1cbf53fe64765b23d4f3e93c23401df01eecfcef2b3c3146ec2b912f50d"
+    },
+    {
+      "url": "https://software.es.net/iperf/invoking.html",
+      "cacheKey": "3547e08c4380",
+      "fetchedAt": "2026-09-12T14:18:01.453933+00:00",
+      "status": 200,
+      "sha256": "ff7d9e4dade574271def662144b1f2023b651c722768a33bc65b815ae06dd2ac"
+    },
+    {
+      "url": "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_version/",
+      "cacheKey": "e63b6c188322",
+      "fetchedAt": "2026-09-12T14:18:02.304375+00:00",
+      "status": 200,
+      "sha256": "4d909c5894814d6fda6e6c8813d55186f22792b33b595a4e38b5bacc91ebbf14"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane-configuration.rst",
+      "cacheKey": "d22b9e16808d",
+      "fetchedAt": "2026-09-12T14:04:21.339699+00:00",
+      "status": 200,
+      "sha256": "f108f647f12b8f52012ab6171b391228ddbe0c1130647ccbdb713c270cbe333d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/cmdref/cilium-dbg_encrypt_status.md",
+      "cacheKey": "0fe8f6995551",
+      "fetchedAt": "2026-09-12T14:04:21.541460+00:00",
+      "status": 200,
+      "sha256": "4eb182e662274ac659996e2cfb6c2b25a1b0d0732f08dce3c6fc90bbfe5d5250"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane-operation.rst",
+      "cacheKey": "53020d6527cf",
+      "fetchedAt": "2026-09-12T14:24:54.145675+00:00",
+      "status": 200,
+      "sha256": "dc8d4c27f0f7a21f49e127eebb4413fedeeeb2386be0770a53fb78b1717e8d0c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium-cli/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/cli/bgp.go",
+      "cacheKey": "63ee9e714295",
+      "fetchedAt": "2026-09-12T14:24:54.341836+00:00",
+      "status": 200,
+      "sha256": "ecf8ae083eb36852e0c9c6cdc92d832ae640f64b8da701b298060c9973192f00"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer7.rst",
+      "cacheKey": "f79fc9587de7",
+      "fetchedAt": "2026-09-12T13:56:49.524401+00:00",
+      "status": 200,
+      "sha256": "65c36cebf69b753e96c14193632a9fc964cff434d4cc1e18dbf41f8414ac4797"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/system_requirements.rst",
+      "cacheKey": "47d0fa2d6ec0",
+      "fetchedAt": "2026-09-12T13:53:41.218485+00:00",
+      "status": 200,
+      "sha256": "608ef0b3a0fd0e39ca15044baf83a68f62ec635c50630c747005d920d8f0167d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/compatibility.rst",
+      "cacheKey": "68e8148446c9",
+      "fetchedAt": "2026-09-12T13:53:41.051310+00:00",
+      "status": 200,
+      "sha256": "4119df582c01582bc082c529b6faf29167d07f129c1cec2583117fc37e2e4b13"
+    }
+  ],
+  "artifactDirectory": ".vitepress/cache/networking-cilium-networking-audit",
+  "figures": {
+    "actuallyViewed": 6,
+    "removedReferences": [
+      "en-networking-cilium-03-networking-0",
+      "en-networking-cilium-03-networking-1",
+      "ko-networking-cilium-03-networking-0",
+      "ko-networking-cilium-03-networking-1"
+    ],
+    "retainedWithCaption": [
+      "en-networking-cilium-03-networking-2",
+      "ko-networking-cilium-03-networking-2"
+    ],
+    "reason": "Figure0 conflates modes/IPAM/BGP with guaranteedperformance;figure1 reversesIP/UDP wording,omitsUDPstageandshowsobsolete tunnel:vxlan. Accurate tables/packetlayout replace these. Figure2 retainedasconceptualflow,notIPAMblockplan.",
+    "externalRepair": "Parent may regenerate removed source diagrams before reuse and automate foreign source-sync. No asset or foreign-prose edits."
+  },
+  "limitations": [
+    "NoHelmrender,liveAPIadmission/CEL,clusterdeployment,imageexecution,datapathorbenchmarkrun.",
+    "Structural schemas,CLI/source contracts and native shell fixtures validate specific properties only; platform/admission/imagearchitecture/capacity must be checked in the prepared lab.",
+    "Nohosted/fullsite/repository-widebuild executed;four-fileMarkdown/VuecompilationusedNodeheap1GiB.",
+    "Schema checker initially closed partialanyOf/oneOf fragments and falselyrejectedvalidCNP;fixedtyped-object-onlystrictification,validCNPpassesandmisspelledingressisrejected."
+  ]
+}

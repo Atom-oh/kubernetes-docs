@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Composition을 통한 플랫폼 추상화",
+    "title": "동일 Composition의 환경별 입력",
     "output": "ko-platform-engineering-07-crossplane-2.html",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -15,11 +15,11 @@
           "comp_dev",
           "comp_prod"
         ],
-        "note": "플랫폼 팀이 정의한 하나의 XRD 아래에 dev/prod 두 Composition을 둔다."
+        "note": "같은 postgresql-aws-reviewed Composition을 서로 다른 환경 입력으로 로컬 렌더링한 예입니다."
       },
       {
         "id": "dev-path",
-        "label": "dev Claim 경로",
+        "label": "dev XR 경로",
         "focus": [
           "claim_a",
           "comp_dev",
@@ -27,11 +27,11 @@
           "sg_a",
           "sub_a"
         ],
-        "note": "my-db Claim이 dev Composition을 참조해 db.t3.medium · 20GB · Single-AZ 사양의 리소스 묶음을 만든다."
+        "note": "같은 postgresql-aws-reviewed Composition을 서로 다른 환경 입력으로 로컬 렌더링한 예입니다."
       },
       {
         "id": "prod-path",
-        "label": "prod Claim 경로",
+        "label": "prod XR 경로",
         "focus": [
           "claim_b",
           "comp_prod",
@@ -39,7 +39,7 @@
           "sg_b",
           "sub_b"
         ],
-        "note": "order-db Claim이 prod Composition을 참조해 db.r6g.xlarge · 100GB+ · Multi-AZ 리소스 묶음을 만든다."
+        "note": "같은 postgresql-aws-reviewed Composition을 서로 다른 환경 입력으로 로컬 렌더링한 예입니다."
       }
     ],
     "viewBox": [
@@ -71,8 +71,8 @@
     {
       "id": "claim_a",
       "type": "external",
-      "label": "Claim: my-db",
-      "sublabel": "size: small",
+      "label": "XR: dev",
+      "sublabel": "environment: dev",
       "pos": [
         40,
         110
@@ -85,8 +85,8 @@
     {
       "id": "claim_b",
       "type": "external",
-      "label": "Claim: order-db",
-      "sublabel": "size: large",
+      "label": "XR: production",
+      "sublabel": "environment: production",
       "pos": [
         40,
         340
@@ -113,8 +113,8 @@
     {
       "id": "comp_dev",
       "type": "backend",
-      "label": "Composition (dev)",
-      "sublabel": "db.t3.medium · 20GB · Single-AZ",
+      "label": "Pipeline: dev 입력",
+      "sublabel": "db.t4g.medium · 50GB · Single-AZ",
       "pos": [
         420,
         110
@@ -127,8 +127,8 @@
     {
       "id": "comp_prod",
       "type": "backend",
-      "label": "Composition (prod)",
-      "sublabel": "db.r6g.xlarge · 100GB+ · Multi-AZ",
+      "label": "Pipeline: prod 입력",
+      "sublabel": "db.r6g.large · 200GB · Multi-AZ",
       "pos": [
         420,
         340
@@ -142,7 +142,7 @@
       "id": "rds_a",
       "type": "database",
       "label": "RDS Instance",
-      "sublabel": "db.t3.medium",
+      "sublabel": "db.t4g.medium",
       "pos": [
         900,
         56
@@ -155,7 +155,7 @@
     {
       "id": "sg_a",
       "type": "security",
-      "label": "SecurityGroup",
+      "label": "SG + ingress rule",
       "pos": [
         900,
         118
@@ -163,7 +163,8 @@
       "size": [
         170,
         48
-      ]
+      ],
+      "sublabel": "승인된 client SG만"
     },
     {
       "id": "sub_a",
@@ -182,7 +183,7 @@
       "id": "rds_b",
       "type": "database",
       "label": "RDS Instance",
-      "sublabel": "db.r6g.xlarge",
+      "sublabel": "db.r6g.large",
       "pos": [
         900,
         286
@@ -195,7 +196,7 @@
     {
       "id": "sg_b",
       "type": "security",
-      "label": "SecurityGroup",
+      "label": "SG + ingress rule",
       "pos": [
         900,
         348
@@ -203,7 +204,8 @@
       "size": [
         170,
         48
-      ]
+      ],
+      "sublabel": "승인된 client SG만"
     },
     {
       "id": "sub_b",
@@ -265,14 +267,14 @@
       "id": "claim-a-dev",
       "from": "claim_a",
       "to": "comp_dev",
-      "label": "compositionRef: dev",
+      "label": "environment: dev",
       "variant": "emphasis"
     },
     {
       "id": "claim-b-prod",
       "from": "claim_b",
       "to": "comp_prod",
-      "label": "compositionRef: prod",
+      "label": "environment: production",
       "variant": "emphasis"
     },
     {
@@ -304,6 +306,17 @@
       "id": "prod-sub",
       "from": "comp_prod",
       "to": "sub_b"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "검증된 값",
+      "items": [
+        "native Function에서 Boolean/숫자 map 변환 확인",
+        "prod: deletionProtection=true, backupRetentionPeriod=30",
+        "실제 RDS 생성·부하·HA 검증은 별도"
+      ]
     }
   ]
 }

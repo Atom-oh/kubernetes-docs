@@ -5,7 +5,7 @@
     "title": "분산 훈련 아키텍처",
     "output": "ko-ai-ml-01-ai-ml-workloads-3.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "views": [
       {
         "id": "launch",
@@ -14,7 +14,7 @@
           "launcher",
           "workers"
         ],
-        "note": "Launcher 파드가 mpirun으로 Worker 파드들을 기동한다."
+        "note": "Job controller가 Pod를 만들고 launcher가 워커 안의 프로세스를 시작합니다."
       },
       {
         "id": "collective",
@@ -25,7 +25,7 @@
           "mpi",
           "efa"
         ],
-        "note": "Worker들이 NCCL로 그래디언트를 교환하고, NCCL은 MPI와 EFA 위에서 동작한다."
+        "note": "NCCL → AWS OFI NCCL → libfabric → EFA; MPI는 필수 전송 계층이 아닙니다."
       },
       {
         "id": "checkpoint",
@@ -36,7 +36,7 @@
           "s3",
           "ckpt"
         ],
-        "note": "Worker가 FSx for Lustre에 기록하면 S3와 체크포인트 저장소로 이어진다."
+        "note": "체크포인트 작성·S3 export·복구는 명시적 구성과 검증이 필요합니다."
       }
     ],
     "legend": {
@@ -103,8 +103,8 @@
     {
       "id": "mpi",
       "type": "messagebus",
-      "label": "MPI",
-      "sublabel": "랭크 조정",
+      "label": "AWS OFI NCCL",
+      "sublabel": "libfabric 연동",
       "pos": [
         610,
         240
@@ -204,7 +204,7 @@
       "id": "launch-workers",
       "from": "launcher",
       "to": "workers",
-      "label": "기동",
+      "label": "프로세스 기동",
       "fromSide": "bottom",
       "toSide": "top",
       "labelDy": 24
@@ -239,7 +239,11 @@
       "id": "fsx-s3",
       "from": "fsx",
       "to": "s3",
-      "label": "S3 연동"
+      "label": "구성된 import/export",
+      "labelAt": [
+        600,
+        380
+      ]
     },
     {
       "id": "fsx-ckpt",
@@ -250,18 +254,17 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "통신",
+      "title": "통신 경로",
       "items": [
-        "Worker 파드들은 NCCL로 그래디언트를 교환한다",
-        "NCCL 통신은 MPI와 Elastic Fabric Adapter(EFA) 위에서 동작한다"
+        "NCCL은 AWS OFI NCCL과 libfabric으로 EFA를 사용할 수 있습니다.",
+        "장치·driver·plugin·네트워크·프레임워크 구성을 검증해야 합니다."
       ]
     },
     {
       "dot": "amber",
-      "title": "스토리지",
+      "title": "복구",
       "items": [
-        "FSx for Lustre는 대규모 데이터셋에 빠른 액세스를 제공한다",
-        "S3 통합으로 데이터 가져오기·내보내기를 간소화하고, 체크포인트를 보존한다"
+        "FSx 연결만으로 checkpoint 보존·S3 export가 보장되지 않습니다."
       ]
     }
   ]

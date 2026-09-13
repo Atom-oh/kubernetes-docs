@@ -9,9 +9,9 @@ This quiz tests your understanding of ArgoCD and GitOps.
 
 **Answer:**
 1. **Declarative Configuration**: Define the desired state of the system as code
-2. **Version Control**: Track all changes in Git
-3. **Automated Synchronization**: Automatically reconcile differences between the repository and the running environment
-4. **Self-Healing**: Automatically recover the system to the desired state
+2. **Versioned and Immutable**: Retain immutable desired-state versions and complete history
+3. **Pulled Automatically**: Agents automatically retrieve desired-state declarations from the source
+4. **Continuously Reconciled**: Observe actual state and continuously attempt to apply desired state
 
 These principles enable GitOps to operate as a complete operational model beyond just a deployment tool.
 </details>
@@ -25,10 +25,10 @@ These principles enable GitOps to operate as a complete operational model beyond
 - **API Server**: Provides REST API and web UI, handles authentication and authorization
 - **Repository Server**: Connects to Git repositories and generates manifests
 - **Application Controller**: Monitors application state and performs synchronization
-- **Redis**: Caching and session storage
+- **Redis**: Rebuildable cache
 - **Dex**: OIDC authentication server (optional)
 
-Each component can be scaled independently and supports high availability configurations.
+Scaling differs by component: Application Controller uses shards, ApplicationSet uses leader election, and bundled Dex cannot safely gain HA merely by adding replicas to its in-memory storage.
 </details>
 
 ## Question 3: Application Resource
@@ -84,7 +84,7 @@ syncPolicy:
 **Manual Sync:**
 - User explicitly triggers synchronization
 - Apply after reviewing changes
-- Safer but increases operational overhead
+- Review/approval controls and operational overhead still need design
 </details>
 
 ## Question 5: ApplicationSet
@@ -109,19 +109,30 @@ syncPolicy:
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: cluster-apps
+  name: demo-cluster-apps
+  namespace: argocd
 spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
   generators:
-  - clusters: {}
+  - clusters:
+      selector:
+        matchLabels:
+          environment: demo
   template:
     metadata:
-      name: '{{name}}-app'
+      name: '{{.nameNormalized}}-guestbook'
     spec:
+      project: default
       source:
-        repoURL: https://github.com/example/apps
-        path: '{{name}}'
+        repoURL: https://github.com/argoproj/argocd-example-apps.git
+        targetRevision: HEAD
+        path: guestbook
       destination:
-        server: '{{server}}'
+        server: '{{.server}}'
+        namespace: guestbook
+      syncPolicy:
+        syncOptions: [CreateNamespace=true]
 ```
 </details>
 
@@ -133,15 +144,15 @@ spec:
 **Answer:**
 1. **RBAC Configuration**:
    ```yaml
-   policy.default: role:readonly
+   policy.default: role:authenticated
    policy.csv: |
-     p, role:admin, applications, *, */*, allow
      p, role:dev, applications, get, dev/*, allow
+     p, role:dev, projects, get, dev, allow
      g, dev-team, role:dev
    ```
 
 2. **SSO Integration**:
-   - OIDC, SAML, LDAP integration
+   - Direct OIDC or supported Dex connectors for other identity providers
    - Centralized authentication management
 
 3. **Network Security**:
@@ -152,7 +163,7 @@ spec:
 4. **Secret Management**:
    - Use External Secrets Operator
    - Sealed Secrets or Helm Secrets
-   - Separate Git repositories for sensitive information
+   - Keep plaintext secrets out of Git; use an external secret store or appropriate encryption/key management
 
 5. **Audit Logging**:
    - Track all changes
@@ -207,13 +218,13 @@ spec:
    ```bash
    # Check repository access permissions
    argocd repo list
-   argocd repo get <repo-url>
+   argocd repo get "$REPO_URL"
    ```
 
 2. **Validate Manifests**:
    ```bash
    # Validate manifests locally
-   kubectl apply --dry-run=client -f manifests/
+   kubectl --context "$TARGET_CONTEXT" apply --server-side --dry-run=server -f manifests/
    ```
 
 3. **Check Sync Policies**:
@@ -224,8 +235,8 @@ spec:
 4. **Analyze Resource Status**:
    ```bash
    # Check application details
-   argocd app get <app-name>
-   argocd app diff <app-name>
+   argocd app get "$APP_NAME"
+   argocd app diff "$APP_NAME"
    ```
 
 5. **Check Logs**:
@@ -236,14 +247,14 @@ spec:
 
 6. **Try Manual Sync**:
    ```bash
-   argocd app sync <app-name> --prune
+   argocd app sync "$APP_NAME" --dry-run
    ```
 </details>
 
-## Question 9: Latest GitOps Trends
+## Question 9: GitOps Operating Patterns
 
 <details>
-<summary>What are the major trends in the GitOps space in 2023?</summary>
+<summary>Which GitOps operating patterns does this guide cover?</summary>
 
 **Answer:**
 1. **Multi-Cluster GitOps**:
@@ -274,23 +285,26 @@ spec:
 1. **IAM Permission Setup**:
    ```yaml
    # IRSA (IAM Roles for Service Accounts) configuration
-   serviceAccount:
-     annotations:
-       eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT:role/argocd-role
+   controller:
+     serviceAccount:
+       annotations:
+         eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ArgoCD-Management
    ```
 
 2. **ALB Ingress Configuration**:
    ```yaml
-   annotations:
-     kubernetes.io/ingress.class: alb
-     alb.ingress.kubernetes.io/scheme: internet-facing
-     alb.ingress.kubernetes.io/target-type: ip
+   metadata:
+     annotations:
+       alb.ingress.kubernetes.io/scheme: internal
+       alb.ingress.kubernetes.io/target-type: ip
+   spec:
+     ingressClassName: alb
    ```
 
 3. **EKS Cluster Registration**:
    ```bash
    # Register EKS cluster to ArgoCD
-   argocd cluster add arn:aws:eks:region:account:cluster/cluster-name
+   argocd cluster add "$TARGET_CONTEXT"
    ```
 
 4. **ECR Integration**:
@@ -310,7 +324,10 @@ spec:
 ---
 
 **Scoring:**
-- 8-10 correct: Excellent (ArgoCD expert level)
+- 8-10 correct: Core concepts in this quiz understood
 - 6-7 correct: Good (additional learning recommended)
 - 4-5 correct: Average (basic concepts review needed)
-- 0-3 correct: Insufficient (full content re-study needed)
+- 0-3 correct: Review fundamentals and practice the labs
+
+
+Set REPO_URL, APP_NAME and TARGET_CONTEXT to real values. TARGET_CONTEXT is a kubeconfig context; an EKS default context may itself be an ARN. Review cluster-add RBAC changes and sync/prune differences. The dry run previews changes; --prune includes deletion and requires separate review. IRSA annotations do not configure trust/EKS access entries, and ALB needs certificates/TLS/network access. ApplicationSet environment: demo matches registered cluster Secret labels. Keep role:authenticated without global readonly grants and assign dev-team only its required scope.

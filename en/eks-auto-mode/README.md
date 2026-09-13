@@ -1,9 +1,9 @@
 # EKS Auto Mode Operations Guide
 
-> **Supported Versions**: EKS 1.29+, EKS Auto Mode GA
-> **Last Updated**: July 27, 2026
+> **Supported Versions**: EKS Auto Mode GA; example baseline EKS 1.36
+> **Last Updated**: September 12, 2026
 
-Amazon EKS Auto Mode is a feature that fully automates Kubernetes node management, automatically provisioning and optimizing nodes based on workload requirements. This guide covers the concepts of EKS Auto Mode, configuration methods, and best practices for production environments.
+Amazon EKS Auto Mode is a feature that fully automates Kubernetes node management, automatically provisioning and optimizing nodes based on workload requirements. This guide covers Auto Mode concepts, configuration and operational considerations. AWS manages the Auto Mode infrastructure; you still own application availability, resource requests, security, monitoring and cluster/VPC configuration. Examples require validation in your environment before production use.
 
 ### July 2026 Update: EFA and Placement Group Support
 
@@ -11,7 +11,7 @@ On July 22, 2026, AWS announced that EKS Auto Mode (and open-source Karpenter) n
 
 ### July 2026 Update: ARC Zonal Shift Support
 
-As of July 10, 2026, EKS Auto Mode clusters support Amazon Application Recovery Controller (ARC) zonal shift and autoshift. Because Auto Mode manages compute on your behalf, you get zonal shift support without setting flags or managing Karpenter versions — simply enable ARC zonal shift on the cluster. When a zonal shift is activated, Auto Mode stops provisioning new capacity in the impaired AZ and halts voluntary disruptions such as consolidation and drift for nodes in that zone. There is no additional cost; see the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift) and the [ARC zonal shift documentation](https://docs.aws.amazon.com/eks/latest/userguide/zone-shift.html) for details.
+As of July 10, 2026, EKS Auto Mode clusters support Amazon Application Recovery Controller (ARC) zonal shift and autoshift. Because Auto Mode manages compute on your behalf, you get zonal shift support without setting flags or managing Karpenter versions — simply enable ARC zonal shift on the cluster. When a zonal shift is activated, Auto Mode stops provisioning new capacity in the impaired AZ and halts voluntary disruptions such as consolidation and drift for nodes in that zone. It also prevents voluntary disruptions in healthy AZs when replacement scheduling would depend on the impaired AZ. Auto Mode needs no additional Karpenter flag, but ARC zonal autoshift must be separately configured after cluster registration. Zonal shift does not make a zonal volume or strict AZ-bound workload portable. ARC has no additional zonal-shift charge; replacement capacity and normal infrastructure charges still apply. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift) and the [ARC zonal shift documentation](https://docs.aws.amazon.com/eks/latest/userguide/zone-shift-enable.html) for details.
 
 ## Table of Contents
 
@@ -31,7 +31,7 @@ As of July 10, 2026, EKS Auto Mode clusters support Amazon Application Recovery 
 
 ### What is Auto Mode?
 
-EKS Auto Mode is a fully automated node management solution managed by AWS. It is based on Karpenter internally, and AWS manages everything without users needing to install or configure separate node management components.
+EKS Auto Mode is a fully automated node management solution managed by AWS. It is based on Karpenter internally; AWS operates the managed infrastructure controllers. Users configure workload constraints, custom NodePools/NodeClasses and disruption budgets rather than installing a separate Karpenter controller for Auto Mode.
 
 ```
 +-----------------------------------------------------------------------------+
@@ -71,20 +71,19 @@ EKS Auto Mode is a fully automated node management solution managed by AWS. It i
 
 | Feature | Managed Node Groups | Fargate | Auto Mode |
 |---------|---------------------|---------|-----------|
-| Node Management | User (ASG-based) | Fully AWS Managed | Fully AWS Managed |
-| Scaling Method | Cluster Autoscaler | Per-Pod | Karpenter-based |
-| Scaling Speed | Minutes | Immediate (Pod schedule) | Tens of seconds |
-| Instance Type Selection | Pre-defined | Automatic | Auto-optimized |
-| Spot Support | Manual configuration | Not supported | Auto-managed |
-| GPU Workloads | Supported | Limited | Fully supported |
-| DaemonSet Support | Supported | Not supported | Supported |
-| Cost Optimization | Manual | Medium | Automatic |
-| Complexity | High | Low | Low |
-| Customization | High | Low | Medium |
+| Node management | AWS manages node groups; you configure capacity and updates | AWS manages per-Pod infrastructure | AWS manages launched nodes and infrastructure controllers |
+| Scaling | Cluster Autoscaler if installed, or explicit group scaling | Per-Pod provisioning with Fargate profiles | Karpenter-based provisioning for unschedulable Pods |
+| Provisioning time | Depends on capacity, bootstrap and workload | Depends on capacity, images and workload; not instantaneous | Depends on capacity, bootstrap, images and constraints; no fixed-time guarantee |
+| Instance selection | Configured instance types | Managed compute sizes | Selection within NodePool and workload constraints |
+| Spot | Supported by managed node groups | Not supported on EKS Fargate | Supported when permitted by a NodePool |
+| GPU workloads | Supported on appropriate nodes | Not supported | Supported on compatible accelerated instances; workload/runtime requirements still apply |
+| DaemonSets | Supported | Not supported | Supported within managed-node restrictions |
+| Cost control | Requests, instance choices and autoscaler policies | Pod resource sizing and replicas | Requests, allowed capacity and consolidation policies; no guaranteed savings |
+| Host customization | AMI/launch-template options | No host customization | AWS-managed Bottlerocket variants; supported NodeClass settings |
 
 ### Internal Architecture and Operating Principles
 
-EKS Auto Mode operates based on Karpenter, but runs within the AWS-managed control plane.
+The Karpenter-based controller is operated by AWS, outside your worker nodes. The drawings are conceptual: the scheduler identifies unschedulable Pods and later binds them to nodes; the API server stores the objects. A Pod being Pending alone does not establish that adding a node will solve its problem.
 
 ![Sequence diagram of EKS Auto Mode node provisioning: a pending pod triggers the Auto Mode controller to match a NodePool and pick an instance type, launch an EC2 instance, register the new node, and schedule the pod until it is running.](../.gitbook/assets/en-eks-auto-mode-readme-0.png)
 
@@ -92,24 +91,23 @@ EKS Auto Mode operates based on Karpenter, but runs within the AWS-managed contr
 
 ### Supported Regions and Limitations
 
-#### Supported Regions (as of February 2025)
+#### Regions and supported versions
 
-EKS Auto Mode is available in the following regions:
+The [EKS FAQ](https://aws.amazon.com/eks/faqs/) lists Auto Mode in EKS regions, including GovCloud (US), except China regions. Check regional instance/feature availability separately. The earlier short region list was not exhaustive.
 
-- **Americas**: us-east-1, us-east-2, us-west-1, us-west-2
-- **Europe**: eu-west-1, eu-west-2, eu-central-1, eu-north-1
-- **Asia Pacific**: ap-northeast-1, ap-northeast-2, ap-southeast-1, ap-southeast-2, ap-south-1
+The FAQ's original `1.29+` feature floor does not mean that every such version can still be created or is in standard support. On September 12, 2026, EKS 1.34–1.36 are in standard support; the examples use 1.36. Consult the [current EKS version calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) for lifecycle dates and extended-support charges.
 
-#### Limitations
+#### Constraints to check
 
-| Item | Limit |
-|------|-------|
-| Maximum NodePools per cluster | 100 |
-| Maximum nodes per NodePool | 1000 |
-| Maximum nodes per cluster | 5000 |
-| Minimum EKS version | 1.29 |
-| Supported AMI families | AL2023, Bottlerocket |
-| Windows nodes | Not supported |
+| Item | Guidance |
+|------|----------|
+| Capacity and scale | Check applied EKS/EC2 quotas, subnet IP capacity and workload constraints; validate the intended scale in your environment |
+| NodePool limits | User-defined resource limits differ from AWS account/service quotas; validate scale and replacement headroom |
+| Operating system | AWS selects its managed Bottlerocket variant; AL2023 or arbitrary custom AMIs are not an Auto Mode AMI choice |
+| Windows | Auto Mode does not provide Windows nodes; use a compatible separate node group where needed |
+| DNS and storage | Auto Mode nodes provide local CoreDNS; mixed clusters retain CoreDNS for other nodes. Managed node-disk encryption does not establish encryption for every dynamic PVC; set the StorageClass explicitly |
+
+Use [Service Quotas](https://docs.aws.amazon.com/eks/latest/userguide/service-quotas.html) and the [NodeClass reference](https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html) to verify the relevant constraints. Actual account quotas and instance capacity were not queried during this audit.
 
 ---
 
@@ -132,10 +130,13 @@ To test your learning, try the [EKS Auto Mode Quiz](../quizzes/eks-auto-mode/01-
 
 - [AWS EKS Auto Mode Official Documentation](https://docs.aws.amazon.com/eks/latest/userguide/automode.html)
 - [Karpenter Official Documentation](https://karpenter.sh/)
-- [EKS Best Practices Guide](https://aws.github.io/aws-eks-best-practices/)
+- [EKS Best Practices Guide](https://docs.aws.amazon.com/eks/latest/best-practices/)
 - [AWS Cost Optimization Guide](https://aws.amazon.com/pricing/cost-optimization/)
 - [New EKS Auto Mode features for enhanced security, network control, and performance (AWS Containers Blog, 2025-10-16)](https://aws.amazon.com/blogs/containers/new-amazon-eks-auto-mode-features-for-enhanced-security-network-control-and-performance/)
 - [Migrate from self-managed Karpenter to EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-migrate-karpenter.html)
+
+- [Auto Mode architecture and responsibilities](https://docs.aws.amazon.com/eks/latest/userguide/automode.html)
+- [EKS Fargate restrictions](https://docs.aws.amazon.com/eks/latest/userguide/fargate.html)
 
 ---
 

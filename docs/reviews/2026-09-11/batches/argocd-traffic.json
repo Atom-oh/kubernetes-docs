@@ -1,0 +1,160 @@
+[
+  {
+    "path": "ko/gitops/argocd/05-traffic-management.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed traffic management source and quiz against Rollouts1.10.0 andplugin0.17.0; corrected API examples, analysis/rollback/routing behavior and all linked diagrams.",
+    "sources": [
+      "https://github.com/argoproj/argo-rollouts/releases/tag/v1.10.0",
+      "https://github.com/argoproj/argo-helm/releases/tag/argo-rollouts-2.43.1",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/docs/features/canary/index.md",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/analysis/analysis.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/server/server.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/metricproviders/cloudwatch/cloudwatch.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/docs/analysis/datadog.md",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/docs/analysis/web.md",
+      "https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi/releases/tag/v0.17.0"
+    ],
+    "findings": [
+      "Old unpinned1.6controller/CLI/chart; incomplete fullRollout objects; missing AnalysisTemplate dependencies/args; overlapping host-level Istio and unrelatedDestinationRule configuration",
+      "Communityingress-nginx retired; starter nowGatewayAPI. NativeGoogleCloud/Linkerd implications and universalGatewayguarantees removed; standaloneKICvsKongOperator scoped",
+      "DashboardCLI bindsallinterfaces despiteprintedlocalhost; replaceddefaultaccesswithoptionalHelmreadonlyClusterIP+loopbackportforward",
+      "KOALBrootService missing; action/backendnamesanduse-annotation clarified; privateALBscope",
+      "Prom numeratorabsentledtoemptyresult underzeroerrors/all5xx; noData/NaN/Inf gates,DDv2queries/formula,niltypehandling,WebscalarJSONPath,CWarray/StatusCodealias/ReturnData/volume semantics corrected",
+      "CloudWatchALBglobalmetric cannotisolatecanary; combinedwithPromcanarygateanduniquemetricnames; controllerIAM/AWS_REGION clarified; Fargateprofileannotationmisplacementremoved",
+      "Abort doesnotrevertGit/data; maxSurge isnottraffic-routedtotalPodcap; postanalysiscancellation/delays andinitialdeployment scope clarified",
+      "Experiment hasharguments use templates.*.podTemplateHash; comparetemplateaddedwithrelativeandabsolutegates; trafficscrape/statistical/sample prerequisites explicit",
+      "Notifications shouldusebuiltin events,notDegraded-equals-aborted; missingtrigger/template/secretsetup fixed",
+      "HistoricalEKSverificationretainedasreportedwithnoattachedrawlogs,notreproduced/freshvalidation; diagrams correctedcapacity/ServiceSelectors/propagation/Inconclusive andEnglishactual10%step",
+      "Experiment10 cross-review: noted required analysis can finish before duration and explicit Service/router selector isolation; parameter examples unchanged."
+    ],
+    "validation": [
+      "53fences classified;41YAMLstrictlyparsed,12Bashsyntaxchecks,32fullCRDvalidationspassed",
+      "14analysis templatereferencescheckedwithrequiredargsandcombinedmetricnames;no unresolvedrefs/duplicates",
+      "93metricconditioncases executedwithactualexpr1.17.7 andmatchingproviderresultshapes/functionsignatures; healthy/failed/empty/NaN/Inf/partial/low-volume branchespassed (syntheticinputs,noAPIcalls)",
+      "Promtool3.14.0officialarchiveSHAcheckedagainstpublisherchecksumsandGitHubassetdigest;34actualtime-seriescasescover10uniquePromQL/metricpairs,zeroerrors/allcanary5xx/missing/zerotraffic/classichistogram;SUCCESS",
+      "Helmchart2.43.1publisherSHAverified;rendered2leader-electcontrollers/PDBmin1/metricsservice/ClusterIPdashboard3100;dashboardworkloadRBACget-list-watch(leaseRBACalsocreate-update)",
+      "7diagrams passed9/9showcasechecksand4viewportlight/darkchecksafterproductionCJKfontnormalization;finalcapturesinspectedandPNGsregenerated",
+      "Repositorydocs tests110/110pass aftertrafficchanges;no livecluster/provider/benchmarkexecution"
+    ],
+    "reviewedSha256": "7442872f9483ff5e3ace753c543e078c613004f7631ccbd442d87d3dda4f95da"
+  },
+  {
+    "path": "ko/quizzes/gitops/argocd/05-traffic-management-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed traffic management source and quiz against Rollouts1.10.0 andplugin0.17.0; corrected API examples, analysis/rollback/routing behavior and all linked diagrams.",
+    "sources": [
+      "https://github.com/argoproj/argo-rollouts/releases/tag/v1.10.0",
+      "https://github.com/argoproj/argo-helm/releases/tag/argo-rollouts-2.43.1",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/docs/features/canary/index.md",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/analysis/analysis.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/server/server.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/metricproviders/cloudwatch/cloudwatch.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/docs/analysis/datadog.md",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/docs/analysis/web.md",
+      "https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi/releases/tag/v0.17.0"
+    ],
+    "findings": [
+      "Old unpinned1.6controller/CLI/chart; incomplete fullRollout objects; missing AnalysisTemplate dependencies/args; overlapping host-level Istio and unrelatedDestinationRule configuration",
+      "Communityingress-nginx retired; starter nowGatewayAPI. NativeGoogleCloud/Linkerd implications and universalGatewayguarantees removed; standaloneKICvsKongOperator scoped",
+      "DashboardCLI bindsallinterfaces despiteprintedlocalhost; replaceddefaultaccesswithoptionalHelmreadonlyClusterIP+loopbackportforward",
+      "KOALBrootService missing; action/backendnamesanduse-annotation clarified; privateALBscope",
+      "Prom numeratorabsentledtoemptyresult underzeroerrors/all5xx; noData/NaN/Inf gates,DDv2queries/formula,niltypehandling,WebscalarJSONPath,CWarray/StatusCodealias/ReturnData/volume semantics corrected",
+      "CloudWatchALBglobalmetric cannotisolatecanary; combinedwithPromcanarygateanduniquemetricnames; controllerIAM/AWS_REGION clarified; Fargateprofileannotationmisplacementremoved",
+      "Abort doesnotrevertGit/data; maxSurge isnottraffic-routedtotalPodcap; postanalysiscancellation/delays andinitialdeployment scope clarified",
+      "Experiment hasharguments use templates.*.podTemplateHash; comparetemplateaddedwithrelativeandabsolutegates; trafficscrape/statistical/sample prerequisites explicit",
+      "Notifications shouldusebuiltin events,notDegraded-equals-aborted; missingtrigger/template/secretsetup fixed",
+      "HistoricalEKSverificationretainedasreportedwithnoattachedrawlogs,notreproduced/freshvalidation; diagrams correctedcapacity/ServiceSelectors/propagation/Inconclusive andEnglishactual10%step"
+    ],
+    "validation": [
+      "53fences classified;41YAMLstrictlyparsed,12Bashsyntaxchecks,32fullCRDvalidationspassed",
+      "14analysis templatereferencescheckedwithrequiredargsandcombinedmetricnames;no unresolvedrefs/duplicates",
+      "93metricconditioncases executedwithactualexpr1.17.7 andmatchingproviderresultshapes/functionsignatures; healthy/failed/empty/NaN/Inf/partial/low-volume branchespassed (syntheticinputs,noAPIcalls)",
+      "Promtool3.14.0officialarchiveSHAcheckedagainstpublisherchecksumsandGitHubassetdigest;34actualtime-seriescasescover10uniquePromQL/metricpairs,zeroerrors/allcanary5xx/missing/zerotraffic/classichistogram;SUCCESS",
+      "Helmchart2.43.1publisherSHAverified;rendered2leader-electcontrollers/PDBmin1/metricsservice/ClusterIPdashboard3100;dashboardworkloadRBACget-list-watch(leaseRBACalsocreate-update)",
+      "7diagrams passed9/9showcasechecksand4viewportlight/darkchecksafterproductionCJKfontnormalization;finalcapturesinspectedandPNGsregenerated",
+      "Repositorydocs tests110/110pass aftertrafficchanges;no livecluster/provider/benchmarkexecution"
+    ],
+    "reviewedSha256": "1626f4c7e256e0a0d66c28eeb3ce27a922d6cea50785bdfa7ee28c055b8c5d84"
+  },
+  {
+    "path": "en/gitops/argocd/05-traffic-management.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed traffic management source and quiz against Rollouts1.10.0 andplugin0.17.0; corrected API examples, analysis/rollback/routing behavior and all linked diagrams.",
+    "sources": [
+      "https://github.com/argoproj/argo-rollouts/releases/tag/v1.10.0",
+      "https://github.com/argoproj/argo-helm/releases/tag/argo-rollouts-2.43.1",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/docs/features/canary/index.md",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/analysis/analysis.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/server/server.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/metricproviders/cloudwatch/cloudwatch.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/docs/analysis/datadog.md",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/docs/analysis/web.md",
+      "https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi/releases/tag/v0.17.0"
+    ],
+    "findings": [
+      "Old unpinned1.6controller/CLI/chart; incomplete fullRollout objects; missing AnalysisTemplate dependencies/args; overlapping host-level Istio and unrelatedDestinationRule configuration",
+      "Communityingress-nginx retired; starter nowGatewayAPI. NativeGoogleCloud/Linkerd implications and universalGatewayguarantees removed; standaloneKICvsKongOperator scoped",
+      "DashboardCLI bindsallinterfaces despiteprintedlocalhost; replaceddefaultaccesswithoptionalHelmreadonlyClusterIP+loopbackportforward",
+      "KOALBrootService missing; action/backendnamesanduse-annotation clarified; privateALBscope",
+      "Prom numeratorabsentledtoemptyresult underzeroerrors/all5xx; noData/NaN/Inf gates,DDv2queries/formula,niltypehandling,WebscalarJSONPath,CWarray/StatusCodealias/ReturnData/volume semantics corrected",
+      "CloudWatchALBglobalmetric cannotisolatecanary; combinedwithPromcanarygateanduniquemetricnames; controllerIAM/AWS_REGION clarified; Fargateprofileannotationmisplacementremoved",
+      "Abort doesnotrevertGit/data; maxSurge isnottraffic-routedtotalPodcap; postanalysiscancellation/delays andinitialdeployment scope clarified",
+      "Experiment hasharguments use templates.*.podTemplateHash; comparetemplateaddedwithrelativeandabsolutegates; trafficscrape/statistical/sample prerequisites explicit",
+      "Notifications shouldusebuiltin events,notDegraded-equals-aborted; missingtrigger/template/secretsetup fixed",
+      "HistoricalEKSverificationretainedasreportedwithnoattachedrawlogs,notreproduced/freshvalidation; diagrams correctedcapacity/ServiceSelectors/propagation/Inconclusive andEnglishactual10%step",
+      "Experiment10 cross-review: noted required analysis can finish before duration and explicit Service/router selector isolation; parameter examples unchanged."
+    ],
+    "validation": [
+      "53fences classified;41YAMLstrictlyparsed,12Bashsyntaxchecks,32fullCRDvalidationspassed",
+      "14analysis templatereferencescheckedwithrequiredargsandcombinedmetricnames;no unresolvedrefs/duplicates",
+      "93metricconditioncases executedwithactualexpr1.17.7 andmatchingproviderresultshapes/functionsignatures; healthy/failed/empty/NaN/Inf/partial/low-volume branchespassed (syntheticinputs,noAPIcalls)",
+      "Promtool3.14.0officialarchiveSHAcheckedagainstpublisherchecksumsandGitHubassetdigest;34actualtime-seriescasescover10uniquePromQL/metricpairs,zeroerrors/allcanary5xx/missing/zerotraffic/classichistogram;SUCCESS",
+      "Helmchart2.43.1publisherSHAverified;rendered2leader-electcontrollers/PDBmin1/metricsservice/ClusterIPdashboard3100;dashboardworkloadRBACget-list-watch(leaseRBACalsocreate-update)",
+      "7diagrams passed9/9showcasechecksand4viewportlight/darkchecksafterproductionCJKfontnormalization;finalcapturesinspectedandPNGsregenerated",
+      "Repositorydocs tests110/110pass aftertrafficchanges;no livecluster/provider/benchmarkexecution"
+    ],
+    "reviewedSha256": "584a84eba10f22660b10d65d61faf1483fe0b031ec7fd107a81e8d3d5b099dc9"
+  },
+  {
+    "path": "en/quizzes/gitops/argocd/05-traffic-management-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully reviewed traffic management source and quiz against Rollouts1.10.0 andplugin0.17.0; corrected API examples, analysis/rollback/routing behavior and all linked diagrams.",
+    "sources": [
+      "https://github.com/argoproj/argo-rollouts/releases/tag/v1.10.0",
+      "https://github.com/argoproj/argo-helm/releases/tag/argo-rollouts-2.43.1",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/docs/features/canary/index.md",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/analysis/analysis.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/server/server.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/metricproviders/cloudwatch/cloudwatch.go",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/docs/analysis/datadog.md",
+      "https://github.com/argoproj/argo-rollouts/blob/v1.10.0/docs/analysis/web.md",
+      "https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi/releases/tag/v0.17.0"
+    ],
+    "findings": [
+      "Old unpinned1.6controller/CLI/chart; incomplete fullRollout objects; missing AnalysisTemplate dependencies/args; overlapping host-level Istio and unrelatedDestinationRule configuration",
+      "Communityingress-nginx retired; starter nowGatewayAPI. NativeGoogleCloud/Linkerd implications and universalGatewayguarantees removed; standaloneKICvsKongOperator scoped",
+      "DashboardCLI bindsallinterfaces despiteprintedlocalhost; replaceddefaultaccesswithoptionalHelmreadonlyClusterIP+loopbackportforward",
+      "KOALBrootService missing; action/backendnamesanduse-annotation clarified; privateALBscope",
+      "Prom numeratorabsentledtoemptyresult underzeroerrors/all5xx; noData/NaN/Inf gates,DDv2queries/formula,niltypehandling,WebscalarJSONPath,CWarray/StatusCodealias/ReturnData/volume semantics corrected",
+      "CloudWatchALBglobalmetric cannotisolatecanary; combinedwithPromcanarygateanduniquemetricnames; controllerIAM/AWS_REGION clarified; Fargateprofileannotationmisplacementremoved",
+      "Abort doesnotrevertGit/data; maxSurge isnottraffic-routedtotalPodcap; postanalysiscancellation/delays andinitialdeployment scope clarified",
+      "Experiment hasharguments use templates.*.podTemplateHash; comparetemplateaddedwithrelativeandabsolutegates; trafficscrape/statistical/sample prerequisites explicit",
+      "Notifications shouldusebuiltin events,notDegraded-equals-aborted; missingtrigger/template/secretsetup fixed",
+      "HistoricalEKSverificationretainedasreportedwithnoattachedrawlogs,notreproduced/freshvalidation; diagrams correctedcapacity/ServiceSelectors/propagation/Inconclusive andEnglishactual10%step"
+    ],
+    "validation": [
+      "53fences classified;41YAMLstrictlyparsed,12Bashsyntaxchecks,32fullCRDvalidationspassed",
+      "14analysis templatereferencescheckedwithrequiredargsandcombinedmetricnames;no unresolvedrefs/duplicates",
+      "93metricconditioncases executedwithactualexpr1.17.7 andmatchingproviderresultshapes/functionsignatures; healthy/failed/empty/NaN/Inf/partial/low-volume branchespassed (syntheticinputs,noAPIcalls)",
+      "Promtool3.14.0officialarchiveSHAcheckedagainstpublisherchecksumsandGitHubassetdigest;34actualtime-seriescasescover10uniquePromQL/metricpairs,zeroerrors/allcanary5xx/missing/zerotraffic/classichistogram;SUCCESS",
+      "Helmchart2.43.1publisherSHAverified;rendered2leader-electcontrollers/PDBmin1/metricsservice/ClusterIPdashboard3100;dashboardworkloadRBACget-list-watch(leaseRBACalsocreate-update)",
+      "7diagrams passed9/9showcasechecksand4viewportlight/darkchecksafterproductionCJKfontnormalization;finalcapturesinspectedandPNGsregenerated",
+      "Repositorydocs tests110/110pass aftertrafficchanges;no livecluster/provider/benchmarkexecution"
+    ],
+    "reviewedSha256": "95c0646b9716d044c90c3b391253fa6d8692a8ccc974014a5de73cec56a834e8"
+  }
+]

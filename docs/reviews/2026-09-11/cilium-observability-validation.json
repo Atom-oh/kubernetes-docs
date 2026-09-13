@@ -1,0 +1,404 @@
+{
+  "date": "2026-09-11",
+  "sources": [
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/setup.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/configuration/tls.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/configuration/export.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/hubble-cli.rst",
+    "https://github.com/cilium/hubble/releases/tag/v1.19.4",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/hubble-ui.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/metrics.rst",
+    "https://github.com/cilium/cilium/blob/v1.20.1/pkg/hubble/metrics/http/handler.go",
+    "https://github.com/cilium/cilium/blob/v1.20.1/pkg/hubble/metrics/api/context.go",
+    "https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/files/hubble/dashboards/hubble-l7-http-metrics-by-workload.json",
+    "https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/files/hubble/dashboards/hubble-dashboard.json",
+    "https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/receiver/filelogreceiver/README.md",
+    "https://github.com/grafana/loki/blob/v3.7.7/docs/sources/send-data/otel/_index.md",
+    "https://github.com/grafana/loki/blob/v3.7.7/docs/sources/shared/otel.md",
+    "https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/pkg/stanza/docs/operators/json_parser.md",
+    "https://sre.google/sre-book/monitoring-distributed-systems/"
+  ],
+  "cli": {
+    "cases": [
+      {
+        "case": "all",
+        "args": [],
+        "exit": 0,
+        "flows": 13,
+        "error": ""
+      },
+      {
+        "case": "http",
+        "args": [
+          "--protocol",
+          "http"
+        ],
+        "exit": 0,
+        "flows": 8,
+        "error": ""
+      },
+      {
+        "case": "old-source-ip",
+        "args": [
+          "--ip-source",
+          "10.0.1.5"
+        ],
+        "exit": 1,
+        "flows": 0,
+        "error": "unknown flag: --ip-source"
+      },
+      {
+        "case": "from-ip",
+        "args": [
+          "--from-ip",
+          "10.0.1.5"
+        ],
+        "exit": 0,
+        "flows": 7,
+        "error": ""
+      },
+      {
+        "case": "old-destination-ip",
+        "args": [
+          "--ip-destination",
+          "10.0.2.10"
+        ],
+        "exit": 1,
+        "flows": 0,
+        "error": "unknown flag: --ip-destination"
+      },
+      {
+        "case": "to-ip",
+        "args": [
+          "--to-ip",
+          "10.0.2.10"
+        ],
+        "exit": 0,
+        "flows": 5,
+        "error": ""
+      },
+      {
+        "case": "old-status-range",
+        "args": [
+          "--http-status",
+          "200-299"
+        ],
+        "exit": 1,
+        "flows": 0,
+        "error": "invalid http status code filter: invalid status code prefix: \"200-299\""
+      },
+      {
+        "case": "status-prefix",
+        "args": [
+          "--http-status",
+          "2+"
+        ],
+        "exit": 0,
+        "flows": 2,
+        "error": ""
+      },
+      {
+        "case": "old-method-regex",
+        "args": [
+          "--http-method",
+          "POST|PUT"
+        ],
+        "exit": 0,
+        "flows": 0,
+        "error": ""
+      },
+      {
+        "case": "method-list",
+        "args": [
+          "--http-method",
+          "POST",
+          "--http-method",
+          "PUT"
+        ],
+        "exit": 0,
+        "flows": 4,
+        "error": ""
+      },
+      {
+        "case": "old-dns-rcode",
+        "args": [
+          "--protocol",
+          "dns",
+          "--dns-rcode",
+          "NXDOMAIN"
+        ],
+        "exit": 1,
+        "flows": 0,
+        "error": "unknown flag: --dns-rcode"
+      },
+      {
+        "case": "dns",
+        "args": [
+          "--protocol",
+          "dns"
+        ],
+        "exit": 0,
+        "flows": 1,
+        "error": ""
+      },
+      {
+        "case": "kafka",
+        "args": [
+          "--protocol",
+          "kafka"
+        ],
+        "exit": 0,
+        "flows": 0,
+        "error": ""
+      },
+      {
+        "case": "short-label",
+        "args": [
+          "--from-label",
+          "app=frontend"
+        ],
+        "exit": 0,
+        "flows": 7,
+        "error": ""
+      },
+      {
+        "case": "combined-label",
+        "args": [
+          "--to-label",
+          "app=backend,version=v2"
+        ],
+        "exit": 0,
+        "flows": 6,
+        "error": ""
+      },
+      {
+        "case": "qualified-label",
+        "args": [
+          "--to-label",
+          "k8s:app=backend,k8s:version=v2"
+        ],
+        "exit": 0,
+        "flows": 6,
+        "error": ""
+      },
+      {
+        "case": "repeated-label",
+        "args": [
+          "--to-label",
+          "app=backend",
+          "--to-label",
+          "version=v2"
+        ],
+        "exit": 0,
+        "flows": 7,
+        "error": ""
+      },
+      {
+        "case": "service-caller",
+        "args": [
+          "--from-service",
+          "production/frontend"
+        ],
+        "exit": 0,
+        "flows": 0,
+        "error": ""
+      },
+      {
+        "case": "service-target",
+        "args": [
+          "--to-service",
+          "production/backend"
+        ],
+        "exit": 0,
+        "flows": 1,
+        "error": ""
+      },
+      {
+        "case": "service-source-reply",
+        "args": [
+          "--from-service",
+          "production/backend"
+        ],
+        "exit": 0,
+        "flows": 1,
+        "error": ""
+      },
+      {
+        "case": "workload-pair",
+        "args": [
+          "--from-workload",
+          "frontend",
+          "--to-workload",
+          "backend"
+        ],
+        "exit": 0,
+        "flows": 7,
+        "error": ""
+      },
+      {
+        "case": "namespace-service-invalid",
+        "args": [
+          "--namespace",
+          "production",
+          "--to-service",
+          "backend"
+        ],
+        "exit": 1,
+        "flows": 0,
+        "error": "invalid argument \"backend\" for \"--to-service\" flag: filters --to-service and --namespace cannot be combined"
+      },
+      {
+        "case": "http-path",
+        "args": [
+          "--http-path",
+          "^/api/v1/users/.*$"
+        ],
+        "exit": 0,
+        "flows": 8,
+        "error": ""
+      },
+      {
+        "case": "server-http",
+        "args": [
+          "--protocol",
+          "http",
+          "--traffic-direction",
+          "ingress"
+        ],
+        "exit": 0,
+        "flows": 8,
+        "error": ""
+      },
+      {
+        "case": "destination-port",
+        "args": [
+          "--to-port",
+          "8080"
+        ],
+        "exit": 0,
+        "flows": 7,
+        "error": ""
+      },
+      {
+        "case": "source-port",
+        "args": [
+          "--from-port",
+          "8080"
+        ],
+        "exit": 0,
+        "flows": 5,
+        "error": ""
+      }
+    ],
+    "formats": {
+      "json": "accepted",
+      "jsonpb": "accepted",
+      "dict": "accepted",
+      "compact": "accepted",
+      "table": "accepted"
+    },
+    "jq": {
+      "originalSlowFilterFalsePositives": 4,
+      "correctSlowResponses": 2,
+      "NXDOMAINResponses": 1,
+      "requestDirectionEdges": 4
+    },
+    "limits": [
+      "Synthetic GetFlowsResponse fixtures, not captured cluster traffic. Native CLI decoder/filter behavior and JSON/JQ processing only.",
+      "The CLI retains a legacy Kafka filter, but that does not restore removed Kafka L7 production in Cilium1.20.1.",
+      "Service fields model ClusterIP-derived metadata; from-service is not a general caller-workload filter."
+    ]
+  },
+  "prometheus": {
+    "version": "Promtool3.14.0",
+    "cases": 17,
+    "expressionAssertions": 36,
+    "alertAssertions": 17,
+    "exit": 0,
+    "log": "/tmp/mesh-cilium-observability-validation/prometheus/test.log"
+  },
+  "collectorLoki": {
+    "collector": "0.160.0",
+    "loki": "3.7.7",
+    "initialNewRecords": 13,
+    "afterCollectorRestart": 14,
+    "priorRecordsSkipped": 13,
+    "persistentCheckpointPreventedReplay": true,
+    "structuredBodyPreserved": true,
+    "analyticsDisabled": true,
+    "network": "loopback only",
+    "limits": "Synthetic logs; Cilium exporter/enrollment, actual node mounts, remote TLS/authentication and production backend not exercised."
+  },
+  "schemaHelm": {
+    "helm": [
+      {
+        "name": "new-base",
+        "exit": 0,
+        "objects": 39,
+        "cronJobs": [
+          "hubble-generate-certs"
+        ]
+      },
+      {
+        "name": "new-monitors-missing-crds",
+        "exit": 1,
+        "objects": 0,
+        "diagnostic": "Error: execution error at (cilium/templates/validate.yaml:79:13): Service Monitor requires monitoring.coreos.com/v1 CRDs. Please refer to https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml or set .Values.prometheus.serviceMonitor.trustCRDsExist=true\n\nUse --debug flag to render out invalid YAML"
+      },
+      {
+        "name": "new-monitors",
+        "exit": 0,
+        "objects": 42,
+        "cronJobs": [
+          "hubble-generate-certs"
+        ]
+      },
+      {
+        "name": "new-export",
+        "exit": 0,
+        "objects": 43,
+        "cronJobs": [
+          "hubble-generate-certs"
+        ]
+      }
+    ],
+    "schemas": 3,
+    "standaloneAndDashboardQueries": 18,
+    "checksumFailureBlocksUnpackAndInstall": true,
+    "publishedCodeParity": true
+  },
+  "render": [
+    {
+      "path": "en/service-mesh/cilium-service-mesh/04-observability.md",
+      "errors": []
+    },
+    {
+      "path": "en/quizzes/service-mesh/cilium-service-mesh/observability.md",
+      "errors": []
+    },
+    {
+      "path": "ko/service-mesh/cilium-service-mesh/04-observability.md",
+      "errors": []
+    },
+    {
+      "path": "ko/quizzes/service-mesh/cilium-service-mesh/observability.md",
+      "errors": []
+    }
+  ],
+  "docsTest": "118/118",
+  "figures": {
+    "visuallyRead": 8,
+    "retainedPerLocale": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "qualification": "Logical diagram needs Envoy L7 input explained; service maps are observation-derived illustrations, not UI captures or complete inventories. Original RPS/P99 annotations preserved with no measurement claim."
+  },
+  "limits": [
+    "No live Cilium, Prometheus Operator or Grafana deployment. Native CLI/filter/JSON tests use synthetic GetFlowsResponse input.",
+    "Collector-to-Loki test uses local synthetic files, loopback-only services, disabled Loki analytics, and a local filesystem store. Remote TLS/authentication, real node mounts and Cilium exporter enforcement are not tested.",
+    "Dashboard JSON and queries are checked; no Grafana server import/browser test claimed. Retained release dashboards have documented legacy-panel/label/missing-numerator caveats."
+  ]
+}

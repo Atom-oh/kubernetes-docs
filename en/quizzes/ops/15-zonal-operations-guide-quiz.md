@@ -4,104 +4,98 @@
 
 ## Multiple Choice Questions
 
-### 1. What is the eligibility window for Amazon EKS's native Kubernetes version rollback (GA'd July 2026)?
+### 1. What does the seven-day EKS native rollback window mean?
 
-- A) 24 hours
-- B) 7 days
-- C) 30 days
-- D) Unlimited
+- A) The time rollback must take
+- B) Eligibility to initiate rollback after upgrade completion
+- C) Maximum node lifetime
+- D) The period for automatic add-on restoration
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) 7 days**
+**Answer: B) Eligibility to initiate rollback after upgrade completion**
 
-**Explanation:**
-EKS native rollback can revert one minor version at a time, within 7 days of the upgrade. Clusters created at the target version, more than 7 days elapsed, or clusters already re-upgraded are not eligible.
+It is the window to initiate rollback to the immediately previous minor version. Creation version, support status, subsequent upgrades, and compatibility still matter. Auto Mode rolls back nodes first; add-ons, applications, and data changes are not automatically restored.
 
 </details>
 
-### 2. What mechanism is used to drain traffic out of a zone during a Zonal In-Place upgrade?
+### 2. What must be checked after setting an NLB target-group weight to zero?
 
-- A) `kubectl drain`
-- B) Adjusting Target Group weight
-- C) Waiting for DNS TTL to expire
-- D) Recreating the cluster
+- A) All existing connections terminate immediately
+- B) TargetGroupBinding moves to another cluster
+- C) New-flow reduction and existing-flow draining separately
+- D) ARC rewrites every other cluster’s weights automatically
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Adjusting Target Group weight**
+**Answer: C) New-flow reduction and existing-flow draining separately**
 
-**Explanation:**
-Instead of touching anything inside the cluster, you adjust the weight of the Target Group bound via TargetGroupBinding to reduce or stop traffic to a given zone. For unplanned situations like an AZ outage, ARC Zonal Shift performs this role automatically.
+Ordinary weight changes affect new flows, but the current NLB guide says weight zero also closes existing connections after a short period. Do not assume natural draining alone; test reconnection and retry behavior. Check NewFlowCount, ActiveFlowCount, and errors before changing nodes. TGB has no weight field, and EKS zonal shift does not automatically change weights across clusters.
 
 </details>
 
-### 3. What must be set on Kafka brokers to enable KIP-392 (Follower Fetching)?
+### 3. Which combination configures Kafka KIP-392 correctly?
 
-- A) `auto.leader.rebalance.enable=true`
-- B) `replica.selector.class=RackAwareReplicaSelector`
-- C) `unclean.leader.election.enable=true`
-- D) `min.insync.replicas=2`
+- A) broker.rack alone automatically configures all consumers
+- B) RackAwareReplicaSelector, broker.rack, and matching consumer client.rack
+- C) Only unclean.leader.election.enable=true
+- D) Different AZ-name and AZ-ID strings are interchangeable
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) `replica.selector.class=RackAwareReplicaSelector`**
+**Answer: B) RackAwareReplicaSelector, broker.rack, and matching consumer client.rack**
 
-**Explanation:**
-Brokers need `replica.selector.class` set to `RackAwareReplicaSelector` and a `broker.rack` (AZ ID) assigned. On the consumer side, the `client.rack` property must be set to the consumer's own AZ ID so fetches get redirected to a same-rack follower.
+The complete replica.selector.class is org.apache.kafka.common.replica.RackAwareReplicaSelector. The Strimzi Kafka CR configures brokers; ordinary application consumers need separate configuration. Selection falls back to the leader when no suitable local replica exists.
 
 </details>
 
-### 4. Which Valkey GLIDE `ReadFrom` strategy is recommended for workloads that are over 99% reads?
+### 4. What is the priority for GLIDE AZ_AFFINITY_REPLICAS_AND_PRIMARY?
 
-- A) `PRIMARY`
-- B) `PREFER_REPLICA`
-- C) `AZ_AFFINITY_REPLICAS_AND_PRIMARY`
-- D) Random distribution
+- A) Primary only
+- B) Local replicas → local primary → replicas or primary in other AZs
+- C) Remote replicas only
+- D) Always error when no local node exists
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) `AZ_AFFINITY_REPLICAS_AND_PRIMARY`**
+**Answer: B) Local replicas → local primary → replicas or primary in other AZs**
 
-**Explanation:**
-It prefers a same-AZ replica first, falls back to the same-AZ primary, and only reaches into other AZs as a last resort. For read-dominant workloads this is the recommended balance of cost savings and availability — HotelTrader cut inter-AZ transfer costs by 95% after adopting it.
+Server AZ metadata must match client_az. Evaluate tolerance for stale replica reads; read percentage alone is insufficient. HotelTrader’s reported improvements include request batching as well as AZ-aware routing.
 
 </details>
 
-### 5. Which statement about Amazon Aurora's default reader endpoint is correct?
+### 5. Which statement about Aurora’s default reader endpoint is correct?
 
-- A) It automatically prioritizes replicas in the same AZ
-- B) It is round-robin DNS with no AZ awareness
-- C) It always routes to the primary
-- D) It cannot be used without the AWS Advanced JDBC Wrapper
+- A) It distributes each SQL query to a different replica
+- B) It guarantees a reader in the same AZ
+- C) It balances connections and can use the writer if no replicas exist
+- D) It requires the JDBC Wrapper to connect
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) It is round-robin DNS with no AZ awareness**
+**Answer: C) It balances connections and can use the writer if no replicas exist**
 
-**Explanation:**
-Aurora's default reader endpoint has no AZ affinity. You can work around this with per-AZ custom endpoints or the AWS Advanced JDBC Wrapper's `fastestResponse` strategy, but true AZ affinity itself remains an open feature request in the `aws-advanced-jdbc-wrapper` repository.
+It does not guarantee AZ preference. Per-AZ READER custom endpoints need membership and fallback management. JDBC fastestResponse uses response time, not a strict AZ constraint. Feature request #1139 was closed in 2025.
 
 </details>
 
-### 6. Which statement about how a pod can determine its own AZ is INCORRECT?
+### 6. Which statement about discovering a pod’s AZ is incorrect?
 
-- A) It can look this up directly via EC2 IMDS
-- B) A Kyverno mutating policy can copy a node label onto a pod annotation
-- C) The Kubernetes Downward API injects the node's zone label into the pod by default
-- D) An operator like Strimzi can provide rack-awareness as a built-in feature
+- A) Ordinary Pod-create admission always knows the scheduler-selected node
+- B) The AWS MSK Kyverno example handles Pod/binding requests
+- C) spec.nodeName can be passed to an initialization component through the Downward API
+- D) IMDS access depends on environment and security configuration
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) The Kubernetes Downward API injects the node's zone label into the pod by default**
+**Answer: A) Ordinary Pod-create admission always knows the scheduler-selected node**
 
-**Explanation:**
-The Downward API does not automatically inject a node's `topology.kubernetes.io/zone` label into a pod. That's why one of the other approaches — direct IMDS lookup, Kyverno-based admission-time label copying, or an operator's built-in support like Strimzi's — is needed.
+A node normally has not been selected at Pod creation. Use binding-time injection or post-scheduling lookup. The Downward API does not directly query node labels, and Strimzi does not configure unrelated application consumers automatically.
 
 </details>

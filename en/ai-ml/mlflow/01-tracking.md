@@ -1,93 +1,120 @@
 # Part 1: MLflow Tracking
 
-> **Supported Versions**: MLflow 3.15.1
-> **Last Updated**: August 19, 2026
+> **Review baseline**: MLflow 3.16.0 · 2026-09-12
 
 ## Lab Environment Setup
 
-To follow along with the examples in this document, you will need the following tools and environment:
-
-### Required Tools
-
-* Python 3.10 or later
-* `pip install mlflow` (this document assumes MLflow 3.x; install a specific pinned version such as `mlflow==3.15.1` if you want to match the examples exactly)
-* Access to a running MLflow tracking server, or run one locally for these examples with `mlflow server` — [Part 3: EKS Deployment](./03-eks-deployment.md) covers standing up a production tracking server on EKS
-* A training script or notebook you can add a few lines of logging code to (any scikit-learn, PyTorch, or similar example works)
+Install `mlflow==3.16.0` with Python 3.10 or later. The example below was checked with Python 3.12, SQLite, and a local artifact store. It requires no GPU, trained model, or remote server. [Part 3](03-eks-deployment.md) covers a team HTTP server and EKS operation.
 
 ## What Is MLflow Tracking?
 
-MLflow Tracking is the part of MLflow that logs and queries information about machine learning training runs. It combines a Python (and REST) API for recording data with a UI for browsing it. What gets logged falls into a few categories: parameters (the inputs to a run, such as a learning rate or batch size), metrics (the outputs measured during or after training, such as accuracy or loss), artifacts (arbitrary files a run produces, such as plots, datasets, or serialized models), and — as of MLflow 3 — models themselves, tracked as first-class entities rather than plain files.
+Tracking provides APIs and a UI for experiments, runs, parameters, metrics, artifacts, logged models, and traces. The SDK can connect to an HTTP tracking server or directly to a local file/SQL backend. A separate server process is not required for every use.
 
-All of this is recorded through a **tracking server**, which is really two cooperating stores behind one API: a backend store that holds structured metadata, and an artifact store that holds the large binary files. The rest of this document covers the concepts you need to use Tracking day to day; the backend/artifact store split matters more once you deploy your own tracking server, which is why Part 3 revisits it in more depth.
+Even with a remote server, metadata and artifact transfers can take different paths. Metadata goes through the tracking API; artifacts can be proxied by the server or transferred directly between the client and a store such as S3. These configurations are distinguished below.
 
 ## Core Concepts: Experiments and Runs
 
-An **Experiment** is a named collection of Runs — typically one experiment per project or per model you're iterating on. A **Run** is a single execution of your training code: one call to train a model, evaluate it, or otherwise produce something worth recording. Each run captures its own parameters, metrics, tags, and artifacts, so you can compare runs against each other inside the same experiment to see which configuration performed best.
+An **Experiment** groups runs and related results. A **Run** can represent evaluation, preprocessing, or a comparison as well as training. A parameter key cannot be changed to a different value within one run. Metrics can have multiple timestamped observations with steps; distinguish the current summary from the full history.
 
-A minimal tracking call looks like this:
+The following values are **Tracking API fixtures, not measured model accuracy**. The example creates its JSON artifact instead of depending on an undefined image file.
 
 ```python
+from pathlib import Path
 import mlflow
+from mlflow import MlflowClient
 
-with mlflow.start_run():
+root = Path(".mlflow-demo").resolve()
+root.mkdir(exist_ok=True)
+mlflow.set_tracking_uri(f"sqlite:///{root / 'mlflow.db'}")
+client = MlflowClient()
+experiment = client.get_experiment_by_name("tracking-demo")
+experiment_id = (
+    experiment.experiment_id if experiment else
+    client.create_experiment(
+        "tracking-demo", artifact_location=(root / "artifacts").as_uri()
+    )
+)
+mlflow.set_experiment(experiment_id=experiment_id)
+
+with mlflow.start_run(run_name="demo") as run:
     mlflow.log_param("learning_rate", 0.01)
-    mlflow.log_metric("accuracy", 0.92)
-    mlflow.log_artifact("confusion_matrix.png")
+    mlflow.log_metric("demo_score", 0.92, step=0)
+    mlflow.log_metric("demo_score", 0.95, step=1)
+    mlflow.log_dict({"synthetic_example": True}, "summary.json")
+    run_id = run.info.run_id
+
+assert client.get_run(run_id).info.status == "FINISHED"
+assert len(client.get_metric_history(run_id, "demo_score")) == 2
 ```
 
-The `with mlflow.start_run()` context manager opens a run, associates every logging call inside the block with that run, and closes it automatically when the block exits.
+Normal context exit ends the run as `FINISHED`; an exception in the block ends it as `FAILED`. Run termination does not back up artifacts or verify success of an entire training process. Repeating the example adds a run to the same experiment. The conditional does not change an existing experiment's artifact location.
 
 ### Autologging
 
-Manually calling `log_param` and `log_metric` for every value you care about gets tedious fast. MLflow's **autologging** feature instruments common ML libraries so that parameters, metrics, and artifacts are captured automatically during training, without changing your training code. A single call enables it:
+`mlflow.autolog()` configures supported integrations. Captured values, supported framework versions, model logging, and input-example collection vary by integration. Do not assume an ordinary PyTorch loop and a Lightning workflow receive identical automatic instrumentation. Check the framework-specific API and version support; log additional metrics manually.
 
-```python
-mlflow.autolog()
-```
-
-This enables autologging for whichever supported framework is in use in the current process. MLflow also ships framework-specific autolog functions — for example, one for scikit-learn and one for PyTorch — for cases where you want to enable autologging for just one library rather than everything MLflow can detect. Autologging is a good default for routine training runs; manual logging remains useful when you need to capture values autologging doesn't know about, such as custom evaluation metrics or domain-specific artifacts.
+Review where inputs, outputs, models, and data samples will be stored before enabling autologging. Enabling the feature neither removes PII nor instruments every custom code path.
 
 ## The MLflow 3 Shift: Models as First-Class Entities
 
-If you've used MLflow 1.x or 2.x, model tracking worked differently than it does now. In that earlier, run-centric model, a logged model was just another **artifact nested under a Run** — you called `mlflow.sklearn.log_model(...)` inside an active `mlflow.start_run()` block, and the model files landed in that run's artifact directory alongside your plots and datasets. To find a model, you first had to find the run that produced it.
+A `LoggedModel` has its own `model_id`, status, artifact location, and metadata. It can refer to a training run through `source_run_id` and have relationships with other evaluation runs, metrics, and traces. It is distinct from Registered Models and Model Versions.
 
-MLflow 3 changes this by introducing **`LoggedModel`** as its own first-class entity, separate from the Run that produced it. A few consequences follow from that:
+**Calling `log_model()` without an explicit `start_run()` block is not itself new in 3.x.** `Model.log()` in 2.22.0 already used `_get_or_start_run()` when necessary; the 3.16.0 model-logging path still has this behavior. The important change is independent model identity and relationship tracking.
 
-* You can call `mlflow.sklearn.log_model(...)` directly, without an active `mlflow.start_run()` context — the model doesn't need to be nested under a run to be tracked.
-* The tracking UI has a dedicated **Logged Models** view, distinct from the Experiments/Runs view, where you can browse and compare models directly instead of hunting through runs to find the one that produced a model you care about.
-* Because a model is no longer just a file under one run, MLflow 3 can track richer lineage between it and the runs, traces, prompts, and evaluation metrics associated with it — a model can be linked to the run that trained it, the runs that evaluated it, and any traces generated by serving it, rather than being permanently tied to a single training execution.
+After the tracking setup above, this creates model metadata with no active run:
 
-This decouples model versioning and comparison from any single training run, which matters most once you're iterating on the same model across many runs, or generating models outside a traditional training loop entirely (for example, by wrapping an existing LLM with custom logic).
+```python
+model = mlflow.initialize_logged_model(
+    name="metadata-only", model_type="demo"
+)
+assert mlflow.active_run() is None
+assert model.source_run_id is None
+print(model.model_id, model.status)  # PENDING
+```
+
+It does not yet contain usable model weights or a model flavor. Complete actual model logging, artifact retention, and finalization before use. `READY` is not evidence of deployment approval, quality, or security review.
 
 ## GenAI and LLM Observability: Tracing
 
-MLflow's original scope was classic ML experiment tracking: params, metrics, and artifacts for training runs. MLflow 3 extends that same tracking system to cover **GenAI and agent observability** as a core feature, not a separate tool. The mechanism for this is **tracing**.
+MLflow Tracing was introduced in **2.14.0 on 2024-06-17**. Version 3.x expanded model, evaluation, and GenAI UI integration; 3.16.0 added span links and a redesigned trace UI. Tracing did not first become possible in version 3.
 
-Tracing captures the internal steps of an LLM or agent call as a tree of **spans** — each span representing one step, such as a retrieval call, a tool invocation, or a call to the underlying model — along with token usage and cost for each step. MLflow provides auto-instrumentation for popular LLM and agent frameworks, including LangChain, and newer auto-tracing integrations for frameworks such as PydanticAI and smolagents, so that in many cases enabling tracing requires little or no change to your application code. Traces are viewable in the same tracking UI used for experiments and runs, and — reflecting the lineage MLflow 3 tracks — can be linked back to the model, prompt, or evaluation run that produced them.
+A trace represents request steps such as retrieval, tool execution, and LLM calls with spans. Distinguish parent/child structure from span links. Token collection depends on the integration and provider response; retrieval or tool spans do not necessarily have LLM token or cost fields. Cost estimation requires model identity, usage, and price information and is not the reconciled billing total.
 
-The practical implication is that a team doing both classic ML training and LLM/agent development can use one MLflow Tracking deployment for both, rather than standing up a separate observability tool for the GenAI side.
+Combine automatic instrumentation with manual spans where appropriate. Inputs, outputs, exceptions, tool arguments, and reasoning may contain sensitive information; define collection scope, access, redaction, and retention. Installing an integration does not ensure complete path coverage or cost accounting.
 
 ## Backend Store vs. Artifact Store
 
-The tracking server splits what it stores into two categories, backed by two different kinds of storage:
+| Store or default | Meaning |
+|---|---|
+| Backend | experiment/run/parameter/metric/model metadata; SQLite, PostgreSQL, MySQL, and other supported SQL stores |
+| Artifact | model files, plots, JSON, and other files; local paths, S3, and other stores |
+| Default | a new 3.16.0 environment uses `sqlite:///mlflow.db`; check compatibility behavior if `./mlruns` already exists |
+| Legacy file backend | maintenance mode; choose an explicit SQL backend and migration plan for new operation |
 
-* **Backend store**: structured metadata — parameters, metrics, tags, and the records describing experiments, runs, and (in MLflow 3) logged models. At any team scale beyond quick local experimentation, this needs a real relational database, such as PostgreSQL or MySQL, rather than the default local file-based store.
-* **Artifact store**: large binary objects — model files, plots, datasets, and any other files a run produces. This is typically object storage, such as an S3-compatible bucket, rather than a database.
+SQLite is also a relational database. It fits small local exercises; concurrent writers, multiple server replicas, backups, and high availability require separate assessment. A metadata database backup does not automatically include artifact files.
 
-This split matters because the two stores have different durability, scaling, and access-pattern requirements: a database is well-suited to many small structured writes and queries, while object storage is well-suited to storing and retrieving large files. [Part 3: EKS Deployment](./03-eks-deployment.md) goes into the infrastructure choices this implies when you run your own tracking server on EKS — for now, it's enough to know the two stores exist and serve different purposes.
+### Two Artifact Paths with a Remote Server
 
-![Diagram showing a training script logging through the MLflow Tracking API into the Tracking Server, which writes run metadata to a backend store and files to an artifact store, both of which the Tracking UI reads directly.](../../.gitbook/assets/en-ai-ml-mlflow-01-tracking-0.png)
+- **Proxy mode:** the client uses a `mlflow-artifacts:` location and sends files through the server, which holds artifact-store permissions. Clients may not need their own S3 access, making tracking-server authentication and authorization important.
+- **Direct mode:** with `--no-serve-artifacts` and a direct `s3://...` artifact root, clients access storage themselves. They need the relevant AWS permissions, network access, and libraries.
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-mlflow-01-tracking-0.html)
+Changing server flags does not retroactively rewrite existing experiment artifact URIs. Inspect the actual experiment/run URI. The browser UI queries server HTTP APIs; it does not connect directly to PostgreSQL.
 
-The training script never talks to either store directly — it always goes through the Tracking API, which the tracking server uses to route metadata writes to the backend store and file writes to the artifact store. The UI reads from both stores to render experiments, runs, logged models, and traces.
+![Clients and the web UI connect to the Tracking server API, which accesses SQL metadata and artifact storage. In direct artifact mode, an authorized client uses a separate file-transfer path to storage.](../../.gitbook/assets/en-ai-ml-mlflow-01-tracking-0.png)
+
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-mlflow-01-tracking-0.html)
 
 ## Next Steps
 
-This document covered what MLflow Tracking records, how Experiments and Runs organize that data, how MLflow 3's `LoggedModel` entity changes model tracking compared to earlier run-nested models, and how tracing extends the same system to GenAI and agent observability. [Part 2: Model Registry](./02-model-registry.md) covers what happens after a run produces a model worth keeping: registering it, versioning it, and promoting it toward production with aliases like `champion`. [Part 3: EKS Deployment](./03-eks-deployment.md) covers running your own tracking server on EKS, including the backend store and artifact store choices introduced above.
+[Part 2](02-model-registry.md) covers registration, versions, and aliases. [Part 3](03-eks-deployment.md) covers EKS storage and access control. Changing an alias alone does not automatically redeploy every serving process.
 
-[Return to Main Page](./README.md)
+## Primary Sources
 
-## Quiz
+- [MLflow 3.16.0 release](https://github.com/mlflow/mlflow/releases/tag/v3.16.0)
+- [Backend store](https://mlflow.org/docs/3.16.0/self-hosting/architecture/backend-store/)
+- [Artifact store](https://mlflow.org/docs/3.16.0/self-hosting/architecture/artifact-store/)
+- [2.22.0 model logging implementation](https://github.com/mlflow/mlflow/blob/v2.22.0/mlflow/models/model.py)
+- [3.16.0 Tracking API implementation](https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/tracking/fluent.py)
+- [Tracing introduced in 2.14.0](https://github.com/mlflow/mlflow/releases/tag/v2.14.0)
 
-To test what you've learned in this chapter, try the [Topic Quiz](../../quizzes/ai-ml/mlflow/01-tracking-quiz.md).
+[Return to Main Page](README.md) · [Quiz](../../quizzes/ai-ml/mlflow/01-tracking-quiz.md)

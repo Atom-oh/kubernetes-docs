@@ -9,7 +9,7 @@
       1070,
       625
     ],
-    "animation": "trace",
+    "animation": "none",
     "views": [
       {
         "id": "spawn",
@@ -19,7 +19,7 @@
           "dash",
           "crd"
         ],
-        "note": "사용자가 스포너에서 고른 사양이 Profile 네임스페이스 안의 Notebook CR로 기록된다."
+        "note": "웹앱이 선택한 namespace에 Notebook CR을 생성합니다."
       },
       {
         "id": "reconcile",
@@ -29,7 +29,7 @@
           "ctrl",
           "k8s"
         ],
-        "note": "컨트롤러가 CR 이벤트를 감시하고 StatefulSet/Pod로 조정하며 PVC 마운트와 GPU 요청을 반영한다."
+        "note": "Notebook 컨트롤러가 StatefulSet·Service를 조정하고 Kubernetes가 Pod를 생성·배치합니다."
       },
       {
         "id": "expose",
@@ -39,7 +39,7 @@
           "istio",
           "user"
         ],
-        "note": "Istio 사이드카가 주입된 Pod가 Dashboard 프록시를 통해 사용자에게 노출된다."
+        "note": "설정된 gateway·routing·authorization을 통해 접근하며 대시보드 자체가 프록시는 아닙니다."
       }
     ],
     "legend": {
@@ -73,14 +73,14 @@
     {
       "id": "dash",
       "type": "frontend",
-      "label": "Central Dashboard",
-      "sublabel": "스포너 UI"
+      "label": "Notebooks 웹앱",
+      "sublabel": "대시보드 진입점"
     },
     {
       "id": "crd",
       "type": "database",
       "label": "Notebook CR",
-      "sublabel": "Profile 네임스페이스 내"
+      "sublabel": "선택한 namespace"
     },
     {
       "id": "ctrl",
@@ -91,14 +91,14 @@
     {
       "id": "k8s",
       "type": "cloud",
-      "label": "StatefulSet / Pod",
-      "sublabel": "노트북 서버"
+      "label": "Kubernetes 워크로드",
+      "sublabel": "StatefulSet / Pod"
     },
     {
       "id": "istio",
       "type": "security",
-      "label": "Istio 사이드카",
-      "sublabel": "네임스페이스 라우팅"
+      "label": "Istio 접근 경로",
+      "sublabel": "gateway / routing / authz"
     }
   ],
   "segments": [
@@ -147,25 +147,25 @@
       "from": "ctrl",
       "to": "k8s",
       "y": 365,
-      "label": "StatefulSet/Pod로 조정",
+      "label": "StatefulSet·Service 조정",
       "variant": "emphasis",
-      "note": "PVC 마운트 · nvidia.com/gpu 요청"
+      "note": "PodSpec에 볼륨·자원 설정"
     },
     {
       "id": "inject",
       "from": "k8s",
       "to": "istio",
       "y": 445,
-      "label": "Istio 사이드카 주입",
+      "label": "설정된 admission·routing",
       "variant": "security",
-      "note": "네임스페이스 단위 라우팅"
+      "note": "주입은 webhook의 역할"
     },
     {
       "id": "expose",
       "from": "istio",
       "to": "user",
       "y": 505,
-      "label": "Dashboard 프록시를 통해 노트북 UI 노출",
+      "label": "인증된 노트북 HTTP 접근",
       "variant": "return"
     }
   ],
@@ -193,6 +193,24 @@
       "from": 440,
       "to": 512,
       "type": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "중지와 재시작",
+      "items": [
+        "중지 annotation 존재 → StatefulSet 0; 제거 → 1",
+        "Notebook spec에는 replicas 필드가 없습니다."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "보존과 컬링",
+      "items": [
+        "PVC의 데이터만 보존되며 커널 메모리는 사라집니다.",
+        "기본 컬링은 꺼져 있고 Jupyter kernel API 판정을 사용합니다."
+      ]
     }
   ]
 }

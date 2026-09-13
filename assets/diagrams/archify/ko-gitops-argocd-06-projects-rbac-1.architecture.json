@@ -17,7 +17,7 @@
           "staging",
           "prod"
         ],
-        "note": "destinations의 server: '*' 덕분에 Frontend 프로젝트는 세 클러스터 모두에 배포할 수 있다."
+        "note": "Frontend 프로젝트의 허용 서버 목록에 세 클러스터를 명시하고 Namespace는 frontend-*로 제한합니다."
       },
       {
         "id": "backend-path",
@@ -29,7 +29,7 @@
           "staging",
           "prod"
         ],
-        "note": "Backend 프로젝트도 같은 방식으로 세 클러스터 전체를 대상으로 한다."
+        "note": "Backend도 서버 목록을 명시하며 backend-* Namespace만 허용합니다."
       },
       {
         "id": "shared-clusters",
@@ -39,23 +39,26 @@
           "staging",
           "prod"
         ],
-        "note": "Dev · Staging · Prod 클러스터는 모든 프로젝트가 공유하는 배포 대상이다."
+        "note": "배포하려면 대상별 Application 또는 ApplicationSet이 필요합니다. AppProject가 세 곳에 자동 배포하지 않습니다."
       }
     ],
     "legend": {
-      "mode": "auto",
       "entries": {
         "backend": {
-          "label": "백엔드 서비스"
+          "label": "허용 대상 목록"
         },
         "cloud": {
-          "label": "클라우드 서비스"
+          "label": "등록된 클러스터"
         },
         "security": {
-          "label": "보안 구성 요소"
+          "label": "AppProject"
         }
       }
-    }
+    },
+    "viewBox": [
+      1054.0,
+      588.0
+    ]
   },
   "components": [
     {
@@ -65,7 +68,7 @@
       "sublabel": "frontend-web · frontend-api",
       "tag": "namespace: frontend-*",
       "pos": [
-        60,
+        160,
         80
       ],
       "size": [
@@ -80,21 +83,7 @@
       "sublabel": "user-service · order-service",
       "tag": "namespace: backend-*",
       "pos": [
-        400,
-        80
-      ],
-      "size": [
-        240,
-        64
-      ]
-    },
-    {
-      "id": "proj-data",
-      "type": "security",
-      "label": "Project: Data",
-      "sublabel": "analytics · ml-pipeline",
-      "pos": [
-        740,
+        660,
         80
       ],
       "size": [
@@ -105,8 +94,8 @@
     {
       "id": "dest-any",
       "type": "backend",
-      "label": "destinations.server: '*'",
-      "sublabel": "모든 클러스터를 배포 대상으로 허용",
+      "label": "각 프로젝트의 destinations",
+      "sublabel": "Dev · Staging · Prod 서버를 명시",
       "pos": [
         390,
         270
@@ -165,8 +154,7 @@
       "label": "ArgoCD · AppProject (팀별)",
       "wraps": [
         "proj-frontend",
-        "proj-backend",
-        "proj-data"
+        "proj-backend"
       ]
     },
     {
@@ -184,18 +172,29 @@
       "id": "fe-dest",
       "from": "proj-frontend",
       "to": "dest-any",
-      "label": "배포",
-      "variant": "emphasis"
+      "label": "허용 범위",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          280,
+          302
+        ]
+      ]
     },
     {
       "id": "be-dest",
       "from": "proj-backend",
-      "to": "dest-any"
-    },
-    {
-      "id": "data-dest",
-      "from": "proj-data",
-      "to": "dest-any"
+      "to": "dest-any",
+      "fromSide": "bottom",
+      "toSide": "right",
+      "via": [
+        [
+          780,
+          302
+        ]
+      ]
     },
     {
       "id": "dest-dev",
@@ -207,7 +206,7 @@
       "id": "dest-staging",
       "from": "dest-any",
       "to": "staging",
-      "label": "모든 클러스터에 동일하게 배포",
+      "label": "대상으로 선택 가능",
       "variant": "emphasis",
       "labelDy": 24
     },
@@ -221,7 +220,7 @@
   "cards": [
     {
       "dot": "rose",
-      "title": "프로젝트별 격리 (팀 단위)",
+      "title": "팀별 Argo CD 배포 범위",
       "items": [
         "sourceRepos: https://github.com/myorg/frontend-* 처럼 팀 저장소만 허용",
         "destinations.namespace: frontend-* 처럼 팀 네임스페이스만 허용"
@@ -231,8 +230,9 @@
       "dot": "cyan",
       "title": "공유 클러스터",
       "items": [
-        "destinations.server: '*' 로 Dev · Staging · Prod 전체를 대상으로 한다",
-        "클러스터 격리는 네임스페이스 패턴이 담당한다"
+        "세 서버 URL을 destinations에 명시한다",
+        "Namespace 패턴은 배포 허용 범위이며 런타임 격리는 별도",
+        "다중 클러스터 배포에는 대상별 Application이 필요하다"
       ]
     },
     {

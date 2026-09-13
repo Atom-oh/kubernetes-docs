@@ -1,0 +1,150 @@
+[
+  {
+    "path": "en/service-mesh/02-istio.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full283-line original reviewed; retained older chapterURL asoverviewandcanonicallearningmap; replaceddriftedduplicatequickstartwithmaintainedsetup references.",
+    "sources": [
+      "https://istio.io/latest/docs/overview/",
+      "https://istio.io/latest/docs/ambient/architecture/data-plane/",
+      "https://istio.io/latest/docs/ops/configuration/traffic-management/tls-configuration/",
+      "https://istio.io/latest/docs/tasks/observability/distributed-tracing/overview/",
+      "https://istio.io/latest/docs/setup/platform-setup/amazon-eks/",
+      "https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html",
+      "https://istio.io/latest/get-involved/"
+    ],
+    "findings": [
+      "Kept allfeature/learningsections andthevisuallyverifiedsidecararchitecturefigure; addedexplicitambientdescriptionandcaptionlimitsratherthanmisrepresentingsidecarsasallIstio.",
+      "Reconciledolderoverviewwithmaintainedistio/READMEandinstallationguide. RemovedunsupportedKubernetes1.28+currentmatrix, unpinneddownload/oldcd mismatch, assumeddefaultprofileingressdeployment, hostname-only/port-nameassumptions anddashboardcommandswithoutinstalledbackends.",
+      "CorrectedIstiodwatches/translates/distributesvsKubernetesresourcepersistence; scopeautomaticmTLS/enrollment,JWTvalidationvsJWTrequiredAuthz,tracecontextparticipation,explicitretryandratelimitconfiguration.",
+      "CorrectedPeerAuthenticationlinktotheactualmTLSguide; retainedrelativelearningmapandquizlink. Replaced404AppMeshblogwithverifiedAWSend-of-supportnoticeforSeptember30,2026(futureasofaudit); replacedunverifiedworkshop/forum andmisnamedCNCFworkinggroupwithofficialEKS/communityentrypoints.",
+      "VerifiedbothlocalPNGandpublicarchmapsourcefiles; noassetschanged. Historicalbooksretainedasadditionalreading,notcurrentinstallauthority; OReillyURLremainsHTTP403-unverifiedintheparentsnapshot,notprovenbroken."
+    ],
+    "validation": [
+      "All283originallines read perlocale;botharchitecturePNGvisuallyinspected.",
+      "4-filebatch22YAMLblocks/10Bashblocks;relative/own-mainlinks,known404/410,fences,details,duplicatekeys andsyntaxchecks0errors.",
+      "Scopedgitdiffcheckclean; cleandocs:test110/110passed in /tmp/kubernetes-docs-full-review/docs-test-mesh-other-istio-clean.log."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/02-istio.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full283-line original reviewed; retained older chapterURL asoverviewandcanonicallearningmap; replaceddriftedduplicatequickstartwithmaintainedsetup references.",
+    "sources": [
+      "https://istio.io/latest/docs/overview/",
+      "https://istio.io/latest/docs/ambient/architecture/data-plane/",
+      "https://istio.io/latest/docs/ops/configuration/traffic-management/tls-configuration/",
+      "https://istio.io/latest/docs/tasks/observability/distributed-tracing/overview/",
+      "https://istio.io/latest/docs/setup/platform-setup/amazon-eks/",
+      "https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html",
+      "https://istio.io/latest/get-involved/"
+    ],
+    "findings": [
+      "Kept allfeature/learningsections andthevisuallyverifiedsidecararchitecturefigure; addedexplicitambientdescriptionandcaptionlimitsratherthanmisrepresentingsidecarsasallIstio.",
+      "Reconciledolderoverviewwithmaintainedistio/READMEandinstallationguide. RemovedunsupportedKubernetes1.28+currentmatrix, unpinneddownload/oldcd mismatch, assumeddefaultprofileingressdeployment, hostname-only/port-nameassumptions anddashboardcommandswithoutinstalledbackends.",
+      "CorrectedIstiodwatches/translates/distributesvsKubernetesresourcepersistence; scopeautomaticmTLS/enrollment,JWTvalidationvsJWTrequiredAuthz,tracecontextparticipation,explicitretryandratelimitconfiguration.",
+      "CorrectedPeerAuthenticationlinktotheactualmTLSguide; retainedrelativelearningmapandquizlink. Replaced404AppMeshblogwithverifiedAWSend-of-supportnoticeforSeptember30,2026(futureasofaudit); replacedunverifiedworkshop/forum andmisnamedCNCFworkinggroupwithofficialEKS/communityentrypoints.",
+      "VerifiedbothlocalPNGandpublicarchmapsourcefiles; noassetschanged. Historicalbooksretainedasadditionalreading,notcurrentinstallauthority; OReillyURLremainsHTTP403-unverifiedintheparentsnapshot,notprovenbroken."
+    ],
+    "validation": [
+      "All283originallines read perlocale;botharchitecturePNGvisuallyinspected.",
+      "4-filebatch22YAMLblocks/10Bashblocks;relative/own-mainlinks,known404/410,fences,details,duplicatekeys andsyntaxchecks0errors.",
+      "Scopedgitdiffcheckclean; cleandocs:test110/110passed in /tmp/kubernetes-docs-full-review/docs-test-mesh-other-istio-clean.log."
+    ]
+  },
+  {
+    "path": "en/quizzes/service-mesh/02-istio-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full732-line original reviewed; preserved11open-endedquestionswithcorrectanalysis/security/telemetry/locality/EKSsemanticsandexplicitexampleboundaries.",
+    "sources": [
+      "https://istio.io/latest/docs/",
+      "https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/istio/",
+      "https://argo-rollouts.readthedocs.io/en/stable/features/analysis/",
+      "https://argo-rollouts.readthedocs.io/en/stable/analysis/prometheus/",
+      "https://istio.io/latest/docs/ops/configuration/traffic-management/tls-configuration/",
+      "https://istio.io/latest/docs/reference/config/",
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/",
+      "https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/http/local_ratelimit/v3/local_rate_limit.proto",
+      "https://istio.io/latest/docs/tasks/observability/distributed-tracing/opentelemetry/",
+      "https://istio.io/latest/docs/reference/config/telemetry/",
+      "https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/cost-opt-networking.html",
+      "https://docs.aws.amazon.com/global-infrastructure/latest/regions/az-ids.html",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/pkg/config/validation/validation.go",
+      "https://github.com/argoproj/argo-rollouts/releases/tag/v1.10.0"
+    ],
+    "findings": [
+      "Q1/2correctapplicationparticipation,controlplaneconfigpersistence,sidecarvsambientcaptureandunsubstantiated85%resourceclaims.",
+      "Q3replacesincompleteRolloutwithclearlylabeledstrategyfragmentpluscompletefinitecanaryAnalysisTemplate. Realprovideraddress/args,source-reporterselectors,volumeandavailabilitygates,arrayresult[0],empty/NaN/Infguards; failureLimit2means3rdfailure,notimmediaterollback. Surroundingfullresourceslinkedtocanonicalguide.",
+      "Q4usesv1securityresources,namespaceSTRICTscope,emptyALLOWdefaultdenyvsDENYprecedence,andcombinedworkloadprincipal/JWTprincipal/method/pathcondition. RequestAuthaloneisnotJWTrequired;ambientL7needswaypointattachment.",
+      "Q5completeIstioGateway/VirtualServicewithnamespace-qualifiedgateway/backend,matchingTLSHTTPsemantics,owned-domainredirectandwriteattempts0;Secretcreationdoesnotissueortrustcerts.",
+      "Q6scopesoneIstiosourcereporter/service,latencyms→seconds,requests/secvsrequestcount,errornumeratorzero-onlywithpositivetotal;CPUselectscontainerlabelandmeasurescoresnotsaturation. Replacedlegacy100%tracing-onlyconfigwithnamedOTLPprovider+Telemetry1%exampleandbackend/contextprerequisites.",
+      "Q7removesunqualified50MB/85%/alwaysfasterclaimsandunsafesharedambientinstallshortcuts;fixedKoreanreplacementglyphcorruptioninthearchitectureword.",
+      "Q8currentconsecutive5xxErrors,connection/resourcevsRPSsemantics;completeLocalRateLimittypedconfig/context/routermatch+enable/enforce100%,perproxyburst100/refill10ratherthanglobalquota;unsupportedwaypointEnvoyFilterclarified.",
+      "Q9native-rejecteddistribute+failovercombinationreplacedwithfailoverPriority+outlierdetection;80/20distributionisnotstandbyfailover;endpointcapacity/AZID/pricingpathlimitsreplaceunfounded85%costandfixedlatencyclaims.",
+      "Q10removednonexistentproductionprofile,incompletelegacyNLBService/blanketIAMrole/portlist,partialFluentBit-as-ContainerInsightsrecipe. Explainedactualcontroller/TLS/IAM/network/pipelineownership;validatedHPA3–5andproxyrequest/limitexamplewithoutproduction-sizingclaims.",
+      "Bonusreplacesemptyquery/incompleteautomationpromiseswithfinitecanaryvolume/availability/latency/erroranalysis;abort/providererror/inconclusive/rollbackandsideeffectsremain distinct. Quizscorenolongerclaimsexpertorproduction-readinesscertification.",
+      "Nolivecluster,AWSoperation,containerimageexecutionorproductionloadtest. Fragmentcompositionusedonlyforofflinefieldvalidation;actualmetrics/routing/applicationinputsremainrequired."
+    ],
+    "validation": [
+      "All732originallinesperlocaleincluding11fullanswers/codeblocks/referencesread.",
+      "Perlocale15YAMLdocuments;10Istioresourcesnative1.31+releasedCRDpassed;2AnalysisTemplatesreleasedArgo1.10schemaand1composedRolloutnative1.10lintpassed.",
+      "4nativeIOPrendersacrosslocalesconfirmedOTLPprovider/tracing,HPA3–5,istiodrequestsandproxyresources;2EnvoyLocalRateLimitconfigsvalidatedagainstIstio1.31pinnedprotobufs.",
+      "96casesfor12metricconditionspassedactualExpr1.17.7withArgohelpers;20PromQLqueriesparsed(8fenced+12metric).",
+      "9actualtimeseriesfixtures/43assertionspassedpromtool3.14:missing5xx,allsuccessmissing,code0,4xx,missing/idlemetrics,one-sidedreporter/namespacefiltering,histogramunits,realPodCPUcontainerlabels. Initial2ULPexpectationdifferencefixedwith1e-12numericassertiontolerance;documentqueryunchanged.",
+      "Negativecontrols:originalmixedlocalityrejectedbynativeIstio;productionprofilemissing. EN/KOYAML+Bash+PromQLexamplesidentical.",
+      "Batchlinks/syntax/diffclean; fullcleandocs:test110/110passed. Evidence /tmp/mesh-orphan-quiz-validation/report.json,prometheus-fixtures.json,conditions.json; fulltestslog /tmp/kubernetes-docs-full-review/docs-test-mesh-other-istio-clean.log."
+    ]
+  },
+  {
+    "path": "ko/quizzes/service-mesh/02-istio-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full732-line original reviewed; preserved11open-endedquestionswithcorrectanalysis/security/telemetry/locality/EKSsemanticsandexplicitexampleboundaries.",
+    "sources": [
+      "https://istio.io/latest/docs/",
+      "https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/istio/",
+      "https://argo-rollouts.readthedocs.io/en/stable/features/analysis/",
+      "https://argo-rollouts.readthedocs.io/en/stable/analysis/prometheus/",
+      "https://istio.io/latest/docs/ops/configuration/traffic-management/tls-configuration/",
+      "https://istio.io/latest/docs/reference/config/",
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/",
+      "https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/http/local_ratelimit/v3/local_rate_limit.proto",
+      "https://istio.io/latest/docs/tasks/observability/distributed-tracing/opentelemetry/",
+      "https://istio.io/latest/docs/reference/config/telemetry/",
+      "https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/cost-opt-networking.html",
+      "https://docs.aws.amazon.com/global-infrastructure/latest/regions/az-ids.html",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/pkg/config/validation/validation.go",
+      "https://github.com/argoproj/argo-rollouts/releases/tag/v1.10.0"
+    ],
+    "findings": [
+      "Q1/2correctapplicationparticipation,controlplaneconfigpersistence,sidecarvsambientcaptureandunsubstantiated85%resourceclaims.",
+      "Q3replacesincompleteRolloutwithclearlylabeledstrategyfragmentpluscompletefinitecanaryAnalysisTemplate. Realprovideraddress/args,source-reporterselectors,volumeandavailabilitygates,arrayresult[0],empty/NaN/Infguards; failureLimit2means3rdfailure,notimmediaterollback. Surroundingfullresourceslinkedtocanonicalguide.",
+      "Q4usesv1securityresources,namespaceSTRICTscope,emptyALLOWdefaultdenyvsDENYprecedence,andcombinedworkloadprincipal/JWTprincipal/method/pathcondition. RequestAuthaloneisnotJWTrequired;ambientL7needswaypointattachment.",
+      "Q5completeIstioGateway/VirtualServicewithnamespace-qualifiedgateway/backend,matchingTLSHTTPsemantics,owned-domainredirectandwriteattempts0;Secretcreationdoesnotissueortrustcerts.",
+      "Q6scopesoneIstiosourcereporter/service,latencyms→seconds,requests/secvsrequestcount,errornumeratorzero-onlywithpositivetotal;CPUselectscontainerlabelandmeasurescoresnotsaturation. Replacedlegacy100%tracing-onlyconfigwithnamedOTLPprovider+Telemetry1%exampleandbackend/contextprerequisites.",
+      "Q7removesunqualified50MB/85%/alwaysfasterclaimsandunsafesharedambientinstallshortcuts;fixedKoreanreplacementglyphcorruptioninthearchitectureword.",
+      "Q8currentconsecutive5xxErrors,connection/resourcevsRPSsemantics;completeLocalRateLimittypedconfig/context/routermatch+enable/enforce100%,perproxyburst100/refill10ratherthanglobalquota;unsupportedwaypointEnvoyFilterclarified.",
+      "Q9native-rejecteddistribute+failovercombinationreplacedwithfailoverPriority+outlierdetection;80/20distributionisnotstandbyfailover;endpointcapacity/AZID/pricingpathlimitsreplaceunfounded85%costandfixedlatencyclaims.",
+      "Q10removednonexistentproductionprofile,incompletelegacyNLBService/blanketIAMrole/portlist,partialFluentBit-as-ContainerInsightsrecipe. Explainedactualcontroller/TLS/IAM/network/pipelineownership;validatedHPA3–5andproxyrequest/limitexamplewithoutproduction-sizingclaims.",
+      "Bonusreplacesemptyquery/incompleteautomationpromiseswithfinitecanaryvolume/availability/latency/erroranalysis;abort/providererror/inconclusive/rollbackandsideeffectsremain distinct. Quizscorenolongerclaimsexpertorproduction-readinesscertification.",
+      "Nolivecluster,AWSoperation,containerimageexecutionorproductionloadtest. Fragmentcompositionusedonlyforofflinefieldvalidation;actualmetrics/routing/applicationinputsremainrequired."
+    ],
+    "validation": [
+      "All732originallinesperlocaleincluding11fullanswers/codeblocks/referencesread.",
+      "Perlocale15YAMLdocuments;10Istioresourcesnative1.31+releasedCRDpassed;2AnalysisTemplatesreleasedArgo1.10schemaand1composedRolloutnative1.10lintpassed.",
+      "4nativeIOPrendersacrosslocalesconfirmedOTLPprovider/tracing,HPA3–5,istiodrequestsandproxyresources;2EnvoyLocalRateLimitconfigsvalidatedagainstIstio1.31pinnedprotobufs.",
+      "96casesfor12metricconditionspassedactualExpr1.17.7withArgohelpers;20PromQLqueriesparsed(8fenced+12metric).",
+      "9actualtimeseriesfixtures/43assertionspassedpromtool3.14:missing5xx,allsuccessmissing,code0,4xx,missing/idlemetrics,one-sidedreporter/namespacefiltering,histogramunits,realPodCPUcontainerlabels. Initial2ULPexpectationdifferencefixedwith1e-12numericassertiontolerance;documentqueryunchanged.",
+      "Negativecontrols:originalmixedlocalityrejectedbynativeIstio;productionprofilemissing. EN/KOYAML+Bash+PromQLexamplesidentical.",
+      "Batchlinks/syntax/diffclean; fullcleandocs:test110/110passed. Evidence /tmp/mesh-orphan-quiz-validation/report.json,prometheus-fixtures.json,conditions.json; fulltestslog /tmp/kubernetes-docs-full-review/docs-test-mesh-other-istio-clean.log."
+    ]
+  }
+]

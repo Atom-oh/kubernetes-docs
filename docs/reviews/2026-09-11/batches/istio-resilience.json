@@ -1,0 +1,414 @@
+[
+  {
+    "path": "en/service-mesh/istio/resilience/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected sidecar resilience patterns, enforced local rate limits, explicit write retry guards, locality scopes, timeout budgets and observable metrics; preserved useful conceptual figures with limitations.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/",
+      "https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_circuit_breakers",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/local_rate_limit_filter",
+      "https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/circuit_breaking",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter",
+      "https://istio.io/latest/docs/reference/commands/istioctl/",
+      "https://kubernetes.io/docs/reference/labels-annotations-taints/#topologykubernetesiozone",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/reliability.html"
+    ],
+    "findings": [
+      "Obsolete consecutiveErrors, wrong locality region/zone paths and weighted distribution labeled failover.",
+      "Local rate-limit filters omit router match/enabled/enforced fractions; not a shared service quota.",
+      "Retry examples cover writes/reset without application idempotency; attempts excludes original request; timeout arithmetic is wrong.",
+      "Nonexistent circuit-breaker capacity/overflow metrics, custom zone labels assumed standard, retry counter misdescribed as pre-retry error rate.",
+      "Duplicate YAML keys in good/bad snippets; missing fault fallback and wrong rateLimits diagnostic; topology labels on Pods assumed automatic.",
+      "Per-client proxy upstream-cluster limits misdescribed as per-server-Pod/global limits; minHealthPercent is fail-open, not guaranteed healthy capacity.",
+      "Official AWS reference URLs need status/content verification; figure descriptions overstate independent stages and automatic same-zone-only routing.",
+      "Fixed all concrete findings above; legacy EKS networkmanagement URL returned404 and now links to the verified current EKS Reliability guide.",
+      "Rate-limiter token-shortage and enforced counters distinguished; active-request overflow counters are explicitly version-dependent.",
+      "Out-of-scope archmaps README diagrams0/1/3 still simplify pipeline order/connection-limit rejection/locality behavior; current prose explains the limits. Regeneration would improve those external source diagrams."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "13 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Pair:36 YAML blocks,14 Bash blocks,22 fenced PromQL expressions passed;13 Istio resources per language validated against released1.31 CRD schemas and offline1.30.2 CLI.",
+      "Verified all write-method routes explicitly disable retries and read routes require GET/HEAD/OPTIONS; ordinary fault-traffic fallback retained.",
+      "No live Envoy, cluster, traffic or AWS validation; EnvoyFilter fields checked against official API/example, runtime listener matching must still be verified in the target deployment.",
+      "Final batch recheck also passed native istioctl1.31.0 plus released1.31 schemas; full docs:test107/107. Earlier1.30.2 checks remain historical evidence, not the final validator version."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/resilience/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected sidecar resilience patterns, enforced local rate limits, explicit write retry guards, locality scopes, timeout budgets and observable metrics; preserved useful conceptual figures with limitations.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/",
+      "https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_circuit_breakers",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/local_rate_limit_filter",
+      "https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/circuit_breaking",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter",
+      "https://istio.io/latest/docs/reference/commands/istioctl/",
+      "https://kubernetes.io/docs/reference/labels-annotations-taints/#topologykubernetesiozone",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/reliability.html"
+    ],
+    "findings": [
+      "Obsolete consecutiveErrors, wrong locality region/zone paths and weighted distribution labeled failover.",
+      "Local rate-limit filters omit router match/enabled/enforced fractions; not a shared service quota.",
+      "Retry examples cover writes/reset without application idempotency; attempts excludes original request; timeout arithmetic is wrong.",
+      "Nonexistent circuit-breaker capacity/overflow metrics, custom zone labels assumed standard, retry counter misdescribed as pre-retry error rate.",
+      "Duplicate YAML keys in good/bad snippets; missing fault fallback and wrong rateLimits diagnostic; topology labels on Pods assumed automatic.",
+      "Per-client proxy upstream-cluster limits misdescribed as per-server-Pod/global limits; minHealthPercent is fail-open, not guaranteed healthy capacity.",
+      "Official AWS reference URLs need status/content verification; figure descriptions overstate independent stages and automatic same-zone-only routing.",
+      "Fixed all concrete findings above; legacy EKS networkmanagement URL returned404 and now links to the verified current EKS Reliability guide.",
+      "Rate-limiter token-shortage and enforced counters distinguished; active-request overflow counters are explicitly version-dependent.",
+      "Out-of-scope archmaps README diagrams0/1/3 still simplify pipeline order/connection-limit rejection/locality behavior; current prose explains the limits. Regeneration would improve those external source diagrams."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "13 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "Pair:36 YAML blocks,14 Bash blocks,22 fenced PromQL expressions passed;13 Istio resources per language validated against released1.31 CRD schemas and offline1.30.2 CLI.",
+      "Verified all write-method routes explicitly disable retries and read routes require GET/HEAD/OPTIONS; ordinary fault-traffic fallback retained.",
+      "No live Envoy, cluster, traffic or AWS validation; EnvoyFilter fields checked against official API/example, runtime listener matching must still be verified in the target deployment.",
+      "Final batch recheck also passed native istioctl1.31.0 plus released1.31 schemas; full docs:test107/107. Earlier1.30.2 checks remain historical evidence, not the final validator version."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/resilience/01-outlier-detection.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected passive per-proxy outlier behavior, supported API fields, fail-open semantics, TLS-origination external examples, safe payment/retry handling, topology/canary claims and enforcement metrics.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier",
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/tools/packaging/common/envoy_bootstrap.json",
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats",
+      "https://pkg.go.dev/net/http"
+    ],
+    "findings": [
+      "Latency-based automatic ejection and periodic health probes falsely attributed to DestinationRule; obsolete consecutiveErrors and unsupported enforcing fields.",
+      "minHealthPercent described as request count, minimum healthy capacity and split-brain protection; missing splitExternalLocalOriginErrors for local-failure threshold.",
+      "HTTPS ServiceEntry plus SIMPLE re-encrypts application TLS; HTTP retry rules cannot inspect passthrough HTTPS; HTTP-aware TLS origination needs plaintext inbound port mapped to443 and verified upstream identity.",
+      "Payment Go sample undefined payload, unused amount/context/response, no timeout/status/body handling, automatic retry claim unsafe for writes.",
+      "429 not a gateway error; ConfigMap alone does not enable a global limiter; DB query failures/SQL latency not visible as TCP transport failures.",
+      "Endpoint tier labels do not implement ordered priority failover; incomplete STATIC ServiceEntry lacks ports; ejection percentages not per-region or guaranteed endpoint counts.",
+      "Canary full ejection does not shift its traffic weight to stable automatically; metrics use deprecated detected counters, healthy denominator and YAML instead of PromQL.",
+      "Duplicate YAML keys; maxEjectionPercent0 observation-mode claim requires released implementation check; Kiali/istiod logs do not prove per-proxy ejections.",
+      "Released Istio1.31 applyOutlierDetection sets max_ejection_percent only for values>0; corrected false0%=observation advice. The same function disables success-rate enforcement.",
+      "Replaced two redundant diagrams that asserted latency-based ejection/active recovery probes/obsolete field with correct explanatory prose. External archmaps sources/assets0/1 require regeneration outside this worker’s scope; useful external API diagram2 retained.",
+      "Fixed all concrete findings above. Kept explicit unverified lab/backend/enrollment/CA/namespace assumptions and independent same-host configurations."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "30 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "3 JSON dashboard PromQL expressions parsed.",
+      "Go standard-library payment fragment compiled via go test (no test cases, no API calls, no payment operation executed).",
+      "Pair:20 fenced PromQL expressions,4 Prometheus rule files and6 JSON dashboard expressions passed promtool3.14; batch-to-date4 documents88 YAML22 Bash blocks have no syntax/local/own-main/known-broken-link errors.",
+      "Validated30 Istio resources per language; HTTP port80→target443 origination, SNI/SAN, namespace placement, method matching and explicit no-retry routes reviewed. No live Envoy/cluster/HTTP call or payment operation executed.",
+      "Scoped git diff --check passes.",
+      "Final batch recheck also passed native istioctl1.31.0 plus released1.31 schemas; full docs:test107/107. Earlier1.30.2 checks remain historical evidence, not the final validator version."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/resilience/01-outlier-detection.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Corrected passive per-proxy outlier behavior, supported API fields, fail-open semantics, TLS-origination external examples, safe payment/retry handling, topology/canary claims and enforcement metrics.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/outlier",
+      "https://istio.io/latest/docs/tasks/traffic-management/egress/egress-tls-origination/",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/tools/packaging/common/envoy_bootstrap.json",
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/upstream/cluster_manager/cluster_stats",
+      "https://pkg.go.dev/net/http"
+    ],
+    "findings": [
+      "Latency-based automatic ejection and periodic health probes falsely attributed to DestinationRule; obsolete consecutiveErrors and unsupported enforcing fields.",
+      "minHealthPercent described as request count, minimum healthy capacity and split-brain protection; missing splitExternalLocalOriginErrors for local-failure threshold.",
+      "HTTPS ServiceEntry plus SIMPLE re-encrypts application TLS; HTTP retry rules cannot inspect passthrough HTTPS; HTTP-aware TLS origination needs plaintext inbound port mapped to443 and verified upstream identity.",
+      "Payment Go sample undefined payload, unused amount/context/response, no timeout/status/body handling, automatic retry claim unsafe for writes.",
+      "429 not a gateway error; ConfigMap alone does not enable a global limiter; DB query failures/SQL latency not visible as TCP transport failures.",
+      "Endpoint tier labels do not implement ordered priority failover; incomplete STATIC ServiceEntry lacks ports; ejection percentages not per-region or guaranteed endpoint counts.",
+      "Canary full ejection does not shift its traffic weight to stable automatically; metrics use deprecated detected counters, healthy denominator and YAML instead of PromQL.",
+      "Duplicate YAML keys; maxEjectionPercent0 observation-mode claim requires released implementation check; Kiali/istiod logs do not prove per-proxy ejections.",
+      "Released Istio1.31 applyOutlierDetection sets max_ejection_percent only for values>0; corrected false0%=observation advice. The same function disables success-rate enforcement.",
+      "Replaced two redundant diagrams that asserted latency-based ejection/active recovery probes/obsolete field with correct explanatory prose. External archmaps sources/assets0/1 require regeneration outside this worker’s scope; useful external API diagram2 retained.",
+      "Fixed all concrete findings above. Kept explicit unverified lab/backend/enrollment/CA/namespace assumptions and independent same-host configurations."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "30 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "3 JSON dashboard PromQL expressions parsed.",
+      "Go standard-library payment fragment compiled via go test (no test cases, no API calls, no payment operation executed).",
+      "Pair:20 fenced PromQL expressions,4 Prometheus rule files and6 JSON dashboard expressions passed promtool3.14; batch-to-date4 documents88 YAML22 Bash blocks have no syntax/local/own-main/known-broken-link errors.",
+      "Validated30 Istio resources per language; HTTP port80→target443 origination, SNI/SAN, namespace placement, method matching and explicit no-retry routes reviewed. No live Envoy/cluster/HTTP call or payment operation executed.",
+      "Scoped git diff --check passes.",
+      "Final batch recheck also passed native istioctl1.31.0 plus released1.31 schemas; full docs:test107/107. Earlier1.30.2 checks remain historical evidence, not the final validator version."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/resilience/02-rate-limiting.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Enabled real path/tier descriptor generation, bounded fallback and egress scoping; repaired global Redis/gRPC prerequisites and commit-image pinning, metrics, dashboard and diagnostics.",
+    "sources": [
+      "https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/local_rate_limit_filter",
+      "https://github.com/envoyproxy/ratelimit",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/go.mod",
+      "https://raw.githubusercontent.com/envoyproxy/go-control-plane/ca8ce173c36f/envoy/extensions/filters/http/local_ratelimit/v3/local_rate_limit.pb.go",
+      "https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/http/local_ratelimit/v3/local_rate_limit.proto",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/rate_limit_filter",
+      "https://raw.githubusercontent.com/envoyproxy/ratelimit/8fe6ea42/README.md",
+      "https://raw.githubusercontent.com/envoyproxy/ratelimit/8fe6ea42/src/settings/settings.go",
+      "https://hub.docker.com/v2/repositories/envoyproxy/ratelimit/tags/8fe6ea42"
+    ],
+    "findings": [
+      "Path/tier descriptors lack route actions, fallback bucket and enabled/enforced fractions; tier groups are not per-user buckets and caller headers are untrusted.",
+      "Global rate-limit Deployment has no Redis backend/REDIS_SOCKET_TYPE/REDIS_URL wiring and labels an old commit tag stable; global failure semantics and actual quota guarantees missing.",
+      "Global action EnvoyFilter in default cannot select ingressgateway in istio-system; vhost names guessed; additive global action examples can overwrite or duplicate policy.",
+      "Hand-added plaintext cluster bypasses Istio service/mTLS handling; use generated gRPC service cluster with explicit deployment assumptions.",
+      "Outbound limiter affects all HTTP destinations and is disabled without fractions; HTTPS opaque traffic is not HTTP-rate-limited.",
+      "Burst tokens confused with sustained req/s; global over_limit described as call count; local rate_limited differs from enforced; absent metrics prefixes and malformed/incomplete dashboard.",
+      "Redis CLI assumed present in rate-limit image; IPv4-name-filtered diagnostic misses listeners; default logs do not enumerate all limiter decisions.",
+      "Used LocalRateLimit.rate_limits descriptor generation verified in the exact Envoy protobuf revision pinned by Istio1.31; avoids guessed route names for local path/tier limits.",
+      "Pinned published commit8fe6ea42 and manifest sha256:a61547259607d40aff153050c2a87873ca1676d1d9f5f06937d412000dcc2df1; Docker Hub confirms linux/amd64 and linux/arm64. Upstream has no semantic versioning after oldv1.4.0; not labeled a certified stable release.",
+      "Global Deployment explicitly requires existing Redis and actual sidecar/gRPC policy connectivity; no complete HA/production claim. The retained cache diagram is explained as a shared counter store, not independent in-process caches.",
+      "Fixed all concrete findings above; protobuf verification caught and corrected Envoy Duration from100ms to0.1s."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "8 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "2 dashboard JSON PromQL queries passed.",
+      "PASS 42 Envoy typed configurations/actions against Istio1.31 pinned control-plane protobufs",
+      "Pair:14 fenced PromQL expressions and4 JSON dashboard expressions passed promtool3.14. Batch-to-date6 documents:114 YAML blocks26 Bash blocks; local/own-main/known-broken links clean.",
+      "42 typed Envoy configurations/actions checked using Go1.26 and envoy module v1.37.1-0.20260713214202-ca8ce173c36f, including protobuf parsing and ValidateAll. This is not live Envoy traffic/Redis/quota/HA validation.",
+      "Final batch recheck also passed native istioctl1.31.0 plus released1.31 schemas; full docs:test107/107. Earlier1.30.2 checks remain historical evidence, not the final validator version."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/resilience/02-rate-limiting.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Enabled real path/tier descriptor generation, bounded fallback and egress scoping; repaired global Redis/gRPC prerequisites and commit-image pinning, metrics, dashboard and diagnostics.",
+    "sources": [
+      "https://istio.io/latest/docs/tasks/policy-enforcement/rate-limit/",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/local_rate_limit_filter",
+      "https://github.com/envoyproxy/ratelimit",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/go.mod",
+      "https://raw.githubusercontent.com/envoyproxy/go-control-plane/ca8ce173c36f/envoy/extensions/filters/http/local_ratelimit/v3/local_rate_limit.pb.go",
+      "https://www.envoyproxy.io/docs/envoy/latest/api-v3/extensions/filters/http/local_ratelimit/v3/local_rate_limit.proto",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/rate_limit_filter",
+      "https://raw.githubusercontent.com/envoyproxy/ratelimit/8fe6ea42/README.md",
+      "https://raw.githubusercontent.com/envoyproxy/ratelimit/8fe6ea42/src/settings/settings.go",
+      "https://hub.docker.com/v2/repositories/envoyproxy/ratelimit/tags/8fe6ea42"
+    ],
+    "findings": [
+      "Path/tier descriptors lack route actions, fallback bucket and enabled/enforced fractions; tier groups are not per-user buckets and caller headers are untrusted.",
+      "Global rate-limit Deployment has no Redis backend/REDIS_SOCKET_TYPE/REDIS_URL wiring and labels an old commit tag stable; global failure semantics and actual quota guarantees missing.",
+      "Global action EnvoyFilter in default cannot select ingressgateway in istio-system; vhost names guessed; additive global action examples can overwrite or duplicate policy.",
+      "Hand-added plaintext cluster bypasses Istio service/mTLS handling; use generated gRPC service cluster with explicit deployment assumptions.",
+      "Outbound limiter affects all HTTP destinations and is disabled without fractions; HTTPS opaque traffic is not HTTP-rate-limited.",
+      "Burst tokens confused with sustained req/s; global over_limit described as call count; local rate_limited differs from enforced; absent metrics prefixes and malformed/incomplete dashboard.",
+      "Redis CLI assumed present in rate-limit image; IPv4-name-filtered diagnostic misses listeners; default logs do not enumerate all limiter decisions.",
+      "Used LocalRateLimit.rate_limits descriptor generation verified in the exact Envoy protobuf revision pinned by Istio1.31; avoids guessed route names for local path/tier limits.",
+      "Pinned published commit8fe6ea42 and manifest sha256:a61547259607d40aff153050c2a87873ca1676d1d9f5f06937d412000dcc2df1; Docker Hub confirms linux/amd64 and linux/arm64. Upstream has no semantic versioning after oldv1.4.0; not labeled a certified stable release.",
+      "Global Deployment explicitly requires existing Redis and actual sidecar/gRPC policy connectivity; no complete HA/production claim. The retained cache diagram is explained as a shared counter store, not independent in-process caches.",
+      "Fixed all concrete findings above; protobuf verification caught and corrected Envoy Duration from100ms to0.1s."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "8 Istio manifests passed offline istioctl 1.30.2 validation and released 1.31.0 CRD schemas (where applicable).",
+      "2 dashboard JSON PromQL queries passed.",
+      "PASS 42 Envoy typed configurations/actions against Istio1.31 pinned control-plane protobufs",
+      "Pair:14 fenced PromQL expressions and4 JSON dashboard expressions passed promtool3.14. Batch-to-date6 documents:114 YAML blocks26 Bash blocks; local/own-main/known-broken links clean.",
+      "42 typed Envoy configurations/actions checked using Go1.26 and envoy module v1.37.1-0.20260713214202-ca8ce173c36f, including protobuf parsing and ValidateAll. This is not live Envoy traffic/Redis/quota/HA validation.",
+      "Final batch recheck also passed native istioctl1.31.0 plus released1.31 schemas; full docs:test107/107. Earlier1.30.2 checks remain historical evidence, not the final validator version."
+    ]
+  },
+  {
+    "path": "en/service-mesh/istio/resilience/03-zone-aware-routing.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Separated weighted locality distribution from failover; fixed region paths, Kubernetes/EKS placement diagnostics and storage guidance; made custom AZ-metric prerequisites explicit.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
+      "https://raw.githubusercontent.com/istio/api/1.31.0/networking/v1alpha3/destination_rule.proto",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/istioctl/pkg/proxyconfig/proxyconfig.go",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/pkg/config/validation/validation.go",
+      "https://raw.githubusercontent.com/aws/aws-node-termination-handler/main/README.md",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/cost-opt-networking.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volumes.html",
+      "https://docs.aws.amazon.com/global-infrastructure/latest/regions/az-ids.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html",
+      "https://docs.aws.amazon.com/eks/latest/eksctl/nodegroups.html",
+      "https://kubernetes.io/docs/concepts/services-networking/topology-aware-routing/"
+    ],
+    "findings": [
+      "Weighted80/10/10 traffic described as failover; same-zone preference requires effective locality/outlier setup and can spill before every local endpoint fails.",
+      "Failover fields contain region/zone paths although the API takes region names; distribute and failover are combined despite mutual exclusion; myapp.global assumed automatic service.",
+      "Missing outlier policy in basic priority example; minHealthPercent described as per-zone healthy capacity.",
+      "Fabricated locality columns/output; EDS lookup incorrectly reads cluster.loadAssignment; node labels assumed on Pods elsewhere; snapshot config update described as always immediate.",
+      "Node Termination Handler incorrectly recommended to install topology labels; providerID full URI passed as EC2 instance ID; missing regional targeting/IMDSv2 clarification.",
+      "Incomplete Deployment/StatefulSet manifests, absent Service, myapp:latest placeholder and universal single-AZ StatefulSet recommendation.",
+      "Unconfigured source_zone/destination_zone labels and invalid PromQL label-to-label matcher; active connections do not prove locality; incomplete dashboard object.",
+      "Flat AWS per-GB charge claim lacks direction/service/region/billing context; topology spread constraints missing selectors/eligible-domain caveats.",
+      "The adjacent API sections describe localityLbSetting and a separate zoneAwareLbSetting; released1.31 proto confirms different failoverPriority rules. Chapter uses localityLbSetting; no fields from the other API were mixed.",
+      "Native1.31 validation also found invalid region/*/* wildcards; corrected to a single terminal wildcard.",
+      "Removed misleading redundant diagrams0/1 (weighted traffic labeled standby/free, and overly absolute failover flow), replaced with accurate explanation; out-of-scope archmap sources need regeneration. Retained valid Node→EDS locality diagram2.",
+      "AZ queries/dashboard are explicitly conditional on a separately validated enrichment pipeline; no claim that standard Istio exports source_zone/destination_zone. No pipeline or production quota/cost guarantee invented.",
+      "NTH installation and blind relabeling removed; EC2-only providerID extraction/read-only regional lookup replaces the incorrect repair loop. All concrete findings addressed."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "10 Istio manifests passed offline istioctl 1.31.0 validation and released 1.31.0 CRD schemas (where applicable).",
+      "2 dashboard JSON expressions parsed;3 fenced enriched-label PromQL expressions per language parsed separately.",
+      "New official1.31 CLI SHA256 verified; offline synthetic config_dump fixture passed proxy-config all/bootstrap and the exact EDS jq selector. No live endpoint or AWS query executed.",
+      "Documented node/Pod/readiness jq join passed synthetic ready and unscheduled-Pod fixtures; unknown Node/zone handled.",
+      "Batch-to-date8 documents:150 YAML46 Bash blocks;6 fenced and4 dashboard PromQL expressions for this pair passed. No live cluster, EC2 call, node label change, provisioning or load test executed.",
+      "Final batch recheck also passed native istioctl1.31.0 plus released1.31 schemas; full docs:test107/107. Earlier1.30.2 checks remain historical evidence, not the final validator version."
+    ]
+  },
+  {
+    "path": "ko/service-mesh/istio/resilience/03-zone-aware-routing.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Separated weighted locality distribution from failover; fixed region paths, Kubernetes/EKS placement diagnostics and storage guidance; made custom AZ-metric prerequisites explicit.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
+      "https://raw.githubusercontent.com/istio/api/1.31.0/networking/v1alpha3/destination_rule.proto",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/istioctl/pkg/proxyconfig/proxyconfig.go",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/pkg/config/validation/validation.go",
+      "https://raw.githubusercontent.com/aws/aws-node-termination-handler/main/README.md",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/cost-opt-networking.html",
+      "https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volumes.html",
+      "https://docs.aws.amazon.com/global-infrastructure/latest/regions/az-ids.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-service.html",
+      "https://docs.aws.amazon.com/eks/latest/eksctl/nodegroups.html",
+      "https://kubernetes.io/docs/concepts/services-networking/topology-aware-routing/"
+    ],
+    "findings": [
+      "Weighted80/10/10 traffic described as failover; same-zone preference requires effective locality/outlier setup and can spill before every local endpoint fails.",
+      "Failover fields contain region/zone paths although the API takes region names; distribute and failover are combined despite mutual exclusion; myapp.global assumed automatic service.",
+      "Missing outlier policy in basic priority example; minHealthPercent described as per-zone healthy capacity.",
+      "Fabricated locality columns/output; EDS lookup incorrectly reads cluster.loadAssignment; node labels assumed on Pods elsewhere; snapshot config update described as always immediate.",
+      "Node Termination Handler incorrectly recommended to install topology labels; providerID full URI passed as EC2 instance ID; missing regional targeting/IMDSv2 clarification.",
+      "Incomplete Deployment/StatefulSet manifests, absent Service, myapp:latest placeholder and universal single-AZ StatefulSet recommendation.",
+      "Unconfigured source_zone/destination_zone labels and invalid PromQL label-to-label matcher; active connections do not prove locality; incomplete dashboard object.",
+      "Flat AWS per-GB charge claim lacks direction/service/region/billing context; topology spread constraints missing selectors/eligible-domain caveats.",
+      "The adjacent API sections describe localityLbSetting and a separate zoneAwareLbSetting; released1.31 proto confirms different failoverPriority rules. Chapter uses localityLbSetting; no fields from the other API were mixed.",
+      "Native1.31 validation also found invalid region/*/* wildcards; corrected to a single terminal wildcard.",
+      "Removed misleading redundant diagrams0/1 (weighted traffic labeled standby/free, and overly absolute failover flow), replaced with accurate explanation; out-of-scope archmap sources need regeneration. Retained valid Node→EDS locality diagram2.",
+      "AZ queries/dashboard are explicitly conditional on a separately validated enrichment pipeline; no claim that standard Istio exports source_zone/destination_zone. No pipeline or production quota/cost guarantee invented.",
+      "NTH installation and blind relabeling removed; EC2-only providerID extraction/read-only regional lookup replaces the incorrect repair loop. All concrete findings addressed."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "10 Istio manifests passed offline istioctl 1.31.0 validation and released 1.31.0 CRD schemas (where applicable).",
+      "2 dashboard JSON expressions parsed;3 fenced enriched-label PromQL expressions per language parsed separately.",
+      "New official1.31 CLI SHA256 verified; offline synthetic config_dump fixture passed proxy-config all/bootstrap and the exact EDS jq selector. No live endpoint or AWS query executed.",
+      "Documented node/Pod/readiness jq join passed synthetic ready and unscheduled-Pod fixtures; unknown Node/zone handled.",
+      "Batch-to-date8 documents:150 YAML46 Bash blocks;6 fenced and4 dashboard PromQL expressions for this pair passed. No live cluster, EC2 call, node label change, provisioning or load test executed.",
+      "Final batch recheck also passed native istioctl1.31.0 plus released1.31 schemas; full docs:test107/107. Earlier1.30.2 checks remain historical evidence, not the final validator version."
+    ]
+  },
+  {
+    "path": "en/quizzes/service-mesh/istio/resilience.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "All10 answers aligned with corrected resilience prose; fixed passive ejection, enforced rate limiting, locality/failover, safe write retry guards and conditional cost/SLO reasoning.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/local_rate_limit_filter",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/cost-opt-networking.html",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go",
+      "https://raw.githubusercontent.com/istio/api/1.31.0/networking/v1alpha3/destination_rule.proto",
+      "https://raw.githubusercontent.com/envoyproxy/go-control-plane/ca8ce173c36f/envoy/extensions/filters/http/local_ratelimit/v3/local_rate_limit.pb.go"
+    ],
+    "findings": [
+      "Outdated Istio1.28/EKS1.34/Kubernetes1.28+ header; multiple-choice choices collapse into one line; Q1/Q4 confuse passive re-entry with active probes/latency and ejection caps with health guarantees.",
+      "Q2 says100 req/s although bucket refills10/s; limiter lacks match/fractions. Q5 enforcement absent and duplicate token_bucket mappings overwrite alternatives.",
+      "Q6 contains obsolete/duplicate error fields and unsupported Envoy enforcement fields; minHealthPercent70 is not70% healthy capacity; gateway threshold equal to5xx threshold redundant.",
+      "Q7 invalid local rate_limited_status, fabricated dynamic token metadata, Retry-After patch applies beyond429; normal-response headers are invented; path descriptors lack generation.",
+      "Q8 combines mutually exclusive distribute/failover and uses zone paths as regions; complete AZ outage cannot leave the client in that AZ running; custom zone metrics assumed available; incomplete Deployment.",
+      "Q9 nonexistent global50%-error circuit breaker, unsupported statistical fields, payment write retries and broad retry conditions, retry-count/timeout/gauge errors; broken ownrepo traffic/README link.",
+      "Q10 wildcard conflicting DestinationRules/VirtualService route to one generic service; fabricated promised cost/latency/error reductions; median mislabeled average, gauge rate, invalid label-to-label comparison and missing limiter activation.",
+      "Q8/Q10 numerical scenarios need explicit assumed billing model and exact-before-rounding arithmetic; preserve given hypothetical traffic/latency/targets without presenting forecasts as measured results.",
+      "All concrete findings addressed. Multiple-choice keys remain C/C/C/B/A; English options now separate Markdown lines.",
+      "Removed incorrect/redundant figures0/2/3 describing active recovery probes, free traffic and weighted standby failover. Kept correct token-bucket figure1; external archmap sources/assets need regeneration outside scope.",
+      "Q9 now identifies the unimplementable global50%-error breaker and supplies supported concurrency limits with explicit POST/PUT/PATCH/DELETE attempts0; scoped reads only may retry.",
+      "Q8/Q10 hypothetical numerical inputs and targets retained; exact Fraction arithmetic recorded in docs/reviews/2026-09-11/istio-resilience-calculations.json.100TB annual saving is$4400; no guaranteed production cost/latency/error reduction claimed.",
+      "Q7 headers are attached by the actual local filter only on enforced429; fake Remaining metadata and broad HTTP_ROUTE response-header patch removed."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "15 Istio manifests passed offline istioctl 1.31.0 validation and released 1.31.0 CRD schemas (where applicable).",
+      "All10 complete question/answer sections intact; multiple-choice keys C/C/C/B/A. Original hypothetical baseline/targets preserved; revised unsupported guarantees and exact cost arithmetic.",
+      "Quiz pair:24 fenced PromQL expressions parsed;15 Istio resources per language passed native1.31 CLI and released CRD schemas.",
+      "Full10-document batch:152 Istio manifests,190 YAML blocks,50 Bash blocks,86 fenced PromQL queries,4 rule files,14 dashboard JSON queries and62 Envoy typed configurations/actions passed offline checks.",
+      "Fresh npm run docs:test107/107 passed; log /tmp/kubernetes-docs-full-review/docs-test-resilience.log. All owned mesh git diff --check clean; no live cluster/AWS/application calls performed."
+    ]
+  },
+  {
+    "path": "ko/quizzes/service-mesh/istio/resilience.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "All10 answers aligned with corrected resilience prose; fixed passive ejection, enforced rate limiting, locality/failover, safe write retry guards and conditional cost/SLO reasoning.",
+    "sources": [
+      "https://istio.io/latest/docs/reference/config/networking/destination-rule/",
+      "https://istio.io/latest/docs/reference/config/networking/virtual-service/",
+      "https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/local_rate_limit_filter",
+      "https://docs.aws.amazon.com/eks/latest/best-practices/cost-opt-networking.html",
+      "https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/networking/core/cluster_traffic_policy.go",
+      "https://raw.githubusercontent.com/istio/api/1.31.0/networking/v1alpha3/destination_rule.proto",
+      "https://raw.githubusercontent.com/envoyproxy/go-control-plane/ca8ce173c36f/envoy/extensions/filters/http/local_ratelimit/v3/local_rate_limit.pb.go"
+    ],
+    "findings": [
+      "Outdated Istio1.28/EKS1.34/Kubernetes1.28+ header; multiple-choice choices collapse into one line; Q1/Q4 confuse passive re-entry with active probes/latency and ejection caps with health guarantees.",
+      "Q2 says100 req/s although bucket refills10/s; limiter lacks match/fractions. Q5 enforcement absent and duplicate token_bucket mappings overwrite alternatives.",
+      "Q6 contains obsolete/duplicate error fields and unsupported Envoy enforcement fields; minHealthPercent70 is not70% healthy capacity; gateway threshold equal to5xx threshold redundant.",
+      "Q7 invalid local rate_limited_status, fabricated dynamic token metadata, Retry-After patch applies beyond429; normal-response headers are invented; path descriptors lack generation.",
+      "Q8 combines mutually exclusive distribute/failover and uses zone paths as regions; complete AZ outage cannot leave the client in that AZ running; custom zone metrics assumed available; incomplete Deployment.",
+      "Q9 nonexistent global50%-error circuit breaker, unsupported statistical fields, payment write retries and broad retry conditions, retry-count/timeout/gauge errors; broken ownrepo traffic/README link.",
+      "Q10 wildcard conflicting DestinationRules/VirtualService route to one generic service; fabricated promised cost/latency/error reductions; median mislabeled average, gauge rate, invalid label-to-label comparison and missing limiter activation.",
+      "Q8/Q10 numerical scenarios need explicit assumed billing model and exact-before-rounding arithmetic; preserve given hypothetical traffic/latency/targets without presenting forecasts as measured results.",
+      "All concrete findings addressed. Multiple-choice keys remain C/C/C/B/A; English options now separate Markdown lines.",
+      "Removed incorrect/redundant figures0/2/3 describing active recovery probes, free traffic and weighted standby failover. Kept correct token-bucket figure1; external archmap sources/assets need regeneration outside scope.",
+      "Q9 now identifies the unimplementable global50%-error breaker and supplies supported concurrency limits with explicit POST/PUT/PATCH/DELETE attempts0; scoped reads only may retry.",
+      "Q8/Q10 hypothetical numerical inputs and targets retained; exact Fraction arithmetic recorded in docs/reviews/2026-09-11/istio-resilience-calculations.json.100TB annual saving is$4400; no guaranteed production cost/latency/error reduction claimed.",
+      "Q7 headers are attached by the actual local filter only on enforced429; fake Remaining metadata and broad HTTP_ROUTE response-header patch removed."
+    ],
+    "validation": [
+      "Full original Markdown read, including every code block, diagram description, reference, and conclusion.",
+      "Fenced YAML parsed; no live cluster or AWS mutation executed.",
+      "15 Istio manifests passed offline istioctl 1.31.0 validation and released 1.31.0 CRD schemas (where applicable).",
+      "All10 complete question/answer sections intact; multiple-choice keys C/C/C/B/A. Original hypothetical baseline/targets preserved; revised unsupported guarantees and exact cost arithmetic.",
+      "Quiz pair:24 fenced PromQL expressions parsed;15 Istio resources per language passed native1.31 CLI and released CRD schemas.",
+      "Full10-document batch:152 Istio manifests,190 YAML blocks,50 Bash blocks,86 fenced PromQL queries,4 rule files,14 dashboard JSON queries and62 Envoy typed configurations/actions passed offline checks.",
+      "Fresh npm run docs:test107/107 passed; log /tmp/kubernetes-docs-full-review/docs-test-resilience.log. All owned mesh git diff --check clean; no live cluster/AWS/application calls performed."
+    ]
+  }
+]

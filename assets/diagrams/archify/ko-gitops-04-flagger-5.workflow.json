@@ -29,7 +29,7 @@
           "verdict",
           "promote"
         ],
-        "note": "두 버전의 메트릭을 수집해 분석 결과가 성공이면 Canary를 전체 승격한다."
+        "note": "선택한 canary 지표로 승격을 판단한다. 통계적 A/B 결론과 인증은 별도 설계가 필요하다."
       },
       {
         "id": "rollback",
@@ -39,41 +39,21 @@
           "verdict",
           "rollback"
         ],
-        "note": "분석 결과가 실패이면 롤백되어 Primary v1이 그대로 유지된다."
+        "note": "승격 전 누적 실패 한도에 도달하면 정상 primary로 복귀한다."
       }
     ],
     "viewBox": [
-      1010,
-      660
+      1080,
+      560
     ],
     "legend": {
-      "mode": "auto",
-      "entries": {
-        "backend": {
-          "label": "처리 단계"
-        },
-        "cloud": {
-          "label": "클라우드 서비스"
-        },
-        "database": {
-          "label": "데이터"
-        },
-        "external": {
-          "label": "외부 · 참조"
-        },
-        "messagebus": {
-          "label": "메시지"
-        },
-        "security": {
-          "label": "판단 · 정책"
-        }
-      }
+      "mode": "hidden"
     }
   },
   "lanes": [
     {
       "id": "traffic",
-      "label": "사용자 트래픽"
+      "label": "요청 · 분석"
     },
     {
       "id": "canary_lane",
@@ -82,10 +62,6 @@
     {
       "id": "primary_lane",
       "label": "Primary · 롤백"
-    },
-    {
-      "id": "analysis_lane",
-      "label": "Flagger 분석"
     }
   ],
   "phases": [
@@ -151,7 +127,7 @@
       "col": 3,
       "type": "backend",
       "label": "Canary · v2",
-      "sublabel": "x-canary: true",
+      "sublabel": "x-canary: insider",
       "width": 124
     },
     {
@@ -165,7 +141,7 @@
     },
     {
       "id": "metrics",
-      "lane": "analysis_lane",
+      "lane": "traffic",
       "col": 4,
       "type": "database",
       "label": "메트릭 수집",
@@ -174,11 +150,11 @@
     },
     {
       "id": "verdict",
-      "lane": "analysis_lane",
+      "lane": "traffic",
       "col": 5,
       "type": "security",
       "label": "분석 결과",
-      "sublabel": "threshold 판정",
+      "sublabel": "반복 검사 · 누적 실패",
       "width": 124
     },
     {
@@ -196,7 +172,7 @@
       "col": 5,
       "type": "messagebus",
       "label": "롤백",
-      "sublabel": "v1 유지",
+      "sublabel": "분석 중 primary 복구",
       "width": 124
     }
   ],
@@ -223,11 +199,15 @@
     },
     {
       "from": "canary",
-      "to": "metrics"
+      "to": "metrics",
+      "fromSide": "right",
+      "toSide": "bottom"
     },
     {
       "from": "primary",
-      "to": "metrics"
+      "to": "metrics",
+      "variant": "dashed",
+      "label": "선택 비교"
     },
     {
       "from": "metrics",
@@ -242,12 +222,11 @@
     {
       "from": "verdict",
       "to": "rollback",
-      "label": "실패",
+      "label": "한도 도달",
       "variant": "security",
       "role": "error",
-      "fromSide": "top",
-      "toSide": "bottom",
-      "route": "straight"
+      "fromSide": "right",
+      "toSide": "right"
     }
   ]
 }

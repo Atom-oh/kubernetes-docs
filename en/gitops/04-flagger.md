@@ -1,9 +1,11 @@
 # Flagger Progressive Delivery
 
-> **Supported Versions**: Flagger v1.38+, Flux v2.4+
-> **Last Updated**: June 2025
+> **Review baseline**: Flagger/Chart 1.45.0, Loadtester 0.39.0, Flux 2.9.5, Podinfo 6.15.0
+> **Last updated**: September 11, 2026
 
-Flagger is a progressive delivery operator for Kubernetes that automates the promotion of canary deployments using service mesh routing, ingress controllers, or Gateway API for traffic shifting and Prometheus metrics for canary analysis. Originally created by Weaveworks and now a CNCF project under the Flux family, Flagger reduces the risk of introducing new software versions in production by gradually shifting traffic to a new version while measuring key performance indicators and automatically rolling back if anomalies are detected.
+Flagger manages progressive delivery of Kubernetes workloads through the Canary CRD. It controls traffic and revisions, not transactional rollback of databases or external side effects. These lab examples require matching networking, instrumentation, authorization, and service SLOs.
+
+Code includes full manifests and spec/Helm-values fragments. Merge them into the indicated owner; same-named strategy examples are alternatives, not a sequence of blocks to apply.
 
 ## Table of Contents
 
@@ -17,1017 +19,755 @@ Flagger is a progressive delivery operator for Kubernetes that automates the pro
 - [GitOps Integration (Flux + Flagger)](#gitops-integration-flux--flagger)
 - [Observability and Alerting](#observability-and-alerting)
 - [Production Best Practices](#production-best-practices)
-- [References](#references)
-
----
 
 ## Overview and Learning Objectives
 
-### Learning Objectives
+Kubernetes Deployment RollingUpdate already replaces Pods gradually. Flagger adds explicit revision traffic control and metric/test-based promotion. This chapter covers resource ownership, three strategies, metrics/gates, GitOps, and observability.
 
-After completing this document, you will be able to:
+| Strategy | Control | Check |
+|---|---|---|
+| Canary | Incremental weights | Additional replicas, minimum traffic, failure criteria |
+| Blue-Green | Validate a separate revision, then switch | Both workloads plus surge, database compatibility |
+| A/B | Supported header/cookie matching | Cohort assignment, statistics, separate authorization |
 
-1. Explain progressive delivery strategies (Canary, Blue-Green, A/B Testing) and when to use each
-2. Deploy and configure Flagger on Amazon EKS with various mesh and ingress providers
-3. Define Canary resources with custom metrics analysis and automated rollback conditions
-4. Implement Blue-Green deployments with traffic mirroring and manual gating
-5. Configure A/B testing with header-based and cookie-based routing
-6. Integrate Flagger with FluxCD for fully automated GitOps progressive delivery pipelines
-7. Set up observability dashboards and alerting for Flagger deployments
+Blue-Green does not guarantee exactly twice the resources, instant rollback, or zero downtime. Flagger updates primary to the new revision; it does not retain a complete old-version standby afterward.
 
-### What is Progressive Delivery?
+### Flagger and Argo Rollouts
 
-Progressive delivery is an umbrella term for advanced deployment strategies that enable controlled, gradual rollout of changes to a subset of users before making them available to the entire user base. Unlike traditional rolling updates that replace all pods simultaneously, progressive delivery provides fine-grained control over traffic distribution, real-time analysis, and automated rollback.
+| Aspect | Flagger | Argo Rollouts |
+|---|---|---|
+| Resources | Canary references an existing workload | Rollout CRD, including Deployment workloadRef |
+| GitOps | Flux and other GitOps tools | Argo CD and other GitOps tools |
+| Analysis | MetricTemplate, thresholds, webhooks | AnalysisTemplate/AnalysisRun and Web/Job providers |
+| Project family | CNCF Graduated Flux | CNCF Graduated Argo |
 
-The three primary progressive delivery strategies are:
-
-| Strategy | Traffic Control | Use Case | Complexity |
-|----------|----------------|----------|------------|
-| **Canary** | Percentage-based weight shifting | General-purpose, gradual rollout | Medium |
-| **Blue-Green** | Full switch between two environments | Zero-downtime, instant rollback | Low |
-| **A/B Testing** | Header/cookie-based routing | Feature testing with specific user segments | High |
-
-### Flagger vs Argo Rollouts
-
-Both Flagger and Argo Rollouts solve the progressive delivery problem for Kubernetes, but they take fundamentally different approaches:
-
-| Feature | Flagger | Argo Rollouts |
-|---------|---------|---------------|
-| **Ecosystem** | Flux / CNCF | Argo / CNCF |
-| **Resource Model** | Wraps native Deployment/DaemonSet | Replaces Deployment with Rollout CRD |
-| **Traffic Providers** | Istio, Linkerd, Contour, Nginx, Gateway API, AWS App Mesh, Gloo, Traefik | Istio, Nginx, ALB, SMI, Gateway API |
-| **Metrics Analysis** | Built-in Prometheus, Datadog, CloudWatch, custom webhooks | Built-in AnalysisTemplate with multiple providers |
-| **GitOps Integration** | Native Flux integration | Native Argo CD integration |
-| **Webhook Support** | Pre/post-rollout, rollout, confirm-rollout, load-test | Pre/post analysis, anti-affinity |
-| **Blue-Green** | Supported via Canary CRD | First-class Rollout strategy |
-| **A/B Testing** | Supported via Canary CRD with headers | Supported via Experiment CRD |
-| **CNCF Status** | Incubating (Flux family) | Graduated (Argo family) |
-| **Adoption Pattern** | Additive (no Deployment changes) | Replacement (Rollout replaces Deployment) |
-
-**Key Differentiator**: Flagger does not require you to change your existing Deployment resources. It creates primary and canary CloneSet variants automatically and manages traffic shifting through the mesh/ingress layer. Argo Rollouts requires replacing your `Deployment` kind with a `Rollout` kind.
-
-### Flagger in the Flux Ecosystem
-
-Flagger is designed as the progressive delivery component of the Flux GitOps toolkit:
-
-![Flux's source, kustomize, helm, notification and image-automation controllers reconcile Deployments from a Git repository, while Flagger watches them, queries Prometheus, and manages the Services and routes used for progressive delivery.](../.gitbook/assets/en-gitops-04-flagger-0.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-0.html)
-
----
+Ecosystem integration is not exclusive coupling. Do not let two progressive-delivery controllers manage the same workload.
 
 ## Flagger Architecture
 
-### Control Loop
+![Flagger observes Canary/workload resources and connects routing, metrics, and notifications.](../.gitbook/assets/en-gitops-04-flagger-1.png)
 
-Flagger implements a control loop that progressively advances a new version of an application by analyzing metrics, running conformance tests, and managing traffic routing. The core reconciliation loop is:
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-1.html)
 
-![Flagger, running as a Kubernetes controller, watches the Canary CRD, starts the new version in the canary Deployment, adjusts routing weights on the mesh/ingress provider, judges success from the metrics backend, then promotes to app-primary and reports the result to Slack/Teams alert channels.](../.gitbook/assets/en-gitops-04-flagger-1.png)
+In the Deployment example, podinfo is the original resource and the canary workload. The new stable workload is podinfo-primary. podinfo-canary is a Service name, not an additional Deployment or CloneSet.
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-1.html)
+| Resource | Ownership/purpose |
+|---|---|
+| podinfo Deployment | Git/Helm Pod template, Flagger canary control |
+| podinfo-primary Deployment | Stable workload created/promoted by Flagger |
+| podinfo / podinfo-primary / podinfo-canary Services | Entry/destination selection managed by Flagger |
+| Primary autoscaler | Corresponding autoscaler when autoscalerRef is used |
+| VirtualService/DestinationRule/HTTPRoute, etc. | Routing for the selected provider |
 
-### Detailed Control Loop Steps
+![Changes lead to canary analysis, primary updates, and traffic transitions.](../.gitbook/assets/en-gitops-04-flagger-2.png)
 
-When a change is detected in the target workload (e.g., a new container image), Flagger executes the following sequence:
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-2.html)
 
-1. **Detect Change**: Flagger watches the target Deployment for spec changes (image tag, environment variables, resources, etc.)
-2. **Initialize Canary**: Scale up the canary Deployment with the new version; the primary retains the old version
-3. **Run Pre-Rollout Webhooks**: Execute conformance tests, smoke tests, or other pre-conditions
-4. **Shift Traffic**: Incrementally increase the canary traffic weight according to `stepWeight` and `maxWeight`
-5. **Analyze Metrics**: Query Prometheus (or other providers) for success rate, latency, and custom metrics
-6. **Advance or Rollback**: If metrics pass thresholds, advance to the next step; otherwise initiate rollback
-7. **Confirm Promotion**: Optionally wait for manual gate approval via webhook
-8. **Promote**: Copy canary spec to primary, scale down canary, route all traffic to primary
-9. **Send Notifications**: Alert via Slack, Teams, or other configured providers
+After initial primary setup, Pod-template or tracked ConfigMap/Secret changes prepare canary. Following pre-rollout checks, analysis, and routing, promotion serves traffic through the ready canary while primary adopts the new spec. After primary readiness, traffic returns to it and canary scales down.
 
-### Mesh and Ingress Provider Support
+**Analysis failure** normally restores a healthy primary. **Failure while updating primary** differs: during Promoting/Finalising, 1.45.0 can keep/return traffic to the healthy canary while reporting failure. Failed status alone does not prove the old primary is serving traffic.
 
-Flagger supports a wide range of traffic management providers, each with different capabilities:
+### Providers and Lifecycle
 
-| Provider | Canary | Blue-Green | A/B Testing | Mirroring | Gateway API |
-|----------|--------|------------|-------------|-----------|-------------|
-| **Istio** | Yes | Yes | Yes | Yes | Yes |
-| **Linkerd** | Yes | Yes | No | No | Yes |
-| **AWS App Mesh** | Yes | Yes | No | No | No |
-| **Contour** | Yes | Yes | Yes | No | Yes |
-| **Nginx Ingress** | Yes | Yes | Yes | No | No |
-| **Gloo Edge** | Yes | Yes | No | No | No |
-| **Traefik** | Yes | Yes | No | No | No |
-| **Gateway API** | Yes | Yes | Yes | No | Yes |
-| **Kuma** | Yes | Yes | No | No | No |
-| **Open Service Mesh** | Yes | Yes | No | No | No |
+| Provider | Check |
+|---|---|
+| Istio | VirtualService/DestinationRule and sidecar HTTP metrics |
+| gatewayapi:v1 | Gateway HTTPRoute features and MetricTemplate |
+| Linkerd/Contour/Gloo/Traefik/Kuma, etc. | Installed-version capabilities and metric contract |
+| kubernetes | Service-switching Blue-Green, not L7 weighted/A/B routing |
+| App Mesh / ingress-nginx / OSM | Legacy lifecycle limits below |
 
-### Prometheus Metrics Analysis
-
-Flagger's metrics analysis engine queries Prometheus to evaluate whether a canary release is healthy. The two built-in metrics are:
-
-- **request-success-rate**: The percentage of successful HTTP requests (non-5xx) over the analysis interval
-- **request-duration**: The P99 latency of HTTP requests over the analysis interval
-
-Both metrics are derived from the service mesh or ingress controller's Prometheus metrics (e.g., `istio_requests_total`, `istio_request_duration_milliseconds_bucket`).
-
-![An image tag update flows through FluxCD to the Deployment, then Flagger raises canary traffic step by step while querying Prometheus, promoting to primary when metrics pass or rolling back the canary and notifying the developer when they fail.](../.gitbook/assets/en-gitops-04-flagger-2.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-2.html)
-
----
+AWS App Mesh support is scheduled to end **2026-09-30**, still future at this review date. Community ingress-nginx retired in March 2026, and the OSM repository is archived. Adapter availability is not a maintenance guarantee for new production use. Verify A/B, mirroring, and session-affinity support per implementation.
 
 ## EKS Installation and Configuration
 
-### Prerequisites
+The baseline requires supported EKS/Kubernetes, an installed Istio sidecar environment, and Prometheus scraping the required metrics. Replace its URL with the actual Service. Flagger does not install Istio or instrumentation. The chart’s bundled Prometheus image is old 2.41.0, so it is disabled.
 
-Before installing Flagger on Amazon EKS, ensure the following prerequisites are met:
-
-- An Amazon EKS cluster running Kubernetes v1.27+
-- Helm v3.12+ installed
-- A service mesh (Istio) or ingress controller (Nginx, Contour) deployed
-- Prometheus stack deployed (kube-prometheus-stack recommended)
-- FluxCD v2.4+ bootstrapped (for GitOps integration)
-
-### Helm Installation with Prometheus
-
-Install Flagger using Helm with Prometheus metrics server enabled:
-
-```bash
-# Add Flagger Helm repository
-helm repo add flagger https://flagger.app
-helm repo update
-
-# Install Flagger with Prometheus metrics server
-helm upgrade -i flagger flagger/flagger \
-  --namespace flagger-system \
-  --create-namespace \
-  --set meshProvider=istio \
-  --set metricsServer=http://prometheus-kube-prometheus-prometheus.monitoring:9090 \
-  --set prometheus.install=true
-```
-
-For EKS with IRSA (IAM Roles for Service Accounts), configure the service account:
+Choose one release/management method. Installing independent Flagger instances in different namespaces can make both control the same Canary. Examples use flagger-system for controllers and flagger-demo for workloads. Adapt injection labels to the actual Istio revision.
 
 ```yaml
-# flagger-values.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flagger-system
+  labels:
+    istio-injection: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flagger-demo
+  labels:
+    istio-injection: enabled
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flagger-loadtester
+  namespace: flagger-system
+automountServiceAccountToken: false
+```
+
+### Flagger Helm Installation
+
+```yaml
+fullnameOverride: flagger
 meshProvider: istio
-metricsServer: http://prometheus-kube-prometheus-prometheus.monitoring:9090
-
-serviceAccount:
-  create: true
-  name: flagger
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/FlaggerRole
-
+namespace: flagger-demo
+noCrossNamespaceRefs: true
+metricsServer: http://prometheus.monitoring.svc.cluster.local:9090
 prometheus:
-  install: true
-  retention: 2h
-
+  install: false
+leaderElection:
+  enabled: true
+  replicaCount: 2
 resources:
   requests:
     cpu: 100m
     memory: 128Mi
   limits:
-    cpu: 1000m
+    cpu: '1'
     memory: 512Mi
-
-# Enable leader election for HA
-leaderElection:
+podDisruptionBudget:
   enabled: true
-  replicaCount: 2
+  minAvailable: 1
 ```
 
 ```bash
-helm upgrade -i flagger flagger/flagger \
-  --namespace flagger-system \
-  --create-namespace \
-  -f flagger-values.yaml
+helm repo add flagger https://flagger.app
+helm repo update flagger
+helm upgrade --install flagger flagger/flagger --version 1.45.0 \
+  --namespace flagger-system -f flagger-values.yaml --wait --timeout 5m
 ```
 
-### Install Flagger Loadtester
-
-The Flagger loadtester is a companion tool for running automated load tests and webhooks during canary analysis:
+namespace limits watching, not the chart’s ClusterRole permissions. Restrict tenant RBAC separately. leaderElection.replicaCount is a real chart value. Ordinary Helm upgrades do not update crds/ as initial installation does; apply reviewed CRDs separately or use Flux’s CRD policy.
 
 ```bash
-helm upgrade -i flagger-loadtester flagger/loadtester \
-  --namespace flagger-system \
-  --set cmd.timeout=1h \
-  --set resources.requests.cpu=100m \
-  --set resources.requests.memory=64Mi
+kubectl apply --server-side -f https://raw.githubusercontent.com/fluxcd/flagger/v1.45.0/artifacts/flagger/crd.yaml
 ```
 
-### Istio Provider Configuration
-
-When using Istio as the mesh provider, Flagger automatically manages VirtualService and DestinationRule resources:
+### Loadtester and Access Scope
 
 ```yaml
-# flagger-values-istio.yaml
-meshProvider: istio
-metricsServer: http://prometheus-kube-prometheus-prometheus.monitoring:9090
-
-# Istio-specific settings
-istio:
-  # The Istio ingress gateway name
-  gateway: istio-system/public-gateway
-
-# Namespace selector for Flagger to watch
-namespace: ""  # Empty means all namespaces
-
-# Log level
-logLevel: info
+fullnameOverride: flagger-loadtester
+replicaCount: 1
+service:
+  type: ClusterIP
+  port: 80
+serviceAccountName: flagger-loadtester
+rbac:
+  create: false
+cmd:
+  timeout: 2m
+  namespaceRegexp: ^flagger-demo$
+resources:
+  requests:
+    cpu: 100m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+securityContext:
+  enabled: true
+  context:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+    runAsUser: 100
+    runAsGroup: 101
+volumes:
+- name: tmp
+  emptyDir: {}
+volumeMounts:
+- name: tmp
+  mountPath: /tmp
 ```
-
-Verify that Istio sidecar injection is enabled for the target namespace:
 
 ```bash
-kubectl label namespace production istio-injection=enabled
-kubectl get namespace production --show-labels
+helm upgrade --install flagger-loadtester flagger/loadtester --version 0.39.0 \
+  --namespace flagger-system -f loadtester-values.yaml --wait --timeout 5m
 ```
 
-### Gateway API Provider Configuration
-
-Flagger supports Kubernetes Gateway API as a provider, enabling progressive delivery without a full service mesh:
+Loadtester executes commands from HTTP requests. namespaceRegexp filters a body string; it is not caller authentication. Keep it off the internet and restrict ingress to controller Pods through CNI policy. Control operator exec/port-forward with RBAC. Use one replica for memory-gate labs.
 
 ```yaml
-# flagger-values-gatewayapi.yaml
-meshProvider: gatewayapi
-metricsServer: http://prometheus-kube-prometheus-prometheus.monitoring:9090
-
-# Gateway API specific configuration
-gatewayApi:
-  # Reference to the Gateway resource
-  gateway: istio-system/main-gateway
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: flagger-loadtester-ingress
+  namespace: flagger-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: loadtester
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: flagger-system
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: flagger
+    ports:
+    - protocol: TCP
+      port: 8080
 ```
 
-```bash
-helm upgrade -i flagger flagger/flagger \
-  --namespace flagger-system \
-  --create-namespace \
-  -f flagger-values-gatewayapi.yaml
-```
+Allow required Istio mTLS and scrape paths. This loadtester does not perform API operations, so automatic ServiceAccount-token mounting is disabled. Adding Helm/kubectl tests requires explicit permissions and writable paths.
 
-Create the Gateway resource that Flagger will reference:
+### Gateway API Alternative
+
+This assumes an existing Istio GatewayClass and compatible Gateway API CRDs. Do not overwrite them with an old bundle. Other implementations need matching instrumentation/queries. Configure Service/LB exposure, DNS, and TLS for the environment.
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: main-gateway
-  namespace: istio-system
+  name: podinfo-gateway
+  namespace: flagger-demo
 spec:
   gatewayClassName: istio
   listeners:
   - name: http
-    port: 80
     protocol: HTTP
+    port: 80
     allowedRoutes:
       namespaces:
-        from: All
-  - name: https
-    port: 443
-    protocol: HTTPS
-    tls:
-      mode: Terminate
-      certificateRefs:
-      - name: tls-secret
-    allowedRoutes:
-      namespaces:
-        from: All
+        from: Same
 ```
 
-### Slack and Teams Notification Setup
-
-Flagger can send deployment notifications to Slack, Microsoft Teams, and other providers using the AlertProvider CRD:
-
-```yaml
-# Slack AlertProvider
-apiVersion: flagger.app/v1beta1
-kind: AlertProvider
-metadata:
-  name: slack
-  namespace: production
-spec:
-  type: slack
-  channel: deployments
-  username: flagger
-  # Webhook URL stored in a Kubernetes Secret
-  secretRef:
-    name: slack-webhook
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: slack-webhook
-  namespace: production
-stringData:
-  address: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
-```
-
-```yaml
-# Microsoft Teams AlertProvider
-apiVersion: flagger.app/v1beta1
-kind: AlertProvider
-metadata:
-  name: msteams
-  namespace: production
-spec:
-  type: msteams
-  secretRef:
-    name: msteams-webhook
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: msteams-webhook
-  namespace: production
-stringData:
-  address: https://outlook.office.com/webhook/XXXXXXXX
-```
-
-Multiple alert providers can be referenced in a Canary resource:
-
-```yaml
-spec:
-  analysis:
-    alerts:
-    - name: "slack-notification"
-      severity: info
-      providerRef:
-        name: slack
-        namespace: production
-    - name: "teams-notification"
-      severity: error
-      providerRef:
-        name: msteams
-        namespace: production
-```
-
----
-
-## Canary Deployment Strategy
-
-### Canary CRD Detailed Explanation
-
-The Canary CRD is Flagger's primary resource for defining progressive delivery strategies. It references a target Deployment and specifies how traffic should be shifted, what metrics to analyze, and when to rollback.
-
-**Core structure of the Canary resource:**
+Use **gatewayapi:v1** and Canary service.gatewayRefs, not an invented Helm gatewayApi.gateway value. Prepare the three MetricTemplates below and use this Canary as an **alternative** to the Istio approach.
 
 ```yaml
 apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
-  name: app-name
-  namespace: production
+  name: podinfo
+  namespace: flagger-demo
 spec:
-  # ---- Target Reference ----
-  targetRef:              # The Deployment to manage
-  autoscalerRef:          # Optional HPA/KEDA reference
-  ingressRef:             # Optional Ingress reference
-  
-  # ---- Service Configuration ----
-  service:                # Service mesh / ingress settings
-  
-  # ---- Analysis Configuration ----
-  analysis:               # Metrics, webhooks, alerts
-  
-  # ---- Promotion Policy ----
-  progressDeadlineSeconds: 600
-  skipAnalysis: false
-```
-
-### Step-by-Step Traffic Shifting
-
-Flagger manages canary traffic shifting through two key parameters:
-
-- **`stepWeight`**: The percentage of traffic to add to the canary at each analysis interval
-- **`maxWeight`**: The maximum percentage of traffic the canary receives before promotion
-
-For example, with `stepWeight: 10` and `maxWeight: 50`:
-
-```
-Step 1: Canary 10%, Primary 90%  ->  Analyze metrics
-Step 2: Canary 20%, Primary 80%  ->  Analyze metrics
-Step 3: Canary 30%, Primary 70%  ->  Analyze metrics
-Step 4: Canary 40%, Primary 60%  ->  Analyze metrics
-Step 5: Canary 50%, Primary 50%  ->  Analyze metrics
-Step 6: Promote -> Canary spec copied to Primary, all traffic to Primary
-```
-
-![Canary CRD fields feed a deployment process that initializes the primary, detects a change, scales up the canary, shifts traffic from 10% to 50%, analyzes metrics at each step, then promotes on success or rolls back on failure.](../.gitbook/assets/en-gitops-04-flagger-3.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-3.html)
-
-You can also define non-linear traffic stepping with `stepWeights` (an array):
-
-```yaml
-analysis:
-  stepWeights: [1, 2, 5, 10, 25, 50, 80]
-  # Traffic progression: 1% -> 2% -> 5% -> 10% -> 25% -> 50% -> 80% -> promote
-```
-
-### Metrics Analysis
-
-Flagger's built-in metrics rely on the service mesh or ingress controller to expose Prometheus metrics:
-
-```yaml
-analysis:
-  metrics:
-  # Built-in metric: request success rate
-  - name: request-success-rate
-    # Minimum percentage of successful (non-5xx) requests
-    thresholdRange:
-      min: 99
-    interval: 1m
-
-  # Built-in metric: request duration (latency)
-  - name: request-duration
-    # Maximum P99 latency in milliseconds
-    thresholdRange:
-      max: 500
-    interval: 1m
-```
-
-The `interval` field determines how often Flagger queries Prometheus during each analysis step. The `thresholdRange` specifies the acceptable boundaries:
-
-- `min`: The metric value must be **greater than or equal** to this value (e.g., success rate >= 99%)
-- `max`: The metric value must be **less than or equal** to this value (e.g., latency <= 500ms)
-
-### Automatic Rollback Conditions
-
-Flagger automatically rolls back a canary deployment when:
-
-1. **Metric failure threshold exceeded**: A metric check fails more times than `threshold` within an analysis step
-2. **Progress deadline exceeded**: The canary does not progress within `progressDeadlineSeconds`
-3. **Webhook failure**: A pre-rollout or rollout webhook returns a non-2xx status
-
-```yaml
-analysis:
-  # Number of consecutive metric check failures before rollback
-  threshold: 5
-  
-  # Maximum number of failed metric checks before rollback
-  # (across all steps, not just consecutive)
-  maxWeight: 50
-  
-  # Analysis interval
-  interval: 1m
-  
-  metrics:
-  - name: request-success-rate
-    thresholdRange:
-      min: 99
-    interval: 1m
-  - name: request-duration
-    thresholdRange:
-      max: 500
-    interval: 1m
-```
-
-When a rollback occurs, Flagger:
-1. Routes all traffic back to the primary (old version)
-2. Scales the canary to zero
-3. Sets the Canary status to `Failed`
-4. Sends alert notifications
-
-### Complete Canary YAML Example
-
-The following is a production-ready Canary resource for a web application deployed on EKS with Istio:
-
-```yaml
-apiVersion: flagger.app/v1beta1
-kind: Canary
-metadata:
-  name: web-app
-  namespace: production
-spec:
-  # Reference to the target Deployment
+  provider: gatewayapi:v1
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: web-app
-
-  # Reference to the HPA (optional, Flagger will manage scaling)
+    name: podinfo
   autoscalerRef:
     apiVersion: autoscaling/v2
     kind: HorizontalPodAutoscaler
-    name: web-app
-
-  # Maximum time in seconds for the canary to progress
-  progressDeadlineSeconds: 600
-
+    name: podinfo
+  progressDeadlineSeconds: 120
   service:
-    # Container port
-    port: 8080
-    # Port name (must match Istio conventions)
-    portName: http
-    # Target port on the container
-    targetPort: 8080
-    # Istio gateway references
-    gateways:
-    - istio-system/public-gateway
-    # Hostnames
+    port: 9898
+    targetPort: 9898
     hosts:
     - app.example.com
-    # Istio traffic policy
-    trafficPolicy:
-      tls:
-        mode: ISTIO_MUTUAL
-    # Retries
-    retries:
-      attempts: 3
-      perTryTimeout: 1s
-      retryOn: "gateway-error,connect-failure,refused-stream"
-
+    gatewayRefs:
+    - name: podinfo-gateway
+      namespace: flagger-demo
+      sectionName: http
   analysis:
-    # Analysis interval
     interval: 1m
-    # Number of analysis cycles before promotion
-    iterations: 10
-    # Max traffic weight shifted to canary
-    maxWeight: 50
-    # Traffic weight step
-    stepWeight: 10
-    # Number of failed checks before rollback
     threshold: 5
-
-    # Prometheus metrics
+    maxWeight: 50
+    stepWeight: 10
     metrics:
-    - name: request-success-rate
+    - name: error-rate
+      templateRef:
+        name: istio-error-rate
       thresholdRange:
-        min: 99
+        min: 0
+        max: 1
       interval: 1m
-    - name: request-duration
+    - name: latency-p99-ms
+      templateRef:
+        name: istio-latency-ms
       thresholdRange:
+        min: 0
         max: 500
       interval: 1m
-
-    # Webhooks for load testing and conformance
+    - name: request-count
+      templateRef:
+        name: istio-request-count
+      thresholdRange:
+        min: 100
+      interval: 1m
     webhooks:
     - name: smoke-test
       type: pre-rollout
-      url: http://flagger-loadtester.flagger-system/
-      timeout: 60s
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/
+      timeout: 30s
       metadata:
         type: bash
-        cmd: "curl -sd 'test' http://web-app-canary.production:8080/healthz | grep ok"
-
+        cmd: |-
+          set -euo pipefail
+          curl -fsS --max-time 10 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/healthz >/dev/null
+          curl -fsS --max-time 10 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/readyz >/dev/null
     - name: load-test
       type: rollout
-      url: http://flagger-loadtester.flagger-system/
-      timeout: 60s
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/
+      timeout: 5s
       metadata:
         type: cmd
-        cmd: "hey -z 1m -q 10 -c 2 http://web-app-canary.production:8080/"
-
-    # Alert providers
-    alerts:
-    - name: "slack"
-      severity: info
-      providerRef:
-        name: slack
-        namespace: production
+        cmd: hey -z 1m -q 10 -c 2 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/
 ```
-
-This Canary resource will:
-1. Watch the `web-app` Deployment for changes
-2. Create `web-app-primary` and `web-app-canary` Deployments
-3. Create `web-app`, `web-app-primary`, and `web-app-canary` ClusterIP Services
-4. Create an Istio VirtualService for traffic routing
-5. Run a smoke test before starting the rollout
-6. Shift traffic 10% at a time up to 50%
-7. Run load tests during each analysis step
-8. Check request success rate (>= 99%) and P99 latency (<= 500ms)
-9. Rollback if 5 consecutive metric checks fail
-10. Promote by copying canary spec to primary after all steps pass
-
-**Monitoring a canary deployment:**
 
 ```bash
-# Watch Canary status
-kubectl get canaries -n production -w
-
-# Describe the Canary for detailed events
-kubectl describe canary web-app -n production
-
-# Check Flagger logs
-kubectl logs -n flagger-system deploy/flagger -f | jq
-
-# Trigger a canary deployment by updating the image
-kubectl set image deployment/web-app web-app=myregistry/web-app:v2.0.0 -n production
+helm upgrade --install flagger flagger/flagger --version 1.45.0 \
+  --namespace flagger-system -f flagger-values.yaml --set meshProvider=gatewayapi:v1
 ```
 
+## Canary Deployment Strategy
+
+These are the baseline Istio workload and HPA; Metrics Server is required. Omit Deployment replicas from Git so HPA/Flagger can own scaling, and do not create a competing Service. Choose these manifests or the later HelmRelease alternative.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: podinfo
+  namespace: flagger-demo
+spec:
+  selector:
+    matchLabels:
+      app: podinfo
+  template:
+    metadata:
+      labels:
+        app: podinfo
+    spec:
+      containers:
+      - name: podinfo
+        image: ghcr.io/stefanprodan/podinfo:6.15.0
+        ports:
+        - name: http
+          containerPort: 9898
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: http
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
 ---
-
-## Blue-Green Deployment Strategy
-
-### Blue-Green Canary CRD
-
-Flagger supports Blue-Green deployments through the same Canary CRD by omitting `stepWeight` and `maxWeight` and using `iterations` to define how many analysis cycles to run before switching traffic from the old (blue) version to the new (green) version.
-
-In Blue-Green mode:
-- The canary receives no live traffic during analysis (unless mirroring is enabled)
-- Flagger runs metric checks against the canary using the load tester or mirrored traffic
-- After all iterations pass, traffic is switched 100% from primary to canary in a single step
-- If any iteration fails, the canary is scaled down with no impact on production traffic
-
-![Shows the three Blue-Green phases: before the switch the load balancer sends all live traffic to Blue v1 while Green v2 stands ready, during the test phase only mirrored traffic reaches Green for validation, and after the switch traffic moves to Green v2 with Blue v1 on standby.](../.gitbook/assets/en-gitops-04-flagger-4.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-4.html)
-
-### Mirror Traffic
-
-When using Istio, Flagger can mirror production traffic to the canary during Blue-Green analysis. Mirrored traffic is fire-and-forget; the response from the canary is discarded, ensuring zero impact on users:
-
-```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: podinfo
+  namespace: flagger-demo
 spec:
-  analysis:
-    # Number of analysis cycles
-    iterations: 10
-    # Enable traffic mirroring (Istio only)
-    mirror: true
-    # Percentage of traffic to mirror (default: 100)
-    mirrorWeight: 100
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
 ```
 
-### Manual Gating
+![Weighted Canary advances after analysis and evaluates accumulated failures.](../.gitbook/assets/en-gitops-04-flagger-3.png)
 
-For high-risk deployments, you can require manual approval before Flagger promotes the canary. This is achieved via a confirm-rollout webhook that Flagger queries at each step:
-
-```yaml
-spec:
-  analysis:
-    webhooks:
-    - name: confirm-promotion
-      type: confirm-promotion
-      url: http://flagger-loadtester.flagger-system/gate/approve
-```
-
-To manually approve or reject:
-
-```bash
-# Approve the promotion
-kubectl exec -n flagger-system deploy/flagger-loadtester -- \
-  wget --post-data='{}' -q -O- http://localhost:8080/gate/open/web-app.production
-
-# Reject the promotion (close the gate)
-kubectl exec -n flagger-system deploy/flagger-loadtester -- \
-  wget --post-data='{}' -q -O- http://localhost:8080/gate/close/web-app.production
-
-# Check gate status
-kubectl exec -n flagger-system deploy/flagger-loadtester -- \
-  wget -q -O- http://localhost:8080/gate/check/web-app.production
-```
-
-### Complete Blue-Green YAML Example
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-3.html)
 
 ```yaml
 apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
-  name: web-app
-  namespace: production
+  name: podinfo
+  namespace: flagger-demo
 spec:
+  provider: istio
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: web-app
-
+    name: podinfo
   autoscalerRef:
     apiVersion: autoscaling/v2
     kind: HorizontalPodAutoscaler
-    name: web-app
-
-  progressDeadlineSeconds: 600
-
+    name: podinfo
+  progressDeadlineSeconds: 120
   service:
-    port: 8080
+    port: 9898
+    targetPort: 9898
     portName: http
-    targetPort: 8080
     gateways:
-    - istio-system/public-gateway
+    - mesh
     hosts:
-    - app.example.com
-
+    - podinfo
+    trafficPolicy:
+      tls:
+        mode: ISTIO_MUTUAL
   analysis:
-    # Blue-Green: use iterations, no stepWeight/maxWeight
     interval: 1m
-    iterations: 10
-    threshold: 2
-
-    # Mirror production traffic to the canary (Istio only)
-    mirror: true
-    mirrorWeight: 100
-
+    threshold: 5
+    maxWeight: 50
+    stepWeight: 10
     metrics:
     - name: request-success-rate
       thresholdRange:
         min: 99
+        max: 100
       interval: 1m
     - name: request-duration
       thresholdRange:
+        min: 0
         max: 500
       interval: 1m
-
     webhooks:
-    # Pre-rollout conformance test
-    - name: conformance-test
+    - name: smoke-test
       type: pre-rollout
-      url: http://flagger-loadtester.flagger-system/
-      timeout: 120s
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/
+      timeout: 30s
       metadata:
         type: bash
-        cmd: "curl -sd 'test' http://web-app-canary.production:8080/healthz | grep ok"
-
-    # Load test for generating metrics
+        cmd: |-
+          set -euo pipefail
+          curl -fsS --max-time 10 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/healthz >/dev/null
+          curl -fsS --max-time 10 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/readyz >/dev/null
     - name: load-test
       type: rollout
-      url: http://flagger-loadtester.flagger-system/
-      timeout: 60s
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/
+      timeout: 5s
       metadata:
         type: cmd
-        cmd: "hey -z 1m -q 10 -c 2 http://web-app-canary.production:8080/"
-
-    # Manual gate for production approval
-    - name: confirm-promotion
-      type: confirm-promotion
-      url: http://flagger-loadtester.flagger-system/gate/approve
-
-    alerts:
-    - name: "slack"
-      severity: info
-      providerRef:
-        name: slack
-        namespace: production
+        cmd: hey -z 1m -q 10 -c 2 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/
 ```
 
----
+Iterations select Blue-Green, or A/B when match is present; do not mix them into a weighted Canary. StepWeight 10 and maxWeight 50 describe analysis at 10→20→30→40→50% before promotion. Total time depends on readiness, check latency, failures/approvals, and primary rollout.
 
-## A/B Testing Strategy
+Analysis.interval schedules analysis; metric interval supplies its query/aggregation window. Threshold 5 applies to accumulated failed checks for a revision, not a consecutive count reset by every success. Reaching five causes rollback on subsequent reconciliation. Pre-rollout and rollout/metric failures feed this path. ProgressDeadlineSeconds bounds workload progress/readiness, not twice the total rollout time.
 
-### Header and Cookie-Based Routing
+For non-linear weights, use stepWeights and remove existing stepWeight/maxWeight. Connections and routing convergence mean configured weights do not guarantee an exact request ratio at every instant.
 
-A/B testing in Flagger uses HTTP headers or cookies to route specific users to the canary version. Unlike canary deployments that use weighted routing, A/B testing ensures deterministic routing based on request attributes.
+```yaml
+spec:
+  analysis:
+    stepWeights:
+    - 1
+    - 2
+    - 5
+    - 10
+    - 25
+    - 50
+```
 
-This strategy is ideal for:
-- Feature flag testing with specific user segments
-- Regional rollouts based on request headers
-- Internal testing before public release
-- Measuring business metrics (conversion rate, engagement) for specific user cohorts
+```bash
+kubectl get canary podinfo -n flagger-demo --watch
+kubectl describe canary podinfo -n flagger-demo
+kubectl logs -n flagger-system -l app.kubernetes.io/name=flagger -c flagger --prefix --tail=100
+```
 
-### Istio VirtualService Integration
+After initial stable setup, apply a reviewed image/tag/digest or Pod-template change through Git to start analysis. Replacing remote contents behind the same tag does not substitute for a Git change. Do not edit generated primary, Service, or routing resources directly.
 
-When using Istio, Flagger generates VirtualService rules that match on HTTP headers or cookies:
+## Blue-Green Deployment Strategy
+
+![Blue-Green validates canary, updates primary, then scales canary down.](../.gitbook/assets/en-gitops-04-flagger-4.png)
+
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-4.html)
 
 ```yaml
 apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
-  name: web-app
-  namespace: production
+  name: podinfo
+  namespace: flagger-demo
 spec:
+  provider: istio
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: web-app
-
-  progressDeadlineSeconds: 600
-
+    name: podinfo
+  autoscalerRef:
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    name: podinfo
+  progressDeadlineSeconds: 120
   service:
-    port: 8080
+    port: 9898
+    targetPort: 9898
     portName: http
-    targetPort: 8080
     gateways:
-    - istio-system/public-gateway
+    - mesh
     hosts:
-    - app.example.com
-
+    - podinfo
+    trafficPolicy:
+      tls:
+        mode: ISTIO_MUTUAL
   analysis:
     interval: 1m
-    iterations: 20
     threshold: 5
-
-    # A/B testing match conditions
-    # Users matching ANY of these conditions see the canary
-    match:
-    # Route based on a custom header
-    - headers:
-        x-canary:
-          exact: "insider"
-    # Route based on a cookie value
-    - headers:
-        cookie:
-          regex: "^(.*?;)?(canary=always)(;.*)?$"
-
     metrics:
     - name: request-success-rate
       thresholdRange:
         min: 99
+        max: 100
       interval: 1m
     - name: request-duration
       thresholdRange:
+        min: 0
         max: 500
       interval: 1m
-
     webhooks:
+    - name: smoke-test
+      type: pre-rollout
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/
+      timeout: 30s
+      metadata:
+        type: bash
+        cmd: |-
+          set -euo pipefail
+          curl -fsS --max-time 10 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/healthz >/dev/null
+          curl -fsS --max-time 10 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/readyz >/dev/null
     - name: load-test
       type: rollout
-      url: http://flagger-loadtester.flagger-system/
-      timeout: 60s
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/
+      timeout: 5s
       metadata:
         type: cmd
-        cmd: "hey -z 1m -q 5 -c 2 -H 'x-canary: insider' http://web-app-canary.production:8080/"
-
-    alerts:
-    - name: "slack"
-      severity: info
-      providerRef:
-        name: slack
-        namespace: production
+        cmd: hey -z 1m -q 10 -c 2 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/
+    iterations: 10
 ```
 
-The resulting Istio VirtualService will look like:
+This example analyzes synthetic traffic while live traffic stays on primary. After passing, traffic moves to canary while primary updates, then returns when primary is ready. Failure thresholds still apply; one failed measurement is not always an immediate rollback. This is not a separate environment retaining a complete old-version standby.
+
+### Optional Traffic Mirroring
 
 ```yaml
-# Auto-generated by Flagger
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: web-app
-  namespace: production
 spec:
-  gateways:
-  - istio-system/public-gateway
-  hosts:
-  - app.example.com
-  http:
-  # A/B test route: matched users go to canary
-  - match:
+  analysis:
+    mirror: true
+    mirrorWeight: 10
+```
+
+Supporting providers can mirror as a Canary pre-stage or for Blue-Green. Verify RequestMirror support for Gateway API. Discarding responses does not prevent database writes, payments, messages, or load; use verified read-only requests or isolation. Mirroring is not database replication or rollback.
+
+## A/B Testing Strategy
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: flagger-demo
+spec:
+  provider: istio
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  autoscalerRef:
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    name: podinfo
+  progressDeadlineSeconds: 120
+  service:
+    port: 9898
+    targetPort: 9898
+    portName: http
+    gateways:
+    - mesh
+    hosts:
+    - podinfo
+    trafficPolicy:
+      tls:
+        mode: ISTIO_MUTUAL
+  analysis:
+    interval: 1m
+    threshold: 5
+    metrics:
+    - name: request-success-rate
+      thresholdRange:
+        min: 99
+        max: 100
+      interval: 1m
+    - name: request-duration
+      thresholdRange:
+        min: 0
+        max: 500
+      interval: 1m
+    webhooks:
+    - name: smoke-test
+      type: pre-rollout
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/
+      timeout: 30s
+      metadata:
+        type: bash
+        cmd: |-
+          set -euo pipefail
+          curl -fsS --max-time 10 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/healthz >/dev/null
+          curl -fsS --max-time 10 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/readyz >/dev/null
+    - name: load-test
+      type: rollout
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/
+      timeout: 5s
+      metadata:
+        type: cmd
+        cmd: hey -z 1m -q 10 -c 2 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/
+    iterations: 10
+    match:
     - headers:
         x-canary:
-          exact: "insider"
+          exact: insider
     - headers:
         cookie:
-          regex: "^(.*?;)?(canary=always)(;.*)?$"
-    route:
-    - destination:
-        host: web-app-canary
-  # Default route: everyone else goes to primary
-  - route:
-    - destination:
-        host: web-app-primary
+          regex: (^|.*;\s*)canary=always(;.*|$)
 ```
 
-### Metrics-Based Automatic Promotion
+Match entries are OR alternatives; conditions within an entry follow provider rules. The cookie regex handles spaces after semicolons. Istio sourceLabels describe workload labels, not source IPs. Verify matcher support per Gateway implementation/version.
 
-During A/B testing, Flagger still performs metrics analysis on the canary traffic. After the configured number of `iterations` pass with all metrics within their thresholds, Flagger automatically promotes the canary:
+Routing is neither authorization nor a complete statistical experiment. Do not trust client-controlled markers as employee permissions. Assign cohorts at a trusted edge and authorize server-side; meaningful A/B conclusions also require samples, assignment design, and statistical testing.
+
+Verify the baseline mesh route from the injected loadtester Pod. Test external Gateway paths through their actual host/TLS/ingress. Calling -canary directly does not validate routing matches.
 
 ```bash
-# Test A/B routing with header
-curl -H "x-canary: insider" http://app.example.com/
-
-# Test A/B routing with cookie
-curl -b "canary=always" http://app.example.com/
-
-# Verify routing (should return the canary version)
-for i in $(seq 1 10); do
-  curl -s -H "x-canary: insider" http://app.example.com/version
-done
+kubectl exec -n flagger-system deployment/flagger-loadtester -- \
+  curl -fsS http://podinfo.flagger-demo.svc.cluster.local:9898/
+kubectl exec -n flagger-system deployment/flagger-loadtester -- \
+  curl -fsS -H 'x-canary: insider' http://podinfo.flagger-demo.svc.cluster.local:9898/
+kubectl exec -n flagger-system deployment/flagger-loadtester -- \
+  curl -fsS -b 'canary=always' http://podinfo.flagger-demo.svc.cluster.local:9898/
 ```
-
----
 
 ## Custom Metrics and Webhooks
 
-### Prometheus Custom Metric Queries
+### Prometheus MetricTemplate
 
-Beyond the two built-in metrics, Flagger supports custom Prometheus queries through the MetricTemplate CRD. This allows you to analyze any Prometheus metric during canary deployments:
+These queries use an Istio sidecar metric contract. Verify namespace/workload labels, reporter, and scraping. A missing 5xx series becomes a zero numerator; absent traffic or a zero denominator does not become success. The minimum of 100 requests and other bounds are illustrative; choose values from SLOs and sample requirements.
 
 ```yaml
 apiVersion: flagger.app/v1beta1
 kind: MetricTemplate
 metadata:
-  name: error-rate
-  namespace: production
+  name: istio-error-rate
+  namespace: flagger-demo
 spec:
   provider:
     type: prometheus
-    address: http://prometheus-kube-prometheus-prometheus.monitoring:9090
+    address: http://prometheus.monitoring.svc.cluster.local:9090
   query: |
-    100 - sum(
-      rate(
-        http_requests_total{
-          namespace="{{ namespace }}",
-          job="{{ target }}-canary",
-          status!~"5.*"
-        }[{{ interval }}]
-      )
-    )
-    /
-    sum(
-      rate(
-        http_requests_total{
-          namespace="{{ namespace }}",
-          job="{{ target }}-canary"
-        }[{{ interval }}]
-      )
-    ) * 100
-```
-
-```yaml
+    (sum(rate(istio_requests_total{reporter="destination", destination_workload_namespace="{{ namespace }}", destination_workload="{{ target }}", response_code=~"5.."}[{{ interval }}])) or vector(0)) / sum(rate(istio_requests_total{reporter="destination", destination_workload_namespace="{{ namespace }}", destination_workload="{{ target }}"}[{{ interval }}])) * 100
+---
 apiVersion: flagger.app/v1beta1
 kind: MetricTemplate
 metadata:
-  name: latency-p95
-  namespace: production
+  name: istio-latency-ms
+  namespace: flagger-demo
 spec:
   provider:
     type: prometheus
-    address: http://prometheus-kube-prometheus-prometheus.monitoring:9090
+    address: http://prometheus.monitoring.svc.cluster.local:9090
   query: |
-    histogram_quantile(0.95,
-      sum(
-        rate(
-          http_request_duration_seconds_bucket{
-            namespace="{{ namespace }}",
-            job="{{ target }}-canary"
-          }[{{ interval }}]
-        )
-      ) by (le)
-    )
+    histogram_quantile(0.99, sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination", destination_workload_namespace="{{ namespace }}", destination_workload="{{ target }}"}[{{ interval }}])) by (le))
+---
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: istio-request-count
+  namespace: flagger-demo
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.monitoring.svc.cluster.local:9090
+  query: |
+    sum(increase(istio_requests_total{reporter="destination", destination_workload_namespace="{{ namespace }}", destination_workload="{{ target }}"}[{{ interval }}]))
+---
+spec:
+  analysis:
+    metrics:
+    - name: error-rate
+      templateRef:
+        name: istio-error-rate
+      thresholdRange:
+        min: 0
+        max: 1
+      interval: 1m
+    - name: latency-p99-ms
+      templateRef:
+        name: istio-latency-ms
+      thresholdRange:
+        min: 0
+        max: 500
+      interval: 1m
+    - name: request-count
+      templateRef:
+        name: istio-request-count
+      thresholdRange:
+        min: 100
+      interval: 1m
 ```
 
-Reference custom metrics in the Canary analysis:
+MetricTemplate must return one numeric value. The Prometheus provider rejects empty results/NaN. Bound percentages to finite 0–100 ranges and align custom latency units. Bounds are inclusive. Measurements with overlapping query windows are not independent samples.
 
-```yaml
-analysis:
-  metrics:
-  - name: error-rate
-    templateRef:
-      name: error-rate
-      namespace: production
-    thresholdRange:
-      max: 1
-    interval: 1m
-  - name: latency-p95
-    templateRef:
-      name: latency-p95
-      namespace: production
-    thresholdRange:
-      max: 0.5
-    interval: 1m
-```
-
-### Datadog Metrics Provider
-
-Flagger supports Datadog as an external metrics provider:
+### Datadog Units and Selected Datapoint
 
 ```yaml
 apiVersion: flagger.app/v1beta1
 kind: MetricTemplate
 metadata:
-  name: dd-request-duration
-  namespace: production
+  name: datadog-average-latency-ms
+  namespace: flagger-demo
 spec:
   provider:
     type: datadog
+    address: https://api.datadoghq.com
     secretRef:
       name: datadog-api
   query: |
-    avg:trace.http.request.duration{
-      service:{{ target }}-canary,
-      kube_namespace:{{ namespace }}
-    }.rollup(avg, 60)
+    avg:myapp.request_duration_ms{kube_deployment:{{ target }},kube_namespace:{{ namespace }}}.rollup(avg, 60)
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: datadog-api
-  namespace: production
+  namespace: flagger-demo
+type: Opaque
 stringData:
-  datadog_api_key: YOUR_DATADOG_API_KEY
-  datadog_application_key: YOUR_DATADOG_APP_KEY
-  datadog_site: datadoghq.com
+  datadog_api_key: REPLACE_WITH_API_KEY
+  datadog_application_key: REPLACE_WITH_APPLICATION_KEY
 ```
 
-### CloudWatch Metrics Provider
+myapp.request_duration_ms is a custom average latency in ms that you must publish; it is not P99. Select the site with provider.address. The client reads the two shown Secret keys, not datadog_site. It queries ten times the metric interval and returns the oldest first point of the first series. Do not use it alone as proof of the current canary’s health; pair it with fresh revision-specific measurements.
 
-For Amazon CloudWatch metrics on EKS:
+Local mock-response testing of the original client also confirmed that a null first datapoint decodes to zero. A latency gate that accepts zero milliseconds can therefore be misleading. Use a bridge validating timestamps/missing values or fresh Prometheus measurements.
+
+### CloudWatch Fields and Limits
 
 ```yaml
 apiVersion: flagger.app/v1beta1
 kind: MetricTemplate
 metadata:
-  name: cw-error-rate
-  namespace: production
+  name: cloudwatch-error-percent
+  namespace: flagger-demo
 spec:
   provider:
     type: cloudwatch
-    region: us-west-2
+    region: ap-northeast-2
   query: |
     [
       {
-        "Id": "e1",
-        "Expression": "m1 / m2 * 100",
-        "Label": "ErrorRate"
+        "Id": "errorrate",
+        "Expression": "IF(FILL(requests,0)>=100,100*FILL(errors,0)/FILL(requests,0),-1)",
+        "Label": "CanaryErrorPercent",
+        "ReturnData": true
       },
       {
-        "Id": "m1",
+        "Id": "errors",
         "MetricStat": {
           "Metric": {
             "Namespace": "MyApp",
@@ -1035,7 +775,11 @@ spec:
             "Dimensions": [
               {
                 "Name": "Service",
-                "Value": "{{ target }}-canary"
+                "Value": "{{ target }}"
+              },
+              {
+                "Name": "Namespace",
+                "Value": "{{ namespace }}"
               }
             ]
           },
@@ -1045,7 +789,7 @@ spec:
         "ReturnData": false
       },
       {
-        "Id": "m2",
+        "Id": "requests",
         "MetricStat": {
           "Metric": {
             "Namespace": "MyApp",
@@ -1053,7 +797,11 @@ spec:
             "Dimensions": [
               {
                 "Name": "Service",
-                "Value": "{{ target }}-canary"
+                "Value": "{{ target }}"
+              },
+              {
+                "Name": "Namespace",
+                "Value": "{{ namespace }}"
               }
             ]
           },
@@ -1063,9 +811,22 @@ spec:
         "ReturnData": false
       }
     ]
+---
+spec:
+  analysis:
+    metrics:
+    - name: cw-error-percent
+      templateRef:
+        name: cloudwatch-error-percent
+      thresholdRange:
+        min: 0
+        max: 1
+      interval: 1m
 ```
 
-Ensure the Flagger service account has the appropriate IAM permissions to query CloudWatch:
+Provider.region is supported and required. Publish the MyApp metrics and Service/Namespace dimensions separately. The expression returns -1 for missing/low-volume periods, failing the 0–1% bound. Ingestion delays can reject a rollout; verify actual publishing and aggregation/query windows.
+
+The native provider queries ten times the metric interval and selects the first value of the first result without separately validating timestamp/StatusCode. Supplement it with current-revision Prometheus request/health checks so older points or aggregate ALB metrics are not mistaken for current canary health. Its AWS API permission is GetMetricData.
 
 ```json
 {
@@ -1073,454 +834,496 @@ Ensure the Flagger service account has the appropriate IAM permissions to query 
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": [
-        "cloudwatch:GetMetricData",
-        "cloudwatch:ListMetrics"
-      ],
-      "Resource": "*"
+      "Action": "cloudwatch:GetMetricData",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "ap-northeast-2"
+        }
+      }
     }
   ]
 }
 ```
 
-### Pre/Post Rollout Webhooks
+Configure Flagger ServiceAccount authentication and role trust when CloudWatch is used, and match the region condition. This review did not call AWS APIs or deploy a role.
 
-Flagger supports several webhook types that execute at different phases of the rollout:
+### Webhook Contract
 
-| Webhook Type | When Executed | Use Case |
-|-------------|---------------|----------|
-| `confirm-rollout` | Before traffic shifting starts | Gate: require external approval |
-| `pre-rollout` | Before each analysis step | Smoke tests, conformance tests |
-| `rollout` | During each analysis step | Load testing, synthetic traffic |
-| `confirm-promotion` | Before final promotion | Manual gate, business approval |
-| `post-rollout` | After promotion or rollback | Cleanup, notification, audit |
-| `rollback` | After a failed rollout | Incident notification, cleanup |
-| `event` | On every Flagger event | Audit logging |
+| Type | Meaning / rejection behavior |
+|---|---|
+| confirm-rollout | Wait for start approval |
+| pre-rollout | Check before initial traffic shift; increments failures |
+| rollout | Called during analysis; increments failures |
+| confirm-traffic-increase | Wait before increasing weight |
+| confirm-promotion | Wait before promotion |
+| post-rollout | Notify/clean up after Succeeded or Failed; does not reverse the result |
+| rollback | Success during analysis/approval waiting requests rollback |
+| event | Forward state-related events |
 
-### Webhook YAML Examples
-
-**Load testing webhook with hey:**
-
-```yaml
-webhooks:
-- name: load-test-hey
-  type: rollout
-  url: http://flagger-loadtester.flagger-system/
-  timeout: 60s
-  metadata:
-    type: cmd
-    cmd: "hey -z 1m -q 10 -c 2 http://web-app-canary.production:8080/"
-    logCmdOutput: "true"
-```
-
-**Conformance test with bash:**
+Normally return HTTP 200. Version 1.45.0 treats codes greater than 202 as errors, so do not assume 204 succeeds. Metadata is copied literally; `{{ .Version }}` is not interpolated. Use name/namespace/phase/checksum from the payload. Non-success bodies can enter logs/events, so do not return sensitive values.
 
 ```yaml
-webhooks:
-- name: smoke-test
-  type: pre-rollout
-  url: http://flagger-loadtester.flagger-system/
-  timeout: 120s
-  metadata:
-    type: bash
-    cmd: |
-      set -e
-      # Check health endpoint
-      curl -sf http://web-app-canary.production:8080/healthz
-
-      # Check readiness
-      curl -sf http://web-app-canary.production:8080/readyz
-
-      # Verify API response
-      response=$(curl -sf http://web-app-canary.production:8080/api/v1/status)
-      echo "$response" | jq -e '.status == "ok"'
+name: podinfo
+namespace: flagger-demo
+phase: Progressing
+checksum: example-revision-checksum
+metadata:
+  gate: promotion
 ```
 
-**Load testing with Grafana k6:**
+Webhook configuration does not supply arbitrary Authorization headers. Implement required authentication through a reviewed mTLS/internal-proxy boundary; do not put secrets in public Git URLs/metadata or disable TLS verification by default.
+
+cmd load tests are accepted asynchronously; HTTP success is not a load-test quality verdict. Bash blocks until completion and must fit its timeout. Image 0.39.0 includes curl/jq/hey/wrk/bash, but not k6. k6 needs a separately verified image and thresholds, because check() alone does not establish a failing exit status.
+
+This script is for a dedicated test image with k6 installed, not a command that works in the default loadtester image.
+
+```javascript
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+
+export const options = {
+  vus: 2,
+  duration: '20s',
+  thresholds: {
+    checks: ['rate==1'],
+    http_req_failed: ['rate<0.01'],
+    http_req_duration: ['p(99)<500'],
+  },
+};
+export default function () {
+  const result = http.get('http://podinfo-canary.flagger-demo.svc.cluster.local:9898/');
+  check(result, { 'HTTP 200': (response) => response.status === 200 });
+  sleep(0.5);
+}
+```
+
+### Manual Gating
 
 ```yaml
-webhooks:
-- name: load-test-k6
-  type: rollout
-  url: http://flagger-loadtester.flagger-system/
-  timeout: 120s
-  metadata:
-    type: bash
-    cmd: |
-      k6 run --vus 5 --duration 1m - <<'EOF'
-      import http from 'k6/http';
-      import { check, sleep } from 'k6';
-
-      export default function () {
-        const res = http.get('http://web-app-canary.production:8080/');
-        check(res, {
-          'status is 200': (r) => r.status === 200,
-          'duration < 500ms': (r) => r.timings.duration < 500,
-        });
-        sleep(0.5);
-      }
-      EOF
+spec:
+  analysis:
+    webhooks:
+    - name: promotion-approval
+      type: confirm-promotion
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/gate/check
+      timeout: 5s
+      metadata:
+        gate: promotion
 ```
 
-**Post-rollout cleanup webhook:**
+Merge this entry into the existing Canary webhook list. /gate/approve always approves; it is not a manual gate. /gate/check reads in-memory name.namespace state. Supply the same JSON body to open/close/check. Closing holds promotion, not rollback.
+
+```bash
+# Close before starting a new revision.
+kubectl exec -n flagger-system deployment/flagger-loadtester -- \
+  curl -fsS -X POST -H 'Content-Type: application/json' \
+  -d '{"name":"podinfo","namespace":"flagger-demo"}' http://localhost:8080/gate/close
+# Approve the reviewed revision.
+kubectl exec -n flagger-system deployment/flagger-loadtester -- \
+  curl -fsS -X POST -H 'Content-Type: application/json' \
+  -d '{"name":"podinfo","namespace":"flagger-demo"}' http://localhost:8080/gate/open
+# A closed gate returns 403.
+kubectl exec -n flagger-system deployment/flagger-loadtester -- \
+  curl -sS -o /dev/null -w '%{http_code}\n' -X POST -H 'Content-Type: application/json' \
+  -d '{"name":"podinfo","namespace":"flagger-demo"}' http://localhost:8080/gate/check
+```
+
+The built-in gate is not checksum-specific, resets on Pod restart, and is not shared across replicas. Close it before the next revision. Production approval needs authentication, audit, expiry, and state keyed by name/namespace/checksum/gate. One memory gate shared by start and promotion is not two independent approvals.
+
+### Manual Rollback and Suspend
 
 ```yaml
-webhooks:
-- name: post-deploy-cleanup
-  type: post-rollout
-  url: http://flagger-loadtester.flagger-system/
-  timeout: 60s
-  metadata:
-    type: bash
-    cmd: |
-      # Notify external system of deployment
-      curl -X POST https://api.internal.example.com/deployments \
-        -H 'Content-Type: application/json' \
-        -d '{"service": "web-app", "status": "promoted", "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+spec:
+  analysis:
+    webhooks:
+    - name: operator-rollback
+      type: rollback
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/rollback/check
+      timeout: 5s
 ```
 
-**External webhook for manual gating:**
+The rollback endpoint normally returns 403 for no signal and 200 when requested. A notification receiver’s success response here can cause unintended rollback. The following requests rollback during normally reconciling analysis/promotion-approval waiting; it is not an instant recovery switch for every phase.
+
+```bash
+kubectl get canary podinfo -n flagger-demo -o jsonpath='{.status.phase}{"\n"}'
+kubectl exec -n flagger-system deployment/flagger-loadtester -- \
+  curl -fsS -X POST -H 'Content-Type: application/json' \
+  -d '{"name":"podinfo","namespace":"flagger-demo"}' http://localhost:8080/rollback/open
+kubectl get canary podinfo -n flagger-demo --watch
+# Reset the request after observing the operation.
+kubectl exec -n flagger-system deployment/flagger-loadtester -- \
+  curl -fsS -X POST -H 'Content-Type: application/json' \
+  -d '{"name":"podinfo","namespace":"flagger-demo"}' http://localhost:8080/rollback/close
+```
+
+Controller/readiness failures or a closed confirm-rollout gate can stop reconciliation before this hook. Primary failures during Promoting/Finalising need the separate recovery handling described earlier. Leaving rollback open after completion can affect the next revision.
+
+Do not treat flagger.app/rollback, flagger.app/suspend, or flagger.app/skipAnalysis annotations as control APIs. Suspend/skipAnalysis are spec fields. Suspend stops reconciliation, including rollback hooks, without returning traffic to primary. SkipAnalysis promotes without analysis; it is not rollback. Update the Git owner as well.
 
 ```yaml
-webhooks:
-- name: manual-gate
-  type: confirm-promotion
-  url: https://deploy-approval.internal.example.com/api/approve
-  timeout: 30s
-  metadata:
-    service: web-app
-    environment: production
+spec:
+  suspend: true
 ```
-
----
 
 ## GitOps Integration (Flux + Flagger)
 
-### FluxCD HelmRelease + Flagger Canary Workflow
+![Flux applies desired workloads; Flagger manages progressive delivery separately.](../.gitbook/assets/en-gitops-04-flagger-0.png)
 
-The most powerful pattern is combining Flux HelmRelease for application deployment with Flagger Canary for progressive delivery. Flux manages the desired state from Git, and Flagger manages how changes are rolled out.
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-0.html)
 
-![A developer's image push flows through Flux's controllers into a HelmRelease change that Flagger picks up, runs a canary analysis against, and then either promotes to primary or rolls back, notifying the developer either way.](../.gitbook/assets/en-gitops-04-flagger-5.png)
+![Flux applies desired workloads while Flagger controls Canary analysis.](../.gitbook/assets/en-gitops-04-flagger-5.png)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-5.html)
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-5.html)
 
-**Repository structure for Flux + Flagger:**
-
-```
-fleet-infra/
-├── clusters/
-│   └── production/
-│       ├── flux-system/         # Flux bootstrap
-│       │   ├── gotk-components.yaml
-│       │   └── gotk-sync.yaml
-│       ├── infrastructure.yaml  # Infrastructure Kustomization
-│       └── apps.yaml            # Apps Kustomization
-├── infrastructure/
-│   ├── flagger/
-│   │   ├── kustomization.yaml
-│   │   ├── namespace.yaml
-│   │   ├── helmrepository.yaml
-│   │   └── helmrelease.yaml
-│   └── istio/
-│       └── ...
-└── apps/
-    └── web-app/
-        ├── kustomization.yaml
-        ├── deployment.yaml
-        ├── hpa.yaml
-        ├── canary.yaml          # Flagger Canary resource
-        └── alerts.yaml          # Flagger AlertProviders
-```
-
-**Flux HelmRelease for the application:**
+Flux bootstrap does not install Flagger as a built-in controller. Install it separately through HelmRelease or Kustomization. Do not manage the same release simultaneously through Helm CLI. Manage the preceding namespaces, ServiceAccount, and NetworkPolicy in Git as well.
 
 ```yaml
-# apps/web-app/helmrelease.yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: flagger
+  namespace: flagger-system
+spec:
+  interval: 1h
+  url: https://flagger.app
+---
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: web-app
-  namespace: production
+  name: flagger
+  namespace: flagger-system
 spec:
-  interval: 5m
+  interval: 1h
+  releaseName: flagger
   chart:
     spec:
-      chart: web-app
-      version: "1.x"
+      chart: flagger
+      version: 1.45.0
       sourceRef:
         kind: HelmRepository
-        name: internal-charts
-        namespace: flux-system
+        name: flagger
+  install:
+    crds: Create
+  upgrade:
+    crds: CreateReplace
   values:
-    image:
-      repository: 123456789012.dkr.ecr.us-west-2.amazonaws.com/web-app
-      tag: v2.0.0
-    replicaCount: 3
+    fullnameOverride: flagger
+    meshProvider: istio
+    namespace: flagger-demo
+    noCrossNamespaceRefs: true
+    metricsServer: http://prometheus.monitoring.svc.cluster.local:9090
+    prometheus:
+      install: false
+    leaderElection:
+      enabled: true
+      replicaCount: 2
     resources:
       requests:
         cpu: 100m
         memory: 128Mi
       limits:
+        cpu: '1'
+        memory: 512Mi
+    podDisruptionBudget:
+      enabled: true
+      minAvailable: 1
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: loadtester
+  namespace: flagger-system
+spec:
+  interval: 1h
+  releaseName: flagger-loadtester
+  chart:
+    spec:
+      chart: loadtester
+      version: 0.39.0
+      sourceRef:
+        kind: HelmRepository
+        name: flagger
+  values:
+    fullnameOverride: flagger-loadtester
+    replicaCount: 1
+    service:
+      type: ClusterIP
+      port: 80
+    serviceAccountName: flagger-loadtester
+    rbac:
+      create: false
+    cmd:
+      timeout: 2m
+      namespaceRegexp: ^flagger-demo$
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+    securityContext:
+      enabled: true
+      context:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        readOnlyRootFilesystem: true
+        runAsUser: 100
+        runAsGroup: 101
+    volumes:
+    - name: tmp
+      emptyDir: {}
+    volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+```
+
+Flux CreateReplace CRD handling is not a guarantee of safe migration. Review CRD changes and stored objects before upgrades. Apply Canary objects after the sources and provider installation are ready.
+
+### Application HelmRelease Alternative
+
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: podinfo
+  namespace: flagger-demo
+spec:
+  interval: 1h
+  url: https://stefanprodan.github.io/podinfo
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: podinfo
+  namespace: flagger-demo
+spec:
+  interval: 5m
+  releaseName: podinfo
+  chart:
+    spec:
+      chart: podinfo
+      version: 6.15.0
+      sourceRef:
+        kind: HelmRepository
+        name: podinfo
+  values:
+    service:
+      enabled: false
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 4
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
         cpu: 500m
         memory: 256Mi
 ```
 
-**Flagger Canary resource alongside the HelmRelease:**
+Podinfo 6.15.0 service.enabled=false avoids competing Service ownership. With hpa.enabled=true the chart does not fix Deployment replicas. Do not apply this HelmRelease alongside the native workload manifests. Verify equivalent behavior by rendering other charts rather than assuming identical value names.
+
+Manage the earlier Canary alongside the application. Flux/Helm Ready concerns resource application/readiness; it does not automatically prove Flagger promoted the current revision. Gate the next environment on Canary state/checksum and deployed version matching the intended change.
+
+### Kustomization Alternative
 
 ```yaml
-# apps/web-app/canary.yaml
-apiVersion: flagger.app/v1beta1
-kind: Canary
-metadata:
-  name: web-app
-  namespace: production
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: web-app
-  autoscalerRef:
-    apiVersion: autoscaling/v2
-    kind: HorizontalPodAutoscaler
-    name: web-app
-  progressDeadlineSeconds: 600
-  service:
-    port: 8080
-    portName: http
-    gateways:
-    - istio-system/public-gateway
-    hosts:
-    - app.example.com
-  analysis:
-    interval: 1m
-    maxWeight: 50
-    stepWeight: 10
-    threshold: 5
-    metrics:
-    - name: request-success-rate
-      thresholdRange:
-        min: 99
-      interval: 1m
-    - name: request-duration
-      thresholdRange:
-        max: 500
-      interval: 1m
-    webhooks:
-    - name: load-test
-      type: rollout
-      url: http://flagger-loadtester.flagger-system/
-      timeout: 60s
-      metadata:
-        type: cmd
-        cmd: "hey -z 1m -q 10 -c 2 http://web-app-canary.production:8080/"
-```
-
-### Kustomization-Based Deployment
-
-For teams using Flux Kustomizations instead of HelmReleases:
-
-```yaml
-# clusters/production/apps.yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: web-app
+  name: podinfo
   namespace: flux-system
 spec:
   interval: 10m
-  targetNamespace: production
+  targetNamespace: flagger-demo
   sourceRef:
     kind: GitRepository
-    name: fleet-infra
-  path: ./apps/web-app
+    name: flux-system
+  path: ./apps/podinfo
   prune: true
-  healthChecks:
-  - apiVersion: apps/v1
-    kind: Deployment
-    name: web-app
-    namespace: production
   timeout: 5m
 ```
 
 ```yaml
-# apps/web-app/kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: production
+namespace: flagger-demo
 resources:
 - deployment.yaml
-- service.yaml
 - hpa.yaml
 - canary.yaml
-- alert-providers.yaml
-
-images:
-- name: web-app
-  newName: 123456789012.dkr.ecr.us-west-2.amazonaws.com/web-app
-  newTag: v2.0.0
 ```
 
-### Image Automation + Canary Automation Pipeline
+The sourceRef uses the default bootstrap GitRepository name. Store the native manifests under apps/podinfo and omit Flagger-owned Services/primary resources. Kustomization application success is not promotion completion.
 
-The fully automated pipeline uses Flux Image Automation to detect new container images, commit the updated tag to Git, and let Flagger handle the progressive rollout:
-
-![A new web-app image pushed to Amazon ECR is scanned by Flux image automation, which commits the updated tag to Git; the Kustomize Controller applies the Deployment, and Flagger runs a progressive canary rollout that promotes to primary or rolls back.](../.gitbook/assets/en-gitops-04-flagger-6.png)
-
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-6.html)
-
-**Flux Image Automation resources:**
+An environment overlay can patch scalar settings explicitly. These are illustrative choices, not a universal production standard. Also check array-replacement behavior when patching CRDs.
 
 ```yaml
-# Image repository: scan ECR for new tags
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../base
+patches:
+- target:
+    group: flagger.app
+    version: v1beta1
+    kind: Canary
+    name: podinfo
+  patch: |
+    - op: replace
+      path: /spec/analysis/threshold
+      value: 3
+    - op: replace
+      path: /spec/analysis/maxWeight
+      value: 30
+    - op: replace
+      path: /spec/analysis/stepWeight
+      value: 5
+```
+
+### Image Automation and Promotion Branches
+
+![Selected images reach Git through a dedicated branch/PR before Canary analysis.](../.gitbook/assets/en-gitops-04-flagger-6.png)
+
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-6.html)
+
+```yaml
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageRepository
 metadata:
-  name: web-app
+  name: podinfo
   namespace: flux-system
 spec:
-  image: 123456789012.dkr.ecr.us-west-2.amazonaws.com/web-app
+  image: ghcr.io/stefanprodan/podinfo
   interval: 5m
-  provider: aws
 ---
-# Image policy: select the latest semver tag
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
 metadata:
-  name: web-app
+  name: podinfo
   namespace: flux-system
+  labels:
+    app: podinfo
 spec:
   imageRepositoryRef:
-    name: web-app
+    name: podinfo
   policy:
     semver:
-      range: ">=1.0.0"
+      range: '>=6.15.0 <7.0.0'
+  digestReflectionPolicy: IfNotPresent
 ---
-# Image update automation: commit new tag to Git
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageUpdateAutomation
 metadata:
-  name: web-app
+  name: podinfo
   namespace: flux-system
 spec:
   interval: 5m
   sourceRef:
     kind: GitRepository
-    name: fleet-infra
+    name: flux-system
+  policySelector:
+    matchLabels:
+      app: podinfo
   git:
     checkout:
       ref:
         branch: main
     commit:
       author:
+        name: Flux
         email: flux@example.com
-        name: flux
-      messageTemplate: |
-        Automated image update
-
-        Automation: {{ .AutomationObject }}
-
-        Files:
-        {{ range $filename, $_ := .Changed.FileChanges -}}
-        - {{ $filename }}
-        {{ end -}}
-
-        Objects:
-        {{ range $resource, $_ := .Changed.Objects -}}
-        - {{ $resource.Kind }} {{ $resource.Name }}
-        {{ end -}}
+      messageTemplate: |-
+        Update podinfo image
+        {{ range .Changed.Changes }}{{ .OldValue }} -> {{ .NewValue }}
+        {{ end }}
     push:
-      branch: main
+      branch: flux/podinfo-updates
   update:
-    path: ./apps/web-app
+    path: ./apps/podinfo
     strategy: Setters
 ```
 
-Mark the image field in the Deployment with a setter comment:
+This requires image-reflector/image-automation controllers, policy markers, and Git write access. It pushes to a dedicated branch, so PR creation/checks/merge are separate. Adapt repository/paths and reserve the branch for automation. Use the current .Changed commit-template model, not a nonexistent .NewTag field.
 
 ```yaml
-# apps/web-app/deployment.yaml
+# Native Deployment Pod-template fragment.
 spec:
   template:
     spec:
       containers:
-      - name: web-app
-        image: 123456789012.dkr.ecr.us-west-2.amazonaws.com/web-app:v1.0.0 # {"$imagepolicy": "flux-system:web-app"}
+      - name: podinfo
+        image: ghcr.io/stefanprodan/podinfo:6.15.0 # {"$imagepolicy": "flux-system:podinfo"}
 ```
 
-When a new image (e.g., `v2.0.0`) is pushed to ECR:
-1. Flux Image Repository scans ECR and detects the new tag
-2. Flux Image Policy selects `v2.0.0` based on the semver range
-3. Flux Image Update Automation commits the new tag to Git
-4. Flux Kustomize Controller applies the updated Deployment
-5. Flagger detects the Deployment change and begins the canary rollout
-6. Flagger progressively shifts traffic, analyzes metrics, and promotes or rolls back
+```yaml
+# Alternative: merge into HelmRelease.spec.values.
+image:
+  repository: ghcr.io/stefanprodan/podinfo
+  tag: "6.15.0" # {"$imagepolicy": "flux-system:podinfo:tag"}
+```
 
----
+A tag-only marker does not pin a digest. Verify chart digest support or registry tag immutability and validation. Do not override one image inconsistently through both Kustomize images and a Deployment marker. ECR needs separate image-reflector AWS authentication and actual Pod image-pull authorization.
 
 ## Observability and Alerting
 
-### Grafana Dashboard (Flagger Metrics)
+Flagger metrics and Istio/application metrics are different scrape targets. Annotations do not make every Prometheus installation scrape automatically. For Prometheus Operator, align the chart’s serviceMonitor.enabled with actual selectors, namespaces, and mTLS access.
 
-Flagger exports Prometheus metrics that can be visualized in Grafana. The key metrics are:
+```yaml
+serviceMonitor:
+  enabled: true
+  labels:
+    release: prometheus
+```
 
-| Metric | Type | Description |
-|--------|------|-------------|
-| `flagger_canary_status` | Gauge | Canary status (0=Initialized, 1=Progressing, 2=WaitingPromotion, 3=Promoting, 4=Finalising, 5=Succeeded, 6=Failed) |
-| `flagger_canary_weight` | Gauge | Current canary traffic weight |
-| `flagger_canary_total` | Counter | Total number of canary analyses |
-| `flagger_canary_duration_seconds` | Histogram | Duration of canary analysis in seconds |
-| `flagger_canary_metric_analysis` | Gauge | Result of the last metric analysis (1=pass, 0=fail) |
+The release label is illustrative and must match the Prometheus serviceMonitorSelector. Installed Operator CRDs are a prerequisite.
 
-**Import the official Flagger Grafana dashboard:**
+| Metric | Type / actual meaning |
+|---|---|
+| flagger_info | Gauge, version/mesh_provider |
+| flagger_canary_total | Gauge, Canary object count per namespace |
+| flagger_canary_status | Gauge, 0=Progressing, 2=Failed, other phases map to 1 |
+| flagger_canary_weight | Gauge, traffic weight by workload/namespace |
+| flagger_canary_metric_analysis | Gauge, actual metric value, not a generic pass/fail boolean |
+| flagger_canary_duration_seconds | Histogram, analysis reconciliation processing time, not total rollout duration |
+| flagger_canary_successes_total / failures_total | Counter, outcomes with strategy/analysis_status labels |
+
+Do not infer Succeeded from status value 1; approval/promotion and other phases can share it. Check Canary.status.phase and the intended revision. The name label is targetRef.name, not necessarily the Canary object name. Weight uses workload instead of name. Read status.iterations rather than assuming an exported iterations metric exists.
+
+### Grafana Dashboard
+
+Use the following queries in current Grafana Stat/Time series panels. Filter an external cluster label when aggregating centrally. Flagger clusterName affects alerts; it does not automatically add a cluster label to Prometheus metrics.
+
+```promql
+flagger_canary_status{namespace="flagger-demo"}
+flagger_canary_weight{namespace="flagger-demo",workload="podinfo"}
+flagger_canary_metric_analysis{namespace="flagger-demo",name="podinfo",metric="request-success-rate"}
+increase(flagger_canary_successes_total{namespace="flagger-demo",analysis_status="completed"}[7d])
+increase(flagger_canary_failures_total{namespace="flagger-demo",analysis_status="completed"}[7d])
+```
+
+The official Istio dashboard JSON is a reference; validate its datasource names and panel/schema compatibility in current Grafana, then export. Dashboard JSON is not a Kubernetes manifest. Provision the exported dashboard model, not an HTTP API {"dashboard": ...} envelope.
 
 ```bash
-# The official Flagger dashboard ID for Grafana is 16527
-# Import via Grafana UI: Dashboards > Import > Enter 16527
+curl -fsSL -o flagger-istio-reference.json \
+  https://raw.githubusercontent.com/fluxcd/flagger/v1.45.0/charts/grafana/dashboards/istio.json
+# After reviewing/exporting flagger-dashboard.json in Grafana:
+jq -e '.title and (.panels | type == "array")' flagger-dashboard.json >/dev/null
+kubectl create configmap flagger-dashboard -n monitoring \
+  --from-file=flagger-dashboard.json=./flagger-dashboard.json \
+  --dry-run=client -o yaml > flagger-dashboard-cm.yaml
+kubectl label --local -f flagger-dashboard-cm.yaml grafana_dashboard=1 \
+  -o yaml > flagger-dashboard-ready.yaml
 ```
 
-**Custom Grafana dashboard JSON model (simplified):**
+Review the generated ConfigMap and place it under GitOps. Configure the Grafana sidecar/provisioner to watch its label and namespace. Do not rely on an unverified dashboard ID as installation guidance.
 
-```json
-{
-  "title": "Flagger Canary Deployments",
-  "panels": [
-    {
-      "title": "Canary Status",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "flagger_canary_status{namespace=\"production\"}",
-          "legendFormat": "{{ name }}"
-        }
-      ]
-    },
-    {
-      "title": "Canary Traffic Weight",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "flagger_canary_weight{namespace=\"production\"}",
-          "legendFormat": "{{ name }}"
-        }
-      ]
-    },
-    {
-      "title": "Request Success Rate",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "flagger_canary_metric_analysis{namespace=\"production\", metric=\"request-success-rate\"}",
-          "legendFormat": "{{ name }}"
-        }
-      ]
-    }
-  ]
-}
-```
-
-### Prometheus Alert Rules
-
-Configure Prometheus alerting rules for Flagger canary failures:
+### Prometheus Alerts
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1532,386 +1335,166 @@ spec:
   groups:
   - name: flagger
     rules:
-    # Alert when a canary deployment fails
-    - alert: CanaryDeploymentFailed
-      expr: flagger_canary_status == 6
+    - alert: FlaggerAnalysisFailed
+      expr: flagger_canary_status == 2
       for: 1m
       labels:
-        severity: critical
+        severity: warning
       annotations:
-        summary: "Canary deployment failed for {{ $labels.name }}"
-        description: >
-          The canary deployment for {{ $labels.name }} in namespace
-          {{ $labels.namespace }} has failed. Flagger has rolled back
-          to the previous version.
-
-    # Alert when a canary is stuck progressing
-    - alert: CanaryProgressStalled
-      expr: flagger_canary_status == 1 and flagger_canary_weight == flagger_canary_weight offset 10m
-      for: 15m
+        summary: Flagger analysis failed for {{ $labels.namespace }}/{{ $labels.name }}
+        description: Inspect Canary phase, events, and actual routing before assuming the old primary is serving
+          traffic.
+    - alert: FlaggerAnalysisLongRunning
+      expr: flagger_canary_status == 0
+      for: 1h
       labels:
         severity: warning
       annotations:
-        summary: "Canary progress stalled for {{ $labels.name }}"
-        description: >
-          The canary weight for {{ $labels.name }} has not changed in
-          the last 15 minutes. Check Flagger logs for analysis failures.
-
-    # Alert when canary metric analysis fails
-    - alert: CanaryMetricCheckFailed
-      expr: flagger_canary_metric_analysis == 0
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "Canary metric check failing for {{ $labels.name }}"
-        description: >
-          The {{ $labels.metric }} metric check for {{ $labels.name }}
-          is failing. If this continues, Flagger will rollback.
-
-    # Alert on high canary analysis duration
-    - alert: CanaryAnalysisSlow
-      expr: histogram_quantile(0.99, rate(flagger_canary_duration_seconds_bucket[1h])) > 600
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "Canary analysis taking too long for {{ $labels.name }}"
-        description: >
-          The canary analysis P99 duration exceeds 10 minutes.
-          Consider tuning the analysis interval or metrics thresholds.
+        summary: Flagger analysis remains active for {{ $labels.namespace }}/{{ $labels.name }}
+        description: Check approval gates, failed checks and workload readiness; this is not a measurement of rollout
+          duration.
 ```
 
-### Slack and Teams Notification Configuration
+These rules assume a cluster-local Prometheus. The ==0 condition with for:1h measures a continuously observed Progressing condition, not every active phase or a rollout start timestamp. Assess intentional gate waits separately. Histogram buckets represent short reconciliation processing times; do not use time()-duration or a 600-second rollout P99 alert.
 
-Configure comprehensive alerting with severity-based routing:
+### Slack, Teams, and External Notifications
 
 ```yaml
-# Alert provider for informational messages (deployments started, promoted)
 apiVersion: flagger.app/v1beta1
 kind: AlertProvider
 metadata:
-  name: slack-info
-  namespace: production
+  name: slack
+  namespace: flagger-demo
 spec:
   type: slack
-  channel: deploy-notifications
+  channel: C0123456789
   username: flagger
   secretRef:
-    name: slack-webhook
+    name: slack-bot
 ---
-# Alert provider for critical messages (failures, rollbacks)
-apiVersion: flagger.app/v1beta1
-kind: AlertProvider
+apiVersion: v1
+kind: Secret
 metadata:
-  name: slack-critical
-  namespace: production
-spec:
-  type: slack
-  channel: deploy-incidents
-  username: flagger
-  secretRef:
-    name: slack-webhook
+  name: slack-bot
+  namespace: flagger-demo
+type: Opaque
+stringData:
+  address: https://slack.com/api/chat.postMessage
+  token: REPLACE_WITH_SLACK_BOT_TOKEN
 ---
-# Alert provider for PagerDuty integration
-apiVersion: flagger.app/v1beta1
-kind: AlertProvider
-metadata:
-  name: pagerduty
-  namespace: production
 spec:
-  type: slack
-  # PagerDuty Slack integration or Events API v2
-  secretRef:
-    name: pagerduty-webhook
+  analysis:
+    alerts:
+    - name: deployment-alerts
+      severity: info
+      providerRef:
+        name: slack
 ```
 
-Reference multiple providers with different severities in the Canary:
+Secret values are placeholders; keep actual tokens out of Git. AlertProvider secretRef requires address in this version, plus token for the Slack Bot API. Configure chat:write and channel membership, and replace channel with the actual ID. For Incoming Webhooks, verify the bound channel and permitted overrides.
+
+Severity is a minimum level, not exclusive routing: info receives all levels, warn receives warn/error, and error receives errors. Duplicate subscriptions can duplicate notifications.
+
+Flagger 1.45.0 native msteams still emits MessageCard. Do not assume swapping its URL for a Workflows Adaptive Card endpoint is sufficient. Configure a compatible converter or event receiver with authentication and payload conversion. This differs from Flux 2.9.5 Teams behavior.
+
+Do not assume a native PagerDuty Events API AlertProvider. Sending type: slack directly to a PagerDuty URL produces the wrong payload. Use an established Slack integration or a verified event adapter.
+
+### Deployment History and Events
 
 ```yaml
 spec:
   analysis:
-    alerts:
-    - name: "info-slack"
-      severity: info
-      providerRef:
-        name: slack-info
-    - name: "error-slack"
-      severity: error
-      providerRef:
-        name: slack-critical
-    - name: "critical-pagerduty"
-      severity: error
-      providerRef:
-        name: pagerduty
+    webhooks:
+    - name: deployment-events
+      type: event
+      url: http://deployment-events.flagger-system.svc.cluster.local/events
+      timeout: 5s
+      metadata:
+        environment: demo
 ```
 
-### Deployment History Tracking
-
-Track deployment history through Flagger events and Kubernetes events:
+Deployment-events is an internal receiver you must separately provide. Validate/store name/namespace/phase/checksum and eventMessage/eventType/timestamp. Post-rollout runs for success and failure; do not always record promoted. Flux Notification Alert eventSources does not support Canary and does not automatically collect arbitrary Kubernetes events.
 
 ```bash
-# View Flagger events for a canary
-kubectl describe canary web-app -n production
-
-# Query Flagger events via kubectl
-kubectl get events -n production \
-  --field-selector involvedObject.kind=Canary,involvedObject.name=web-app \
+kubectl get events -n flagger-demo \
+  --field-selector involvedObject.kind=Canary,involvedObject.name=podinfo \
   --sort-by='.lastTimestamp'
-
-# Export deployment history from Prometheus
-# Query: changes(flagger_canary_status{name="web-app"}[7d])
+kubectl get canaries -A -o custom-columns=\
+NAME:.metadata.name,NAMESPACE:.metadata.namespace,PHASE:.status.phase,WEIGHT:.status.canaryWeight,LAST:.status.lastTransitionTime
 ```
 
-For long-term deployment history, integrate with Flux Notification Controller to forward events to an external system:
-
-```yaml
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
-kind: Provider
-metadata:
-  name: deployment-tracker
-  namespace: flux-system
-spec:
-  type: generic
-  address: https://deploy-tracker.internal.example.com/api/events
----
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
-kind: Alert
-metadata:
-  name: flagger-events
-  namespace: flux-system
-spec:
-  providerRef:
-    name: deployment-tracker
-  eventSources:
-  - kind: Canary
-    name: "*"
-    namespace: production
-  eventSeverity: info
-```
-
----
+Kubernetes events have retention limits; keep durable history externally. changes(status[7d]) counts transitions, not deployments. Interpret outcome counters with skipped/completed and actual revisions in mind.
 
 ## Production Best Practices
 
-### Incremental Adoption Strategy
+Start with noncritical/lab workloads and test success, failure, missing data, approval waiting, and primary-promotion failure. A higher failure threshold can delay rollback rather than improve safety. Larger stepWeight exposes more users; longer analysis intervals can delay detection.
 
-Adopt Flagger progressively across your organization:
+| Decision | Evidence |
+|---|---|
+| Error/latency bounds | Service SLO, real units and normal distribution |
+| Minimum requests / query window | Low traffic, ingestion delay, sample size |
+| Failure threshold | Allowed exposure time and false alarms |
+| Weight steps | Blast radius and spare replicas/nodes |
+| Progress deadline | Pod startup, readiness, rolling-update progress |
+| Approval / rollback | Authentication, revision identity, recovery procedure |
 
-**Phase 1: Non-Critical Services**
-- Start with internal tools or staging environments
-- Use conservative analysis settings (high thresholds, many iterations)
-- Validate metrics collection and webhook integration
+Do not derive 99.9%, 200ms, or exact rollout durations solely from environment/industry labels. Measure, tune, and regularly verify failure/recovery behavior.
 
-**Phase 2: Low-Risk Production Services**
-- Apply to production services with low blast radius
-- Configure alerting and notification channels
-- Establish runbooks for manual intervention
+### Configuration Tracking and Autoscaling
 
-**Phase 3: Mission-Critical Services**
-- Apply to high-traffic, customer-facing services
-- Use manual gating for additional safety
-- Implement custom metrics specific to business KPIs
-
-**Phase 4: Organization-Wide Rollout**
-- Standardize Canary templates across teams
-- Build self-service platform with Flux + Flagger
-- Automate end-to-end image-to-production pipelines
-
-### Metrics Threshold Tuning
-
-Choosing the right metric thresholds is critical for balancing deployment speed against safety:
+ConfigMap/Secret tracking is enabled by default, and referenced configuration changes can trigger analysis. Exclude a selected ConfigMap/Secret with this annotation on that resource. Global configTracking.enabled=false is also possible, but review its effect on detection and primary configuration copies.
 
 ```yaml
-# Conservative (recommended for initial rollout)
-analysis:
-  interval: 2m
-  maxWeight: 30
-  stepWeight: 5
-  threshold: 3
-  iterations: 15
-  metrics:
-  - name: request-success-rate
-    thresholdRange:
-      min: 99.9
-    interval: 2m
-  - name: request-duration
-    thresholdRange:
-      max: 200
-    interval: 2m
-
-# Balanced (recommended for most production services)
-analysis:
-  interval: 1m
-  maxWeight: 50
-  stepWeight: 10
-  threshold: 5
-  metrics:
-  - name: request-success-rate
-    thresholdRange:
-      min: 99
-    interval: 1m
-  - name: request-duration
-    thresholdRange:
-      max: 500
-    interval: 1m
-
-# Aggressive (for high-confidence, frequently deployed services)
-analysis:
-  interval: 30s
-  maxWeight: 80
-  stepWeight: 20
-  threshold: 10
-  metrics:
-  - name: request-success-rate
-    thresholdRange:
-      min: 95
-    interval: 30s
-  - name: request-duration
-    thresholdRange:
-      max: 1000
-    interval: 30s
+metadata:
+  annotations:
+    flagger.app/config-tracking: disabled
 ```
 
-**Guidelines for threshold tuning:**
-
-| Parameter | Conservative | Balanced | Aggressive |
-|-----------|-------------|----------|------------|
-| `interval` | 2m | 1m | 30s |
-| `stepWeight` | 5 | 10 | 20 |
-| `maxWeight` | 30 | 50 | 80 |
-| `threshold` (failures) | 3 | 5 | 10 |
-| Success Rate Min | 99.9% | 99% | 95% |
-| Latency P99 Max | 200ms | 500ms | 1000ms |
-| Total Rollout Time | ~20 min | ~10 min | ~4 min |
-
-### Rollback Strategies
-
-Understanding rollback behavior is essential for production operations:
-
-**Automatic Rollback** (default behavior):
-- Flagger detects metric failures exceeding the threshold
-- All traffic is immediately routed back to the primary
-- Canary pods are scaled to zero
-- Status is set to `Failed`
-
-**Manual Rollback**:
-```bash
-# Force a rollback by setting the skipAnalysis annotation
-kubectl annotate canary web-app -n production \
-  flagger.app/rollback="true"
-
-# Skip analysis for emergency deploys (not recommended for production)
-kubectl annotate canary web-app -n production \
-  flagger.app/skipAnalysis="true"
-```
-
-**Rollback Webhook** for automated incident response:
-
-```yaml
-webhooks:
-- name: rollback-handler
-  type: rollback
-  url: http://incident-handler.production:8080/api/rollback
-  timeout: 30s
-  metadata:
-    service: web-app
-    team: platform
-    pagerduty_service: web-app-prod
-```
+HPA/supported KEDA scalers need the correct autoscalerRef and Metrics Server/metric provider. Verify that Flux/Helm does not continually override Flagger scaling/service control. PDBs primarily govern voluntary evictions, not guaranteed protection from controller scale-down or Deployment rolling updates. Configure workload rollout strategy and readiness separately.
 
 ### Multi-Cluster Flagger
 
-For organizations running multiple EKS clusters, Flagger can be deployed in a hub-and-spoke pattern:
+![A central Flux pattern requires explicit remote-Kustomization authorization; Flagger runs in each cluster.](../.gitbook/assets/en-gitops-04-flagger-8.png)
 
-![A management cluster's FluxCD reads one Git repository and propagates deployments to independent Flagger instances in two production clusters (Seoul, Oregon) and a staging cluster, each promoting or rolling back its own canary.](../.gitbook/assets/en-gitops-04-flagger-8.png)
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-8.html)
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-8.html)
-
-**Key considerations for multi-cluster Flagger:**
-
-1. **Independent Flagger instances**: Deploy Flagger in each cluster; it only manages local resources
-2. **Shared Canary definitions**: Use Flux Kustomizations with overlays for cluster-specific configuration
-3. **Sequential rollouts**: Use Flux dependencies to roll out to staging before production clusters
-4. **Centralized observability**: Aggregate Flagger metrics from all clusters to a central Prometheus/Thanos/Mimir
+Either bootstrap Flux per cluster with distinct Git paths, or configure central Flux with explicit kubeConfig/workload identity for remote reconciliation. Sharing a Git repository does not grant remote access. Flagger controls workloads locally in each cluster.
 
 ```yaml
-# clusters/production-us-east-1/apps.yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: web-app
+  name: podinfo-production-a
   namespace: flux-system
 spec:
-  # Deploy to us-east-1 only after staging succeeds
-  dependsOn:
-  - name: web-app
-    namespace: flux-system
-  # This refers to the staging cluster Kustomization
+  interval: 10m
+  targetNamespace: flagger-demo
   sourceRef:
     kind: GitRepository
-    name: fleet-infra
-  path: ./apps/web-app/overlays/production-us-east-1
-  interval: 10m
+    name: flux-system
+  path: ./apps/podinfo/overlays/production-a
   prune: true
 ```
 
-### Additional Best Practices
+This object runs in the target cluster’s Flux. Do not make it depend on itself or expect dependsOn to find a same-named object in an independent cluster. Even distinct remote Kustomizations in one control plane do not automatically make Ready prove promotion of the current revision; gate the next environment’s Git change on actual release results.
 
-1. **Always run load tests during canary analysis.** Without traffic to the canary, Prometheus has no metrics to analyze. Use the Flagger loadtester or generate synthetic traffic.
-
-2. **Set `progressDeadlineSeconds` appropriately.** This is your safety net. If the canary cannot progress within this time, it is automatically rolled back. Set it to at least 2x your expected total rollout time.
-
-3. **Use `skipAnalysis` sparingly.** While it allows emergency deploys, it bypasses all safety checks. Prefer manual gating for urgent changes that still need basic validation.
-
-4. **Pin Flagger and provider versions.** Use specific Helm chart versions in your Flux HelmRelease to avoid unexpected behavior from auto-upgrades.
-
-5. **Test rollback behavior regularly.** Deploy known-bad versions in staging to verify that Flagger correctly detects failures and rolls back.
-
-6. **Separate Canary definitions from Deployments in Git.** This keeps your Deployment resources clean and portable, with progressive delivery concerns isolated in Canary resources.
-
-7. **Use namespace-scoped AlertProviders.** This prevents webhook credential leakage across namespaces and supports multi-tenant environments.
-
-8. **Monitor Flagger controller health.** Set up alerts for Flagger pod restarts, high memory usage, and reconciliation errors.
-
----
+Configure cluster labels and retention for centralized observability. Namespaced alerts/MetricTemplates alone do not complete tenant isolation; also restrict RBAC, cross-namespace references, networking, and Secret access.
 
 ## References
 
-### Official Documentation
+- [Flagger 1.45.0 source](https://github.com/fluxcd/flagger/tree/v1.45.0)
+- [Deployment strategies](https://github.com/fluxcd/flagger/blob/v1.45.0/docs/gitbook/usage/deployment-strategies.md)
+- [Webhook contract](https://github.com/fluxcd/flagger/blob/v1.45.0/docs/gitbook/usage/webhooks.md)
+- [Actual metrics recorder](https://github.com/fluxcd/flagger/blob/v1.45.0/pkg/metrics/recorder.go)
+- [Scheduler / rollback behavior](https://github.com/fluxcd/flagger/blob/v1.45.0/pkg/controller/scheduler.go)
+- [Gateway API examples](https://github.com/fluxcd/flagger/blob/v1.45.0/docs/gitbook/tutorials/gatewayapi-progressive-delivery.md)
+- [AWS App Mesh end of support](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html)
+- [Kubernetes disruptions / PDB](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)
+- [FluxCD](02-fluxcd.md)
+- [Argo Rollouts traffic management](argocd/05-traffic-management.md)
 
-- [Flagger Official Documentation](https://docs.flagger.app/)
-- [Flagger GitHub Repository](https://github.com/fluxcd/flagger)
-- [Flagger Helm Chart](https://artifacthub.io/packages/helm/flagger/flagger)
-- [FluxCD Official Documentation](https://fluxcd.io/docs/)
-- [Flagger FAQ](https://docs.flagger.app/faq)
+[Previous: GitOps comparison](03-gitops-comparison.md) · [Next: Feature Flags](05-feature-flags.md) · [Overview](README.md)
 
-### Related Internal Documentation
+## Quiz
 
-| Topic | Link |
-|-------|------|
-| FluxCD | [FluxCD GitOps](./02-fluxcd.md) |
-| GitOps Tools Comparison | [ArgoCD vs FluxCD vs Others](./03-gitops-comparison.md) |
-| ArgoCD | [ArgoCD Documentation](./argocd/README.md) |
-| Istio Traffic Splitting | [Traffic Splitting](../service-mesh/istio/traffic-management/04-traffic-splitting.md) |
-| Argo Rollouts + Istio | [Argo Rollouts Integration](../service-mesh/istio/advanced/08-argo-rollouts.md) |
-| Prometheus | [Prometheus Monitoring](../observability/metrics/01-prometheus.md) |
-| Grafana | [Grafana Dashboards](../observability/grafana/README.md) |
-| Gateway API | [Gateway API](../networking/04-gateway-api.md) |
-| KEDA Autoscaling | [KEDA](../autoscaling/01-keda.md) |
-
-### External Resources
-
-- [Progressive Delivery with Flagger (CNCF Webinar)](https://www.cncf.io/online-programs/progressive-delivery-with-flagger/)
-- [GitOps and Progressive Delivery with Flux and Flagger](https://fluxcd.io/blog/)
-- [Canary Deployments with Flagger and Istio](https://docs.flagger.app/tutorials/istio-progressive-delivery)
-- [Flagger on AWS App Mesh](https://docs.flagger.app/tutorials/appmesh-progressive-delivery)
-- [Gateway API Canary Deployments](https://docs.flagger.app/tutorials/gatewayapi-progressive-delivery)
-
----
-
-## Navigation
-
-| Previous | Up | Next |
-|----------|----|----- |
-| [GitOps Tools Comparison](./03-gitops-comparison.md) | [GitOps Overview](./README.md) | None |
+Test your understanding with the [Flagger quiz](../quizzes/gitops/04-flagger-quiz.md).

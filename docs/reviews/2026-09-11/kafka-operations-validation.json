@@ -1,0 +1,315 @@
+{
+  "reviewedAt": "2026-09-12",
+  "scope": [
+    "ko/data-on-eks/kafka/03-kafka-operations.md",
+    "ko/quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md",
+    "en/data-on-eks/kafka/03-kafka-operations.md",
+    "en/quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md"
+  ],
+  "versions": {
+    "strimzi": "1.2.0",
+    "kafka": "4.3.1"
+  },
+  "sources": [
+    "https://strimzi.io/docs/operators/1.2.0/deploying.html",
+    "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html",
+    "https://docs.aws.amazon.com/ebs/latest/userguide/provisioned-iops.html",
+    "https://aws.amazon.com/ebs/pricing/",
+    "https://github.com/apache/kafka/blob/4.3.1/core/src/main/scala/kafka/log/LogManager.scala",
+    "https://github.com/apache/kafka/blob/4.3.1/tools/src/main/java/org/apache/kafka/tools/reassign/ReassignPartitionsCommand.java",
+    "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaCluster.java",
+    "https://github.com/strimzi/strimzi-kafka-operator/blob/1.2.0/cluster-operator/src/main/java/io/strimzi/operator/cluster/model/KafkaBrokerConfigurationBuilder.java"
+  ],
+  "findings": [
+    "Updatedgp3limits/unitsandio2BlockExpressconditions;separateddurabilityfromAFR/capacityplusIOPScosts.",
+    "Verifiedoriginal117.936TBadditivemarginmathanddistinguished30percentfreecapacity129.6TB;statedsustainedretainedlograteandextraoverhead/skewlimitations.",
+    "CorrectedJBODfewestlogcountplacementnotroundrobin,volumeaddition/removal/metadata/retention;usedmergepatchespreservingPart2TLSauth/topology.",
+    "CorrectedautoRebalancetriggersonexistingpoolreplicaschanges,broker-onlyscope,nonemptychecks/actualremovalIDsandIdlefailuresemantics.",
+    "Addedmanualproposalapprovalandnative-v1scopehelpers;removedunsafehardgoaloverrides/partialKafkaapply.",
+    "Fixedlocal-versusPodfilepaths,adminTLSconfiguration,actualbrokerIDsandCurrent/ProposedJSONextraction;explicitthrottlesand--verifyconfigurationcleanupsideeffects.",
+    "ClarifiedoptionalmetadataVersionpinning/automaticupgradeandcurrent+targetOperatorcompatibilityratherthanalwayslatestfirst;keptrecoverycaveats.",
+    "CorrectedPDBoneperKafkacluster/allpoolsandvoluntaryevictionlimits;removedzerodowntime/zerolossguarantees.",
+    "Updated34questionsandvalidated52fenceswithnative-v1schemasandfixturecopychecks."
+  ],
+  "validation": {
+    "mergedPatches": [
+      "storage-expand.patch.yaml",
+      "cruise-control.patch.yaml",
+      "auto-rebalance.patch.yaml",
+      "upgrade-binaries.patch.yaml",
+      "upgrade-metadata.patch.yaml"
+    ],
+    "fullRebalance": "v1 schema validated",
+    "proposalCases": [
+      "add-brokers proposal generated without automatic approval",
+      "remove-brokers proposal generated without automatic approval",
+      "invalid broker IDs rejected",
+      "invalid broker IDs rejected",
+      "invalid broker IDs rejected",
+      "invalid broker IDs rejected",
+      "invalid broker IDs rejected",
+      "controller rejected",
+      "missing-status rejected",
+      "missing-namespace rejected"
+    ],
+    "extractionCases": [
+      "Proposed selected instead of Current; replica order preserved",
+      "invalid output rejected",
+      "invalid output rejected",
+      "invalid output rejected",
+      "duplicate replica rejected"
+    ],
+    "sizing": {
+      "replicated_log_TB": "90.72",
+      "capacity_with_30_percent_added_TB": "117.936",
+      "free_percent_with_added_margin": "23.07692307692307692307692308",
+      "capacity_with_30_percent_free_TB": "129.6",
+      "capacity_with_30_percent_free_TiB": "117.8705133497714996337890625",
+      "average_per_broker_TB": "43.2",
+      "assumptions": [
+        "Sustained retained-log bytes after compression; not a short traffic peak.",
+        "No separate allowance here for indexes, internal topics, compaction or temporary reassignment copies.",
+        "Per-broker division assumes equal data placement; measure actual skew."
+      ]
+    },
+    "limits": "No API calls or data movement. Proposal generation checks identity/shape, not capacity, ISR, rack placement or safety."
+  },
+  "documents": {
+    "fences": [
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "python"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "python"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "json"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "python"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md",
+        "language": "yaml"
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md",
+        "language": "bash"
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "python"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "python"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "json"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "python"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/data-on-eks/kafka/03-kafka-operations.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md",
+        "language": "yaml"
+      },
+      {
+        "path": "en/quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md",
+        "language": "bash"
+      },
+      {
+        "path": "en/quizzes/data-on-eks/kafka/03-kafka-operations-quiz.md",
+        "language": "bash"
+      }
+    ],
+    "v1Objects": 6,
+    "relativeLinks": 12,
+    "quizQuestions": 34,
+    "images": 0,
+    "limits": "No broker or AWS mutations; syntax/schema/copy checks and previously recorded native CLI/source validation."
+  },
+  "nativeCliHelp": {
+    "kafka-reassign-partitions": [
+      "command-config",
+      "generate",
+      "execute",
+      "verify",
+      "preserve-throttles",
+      "throttle"
+    ],
+    "kafka-topics": [
+      "under-replicated-partitions",
+      "under-min-isr-partitions",
+      "unavailable-partitions"
+    ],
+    "note": "These --help commands return1whileprintingvalidusage; no cluster requests executed."
+  },
+  "limitations": [
+    "Noactualbrokerscaling,partitionmovement,storagechange,upgradeorAWSmutation.",
+    "ProposalhelperchecksIDsandshape,notcapacity/ISR/racksafety.",
+    "Noimagesinthischapter."
+  ]
+}

@@ -1,0 +1,2803 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T23:18:48.297407+00:00",
+  "scope": {
+    "documents": 10,
+    "quizQuestions": 30,
+    "originalUniqueCodeBlocksRead": 56,
+    "resourceExamples": 18,
+    "officialHelmCharts": 7,
+    "figures": 2
+  },
+  "originalFiles": [
+    {
+      "path": "ko/platform-engineering/02-ack.md",
+      "lines": 582,
+      "proseLines": 365,
+      "sha256": "c61a7ed9f5332f64a254c59d7f79a072b2e2bcb67abb7e3d22888105c41e4ea3"
+    },
+    {
+      "path": "ko/quizzes/platform-engineering/02-ack-quiz.md",
+      "lines": 288,
+      "proseLines": 237,
+      "sha256": "018df347c2565e41c9ce8f2fa784571cf7c0b3cce221f5bf5acdc9fbe44fb900"
+    },
+    {
+      "path": "ko/platform-engineering/ack/01-s3-iam.md",
+      "lines": 114,
+      "proseLines": 23,
+      "sha256": "cc5abe2a3a8f276bd03a0fff7ed8d8ee281f9ede8668f65ea3ce169a63e60b7d"
+    },
+    {
+      "path": "ko/platform-engineering/ack/02-sqs-sns.md",
+      "lines": 97,
+      "proseLines": 28,
+      "sha256": "1f8521efd46998934248ad26c7572a88f6177bcbd78acb7954443bfe2a09e276"
+    },
+    {
+      "path": "ko/platform-engineering/ack/03-elbv2-route53-rds.md",
+      "lines": 253,
+      "proseLines": 77,
+      "sha256": "02bf0b12de89e833046742bc44b23d3d0bc94cfdd8cba1b19b0eb906e7f66922"
+    },
+    {
+      "path": "en/platform-engineering/02-ack.md",
+      "lines": 578,
+      "proseLines": 361,
+      "sha256": "df3e962c154f5de522046d3f0632482ae3f4a7340908783e3c3e8559aaa4dc7e"
+    },
+    {
+      "path": "en/quizzes/platform-engineering/02-ack-quiz.md",
+      "lines": 288,
+      "proseLines": 237,
+      "sha256": "efceecf17f5253bc60bb45ad5586a064b5d7567a211dafb19062ba31af867966"
+    },
+    {
+      "path": "en/platform-engineering/ack/01-s3-iam.md",
+      "lines": 116,
+      "proseLines": 25,
+      "sha256": "a826e28a3f7d1ed7a174dfc5503f5dc5cab6133b072216685818c8d47f00881b"
+    },
+    {
+      "path": "en/platform-engineering/ack/02-sqs-sns.md",
+      "lines": 99,
+      "proseLines": 30,
+      "sha256": "bc39d20c1b4788c25ea4b85aadff5a812bf77fdc6fb3022238f260011cbac9b0"
+    },
+    {
+      "path": "en/platform-engineering/ack/03-elbv2-route53-rds.md",
+      "lines": 255,
+      "proseLines": 79,
+      "sha256": "f7fa462c2b780f352e72355d12bc8087b43129ca44c5241496b9e77f9cb2f4d8"
+    }
+  ],
+  "contentPreservation": "All15quiztopics and architecture/install/identity/schema/serviceexamples/adoption/retention/CARM/observability/scale/GitOps/recovery retained. InvalidCRDs/attributes/policies replaced with currentservice-specific schemas; unsupported allpurposepermissions andfinalizerclearing removed. OriginalonlyKOfigurecorrected;ENfigureadded.",
+  "versions": [
+    {
+      "service": "s3",
+      "version": "v1.12.1",
+      "publishedAt": "2026-09-09T23:59:53Z",
+      "url": "https://github.com/aws-controllers-k8s/s3-controller/releases/tag/v1.12.1"
+    },
+    {
+      "service": "iam",
+      "version": "v1.9.0",
+      "publishedAt": "2026-08-28T20:10:31Z",
+      "url": "https://github.com/aws-controllers-k8s/iam-controller/releases/tag/v1.9.0"
+    },
+    {
+      "service": "sqs",
+      "version": "v1.7.0",
+      "publishedAt": "2026-08-28T20:11:56Z",
+      "url": "https://github.com/aws-controllers-k8s/sqs-controller/releases/tag/v1.7.0"
+    },
+    {
+      "service": "sns",
+      "version": "v1.10.1",
+      "publishedAt": "2026-09-09T20:29:21Z",
+      "url": "https://github.com/aws-controllers-k8s/sns-controller/releases/tag/v1.10.1"
+    },
+    {
+      "service": "elbv2",
+      "version": "v1.7.0",
+      "publishedAt": "2026-08-28T20:07:06Z",
+      "url": "https://github.com/aws-controllers-k8s/elbv2-controller/releases/tag/v1.7.0"
+    },
+    {
+      "service": "route53",
+      "version": "v1.6.0",
+      "publishedAt": "2026-08-28T20:17:32Z",
+      "url": "https://github.com/aws-controllers-k8s/route53-controller/releases/tag/v1.6.0"
+    },
+    {
+      "service": "rds",
+      "version": "v1.12.0",
+      "publishedAt": "2026-08-28T21:13:27Z",
+      "url": "https://github.com/aws-controllers-k8s/rds-controller/releases/tag/v1.12.0"
+    }
+  ],
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/platform-engineering/02-ack.md",
+        "sha256": "75b3db5b1cf188c640848867494031c8c10b5c6c3e8968264dad4ce6d5dedb9b",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "aws-controllers-for-kubernetes-ack"
+          },
+          {
+            "tag": "h2",
+            "id": "개념과-아키텍처"
+          },
+          {
+            "tag": "h2",
+            "id": "버전과-지원-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "설치-준비와-오프라인-검사"
+          },
+          {
+            "tag": "h2",
+            "id": "namespace와-계정-격리"
+          },
+          {
+            "tag": "h2",
+            "id": "리소스-생성·참조·상태"
+          },
+          {
+            "tag": "h2",
+            "id": "기존-리소스-가져오기와-삭제-보존"
+          },
+          {
+            "tag": "h2",
+            "id": "관찰·확장·복구"
+          },
+          {
+            "tag": "h2",
+            "id": "문제-해결"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위와-참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "aws-controllers-for-kubernetes-ack",
+          "개념과-아키텍처",
+          "버전과-지원-범위",
+          "설치-준비와-오프라인-검사",
+          "namespace와-계정-격리",
+          "리소스-생성·참조·상태",
+          "기존-리소스-가져오기와-삭제-보존",
+          "관찰·확장·복구",
+          "문제-해결",
+          "검증-범위와-참고-자료"
+        ]
+      },
+      {
+        "path": "ko/quizzes/platform-engineering/02-ack-quiz.md",
+        "sha256": "9320388d4d8eb624a1d0d5e7892268f773c8da6a917594dea443c27a837af209",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "aws-controllers-for-kubernetes-ack-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-ack의-주요-목적은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-서비스마다-설치하는-구성-요소는-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-controller의-aws-credential을-어떻게-제공하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-cr-삭제-후-aws-리소스를-보존하는-값은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-기존-aws-리소스를-어떻게-가져오나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-ga-상태는-무엇을-보장하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-동기화를-나타내는-condition과-한계는-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-팀별-namespace를-나누면-권한-격리가-끝나나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-원하는-상태와-aws-상태를-맞추는-패턴은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-aws-리소스-입력을-정의하는-kubernetes-확장-방식은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_11-arn은-어디에서-확인하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_12-carm과-여러-cluster의-리소스-참조는-어떤-차이가-있나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_13-development-태그를-가진-s3-bucket을-작성할-때-무엇을-포함하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_14-ack-s3-chart를-검사하고-설치하기-위한-전제는-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_15-문제-해결-시-어떤-상태와-로그를-확인하나요"
+          }
+        ],
+        "renderedIds": [
+          "aws-controllers-for-kubernetes-ack-퀴즈",
+          "_1-ack의-주요-목적은-무엇인가요",
+          "_2-서비스마다-설치하는-구성-요소는-무엇인가요",
+          "_3-controller의-aws-credential을-어떻게-제공하나요",
+          "_4-cr-삭제-후-aws-리소스를-보존하는-값은-무엇인가요",
+          "_5-기존-aws-리소스를-어떻게-가져오나요",
+          "_6-ga-상태는-무엇을-보장하나요",
+          "_7-동기화를-나타내는-condition과-한계는-무엇인가요",
+          "_8-팀별-namespace를-나누면-권한-격리가-끝나나요",
+          "_9-원하는-상태와-aws-상태를-맞추는-패턴은-무엇인가요",
+          "_10-aws-리소스-입력을-정의하는-kubernetes-확장-방식은-무엇인가요",
+          "_11-arn은-어디에서-확인하나요",
+          "_12-carm과-여러-cluster의-리소스-참조는-어떤-차이가-있나요",
+          "_13-development-태그를-가진-s3-bucket을-작성할-때-무엇을-포함하나요",
+          "_14-ack-s3-chart를-검사하고-설치하기-위한-전제는-무엇인가요",
+          "_15-문제-해결-시-어떤-상태와-로그를-확인하나요"
+        ]
+      },
+      {
+        "path": "ko/platform-engineering/ack/01-s3-iam.md",
+        "sha256": "80cfb11b624330a4569c0d8867fc4cd2d6f7cca7a1efb6739d4d12ee9026bb1a",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "s3-및-iam-ack"
+          },
+          {
+            "tag": "h2",
+            "id": "bucket-—-bucket-app-data"
+          },
+          {
+            "tag": "h2",
+            "id": "policy-—-policy-app-data-read"
+          },
+          {
+            "tag": "h2",
+            "id": "role-—-role-app-role"
+          },
+          {
+            "tag": "h2",
+            "id": "검증과-운영-전-확인"
+          }
+        ],
+        "renderedIds": [
+          "s3-및-iam-ack",
+          "bucket-—-bucket-app-data",
+          "policy-—-policy-app-data-read",
+          "role-—-role-app-role",
+          "검증과-운영-전-확인"
+        ]
+      },
+      {
+        "path": "ko/platform-engineering/ack/02-sqs-sns.md",
+        "sha256": "7e7e7cc55c16ca37df2fda75382ca69432dc8cfe6f69e02d2dd314cc6362b3ad",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "sqs-및-sns-ack"
+          },
+          {
+            "tag": "h2",
+            "id": "queue-—-queue-app-events"
+          },
+          {
+            "tag": "h2",
+            "id": "queue-—-queue-app-events-fifo"
+          },
+          {
+            "tag": "h2",
+            "id": "topic-—-topic-app-events"
+          },
+          {
+            "tag": "h2",
+            "id": "subscription-—-subscription-app-email"
+          },
+          {
+            "tag": "h2",
+            "id": "subscription-—-subscription-app-queue"
+          },
+          {
+            "tag": "h2",
+            "id": "검증과-운영-전-확인"
+          }
+        ],
+        "renderedIds": [
+          "sqs-및-sns-ack",
+          "queue-—-queue-app-events",
+          "queue-—-queue-app-events-fifo",
+          "topic-—-topic-app-events",
+          "subscription-—-subscription-app-email",
+          "subscription-—-subscription-app-queue",
+          "검증과-운영-전-확인"
+        ]
+      },
+      {
+        "path": "ko/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "sha256": "08076620b1621305c2bd4ad6eec6b6cd824c41715103e192668060c237869cb2",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "elbv2-route-53-및-aurora-ack"
+          },
+          {
+            "tag": "h2",
+            "id": "loadbalancer-—-loadbalancer-app-nlb"
+          },
+          {
+            "tag": "h2",
+            "id": "targetgroup-—-targetgroup-app-tg"
+          },
+          {
+            "tag": "h2",
+            "id": "listener-—-listener-app-listener"
+          },
+          {
+            "tag": "h2",
+            "id": "recordset-—-recordset-app-dns"
+          },
+          {
+            "tag": "h2",
+            "id": "dbsubnetgroup-—-dbsubnetgroup-app-db-subnets"
+          },
+          {
+            "tag": "h2",
+            "id": "dbcluster-—-dbcluster-app-aurora"
+          },
+          {
+            "tag": "h2",
+            "id": "dbinstance-—-dbinstance-app-db-1"
+          },
+          {
+            "tag": "h2",
+            "id": "dbinstance-—-dbinstance-app-db-2"
+          },
+          {
+            "tag": "h2",
+            "id": "dbinstance-—-dbinstance-app-db-3"
+          },
+          {
+            "tag": "h2",
+            "id": "dbclusterendpoint-—-dbclusterendpoint-app-selected-readers"
+          },
+          {
+            "tag": "h2",
+            "id": "검증과-운영-전-확인"
+          }
+        ],
+        "renderedIds": [
+          "elbv2-route-53-및-aurora-ack",
+          "loadbalancer-—-loadbalancer-app-nlb",
+          "targetgroup-—-targetgroup-app-tg",
+          "listener-—-listener-app-listener",
+          "recordset-—-recordset-app-dns",
+          "dbsubnetgroup-—-dbsubnetgroup-app-db-subnets",
+          "dbcluster-—-dbcluster-app-aurora",
+          "dbinstance-—-dbinstance-app-db-1",
+          "dbinstance-—-dbinstance-app-db-2",
+          "dbinstance-—-dbinstance-app-db-3",
+          "dbclusterendpoint-—-dbclusterendpoint-app-selected-readers",
+          "검증과-운영-전-확인"
+        ]
+      },
+      {
+        "path": "en/platform-engineering/02-ack.md",
+        "sha256": "6b94221dd069771f46747c2be0fe14c13d1e076da45151f06d2e7e7f89301348",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "aws-controllers-for-kubernetes-ack"
+          },
+          {
+            "tag": "h2",
+            "id": "concepts-and-architecture"
+          },
+          {
+            "tag": "h2",
+            "id": "versions-and-support"
+          },
+          {
+            "tag": "h2",
+            "id": "installation-preparation-and-offline-inspection"
+          },
+          {
+            "tag": "h2",
+            "id": "namespace-and-account-isolation"
+          },
+          {
+            "tag": "h2",
+            "id": "creation-references-and-status"
+          },
+          {
+            "tag": "h2",
+            "id": "adoption-and-retention"
+          },
+          {
+            "tag": "h2",
+            "id": "observability-scaling-and-recovery"
+          },
+          {
+            "tag": "h2",
+            "id": "troubleshooting"
+          },
+          {
+            "tag": "h2",
+            "id": "verification-and-references"
+          }
+        ],
+        "renderedIds": [
+          "aws-controllers-for-kubernetes-ack",
+          "concepts-and-architecture",
+          "versions-and-support",
+          "installation-preparation-and-offline-inspection",
+          "namespace-and-account-isolation",
+          "creation-references-and-status",
+          "adoption-and-retention",
+          "observability-scaling-and-recovery",
+          "troubleshooting",
+          "verification-and-references"
+        ]
+      },
+      {
+        "path": "en/quizzes/platform-engineering/02-ack-quiz.md",
+        "sha256": "db2b2d184a8d2949b3f5b72c02f0d52177d6f838c4d69ef2222b4ad48f574d95",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "aws-controllers-for-kubernetes-ack-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-what-is-ack-s-main-purpose"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-what-component-is-installed-for-each-service"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-how-should-controllers-receive-aws-credentials"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-which-value-retains-aws-resources-after-cr-deletion"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-how-are-existing-resources-adopted"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-what-does-ga-status-establish"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-which-condition-indicates-synchronization-and-what-are-its-limits"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-does-separating-team-namespaces-complete-isolation"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-what-pattern-aligns-desired-and-observed-aws-state"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-which-kubernetes-extension-defines-resource-inputs"
+          },
+          {
+            "tag": "h2",
+            "id": "_11-where-can-the-arn-be-found"
+          },
+          {
+            "tag": "h2",
+            "id": "_12-how-does-carm-differ-from-cross-cluster-references"
+          },
+          {
+            "tag": "h2",
+            "id": "_13-what-belongs-in-a-development-tagged-s3-bucket-example"
+          },
+          {
+            "tag": "h2",
+            "id": "_14-how-is-the-ack-s3-chart-inspected-and-what-precedes-installation"
+          },
+          {
+            "tag": "h2",
+            "id": "_15-what-status-and-logs-should-be-inspected"
+          }
+        ],
+        "renderedIds": [
+          "aws-controllers-for-kubernetes-ack-quiz",
+          "_1-what-is-ack-s-main-purpose",
+          "_2-what-component-is-installed-for-each-service",
+          "_3-how-should-controllers-receive-aws-credentials",
+          "_4-which-value-retains-aws-resources-after-cr-deletion",
+          "_5-how-are-existing-resources-adopted",
+          "_6-what-does-ga-status-establish",
+          "_7-which-condition-indicates-synchronization-and-what-are-its-limits",
+          "_8-does-separating-team-namespaces-complete-isolation",
+          "_9-what-pattern-aligns-desired-and-observed-aws-state",
+          "_10-which-kubernetes-extension-defines-resource-inputs",
+          "_11-where-can-the-arn-be-found",
+          "_12-how-does-carm-differ-from-cross-cluster-references",
+          "_13-what-belongs-in-a-development-tagged-s3-bucket-example",
+          "_14-how-is-the-ack-s3-chart-inspected-and-what-precedes-installation",
+          "_15-what-status-and-logs-should-be-inspected"
+        ]
+      },
+      {
+        "path": "en/platform-engineering/ack/01-s3-iam.md",
+        "sha256": "33b7bce5fb5f3b6ea21e9034d5b2975683c0687c3d577ce243e58fd1d1f85c0f",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "s3-and-iam-ack"
+          },
+          {
+            "tag": "h2",
+            "id": "bucket-—-bucket-app-data"
+          },
+          {
+            "tag": "h2",
+            "id": "policy-—-policy-app-data-read"
+          },
+          {
+            "tag": "h2",
+            "id": "role-—-role-app-role"
+          },
+          {
+            "tag": "h2",
+            "id": "verification-and-operational-prerequisites"
+          }
+        ],
+        "renderedIds": [
+          "s3-and-iam-ack",
+          "bucket-—-bucket-app-data",
+          "policy-—-policy-app-data-read",
+          "role-—-role-app-role",
+          "verification-and-operational-prerequisites"
+        ]
+      },
+      {
+        "path": "en/platform-engineering/ack/02-sqs-sns.md",
+        "sha256": "f1d4fe47275a5dfb56d80cd6a42fa3d8cde3373a5c6ba7a1e59836433fa9b2b5",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "sqs-and-sns-ack"
+          },
+          {
+            "tag": "h2",
+            "id": "queue-—-queue-app-events"
+          },
+          {
+            "tag": "h2",
+            "id": "queue-—-queue-app-events-fifo"
+          },
+          {
+            "tag": "h2",
+            "id": "topic-—-topic-app-events"
+          },
+          {
+            "tag": "h2",
+            "id": "subscription-—-subscription-app-email"
+          },
+          {
+            "tag": "h2",
+            "id": "subscription-—-subscription-app-queue"
+          },
+          {
+            "tag": "h2",
+            "id": "verification-and-operational-prerequisites"
+          }
+        ],
+        "renderedIds": [
+          "sqs-and-sns-ack",
+          "queue-—-queue-app-events",
+          "queue-—-queue-app-events-fifo",
+          "topic-—-topic-app-events",
+          "subscription-—-subscription-app-email",
+          "subscription-—-subscription-app-queue",
+          "verification-and-operational-prerequisites"
+        ]
+      },
+      {
+        "path": "en/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "sha256": "101ee6adcf367bc4e2739937a8bdb66d1fc708caa15cfc1fb74f098f3b47c0a6",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "elbv2-route-53-and-aurora-ack"
+          },
+          {
+            "tag": "h2",
+            "id": "loadbalancer-—-loadbalancer-app-nlb"
+          },
+          {
+            "tag": "h2",
+            "id": "targetgroup-—-targetgroup-app-tg"
+          },
+          {
+            "tag": "h2",
+            "id": "listener-—-listener-app-listener"
+          },
+          {
+            "tag": "h2",
+            "id": "recordset-—-recordset-app-dns"
+          },
+          {
+            "tag": "h2",
+            "id": "dbsubnetgroup-—-dbsubnetgroup-app-db-subnets"
+          },
+          {
+            "tag": "h2",
+            "id": "dbcluster-—-dbcluster-app-aurora"
+          },
+          {
+            "tag": "h2",
+            "id": "dbinstance-—-dbinstance-app-db-1"
+          },
+          {
+            "tag": "h2",
+            "id": "dbinstance-—-dbinstance-app-db-2"
+          },
+          {
+            "tag": "h2",
+            "id": "dbinstance-—-dbinstance-app-db-3"
+          },
+          {
+            "tag": "h2",
+            "id": "dbclusterendpoint-—-dbclusterendpoint-app-selected-readers"
+          },
+          {
+            "tag": "h2",
+            "id": "verification-and-operational-prerequisites"
+          }
+        ],
+        "renderedIds": [
+          "elbv2-route-53-and-aurora-ack",
+          "loadbalancer-—-loadbalancer-app-nlb",
+          "targetgroup-—-targetgroup-app-tg",
+          "listener-—-listener-app-listener",
+          "recordset-—-recordset-app-dns",
+          "dbsubnetgroup-—-dbsubnetgroup-app-db-subnets",
+          "dbcluster-—-dbcluster-app-aurora",
+          "dbinstance-—-dbinstance-app-db-1",
+          "dbinstance-—-dbinstance-app-db-2",
+          "dbinstance-—-dbinstance-app-db-3",
+          "dbclusterendpoint-—-dbclusterendpoint-app-selected-readers",
+          "verification-and-operational-prerequisites"
+        ]
+      }
+    ]
+  },
+  "native": {
+    "status": "passed",
+    "schemas": [
+      {
+        "path": "elbv2-route53-rds-dbcluster-app-aurora.yaml",
+        "kind": "DBCluster",
+        "sha256": "ec1b113e7e087a337caa5f620325894a58f59c800cd49b92bae1d7cabc1bcc6e",
+        "passed": true
+      },
+      {
+        "path": "elbv2-route53-rds-dbclusterendpoint-app-selected-readers.yaml",
+        "kind": "DBClusterEndpoint",
+        "sha256": "325dee6f0ec7fe565fcaebd7c9fccc82909a1dfd0af5ab5275208892085ba8fd",
+        "passed": true
+      },
+      {
+        "path": "elbv2-route53-rds-dbinstance-app-db-1.yaml",
+        "kind": "DBInstance",
+        "sha256": "bde7360a46fda7c4f0d429079d2db8e20d77f1915f75dfdda712d64ca933558a",
+        "passed": true
+      },
+      {
+        "path": "elbv2-route53-rds-dbinstance-app-db-2.yaml",
+        "kind": "DBInstance",
+        "sha256": "e3b716e50c9eb0b8f25e40c703586918bf50cb719f16ee129bc0c0fe02385416",
+        "passed": true
+      },
+      {
+        "path": "elbv2-route53-rds-dbinstance-app-db-3.yaml",
+        "kind": "DBInstance",
+        "sha256": "97c3b8cf5c64d15cc6a4059e38667eba1c53f0c608365433a5a53af5e19484ee",
+        "passed": true
+      },
+      {
+        "path": "elbv2-route53-rds-dbsubnetgroup-app-db-subnets.yaml",
+        "kind": "DBSubnetGroup",
+        "sha256": "53e388cc51685188aa33d4a8676bf19b9e84abe5b4ed9228f8f86dc11fa3c985",
+        "passed": true
+      },
+      {
+        "path": "elbv2-route53-rds-listener-app-listener.yaml",
+        "kind": "Listener",
+        "sha256": "b42dc7f63add76b45f0197c092ee22bcfa911a81d956a018b34775512ccd42ef",
+        "passed": true
+      },
+      {
+        "path": "elbv2-route53-rds-loadbalancer-app-nlb.yaml",
+        "kind": "LoadBalancer",
+        "sha256": "2ea46848ea0030fcb4c2c07e162c787dab594f65a7337342d1c9622a6ca0fce4",
+        "passed": true
+      },
+      {
+        "path": "elbv2-route53-rds-recordset-app-dns.yaml",
+        "kind": "RecordSet",
+        "sha256": "0a9faa7a11a2899bdab827621165fdb9d135ea73a53f44b889a89f7083250647",
+        "passed": true
+      },
+      {
+        "path": "elbv2-route53-rds-targetgroup-app-tg.yaml",
+        "kind": "TargetGroup",
+        "sha256": "cf10138480ef5f33262145a3010388bbf591280c87a20ddd84cde091e0738b26",
+        "passed": true
+      },
+      {
+        "path": "s3-iam-bucket-app-data.yaml",
+        "kind": "Bucket",
+        "sha256": "7df43a82f328ef725d288fbb7a5937c2d128539057bc34f5890f45e69b9a700f",
+        "passed": true
+      },
+      {
+        "path": "s3-iam-policy-app-data-read.yaml",
+        "kind": "Policy",
+        "sha256": "f42f62bc2c4f54227676b5cd4e56b3193f9ea6a7830bc088ee06837fa8e33b60",
+        "passed": true
+      },
+      {
+        "path": "s3-iam-role-app-role.yaml",
+        "kind": "Role",
+        "sha256": "dac2e71d972d604d434431441b18655ec96448b2e9aeaee99a9814d047f2ae59",
+        "passed": true
+      },
+      {
+        "path": "sqs-sns-queue-app-events-fifo.yaml",
+        "kind": "Queue",
+        "sha256": "36ec64989da90d1d836a500bce7bc328318562db442782429c8fad15863feff2",
+        "passed": true
+      },
+      {
+        "path": "sqs-sns-queue-app-events.yaml",
+        "kind": "Queue",
+        "sha256": "d0a9cc86a5eaa383696c8f8912350e892072320070ae5b90953867c93744b8d2",
+        "passed": true
+      },
+      {
+        "path": "sqs-sns-subscription-app-email.yaml",
+        "kind": "Subscription",
+        "sha256": "e3abebfec769dccfefedd050d1570caec666fa80e3842a6cb7b1bbdee4cd3e0a",
+        "passed": true
+      },
+      {
+        "path": "sqs-sns-subscription-app-queue.yaml",
+        "kind": "Subscription",
+        "sha256": "3820c273637c61d8e61af06469ad995d3f44ddaa3d1bb2099ce56764847cb073",
+        "passed": true
+      },
+      {
+        "path": "sqs-sns-topic-app-events.yaml",
+        "kind": "Topic",
+        "sha256": "2929b679f391e820c3e86d2bccabd069ab92a4b4ca826dd08da78ed2e4e52337",
+        "passed": true
+      }
+    ],
+    "helm": [
+      {
+        "version": "v1.12.1",
+        "kinds": [
+          "ClusterRole",
+          "ClusterRoleBinding",
+          "Role",
+          "Role",
+          "Role",
+          "Role",
+          "RoleBinding",
+          "RoleBinding",
+          "Service",
+          "Deployment"
+        ],
+        "args": [
+          "--aws-region",
+          "$(AWS_REGION)",
+          "--aws-endpoint-url",
+          "$(AWS_ENDPOINT_URL)",
+          "--log-level",
+          "$(ACK_LOG_LEVEL)",
+          "--resource-tags",
+          "$(ACK_RESOURCE_TAGS)",
+          "--watch-namespace",
+          "$(ACK_WATCH_NAMESPACE)",
+          "--watch-selectors",
+          "$(ACK_WATCH_SELECTORS)",
+          "--reconcile-resources",
+          "$(RECONCILE_RESOURCES)",
+          "--deletion-policy",
+          "$(DELETION_POLICY)",
+          "--reconcile-default-resync-seconds",
+          "$(RECONCILE_DEFAULT_RESYNC_SECONDS)",
+          "--reconcile-default-max-concurrent-syncs",
+          "$(RECONCILE_DEFAULT_MAX_CONCURRENT_SYNCS)",
+          "--feature-gates",
+          "$(FEATURE_GATES)",
+          "--enable-carm=false",
+          "--enable-cross-namespace=false"
+        ],
+        "env": [
+          {
+            "name": "ACK_SYSTEM_NAMESPACE",
+            "valueFrom": {
+              "fieldRef": {
+                "fieldPath": "metadata.namespace"
+              }
+            }
+          },
+          {
+            "name": "AWS_REGION",
+            "value": "us-west-2"
+          },
+          {
+            "name": "AWS_ENDPOINT_URL",
+            "value": ""
+          },
+          {
+            "name": "AWS_IDENTITY_ENDPOINT_URL",
+            "value": ""
+          },
+          {
+            "name": "ACK_WATCH_NAMESPACE",
+            "value": "infra"
+          },
+          {
+            "name": "ACK_WATCH_SELECTORS",
+            "value": null
+          },
+          {
+            "name": "RECONCILE_RESOURCES",
+            "value": "Bucket"
+          },
+          {
+            "name": "DELETION_POLICY",
+            "value": "retain"
+          },
+          {
+            "name": "LEADER_ELECTION_NAMESPACE",
+            "value": ""
+          },
+          {
+            "name": "ACK_LOG_LEVEL",
+            "value": "info"
+          },
+          {
+            "name": "ACK_RESOURCE_TAGS",
+            "value": "services.k8s.aws/controller-version=%CONTROLLER_SERVICE%-%CONTROLLER_VERSION%,services.k8s.aws/namespace=%K8S_NAMESPACE%,app.kubernetes.io/managed-by=%MANAGED_BY%,kro.run/kro-version=%KRO_VERSION%"
+          },
+          {
+            "name": "RECONCILE_DEFAULT_RESYNC_SECONDS",
+            "value": "36000"
+          },
+          {
+            "name": "RECONCILE_DEFAULT_MAX_CONCURRENT_SYNCS",
+            "value": "1"
+          },
+          {
+            "name": "FEATURE_GATES",
+            "value": "IAMRoleSelector=false,IgnoreFieldDrift=false,ReadOnlyResources=true,ResourceAdoption=true,ServiceLevelCARM=false,TeamLevelCARM=false"
+          }
+        ],
+        "servicePort": [
+          {
+            "name": "metricsport",
+            "port": 8080,
+            "targetPort": "http",
+            "protocol": "TCP"
+          }
+        ],
+        "podLabels": {
+          "app.kubernetes.io/name": "s3-chart",
+          "app.kubernetes.io/instance": "ack-s3",
+          "app.kubernetes.io/managed-by": "Helm",
+          "k8s-app": "s3-chart"
+        },
+        "sha256": "275a97fc6fbf230320012f51fe897f6f0b9547f6b59fabc3b14ea5df41a8466b",
+        "metricsServiceName": "s3-controller-metrics",
+        "service": "s3"
+      },
+      {
+        "version": "v1.9.0",
+        "kinds": [
+          "ClusterRole",
+          "ClusterRoleBinding",
+          "Role",
+          "Role",
+          "Role",
+          "Role",
+          "RoleBinding",
+          "RoleBinding",
+          "Service",
+          "Deployment"
+        ],
+        "args": [
+          "--aws-region",
+          "$(AWS_REGION)",
+          "--aws-endpoint-url",
+          "$(AWS_ENDPOINT_URL)",
+          "--log-level",
+          "$(ACK_LOG_LEVEL)",
+          "--resource-tags",
+          "$(ACK_RESOURCE_TAGS)",
+          "--watch-namespace",
+          "$(ACK_WATCH_NAMESPACE)",
+          "--watch-selectors",
+          "$(ACK_WATCH_SELECTORS)",
+          "--reconcile-resources",
+          "$(RECONCILE_RESOURCES)",
+          "--deletion-policy",
+          "$(DELETION_POLICY)",
+          "--reconcile-default-resync-seconds",
+          "$(RECONCILE_DEFAULT_RESYNC_SECONDS)",
+          "--reconcile-default-max-concurrent-syncs",
+          "$(RECONCILE_DEFAULT_MAX_CONCURRENT_SYNCS)",
+          "--feature-gates",
+          "$(FEATURE_GATES)",
+          "--enable-carm=false",
+          "--enable-cross-namespace=false"
+        ],
+        "env": [
+          {
+            "name": "ACK_SYSTEM_NAMESPACE",
+            "valueFrom": {
+              "fieldRef": {
+                "fieldPath": "metadata.namespace"
+              }
+            }
+          },
+          {
+            "name": "AWS_REGION",
+            "value": "us-west-2"
+          },
+          {
+            "name": "AWS_ENDPOINT_URL",
+            "value": ""
+          },
+          {
+            "name": "AWS_IDENTITY_ENDPOINT_URL",
+            "value": ""
+          },
+          {
+            "name": "ACK_WATCH_NAMESPACE",
+            "value": "infra"
+          },
+          {
+            "name": "ACK_WATCH_SELECTORS",
+            "value": null
+          },
+          {
+            "name": "RECONCILE_RESOURCES",
+            "value": "Group,InstanceProfile,OpenIDConnectProvider,Policy,Role,ServiceLinkedRole,User"
+          },
+          {
+            "name": "DELETION_POLICY",
+            "value": "retain"
+          },
+          {
+            "name": "LEADER_ELECTION_NAMESPACE",
+            "value": ""
+          },
+          {
+            "name": "ACK_LOG_LEVEL",
+            "value": "info"
+          },
+          {
+            "name": "ACK_RESOURCE_TAGS",
+            "value": "services.k8s.aws/controller-version=%CONTROLLER_SERVICE%-%CONTROLLER_VERSION%,services.k8s.aws/namespace=%K8S_NAMESPACE%,app.kubernetes.io/managed-by=%MANAGED_BY%,kro.run/kro-version=%KRO_VERSION%"
+          },
+          {
+            "name": "RECONCILE_DEFAULT_RESYNC_SECONDS",
+            "value": "36000"
+          },
+          {
+            "name": "RECONCILE_DEFAULT_MAX_CONCURRENT_SYNCS",
+            "value": "1"
+          },
+          {
+            "name": "FEATURE_GATES",
+            "value": "IAMRoleSelector=false,IgnoreFieldDrift=false,ReadOnlyResources=true,ResourceAdoption=true,ServiceLevelCARM=false,TeamLevelCARM=false"
+          }
+        ],
+        "servicePort": [
+          {
+            "name": "metricsport",
+            "port": 8080,
+            "targetPort": "http",
+            "protocol": "TCP"
+          }
+        ],
+        "podLabels": {
+          "app.kubernetes.io/name": "iam-chart",
+          "app.kubernetes.io/instance": "ack-iam",
+          "app.kubernetes.io/managed-by": "Helm",
+          "k8s-app": "iam-chart"
+        },
+        "sha256": "0aee2942e4a7c299258afa707b37dbcbd407f78343ca7e416c561ab2fe303834",
+        "metricsServiceName": "iam-controller-metrics",
+        "service": "iam"
+      },
+      {
+        "version": "v1.7.0",
+        "kinds": [
+          "ClusterRole",
+          "ClusterRoleBinding",
+          "Role",
+          "Role",
+          "Role",
+          "Role",
+          "RoleBinding",
+          "RoleBinding",
+          "Service",
+          "Deployment"
+        ],
+        "args": [
+          "--aws-region",
+          "$(AWS_REGION)",
+          "--aws-endpoint-url",
+          "$(AWS_ENDPOINT_URL)",
+          "--log-level",
+          "$(ACK_LOG_LEVEL)",
+          "--resource-tags",
+          "$(ACK_RESOURCE_TAGS)",
+          "--watch-namespace",
+          "$(ACK_WATCH_NAMESPACE)",
+          "--watch-selectors",
+          "$(ACK_WATCH_SELECTORS)",
+          "--reconcile-resources",
+          "$(RECONCILE_RESOURCES)",
+          "--deletion-policy",
+          "$(DELETION_POLICY)",
+          "--reconcile-default-resync-seconds",
+          "$(RECONCILE_DEFAULT_RESYNC_SECONDS)",
+          "--reconcile-default-max-concurrent-syncs",
+          "$(RECONCILE_DEFAULT_MAX_CONCURRENT_SYNCS)",
+          "--feature-gates",
+          "$(FEATURE_GATES)",
+          "--enable-carm=false",
+          "--enable-cross-namespace=false"
+        ],
+        "env": [
+          {
+            "name": "ACK_SYSTEM_NAMESPACE",
+            "valueFrom": {
+              "fieldRef": {
+                "fieldPath": "metadata.namespace"
+              }
+            }
+          },
+          {
+            "name": "AWS_REGION",
+            "value": "us-west-2"
+          },
+          {
+            "name": "AWS_ENDPOINT_URL",
+            "value": ""
+          },
+          {
+            "name": "AWS_IDENTITY_ENDPOINT_URL",
+            "value": ""
+          },
+          {
+            "name": "ACK_WATCH_NAMESPACE",
+            "value": "infra"
+          },
+          {
+            "name": "ACK_WATCH_SELECTORS",
+            "value": null
+          },
+          {
+            "name": "RECONCILE_RESOURCES",
+            "value": "Queue"
+          },
+          {
+            "name": "DELETION_POLICY",
+            "value": "retain"
+          },
+          {
+            "name": "LEADER_ELECTION_NAMESPACE",
+            "value": ""
+          },
+          {
+            "name": "ACK_LOG_LEVEL",
+            "value": "info"
+          },
+          {
+            "name": "ACK_RESOURCE_TAGS",
+            "value": "services.k8s.aws/controller-version=%CONTROLLER_SERVICE%-%CONTROLLER_VERSION%,services.k8s.aws/namespace=%K8S_NAMESPACE%,app.kubernetes.io/managed-by=%MANAGED_BY%,kro.run/kro-version=%KRO_VERSION%"
+          },
+          {
+            "name": "RECONCILE_DEFAULT_RESYNC_SECONDS",
+            "value": "36000"
+          },
+          {
+            "name": "RECONCILE_DEFAULT_MAX_CONCURRENT_SYNCS",
+            "value": "1"
+          },
+          {
+            "name": "FEATURE_GATES",
+            "value": "IAMRoleSelector=false,IgnoreFieldDrift=false,ReadOnlyResources=true,ResourceAdoption=true,ServiceLevelCARM=false,TeamLevelCARM=false"
+          }
+        ],
+        "servicePort": [
+          {
+            "name": "metricsport",
+            "port": 8080,
+            "targetPort": "http",
+            "protocol": "TCP"
+          }
+        ],
+        "podLabels": {
+          "app.kubernetes.io/name": "sqs-chart",
+          "app.kubernetes.io/instance": "ack-sqs",
+          "app.kubernetes.io/managed-by": "Helm",
+          "k8s-app": "sqs-chart"
+        },
+        "sha256": "f38b48b9ae9c3cef976ada58188bfffca55bda01f9fb9bfb02ba7e87c24f5a76",
+        "metricsServiceName": "sqs-controller-metrics",
+        "service": "sqs"
+      },
+      {
+        "version": "v1.10.1",
+        "kinds": [
+          "ClusterRole",
+          "ClusterRoleBinding",
+          "Role",
+          "Role",
+          "Role",
+          "Role",
+          "RoleBinding",
+          "RoleBinding",
+          "Service",
+          "Deployment"
+        ],
+        "args": [
+          "--aws-region",
+          "$(AWS_REGION)",
+          "--aws-endpoint-url",
+          "$(AWS_ENDPOINT_URL)",
+          "--log-level",
+          "$(ACK_LOG_LEVEL)",
+          "--resource-tags",
+          "$(ACK_RESOURCE_TAGS)",
+          "--watch-namespace",
+          "$(ACK_WATCH_NAMESPACE)",
+          "--watch-selectors",
+          "$(ACK_WATCH_SELECTORS)",
+          "--reconcile-resources",
+          "$(RECONCILE_RESOURCES)",
+          "--deletion-policy",
+          "$(DELETION_POLICY)",
+          "--reconcile-default-resync-seconds",
+          "$(RECONCILE_DEFAULT_RESYNC_SECONDS)",
+          "--reconcile-default-max-concurrent-syncs",
+          "$(RECONCILE_DEFAULT_MAX_CONCURRENT_SYNCS)",
+          "--feature-gates",
+          "$(FEATURE_GATES)",
+          "--enable-carm=false",
+          "--enable-cross-namespace=false"
+        ],
+        "env": [
+          {
+            "name": "ACK_SYSTEM_NAMESPACE",
+            "valueFrom": {
+              "fieldRef": {
+                "fieldPath": "metadata.namespace"
+              }
+            }
+          },
+          {
+            "name": "AWS_REGION",
+            "value": "us-west-2"
+          },
+          {
+            "name": "AWS_ENDPOINT_URL",
+            "value": ""
+          },
+          {
+            "name": "AWS_IDENTITY_ENDPOINT_URL",
+            "value": ""
+          },
+          {
+            "name": "ACK_WATCH_NAMESPACE",
+            "value": "infra"
+          },
+          {
+            "name": "ACK_WATCH_SELECTORS",
+            "value": null
+          },
+          {
+            "name": "RECONCILE_RESOURCES",
+            "value": "PlatformApplication,PlatformEndpoint,Subscription,Topic"
+          },
+          {
+            "name": "DELETION_POLICY",
+            "value": "retain"
+          },
+          {
+            "name": "LEADER_ELECTION_NAMESPACE",
+            "value": ""
+          },
+          {
+            "name": "ACK_LOG_LEVEL",
+            "value": "info"
+          },
+          {
+            "name": "ACK_RESOURCE_TAGS",
+            "value": "services.k8s.aws/controller-version=%CONTROLLER_SERVICE%-%CONTROLLER_VERSION%,services.k8s.aws/namespace=%K8S_NAMESPACE%,app.kubernetes.io/managed-by=%MANAGED_BY%,kro.run/kro-version=%KRO_VERSION%"
+          },
+          {
+            "name": "RECONCILE_DEFAULT_RESYNC_SECONDS",
+            "value": "36000"
+          },
+          {
+            "name": "RECONCILE_DEFAULT_MAX_CONCURRENT_SYNCS",
+            "value": "1"
+          },
+          {
+            "name": "FEATURE_GATES",
+            "value": "IAMRoleSelector=false,IgnoreFieldDrift=false,ReadOnlyResources=true,ResourceAdoption=true,ServiceLevelCARM=false,TeamLevelCARM=false"
+          }
+        ],
+        "servicePort": [
+          {
+            "name": "metricsport",
+            "port": 8080,
+            "targetPort": "http",
+            "protocol": "TCP"
+          }
+        ],
+        "podLabels": {
+          "app.kubernetes.io/name": "sns-chart",
+          "app.kubernetes.io/instance": "ack-sns",
+          "app.kubernetes.io/managed-by": "Helm",
+          "k8s-app": "sns-chart"
+        },
+        "sha256": "a04b40fc033f41cf13837233356b87e1b570dc95e6eda3595589bc1aadfce9ce",
+        "metricsServiceName": "sns-controller-metrics",
+        "service": "sns"
+      },
+      {
+        "version": "v1.7.0",
+        "kinds": [
+          "ClusterRole",
+          "ClusterRoleBinding",
+          "Role",
+          "Role",
+          "Role",
+          "Role",
+          "RoleBinding",
+          "RoleBinding",
+          "Service",
+          "Deployment"
+        ],
+        "args": [
+          "--aws-region",
+          "$(AWS_REGION)",
+          "--aws-endpoint-url",
+          "$(AWS_ENDPOINT_URL)",
+          "--log-level",
+          "$(ACK_LOG_LEVEL)",
+          "--resource-tags",
+          "$(ACK_RESOURCE_TAGS)",
+          "--watch-namespace",
+          "$(ACK_WATCH_NAMESPACE)",
+          "--watch-selectors",
+          "$(ACK_WATCH_SELECTORS)",
+          "--reconcile-resources",
+          "$(RECONCILE_RESOURCES)",
+          "--deletion-policy",
+          "$(DELETION_POLICY)",
+          "--reconcile-default-resync-seconds",
+          "$(RECONCILE_DEFAULT_RESYNC_SECONDS)",
+          "--reconcile-default-max-concurrent-syncs",
+          "$(RECONCILE_DEFAULT_MAX_CONCURRENT_SYNCS)",
+          "--feature-gates",
+          "$(FEATURE_GATES)",
+          "--enable-carm=false",
+          "--enable-cross-namespace=false"
+        ],
+        "env": [
+          {
+            "name": "ACK_SYSTEM_NAMESPACE",
+            "valueFrom": {
+              "fieldRef": {
+                "fieldPath": "metadata.namespace"
+              }
+            }
+          },
+          {
+            "name": "AWS_REGION",
+            "value": "us-west-2"
+          },
+          {
+            "name": "AWS_ENDPOINT_URL",
+            "value": ""
+          },
+          {
+            "name": "AWS_IDENTITY_ENDPOINT_URL",
+            "value": ""
+          },
+          {
+            "name": "ACK_WATCH_NAMESPACE",
+            "value": "infra"
+          },
+          {
+            "name": "ACK_WATCH_SELECTORS",
+            "value": null
+          },
+          {
+            "name": "RECONCILE_RESOURCES",
+            "value": "Listener,LoadBalancer,Rule,TargetGroup"
+          },
+          {
+            "name": "DELETION_POLICY",
+            "value": "retain"
+          },
+          {
+            "name": "LEADER_ELECTION_NAMESPACE",
+            "value": ""
+          },
+          {
+            "name": "ACK_LOG_LEVEL",
+            "value": "info"
+          },
+          {
+            "name": "ACK_RESOURCE_TAGS",
+            "value": "services.k8s.aws/controller-version=%CONTROLLER_SERVICE%-%CONTROLLER_VERSION%,services.k8s.aws/namespace=%K8S_NAMESPACE%,app.kubernetes.io/managed-by=%MANAGED_BY%,kro.run/kro-version=%KRO_VERSION%"
+          },
+          {
+            "name": "RECONCILE_DEFAULT_RESYNC_SECONDS",
+            "value": "36000"
+          },
+          {
+            "name": "RECONCILE_DEFAULT_MAX_CONCURRENT_SYNCS",
+            "value": "1"
+          },
+          {
+            "name": "FEATURE_GATES",
+            "value": "IAMRoleSelector=false,IgnoreFieldDrift=false,ReadOnlyResources=true,ResourceAdoption=true,ServiceLevelCARM=false,TeamLevelCARM=false"
+          }
+        ],
+        "servicePort": [
+          {
+            "name": "metricsport",
+            "port": 8080,
+            "targetPort": "http",
+            "protocol": "TCP"
+          }
+        ],
+        "podLabels": {
+          "app.kubernetes.io/name": "elbv2-chart",
+          "app.kubernetes.io/instance": "ack-elbv2",
+          "app.kubernetes.io/managed-by": "Helm",
+          "k8s-app": "elbv2-chart"
+        },
+        "sha256": "0ebbddd17e9752547969f72d6f94070bb029441778424e7494102225680a7dbd",
+        "metricsServiceName": "elbv2-controller-metrics",
+        "service": "elbv2"
+      },
+      {
+        "version": "v1.6.0",
+        "kinds": [
+          "ClusterRole",
+          "ClusterRoleBinding",
+          "Role",
+          "Role",
+          "Role",
+          "Role",
+          "RoleBinding",
+          "RoleBinding",
+          "Service",
+          "Deployment"
+        ],
+        "args": [
+          "--aws-region",
+          "$(AWS_REGION)",
+          "--aws-endpoint-url",
+          "$(AWS_ENDPOINT_URL)",
+          "--log-level",
+          "$(ACK_LOG_LEVEL)",
+          "--resource-tags",
+          "$(ACK_RESOURCE_TAGS)",
+          "--watch-namespace",
+          "$(ACK_WATCH_NAMESPACE)",
+          "--watch-selectors",
+          "$(ACK_WATCH_SELECTORS)",
+          "--reconcile-resources",
+          "$(RECONCILE_RESOURCES)",
+          "--deletion-policy",
+          "$(DELETION_POLICY)",
+          "--reconcile-default-resync-seconds",
+          "$(RECONCILE_DEFAULT_RESYNC_SECONDS)",
+          "--reconcile-default-max-concurrent-syncs",
+          "$(RECONCILE_DEFAULT_MAX_CONCURRENT_SYNCS)",
+          "--feature-gates",
+          "$(FEATURE_GATES)",
+          "--enable-carm=false",
+          "--enable-cross-namespace=false"
+        ],
+        "env": [
+          {
+            "name": "ACK_SYSTEM_NAMESPACE",
+            "valueFrom": {
+              "fieldRef": {
+                "fieldPath": "metadata.namespace"
+              }
+            }
+          },
+          {
+            "name": "AWS_REGION",
+            "value": "us-west-2"
+          },
+          {
+            "name": "AWS_ENDPOINT_URL",
+            "value": ""
+          },
+          {
+            "name": "AWS_IDENTITY_ENDPOINT_URL",
+            "value": ""
+          },
+          {
+            "name": "ACK_WATCH_NAMESPACE",
+            "value": "infra"
+          },
+          {
+            "name": "ACK_WATCH_SELECTORS",
+            "value": null
+          },
+          {
+            "name": "RECONCILE_RESOURCES",
+            "value": "HealthCheck,HostedZone,RecordSet"
+          },
+          {
+            "name": "DELETION_POLICY",
+            "value": "retain"
+          },
+          {
+            "name": "LEADER_ELECTION_NAMESPACE",
+            "value": ""
+          },
+          {
+            "name": "ACK_LOG_LEVEL",
+            "value": "info"
+          },
+          {
+            "name": "ACK_RESOURCE_TAGS",
+            "value": "services.k8s.aws/controller-version=%CONTROLLER_SERVICE%-%CONTROLLER_VERSION%,services.k8s.aws/namespace=%K8S_NAMESPACE%,app.kubernetes.io/managed-by=%MANAGED_BY%,kro.run/kro-version=%KRO_VERSION%"
+          },
+          {
+            "name": "RECONCILE_DEFAULT_RESYNC_SECONDS",
+            "value": "36000"
+          },
+          {
+            "name": "RECONCILE_DEFAULT_MAX_CONCURRENT_SYNCS",
+            "value": "1"
+          },
+          {
+            "name": "FEATURE_GATES",
+            "value": "IAMRoleSelector=false,IgnoreFieldDrift=false,ReadOnlyResources=true,ResourceAdoption=true,ServiceLevelCARM=false,TeamLevelCARM=false"
+          }
+        ],
+        "servicePort": [
+          {
+            "name": "metricsport",
+            "port": 8080,
+            "targetPort": "http",
+            "protocol": "TCP"
+          }
+        ],
+        "podLabels": {
+          "app.kubernetes.io/name": "route53-chart",
+          "app.kubernetes.io/instance": "ack-route53",
+          "app.kubernetes.io/managed-by": "Helm",
+          "k8s-app": "route53-chart"
+        },
+        "sha256": "d9077cd2c5b060bf17d6679689071d456fbd5bbb401c7d5c29a847233a39cd24",
+        "metricsServiceName": "route53-controller-metrics",
+        "service": "route53"
+      },
+      {
+        "version": "v1.12.0",
+        "kinds": [
+          "ClusterRole",
+          "ClusterRoleBinding",
+          "Role",
+          "Role",
+          "Role",
+          "Role",
+          "RoleBinding",
+          "RoleBinding",
+          "Service",
+          "Deployment"
+        ],
+        "args": [
+          "--aws-region",
+          "$(AWS_REGION)",
+          "--aws-endpoint-url",
+          "$(AWS_ENDPOINT_URL)",
+          "--log-level",
+          "$(ACK_LOG_LEVEL)",
+          "--resource-tags",
+          "$(ACK_RESOURCE_TAGS)",
+          "--watch-namespace",
+          "$(ACK_WATCH_NAMESPACE)",
+          "--watch-selectors",
+          "$(ACK_WATCH_SELECTORS)",
+          "--reconcile-resources",
+          "$(RECONCILE_RESOURCES)",
+          "--deletion-policy",
+          "$(DELETION_POLICY)",
+          "--reconcile-default-resync-seconds",
+          "$(RECONCILE_DEFAULT_RESYNC_SECONDS)",
+          "--reconcile-default-max-concurrent-syncs",
+          "$(RECONCILE_DEFAULT_MAX_CONCURRENT_SYNCS)",
+          "--feature-gates",
+          "$(FEATURE_GATES)",
+          "--enable-carm=false",
+          "--enable-cross-namespace=false"
+        ],
+        "env": [
+          {
+            "name": "ACK_SYSTEM_NAMESPACE",
+            "valueFrom": {
+              "fieldRef": {
+                "fieldPath": "metadata.namespace"
+              }
+            }
+          },
+          {
+            "name": "AWS_REGION",
+            "value": "us-west-2"
+          },
+          {
+            "name": "AWS_ENDPOINT_URL",
+            "value": ""
+          },
+          {
+            "name": "AWS_IDENTITY_ENDPOINT_URL",
+            "value": ""
+          },
+          {
+            "name": "ACK_WATCH_NAMESPACE",
+            "value": "infra"
+          },
+          {
+            "name": "ACK_WATCH_SELECTORS",
+            "value": null
+          },
+          {
+            "name": "RECONCILE_RESOURCES",
+            "value": "DBCluster,DBClusterEndpoint,DBClusterParameterGroup,DBClusterSnapshot,DBInstance,DBParameterGroup,DBProxy,DBSnapshot,DBSubnetGroup,GlobalCluster"
+          },
+          {
+            "name": "DELETION_POLICY",
+            "value": "retain"
+          },
+          {
+            "name": "LEADER_ELECTION_NAMESPACE",
+            "value": ""
+          },
+          {
+            "name": "ACK_LOG_LEVEL",
+            "value": "info"
+          },
+          {
+            "name": "ACK_RESOURCE_TAGS",
+            "value": "services.k8s.aws/controller-version=%CONTROLLER_SERVICE%-%CONTROLLER_VERSION%,services.k8s.aws/namespace=%K8S_NAMESPACE%,app.kubernetes.io/managed-by=%MANAGED_BY%,kro.run/kro-version=%KRO_VERSION%"
+          },
+          {
+            "name": "RECONCILE_DEFAULT_RESYNC_SECONDS",
+            "value": "36000"
+          },
+          {
+            "name": "RECONCILE_DEFAULT_MAX_CONCURRENT_SYNCS",
+            "value": "1"
+          },
+          {
+            "name": "FEATURE_GATES",
+            "value": "IAMRoleSelector=false,IgnoreFieldDrift=false,ReadOnlyResources=true,ResourceAdoption=true,ServiceLevelCARM=false,TeamLevelCARM=false"
+          }
+        ],
+        "servicePort": [
+          {
+            "name": "metricsport",
+            "port": 8080,
+            "targetPort": "http",
+            "protocol": "TCP"
+          }
+        ],
+        "podLabels": {
+          "app.kubernetes.io/name": "rds-chart",
+          "app.kubernetes.io/instance": "ack-rds",
+          "app.kubernetes.io/managed-by": "Helm",
+          "k8s-app": "rds-chart"
+        },
+        "sha256": "29eb8a5fd19ca31ede1a44913fd225affd28452476b941973518716baaa080f0",
+        "metricsServiceName": "rds-controller-metrics",
+        "service": "rds"
+      }
+    ],
+    "scope": "18exactspecsagainstversionedCRDswithunknownfieldrejection;7officialOCIHelmchartsofflinerender.NoAWS/KubernetesAPIinstall/controller/runtime/admission/CELexecution."
+  },
+  "published": {
+    "status": "passed",
+    "exactMatches": [
+      {
+        "document": "ko/quizzes/platform-engineering/02-ack-quiz.md",
+        "fixture": "s3-iam-bucket-app-data.yaml",
+        "sha256": "7df43a82f328ef725d288fbb7a5937c2d128539057bc34f5890f45e69b9a700f"
+      },
+      {
+        "document": "ko/platform-engineering/ack/01-s3-iam.md",
+        "fixture": "s3-iam-bucket-app-data.yaml",
+        "sha256": "7df43a82f328ef725d288fbb7a5937c2d128539057bc34f5890f45e69b9a700f"
+      },
+      {
+        "document": "ko/platform-engineering/ack/01-s3-iam.md",
+        "fixture": "s3-iam-policy-app-data-read.yaml",
+        "sha256": "f42f62bc2c4f54227676b5cd4e56b3193f9ea6a7830bc088ee06837fa8e33b60"
+      },
+      {
+        "document": "ko/platform-engineering/ack/01-s3-iam.md",
+        "fixture": "s3-iam-role-app-role.yaml",
+        "sha256": "dac2e71d972d604d434431441b18655ec96448b2e9aeaee99a9814d047f2ae59"
+      },
+      {
+        "document": "ko/platform-engineering/ack/02-sqs-sns.md",
+        "fixture": "sqs-sns-queue-app-events.yaml",
+        "sha256": "d0a9cc86a5eaa383696c8f8912350e892072320070ae5b90953867c93744b8d2"
+      },
+      {
+        "document": "ko/platform-engineering/ack/02-sqs-sns.md",
+        "fixture": "sqs-sns-queue-app-events-fifo.yaml",
+        "sha256": "36ec64989da90d1d836a500bce7bc328318562db442782429c8fad15863feff2"
+      },
+      {
+        "document": "ko/platform-engineering/ack/02-sqs-sns.md",
+        "fixture": "sqs-sns-topic-app-events.yaml",
+        "sha256": "2929b679f391e820c3e86d2bccabd069ab92a4b4ca826dd08da78ed2e4e52337"
+      },
+      {
+        "document": "ko/platform-engineering/ack/02-sqs-sns.md",
+        "fixture": "sqs-sns-subscription-app-email.yaml",
+        "sha256": "e3abebfec769dccfefedd050d1570caec666fa80e3842a6cb7b1bbdee4cd3e0a"
+      },
+      {
+        "document": "ko/platform-engineering/ack/02-sqs-sns.md",
+        "fixture": "sqs-sns-subscription-app-queue.yaml",
+        "sha256": "3820c273637c61d8e61af06469ad995d3f44ddaa3d1bb2099ce56764847cb073"
+      },
+      {
+        "document": "ko/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-loadbalancer-app-nlb.yaml",
+        "sha256": "2ea46848ea0030fcb4c2c07e162c787dab594f65a7337342d1c9622a6ca0fce4"
+      },
+      {
+        "document": "ko/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-targetgroup-app-tg.yaml",
+        "sha256": "cf10138480ef5f33262145a3010388bbf591280c87a20ddd84cde091e0738b26"
+      },
+      {
+        "document": "ko/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-listener-app-listener.yaml",
+        "sha256": "b42dc7f63add76b45f0197c092ee22bcfa911a81d956a018b34775512ccd42ef"
+      },
+      {
+        "document": "ko/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-recordset-app-dns.yaml",
+        "sha256": "0a9faa7a11a2899bdab827621165fdb9d135ea73a53f44b889a89f7083250647"
+      },
+      {
+        "document": "ko/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-dbsubnetgroup-app-db-subnets.yaml",
+        "sha256": "53e388cc51685188aa33d4a8676bf19b9e84abe5b4ed9228f8f86dc11fa3c985"
+      },
+      {
+        "document": "ko/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-dbcluster-app-aurora.yaml",
+        "sha256": "ec1b113e7e087a337caa5f620325894a58f59c800cd49b92bae1d7cabc1bcc6e"
+      },
+      {
+        "document": "ko/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-dbinstance-app-db-1.yaml",
+        "sha256": "bde7360a46fda7c4f0d429079d2db8e20d77f1915f75dfdda712d64ca933558a"
+      },
+      {
+        "document": "ko/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-dbinstance-app-db-2.yaml",
+        "sha256": "e3b716e50c9eb0b8f25e40c703586918bf50cb719f16ee129bc0c0fe02385416"
+      },
+      {
+        "document": "ko/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-dbinstance-app-db-3.yaml",
+        "sha256": "97c3b8cf5c64d15cc6a4059e38667eba1c53f0c608365433a5a53af5e19484ee"
+      },
+      {
+        "document": "ko/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-dbclusterendpoint-app-selected-readers.yaml",
+        "sha256": "325dee6f0ec7fe565fcaebd7c9fccc82909a1dfd0af5ab5275208892085ba8fd"
+      },
+      {
+        "document": "en/quizzes/platform-engineering/02-ack-quiz.md",
+        "fixture": "s3-iam-bucket-app-data.yaml",
+        "sha256": "7df43a82f328ef725d288fbb7a5937c2d128539057bc34f5890f45e69b9a700f"
+      },
+      {
+        "document": "en/platform-engineering/ack/01-s3-iam.md",
+        "fixture": "s3-iam-bucket-app-data.yaml",
+        "sha256": "7df43a82f328ef725d288fbb7a5937c2d128539057bc34f5890f45e69b9a700f"
+      },
+      {
+        "document": "en/platform-engineering/ack/01-s3-iam.md",
+        "fixture": "s3-iam-policy-app-data-read.yaml",
+        "sha256": "f42f62bc2c4f54227676b5cd4e56b3193f9ea6a7830bc088ee06837fa8e33b60"
+      },
+      {
+        "document": "en/platform-engineering/ack/01-s3-iam.md",
+        "fixture": "s3-iam-role-app-role.yaml",
+        "sha256": "dac2e71d972d604d434431441b18655ec96448b2e9aeaee99a9814d047f2ae59"
+      },
+      {
+        "document": "en/platform-engineering/ack/02-sqs-sns.md",
+        "fixture": "sqs-sns-queue-app-events.yaml",
+        "sha256": "d0a9cc86a5eaa383696c8f8912350e892072320070ae5b90953867c93744b8d2"
+      },
+      {
+        "document": "en/platform-engineering/ack/02-sqs-sns.md",
+        "fixture": "sqs-sns-queue-app-events-fifo.yaml",
+        "sha256": "36ec64989da90d1d836a500bce7bc328318562db442782429c8fad15863feff2"
+      },
+      {
+        "document": "en/platform-engineering/ack/02-sqs-sns.md",
+        "fixture": "sqs-sns-topic-app-events.yaml",
+        "sha256": "2929b679f391e820c3e86d2bccabd069ab92a4b4ca826dd08da78ed2e4e52337"
+      },
+      {
+        "document": "en/platform-engineering/ack/02-sqs-sns.md",
+        "fixture": "sqs-sns-subscription-app-email.yaml",
+        "sha256": "e3abebfec769dccfefedd050d1570caec666fa80e3842a6cb7b1bbdee4cd3e0a"
+      },
+      {
+        "document": "en/platform-engineering/ack/02-sqs-sns.md",
+        "fixture": "sqs-sns-subscription-app-queue.yaml",
+        "sha256": "3820c273637c61d8e61af06469ad995d3f44ddaa3d1bb2099ce56764847cb073"
+      },
+      {
+        "document": "en/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-loadbalancer-app-nlb.yaml",
+        "sha256": "2ea46848ea0030fcb4c2c07e162c787dab594f65a7337342d1c9622a6ca0fce4"
+      },
+      {
+        "document": "en/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-targetgroup-app-tg.yaml",
+        "sha256": "cf10138480ef5f33262145a3010388bbf591280c87a20ddd84cde091e0738b26"
+      },
+      {
+        "document": "en/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-listener-app-listener.yaml",
+        "sha256": "b42dc7f63add76b45f0197c092ee22bcfa911a81d956a018b34775512ccd42ef"
+      },
+      {
+        "document": "en/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-recordset-app-dns.yaml",
+        "sha256": "0a9faa7a11a2899bdab827621165fdb9d135ea73a53f44b889a89f7083250647"
+      },
+      {
+        "document": "en/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-dbsubnetgroup-app-db-subnets.yaml",
+        "sha256": "53e388cc51685188aa33d4a8676bf19b9e84abe5b4ed9228f8f86dc11fa3c985"
+      },
+      {
+        "document": "en/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-dbcluster-app-aurora.yaml",
+        "sha256": "ec1b113e7e087a337caa5f620325894a58f59c800cd49b92bae1d7cabc1bcc6e"
+      },
+      {
+        "document": "en/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-dbinstance-app-db-1.yaml",
+        "sha256": "bde7360a46fda7c4f0d429079d2db8e20d77f1915f75dfdda712d64ca933558a"
+      },
+      {
+        "document": "en/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-dbinstance-app-db-2.yaml",
+        "sha256": "e3b716e50c9eb0b8f25e40c703586918bf50cb719f16ee129bc0c0fe02385416"
+      },
+      {
+        "document": "en/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-dbinstance-app-db-3.yaml",
+        "sha256": "97c3b8cf5c64d15cc6a4059e38667eba1c53f0c608365433a5a53af5e19484ee"
+      },
+      {
+        "document": "en/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "fixture": "elbv2-route53-rds-dbclusterendpoint-app-selected-readers.yaml",
+        "sha256": "325dee6f0ec7fe565fcaebd7c9fccc82909a1dfd0af5ab5275208892085ba8fd"
+      }
+    ],
+    "localLinks": [
+      {
+        "source": "ko/platform-engineering/02-ack.md",
+        "target": "../.gitbook/assets/ko-platform-engineering-02-ack-0.png"
+      },
+      {
+        "source": "ko/platform-engineering/02-ack.md",
+        "target": "ack/01-s3-iam.md"
+      },
+      {
+        "source": "ko/platform-engineering/02-ack.md",
+        "target": "ack/02-sqs-sns.md"
+      },
+      {
+        "source": "ko/platform-engineering/02-ack.md",
+        "target": "ack/03-elbv2-route53-rds.md"
+      },
+      {
+        "source": "ko/platform-engineering/02-ack.md",
+        "target": "../quizzes/platform-engineering/02-ack-quiz.md"
+      },
+      {
+        "source": "ko/quizzes/platform-engineering/02-ack-quiz.md",
+        "target": "../../platform-engineering/02-ack.md"
+      },
+      {
+        "source": "ko/platform-engineering/ack/01-s3-iam.md",
+        "target": "../02-ack.md"
+      },
+      {
+        "source": "ko/platform-engineering/ack/02-sqs-sns.md",
+        "target": "../02-ack.md"
+      },
+      {
+        "source": "ko/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "target": "../02-ack.md"
+      },
+      {
+        "source": "en/platform-engineering/02-ack.md",
+        "target": "../.gitbook/assets/en-platform-engineering-02-ack-0.png"
+      },
+      {
+        "source": "en/platform-engineering/02-ack.md",
+        "target": "ack/01-s3-iam.md"
+      },
+      {
+        "source": "en/platform-engineering/02-ack.md",
+        "target": "ack/02-sqs-sns.md"
+      },
+      {
+        "source": "en/platform-engineering/02-ack.md",
+        "target": "ack/03-elbv2-route53-rds.md"
+      },
+      {
+        "source": "en/platform-engineering/02-ack.md",
+        "target": "../quizzes/platform-engineering/02-ack-quiz.md"
+      },
+      {
+        "source": "en/quizzes/platform-engineering/02-ack-quiz.md",
+        "target": "../../platform-engineering/02-ack.md"
+      },
+      {
+        "source": "en/platform-engineering/ack/01-s3-iam.md",
+        "target": "../02-ack.md"
+      },
+      {
+        "source": "en/platform-engineering/ack/02-sqs-sns.md",
+        "target": "../02-ack.md"
+      },
+      {
+        "source": "en/platform-engineering/ack/03-elbv2-route53-rds.md",
+        "target": "../02-ack.md"
+      }
+    ],
+    "externalLinks": [
+      {
+        "url": "https://aws-controllers-k8s.github.io/community/docs/community/services/",
+        "status": 200,
+        "finalUrl": "https://aws-controllers-k8s.github.io/community/docs/community/services/",
+        "sha256": "faf867ae3aae1d7f3424a01aafc81098b49854e988a46dc0b21a3489e85db692"
+      },
+      {
+        "url": "https://aws-controllers-k8s.github.io/community/docs/user-docs/deletion-policy/",
+        "status": 200,
+        "finalUrl": "https://aws-controllers-k8s.github.io/community/docs/user-docs/deletion-policy/",
+        "sha256": "1a39b97778bb06b4ae687baf9decc1dba11421ef849d50c1fbf0276d8b363918"
+      },
+      {
+        "url": "https://aws-controllers-k8s.github.io/community/docs/user-docs/features/#resourceadoption",
+        "status": 200,
+        "finalUrl": "https://aws-controllers-k8s.github.io/community/docs/user-docs/features/#resourceadoption",
+        "sha256": "d3e57e986f89301d80a5c2a882b96ce3ad4d642eab51c8483cea6016db967d99"
+      },
+      {
+        "url": "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-aurora-postgresql-18-4-17-10-16-14-15-18-14-23/",
+        "status": 200,
+        "finalUrl": "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-aurora-postgresql-18-4-17-10-16-14-15-18-14-23/",
+        "sha256": "20e62c635b481e2be111e23c158bd8790da27a782ab43b69748d7921605579f1"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Custom.html",
+        "status": 200,
+        "finalUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Custom.html",
+        "sha256": "fb4df3b6b4c790c0019b4cb35f65713d0deb181b82e445f6c2c4a56a70b63dcb"
+      },
+      {
+        "url": "https://github.com/aws-controllers-k8s/elbv2-controller/tree/v1.7.0/config/crd/bases",
+        "status": 200,
+        "finalUrl": "https://github.com/aws-controllers-k8s/elbv2-controller/tree/v1.7.0/config/crd/bases",
+        "sha256": "f8b896473056b3c08e0cf79ee734ac0214d48d3dda7124a7147e631c67b5224d"
+      },
+      {
+        "url": "https://github.com/aws-controllers-k8s/iam-controller/tree/v1.9.0/config/crd/bases",
+        "status": 200,
+        "finalUrl": "https://github.com/aws-controllers-k8s/iam-controller/tree/v1.9.0/config/crd/bases",
+        "sha256": "f133cceafe5d09947d33ca51a8464ba021c4c2d4f548ca872289e7189227f17f"
+      },
+      {
+        "url": "https://github.com/aws-controllers-k8s/rds-controller/tree/v1.12.0/config/crd/bases",
+        "status": 200,
+        "finalUrl": "https://github.com/aws-controllers-k8s/rds-controller/tree/v1.12.0/config/crd/bases",
+        "sha256": "0197f39d5bf6b9ac99ce4f14152a6cf7e21fd43ea2274759f747c9c570df1866"
+      },
+      {
+        "url": "https://github.com/aws-controllers-k8s/route53-controller/tree/v1.6.0/config/crd/bases",
+        "status": 200,
+        "finalUrl": "https://github.com/aws-controllers-k8s/route53-controller/tree/v1.6.0/config/crd/bases",
+        "sha256": "6df4eac2044d672d7e5e6a29e625904a4b80c7e74f9fd47f1f91d16aa5e48124"
+      },
+      {
+        "url": "https://github.com/aws-controllers-k8s/runtime/tree/v0.63.0",
+        "status": 200,
+        "finalUrl": "https://github.com/aws-controllers-k8s/runtime/tree/v0.63.0",
+        "sha256": "edab9edd44414729f876941de0ba7d2b97d34ee08f879bc73744fc2ba50c5697"
+      },
+      {
+        "url": "https://github.com/aws-controllers-k8s/s3-controller/tree/v1.12.1/config/crd/bases",
+        "status": 200,
+        "finalUrl": "https://github.com/aws-controllers-k8s/s3-controller/tree/v1.12.1/config/crd/bases",
+        "sha256": "cefc17bbf058b90e97a538bcf0e3ac600f3586ebc0c511ec1680ae227007e6f6"
+      },
+      {
+        "url": "https://github.com/aws-controllers-k8s/s3-controller/tree/v1.12.1/helm",
+        "status": 200,
+        "finalUrl": "https://github.com/aws-controllers-k8s/s3-controller/tree/v1.12.1/helm",
+        "sha256": "d2d7c9bb1f4ea94df27e4a1488a6f3d128299feb969e206289ac042314b6985b"
+      },
+      {
+        "url": "https://github.com/aws-controllers-k8s/sns-controller/tree/v1.10.1/config/crd/bases",
+        "status": 200,
+        "finalUrl": "https://github.com/aws-controllers-k8s/sns-controller/tree/v1.10.1/config/crd/bases",
+        "sha256": "459398d45ae7961c13112ed29bcddefa3e324896aea062f7159b3f04f8508c7a"
+      },
+      {
+        "url": "https://github.com/aws-controllers-k8s/sqs-controller/tree/v1.7.0/config/crd/bases",
+        "status": 200,
+        "finalUrl": "https://github.com/aws-controllers-k8s/sqs-controller/tree/v1.7.0/config/crd/bases",
+        "sha256": "c7dd1b219af87a90dc4719710fed286ddbfdf1b947a0fd45ba345b5e263b58e3"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-02-ack-0.html",
+        "error": "HTTP Error 404: Not Found",
+        "state": "new local artifact; production verification pending deployment"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-02-ack-0.html",
+        "status": 200,
+        "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-02-ack-0.html",
+        "sha256": "149bcdfc68fd95c95e11eb896f2d3343295e7262f3addbee14a34eefc5971acb"
+      }
+    ],
+    "semantics": [
+      "Runtimeadoptionacceptsadopt/adopt-or-create;stalecommentsadopt-onlynotused",
+      "Runtimeacceptsdelete/retain;notorphan",
+      "ServiceMonitorlabels/metricsportverifiedinactualS3Helmrender",
+      "S3fullBlockPublicAccess+matchingpolicyARNs/SNSSourceArnandAccountreviewed"
+    ]
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "b52c5ec1cf25aa6c572f9f88bf5577c06d0007379d9602c9c3a34fe400383c24"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "b52c5ec1cf25aa6c572f9f88bf5577c06d0007379d9602c9c3a34fe400383c24"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "b52c5ec1cf25aa6c572f9f88bf5577c06d0007379d9602c9c3a34fe400383c24"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "c41eb6f3dee15cb84c5bed7e506a17cc097617f84f4e5f12a9217826ad2f9906"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "c41eb6f3dee15cb84c5bed7e506a17cc097617f84f4e5f12a9217826ad2f9906"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "c41eb6f3dee15cb84c5bed7e506a17cc097617f84f4e5f12a9217826ad2f9906"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "diagrams": [
+    {
+      "path": "assets/diagrams/archify/ko-platform-engineering-02-ack-0.architecture.json",
+      "sha256": "8bfe9fa31dadfb2d790a45fa157f4eba7114add75ebe1e486e7d6a40dc71a2e4"
+    },
+    {
+      "path": "public/archmaps/ko-platform-engineering-02-ack-0.html",
+      "sha256": "b52c5ec1cf25aa6c572f9f88bf5577c06d0007379d9602c9c3a34fe400383c24"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-platform-engineering-02-ack-0.png",
+      "sha256": "416af182effee98720330362a9803a3c5c755f4215126b103d26bf4275bc47ee"
+    },
+    {
+      "path": "assets/diagrams/archify/en-platform-engineering-02-ack-0.architecture.json",
+      "sha256": "3355ae4fad9791498b5bcedf58b97dd38ba2c140ae07cc9591f72bd1f02f0fcd"
+    },
+    {
+      "path": "public/archmaps/en-platform-engineering-02-ack-0.html",
+      "sha256": "c41eb6f3dee15cb84c5bed7e506a17cc097617f84f4e5f12a9217826ad2f9906"
+    },
+    {
+      "path": "en/.gitbook/assets/en-platform-engineering-02-ack-0.png",
+      "sha256": "6416f4c10b3f26324c57cbd84512a914e89922aa1662a762c588aa827f742597"
+    }
+  ],
+  "sources": [
+    {
+      "file": "s3-config_crd_bases_s3.services.k8s.aws_buckets.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/s3-controller/v1.12.1/config/crd/bases/s3.services.k8s.aws_buckets.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/s3-controller/v1.12.1/config/crd/bases/s3.services.k8s.aws_buckets.yaml",
+      "sha256": "07c959f142579405e8ebfd03a26e8ef4b66027a39d4a5202aed164566d29d4b6"
+    },
+    {
+      "file": "s3-helm_values.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/s3-controller/v1.12.1/helm/values.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/s3-controller/v1.12.1/helm/values.yaml",
+      "sha256": "2d537d8a1c168b1dc83246e196e8e6bd2c3a62c68d2e2e41afa231566e391ef4"
+    },
+    {
+      "file": "s3-helm_Chart.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/s3-controller/v1.12.1/helm/Chart.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/s3-controller/v1.12.1/helm/Chart.yaml",
+      "sha256": "6f2fbbde4872d6180ed42d3a097255a9e8bedcdd1352e7c377c5532b9a5e0fbb"
+    },
+    {
+      "file": "s3-helm_templates_deployment.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/s3-controller/v1.12.1/helm/templates/deployment.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/s3-controller/v1.12.1/helm/templates/deployment.yaml",
+      "sha256": "b6551b9740f1f9282720cf63b91560a7b7139dcb2d5a2bbbd12e1a969e6267d8"
+    },
+    {
+      "file": "s3-helm_templates_service.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/s3-controller/v1.12.1/helm/templates/service.yaml",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "s3-helm_templates_role.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/s3-controller/v1.12.1/helm/templates/role.yaml",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "s3-go.mod",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/s3-controller/v1.12.1/go.mod",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/s3-controller/v1.12.1/go.mod",
+      "sha256": "681bee573e35ea914dc17cb22ba0521d362db42af317c2ac8e6d3facead863a1"
+    },
+    {
+      "file": "s3-README.md",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/s3-controller/v1.12.1/README.md",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/s3-controller/v1.12.1/README.md",
+      "sha256": "b977731638c204af79a15fbb3546b8b08d481f890e5df28be57646ec8ffef6b3"
+    },
+    {
+      "file": "iam-config_crd_bases_iam.services.k8s.aws_groups.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/config/crd/bases/iam.services.k8s.aws_groups.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/config/crd/bases/iam.services.k8s.aws_groups.yaml",
+      "sha256": "0a3af9066b2aac6a4a62c2e65530db8aa41a4139b03c3c4f1ddecd7c944e6a49"
+    },
+    {
+      "file": "iam-config_crd_bases_iam.services.k8s.aws_instanceprofiles.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/config/crd/bases/iam.services.k8s.aws_instanceprofiles.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/config/crd/bases/iam.services.k8s.aws_instanceprofiles.yaml",
+      "sha256": "0a4c9258cb0288dff996408f7dbbf063e8bf4f51734faebbe200973454f621b1"
+    },
+    {
+      "file": "iam-config_crd_bases_iam.services.k8s.aws_openidconnectproviders.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/config/crd/bases/iam.services.k8s.aws_openidconnectproviders.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/config/crd/bases/iam.services.k8s.aws_openidconnectproviders.yaml",
+      "sha256": "57eb0a78f92e72797b1e65ccc843a7d640390d96773f9e2ae6d43ff3204a223f"
+    },
+    {
+      "file": "iam-config_crd_bases_iam.services.k8s.aws_policies.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/config/crd/bases/iam.services.k8s.aws_policies.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/config/crd/bases/iam.services.k8s.aws_policies.yaml",
+      "sha256": "4064ead3f3107a416bd9930ad11b53803728b1f36c75fe623756d14fae4464e6"
+    },
+    {
+      "file": "iam-config_crd_bases_iam.services.k8s.aws_roles.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/config/crd/bases/iam.services.k8s.aws_roles.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/config/crd/bases/iam.services.k8s.aws_roles.yaml",
+      "sha256": "97cf0706393a015cbdaf8475e0a8de4a4cbd201431cc1a9ba31abc5be547e7da"
+    },
+    {
+      "file": "iam-config_crd_bases_iam.services.k8s.aws_servicelinkedroles.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/config/crd/bases/iam.services.k8s.aws_servicelinkedroles.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/config/crd/bases/iam.services.k8s.aws_servicelinkedroles.yaml",
+      "sha256": "5c642d406b1dce0c5749380b552ac2dfe9d7835ae72cb191f45775e3701db82a"
+    },
+    {
+      "file": "iam-config_crd_bases_iam.services.k8s.aws_users.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/config/crd/bases/iam.services.k8s.aws_users.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/config/crd/bases/iam.services.k8s.aws_users.yaml",
+      "sha256": "2360c5dd71aa145fde6f98e03fbf7f517625adcff83fb9046b30c86d8e4a5257"
+    },
+    {
+      "file": "iam-helm_values.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/helm/values.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/helm/values.yaml",
+      "sha256": "07eccf1fb9c180c36cc7b5fb9303d5d59a65fa696dd848168beb1c82d648ec71"
+    },
+    {
+      "file": "iam-helm_Chart.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/helm/Chart.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/helm/Chart.yaml",
+      "sha256": "711a7dabed80c86602be25b48abe71788d04ea3176214e30eae95c57dbc652d0"
+    },
+    {
+      "file": "iam-helm_templates_deployment.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/helm/templates/deployment.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/helm/templates/deployment.yaml",
+      "sha256": "d6a46b7c66f57b5a937389aaa69deff85a72bc70b8e3f116d4c5e8c414c3fc29"
+    },
+    {
+      "file": "iam-helm_templates_service.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/helm/templates/service.yaml",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "iam-helm_templates_role.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/helm/templates/role.yaml",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "iam-go.mod",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/go.mod",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/go.mod",
+      "sha256": "8e853dfac32fbb6954360952ad40549a0cd7880d43357c076560f142313345ad"
+    },
+    {
+      "file": "iam-README.md",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/README.md",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/iam-controller/v1.9.0/README.md",
+      "sha256": "1e49a9f0d14be2a90e84ef3f8ce14e7516a2e5abd0a5c6726a51b7d4bd5549b3"
+    },
+    {
+      "file": "sqs-config_crd_bases_sqs.services.k8s.aws_queues.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sqs-controller/v1.7.0/config/crd/bases/sqs.services.k8s.aws_queues.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/sqs-controller/v1.7.0/config/crd/bases/sqs.services.k8s.aws_queues.yaml",
+      "sha256": "bf7bf11ecde93a65cdcbd73824f11c946685e99e8fd5b3c6b47a3313b3513abe"
+    },
+    {
+      "file": "sqs-helm_values.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sqs-controller/v1.7.0/helm/values.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/sqs-controller/v1.7.0/helm/values.yaml",
+      "sha256": "1dfe677ca88d022bd85fef1cc5c8a516e53a9071c8c3746c7e52cc5b9d025a1b"
+    },
+    {
+      "file": "sqs-helm_Chart.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sqs-controller/v1.7.0/helm/Chart.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/sqs-controller/v1.7.0/helm/Chart.yaml",
+      "sha256": "9e7d39d26ac39c3dddc638c641af471ec9a837b4a5c1264b8649f39c9117ed19"
+    },
+    {
+      "file": "sqs-helm_templates_deployment.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sqs-controller/v1.7.0/helm/templates/deployment.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/sqs-controller/v1.7.0/helm/templates/deployment.yaml",
+      "sha256": "89a1871254f46239fd027f4baa5be8ed4fabe9d69194cf35e9053ac49b575b25"
+    },
+    {
+      "file": "sqs-helm_templates_service.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sqs-controller/v1.7.0/helm/templates/service.yaml",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "sqs-helm_templates_role.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sqs-controller/v1.7.0/helm/templates/role.yaml",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "sqs-go.mod",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sqs-controller/v1.7.0/go.mod",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/sqs-controller/v1.7.0/go.mod",
+      "sha256": "4b03287b23792ff0bc9833d3a4cb2ae9f2e9ece373e465d81a49f8c4a863e91a"
+    },
+    {
+      "file": "sqs-README.md",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sqs-controller/v1.7.0/README.md",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/sqs-controller/v1.7.0/README.md",
+      "sha256": "509444faf2ccab0164a2fe71fe513cee76d63cfa0a29c1082b6ea977a54d1c0d"
+    },
+    {
+      "file": "sns-config_crd_bases_sns.services.k8s.aws_platformapplications.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/config/crd/bases/sns.services.k8s.aws_platformapplications.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/config/crd/bases/sns.services.k8s.aws_platformapplications.yaml",
+      "sha256": "87b05c8b6c92b1006733a6524c8e64536f650f084af21505f58f9a75eebc1f4e"
+    },
+    {
+      "file": "sns-config_crd_bases_sns.services.k8s.aws_platformendpoints.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/config/crd/bases/sns.services.k8s.aws_platformendpoints.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/config/crd/bases/sns.services.k8s.aws_platformendpoints.yaml",
+      "sha256": "0e7313925ba7fe4800e9b1f5334b99aad2f7ef6ebbb67af4728f604059a7ebba"
+    },
+    {
+      "file": "sns-config_crd_bases_sns.services.k8s.aws_subscriptions.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/config/crd/bases/sns.services.k8s.aws_subscriptions.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/config/crd/bases/sns.services.k8s.aws_subscriptions.yaml",
+      "sha256": "583d6a36441cf295958d61360f149f38c0855534156983f9bee910aab0bf2e8c"
+    },
+    {
+      "file": "sns-config_crd_bases_sns.services.k8s.aws_topics.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/config/crd/bases/sns.services.k8s.aws_topics.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/config/crd/bases/sns.services.k8s.aws_topics.yaml",
+      "sha256": "ca4eaf8e2531d5bc61e3faeb7ffe5c7f3e4e9e9b9393d66f9b2767b5dd474d5a"
+    },
+    {
+      "file": "sns-helm_values.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/helm/values.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/helm/values.yaml",
+      "sha256": "8e2f668d426cb7ebf0058ce66aeb1626b5214b5a11ac5a6fbb01118819b70957"
+    },
+    {
+      "file": "sns-helm_Chart.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/helm/Chart.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/helm/Chart.yaml",
+      "sha256": "118faea08a7f0d2352ac21e8fcab2d33d394c172a36abc41fae46db0b7077ab5"
+    },
+    {
+      "file": "sns-helm_templates_deployment.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/helm/templates/deployment.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/helm/templates/deployment.yaml",
+      "sha256": "41ddec06022cdb291793e107dd35a8bdae6ae900d617853c2930cc7e05f76fa0"
+    },
+    {
+      "file": "sns-helm_templates_service.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/helm/templates/service.yaml",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "sns-helm_templates_role.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/helm/templates/role.yaml",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "sns-go.mod",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/go.mod",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/go.mod",
+      "sha256": "635954b7066b2e380fa1c5b6443b003a4ec37016be3be4462cb69deecc6b4179"
+    },
+    {
+      "file": "sns-README.md",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/README.md",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/sns-controller/v1.10.1/README.md",
+      "sha256": "6534b0798ebe4b5710c990e24065592147c2ebd04e6314e5ea7c21cff0b7d01b"
+    },
+    {
+      "file": "elbv2-config_crd_bases_elbv2.services.k8s.aws_listeners.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/config/crd/bases/elbv2.services.k8s.aws_listeners.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/config/crd/bases/elbv2.services.k8s.aws_listeners.yaml",
+      "sha256": "7a11152903af1caa3555c9856207a7f00b22c844eace0f9ffc88e2e19c095ba7"
+    },
+    {
+      "file": "elbv2-config_crd_bases_elbv2.services.k8s.aws_loadbalancers.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/config/crd/bases/elbv2.services.k8s.aws_loadbalancers.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/config/crd/bases/elbv2.services.k8s.aws_loadbalancers.yaml",
+      "sha256": "ef68f5b4ef2ce8909631bf161787684ff64fd5aa255cefc976390b1f032ecf4d"
+    },
+    {
+      "file": "elbv2-config_crd_bases_elbv2.services.k8s.aws_rules.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/config/crd/bases/elbv2.services.k8s.aws_rules.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/config/crd/bases/elbv2.services.k8s.aws_rules.yaml",
+      "sha256": "070324d39fc858739cb1bff777ad216fd3df192e7f19929587c81be9f8e82038"
+    },
+    {
+      "file": "elbv2-config_crd_bases_elbv2.services.k8s.aws_targetgroups.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/config/crd/bases/elbv2.services.k8s.aws_targetgroups.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/config/crd/bases/elbv2.services.k8s.aws_targetgroups.yaml",
+      "sha256": "5bf6347986e1c1c2e28a81983021d251aedb5062be6d39143739b3baaeff0c23"
+    },
+    {
+      "file": "elbv2-helm_values.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/helm/values.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/helm/values.yaml",
+      "sha256": "88a2db8b0ccbd9e4736f6986f73a839b2ed701a1c5eb67662a0196bafd72069e"
+    },
+    {
+      "file": "elbv2-helm_Chart.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/helm/Chart.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/helm/Chart.yaml",
+      "sha256": "b6914eb39975c5dd0881ebd443f9d9791d4195c17f213189d5f84d0386dd47d9"
+    },
+    {
+      "file": "elbv2-helm_templates_deployment.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/helm/templates/deployment.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/helm/templates/deployment.yaml",
+      "sha256": "38eff30010217e8aa8c9c2c67ce5158f2a9643d706a80d66f4745de55b40c711"
+    },
+    {
+      "file": "elbv2-helm_templates_service.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/helm/templates/service.yaml",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "elbv2-helm_templates_role.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/helm/templates/role.yaml",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "elbv2-go.mod",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/go.mod",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/go.mod",
+      "sha256": "03d5809708fdcf8da13f6c3c72f047b78b6602d6c3efda41ce34b583214bddea"
+    },
+    {
+      "file": "elbv2-README.md",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/README.md",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/elbv2-controller/v1.7.0/README.md",
+      "sha256": "6c01d1311f99704acd94127f8315346c0ea2556a41d3ab12beb35532f608095d"
+    },
+    {
+      "file": "route53-config_crd_bases_route53.services.k8s.aws_healthchecks.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/route53-controller/v1.6.0/config/crd/bases/route53.services.k8s.aws_healthchecks.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/route53-controller/v1.6.0/config/crd/bases/route53.services.k8s.aws_healthchecks.yaml",
+      "sha256": "5a8ee673822951d85121da98ba222516b27ad30cb0c62fe83b403c525f164512"
+    },
+    {
+      "file": "route53-config_crd_bases_route53.services.k8s.aws_hostedzones.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/route53-controller/v1.6.0/config/crd/bases/route53.services.k8s.aws_hostedzones.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/route53-controller/v1.6.0/config/crd/bases/route53.services.k8s.aws_hostedzones.yaml",
+      "sha256": "1d417c0a944f7ab69e2f0fe8fa924ad1967ac8cbddb08f51b775c8348fd69439"
+    },
+    {
+      "file": "route53-config_crd_bases_route53.services.k8s.aws_recordsets.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/route53-controller/v1.6.0/config/crd/bases/route53.services.k8s.aws_recordsets.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/route53-controller/v1.6.0/config/crd/bases/route53.services.k8s.aws_recordsets.yaml",
+      "sha256": "e5443f9911e045f27fbccc59c56a80bce1073154fc7bf81764125ff2803a31d8"
+    },
+    {
+      "file": "route53-helm_values.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/route53-controller/v1.6.0/helm/values.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/route53-controller/v1.6.0/helm/values.yaml",
+      "sha256": "f7f294140c49557247f0c32f0d94e95cc5eb711457083f20e20a387eaacae8b5"
+    },
+    {
+      "file": "route53-helm_Chart.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/route53-controller/v1.6.0/helm/Chart.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/route53-controller/v1.6.0/helm/Chart.yaml",
+      "sha256": "fc710de7225d5163f73c96f0db2457b73e3d409f6134ee82f4d894d8f24a0e53"
+    },
+    {
+      "file": "route53-helm_templates_deployment.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/route53-controller/v1.6.0/helm/templates/deployment.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/route53-controller/v1.6.0/helm/templates/deployment.yaml",
+      "sha256": "7a6110d3a54f6d01c5294028c5a373ff9a82efb1730dbb5d7a59e67fda4b181a"
+    },
+    {
+      "file": "route53-helm_templates_service.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/route53-controller/v1.6.0/helm/templates/service.yaml",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "route53-helm_templates_role.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/route53-controller/v1.6.0/helm/templates/role.yaml",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "route53-go.mod",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/route53-controller/v1.6.0/go.mod",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/route53-controller/v1.6.0/go.mod",
+      "sha256": "cf27db4c732a00b2fbd83d52899b6740acd1aeab7266bcc6b610f361583ccff7"
+    },
+    {
+      "file": "route53-README.md",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/route53-controller/v1.6.0/README.md",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/route53-controller/v1.6.0/README.md",
+      "sha256": "0a78eb8364af718a0958ac4a4176da525085cd224b30b1a0a622564a19fb5e94"
+    },
+    {
+      "file": "rds-config_crd_bases_rds.services.k8s.aws_dbclusterendpoints.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_dbclusterendpoints.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_dbclusterendpoints.yaml",
+      "sha256": "aa5a88683c726e76b7e350753ed4afccd57e6b09ce0e4fbd7f56fc6fae7fb693"
+    },
+    {
+      "file": "rds-config_crd_bases_rds.services.k8s.aws_dbclusterparametergroups.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_dbclusterparametergroups.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_dbclusterparametergroups.yaml",
+      "sha256": "2e005edecef0c470bcb6a2c705caf4fe6d4b3db5e1512f876a778ee69ba16303"
+    },
+    {
+      "file": "rds-config_crd_bases_rds.services.k8s.aws_dbclusters.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_dbclusters.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_dbclusters.yaml",
+      "sha256": "13bb811b46305c6457d304c273291475db235243c93cb6d3e5cfd2f72d6eb108"
+    },
+    {
+      "file": "rds-config_crd_bases_rds.services.k8s.aws_dbclustersnapshots.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_dbclustersnapshots.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_dbclustersnapshots.yaml",
+      "sha256": "da7304eeed805af37f9e2ea6747dafca5cb0eb66fc5c13c7ae14ba2b2012e947"
+    },
+    {
+      "file": "rds-config_crd_bases_rds.services.k8s.aws_dbinstances.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_dbinstances.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_dbinstances.yaml",
+      "sha256": "d28e6695311bd0cf3a7d49221f2ffe2aed1f7628cba870a7637acae8719263d7"
+    },
+    {
+      "file": "rds-config_crd_bases_rds.services.k8s.aws_dbparametergroups.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_dbparametergroups.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_dbparametergroups.yaml",
+      "sha256": "dda051fd21eb9078906f291efcc39a82b7312dbf91d8bd54e3c592b4455bef08"
+    },
+    {
+      "file": "rds-config_crd_bases_rds.services.k8s.aws_dbproxies.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_dbproxies.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_dbproxies.yaml",
+      "sha256": "39da061d57942a11a1c117ce170a7d8eb67d3a819a9463ddc2ae2dd2075c9ffd"
+    },
+    {
+      "file": "rds-config_crd_bases_rds.services.k8s.aws_dbsnapshots.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_dbsnapshots.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_dbsnapshots.yaml",
+      "sha256": "4c93e20e68205d180af0cd405210f119d4000d5507495c229a9c0f89ea06eca7"
+    },
+    {
+      "file": "rds-config_crd_bases_rds.services.k8s.aws_dbsubnetgroups.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_dbsubnetgroups.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_dbsubnetgroups.yaml",
+      "sha256": "a920ff8464ef00094a860900f1bbbd284ef522b4089790bdda2fb727734ecb21"
+    },
+    {
+      "file": "rds-config_crd_bases_rds.services.k8s.aws_globalclusters.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_globalclusters.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/config/crd/bases/rds.services.k8s.aws_globalclusters.yaml",
+      "sha256": "97db2281aa3e2d525ac45e211d383aced34ed0ab5427fbd73596787aecf6e458"
+    },
+    {
+      "file": "rds-helm_values.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/helm/values.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/helm/values.yaml",
+      "sha256": "67114379b879eef1a2b71538f0011148cdb99c29ee913df729e1480b992a5e77"
+    },
+    {
+      "file": "rds-helm_Chart.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/helm/Chart.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/helm/Chart.yaml",
+      "sha256": "538195c7b1f572469fa506c3ca61a236050b01846b98ee18937a8513032cf20f"
+    },
+    {
+      "file": "rds-helm_templates_deployment.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/helm/templates/deployment.yaml",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/helm/templates/deployment.yaml",
+      "sha256": "85df1acf5745d899eaef1ed71eed27c483fb65b5dd06aebe3d15b95097ad686c"
+    },
+    {
+      "file": "rds-helm_templates_service.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/helm/templates/service.yaml",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "rds-helm_templates_role.yaml",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/helm/templates/role.yaml",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "rds-go.mod",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/go.mod",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/go.mod",
+      "sha256": "ff74aac04bd562222eed1c783034badcdc809568b2eb824bb24db926f918164f"
+    },
+    {
+      "file": "rds-README.md",
+      "url": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/README.md",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/aws-controllers-k8s/rds-controller/v1.12.0/README.md",
+      "sha256": "ff62dc726f386a3cc135385fcde39b91ccaaab35569b41b8bb10d3dbdf6b3848"
+    },
+    {
+      "file": "community-adopted-resource.html",
+      "url": "https://aws-controllers-k8s.github.io/community/docs/user-docs/adopted-resource/",
+      "status": 200,
+      "finalUrl": "https://aws-controllers-k8s.github.io/community/docs/user-docs/adopted-resource/",
+      "sha256": "7d951f0978b459c4a6ca15b60880c6ecf2511bc6564190d5f0ef911c002a8325"
+    },
+    {
+      "file": "community-deletion-policy.html",
+      "url": "https://aws-controllers-k8s.github.io/community/docs/user-docs/deletion-policy/",
+      "status": 200,
+      "finalUrl": "https://aws-controllers-k8s.github.io/community/docs/user-docs/deletion-policy/",
+      "sha256": "1a39b97778bb06b4ae687baf9decc1dba11421ef849d50c1fbf0276d8b363918"
+    },
+    {
+      "file": "community-irsa.html",
+      "url": "https://aws-controllers-k8s.github.io/community/docs/user-docs/irsa/",
+      "status": 200,
+      "finalUrl": "https://aws-controllers-k8s.github.io/community/docs/user-docs/irsa/",
+      "sha256": "c0422e90a6b59231a7480f5b4743c89ee7f081eff45bd5fa44b053a54f494ecd"
+    },
+    {
+      "file": "community-cross-account-resource-management.html",
+      "url": "https://aws-controllers-k8s.github.io/community/docs/user-docs/cross-account-resource-management/",
+      "status": 200,
+      "finalUrl": "https://aws-controllers-k8s.github.io/community/docs/user-docs/cross-account-resource-management/",
+      "sha256": "0ec025e16aebf2e5e84e3f0c33f0261b2fe512182d959497d9c83fcd2efe667a"
+    },
+    {
+      "file": "community-authorization.html",
+      "url": "https://aws-controllers-k8s.github.io/community/docs/user-docs/authorization/",
+      "status": 200,
+      "finalUrl": "https://aws-controllers-k8s.github.io/community/docs/user-docs/authorization/",
+      "sha256": "226a7d79515d00eab4303a5eb32a83a890785acf5155da7515dc405660f2aada"
+    },
+    {
+      "file": "community-metrics.html",
+      "url": "https://aws-controllers-k8s.github.io/community/docs/user-docs/metrics/",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "community-install.html",
+      "url": "https://aws-controllers-k8s.github.io/community/docs/user-docs/install/",
+      "status": 200,
+      "finalUrl": "https://aws-controllers-k8s.github.io/community/docs/user-docs/install/",
+      "sha256": "9a8bc765089b051cce79ae96738e543aae08e34aea6325e19bf8314acf0d85bd"
+    }
+  ],
+  "additionalSources": [
+    "https://raw.githubusercontent.com/aws-controllers-k8s/runtime/v0.63.0/pkg/runtime/util.go",
+    "https://raw.githubusercontent.com/aws-controllers-k8s/runtime/v0.63.0/apis/core/v1alpha1/deletion_policy.go",
+    "https://raw.githubusercontent.com/aws-controllers-k8s/runtime/v0.63.0/pkg/metrics/metrics.go",
+    "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-aurora-postgresql-18-4-17-10-16-14-15-18-14-23/"
+  ],
+  "limitations": [
+    "NoAWS/Kubernetesresourcemutations,controllerexecution,admission/CEL,SMTP/SNS/SQSdeliveryorDB/NLBtraffic.",
+    "CRDvalidationchecksstructuresandunknownfields;AWSserviceconstraints/IAM/regioncapacitystillrequireoperatorchecks.",
+    "RDS17.10announcementsupportverified;actualaccount/regionengine/classavailabilitynotqueried.",
+    "Resourceadoptionandretentionsemanticsverifiedagainstactualruntimeconstants/parser;notclusterlifecycleexecution.",
+    "NamespacechartstillrendersnamespacescacheClusterRole;scope/IAM/RBACandcrossnamespaceboundariesdocumented.",
+    "Localstandalonediagramchecks375/768/1920;newENproductionURLexpected404untildeployment;nofullsitebuild."
+  ]
+}

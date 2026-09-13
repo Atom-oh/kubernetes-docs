@@ -1,0 +1,763 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "Namespace",
+      "metadata": {
+        "name": "spot-exp-20260912",
+        "labels": {
+          "experiments.atomai.click/run": "eks-spot-20260912",
+          "app.kubernetes.io/part-of": "spot-experiment",
+          "istio-injection": "disabled",
+          "istio.io/dataplane-mode": "none",
+          "pod-security.kubernetes.io/enforce": "restricted"
+        }
+      }
+    },
+    {
+      "apiVersion": "karpenter.k8s.aws/v1",
+      "kind": "EC2NodeClass",
+      "metadata": {
+        "name": "spot-exp-20260912",
+        "labels": {
+          "experiments.atomai.click/run": "eks-spot-20260912",
+          "app.kubernetes.io/part-of": "spot-experiment"
+        }
+      },
+      "spec": {
+        "amiFamily": "AL2023",
+        "amiSelectorTerms": [
+          {
+            "id": "REPLACE_WITH_ARM64_AL2023_AMI"
+          }
+        ],
+        "role": "REPLACE_WITH_REVIEWED_NODE_ROLE",
+        "subnetSelectorTerms": [
+          {
+            "id": "REPLACE_PRIVATE_SUBNET_A"
+          },
+          {
+            "id": "REPLACE_PRIVATE_SUBNET_B"
+          }
+        ],
+        "securityGroupSelectorTerms": [
+          {
+            "id": "REPLACE_WITH_REVIEWED_SECURITY_GROUP"
+          }
+        ],
+        "metadataOptions": {
+          "httpEndpoint": "enabled",
+          "httpTokens": "required",
+          "httpPutResponseHopLimit": 1
+        },
+        "blockDeviceMappings": [
+          {
+            "deviceName": "/dev/xvda",
+            "ebs": {
+              "volumeType": "gp3",
+              "volumeSize": "20Gi",
+              "encrypted": true,
+              "deleteOnTermination": true
+            }
+          }
+        ],
+        "tags": {
+          "ExperimentRun": "eks-spot-20260912",
+          "Purpose": "isolated-spot-production-experiment",
+          "managed-by": "karpenter"
+        }
+      }
+    },
+    {
+      "apiVersion": "karpenter.sh/v1",
+      "kind": "NodePool",
+      "metadata": {
+        "name": "spot-exp-20260912-spot",
+        "labels": {
+          "experiments.atomai.click/run": "eks-spot-20260912",
+          "app.kubernetes.io/part-of": "spot-experiment"
+        }
+      },
+      "spec": {
+        "template": {
+          "metadata": {
+            "labels": {
+              "experiments.atomai.click/run": "eks-spot-20260912",
+              "node-type": "spot-experiment"
+            }
+          },
+          "spec": {
+            "nodeClassRef": {
+              "group": "karpenter.k8s.aws",
+              "kind": "EC2NodeClass",
+              "name": "spot-exp-20260912"
+            },
+            "taints": [
+              {
+                "key": "experiments.atomai.click/run",
+                "value": "eks-spot-20260912",
+                "effect": "NoSchedule"
+              }
+            ],
+            "requirements": [
+              {
+                "key": "kubernetes.io/arch",
+                "operator": "In",
+                "values": [
+                  "arm64"
+                ]
+              },
+              {
+                "key": "kubernetes.io/os",
+                "operator": "In",
+                "values": [
+                  "linux"
+                ]
+              },
+              {
+                "key": "karpenter.sh/capacity-type",
+                "operator": "In",
+                "values": [
+                  "spot"
+                ]
+              },
+              {
+                "key": "node.kubernetes.io/instance-type",
+                "operator": "In",
+                "values": [
+                  "m6g.large",
+                  "m7g.large",
+                  "c6g.large",
+                  "c7g.large"
+                ]
+              },
+              {
+                "key": "topology.kubernetes.io/zone",
+                "operator": "In",
+                "values": [
+                  "ap-northeast-2a",
+                  "ap-northeast-2b"
+                ]
+              }
+            ],
+            "expireAfter": "4h"
+          }
+        },
+        "limits": {
+          "cpu": "8"
+        },
+        "disruption": {
+          "consolidationPolicy": "WhenEmpty",
+          "consolidateAfter": "Never",
+          "budgets": [
+            {
+              "nodes": "0"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "karpenter.sh/v1",
+      "kind": "NodePool",
+      "metadata": {
+        "name": "spot-exp-20260912-od",
+        "labels": {
+          "experiments.atomai.click/run": "eks-spot-20260912",
+          "app.kubernetes.io/part-of": "spot-experiment"
+        }
+      },
+      "spec": {
+        "template": {
+          "metadata": {
+            "labels": {
+              "experiments.atomai.click/run": "eks-spot-20260912",
+              "node-type": "spot-experiment"
+            }
+          },
+          "spec": {
+            "nodeClassRef": {
+              "group": "karpenter.k8s.aws",
+              "kind": "EC2NodeClass",
+              "name": "spot-exp-20260912"
+            },
+            "taints": [
+              {
+                "key": "experiments.atomai.click/run",
+                "value": "eks-spot-20260912",
+                "effect": "NoSchedule"
+              }
+            ],
+            "requirements": [
+              {
+                "key": "kubernetes.io/arch",
+                "operator": "In",
+                "values": [
+                  "arm64"
+                ]
+              },
+              {
+                "key": "kubernetes.io/os",
+                "operator": "In",
+                "values": [
+                  "linux"
+                ]
+              },
+              {
+                "key": "karpenter.sh/capacity-type",
+                "operator": "In",
+                "values": [
+                  "on-demand"
+                ]
+              },
+              {
+                "key": "node.kubernetes.io/instance-type",
+                "operator": "In",
+                "values": [
+                  "m6g.large",
+                  "m7g.large",
+                  "c6g.large",
+                  "c7g.large"
+                ]
+              },
+              {
+                "key": "topology.kubernetes.io/zone",
+                "operator": "In",
+                "values": [
+                  "ap-northeast-2a",
+                  "ap-northeast-2b"
+                ]
+              }
+            ],
+            "expireAfter": "4h"
+          }
+        },
+        "limits": {
+          "cpu": "4"
+        },
+        "disruption": {
+          "consolidationPolicy": "WhenEmpty",
+          "consolidateAfter": "Never",
+          "budgets": [
+            {
+              "nodes": "0"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "baseline",
+        "namespace": "spot-exp-20260912",
+        "labels": {
+          "experiments.atomai.click/run": "eks-spot-20260912",
+          "app.kubernetes.io/part-of": "spot-experiment"
+        }
+      },
+      "spec": {
+        "replicas": 3,
+        "selector": {
+          "matchLabels": {
+            "app": "baseline"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "experiments.atomai.click/run": "eks-spot-20260912",
+              "app.kubernetes.io/part-of": "spot-experiment",
+              "app": "baseline",
+              "cohort": "baseline"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 10001,
+              "runAsGroup": 10001,
+              "fsGroup": 10001,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "terminationGracePeriodSeconds": 30,
+            "nodeSelector": {
+              "experiments.atomai.click/run": "eks-spot-20260912",
+              "karpenter.sh/capacity-type": "on-demand"
+            },
+            "tolerations": [
+              {
+                "key": "experiments.atomai.click/run",
+                "operator": "Equal",
+                "value": "eks-spot-20260912",
+                "effect": "NoSchedule"
+              }
+            ],
+            "containers": [
+              {
+                "name": "http",
+                "image": "docker.io/fortio/fortio@sha256:65633fc5e70f9745be8c311637fb8e484da31a366463028a11083ac0a098e3d3",
+                "args": [
+                  "server",
+                  "-http-port",
+                  "8080"
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "64Mi"
+                  },
+                  "limits": {
+                    "cpu": "500m",
+                    "memory": "256Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/",
+                    "port": "http"
+                  },
+                  "periodSeconds": 2,
+                  "timeoutSeconds": 1,
+                  "failureThreshold": 1
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/",
+                    "port": "http"
+                  },
+                  "periodSeconds": 10,
+                  "timeoutSeconds": 2,
+                  "failureThreshold": 3
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "mixed-stable",
+        "namespace": "spot-exp-20260912",
+        "labels": {
+          "experiments.atomai.click/run": "eks-spot-20260912",
+          "app.kubernetes.io/part-of": "spot-experiment"
+        }
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "app": "mixed-stable"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "experiments.atomai.click/run": "eks-spot-20260912",
+              "app.kubernetes.io/part-of": "spot-experiment",
+              "app": "mixed-stable",
+              "cohort": "mixed"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 10001,
+              "runAsGroup": 10001,
+              "fsGroup": 10001,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "terminationGracePeriodSeconds": 30,
+            "nodeSelector": {
+              "experiments.atomai.click/run": "eks-spot-20260912",
+              "karpenter.sh/capacity-type": "on-demand"
+            },
+            "tolerations": [
+              {
+                "key": "experiments.atomai.click/run",
+                "operator": "Equal",
+                "value": "eks-spot-20260912",
+                "effect": "NoSchedule"
+              }
+            ],
+            "containers": [
+              {
+                "name": "http",
+                "image": "docker.io/fortio/fortio@sha256:65633fc5e70f9745be8c311637fb8e484da31a366463028a11083ac0a098e3d3",
+                "args": [
+                  "server",
+                  "-http-port",
+                  "8080"
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "64Mi"
+                  },
+                  "limits": {
+                    "cpu": "500m",
+                    "memory": "256Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/",
+                    "port": "http"
+                  },
+                  "periodSeconds": 2,
+                  "timeoutSeconds": 1,
+                  "failureThreshold": 1
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/",
+                    "port": "http"
+                  },
+                  "periodSeconds": 10,
+                  "timeoutSeconds": 2,
+                  "failureThreshold": 3
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "mixed-spot",
+        "namespace": "spot-exp-20260912",
+        "labels": {
+          "experiments.atomai.click/run": "eks-spot-20260912",
+          "app.kubernetes.io/part-of": "spot-experiment"
+        }
+      },
+      "spec": {
+        "replicas": 2,
+        "selector": {
+          "matchLabels": {
+            "app": "mixed-spot"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "experiments.atomai.click/run": "eks-spot-20260912",
+              "app.kubernetes.io/part-of": "spot-experiment",
+              "app": "mixed-spot",
+              "cohort": "mixed"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 10001,
+              "runAsGroup": 10001,
+              "fsGroup": 10001,
+              "seccompProfile": {
+                "type": "RuntimeDefault"
+              }
+            },
+            "terminationGracePeriodSeconds": 30,
+            "nodeSelector": {
+              "experiments.atomai.click/run": "eks-spot-20260912",
+              "karpenter.sh/capacity-type": "spot"
+            },
+            "tolerations": [
+              {
+                "key": "experiments.atomai.click/run",
+                "operator": "Equal",
+                "value": "eks-spot-20260912",
+                "effect": "NoSchedule"
+              }
+            ],
+            "containers": [
+              {
+                "name": "http",
+                "image": "docker.io/fortio/fortio@sha256:65633fc5e70f9745be8c311637fb8e484da31a366463028a11083ac0a098e3d3",
+                "args": [
+                  "server",
+                  "-http-port",
+                  "8080"
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "64Mi"
+                  },
+                  "limits": {
+                    "cpu": "500m",
+                    "memory": "256Mi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/",
+                    "port": "http"
+                  },
+                  "periodSeconds": 2,
+                  "timeoutSeconds": 1,
+                  "failureThreshold": 1
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/",
+                    "port": "http"
+                  },
+                  "periodSeconds": 10,
+                  "timeoutSeconds": 2,
+                  "failureThreshold": 3
+                }
+              }
+            ],
+            "affinity": {
+              "podAntiAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": [
+                  {
+                    "labelSelector": {
+                      "matchLabels": {
+                        "app": "mixed-spot"
+                      }
+                    },
+                    "topologyKey": "kubernetes.io/hostname"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "baseline",
+        "namespace": "spot-exp-20260912",
+        "labels": {
+          "experiments.atomai.click/run": "eks-spot-20260912",
+          "app.kubernetes.io/part-of": "spot-experiment"
+        }
+      },
+      "spec": {
+        "selector": {
+          "cohort": "baseline"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": "http"
+          }
+        ],
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "mixed",
+        "namespace": "spot-exp-20260912",
+        "labels": {
+          "experiments.atomai.click/run": "eks-spot-20260912",
+          "app.kubernetes.io/part-of": "spot-experiment"
+        }
+      },
+      "spec": {
+        "selector": {
+          "cohort": "mixed"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": "http"
+          }
+        ],
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "spot-only",
+        "namespace": "spot-exp-20260912",
+        "labels": {
+          "experiments.atomai.click/run": "eks-spot-20260912",
+          "app.kubernetes.io/part-of": "spot-experiment"
+        }
+      },
+      "spec": {
+        "selector": {
+          "app": "mixed-spot"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": "http"
+          }
+        ],
+        "type": "ClusterIP"
+      }
+    },
+    {
+      "apiVersion": "policy/v1",
+      "kind": "PodDisruptionBudget",
+      "metadata": {
+        "name": "mixed-spot",
+        "namespace": "spot-exp-20260912",
+        "labels": {
+          "experiments.atomai.click/run": "eks-spot-20260912",
+          "app.kubernetes.io/part-of": "spot-experiment"
+        }
+      },
+      "spec": {
+        "minAvailable": 1,
+        "selector": {
+          "matchLabels": {
+            "app": "mixed-spot"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "networking.k8s.io/v1",
+      "kind": "NetworkPolicy",
+      "metadata": {
+        "name": "experiment-only",
+        "namespace": "spot-exp-20260912",
+        "labels": {
+          "experiments.atomai.click/run": "eks-spot-20260912",
+          "app.kubernetes.io/part-of": "spot-experiment"
+        }
+      },
+      "spec": {
+        "podSelector": {},
+        "policyTypes": [
+          "Ingress",
+          "Egress"
+        ],
+        "ingress": [
+          {
+            "from": [
+              {
+                "podSelector": {}
+              }
+            ],
+            "ports": [
+              {
+                "protocol": "TCP",
+                "port": 8080
+              }
+            ]
+          }
+        ],
+        "egress": [
+          {
+            "to": [
+              {
+                "podSelector": {}
+              }
+            ],
+            "ports": [
+              {
+                "protocol": "TCP",
+                "port": 8080
+              }
+            ]
+          },
+          {
+            "to": [
+              {
+                "namespaceSelector": {
+                  "matchLabels": {
+                    "kubernetes.io/metadata.name": "kube-system"
+                  }
+                },
+                "podSelector": {
+                  "matchLabels": {
+                    "k8s-app": "kube-dns"
+                  }
+                }
+              }
+            ],
+            "ports": [
+              {
+                "protocol": "UDP",
+                "port": 53
+              },
+              {
+                "protocol": "TCP",
+                "port": 53
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

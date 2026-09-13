@@ -72,7 +72,7 @@
       "id": "cr",
       "type": "backend",
       "label": "Custom Resources",
-      "sublabel": "AWS 리소스 인스턴스",
+      "sublabel": "Kubernetes의 spec / status",
       "pos": [
         290,
         220
@@ -170,17 +170,17 @@
       "id": "watch",
       "from": "cr",
       "to": "controller",
-      "label": "감시(Watch)",
+      "label": "CR 변경 알림",
       "variant": "emphasis"
     },
     {
       "id": "reconcile",
-      "from": "controller",
-      "to": "crd",
-      "label": "조정(Reconcile)",
+      "from": "crd",
+      "to": "cr",
+      "label": "API schema",
       "variant": "dashed",
-      "fromSide": "top",
-      "toSide": "bottom"
+      "fromSide": "left",
+      "toSide": "top"
     },
     {
       "id": "cud",
@@ -203,7 +203,16 @@
       "id": "status",
       "from": "awsapi",
       "to": "controller",
-      "label": "상태 모니터링",
+      "label": "AWS 응답",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "status-update",
+      "from": "controller",
+      "to": "cr",
+      "label": "status 갱신",
       "variant": "dashed",
       "fromSide": "bottom",
       "toSide": "bottom"
@@ -216,7 +225,7 @@
       "items": [
         "서비스 컨트롤러: 각 AWS 서비스에 대한 전용 컨트롤러",
         "CRD: AWS 리소스를 Kubernetes API로 정의",
-        "CR: AWS 리소스의 인스턴스",
+        "CR: AWS 리소스의 원하는 상태와 관찰된 상태",
         "조정 루프: 원하는 상태와 실제 상태의 차이를 감지하고 해결"
       ]
     },
@@ -228,6 +237,15 @@
         "2. ACK 컨트롤러가 CR 변경 사항을 감지",
         "3. 컨트롤러가 AWS API를 호출하여 리소스를 생성, 업데이트, 삭제",
         "4. 컨트롤러가 AWS 리소스 상태를 모니터링하고 Kubernetes 리소스 상태를 업데이트"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "권한과 준비 상태",
+      "items": [
+        "Kubernetes RBAC와 controller의 AWS IAM 권한은 별도",
+        "CR 생성 / ResourceSynced가 app readiness를 증명하지 않음",
+        "기본 감시 범위는 cluster이며 namespace 분리만으로 격리되지 않음"
       ]
     }
   ]

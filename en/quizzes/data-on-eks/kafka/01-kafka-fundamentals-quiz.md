@@ -1,5 +1,7 @@
 # Kafka Fundamentals Quiz
 
+> **Last Updated**: September 12, 2026, Kafka 4.3.1.
+
 This quiz tests your understanding of Kafka's broker/topic/partition model, ordering guarantees, consumer group rebalancing, KRaft, and replication/durability settings.
 
 ## Multiple Choice Questions
@@ -17,7 +19,7 @@ This quiz tests your understanding of Kafka's broker/topic/partition model, orde
 **Answer: C) Only within the same partition**
 
 **Explanation:**
-Kafka only guarantees message ordering within a single partition. If a topic has multiple partitions, there is no guaranteed relative order between messages stored in different partitions, regardless of the order the producer sent them in. To preserve ordering for a specific entity's events (for example, events for a given order ID), you must use a key that identifies that entity so all its events are routed to the same partition.
+The guarantee is partition log order. Same-key routing requires consistent serialization, partitioner and partition count; resizing or client changes can change the mapping. Business-event time and parallel application processing require separate ordering contracts.
 </details>
 
 2. What does ISR (In-Sync Replicas) refer to?
@@ -33,10 +35,10 @@ Kafka only guarantees message ordering within a single partition. If a topic has
 **Answer: B) The set of replicas that are sufficiently caught up with the leader**
 
 **Explanation:**
-ISR (In-Sync Replicas) is the set of follower replicas (plus the leader itself) whose data is sufficiently synchronized with the partition's leader replica. When a write is sent with `acks=all`, it is only considered successful once every replica in the ISR has received the message. A follower that falls too far behind the leader is removed from the ISR, which acts as a safeguard for data consistency during failures.
+ISR contains sufficiently synchronized replicas, including the leader. acks=all waits for the current full ISR, while min.insync.replicas constrains its minimum size. Acknowledgement is not equivalent to fsync of every record.
 </details>
 
-3. What is the default value of a Kafka consumer's `enable.auto.commit` setting?
+3. What is the default enable.auto.commit value for Kafka 4.3 Java KafkaConsumer?
    - A) `false`
    - B) `true`
    - C) It depends on the broker configuration
@@ -49,12 +51,12 @@ ISR (In-Sync Replicas) is the set of follower replicas (plus the leader itself) 
 **Answer: B) `true`**
 
 **Explanation:**
-The default value of `enable.auto.commit` is `true`, in which case the consumer automatically commits offsets every `auto.commit.interval.ms` (5 seconds by default). This is convenient, but the offset can be committed before message processing actually finishes, risking message loss on failure. To commit only after processing completes, set `enable.auto.commit=false` and call `commitSync()` or `commitAsync()` explicitly.
+Kafka 4.3 Java KafkaConsumer defaults to true with a 5000 ms interval. Client position is not external business completion. In asynchronous/parallel processing, avoid committing beyond unfinished work. Manual commit also requires correct completed-position accounting.
 </details>
 
 4. Which of the following does NOT trigger a consumer group rebalance?
    - A) A new consumer joins the group
-   - B) A consumer fails to send a heartbeat within `session.timeout.ms`
+   - B) A Classic-protocol consumer fails to send a heartbeat within `session.timeout.ms`
    - C) The number of partitions on the topic changes
    - D) A producer sends a message with `acks=all`
 
@@ -65,7 +67,7 @@ The default value of `enable.auto.commit` is `true`, in which case the consumer 
 **Answer: D) A producer sends a message with `acks=all`**
 
 **Explanation:**
-Rebalances happen when consumer group membership changes or the partition layout of the subscribed topic changes: consumers joining or leaving, heartbeat timeouts, exceeding `max.poll.interval.ms`, or a change in partition count are the typical triggers. `acks`, on the other hand, is a producer-side setting that determines how the producer confirms a write completed — it has nothing to do with a consumer group's partition assignment or rebalancing.
+Membership, subscribed partitions and heartbeat/poll timeouts affect assignment. Classic uses client session.timeout.ms; the consumer protocol uses broker group.consumer.session.timeout.ms. acks controls producer acknowledgements.
 </details>
 
 5. Starting with which Kafka version did KRaft (Kafka Raft metadata mode) become production-ready (GA)?
@@ -100,7 +102,7 @@ KRaft was first introduced as an early-access preview in Kafka 2.8, but it did n
 Kafka 4.0 (released in March 2025) completely removed the ZooKeeper-based metadata management mode. From this version on, new clusters can only be bootstrapped in KRaft mode, and existing ZooKeeper-based clusters must complete a migration to KRaft on Kafka 3.x before upgrading to 4.0.
 </details>
 
-7. If a topic is configured with `replication.factor=3` and `min.insync.replicas=2`, and the producer uses `acks=all`, what is the maximum number of simultaneous broker failures the topic can tolerate while still accepting writes?
+7. With three healthy ISR replicas and other requirements such as controller quorum maintained, how many broker failures can RF=3/min ISR=2/acks=all tolerate while retaining write availability?
    - A) 0
    - B) 1
    - C) 2
@@ -113,10 +115,10 @@ Kafka 4.0 (released in March 2025) completely removed the ZooKeeper-based metada
 **Answer: B) 1**
 
 **Explanation:**
-With a replication factor of 3, each partition is stored on 3 replicas. `min.insync.replicas=2` means at least 2 replicas must remain in the ISR for an `acks=all` write to succeed. If one broker fails, the remaining 2 replicas stay in the ISR, so writes continue to succeed. But if two brokers fail simultaneously, the ISR shrinks to just 1, no longer satisfying `min.insync.replicas`, and the producer receives a `NotEnoughReplicasException`.
+This assumes all three replicas initially belong to a healthy ISR and controller quorum, networking and storage remain viable. Two remaining ISR members satisfy the minimum after one broker failure, though transition errors/retries can occur. Two replica failures do not preserve write availability. RF=3 alone does not guarantee data survival under arbitrary two-broker failures.
 </details>
 
-8. Which producer `acks` setting has the lowest durability but the lowest latency?
+8. Which acks setting does not wait for a broker acknowledgement?
    - A) `acks=0`
    - B) `acks=1`
    - C) `acks=all`
@@ -129,7 +131,7 @@ With a replication factor of 3, each partition is stored on 3 replicas. `min.ins
 **Answer: A) `acks=0`**
 
 **Explanation:**
-`acks=0` means the producer does not wait for any response from the broker at all — it considers the write successful the instant the message is sent. This is the fastest option in terms of latency and throughput, but if a network issue or broker failure occurs, there is no way to know whether the message was actually stored, making it the riskiest option for data loss. Note that `acks=all` and `acks=-1` mean the same thing — the safest setting, requiring every ISR replica to acknowledge the write before it's considered successful.
+acks=0 waits for no broker response, cannot confirm storage and returns offset -1. It does not guarantee the best latency/throughput under every load. It conflicts with explicitly enabled idempotence. acks=all and -1 are equivalent.
 </details>
 
 9. In the KRaft architecture, what is the single node called that actually processes cluster metadata changes (partition leader election, topic creation, etc.)?
@@ -145,10 +147,10 @@ With a replication factor of 3, each partition is stored on 3 replicas. `min.ins
 **Answer: B) Active Controller**
 
 **Explanation:**
-In KRaft, several controller voters (typically 3 or 5, an odd number for Raft quorum) participate in replicating the metadata log, and one of them is elected Active Controller through Raft consensus. Only the Active Controller actually processes cluster metadata changes; if it fails, a new Active Controller is elected from the remaining voters.
+One controller voter is elected active controller. Electing a replacement requires the necessary majority and connectivity. Dedicated controllers need not serve the broker data role.
 </details>
 
-10. What is the main purpose of using the `CooperativeStickyAssignor`?
+10. What is the purpose of CooperativeStickyAssignor in the Classic group protocol?
     - A) To change how the producer hashes partition keys
     - B) To minimize partition movement during a rebalance, reducing its cost
     - C) To dynamically adjust the number of voters in the controller quorum
@@ -161,12 +163,12 @@ In KRaft, several controller voters (typically 3 or 5, an odd number for Raft qu
 **Answer: B) To minimize partition movement during a rebalance, reducing its cost**
 
 **Explanation:**
-The traditional eager rebalancing protocol requires every consumer to give up all of its owned partitions and get reassigned from scratch whenever a rebalance starts. `CooperativeStickyAssignor` uses a cooperative rebalancing protocol that only reassigns the partitions that actually need to move, letting existing consumers keep the partitions they already own. This reduces the number of partitions whose consumption is interrupted during a rebalance, mitigating the overall throughput hit.
+CooperativeStickyAssignor is a client assignor for the Classic group protocol. Incremental reassignment reduces unnecessary disruption. The newer consumer protocol uses server-side assignors, so the same client-class configuration does not apply.
 </details>
 
 ## Short Answer Questions
 
-11. What is the name of the internal Kafka topic where cluster metadata is stored in KRaft mode?
+11. What is the name of KRaft's internal metadata Raft log?
 
 <details>
 
@@ -175,7 +177,7 @@ The traditional eager rebalancing protocol requires every consumer to give up al
 **Answer: `__cluster_metadata`**
 
 **Explanation:**
-In KRaft mode, instead of relying on a separate ZooKeeper ensemble, Kafka stores cluster metadata (topic/partition information, ACLs, controller state change history, etc.) as an event log in an internal topic named `__cluster_metadata`. Controller quorum voters replicate this topic via the Raft protocol, and brokers subscribe to it to stay current with the latest metadata. This design lets Kafka reuse its own core storage model — the partition log — for metadata management as well.
+__cluster_metadata is KRaft's internal metadata Raft log, commonly visible as a __cluster_metadata-0 directory. It is not an ordinary application topic managed through KafkaProducer/KafkaConsumer; controllers and brokers use metadata replication/fetch paths.
 </details>
 
 12. What producer setting is enabled to prevent duplicate message writes caused by network retries?
@@ -187,7 +189,7 @@ In KRaft mode, instead of relying on a separate ZooKeeper ensemble, Kafka stores
 **Answer: `enable.idempotence` (the idempotent producer, `enable.idempotence=true`)**
 
 **Explanation:**
-Setting `enable.idempotence=true` causes the producer to attach a sequence number and producer ID to each message, which the broker uses to detect and discard duplicate writes caused by retries. This setting is the foundation for achieving exactly-once writes within Kafka (at the topic level), and combining it with `transactional.id` extends that guarantee to atomic writes spanning multiple partitions or topics.
+Producer IDs, epochs and sequences suppress duplicates of the same retried transmission. They do not generally deduplicate an application submitting a business event as a new send. Transactions require logical-writer identity/fencing, atomic output/input-offset commits and read_committed consumption.
 </details>
 
 13. What is the term for the situation where traffic concentrates on a small number of partitions because the chosen partition key has low cardinality (few distinct values)?
@@ -202,7 +204,7 @@ Setting `enable.idempotence=true` causes the producer to attach a sequence numbe
 A hot partition occurs when the values chosen as the partition key don't have enough cardinality (distinct values), or when a particular value occurs disproportionately often. For example, if most of the traffic is concentrated on a handful of large customer IDs, only the partitions those keys hash to receive excessive load while the rest sit idle. This defeats the benefit of parallel consumer processing, so traffic distribution should be reviewed carefully when designing the key.
 </details>
 
-14. What setting controls the maximum time a consumer can spend processing messages between calls to `poll()`, and triggers a rebalance if exceeded because the consumer is considered to have left the group?
+14. Which setting bounds the interval between consecutive KafkaConsumer poll() calls?
 
 <details>
 
@@ -211,7 +213,7 @@ A hot partition occurs when the values chosen as the partition key don't have en
 **Answer: `max.poll.interval.ms`**
 
 **Explanation:**
-`max.poll.interval.ms` specifies the maximum allowed time between consecutive `poll()` calls (5 minutes by default). If processing the records returned from a single `poll()` takes longer than this, the broker considers the consumer no longer alive, removes it from the group, and triggers a rebalance. This is a separate mechanism from `session.timeout.ms`, which is governed by a separate heartbeat thread; if processing logic is slow, you should either increase this value or reduce `max.poll.records` to shrink the batch size.
+The default is 300000 ms. With static membership (group.instance.id), exceeding it does not immediately reassign partitions; session timeout after heartbeats stop also matters. Check Classic/consumer timeout rules and tune processing, poll size and execution model together.
 </details>
 
 ## Hands-on Questions
@@ -225,7 +227,7 @@ A hot partition occurs when the values chosen as the partition key don't have en
 **Answer:**
 ```bash
 kafka-topics.sh --create \
-  --bootstrap-server localhost:9092 \
+  --bootstrap-server "$DOCS_BOOTSTRAP" \
   --topic events \
   --partitions 8 \
   --replication-factor 3 \
@@ -233,10 +235,10 @@ kafka-topics.sh --create \
 ```
 
 **Explanation:**
-`--partitions 8` splits the topic into 8 partitions, allowing up to 8 consumers to consume it in parallel. `--replication-factor 3` copies each partition to 3 brokers, preserving data through up to 2 broker failures. `--config min.insync.replicas=2` enforces that at least 2 replicas remain in the ISR for an `acks=all` write to succeed, which combined with the replication factor keeps writes available through a single broker failure.
+This assumes a reachable cluster with at least three brokers and appropriate authentication. Eight partitions permit up to eight active owners in an automatically assigned partition-based group; one consumer can own several. Failure tolerance depends on actual synchronization, quorum and other conditions.
 </details>
 
-16. Write a sample `server.properties` configuration for a dedicated 3-node KRaft controller quorum (controller role only, no broker role). Use node IDs 90, 91, and 92.
+16. Write a Kafka 4.3.1 dynamic-quorum configuration excerpt for dedicated controller node.id=90 with three discovery endpoints, and explain why seeds are not voter membership.
 
 <details>
 
@@ -244,23 +246,22 @@ kafka-topics.sh --create \
 
 **Answer:**
 ```properties
-# server.properties for one dedicated controller node (e.g., node.id=90)
+# Configuration excerpt for node 90; these DNS names must resolve in the deployment.
 process.roles=controller
 node.id=90
-
-controller.quorum.voters=90@kraft-controller-0:9093,91@kraft-controller-1:9093,92@kraft-controller-2:9093
-
-listeners=CONTROLLER://:9093
+controller.quorum.bootstrap.servers=controller-0.example.internal:9093,controller-1.example.internal:9093,controller-2.example.internal:9093
+listeners=CONTROLLER://controller-0.example.internal:9093
+advertised.listeners=CONTROLLER://controller-0.example.internal:9093
+listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
 controller.listener.names=CONTROLLER
-
-log.dirs=/var/lib/kafka/controller-data
+log.dirs=./controller-90-data
 ```
 
 **Explanation:**
-Setting `process.roles=controller` means this node only acts as a controller quorum voter and does not serve broker traffic. In larger clusters, separating the controller role from the broker role this way keeps metadata processing load from competing with data processing load, improving stability. `controller.quorum.voters` must list every node participating in the controller quorum as `node.id@host:port`, and using an odd count (3 or 5) lets the cluster compute a clear Raft quorum majority.
+controller.quorum.bootstrap.servers is a discovery seed list, not voter membership. Initial format/bootstrap must coordinate cluster ID, directory IDs and initial voters. Do not set controller.quorum.voters for a dynamic quorum. Match DNS, listeners and TLS/authentication to the deployment; this is a configuration excerpt, not a complete deployable cluster.
 </details>
 
-17. Write a producer configuration (Java properties format) that combines `acks=all`, idempotent writes, and a transactional ID to achieve exactly-once writes.
+17. Provide producer settings for idempotence and a transactional ID, and explain the additional steps needed for Kafka-to-Kafka exactly-once processing.
 
 <details>
 
@@ -268,16 +269,18 @@ Setting `process.roles=controller` means this node only acts as a controller quo
 
 **Answer:**
 ```properties
-bootstrap.servers=broker1:9092,broker2:9092,broker3:9092
+bootstrap.servers=127.0.0.1:19092
+key.serializer=org.apache.kafka.common.serialization.StringSerializer
+value.serializer=org.apache.kafka.common.serialization.StringSerializer
 acks=all
 enable.idempotence=true
-transactional.id=order-producer-1
+transactional.id=orders-writer-1
 max.in.flight.requests.per.connection=5
-retries=2147483647
+delivery.timeout.ms=120000
 ```
 
 **Explanation:**
-`acks=all` requires every ISR replica to receive the message before the write is considered successful, and `enable.idempotence=true` eliminates duplicate writes caused by retries. Setting `transactional.id` makes the producer a transactional producer, letting it use the `initTransactions()`, `beginTransaction()`, and `commitTransaction()` APIs to atomically write across multiple partitions. Setting `retries` very high is safe once `enable.idempotence=true` is set, since ordering and duplicates are managed automatically; `max.in.flight.requests.per.connection` must stay at 5 or below to avoid breaking ordering guarantees.
+Configuration only prepares a producer for transactions. Implement initTransactions, beginTransaction, output sends, sendOffsetsToTransaction with next input offsets, commitTransaction, and abort/recovery handling. Consumers disable auto commit and use read_committed. Concurrent writers need distinct transactional IDs; deadlines such as delivery.timeout.ms still apply.
 </details>
 
 ---

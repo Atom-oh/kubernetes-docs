@@ -6,6 +6,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const REMOTE_OR_DYNAMIC_TARGET = /^(?:[a-z][a-z0-9+.-]*:|\/\/|#|\{\{|\{%)/i
+const REPOSITORY_MAIN = /^https:\/\/(?:github\.com\/Atom-oh\/kubernetes-docs\/blob\/main\/|raw\.githubusercontent\.com\/Atom-oh\/kubernetes-docs\/main\/)/i
 
 export function stripFencedCode(markdown) {
   let activeFence = null
@@ -29,25 +30,29 @@ function lineNumberAt(source, index) {
 }
 
 function isLocalTarget(target) {
-  return target && !REMOTE_OR_DYNAMIC_TARGET.test(target)
+  return target && (REPOSITORY_MAIN.test(target) || !REMOTE_OR_DYNAMIC_TARGET.test(target))
 }
 
 export function extractLocalTargets(markdown) {
   const matches = []
   const patterns = [
-    /!?\[[^\]]*]\(\s*(?:<([^>]+)>|([^\s)]+))/g,
-    /<(?:a|img)\b[^>]*?\b(?:href|src)=["']([^"']+)["'][^>]*>/gi,
-    /^\s*\[[^\]]+]:\s*(?:<([^>]+)>|(\S+))/gm
+    /!?\[[^\]]*]\(\s*(?:<([^>]+)>|([^\s)]+))/gd,
+    /<(?:a|img)\b[^>]*?\b(?:href|src)=["']([^"']+)["'][^>]*>/gdi,
+    /^\s*\[[^\]]+]:\s*(?:<([^>]+)>|(\S+))/gmd
   ]
 
   for (const pattern of patterns) {
     for (const match of markdown.matchAll(pattern)) {
       const target = (match[1] || match[2] || '').trim()
       if (!isLocalTarget(target)) continue
+      const group = match[1] ? 1 : 2
+      const targetStart = match.indices[group][0] + match[group].indexOf(target)
       matches.push({
         target,
         line: lineNumberAt(markdown, match.index),
-        index: match.index
+        index: match.index,
+        targetStart,
+        targetEnd: targetStart + target.length
       })
     }
   }
@@ -71,7 +76,7 @@ export function requiresExplicitReadmeTarget(target) {
 }
 
 export function resolveLocalTarget(sourcePath, target, repositoryRoot) {
-  const cleanTarget = withoutQueryOrFragment(target)
+  const cleanTarget = withoutQueryOrFragment(target.replace(REPOSITORY_MAIN, '/'))
   if (!cleanTarget) return []
 
   let resolved

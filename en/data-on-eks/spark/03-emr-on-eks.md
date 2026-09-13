@@ -1,33 +1,100 @@
 # Part 3: Amazon EMR on EKS
 
-> **Last Updated**: July 15, 2026
+> **Last reviewed**: September 12, 2026 · API example: `emr-spark-8.0.0-20260421`
 
-## Lab Environment Setup
+## Runtime and submission paths
 
-To follow along with the examples in this document, you will need the following tools and environment:
+EMR on EKS adds an AWS-curated Spark runtime and submission services to existing
+EKS infrastructure. You still operate EKS capacity, networking, storage and nodes.
+Distinguish the following paths:
 
-### Required Tools
+| Path | Submission and lifecycle | What you manage |
+| --- | --- | --- |
+| StartJobRun | AWS API with an EMR virtual cluster ID and execution role | EMR job status, permissions and logging configuration |
+| EMR runtime + Spark Operator | SparkApplication CR submitted to the installed EMR operator | Helm/CRDs, controller, Kubernetes RBAC and CR lifecycle |
+| Direct spark-submit | Spark submits to the Kubernetes API | Submitter, Spark configuration, status and reruns |
 
-* AWS CLI v2 (for registering virtual clusters and calling `emr-containers` APIs)
-* A working Amazon EKS cluster (v1.30 or later recommended)
-* IAM permissions to create the EMR virtual cluster's IAM role and each job's execution role
-* kubectl v1.30 or later (for inspecting the namespace EMR on EKS targets)
+Spark Operator support since EMR 6.10.0 does **not** mean StartJobRun has an option
+to delegate internally to that operator. The documented operator path installs it
+separately and uses kubectl apply. Do not assume those CR applications automatically
+receive StartJobRun IDs or become managed by the EMR job API. You can combine the
+EMR runtime with CR-based operations, but submission, observation and retries follow
+the chosen path. The EMR chart is also distinct from Part 2's current upstream charts.
 
-Part 1 covered running `spark-submit` directly against Kubernetes, and Part 2 covers wrapping that same submission model in the open-source Spark Operator's CRD-based workflow. This part covers a third option: Amazon EMR on EKS, AWS's managed Spark runtime that runs on top of your own EKS cluster rather than replacing it.
+## Current releases and reproducibility
 
-## What EMR on EKS Actually Changes
+| EMR on EKS release | Spark runtime |
+| --- | --- |
+| emr-7.13.0 | 3.5.6-amzn-2 |
+| emr-spark-8.0.0 | 4.0.2-amzn-0; Spark 4.x GA, released April 2026 |
 
-EMR on EKS doesn't give you a different cluster — your driver and executor pods still land on the same EKS nodes as everything else. What it changes is the **submission model and the Spark runtime**. Instead of running `kubectl apply` against a `SparkApplication` custom resource (the Part 2 approach) or calling `spark-submit` yourself (the Part 1 approach), you call the **StartJobRun API**, and AWS's control plane translates that into pods running an AWS-optimized Spark build.
+Spark 4 is already available. The 8.0.0 number names an EMR runtime release, not
+Apache Spark 8. Check versions and capabilities separately for other EMR deployment
+options. A `-latest` alias follows security updates; it does not pin identical
+image bytes. Dated suffixes aid reproducibility, but still require update review.
+The dated example below is a reproducibility baseline, not a claim of the latest
+security patch level.
 
-### Virtual Clusters: the Core Abstraction
+## Prepare the environment
 
-A **virtual cluster** is the mapping between an EMR concept and a real Kubernetes object: it registers a single EKS namespace with the EMR control plane. Nothing is provisioned inside the namespace at registration time — a virtual cluster is a pointer, not new infrastructure. Every job you submit against that virtual cluster ID lands as driver/executor pods inside the namespace it points to, governed by whatever `ResourceQuota`, `LimitRange`, and RBAC already apply to that namespace.
+Use a supported EKS release, compatible kubectl and current AWS CLI v2 rather than
+an old blanket recommendation of Kubernetes 1.30. The Pod Identity CLI helper needs
+2.24.0 or later. Have an administrator prepare:
+
+1. The `emr-spark` namespace, node capacity/networking, quotas and admission policies.
+2. The EMR service-linked role and EKS API access. Use Access Entry integration for
+   new virtual clusters. The documented CAM procedure shows API_AND_CONFIG_MAP;
+   inspect the current mode and do not attempt to downgrade an API-only cluster.
+   Existing virtual clusters are not automatically migrated.
+3. The `docs-emr-job` execution role: read the script object below and grant only
+   required data/KMS and CloudWatch log group/stream permissions.
+4. An existing S3 artifact bucket and `/emr-containers/docs-spark` log group with a
+   retention policy. Uploader and job execution permissions are separate.
+5. Caller permissions to start, inspect and cancel jobs with allowed execution roles.
+   Restrict roles using `emr-containers:ExecutionRoleArn`. For Pod Identity,
+   scope PassRole to the selected role and `pods.eks.amazonaws.com`.
+
+A virtual cluster registers an EKS namespace; it does not create compute capacity.
+However, registration can create the initial service-linked role and configure CAM
+access entries/policies. “Registration changes no resources or permissions” is too
+broad. Namespaces also need RBAC, network and pod-security controls for isolation.
+
+## Execution role: IRSA or Pod Identity
+
+IRSA needs the cluster's IAM OIDC provider and trust scoped to the audience,
+namespace and EMR-managed service-account identity. update-role-trust-policy
+changes this trust; it does not grant data permissions or caller permissions.
+
+StartJobRun also supports **EKS Pod Identity from EMR 7.3.0**. Prepare the Agent,
+node EKS Auth permissions, sts:AssumeRole/sts:TagSession trust for
+`pods.eks.amazonaws.com`, and EMR service-account associations. The helper prepares
+three associations for submitter, driver and executor. An IRSA annotation does not
+replace these associations.
+
+Replace the cluster/role/namespace values and execute **only the selected path**.
+These helpers change IAM/EKS configuration.
 
 ```bash
-# Register an existing EKS namespace as an EMR virtual cluster
-aws emr-containers create-virtual-cluster \
-  --name my-spark-vc \
-  --container-provider '{
+# Option A: IRSA, after creating the cluster IAM OIDC provider and job role.
+aws emr-containers update-role-trust-policy \
+  --region "$AWS_REGION" \
+  --cluster-name my-eks-cluster --namespace emr-spark --role-name docs-emr-job
+
+# Option B: Pod Identity, after configuring the agent/node permissions and job-role trust.
+# Choose the appropriate path; these are not two mandatory consecutive steps.
+aws emr-containers create-role-associations \
+  --region "$AWS_REGION" \
+  --cluster-name my-eks-cluster --namespace emr-spark --role-name docs-emr-job
+```
+
+## Register a virtual cluster
+
+Save as create-virtual-cluster.json and replace the example names.
+
+```json
+{
+  "name": "docs-spark-vc",
+  "containerProvider": {
     "id": "my-eks-cluster",
     "type": "EKS",
     "info": {
@@ -35,122 +102,177 @@ aws emr-containers create-virtual-cluster \
         "namespace": "emr-spark"
       }
     }
-  }'
+  }
+}
 ```
 
-This call returns a `virtualClusterId` — an opaque identifier you'll pass to every subsequent `start-job-run` call. Deleting a virtual cluster only deletes the registration; it does not touch the namespace or anything running in it.
-
-### Job Execution IAM Roles
-
-Every job run needs a **job execution role**: an IAM role scoped to what that specific job is allowed to touch (an S3 bucket, a Glue Data Catalog, a KMS key), passed explicitly on each `start-job-run` call rather than attached once to the cluster. The role must first be **onboarded** to the virtual cluster — its trust policy has to allow the EMR on EKS service to assume it for pods running in that namespace, bound to a Kubernetes service account via an IRSA-style OIDC trust relationship. This mirrors IRSA's mechanics from Part 2's IAM discussion, but the binding is between the execution role and EMR-managed pods rather than a service account you create and manage yourself.
+Current service documentation also defines schedulerConfiguration with
+maxConcurrentJobRuns and maxInQueueJobRuns. The AWS CLI 2.35.11 service model used
+for this review lacks that field, so it is omitted from this baseline example.
+Verify CLI/SDK support before using it. Job-count limits do not replace CPU/memory
+quotas or executor caps.
 
 ```bash
-# Grant the EMR on EKS service permission to assume the job execution role
-aws emr-containers update-role-trust-policy \
-  --cluster-name my-eks-cluster \
-  --namespace emr-spark \
-  --role-name my-job-execution-role
+# Replace the cluster/name/namespace in create-virtual-cluster.json first.
+: "${AWS_REGION:?Set the region of the EKS cluster}"
+aws emr-containers create-virtual-cluster \
+  --region "$AWS_REGION" \
+  --cli-input-json file://create-virtual-cluster.json \
+  --query id --output text
+# Copy the returned id into start-job-run.json; verify state before submitting.
+: "${EMR_VIRTUAL_CLUSTER_ID:?Set the returned virtual cluster ID}"
+aws emr-containers describe-virtual-cluster \
+  --region "$AWS_REGION" --id "$EMR_VIRTUAL_CLUSTER_ID" \
+  --query 'virtualCluster.{state:state,provider:containerProvider}'
 ```
 
-## Submitting a Job: StartJobRun vs. kubectl apply
+CreateVirtualCluster returns **id**. Use it as virtualClusterId in StartJobRun and
+verify RUNNING state and the target namespace.
 
-This is the fundamental UX difference from Part 2. The Spark Operator approach submits a job by writing a `SparkApplication` YAML manifest and applying it with `kubectl` (or a GitOps tool syncing it from Git) — the job's entire definition lives as a Kubernetes object, reconciled by a controller watching that CRD. EMR on EKS instead exposes job submission as a **regular AWS API**, callable from the CLI, any AWS SDK, the console, or a Step Functions state machine — no `kubectl` access to the cluster is required to run a job at all.
+## Submit a smoke job
 
-```bash
-aws emr-containers start-job-run \
-  --virtual-cluster-id abcd1234efgh5678ijkl9012mnop \
-  --name my-etl-job \
-  --execution-role-arn arn:aws:iam::111122223333:role/my-job-execution-role \
-  --release-label emr-7.6.0-latest \
-  --job-driver '{
+Save as smoke.py. It checks rows=10 and total=45 without modifying an external dataset.
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+
+spark = SparkSession.builder.appName("docs-emr-smoke").getOrCreate()
+try:
+    result = spark.range(10).agg(F.count("*").alias("rows"), F.sum("id").alias("total")).first()
+    if result.rows != 10 or result.total != 45:
+        raise RuntimeError(f"Unexpected result: {result}")
+    print("SMOKE_OK rows=10 total=45")
+finally:
+    spark.stop()
+```
+
+Save as start-job-run.json and replace the virtualClusterId, account, role and
+bucket. Prepare script-read and log-group access before submission.
+
+```json
+{
+  "name": "docs-spark-smoke",
+  "virtualClusterId": "abcd1234efgh5678ijkl9012mnop",
+  "executionRoleArn": "arn:aws:iam::111122223333:role/docs-emr-job",
+  "releaseLabel": "emr-spark-8.0.0-20260421",
+  "jobDriver": {
     "sparkSubmitJobDriver": {
-      "entryPoint": "s3://my-bucket/jobs/etl-job.py",
-      "sparkSubmitParameters": "--conf spark.executor.instances=4 --conf spark.executor.memory=4G"
+      "entryPoint": "s3://my-existing-artifact-bucket/docs-emr/smoke.py",
+      "sparkSubmitParameters": "--conf spark.executor.instances=2 --conf spark.executor.cores=1 --conf spark.executor.memory=1g --conf spark.driver.cores=1 --conf spark.driver.memory=1g"
     }
-  }' \
-  --configuration-overrides '{
+  },
+  "configurationOverrides": {
     "monitoringConfiguration": {
       "cloudWatchMonitoringConfiguration": {
-        "logGroupName": "/emr-containers/my-spark-vc",
-        "logStreamNamePrefix": "etl-job"
+        "logGroupName": "/emr-containers/docs-spark",
+        "logStreamNamePrefix": "smoke"
       }
     }
-  }'
+  }
+}
 ```
 
-![Sequence showing a client calling StartJobRun, EMR targeting the EKS namespace bound to the virtual cluster, a driver pod created under the job execution role (IRSA-style), the driver requesting executor pods, and status, logs and metrics sent back.](../../.gitbook/assets/en-data-on-eks-spark-03-emr-on-eks-0.png)
+```bash
+# Replace the bucket in this command and start-job-run.json with the same existing bucket.
+aws s3 cp smoke.py s3://my-existing-artifact-bucket/docs-emr/smoke.py \
+  --region "$AWS_REGION"
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-spark-03-emr-on-eks-0.html)
+# Keep this token for retries of the same request. Use a new token for a new intended run.
+EMR_REQUEST_TOKEN="$(python3 -c 'import uuid; print(uuid.uuid4())')"
+aws emr-containers start-job-run \
+  --region "$AWS_REGION" \
+  --cli-input-json file://start-job-run.json \
+  --client-token "$EMR_REQUEST_TOKEN" --query id --output text
 
-The pods that eventually run are ordinary EKS pods — they show up under `kubectl get pods -n emr-spark` like anything else — but you never author their spec directly. The `release-label` you pass (`emr-7.6.0-latest`, for example) selects both the Spark version and the container image EMR uses for the driver/executor pods, so there's no Dockerfile to build and push yourself.
+: "${EMR_JOB_ID:?Set the returned job ID}"
+aws emr-containers describe-job-run \
+  --region "$AWS_REGION" --virtual-cluster-id "$EMR_VIRTUAL_CLUSTER_ID" \
+  --id "$EMR_JOB_ID" --query 'jobRun.{state:state,details:stateDetails,reason:failureReason}'
+```
 
-### EMR Release Labels
+An accepted API response is not job completion. Check final COMPLETED state and
+SMOKE_OK rows=10 total=45 in driver logs. A request token deduplicates the API request;
+it does not make external side effects exactly-once across application retries.
+Inspect stateDetails, failureReason and submitter/driver/executor logs on failure.
 
-EMR on EKS versions its Spark runtime through **release labels**, following the pattern `emr-x.x.x-latest`. Each release label pins a specific, AWS-patched Spark build:
+![StartJobRun, Kubernetes pod placement, execution-role credentials and separate job/log observation.](../../.gitbook/assets/en-data-on-eks-spark-03-emr-on-eks-0.png)
 
-| Release Label | Spark Version |
-| --- | --- |
-| `emr-7.0.0-latest` | Spark 3.5.0-amzn-0 |
-| `emr-7.6.0-latest` | Spark 3.5.3-amzn-0 |
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-spark-03-emr-on-eks-0.html)
 
-The `-amzn-N` suffix signals that this isn't stock upstream Spark — it's the open-source release plus AWS's own patches (S3 connector tuning, AQE and shuffle improvements, and other performance backports) layered on top. The `emr-spark-8.0` release line is the one that brings **Spark 4.0** to GA across EMR on EC2, EMR Serverless, and EMR on EKS uniformly.
+## Pod configuration, observation and interactive development
 
-### EMR Studio
+EMR pods are visible through kubectl in their namespace. Supported pod templates and
+custom-image paths allow customization; “you can never author pod configuration” is
+incorrect. Do not override StartJobRun-managed namespace, service-account or pod-name
+settings arbitrarily. Follow the release/submission-specific supported fields and
+custom-image validation procedure.
 
-**EMR Studio** is a notebook/IDE-style interface for developing and running Spark code against your virtual clusters interactively, instead of packaging a job and calling `start-job-run` from the CLI every time. It's the same virtual-cluster/execution-role model underneath — Studio submits through the same APIs — but gives you a Jupyter-style development loop for exploration before a job graduates into a scheduled `start-job-run` pipeline.
+CloudWatch logs need monitoringConfiguration and execution-role permissions.
+Distinguish job-state metrics from complete Spark executor telemetry. Step Functions
+supports StartJobRun request/response and .sync integration, but needs a configured
+state machine and role. EventBridge job events also need rules, targets and failure
+handling. Availability of an integration does not enable all collection or automation.
 
-## EMR on EKS and the Spark Operator Aren't Mutually Exclusive
+EMR Studio connects to an **interactive endpoint created with CreateManagedEndpoint**.
+Jupyter Enterprise Gateway manages kernel lifecycles, with private-subnet, ALB
+controller, network and role prerequisites. Notebook cells are not simply ordinary
+StartJobRun batch calls. Users/kernels sharing an endpoint use its execution role;
+review access boundaries and separate endpoints where needed. Endpoints and kernels
+incur costs, unlike merely registering the virtual cluster.
 
-It's tempting to read EMR on EKS and Part 2's self-managed Spark Operator as two competing, either-or submission paths. Since **EMR 6.10**, that's no longer strictly true: EMR on EKS can itself submit jobs *through* the open-source Spark Operator as a job-submission-model choice, rather than only through its own native driver/executor pod creation. In that mode, you still get EMR's AWS-optimized Spark runtime and release-label versioning, but the underlying reconciliation follows the Spark Operator's CRD-based lifecycle instead of EMR's own internal pod management. This matters if you've already standardized your GitOps pipeline around `SparkApplication` manifests and don't want to give that up just to get EMR's managed runtime and job-run API.
+## Choosing and cleaning up
 
-## Comparing EMR on EKS vs. the Self-Managed Spark Operator
+Choose StartJobRun for an AWS API submission lifecycle and assess a suitable operator
+for CR-based operations. Compare required upstream versions/plugins, portability,
+measured performance and total cost. EMR does not remove EKS/compute, storage and
+logging costs or infrastructure responsibility.
 
-| Aspect | Amazon EMR on EKS | Self-Managed Spark Operator (Part 2) |
-| --- | --- | --- |
-| **Spark runtime** | AWS-optimized build (`-amzn-N`) with backported performance/AQE improvements | Vanilla upstream Spark, or any custom build you choose |
-| **Job submission** | `StartJobRun` API (CLI/SDK/console/Step Functions) | `kubectl apply` of a `SparkApplication` CR, typically via GitOps |
-| **Version control** | Pick a `release-label`; AWS curates the Spark/runtime pairing | You choose the exact Spark and Kubernetes versions, upgraded on your own schedule |
-| **Operational burden** | AWS manages the runtime image and much of the submission plumbing | You own the Operator's lifecycle, CRD versions, and upgrade timing |
-| **AWS service integration** | Native CloudWatch Logs/Metrics, Step Functions, EventBridge integration built in | Requires wiring your own Prometheus/Grafana/EventBridge integration |
-| **GitOps fit** | Jobs are API calls, not manifests — needs a wrapper (Lambda, Step Functions) to fit a GitOps pipeline cleanly | `SparkApplication` is a native Kubernetes object; fits directly into Argo CD/Flux like any other manifest |
-| **Portability** | AWS-specific control plane and APIs | Portable to any Kubernetes cluster running the Operator |
-| **Interactive development** | EMR Studio notebooks against virtual clusters | Bring your own notebook/IDE integration |
-| **Submission-model flexibility** | Can delegate to the Spark Operator underneath (EMR 6.10+) for CRD-based reconciliation while keeping the managed runtime | N/A — it's the CRD-based model itself |
+Virtual-cluster deletion is not a universal cleanup command for jobs, data and roles.
+Inspect active jobs/endpoints and clean up the intended resources separately.
 
-### Why choose EMR on EKS
+```bash
+# Inspect active work/endpoints before cleanup.
+aws emr-containers list-job-runs \
+  --region "$AWS_REGION" --virtual-cluster-id "$EMR_VIRTUAL_CLUSTER_ID"
+aws emr-containers list-managed-endpoints \
+  --region "$AWS_REGION" --virtual-cluster-id "$EMR_VIRTUAL_CLUSTER_ID"
+# If this demo job is still active and should stop:
+aws emr-containers cancel-job-run \
+  --region "$AWS_REGION" --virtual-cluster-id "$EMR_VIRTUAL_CLUSTER_ID" --id "$EMR_JOB_ID"
+# After reviewing/cleaning the relevant jobs and any managed endpoints:
+aws emr-containers delete-virtual-cluster \
+  --region "$AWS_REGION" --id "$EMR_VIRTUAL_CLUSTER_ID"
+aws emr-containers describe-virtual-cluster \
+  --region "$AWS_REGION" --id "$EMR_VIRTUAL_CLUSTER_ID" --query virtualCluster.state
+```
 
-* You want AWS's optimized Spark runtime and don't want to track upstream performance patches yourself
-* You want to submit and monitor jobs through a managed API/console, wired into Step Functions or EventBridge for orchestration, rather than maintaining your own submission tooling
-* You want CloudWatch Logs/Metrics for job observability without building that integration yourself
-* Your team wants an interactive notebook experience (EMR Studio) against the same EKS infrastructure that runs production jobs
+Observe asynchronous deletion state; permission failures can produce ARRESTED.
+Review the namespace, EKS cluster, S3 artifacts, log group, IAM role and Pod Identity
+associations separately. Associations can remain after namespace/SA deletion; remove
+only those no longer used. Do not remove shared resources for this demo.
 
-### Why stay with the self-managed Spark Operator anyway
+Examples are checked for local CLI input shape and syntax. This is not a completed
+AWS deployment or EMR runtime test. Validate permissions, quotas, networking and
+release availability in the target environment.
 
-* You need to run a specific Spark build (a newer upstream release, a custom fork, or a non-AWS-patched version) that hasn't landed in an EMR release label yet
-* Your platform is already fully GitOps-driven around Kubernetes manifests, and adding an AWS-API submission path would fragment that pipeline
-* You want full control over the exact Kubernetes and Spark version pairing, upgraded on your own timeline rather than AWS's release-label cadence
-* You need portability to a non-EKS Kubernetes cluster
 
-In practice, EMR 6.10+'s ability to run EMR on EKS jobs through the Spark Operator means this isn't always a hard choice — you can get AWS's managed runtime and job-run API while still reconciling through the same `SparkApplication` CRD your GitOps pipeline already watches.
+- [EMR on EKS release labels](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks-releases.html)
+- [EMR Spark 8.0.0 on EKS release notes](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks-spark-8.0.0.html)
+- [EKS cluster access setup](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/setting-up-cluster-access.html)
+- [Job execution role and execution-role condition](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/iam-execution-role.html)
+- [Pod Identity setup for StartJobRun](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/setting-up-enable-IAM.html)
+- [Virtual clusters and scheduler limits](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/virtual-cluster.html)
+- [StartJobRun API](https://docs.aws.amazon.com/emr-on-eks/latest/APIReference/API_StartJobRun.html)
+- [EMR Spark Operator installation and CR submission](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/spark-operator-gs.html)
+- [Interactive endpoint architecture](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/how-it-works.html)
+- [Custom images](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/docker-custom-images.html)
+- [CloudWatch logging configuration](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks-jobs-cloudwatch.html)
 
-## Decision Guide
+## Next steps
 
-Use this checklist to narrow down between EMR on EKS and the self-managed Spark Operator.
+[Part 4: Performance tuning](./04-performance-tuning.md)
 
-* **Do you want AWS to curate the Spark build and patch cadence for you?** → Yes: EMR on EKS / No: self-managed Spark Operator gives you the exact version you choose
-* **Do jobs need to be triggered from Step Functions, EventBridge, or another AWS orchestration service without custom glue code?** → Yes: EMR on EKS's `StartJobRun` API / No: either fits
-* **Is your platform already fully GitOps-driven around Kubernetes manifests?** → Yes: the Spark Operator (or EMR on EKS running through it, since 6.10) / No: EMR on EKS's API-based submission is simpler to adopt
-* **Do you need a Spark build EMR hasn't shipped a release label for yet (a bleeding-edge upstream version or a custom fork)?** → Yes: self-managed Spark Operator / No: EMR on EKS's release labels are enough
-* **Do you want an interactive notebook experience against the same infrastructure that runs production jobs?** → Yes: EMR Studio (EMR on EKS) / No: bring your own notebook integration
+[README](./README.md)
 
-As with MSK vs. Strimzi in the Kafka series, the two aren't always exclusive — since EMR 6.10, choosing EMR on EKS doesn't have to mean giving up the Spark Operator's CRD-based workflow.
-
-## Next Steps
-
-Part 1 and Part 2 covered running Spark yourself on EKS — directly via `spark-submit` or declaratively via the Spark Operator. This part covered EMR on EKS, AWS's managed alternative that layers a job-run API, an optimized runtime, and native AWS service integration on top of the same underlying EKS infrastructure. The next part in this series turns to performance tuning and cost optimization that applies across all three submission models.
-
-[Return to Main Page](./README.md)
-
-## Quiz
-
-To test what you've learned in this chapter, try the [Topic Quiz](../../quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md).
+[Quiz](../../quizzes/data-on-eks/spark/03-emr-on-eks-quiz.md)
