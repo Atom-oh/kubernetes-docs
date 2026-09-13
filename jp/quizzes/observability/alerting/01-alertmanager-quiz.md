@@ -198,6 +198,8 @@ Go template はこの三項式をサポートしていません。root では、
 
 ---
 
+<span id="追加学習リソース"></span>
+
 ## 追加の学習リソース
 
 - [Alertmanager 0.34 の設定](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md)

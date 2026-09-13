@@ -21,6 +21,8 @@
 
 ---
 
+<span id="alertmanager-overview"></span>
+
 ## Alertmanager の概要
 
 Prometheus Alertmanager は、Prometheus server から送信された Alert を処理するコンポーネントです。Alert の重複排除、グループ化、ルーティング、inhibition、silencing などの機能を提供します。
@@ -31,6 +33,8 @@ Prometheus Alertmanager は、Prometheus server から送信された Alert を�
 2. **Inhibition と silence** は、基になる Prometheus rule 条件を変更せずに通知を抑制します。
 3. **Routing** は Receiver を選択します。1 つの Receiver に複数の integration を含めることができます。
 4. **HA** は、最終的整合性を伴って silence と notification-log state を共有します。partition 時には通知抑制より重複配信を優先します。これは exactly-once 配信ではありません。
+
+<span id="prometheus-のアラートフロー"></span>
 
 ### Prometheus の Alert フロー
 
@@ -49,6 +53,8 @@ sequenceDiagram
   R-->>A: Delivery response
   Note over A,R: Failures and partitions can cause<br/>retries or duplicates
 ```
+
+<span id="architecture"></span>
 
 ## アーキテクチャ
 
@@ -82,11 +88,15 @@ flowchart TB
 
 ---
 
+<span id="installation-and-configuration"></span>
+
 ## インストールと設定
 
 これらは Kubernetes 1.35 Linux worker のベースラインに対する代替例です。2 つの Helm chart と手動 StatefulSet は**異なるインストール所有者**です。いずれか 1 つを選択してください。Chart の render、設定/template、synthetic rule のローカル実行は行いましたが、Kubernetes インストール、実環境 CNI の適用、SaaS 配信、本番容量テストは実施していません。既存インストールには、所有者が確認した values のマージと upgrade 計画が必要であり、このチュートリアルによる無条件の置換は行わないでください。
 
 `monitoring` namespace、hard anti-affinity 用のスケジュール可能な 3 node、適切なデフォルト RWO StorageClass、通知 credential、承認済み network path を準備します。EKS Fargate/Auto Mode と managed control-plane metrics には異なる collection/storage 制約があります。特に、EKS-managed etcd は顧客が scrape する endpoint ではありません。この profile は例に集中するため Grafana と etcd ServiceMonitor を無効にしています。既存 stack のコンポーネントを無効にする指示ではありません。
+
+<span id="helm-kube-prometheus-stack-によるインストール"></span>
 
 ### Helm によるインストール（kube-prometheus-stack）
 
@@ -404,6 +414,9 @@ kubectl -n monitoring create configmap alertmanager-config   --from-file=alertma
 
 Secret の read/exec permission と通知内容自体を保護してください。有効な integration が必要とする credential file だけを追加します。ConfigMap projection は自動 Alertmanager reload ではありません。選択した owner で確認済みの reload/rollout 機構を使用してください。無効な reload では、最後に正常だった設定が実行中のままになる必要があります。
 
+<span id="アラートルールの定義"></span>
+<span id="defining-alert-rules"></span>
+
 ## Alert Rule の定義
 
 ### PrometheusRule CRD
@@ -436,9 +449,13 @@ spec:
         runbook_url: https://runbooks.example.com/node-not-ready
 ```
 
+<span id="アラートルールの構成要素"></span>
+
 ### Alert Rule の構成要素
 
 `alert` と `expr` は rule とその expression を識別します。sample 値が zero でも、空でない result vector は active Alert instance を識別します。`for` は rule evaluation をまたいで確認され、scrape interval や通知 deadline ではありません。`labels` は Alert identity/routing に影響します。変化する値は label ではなく `annotations` に保持してください。任意の `keep_firing_for` は、条件が解除された後も一定期間 Firing を維持します。デプロイ済み Prometheus/Operator version でのサポートを確認してください。
+
+<span id="アラートの状態"></span>
 
 ### Alert 状態
 
@@ -448,7 +465,11 @@ keep_firing_for 未設定で正の for duration を持つ場合の Prometheus �
 
 [インタラクティブ図](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-01-alertmanager-2.html)
 
+<span id="routing-configuration"></span>
+
 ## ルーティング設定
+
+<span id="ルーティングツリーの構造"></span>
 
 ### Routing Tree の構造
 
@@ -483,6 +504,8 @@ receivers:
 - name: team-a
 ```
 
+<span id="ルーティングフロー"></span>
+
 ### Routing フロー
 
 continue=false を使用した label のみの routing です。図では legacy の match/match_re 表記を使用しています。検証済みの同等設定では matchers を使用します。Time-window eligibility は別です。
@@ -503,6 +526,8 @@ routes:
   - matchers: ['service=~"(api|web|worker).*"', 'environment=~"prod.*"']
     receiver: prod-team
 ```
+
+<span id="高度なルーティングの例"></span>
 
 ### 高度な Routing の例
 
@@ -570,6 +595,8 @@ time_intervals:
 ```
 
 Native label-route test は calendar を評価しません。calendar は release 済み time-interval implementation で、開始/終了 boundary、weekend、UTC/KST offset において別途確認しました。Mute または inactive の通知は parent の fallback に自動転送されません。
+
+<span id="receiver-configuration"></span>
 
 ## Receiver の設定
 
@@ -704,6 +731,9 @@ receivers:
       namespace: '{{ .CommonLabels.namespace }}'
 ```
 
+<span id="inhibition-ルール"></span>
+<span id="inhibition-rules"></span>
+
 ## Inhibition Rule
 
 ### Inhibition の概念
@@ -718,6 +748,8 @@ flowchart LR
   O["PodNotReady: cluster=a, node=n2"] --> N["Not inhibited by this rule"]
   M["PodNotReady: missing node or cluster"] --> N
 ```
+
+<span id="inhibition-ルールの設定"></span>
 
 ### Inhibition Rule の設定
 
@@ -777,11 +809,18 @@ inhibit_rules:
   - database_id
 ```
 
+<span id="inhibition-の優先順位"></span>
+
 ### Inhibition の優先度
 
 list の順序は**優先度システムではありません**。適用可能な inhibition rule は target を抑制できます。非重複の source/target matcher と空でない correlation label により infrastructure→node→service の依存関係を model 化し、その後、無関係な node/cluster と missing label を test してください。広範な `alertname=~".*"` と missing `datacenter` は無関係な incident を mute することがあります。severity だけから因果関係を推論しないでください。
 
+<span id="サイレンス"></span>
+<span id="silencing"></span>
+
 ## Silence
+
+<span id="サイレンスの作成"></span>
 
 ### Silence の作成
 
@@ -798,6 +837,8 @@ amtool --alertmanager.url="$ALERTMANAGER_URL" silence query
 : "${SILENCE_ID:?Set the exact silence UUID}"
 amtool --alertmanager.url="$ALERTMANAGER_URL" silence expire "$SILENCE_ID"
 ```
+
+<span id="api-によるサイレンスの作成"></span>
 
 #### API による Silence の作成
 
@@ -820,6 +861,8 @@ print(json.dumps({
 }, indent=2))
 ```
 
+<span id="サイレンス管理のベストプラクティス"></span>
+
 ### Silence 管理のベストプラクティス
 
 最短の承認済み maintenance/deployment window と、範囲を限定した investigation period を使用してください。「修正されるまで」でも有限の終了時刻と owner review が必要です。4 時間は Alertmanager の制限ではなく、team policy の例です。expiry により抑制は停止しますが、期限切れ record は retention/GC まで残ります。ローカル API test でこの区別を確認しました。Expiry reminder には別途設定した workflow が必要です。
@@ -833,6 +876,9 @@ stateDiagram-v2
   Pending --> Expired: explicit expiry
   Expired --> Removed: retention and garbage collection
 ```
+
+<span id="テンプレートのカスタマイズ"></span>
+<span id="template-customization"></span>
 
 ## Template のカスタマイズ
 
@@ -870,6 +916,8 @@ stateDiagram-v2
 {{ printf "%.2f%%" 95.5 }}
 {{- end }}
 ```
+
+<span id="template-関数"></span>
 
 ### Template Function
 
@@ -917,6 +965,8 @@ stateDiagram-v2
 ```bash
 amtool template render --template.glob=slack.tmpl   --template.data=synthetic-notification.json   --template.text='{{ template "slack.custom.title" . }}'
 ```
+
+<span id="configmap-による-template-の管理"></span>
 
 ### ConfigMap による Template 管理
 
@@ -983,7 +1033,12 @@ data:
     '
 ```
 
+<span id="高可用性の設定"></span>
+<span id="high-availability-configuration"></span>
+
 ## 高可用性設定
+
+<span id="クラスタリングアーキテクチャ"></span>
 
 ### Clustering アーキテクチャ
 
@@ -1143,6 +1198,8 @@ spec:
       app: alertmanager-demo
 ```
 
+<span id="prometheus-統合設定"></span>
+
 ### Prometheus Integration 設定
 
 この fragment を**manual Prometheus owner**の完全な設定にマージします。DNS discovery または全 replica の明示 list のいずれかを選択し、重複した list の両方を使用しないでください。通知を replica 間で load-balance しないでください。Operator stack は独自の alerting discovery を管理します。
@@ -1247,6 +1304,8 @@ spec:
     - alertname
 ```
 
+<span id="secret-の参照"></span>
+
 ### Secret Reference
 
 team-a の例では、`#team-a-alerts` と `#team-a-critical` 用に異なる URL を作成します。これらをそれぞれ `normal-webhook-url` と `critical-webhook-url` として `slack-webhook-secret` に格納します。AlertmanagerConfig はこれらの異なる key を選択します。channel field を変更して 1 webhook の送信先を変更するわけではありません。
@@ -1261,6 +1320,8 @@ kubectl -n team-a create secret generic slack-webhook-secret \
   --from-file=critical-webhook-url=private-team-a/slack-critical-webhook-url
 kubectl -n team-a create secret generic pagerduty-secret   --from-file=routing-key=private-team-a/pagerduty-routing-key
 ```
+
+<span id="alertmanager-による-alertmanagerconfig-の選択"></span>
 
 ### Alertmanager AlertmanagerConfig の選択
 
@@ -1279,7 +1340,12 @@ alertmanager:
       type: OnNamespace
 ```
 
+<span id="本番環境向けアラートルールの例"></span>
+<span id="production-alert-rule-examples"></span>
+
 ## 本番用 Alert Rule の例
+
+<span id="node-アラート"></span>
 
 ### Node Alert
 
@@ -1354,6 +1420,8 @@ spec:
         summary: Network errors on {{ $labels.instance }}
     interval: 30s
 ```
+
+<span id="pod-と-container-のアラート"></span>
 
 ### Pod と Container の Alert
 
@@ -1460,6 +1528,8 @@ spec:
     interval: 30s
 ```
 
+<span id="api-server-アラート"></span>
+
 ### API Server Alert
 
 確認済み stack ServiceMonitor は `job="apiserver"` を使用します。実際の target label を確認してください。scrape 成功がない場合は discovery/RBAC/TLS/network failure の可能性があり、必ずしも API server failure ではありません。error ratio は total request が存在する場合のみ存在しない 5xx numerator を埋め、zero traffic を除外します。Percent 値には 100 を掛けます。client-certificate histogram は Kubernetes1.35 source では ALPHA であり、request certificate を観測します。最近の quantile は完全な certificate inventory や AWS IAM credential expiry monitor ではありません。
@@ -1528,6 +1598,8 @@ spec:
           credential expiry check.
     interval: 30s
 ```
+
+<span id="etcd-アラート"></span>
 
 ### etcd Alert
 
@@ -1601,9 +1673,13 @@ spec:
     interval: 30s
 ```
 
+<span id="troubleshooting"></span>
+
 ## トラブルシューティング
 
 ### よくある問題と解決策
+
+<span id="アラートが送信されない"></span>
 
 #### Alert が送信されない
 
@@ -1620,13 +1696,19 @@ amtool check-config alertmanager.yaml
 amtool config routes test --config.file=routing-tree.yaml   --verify.receivers=critical-receiver severity=critical service=foo owner=team-a
 ```
 
+<span id="重複するアラート"></span>
+
 #### 重複 Alert
 
 同等な Prometheus replica が意図した replica label でのみ異なることを確認し、その label は notification path 上でのみ drop してください。cluster membership/nflog、partition、retry、group change、repeat/retention timing を確認します。`group_by` に `pod` を追加すると group は増えますが、普遍的な duplicate 修正ではありません。
 
+<span id="アラートが誤った-receiver-に送信される"></span>
+
 #### 誤った Receiver に送られる Alert
 
 まず正確な label set と期待する Receiver をローカルで test し、次に time window と実際の delivery を別々に test します。first-match/continue の動作、継承された group parameter、継承されない active/mute interval を確認してください。
+
+<span id="amtool-コマンドリファレンス"></span>
 
 ### amtool Command Reference
 
@@ -1639,6 +1721,8 @@ amtool config routes test --config.file=routing-tree.yaml   --verify.receivers=t
 amtool --alertmanager.url="$ALERTMANAGER_URL" alert query alertname=HighCPU
 amtool --alertmanager.url="$ALERTMANAGER_URL" silence query
 ```
+
+<span id="メトリクスの確認"></span>
 
 ### Metric の検証
 
@@ -1653,6 +1737,8 @@ amtool --alertmanager.url="$ALERTMANAGER_URL" silence query
 | `alertmanager_alerts` | state 別の Alert |
 | `alertmanager_silences` | 該当する場合、期限切れ record を含む state 別の silence |
 | `alertmanager_cluster_members` | gossip 有効時の cluster membership。single-instance gossip-disabled fixture では存在しない |
+
+<span id="デバッグのヒント"></span>
 
 ### Debugging のヒント
 

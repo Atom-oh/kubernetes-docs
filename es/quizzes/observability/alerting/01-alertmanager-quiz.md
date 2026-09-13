@@ -198,6 +198,8 @@ Las plantillas Go no admiten esta expresión ternaria. En la raíz, Alertmanager
 
 ---
 
+<span id="recursos-adicionales-de-aprendizaje"></span>
+
 ## Recursos de aprendizaje adicionales
 
 - [Configuración de Alertmanager 0.34](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md)

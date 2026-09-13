@@ -198,6 +198,8 @@ Go template 不支持此三元表达式。在根级别，Alertmanager 提供带�
 
 ---
 
+<span id="附加学习资源"></span>
+
 ## 补充学习资源
 
 - [Alertmanager 0.34 配置](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md)
