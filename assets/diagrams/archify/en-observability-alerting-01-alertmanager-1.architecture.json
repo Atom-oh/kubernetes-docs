@@ -7,36 +7,32 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1350,
-      620
+      1390,
+      760
     ],
     "views": [
       {
         "id": "pipeline",
-        "label": "Alert pipeline",
+        "label": "Alert processing",
         "focus": [
-          "prometheus",
           "api",
           "dispatcher",
-          "inhibitor",
-          "silencer",
           "aggregation",
           "notification",
           "receivers"
         ],
-        "note": "Main path: alerts from Prometheus enter the API, pass routing, inhibition, silencing and grouping, then go out to receivers."
+        "note": "API → routing → aggregation/timers → notification suppression/deduplication → receiver"
       },
       {
         "id": "state",
-        "label": "State storage and sync",
+        "label": "State synchronization",
         "focus": [
-          "silencer",
-          "notification",
+          "gossip",
           "silences",
           "nflog",
-          "gossip"
+          "notification"
         ],
-        "note": "Silencer queries silence rules, Notification Pipeline records deliveries in nflog, and Gossip syncs both stores across cluster nodes."
+        "note": "Gossip synchronizes silences and nflog; it does not guarantee exactly-once delivery."
       }
     ],
     "locale": "en"
@@ -46,276 +42,215 @@
       "id": "prometheus",
       "type": "external",
       "label": "Prometheus",
-      "sublabel": "alert rule evaluation",
       "pos": [
         30,
-        120
+        70
       ],
       "size": [
-        120,
-        60
+        160,
+        64
       ]
     },
     {
       "id": "api",
       "type": "backend",
-      "label": "API",
-      "sublabel": "/api/v2/alerts",
+      "label": "API: alerts in memory",
       "pos": [
-        186,
-        120
+        270,
+        70
       ],
       "size": [
-        120,
-        60
+        220,
+        64
       ]
     },
     {
       "id": "dispatcher",
       "type": "backend",
-      "label": "Dispatcher",
-      "sublabel": "routing tree",
+      "label": "Dispatcher: route",
       "pos": [
-        342,
-        120
+        530,
+        70
       ],
       "size": [
-        120,
-        60
-      ]
-    },
-    {
-      "id": "inhibitor",
-      "type": "backend",
-      "label": "Inhibitor",
-      "sublabel": "inhibition rules",
-      "pos": [
-        498,
-        120
-      ],
-      "size": [
-        120,
-        60
-      ]
-    },
-    {
-      "id": "silencer",
-      "type": "backend",
-      "label": "Silencer",
-      "sublabel": "silence filter",
-      "pos": [
-        654,
-        120
-      ],
-      "size": [
-        120,
-        60
+        220,
+        64
       ]
     },
     {
       "id": "aggregation",
       "type": "backend",
-      "label": "Aggregation Group",
-      "sublabel": "grouping",
+      "label": "Groups and timers",
       "pos": [
         810,
-        150
+        70
       ],
       "size": [
-        150,
-        60
+        220,
+        64
       ]
     },
     {
       "id": "notification",
       "type": "backend",
-      "label": "Notification Pipeline",
-      "sublabel": "alert sending",
+      "label": "Notification pipeline",
       "pos": [
-        996,
-        160
+        810,
+        335
       ],
       "size": [
-        160,
-        60
+        220,
+        64
       ]
     },
     {
       "id": "receivers",
       "type": "external",
-      "label": "Receivers",
-      "sublabel": "Slack / PagerDuty",
+      "label": "Receiver integrations",
       "pos": [
-        1196,
-        120
+        1100,
+        335
       ],
       "size": [
-        120,
-        60
+        220,
+        64
       ]
     },
     {
       "id": "silences",
       "type": "database",
-      "label": "Silences",
-      "sublabel": "silence rules",
+      "label": "Silence state",
       "pos": [
-        654,
-        330
+        270,
+        300
       ],
       "size": [
-        120,
-        60
+        220,
+        64
+      ]
+    },
+    {
+      "id": "inhibitor",
+      "type": "backend",
+      "label": "Inhibition sources",
+      "pos": [
+        530,
+        335
+      ],
+      "size": [
+        220,
+        64
       ]
     },
     {
       "id": "nflog",
       "type": "database",
-      "label": "nflog",
-      "sublabel": "notification log",
+      "label": "Notification log: nflog",
       "pos": [
-        1016,
-        330
+        810,
+        580
       ],
       "size": [
-        120,
-        60
+        220,
+        64
       ]
     },
     {
       "id": "gossip",
       "type": "messagebus",
-      "label": "Gossip Protocol",
-      "sublabel": "cluster state sync",
+      "label": "Peer gossip",
       "pos": [
-        820,
-        490
+        270,
+        580
       ],
       "size": [
-        150,
-        60
-      ]
-    }
-  ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "Alertmanager",
-      "wraps": [
-        "api",
-        "dispatcher",
-        "inhibitor",
-        "silencer",
-        "aggregation",
-        "notification",
-        "silences",
-        "nflog",
-        "gossip"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "State storage",
-      "wraps": [
-        "silences",
-        "nflog"
+        220,
+        64
       ]
     }
   ],
   "connections": [
     {
-      "id": "prom-to-api",
+      "id": "flow-0",
       "from": "prometheus",
       "to": "api",
-      "label": "alerts",
-      "variant": "emphasis"
+      "label": "alerts"
     },
     {
-      "id": "api-to-dispatcher",
+      "id": "flow-1",
       "from": "api",
       "to": "dispatcher"
     },
     {
-      "id": "dispatcher-to-inhibitor",
+      "id": "flow-2",
       "from": "dispatcher",
-      "to": "inhibitor"
-    },
-    {
-      "id": "inhibitor-to-silencer",
-      "from": "inhibitor",
-      "to": "silencer"
-    },
-    {
-      "id": "silencer-to-aggregation",
-      "from": "silencer",
       "to": "aggregation"
     },
     {
-      "id": "aggregation-to-notification",
+      "id": "flow-3",
       "from": "aggregation",
       "to": "notification"
     },
     {
-      "id": "notification-to-receivers",
-      "from": "notification",
-      "to": "receivers",
-      "label": "send",
-      "variant": "emphasis"
+      "id": "flow-4",
+      "from": "silences",
+      "to": "notification",
+      "label": "silence state",
+      "fromSide": "top"
     },
     {
-      "id": "silencer-to-silences",
-      "from": "silencer",
-      "to": "silences",
-      "label": "query",
-      "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "top",
-      "labelDy": 80
+      "id": "flow-5",
+      "from": "inhibitor",
+      "to": "notification",
+      "label": "inhibition",
+      "labelAt": [
+        770,
+        420
+      ]
     },
     {
-      "id": "notification-to-nflog",
+      "id": "flow-6",
+      "from": "nflog",
+      "to": "notification",
+      "label": "delivery history",
+      "fromSide": "right"
+    },
+    {
+      "id": "flow-7",
       "from": "notification",
       "to": "nflog",
       "label": "record",
-      "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "top",
-      "labelDy": 80
+      "labelAt": [
+        950,
+        470
+      ]
     },
     {
-      "id": "gossip-to-silences",
+      "id": "flow-8",
+      "from": "notification",
+      "to": "receivers",
+      "label": "notify"
+    },
+    {
+      "id": "flow-9",
       "from": "gossip",
       "to": "silences",
-      "label": "sync",
-      "variant": "dashed"
+      "label": "sync"
     },
     {
-      "id": "gossip-to-nflog",
+      "id": "flow-10",
       "from": "gossip",
       "to": "nflog",
-      "label": "sync",
-      "variant": "dashed"
+      "label": "sync"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Alert pipeline",
+      "title": "Data boundaries",
       "items": [
-        "Dispatcher routes alerts to the appropriate receivers based on the routing tree",
-        "Inhibitor suppresses related alerts according to inhibition rules",
-        "Silencer filters alerts matching silence rules",
-        "Aggregation Group bundles alerts of the same group for processing",
-        "Notification Pipeline handles the actual alert sending"
-      ]
-    },
-    {
-      "dot": "violet",
-      "title": "State and high availability",
-      "items": [
-        "nflog records sent notifications to prevent duplicates",
-        "Silences stores the silence rules",
-        "Gossip Protocol syncs nflog and Silences across cluster nodes"
+        "In-memory alerts differ from stored silence/nflog state.",
+        "Notification eligibility is not successful delivery; handle retries and duplicates."
       ]
     }
   ]

@@ -26,9 +26,29 @@
           "auto_remove",
           "manual"
         ],
-        "note": "Review long-lived silences regularly; expired ones are removed automatically, the rest get a manual review."
+        "note": "Expired stops suppression; removal occurs later through retention and garbage collection."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "backend": {
+          "label": "Management step"
+        },
+        "security": {
+          "label": "Decision"
+        },
+        "cloud": {
+          "label": "Expired state"
+        },
+        "external": {
+          "label": "Owner review"
+        },
+        "frontend": {
+          "label": "Input"
+        }
+      }
+    }
   },
   "lanes": [
     {
@@ -105,8 +125,8 @@
       "lane": "review",
       "col": 5,
       "type": "cloud",
-      "label": "Auto removal",
-      "sublabel": "silence cleaned up",
+      "label": "Expired",
+      "sublabel": "retained until GC",
       "width": 150
     },
     {
@@ -155,22 +175,19 @@
   "cards": [
     {
       "dot": "amber",
-      "title": "Recommendations",
+      "title": "Silence lifecycle",
       "items": [
-        "Always write comments: record why the silence was created",
-        "Set minimum duration: only silence for as long as needed",
-        "Regular review: periodically review long-term silences",
-        "Set up notifications: alert before a silence expires"
+        "Future startsAt: Pending → Active → Expired",
+        "Reaching endsAt or explicit expiry is not immediate physical deletion.",
+        "Expired records are removed after retention/GC."
       ]
     },
     {
       "dot": "cyan",
-      "title": "Silence duration by type",
+      "title": "Operating conditions",
       "items": [
-        "Maintenance: for the planned window",
-        "Deployment: until the deploy completes",
-        "Investigation: max 4 hours",
-        "Known issue: until the fix lands"
+        "Record author, reason and duration; review long-lived silences.",
+        "An investigation duration is policy, not a fixed product maximum."
       ]
     }
   ]

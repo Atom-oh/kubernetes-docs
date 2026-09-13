@@ -1,7 +1,7 @@
 {
   "status": "passed",
   "checkedAt": "2026-09-13T14:44:31.189183+00:00",
-  "baseCommit": "f502959add1fe7d409a9f432e1323d3c21616027",
+  "baseCommit": "03cd44d289950a390ec316ff6da54dadeb548760",
   "scope": "Exact whole-line heading aliases and verified English fallback links. Heading lines and fenced code unchanged; fallback labels explicitly marked English.",
   "files": [
     {
@@ -320,27 +320,6 @@
       "headingLinesUnchanged": true
     },
     {
-      "path": "cn/observability/alerting/01-alertmanager.md",
-      "previousSha256": "36e873af462bc371226da3eea796688c16051bea6e489cef295f77264c3326fa",
-      "sha256": "81ce2a5a445da8c5833c5e11ea94aaf26e74ecfa16ed1bd26f2db8b9c961814d",
-      "fencedCodeUnchanged": true,
-      "headingLinesUnchanged": true
-    },
-    {
-      "path": "cn/observability/alerting/02-cloudwatch-alarms.md",
-      "previousSha256": "f53cbff79ce8849e3893e6ca65e173463af751d5a646b9f3890abf8bd970d0e5",
-      "sha256": "f732a1a7f4ff4fcdbd33eb735479e228f7b5994919d0e28881bc4d1be6239447",
-      "fencedCodeUnchanged": true,
-      "headingLinesUnchanged": true
-    },
-    {
-      "path": "cn/observability/alerting/README.md",
-      "previousSha256": "1e3a76acf55f485c55ed27c8910540e3e158d3fc2e6a97791e8bb3667590f428",
-      "sha256": "edd38c6b8d7c181d0bbcedcf484e2f8810bec0c11061f37f32201f6cc0eb1bf3",
-      "fencedCodeUnchanged": true,
-      "headingLinesUnchanged": true
-    },
-    {
       "path": "cn/observability/logging/03-cloudwatch-logs.md",
       "previousSha256": "8e0b63d1086b0aa08ff1baba864f40882152c35c66d1bfda413b00bf12e3cc08",
       "sha256": "ab891d972005e99bb4d2fde433abb72232f6580a0d67f895ec3df38c682ff2a0",
@@ -428,13 +407,6 @@
       "path": "cn/security/03-pod-security-standards.md",
       "previousSha256": "5cc6edaf2ad3b036bec502bdefef3fb8539226a8da086e17ae7788d6fdf06df2",
       "sha256": "280739527c5dc2457341b7961fb22f1f49ec5919f3a7e21b83c2e595fb86d77a",
-      "fencedCodeUnchanged": true,
-      "headingLinesUnchanged": true
-    },
-    {
-      "path": "cn/security/04-network-policies.md",
-      "previousSha256": "260d9a1eb875b36db9a8c4fac1e9688c7efe743182197c864c85b3b2dd30fcbc",
-      "sha256": "d4188e4774c64bb7ced66e81385b2cbbe0d58030fbce327fbb5f980efe1d62bd",
       "fencedCodeUnchanged": true,
       "headingLinesUnchanged": true
     },
@@ -950,27 +922,6 @@
       "headingLinesUnchanged": true
     },
     {
-      "path": "es/observability/alerting/01-alertmanager.md",
-      "previousSha256": "61c16d52878b5dd243b37d56fc388ae90dce6253209b8aa7ec17de9274a94d7e",
-      "sha256": "c85889afd092267e26b3dc59f7df55314c7bc907d1e4b98baeb306e3ad7da06a",
-      "fencedCodeUnchanged": true,
-      "headingLinesUnchanged": true
-    },
-    {
-      "path": "es/observability/alerting/02-cloudwatch-alarms.md",
-      "previousSha256": "ef0cd4fea5d7a2bbbb18b4f80b88bb398bc8f43e47040648c2ec851ffb27780c",
-      "sha256": "6d1efbc7ebb027357ae6f75cd940b4adb6d6c6c47c4cb2a8ee3079fae953485b",
-      "fencedCodeUnchanged": true,
-      "headingLinesUnchanged": true
-    },
-    {
-      "path": "es/observability/alerting/README.md",
-      "previousSha256": "64a386a362fa4c3f03d07d0b91fa0677891f6c5f7d9efc661b0019978e09b707",
-      "sha256": "4d2202033682e6f10e43c03875c595ab1638ca3afb031372b226ef71a44ed5da",
-      "fencedCodeUnchanged": true,
-      "headingLinesUnchanged": true
-    },
-    {
       "path": "es/observability/logging/03-cloudwatch-logs.md",
       "previousSha256": "4f0416c5591522d8a863f2f886b9736848730128395a4220b84d5868bf0b1440",
       "sha256": "50e0c3205d1effe60d25d3cd8d7b4110181609e57241b839765af1bcdf1f8afe",
@@ -1058,13 +1009,6 @@
       "path": "es/security/03-pod-security-standards.md",
       "previousSha256": "57e0af075ea7bca80dae3cd912f63e42dbba197bb7a04391f65318e70eaba6aa",
       "sha256": "717cd8dda02bcd297bde3d5b81d7c9ff20596c37c6d22a56fe00989c343ddc1e",
-      "fencedCodeUnchanged": true,
-      "headingLinesUnchanged": true
-    },
-    {
-      "path": "es/security/04-network-policies.md",
-      "previousSha256": "286ad83c8b84fbe21da866a7b7826e630ae052d816b08a2203e7ef8febb72544",
-      "sha256": "88f62f2cc8247f8073903343d0d3db60314395b0a8afcee162bd40ba68d99a5d",
       "fencedCodeUnchanged": true,
       "headingLinesUnchanged": true
     },
@@ -1548,20 +1492,6 @@
       "path": "jp/networking/cilium/networking-concepts.md",
       "previousSha256": "8174d96c88ed2f76e74e1f6ad9ee51f3f1154c3b7e129280bcf9c3caa71f4215",
       "sha256": "8b9142a87076ec53588ae68fff2f0928ea5066054b7c0476594f84948594b11a",
-      "fencedCodeUnchanged": true,
-      "headingLinesUnchanged": true
-    },
-    {
-      "path": "jp/observability/alerting/01-alertmanager.md",
-      "previousSha256": "bd07151fa9450cc47343deafd012dec61d0c93c6467a8997a3d8ce7b5acf0916",
-      "sha256": "f65f20c9fedc2bb0a61715035f53a89dbe78875db1535bebcb4e97b0be45a019",
-      "fencedCodeUnchanged": true,
-      "headingLinesUnchanged": true
-    },
-    {
-      "path": "jp/observability/alerting/README.md",
-      "previousSha256": "7bb5653eedaa3747f6695dd0e9d238b8957e1dbea62e375a5a1562561d9c3064",
-      "sha256": "12959572b99b6a1b5215ef9e64306a015d02dbea4f87d22581640ad82d0e28c0",
       "fencedCodeUnchanged": true,
       "headingLinesUnchanged": true
     },
@@ -5972,347 +5902,6 @@
     },
     {
       "kind": "alias",
-      "path": "cn/observability/alerting/01-alertmanager.md",
-      "id": "troubleshooting",
-      "heading": "## 故障排查",
-      "nativeId": "故障排查",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "故障排查"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/01-alertmanager.md",
-      "id": "production-alert-rule-examples",
-      "heading": "## 生产环境告警规则示例",
-      "nativeId": "生产环境告警规则示例",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "生产环境告警规则示例"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/01-alertmanager.md",
-      "id": "high-availability-configuration",
-      "heading": "## 高可用配置",
-      "nativeId": "高可用配置",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "高可用配置"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/01-alertmanager.md",
-      "id": "template-customization",
-      "heading": "## 模板自定义",
-      "nativeId": "模板自定义",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "模板自定义"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/01-alertmanager.md",
-      "id": "silencing",
-      "heading": "## 静默",
-      "nativeId": "静默",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "静默"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/01-alertmanager.md",
-      "id": "inhibition-rules",
-      "heading": "## 抑制规则",
-      "nativeId": "抑制规则",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "抑制规则"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/01-alertmanager.md",
-      "id": "receiver-configuration",
-      "heading": "## 接收器配置",
-      "nativeId": "接收器配置",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "接收器配置"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/01-alertmanager.md",
-      "id": "routing-configuration",
-      "heading": "## 路由配置",
-      "nativeId": "路由配置",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "路由配置"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/01-alertmanager.md",
-      "id": "defining-alert-rules",
-      "heading": "## 定义告警规则",
-      "nativeId": "定义告警规则",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "定义告警规则"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/01-alertmanager.md",
-      "id": "installation-and-configuration",
-      "heading": "## 安装与配置",
-      "nativeId": "安装与配置",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "安装与配置"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/01-alertmanager.md",
-      "id": "architecture",
-      "heading": "## 架构",
-      "nativeId": "架构",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "架构"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/01-alertmanager.md",
-      "id": "alertmanager-overview",
-      "heading": "## Alertmanager 概述",
-      "nativeId": "alertmanager-概述",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Alertmanager 概述"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "terraform-examples",
-      "heading": "## Terraform 示例",
-      "nativeId": "terraform-示例",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Terraform 示例"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "prometheus-metrics-integration",
-      "heading": "## Prometheus 指标集成",
-      "nativeId": "prometheus-指标集成",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Prometheus 指标集成"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "cost-optimization",
-      "heading": "## 成本优化",
-      "nativeId": "成本优化",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "成本优化"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "cloudwatch-alarm-actions",
-      "heading": "## CloudWatch Alarm 操作",
-      "nativeId": "cloudwatch-alarm-操作",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "CloudWatch Alarm 操作"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "container-insights-alerts",
-      "heading": "## Container Insights 告警",
-      "nativeId": "container-insights-告警",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Container Insights 告警"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "eventbridge-integration",
-      "heading": "## EventBridge 集成",
-      "nativeId": "eventbridge-集成",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "EventBridge 集成"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "sns-integration",
-      "heading": "## SNS 集成",
-      "nativeId": "sns-集成",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "SNS 集成"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "anomaly-detection",
-      "heading": "## 异常检测",
-      "nativeId": "异常检测",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "异常检测"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "composite-alarms",
-      "heading": "## 复合告警",
-      "nativeId": "复合告警",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "复合告警"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "metric-alarms",
-      "heading": "## 指标告警",
-      "nativeId": "指标告警",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "指标告警"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "architecture",
-      "heading": "## 架构",
-      "nativeId": "架构",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "架构"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "cloudwatch-alarms-overview",
-      "heading": "## CloudWatch Alarms 概览",
-      "nativeId": "cloudwatch-alarms-概览",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "CloudWatch Alarms 概览"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/README.md",
-      "id": "solution-comparison",
-      "heading": "## 方案对比",
-      "nativeId": "方案对比",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "方案对比"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/README.md",
-      "id": "alerting-strategy-for-eks-environments",
-      "heading": "## EKS 环境的告警策略",
-      "nativeId": "eks-环境的告警策略",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "EKS 环境的告警策略"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/README.md",
-      "id": "on-call-rotation",
-      "heading": "## On-Call 轮值",
-      "nativeId": "on-call-轮值",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "On-Call 轮值"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/README.md",
-      "id": "alert-routing-and-escalation",
-      "heading": "## 告警路由与升级",
-      "nativeId": "告警路由与升级",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "告警路由与升级"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/README.md",
-      "id": "alert-design-principles",
-      "heading": "## 告警设计原则",
-      "nativeId": "告警设计原则",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "告警设计原则"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/README.md",
-      "id": "alert-lifecycle",
-      "heading": "## 告警生命周期",
-      "nativeId": "告警生命周期",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "告警生命周期"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/observability/alerting/README.md",
-      "id": "the-role-and-importance-of-alerting",
-      "heading": "## 告警的作用与重要性",
-      "nativeId": "告警的作用与重要性",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "告警的作用与重要性"
-      ]
-    },
-    {
-      "kind": "alias",
       "path": "cn/observability/logging/03-cloudwatch-logs.md",
       "id": "cost-optimization",
       "heading": "## 成本优化",
@@ -7208,116 +6797,6 @@
       "method": "unique exact normalized label at highest matching heading level",
       "evidenceLabels": [
         "从 PSP 到 PSS 的演进"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/security/04-network-policies.md",
-      "id": "visualization-tools",
-      "heading": "## 可视化工具",
-      "nativeId": "可视化工具",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "可视化工具"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/security/04-network-policies.md",
-      "id": "eks-considerations",
-      "heading": "## EKS 注意事项",
-      "nativeId": "eks-注意事项",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "EKS 注意事项"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/security/04-network-policies.md",
-      "id": "testing-network-policies",
-      "heading": "## 测试 Network Policies",
-      "nativeId": "测试-network-policies",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "测试 Network Policies"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/security/04-network-policies.md",
-      "id": "design-patterns",
-      "heading": "## 设计模式",
-      "nativeId": "设计模式",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "设计模式"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/security/04-network-policies.md",
-      "id": "calico-network-policy-extensions",
-      "heading": "## Calico Network Policy 扩展",
-      "nativeId": "calico-network-policy-扩展",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Calico Network Policy 扩展"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/security/04-network-policies.md",
-      "id": "cilium-network-policy-extensions",
-      "heading": "## Cilium Network Policy 扩展",
-      "nativeId": "cilium-network-policy-扩展",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Cilium Network Policy 扩展"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/security/04-network-policies.md",
-      "id": "policy-order-and-evaluation",
-      "heading": "## 策略顺序与评估",
-      "nativeId": "策略顺序与评估",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "策略顺序与评估"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/security/04-network-policies.md",
-      "id": "default-deny-policies",
-      "heading": "## 默认拒绝策略",
-      "nativeId": "默认拒绝策略",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "默认拒绝策略"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/security/04-network-policies.md",
-      "id": "kubernetes-networkpolicy-spec",
-      "heading": "## Kubernetes NetworkPolicy 规范",
-      "nativeId": "kubernetes-networkpolicy-规范",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Kubernetes NetworkPolicy 规范"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "cn/security/04-network-policies.md",
-      "id": "network-policy-overview",
-      "heading": "## Network Policy 概述",
-      "nativeId": "network-policy-概述",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Network Policy 概述"
       ]
     },
     {
@@ -13391,358 +12870,6 @@
     },
     {
       "kind": "alias",
-      "path": "es/observability/alerting/01-alertmanager.md",
-      "id": "troubleshooting",
-      "heading": "## Solución de problemas",
-      "nativeId": "solucion-de-problemas",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Solución de problemas"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/01-alertmanager.md",
-      "id": "production-alert-rule-examples",
-      "heading": "## Ejemplos de reglas de alerta para producción",
-      "nativeId": "ejemplos-de-reglas-de-alerta-para-produccion",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Ejemplos de reglas de alerta para producción"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/01-alertmanager.md",
-      "id": "alertmanagerconfig-crd",
-      "heading": "## CRD AlertmanagerConfig",
-      "nativeId": "crd-alertmanagerconfig",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "CRD AlertmanagerConfig"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/01-alertmanager.md",
-      "id": "high-availability-configuration",
-      "heading": "## Configuración de alta disponibilidad",
-      "nativeId": "configuracion-de-alta-disponibilidad",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Configuración de alta disponibilidad"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/01-alertmanager.md",
-      "id": "template-customization",
-      "heading": "## Personalización de plantillas",
-      "nativeId": "personalizacion-de-plantillas",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Personalización de plantillas"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/01-alertmanager.md",
-      "id": "silencing",
-      "heading": "## Silenciamiento",
-      "nativeId": "silenciamiento",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Silenciamiento"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/01-alertmanager.md",
-      "id": "inhibition-rules",
-      "heading": "## Reglas de inhibición",
-      "nativeId": "reglas-de-inhibicion",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Reglas de inhibición"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/01-alertmanager.md",
-      "id": "receiver-configuration",
-      "heading": "## Configuración de receptores",
-      "nativeId": "configuracion-de-receptores",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Configuración de receptores"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/01-alertmanager.md",
-      "id": "routing-configuration",
-      "heading": "## Configuración de enrutamiento",
-      "nativeId": "configuracion-de-enrutamiento",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Configuración de enrutamiento"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/01-alertmanager.md",
-      "id": "defining-alert-rules",
-      "heading": "## Definición de reglas de alerta",
-      "nativeId": "definicion-de-reglas-de-alerta",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Definición de reglas de alerta"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/01-alertmanager.md",
-      "id": "installation-and-configuration",
-      "heading": "## Instalación y configuración",
-      "nativeId": "instalacion-y-configuracion",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Instalación y configuración"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/01-alertmanager.md",
-      "id": "architecture",
-      "heading": "## Arquitectura",
-      "nativeId": "arquitectura",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Arquitectura"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/01-alertmanager.md",
-      "id": "alertmanager-overview",
-      "heading": "## Descripción general de Alertmanager",
-      "nativeId": "descripcion-general-de-alertmanager",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Descripción general de Alertmanager"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "terraform-examples",
-      "heading": "## Ejemplos de Terraform",
-      "nativeId": "ejemplos-de-terraform",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Ejemplos de Terraform"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "prometheus-metrics-integration",
-      "heading": "## Integración de métricas de Prometheus",
-      "nativeId": "integracion-de-metricas-de-prometheus",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Integración de métricas de Prometheus"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "cost-optimization",
-      "heading": "## Optimización de costos",
-      "nativeId": "optimizacion-de-costos",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Optimización de costos"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "cloudwatch-alarm-actions",
-      "heading": "## Acciones de CloudWatch Alarm",
-      "nativeId": "acciones-de-cloudwatch-alarm",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Acciones de CloudWatch Alarm"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "container-insights-alerts",
-      "heading": "## Alertas de Container Insights",
-      "nativeId": "alertas-de-container-insights",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Alertas de Container Insights"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "eventbridge-integration",
-      "heading": "## Integración con EventBridge",
-      "nativeId": "integracion-con-eventbridge",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Integración con EventBridge"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "sns-integration",
-      "heading": "## Integración con SNS",
-      "nativeId": "integracion-con-sns",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Integración con SNS"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "anomaly-detection",
-      "heading": "## Detección de anomalías",
-      "nativeId": "deteccion-de-anomalias",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Detección de anomalías"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "composite-alarms",
-      "heading": "## Alarmas compuestas",
-      "nativeId": "alarmas-compuestas",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Alarmas compuestas"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "metric-alarms",
-      "heading": "## Alarmas de métricas",
-      "nativeId": "alarmas-de-metricas",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Alarmas de métricas"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "architecture",
-      "heading": "## Arquitectura",
-      "nativeId": "arquitectura",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Arquitectura"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/02-cloudwatch-alarms.md",
-      "id": "cloudwatch-alarms-overview",
-      "heading": "## Descripción general de CloudWatch Alarms",
-      "nativeId": "descripcion-general-de-cloudwatch-alarms",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Descripción general de CloudWatch Alarms"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/README.md",
-      "id": "solution-comparison",
-      "heading": "## Comparación de soluciones",
-      "nativeId": "comparacion-de-soluciones",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Comparación de soluciones"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/README.md",
-      "id": "alerting-strategy-for-eks-environments",
-      "heading": "## Estrategia de alertas para entornos EKS",
-      "nativeId": "estrategia-de-alertas-para-entornos-eks",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Estrategia de alertas para entornos EKS"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/README.md",
-      "id": "on-call-rotation",
-      "heading": "## Rotación de guardia",
-      "nativeId": "rotacion-de-guardia",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Rotación de guardia"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/README.md",
-      "id": "alert-routing-and-escalation",
-      "heading": "## Enrutamiento y escalamiento de alertas",
-      "nativeId": "enrutamiento-y-escalamiento-de-alertas",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Enrutamiento y escalamiento de alertas"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/README.md",
-      "id": "alert-design-principles",
-      "heading": "## Principios de diseño de alertas",
-      "nativeId": "principios-de-diseno-de-alertas",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Principios de diseño de alertas"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/README.md",
-      "id": "alert-lifecycle",
-      "heading": "## Ciclo de vida de las alertas",
-      "nativeId": "ciclo-de-vida-de-las-alertas",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Ciclo de vida de las alertas"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/observability/alerting/README.md",
-      "id": "the-role-and-importance-of-alerting",
-      "heading": "## El rol y la importancia de las alertas",
-      "nativeId": "el-rol-y-la-importancia-de-las-alertas",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "El rol y la importancia de las alertas"
-      ]
-    },
-    {
-      "kind": "alias",
       "path": "es/observability/logging/03-cloudwatch-logs.md",
       "id": "cost-optimization",
       "heading": "## Optimización de costos",
@@ -14636,116 +13763,6 @@
       "method": "unique exact normalized label at highest matching heading level",
       "evidenceLabels": [
         "Evolución de PSP a PSS"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/security/04-network-policies.md",
-      "id": "visualization-tools",
-      "heading": "## Herramientas de visualización",
-      "nativeId": "herramientas-de-visualizacion",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Herramientas de visualización"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/security/04-network-policies.md",
-      "id": "eks-considerations",
-      "heading": "## Consideraciones de EKS",
-      "nativeId": "consideraciones-de-eks",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Consideraciones de EKS"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/security/04-network-policies.md",
-      "id": "testing-network-policies",
-      "heading": "## Pruebas de Network Policies",
-      "nativeId": "pruebas-de-network-policies",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Pruebas de Network Policies"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/security/04-network-policies.md",
-      "id": "design-patterns",
-      "heading": "## Patrones de diseño",
-      "nativeId": "patrones-de-diseno",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Patrones de diseño"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/security/04-network-policies.md",
-      "id": "calico-network-policy-extensions",
-      "heading": "## Extensiones de Calico Network Policy",
-      "nativeId": "extensiones-de-calico-network-policy",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Extensiones de Calico Network Policy"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/security/04-network-policies.md",
-      "id": "cilium-network-policy-extensions",
-      "heading": "## Extensiones de Cilium Network Policy",
-      "nativeId": "extensiones-de-cilium-network-policy",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Extensiones de Cilium Network Policy"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/security/04-network-policies.md",
-      "id": "policy-order-and-evaluation",
-      "heading": "## Orden y evaluación de políticas",
-      "nativeId": "orden-y-evaluacion-de-politicas",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Orden y evaluación de políticas"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/security/04-network-policies.md",
-      "id": "default-deny-policies",
-      "heading": "## Políticas de denegación predeterminada",
-      "nativeId": "politicas-de-denegacion-predeterminada",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Políticas de denegación predeterminada"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/security/04-network-policies.md",
-      "id": "kubernetes-networkpolicy-spec",
-      "heading": "## Especificación NetworkPolicy de Kubernetes",
-      "nativeId": "especificacion-networkpolicy-de-kubernetes",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Especificación NetworkPolicy de Kubernetes"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "es/security/04-network-policies.md",
-      "id": "network-policy-overview",
-      "heading": "## Descripción general de Network Policy",
-      "nativeId": "descripcion-general-de-network-policy",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Descripción general de Network Policy"
       ]
     },
     {
@@ -20167,215 +19184,6 @@
     },
     {
       "kind": "alias",
-      "path": "jp/observability/alerting/01-alertmanager.md",
-      "id": "troubleshooting",
-      "heading": "## トラブルシューティング",
-      "nativeId": "トラブルシューティング",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "トラブルシューティング"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/01-alertmanager.md",
-      "id": "production-alert-rule-examples",
-      "heading": "## 本番環境向けアラートルールの例",
-      "nativeId": "本番環境向けアラートルールの例",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "本番環境向けアラートルールの例"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/01-alertmanager.md",
-      "id": "high-availability-configuration",
-      "heading": "## 高可用性の設定",
-      "nativeId": "高可用性の設定",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "高可用性の設定"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/01-alertmanager.md",
-      "id": "template-customization",
-      "heading": "## テンプレートのカスタマイズ",
-      "nativeId": "テンプレートのカスタマイズ",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "テンプレートのカスタマイズ"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/01-alertmanager.md",
-      "id": "silencing",
-      "heading": "## サイレンス",
-      "nativeId": "サイレンス",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "サイレンス"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/01-alertmanager.md",
-      "id": "inhibition-rules",
-      "heading": "## Inhibition ルール",
-      "nativeId": "inhibition-ルール",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Inhibition ルール"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/01-alertmanager.md",
-      "id": "receiver-configuration",
-      "heading": "## Receiver の設定",
-      "nativeId": "receiver-の設定",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Receiver の設定"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/01-alertmanager.md",
-      "id": "routing-configuration",
-      "heading": "## ルーティング設定",
-      "nativeId": "ルーティング設定",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "ルーティング設定"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/01-alertmanager.md",
-      "id": "defining-alert-rules",
-      "heading": "## アラートルールの定義",
-      "nativeId": "アラートルールの定義",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "アラートルールの定義"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/01-alertmanager.md",
-      "id": "installation-and-configuration",
-      "heading": "## インストールと設定",
-      "nativeId": "インストールと設定",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "インストールと設定"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/01-alertmanager.md",
-      "id": "architecture",
-      "heading": "## アーキテクチャ",
-      "nativeId": "アーキテクチャ",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "アーキテクチャ"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/01-alertmanager.md",
-      "id": "alertmanager-overview",
-      "heading": "## Alertmanager の概要",
-      "nativeId": "alertmanager-の概要",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "Alertmanager の概要"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/README.md",
-      "id": "solution-comparison",
-      "heading": "## ソリューション比較",
-      "nativeId": "ソリューション比較",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "ソリューション比較"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/README.md",
-      "id": "alerting-strategy-for-eks-environments",
-      "heading": "## EKS 環境におけるアラート戦略",
-      "nativeId": "eks-環境におけるアラート戦略",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "EKS 環境におけるアラート戦略"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/README.md",
-      "id": "on-call-rotation",
-      "heading": "## オンコールローテーション",
-      "nativeId": "オンコールローテーション",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "オンコールローテーション"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/README.md",
-      "id": "alert-routing-and-escalation",
-      "heading": "## アラートのルーティングとエスカレーション",
-      "nativeId": "アラートのルーティングとエスカレーション",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "アラートのルーティングとエスカレーション"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/README.md",
-      "id": "alert-design-principles",
-      "heading": "## アラート設計の原則",
-      "nativeId": "アラート設計の原則",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "アラート設計の原則"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/README.md",
-      "id": "alert-lifecycle",
-      "heading": "## アラートのライフサイクル",
-      "nativeId": "アラートのライフサイクル",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "アラートのライフサイクル"
-      ]
-    },
-    {
-      "kind": "alias",
-      "path": "jp/observability/alerting/README.md",
-      "id": "the-role-and-importance-of-alerting",
-      "heading": "## アラートの役割と重要性",
-      "nativeId": "アラートの役割と重要性",
-      "method": "unique exact normalized label at highest matching heading level",
-      "evidenceLabels": [
-        "アラートの役割と重要性"
-      ]
-    },
-    {
-      "kind": "alias",
       "path": "jp/observability/logging/03-cloudwatch-logs.md",
       "id": "cost-optimization",
       "heading": "## コスト最適化",
@@ -23873,7 +22681,7 @@
   ],
   "nativePreservation": {
     "status": "passed",
-    "documents": 269,
+    "documents": 259,
     "checks": [
       {
         "path": "cn/autoscaling/01-keda.md",
@@ -24101,21 +22909,6 @@
         "headingsUnchanged": true
       },
       {
-        "path": "cn/observability/alerting/01-alertmanager.md",
-        "codeUnchanged": true,
-        "headingsUnchanged": true
-      },
-      {
-        "path": "cn/observability/alerting/02-cloudwatch-alarms.md",
-        "codeUnchanged": true,
-        "headingsUnchanged": true
-      },
-      {
-        "path": "cn/observability/alerting/README.md",
-        "codeUnchanged": true,
-        "headingsUnchanged": true
-      },
-      {
         "path": "cn/observability/logging/03-cloudwatch-logs.md",
         "codeUnchanged": true,
         "headingsUnchanged": true
@@ -24177,11 +22970,6 @@
       },
       {
         "path": "cn/security/03-pod-security-standards.md",
-        "codeUnchanged": true,
-        "headingsUnchanged": true
-      },
-      {
-        "path": "cn/security/04-network-policies.md",
         "codeUnchanged": true,
         "headingsUnchanged": true
       },
@@ -24551,21 +23339,6 @@
         "headingsUnchanged": true
       },
       {
-        "path": "es/observability/alerting/01-alertmanager.md",
-        "codeUnchanged": true,
-        "headingsUnchanged": true
-      },
-      {
-        "path": "es/observability/alerting/02-cloudwatch-alarms.md",
-        "codeUnchanged": true,
-        "headingsUnchanged": true
-      },
-      {
-        "path": "es/observability/alerting/README.md",
-        "codeUnchanged": true,
-        "headingsUnchanged": true
-      },
-      {
         "path": "es/observability/logging/03-cloudwatch-logs.md",
         "codeUnchanged": true,
         "headingsUnchanged": true
@@ -24627,11 +23400,6 @@
       },
       {
         "path": "es/security/03-pod-security-standards.md",
-        "codeUnchanged": true,
-        "headingsUnchanged": true
-      },
-      {
-        "path": "es/security/04-network-policies.md",
         "codeUnchanged": true,
         "headingsUnchanged": true
       },
@@ -24981,16 +23749,6 @@
         "headingsUnchanged": true
       },
       {
-        "path": "jp/observability/alerting/01-alertmanager.md",
-        "codeUnchanged": true,
-        "headingsUnchanged": true
-      },
-      {
-        "path": "jp/observability/alerting/README.md",
-        "codeUnchanged": true,
-        "headingsUnchanged": true
-      },
-      {
         "path": "jp/observability/logging/03-cloudwatch-logs.md",
         "codeUnchanged": true,
         "headingsUnchanged": true
@@ -25243,5 +24001,128 @@
     ],
     "reason": "PR301 latest translations already provide the corresponding current section IDs and73historicalaliases. Preserve those complete reviewed translations instead of layering old-version edits.",
     "removedFromThisPRScope": 3
+  },
+  "finalTranslationIntegration": {
+    "previousReviewedHead": "2f14ea13c988aeae4ab612b7a1266171faaf1a86",
+    "mergedMain": "03cd44d289950a390ec316ff6da54dadeb548760",
+    "freshTranslationsPreserved": [
+      "cn/.gitbook/assets/en-observability-alerting-01-alertmanager-2.png",
+      "cn/.gitbook/assets/en-observability-alerting-01-alertmanager-3.png",
+      "cn/.gitbook/assets/en-observability-alerting-01-alertmanager-6.png",
+      "cn/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-0.png",
+      "cn/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-1.png",
+      "cn/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-2.png",
+      "cn/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-3.png",
+      "cn/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-4.png",
+      "cn/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-5.png",
+      "cn/.gitbook/assets/en-observability-alerting-03-grafana-oncall-0.png",
+      "cn/.gitbook/assets/en-observability-alerting-03-grafana-oncall-1.png",
+      "cn/.gitbook/assets/en-observability-alerting-03-grafana-oncall-2.png",
+      "cn/.gitbook/assets/en-observability-alerting-03-grafana-oncall-3.png",
+      "cn/.gitbook/assets/en-observability-alerting-03-grafana-oncall-4.png",
+      "cn/.gitbook/assets/en-observability-alerting-03-grafana-oncall-5.png",
+      "cn/.gitbook/assets/en-observability-alerting-03-grafana-oncall-6.png",
+      "cn/.gitbook/assets/en-observability-alerting-03-grafana-oncall-7.png",
+      "cn/.gitbook/assets/en-observability-alerting-03-grafana-oncall-8.png",
+      "cn/.gitbook/assets/en-observability-tracing-03-opentelemetry-0.png",
+      "cn/.gitbook/assets/en-observability-tracing-03-opentelemetry-2.png",
+      "cn/.gitbook/assets/en-observability-tracing-04-dynatrace-1.png",
+      "cn/observability/alerting/01-alertmanager.md",
+      "cn/observability/alerting/02-cloudwatch-alarms.md",
+      "cn/observability/alerting/03-grafana-oncall.md",
+      "cn/observability/alerting/README.md",
+      "cn/observability/tracing/03-opentelemetry.md",
+      "cn/observability/tracing/04-dynatrace.md",
+      "cn/quizzes/observability/alerting/01-alertmanager-quiz.md",
+      "cn/quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md",
+      "cn/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+      "cn/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+      "cn/quizzes/observability/tracing/04-dynatrace-quiz.md",
+      "cn/quizzes/security/04-network-policies-quiz.md",
+      "cn/security/04-network-policies.md",
+      "docs/reviews/2026-09-11/alertmanager-translation-repair-validation.json",
+      "es/.gitbook/assets/en-observability-alerting-01-alertmanager-2.png",
+      "es/.gitbook/assets/en-observability-alerting-01-alertmanager-3.png",
+      "es/.gitbook/assets/en-observability-alerting-01-alertmanager-6.png",
+      "es/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-0.png",
+      "es/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-1.png",
+      "es/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-2.png",
+      "es/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-3.png",
+      "es/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-4.png",
+      "es/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-5.png",
+      "es/.gitbook/assets/en-observability-alerting-03-grafana-oncall-0.png",
+      "es/.gitbook/assets/en-observability-alerting-03-grafana-oncall-1.png",
+      "es/.gitbook/assets/en-observability-alerting-03-grafana-oncall-2.png",
+      "es/.gitbook/assets/en-observability-alerting-03-grafana-oncall-3.png",
+      "es/.gitbook/assets/en-observability-alerting-03-grafana-oncall-4.png",
+      "es/.gitbook/assets/en-observability-alerting-03-grafana-oncall-5.png",
+      "es/.gitbook/assets/en-observability-alerting-03-grafana-oncall-6.png",
+      "es/.gitbook/assets/en-observability-alerting-03-grafana-oncall-7.png",
+      "es/.gitbook/assets/en-observability-alerting-03-grafana-oncall-8.png",
+      "es/.gitbook/assets/en-observability-tracing-03-opentelemetry-0.png",
+      "es/.gitbook/assets/en-observability-tracing-03-opentelemetry-2.png",
+      "es/.gitbook/assets/en-observability-tracing-04-dynatrace-1.png",
+      "es/observability/alerting/01-alertmanager.md",
+      "es/observability/alerting/02-cloudwatch-alarms.md",
+      "es/observability/alerting/03-grafana-oncall.md",
+      "es/observability/alerting/README.md",
+      "es/observability/tracing/03-opentelemetry.md",
+      "es/observability/tracing/04-dynatrace.md",
+      "es/quizzes/observability/alerting/01-alertmanager-quiz.md",
+      "es/quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md",
+      "es/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+      "es/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+      "es/quizzes/observability/tracing/04-dynatrace-quiz.md",
+      "es/quizzes/security/04-network-policies-quiz.md",
+      "es/security/04-network-policies.md",
+      "jp/.gitbook/assets/en-observability-alerting-01-alertmanager-2.png",
+      "jp/.gitbook/assets/en-observability-alerting-01-alertmanager-3.png",
+      "jp/.gitbook/assets/en-observability-alerting-01-alertmanager-6.png",
+      "jp/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-0.png",
+      "jp/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-1.png",
+      "jp/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-2.png",
+      "jp/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-3.png",
+      "jp/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-4.png",
+      "jp/.gitbook/assets/en-observability-alerting-02-cloudwatch-alarms-5.png",
+      "jp/.gitbook/assets/en-observability-alerting-03-grafana-oncall-0.png",
+      "jp/.gitbook/assets/en-observability-alerting-03-grafana-oncall-1.png",
+      "jp/.gitbook/assets/en-observability-alerting-03-grafana-oncall-2.png",
+      "jp/.gitbook/assets/en-observability-alerting-03-grafana-oncall-3.png",
+      "jp/.gitbook/assets/en-observability-alerting-03-grafana-oncall-4.png",
+      "jp/.gitbook/assets/en-observability-alerting-03-grafana-oncall-5.png",
+      "jp/.gitbook/assets/en-observability-alerting-03-grafana-oncall-6.png",
+      "jp/.gitbook/assets/en-observability-alerting-03-grafana-oncall-7.png",
+      "jp/.gitbook/assets/en-observability-alerting-03-grafana-oncall-8.png",
+      "jp/.gitbook/assets/en-observability-tracing-03-opentelemetry-0.png",
+      "jp/.gitbook/assets/en-observability-tracing-03-opentelemetry-2.png",
+      "jp/.gitbook/assets/en-observability-tracing-04-dynatrace-1.png",
+      "jp/observability/alerting/01-alertmanager.md",
+      "jp/observability/alerting/02-cloudwatch-alarms.md",
+      "jp/observability/alerting/03-grafana-oncall.md",
+      "jp/observability/alerting/README.md",
+      "jp/observability/tracing/03-opentelemetry.md",
+      "jp/observability/tracing/04-dynatrace.md",
+      "jp/quizzes/observability/alerting/01-alertmanager-quiz.md",
+      "jp/quizzes/observability/alerting/02-cloudwatch-alarms-quiz.md",
+      "jp/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+      "jp/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+      "jp/quizzes/observability/tracing/04-dynatrace-quiz.md",
+      "jp/quizzes/security/04-network-policies-quiz.md",
+      "jp/security/04-network-policies.md"
+    ],
+    "removedFromThisPRScope": [
+      "cn/observability/alerting/01-alertmanager.md",
+      "cn/observability/alerting/02-cloudwatch-alarms.md",
+      "cn/observability/alerting/README.md",
+      "cn/security/04-network-policies.md",
+      "es/observability/alerting/01-alertmanager.md",
+      "es/observability/alerting/02-cloudwatch-alarms.md",
+      "es/observability/alerting/README.md",
+      "es/security/04-network-policies.md",
+      "jp/observability/alerting/01-alertmanager.md",
+      "jp/observability/alerting/README.md"
+    ],
+    "reason": "Preserve all latest reviewed translation files including failed-guide repair; corresponding current/headings aliases already exist.",
+    "fullFragmentCheck": "Will be recorded against the committed input tree before publication."
   }
 }

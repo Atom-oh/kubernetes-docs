@@ -1,185 +1,177 @@
 # Cuestionario de Dynatrace
 
-Pon a prueba tus conocimientos sobre Dynatrace.
+> **Última actualización**: September 13, 2026
 
 ---
 
-1. ¿Cuál NO es una característica de la tecnología principal de Dynatrace, OneAgent?
-   - A) Monitorización full-stack con un único agente
-   - B) Instrumentación automática de código
-   - C) Configuración manual obligatoria
-   - D) Detección automática de procesos
+1. ¿Qué afirmación sobre OneAgent es incorrecta?
+   - A) Puede descubrir procesos compatibles.
+   - B) Puede instrumentar tecnologías compatibles.
+   - C) La instalación elimina todos los requisitos de permisos, alcance y conectividad.
+   - D) La cobertura depende del modo de despliegue y de la compatibilidad tecnológica.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Configuración manual obligatoria**
+**Respuesta: C) La instalación elimina todos los requisitos de permisos, alcance y conectividad.**
 
-**Explicación:**
-Las características principales de OneAgent son la detección automática y la instrumentación automática. Tras la instalación, detecta y monitoriza automáticamente los procesos, Services y aplicaciones del host sin configuración manual adicional. Esto refleja la filosofía de «Zero-configuration» de Dynatrace.
+El descubrimiento automático no elimina los privilegios de instalación, los requisitos de runtimes compatibles, la salida de red, la configuración de tokens, la selección de inyección ni las decisiones de privacidad de datos. No garantiza que se capture cada método/solicitud.
 
 </details>
 
 ---
 
-2. ¿Cuál es la forma recomendada de desplegar Dynatrace en EKS?
-   - A) Desplegar directamente con kubectl apply
-   - B) Usar Dynatrace Operator
-   - C) Desplegar solo OneAgent con Helm
-   - D) Desplegar con una función Lambda
+2. ¿Qué componente administra los recursos de DynaKube y las cargas de trabajo de Dynatrace en Kubernetes?
+   - A) Un binario kubectl independiente.
+   - B) Dynatrace Operator.
+   - C) Solo el proceso OneAgent.
+   - D) Una función Lambda creada automáticamente.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Usar Dynatrace Operator**
+**Respuesta: B) Dynatrace Operator.**
 
-**Explicación:**
-Dynatrace Operator gestiona automáticamente el ciclo de vida de los componentes de Dynatrace (OneAgent, ActiveGate, etc.) en entornos Kubernetes. Configura de forma declarativa mediante el DynaKube CR, proporcionando actualizaciones automáticas, despliegues graduales y monitorización de estado.
+Helm o los manifiestos instalan el Operator; no son modos de monitorización que compitan entre sí. El Operator/chart revisado es la versión 1.10.2. Su CRD publicado sirve v1beta5 y v1beta6, con v1beta6 como almacenamiento; el ejemplo antiguo de v1beta2 no es una API servida actualmente. Aún deben revisarse las versiones de los componentes y el comportamiento de actualización.
 
 </details>
 
 ---
 
-3. ¿Cuál NO es una característica principal del motor Davis AI?
-   - A) Aprendizaje automático de líneas de base
-   - B) Detección de anomalías
-   - C) Corrección automática de código
-   - D) Análisis de la causa raíz
+3. ¿Qué resultado no está implícito al habilitar la detección de problemas y el análisis de causa raíz?
+   - A) Análisis de línea base y anomalías.
+   - B) Investigación con conocimiento de la topología.
+   - C) Los cambios de código de producción no revisados se autorizan automáticamente.
+   - D) Análisis de impacto mediante evidencia recopilada.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Corrección automática de código**
+**Respuesta: C) Los cambios de código de producción no revisados se autorizan automáticamente.**
 
-**Explicación:**
-Davis AI aprende automáticamente las líneas de base, detecta anomalías y analiza las causas raíz de los problemas. Sin embargo, no corrige código automáticamente. Davis diagnostica problemas y sugiere vías de resolución, pero los desarrolladores deben realizar las correcciones de código reales.
+La terminología Davis permanece en material anterior; la documentación actual utiliza Dynatrace Intelligence. Se pueden configurar acciones/flujos de trabajo agénticos aprobados, incluidas las funcionalidades Preview, por lo que «la IA nunca puede tomar medidas» también es una afirmación demasiado amplia. La detección por sí sola no concede autoridad de remediación ni prueba que un diagnóstico sea correcto.
 
 </details>
 
 ---
 
-4. ¿Cuál es la diferencia entre los modos de despliegue Cloud Native Full Stack y Classic Full Stack en Dynatrace?
-   - A) Cloud Native solo es compatible con Windows
-   - B) Cloud Native utiliza inyección de módulos de código
-   - C) Classic no se puede utilizar en entornos cloud
-   - D) Ambos modos ofrecen funcionalidad idéntica
+4. ¿Qué combina cloudNativeFullStack?
+   - A) Solo monitorización de Windows.
+   - B) Monitorización de host e inyección de módulos de código de aplicación basada en webhook.
+   - C) Monitorización solo de aplicaciones sin componente de host.
+   - D) Una garantía de menor sobrecarga en cada carga de trabajo.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Cloud Native utiliza inyección de módulos de código**
+**Respuesta: B) Monitorización de host e inyección de módulos de código de aplicación basada en webhook.**
 
-**Explicación:**
-Cloud Native Full Stack es un enfoque ligero que inyecta módulos de código en Pods mediante CSI Driver. Classic Full Stack despliega el OneAgent completo en cada nodo como un DaemonSet. Cloud Native tiene un menor uso de recursos y permite un control detallado a nivel de Pod, pero presenta limitaciones para la monitorización a nivel de host.
+El Operator publicado describe cloudNativeFullStack como la combinación de hostMonitoring y applicationMonitoring, mediante su infraestructura CSI. No es simplemente un sidecar de aplicación. classicFullStack sigue presente en la versión revisada; no debe describirse como eliminado. El modo, el sistema operativo y los permisos de CSI determinan su idoneidad.
 
 </details>
 
 ---
 
-5. ¿Qué funcionalidad proporciona la tecnología PurePath de Dynatrace?
-   - A) Compresión de logs
-   - B) Trazado distribuido a nivel de código
-   - C) Captura de paquetes de red
-   - D) Copia de seguridad de base de datos
+5. ¿Qué capacidad se asocia con PurePath?
+   - A) Compresión de logs.
+   - B) Trazado distribuido con contexto a nivel de código compatible.
+   - C) Un dispositivo universal de captura de paquetes.
+   - D) Copia de seguridad de bases de datos.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Trazado distribuido a nivel de código**
+**Respuesta: B) Trazado distribuido con contexto a nivel de código compatible.**
 
-**Explicación:**
-PurePath es la tecnología propietaria de trazado distribuido de Dynatrace que rastrea la ruta completa de las solicitudes a través del sistema hasta el nivel de código. Registra detalladamente no solo las llamadas de Service a Service, sino también las llamadas a métodos dentro de cada Service, las consultas de base de datos y las llamadas a API externas.
+La visibilidad de trazas y código depende de las tecnologías compatibles, la instrumentación, la configuración de captura/muestreo y la telemetría disponible. «Ruta completa» no prueba que se conserve cada solicitud, método o relación asíncrona.
 
 </details>
 
 ---
 
-6. ¿Cuál es la fórmula correcta para calcular Dynatrace Host Units?
-   - A) vCPU + Memory(GB)
-   - B) max(Memory(GB) / 16, vCPU / 1.5)
-   - C) vCPU * Memory(GB) / 100
-   - D) (vCPU + Memory(GB)) / 2
+6. ¿Qué medida utiliza la monitorización Full-Stack basada en host de DPS actual?
+   - A) vCPU más RAM.
+   - B) GiB-horas de memoria monitorizada según la tarifa aplicable.
+   - C) max(RAM/16, vCPU/1.5) Host Units.
+   - D) Una unidad fija por namespace de Kubernetes.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) max(Memory(GB) / 16, vCPU / 1.5)**
+**Respuesta: B) GiB-horas de memoria monitorizada según la tarifa aplicable.**
 
-**Explicación:**
-Las Dynatrace Host Units se calculan según el valor mayor entre la memoria y la CPU. 16GB de memoria o 1.5 vCPU equivalen a 1 Host Unit. Por ejemplo, un host con 8 vCPU y 32GB de RAM es max(2, 5.33) = 5.33 Host Units.
+El proveedor documenta intervalos de facturación de 15 minutos, redondeo de RAM a 0.25 GiB y un mínimo de host de 4 GiB. La monitorización de aplicaciones solo basada en contenedores tiene reglas diferentes de memoria/mínimos. La antigua fórmula máxima de CPU/RAM no es el cálculo actual de DPS. La aritmética de uso no es una factura: importan el compromiso, la tarifa, las asignaciones y las capacidades facturadas por separado.
 
 </details>
 
 ---
 
-7. ¿Cuál NO es una función de Dynatrace ActiveGate?
-   - A) Enrutamiento de datos
-   - B) Monitorización de la API de Kubernetes
-   - C) Almacenamiento de datos a largo plazo
-   - D) Separación de zonas de red
+7. ¿Cuál no es una función de ActiveGate?
+   - A) Enrutar telemetría.
+   - B) Monitorización configurada de la API de Kubernetes.
+   - C) Actuar como lakehouse de datos analíticos a largo plazo.
+   - D) Proporcionar una ruta de conectividad aprobada al entorno.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Almacenamiento de datos a largo plazo**
+**Respuesta: C) Actuar como lakehouse de datos analíticos a largo plazo.**
 
-**Explicación:**
-ActiveGate gestiona el enrutamiento de datos entre OneAgent y Dynatrace SaaS, la monitorización de la API de Kubernetes y las funciones de proxy en entornos aislados de la red. El almacenamiento de datos a largo plazo se gestiona mediante el lakehouse de datos Grail de Dynatrace; ActiveGate no almacena datos, solo los reenvía.
+El enrutamiento/la monitorización y el almacenamiento en búfer local son diferentes del almacenamiento backend a largo plazo. Algunas configuraciones de ingesta de ActiveGate en contenedores requieren un PVC. Una ruta SaaS aún necesita conectividad; un proxy no permite que una red completamente desconectada alcance SaaS.
 
 </details>
 
 ---
 
-8. ¿Cuál es el propósito de usar namespaceSelector en Dynatrace?
-   - A) Crear namespaces
-   - B) Monitorizar solo namespaces específicos
-   - C) Bloquear la comunicación entre namespaces
-   - D) Establecer cuotas de recursos
+8. ¿Qué selecciona oneAgent.cloudNativeFullStack.namespaceSelector?
+   - A) Namespaces que se deben crear.
+   - B) Namespaces elegibles para la inyección de webhook configurada.
+   - C) Un límite de aislamiento de red.
+   - D) El alcance completo de la monitorización de host y de la API de Kubernetes.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Monitorizar solo namespaces específicos**
+**Respuesta: B) Namespaces elegibles para la inyección de webhook configurada.**
 
-**Explicación:**
-El uso de namespaceSelector en el DynaKube CR permite especificar como objetivos de monitorización únicamente los namespaces con etiquetas específicas. Esto permite monitorizar solo entornos de producción o monitorizar selectivamente namespaces de equipos específicos para optimizar los costes.
+El selector y las anotaciones de inyección de Pod controlan la inyección de webhook. No restringen la monitorización de host de OneAgent ni la monitorización de la API de Kubernetes de ActiveGate. El enriquecimiento de metadatos y la configuración automática del exportador OTLP tienen sus propios selectores. Proteja las etiquetas y los permisos de actualización de DynaKube; los selectores no son RBAC ni un límite de facturación.
 
 </details>
 
 ---
 
-9. ¿Qué protocolo se utiliza al integrar Dynatrace con OpenTelemetry?
-   - A) Solo se admite gRPC
-   - B) Solo se admite HTTP
-   - C) OTLP (gRPC and HTTP)
-   - D) Solo se admite protocolo propietario
+9. ¿Qué transporte acepta la API OTLP nativa documentada de Dynatrace SaaS/ActiveGate?
+   - A) Solo gRPC.
+   - B) HTTP con Protocol Buffers binarios.
+   - C) gRPC y HTTP/JSON indistintamente.
+   - D) Solo un formato propietario que no es OTLP.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) OTLP (gRPC and HTTP)**
+**Respuesta: B) HTTP con Protocol Buffers binarios.**
 
-**Explicación:**
-Dynatrace admite de forma nativa OpenTelemetry Protocol (OTLP). Con el exportador otlphttp de OTEL Collector, puedes enviar trazas, métricas y logs al endpoint de la API de Dynatrace. Se admiten tanto gRPC como HTTP.
+El endpoint nativo admite HTTP/protobuf, no gRPC ni JSON de protobuf. Un Collector puede aceptar gRPC y exportar HTTP a Dynatrace. Utilice la base /api/v2/otlp y el sufijo de señal correctos, TLS y el tipo/los alcances de token requeridos por el endpoint seleccionado. No sustituya una URL de navegador .apps.
 
 </details>
 
 ---
 
-10. ¿Qué funcionalidad proporciona Smartscape de Dynatrace?
-    - A) Filtrado inteligente de alertas
-    - B) Mapeo de topología en tiempo real
-    - C) Autoescalado
-    - D) Revisión de código
+10. ¿Qué proporciona Smartscape?
+   - A) Un interruptor universal para silenciar alertas.
+   - B) Mapeo de topología y dependencias a partir de datos observados.
+   - C) Autorización automática para el escalado.
+   - D) Revisión de código fuente.
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Mapeo de topología en tiempo real**
+**Respuesta: B) Mapeo de topología y dependencias a partir de datos observados.**
 
-**Explicación:**
-Smartscape es la tecnología de mapeo de topología en tiempo real de Dynatrace. Detecta y visualiza automáticamente las relaciones entre la infraestructura (hosts, contenedores), los procesos, los Services y las aplicaciones. Esto ayuda a comprender las dependencias del sistema e identificar el alcance del impacto de los problemas.
+El grafo de dependencias permite el análisis de impacto y la investigación. Su cobertura depende de las tecnologías monitorizadas y de la telemetría; las relaciones ausentes o las brechas de datos no deben considerarse prueba de que no existe ninguna dependencia.
 
 </details>
 
 ---
+
+[Volver a la guía](../../../observability/tracing/04-dynatrace.md)

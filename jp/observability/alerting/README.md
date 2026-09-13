@@ -3,7 +3,7 @@
 > **最終更新**: September 13, 2026
 
 
-> レビュー基準: Prometheus 3.14.0 および Alertmanager 0.34.0。例では 1 つの cluster と重複排除された series を想定しています。実際の job、label、exporter、metric の可用性を確認してから、threshold を調整してください。ローカルの rule/routing チェックのみを実行しており、cluster または notification channel は検証していません。
+> レビュー基準: Prometheus 3.14.0 および Alertmanager 0.34.0。例では単一の cluster と重複排除された series を前提としています。実際の job、label、exporter、metric の可用性を検証してから、threshold を調整してください。ローカルの rule/routing チェックのみを実行しており、cluster または通知 channel は実施していません。
 
 
 ## 目次
@@ -13,8 +13,8 @@
 - [アラート設計の原則](#alert-design-principles)
 - [アラートのルーティングとエスカレーション](#alert-routing-and-escalation)
 - [オンコールローテーション](#on-call-rotation)
-- [EKS 環境におけるアラート戦略](#alerting-strategy-for-eks-environments)
-- [ソリューション比較](#solution-comparison)
+- [EKS 環境のアラート戦略](#alerting-strategy-for-eks-environments)
+- [ソリューションの比較](#solution-comparison)
 
 ---
 
@@ -24,35 +24,35 @@
 
 ### オブザーバビリティの 3 つの柱におけるアラートの位置付け
 
-Metrics、logs、traces は一般的なオブザーバビリティシグナルであり、profiles やその他のシグナルも存在します。rule engine が必ずしもこれら 3 つすべてを直接評価するわけではありません。
+Metrics、logs、traces は一般的なオブザーバビリティシグナルです。profiles やその他のシグナルも存在します。rule engine が必ずしもこれら 3 つすべてを直接評価するとは限りません。
 
-![一般的なオブザーバビリティシグナルが、互換性のある backend rule または派生 metric に入力され、構成済みの notification および incident integration に渡されます。](../../.gitbook/assets/en-observability-alerting-readme-0.png)
+![一般的なオブザーバビリティシグナルは、互換性のある backend rule または導出された metrics に送られ、その後に設定済みの通知および incident integration に送られます。](../../.gitbook/assets/en-observability-alerting-readme-0.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-0.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-0.html)
 
-- **Metrics**: システムの定量的な状態（CPU、memory、request count など）
+- **Metrics**: システムの定量的な状態（CPU、memory、request 数など）
 - **Logs**: event の詳細な記録
-- **Traces**: 分散システムにおける request のフロー
+- **Traces**: 分散システムにおける request の流れ
 
-Prometheus rule は metrics を評価します。logs と traces は backend 固有の rule または派生 metric を通じてアラートに入力されます。検出、通知、人間による acknowledgment は別々の段階であり、配信の成功には独自の monitoring が必要です。
+Prometheus rule は metrics を評価します。logs と traces は、backend 固有の rule または導出された metrics を通じてアラートに供給されます。検知、通知、人による確認応答は別々の段階であり、配信成功も独自に監視する必要があります。
 
 ### アラートが必要な理由
 
-1. **プロアクティブな問題対応**: ユーザーが問題を経験する前に issue を検出する
-2. **ダウンタイムの最小化**: 迅速な検出と対応により service availability を向上させる
-3. **コスト削減**: 自動 monitoring により人件費を削減する
-4. **SLA/SLO 準拠**: service level objective を達成するための必須要素
-5. **Incident の記録**: 問題発生履歴を追跡して分析する
+1. **プロアクティブな問題対応**: ユーザーが問題を経験する前に問題を検出する
+2. **ダウンタイムの最小化**: 迅速な検出と対応によりサービスの可用性を向上させる
+3. **コスト削減**: 自動監視により人件費を削減する
+4. **SLA/SLO の遵守**: サービスレベル目標を達成するための不可欠な要素
+5. **インシデントの記録**: 問題発生の履歴を追跡および分析する
 
 ### 良いアラートと悪いアラート
 
 | 観点 | 良いアラート | 悪いアラート |
 |--------|-------------|------------|
 | **実行可能性** | 即時の対応が必要 | 情報のみで、対応不要 |
-| **明確さ** | 問題が何であるか明確 | 曖昧で不明確 |
-| **緊急度** | 緊急度が severity と一致 | すべてが緊急 |
-| **頻度** | 適切な頻度 | 頻繁すぎる、または少なすぎる |
-| **重複** | 関連するアラートをグループ化 | 同じ issue に対して多数のアラート |
+| **明確性** | 問題が何か明確 | 曖昧で不明確 |
+| **緊急度** | 緊急度が重大度に一致する | すべてが緊急扱い |
+| **頻度** | 適切な頻度 | 頻度が高すぎる、または低すぎる |
+| **重複** | 関連アラートがグループ化される | 同じ問題に対して数十件のアラート |
 
 ---
 
@@ -60,18 +60,18 @@ Prometheus rule は metrics を評価します。logs と traces は backend 固
 
 ## アラートのライフサイクル
 
-この図は rule state と incident response を組み合わせています。Prometheus は inactive/pending/firing を使用します。acknowledgment と work-in-progress はオンコールツールに属します。incident をクローズしても firing rule はクリアされません。time series が消失した場合も rule が非アクティブになることがあり、復旧の証拠として扱ってはなりません。
+この図は rule state と incident response を組み合わせています。Prometheus は inactive/pending/firing を使用します。確認応答と対応中はオンコールツールに属します。incident をクローズしても、firing 中の rule は解除されません。time series が消失すると rule が非アクティブ化される場合もあるため、復旧の証拠として扱ってはなりません。
 
-![Prometheus の rule state と独立した incident-response state。incident のクローズまたは series の喪失は service recovery を証明しません。](../../.gitbook/assets/en-observability-alerting-readme-1.png)
+![Prometheus の rule state と別個の incident-response state。incident をクローズすることや series を失うことは、サービスの復旧を証明しません。](../../.gitbook/assets/en-observability-alerting-readme-1.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-1.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-1.html)
 
-### 1. 検出
+### 1. 検知
 
-- **Threshold ベース**: 特定の値が構成済みの threshold を超えた場合
-- **変化率ベース**: 変化率が異常な場合
-- **Anomaly detection**: machine learning ベースの異常パターン検出
-- **Log pattern**: 特定の log pattern が発生した場合
+- **しきい値ベース**: 特定の値が設定済みのしきい値を超えたとき
+- **変化率ベース**: 変化率が異常なとき
+- **異常検知**: 機械学習ベースの異常パターン検知
+- **ログパターン**: 特定のログパターンが発生したとき
 
 ```yaml
 groups:
@@ -90,26 +90,26 @@ groups:
 
 ### 2. 通知
 
-- **Channel の選択**: Slack、Email、SMS、PagerDuty など
-- **Routing**: alert type に基づいて適切な receiver に配信する
-- **Grouping**: 関連するアラートをまとめる
-- **Deduplication**: 重複通知を削減する。exactly-once の保証はなく、repeat_interval の reminder と retry は発生する可能性があります
+- **channel の選択**: Slack、Email、SMS、PagerDuty など
+- **routing**: アラートタイプに基づいて適切な receiver に配信する
+- **grouping**: 関連するアラートをまとめる
+- **重複排除**: 重複する通知を減らす。exactly-once の保証はなく、repeat_interval のリマインダーと retry は引き続き発生する可能性があります
 
 ### 3. エスカレーション
 
-- **時間ベース**: 指定時間内に応答がなければ次の responder にエスカレーションする
-- **Severity ベース**: severity に基づいて異なるエスカレーションパスを使用する
-- **自動エスカレーション**: オンコール service で構成します。Alertmanager の repeat_interval は acknowledgment の確認も responder の交代も行いません
+- **時間ベース**: 指定時間内に応答がない場合、次の responder にエスカレーションする
+- **重大度ベース**: 重大度に応じて異なるエスカレーションパスを使用する
+- **自動エスカレーション**: オンコールサービスで設定します。Alertmanager の repeat_interval は確認応答を確認せず、responder も交代させません
 
-![オンコール service で実装する例示的なエスカレーション時間枠。acknowledgment と backup の動作は policy で設定します。](../../.gitbook/assets/en-observability-alerting-readme-2.png)
+![オンコールサービスで実装された例示的なエスカレーション時間枠。確認応答および backup の動作は policy で設定されます。](../../.gitbook/assets/en-observability-alerting-readme-2.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-2.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-2.html)
 
 ### 4. 解決
 
-- **手動解決**: responder が incident tool で incident をクローズし、rule state は個別に確認する
-- **自動解決**: rule と collection health を確認後、integration policy に従って incident state を更新する
-- **解決通知**: 問題が修正されたときに解決通知を送信する
+- **手動解決**: responder が incident tool で incident をクローズします。rule state は別途確認します
+- **自動解決**: rule と collection health を確認後、integration policy に従って incident state を更新します
+- **解決通知**: 問題が修正されたときに解決通知を送信します
 
 ---
 
@@ -119,7 +119,7 @@ groups:
 
 ### 1. 実行可能なアラート
 
-人を中断させる page には、即時に実行可能な対応が必要です。情報提供 event や長期的な作業は、代わりに ticket または dashboard に送ることができます。
+人を中断させる page には、即時に実行可能な対応が必要です。情報提供の event や長期的な作業は、代わりに ticket または dashboard に送ることができます。
 
 **悪い例:**
 ```
@@ -135,30 +135,30 @@ Runbook: https://example.com/runbooks/replace-db-runbook
 
 ### 2. アラート疲れの防止
 
-アラートが多すぎると、重要なアラートを見逃す可能性があります。
+アラートが多すぎると、重要なアラートを見逃すおそれがあります。
 
-![アラート疲れと、実行可能性、grouping、緊急ではない作業の扱いを改善する review cycle。](../../.gitbook/assets/en-observability-alerting-readme-3.png)
+![アラート疲れと、実行可能性、grouping、緊急性の低い作業の扱いを改善するレビューサイクル。](../../.gitbook/assets/en-observability-alerting-readme-3.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-3.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-3.html)
 
-**アラート疲れを防止する戦略:**
+**アラート疲れを防ぐ戦略:**
 
-1. **Threshold の調整**: 敏感すぎる threshold を設定しない
-2. **Alert grouping**: 関連するアラートを 1 つにまとめる
-3. **Inhibition**: 親 alert が firing のときに子 alert を抑制する
+1. **しきい値の調整**: 過敏すぎるしきい値を設定しない
+2. **アラートのグループ化**: 関連するアラートを 1 つにまとめる
+3. **抑制**: 親アラートが firing したときに子アラートを抑制する
 4. **定期的なレビュー**: 不要なアラートを削除する
-5. **段階的な導入**: 新しいアラートは最初に低い severity で開始する
+5. **段階的な導入**: 新しいアラートは最初に低い重大度で開始する
 
-### 3. Severity レベル
+### 3. 重大度レベル
 
-これらの response time は例示的な組織の policy であり、product SLA や普遍的な推奨事項ではありません。
+これらの応答時間は例示的な組織 policy であり、製品の SLA や普遍的な推奨ではありません。
 
-| Severity | 説明 | Response Time | 例 |
+| 重大度 | 説明 | 応答時間 | 例 |
 |----------|-------------|---------------|----------|
-| **Critical** | service の完全な停止 | 即時（5 分以内） | service 全体の停止、data loss のリスク |
-| **High** | 主要機能の障害 | 15 分以内 | payment system error、login failure |
-| **Warning** | 潜在的な問題 | 1 時間以内 | disk usage 80%、response latency の増加 |
-| **Info** | 情報提供アラート | 営業時間内 | Deployment 完了、backup 成功 |
+| **Critical** | 完全なサービス停止 | 即時（5 分以内） | サービス全体の停止、データ損失リスク |
+| **High** | 主要機能の障害 | 15 分以内 | 決済システムエラー、ログイン失敗 |
+| **Warning** | 潜在的な問題 | 1 時間以内 | disk 使用率 80%、response latency の増加 |
+| **Info** | 情報アラート | 営業時間内 | Deployment 完了、backup 成功 |
 
 ```yaml
 groups:
@@ -190,14 +190,14 @@ groups:
           summary: "Disk space low"
 ```
 
-### 4. アラートのドキュメント
+### 4. アラートのドキュメント化
 
-すべてのアラートには次の情報を含める必要があります。
+すべてのアラートには、以下の情報を含める必要があります。
 
 - **説明**: アラートの意味
-- **Impact**: この問題が service に与える影響
-- **Action steps**: 問題を解決するためのステップごとのガイド
-- **Runbook link**: 詳細な対応手順書
+- **影響**: この問題がサービスに与える影響
+- **対応手順**: 問題を解決するための段階的なガイド
+- **Runbook link**: 詳細な対応手順ドキュメント
 
 ```yaml
 annotations:
@@ -214,17 +214,17 @@ annotations:
 
 ## アラートのルーティングとエスカレーション
 
-### Routing 戦略
+### ルーティング戦略
 
-アラートはさまざまな条件に基づいて適切な receiver に配信する必要があります。
+アラートは、さまざまな基準に基づいて適切な receiver に配信する必要があります。
 
-![alert label が配信前にオンコールおよび team receiver を選択します。critical のみの match は default receiver も呼び出しません。](../../.gitbook/assets/en-observability-alerting-readme-5.png)
+![アラート label は配信前にオンコールおよび team の receiver を選択します。critical-only の一致では default receiver も呼び出されることはありません。](../../.gitbook/assets/en-observability-alerting-readme-5.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-5.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-5.html)
 
-### Routing Tree の設計
+### ルーティングツリーの設計
 
-これは完全な**通知しない** routing-validation configuration です。空の receiver は意図的なものです。本番使用前にレビュー済み integration と Secret file を構成してください。Critical alert はオンコール receiver と一致する team に fan out されます。team label がない場合は default にフォールバックしますが、critical のみの match は default も呼び出しません。grouping delay のため、即時の電話を保証するものではありません。Disk critical は同じ instance/device/mountpoint の warning のみを inhibit します。
+これは完全な**通知を行わない** routing-validation 設定です。空の receiver は意図的なものです。本番利用前に、レビュー済みの integration と Secret file を設定してください。critical アラートはオンコール receiver と一致する team に fan out します。team label がない場合は default にフォールバックしますが、critical-only の一致では default も呼び出されません。grouping delay があるため、即時に電話される保証はありません。disk critical は、同じ instance/device/mountpoint の warning のみを抑制します。
 
 ```yaml
 route:
@@ -258,17 +258,17 @@ inhibit_rules:
     equal: [cluster, instance, device, mountpoint]
 ```
 
-### エスカレーション policy
+### エスカレーションポリシー
 
-以下は例示です。オンコール service で time zone、acknowledgment window、backup、再 page の動作を構成し、drill でテストしてください。
+以下は例示です。オンコールサービスで time zone、確認応答の時間枠、backup、再 page の動作を設定し、drill でテストしてください。
 
-| ステップ | 時間 | 対象 | Channel |
+| 手順 | 時間 | 対象 | channel |
 |------|------|--------|---------|
 | 1 | 0 分 | Primary on-call | Slack、PagerDuty |
 | 2 | 15 分 | Secondary on-call | Slack、PagerDuty、SMS |
-| 3 | 30 分 | Team Lead | Slack、PagerDuty、Phone |
-| 4 | 45 分 | Engineering Manager | Phone |
-| 5 | 60 分 | CTO/VP Engineering | Phone |
+| 3 | 30 分 | Team Lead | Slack、PagerDuty、電話 |
+| 4 | 45 分 | Engineering Manager | 電話 |
+| 5 | 60 分 | CTO/VP Engineering | 電話 |
 
 ---
 
@@ -278,46 +278,46 @@ inhibit_rules:
 
 ### オンコールの概念
 
-オンコールとは、指定された期間中に system issue を担当するよう指定された responder を指します。
+オンコールとは、指定された期間中のシステム問題に責任を持つよう指定された responder を指します。
 
-![handoff を伴う例示的な 4 週間の rotation。実際の time zone、staffing、backup、compensation には合意済みの policy が必要です。](../../.gitbook/assets/en-observability-alerting-readme-8.png)
+![handoff を伴う例示的な 4 週間のローテーション。実際の time zone、人員配置、backup、報酬には合意済みの policy が必要です。](../../.gitbook/assets/en-observability-alerting-readme-8.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-8.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-8.html)
 
 
 ### オンコールのベストプラクティス
 
-1. **明確な handoff schedule**: 毎週または隔週の rotation
-2. **Handoff process**: シフト交代時に継続中の issue を引き継ぐ
-3. **Backup responder**: primary が対応できない場合の backup
-4. **適切な compensation**: オンコール手当または代休
-5. **Burnout の防止**: 適切な rotation cycle
+1. **明確な handoff スケジュール**: 毎週または隔週のローテーション
+2. **handoff プロセス**: シフト交代時に進行中の問題を引き継ぐ
+3. **backup responder**: primary が対応できない場合の backup
+4. **適切な報酬**: オンコール手当または代休
+5. **燃え尽きの防止**: 適切なローテーションサイクル
 
 ### オンコールツールの要件
 
-- **Schedule management**: calendar integration、shift management
-- **Override**: 一時的な responder の変更
-- **Escalation**: 自動エスカレーション
-- **Mobile support**: いつでもどこでもアラートを受信
-- **Reporting**: オンコール activity の分析
+- **スケジュール管理**: calendar integration、シフト管理
+- **override**: 一時的な responder の変更
+- **エスカレーション**: 自動エスカレーション
+- **モバイル対応**: いつでもどこでもアラートを受信
+- **レポート**: オンコール活動の分析
 
 ---
 
 <span id="alerting-strategy-for-eks-environments"></span>
 
-## EKS 環境におけるアラート戦略
+## EKS 環境のアラート戦略
 
 ### EKS 固有のアラート領域
 
-![EKS の monitoring scope と collection limit。scrape failure、target absence、readiness、resource signal を分離しています。](../../.gitbook/assets/en-observability-alerting-readme-4.png)
+![EKS の監視範囲と collection の制限。scrape failure、target 不在、readiness、resource signal を分離しています。](../../.gitbook/assets/en-observability-alerting-readme-4.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-4.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-4.html)
 
 ### レイヤー別のアラート戦略
 
 #### 1. Cluster レベルのアラート
 
-job 名をデプロイ済みの target に置き換えてください。up=0 は scrape failure を証明しますが、完全な API outage を証明するものではありません。absent rule は 1 つの collection scope を対象とします。multi-cluster setup には expected-target inventory と cluster label が必要です。累積的な Cluster Autoscaler error counter には increase を使用します。5 分間存在する最近の increase は、error が 5 分間連続して発生したことを意味しません。この rule は Karpenter または EKS Auto Mode にはそのまま適用できません。
+job 名をデプロイ済みの target に置き換えてください。up=0 は scrape failure を示すものであり、完全な API outage を示すものではありません。absent rule は 1 つの collection scope を対象としています。multi-cluster 構成では、想定 target inventory と cluster label が必要です。累積する Cluster Autoscaler error counter には increase を使用します。5 分間存在する最近の increase は、error が 5 分間継続して発生したことを意味しません。この rule は Karpenter または EKS Auto Mode に変更なしでは適用できません。
 
 ```yaml
 groups:
@@ -359,7 +359,7 @@ groups:
 
 #### 2. Workload レベルのアラート
 
-CrashLoopBackOff series は retry の間に短時間消失することがあります。この rule は、最近 5 分間の observation window が 10 分間にわたり存在し続けた後に firing します。連続的な現在の Waiting ではなく、繰り返しの observation を検出し、最後の observation から最大 5 分間アクティブのままとなる可能性があります。native rule test は短い transient、繰り返す retry、recovery を区別します。
+CrashLoopBackOff series は retry の間に一時的に消失する場合があります。この rule は、直近 5 分間の observation window が 10 分間にわたり存在し続けた後に firing します。これは再発する observation を検出するものであり、継続中の Waiting を検出するものではありません。最後の observation 後も最大 5 分間 active のままになることがあります。native rule test は、短い一時的な事象、再発する retry、復旧を区別します。
 
 ```yaml
 groups:
@@ -406,7 +406,7 @@ groups:
 
 #### 3. Resource レベルのアラート
 
-CFS の例は、経過時間の割合ではなく、**throttled period / total period** を測定します。cAdvisor がこれらの metric を export していることを確認してください。unlimited memory は zero または非常に大きな値として現れる可能性があります。memory rule は明示的な limit を持つ container に制限してください。PVC statistics は CSI driver と volume type に依存します。zero denominator は除外されますが、metric がないことは健全性を証明しません。
+CFS の例は、経過時間の割合ではなく、**throttled periods / total periods** を測定します。cAdvisor がこれらの metrics を export していることを確認してください。unlimited memory はゼロまたは非常に大きい値として表示されることがあるため、memory rule は明示的な limit がある container に限定してください。PVC の統計は CSI driver と volume type に依存します。ゼロの分母は除外されていますが、metric が欠落していても健全性を証明するものではありません。
 
 ```yaml
 groups:
@@ -453,68 +453,68 @@ groups:
           summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} is almost full"
 ```
 
-### AWS Service Integration アラート
+### AWS Service Integration のアラート
 
-EKS 1.28+ は AWS/EKS に選択された control-plane metric を提供しますが、scraping 用にすべての内部 component を公開するわけではありません。authentication error を調査するには、control-plane log を個別に有効化してください。collection health、API request failure、external probe を使用して availability を評価してください。
+EKS 1.28+ は、選択された control-plane metrics を AWS/EKS で提供します。ただし、すべての internal component を scrape 用に公開するわけではありません。authentication error を調査するには、control-plane log を別途有効化してください。collection health、API request failure、external probe を使用して可用性を評価します。
 
-| AWS Service | Monitoring 項目 | Alert Tool |
+| AWS Service | 監視項目 | アラートツール |
 |-------------|------------------|------------|
-| EKS Control Plane | API Server availability、authentication error | CloudWatch |
+| EKS Control Plane | API Server の可用性、authentication error | CloudWatch |
 | EC2 (Nodes) | Instance status、system check | CloudWatch |
-| EBS | Volume status、IOPS usage | CloudWatch |
-| EFS | Throughput、connection count | CloudWatch |
-| ALB / NLB | ALB HTTP request/error/response time、NLB flow/TCP reset/target health | CloudWatch: product 固有の metric を使用 |
-| VPC / NAT Gateway | NAT metric、個別に有効化した Flow Logs の accepted/rejected record | CloudWatch metrics/Logs。Flow Logs は alarm engine ではありません |
+| EBS | Volume status、IOPS 使用率 | CloudWatch |
+| EFS | Throughput、connection 数 | CloudWatch |
+| ALB / NLB | ALB HTTP request/error/response time、NLB flow/TCP reset/target health | CloudWatch: 製品固有の metrics を使用 |
+| VPC / NAT Gateway | NAT metrics、別途有効化された Flow Logs の accepted/rejected record | CloudWatch metrics/Logs。Flow Logs は alarm engine ではありません |
 
 ---
 
 <span id="solution-comparison"></span>
 
-## ソリューション比較
+## ソリューションの比較
 
 ### 主なアラートソリューションの比較表
 
-| Product | 役割と運用上の制約 |
+| 製品 | 役割と運用上の制約 |
 |---------|--------------------------------|
-| Alertmanager | オープンソースの grouping、routing、inhibition、reminder。hosting と operation が必要。オンコール schedule や acknowledgment ベースの escalation はありません |
-| CloudWatch Alarms | AWS metric/supported query を評価し、state を変更して構成済みの action を実行する。schedule は別途必要 |
-| Grafana OnCall OSS | 2026-03-24 に archive 済み。新しい production deployment のデフォルト選択肢ではありません |
-| Grafana Cloud IRM / PagerDuty | オンコール/escalation の候補。現在の plan、channel、region、contract を確認してください |
-| Opsgenie | 2025-06-04 に販売終了。support と service の終了は 2027-04-05 に予定されています。既存ユーザーには migration plan が必要です |
+| Alertmanager | オープンソースの grouping、routing、inhibition、reminder。hosting と運用が必要です。オンコール schedule や確認応答ベースの escalation はありません |
+| CloudWatch Alarms | AWS metrics/対応 query を評価し、state を変更して設定済み action を呼び出します。schedule は別途必要です |
+| Grafana OnCall OSS | 2026-03-24 に archive 済み。新規の本番 deployment のデフォルト選択肢ではありません |
+| Grafana Cloud IRM / PagerDuty | オンコール/エスカレーションの候補。現在の plan、channel、region、contract を確認してください |
+| Opsgenie | 2025-06-04 に販売終了。support および service の終了は 2027-04-05 を予定しています。既存ユーザーには migration plan が必要です |
 
 ### ソリューション選択ガイド
 
-![要件に応じて保守されている rule、routing、オンコールツールを選択し、archive 済みの OnCall OSS と終了予定の Opsgenie の migration を計画してください。](../../.gitbook/assets/en-observability-alerting-readme-6.png)
+![要件に応じて保守された rule、routing、オンコールツールを選択します。archive された OnCall OSS と終了予定の Opsgenie については migration を計画してください。](../../.gitbook/assets/en-observability-alerting-readme-6.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-6.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-6.html)
 
 #### 状況別の推奨ソリューション
 
-1. Prometheus 重視: Alertmanager を grouping/routing に使用し、必要な channel を接続します。
-2. AWS metric 重視: SNS またはサポートされる incident integration を使用して CloudWatch Alarms を評価します。
-3. 24 時間対応: staffing、backup、time zone、acknowledgment、escalation、cost に基づいて、保守されているオンコール service を選択します。
-4. 既存の Grafana OnCall OSS/Opsgenie: 機能、history、schedule、integration の migration を確認します。
+1. Prometheus 中心: Alertmanager を grouping/routing に使用し、必要な channel を接続します。
+2. AWS metric 中心: SNS または対応する incident integration とともに CloudWatch Alarms を評価します。
+3. 24 時間対応: 人員配置、backup、time zone、確認応答、escalation、コストに基づいて、保守されたオンコールサービスを選択します。
+4. 既存の Grafana OnCall OSS/Opsgenie: 機能、履歴、schedule、integration の migration を検証します。
 
 ### ハイブリッドアプローチ
 
-ソリューションは組み合わせることができます。CloudWatch は自動的に Alertmanager へ直接送信しません。この例では、オンコール service への SNS/サポート対象 integration を使用しています。Alertmanager を経由した routing には、個別に設計された adapter、authentication、duplicate/resolution の処理が必要です。
+ソリューションは組み合わせることができます。CloudWatch が自動的に Alertmanager へ直接送信することはありません。この例では、SNS/オンコールサービスへの対応 integration を使用します。Alertmanager を経由する routing には、別途設計された adapter、authentication、重複/解決の処理が必要です。
 
-![Prometheus は Alertmanager を使用し、CloudWatch はオンコール service への明示的な SNS または service integration を使用します。自動の直接 bridge はありません。](../../.gitbook/assets/en-observability-alerting-readme-7.png)
+![Prometheus は Alertmanager を使用します。CloudWatch は明示的な SNS または service integration を使用してオンコールサービスに送信し、自動的な直接 bridge はありません。](../../.gitbook/assets/en-observability-alerting-readme-7.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-7.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-7.html)
 
 **アーキテクチャ例:**
 
-1. **Prometheus + Alertmanager**: Metric collection と primary alert processing
+1. **Prometheus + Alertmanager**: metric collection と primary alert processing
 2. **CloudWatch**: AWS service metric collection
-3. **保守されているオンコール service**: オンコール管理と escalation
-4. **Slack**: リアルタイムアラートと collaboration
+3. **保守されたオンコールサービス**: オンコール管理とエスカレーション
+4. **Slack**: リアルタイムアラートとコラボレーション
 
 ---
 
 ## 次のステップ
 
-このセクションでは、アラートの基本概念と戦略について説明しました。各ソリューションの詳細な構成方法については、以下のドキュメントを参照してください。
+このセクションでは、アラートの基本的な概念と戦略を扱いました。各ソリューションの詳細な設定方法については、以下のドキュメントを参照してください。
 
 - [Prometheus Alertmanager](./01-alertmanager.md): オープンソースのアラート管理
 - [CloudWatch Alarms](./02-cloudwatch-alarms.md): AWS ネイティブのアラート
@@ -528,7 +528,7 @@ EKS 1.28+ は AWS/EKS に選択された control-plane metric を提供します
 - [Google SRE Book - Practical Alerting](https://sre.google/sre-book/practical-alerting/)
 - [AWS CloudWatch Alarms Documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html)
 - [Grafana OnCall Documentation](https://grafana.com/docs/oncall/latest/)
-- [PagerDuty Operations Guide](https://www.pagerduty.com/resources/operations/)
+- [PagerDuty Incident Response](https://response.pagerduty.com/)
 
 - [Alertmanager configuration](https://prometheus.io/docs/alerting/latest/configuration/)
 - [EKS control-plane metrics](https://docs.aws.amazon.com/eks/latest/userguide/cloudwatch.html)
