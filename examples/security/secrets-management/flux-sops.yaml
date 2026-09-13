@@ -1,0 +1,18 @@
+# Create flux-system/sops-age from a private age.agekey file separately.
+# Never put an actual AGE-SECRET-KEY value in a tracked manifest.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: app
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./k8s
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: my-repo
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age

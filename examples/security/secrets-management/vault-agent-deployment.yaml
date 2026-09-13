@@ -1,0 +1,47 @@
+# Requires a configured Vault Kubernetes auth role, KV v2 path and trusted CA.
+# The application must parse JSON and reopen the file on refresh.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: app-sa
+  namespace: production
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secret-json-consumer
+  namespace: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: secret-json-consumer
+  template:
+    metadata:
+      labels:
+        app: secret-json-consumer
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: app-role
+        vault.hashicorp.com/agent-service-account-token-volume-name: vault-token
+        vault.hashicorp.com/tls-secret: vault-client-ca
+        vault.hashicorp.com/ca-cert: /vault/tls/ca.crt
+        vault.hashicorp.com/agent-inject-secret-config.json: secret/data/production/config
+        vault.hashicorp.com/agent-inject-template-config.json: |
+          {{- with secret "secret/data/production/config" -}}
+          {{ .Data.data | toJSON }}
+          {{- end }}
+    spec:
+      serviceAccountName: app-sa
+      automountServiceAccountToken: false
+      volumes:
+        - name: vault-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  audience: vault
+                  expirationSeconds: 3600
+      containers:
+        - name: app
+          image: registry.example.com/team/app:replace-with-reviewed-tag

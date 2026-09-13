@@ -1,5 +1,7 @@
 # Secrets Management Quiz
 
+> **Last Updated**: September 13, 2026
+
 This quiz tests your understanding of Kubernetes Secrets, AWS Secrets Manager, External Secrets Operator, and encryption.
 
 ## Quiz Questions
@@ -17,7 +19,7 @@ D. RSA encryption
 **Answer: B. Base64 encoding**
 
 **Explanation:**
-Kubernetes Secrets are Base64 encoded by default. Base64 is simple encoding, not encryption, so you should enable etcd encryption or use an external secrets management system.
+The serialized Secret `data` field uses Base64. Encoding is not encryption. Protect API authorization, storage and the consuming application; an external store does not eliminate these requirements.
 
 </details>
 
@@ -34,12 +36,7 @@ D. AWS CloudHSM
 **Answer: B. AWS KMS (Key Management Service)**
 
 **Explanation:**
-EKS uses AWS KMS to encrypt Kubernetes Secrets stored in etcd. Envelope encryption can be enabled during cluster creation or afterwards:
-```bash
-aws eks associate-encryption-config \
-  --cluster-name my-cluster \
-  --encryption-config '[{"resources":["secrets"],"provider":{"keyArn":"arn:aws:kms:..."}}]'
-```
+EKS 1.28+ defaults to KMS envelope encryption of all Kubernetes API data with an AWS-owned key. A customer-managed-key option exists. This differs from configuring a self-managed API server; do not assume a plaintext EKS default or a customer-managed key is always required.
 
 </details>
 
@@ -56,11 +53,7 @@ D. A and B or C and B
 **Answer: D. A and B or C and B**
 
 **Explanation:**
-External Secrets Operator components:
-- **SecretStore/ClusterSecretStore**: External secret store connection settings
-- **ExternalSecret**: Actual secret reference and Kubernetes Secret creation
-
-SecretStore is namespace-scoped, ClusterSecretStore is cluster-scoped.
+SecretStore/ClusterSecretStore describes provider access and identity; ExternalSecret selects external values and defines the target Secret. A namespaced store references a ServiceAccount in that namespace. A ClusterSecretStore needs an explicit reference namespace and usage restrictions.
 
 </details>
 
@@ -77,16 +70,13 @@ D. Convert to ConfigMap
 **Answer: D. Convert to ConfigMap**
 
 **Explanation:**
-Ways to use Secrets in a Pod:
-1. **Environment variables**: `envFrom.secretRef` or `env.valueFrom.secretKeyRef`
-2. **Volume mount**: Mount as files
-3. **Image pull secrets**: `imagePullSecrets`
-
-Secrets are not automatically converted to ConfigMaps. They are separate resources.
+Pods can consume Secrets through key references, volumes and imagePullSecrets. A ConfigMap is a distinct object, not a secret-protection mechanism. Environment variables do not refresh in running containers; volume refresh and application reload are separate.
 
 </details>
 
-### 5. Which AWS service is used to configure automatic rotation in AWS Secrets Manager?
+<span id="_5-which-aws-service-is-used-to-configure-automatic-rotation-in-aws-secrets-manager"></span>
+
+### 5. Which AWS service executes a custom Lambda-based Secrets Manager rotation function?
 
 A. AWS EventBridge
 B. AWS Lambda
@@ -99,7 +89,7 @@ D. AWS SNS
 **Answer: B. AWS Lambda**
 
 **Explanation:**
-AWS Secrets Manager automatic rotation uses Lambda functions. AWS provides pre-built rotation functions for RDS, Redshift, etc., and custom rotation can be implemented with Lambda.
+A custom Lambda-based rotation workflow uses a Lambda function with target update logic, permissions and network access. Secrets Manager also has managed-rotation integrations; not every rotation uses an operator-managed Lambda. ESO synchronizes values but does not rotate the database credential itself.
 
 </details>
 
@@ -116,7 +106,7 @@ D. Automatic rotation support
 **Answer: B. Safe to store in Git**
 
 **Explanation:**
-Sealed Secrets encrypts secrets with a public key so they can be safely stored in Git repositories. Only the Sealed Secrets controller in the cluster can decrypt with the private key. It's suitable for GitOps workflows.
+Sealed Secrets encrypts values for storage in Git using a trusted certificate. Anyone holding a suitable private key, including an authorized recovery operator, can decrypt. Metadata stays visible; key renewal does not rotate the application credential or erase old Git ciphertext.
 
 </details>
 
@@ -133,41 +123,24 @@ D. Set retry interval
 **Answer: B. Set synchronization interval with external secret**
 
 **Explanation:**
-`refreshInterval` defines how often External Secrets Operator synchronizes with the external secret store:
-```yaml
-spec:
-  refreshInterval: 1h  # Sync every 1 hour
-```
-
-When secrets change externally, the Kubernetes Secret is updated according to this interval.
+With refreshPolicy Periodic and a positive refreshInterval, ESO periodically reconciles external values. It is not a guaranteed completion deadline and differs from OnChange/CreatedOnce. Provider errors, backoff and application reload still need handling.
 
 </details>
 
 ### 8. What happens when Kubernetes Secret's immutable field is set to true?
 
 A. Secret cannot be deleted
-B. Secret cannot be modified
+B. Secret data cannot be modified
 C. Secret cannot be read
 D. Secret cannot be copied
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Secret cannot be modified**
+**Answer: B. Secret data cannot be modified**
 
 **Explanation:**
-`immutable: true` setting prevents modification after the Secret is created:
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: my-secret
-immutable: true
-data:
-  password: cGFzc3dvcmQ=
-```
-
-To change it, you must delete and recreate the Secret. This prevents accidental changes and improves performance.
+Immutable prevents changes to Secret data and cannot be reverted to mutable. Metadata can still change, and deletion is still possible. Prefer a newly named Secret with a controlled rollout when replacing a live dependency.
 
 </details>
 
@@ -184,7 +157,7 @@ D. Backup secrets
 **Answer: B. Mount external secrets as volumes**
 
 **Explanation:**
-Secrets Store CSI Driver mounts external secrets from AWS Secrets Manager, Azure Key Vault, etc. directly as CSI volumes. Pods can use secrets without creating Kubernetes Secrets.
+The Secrets Store CSI Driver and a supported provider mount external values as files. Kubernetes Secret synchronization is optional and requires the sync feature and a consuming mount. Rotation, file propagation and application reload remain separate; platform support varies.
 
 </details>
 
@@ -201,7 +174,7 @@ D. Free usage
 **Answer: B. No need to hardcode IAM credentials in Pods**
 
 **Explanation:**
-IRSA allows attaching IAM roles to Service Accounts. External Secrets Operator Pods can securely access AWS Secrets Manager without AWS credentials. This is a security best practice.
+IRSA exchanges a projected identity token for temporary AWS credentials through an exact role trust binding. It avoids hardcoded long-lived access keys, not credentials altogether. ESO Pod Identity uses the controller identity and cannot be substituted into serviceAccountRef impersonation.
 
 </details>
 
@@ -218,17 +191,7 @@ D. Compressed
 **Answer: B. No Base64 encoding required**
 
 **Explanation:**
-The `stringData` field allows specifying values in plain text:
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: my-secret
-stringData:
-  password: mypassword  # Plain text, auto Base64 encoded
-```
-
-Kubernetes automatically handles Base64 encoding. However, when queried, it appears as Base64 in the data field.
+stringData accepts plaintext input without manual Base64 conversion, then merges it into data. It is not encryption or additional access protection; API reads expose the data representation to authorized readers. Avoid actual values in tracked YAML and note server-side-apply limitations.
 
 </details>
 
@@ -236,22 +199,19 @@ Kubernetes automatically handles Base64 encoding. However, when queried, it appe
 
 A. Enable etcd encryption
 B. Restrict Secret access with RBAC
-C. Commit secrets to source code
+C. Commit plaintext credentials to source code
 D. Use external secrets management system
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Commit secrets to source code**
+**Answer: C. Commit plaintext credentials to source code**
 
 **Explanation:**
-Secrets management best practices:
-- Enable etcd encryption
-- Restrict Secret access with RBAC
-- Use external secrets management systems (AWS Secrets Manager, HashiCorp Vault, etc.)
-- Enable audit logging
-- Regular secret rotation
-
-Never commit secrets to source code. Plain text secrets would be exposed in version control systems.
+Never commit plaintext credentials or private decryptor keys. Encrypted SOPS/SealedSecret artifacts and value-free ESO references can be stored in Git with reviewed recipients, protected keys, recovery tests and access controls. No tool alone guarantees security or compliance.
 
 </details>
+
+---
+
+[Secrets management guide](../../security/05-secrets-management.md)

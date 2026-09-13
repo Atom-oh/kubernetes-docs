@@ -1,0 +1,14 @@
+# Sidecar-local /home/argocd/cmp-server/config/plugin.yaml.
+# This is NOT a Kubernetes CRD and must not be applied with kubectl.
+# A separately configured repo-server CMP sidecar must contain AVP.
+apiVersion: argoproj.io/v1alpha1
+kind: ConfigManagementPlugin
+metadata:
+  name: argocd-vault-plugin
+spec:
+  version: v1.18.1
+  generate:
+    command: [argocd-vault-plugin]
+    args: [generate, .]
+  preserveFileMode: false
+  provideGitCreds: false

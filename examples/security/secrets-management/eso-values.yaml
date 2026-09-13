@@ -1,0 +1,12 @@
+# ESO chart/application 2.10.0. IRSA is bound to the store's ServiceAccount.
+serviceAccount:
+  create: true
+  name: external-secrets-controller
+processPushSecret: false
+processClusterPushSecret: false
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    memory: 512Mi
