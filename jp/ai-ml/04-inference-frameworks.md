@@ -1,2873 +1,314 @@
 # LLM Serving のための Inference Frameworks
 
-> **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **最終更新**: April 9, 2026
+> **最終更新**: September 12, 2026
+> **対象範囲**: 公式リリース、API、chart、およびローカルチェック。GPU/Neuron モデルの実行は含みません。
 
-この章では、Amazon EKS 上で Large Language Models (LLMs) をデプロイするための多様な inference framework エコシステムを扱います。NVIDIA NIM、NVIDIA Dynamo、AIBrix、Ray Serve integration、AWS Neuron に加え、SGLang、HuggingFace TGI、Ollama、LiteLLM など急速に成長しているオープンソース framework を見ていきます。
+推論エンジン、分散実行レイヤー、Kubernetes controller、provider gateway は個別に選定してください。「OpenAI-compatible」は、endpoint、field、streaming、tool call、認証が同一であることを意味しません。
 
 ## Inference Framework の全体像
 
-LLM inference エコシステムは急速に進化しており、production deployment のさまざまな側面に対応する複数の framework があります。次の図は、これらの framework 間の関係を示しています。
+![推論エンジン、分散 Serving、Kubernetes 運用、provider gateway の明確に異なる役割。](../.gitbook/assets/en-ai-ml-04-inference-frameworks-0.png)
 
-```mermaid
-flowchart TD
-    subgraph Ecosystem [LLM Inference Framework Ecosystem]
-        subgraph NVIDIAStack [NVIDIA Stack]
-            NIM[NVIDIA NIM]
-            Dynamo[NVIDIA Dynamo]
-            TensorRTLLM[TensorRT-LLM]
-            Triton[Triton Inference Server]
-        end
+[インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-04-inference-frameworks-0.html)
 
-        subgraph OpenSource [Open Source Frameworks]
-            vLLM[vLLM]
-            SGLang[SGLang]
-            TGI[HuggingFace TGI]
-            AIBrix[AIBrix]
-            RayServe[Ray Serve]
-        end
+| コンポーネント | 確認済みベースライン | 選定チェック項目 |
+| --- | --- | --- |
+| NIM LLM/VLM | 2.0.12 documentation; separate 3.0 offering | Model、profile、hardware、support agreement、backend |
+| Dynamo | 1.4.2 | Aggregated/disaggregated serving、KV transfer、planner、controller |
+| AIBrix | 0.7.0 | Envoy Gateway、adapter/controller、autoscaling |
+| SGLang | 0.5.19 | Model、grammar backend、device、測定済み workload |
+| vLLM / Ray Serve | vLLM 0.29.0 / Ray 2.58.0 / KubeRay 1.7.0 | 個別に検証済みの image/model/controller の組み合わせ |
+| TGI | 3.3.7; maintenance mode | 既存 system の maintenance と migration 計画 |
+| Ollama | 0.34.0 | ローカル API access、model storage、準備 |
+| LiteLLM | 1.100.1 | Provider adaptation、認証、fallback、cost instrumentation |
+| Neuron | SDK 2.32.0; Helm 1.10.0 | Instance 固有の plugin/compiler/driver 互換性 |
 
-        subgraph DevTools [Dev / Gateway Tools]
-            Ollama[Ollama]
-            LiteLLM[LiteLLM]
-            LlamaCpp[llama.cpp]
-        end
-
-        subgraph AWSNative [AWS Native]
-            Neuron[AWS Neuron SDK]
-            Inferentia[Inferentia2]
-            SageMaker[SageMaker]
-        end
-
-        subgraph Orchestration [Orchestration Layer]
-            KubeRay[KubeRay Operator]
-            Karpenter[Karpenter]
-            KEDA[KEDA]
-        end
-    end
-
-    NIM --> TensorRTLLM
-    Dynamo --> vLLM
-    Dynamo --> SGLang
-    Dynamo --> TensorRTLLM
-    RayServe --> vLLM
-    AIBrix --> vLLM
-    AIBrix --> SGLang
-
-    Neuron --> Inferentia
-    LiteLLM --> vLLM
-    LiteLLM --> SGLang
-    LiteLLM --> NIM
-    Ollama --> LlamaCpp
-
-    KubeRay --> RayServe
-    Karpenter --> NVIDIAStack
-    Karpenter --> OpenSource
-    Karpenter --> AWSNative
-
-    classDef nvidiaNode fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-    classDef ossNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef awsNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef orchNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef devToolNode fill:#9B59B6,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class NIM,Dynamo,TensorRTLLM,Triton,NVIDIAStack nvidiaNode;
-    class vLLM,SGLang,TGI,AIBrix,RayServe,OpenSource ossNode;
-    class Neuron,Inferentia,SageMaker,AWSNative awsNode;
-    class KubeRay,Karpenter,KEDA,Orchestration orchNode;
-    class Ollama,LiteLLM,LlamaCpp,DevTools devToolNode;
-    class Ecosystem default;
-```
-
-### Framework 選定ガイド
-
-| ユースケース | 推奨 Framework | 理由 |
-|----------|----------------------|-----|
-| NVIDIA GPUs を使う enterprise production | NVIDIA NIM | 最適化済み containers、サポート、monitoring |
-| KV cache 最適化による高 throughput | NVIDIA Dynamo | 分離型 serving、インテリジェント routing |
-| Structured output、複雑な prompting pipelines | SGLang | RadixAttention、最適化された structured output |
-| LoRA adapters を使う multi-tenant | AIBrix | Native LoRA 管理、heterogeneous GPUs |
-| HuggingFace model の迅速な production deployment | HuggingFace TGI | HF エコシステム統合、簡単な setup |
-| 大規模な distributed inference | Ray Serve + vLLM | 成熟した orchestration、auto-scaling |
-| Multi-LLM provider 統合 (gateway) | LiteLLM | 100+ model providers、cost tracking |
-| ローカル開発と edge deployment | Ollama | ワンクリック setup、GGUF support、軽量 |
-| AWS silicon による cost optimization | AWS Neuron + Inferentia2 | GPUs 比で 40-70% の cost reduction |
-| 研究と実験 | vLLM standalone | 簡単な setup、活発な community |
+万能な yes/no の feature matrix は避けてください。Dynamo の計画、vLLM/SGLang の disaggregation、CPU および GGUF support は、release、backend、hardware に依存します。Adapter loading と model alias は tenant 認証境界ではありません。
 
 ## NVIDIA NIM
 
-NVIDIA NIM (NVIDIA Inference Microservices) は、最適化された inference engines、組み込み monitoring、OpenAI-compatible APIs を備えた production-ready な containerized LLM deployments を提供します。
+container、model profile、GPU 互換性、support agreement をまとめて確認してください。NIM Operator 3.1.2 は LLM/VLM 2.0.12 container とは別です。確認した 2.0.12 release では vLLM 0.27.1 が文書化されています。NIM が常に TensorRT-LLM を使用するとは限りません。Dynamo ベースの 3.0 offering を 2.0 と同じ deployment path とみなさないでください。
 
-### NIM Architecture
+![承認済みの entry path が NIM request を処理し、準備済み model caching と個別の metrics collection を備える。](../.gitbook/assets/en-ai-ml-04-inference-frameworks-1.png)
 
-```mermaid
-flowchart TD
-    subgraph NIMDeployment [NVIDIA NIM Deployment on EKS]
-        subgraph Ingress [Ingress Layer]
-            ALB[Application Load Balancer]
-            NginxIngress[Nginx Ingress Controller]
-        end
+[インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-04-inference-frameworks-1.html)
 
-        subgraph NIMPods [NIM Pods]
-            subgraph Pod1 [NIM Pod 1]
-                NIMContainer1[NIM Container]
-                TensorRTEngine1[TensorRT-LLM Engine]
-                ModelCache1[Model Cache]
-            end
-            subgraph Pod2 [NIM Pod 2]
-                NIMContainer2[NIM Container]
-                TensorRTEngine2[TensorRT-LLM Engine]
-                ModelCache2[Model Cache]
-            end
-        end
+### Deployment の準備と Profile
 
-        subgraph GPUNodes [GPU Node Pool]
-            Node1[p4d.24xlarge - 8x A100]
-            Node2[g5.48xlarge - 8x A10G]
-        end
+AMI、driver/toolkit、device-plugin の要件については [GPU guide](01-ai-ml-workloads.md) を使用してください。常に driver installation を有効にすると、provider AMI と競合する可能性があります。Karpenter NodePool/EC2NodeClass、実際に schedulable な CPU/RAM/GPU resource、および device 数を確認してください。8 GPU の Pod は 1/4 GPU node には収まりません。また Custom AMI には明示的な EKS bootstrap configuration が必要です。
 
-        subgraph Monitoring [Monitoring Stack]
-            Prometheus[(Prometheus)]
-            Grafana[Grafana Dashboards]
-            NIMMetrics[NIM Metrics Exporter]
-        end
+container の profile list にある、support された profile ID/name で NIM_MODEL_PROFILE を使用してください。古い NIM_MANIFEST_PROFILE や、作り出した vllm-bf16-tp8 string が有効だと想定しないでください。image digest、model revision、profile、driver、実際の検証をまとめて記録してください。
 
-        subgraph Storage [Model Storage]
-            NGC[NGC Catalog]
-            S3[Amazon S3]
-            FSx[FSx for Lustre]
-        end
-    end
+NGC image-pull credential と runtime model-download credential は異なる役割を果たします。文書化された NGC_API_KEY environment path は、file-only credential policy を満たしません。承認済みの prepared-model path または検証済みの credential adapter を使用してください。実際の key を shell argument や source に絶対に置かないでください。internal Service だけでは inference request を認証できません。
 
-    ALB --> NginxIngress
-    NginxIngress --> Pod1
-    NginxIngress --> Pod2
+異なる node 上の replica 間で、1 つの EBS RWO PVC を共有しないでください。replica ごとの storage/local cache または適切な shared filesystem を選び、download failure、storage performance、startup probe、rollout をテストしてください。model は常に image に埋め込まれているわけではなく、cache は FSx/S3 と自動的に同期しません。
 
-    Pod1 --> Node1
-    Pod2 --> Node2
+### Metrics と GenAI-Perf
 
-    NIMContainer1 --> TensorRTEngine1
-    NIMContainer2 --> TensorRTEngine2
+確認した NIM 2.0.12 documentation は、native vLLM backend metrics を pass through する `/v1/metrics` を公開しています。作り出した nim_* 名や `/metrics` をコピーするのではなく、実際の name、unit、label を確認してください。Grafana ConfigMap には、対応する datasource/sidecar と Prometheus scraping が必要です。millisecond panel に seconds をそのまま表示しないでください。
 
-    TensorRTEngine1 --> ModelCache1
-    TensorRTEngine2 --> ModelCache2
+TTFT、ITL、end-to-end latency、successful throughput、queueing について workload 固有の SLO を定義してください。token interval が均一である場合、近似値は `TTFT + (output tokens - 1) × ITL` に network/postprocessing overhead を別途加えたものです。500ms や GPU80% などの target は、万能な health standard ではありません。
 
-    ModelCache1 --> FSx
-    ModelCache2 --> FSx
-    FSx --> S3
-    NGC --> FSx
-
-    NIMMetrics --> Prometheus
-    Prometheus --> Grafana
-
-    classDef ingressNode fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef nimNode fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-    classDef gpuNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef monitorNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef storageNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class ALB,NginxIngress,Ingress ingressNode;
-    class NIMContainer1,NIMContainer2,TensorRTEngine1,TensorRTEngine2,ModelCache1,ModelCache2,Pod1,Pod2,NIMPods nimNode;
-    class Node1,Node2,GPUNodes gpuNode;
-    class Prometheus,Grafana,NIMMetrics,Monitoring monitorNode;
-    class NGC,S3,FSx,Storage storageNode;
-    class NIMDeployment default;
-```
-
-### 前提条件
-
-NIM をデプロイする前に、次を確認してください。
+GenAI-Perf 0.0.16 は、profile subcommand と synthetic-input-tokens-mean/output-tokens-mean option を使用します。以下の command は準備済み internal endpoint に負荷をかけるものですが、この audit では実行していません。最初に perf_analyzer、tokenizer、その他の distribution dependency を準備してください。
 
 ```bash
-# Verify GPU nodes are available
-kubectl get nodes -l nvidia.com/gpu.present=true \
-  -o custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\\.com/gpu
-
-# Install NVIDIA GPU Operator (if not already installed)
-helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
-helm repo update
-
-helm install gpu-operator nvidia/gpu-operator \
-  --namespace gpu-operator \
-  --create-namespace \
-  --set driver.enabled=true \
-  --set toolkit.enabled=true \
-  --set devicePlugin.enabled=true
-
-# Create NGC API key secret
-kubectl create secret generic ngc-api-key \
-  --from-literal=NGC_API_KEY='your-ngc-api-key'
+genai-perf profile   --endpoint-type chat   --service-kind openai   --url http://127.0.0.1:8000   --model approved-model-alias   --concurrency 2   --synthetic-input-tokens-mean 128   --output-tokens-mean 64   --num-prompts 20   --profile-export-file profile_export.json
 ```
 
-### Karpenter を使った NIM Deployment
-
-まず、GPU workloads 用の Karpenter NodePool を設定します。
-
-```yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: nim-gpu-pool
-spec:
-  template:
-    spec:
-      requirements:
-      - key: node.kubernetes.io/instance-type
-        operator: In
-        values:
-        - p4d.24xlarge
-        - p4de.24xlarge
-        - p5.48xlarge
-        - g5.48xlarge
-        - g5.24xlarge
-        - g5.12xlarge
-      - key: karpenter.sh/capacity-type
-        operator: In
-        values:
-        - on-demand
-      - key: kubernetes.io/arch
-        operator: In
-        values:
-        - amd64
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: nim-gpu-class
-      taints:
-      - key: nvidia.com/gpu
-        value: "true"
-        effect: NoSchedule
-  limits:
-    nvidia.com/gpu: 64
-  disruption:
-    consolidationPolicy: WhenEmpty
-    consolidateAfter: 5m
----
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: nim-gpu-class
-spec:
-  amiFamily: AL2
-  subnetSelectorTerms:
-  - tags:
-      karpenter.sh/discovery: my-cluster
-  securityGroupSelectorTerms:
-  - tags:
-      karpenter.sh/discovery: my-cluster
-  instanceStorePolicy: RAID0
-  blockDeviceMappings:
-  - deviceName: /dev/xvda
-    ebs:
-      volumeSize: 500Gi
-      volumeType: gp3
-      iops: 10000
-      throughput: 500
-      deleteOnTermination: true
-  userData: |
-    #!/bin/bash
-    # Pre-pull NIM container images
-    nvidia-container-toolkit --version
-```
-
-### NIM Deployment Manifest
-
-Llama 3.1 70B で NVIDIA NIM をデプロイします。
-
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: nim-inference
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: ngc-credentials
-  namespace: nim-inference
-type: kubernetes.io/dockerconfigjson
-data:
-  .dockerconfigjson: <base64-encoded-docker-config>
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nim-config
-  namespace: nim-inference
-data:
-  NIM_MANIFEST_PROFILE: "vllm-bf16-tp8"
-  NIM_MAX_MODEL_LEN: "32768"
-  NIM_GPU_MEMORY_UTILIZATION: "0.90"
-  NIM_ENABLE_CHUNKED_PREFILL: "true"
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nim-llama-70b
-  namespace: nim-inference
-  labels:
-    app: nim-inference
-    model: llama-3-1-70b
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: nim-inference
-      model: llama-3-1-70b
-  template:
-    metadata:
-      labels:
-        app: nim-inference
-        model: llama-3-1-70b
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "8000"
-        prometheus.io/path: "/metrics"
-    spec:
-      imagePullSecrets:
-      - name: ngc-credentials
-      tolerations:
-      - key: nvidia.com/gpu
-        operator: Exists
-        effect: NoSchedule
-      containers:
-      - name: nim
-        image: nvcr.io/nim/meta/llama-3.1-70b-instruct:1.2.0
-        ports:
-        - containerPort: 8000
-          name: http
-          protocol: TCP
-        envFrom:
-        - configMapRef:
-            name: nim-config
-        env:
-        - name: NGC_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: ngc-api-key
-              key: NGC_API_KEY
-        - name: NIM_CACHE_PATH
-          value: "/opt/nim/.cache"
-        resources:
-          limits:
-            nvidia.com/gpu: 8
-            memory: 700Gi
-          requests:
-            nvidia.com/gpu: 8
-            memory: 600Gi
-            cpu: "32"
-        volumeMounts:
-        - name: nim-cache
-          mountPath: /opt/nim/.cache
-        - name: shm
-          mountPath: /dev/shm
-        readinessProbe:
-          httpGet:
-            path: /v1/health/ready
-            port: 8000
-          initialDelaySeconds: 300
-          periodSeconds: 10
-          timeoutSeconds: 5
-        livenessProbe:
-          httpGet:
-            path: /v1/health/live
-            port: 8000
-          initialDelaySeconds: 300
-          periodSeconds: 30
-          timeoutSeconds: 10
-        startupProbe:
-          httpGet:
-            path: /v1/health/ready
-            port: 8000
-          initialDelaySeconds: 60
-          periodSeconds: 30
-          failureThreshold: 20
-      volumes:
-      - name: nim-cache
-        persistentVolumeClaim:
-          claimName: nim-model-cache
-      - name: shm
-        emptyDir:
-          medium: Memory
-          sizeLimit: 64Gi
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchLabels:
-                  app: nim-inference
-              topologyKey: kubernetes.io/hostname
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: nim-inference
-  namespace: nim-inference
-  labels:
-    app: nim-inference
-spec:
-  selector:
-    app: nim-inference
-  ports:
-  - port: 8000
-    targetPort: 8000
-    name: http
-  type: ClusterIP
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: nim-model-cache
-  namespace: nim-inference
-spec:
-  accessModes:
-  - ReadWriteOnce
-  storageClassName: gp3
-  resources:
-    requests:
-      storage: 500Gi
-```
-
-### OpenAI-Compatible API Usage
-
-NIM は OpenAI-compatible API を提供します。
-
-```bash
-# Port forward for local testing
-kubectl port-forward -n nim-inference svc/nim-inference 8000:8000
-
-# Chat completion request
-curl -X POST http://localhost:8000/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "meta/llama-3.1-70b-instruct",
-    "messages": [
-      {"role": "system", "content": "You are a helpful assistant."},
-      {"role": "user", "content": "What is Kubernetes?"}
-    ],
-    "temperature": 0.7,
-    "max_tokens": 500,
-    "stream": false
-  }'
-
-# Streaming response
-curl -X POST http://localhost:8000/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "meta/llama-3.1-70b-instruct",
-    "messages": [
-      {"role": "user", "content": "Explain containerization in 3 sentences."}
-    ],
-    "stream": true
-  }'
-```
-
-Python client の例:
-
-```python
-from openai import OpenAI
-
-client = OpenAI(
-    base_url="http://nim-inference.nim-inference.svc.cluster.local:8000/v1",
-    api_key="not-needed"  # NIM doesn't require API key for internal calls
-)
-
-response = client.chat.completions.create(
-    model="meta/llama-3.1-70b-instruct",
-    messages=[
-        {"role": "system", "content": "You are a Kubernetes expert."},
-        {"role": "user", "content": "How does HPA work?"}
-    ],
-    temperature=0.7,
-    max_tokens=1000
-)
-
-print(response.choices[0].message.content)
-```
-
-### Grafana による NIM Monitoring
-
-NIM metrics 用の Grafana dashboards をデプロイします。
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nim-grafana-dashboard
-  namespace: monitoring
-  labels:
-    grafana_dashboard: "1"
-data:
-  nim-dashboard.json: |
-    {
-      "annotations": {
-        "list": []
-      },
-      "editable": true,
-      "fiscalYearStartMonth": 0,
-      "graphTooltip": 0,
-      "id": null,
-      "links": [],
-      "liveNow": false,
-      "panels": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  }
-                ]
-              },
-              "unit": "ms"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 0
-          },
-          "id": 1,
-          "options": {
-            "legend": {
-              "calcs": ["mean", "max"],
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "prometheus"
-              },
-              "expr": "histogram_quantile(0.99, sum(rate(nim_request_latency_bucket[5m])) by (le))",
-              "legendFormat": "P99 Latency",
-              "refId": "A"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "prometheus"
-              },
-              "expr": "histogram_quantile(0.95, sum(rate(nim_request_latency_bucket[5m])) by (le))",
-              "legendFormat": "P95 Latency",
-              "refId": "B"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "prometheus"
-              },
-              "expr": "histogram_quantile(0.50, sum(rate(nim_request_latency_bucket[5m])) by (le))",
-              "legendFormat": "P50 Latency",
-              "refId": "C"
-            }
-          ],
-          "title": "Request Latency (TTFT + Generation)",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  }
-                ]
-              },
-              "unit": "tokens/s"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 0
-          },
-          "id": 2,
-          "options": {
-            "legend": {
-              "calcs": ["mean", "max"],
-              "displayMode": "table",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "prometheus"
-              },
-              "expr": "sum(rate(nim_tokens_generated_total[5m]))",
-              "legendFormat": "Output Tokens/s",
-              "refId": "A"
-            },
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "prometheus"
-              },
-              "expr": "sum(rate(nim_tokens_processed_total[5m]))",
-              "legendFormat": "Input Tokens/s",
-              "refId": "B"
-            }
-          ],
-          "title": "Token Throughput",
-          "type": "timeseries"
-        }
-      ],
-      "refresh": "5s",
-      "schemaVersion": 38,
-      "tags": ["nim", "llm", "inference"],
-      "templating": {
-        "list": []
-      },
-      "time": {
-        "from": "now-1h",
-        "to": "now"
-      },
-      "timepicker": {},
-      "timezone": "",
-      "title": "NVIDIA NIM Inference Metrics",
-      "uid": "nim-metrics",
-      "version": 1,
-      "weekStart": ""
-    }
-```
-
-### NIM Performance Metrics
-
-NIM deployments で監視すべき主要 metrics:
-
-| Metric | Description | Target |
-|--------|-------------|--------|
-| TTFT (Time to First Token) | 最初の token が生成されるまでの latency | < 500ms |
-| ITL (Inter-Token Latency) | 連続する tokens 間の時間 | < 50ms |
-| Throughput | 1 秒あたりに生成される tokens | Model-dependent |
-| GPU Utilization | GPU compute utilization | 80-95% |
-| KV Cache Utilization | KV cache memory usage | < 90% |
-| Queue Depth | Queue 内の pending requests | < 100 |
-
-### GenAI-Perf Benchmarking
-
-Benchmarking には NVIDIA GenAI-Perf を使用します。
-
-```bash
-# Install GenAI-Perf
-pip install genai-perf
-
-# Run benchmark against NIM endpoint
-genai-perf \
-  --endpoint-type chat \
-  --service-kind openai \
-  --url http://nim-inference.nim-inference.svc.cluster.local:8000/v1 \
-  --model meta/llama-3.1-70b-instruct \
-  --concurrency 16 \
-  --input-sequence-length 512 \
-  --output-sequence-length 256 \
-  --num-prompts 100 \
-  --profile-export-file nim-benchmark.json
-
-# View results
-genai-perf analyze nim-benchmark.json
-```
+analyze が JSON の postprocessing のみであると想定しないでください。sweep setting は追加の profiling を実行する可能性があります。raw request、failure、tokenizer、warmup、concurrency、model/backend revision を保持してください。GPU utilization には実際の metrics collection が必要です。
 
 ## NVIDIA Dynamo
 
-NVIDIA Dynamo は、最適な resource utilization のために prefill (prompt processing) と decode (token generation) フェーズを分離する disaggregated serving を可能にする inference graph orchestration framework です。
+公式の 1.4.2 Kubernetes path は Dynamo platform、DynamoGraphDeployment (DGD)、DynamoGraphDeploymentRequest (DGDR) を使用します。以前に作り出された dynamo-router/dynamo-worker image、KV_CACHE_HOST、任意の router YAML では実装されません。DGDR は profiling と DGD creation を要求します。read-only inspection ではありません。
 
-### Dynamo Architecture
+![Dynamo frontend、設定済み worker、KV transfer。controller/planner が deployment と capacity を管理する。](../.gitbook/assets/en-ai-ml-04-inference-frameworks-2.png)
 
-```mermaid
-flowchart TD
-    subgraph DynamoCluster [NVIDIA Dynamo Deployment]
-        subgraph Router [Dynamo Router]
-            RouterPod[Router Pod]
-            KVRouter[KV-Aware Router]
-            LoadBalancer[Request Load Balancer]
-        end
+[インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-04-inference-frameworks-2.html)
 
-        subgraph PrefillPool [Prefill Workers]
-            Prefill1[Prefill Worker 1]
-            Prefill2[Prefill Worker 2]
-            PrefillGPU1[8x A100 - High Memory BW]
-            PrefillGPU2[8x A100 - High Memory BW]
-        end
+### 実際の DGD 構造
 
-        subgraph DecodePool [Decode Workers]
-            Decode1[Decode Worker 1]
-            Decode2[Decode Worker 2]
-            Decode3[Decode Worker 3]
-            DecodeGPU1[4x A10G - Cost Optimized]
-            DecodeGPU2[4x A10G - Cost Optimized]
-            DecodeGPU3[4x A10G - Cost Optimized]
-        end
-
-        subgraph KVCache [Distributed KV Cache]
-            KVStore[(KV Cache Store)]
-            KVTransfer[KV Transfer Service]
-        end
-
-        subgraph Backends [Inference Backends]
-            vLLMBackend[vLLM]
-            SGLangBackend[SGLang]
-            TRTLLMBackend[TensorRT-LLM]
-        end
-    end
-
-    Client[Client Request] --> RouterPod
-    RouterPod --> KVRouter
-    KVRouter --> LoadBalancer
-
-    LoadBalancer -->|Prefill Request| Prefill1
-    LoadBalancer -->|Prefill Request| Prefill2
-
-    Prefill1 --> PrefillGPU1
-    Prefill2 --> PrefillGPU2
-
-    Prefill1 -->|KV Cache| KVStore
-    Prefill2 -->|KV Cache| KVStore
-
-    KVStore --> KVTransfer
-    KVTransfer --> Decode1
-    KVTransfer --> Decode2
-    KVTransfer --> Decode3
-
-    Decode1 --> DecodeGPU1
-    Decode2 --> DecodeGPU2
-    Decode3 --> DecodeGPU3
-
-    Prefill1 --> vLLMBackend
-    Decode1 --> SGLangBackend
-    Decode2 --> TRTLLMBackend
-
-    classDef routerNode fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-    classDef prefillNode fill:#76B900,stroke:#333,stroke-width:1px,color:white;
-    classDef decodeNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef kvNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef backendNode fill:#E6522C,stroke:#333,stroke-width:1px,color:white;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class RouterPod,KVRouter,LoadBalancer,Router routerNode;
-    class Prefill1,Prefill2,PrefillGPU1,PrefillGPU2,PrefillPool prefillNode;
-    class Decode1,Decode2,Decode3,DecodeGPU1,DecodeGPU2,DecodeGPU3,DecodePool decodeNode;
-    class KVStore,KVTransfer,KVCache kvNode;
-    class vLLMBackend,SGLangBackend,TRTLLMBackend,Backends backendNode;
-    class DynamoCluster,Client default;
-```
-
-### 主要概念
-
-1. **Disaggregated Serving**: prefill (compute-intensive) と decode (memory-bandwidth-intensive) フェーズを分離します
-2. **KV Cache Routing**: KV cache locality に基づいて requests をインテリジェントに routing します
-3. **Multi-Runtime Support**: vLLM、SGLang、TensorRT-LLM backends と連携します
-4. **Heterogeneous GPU Support**: prefill と decode workloads に異なる GPU types を使用できます
-
-### Dynamo Deployment
+この **schema-checked configuration** は、public model と制限された execution setting 向けに、公式の 1.4.2 v1beta1 aggregated example を適応したものです。platform/controller、namespace、GPU、model access、networking が必要です。deployment 前に model/image digest を pin し、実際の hardware を検証してください。この audit では model を実行していません。
 
 ```yaml
-apiVersion: v1
-kind: Namespace
+apiVersion: nvidia.com/v1beta1
+kind: DynamoGraphDeployment
 metadata:
-  name: dynamo
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: dynamo-config
-  namespace: dynamo
-data:
-  config.yaml: |
-    router:
-      port: 8080
-      kv_routing:
-        enabled: true
-        locality_weight: 0.7
-        load_weight: 0.3
-      load_balancing:
-        algorithm: least_pending
-
-    prefill:
-      replicas: 2
-      backend: vllm
-      model: meta-llama/Llama-3.1-70B-Instruct
-      tensor_parallel_size: 8
-      max_num_seqs: 256
-      max_model_len: 32768
-      gpu_memory_utilization: 0.92
-
-    decode:
-      replicas: 4
-      backend: vllm
-      model: meta-llama/Llama-3.1-70B-Instruct
-      tensor_parallel_size: 4
-      max_num_seqs: 512
-      gpu_memory_utilization: 0.88
-
-    kv_cache:
-      transfer_protocol: rdma  # or tcp
-      compression: lz4
-      max_cache_size_gb: 128
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: dynamo-router
-  namespace: dynamo
+  name: vllm-agg
+  namespace: dynamo-system
 spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: dynamo-router
-  template:
-    metadata:
-      labels:
-        app: dynamo-router
-    spec:
-      containers:
-      - name: router
-        image: nvcr.io/nvidia/dynamo-router:0.4.0
-        ports:
-        - containerPort: 8080
-          name: http
-        - containerPort: 9090
-          name: metrics
-        env:
-        - name: DYNAMO_CONFIG_PATH
-          value: /config/config.yaml
-        - name: PREFILL_SERVICE
-          value: "dynamo-prefill.dynamo.svc.cluster.local:8000"
-        - name: DECODE_SERVICE
-          value: "dynamo-decode.dynamo.svc.cluster.local:8000"
-        - name: KV_CACHE_SERVICE
-          value: "dynamo-kv-cache.dynamo.svc.cluster.local:6379"
-        volumeMounts:
-        - name: config
-          mountPath: /config
-        resources:
-          requests:
-            cpu: "4"
-            memory: 8Gi
-          limits:
-            cpu: "8"
-            memory: 16Gi
-      volumes:
-      - name: config
-        configMap:
-          name: dynamo-config
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: dynamo-prefill
-  namespace: dynamo
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: dynamo-prefill
-  template:
-    metadata:
-      labels:
-        app: dynamo-prefill
-        dynamo-role: prefill
-    spec:
-      tolerations:
-      - key: nvidia.com/gpu
-        operator: Exists
-        effect: NoSchedule
-      containers:
-      - name: prefill
-        image: nvcr.io/nvidia/dynamo-worker:0.4.0
-        args:
-        - --role=prefill
-        - --backend=vllm
-        - --model=meta-llama/Llama-3.1-70B-Instruct
-        - --tensor-parallel-size=8
-        - --max-num-seqs=256
-        - --gpu-memory-utilization=0.92
-        - --enable-kv-export
-        ports:
-        - containerPort: 8000
-          name: inference
-        - containerPort: 8001
-          name: kv-transfer
-        env:
-        - name: HF_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: hf-token
-              key: token
-        - name: KV_CACHE_HOST
-          value: "dynamo-kv-cache.dynamo.svc.cluster.local"
-        - name: CUDA_VISIBLE_DEVICES
-          value: "0,1,2,3,4,5,6,7"
-        resources:
-          limits:
-            nvidia.com/gpu: 8
-            memory: 600Gi
-          requests:
-            nvidia.com/gpu: 8
-            memory: 500Gi
-            cpu: "32"
-        volumeMounts:
-        - name: shm
-          mountPath: /dev/shm
-        - name: model-cache
-          mountPath: /models
-      volumes:
-      - name: shm
-        emptyDir:
-          medium: Memory
-          sizeLimit: 64Gi
-      - name: model-cache
-        persistentVolumeClaim:
-          claimName: dynamo-model-cache
-      nodeSelector:
-        node.kubernetes.io/instance-type: p4d.24xlarge
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: dynamo-decode
-  namespace: dynamo
-spec:
-  replicas: 4
-  selector:
-    matchLabels:
-      app: dynamo-decode
-  template:
-    metadata:
-      labels:
-        app: dynamo-decode
-        dynamo-role: decode
-    spec:
-      tolerations:
-      - key: nvidia.com/gpu
-        operator: Exists
-        effect: NoSchedule
-      containers:
-      - name: decode
-        image: nvcr.io/nvidia/dynamo-worker:0.4.0
-        args:
-        - --role=decode
-        - --backend=vllm
-        - --model=meta-llama/Llama-3.1-70B-Instruct
-        - --tensor-parallel-size=4
-        - --max-num-seqs=512
-        - --gpu-memory-utilization=0.88
-        - --enable-kv-import
-        ports:
-        - containerPort: 8000
-          name: inference
-        - containerPort: 8001
-          name: kv-transfer
-        env:
-        - name: HF_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: hf-token
-              key: token
-        - name: KV_CACHE_HOST
-          value: "dynamo-kv-cache.dynamo.svc.cluster.local"
-        resources:
-          limits:
-            nvidia.com/gpu: 4
-            memory: 200Gi
-          requests:
-            nvidia.com/gpu: 4
-            memory: 150Gi
-            cpu: "16"
-        volumeMounts:
-        - name: shm
-          mountPath: /dev/shm
-        - name: model-cache
-          mountPath: /models
-      volumes:
-      - name: shm
-        emptyDir:
-          medium: Memory
-          sizeLimit: 32Gi
-      - name: model-cache
-        persistentVolumeClaim:
-          claimName: dynamo-model-cache
-      nodeSelector:
-        node.kubernetes.io/instance-type: g5.12xlarge
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: dynamo-router
-  namespace: dynamo
-spec:
-  selector:
-    app: dynamo-router
-  ports:
-  - port: 8080
-    targetPort: 8080
-    name: http
-  type: ClusterIP
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: dynamo-prefill
-  namespace: dynamo
-spec:
-  selector:
-    app: dynamo-prefill
-  ports:
-  - port: 8000
-    targetPort: 8000
-    name: inference
-  - port: 8001
-    targetPort: 8001
-    name: kv-transfer
-  clusterIP: None
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: dynamo-decode
-  namespace: dynamo
-spec:
-  selector:
-    app: dynamo-decode
-  ports:
-  - port: 8000
-    targetPort: 8000
-    name: inference
-  - port: 8001
-    targetPort: 8001
-    name: kv-transfer
-  clusterIP: None
+  components:
+  - name: Frontend
+    podTemplate:
+      spec:
+        containers:
+        - image: nvcr.io/nvidia/ai-dynamo/vllm-runtime:1.4.2
+          name: main
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: '1'
+              memory: 2Gi
+    replicas: 1
+    type: frontend
+  - name: VllmDecodeWorker
+    podTemplate:
+      spec:
+        containers:
+        - args:
+          - --model
+          - Qwen/Qwen3-0.6B
+          - --max-model-len
+          - '2048'
+          - --max-num-seqs
+          - '8'
+          command:
+          - python3
+          - -m
+          - dynamo.vllm
+          image: nvcr.io/nvidia/ai-dynamo/vllm-runtime:1.4.2
+          name: main
+          resources:
+            limits:
+              nvidia.com/gpu: '1'
+              cpu: '4'
+              memory: 12Gi
+            requests:
+              ephemeral-storage: 2Gi
+              cpu: '2'
+              memory: 4Gi
+          workingDir: /workspace/examples/backends/vllm
+    replicas: 1
+    type: worker
 ```
 
-### Dynamo KV Cache Service
+Disaggregation には、互換性のある prefill/decode role、KV connector/format、model revision、networking が必要です。backend や GPU の任意の混在が、自動的に相互運用できるわけではありません。KV-aware routing は locality と load のバランスを取ります。固定の 0.7/0.3 formula は万能な実装ではありません。Redis はすべての Dynamo deployment に必須の KV tensor store ではありません。
 
-KV cache metadata 用に Redis をデプロイします。
-
-```yaml
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: dynamo-kv-cache
-  namespace: dynamo
-spec:
-  serviceName: dynamo-kv-cache
-  replicas: 1
-  selector:
-    matchLabels:
-      app: dynamo-kv-cache
-  template:
-    metadata:
-      labels:
-        app: dynamo-kv-cache
-    spec:
-      containers:
-      - name: redis
-        image: redis:7-alpine
-        ports:
-        - containerPort: 6379
-        args:
-        - --maxmemory
-        - 32gb
-        - --maxmemory-policy
-        - allkeys-lru
-        resources:
-          requests:
-            cpu: "2"
-            memory: 34Gi
-          limits:
-            cpu: "4"
-            memory: 36Gi
-        volumeMounts:
-        - name: data
-          mountPath: /data
-  volumeClaimTemplates:
-  - metadata:
-      name: data
-    spec:
-      accessModes: ["ReadWriteOnce"]
-      storageClassName: gp3
-      resources:
-        requests:
-          storage: 100Gi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: dynamo-kv-cache
-  namespace: dynamo
-spec:
-  selector:
-    app: dynamo-kv-cache
-  ports:
-  - port: 6379
-    targetPort: 6379
-  clusterIP: None
-```
+確認した platform chart の cluster-wide operator は、crd-apply init container を介して CRD を管理します。upgradeCRD=false は external management を選択しますが、CRD requirement を取り除くものではありません。planner、discovery、NATS/etcd、Grove/KAI、その他の release 固有の setting を確認してください。chart rendering は CRD application、authorization、live discovery を検証しません。
 
 ## AIBrix
 
-AIBrix は、LLM gateway/routing、LoRA adapter management、application-tailored autoscaling、heterogeneous GPU support を提供するオープンソースの GenAI inference infrastructure です。
+Version0.7.0 は Envoy Gateway、gateway plugin、controller-manager、metadata service を使用します。KubeRay は Ray ベース capability では optional です。以前の standalone aibrix-registry server と /v1/lora/register API は、確認した 0.7.0 installation path ではありません。
 
-### AIBrix Components
+### ModelAdapter と PodAutoscaler
 
-AIBrix はいくつかの主要 components で構成されています。
-
-1. **Gateway**: インテリジェントな request routing と load balancing
-2. **LoRA Manager**: Dynamic LoRA adapter loading と management
-3. **Autoscaler**: Inference pods 向けの workload-aware autoscaling
-4. **Model Registry**: 集中管理された model と adapter management
-
-### AIBrix Deployment
+実際の ModelAdapter field には baseModel、podSelector、artifactURL が含まれます。replicas を省略すると、matching Pod のすべてに adapter を load します。1 では 1 つの Pod を選択し、他の値は拒否されます。example bucket/revision と base model は承認済みの value に置き換えてください。controller の download permission、runtime compatibility、adapter capacity/lifecycle、tenant authorization は個別に検証してください。
 
 ```yaml
-apiVersion: v1
-kind: Namespace
+apiVersion: model.aibrix.ai/v1alpha1
+kind: ModelAdapter
 metadata:
-  name: aibrix
----
-# AIBrix Gateway
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: aibrix-gateway
-  namespace: aibrix
+  name: support-lora
+  namespace: ai-inference
 spec:
-  replicas: 3
-  selector:
+  baseModel: approved-base-model
+  podSelector:
     matchLabels:
-      app: aibrix-gateway
-  template:
-    metadata:
-      labels:
-        app: aibrix-gateway
-    spec:
-      containers:
-      - name: gateway
-        image: ghcr.io/aibrix/aibrix-gateway:0.3.0
-        ports:
-        - containerPort: 8080
-          name: http
-        - containerPort: 9090
-          name: metrics
-        env:
-        - name: AIBRIX_MODEL_REGISTRY
-          value: "aibrix-registry.aibrix.svc.cluster.local:8081"
-        - name: AIBRIX_ROUTING_STRATEGY
-          value: "least_load"  # Options: round_robin, least_load, hash
-        - name: AIBRIX_ENABLE_LORA_ROUTING
-          value: "true"
-        - name: AIBRIX_MAX_QUEUE_SIZE
-          value: "1000"
-        resources:
-          requests:
-            cpu: "2"
-            memory: 4Gi
-          limits:
-            cpu: "4"
-            memory: 8Gi
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 10
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: aibrix-gateway
-  namespace: aibrix
-spec:
-  selector:
-    app: aibrix-gateway
-  ports:
-  - port: 8080
-    targetPort: 8080
-    name: http
-  type: ClusterIP
----
-# AIBrix Model Registry
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: aibrix-registry
-  namespace: aibrix
-spec:
+      model.aibrix.ai/name: approved-base-model
+  artifactURL: s3://REPLACE_WITH_APPROVED_BUCKET/adapters/support/REVISION/
   replicas: 1
-  selector:
-    matchLabels:
-      app: aibrix-registry
-  template:
-    metadata:
-      labels:
-        app: aibrix-registry
-    spec:
-      containers:
-      - name: registry
-        image: ghcr.io/aibrix/aibrix-registry:0.3.0
-        ports:
-        - containerPort: 8081
-          name: http
-        env:
-        - name: DATABASE_URL
-          value: "postgresql://aibrix:password@aibrix-db.aibrix.svc.cluster.local:5432/aibrix"
-        - name: S3_BUCKET
-          value: "aibrix-models"
-        - name: AWS_REGION
-          value: "us-west-2"
-        volumeMounts:
-        - name: lora-cache
-          mountPath: /cache
-        resources:
-          requests:
-            cpu: "1"
-            memory: 2Gi
-          limits:
-            cpu: "2"
-            memory: 4Gi
-      volumes:
-      - name: lora-cache
-        emptyDir:
-          sizeLimit: 50Gi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: aibrix-registry
-  namespace: aibrix
-spec:
-  selector:
-    app: aibrix-registry
-  ports:
-  - port: 8081
-    targetPort: 8081
-    name: http
-  type: ClusterIP
----
-# AIBrix vLLM Backend with LoRA support
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: aibrix-vllm
-  namespace: aibrix
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: aibrix-vllm
-  template:
-    metadata:
-      labels:
-        app: aibrix-vllm
-      annotations:
-        aibrix.io/gpu-type: "nvidia-a10g"
-        aibrix.io/model: "meta-llama/Llama-3.1-8B-Instruct"
-    spec:
-      tolerations:
-      - key: nvidia.com/gpu
-        operator: Exists
-        effect: NoSchedule
-      containers:
-      - name: vllm
-        image: vllm/vllm-openai:v0.6.0
-        command:
-        - python
-        - -m
-        - vllm.entrypoints.openai.api_server
-        args:
-        - --model=meta-llama/Llama-3.1-8B-Instruct
-        - --enable-lora
-        - --max-loras=8
-        - --max-lora-rank=32
-        - --lora-modules
-        - customer-support=/lora/customer-support
-        - code-review=/lora/code-review
-        - translation=/lora/translation
-        - --tensor-parallel-size=1
-        - --gpu-memory-utilization=0.85
-        - --max-model-len=8192
-        - --port=8000
-        ports:
-        - containerPort: 8000
-          name: http
-        env:
-        - name: HF_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: hf-token
-              key: token
-        - name: AIBRIX_REGISTRY_URL
-          value: "http://aibrix-registry.aibrix.svc.cluster.local:8081"
-        resources:
-          limits:
-            nvidia.com/gpu: 1
-            memory: 48Gi
-          requests:
-            nvidia.com/gpu: 1
-            memory: 40Gi
-            cpu: "8"
-        volumeMounts:
-        - name: shm
-          mountPath: /dev/shm
-        - name: lora-adapters
-          mountPath: /lora
-        - name: model-cache
-          mountPath: /root/.cache/huggingface
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 120
-          periodSeconds: 10
-      volumes:
-      - name: shm
-        emptyDir:
-          medium: Memory
-          sizeLimit: 16Gi
-      - name: lora-adapters
-        persistentVolumeClaim:
-          claimName: aibrix-lora-pvc
-      - name: model-cache
-        persistentVolumeClaim:
-          claimName: aibrix-model-cache
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: aibrix-vllm
-  namespace: aibrix
-spec:
-  selector:
-    app: aibrix-vllm
-  ports:
-  - port: 8000
-    targetPort: 8000
-    name: http
-  type: ClusterIP
 ```
 
-### AIBrix LoRA Management
-
-LoRA adapters を登録および管理します。
-
-```bash
-# Register a new LoRA adapter
-curl -X POST http://aibrix-registry.aibrix.svc.cluster.local:8081/v1/lora/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "customer-support",
-    "base_model": "meta-llama/Llama-3.1-8B-Instruct",
-    "lora_path": "s3://aibrix-models/lora/customer-support",
-    "rank": 16,
-    "alpha": 32,
-    "target_modules": ["q_proj", "v_proj", "k_proj", "o_proj"]
-  }'
-
-# List registered LoRA adapters
-curl http://aibrix-registry.aibrix.svc.cluster.local:8081/v1/lora/list
-
-# Use LoRA adapter in inference request
-curl -X POST http://aibrix-gateway.aibrix.svc.cluster.local:8080/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "meta-llama/Llama-3.1-8B-Instruct",
-    "lora_adapter": "customer-support",
-    "messages": [
-      {"role": "user", "content": "How do I reset my password?"}
-    ],
-    "max_tokens": 200
-  }'
-```
-
-### AIBrix Autoscaler
-
-Workload-aware autoscaling を設定します。
+PodAutoscaler0.7.0 は、任意の autoscaler ConfigMap ではなく、metricsSources と HPA/KPA/APA strategy を使用します。この CPU example には metrics-server、workload CPU request、controller が必要です。GPU queue ベースの scaling を検証するものではありません。同じ target に対して scaler owner が競合しないようにしてください。
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
+apiVersion: autoscaling.aibrix.ai/v1alpha1
+kind: PodAutoscaler
 metadata:
-  name: aibrix-autoscaler-config
-  namespace: aibrix
-data:
-  config.yaml: |
-    autoscaler:
-      enabled: true
-      poll_interval: 30s
-
-      scaling_policies:
-        - name: default
-          min_replicas: 2
-          max_replicas: 10
-          target_metrics:
-            - name: requests_per_second
-              target: 50
-              window: 60s
-            - name: gpu_utilization
-              target: 80
-              window: 120s
-            - name: queue_depth
-              target: 20
-              window: 30s
-          scale_up:
-            stabilization_window: 60s
-            step_size: 2
-          scale_down:
-            stabilization_window: 300s
-            step_size: 1
-
-        - name: high-priority
-          min_replicas: 4
-          max_replicas: 20
-          target_metrics:
-            - name: p99_latency_ms
-              target: 1000
-              window: 60s
-          scale_up:
-            stabilization_window: 30s
-            step_size: 4
-          scale_down:
-            stabilization_window: 600s
-            step_size: 1
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: aibrix-autoscaler
-  namespace: aibrix
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: aibrix-autoscaler
-  template:
-    metadata:
-      labels:
-        app: aibrix-autoscaler
-    spec:
-      serviceAccountName: aibrix-autoscaler
-      containers:
-      - name: autoscaler
-        image: ghcr.io/aibrix/aibrix-autoscaler:0.3.0
-        env:
-        - name: AIBRIX_NAMESPACE
-          value: "aibrix"
-        - name: PROMETHEUS_URL
-          value: "http://prometheus.monitoring.svc.cluster.local:9090"
-        volumeMounts:
-        - name: config
-          mountPath: /config
-        resources:
-          requests:
-            cpu: "500m"
-            memory: 512Mi
-          limits:
-            cpu: "1"
-            memory: 1Gi
-      volumes:
-      - name: config
-        configMap:
-          name: aibrix-autoscaler-config
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: aibrix-autoscaler
-  namespace: aibrix
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: aibrix-autoscaler
-  namespace: aibrix
-rules:
-- apiGroups: ["apps"]
-  resources: ["deployments", "deployments/scale"]
-  verbs: ["get", "list", "watch", "update", "patch"]
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["get", "list", "watch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: aibrix-autoscaler
-  namespace: aibrix
-subjects:
-- kind: ServiceAccount
-  name: aibrix-autoscaler
-  namespace: aibrix
-roleRef:
-  kind: Role
-  name: aibrix-autoscaler
-  apiGroup: rbac.authorization.k8s.io
-```
-
-## Ray Serve Integration
-
-Ray Serve は、Kubernetes-native deployment のために KubeRay operator と連携して distributed serving capabilities を提供します。
-
-### KubeRay Operator Installation
-
-```bash
-# Add KubeRay Helm repository
-helm repo add kuberay https://ray-project.github.io/kuberay-helm/
-helm repo update
-
-# Install KubeRay operator
-helm install kuberay-operator kuberay/kuberay-operator \
-  --namespace kuberay-system \
-  --create-namespace \
-  --set image.tag=v1.1.0
-```
-
-### vLLM を使った Ray Serve Deployment
-
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ray-serve
----
-apiVersion: ray.io/v1
-kind: RayService
-metadata:
-  name: vllm-serve
-  namespace: ray-serve
-spec:
-  serviceUnhealthySecondThreshold: 900
-  deploymentUnhealthySecondThreshold: 300
-  serveConfigV2: |
-    applications:
-    - name: vllm-app
-      route_prefix: /
-      import_path: serve_vllm:deployment
-      deployments:
-      - name: VLLMDeployment
-        num_replicas: 2
-        ray_actor_options:
-          num_cpus: 8
-          num_gpus: 1
-        user_config:
-          model: meta-llama/Llama-3.1-8B-Instruct
-          tensor_parallel_size: 1
-          max_model_len: 8192
-          gpu_memory_utilization: 0.85
-  rayClusterConfig:
-    rayVersion: '2.9.0'
-    headGroupSpec:
-      rayStartParams:
-        dashboard-host: '0.0.0.0'
-        block: 'true'
-      template:
-        spec:
-          containers:
-          - name: ray-head
-            image: rayproject/ray-ml:2.9.0-py310-gpu
-            ports:
-            - containerPort: 6379
-              name: gcs
-            - containerPort: 8265
-              name: dashboard
-            - containerPort: 10001
-              name: client
-            - containerPort: 8000
-              name: serve
-            env:
-            - name: HF_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: hf-token
-                  key: token
-            resources:
-              limits:
-                cpu: "4"
-                memory: 16Gi
-              requests:
-                cpu: "2"
-                memory: 8Gi
-            volumeMounts:
-            - name: serve-code
-              mountPath: /home/ray/serve_vllm.py
-              subPath: serve_vllm.py
-          volumes:
-          - name: serve-code
-            configMap:
-              name: vllm-serve-code
-    workerGroupSpecs:
-    - groupName: gpu-workers
-      replicas: 2
-      minReplicas: 1
-      maxReplicas: 8
-      rayStartParams:
-        block: 'true'
-      template:
-        spec:
-          tolerations:
-          - key: nvidia.com/gpu
-            operator: Exists
-            effect: NoSchedule
-          containers:
-          - name: ray-worker
-            image: rayproject/ray-ml:2.9.0-py310-gpu
-            env:
-            - name: HF_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: hf-token
-                  key: token
-            resources:
-              limits:
-                nvidia.com/gpu: 1
-                cpu: "16"
-                memory: 64Gi
-              requests:
-                nvidia.com/gpu: 1
-                cpu: "8"
-                memory: 48Gi
-            volumeMounts:
-            - name: shm
-              mountPath: /dev/shm
-            - name: model-cache
-              mountPath: /home/ray/.cache/huggingface
-          volumes:
-          - name: shm
-            emptyDir:
-              medium: Memory
-              sizeLimit: 16Gi
-          - name: model-cache
-            persistentVolumeClaim:
-              claimName: ray-model-cache
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: vllm-serve-code
-  namespace: ray-serve
-data:
-  serve_vllm.py: |
-    from ray import serve
-    from vllm.engine.arg_utils import AsyncEngineArgs
-    from vllm.engine.async_llm_engine import AsyncLLMEngine
-    from vllm.sampling_params import SamplingParams
-    from fastapi import FastAPI
-    from pydantic import BaseModel
-    from typing import List, Optional
-    import asyncio
-
-    app = FastAPI()
-
-    class ChatMessage(BaseModel):
-        role: str
-        content: str
-
-    class ChatCompletionRequest(BaseModel):
-        model: str
-        messages: List[ChatMessage]
-        temperature: Optional[float] = 0.7
-        max_tokens: Optional[int] = 512
-        stream: Optional[bool] = False
-
-    @serve.deployment(
-        ray_actor_options={"num_gpus": 1, "num_cpus": 8},
-        autoscaling_config={
-            "min_replicas": 1,
-            "max_replicas": 8,
-            "target_num_ongoing_requests_per_replica": 10,
-            "upscale_delay_s": 30,
-            "downscale_delay_s": 300,
-        },
-    )
-    @serve.ingress(app)
-    class VLLMDeployment:
-        def __init__(self, model: str, tensor_parallel_size: int = 1,
-                     max_model_len: int = 8192, gpu_memory_utilization: float = 0.85):
-            engine_args = AsyncEngineArgs(
-                model=model,
-                tensor_parallel_size=tensor_parallel_size,
-                max_model_len=max_model_len,
-                gpu_memory_utilization=gpu_memory_utilization,
-                trust_remote_code=True,
-            )
-            self.engine = AsyncLLMEngine.from_engine_args(engine_args)
-
-        @app.post("/v1/chat/completions")
-        async def chat_completions(self, request: ChatCompletionRequest):
-            # Format messages into prompt
-            prompt = self._format_chat_prompt(request.messages)
-
-            sampling_params = SamplingParams(
-                temperature=request.temperature,
-                max_tokens=request.max_tokens,
-            )
-
-            request_id = str(id(request))
-            results_generator = self.engine.generate(prompt, sampling_params, request_id)
-
-            final_output = None
-            async for request_output in results_generator:
-                final_output = request_output
-
-            return {
-                "id": request_id,
-                "object": "chat.completion",
-                "model": request.model,
-                "choices": [{
-                    "index": 0,
-                    "message": {
-                        "role": "assistant",
-                        "content": final_output.outputs[0].text
-                    },
-                    "finish_reason": "stop"
-                }]
-            }
-
-        def _format_chat_prompt(self, messages: List[ChatMessage]) -> str:
-            prompt = ""
-            for msg in messages:
-                if msg.role == "system":
-                    prompt += f"<|system|>\n{msg.content}</s>\n"
-                elif msg.role == "user":
-                    prompt += f"<|user|>\n{msg.content}</s>\n"
-                elif msg.role == "assistant":
-                    prompt += f"<|assistant|>\n{msg.content}</s>\n"
-            prompt += "<|assistant|>\n"
-            return prompt
-
-        @app.get("/health")
-        async def health(self):
-            return {"status": "healthy"}
-
-    deployment = VLLMDeployment.bind(
-        model="meta-llama/Llama-3.1-8B-Instruct",
-        tensor_parallel_size=1,
-        max_model_len=8192,
-        gpu_memory_utilization=0.85
-    )
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: vllm-serve
-  namespace: ray-serve
-spec:
-  selector:
-    ray.io/serve: vllm-serve
-  ports:
-  - port: 8000
-    targetPort: 8000
-    name: serve
-  type: ClusterIP
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: ray-model-cache
-  namespace: ray-serve
-spec:
-  accessModes:
-  - ReadWriteOnce
-  storageClassName: gp3
-  resources:
-    requests:
-      storage: 200Gi
-```
-
-### Ray Serve Auto-Scaling
-
-Ray Serve の auto-scaling を設定します。
-
-```yaml
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: ray-worker-hpa
-  namespace: ray-serve
+  name: model-cpu
+  namespace: ai-inference
 spec:
   scaleTargetRef:
-    apiVersion: ray.io/v1
-    kind: RayCluster
-    name: vllm-serve-raycluster
-  minReplicas: 2
-  maxReplicas: 10
-  metrics:
-  - type: External
-    external:
-      metric:
-        name: ray_serve_num_pending_requests
-      target:
-        type: AverageValue
-        averageValue: "20"
-  - type: External
-    external:
-      metric:
-        name: ray_serve_deployment_replica_healthy
-      target:
-        type: Value
-        value: "1"
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 60
-      policies:
-      - type: Pods
-        value: 2
-        periodSeconds: 60
-    scaleDown:
-      stabilizationWindowSeconds: 300
-      policies:
-      - type: Pods
-        value: 1
-        periodSeconds: 120
+    apiVersion: apps/v1
+    kind: Deployment
+    name: prepared-model-server
+  minReplicas: 1
+  maxReplicas: 3
+  scalingStrategy: HPA
+  metricsSources:
+  - metricSourceType: resource
+    targetMetric: cpu
+    targetValue: '70'
 ```
+
+## Ray Serve の統合
+
+監査済みの [Ray Serve](ray/04-ray-serve.md) および [KubeRay](ray/02-kuberay-operator.md) API を使用してください。KubeRay reconciliation、Ray worker autoscaling、Serve replica autoscaling には異なる役割があります。RayCluster を通常の Deployment HPA scale target として使用したり、生成される cluster/Serve Service 名や selector を推測したりしないでください。
+
+code と dependency は head だけでなく execution worker に到達しなければなりません。user_config は constructor argument を自動的に変更しません。適切な reconfigure path を実装してください。互換 API には、実際の chat template、streaming、cancellation、finish reason、usage、error が必要です。role string を連結して stream=true を無視するだけでは不十分です。古い Ray2.9/operator1.1 example と無条件の trust_remote_code=True は削除されました。
 
 ## SGLang
 
-SGLang (Structured Generation Language) は UC Berkeley で開発された high-performance LLM serving framework で、structured output generation と複雑な prompting pipelines に最適化されています。vLLM と並ぶ、最も急成長しているオープンソース inference engines の 1 つです。
+Version0.5.19 の RadixAttention は、共通 prefix に対して KV を再利用します。任意に重複する途中の substring は、交換可能な cached prefix ではありません。Model、KV format、access policy は一致しなければなりません。現在の grammar backend には、default の XGrammar と代替の Outlines/Llguidance が含まれます。「compressed FSM により常に 10x 高速」というのは一般的な結論ではありません。
 
-### SGLang Core Technology
+![SGLang API/runtime、common-prefix KV caching、選定された grammar backend。](../.gitbook/assets/en-ai-ml-04-inference-frameworks-3.png)
 
-```mermaid
-flowchart TD
-    subgraph SGLangArch [SGLang Architecture]
-        subgraph Frontend [Frontend]
-            SGLangDSL[SGLang DSL]
-            OpenAICompat[OpenAI Compatible API]
-            NativeAPI[Native API]
-        end
+[インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-04-inference-frameworks-3.html)
 
-        subgraph Runtime [Runtime Engine]
-            RadixAttention[RadixAttention]
-            CompressedFSM[Compressed FSM Structured Output]
-            ChunkedPrefill[Chunked Prefill]
-            FlashInfer[FlashInfer Kernels]
-        end
+### Structured Request の例
 
-        subgraph Optimization [Optimization]
-            KVCacheReuse[KV Cache Reuse]
-            OverlapSchedule[Schedule Overlapping]
-            DataParallel[Data Parallelism]
-        end
-    end
-
-    SGLangDSL --> Runtime
-    OpenAICompat --> Runtime
-    RadixAttention --> KVCacheReuse
-    CompressedFSM --> OverlapSchedule
-
-    classDef featureNode fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef runtimeNode fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef optNode fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef default fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class SGLangDSL,OpenAICompat,NativeAPI,Frontend featureNode;
-    class RadixAttention,CompressedFSM,ChunkedPrefill,FlashInfer,Runtime runtimeNode;
-    class KVCacheReuse,OverlapSchedule,DataParallel,Optimization optNode;
-    class SGLangArch default;
-```
-
-1. **RadixAttention**: Prefix caching を超える radix tree-based KV cache reuse で、部分的に重複する prompts 間で cache を効率的に共有します。
-2. **Compressed FSM Structured Output**: Structured output (JSON Schema、regex など) 用の finite state machines を圧縮し、vLLM 比で最大 10 倍高速な structured decoding を実現します。
-3. **FlashInfer Kernels**: GPU architectures 全体で peak performance を提供する最適化された attention kernels です。
-
-### EKS 上の SGLang Deployment
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: sglang-server
-  namespace: ai-inference
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: sglang-server
-  template:
-    metadata:
-      labels:
-        app: sglang-server
-    spec:
-      containers:
-      - name: sglang
-        image: lmsysorg/sglang:latest
-        command:
-        - python3
-        - -m
-        - sglang.launch_server
-        - --model-path=meta-llama/Llama-3.1-8B-Instruct
-        - --host=0.0.0.0
-        - --port=30000
-        - --tp=1
-        - --mem-fraction-static=0.85
-        ports:
-        - containerPort: 30000
-        resources:
-          limits:
-            nvidia.com/gpu: 1
-            memory: 48Gi
-          requests:
-            nvidia.com/gpu: 1
-            memory: 32Gi
-        env:
-        - name: HF_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: hf-token
-              key: token
-        volumeMounts:
-        - name: model-cache
-          mountPath: /root/.cache/huggingface
-      volumes:
-      - name: model-cache
-        persistentVolumeClaim:
-          claimName: model-cache-pvc
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: sglang-server
-  namespace: ai-inference
-spec:
-  selector:
-    app: sglang-server
-  ports:
-  - port: 30000
-    targetPort: 30000
-  type: ClusterIP
-```
-
-### SGLang DSL Programming
-
-SGLang の主な差別化要因は、複雑な LLM pipelines をプログラムで構成するための DSL です。
+この client は、SGLang の json_schema request shape を support する承認済み gateway を前提とします。通常の completion と output shape を確認します。検証では、synthetic response と failure case を用いる local HTTP fixture を使用します。model accuracy を測定するものではありません。JSON の有効性は、事実上の正確性や tool authorization を保証しません。
 
 ```python
-import sglang as sgl
+from pathlib import Path
+import json
+from urllib.request import Request, urlopen
 
-@sgl.function
-def multi_turn_qa(s, question_1, question_2):
-    s += sgl.system("You are a helpful AI assistant.")
-    s += sgl.user(question_1)
-    s += sgl.assistant(sgl.gen("answer_1", max_tokens=256))
-    s += sgl.user(question_2)
-    s += sgl.assistant(sgl.gen("answer_2", max_tokens=256))
-
-@sgl.function
-def json_extraction(s, text):
-    s += sgl.user(f"Extract information from the following text: {text}")
-    s += sgl.assistant(
-        sgl.gen("result", max_tokens=512,
-                regex=r'\{"name": "[^"]+", "age": \d+, "city": "[^"]+"\}')
-    )
+# Existing private gateway and a scoped credential mounted as a file.
+base_url = "https://inference.example.internal/v1"
+credential = Path("/run/secrets/inference/token").read_text().strip()
+payload = {
+    "model": "approved-model-alias",
+    "messages": [{"role": "user", "content": "Return the city Seoul and country Korea."}],
+    "temperature": 0,
+    "max_tokens": 128,
+    "response_format": {
+        "type": "json_schema",
+        "json_schema": {
+            "name": "location",
+            "schema": {
+                "type": "object",
+                "properties": {"city": {"type": "string"}, "country": {"type": "string"}},
+                "required": ["city", "country"],
+                "additionalProperties": False,
+            },
+        },
+    },
+}
+request = Request(
+    base_url + "/chat/completions",
+    data=json.dumps(payload).encode(),
+    headers={"Content-Type": "application/json", "Authorization": "Bearer " + credential},
+    method="POST",
+)
+with urlopen(request, timeout=30) as response:
+    result = json.load(response)
+choice = result["choices"][0]
+if choice["finish_reason"] != "stop":
+    raise RuntimeError("Generation did not complete normally")
+location = json.loads(choice["message"]["content"])
+if set(location) != {"city", "country"} or not all(isinstance(v, str) for v in location.values()):
+    raise ValueError("Unexpected output shape")
+print(location)
 ```
 
-### vLLM vs SGLang Selection Criteria
+SGLang の function/system/user/assistant/gen DSL API はこの release にも残っています。function を宣言しても inference は実行されません。準備済みの RuntimeEndpoint/backend に接続して実行してください。installation 時に Torch、FlashInfer、hardware 互換性を検証してください。この audit では full GPU SDK を install せず、DSL も model に接続していません。
 
-| Criteria | vLLM | SGLang |
-|----------|------|--------|
-| **Structured output speed** | 良好 | 非常に優秀 (最大 10 倍) |
-| **Community/ecosystem** | 非常に大規模 | 急速に成長中 |
-| **Multi-turn pipelines** | API-level | DSL-level optimization |
-| **Prefix caching** | Supported | RadixAttention (より効率的) |
-| **Production stability** | 非常に高い | 高い |
-| **VLM support** | 広範 | 広範 |
-| **Kubernetes integration** | Helm chart | Docker image |
+## Hugging Face TGI
 
-## HuggingFace TGI (Text Generation Inference)
+公式 repository は **maintenance mode** を宣言しています。確認した最新 release は 3.3.7(December19,2025) です。minor fix、documentation、maintenance を受け付けており、新しい engine の採用は vLLM/SGLang などへ誘導しています。新規 project に対する汎用 default recommendation ではなくなりました。既存 deployment を migration する際は、model、template、streaming、metrics、SLO の互換性を検証してください。
 
-HuggingFace TGI は HuggingFace が開発した production-ready な LLM serving framework で、HuggingFace model hub との native integration が主な強みです。
-
-### TGI Key Features
-
-- **Flash Attention 2 Integration**: 高 throughput のための最適化された attention operations
-- **Continuous Batching**: GPU utilization を最大化する dynamic request batching
-- **Quantization Support**: GPTQ、AWQ、bitsandbytes、EETQ、Marlin など
-- **Guidance Integration**: JSON schema-based structured output support
-- **HuggingFace Hub Integration**: model ID だけで直接 download と serving
-- **Rust-Based High-Performance Server**: 低 memory overhead と高 concurrency
-
-### EKS 上の TGI Deployment
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: tgi-server
-  namespace: ai-inference
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: tgi-server
-  template:
-    metadata:
-      labels:
-        app: tgi-server
-    spec:
-      containers:
-      - name: tgi
-        image: ghcr.io/huggingface/text-generation-inference:latest
-        args:
-        - --model-id=meta-llama/Llama-3.1-8B-Instruct
-        - --max-input-tokens=4096
-        - --max-total-tokens=8192
-        - --max-batch-prefill-tokens=16384
-        - --quantize=awq
-        - --port=8080
-        ports:
-        - containerPort: 8080
-        resources:
-          limits:
-            nvidia.com/gpu: 1
-            memory: 48Gi
-          requests:
-            nvidia.com/gpu: 1
-            memory: 32Gi
-        env:
-        - name: HUGGING_FACE_HUB_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: hf-token
-              key: token
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 120
-          periodSeconds: 10
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 180
-          periodSeconds: 30
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: tgi-server
-  namespace: ai-inference
-spec:
-  selector:
-    app: tgi-server
-  ports:
-  - port: 8080
-    targetPort: 8080
-  type: ClusterIP
-```
-
-### TGI API Usage Examples
-
-```bash
-# Text generation
-curl http://tgi-server:8080/generate \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "inputs": "The advantages of running AI workloads on Kubernetes are",
-    "parameters": {
-      "max_new_tokens": 200,
-      "temperature": 0.7,
-      "do_sample": true
-    }
-  }'
-
-# OpenAI-compatible API (TGI v2+)
-curl http://tgi-server:8080/v1/chat/completions \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "model": "tgi",
-    "messages": [{"role": "user", "content": "Hello!"}],
-    "max_tokens": 100
-  }'
-```
+--quantize=awq を追加しても、通常の model から AWQ weight が自動的に生成されるわけではありません。その format で準備された support 対象の model を使用してください。floating tag、欠落した gated-model credential、短い liveness deadline は reproducibility と startup 成功を損ないます。
 
 ## Ollama
 
-Ollama は LLMs をローカルで簡単に実行するための tool で、development/testing environments や edge deployments に最適です。GGUF format の quantized models を使用することで、consumer-grade hardware でも LLMs を実行できます。
+0.34.0 では、model の pull と serving は別々の operation です。sleep10 を含む postStart hook は readiness を保証しません。承認済み model を prestage するか、health check、上限付き retry、failure handling を備えた別の preparation procedure を使用してください。mutable な model tag と storage permission を記録してください。
 
-### Ollama Features
+local Ollama API は user 認証を提供しません。公開する前に authorization と path control を前段に置いてください。Pod localhost にのみ bind された server には、Service 経由で到達できません。OLLAMA_HOST は listening scope を変更するものであり、認証ではありません。model-management endpoint と inference endpoint の scope を個別に設定してください。
 
-- **One-Click Model Execution**: 単一 command で download して実行: `ollama run llama3.1`
-- **GGUF Quantized Models**: CPU と consumer GPUs での効率的な実行
-- **Modelfile**: Dockerfile-like syntax で custom models を定義
-- **OpenAI Compatible API**: 既存 code と最小限の変更で統合
-- **Lightweight Container**: Docker/Kubernetes への簡単な deployment
-
-### EKS 上の Ollama Deployment
-
-Development/staging environments または lightweight inference 用に、EKS 上へ Ollama をデプロイします。
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ollama
-  namespace: ai-dev
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: ollama
-  template:
-    metadata:
-      labels:
-        app: ollama
-    spec:
-      containers:
-      - name: ollama
-        image: ollama/ollama:latest
-        ports:
-        - containerPort: 11434
-        resources:
-          limits:
-            nvidia.com/gpu: 1
-            memory: 32Gi
-          requests:
-            nvidia.com/gpu: 1
-            memory: 16Gi
-        volumeMounts:
-        - name: ollama-data
-          mountPath: /root/.ollama
-        lifecycle:
-          postStart:
-            exec:
-              command:
-              - /bin/sh
-              - -c
-              - |
-                sleep 10 && ollama pull llama3.1:8b
-      volumes:
-      - name: ollama-data
-        persistentVolumeClaim:
-          claimName: ollama-data-pvc
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: ollama
-  namespace: ai-dev
-spec:
-  selector:
-    app: ollama
-  ports:
-  - port: 11434
-    targetPort: 11434
-  type: ClusterIP
-```
-
-### Ollama Usage Examples
-
-```bash
-# Download and run models
-ollama pull llama3.1:8b
-ollama pull deepseek-r1:8b
-ollama pull qwen2.5:7b
-
-# Chat API (OpenAI compatible)
-curl http://ollama:11434/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "llama3.1:8b",
-    "messages": [{"role": "user", "content": "Hello!"}]
-  }'
-
-# Create custom model with Modelfile
-cat <<EOF > Modelfile
-FROM llama3.1:8b
-SYSTEM "You are a Kubernetes expert assistant."
-PARAMETER temperature 0.3
-PARAMETER num_ctx 4096
-EOF
-ollama create k8s-expert -f Modelfile
-```
+Modelfile は base model、system prompt、generation setting を定義します。model を train したり Kubernetes image を build したりするものではありません。大規模 multitenancy を想定するのではなく、model size、device、backend ごとの CPU/GPU support を検証してください。
 
 ## LiteLLM
 
-LiteLLM は、100+ LLM providers を単一の OpenAI-compatible interface に統合する proxy/gateway です。EKS 上で複数の model backends (vLLM、SGLang、NIM、cloud APIs など) を管理するときに有用です。
+[Agentic AI guide](03-agentic-ai-platform.md) の監査済み 1.100.1 Router configuration を使用してください。provider gateway は inference engine とは別の layer です。alias を gpt-4-equivalent と呼んでも、同等の quality が確立されるわけではありません。fallback はまず、allowed-provider と data-egress policy を満たさなければなりません。
 
-### LiteLLM Key Features
+実際の configuration file を proxy command に接続し、必要に応じて client credential、DB/Redis、callback を構成してください。dummy key や ClusterIP は認証ではありません。drop_params=true は意味のある request condition を取り除く可能性があります。request、success、failure、retry、cache cost を区別してください。
 
-- **Unified API**: OpenAI、Anthropic、Google、vLLM、Ollama、100+ providers 向けの単一 interface
-- **Load Balancing**: 複数 model instances 間のインテリジェント routing
-- **Cost Tracking**: Model、team、project ごとの usage と cost tracking
-- **Rate Limiting**: API key ごと、user ごとの rate limit management
-- **Fallback Strategy**: Model failures 時の automatic fallback
+## AWS Neuron と Inferentia2
 
-### EKS 上の LiteLLM Proxy Deployment
+chip、NeuronCore、host RAM/HBM を区別してください。各 Inferentia2 chip には 2 個の NeuronCore-v2 core と 32GiB の HBM があります。
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: litellm-config
-  namespace: ai-gateway
-data:
-  config.yaml: |
-    model_list:
-      - model_name: gpt-4-equivalent
-        litellm_params:
-          model: openai/meta-llama/Llama-3.1-70B-Instruct
-          api_base: http://vllm-inference.ai-inference:8000/v1
-          api_key: dummy
-      - model_name: gpt-4-equivalent
-        litellm_params:
-          model: openai/meta-llama/Llama-3.1-70B-Instruct
-          api_base: http://sglang-server.ai-inference:30000/v1
-          api_key: dummy
-      - model_name: fast-model
-        litellm_params:
-          model: openai/meta-llama/Llama-3.1-8B-Instruct
-          api_base: http://vllm-small.ai-inference:8000/v1
-          api_key: dummy
-      - model_name: dev-model
-        litellm_params:
-          model: ollama/llama3.1:8b
-          api_base: http://ollama.ai-dev:11434
-    
-    litellm_settings:
-      drop_params: true
-      set_verbose: false
-    
-    router_settings:
-      routing_strategy: least-busy
-      num_retries: 3
-      retry_after: 5
-      allowed_fails: 2
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: litellm-proxy
-  namespace: ai-gateway
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: litellm-proxy
-  template:
-    metadata:
-      labels:
-        app: litellm-proxy
-    spec:
-      containers:
-      - name: litellm
-        image: ghcr.io/berriai/litellm:main-latest
-        args:
-        - --config=/app/config.yaml
-        - --port=4000
-        ports:
-        - containerPort: 4000
-        resources:
-          requests:
-            cpu: "500m"
-            memory: 512Mi
-          limits:
-            cpu: "2"
-            memory: 2Gi
-        volumeMounts:
-        - name: config
-          mountPath: /app/config.yaml
-          subPath: config.yaml
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 4000
-          initialDelaySeconds: 10
-          periodSeconds: 10
-      volumes:
-      - name: config
-        configMap:
-          name: litellm-config
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: litellm-proxy
-  namespace: ai-gateway
-spec:
-  selector:
-    app: litellm-proxy
-  ports:
-  - port: 4000
-    targetPort: 4000
-  type: ClusterIP
-```
+| Instance | Chip | NeuronCore-v2 | Device HBM (GiB) | Host RAM (GiB) | vCPU |
+| --- | --- | --- | --- | --- | --- |
+| inf2.xlarge | 1 | 2 | 32 | 16 | 4 |
+| inf2.8xlarge | 1 | 2 | 32 | 128 | 32 |
+| inf2.24xlarge | 6 | 12 | 192 | 384 | 96 |
+| inf2.48xlarge | 12 | 24 | 384 | 768 | 192 |
 
-### LiteLLM Usage Examples
+### Device 割り当てと Plugin Path
 
-```python
-from openai import OpenAI
+aws.amazon.com/neuron は **device 全体**を割り当てます。aws.amazon.com/neuroncore は **core** を割り当てます。以前の inf2.xlarge example では、1 device、4 vCPU、16Gi RAM の node に対して neuron:2、8 CPU、24Gi RAM を request していました。これは schedule できません。NEURON_RT_VISIBLE_CORES は runtime scope を選択するもので、未割り当ての device を作成するものではありません。選んだ release に対して、NUM_CORES および logical-core policy との precedence を確認してください。
 
-# Access various backends through LiteLLM proxy
-client = OpenAI(
-    base_url="http://litellm-proxy.ai-gateway:4000/v1",
-    api_key="sk-your-litellm-key"
-)
-
-# Auto load-balancing - distributes between vLLM and SGLang
-response = client.chat.completions.create(
-    model="gpt-4-equivalent",
-    messages=[{"role": "user", "content": "Hello!"}]
-)
-
-# Route to lightweight model
-response = client.chat.completions.create(
-    model="fast-model",
-    messages=[{"role": "user", "content": "Simple question"}]
-)
-```
-
-## AWS Neuron and Inferentia2
-
-AWS Neuron SDK は、cost-effective な Inferentia2 (inf2) instances 上で LLMs を実行できるようにし、GPU instances と比較して大幅な cost savings を提供します。
-
-### Neuron SDK Overview
-
-AWS Inferentia2 は次を提供します。
-- GPU instances と比較して最大 70% 低い cost
-- Inference workloads 向けの高 throughput
-- 一般的な models のサポート: Llama 2/3、Mistral、Stable Diffusion
-
-### Supported Instance Types
-
-| Instance Type | Neuron Cores | Memory | Use Case |
-|--------------|--------------|--------|----------|
-| inf2.xlarge | 2 | 32 GB | Small models (7B) |
-| inf2.8xlarge | 2 | 32 GB | Medium models (7B with batching) |
-| inf2.24xlarge | 6 | 96 GB | Large models (13B-70B) |
-| inf2.48xlarge | 12 | 192 GB | Very large models (70B+) |
-
-### Neuron Device Plugin Installation
+確認した公式 Helm1.10.0 には、device-plugin、scheduler、node-problem-detector の option が含まれます。installation 前に、render された DaemonSet、hostPath、RBAC、recovery behavior を確認してください。この command は local output のみを生成します。
 
 ```bash
-# Install Neuron device plugin
-kubectl apply -f https://raw.githubusercontent.com/aws-neuron/aws-neuron-sdk/master/src/k8/k8s-neuron-device-plugin.yml
-
-# Verify Neuron device plugin
-kubectl get ds neuron-device-plugin-daemonset -n kube-system
-
-# Check Neuron devices on nodes
-kubectl get nodes -l 'node.kubernetes.io/instance-type in (inf2.xlarge,inf2.8xlarge,inf2.24xlarge,inf2.48xlarge)' \
-  -o custom-columns=NAME:.metadata.name,NEURON:.status.allocatable.aws\\.amazon\\.com/neuron
+helm template neuron-audit oci://public.ecr.aws/neuron/neuron-helm-chart   --version 1.10.0 --namespace kube-system --include-crds > neuron-rendered.yaml
 ```
 
-### Inferentia2 用 Karpenter NodePool
+SDK2.32.0 では 2 つの別個の path が文書化されています。**Inf2/Trn1/Trn2 向けの vLLM0.16 を伴う NxD Inference plugin0.5.x** と、**Trn2/Trn3 専用の新しい vLLM Neuron beta0.24.0.1.1.0** です。詳細な NxD guide は依然として 0.5.0/SDK2.29 を示す一方、overview は 0.5.3 を示しています。選択した plugin tag、DLC、正確な dependency を検証してください。Inf2 に最新 beta を install したり、古い 2.18 DLC に pip install を追加したりすることは、互換性の検証ではありません。
 
-```yaml
-apiVersion: karpenter.sh/v1
-kind: NodePool
-metadata:
-  name: neuron-pool
-spec:
-  template:
-    spec:
-      requirements:
-      - key: node.kubernetes.io/instance-type
-        operator: In
-        values:
-        - inf2.xlarge
-        - inf2.8xlarge
-        - inf2.24xlarge
-        - inf2.48xlarge
-      - key: karpenter.sh/capacity-type
-        operator: In
-        values:
-        - on-demand
-        - spot
-      - key: kubernetes.io/arch
-        operator: In
-        values:
-        - amd64
-      nodeClassRef:
-        group: karpenter.k8s.aws
-        kind: EC2NodeClass
-        name: neuron-class
-      taints:
-      - key: aws.amazon.com/neuron
-        value: "true"
-        effect: NoSchedule
-  limits:
-    aws.amazon.com/neuron: 24
-  disruption:
-    consolidationPolicy: WhenEmpty
-    consolidateAfter: 10m
----
-apiVersion: karpenter.k8s.aws/v1
-kind: EC2NodeClass
-metadata:
-  name: neuron-class
-spec:
-  amiFamily: AL2
-  amiSelectorTerms:
-  - id: ami-xxxxxxxxxxxxxxxxx  # Neuron DLAMI
-  subnetSelectorTerms:
-  - tags:
-      karpenter.sh/discovery: my-cluster
-  securityGroupSelectorTerms:
-  - tags:
-      karpenter.sh/discovery: my-cluster
-  blockDeviceMappings:
-  - deviceName: /dev/xvda
-    ebs:
-      volumeSize: 500Gi
-      volumeType: gp3
-      deleteOnTermination: true
-  userData: |
-    #!/bin/bash
-    # Configure Neuron runtime
-    source /opt/aws_neuron_venv_pytorch/bin/activate
-```
+Neuron compilation には、support された model implementation、shape/batch/sequence bucket、TP、compiler/SDK、hardware、cache artifact が必要です。未使用の tp_degree dictionary とともに generic Transformers model で torch_neuronx.trace を呼び出しても、分散 causal-LM serving は実装されません。compiler output file と tokenizer directory は異なる artifact です。この audit では compiler も Neuron instance も実行していません。
 
-### Neuron 上の vLLM Deployment
+## Performance、Cost、Operations
 
-```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: neuron-inference
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: vllm-neuron
-  namespace: neuron-inference
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: vllm-neuron
-  template:
-    metadata:
-      labels:
-        app: vllm-neuron
-    spec:
-      tolerations:
-      - key: aws.amazon.com/neuron
-        operator: Exists
-        effect: NoSchedule
-      containers:
-      - name: vllm-neuron
-        image: public.ecr.aws/neuron/pytorch-inference-neuronx:2.1.2-neuronx-py310-sdk2.18.0
-        command:
-        - /bin/bash
-        - -c
-        - |
-          source /opt/aws_neuron_venv_pytorch/bin/activate
-          pip install vllm-neuron
-          python -m vllm.entrypoints.openai.api_server \
-            --model /models/llama-3-8b-neuron \
-            --device neuron \
-            --tensor-parallel-size 2 \
-            --max-num-seqs 8 \
-            --max-model-len 4096 \
-            --port 8000
-        ports:
-        - containerPort: 8000
-          name: http
-        env:
-        - name: NEURON_RT_NUM_CORES
-          value: "2"
-        - name: NEURON_RT_VISIBLE_CORES
-          value: "0,1"
-        - name: NEURON_CC_FLAGS
-          value: "--model-type transformer"
-        - name: HF_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: hf-token
-              key: token
-        resources:
-          limits:
-            aws.amazon.com/neuron: 2
-            memory: 32Gi
-          requests:
-            aws.amazon.com/neuron: 2
-            memory: 24Gi
-            cpu: "8"
-        volumeMounts:
-        - name: model-cache
-          mountPath: /models
-        - name: shm
-          mountPath: /dev/shm
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8000
-          initialDelaySeconds: 600
-          periodSeconds: 30
-      volumes:
-      - name: model-cache
-        persistentVolumeClaim:
-          claimName: neuron-model-cache
-      - name: shm
-        emptyDir:
-          medium: Memory
-          sizeLimit: 8Gi
-      nodeSelector:
-        node.kubernetes.io/instance-type: inf2.xlarge
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: vllm-neuron
-  namespace: neuron-inference
-spec:
-  selector:
-    app: vllm-neuron
-  ports:
-  - port: 8000
-    targetPort: 8000
-    name: http
-  type: ClusterIP
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: neuron-model-cache
-  namespace: neuron-inference
-spec:
-  accessModes:
-  - ReadWriteOnce
-  storageClassName: gp3
-  resources:
-    requests:
-      storage: 200Gi
-```
+出典のない A100 ranking table と固定の 40–70% savings claim は削除されました。同じ model/revision/precision、input/output-token distribution、concurrency、success rate、SLO、warmup、日付付き price を比較してください。1 日あたり 100 万 request を 30 日続けると 3,000 万 request です。仮想的な月額 48,000 dollars は 1,000 request あたり 1.60 dollars です。以前の 0.80 という数値は算術的に誤っていました。この例は現在の AWS pricing ではありません。
 
-### Neuron 用の Model Compilation
+engine を変更する際は、実際の payload、template、streaming、usage、failure behavior を regression してください。shard された model group と独立した replica を区別し、StatefulSet の ordered readiness が相互に待機する worker を block していないか確認してください。StatefulSet だけでは TP/PP、rendezvous、NCCL は構成されません。
 
-デプロイ前に、models を Neuron 用に compile します。
+model size、restart/download concurrency、authorization、cost を使用して local cache、EBS、EFS、FSx を比較してください。EFS が FSx より常に遅いわけではなく、過去の gp3 limit は現在の guarantee ではありません。[GPU/storage example](01-ai-ml-workloads.md) を参照してください。
 
-```python
-# compile_model.py
-import torch
-import torch_neuronx
-from transformers import AutoModelForCausalLM, AutoTokenizer
+operations の前に、実際の environment で authentication、TLS、management path、probe、placement、quota、単一の scaler owner、metrics unit、pin された model revision、cache lifecycle、rollout/rollback、interruption recovery をテストしてください。
 
-model_id = "meta-llama/Llama-3.1-8B-Instruct"
-output_dir = "/models/llama-3-8b-neuron"
+## 検証範囲
 
-# Load model
-tokenizer = AutoTokenizer.from_pretrained(model_id)
-model = AutoModelForCausalLM.from_pretrained(
-    model_id,
-    torch_dtype=torch.bfloat16,
-    low_cpu_mem_usage=True
-)
+チェック対象は、公式 chart/CRD、実際の SDK/CLI source、local HTTP request/failure fixture、Markdown、image です。GPU/Neuron model execution、throughput/cost measurement、cloud deployment、model download は実行していません。schema/chart の成功は、admission、authorization、model compatibility、production readiness を確立するものではありません。
 
-# Compile for Neuron
-# Configure for tensor parallelism
-neuron_config = {
-    "sequence_length": 4096,
-    "batch_size": 1,
-    "tp_degree": 2,  # Number of Neuron cores
-    "amp": "bf16",
-}
+## 参考資料
 
-# Trace and compile
-compiled_model = torch_neuronx.trace(
-    model,
-    example_inputs=torch.zeros((1, 4096), dtype=torch.long),
-    compiler_args=["--model-type", "transformer"]
-)
+- [NIM 2.0 release notes](https://docs.nvidia.com/nim/large-language-models/2.0.12/about-nim-llm/release-notes.html)
+- [NIM configuration](https://docs.nvidia.com/nim/large-language-models/2.0.12/reference/environment-variables.html)
+- [NIM observability](https://docs.nvidia.com/nim/large-language-models/2.0.12/reference/logging-and-observability.html)
+- [Dynamo 1.4.2](https://github.com/ai-dynamo/dynamo/tree/v1.4.2)
+- [AIBrix 0.7.0](https://github.com/aibrix/aibrix/tree/v0.7.0)
+- [SGLang 0.5.19 structured output](https://github.com/sgl-project/sglang/blob/v0.5.19/docs/docs/advanced_features/structured_outputs.mdx)
+- [TGI maintenance notice](https://github.com/huggingface/text-generation-inference)
+- [Ollama 0.34.0](https://github.com/ollama/ollama/tree/v0.34.0)
+- [GenAI-Perf 0.0.16](https://pypi.org/project/genai-perf/0.0.16/)
+- [Neuron SDK 2.32.0 inference paths](https://github.com/aws-neuron/aws-neuron-sdk/blob/v2.32.0/libraries/vllm-neuron/neuron-inference-overview.rst)
+- [Inf2 architecture](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/about-neuron/arch/neuron-hardware/inf2-arch.html)
+- [Neuron Kubernetes components](https://github.com/aws-neuron/neuron-helm-charts)
 
-# Save compiled model
-compiled_model.save(output_dir)
-tokenizer.save_pretrained(output_dir)
-print(f"Model compiled and saved to {output_dir}")
-```
+## クイズ
 
-Compilation 用の Kubernetes Job:
-
-```yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: neuron-compile-llama
-  namespace: neuron-inference
-spec:
-  template:
-    spec:
-      tolerations:
-      - key: aws.amazon.com/neuron
-        operator: Exists
-        effect: NoSchedule
-      containers:
-      - name: compiler
-        image: public.ecr.aws/neuron/pytorch-inference-neuronx:2.1.2-neuronx-py310-sdk2.18.0
-        command:
-        - /bin/bash
-        - -c
-        - |
-          source /opt/aws_neuron_venv_pytorch/bin/activate
-          pip install transformers accelerate
-          python /scripts/compile_model.py
-        env:
-        - name: HF_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: hf-token
-              key: token
-        - name: NEURON_RT_NUM_CORES
-          value: "2"
-        resources:
-          limits:
-            aws.amazon.com/neuron: 2
-            memory: 64Gi
-            cpu: "16"
-          requests:
-            aws.amazon.com/neuron: 2
-            memory: 48Gi
-            cpu: "8"
-        volumeMounts:
-        - name: model-cache
-          mountPath: /models
-        - name: compile-script
-          mountPath: /scripts
-      volumes:
-      - name: model-cache
-        persistentVolumeClaim:
-          claimName: neuron-model-cache
-      - name: compile-script
-        configMap:
-          name: neuron-compile-script
-      restartPolicy: Never
-      nodeSelector:
-        node.kubernetes.io/instance-type: inf2.xlarge
-  backoffLimit: 2
-```
-
-## Framework Comparison
-
-### Feature Comparison Matrix
-
-| Feature | NIM | Dynamo | SGLang | vLLM | TGI | AIBrix | Ollama |
-|---------|-----|--------|--------|------|-----|--------|--------|
-| **OpenAI API** | Yes | Yes | Yes | Yes | Yes (v2+) | Yes | Yes |
-| **Tensor Parallelism** | Yes | Yes | Yes | Yes | Yes | Yes | No |
-| **Disaggregated Serving** | No | Yes | No | No | No | No | No |
-| **Structured Output** | Limited | Yes | Very fast | Yes | Yes | Yes | Yes |
-| **LoRA Support** | Limited | Yes | Yes | Yes | Yes | Native | Yes |
-| **VLM (Vision)** | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
-| **Speculative Decoding** | Yes | Yes | Yes | Yes | Yes | No | No |
-| **FP8 Quantization** | Yes | Yes | Yes | Yes | No | Yes | No |
-| **GGUF Models** | No | No | No | No | No | No | Yes |
-| **CPU Inference** | No | No | No | Limited | No | No | Yes |
-| **Auto-Scaling** | Manual | Manual | Manual | Manual | Manual | Built-in | Manual |
-| **Enterprise Support** | Yes | Yes | Community | Community | HuggingFace | Community | Community |
-
-### Performance Comparison (Llama 3.1 70B, 8x A100)
-
-| Framework | TTFT (P99) | ITL (P99) | Throughput (tok/s) | Max Concurrency |
-|-----------|------------|-----------|-------------------|-----------------|
-| NIM | 450ms | 35ms | 2,800 | 128 |
-| Dynamo | 380ms | 30ms | 3,200 | 256 |
-| SGLang | 480ms | 36ms | 2,700 | 128 |
-| vLLM | 520ms | 40ms | 2,400 | 96 |
-| TGI | 540ms | 38ms | 2,200 | 96 |
-| Ray+vLLM | 550ms | 42ms | 2,300 | 128 |
-| Triton+TRT-LLM | 400ms | 32ms | 3,000 | 128 |
-
-> **Note**: Structured output scenarios では、SGLang は vLLM より最大 5-10 倍高速な performance を提供します。上記の数値は一般的な text generation 向けです。
-
-### Cost Comparison (Monthly, 1M requests/day)
-
-| Framework | Instance Type | Count | Monthly Cost | Cost/1K requests |
-|-----------|--------------|-------|--------------|------------------|
-| NIM | p4d.24xlarge | 2 | $48,000 | $0.80 |
-| vLLM | p4d.24xlarge | 3 | $72,000 | $1.20 |
-| Dynamo | p4d + g5 mix | 2+4 | $52,000 | $0.87 |
-| Neuron | inf2.48xlarge | 4 | $28,000 | $0.47 |
-| Ray+vLLM | g5.48xlarge | 4 | $38,000 | $0.63 |
-
-## Best Practices
-
-### Framework Selection Guidelines
-
-1. **NIM を選ぶ場合**:
-   - Enterprise support と SLAs が必要
-   - NVIDIA GPUs のみを使用している
-   - 最小限の tuning で pre-optimized containers が必要
-   - Grafana-based monitoring が望ましい
-
-2. **Dynamo を選ぶ場合**:
-   - 高 throughput が重要
-   - Disaggregated serving の恩恵を受けられる
-   - Heterogeneous GPU types を使用している
-   - Workload にとって KV cache locality が重要
-
-3. **AIBrix を選ぶ場合**:
-   - LoRA adapters を使う multi-tenant deployment
-   - Built-in autoscaling が必要
-   - 同一 cluster 内で mixed GPU types を使用している
-   - 柔軟な routing strategies が必要
-
-4. **Ray Serve を選ぶ場合**:
-   - すでに Ray ecosystem を使用している
-   - 複雑な serving pipelines が必要
-   - Python-native deployment が必要
-   - Multi-model serving が必要
-
-5. **SGLang を選ぶ場合**:
-   - Structured output (JSON、regex) が中核要件
-   - 複雑な multi-turn prompting pipelines が必要
-   - Prefix caching efficiency が重要
-   - vLLM-like capabilities が必要だが、より優れた structured output performance が必要
-
-6. **TGI を選ぶ場合**:
-   - HuggingFace models の迅速な production deployment
-   - 安定した Rust-based server が必要
-   - HuggingFace Enterprise Hub を使用している
-
-7. **Ollama を選ぶ場合**:
-   - Development/testing 向けに素早く LLM setup したい
-   - GPU なしで CPU 上に LLMs を実行する必要がある
-   - Edge device または lightweight environment deployment
-
-8. **LiteLLM を選ぶ場合**:
-   - 複数の LLM backends を統一的に管理している
-   - Team/project ごとの cost tracking が必要
-   - Fallback strategies と load balancing が必要
-
-9. **Neuron を選ぶ場合**:
-   - Cost optimization が主目的
-   - Workload が inf2 constraints に適合する
-   - Compilation overhead を許容できる
-   - Supported models (Llama、Mistral) を実行している
-
-### Production Deployment Checklist
-
-- [ ] 適切な resource requests と limits を設定する
-- [ ] Health checks (readiness、liveness、startup probes) を設定する
-- [ ] Auto-scaling (HPA、Karpenter、または framework-native) を実装する
-- [ ] Monitoring と alerting を設定する
-- [ ] Log aggregation を設定する
-- [ ] Request rate limiting を実装する
-- [ ] Network policies を設定する
-- [ ] Model caching (FSx、EBS、または S3) を設定する
-- [ ] Failover と recovery をテストする
-- [ ] 一般的な issues 向けの runbooks を文書化する
-
-## References
-
-- [AI on EKS](https://awslabs.github.io/ai-on-eks/) - EKS 上に AI/ML workloads をデプロイするための AWS guide と examples
-- [NVIDIA NIM Documentation](https://docs.nvidia.com/nim/)
-- [NVIDIA Dynamo GitHub](https://github.com/ai-dynamo/dynamo)
-- [SGLang Official Documentation](https://sgl-project.github.io/) - SGLang project docs と benchmarks
-- [HuggingFace TGI GitHub](https://github.com/huggingface/text-generation-inference)
-- [Ollama Official Site](https://ollama.com/) - Ollama downloads と model library
-- [LiteLLM Documentation](https://docs.litellm.ai/) - LiteLLM proxy setup と integration guide
-- [AIBrix GitHub](https://github.com/aibrix/aibrix)
-- [KubeRay Documentation](https://docs.ray.io/en/latest/cluster/kubernetes/)
-- [AWS Neuron Documentation](https://awsdocs-neuron.readthedocs-hosted.com/)
-
-## Quiz
-
-この章で学んだ内容を確認するには、[Inference Frameworks Quiz](../quizzes/ai-ml/04-inference-frameworks-quiz.md) に挑戦してください。
+[Inference Frameworks Quiz](../quizzes/ai-ml/04-inference-frameworks-quiz.md)
