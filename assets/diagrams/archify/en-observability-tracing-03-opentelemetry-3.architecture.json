@@ -2,242 +2,238 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "OTel Collector Architecture",
-    "locale": "en",
-    "output": "en-observability-tracing-03-opentelemetry-3.html",
+    "title": "Collector: Separate Signal Pipelines",
     "quality_profile": "showcase",
     "animation": "trace",
-    "viewBox": [
-      900,
-      440
-    ],
-    "views": [
-      {
-        "id": "receive",
-        "label": "Receive",
-        "focus": [
-          "receivers",
-          "memory-limiter"
-        ],
-        "note": "Data accepted by the OTLP (4317/4318), Jaeger, Zipkin and Prometheus receivers passes through memory_limiter first."
-      },
-      {
-        "id": "enrich-filter",
-        "label": "Enrich and filter",
-        "focus": [
-          "resource",
-          "attributes",
-          "filter"
-        ],
-        "note": "Resource detection and attribute upserts enrich the data; health-check spans such as /health, /ready and /metrics are dropped."
-      },
-      {
-        "id": "sample-export",
-        "label": "Sampling decision and export",
-        "focus": [
-          "tail-sampling",
-          "batch",
-          "exporters"
-        ],
-        "note": "tail_sampling decides on the whole trace, then batch sends sampled traces to Tempo and X-Ray; metrics go to Prometheus, logs to Loki."
-      }
-    ]
+    "output": "en-observability-tracing-03-opentelemetry-3.html",
+    "locale": "en"
   },
   "components": [
     {
-      "id": "receivers",
+      "id": "recv",
       "type": "external",
-      "label": "Receivers",
-      "sublabel": "OTLP · Jaeger · Zipkin · Prometheus",
+      "label": "OTLP / mTLS",
+      "sublabel": "traces · metrics · logs",
       "pos": [
-        40,
-        100
+        30,
+        240
       ],
       "size": [
-        190,
-        64
+        220,
+        70
       ]
     },
     {
-      "id": "memory-limiter",
+      "id": "pre",
       "type": "backend",
-      "label": "Memory Limiter",
-      "sublabel": "memory_limiter",
+      "label": "Trace preprocessing",
+      "sublabel": "memory · enrich · redact",
       "pos": [
-        290,
-        100
+        300,
+        60
       ],
       "size": [
-        150,
-        64
+        220,
+        70
       ]
     },
     {
-      "id": "resource",
+      "id": "tail",
       "type": "backend",
-      "label": "Resource",
-      "sublabel": "resourcedetection · resource",
+      "label": "tail_sampling",
+      "sublabel": "bounded decision wait",
       "pos": [
-        490,
-        100
+        570,
+        60
       ],
       "size": [
-        150,
-        64
+        220,
+        70
       ]
     },
     {
-      "id": "attributes",
-      "type": "backend",
-      "label": "Attributes",
-      "sublabel": "attributes",
-      "pos": [
-        690,
-        100
-      ],
-      "size": [
-        150,
-        64
-      ]
-    },
-    {
-      "id": "filter",
-      "type": "backend",
-      "label": "Filter",
-      "sublabel": "filter",
-      "pos": [
-        690,
-        270
-      ],
-      "size": [
-        150,
-        64
-      ]
-    },
-    {
-      "id": "tail-sampling",
-      "type": "backend",
-      "label": "Tail Sampling",
-      "sublabel": "tail_sampling",
-      "tag": "decides what is kept",
-      "pos": [
-        490,
-        270
-      ],
-      "size": [
-        150,
-        64
-      ]
-    },
-    {
-      "id": "batch",
-      "type": "backend",
-      "label": "Batch",
-      "sublabel": "batch",
-      "pos": [
-        290,
-        270
-      ],
-      "size": [
-        150,
-        64
-      ]
-    },
-    {
-      "id": "exporters",
+      "id": "traceout",
       "type": "external",
-      "label": "Exporters",
-      "sublabel": "Tempo · X-Ray · Prometheus · Loki",
+      "label": "Tempo / OTLP",
+      "sublabel": "batch · gRPC mTLS",
       "pos": [
-        40,
-        270
+        850,
+        60
       ],
       "size": [
-        190,
-        64
+        220,
+        70
       ]
-    }
-  ],
-  "boundaries": [
+    },
     {
-      "kind": "region",
-      "label": "Processors (traces pipeline order)",
-      "wraps": [
-        "memory-limiter",
-        "resource",
-        "attributes",
-        "filter",
-        "tail-sampling",
-        "batch"
+      "id": "span",
+      "type": "backend",
+      "label": "span_metrics",
+      "sublabel": "before tail sampling",
+      "pos": [
+        300,
+        260
+      ],
+      "size": [
+        220,
+        70
+      ]
+    },
+    {
+      "id": "metrics",
+      "type": "backend",
+      "label": "Metrics pipeline",
+      "sublabel": "memory · resource · batch",
+      "pos": [
+        570,
+        260
+      ],
+      "size": [
+        220,
+        70
+      ]
+    },
+    {
+      "id": "metricout",
+      "type": "external",
+      "label": "Prometheus",
+      "sublabel": "remote write / HTTPS",
+      "pos": [
+        850,
+        260
+      ],
+      "size": [
+        220,
+        70
+      ]
+    },
+    {
+      "id": "logs",
+      "type": "backend",
+      "label": "Logs pipeline",
+      "sublabel": "memory · redact · batch",
+      "pos": [
+        570,
+        460
+      ],
+      "size": [
+        220,
+        70
+      ]
+    },
+    {
+      "id": "logout",
+      "type": "external",
+      "label": "Loki native OTLP",
+      "sublabel": "HTTP / mTLS",
+      "pos": [
+        850,
+        460
+      ],
+      "size": [
+        220,
+        70
       ]
     }
   ],
   "connections": [
     {
-      "id": "recv-to-limiter",
-      "from": "receivers",
-      "to": "memory-limiter"
-    },
-    {
-      "id": "limiter-to-resource",
-      "from": "memory-limiter",
-      "to": "resource"
-    },
-    {
-      "id": "resource-to-attr",
-      "from": "resource",
-      "to": "attributes"
-    },
-    {
-      "id": "attr-to-filter",
-      "from": "attributes",
-      "to": "filter"
-    },
-    {
-      "id": "filter-to-tail",
-      "from": "filter",
-      "to": "tail-sampling",
+      "id": "recv-traces",
+      "from": "recv",
+      "to": "pre",
+      "label": "traces",
       "variant": "emphasis"
     },
     {
-      "id": "tail-to-batch",
-      "from": "tail-sampling",
-      "to": "batch",
-      "variant": "emphasis"
+      "id": "pre-tail",
+      "from": "pre",
+      "to": "tail"
     },
     {
-      "id": "batch-to-exporters",
-      "from": "batch",
-      "to": "exporters"
+      "id": "tail-out",
+      "from": "tail",
+      "to": "traceout"
+    },
+    {
+      "id": "pre-span",
+      "from": "pre",
+      "to": "span"
+    },
+    {
+      "id": "span-metrics",
+      "from": "span",
+      "to": "metrics"
+    },
+    {
+      "id": "recv-metrics",
+      "from": "recv",
+      "to": "metrics",
+      "label": "metrics",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          275,
+          275
+        ],
+        [
+          275,
+          385
+        ],
+        [
+          680,
+          385
+        ]
+      ],
+      "labelAt": [
+        460,
+        374
+      ]
+    },
+    {
+      "id": "metrics-out",
+      "from": "metrics",
+      "to": "metricout"
+    },
+    {
+      "id": "recv-logs",
+      "from": "recv",
+      "to": "logs",
+      "label": "logs",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "via": [
+        [
+          140,
+          495
+        ]
+      ],
+      "labelAt": [
+        350,
+        480
+      ]
+    },
+    {
+      "id": "logs-out",
+      "from": "logs",
+      "to": "logout"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Receivers",
+      "title": "Branch before sampling",
       "items": [
-        "OTLP gRPC 4317 / HTTP 4318",
-        "Jaeger (14268/14250) and Zipkin (9411) compatibility",
-        "Prometheus scraping, k8s_cluster metrics"
+        "Span metrics count observed preprocessed spans, not unique requests",
+        "Metrics and logs do not pass through a traces-only tail sampler"
       ]
     },
     {
       "dot": "amber",
-      "title": "Processors",
+      "title": "Operational limits",
       "items": [
-        "memory_limiter: limit 1500 MiB, spike 500 MiB",
-        "filter: drops /health, /ready, /metrics spans",
-        "tail_sampling: keeps 100% of error requests, decision_wait 10s",
-        "batch: flushes every 5s or 1000 items"
-      ]
-    },
-    {
-      "dot": "emerald",
-      "title": "Exporters",
-      "items": [
-        "traces -> otlp/tempo, awsxray",
-        "metrics -> prometheusremotewrite",
-        "logs -> loki"
+        "Memory limits need headroom below Pod capacity; refusal/backpressure can occur",
+        "Tail wait does not prove complete traces or100%error retention"
       ]
     }
   ]

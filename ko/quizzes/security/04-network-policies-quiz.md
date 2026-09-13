@@ -1,5 +1,7 @@
 # 네트워크 정책 퀴즈
 
+> **마지막 업데이트**: 2026년 9월 13일
+
 이 퀴즈는 Kubernetes 네트워크 정책, Cilium 네트워크 정책, 마이크로세그멘테이션에 대한 이해를 테스트합니다.
 
 ## 퀴즈 문제
@@ -7,17 +9,17 @@
 ### 1. Kubernetes NetworkPolicy의 기본 동작은?
 
 A. 모든 트래픽 차단
-B. 모든 트래픽 허용
+B. 해당 방향에 선택 정책이 없으면 NetworkPolicy로 격리되지 않음
 C. 인바운드만 차단
 D. 아웃바운드만 차단
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. 모든 트래픽 허용**
+**정답: B. 해당 방향에 선택 정책이 없으면 NetworkPolicy로 격리되지 않음**
 
 **설명:**
-NetworkPolicy가 없는 경우, Kubernetes는 기본적으로 모든 Pod 간 트래픽을 허용합니다. NetworkPolicy를 생성하면 해당 정책의 podSelector에 매칭되는 Pod에 대해 "기본 거부" 동작이 활성화됩니다.
+Ingress·egress를 따로 평가합니다. 특정 방향의 선택 정책이 없으면 그 방향은 NetworkPolicy로 격리되지 않지만 CNI/route/SG/NACL이나 다른 정책이 연결을 막을 수 있습니다. Ingress 전용 정책은 egress까지 격리하지 않습니다. Pod 간 연결은 출발지 egress와 목적지 ingress를 모두 만족해야 합니다.
 
 </details>
 
@@ -81,32 +83,23 @@ spec:
 ### 4. CiliumNetworkPolicy에서 L7 HTTP 규칙을 정의하는 위치는?
 
 A. spec.http
-B. spec.ingress.toPorts.rules.http
+B. spec.ingress[].toPorts[].rules.http
 C. spec.rules.http
 D. spec.layer7.http
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. spec.ingress.toPorts.rules.http**
+**정답: B. spec.ingress[].toPorts[].rules.http**
 
 **설명:**
-CiliumNetworkPolicy의 L7 규칙은 toPorts 내의 rules 섹션에 정의됩니다:
-```yaml
-spec:
-  ingress:
-    - toPorts:
-        - ports:
-            - port: "80"
-          rules:
-            http:
-              - method: GET
-                path: "/api/.*"
-```
+HTTP 규칙은 ingress 규칙의 `toPorts[].rules.http` 아래에 있으며 egress 규칙에도 사용할 수 있습니다. 지원되는 L7 proxy 경로가 필요하고 end-to-end TLS를 자동 해독하거나 사용자 입력 역할/API-key 헤더를 인증으로 바꾸지 않습니다. Cilium의 AWS VPC CNI chaining에는 L7 제한이 문서화되어 있습니다.
 
 </details>
 
-### 5. 기본 거부 정책을 구현하는 올바른 NetworkPolicy는?
+<span id="_5-기본-거부-정책을-구현하는-올바른-networkpolicy는"></span>
+
+### 5. 네임스페이스 전체의 양쪽 방향 기본 거부 기준선을 만드는 방법은?
 
 A. policyTypes에 Ingress만 지정
 B. podSelector를 빈 값으로, policyTypes에 Ingress와 Egress 지정
@@ -119,38 +112,24 @@ D. B와 C 모두
 **정답: D. B와 C 모두**
 
 **설명:**
-기본 거부 정책 예시:
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: default-deny-all
-spec:
-  podSelector: {}  # 모든 Pod 선택
-  policyTypes:
-    - Ingress
-    - Egress
-  # ingress와 egress 규칙 없음 = 모든 트래픽 차단
-```
-
-빈 podSelector는 모든 Pod를 선택하고, 규칙이 없으면 해당 트래픽 유형이 차단됩니다.
+네임스페이스 전체의 **양쪽 방향** 기준선에는 B와 C를 함께 사용합니다. 빈 셀렉터는 정책 자신의 네임스페이스 Pod 전체를 고르고 Ingress/Egress를 명시한 뒤 허용 규칙을 비우면 양쪽을 격리합니다. 다른 Kubernetes NetworkPolicy가 허용을 추가할 수 있으며 기준선이 이를 덮어쓰지는 않습니다. 의도에 따라 ingress 전용 기준선도 가능합니다.
 
 </details>
 
 ### 6. CiliumClusterwideNetworkPolicy의 특징은?
 
-A. 특정 네임스페이스에만 적용
-B. 클러스터 전체에 적용
+A. 범위 선택을 위해 metadata.namespace가 필수
+B. 클러스터 범위 리소스이며 endpoint selector로 대상을 제한
 C. 외부 트래픽만 제어
 D. L7 정책만 지원
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B. 클러스터 전체에 적용**
+**정답: B. 클러스터 범위 리소스이며 endpoint selector로 대상을 제한**
 
 **설명:**
-CiliumClusterwideNetworkPolicy는 네임스페이스에 관계없이 클러스터 전체에 적용되는 정책입니다. 일반적인 보안 규칙(예: 모든 네임스페이스에서 메타데이터 서비스 접근 차단)을 구현할 때 유용합니다.
+CiliumClusterwideNetworkPolicy는 네임스페이스 리소스가 아닙니다. endpoint selector로 여러 네임스페이스 또는 특정 네임스페이스·앱만 선택할 수 있습니다. 클러스터 범위가 모든 엔드포인트 자동 선택이나 넓은 `cluster`/`world` 허용을 default-deny로 만든다는 뜻은 아닙니다.
 
 </details>
 
@@ -158,7 +137,7 @@ CiliumClusterwideNetworkPolicy는 네임스페이스에 관계없이 클러스�
 
 A. namespaceSelector만 사용
 B. podSelector만 사용
-C. namespaceSelector와 빈 podSelector 조합
+C. namespaceSelector와 app=api를 요구하는 podSelector 조합
 D. namespace 필드 사용
 
 <details>
@@ -167,15 +146,7 @@ D. namespace 필드 사용
 **정답: A. namespaceSelector만 사용**
 
 **설명:**
-```yaml
-ingress:
-  - from:
-      - namespaceSelector:
-          matchLabels:
-            name: monitoring
-```
-
-namespaceSelector만 지정하면 해당 네임스페이스의 모든 Pod가 허용됩니다. podSelector를 함께 사용하면 해당 네임스페이스 내의 특정 Pod만 선택됩니다.
+`namespaceSelector.matchLabels.kubernetes.io/metadata.name: monitoring`으로 해당 네임스페이스의 Pod 전체를 선택합니다. 같은 peer에 **빈** podSelector를 추가해도 전체 선택이지만 C는 `app=api`만 선택합니다. 한 peer의 두 셀렉터는 AND, 별도 peer 항목은 OR이며 사용자 정의 `name` 레이블은 자동 생성되지 않습니다.
 
 </details>
 
@@ -192,17 +163,7 @@ D. toEndpoints
 **정답: A. toFQDNs**
 
 **설명:**
-CiliumNetworkPolicy의 toFQDNs는 DNS 이름 기반으로 이그레스 트래픽을 허용합니다:
-```yaml
-spec:
-  egress:
-    - toFQDNs:
-        - matchName: "api.example.com"
-        - matchPattern: "*.amazonaws.com"
-      toPorts:
-        - ports:
-            - port: "443"
-```
+`toFQDNs`는 DNS에서 학습한 IP와 지정 포트 규칙을 사용합니다. 실제 resolver 경로와 필요한 질의를 별도로 허용하며 UDP뿐 아니라 TCP53도 고려합니다. 캐시·TTL·검색 접미사·공유 목적지 IP와 TLS/앱 권한 확인은 여전히 필요합니다. 도메인 일치만으로 SaaS 테넌트 identity를 인증하지 않습니다.
 
 </details>
 
@@ -219,7 +180,7 @@ D. 외부에서 들어오는 트래픽
 **정답: B. 동일 Pod 내 컨테이너 간 트래픽 (localhost)**
 
 **설명:**
-NetworkPolicy는 Pod 간 네트워크 트래픽에 적용됩니다. 동일 Pod 내의 컨테이너 간 localhost 통신은 NetworkPolicy의 범위 밖입니다. 또한, 노드의 hostNetwork를 사용하는 Pod도 일부 제한이 있습니다.
+같은 Pod의 컨테이너는 네트워크 네임스페이스를 공유하므로 localhost 통신은 일반 Kubernetes NetworkPolicy 집행 범위 밖입니다. 노드·hostNetwork 처리와 TCP/UDP/SCTP 외 프로토콜에는 구현별 제한이 있습니다. Pod 정책만으로 호스트 전체 격리를 추론하지 않습니다.
 
 </details>
 
@@ -236,7 +197,7 @@ D. DNS 조회 불필요
 **정답: A. IP 주소 변경에 영향받지 않음**
 
 **설명:**
-Cilium Identity는 Pod의 레이블을 기반으로 생성됩니다. Pod가 재시작되어 IP가 변경되더라도 동일한 레이블을 가지면 같은 Identity를 유지합니다. 이는 IP 기반 정책의 한계를 극복합니다.
+레이블 기반 엔드포인트 정책은 일시적인 Pod IP를 하드코딩하지 않아도 됩니다. datapath가 현재 엔드포인트와 관련 레이블 집합의 security identity를 연결합니다. 숫자 identity는 재할당될 수 있으며 영구 앱 식별자가 아닙니다. 레이블 변경·네임스페이스/클러스터 문맥·전파도 고려해야 합니다.
 
 </details>
 
@@ -253,11 +214,7 @@ D. 데이터베이스로 이그레스만 허용
 **정답: C. 프론트엔드에서 인그레스 허용, 데이터베이스로 이그레스 허용**
 
 **설명:**
-3-tier 마이크로세그멘테이션에서 백엔드:
-- **인그레스**: 프론트엔드 계층에서만 허용
-- **이그레스**: 데이터베이스 계층으로만 허용
-
-이는 최소 권한 원칙을 따르며, 각 계층 간의 트래픽 흐름을 명확히 제어합니다.
+C는 백엔드의 앱 경로인 frontend ingress와 DB egress를 뜻하며 검토한 포트로 제한합니다. frontend egress·DB ingress와 필요한 DNS·health·monitoring 경로도 함께 허용해야 합니다. 반대편의 default-deny가 연결을 막을 수 있기 때문입니다. 허용된 연결의 응답 트래픽은 암묵적으로 허용됩니다.
 
 </details>
 
@@ -274,17 +231,10 @@ D. excludeCIDR
 **정답: B. except**
 
 **설명:**
-ipBlock의 except 필드로 특정 CIDR을 제외할 수 있습니다:
-```yaml
-ingress:
-  - from:
-      - ipBlock:
-          cidr: 10.0.0.0/8
-          except:
-            - 10.0.1.0/24
-            - 10.0.2.0/24
-```
-
-이는 10.0.0.0/8 범위에서 10.0.1.0/24와 10.0.2.0/24를 제외한 트래픽을 허용합니다.
+`except`는 해당 ipBlock 허용 규칙에서 CIDR을 제외합니다. 전역 deny가 아니므로 다른 선택 정책이 제외 주소를 허용할 수 있습니다. 주소 변환으로 플러그인이 평가하는 IP가 달라질 수 있어 실제 CNI·로드밸런서/Service 경로를 확인합니다.
 
 </details>
+
+---
+
+[네트워크 정책 가이드](../../security/04-network-policies.md)

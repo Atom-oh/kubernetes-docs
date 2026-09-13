@@ -1,0 +1,1910 @@
+{
+  "status": "passed",
+  "auditFolderDate": "2026-09-11",
+  "verifiedAt": "2026-09-13T12:47:13.343493+00:00",
+  "scope": [
+    "en/security/04-network-policies.md",
+    "en/quizzes/security/04-network-policies-quiz.md",
+    "ko/security/04-network-policies.md",
+    "ko/quizzes/security/04-network-policies-quiz.md"
+  ],
+  "originalRead": [
+    {
+      "path": "en/security/04-network-policies.md",
+      "fullyRead": true,
+      "originalSHA256": "f0242aa8348701e3909500bd3220b0f2e72a2942fad7c4f9da06ed4c3278f08b",
+      "lines": 1776
+    },
+    {
+      "path": "en/quizzes/security/04-network-policies-quiz.md",
+      "fullyRead": true,
+      "originalSHA256": "57669ba3c2cd0e1d823281b8f81986c7d6319d88bb529c0a9788aabb629d4f55",
+      "lines": 290
+    },
+    {
+      "path": "ko/security/04-network-policies.md",
+      "fullyRead": true,
+      "originalSHA256": "50f5e89ffcc944423197519782d31753b3f558dfe054a22d2a486ef80fac7e31",
+      "lines": 1777
+    },
+    {
+      "path": "ko/quizzes/security/04-network-policies-quiz.md",
+      "fullyRead": true,
+      "originalSHA256": "1e71a0bf72f2bc05a78dd76aa1d0362e0b59ab0eeb6cadc54e7f6379ba2eb0df",
+      "lines": 290
+    }
+  ],
+  "originalLines": 4133,
+  "findings": [
+    "Clarified direction-specific isolation, both endpoint permissions, additive Kubernetes allows, ipBlock exceptions, node/hostNetwork/established-connection limits and CNI-dependent enforcement.",
+    "Replaced assumed namespace name labels with kubernetes.io/metadata.name; scoped Pod-based DNS to kube-system AND kube-dns, with TCP and UDP53 and explicit NodeLocal/AutoMode alternatives.",
+    "Completed frontend-to-API/API-to-database source and destination rules, same-team egress, database/data-tier peer ingress, DNS and bounded ports. Alternative profiles must not be combined blindly.",
+    "Removed current-schema-invalid Cilium Kafka L7 recipe; corrected HTTP/header authorization claims, DNS/IP learning limits, falsely named global default-deny and broad kubelet/world permissions; numeric identities are not permanent.",
+    "Corrected Calico NetworkSet labels, global() placement, workload-only namespace scope, Tier defaultAction/Pass behavior, and false Enterprise-only Tier/L7 assertions. Optional Istio/Dikastes integration was documented, not deployed.",
+    "Kept real EKS ClusterNetworkPolicy/ApplicationNetworkPolicy features, pinned their actual schemas, corrected enableNetworkPolicy string configuration and preserved existing addon config; failed reads/JSON now stop before update.",
+    "Replaced bare PostgreSQL deployment and aws-node deletion shortcut with explicit Pod-SG prerequisites and render-only CNI chaining. Clarified SG union/stateful returns, NACL stateless ephemeral returns and platform/SNAT limits.",
+    "Replaced false-PASS/fixed-Pod-delete test script with existing-Pod positive control and UNKNOWN/INCONCLUSIVE outcomes; timeout is not policy-drop proof. Inventory no longer hides API errors or misclassifies empty/allow-all/directional rules.",
+    "Distinguished Hubble visualization from policy editing, observed verdicts from delivery proof, licensed Calico UI and intrusive scanning from policy validation; archived Weave support is historical.",
+    "Reconciled all12quizquestions perlocale, removed Q7 duplicate correct answer, qualified scope/identity/DNS and preserved all156priorIDs with twoQ5aliases. LastUpdatedheaders record substantiveSeptember13verification."
+  ],
+  "sources": [
+    "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+    "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html",
+    "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html",
+    "https://docs.aws.amazon.com/eks/latest/userguide/auto-net-pol.html",
+    "https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html",
+    "https://docs.aws.amazon.com/eks/latest/best-practices/sgpp.html",
+    "https://docs.aws.amazon.com/eks/latest/best-practices/network-security.html",
+    "https://aws.amazon.com/about-aws/whats-new/2025/12/amazon-eks-enhanced-network-security-policies/",
+    "https://raw.githubusercontent.com/aws/amazon-network-policy-controller-k8s/5d464ed62d9ce8f18b74292f0e319fa91e1c6201/config/crd/bases/networking.k8s.aws_clusternetworkpolicies.yaml",
+    "https://raw.githubusercontent.com/aws/amazon-network-policy-controller-k8s/5d464ed62d9ce8f18b74292f0e319fa91e1c6201/config/crd/bases/networking.k8s.aws_applicationnetworkpolicies.yaml",
+    "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml",
+    "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/policy/api/http.go",
+    "https://docs.cilium.io/en/stable/installation/cni-chaining-aws-cni/",
+    "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/plugins/cilium-cni/chaining/awscni/aws-cni.go",
+    "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/plugins/cilium-cni/chaining/generic-veth/generic-veth.go",
+    "https://docs.cilium.io/en/stable/observability/hubble/hubble-ui/",
+    "https://helm.cilium.io/index.yaml",
+    "https://docs.tigera.io/calico/latest/reference/resources/networkpolicy",
+    "https://docs.tigera.io/calico/latest/reference/resources/globalnetworkpolicy",
+    "https://docs.tigera.io/calico/latest/reference/resources/networkset",
+    "https://docs.tigera.io/calico/latest/reference/resources/tier",
+    "https://docs.tigera.io/calico/latest/network-policy/istio/app-layer-policy",
+    "https://api.github.com/repos/weaveworks/weave"
+  ],
+  "artifacts": [
+    {
+      "path": "en/security/04-network-policies.md",
+      "sha256": "e579146b0546d5cefdff8f64f81a62bbd6e005ae51d03f3221005c84c6b92df8",
+      "lines": 1842
+    },
+    {
+      "path": "en/quizzes/security/04-network-policies-quiz.md",
+      "sha256": "6dcbd243d3ac53295a7bddba81bd92f404c541800444baf8fa058a694d4d9beb",
+      "lines": 240
+    },
+    {
+      "path": "ko/security/04-network-policies.md",
+      "sha256": "5741ceb54d800d58702327db70d741db24379a765d64147298ff7775e76e4b2d",
+      "lines": 1851
+    },
+    {
+      "path": "ko/quizzes/security/04-network-policies-quiz.md",
+      "sha256": "d4f643a3a5344ba0df8d0e26abfc7d028528a3c14c4daf2c71ed83660fcbf118",
+      "lines": 240
+    }
+  ],
+  "validation": {
+    "manifest-validation.json": {
+      "status": "passed",
+      "results": [
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 87,
+          "kind": "NetworkPolicy",
+          "name": "example-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 138,
+          "method": "partial YAML syntax only",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 138,
+          "method": "partial YAML syntax only",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 138,
+          "method": "partial YAML syntax only",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 171,
+          "kind": "NetworkPolicy",
+          "name": "allow-from-monitoring",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 200,
+          "method": "partial YAML syntax only",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 200,
+          "method": "partial YAML syntax only",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 227,
+          "kind": "NetworkPolicy",
+          "name": "allow-external-traffic",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 266,
+          "kind": "NetworkPolicy",
+          "name": "port-specific-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 304,
+          "kind": "NetworkPolicy",
+          "name": "default-deny-ingress",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 321,
+          "kind": "NetworkPolicy",
+          "name": "default-deny-egress",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 336,
+          "kind": "NetworkPolicy",
+          "name": "default-deny-all",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 353,
+          "kind": "NetworkPolicy",
+          "name": "default-deny-egress-allow-dns",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 382,
+          "kind": "NetworkPolicy",
+          "name": "zero-trust-default",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 382,
+          "kind": "NetworkPolicy",
+          "name": "allow-dns",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 382,
+          "kind": "NetworkPolicy",
+          "name": "allow-frontend-to-api",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 382,
+          "kind": "NetworkPolicy",
+          "name": "frontend-api-egress",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 498,
+          "kind": "NetworkPolicy",
+          "name": "allow-frontend",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 498,
+          "kind": "NetworkPolicy",
+          "name": "allow-monitoring",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 582,
+          "kind": "CiliumNetworkPolicy",
+          "name": "cilium-l7-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 618,
+          "kind": "CiliumNetworkPolicy",
+          "name": "http-api-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 657,
+          "kind": "CiliumNetworkPolicy",
+          "name": "kafka-client-network-access",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 685,
+          "kind": "CiliumNetworkPolicy",
+          "name": "dns-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 720,
+          "kind": "CiliumClusterwideNetworkPolicy",
+          "name": "production-api-from-edge",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 745,
+          "kind": "CiliumNetworkPolicy",
+          "name": "kubernetes-api-client",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 772,
+          "kind": "NetworkPolicy",
+          "name": "calico-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 810,
+          "kind": "GlobalNetworkPolicy",
+          "name": "production-default-deny",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 810,
+          "kind": "GlobalNetworkPolicy",
+          "name": "production-allow-dns",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 856,
+          "kind": "NetworkSet",
+          "name": "external-apis",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 856,
+          "kind": "GlobalNetworkSet",
+          "name": "blocked-ips",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 856,
+          "kind": "NetworkPolicy",
+          "name": "allow-external-apis",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 901,
+          "kind": "Tier",
+          "name": "security",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 901,
+          "kind": "Tier",
+          "name": "platform",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 901,
+          "kind": "Tier",
+          "name": "application",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 901,
+          "kind": "GlobalNetworkPolicy",
+          "name": "security.block-known-threats",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 901,
+          "kind": "GlobalNetworkPolicy",
+          "name": "platform.allow-dns",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 979,
+          "kind": "NetworkPolicy",
+          "name": "default-deny",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 979,
+          "kind": "NetworkPolicy",
+          "name": "allow-dns",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 979,
+          "kind": "NetworkPolicy",
+          "name": "frontend-api-egress",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 979,
+          "kind": "NetworkPolicy",
+          "name": "frontend-to-api",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 979,
+          "kind": "NetworkPolicy",
+          "name": "api-to-database",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 979,
+          "kind": "NetworkPolicy",
+          "name": "database-from-api",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 1101,
+          "kind": "Namespace",
+          "name": "team-a",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 1101,
+          "kind": "NetworkPolicy",
+          "name": "allow-same-team",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 1101,
+          "kind": "NetworkPolicy",
+          "name": "allow-shared-services",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 1168,
+          "kind": "NetworkPolicy",
+          "name": "database-protection",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 1235,
+          "kind": "NetworkPolicy",
+          "name": "three-tier-default-deny",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 1235,
+          "kind": "NetworkPolicy",
+          "name": "web-tier-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 1235,
+          "kind": "NetworkPolicy",
+          "name": "app-tier-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 1235,
+          "kind": "NetworkPolicy",
+          "name": "data-tier-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 1235,
+          "kind": "NetworkPolicy",
+          "name": "three-tier-dns",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 1495,
+          "kind": "ClusterNetworkPolicy",
+          "name": "isolate-demo-namespace",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 1517,
+          "kind": "ApplicationNetworkPolicy",
+          "name": "approved-api-egress",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 1556,
+          "kind": "SecurityGroupPolicy",
+          "name": "database-sg-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 1594,
+          "kind": "NetworkPolicy",
+          "name": "database-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 1702,
+          "kind": "NetworkPolicy",
+          "name": "default-deny-all",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 1720,
+          "kind": "NetworkPolicy",
+          "name": "api-minimal-access",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "line": 1743,
+          "kind": "NetworkPolicy",
+          "name": "api-ingress",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "en/quizzes/security/04-network-policies-quiz.md",
+          "line": 40,
+          "method": "partial YAML syntax only",
+          "passed": true
+        },
+        {
+          "path": "en/quizzes/security/04-network-policies-quiz.md",
+          "line": 67,
+          "method": "partial YAML syntax only",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 90,
+          "kind": "NetworkPolicy",
+          "name": "example-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 143,
+          "method": "partial YAML syntax only",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 143,
+          "method": "partial YAML syntax only",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 143,
+          "method": "partial YAML syntax only",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 176,
+          "kind": "NetworkPolicy",
+          "name": "allow-from-monitoring",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 205,
+          "method": "partial YAML syntax only",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 205,
+          "method": "partial YAML syntax only",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 232,
+          "kind": "NetworkPolicy",
+          "name": "allow-external-traffic",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 273,
+          "kind": "NetworkPolicy",
+          "name": "port-specific-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 311,
+          "kind": "NetworkPolicy",
+          "name": "default-deny-ingress",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 328,
+          "kind": "NetworkPolicy",
+          "name": "default-deny-egress",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 343,
+          "kind": "NetworkPolicy",
+          "name": "default-deny-all",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 360,
+          "kind": "NetworkPolicy",
+          "name": "default-deny-egress-allow-dns",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 389,
+          "kind": "NetworkPolicy",
+          "name": "zero-trust-default",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 389,
+          "kind": "NetworkPolicy",
+          "name": "allow-dns",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 389,
+          "kind": "NetworkPolicy",
+          "name": "allow-frontend-to-api",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 389,
+          "kind": "NetworkPolicy",
+          "name": "frontend-api-egress",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 507,
+          "kind": "NetworkPolicy",
+          "name": "allow-frontend",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 507,
+          "kind": "NetworkPolicy",
+          "name": "allow-monitoring",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 591,
+          "kind": "CiliumNetworkPolicy",
+          "name": "cilium-l7-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 627,
+          "kind": "CiliumNetworkPolicy",
+          "name": "http-api-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 666,
+          "kind": "CiliumNetworkPolicy",
+          "name": "kafka-client-network-access",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 694,
+          "kind": "CiliumNetworkPolicy",
+          "name": "dns-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 729,
+          "kind": "CiliumClusterwideNetworkPolicy",
+          "name": "production-api-from-edge",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 754,
+          "kind": "CiliumNetworkPolicy",
+          "name": "kubernetes-api-client",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 781,
+          "kind": "NetworkPolicy",
+          "name": "calico-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 819,
+          "kind": "GlobalNetworkPolicy",
+          "name": "production-default-deny",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 819,
+          "kind": "GlobalNetworkPolicy",
+          "name": "production-allow-dns",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 865,
+          "kind": "NetworkSet",
+          "name": "external-apis",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 865,
+          "kind": "GlobalNetworkSet",
+          "name": "blocked-ips",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 865,
+          "kind": "NetworkPolicy",
+          "name": "allow-external-apis",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 910,
+          "kind": "Tier",
+          "name": "security",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 910,
+          "kind": "Tier",
+          "name": "platform",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 910,
+          "kind": "Tier",
+          "name": "application",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 910,
+          "kind": "GlobalNetworkPolicy",
+          "name": "security.block-known-threats",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 910,
+          "kind": "GlobalNetworkPolicy",
+          "name": "platform.allow-dns",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 988,
+          "kind": "NetworkPolicy",
+          "name": "default-deny",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 988,
+          "kind": "NetworkPolicy",
+          "name": "allow-dns",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 988,
+          "kind": "NetworkPolicy",
+          "name": "frontend-api-egress",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 988,
+          "kind": "NetworkPolicy",
+          "name": "frontend-to-api",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 988,
+          "kind": "NetworkPolicy",
+          "name": "api-to-database",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 988,
+          "kind": "NetworkPolicy",
+          "name": "database-from-api",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 1110,
+          "kind": "Namespace",
+          "name": "team-a",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 1110,
+          "kind": "NetworkPolicy",
+          "name": "allow-same-team",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 1110,
+          "kind": "NetworkPolicy",
+          "name": "allow-shared-services",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 1177,
+          "kind": "NetworkPolicy",
+          "name": "database-protection",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 1244,
+          "kind": "NetworkPolicy",
+          "name": "three-tier-default-deny",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 1244,
+          "kind": "NetworkPolicy",
+          "name": "web-tier-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 1244,
+          "kind": "NetworkPolicy",
+          "name": "app-tier-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 1244,
+          "kind": "NetworkPolicy",
+          "name": "data-tier-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 1244,
+          "kind": "NetworkPolicy",
+          "name": "three-tier-dns",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 1504,
+          "kind": "ClusterNetworkPolicy",
+          "name": "isolate-demo-namespace",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 1526,
+          "kind": "ApplicationNetworkPolicy",
+          "name": "approved-api-egress",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 1565,
+          "kind": "SecurityGroupPolicy",
+          "name": "database-sg-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 1603,
+          "kind": "NetworkPolicy",
+          "name": "database-policy",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 1711,
+          "kind": "NetworkPolicy",
+          "name": "default-deny-all",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 1729,
+          "kind": "NetworkPolicy",
+          "name": "api-minimal-access",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "line": 1752,
+          "kind": "NetworkPolicy",
+          "name": "api-ingress",
+          "method": "released API/CRD schema",
+          "passed": true
+        },
+        {
+          "path": "ko/quizzes/security/04-network-policies-quiz.md",
+          "line": 40,
+          "method": "partial YAML syntax only",
+          "passed": true
+        },
+        {
+          "path": "ko/quizzes/security/04-network-policies-quiz.md",
+          "line": 67,
+          "method": "partial YAML syntax only",
+          "passed": true
+        }
+      ],
+      "failures": [],
+      "artifacts": [
+        {
+          "path": "en/security/04-network-policies.md",
+          "sha256": "e579146b0546d5cefdff8f64f81a62bbd6e005ae51d03f3221005c84c6b92df8"
+        },
+        {
+          "path": "en/quizzes/security/04-network-policies-quiz.md",
+          "sha256": "6dcbd243d3ac53295a7bddba81bd92f404c541800444baf8fa058a694d4d9beb"
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "sha256": "5741ceb54d800d58702327db70d741db24379a765d64147298ff7775e76e4b2d"
+        },
+        {
+          "path": "ko/quizzes/security/04-network-policies-quiz.md",
+          "sha256": "d4f643a3a5344ba0df8d0e26abfc7d028528a3c14c4daf2c71ed83660fcbf118"
+        }
+      ],
+      "schemaSources": [
+        {
+          "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-04-network/sources/cilium-1.20.1-cnp.raw",
+          "sha256": "62c6de8f358da125b94468d39187edb1cea157d79503fdc50ccec8a6aaa79a76"
+        },
+        {
+          "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-04-network/sources/cilium-1.20.1-ccnp.raw",
+          "sha256": "ae65e44fdee9da399cb7257a8464f197bea5270fdc213f6343700309c39abad6"
+        },
+        {
+          "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-04-network/sources/calico-3.32.2-crds.raw",
+          "sha256": "3f62456ede5360c773e007011992c0081b8b6c442f7c9ce66a9f51a2f5d9dbcd"
+        },
+        {
+          "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-04-network/sources/aws-controller-networking.k8s.aws_clusternetworkpolicies.yaml",
+          "sha256": "df21033959e3d50b8b2e445a3619db38fe0d59dee69b9afb4980110ae069866b"
+        },
+        {
+          "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-04-network/sources/aws-controller-networking.k8s.aws_applicationnetworkpolicies.yaml",
+          "sha256": "be35c3f27035d423123fe5b9a8e7247bd53fd4ac766928cbac0a904f4f4e3ead"
+        },
+        {
+          "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-eks-security06/sources/securitygrouppolicy-crd.yaml",
+          "sha256": "c5d5bde7330ae7626de19e073419544eff939aee3bd13295defb91ad4cbd467b"
+        }
+      ],
+      "limits": [
+        "Offline OpenAPI/JSON schema only; no Kubernetes admission/CEL or CNI enforcement.",
+        "Calico public v3 spec shape checked against released storage CRDs; conversion and selector grammar need separate evidence.",
+        "Partial spec/peer YAML snippets are syntax checked, not standalone resources."
+      ]
+    },
+    "policy-intent-validation.json": {
+      "status": "passed",
+      "cases": [
+        {
+          "locale": "en",
+          "case": "zero-trust frontend→API",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "en",
+          "case": "micro frontend→API",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "en",
+          "case": "micro API→DB",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "en",
+          "case": "micro frontend→DB denied",
+          "expectedPermit": false,
+          "passed": true
+        },
+        {
+          "locale": "en",
+          "case": "micro wrong API port denied",
+          "expectedPermit": false,
+          "passed": true
+        },
+        {
+          "locale": "en",
+          "case": "micro DB→frontend denied",
+          "expectedPermit": false,
+          "passed": true
+        },
+        {
+          "locale": "en",
+          "case": "UDP DNS permitted",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "en",
+          "case": "TCP DNS permitted",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "en",
+          "case": "same DNS label in wrong namespace denied",
+          "expectedPermit": false,
+          "passed": true
+        },
+        {
+          "locale": "en",
+          "case": "same-team egress+ingress",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "en",
+          "case": "different team denied",
+          "expectedPermit": false,
+          "passed": true
+        },
+        {
+          "locale": "en",
+          "case": "PostgreSQL peer ingress+egress",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "en",
+          "case": "PostgreSQL peer wrong port denied",
+          "expectedPermit": false,
+          "passed": true
+        },
+        {
+          "locale": "en",
+          "case": "data peer PostgreSQL port",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "en",
+          "case": "data peer Redis port",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "en",
+          "case": "data peer unlisted port denied",
+          "expectedPermit": false,
+          "passed": true
+        },
+        {
+          "locale": "en",
+          "case": "data DNS permitted",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "ko",
+          "case": "zero-trust frontend→API",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "ko",
+          "case": "micro frontend→API",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "ko",
+          "case": "micro API→DB",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "ko",
+          "case": "micro frontend→DB denied",
+          "expectedPermit": false,
+          "passed": true
+        },
+        {
+          "locale": "ko",
+          "case": "micro wrong API port denied",
+          "expectedPermit": false,
+          "passed": true
+        },
+        {
+          "locale": "ko",
+          "case": "micro DB→frontend denied",
+          "expectedPermit": false,
+          "passed": true
+        },
+        {
+          "locale": "ko",
+          "case": "UDP DNS permitted",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "ko",
+          "case": "TCP DNS permitted",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "ko",
+          "case": "same DNS label in wrong namespace denied",
+          "expectedPermit": false,
+          "passed": true
+        },
+        {
+          "locale": "ko",
+          "case": "same-team egress+ingress",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "ko",
+          "case": "different team denied",
+          "expectedPermit": false,
+          "passed": true
+        },
+        {
+          "locale": "ko",
+          "case": "PostgreSQL peer ingress+egress",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "ko",
+          "case": "PostgreSQL peer wrong port denied",
+          "expectedPermit": false,
+          "passed": true
+        },
+        {
+          "locale": "ko",
+          "case": "data peer PostgreSQL port",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "ko",
+          "case": "data peer Redis port",
+          "expectedPermit": true,
+          "passed": true
+        },
+        {
+          "locale": "ko",
+          "case": "data peer unlisted port denied",
+          "expectedPermit": false,
+          "passed": true
+        },
+        {
+          "locale": "ko",
+          "case": "data DNS permitted",
+          "expectedPermit": true,
+          "passed": true
+        }
+      ],
+      "count": 34,
+      "originalRegressionCases": [
+        {
+          "locale": "en",
+          "case": "zero-trust missing source egress",
+          "originalPermits": false,
+          "fixedPermits": true
+        },
+        {
+          "locale": "en",
+          "case": "micro missing source/destination sides",
+          "originalPermits": false,
+          "fixedPermits": true
+        },
+        {
+          "locale": "en",
+          "case": "team missing same-team egress",
+          "originalPermits": false,
+          "fixedPermits": true
+        },
+        {
+          "locale": "en",
+          "case": "database missing peer ingress",
+          "originalPermits": false,
+          "fixedPermits": true
+        },
+        {
+          "locale": "en",
+          "case": "data tier missing peer ingress",
+          "originalPermits": false,
+          "fixedPermits": true
+        },
+        {
+          "locale": "ko",
+          "case": "zero-trust missing source egress",
+          "originalPermits": false,
+          "fixedPermits": true
+        },
+        {
+          "locale": "ko",
+          "case": "micro missing source/destination sides",
+          "originalPermits": false,
+          "fixedPermits": true
+        },
+        {
+          "locale": "ko",
+          "case": "team missing same-team egress",
+          "originalPermits": false,
+          "fixedPermits": true
+        },
+        {
+          "locale": "ko",
+          "case": "database missing peer ingress",
+          "originalPermits": false,
+          "fixedPermits": true
+        },
+        {
+          "locale": "ko",
+          "case": "data tier missing peer ingress",
+          "originalPermits": false,
+          "fixedPermits": true
+        }
+      ],
+      "scope": "Static Kubernetes NetworkPolicy permission model over published selectors and ports, not executed network connectivity.",
+      "limits": "No CNI, extension policy, admission, NAT, hostNetwork, conntrack, DNS resolution or actual listener behavior tested."
+    },
+    "script-validation.json": {
+      "status": "passed",
+      "cases": [
+        {
+          "case": "reachable denied subject fails",
+          "exitCode": 1,
+          "passed": true
+        },
+        {
+          "case": "timeout remains inconclusive",
+          "exitCode": 3,
+          "passed": true
+        },
+        {
+          "case": "exec auth error is unknown",
+          "exitCode": 2,
+          "passed": true
+        },
+        {
+          "case": "failed positive control is unknown",
+          "exitCode": 2,
+          "passed": true
+        },
+        {
+          "case": "missing marker is unknown",
+          "exitCode": 2,
+          "passed": true
+        },
+        {
+          "case": "connection refused is unknown",
+          "exitCode": 2,
+          "passed": true
+        },
+        {
+          "case": "DNS error is unknown",
+          "exitCode": 2,
+          "passed": true
+        },
+        {
+          "case": "TLS verification error is unknown",
+          "exitCode": 2,
+          "passed": true
+        },
+        {
+          "case": "inventory handles empty, omitted, directional, subset and allow-all rules",
+          "passed": true
+        },
+        {
+          "case": "namespaces query error stays unknown",
+          "passed": true
+        },
+        {
+          "case": "policies query error stays unknown",
+          "passed": true
+        }
+      ],
+      "count": 11,
+      "oldRegression": "Original function prints PASS(correctly blocked) when mocked kubectl exec succeeds.",
+      "scope": "Read-only kubectl mocks only. No cluster commands, live connectivity or policy enforcement were executed.",
+      "allStubCallsReadOnly": true
+    },
+    "addon-config-validation.json": {
+      "status": "passed",
+      "cases": [
+        {
+          "case": "existing settings retained",
+          "passed": true,
+          "updateAttempted": true
+        },
+        {
+          "case": "empty string configuration",
+          "passed": true,
+          "updateAttempted": true
+        },
+        {
+          "case": "omitted configuration",
+          "passed": true,
+          "updateAttempted": true
+        },
+        {
+          "case": "malformed configuration stops before update",
+          "passed": true,
+          "updateAttempted": false
+        },
+        {
+          "case": "describe failure stops before update",
+          "passed": true,
+          "updateAttempted": false
+        }
+      ],
+      "oldMissingGuardReproduced": true,
+      "scope": "Native jq and Bash with a private fake AWS executable. No real AWS query or mutation."
+    },
+    "cilium-helm-validation.json": {
+      "status": "passed",
+      "objects": 25,
+      "renderedConfig": {
+        "cni-chaining-mode": "aws-cni",
+        "cni-exclusive": "false",
+        "enable-ipv4-masquerade": "false",
+        "routing-mode": "native",
+        "ipam": "cluster-pool"
+      },
+      "chartSHA256": "06210eef7c23d15f7699c79e2fe3a1ec9c389024c5c5c006ea04022d322449a2",
+      "architectureSource": "v1.20.1awscniregistersGenericVethChainer;AddusespreviousCNIresult/existinginterfaceaddressesandExternalIpam=true.",
+      "harnessCorrection": "Extra reviewer expectation ipam=delegated-plugin was not part of the documentedvalues and failed. Actual chartdefaultcluster-poolis recorded;the4documentedvaluesmatch and upstreamExternalIpam confirmsAWSaddressownership.",
+      "scope": "Actual pinnedHelm render plusreleasedsource inspection;no CNI installation,cloud ornetworktest."
+    },
+    "shell-hcl-validation.json": {
+      "status": "passed",
+      "bashBlocks": 14,
+      "hclFragments": 4,
+      "shell": [
+        {
+          "path": "en/security/04-network-policies.md",
+          "block": 0,
+          "valid": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "block": 1,
+          "valid": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "block": 2,
+          "valid": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "block": 3,
+          "valid": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "block": 4,
+          "valid": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "block": 5,
+          "valid": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "block": 6,
+          "valid": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "block": 0,
+          "valid": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "block": 1,
+          "valid": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "block": 2,
+          "valid": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "block": 3,
+          "valid": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "block": 4,
+          "valid": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "block": 5,
+          "valid": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "block": 6,
+          "valid": true
+        }
+      ],
+      "hcl": [
+        {
+          "path": "en/security/04-network-policies.md",
+          "block": 0,
+          "parseValid": true
+        },
+        {
+          "path": "en/security/04-network-policies.md",
+          "block": 1,
+          "parseValid": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "block": 0,
+          "parseValid": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "block": 1,
+          "parseValid": true
+        }
+      ],
+      "publishedScriptsMatchTestedFiles": [
+        {
+          "locale": "en",
+          "script": "network-policy-probe.sh",
+          "exact": true
+        },
+        {
+          "locale": "en",
+          "script": "network-policy-inventory.sh",
+          "exact": true
+        },
+        {
+          "locale": "ko",
+          "script": "network-policy-probe.sh",
+          "exact": true
+        },
+        {
+          "locale": "ko",
+          "script": "network-policy-inventory.sh",
+          "exact": true
+        }
+      ],
+      "noPublishedCommandsExecuted": true
+    },
+    "markdown-validation.json": {
+      "status": "passed",
+      "rows": [
+        {
+          "path": "en/security/04-network-policies.md",
+          "sha256": "e579146b0546d5cefdff8f64f81a62bbd6e005ae51d03f3221005c84c6b92df8",
+          "originalIds": 64,
+          "currentIds": 64,
+          "missingAnchors": [],
+          "missingFragments": [],
+          "missingFiles": [],
+          "duplicates": [],
+          "errors": [],
+          "answers": [],
+          "oneH1": true,
+          "lastUpdated": "2026-09-13"
+        },
+        {
+          "path": "en/quizzes/security/04-network-policies-quiz.md",
+          "sha256": "6dcbd243d3ac53295a7bddba81bd92f404c541800444baf8fa058a694d4d9beb",
+          "originalIds": 14,
+          "currentIds": 15,
+          "missingAnchors": [],
+          "missingFragments": [],
+          "missingFiles": [],
+          "duplicates": [],
+          "errors": [],
+          "answers": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B",
+            "A",
+            "A",
+            "B",
+            "A",
+            "C",
+            "B"
+          ],
+          "oneH1": true,
+          "lastUpdated": "2026-09-13"
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "sha256": "5741ceb54d800d58702327db70d741db24379a765d64147298ff7775e76e4b2d",
+          "originalIds": 64,
+          "currentIds": 64,
+          "missingAnchors": [],
+          "missingFragments": [],
+          "missingFiles": [],
+          "duplicates": [],
+          "errors": [],
+          "answers": [],
+          "oneH1": true,
+          "lastUpdated": "2026-09-13"
+        },
+        {
+          "path": "ko/quizzes/security/04-network-policies-quiz.md",
+          "sha256": "d4f643a3a5344ba0df8d0e26abfc7d028528a3c14c4daf2c71ed83660fcbf118",
+          "originalIds": 14,
+          "currentIds": 15,
+          "missingAnchors": [],
+          "missingFragments": [],
+          "missingFiles": [],
+          "duplicates": [],
+          "errors": [],
+          "answers": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B",
+            "A",
+            "A",
+            "B",
+            "A",
+            "C",
+            "B"
+          ],
+          "oneH1": true,
+          "lastUpdated": "2026-09-13"
+        }
+      ],
+      "quizParity": true,
+      "scope": "Four Markdown/Vue source compilations and original ID/link/quiz checks; no full site build."
+    }
+  },
+  "sourcePreservation": {
+    "allOriginalHeadingIDs": 156,
+    "allPreserved": true,
+    "quizQuestionsPerLocale": 12,
+    "note": "All four originals fully read. Topic headings retained; removed code was invalid/unsafe or replaced with bounded examples. No measured benchmark was re-executed or fabricated."
+  },
+  "limitations": [
+    "No real AWS/EKS/Kubernetes/Cilium/Calico cluster query,mutation,deployment or network probe. Published cloud/cluster commands were not executed.",
+    "106 API/CRD shapes and14partial YAML snippets validated offline; Calico public-v3 spec uses released storage-CRD shape. CEL,conversion,selector execution and actual admission were not tested.",
+    "34 policy-intent cases and10 original missing-flow cases are a static permission model,not live networking or CNI enforcement.",
+    "11 probe/inventory cases and5addon cases use private fake kubectl/AWS executables. Actual Bash/jq behavior is tested without cloud calls.",
+    "Cilium25-resource Helm render is not installation proof. The chart retains globalipam=cluster-pool; released chaining source sets endpointExternalIpam=true. The initial reviewer delegated-plugin expectation was corrected.",
+    "No full local site build,provider login,GPU/model download,commit,push or foreign-language edit."
+  ],
+  "neededScopeExternalRepairs": [],
+  "privateEvidenceDirectory": ".vitepress/cache/core-audit/security-04-network",
+  "integrationFollowup": {
+    "baseCommit": "d8ca37dc523ce26f6b64324daf74fe5c4d356065",
+    "checkedAt": "2026-09-13T13:20:36.563234+00:00",
+    "changes": [
+      {
+        "path": "en/security/04-network-policies.md",
+        "previousSha256": "fcf4dd6e2e6e44058cd2fd436e2424bca4dcca19fd1b20975b5bb69a921d26c5",
+        "sha256": "e579146b0546d5cefdff8f64f81a62bbd6e005ae51d03f3221005c84c6b92df8"
+      },
+      {
+        "path": "ko/security/04-network-policies.md",
+        "previousSha256": "674c661bb009897bfaf890eb45b7211d8882bb02663ee4681db113fdbcdcf806",
+        "sha256": "5741ceb54d800d58702327db70d741db24379a765d64147298ff7775e76e4b2d"
+      }
+    ],
+    "scope": "Explicit heading IDs and authored TOC targets; legacy native anchors retained. All fenced examples, quiz answers, diagrams and source-contract test artifacts unchanged.",
+    "documentValidation": {
+      "status": "passed",
+      "method": "Fresh native VitePress render against pre-repair commit; all legacy IDs, authored TOC targets, exact fenced code and original quiz answer parity.",
+      "files": [
+        {
+          "path": "en/security/04-network-policies.md",
+          "previousIds": 64,
+          "currentIds": 64,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [],
+          "answersAfter": [],
+          "pass": true
+        },
+        {
+          "path": "en/quizzes/security/04-network-policies-quiz.md",
+          "previousIds": 15,
+          "currentIds": 15,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B",
+            "A",
+            "A",
+            "B",
+            "A",
+            "C",
+            "B"
+          ],
+          "answersAfter": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B",
+            "A",
+            "A",
+            "B",
+            "A",
+            "C",
+            "B"
+          ],
+          "pass": true
+        },
+        {
+          "path": "en/observability/tracing/03-opentelemetry.md",
+          "previousIds": 38,
+          "currentIds": 38,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [],
+          "answersAfter": [],
+          "pass": true
+        },
+        {
+          "path": "en/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+          "previousIds": 1,
+          "currentIds": 1,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [
+            "B",
+            "C",
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B"
+          ],
+          "answersAfter": [
+            "B",
+            "C",
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B"
+          ],
+          "pass": true
+        },
+        {
+          "path": "ko/security/04-network-policies.md",
+          "previousIds": 64,
+          "currentIds": 74,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [],
+          "answersAfter": [],
+          "pass": true
+        },
+        {
+          "path": "ko/quizzes/security/04-network-policies-quiz.md",
+          "previousIds": 15,
+          "currentIds": 15,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B",
+            "A",
+            "A",
+            "B",
+            "A",
+            "C",
+            "B"
+          ],
+          "answersAfter": [
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B",
+            "A",
+            "A",
+            "B",
+            "A",
+            "C",
+            "B"
+          ],
+          "pass": true
+        },
+        {
+          "path": "ko/observability/tracing/03-opentelemetry.md",
+          "previousIds": 38,
+          "currentIds": 38,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [],
+          "answersAfter": [],
+          "pass": true
+        },
+        {
+          "path": "ko/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+          "previousIds": 1,
+          "currentIds": 1,
+          "missingOld": [],
+          "missingToc": [],
+          "duplicateIds": [],
+          "codeUnchanged": true,
+          "answersBefore": [
+            "B",
+            "C",
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B"
+          ],
+          "answersAfter": [
+            "B",
+            "C",
+            "C",
+            "B",
+            "B",
+            "B",
+            "B",
+            "B",
+            "D",
+            "B"
+          ],
+          "pass": true
+        }
+      ]
+    }
+  }
+}
