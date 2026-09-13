@@ -16,7 +16,7 @@
           "cw-metrics",
           "container-insights"
         ],
-        "note": "CloudWatch-based. Takes 1-2 days; low cost and low operational complexity."
+        "note": "Optional adoption stages based on requirements and operating capacity; not a data-flow diagram."
       },
       {
         "id": "phase2",
@@ -26,7 +26,7 @@
           "fluentbit-loki",
           "xray"
         ],
-        "note": "Grafana stack. Takes 1-2 weeks; medium cost and operational complexity."
+        "note": "Optional adoption stages based on requirements and operating capacity; not a data-flow diagram."
       },
       {
         "id": "phase3",
@@ -37,7 +37,7 @@
           "ebpf",
           "cost"
         ],
-        "note": "OpenTelemetry + eBPF. Takes 2-4 weeks; high cost and high operational complexity."
+        "note": "Optional adoption stages based on requirements and operating capacity; not a data-flow diagram."
       }
     ]
   },
@@ -217,43 +217,50 @@
     {
       "id": "metrics-to-prom",
       "from": "cw-metrics",
-      "to": "prom-grafana"
+      "to": "prom-grafana",
+      "variant": "dashed"
     },
     {
       "id": "logs-to-loki",
       "from": "cw-logs",
-      "to": "fluentbit-loki"
+      "to": "fluentbit-loki",
+      "variant": "dashed"
     },
     {
       "id": "insights-to-xray",
       "from": "container-insights",
-      "to": "xray"
+      "to": "xray",
+      "variant": "dashed"
     },
     {
       "id": "prom-to-vm",
       "from": "prom-grafana",
       "to": "vm-amp",
-      "label": "remoteWrite"
+      "variant": "dashed"
     },
     {
       "id": "loki-to-otel",
       "from": "fluentbit-loki",
-      "to": "otel"
+      "to": "otel",
+      "variant": "dashed"
     },
     {
       "id": "xray-to-otel",
       "from": "xray",
-      "to": "otel"
+      "to": "otel",
+      "variant": "dashed"
     },
     {
       "id": "vm-to-cost",
       "from": "vm-amp",
-      "to": "cost"
+      "to": "cost",
+      "variant": "dashed"
     },
     {
       "id": "otel-to-ebpf",
       "from": "otel",
-      "to": "ebpf"
+      "to": "ebpf",
+      "variant": "dashed"
     }
   ],
   "cards": [
@@ -261,24 +268,21 @@
       "dot": "cyan",
       "title": "Phase 1 (Basic)",
       "items": [
-        "CloudWatch-based setup",
-        "1-2 days · low cost · low operational complexity"
+        "Define incident questions and collection scope"
       ]
     },
     {
       "dot": "emerald",
       "title": "Phase 2 (Intermediate)",
       "items": [
-        "Adopt the Grafana stack",
-        "1-2 weeks · medium cost · medium operational complexity"
+        "Verify correlation, SLOs and collection quality"
       ]
     },
     {
       "dot": "amber",
       "title": "Phase 3 (Advanced)",
       "items": [
-        "OpenTelemetry + eBPF",
-        "2-4 weeks · high cost · high operational complexity"
+        "Extend where needed; measure cost and recovery"
       ]
     }
   ]

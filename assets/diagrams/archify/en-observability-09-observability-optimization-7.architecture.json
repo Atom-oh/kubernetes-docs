@@ -19,7 +19,7 @@
           "otel1",
           "otel2"
         ],
-        "note": "Fluent Bit on every node fans into the redundant OTel Collectors through the Load Balancer."
+        "note": "Separate node agents and gateways; tail sampling requires trace-ID affinity."
       },
       {
         "id": "logs",
@@ -31,7 +31,7 @@
           "loki2",
           "s3"
         ],
-        "note": "Both Loki Write replicas receive logs and persist them to the shared S3 Bucket."
+        "note": "Follow the chosen Loki mode replication, quorum and AZ requirements; two icons are not a replica minimum."
       },
       {
         "id": "metrics",
@@ -51,7 +51,7 @@
     {
       "id": "fb1",
       "type": "backend",
-      "label": "Fluent Bit",
+      "label": "Collection agent",
       "sublabel": "Node 1",
       "pos": [
         40,
@@ -65,7 +65,7 @@
     {
       "id": "fb2",
       "type": "backend",
-      "label": "Fluent Bit",
+      "label": "Collection agent",
       "sublabel": "Node 2",
       "pos": [
         40,
@@ -79,7 +79,7 @@
     {
       "id": "fb3",
       "type": "backend",
-      "label": "Fluent Bit",
+      "label": "Collection agent",
       "sublabel": "Node N",
       "pos": [
         40,
@@ -94,7 +94,7 @@
       "id": "lb",
       "type": "cloud",
       "label": "Load Balancer",
-      "sublabel": "spreads collectors",
+      "sublabel": "Route by signal",
       "pos": [
         260,
         290
@@ -135,9 +135,8 @@
     {
       "id": "loki1",
       "type": "backend",
-      "label": "Loki Write 1",
+      "label": "Loki write tier",
       "sublabel": "log write",
-      "tag": "Loki HA",
       "pos": [
         700,
         40
@@ -166,7 +165,7 @@
       "id": "vms",
       "type": "database",
       "label": "vmstorage x3",
-      "sublabel": "metrics storage",
+      "sublabel": "Explicit replication",
       "tag": "VictoriaMetrics HA",
       "pos": [
         700,
@@ -195,9 +194,8 @@
     {
       "id": "loki2",
       "type": "backend",
-      "label": "Loki Write 2",
+      "label": "Loki write tier",
       "sublabel": "log write",
-      "tag": "Loki HA",
       "pos": [
         700,
         560
@@ -339,10 +337,11 @@
   "cards": [
     {
       "dot": "amber",
-      "title": "Read components of the storage layer",
+      "title": "Validate availability",
       "items": [
-        "Loki Read 1 · Loki Read 2 — serve log queries, separate from the Loki Write path",
-        "vmselect 1 · vmselect 2 — serve metric queries by reading from vmstorage"
+        "Test replication, quorum, buffers and recovery",
+        "Icon counts do not prescribe replica counts",
+        "Merge query results and deduplicate replicas"
       ]
     }
   ]

@@ -1,1451 +1,358 @@
 # EKS 관측성 최적화 가이드
 
-> **지원 버전**: Amazon EKS 1.29+, OpenTelemetry 0.90+
-> **마지막 업데이트**: 2026년 2월 23일
+> **검증 예제 버전**: Prometheus 3.14.0 · OTel Collector Contrib 0.160.0 · Alertmanager 0.34.0 · OpenCost 1.121.2/chart 2.5.31
 
----
+> **마지막 업데이트**: 2026년 9월 13일
 
-## 목차
+관측성 최적화는 장애 조사에 필요한 질문, 수집 품질, 실제 비용에서 시작합니다. 노드 수만으로 수집량·조회 부하·보존 비용·운영 인력을 예측할 수 없습니다. 이 장은 [완전한 설정 예제](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/observability/optimization)를 제공하고 클러스터 설치는 각 배포 가이드로 연결합니다. native 검증에는 합성 데이터를 사용했으며 운영 성능 벤치마크가 아닙니다.
 
-1. [관측성 3대 축 개요](#1-관측성-3대-축-개요)
-2. [로깅 솔루션 비교](#2-로깅-솔루션-비교)
-3. [메트릭 수집 및 저장](#3-메트릭-수집-및-저장)
-4. [분산 트레이싱](#4-분산-트레이싱)
-5. [eBPF 기반 No-Code 모니터링](#5-ebpf-기반-no-code-모니터링)
-6. [비용 모니터링](#6-비용-모니터링)
-7. [통합 관측성 대시보드](#7-통합-관측성-대시보드)
-8. [운영 과제와 해결 방법](#8-운영-과제와-해결-방법)
-9. [모범 사례와 다음 단계](#9-모범-사례와-다음-단계)
+<span id="_1-1-로깅-메트릭-트레이싱의-관계"></span>
 
----
+<span id="_1-2-각-축의-역할과-선택-기준"></span>
+
+<span id="_1-3-eks-관측성-아키텍처-전체-그림"></span>
 
 <span id="1-관측성-3대-축-개요"></span>
 
 ## 1. 관측성 3대 축 개요
 
-현대 클라우드 네이티브 환경에서 **관측성(Observability)**은 시스템의 내부 상태를 외부 출력을 통해 이해하는 능력입니다. EKS 환경에서 효과적인 관측성을 구현하려면 세 가지 핵심 축을 이해해야 합니다.
+로그는 사건을, 메트릭은 시간에 따른 집계 상태를, 트레이스는 계측된 요청 경로를 설명합니다. 추적 데이터가 없거나 대시보드가 조용하다는 사실만으로 서비스가 정상이라고 판단하면 안 됩니다. Collector의 drop·queue·export 실패와 scrape 상태도 함께 관찰합니다.
 
-### 1.1 로깅, 메트릭, 트레이싱의 관계
-
-![로깅, 메트릭, 트레이싱 3대 관측성 축이 각각 어떤 데이터 특성을 가지며 Exemplars, Context, Correlation ID로 서로 연결되는지를 보여준다.](../.gitbook/assets/ko-observability-09-observability-optimization-0.png)
+![로그는 공통 라벨과 trace ID로 연결하고, exemplar는 선택된 메트릭 표본과 추적을 연결한다.](../.gitbook/assets/ko-observability-09-observability-optimization-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-0.html)
 
-### 1.2 각 축의 역할과 선택 기준
+메트릭에는 제한된 service/route/status 라벨을 사용합니다. 요청 ID처럼 카디널리티가 높은 값은 접근이 통제되는 로그·추적에 넣습니다. 계측·전파·샘플링·보존 상태에 따라 trace의 일부 span이 없을 수 있습니다.
 
-| 축 | 주요 역할 | 질문 유형 | 데이터 볼륨 | 비용 특성 |
-|---|---|---|---|---|
-| **로깅** | 이벤트 기록, 감사, 디버깅 | "무엇이 일어났나?" | 높음 | 저장 비용 높음 |
-| **메트릭** | 시스템 상태 모니터링, 알림 | "시스템이 정상인가?" | 중간 | 카디널리티에 민감 |
-| **트레이싱** | 요청 흐름 추적, 병목 분석 | "왜 느린가?" | 높음 (샘플링 필요) | 샘플링률에 비례 |
-
-### 1.3 EKS 관측성 아키텍처 전체 그림
-
-![애플리케이션 Pod에서 나온 로그·메트릭·트레이스가 Fluent Bit, OTel Collector, Prometheus를 거쳐 각 저장소에 쌓이고 Grafana 하나로 통합 시각화되는 EKS 관측성 아키텍처 전체 그림을 보여준다.](../.gitbook/assets/ko-observability-09-observability-optimization-1.png)
+![노드 에이전트와 gateway Collector가 각 신호를 선택한 백엔드로 보내고 Grafana는 해당 저장소를 조회한다.](../.gitbook/assets/ko-observability-09-observability-optimization-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-1.html)
 
----
+노드 에이전트는 로컬 로그를 읽고 gateway는 중앙 정책을 적용하는 등 역할이 다릅니다. Tail sampling에는 trace affinity가 필요합니다. 여러 DaemonSet 앞에 임의 분산하는 Load Balancer를 두는 것만으로 올바른 tail sampling이 구현되지 않습니다.
+
+<span id="_2-1-로그-저장소-비교"></span>
+
+<span id="_2-2-로그-에이전트-비교"></span>
+
+<span id="_2-3-eks에서-fluent-bit-loki-구성-예제"></span>
 
 <span id="2-로깅-솔루션-비교"></span>
 
 ## 2. 로깅 솔루션 비교
 
-### 2.1 로그 저장소 비교
+| 저장소 | 유용한 특징 | 비용·운영 제약 |
+|---|---|---|
+| CloudWatch Logs | 관리형 수집·보존·Logs Insights | Region, log class, 수집·저장·scan·quota |
+| OpenSearch | 인덱스 기반 검색과 분석 | provisioned/serverless 용량, 인덱싱, replica, 저장·조회 부하 |
+| Loki | 라벨 인덱스·LogQL·오브젝트 스토리지 | compute·cache·object request·보존·query fanout·운영 |
+| ClickHouse | SQL 분석·스키마·압축 선택 | compute·저장·복제·수집 스키마·query tuning |
 
-| 기준 | CloudWatch Logs | OpenSearch | Loki | ClickHouse |
-|---|---|---|---|---|
-| **비용** | 수집: $0.50/GB<br/>저장: $0.03/GB/월 | 인스턴스 비용 + EBS<br/>r6g.large: ~$150/월 | 오브젝트 스토리지 비용<br/>S3: $0.023/GB/월 | 인스턴스 + 스토리지<br/>높은 압축률로 절감 |
-| **성능** | 소규모 우수<br/>대규모 지연 | 전문 검색 최적화<br/>복잡한 쿼리 강점 | 레이블 기반 빠른 필터링<br/>전문 검색 제한적 | 분석 쿼리 최적화<br/>실시간 집계 우수 |
-| **운영 복잡성** | 완전 관리형<br/>운영 부담 최소 | 클러스터 관리 필요<br/>튜닝 복잡 | 단순한 아키텍처<br/>운영 용이 | 스키마 관리 필요<br/>중간 복잡도 |
-| **쿼리 기능** | Logs Insights<br/>기본적인 분석 | Lucene 쿼리<br/>강력한 전문 검색 | LogQL<br/>레이블 기반 필터링 | SQL 기반<br/>복잡한 분석 쿼리 |
-| **확장성** | 자동 확장<br/>제한 없음 | 수동 샤딩<br/>노드 추가 필요 | 수평 확장 용이<br/>오브젝트 스토리지 활용 | 샤딩 지원<br/>페타바이트 규모 |
-| **적합 사용 사례** | AWS 네이티브 환경<br/>간단한 로깅 | 복잡한 검색 요구<br/>보안/컴플라이언스 | 비용 효율 중시<br/>Grafana 통합 | 로그 분석/집계<br/>장기 보관 |
+어떤 도구가 항상 가장 빠르거나 저렴한 것은 아닙니다. 같은 입력량·압축·보존·가용성·조회 지연·지원 범위를 비교합니다. S3 저장 단가만으로 Loki/Tempo 전체 비용을 계산하지 않습니다. 관리형 서비스에도 quota가 있습니다.
 
-### 2.2 로그 에이전트 비교
+### 에이전트와 컨테이너 로그 형식
 
-| 기준 | Fluent Bit | Fluentd | Vector |
-|---|---|---|---|
-| **메모리 사용량** | ~15MB | ~60MB | ~30MB |
-| **CPU 사용량** | 낮음 | 중간 | 낮음 |
-| **처리량** | 최대 ~200K msg/s | 최대 ~50K msg/s | 최대 ~300K msg/s |
-| **언어** | C | Ruby/C | Rust |
-| **플러그인 생태계** | 제한적이나 핵심 지원 | 매우 풍부 | 성장 중 |
-| **설정 복잡도** | 낮음 | 중간 | 중간 |
-| **EKS 통합** | 네이티브 지원 | 지원 | 지원 |
+Fluent Bit·Fluentd·Vector는 plugin·언어·buffering·배포 방식이 다릅니다. “15 MB”, “초당 200K 메시지”처럼 고정된 성능 수치는 재현 가능한 workload·버전·하드웨어 근거가 있어야 합니다. 실제 record 크기·parser 비용·재시도·backpressure를 측정합니다.
 
-### 2.3 EKS에서 Fluent Bit + Loki 구성 예제
+현재 EKS의 containerd 로그는 CRI framing을 사용합니다. Docker JSON parser를 무조건 적용하거나 `/var/lib/docker/containers`가 있다고 가정하지 않습니다. 지원되는 container/CRI parser와 multiline 처리를 사용하고 host 로그는 읽기 전용, offset/buffer 상태는 별도 쓰기 가능한 위치에 둡니다. Kubernetes metadata enrichment에는 맞는 ServiceAccount/RBAC가 필요합니다. ConfigMap만으로 수집기가 배포되지는 않습니다.
 
-```yaml
-# fluent-bit-configmap.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluent-bit-config
-  namespace: logging
-data:
-  fluent-bit.conf: |
-    [SERVICE]
-        Flush         5
-        Log_Level     info
-        Daemon        off
-        Parsers_File  parsers.conf
-        HTTP_Server   On
-        HTTP_Listen   0.0.0.0
-        HTTP_Port     2020
+Loki 라벨은 cluster·namespace·service 같은 안정적인 차원으로 제한합니다. Pod 라벨을 모두 자동 복사하면 stream 수가 폭증할 수 있습니다. [수집기 가이드](./logging/05-collectors.md)와 [Loki 가이드](./logging/01-loki.md)의 완전한 현재 프로필을 참고하고 Service·schema·storage·IAM·network 설정을 확인합니다.
 
-    [INPUT]
-        Name              tail
-        Tag               kube.*
-        Path              /var/log/containers/*.log
-        Parser            docker
-        DB                /var/log/flb_kube.db
-        Mem_Buf_Limit     50MB
-        Skip_Long_Lines   On
-        Refresh_Interval  10
+### 필터와 확률 샘플링 구분
 
-    [FILTER]
-        Name                kubernetes
-        Match               kube.*
-        Kube_URL            https://kubernetes.default.svc:443
-        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
-        Kube_Tag_Prefix     kube.var.log.containers.
-        Merge_Log           On
-        Keep_Log            Off
-        K8S-Logging.Parser  On
-        K8S-Logging.Exclude On
+JSON을 `level` 필드로 파싱한 뒤 다음 Fluent Bit 필터 조각으로 정확한 DEBUG/TRACE 레벨을 제외할 수 있습니다.
 
-    [OUTPUT]
-        Name                   loki
-        Match                  *
-        Host                   loki-gateway.logging.svc.cluster.local
-        Port                   80
-        Labels                 job=fluent-bit
-        Label_Keys             $kubernetes['namespace_name'],$kubernetes['pod_name'],$kubernetes['container_name']
-        Remove_Keys            kubernetes,stream
-        Auto_Kubernetes_Labels on
-        Line_Format            json
-
-  parsers.conf: |
-    [PARSER]
-        Name        docker
-        Format      json
-        Time_Key    time
-        Time_Format %Y-%m-%dT%H:%M:%S.%L
-        Time_Keep   On
-
-    [PARSER]
-        Name        json
-        Format      json
-        Time_Key    timestamp
-        Time_Format %Y-%m-%dT%H:%M:%S.%L
----
-# fluent-bit-daemonset.yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: fluent-bit
-  namespace: logging
-  labels:
-    app: fluent-bit
-spec:
-  selector:
-    matchLabels:
-      app: fluent-bit
-  template:
-    metadata:
-      labels:
-        app: fluent-bit
-    spec:
-      serviceAccountName: fluent-bit
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          effect: NoSchedule
-        - key: node-role.kubernetes.io/master
-          effect: NoSchedule
-      containers:
-        - name: fluent-bit
-          image: fluent/fluent-bit:2.2
-          resources:
-            limits:
-              memory: 200Mi
-              cpu: 200m
-            requests:
-              memory: 100Mi
-              cpu: 100m
-          volumeMounts:
-            - name: varlog
-              mountPath: /var/log
-            - name: varlibdockercontainers
-              mountPath: /var/lib/docker/containers
-              readOnly: true
-            - name: config
-              mountPath: /fluent-bit/etc/
-      volumes:
-        - name: varlog
-          hostPath:
-            path: /var/log
-        - name: varlibdockercontainers
-          hostPath:
-            path: /var/lib/docker/containers
-        - name: config
-          configMap:
-            name: fluent-bit-config
+```ini
+[FILTER]
+    Name     grep
+    Match    application.*
+    Exclude  level ^(DEBUG|TRACE)$
 ```
 
-```bash
-# Loki 설치 (Helm)
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
+이 조각에는 해당 tag를 만드는 input/parser/output pipeline이 필요합니다. 임의 메시지 본문에 DEBUG라는 단어가 있다는 이유만으로 삭제하지 않습니다. Fluent Bit throttle의 `Rate`·`Window`는 이동 구간의 처리율 제한이며 10% 확률 샘플러가 아닙니다. drop 수를 측정하고 장애 분석·감사 요구를 검토한 뒤 필터를 적용합니다.
 
-# Simple Scalable 모드로 Loki 설치
-helm install loki grafana/loki \
-  --namespace logging \
-  --create-namespace \
-  --set loki.auth_enabled=false \
-  --set loki.storage.type=s3 \
-  --set loki.storage.s3.endpoint=s3.ap-northeast-2.amazonaws.com \
-  --set loki.storage.s3.region=ap-northeast-2 \
-  --set loki.storage.s3.bucketnames=my-loki-bucket \
-  --set loki.storage.s3.insecure=false \
-  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::ACCOUNT:role/LokiS3Role
-```
+CloudWatch에는 문서화된 `cloudwatch_logs` 옵션을 사용합니다. 과거 예제의 `log_format json`, `max_batch_size`, `max_batch_put_limit`을 일반 JSON 출력·배치 옵션처럼 사용하지 않습니다. plugin이 batching을 처리하며 고정 버전의 지원 옵션을 확인해야 합니다. 새 group 생성 시 적용되는 `log_retention_days`만으로 모든 기존 group의 보존 기간이 설정되는 것은 아닙니다.
 
----
+<span id="_3-1-메트릭-저장소-비교"></span>
+
+<span id="_3-2-cardinality-관리-전략"></span>
+
+<span id="_3-3-recording-rules로-쿼리-성능-개선"></span>
+
+<span id="_3-4-장기-저장-전략"></span>
 
 <span id="3-메트릭-수집-및-저장"></span>
 
 ## 3. 메트릭 수집 및 저장
 
-### 3.1 메트릭 저장소 비교
+Prometheus는 로컬 TSDB를 사용하고 sharding·remote write·query/aggregation 계층으로 배포 모델을 확장할 수 있습니다. VictoriaMetrics 단일 노드와 cluster 제품의 가용성·복제 특성은 다릅니다. AMP도 workspace quota와 설정 가능한 보존 기간을 갖습니다. 어느 경우에도 무제한 보존, “storage Pod 세 개면 자동 복제”, 모든 확장 쿼리의 동일한 동작을 가정하지 않습니다.
 
-| 기준 | Prometheus | VictoriaMetrics | AMP (Amazon Managed Prometheus) |
-|---|---|---|---|
-| **확장성** | 단일 노드<br/>수직 확장만 | 클러스터 모드<br/>수평 확장 | 자동 확장<br/>제한 없음 |
-| **비용** | 인프라 비용만<br/>EC2/EBS | 인프라 비용<br/>Prometheus 대비 절감 | 수집: $0.90/10M 샘플<br/>저장: $0.03/GB/월 |
-| **HA** | 별도 구성 필요<br/>Thanos/Cortex | 내장 복제<br/>자동 장애 조치 | 완전 관리형 HA<br/>다중 AZ |
-| **운영 오버헤드** | 높음<br/>스토리지/확장 관리 | 중간<br/>단순한 운영 | 낮음<br/>AWS 관리 |
-| **장기 저장** | 별도 솔루션 필요 | 내장 지원 | 무제한 보관 |
-| **쿼리 성능** | 우수 | 매우 우수<br/>(최적화된 엔진) | 우수 |
-| **PromQL 호환** | 네이티브 | 완전 호환 + 확장 | 완전 호환 |
+### 다른 지표를 지우지 않는 카디널리티 관리
 
-### 3.2 Cardinality 관리 전략
-
-**카디널리티(Cardinality)**는 고유한 시계열 수를 의미합니다. 높은 카디널리티는 메모리 사용량과 쿼리 성능에 직접적인 영향을 미칩니다.
+`prometheus.yaml`은 알려진 histogram 하나의 일부 bucket만 drop합니다. histogram 외 지표와 `_sum`, `_count`, SLO bucket `le="0.5"`, `+Inf`는 유지합니다.
 
 ```yaml
-# prometheus-config.yaml - 메트릭 드롭 및 레이블 최적화
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: prometheus-config
-  namespace: monitoring
-data:
-  prometheus.yml: |
-    global:
-      scrape_interval: 30s
-      evaluation_interval: 30s
-
-    scrape_configs:
-      - job_name: 'kubernetes-pods'
-        kubernetes_sd_configs:
-          - role: pod
-        relabel_configs:
-          # 특정 네임스페이스만 수집
-          - source_labels: [__meta_kubernetes_namespace]
-            regex: 'kube-system|monitoring|production'
-            action: keep
-
-          # 불필요한 레이블 제거
-          - regex: '__meta_kubernetes_pod_label_(.+)'
-            action: labeldrop
-
-          # Pod UID 제거 (높은 카디널리티 원인)
-          - regex: 'pod_template_hash|controller_revision_hash'
-            action: labeldrop
-
-        metric_relabel_configs:
-          # 불필요한 메트릭 드롭
-          - source_labels: [__name__]
-            regex: 'go_.*|promhttp_.*'
-            action: drop
-
-          # 히스토그램 버킷 제한 (높은 카디널리티 주범)
-          - source_labels: [__name__, le]
-            regex: '.*_bucket;(0\.001|0\.005|0\.01|0\.05|0\.1|0\.5|1|5|10|30|60|120|300)'
-            action: keep
+- source_labels:
+  - __name__
+  - le
+  regex: lab_http_request_duration_seconds_bucket;(0\.005|0\.01|0\.025|0\.05|0\.25)
+  action: drop
 ```
 
-### 3.3 Recording Rules로 쿼리 성능 개선
+`action: keep`으로 `.*_bucket;...`만 선택하면 일치하지 않는 다른 모든 지표와 `+Inf`까지 삭제할 수 있습니다. Bucket 변경은 quantile 정확도에 영향을 줍니다. 가능하면 계측 schema에서 조정하고 SLO에 필요한 경계를 유지합니다. Prometheus 3은 classic histogram의 `le` 값을 정규화하므로 `1`이 `1.0`으로 보이는 것처럼 실제 저장된 라벨에 맞춥니다.
 
-Recording Rules는 복잡한 쿼리를 미리 계산하여 저장합니다.
+`relabel_configs`는 scrape 전 발견된 target을, `metric_relabel_configs`는 수집된 sample을 변경합니다. 라벨 삭제는 집계가 아니며 시계열 충돌을 만들 수 있습니다. Discovery의 `__meta_*` 라벨도 자동으로 영구 sample 라벨이 되지 않습니다. 원천에서 라벨을 줄이고 남은 조합의 고유성을 검증합니다.
 
-```yaml
-# prometheus-recording-rules.yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: recording-rules
-  namespace: monitoring
-spec:
-  groups:
-    - name: k8s.rules
-      interval: 30s
-      rules:
-        # 노드별 CPU 사용률 미리 계산
-        - record: node:cpu_utilization:ratio
-          expr: |
-            1 - avg by (node) (
-              rate(node_cpu_seconds_total{mode="idle"}[5m])
-            )
+### Recording rule과 보존
 
-        # 노드별 메모리 사용률
-        - record: node:memory_utilization:ratio
-          expr: |
-            1 - (
-              node_memory_MemAvailable_bytes
-              / node_memory_MemTotal_bytes
-            )
+반복 계산은 recording rule로 저장하고 service·cluster·namespace 차원을 일관되게 유지합니다. Node-exporter target에는 일반적으로 `instance`가 있으므로 만들지 않은 `node` 라벨로 집계하지 않습니다. Collector 자체 장애를 진단할 지표까지 모든 `go_.*`·`promhttp_.*` family와 함께 제거하지 않습니다.
 
-        # 네임스페이스별 CPU 사용량
-        - record: namespace:container_cpu_usage_seconds_total:sum_rate
-          expr: |
-            sum by (namespace) (
-              rate(container_cpu_usage_seconds_total{container!=""}[5m])
-            )
-
-        # Pod 재시작 횟수 (1시간 단위)
-        - record: namespace:pod_restarts:sum_increase1h
-          expr: |
-            sum by (namespace) (
-              increase(kube_pod_container_status_restarts_total[1h])
-            )
-
-    - name: slo.rules
-      interval: 30s
-      rules:
-        # 서비스별 에러율
-        - record: service:http_requests:error_rate5m
-          expr: |
-            sum by (service) (
-              rate(http_requests_total{status=~"5.."}[5m])
-            )
-            /
-            sum by (service) (
-              rate(http_requests_total[5m])
-            )
-
-        # 서비스별 P99 지연 시간
-        - record: service:http_request_duration_seconds:p99
-          expr: |
-            histogram_quantile(0.99,
-              sum by (service, le) (
-                rate(http_request_duration_seconds_bucket[5m])
-              )
-            )
-```
-
-### 3.4 장기 저장 전략
-
-![Prometheus의 7일 단기 저장 데이터를 Thanos, VictoriaMetrics, AMP로 Remote Write해 장기 보관하고 각자의 쿼리 계층을 거쳐 Grafana에서 통합 조회하는 세 가지 대안 경로를 보여준다.](../.gitbook/assets/ko-observability-09-observability-optimization-2.png)
+![Prometheus에서 구성된 Thanos Receive, VictoriaMetrics 또는 AMP로 전송하는 선택지이며 각 경로에 보존·조회 정책이 필요하다.](../.gitbook/assets/ko-observability-09-observability-optimization-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-2.html)
 
----
+Remote-write queue는 백업이나 무손실 전달 보장이 아닙니다. WAL/queue 용량·재시도·인증·네트워크 단절·receiver 제한을 함께 설계합니다. Thanos sidecar의 block upload 방식은 그림의 Thanos Receive 경로와 다릅니다.
+
+Prometheus Operator에서 `replicas: 2`, `shards: 3`이면 총 여섯 Pod입니다. 모든 Pod의 PVC·메모리 예산과 selector를 구성하고, shard 병합과 HA replica 중복 제거를 지원하는 query 계층을 둡니다. 중복 제거되지 않는 remote-write receiver에 두 replica를 보내면 지표가 중복 계산될 수 있습니다. 고정한 Operator CRD의 전용 query 설정을 확인하고 충돌하는 generic argument를 추가하지 않습니다.
+
+<span id="_4-1-opentelemetry-개요-및-아키텍처"></span>
+
+<span id="_4-2-트레이싱-백엔드-비교"></span>
+
+<span id="_4-3-샘플링-전략"></span>
+
+<span id="_4-4-eks에서-otel-collector-daemonset-구성"></span>
 
 <span id="4-분산-트레이싱"></span>
 
 ## 4. 분산 트레이싱
 
-### 4.1 OpenTelemetry 개요 및 아키텍처
+Tempo는 trace ID 조회뿐 아니라 TraceQL을 지원합니다. Jaeger 2는 OTel 기반 구조와 명시적으로 선택한 storage를 사용합니다. X-Ray는 AWS 백엔드이며 현재 OTel/ADOT 연동 가이드를 따릅니다. 오래된 SDK 버전을 모든 배포의 기준으로 삼지 않습니다. Trace당 가격과 S3 가격만 비교하지 말고 수집·조회·저장·운영 비용을 포함합니다.
 
-OpenTelemetry(OTel)는 관측성 데이터(트레이스, 메트릭, 로그)를 수집하고 내보내기 위한 벤더 중립적 표준입니다.
-
-![애플리케이션이 보낸 트레이스가 OTel Collector의 Receiver로 들어와 Batch·Attributes·Tail Sampling 처리기를 거친 뒤 Exporter를 통해 Grafana Tempo, Jaeger, AWS X-Ray 백엔드로 전달되는 파이프라인을 보여준다.](../.gitbook/assets/ko-observability-09-observability-optimization-3.png)
+![메모리 제한과 명시적 민감 값 처리 후 tail sampling을 수행하고 batch·trace exporter로 보낸다. 메트릭은 별도 pipeline이다.](../.gitbook/assets/ko-observability-09-observability-optimization-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-3.html)
 
-### 4.2 트레이싱 백엔드 비교
+### 샘플링과 affinity
 
-| 기준 | Grafana Tempo | Jaeger | AWS X-Ray |
-|---|---|---|---|
-| **아키텍처** | 오브젝트 스토리지 기반<br/>인덱스 없음 | Elasticsearch/Cassandra<br/>인덱스 기반 | AWS 관리형<br/>서버리스 |
-| **비용** | S3 저장 비용만<br/>매우 저렴 | 인프라 비용<br/>인덱스 스토리지 | 트레이스당 과금<br/>$5/백만 트레이스 |
-| **확장성** | 무제한<br/>수평 확장 | 노드 추가 필요<br/>인덱스 관리 | 자동 확장<br/>제한 없음 |
-| **쿼리 방식** | TraceID 직접 조회<br/>Exemplars 연계 | 태그 기반 검색<br/>시간 범위 검색 | 서비스 맵<br/>필터 검색 |
-| **Grafana 통합** | 네이티브 | 지원 | 제한적 |
-| **AWS 통합** | 별도 구성 | 별도 구성 | 네이티브<br/>Lambda, ECS 등 |
-| **적합 사용 사례** | 비용 효율 중시<br/>Grafana 스택 | 복잡한 검색 요구<br/>자체 인프라 | AWS 네이티브<br/>서버리스 환경 |
+Head sampling은 전체 요청 결과를 알기 전에 결정합니다. Collector probabilistic sampling은 데이터가 Collector에 도달한 이후 실행되므로 SDK의 head 결정과 같은 위치가 아닙니다. Tail sampling은 앞에서 삭제한 span을 복구할 수 없습니다.
 
-### 4.3 샘플링 전략
+기본 `trace-complete` 방식의 `decision_wait`는 수신한 span에 대한 timer 결정을 제어합니다. 모든 span의 도착이나 trace 완료를 보증하지 않습니다. 같은 trace ID는 같은 sampler로 라우팅합니다. 유입률 × 대기 시간에 burst와 span 크기 여유를 더해 buffer를 산정합니다. Buffer 초과·너무 큰 trace·재시작·늦은 span 때문에 모든 오류 trace를 보존한다는 약속이 깨질 수 있습니다.
+
+`collector-tail-local.yaml`은 루프백에서 합성 데이터를 확인하는 예제이며 EKS manifest가 아닙니다. 1,000개 trace buffer, 2초 대기, 192 MiB memory limiter를 사용합니다. 운영 값은 실제 trace 길이와 컨테이너 메모리 여유에 맞춰 조정합니다.
 
 ```yaml
-# otel-collector-config.yaml - 샘플링 전략 구성
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: otel-collector-config
-  namespace: observability
-data:
-  config.yaml: |
-    receivers:
-      otlp:
-        protocols:
-          grpc:
-            endpoint: 0.0.0.0:4317
-          http:
-            endpoint: 0.0.0.0:4318
-
-    processors:
-      # 배치 처리 - 성능 최적화
-      batch:
-        timeout: 5s
-        send_batch_size: 1000
-        send_batch_max_size: 1500
-
-      # 메모리 제한 - OOM 방지
-      memory_limiter:
-        check_interval: 1s
-        limit_mib: 1000
-        spike_limit_mib: 200
-
-      # 확률적 샘플링 - Head Sampling
-      probabilistic_sampler:
-        hash_seed: 22
-        sampling_percentage: 10  # 10% 샘플링
-
-      # Tail Sampling - 조건 기반 샘플링
-      tail_sampling:
-        decision_wait: 10s
-        num_traces: 100000
-        policies:
-          # 에러가 있는 트레이스는 100% 유지
-          - name: errors
-            type: status_code
-            status_code:
-              status_codes: [ERROR]
-
-          # 지연 시간이 긴 트레이스는 100% 유지
-          - name: slow-traces
-            type: latency
-            latency:
-              threshold_ms: 1000
-
-          # 특정 서비스의 트레이스는 100% 유지
-          - name: critical-services
-            type: string_attribute
-            string_attribute:
-              key: service.name
-              values: [payment-service, order-service]
-
-          # 나머지는 5%만 샘플링
-          - name: default
-            type: probabilistic
-            probabilistic:
-              sampling_percentage: 5
-
-      # 속성 추가/제거
-      attributes:
-        actions:
-          - key: environment
-            value: production
-            action: upsert
-          - key: sensitive_data
-            action: delete
-
-    exporters:
-      otlp:
-        endpoint: tempo-distributor.observability:4317
-        tls:
-          insecure: true
-
-      awsxray:
-        region: ap-northeast-2
-
-      debug:
-        verbosity: detailed
-
-    service:
-      pipelines:
-        traces:
-          receivers: [otlp]
-          processors: [memory_limiter, batch, tail_sampling, attributes]
-          exporters: [otlp, awsxray]
+decision_wait: 2s
+num_traces: 1000
+maximum_trace_size_bytes: 1048576
+policies:
+- name: errors
+  type: status_code
+  status_code:
+    status_codes:
+    - ERROR
+- name: slow
+  type: latency
+  latency:
+    threshold_ms: 1000
+- name: baseline
+  type: probabilistic
+  probabilistic:
+    sampling_percentage: 10
 ```
 
-### 4.4 EKS에서 OTel Collector DaemonSet 구성
+이 positive policy 조합은 일치하는 오류·느린 trace를 유지하고 나머지에 확률 정책을 적용합니다. 전체 볼륨 90% 감소를 뜻하지 않습니다. Drop/composite/inverted policy의 결정 방식은 다르므로 “첫 번째 일치 규칙이 항상 우선”이라고 일반화하지 않습니다. 예제는 `sensitive_data`라는 특정 span attribute만 지웁니다. Span 이름·event·resource attribute·애플리케이션 로그도 명시적 데이터 정책에 따라 전송 전에 처리해야 합니다.
 
-```yaml
-# otel-collector-daemonset.yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: otel-collector
-  namespace: observability
-  labels:
-    app: otel-collector
-spec:
-  selector:
-    matchLabels:
-      app: otel-collector
-  template:
-    metadata:
-      labels:
-        app: otel-collector
-    spec:
-      serviceAccountName: otel-collector
-      containers:
-        - name: collector
-          image: otel/opentelemetry-collector-contrib:0.92.0
-          args:
-            - --config=/conf/config.yaml
-          ports:
-            - containerPort: 4317  # OTLP gRPC
-              hostPort: 4317
-            - containerPort: 4318  # OTLP HTTP
-              hostPort: 4318
-            - containerPort: 8888  # Metrics
-          resources:
-            limits:
-              memory: 1Gi
-              cpu: 500m
-            requests:
-              memory: 200Mi
-              cpu: 100m
-          volumeMounts:
-            - name: config
-              mountPath: /conf
-          env:
-            - name: K8S_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: K8S_POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            - name: K8S_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-      volumes:
-        - name: config
-          configMap:
-            name: otel-collector-config
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          effect: NoSchedule
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: otel-collector
-  namespace: observability
-spec:
-  selector:
-    app: otel-collector
-  ports:
-    - name: otlp-grpc
-      port: 4317
-      targetPort: 4317
-    - name: otlp-http
-      port: 4318
-      targetPort: 4318
-    - name: metrics
-      port: 8888
-      targetPort: 8888
-```
+클러스터에는 [OpenTelemetry 가이드](./tracing/03-opentelemetry.md)와 [관측성 스택 실습](../labs/observability/02-observability-stack-lab.md)을 사용합니다. Operator injection annotation에는 Operator, 일치하는 `Instrumentation`, 지원 runtime image, workload 재시작이 필요합니다. OTLP HTTP/4318과 gRPC/4317, TLS/인증을 맞춥니다. Annotation만 추가해도 계측이 설치되는 것은 아닙니다.
 
-애플리케이션에서 OTel SDK 자동 계측 구성:
+<span id="_5-1-왜-ebpf-모니터링인가"></span>
 
-```yaml
-# 애플리케이션 Deployment에 자동 계측 추가
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-app
-  namespace: production
-spec:
-  template:
-    metadata:
-      annotations:
-        # OTel Operator 자동 계측 활성화
-        instrumentation.opentelemetry.io/inject-java: "true"
-        # 또는 Python, Node.js 등
-        # instrumentation.opentelemetry.io/inject-python: "true"
-        # instrumentation.opentelemetry.io/inject-nodejs: "true"
-    spec:
-      containers:
-        - name: app
-          image: my-app:latest
-          env:
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://otel-collector.observability:4317"
-            - name: OTEL_SERVICE_NAME
-              value: "my-app"
-            - name: OTEL_RESOURCE_ATTRIBUTES
-              value: "service.namespace=production,deployment.environment=prod"
-```
+<span id="_5-2-coroot-자동-서비스-맵-및-지연-시간-분석"></span>
 
----
+<span id="_5-3-pixie-현재-new-relic-kubernetes-특화-관측성"></span>
+
+<span id="_5-4-cilium-hubble-네트워크-흐름-관찰"></span>
+
+<span id="_5-5-kepler-에너지-소비-모니터링"></span>
 
 <span id="5-ebpf-기반-no-code-모니터링"></span>
 
 ## 5. eBPF 기반 No-Code 모니터링
 
-### 5.1 왜 eBPF 모니터링인가
-
-**eBPF(extended Berkeley Packet Filter)**는 리눅스 커널에서 안전하게 프로그램을 실행할 수 있는 기술입니다. eBPF 기반 모니터링의 가장 큰 장점은 **코드 수정 없이** 관측성을 확보할 수 있다는 점입니다.
-
-![전통적 계측은 SDK 추가와 코드 수정/재배포를 거쳐야 데이터를 수집하지만, eBPF 계측은 애플리케이션 코드 변경 없이 eBPF 프로그램이 커널 레벨 훅에서 데이터를 수집한다는 두 방식의 차이를 보여준다.](../.gitbook/assets/ko-observability-09-observability-optimization-4.png)
+![수동·자동 SDK 계측과 eBPF는 배포 조건과 관찰 범위가 다르며 모든 애플리케이션을 동일하게 관찰하지 않는다.](../.gitbook/assets/ko-observability-09-observability-optimization-4.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-4.html)
 
-| 특성 | 전통적 계측 | eBPF 계측 |
-|---|---|---|
-| **코드 수정** | 필요 | 불필요 |
-| **배포 영향** | 재배포 필요 | 별도 배포 |
-| **오버헤드** | 애플리케이션 레벨 | 커널 레벨 (매우 낮음) |
-| **언어 종속성** | SDK별 지원 필요 | 언어 무관 |
-| **커버리지** | 계측된 부분만 | 시스템 전체 |
-| **유지보수** | 코드와 함께 관리 | 독립적 |
+eBPF는 지원 protocol·kernel·runtime에서 소스 수정을 줄일 수 있습니다. 업무 의미, 모든 언어·라이브러리, 모든 TLS 트래픽을 자동 수집하는 것은 아닙니다. Uprobe가 지원 라이브러리 경계의 평문을 관찰하는 것과 일반적인 TLS 복호화는 다릅니다. 권한·민감 payload·kernel 호환성·실측 overhead를 확인합니다. SDK auto-instrumentation도 소스 변경을 피할 수 있지만 설정·재시작이 필요할 수 있습니다.
 
-### 5.2 Coroot: 자동 서비스 맵 및 지연 시간 분석
+| 도구 | 현재 배포 시 확인할 내용 |
+|---|---|
+| Coroot | 기존 `coroot/coroot` chart는 deprecated입니다. 문서화된 Operator/Coroot CR 흐름을 사용합니다. Operator chart 0.9.10과 CE chart 0.3.3은 별개 구성요소이며 agent 권한·storage·인증을 검토합니다. |
+| Pixie | Kernel/protocol 조건과 control-plane 선택이 있는 오픈소스입니다. 클러스터 내부 저장이 query 결과나 export가 절대 외부로 나가지 않는다는 뜻은 아닙니다. 실제 접근·데이터 경로를 확인합니다. |
+| Cilium Hubble | 호환되는 Cilium 설치가 필요합니다. Flow·L7 policy/proxy·metric 범위가 다르며 모든 앱의 분산 추적을 대체하지 않습니다. |
+| Kepler | 0.10+에서 과거 0.7 구조를 재작성했습니다. Metric과 배포 조건이 달라졌으므로 오래된 privileged/BPF DaemonSet을 복사하지 않습니다. |
 
-Coroot는 eBPF를 활용하여 자동으로 서비스 맵을 생성하고 지연 시간을 분석합니다.
-
-```yaml
-# coroot-helm-values.yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: coroot
----
-# Helm을 통한 Coroot 설치
-# helm repo add coroot https://coroot.github.io/helm-charts
-# helm install coroot coroot/coroot -n coroot -f coroot-helm-values.yaml
-
-coroot:
-  replicas: 1
-  resources:
-    requests:
-      cpu: 200m
-      memory: 1Gi
-    limits:
-      cpu: 1
-      memory: 2Gi
-
-  # Prometheus 연동
-  prometheus:
-    url: "http://prometheus-server.monitoring:9090"
-
-  # ClickHouse 저장소 (로그/트레이스)
-  clickhouse:
-    enabled: true
-    persistence:
-      size: 100Gi
-      storageClass: gp3
-
-node-agent:
-  # eBPF 기반 에이전트
-  ebpf:
-    enabled: true
-
-  resources:
-    requests:
-      cpu: 100m
-      memory: 100Mi
-    limits:
-      cpu: 500m
-      memory: 500Mi
-
-  tolerations:
-    - operator: Exists
-```
-
-**Coroot 주요 기능:**
-
-- **자동 서비스 발견**: eBPF로 네트워크 연결을 감지하여 서비스 맵 자동 생성
-- **지연 시간 분석**: 각 서비스 간 지연 시간을 자동으로 측정
-- **리소스 사용량 추적**: CPU, 메모리, 디스크 I/O를 서비스별로 분석
-- **로그 수집**: 코드 수정 없이 애플리케이션 로그 수집
-
-### 5.3 Pixie (현재 New Relic): Kubernetes 특화 관측성
-
-Pixie는 Kubernetes 환경에 특화된 eBPF 기반 관측성 플랫폼입니다.
-
-```bash
-# Pixie CLI 설치
-bash -c "$(curl -fsSL https://withpixie.ai/install.sh)"
-
-# Pixie 배포
-px deploy
-
-# 클러스터 상태 확인
-px get viziers
-
-# 실시간 HTTP 트래픽 모니터링
-px live http_data
-
-# 서비스별 지연 시간 분석
-px live service_stats
-```
-
-**Pixie 주요 기능:**
-
-- **즉시 사용 가능한 대시보드**: 배포 즉시 HTTP, DNS, MySQL, PostgreSQL 등 자동 모니터링
-- **PxL 스크립트**: Python 유사 쿼리 언어로 커스텀 분석
-- **로컬 데이터 저장**: 민감한 데이터가 클러스터를 떠나지 않음
-- **자동 암호화 분석**: TLS 트래픽도 eBPF로 복호화하여 분석
-
-### 5.4 Cilium Hubble: 네트워크 흐름 관찰
-
-Cilium CNI를 사용하는 EKS 클러스터에서 Hubble은 네트워크 가시성을 제공합니다.
-
-```yaml
-# cilium-hubble-values.yaml
-hubble:
-  enabled: true
-
-  relay:
-    enabled: true
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-
-  ui:
-    enabled: true
-    replicas: 1
-    ingress:
-      enabled: true
-      annotations:
-        kubernetes.io/ingress.class: nginx
-      hosts:
-        - hubble.example.com
-
-  metrics:
-    enabled:
-      - dns
-      - drop
-      - tcp
-      - flow
-      - icmp
-      - http
-    serviceMonitor:
-      enabled: true
-```
-
-```bash
-# Hubble CLI로 실시간 흐름 관찰
-hubble observe --namespace production
-
-# 특정 서비스로의 트래픽 필터링
-hubble observe --to-service production/api-server
-
-# DNS 요청 모니터링
-hubble observe --protocol dns
-
-# 드롭된 패킷 분석
-hubble observe --verdict DROPPED
-```
-
-### 5.5 Kepler: 에너지 소비 모니터링
-
-Kepler(Kubernetes Efficient Power Level Exporter)는 eBPF를 사용하여 워크로드의 에너지 소비를 측정합니다.
-
-```yaml
-# kepler-daemonset.yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: kepler
-  namespace: kepler
-spec:
-  selector:
-    matchLabels:
-      app: kepler
-  template:
-    metadata:
-      labels:
-        app: kepler
-    spec:
-      serviceAccountName: kepler
-      containers:
-        - name: kepler
-          image: quay.io/sustainable_computing_io/kepler:release-0.7
-          securityContext:
-            privileged: true
-          ports:
-            - containerPort: 9102
-              name: metrics
-          volumeMounts:
-            - name: lib-modules
-              mountPath: /lib/modules
-            - name: tracing
-              mountPath: /sys/kernel/tracing
-            - name: kernel-src
-              mountPath: /usr/src/kernels
-          env:
-            - name: NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-      volumes:
-        - name: lib-modules
-          hostPath:
-            path: /lib/modules
-        - name: tracing
-          hostPath:
-            path: /sys/kernel/tracing
-        - name: kernel-src
-          hostPath:
-            path: /usr/src/kernels
-```
-
-**Kepler 메트릭 예시:**
+Kepler 0.11.4 문서는 `kepler_pod_cpu_watts`, `kepler_pod_cpu_joules_total`과 `pod_namespace`/`pod_name` 라벨을 설명합니다. 실제 host에서 하드웨어 에너지 접근과 attribution이 동작해야 합니다. 일반 가상 EKS 노드에서 host RAPL 데이터가 노출된다고 보장하지 않습니다. 해당 release의 배포·하드웨어 지원 문서를 확인한 뒤 측정 정확도를 주장합니다.
 
 ```promql
-# 네임스페이스별 에너지 소비 (줄)
-sum by (namespace) (kepler_container_joules_total)
+# watts gauge는 이미 전력이다.
+sum by (pod_namespace) (kepler_pod_cpu_watts)
 
-# Pod별 전력 소비 (와트)
-rate(kepler_container_joules_total[5m]) * 1000
-
-# 가장 많은 에너지를 소비하는 상위 10개 Pod
-topk(10, sum by (pod_name) (rate(kepler_container_joules_total[5m])))
+# J/s = W이며 1000을 곱하면 mW이다.
+rate(kepler_pod_cpu_joules_total[5m])
 ```
 
----
+Exporter가 실행 중이거나 ready라는 사실만으로 하드웨어 측정이 정확한 것은 아닙니다. EKS Auto Mode·Fargate는 host 접근 조건이 다르므로 모든 곳에 privileged agent를 적용하지 않습니다. Hubble·Coroot·OpenCost UI는 인증과 네트워크 접근을 구성하기 전까지 비공개로 유지합니다.
+
+<span id="_6-1-kubecost-opencost-설치-및-구성"></span>
+
+<span id="_6-2-네임스페이스-팀별-비용-할당"></span>
+
+<span id="_6-3-cloudwatch-비용-최적화"></span>
+
+<span id="_6-4-로그-메트릭-저장-비용-절감-전략"></span>
 
 <span id="6-비용-모니터링"></span>
 
 ## 6. 비용 모니터링
 
-### 6.1 KubeCost / OpenCost 설치 및 구성
+### OpenCost와 비용 할당
 
-OpenCost는 CNCF 프로젝트로, Kubernetes 비용 모니터링의 오픈소스 표준입니다.
+`opencost-values.yaml`은 chart 2.5.31/app 1.121.2를 사용하고 기존 Prometheus를 선택하며 Cloud Cost 수집을 비활성화합니다. OpenCost에 필요한 workload/resource/cost metric이 있는 실제 endpoint로 변경합니다. 접속 성공만으로 충분하지 않습니다. 보호된 Prometheus에는 승인된 인증·CA 구성을 적용합니다.
 
 ```bash
-# OpenCost 설치
 helm repo add opencost https://opencost.github.io/opencost-helm-chart
-helm repo update
-
-helm install opencost opencost/opencost \
-  --namespace opencost \
-  --create-namespace \
-  --set opencost.prometheus.internal.enabled=false \
-  --set opencost.prometheus.external.enabled=true \
-  --set opencost.prometheus.external.url="http://prometheus-server.monitoring:9090" \
-  --set opencost.ui.enabled=true
+helm repo update opencost
+helm upgrade --install opencost opencost/opencost --version 2.5.31   -n opencost --create-namespace -f opencost-values.yaml
+kubectl -n opencost port-forward service/opencost 9003:9003 --address 127.0.0.1
+# 다른 터미널에서 실행:
+curl --fail --get http://127.0.0.1:9003/allocation/compute   --data-urlencode 'window=7d' --data-urlencode 'aggregate=namespace'
 ```
 
-```yaml
-# opencost-values.yaml - 상세 설정
-opencost:
-  exporter:
-    defaultClusterId: "eks-production"
+7일 결과를 요청하려면 충분한 입력 history가 필요합니다. Allocation 추정치는 AWS 청구서와 다릅니다. team·cost-center·cluster·namespace 라벨을 표준화하고 idle/shared 비용 배분을 정의한 뒤 CUR/Data Exports·credit·할인·상각과 대조합니다. AWS Cloud Cost에는 지원되는 `cloudIntegrationSecret` 형식, CUR/Athena/S3 및 범위가 제한된 identity 권한이 필요합니다. 과거 `exporter.aws.athenaProjectID` 같은 지원되지 않는 values 조각으로 연동되지 않습니다. AWS access key를 values에 넣지 않습니다.
 
-    # AWS 비용 연동
-    aws:
-      spotDataRegion: ap-northeast-2
-      spotDataBucket: "my-spot-data-bucket"
-      athenaProjectID: "my-aws-project"
-      athenaRegion: ap-northeast-2
-      athenaDatabase: "athenacurcfn_my_cur"
-      athenaTable: "my_cur"
-      masterPayerARN: "arn:aws:iam::ACCOUNT:role/OpenCostRole"
+### 보존 기간과 아카이브
 
-  prometheus:
-    external:
-      enabled: true
-      url: "http://prometheus-server.monitoring:9090"
-
-  ui:
-    enabled: true
-    ingress:
-      enabled: true
-      annotations:
-        kubernetes.io/ingress.class: nginx
-      hosts:
-        - host: opencost.example.com
-          paths:
-            - path: /
-              pathType: Prefix
-```
-
-### 6.2 네임스페이스/팀별 비용 할당
-
-```yaml
-# cost-allocation-labels.yaml
-# 팀별 비용 추적을 위한 레이블 표준화
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: team-alpha
-  labels:
-    cost-center: "engineering"
-    team: "alpha"
-    environment: "production"
----
-# Pod에 비용 레이블 적용
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-server
-  namespace: team-alpha
-spec:
-  template:
-    metadata:
-      labels:
-        cost-center: "engineering"
-        team: "alpha"
-        component: "api"
-    spec:
-      containers:
-        - name: api
-          resources:
-            requests:
-              cpu: 500m
-              memory: 512Mi
-            limits:
-              cpu: 1000m
-              memory: 1Gi
-```
-
-**OpenCost API를 통한 비용 조회:**
+보존 기간 변경 전에 대상 log group을 조회합니다.
 
 ```bash
-# 네임스페이스별 비용 (지난 7일)
-curl -s "http://opencost.opencost:9003/allocation/compute?window=7d&aggregate=namespace" | jq '.'
-
-# 팀 레이블별 비용
-curl -s "http://opencost.opencost:9003/allocation/compute?window=7d&aggregate=label:team" | jq '.'
-
-# 일별 비용 추이
-curl -s "http://opencost.opencost:9003/allocation/compute?window=30d&step=1d&aggregate=namespace" | jq '.'
+aws logs describe-log-groups --log-group-name-prefix /eks/production/   --query 'logGroups[].{name:logGroupName,retention:retentionInDays,storedBytes:storedBytes}'   --output json
 ```
 
-### 6.3 CloudWatch 비용 최적화
+승인된 기간을 명시적으로 선택한 group에 인프라 설정으로 적용합니다. `storedBytes == 0`은 미사용을 뜻하지 않습니다. Subscription·producer·감사 요구·앞으로의 write가 남아 있을 수 있습니다. “빈 group”을 일괄 삭제하거나 tab으로 구분된 CLI text를 한 줄에 group 하나라고 간주하지 않습니다.
 
-```yaml
-# cloudwatch-log-retention.yaml
-# 로그 보존 기간 최적화로 비용 절감
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluent-bit-cloudwatch-config
-  namespace: logging
-data:
-  fluent-bit.conf: |
-    [OUTPUT]
-        Name                cloudwatch_logs
-        Match               *
-        region              ap-northeast-2
-        log_group_name      /eks/production/application
-        log_stream_prefix   ${HOSTNAME}-
-        auto_create_group   true
-        # 로그 보존 기간 설정 (비용 최적화)
-        log_retention_days  14
-
-        # 배치 설정으로 API 호출 최적화
-        log_format          json
-        max_batch_size      1048576
-        max_batch_put_limit 100
-```
-
-```bash
-# CloudWatch Logs 보존 기간 일괄 설정
-aws logs describe-log-groups --query 'logGroups[*].logGroupName' --output text | \
-while read log_group; do
-  aws logs put-retention-policy \
-    --log-group-name "$log_group" \
-    --retention-in-days 14
-done
-
-# 미사용 로그 그룹 정리
-aws logs describe-log-groups --query 'logGroups[?storedBytes==`0`].logGroupName' --output text | \
-while read log_group; do
-  echo "Deleting empty log group: $log_group"
-  aws logs delete-log-group --log-group-name "$log_group"
-done
-```
-
-### 6.4 로그/메트릭 저장 비용 절감 전략
-
-![수집한 로그·메트릭을 중요도에 따라 분류해 전체 저장, 샘플링, 집계 중 하나로 처리한 뒤 각각 비용이 다른 저장소(S3 Glacier Deep Archive, S3 Standard-IA, 메모리/로컬)로 보내는 비용 절감 흐름을 보여준다.](../.gitbook/assets/ko-observability-09-observability-optimization-5.png)
+![활성 장애 데이터는 즉시 조회 가능하게 보존하고 샘플링 영향을 측정한다. 복구 지연을 허용하는 데이터만 별도 아카이브로 관리한다.](../.gitbook/assets/ko-observability-09-observability-optimization-5.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-5.html)
 
-| 전략 | 적용 대상 | 예상 절감 |
-|---|---|---|
-| **로그 레벨 필터링** | DEBUG/TRACE 로그 드롭 | 40-60% |
-| **샘플링** | 고빈도 이벤트 | 30-50% |
-| **압축** | 모든 로그/메트릭 | 60-80% |
-| **계층화 저장** | 오래된 데이터 | 70-90% |
-| **보존 기간 최적화** | 중요도 낮은 데이터 | 50-70% |
+활성 Loki/Tempo block을 무작정 Glacier로 전환하지 않습니다. 백엔드는 즉시 읽기를 요구하며 아카이브 객체를 자동 복구한다고 보장하지 않습니다. Backend retention/compaction과 object lifecycle을 함께 설계하고 복구·재조회를 시험합니다. 압축·필터·보존 절감률은 서로 중첩되므로 독립적인 수치처럼 합산하지 않습니다.
 
----
+<span id="_7-1-grafana-기반-통합-대시보드-구성"></span>
+
+<span id="_7-2-로그-메트릭-트레이스-연계-exemplars"></span>
+
+<span id="_7-3-알림-전략-경고-피로-방지"></span>
+
+<span id="_7-4-slo-sli-기반-모니터링"></span>
 
 <span id="7-통합-관측성-대시보드"></span>
 
 ## 7. 통합 관측성 대시보드
 
-### 7.1 Grafana 기반 통합 대시보드 구성
+[Grafana 가이드](./grafana/README.md)의 고정 provisioning을 사용해 `prometheus`·`loki`·`tempo` UID, 현재 `tracesToLogsV2`, 실제 HTTP/TLS endpoint를 맞춥니다. 환경 변수만으로 데이터 소스가 생성되지는 않습니다. Exemplar 라벨 이름과 JSON trace field는 앱 계측과 일치해야 합니다.
 
-```yaml
-# grafana-datasources.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-datasources
-  namespace: monitoring
-data:
-  datasources.yaml: |
-    apiVersion: 1
-    datasources:
-      # Prometheus - 메트릭
-      - name: Prometheus
-        type: prometheus
-        access: proxy
-        url: http://prometheus-server:9090
-        isDefault: true
-        jsonData:
-          httpMethod: POST
-          exemplarTraceIdDestinations:
-            - name: traceID
-              datasourceUid: tempo
+Prometheus feature switch는 CLI 또는 Operator의 지원 `enableFeatures` 필드에 설정하며 `prometheus.yml`의 `global.enable_features`가 아닙니다. 예제는 `storage.exemplars.max_exemplars`를 사용하고 저장 기능을 켤 때는 해당 버전의 feature flag도 적용합니다. 앱에는 collector 등록과 OpenMetrics exposition이 필요합니다. Raw request path나 unsampled/invalid trace ID를 exemplar 계측에 넣지 않습니다.
 
-      # Loki - 로그
-      - name: Loki
-        type: loki
-        access: proxy
-        url: http://loki-gateway:80
-        jsonData:
-          derivedFields:
-            - name: TraceID
-              matcherRegex: '"traceId":"([a-f0-9]+)"'
-              url: '$${__value.raw}'
-              datasourceUid: tempo
+### 요청 SLO·burn rate·남은 에러 버짓
 
-      # Tempo - 트레이스
-      - name: Tempo
-        type: tempo
-        access: proxy
-        url: http://tempo-query-frontend:3100
-        uid: tempo
-        jsonData:
-          httpMethod: GET
-          tracesToLogs:
-            datasourceUid: loki
-            tags: ['service.name', 'pod']
-          serviceMap:
-            datasourceUid: prometheus
-          nodeGraph:
-            enabled: true
-          lokiSearch:
-            datasourceUid: loki
+요청 기반 99.9% 가용성 SLO의 허용 bad request는 정해진 기간의 `전체 요청 × 0.001`입니다. 자동으로 “43분 downtime”이 되는 것은 아닙니다. 시간 기반 SLI와 요청 기반 SLI의 분모는 다릅니다.
+
+`slo-rules.yaml`은 짧은 구간의 오류율과 요청 수로 가중한 30일 오류율을 구분합니다.
+
+```promql
+# 최근 burn rate:
+service:http_5xx:ratio_5m / 0.001
+
+# 30일 요청 에러 버짓의 잔여 비율:
+1 - service:http_5xx:ratio_30d / 0.001
 ```
 
-### 7.2 로그 -> 메트릭 -> 트레이스 연계 (Exemplars)
+30일 비율은 분자와 분모에 `increase(counter[30d])`를 사용하며 최근 5분 비율로 대체하지 않습니다. 충분한 history와 수집 공백 검사가 필요합니다. 소진한 버짓은 음수일 수 있습니다. 데이터 부재·0요청을 완벽한 가용성으로 바꾸지 않습니다. `le="0.5"` bucket/count는 500ms 이내 요청의 비율이며 “p99 값 중 500ms 미만인 비율”이 아닙니다.
 
-Exemplars는 메트릭 데이터 포인트에 트레이스 ID를 연결하는 기능입니다.
+예제는 1h/5m 구간에서 14.4, 6h/30m 구간에서 6의 burn threshold를 함께 사용합니다. 30일 목표의 빠른/지속 소진을 위한 예시 정책이며 모든 서비스에 같은 severity가 맞는 것은 아닙니다. Service owner와 평가 구간·최소 traffic 신뢰도·대응 정책을 조정합니다. 한 번의 짧은 구간 추정치만으로 배포를 자동 중단하지 않습니다.
 
-```yaml
-# prometheus-exemplars-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: prometheus-config
-  namespace: monitoring
-data:
-  prometheus.yml: |
-    global:
-      scrape_interval: 15s
-      # Exemplars 활성화
-      enable_features:
-        - exemplar-storage
+### 알림 라우팅
 
-    scrape_configs:
-      - job_name: 'application'
-        kubernetes_sd_configs:
-          - role: pod
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-            regex: 'true'
-            action: keep
-```
+`alertmanager.yaml`은 현재 matcher, Asia/Seoul 업무 외 시간, 비어 있지 않은 cluster/node 라벨을 조건으로 하는 inhibition을 제공합니다. 누락 라벨끼리는 같다고 비교되어 무관한 알림까지 억제할 수 있습니다. `review-only` receiver에는 외부 integration이 없으며 전송 없이 라우팅 설정을 검증합니다. 운영에 쓰기 전에 승인된 연락처, Secret 기반 webhook/routing key와 receiver policy를 연결하고 delivery·inhibition을 시험합니다. Evaluation·grouping·repeat interval·pending·mute 시간의 역할은 서로 다릅니다.
 
-애플리케이션에서 Exemplars 내보내기 (Go 예시):
+<span id="_8-1-로그-메트릭-저장-비용-폭증-대응"></span>
 
-```go
-// Prometheus 히스토그램에 Exemplars 추가
-import (
-    "github.com/prometheus/client_golang/prometheus"
-    "go.opentelemetry.io/otel/trace"
-)
+<span id="_8-2-eks-auto-mode-노드-모니터링"></span>
 
-var httpDuration = prometheus.NewHistogramVec(
-    prometheus.HistogramOpts{
-        Name:    "http_request_duration_seconds",
-        Help:    "HTTP request duration",
-        Buckets: prometheus.DefBuckets,
-    },
-    []string{"method", "path", "status"},
-)
+<span id="_8-3-도구-간-데이터-상관관계-분석"></span>
 
-func recordMetric(ctx context.Context, method, path, status string, duration float64) {
-    span := trace.SpanFromContext(ctx)
-    traceID := span.SpanContext().TraceID().String()
+<span id="_8-4-대규모-클러스터에서-모니터링-시스템-성능-유지"></span>
 
-    httpDuration.WithLabelValues(method, path, status).(prometheus.ExemplarObserver).
-        ObserveWithExemplar(duration, prometheus.Labels{"traceID": traceID})
-}
-```
-
-### 7.3 알림 전략: 경고 피로 방지
-
-```yaml
-# alertmanager-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: alertmanager-config
-  namespace: monitoring
-data:
-  alertmanager.yml: |
-    global:
-      resolve_timeout: 5m
-
-    # 라우팅 규칙
-    route:
-      receiver: 'default'
-      group_by: ['alertname', 'namespace', 'service']
-      group_wait: 30s
-      group_interval: 5m
-      repeat_interval: 4h
-
-      routes:
-        # 심각도별 라우팅
-        - match:
-            severity: critical
-          receiver: 'critical-alerts'
-          group_wait: 10s
-          repeat_interval: 1h
-
-        - match:
-            severity: warning
-          receiver: 'warning-alerts'
-          group_wait: 1m
-          repeat_interval: 4h
-
-        # 업무 시간 외 알림 억제
-        - match:
-            severity: info
-          receiver: 'info-alerts'
-          mute_time_intervals:
-            - off-hours
-
-    # 알림 억제 규칙
-    inhibit_rules:
-      # 클러스터 다운 시 개별 서비스 알림 억제
-      - source_match:
-          alertname: ClusterDown
-        target_match_re:
-          alertname: '.+'
-        equal: ['cluster']
-
-      # 노드 다운 시 해당 노드의 Pod 알림 억제
-      - source_match:
-          alertname: NodeDown
-        target_match_re:
-          alertname: 'Pod.*'
-        equal: ['node']
-
-    # 업무 외 시간 정의
-    time_intervals:
-      - name: off-hours
-        time_intervals:
-          - weekdays: ['saturday', 'sunday']
-          - times:
-              - start_time: '00:00'
-                end_time: '09:00'
-              - start_time: '18:00'
-                end_time: '24:00'
-
-    receivers:
-      - name: 'default'
-        slack_configs:
-          - channel: '#alerts-default'
-
-      - name: 'critical-alerts'
-        slack_configs:
-          - channel: '#alerts-critical'
-        pagerduty_configs:
-          - service_key: '<pagerduty-key>'
-
-      - name: 'warning-alerts'
-        slack_configs:
-          - channel: '#alerts-warning'
-
-      - name: 'info-alerts'
-        slack_configs:
-          - channel: '#alerts-info'
-```
-
-### 7.4 SLO/SLI 기반 모니터링
-
-```yaml
-# slo-recording-rules.yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: slo-rules
-  namespace: monitoring
-spec:
-  groups:
-    - name: slo.rules
-      rules:
-        # 가용성 SLI: 성공한 요청 비율
-        - record: sli:availability:ratio
-          expr: |
-            sum(rate(http_requests_total{status!~"5.."}[5m]))
-            /
-            sum(rate(http_requests_total[5m]))
-
-        # 지연 시간 SLI: P99 < 500ms 비율
-        - record: sli:latency:ratio
-          expr: |
-            sum(rate(http_request_duration_seconds_bucket{le="0.5"}[5m]))
-            /
-            sum(rate(http_request_duration_seconds_count[5m]))
-
-        # 에러 버짓 소비율 (30일 기준)
-        - record: slo:error_budget:remaining
-          expr: |
-            1 - (
-              (1 - sli:availability:ratio)
-              /
-              (1 - 0.999)  # 99.9% SLO 목표
-            )
-
-    - name: slo.alerts
-      rules:
-        # 에러 버짓 50% 소진 경고
-        - alert: ErrorBudgetBurnRateHigh
-          expr: slo:error_budget:remaining < 0.5
-          for: 5m
-          labels:
-            severity: warning
-          annotations:
-            summary: "에러 버짓 50% 이상 소진"
-            description: "남은 에러 버짓: {{ $value | humanizePercentage }}"
-
-        # 에러 버짓 80% 소진 심각
-        - alert: ErrorBudgetBurnRateCritical
-          expr: slo:error_budget:remaining < 0.2
-          for: 5m
-          labels:
-            severity: critical
-          annotations:
-            summary: "에러 버짓 80% 이상 소진"
-            description: "남은 에러 버짓: {{ $value | humanizePercentage }}"
-```
-
----
+<span id="_8-5-고가용성-관측성-스택-구성"></span>
 
 <span id="8-운영-과제와-해결-방법"></span>
 
 ## 8. 운영 과제와 해결 방법
 
-### 8.1 로그/메트릭 저장 비용 폭증 대응
-
-| 문제 상황 | 원인 | 해결 방법 |
-|---|---|---|
-| 로그 비용 급증 | DEBUG 로그 과다 | 로그 레벨 필터링, 샘플링 |
-| 메트릭 카디널리티 폭발 | Pod UID, 타임스탬프 레이블 | 레이블 정리, 메트릭 드롭 |
-| 트레이스 저장 비용 | 100% 샘플링 | Tail Sampling 적용 |
-| 장기 보관 비용 | 모든 데이터 동일 보관 | 계층화 저장 (Tiered Storage) |
-
-```yaml
-# cost-optimization-config.yaml
-# Fluent Bit 로그 필터링
-[FILTER]
-    Name     grep
-    Match    *
-    Exclude  log ^.*DEBUG.*$
-    Exclude  log ^.*TRACE.*$
-
-# 고빈도 로그 샘플링 (10%)
-[FILTER]
-    Name          throttle
-    Match         kube.var.log.containers.nginx*
-    Rate          10
-    Window        60
-    Print_Status  true
-```
-
-### 8.2 EKS Auto Mode 노드 모니터링
-
-EKS Auto Mode에서는 노드가 자동으로 관리되므로 특별한 모니터링 전략이 필요합니다.
-
-```yaml
-# auto-mode-monitoring.yaml
-# Managed Node Pool 모니터링
-apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
-metadata:
-  name: auto-mode-nodes
-  namespace: monitoring
-spec:
-  selector:
-    matchLabels:
-      eks.amazonaws.com/managed: "true"
-  namespaceSelector:
-    any: true
-  podMetricsEndpoints:
-    - port: metrics
-      interval: 30s
----
-# CloudWatch Container Insights 활성화
-# EKS Auto Mode와 함께 사용 권장
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cwagent-config
-  namespace: amazon-cloudwatch
-data:
-  cwagentconfig.json: |
-    {
-      "logs": {
-        "metrics_collected": {
-          "kubernetes": {
-            "cluster_name": "eks-auto-cluster",
-            "metrics_collection_interval": 60
-          }
-        }
-      }
-    }
-```
-
-### 8.3 도구 간 데이터 상관관계 분석
-
-![사용자가 느린 API를 조사할 때 Grafana가 Prometheus의 P99 Exemplar에서 얻은 traceID로 Tempo 트레이스를 조회해 병목 서비스를 식별하고, 같은 traceID로 Loki 로그를 필터링해 통합된 분석 결과를 돌려주는 과정을 보여준다.](../.gitbook/assets/ko-observability-09-observability-optimization-6.png)
+![Grafana에서 원본 histogram exemplar를 조회한 뒤 보존된 trace를 확인하고 같은 trace ID의 로그와 연결한다.](../.gitbook/assets/ko-observability-09-observability-optimization-6.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-6.html)
 
-### 8.4 대규모 클러스터에서 모니터링 시스템 성능 유지
+계산된 p99 시계열 자체에 exemplar metadata가 유지되는 것은 아닙니다. 원래 계측된 series에서 exemplar를 조회하고 trace retention과 log field를 확인합니다. 링크가 열려도 데이터가 없다면 UI 오류가 아니라 sampling/retention 불일치일 수 있습니다.
 
-```yaml
-# high-scale-prometheus.yaml
-apiVersion: monitoring.coreos.com/v1
-kind: Prometheus
-metadata:
-  name: prometheus
-  namespace: monitoring
-spec:
-  replicas: 2
-  retention: 7d
-  retentionSize: 100GB
+EKS Auto Mode에는 Kubernetes Event·Node Condition을 게시하는 node monitoring agent가 포함됩니다. 이 신호와 workload metric을 함께 봅니다. PodMonitor는 Pod와 이름이 있는 container port를 선택하므로 node label을 지정한다고 node metric endpoint가 생기지 않습니다. CloudWatch Observability add-on/operator가 agent를 설치하며 IAM·설정이 필요합니다. ConfigMap 하나로 Container Insights가 활성화되지 않습니다.
 
-  # 샤딩으로 부하 분산
-  shards: 3
-
-  resources:
-    requests:
-      cpu: 2
-      memory: 8Gi
-    limits:
-      cpu: 4
-      memory: 16Gi
-
-  # 외부 저장소로 오프로드
-  remoteWrite:
-    - url: "http://victoriametrics:8428/api/v1/write"
-      queueConfig:
-        capacity: 10000
-        maxShards: 30
-        maxSamplesPerSend: 5000
-
-  # 쿼리 성능 최적화
-  queryLogFile: /prometheus/query.log
-
-  additionalArgs:
-    # 쿼리 동시성 제한
-    - name: query.max-concurrency
-      value: "20"
-    # 쿼리 타임아웃
-    - name: query.timeout
-      value: "2m"
-```
-
-### 8.5 고가용성 관측성 스택 구성
-
-![여러 노드의 Fluent Bit가 Load Balancer를 거쳐 이중화된 OTel Collector로 모이고, 두 Loki Write가 공유 S3 Bucket에 로그를, 두 vminsert가 vmstorage x3에 메트릭을 기록하는 고가용성 관측성 스택 구성을 보여준다.](../.gitbook/assets/ko-observability-09-observability-optimization-7.png)
+![수집·gateway·저장 계층의 가용성에는 복제·quorum·routing·query 계약이 필요하며 아이콘 수는 replica 권장 수가 아니다.](../.gitbook/assets/ko-observability-09-observability-optimization-7.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-7.html)
 
----
+수집·queue·receiver·storage·query 계층별 실패를 시험합니다. PDB는 이를 존중하는 자발적 중단을 제한하지만 node 장애에도 가용성을 보장하는 기능은 아닙니다. Replication factor·quorum·AZ 배치·stateful storage·read 병합은 별도 요구입니다. 현재 Loki/Tempo 모드를 따르고 폐기된 Simple Scalable 또는 Tempo 2 ingester 예제를 최신 스택에 섞지 않습니다.
+
+<span id="_9-1-단계별-도입-전략"></span>
+
+<span id="_9-2-비용-대비-효과-분석"></span>
+
+<span id="_9-3-체크리스트"></span>
+
+<span id="_9-4-관련-문서-및-퀴즈"></span>
 
 <span id="9-모범-사례와-다음-단계"></span>
 
 ## 9. 모범 사례와 다음 단계
 
-### 9.1 단계별 도입 전략
-
-![CloudWatch 기본 구성에서 시작해 Prometheus/Grafana 스택을 거쳐 OpenTelemetry와 eBPF, 비용 모니터링 기반 고급 관측성으로 단계적으로 성장하는 EKS 관측성 3단계 도입 경로를 보여준다.](../.gitbook/assets/ko-observability-09-observability-optimization-8.png)
+![장애 질문과 운영 역량에 따라 선택하는 도입 단계이며 필수 제품 이전이나 고정 일정은 아니다.](../.gitbook/assets/ko-observability-09-observability-optimization-8.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-8.html)
 
-| 단계 | 구성 요소 | 소요 기간 | 비용 | 운영 복잡도 |
-|---|---|---|---|---|
-| **1단계 (기본)** | CloudWatch 기반 | 1-2일 | 낮음 | 낮음 |
-| **2단계 (중급)** | Grafana 스택 | 1-2주 | 중간 | 중간 |
-| **3단계 (고급)** | OpenTelemetry + eBPF | 2-4주 | 높음 | 높음 |
+신호별 bytes/day, active series, 새 series 증가, samples/second, spans/second, sample 보존율, query scan, retention, buffer loss, 복구 시간과 운영 시간을 먼저 측정합니다. 현재 Region별 가격과 계약 단가를 사용합니다. 월 $5,000에서 $2,500을 목표로 하는 가상 사례도 실제 비용 항목을 나눈 다음 절감을 추정해야 합니다. 도구 변경만으로 50% 절감이 보장되지 않습니다.
 
-### 9.2 비용 대비 효과 분석
+한 번에 측정 가능한 변경 하나를 적용하고 전후의 장애 조사 성공률·SLO coverage·손실 데이터·청구액을 비교합니다. 잘못된 필터를 되돌리고 진단을 복원할 만큼의 데이터를 유지합니다. 도입 기간은 권한·팀 경험·검증·이전에 따라 달라지므로 “1~2일”을 보편적인 약속으로 제시하지 않습니다.
 
-| 도구 조합 | 월 예상 비용 (100노드) | 기능 커버리지 | ROI |
-|---|---|---|---|
-| CloudWatch 전체 | $500-1,000 | 기본 | 낮음 |
-| Prometheus + Loki + Grafana | $200-400 (인프라) | 중급 | 중간 |
-| AMP + Tempo + eBPF | $300-600 | 고급 | 높음 |
-| 상용 솔루션 (Datadog 등) | $2,000-5,000 | 전체 | 상황에 따라 |
+### 검증 범위
 
-### 9.3 체크리스트
+Prometheus config/9개 rule, 실제 합성 scrape에서 선택적 bucket relabeling, 30일 요청 버짓을 포함한 SLO 7개 assertion, 실제 Collector tail sampling, Alertmanager config, 고정 OpenCost Helm render를 검증했습니다. 운영 workload·청구서 대조·Kubernetes/eBPF 설치·외부 알림 전송은 실행하지 않았습니다. 다이어그램과 브라우저 검사는 리뷰 보고서에 별도로 기록합니다.
 
-**관측성 구현 체크리스트:**
-
-- [ ] 로깅, 메트릭, 트레이싱 3대 축 모두 구현
-- [ ] 데이터 간 상관관계 (Correlation) 설정
-- [ ] 카디널리티 관리 정책 수립
-- [ ] 샘플링 전략 정의 및 적용
-- [ ] 비용 모니터링 도구 배포
-- [ ] 알림 규칙 최적화 (경고 피로 방지)
-- [ ] SLO/SLI 정의 및 대시보드 구성
-- [ ] 장기 저장 전략 수립
-- [ ] 고가용성 구성 완료
-- [ ] 문서화 및 팀 교육
-
-### 9.4 관련 문서 및 퀴즈
-
-**관련 문서:**
+### 관련 문서와 퀴즈
 
 - [Prometheus 운영 가이드](./metrics/01-prometheus.md)
-- [Grafana 대시보드 구성](./grafana/README.md)
-
-**관련 퀴즈:**
-
+- [Grafana 대시보드](./grafana/README.md)
 - [관측성 최적화 퀴즈](../quizzes/observability/09-observability-optimization-quiz.md)
 
----
+<span id="목차"></span>
 
 ## 참고 자료
 
-- [OpenTelemetry 공식 문서](https://opentelemetry.io/docs/)
-- [Grafana Loki 문서](https://grafana.com/docs/loki/latest/)
-- [Prometheus Operator](https://prometheus-operator.dev/)
-- [AWS Observability Best Practices](https://aws-observability.github.io/observability-best-practices/)
-- [OpenCost 프로젝트](https://www.opencost.io/)
-- [eBPF.io](https://ebpf.io/)
+- [Collector tail sampling v0.160.0](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/processor/tailsamplingprocessor)
+- [Prometheus configuration](https://prometheus.io/docs/prometheus/latest/configuration/configuration/)
+- [Prometheus alerting configuration](https://prometheus.io/docs/alerting/latest/configuration/)
+- [AMP workspace retention configuration](https://docs.aws.amazon.com/prometheus/latest/APIReference/API_UpdateWorkspaceConfiguration.html)
+- [EKS Auto Mode troubleshooting](https://docs.aws.amazon.com/eks/latest/userguide/auto-troubleshoot.html)
+- [CloudWatch Observability add-on](https://docs.aws.amazon.com/eks/latest/userguide/cloudwatch.html)
+- [Kepler v0.11.4](https://github.com/sustainable-computing-io/kepler/tree/v0.11.4)
+- [Coroot Helm charts](https://github.com/coroot/helm-charts/tree/main/charts)
+- [OpenCost Helm chart](https://github.com/opencost/opencost-helm-chart/tree/main/charts/opencost)
+- [Pixie](https://github.com/pixie-io/pixie)

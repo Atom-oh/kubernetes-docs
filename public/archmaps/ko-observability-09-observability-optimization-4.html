@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" data-preset="classic">
+<html lang="ko" data-theme="dark" data-preset="classic">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -3581,6 +3581,9 @@
       }
       .toolbar {
         position: relative;
+        top: auto;
+        right: auto;
+        flex-wrap: wrap;
         justify-content: flex-end;
         width: max-content;
         max-width: 100%;
@@ -5055,25 +5058,25 @@
         <text data-detail="context" x="125" y="136" class="t-muted" font-size="9" text-anchor="middle">서비스 소스</text>
         </g>
 
-        <g id="node-sdk" data-node-id="sdk" data-node-label="SDK 추가" tabindex="0" role="button" aria-label="Focus SDK 추가, 언어별 계측 라이브러리, 전통적 계측 방식" aria-pressed="false" data-node-kind="backend" data-node-sublabel="언어별 계측 라이브러리" data-node-context="전통적 계측 방식">
-          <title>SDK 추가 · 언어별 계측 라이브러리 · 전통적 계측 방식</title>
+        <g id="node-sdk" data-node-id="sdk" data-node-label="수동 / 자동 계측" tabindex="0" role="button" aria-label="Focus 수동 / 자동 계측, 언어별 계측 라이브러리, 전통적 계측 방식" aria-pressed="false" data-node-kind="backend" data-node-sublabel="언어별 계측 라이브러리" data-node-context="전통적 계측 방식">
+          <title>수동 / 자동 계측 · 언어별 계측 라이브러리 · 전통적 계측 방식</title>
           <rect x="270" y="90" width="170" height="64" rx="6" class="c-mask"/>
           <rect x="270" y="90" width="170" height="64" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(276 96) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="355" y="120" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">SDK 추가</text>
+          <text data-node-label="" data-detail-anchor="" x="355" y="120" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">수동 / 자동 계측</text>
         <text data-detail="context" x="355" y="136" class="t-muted" font-size="9" text-anchor="middle">언어별 계측 라이브러리</text>
         </g>
 
-        <g id="node-redeploy" data-node-id="redeploy" data-node-label="코드 수정/재배포" tabindex="0" role="button" aria-label="Focus 코드 수정/재배포, 빌드 · 롤아웃, 전통적 계측 방식" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="빌드 · 롤아웃" data-node-context="전통적 계측 방식">
-          <title>코드 수정/재배포 · 빌드 · 롤아웃 · 전통적 계측 방식</title>
+        <g id="node-redeploy" data-node-id="redeploy" data-node-label="배포 설정·재시작" tabindex="0" role="button" aria-label="Focus 배포 설정·재시작, 빌드 · 롤아웃, 전통적 계측 방식" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="빌드 · 롤아웃" data-node-context="전통적 계측 방식">
+          <title>배포 설정·재시작 · 빌드 · 롤아웃 · 전통적 계측 방식</title>
           <rect x="500" y="90" width="170" height="64" rx="6" class="c-mask"/>
           <rect x="500" y="90" width="170" height="64" rx="6" class="c-cloud" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(506 96) scale(0.6875)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="585" y="120" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">코드 수정/재배포</text>
+          <text data-node-label="" data-detail-anchor="" x="585" y="120" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">배포 설정·재시작</text>
         <text data-detail="context" x="585" y="136" class="t-muted" font-size="9" text-anchor="middle">빌드 · 롤아웃</text>
         </g>
 
@@ -5100,15 +5103,15 @@
         <text data-detail="context" x="125" y="426" class="t-muted" font-size="9" text-anchor="middle">서비스 소스</text>
         </g>
 
-        <g id="node-nochange" data-node-id="nochange" data-node-label="변경 없음" tabindex="0" role="button" aria-label="Focus 변경 없음, 재배포 불필요, eBPF 계측 방식" aria-pressed="false" data-node-kind="backend" data-node-sublabel="재배포 불필요" data-node-tag="no-code" data-node-context="eBPF 계측 방식">
-          <title>변경 없음 · 재배포 불필요 · eBPF 계측 방식 · no-code</title>
+        <g id="node-nochange" data-node-id="nochange" data-node-label="변경 없음" tabindex="0" role="button" aria-label="Focus 변경 없음, 앱 코드 수정 완화, eBPF 계측 방식" aria-pressed="false" data-node-kind="backend" data-node-sublabel="앱 코드 수정 완화" data-node-tag="no-code" data-node-context="eBPF 계측 방식">
+          <title>변경 없음 · 앱 코드 수정 완화 · eBPF 계측 방식 · no-code</title>
           <rect x="270" y="380" width="170" height="64" rx="6" class="c-mask"/>
           <rect x="270" y="380" width="170" height="64" rx="6" class="c-backend" data-animate="node" style="--step:4" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(276 386) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="355" y="410" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">변경 없음</text>
-        <text data-detail="context" x="355" y="426" class="t-muted" font-size="9" text-anchor="middle">재배포 불필요</text>
+        <text data-detail="context" x="355" y="426" class="t-muted" font-size="9" text-anchor="middle">앱 코드 수정 완화</text>
         <text data-detail="fine" x="355" y="436" class="t-backend" font-size="7" text-anchor="middle">no-code</text>
         </g>
 
@@ -5124,19 +5127,19 @@
         <text data-detail="context" x="585" y="296" class="t-muted" font-size="9" text-anchor="middle">커널 내 안전 실행</text>
         </g>
 
-        <g id="node-hook" data-node-id="hook" data-node-label="커널 레벨 훅" tabindex="0" role="button" aria-label="Focus 커널 레벨 훅, 언어 무관, eBPF 계측 방식" aria-pressed="false" data-node-kind="backend" data-node-sublabel="언어 무관" data-node-context="eBPF 계측 방식">
-          <title>커널 레벨 훅 · 언어 무관 · eBPF 계측 방식</title>
+        <g id="node-hook" data-node-id="hook" data-node-label="커널 레벨 훅" tabindex="0" role="button" aria-label="Focus 커널 레벨 훅, 지원 커널·런타임, eBPF 계측 방식" aria-pressed="false" data-node-kind="backend" data-node-sublabel="지원 커널·런타임" data-node-context="eBPF 계측 방식">
+          <title>커널 레벨 훅 · 지원 커널·런타임 · eBPF 계측 방식</title>
           <rect x="500" y="380" width="170" height="64" rx="6" class="c-mask"/>
           <rect x="500" y="380" width="170" height="64" rx="6" class="c-backend" data-animate="node" style="--step:5" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(506 386) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="585" y="410" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">커널 레벨 훅</text>
-        <text data-detail="context" x="585" y="426" class="t-muted" font-size="9" text-anchor="middle">언어 무관</text>
+        <text data-detail="context" x="585" y="426" class="t-muted" font-size="9" text-anchor="middle">지원 커널·런타임</text>
         </g>
 
-        <g id="node-collect-b" data-node-id="collect-b" data-node-label="데이터 수집" tabindex="0" role="button" aria-label="Focus 데이터 수집, 시스템 전체, eBPF 계측 방식" aria-pressed="false" data-node-kind="database" data-node-sublabel="시스템 전체" data-node-context="eBPF 계측 방식">
-          <title>데이터 수집 · 시스템 전체 · eBPF 계측 방식</title>
+        <g id="node-collect-b" data-node-id="collect-b" data-node-label="데이터 수집" tabindex="0" role="button" aria-label="Focus 데이터 수집, 지원 프로토콜 범위, eBPF 계측 방식" aria-pressed="false" data-node-kind="database" data-node-sublabel="지원 프로토콜 범위" data-node-context="eBPF 계측 방식">
+          <title>데이터 수집 · 지원 프로토콜 범위 · eBPF 계측 방식</title>
           <rect x="730" y="380" width="170" height="64" rx="6" class="c-mask"/>
           <rect x="730" y="380" width="170" height="64" rx="6" class="c-database" data-animate="node" style="--step:6" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(736 386) scale(0.6875)">
@@ -5144,7 +5147,7 @@
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="815" y="410" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">데이터 수집</text>
-        <text data-detail="context" x="815" y="426" class="t-muted" font-size="9" text-anchor="middle">시스템 전체</text>
+        <text data-detail="context" x="815" y="426" class="t-muted" font-size="9" text-anchor="middle">지원 프로토콜 범위</text>
         </g>
 
         <!-- Connection labels -->
@@ -5382,9 +5385,8 @@
           <h3>전통적 계측</h3>
         </div>
         <ul>
-          <li>&bull; 코드 수정 필요, 재배포 필요</li>
-          <li>&bull; 오버헤드는 애플리케이션 레벨</li>
-          <li>&bull; 언어별 SDK 지원 필요, 계측된 부분만 커버</li>
+          <li>&bull; 자동 계측은 소스 변경 없이도 가능</li>
+          <li>&bull; 업무 의미와 사용자 정의 span 표현</li>
         </ul>
       </div>
 
@@ -5394,9 +5396,8 @@
           <h3>eBPF 계측</h3>
         </div>
         <ul>
-          <li>&bull; 코드 수정 불필요, 별도 배포</li>
-          <li>&bull; 커널 레벨 오버헤드(매우 낮음)</li>
-          <li>&bull; 언어 무관, 시스템 전체 커버</li>
+          <li>&bull; 커널·런타임·TLS 라이브러리별 제약</li>
+          <li>&bull; 부하·권한·민감 데이터 노출 검증</li>
         </ul>
       </div>
     </div>
@@ -7192,7 +7193,7 @@
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
         label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
-        if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.isPlaying()) {
+        if (paused && lastEffectivePaused !== true && Archify.guidedViews && typeof Archify.guidedViews.isPlaying === 'function' && typeof Archify.guidedViews.pause === 'function' && Archify.guidedViews.isPlaying()) {
           Archify.guidedViews.pause();
         }
         if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.settleHandoff) {

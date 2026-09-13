@@ -19,7 +19,7 @@
           "grafana",
           "prometheus"
         ],
-        "note": "P99 지연 시간 쿼리 결과에 붙은 Exemplar가 traceID를 제공한다."
+        "note": "지연 그래프와 원본 histogram exemplar를 함께 조회한다. 계산된 P99 시계열이 exemplar를 보존하는 것은 아니다."
       },
       {
         "id": "trace",
@@ -105,7 +105,7 @@
       "from": "grafana",
       "to": "prometheus",
       "y": 228,
-      "label": "P99 지연 시간 쿼리"
+      "label": "지연 + 원본 exemplar 조회"
     },
     {
       "id": "exemplar",
@@ -127,7 +127,7 @@
       "from": "tempo",
       "to": "grafana",
       "y": 358,
-      "label": "전체 요청 흐름",
+      "label": "보존된 span 흐름",
       "variant": "return",
       "note": "병목 서비스 식별"
     },

@@ -1,7 +1,8 @@
 # 관측성 최적화 퀴즈
 
-> **지원 버전**: Amazon EKS 1.29+, OpenTelemetry 0.90+
-> **마지막 업데이트**: 2026년 2월 22일
+> **검증 예제 버전**: Prometheus 3.14.0 · OTel Collector Contrib 0.160.0
+
+> **마지막 업데이트**: 2026년 9월 13일
 
 이 퀴즈는 EKS 관측성 최적화 가이드에 대한 이해도를 테스트합니다. 로깅, 메트릭, 트레이싱의 3대 축과 eBPF 기반 모니터링, 비용 최적화 전략을 다룹니다.
 
@@ -37,11 +38,11 @@
 **정답: C) Loki**
 
 **설명:**
-Grafana Loki는 레이블 기반 인덱싱을 사용하여 전문 검색 인덱스 없이도 빠른 필터링을 제공합니다. 로그 데이터를 S3와 같은 오브젝트 스토리지에 저장하므로 저장 비용이 매우 저렴합니다(S3: $0.023/GB/월). OpenSearch는 전문 검색에 강하지만 인덱스 스토리지 비용이 높고, CloudWatch Logs는 수집 비용($0.50/GB)이 상대적으로 높습니다.
+Loki는 라벨 기반 인덱스와 오브젝트 스토리지를 사용하지만 실제 비용에는 compute·cache·object request·조회·운영이 포함됩니다. Region·수집량·보존·가용성 요구를 맞춰 비교하며 S3 저장 단가만으로 전체 비용이 저렴하다고 단정하지 않습니다.
 
 </details>
 
-3. 로그 에이전트 중 메모리 사용량이 가장 적고 C 언어로 작성되어 EKS에서 네이티브로 지원되는 것은?
+3. C 언어로 작성되었으며 EKS의 로그 수집에 사용할 수 있는 에이전트는?
    - A) Fluentd
    - B) Fluent Bit
    - C) Vector
@@ -53,7 +54,7 @@ Grafana Loki는 레이블 기반 인덱싱을 사용하여 전문 검색 인덱�
 **정답: B) Fluent Bit**
 
 **설명:**
-Fluent Bit은 C 언어로 작성되어 약 15MB의 매우 적은 메모리를 사용합니다. Fluentd(~60MB, Ruby/C)나 Vector(~30MB, Rust)에 비해 가볍고, 최대 ~200K msg/s의 높은 처리량을 제공합니다. AWS는 Fluent Bit을 EKS용 로그 수집기로 공식 권장하며, aws-for-fluent-bit 이미지를 제공합니다.
+Fluent Bit은 C 기반 수집기이며 AWS 배포에도 사용할 수 있습니다. 메모리와 처리량은 버전·parser·record 크기·buffering·하드웨어에 따라 달라지므로 고정된 15 MB 또는 200K msg/s를 보장하지 않습니다.
 
 </details>
 
@@ -69,11 +70,11 @@ Fluent Bit은 C 언어로 작성되어 약 15MB의 매우 적은 메모리를 �
 **정답: B) Pod UID나 타임스탬프를 레이블로 사용할 때**
 
 **설명:**
-카디널리티는 고유한 시계열(time series)의 수를 의미합니다. Pod UID, 타임스탬프, 요청 ID 등 고유한 값을 레이블로 사용하면 레이블 조합이 무한히 증가하여 시계열 수가 폭발적으로 늘어납니다. 이는 Prometheus의 메모리 사용량 급증과 쿼리 성능 저하를 유발합니다. relabel_configs에서 pod_template_hash, controller_revision_hash 같은 레이블을 제거하는 것이 권장됩니다.
+요청 ID·timestamp 등 계속 달라지는 라벨은 시계열을 증가시킵니다. 원천에서 제한하고 남은 라벨의 고유성을 검증합니다. labeldrop은 집계가 아니므로 중복 시계열을 만들 수 있고 relabel_configs와 metric_relabel_configs의 처리 시점도 다릅니다.
 
 </details>
 
-5. OpenTelemetry Collector의 Tail Sampling 전략에서 에러가 있는 트레이스를 100% 유지하는 정책 유형은?
+5. OpenTelemetry Collector의 Tail Sampling 전략에서 수신한 trace에서 ERROR 상태 span을 선택하는 정책 유형은?
    - A) probabilistic
    - B) latency
    - C) status_code
@@ -85,7 +86,7 @@ Fluent Bit은 C 언어로 작성되어 약 15MB의 매우 적은 메모리를 �
 **정답: C) status_code**
 
 **설명:**
-Tail Sampling은 트레이스가 완료된 후 전체 트레이스 정보를 기반으로 샘플링 결정을 내립니다. `status_code` 정책은 트레이스의 상태 코드(OK, ERROR)를 기준으로 샘플링합니다. `status_codes: [ERROR]`로 설정하면 에러가 포함된 트레이스를 100% 유지합니다. 이는 문제 분석에 중요한 트레이스를 놓치지 않으면서 전체 데이터 볼륨을 줄이는 효과적인 전략입니다.
+status_code의 ERROR 정책은 sampler가 수신한 오류 span을 기준으로 선택합니다. 같은 trace의 affinity, decision_wait, buffer, 늦은 span, 상위 단계의 head sampling 때문에 모든 오류 요청이 반드시 보존되는 것은 아닙니다.
 
 </details>
 
@@ -101,7 +102,7 @@ Tail Sampling은 트레이스가 완료된 후 전체 트레이스 정보를 기
 **정답: B) 코드 수정 없이 애플리케이션을 계측할 수 있다**
 
 **설명:**
-eBPF(extended Berkeley Packet Filter)는 리눅스 커널에서 안전하게 프로그램을 실행하여 시스템 호출, 네트워크 패킷 등을 관찰합니다. 전통적인 계측 방식은 SDK 추가와 코드 수정, 재배포가 필요하지만, eBPF는 커널 레벨에서 투명하게 동작하므로 애플리케이션 변경 없이 모니터링이 가능합니다. 또한 언어 종속성이 없어 어떤 언어로 작성된 애플리케이션이든 동일하게 계측됩니다.
+지원 kernel·runtime·protocol에서는 소스 변경을 줄일 수 있습니다. 모든 언어·TLS 라이브러리·업무 span을 동일하게 관찰하는 것은 아닙니다. 권한·overhead·민감 payload를 검토하며 SDK 자동 계측도 소스 변경 없이 사용할 수 있는 경우가 있습니다.
 
 </details>
 
@@ -117,23 +118,23 @@ eBPF(extended Berkeley Packet Filter)는 리눅스 커널에서 안전하게 프
 **정답: B) 네트워크 흐름 관찰 및 분석**
 
 **설명:**
-Cilium Hubble은 eBPF 기반 CNI인 Cilium의 관측성 컴포넌트입니다. Hubble은 클러스터 내 모든 네트워크 흐름을 실시간으로 관찰하며, DNS 요청, TCP 연결, HTTP 트래픽 등을 분석합니다. `hubble observe` 명령으로 특정 서비스로의 트래픽을 필터링하거나 드롭된 패킷을 분석할 수 있습니다. 서비스 맵 시각화와 네트워크 정책 검증에 유용합니다.
+Hubble은 호환되는 Cilium 환경의 네트워크 flow를 관찰합니다. L7 가시성은 지원 protocol과 proxy/policy 설정 등에 따라 달라집니다. 모든 flow나 앱 분산 추적을 보장하지 않으며 실제 기능 범위를 확인합니다.
 
 </details>
 
 8. Kepler(Kubernetes Efficient Power Level Exporter)가 측정하는 주요 지표는?
    - A) CPU 온도
    - B) 네트워크 대역폭
-   - C) 에너지 소비량(줄/와트)
+   - C) 에너지(줄)와 전력(와트)
    - D) 디스크 I/O 대기 시간
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 에너지 소비량(줄/와트)**
+**정답: C) 에너지(줄)와 전력(와트)**
 
 **설명:**
-Kepler는 eBPF를 사용하여 컨테이너와 Pod의 에너지 소비를 측정하는 CNCF 프로젝트입니다. `kepler_container_joules_total` 메트릭으로 에너지 소비량(줄)을, `rate(kepler_container_joules_total[5m]) * 1000`으로 전력 소비(와트)를 계산할 수 있습니다. 이를 통해 네임스페이스나 Pod별 에너지 사용량을 분석하고 친환경 컴퓨팅 목표를 달성하는 데 활용합니다.
+Kepler 0.10+의 구조와 metric은 과거 0.7과 다릅니다. 0.11.4의 kepler_pod_cpu_watts는 전력 gauge이고 kepler_pod_cpu_joules_total의 rate는 J/s=W입니다. 1000을 곱하면 mW이며 host hardware 접근과 attribution 지원을 확인해야 합니다.
 
 </details>
 
@@ -165,7 +166,7 @@ OpenCost는 Kubernetes 레이블을 기반으로 비용을 할당합니다. 네�
 **정답: B) SLO 목표를 벗어나도 허용되는 오류의 양**
 
 **설명:**
-에러 버짓은 SLO에서 파생되는 개념으로, 허용되는 오류의 총량입니다. 예를 들어 99.9% 가용성 SLO는 0.1%의 에러 버짓을 의미합니다. 30일 기준으로 약 43분의 다운타임이 허용됩니다. 에러 버짓이 소진되면 새로운 기능 배포를 중단하고 안정성 개선에 집중해야 합니다. `1 - (1 - sli:availability:ratio) / (1 - 0.999)` 표현식으로 남은 에러 버짓 비율을 계산합니다.
+요청 기반 99.9% SLO의 허용 오류는 정의한 기간의 전체 요청×0.001입니다. 시간 기반 SLI의 downtime과 혼동하지 않습니다. 30일 잔여 버짓에는 30일 요청 가중 오류율이 필요하며 최근 5분 ratio로 대체할 수 없습니다.
 
 </details>
 
@@ -185,7 +186,7 @@ Recording Rules는 PromQL 표현식을 주기적으로 평가하여 결과를 �
 
 </details>
 
-2. OpenTelemetry에서 트레이스가 완료된 후 전체 트레이스 정보를 기반으로 샘플링 결정을 내리는 방식을 무엇이라고 하나요?
+2. OpenTelemetry에서 일정 시간 수신한 span을 모아 요청 결과에 따라 샘플링하는 방식을 무엇이라고 하나요?
 
 <details>
 <summary>정답 보기</summary>
@@ -193,7 +194,7 @@ Recording Rules는 PromQL 표현식을 주기적으로 평가하여 결과를 �
 **정답:** Tail Sampling (테일 샘플링)
 
 **설명:**
-Tail Sampling은 트레이스의 모든 스팬이 도착한 후 샘플링 결정을 내립니다. 이는 트레이스 시작 시점에 결정하는 Head Sampling(확률적 샘플링)과 대비됩니다. Tail Sampling의 장점은 에러가 있거나 지연 시간이 긴 트레이스만 선택적으로 유지할 수 있다는 것입니다. 단, 결정을 내리기 전까지 모든 스팬을 메모리에 보관해야 하므로 `decision_wait`와 `num_traces` 설정이 중요합니다.
+기본 trace-complete 모드는 decision_wait 동안 수신한 span으로 결정합니다. 모든 span의 도착이나 요청 완료를 보증하지 않으므로 trace ID affinity·buffer·late span·재시작·상위 sampling을 함께 검토합니다.
 
 </details>
 
@@ -217,7 +218,7 @@ Exemplars는 메트릭 샘플에 추가 컨텍스트(주로 traceID)를 첨부�
 **정답:** vmstorage
 
 **설명:**
-VictoriaMetrics 클러스터 모드는 세 가지 구성 요소로 이루어집니다. vminsert는 메트릭 수집 및 분산을, vmselect는 쿼리 처리를, vmstorage는 실제 메트릭 데이터 저장을 담당합니다. vmstorage는 여러 인스턴스로 수평 확장이 가능하며, 복제 기능을 통해 고가용성을 제공합니다. 이러한 분리된 아키텍처 덕분에 수집, 저장, 쿼리 워크로드를 독립적으로 스케일링할 수 있습니다.
+vmstorage가 저장을 담당합니다. 여러 인스턴스를 만드는 것만으로 자동 복제가 완성되지는 않으며 replication factor, vminsert/vmselect 설정, query 중복 제거, 실패 시 동작을 맞춰 검증해야 합니다.
 
 </details>
 
@@ -229,7 +230,7 @@ VictoriaMetrics 클러스터 모드는 세 가지 구성 요소로 이루어집�
 **정답:** Tiered Storage (계층화 저장) 또는 계층형 스토리지
 
 **설명:**
-계층화 저장 전략은 데이터의 중요도와 접근 빈도에 따라 다른 스토리지 티어에 저장합니다. 최근 데이터는 고성능 스토리지(SSD, EBS)에, 중기 데이터는 S3 Standard-IA에, 장기 보관 데이터는 S3 Glacier Deep Archive에 저장합니다. 이를 통해 70-90%의 저장 비용을 절감할 수 있습니다. Loki, Tempo 등 오브젝트 스토리지 기반 솔루션은 이러한 전략을 기본적으로 지원합니다.
+계층화는 접근 빈도·복구 시간·보존 요구를 기준으로 합니다. Loki/Tempo 활성 block을 Glacier로 이동하면 조회가 깨질 수 있어 backend 호환성과 복구를 검증하거나 별도 아카이브를 설계합니다. 고정 절감률을 보장하지 않습니다.
 
 </details>
 
@@ -247,8 +248,7 @@ VictoriaMetrics 클러스터 모드는 세 가지 구성 요소로 이루어집�
 [FILTER]
     Name     grep
     Match    *
-    Exclude  log ^.*DEBUG.*$
-    Exclude  log ^.*TRACE.*$
+    Exclude  level ^(DEBUG|TRACE)$
 ```
 
 또는 정규표현식을 활용한 방식:
@@ -256,11 +256,11 @@ VictoriaMetrics 클러스터 모드는 세 가지 구성 요소로 이루어집�
 [FILTER]
     Name     grep
     Match    *
-    Exclude  log (DEBUG|TRACE)
+    Exclude  level ^(DEBUG|TRACE)$
 ```
 
 **설명:**
-Fluent Bit의 grep 필터는 정규표현식을 사용하여 로그를 필터링합니다. `Exclude` 지시어는 패턴과 일치하는 로그를 제외합니다. 프로덕션 환경에서 DEBUG/TRACE 로그를 필터링하면 로그 볼륨을 40-60% 줄일 수 있어 저장 비용이 크게 절감됩니다. 단, 트러블슈팅이 필요한 특정 서비스에서는 선별적으로 DEBUG 로그를 활성화할 수 있습니다.
+파싱된 level 필드에 ^(DEBUG|TRACE)$를 적용하면 임의 본문의 단어로 중요한 로그를 지우는 일을 피할 수 있습니다. 실제 drop과 장애 조사 영향을 측정하며 일정한 40~60% 절감을 보장하지 않습니다.
 
 </details>
 
@@ -312,30 +312,27 @@ spec:
 ```yaml
 processors:
   tail_sampling:
-    decision_wait: 10s
-    num_traces: 100000
+    decision_wait: 2s
+    num_traces: 1000
+    maximum_trace_size_bytes: 1048576
     policies:
-      # 에러가 있는 트레이스는 100% 유지
-      - name: errors-policy
-        type: status_code
-        status_code:
-          status_codes: [ERROR]
-
-      # 1초 이상 지연된 트레이스는 100% 유지
-      - name: slow-traces-policy
-        type: latency
-        latency:
-          threshold_ms: 1000
-
-      # 나머지는 10%만 샘플링
-      - name: default-policy
-        type: probabilistic
-        probabilistic:
-          sampling_percentage: 10
+    - name: errors
+      type: status_code
+      status_code:
+        status_codes:
+        - ERROR
+    - name: slow
+      type: latency
+      latency:
+        threshold_ms: 1000
+    - name: baseline
+      type: probabilistic
+      probabilistic:
+        sampling_percentage: 10
 ```
 
 **설명:**
-Tail Sampling 정책은 순서대로 평가되며, 하나라도 일치하면 트레이스가 유지됩니다. `decision_wait`는 트레이스 완료를 기다리는 시간으로, 모든 스팬이 도착할 충분한 시간이 필요합니다. `num_traces`는 메모리에 보관할 최대 트레이스 수입니다. 이 설정으로 에러와 성능 문제 분석에 중요한 트레이스는 유지하면서 전체 데이터 볼륨을 약 90% 줄일 수 있습니다.
+이 positive policy 조합은 수신한 오류·느린 trace를 유지하고 나머지에 확률 정책을 적용합니다. Buffer·affinity·late span 제한은 남습니다. 전체 중 오류·느린 trace 비중에 따라 보존율이 달라지므로 90% 절감을 단정하지 않습니다. Drop/composite 정책까지 첫 일치 규칙으로 일반화하지 않습니다.
 
 </details>
 
@@ -350,36 +347,7 @@ Tail Sampling 정책은 순서대로 평가되며, 하나라도 일치하면 트
 
 **정답:**
 
-**수집 계층 (Data Collection):**
-- Fluent Bit: 각 노드에 DaemonSet으로 배포 (메모리 100-200Mi 제한)
-- OTel Collector: DaemonSet으로 배포, 앞단에 로드밸런서 배치
-- 수집기 이중화: 각 AZ에 최소 2개 이상의 Collector 인스턴스
-
-**저장 계층 (Storage):**
-- 로그: Loki Simple Scalable 모드
-  - Write 경로: 2+ 레플리카 (AZ 분산)
-  - Read 경로: 2+ 레플리카 (쿼리 부하 분산)
-  - 백엔드: S3 (내구성 99.999999999%)
-
-- 메트릭: VictoriaMetrics 클러스터 또는 AMP
-  - vminsert: 2+ 레플리카 (쓰기 부하 분산)
-  - vmstorage: 3+ 레플리카 (복제 팩터 2)
-  - vmselect: 2+ 레플리카 (읽기 부하 분산)
-
-- 트레이스: Grafana Tempo
-  - Distributor: 2+ 레플리카
-  - Ingester: 3+ 레플리카 (WAL 활성화)
-  - 백엔드: S3
-
-**쿼리 계층 (Query):**
-- Grafana: 2+ 레플리카, 외부 PostgreSQL/MySQL로 세션 저장
-- 캐싱: Redis/Memcached로 쿼리 결과 캐싱
-
-**핵심 고려사항:**
-1. 모든 Stateful 컴포넌트는 다중 AZ 배포
-2. 공유 스토리지로 S3 활용 (단일 장애점 제거)
-3. Prometheus 샤딩 (3-5개 샤드) + Remote Write로 중앙 저장소 오프로드
-4. PodDisruptionBudget으로 롤링 업데이트 시 가용성 보장
+노드 수만으로 replica 수를 결정하지 않습니다. 노드 로그 agent와 gateway를 분리하고 tail sampling에는 trace ID affinity를 적용합니다. 수집 buffer·backpressure와 장애 시 drop을 측정합니다. 현재 Loki/Tempo 모드의 복제·quorum·AZ 조건, VictoriaMetrics의 명시적 replication과 query 중복 제거, AMP quota·retention을 확인합니다. Prometheus replicas×shards만큼 PVC·메모리를 배정하고 shard query를 병합합니다. Grafana는 공유 PostgreSQL/MySQL과 별도 Alerting HA를 구성하며 쿼리 cache는 지원 edition을 확인합니다. PDB나 S3 내구성만으로 전체 가용성을 보장하지 않고 각 계층의 실패·복구를 시험합니다.
 
 </details>
 
@@ -390,57 +358,7 @@ Tail Sampling 정책은 순서대로 평가되며, 하나라도 일치하면 트
 
 **정답:**
 
-**로깅 최적화 (예상 절감: $1,500-2,000)**
-
-1. **로그 레벨 필터링** (40-60% 절감)
-   - DEBUG/TRACE 로그 프로덕션 환경에서 제외
-   - 구현: Fluent Bit grep 필터로 `Exclude log (DEBUG|TRACE)`
-
-2. **샘플링 적용** (30-50% 절감)
-   - 고빈도 로그(액세스 로그, 헬스체크)에 10% 샘플링
-   - 구현: Fluent Bit throttle 필터 `Rate 10, Window 60`
-
-3. **보존 기간 최적화** (20-40% 절감)
-   - 프로덕션: 14일, 개발/스테이징: 7일
-   - 중요 로그만 장기 보관 (S3 Glacier로 이동)
-
-4. **저장소 전환** (50-70% 절감)
-   - CloudWatch Logs ($0.50/GB 수집) -> Loki + S3 ($0.023/GB 저장)
-
-**메트릭 최적화 (예상 절감: $500-800)**
-
-1. **카디널리티 관리**
-   - 불필요한 레이블 제거 (pod_template_hash, controller_revision_hash)
-   - 메트릭 드롭: `go_.*`, `promhttp_.*` 등 내부 메트릭 제외
-
-2. **스크랩 간격 조정**
-   - 중요 메트릭: 15s, 일반 메트릭: 30s-60s
-   - 히스토그램 버킷 제한 (불필요한 le 값 제거)
-
-3. **Recording Rules 활용**
-   - 자주 사용되는 집계 쿼리 미리 계산
-   - 원본 고해상도 데이터 조기 삭제 (7일 -> 3일)
-
-4. **저장소 전환**
-   - 자체 Prometheus -> VictoriaMetrics (7배 압축률)
-   - 또는 AMP 활용 (운영 부담 제거, 비용 예측 가능)
-
-**트레이싱 최적화 (예상 절감: $500-1,000)**
-
-1. **Tail Sampling 적용** (80-90% 절감)
-   - 에러/느린 트레이스: 100% 유지
-   - 정상 트레이스: 5-10%만 샘플링
-
-2. **저장소 전환**
-   - X-Ray ($5/백만 트레이스) -> Tempo + S3 (저장 비용만)
-
-3. **보존 기간 최적화**
-   - 상세 트레이스: 7일
-   - 집계 데이터: 30일
-
-**종합 예상 절감: $2,500-3,800 (50-76%)**
-
-핵심은 중요도 기반 계층화입니다. 모든 데이터를 동등하게 취급하지 않고, 문제 분석에 필요한 데이터는 유지하면서 나머지는 적극적으로 줄입니다.
+월 $5,000과 50% 절감은 이 문제의 가상 기준과 목표입니다. 실제 수집·저장·scan·compute·운영 비용으로 나누어 상위 항목부터 개선합니다. 파싱된 로그 level 필터, 요청 단위 확률 sampling, 안전한 metric/bucket 관리, tail sampling, 보존 기간을 각각 작은 범위에서 시험합니다. Throttle은 10% sampler가 아니고 recording rule 자체가 원본 보존 정책을 바꾸지 않습니다. 같은 Region·가용성·쿼리·retention을 갖춘 전체 비용으로 저장소를 비교합니다. 절감률은 서로 중첩되므로 합산하지 말고 전후 청구액·수집 손실·SLO coverage·장애 조사 성공률로 판단합니다. 목표 달성을 보장할 수 없다면 데이터와 다음 실험을 제시합니다.
 
 </details>
 

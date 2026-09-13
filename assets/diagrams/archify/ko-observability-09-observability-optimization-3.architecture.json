@@ -2,374 +2,184 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "OpenTelemetry Collector 파이프라인",
+    "title": "트레이스 샘플링 파이프라인",
     "output": "ko-observability-09-observability-optimization-3.html",
     "quality_profile": "showcase",
-    "animation": "trace",
-    "legend": {
-      "entries": {
-        "frontend": {
-          "label": "애플리케이션"
-        },
-        "backend": {
-          "label": "OTel"
-        },
-        "database": {
-          "label": "백엔드"
-        },
-        "cloud": {
-          "label": "AWS"
-        }
-      }
-    },
-    "views": [
-      {
-        "id": "ingest",
-        "label": "수집",
-        "focus": [
-          "app",
-          "otlp-r",
-          "legacy-r",
-          "batch"
-        ],
-        "note": "OTel SDK 또는 Auto-instrumentation이 붙은 서비스가 OTLP로 보내고, Jaeger·Zipkin 형식도 Receiver가 받아 배치 처리로 넘긴다."
-      },
-      {
-        "id": "process",
-        "label": "처리·샘플링",
-        "focus": [
-          "batch",
-          "attr",
-          "tail"
-        ],
-        "note": "Batch 처리 후 속성을 보정하고, Tail Sampling이 에러·지연·핵심 서비스 트레이스를 남길지 결정한다."
-      },
-      {
-        "id": "export",
-        "label": "내보내기",
-        "focus": [
-          "tail",
-          "otlp-e",
-          "xray-e",
-          "prom-e",
-          "tempo",
-          "jaeger",
-          "xray"
-        ],
-        "note": "살아남은 스팬은 Exporter를 거쳐 Grafana Tempo, Jaeger, AWS X-Ray로 전달된다."
-      }
-    ]
+    "animation": "trace"
   },
   "components": [
     {
       "id": "app",
       "type": "frontend",
-      "label": "애플리케이션 서비스",
-      "sublabel": "OTel SDK · Auto-instrumentation",
+      "label": "애플리케이션",
+      "sublabel": "OTLP",
       "pos": [
-        30,
+        40,
         100
       ],
       "size": [
-        180,
-        60
+        190,
+        64
       ]
     },
     {
-      "id": "otlp-r",
+      "id": "ingest",
       "type": "backend",
-      "label": "OTLP Receiver",
-      "sublabel": "gRPC 4317 · HTTP 4318",
+      "label": "OTLP receiver",
+      "sublabel": "인증된 수신 경로",
       "pos": [
-        270,
+        310,
         100
       ],
       "size": [
-        160,
-        60
+        190,
+        64
       ]
     },
     {
-      "id": "legacy-r",
+      "id": "memory",
       "type": "backend",
-      "label": "Jaeger / Zipkin Receiver",
-      "sublabel": "레거시 형식 수신",
+      "label": "Memory limiter",
+      "sublabel": "Bounded memory",
       "pos": [
-        270,
-        220
-      ],
-      "size": [
-        160,
-        60
-      ]
-    },
-    {
-      "id": "batch",
-      "type": "backend",
-      "label": "Batch Processor",
-      "sublabel": "배치 전송",
-      "pos": [
-        520,
+        580,
         100
       ],
       "size": [
-        150,
-        60
+        190,
+        64
       ]
     },
     {
-      "id": "attr",
+      "id": "redact",
       "type": "backend",
-      "label": "Attributes Processor",
-      "sublabel": "속성 추가·수정",
+      "label": "민감 값 처리",
+      "sublabel": "Explicit field policy",
       "pos": [
-        720,
+        850,
         100
       ],
       "size": [
-        160,
-        60
+        190,
+        64
       ]
     },
     {
       "id": "tail",
       "type": "backend",
-      "label": "Tail Sampling",
-      "sublabel": "조건 기반 샘플링 결정",
-      "tag": "샘플링 결정",
+      "label": "Tail sampling",
+      "sublabel": "Trace affinity",
       "pos": [
-        930,
-        100
+        850,
+        330
       ],
       "size": [
-        150,
-        60
+        190,
+        64
       ]
     },
     {
-      "id": "otlp-e",
+      "id": "batch",
       "type": "backend",
-      "label": "OTLP Exporter",
-      "sublabel": "Tempo · Jaeger로",
+      "label": "Batch",
+      "sublabel": "After sampling",
       "pos": [
-        430,
-        320
+        580,
+        330
       ],
       "size": [
-        160,
-        60
+        190,
+        64
       ]
     },
     {
-      "id": "xray-e",
+      "id": "export",
       "type": "backend",
-      "label": "X-Ray Exporter",
-      "sublabel": "AWS X-Ray로",
+      "label": "OTLP exporter",
+      "sublabel": "TLS / queue",
       "pos": [
-        730,
-        320
+        310,
+        330
       ],
       "size": [
-        160,
-        60
+        190,
+        64
       ]
     },
     {
-      "id": "prom-e",
-      "type": "backend",
-      "label": "Prometheus Exporter",
-      "sublabel": "메트릭 노출",
-      "pos": [
-        930,
-        320
-      ],
-      "size": [
-        150,
-        60
-      ]
-    },
-    {
-      "id": "tempo",
+      "id": "backend",
       "type": "database",
-      "label": "Grafana Tempo",
-      "sublabel": "오브젝트 스토리지 기반",
+      "label": "Tempo / Jaeger",
+      "sublabel": "추적 저장·조회",
       "pos": [
-        290,
-        520
+        40,
+        330
       ],
       "size": [
-        170,
-        60
-      ]
-    },
-    {
-      "id": "jaeger",
-      "type": "database",
-      "label": "Jaeger",
-      "sublabel": "인덱스 기반",
-      "pos": [
-        540,
-        520
-      ],
-      "size": [
-        160,
-        60
-      ]
-    },
-    {
-      "id": "xray",
-      "type": "cloud",
-      "label": "AWS X-Ray",
-      "sublabel": "AWS 관리형",
-      "pos": [
-        730,
-        520
-      ],
-      "size": [
-        160,
-        60
-      ]
-    }
-  ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "OTel Collector",
-      "wraps": [
-        "otlp-r",
-        "legacy-r",
-        "batch",
-        "attr",
-        "tail",
-        "otlp-e",
-        "xray-e",
-        "prom-e"
-      ],
-      "pad": 44
-    },
-    {
-      "kind": "region",
-      "label": "Receivers",
-      "wraps": [
-        "otlp-r",
-        "legacy-r"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "Processors",
-      "wraps": [
-        "batch",
-        "attr",
-        "tail"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "Exporters",
-      "wraps": [
-        "otlp-e",
-        "xray-e",
-        "prom-e"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "백엔드",
-      "wraps": [
-        "tempo",
-        "jaeger",
-        "xray"
+        190,
+        64
       ]
     }
   ],
   "connections": [
     {
-      "id": "app-otlp",
+      "id": "app-ingest",
       "from": "app",
-      "to": "otlp-r",
-      "label": "OTLP",
+      "to": "ingest",
       "variant": "emphasis"
     },
     {
-      "id": "otlp-batch",
-      "from": "otlp-r",
-      "to": "batch",
+      "id": "ingest-memory",
+      "from": "ingest",
+      "to": "memory",
       "variant": "emphasis"
     },
     {
-      "id": "legacy-batch",
-      "from": "legacy-r",
-      "to": "batch"
-    },
-    {
-      "id": "batch-attr",
-      "from": "batch",
-      "to": "attr",
+      "id": "memory-redact",
+      "from": "memory",
+      "to": "redact",
       "variant": "emphasis"
     },
     {
-      "id": "attr-tail",
-      "from": "attr",
+      "id": "redact-tail",
+      "from": "redact",
       "to": "tail",
       "variant": "emphasis"
     },
     {
-      "id": "tail-otlp-e",
+      "id": "tail-batch",
       "from": "tail",
-      "to": "otlp-e",
-      "label": "샘플링 통과 스팬",
-      "variant": "emphasis",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "to": "batch",
+      "variant": "emphasis"
     },
     {
-      "id": "tail-xray-e",
-      "from": "tail",
-      "to": "xray-e"
+      "id": "batch-export",
+      "from": "batch",
+      "to": "export",
+      "variant": "emphasis"
     },
     {
-      "id": "tail-prom-e",
-      "from": "tail",
-      "to": "prom-e"
-    },
-    {
-      "id": "otlp-e-tempo",
-      "from": "otlp-e",
-      "to": "tempo",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "otlp-e-jaeger",
-      "from": "otlp-e",
-      "to": "jaeger",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "xray-e-xray",
-      "from": "xray-e",
-      "to": "xray"
+      "id": "export-backend",
+      "from": "export",
+      "to": "backend",
+      "variant": "emphasis"
     }
   ],
   "cards": [
     {
       "dot": "amber",
-      "title": "Tail Sampling 정책",
+      "title": "샘플링 한계",
       "items": [
-        "에러 트레이스(status_code ERROR) 100% 유지",
-        "지연 1000ms 초과 트레이스 100% 유지",
-        "payment-service·order-service 트레이스 100% 유지",
-        "나머지는 5%만 확률적 샘플링"
+        "같은 trace ID는 같은 sampler로 라우팅",
+        "대기 시간·버퍼 초과·늦은 span을 점검"
       ]
     },
     {
       "dot": "cyan",
-      "title": "Batch · 메모리 보호",
+      "title": "신호 분리",
       "items": [
-        "batch: timeout 5s, send_batch_size 1000",
-        "memory_limiter: limit_mib 1000, spike_limit_mib 200"
+        "메트릭은 별도 pipeline으로 처리",
+        "민감 값은 수집 전에 제거"
       ]
     }
   ]

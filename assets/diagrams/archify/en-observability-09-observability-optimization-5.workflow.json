@@ -20,7 +20,7 @@
           "full",
           "glacier"
         ],
-        "note": "High-priority data is stored in full and tiered into S3 Glacier Deep Archive for long-term retention."
+        "note": "Keep important active data immediately queryable."
       },
       {
         "id": "medium-tier",
@@ -30,17 +30,17 @@
           "sample",
           "standardIa"
         ],
-        "note": "High-frequency events are sampled and kept in S3 Standard-IA for medium-term retention. Table estimate: 30-50% savings."
+        "note": "Measure sampling loss and actual cost; savings are not fixed."
       },
       {
         "id": "low-tier",
-        "label": "Low · Aggregation only",
+        "label": "Separate archive",
         "focus": [
           "classify",
           "aggregate",
           "local"
         ],
-        "note": "Low-priority data keeps only aggregates in memory/local storage for short-term retention, minimizing the retention period."
+        "note": "Do not move active Loki/Tempo blocks blindly into Glacier; plan separately restorable archives."
       }
     ]
   },
@@ -59,7 +59,7 @@
     },
     {
       "id": "low",
-      "label": "Low priority"
+      "label": "Inactive archive"
     }
   ],
   "mainPath": [
@@ -105,7 +105,7 @@
       "lane": "intake",
       "col": 1,
       "type": "security",
-      "label": "Priority Classification",
+      "label": "Classify access needs",
       "tag": "DECISION",
       "width": 224
     },
@@ -115,7 +115,7 @@
       "col": 3,
       "type": "backend",
       "label": "Full Storage",
-      "sublabel": "Long-term retention",
+      "sublabel": "Fast investigation",
       "width": 164
     },
     {
@@ -123,8 +123,8 @@
       "lane": "high",
       "col": 5,
       "type": "cloud",
-      "label": "S3 Glacier",
-      "sublabel": "Deep Archive",
+      "label": "Queryable storage",
+      "sublabel": "Within retention",
       "width": 164
     },
     {
@@ -133,7 +133,7 @@
       "col": 3,
       "type": "backend",
       "label": "Sampling",
-      "sublabel": "Medium-term retention",
+      "sublabel": "Measure lost coverage",
       "width": 164
     },
     {
@@ -141,16 +141,17 @@
       "lane": "medium",
       "col": 5,
       "type": "cloud",
-      "label": "S3 Standard-IA",
-      "width": 164
+      "label": "Compatible storage",
+      "width": 164,
+      "sublabel": "Lifecycle compatibility"
     },
     {
       "id": "aggregate",
       "lane": "low",
       "col": 3,
       "type": "backend",
-      "label": "Aggregation Only",
-      "sublabel": "Short-term retention",
+      "label": "Separate archive",
+      "sublabel": "Accept restore delay",
       "width": 164
     },
     {
@@ -158,8 +159,9 @@
       "lane": "low",
       "col": 5,
       "type": "database",
-      "label": "Memory/Local",
-      "width": 164
+      "label": "S3 archive",
+      "width": 164,
+      "sublabel": "Restore before query"
     }
   ],
   "edges": [

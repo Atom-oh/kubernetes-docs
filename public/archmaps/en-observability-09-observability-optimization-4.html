@@ -3581,6 +3581,9 @@
       }
       .toolbar {
         position: relative;
+        top: auto;
+        right: auto;
+        flex-wrap: wrap;
         justify-content: flex-end;
         width: max-content;
         max-width: 100%;
@@ -5055,25 +5058,25 @@
         <text data-detail="context" x="125" y="136" class="t-muted" font-size="9" text-anchor="middle">service source</text>
         </g>
 
-        <g id="node-sdk" data-node-id="sdk" data-node-label="Add SDK" tabindex="0" role="button" aria-label="Focus Add SDK, per-language library, Traditional Instrumentation" aria-pressed="false" data-node-kind="backend" data-node-sublabel="per-language library" data-node-context="Traditional Instrumentation">
-          <title>Add SDK · per-language library · Traditional Instrumentation</title>
+        <g id="node-sdk" data-node-id="sdk" data-node-label="Manual / auto SDK" tabindex="0" role="button" aria-label="Focus Manual / auto SDK, per-language library, Traditional Instrumentation" aria-pressed="false" data-node-kind="backend" data-node-sublabel="per-language library" data-node-context="Traditional Instrumentation">
+          <title>Manual / auto SDK · per-language library · Traditional Instrumentation</title>
           <rect x="270" y="90" width="170" height="64" rx="6" class="c-mask"/>
           <rect x="270" y="90" width="170" height="64" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(276 96) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="355" y="120" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Add SDK</text>
+          <text data-node-label="" data-detail-anchor="" x="355" y="120" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Manual / auto SDK</text>
         <text data-detail="context" x="355" y="136" class="t-muted" font-size="9" text-anchor="middle">per-language library</text>
         </g>
 
-        <g id="node-redeploy" data-node-id="redeploy" data-node-label="Modify / Redeploy Code" tabindex="0" role="button" aria-label="Focus Modify / Redeploy Code, build · rollout, Traditional Instrumentation" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="build · rollout" data-node-context="Traditional Instrumentation">
-          <title>Modify / Redeploy Code · build · rollout · Traditional Instrumentation</title>
+        <g id="node-redeploy" data-node-id="redeploy" data-node-label="Configure / restart" tabindex="0" role="button" aria-label="Focus Configure / restart, build · rollout, Traditional Instrumentation" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="build · rollout" data-node-context="Traditional Instrumentation">
+          <title>Configure / restart · build · rollout · Traditional Instrumentation</title>
           <rect x="500" y="90" width="170" height="64" rx="6" class="c-mask"/>
           <rect x="500" y="90" width="170" height="64" rx="6" class="c-cloud" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(506 96) scale(0.6875)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="585" y="120" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Modify / Redeploy Code</text>
+          <text data-node-label="" data-detail-anchor="" x="585" y="120" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Configure / restart</text>
         <text data-detail="context" x="585" y="136" class="t-muted" font-size="9" text-anchor="middle">build · rollout</text>
         </g>
 
@@ -5100,15 +5103,15 @@
         <text data-detail="context" x="125" y="426" class="t-muted" font-size="9" text-anchor="middle">service source</text>
         </g>
 
-        <g id="node-nochange" data-node-id="nochange" data-node-label="No Changes" tabindex="0" role="button" aria-label="Focus No Changes, no redeploy needed, eBPF Instrumentation" aria-pressed="false" data-node-kind="backend" data-node-sublabel="no redeploy needed" data-node-tag="no-code" data-node-context="eBPF Instrumentation">
-          <title>No Changes · no redeploy needed · eBPF Instrumentation · no-code</title>
+        <g id="node-nochange" data-node-id="nochange" data-node-label="No Changes" tabindex="0" role="button" aria-label="Focus No Changes, Less app code change, eBPF Instrumentation" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Less app code change" data-node-tag="no-code" data-node-context="eBPF Instrumentation">
+          <title>No Changes · Less app code change · eBPF Instrumentation · no-code</title>
           <rect x="270" y="380" width="170" height="64" rx="6" class="c-mask"/>
           <rect x="270" y="380" width="170" height="64" rx="6" class="c-backend" data-animate="node" style="--step:4" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(276 386) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="355" y="410" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">No Changes</text>
-        <text data-detail="context" x="355" y="426" class="t-muted" font-size="9" text-anchor="middle">no redeploy needed</text>
+        <text data-detail="context" x="355" y="426" class="t-muted" font-size="9" text-anchor="middle">Less app code change</text>
         <text data-detail="fine" x="355" y="436" class="t-backend" font-size="7" text-anchor="middle">no-code</text>
         </g>
 
@@ -5124,19 +5127,19 @@
         <text data-detail="context" x="585" y="296" class="t-muted" font-size="9" text-anchor="middle">safe in-kernel execution</text>
         </g>
 
-        <g id="node-hook" data-node-id="hook" data-node-label="Kernel-level Hooks" tabindex="0" role="button" aria-label="Focus Kernel-level Hooks, language agnostic, eBPF Instrumentation" aria-pressed="false" data-node-kind="backend" data-node-sublabel="language agnostic" data-node-context="eBPF Instrumentation">
-          <title>Kernel-level Hooks · language agnostic · eBPF Instrumentation</title>
+        <g id="node-hook" data-node-id="hook" data-node-label="Kernel-level Hooks" tabindex="0" role="button" aria-label="Focus Kernel-level Hooks, Supported kernel/runtime, eBPF Instrumentation" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Supported kernel/runtime" data-node-context="eBPF Instrumentation">
+          <title>Kernel-level Hooks · Supported kernel/runtime · eBPF Instrumentation</title>
           <rect x="500" y="380" width="170" height="64" rx="6" class="c-mask"/>
           <rect x="500" y="380" width="170" height="64" rx="6" class="c-backend" data-animate="node" style="--step:5" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(506 386) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="585" y="410" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Kernel-level Hooks</text>
-        <text data-detail="context" x="585" y="426" class="t-muted" font-size="9" text-anchor="middle">language agnostic</text>
+        <text data-detail="context" x="585" y="426" class="t-muted" font-size="9" text-anchor="middle">Supported kernel/runtime</text>
         </g>
 
-        <g id="node-collect-b" data-node-id="collect-b" data-node-label="Data Collection" tabindex="0" role="button" aria-label="Focus Data Collection, entire system, eBPF Instrumentation" aria-pressed="false" data-node-kind="database" data-node-sublabel="entire system" data-node-context="eBPF Instrumentation">
-          <title>Data Collection · entire system · eBPF Instrumentation</title>
+        <g id="node-collect-b" data-node-id="collect-b" data-node-label="Data Collection" tabindex="0" role="button" aria-label="Focus Data Collection, Supported protocols, eBPF Instrumentation" aria-pressed="false" data-node-kind="database" data-node-sublabel="Supported protocols" data-node-context="eBPF Instrumentation">
+          <title>Data Collection · Supported protocols · eBPF Instrumentation</title>
           <rect x="730" y="380" width="170" height="64" rx="6" class="c-mask"/>
           <rect x="730" y="380" width="170" height="64" rx="6" class="c-database" data-animate="node" style="--step:6" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(736 386) scale(0.6875)">
@@ -5144,7 +5147,7 @@
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="815" y="410" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Data Collection</text>
-        <text data-detail="context" x="815" y="426" class="t-muted" font-size="9" text-anchor="middle">entire system</text>
+        <text data-detail="context" x="815" y="426" class="t-muted" font-size="9" text-anchor="middle">Supported protocols</text>
         </g>
 
         <!-- Connection labels -->
@@ -5382,9 +5385,8 @@
           <h3>Traditional instrumentation</h3>
         </div>
         <ul>
-          <li>&bull; Code modification required, redeployment required</li>
-          <li>&bull; Overhead at the application level</li>
-          <li>&bull; SDK support needed per language, covers only instrumented parts</li>
+          <li>&bull; Auto-instrumentation may avoid source changes</li>
+          <li>&bull; Capture application semantics and custom spans</li>
         </ul>
       </div>
 
@@ -5394,9 +5396,8 @@
           <h3>eBPF instrumentation</h3>
         </div>
         <ul>
-          <li>&bull; No code modification, deployed separately</li>
-          <li>&bull; Kernel-level overhead (very low)</li>
-          <li>&bull; Language agnostic, covers the entire system</li>
+          <li>&bull; Kernel, runtime and TLS-library constraints</li>
+          <li>&bull; Validate overhead, privileges and sensitive data</li>
         </ul>
       </div>
     </div>
@@ -7192,7 +7193,7 @@
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
         label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
-        if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.isPlaying()) {
+        if (paused && lastEffectivePaused !== true && Archify.guidedViews && typeof Archify.guidedViews.isPlaying === 'function' && typeof Archify.guidedViews.pause === 'function' && Archify.guidedViews.isPlaying()) {
           Archify.guidedViews.pause();
         }
         if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.settleHandoff) {

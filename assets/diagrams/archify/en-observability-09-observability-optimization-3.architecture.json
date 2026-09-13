@@ -2,375 +2,184 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "OpenTelemetry Collector Pipeline",
-    "locale": "en",
+    "title": "Trace sampling pipeline",
     "output": "en-observability-09-observability-optimization-3.html",
     "quality_profile": "showcase",
-    "animation": "trace",
-    "legend": {
-      "entries": {
-        "frontend": {
-          "label": "App"
-        },
-        "backend": {
-          "label": "OTel"
-        },
-        "database": {
-          "label": "Backend"
-        },
-        "cloud": {
-          "label": "AWS"
-        }
-      }
-    },
-    "views": [
-      {
-        "id": "ingest",
-        "label": "Ingest",
-        "focus": [
-          "app",
-          "otlp-r",
-          "legacy-r",
-          "batch"
-        ],
-        "note": "OTel SDK or auto-instrumented services send OTLP; Jaeger and Zipkin formats are also received, then handed to batching."
-      },
-      {
-        "id": "process",
-        "label": "Process & sample",
-        "focus": [
-          "batch",
-          "attr",
-          "tail"
-        ],
-        "note": "After batching, attributes are adjusted and tail sampling decides whether error, slow, and critical-service traces are kept."
-      },
-      {
-        "id": "export",
-        "label": "Export",
-        "focus": [
-          "tail",
-          "otlp-e",
-          "xray-e",
-          "prom-e",
-          "tempo",
-          "jaeger",
-          "xray"
-        ],
-        "note": "Surviving spans leave through exporters to Grafana Tempo, Jaeger, and AWS X-Ray."
-      }
-    ]
+    "animation": "trace"
   },
   "components": [
     {
       "id": "app",
       "type": "frontend",
-      "label": "Application services",
-      "sublabel": "OTel SDK · Auto-instrumentation",
+      "label": "Application",
+      "sublabel": "OTLP",
       "pos": [
-        30,
+        40,
         100
       ],
       "size": [
-        180,
-        60
+        190,
+        64
       ]
     },
     {
-      "id": "otlp-r",
+      "id": "ingest",
       "type": "backend",
-      "label": "OTLP Receiver",
-      "sublabel": "gRPC 4317 · HTTP 4318",
+      "label": "OTLP receiver",
+      "sublabel": "Authenticated ingress",
       "pos": [
-        270,
+        310,
         100
       ],
       "size": [
-        160,
-        60
+        190,
+        64
       ]
     },
     {
-      "id": "legacy-r",
+      "id": "memory",
       "type": "backend",
-      "label": "Jaeger / Zipkin Receiver",
-      "sublabel": "Legacy format ingest",
+      "label": "Memory limiter",
+      "sublabel": "Bounded memory",
       "pos": [
-        270,
-        220
-      ],
-      "size": [
-        160,
-        60
-      ]
-    },
-    {
-      "id": "batch",
-      "type": "backend",
-      "label": "Batch Processor",
-      "sublabel": "Batched export",
-      "pos": [
-        520,
+        580,
         100
       ],
       "size": [
-        150,
-        60
+        190,
+        64
       ]
     },
     {
-      "id": "attr",
+      "id": "redact",
       "type": "backend",
-      "label": "Attributes Processor",
-      "sublabel": "Add / modify attributes",
+      "label": "Redaction",
+      "sublabel": "Explicit field policy",
       "pos": [
-        720,
+        850,
         100
       ],
       "size": [
-        160,
-        60
+        190,
+        64
       ]
     },
     {
       "id": "tail",
       "type": "backend",
-      "label": "Tail Sampling",
-      "sublabel": "Policy-based sampling decision",
-      "tag": "Sampling decision",
+      "label": "Tail sampling",
+      "sublabel": "Trace affinity",
       "pos": [
-        930,
-        100
+        850,
+        330
       ],
       "size": [
-        150,
-        60
+        190,
+        64
       ]
     },
     {
-      "id": "otlp-e",
+      "id": "batch",
       "type": "backend",
-      "label": "OTLP Exporter",
-      "sublabel": "To Tempo · Jaeger",
+      "label": "Batch",
+      "sublabel": "After sampling",
       "pos": [
-        430,
-        320
+        580,
+        330
       ],
       "size": [
-        160,
-        60
+        190,
+        64
       ]
     },
     {
-      "id": "xray-e",
+      "id": "export",
       "type": "backend",
-      "label": "X-Ray Exporter",
-      "sublabel": "To AWS X-Ray",
+      "label": "OTLP exporter",
+      "sublabel": "TLS / queue",
       "pos": [
-        730,
-        320
+        310,
+        330
       ],
       "size": [
-        160,
-        60
+        190,
+        64
       ]
     },
     {
-      "id": "prom-e",
-      "type": "backend",
-      "label": "Prometheus Exporter",
-      "sublabel": "Exposes metrics",
-      "pos": [
-        930,
-        320
-      ],
-      "size": [
-        150,
-        60
-      ]
-    },
-    {
-      "id": "tempo",
+      "id": "backend",
       "type": "database",
-      "label": "Grafana Tempo",
-      "sublabel": "Object storage based",
+      "label": "Tempo / Jaeger",
+      "sublabel": "Trace storage/query",
       "pos": [
-        290,
-        520
+        40,
+        330
       ],
       "size": [
-        170,
-        60
-      ]
-    },
-    {
-      "id": "jaeger",
-      "type": "database",
-      "label": "Jaeger",
-      "sublabel": "Index based",
-      "pos": [
-        540,
-        520
-      ],
-      "size": [
-        160,
-        60
-      ]
-    },
-    {
-      "id": "xray",
-      "type": "cloud",
-      "label": "AWS X-Ray",
-      "sublabel": "AWS managed",
-      "pos": [
-        730,
-        520
-      ],
-      "size": [
-        160,
-        60
-      ]
-    }
-  ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "OTel Collector",
-      "wraps": [
-        "otlp-r",
-        "legacy-r",
-        "batch",
-        "attr",
-        "tail",
-        "otlp-e",
-        "xray-e",
-        "prom-e"
-      ],
-      "pad": 44
-    },
-    {
-      "kind": "region",
-      "label": "Receivers",
-      "wraps": [
-        "otlp-r",
-        "legacy-r"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "Processors",
-      "wraps": [
-        "batch",
-        "attr",
-        "tail"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "Exporters",
-      "wraps": [
-        "otlp-e",
-        "xray-e",
-        "prom-e"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "Backends",
-      "wraps": [
-        "tempo",
-        "jaeger",
-        "xray"
+        190,
+        64
       ]
     }
   ],
   "connections": [
     {
-      "id": "app-otlp",
+      "id": "app-ingest",
       "from": "app",
-      "to": "otlp-r",
-      "label": "OTLP",
+      "to": "ingest",
       "variant": "emphasis"
     },
     {
-      "id": "otlp-batch",
-      "from": "otlp-r",
-      "to": "batch",
+      "id": "ingest-memory",
+      "from": "ingest",
+      "to": "memory",
       "variant": "emphasis"
     },
     {
-      "id": "legacy-batch",
-      "from": "legacy-r",
-      "to": "batch"
-    },
-    {
-      "id": "batch-attr",
-      "from": "batch",
-      "to": "attr",
+      "id": "memory-redact",
+      "from": "memory",
+      "to": "redact",
       "variant": "emphasis"
     },
     {
-      "id": "attr-tail",
-      "from": "attr",
+      "id": "redact-tail",
+      "from": "redact",
       "to": "tail",
       "variant": "emphasis"
     },
     {
-      "id": "tail-otlp-e",
+      "id": "tail-batch",
       "from": "tail",
-      "to": "otlp-e",
-      "label": "Sampled spans",
-      "variant": "emphasis",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "to": "batch",
+      "variant": "emphasis"
     },
     {
-      "id": "tail-xray-e",
-      "from": "tail",
-      "to": "xray-e"
+      "id": "batch-export",
+      "from": "batch",
+      "to": "export",
+      "variant": "emphasis"
     },
     {
-      "id": "tail-prom-e",
-      "from": "tail",
-      "to": "prom-e"
-    },
-    {
-      "id": "otlp-e-tempo",
-      "from": "otlp-e",
-      "to": "tempo",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "otlp-e-jaeger",
-      "from": "otlp-e",
-      "to": "jaeger",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "xray-e-xray",
-      "from": "xray-e",
-      "to": "xray"
+      "id": "export-backend",
+      "from": "export",
+      "to": "backend",
+      "variant": "emphasis"
     }
   ],
   "cards": [
     {
       "dot": "amber",
-      "title": "Tail Sampling policies",
+      "title": "Sampling limits",
       "items": [
-        "Keep 100% of error traces (status_code ERROR)",
-        "Keep 100% of traces slower than 1000 ms",
-        "Keep 100% of payment-service / order-service traces",
-        "Probabilistically sample only 5% of the rest"
+        "Route each trace ID to the same sampler",
+        "Check decision wait, overflow and late spans"
       ]
     },
     {
       "dot": "cyan",
-      "title": "Batch · memory protection",
+      "title": "Separate signals",
       "items": [
-        "batch: timeout 5s, send_batch_size 1000",
-        "memory_limiter: limit_mib 1000, spike_limit_mib 200"
+        "Metrics use a separate pipeline",
+        "Remove sensitive values before collection"
       ]
     }
   ]

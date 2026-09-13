@@ -25,8 +25,8 @@
     {
       "id": "thanos",
       "type": "database",
-      "label": "Thanos",
-      "sublabel": "S3 기반",
+      "label": "Thanos Receive",
+      "sublabel": "TSDB + object storage",
       "pos": [
         360,
         100
@@ -122,7 +122,7 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "단기 저장 (7일)",
+      "label": "로컬 보존 정책",
       "wraps": [
         "prom"
       ]
@@ -221,6 +221,16 @@
       "id": "ampq-grafana",
       "from": "ampq",
       "to": "grafana"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "장기 저장 계약",
+      "items": [
+        "용량·보존 기간·쿼리·복제 중복 제거 확인",
+        "Remote Write는 백업·무손실 보장이 아님"
+      ]
     }
   ]
 }

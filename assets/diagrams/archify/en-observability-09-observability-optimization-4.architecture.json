@@ -26,7 +26,7 @@
     {
       "id": "sdk",
       "type": "backend",
-      "label": "Add SDK",
+      "label": "Manual / auto SDK",
       "sublabel": "per-language library",
       "pos": [
         270,
@@ -40,7 +40,7 @@
     {
       "id": "redeploy",
       "type": "cloud",
-      "label": "Modify / Redeploy Code",
+      "label": "Configure / restart",
       "sublabel": "build · rollout",
       "pos": [
         500,
@@ -83,7 +83,7 @@
       "id": "nochange",
       "type": "backend",
       "label": "No Changes",
-      "sublabel": "no redeploy needed",
+      "sublabel": "Less app code change",
       "pos": [
         270,
         380
@@ -112,7 +112,7 @@
       "id": "hook",
       "type": "backend",
       "label": "Kernel-level Hooks",
-      "sublabel": "language agnostic",
+      "sublabel": "Supported kernel/runtime",
       "pos": [
         500,
         380
@@ -126,7 +126,7 @@
       "id": "collect-b",
       "type": "database",
       "label": "Data Collection",
-      "sublabel": "entire system",
+      "sublabel": "Supported protocols",
       "pos": [
         730,
         380
@@ -209,18 +209,16 @@
       "dot": "rose",
       "title": "Traditional instrumentation",
       "items": [
-        "Code modification required, redeployment required",
-        "Overhead at the application level",
-        "SDK support needed per language, covers only instrumented parts"
+        "Auto-instrumentation may avoid source changes",
+        "Capture application semantics and custom spans"
       ]
     },
     {
       "dot": "emerald",
       "title": "eBPF instrumentation",
       "items": [
-        "No code modification, deployed separately",
-        "Kernel-level overhead (very low)",
-        "Language agnostic, covers the entire system"
+        "Kernel, runtime and TLS-library constraints",
+        "Validate overhead, privileges and sensitive data"
       ]
     }
   ]

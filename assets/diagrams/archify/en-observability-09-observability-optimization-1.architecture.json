@@ -81,7 +81,7 @@
       "id": "otel",
       "type": "backend",
       "label": "OTel Collector",
-      "sublabel": "DaemonSet",
+      "sublabel": "Agent / gateway",
       "pos": [
         320,
         410
@@ -250,6 +250,11 @@
       "id": "tracestore-grafana",
       "from": "tracestore",
       "to": "grafana"
+    },
+    {
+      "id": "app-prom",
+      "from": "app",
+      "to": "prom"
     }
   ],
   "cards": [
@@ -257,7 +262,7 @@
       "dot": "violet",
       "title": "eBPF Layer",
       "items": [
-        "Collects data from kernel-level hooks with no code changes (see Section 5)",
+        "Verify kernel, protocol and permission support",
         "Cilium Hubble · Pixie · Coroot"
       ]
     }

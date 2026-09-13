@@ -144,21 +144,21 @@
       "id": "exemplars",
       "from": "logging",
       "to": "metrics",
-      "label": "Exemplars",
+      "label": "Shared labels",
       "variant": "dashed"
     },
     {
       "id": "context",
       "from": "metrics",
       "to": "tracing",
-      "label": "Context",
+      "label": "Exemplars",
       "variant": "dashed"
     },
     {
       "id": "correlation-id",
       "from": "tracing",
       "to": "logging",
-      "label": "Correlation ID",
+      "label": "Trace ID",
       "variant": "dashed",
       "fromSide": "top",
       "toSide": "top",
@@ -199,8 +199,8 @@
       "dot": "violet",
       "title": "Tracing",
       "items": [
-        "Request flow tracking, bottleneck analysis",
-        "High volume needs sampling; cost scales with sampling rate"
+        "Investigate request flow and latency",
+        "Evaluate sampling, loss and operating cost"
       ]
     }
   ]

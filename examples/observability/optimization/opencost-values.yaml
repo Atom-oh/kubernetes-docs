@@ -1,0 +1,15 @@
+opencost:
+  exporter:
+    defaultClusterId: eks-production
+  cloudCost:
+    enabled: false
+  prometheus:
+    internal:
+      enabled: false
+    external:
+      enabled: true
+      url: http://prometheus-operated.monitoring.svc.cluster.local:9090
+  ui:
+    enabled: true
+    ingress:
+      enabled: false

@@ -1,0 +1,19 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+storage:
+  exemplars:
+    max_exemplars: 10000
+rule_files:
+- slo-rules.yaml
+scrape_configs:
+- job_name: synthetic-application
+  static_configs:
+  - targets:
+    - 127.0.0.1:8080
+  metric_relabel_configs:
+  - source_labels:
+    - __name__
+    - le
+    regex: lab_http_request_duration_seconds_bucket;(0\.005|0\.01|0\.025|0\.05|0\.25)
+    action: drop
