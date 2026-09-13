@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "lifecycle",
   "meta": {
-    "title": "CloudWatch Investigations Process",
+    "title": "CloudWatch Investigations: group → alarm action → review",
     "animation": "trace",
     "quality_profile": "showcase",
     "legend": {
@@ -46,7 +46,7 @@
       "id": "alarm",
       "type": "start",
       "label": "Alarm Fired",
-      "sublabel": "CloudWatch alarm",
+      "sublabel": "group / permissions ready",
       "lane": "main",
       "col": 0,
       "step": "01"
@@ -55,7 +55,7 @@
       "id": "start",
       "type": "active",
       "label": "Investigation",
-      "sublabel": "alarm or time range",
+      "sublabel": "group ARN alarm action",
       "lane": "main",
       "col": 1,
       "step": "02"
@@ -64,7 +64,7 @@
       "id": "scan",
       "type": "active",
       "label": "Resource Scan",
-      "sublabel": "analyze EKS, RDS, SQS",
+      "sublabel": "authorized resources",
       "lane": "main",
       "col": 2,
       "step": "03"
@@ -82,7 +82,7 @@
       "id": "hypothesis",
       "type": "decision",
       "label": "AI Hypothesis",
-      "sublabel": "root cause, AI-generated",
+      "sublabel": "unproven hypothesis",
       "lane": "main",
       "col": 4,
       "step": "05"
@@ -91,7 +91,7 @@
       "id": "actions",
       "type": "active",
       "label": "Suggestions",
-      "sublabel": "recommended actions",
+      "sublabel": "human evidence review",
       "lane": "analyze",
       "col": 2,
       "step": "06"
@@ -100,7 +100,7 @@
       "id": "report",
       "type": "success",
       "label": "Incident Report",
-      "sublabel": "investigation complete",
+      "sublabel": "evidence / unknowns",
       "lane": "terminal",
       "col": 2,
       "step": "07"

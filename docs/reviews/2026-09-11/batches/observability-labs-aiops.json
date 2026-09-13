@@ -1,0 +1,34 @@
+[
+  {
+    "path": "ko/labs/observability/05-alerting-aiops-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "e654579cb565167d7f16f4c978d1259c4a11df7ecf5d6b689a6787c243bde887",
+    "summary": "FullPart5review;20quiz11examples/tests10diagrams30browser10SVG;24unit6SDK1AMnativeJSON15resourceCFNlint/15policystatements;50anchors;noAWSdeployment. CorrectedGo-templatevsJSON-tagcasingfromnativefixture.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-aiops-validation.json"
+  },
+  {
+    "path": "ko/quizzes/observability/labs/05-alerting-aiops-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "f93a3e67b145dc875826b98b85ac9a4f427bcfdbffab282504bdd94199d155e0",
+    "summary": "FullPart5review;20quiz11examples/tests10diagrams30browser10SVG;24unit6SDK1AMnativeJSON15resourceCFNlint/15policystatements;50anchors;noAWSdeployment. CorrectedGo-templatevsJSON-tagcasingfromnativefixture.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-aiops-validation.json"
+  },
+  {
+    "path": "en/labs/observability/05-alerting-aiops-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "4e0bf268dce00352ae9f8d446527d83edd8d9e65f068de0e1fd5e42383f81dd8",
+    "summary": "FullPart5review;20quiz11examples/tests10diagrams30browser10SVG;24unit6SDK1AMnativeJSON15resourceCFNlint/15policystatements;50anchors;noAWSdeployment. CorrectedGo-templatevsJSON-tagcasingfromnativefixture.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-aiops-validation.json"
+  },
+  {
+    "path": "en/quizzes/observability/labs/05-alerting-aiops-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "77ac8b0f9a00239e71487f359e49d92dac4919f8d36f27b5d9b26ccc7d5390a4",
+    "summary": "FullPart5review;20quiz11examples/tests10diagrams30browser10SVG;24unit6SDK1AMnativeJSON15resourceCFNlint/15policystatements;50anchors;noAWSdeployment. CorrectedGo-templatevsJSON-tagcasingfromnativefixture.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-aiops-validation.json"
+  }
+]

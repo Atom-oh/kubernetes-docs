@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "AIOps Agent Architecture",
+    "title": "SNS diagnostic processing",
     "locale": "en",
     "quality_profile": "showcase",
     "column_fit": "spread",
@@ -14,32 +14,32 @@
     "views": [
       {
         "id": "trigger",
-        "label": "Alert intake",
+        "label": "Normalize",
         "focus": [
           "alertmanager",
           "lambda"
         ],
-        "note": "The Alertmanager webhook reaches Lambda through API Gateway; the handler extracts service, metric, and time range from the alert."
+        "note": "Validate input topic, allowlists and SNS message ID; check DynamoDB idempotency."
       },
       {
         "id": "collect",
-        "label": "Telemetry collection",
+        "label": "Collect evidence",
         "focus": [
           "lambda",
           "telemetry"
         ],
-        "note": "CloudWatch Logs Insights, AMP PromQL, and X-Ray GetTraceSummaries are queried in order to gather evidence."
+        "note": "Metrics/log aggregates use two workers; diagram rows identify calls, not mandatory serial scheduling."
       },
       {
         "id": "analyze",
-        "label": "AI analysis and notify",
+        "label": "Deliver hypotheses",
         "focus": [
           "lambda",
           "bedrock",
           "sns",
           "oncall"
         ],
-        "note": "Alert, metrics, logs, and traces go to Bedrock Claude for analysis; the result is published to SNS and delivered by email."
+        "note": "Publish to a separate SNS topic; successful message IDs deduplicate for 24 hours."
       }
     ],
     "legend": {
@@ -64,38 +64,38 @@
     {
       "id": "alertmanager",
       "type": "external",
-      "label": "AlertManager",
-      "sublabel": "webhook sender"
+      "label": "Input SNS",
+      "sublabel": "allowed alerts"
     },
     {
       "id": "lambda",
       "type": "backend",
       "label": "Lambda",
-      "sublabel": "AIOps Agent"
+      "sublabel": "Diagnostic reporter"
     },
     {
       "id": "telemetry",
       "type": "database",
       "label": "Telemetry",
-      "sublabel": "Logs · AMP · X-Ray"
+      "sublabel": "CW metrics · log counts"
     },
     {
       "id": "bedrock",
       "type": "cloud",
       "label": "Bedrock",
-      "sublabel": "Claude"
+      "sublabel": "Converse"
     },
     {
       "id": "sns",
       "type": "messagebus",
-      "label": "SNS",
-      "sublabel": "alerts topic"
+      "label": "Output SNS",
+      "sublabel": "different topic"
     },
     {
       "id": "oncall",
       "type": "external",
       "label": "On-call team",
-      "sublabel": "email subscription"
+      "sublabel": "configured subscription"
     }
   ],
   "segments": [
@@ -107,7 +107,7 @@
     {
       "from": 220,
       "to": 410,
-      "label": "Telemetry collection (sequential)"
+      "label": "Configured sources · 2 workers"
     },
     {
       "from": 425,
@@ -121,16 +121,15 @@
       "from": "alertmanager",
       "to": "lambda",
       "y": 180,
-      "label": "webhook (via API Gateway)",
-      "variant": "emphasis",
-      "note": "extract service · metric · time range"
+      "label": "SNS delivery · idempotency check",
+      "variant": "emphasis"
     },
     {
       "id": "logs-query",
       "from": "lambda",
       "to": "telemetry",
       "y": 245,
-      "label": "Logs Insights query",
+      "label": "Start aggregate log query",
       "variant": "default"
     },
     {
@@ -138,7 +137,7 @@
       "from": "telemetry",
       "to": "lambda",
       "y": 275,
-      "label": "log results",
+      "label": "Complete status or missing data",
       "variant": "return"
     },
     {
@@ -146,7 +145,7 @@
       "from": "lambda",
       "to": "telemetry",
       "y": 305,
-      "label": "PromQL query (AMP)",
+      "label": "Configured CloudWatch metrics",
       "variant": "default"
     },
     {
@@ -154,23 +153,7 @@
       "from": "telemetry",
       "to": "lambda",
       "y": 335,
-      "label": "metric results",
-      "variant": "return"
-    },
-    {
-      "id": "trace-query",
-      "from": "lambda",
-      "to": "telemetry",
-      "y": 365,
-      "label": "GetTraceSummaries (X-Ray)",
-      "variant": "default"
-    },
-    {
-      "id": "trace-result",
-      "from": "telemetry",
-      "to": "lambda",
-      "y": 395,
-      "label": "trace results",
+      "label": "Actual values and timestamps",
       "variant": "return"
     },
     {
@@ -178,16 +161,15 @@
       "from": "lambda",
       "to": "bedrock",
       "y": 455,
-      "label": "invoke Claude (alert + metrics·logs·traces)",
-      "variant": "emphasis",
-      "note": "system prompt: SRE expert"
+      "label": "Converse only with usable evidence",
+      "variant": "emphasis"
     },
     {
       "id": "analysis-result",
       "from": "bedrock",
       "to": "lambda",
       "y": 500,
-      "label": "analysis result",
+      "label": "Hypotheses and evidence gaps",
       "variant": "return"
     },
     {
@@ -195,7 +177,7 @@
       "from": "lambda",
       "to": "sns",
       "y": 535,
-      "label": "publish analysis",
+      "label": "Publish to separate result topic",
       "variant": "emphasis"
     },
     {
@@ -203,7 +185,7 @@
       "from": "sns",
       "to": "oncall",
       "y": 560,
-      "label": "email notification",
+      "label": "Notification for human review",
       "variant": "dashed"
     }
   ],

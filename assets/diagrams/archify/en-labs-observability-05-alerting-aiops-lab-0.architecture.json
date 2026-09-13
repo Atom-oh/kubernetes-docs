@@ -14,36 +14,33 @@
     "views": [
       {
         "id": "detect-route",
-        "label": "Detection and routing",
+        "label": "Receive alerts",
         "focus": [
-          "alertmanager",
           "cw-alarms",
-          "oncall",
+          "alertmanager",
           "sns"
         ],
-        "note": "AlertManager sends alerts to the OnCall webhook and SNS; CloudWatch Alarms publish to the SNS topic via alarm-actions."
+        "note": "Prometheus evaluates rules; Alertmanager sends JSON to SNS."
       },
       {
         "id": "ai-analysis",
-        "label": "AI analysis",
+        "label": "Bounded analysis",
         "focus": [
-          "alertmanager",
           "sns",
           "aiops",
-          "bedrock",
-          "investigations"
+          "bedrock"
         ],
-        "note": "SNS or the AlertManager webhook triggers the Lambda, which analyzes the root cause with Bedrock Claude and publishes the result back to SNS."
+        "note": "Analyze only the input topic. No resource-changing tools or remediation."
       },
       {
         "id": "respond",
-        "label": "Response channels",
+        "label": "Deliver results",
         "focus": [
+          "aiops",
           "oncall",
-          "sns",
           "channels"
         ],
-        "note": "Alerts and analysis reports reach responders through OnCall escalation and SNS subscriptions."
+        "note": "Results go to a different topic. CloudWatch Investigations is configured separately."
       }
     ]
   },
@@ -65,22 +62,22 @@
     {
       "id": "alertmanager",
       "type": "backend",
-      "label": "Prometheus AlertManager",
-      "sublabel": "PrometheusRule evaluation",
+      "label": "Prometheus + Alertmanager",
+      "sublabel": "evaluate → route",
       "pos": [
         40,
         200
       ],
       "size": [
-        190,
+        220,
         64
       ]
     },
     {
       "id": "sns",
       "type": "messagebus",
-      "label": "SNS Topic",
-      "sublabel": "obs-lab-alerts",
+      "label": "Input SNS",
+      "sublabel": "alert JSON",
       "pos": [
         310,
         200
@@ -92,11 +89,11 @@
     },
     {
       "id": "oncall",
-      "type": "external",
-      "label": "Grafana OnCall",
-      "sublabel": "Incident management",
+      "type": "messagebus",
+      "label": "Output SNS",
+      "sublabel": "diagnostic results only",
       "pos": [
-        310,
+        810,
         360
       ],
       "size": [
@@ -108,7 +105,7 @@
       "id": "investigations",
       "type": "cloud",
       "label": "CloudWatch Investigations",
-      "sublabel": "AI hypotheses · Console",
+      "sublabel": "separate group/action setup",
       "pos": [
         570,
         60
@@ -121,8 +118,8 @@
     {
       "id": "aiops",
       "type": "backend",
-      "label": "AIOps Agent",
-      "sublabel": "Lambda",
+      "label": "Diagnostic reporter",
+      "sublabel": "Lambda · read only",
       "tag": "focal",
       "pos": [
         570,
@@ -136,8 +133,8 @@
     {
       "id": "bedrock",
       "type": "cloud",
-      "label": "Bedrock Claude",
-      "sublabel": "Root cause analysis",
+      "label": "Amazon Bedrock",
+      "sublabel": "hypotheses for review",
       "pos": [
         810,
         200
@@ -151,7 +148,7 @@
       "id": "channels",
       "type": "external",
       "label": "Response channels",
-      "sublabel": "Slack · Email · PagerDuty",
+      "sublabel": "operator-configured subscription",
       "pos": [
         1050,
         360
@@ -165,7 +162,7 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "Alert detection",
+      "label": "Detect / deliver",
       "wraps": [
         "cw-alarms",
         "alertmanager"
@@ -173,25 +170,24 @@
     },
     {
       "kind": "region",
-      "label": "Notification routing",
+      "label": "Input",
       "wraps": [
-        "sns",
-        "oncall"
+        "sns"
       ]
     },
     {
       "kind": "region",
-      "label": "AI analysis",
+      "label": "Analysis",
       "wraps": [
-        "investigations",
         "aiops",
         "bedrock"
       ]
     },
     {
       "kind": "region",
-      "label": "Response",
+      "label": "Output · no input loop",
       "wraps": [
+        "oncall",
         "channels"
       ]
     }
@@ -201,7 +197,7 @@
       "id": "cw-to-investigations",
       "from": "cw-alarms",
       "to": "investigations",
-      "label": "investigate alarm",
+      "label": "group ARN action",
       "variant": "dashed"
     },
     {
@@ -213,37 +209,11 @@
       "toSide": "top"
     },
     {
-      "id": "am-to-oncall",
-      "from": "alertmanager",
-      "to": "oncall",
-      "label": "webhook",
-      "fromSide": "right",
-      "toSide": "left"
-    },
-    {
       "id": "am-to-sns",
       "from": "alertmanager",
       "to": "sns",
-      "label": "sns_configs"
-    },
-    {
-      "id": "am-to-aiops",
-      "from": "alertmanager",
-      "to": "aiops",
-      "label": "webhook",
-      "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "bottom",
-      "via": [
-        [
-          135,
-          318
-        ],
-        [
-          655,
-          318
-        ]
-      ]
+      "label": "sns_configs",
+      "labelDy": 56
     },
     {
       "id": "sns-to-aiops",
@@ -257,31 +227,30 @@
       "id": "aiops-to-bedrock",
       "from": "aiops",
       "to": "bedrock",
-      "label": "InvokeModel",
-      "variant": "emphasis"
+      "label": "Converse · maxTokens 1024",
+      "variant": "emphasis",
+      "labelAt": [
+        780,
+        188
+      ]
     },
     {
-      "id": "aiops-to-sns",
+      "id": "reporter-output",
       "from": "aiops",
-      "to": "sns",
-      "label": "publish analysis",
-      "variant": "dashed",
-      "fromSide": "left",
-      "toSide": "right"
+      "to": "oncall",
+      "label": "publish result",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "labelAt": [
+        725,
+        325
+      ]
     },
     {
-      "id": "sns-to-channels",
-      "from": "sns",
-      "to": "channels",
-      "label": "email subscription",
-      "fromSide": "top",
-      "toSide": "top"
-    },
-    {
-      "id": "oncall-to-channels",
+      "id": "output-human",
       "from": "oncall",
       "to": "channels",
-      "label": "escalation"
+      "label": "human review"
     }
   ]
 }

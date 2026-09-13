@@ -1,0 +1,352 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: SNS-only observability lab diagnostic reporter; no remediation and no output-topic loop.
+Parameters:
+  ModelId:
+    Type: String
+    MinLength: 1
+    Description: Approved Converse model or inference-profile ID; verify current availability and access.
+  ModelInvokeArns:
+    Type: CommaDelimitedList
+    AllowedPattern: arn:aws[a-z-]*:bedrock:[a-z0-9-]+:[0-9]*:(foundation-model|inference-profile|application-inference-profile)/[A-Za-z0-9._:-]+
+    Description: Exact allowed model/profile ARNs, including required destination models; no wildcard.
+  QueueName:
+    Type: String
+    AllowedPattern: '[A-Za-z0-9_.-]{1,80}'
+    Description: Existing lab SQS queue name.
+  ApplicationLogGroup:
+    Type: String
+    AllowedPattern: '[A-Za-z0-9/_.#-]{1,512}'
+    Description: Existing log group with structured service and level fields.
+  ServiceName:
+    Type: String
+    Default: order-service
+    AllowedPattern: '[a-z][a-z0-9-]{0,62}'
+Resources:
+  NotificationKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: Encryption for this lab input and diagnostic SNS topics
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: AccountAdministration
+          Effect: Allow
+          Principal:
+            AWS:
+              Fn::Sub: arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+          Action: kms:*
+          Resource: '*'
+          Condition:
+            StringEquals:
+              aws:PrincipalAccount:
+                Ref: AWS::AccountId
+        - Sid: AlarmPublishing
+          Effect: Allow
+          Principal:
+            Service: cloudwatch.amazonaws.com
+          Action:
+          - kms:Decrypt
+          - kms:GenerateDataKey*
+          Resource: '*'
+          Condition:
+            StringEquals:
+              aws:SourceAccount:
+                Ref: AWS::AccountId
+            ArnEquals:
+              aws:SourceArn:
+                Fn::Sub: arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:${AWS::StackName}-queue-backlog
+  InputTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      KmsMasterKeyId: &id001
+        Fn::GetAtt:
+        - NotificationKey
+        - Arn
+  OutputTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      KmsMasterKeyId: *id001
+  FailureQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      SqsManagedSseEnabled: true
+      MessageRetentionPeriod: 1209600
+  IdempotencyTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: expiration
+        Enabled: true
+      SSESpecification:
+        SSEEnabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+  FunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName:
+        Fn::Sub: /aws/lambda/${AWS::StackName}-aiops
+      RetentionInDays: 7
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+      - PolicyName: BoundedDiagnosticReads
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource:
+              Fn::GetAtt:
+              - FunctionLogGroup
+              - Arn
+          - Effect: Allow
+            Action:
+            - logs:StartQuery
+            Resource:
+              Fn::Sub: arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:${ApplicationLogGroup}:*
+          - Effect: Allow
+            Action:
+            - logs:GetQueryResults
+            - logs:StopQuery
+            - cloudwatch:GetMetricData
+            Resource: '*'
+            Condition:
+              StringEquals:
+                aws:RequestedRegion:
+                  Ref: AWS::Region
+          - Effect: Allow
+            Action: bedrock:InvokeModel
+            Resource:
+              Ref: ModelInvokeArns
+          - Effect: Allow
+            Action: sns:Publish
+            Resource:
+              Ref: OutputTopic
+          - Effect: Allow
+            Action:
+            - kms:GenerateDataKey
+            - kms:Decrypt
+            Resource: *id001
+            Condition:
+              StringEquals:
+                kms:ViaService:
+                  Fn::Sub: sns.${AWS::Region}.${AWS::URLSuffix}
+                kms:CallerAccount:
+                  Ref: AWS::AccountId
+          - Effect: Allow
+            Action:
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            Resource:
+              Fn::GetAtt:
+              - IdempotencyTable
+              - Arn
+          - Effect: Allow
+            Action: sqs:SendMessage
+            Resource:
+              Fn::GetAtt:
+              - FailureQueue
+              - Arn
+  Reporter:
+    Type: AWS::Serverless::Function
+    DependsOn: FunctionLogGroup
+    Properties:
+      FunctionName:
+        Fn::Sub: ${AWS::StackName}-aiops
+      Runtime: python3.12
+      Architectures:
+      - arm64
+      Handler: handler.lambda_handler
+      CodeUri: .
+      Role:
+        Fn::GetAtt:
+        - ExecutionRole
+        - Arn
+      Timeout: 180
+      MemorySize: 256
+      ReservedConcurrentExecutions: 2
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn:
+          Fn::GetAtt:
+          - FailureQueue
+          - Arn
+      Environment:
+        Variables:
+          INPUT_TOPIC_ARN:
+            Ref: InputTopic
+          OUTPUT_TOPIC_ARN:
+            Ref: OutputTopic
+          MODEL_ID:
+            Ref: ModelId
+          IDEMPOTENCY_TABLE:
+            Ref: IdempotencyTable
+          SERVICE_CATALOG:
+            Fn::Sub: '{"${ServiceName}":{"queue":"${QueueName}","log_group":"${ApplicationLogGroup}"}}'
+          ALLOWED_ALERTS: '["HighErrorRate","HighLatency","SQSQueueBacklog"]'
+          ALARM_SERVICES:
+            Fn::Sub: '{"${AWS::StackName}-queue-backlog":"${ServiceName}"}'
+  InvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Ref: Reporter
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn:
+        Ref: InputTopic
+      SourceAccount:
+        Ref: AWS::AccountId
+  InputSubscription:
+    Type: AWS::SNS::Subscription
+    DependsOn: InvokePermission
+    Properties:
+      TopicArn:
+        Ref: InputTopic
+      Protocol: lambda
+      Endpoint:
+        Fn::GetAtt:
+        - Reporter
+        - Arn
+      RedrivePolicy:
+        deadLetterTargetArn:
+          Fn::GetAtt:
+          - FailureQueue
+          - Arn
+  EventRetries:
+    Type: AWS::Lambda::EventInvokeConfig
+    Properties:
+      FunctionName:
+        Ref: Reporter
+      Qualifier: $LATEST
+      MaximumEventAgeInSeconds: 3600
+      MaximumRetryAttempts: 2
+  FailureQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+      - Ref: FailureQueue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: sns.amazonaws.com
+          Action: sqs:SendMessage
+          Resource:
+            Fn::GetAtt:
+            - FailureQueue
+            - Arn
+          Condition:
+            ArnEquals:
+              aws:SourceArn:
+                Ref: InputTopic
+            StringEquals:
+              aws:SourceAccount:
+                Ref: AWS::AccountId
+  QueueAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName:
+        Fn::Sub: ${AWS::StackName}-queue-backlog
+      AlarmDescription: Synthetic lab queue backlog; investigate before changing resources.
+      Namespace: AWS/SQS
+      MetricName: ApproximateNumberOfMessagesVisible
+      Dimensions:
+      - Name: QueueName
+        Value:
+          Ref: QueueName
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 3
+      DatapointsToAlarm: 2
+      Threshold: 1000
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: missing
+      AlarmActions:
+      - Ref: InputTopic
+      OKActions:
+      - Ref: InputTopic
+  InputTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+      - Ref: InputTopic
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: cloudwatch.amazonaws.com
+          Action: sns:Publish
+          Resource:
+            Ref: InputTopic
+          Condition:
+            StringEquals:
+              aws:SourceAccount:
+                Ref: AWS::AccountId
+            ArnEquals:
+              aws:SourceArn:
+                Fn::GetAtt:
+                - QueueAlarm
+                - Arn
+  AlertmanagerPublishPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Attach only to the configured Alertmanager workload role.
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: sns:Publish
+          Resource:
+            Ref: InputTopic
+        - Effect: Allow
+          Action:
+          - kms:GenerateDataKey
+          - kms:Decrypt
+          Resource: *id001
+          Condition:
+            StringEquals:
+              kms:ViaService:
+                Fn::Sub: sns.${AWS::Region}.${AWS::URLSuffix}
+              kms:CallerAccount:
+                Ref: AWS::AccountId
+Outputs:
+  InputTopicArn:
+    Value:
+      Ref: InputTopic
+  OutputTopicArn:
+    Value:
+      Ref: OutputTopic
+  FailureQueueUrl:
+    Value:
+      Ref: FailureQueue
+  AlertmanagerPublishPolicyArn:
+    Value:
+      Ref: AlertmanagerPublishPolicy
+  FunctionName:
+    Value:
+      Ref: Reporter

@@ -1,0 +1,610 @@
+{
+  "status": "passed",
+  "verifiedAt": "2026-09-13T06:01:49.320788+00:00",
+  "deploymentRun": 34741140267,
+  "mergeCommit": "10a0f73941e77ffe5c93c04ef5fa55bf1d19f9b4",
+  "includedPRs": [
+    263
+  ],
+  "pages": [
+    {
+      "path": "ko/security/12-spiffe-spire.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/security/12-spiffe-spire",
+      "status": 200,
+      "sha256": "ada5e53d9293025a4a5466e19bc832c5bcc2096e8ede4f1dcb4ea76469b98a93",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-security-12-spiffe-spire-0.CW8tUQ_n.png",
+          "status": 200,
+          "sha256": "ef9f23d8c936e5ee9a20a717e9235e2382e549efce07781f52eeeec6c5a87a44",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-security-12-spiffe-spire-1.D-EVYuU6.png",
+          "status": 200,
+          "sha256": "d167e07e224530bf8fe75622cd905f4e7c7be35840330ae712420ee30088fcac",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-security-12-spiffe-spire-2.Bew8gA3_.png",
+          "status": 200,
+          "sha256": "0bfa17187a21b0e950e8177dc71ac5b2493cbe7fbf52f69d625084661e50ed67",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-security-12-spiffe-spire-3.Nq004UfD.png",
+          "status": 200,
+          "sha256": "1e6d9a62dc736fe111e6f10e027050ac6ea90106ae45b80b77a4648fedaac844",
+          "matchesMain": true
+        }
+      ],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 499342,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    },
+    {
+      "path": "ko/quizzes/security/12-spiffe-spire-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/security/12-spiffe-spire-quiz",
+      "status": 200,
+      "sha256": "7034f77410747707c9cc548e1ab1963c13b7669eee4bd9cb6dd52243e50a44d8",
+      "images": [],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 453075,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    },
+    {
+      "path": "en/security/12-spiffe-spire.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/security/12-spiffe-spire",
+      "status": 200,
+      "sha256": "099eeef787a09ba2788f7ed251d8236ea9dabe1ce974037f4960e90879d59330",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-security-12-spiffe-spire-0.BMQP0GjV.png",
+          "status": 200,
+          "sha256": "c04a65fb539129b5af9f3e3f4697e968a5d99cb4827ac6f241ab37f0692f0e2c",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-security-12-spiffe-spire-1.BMaCZaBN.png",
+          "status": 200,
+          "sha256": "eacb8d3cf51fffd7d8ce05d72e224ee7dc8d9b782f845e4aad670357683e3dcb",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-security-12-spiffe-spire-2.X3y8v9CY.png",
+          "status": 200,
+          "sha256": "453b00bac394f9ba602599d997139db075c5bb34fab35dacff8a9558e79239f8",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-security-12-spiffe-spire-3.duU-0ZUR.png",
+          "status": 200,
+          "sha256": "8fa07508e0bae96f6c4a2157201c1cc89f8c9a62bb2e06291a43a41ba0dd30d5",
+          "matchesMain": true
+        }
+      ],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 493381,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    },
+    {
+      "path": "en/quizzes/security/12-spiffe-spire-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/security/12-spiffe-spire-quiz",
+      "status": 200,
+      "sha256": "c274573ee064ce00df6918b9b2947ad900e26156cbc87d857cdfc5be25d850ab",
+      "images": [],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 450265,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    }
+  ],
+  "viewers": [
+    {
+      "name": "ko-security-12-spiffe-spire-0.html",
+      "status": 200,
+      "bytes": 717727,
+      "sha256": "1f7c78247ce08b535b826d06a86743d4d71fe8acae05234d83d17eae8a27bed0"
+    },
+    {
+      "name": "ko-security-12-spiffe-spire-1.html",
+      "status": 200,
+      "bytes": 717237,
+      "sha256": "ee8518ac32f512602f979fdd150ca4f902a2e1879025a9f41d03dcac49457789"
+    },
+    {
+      "name": "ko-security-12-spiffe-spire-2.html",
+      "status": 200,
+      "bytes": 718112,
+      "sha256": "730a8c77a0f1279ed03fcb5cb217a843d9d278fd629895abaac26ed307223d42"
+    },
+    {
+      "name": "ko-security-12-spiffe-spire-3.html",
+      "status": 200,
+      "bytes": 716281,
+      "sha256": "0343c7f6efb5868c1b32b5cae3debf9a509603f6d5fa6f6087c32e0939f0c22a"
+    },
+    {
+      "name": "en-security-12-spiffe-spire-0.html",
+      "status": 200,
+      "bytes": 717660,
+      "sha256": "7e9c89479191192105c15aff0a471ed1423f34888ead7faaac9526eca15f14a1"
+    },
+    {
+      "name": "en-security-12-spiffe-spire-1.html",
+      "status": 200,
+      "bytes": 716909,
+      "sha256": "8bb97c15493cbd450d5262da91baec166ccbb3fc5c9e2d9f9820f619b766506d"
+    },
+    {
+      "name": "en-security-12-spiffe-spire-2.html",
+      "status": 200,
+      "bytes": 717352,
+      "sha256": "782351d8cf6d530182a400b64f722b08d5b662b58bb7b01914094db5e5a6d30c"
+    },
+    {
+      "name": "en-security-12-spiffe-spire-3.html",
+      "status": 200,
+      "bytes": 715903,
+      "sha256": "783bc0f44614628cae3131e67ff1771ed3e35dcefcba213d6f9f327a18198525"
+    }
+  ],
+  "scope": "HTTP source and exact hashed PNG comparison; no analytics events or real application execution.",
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-security-12-spiffe-spire-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1194,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-12-spiffe-spire-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1194,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-12-spiffe-spire-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1194,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 58753,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-12-spiffe-spire-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 845,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-12-spiffe-spire-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 845,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-12-spiffe-spire-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 845,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 59109,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-12-spiffe-spire-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 860,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-12-spiffe-spire-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 860,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-12-spiffe-spire-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 860,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 59387,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-12-spiffe-spire-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1093,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-12-spiffe-spire-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1093,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-12-spiffe-spire-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1093,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57048,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-12-spiffe-spire-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 864,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-12-spiffe-spire-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 864,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-12-spiffe-spire-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 864,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57939,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-12-spiffe-spire-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 649,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-12-spiffe-spire-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 649,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-12-spiffe-spire-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 649,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 58803,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-12-spiffe-spire-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 634,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-12-spiffe-spire-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 634,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-12-spiffe-spire-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 634,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 58418,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-12-spiffe-spire-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 890,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-12-spiffe-spire-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 890,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-12-spiffe-spire-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 890,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56779,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "24caseson8fetchedproductionviewers; motion/reduced-motion/visibility/theme/guided controls and8SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  }
+}

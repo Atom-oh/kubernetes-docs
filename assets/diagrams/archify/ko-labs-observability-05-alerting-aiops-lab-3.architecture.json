@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "A2A 멀티 에이전트 아키텍처",
+    "title": "선택 확장: 전문 분석 모듈 협업",
     "output": "ko-labs-observability-05-alerting-aiops-lab-3.html",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -18,7 +18,7 @@
           "trigger",
           "collaborator"
         ],
-        "note": "운영자 또는 발생한 Alert가 Collaborator Agent를 호출해 분석을 시작한다."
+        "note": "선택적인 설계 예시입니다. 이 실습의 Lambda는 멀티 에이전트 프로토콜을 구현하지 않습니다."
       },
       {
         "id": "consult",
@@ -29,7 +29,7 @@
           "log",
           "trace"
         ],
-        "note": "Collaborator가 지표·로그·트레이스 전문 에이전트와 양방향으로 협의하며 각자의 데이터 소스를 분석하게 한다."
+        "note": "Coordinator가 전문 분석 모듈을 호출하고 결과를 수집합니다."
       },
       {
         "id": "synthesis",
@@ -38,7 +38,7 @@
           "collaborator",
           "report"
         ],
-        "note": "세 에이전트의 결과를 Collaborator가 종합해 근본 원인 보고서를 만든다."
+        "note": "관찰·가설·미확인 사항을 구분해 운영자가 검토합니다."
       }
     ],
     "legend": {
@@ -63,7 +63,7 @@
     {
       "id": "collaborator",
       "type": "backend",
-      "label": "Collaborator Agent",
+      "label": "Coordinator",
       "sublabel": "조율 및 종합",
       "pos": [
         320,
@@ -119,8 +119,8 @@
     {
       "id": "report",
       "type": "external",
-      "label": "종합 근본 원인 보고서",
-      "sublabel": "Root Cause Analysis",
+      "label": "검토할 진단 가설",
+      "sublabel": "Human review required",
       "pos": [
         320,
         490
@@ -185,10 +185,10 @@
   "cards": [
     {
       "dot": "orange",
-      "title": "에이전트 역할",
+      "title": "구현 범위",
       "items": [
-        "Collaborator: 조율 및 종합 — 다른 에이전트 결과를 입력으로 사용",
-        "Metric / Log / Trace Agent: 각자 지표·로그·트레이스 분석 담당"
+        "이 그림은 확장 설계이며 실행 코드가 아닙니다.",
+        "여러 모듈 호출만으로 A2A 프로토콜 구현이 되지 않습니다."
       ]
     }
   ]
