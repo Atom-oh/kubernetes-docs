@@ -1,0 +1,165 @@
+apiVersion: test.gatekeeper.sh/v1alpha1
+kind: Suite
+metadata:
+  name: docs-gatekeeper
+tests:
+- name: required-labels
+  template: ../templates/docsrequiredlabels.yaml
+  constraint: ../constraints/required-labels.yaml
+  cases:
+  - name: labels-present
+    object: fixtures/labels-present.yaml
+    assertions:
+    - violations: 0
+  - name: labels-absent
+    object: fixtures/labels-absent.yaml
+    assertions:
+    - violations: 1
+  - name: labels-empty
+    object: fixtures/labels-empty.yaml
+    assertions:
+    - violations: 1
+  - name: labels-outside-scope
+    object: fixtures/labels-outside-scope.yaml
+    assertions:
+    - violations: 0
+- name: no-privileged
+  template: ../templates/docsnoprivileged.yaml
+  constraint: ../constraints/no-privileged.yaml
+  cases:
+  - name: containers-privileged-false
+    object: fixtures/containers-privileged-false.yaml
+    assertions:
+    - violations: 0
+  - name: containers-privileged-true
+    object: fixtures/containers-privileged-true.yaml
+    assertions:
+    - violations: 1
+  - name: initContainers-privileged-false
+    object: fixtures/initContainers-privileged-false.yaml
+    assertions:
+    - violations: 0
+  - name: initContainers-privileged-true
+    object: fixtures/initContainers-privileged-true.yaml
+    assertions:
+    - violations: 1
+  - name: ephemeralContainers-privileged-false
+    object: fixtures/ephemeralContainers-privileged-false.yaml
+    assertions:
+    - violations: 0
+  - name: ephemeralContainers-privileged-true
+    object: fixtures/ephemeralContainers-privileged-true.yaml
+    assertions:
+    - violations: 1
+  - name: tenant-skip-label-no-bypass
+    object: fixtures/tenant-skip-label-no-bypass.yaml
+    assertions:
+    - violations: 1
+- name: approved-images
+  template: ../templates/docsapprovedimages.yaml
+  constraint: ../constraints/approved-images.yaml
+  cases:
+  - name: image-boundary-0
+    object: fixtures/image-boundary-0.yaml
+    assertions:
+    - violations: 0
+  - name: image-boundary-1
+    object: fixtures/image-boundary-1.yaml
+    assertions:
+    - violations: 1
+  - name: image-boundary-2
+    object: fixtures/image-boundary-2.yaml
+    assertions:
+    - violations: 1
+  - name: image-boundary-3
+    object: fixtures/image-boundary-3.yaml
+    assertions:
+    - violations: 1
+  - name: image-initContainers
+    object: fixtures/image-initContainers.yaml
+    assertions:
+    - violations: 1
+  - name: image-ephemeralContainers
+    object: fixtures/image-ephemeralContainers.yaml
+    assertions:
+    - violations: 1
+- name: resource-limits
+  template: ../templates/k8scontainerlimits.yaml
+  constraint: ../constraints/resource-limits.yaml
+  cases:
+  - name: quantity-0
+    object: fixtures/quantity-0.yaml
+    assertions:
+    - violations: 0
+  - name: quantity-1
+    object: fixtures/quantity-1.yaml
+    assertions:
+    - violations: 1
+  - name: quantity-2
+    object: fixtures/quantity-2.yaml
+    assertions:
+    - violations: 1
+  - name: quantity-3
+    object: fixtures/quantity-3.yaml
+    assertions:
+    - violations: 1
+  - name: quantity-4
+    object: fixtures/quantity-4.yaml
+    assertions:
+    - violations: 1
+  - name: quantity-5
+    object: fixtures/quantity-5.yaml
+    assertions:
+    - violations: 0
+  - name: quantity-6
+    object: fixtures/quantity-6.yaml
+    assertions:
+    - violations: 1
+  - name: quantity-7
+    object: fixtures/quantity-7.yaml
+    assertions:
+    - violations: 1
+  - name: quantity-8
+    object: fixtures/quantity-8.yaml
+    assertions:
+    - violations: 1
+  - name: quantity-9
+    object: fixtures/quantity-9.yaml
+    assertions:
+    - violations: 0
+  - name: missing-resources
+    object: fixtures/missing-resources.yaml
+    assertions:
+    - violations: 1
+  - name: ephemeral-no-resource-fields
+    object: fixtures/ephemeral-no-resource-fields.yaml
+    assertions:
+    - violations: 0
+- name: ingress-inventory
+  template: ../templates/docsuniqueingress.yaml
+  constraint: ../constraints/unique-ingress.yaml
+  cases:
+  - name: same-object-update
+    object: fixtures/same-object-update.yaml
+    assertions:
+    - violations: 0
+    inventory:
+    - inventory.yaml
+  - name: same-namespace-other-name
+    object: fixtures/same-namespace-other-name.yaml
+    assertions:
+    - violations: 1
+    inventory:
+    - inventory.yaml
+  - name: nonconflicting-host
+    object: fixtures/nonconflicting-host.yaml
+    assertions:
+    - violations: 0
+    inventory:
+    - inventory.yaml
+  - name: different-namespace-same-name
+    object: fixtures/different-namespace-same-name.yaml
+    assertions:
+    - violations: 1
+    inventory:
+    - inventory-other-namespace.yaml

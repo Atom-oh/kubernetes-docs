@@ -50,10 +50,12 @@
         "id": "audit",
         "label": "감사(Audit)",
         "focus": [
-          "gk",
-          "audit"
+          "api",
+          "audit",
+          "opa",
+          "c"
         ],
-        "note": "Gatekeeper Controller는 이미 존재하는 리소스도 주기적으로 검사해 감사 결과를 남긴다."
+        "note": "별도 audit Deployment가 기존 객체를 주기적으로 조회·평가하여 Constraint status에 기록한다."
       }
     ]
   },
@@ -89,7 +91,7 @@
     {
       "id": "gk",
       "type": "backend",
-      "label": "Gatekeeper Controller",
+      "label": "Webhook controller",
       "sublabel": "controller-runtime",
       "pos": [
         470,
@@ -117,8 +119,8 @@
     {
       "id": "audit",
       "type": "database",
-      "label": "Audit Results",
-      "sublabel": "주기적 감사",
+      "label": "Audit controller",
+      "sublabel": "별도 Deployment",
       "pos": [
         470,
         240
@@ -242,14 +244,6 @@
       "toSide": "top"
     },
     {
-      "id": "gk-audit",
-      "from": "gk",
-      "to": "audit",
-      "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
       "id": "ct-rego",
       "from": "ct",
       "to": "rego",
@@ -266,6 +260,40 @@
       "fromSide": "bottom",
       "toSide": "top",
       "labelDy": 88
+    },
+    {
+      "id": "api-audit",
+      "from": "api",
+      "to": "audit",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "audit-opa",
+      "from": "audit",
+      "to": "opa",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "호출 실패와 정책 위반",
+      "items": [
+        "failurePolicy는 webhook 호출 실패의 처리",
+        "enforcementAction은 정책 위반의 처리"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Rego와 inventory",
+      "items": [
+        "v1은 code.source.version으로 명시",
+        "동기화 cache는 원자적 유일성 보장이 아님"
+      ]
     }
   ]
 }

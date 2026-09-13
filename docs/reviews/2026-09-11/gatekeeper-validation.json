@@ -1,0 +1,1668 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-13T08:48:01.235545+00:00",
+  "scope": "FourKorean/EnglishGatekeeperguides/quizzes,54examples/license/readmefiles,twofigures",
+  "originalFiles": [
+    {
+      "path": "ko/security/09-opa-gatekeeper.md",
+      "lines": 1161,
+      "sha256": "93e57c62989cf066ed3361433d11b228a08314bb4daa1f3a806f63ac1c1bf5fe"
+    },
+    {
+      "path": "ko/quizzes/security/09-opa-gatekeeper-quiz.md",
+      "lines": 509,
+      "sha256": "7e395464c55b802822feeb4704c5b9afce67cb292aaa1841d7665a58e4c5b7d2"
+    },
+    {
+      "path": "en/security/09-opa-gatekeeper.md",
+      "lines": 1161,
+      "sha256": "382506e47522d76e6c59bcddee1d45449ce0a8fcaac6dc35a32bcfc4e8788a9b"
+    },
+    {
+      "path": "en/quizzes/security/09-opa-gatekeeper-quiz.md",
+      "lines": 507,
+      "sha256": "ab2dc1be206b1dd9aa1d11180d7a5aee764279a00e9c9654a50b31ef6f5bf12d"
+    }
+  ],
+  "originalLines": 3338,
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/security/09-opa-gatekeeper.md",
+        "sha256": "df303cb8988acef4d9777755e2ab0d2ea294d260aa1656ab39e14135705e1a46",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "opa-gatekeeper"
+          },
+          {
+            "tag": "h2",
+            "id": "개요"
+          },
+          {
+            "tag": "h2",
+            "id": "gatekeeper와-kyverno-선택"
+          },
+          {
+            "tag": "h2",
+            "id": "gatekeeper-설치"
+          },
+          {
+            "tag": "h3",
+            "id": "템플릿과-constraint-적용-순서"
+          },
+          {
+            "tag": "h2",
+            "id": "rego-언어와-입력-계약"
+          },
+          {
+            "tag": "h2",
+            "id": "검증하는-정책과-범위"
+          },
+          {
+            "tag": "h3",
+            "id": "이미지-경계와-정책-예외"
+          },
+          {
+            "tag": "h3",
+            "id": "리소스-단위-처리"
+          },
+          {
+            "tag": "h3",
+            "id": "pss와-controller-리소스"
+          },
+          {
+            "tag": "h2",
+            "id": "동기화-데이터와-고급-정책"
+          },
+          {
+            "tag": "h2",
+            "id": "mutation"
+          },
+          {
+            "tag": "h2",
+            "id": "audit와-모니터링"
+          },
+          {
+            "tag": "h2",
+            "id": "gator-테스트와-ci"
+          },
+          {
+            "tag": "h2",
+            "id": "단계적-적용과-문제-해결"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위와-관련-문서"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "opa-gatekeeper",
+          "개요",
+          "gatekeeper-vs-kyverno-비교",
+          "gatekeeper와-kyverno-선택",
+          "helm을-이용한-설치",
+          "매니페스트를-이용한-설치",
+          "설치-확인",
+          "gatekeeper-설치",
+          "템플릿과-constraint-적용-순서",
+          "rego-언어-기초",
+          "rego-문법-개요",
+          "rego-데이터-타입",
+          "rego-연산자와-내장-함수",
+          "rego-언어와-입력-계약",
+          "constraint-template-작성",
+          "기본-구조",
+          "privileged-container-방지",
+          "리소스-제한-강제",
+          "이미지-레지스트리-제한",
+          "constraint-정의",
+          "기본-constraint-작성",
+          "namespace-선택자-사용",
+          "리소스-제한-constraint",
+          "이미지-레지스트리-constraint",
+          "검증하는-정책과-범위",
+          "이미지-경계와-정책-예외",
+          "리소스-단위-처리",
+          "pss와-controller-리소스",
+          "고급-정책-패턴",
+          "외부-데이터-참조",
+          "네임스페이스-간-정책",
+          "복합-조건-정책",
+          "동기화-데이터와-고급-정책",
+          "mutation-기능",
+          "assignmetadata-사용",
+          "assign-사용",
+          "조건부-mutation",
+          "modifyset-사용",
+          "mutation",
+          "감사-audit-및-모니터링",
+          "audit-설정",
+          "constraint-위반-확인",
+          "prometheus-메트릭",
+          "grafana-대시보드",
+          "audit와-모니터링",
+          "테스트-및-ci-cd-통합",
+          "gator-cli-테스트",
+          "테스트-스위트-정의",
+          "테스트-픽스처",
+          "github-actions-통합",
+          "gator-테스트와-ci",
+          "모범-사례",
+          "정책-구조화",
+          "점진적-정책-적용",
+          "정책-예외-관리",
+          "문제-해결",
+          "일반적인-문제",
+          "디버깅-팁",
+          "단계적-적용과-문제-해결",
+          "요약",
+          "관련-문서",
+          "검증-범위와-관련-문서",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/security/09-opa-gatekeeper.md",
+        "sha256": "aaca3958a9d1588368de04ca63e8dd9cb70a863adcb13cb10b2fb8adf2e7e43d",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "opa-gatekeeper"
+          },
+          {
+            "tag": "h2",
+            "id": "overview"
+          },
+          {
+            "tag": "h2",
+            "id": "choosing-gatekeeper-and-kyverno"
+          },
+          {
+            "tag": "h2",
+            "id": "installing-gatekeeper"
+          },
+          {
+            "tag": "h3",
+            "id": "template-and-constraint-ordering"
+          },
+          {
+            "tag": "h2",
+            "id": "rego-and-the-input-contract"
+          },
+          {
+            "tag": "h2",
+            "id": "policies-and-scope"
+          },
+          {
+            "tag": "h3",
+            "id": "image-boundaries-and-exceptions"
+          },
+          {
+            "tag": "h3",
+            "id": "resource-quantities"
+          },
+          {
+            "tag": "h3",
+            "id": "pss-and-controller-resources"
+          },
+          {
+            "tag": "h2",
+            "id": "synchronized-data-and-referential-policies"
+          },
+          {
+            "tag": "h2",
+            "id": "mutation"
+          },
+          {
+            "tag": "h2",
+            "id": "audit-and-monitoring"
+          },
+          {
+            "tag": "h2",
+            "id": "gator-tests-and-ci"
+          },
+          {
+            "tag": "h2",
+            "id": "rollout-and-troubleshooting"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-scope-and-related-reading"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "opa-gatekeeper",
+          "overview",
+          "gatekeeper-vs-kyverno-comparison",
+          "choosing-gatekeeper-and-kyverno",
+          "installation-with-helm",
+          "installation-with-manifests",
+          "verify-installation",
+          "installing-gatekeeper",
+          "template-and-constraint-ordering",
+          "rego-language-basics",
+          "rego-syntax-overview",
+          "rego-data-types",
+          "rego-operators-and-built-in-functions",
+          "rego-and-the-input-contract",
+          "writing-constraint-templates",
+          "basic-structure",
+          "preventing-privileged-containers",
+          "enforcing-resource-limits",
+          "restricting-image-registries",
+          "defining-constraints",
+          "basic-constraint-writing",
+          "using-namespace-selectors",
+          "resource-limits-constraint",
+          "image-registry-constraint",
+          "policies-and-scope",
+          "image-boundaries-and-exceptions",
+          "resource-quantities",
+          "pss-and-controller-resources",
+          "advanced-policy-patterns",
+          "external-data-reference",
+          "cross-namespace-policies",
+          "complex-condition-policies",
+          "synchronized-data-and-referential-policies",
+          "mutation-features",
+          "using-assignmetadata",
+          "using-assign",
+          "conditional-mutation",
+          "using-modifyset",
+          "mutation",
+          "audit-configuration",
+          "checking-constraint-violations",
+          "prometheus-metrics",
+          "grafana-dashboard",
+          "audit-and-monitoring",
+          "testing-and-ci-cd-integration",
+          "gator-cli-testing",
+          "test-suite-definition",
+          "test-fixtures",
+          "github-actions-integration",
+          "gator-tests-and-ci",
+          "best-practices",
+          "policy-organization",
+          "gradual-policy-rollout",
+          "policy-exception-management",
+          "troubleshooting",
+          "common-issues",
+          "debugging-tips",
+          "rollout-and-troubleshooting",
+          "summary",
+          "related-documentation",
+          "validation-scope-and-related-reading",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/quizzes/security/09-opa-gatekeeper-quiz.md",
+        "sha256": "46e84c6ac40738cd384cb395032d2e122544765213e2ff8ec04d4d237456123d",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "opa-gatekeeper-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "문제"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-opa-gatekeeper에서-정책을-작성하는-데-사용되는-언어는"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-gatekeeper에서-재사용-가능한-정책-템플릿을-정의하는-crd는"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-gatekeeper-constraint의-enforcementaction-필드에서-지원하지-않는-값은"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-rego에서-배열의-모든-요소를-순회하는-구문은"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-gatekeeper에서-기존-클러스터-리소스의-정책-준수-여부를-확인하는-기능은"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-gatekeeper-3-23-1에서-지원하는-리소스-자동-수정-기능의-crd는"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-rego에서-두-집합의-차이를-계산하는-연산자는"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-gatekeeper에서-다른-네임스페이스의-리소스를-참조하기-위해-필요한-설정은"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-gatekeeper-정책-테스트를-위한-공식-cli-도구는"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-rego-정책을-선택할-구체적인-요구-사례는"
+          },
+          {
+            "tag": "h3",
+            "id": "_11-rego에서-violation-규칙이-여러-개-정의되어-있을-때-평가-방식은"
+          },
+          {
+            "tag": "h3",
+            "id": "_12-gatekeeper에서-constraint가-특정-네임스페이스에만-적용되도록-설정하는-필드는"
+          },
+          {
+            "tag": "h2",
+            "id": "점수-계산"
+          },
+          {
+            "tag": "h2",
+            "id": "관련-문서"
+          }
+        ],
+        "renderedIds": [
+          "opa-gatekeeper-퀴즈",
+          "문제",
+          "_1-opa-gatekeeper에서-정책을-작성하는-데-사용되는-언어는",
+          "_2-gatekeeper에서-재사용-가능한-정책-템플릿을-정의하는-crd는",
+          "_3-gatekeeper-constraint의-enforcementaction-필드에서-지원하지-않는-값은",
+          "_4-rego에서-배열의-모든-요소를-순회하는-구문은",
+          "_5-gatekeeper에서-기존-클러스터-리소스의-정책-준수-여부를-확인하는-기능은",
+          "_6-gatekeeper-v3-10-에서-지원하는-리소스-자동-수정-기능의-crd는",
+          "_6-gatekeeper-3-23-1에서-지원하는-리소스-자동-수정-기능의-crd는",
+          "_7-rego에서-두-집합의-차이를-계산하는-연산자는",
+          "_8-gatekeeper에서-다른-네임스페이스의-리소스를-참조하기-위해-필요한-설정은",
+          "_9-gatekeeper-정책-테스트를-위한-공식-cli-도구는",
+          "_10-gatekeeper와-kyverno-비교-시-gatekeeper의-장점은",
+          "_10-rego-정책을-선택할-구체적인-요구-사례는",
+          "_11-rego에서-violation-규칙이-여러-개-정의되어-있을-때-평가-방식은",
+          "_12-gatekeeper에서-constraint가-특정-네임스페이스에만-적용되도록-설정하는-필드는",
+          "점수-계산",
+          "관련-문서"
+        ]
+      },
+      {
+        "path": "en/quizzes/security/09-opa-gatekeeper-quiz.md",
+        "sha256": "010aeff3eb88670f8c54f22a107a8608cb3035289de817b5c4fa5215e062b884",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "opa-gatekeeper-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "questions"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-what-language-is-used-to-write-policies-in-opa-gatekeeper"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-what-crd-defines-reusable-policy-templates-in-gatekeeper"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-which-value-is-not-supported-in-the-enforcementaction-field-of-a-gatekeeper-constraint"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-what-is-the-syntax-for-iterating-through-all-elements-of-an-array-in-rego"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-what-feature-in-gatekeeper-checks-policy-compliance-of-existing-cluster-resources"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-what-crd-is-used-for-automatic-resource-modification-in-gatekeeper-3-23-1"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-what-operator-calculates-the-difference-between-two-sets-in-rego"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-what-configuration-is-needed-in-gatekeeper-to-reference-resources-from-other-namespaces"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-what-is-the-official-cli-tool-for-testing-gatekeeper-policies"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-which-concrete-requirement-can-motivate-choosing-a-rego-policy"
+          },
+          {
+            "tag": "h3",
+            "id": "_11-when-multiple-violation-rules-are-defined-in-rego-how-are-they-evaluated"
+          },
+          {
+            "tag": "h3",
+            "id": "_12-what-field-in-gatekeeper-configures-a-constraint-to-apply-only-to-specific-namespaces"
+          },
+          {
+            "tag": "h2",
+            "id": "score-calculation"
+          },
+          {
+            "tag": "h2",
+            "id": "related-documentation"
+          }
+        ],
+        "renderedIds": [
+          "opa-gatekeeper-quiz",
+          "questions",
+          "_1-what-language-is-used-to-write-policies-in-opa-gatekeeper",
+          "_2-what-crd-defines-reusable-policy-templates-in-gatekeeper",
+          "_3-which-value-is-not-supported-in-the-enforcementaction-field-of-a-gatekeeper-constraint",
+          "_4-what-is-the-syntax-for-iterating-through-all-elements-of-an-array-in-rego",
+          "_5-what-feature-in-gatekeeper-checks-policy-compliance-of-existing-cluster-resources",
+          "_6-what-crd-is-used-for-automatic-resource-modification-in-gatekeeper-v3-10",
+          "_6-what-crd-is-used-for-automatic-resource-modification-in-gatekeeper-3-23-1",
+          "_7-what-operator-calculates-the-difference-between-two-sets-in-rego",
+          "_8-what-configuration-is-needed-in-gatekeeper-to-reference-resources-from-other-namespaces",
+          "_9-what-is-the-official-cli-tool-for-testing-gatekeeper-policies",
+          "_10-what-is-gatekeeper-s-advantage-when-comparing-gatekeeper-and-kyverno",
+          "_10-which-concrete-requirement-can-motivate-choosing-a-rego-policy",
+          "_11-when-multiple-violation-rules-are-defined-in-rego-how-are-they-evaluated",
+          "_12-what-field-in-gatekeeper-configures-a-constraint-to-apply-only-to-specific-namespaces",
+          "score-calculation",
+          "related-documentation"
+        ]
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "assets/diagrams/archify/en-security-09-opa-gatekeeper-0.architecture.json",
+      "sha256": "73fa96beccd099f876285282494ba2ef0604467de8fb81bf86e5fe2cf60a8afb"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-security-09-opa-gatekeeper-0.architecture.json",
+      "sha256": "a83d577b14d8c0f547235247f945558ca0ae47bc3879600a7f884029636de1d1"
+    },
+    {
+      "path": "en/.gitbook/assets/en-security-09-opa-gatekeeper-0.png",
+      "sha256": "e0a5d9dcd663146a440834c8cc5e43a1234eab696443cef9c1e01fae48718051"
+    },
+    {
+      "path": "en/quizzes/security/09-opa-gatekeeper-quiz.md",
+      "sha256": "010aeff3eb88670f8c54f22a107a8608cb3035289de817b5c4fa5215e062b884"
+    },
+    {
+      "path": "en/security/09-opa-gatekeeper.md",
+      "sha256": "aaca3958a9d1588368de04ca63e8dd9cb70a863adcb13cb10b2fb8adf2e7e43d"
+    },
+    {
+      "path": "examples/security/gatekeeper/LICENSE.gatekeeper-library",
+      "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd"
+    },
+    {
+      "path": "examples/security/gatekeeper/README.md",
+      "sha256": "a4eb3bca967a21ba37b2768379bc6b60a715f7f1f7c76606b97873fb735794cc"
+    },
+    {
+      "path": "examples/security/gatekeeper/UPSTREAM.md",
+      "sha256": "fc233a6ba764905cdac3c08e16d4e6a17dfd54d31c0f70b823d843b9357016f3"
+    },
+    {
+      "path": "examples/security/gatekeeper/constraints/approved-images.yaml",
+      "sha256": "8c2ff69cf2fc815134ee73d4c6bc9d7249e228e236489fd05419f298c17f15d9"
+    },
+    {
+      "path": "examples/security/gatekeeper/constraints/no-privileged.yaml",
+      "sha256": "db0e2975c48360ea0569c28c521642e3b860e46d2cb063bf33f34a92292b6982"
+    },
+    {
+      "path": "examples/security/gatekeeper/constraints/required-labels.yaml",
+      "sha256": "8f8845404e2cc3a7411feff61041dc3fd3764ca4de0f726595d93e95ed8fa4b6"
+    },
+    {
+      "path": "examples/security/gatekeeper/constraints/resource-limits.yaml",
+      "sha256": "f0f5d1e19bc2b8865117874f6659b5b364999321c8eec3bd16abcd34445ef502"
+    },
+    {
+      "path": "examples/security/gatekeeper/constraints/unique-ingress.yaml",
+      "sha256": "c10caca4488aaf256cae35d1a38b04c9b76416119506b4b1e1524af2b3eb94f0"
+    },
+    {
+      "path": "examples/security/gatekeeper/mutations/add-owner.yaml",
+      "sha256": "e6f68a7c541461828acfccae651e9d3a0bd4fd4e5c65361e3b85639e1d48d2bc"
+    },
+    {
+      "path": "examples/security/gatekeeper/mutations/add-toleration.yaml",
+      "sha256": "daba3455ebe6996cfd600c9a017386e7a28c13a576c1379319dd8bbcdd09efd6"
+    },
+    {
+      "path": "examples/security/gatekeeper/podmonitor.yaml",
+      "sha256": "78b469fc14800d9bd260d916a53031ce026bfc9028aedb2974cfdfa3c87f3f0c"
+    },
+    {
+      "path": "examples/security/gatekeeper/sync.yaml",
+      "sha256": "e2b789eac4dc4012f5259d222929e835d3e99fc9717cd196da6da5bd38bdbf88"
+    },
+    {
+      "path": "examples/security/gatekeeper/templates/docsapprovedimages.yaml",
+      "sha256": "1f25c348a615b44bf5a1f81fcad5dabdea7e0f67aaae11025136381105736835"
+    },
+    {
+      "path": "examples/security/gatekeeper/templates/docsnoprivileged.yaml",
+      "sha256": "385df3649cf6ed307467ae19ee54aed26530604c27dffafcf51e404c40b4a7d6"
+    },
+    {
+      "path": "examples/security/gatekeeper/templates/docsrequiredlabels.yaml",
+      "sha256": "244a4710bb899da5f2758598943279efec5ee3d4e75edd44ee3d76ed5d72aa2f"
+    },
+    {
+      "path": "examples/security/gatekeeper/templates/docsuniqueingress.yaml",
+      "sha256": "156b5e6765b59a6acbf41f65952cedbf2f68a65d0b00088ed4433cb69e133ab1"
+    },
+    {
+      "path": "examples/security/gatekeeper/templates/k8scontainerlimits.yaml",
+      "sha256": "b408059a0eaf60bd91d0d0d8c8fbf6bb46dd078472ffc33fc391d1775052f7a3"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/containers-privileged-false.yaml",
+      "sha256": "9b85606e64f72430da092a4d37218971a0ab361bccc295590dcfa605ea8fcd8c"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/containers-privileged-true.yaml",
+      "sha256": "41d16f79a3e27ed7a19fee943671798ba7823687fbb02ffffc8247f1bbd3c61e"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/different-namespace-same-name.yaml",
+      "sha256": "9d8a691824cfaefd3041b039c98890b391588b9f14cb1ebb3e54f34b19555bfb"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/ephemeral-no-resource-fields.yaml",
+      "sha256": "7c5b0a7414979e2fec2cb610b36e64312de953c5834d4d103a23db671ba427b9"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/ephemeralContainers-privileged-false.yaml",
+      "sha256": "f232135690785efa3dbf1cbd74d5eaac8ce9265a4f896441ae1070ff65c07abc"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/ephemeralContainers-privileged-true.yaml",
+      "sha256": "b42886e459077262f42b74a669dd326a0a2d252e1799ee0e10596065da4eed6e"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/image-boundary-0.yaml",
+      "sha256": "d059a4642d17105aae4e8affe276b285ab9e631376be110f51b9c212037053f4"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/image-boundary-1.yaml",
+      "sha256": "5169e3ad06cdd5049eb5cc7545b2b410b7fee767ad6faa260b25412f5c38e0d8"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/image-boundary-2.yaml",
+      "sha256": "7c463ebc25662d4d478fc9743a25d48fe40e591a8039abb4830f905504ff07c8"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/image-boundary-3.yaml",
+      "sha256": "1d48e710e04d8f486a63d7baa49c9f84239e596e92fc33cc8db13cfc7fe65468"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/image-ephemeralContainers.yaml",
+      "sha256": "99bd8e53ad200c4ff120e517bbfe1a75f46bdd96bc9c1a8578c9226e77f928c5"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/image-initContainers.yaml",
+      "sha256": "be88c1b837e24144ccfdbd0ee9a8f78764aa0c40cf30631275020922fe98b8fa"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/initContainers-privileged-false.yaml",
+      "sha256": "c178a538119b6d718e7cf53d6abf73e921037cc196b66c82c6d013ad59fa2a25"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/initContainers-privileged-true.yaml",
+      "sha256": "69ea84687a4891d2736869cae518d04e0400b3b228f51159273a1c9911b67560"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/labels-absent.yaml",
+      "sha256": "ce519613aab25368015e39636cf2adfb363a7ff5b9db3363000f546224a74969"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/labels-empty.yaml",
+      "sha256": "8443db669db71498b58157c74bd84bc512fee6f4df1c970ddadab346f99123e2"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/labels-outside-scope.yaml",
+      "sha256": "75172918a7e22939e90d0782db095704cc255c4eaddc8286a85c16dad719d0ba"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/labels-present.yaml",
+      "sha256": "d059a4642d17105aae4e8affe276b285ab9e631376be110f51b9c212037053f4"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/missing-resources.yaml",
+      "sha256": "6e7b8611720a18c60850c83a4eb5cf3c696f5cdfc817ae12458159b3cd9f7750"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/nonconflicting-host.yaml",
+      "sha256": "31f4bc44b06e3c5fdccd4a6259d1329a655a9718a65995a4692e297806b4b41a"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/quantity-0.yaml",
+      "sha256": "345d322b5dc5d682512cb9616e4c1268a0b5c07c1814caf442de17c3755fc13a"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/quantity-1.yaml",
+      "sha256": "6cbf68e1ecde3d276d249a1889c0def182ff83d8506021d597e6ae0df5b4db8d"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/quantity-2.yaml",
+      "sha256": "b0c3f364facf433cdbdad7ee071b5b7c36d3cf892f0cb9665b162601c84f272e"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/quantity-3.yaml",
+      "sha256": "5a45ccb8bb2cb11ba19af24683b383122ebc4de4182009f95cfbc601ef31af13"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/quantity-4.yaml",
+      "sha256": "0482c9233138d5c3ddb02eab46bca61c4440d8253581dbb48b8811359de59722"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/quantity-5.yaml",
+      "sha256": "f3f08481c9ce7f7b06f08d0020d22b81c0b8f6b5fe3fea7cc9eda6cfd07bbf03"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/quantity-6.yaml",
+      "sha256": "11e4adc98b92bb46325c30740765a0d793db1240a7acd96f9ab3dfcf0b4158b9"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/quantity-7.yaml",
+      "sha256": "d7242e14f01047c6209257de92de39982649b9260095cff31b2a89faf6f5375b"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/quantity-8.yaml",
+      "sha256": "b0b7566c1fad130ad702401f3a8909a97f6160a85e5e35b357d2ee6672d75966"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/quantity-9.yaml",
+      "sha256": "4b4616bf411d8b0960de69a958783a7ef68fdc56d24a14bf6aa3c5f4a6d81299"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/same-namespace-other-name.yaml",
+      "sha256": "206bad56c95e82cdfbf13fcdf35982f489eec39837cffe5c031013c9877f2994"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/same-object-update.yaml",
+      "sha256": "9d8a691824cfaefd3041b039c98890b391588b9f14cb1ebb3e54f34b19555bfb"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/fixtures/tenant-skip-label-no-bypass.yaml",
+      "sha256": "660b8b65eb16b3c1a7002c45e395f15c094c761a4e62f61db5ab003363c4bc65"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/inventory-other-namespace.yaml",
+      "sha256": "e37f00c0fc5a4873e87b3ce21a7f806ab84a2dd97d433a5ce5a9a27277898897"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/inventory.yaml",
+      "sha256": "9d8a691824cfaefd3041b039c98890b391588b9f14cb1ebb3e54f34b19555bfb"
+    },
+    {
+      "path": "examples/security/gatekeeper/tests/suite.yaml",
+      "sha256": "0303009f9281c0dc79932e1b9699485a3c216b5678500e156552abef7f92134c"
+    },
+    {
+      "path": "examples/security/gatekeeper/values.yaml",
+      "sha256": "720666f11b73602aff1be80c7cb1bc2c4fbae2ffcadf79b9b058c14bd11f14d3"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-security-09-opa-gatekeeper-0.png",
+      "sha256": "f7355e3f8a8fce82f5289bced05b7ce5fc824c70bd822ac37984bea55e8619e1"
+    },
+    {
+      "path": "ko/quizzes/security/09-opa-gatekeeper-quiz.md",
+      "sha256": "46e84c6ac40738cd384cb395032d2e122544765213e2ff8ec04d4d237456123d"
+    },
+    {
+      "path": "ko/security/09-opa-gatekeeper.md",
+      "sha256": "df303cb8988acef4d9777755e2ab0d2ea294d260aa1656ab39e14135705e1a46"
+    },
+    {
+      "path": "public/archmaps/en-security-09-opa-gatekeeper-0.html",
+      "sha256": "98be155bce722aea2bd5b87f4227eb367d52e1e9b25a12306bfff410d94c2785"
+    },
+    {
+      "path": "public/archmaps/ko-security-09-opa-gatekeeper-0.html",
+      "sha256": "3aa8931c896a689c29dca71fc5eb21c45c2f5e914a65018c5be69b11dfab408f"
+    }
+  ],
+  "native": {
+    "gator": {
+      "status": "passed",
+      "version": "3.23.1",
+      "tests": 5,
+      "cases": 33,
+      "scope": "Native Gator verify actuallocaltemplates/constraints/syntheticfixtureobjects; no APIserver/webhook/admission/externaldata calls",
+      "quantityNote": "Scientific-notation strings are explicitly quoted in YAML to avoid parser conversion to JSONnumbers; numericvalues andunsupportedstrings have separate behavior",
+      "libraryCommit": "bd333d4704647b1000cef5a92017257ee46fe2c8"
+    },
+    "enforcement": {
+      "status": "passed",
+      "cases": [
+        {
+          "action": "dryrun",
+          "exit": 0,
+          "violationsReturned": true
+        },
+        {
+          "action": "warn",
+          "exit": 0,
+          "violationsReturned": true
+        },
+        {
+          "action": "deny",
+          "exit": 1,
+          "violationsReturned": true
+        }
+      ],
+      "scope": "NativeGator review only; no webhook orcluster"
+    },
+    "schema": {
+      "status": "passed",
+      "gatekeeper": "3.23.1",
+      "helmResources": 38,
+      "publishedCRDs": 17,
+      "validatedObjects": [
+        "templates/docsrequiredlabels.yaml",
+        "templates/docsnoprivileged.yaml",
+        "templates/docsapprovedimages.yaml",
+        "templates/docsuniqueingress.yaml",
+        "templates/k8scontainerlimits.yaml",
+        "mutations/add-owner.yaml",
+        "mutations/add-toleration.yaml",
+        "sync.yaml"
+      ],
+      "metricsBinding": "PodMonitor matches both actual audit andwebhook Deployments andtheir namedmetrics8888ports",
+      "scope": "Pinned Helm/CRD/selector checks only; no Kubernetesadmission"
+    },
+    "mutation": {
+      "status": "passed",
+      "gatekeeper": "3.23.1",
+      "native": "Actual Gatekeeper MutatorForModifySet/Matches/Mutate",
+      "checks": [
+        "namespace scope matches policy-lab",
+        "unrelated toleration remains",
+        "new dedicated toleration added",
+        "second mutation does not duplicate entry",
+        "outside namespace does not match"
+      ],
+      "sourceSha256": "daba3455ebe6996cfd600c9a017386e7a28c13a576c1379319dd8bbcdd09efd6",
+      "limits": "In-process native mutation engine with synthetic Pod; no APIserver/admission order test"
+    },
+    "binary": {
+      "tag": "v3.23.1",
+      "archive": "gator-v3.23.1-linux-arm64.tar.gz",
+      "sha256": "2d4bd0e28e708c2893a66fdca652f1d775b23fc5a3c07571fd314ba06d19ff2b",
+      "verified": true,
+      "method": "Actual GitHubrelease download and publishedarchive checksum"
+    }
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-security-09-opa-gatekeeper-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 874,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-09-opa-gatekeeper-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 874,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-security-09-opa-gatekeeper-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 874,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55538,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-09-opa-gatekeeper-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 645,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-09-opa-gatekeeper-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 645,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-security-09-opa-gatekeeper-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 645,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54954,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "6 cases on 2 locally generated viewers; motion/reduced-motion/visibility/theme/guided controls and 2 SVG exports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  },
+  "visual": {
+    "status": "passed",
+    "individuallyInspected": [
+      "ko/.gitbook/assets/ko-security-09-opa-gatekeeper-0.png",
+      "en/.gitbook/assets/en-security-09-opa-gatekeeper-0.png"
+    ],
+    "notes": "BothcompletePNGsviewed;labels/cards/arrowslegible, auditseparateDeploymentexplicit; no clipping"
+  },
+  "legacyAnchors": [
+    {
+      "path": "ko/security/09-opa-gatekeeper.md",
+      "preservedAliases": [
+        {
+          "id": "gatekeeper-vs-kyverno-비교",
+          "target": "## Gatekeeper와 Kyverno 선택"
+        },
+        {
+          "id": "helm을-이용한-설치",
+          "target": "## Gatekeeper 설치"
+        },
+        {
+          "id": "매니페스트를-이용한-설치",
+          "target": "## Gatekeeper 설치"
+        },
+        {
+          "id": "설치-확인",
+          "target": "## Gatekeeper 설치"
+        },
+        {
+          "id": "rego-언어-기초",
+          "target": "## Rego 언어와 입력 계약"
+        },
+        {
+          "id": "rego-문법-개요",
+          "target": "## Rego 언어와 입력 계약"
+        },
+        {
+          "id": "rego-데이터-타입",
+          "target": "## Rego 언어와 입력 계약"
+        },
+        {
+          "id": "rego-연산자와-내장-함수",
+          "target": "## Rego 언어와 입력 계약"
+        },
+        {
+          "id": "constraint-template-작성",
+          "target": "## 검증하는 정책과 범위"
+        },
+        {
+          "id": "기본-구조",
+          "target": "## 검증하는 정책과 범위"
+        },
+        {
+          "id": "privileged-container-방지",
+          "target": "## 검증하는 정책과 범위"
+        },
+        {
+          "id": "리소스-제한-강제",
+          "target": "## 검증하는 정책과 범위"
+        },
+        {
+          "id": "이미지-레지스트리-제한",
+          "target": "## 검증하는 정책과 범위"
+        },
+        {
+          "id": "constraint-정의",
+          "target": "## 검증하는 정책과 범위"
+        },
+        {
+          "id": "기본-constraint-작성",
+          "target": "## 검증하는 정책과 범위"
+        },
+        {
+          "id": "namespace-선택자-사용",
+          "target": "## 검증하는 정책과 범위"
+        },
+        {
+          "id": "리소스-제한-constraint",
+          "target": "## 검증하는 정책과 범위"
+        },
+        {
+          "id": "이미지-레지스트리-constraint",
+          "target": "## 검증하는 정책과 범위"
+        },
+        {
+          "id": "고급-정책-패턴",
+          "target": "## 동기화 데이터와 고급 정책"
+        },
+        {
+          "id": "외부-데이터-참조",
+          "target": "## 동기화 데이터와 고급 정책"
+        },
+        {
+          "id": "네임스페이스-간-정책",
+          "target": "## 동기화 데이터와 고급 정책"
+        },
+        {
+          "id": "복합-조건-정책",
+          "target": "## 동기화 데이터와 고급 정책"
+        },
+        {
+          "id": "mutation-기능",
+          "target": "## Mutation"
+        },
+        {
+          "id": "assignmetadata-사용",
+          "target": "## Mutation"
+        },
+        {
+          "id": "assign-사용",
+          "target": "## Mutation"
+        },
+        {
+          "id": "조건부-mutation",
+          "target": "## Mutation"
+        },
+        {
+          "id": "modifyset-사용",
+          "target": "## Mutation"
+        },
+        {
+          "id": "감사-audit-및-모니터링",
+          "target": "## Audit와 모니터링"
+        },
+        {
+          "id": "audit-설정",
+          "target": "## Audit와 모니터링"
+        },
+        {
+          "id": "constraint-위반-확인",
+          "target": "## Audit와 모니터링"
+        },
+        {
+          "id": "prometheus-메트릭",
+          "target": "## Audit와 모니터링"
+        },
+        {
+          "id": "grafana-대시보드",
+          "target": "## Audit와 모니터링"
+        },
+        {
+          "id": "테스트-및-ci-cd-통합",
+          "target": "## Gator 테스트와 CI"
+        },
+        {
+          "id": "gator-cli-테스트",
+          "target": "## Gator 테스트와 CI"
+        },
+        {
+          "id": "테스트-스위트-정의",
+          "target": "## Gator 테스트와 CI"
+        },
+        {
+          "id": "테스트-픽스처",
+          "target": "## Gator 테스트와 CI"
+        },
+        {
+          "id": "github-actions-통합",
+          "target": "## Gator 테스트와 CI"
+        },
+        {
+          "id": "모범-사례",
+          "target": "## 단계적 적용과 문제 해결"
+        },
+        {
+          "id": "정책-구조화",
+          "target": "## 단계적 적용과 문제 해결"
+        },
+        {
+          "id": "점진적-정책-적용",
+          "target": "## 단계적 적용과 문제 해결"
+        },
+        {
+          "id": "정책-예외-관리",
+          "target": "## 단계적 적용과 문제 해결"
+        },
+        {
+          "id": "문제-해결",
+          "target": "## 단계적 적용과 문제 해결"
+        },
+        {
+          "id": "일반적인-문제",
+          "target": "## 단계적 적용과 문제 해결"
+        },
+        {
+          "id": "디버깅-팁",
+          "target": "## 단계적 적용과 문제 해결"
+        },
+        {
+          "id": "요약",
+          "target": "## 검증 범위와 관련 문서"
+        },
+        {
+          "id": "관련-문서",
+          "target": "## 검증 범위와 관련 문서"
+        }
+      ]
+    },
+    {
+      "path": "ko/quizzes/security/09-opa-gatekeeper-quiz.md",
+      "preservedAliases": [
+        {
+          "id": "_6-gatekeeper-v3-10-에서-지원하는-리소스-자동-수정-기능의-crd는",
+          "target": "### 6. Gatekeeper 3.23.1에서 지원하는 리소스 자동 수정 기능의 CRD는?"
+        },
+        {
+          "id": "_10-gatekeeper와-kyverno-비교-시-gatekeeper의-장점은",
+          "target": "### 10. Rego 정책을 선택할 구체적인 요구 사례는?"
+        }
+      ]
+    },
+    {
+      "path": "en/security/09-opa-gatekeeper.md",
+      "preservedAliases": [
+        {
+          "id": "gatekeeper-vs-kyverno-comparison",
+          "target": "## Choosing Gatekeeper and Kyverno"
+        },
+        {
+          "id": "installation-with-helm",
+          "target": "## Installing Gatekeeper"
+        },
+        {
+          "id": "installation-with-manifests",
+          "target": "## Installing Gatekeeper"
+        },
+        {
+          "id": "verify-installation",
+          "target": "## Installing Gatekeeper"
+        },
+        {
+          "id": "rego-language-basics",
+          "target": "## Rego and the Input Contract"
+        },
+        {
+          "id": "rego-syntax-overview",
+          "target": "## Rego and the Input Contract"
+        },
+        {
+          "id": "rego-data-types",
+          "target": "## Rego and the Input Contract"
+        },
+        {
+          "id": "rego-operators-and-built-in-functions",
+          "target": "## Rego and the Input Contract"
+        },
+        {
+          "id": "writing-constraint-templates",
+          "target": "## Policies and Scope"
+        },
+        {
+          "id": "basic-structure",
+          "target": "## Policies and Scope"
+        },
+        {
+          "id": "preventing-privileged-containers",
+          "target": "## Policies and Scope"
+        },
+        {
+          "id": "enforcing-resource-limits",
+          "target": "## Policies and Scope"
+        },
+        {
+          "id": "restricting-image-registries",
+          "target": "## Policies and Scope"
+        },
+        {
+          "id": "defining-constraints",
+          "target": "## Policies and Scope"
+        },
+        {
+          "id": "basic-constraint-writing",
+          "target": "## Policies and Scope"
+        },
+        {
+          "id": "using-namespace-selectors",
+          "target": "## Policies and Scope"
+        },
+        {
+          "id": "resource-limits-constraint",
+          "target": "## Policies and Scope"
+        },
+        {
+          "id": "image-registry-constraint",
+          "target": "## Policies and Scope"
+        },
+        {
+          "id": "advanced-policy-patterns",
+          "target": "## Synchronized Data and Referential Policies"
+        },
+        {
+          "id": "external-data-reference",
+          "target": "## Synchronized Data and Referential Policies"
+        },
+        {
+          "id": "cross-namespace-policies",
+          "target": "## Synchronized Data and Referential Policies"
+        },
+        {
+          "id": "complex-condition-policies",
+          "target": "## Synchronized Data and Referential Policies"
+        },
+        {
+          "id": "mutation-features",
+          "target": "## Mutation"
+        },
+        {
+          "id": "using-assignmetadata",
+          "target": "## Mutation"
+        },
+        {
+          "id": "using-assign",
+          "target": "## Mutation"
+        },
+        {
+          "id": "conditional-mutation",
+          "target": "## Mutation"
+        },
+        {
+          "id": "using-modifyset",
+          "target": "## Mutation"
+        },
+        {
+          "id": "audit-configuration",
+          "target": "## Audit and Monitoring"
+        },
+        {
+          "id": "checking-constraint-violations",
+          "target": "## Audit and Monitoring"
+        },
+        {
+          "id": "prometheus-metrics",
+          "target": "## Audit and Monitoring"
+        },
+        {
+          "id": "grafana-dashboard",
+          "target": "## Audit and Monitoring"
+        },
+        {
+          "id": "testing-and-ci-cd-integration",
+          "target": "## Gator Tests and CI"
+        },
+        {
+          "id": "gator-cli-testing",
+          "target": "## Gator Tests and CI"
+        },
+        {
+          "id": "test-suite-definition",
+          "target": "## Gator Tests and CI"
+        },
+        {
+          "id": "test-fixtures",
+          "target": "## Gator Tests and CI"
+        },
+        {
+          "id": "github-actions-integration",
+          "target": "## Gator Tests and CI"
+        },
+        {
+          "id": "best-practices",
+          "target": "## Rollout and Troubleshooting"
+        },
+        {
+          "id": "policy-organization",
+          "target": "## Rollout and Troubleshooting"
+        },
+        {
+          "id": "gradual-policy-rollout",
+          "target": "## Rollout and Troubleshooting"
+        },
+        {
+          "id": "policy-exception-management",
+          "target": "## Rollout and Troubleshooting"
+        },
+        {
+          "id": "troubleshooting",
+          "target": "## Rollout and Troubleshooting"
+        },
+        {
+          "id": "common-issues",
+          "target": "## Rollout and Troubleshooting"
+        },
+        {
+          "id": "debugging-tips",
+          "target": "## Rollout and Troubleshooting"
+        },
+        {
+          "id": "summary",
+          "target": "## Validation Scope and Related Reading"
+        },
+        {
+          "id": "related-documentation",
+          "target": "## Validation Scope and Related Reading"
+        }
+      ]
+    },
+    {
+      "path": "en/quizzes/security/09-opa-gatekeeper-quiz.md",
+      "preservedAliases": [
+        {
+          "id": "_6-what-crd-is-used-for-automatic-resource-modification-in-gatekeeper-v3-10",
+          "target": "### 6. What CRD is used for automatic resource modification in Gatekeeper 3.23.1?"
+        },
+        {
+          "id": "_10-what-is-gatekeeper-s-advantage-when-comparing-gatekeeper-and-kyverno",
+          "target": "### 10. Which concrete requirement can motivate choosing a Rego policy?"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://github.com/open-policy-agent/gatekeeper/blob/v3.23.1/website/docs/constrainttemplates.md",
+      "method": "AuthenticatedGitHubAPIrawcontent",
+      "cacheSha256": "8a11a1766837b6c456f34d3c288d51f5ced354754fc3043402c16c24dc9e2399"
+    },
+    {
+      "url": "https://github.com/open-policy-agent/gatekeeper/blob/v3.23.1/website/docs/gator.md",
+      "method": "AuthenticatedGitHubAPIrawcontent",
+      "cacheSha256": "7d989bdfcdb7d6a415b3e3349c9347a2256636d136f2ec0e56819b13987c822b"
+    },
+    {
+      "url": "https://github.com/open-policy-agent/gatekeeper/blob/v3.23.1/website/docs/sync.md",
+      "method": "AuthenticatedGitHubAPIrawcontent",
+      "cacheSha256": "4f72c6f87e43e108f92e13327ef186a117ff9d3d145df649ca6cbfa2060080c2"
+    },
+    {
+      "url": "https://github.com/open-policy-agent/gatekeeper/blob/v3.23.1/website/docs/mutation.md",
+      "method": "AuthenticatedGitHubAPIrawcontent",
+      "cacheSha256": "80218b023378bbd9c9281a039c5e15a101232b3801d2e73e344d9a502d45d6ee"
+    },
+    {
+      "url": "https://github.com/open-policy-agent/gatekeeper/blob/v3.23.1/website/docs/audit.md",
+      "method": "AuthenticatedGitHubAPIrawcontent",
+      "cacheSha256": "e9cf7fdc8f5269fcb992000274d5798a5570c14e52917b5588006f72622c033d"
+    },
+    {
+      "url": "https://github.com/open-policy-agent/gatekeeper/blob/v3.23.1/website/docs/metrics.md",
+      "method": "AuthenticatedGitHubAPIrawcontent",
+      "cacheSha256": "18fbfdef3343a36c1f8d316bb2b9e7f397481499a3c9a6c965ab1e2ec572ccf2"
+    }
+  ],
+  "upstreamLibrary": {
+    "commit": {
+      "committer": {
+        "date": "2026-09-08T21:31:53Z",
+        "email": "noreply@github.com",
+        "name": "GitHub"
+      }
+    },
+    "sha": "bd333d4704647b1000cef5a92017257ee46fe2c8"
+  },
+  "corrections": [
+    "Attribute graduation to OPA rather than treating Gatekeeper as a separately graduated project; remove unsupported performance rankings.",
+    "Pin chart/Gator3.23.1; use actual auditInterval/logLevel fields, webhook failurePolicy and controller/audit replica behavior.",
+    "Use input.review; distinguish supported legacy RegoV0 from explicit code.source.version v1.",
+    "Provide complete required-label schema and nonempty-label policy.",
+    "Cover regular/init/ephemeral containers for privilege/image checks without workload-controlled bypass labels.",
+    "Replace fail-open quantity parsing with pinned upstream policy; test regular/init limits and skip invalid ephemeral resource fields.",
+    "Require separator-terminated image prefixes and test registry/path spoofing.",
+    "Fix Ingress self-exclusion so same-namespace/different-name and different-namespace/same-name conflicts are detected; explain cache/race/wildcard limits.",
+    "Describe selected policies as partial checks rather than full Baseline/Restricted PSS.",
+    "Use ModifySet to preserve unrelated tolerations and prove idempotence/scope natively.",
+    "Distinguish auditInterval from Config.validation.traces debugging; avoid raw sensitive debugging data.",
+    "Use real validation metric names/labels and PodMonitor on both actual Deployments rather than a nonexistent Service metrics port.",
+    "Use gator verify Suites and gator test -f manifests; require expected test/case counts; pin binary and avoid untrusted CI cluster credentials.",
+    "Distinguish dryrun/warn/deny output and exit behavior, with populated Constraint parameters.",
+    "Correct quiz object-value versus object-key iteration, partial-set semantics, self-link and unsupported recursive-rule/bundle claims."
+  ],
+  "clarifications": [
+    "Gatekeeperlegacytarget.rego defaultsV0, soV0notautomaticallyinvalid;newlocaltemplatesoptV1source.version",
+    "Kyverno currentREADME stillstatesCNCFIncubating; OPAgraduatedstatusmustnotattributeastandaloneGatekeepergraduation",
+    "Gatekeeper resourcequantities applynormal/init only; ephemeralcontainerscannotsetresources",
+    "Gator officialSuitesupportsviolationsyes/noorinteger; useexactintegerassertions"
+  ],
+  "limits": [
+    "NoEKS/Kubernetesadmission/liveauditcache orAPIavailabilityfailuretest.",
+    "NativeGatorislocalpolicyexecution; schemaandHelmchecksnotrealclusteradmission.",
+    "Noimagepullsorworkloaddeployment;exampleimageURLsarepolicyfixtures.",
+    "Noequality/uniquenessguaranteeforconcurrentIngresscreationorwildcardhosts.",
+    "Onlyselectedpolicychecks;notfullPodSecurityStandards."
+  ],
+  "reviewFix": {
+    "findings": [
+      "GK-R1-001",
+      "GK-R1-002",
+      "GK-R1-003"
+    ],
+    "changes": [
+      "LiteralblockRego inquizCT;lambda replacementpreservesexactnewlines",
+      "AuditdiagnosticusesinstalledDocsRequiredLabels/required-labels",
+      "ConcreteRegoset/comprehensionquestionreplacesblanketKyverno superiority claims"
+    ],
+    "nativeMarkdownPolicies": {
+      "status": "passed",
+      "cases": [
+        {
+          "path": "ko/security/09-opa-gatekeeper.md",
+          "fence": 0,
+          "gatorExit": 0,
+          "violationCount": 1,
+          "extractedFile": ".vitepress/cache/content-review-gatekeeper/markdown-policy-checks/ko-guide-0.yaml"
+        },
+        {
+          "path": "ko/quizzes/security/09-opa-gatekeeper-quiz.md",
+          "fence": 0,
+          "gatorExit": 0,
+          "violationCount": 1,
+          "extractedFile": ".vitepress/cache/content-review-gatekeeper/markdown-policy-checks/ko-quiz-0.yaml"
+        },
+        {
+          "path": "en/security/09-opa-gatekeeper.md",
+          "fence": 0,
+          "gatorExit": 0,
+          "violationCount": 1,
+          "extractedFile": ".vitepress/cache/content-review-gatekeeper/markdown-policy-checks/en-guide-0.yaml"
+        },
+        {
+          "path": "en/quizzes/security/09-opa-gatekeeper-quiz.md",
+          "fence": 0,
+          "gatorExit": 0,
+          "violationCount": 1,
+          "extractedFile": ".vitepress/cache/content-review-gatekeeper/markdown-policy-checks/en-quiz-0.yaml"
+        }
+      ],
+      "scope": "Each guide/quiz CT fence extracted to a distinctfile, compiled/evaluated bynativeGator3.23.1; exactone missing-label violation required. Dryrunexit0notusedasproofalone."
+    },
+    "markdown": {
+      "nodeHeapMiB": 512,
+      "scope": "Explicit documents only; no site build",
+      "results": [
+        {
+          "path": "ko/quizzes/security/09-opa-gatekeeper-quiz.md",
+          "sha256": "46e84c6ac40738cd384cb395032d2e122544765213e2ff8ec04d4d237456123d",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "opa-gatekeeper-퀴즈"
+            },
+            {
+              "tag": "h2",
+              "id": "문제"
+            },
+            {
+              "tag": "h3",
+              "id": "_1-opa-gatekeeper에서-정책을-작성하는-데-사용되는-언어는"
+            },
+            {
+              "tag": "h3",
+              "id": "_2-gatekeeper에서-재사용-가능한-정책-템플릿을-정의하는-crd는"
+            },
+            {
+              "tag": "h3",
+              "id": "_3-gatekeeper-constraint의-enforcementaction-필드에서-지원하지-않는-값은"
+            },
+            {
+              "tag": "h3",
+              "id": "_4-rego에서-배열의-모든-요소를-순회하는-구문은"
+            },
+            {
+              "tag": "h3",
+              "id": "_5-gatekeeper에서-기존-클러스터-리소스의-정책-준수-여부를-확인하는-기능은"
+            },
+            {
+              "tag": "h3",
+              "id": "_6-gatekeeper-3-23-1에서-지원하는-리소스-자동-수정-기능의-crd는"
+            },
+            {
+              "tag": "h3",
+              "id": "_7-rego에서-두-집합의-차이를-계산하는-연산자는"
+            },
+            {
+              "tag": "h3",
+              "id": "_8-gatekeeper에서-다른-네임스페이스의-리소스를-참조하기-위해-필요한-설정은"
+            },
+            {
+              "tag": "h3",
+              "id": "_9-gatekeeper-정책-테스트를-위한-공식-cli-도구는"
+            },
+            {
+              "tag": "h3",
+              "id": "_10-rego-정책을-선택할-구체적인-요구-사례는"
+            },
+            {
+              "tag": "h3",
+              "id": "_11-rego에서-violation-규칙이-여러-개-정의되어-있을-때-평가-방식은"
+            },
+            {
+              "tag": "h3",
+              "id": "_12-gatekeeper에서-constraint가-특정-네임스페이스에만-적용되도록-설정하는-필드는"
+            },
+            {
+              "tag": "h2",
+              "id": "점수-계산"
+            },
+            {
+              "tag": "h2",
+              "id": "관련-문서"
+            }
+          ],
+          "renderedIds": [
+            "opa-gatekeeper-퀴즈",
+            "문제",
+            "_1-opa-gatekeeper에서-정책을-작성하는-데-사용되는-언어는",
+            "_2-gatekeeper에서-재사용-가능한-정책-템플릿을-정의하는-crd는",
+            "_3-gatekeeper-constraint의-enforcementaction-필드에서-지원하지-않는-값은",
+            "_4-rego에서-배열의-모든-요소를-순회하는-구문은",
+            "_5-gatekeeper에서-기존-클러스터-리소스의-정책-준수-여부를-확인하는-기능은",
+            "_6-gatekeeper-v3-10-에서-지원하는-리소스-자동-수정-기능의-crd는",
+            "_6-gatekeeper-3-23-1에서-지원하는-리소스-자동-수정-기능의-crd는",
+            "_7-rego에서-두-집합의-차이를-계산하는-연산자는",
+            "_8-gatekeeper에서-다른-네임스페이스의-리소스를-참조하기-위해-필요한-설정은",
+            "_9-gatekeeper-정책-테스트를-위한-공식-cli-도구는",
+            "_10-gatekeeper와-kyverno-비교-시-gatekeeper의-장점은",
+            "_10-rego-정책을-선택할-구체적인-요구-사례는",
+            "_11-rego에서-violation-규칙이-여러-개-정의되어-있을-때-평가-방식은",
+            "_12-gatekeeper에서-constraint가-특정-네임스페이스에만-적용되도록-설정하는-필드는",
+            "점수-계산",
+            "관련-문서"
+          ]
+        },
+        {
+          "path": "en/quizzes/security/09-opa-gatekeeper-quiz.md",
+          "sha256": "010aeff3eb88670f8c54f22a107a8608cb3035289de817b5c4fa5215e062b884",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "opa-gatekeeper-quiz"
+            },
+            {
+              "tag": "h2",
+              "id": "questions"
+            },
+            {
+              "tag": "h3",
+              "id": "_1-what-language-is-used-to-write-policies-in-opa-gatekeeper"
+            },
+            {
+              "tag": "h3",
+              "id": "_2-what-crd-defines-reusable-policy-templates-in-gatekeeper"
+            },
+            {
+              "tag": "h3",
+              "id": "_3-which-value-is-not-supported-in-the-enforcementaction-field-of-a-gatekeeper-constraint"
+            },
+            {
+              "tag": "h3",
+              "id": "_4-what-is-the-syntax-for-iterating-through-all-elements-of-an-array-in-rego"
+            },
+            {
+              "tag": "h3",
+              "id": "_5-what-feature-in-gatekeeper-checks-policy-compliance-of-existing-cluster-resources"
+            },
+            {
+              "tag": "h3",
+              "id": "_6-what-crd-is-used-for-automatic-resource-modification-in-gatekeeper-3-23-1"
+            },
+            {
+              "tag": "h3",
+              "id": "_7-what-operator-calculates-the-difference-between-two-sets-in-rego"
+            },
+            {
+              "tag": "h3",
+              "id": "_8-what-configuration-is-needed-in-gatekeeper-to-reference-resources-from-other-namespaces"
+            },
+            {
+              "tag": "h3",
+              "id": "_9-what-is-the-official-cli-tool-for-testing-gatekeeper-policies"
+            },
+            {
+              "tag": "h3",
+              "id": "_10-which-concrete-requirement-can-motivate-choosing-a-rego-policy"
+            },
+            {
+              "tag": "h3",
+              "id": "_11-when-multiple-violation-rules-are-defined-in-rego-how-are-they-evaluated"
+            },
+            {
+              "tag": "h3",
+              "id": "_12-what-field-in-gatekeeper-configures-a-constraint-to-apply-only-to-specific-namespaces"
+            },
+            {
+              "tag": "h2",
+              "id": "score-calculation"
+            },
+            {
+              "tag": "h2",
+              "id": "related-documentation"
+            }
+          ],
+          "renderedIds": [
+            "opa-gatekeeper-quiz",
+            "questions",
+            "_1-what-language-is-used-to-write-policies-in-opa-gatekeeper",
+            "_2-what-crd-defines-reusable-policy-templates-in-gatekeeper",
+            "_3-which-value-is-not-supported-in-the-enforcementaction-field-of-a-gatekeeper-constraint",
+            "_4-what-is-the-syntax-for-iterating-through-all-elements-of-an-array-in-rego",
+            "_5-what-feature-in-gatekeeper-checks-policy-compliance-of-existing-cluster-resources",
+            "_6-what-crd-is-used-for-automatic-resource-modification-in-gatekeeper-v3-10",
+            "_6-what-crd-is-used-for-automatic-resource-modification-in-gatekeeper-3-23-1",
+            "_7-what-operator-calculates-the-difference-between-two-sets-in-rego",
+            "_8-what-configuration-is-needed-in-gatekeeper-to-reference-resources-from-other-namespaces",
+            "_9-what-is-the-official-cli-tool-for-testing-gatekeeper-policies",
+            "_10-what-is-gatekeeper-s-advantage-when-comparing-gatekeeper-and-kyverno",
+            "_10-which-concrete-requirement-can-motivate-choosing-a-rego-policy",
+            "_11-when-multiple-violation-rules-are-defined-in-rego-how-are-they-evaluated",
+            "_12-what-field-in-gatekeeper-configures-a-constraint-to-apply-only-to-specific-namespaces",
+            "score-calculation",
+            "related-documentation"
+          ]
+        }
+      ]
+    }
+  }
+}

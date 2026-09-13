@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: case
+  namespace: policy-lab
+  labels:
+    app.kubernetes.io/name: demo
+spec:
+  containers:
+  - name: subject
+    image: registry.example.com/team/app:v1
+    resources:
+      limits:
+        cpu: '4'
+        memory: '8e9'
