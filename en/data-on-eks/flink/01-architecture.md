@@ -1,6 +1,6 @@
 # Part 1: Flink Architecture on Kubernetes
 
-> Reviewed: 2026-09-12. Integration examples: Flink 2.2.1 / Java 17 / Operator 1.15.0.
+> **Last Updated**: September 12, 2026. Integration examples: Flink 2.2.1 / Java 17 / Operator 1.15.0.
 
 This chapter explains cluster roles and resource sizing. Prepare a currently
 supported EKS/Kubernetes version, compatible kubectl, a Flink distribution and

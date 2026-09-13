@@ -1,6 +1,6 @@
 # Tekton Pipelines: Kubernetes 네이티브 CI
 
-> **검토일**: 2026-09-12. Pipelines 1.16.0, Triggers 0.37.0, Chains 0.29.0, Dashboard 0.72.0, tkn 0.46.0.
+> **마지막 업데이트**: 2026년 9월 12일. Pipelines 1.16.0, Triggers 0.37.0, Chains 0.29.0, Dashboard 0.72.0, tkn 0.46.0.
 > **검증 범위**: 릴리스 CRD 스키마·Task 의존 관계·로컬 스크립트와 모의 도구 실행. 실제 EKS 설치, 이미지 빌드·게시, KMS 서명, 외부 Webhook/알림은 실행하지 않았습니다.
 
 < [이전: FinOps](./13-finops-cost-platform.md) | [목차](./README.md) | [다음: 가용 영역 운영](./15-zonal-operations-guide.md) >

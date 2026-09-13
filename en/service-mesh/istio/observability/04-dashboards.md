@@ -1,7 +1,7 @@
 # Istio Dashboards
 
 > **Review baseline**: Istio 1.31; Kiali compatibility is qualified below.
-> **Last Reviewed**: September 11, 2026
+> **Last Updated**: September 11, 2026
 
 Use Grafana, Kiali and Prometheus to inspect configured telemetry. The examples are lab configuration patterns checked against official references and offline validation; they were not deployed or production-load tested. Backend availability, authentication, namespace permissions, storage and version compatibility are explicit prerequisites.
 

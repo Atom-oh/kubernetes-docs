@@ -1,6 +1,6 @@
 # Cilium Service Mesh Observability
 
-> **Reviewed**: September 11, 2026 · Cilium/chart 1.20.1 · Hubble CLI 1.19.4 · Collector Contrib 0.160.0 · Loki 3.7.7. See the [overview](./README.md) for Kubernetes/EKS and platform requirements.
+> **Last Updated**: September 11, 2026 · Cilium/chart 1.20.1 · Hubble CLI 1.19.4 · Collector Contrib 0.160.0 · Loki 3.7.7. See the [overview](./README.md) for Kubernetes/EKS and platform requirements.
 
 ## Overview
 

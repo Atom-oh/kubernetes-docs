@@ -1,6 +1,6 @@
 # Istio
 
-> **Reviewed**: September 11, 2026 · Istio 1.31 guidance
+> **Last Updated**: September 11, 2026 · Istio 1.31 guidance
 
 This overview keeps the earlier chapter URL usable. The maintained [Istio documentation index](istio/README.md) and [installation guide](istio/01-installation.md) own the detailed procedures and compatibility matrix; use them for current setup.
 

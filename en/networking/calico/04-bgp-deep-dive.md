@@ -1,6 +1,6 @@
 # Part 4: BGP Deep Dive
 
-> **Review baseline**: Calico 3.32.2; Calico 3.32 tests Kubernetes 1.34–1.36. **Reviewed**: September 12, 2026.
+> **Review baseline**: Calico 3.32.2; Calico 3.32 tests Kubernetes 1.34–1.36. **Last Updated**: September 12, 2026.
 >
 > Configuration examples assume a Linux Calico cluster with BGP enabled and the standard Calico API server installed (`projectcalico.org/v3`). They are separate topology alternatives, not one manifest to apply in sequence. Retain the installation's operator/GitOps ownership and merge intended fields into its existing configuration. The [installation guide](01-introduction.md) covers API prerequisites; the [networking modes guide](03-networking-modes.md) covers BGP-free routing alternatives. Router addresses, ASNs and CIDRs must match a network you control. No live fabric or cluster failover was tested for this review.
 

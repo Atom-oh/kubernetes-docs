@@ -1,7 +1,7 @@
 # Part 1: Calico 소개 및 기본 개념
 
 > **검토 기준**: Calico Open Source 3.32.2, kind 0.33.0, Kubernetes 1.36.4
-> **검토일**: 2026년 9월 12일. Calico 3.32의 공식 Kubernetes 시험 대상은 1.34–1.36입니다.
+> **마지막 업데이트**: 2026년 9월 12일. Calico 3.32의 공식 Kubernetes 시험 대상은 1.34–1.36입니다.
 
 ## 실습 환경
 

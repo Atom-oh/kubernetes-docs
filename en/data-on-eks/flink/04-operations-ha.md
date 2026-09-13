@@ -1,6 +1,6 @@
 # Part 4: Operations, High Availability and Managed Flink
 
-> Reviewed: 2026-09-12. Self-managed examples use Flink 2.2.1 / Operator 1.15.0; the managed-service comparison uses AWS's Flink 2.3 documentation.
+> **Last Updated**: September 12, 2026. Self-managed examples use Flink 2.2.1 / Operator 1.15.0; the managed-service comparison uses AWS's Flink 2.3 documentation.
 
 Connect observability and HA to Part 3's stateful deployment, then validate failures,
 recovery and capacity. Karpenter is not mandatory; inspect whichever node-capacity

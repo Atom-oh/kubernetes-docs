@@ -1,6 +1,6 @@
 # FinOps Cost Visibility Platform
 
-> **Reviewed**: 2026-09-12. OpenCost 1.121.2 / chart 2.5.31, Kubecost 3.2.4, Kyverno 1.19.1.
+> **Last Updated**: September 12, 2026. OpenCost 1.121.2 / chart 2.5.31, Kubecost 3.2.4, Kyverno 1.19.1.
 > **Validation**: Helm rendering, Kubernetes schemas, Terraform mock providers, local cost calculations and policy evaluation. This does not represent an installation on a production cluster or reconciliation against an actual AWS invoice.
 
 < [Previous: Event Capacity Planning](./12-event-capacity-planning.md) | [Contents](./README.md) | [Next: Tekton Pipelines](./14-tekton-pipelines.md) >

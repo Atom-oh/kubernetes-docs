@@ -1,7 +1,7 @@
 # Observability
 
 > **Supported Versions**: Istio 1.31
-> **Last Reviewed**: September 11, 2026
+> **Last Updated**: September 11, 2026
 
 Istio proxies generate telemetry for traffic they observe. Metrics scraping, access logging, trace providers and storage must be configured. Applications must propagate trace context between incoming and outgoing requests to connect spans; application-internal spans and exceptions need application instrumentation/logging.
 

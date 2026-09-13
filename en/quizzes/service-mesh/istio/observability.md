@@ -1,6 +1,6 @@
 # Observability Quiz
 
-> **Reviewed**: September 11, 2026 · Istio 1.31 · Kubernetes 1.32–1.36. See the installation and dashboard chapters for EKS and Kiali compatibility limits.
+> **Last Updated**: September 11, 2026 · Istio 1.31 · Kubernetes 1.32–1.36. See the installation and dashboard chapters for EKS and Kiali compatibility limits.
 
 This quiz covers configured sidecar/waypoint telemetry. Each worked example is independent and assumes the stated backends, namespaces, permissions and traffic exist. YAML/API/query checks are not production or live-cluster tests; ztunnel L4, native sidecars and HA deployments need their specific collection configuration.
 

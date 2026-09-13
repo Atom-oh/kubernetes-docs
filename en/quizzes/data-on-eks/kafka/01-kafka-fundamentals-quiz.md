@@ -1,6 +1,6 @@
 # Kafka Fundamentals Quiz
 
-> **Reviewed**: 2026-09-12, Kafka 4.3.1.
+> **Last Updated**: September 12, 2026, Kafka 4.3.1.
 
 This quiz tests your understanding of Kafka's broker/topic/partition model, ordering guarantees, consumer group rebalancing, KRaft, and replication/durability settings.
 

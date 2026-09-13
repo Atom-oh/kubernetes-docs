@@ -1,7 +1,7 @@
 # AWS Load Balancer Controller
 
 > **Review baseline**: AWS Load Balancer Controller / Helm chart v3.5.0
-> **Reviewed**: September 11, 2026
+> **Last Updated**: September 11, 2026
 
 ## Overview
 

@@ -1,6 +1,6 @@
 # Outlier Detection
 
-> **Reviewed**: September 11, 2026 · Istio 1.31. Independent sidecar examples; create the stated namespaces and real workloads/endpoints before testing. Same-host examples are alternatives. Values are illustrative and have not been load-tested.
+> **Last Updated**: September 11, 2026 · Istio 1.31. Independent sidecar examples; create the stated namespaces and real workloads/endpoints before testing. Same-host examples are alternatives. Values are illustrative and have not been load-tested.
 
 Outlier Detection is a form of the Circuit Breaker pattern that automatically detects abnormally behaving service instances and removes them from the traffic pool.
 

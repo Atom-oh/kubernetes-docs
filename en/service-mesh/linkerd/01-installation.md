@@ -1,6 +1,6 @@
 # Linkerd Installation and Setup
 
-> **Reviewed**: September 11, 2026 · Public CLI: edge-26.9.1 · Matching charts: 2026.9.1
+> **Last Updated**: September 11, 2026 · Public CLI: edge-26.9.1 · Matching charts: 2026.9.1
 
 This guide covers a controlled Kubernetes installation, Helm/CLI ownership, HA, optional extensions, EKS considerations, upgrades and removal. The upstream project publishes edge artifacts; stable distributions have vendor-specific installation/support guidance. A milestone such as 2.20 is not an upstream stable-2.20.0 download.
 

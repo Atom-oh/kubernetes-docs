@@ -1,6 +1,6 @@
 # Calico 딥다이브: Kubernetes 네트워킹과 정책
 
-> **검토 기준**: Calico Open Source 3.32.2 · **검토일**: 2026년 9월 12일
+> **검토 기준**: Calico Open Source 3.32.2 · **마지막 업데이트**: 2026년 9월 12일
 > Calico 3.32의 공식 시험 대상은 Kubernetes 1.34–1.36입니다. `3.29+ / Kubernetes 1.28+` 전체의 호환성을 보장하는 범위가 아닙니다.
 
 ## 개요

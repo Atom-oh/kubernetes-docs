@@ -1,6 +1,6 @@
 # EKS 기반 AI 인프라
 
-> **검토일**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 9월 12일
 > **기준**: GPU Operator26.7.0 / NVIDIA DRA0.5.0 / Argo Workflows4.1.3 / JupyterHub chart4.4.2 / Mountpoint CSI2.8.0
 
 AI 인프라는 notebook, pipeline, 분산 runtime, 장치·node, 저장소·네트워크와 인증을 함께 구성해야 합니다. 도구 이름을 모으거나 Helm release가 성공했다고 전체 플랫폼의 보안·고가용성·model 실행이 검증되지는 않습니다.

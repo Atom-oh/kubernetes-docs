@@ -1,6 +1,6 @@
 # Advanced
 
-> **검토일**: 2026년 9월 11일 · Istio1.31. 독립적인 예제이며 지정한 workload·Service·controller가 있다고 가정합니다. 설치·호환성·검증은 상세 장을 따르며 운영에서 검증된 전체 스택이 아닙니다.
+> **마지막 업데이트**: 2026년 9월 11일 · Istio1.31. 독립적인 예제이며 지정한 workload·Service·controller가 있다고 가정합니다. 설치·호환성·검증은 상세 장을 따르며 운영에서 검증된 전체 스택이 아닙니다.
 
 Istio의 고급 기능들을 다룹니다. 이 섹션에서는 Ambient Mode, Multi-cluster, EnvoyFilter, gRPC/WebSocket 지원 등 고급 주제들을 다룹니다.
 

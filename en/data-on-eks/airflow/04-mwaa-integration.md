@@ -1,6 +1,6 @@
 # Part 4: Amazon MWAA Integration
 
-> Reviewed: 2026-09-12; MWAA Airflow 3.3.1 / Python 3.12; Kubernetes provider 10.21.0.
+> **Last Updated**: September 12, 2026; MWAA Airflow 3.3.1 / Python 3.12; Kubernetes provider 10.21.0.
 
 This chapter targets **provisioned Amazon MWAA environments** submitting work to
 customer EKS clusters. **MWAA Serverless**, with YAML workflow definitions, is a
