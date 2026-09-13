@@ -1,0 +1,1436 @@
+{
+  "status": "passed-scoped-audit",
+  "reviewedAt": "2026-09-13T03:40:24.444966+00:00",
+  "scope": {
+    "documents": 4,
+    "originalLines": 2542,
+    "quizQuestions": 24,
+    "exampleFiles": 11,
+    "legacyAnchors": 34,
+    "originalExternalImages": 0
+  },
+  "originalFiles": [
+    {
+      "path": "ko/security/08-runtime-security.md",
+      "lines": 999,
+      "sha256": "90852776be6e8bbed5121535f74460edf193ed635a9c363609c0a9689d534310"
+    },
+    {
+      "path": "ko/quizzes/security/08-runtime-security-quiz.md",
+      "lines": 272,
+      "sha256": "83d71ada924cea7524833588d4dcdde1f1c7d501ab455477712f087b8cbec0e7"
+    },
+    {
+      "path": "en/security/08-runtime-security.md",
+      "lines": 999,
+      "sha256": "224ed34cdead71d2d29f46ea0b273a5083e090f5d849466ab27e95ebf58d2bd8"
+    },
+    {
+      "path": "en/quizzes/security/08-runtime-security-quiz.md",
+      "lines": 272,
+      "sha256": "7823f99ab78960af095de620bbfefac6a815e1ece2af49378023e73ec40c4d71"
+    }
+  ],
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/security/08-runtime-security.md",
+        "sha256": "0263c52db4d02a7a5c06c6467c4e889490c9848f2f6a71b61624750368d9da55",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "런타임-보안-runtime-security"
+          },
+          {
+            "tag": "h2",
+            "id": "런타임-위협-환경"
+          },
+          {
+            "tag": "h2",
+            "id": "falco"
+          },
+          {
+            "tag": "h3",
+            "id": "falco-개요"
+          },
+          {
+            "tag": "h3",
+            "id": "falco-설치-eks"
+          },
+          {
+            "tag": "h3",
+            "id": "falco-규칙-구조"
+          },
+          {
+            "tag": "h3",
+            "id": "커스텀-규칙-작성"
+          },
+          {
+            "tag": "h3",
+            "id": "falco-알림-설정"
+          },
+          {
+            "tag": "h2",
+            "id": "tetragon"
+          },
+          {
+            "tag": "h3",
+            "id": "tetragon-개요"
+          },
+          {
+            "tag": "h3",
+            "id": "파일-접근-모니터링"
+          },
+          {
+            "tag": "h3",
+            "id": "네트워크-모니터링"
+          },
+          {
+            "tag": "h3",
+            "id": "런타임-강제-enforcement"
+          },
+          {
+            "tag": "h3",
+            "id": "tetragon-cli-사용"
+          },
+          {
+            "tag": "h2",
+            "id": "falco-vs-tetragon-비교"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes-감사-로깅"
+          },
+          {
+            "tag": "h3",
+            "id": "감사-정책-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "eks-감사-로그-분석"
+          },
+          {
+            "tag": "h2",
+            "id": "런타임-위협-탐지-패턴"
+          },
+          {
+            "tag": "h2",
+            "id": "인시던트-대응"
+          },
+          {
+            "tag": "h3",
+            "id": "pod-격리-절차"
+          },
+          {
+            "tag": "h3",
+            "id": "증거-수집과-포렌식"
+          },
+          {
+            "tag": "h2",
+            "id": "siem-soar-통합"
+          },
+          {
+            "tag": "h2",
+            "id": "요약"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "목차",
+          "런타임-보안-runtime-security",
+          "컨테이너-런타임-위협",
+          "탐지-기술",
+          "런타임-위협-환경",
+          "기본-제공-규칙-예시",
+          "falco",
+          "falco-개요",
+          "falco-설치-eks",
+          "falco-규칙-구조",
+          "커스텀-규칙-작성",
+          "falco-알림-설정",
+          "tetragon-설치",
+          "tracingpolicy-기본-구조",
+          "프로세스-모니터링",
+          "tetragon",
+          "tetragon-개요",
+          "파일-접근-모니터링",
+          "네트워크-모니터링",
+          "런타임-강제-enforcement",
+          "tetragon-cli-사용",
+          "기능-비교표",
+          "사용-사례별-권장",
+          "falco-vs-tetragon-비교",
+          "kubernetes-감사-로깅",
+          "감사-정책-구성",
+          "eks-감사-로그-분석",
+          "암호화폐-채굴-탐지",
+          "리버스-셸-탐지",
+          "권한-상승-탐지",
+          "런타임-위협-탐지-패턴",
+          "포렌식-컨테이너-사용",
+          "인시던트-대응",
+          "pod-격리-절차",
+          "증거-수집과-포렌식",
+          "falco-→-elasticsearch",
+          "prometheus-grafana-대시보드",
+          "siem-soar-통합",
+          "권장-사항",
+          "요약",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/security/08-runtime-security.md",
+        "sha256": "6d82a174e83696460a5d5709df5c32a5ea47a3d5b45a09d2a4e2d4e4353f0904",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "runtime-security"
+          },
+          {
+            "tag": "h2",
+            "id": "runtime-threat-landscape"
+          },
+          {
+            "tag": "h2",
+            "id": "falco"
+          },
+          {
+            "tag": "h3",
+            "id": "falco-overview"
+          },
+          {
+            "tag": "h3",
+            "id": "falco-installation-eks"
+          },
+          {
+            "tag": "h3",
+            "id": "falco-rule-structure"
+          },
+          {
+            "tag": "h3",
+            "id": "writing-custom-rules"
+          },
+          {
+            "tag": "h3",
+            "id": "falco-alert-configuration"
+          },
+          {
+            "tag": "h2",
+            "id": "tetragon"
+          },
+          {
+            "tag": "h3",
+            "id": "tetragon-overview"
+          },
+          {
+            "tag": "h3",
+            "id": "file-access-monitoring"
+          },
+          {
+            "tag": "h3",
+            "id": "network-monitoring"
+          },
+          {
+            "tag": "h3",
+            "id": "runtime-enforcement"
+          },
+          {
+            "tag": "h3",
+            "id": "tetragon-cli-usage"
+          },
+          {
+            "tag": "h2",
+            "id": "falco-vs-tetragon-comparison"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes-audit-logging"
+          },
+          {
+            "tag": "h3",
+            "id": "audit-policy-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "eks-audit-log-analysis"
+          },
+          {
+            "tag": "h2",
+            "id": "runtime-threat-detection-patterns"
+          },
+          {
+            "tag": "h2",
+            "id": "incident-response"
+          },
+          {
+            "tag": "h3",
+            "id": "pod-isolation-procedure"
+          },
+          {
+            "tag": "h3",
+            "id": "evidence-collection-and-forensics"
+          },
+          {
+            "tag": "h2",
+            "id": "siem-soar-integration"
+          },
+          {
+            "tag": "h2",
+            "id": "summary"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "runtime-security",
+          "container-runtime-threats",
+          "detection-technologies",
+          "runtime-threat-landscape",
+          "default-rule-examples",
+          "falco",
+          "falco-overview",
+          "falco-installation-eks",
+          "falco-rule-structure",
+          "writing-custom-rules",
+          "falco-alert-configuration",
+          "tetragon-installation",
+          "tracingpolicy-basic-structure",
+          "process-monitoring",
+          "tetragon",
+          "tetragon-overview",
+          "file-access-monitoring",
+          "network-monitoring",
+          "runtime-enforcement",
+          "tetragon-cli-usage",
+          "feature-comparison-table",
+          "use-case-recommendations",
+          "falco-vs-tetragon-comparison",
+          "kubernetes-audit-logging",
+          "audit-policy-configuration",
+          "eks-audit-log-analysis",
+          "cryptocurrency-mining-detection",
+          "reverse-shell-detection",
+          "privilege-escalation-detection",
+          "runtime-threat-detection-patterns",
+          "forensics-container",
+          "incident-response",
+          "pod-isolation-procedure",
+          "evidence-collection-and-forensics",
+          "falco-to-elasticsearch",
+          "prometheus-grafana-dashboard",
+          "siem-soar-integration",
+          "table-of-contents",
+          "recommendations",
+          "summary",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/quizzes/security/08-runtime-security-quiz.md",
+        "sha256": "9a19abcce921517948de5512d54a0da424e109f983d0d9c84a6676dc557decbf",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "런타임-보안-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈-문제"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-falco가-런타임-위협을-탐지하는-데-사용하는-기술은"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-seccomp의-주요-기능은"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-kubernetes-1-27-에서-기본-seccomp-프로파일로-권장되는-것은"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-falco-규칙에서-priority-필드의-역할은"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-apparmor의-complain-모드에서-어떤-일이-발생하나요"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-amazon-guardduty-eks-runtime-monitoring이-탐지하는-위협이-아닌-것은"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-cilium-tetragon의-주요-기능은"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-falco에서-컨테이너-내-셸-실행을-탐지하는-조건은"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-pod의-읽기-전용-루트-파일시스템-설정-방법은"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-런타임-보안에서-defense-in-depth-전략의-의미는"
+          },
+          {
+            "tag": "h3",
+            "id": "_11-hubble에서-drop-이벤트를-필터링하는-명령은"
+          },
+          {
+            "tag": "h3",
+            "id": "_12-런타임-보안-모범-사례가-아닌-것은"
+          }
+        ],
+        "renderedIds": [
+          "런타임-보안-퀴즈",
+          "퀴즈-문제",
+          "_1-falco가-런타임-위협을-탐지하는-데-사용하는-기술은",
+          "_2-seccomp의-주요-기능은",
+          "_3-kubernetes-1-27-에서-기본-seccomp-프로파일로-권장되는-것은",
+          "_4-falco-규칙에서-priority-필드의-역할은",
+          "_5-apparmor의-complain-모드에서-어떤-일이-발생하나요",
+          "_6-amazon-guardduty-eks-runtime-monitoring이-탐지하는-위협이-아닌-것은",
+          "_7-cilium-tetragon의-주요-기능은",
+          "_8-falco에서-컨테이너-내-셸-실행을-탐지하는-조건은",
+          "_9-pod의-읽기-전용-루트-파일시스템-설정-방법은",
+          "_10-런타임-보안에서-defense-in-depth-전략의-의미는",
+          "_11-hubble에서-정책에-의해-차단된-트래픽을-확인하는-명령은",
+          "_11-hubble에서-drop-이벤트를-필터링하는-명령은",
+          "_12-런타임-보안-모범-사례가-아닌-것은"
+        ]
+      },
+      {
+        "path": "en/quizzes/security/08-runtime-security-quiz.md",
+        "sha256": "245a35aacface33118eb173f48237d4803dc969af62814e3f4971547a876899e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "runtime-security-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz-questions"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-what-technology-does-falco-use-to-detect-runtime-threats"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-what-is-the-main-function-of-seccomp"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-what-is-the-recommended-default-seccomp-profile-in-kubernetes-1-27"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-what-is-the-role-of-the-priority-field-in-falco-rules"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-what-happens-in-apparmor-s-complain-mode"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-what-is-not-a-threat-detected-by-amazon-guardduty-eks-runtime-monitoring"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-what-is-the-main-function-of-cilium-tetragon"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-what-condition-detects-shell-execution-inside-a-container-in-falco"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-how-do-you-set-a-read-only-root-filesystem-for-a-pod"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-what-does-the-defense-in-depth-strategy-mean-in-runtime-security"
+          },
+          {
+            "tag": "h3",
+            "id": "_11-which-hubble-command-filters-dropped-flows"
+          },
+          {
+            "tag": "h3",
+            "id": "_12-which-is-not-a-runtime-security-best-practice"
+          }
+        ],
+        "renderedIds": [
+          "runtime-security-quiz",
+          "quiz-questions",
+          "_1-what-technology-does-falco-use-to-detect-runtime-threats",
+          "_2-what-is-the-main-function-of-seccomp",
+          "_3-what-is-the-recommended-default-seccomp-profile-in-kubernetes-1-27",
+          "_4-what-is-the-role-of-the-priority-field-in-falco-rules",
+          "_5-what-happens-in-apparmor-s-complain-mode",
+          "_6-what-is-not-a-threat-detected-by-amazon-guardduty-eks-runtime-monitoring",
+          "_7-what-is-the-main-function-of-cilium-tetragon",
+          "_8-what-condition-detects-shell-execution-inside-a-container-in-falco",
+          "_9-how-do-you-set-a-read-only-root-filesystem-for-a-pod",
+          "_10-what-does-the-defense-in-depth-strategy-mean-in-runtime-security",
+          "_11-what-command-shows-traffic-blocked-by-policies-in-hubble",
+          "_11-which-hubble-command-filters-dropped-flows",
+          "_12-which-is-not-a-runtime-security-best-practice"
+        ]
+      }
+    ]
+  },
+  "examples": [
+    {
+      "path": "examples/security/runtime-security/falco-values.yaml",
+      "sha256": "c52a1681b68a3b3310d0000cc43d8ed5295952bcdf255f20248cd92d57ca5294",
+      "bytes": 1429
+    },
+    {
+      "path": "examples/security/runtime-security/falco-rules.yaml",
+      "sha256": "f7b748b317ed659a21d1566a4d809d743a58d487b06fbac390843eae89cb1006",
+      "bytes": 1021
+    },
+    {
+      "path": "examples/security/runtime-security/falcosidekick-values.yaml",
+      "sha256": "eebe39ae37c948369be890f36a7a9e6e5084adb91020b177f64c15ec3baec910",
+      "bytes": 429
+    },
+    {
+      "path": "examples/security/runtime-security/tetragon-values.yaml",
+      "sha256": "cd89f3430973d729ab814a28dc3588ef474de95d224fcd2f0a06f1eba3ad8f5b",
+      "bytes": 60
+    },
+    {
+      "path": "examples/security/runtime-security/tetragon-file-observe.yaml",
+      "sha256": "69b5a4c9fca34f24e664a39bee7ddfccd599067551a4e0f2654f3cb858c84b81",
+      "bytes": 517
+    },
+    {
+      "path": "examples/security/runtime-security/tetragon-network-observe.yaml",
+      "sha256": "9f0f0e6b1f792ab9f0ec3d4fd4a55f971df224b7423e98c538613061e9cbf1e5",
+      "bytes": 411
+    },
+    {
+      "path": "examples/security/runtime-security/audit-policy.yaml",
+      "sha256": "ec3380f76330a56d39e1429f6469127f5d84df1752d3b0529b86c7167f9c8cbf",
+      "bytes": 525
+    },
+    {
+      "path": "examples/security/runtime-security/restricted-pod.yaml",
+      "sha256": "f7f6943dbd3c60ac8ed02e1f497a36feea172659669c12b37c97d0c2143ba2a8",
+      "bytes": 786
+    },
+    {
+      "path": "examples/security/runtime-security/collect-evidence.sh",
+      "sha256": "3d87642f2a5f5436c58ac9c896903f369c850048589875ac63b8f0ed0197e787",
+      "bytes": 1354
+    },
+    {
+      "path": "examples/security/runtime-security/alert-queries.promql",
+      "sha256": "819739937dc004c9e6922e2070031d49f42d586f9e577cf716e6cc513f5fe10a",
+      "bytes": 77
+    },
+    {
+      "path": "examples/security/runtime-security/README.md",
+      "sha256": "43aaa90848525879b34339e0812fee20ed7cce3de567e73a89f5430741f3e76a",
+      "bytes": 3017
+    }
+  ],
+  "releases": [
+    {
+      "repo": "falcosecurity/falco",
+      "tag": "0.44.1",
+      "publishedAt": "2026-06-11T07:53:06Z",
+      "url": "https://github.com/falcosecurity/falco/releases/tag/0.44.1",
+      "assets": []
+    },
+    {
+      "repo": "falcosecurity/charts",
+      "tag": "k8s-metacollector-0.3.2",
+      "publishedAt": "2026-09-09T20:15:57Z",
+      "url": "https://github.com/falcosecurity/charts/releases/tag/k8s-metacollector-0.3.2",
+      "assets": [
+        {
+          "name": "k8s-metacollector-0.3.2.tgz",
+          "url": "https://github.com/falcosecurity/charts/releases/download/k8s-metacollector-0.3.2/k8s-metacollector-0.3.2.tgz",
+          "size": 19926
+        }
+      ]
+    },
+    {
+      "repo": "falcosecurity/falcosidekick",
+      "tag": "2.35.0",
+      "publishedAt": "2026-08-31T12:56:48Z",
+      "url": "https://github.com/falcosecurity/falcosidekick/releases/tag/2.35.0",
+      "assets": [
+        {
+          "name": "checksums.txt",
+          "url": "https://github.com/falcosecurity/falcosidekick/releases/download/2.35.0/checksums.txt",
+          "size": 666
+        },
+        {
+          "name": "checksums.txt.bundle",
+          "url": "https://github.com/falcosecurity/falcosidekick/releases/download/2.35.0/checksums.txt.bundle",
+          "size": 10431
+        },
+        {
+          "name": "falcosidekick_2.35.0_linux_amd64.tar.gz",
+          "url": "https://github.com/falcosecurity/falcosidekick/releases/download/2.35.0/falcosidekick_2.35.0_linux_amd64.tar.gz",
+          "size": 55171654
+        },
+        {
+          "name": "falcosidekick_2.35.0_linux_amd64.tar.gz.bundle",
+          "url": "https://github.com/falcosecurity/falcosidekick/releases/download/2.35.0/falcosidekick_2.35.0_linux_amd64.tar.gz.bundle",
+          "size": 10335
+        },
+        {
+          "name": "falcosidekick_2.35.0_linux_amd64.tar.gz.sbom.json",
+          "url": "https://github.com/falcosecurity/falcosidekick/releases/download/2.35.0/falcosidekick_2.35.0_linux_amd64.tar.gz.sbom.json",
+          "size": 316611
+        },
+        {
+          "name": "falcosidekick_2.35.0_linux_arm64.tar.gz",
+          "url": "https://github.com/falcosecurity/falcosidekick/releases/download/2.35.0/falcosidekick_2.35.0_linux_arm64.tar.gz",
+          "size": 50715281
+        },
+        {
+          "name": "falcosidekick_2.35.0_linux_arm64.tar.gz.bundle",
+          "url": "https://github.com/falcosecurity/falcosidekick/releases/download/2.35.0/falcosidekick_2.35.0_linux_arm64.tar.gz.bundle",
+          "size": 10383
+        },
+        {
+          "name": "falcosidekick_2.35.0_linux_arm64.tar.gz.sbom.json",
+          "url": "https://github.com/falcosecurity/falcosidekick/releases/download/2.35.0/falcosidekick_2.35.0_linux_arm64.tar.gz.sbom.json",
+          "size": 316611
+        },
+        {
+          "name": "falcosidekick_2.35.0_linux_armv7.tar.gz",
+          "url": "https://github.com/falcosecurity/falcosidekick/releases/download/2.35.0/falcosidekick_2.35.0_linux_armv7.tar.gz",
+          "size": 51575239
+        },
+        {
+          "name": "falcosidekick_2.35.0_linux_armv7.tar.gz.bundle",
+          "url": "https://github.com/falcosecurity/falcosidekick/releases/download/2.35.0/falcosidekick_2.35.0_linux_armv7.tar.gz.bundle",
+          "size": 10387
+        },
+        {
+          "name": "falcosidekick_2.35.0_linux_armv7.tar.gz.sbom.json",
+          "url": "https://github.com/falcosecurity/falcosidekick/releases/download/2.35.0/falcosidekick_2.35.0_linux_armv7.tar.gz.sbom.json",
+          "size": 316611
+        },
+        {
+          "name": "multiple.intoto.jsonl",
+          "url": "https://github.com/falcosecurity/falcosidekick/releases/download/2.35.0/multiple.intoto.jsonl",
+          "size": 25183
+        }
+      ]
+    },
+    {
+      "repo": "cilium/tetragon",
+      "tag": "v1.7.1",
+      "publishedAt": "2026-08-25T11:40:47Z",
+      "url": "https://github.com/cilium/tetragon/releases/tag/v1.7.1",
+      "assets": [
+        {
+          "name": "tetra-darwin-amd64.tar.gz",
+          "url": "https://github.com/cilium/tetragon/releases/download/v1.7.1/tetra-darwin-amd64.tar.gz",
+          "size": 15786293
+        },
+        {
+          "name": "tetra-darwin-amd64.tar.gz.sha256sum",
+          "url": "https://github.com/cilium/tetragon/releases/download/v1.7.1/tetra-darwin-amd64.tar.gz.sha256sum",
+          "size": 100
+        },
+        {
+          "name": "tetra-darwin-arm64.tar.gz",
+          "url": "https://github.com/cilium/tetragon/releases/download/v1.7.1/tetra-darwin-arm64.tar.gz",
+          "size": 14237394
+        },
+        {
+          "name": "tetra-darwin-arm64.tar.gz.sha256sum",
+          "url": "https://github.com/cilium/tetragon/releases/download/v1.7.1/tetra-darwin-arm64.tar.gz.sha256sum",
+          "size": 100
+        },
+        {
+          "name": "tetra-linux-amd64.tar.gz",
+          "url": "https://github.com/cilium/tetragon/releases/download/v1.7.1/tetra-linux-amd64.tar.gz",
+          "size": 17015282
+        },
+        {
+          "name": "tetra-linux-amd64.tar.gz.sha256sum",
+          "url": "https://github.com/cilium/tetragon/releases/download/v1.7.1/tetra-linux-amd64.tar.gz.sha256sum",
+          "size": 99
+        },
+        {
+          "name": "tetra-linux-arm64.tar.gz",
+          "url": "https://github.com/cilium/tetragon/releases/download/v1.7.1/tetra-linux-arm64.tar.gz",
+          "size": 14938972
+        },
+        {
+          "name": "tetra-linux-arm64.tar.gz.sha256sum",
+          "url": "https://github.com/cilium/tetragon/releases/download/v1.7.1/tetra-linux-arm64.tar.gz.sha256sum",
+          "size": 99
+        },
+        {
+          "name": "tetra-windows-amd64.tar.gz",
+          "url": "https://github.com/cilium/tetragon/releases/download/v1.7.1/tetra-windows-amd64.tar.gz",
+          "size": 14801360
+        },
+        {
+          "name": "tetra-windows-amd64.tar.gz.sha256sum",
+          "url": "https://github.com/cilium/tetragon/releases/download/v1.7.1/tetra-windows-amd64.tar.gz.sha256sum",
+          "size": 101
+        },
+        {
+          "name": "tetra-windows-arm64.tar.gz",
+          "url": "https://github.com/cilium/tetragon/releases/download/v1.7.1/tetra-windows-arm64.tar.gz",
+          "size": 12775555
+        },
+        {
+          "name": "tetra-windows-arm64.tar.gz.sha256sum",
+          "url": "https://github.com/cilium/tetragon/releases/download/v1.7.1/tetra-windows-arm64.tar.gz.sha256sum",
+          "size": 101
+        },
+        {
+          "name": "tetragon-v1.7.1-amd64.tar.gz",
+          "url": "https://github.com/cilium/tetragon/releases/download/v1.7.1/tetragon-v1.7.1-amd64.tar.gz",
+          "size": 80984025
+        },
+        {
+          "name": "tetragon-v1.7.1-amd64.tar.gz.sha256sum",
+          "url": "https://github.com/cilium/tetragon/releases/download/v1.7.1/tetragon-v1.7.1-amd64.tar.gz.sha256sum",
+          "size": 95
+        },
+        {
+          "name": "tetragon-v1.7.1-arm64.tar.gz",
+          "url": "https://github.com/cilium/tetragon/releases/download/v1.7.1/tetragon-v1.7.1-arm64.tar.gz",
+          "size": 76164913
+        },
+        {
+          "name": "tetragon-v1.7.1-arm64.tar.gz.sha256sum",
+          "url": "https://github.com/cilium/tetragon/releases/download/v1.7.1/tetragon-v1.7.1-arm64.tar.gz.sha256sum",
+          "size": 95
+        }
+      ]
+    },
+    {
+      "repo": "cilium/hubble",
+      "tag": "v1.19.4",
+      "publishedAt": "2026-06-05T19:57:01Z",
+      "url": "https://github.com/cilium/hubble/releases/tag/v1.19.4",
+      "assets": [
+        {
+          "name": "hubble-darwin-amd64.tar.gz",
+          "url": "https://github.com/cilium/hubble/releases/download/v1.19.4/hubble-darwin-amd64.tar.gz",
+          "size": 17817331
+        },
+        {
+          "name": "hubble-darwin-amd64.tar.gz.sha256sum",
+          "url": "https://github.com/cilium/hubble/releases/download/v1.19.4/hubble-darwin-amd64.tar.gz.sha256sum",
+          "size": 93
+        },
+        {
+          "name": "hubble-darwin-arm64.tar.gz",
+          "url": "https://github.com/cilium/hubble/releases/download/v1.19.4/hubble-darwin-arm64.tar.gz",
+          "size": 16230344
+        },
+        {
+          "name": "hubble-darwin-arm64.tar.gz.sha256sum",
+          "url": "https://github.com/cilium/hubble/releases/download/v1.19.4/hubble-darwin-arm64.tar.gz.sha256sum",
+          "size": 93
+        },
+        {
+          "name": "hubble-linux-amd64.tar.gz",
+          "url": "https://github.com/cilium/hubble/releases/download/v1.19.4/hubble-linux-amd64.tar.gz",
+          "size": 21789058
+        },
+        {
+          "name": "hubble-linux-amd64.tar.gz.sha256sum",
+          "url": "https://github.com/cilium/hubble/releases/download/v1.19.4/hubble-linux-amd64.tar.gz.sha256sum",
+          "size": 92
+        },
+        {
+          "name": "hubble-linux-arm64.tar.gz",
+          "url": "https://github.com/cilium/hubble/releases/download/v1.19.4/hubble-linux-arm64.tar.gz",
+          "size": 19283006
+        },
+        {
+          "name": "hubble-linux-arm64.tar.gz.sha256sum",
+          "url": "https://github.com/cilium/hubble/releases/download/v1.19.4/hubble-linux-arm64.tar.gz.sha256sum",
+          "size": 92
+        },
+        {
+          "name": "hubble-windows-amd64.tar.gz",
+          "url": "https://github.com/cilium/hubble/releases/download/v1.19.4/hubble-windows-amd64.tar.gz",
+          "size": 17691110
+        },
+        {
+          "name": "hubble-windows-amd64.tar.gz.sha256sum",
+          "url": "https://github.com/cilium/hubble/releases/download/v1.19.4/hubble-windows-amd64.tar.gz.sha256sum",
+          "size": 94
+        },
+        {
+          "name": "hubble-windows-arm64.tar.gz",
+          "url": "https://github.com/cilium/hubble/releases/download/v1.19.4/hubble-windows-arm64.tar.gz",
+          "size": 15382104
+        },
+        {
+          "name": "hubble-windows-arm64.tar.gz.sha256sum",
+          "url": "https://github.com/cilium/hubble/releases/download/v1.19.4/hubble-windows-arm64.tar.gz.sha256sum",
+          "size": 94
+        }
+      ]
+    }
+  ],
+  "charts": [
+    {
+      "name": "falco",
+      "version": "9.1.0",
+      "appVersion": "0.44.1",
+      "url": "https://github.com/falcosecurity/charts/releases/download/falco-9.1.0/falco-9.1.0.tgz",
+      "sha256": "2a767d6aeccf2392c5e263ae1f5e0950520affe3a9908ff7986ac213649c45b4"
+    },
+    {
+      "name": "falcosidekick",
+      "version": "0.14.0",
+      "appVersion": "2.31.1",
+      "url": "https://github.com/falcosecurity/charts/releases/download/falcosidekick-0.14.0/falcosidekick-0.14.0.tgz",
+      "sha256": "e79abb3d39bee0dc017d5121c5f5cbaa82f4d00d7f1a7e12dcd01c69a3fb068f"
+    },
+    {
+      "name": "tetragon",
+      "version": "1.7.1",
+      "appVersion": "1.7.1",
+      "url": "https://helm.cilium.io/tetragon-1.7.1.tgz",
+      "sha256": "79ec0f7d35b6fcad99ca317348deac136c00b674430c28be17aa818d2015c632"
+    }
+  ],
+  "actualRenderedImages": [
+    {
+      "chart": "falco",
+      "version": "9.1.0",
+      "images": [
+        "docker.io/falcosecurity/falco:0.44.1",
+        "docker.io/falcosecurity/falcoctl:0.13.0"
+      ],
+      "renderedSha256": "e8764880e105a06b7e3c7beb31b958b05d26bec8f49c8ceef7b707c86cca017f"
+    },
+    {
+      "chart": "falcosidekick",
+      "version": "0.14.0",
+      "images": [
+        "docker.io/falcosecurity/falcosidekick:2.35.0"
+      ],
+      "renderedSha256": "e16ff8130394b6f62d6d7379977d4466a910b884e75773c6d77cdfef31e7a078"
+    },
+    {
+      "chart": "tetragon",
+      "version": "1.7.1",
+      "images": [
+        "quay.io/cilium/hubble-export-stdout:v1.1.1",
+        "quay.io/cilium/tetragon:v1.7.1",
+        "quay.io/cilium/tetragon-operator:v1.7.1"
+      ],
+      "renderedSha256": "dc022af1748069022004ebc64d2de19b34e1ccb40cb9bee7458f956bf36c12e9"
+    }
+  ],
+  "primarySources": [
+    {
+      "url": "https://falcosecurity.github.io/charts/index.yaml",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-runtime-security/sources/4f35294a2370.yaml",
+      "sha256": "139f52b2de85375f9334a6f00bb8b0ecfb737270f329e5b65523278c10e6982e",
+      "bytes": 376612
+    },
+    {
+      "url": "https://helm.cilium.io/index.yaml",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-runtime-security/sources/9e33205ffb26.yaml",
+      "sha256": "01757ffa2eb8ba70a61131814b4b7503145816186f73ade28ebf313be04f5d99",
+      "bytes": 1740028
+    },
+    {
+      "url": "https://falco.org/docs/setup/kubernetes/",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-runtime-security/sources/ae3b4c8246d3.html",
+      "sha256": "c6e7060da198339ab815a32be66c42eea90cea1e3a290ab77b895a4302d189e2",
+      "bytes": 68642
+    },
+    {
+      "url": "https://falco.org/docs/setup/versions/",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "url": "https://falco.org/docs/reference/rules/supported-fields/",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-runtime-security/sources/52d3b9d78c99.html",
+      "sha256": "da218e1f3bc740843281346a0e6bc56d60dcfc625ff202f160961cb9cb44f8cf",
+      "bytes": 140646
+    },
+    {
+      "url": "https://tetragon.io/docs/concepts/tracing-policy/",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-runtime-security/sources/4764d6ae7501.html",
+      "sha256": "3518782fb7bc899f80677654be0de3126c2d1b53729799f57adfdda93f73881f",
+      "bytes": 75282
+    },
+    {
+      "url": "https://tetragon.io/docs/concepts/enforcement/",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-runtime-security/sources/176fc2a0e199.html",
+      "sha256": "561d4b09f9a74c5b958d9e9a4239ddb430e42aa8f1295fb9bb044ada0e956222",
+      "bytes": 73815
+    },
+    {
+      "url": "https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-runtime-security/sources/e792035f6caa.html",
+      "sha256": "964822c4368a0c11367d2e2445c3c5fd5434a67b36847f88a087617960ca0acd",
+      "bytes": 533903
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-runtime-security/sources/953450b4076f.html",
+      "sha256": "d537cebf90aee2ca121c56a6cda0b52969f99be62cdb54692dfe5bef7a95da02",
+      "bytes": 557165
+    },
+    {
+      "url": "https://kubernetes.io/docs/tutorials/security/seccomp/",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-runtime-security/sources/9e78a7d200b2.html",
+      "sha256": "9f9166b3b5f6f00b26540f86fc09c85ade61f028377e208fdceac4568744a738",
+      "bytes": 559899
+    },
+    {
+      "url": "https://docs.aws.amazon.com/guardduty/latest/ug/runtime-monitoring-configuration.html",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-runtime-security/sources/b482f37fa940.html",
+      "sha256": "9aadf72a83ed58f07a82a4b285ab0a8e67e66539f00af2e816c96a819340c8f3",
+      "bytes": 13983
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-runtime-security/sources/7acc47fd7b9d.html",
+      "sha256": "95bbcc12dd12cee13b8b89faa351ff5d31f8697f90331938a5bb7bd91f7398eb",
+      "bytes": 28706
+    },
+    {
+      "url": "https://download.falco.org/packages/bin/aarch64/falco-0.44.1-aarch64.tar.gz.sha256",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "url": "https://download.falco.org/packages/bin/aarch64/falco-0.44.1-aarch64.tar.gz.sha256sum",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/falcosecurity/falco/0.44.1/falco.yaml",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-runtime-security/sources/native-0d070bebac2c",
+      "bytes": 64713
+    },
+    {
+      "url": "https://raw.githubusercontent.com/falcosecurity/falcosidekick/2.35.0/config_example.yaml",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-runtime-security/sources/native-1c34c5d2aa10",
+      "bytes": 46695
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/tetragon/v1.7.1/pkg/tracingpolicy/generictracingpolicy.go",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-runtime-security/sources/native-8d751a67b491",
+      "bytes": 1836
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/tetragon/v1.7.1/cmd/tetra/tracingpolicy/tracingpolicy.go",
+      "status": 200,
+      "path": ".vitepress/cache/content-review-runtime-security/sources/native-a2e671510238",
+      "bytes": 7671
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/tetragon/v1.7.1/examples/quickstart/file_monitoring.yaml",
+      "path": ".vitepress/cache/content-review-runtime-security/sources/file_monitoring.yaml"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/tetragon/v1.7.1/examples/quickstart/file_monitoring_enforce.yaml",
+      "path": ".vitepress/cache/content-review-runtime-security/sources/file_monitoring_enforce.yaml"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/tetragon/v1.7.1/examples/tracingpolicy/lsm_file_open.yaml",
+      "path": ".vitepress/cache/content-review-runtime-security/sources/lsm_file_open.yaml"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/tetragon/v1.7.1/examples/quickstart/network_egress_cluster.yaml",
+      "path": ".vitepress/cache/content-review-runtime-security/sources/network_egress_cluster.yaml"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/tetragon/v1.7.1/examples/quickstart/network_egress_cluster_enforce.yaml",
+      "path": ".vitepress/cache/content-review-runtime-security/sources/network_egress_cluster_enforce.yaml"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/tetragon/v1.7.1/examples/eventchecker/process_exec.yaml",
+      "path": ".vitepress/cache/content-review-runtime-security/sources/process_exec.yaml"
+    }
+  ],
+  "validation": {
+    "falcoRules": {
+      "status": "passed",
+      "version": "0.44.1",
+      "containerPlugin": "0.7.1",
+      "result": {
+        "falco_load_results": [
+          {
+            "errors": [],
+            "name": ".vitepress/cache/content-review-runtime-security/fixtures/falco-rules.yaml",
+            "schema_valid": true,
+            "schema_warnings": [],
+            "successful": true,
+            "warnings": []
+          }
+        ]
+      },
+      "scope": "NativeFalco -V parser/condition/outputcompile;nodriver;allcontainerenginesdisabled;noeventcapture/socket/cluster;notdetectionefficacy"
+    },
+    "falcoConfig": {
+      "status": "passed",
+      "cases": [
+        {
+          "name": "current",
+          "accepted": true,
+          "errors": []
+        },
+        {
+          "name": "old-jsonOutput",
+          "accepted": false,
+          "errors": [
+            "Additional properties are not allowed ('jsonOutput' was unexpected)"
+          ]
+        },
+        {
+          "name": "old-httpOutput",
+          "accepted": false,
+          "errors": [
+            "Additional properties are not allowed ('httpOutput' was unexpected)"
+          ]
+        },
+        {
+          "name": "retired-grpc",
+          "accepted": false,
+          "errors": [
+            "Additional properties are not allowed ('grpc' was unexpected)"
+          ]
+        }
+      ],
+      "scope": "Nativebinary-emittedconfigschema;noeventcapture"
+    },
+    "tetraFilters": {
+      "status": "passed",
+      "version": "1.7.1",
+      "cases": [
+        {
+          "name": "namespace",
+          "expected": 1,
+          "actual": 1,
+          "passed": true
+        },
+        {
+          "name": "binary",
+          "expected": 2,
+          "actual": 2,
+          "passed": true
+        },
+        {
+          "name": "combined",
+          "expected": 1,
+          "actual": 1,
+          "passed": true
+        }
+      ],
+      "scope": "tetra getevents stdin syntheticprotobufJSON;noagentgRPC/cluster/BPFconnection"
+    },
+    "tetraSchema": {
+      "status": "passed",
+      "resources": [
+        {
+          "file": "tetragon-file-observe.yaml",
+          "errors": [],
+          "passed": true
+        },
+        {
+          "file": "tetragon-network-observe.yaml",
+          "errors": [],
+          "passed": true
+        }
+      ],
+      "scope": "Pinned1.7.1CRDOpenAPI;notkernelBTFhookloadorbehavior"
+    },
+    "evidenceScript": {
+      "status": "passed",
+      "cases": [
+        {
+          "name": "valid",
+          "exitCode": 0,
+          "calls": [
+            [
+              "get",
+              "pod",
+              "app-123",
+              "-n",
+              "demo-app",
+              "-o",
+              "json"
+            ],
+            [
+              "describe",
+              "pod",
+              "app-123",
+              "-n",
+              "demo-app"
+            ],
+            [
+              "logs",
+              "app-123",
+              "-n",
+              "demo-app",
+              "--all-containers=true",
+              "--timestamps=true"
+            ],
+            [
+              "logs",
+              "app-123",
+              "-n",
+              "demo-app",
+              "--all-containers=true",
+              "--previous=true",
+              "--timestamps=true"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "invalid-name",
+          "exitCode": 2,
+          "calls": [],
+          "passed": true
+        },
+        {
+          "name": "api-failure",
+          "exitCode": 3,
+          "calls": [
+            [
+              "get",
+              "pod",
+              "app-123",
+              "-n",
+              "demo-app",
+              "-o",
+              "json"
+            ]
+          ],
+          "passed": true
+        },
+        {
+          "name": "existing-dir",
+          "exitCode": 1,
+          "calls": [],
+          "passed": true
+        }
+      ],
+      "privateDirectoryMode": "0700",
+      "checksumsPassed": true,
+      "scope": "kubectl subprocess testdouble;noactualKubernetesAPIrequests"
+    },
+    "resourceContracts": {
+      "status": "passed",
+      "restrictedPod": "OfficialKubernetes1.36OpenAPIschema",
+      "serviceMonitors": [
+        {
+          "chart": "falco",
+          "monitor": "falco",
+          "services": [
+            "falco-metrics"
+          ],
+          "ports": [
+            "metrics"
+          ],
+          "passed": true
+        },
+        {
+          "chart": "falcosidekick",
+          "monitor": "falcosidekick",
+          "services": [
+            "falcosidekick"
+          ],
+          "ports": [
+            "http"
+          ],
+          "passed": true
+        }
+      ],
+      "scope": "Schema/renderedresourcelinks;noactualscrapeorcluster"
+    },
+    "legacyAnchors": [
+      {
+        "path": "ko/security/08-runtime-security.md",
+        "preserved": 16,
+        "anchors": [
+          {
+            "id": "목차",
+            "oldHeading": "목차",
+            "newHeading": "런타임 보안 (Runtime Security)"
+          },
+          {
+            "id": "컨테이너-런타임-위협",
+            "oldHeading": "컨테이너 런타임 위협",
+            "newHeading": "런타임 위협 환경"
+          },
+          {
+            "id": "탐지-기술",
+            "oldHeading": "탐지 기술",
+            "newHeading": "런타임 위협 환경"
+          },
+          {
+            "id": "기본-제공-규칙-예시",
+            "oldHeading": "기본 제공 규칙 예시",
+            "newHeading": "Falco"
+          },
+          {
+            "id": "tetragon-설치",
+            "oldHeading": "Tetragon 설치",
+            "newHeading": "Tetragon"
+          },
+          {
+            "id": "tracingpolicy-기본-구조",
+            "oldHeading": "TracingPolicy 기본 구조",
+            "newHeading": "Tetragon"
+          },
+          {
+            "id": "프로세스-모니터링",
+            "oldHeading": "프로세스 모니터링",
+            "newHeading": "Tetragon"
+          },
+          {
+            "id": "기능-비교표",
+            "oldHeading": "기능 비교표",
+            "newHeading": "Falco vs Tetragon 비교"
+          },
+          {
+            "id": "사용-사례별-권장",
+            "oldHeading": "사용 사례별 권장",
+            "newHeading": "Falco vs Tetragon 비교"
+          },
+          {
+            "id": "암호화폐-채굴-탐지",
+            "oldHeading": "암호화폐 채굴 탐지",
+            "newHeading": "런타임 위협 탐지 패턴"
+          },
+          {
+            "id": "리버스-셸-탐지",
+            "oldHeading": "리버스 셸 탐지",
+            "newHeading": "런타임 위협 탐지 패턴"
+          },
+          {
+            "id": "권한-상승-탐지",
+            "oldHeading": "권한 상승 탐지",
+            "newHeading": "런타임 위협 탐지 패턴"
+          },
+          {
+            "id": "포렌식-컨테이너-사용",
+            "oldHeading": "포렌식 컨테이너 사용",
+            "newHeading": "인시던트 대응"
+          },
+          {
+            "id": "falco-→-elasticsearch",
+            "oldHeading": "Falco → Elasticsearch",
+            "newHeading": "SIEM/SOAR 통합"
+          },
+          {
+            "id": "prometheus-grafana-대시보드",
+            "oldHeading": "Prometheus + Grafana 대시보드",
+            "newHeading": "SIEM/SOAR 통합"
+          },
+          {
+            "id": "권장-사항",
+            "oldHeading": "권장 사항",
+            "newHeading": "요약"
+          }
+        ]
+      },
+      {
+        "path": "ko/quizzes/security/08-runtime-security-quiz.md",
+        "preserved": 1,
+        "anchors": [
+          {
+            "id": "_11-hubble에서-정책에-의해-차단된-트래픽을-확인하는-명령은",
+            "oldHeading": "11. Hubble에서 정책에 의해 차단된 트래픽을 확인하는 명령은?",
+            "newHeading": "11. Hubble에서 drop 이벤트를 필터링하는 명령은?"
+          }
+        ]
+      },
+      {
+        "path": "en/security/08-runtime-security.md",
+        "preserved": 16,
+        "anchors": [
+          {
+            "id": "table-of-contents",
+            "oldHeading": "Table of Contents",
+            "newHeading": "Summary"
+          },
+          {
+            "id": "container-runtime-threats",
+            "oldHeading": "Container Runtime Threats",
+            "newHeading": "Runtime Threat Landscape"
+          },
+          {
+            "id": "detection-technologies",
+            "oldHeading": "Detection Technologies",
+            "newHeading": "Runtime Threat Landscape"
+          },
+          {
+            "id": "default-rule-examples",
+            "oldHeading": "Default Rule Examples",
+            "newHeading": "Falco"
+          },
+          {
+            "id": "tetragon-installation",
+            "oldHeading": "Tetragon Installation",
+            "newHeading": "Tetragon"
+          },
+          {
+            "id": "tracingpolicy-basic-structure",
+            "oldHeading": "TracingPolicy Basic Structure",
+            "newHeading": "Tetragon"
+          },
+          {
+            "id": "process-monitoring",
+            "oldHeading": "Process Monitoring",
+            "newHeading": "Tetragon"
+          },
+          {
+            "id": "feature-comparison-table",
+            "oldHeading": "Feature Comparison Table",
+            "newHeading": "Falco vs Tetragon Comparison"
+          },
+          {
+            "id": "use-case-recommendations",
+            "oldHeading": "Use Case Recommendations",
+            "newHeading": "Falco vs Tetragon Comparison"
+          },
+          {
+            "id": "cryptocurrency-mining-detection",
+            "oldHeading": "Cryptocurrency Mining Detection",
+            "newHeading": "Runtime Threat Detection Patterns"
+          },
+          {
+            "id": "reverse-shell-detection",
+            "oldHeading": "Reverse Shell Detection",
+            "newHeading": "Runtime Threat Detection Patterns"
+          },
+          {
+            "id": "privilege-escalation-detection",
+            "oldHeading": "Privilege Escalation Detection",
+            "newHeading": "Runtime Threat Detection Patterns"
+          },
+          {
+            "id": "forensics-container",
+            "oldHeading": "Forensics Container",
+            "newHeading": "Incident Response"
+          },
+          {
+            "id": "falco-to-elasticsearch",
+            "oldHeading": "Falco to Elasticsearch",
+            "newHeading": "SIEM/SOAR Integration"
+          },
+          {
+            "id": "prometheus-grafana-dashboard",
+            "oldHeading": "Prometheus + Grafana Dashboard",
+            "newHeading": "SIEM/SOAR Integration"
+          },
+          {
+            "id": "recommendations",
+            "oldHeading": "Recommendations",
+            "newHeading": "Summary"
+          }
+        ]
+      },
+      {
+        "path": "en/quizzes/security/08-runtime-security-quiz.md",
+        "preserved": 1,
+        "anchors": [
+          {
+            "id": "_11-what-command-shows-traffic-blocked-by-policies-in-hubble",
+            "oldHeading": "11. What command shows traffic blocked by policies in Hubble?",
+            "newHeading": "11. Which Hubble command filters dropped flows?"
+          }
+        ]
+      }
+    ]
+  },
+  "changes": [
+    "Falco legacy ebpf driver/current chart fields camelCase vs snake_case; Falcosidekick secret delivery and integration field shape/priority high invalid",
+    "Tetragon security_file_open has only file arg not flags; sys_execve argv is pointerarray not string; Sigkill vs actual syscall prevention; kprobe kernel/version scope",
+    "Audit RequestResponse secrets leaks payload; EKS managed audit policy cannot replace via user YAML; systemanonymous not all authfailures",
+    "NetworkPolicy additive allow means emptydeny cannot quarantine when anotherpolicy permits; selectorappaffectsotherpods; persistent evidence and error handling",
+    "Forensics hostProc unscheduled arbitrarynode,emptyDir loses evidence; do not claimdebugtar root is targetsnapshot",
+    "Falco macros undefined customrules/defaultset prerequisites; execve fdname not network; processname heuristics not proof",
+    "Seccomp deny errno/notalwaysterminate;AppArmor complain explicitdeny;RuntimeDefault notautomaticallnodes;HubbleDROPPEDnotpolicyonly",
+    "Unmeasured toolperformance/compliance claims remove;GuardDutycoverage versions nodeOS/AutoMode/Fargate scopes verify",
+    "Falco0.44containerfieldsrequirecontainerplugin,notcorefields;evt.dirdeprecatedsinceentereventsremoved;grpcconfigremoved",
+    "tetra tracingpolicy modify unexpectedly createsgRPCclient;avoidforofflinevalidation",
+    "Falco0.44rules evt.dir deprecated,removedgrpcconfiguration;containerplugin0.7.1bundledwithdist",
+    "Falcosidekick actualPrometheusmetric falcosecurity_falcosidekick_falco_events_total;ServiceMonitor api-capabilitygated",
+    "Tetragon security_file_permission arg1MAY_READ4/MAY_WRITE2 differsfromopenflags;sourceexactv1.7.1quickstart",
+    "CurrentAWSprimary:GuardDutyRuntimeMonitoring supportsEKS EC2andAutoMode;doesnot supportEKSHybridNodesorEKSFargate. Do not copyolderAutoModeunsupportedclaim.",
+    "Falcosidekickchart0.14metadataappVersion2.31.1butrendereddefaultimage2.32.0;finalexampleexplicitlypinsimage.tag2.35.0anduses2.35source."
+  ],
+  "limits": [
+    "No real cluster/API reads, BPF attachment, kernel enforcement, event capture, GuardDuty coverage, AWS calls, or external notifications were executed.",
+    "Falco -V compiled rules with container plugin but all runtime engine connections disabled; parser success is not detection-efficacy evidence.",
+    "Tetragon CRD schema does not validate kernel hook signatures/BTF or runtime actions.",
+    "Shell collection tests used a subprocess test double; no customer evidence was collected.",
+    "Four ASCII presentation blocks per language were replaced by readable flow text/tables; no new bitmap was required.",
+    "Falco official HTTPS tarball SHA is recorded but no independent checksum was available; Tetra/chart checksums verified."
+  ],
+  "binaries": [
+    {
+      "url": "https://download.falco.org/packages/bin/aarch64/falco-0.44.1-aarch64.tar.gz",
+      "sha256": "17ff67764cb84374ca0fcc98a733316f973a90f3457495df35a24bd839b4ce87",
+      "independentChecksumAvailable": false,
+      "source": "Official Falco HTTPS binary endpoint from official tarball installation instructions",
+      "binary": ".vitepress/cache/content-review-runtime-security/falco-dist/falco-0.44.1-aarch64/usr/bin/falco"
+    },
+    {
+      "version": "v1.7.1",
+      "url": "https://github.com/cilium/tetragon/releases/download/v1.7.1/tetra-linux-arm64.tar.gz",
+      "sha256": "199802d9bfbf71471bf226b39bad944dfcc55d7a5e25c1863261ab5789ec0f3b",
+      "checksumVerified": true
+    }
+  ]
+}

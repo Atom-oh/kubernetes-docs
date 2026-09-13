@@ -1,0 +1,28 @@
+driver:
+  kind: modern_ebpf
+metrics:
+  enabled: true
+serviceMonitor:
+  create: true
+falcosidekick:
+  enabled: false
+falco:
+  json_output: true
+  json_include_output_property: true
+  http_output:
+    enabled: true
+    url: http://falcosidekick.falco.svc:2801
+customRules:
+  documentation-rules.yaml: "- macro: doc_spawned\n  condition: evt.type in (execve,\
+    \ execveat) and evt.res = SUCCESS\n- macro: doc_container\n  condition: container.id\
+    \ != host\n- rule: Documentation shell execution\n  desc: Observe successful shell\
+    \ process execution in a container; not proof of compromise.\n  condition: doc_spawned\
+    \ and doc_container and proc.name in (bash, sh, dash, zsh)\n  output: Shell process\
+    \ observed (proc=%proc.name command=%proc.cmdline container=%container.id)\n \
+    \ priority: NOTICE\n  tags:\n  - documentation\n  - process\n- rule: Documentation\
+    \ service account token read\n  desc: Observe read access to the default projected\
+    \ service account token path; legitimate\n    clients also read it.\n  condition:\
+    \ evt.type in (open, openat, openat2) and evt.is_open_read\n    = true and fd.num\
+    \ >= 0 and doc_container and fd.name startswith /var/run/secrets/kubernetes.io/serviceaccount/\n\
+    \  output: Service account path read (proc=%proc.name file=%fd.name container=%container.id)\n\
+    \  priority: NOTICE\n  tags:\n  - documentation\n  - credential_access\n"

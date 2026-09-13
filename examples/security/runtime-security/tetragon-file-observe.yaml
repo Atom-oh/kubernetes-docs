@@ -1,0 +1,27 @@
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicyNamespaced
+metadata:
+  name: documentation-file-observe
+  namespace: demo-app
+spec:
+  kprobes:
+  - call: security_file_permission
+    syscall: false
+    args:
+    - index: 0
+      type: file
+    - index: 1
+      type: int
+    selectors:
+    - matchArgs:
+      - index: 0
+        operator: Prefix
+        values:
+        - /etc/shadow
+        - /root/.ssh/
+      - index: 1
+        operator: Mask
+        values:
+        - '4'
+      matchActions:
+      - action: Post
