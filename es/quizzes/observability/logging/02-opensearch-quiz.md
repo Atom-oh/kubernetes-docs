@@ -108,7 +108,7 @@ Firehose ofrece una ruta de entrega gestionada, pero requiere roles, conectivida
 
 **Respuesta: A**
 
-La guía usa metadatos de confianza kubernetes.namespace_name. Un rol restringido no cancela una concesión más amplia existente. FLS no redacta el texto sensible dentro de un mensaje permitido ni elimina los datos o backups almacenados.
+La guía usa metadatos de confianza kubernetes.namespace_name. Un rol restringido no cancela una concesión más amplia existente. FLS no enmascara el texto sensible dentro de un mensaje permitido ni elimina los datos o backups almacenados.
 
 </details>
 

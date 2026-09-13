@@ -166,7 +166,7 @@ Cuando uses el **filtro** multilínea, sigue su guía de reemisión/orden: coló
 
 ### Ejemplo de script Lua
 
-Guarda esto como `process.lua`. Redacta claves seleccionadas en los objetos de aplicación parseados, incluidos objetos/arrays anidados, y elimina el duplicado sin redactar. **No** detecta todos los secretos ni identificadores personales en texto arbitrario.
+Guarda esto como `process.lua`. Enmascara claves seleccionadas en los objetos de aplicación parseados, incluidos objetos/arrays anidados, y elimina el duplicado sin enmascarar. **No** detecta todos los secretos ni identificadores personales en texto arbitrario.
 
 ```lua
 -- Redacts selected structured keys; it is not a general PII detector.
@@ -214,7 +214,7 @@ function process_log(tag, timestamp, record)
 end
 ```
 
-Por ejemplo, un campo `password` se redacta, pero un texto como `"message": "password=..."` no se interpreta automáticamente como una credencial. Los logs en texto plano siguen siendo texto plano. Esta transformación no es un límite de seguridad fail-closed; protege los archivos de origen, el almacenamiento local y el destino, y usa una allowlist de logging en la aplicación donde se requieran garantías más fuertes.
+Por ejemplo, un campo `password` se enmascara, pero un texto como `"message": "password=..."` no se interpreta automáticamente como una credencial. Los logs en texto plano siguen siendo texto plano. Esta transformación no es un límite de seguridad fail-closed; protege los archivos de origen, el almacenamiento local y el destino, y usa una allowlist de logging en la aplicación donde se requieran garantías más fuertes.
 
 `return 2` mantiene el timestamp original de Fluent Bit mientras modifica el registro. Las comprobaciones de tipo evitan que un nivel de log booleano malformado haga fallar el callback. Las pruebas ejercitaron estas transformaciones con un intérprete Lua nativo; el container completo de Fluent Bit no se ejecutó.
 
@@ -540,7 +540,7 @@ Los archivos de certificado mTLS configurados deben existir. Aplica por separado
 alloy validate config.alloy
 ```
 
-El label de severidad se restringe a niveles conocidos y a `UNKNOWN`, mientras que la línea de la aplicación sigue disponible para la búsqueda por trace ID. No es un pipeline de redacción. El label de nombre de archivo se elimina; los labels de Pod/container se conservan y aún deben evaluarse frente a los límites de retención/cardinalidad.
+El label de severidad se restringe a niveles conocidos y a `UNKNOWN`, mientras que la línea de la aplicación sigue disponible para la búsqueda por trace ID. No es un pipeline de enmascaramiento. El label de nombre de archivo se elimina; los labels de Pod/container se conservan y aún deben evaluarse frente a los límites de retención/cardinalidad.
 
 Para la recolección basada en API, usa `loki.source.kubernetes` **en lugar del** lector de archivos y elimina la etapa de envoltura CRI/Docker: la API de logs de Kubernetes proporciona las líneas de log de la aplicación. Un solo collector de API puede recolectar un clúster sin montajes del host. Varias instancias requieren una partición deliberada de targets o el clustering de Alloy configurado con participación de componentes; añadir réplicas sin más puede duplicar la recolección.
 
@@ -701,7 +701,7 @@ El exporter añade `/v1/logs` a `/otlp`; configura el gateway y el soporte de OT
 
 `memory_limiter` puede rechazar datos con un error reintentable y solicitar recolección de basura. No es un límite de memoria del proceso ni una garantía absoluta frente a OOM. El comportamiento de reintento upstream importa; este receiver de archivos reintenta durante cinco minutos acotados, tras lo cual un lote fallido puede descartarse. La capacidad de la cola, la capacidad de disco, el apagado y los fallos del backend siguen necesitando pruebas.
 
-El cuerpo de la aplicación se conserva, incluidos el texto plano y el JSON malformado. El parseo de severidad no es eliminación de datos sensibles. No añadas un exporter paralelo de depuración detallada que copie inadvertidamente payloads de producción sin redactar en los logs del collector.
+El cuerpo de la aplicación se conserva, incluidos el texto plano y el JSON malformado. El parseo de severidad no es eliminación de datos sensibles. No añadas un exporter paralelo de depuración detallada que copie inadvertidamente payloads de producción sin enmascarar en los logs del collector.
 
 ### Connector de enrutamiento
 

@@ -383,7 +383,7 @@ Un registro de aplicación ilustrativo de una línea antes del enriquecimiento d
 
 El subcampo `message.keyword` se define explícitamente como `app.message.keyword`; una asignación `text` por sí sola no lo crea automáticamente. Los valores por encima de su límite `ignore_above` no se indexan en ese subcampo. Considere una taxonomía delimitada de `error_type` para agregaciones en vez de mensajes arbitrarios.
 
-`dynamic: false` limita los campos asignados nuevos, pero **no elimina campos desconocidos de `_source`**. El campo `log` sin procesar se almacena sin un índice de búsqueda. Revise la duplicación, la redacción y el acceso a los datos sin procesar. `translog.durability: request` es una línea base más segura que una compensación de durabilidad async/30s sin explicación; ninguno de los dos ajustes garantiza la recuperación ante cada fallo de almacenamiento o réplica.
+`dynamic: false` limita los campos asignados nuevos, pero **no elimina campos desconocidos de `_source`**. El campo `log` sin procesar se almacena sin un índice de búsqueda. Revise la duplicación, el enmascaramiento y el acceso a los datos sin procesar. `translog.durability: request` es una línea base más segura que una compensación de durabilidad async/30s sin explicación; ninguno de los dos ajustes garantiza la recuperación ante cada fallo de almacenamiento o réplica.
 
 ### Políticas ISM (Index State Management)
 
@@ -758,7 +758,7 @@ Relaciones de configuración importantes:
 - `Logstash_Format On` crea nombres de índices basados en fechas y el campo `@timestamp`. No escribe en el alias de rollover opcional.
 - Los reintentos, `Generate_ID`, los buffers de memoria y el límite de almacenamiento de la salida no son una garantía de entrega exactamente una vez ni sin pérdidas. Pruebe errores bulk parciales, líneas sobredimensionadas, offsets de reinicio, el límite de reintentos, presión de disco y registros tardíos. El límite de salida no limita todo el uso de disco del nodo.
 
-El log sin procesar conservado puede contener datos también presentes bajo `app`. Redacte contenido prohibido antes de almacenarlo y supervise los registros rechazados. No habilite el rastreo de cuerpos de solicitudes como un ajuste de diagnóstico permanente.
+El log sin procesar conservado puede contener datos también presentes bajo `app`. Enmascare el contenido prohibido antes de almacenarlo y supervise los registros rechazados. No habilite el rastreo de cuerpos de solicitudes como un ajuste de diagnóstico permanente.
 
 <span id="ingestion-via-kinesis-data-firehose"></span>
 

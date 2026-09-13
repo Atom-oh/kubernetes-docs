@@ -90,7 +90,7 @@ Esta es una tasa de líneas de log por stream, no automáticamente una proporci�
 
 **Respuesta: B**
 
-Los valores de índice de alta cardinalidad pueden crear muchos streams. Los metadatos estructurados no son redacción, y el producto de cardinalidad es solo un límite superior de las combinaciones observadas.
+Los valores de índice de alta cardinalidad pueden crear muchos streams. Los metadatos estructurados no son una función de enmascaramiento, y el producto de cardinalidad es solo un límite superior de las combinaciones observadas.
 
 </details>
 

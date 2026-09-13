@@ -221,7 +221,7 @@ ENGINE = Distributed(
     cityHash64(namespace, service, pod_name));
 ```
 
-El colector envía las diez columnas ordinarias; ClickHouse calcula `date` y `response_time_ms` nullable. Los tiempos de respuesta ausentes o no numéricos permanecen como `NULL`, por lo que los logs que no son de solicitudes no se cuentan como solicitudes de latencia cero. `raw_json` es JSON válido de la aplicación, separado de los metadatos confiables de Kubernetes. Aplica redacción antes de la ingestión si la aplicación puede emitir secretos o datos personales.
+El colector envía las diez columnas ordinarias; ClickHouse calcula `date` y `response_time_ms` nullable. Los tiempos de respuesta ausentes o no numéricos permanecen como `NULL`, por lo que los logs que no son de solicitudes no se cuentan como solicitudes de latencia cero. `raw_json` es JSON válido de la aplicación, separado de los metadatos confiables de Kubernetes. Aplica el enmascaramiento antes de la ingestión si la aplicación puede emitir secretos o datos personales.
 
 Las particiones diarias son adecuadas para la gestión de retención de este ejemplo; no son óptimas universalmente. La ruta de Keeper es específica de esta instalación. Reutilizarla entre instalaciones no relacionadas puede mezclar identidades de replicación. `IF NOT EXISTS` no es una migración de esquema.
 

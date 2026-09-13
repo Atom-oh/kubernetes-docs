@@ -62,7 +62,7 @@ Recolecte los campos de negocio o de contexto que realmente necesite. No recomie
 de sesión en bruto, contraseñas, datos de clientes, direcciones IP o cuerpos de peticiones
 como campos predeterminados universales. Los datos de auditoría que contienen identidades
 pueden tener un propósito legítimo, pero requieren una política definida de acceso,
-retención y redacción. Prefiera metadatos de un collector de confianza para el enrutamiento
+retención y enmascaramiento. Prefiera metadatos de un collector de confianza para el enrutamiento
 en lugar de permitir que el JSON de la aplicación declare un tenant o namespace arbitrario.
 
 ### La severidad no es una escala universal de 0 a 5
@@ -185,7 +185,7 @@ elegidos; `Add` dejaría sin cambios un valor ya presente. En este fragmento, lo
 las annotations seleccionados por la carga de trabajo no son de confianza implícita. Haga
 coincidir `Kube_Tag_Prefix` con los tags reales de la entrada.
 
-Con `Keep_Log On`, la redacción debe tener en cuenta tanto el log original como la copia
+Con `Keep_Log On`, el enmascaramiento debe tener en cuenta tanto el log original como la copia
 parseada. Elimine la copia en bruto solo bajo una política probada. No descarte cualquier
 línea que contenga `HealthCheck`: un health check que falla puede ser justo la evidencia que
 necesita. Filtre únicamente eventos rutinarios bien definidos, tras comprobar el formato de

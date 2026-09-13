@@ -533,7 +533,7 @@ loki.process "app" {
 }
 ```
 
-El `level` indexado debe tener un conjunto controlado de valores; los datos proporcionados por la aplicación no son una identidad de tenant o cluster confiable. Los metadatos estructurados requieren un esquema compatible (v13 en este ejemplo) y `allow_structured_metadata`. No son una función de redacción de privacidad. Las referencias a secretos del collector y los permisos de archivos deben configurarse por separado.
+El `level` indexado debe tener un conjunto controlado de valores; los datos proporcionados por la aplicación no son una identidad de tenant o cluster confiable. Los metadatos estructurados requieren un esquema compatible (v13 en este ejemplo) y `allow_structured_metadata`. No son una función de enmascaramiento de datos sensibles. Las referencias a secretos del collector y los permisos de archivos deben configurarse por separado.
 
 ## Ajuste de rendimiento
 

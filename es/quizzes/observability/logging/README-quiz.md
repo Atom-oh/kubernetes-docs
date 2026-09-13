@@ -7,7 +7,7 @@
    - A) No necesitan análisis
    - B) Siempre usan menos bytes
    - C) Los campos explícitos ayudan al análisis, pero la decodificación, el enmarcado y el mapeo de campos siguen siendo importantes
-   - D) Redactan automáticamente todos los datos confidenciales
+   - D) Enmascaran automáticamente todos los datos confidenciales
 
 <details>
 <summary>Mostrar respuesta</summary>
@@ -86,7 +86,7 @@ Los eventos sin trace son válidos. Los nombres de campos JSON requieren mapeo a
 
    - A) Descartar cada línea que contenga HealthCheck
    - B) Confiar en JSON de la aplicación como identidad del tenant
-   - C) Separar los campos de la aplicación de los metadatos de confianza y validar la redacción/el filtrado, los offsets, los búferes y los reintentos
+   - C) Separar los campos de la aplicación de los metadatos de confianza y validar el enmascaramiento/el filtrado, los offsets, los búferes y los reintentos
    - D) Asumir que el almacenamiento en búfer evita todas las pérdidas y duplicados
 
 <details>
@@ -94,7 +94,7 @@ Los eventos sin trace son válidos. Los nombres de campos JSON requieren mapeo a
 
 **Respuesta: C**
 
-El ejemplo de Fluent Bit es un fragmento de filtro de formato clásico. Keep_Log conserva otra copia para redactar. Las comprobaciones de estado fallidas pueden ser evidencia valiosa, y las garantías de entrega dependen de toda la ruta.
+El ejemplo de Fluent Bit es un fragmento de filtro de formato clásico. Keep_Log conserva otra copia para enmascarar. Las comprobaciones de estado fallidas pueden ser evidencia valiosa, y las garantías de entrega dependen de toda la ruta.
 
 </details>
 

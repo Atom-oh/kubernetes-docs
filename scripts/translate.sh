@@ -42,6 +42,10 @@ Rules:
 - Keep Kubernetes/AWS technical terms in English (Pod, Deployment, Service,
   EKS, etc.); you may add the local-language term in parentheses on first
   use only.
+- In Spanish security/privacy prose, translate redact/redaction as
+  enmascarar/enmascaramiento, ocultar, or eliminar datos sensibles as the
+  context requires. Never use redactar/redaccion/redacción for masking:
+  those words mean composing text. Keep literal code identifiers unchanged.
 - Translate the header date field's label to $LANG_NAME (e.g. use \"$DATE_LABEL\"
   in place of \"Last Updated\"/\"마지막 업데이트\"), but keep the date value itself
   unchanged.

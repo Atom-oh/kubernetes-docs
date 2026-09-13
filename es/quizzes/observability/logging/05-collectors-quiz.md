@@ -97,12 +97,12 @@ Los Connectors pueden enlazar pipelines. La ruta actual de Loki utiliza OTLP HTT
    - A) La eliminación de todos los secretos posibles de texto arbitrario
    - B) La eliminación de los archivos de logs originales del nodo
    - C) Entrega exactamente una vez
-   - D) La redacción de claves estructuradas seleccionadas y la eliminación del duplicado sin procesar
+   - D) El enmascaramiento de claves estructuradas seleccionadas y la eliminación del duplicado sin procesar
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D) La redacción de claves estructuradas seleccionadas y la eliminación del duplicado sin procesar**
+**Respuesta: D) El enmascaramiento de claves estructuradas seleccionadas y la eliminación del duplicado sin procesar**
 
 No es un detector general de PII ni un límite de cierre ante fallos. Los valores de mensajes de texto sin formato y texto libre pueden seguir conteniendo datos sensibles.
 
