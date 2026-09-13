@@ -74,7 +74,7 @@ Inhibition changes notification eligibility, not the underlying alert condition.
 
 **Answer: B) Enter Firing after the condition persists for five minutes across evaluations.**
 
-This assumes scraped node-exporter CPU counters and an appropriate evaluation interval. `for` does not set the scrape/evaluation interval or guarantee a delivery deadline. A changed label set identifies a different alert; recovery resets Pending unless separate firing-retention behavior applies.
+This assumes scraped node-exporter CPU counters and an appropriate evaluation interval. `for` does not set the scrape/evaluation interval or guarantee a delivery deadline. A changed label set identifies a different alert; recovery resets Pending unless separate firing-retention behavior applies. The CrashLoop example first uses a five-minute observation window and then `for: 10m`: this bridges retry gaps and rejects a one-off wait, with a lookback-related clearing delay.
 
 </details>
 
@@ -135,7 +135,7 @@ Gossip shares silences and notification-log state with eventual consistency. Sen
 
 **Answer: B) critical-receiver**
 
-With default `continue: false`, the first matching sibling stops sibling traversal. Set `continue: true` on it to consider later siblings. This tests label routing only: an inactive/muted route can still stop traversal, so time-window behavior needs separate checks. Multiple integrations inside one receiver do not require `continue`.
+With default `continue: false`, the first matching sibling stops sibling traversal. Set `continue: true` on it to consider later siblings. This tests label routing only: an inactive/muted route can still stop traversal, so time-window behavior needs separate checks. Multiple integrations inside one receiver do not require `continue`. Provider destination rules still apply: Slack incoming-webhook URLs are channel-bound, so normal and critical channels require distinct webhook files/Secret keys, not a channel override.
 
 </details>
 

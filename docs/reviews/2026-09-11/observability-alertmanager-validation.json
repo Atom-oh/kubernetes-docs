@@ -1,6 +1,6 @@
 {
   "date": "2026-09-11",
-  "completedAt": "2026-09-13T14:14:46.198183+00:00",
+  "completedAt": "2026-09-13T14:50:11.362840+00:00",
   "scope": [
     "en/observability/alerting/01-alertmanager.md",
     "en/quizzes/observability/alerting/01-alertmanager-quiz.md",
@@ -32,27 +32,57 @@
     "files": [
       {
         "path": "en/observability/alerting/01-alertmanager.md",
-        "sha256": "723bcf32c7e57efaf920dd18da8ac874182369e207145da059d996c0c84212f4",
+        "sha256": "4119850f90aa965473cc0dd8632b050c85e27e8dd790515acf6daf0664ad3a92",
         "fullyRead": true,
-        "fixed": true
-      },
-      {
-        "path": "en/quizzes/observability/alerting/01-alertmanager-quiz.md",
-        "sha256": "3d51cbd75b5d38be8ab676d0e855c105b49de9c968a8af04be60119508f77add",
-        "fullyRead": true,
-        "fixed": true
+        "fixed": true,
+        "lines": 1675,
+        "fencedBlockCounts": {
+          "mermaid": 4,
+          "bash": 9,
+          "yaml": 23,
+          "python": 1,
+          "text": 1,
+          "json": 1
+        },
+        "fencedBlocks": 39
       },
       {
         "path": "ko/observability/alerting/01-alertmanager.md",
-        "sha256": "01a339b47568607a2484716ab578d19c9c1f9768cf14c7cc9cfb535692c3557a",
+        "sha256": "3e084fca3ea5f80d8c65fa2a3e86811349651b3f91b8124d45f95587f606dbcf",
         "fullyRead": true,
-        "fixed": true
+        "fixed": true,
+        "lines": 1675,
+        "fencedBlockCounts": {
+          "mermaid": 4,
+          "bash": 9,
+          "yaml": 23,
+          "python": 1,
+          "text": 1,
+          "json": 1
+        },
+        "fencedBlocks": 39
+      },
+      {
+        "path": "en/quizzes/observability/alerting/01-alertmanager-quiz.md",
+        "sha256": "74875d8b93457adbd069c8d5cd4798cce88ed756225d624f00a6297329de5b62",
+        "fullyRead": true,
+        "fixed": true,
+        "lines": 207,
+        "fencedBlockCounts": {
+          "text": 1
+        },
+        "fencedBlocks": 1
       },
       {
         "path": "ko/quizzes/observability/alerting/01-alertmanager-quiz.md",
-        "sha256": "8fe7c62031b4e24830d4cc6979ac0ccbf192c07c6c4c6a328eb2b57f2a252efb",
+        "sha256": "e138beb518756306c65f62cbc8b38248e2b79b53889b1cdf8161b79fd979ce19",
         "fullyRead": true,
-        "fixed": true
+        "fixed": true,
+        "lines": 207,
+        "fencedBlockCounts": {
+          "text": 1
+        },
+        "fencedBlocks": 1
       }
     ],
     "finalSourceContracts": {
@@ -292,16 +322,6 @@
           "lang": "en"
         },
         {
-          "name": "eight-retired-image-links-removed",
-          "passed": true,
-          "lang": "en"
-        },
-        {
-          "name": "four-replacement-Mermaids",
-          "passed": true,
-          "lang": "en"
-        },
-        {
           "name": "known-resource-fixture",
           "passed": true,
           "lang": "ko",
@@ -535,16 +555,6 @@
           "lang": "ko"
         },
         {
-          "name": "eight-retired-image-links-removed",
-          "passed": true,
-          "lang": "ko"
-        },
-        {
-          "name": "four-replacement-Mermaids",
-          "passed": true,
-          "lang": "ko"
-        },
-        {
           "name": "bilingual-code-parity",
           "passed": true,
           "language": "yaml"
@@ -585,10 +595,11 @@
           "passed": true
         },
         {
-          "name": "original-IDs-preserved",
+          "name": "original-heading-and-explicit-IDs-preserved",
           "passed": true,
           "path": "en/observability/alerting/01-alertmanager.md",
-          "missing": []
+          "missing": [],
+          "preserved": 66
         },
         {
           "name": "local-fragments-resolve",
@@ -601,10 +612,11 @@
           "path": "en/observability/alerting/01-alertmanager.md"
         },
         {
-          "name": "original-IDs-preserved",
+          "name": "original-heading-and-explicit-IDs-preserved",
           "passed": true,
           "path": "en/quizzes/observability/alerting/01-alertmanager-quiz.md",
-          "missing": []
+          "missing": [],
+          "preserved": 2
         },
         {
           "name": "local-fragments-resolve",
@@ -617,10 +629,11 @@
           "path": "en/quizzes/observability/alerting/01-alertmanager-quiz.md"
         },
         {
-          "name": "original-IDs-preserved",
+          "name": "original-heading-and-explicit-IDs-preserved",
           "passed": true,
           "path": "ko/observability/alerting/01-alertmanager.md",
-          "missing": []
+          "missing": [],
+          "preserved": 66
         },
         {
           "name": "local-fragments-resolve",
@@ -633,10 +646,11 @@
           "path": "ko/observability/alerting/01-alertmanager.md"
         },
         {
-          "name": "original-IDs-preserved",
+          "name": "original-heading-and-explicit-IDs-preserved",
           "passed": true,
           "path": "ko/quizzes/observability/alerting/01-alertmanager-quiz.md",
-          "missing": []
+          "missing": [],
+          "preserved": 2
         },
         {
           "name": "local-fragments-resolve",
@@ -1046,7 +1060,7 @@
     "fixtureBindings": [
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/alertmanager-config.yaml",
-        "sha256": "e4d7961acdd641b73d35f7c46b16ac0bd56bbc215ca9a3ac14174cbde3dea190"
+        "sha256": "e3bb6db4995005ce9d7b3bc9cd01d1f1d3296ba030b7fb4293356c19fcf33530"
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/alertmanager-templates.yaml",
@@ -1054,11 +1068,11 @@
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/alertmanager-values.yaml",
-        "sha256": "e9e586cb2ebd8ef9984c94ba518c62b0f78cf17135db50c952549c9963953785"
+        "sha256": "551c4f14dfbff38df84401ac1999f23947e6862831cbcd0f0b5d959e456e51ba"
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/alertmanager.yaml",
-        "sha256": "afe0060c819aefd56df091ce983ac4d7e2d13ca079310218ff28ac0cd0339466"
+        "sha256": "aefa1e1f67558ec7a84e93a56d28a1b3c108c89d966bf28ecc6b8ab3c88422ae"
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/alertmanagerconfig-selection.yaml",
@@ -1066,7 +1080,7 @@
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/all-rules.yaml",
-        "sha256": "6e8eed4aa6b23d0fa223d44549b86b4ea55aecfea26ca6f6c8f6bddd337b2296"
+        "sha256": "36b728c2f0e66bc8ad51cba9298f5710f9072013ff93d4bb4055581efac6258e"
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/apiserver-alerts.yaml",
@@ -1082,7 +1096,7 @@
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/kube-prometheus-stack-values.yaml",
-        "sha256": "b621260fe48b47cf5ef838ed22d9da56fcab7c1769c2acf1106ecb3b0cd08530"
+        "sha256": "beec54615f31420cc3a503df1688e0b375c230b96e7bc7876d5dba21cf4968ef"
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/kubernetes-alerts.yaml",
@@ -1106,23 +1120,23 @@
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/node-alerts.yaml",
-        "sha256": "66a27541a07af59be5e0df6831afcf39b0bf056924b08c950474d378a438be95"
+        "sha256": "bc870da132507678825eb0407bd8d17d8d48093d9f64e213f84c4b7cd1a811bc"
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/pod-alerts.yaml",
-        "sha256": "68153eaa28fe03deaf5d1d00a269676c8a1d194232ef9c1f3ef8933d8e2dd2cc"
+        "sha256": "f7c1243e858122f1e1e046d1cc840c2ef99dc705e3051eaf0bc1352f7492493f"
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/prepare-configs.py",
-        "sha256": "99d9fffd829900615dffd7d4a09523965b007e36046c85d49c34adb103f5bbc9"
+        "sha256": "ff94ffc0875b3c5f31824c4458e8856b34fb30828e39d1417ae00f8b9bb7a274"
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/prepare-rules.py",
-        "sha256": "d178b1a616fe161d08de568158280a5d07deb02de463c9657c09ef1376f11f76"
+        "sha256": "6d6d8dc832a2bf89e1ccb4d31e818c5822bf4a663c60b7680a0c3418dbedf0ba"
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/prepare-workloads.py",
-        "sha256": "cc72c6af41b41a341063028300b4c1228cd04e617b84ec1d5b2b72652b3f71a8"
+        "sha256": "6b641967dd1e57e2d97d29e8a3e475e68609b1f9d9c7d3a5c5748d58138e59c0"
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/prometheus-alerting.yaml",
@@ -1134,7 +1148,7 @@
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/receiver-multiple.yaml",
-        "sha256": "d29d4bc3b29d9ef8e089ccb0e2b0dd594745487747fad58bb09e46d56b85fa6d"
+        "sha256": "87b6a2e0bb47958a9c910050767983a8ee531c457a37d4a356f09bbe9f736404"
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/receiver-opsgenie.yaml",
@@ -1146,7 +1160,7 @@
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/receiver-slack.yaml",
-        "sha256": "0abb8b11b7fd1673284a456979985875ae702f7c579dd9d1ddab60234be84cac"
+        "sha256": "7c68c0d9b2b0af40c6fa274ec50074a2a700a07d0a819a9b56ef59b7e2693b08"
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/receiver-webhook.yaml",
@@ -1170,7 +1184,7 @@
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/rule-tests.yaml",
-        "sha256": "f37d10012b48c275220d14ad699432484e56c786ba8fac34442447e4789777b5"
+        "sha256": "9e5937ca487c44cc5435d5723b80df17d12721c05001950f8c7af506fd18a8f9"
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/slack.tmpl",
@@ -1178,11 +1192,111 @@
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/team-a-alertmanagerconfig.yaml",
-        "sha256": "9d9ae752c9b3a5fe2941b7d4b2f3ea2d414c01ff9c333e2897c34c9d39003b3c"
+        "sha256": "978a220738e282a2ec288437216d3f0f8bcad415dd97ee3b8592ebcb75c2391a"
       },
       {
         "path": ".vitepress/cache/observability-alertmanager-audit/synthetic-notification.json",
         "sha256": "65d24a21fa3d00689c8d0d6040c3ed8110d8cd120e8d677dcdabae650b804752"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/apply-source-fixes.py",
+        "sha256": "5c1b2f6d6172cdc7a5dc92f21eb2ee3df3c31713adc6ecf37e3f98ea1ed18848"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/before-fixture-hashes.json",
+        "sha256": "a5df18a82c379953a86530d7bec4c3669d4e7aed4af32b92b0e2732d31b4804f"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/before-markdown.json",
+        "sha256": "16670da94cd6a56660787aa88f6e728365668976d14ad039b6ce484d4ef11d6b"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/check-crashloop-regression.py",
+        "sha256": "bd739dea1b3b8f49248840362f7f7d669da160fa6213fd10bb7fca29cae603bd"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/check-current-contracts.py",
+        "sha256": "905fb3aec35cda4d773a656840a82e9b29d465f78268a43c30e8cf5499669fe0"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/check-slack-bindings.py",
+        "sha256": "2a6facfae7c6c06ab0adb4d9a432969e6b8c1f7c7e50d364081619fd241ea79d"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/compile-current.mjs",
+        "sha256": "b571339fe4b182ee55c672fa0763ac4b527a5b85441f583fe5f7b56b2ec3328c"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/crashloop-current-rule.yaml",
+        "sha256": "5eb7b422687d78a063992c91da77c5899455a2b5dd04439bcedc7590b218cf20"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/crashloop-green.log",
+        "sha256": "8289a4919870ab5b28f5e90a86b4af3cdbd8c244516c02fca90d6e3f289a6711"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/crashloop-red.log",
+        "sha256": "d3825fee44461ce616712519df449e6e59735e5491b2ec2456c8342937c01533"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/crashloop-regression-tests.yaml",
+        "sha256": "7c50b53e6b44476d16c681ab54807420b35c24a2260a4672bd5b28c7e4036032"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/crashloop-state-validation.json",
+        "sha256": "83bf4f8985ec5f71cb2c0038ea12ea34fbb69af1cf2f5b89f30e7fb7867c349e"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/current-contract-validation.json",
+        "sha256": "1dba0d1ce9e38b3e04c23a753fe9a1d997a2c07beda83cd618159419104ee509"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/current-markdown.json",
+        "sha256": "f67de2835ee5148523f577e7ecd93e3bc15ae8e8971ce2279088d45938b008c0"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/docs-test-validation.json",
+        "sha256": "4a8c4bcedf0a48df7a8af877c66398d7bc300c315e96622b6badf25b0d71e720"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/docs-test.log",
+        "sha256": "10eb88f03e33496b8e60d4c8746929aef247af378720422d7f7f56c6b2e1241a"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/historical-fixture-preservation.json",
+        "sha256": "c776ea66edf0da6be5faa3385176928414d321d9011d959abe2c44977fa548be"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/node-exporter-rule.yaml",
+        "sha256": "d2bd4e19620ca6c38821992cb68ffb855c5edd7cb34c5802306f7e30673bcdbd"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/node-exporter-test.log",
+        "sha256": "8289a4919870ab5b28f5e90a86b4af3cdbd8c244516c02fca90d6e3f289a6711"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/node-exporter-tests.yaml",
+        "sha256": "53dac58190063347350bfbb06f40ea212fe95326f321d723dfcd99ae325f8786"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/node-exporter-validation.json",
+        "sha256": "8202a4a0f3e9b5d2b1bb824e99e21982eaf65fab2dd9346765ada65536876ada"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/persist-review-fixes.py",
+        "sha256": "c39a06fa64bb8b7c6053d376c8cdf6d1866863a957749acf7ea2dadfd92bc380"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/protected-assets.json",
+        "sha256": "36497be43db5e2f1c51b99a4677eb088505908f48f88287f9fd94f6320d1cdbc"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/slack-binding-validation.json",
+        "sha256": "ae57b196e47f969e342780406cc80199e286a55cea0b0a23b8640af3a345ff6b"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/source-changes.json",
+        "sha256": "ab68487ecf55798587ea7304923787529678d9c06ce4a1eb554fe6ae06da5fa4"
       }
     ],
     "limits": [
@@ -1199,7 +1313,7 @@
     "results": [
       {
         "path": "en/observability/alerting/01-alertmanager.md",
-        "sha256": "723bcf32c7e57efaf920dd18da8ac874182369e207145da059d996c0c84212f4",
+        "sha256": "4119850f90aa965473cc0dd8632b050c85e27e8dd790515acf6daf0664ad3a92",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -1469,6 +1583,87 @@
             "id": "quiz"
           }
         ],
+        "localFragments": [
+          "prometheus-alertmanager",
+          "table-of-contents",
+          "alertmanager-overview",
+          "architecture",
+          "installation-and-configuration",
+          "defining-alert-rules",
+          "routing-configuration",
+          "receiver-configuration",
+          "inhibition-rules",
+          "silencing",
+          "template-customization",
+          "high-availability-configuration",
+          "alertmanagerconfig-crd",
+          "production-alert-rule-examples",
+          "troubleshooting",
+          "alertmanager-overview",
+          "key-features",
+          "prometheus-alert-flow",
+          "architecture",
+          "alertmanager-internal-structure",
+          "component-description",
+          "installation-and-configuration",
+          "installation-via-helm-kube-prometheus-stack",
+          "alertmanager-dedicated-helm-chart",
+          "values-yaml-example",
+          "direct-configuration-via-configmap",
+          "defining-alert-rules",
+          "prometheusrule-crd",
+          "alert-rule-components",
+          "alert-states",
+          "routing-configuration",
+          "routing-tree-structure",
+          "routing-flow",
+          "matchers",
+          "advanced-routing-example",
+          "receiver-configuration",
+          "slack-receiver",
+          "pagerduty-receiver",
+          "email-receiver",
+          "opsgenie-receiver",
+          "webhook-receiver",
+          "multiple-receiver-configuration",
+          "inhibition-rules",
+          "inhibition-concept",
+          "inhibition-rule-configuration",
+          "inhibition-priority",
+          "silencing",
+          "creating-silences",
+          "using-amtool-cli",
+          "creating-silence-via-api",
+          "silence-management-best-practices",
+          "template-customization",
+          "go-template-basics",
+          "slack-template-example",
+          "template-functions",
+          "managing-templates-via-configmap",
+          "high-availability-configuration",
+          "clustering-architecture",
+          "statefulset-configuration",
+          "prometheus-integration-configuration",
+          "alertmanagerconfig-crd",
+          "namespace-scoped-configuration",
+          "secret-reference",
+          "alertmanager-alertmanagerconfig-selection",
+          "production-alert-rule-examples",
+          "node-alerts",
+          "pod-and-container-alerts",
+          "api-server-alerts",
+          "etcd-alerts",
+          "troubleshooting",
+          "common-problems-and-solutions",
+          "alerts-not-being-sent",
+          "duplicate-alerts",
+          "alerts-sent-to-wrong-receiver",
+          "amtool-command-reference",
+          "metric-verification",
+          "debugging-tips",
+          "references",
+          "quiz"
+        ],
         "renderedIds": [
           "prometheus-alertmanager",
           "table-of-contents",
@@ -1503,7 +1698,7 @@
           "multiple-receiver-configuration",
           "inhibition-rules",
           "inhibition-concept",
-          "mermaid-362",
+          "mermaid-365",
           "inhibition-rule-configuration",
           "inhibition-priority",
           "silencing",
@@ -1511,7 +1706,7 @@
           "using-amtool-cli",
           "creating-silence-via-api",
           "silence-management-best-practices",
-          "mermaid-405",
+          "mermaid-408",
           "template-customization",
           "go-template-basics",
           "slack-template-example",
@@ -1544,7 +1739,7 @@
       },
       {
         "path": "en/quizzes/observability/alerting/01-alertmanager-quiz.md",
-        "sha256": "3d51cbd75b5d38be8ab676d0e855c105b49de9c968a8af04be60119508f77add",
+        "sha256": "74875d8b93457adbd069c8d5cd4798cce88ed756225d624f00a6297329de5b62",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -1558,6 +1753,10 @@
             "id": "additional-learning-resources"
           }
         ],
+        "localFragments": [
+          "prometheus-alertmanager-quiz",
+          "additional-learning-resources"
+        ],
         "renderedIds": [
           "prometheus-alertmanager-quiz",
           "additional-learning-resources"
@@ -1565,7 +1764,7 @@
       },
       {
         "path": "ko/observability/alerting/01-alertmanager.md",
-        "sha256": "01a339b47568607a2484716ab578d19c9c1f9768cf14c7cc9cfb535692c3557a",
+        "sha256": "3e084fca3ea5f80d8c65fa2a3e86811349651b3f91b8124d45f95587f606dbcf",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -1835,6 +2034,87 @@
             "id": "퀴즈"
           }
         ],
+        "localFragments": [
+          "prometheus-alertmanager",
+          "목차",
+          "alertmanager-개요",
+          "아키텍처",
+          "설치-및-구성",
+          "알림-규칙-정의",
+          "라우팅-구성",
+          "수신자-구성",
+          "inhibition-규칙",
+          "silencing",
+          "템플릿-커스터마이징",
+          "고가용성-구성",
+          "alertmanagerconfig-crd",
+          "실전-알림-규칙-예시",
+          "트러블슈팅",
+          "alertmanager-개요",
+          "주요-기능",
+          "prometheus-알림-흐름",
+          "아키텍처",
+          "alertmanager-내부-구조",
+          "컴포넌트-설명",
+          "설치-및-구성",
+          "helm을-통한-설치-kube-prometheus-stack",
+          "alertmanager-전용-helm-chart",
+          "values-yaml-예시",
+          "configmap으로-직접-구성",
+          "알림-규칙-정의",
+          "prometheusrule-crd",
+          "알림-규칙-구성-요소",
+          "알림-상태",
+          "라우팅-구성",
+          "라우팅-트리-구조",
+          "라우팅-흐름",
+          "매처-matchers",
+          "고급-라우팅-예시",
+          "수신자-구성",
+          "slack-수신자",
+          "pagerduty-수신자",
+          "email-수신자",
+          "opsgenie-수신자",
+          "webhook-수신자",
+          "다중-수신자-구성",
+          "inhibition-규칙",
+          "inhibition-개념",
+          "inhibition-규칙-구성",
+          "inhibition-우선순위",
+          "silencing",
+          "silence-생성",
+          "amtool-cli-사용",
+          "api를-통한-silence-생성",
+          "silence-관리-모범-사례",
+          "템플릿-커스터마이징",
+          "go-템플릿-기본",
+          "slack-템플릿-예시",
+          "템플릿-함수",
+          "configmap으로-템플릿-관리",
+          "고가용성-구성",
+          "클러스터링-아키텍처",
+          "statefulset-구성",
+          "prometheus-연동-설정",
+          "alertmanagerconfig-crd",
+          "네임스페이스별-설정",
+          "secret-참조",
+          "alertmanager에서-alertmanagerconfig-선택",
+          "실전-알림-규칙-예시",
+          "node-알림",
+          "pod-및-container-알림",
+          "api-server-알림",
+          "etcd-알림",
+          "트러블슈팅",
+          "일반적인-문제와-해결책",
+          "알림이-전송되지-않는-경우",
+          "중복-알림이-발생하는-경우",
+          "알림이-잘못된-수신자에게-전송되는-경우",
+          "amtool-명령어-모음",
+          "메트릭-확인",
+          "디버깅-팁",
+          "참고-자료",
+          "퀴즈"
+        ],
         "renderedIds": [
           "prometheus-alertmanager",
           "목차",
@@ -1869,7 +2149,7 @@
           "다중-수신자-구성",
           "inhibition-규칙",
           "inhibition-개념",
-          "mermaid-362",
+          "mermaid-365",
           "inhibition-규칙-구성",
           "inhibition-우선순위",
           "silencing",
@@ -1877,7 +2157,7 @@
           "amtool-cli-사용",
           "api를-통한-silence-생성",
           "silence-관리-모범-사례",
-          "mermaid-405",
+          "mermaid-408",
           "템플릿-커스터마이징",
           "go-템플릿-기본",
           "slack-템플릿-예시",
@@ -1910,7 +2190,7 @@
       },
       {
         "path": "ko/quizzes/observability/alerting/01-alertmanager-quiz.md",
-        "sha256": "8fe7c62031b4e24830d4cc6979ac0ccbf192c07c6c4c6a328eb2b57f2a252efb",
+        "sha256": "e138beb518756306c65f62cbc8b38248e2b79b53889b1cdf8161b79fd979ce19",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -1923,6 +2203,10 @@
             "tag": "h2",
             "id": "추가-학습-자료"
           }
+        ],
+        "localFragments": [
+          "prometheus-alertmanager-퀴즈",
+          "추가-학습-자료"
         ],
         "renderedIds": [
           "prometheus-alertmanager-퀴즈",
@@ -2131,6 +2415,22 @@
       "status": 200,
       "finalURL": "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.93.1/pkg/alertmanager/amcfg.go",
       "sha256": "dfae729fc64fe4944b87774f7d7b75931563dae958f91d6e2d56e8989848e83e"
+    },
+    {
+      "url": "https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/",
+      "cacheKey": "604e6c2daa3f",
+      "fetchedAt": "2026-09-13T14:40:57+00:00",
+      "status": 200,
+      "finalURL": "https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/",
+      "sha256": "858af63c759f1321f0861227dea84b03251547f0f0d633b393ec0c682b11292b"
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/",
+      "cacheKey": "3e34f258a95a",
+      "fetchedAt": "2026-09-13T14:40:57.722905+00:00",
+      "status": 200,
+      "finalURL": "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/",
+      "sha256": "827a3a6e5b21763c7e6835ca973fc7ee531c43d7f92bf7daa9b2640bbcbcadd5"
     }
   ],
   "findings": [
@@ -2798,5 +3098,3631 @@
     "browserCases": 24,
     "desktopCases": 32,
     "individualPNG": 8
+  },
+  "historicalBeforeReviewFixes": {
+    "reviewedHead": "09731bcb844236258c9864809dc8871e666516bd",
+    "completedAt": "2026-09-13T14:14:46.198183+00:00",
+    "checks": {
+      "status": "passed",
+      "files": [
+        {
+          "path": "en/observability/alerting/01-alertmanager.md",
+          "sha256": "723bcf32c7e57efaf920dd18da8ac874182369e207145da059d996c0c84212f4",
+          "fullyRead": true,
+          "fixed": true
+        },
+        {
+          "path": "en/quizzes/observability/alerting/01-alertmanager-quiz.md",
+          "sha256": "3d51cbd75b5d38be8ab676d0e855c105b49de9c968a8af04be60119508f77add",
+          "fullyRead": true,
+          "fixed": true
+        },
+        {
+          "path": "ko/observability/alerting/01-alertmanager.md",
+          "sha256": "01a339b47568607a2484716ab578d19c9c1f9768cf14c7cc9cfb535692c3557a",
+          "fullyRead": true,
+          "fixed": true
+        },
+        {
+          "path": "ko/quizzes/observability/alerting/01-alertmanager-quiz.md",
+          "sha256": "8fe7c62031b4e24830d4cc6979ac0ccbf192c07c6c4c6a328eb2b57f2a252efb",
+          "fullyRead": true,
+          "fixed": true
+        }
+      ],
+      "finalSourceContracts": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "only-labeled-matcher-fragment",
+            "passed": true,
+            "lang": "en",
+            "index": 5
+          },
+          {
+            "name": "matcher-fragment-native-parse",
+            "passed": true,
+            "lang": "en",
+            "error": ""
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "ConfigMap"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "ConfigMap",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "StatefulSet"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "StatefulSet",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "Service"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "Service",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "PodDisruptionBudget"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "PodDisruptionBudget",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "Namespace"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "Namespace",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "AlertmanagerConfig"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "AlertmanagerConfig",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "en",
+            "index": 0,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "en",
+            "index": 1,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "en",
+            "index": 2,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "en",
+            "index": 3,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "en",
+            "index": 4,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "en",
+            "index": 5,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "en",
+            "index": 6,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "en",
+            "index": 7,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "en",
+            "index": 8,
+            "error": ""
+          },
+          {
+            "name": "payload-helper-no-send-valid-output",
+            "passed": true,
+            "lang": "en"
+          },
+          {
+            "name": "quiz-10-and-correct-key",
+            "passed": true,
+            "lang": "en"
+          },
+          {
+            "name": "old404-absent",
+            "passed": true,
+            "lang": "en"
+          },
+          {
+            "name": "eight-retired-image-links-removed",
+            "passed": true,
+            "lang": "en"
+          },
+          {
+            "name": "four-replacement-Mermaids",
+            "passed": true,
+            "lang": "en"
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "only-labeled-matcher-fragment",
+            "passed": true,
+            "lang": "ko",
+            "index": 5
+          },
+          {
+            "name": "matcher-fragment-native-parse",
+            "passed": true,
+            "lang": "ko",
+            "error": ""
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "ConfigMap"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "ConfigMap",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "StatefulSet"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "StatefulSet",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "Service"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "Service",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PodDisruptionBudget"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PodDisruptionBudget",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "Namespace"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "Namespace",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "AlertmanagerConfig"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "AlertmanagerConfig",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "ko",
+            "index": 0,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "ko",
+            "index": 1,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "ko",
+            "index": 2,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "ko",
+            "index": 3,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "ko",
+            "index": 4,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "ko",
+            "index": 5,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "ko",
+            "index": 6,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "ko",
+            "index": 7,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "ko",
+            "index": 8,
+            "error": ""
+          },
+          {
+            "name": "payload-helper-no-send-valid-output",
+            "passed": true,
+            "lang": "ko"
+          },
+          {
+            "name": "quiz-10-and-correct-key",
+            "passed": true,
+            "lang": "ko"
+          },
+          {
+            "name": "old404-absent",
+            "passed": true,
+            "lang": "ko"
+          },
+          {
+            "name": "eight-retired-image-links-removed",
+            "passed": true,
+            "lang": "ko"
+          },
+          {
+            "name": "four-replacement-Mermaids",
+            "passed": true,
+            "lang": "ko"
+          },
+          {
+            "name": "bilingual-code-parity",
+            "passed": true,
+            "language": "yaml"
+          },
+          {
+            "name": "bilingual-code-parity",
+            "passed": true,
+            "language": "bash"
+          },
+          {
+            "name": "bilingual-code-parity",
+            "passed": true,
+            "language": "python"
+          },
+          {
+            "name": "bilingual-code-parity",
+            "passed": true,
+            "language": "text"
+          },
+          {
+            "name": "team-label-selected",
+            "passed": true
+          },
+          {
+            "name": "team-namespace-selected",
+            "passed": true
+          },
+          {
+            "name": "namespace-matcher-strategy",
+            "passed": true
+          },
+          {
+            "name": "manual-HA-discovery-and-protocols",
+            "passed": true
+          },
+          {
+            "name": "manual-HA-resource-names",
+            "passed": true
+          },
+          {
+            "name": "original-IDs-preserved",
+            "passed": true,
+            "path": "en/observability/alerting/01-alertmanager.md",
+            "missing": []
+          },
+          {
+            "name": "local-fragments-resolve",
+            "passed": true,
+            "path": "en/observability/alerting/01-alertmanager.md"
+          },
+          {
+            "name": "no-duplicate-IDs",
+            "passed": true,
+            "path": "en/observability/alerting/01-alertmanager.md"
+          },
+          {
+            "name": "original-IDs-preserved",
+            "passed": true,
+            "path": "en/quizzes/observability/alerting/01-alertmanager-quiz.md",
+            "missing": []
+          },
+          {
+            "name": "local-fragments-resolve",
+            "passed": true,
+            "path": "en/quizzes/observability/alerting/01-alertmanager-quiz.md"
+          },
+          {
+            "name": "no-duplicate-IDs",
+            "passed": true,
+            "path": "en/quizzes/observability/alerting/01-alertmanager-quiz.md"
+          },
+          {
+            "name": "original-IDs-preserved",
+            "passed": true,
+            "path": "ko/observability/alerting/01-alertmanager.md",
+            "missing": []
+          },
+          {
+            "name": "local-fragments-resolve",
+            "passed": true,
+            "path": "ko/observability/alerting/01-alertmanager.md"
+          },
+          {
+            "name": "no-duplicate-IDs",
+            "passed": true,
+            "path": "ko/observability/alerting/01-alertmanager.md"
+          },
+          {
+            "name": "original-IDs-preserved",
+            "passed": true,
+            "path": "ko/quizzes/observability/alerting/01-alertmanager-quiz.md",
+            "missing": []
+          },
+          {
+            "name": "local-fragments-resolve",
+            "passed": true,
+            "path": "ko/quizzes/observability/alerting/01-alertmanager-quiz.md"
+          },
+          {
+            "name": "no-duplicate-IDs",
+            "passed": true,
+            "path": "ko/quizzes/observability/alerting/01-alertmanager-quiz.md"
+          },
+          {
+            "name": "unique-published-alert-names",
+            "passed": true
+          }
+        ],
+        "counts": {
+          "kubernetesObjects": 10,
+          "customResources": 12,
+          "shellBlocks": 18,
+          "pythonBlocks": 2,
+          "configBindings": 30
+        },
+        "limits": "Exact source/fixture and schema bindings; no Kubernetes admission/CEL/operator reconciliation or cloud calls. Python helper only generates a local JSON payload."
+      },
+      "native": {
+        "config-native-validation.json": {
+          "passed": true,
+          "checks": [
+            {
+              "name": "amtool-config",
+              "passed": true,
+              "file": "alertmanager.yaml",
+              "error": ""
+            },
+            {
+              "name": "amtool-config",
+              "passed": true,
+              "file": "routing-tree.yaml",
+              "error": ""
+            },
+            {
+              "name": "amtool-config",
+              "passed": true,
+              "file": "routing-schedule.yaml",
+              "error": ""
+            },
+            {
+              "name": "amtool-config",
+              "passed": true,
+              "file": "inhibition.yaml",
+              "error": ""
+            },
+            {
+              "name": "amtool-config",
+              "passed": true,
+              "file": "local-null.yaml",
+              "error": ""
+            },
+            {
+              "name": "amtool-receiver",
+              "passed": true,
+              "file": "receiver-email.yaml",
+              "error": ""
+            },
+            {
+              "name": "amtool-receiver",
+              "passed": true,
+              "file": "receiver-multiple.yaml",
+              "error": ""
+            },
+            {
+              "name": "amtool-receiver",
+              "passed": true,
+              "file": "receiver-opsgenie.yaml",
+              "error": ""
+            },
+            {
+              "name": "amtool-receiver",
+              "passed": true,
+              "file": "receiver-pagerduty.yaml",
+              "error": ""
+            },
+            {
+              "name": "amtool-receiver",
+              "passed": true,
+              "file": "receiver-slack.yaml",
+              "error": ""
+            },
+            {
+              "name": "amtool-receiver",
+              "passed": true,
+              "file": "receiver-webhook.yaml",
+              "error": ""
+            },
+            {
+              "name": "actual-label-route",
+              "passed": true,
+              "labels": [
+                "severity=critical",
+                "service=foo",
+                "owner=team-a"
+              ],
+              "receiver": "critical-receiver",
+              "error": ""
+            },
+            {
+              "name": "actual-label-route",
+              "passed": true,
+              "labels": [
+                "severity=warning",
+                "service=foo",
+                "owner=team-a"
+              ],
+              "receiver": "team-a",
+              "error": ""
+            },
+            {
+              "name": "actual-label-route",
+              "passed": true,
+              "labels": [
+                "service=bar",
+                "owner=other"
+              ],
+              "receiver": "service-team",
+              "error": ""
+            },
+            {
+              "name": "actual-label-route",
+              "passed": true,
+              "labels": [
+                "service=baz"
+              ],
+              "receiver": "default-receiver",
+              "error": ""
+            },
+            {
+              "name": "schedule-route-label-matching-only",
+              "passed": true,
+              "labels": [
+                "severity=critical",
+                "team=infra"
+              ],
+              "receivers": "oncall,infra-team",
+              "error": ""
+            },
+            {
+              "name": "schedule-route-label-matching-only",
+              "passed": true,
+              "labels": [
+                "severity=critical",
+                "team=other"
+              ],
+              "receivers": "oncall,team-slack",
+              "error": ""
+            },
+            {
+              "name": "schedule-route-label-matching-only",
+              "passed": true,
+              "labels": [
+                "severity=warning",
+                "team=dev"
+              ],
+              "receivers": "dev-team",
+              "error": ""
+            },
+            {
+              "name": "template-color-no-whitespace",
+              "passed": true,
+              "status": "firing",
+              "severity": "critical",
+              "output": "#ff0000"
+            },
+            {
+              "name": "template-color-no-whitespace",
+              "passed": true,
+              "status": "firing",
+              "severity": "warning",
+              "output": "#ff9900"
+            },
+            {
+              "name": "template-color-no-whitespace",
+              "passed": true,
+              "status": "resolved",
+              "severity": "critical",
+              "output": "#36a64f"
+            },
+            {
+              "name": "actual-template-title",
+              "passed": true,
+              "error": ""
+            },
+            {
+              "name": "actual-template-rune-safe-quiz",
+              "passed": true,
+              "error": ""
+            },
+            {
+              "name": "old-template-rejected-wrong-root",
+              "passed": true
+            },
+            {
+              "name": "old-template-rejected-ternary",
+              "passed": true
+            },
+            {
+              "name": "Helm-render",
+              "passed": true,
+              "profile": "stack",
+              "error": ""
+            },
+            {
+              "name": "stack-replicas-storage-resources",
+              "passed": true
+            },
+            {
+              "name": "stack-secret-template-mounts",
+              "passed": true
+            },
+            {
+              "name": "rule-selection-labels",
+              "passed": true
+            },
+            {
+              "name": "Helm-render",
+              "passed": true,
+              "profile": "standalone",
+              "error": ""
+            },
+            {
+              "name": "standalone-replicas-storage-resources",
+              "passed": true
+            },
+            {
+              "name": "standalone-secret-template-mounts",
+              "passed": true
+            }
+          ],
+          "limits": [
+            "amtool config/routes/template execution and local Helm rendering only.",
+            "No SMTP/Slack/PagerDuty/Opsgenie/webhook notification or cloud/cluster calls.",
+            "Route CLI verifies labels, not time-window activation; calendar separately tested."
+          ]
+        },
+        "rules-native-validation.json": {
+          "passed": true,
+          "testGroups": 34,
+          "expressionCases": 33,
+          "alertStateCases": 3,
+          "version": "3.14.0",
+          "scope": "Actual promtool synthetic time-series tests; no scrape, Kubernetes or cloud execution."
+        },
+        "inhibition-native-validation.json": {
+          "version": "0.34.0",
+          "checks": [
+            {
+              "case": "original-missing-node/unrelated-missing-node",
+              "expectedInhibited": true,
+              "observedInhibited": true,
+              "passed": true
+            },
+            {
+              "case": "guarded-node-scope/same-node",
+              "expectedInhibited": true,
+              "observedInhibited": true,
+              "passed": true
+            },
+            {
+              "case": "guarded-node-scope/other-node",
+              "expectedInhibited": false,
+              "observedInhibited": false,
+              "passed": true
+            },
+            {
+              "case": "guarded-node-scope/other-cluster",
+              "expectedInhibited": false,
+              "observedInhibited": false,
+              "passed": true
+            },
+            {
+              "case": "guarded-node-scope/missing-labels",
+              "expectedInhibited": false,
+              "observedInhibited": false,
+              "passed": true
+            },
+            {
+              "case": "guarded-node-scope/missing-cluster",
+              "expectedInhibited": false,
+              "observedInhibited": false,
+              "passed": true
+            },
+            {
+              "case": "guarded-node-scope/same-node-b",
+              "expectedInhibited": true,
+              "observedInhibited": true,
+              "passed": true
+            }
+          ],
+          "scope": "Actual local Alertmanager API with synthetic alerts, gossip disabled and null receiver; no cluster/cloud/provider delivery."
+        },
+        "timeinterval-native-validation.json": {
+          "passed": true,
+          "cases": 11,
+          "method": "Unmodified released Alertmanager0.34.0timeinterval.go compiled locally with cachedYAML2;actualContainsTime over publishedscheduleandKST/UTCboundary/weekendcases.",
+          "upstreamSha256": "87968ea608a2667dd606bffe9328e9212d7769e99c6f97b8dd8ed679dbf8527d",
+          "scheduleSha256": "301d93b393042ce6edef2ea7f24575845a6568992b35ad8996ae1b215edefc17",
+          "cloudCalls": 0
+        },
+        "silence-native-validation.json": {
+          "version": "0.34.0",
+          "checks": [
+            {
+              "case": "active-create",
+              "passed": true,
+              "status": 200
+            },
+            {
+              "case": "active-state",
+              "passed": true
+            },
+            {
+              "case": "expire-cli",
+              "passed": true
+            },
+            {
+              "case": "expired-record-remains",
+              "passed": true
+            },
+            {
+              "case": "future-create",
+              "passed": true
+            },
+            {
+              "case": "future-pending-state",
+              "passed": true
+            },
+            {
+              "case": "historical-window-does-not-mute-now",
+              "passed": true,
+              "httpStatus": 400,
+              "response": "\"Failed to create silence: end time can't be in the past\"\n"
+            },
+            {
+              "case": "duration-cli-create",
+              "passed": true,
+              "error": ""
+            },
+            {
+              "case": "duration-cli-active",
+              "passed": true
+            },
+            {
+              "case": "all-empty-match-silence-rejected",
+              "passed": true,
+              "status": 400
+            }
+          ],
+          "scope": "Actual localnullreceiverAlertmanager andamtool,syntheticsilencesonly.No cluster/cloud/provider calls.No hostclockchanges;calendar datageneratedorhistoricalsyntheticfixture."
+        },
+        "metrics-native-validation.json": {
+          "version": "0.34.0",
+          "metricHelp": {
+            "alertmanager_alerts_received_total": "# HELP alertmanager_alerts_received_total The total number of received alerts.",
+            "alertmanager_alerts_invalid_total": "# HELP alertmanager_alerts_invalid_total The total number of received alerts that were invalid.",
+            "alertmanager_notifications_failed_total": "# HELP alertmanager_notifications_failed_total The total number of failed notifications.",
+            "alertmanager_notifications_total": "# HELP alertmanager_notifications_total The total number of attempted notifications.",
+            "alertmanager_alerts": "# HELP alertmanager_alerts How many alerts by state.",
+            "alertmanager_silences": "# HELP alertmanager_silences How many silences by state.",
+            "alertmanager_cluster_members": null
+          },
+          "localNotifications": 1,
+          "scope": "ActuallocalAlertmanager/syntheticAPIalert/loopbackHTTPsinkand/metrics.No externalnotification orcloud."
+        },
+        "gossip-metric-validation.json": {
+          "passed": true,
+          "help": "# HELP alertmanager_cluster_members Number indicating current number of members in cluster.",
+          "observedMembers": 1,
+          "scope": "One localnodegossip onloopback;nopeers/cloud/notifications.No multi-replicaHAorfailoverclaim."
+        },
+        "published-template-data-validation.json": {
+          "passed": true,
+          "dataSha256": "65d24a21fa3d00689c8d0d6040c3ed8110d8cd120e8d677dcdabae650b804752",
+          "actualTitle": "[FIRING:1] HighCPU",
+          "scope": "Actual amtool render of the exact published synthetic Data; no alert sent."
+        },
+        "chart-downloads.json": [
+          {
+            "name": "alertmanager",
+            "version": "1.43.1",
+            "sha256": "d370858f873b904a966e64d530874e645114a86a3095f7afc43ed65b217afab8",
+            "bytes": 16275,
+            "url": "https://github.com/prometheus-community/helm-charts/releases/download/alertmanager-1.43.1/alertmanager-1.43.1.tgz"
+          },
+          {
+            "name": "kube-prometheus-stack",
+            "version": "90.0.0",
+            "sha256": "04b90a3f4aab4b40572585095331259bc8f00328e40f9ec588e54cdb9aa6a55f",
+            "bytes": 899290,
+            "url": "https://github.com/prometheus-community/helm-charts/releases/download/kube-prometheus-stack-90.0.0/kube-prometheus-stack-90.0.0.tgz"
+          }
+        ],
+        "manifest-parser-note.json": {
+          "issue": "Officialstandalonechart1.43.1hasatrailingtabafterv1involumeClaimTemplate.PurePythonSafeLoaderrejects;libyamlCSafeLoaderandnativeHelmacceptthesameunmodifiedrender.",
+          "resolution": "UseCSafeLoaderfortherenderinspection.No whitespace rewritingorproductpatch;theoriginalrenderiskept."
+        }
+      },
+      "fixtureBindings": [
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/alertmanager-config.yaml",
+          "sha256": "e4d7961acdd641b73d35f7c46b16ac0bd56bbc215ca9a3ac14174cbde3dea190"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/alertmanager-templates.yaml",
+          "sha256": "b6a4d7f4053d8ba9e5078934f1925e9e4854f25e9984d888d8a924564db14613"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/alertmanager-values.yaml",
+          "sha256": "e9e586cb2ebd8ef9984c94ba518c62b0f78cf17135db50c952549c9963953785"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/alertmanager.yaml",
+          "sha256": "afe0060c819aefd56df091ce983ac4d7e2d13ca079310218ff28ac0cd0339466"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/alertmanagerconfig-selection.yaml",
+          "sha256": "2292cbd0d39bf46cbf0b6d1c3d7c46dd988bf84a769494504e0d8ea04a6aad38"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/all-rules.yaml",
+          "sha256": "6e8eed4aa6b23d0fa223d44549b86b4ea55aecfea26ca6f6c8f6bddd337b2296"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/apiserver-alerts.yaml",
+          "sha256": "45c2c855d32a6e0439a3f8c8b3f4a1975b7e10658462f155ef3bfb825df58b55"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/etcd-alerts.yaml",
+          "sha256": "f4f6c6266f7417beb2088e4645af6ebfb264d5f7be7eee68b4989e80b1d95fc1"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/inhibition.yaml",
+          "sha256": "e339b40c3f27dcdff02d5b678f675cda5acc688462b8b6c1f8f50826a824739d"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/kube-prometheus-stack-values.yaml",
+          "sha256": "b621260fe48b47cf5ef838ed22d9da56fcab7c1769c2acf1106ecb3b0cd08530"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/kubernetes-alerts.yaml",
+          "sha256": "d956409f1a1f6decc39e596063bf3e005cb2cd47c49db74e7b9338de1b5ecb3f"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/local-null.yaml",
+          "sha256": "5fb2ed4d74bacaf48cbb11fd66ed3b376853cfbf1245b08620a243b33073a4d4"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/manual-ha.yaml",
+          "sha256": "372c017638f17c19c61eebe59b734dde2529765db3f0f6f5d072d612b03fa0fe"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/matcher-fragment-en.yaml",
+          "sha256": "6c7e4d602b22505a8e95fd13f82da0df94c7f219458fa9d0f29d360f7e1a4459"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/matcher-fragment-ko.yaml",
+          "sha256": "6c7e4d602b22505a8e95fd13f82da0df94c7f219458fa9d0f29d360f7e1a4459"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/node-alerts.yaml",
+          "sha256": "66a27541a07af59be5e0df6831afcf39b0bf056924b08c950474d378a438be95"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/pod-alerts.yaml",
+          "sha256": "68153eaa28fe03deaf5d1d00a269676c8a1d194232ef9c1f3ef8933d8e2dd2cc"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/prepare-configs.py",
+          "sha256": "99d9fffd829900615dffd7d4a09523965b007e36046c85d49c34adb103f5bbc9"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/prepare-rules.py",
+          "sha256": "d178b1a616fe161d08de568158280a5d07deb02de463c9657c09ef1376f11f76"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/prepare-workloads.py",
+          "sha256": "cc72c6af41b41a341063028300b4c1228cd04e617b84ec1d5b2b72652b3f71a8"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/prometheus-alerting.yaml",
+          "sha256": "4420245b62827a42c46c9e4c073fbd4b1864085bb37903b5a0c45e8e40035c3a"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/receiver-email.yaml",
+          "sha256": "a95db713741d5b06b0ece3fb8f5013dff1d69de84fc9d511092e0c64479d7818"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/receiver-multiple.yaml",
+          "sha256": "d29d4bc3b29d9ef8e089ccb0e2b0dd594745487747fad58bb09e46d56b85fa6d"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/receiver-opsgenie.yaml",
+          "sha256": "3a4dd633f31ef08afd1efa3f9310f5dabe96b5ccf5590695d9a1699535d87478"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/receiver-pagerduty.yaml",
+          "sha256": "9af4c318310f35980523a23c1027a9a2c70624a843e40e75a1f5427bb0270090"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/receiver-slack.yaml",
+          "sha256": "0abb8b11b7fd1673284a456979985875ae702f7c579dd9d1ddab60234be84cac"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/receiver-webhook.yaml",
+          "sha256": "49712d6fba85bcebda9f3c902bb8f7e4159615454cf8e889cfdea39751668bc0"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/rewrite-guides.py",
+          "sha256": "38a996832ce37e66b3fdfe1fe80a6325c63eff5ea58825f2b68f075c4f0b9ff2"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/rewrite-quizzes.py",
+          "sha256": "b6deab4ff4a7d4798ac9f417460f609f42666a1a8a20d4bbf361dec4238306cd"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/routing-schedule.yaml",
+          "sha256": "301d93b393042ce6edef2ea7f24575845a6568992b35ad8996ae1b215edefc17"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/routing-tree.yaml",
+          "sha256": "e5d0991f437b7907a6f2db73eaea6f89d21178df1bae9772eb1a7cf519aa655f"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/rule-tests.yaml",
+          "sha256": "f37d10012b48c275220d14ad699432484e56c786ba8fac34442447e4789777b5"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/slack.tmpl",
+          "sha256": "82c373985babf0eefe328716a758821db0ff40bc8046e98c3ed96134df7698e3"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/team-a-alertmanagerconfig.yaml",
+          "sha256": "9d9ae752c9b3a5fe2941b7d4b2f3ea2d414c01ff9c333e2897c34c9d39003b3c"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/synthetic-notification.json",
+          "sha256": "65d24a21fa3d00689c8d0d6040c3ed8110d8cd120e8d677dcdabae650b804752"
+        }
+      ],
+      "limits": [
+        "No AWS/EKS/Kubernetes provisioning, real CNI enforcement, provider notification, full site build or production performance/HA guarantee.",
+        "Promtool uses synthetic series;Alertmanager/amtool use local fixtures and loopback endpoints;Go timeinterval uses unmodified released source with synthetic dates and no host clock changes.",
+        "Schema checks do not execute Kubernetes admission/CEL or Operator reconciliation.",
+        "Helmprofiles are alternative new-install examples;real deployment needs owner-reviewedRBAC,Secrets,TLS/network/storage/labels.",
+        "Noforeignproseorassetfileedits;retiredviewers/backfillhandedtoparent."
+      ]
+    },
+    "markdownVue": {
+      "nodeHeapMiB": 512,
+      "scope": "Explicit documents only; no site build",
+      "results": [
+        {
+          "path": "en/observability/alerting/01-alertmanager.md",
+          "sha256": "723bcf32c7e57efaf920dd18da8ac874182369e207145da059d996c0c84212f4",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "prometheus-alertmanager"
+            },
+            {
+              "tag": "h2",
+              "id": "table-of-contents"
+            },
+            {
+              "tag": "h2",
+              "id": "alertmanager-overview"
+            },
+            {
+              "tag": "h3",
+              "id": "key-features"
+            },
+            {
+              "tag": "h3",
+              "id": "prometheus-alert-flow"
+            },
+            {
+              "tag": "h2",
+              "id": "architecture"
+            },
+            {
+              "tag": "h3",
+              "id": "alertmanager-internal-structure"
+            },
+            {
+              "tag": "h3",
+              "id": "component-description"
+            },
+            {
+              "tag": "h2",
+              "id": "installation-and-configuration"
+            },
+            {
+              "tag": "h3",
+              "id": "installation-via-helm-kube-prometheus-stack"
+            },
+            {
+              "tag": "h3",
+              "id": "alertmanager-dedicated-helm-chart"
+            },
+            {
+              "tag": "h3",
+              "id": "values-yaml-example"
+            },
+            {
+              "tag": "h3",
+              "id": "direct-configuration-via-configmap"
+            },
+            {
+              "tag": "h2",
+              "id": "defining-alert-rules"
+            },
+            {
+              "tag": "h3",
+              "id": "prometheusrule-crd"
+            },
+            {
+              "tag": "h3",
+              "id": "alert-rule-components"
+            },
+            {
+              "tag": "h3",
+              "id": "alert-states"
+            },
+            {
+              "tag": "h2",
+              "id": "routing-configuration"
+            },
+            {
+              "tag": "h3",
+              "id": "routing-tree-structure"
+            },
+            {
+              "tag": "h3",
+              "id": "routing-flow"
+            },
+            {
+              "tag": "h3",
+              "id": "matchers"
+            },
+            {
+              "tag": "h3",
+              "id": "advanced-routing-example"
+            },
+            {
+              "tag": "h2",
+              "id": "receiver-configuration"
+            },
+            {
+              "tag": "h3",
+              "id": "slack-receiver"
+            },
+            {
+              "tag": "h3",
+              "id": "pagerduty-receiver"
+            },
+            {
+              "tag": "h3",
+              "id": "email-receiver"
+            },
+            {
+              "tag": "h3",
+              "id": "opsgenie-receiver"
+            },
+            {
+              "tag": "h3",
+              "id": "webhook-receiver"
+            },
+            {
+              "tag": "h3",
+              "id": "multiple-receiver-configuration"
+            },
+            {
+              "tag": "h2",
+              "id": "inhibition-rules"
+            },
+            {
+              "tag": "h3",
+              "id": "inhibition-concept"
+            },
+            {
+              "tag": "h3",
+              "id": "inhibition-rule-configuration"
+            },
+            {
+              "tag": "h3",
+              "id": "inhibition-priority"
+            },
+            {
+              "tag": "h2",
+              "id": "silencing"
+            },
+            {
+              "tag": "h3",
+              "id": "creating-silences"
+            },
+            {
+              "tag": "h4",
+              "id": "using-amtool-cli"
+            },
+            {
+              "tag": "h4",
+              "id": "creating-silence-via-api"
+            },
+            {
+              "tag": "h3",
+              "id": "silence-management-best-practices"
+            },
+            {
+              "tag": "h2",
+              "id": "template-customization"
+            },
+            {
+              "tag": "h3",
+              "id": "go-template-basics"
+            },
+            {
+              "tag": "h3",
+              "id": "slack-template-example"
+            },
+            {
+              "tag": "h3",
+              "id": "template-functions"
+            },
+            {
+              "tag": "h3",
+              "id": "managing-templates-via-configmap"
+            },
+            {
+              "tag": "h2",
+              "id": "high-availability-configuration"
+            },
+            {
+              "tag": "h3",
+              "id": "clustering-architecture"
+            },
+            {
+              "tag": "h3",
+              "id": "statefulset-configuration"
+            },
+            {
+              "tag": "h3",
+              "id": "prometheus-integration-configuration"
+            },
+            {
+              "tag": "h2",
+              "id": "alertmanagerconfig-crd"
+            },
+            {
+              "tag": "h3",
+              "id": "namespace-scoped-configuration"
+            },
+            {
+              "tag": "h3",
+              "id": "secret-reference"
+            },
+            {
+              "tag": "h3",
+              "id": "alertmanager-alertmanagerconfig-selection"
+            },
+            {
+              "tag": "h2",
+              "id": "production-alert-rule-examples"
+            },
+            {
+              "tag": "h3",
+              "id": "node-alerts"
+            },
+            {
+              "tag": "h3",
+              "id": "pod-and-container-alerts"
+            },
+            {
+              "tag": "h3",
+              "id": "api-server-alerts"
+            },
+            {
+              "tag": "h3",
+              "id": "etcd-alerts"
+            },
+            {
+              "tag": "h2",
+              "id": "troubleshooting"
+            },
+            {
+              "tag": "h3",
+              "id": "common-problems-and-solutions"
+            },
+            {
+              "tag": "h4",
+              "id": "alerts-not-being-sent"
+            },
+            {
+              "tag": "h4",
+              "id": "duplicate-alerts"
+            },
+            {
+              "tag": "h4",
+              "id": "alerts-sent-to-wrong-receiver"
+            },
+            {
+              "tag": "h3",
+              "id": "amtool-command-reference"
+            },
+            {
+              "tag": "h3",
+              "id": "metric-verification"
+            },
+            {
+              "tag": "h3",
+              "id": "debugging-tips"
+            },
+            {
+              "tag": "h2",
+              "id": "references"
+            },
+            {
+              "tag": "h2",
+              "id": "quiz"
+            }
+          ],
+          "renderedIds": [
+            "prometheus-alertmanager",
+            "table-of-contents",
+            "alertmanager-overview",
+            "key-features",
+            "prometheus-alert-flow",
+            "mermaid-116",
+            "architecture",
+            "alertmanager-internal-structure",
+            "mermaid-126",
+            "component-description",
+            "installation-and-configuration",
+            "installation-via-helm-kube-prometheus-stack",
+            "alertmanager-dedicated-helm-chart",
+            "values-yaml-example",
+            "direct-configuration-via-configmap",
+            "defining-alert-rules",
+            "prometheusrule-crd",
+            "alert-rule-components",
+            "alert-states",
+            "routing-configuration",
+            "routing-tree-structure",
+            "routing-flow",
+            "matchers",
+            "advanced-routing-example",
+            "receiver-configuration",
+            "slack-receiver",
+            "pagerduty-receiver",
+            "email-receiver",
+            "opsgenie-receiver",
+            "webhook-receiver",
+            "multiple-receiver-configuration",
+            "inhibition-rules",
+            "inhibition-concept",
+            "mermaid-362",
+            "inhibition-rule-configuration",
+            "inhibition-priority",
+            "silencing",
+            "creating-silences",
+            "using-amtool-cli",
+            "creating-silence-via-api",
+            "silence-management-best-practices",
+            "mermaid-405",
+            "template-customization",
+            "go-template-basics",
+            "slack-template-example",
+            "template-functions",
+            "managing-templates-via-configmap",
+            "high-availability-configuration",
+            "clustering-architecture",
+            "statefulset-configuration",
+            "prometheus-integration-configuration",
+            "alertmanagerconfig-crd",
+            "namespace-scoped-configuration",
+            "secret-reference",
+            "alertmanager-alertmanagerconfig-selection",
+            "production-alert-rule-examples",
+            "node-alerts",
+            "pod-and-container-alerts",
+            "api-server-alerts",
+            "etcd-alerts",
+            "troubleshooting",
+            "common-problems-and-solutions",
+            "alerts-not-being-sent",
+            "duplicate-alerts",
+            "alerts-sent-to-wrong-receiver",
+            "amtool-command-reference",
+            "metric-verification",
+            "debugging-tips",
+            "references",
+            "quiz"
+          ]
+        },
+        {
+          "path": "en/quizzes/observability/alerting/01-alertmanager-quiz.md",
+          "sha256": "3d51cbd75b5d38be8ab676d0e855c105b49de9c968a8af04be60119508f77add",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "prometheus-alertmanager-quiz"
+            },
+            {
+              "tag": "h2",
+              "id": "additional-learning-resources"
+            }
+          ],
+          "renderedIds": [
+            "prometheus-alertmanager-quiz",
+            "additional-learning-resources"
+          ]
+        },
+        {
+          "path": "ko/observability/alerting/01-alertmanager.md",
+          "sha256": "01a339b47568607a2484716ab578d19c9c1f9768cf14c7cc9cfb535692c3557a",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "prometheus-alertmanager"
+            },
+            {
+              "tag": "h2",
+              "id": "목차"
+            },
+            {
+              "tag": "h2",
+              "id": "alertmanager-개요"
+            },
+            {
+              "tag": "h3",
+              "id": "주요-기능"
+            },
+            {
+              "tag": "h3",
+              "id": "prometheus-알림-흐름"
+            },
+            {
+              "tag": "h2",
+              "id": "아키텍처"
+            },
+            {
+              "tag": "h3",
+              "id": "alertmanager-내부-구조"
+            },
+            {
+              "tag": "h3",
+              "id": "컴포넌트-설명"
+            },
+            {
+              "tag": "h2",
+              "id": "설치-및-구성"
+            },
+            {
+              "tag": "h3",
+              "id": "helm을-통한-설치-kube-prometheus-stack"
+            },
+            {
+              "tag": "h3",
+              "id": "alertmanager-전용-helm-chart"
+            },
+            {
+              "tag": "h3",
+              "id": "values-yaml-예시"
+            },
+            {
+              "tag": "h3",
+              "id": "configmap으로-직접-구성"
+            },
+            {
+              "tag": "h2",
+              "id": "알림-규칙-정의"
+            },
+            {
+              "tag": "h3",
+              "id": "prometheusrule-crd"
+            },
+            {
+              "tag": "h3",
+              "id": "알림-규칙-구성-요소"
+            },
+            {
+              "tag": "h3",
+              "id": "알림-상태"
+            },
+            {
+              "tag": "h2",
+              "id": "라우팅-구성"
+            },
+            {
+              "tag": "h3",
+              "id": "라우팅-트리-구조"
+            },
+            {
+              "tag": "h3",
+              "id": "라우팅-흐름"
+            },
+            {
+              "tag": "h3",
+              "id": "매처-matchers"
+            },
+            {
+              "tag": "h3",
+              "id": "고급-라우팅-예시"
+            },
+            {
+              "tag": "h2",
+              "id": "수신자-구성"
+            },
+            {
+              "tag": "h3",
+              "id": "slack-수신자"
+            },
+            {
+              "tag": "h3",
+              "id": "pagerduty-수신자"
+            },
+            {
+              "tag": "h3",
+              "id": "email-수신자"
+            },
+            {
+              "tag": "h3",
+              "id": "opsgenie-수신자"
+            },
+            {
+              "tag": "h3",
+              "id": "webhook-수신자"
+            },
+            {
+              "tag": "h3",
+              "id": "다중-수신자-구성"
+            },
+            {
+              "tag": "h2",
+              "id": "inhibition-규칙"
+            },
+            {
+              "tag": "h3",
+              "id": "inhibition-개념"
+            },
+            {
+              "tag": "h3",
+              "id": "inhibition-규칙-구성"
+            },
+            {
+              "tag": "h3",
+              "id": "inhibition-우선순위"
+            },
+            {
+              "tag": "h2",
+              "id": "silencing"
+            },
+            {
+              "tag": "h3",
+              "id": "silence-생성"
+            },
+            {
+              "tag": "h4",
+              "id": "amtool-cli-사용"
+            },
+            {
+              "tag": "h4",
+              "id": "api를-통한-silence-생성"
+            },
+            {
+              "tag": "h3",
+              "id": "silence-관리-모범-사례"
+            },
+            {
+              "tag": "h2",
+              "id": "템플릿-커스터마이징"
+            },
+            {
+              "tag": "h3",
+              "id": "go-템플릿-기본"
+            },
+            {
+              "tag": "h3",
+              "id": "slack-템플릿-예시"
+            },
+            {
+              "tag": "h3",
+              "id": "템플릿-함수"
+            },
+            {
+              "tag": "h3",
+              "id": "configmap으로-템플릿-관리"
+            },
+            {
+              "tag": "h2",
+              "id": "고가용성-구성"
+            },
+            {
+              "tag": "h3",
+              "id": "클러스터링-아키텍처"
+            },
+            {
+              "tag": "h3",
+              "id": "statefulset-구성"
+            },
+            {
+              "tag": "h3",
+              "id": "prometheus-연동-설정"
+            },
+            {
+              "tag": "h2",
+              "id": "alertmanagerconfig-crd"
+            },
+            {
+              "tag": "h3",
+              "id": "네임스페이스별-설정"
+            },
+            {
+              "tag": "h3",
+              "id": "secret-참조"
+            },
+            {
+              "tag": "h3",
+              "id": "alertmanager에서-alertmanagerconfig-선택"
+            },
+            {
+              "tag": "h2",
+              "id": "실전-알림-규칙-예시"
+            },
+            {
+              "tag": "h3",
+              "id": "node-알림"
+            },
+            {
+              "tag": "h3",
+              "id": "pod-및-container-알림"
+            },
+            {
+              "tag": "h3",
+              "id": "api-server-알림"
+            },
+            {
+              "tag": "h3",
+              "id": "etcd-알림"
+            },
+            {
+              "tag": "h2",
+              "id": "트러블슈팅"
+            },
+            {
+              "tag": "h3",
+              "id": "일반적인-문제와-해결책"
+            },
+            {
+              "tag": "h4",
+              "id": "알림이-전송되지-않는-경우"
+            },
+            {
+              "tag": "h4",
+              "id": "중복-알림이-발생하는-경우"
+            },
+            {
+              "tag": "h4",
+              "id": "알림이-잘못된-수신자에게-전송되는-경우"
+            },
+            {
+              "tag": "h3",
+              "id": "amtool-명령어-모음"
+            },
+            {
+              "tag": "h3",
+              "id": "메트릭-확인"
+            },
+            {
+              "tag": "h3",
+              "id": "디버깅-팁"
+            },
+            {
+              "tag": "h2",
+              "id": "참고-자료"
+            },
+            {
+              "tag": "h2",
+              "id": "퀴즈"
+            }
+          ],
+          "renderedIds": [
+            "prometheus-alertmanager",
+            "목차",
+            "alertmanager-개요",
+            "주요-기능",
+            "prometheus-알림-흐름",
+            "mermaid-116",
+            "아키텍처",
+            "alertmanager-내부-구조",
+            "mermaid-126",
+            "컴포넌트-설명",
+            "설치-및-구성",
+            "helm을-통한-설치-kube-prometheus-stack",
+            "alertmanager-전용-helm-chart",
+            "values-yaml-예시",
+            "configmap으로-직접-구성",
+            "알림-규칙-정의",
+            "prometheusrule-crd",
+            "알림-규칙-구성-요소",
+            "알림-상태",
+            "라우팅-구성",
+            "라우팅-트리-구조",
+            "라우팅-흐름",
+            "매처-matchers",
+            "고급-라우팅-예시",
+            "수신자-구성",
+            "slack-수신자",
+            "pagerduty-수신자",
+            "email-수신자",
+            "opsgenie-수신자",
+            "webhook-수신자",
+            "다중-수신자-구성",
+            "inhibition-규칙",
+            "inhibition-개념",
+            "mermaid-362",
+            "inhibition-규칙-구성",
+            "inhibition-우선순위",
+            "silencing",
+            "silence-생성",
+            "amtool-cli-사용",
+            "api를-통한-silence-생성",
+            "silence-관리-모범-사례",
+            "mermaid-405",
+            "템플릿-커스터마이징",
+            "go-템플릿-기본",
+            "slack-템플릿-예시",
+            "템플릿-함수",
+            "configmap으로-템플릿-관리",
+            "고가용성-구성",
+            "클러스터링-아키텍처",
+            "statefulset-구성",
+            "prometheus-연동-설정",
+            "alertmanagerconfig-crd",
+            "네임스페이스별-설정",
+            "secret-참조",
+            "alertmanager에서-alertmanagerconfig-선택",
+            "실전-알림-규칙-예시",
+            "node-알림",
+            "pod-및-container-알림",
+            "api-server-알림",
+            "etcd-알림",
+            "트러블슈팅",
+            "일반적인-문제와-해결책",
+            "알림이-전송되지-않는-경우",
+            "중복-알림이-발생하는-경우",
+            "알림이-잘못된-수신자에게-전송되는-경우",
+            "amtool-명령어-모음",
+            "메트릭-확인",
+            "디버깅-팁",
+            "참고-자료",
+            "퀴즈"
+          ]
+        },
+        {
+          "path": "ko/quizzes/observability/alerting/01-alertmanager-quiz.md",
+          "sha256": "8fe7c62031b4e24830d4cc6979ac0ccbf192c07c6c4c6a328eb2b57f2a252efb",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "prometheus-alertmanager-퀴즈"
+            },
+            {
+              "tag": "h2",
+              "id": "추가-학습-자료"
+            }
+          ],
+          "renderedIds": [
+            "prometheus-alertmanager-퀴즈",
+            "추가-학습-자료"
+          ]
+        }
+      ]
+    },
+    "fixturePreservation": {
+      "passed": true,
+      "scope": "Every fixture hash recorded before review fixes resolves to an unchanged current file or preserved/reconstructed exact prior byte sequence; no historical execution result was regenerated.",
+      "files": [
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/alertmanager-config.yaml",
+          "sha256": "e4d7961acdd641b73d35f7c46b16ac0bd56bbc215ca9a3ac14174cbde3dea190",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/review-fixes/before/alertmanager-config.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/alertmanager-templates.yaml",
+          "sha256": "b6a4d7f4053d8ba9e5078934f1925e9e4854f25e9984d888d8a924564db14613",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/alertmanager-templates.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/alertmanager-values.yaml",
+          "sha256": "e9e586cb2ebd8ef9984c94ba518c62b0f78cf17135db50c952549c9963953785",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/review-fixes/before/alertmanager-values.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/alertmanager.yaml",
+          "sha256": "afe0060c819aefd56df091ce983ac4d7e2d13ca079310218ff28ac0cd0339466",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/review-fixes/before/alertmanager.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/alertmanagerconfig-selection.yaml",
+          "sha256": "2292cbd0d39bf46cbf0b6d1c3d7c46dd988bf84a769494504e0d8ea04a6aad38",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/alertmanagerconfig-selection.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/all-rules.yaml",
+          "sha256": "6e8eed4aa6b23d0fa223d44549b86b4ea55aecfea26ca6f6c8f6bddd337b2296",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/review-fixes/before/all-rules.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/apiserver-alerts.yaml",
+          "sha256": "45c2c855d32a6e0439a3f8c8b3f4a1975b7e10658462f155ef3bfb825df58b55",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/apiserver-alerts.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/etcd-alerts.yaml",
+          "sha256": "f4f6c6266f7417beb2088e4645af6ebfb264d5f7be7eee68b4989e80b1d95fc1",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/etcd-alerts.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/inhibition.yaml",
+          "sha256": "e339b40c3f27dcdff02d5b678f675cda5acc688462b8b6c1f8f50826a824739d",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/inhibition.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/kube-prometheus-stack-values.yaml",
+          "sha256": "b621260fe48b47cf5ef838ed22d9da56fcab7c1769c2acf1106ecb3b0cd08530",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/review-fixes/before/kube-prometheus-stack-values.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/kubernetes-alerts.yaml",
+          "sha256": "d956409f1a1f6decc39e596063bf3e005cb2cd47c49db74e7b9338de1b5ecb3f",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/kubernetes-alerts.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/local-null.yaml",
+          "sha256": "5fb2ed4d74bacaf48cbb11fd66ed3b376853cfbf1245b08620a243b33073a4d4",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/local-null.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/manual-ha.yaml",
+          "sha256": "372c017638f17c19c61eebe59b734dde2529765db3f0f6f5d072d612b03fa0fe",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/manual-ha.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/matcher-fragment-en.yaml",
+          "sha256": "6c7e4d602b22505a8e95fd13f82da0df94c7f219458fa9d0f29d360f7e1a4459",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/matcher-fragment-en.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/matcher-fragment-ko.yaml",
+          "sha256": "6c7e4d602b22505a8e95fd13f82da0df94c7f219458fa9d0f29d360f7e1a4459",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/matcher-fragment-ko.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/node-alerts.yaml",
+          "sha256": "66a27541a07af59be5e0df6831afcf39b0bf056924b08c950474d378a438be95",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/review-fixes/before/node-alerts.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/pod-alerts.yaml",
+          "sha256": "68153eaa28fe03deaf5d1d00a269676c8a1d194232ef9c1f3ef8933d8e2dd2cc",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/review-fixes/before/pod-alerts.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/prepare-configs.py",
+          "sha256": "99d9fffd829900615dffd7d4a09523965b007e36046c85d49c34adb103f5bbc9",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/review-fixes/before/prepare-configs.py"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/prepare-rules.py",
+          "sha256": "d178b1a616fe161d08de568158280a5d07deb02de463c9657c09ef1376f11f76",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/review-fixes/before/prepare-rules.py"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/prepare-workloads.py",
+          "sha256": "cc72c6af41b41a341063028300b4c1228cd04e617b84ec1d5b2b72652b3f71a8",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/review-fixes/before/prepare-workloads.py"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/prometheus-alerting.yaml",
+          "sha256": "4420245b62827a42c46c9e4c073fbd4b1864085bb37903b5a0c45e8e40035c3a",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/prometheus-alerting.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/receiver-email.yaml",
+          "sha256": "a95db713741d5b06b0ece3fb8f5013dff1d69de84fc9d511092e0c64479d7818",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/receiver-email.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/receiver-multiple.yaml",
+          "sha256": "d29d4bc3b29d9ef8e089ccb0e2b0dd594745487747fad58bb09e46d56b85fa6d",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/review-fixes/before/receiver-multiple.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/receiver-opsgenie.yaml",
+          "sha256": "3a4dd633f31ef08afd1efa3f9310f5dabe96b5ccf5590695d9a1699535d87478",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/receiver-opsgenie.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/receiver-pagerduty.yaml",
+          "sha256": "9af4c318310f35980523a23c1027a9a2c70624a843e40e75a1f5427bb0270090",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/receiver-pagerduty.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/receiver-slack.yaml",
+          "sha256": "0abb8b11b7fd1673284a456979985875ae702f7c579dd9d1ddab60234be84cac",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/review-fixes/before/receiver-slack.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/receiver-webhook.yaml",
+          "sha256": "49712d6fba85bcebda9f3c902bb8f7e4159615454cf8e889cfdea39751668bc0",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/receiver-webhook.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/rewrite-guides.py",
+          "sha256": "38a996832ce37e66b3fdfe1fe80a6325c63eff5ea58825f2b68f075c4f0b9ff2",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/rewrite-guides.py"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/rewrite-quizzes.py",
+          "sha256": "b6deab4ff4a7d4798ac9f417460f609f42666a1a8a20d4bbf361dec4238306cd",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/rewrite-quizzes.py"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/routing-schedule.yaml",
+          "sha256": "301d93b393042ce6edef2ea7f24575845a6568992b35ad8996ae1b215edefc17",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/routing-schedule.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/routing-tree.yaml",
+          "sha256": "e5d0991f437b7907a6f2db73eaea6f89d21178df1bae9772eb1a7cf519aa655f",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/routing-tree.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/rule-tests.yaml",
+          "sha256": "f37d10012b48c275220d14ad699432484e56c786ba8fac34442447e4789777b5",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/review-fixes/before/rule-tests.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/slack.tmpl",
+          "sha256": "82c373985babf0eefe328716a758821db0ff40bc8046e98c3ed96134df7698e3",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/slack.tmpl"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/team-a-alertmanagerconfig.yaml",
+          "sha256": "9d9ae752c9b3a5fe2941b7d4b2f3ea2d414c01ff9c333e2897c34c9d39003b3c",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/review-fixes/before/team-a-alertmanagerconfig.yaml"
+        },
+        {
+          "path": ".vitepress/cache/observability-alertmanager-audit/synthetic-notification.json",
+          "sha256": "65d24a21fa3d00689c8d0d6040c3ed8110d8cd120e8d677dcdabae650b804752",
+          "preservedAt": ".vitepress/cache/observability-alertmanager-audit/synthetic-notification.json"
+        }
+      ]
+    },
+    "note": "Original native execution records and source hashes are retained verbatim. Current fixes have separate fresh evidence below. Reconstructed historical fixtures were accepted only after their complete bytes matched the recorded original SHA256."
+  },
+  "reviewFixes": {
+    "status": "implemented-and-locally-validated-awaiting-independent-review",
+    "reviewedHead": "09731bcb844236258c9864809dc8871e666516bd",
+    "updatedAt": "2026-09-13T14:50:11.362840+00:00",
+    "findingsAddressed": [
+      {
+        "id": "ALERTMANAGER-R1-001",
+        "status": "fixed-pending-independent-review",
+        "change": "ALERTMANAGER-R1-001: Apply max_over_time(waiting_reason[5m]) before UID/node enrichment, then for:10m. Repeated retry gaps are bridged; one-off observations do not fire; document up to five minutes plus scrape/evaluation clearing delay."
+      },
+      {
+        "id": "ALERTMANAGER-R1-002",
+        "status": "fixed-pending-independent-review",
+        "change": "ALERTMANAGER-R1-002: Normal and critical Slack destinations use distinct channel-bound incoming-webhook URLs/files and Secret keys in stack, standalone, manual and AlertmanagerConfig examples; creation and mount prerequisites match. Remove unsupported channel overrides."
+      },
+      {
+        "id": "ALERTMANAGER-R1-003",
+        "status": "fixed-pending-independent-review",
+        "change": "ALERTMANAGER-R1-003: NodeExporterUnavailable summary and description identify scrape unavailability; they do not establish physical node failure."
+      }
+    ],
+    "currentSourceFiles": [
+      {
+        "path": "en/observability/alerting/01-alertmanager.md",
+        "sha256": "4119850f90aa965473cc0dd8632b050c85e27e8dd790515acf6daf0664ad3a92",
+        "fullyRead": true,
+        "fixed": true,
+        "lines": 1675,
+        "fencedBlockCounts": {
+          "mermaid": 4,
+          "bash": 9,
+          "yaml": 23,
+          "python": 1,
+          "text": 1,
+          "json": 1
+        },
+        "fencedBlocks": 39
+      },
+      {
+        "path": "ko/observability/alerting/01-alertmanager.md",
+        "sha256": "3e084fca3ea5f80d8c65fa2a3e86811349651b3f91b8124d45f95587f606dbcf",
+        "fullyRead": true,
+        "fixed": true,
+        "lines": 1675,
+        "fencedBlockCounts": {
+          "mermaid": 4,
+          "bash": 9,
+          "yaml": 23,
+          "python": 1,
+          "text": 1,
+          "json": 1
+        },
+        "fencedBlocks": 39
+      },
+      {
+        "path": "en/quizzes/observability/alerting/01-alertmanager-quiz.md",
+        "sha256": "74875d8b93457adbd069c8d5cd4798cce88ed756225d624f00a6297329de5b62",
+        "fullyRead": true,
+        "fixed": true,
+        "lines": 207,
+        "fencedBlockCounts": {
+          "text": 1
+        },
+        "fencedBlocks": 1
+      },
+      {
+        "path": "ko/quizzes/observability/alerting/01-alertmanager-quiz.md",
+        "sha256": "e138beb518756306c65f62cbc8b38248e2b79b53889b1cdf8161b79fd979ce19",
+        "fullyRead": true,
+        "fixed": true,
+        "lines": 207,
+        "fencedBlockCounts": {
+          "text": 1
+        },
+        "fencedBlocks": 1
+      }
+    ],
+    "freshProof": {
+      "config-native-validation.json": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "amtool-config",
+            "passed": true,
+            "file": "alertmanager.yaml",
+            "error": ""
+          },
+          {
+            "name": "amtool-config",
+            "passed": true,
+            "file": "routing-tree.yaml",
+            "error": ""
+          },
+          {
+            "name": "amtool-config",
+            "passed": true,
+            "file": "routing-schedule.yaml",
+            "error": ""
+          },
+          {
+            "name": "amtool-config",
+            "passed": true,
+            "file": "inhibition.yaml",
+            "error": ""
+          },
+          {
+            "name": "amtool-config",
+            "passed": true,
+            "file": "local-null.yaml",
+            "error": ""
+          },
+          {
+            "name": "amtool-receiver",
+            "passed": true,
+            "file": "receiver-email.yaml",
+            "error": ""
+          },
+          {
+            "name": "amtool-receiver",
+            "passed": true,
+            "file": "receiver-multiple.yaml",
+            "error": ""
+          },
+          {
+            "name": "amtool-receiver",
+            "passed": true,
+            "file": "receiver-opsgenie.yaml",
+            "error": ""
+          },
+          {
+            "name": "amtool-receiver",
+            "passed": true,
+            "file": "receiver-pagerduty.yaml",
+            "error": ""
+          },
+          {
+            "name": "amtool-receiver",
+            "passed": true,
+            "file": "receiver-slack.yaml",
+            "error": ""
+          },
+          {
+            "name": "amtool-receiver",
+            "passed": true,
+            "file": "receiver-webhook.yaml",
+            "error": ""
+          },
+          {
+            "name": "actual-label-route",
+            "passed": true,
+            "labels": [
+              "severity=critical",
+              "service=foo",
+              "owner=team-a"
+            ],
+            "receiver": "critical-receiver",
+            "error": ""
+          },
+          {
+            "name": "actual-label-route",
+            "passed": true,
+            "labels": [
+              "severity=warning",
+              "service=foo",
+              "owner=team-a"
+            ],
+            "receiver": "team-a",
+            "error": ""
+          },
+          {
+            "name": "actual-label-route",
+            "passed": true,
+            "labels": [
+              "service=bar",
+              "owner=other"
+            ],
+            "receiver": "service-team",
+            "error": ""
+          },
+          {
+            "name": "actual-label-route",
+            "passed": true,
+            "labels": [
+              "service=baz"
+            ],
+            "receiver": "default-receiver",
+            "error": ""
+          },
+          {
+            "name": "schedule-route-label-matching-only",
+            "passed": true,
+            "labels": [
+              "severity=critical",
+              "team=infra"
+            ],
+            "receivers": "oncall,infra-team",
+            "error": ""
+          },
+          {
+            "name": "schedule-route-label-matching-only",
+            "passed": true,
+            "labels": [
+              "severity=critical",
+              "team=other"
+            ],
+            "receivers": "oncall,team-slack",
+            "error": ""
+          },
+          {
+            "name": "schedule-route-label-matching-only",
+            "passed": true,
+            "labels": [
+              "severity=warning",
+              "team=dev"
+            ],
+            "receivers": "dev-team",
+            "error": ""
+          },
+          {
+            "name": "template-color-no-whitespace",
+            "passed": true,
+            "status": "firing",
+            "severity": "critical",
+            "output": "#ff0000"
+          },
+          {
+            "name": "template-color-no-whitespace",
+            "passed": true,
+            "status": "firing",
+            "severity": "warning",
+            "output": "#ff9900"
+          },
+          {
+            "name": "template-color-no-whitespace",
+            "passed": true,
+            "status": "resolved",
+            "severity": "critical",
+            "output": "#36a64f"
+          },
+          {
+            "name": "actual-template-title",
+            "passed": true,
+            "error": ""
+          },
+          {
+            "name": "actual-template-rune-safe-quiz",
+            "passed": true,
+            "error": ""
+          },
+          {
+            "name": "old-template-rejected-wrong-root",
+            "passed": true
+          },
+          {
+            "name": "old-template-rejected-ternary",
+            "passed": true
+          },
+          {
+            "name": "Helm-render",
+            "passed": true,
+            "profile": "stack",
+            "error": ""
+          },
+          {
+            "name": "stack-replicas-storage-resources",
+            "passed": true
+          },
+          {
+            "name": "stack-secret-template-mounts",
+            "passed": true
+          },
+          {
+            "name": "rule-selection-labels",
+            "passed": true
+          },
+          {
+            "name": "Helm-render",
+            "passed": true,
+            "profile": "standalone",
+            "error": ""
+          },
+          {
+            "name": "standalone-replicas-storage-resources",
+            "passed": true
+          },
+          {
+            "name": "standalone-secret-template-mounts",
+            "passed": true
+          }
+        ],
+        "limits": [
+          "amtool config/routes/template execution and local Helm rendering only.",
+          "No SMTP/Slack/PagerDuty/Opsgenie/webhook notification or cloud/cluster calls.",
+          "Route CLI verifies labels, not time-window activation; calendar separately tested."
+        ]
+      },
+      "rules-native-validation.json": {
+        "passed": true,
+        "testGroups": 34,
+        "expressionCases": 33,
+        "alertStateCases": 3,
+        "version": "3.14.0",
+        "scope": "Actual promtool synthetic time-series tests; no scrape, Kubernetes or cloud execution."
+      },
+      "crashloop-state-validation.json": {
+        "passed": true,
+        "stateAssertions": 13,
+        "groups": 4,
+        "scope": "Actual promtool3.14.0 over recurring30s stale retry gaps, UID/node enrichment, one-off transient and recovery; no actual Pod/cluster execution."
+      },
+      "node-exporter-validation.json": {
+        "passed": true,
+        "cases": 1,
+        "scope": "Actual promtool emittedannotationofexactcurrentrule;syntheticscrapefailureonly."
+      },
+      "slack-binding-validation.json": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "distinct-channel-bound-webhook-files",
+            "passed": true,
+            "profile": "stack"
+          },
+          {
+            "name": "no-incoming-webhook-channel-override",
+            "passed": true,
+            "profile": "stack"
+          },
+          {
+            "name": "distinct-channel-bound-webhook-files",
+            "passed": true,
+            "profile": "standalone"
+          },
+          {
+            "name": "no-incoming-webhook-channel-override",
+            "passed": true,
+            "profile": "standalone"
+          },
+          {
+            "name": "distinct-channel-bound-webhook-files",
+            "passed": true,
+            "profile": "manual"
+          },
+          {
+            "name": "no-incoming-webhook-channel-override",
+            "passed": true,
+            "profile": "manual"
+          },
+          {
+            "name": "normal-receiver-fragment-binding",
+            "passed": true,
+            "file": "receiver-slack.yaml"
+          },
+          {
+            "name": "normal-receiver-fragment-binding",
+            "passed": true,
+            "file": "receiver-multiple.yaml"
+          },
+          {
+            "name": "operator-secret-whole-directory-selected",
+            "passed": true
+          },
+          {
+            "name": "standalone-whole-secret-readonly-mount",
+            "passed": true
+          },
+          {
+            "name": "manual-whole-secret-readonly-mount",
+            "passed": true
+          },
+          {
+            "name": "AlertmanagerConfig-distinct-Secret-key",
+            "passed": true,
+            "receiver": "team-a-slack"
+          },
+          {
+            "name": "AlertmanagerConfig-distinct-Secret-key",
+            "passed": true,
+            "receiver": "team-a-critical"
+          },
+          {
+            "name": "exactly-one-published-secret-command",
+            "passed": true,
+            "lang": "en",
+            "secret": "notification-credentials"
+          },
+          {
+            "name": "published-secret-command-namespace",
+            "passed": true,
+            "lang": "en",
+            "secret": "notification-credentials"
+          },
+          {
+            "name": "published-command-exact-keys-no-stray-argv",
+            "passed": true,
+            "lang": "en",
+            "secret": "notification-credentials"
+          },
+          {
+            "name": "distinct-input-files-for-normal-and-critical",
+            "passed": true,
+            "lang": "en",
+            "secret": "notification-credentials"
+          },
+          {
+            "name": "exactly-one-published-secret-command",
+            "passed": true,
+            "lang": "en",
+            "secret": "slack-webhook-secret"
+          },
+          {
+            "name": "published-secret-command-namespace",
+            "passed": true,
+            "lang": "en",
+            "secret": "slack-webhook-secret"
+          },
+          {
+            "name": "published-command-exact-keys-no-stray-argv",
+            "passed": true,
+            "lang": "en",
+            "secret": "slack-webhook-secret"
+          },
+          {
+            "name": "distinct-input-files-for-normal-and-critical",
+            "passed": true,
+            "lang": "en",
+            "secret": "slack-webhook-secret"
+          },
+          {
+            "name": "exactly-one-published-secret-command",
+            "passed": true,
+            "lang": "ko",
+            "secret": "notification-credentials"
+          },
+          {
+            "name": "published-secret-command-namespace",
+            "passed": true,
+            "lang": "ko",
+            "secret": "notification-credentials"
+          },
+          {
+            "name": "published-command-exact-keys-no-stray-argv",
+            "passed": true,
+            "lang": "ko",
+            "secret": "notification-credentials"
+          },
+          {
+            "name": "distinct-input-files-for-normal-and-critical",
+            "passed": true,
+            "lang": "ko",
+            "secret": "notification-credentials"
+          },
+          {
+            "name": "exactly-one-published-secret-command",
+            "passed": true,
+            "lang": "ko",
+            "secret": "slack-webhook-secret"
+          },
+          {
+            "name": "published-secret-command-namespace",
+            "passed": true,
+            "lang": "ko",
+            "secret": "slack-webhook-secret"
+          },
+          {
+            "name": "published-command-exact-keys-no-stray-argv",
+            "passed": true,
+            "lang": "ko",
+            "secret": "slack-webhook-secret"
+          },
+          {
+            "name": "distinct-input-files-for-normal-and-critical",
+            "passed": true,
+            "lang": "ko",
+            "secret": "slack-webhook-secret"
+          },
+          {
+            "name": "historical-defect-confirmed",
+            "passed": true
+          }
+        ],
+        "publishedCommandCaptures": [
+          {
+            "lang": "en",
+            "secret": "notification-credentials",
+            "argv": [
+              "-n",
+              "monitoring",
+              "create",
+              "secret",
+              "generic",
+              "notification-credentials",
+              "--from-file=slack-normal-webhook-url=/private/local-fixture/slack-normal-webhook-url",
+              "--from-file=slack-critical-webhook-url=/private/local-fixture/slack-critical-webhook-url",
+              "--from-file=pagerduty-routing-key=/private/local-fixture/pagerduty-routing-key"
+            ]
+          },
+          {
+            "lang": "en",
+            "secret": "slack-webhook-secret",
+            "argv": [
+              "-n",
+              "team-a",
+              "create",
+              "secret",
+              "generic",
+              "slack-webhook-secret",
+              "--from-file=normal-webhook-url=private-team-a/slack-normal-webhook-url",
+              "--from-file=critical-webhook-url=private-team-a/slack-critical-webhook-url"
+            ]
+          },
+          {
+            "lang": "ko",
+            "secret": "notification-credentials",
+            "argv": [
+              "-n",
+              "monitoring",
+              "create",
+              "secret",
+              "generic",
+              "notification-credentials",
+              "--from-file=slack-normal-webhook-url=/private/local-fixture/slack-normal-webhook-url",
+              "--from-file=slack-critical-webhook-url=/private/local-fixture/slack-critical-webhook-url",
+              "--from-file=pagerduty-routing-key=/private/local-fixture/pagerduty-routing-key"
+            ]
+          },
+          {
+            "lang": "ko",
+            "secret": "slack-webhook-secret",
+            "argv": [
+              "-n",
+              "team-a",
+              "create",
+              "secret",
+              "generic",
+              "slack-webhook-secret",
+              "--from-file=normal-webhook-url=private-team-a/slack-normal-webhook-url",
+              "--from-file=critical-webhook-url=private-team-a/slack-critical-webhook-url"
+            ]
+          }
+        ],
+        "scope": "Native shell argv capture, parsed YAML and Secret/mount/receiver bindings. amtool and Helm validation is separate. No actual Secret creation, Slack delivery or provider destination verification.",
+        "sourceFiles": [
+          {
+            "path": "en/observability/alerting/01-alertmanager.md",
+            "sha256": "4119850f90aa965473cc0dd8632b050c85e27e8dd790515acf6daf0664ad3a92"
+          },
+          {
+            "path": "ko/observability/alerting/01-alertmanager.md",
+            "sha256": "3e084fca3ea5f80d8c65fa2a3e86811349651b3f91b8124d45f95587f606dbcf"
+          }
+        ]
+      },
+      "current-contract-validation.json": {
+        "passed": true,
+        "checks": [
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "only-labeled-matcher-fragment",
+            "passed": true,
+            "lang": "en",
+            "index": 5
+          },
+          {
+            "name": "matcher-fragment-native-parse",
+            "passed": true,
+            "lang": "en",
+            "error": ""
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "ConfigMap"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "ConfigMap",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "StatefulSet"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "StatefulSet",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "Service"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "Service",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "PodDisruptionBudget"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "PodDisruptionBudget",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "Namespace"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "Namespace",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "AlertmanagerConfig"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "AlertmanagerConfig",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "en",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "en",
+            "index": 0,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "en",
+            "index": 1,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "en",
+            "index": 2,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "en",
+            "index": 3,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "en",
+            "index": 4,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "en",
+            "index": 5,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "en",
+            "index": 6,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "en",
+            "index": 7,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "en",
+            "index": 8,
+            "error": ""
+          },
+          {
+            "name": "payload-helper-no-send-valid-output",
+            "passed": true,
+            "lang": "en"
+          },
+          {
+            "name": "quiz-10-and-correct-key",
+            "passed": true,
+            "lang": "en"
+          },
+          {
+            "name": "old404-absent",
+            "passed": true,
+            "lang": "en"
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "only-labeled-matcher-fragment",
+            "passed": true,
+            "lang": "ko",
+            "index": 5
+          },
+          {
+            "name": "matcher-fragment-native-parse",
+            "passed": true,
+            "lang": "ko",
+            "error": ""
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "ConfigMap"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "ConfigMap",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "StatefulSet"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "StatefulSet",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "Service"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "Service",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PodDisruptionBudget"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PodDisruptionBudget",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "Namespace"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "Namespace",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "AlertmanagerConfig"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "AlertmanagerConfig",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "known-resource-fixture",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule"
+          },
+          {
+            "name": "strict-resource-schema",
+            "passed": true,
+            "lang": "ko",
+            "kind": "PrometheusRule",
+            "errors": []
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "ko",
+            "index": 0,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "ko",
+            "index": 1,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "ko",
+            "index": 2,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "ko",
+            "index": 3,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "ko",
+            "index": 4,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "ko",
+            "index": 5,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "ko",
+            "index": 6,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "ko",
+            "index": 7,
+            "error": ""
+          },
+          {
+            "name": "shell-syntax",
+            "passed": true,
+            "lang": "ko",
+            "index": 8,
+            "error": ""
+          },
+          {
+            "name": "payload-helper-no-send-valid-output",
+            "passed": true,
+            "lang": "ko"
+          },
+          {
+            "name": "quiz-10-and-correct-key",
+            "passed": true,
+            "lang": "ko"
+          },
+          {
+            "name": "old404-absent",
+            "passed": true,
+            "lang": "ko"
+          },
+          {
+            "name": "bilingual-code-parity",
+            "passed": true,
+            "language": "yaml"
+          },
+          {
+            "name": "bilingual-code-parity",
+            "passed": true,
+            "language": "bash"
+          },
+          {
+            "name": "bilingual-code-parity",
+            "passed": true,
+            "language": "python"
+          },
+          {
+            "name": "bilingual-code-parity",
+            "passed": true,
+            "language": "text"
+          },
+          {
+            "name": "team-label-selected",
+            "passed": true
+          },
+          {
+            "name": "team-namespace-selected",
+            "passed": true
+          },
+          {
+            "name": "namespace-matcher-strategy",
+            "passed": true
+          },
+          {
+            "name": "manual-HA-discovery-and-protocols",
+            "passed": true
+          },
+          {
+            "name": "manual-HA-resource-names",
+            "passed": true
+          },
+          {
+            "name": "original-heading-and-explicit-IDs-preserved",
+            "passed": true,
+            "path": "en/observability/alerting/01-alertmanager.md",
+            "missing": [],
+            "preserved": 66
+          },
+          {
+            "name": "local-fragments-resolve",
+            "passed": true,
+            "path": "en/observability/alerting/01-alertmanager.md"
+          },
+          {
+            "name": "no-duplicate-IDs",
+            "passed": true,
+            "path": "en/observability/alerting/01-alertmanager.md"
+          },
+          {
+            "name": "original-heading-and-explicit-IDs-preserved",
+            "passed": true,
+            "path": "en/quizzes/observability/alerting/01-alertmanager-quiz.md",
+            "missing": [],
+            "preserved": 2
+          },
+          {
+            "name": "local-fragments-resolve",
+            "passed": true,
+            "path": "en/quizzes/observability/alerting/01-alertmanager-quiz.md"
+          },
+          {
+            "name": "no-duplicate-IDs",
+            "passed": true,
+            "path": "en/quizzes/observability/alerting/01-alertmanager-quiz.md"
+          },
+          {
+            "name": "original-heading-and-explicit-IDs-preserved",
+            "passed": true,
+            "path": "ko/observability/alerting/01-alertmanager.md",
+            "missing": [],
+            "preserved": 66
+          },
+          {
+            "name": "local-fragments-resolve",
+            "passed": true,
+            "path": "ko/observability/alerting/01-alertmanager.md"
+          },
+          {
+            "name": "no-duplicate-IDs",
+            "passed": true,
+            "path": "ko/observability/alerting/01-alertmanager.md"
+          },
+          {
+            "name": "original-heading-and-explicit-IDs-preserved",
+            "passed": true,
+            "path": "ko/quizzes/observability/alerting/01-alertmanager-quiz.md",
+            "missing": [],
+            "preserved": 2
+          },
+          {
+            "name": "local-fragments-resolve",
+            "passed": true,
+            "path": "ko/quizzes/observability/alerting/01-alertmanager-quiz.md"
+          },
+          {
+            "name": "no-duplicate-IDs",
+            "passed": true,
+            "path": "ko/quizzes/observability/alerting/01-alertmanager-quiz.md"
+          },
+          {
+            "name": "unique-published-alert-names",
+            "passed": true
+          }
+        ],
+        "counts": {
+          "kubernetesObjects": 10,
+          "customResources": 12,
+          "shellBlocks": 18,
+          "pythonBlocks": 2,
+          "configBindings": 30
+        },
+        "limits": "Exact source/fixture and schema bindings; no Kubernetes admission/CEL/operator reconciliation or cloud calls. Python helper only generates a local JSON payload."
+      },
+      "docs-test-validation.json": {
+        "passed": true,
+        "exitCode": 0,
+        "command": "npm run docs:test",
+        "nodeHeapMiB": 512,
+        "tmpdir": "private EBS cache",
+        "completedAt": "2026-09-13T14:49:08.579021+00:00",
+        "log": ".vitepress/cache/observability-alertmanager-audit/review-fixes/docs-test.log"
+      }
+    },
+    "summary": {
+      "sourceContracts": 94,
+      "slackBindings": 30,
+      "publishedSecretCommandCaptures": 4,
+      "configHelmTemplateChecks": 32,
+      "priorPromQLExpressionCases": 33,
+      "priorAlertStateCases": 3,
+      "crashLoopStateAssertions": 13,
+      "nodeExporterAnnotationCases": 1,
+      "markdownCompiles": 4,
+      "preservedHeadingAndExplicitIds": 136,
+      "docsTests": 120,
+      "docsTestsFailed": 0,
+      "unchangedParentAssetFiles": 24,
+      "preservedHistoricalFixtureHashes": 35
+    },
+    "currentFixtureBindings": [
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/alertmanager-config.yaml",
+        "sha256": "e3bb6db4995005ce9d7b3bc9cd01d1f1d3296ba030b7fb4293356c19fcf33530"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/alertmanager-templates.yaml",
+        "sha256": "b6a4d7f4053d8ba9e5078934f1925e9e4854f25e9984d888d8a924564db14613"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/alertmanager-values.yaml",
+        "sha256": "551c4f14dfbff38df84401ac1999f23947e6862831cbcd0f0b5d959e456e51ba"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/alertmanager.yaml",
+        "sha256": "aefa1e1f67558ec7a84e93a56d28a1b3c108c89d966bf28ecc6b8ab3c88422ae"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/alertmanagerconfig-selection.yaml",
+        "sha256": "2292cbd0d39bf46cbf0b6d1c3d7c46dd988bf84a769494504e0d8ea04a6aad38"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/all-rules.yaml",
+        "sha256": "36b728c2f0e66bc8ad51cba9298f5710f9072013ff93d4bb4055581efac6258e"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/apiserver-alerts.yaml",
+        "sha256": "45c2c855d32a6e0439a3f8c8b3f4a1975b7e10658462f155ef3bfb825df58b55"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/etcd-alerts.yaml",
+        "sha256": "f4f6c6266f7417beb2088e4645af6ebfb264d5f7be7eee68b4989e80b1d95fc1"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/inhibition.yaml",
+        "sha256": "e339b40c3f27dcdff02d5b678f675cda5acc688462b8b6c1f8f50826a824739d"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/kube-prometheus-stack-values.yaml",
+        "sha256": "beec54615f31420cc3a503df1688e0b375c230b96e7bc7876d5dba21cf4968ef"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/kubernetes-alerts.yaml",
+        "sha256": "d956409f1a1f6decc39e596063bf3e005cb2cd47c49db74e7b9338de1b5ecb3f"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/local-null.yaml",
+        "sha256": "5fb2ed4d74bacaf48cbb11fd66ed3b376853cfbf1245b08620a243b33073a4d4"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/manual-ha.yaml",
+        "sha256": "372c017638f17c19c61eebe59b734dde2529765db3f0f6f5d072d612b03fa0fe"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/matcher-fragment-en.yaml",
+        "sha256": "6c7e4d602b22505a8e95fd13f82da0df94c7f219458fa9d0f29d360f7e1a4459"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/matcher-fragment-ko.yaml",
+        "sha256": "6c7e4d602b22505a8e95fd13f82da0df94c7f219458fa9d0f29d360f7e1a4459"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/node-alerts.yaml",
+        "sha256": "bc870da132507678825eb0407bd8d17d8d48093d9f64e213f84c4b7cd1a811bc"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/pod-alerts.yaml",
+        "sha256": "f7c1243e858122f1e1e046d1cc840c2ef99dc705e3051eaf0bc1352f7492493f"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/prepare-configs.py",
+        "sha256": "ff94ffc0875b3c5f31824c4458e8856b34fb30828e39d1417ae00f8b9bb7a274"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/prepare-rules.py",
+        "sha256": "6d6d8dc832a2bf89e1ccb4d31e818c5822bf4a663c60b7680a0c3418dbedf0ba"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/prepare-workloads.py",
+        "sha256": "6b641967dd1e57e2d97d29e8a3e475e68609b1f9d9c7d3a5c5748d58138e59c0"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/prometheus-alerting.yaml",
+        "sha256": "4420245b62827a42c46c9e4c073fbd4b1864085bb37903b5a0c45e8e40035c3a"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/receiver-email.yaml",
+        "sha256": "a95db713741d5b06b0ece3fb8f5013dff1d69de84fc9d511092e0c64479d7818"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/receiver-multiple.yaml",
+        "sha256": "87b6a2e0bb47958a9c910050767983a8ee531c457a37d4a356f09bbe9f736404"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/receiver-opsgenie.yaml",
+        "sha256": "3a4dd633f31ef08afd1efa3f9310f5dabe96b5ccf5590695d9a1699535d87478"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/receiver-pagerduty.yaml",
+        "sha256": "9af4c318310f35980523a23c1027a9a2c70624a843e40e75a1f5427bb0270090"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/receiver-slack.yaml",
+        "sha256": "7c68c0d9b2b0af40c6fa274ec50074a2a700a07d0a819a9b56ef59b7e2693b08"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/receiver-webhook.yaml",
+        "sha256": "49712d6fba85bcebda9f3c902bb8f7e4159615454cf8e889cfdea39751668bc0"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/rewrite-guides.py",
+        "sha256": "38a996832ce37e66b3fdfe1fe80a6325c63eff5ea58825f2b68f075c4f0b9ff2"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/rewrite-quizzes.py",
+        "sha256": "b6deab4ff4a7d4798ac9f417460f609f42666a1a8a20d4bbf361dec4238306cd"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/routing-schedule.yaml",
+        "sha256": "301d93b393042ce6edef2ea7f24575845a6568992b35ad8996ae1b215edefc17"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/routing-tree.yaml",
+        "sha256": "e5d0991f437b7907a6f2db73eaea6f89d21178df1bae9772eb1a7cf519aa655f"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/rule-tests.yaml",
+        "sha256": "9e5937ca487c44cc5435d5723b80df17d12721c05001950f8c7af506fd18a8f9"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/slack.tmpl",
+        "sha256": "82c373985babf0eefe328716a758821db0ff40bc8046e98c3ed96134df7698e3"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/team-a-alertmanagerconfig.yaml",
+        "sha256": "978a220738e282a2ec288437216d3f0f8bcad415dd97ee3b8592ebcb75c2391a"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/synthetic-notification.json",
+        "sha256": "65d24a21fa3d00689c8d0d6040c3ed8110d8cd120e8d677dcdabae650b804752"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/apply-source-fixes.py",
+        "sha256": "5c1b2f6d6172cdc7a5dc92f21eb2ee3df3c31713adc6ecf37e3f98ea1ed18848"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/before-fixture-hashes.json",
+        "sha256": "a5df18a82c379953a86530d7bec4c3669d4e7aed4af32b92b0e2732d31b4804f"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/before-markdown.json",
+        "sha256": "16670da94cd6a56660787aa88f6e728365668976d14ad039b6ce484d4ef11d6b"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/check-crashloop-regression.py",
+        "sha256": "bd739dea1b3b8f49248840362f7f7d669da160fa6213fd10bb7fca29cae603bd"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/check-current-contracts.py",
+        "sha256": "905fb3aec35cda4d773a656840a82e9b29d465f78268a43c30e8cf5499669fe0"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/check-slack-bindings.py",
+        "sha256": "2a6facfae7c6c06ab0adb4d9a432969e6b8c1f7c7e50d364081619fd241ea79d"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/compile-current.mjs",
+        "sha256": "b571339fe4b182ee55c672fa0763ac4b527a5b85441f583fe5f7b56b2ec3328c"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/crashloop-current-rule.yaml",
+        "sha256": "5eb7b422687d78a063992c91da77c5899455a2b5dd04439bcedc7590b218cf20"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/crashloop-green.log",
+        "sha256": "8289a4919870ab5b28f5e90a86b4af3cdbd8c244516c02fca90d6e3f289a6711"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/crashloop-red.log",
+        "sha256": "d3825fee44461ce616712519df449e6e59735e5491b2ec2456c8342937c01533"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/crashloop-regression-tests.yaml",
+        "sha256": "7c50b53e6b44476d16c681ab54807420b35c24a2260a4672bd5b28c7e4036032"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/crashloop-state-validation.json",
+        "sha256": "83bf4f8985ec5f71cb2c0038ea12ea34fbb69af1cf2f5b89f30e7fb7867c349e"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/current-contract-validation.json",
+        "sha256": "1dba0d1ce9e38b3e04c23a753fe9a1d997a2c07beda83cd618159419104ee509"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/current-markdown.json",
+        "sha256": "f67de2835ee5148523f577e7ecd93e3bc15ae8e8971ce2279088d45938b008c0"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/docs-test-validation.json",
+        "sha256": "4a8c4bcedf0a48df7a8af877c66398d7bc300c315e96622b6badf25b0d71e720"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/docs-test.log",
+        "sha256": "10eb88f03e33496b8e60d4c8746929aef247af378720422d7f7f56c6b2e1241a"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/historical-fixture-preservation.json",
+        "sha256": "c776ea66edf0da6be5faa3385176928414d321d9011d959abe2c44977fa548be"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/node-exporter-rule.yaml",
+        "sha256": "d2bd4e19620ca6c38821992cb68ffb855c5edd7cb34c5802306f7e30673bcdbd"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/node-exporter-test.log",
+        "sha256": "8289a4919870ab5b28f5e90a86b4af3cdbd8c244516c02fca90d6e3f289a6711"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/node-exporter-tests.yaml",
+        "sha256": "53dac58190063347350bfbb06f40ea212fe95326f321d723dfcd99ae325f8786"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/node-exporter-validation.json",
+        "sha256": "8202a4a0f3e9b5d2b1bb824e99e21982eaf65fab2dd9346765ada65536876ada"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/persist-review-fixes.py",
+        "sha256": "c39a06fa64bb8b7c6053d376c8cdf6d1866863a957749acf7ea2dadfd92bc380"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/protected-assets.json",
+        "sha256": "36497be43db5e2f1c51b99a4677eb088505908f48f88287f9fd94f6320d1cdbc"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/slack-binding-validation.json",
+        "sha256": "ae57b196e47f969e342780406cc80199e286a55cea0b0a23b8640af3a345ff6b"
+      },
+      {
+        "path": ".vitepress/cache/observability-alertmanager-audit/review-fixes/source-changes.json",
+        "sha256": "ab68487ecf55798587ea7304923787529678d9c06ce4a1eb554fe6ae06da5fa4"
+      }
+    ],
+    "unchangedParentAssetBindings": [
+      {
+        "path": "assets/diagrams/archify/en-observability-alerting-01-alertmanager-0.sequence.json",
+        "sha256": "c8ce643947dc67b5d5050ac8b9bd94d8658321c486afba41671f0064233b3e0d"
+      },
+      {
+        "path": "assets/diagrams/archify/en-observability-alerting-01-alertmanager-1.architecture.json",
+        "sha256": "c6c03752e7498ab996d871ddb140aa9ed1d3fcc4e1ea05fd936edf62540b6b69"
+      },
+      {
+        "path": "assets/diagrams/archify/en-observability-alerting-01-alertmanager-4.architecture.json",
+        "sha256": "98bb673311894f586c65dca85131a3f454a7fb230f9031a55110024192fe3075"
+      },
+      {
+        "path": "assets/diagrams/archify/en-observability-alerting-01-alertmanager-5.workflow.json",
+        "sha256": "3291e72c57817725e7fa5bdc4bf06ed4ddb568f31f561332e124d4accf41f632"
+      },
+      {
+        "path": "assets/diagrams/archify/ko-observability-alerting-01-alertmanager-0.sequence.json",
+        "sha256": "b358a8af62f0fb2d779aa53f914932e8b81b90d369dab27a8b2b8dd564a802f8"
+      },
+      {
+        "path": "assets/diagrams/archify/ko-observability-alerting-01-alertmanager-1.architecture.json",
+        "sha256": "8056754cc83021c293433e10c038adf45e39fc91a73e581ddd26ef19a1011f1a"
+      },
+      {
+        "path": "assets/diagrams/archify/ko-observability-alerting-01-alertmanager-4.architecture.json",
+        "sha256": "47ff8cc33dde1a5531cf7b85dc71852d5551f79f6abc909c3ab6ea20cd8fdc38"
+      },
+      {
+        "path": "assets/diagrams/archify/ko-observability-alerting-01-alertmanager-5.workflow.json",
+        "sha256": "e916fee1072e4a9e545e8c817e0c2f510e34b86980e9092e655a81148075176e"
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-alerting-01-alertmanager-0.png",
+        "sha256": "57362ccd2401431e05985196da7cf63b5631914529976a6f8fe4acb49e55eda1"
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-alerting-01-alertmanager-1.png",
+        "sha256": "15189a36ef2a7010007ec3b74fe119ddf573083d9799a1b56b385bdca4884973"
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-alerting-01-alertmanager-4.png",
+        "sha256": "55d5483ef5a20f075dddb405f2849dba91273313cb570e2fa6ad12dae5ba341b"
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-alerting-01-alertmanager-5.png",
+        "sha256": "d8010af21490f449f585eeadff2f9c944880a14db03b65a38e5435872068d9d7"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-alerting-01-alertmanager-0.png",
+        "sha256": "6163cfbe5fc9f11d2329c349a556ff3f15f007860d165bad2ed0db586b2aba89"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-alerting-01-alertmanager-1.png",
+        "sha256": "9d8cc78161a392d296a2a487bdffe724d74595a93e7ddb11d6318dd394e9a54f"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-alerting-01-alertmanager-4.png",
+        "sha256": "c892a99f7b7d4d6de418dd9765a60bbd0fa811b5bc260538d0fbe3602adc5b40"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-alerting-01-alertmanager-5.png",
+        "sha256": "710aa1353031dd995285446c500dda14b86fc5e4b432dbd208822358571ccbb5"
+      },
+      {
+        "path": "public/archmaps/en-observability-alerting-01-alertmanager-0.html",
+        "sha256": "9453159621bb23b5210752116426081ed3153186938cbded398a91d3e7808495"
+      },
+      {
+        "path": "public/archmaps/en-observability-alerting-01-alertmanager-1.html",
+        "sha256": "c301aae96620b73afafdef3f5a9878c5abf968fb07d7faa5207af6a69f4f8f77"
+      },
+      {
+        "path": "public/archmaps/en-observability-alerting-01-alertmanager-4.html",
+        "sha256": "dda15eee0af7832091cfa2f26ba035f9b76bcc5409faeb3d1747920d9539ad1d"
+      },
+      {
+        "path": "public/archmaps/en-observability-alerting-01-alertmanager-5.html",
+        "sha256": "f638d5551b8e4f25703d10741c92231a157165037d9e82a66c614457bb7d7864"
+      },
+      {
+        "path": "public/archmaps/ko-observability-alerting-01-alertmanager-0.html",
+        "sha256": "d54ae3565c460d4abb5c7171cd43f00a785eacc5efce412867ab93e781c4b95b"
+      },
+      {
+        "path": "public/archmaps/ko-observability-alerting-01-alertmanager-1.html",
+        "sha256": "ef3079e9aa2b574d531194b41cbdcf0c8d1681ea5dc68d6e426a253a54b0f3f2"
+      },
+      {
+        "path": "public/archmaps/ko-observability-alerting-01-alertmanager-4.html",
+        "sha256": "94608094aece788f1747dd70cbb969d2cbc77a2a61c012db481b6de9affbb101"
+      },
+      {
+        "path": "public/archmaps/ko-observability-alerting-01-alertmanager-5.html",
+        "sha256": "3f449da30062ef5b3ce3ebef64c1fb4707fbdcb2181be4283556d311f0d81b78"
+      }
+    ],
+    "parentAssetClosurePreserved": true,
+    "nativeCarryScope": {
+      "rerun": [
+        "config-native-validation.json",
+        "rules-native-validation.json"
+      ],
+      "historicalUnchangedBehaviorProof": [
+        "inhibition-native-validation.json",
+        "timeinterval-native-validation.json",
+        "silence-native-validation.json",
+        "metrics-native-validation.json",
+        "gossip-metric-validation.json",
+        "published-template-data-validation.json",
+        "chart-downloads.json",
+        "manifest-parser-note.json"
+      ],
+      "note": "Prior inhibition, calendar, silence, loopback metric, template-data and chart provenance proofs are retained for unchanged behavior; these were not relabeled as newly executed."
+    },
+    "figureScope": "All 24 parent-repaired diagram files and the parentAssetClosure object are unchanged. The older figures section records the historical retirement stage; the parent's asset-closure report controls current replacement assets. No new browser or PNG pass is claimed.",
+    "limits": [
+      "Promtool uses synthetic time series; no Kubernetes workload or scrape was run.",
+      "Slack checks validate native shell argv and local schema/Helm/config bindings only; no credentials were sent, Secret created, or provider destination/delivery verified.",
+      "No AWS/cluster provisioning, cloud call, GPU, full site build, immutable-worktree edit, commit or push.",
+      "Dynamic Mermaid DOM IDs are position-derived; preservation checks cover all prior heading and explicit anchor IDs, local fragments and duplicate IDs."
+    ]
   }
 }

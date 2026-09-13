@@ -3,7 +3,7 @@
     "path": "en/observability/alerting/01-alertmanager.md",
     "fullyRead": true,
     "status": "fixed",
-    "summary": "Allfouroriginals3050linesfullyread;pairedcurrentinstallation/routing/inhibition/credentials/templates/HA/PromQL/quizfixesclosedwithboundednativeproof.",
+    "summary": "Entire original source and current fix delta read; recurring CrashLoop detection, distinct Slack webhook destinations and scrape-unavailability wording corrected with native local proof.",
     "sources": [
       "https://api.github.com/repos/prometheus/alertmanager/releases/latest",
       "https://raw.githubusercontent.com/prometheus/alertmanager/v0.34.0/docs/configuration.md",
@@ -29,7 +29,9 @@
       "https://raw.githubusercontent.com/prometheus/alertmanager/v0.34.0/silence/silence.go",
       "https://raw.githubusercontent.com/prometheus/alertmanager/v0.34.0/template/template.go",
       "https://www.atlassian.com/licensing/opsgenie",
-      "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.93.1/pkg/alertmanager/amcfg.go"
+      "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.93.1/pkg/alertmanager/amcfg.go",
+      "https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/"
     ],
     "findings": [
       "Separatedkube-prometheus-stack90/Operator0.93.1andstandalone1.43.1/AM0.34values;fixedreplicas/resources/storage/mounts,protectedfilecredentialsandmatchedPrometheusRule/AlertmanagerConfigselection.",
@@ -43,9 +45,24 @@
       "Keptrealetcd_server_idandservedAlertmanagerConfigv1alpha1;avoidedinventedAPIremoval.OOM/deletion/certmetricstabilityandEKSmanaged-etcdlimitationsdocumented.",
       "Correctednotificationattemptcounterdescription,removedconfig/Secretdumpandpublicrequest-binadvice,mixedYAML/shellfencesandunboundeddiagnostics.",
       "Reviewed14originalPNGs;replaced8wrongpipeline/inhibition/expiryreferenceswith8validatedMermaidgraphs;retained6qualifiedfigures;alloriginalheadingIDsretained.",
-      "Alignedall20quizanswersandcorrectedbothOperator404referencestoverified/docs/developer/alerting/.RecognizedLastUpdatedheadersdatedSeptember13."
+      "Alignedall20quizanswersandcorrectedbothOperator404referencestoverified/docs/developer/alerting/.RecognizedLastUpdatedheadersdatedSeptember13.",
+      "ALERTMANAGER-R1-001: Apply max_over_time(waiting_reason[5m]) before UID/node enrichment, then for:10m. Repeated retry gaps are bridged; one-off observations do not fire; document up to five minutes plus scrape/evaluation clearing delay.",
+      "ALERTMANAGER-R1-002: Normal and critical Slack destinations use distinct channel-bound incoming-webhook URLs/files and Secret keys in stack, standalone, manual and AlertmanagerConfig examples; creation and mount prerequisites match. Remove unsupported channel overrides.",
+      "ALERTMANAGER-R1-003: NodeExporterUnavailable summary and description identify scrape unavailability; they do not establish physical node failure."
     ],
     "validation": [
+      "Current four Markdown/Vue compiles pass; all 136 prior heading/explicit IDs retained; local fragments and duplicate IDs checked.",
+      "94 current source/schema/shell/fixture checks pass: 10 Kubernetes objects, 12 CRD instances, 18 Bash blocks, two payload-only Python blocks, 30 config bindings.",
+      "Actual promtool: 33 existing expression and three existing alert-state cases, 13 recurring/transient/recovery CrashLoop assertions and one exact NodeExporterUnavailable annotation case pass.",
+      "32 amtool/Helm/template checks and 30 Slack binding checks pass; four actual published Secret commands captured with a local command double, no API/provider send.",
+      "Current ROOT docs:test passes 120/120; parent 24 asset hashes and parentAssetClosure preserved.",
+      "All 35 historical fixture hashes resolve exactly; prior native execution evidence retained separately from new review-fix proof.",
+      "Evidence: docs/reviews/2026-09-11/observability-alertmanager-validation.json#reviewFixes"
+    ],
+    "reviewedSha256": "4119850f90aa965473cc0dd8632b050c85e27e8dd790515acf6daf0664ad3a92",
+    "validationReport": "docs/reviews/2026-09-11/observability-alertmanager-validation.json",
+    "updatedAt": "2026-09-13T14:50:11.362840+00:00",
+    "historicalValidationBeforeReviewFixes": [
       "Entireoriginalsourceconsumed:1306lines;originalsnapshotpreserved.",
       "98finalsource/fixture/schema/shell/anchorchecksPASS;10K8sobject+12CRDinstances,18Bashblocks,2payload-onlyPythonblocks.",
       "20uniquealertdefinitionsparse;33actualPromQLseriescases+3alert-statecasesPASS.",
@@ -54,15 +71,29 @@
       "4currentMarkdown/VuecompilesandoriginalheadingIDsPASS;8Mermaidgraphsparsed/rendered/individuallyviewed;14originalfiguresreviewed;scopegitdiff--checkPASS.",
       "Evidence:docs/reviews/2026-09-11/observability-alertmanager-validation.json"
     ],
-    "reviewedSha256": "723bcf32c7e57efaf920dd18da8ac874182369e207145da059d996c0c84212f4",
-    "validationReport": "docs/reviews/2026-09-11/observability-alertmanager-validation.json",
-    "updatedAt": "2026-09-13T14:14:46.238405+00:00"
+    "currentLines": 1675,
+    "currentFencedBlockCounts": {
+      "mermaid": 4,
+      "bash": 9,
+      "yaml": 23,
+      "python": 1,
+      "text": 1,
+      "json": 1
+    },
+    "reviewFixes": {
+      "ids": [
+        "ALERTMANAGER-R1-001",
+        "ALERTMANAGER-R1-002",
+        "ALERTMANAGER-R1-003"
+      ],
+      "independentReview": "pending-parent-integration"
+    }
   },
   {
     "path": "en/quizzes/observability/alerting/01-alertmanager-quiz.md",
     "fullyRead": true,
     "status": "fixed",
-    "summary": "Allfouroriginals3050linesfullyread;pairedcurrentinstallation/routing/inhibition/credentials/templates/HA/PromQL/quizfixesclosedwithboundednativeproof.",
+    "summary": "Entire original source and current fix delta read; recurring CrashLoop detection, distinct Slack webhook destinations and scrape-unavailability wording corrected with native local proof.",
     "sources": [
       "https://api.github.com/repos/prometheus/alertmanager/releases/latest",
       "https://raw.githubusercontent.com/prometheus/alertmanager/v0.34.0/docs/configuration.md",
@@ -88,7 +119,9 @@
       "https://raw.githubusercontent.com/prometheus/alertmanager/v0.34.0/silence/silence.go",
       "https://raw.githubusercontent.com/prometheus/alertmanager/v0.34.0/template/template.go",
       "https://www.atlassian.com/licensing/opsgenie",
-      "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.93.1/pkg/alertmanager/amcfg.go"
+      "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.93.1/pkg/alertmanager/amcfg.go",
+      "https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/"
     ],
     "findings": [
       "Separatedkube-prometheus-stack90/Operator0.93.1andstandalone1.43.1/AM0.34values;fixedreplicas/resources/storage/mounts,protectedfilecredentialsandmatchedPrometheusRule/AlertmanagerConfigselection.",
@@ -102,9 +135,24 @@
       "Keptrealetcd_server_idandservedAlertmanagerConfigv1alpha1;avoidedinventedAPIremoval.OOM/deletion/certmetricstabilityandEKSmanaged-etcdlimitationsdocumented.",
       "Correctednotificationattemptcounterdescription,removedconfig/Secretdumpandpublicrequest-binadvice,mixedYAML/shellfencesandunboundeddiagnostics.",
       "Reviewed14originalPNGs;replaced8wrongpipeline/inhibition/expiryreferenceswith8validatedMermaidgraphs;retained6qualifiedfigures;alloriginalheadingIDsretained.",
-      "Alignedall20quizanswersandcorrectedbothOperator404referencestoverified/docs/developer/alerting/.RecognizedLastUpdatedheadersdatedSeptember13."
+      "Alignedall20quizanswersandcorrectedbothOperator404referencestoverified/docs/developer/alerting/.RecognizedLastUpdatedheadersdatedSeptember13.",
+      "ALERTMANAGER-R1-001: Apply max_over_time(waiting_reason[5m]) before UID/node enrichment, then for:10m. Repeated retry gaps are bridged; one-off observations do not fire; document up to five minutes plus scrape/evaluation clearing delay.",
+      "ALERTMANAGER-R1-002: Normal and critical Slack destinations use distinct channel-bound incoming-webhook URLs/files and Secret keys in stack, standalone, manual and AlertmanagerConfig examples; creation and mount prerequisites match. Remove unsupported channel overrides.",
+      "ALERTMANAGER-R1-003: NodeExporterUnavailable summary and description identify scrape unavailability; they do not establish physical node failure."
     ],
     "validation": [
+      "Current four Markdown/Vue compiles pass; all 136 prior heading/explicit IDs retained; local fragments and duplicate IDs checked.",
+      "94 current source/schema/shell/fixture checks pass: 10 Kubernetes objects, 12 CRD instances, 18 Bash blocks, two payload-only Python blocks, 30 config bindings.",
+      "Actual promtool: 33 existing expression and three existing alert-state cases, 13 recurring/transient/recovery CrashLoop assertions and one exact NodeExporterUnavailable annotation case pass.",
+      "32 amtool/Helm/template checks and 30 Slack binding checks pass; four actual published Secret commands captured with a local command double, no API/provider send.",
+      "Current ROOT docs:test passes 120/120; parent 24 asset hashes and parentAssetClosure preserved.",
+      "All 35 historical fixture hashes resolve exactly; prior native execution evidence retained separately from new review-fix proof.",
+      "Evidence: docs/reviews/2026-09-11/observability-alertmanager-validation.json#reviewFixes"
+    ],
+    "reviewedSha256": "74875d8b93457adbd069c8d5cd4798cce88ed756225d624f00a6297329de5b62",
+    "validationReport": "docs/reviews/2026-09-11/observability-alertmanager-validation.json",
+    "updatedAt": "2026-09-13T14:50:11.362840+00:00",
+    "historicalValidationBeforeReviewFixes": [
       "Entireoriginalsourceconsumed:219lines;originalsnapshotpreserved.",
       "98finalsource/fixture/schema/shell/anchorchecksPASS;10K8sobject+12CRDinstances,18Bashblocks,2payload-onlyPythonblocks.",
       "20uniquealertdefinitionsparse;33actualPromQLseriescases+3alert-statecasesPASS.",
@@ -113,15 +161,24 @@
       "4currentMarkdown/VuecompilesandoriginalheadingIDsPASS;8Mermaidgraphsparsed/rendered/individuallyviewed;14originalfiguresreviewed;scopegitdiff--checkPASS.",
       "Evidence:docs/reviews/2026-09-11/observability-alertmanager-validation.json"
     ],
-    "reviewedSha256": "3d51cbd75b5d38be8ab676d0e855c105b49de9c968a8af04be60119508f77add",
-    "validationReport": "docs/reviews/2026-09-11/observability-alertmanager-validation.json",
-    "updatedAt": "2026-09-13T14:14:46.238426+00:00"
+    "currentLines": 207,
+    "currentFencedBlockCounts": {
+      "text": 1
+    },
+    "reviewFixes": {
+      "ids": [
+        "ALERTMANAGER-R1-001",
+        "ALERTMANAGER-R1-002",
+        "ALERTMANAGER-R1-003"
+      ],
+      "independentReview": "pending-parent-integration"
+    }
   },
   {
     "path": "ko/observability/alerting/01-alertmanager.md",
     "fullyRead": true,
     "status": "fixed",
-    "summary": "Allfouroriginals3050linesfullyread;pairedcurrentinstallation/routing/inhibition/credentials/templates/HA/PromQL/quizfixesclosedwithboundednativeproof.",
+    "summary": "Entire original source and current fix delta read; recurring CrashLoop detection, distinct Slack webhook destinations and scrape-unavailability wording corrected with native local proof.",
     "sources": [
       "https://api.github.com/repos/prometheus/alertmanager/releases/latest",
       "https://raw.githubusercontent.com/prometheus/alertmanager/v0.34.0/docs/configuration.md",
@@ -147,7 +204,9 @@
       "https://raw.githubusercontent.com/prometheus/alertmanager/v0.34.0/silence/silence.go",
       "https://raw.githubusercontent.com/prometheus/alertmanager/v0.34.0/template/template.go",
       "https://www.atlassian.com/licensing/opsgenie",
-      "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.93.1/pkg/alertmanager/amcfg.go"
+      "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.93.1/pkg/alertmanager/amcfg.go",
+      "https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/"
     ],
     "findings": [
       "Separatedkube-prometheus-stack90/Operator0.93.1andstandalone1.43.1/AM0.34values;fixedreplicas/resources/storage/mounts,protectedfilecredentialsandmatchedPrometheusRule/AlertmanagerConfigselection.",
@@ -161,9 +220,24 @@
       "Keptrealetcd_server_idandservedAlertmanagerConfigv1alpha1;avoidedinventedAPIremoval.OOM/deletion/certmetricstabilityandEKSmanaged-etcdlimitationsdocumented.",
       "Correctednotificationattemptcounterdescription,removedconfig/Secretdumpandpublicrequest-binadvice,mixedYAML/shellfencesandunboundeddiagnostics.",
       "Reviewed14originalPNGs;replaced8wrongpipeline/inhibition/expiryreferenceswith8validatedMermaidgraphs;retained6qualifiedfigures;alloriginalheadingIDsretained.",
-      "Alignedall20quizanswersandcorrectedbothOperator404referencestoverified/docs/developer/alerting/.RecognizedLastUpdatedheadersdatedSeptember13."
+      "Alignedall20quizanswersandcorrectedbothOperator404referencestoverified/docs/developer/alerting/.RecognizedLastUpdatedheadersdatedSeptember13.",
+      "ALERTMANAGER-R1-001: Apply max_over_time(waiting_reason[5m]) before UID/node enrichment, then for:10m. Repeated retry gaps are bridged; one-off observations do not fire; document up to five minutes plus scrape/evaluation clearing delay.",
+      "ALERTMANAGER-R1-002: Normal and critical Slack destinations use distinct channel-bound incoming-webhook URLs/files and Secret keys in stack, standalone, manual and AlertmanagerConfig examples; creation and mount prerequisites match. Remove unsupported channel overrides.",
+      "ALERTMANAGER-R1-003: NodeExporterUnavailable summary and description identify scrape unavailability; they do not establish physical node failure."
     ],
     "validation": [
+      "Current four Markdown/Vue compiles pass; all 136 prior heading/explicit IDs retained; local fragments and duplicate IDs checked.",
+      "94 current source/schema/shell/fixture checks pass: 10 Kubernetes objects, 12 CRD instances, 18 Bash blocks, two payload-only Python blocks, 30 config bindings.",
+      "Actual promtool: 33 existing expression and three existing alert-state cases, 13 recurring/transient/recovery CrashLoop assertions and one exact NodeExporterUnavailable annotation case pass.",
+      "32 amtool/Helm/template checks and 30 Slack binding checks pass; four actual published Secret commands captured with a local command double, no API/provider send.",
+      "Current ROOT docs:test passes 120/120; parent 24 asset hashes and parentAssetClosure preserved.",
+      "All 35 historical fixture hashes resolve exactly; prior native execution evidence retained separately from new review-fix proof.",
+      "Evidence: docs/reviews/2026-09-11/observability-alertmanager-validation.json#reviewFixes"
+    ],
+    "reviewedSha256": "3e084fca3ea5f80d8c65fa2a3e86811349651b3f91b8124d45f95587f606dbcf",
+    "validationReport": "docs/reviews/2026-09-11/observability-alertmanager-validation.json",
+    "updatedAt": "2026-09-13T14:50:11.362840+00:00",
+    "historicalValidationBeforeReviewFixes": [
       "Entireoriginalsourceconsumed:1306lines;originalsnapshotpreserved.",
       "98finalsource/fixture/schema/shell/anchorchecksPASS;10K8sobject+12CRDinstances,18Bashblocks,2payload-onlyPythonblocks.",
       "20uniquealertdefinitionsparse;33actualPromQLseriescases+3alert-statecasesPASS.",
@@ -172,15 +246,29 @@
       "4currentMarkdown/VuecompilesandoriginalheadingIDsPASS;8Mermaidgraphsparsed/rendered/individuallyviewed;14originalfiguresreviewed;scopegitdiff--checkPASS.",
       "Evidence:docs/reviews/2026-09-11/observability-alertmanager-validation.json"
     ],
-    "reviewedSha256": "01a339b47568607a2484716ab578d19c9c1f9768cf14c7cc9cfb535692c3557a",
-    "validationReport": "docs/reviews/2026-09-11/observability-alertmanager-validation.json",
-    "updatedAt": "2026-09-13T14:14:46.238429+00:00"
+    "currentLines": 1675,
+    "currentFencedBlockCounts": {
+      "mermaid": 4,
+      "bash": 9,
+      "yaml": 23,
+      "python": 1,
+      "text": 1,
+      "json": 1
+    },
+    "reviewFixes": {
+      "ids": [
+        "ALERTMANAGER-R1-001",
+        "ALERTMANAGER-R1-002",
+        "ALERTMANAGER-R1-003"
+      ],
+      "independentReview": "pending-parent-integration"
+    }
   },
   {
     "path": "ko/quizzes/observability/alerting/01-alertmanager-quiz.md",
     "fullyRead": true,
     "status": "fixed",
-    "summary": "Allfouroriginals3050linesfullyread;pairedcurrentinstallation/routing/inhibition/credentials/templates/HA/PromQL/quizfixesclosedwithboundednativeproof.",
+    "summary": "Entire original source and current fix delta read; recurring CrashLoop detection, distinct Slack webhook destinations and scrape-unavailability wording corrected with native local proof.",
     "sources": [
       "https://api.github.com/repos/prometheus/alertmanager/releases/latest",
       "https://raw.githubusercontent.com/prometheus/alertmanager/v0.34.0/docs/configuration.md",
@@ -206,7 +294,9 @@
       "https://raw.githubusercontent.com/prometheus/alertmanager/v0.34.0/silence/silence.go",
       "https://raw.githubusercontent.com/prometheus/alertmanager/v0.34.0/template/template.go",
       "https://www.atlassian.com/licensing/opsgenie",
-      "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.93.1/pkg/alertmanager/amcfg.go"
+      "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.93.1/pkg/alertmanager/amcfg.go",
+      "https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/"
     ],
     "findings": [
       "Separatedkube-prometheus-stack90/Operator0.93.1andstandalone1.43.1/AM0.34values;fixedreplicas/resources/storage/mounts,protectedfilecredentialsandmatchedPrometheusRule/AlertmanagerConfigselection.",
@@ -220,9 +310,24 @@
       "Keptrealetcd_server_idandservedAlertmanagerConfigv1alpha1;avoidedinventedAPIremoval.OOM/deletion/certmetricstabilityandEKSmanaged-etcdlimitationsdocumented.",
       "Correctednotificationattemptcounterdescription,removedconfig/Secretdumpandpublicrequest-binadvice,mixedYAML/shellfencesandunboundeddiagnostics.",
       "Reviewed14originalPNGs;replaced8wrongpipeline/inhibition/expiryreferenceswith8validatedMermaidgraphs;retained6qualifiedfigures;alloriginalheadingIDsretained.",
-      "Alignedall20quizanswersandcorrectedbothOperator404referencestoverified/docs/developer/alerting/.RecognizedLastUpdatedheadersdatedSeptember13."
+      "Alignedall20quizanswersandcorrectedbothOperator404referencestoverified/docs/developer/alerting/.RecognizedLastUpdatedheadersdatedSeptember13.",
+      "ALERTMANAGER-R1-001: Apply max_over_time(waiting_reason[5m]) before UID/node enrichment, then for:10m. Repeated retry gaps are bridged; one-off observations do not fire; document up to five minutes plus scrape/evaluation clearing delay.",
+      "ALERTMANAGER-R1-002: Normal and critical Slack destinations use distinct channel-bound incoming-webhook URLs/files and Secret keys in stack, standalone, manual and AlertmanagerConfig examples; creation and mount prerequisites match. Remove unsupported channel overrides.",
+      "ALERTMANAGER-R1-003: NodeExporterUnavailable summary and description identify scrape unavailability; they do not establish physical node failure."
     ],
     "validation": [
+      "Current four Markdown/Vue compiles pass; all 136 prior heading/explicit IDs retained; local fragments and duplicate IDs checked.",
+      "94 current source/schema/shell/fixture checks pass: 10 Kubernetes objects, 12 CRD instances, 18 Bash blocks, two payload-only Python blocks, 30 config bindings.",
+      "Actual promtool: 33 existing expression and three existing alert-state cases, 13 recurring/transient/recovery CrashLoop assertions and one exact NodeExporterUnavailable annotation case pass.",
+      "32 amtool/Helm/template checks and 30 Slack binding checks pass; four actual published Secret commands captured with a local command double, no API/provider send.",
+      "Current ROOT docs:test passes 120/120; parent 24 asset hashes and parentAssetClosure preserved.",
+      "All 35 historical fixture hashes resolve exactly; prior native execution evidence retained separately from new review-fix proof.",
+      "Evidence: docs/reviews/2026-09-11/observability-alertmanager-validation.json#reviewFixes"
+    ],
+    "reviewedSha256": "e138beb518756306c65f62cbc8b38248e2b79b53889b1cdf8161b79fd979ce19",
+    "validationReport": "docs/reviews/2026-09-11/observability-alertmanager-validation.json",
+    "updatedAt": "2026-09-13T14:50:11.362840+00:00",
+    "historicalValidationBeforeReviewFixes": [
       "Entireoriginalsourceconsumed:219lines;originalsnapshotpreserved.",
       "98finalsource/fixture/schema/shell/anchorchecksPASS;10K8sobject+12CRDinstances,18Bashblocks,2payload-onlyPythonblocks.",
       "20uniquealertdefinitionsparse;33actualPromQLseriescases+3alert-statecasesPASS.",
@@ -231,8 +336,17 @@
       "4currentMarkdown/VuecompilesandoriginalheadingIDsPASS;8Mermaidgraphsparsed/rendered/individuallyviewed;14originalfiguresreviewed;scopegitdiff--checkPASS.",
       "Evidence:docs/reviews/2026-09-11/observability-alertmanager-validation.json"
     ],
-    "reviewedSha256": "8fe7c62031b4e24830d4cc6979ac0ccbf192c07c6c4c6a328eb2b57f2a252efb",
-    "validationReport": "docs/reviews/2026-09-11/observability-alertmanager-validation.json",
-    "updatedAt": "2026-09-13T14:14:46.238431+00:00"
+    "currentLines": 207,
+    "currentFencedBlockCounts": {
+      "text": 1
+    },
+    "reviewFixes": {
+      "ids": [
+        "ALERTMANAGER-R1-001",
+        "ALERTMANAGER-R1-002",
+        "ALERTMANAGER-R1-003"
+      ],
+      "independentReview": "pending-parent-integration"
+    }
   }
 ]

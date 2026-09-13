@@ -113,6 +113,8 @@ helm install alertmanager prometheus-community/alertmanager   --version 1.43.1 -
 
 아래 기본 설정은 `alertmanager.yaml`이며 수신자 자격 증명은 실제 토큰 대신 파일 경로를 참조합니다. 선택한 워크로드가 시작되기 전에 `notification-credentials`와 `alertmanager-templates`를 준비합니다. Helm 렌더 성공이 누락 파일·잘못된 채널·유효하지 않은 provider 자격 증명을 해결하지는 않습니다.
 
+**서로 다른 Slack incoming-webhook URL 2개**를 만들고 Slack에서 각 URL의 대상 채널을 미리 지정합니다. `slack-normal-webhook-url`은 `#alerts`, `slack-critical-webhook-url`은 `#critical-alerts`용입니다. Incoming webhook의 설정된 채널을 `channel` 필드로 덮어쓸 수 없습니다. 두 파일은 `notification-credentials`의 키이며 stack·standalone·수동 profile에서 마운트합니다. URL과 채널 연결은 provider 선행 조건이고 로컬 파싱으로 Slack 전달을 검증하지 않습니다.
+
 **Stack profile — `kube-prometheus-stack-values.yaml`:**
 
 ```yaml
@@ -139,16 +141,14 @@ alertmanager:
     receivers:
     - name: default-receiver
       slack_configs:
-      - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-webhook-url
-        channel: '#alerts'
+      - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-normal-webhook-url
         send_resolved: true
         title: '{{ template "slack.custom.title" . }}'
         text: '{{ template "slack.custom.text" . }}'
         color: '{{ template "slack.custom.color" . }}'
     - name: critical-receiver
       slack_configs:
-      - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-webhook-url
-        channel: '#critical-alerts'
+      - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-critical-webhook-url
         send_resolved: true
         title: '{{ template "slack.custom.title" . }}'
         text: '{{ template "slack.custom.text" . }}'
@@ -262,16 +262,14 @@ config:
   receivers:
   - name: default-receiver
     slack_configs:
-    - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-webhook-url
-      channel: '#alerts'
+    - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-normal-webhook-url
       send_resolved: true
       title: '{{ template "slack.custom.title" . }}'
       text: '{{ template "slack.custom.text" . }}'
       color: '{{ template "slack.custom.color" . }}'
   - name: critical-receiver
     slack_configs:
-    - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-webhook-url
-      channel: '#critical-alerts'
+    - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-critical-webhook-url
       send_resolved: true
       title: '{{ template "slack.custom.title" . }}'
       text: '{{ template "slack.custom.text" . }}'
@@ -346,16 +344,14 @@ route:
 receivers:
 - name: default-receiver
   slack_configs:
-  - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-webhook-url
-    channel: '#alerts'
+  - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-normal-webhook-url
     send_resolved: true
     title: '{{ template "slack.custom.title" . }}'
     text: '{{ template "slack.custom.text" . }}'
     color: '{{ template "slack.custom.color" . }}'
 - name: critical-receiver
   slack_configs:
-  - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-webhook-url
-    channel: '#critical-alerts'
+  - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-critical-webhook-url
     send_resolved: true
     title: '{{ template "slack.custom.title" . }}'
     text: '{{ template "slack.custom.text" . }}'
@@ -395,7 +391,10 @@ templates:
 credential_dir="$PWD/private-notification-credentials"
 chmod 700 "$credential_dir"
 chmod 600 "$credential_dir"/*
-kubectl -n monitoring create secret generic notification-credentials   --from-file=slack-webhook-url="$credential_dir/slack-webhook-url"   --from-file=pagerduty-routing-key="$credential_dir/pagerduty-routing-key"
+kubectl -n monitoring create secret generic notification-credentials \
+  --from-file=slack-normal-webhook-url="$credential_dir/slack-normal-webhook-url" \
+  --from-file=slack-critical-webhook-url="$credential_dir/slack-critical-webhook-url" \
+  --from-file=pagerduty-routing-key="$credential_dir/pagerduty-routing-key"
 # Optional integrations need their own additional files; rotate existing Secrets separately.
 ```
 
@@ -576,14 +575,13 @@ Native 레이블 라우팅 테스트는 달력을 평가하지 않습니다. 시
 
 ### Slack 수신자
 
-보호된 webhook URL 파일에 `api_url_file`을 사용합니다. 검증한 custom template은 승인한 일부 필드만 출력합니다. 레이블·annotation 전체를 덤프하지 않습니다. 사용자 정보·비밀이 들어갈 수 있으며 길이 제한은 마스킹이 아닙니다. 완전한 설정에 넣는 receiver 조각입니다.
+대상 Slack 채널에 미리 연결된 보호된 incoming-webhook URL 파일에 `api_url_file`을 사용합니다. 아래 일반 예제는 `slack-normal-webhook-url`, critical route는 별도의 critical 파일을 사용합니다. [Slack은 incoming webhook의 채널 덮어쓰기를 지원하지 않는다고 명시합니다](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/). 검증한 custom template은 승인한 일부 필드만 출력합니다. 레이블·annotation 전체를 덤프하지 않습니다. 사용자 정보·비밀이 들어갈 수 있으며 길이 제한은 마스킹이 아닙니다. 완전한 설정에 넣는 receiver 조각입니다.
 
 ```yaml
 receivers:
 - name: slack-notifications
   slack_configs:
-  - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-webhook-url
-    channel: '#alerts'
+  - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-normal-webhook-url
     send_resolved: true
     title: '{{ template "slack.custom.title" . }}'
     text: '{{ template "slack.custom.text" . }}'
@@ -677,8 +675,7 @@ receivers:
 receivers:
 - name: team-all
   slack_configs:
-  - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-webhook-url
-    channel: '#alerts'
+  - api_url_file: /etc/alertmanager/secrets/notification-credentials/slack-normal-webhook-url
     send_resolved: true
     title: '{{ template "slack.custom.title" . }}'
     text: '{{ template "slack.custom.text" . }}'
@@ -1210,15 +1207,13 @@ spec:
     slackConfigs:
     - apiURL:
         name: slack-webhook-secret
-        key: webhook-url
-      channel: '#team-a-alerts'
+        key: normal-webhook-url
       sendResolved: true
   - name: team-a-critical
     slackConfigs:
     - apiURL:
         name: slack-webhook-secret
-        key: webhook-url
-      channel: '#team-a-critical'
+        key: critical-webhook-url
       sendResolved: true
     pagerdutyConfigs:
     - routingKey:
@@ -1254,12 +1249,16 @@ spec:
 
 ### Secret 참조
 
+team-a 예제에는 `#team-a-alerts`와 `#team-a-critical`에 각각 연결된 별도 URL을 만듭니다. `slack-webhook-secret`의 `normal-webhook-url`, `critical-webhook-url` 키에 각각 저장합니다. AlertmanagerConfig는 서로 다른 키를 선택하며 한 webhook의 channel 값을 바꿔 수신처를 전환하지 않습니다.
+
 Secret보다 먼저 네임스페이스를 준비하고 설정을 reconcile하기 전에 Secret을 생성합니다. 이름·키는 AlertmanagerConfig와 일치해야 하며 해당 네임스페이스에 있어야 합니다. 로컬 파일을 보호하고 기존 Secret 회전은 별도로 수행합니다.
 
 ```bash
 # team-a namespace is declared in team-a-alertmanagerconfig.yaml.
 # Supply protected files, without exposing values in argv or committed YAML.
-kubectl -n team-a create secret generic slack-webhook-secret   --from-file=webhook-url=private-team-a/slack-webhook-url
+kubectl -n team-a create secret generic slack-webhook-secret \
+  --from-file=normal-webhook-url=private-team-a/slack-normal-webhook-url \
+  --from-file=critical-webhook-url=private-team-a/slack-critical-webhook-url
 kubectl -n team-a create secret generic pagerduty-secret   --from-file=routing-key=private-team-a/pagerduty-routing-key
 ```
 
@@ -1305,8 +1304,10 @@ spec:
         severity: critical
         team: sre
       annotations:
-        summary: Node {{ $labels.instance }} is down
-        description: Node exporter is not responding for more than 5 minutes.
+        summary: Node-exporter scrape unavailable for {{ $labels.instance }}
+        description: The node-exporter target has not been scraped successfully for
+          at least 5 minutes; inspect the exporter, access and network path. Physical
+          node failure is not established.
     - alert: NodeHighCPU
       expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m]))
         * 100) > 80
@@ -1356,6 +1357,8 @@ spec:
 
 ### Pod 및 Container 알림
 
+`PodCrashLooping`은 각 metric series에 `max_over_time(waiting_reason[5m])`을 **UID·node 보강 전에** 적용하고, 그 관측 조건을 `10m` 동안 요구합니다. 재시도 사이에는 순간 waiting reason이 사라질 수 있으며, 제한된 window가 5분보다 짧은 빈 구간을 연결합니다. 일회성 waiting 샘플은 10분 유지 조건을 만족하기 전에 window에서 만료됩니다. 이는 10분 내내 waiting이었다는 뜻이 아닌 반복 관측의 탐지입니다. 해제는 마지막 관측 후 최대 5분에 scrape·평가 지연을 더한 만큼 늦어질 수 있습니다.
+
 Readiness는 Pod phase만으로 판단할 수 없습니다. 완료·삭제 중인 Pod를 제외하고 CrashLoopBackOff와 일반 재시작을 구분하며 최근 재시작과 마지막 OOM reason을 결합합니다. kube-state-metrics 2.20.0의 마지막 종료·삭제 timestamp 메트릭은 experimental이므로 가용성을 확인합니다. Pod UID로 node를 보강하고 정보가 없으면 알림을 유지합니다. 메모리 limit은 양수여야 하며 CFS 주기 throttling 비율은 CPU 시간 비율이 아닙니다.
 
 ```yaml
@@ -1388,22 +1391,23 @@ spec:
         summary: Pod {{ $labels.namespace }}/{{ $labels.pod }} is not ready
         description: A non-terminal, non-deleting Pod remained not ready for 15 minutes.
     - alert: PodCrashLooping
-      expr: '((max by (namespace, pod, container, uid) (kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"})
+      expr: '((max by (namespace, pod, container, uid) (max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}[5m]))
         == 1) * on (namespace, pod, uid) group_left (node) max by (namespace, pod,
         uid, node) (kube_pod_info))
 
         or on (namespace, pod, container, uid) (max by (namespace, pod, container,
-        uid) (kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"})
+        uid) (max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}[5m]))
         == 1)'
-      for: 5m
+      for: 10m
       labels:
         severity: warning
         team: sre
       annotations:
-        summary: Pod {{ $labels.namespace }}/{{ $labels.pod }} has a container waiting
-          in CrashLoopBackOff
-        description: The waiting reason persisted across evaluations for 5 minutes;
-          a restart count alone is not this state.
+        summary: Recurring CrashLoopBackOff observations for {{ $labels.namespace
+          }}/{{ $labels.pod }}
+        description: CrashLoopBackOff was observed within each rolling 5-minute window
+          for at least 10 minutes. Retry gaps are bridged; recovery can take up to
+          5 minutes plus scrape/evaluation delay to clear.
     - alert: ContainerOOMKilled
       expr: "(((max by (namespace, pod, container, uid) (increase(kube_pod_container_status_restarts_total[5m]))\
         \ > 0)\n and on (namespace, pod, container, uid)\n (max by (namespace, pod,\

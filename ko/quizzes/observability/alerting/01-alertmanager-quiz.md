@@ -74,7 +74,7 @@ Inhibition은 기저 알림 조건이 아니라 통지 대상을 바꿉니다. S
 
 **정답: B) 연속 평가에서 조건이 5분 유지된 후 Firing으로 전환한다.**
 
-Node exporter CPU counter 수집과 적절한 평가 간격을 가정합니다. `for`는 수집·평가 간격이나 통지 마감 시각을 정하지 않습니다. 레이블 집합이 바뀌면 다른 알림이며, 조건이 해제되면 Pending이 초기화됩니다. 별도의 발화 유지 설정도 확인해야 합니다.
+Node exporter CPU counter 수집과 적절한 평가 간격을 가정합니다. `for`는 수집·평가 간격이나 통지 마감 시각을 정하지 않습니다. 레이블 집합이 바뀌면 다른 알림이며, 조건이 해제되면 Pending이 초기화됩니다. 별도의 발화 유지 설정도 확인해야 합니다. CrashLoop 예제는 먼저 5분 관측 window를 사용하고 `for: 10m`을 적용해 재시도 빈 구간을 연결하고 일회성 waiting을 제외합니다. 해제에는 lookback에 따른 지연이 있습니다.
 
 </details>
 
@@ -135,7 +135,7 @@ Gossip은 Silence와 통지 로그 상태를 최종적 일관성으로 공유합
 
 **정답: B) critical-receiver**
 
-기본 `continue: false`에서는 첫 일치 형제 route가 이후 형제 탐색을 중단합니다. 후속 형제를 보려면 해당 route에 `continue: true`를 설정합니다. 이는 레이블 라우팅만 보는 예제입니다. 비활성·mute route도 탐색을 중단할 수 있어 시간 조건은 별도 검증해야 합니다. 한 receiver 안의 여러 통합에는 `continue`가 필요하지 않습니다.
+기본 `continue: false`에서는 첫 일치 형제 route가 이후 형제 탐색을 중단합니다. 후속 형제를 보려면 해당 route에 `continue: true`를 설정합니다. 이는 레이블 라우팅만 보는 예제입니다. 비활성·mute route도 탐색을 중단할 수 있어 시간 조건은 별도 검증해야 합니다. 한 receiver 안의 여러 통합에는 `continue`가 필요하지 않습니다. Provider의 수신처 규칙도 적용됩니다. Slack incoming-webhook URL은 채널에 연결되므로 일반·critical 채널에는 channel 덮어쓰기 대신 서로 다른 webhook 파일·Secret 키가 필요합니다.
 
 </details>
 
