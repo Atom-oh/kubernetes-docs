@@ -25,6 +25,8 @@
 
 **Grafana OnCall OSS는 2026-03-24에 보관 처리되었습니다.** 저장소는 `grafana-cold-storage/oncall`로 이동했으며 읽기 전용입니다. 이 장은 기존 설치의 구조·API·이전 검토용이고 새로운 프로덕션 OSS 도입을 권장하는 설치 가이드가 아닙니다. 유지보수되는 Grafana Cloud IRM의 기능·API·요금제는 별도로 확인합니다.
 
+**Cloud Connection도 2026-03-24에 종료되었습니다.** OSS 사용자의 Grafana IRM 모바일 앱 push와 Cloud Connection에 의존하는 SMS·음성 알림은 더 이상 동작하지 않습니다. 별도로 구성한 Twilio 또는 다른 알림 서비스는 별도 경로이며 모든 자체 호스팅 전화/SMS 방식이 종료됐다는 뜻은 아닙니다.
+
 검토한 archived source는 `af0fbd40558c9a63bcf438589894c440fc434a54`입니다. 최신 release 표기는 v1.16.11이지만 해당 source의 Helm chart/appVersion은 1.15.6으로 같지 않습니다. API 예시는 이 소스와 공식 OnCall API 설명을 대조했으며 실제 OnCall 계정 생성·API 쓰기·알림 전송은 하지 않았습니다.
 
 ### 주요 기능
@@ -58,7 +60,7 @@
 
 
 
-![보관된 OnCall 설치의 논리 구성. DB·broker·cache 역할과 실제 채널 사용 가능 여부를 구분한다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-0.png)
+![보관된 OnCall 설치의 논리 구성. DB·broker·cache 역할과 실제 채널 사용 가능 여부를 구분한다. Cloud Connection은 2026-03-24에 종료되었으며 별도 지원 채널을 확인해야 한다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-03-grafana-oncall-0.html)
 
@@ -367,14 +369,14 @@ Grafana Cloud IRM의 유지보수되는 알림·온콜·인시던트 기능과 �
 
 ### 모바일 앱 설정
 
-기존 `mobile.firebase`는 읽은 archived chart의 설정 key가 아닙니다. 임의 Firebase 서비스 계정 파일만으로 push를 활성화할 수 있다고 가정하지 않습니다. 실제 모바일/Cloud Connection 경로의 현재 사용 가능 여부와 이전 대상의 지원 방식을 확인합니다. 이 감사에서는 Firebase 프로젝트·계정·push 알림을 만들지 않았습니다.
+기존 `mobile.firebase`는 읽은 archived chart의 설정 key가 아닙니다. 임의 Firebase 서비스 계정 파일만으로 push를 활성화할 수 있다고 가정하지 않습니다. Cloud Connection 종료로 OSS의 Grafana IRM 앱 push와 그 연결을 통한 SMS·음성 경로는 사용할 수 없습니다. 별도 Twilio/알림 서비스 또는 이전 대상의 지원 경로를 구성·검증합니다. 이 감사에서는 Firebase 프로젝트·계정·push 알림을 만들지 않았습니다.
 
 
 ### 알림 채널 우선순위
 
 Important/default는 사용자의 별도 알림 규칙 세트를 선택합니다. 순서·wait·채널·사용 가능 여부가 각각 적용되며 important가 모든 채널 동시 전송을 뜻하지 않습니다. 실제 전달과 확인/에스컬레이션을 시험합니다.
 
-![Important와 default는 개인 알림 규칙을 선택하며 무조건 전체 채널로 동시 전송하는 기능이 아니다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-7.png)
+![Important와 default는 개인 알림 규칙을 선택하며 무조건 전체 채널로 동시 전송하는 기능이 아니다. Cloud Connection은 2026-03-24에 종료되었으며 별도 지원 채널을 확인해야 한다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-7.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-03-grafana-oncall-7.html)
 
@@ -395,7 +397,7 @@ Important/default는 사용자의 별도 알림 규칙 세트를 선택합니다
 
 이제 검토 방향은 PagerDuty/Opsgenie에서 새로운 OnCall OSS 설치로 이동하는 기본 권장이 아닙니다. 기존 OnCall/종료 예정 도구의 데이터·의존성을 파악하고 유지보수되는 목적지와 기능 차이·복구를 검증합니다. 무료 코드가 호스팅·운영·지원·통신 비용이 없다는 뜻은 아닙니다.
 
-![목록화·백업·계약 검토·전달/복구 시험을 거쳐 유지보수되는 목적지로 통제된 전환을 수행한다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-8.png)
+![목록화·백업·계약 검토·전달/복구 시험을 거쳐 유지보수되는 목적지로 통제된 전환을 수행한다. Cloud Connection은 2026-03-24에 종료되었으며 별도 지원 채널을 확인해야 한다.](../../.gitbook/assets/ko-observability-alerting-03-grafana-oncall-8.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-alerting-03-grafana-oncall-8.html)
 
@@ -450,3 +452,4 @@ Important/default는 사용자의 별도 알림 규칙 세트를 선택합니다
 - [OnCall API reference](https://grafana.com/docs/oncall/latest/oncall-api-reference/)
 - [Archived source contract](https://github.com/grafana-cold-storage/oncall/tree/af0fbd40558c9a63bcf438589894c440fc434a54)
 - [Opsgenie lifecycle](https://www.atlassian.com/software/opsgenie)
+- [Cloud Connection cutoff and alternatives](https://grafana.com/docs/oncall/latest/set-up/open-source/)

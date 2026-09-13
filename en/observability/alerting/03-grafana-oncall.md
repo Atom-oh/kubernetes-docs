@@ -23,6 +23,8 @@
 
 **Grafana OnCall OSS was archived on 2026-03-24.** Its repository moved to `grafana-cold-storage/oncall` and is read-only. This chapter supports review/migration of existing installations; it is not a recommendation for a new production OSS deployment. Check maintained Grafana Cloud IRM features, APIs and plans separately.
 
+**Cloud Connection ended on 2026-03-24.** OSS mobile push through the Grafana IRM app and SMS/voice notifications relying on Cloud Connection no longer function. Separately configured Twilio or other notification services are distinct paths; this does not mean every self-hosted phone/SMS mechanism ended.
+
 The reviewed archived source is `af0fbd40558c9a63bcf438589894c440fc434a54`. The latest release is labelled v1.16.11, while that source's Helm chart/appVersion is 1.15.6; these are not interchangeable version identifiers. Examples were checked against this source and official OnCall API documentation. No actual OnCall account creation, API writes or notifications were performed.
 
 ### Key Features
@@ -54,7 +56,7 @@ These are logical responsibilities, not necessarily separate Deployments. Inspec
 
 
 
-![Logical components of an archived OnCall installation, with configured database/broker/cache roles and conditional channel availability.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-0.png)
+![Logical components of an archived OnCall installation, with configured database/broker/cache roles and conditional channel availability. Cloud Connection ended 2026-03-24; independently supported channels must be verified.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-0.html)
 
@@ -347,14 +349,14 @@ Supported app/deployment combinations can offer alert feeds, state actions, sche
 
 ### Mobile App Configuration
 
-The old mobile.firebase block is not a key in the inspected archived chart. An arbitrary Firebase service-account file does not establish working push. Check current mobile/Cloud Connection availability and the migration destination's supported mechanism. No Firebase project/account or push notification was created.
+The old mobile.firebase block is not a key in the inspected archived chart. An arbitrary Firebase service-account file does not establish working push. Cloud Connection has ended: OSS Grafana IRM app push and SMS/voice using that connection are unavailable. Configure and verify a separately supported Twilio/notification-service path or migration destination. No Firebase project/account or push notification was created.
 
 
 ### Notification Channel Priority
 
 Important/default selects separate personal notification-rule sets. Their order, waits, channels and availability apply; important does not mean simultaneous delivery to all channels. Test delivery, acknowledgment and escalation behavior.
 
-![Important and default select configured personal notification rules, not an unconditional all-channel fan-out.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-7.png)
+![Important and default select configured personal notification rules, not an unconditional all-channel fan-out. Cloud Connection ended 2026-03-24; independently supported channels must be verified.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-7.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-7.html)
 
@@ -373,7 +375,7 @@ Compare the same requirements against actual plans, usage and contracts. Old per
 
 The default direction is no longer a new migration from PagerDuty/Opsgenie into OnCall OSS. Inventory existing OnCall/ending-tool data and dependencies, then validate a maintained destination's feature differences and recovery. Free code does not eliminate hosting, operations, support or communication costs.
 
-![Inventory, backup, contract review, delivery/recovery tests and controlled cutover to a maintained destination.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-8.png)
+![Inventory, backup, contract review, delivery/recovery tests and controlled cutover to a maintained destination. Cloud Connection ended 2026-03-24; independently supported channels must be verified.](../../.gitbook/assets/en-observability-alerting-03-grafana-oncall-8.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-03-grafana-oncall-8.html)
 
@@ -426,3 +428,4 @@ Test your knowledge with the [Grafana OnCall Quiz](../../quizzes/observability/a
 - [OnCall API reference](https://grafana.com/docs/oncall/latest/oncall-api-reference/)
 - [Archived source contract](https://github.com/grafana-cold-storage/oncall/tree/af0fbd40558c9a63bcf438589894c440fc434a54)
 - [Opsgenie lifecycle](https://www.atlassian.com/software/opsgenie)
+- [Cloud Connection cutoff and alternatives](https://grafana.com/docs/oncall/latest/set-up/open-source/)

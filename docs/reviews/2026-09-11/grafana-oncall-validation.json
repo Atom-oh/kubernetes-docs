@@ -148,6 +148,13 @@
         "; } @media (min-width: 1024px) { #adg4-global-nav .component.component--heading.mobile-solutions-title { display: none; } #adg4-global-nav .adg4-nav-link-products .dropdown-content { left: -100px; width: 912px; } } .adg4-nav-link-teams .dropdown-content, .adg4-nav-link-why-atlassian .dropdown-content { width: 696px; left: 5px; } .adg4-nav-link-",
         ".constants.headerLoginMenu = true; imkt.constants.public = true; imkt.constants.mobileBreakpoint = 640; })(); { \"type\":\"imkt.pages.WACPage\", \"params\": { } } function initializeATLAnalytics() { var pageViewProperties = { contentSite: 'WAC', contentType: 'Website', contentProduct: 'Opsgenie' }; /* get url path, convert to dash format and add it t"
       ]
+    },
+    {
+      "name": "cloud-connection-cutoff",
+      "url": "https://grafana.com/docs/oncall/latest/set-up/open-source/",
+      "status": 200,
+      "sha256": "bac7da4694082fb19d2f4b14e55be97a8ac79d79ac6bed8f7d2716196e84b214",
+      "verifiedClaim": "Cloud Connection ended 2026-03-24; OSS mobile push via Grafana IRM app and Cloud Connection-dependent SMS/voice unavailable. Separately configured notification mechanisms are distinct."
     }
   ],
   "archivedCodeSources": [
@@ -226,7 +233,8 @@
     "AcknowledgevsResolve/source-rulelifecycle;importantselectspersonalrulesnotallchannels;actualcustomwebhookfields/declare_incidentfeaturegates.",
     "Nestedslackroutecontract,payload-specificgroupingandrouting,timersnotinterchangeable;unsupportedslashcommands/Firebase/Teamsuniversalsettingsremoved.",
     "Migrationtowell-maintaineddestinationwithbackups,identitymapping,delivery/recoverytestsandnonfixedcutover;20quizanswersand116oldIDsretained.",
-    "All18figuresrepaired/captionsaligned;18showcase+54browser+18SVG+18individualPNGreviewed;fourrefinementsrechecked."
+    "All18figuresrepaired/captionsaligned;18showcase+54browser+18SVG+18individualPNGreviewed;fourrefinementsrechecked.",
+    "ONCALL-R1-001 fixed: explicitly state expired Cloud Connection path and distinguish independent Twilio/notification-service alternatives in both guides, quizzes and relevant captions."
   ],
   "native": {
     "inventory-validation.json": {
@@ -397,7 +405,7 @@
         "path": "en/observability/alerting/03-grafana-oncall.md",
         "originalLines": 1011,
         "originalHash": "471f6fd366dd0432093460b892b6ae9275c777c30935319e2980066585e3453b",
-        "sha256": "c96e7a8294dfe5a205d50b18dcc69eefbdb0cc05780590c977b36c88cd89162a",
+        "sha256": "44662f6f0298aaaab20816dc6c12966aedf6b5e94e8660d8b0a7641ba301dc1d",
         "originalIds": 56,
         "aliases": [],
         "missingOld": [],
@@ -462,7 +470,7 @@
         "path": "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
         "originalLines": 247,
         "originalHash": "260271b2728b29b242f79e2fd452707a218c497cde9f86cb2e4f16a18574c62d",
-        "sha256": "b76cd946d8d87aacc242ffd5ac9e82284fa04058ae4372090725e99cf0d03307",
+        "sha256": "cd4d6cf6df5e6e2a88a20d9e1eaf58e3a55657aaf1b5044e20824a61da033487",
         "originalIds": 2,
         "aliases": [],
         "missingOld": [],
@@ -506,7 +514,7 @@
         "path": "ko/observability/alerting/03-grafana-oncall.md",
         "originalLines": 1011,
         "originalHash": "9a8bf7072009b9c14eddabc8e92ebb396c439fec5a394d3d10f151a6d4a0699a",
-        "sha256": "22ad87972e538e211f7b785341df11c77c64ff9195daea1428ba11d6baddfeaa",
+        "sha256": "e72a148fb34042f5abc7373d8b3e540e4cb16cbc2d1dfd8fcb195e08e3fb5414",
         "originalIds": 56,
         "aliases": [],
         "missingOld": [],
@@ -571,7 +579,7 @@
         "path": "ko/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
         "originalLines": 247,
         "originalHash": "6e61be2cf9ec20e2c5b714a0a68445ca3d3d1681fc91bdbbb80736727f4f862d",
-        "sha256": "844b7d76d246f5a2313172dcdc7e035a70ddfb95aa42c947d176999c06d6607d",
+        "sha256": "8fba7b2c34577a1609d436b38d367611bf0c9ae330922af5c57abca54b7253a9",
         "originalIds": 2,
         "aliases": [],
         "missingOld": [],
@@ -1730,19 +1738,19 @@
   "artifacts": [
     {
       "path": "en/observability/alerting/03-grafana-oncall.md",
-      "sha256": "c96e7a8294dfe5a205d50b18dcc69eefbdb0cc05780590c977b36c88cd89162a"
+      "sha256": "44662f6f0298aaaab20816dc6c12966aedf6b5e94e8660d8b0a7641ba301dc1d"
     },
     {
       "path": "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
-      "sha256": "b76cd946d8d87aacc242ffd5ac9e82284fa04058ae4372090725e99cf0d03307"
+      "sha256": "cd4d6cf6df5e6e2a88a20d9e1eaf58e3a55657aaf1b5044e20824a61da033487"
     },
     {
       "path": "ko/observability/alerting/03-grafana-oncall.md",
-      "sha256": "22ad87972e538e211f7b785341df11c77c64ff9195daea1428ba11d6baddfeaa"
+      "sha256": "e72a148fb34042f5abc7373d8b3e540e4cb16cbc2d1dfd8fcb195e08e3fb5414"
     },
     {
       "path": "ko/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
-      "sha256": "844b7d76d246f5a2313172dcdc7e035a70ddfb95aa42c947d176999c06d6607d"
+      "sha256": "8fba7b2c34577a1609d436b38d367611bf0c9ae330922af5c57abca54b7253a9"
     },
     {
       "path": "examples/observability/oncall/inventory.py",
@@ -2123,5 +2131,33 @@
         }
       ]
     }
+  },
+  "cloudConnectionFollowup": {
+    "baseCommit": "5c20ba59e22a8fdd4fd730d0ffe2eacb4cf1ae19",
+    "changes": [
+      {
+        "path": "en/observability/alerting/03-grafana-oncall.md",
+        "previousSha256": "c96e7a8294dfe5a205d50b18dcc69eefbdb0cc05780590c977b36c88cd89162a",
+        "sha256": "44662f6f0298aaaab20816dc6c12966aedf6b5e94e8660d8b0a7641ba301dc1d"
+      },
+      {
+        "path": "en/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+        "previousSha256": "b76cd946d8d87aacc242ffd5ac9e82284fa04058ae4372090725e99cf0d03307",
+        "sha256": "cd4d6cf6df5e6e2a88a20d9e1eaf58e3a55657aaf1b5044e20824a61da033487"
+      },
+      {
+        "path": "ko/observability/alerting/03-grafana-oncall.md",
+        "previousSha256": "22ad87972e538e211f7b785341df11c77c64ff9195daea1428ba11d6baddfeaa",
+        "sha256": "e72a148fb34042f5abc7373d8b3e540e4cb16cbc2d1dfd8fcb195e08e3fb5414"
+      },
+      {
+        "path": "ko/quizzes/observability/alerting/03-grafana-oncall-quiz.md",
+        "previousSha256": "844b7d76d246f5a2313172dcdc7e035a70ddfb95aa42c947d176999c06d6607d",
+        "sha256": "8fba7b2c34577a1609d436b38d367611bf0c9ae330922af5c57abca54b7253a9"
+      }
+    ],
+    "fencedCodeUnchanged": true,
+    "sourceSHA256": "bac7da4694082fb19d2f4b14e55be97a8ac79d79ac6bed8f7d2716196e84b214",
+    "scope": "Four prose/caption/source updates. Previous native and visual artifacts unchanged; current Markdown compile/anchor/answer checks rerun."
   }
 }

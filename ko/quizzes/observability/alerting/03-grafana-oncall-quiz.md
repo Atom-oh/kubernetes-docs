@@ -6,6 +6,8 @@
 
 Grafana OnCall에 대한 이해도를 테스트하는 퀴즈입니다.
 
+**Cloud Connection도 2026-03-24에 종료되었습니다.** OSS 사용자의 Grafana IRM 모바일 앱 push와 Cloud Connection에 의존하는 SMS·음성 알림은 더 이상 동작하지 않습니다. 별도로 구성한 Twilio 또는 다른 알림 서비스는 별도 경로이며 모든 자체 호스팅 전화/SMS 방식이 종료됐다는 뜻은 아닙니다.
+
 ---
 
 1. Grafana OnCall의 주요 기능이 아닌 것은?

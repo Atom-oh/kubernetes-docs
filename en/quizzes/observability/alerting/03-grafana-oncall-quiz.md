@@ -6,6 +6,8 @@ This quiz covers review/migration of archived OnCall OSS installations.
 
 A quiz to test your understanding of Grafana OnCall.
 
+**Cloud Connection ended on 2026-03-24.** OSS mobile push through the Grafana IRM app and SMS/voice notifications relying on Cloud Connection no longer function. Separately configured Twilio or other notification services are distinct paths; this does not mean every self-hosted phone/SMS mechanism ended.
+
 ---
 
 1. Which is NOT a key feature of Grafana OnCall?
