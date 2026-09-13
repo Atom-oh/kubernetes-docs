@@ -1,999 +1,490 @@
 # Runtime Security
 
-> **Supported Versions**: Falco 0.39+, Tetragon 1.2+, Kubernetes 1.31, 1.32, 1.33
-> **最終更新**: February 22, 2026
+> **最終更新**: September 13, 2026
+> **検証ベースライン**: Falco 0.44.1 / chart 9.1.0、Falcosidekick 2.35.0 / chart 0.14.0、Tetragon 1.7.1。実際の kernel、OS、node type のサポートを確認してください。
 
-Runtime security は、containers の実行中に悪意のあるアクティビティや異常な挙動を検出し、対応することを指します。このドキュメントでは、Falco と Tetragon を中心とした runtime security 戦略について説明します。
+Runtime security は process、file、network のアクティビティを監視し、検証済みの policy を通じて選択した操作を制限します。**alert は侵害の証明ではありません。検知と防止には別々のテストが必要です。**このガイドは、ローカル CLI、schema、Helm、および synthetic event で確認しました。実際の cluster、kernel BPF program、notification channel は使用していません。
 
-## Table of Contents
+<span id="container-runtime-threats"></span>
+<span id="detection-technologies"></span>
 
-1. [Runtime Threat Landscape](#runtime-threat-landscape)
-2. [Falco](#falco)
-3. [Tetragon](#tetragon)
-4. [Falco vs Tetragon Comparison](#falco-vs-tetragon-comparison)
-5. [Kubernetes Audit Logging](#kubernetes-audit-logging)
-6. [Runtime Threat Detection Patterns](#runtime-threat-detection-patterns)
-7. [Incident Response](#incident-response)
-8. [SIEM/SOAR Integration](#siemsoar-integration)
+## Runtime Threat の状況
 
----
+| 観測ポイント | 確認できる内容 | 制限事項 |
+|---|---|---|
+| Syscall/kernel hook | Process 実行、file access、connection attempt | drop event、privilege、kernel support、filter を確認する |
+| Kubernetes audit | API requester、verb、object、response status | Pod 内のすべての process/file 操作は表示しない |
+| Network flow | Connection、drop、policy verdict | port または暗号化された connection だけでは悪意を立証できない |
+| Image/admission policy | Vulnerability、signature、Pod setting | deployment 後のすべての挙動を検知するわけではない |
 
-## Runtime Threat Landscape
+eBPF だけでは低 overhead や安全性は保証されません。実際の node で hook、event volume、filtering、output cost、CPU、memory を測定してください。command name が indicator と一致するという理由だけで、production process を自動的に kill してはいけません。
 
-### Container Runtime Threats
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    Container Runtime Threat Types                        │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │                      Attack Vectors                              │   │
-│  │                                                                  │   │
-│  │  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐   │   │
-│  │  │Vulnerability│ │  Miscon-  │  │ Malicious │  │  Supply   │   │   │
-│  │  │  Exploit   │  │figuration │  │   Image   │  │  Chain    │   │   │
-│  │  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘   │   │
-│  │        │              │              │              │          │   │
-│  │        └──────────────┴──────────────┴──────────────┘          │   │
-│  │                              │                                  │   │
-│  │                              ▼                                  │   │
-│  │  ┌─────────────────────────────────────────────────────────┐   │   │
-│  │  │                    Runtime Threats                       │   │   │
-│  │  │                                                          │   │   │
-│  │  │  • Cryptocurrency Mining                                 │   │   │
-│  │  │  • Reverse Shell                                         │   │   │
-│  │  │  • Privilege Escalation                                  │   │   │
-│  │  │  • Container Escape                                      │   │   │
-│  │  │  • Data Exfiltration                                     │   │   │
-│  │  │  • Lateral Movement                                      │   │   │
-│  │  │  • Persistence                                           │   │   │
-│  │  └─────────────────────────────────────────────────────────┘   │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-### Detection Technologies
-
-| Technology | Description | Pros | Cons |
-|------------|-------------|------|------|
-| **Syscall Monitoring** | Kernel system call tracing | Detailed visibility | Overhead |
-| **eBPF** | Kernel-level programming | High performance, safe | Complex implementation |
-| **Audit Logs** | K8s API call recording | Compliance | Limited runtime visibility |
-| **Network Monitoring** | Traffic pattern analysis | Lateral movement detection | Encrypted traffic |
-
----
+<span id="default-rule-examples"></span>
 
 ## Falco
 
-### Falco Overview
+### Falco の概要
 
-Falco は cloud-native runtime security tool であり、system calls を分析して異常な挙動を検出します。
+Falco は event を rule と照合して評価します。一般的な syscall path は `Linux event → modern eBPF/kmod capture → Falco filter/rule → JSON output → Falcosidekick → notification/storage` です。Slack と PagerDuty は downstream integration であり、Falco rule engine 内の native Slack client ではありません。
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         Falco Architecture                               │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │                      Kubernetes Node                             │   │
-│  │                                                                  │   │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │   │
-│  │  │ Container A │  │ Container B │  │ Container C │             │   │
-│  │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘             │   │
-│  │         │                │                │                     │   │
-│  │         └────────────────┼────────────────┘                     │   │
-│  │                          │ System Calls                         │   │
-│  │                          ▼                                      │   │
-│  │  ┌─────────────────────────────────────────────────────────┐   │   │
-│  │  │                    Linux Kernel                          │   │   │
-│  │  │  ┌─────────────────────────────────────────────────┐    │   │   │
-│  │  │  │         Falco eBPF/Kernel Module               │    │   │   │
-│  │  │  │         (System Call Capture)                  │    │   │   │
-│  │  │  └─────────────────────────────────────────────────┘    │   │   │
-│  │  └─────────────────────────────────────────────────────────┘   │   │
-│  │                          │                                      │   │
-│  │                          ▼                                      │   │
-│  │  ┌─────────────────────────────────────────────────────────┐   │   │
-│  │  │                    Falco Engine                          │   │   │
-│  │  │  ┌───────────┐  ┌───────────┐  ┌───────────────────┐   │   │   │
-│  │  │  │   Rules   │  │ Filtering │  │  Output Channels  │   │   │   │
-│  │  │  │  Engine   │──▶│  Engine   │──▶│ • stdout         │   │   │   │
-│  │  │  │           │  │           │  │ • file            │   │   │   │
-│  │  │  │           │  │           │  │ • Slack           │   │   │   │
-│  │  │  │           │  │           │  │ • PagerDuty       │   │   │   │
-│  │  │  └───────────┘  └───────────┘  └───────────────────┘   │   │   │
-│  │  └─────────────────────────────────────────────────────────┘   │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+0.44.1 distribution には container plugin 0.7.1 が同梱されています。これは container.id などの field を提供するため、すべての plugin を無効にすると、それらの field を使用する rule は compile/run できなくなります。runtime socket、Kubernetes metadata collection、access permission を確認してください。
 
 ### Falco Installation (EKS)
 
+この例は、host access を管理している Linux EC2 node を対象としています。DaemonSet が Fargate やその他の制限された host 上で実行できると想定しないでください。modern eBPF の kernel/BTF/capability 要件を確認してください。chart 9.1.0 は明示的な driver kind `modern_ebpf` と `kmod` をサポートしています。古い `ebpf` 設定を残さないでください。
+
+[example directory](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/runtime-security)を download し、`examples/security/runtime-security` からこれらの command を実行します。[example README](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/runtime-security/README.md)には、3 つの values file と rule が説明されています。
+
 ```bash
-# Install Falco using Helm
 helm repo add falcosecurity https://falcosecurity.github.io/charts
-helm repo update
-
-# Use eBPF driver (recommended)
-helm install falco falcosecurity/falco \
-    --namespace falco \
-    --create-namespace \
-    --set driver.kind=ebpf \
-    --set falcosidekick.enabled=true \
-    --set falcosidekick.webui.enabled=true
+helm repo update falcosecurity
+helm upgrade --install falcosidekick falcosecurity/falcosidekick \
+  --version 0.14.0 --namespace falco --create-namespace \
+  --values falcosidekick-values.yaml
+helm upgrade --install falco falcosecurity/falco \
+  --version 9.1.0 --namespace falco \
+  --values falco-values.yaml
 ```
 
+Sidekick chart の appVersion は default image tag と異なるため、この例では image.tag を 2.35.0 に明示的に固定しています。まず output credential Secret と Prometheus Operator CRD を準備してください。Secret がないと Pod の起動を妨げる可能性があります。最小限の lab では、使用しない notification/metrics option を無効にしてください。
+
 ```yaml
-# values.yaml (detailed configuration)
 driver:
-  kind: ebpf
-
-falco:
-  jsonOutput: true
-  jsonIncludeOutputProperty: true
-  httpOutput:
-    enabled: true
-    url: http://falcosidekick:2801
-
-customRules:
-  custom-rules.yaml: |-
-    # Add custom rules here
-
-falcosidekick:
+  kind: modern_ebpf
+metrics:
   enabled: true
-  config:
-    slack:
-      webhookurl: "https://hooks.slack.com/services/xxx"
-      outputformat: "all"
-      minimumpriority: "warning"
-    pagerduty:
-      apikey: "xxx"
-      minimumpriority: "critical"
-
-  webui:
+serviceMonitor:
+  create: true
+falcosidekick:
+  enabled: false
+falco:
+  json_output: true
+  json_include_output_property: true
+  http_output:
     enabled: true
-    service:
-      type: ClusterIP
+    url: http://falcosidekick.falco.svc:2801
+customRules:
+  documentation-rules.yaml: |-
+    - macro: doc_spawned
+      condition: evt.type in (execve, execveat) and evt.res = SUCCESS
+    - macro: doc_container
+      condition: container.id != host
+    - rule: Documentation shell execution
+      desc: Observe successful shell process execution in a container; not proof of compromise.
+      condition: doc_spawned and doc_container and proc.name in (bash, sh, dash, zsh)
+      output: Shell process observed (proc=%proc.name command=%proc.cmdline container=%container.id)
+      priority: NOTICE
+      tags:
+      - documentation
+      - process
+    - rule: Documentation service account token read
+      desc: Observe read access to the default projected service account token path; legitimate
+        clients also read it.
+      condition: evt.type in (open, openat, openat2) and evt.is_open_read
+        = true and fd.num >= 0 and doc_container and fd.name startswith /var/run/secrets/kubernetes.io/serviceaccount/
+      output: Service account path read (proc=%proc.name file=%fd.name container=%container.id)
+      priority: NOTICE
+      tags:
+      - documentation
+      - credential_access
 ```
 
-### Falco Rule Structure
+
+この設定は、個別に install した falcosidekick ClusterIP Service に HTTP を送信します。namespace を共有しても traffic の authentication や encryption は行われません。実際の trust boundary に従って access policy と TLS/mTLS を設定し、node/Falco connectivity を確認してください。Falco は json_output や http_output のような snake_case field を使用します。古い jsonOutput/httpOutput と削除された grpc 設定は 0.44.1 schema で失敗します。
+
+### Falco Rule の構造
+
+これらの rule は必要な macro を独自に定義し、default rule name を置き換えません。既存の rule を意図的に変更する場合は、固定した ruleset の override syntax を使用してください。
 
 ```yaml
-# Rule structure
-- rule: <rule name>
-  desc: <description>
-  condition: <condition expression>
-  output: <output message>
-  priority: <severity: EMERGENCY|ALERT|CRITICAL|ERROR|WARNING|NOTICE|INFO|DEBUG>
-  tags: [<tag list>]
-  enabled: true|false
+- macro: doc_spawned
+  condition: evt.type in (execve, execveat) and evt.res = SUCCESS
+- macro: doc_container
+  condition: container.id != host
+- rule: Documentation shell execution
+  desc: Observe successful shell process execution in a container; not proof of compromise.
+  condition: doc_spawned and doc_container and proc.name in (bash, sh, dash, zsh)
+  output: Shell process observed (proc=%proc.name command=%proc.cmdline container=%container.id)
+  priority: NOTICE
+  tags:
+  - documentation
+  - process
+- rule: Documentation service account token read
+  desc: Observe read access to the default projected service account token path; legitimate
+    clients also read it.
+  condition: evt.type in (open, openat, openat2) and evt.is_open_read
+    = true and fd.num >= 0 and doc_container and fd.name startswith /var/run/secrets/kubernetes.io/serviceaccount/
+  output: Service account path read (proc=%proc.name file=%fd.name container=%container.id)
+  priority: NOTICE
+  tags:
+  - documentation
+  - credential_access
 ```
 
-### Default Rule Examples
 
-```yaml
-# /etc/falco/falco_rules.yaml
+enter event の削除後、Falco 0.44.1 は evt.dir が deprecated であると warning を出します。これらの例では、successful exec event と read event を直接選択しています。正当な Kubernetes client も service account token を読み取るため、read signal だけでは「unauthorized access」ではありません。workload baseline、承認済み binary、Pod identity と組み合わせてください。
 
-# Detect shell execution in container
-- rule: Terminal shell in container
-  desc: A shell was spawned in a container
-  condition: >
-    spawned_process and
-    container and
-    shell_procs and
-    proc.tty != 0
-  output: >
-    Shell spawned in a container
-    (user=%user.name user_loginuid=%user.loginuid container=%container.name
-    shell=%proc.name parent=%proc.pname cmdline=%proc.cmdline
-    terminal=%proc.tty exe_flags=%evt.arg.flags)
-  priority: WARNING
-  tags: [shell, container, mitre_execution]
+### Custom Rule の作成
 
-# Detect sensitive file reads
-- rule: Read sensitive file untrusted
-  desc: An untrusted program read a sensitive file
-  condition: >
-    sensitive_files and
-    open_read and
-    proc_name_exists and
-    not user_trusted_containers
-  output: >
-    Sensitive file read by untrusted program
-    (user=%user.name name=%proc.name command=%proc.cmdline
-    file=%fd.name parent=%proc.pname gparent=%proc.aname[2]
-    container=%container.name image=%container.image.repository)
-  priority: WARNING
-  tags: [filesystem, mitre_credential_access]
+| Pattern | 考えられる signal | 必要な考慮事項 |
+|---|---|---|
+| 疑わしい mining | Process name、pool/stratum string、通常と異なる resource use | rename と正当な computation により heuristic が回避または発動される可能性がある |
+| 疑わしい reverse shell | shell argv 内の connection string と通常と異なる outbound flow | exec event の fd.name は network connection の証明ではない |
+| Privilege escalation | credential change、SUID setting、capability | user.uid/proc.uid/proc.suid の意味と操作の成功を確認する |
+| 疑わしい escape | Namespace/host-path access と通常と異なる mount | nsenter または /.dockerenv string は escape の成功を立証しない |
 
-# Detect privilege escalation
-- rule: Detect su or sudo
-  desc: Detect su or sudo execution
-  condition: >
-    spawned_process and
-    (proc.name in (su, sudo))
-  output: >
-    Privilege escalation via su/sudo
-    (user=%user.name command=%proc.cmdline container=%container.name)
-  priority: WARNING
-  tags: [privilege_escalation]
-```
-
-### Writing Custom Rules
-
-```yaml
-# Cryptocurrency mining detection
-- rule: Detect Cryptocurrency Mining
-  desc: Detect cryptocurrency mining processes
-  condition: >
-    spawned_process and
-    container and
-    (
-      proc.name in (xmrig, minerd, cgminer, cpuminer, bfgminer) or
-      proc.cmdline contains "stratum+tcp://" or
-      proc.cmdline contains "pool.minexmr.com" or
-      proc.cmdline contains "cryptonight"
-    )
-  output: >
-    Cryptocurrency mining detected
-    (user=%user.name command=%proc.cmdline container=%container.name
-    image=%container.image.repository)
-  priority: CRITICAL
-  tags: [cryptomining, mitre_resource_hijacking]
-
-# Reverse shell detection
-- rule: Reverse Shell Detection
-  desc: Detect reverse shell connections
-  condition: >
-    spawned_process and
-    container and
-    (
-      (proc.name = bash and proc.cmdline contains "/dev/tcp/") or
-      (proc.name = nc and proc.args contains "-e") or
-      (proc.name = python and proc.cmdline contains "socket" and
-       proc.cmdline contains "subprocess") or
-      (proc.name = perl and proc.cmdline contains "socket") or
-      (proc.name = ruby and proc.cmdline contains "TCPSocket")
-    )
-  output: >
-    Reverse shell detected
-    (user=%user.name command=%proc.cmdline container=%container.name
-    image=%container.image.repository connection=%fd.name)
-  priority: CRITICAL
-  tags: [reverse_shell, mitre_execution]
-
-# Kubernetes Secret access detection
-- rule: Unauthorized K8s Secret Access
-  desc: Detect unauthorized access to mounted Kubernetes secrets
-  condition: >
-    open_read and
-    container and
-    fd.name startswith "/var/run/secrets/kubernetes.io" and
-    not proc.name in (kubelet, kube-proxy)
-  output: >
-    Kubernetes secret accessed
-    (user=%user.name command=%proc.cmdline file=%fd.name
-    container=%container.name image=%container.image.repository)
-  priority: WARNING
-  tags: [k8s, secrets, mitre_credential_access]
-
-# Container escape attempt detection
-- rule: Container Escape Attempt
-  desc: Detect potential container escape attempts
-  condition: >
-    spawned_process and
-    container and
-    (
-      proc.cmdline contains "nsenter" or
-      proc.cmdline contains "/proc/1/root" or
-      proc.cmdline contains "/.dockerenv" or
-      (proc.name = mount and proc.args contains "cgroup")
-    )
-  output: >
-    Container escape attempt detected
-    (user=%user.name command=%proc.cmdline container=%container.name
-    image=%container.image.repository)
-  priority: CRITICAL
-  tags: [container_escape, mitre_privilege_escalation]
-```
+Rule compile は検知の有効性を測定しません。段階的 rollout の前に、synthetic/authorized lab event、正常な workload、欠落した metadata、drop counter をテストしてください。argument、path、log には secret が含まれる可能性があります。event field、retention、access を制限してください。
 
 ### Falco Alert Configuration
 
 ```yaml
-# Falcosidekick configuration for various alert channels
-falcosidekick:
-  config:
-    # Slack
-    slack:
-      webhookurl: "https://hooks.slack.com/services/xxx/yyy/zzz"
-      channel: "#security-alerts"
-      username: "Falco"
-      outputformat: "all"
-      minimumpriority: "warning"
-
-    # PagerDuty
-    pagerduty:
-      routingkey: "xxx"
-      minimumpriority: "critical"
-
-    # AWS CloudWatch
+config:
+  existingSecret: falcosidekick-output-credentials
+  slack:
+    minimumpriority: warning
+  pagerduty:
+    minimumpriority: critical
+  aws:
+    region: ap-northeast-2
     cloudwatchlogs:
-      region: "us-east-1"
-      loggroup: "/falco/alerts"
-      logstream: "eks-cluster"
-
-    # AWS Security Hub
-    securityhub:
-      region: "us-east-1"
-      minimumpriority: "high"
-
-    # Prometheus
-    prometheus:
-      extralabels: "cluster:production"
-
-    # Elasticsearch
-    elasticsearch:
-      hostport: "https://elasticsearch:9200"
-      index: "falco"
-      type: "_doc"
+      loggroup: /falco/alerts
+      logstream: documentation
+      minimumpriority: warning
+  elasticsearch:
+    minimumpriority: warning
+    checkcert: true
+webui:
+  enabled: false
+serviceMonitor:
+  enabled: true
+image:
+  tag: 2.35.0
 ```
 
----
+
+falcosidekick-output-credentials は、envFrom を通じて読み取る同一 namespace の既存 Secret です。secret-management process を通じて、SLACK_WEBHOOKURL、PAGERDUTY_ROUTINGKEY、ELASTICSEARCH_HOSTPORT/USERNAME/PASSWORD など、承認済み output の variable だけを指定してください。Helm values 内に `${ELASTIC_PASSWORD}` と記述しても shell substitution は実行されません。credential を Git、command line、review log に公開しないでください。
+
+AWS setting は config.aws 配下に配置します。workload identity を確認し、IAM action/resource の scope を対象の log group/stream に限定してください。minimumpriority には `high` ではなく emergency/alert/critical/error/warning/notice/informational/debug を使用します。各 output の activation condition、retry、failure metrics を確認してください。この例では Web UI を無効にしています。
+
+<span id="tetragon-installation"></span>
+<span id="tracingpolicy-basic-structure"></span>
+<span id="process-monitoring"></span>
 
 ## Tetragon
 
-### Tetragon Overview
+### Tetragon の概要
 
-Tetragon は、Cilium project の eBPF ベースの security observability および runtime enforcement tool です。
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        Tetragon Architecture                             │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │                    Kubernetes Cluster                            │   │
-│  │                                                                  │   │
-│  │  ┌───────────────────────────────────────────────────────────┐  │   │
-│  │  │                    Tetragon DaemonSet                      │  │   │
-│  │  │                                                            │  │   │
-│  │  │  ┌─────────────────────────────────────────────────────┐  │  │   │
-│  │  │  │                   eBPF Programs                      │  │  │   │
-│  │  │  │                                                      │  │  │   │
-│  │  │  │  • Process Execution   • File Access                │  │  │   │
-│  │  │  │  • Network Activity    • Capability Usage           │  │  │   │
-│  │  │  │  • Namespace Changes   • Syscall Tracing            │  │  │   │
-│  │  │  └─────────────────────────────────────────────────────┘  │  │   │
-│  │  │                           │                                │  │   │
-│  │  │                           ▼                                │  │   │
-│  │  │  ┌─────────────────────────────────────────────────────┐  │  │   │
-│  │  │  │               TracingPolicy CRD                      │  │  │   │
-│  │  │  │                                                      │  │  │   │
-│  │  │  │  • kprobes    • tracepoints    • uprobes            │  │  │   │
-│  │  │  │  • Selectors  • Actions        • Filters            │  │  │   │
-│  │  │  └─────────────────────────────────────────────────────┘  │  │   │
-│  │  │                           │                                │  │   │
-│  │  │                           ▼                                │  │   │
-│  │  │  ┌─────────────────────────────────────────────────────┐  │  │   │
-│  │  │  │                    Outputs                           │  │  │   │
-│  │  │  │                                                      │  │  │   │
-│  │  │  │  • JSON Events  • gRPC API  • Prometheus Metrics    │  │  │   │
-│  │  │  └─────────────────────────────────────────────────────┘  │  │   │
-│  │  └────────────────────────────────────────────────────────────┘  │   │
-│  └─────────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-### Tetragon Installation
+Tetragon は Cilium CNI とは独立して実行できます。built-in の process_exec/exit event と追加の TracingPolicy hook を区別してください。flow は `kernel hook → selector → Post/supported action → JSON/gRPC/metrics` です。Kubernetes CRD 自体は kernel 内で実行されません。
 
 ```bash
-# Install Tetragon using Helm
 helm repo add cilium https://helm.cilium.io
-helm repo update
-
-helm install tetragon cilium/tetragon \
-    -n kube-system \
-    --set tetragon.enableProcessCred=true \
-    --set tetragon.enableProcessNs=true
+helm repo update cilium
+helm upgrade --install tetragon cilium/tetragon \
+  --version 1.7.1 --namespace kube-system --values tetragon-values.yaml
 ```
-
-### TracingPolicy Basic Structure
 
 ```yaml
-apiVersion: cilium.io/v1alpha1
-kind: TracingPolicy
-metadata:
-  name: example-policy
-spec:
-  # kprobes: kernel function tracing
-  kprobes:
-    - call: "security_file_open"
-      syscall: false
-      args:
-        - index: 0
-          type: "file"
-      selectors:
-        - matchArgs:
-            - index: 0
-              operator: "Prefix"
-              values:
-                - "/etc/shadow"
-          matchActions:
-            - action: Sigkill  # Kill process
+tetragon:
+  enableProcessCred: true
+  enableProcessNs: true
 ```
 
-### Process Monitoring
 
-```yaml
-apiVersion: cilium.io/v1alpha1
-kind: TracingPolicy
-metadata:
-  name: process-monitoring
-spec:
-  kprobes:
-    # Monitor execve system call
-    - call: "sys_execve"
-      syscall: true
-      args:
-        - index: 0
-          type: "string"  # Executable path
-      selectors:
-        - matchBinaries:
-            - operator: "In"
-              values:
-                - "/bin/bash"
-                - "/bin/sh"
-                - "/usr/bin/python"
-          matchNamespaces:
-            - namespace: Pid
-              operator: NotIn
-              values:
-                - "host_ns"  # Exclude host namespace
-```
+operator/CRD の readiness と、各 node の kernel、BTF、capability を確認してください。Helm rendering は hook attachment を保証しません。namespaced example は demo-app workload を対象とします。選択した policy type と hook の有効な scope を確認してください。
 
 ### File Access Monitoring
 
 ```yaml
 apiVersion: cilium.io/v1alpha1
-kind: TracingPolicy
+kind: TracingPolicyNamespaced
 metadata:
-  name: sensitive-file-access
+  name: documentation-file-observe
+  namespace: demo-app
 spec:
   kprobes:
-    - call: "security_file_open"
-      syscall: false
-      args:
-        - index: 0
-          type: "file"
-      selectors:
-        # Monitor sensitive file access
-        - matchArgs:
-            - index: 0
-              operator: "Prefix"
-              values:
-                - "/etc/shadow"
-                - "/etc/passwd"
-                - "/etc/sudoers"
-                - "/root/.ssh"
-                - "/var/run/secrets/kubernetes.io"
-          matchActions:
-            - action: Post  # Log event
----
-apiVersion: cilium.io/v1alpha1
-kind: TracingPolicy
-metadata:
-  name: block-sensitive-file-write
-spec:
-  kprobes:
-    - call: "security_file_open"
-      syscall: false
-      args:
-        - index: 0
-          type: "file"
-        - index: 1
-          type: "int"  # flags
-      selectors:
-        # Block write access to sensitive files
-        - matchArgs:
-            - index: 0
-              operator: "Prefix"
-              values:
-                - "/etc/passwd"
-                - "/etc/shadow"
-            - index: 1
-              operator: "Mask"
-              values:
-                - "2"  # O_WRONLY or O_RDWR
-          matchActions:
-            - action: Sigkill  # Kill process
+  - call: security_file_permission
+    syscall: false
+    args:
+    - index: 0
+      type: file
+    - index: 1
+      type: int
+    selectors:
+    - matchArgs:
+      - index: 0
+        operator: Prefix
+        values:
+        - /etc/shadow
+        - /root/.ssh/
+      - index: 1
+        operator: Mask
+        values:
+        - '4'
+      matchActions:
+      - action: Post
 ```
+
+
+`security_file_permission(struct file *, int mask)` の第 2 argument は permission mask です。MAY_READ=4、MAY_WRITE=2 です。単一 argument の security_file_open function に「index 1 = open flag」を割り当てるのは誤りです。open flag の O_WRONLY=1/O_RDWR=2 もこの permission mask とは異なります。この hook だけでは、すべての mmap/truncate/file mutation を対象にできません。
 
 ### Network Monitoring
 
 ```yaml
 apiVersion: cilium.io/v1alpha1
-kind: TracingPolicy
+kind: TracingPolicyNamespaced
 metadata:
-  name: network-monitoring
+  name: documentation-outbound-observe
+  namespace: demo-app
 spec:
   kprobes:
-    # Monitor outbound connections
-    - call: "tcp_connect"
-      syscall: false
-      args:
-        - index: 0
-          type: "sock"
-      selectors:
-        - matchArgs:
-            - index: 0
-              operator: "DPort"
-              values:
-                - "22"    # SSH
-                - "4444"  # Common reverse shell port
-                - "5555"  # Common reverse shell port
-          matchActions:
-            - action: Post
-
-    # Monitor DNS queries
-    - call: "udp_sendmsg"
-      syscall: false
-      args:
-        - index: 0
-          type: "sock"
-      selectors:
-        - matchArgs:
-            - index: 0
-              operator: "DPort"
-              values:
-                - "53"
-          matchActions:
-            - action: Post
+  - call: tcp_connect
+    syscall: false
+    args:
+    - index: 0
+      type: sock
+    selectors:
+    - matchArgs:
+      - index: 0
+        operator: DPort
+        values:
+        - '22'
+        - '4444'
+        - '5555'
+      matchActions:
+      - action: Post
 ```
+
+
+tcp_connect は TCP connection attempt を観測します。destination port だけでは malicious traffic や policy rejection を意味しません。UDP port 53 のアクティビティは完全な DNS question/answer analysis を提供しません。適切な DNS telemetry path を使用してください。
 
 ### Runtime Enforcement
 
-```yaml
-apiVersion: cilium.io/v1alpha1
-kind: TracingPolicy
-metadata:
-  name: block-crypto-miners
-spec:
-  kprobes:
-    - call: "sys_execve"
-      syscall: true
-      args:
-        - index: 0
-          type: "string"
-      selectors:
-        # Block cryptocurrency mining processes
-        - matchArgs:
-            - index: 0
-              operator: "Postfix"
-              values:
-                - "xmrig"
-                - "minerd"
-                - "cgminer"
-          matchActions:
-            - action: Sigkill
----
-apiVersion: cilium.io/v1alpha1
-kind: TracingPolicy
-metadata:
-  name: block-reverse-shells
-spec:
-  kprobes:
-    - call: "sys_execve"
-      syscall: true
-      args:
-        - index: 0
-          type: "string"
-        - index: 1
-          type: "string"  # argv
-      selectors:
-        # Block reverse shell patterns
-        - matchArgs:
-            - index: 1
-              operator: "Contains"
-              values:
-                - "/dev/tcp/"
-                - "bash -i"
-                - "nc -e"
-          matchActions:
-            - action: Sigkill
-```
+Post/monitor の挙動から開始し、正常な操作と false positive を確認してください。Sigkill は signal を送信します。hook と kernel の挙動によっては、すでに発生した effect を取り消せません。return-value override には、support される syscall/security function、kernel setting、適切な error result が必要です。任意の kprobe がすべてこれを support するわけではありません。
 
-### Tetragon CLI Usage
+filename や argv string から universal な mining/reverse-shell prevention を主張しないでください。execve argv は pointer の配列であり、単一の string argument ではありません。これを単一 string として読み取っても、意図した完全な command line は検査できません。process-event argument filtering と kernel action を区別し、承認された狭い scope の lab で enforcement を検証してください。
+
+### Tetragon CLI の使用
 
 ```bash
-# View event stream
-kubectl exec -n kube-system ds/tetragon -c tetragon -- tetra getevents
-
-# Filter process events
+kubectl exec -n kube-system ds/tetragon -c tetragon -- tetra getevents -o json
 kubectl exec -n kube-system ds/tetragon -c tetragon -- \
-    tetra getevents -o compact --process curl
-
-# JSON format output
-kubectl exec -n kube-system ds/tetragon -c tetragon -- \
-    tetra getevents -o json
-
-# Filter by namespace
-kubectl exec -n kube-system ds/tetragon -c tetragon -- \
-    tetra getevents --namespace production
+  tetra getevents -o compact --namespace production --process curl
+# Filter stored synthetic events locally:
+tetra getevents -o json --namespace demo-app < events.jsonl
 ```
 
----
+DaemonSet に対する実行では Pod/node の agent が選択されます。これは cluster-wide aggregation ではありません。ここでは stdin filtering path のみを実行しました。tetra tracingpolicy modify の 1.7.1 implementation も gRPC client を作成するため、offline validator としては使用しませんでした。
 
-## Falco vs Tetragon Comparison
+<span id="feature-comparison-table"></span>
+<span id="use-case-recommendations"></span>
 
-### Feature Comparison Table
+## Falco と Tetragon の比較
 
-| Feature | Falco | Tetragon |
-|---------|-------|----------|
-| **Technology Base** | Kernel module/eBPF | eBPF only |
-| **Performance** | Good | Excellent |
-| **Rule Language** | YAML + conditions | CRD (TracingPolicy) |
-| **Runtime Enforcement** | Limited | Native support |
-| **Kubernetes Integration** | Good | Excellent (Cilium) |
-| **Process Tracing** | ✓ | ✓ |
-| **File Monitoring** | ✓ | ✓ |
-| **Network Monitoring** | Limited | ✓ (Cilium integration) |
-| **Community** | Large and mature | Growing |
-| **Learning Curve** | Medium | High |
-| **Alert Integration** | Falcosidekick | Prometheus, gRPC |
+| 基準 | Falco | Tetragon |
+|---|---|---|
+| Policy | Event condition と ruleset | Kernel hook、selector、action |
+| 一般的な用途 | notification/storage integration を伴う検知 | Process visibility と明示的な hook enforcement |
+| 運用上の確認事項 | Driver/plugin/runtime metadata と drop event | BTF/hook support、policy scope、side effect |
+| Performance | 実際の load で CPU/memory/event loss を測定 | 同じ workload を使用する。eBPF だけで優位性は立証されない |
 
-### Use Case Recommendations
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    Recommended Tools by Use Case                         │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  Detection-focused Monitoring                                           │
-│  └─▶ Falco (mature ruleset, diverse alert integration)                 │
-│                                                                         │
-│  Runtime Enforcement Needed                                             │
-│  └─▶ Tetragon (process termination, network blocking)                  │
-│                                                                         │
-│  Cilium CNI Environment                                                 │
-│  └─▶ Tetragon (native integration)                                     │
-│                                                                         │
-│  Compliance/Auditing                                                    │
-│  └─▶ Falco + Tetragon (complementary)                                  │
-│                                                                         │
-│  Minimal Overhead Required                                              │
-│  └─▶ Tetragon (pure eBPF)                                              │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
----
+両方を deploy することが自動的に最善の選択となるわけではありません。重複収集、node privilege、cost、operational complexity、必要な enforcement を考慮してください。
 
 ## Kubernetes Audit Logging
 
 ### Audit Policy Configuration
 
+この policy は **self-managed Kubernetes API server** 用です。この YAML を適用しても、EKS の managed audit policy は置き換えられません。EKS control-plane audit log を有効にし、CloudWatch の access、retention、encryption を設定してください。
+
 ```yaml
-# audit-policy.yaml
 apiVersion: audit.k8s.io/v1
 kind: Policy
+omitStages:
+- RequestReceived
 rules:
-  # Log authentication failures
-  - level: Metadata
-    users: ["system:anonymous"]
-    verbs: ["*"]
-
-  # Detailed Secret access logging
-  - level: RequestResponse
+- level: Metadata
+  resources:
+  - group: ''
     resources:
-      - group: ""
-        resources: ["secrets"]
-    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-
-  # Pod exec/attach logging
-  - level: RequestResponse
+    - secrets
+    - serviceaccounts/token
+- level: Metadata
+  resources:
+  - group: ''
     resources:
-      - group: ""
-        resources: ["pods/exec", "pods/attach", "pods/portforward"]
-    verbs: ["create"]
-
-  # RBAC change logging
-  - level: RequestResponse
+    - pods/exec
+    - pods/attach
+    - pods/portforward
+- level: Request
+  resources:
+  - group: rbac.authorization.k8s.io
     resources:
-      - group: "rbac.authorization.k8s.io"
-        resources: ["roles", "rolebindings", "clusterroles", "clusterrolebindings"]
-    verbs: ["create", "update", "patch", "delete"]
-
-  # Minimal logging for read operations
-  - level: Metadata
-    verbs: ["get", "list", "watch"]
-
-  # All other requests
-  - level: Request
-    verbs: ["*"]
+    - roles
+    - rolebindings
+    - clusterroles
+    - clusterrolebindings
+  verbs:
+  - create
+  - update
+  - patch
+  - delete
+- level: Metadata
 ```
+
+
+Secrets および serviceaccounts/token の Request/RequestResponse logging は credential body を永続化する可能性があるため、Metadata を使用してください。audit rule は first-match です。sensitive-resource rule を先頭に配置してください。system:anonymous だけでは、すべての authentication failure を捕捉できません。audit stage、responseStatus、authentication log を確認してください。exec audit record は terminal session 内のすべての command の記録ではありません。
 
 ### EKS Audit Log Analysis
 
-```bash
-# CloudWatch Logs Insights queries
-
-# Secret access events
-fields @timestamp, user.username, verb, objectRef.resource, objectRef.name
+```text
+fields @timestamp, user.username, verb, objectRef.resource, objectRef.name, responseStatus.code
 | filter objectRef.resource = "secrets"
 | sort @timestamp desc
 | limit 100
-
-# Permission denied events
-fields @timestamp, user.username, verb, objectRef.resource, responseStatus.code
-| filter responseStatus.code = 403
-| sort @timestamp desc
-
-# exec/attach events
-fields @timestamp, user.username, objectRef.name, requestURI
-| filter objectRef.subresource in ["exec", "attach"]
-| sort @timestamp desc
 ```
 
----
+これは CloudWatch Logs Insights query であり、Bash ではありません。403 は拒否された response です。successful read は別に分類してください。logging を有効にした後に collection を確認し、retention を設定してください。
 
-## Runtime Threat Detection Patterns
+<span id="cryptocurrency-mining-detection"></span>
+<span id="reverse-shell-detection"></span>
+<span id="privilege-escalation-detection"></span>
 
-### Cryptocurrency Mining Detection
+## Runtime Threat Detection Pattern
+
+Seccomp は syscall を制限しますが、rejection が必ず process を terminate するとは限りません。action は ERRNO を返す、kill する、または notify できます。RuntimeDefault は runtime の profile を意味します。明示的に設定するか、kubelet seccompDefault を確認してください。Kubernetes 1.27+ だけでは、すべての Pod に自動的に適用されません。
+
+AppArmor には node support と loaded profile が必要です。Complain mode は通常の violation を記録しますが、明示的な deny rule は引き続き block できます。readOnlyRootFilesystem は container securityContext field です。writable volume の悪意ある使用、network access、memory は防止しません。
 
 ```yaml
-# Falco rule
-- rule: Cryptocurrency Mining Activity
-  desc: Detect processes commonly used for cryptocurrency mining
-  condition: >
-    spawned_process and container and
-    (
-      proc.name in (xmrig, minerd, cpuminer, cgminer) or
-      proc.cmdline contains "stratum+tcp" or
-      proc.cmdline contains "pool." and proc.cmdline contains ":" or
-      proc.cmdline contains "--algo=cryptonight"
-    )
-  output: >
-    Cryptocurrency mining activity detected
-    (user=%user.name command=%proc.cmdline container=%container.name
-    image=%container.image.repository pod=%k8s.pod.name)
-  priority: CRITICAL
-  tags: [cryptomining, mitre_resource_hijacking]
+apiVersion: v1
+kind: Pod
+metadata:
+  name: runtime-security-demo
+  namespace: demo-app
+  labels:
+    app: runtime-security-demo
+spec:
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: app
+    image: registry.example.com/team/app:REPLACE_WITH_APPROVED_VERSION
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 128Mi
+    volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+  volumes:
+  - name: tmp
+    emptyDir:
+      sizeLimit: 64Mi
 ```
 
-### Reverse Shell Detection
 
-```yaml
-- rule: Reverse Shell Activity
-  desc: Detect outbound network connections that may be reverse shells
-  condition: >
-    spawned_process and container and
-    (
-      (proc.name = bash and proc.cmdline contains "/dev/tcp/") or
-      (proc.name = nc and (proc.args contains "-e" or proc.args contains "-c")) or
-      (proc.name = ncat and proc.args contains "--sh-exec") or
-      (proc.name = python and proc.cmdline contains "socket" and
-       proc.cmdline contains "subprocess") or
-      (proc.name = perl and proc.cmdline contains "socket" and
-       proc.cmdline contains "exec") or
-      (proc.name = php and proc.cmdline contains "fsockopen")
-    )
-  output: >
-    Reverse shell detected
-    (user=%user.name command=%proc.cmdline container=%container.name
-    image=%container.image.repository pod=%k8s.pod.name)
-  priority: CRITICAL
-  tags: [reverse_shell, mitre_command_and_control]
-```
+現在の GuardDuty Runtime Monitoring は EKS EC2 node と EKS Auto Mode を support していますが、EKS Hybrid Nodes と EKS Fargate は support していません。公式の OS/kernel/architecture/agent-version matrix と coverage health を確認してください。この feature を有効にしても、すべての node の正常な coverage が確立されるわけではありません。
 
-### Privilege Escalation Detection
+Hubble `--verdict DROPPED` は drop を表示します。すべての drop が NetworkPolicy denial というわけではありません。drop reason と policy verdict を合わせて確認してください。
 
-```yaml
-- rule: Privilege Escalation via SUID
-  desc: Detect execution of SUID binaries
-  condition: >
-    spawned_process and container and
-    proc.is_exe_upper_layer=false and
-    user.uid != 0 and
-    proc.suid != 0 and
-    proc.suid != proc.uid
-  output: >
-    SUID binary executed
-    (user=%user.name uid=%user.uid suid=%proc.suid command=%proc.cmdline
-    container=%container.name)
-  priority: WARNING
-  tags: [privilege_escalation, mitre_privilege_escalation]
-
-- rule: Setuid/Setgid Binary Created
-  desc: Detect creation of setuid/setgid binaries
-  condition: >
-    evt.type = chmod and container and
-    (evt.arg.mode contains "S_ISUID" or evt.arg.mode contains "S_ISGID")
-  output: >
-    Setuid/setgid binary created
-    (user=%user.name file=%fd.name mode=%evt.arg.mode container=%container.name)
-  priority: CRITICAL
-  tags: [privilege_escalation, persistence]
-```
-
----
+<span id="forensics-container"></span>
 
 ## Incident Response
 
 ### Pod Isolation Procedure
 
+標準の NetworkPolicy は union として組み合わされます。empty ingress/egress list を持つ policy を追加しても、別の policy が許可している connection は override されません。app label は application に属する複数の Pod を選択できます。
+
+1. namespace、Pod UID、node、owner、既存の network policy を特定します。
+2. 承認済みの isolation mechanism を選択します。CNI 固有の明示的な deny や既存 allow の変更では、正確な target、impact、recovery を確認します。
+3. established connection と new connection をテストし、hostNetwork、node traffic、CNI limitation を考慮します。
+4. evidence を保護し、isolation、interruption、recovery の判断を記録します。
+
+### Evidence Collection and Forensics
+
 ```bash
-#!/bin/bash
-# incident-response.sh
-
-POD_NAME=$1
-NAMESPACE=$2
-
-# 1. Apply isolation network policy
-kubectl apply -f - <<EOF
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: isolate-${POD_NAME}
-  namespace: ${NAMESPACE}
-spec:
-  podSelector:
-    matchLabels:
-      app: $(kubectl get pod ${POD_NAME} -n ${NAMESPACE} -o jsonpath='{.metadata.labels.app}')
-  policyTypes:
-    - Ingress
-    - Egress
-  # Block all traffic
-EOF
-
-# 2. Collect pod information
-echo "=== Collecting Pod Information ==="
-kubectl get pod ${POD_NAME} -n ${NAMESPACE} -o yaml > pod-${POD_NAME}-spec.yaml
-kubectl describe pod ${POD_NAME} -n ${NAMESPACE} > pod-${POD_NAME}-describe.txt
-kubectl logs ${POD_NAME} -n ${NAMESPACE} --all-containers > pod-${POD_NAME}-logs.txt
-
-# 3. Collect process list (if possible)
-kubectl exec ${POD_NAME} -n ${NAMESPACE} -- ps aux > pod-${POD_NAME}-processes.txt 2>/dev/null
-
-# 4. Collect network connections
-kubectl exec ${POD_NAME} -n ${NAMESPACE} -- netstat -an > pod-${POD_NAME}-network.txt 2>/dev/null
-
-# 5. Filesystem snapshot (if needed)
-# kubectl debug ${POD_NAME} -n ${NAMESPACE} --image=busybox -- tar -cvf /tmp/fs.tar /
-
-echo "=== Evidence Collection Complete ==="
-echo "Collected files: pod-${POD_NAME}-*.txt"
+#!/usr/bin/env bash
+# Authorized read-only Kubernetes API collection. Sensitive output stays in a private directory.
+set -euo pipefail
+if [[ $# -ne 3 ]]; then
+  printf 'Usage: %s NAMESPACE POD OUTPUT_DIRECTORY\n' "$0" >&2
+  exit 2
+fi
+namespace=$1
+pod_name=$2
+evidence_dir=$3
+if [[ ! $namespace =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]] || [[ ! $pod_name =~ ^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$ ]]; then
+  printf 'Invalid namespace or pod name\n' >&2
+  exit 2
+fi
+umask 077
+mkdir -- "$evidence_dir"
+kubectl get pod "$pod_name" -n "$namespace" -o json > "$evidence_dir/pod.json"
+kubectl describe pod "$pod_name" -n "$namespace" > "$evidence_dir/describe.txt"
+kubectl logs "$pod_name" -n "$namespace" --all-containers=true --timestamps=true > "$evidence_dir/logs.txt"
+# Previous logs may not exist. Record this separately instead of calling collection complete silently.
+if ! kubectl logs "$pod_name" -n "$namespace" --all-containers=true --previous=true --timestamps=true > "$evidence_dir/previous-logs.txt" 2> "$evidence_dir/previous-logs-error.txt"; then
+  printf 'Previous logs unavailable; inspect previous-logs-error.txt\n' >&2
+fi
+(
+  cd -- "$evidence_dir"
+  sha256sum -- pod.json describe.txt logs.txt previous-logs.txt previous-logs-error.txt > SHA256SUMS
+)
+printf 'API evidence written to %s. This is not a memory or filesystem snapshot.\n' "$evidence_dir"
 ```
 
-### Forensics Container
 
-```yaml
-# Debug container for forensics
-apiVersion: v1
-kind: Pod
-metadata:
-  name: forensics-pod
-  namespace: security
-spec:
-  containers:
-  - name: forensics
-    image: nicolaka/netshoot:latest
-    command: ["sleep", "3600"]
-    securityContext:
-      capabilities:
-        add:
-          - SYS_PTRACE
-          - NET_ADMIN
-    volumeMounts:
-      - name: host-proc
-        mountPath: /host/proc
-        readOnly: true
-      - name: evidence
-        mountPath: /evidence
-  volumes:
-    - name: host-proc
-      hostPath:
-        path: /proc
-    - name: evidence
-      emptyDir: {}
-```
+この script は API を通じて Pod metadata/log を収集し、checksum を記録します。これは real cluster ではなく、subprocess double を使用して failure と private 0700 output directory を含めてテストされました。Pod spec と log には secret/personal information が含まれる可能性があります。承認済みの storage と access control を使用してください。
 
----
+新しい forensic Pod が、target node で実行されたり、target process namespace を共有したりするとは限りません。hostPath /proc、SYS_PTRACE、NET_ADMIN は大きな access を付与します。必要な場合は承認済み procedure を使用してください。emptyDir は durable evidence storage ではありません。ephemeral container の `/` を archive しても、target container filesystem の snapshot になるとは限りません。
+
+<span id="falco-to-elasticsearch"></span>
+<span id="prometheus-grafana-dashboard"></span>
+
+<span id="siemsoar-integration"></span>
 
 ## SIEM/SOAR Integration
 
-### Falco to Elasticsearch
+ServiceMonitor namespace、selector、port を実際の Service と比較してください。Falco chart には metrics Service があり、Falcosidekick は HTTP port で metrics を公開します。Sidekick chart が ServiceMonitor を render するのは、monitoring.coreos.com/v1 が利用可能な場合のみです。
 
-```yaml
-# Falcosidekick Elasticsearch configuration
-falcosidekick:
-  config:
-    elasticsearch:
-      hostport: "https://elasticsearch.logging:9200"
-      index: "falco"
-      type: "_doc"
-      minimumpriority: "warning"
-      mutualtls: false
-      checkcert: true
-      username: "elastic"
-      password: "${ELASTIC_PASSWORD}"
+```promql
+sum by (priority) (rate(falcosecurity_falcosidekick_falco_events_total[5m]))
 ```
 
-### Prometheus + Grafana Dashboard
+これは Falcosidekick 2.35.0 の received-event counter です。元の falco_events_total を universal metric name として扱わないでください。cumulative count と interval rate を区別し、実際の label、reset、output failure、欠落した scrape を確認してください。synthetic な Slack/PagerDuty/SIEM notification test であっても、recipient と operational process と調整してください。
 
-```yaml
-# ServiceMonitor for Falco metrics
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: falco
-  namespace: monitoring
-spec:
-  selector:
-    matchLabels:
-      app: falco
-  endpoints:
-    - port: metrics
-      interval: 30s
-```
+<span id="table-of-contents"></span>
+<span id="recommendations"></span>
 
-```yaml
-# Grafana dashboard ConfigMap
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: falco-dashboard
-  namespace: monitoring
-  labels:
-    grafana_dashboard: "1"
-data:
-  falco-dashboard.json: |
-    {
-      "title": "Falco Security Alerts",
-      "panels": [
-        {
-          "title": "Alerts by Priority",
-          "type": "piechart",
-          "targets": [
-            {
-              "expr": "sum by (priority) (falco_events_total)"
-            }
-          ]
-        },
-        {
-          "title": "Alerts Over Time",
-          "type": "timeseries",
-          "targets": [
-            {
-              "expr": "rate(falco_events_total[5m])"
-            }
-          ]
-        }
-      ]
-    }
-```
+## まとめ
 
----
+ローカル検証では、2 つの Falco rule、4 つの configuration-schema case、3 つの Tetragon JSON filter と 2 つの CRD、3 つの Helm chart、4 つの evidence-script success/failure case を対象にしました。kernel attachment、detection efficacy、実際の enforcement、GuardDuty coverage、audit/CloudWatch collection、external notification は実行していません。
 
-## Summary
+## 参考資料
 
-Runtime security の主要な側面:
-
-1. **Falco**: 成熟した ruleset、多様な alert integration、検出重視
-2. **Tetragon**: eBPF ベースの高性能、runtime enforcement support
-3. **Audit Logging**: Kubernetes API アクティビティの追跡、compliance
-4. **Threat Detection**: Cryptocurrency mining、reverse shells、privilege escalation
-5. **Incident Response**: 分離、証拠収集、forensics
-
-### Recommendations
-
-- 検出と enforcement には Falco + Tetragon の組み合わせを使用する
-- 重要な systems 向けに custom rules を作成する
-- centralized monitoring のために SIEM と統合する
-- incident response playbooks を準備する
-
----
-
-## References
-
-- [Falco Official Documentation](https://falco.org/docs/)
-- [Tetragon Documentation](https://tetragon.io/docs/)
-- [MITRE ATT&CK for Containers](https://attack.mitre.org/matrices/enterprise/containers/)
-- [Kubernetes Audit Logging](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/)
+- [Falco Kubernetes installation](https://falco.org/docs/setup/kubernetes/)
+- [Falco 0.44.1 configuration](https://github.com/falcosecurity/falco/blob/0.44.1/falco.yaml)
+- [Falcosidekick 2.35.0 configuration](https://github.com/falcosecurity/falcosidekick/blob/2.35.0/config_example.yaml)
+- [Tetragon tracing policies](https://tetragon.io/docs/concepts/tracing-policy/)
+- [Tetragon enforcement](https://tetragon.io/docs/concepts/enforcement/)
+- [Tetragon 1.7.1 file monitoring](https://github.com/cilium/tetragon/blob/v1.7.1/examples/quickstart/file_monitoring.yaml)
+- [Kubernetes audit](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/)
+- [NetworkPolicy semantics](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
+- [Seccomp](https://kubernetes.io/docs/tutorials/security/seccomp/)
+- [AppArmor](https://kubernetes.io/docs/tutorials/security/apparmor/)
+- [EKS control-plane logs](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
+- [GuardDuty EKS runtime requirements](https://docs.aws.amazon.com/guardduty/latest/ug/prereq-runtime-monitoring-eks-support.html)
+- [MITRE ATT&CK Containers](https://attack.mitre.org/matrices/enterprise/containers/)
