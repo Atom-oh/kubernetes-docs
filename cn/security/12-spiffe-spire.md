@@ -1,842 +1,186 @@
-# Workload Identity with SPIFFE/SPIRE
+# 使用 SPIFFE/SPIRE 实现工作负载身份
 
-> **Supported Versions**: SPIRE 1.12+, Kubernetes 1.31, 1.32, 1.33
-> **最后更新**: February 25, 2026
+> **最后更新**: September 13, 2026
+> **验证基线**: SPIRE 1.15.3、hardened chart 0.30.2 / CRD chart 0.6.1、Controller Manager 0.7.0、chart CSI 镜像 0.2.7（同时对照当前 CSI 0.2.13 文档进行了检查）、go-spiffe 2.8.1。请单独检查 chart 渲染出的镜像版本。
 
-SPIFFE (Secure Production Identity Framework For Everyone) 和 SPIRE (the SPIFFE Runtime Environment) 为 cloud-native 环境中的工作负载身份提供了基于标准的方法。作为 CNCF Graduated 项目，SPIFFE/SPIRE 通过为工作负载提供可用密码学方式验证的身份来实现零信任安全，并且不需要修改应用程序代码。
+SPIFFE 定义工作负载身份、凭证、分发以及信任格式；SPIRE 则实现这些定义。**签发身份并不会自动加密流量或授权服务访问。** 本指南验证的是本地配置、schema、库、chart 和示意图。未执行任何真实集群、AWS CA、SPIRE 证明（attestation）或服务网格安装操作。
 
-## Table of Contents
+## 概述
 
-1. [The Zero Trust Identity Problem](#the-zero-trust-identity-problem)
-2. [SPIFFE Specification Overview](#spiffe-specification-overview)
-3. [Core Concepts](#core-concepts)
-4. [SPIRE Architecture](#spire-architecture)
-5. [Installation](#installation)
-6. [Node Attestation](#node-attestation)
-7. [Workload Attestation](#workload-attestation)
-8. [Kubernetes Integration](#kubernetes-integration)
-9. [Service Mesh Integration](#service-mesh-integration)
-10. [Federation](#federation)
-11. [EKS Integration](#eks-integration)
-12. [Best Practices](#best-practices)
-13. [Troubleshooting](#troubleshooting)
-14. [Summary and References](#summary-and-references)
+SPIFFE 和 SPIRE 是 CNCF 毕业（Graduated）项目。它们的 CNCF 项目页面分别记录为 2022 年 8 月 23 日和 2022 年 8 月 22 日。项目成熟度与单个部署的验证是两件不同的事情。
 
----
+在 IP/Pod 不断变化的情况下，稳定的身份很有价值，但应用程序仍然需要 Workload API 客户端、SDK、代理或显式的文件适配器。“所有工作负载都零应用改动”并不是一个普适的保证。本章聚焦于 SPIRE 的 X.509/JWT 路径；单独发布的 **孵化中（Incubating）WIT-SVID 规范** 不应被假定在每个部署中都受支持。
 
-## The Zero Trust Identity Problem
+<span id="svid-spiffe-verifiable-identity-document"></span>
+<span id="x-509-svid-vs-jwt-svid-comparison"></span>
+<span id="trust-bundle"></span>
+<span id="trust-domain"></span>
 
-传统的基于边界的安全模型假设网络边界内的工作负载是可信的。在现代分布式系统中，这种方法会失效，原因包括：
-
-- **微服务跨网络边界通信** — Service 跨越多个 cluster、cloud 和数据中心
-- **动态基础设施** — Container 和 Pod 是短暂的，IP 地址会不断变化
-- **横向移动攻击** — 攻击者一旦突破边界，就可以在网络内自由移动
-- **共享租户** — 多个团队和应用共享同一套基础设施
-
-零信任安全要求每个工作负载在通信前证明自己的身份，而不论其网络位置如何。SPIFFE 通过提供以下能力来解决这个问题：
-
-1. **通用身份标准** — 在异构环境中一致地识别工作负载
-2. **密码学验证** — 无需信任网络即可验证的身份
-3. **自动轮换** — 使用短生命周期凭证，在被攻破时降低影响范围
-4. **无需应用变更** — 身份注入对应用程序透明
-
----
-
-## SPIFFE Specification Overview
-
-SPIFFE 是一个开放规范，定义了三个核心组件：
-
-| Component | Description |
-|-----------|-------------|
-| **SPIFFE ID** | A URI that uniquely identifies a workload |
-| **SVID** | SPIFFE Verifiable Identity Document — a cryptographic document that proves a workload's identity |
-| **Trust Bundle** | A set of CA certificates used to verify SVIDs |
-| **Workload API** | A local API that workloads use to obtain their SVIDs |
-
-### CNCF Graduation Status
-
-SPIFFE/SPIRE 于 2022 年从 CNCF 毕业，表明其已具备生产就绪性并获得了广泛的行业采用。知名采用者包括：
-
-- Bloomberg
-- ByteDance
-- GitHub
-- Pinterest
-- Square
-- Uber
-
----
-
-## Core Concepts
+## 核心概念
 
 ### SPIFFE ID
 
-SPIFFE ID 是一个 URI，用于在 trust domain 内唯一标识工作负载：
-
-```
-spiffe://trust-domain/workload-identifier
+```text
+spiffe://example.org/ns/payments/sa/payment-processor
 ```
 
-**组成部分：**
+一个 ID 包含 scheme、信任域（trust domain）以及可选的 path。不允许出现 query、fragment、端口、点号段（dot-segment）以及百分号编码的 path 组成部分。类 DNS 形式的稳定信任域名称很有用，但并不需要能够通过 DNS 解析。形如 IPv4 或纯数字的名称并非一律无效；请区分语法要求与命名建议。
 
-| Part | Description | Example |
-|------|-------------|---------|
-| `spiffe://` | URI scheme (always "spiffe") | `spiffe://` |
-| `trust-domain` | Administrative domain of trust | `prod.example.com` |
-| `workload-identifier` | Path identifying the workload | `/ns/payments/sa/api-server` |
+### SVID 与验证
 
-**SPIFFE ID 示例：**
+| 关注点 | X.509-SVID | JWT-SVID |
+|---|---|---|
+| 身份 | 叶证书中的 SPIFFE URI SAN | sub |
+| 验证 | 证书链、有效期、SVID 规则、信任域 | 签名、subject、audience、过期时间 |
+| 用途 | TLS 客户端/服务端认证 | 接受 bearer token 的 API |
+| 密钥 | 工作负载/agent 私钥路径 | 签发方保留签名私钥 |
+| 有效期 | 策略与实际签发结果 | 策略与实际 token 的 exp |
 
-```
-# Kubernetes workload by namespace and service account
-spiffe://prod.example.com/ns/payments/sa/api-server
+CN 不是 SPIFFE 身份。本地 go-spiffe 测试拒绝了仅有 CN、包含多个 SPIFFE URI、已过期以及信任域错误的情况。Audience 验证限制了接收方，但不等于重放检测：同一个有效的 bearer token 再次通过了验证。请在需要时应用适当的 TLS/token 使用策略以及重放防护。
 
-# Workload by cluster and deployment
-spiffe://example.com/cluster/us-east-1/deployment/frontend
+信任包（trust bundle）包含 X.509 权威机构、JWT 验证密钥和元数据。PEM、SPIFFE bundle JSON 以及任意 YAML 之间不可互换。公开的 bundle 绝不能包含工作负载或 CA 私钥。
 
-# Legacy application by hostname
-spiffe://example.com/host/db-server-01/app/mysql
-```
+<span id="spire-server"></span>
+<span id="spire-agent"></span>
+<span id="svid-issuance-flow"></span>
 
-### SVID (SPIFFE Verifiable Identity Document)
+## SPIRE 架构
 
-SVID 是一个密码学文档，携带工作负载的 SPIFFE ID。SPIFFE 定义了两种 SVID 格式：
+![SPIRE Server, Agent, signing keys and registration responsibilities](../.gitbook/assets/en-security-12-spiffe-spire-0.png)
 
-#### X.509-SVID vs JWT-SVID Comparison
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-12-spiffe-spire-0.html)
 
-| Feature | X.509-SVID | JWT-SVID |
-|---------|------------|----------|
-| **Format** | X.509 certificate | JSON Web Token |
-| **Transport** | TLS client certificates | HTTP headers, gRPC metadata |
-| **Verification** | Certificate chain validation | Signature verification |
-| **Use Case** | mTLS connections | API authentication, proxies |
-| **Audience** | Not applicable | Required (prevents replay) |
-| **Typical TTL** | 1 hour (configurable) | 5 minutes (short-lived) |
-| **Key Storage** | Private key file | Private key for signing |
-| **Revocation** | Short TTL (no CRL/OCSP) | Short TTL |
 
-**X.509-SVID 结构：**
+Server 负责 agent 证明、注册以及 X.509/JWT 签名。DataStore 与 KeyManager 承担不同的持久化职责。诸如 AWS Private CA 之类的 UpstreamAuthority 为 SPIRE 中间 CA 签名；它并不替代每一次工作负载叶证书的签名操作。
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      X.509-SVID                             │
-├─────────────────────────────────────────────────────────────┤
-│  Subject: CN=<workload-identifier>                          │
-│  URI SAN: spiffe://trust-domain/workload-identifier         │
-│  Issuer: SPIRE Server CA                                    │
-│  Not Before: 2026-02-25T10:00:00Z                          │
-│  Not After: 2026-02-25T11:00:00Z (1 hour TTL)              │
-│  Public Key: [workload's public key]                        │
-│  Signature: [signed by SPIRE Server CA]                     │
-└─────────────────────────────────────────────────────────────┘
-```
+Agent 对调用其 API 的进程进行证明，并使用同步得到的条目/SVID 缓存。缓存有效时，并不需要在每次 API 请求时都由 server 重新签发。消费方必须通过流、SDK 或代理来采用更新后的凭证。
 
-**JWT-SVID 结构：**
+![Local X.509-SVID cache and conditional renewal path](../.gitbook/assets/en-security-12-spiffe-spire-1.png)
 
-```json
-{
-  "alg": "RS256",
-  "kid": "abcd1234",
-  "typ": "JWT"
-}
-.
-{
-  "sub": "spiffe://prod.example.com/ns/payments/sa/api",
-  "aud": ["spiffe://prod.example.com/ns/orders/sa/processor"],
-  "exp": 1708858200,
-  "iat": 1708857900
-}
-.
-[signature]
-```
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-12-spiffe-spire-1.html)
 
-### Trust Bundle
 
-Trust bundle 包含 trust domain 的 root CA 证书。工作负载使用 trust bundle 来验证同一 trust domain 中其他工作负载的 SVID。
+<span id="prerequisites"></span>
+<span id="helm-installation-recommended"></span>
+<span id="namespace-layout"></span>
+<span id="high-availability-configuration"></span>
+<span id="verify-installation"></span>
 
-```yaml
-# Trust bundle structure
-trust_domain: "prod.example.com"
-root_certificates:
-  - |
-    -----BEGIN CERTIFICATE-----
-    MIIBzDCCAVKgAwIBAgIJAJR2...
-    -----END CERTIFICATE-----
-jwt_signing_keys:
-  - kid: "key-1"
-    public_key: |
-      -----BEGIN PUBLIC KEY-----
-      MIIBIjANBgkqhkiG9w0BAQEF...
-      -----END PUBLIC KEY-----
-```
+## 安装
 
-### Trust Domain
-
-Trust domain 是信任的管理边界。一个 trust domain 内的所有工作负载共享相同的信任根（SPIRE Server CA）。
-
-**Trust Domain 设计考量：**
-
-| Pattern | Example | Use Case |
-|---------|---------|----------|
-| Single domain | `example.com` | Simple deployments |
-| Environment-based | `prod.example.com`, `staging.example.com` | Environment isolation |
-| Region-based | `us-east.example.com`, `eu-west.example.com` | Regional isolation |
-| Cluster-based | `cluster-a.example.com` | Multi-cluster with separate CAs |
-
----
-
-## SPIRE Architecture
-
-SPIRE 通过 server-agent 架构实现 SPIFFE 规范：
-
-```mermaid
-flowchart TB
-    subgraph ControlPlane["Control Plane"]
-        SERVER[SPIRE Server]
-        DATASTORE[(Data Store<br/>SQLite/PostgreSQL)]
-        SERVER --> DATASTORE
-    end
-
-    subgraph Node1["Kubernetes Node 1"]
-        AGENT1[SPIRE Agent]
-        WORKLOAD1[Workload Pod A]
-        WORKLOAD2[Workload Pod B]
-        WORKLOAD1 -->|Workload API| AGENT1
-        WORKLOAD2 -->|Workload API| AGENT1
-    end
-
-    subgraph Node2["Kubernetes Node 2"]
-        AGENT2[SPIRE Agent]
-        WORKLOAD3[Workload Pod C]
-        WORKLOAD3 -->|Workload API| AGENT2
-    end
-
-    AGENT1 -->|Node Attestation<br/>SVID Requests| SERVER
-    AGENT2 -->|Node Attestation<br/>SVID Requests| SERVER
-
-    subgraph External["External Components"]
-        REGISTRAR[K8s Registrar]
-        CSI[SPIFFE CSI Driver]
-    end
-
-    REGISTRAR -->|Auto-registration| SERVER
-    CSI -->|Mount SVIDs| Node1
-    CSI -->|Mount SVIDs| Node2
-```
-
-### SPIRE Server
-
-SPIRE Server 是中央权威组件，负责：
-
-| Function | Description |
-|----------|-------------|
-| **CA Operations** | Signs X.509-SVIDs and JWT-SVIDs |
-| **Registration API** | Manages workload registration entries |
-| **Node Attestation** | Verifies agent identity during bootstrap |
-| **Data Store** | Persists registration entries and CA state |
-| **Key Management** | Manages signing keys (supports HSM/KMS) |
-
-**Server 配置示例：**
-
-```yaml
-# server.conf
-server {
-    bind_address = "0.0.0.0"
-    bind_port = "8081"
-    trust_domain = "prod.example.com"
-    data_dir = "/run/spire/data"
-    log_level = "INFO"
-
-    ca_ttl = "24h"
-    default_x509_svid_ttl = "1h"
-    default_jwt_svid_ttl = "5m"
-
-    ca_subject {
-        country = ["US"]
-        organization = ["Example Corp"]
-        common_name = "SPIRE Server CA"
-    }
-}
-
-plugins {
-    DataStore "sql" {
-        plugin_data {
-            database_type = "postgres"
-            connection_string = "dbname=spire host=postgres user=spire"
-        }
-    }
-
-    NodeAttestor "k8s_psat" {
-        plugin_data {
-            clusters = {
-                "production" = {
-                    service_account_allow_list = ["spire:spire-agent"]
-                }
-            }
-        }
-    }
-
-    KeyManager "disk" {
-        plugin_data {
-            keys_path = "/run/spire/data/keys.json"
-        }
-    }
-
-    UpstreamAuthority "disk" {
-        plugin_data {
-            key_file_path = "/run/spire/conf/ca.key"
-            cert_file_path = "/run/spire/conf/ca.crt"
-        }
-    }
-}
-```
-
-### SPIRE Agent
-
-SPIRE Agent 在每个 node 上运行，并负责：
-
-| Function | Description |
-|----------|-------------|
-| **Node Attestation** | Proves node identity to the server |
-| **Workload Attestation** | Identifies workloads requesting SVIDs |
-| **Workload API** | Serves SVIDs to workloads via Unix socket |
-| **SVID Caching** | Caches and rotates SVIDs automatically |
-| **SDS Server** | Provides Envoy SDS API for service meshes |
-
-**Agent 配置示例：**
-
-```yaml
-# agent.conf
-agent {
-    data_dir = "/run/spire/data"
-    log_level = "INFO"
-    server_address = "spire-server"
-    server_port = "8081"
-    socket_path = "/run/spire/sockets/agent.sock"
-    trust_domain = "prod.example.com"
-}
-
-plugins {
-    NodeAttestor "k8s_psat" {
-        plugin_data {
-            cluster = "production"
-        }
-    }
-
-    KeyManager "memory" {
-        plugin_data {}
-    }
-
-    WorkloadAttestor "k8s" {
-        plugin_data {
-            skip_kubelet_verification = true
-        }
-    }
-}
-```
-
-### SVID Issuance Flow
-
-下图展示工作负载如何获取其 SVID：
-
-```mermaid
-flowchart LR
-    subgraph Workload["Workload Pod"]
-        APP[Application]
-    end
-
-    subgraph Agent["SPIRE Agent"]
-        WAPI[Workload API]
-        ATTESTOR[Workload Attestor]
-        CACHE[SVID Cache]
-    end
-
-    subgraph Server["SPIRE Server"]
-        CA[Certificate Authority]
-        REGISTRY[Registration Entries]
-    end
-
-    APP -->|1. Request SVID<br/>via Unix Socket| WAPI
-    WAPI -->|2. Get caller info<br/>PID, UID, container| ATTESTOR
-    ATTESTOR -->|3. Query K8s API<br/>for pod metadata| K8S[(Kubernetes API)]
-    ATTESTOR -->|4. Match against<br/>registration entries| WAPI
-    WAPI -->|5. Request SVID<br/>for matched identity| Server
-    CA -->|6. Validate request<br/>sign certificate| CA
-    Server -->|7. Return signed<br/>X.509-SVID| WAPI
-    WAPI -->|8. Cache SVID| CACHE
-    CACHE -->|9. Return SVID<br/>to workload| APP
-```
-
----
-
-## Installation
-
-### Prerequisites
-
-- Kubernetes cluster 1.31+
-- Helm 3.10+
-- 已配置 cluster 访问权限的 kubectl
-- Cluster admin 权限
-
-### Helm Installation (Recommended)
-
-SPIRE 提供了一个 Helm chart，并包含 SPIRE Controller Manager，用于自动化工作负载注册：
+下载[示例目录](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/spiffe)并在 `examples/security/spiffe` 下操作。请核实 hostPath/CSI/内核/kubelet 相关要求。在诸如 Fargate 这类无法获得所需访问权限的主机上，不能假定相同的 DaemonSet 能够运行。
 
 ```bash
-# Add the SPIFFE Helm repository
-helm repo add spiffe https://spiffe.github.io/helm-charts-hardened/
-helm repo update
-
-# Create namespace
-kubectl create namespace spire-system
-
-# Install SPIRE with Controller Manager
-helm install spire spiffe/spire \
-  --namespace spire-system \
-  --set global.spire.trustDomain="prod.example.com" \
-  --set global.spire.clusterName="production" \
-  --set spire-server.replicaCount=3 \
-  --set spire-server.persistence.enabled=true \
-  --set spire-server.persistence.size=1Gi
+helm repo add spiffe https://spiffe.github.io/helm-charts-hardened
+helm repo update spiffe
+helm upgrade --install spire-crds spiffe/spire-crds \
+  --version 0.6.1 --namespace spire-system --create-namespace
+helm upgrade --install spire spiffe/spire \
+  --version 0.30.2 --namespace spire-system --values lab-values.yaml
 ```
 
-### Namespace Layout
-
-典型的 SPIRE 部署使用以下 namespace 结构：
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Namespace Layout                          │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  spire-system/                                              │
-│  ├── spire-server (StatefulSet, 3 replicas for HA)         │
-│  ├── spire-server-0, spire-server-1, spire-server-2        │
-│  ├── spire-controller-manager (Deployment)                  │
-│  └── spire-bundle-configmap                                 │
-│                                                             │
-│  spire-agents/                                              │
-│  └── spire-agent (DaemonSet, one per node)                 │
-│                                                             │
-│  spiffe-csi-driver/                                        │
-│  └── spiffe-csi-driver (DaemonSet)                         │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### High Availability Configuration
-
-对于生产部署，请将 SPIRE Server 配置为高可用：
+### 单 Server 实验环境
 
 ```yaml
-# values-ha.yaml
+global:
+  spire:
+    trustDomain: example.org
+    clusterName: documentation
+    caSubject:
+      organization: Documentation Lab
+      country: KR
+    namespaces:
+      server:
+        name: spire-system
+      system:
+        name: spire-system
+  installAndUpgradeHooks:
+    enabled: false
+  deleteHooks:
+    enabled: false
 spire-server:
-  replicaCount: 3
-
+  replicaCount: 1
+  controllerManager:
+    enabled: true
+    identities:
+      clusterSPIFFEIDs:
+        default:
+          enabled: false
+        oidc-discovery-provider:
+          enabled: false
+        test-keys:
+          enabled: false
+  externalControllerManagers:
+    enabled: false
   persistence:
     enabled: true
-    size: 5Gi
-    storageClass: gp3
-
-  dataStore:
-    sql:
-      databaseType: postgres
-      connectionString: "host=spire-postgres dbname=spire sslmode=verify-full"
-
-  resources:
-    requests:
-      cpu: 200m
-      memory: 512Mi
-    limits:
-      cpu: 1000m
-      memory: 1Gi
-
-  affinity:
-    podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/name: spire-server
-          topologyKey: kubernetes.io/hostname
-
+    size: 1Gi
 spire-agent:
-  resources:
-    requests:
-      cpu: 50m
-      memory: 128Mi
-    limits:
-      cpu: 200m
-      memory: 256Mi
+  workloadAttestors:
+    k8s:
+      verification:
+        type: apiServerCA
+    unix:
+      enabled: true
+spiffe-oidc-discovery-provider:
+  enabled: false
+spiffe-csi-driver:
+  enabled: true
 ```
 
-```bash
-# Install with HA values
-helm install spire spiffe/spire \
-  --namespace spire-system \
-  -f values-ha.yaml
-```
-
-### Verify Installation
-
-```bash
-# Check SPIRE Server status
-kubectl -n spire-system get pods -l app.kubernetes.io/name=spire-server
-
-# Check SPIRE Agent status
-kubectl -n spire-system get pods -l app.kubernetes.io/name=spire-agent
-
-# Verify server health
-kubectl -n spire-system exec -it spire-server-0 -- \
-  /opt/spire/bin/spire-server healthcheck
-
-# List registered entries
-kubectl -n spire-system exec -it spire-server-0 -- \
-  /opt/spire/bin/spire-server entry show
-```
-
----
-
-## Node Attestation
-
-Node attestation 在 SPIRE Agent 和 SPIRE Server 之间建立信任。Agent 必须先证明自己的身份，然后才能代表工作负载请求 SVID。
-
-### Attestation Flow
-
-```mermaid
-flowchart TB
-    subgraph NodeAttestation["Node Attestation Methods"]
-        direction TB
-        PSAT[K8s PSAT<br/>Projected Service Account Token]
-        AWSIID[AWS IID<br/>Instance Identity Document]
-        JOIN[Join Token<br/>One-time Bootstrap]
-    end
-
-    subgraph Agent["SPIRE Agent Bootstrap"]
-        AGENT_START[Agent Starts]
-        COLLECT[Collect Attestation Data]
-        SEND[Send to Server]
-    end
-
-    subgraph Server["SPIRE Server"]
-        VALIDATE[Validate Attestation]
-        ISSUE_NODE[Issue Node SVID]
-        STORE[Store Node Record]
-    end
-
-    AGENT_START --> COLLECT
-    COLLECT --> PSAT
-    COLLECT --> AWSIID
-    COLLECT --> JOIN
-
-    PSAT --> SEND
-    AWSIID --> SEND
-    JOIN --> SEND
-
-    SEND --> VALIDATE
-    VALIDATE -->|Valid| ISSUE_NODE
-    ISSUE_NODE --> STORE
-    STORE -->|Node SVID| Agent
-
-    VALIDATE -->|Invalid| REJECT[Reject Connection]
-```
-
-### Kubernetes PSAT (Projected Service Account Token)
-
-这是 Kubernetes 推荐的 attestation 方法。它使用会自动轮换的 projected service account token。
-
-**Server 配置：**
-
-```yaml
-# In server.conf plugins section
-NodeAttestor "k8s_psat" {
-    plugin_data {
-        clusters = {
-            "production" = {
-                service_account_allow_list = ["spire-system:spire-agent"]
-                audience = ["spire-server"]
-            }
-        }
-    }
-}
-```
-
-**Agent 配置：**
-
-```yaml
-# In agent.conf plugins section
-NodeAttestor "k8s_psat" {
-    plugin_data {
-        cluster = "production"
-        token_path = "/var/run/secrets/tokens/spire-agent"
-    }
-}
-```
-
-**使用 PSAT 的 Agent DaemonSet：**
-
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: spire-agent
-  namespace: spire-system
-spec:
-  selector:
-    matchLabels:
-      app: spire-agent
-  template:
-    metadata:
-      labels:
-        app: spire-agent
-    spec:
-      serviceAccountName: spire-agent
-      containers:
-        - name: spire-agent
-          image: ghcr.io/spiffe/spire-agent:1.12.0
-          volumeMounts:
-            - name: spire-token
-              mountPath: /var/run/secrets/tokens
-      volumes:
-        - name: spire-token
-          projected:
-            sources:
-              - serviceAccountToken:
-                  path: spire-agent
-                  expirationSeconds: 7200
-                  audience: spire-server
-```
-
-### AWS Instance Identity Document (IID)
-
-对于 EKS 或基于 EC2 的 Kubernetes cluster，AWS IID 使用 AWS 通过密码学方式签名的 instance metadata 来提供强 node attestation。
-
-**Server 配置：**
-
-```yaml
-NodeAttestor "aws_iid" {
-    plugin_data {
-        access_key_id = "AKIAIOSFODNN7EXAMPLE"      # Or use IRSA
-        secret_access_key = "wJalrXUtnFEMI/K7MDENG" # Or use IRSA
-        skip_block_device = true
-        account_ids_for_local_validation = ["123456789012"]
-    }
-}
-```
-
-**Agent 配置：**
-
-```yaml
-NodeAttestor "aws_iid" {
-    plugin_data {}
-}
-```
-
-### Join Token (Bootstrap)
-
-用于初始设置或非 cloud 环境。这类一次性 token 会在使用后过期。
-
-```bash
-# Generate a join token on the server
-kubectl -n spire-system exec -it spire-server-0 -- \
-  /opt/spire/bin/spire-server token generate \
-  -spiffeID spiffe://prod.example.com/agent/node-01 \
-  -ttl 3600
-
-# Output: Token: abc123-def456-ghi789
-
-# Use the token when starting the agent
-spire-agent run -joinToken abc123-def456-ghi789
-```
-
-### Node Attestor Comparison
-
-| Attestor | Security | Automation | Use Case |
-|----------|----------|------------|----------|
-| **k8s_psat** | High | Fully automatic | Kubernetes clusters |
-| **aws_iid** | High | Fully automatic | AWS EC2/EKS |
-| **gcp_iit** | High | Fully automatic | GCP GKE |
-| **azure_msi** | High | Fully automatic | Azure AKS |
-| **join_token** | Medium | Manual | Bootstrap, air-gapped |
-| **x509pop** | High | Semi-automatic | Existing PKI integration |
-
----
-
-## Workload Attestation
-
-Workload attestation 用于识别向 SPIRE Agent 请求 SVID 的具体工作负载。Agent 使用 attestor 收集有关调用进程的信息。
-
-### Kubernetes Workload Attestor
-
-Kubernetes attestor 查询 kubelet 来识别 Pod：
-
-```yaml
-# In agent.conf
-WorkloadAttestor "k8s" {
-    plugin_data {
-        kubelet_read_only_port = 10255  # Or use secure port
-        skip_kubelet_verification = false
-        node_name_env = "MY_NODE_NAME"
-    }
-}
-```
-
-**可用 Selector：**
-
-| Selector | Description | Example |
-|----------|-------------|---------|
-| `k8s:ns` | Namespace | `k8s:ns:payments` |
-| `k8s:sa` | Service Account | `k8s:sa:api-server` |
-| `k8s:pod-label` | Pod label | `k8s:pod-label:app:frontend` |
-| `k8s:pod-owner` | Owner reference | `k8s:pod-owner:Deployment:web` |
-| `k8s:pod-owner-uid` | Owner UID | `k8s:pod-owner-uid:abc123` |
-| `k8s:pod-name` | Pod name | `k8s:pod-name:web-abc123` |
-| `k8s:pod-uid` | Pod UID | `k8s:pod-uid:def456` |
-| `k8s:container-name` | Container name | `k8s:container-name:app` |
-| `k8s:container-image` | Container image | `k8s:container-image:nginx:1.25` |
-| `k8s:node-name` | Node name | `k8s:node-name:node-01` |
-
-### Registration Entry Examples
-
-Registration entry 将工作负载 selector 映射到 SPIFFE ID：
-
-```bash
-# Register a workload by namespace and service account
-kubectl -n spire-system exec -it spire-server-0 -- \
-  /opt/spire/bin/spire-server entry create \
-  -spiffeID spiffe://prod.example.com/ns/payments/sa/api-server \
-  -parentID spiffe://prod.example.com/agent/k8s-node \
-  -selector k8s:ns:payments \
-  -selector k8s:sa:api-server
-
-# Register with pod labels
-kubectl -n spire-system exec -it spire-server-0 -- \
-  /opt/spire/bin/spire-server entry create \
-  -spiffeID spiffe://prod.example.com/app/frontend \
-  -parentID spiffe://prod.example.com/agent/k8s-node \
-  -selector k8s:ns:web \
-  -selector k8s:pod-label:app:frontend
-
-# Register with container image (for supply chain security)
-kubectl -n spire-system exec -it spire-server-0 -- \
-  /opt/spire/bin/spire-server entry create \
-  -spiffeID spiffe://prod.example.com/verified/nginx \
-  -parentID spiffe://prod.example.com/agent/k8s-node \
-  -selector k8s:container-image:nginx:1.25-alpine
-```
-
-### Unix Workload Attestor
-
-用于非 Kubernetes 工作负载，或用于额外的进程级 attestation：
-
-```yaml
-WorkloadAttestor "unix" {
-    plugin_data {
-        discover_workload_path = true
-    }
-}
-```
-
-**Unix Selector：**
-
-| Selector | Description |
-|----------|-------------|
-| `unix:uid` | Process user ID |
-| `unix:gid` | Process group ID |
-| `unix:user` | Username |
-| `unix:group` | Group name |
-| `unix:path` | Executable path |
-| `unix:sha256` | Binary SHA256 hash |
-
----
-
-## Kubernetes Integration
-
-### SPIFFE CSI Driver
-
-SPIFFE CSI Driver 将 SVID 直接挂载到 Pod 文件系统中，而不需要修改应用程序：
-
-```bash
-# Install SPIFFE CSI Driver
-helm install spiffe-csi-driver spiffe/spiffe-csi-driver \
-  --namespace spiffe-csi-driver \
-  --create-namespace \
-  --set spire.agentSocketPath=/run/spire/sockets/agent.sock
-```
-
-**在 Pod 中使用 CSI Driver：**
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-workload
-  namespace: payments
-spec:
-  serviceAccountName: api-server
-  containers:
-    - name: app
-      image: myapp:latest
-      volumeMounts:
-        - name: spiffe
-          mountPath: /run/spiffe
-          readOnly: true
-      env:
-        - name: SVID_PATH
-          value: /run/spiffe/svid.pem
-        - name: KEY_PATH
-          value: /run/spiffe/key.pem
-        - name: BUNDLE_PATH
-          value: /run/spiffe/bundle.pem
-  volumes:
-    - name: spiffe
-      csi:
-        driver: csi.spiffe.io
-        readOnly: true
-```
-
-**CSI Driver 挂载的文件：**
-
-```
-/run/spiffe/
-├── svid.pem         # X.509-SVID certificate
-├── key.pem          # Private key
-├── bundle.pem       # Trust bundle (CA certificates)
-└── svid.jwt         # JWT-SVID (if configured)
-```
-
-### SPIRE Controller Manager
-
-SPIRE Controller Manager 使用 Kubernetes CRD 自动化工作负载注册：
-
-```bash
-# Controller Manager is included in the main SPIRE Helm chart
-# Verify it's running
-kubectl -n spire-system get pods -l app.kubernetes.io/name=spire-controller-manager
-```
-
-**ClusterSPIFFEID Custom Resource：**
-
-```yaml
-apiVersion: spire.spiffe.io/v1alpha1
-kind: ClusterSPIFFEID
-metadata:
-  name: payments-api
-spec:
-  spiffeIDTemplate: "spiffe://{{ .TrustDomain }}/ns/{{ .PodMeta.Namespace }}/sa/{{ .PodSpec.ServiceAccountName }}"
-  podSelector:
-    matchLabels:
-      app: payments-api
-  namespaceSelector:
-    matchLabels:
-      spiffe-enabled: "true"
-  ttl: 1h
-  dnsNameTemplates:
-    - "{{ .PodMeta.Name }}.{{ .PodMeta.Namespace }}.svc.cluster.local"
-  workloadSelectorTemplates:
-    - "k8s:ns:{{ .PodMeta.Namespace }}"
-    - "k8s:sa:{{ .PodSpec.ServiceAccountName }}"
-```
-
-**为 Namespace 添加标签以启用自动注册：**
+
+这是一个使用 SQLite 的单 server 实验环境。范围过宽的默认身份、测试身份以及未使用的 OIDC 身份均被禁用；由单独的 ClusterSPIFFEID 来选择工作负载。chart 默认跳过 kubelet 验证，因此这里显式设置了 apiServerCA。这假定实际的 kubelet 服务端证书能够在该 CA 下通过验证；对于其他 PKI，请使用相应的 CA/主机证书方式，而不要禁用验证。
+
+在此配置档中安装/删除 hook 被禁用；请单独执行所需的迁移/清理工作。渲染结果包含带 Controller Manager sidecar 的 Server StatefulSet，以及 Agent 和 CSI DaemonSet。请确认与具体 release 相关的资源名称、标签和 socket 路径。
+
+### 高可用
+
+[ha-values.yaml](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/spiffe/ha-values.yaml) 使用三个副本、共享的 PostgreSQL、已有的密码 Secret、挂载 CA 的 verify-full TLS，以及与实际 Pod 标签匹配的反亲和性（anti-affinity）。三个相互独立的 SQLite 副本并不构成共享的 HA 数据存储。
+
+请先准备好 PostgreSQL/DNS、CA ConfigMap、`spire-database` Secret 中的 `password` 键、StorageClass 以及网络连通性。该示例通过 `extraEnv.valueFrom.secretKeyRef` 以 `PGPASSWORD` 提供原始密码。它禁用了 chart 的 `dataStore.sql.externalSecret` 插值并将 `password` 留空，因此生成的连接字符串中不包含密码。SPIRE 的 PostgreSQL 驱动会单独读取 `PGPASSWORD`：引号、反斜杠、空白字符和美元符号不会进入 JSON/DSN 解析器。请不要对实际密码做预先转义或 URI 编码。
+
+针对原生 SPIRE 1.15.3 配置以及 lib/pq 1.12.3 解析的检查覆盖了六种合成密码用例，同时保留了 `sslmode=verify-full` 和 CA 路径。这些检查并未连接 PostgreSQL，也未测试故障转移。以环境变量形式下发的 Secret 变更需要重启 server Pod；请将数据库密码轮换与重启协同安排，并验证可用性。HA 还需要密钥持久化、备份、bundle 轮转以及恢复测试。
+
+<span id="attestation-flow"></span>
+<span id="kubernetes-psat-projected-service-account-token"></span>
+<span id="aws-instance-identity-document-iid"></span>
+<span id="join-token-bootstrap"></span>
+<span id="node-attestor-comparison"></span>
+
+## 节点证明
+
+![Separate agent and workload attestation](../.gitbook/assets/en-security-12-spiffe-spire-2.png)
+
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-12-spiffe-spire-2.html)
+
+
+k8s_psat 通过 **Kubernetes TokenReview** 验证 agent 的投射式（projected）ServiceAccount token，随后检查 namespace/SA/Pod/节点数据。这不是 IRSA 所使用的 IAM OIDC provider 流程。请对齐逻辑集群名称、token audience、SA 允许列表以及 TokenReview 权限。
+
+默认的 agent ID 形如 `spiffe://TRUST_DOMAIN/spire/agent/k8s_psat/CLUSTER/NODE_UID`；当前版本还提供 Pod UID 模式。请查询已注册的 agent/别名 ID，而不要自行臆造 parentID。token generate、entry create 和 bundle set 会改变真实状态。
+
+aws_iid 是使用 EC2 实例身份的另一种方案。它并非一律强于 PSAT，也不限于非 EKS 环境。请审查 skip_block_device、本地验证假设、允许的账户以及附加选择器。不要将静态 AWS 凭证放入 ConfigMap。
+
+<span id="kubernetes-workload-attestor"></span>
+<span id="registration-entry-examples"></span>
+<span id="unix-workload-attestor"></span>
+
+## 工作负载证明
+
+Agent 使用调用方的 PID/cgroup 以及 kubelet 信息。不要默认使用不安全的 kubelet 端口 10255，也不要设置 skip_kubelet_verification=true。安全认证、正确的服务端 CA 以及网络访问是前提条件。
+
+常见选择器包括 k8s:ns、k8s:sa、k8s:pod-label、k8s:pod-uid 以及 k8s:container-name/image。container-image 反映的是 Kubernetes 报告的 tag/digest；nginx:* 并不是 glob 选择器。tag 字符串不等于供应链验证。必要时请单独使用适当的 digest/签名证明机制。
+
+能够修改 namespace/Pod 标签或以某个 ServiceAccount 创建 Pod 的主体，可以影响身份的适用性。请将 namespace/SA/Pod 的创建控制与身份策略的归属一并管理。Unix 的 UID/GID/路径/哈希选择器同样取决于插件配置和威胁模型。
+
+<span id="spiffe-csi-driver"></span>
+<span id="spire-controller-manager"></span>
+<span id="envoy-sds-integration"></span>
+
+## Kubernetes 集成
+
+### CSI 挂载 API socket
+
+chart 中的 SPIFFE CSI 0.2.7 以及当前的 0.2.13 实现挂载的是 **包含 Workload API Unix socket 的目录**。它不会自动创建 svid.pem、svid.key 或 bundle.pem 文件。基于文件的应用程序需要单独的适配器，并处理续期/重载逻辑。
 
 ```yaml
 apiVersion: v1
@@ -844,749 +188,187 @@ kind: Namespace
 metadata:
   name: payments
   labels:
-    spiffe-enabled: "true"
-```
-
-**高级 ClusterSPIFFEID 示例：**
-
-```yaml
-# Identity based on deployment and container
-apiVersion: spire.spiffe.io/v1alpha1
-kind: ClusterSPIFFEID
-metadata:
-  name: deployment-identity
-spec:
-  spiffeIDTemplate: >-
-    spiffe://{{ .TrustDomain }}/cluster/{{ .ClusterName }}/ns/{{ .PodMeta.Namespace }}/deploy/{{ index .PodMeta.Labels "app" }}
-  podSelector:
-    matchExpressions:
-      - key: app
-        operator: Exists
-  ttl: 30m
-  federatesWith:
-    - "partner.example.com"
+    spiffe-enabled: 'true'
 ---
-# Identity for jobs with short TTL
-apiVersion: spire.spiffe.io/v1alpha1
-kind: ClusterSPIFFEID
-metadata:
-  name: batch-jobs
-spec:
-  spiffeIDTemplate: "spiffe://{{ .TrustDomain }}/job/{{ .PodMeta.Namespace }}/{{ index .PodMeta.Labels \"job-name\" }}"
-  podSelector:
-    matchLabels:
-      workload-type: batch
-  ttl: 5m
-```
-
-### Envoy SDS Integration
-
-SPIRE Agent 为基于 Envoy 的 proxy 暴露 SDS (Secret Discovery Service) API：
-
-```yaml
-# Agent configuration for SDS
-agent {
-    # ... other config ...
-
-    # Enable SDS for Envoy
-    sds {
-        default_svid_name = "default"
-        default_bundle_name = "ROOTCA"
-    }
-}
-```
-
-**使用 SPIRE SDS 的 Envoy 配置：**
-
-```yaml
-static_resources:
-  listeners:
-    - name: mtls_listener
-      address:
-        socket_address:
-          address: 0.0.0.0
-          port_value: 8443
-      filter_chains:
-        - transport_socket:
-            name: envoy.transport_sockets.tls
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
-              common_tls_context:
-                tls_certificate_sds_secret_configs:
-                  - name: "spiffe://prod.example.com/ns/web/sa/frontend"
-                    sds_config:
-                      api_config_source:
-                        api_type: GRPC
-                        grpc_services:
-                          - envoy_grpc:
-                              cluster_name: spire_agent
-                validation_context_sds_secret_config:
-                  name: "ROOTCA"
-                  sds_config:
-                    api_config_source:
-                      api_type: GRPC
-                      grpc_services:
-                        - envoy_grpc:
-                            cluster_name: spire_agent
-
-  clusters:
-    - name: spire_agent
-      connect_timeout: 1s
-      type: STATIC
-      lb_policy: ROUND_ROBIN
-      typed_extension_protocol_options:
-        envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
-          "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
-          explicit_http_config:
-            http2_protocol_options: {}
-      load_assignment:
-        cluster_name: spire_agent
-        endpoints:
-          - lb_endpoints:
-              - endpoint:
-                  address:
-                    pipe:
-                      path: /run/spire/sockets/agent.sock
-```
-
----
-
-## Service Mesh Integration
-
-### Istio + SPIRE Integration
-
-SPIRE 可以替代 Istio 内置的 CA (Citadel)，以提供更强的工作负载身份保证：
-
-**架构：**
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                  Istio + SPIRE Integration                   │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│   ┌─────────────┐     ┌─────────────┐     ┌─────────────┐  │
-│   │   istiod    │     │ SPIRE Server│     │  SPIRE      │  │
-│   │ (disabled   │     │    (CA)     │     │  Agent      │  │
-│   │    CA)      │     │             │     │             │  │
-│   └─────────────┘     └──────┬──────┘     └──────┬──────┘  │
-│                              │                    │         │
-│                              │ SVID               │ SDS     │
-│                              ▼                    ▼         │
-│   ┌─────────────────────────────────────────────────────┐  │
-│   │              Envoy Sidecar (istio-proxy)            │  │
-│   │         Receives SVID via SPIRE Agent SDS           │  │
-│   └─────────────────────────────────────────────────────┘  │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**配置 Istio 使用 SPIRE：**
-
-```yaml
-# IstioOperator configuration
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-metadata:
-  name: istio-spire
-spec:
-  profile: default
-  meshConfig:
-    trustDomain: prod.example.com
-  values:
-    global:
-      caAddress: ""  # Disable Citadel
-    pilot:
-      env:
-        PILOT_CERT_PROVIDER: spiffe
-        SPIFFE_BUNDLE_ENDPOINTS: "prod.example.com|https://spire-server.spire-system:8443"
-  components:
-    pilot:
-      k8s:
-        env:
-          - name: PILOT_ENABLE_WORKLOAD_ENTRY_AUTOREGISTRATION
-            value: "true"
-```
-
-**使用 SPIRE 进行 Sidecar 注入：**
-
-```yaml
 apiVersion: v1
-kind: ConfigMap
+kind: ServiceAccount
 metadata:
-  name: istio-sidecar-injector
-  namespace: istio-system
-data:
-  values: |
-    {
-      "global": {
-        "caAddress": "spire-agent.spire-system:8081",
-        "pilotCertProvider": "spiffe"
-      }
-    }
-```
-
-### Cilium + SPIRE Mutual Authentication
-
-Cilium 可以使用 SPIRE 在 Service 之间进行 mutual authentication：
-
-```yaml
-# CiliumNetworkPolicy with SPIFFE identity
-apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
-metadata:
-  name: payments-api-policy
+  name: payment-processor
   namespace: payments
-spec:
-  endpointSelector:
-    matchLabels:
-      app: payments-api
-  ingress:
-    - fromEndpoints:
-        - matchLabels:
-            app: frontend
-      authentication:
-        mode: required
-  egress:
-    - toEndpoints:
-        - matchLabels:
-            app: database
-      authentication:
-        mode: required
-```
-
-**Cilium SPIRE 配置：**
-
-```yaml
-# Cilium Helm values
-authentication:
-  enabled: true
-  mutual:
-    spire:
-      enabled: true
-      serverAddress: spire-server.spire-system:8081
-      trustDomain: prod.example.com
-```
-
-### Linkerd Identity Trust Anchors
-
-Linkerd 可以配置为信任由 SPIRE 签发的证书：
-
-```bash
-# Export SPIRE trust bundle
-kubectl -n spire-system exec spire-server-0 -- \
-  /opt/spire/bin/spire-server bundle show -format spiffe > spire-bundle.json
-
-# Install Linkerd with SPIRE trust anchor
-linkerd install \
-  --identity-trust-anchors-file spire-bundle.json \
-  --identity-issuer-certificate-file spire-ca.crt \
-  --identity-issuer-key-file spire-ca.key \
-  | kubectl apply -f -
-```
-
 ---
-
-## Federation
-
-Federation 使不同 trust domain 中的工作负载能够建立相互信任。这对于 multi-cluster、multi-cloud 和跨组织通信至关重要。
-
-### Federation Trust Establishment
-
-```mermaid
-flowchart LR
-    subgraph TrustDomainA["Trust Domain A<br/>us-east.example.com"]
-        SERVER_A[SPIRE Server A]
-        AGENT_A[SPIRE Agent A]
-        WORKLOAD_A[Workload A]
-    end
-
-    subgraph TrustDomainB["Trust Domain B<br/>eu-west.example.com"]
-        SERVER_B[SPIRE Server B]
-        AGENT_B[SPIRE Agent B]
-        WORKLOAD_B[Workload B]
-    end
-
-    subgraph BundleExchange["Bundle Exchange"]
-        ENDPOINT_A[Bundle Endpoint A<br/>:8443/bundle]
-        ENDPOINT_B[Bundle Endpoint B<br/>:8443/bundle]
-    end
-
-    SERVER_A -->|Publish Bundle| ENDPOINT_A
-    SERVER_B -->|Publish Bundle| ENDPOINT_B
-
-    SERVER_A -->|Fetch Bundle B| ENDPOINT_B
-    SERVER_B -->|Fetch Bundle A| ENDPOINT_A
-
-    WORKLOAD_A <-->|mTLS with<br/>Cross-Domain Trust| WORKLOAD_B
-
-    AGENT_A --> SERVER_A
-    AGENT_B --> SERVER_B
-    WORKLOAD_A --> AGENT_A
-    WORKLOAD_B --> AGENT_B
-```
-
-### Configuring Federation
-
-**Server A 配置 (us-east.example.com)：**
-
-```yaml
-server {
-    trust_domain = "us-east.example.com"
-
-    federation {
-        bundle_endpoint {
-            address = "0.0.0.0"
-            port = 8443
-        }
-
-        federates_with "eu-west.example.com" {
-            bundle_endpoint_url = "https://spire-server-eu.example.com:8443"
-            bundle_endpoint_profile "https_spiffe" {
-                endpoint_spiffe_id = "spiffe://eu-west.example.com/spire/server"
-            }
-        }
-    }
-}
-```
-
-**Server B 配置 (eu-west.example.com)：**
-
-```yaml
-server {
-    trust_domain = "eu-west.example.com"
-
-    federation {
-        bundle_endpoint {
-            address = "0.0.0.0"
-            port = 8443
-        }
-
-        federates_with "us-east.example.com" {
-            bundle_endpoint_url = "https://spire-server-us.example.com:8443"
-            bundle_endpoint_profile "https_spiffe" {
-                endpoint_spiffe_id = "spiffe://us-east.example.com/spire/server"
-            }
-        }
-    }
-}
-```
-
-### Federated Registration Entries
-
-```bash
-# Register a workload that can communicate with federated domain
-kubectl -n spire-system exec -it spire-server-0 -- \
-  /opt/spire/bin/spire-server entry create \
-  -spiffeID spiffe://us-east.example.com/ns/payments/sa/api \
-  -parentID spiffe://us-east.example.com/agent/node \
-  -selector k8s:ns:payments \
-  -selector k8s:sa:api \
-  -federatesWith "spiffe://eu-west.example.com"
-```
-
-**带 Federation 的 ClusterSPIFFEID：**
-
-```yaml
 apiVersion: spire.spiffe.io/v1alpha1
 kind: ClusterSPIFFEID
 metadata:
-  name: cross-region-api
+  name: payments-workload
 spec:
-  spiffeIDTemplate: "spiffe://{{ .TrustDomain }}/ns/{{ .PodMeta.Namespace }}/sa/{{ .PodSpec.ServiceAccountName }}"
+  spiffeIDTemplate: spiffe://{{ .TrustDomain }}/ns/{{ .PodMeta.Namespace }}/sa/{{
+    .PodSpec.ServiceAccountName }}
+  namespaceSelector:
+    matchLabels:
+      spiffe-enabled: 'true'
   podSelector:
     matchLabels:
-      federation-enabled: "true"
-  federatesWith:
-    - "eu-west.example.com"
-    - "ap-south.example.com"
-```
-
-### Multi-Cloud Federation Example
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                 Multi-Cloud Federation                       │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│   AWS (us-east-1)              GCP (us-central1)            │
-│   ┌─────────────────┐          ┌─────────────────┐          │
-│   │ Trust Domain:   │          │ Trust Domain:   │          │
-│   │ aws.corp.com    │◄────────►│ gcp.corp.com    │          │
-│   │                 │ HTTPS    │                 │          │
-│   │ EKS Cluster     │ Bundle   │ GKE Cluster     │          │
-│   └─────────────────┘ Exchange └─────────────────┘          │
-│           ▲                            ▲                     │
-│           │                            │                     │
-│           ▼                            ▼                     │
-│   ┌─────────────────┐          ┌─────────────────┐          │
-│   │ On-Prem DC      │          │ Azure (eastus)  │          │
-│   │ Trust Domain:   │          │ Trust Domain:   │          │
-│   │ dc.corp.com     │◄────────►│ azure.corp.com  │          │
-│   └─────────────────┘          └─────────────────┘          │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
+      spiffe-managed: 'true'
+  workloadSelectorTemplates:
+  - k8s:ns:{{ .PodMeta.Namespace }}
+  - k8s:sa:{{ .PodSpec.ServiceAccountName }}
+  - k8s:container-name:app
+  ttl: 1h
+  jwtTtl: 5m
 ---
-
-## EKS Integration
-
-### IRSA vs SPIFFE Comparison
-
-| Feature | IRSA | SPIFFE/SPIRE |
-|---------|------|--------------|
-| **Scope** | AWS services only | Universal (any service) |
-| **Identity Format** | IAM Role ARN | SPIFFE ID (URI) |
-| **Token Type** | OIDC JWT (AWS STS) | X.509-SVID, JWT-SVID |
-| **Trust Boundary** | Single AWS account (or cross-account) | Any trust domain (multi-cloud) |
-| **Rotation** | Pod restart required | Automatic (no restart) |
-| **mTLS** | Not supported | Native support |
-| **Service Mesh** | Not integrated | Native integration |
-| **Use Case** | AWS API access | Service-to-service auth |
-
-### Pod Identity vs SPIRE
-
-| Feature | EKS Pod Identity | SPIRE |
-|---------|------------------|-------|
-| **Setup Complexity** | Low (AWS managed) | Medium (self-managed) |
-| **Cloud Lock-in** | AWS only | Cloud agnostic |
-| **Custom Identity** | No (IAM only) | Yes (any identity) |
-| **Federation** | Cross-account IAM | Any trust domain |
-| **On-premises** | Not supported | Fully supported |
-| **Hybrid Cloud** | Limited | Full support |
-
-### Hybrid Use Cases
-
-**场景 1：AWS API + Service-to-Service**
-
-使用 IRSA 访问 AWS API，并使用 SPIRE 进行 service-to-service 认证：
-
-```yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: hybrid-workload
-  annotations:
-    # IRSA for AWS API access
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/my-role
+  name: payment-processor
+  namespace: payments
+  labels:
+    spiffe-managed: 'true'
 spec:
-  serviceAccountName: my-service-account
+  serviceAccountName: payment-processor
   containers:
-    - name: app
-      image: myapp:latest
-      volumeMounts:
-        # SPIRE for service-to-service mTLS
-        - name: spiffe
-          mountPath: /run/spiffe
-          readOnly: true
-      env:
-        # AWS credentials from IRSA
-        - name: AWS_ROLE_ARN
-          value: arn:aws:iam::123456789012:role/my-role
-        - name: AWS_WEB_IDENTITY_TOKEN_FILE
-          value: /var/run/secrets/eks.amazonaws.com/serviceaccount/token
-        # SPIRE certificates for mTLS
-        - name: SVID_PATH
-          value: /run/spiffe/svid.pem
+  - name: app
+    image: registry.example.com/team/payment-app:REPLACE_WITH_APPROVED_VERSION
+    env:
+    - name: SPIFFE_ENDPOINT_SOCKET
+      value: unix:///spiffe-workload-api/spire-agent.sock
+    volumeMounts:
+    - name: spiffe-workload-api
+      mountPath: /spiffe-workload-api
+      readOnly: true
   volumes:
-    - name: spiffe
-      csi:
-        driver: csi.spiffe.io
-        readOnly: true
+  - name: spiffe-workload-api
+    csi:
+      driver: csi.spiffe.io
+      readOnly: true
 ```
 
-**场景 2：使用 EKS 的 Cross-Cloud**
+
+请将应用镜像替换为真正的 Workload API 消费方。注意区分 chart 身份中的 jwtTTL 与 CRD 中的 jwtTtl。示例中的显式选择器指向 app 容器；单独的 Envoy 容器需要相应匹配的代理注册策略。
+
+### Envoy SDS
+
+[完整的 bootstrap 示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/spiffe/envoy.yaml)包含 HTTP filter、SDS 集群、require_client_certificate:true 以及精确匹配的允许对端 URI matcher。Envoy 进程必须可被证明，并且命名的 server/client 身份都必须已注册。
+
+SDS 与 Workload API 共用公开的 agent socket。证书资源名称使用工作负载 SPIFFE ID 或 default；验证上下文使用信任域 ID 或 ROOTCA/ALL。请确认 SPIFFE 证书验证器的支持情况，尤其是对 ALL 的支持。协议 schema 和 URI matcher 实现已经过验证；未运行任何真实的 Envoy/SDS/mTLS 握手。
+
+<span id="istio-spire-integration"></span>
+<span id="cilium-spire-mutual-authentication"></span>
+<span id="linkerd-identity-trust-anchors"></span>
+
+## 服务网格集成
+
+### Istio
+
+不要将 Istio 的 CA 地址指向 SPIRE Server 的 8081 端口，也不要使用臆造的 ENABLE_SPIFFE_IDENTITY/PILOT_ENABLE_SPIRE_INTEGRATION 变量。当前的[官方集成方案](https://istio.io/latest/docs/ops/integrations/spire/)配置的是 CSI socket 挂载、SPIRE 注册以及 sidecar/gateway 模板。
+
+在使用原生 sidecar 时，istio-proxy 是一个 initContainer，必须在那里进行 patch。显式禁用原生 sidecar 模式时则使用 containers。请验证已安装的版本、模板、socket 以及就绪状态；不要用片段式的配置替换完整的 injector ConfigMap。
+
+### Cilium
+
+Cilium 1.20.1 的双向认证功能处于 **beta 阶段，且与普通连接是带外（out-of-band）关系**。流量加密需要单独配置 WireGuard/IPsec。仅包含 SPIFFE ID 的任意标签并不构成经过认证的身份策略。
+
+官方安装方式使用 authentication.mutual.spire.enabled，若使用其自带的安装方式则还需 authentication.mutual.spire.install.enabled。请将自带 SPIRE 与外部 SPIRE 的配置区分清楚，并参考[固定版本的安装源文档](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/installation.rst)。端点选择器/认证模式、身份签发与加密各自承担不同的职责。
+
+### Linkerd
+
+不要在 Linkerd 期望 PEM 格式根证书的位置传入 SPIRE bundle JSON，也不要把 SPIRE CA 私钥复制为 issuer 密钥。Linkerd 需要合适的 issuer 证书/密钥和受信任的根证书，并具备续期和根证书轮转能力。参见[已审阅的 cert-manager/Linkerd 方案](./10-cert-manager.md#linkerd-and-trust-manager)。仅共享根信任并不等于集成了 SPIFFE Workload API 或 SDS。
+
+<span id="federation-trust-establishment"></span>
+<span id="configuring-federation"></span>
+<span id="federated-registration-entries"></span>
+<span id="multi-cloud-federation-example"></span>
+
+## 联邦
+
+![Federation with explicit bundle trust and workload authorization](../.gitbook/assets/en-security-12-spiffe-spire-3.png)
+
+[View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-12-spiffe-spire-3.html)
+
+
+请显式配置每个信任方向；联邦不会自动建立双向信任或授权。需要运维 bundle 端点连通性、TLS 验证、刷新失败、过期以及轮转。
 
 ```yaml
-# EKS cluster federates with GKE and on-premises
 apiVersion: spire.spiffe.io/v1alpha1
-kind: ClusterSPIFFEID
+kind: ClusterFederatedTrustDomain
 metadata:
-  name: eks-cross-cloud
+  name: partner-domain
 spec:
-  spiffeIDTemplate: "spiffe://eks.example.com/ns/{{ .PodMeta.Namespace }}/sa/{{ .PodSpec.ServiceAccountName }}"
-  podSelector:
-    matchLabels:
-      cross-cloud: "true"
-  federatesWith:
-    - "gke.example.com"
-    - "onprem.example.com"
+  trustDomain: partner.example.org
+  bundleEndpointURL: https://bundle.partner.example.org
+  bundleEndpointProfile:
+    type: https_web
 ```
 
-### EKS-Specific Node Attestation
 
-对于 EKS，请使用 AWS IID attestation 以获得更强的 node 身份：
+这个 https_web 示例假定存在一个具备有效 Web PKI 证书的真实端点。https_spiffe 还额外需要 endpointSPIFFEID 以及 **通过经过认证的引导路径获取的初始受信任 bundle**；仅设置 URL 是不够的。在适用的工作负载 federatesWith 列表中，请使用形如 partner.example.org 的裸信任域名称。获取信任 bundle 与授权对端工作负载是两件不同的事。
 
-```yaml
-# Server plugin configuration for EKS
-NodeAttestor "aws_iid" {
-    plugin_data {
-        skip_block_device = true
-        disable_instance_profile_selectors = false
+<span id="irsa-vs-spiffe-comparison"></span>
+<span id="pod-identity-vs-spire"></span>
+<span id="hybrid-use-cases"></span>
+<span id="eks-specific-node-attestation"></span>
 
-        # Allow specific EKS node groups
-        agent_path_template = "/eks/{{ .ClusterName }}/{{ .NodeGroupName }}/{{ .InstanceID }}"
-    }
-}
+## EKS 集成
 
-NodeResolver "aws_iid" {
-    plugin_data {
-        # Resolve AWS-specific selectors
-        # tag:kubernetes.io/cluster/my-cluster = owned
-        # tag:eks:nodegroup-name = my-nodegroup
-    }
-}
-```
+IRSA/Pod Identity 提供 AWS API 凭证路径；SPIFFE/SPIRE 提供工作负载身份路径。两者互不替代，也不是每个环境都需要同时使用。IRSA 支持跨账户设计，并通过兼容的 SDK/投射式 token 行为刷新凭证；重启 Pod 本身并非必需。不要假定存在固定的十二小时有效期。
 
----
+请在 ServiceAccount 上配置 IRSA，并验证 aud/sub 信任关系和 AWS 权限。仅有 Pod 注解或 AWS_ROLE_ARN 环境变量是不够的。对于工作负载 mTLS，应用程序/代理必须消费 SVID 并单独完成对端身份授权。
 
-## Best Practices
+### AWS Private CA
 
-### Trust Domain Naming
+请在完整的 server plugins 段落中使用[固定版本的插件字段](https://github.com/spiffe/spire/blob/v1.15.3/doc/plugin_server_upstreamauthority_aws_pca.md)。以下是插件片段，不是可以独立运行的 server 配置。
 
-| Guideline | Example | Rationale |
-|-----------|---------|-----------|
-| Use DNS-like names | `prod.example.com` | Globally unique, familiar |
-| Environment separation | `prod.corp.com`, `staging.corp.com` | Prevent cross-env access |
-| Avoid IP addresses | Never use IPs | IPs change, names don't |
-| Plan for federation | `aws.corp.com`, `gcp.corp.com` | Easier multi-cloud setup |
-
-### SVID TTL Tuning
-
-```yaml
-# Recommended TTL values
-server {
-    # Root CA certificate - long lived
-    ca_ttl = "168h"  # 7 days
-
-    # X.509-SVID for workloads
-    default_x509_svid_ttl = "1h"  # Balance security vs performance
-
-    # JWT-SVID for API calls
-    default_jwt_svid_ttl = "5m"  # Short for stateless auth
+```hcl
+# Merge this plugin into an otherwise complete server configuration.
+UpstreamAuthority "aws_pca" {
+  plugin_data {
+    region = "ap-northeast-2"
+    certificate_authority_arn = "arn:aws:acm-pca:ap-northeast-2:111122223333:certificate-authority/REPLACE_CA_ID"
+    ca_signing_template_arn = "arn:aws:acm-pca:::template/SubordinateCACertificate_PathLen0/V1"
+  }
 }
 ```
 
-**TTL 指南：**
 
-| Workload Type | Recommended TTL | Rationale |
-|---------------|-----------------|-----------|
-| Long-running services | 1h | Balance rotation overhead |
-| Batch jobs | 5-15m | Match job duration |
-| API gateways | 30m | Frequent rotation acceptable |
-| CI/CD jobs | 5m | Short-lived, high security |
+SPIRE 拥有中间 CA 并签发叶证书。请使用[策略示例](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/spiffe/aws-pca-policy.json)将 DescribeCertificateAuthority/IssueCertificate/GetCertificate 的范围限制到目标 CA ARN。请为真实的 CA 选择合适的签名算法/模板。supplemental_bundle_path 包含额外的 PEM 权威机构，而不是备份区域。请区分 aws_kms KeyManager 与 UpstreamAuthority 插件。
 
-### High Availability Deployment
+## 最佳实践与故障排查
 
-```yaml
-# Production HA configuration
-spire-server:
-  replicaCount: 3
+请结合续期失败、时钟偏移、签发负载和离线时段来调整有效期。短 TTL 并不能解决所有吊销或 JWT 重放问题。bundle set 会更改受信任的 bundle；它不会轮换 CA 私钥。
 
-  # Use external PostgreSQL for HA
-  dataStore:
-    sql:
-      databaseType: postgres
-      connectionString: "host=spire-postgres-cluster..."
+网络策略除了 Server↔Agent 流量之外，还必须考虑 DNS、Kubernetes TokenReview/API、数据存储、上游 CA/KMS、联邦以及遥测。某个 namespace 中的 Pod 选择器不会选中另一个 namespace 中的 agent。在声称策略已放通全部所需流量之前，请验证真实的连通性。
 
-  # Pod anti-affinity for spread
-  affinity:
-    podAntiAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchLabels:
-              app.kubernetes.io/name: spire-server
-          topologyKey: topology.kubernetes.io/zone
+在 agent Pod 内部运行 api fetch 所证明的是该调用进程，而不是应用程序的上下文。请依照经过批准的流程，从目标工作负载的上下文进行诊断。请限制日志中的敏感选择器、token 和密钥。
 
-  # Resource limits
-  resources:
-    requests:
-      cpu: 500m
-      memory: 1Gi
-    limits:
-      cpu: 2000m
-      memory: 4Gi
+<span id="table-of-contents"></span>
+<span id="the-zero-trust-identity-problem"></span>
+<span id="spiffe-specification-overview"></span>
+<span id="cncf-graduation-status"></span>
+<span id="best-practices"></span>
+<span id="trust-domain-naming"></span>
+<span id="svid-ttl-tuning"></span>
+<span id="high-availability-deployment"></span>
+<span id="key-rotation"></span>
+<span id="security-hardening"></span>
+<span id="troubleshooting"></span>
+<span id="common-issues"></span>
+<span id="health-checks"></span>
+<span id="key-takeaways"></span>
+<span id="architecture-decision-guide"></span>
+<span id="references"></span>
 
-  # Persistent storage for CA keys
-  persistence:
-    enabled: true
-    storageClass: gp3
-    size: 10Gi
-```
+## 总结与参考资料
 
-### Key Rotation
+本地验证覆盖了 server/agent 配置、九个 ID 用例、五个 X.509 用例、六个 JWT 用例、实验环境/HA Helm、CRD/Pod schema、Envoy protobuf schema，以及针对八张示意图的二十四个浏览器用例。未执行任何真实的证明、集群安装、数据库连接、AWS 签发、联邦交换或 mTLS 流量。
 
-SPIRE 会在 SVID 过期前自动轮换它们。对于 CA key 轮换：
-
-```bash
-# Prepare new upstream CA (if using disk-based upstream authority)
-# 1. Generate new CA key pair
-# 2. Update server configuration
-# 3. Restart servers one at a time
-
-# For AWS KMS-based key management
-UpstreamAuthority "aws_kms" {
-    plugin_data {
-        region = "us-east-1"
-        key_arn = "arn:aws:kms:us-east-1:123456789012:key/abc123"
-    }
-}
-```
-
-### Security Hardening
-
-```yaml
-# Agent security configuration
-agent {
-    # Restrict socket access
-    socket_path = "/run/spire/sockets/agent.sock"
-
-    # Require attestation for all workloads
-    authorized_delegates = []
-
-    # Log all workload API requests
-    log_level = "INFO"
-}
-
-# Network policies for SPIRE
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: spire-server-policy
-  namespace: spire-system
-spec:
-  podSelector:
-    matchLabels:
-      app.kubernetes.io/name: spire-server
-  policyTypes:
-    - Ingress
-    - Egress
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: spire-agent
-      ports:
-        - port: 8081
-  egress:
-    - to:
-        - podSelector:
-            matchLabels:
-              app: postgres
-      ports:
-        - port: 5432
-```
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-**问题：Agent 无法连接到 Server**
-
-```bash
-# Check agent logs
-kubectl -n spire-system logs -l app.kubernetes.io/name=spire-agent
-
-# Verify server is reachable
-kubectl -n spire-system exec -it spire-agent-xxxxx -- \
-  nc -zv spire-server 8081
-
-# Check node attestation
-kubectl -n spire-system exec -it spire-server-0 -- \
-  /opt/spire/bin/spire-server agent list
-```
-
-**问题：工作负载无法获取 SVID**
-
-```bash
-# Verify registration entry exists
-kubectl -n spire-system exec -it spire-server-0 -- \
-  /opt/spire/bin/spire-server entry show
-
-# Check workload attestation from agent
-kubectl -n spire-system exec -it spire-agent-xxxxx -- \
-  /opt/spire/bin/spire-agent api fetch x509 -socketPath /run/spire/sockets/agent.sock
-
-# Debug workload selectors
-kubectl -n spire-system exec -it spire-agent-xxxxx -- \
-  /opt/spire/bin/spire-agent api fetch x509 -socketPath /run/spire/sockets/agent.sock -debug
-```
-
-**问题：CSI Driver 未挂载 SVID**
-
-```bash
-# Check CSI driver pods
-kubectl -n spiffe-csi-driver get pods
-
-# Verify CSI driver registration
-kubectl get csidrivers csi.spiffe.io
-
-# Check events on failing pod
-kubectl describe pod <pod-name> -n <namespace>
-```
-
-### Health Checks
-
-```bash
-# Server health
-kubectl -n spire-system exec -it spire-server-0 -- \
-  /opt/spire/bin/spire-server healthcheck
-
-# Agent health
-kubectl -n spire-system exec -it spire-agent-xxxxx -- \
-  /opt/spire/bin/spire-agent healthcheck
-
-# Bundle status
-kubectl -n spire-system exec -it spire-server-0 -- \
-  /opt/spire/bin/spire-server bundle show
-```
-
----
-
-## Summary and References
-
-### Key Takeaways
-
-1. **SPIFFE 提供通用工作负载身份** — 一种基于标准的方法，可跨 cloud、cluster 和 platform 工作
-
-2. **SPIRE 大规模实现 SPIFFE** — 具备自动化 attestation 和 SVID 管理的生产就绪实现
-
-3. **零代码集成** — CSI driver 和 service mesh 集成意味着无需修改应用程序
-
-4. **Federation 支持 multi-cluster/multi-cloud** — Trust domain 可以进行 federation，以实现跨边界认证
-
-5. **补充 cloud-native 身份** — SPIFFE 可与 IRSA/Pod Identity 配合使用，实现全面的身份管理
-
-### Architecture Decision Guide
-
-| Requirement | Recommendation |
-|-------------|----------------|
-| AWS-only, AWS APIs | Use IRSA or Pod Identity |
-| Multi-cloud services | Use SPIFFE/SPIRE |
-| Service mesh mTLS | Use SPIFFE/SPIRE |
-| Hybrid cloud | Use SPIFFE/SPIRE |
-| Cross-organization trust | Use SPIFFE Federation |
-| Simple setup, single cluster | Start with cloud-native (IRSA), add SPIRE later |
-
-### References
-
-**官方文档：**
-
-- [SPIFFE Specification](https://spiffe.io/docs/latest/spiffe-about/overview/)
-- [SPIRE Documentation](https://spiffe.io/docs/latest/spire-about/)
-- [SPIRE Helm Charts](https://github.com/spiffe/helm-charts-hardened)
-- [SPIFFE CSI Driver](https://github.com/spiffe/spiffe-csi)
-
-**集成指南：**
-
-- [Istio + SPIRE Integration](https://istio.io/latest/docs/ops/integrations/spire/)
-- [Cilium Mutual Authentication](https://docs.cilium.io/en/stable/network/servicemesh/mutual-authentication/)
-- [Envoy SDS Integration](https://www.envoyproxy.io/docs/envoy/latest/configuration/security/secret)
-
-**CNCF 资源：**
-
-- [SPIFFE CNCF Project Page](https://www.cncf.io/projects/spiffe/)
-- [SPIFFE Slack Channel](https://slack.spiffe.io/)
-- [SPIFFE Community Meetings](https://github.com/spiffe/spiffe/wiki/Community)
+- [SPIFFE ID specification](https://spiffe.io/docs/latest/spiffe-specs/spiffe-id/)
+- [X.509-SVID](https://spiffe.io/docs/latest/spiffe-specs/x509-svid/)
+- [JWT-SVID](https://spiffe.io/docs/latest/spiffe-specs/jwt-svid/)
+- [Incubating WIT-SVID](https://spiffe.io/docs/latest/spiffe-specs/wit-svid/)
+- [Trust domain and bundle](https://spiffe.io/docs/latest/spiffe-specs/spiffe_trust_domain_and_bundle/)
+- [Federation specification](https://spiffe.io/docs/latest/spiffe-specs/spiffe_federation/)
+- [SPIFFE CNCF history](https://www.cncf.io/projects/spiffe/)
+- [SPIRE CNCF history](https://www.cncf.io/projects/spire/)
+- [SPIRE 1.15.3](https://github.com/spiffe/spire/releases/tag/v1.15.3)
+- [SPIFFE CSI 0.2.13](https://github.com/spiffe/spiffe-csi/blob/v0.2.13/README.md)
+- [Hardened Helm charts](https://github.com/spiffe/helm-charts-hardened)
+- [Cilium 1.20.1 mutual authentication](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
