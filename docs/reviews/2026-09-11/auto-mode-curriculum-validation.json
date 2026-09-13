@@ -1,0 +1,294 @@
+{
+  "status": "passed",
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/training/eks-auto-mode-2h-curriculum.md",
+        "sha256": "9f12e65d9008f368525e9be32c27f44a162774930537c556eba1ad008bee3d86",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "eks-auto-mode-운영자-교육-커리큘럼-2시간"
+          },
+          {
+            "tag": "h2",
+            "id": "교육-목표"
+          },
+          {
+            "tag": "h2",
+            "id": "시간표와-사전-준비"
+          },
+          {
+            "tag": "h2",
+            "id": "part1-구조와-배치-40분"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-1-관리-경계-10분"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-2-nodepool-nodeclass-15분"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-3-scaling-15분"
+          },
+          {
+            "tag": "h2",
+            "id": "part2-최적화와-수명-35분"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-1-spot-10분"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-2-비용-10분"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-3-workload-설계-10분"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-4-node-lifecycle-5분"
+          },
+          {
+            "tag": "h2",
+            "id": "휴식-10분"
+          },
+          {
+            "tag": "h2",
+            "id": "part3-관측과-장애-분석-25분"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-1-node-관측-8분"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-2-logs-metrics-traces-연결-8분"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-3-증거-기반-시나리오-9분"
+          },
+          {
+            "tag": "h2",
+            "id": "part4-iac-gitops-10분"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-1-iac-경계-5분"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-2-gitops-운영-5분"
+          },
+          {
+            "tag": "h2",
+            "id": "강의-후-평가와-실습-준비"
+          },
+          {
+            "tag": "h2",
+            "id": "검토-근거"
+          }
+        ],
+        "renderedIds": [
+          "eks-auto-mode-운영자-교육-커리큘럼-2시간",
+          "교육-목표",
+          "시간표와-사전-준비",
+          "part1-구조와-배치-40분",
+          "_1-1-관리-경계-10분",
+          "_1-2-nodepool-nodeclass-15분",
+          "_1-3-scaling-15분",
+          "part2-최적화와-수명-35분",
+          "_2-1-spot-10분",
+          "_2-2-비용-10분",
+          "_2-3-workload-설계-10분",
+          "_2-4-node-lifecycle-5분",
+          "휴식-10분",
+          "part3-관측과-장애-분석-25분",
+          "_3-1-node-관측-8분",
+          "_3-2-logs-metrics-traces-연결-8분",
+          "_3-3-증거-기반-시나리오-9분",
+          "part4-iac-gitops-10분",
+          "_4-1-iac-경계-5분",
+          "_4-2-gitops-운영-5분",
+          "강의-후-평가와-실습-준비",
+          "검토-근거"
+        ]
+      },
+      {
+        "path": "en/training/eks-auto-mode-2h-curriculum.md",
+        "sha256": "5870d3c4efc21f0308115f0567f2a865a104462b5570c8ba0ece1ead83f5713e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "eks-auto-mode-operator-training-curriculum-2-hours"
+          },
+          {
+            "tag": "h2",
+            "id": "learning-objectives"
+          },
+          {
+            "tag": "h2",
+            "id": "schedule-and-preparation"
+          },
+          {
+            "tag": "h2",
+            "id": "part1-architecture-and-placement-40min"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-1-management-boundaries-10min"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-2-nodepool-and-nodeclass-15min"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-3-scaling-15min"
+          },
+          {
+            "tag": "h2",
+            "id": "part2-optimization-and-lifecycle-35min"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-1-spot-10min"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-2-cost-10min"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-3-workload-design-10min"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-4-node-lifecycle-5min"
+          },
+          {
+            "tag": "h2",
+            "id": "break-10min"
+          },
+          {
+            "tag": "h2",
+            "id": "part3-observability-and-diagnosis-25min"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-1-node-observations-8min"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-2-correlating-signals-8min"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-3-evidence-based-scenarios-9min"
+          },
+          {
+            "tag": "h2",
+            "id": "part4-iac-gitops-10min"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-1-iac-boundaries-5min"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-2-gitops-operations-5min"
+          },
+          {
+            "tag": "h2",
+            "id": "assessment-and-lab-preparation"
+          },
+          {
+            "tag": "h2",
+            "id": "review-evidence"
+          }
+        ],
+        "renderedIds": [
+          "eks-auto-mode-operator-training-curriculum-2-hours",
+          "learning-objectives",
+          "schedule-and-preparation",
+          "part1-architecture-and-placement-40min",
+          "_1-1-management-boundaries-10min",
+          "_1-2-nodepool-and-nodeclass-15min",
+          "_1-3-scaling-15min",
+          "part2-optimization-and-lifecycle-35min",
+          "_2-1-spot-10min",
+          "_2-2-cost-10min",
+          "_2-3-workload-design-10min",
+          "_2-4-node-lifecycle-5min",
+          "break-10min",
+          "part3-observability-and-diagnosis-25min",
+          "_3-1-node-observations-8min",
+          "_3-2-correlating-signals-8min",
+          "_3-3-evidence-based-scenarios-9min",
+          "part4-iac-gitops-10min",
+          "_4-1-iac-boundaries-5min",
+          "_4-2-gitops-operations-5min",
+          "assessment-and-lab-preparation",
+          "review-evidence"
+        ]
+      }
+    ]
+  },
+  "localLinksCheckedAgainst": "origin/main510b24c3pluscurrentworkingfiles",
+  "scope": "2hourcurriculumcontentreview;nocloudprovisioning,FISorrealbackenddeployment",
+  "native": {
+    "status": "passed",
+    "nodePool": "Karpenter1.14.1OpenAPIstructuralschemaonly;AWSlabelkeyscheckedagainstofficialAutoModeNodePooldocs",
+    "minutes": 120,
+    "rules": "promtoolcheckrules2andtestrules2casespassed",
+    "scope": "NoAutoModeadmission,nodeprovisioning,FIS,cloudcostorbackenddeployment."
+  },
+  "sources": [
+    {
+      "file": "nodepool.html",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html"
+    },
+    {
+      "file": "security.html",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/auto-security.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/userguide/auto-security.html"
+    },
+    {
+      "file": "automode.html",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/automode.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/userguide/automode.html"
+    },
+    {
+      "file": "grafana-tempo.html",
+      "url": "https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/",
+      "status": 200,
+      "finalUrl": "https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/"
+    },
+    {
+      "file": "loki-labels.html",
+      "url": "https://grafana.com/docs/loki/latest/get-started/labels/",
+      "status": 200,
+      "finalUrl": "https://grafana.com/docs/loki/latest/get-started/labels/"
+    }
+  ],
+  "note": "Guessedauto-monitorURLredirectedtoguideroot;notusedasmetricsource.",
+  "metadataFollowup": "RestoreexistingSept12updatedatesinrecognizedheaders;content/nativeexamplesunchanged."
+}

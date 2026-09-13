@@ -130,7 +130,8 @@ set -euo pipefail
 : "${SPOT_PROFILE:?}" "${SPOT_REGION:?}" "${SPOT_CLUSTER:?}"
 : "${SPOT_NODE:?}" "${SPOT_INSTANCE_ID:?}" "${SPOT_RUN_ID:?}"
 : "${SPOT_FIS_ROLE_ARN:?}" "${SPOT_STOP_ALARM_ARN:?}"
-SPOT_RESULT_DIR=$(mktemp -d /tmp/eks-spot-run.XXXXXX)
+umask 077
+SPOT_RESULT_DIR=$(mktemp -d "$PWD/eks-spot-run.XXXXXX")
 SPOT_KUBECONFIG="$SPOT_RESULT_DIR/kubeconfig"
 spot_aws() { aws --profile "$SPOT_PROFILE" --region "$SPOT_REGION" --output json "$@"; }
 spot_kubectl() { kubectl --kubeconfig "$SPOT_KUBECONFIG" "$@"; }

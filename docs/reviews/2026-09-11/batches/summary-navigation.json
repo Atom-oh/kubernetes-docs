@@ -1,0 +1,18 @@
+[
+  {
+    "path": "ko/SUMMARY.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "18a83deaff869519331733f176b46df176cb7fad7d6a2edf857272050aceea00",
+    "summary": "Readall687linesperlocaleandcurrentmaindeltas;alltargetsvalid;restoredmainSpotentriesandaddedmissingRolloutsquiznavigation.",
+    "validationReport": "docs/reviews/2026-09-11/summary-navigation-validation.json"
+  },
+  {
+    "path": "en/SUMMARY.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "6fcf1c4b644aa533d157b6539e3d637e93f13b89bbc29d34f98c21e4d8e0186f",
+    "summary": "Readall687linesperlocaleandcurrentmaindeltas;alltargetsvalid;restoredmainSpotentriesandaddedmissingRolloutsquiznavigation.",
+    "validationReport": "docs/reviews/2026-09-11/summary-navigation-validation.json"
+  }
+]

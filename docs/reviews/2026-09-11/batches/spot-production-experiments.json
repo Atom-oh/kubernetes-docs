@@ -1,0 +1,34 @@
+[
+  {
+    "path": "ko/ops/17-spot-production-experiments.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "8f754bfdd57b2324c47885d11d5180f3c38c32d042c038ef81d83caee01e5533",
+    "summary": "Reviewedall409guide/115quizlinesperlocale;12rawdatasets86400requestsrecomputedandmatched;29tests/4MD/13referencelinks/PNGpassed.NoFISrerun;resultdirectorychangedfromtmpincurrentworkingdirectory.",
+    "validationReport": "docs/reviews/2026-09-11/spot-experiments-content-validation.json"
+  },
+  {
+    "path": "en/ops/17-spot-production-experiments.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "f506e72249a9529409d9dba39e8b16edfc184f3782658c10db8e27c3cb3ac203",
+    "summary": "Reviewedall409guide/115quizlinesperlocale;12rawdatasets86400requestsrecomputedandmatched;29tests/4MD/13referencelinks/PNGpassed.NoFISrerun;resultdirectorychangedfromtmpincurrentworkingdirectory.",
+    "validationReport": "docs/reviews/2026-09-11/spot-experiments-content-validation.json"
+  },
+  {
+    "path": "ko/quizzes/ops/17-spot-production-experiments-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "fd87a694e73eeae1c6bf9dcac4296e0b0b317bedd2b1359841d9cc0beb8f2604",
+    "summary": "Reviewedall409guide/115quizlinesperlocale;12rawdatasets86400requestsrecomputedandmatched;29tests/4MD/13referencelinks/PNGpassed.NoFISrerun;resultdirectorychangedfromtmpincurrentworkingdirectory.",
+    "validationReport": "docs/reviews/2026-09-11/spot-experiments-content-validation.json"
+  },
+  {
+    "path": "en/quizzes/ops/17-spot-production-experiments-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "f9172db5d923f2cdeac4bd4458f56d93b04f8c769f2377039980c002bdcf5564",
+    "summary": "Reviewedall409guide/115quizlinesperlocale;12rawdatasets86400requestsrecomputedandmatched;29tests/4MD/13referencelinks/PNGpassed.NoFISrerun;resultdirectorychangedfromtmpincurrentworkingdirectory.",
+    "validationReport": "docs/reviews/2026-09-11/spot-experiments-content-validation.json"
+  }
+]

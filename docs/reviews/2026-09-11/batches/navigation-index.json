@@ -1,0 +1,34 @@
+[
+  {
+    "path": "ko/quizzes/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "2f7975373e35b7a92e3ecf5fa21f9a5e61fc87031d434f75df8c4c871ba5404f",
+    "summary": "Fullyreadoriginalindex/landingpage;quizindexnowlistsall253currentmainquizfilesineachlocale;emptyobservabilitylegacypagepointstomaintainedseries;Markdownandlocalmain-targetlinkspassed.",
+    "validationReport": "docs/reviews/2026-09-11/navigation-index-validation.json"
+  },
+  {
+    "path": "en/quizzes/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "6e74dc7d2a23cf8ef419383777679c782e087216e5880a6351acec20c19538e2",
+    "summary": "Fullyreadoriginalindex/landingpage;quizindexnowlistsall253currentmainquizfilesineachlocale;emptyobservabilitylegacypagepointstomaintainedseries;Markdownandlocalmain-targetlinkspassed.",
+    "validationReport": "docs/reviews/2026-09-11/navigation-index-validation.json"
+  },
+  {
+    "path": "ko/lab-guides/labs/observability-end-to-end/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "6aba76e395b46ee9b94819046b578cf5206a5800e64a1076d137b3f88f02ed1d",
+    "summary": "Fullyreadoriginalindex/landingpage;quizindexnowlistsall253currentmainquizfilesineachlocale;emptyobservabilitylegacypagepointstomaintainedseries;Markdownandlocalmain-targetlinkspassed.",
+    "validationReport": "docs/reviews/2026-09-11/navigation-index-validation.json"
+  },
+  {
+    "path": "en/lab-guides/labs/observability-end-to-end/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "6d68fd106435318432d8ab52e97bcc30022d7c23527237aa4c4d6323c35bcf5c",
+    "summary": "Fullyreadoriginalindex/landingpage;quizindexnowlistsall253currentmainquizfilesineachlocale;emptyobservabilitylegacypagepointstomaintainedseries;Markdownandlocalmain-targetlinkspassed.",
+    "validationReport": "docs/reviews/2026-09-11/navigation-index-validation.json"
+  }
+]

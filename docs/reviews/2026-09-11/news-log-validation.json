@@ -1,0 +1,633 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T22:57:16.981319+00:00",
+  "scope": {
+    "documents": 2,
+    "historicalEntriesPerLocale": 62
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/news/README.md",
+        "sha256": "f5054dfe4b13021d372ec32723e6508c1f5f535e39ddf2c8395e6f6879d2df8f",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "소식"
+          },
+          {
+            "tag": "h2",
+            "id": "갱신-로그"
+          }
+        ],
+        "renderedIds": [
+          "소식",
+          "갱신-로그"
+        ]
+      },
+      {
+        "path": "en/news/README.md",
+        "sha256": "d5840f8289a552075af0361ff92258471f26a36841469bd59de8244f47ca204c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "news"
+          },
+          {
+            "tag": "h2",
+            "id": "update-log"
+          }
+        ],
+        "renderedIds": [
+          "news",
+          "update-log"
+        ]
+      }
+    ]
+  },
+  "linkedSources": [
+    {
+      "id": 0,
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/06/aws-systems-manager-multicloud-vm/",
+      "status": 200,
+      "finalUrl": "https://aws.amazon.com/about-aws/whats-new/2026/06/aws-systems-manager-multicloud-vm/",
+      "sha256": "762369b82b2057d6dc6ee023f13bf8f706b18f023ce716138cdd2ad8c41e7e17",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/00.txt"
+    },
+    {
+      "id": 1,
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-emr-eks-spark-troubleshooting/",
+      "status": 200,
+      "finalUrl": "https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-emr-eks-spark-troubleshooting/",
+      "sha256": "4c83dd17b66c0315ca7932360837f944c9ab4465adb82908a5966d4ffc777a86",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/01.txt"
+    },
+    {
+      "id": 2,
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-ecr-image-layers/",
+      "status": 200,
+      "finalUrl": "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-ecr-image-layers/",
+      "sha256": "8d8aac7ca2df1a1032769e6f1d70c62800221bd55c195d55318cf7ee53b25e04",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/02.txt"
+    },
+    {
+      "id": 3,
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-certificate-authority-ca-rotation-automated-lifecycle-management",
+      "status": 200,
+      "finalUrl": "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-certificate-authority-ca-rotation-automated-lifecycle-management/",
+      "sha256": "65bf1385f5594670f9a957fcbb23c9642cf878e4f9a2e197fd6b515b851eafe9",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/03.txt"
+    },
+    {
+      "id": 4,
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-control-plane-configuration-parameters",
+      "status": 200,
+      "finalUrl": "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-control-plane-configuration-parameters/",
+      "sha256": "1a56d757cf0a466b0bb3d38bb4d73552e063f76f7e684e77883091523ff188ca",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/04.txt"
+    },
+    {
+      "id": 5,
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-multiple-oidc-providers",
+      "status": 200,
+      "finalUrl": "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-multiple-oidc-providers/",
+      "sha256": "6de0e0544729c6b6b0dfba071ea211f2cb5a583144963e7fde06e6c949680195",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/05.txt"
+    },
+    {
+      "id": 6,
+      "url": "https://kubernetes.io/blog/2026/08/11/how-to-pretty-print-kubernetes-yaml-as-kyaml/",
+      "status": 200,
+      "finalUrl": "https://kubernetes.io/blog/2026/08/11/how-to-pretty-print-kubernetes-yaml-as-kyaml/",
+      "sha256": "2114f40f47f56e20e6701cc28bf773171ab429d145b0763af35058302987952e",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/06.txt"
+    },
+    {
+      "id": 7,
+      "url": "https://www.cncf.io/announcements/2026/08/05/k8gb-becomes-a-cncf-incubating-project/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/announcements/2026/08/05/k8gb-becomes-a-cncf-incubating-project/",
+      "sha256": "5f3d9b65476783c04421ae3505ca7f050f5f01965fd3bfabdf90b39ac2599526",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/07.txt"
+    },
+    {
+      "id": 8,
+      "url": "https://www.cncf.io/announcements/2026/08/10/cncf-reveals-kubecon-cloudnativecon-north-america-2026-schedule-adds-new-ai-inference-agentic-track/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/announcements/2026/08/10/cncf-reveals-kubecon-cloudnativecon-north-america-2026-schedule-adds-new-ai-inference-agentic-track/",
+      "sha256": "da0b9f8f9341a095cbd207906591e9817d6cd9b878713b58f85a578a9cb8cb32",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/08.txt"
+    },
+    {
+      "id": 9,
+      "url": "https://www.cncf.io/announcements/2026/08/11/cncf-announces-graduation-of-cloud-native-buildpacks-advancing-the-standard-for-container-builds/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/announcements/2026/08/11/cncf-announces-graduation-of-cloud-native-buildpacks-advancing-the-standard-for-container-builds/",
+      "sha256": "a841e3c26e5c522326a62dfc53707db2dd97589cda53ecc7242ea3a04ccccb5c",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/09.txt"
+    },
+    {
+      "id": 10,
+      "url": "https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/",
+      "sha256": "6bbb9380049a70a4cfb5b2d44614a6fb66788d9236c377fd31522b425e107cb6",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/10.txt"
+    },
+    {
+      "id": 11,
+      "url": "https://www.cncf.io/blog/2026/07/06/evolving-platform-engineering-for-ai-native-workloads/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/blog/2026/07/06/evolving-platform-engineering-for-ai-native-workloads/",
+      "sha256": "d6e4a7f5127bf85f4062ad7cf7ea6dbd8bd7877601dfe0ae54fd3dd509b22c86",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/11.txt"
+    },
+    {
+      "id": 12,
+      "url": "https://www.cncf.io/blog/2026/07/09/navigating-the-ingress-nginx-retirement/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/blog/2026/07/09/navigating-the-ingress-nginx-retirement/",
+      "sha256": "e1012096d2ec7bcd104089a003cdf43c7caa3609c4a20be0dfda2b9f1c09938a",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/12.txt"
+    },
+    {
+      "id": 13,
+      "url": "https://www.cncf.io/blog/2026/07/15/hami-becomes-a-cncf-incubating-project/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/blog/2026/07/15/hami-becomes-a-cncf-incubating-project/",
+      "sha256": "63a2fb79c87dd341cb470c43a4f85734acd17624f685563192d6b09d6b5453a6",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/13.txt"
+    },
+    {
+      "id": 14,
+      "url": "https://www.cncf.io/blog/2026/07/16/running-a-self-hosted-llm-in-kubernetes-with-vllm/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/blog/2026/07/16/running-a-self-hosted-llm-in-kubernetes-with-vllm/",
+      "sha256": "e2253a84f13d95216af12dd88a133893817f4263e9f6552032a0bf8245406a7f",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/14.txt"
+    },
+    {
+      "id": 15,
+      "url": "https://www.cncf.io/blog/2026/07/22/confidential-containers-becomes-a-cncf-incubating-project/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/blog/2026/07/22/confidential-containers-becomes-a-cncf-incubating-project/",
+      "sha256": "44fd4e1eb15602eaf5e54b397495601a91f36f6f1891bc54486f1bf6ebdedb8c",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/15.txt"
+    },
+    {
+      "id": 16,
+      "url": "https://www.cncf.io/blog/2026/08/05/opencost-1-121-0-first-of-a-kind-kubernetes-inference-cost-tracking/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/blog/2026/08/05/opencost-1-121-0-first-of-a-kind-kubernetes-inference-cost-tracking/",
+      "sha256": "d5f7650831409cc49729154f572df9682939972f65bc7dee8886f02aa3a98417",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/16.txt"
+    },
+    {
+      "id": 17,
+      "url": "https://www.cncf.io/blog/2026/08/07/does-kubernetes-dra-replace-hami/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/blog/2026/08/07/does-kubernetes-dra-replace-hami/",
+      "sha256": "0ebfeb8bce73bd4c6913bab53ffc12d17cc4881cb283498d343faa965f686ee6",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/17.txt"
+    },
+    {
+      "id": 18,
+      "url": "https://www.cncf.io/blog/2026/08/27/building-an-ai-factory-on-kubernetes/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/blog/2026/08/27/building-an-ai-factory-on-kubernetes/",
+      "sha256": "b1979831366ba7c258cbbef5fa63569dc64c1709cfb0f5b7f307fec040f6df02",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/18.txt"
+    },
+    {
+      "id": 19,
+      "url": "https://www.cncf.io/blog/2026/08/28/scale-before-the-spike-predictive-autoscaling-for-gpu-workloads-on-kubernetes/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/blog/2026/08/28/scale-before-the-spike-predictive-autoscaling-for-gpu-workloads-on-kubernetes/",
+      "sha256": "6aaabec260d761ea666a8ec43c5f22984488a0b297db89c655d2d7c11d88d0b5",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/19.txt"
+    },
+    {
+      "id": 20,
+      "url": "https://www.cncf.io/report-whitepaper/2026/07/08/the-cncf-data-storage-in-cloud-native-ai-white-paper/",
+      "status": 200,
+      "finalUrl": "https://www.cncf.io/report-whitepaper/2026/07/08/the-cncf-data-storage-in-cloud-native-ai-white-paper/",
+      "sha256": "7bf026eb0fa52f2d411aa8b6fa80f69b40340f58ccf67b8f7a21b8c282a0a64f",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/20.txt"
+    },
+    {
+      "id": 21,
+      "url": "https://www.sentinelone.com/blog/mount-here-read-there-twin-path-traversal-cves-in-kubernetes-storage/",
+      "status": 200,
+      "finalUrl": "https://www.sentinelone.com/blog/mount-here-read-there-twin-path-traversal-cves-in-kubernetes-storage/",
+      "sha256": "c38e227a0665dae25a65a6cd76fad7207fd4e3554fce87de178bedb1a6611989",
+      "textFile": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-navigation/news-sources/21.txt"
+    }
+  ],
+  "officialReleases": [
+    {
+      "repo": "kubernetes/kubernetes",
+      "tag": "v1.37.0",
+      "publishedAt": "2026-08-26T16:29:12Z",
+      "prerelease": false,
+      "url": "https://github.com/kubernetes/kubernetes/releases/tag/v1.37.0",
+      "file": "kubernetes-kubernetes-v1.37.0.json"
+    },
+    {
+      "repo": "kubernetes/kubernetes",
+      "tag": "v1.36.4",
+      "publishedAt": "2026-08-20T11:48:16Z",
+      "prerelease": false,
+      "url": "https://github.com/kubernetes/kubernetes/releases/tag/v1.36.4",
+      "file": "kubernetes-kubernetes-v1.36.4.json"
+    },
+    {
+      "repo": "kubernetes/kubernetes",
+      "tag": "v1.35.8",
+      "publishedAt": "2026-08-20T18:59:55Z",
+      "prerelease": false,
+      "url": "https://github.com/kubernetes/kubernetes/releases/tag/v1.35.8",
+      "file": "kubernetes-kubernetes-v1.35.8.json"
+    },
+    {
+      "repo": "kubernetes/kubernetes",
+      "tag": "v1.34.11",
+      "publishedAt": "2026-08-20T18:45:38Z",
+      "prerelease": false,
+      "url": "https://github.com/kubernetes/kubernetes/releases/tag/v1.34.11",
+      "file": "kubernetes-kubernetes-v1.34.11.json"
+    },
+    {
+      "repo": "kubernetes/kubernetes",
+      "tag": "v1.36.3",
+      "publishedAt": "2026-07-23T00:35:52Z",
+      "prerelease": false,
+      "url": "https://github.com/kubernetes/kubernetes/releases/tag/v1.36.3",
+      "file": "kubernetes-kubernetes-v1.36.3.json"
+    },
+    {
+      "repo": "kubernetes/kubernetes",
+      "tag": "v1.35.7",
+      "publishedAt": "2026-07-22T22:28:35Z",
+      "prerelease": false,
+      "url": "https://github.com/kubernetes/kubernetes/releases/tag/v1.35.7",
+      "file": "kubernetes-kubernetes-v1.35.7.json"
+    },
+    {
+      "repo": "kubernetes/kubernetes",
+      "tag": "v1.34.10",
+      "publishedAt": "2026-07-22T22:01:08Z",
+      "prerelease": false,
+      "url": "https://github.com/kubernetes/kubernetes/releases/tag/v1.34.10",
+      "file": "kubernetes-kubernetes-v1.34.10.json"
+    },
+    {
+      "repo": "argoproj/argo-cd",
+      "tag": "v3.5.2",
+      "publishedAt": "2026-08-27T09:55:47Z",
+      "prerelease": false,
+      "url": "https://github.com/argoproj/argo-cd/releases/tag/v3.5.2",
+      "file": "argoproj-argo-cd-v3.5.2.json"
+    },
+    {
+      "repo": "argoproj/argo-cd",
+      "tag": "v3.4.8",
+      "publishedAt": "2026-08-27T09:56:04Z",
+      "prerelease": false,
+      "url": "https://github.com/argoproj/argo-cd/releases/tag/v3.4.8",
+      "file": "argoproj-argo-cd-v3.4.8.json"
+    },
+    {
+      "repo": "argoproj/argo-cd",
+      "tag": "v3.5.0",
+      "publishedAt": "2026-08-04T08:35:57Z",
+      "prerelease": false,
+      "url": "https://github.com/argoproj/argo-cd/releases/tag/v3.5.0",
+      "file": "argoproj-argo-cd-v3.5.0.json"
+    },
+    {
+      "repo": "argoproj/argo-cd",
+      "tag": "v3.5.1",
+      "publishedAt": "2026-08-12T12:12:58Z",
+      "prerelease": false,
+      "url": "https://github.com/argoproj/argo-cd/releases/tag/v3.5.1",
+      "file": "argoproj-argo-cd-v3.5.1.json"
+    },
+    {
+      "repo": "argoproj/argo-cd",
+      "tag": "v3.4.7",
+      "publishedAt": "2026-08-12T11:25:08Z",
+      "prerelease": false,
+      "url": "https://github.com/argoproj/argo-cd/releases/tag/v3.4.7",
+      "file": "argoproj-argo-cd-v3.4.7.json"
+    },
+    {
+      "repo": "argoproj/argo-cd",
+      "tag": "v3.3.14",
+      "publishedAt": "2026-08-12T10:48:37Z",
+      "prerelease": false,
+      "url": "https://github.com/argoproj/argo-cd/releases/tag/v3.3.14",
+      "file": "argoproj-argo-cd-v3.3.14.json"
+    },
+    {
+      "repo": "argoproj/argo-cd",
+      "tag": "v3.4.5",
+      "publishedAt": "2026-07-09T17:01:16Z",
+      "prerelease": false,
+      "url": "https://github.com/argoproj/argo-cd/releases/tag/v3.4.5",
+      "file": "argoproj-argo-cd-v3.4.5.json"
+    },
+    {
+      "repo": "cilium/cilium",
+      "tag": "v1.20.1",
+      "publishedAt": "2026-08-18T10:36:16Z",
+      "prerelease": false,
+      "url": "https://github.com/cilium/cilium/releases/tag/v1.20.1",
+      "file": "cilium-cilium-v1.20.1.json"
+    },
+    {
+      "repo": "cilium/cilium",
+      "tag": "v1.19.7",
+      "publishedAt": "2026-08-18T10:35:54Z",
+      "prerelease": false,
+      "url": "https://github.com/cilium/cilium/releases/tag/v1.19.7",
+      "file": "cilium-cilium-v1.19.7.json"
+    },
+    {
+      "repo": "cilium/cilium",
+      "tag": "v1.18.13",
+      "publishedAt": "2026-08-18T10:35:40Z",
+      "prerelease": false,
+      "url": "https://github.com/cilium/cilium/releases/tag/v1.18.13",
+      "file": "cilium-cilium-v1.18.13.json"
+    },
+    {
+      "repo": "cilium/cilium",
+      "tag": "v1.20.0",
+      "publishedAt": "2026-07-29T15:00:29Z",
+      "prerelease": false,
+      "url": "https://github.com/cilium/cilium/releases/tag/v1.20.0",
+      "file": "cilium-cilium-v1.20.0.json"
+    },
+    {
+      "repo": "cilium/cilium",
+      "tag": "v1.19.6",
+      "publishedAt": "2026-07-16T22:52:21Z",
+      "prerelease": false,
+      "url": "https://github.com/cilium/cilium/releases/tag/v1.19.6",
+      "file": "cilium-cilium-v1.19.6.json"
+    },
+    {
+      "repo": "cilium/cilium",
+      "tag": "v1.18.12",
+      "publishedAt": "2026-07-16T22:47:50Z",
+      "prerelease": false,
+      "url": "https://github.com/cilium/cilium/releases/tag/v1.18.12",
+      "file": "cilium-cilium-v1.18.12.json"
+    },
+    {
+      "repo": "cilium/cilium",
+      "tag": "v1.17.18",
+      "publishedAt": "2026-07-16T22:47:26Z",
+      "prerelease": false,
+      "url": "https://github.com/cilium/cilium/releases/tag/v1.17.18",
+      "file": "cilium-cilium-v1.17.18.json"
+    },
+    {
+      "repo": "aws/karpenter-provider-aws",
+      "tag": "v1.14.1",
+      "publishedAt": "2026-08-21T22:39:31Z",
+      "prerelease": false,
+      "url": "https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.1",
+      "file": "aws-karpenter-provider-aws-v1.14.1.json"
+    },
+    {
+      "repo": "aws/karpenter-provider-aws",
+      "tag": "v1.14.0",
+      "publishedAt": "2026-07-11T00:59:43Z",
+      "prerelease": false,
+      "url": "https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.0",
+      "file": "aws-karpenter-provider-aws-v1.14.0.json"
+    },
+    {
+      "repo": "etcd-io/etcd",
+      "tag": "v3.7.0",
+      "publishedAt": "2026-07-08T18:26:53Z",
+      "prerelease": false,
+      "url": "https://github.com/etcd-io/etcd/releases/tag/v3.7.0",
+      "file": "etcd-io-etcd-v3.7.0.json"
+    },
+    {
+      "repo": "istio/istio",
+      "tag": "1.30.4",
+      "publishedAt": "2026-08-27T15:10:20Z",
+      "prerelease": false,
+      "url": "https://github.com/istio/istio/releases/tag/1.30.4",
+      "file": "istio-istio-1.30.4.json"
+    },
+    {
+      "repo": "istio/istio",
+      "tag": "1.29.7",
+      "publishedAt": "2026-08-27T15:11:19Z",
+      "prerelease": false,
+      "url": "https://github.com/istio/istio/releases/tag/1.29.7",
+      "file": "istio-istio-1.29.7.json"
+    },
+    {
+      "repo": "istio/istio",
+      "tag": "1.31.0-rc.0",
+      "publishedAt": "2026-08-19T14:07:42Z",
+      "prerelease": true,
+      "url": "https://github.com/istio/istio/releases/tag/1.31.0-rc.0",
+      "file": "istio-istio-1.31.0-rc.0.json"
+    },
+    {
+      "repo": "istio/istio",
+      "tag": "1.31.0-beta.1",
+      "publishedAt": "2026-08-17T12:46:22Z",
+      "prerelease": true,
+      "url": "https://github.com/istio/istio/releases/tag/1.31.0-beta.1",
+      "file": "istio-istio-1.31.0-beta.1.json"
+    },
+    {
+      "repo": "istio/istio",
+      "tag": "1.30.3",
+      "publishedAt": "2026-07-16T16:50:56Z",
+      "prerelease": false,
+      "url": "https://github.com/istio/istio/releases/tag/1.30.3",
+      "file": "istio-istio-1.30.3.json"
+    },
+    {
+      "repo": "istio/istio",
+      "tag": "1.29.6",
+      "publishedAt": "2026-07-16T16:51:06Z",
+      "prerelease": false,
+      "url": "https://github.com/istio/istio/releases/tag/1.29.6",
+      "file": "istio-istio-1.29.6.json"
+    }
+  ],
+  "detailSources": [
+    {
+      "file": "k8s-137.html",
+      "url": "https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/",
+      "status": 200
+    },
+    {
+      "file": "k8s-metrics-ga.html",
+      "url": "https://kubernetes.io/blog/2026/08/27/kubernetes-v1-37-metrics-api-ga/",
+      "status": 200
+    },
+    {
+      "file": "istio-security.html",
+      "url": "https://istio.io/latest/news/security/istio-security-2026-006/",
+      "status": 200
+    },
+    {
+      "file": "auto-efa.html",
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-efa-placement-groups/",
+      "status": 200
+    },
+    {
+      "file": "auto-arc.html",
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift",
+      "status": 200
+    },
+    {
+      "file": "auto-gpu-price.html",
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-auto-mode-gpu-price/",
+      "status": 200
+    },
+    {
+      "file": "service-events.html",
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/06/cloudwatch-service-events/",
+      "status": 200
+    },
+    {
+      "file": "edge-26.8.4.json",
+      "url": "https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.4",
+      "status": 200,
+      "publishedAt": "2026-08-25T16:16:21Z"
+    },
+    {
+      "file": "edge-26.8.2.json",
+      "url": "https://github.com/linkerd/linkerd2/releases/tag/edge-26.8.2",
+      "status": 200,
+      "publishedAt": "2026-08-14T19:27:42Z"
+    },
+    {
+      "file": "edge-26.7.1.json",
+      "url": "https://github.com/linkerd/linkerd2/releases/tag/edge-26.7.1",
+      "status": 200,
+      "publishedAt": "2026-07-21T20:32:34Z"
+    },
+    {
+      "file": "otel-graduation.html",
+      "url": "https://www.cncf.io/blog/2026/07/24/opentelemetry-has-graduated-now-what/",
+      "status": 200
+    },
+    {
+      "file": "amp-scale.html",
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-managed-service-prometheus-1500m-metrics-workspace/",
+      "status": 200
+    },
+    {
+      "file": "eks-argocd-config.html",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/argocd-configure-settings.html",
+      "status": 200
+    },
+    {
+      "file": "otel-sql.html",
+      "url": "https://www.cncf.io/blog/2026/08/21/how-to-turn-slow-queries-into-actionable-reliability-metrics-with-opentelemetry/",
+      "status": 200
+    },
+    {
+      "file": "k8s-custom-metrics.html",
+      "url": "https://kubernetes.io/blog/2026/07/14/custom-metrics-exporter-kubernetes/",
+      "status": 200
+    },
+    {
+      "file": "calico-vms.html",
+      "url": "https://www.tigera.io/news/tigera-launches-ebpf-powered-calico-for-vms-on-kubernetes-vm-migration-that-doesnt-require-rebuilding-the-network/",
+      "status": 200
+    }
+  ],
+  "prereleases": [
+    {
+      "repo": "kubernetes/kubernetes",
+      "tag": "v1.37.0-rc.1",
+      "url": "https://github.com/kubernetes/kubernetes/releases/tag/v1.37.0-rc.1",
+      "publishedAt": "2026-08-20T02:44:01Z",
+      "verified": true
+    },
+    {
+      "repo": "kubernetes/kubernetes",
+      "tag": "v1.37.0-beta.0",
+      "url": "https://github.com/kubernetes/kubernetes/releases/tag/v1.37.0-beta.0",
+      "publishedAt": "2026-07-20T23:21:18Z",
+      "verified": true
+    },
+    {
+      "repo": "kubernetes/kubernetes",
+      "tag": "v1.38.0-alpha.0",
+      "url": null,
+      "publishedAt": null,
+      "verified": false
+    },
+    {
+      "repo": "cilium/cilium",
+      "tag": "v1.20.0-rc.1",
+      "url": "https://github.com/cilium/cilium/releases/tag/v1.20.0-rc.1",
+      "publishedAt": "2026-07-21T23:28:11Z",
+      "verified": true
+    },
+    {
+      "repo": "cilium/cilium",
+      "tag": "v1.21.0-pre.0",
+      "url": "https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.0",
+      "publishedAt": "2026-08-03T19:58:45Z",
+      "verified": true
+    },
+    {
+      "repo": "aws/karpenter-provider-aws",
+      "tag": "v1.3.8",
+      "url": "https://github.com/aws/karpenter-provider-aws/releases/tag/v1.3.8",
+      "publishedAt": "2026-07-17T15:01:14Z",
+      "verified": true
+    },
+    {
+      "repo": "aws/karpenter-provider-aws",
+      "tag": "v1.11.3",
+      "url": "https://github.com/aws/karpenter-provider-aws/releases/tag/v1.11.3",
+      "publishedAt": "2026-07-17T15:03:05Z",
+      "verified": true
+    }
+  ],
+  "alphaTag": {
+    "ref": "refs/tags/v1.38.0-alpha.0",
+    "node_id": "MDM6UmVmMjA1ODA0OTg6cmVmcy90YWdzL3YxLjM4LjAtYWxwaGEuMA==",
+    "url": "https://api.github.com/repos/kubernetes/kubernetes/git/refs/tags/v1.38.0-alpha.0",
+    "object": {
+      "sha": "b2a668aedcbd8fc625ef5aaf425acf8421f48483",
+      "type": "tag",
+      "url": "https://api.github.com/repos/kubernetes/kubernetes/git/tags/b2a668aedcbd8fc625ef5aaf425acf8421f48483"
+    }
+  },
+  "corrections": [
+    "Weeklyworkflowopensquality-gatedPR;publicationfollowsreviewmergeanddeployment",
+    "Logweekdiffersfromsourcepublicationdate;historicallognotcurrentcompatibilitymatrix",
+    "Gateway1.6channel-specificdeprecatedAPIserving,notsubstantiatedblanketx-k8s.iomove",
+    "Karpenteroldlinepatchesnotallmaintainedlines"
+  ],
+  "limitations": [
+    "Notanewsdigestworkflowexecutionorpaidmodelcall",
+    "Articleheadlines/recordedannouncementsandreleasefactschecked;doesnotrerunallfeaturesorreplaceeachlinkedguidereview",
+    "K8s1.38alphaexistsasaGittagbutnoGitHubRelease;API404notabsenceoftag"
+  ]
+}
