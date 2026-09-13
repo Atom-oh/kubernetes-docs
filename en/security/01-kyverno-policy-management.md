@@ -1,534 +1,680 @@
 # Policy Management with Kyverno
 
-> **Supported Versions**: Kubernetes 1.31, 1.32, 1.33 **Last Updated**: February 19, 2026
+> **Validation baseline**: Kyverno/CLI 1.19.1, Helm chart 3.9.1. The current release guide lists Kubernetes 1.33–1.35 as tested; the chart's broader install constraint is not a compatibility guarantee.
+> **Last Updated**: September 13, 2026
 
-Kyverno is a Kubernetes-native policy engine used to manage and enforce policies within clusters. In this chapter, we will learn how to manage policies in EKS clusters using Kyverno.
+Kyverno evaluates Kubernetes policy and performs explicitly configured mutation, generation and deletion. These examples were checked locally with the real CLI and released schemas/charts. No live cluster installation, admission, network isolation, cleanup or AWS integration was executed.
+
+The original `ClusterPolicy` examples have been updated to `policies.kyverno.io/v1` CEL policies. The official 1.19 migration guide deprecates ClusterPolicy/Policy, CleanupPolicy and legacy `kyverno.io` PolicyException, with removal planned for 1.20. They are not already absent in 1.19; migrate and test before upgrading rather than merely replacing an apiVersion string.
 
 ## Lab Environment Setup
 
-To follow along with the examples in this document, you will need the following tools and environment:
-
 ### Required Tools
 
-* kubectl v1.31 or higher
-* Helm v3.10 or higher
-* A working Kubernetes cluster (EKS, minikube, kind, etc.)
+Use kubectl with version skew supported by the target API server, an OCI-capable supported Helm release, and the verified Kyverno 1.19.1 CLI for these local tests. Obtain the CLI's matching OS/architecture archive and verify its published checksum/signature. Do not reuse a 1.10.0 archive or pipe an unverified download into a root installation.
+
+Begin with local files. The policies below are independent examples, not a set to apply wholesale. Pod examples target `policy-lab`; generation additionally requires an explicit label. Restrict who can change these policies, namespace labels, Roles and PolicyExceptions. Those selectors are not an RBAC security boundary by themselves.
 
 ### Installing Kyverno
 
-```bash
-# Add Helm repository
-helm repo add kyverno https://kyverno.github.io/kyverno/
-
-# Update Helm repository
-helm repo update
-
-# Install Kyverno
-helm install kyverno kyverno/kyverno -n kyverno --create-namespace
-```
+Prepare a dedicated `kyverno` namespace. Check the chosen EKS/Kubernetes version, API-server-to-webhook connectivity, DNS, admission failure/timeout behavior and CRD upgrade procedure before changing a shared cluster. Kubernetes ServiceAccounts/RBAC authorize the controllers; installing Kyverno does not itself require an AWS administrator role.
 
 ## Introduction to Kyverno
 
-Kyverno is a policy engine that allows you to define and manage policies as Kubernetes resources. Kyverno provides the following capabilities:
-
-1. **Validate**: Verify that resources comply with policies.
-2. **Mutate**: Automatically modify resources.
-3. **Generate**: Automatically create related resources.
-4. **Clean up**: Automatically delete resources that are no longer needed.
-
-> **Key Concept**: Kyverno uses a Kubernetes-native approach, so there's no need to learn a separate language or tool. Policies are defined as Kubernetes resources and can be managed using kubectl.
-
 ### Kyverno Architecture and How It Works
+
+| Component | Responsibility |
+|---|---|
+| Admission controller | Matching admission requests and policy validation/mutation/image checks; not every GET/list request |
+| Background controller | Generate and explicitly enabled mutate-existing work |
+| Reports controller | Policy result aggregation/reporting |
+| Cleanup controller | Scheduled deletion policies and permitted cleanup operations |
+
+A validating policy does not delete or repair existing noncompliant resources. Background reporting, mutate-existing, generate-existing and scheduled deletion are separate mechanisms with different permissions. Generation can be asynchronous; namespace creation and generated NetworkPolicy enforcement are not an atomic operation.
 
 ### Kyverno vs OPA Gatekeeper
 
-Kyverno and OPA Gatekeeper are both tools for Kubernetes policy management, but there are some important differences:
-
-| Feature             | Kyverno                            | OPA Gatekeeper                 |
-| ------------------- | ---------------------------------- | ------------------------------ |
-| Policy Language     | Kubernetes YAML                    | Rego (dedicated language)      |
-| Learning Curve      | Low (familiar to Kubernetes users) | High (requires learning Rego)  |
-| Mutation Policies   | Native support                     | Limited support                |
-| Resource Generation | Supported                          | Not supported                  |
-| Image Verification  | Native support                     | Requires custom implementation |
-| Policy Exceptions   | Simple                             | Complex                        |
-| Performance         | Good                               | Very good (for large clusters) |
-
-Kyverno operates as a Kubernetes Admission Controller, intercepting all requests to the API server and performing validation, mutation, generation, or cleanup operations according to defined policies. It also verifies policy compliance for existing resources through a background scanner and reports policy violations through a reporting controller.
+Kyverno's current policies use CEL in YAML/JSON manifests; legacy policies also use patterns and JMESPath. Kubernetes-native packaging does not eliminate the need to learn policy expressions. Gatekeeper uses ConstraintTemplates/Constraints and supported policy engines for its version, with separate admission/audit/mutation capabilities. Compare required features, expression languages, policy tests, controller availability and measured workload impact. The old “easy/complex” and “good/very good performance” ratings were unsupported comparisons, not benchmarks.
 
 ## Installing Kyverno
 
 ### Installation Using Helm
 
-Here's how to install Kyverno using Helm:
+Save this as `kyverno-values.yaml`. It is a single-replica **lab** profile. ServiceMonitor CRDs and a Prometheus installation selecting the actual namespace/labels must already exist; replace the example `release: kube-prom` label with that installation's selector, or disable ServiceMonitors until prepared.
+
+```yaml
+admissionController:
+  replicas: 1
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: kube-prom
+backgroundController:
+  replicas: 1
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: kube-prom
+cleanupController:
+  replicas: 1
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: kube-prom
+reportsController:
+  replicas: 1
+  serviceMonitor:
+    enabled: true
+    additionalLabels:
+      release: kube-prom
+```
 
 ```bash
-# Add Helm repository
+# Use an approved context; this changes real cluster resources.
+: "${KUBE_CONTEXT:?Set the reviewed cluster context}"
 helm repo add kyverno https://kyverno.github.io/kyverno/
-helm repo update
-
-# Install Kyverno
-helm install kyverno kyverno/kyverno --namespace kyverno --create-namespace
+helm repo update kyverno
+helm template kyverno kyverno/kyverno --version 3.9.1 \
+  --namespace kyverno --values kyverno-values.yaml > kyverno-rendered.yaml
+# Inspect the render, CRD migration and webhook reachability before installation.
+helm upgrade --install kyverno kyverno/kyverno --version 3.9.1 \
+  --namespace kyverno --create-namespace --kube-context "$KUBE_CONTEXT" \
+  --values kyverno-values.yaml
 ```
+
+The render contains four controller Deployments and four metrics ServiceMonitors. More replicas require topology, disruption, resource sizing and webhook availability planning; one replica per controller is not an HA design. Inspect the current chart's defaults and actual rendered image tags instead of interpreting a chart version label as the application version.
 
 ### Installation Using YAML Manifests
 
-Here's how to install Kyverno using YAML manifests:
-
-```bash
-# Create namespace
-kubectl create namespace kyverno
-
-# Install Kyverno
-kubectl apply -f https://github.com/kyverno/kyverno/releases/download/v1.10.0/install.yaml
-```
+If GitOps manages YAML, render the pinned chart and review its CRDs, RBAC, certificates and hooks as a managed set. A raw `kubectl apply` of a render does not execute Helm hook/upgrade semantics. Do not apply the old 1.10.0 install.yaml over a newer release or mix multiple owners for the same controllers.
 
 ## Policy Types
 
-Kyverno supports the following policy types:
-
 ### 1. Validation Policies
 
-Validation policies verify that resources meet specific conditions. If conditions are not met, resource creation or update is rejected.
-
-Example: A policy that ensures all pods have resource limits set
+Save this independent example as `require-limits.yaml`. It checks **normal and init containers** for nonempty CPU/memory limits. Ephemeral containers cannot declare resource requests/limits; security checks below cover them separately. This is a chosen per-container policy, not a claim that every Kubernetes workload must use this resource strategy.
 
 ```yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
 metadata:
-  name: require-resource-limits
+  name: require-container-limits
 spec:
-  validationFailureAction: enforce
-  rules:
-  - name: check-resource-limits
-    match:
+  validationActions:
+  - Audit
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
       resources:
-        kinds:
-        - Pod
-    validate:
-      message: "Resource limits are required for all containers."
-      pattern:
-        spec:
-          containers:
-          - resources:
-              limits:
-                memory: "?*"
-                cpu: "?*"
+      - pods
+  matchConditions:
+  - name: lab-only
+    expression: object.metadata.namespace == 'policy-lab'
+  validations:
+  - expression: variables.containers.all(c, has(c.resources) && has(c.resources.limits) && ['cpu', 'memory'].all(k, k in c.resources.limits
+      && string(c.resources.limits[k]) != ''))
+    message: Normal and init containers need nonempty CPU and memory limits.
+  variables:
+  - name: containers
+    expression: object.spec.containers + object.spec.?initContainers.orValue([])
 ```
+
+`validationActions: [Audit]` records violations while permitting matching admission requests; `[Deny]` rejects them after staging/impact review. `Warn` can provide client warnings. Webhook `failurePolicy` governs evaluation/transport failure and is a different setting. Offline CLI failure results do not demonstrate that an Audit policy denied a live request.
 
 ### 2. Mutation Policies
 
-Mutation policies automatically modify resources. This allows you to set default values or add specific fields.
-
-Example: A policy that adds default labels to all pods
+Save as `add-default-label.yaml`. Existing `environment` labels, including explicitly empty values, are preserved. This uses CEL ApplyConfiguration, not Helm Go-template `if`/`hasKey` syntax inside Kyverno.
 
 ```yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: MutatingPolicy
 metadata:
-  name: add-default-labels
+  name: add-default-label
 spec:
-  rules:
-  - name: add-labels
-    match:
+  evaluation:
+    mutateExisting:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
       resources:
-        kinds:
-        - Pod
-    mutate:
-      patchStrategicMerge:
-        metadata:
-          labels:
-            environment: "{{request.namespace}}"
-            app.kubernetes.io/managed-by: kyverno
+      - pods
+  matchConditions:
+  - name: lab-only
+    expression: object.metadata.namespace == 'policy-lab'
+  mutations:
+  - patchType: ApplyConfiguration
+    applyConfiguration:
+      expression: |-
+        has(object.metadata.labels) && 'environment' in object.metadata.labels
+        ? Object{}
+        : Object{metadata: Object.metadata{labels: {"environment": object.metadata.namespace}}}
 ```
+
+The example disables mutate-existing. Admission mutation can still affect matching CREATE/UPDATE requests. A JSONPatch alternative must create a missing labels map before adding a child key and escape `/` as `~1` in JSON Pointer paths. Mutation order is not guaranteed across independent policies.
 
 ### 3. Generation Policies
 
-Generation policies automatically create related resources when a resource is created.
-
-Example: A policy that automatically creates a NetworkPolicy when a namespace is created
+Save as `generate-networkpolicy.yaml`. Only a Namespace named `policy-lab` with `training.example.com/managed: "true"` triggers this example. For a Namespace object, match its **name/labels**, not `metadata.namespace` or a legacy namespace exclusion list.
 
 ```yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: GeneratingPolicy
 metadata:
-  name: generate-networkpolicy
+  name: generate-lab-networkpolicy
 spec:
-  rules:
-  - name: generate-default-networkpolicy
-    match:
+  evaluation:
+    synchronize:
+      enabled: false
+    generateExisting:
+      enabled: false
+    orphanDownstreamOnPolicyDelete:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
       resources:
-        kinds:
-        - Namespace
-    generate:
-      kind: NetworkPolicy
-      name: default-deny-all
-      namespace: "{{request.object.metadata.name}}"
-      data:
-        spec:
-          podSelector: {}
-          policyTypes:
-          - Ingress
-          - Egress
+      - namespaces
+  matchConditions:
+  - name: approved-lab-namespace
+    expression: object.metadata.name == 'policy-lab' && object.metadata.?labels['training.example.com/managed'].orValue('')
+      == 'true'
+  generate:
+  - expression: |-
+      generator.Apply(object.metadata.name, [{
+        "apiVersion": dyn("networking.k8s.io/v1"),
+        "kind": dyn("NetworkPolicy"),
+        "metadata": dyn({"name": "lab-default-deny", "namespace": object.metadata.name}),
+        "spec": dyn({"podSelector": {}, "policyTypes": ["Ingress", "Egress"]})
+      }])
 ```
+
+Prepare required DNS/API/application allow rules before workloads depend on this namespace. Kubernetes NetworkPolicy isolation needs an enforcing CNI; other allow policies are additive and host-network behavior must be considered. A locally generated manifest is not evidence that traffic was blocked.
+
+Synchronization and generate-existing are disabled here. An already existing Namespace is not automatically backfilled when this policy is installed: use a later matching trigger or explicitly review enabling generate-existing before changing that setting. With synchronization enabled, downstream lifecycle depends on data versus clone source, trigger changes and `orphanDownstreamOnPolicyDelete`; it is not a universal backup/rollback mechanism. Sharing Secrets needs an explicit source/target allowlist and RBAC/credential-lifecycle review, not a copy into every new namespace.
+
+### 4. Scheduled Deletion
+
+`DeletingPolicy` uses `spec.schedule` and CEL conditions; it is separate from validation and has no validationActions Audit switch. A cleanup controller needs explicit deletion permissions. Prefer a narrow namespace/object label and a clear age/status retention requirement, inspect the selected candidates, and test recovery before enabling a schedule. The optional quiz example selects marked completed Pods; it does not mean “older than 24 hours,” and no scheduled deletion was executed here.
 
 ## Kyverno Use Cases in EKS
 
-Using Kyverno in EKS clusters allows you to apply policies across various aspects including security, cost optimization, and compliance.
-
 ### EKS and Kyverno Integration Architecture
 
-The following diagram shows how Kyverno integrates and operates within an EKS cluster:
-
-In this architecture, Kyverno operates as an Admission Webhook within the EKS cluster, intercepting all requests to the API server and processing them according to defined policies. Policy violations can be sent to CloudWatch for monitoring and alerting.
+The EKS API server invokes matching admission webhooks using the configured Kubernetes network/RBAC path. CloudWatch export is a separate configured collector/integration with its own IAM and retention; installing Kyverno does not automatically send every PolicyReport to CloudWatch. Avoid printing raw admission payloads that may contain secrets.
 
 ### 1. Security Hardening
 
 #### Preventing Privileged Containers
 
+Missing `privileged` is treated as false. The check covers normal, init and ephemeral containers; declared `pods/ephemeralcontainers` matching still requires live admission/subresource testing in the target environment.
+
 ```yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
 metadata:
-  name: disallow-privileged-containers
+  name: disallow-privileged
 spec:
-  validationFailureAction: enforce
-  rules:
-  - name: privileged-containers
-    match:
+  validationActions:
+  - Audit
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
       resources:
-        kinds:
-        - Pod
-    validate:
-      message: "Privileged containers are not allowed."
-      pattern:
-        spec:
-          containers:
-          - name: "*"
-            securityContext:
-              privileged: false
+      - pods
+      - pods/ephemeralcontainers
+  matchConditions:
+  - name: lab-only
+    expression: object.metadata.namespace == 'policy-lab'
+  validations:
+  - expression: variables.containers.all(c, !c.?securityContext.privileged.orValue(false))
+    message: Privileged normal, init and ephemeral containers are not allowed.
+  variables:
+  - name: containers
+    expression: object.spec.containers + object.spec.?initContainers.orValue([]) + object.spec.?ephemeralContainers.orValue([])
 ```
 
 #### Preventing Root User Execution
 
+The policy uses each container's override or the Pod-level default, requires effective runAsNonRoot and rejects an explicit effective UID 0. This validates the declaration; kubelet/image behavior is still relevant at runtime.
+
 ```yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
 metadata:
-  name: disallow-root-user
+  name: require-non-root
 spec:
-  validationFailureAction: enforce
-  rules:
-  - name: check-runAsNonRoot
-    match:
+  validationActions:
+  - Audit
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
       resources:
-        kinds:
-        - Pod
-    validate:
-      message: "Running as root is not allowed. Set runAsNonRoot to true."
-      pattern:
-        spec:
-          containers:
-          - securityContext:
-              runAsNonRoot: true
+      - pods
+      - pods/ephemeralcontainers
+  matchConditions:
+  - name: lab-only
+    expression: object.metadata.namespace == 'policy-lab'
+  validations:
+  - expression: variables.containers.all(c, c.?securityContext.runAsNonRoot.orValue(object.spec.?securityContext.runAsNonRoot.orValue(false))
+      && c.?securityContext.runAsUser.orValue(object.spec.?securityContext.runAsUser.orValue(-1)) != 0)
+    message: Use effective runAsNonRoot=true and do not select UID 0.
+  variables:
+  - name: containers
+    expression: object.spec.containers + object.spec.?initContainers.orValue([]) + object.spec.?ephemeralContainers.orValue([])
 ```
 
 ### 2. Cost Optimization
 
 #### Setting Resource Limits
 
+Save as `default-resources.yaml`. This CREATE-only example avoids changing running Pod resources during an ordinary update and supplies defaults only when a normal container has **no requests and no limits**. It preserves complete and partial existing resource settings instead of overwriting workload sizing or producing a request greater than an existing small limit. Review partial settings separately; it does not fill every missing field or default init/ephemeral resources.
+
 ```yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: MutatingPolicy
 metadata:
-  name: set-default-resources
+  name: default-unset-resources
 spec:
-  rules:
-  - name: set-default-resources
-    match:
+  evaluation:
+    mutateExisting:
+      enabled: false
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
       resources:
-        kinds:
-        - Pod
-    mutate:
-      patchStrategicMerge:
-        spec:
-          containers:
-          - (name): "*"
-            resources:
-              limits:
-                memory: "512Mi"
-                cpu: "500m"
-              requests:
-                memory: "256Mi"
-                cpu: "250m"
+      - pods
+  matchConditions:
+  - name: lab-only
+    expression: object.metadata.namespace == 'policy-lab'
+  mutations:
+  - patchType: ApplyConfiguration
+    applyConfiguration:
+      expression: |-
+        Object{spec: Object.spec{containers: object.spec.containers.map(c,
+          (!has(c.resources) || ((!has(c.resources.requests) || c.resources.requests.size() == 0) &&
+            (!has(c.resources.limits) || c.resources.limits.size() == 0)))
+          ? Object.spec.containers{name: c.name, resources: Object.spec.containers.resources{
+              requests: {"cpu": "250m", "memory": "256Mi"},
+              limits: {"cpu": "500m", "memory": "512Mi"}
+            }}
+          : Object.spec.containers{name: c.name}
+        )}}
 ```
 
 #### Enforcing Specific Instance Types
 
+The original instance names are an illustrative allowlist, not a current recommendation. An explicit nodeSelector is a mandatory scheduling constraint. This admission-only CREATE policy rejects a supplied nodeName; background scanning is disabled because scheduled Pods legitimately acquire nodeName. Trust in node labels, scheduler/binding permissions and available capacity is separate. A declaration check cannot guarantee placement against a principal allowed to bind Pods or modify Nodes.
+
 ```yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
 metadata:
-  name: restrict-node-types
+  name: approved-node-selector
 spec:
-  validationFailureAction: enforce
-  rules:
-  - name: check-node-type
-    match:
+  validationActions:
+  - Audit
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
       resources:
-        kinds:
-        - Pod
-    validate:
-      message: "Pod must be scheduled on approved node types."
-      pattern:
-        spec:
-          nodeSelector:
-            node.kubernetes.io/instance-type: "?*"
-          affinity:
-            nodeAffinity:
-              requiredDuringSchedulingIgnoredDuringExecution:
-                nodeSelectorTerms:
-                - matchExpressions:
-                  - key: node.kubernetes.io/instance-type
-                    operator: In
-                    values:
-                    - m5.large
-                    - c5.large
-                    - r5.large
+      - pods
+  matchConditions:
+  - name: lab-only
+    expression: object.metadata.namespace == 'policy-lab'
+  validations:
+  - expression: object.spec.?nodeName.orValue('') == '' && object.spec.?nodeSelector['node.kubernetes.io/instance-type'].orValue('')
+      in ['m5.large', 'c5.large', 'r5.large']
+    message: Use an approved instance-type nodeSelector and do not bypass the scheduler with nodeName.
+  evaluation:
+    background:
+      enabled: false
 ```
 
 ### 3. Compliance
 
 #### Automatic PodDisruptionBudget Generation
 
+This opt-in Deployment example requires at least two desired replicas and copies the **complete spec.selector**, including matchExpressions, rather than a possibly absent top-level app label. It does not prove two replicas are Ready. This static lab budget needs a separate ownership/review decision after scaling or selector changes, especially with synchronization disabled. PDBs constrain eligible voluntary evictions, not every rollout or involuntary failure.
+
 ```yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: GeneratingPolicy
 metadata:
-  name: generate-pdb
+  name: generate-lab-pdb
 spec:
-  rules:
-  - name: generate-pdb-for-deployment
-    match:
+  evaluation:
+    synchronize:
+      enabled: false
+    generateExisting:
+      enabled: false
+    orphanDownstreamOnPolicyDelete:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - apps
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
       resources:
-        kinds:
-        - Deployment
-    generate:
-      kind: PodDisruptionBudget
-      name: "{{request.object.metadata.name}}-pdb"
-      namespace: "{{request.object.metadata.namespace}}"
-      synchronize: true
-      data:
-        spec:
-          minAvailable: 1
-          selector:
-            matchLabels:
-              app: "{{request.object.metadata.labels.app}}"
+      - deployments
+  matchConditions:
+  - name: approved-deployment
+    expression: object.metadata.namespace == 'policy-lab' && object.metadata.?labels['training.example.com/managed'].orValue('')
+      == 'true' && object.spec.?replicas.orValue(1) >= 2
+  generate:
+  - expression: |-
+      generator.Apply(object.metadata.namespace, [{
+        "apiVersion": dyn("policy/v1"), "kind": dyn("PodDisruptionBudget"),
+        "metadata": dyn({"name": object.metadata.name + "-pdb", "namespace": object.metadata.namespace}),
+        "spec": dyn({"minAvailable": 1, "selector": object.spec.selector})
+      }])
+```
+
+The background controller needs actual permission to create the generated resource. For the rendered `kyverno` release, this additional namespace Role/Binding illustrates a narrow PDB grant. The chart already contains other controller permissions; do not call this the controller's entire effective RBAC policy. Adjust ServiceAccount names to the render and verify authorization in the target cluster.
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kyverno-lab-pdb-writer
+  namespace: policy-lab
+rules:
+- apiGroups:
+  - policy
+  resources:
+  - poddisruptionbudgets
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kyverno-lab-pdb-writer
+  namespace: policy-lab
+subjects:
+- kind: ServiceAccount
+  name: kyverno-background-controller
+  namespace: kyverno
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kyverno-lab-pdb-writer
 ```
 
 #### Automatic Namespace ResourceQuota Generation
 
+The same explicit Namespace opt-in applies. Quota values are a lab policy, not an AWS budget or cost cap; account for workload requests, init containers, limits and existing quotas before enabling it.
+
 ```yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: GeneratingPolicy
 metadata:
-  name: generate-resourcequota
+  name: generate-lab-quota
 spec:
-  rules:
-  - name: generate-resourcequota
-    match:
+  evaluation:
+    synchronize:
+      enabled: false
+    generateExisting:
+      enabled: false
+    orphanDownstreamOnPolicyDelete:
+      enabled: true
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
       resources:
-        kinds:
-        - Namespace
-    generate:
-      kind: ResourceQuota
-      name: default-resourcequota
-      namespace: "{{request.object.metadata.name}}"
-      synchronize: true
-      data:
-        spec:
-          hard:
-            requests.cpu: "10"
-            requests.memory: 10Gi
-            limits.cpu: "20"
-            limits.memory: 20Gi
-            pods: "50"
+      - namespaces
+  matchConditions:
+  - name: approved-lab-namespace
+    expression: object.metadata.name == 'policy-lab' && object.metadata.?labels['training.example.com/managed'].orValue('')
+      == 'true'
+  generate:
+  - expression: |-
+      generator.Apply(object.metadata.name, [{
+        "apiVersion": dyn("v1"), "kind": dyn("ResourceQuota"),
+        "metadata": dyn({"name": "lab-resource-quota", "namespace": object.metadata.name}),
+        "spec": dyn({"hard": {"requests.cpu": "10", "requests.memory": "10Gi",
+          "limits.cpu": "20", "limits.memory": "20Gi", "pods": "50"}})
+      }])
 ```
 
 ## Policy Testing and Validation
 
-Kyverno provides tools for testing and validating policies.
-
 ### Policy Application Workflow
 
-The following diagram shows the typical development and application workflow for Kyverno policies:
+Review policy ownership and scope, test positive/negative/skip cases locally, inspect generated/mutated objects, then stage live admission and controller permissions. Audit is a validation action; it does not make mutation, generation or deletion harmless. Pod-controller autogeneration and native ValidatingAdmissionPolicy/MutatingAdmissionPolicy generation are separate opt-ins with compatibility limits; inspect generated policy status rather than assuming all controller templates are covered.
 
 ### Policy Simulation
 
-You can simulate policies using the `kyverno test` command:
+Create `policy-lab-tests/` and save the following four files there. The test intentionally expects a violation for `missing-label`; a passing test suite means expectations matched, not that every input complied.
+
+`require-team.yaml`:
+
+```yaml
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-team
+spec:
+  validationActions:
+  - Audit
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ''
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      - UPDATE
+      resources:
+      - pods
+  matchConditions:
+  - name: lab-only
+    expression: object.metadata.namespace == 'policy-lab'
+  validations:
+  - expression: object.metadata.?labels.team.orValue('') != ''
+    message: A nonempty team label is required.
+```
+
+`pod.yaml` (a local fixture; its image is not pulled):
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: good
+  namespace: policy-lab
+  labels:
+    team: platform
+spec:
+  containers:
+  - name: app
+    image: registry.example.com/app:fixture
+```
+
+`pod-missing.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: missing-label
+  namespace: policy-lab
+spec:
+  containers:
+  - name: app
+    image: registry.example.com/app:fixture
+```
+
+`kyverno-test.yaml`:
+
+```yaml
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: team-label-local-test
+policies:
+- require-team.yaml
+resources:
+- pod.yaml
+- pod-missing.yaml
+results:
+- policy: require-team
+  kind: Pod
+  resources:
+  - good
+  result: pass
+- policy: require-team
+  kind: Pod
+  resources:
+  - missing-label
+  result: fail
+```
 
 ```bash
-# Install Kyverno CLI
-curl -LO https://github.com/kyverno/kyverno/releases/download/v1.10.0/kyverno-cli_v1.10.0_linux_x86_64.tar.gz
-tar -xvf kyverno-cli_v1.10.0_linux_x86_64.tar.gz
-sudo mv kyverno /usr/local/bin/
-
-# Test policy
-kyverno test ./policy.yaml --resource=./resource.yaml
+kyverno version
+kyverno test ./policy-lab-tests --require-tests --warnings-as-errors
+# Offline evaluation; this does not install a policy or modify cluster resources:
+kyverno apply ./policy-lab-tests/require-team.yaml \
+  --resource ./policy-lab-tests/pod-missing.yaml \
+  --continue-on-error=false --warn-no-pass --warn-exit-code 2
+# For mutation/generation, --output takes a file/directory path, not a format name:
+kyverno apply add-default-label.yaml --resource ./policy-lab-tests/pod.yaml --output ./mutated/
 ```
 
 ### Policy Validation
 
-You can validate policies using the `kubectl kyverno` plugin:
-
-```bash
-# Install kubectl kyverno plugin
-kubectl krew install kyverno
-
-# Validate policy
-kubectl kyverno apply ./policy.yaml --cluster
-```
+`kyverno test` takes a directory with a test manifest; `kyverno apply` evaluates policy against supplied resources. `--cluster` reads resources from the selected cluster for evaluation; it is not a policy installation command. Installing a reviewed policy uses kubectl/GitOps and changes the cluster. Consult the pinned CLI help: a generic `kyverno validate` or `kyverno create disallow-latest-tag` workflow is not the tested interface. `create` does exist for supported Kyverno helper resources.
 
 ## Policy Monitoring and Reporting
 
-Kyverno provides tools for monitoring and reporting policy violations.
-
 ### Policy Reports
 
-Kyverno creates the following report resources:
+The default profile uses the Policy WG `PolicyReport`/`ClusterPolicyReport` APIs. A PolicyReport is namespaced; ClusterPolicyReport covers cluster-scoped resources, not simply all namespaces combined. Reporting configuration and supported rule types matter. Background scans report validation results; they do not retroactively deny, mutate or delete existing objects. Existing objects remain subject to matching admission checks when updated even if background scanning is disabled.
 
-1. **ClusterPolicyReport**: Reports cluster-level policy violations.
-2. **PolicyReport**: Reports namespace-level policy violations.
+This is a **synthetic schema example**, not a report collected from a cluster. Results use `resources` and `result`, not `resource`/`status`; if a timestamp is supplied it uses integer seconds/nanos. Summary counts must agree with the entries.
 
-```bash
-# View cluster policy reports
-kubectl get clusterpolicyreport
-
-# View namespace policy reports
-kubectl get policyreport -n <namespace>
+```yaml
+apiVersion: wgpolicyk8s.io/v1alpha2
+kind: PolicyReport
+metadata:
+  name: example-report
+  namespace: policy-lab
+summary:
+  pass: 1
+  fail: 1
+  warn: 0
+  error: 0
+  skip: 0
+results:
+- policy: require-team
+  source: kyverno
+  resources:
+  - apiVersion: v1
+    kind: Pod
+    name: good
+    namespace: policy-lab
+  result: pass
+- policy: require-team
+  source: kyverno
+  resources:
+  - apiVersion: v1
+    kind: Pod
+    name: missing-label
+    namespace: policy-lab
+  result: fail
+  message: A nonempty team label is required.
 ```
+
+Query actual reports with `kubectl get policyreports -n policy-lab` and `kubectl get clusterpolicyreports`. Reports Server/OpenReports are separate optional installations/configurations; verify the API actually installed before assuming the backend.
 
 ### Prometheus Metrics
 
-Kyverno provides Prometheus metrics for monitoring policy violations:
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: kyverno-svc-metrics
-  namespace: kyverno
-  labels:
-    app: kyverno
-spec:
-  ports:
-  - port: 8000
-    targetPort: 8000
-    name: metrics
-  selector:
-    app: kyverno
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: kyverno-svc-metrics
-  namespace: monitoring
-  labels:
-    release: prometheus
-spec:
-  selector:
-    matchLabels:
-      app: kyverno
-  endpoints:
-  - port: metrics
-```
+Use the chart-created metrics Services and per-controller ServiceMonitors from the tested values above. Their Service port name is `metrics-port` on 8000, with component/instance/part-of selectors—not `app: kyverno`. The render places them in `kyverno` and configures `namespaceSelector.matchNames: [kyverno]`. Prometheus must select those monitors and the namespace. Resource existence does not prove scraping or CloudWatch export.
 
 ## Best Practices
 
 ### 1. Gradual Rollout
 
-When introducing new policies, it's recommended to first set `validationFailureAction: audit` mode to monitor violations, then switch to `enforce` mode when ready.
-
-```yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
-metadata:
-  name: require-resource-limits
-spec:
-  validationFailureAction: audit  # Start with audit mode first
-  rules:
-  - name: check-resource-limits
-    match:
-      resources:
-        kinds:
-        - Pod
-    validate:
-      message: "Resource limits are required for all containers."
-      pattern:
-        spec:
-          containers:
-          - resources:
-              limits:
-                memory: "?*"
-                cpu: "?*"
-```
+Stage new validation with Audit, review actual reports and exceptions, then choose Deny where appropriate. Check webhook failure policy, timeout, replica availability and emergency recovery. Keep generation, mutation-existing and destructive deletion review separate.
 
 ### 2. Exception Handling
 
-To handle exceptions for specific namespaces or resources, use the `exclude` section:
-
-```yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
-metadata:
-  name: require-resource-limits
-spec:
-  validationFailureAction: enforce
-  rules:
-  - name: check-resource-limits
-    match:
-      resources:
-        kinds:
-        - Pod
-    exclude:
-      resources:
-        namespaces:
-        - kube-system
-        - kyverno
-    validate:
-      message: "Resource limits are required for all containers."
-      pattern:
-        spec:
-          containers:
-          - resources:
-              limits:
-                memory: "?*"
-                cpu: "?*"
-```
+Narrow matchConstraints/matchConditions are not equivalent to an unlimited exemption. Review namespace scope, names, kinds and admission/user information availability. Classic rules depending on user/role information cannot be assumed evaluable in background scans. CEL PolicyException uses `policies.kyverno.io/v1`, explicit policyRefs/matchConditions and optionally expiresAt; restrict who can create it and verify installation/configuration support. An exception is an authorization-sensitive object, not an admission bypass every application team should receive.
 
 ### 3. Policy Organization
 
-It's recommended to organize policies by purpose and use clear names:
-
-```
-policies/
-├── security/
-│   ├── disallow-privileged-containers.yaml
-│   ├── require-pod-probes.yaml
-│   └── restrict-image-registries.yaml
-├── cost-optimization/
-│   ├── require-resource-limits.yaml
-│   └── restrict-node-types.yaml
-└── compliance/
-    ├── generate-pdb.yaml
-    └── generate-resourcequota.yaml
-```
+Keep versioned validation, mutation, generation and deletion policies with tests and owners. Legacy ClusterPolicy patterns/JMESPath differ from CEL; migrate rule-by-rule with output comparisons. Image signature verification is `ImageValidatingPolicy` in the current API; see the [image security guide](./07-image-security.md) for attestor/registry/trust prerequisites. Signature verification is not vulnerability scanning or a blanket registry allowlist.
 
 ## Conclusion
 
-Kyverno is a powerful tool for managing policies using a Kubernetes-native approach. Using Kyverno in EKS clusters allows you to apply policies across various aspects including security, cost optimization, and compliance. It's important to introduce policies gradually, handle exceptions, and organize them well.
+Local validation covered real Kyverno 1.19.1 policy evaluation and output preservation, released API schemas and chart rendering. Live webhook ordering/autogeneration, controller RBAC, networking, image trust and destructive lifecycle actions were not executed. Those remain deployment acceptance checks.
+
+- [Kyverno releases and tested Kubernetes versions](https://kyverno.io/docs/installation/releases/)
+- [Installation and controller responsibilities](https://kyverno.io/docs/installation/installation/)
+- [Migration to CEL](https://kyverno.io/docs/guides/migration-to-cel/)
+- [ValidatingPolicy](https://kyverno.io/docs/policy-types/validating-policy/)
+- [MutatingPolicy](https://kyverno.io/docs/policy-types/mutating-policy/)
+- [GeneratingPolicy](https://kyverno.io/docs/policy-types/generating-policy/)
+- [DeletingPolicy](https://kyverno.io/docs/policy-types/deleting-policy/)
+- [Kyverno CLI](https://kyverno.io/docs/kyverno-cli/reference/kyverno/)
 
 ## Quiz
 
-To test what you've learned in this chapter, try the [Kyverno Policy Management Quiz](../quizzes/security/01-kyverno-policy-management-quiz.md).
+Try the [Kyverno Policy Management Quiz](../quizzes/security/01-kyverno-policy-management-quiz.md).

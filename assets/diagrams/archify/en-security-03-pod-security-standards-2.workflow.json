@@ -30,7 +30,7 @@
           "map_profile",
           "validate_test"
         ],
-        "note": "Analyze existing PSPs, map them to PSS profiles, and validate first in a test namespace using warn mode."
+        "note": "Compare archived PSP and current controls. PSP API is absent from1.25; use preserved policy records as needed."
       },
       {
         "id": "rollout",
@@ -40,7 +40,7 @@
           "warn_audit",
           "fix_workloads"
         ],
-        "note": "Surface violations with warn/audit mode, then fix workloads while watching warnings and audit logs."
+        "note": "Preserve the existing enforce level while adding warn/audit, observing impact and remediating workloads."
       },
       {
         "id": "enforce",
@@ -50,7 +50,7 @@
           "enforce_mode",
           "remove_psp"
         ],
-        "note": "Once violations are resolved, switch to enforce mode and finally remove PSP."
+        "note": "Apply the target enforce policy after validation. PSP deletion applies only to historical clusters retaining that API."
       }
     ]
   },
@@ -88,7 +88,7 @@
       "col": 0,
       "type": "backend",
       "label": "1. Analyze Current State",
-      "sublabel": "kubectl get psp",
+      "sublabel": "Review archived/current policies",
       "width": 212
     },
     {
@@ -97,7 +97,7 @@
       "col": 1,
       "type": "backend",
       "label": "2. Map to PSS Profiles",
-      "sublabel": "Privileged / Baseline / Restricted",
+      "sublabel": "Gap analysis, not equivalence",
       "width": 200
     },
     {
@@ -141,8 +141,8 @@
       "lane": "cleanup",
       "col": 3,
       "type": "backend",
-      "label": "7. Remove PSP",
-      "sublabel": "delete PodSecurityPolicy",
+      "label": "7. Retire legacy configuration",
+      "sublabel": "PSP API only on <=1.24",
       "width": 220
     }
   ],
@@ -185,29 +185,29 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "PSP → PSS Mapping Rules",
+      "title": "Mapping limits",
       "items": [
-        "privileged: true → Privileged",
-        "privileged: false + allowPrivilegeEscalation: true → Baseline",
-        "allowPrivilegeEscalation: false + MustRunAsNonRoot → Restricted (drop all capabilities)"
+        "A few PSP fields do not establish PSS equivalence",
+        "Check seccomp, SELinux, capabilities, OS and user namespaces",
+        "Review PSP mutation and identity-dependent rules separately"
       ]
     },
     {
       "dot": "amber",
       "title": "Step 4 Gradual Rollout Order",
       "items": [
-        "Phase 1: enforce privileged, audit/warn baseline (monitoring only)",
-        "Phase 2: enforce baseline, audit/warn restricted",
-        "Phase 3: enforce restricted"
+        "Preserve the existing enforce level",
+        "Add warn/audit to assess violations",
+        "Move to a tested, approved target policy version"
       ]
     },
     {
       "dot": "emerald",
       "title": "Restricted-Compliant Workload Fixes",
       "items": [
-        "runAsNonRoot: true, seccompProfile RuntimeDefault",
-        "allowPrivilegeEscalation: false, capabilities drop ALL",
-        "readOnlyRootFilesystem: true"
+        "Linux/default-user-namespace examples; verify versioned rules",
+        "runAsNonRoot / seccomp / no privilege escalation / drop ALL",
+        "readOnlyRootFilesystem is additional hardening, not PSS-required"
       ]
     }
   ]

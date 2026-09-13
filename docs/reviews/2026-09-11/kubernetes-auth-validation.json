@@ -1,0 +1,270 @@
+{
+  "status": "complete",
+  "completedAt": "2026-09-13T07:34:57.614340+00:00",
+  "originalFullReadLines": 1816,
+  "files": [
+    {
+      "path": "en/security/02-kubernetes-auth-authz.md",
+      "originalSHA256": "5e27058df9f5732d4c76fbadd4f0d7219fcfc8bc7284c8a30e114ca5cb4c8df9",
+      "sha256": "96b5548967e35844b996a74a85ebaaeb711dabb3109e2ea9e5b7ab70aa14162f",
+      "fullyRead": true,
+      "status": "fixed"
+    },
+    {
+      "path": "en/quizzes/security/02-kubernetes-auth-authz-quiz.md",
+      "originalSHA256": "2c168270336ee2f5f6a4e4dc57e59ce27d6ac0e600bd7a48425af5c874744d07",
+      "sha256": "c678403d8e2f6be8fc14c65e673883495411818f934fbd3daed0c473433ccd76",
+      "fullyRead": true,
+      "status": "fixed"
+    },
+    {
+      "path": "ko/security/02-kubernetes-auth-authz.md",
+      "originalSHA256": "c00729c21c0374ec078e2ce2661c387026cc7cf4fd69d5631d84d5fff551c7f3",
+      "sha256": "70fcbac15d178ab9f45448d0e81bb6239a0da6e66c629e719bf090d1de85b8f3",
+      "fullyRead": true,
+      "status": "fixed"
+    },
+    {
+      "path": "ko/quizzes/security/02-kubernetes-auth-authz-quiz.md",
+      "originalSHA256": "83ad52545f9b6b99d1e061aae5969fa0dd97733037b505a5c68664916852183e",
+      "sha256": "a322dfe4945d0c755b2efeb7201321a874450b412a608aef3c560bfc5cfbef02",
+      "fullyRead": true,
+      "status": "fixed"
+    }
+  ],
+  "sources": {
+    "fetchedAt": "2026-09-13T07:25:15.930118+00:00",
+    "sources": [
+      {
+        "name": "k8s-authentication",
+        "url": "https://kubernetes.io/docs/reference/access-authn-authz/authentication/",
+        "finalURL": "https://kubernetes.io/docs/reference/access-authn-authz/authentication/",
+        "httpStatus": 200,
+        "sha256": "b0637dd1f044ea8831e4db93da06a8813e44eed71c281b667bae4d9f87a2147e",
+        "bytes": 727176
+      },
+      {
+        "name": "k8s-authorization",
+        "url": "https://kubernetes.io/docs/reference/access-authn-authz/authorization/",
+        "finalURL": "https://kubernetes.io/docs/reference/access-authn-authz/authorization/",
+        "httpStatus": 200,
+        "sha256": "30d68d0be7d73ad3df7c53e87713422f8d306c0478c69bf276914d61ab5ac7c9",
+        "bytes": 544911
+      },
+      {
+        "name": "k8s-rbac",
+        "url": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+        "finalURL": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+        "httpStatus": 200,
+        "sha256": "0ceb425b9f8f6e8c47fd7496735cfab1c148b2c87f74681f7e6c08b9f86076c6",
+        "bytes": 624621
+      },
+      {
+        "name": "k8s-serviceaccounts",
+        "url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+        "finalURL": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+        "httpStatus": 200,
+        "sha256": "f63b9a120545c397c40ce15adf9ff073f85fb372103ed148d0d90345a7509eb3",
+        "bytes": 545441
+      },
+      {
+        "name": "k8s-admission",
+        "url": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+        "finalURL": "https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/",
+        "httpStatus": 200,
+        "sha256": "2548a8ba4f0bca4e35130883a54b2b96873a1dfc2261b27dd69f2ab59a48aff1",
+        "bytes": 572218
+      },
+      {
+        "name": "k8s-webhooks",
+        "url": "https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/",
+        "finalURL": "https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/",
+        "httpStatus": 200,
+        "sha256": "d19bbba3723f07f37d0e2ccced2bed5f2b55afd5a4fe5583a739ea22fe7d248e",
+        "bytes": 644309
+      },
+      {
+        "name": "k8s-abac",
+        "url": "https://kubernetes.io/docs/reference/access-authn-authz/abac/",
+        "finalURL": "https://kubernetes.io/docs/reference/access-authn-authz/abac/",
+        "httpStatus": 200,
+        "sha256": "98c0d5c29af43a862ad7942a4d769f044dd919bd40c70ddf7b0e065e1528c542",
+        "bytes": 511095
+      },
+      {
+        "name": "k8s-node",
+        "url": "https://kubernetes.io/docs/reference/access-authn-authz/node/",
+        "finalURL": "https://kubernetes.io/docs/reference/access-authn-authz/node/",
+        "httpStatus": 200,
+        "sha256": "9f8f347e00a107fd0200c2878b91f9397a7297854d8cf537384b5bcac5674047",
+        "bytes": 514864
+      },
+      {
+        "name": "k8s-networkpolicy",
+        "url": "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+        "finalURL": "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+        "httpStatus": 200,
+        "sha256": "d537cebf90aee2ca121c56a6cda0b52969f99be62cdb54692dfe5bef7a95da02",
+        "bytes": 557165
+      },
+      {
+        "name": "k8s-csr",
+        "url": "https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/",
+        "finalURL": "https://kubernetes.io/docs/reference/access-authn-authz/certificate-signing-requests/",
+        "httpStatus": 200,
+        "sha256": "12677e5f2b02e1dadf120ecc132a890b3c1b2a0d39ab9faa3b2255e0df00659d",
+        "bytes": 561132
+      },
+      {
+        "name": "eks-access-create",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/creating-access-entries.html",
+        "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/creating-access-entries.html",
+        "httpStatus": 200,
+        "sha256": "05f70f35162c50ba4cfa0b0a8ac171a66ed68dcacd07157fb2f39f661213517a",
+        "bytes": 40034
+      },
+      {
+        "name": "eks-access-mode",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/setting-up-access-entries.html",
+        "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/setting-up-access-entries.html",
+        "httpStatus": 200,
+        "sha256": "b4d5c723d5b00972f32f4b0d6e88dc796cfd26a68a298e5ee364c141b5f951ea",
+        "bytes": 19139
+      },
+      {
+        "name": "eks-access-policy",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html",
+        "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html",
+        "httpStatus": 200,
+        "sha256": "15c1da5dc326c718030c49a88438284baf7aacf1d6563a9882f4dfa9936c6d99",
+        "bytes": 30632
+      },
+      {
+        "name": "eks-auth-configmap",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/auth-configmap.html",
+        "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/auth-configmap.html",
+        "httpStatus": 200,
+        "sha256": "3b6eb760acc85d6bc61c710c54e32736a3b4b5a94211d1b38bff9c570e2ce7ee",
+        "bytes": 51278
+      },
+      {
+        "name": "eks-external-oidc",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/authenticate-oidc-identity-provider.html",
+        "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/authenticate-oidc-identity-provider.html",
+        "httpStatus": 200,
+        "sha256": "b05390057e720c5b3c0f501bd0dbb60d2315248938a6bc5aba391ed2c9c0157a",
+        "bytes": 31116
+      },
+      {
+        "name": "eks-iam-workloads",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html",
+        "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html",
+        "httpStatus": 200,
+        "sha256": "653c35231a521ea9b1554452ba74b94d5b74cec136f19a2d9cb77c755346ae92",
+        "bytes": 32833
+      },
+      {
+        "name": "eks-cert-signing",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/cert-signing.html",
+        "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/cert-signing.html",
+        "httpStatus": 200,
+        "sha256": "0d3dae31d65acb5e56c4806e275697f1ce52a09e0374392331e8158a32bc5471",
+        "bytes": 19428
+      },
+      {
+        "name": "eks-controlplane-logs",
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html",
+        "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html",
+        "httpStatus": 200,
+        "sha256": "95bbcc12dd12cee13b8b89faa351ff5d31f8697f90331938a5bb7bd91f7398eb",
+        "bytes": 28706
+      },
+      {
+        "name": "k8s-kubeconfig",
+        "url": "https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/",
+        "finalURL": "https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/",
+        "httpStatus": 200,
+        "sha256": "d0f7ec04bdbae3292ef4d8a59d159a7aa78bd18870256c6cd32df6ea61088293",
+        "bytes": 510546
+      },
+      {
+        "name": "k8s-multitenancy",
+        "url": "https://kubernetes.io/docs/concepts/security/multi-tenancy/",
+        "finalURL": "https://kubernetes.io/docs/concepts/security/multi-tenancy/",
+        "httpStatus": 200,
+        "sha256": "e99e2215c145b328fbc2690352543847addd4a5fe5f05688e281c42a8efeab83",
+        "bytes": 531510
+      },
+      {
+        "name": "k8s-psp",
+        "url": "https://kubernetes.io/docs/concepts/security/pod-security-policy/",
+        "finalURL": "https://kubernetes.io/docs/concepts/security/pod-security-policy/",
+        "httpStatus": 200,
+        "sha256": "8738e43d404ebec903ca67a9f10d45ba7cd9a797729939cc744aa22524a628c2",
+        "bytes": 497957
+      }
+    ]
+  },
+  "validation": {
+    "localChecks": 106,
+    "schemaAPIObjects": 42,
+    "schemaVersion": "Kubernetes 1.35.0 OpenAPI, unknown properties rejected",
+    "nativePackageVersion": "k8s.io/apiserver and client-go v0.36.2",
+    "nativeCases": [
+      "TestPublishedKubeconfigsStrict/en-kubeconfig-0.yaml",
+      "TestPublishedKubeconfigsStrict/en-kubeconfig-2.yaml",
+      "TestPublishedKubeconfigsStrict/ko-kubeconfig-0.yaml",
+      "TestPublishedKubeconfigsStrict/ko-kubeconfig-2.yaml",
+      "TestOriginalInventedKubeconfigFieldsRejected/authentication__webhook:",
+      "TestOriginalInventedKubeconfigFieldsRejected/authentication__proxy:",
+      "TestOriginalInventedKubeconfigFieldsRejected/authorization__webhook:",
+      "TestAuthorizerShortCircuit/allowCannotBeVetoedLater",
+      "TestAuthorizerShortCircuit/denyCannotBeOverriddenLater",
+      "TestAuthorizerShortCircuit/noOpinionThenAllow",
+      "TestAuthorizerShortCircuit/noOpinionThenDeny",
+      "TestAuthorizerShortCircuit/allNoOpinionNoGrant",
+      "TestFirstSuccessfulAuthenticator/secondSucceeds",
+      "TestFirstSuccessfulAuthenticator/firstSuccessStops"
+    ],
+    "markdownFiles": 4,
+    "originalRenderedIDs": 106,
+    "quizQuestionsPerLocale": 20,
+    "mcAnswers": "BBCBBCBDBC",
+    "nativeScope": "Actual strict kubeconfig decoding, union authentication/authorization with synthetic handlers; native local OpenSSL CSR generation/verification and private-key file mode. No live API-server authorization, admission, token rotation, EKS access changes or network/cluster execution."
+  },
+  "sourcePreservation": {
+    "status": "INCLUDED_WITH_CORRECTIONS",
+    "topics": "All original headings and question groups retained; insecure/invalid examples replaced, no benchmark corpus existed. ASCII universal persistence flow corrected to a request-type table. HNC-specific suggestion generalized to explicit subtenant design."
+  },
+  "findings": [
+    "Replaced invented kubeconfig authentication/proxy/authorization fields with valid connection kubeconfig and scoped self-managed API-server configuration; EKS managed control-plane boundary explicit.",
+    "Removed CA-private-key signing from the user recipe; local protected CSR only, client trust vs server trust and EKS app-serving signer limitation verified.",
+    "Clarified projected ServiceAccount tokens, top-level vs Pod.spec automount field, Pod precedence, explicit projection, audience, server-selected expiry and application reload.",
+    "Corrected reusable ClusterRole/RoleBinding scope and ambiguous multiple-choice question; replaced global Secret-reader grant and tenant wildcard writes with explicit grants, documenting indirect Secret/ServiceAccount access through workloads.",
+    "Corrected first-success authentication without guaranteed order; first Allow/Deny authorizer result, NoOpinion continuation and system:masters bypass; get/list/watch skip admission and not all requests persist to etcd.",
+    "Replaced removed PodSecurityPolicy with PodSecurity; opt-in validating webhook with explicit Fail policy and server/TLS assumptions; quota/default class/admission scopes corrected.",
+    "Replaced full aws-auth overwrite with STANDARD access-entry example and namespace RBAC; one-way migration, propagation, existing additive grants and can-i/EKS-policy limitations documented.",
+    "Distinguished external OIDC user access, IRSA workload federation, and Pod Identity; removed broad S3 managed-policy command.",
+    "Preserved all 20 questions per locale and 106 original rendered anchors (6 explicit aliases); original universal ASCII write flow replaced by request-specific prose/table. No images in this cohort.",
+    "Removed stale supported-version list without claiming an upstream/EKS latest release or runtime support matrix; Last Updated changed for substantive verified corrections."
+  ],
+  "limitations": [
+    "No deployed OIDC/webhook/PKI/EKS/network setup or actual IAM/RBAC authorization acceptance test.",
+    "Strict schema validation is not API-server admission validation; example CA bytes and endpoint paths must be supplied by operators.",
+    "Initial native harness setup lacked sum entries; reused existing cached sums, no dependency download.",
+    "Three prior rows remain needs_followup only for parent-owned Hybrid10/Kyverno01 diagrams."
+  ],
+  "evidence": {
+    "scope.json": "ef06e8cf4fe08d7902a14ba5539643b5c71c6af6dd3d5323b2592a6b79fa4b62",
+    "sources/index.json": "19d9059587d62299d232f8a895038b1bbb2ee4c4ba38f981a115bfb5168988e0",
+    "source-validation.json": "39b3ae145d61a0a734be3af2c649bd6cbae6d487c085f5123e6c4ea9772e2125",
+    "native-test.jsonl": "88247c8e82d250d81aa44d90d88755ec250257412749e5fa8e3b809d538f1354",
+    "native/auth_test.go": "008b9536e3a100b6236be6fad4fdf3a9aa338ab794208b1dfbf8ccc446712215",
+    "native/go.mod": "8bb8915bbe91793feb89cf91daaac0d6e5e2e8fc20e198fe2e0b0526ef108d0c",
+    "native/go.sum": "d964b7090ad571a8d8ed674224d05241cd38dba76fe2be08d579dedf5476dad1",
+    "markdown-validation.json": "79143568316ec7f2ba2bc814380033172c09afe1ce86329283bc0b6f346f70cf",
+    "preserved-anchors.json": "44668cce5c7ddf76da18f4c90bf5da0cb9d4e8e06ec95e4d39ad03c55ccb740c"
+  },
+  "evidenceNote": "Published copy of completed worker semantic and bounded native validation. No claim of rerunning native commands during integration.",
+  "publishedAt": "2026-09-13T10:32:09.587792+00:00"
+}

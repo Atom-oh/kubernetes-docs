@@ -1,20 +1,25 @@
 # Pod Security Standards Quiz
 
+> **Last Updated**: September 13, 2026
+> **Related Document**: [Pod Security Standards](../../security/03-pod-security-standards.md)
+
+Answer for ordinary Linux Pods; see the guide for version-specific Windows and user-namespace exceptions.
+
 This quiz tests your understanding of Pod Security Standards (PSS), Pod Security Admission (PSA), and security profiles.
 
 ## Quiz Questions
 
 ### 1. Which is NOT one of the three security levels in Pod Security Standards (PSS)?
 
-A. Privileged
-B. Baseline
-C. Hardened
-D. Restricted
+- A) Privileged
+- B) Baseline
+- C) Hardened
+- D) Restricted
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Hardened**
+**Answer: C) Hardened**
 
 **Explanation:**
 Pod Security Standards defines three security levels:
@@ -28,15 +33,15 @@ Hardened is not an official PSS security level.
 
 ### 2. Which Pod Security Admission (PSA) mode blocks Pod creation when policy violations occur?
 
-A. audit
-B. warn
-C. enforce
-D. deny
+- A) audit
+- B) warn
+- C) enforce
+- D) deny
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. enforce**
+**Answer: C) enforce**
 
 **Explanation:**
 PSA provides three modes:
@@ -44,21 +49,21 @@ PSA provides three modes:
 - **audit**: Records violations in audit logs but allows
 - **warn**: Shows warning message to user but allows
 
-deny is not a valid PSA mode.
+deny is not a valid PSA mode. Audit/warn do not themselves reject; enforce or other checks can still reject the same request. Audit retention requires appropriate log configuration.
 
 </details>
 
 ### 3. What label format is used to apply PSS to a namespace?
 
-A. security.kubernetes.io/enforce: restricted
-B. pod-security.kubernetes.io/enforce: restricted
-C. pss.kubernetes.io/level: restricted
-D. admission.kubernetes.io/policy: restricted
+- A) security.kubernetes.io/enforce: restricted
+- B) pod-security.kubernetes.io/enforce: restricted
+- C) pss.kubernetes.io/level: restricted
+- D) admission.kubernetes.io/policy: restricted
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. pod-security.kubernetes.io/enforce: restricted**
+**Answer: B) pod-security.kubernetes.io/enforce: restricted**
 
 **Explanation:**
 PSA is configured through namespace labels:
@@ -77,38 +82,38 @@ Label format: `pod-security.kubernetes.io/<MODE>: <LEVEL>`
 
 ### 4. Which is NOT allowed in the Baseline security level?
 
-A. hostNetwork: true
-B. runAsNonRoot: false
-C. allowPrivilegeEscalation: true
-D. readOnlyRootFilesystem: false
+- A) hostNetwork: true
+- B) runAsNonRoot: false
+- C) allowPrivilegeEscalation: true
+- D) readOnlyRootFilesystem: false
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A. hostNetwork: true**
+**Answer: A) hostNetwork: true**
 
 **Explanation:**
 Baseline level prevents known privilege escalation. The following are prohibited:
 - hostNetwork, hostPID, hostIPC
 - privileged containers
-- Dangerous capabilities (cannot add except NET_RAW)
-- hostPath volumes (except certain paths)
+- Explicit capability additions outside the Baseline allowlist, including NET_RAW
+- All hostPath volumes; built-in PSA provides no path allowlist
 
-runAsNonRoot, allowPrivilegeEscalation, and readOnlyRootFilesystem are not restricted in Baseline; they are enforced in the Restricted level.
+Baseline does not require runAsNonRoot or allowPrivilegeEscalation: false. Restricted adds those controls for the assumed Pod type. readOnlyRootFilesystem is recommended hardening, not a requirement of either profile. The capability check concerns explicit additions; it does not drop the runtime default set.
 
 </details>
 
 ### 5. Which is NOT a requirement of the Restricted security level?
 
-A. runAsNonRoot: true
-B. allowPrivilegeEscalation: false
-C. readOnlyRootFilesystem: true
-D. capabilities.drop: ["ALL"]
+- A) runAsNonRoot: true
+- B) allowPrivilegeEscalation: false
+- C) readOnlyRootFilesystem: true
+- D) capabilities.drop: ["ALL"]
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. readOnlyRootFilesystem: true**
+**Answer: C) readOnlyRootFilesystem: true**
 
 **Explanation:**
 Restricted level requires:
@@ -123,15 +128,15 @@ readOnlyRootFilesystem is a security best practice but is not a mandatory requir
 
 ### 6. In which Kubernetes version was PodSecurityPolicy (PSP) removed?
 
-A. 1.21
-B. 1.23
-C. 1.25
-D. 1.27
+- A) 1.21
+- B) 1.23
+- C) 1.25
+- D) 1.27
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. 1.25**
+**Answer: C) 1.25**
 
 **Explanation:**
 PSP Timeline:
@@ -144,15 +149,15 @@ PSP Timeline:
 
 ### 7. What label applies a specific version of PSS in PSA?
 
-A. pod-security.kubernetes.io/enforce-version: v1.28
-B. pod-security.kubernetes.io/version: v1.28
-C. pod-security.kubernetes.io/enforce-version: 1.28
-D. pod-security.kubernetes.io/policy-version: 1.28
+- A) pod-security.kubernetes.io/enforce-version: v1.28
+- B) pod-security.kubernetes.io/version: v1.28
+- C) pod-security.kubernetes.io/enforce-version: 1.28
+- D) pod-security.kubernetes.io/policy-version: 1.28
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A. pod-security.kubernetes.io/enforce-version: v1.28**
+**Answer: A) pod-security.kubernetes.io/enforce-version: v1.28**
 
 **Explanation:**
 Version label format:
@@ -160,60 +165,60 @@ Version label format:
 pod-security.kubernetes.io/<MODE>-version: <VERSION>
 ```
 
-Version values use `v1.XX` format or `latest`. Specifying a version uses the PSS definition from that Kubernetes version.
+Values use `v1.XX` or `latest`. Pinning selects the policy definition, not a Kubernetes upgrade. The v1.28 choice illustrates syntax; it omits controls introduced later. latest follows the API server version and can change on upgrade.
 
 </details>
 
 ### 8. How do you enable PSA in EKS?
 
-A. Need to install EKS add-on
-B. Enabled by default
-C. Enable with eksctl command
-D. Configure in AWS console
+- A) Need to install EKS add-on
+- B) Enabled by default
+- C) Enable with eksctl command
+- D) Configure in AWS console
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. Enabled by default**
+**Answer: B) Enabled by default**
 
 **Explanation:**
-Pod Security Admission is enabled by default in Kubernetes 1.25+. In EKS 1.25 and later versions, PSA can be used without additional configuration. You only need to add appropriate labels to namespaces.
+PSA reached GA and is enabled by default in upstream Kubernetes 1.25+. AWS documents EKS default enablement from 1.23, with permissive privileged/latest defaults and no static exemptions. Review actual namespace labels; add an appropriate policy rather than assuming enablement alone provides Baseline/Restricted enforcement.
 
 </details>
 
 ### 9. Which is NOT a method to configure PSA exemptions?
 
-A. RuntimeClass exemption
-B. User exemption
-C. Namespace exemption
-D. Pod label exemption
+- A) RuntimeClass exemption
+- B) User exemption
+- C) Namespace exemption
+- D) Pod label exemption
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: D. Pod label exemption**
+**Answer: D) Pod label exemption**
 
 **Explanation:**
 PSA supports the following exemption types:
 - **usernames**: Exemptions for specific users
-- **runtimeClassNames**: Exemptions for specific RuntimeClasses
+- **runtimeClasses**: Exemptions for specific RuntimeClasses
 - **namespaces**: Exemptions for specific namespaces
 
-Pod label-based exemptions are not supported in PSA. Exemptions are configured through AdmissionConfiguration.
+Pod labels do not create exemptions. Static exemption entries are exact names, not wildcard or group selectors. User exemptions match the request identity, not spec.serviceAccountName. EKS does not expose editing this control-plane configuration; choosing privileged namespace enforcement is different from a static exemption.
 
 </details>
 
 ### 10. Which seccompProfile type is allowed in the Restricted level?
 
-A. Unconfined
-B. RuntimeDefault
-C. Custom
-D. Disabled
+- A) Unconfined
+- B) RuntimeDefault
+- C) Custom
+- D) Disabled
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B. RuntimeDefault**
+**Answer: B) RuntimeDefault**
 
 **Explanation:**
 seccompProfile types allowed in Restricted level:
@@ -226,15 +231,15 @@ Unconfined is not allowed in the Restricted level. It disables seccomp filtering
 
 ### 11. What is the recommended first step when migrating from PSP to PSA?
 
-A. Delete PSP immediately
-B. Apply enforce mode to all namespaces
-C. Start with audit/warn mode to identify violations
-D. Create a new cluster
+- A) Delete PSP immediately
+- B) Apply enforce mode to all namespaces
+- C) Start with audit/warn mode to identify violations
+- D) Create a new cluster
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Start with audit/warn mode to identify violations**
+**Answer: C) Start with audit/warn mode to identify violations**
 
 **Explanation:**
 Recommended PSA migration steps:
@@ -243,30 +248,32 @@ Recommended PSA migration steps:
 3. **Switch to enforce mode**: Apply gradually
 4. **Remove PSP**: After migration is complete
 
-Immediately applying enforce mode can disrupt existing workloads.
+Existing running Pods are not evicted merely by relabeling. Their replacements or relevant updates can be denied, so a later rollout may stall. This PSP removal sequence is historical for clusters that still served PSP before v1.25.
 
 </details>
 
-### 12. What is restricted even in the Privileged level?
+<span id="_12-what-is-restricted-even-in-the-privileged-level"></span>
 
-A. hostNetwork usage
-B. privileged containers
-C. Nothing (everything is allowed)
-D. hostPath volumes
+### 12. Which of these does the PSS Privileged profile itself prohibit?
+
+- A) hostNetwork usage
+- B) privileged containers
+- C) None of these by PSS itself
+- D) hostPath volumes
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Nothing (everything is allowed)**
+**Answer: C) None of these by PSS itself**
 
 **Explanation:**
-Privileged level is completely unrestricted:
+Privileged adds no PSS restrictions on these valid Pod fields:
 - All security context settings allowed
 - hostNetwork, hostPID, hostIPC allowed
 - privileged containers allowed
 - All capabilities allowed
 - All volume types allowed
 
-This level is used for system and infrastructure workloads (e.g., CNI, storage drivers).
+This does not grant IAM/RBAC permissions, bypass schema validation or other admission policies, or force privileged: true. Limit such namespaces to reviewed host-access components.
 
 </details>

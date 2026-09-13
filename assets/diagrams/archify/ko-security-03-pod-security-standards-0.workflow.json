@@ -33,7 +33,7 @@
           "psp_removed",
           "pss_stable"
         ],
-        "note": "1.25에서 PSP가 완전히 제거되어 PSA GA와 함께 전환이 마무리되고, 1.28 이후 PSS/PSA가 안정화된다."
+        "note": "v1.25에서 PSP 제거와 PSA GA가 이루어진다. 이후 버전별 PSS 규칙은 계속 발전하며1.28은 별도 GA 시점이 아니다."
       }
     ],
     "legend": {
@@ -75,7 +75,7 @@
     },
     {
       "id": "cutover",
-      "label": "전환 완료 · 안정화",
+      "label": "PSA GA · 정책 버전 관리",
       "fromCol": 3,
       "toCol": 4,
       "variant": "emphasis"
@@ -138,10 +138,10 @@
       "id": "pss_stable",
       "lane": "psa",
       "col": 4,
-      "width": 160,
+      "width": 190,
       "type": "backend",
-      "label": "PSS/PSA 안정화",
-      "sublabel": "v1.28+ · stable"
+      "label": "정책 버전별 발전",
+      "sublabel": "PSA stable: v1.25부터"
     }
   ],
   "edges": [

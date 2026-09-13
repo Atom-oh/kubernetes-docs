@@ -1,0 +1,634 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-13T10:27:26.866713+00:00",
+  "scope": "Parentclosureof3KOdiagramsemanticissuesandcaptionchanges;original4MD/nativepolicyreviewpreserved",
+  "originalNativeTextEvidence": {
+    "status": "text-and-local-validation-complete-KO-assets-pending-parent",
+    "reviewedAt": "2026-09-13T07:20:03.094129+00:00",
+    "originalFullRead": {
+      "files": 4,
+      "lines": 2989,
+      "scope": [
+        {
+          "path": "en/security/01-kyverno-policy-management.md",
+          "lines": 534,
+          "sha256": "d0d5df7cb5acb36ef3bbc0fbc5872a6c1c9561dedefcfe113af858a8453840d7",
+          "fullyRead": true
+        },
+        {
+          "path": "en/quizzes/security/01-kyverno-policy-management-quiz.md",
+          "lines": 954,
+          "sha256": "d44cc4f1df0d8c9b78a4bcaf7ccb99af1d8d99639bc07c36a49010ea36f31d9e",
+          "fullyRead": true
+        },
+        {
+          "path": "ko/security/01-kyverno-policy-management.md",
+          "lines": 547,
+          "sha256": "99c5ecec6ba338efcfea99c0c89b87e08dc7cbf4ae15f338b5b53624c1855244",
+          "fullyRead": true
+        },
+        {
+          "path": "ko/quizzes/security/01-kyverno-policy-management-quiz.md",
+          "lines": 954,
+          "sha256": "689329b9750db2d1bc126013bc7858cddf117ccd042af4b2fc176e1e13fc97eb",
+          "fullyRead": true
+        }
+      ]
+    },
+    "files": [
+      {
+        "path": "en/security/01-kyverno-policy-management.md",
+        "sha256": "001c84203e942422e3ca400ad0ccc91662b93af617d4806211c0d418b26e8538",
+        "fullyRead": true,
+        "lines": 680,
+        "status": "fixed"
+      },
+      {
+        "path": "en/quizzes/security/01-kyverno-policy-management-quiz.md",
+        "sha256": "345a16edaa9875c077efa6ce931feda6f523febd42572965ab8592ae76fb2a6c",
+        "fullyRead": true,
+        "lines": 406,
+        "status": "fixed"
+      },
+      {
+        "path": "ko/security/01-kyverno-policy-management.md",
+        "sha256": "35f761197880c5c1dd49d51ead2eeea3655da9d4403e1b18f7105d697965d2a9",
+        "fullyRead": true,
+        "lines": 692,
+        "status": "needs_followup"
+      },
+      {
+        "path": "ko/quizzes/security/01-kyverno-policy-management-quiz.md",
+        "sha256": "a585c239ae5ba5100c24ae0cb550a54379bb21e07bae89321a6009ad820602d9",
+        "fullyRead": true,
+        "lines": 406,
+        "status": "fixed"
+      }
+    ],
+    "native": {
+      "initialApplyCases": 26,
+      "affectedCREATEOnlyCasesRerun": 6,
+      "deletionPredicatePreviewCases": 4,
+      "testManifestExpectations": 2,
+      "emptyTestFolderRejected": true,
+      "finalContractChecks": 117,
+      "publishedAPIObjects": 44,
+      "generatedObjectsSchemaChecked": 3,
+      "helmResourcesRendered": 84,
+      "controllersAndMonitorBindings": 4,
+      "existingResourcePreservation": true,
+      "fullPDBSelectorPreserved": true
+    },
+    "markdown": {
+      "files": 4,
+      "passed": true,
+      "oldRenderedIDsPreserved": 94,
+      "aliasesAdded": 12,
+      "quizQuestions": 20,
+      "choices": 80,
+      "answersPerLocale": "ADBBBABABB"
+    },
+    "sources": [
+      "https://kyverno.io/docs/installation/releases/",
+      "https://kyverno.io/docs/installation/installation/",
+      "https://kyverno.io/docs/guides/migration-to-cel/",
+      "https://kyverno.io/docs/policy-types/validating-policy/",
+      "https://kyverno.io/docs/policy-types/mutating-policy/",
+      "https://kyverno.io/docs/policy-types/generating-policy/",
+      "https://kyverno.io/docs/policy-types/deleting-policy/",
+      "https://kyverno.io/docs/policy-types/image-validating-policy/",
+      "https://kyverno.io/docs/kyverno-cli/reference/kyverno/",
+      "https://github.com/kyverno/kyverno/tree/v1.19.1/config/crds",
+      "https://kyverno.github.io/kyverno/kyverno-3.9.1.tgz",
+      "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.35.0/api/openapi-spec/swagger.json"
+    ],
+    "versionScope": {
+      "cliAndController": "1.19.1",
+      "chart": "3.9.1",
+      "upstreamTestedKubernetes": "1.33-1.35",
+      "coreSchema": "1.35.0",
+      "legacy": "Deprecatedin1.19;removalplanned1.20;notclaimedalreadyremoved"
+    },
+    "limits": [
+      "No live cluster installation/admission/subresource/mutation/generation/deletion, controller authorization, actual network isolation, registry/signature verification or AWS integration.",
+      "DeletingPolicy itself was never applied/executed: released schema plus four pure CEL predicate previews through a local Vpol harness only.",
+      "InitialnativecasesprecededCREATE-onlynarrowing;the6affectedcaseswererunagain. OtherpolicylogicunchangedandexactpublishedYAML/fixtureequalitychecked.",
+      "Legacyhypotheticalcomparativeperformancewasnotameasuredbaseline;no benchmark rerun or fabricated result.",
+      "KOguidehas3knownstalegraphicsawaitingparentrepair;ENarchitecturetext/tablescomplete. No asset/generated frontend file altered."
+    ],
+    "artifacts": [
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-01-kyverno/prototype-validation.json",
+        "sha256": "c76e5d3439672169cf6a292778bad302eef52978d96965857ec53ba2c7b1fec5"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-01-kyverno/policy-case-validation.json",
+        "sha256": "e0968dca14d6b31e3474d7fad22ba9464183728ce8c0abb6084431477de474de"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-01-kyverno/create-only-regression.json",
+        "sha256": "97796ec9fdb4036485bad7aee79fcdd6b4bb599f5e7b2129320febdf7a583ccb"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-01-kyverno/mutation-preservation.json",
+        "sha256": "4e12eb9513fad3e3f8a2586022e7c016081983c7f24e9bb01921abdeb9007fdf"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-01-kyverno/final-contract-validation.json",
+        "sha256": "7f2d645f8aa46d2f8d39da9d6ec64c987671ba2551ceda040d17a31566cd504c"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-01-kyverno/source-contract-validation.json",
+        "sha256": "fdd7aa042bc642acb4020f481d137a409f48ed1e370f7fbabb37ebad7797d6b5"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-01-kyverno/schema-validation.json",
+        "sha256": "022b7a14e8d605c0b8d1449a642b38dc6e7e80ab39f566f180bea52cdff64d04"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-01-kyverno/markdown-validation.json",
+        "sha256": "342f03a0bb7a93d91d5bcb264993291ca70977675dcfcae9b4e2efe71a49e810"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-01-kyverno/preserved-anchors.json",
+        "sha256": "75c40f596a2285b4a7d65809d4c4f4042a5c5ab38480fb74482ec3a3521500d4"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-01-kyverno/diagram-repair-handoff.json",
+        "sha256": "c430977c02d2e1ead7d020d54d27951738f178d75da3e42e9f9e7792bd532616"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-01-kyverno/sources/pinned-native-sources.json",
+        "sha256": "eef2d66298ec16b4d68ab22a30030f7784c12173474ba7845f97cfbe514cf99b"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-01-kyverno/sources/fresh-primary.json",
+        "sha256": "259422a19c7a06d40b7ed951cef407c874b0af3a6bd8f4b08aefc335874cd6a0"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-01-kyverno/sources/kubernetes-schema-source.json",
+        "sha256": "e058935ed2d70165df06ecc48b5cd5175d0de50b57649e2149be69e17a8c82e4"
+      }
+    ]
+  },
+  "evidenceNote": "PriorpendingKOassetsstatusisclosedbyparentassetchecks;nonewclusterpolicyexecutionclaimed.",
+  "assets": {
+    "delivery": [
+      {
+        "stem": "ko-security-01-kyverno-policy-management-0",
+        "spec": "assets/diagrams/archify/ko-security-01-kyverno-policy-management-0.architecture.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "ko-security-01-kyverno-policy-management-1",
+        "spec": "assets/diagrams/archify/ko-security-01-kyverno-policy-management-1.architecture.json",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "stem": "ko-security-01-kyverno-policy-management-2",
+        "spec": "assets/diagrams/archify/ko-security-01-kyverno-policy-management-2.workflow.json",
+        "ok": true,
+        "diagnostics": []
+      }
+    ],
+    "browser": {
+      "status": "passed",
+      "cases": [
+        {
+          "file": "ko-security-01-kyverno-policy-management-0.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1024,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-01-kyverno-policy-management-0.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1024,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-01-kyverno-policy-management-0.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1024,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 63774,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-01-kyverno-policy-management-1.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 924,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-01-kyverno-policy-management-1.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 924,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-01-kyverno-policy-management-1.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 924,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 61758,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-01-kyverno-policy-management-2.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 577,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-01-kyverno-policy-management-2.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 577,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-security-01-kyverno-policy-management-2.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 577,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 46929,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        }
+      ],
+      "scope": "9caseson3Kyvernoviewers; motion/reduced-motion/visibility/theme/guided controls and3SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+    },
+    "visual": {
+      "status": "passed",
+      "individuallyInspected": [
+        "ko/.gitbook/assets/ko-security-01-kyverno-policy-management-0.png",
+        "ko/.gitbook/assets/ko-security-01-kyverno-policy-management-1.png",
+        "ko/.gitbook/assets/ko-security-01-kyverno-policy-management-2.png"
+      ]
+    },
+    "markdown": {
+      "nodeHeapMiB": 512,
+      "scope": "Explicit documents only; no site build",
+      "results": [
+        {
+          "path": "ko/security/01-kyverno-policy-management.md",
+          "sha256": "cc128ecf2a5a75115079cebeb19fba491b027462d0ccf022c55824b4b893c9c5",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "kyverno를-사용한-정책-관리"
+            },
+            {
+              "tag": "h2",
+              "id": "실습-환경-설정"
+            },
+            {
+              "tag": "h3",
+              "id": "필수-도구"
+            },
+            {
+              "tag": "h3",
+              "id": "kyverno-설치"
+            },
+            {
+              "tag": "h2",
+              "id": "kyverno-소개"
+            },
+            {
+              "tag": "h3",
+              "id": "kyverno-아키텍처-및-작동-방식"
+            },
+            {
+              "tag": "h3",
+              "id": "kyverno-vs-opa-gatekeeper"
+            },
+            {
+              "tag": "h2",
+              "id": "kyverno-설치-1"
+            },
+            {
+              "tag": "h3",
+              "id": "helm을-사용한-설치"
+            },
+            {
+              "tag": "h3",
+              "id": "yaml-매니페스트를-사용한-설치"
+            },
+            {
+              "tag": "h2",
+              "id": "정책-유형"
+            },
+            {
+              "tag": "h3",
+              "id": "_1-검증-정책-validation-policies"
+            },
+            {
+              "tag": "h3",
+              "id": "_2-변형-정책-mutation-policies"
+            },
+            {
+              "tag": "h3",
+              "id": "_3-생성-정책-generation-policies"
+            },
+            {
+              "tag": "h3",
+              "id": "_4-예약-삭제"
+            },
+            {
+              "tag": "h2",
+              "id": "eks에서의-kyverno-활용-사례"
+            },
+            {
+              "tag": "h3",
+              "id": "eks와-kyverno-통합-아키텍처"
+            },
+            {
+              "tag": "h3",
+              "id": "_1-보안-강화"
+            },
+            {
+              "tag": "h4",
+              "id": "권한-있는-컨테이너-방지"
+            },
+            {
+              "tag": "h4",
+              "id": "루트-사용자-실행-방지"
+            },
+            {
+              "tag": "h3",
+              "id": "_2-비용-최적화"
+            },
+            {
+              "tag": "h4",
+              "id": "리소스-제한-설정"
+            },
+            {
+              "tag": "h4",
+              "id": "특정-인스턴스-유형-강제"
+            },
+            {
+              "tag": "h3",
+              "id": "_3-규정-준수"
+            },
+            {
+              "tag": "h4",
+              "id": "poddisruptionbudget-자동-생성"
+            },
+            {
+              "tag": "h4",
+              "id": "네임스페이스-리소스-쿼터-자동-생성"
+            },
+            {
+              "tag": "h2",
+              "id": "정책-테스트-및-검증"
+            },
+            {
+              "tag": "h3",
+              "id": "정책-적용-워크플로우"
+            },
+            {
+              "tag": "h3",
+              "id": "정책-시뮬레이션"
+            },
+            {
+              "tag": "h3",
+              "id": "정책-검증"
+            },
+            {
+              "tag": "h2",
+              "id": "정책-모니터링-및-보고"
+            },
+            {
+              "tag": "h3",
+              "id": "정책-보고서"
+            },
+            {
+              "tag": "h3",
+              "id": "prometheus-메트릭"
+            },
+            {
+              "tag": "h2",
+              "id": "모범-사례"
+            },
+            {
+              "tag": "h3",
+              "id": "_1-점진적-적용"
+            },
+            {
+              "tag": "h3",
+              "id": "_2-예외-처리"
+            },
+            {
+              "tag": "h3",
+              "id": "_3-정책-조직화"
+            },
+            {
+              "tag": "h2",
+              "id": "결론"
+            },
+            {
+              "tag": "h2",
+              "id": "퀴즈"
+            }
+          ],
+          "renderedIds": [
+            "kyverno를-사용한-정책-관리",
+            "실습-환경-설정",
+            "필수-도구",
+            "kyverno-설치",
+            "kyverno-소개",
+            "kyverno-아키텍처-및-작동-방식",
+            "kyverno-vs-opa-gatekeeper",
+            "kyverno-설치-1",
+            "helm을-사용한-설치",
+            "yaml-매니페스트를-사용한-설치",
+            "정책-유형",
+            "_1-검증-정책-validation-policies",
+            "_2-변형-정책-mutation-policies",
+            "_3-생성-정책-generation-policies",
+            "_4-예약-삭제",
+            "eks에서의-kyverno-활용-사례",
+            "eks와-kyverno-통합-아키텍처",
+            "_1-보안-강화",
+            "권한-있는-컨테이너-방지",
+            "루트-사용자-실행-방지",
+            "_2-비용-최적화",
+            "리소스-제한-설정",
+            "특정-인스턴스-유형-강제",
+            "_3-규정-준수",
+            "poddisruptionbudget-자동-생성",
+            "네임스페이스-리소스-쿼터-자동-생성",
+            "정책-테스트-및-검증",
+            "정책-적용-워크플로우",
+            "정책-시뮬레이션",
+            "정책-검증",
+            "정책-모니터링-및-보고",
+            "정책-보고서",
+            "prometheus-메트릭",
+            "모범-사례",
+            "_1-점진적-적용",
+            "_2-예외-처리",
+            "_3-정책-조직화",
+            "결론",
+            "퀴즈"
+          ]
+        }
+      ]
+    }
+  },
+  "artifacts": [
+    {
+      "path": "assets/diagrams/archify/ko-security-01-kyverno-policy-management-0.architecture.json",
+      "sha256": "0d3c69c357f21b97b9a2970bb63717d71fcf87a3b56e5219bde6a42f4d54112c"
+    },
+    {
+      "path": "public/archmaps/ko-security-01-kyverno-policy-management-0.html",
+      "sha256": "ce45a3b2396881c3c4cdc3d8e60ab168b1818076f631e670e959ee40afe5b7a7"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-security-01-kyverno-policy-management-0.png",
+      "sha256": "6417c6698eecb620dc5636809dcad1bc23f3c6a97303aef09ceffa5acbea65c8"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-security-01-kyverno-policy-management-1.architecture.json",
+      "sha256": "b3ef6e1237ffc868ff7d3b94a117d644359c77b9c65bb2b83bbfb181524f493d"
+    },
+    {
+      "path": "public/archmaps/ko-security-01-kyverno-policy-management-1.html",
+      "sha256": "654740adf70e0386ba0c990e19fabc35f171661bc0e2a4a682452b8e8a99d474"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-security-01-kyverno-policy-management-1.png",
+      "sha256": "ebf4fa58637d7c7b383a46e72f95950e9e21f3063aa247ab2b9d4661b858c7cb"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-security-01-kyverno-policy-management-2.workflow.json",
+      "sha256": "96734eb9e72813689e508eb2aa85235b0ebb19c01ab27fbb859c7a2f76793958"
+    },
+    {
+      "path": "public/archmaps/ko-security-01-kyverno-policy-management-2.html",
+      "sha256": "88a640c128d7fe55843809f488998ae9df614de2d747bf655fcae55a7810f420"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-security-01-kyverno-policy-management-2.png",
+      "sha256": "ec32188d0403521871d3e7eee9701f9b023df52f1aed9b8df3bb83cdb7b38250"
+    },
+    {
+      "path": "ko/security/01-kyverno-policy-management.md",
+      "sha256": "cc128ecf2a5a75115079cebeb19fba491b027462d0ccf022c55824b4b893c9c5"
+    }
+  ],
+  "limits": [
+    "Conceptualcontrollerroles;noEKSadmission/CloudWatchintegration/deletiontest.",
+    "Audit-firstflowisscopedtoValidatingPolicy,notmutation/generation/deletion."
+  ]
+}
