@@ -1,10 +1,12 @@
 # Cuestionario de CloudWatch Logs
 
-Pon a prueba tus conocimientos sobre Amazon CloudWatch Logs.
+> **Última actualización**: September 13, 2026
+
+[Guía](../../../observability/logging/03-cloudwatch-logs.md)
 
 ---
 
-1. ¿Cuál NO es un tipo de log compatible con el logging del control plane de EKS?
+1. ¿Cuál no es un tipo de log del control plane de EKS?
 
    - A) api
    - B) audit
@@ -14,35 +16,33 @@ Pon a prueba tus conocimientos sobre Amazon CloudWatch Logs.
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) worker**
+**Respuesta: C**
 
-**Explicación:**
-El control plane de EKS admite 5 tipos de log: api, audit, authenticator, controllerManager y scheduler. Los logs de los nodos worker no son logs del control plane y deben recopilarse por separado mediante Container Insights o FluentBit.
+Los cinco tipos son api, audit, authenticator, controllerManager y scheduler. Los logs de worker/aplicación y la entrega de componentes administrados de Auto Mode son rutas independientes.
 
 </details>
 
 ---
 
-2. ¿Cuál es el elemento más costoso en la estructura de precios de CloudWatch Logs?
+2. ¿Cómo se deben comparar los factores de costo de CloudWatch Logs?
 
-   - A) Almacenamiento
-   - B) Ingestión
-   - C) Consulta (Logs Insights)
-   - D) Exportación a S3
+   - A) La ingesta siempre es el cargo mensual más alto
+   - B) El almacenamiento siempre es gratuito
+   - C) Todas las rutas de entrega a S3 son gratuitas
+   - D) Comparar el volumen real, la retención, los escaneos, la clase, la Region y los cargos posteriores
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Ingestión**
+**Respuesta: D**
 
-**Explicación:**
-La ingesta de CloudWatch Logs cuesta $0.50/GB, lo cual es mucho más alto que el almacenamiento ($0.03/GB/mes) o las consultas ($0.005/GB analizado). Por lo tanto, filtrar logs innecesarios es importante para la optimización de costos.
+Un precio por GB ingerido no se puede clasificar por sí solo frente al almacenamiento en GB-mes o al volumen de escaneo repetido. El ejemplo de $1,575 de la guía es un cálculo hipotético, no los precios actuales de Seúl ni una factura completa.
 
 </details>
 
 ---
 
-3. ¿Qué comando de CloudWatch Logs Insights extrae campos específicos?
+3. ¿Qué comando de Logs Insights QL extrae campos mediante un glob o una expresión regular?
 
    - A) extract
    - B) parse
@@ -52,54 +52,51 @@ La ingesta de CloudWatch Logs cuesta $0.50/GB, lo cual es mucho más alto que el
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) parse**
+**Respuesta: B**
 
-**Explicación:**
-En CloudWatch Logs Insights, el comando `parse` extrae campos que coinciden con patrones específicos de los mensajes de log. Ejemplo: `parse @message '"level":"*"' as level`
+parse extrae campos; jsonParse puede analizar un mensaje JSON. La envoltura del collector coloca los campos de la aplicación bajo log_processed. No asumas un orden arbitrario de claves JSON en un glob.
 
 </details>
 
 ---
 
-4. ¿Cuál es el formato de la ruta del grupo de logs para los logs recopilados mediante Container Insights?
+4. ¿Qué grupo usa el collector manual de la aplicación en esta guía?
 
-   - A) `/aws/eks/cluster-name/logs`
-   - B) `/aws/containerinsights/cluster-name/application`
-   - C) `/var/log/containers/cluster-name`
-   - D) `/kubernetes/cluster-name/logs`
+   - A) /aws/containerinsights/example-eks/application
+   - B) /aws/eks/example-eks/logs
+   - C) /var/log/containers/example-eks
+   - D) Cada clúster usa un único nombre de grupo universal e inmutable
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) `/aws/containerinsights/cluster-name/application`**
+**Respuesta: A**
 
-**Explicación:**
-Container Insights crea grupos de logs en la ruta `/aws/containerinsights/{cluster-name}/`, incluidos los grupos de logs de aplicación, host, dataplane y rendimiento.
+El grupo de aplicación configurado es diferente de /aws/eks/example-eks/cluster para los logs del control plane. El grupo se prepara primero; el collector no lo crea ni modifica la retención.
 
 </details>
 
 ---
 
-5. ¿Qué característica de CloudWatch Logs entrega logs a funciones Lambda para el procesamiento de logs en tiempo real?
+5. ¿Qué afirmación sobre la entrega mediante suscripción es correcta?
 
-   - A) Log Stream
-   - B) Metric Filter
-   - C) Subscription Filter
-   - D) Log Insight
+   - A) Un ARN de bucket de S3 es un destino directo de filtro de suscripción
+   - B) Los lotes de suscripción de CloudWatch funcionan a través del destino OpenSearch de Firehose
+   - C) Una suscripción puede enviar a Lambda, Kinesis o Firehose; el archivado en S3 mediante Firehose es un paso posterior independiente
+   - D) Las suscripciones garantizan entrega exactamente una vez y rellenan todo el historial
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Subscription Filter**
+**Respuesta: C**
 
-**Explicación:**
-Los Subscription Filters entregan logs de grupos de logs en tiempo real a otros servicios (Lambda, Kinesis Data Firehose, Kinesis Data Streams). Puedes especificar patrones de filtro para entregar solo logs específicos.
+La API de destino y el formato de entrada son importantes. CloudWatch Logs→Firehose→OpenSearch no es compatible específicamente. Las suscripciones son asíncronas y al menos una vez; las tareas de exportación y la entrega de vended-log son API diferentes.
 
 </details>
 
 ---
 
-6. ¿Cuál es el nombre del plugin OUTPUT de FluentBit para enviar logs a CloudWatch Logs?
+6. ¿Cuál es el plugin de salida nativo de C de Fluent Bit para CloudWatch Logs?
 
    - A) cloudwatch
    - B) cloudwatch_logs
@@ -109,85 +106,80 @@ Los Subscription Filters entregan logs de grupos de logs en tiempo real a otros 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) cloudwatch_logs**
+**Respuesta: B**
 
-**Explicación:**
-El plugin de salida de CloudWatch Logs de FluentBit se llama `cloudwatch_logs`. Está incluido de forma predeterminada en la imagen `aws-for-fluent-bit` proporcionada por AWS.
-
-</details>
-
----
-
-7. ¿Cuál es la consulta correcta de CloudWatch Logs Insights para agregar recuentos de logs por período de tiempo?
-
-   - A) `stats count(*) group by hour`
-   - B) `stats count(*) as log_count by bin(1h)`
-   - C) `select count(*) from logs group by hour`
-   - D) `aggregate count by time(1h)`
-
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) `stats count(*) as log_count by bin(1h)`**
-
-**Explicación:**
-En CloudWatch Logs Insights, la agregación basada en tiempo utiliza el comando `stats` y la función `bin()`. `bin(1h)` agrupa los datos en intervalos de 1 hora.
+cloudwatch_logs es el plugin nativo. cloudwatch nombra el plugin anterior de Go. Las credenciales, el ServiceAccount real, el grupo de salida y la política IAM aún deben coincidir.
 
 </details>
 
 ---
 
-8. ¿Cuál NO es una estrategia recomendada para la optimización de costos de CloudWatch Logs?
+7. ¿Qué consulta de QL cuenta eventos por hora y ordena los buckets de tiempo resultantes?
 
-   - A) Filtrar logs innecesarios (healthcheck, etc.)
-   - B) Establecer distintos períodos de retención por entorno
-   - C) Recopilar todos los logs en el nivel DEBUG
-   - D) Archivar logs de retención prolongada en S3
+   - A) stats count(*) group by hour
+   - B) stats count(*) as log_count by bin(1h) as bucket | sort bucket asc
+   - C) select count(*) from logs group by hour
+   - D) stats count(*) by bin(1h) | sort @message
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Recopilar todos los logs en el nivel DEBUG**
+**Respuesta: B**
 
-**Explicación:**
-Los logs de nivel DEBUG son muy detallados y aumentan significativamente el volumen de logs. En entornos de producción, recopilar solo el nivel INFO y superiores ayuda con la optimización de costos.
+stats cambia los campos de salida disponibles, así que ordena por el alias de su bucket. La función de percentil de latencia es pct, no percentile, y las expresiones regulares sin distinción entre mayúsculas y minúsculas usan (?i) dentro de las barras.
 
 </details>
 
 ---
 
-9. ¿Cuál es el propósito principal de usar Metric Filters en CloudWatch Logs?
+8. ¿Qué política de logging no es segura como enfoque predeterminado de control de costos?
 
-   - A) Exportar logs a S3
-   - B) Crear métricas de CloudWatch a partir de patrones de log
-   - C) Establecer períodos de retención de logs
-   - D) Configurar el cifrado de logs
+   - A) Revisar los filtros frente a los registros que se deben conservar
+   - B) Establecer la retención a través del único propietario del grupo de logs
+   - C) Conservar toda la salida DEBUG indefinidamente y descartar indiscriminadamente los registros relevantes para la seguridad como compensación
+   - D) Medir la ingesta y los escaneos antes de cambiar el diseño
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Crear métricas de CloudWatch a partir de patrones de log**
+**Respuesta: C**
 
-**Explicación:**
-Los Metric Filters detectan patrones específicos (por ejemplo, ERROR) en los logs y crean métricas de CloudWatch. Basándote en estas métricas, puedes configurar CloudWatch Alarms para recibir notificaciones.
+Los controles de volumen deben conservar los diagnósticos y registros de seguridad requeridos. LOG_LEVEL en un ConfigMap solo tiene efecto si la aplicación lo consume. Los cambios de retención pueden eliminar datos.
 
 </details>
 
 ---
 
-10. ¿Qué permiso NO se requiere para IRSA (IAM Roles for Service Accounts) al configurar Container Insights en un clúster de EKS?
+9. ¿Qué hace un filtro de métricas y qué significa un valor predeterminado de cero?
 
-    - A) logs:CreateLogGroup
-    - B) logs:PutLogEvents
-    - C) s3:PutObject
-    - D) cloudwatch:PutMetricData
+   - A) Exporta todos los registros históricos a S3
+   - B) Deriva métricas de los logs nuevos que coinciden; el cero predeterminado se aplica cuando llegan logs pero ningún registro coincide
+   - C) Siempre emite cero incluso cuando no llegan logs
+   - D) Es compatible con todas las funciones en todas las clases de logs
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) s3:PutObject**
+**Respuesta: B**
 
-**Explicación:**
-La configuración básica de Container Insights no requiere permisos de S3. Solo se necesitan permisos de CloudWatch Logs (logs:*) y CloudWatch Metrics (cloudwatch:PutMetricData). Los permisos de S3 solo son necesarios al configurar exportaciones de logs independientes a S3.
+Este capítulo usa un filtro JSON de clase Standard en $.log_processed.level. Sin logs entrantes, pueden faltar datos. La alarma comprueba un recuento de errores en dos períodos de cinco minutos, no una tasa de errores ni una prueba de la salud del Service.
+
+</details>
+
+---
+
+10. ¿Qué disposición de IAM/propiedad se ajusta al collector manual solo para logs?
+
+   - A) Otorgar a todos los Pods un rol de administrador
+   - B) Adjuntar una política a cloudwatch-agent mientras se implementa un ServiceAccount no relacionado
+   - C) Usar solo s3:PutObject
+   - D) Crear previamente el grupo, autorizar logs:CreateLogStream/logs:PutLogEvents en su ARN y asignar el ServiceAccount real del collector
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: D**
+
+El perfil manual usa logging/fluent-bit-cloudwatch y una relación de confianza IRSA aprobada. No necesita PutMetricData ni logs:* amplios para esta ruta. El chart completo de observabilidad es un perfil independiente cuyos Pods de Fluent Bit usan cloudwatch-agent.
 
 </details>

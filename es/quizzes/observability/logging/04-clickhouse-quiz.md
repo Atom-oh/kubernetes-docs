@@ -1,193 +1,185 @@
 # Cuestionario de ClickHouse para análisis de logs
 
-Pon a prueba tus conocimientos sobre el análisis de logs con ClickHouse.
+> **Última actualización**: September 13, 2026
 
----
+1. ¿Por qué el almacenamiento columnar puede ayudar a las consultas analíticas de logs?
 
-1. ¿Cuál es la razón principal por la que ClickHouse muestra un alto rendimiento en el análisis de logs?
-
-   - A) Almacenamiento basado en filas
-   - B) Almacenamiento basado en columnas
-   - C) Almacenamiento basado en documentos
-   - D) Almacenamiento Key-Value
+   - A) Siempre analiza cada campo
+   - B) Puede leer columnas seleccionadas y comprimir valores repetidos
+   - C) Garantiza una proporción de compresión fija
+   - D) Elimina la necesidad de diseñar el esquema
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Almacenamiento basado en columnas**
+**Respuesta: B) Puede leer columnas seleccionadas y comprimir valores repetidos**
 
-**Explicación:**
-ClickHouse es una base de datos basada en columnas optimizada para consultas analíticas (que escanean solo columnas específicas). Los mismos tipos de datos se almacenan de forma consecutiva, lo que permite altas tasas de compresión y la ejecución de consultas vectorizadas.
+Los beneficios dependen de los datos, la clave de ordenación y la consulta. La guía no promete una compresión de 10:1 ni un rendimiento fijo.
 
 </details>
 
 ---
 
-2. ¿Qué componente se utiliza para la replicación de datos y la coordinación de consultas distribuidas en un clúster de ClickHouse?
+2. ¿Cuál es el rol de Keeper/ZooKeeper en este diseño?
 
-   - A) Kafka
-   - B) Redis
-   - C) ZooKeeper/ClickHouse Keeper
-   - D) etcd
+   - A) Ejecutar cada SELECT distribuido
+   - B) Almacenar cada fila de logs
+   - C) Coordinar tablas replicadas y DDL distribuido
+   - D) Reemplazar al colector
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) ZooKeeper/ClickHouse Keeper**
+**Respuesta: C) Coordinar tablas replicadas y DDL distribuido**
 
-**Explicación:**
-Los clústeres de ClickHouse usan ZooKeeper o ClickHouse Keeper para coordinar la sincronización de datos entre réplicas, la ejecución de DDL distribuido y la elección de líder. ClickHouse Keeper es una alternativa a ZooKeeper específica de ClickHouse.
+Los iniciadores de consultas de ClickHouse y las tablas Distributed realizan consultas distribuidas. Keeper no es su enrutador de consultas.
 
 </details>
 
 ---
 
-3. ¿Qué motor de tablas de ClickHouse admite replicación y es el más adecuado para el almacenamiento de logs?
+3. ¿Qué motor añade replicación al almacenamiento MergeTree?
 
-   - A) MergeTree
-   - B) ReplicatedMergeTree
-   - C) Log
-   - D) Memory
+   - A) ReplicatedMergeTree
+   - B) Memory
+   - C) Buffer
+   - D) Distributed por sí solo
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) ReplicatedMergeTree**
+**Respuesta: A) ReplicatedMergeTree**
 
-**Explicación:**
-ReplicatedMergeTree añade la funcionalidad de replicación a todas las características de MergeTree (ordenamiento, particionamiento, TTL, etc.). Se recomienda para el almacenamiento de logs de producción que requiere alta disponibilidad.
+Las réplicas aún necesitan coordinación, almacenamiento persistente independiente y un diseño adecuado de dominio de fallos. La replicación por sí sola no es una garantía incondicional de HA.
 
 </details>
 
 ---
 
-4. ¿Qué tipo de optimización se debe usar para columnas de cadenas de baja cardinalidad (por ejemplo, level, namespace) en ClickHouse?
+4. ¿Qué tipo vale la pena evaluar para valores repetidos de namespace o gravedad?
 
-   - A) String
-   - B) FixedString
-   - C) LowCardinality(String)
-   - D) Enum
+   - A) Siempre FixedString(255)
+   - B) LowCardinality(String)
+   - C) Un entero único para cada mensaje de log
+   - D) Solo String sin comprimir
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) LowCardinality(String)**
+**Respuesta: B) LowCardinality(String)**
 
-**Explicación:**
-LowCardinality(String) se utiliza para columnas de cadenas con pocos valores únicos (~10,000 o menos). Usa codificación de diccionario internamente para optimizar el espacio de almacenamiento y el rendimiento de las consultas.
+La codificación de diccionario puede ayudar con valores repetidos; evalúe el tamaño del diccionario y el comportamiento de las consultas en lugar de asumir un límite universal de valores distintos.
 
 </details>
 
 ---
 
-5. ¿Cuál es el principio para especificar el orden de las columnas en la cláusula `ORDER BY` al diseñar tablas de logs de ClickHouse?
+5. ¿Cómo se debe elegir el ORDER BY de la tabla de logs?
 
-   - A) Orden alfabético
-   - B) Orden por tamaño de columna (primero las más pequeñas)
-   - C) Primero las columnas filtradas con frecuencia
-   - D) Orden por hora de creación
+   - A) Alfabéticamente
+   - B) Por el momento de creación del campo
+   - C) A partir de filtros selectivos, localidad y consultas representativas
+   - D) Siempre colocar timestamp al final independientemente de las consultas
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Primero las columnas filtradas con frecuencia**
+**Respuesta: C) A partir de filtros selectivos, localidad y consultas representativas**
 
-**Explicación:**
-El ORDER BY de ClickHouse afecta el ordenamiento de datos y la creación de índices. Colocar al principio las columnas que se usan con frecuencia en las cláusulas WHERE da como resultado el escaneo de menos datos durante las consultas. Ejemplo: `ORDER BY (namespace, service, timestamp)`
+La clave afecta la ordenación y la poda de índices. Las columnas consultadas con frecuencia por sí solas no determinan el mejor orden.
 
 </details>
 
 ---
 
-6. ¿Cuál es la sintaxis de las técnicas de muestreo utilizadas para el análisis rápido de conjuntos de datos grandes en ClickHouse?
+6. ¿Qué debe ser cierto antes de usar SAMPLE 0.1?
 
-   - A) `LIMIT RANDOM 10%`
-   - B) `SAMPLE 0.1`
-   - C) `WHERE rand() < 0.1`
-   - D) `TABLESAMPLE (10 PERCENT)`
+   - A) Cualquier tabla lo admite automáticamente
+   - B) La tabla debe contener exactamente diez filas
+   - C) Siempre devuelve exactamente el 10 % de las filas
+   - D) Debe definirse una expresión de muestreo MergeTree compatible e incluirse en la clave primaria
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) `SAMPLE 0.1`**
+**Respuesta: D) Debe definirse una expresión de muestreo MergeTree compatible e incluirse en la clave primaria**
 
-**Explicación:**
-La cláusula `SAMPLE` de ClickHouse escanea solo una parte de los datos para realizar análisis aproximados rápidos. `SAMPLE 0.1` lee solo el 10 % de los datos. Los resultados se pueden multiplicar por un factor apropiado para obtener totales estimados.
+La tabla principal de logs no tiene SAMPLE BY. El sample_demo independiente muestra el diseño requerido. Un intervalo determinista de clave de muestreo no tiene por qué contener exactamente el 10 % de un conjunto finito de filas.
 
 </details>
 
 ---
 
-7. ¿Cuál es la razón principal para colocar Kafka entre las fuentes de logs y ClickHouse para la recopilación de logs?
+7. ¿Qué añade Kafka, sujeto a su configuración?
 
-   - A) Cifrado de datos
-   - B) Almacenamiento en búfer y gestión de picos de tráfico
-   - C) Compresión de datos
-   - D) Optimización de consultas
+   - A) Entrega exactamente una vez garantizada mediante un Buffer en memoria
+   - B) Búfer para ráfagas y reproducción dentro de la retención
+   - C) Eliminación automática de todos los errores del parser
+   - D) Almacenamiento ilimitado durante interrupciones
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Almacenamiento en búfer y gestión de picos de tráfico**
+**Respuesta: B) Búfer para ráfagas y reproducción dentro de la retención**
 
-**Explicación:**
-Kafka funciona como una cola de mensajes que almacena en búfer los logs durante los picos de tráfico, lo que permite a ClickHouse consumir datos a una velocidad constante. También evita la pérdida de datos durante fallos de ClickHouse.
+Se deben probar la retención, los acknowledgements, la replicación, la capacidad, las confirmaciones de offset y el comportamiento de las inserciones posteriores. Un Buffer en memoria puede perder datos confirmados tras un fallo.
 
 </details>
 
 ---
 
-8. ¿Qué funciones se utilizan para extraer valores de campos JSON en ClickHouse SQL?
+8. ¿Por qué usar una extracción JSON nullable para response_time_ms opcional?
 
-   - A) JSON_EXTRACT()
-   - B) JSONExtractString(), JSONExtractFloat()
-   - C) parseJSON()
-   - D) getJSON()
+   - A) Las mediciones ausentes no deben convertirse en solicitudes de latencia cero
+   - B) Todos los logs son solicitudes HTTP
+   - C) Elimina la necesidad de validación JSON
+   - D) Cambia el reloj del servidor
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) JSONExtractString(), JSONExtractFloat()**
+**Respuesta: A) Las mediciones ausentes no deben convertirse en solicitudes de latencia cero**
 
-**Explicación:**
-ClickHouse extrae campos JSON usando funciones como `JSONExtractString(json, 'field')` y `JSONExtractFloat(json, 'field')`. Se utilizan funciones diferentes para cada tipo.
+Primero compruebe JSONType para excluir booleanos y cadenas numéricas, y después extraiga un número nullable. La extracción nullable por sí sola puede convertir esos valores. Las consultas de recuento y percentiles deben usar eventos medidos.
 
 </details>
 
 ---
 
-9. ¿Qué característica de las tablas de ClickHouse elimina automáticamente los datos antiguos?
+9. ¿Qué requiere y garantiza una cláusula TTL TO VOLUME?
 
-   - A) AUTO_DELETE
-   - B) RETENTION_POLICY
-   - C) TTL (Time To Live)
-   - D) EXPIRE_AFTER
+   - A) Crea un bucket de S3 y un rol de IAM
+   - B) Elimina cada fila en un plazo exacto de reloj de pared
+   - C) Una política de almacenamiento seleccionada existente; trabajo asíncrono en segundo plano
+   - D) Hace que las partes frías sean copias de seguridad Parquet independientes
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) TTL (Time To Live)**
+**Respuesta: C) Una política de almacenamiento seleccionada existente; trabajo asíncrono en segundo plano**
 
-**Explicación:**
-La característica TTL de ClickHouse elimina automáticamente los datos después de un período determinado o los mueve a un almacenamiento diferente (por ejemplo, S3). Ejemplo: `TTL date + INTERVAL 90 DAY DELETE`
+TTL no puede crear la política ni los permisos de cloud. El almacenamiento de tablas frías y un archivo Parquet validado por separado tienen distinta propiedad y semántica de recuperación.
 
 </details>
 
 ---
 
-10. ¿Qué plugin de fuente de datos se utiliza al integrar ClickHouse con Grafana?
+10. ¿Cómo se deben crear las alertas de Grafana respaldadas por ClickHouse?
 
-    - A) grafana-mysql-datasource
-    - B) grafana-clickhouse-datasource
-    - C) grafana-sql-datasource
-    - D) grafana-olap-datasource
+   - A) Inventar una métrica Prometheus clickhouse_custom_query
+   - B) Usar grafana-clickhouse-datasource con resultados SQL numéricos y Grafana Alerting
+   - C) Dar a cada dashboard una cuenta de administrador
+   - D) Considerar la ausencia de logs entrantes como prueba de estado saludable
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) grafana-clickhouse-datasource**
+**Respuesta: B) Usar grafana-clickhouse-datasource con resultados SQL numéricos y Grafana Alerting**
 
-**Explicación:**
-Para integrar ClickHouse con Grafana, instala el plugin `grafana-clickhouse-datasource`. Este plugin permite visualizar datos de ClickHouse mediante consultas SQL y crear dashboards.
+Use una cuenta restringida de solo lectura, TLS verificado y los permisos requeridos para la configuración de timeout. Supervise la ingesta por separado; un agregado puede devolver cero incluso sin entrada.
 
 </details>
+
+---
+
+[Volver a la guía](../../../observability/logging/04-clickhouse.md)

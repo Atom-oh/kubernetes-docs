@@ -1,193 +1,185 @@
 # Cuestionario de Grafana Loki
 
-Pon a prueba tus conocimientos sobre Grafana Loki.
+> **Última actualización**: September 13, 2026
+
+Basado en los ejemplos de Loki3.7.7/chart18.12.1 de la [guía](../../../observability/logging/01-loki.md).
 
 ---
 
-1. ¿Cuál es la razón principal por la que Loki es más rentable que Elasticsearch?
+1. ¿Qué indexa principalmente Loki en el modelo TSDB/chunk?
 
-   - A) Rendimiento de consultas más rápido
-   - B) Indexa solo labels en lugar del contenido de los logs
-   - C) Usa mejores algoritmos de compresión
-   - D) Diseño cloud-native
+   - A) Cada palabra en cada línea de log
+   - B) Etiquetas de stream
+   - C) Solo IDs de solicitud
+   - D) Solo marcas de tiempo
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Indexa solo labels en lugar del contenido de los logs**
+**Respuesta: B**
 
-**Explicación:**
-Loki no indexa el contenido de los logs, solo los metadatos (labels). Esto reduce significativamente el tamaño del índice y permite el uso de almacenamiento de objetos económico (como S3), lo que permite que las operaciones sean 10 veces más económicas en comparación con Elasticsearch.
+Las etiquetas reducen los streams que se deben analizar. Esto no demuestra una ventaja de costo fija de 10× ni elimina los costos de análisis/lectura de chunks.
 
 </details>
 
 ---
 
-2. ¿Qué componente de la arquitectura de Loki almacena en búfer los datos de logs en memoria y los guarda en el almacenamiento?
+2. ¿Qué componente almacena en búfer los streams de logs, escribe el WAL cuando está habilitado y vacía los chunks?
 
    - A) Distributor
-   - B) Querier
+   - B) Query frontend
    - C) Ingester
-   - D) Compactor
+   - D) Index gateway
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Ingester**
+**Respuesta: C**
 
-**Explicación:**
-El Ingester recibe datos de logs del Distributor, los almacena en búfer en memoria (creando chunks), administra WAL y descarga los chunks al almacenamiento. También atiende consultas en tiempo real.
+El Ingester también sirve datos recientes. WAL necesita almacenamiento persistente y, por sí solo, no garantiza la entrega sin pérdidas ni HA.
 
 </details>
 
 ---
 
-3. ¿Cuál es el modo de implementación de Loki recomendado para entornos EKS de producción?
+3. ¿Qué afirmación coincide con la guía de despliegue actual utilizada por este capítulo?
 
-   - A) Modo monolítico
-   - B) Modo Simple Scalable
-   - C) Modo Microservices
-   - D) Modo independiente
+   - A) SSD es permanentemente el valor predeterminado para todos los clústeres de producción de EKS
+   - B) Cualesquiera tres Pods garantizan resiliencia en tres AZ
+   - C) SingleBinary es el único nombre de modo de chart18.12.1
+   - D) SSD está obsoleto; la guía de escalado/HA para producción recomienda Distributed con planificación operativa explícita
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Modo Simple Scalable**
+**Respuesta: D**
 
-**Explicación:**
-El modo Simple Scalable separa las rutas de lectura/escritura para lograr escalabilidad, a la vez que es más sencillo de operar que el modo Microservices. Es adecuado para la mayoría de los clusters EKS de producción con volúmenes diarios de logs de 100 GB a 10 TB.
+Está previsto eliminar SSD en Loki4.0. La capacidad y la disponibilidad dependen de la carga de trabajo, el almacenamiento, la topología y la gestión de fallos probada, no de una tabla fija de GB/día.
 
 </details>
 
 ---
 
-4. ¿Cuál es la consulta LogQL correcta para calcular la tasa por segundo de logs de error?
+4. ¿Qué consulta devuelve una tasa por segundo de líneas de log de error coincidentes durante cinco minutos?
 
-   - A) `count({app="nginx"} |= "error")`
-   - B) `rate({app="nginx"} |= "error" [5m])`
+   - A) `rate({app="nginx"} |= "error" [5m])`
+   - B) `count({app="nginx"} |= "error")`
    - C) `sum({app="nginx"} |= "error")`
-   - D) `avg({app="nginx"} |= "error" [5m])`
+   - D) `increase(count_over_time({app="nginx"}[5m]))`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) `rate({app="nginx"} |= "error" [5m])`**
+**Respuesta: A**
 
-**Explicación:**
-La función `rate()` calcula el recuento de líneas de logs por segundo durante el intervalo de tiempo especificado. `[5m]` indica un intervalo de 5 minutos. `count()` no se utiliza de esta manera en las consultas de métricas, y `sum()` y `avg()` no se utilizan de forma independiente como en este caso.
+Esta es una tasa de líneas de log por stream, no automáticamente una proporción de errores de solicitudes HTTP. La agregación de vectores de conteo de LogQL existe, pero B no proporciona la entrada de vector de métricas requerida.
 
 </details>
 
 ---
 
-5. ¿Cuál es un ejemplo de un label de alta cardinalidad que se debe evitar en el diseño de labels de Loki?
+5. Se necesita un ID de solicitud único para la investigación. ¿Cuál es un mejor punto de partida?
 
-   - A) namespace
-   - B) app
-   - C) pod_name
-   - D) environment
+   - A) Indexar cada ID de solicitud para consultas más rápidas
+   - B) Mantener los IDs necesarios en el contenido de los logs o en metadatos estructurados bajo controles de acceso/privacidad
+   - C) Eliminar todas las etiquetas de clúster/namespace
+   - D) Suponer que el total de streams siempre es igual al producto de las cardinalidades de las etiquetas
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) pod_name**
+**Respuesta: B**
 
-**Explicación:**
-pod_name puede tener miles de valores únicos, lo que lo convierte en un label de alta cardinalidad. Los labels de alta cardinalidad incrementan drásticamente el número de streams, lo que genera tamaños de índice más grandes y un mayor uso de memoria. namespace, app y environment normalmente tienen decenas de valores o menos, lo que los hace adecuados.
+Los valores de índice de alta cardinalidad pueden crear muchos streams. Los metadatos estructurados no son una función de enmascaramiento, y el producto de cardinalidad es solo un límite superior de las combinaciones observadas.
 
 </details>
 
 ---
 
-6. ¿Cuál es el método de autenticación recomendado para el acceso al backend S3 de Loki en EKS?
+6. En el ejemplo de IRSA, ¿cómo se mantiene coherente la propiedad de ServiceAccount?
 
-   - A) Access Key ID/Secret Access Key
-   - B) IAM Roles for Service Accounts (IRSA)
-   - C) EC2 Instance Profile
-   - D) AWS STS AssumeRole
+   - A) eksctl y Helm crean ambos el mismo ServiceAccount
+   - B) Colocar claves de acceso de S3 en los valores de Helm
+   - C) Usar eksctl --role-only; Helm crea el ServiceAccount anotado correspondiente
+   - D) Otorgar a todos los nodos la política del bucket y deshabilitar la autenticación
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) IAM Roles for Service Accounts (IRSA)**
+**Respuesta: C**
 
-**Explicación:**
-IRSA vincula roles de IAM con service accounts de Kubernetes, lo que elimina la necesidad de almacenar Access Keys en código o configuración. Es el enfoque recomendado más seguro y cuenta con soporte nativo en entornos EKS.
+La confianza del rol debe coincidir con el proveedor OIDC del clúster exacto, la audiencia y el sujeto de namespace/service-account. Pod Identity también es una opción cuando se cumplen los requisitos de plataforma/SDK.
 
 </details>
 
 ---
 
-7. ¿Cuál es la sintaxis LogQL correcta para filtrar por un valor de campo específico después de analizar logs JSON?
+7. ¿Qué consulta filtra un campo JSON y excluye los fallos del analizador?
 
-   - A) `{app="api"} | json | level="error"`
-   - B) `{app="api"} | json | filter level="error"`
-   - C) `{app="api"} | json | where level="error"`
-   - D) `{app="api"} | json | select level="error"`
+   - A) `{app="api"} | json | level="error" | __error__=""`
+   - B) `{app="api"} | json | where level="error"`
+   - C) `{app="api"} | json | select level="error"`
+   - D) `{app="api"} | json | filter level="error"`
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) `{app="api"} | json | level="error"`**
+**Respuesta: A**
 
-**Explicación:**
-En LogQL, los filtros de labels después del análisis de JSON usan el formato `| field_name="value"`. `filter`, `where` y `select` no forman parte de la sintaxis de LogQL.
+LogQL usa una etapa de filtro de etiquetas después del análisis. Para una métrica numérica sin envolver, coloque el filtro de errores después de unwrap para excluir también los errores de conversión.
 
 </details>
 
 ---
 
-8. ¿Cuál NO es una función principal del Compactor de Loki?
+8. ¿Cuál es el rol del Compactor en este despliegue de TSDB?
 
-   - A) Fusionar chunks pequeños en chunks más grandes
-   - B) Aplicar políticas de retención (eliminación de datos)
-   - C) Recibir logs de los clientes
-   - D) Optimización del índice
+   - A) Autenticar usuarios del gateway
+   - B) Recibir todas las solicitudes push de clientes
+   - C) Garantizar que todos los logs expiren exactamente 31 días después de la ingestión
+   - D) Compactar archivos de índice y eliminar de forma asíncrona los chunks marcados cuando la retención está habilitada
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Recibir logs de los clientes**
+**Respuesta: D**
 
-**Explicación:**
-Recibir logs de los clientes es la función del Distributor. El Compactor optimiza los datos almacenados en segundo plano y elimina los datos antiguos según las políticas de retención.
+No es un combinador general de chunks pequeños de logs. La retención necesita un período de esquema/índice compatible, procesamiento habilitado, un almacén de eliminación y estado de marcadores duradero; 31 días es una política de ejemplo.
 
 </details>
 
 ---
 
-9. ¿Qué configuraciones se deben ajustar al encontrar errores de "rate limit exceeded" en Loki?
+9. ¿Qué debería ocurrir primero después de una respuesta ingestion429?
 
-   - A) max_streams_per_user
-   - B) ingestion_rate_mb, ingestion_burst_size_mb
-   - C) max_query_parallelism
-   - D) chunk_idle_period
+   - A) Aumentar cada límite sin medir la capacidad
+   - B) Distinguir los límites de tasa/ráfaga de bytes del tenant, de tasa por stream y de streams activos; después inspeccionar la capacidad/reintentos del cliente
+   - C) Aumentar solo el tiempo de espera de consulta
+   - D) Deshabilitar todos los límites permanentemente
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) ingestion_rate_mb, ingestion_burst_size_mb**
+**Respuesta: B**
 
-**Explicación:**
-Los errores de "rate limit exceeded" ocurren cuando la tasa de ingestión de logs supera el límite. Esto puede resolverse aumentando `ingestion_rate_mb` (ingestión máxima por segundo) y `ingestion_burst_size_mb` (capacidad de ráfaga).
+Los límites de tasa de ingestión y de ráfaga se encuentran en limits_config. Aumentar un límite puede sobrecargar el backend, y los reintentos necesitan backoff y una política limitada de pérdida/almacenamiento en búfer.
 
 </details>
 
 ---
 
-10. ¿Qué significa la configuración `chunk_idle_period` del Ingester en el ajuste de rendimiento de Loki?
+10. ¿Qué afirmación describe correctamente chunk_idle_period y /flush?
 
-    - A) Tiempo desde la creación de un chunk hasta su eliminación
-    - B) Tiempo que espera un stream inactivo antes de descargarse
-    - C) Duración del tiempo de espera de la consulta
-    - D) Período de retención de logs
+   - A) Ambos son endpoints de estado de solo lectura
+   - B) chunk_idle_period es el período de retención de logs
+   - C) chunk_idle_period controla el vaciado por inactividad; POST /flush activa el vaciado
+   - D) Reducir chunk_idle_period siempre reduce el costo total
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Tiempo que espera un stream inactivo antes de descargarse**
+**Respuesta: C**
 
-**Explicación:**
-`chunk_idle_period` es el tiempo de espera antes de descargar un chunk al almacenamiento cuando no llegan nuevos logs para ese stream. Reducir este valor disminuye el uso de memoria, pero puede crear muchos chunks pequeños.
+Los tiempos de inactividad más cortos pueden producir más chunks pequeños y solicitudes de objetos. Una operación de flush no es una comprobación de estado, y la disponibilidad no demuestra la durabilidad de extremo a extremo.
 
 </details>

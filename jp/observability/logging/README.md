@@ -1,580 +1,345 @@
-# ロギング
+# Logging
 
-> **最終更新**: February 20, 2026
+> **最終更新**: September 13, 2026
 
-Kubernetes 環境における効果的なロギングは、システムの可視性、トラブルシューティング、およびセキュリティ監査に不可欠です。このドキュメントでは、ロギングの基礎、ログ収集パイプラインのアーキテクチャ、および EKS 環境向けのロギング戦略について説明します。
+Logging は、アプリケーションの挙動、インフラストラクチャのイベント、監査証跡を結び付けます。
+イベントスキーマ、収集の所有責任、配信失敗時の動作、アクセス、
+保持、クエリを一体として設計してください。collector や backend の選択だけでは、
+完全な記録、tenant 分離、または規制準拠は保証されません。
 
-## 目次
+## Logging の基礎
 
-1. [ロギングの基礎](#logging-fundamentals)
-2. [ログ収集パイプラインのアーキテクチャ](#log-collection-pipeline-architecture)
-3. [ログストレージの選定基準](#log-storage-selection-criteria)
-4. [EKS ロギング戦略](#eks-logging-strategy)
-5. [ソリューション比較](#solution-comparison)
+### 構造化レコードにもパースが必要
 
-***
+JSON はフィールドを明示的にし、検証・検索を容易にしますが、それでもデコード、
+timestamp/type のマッピング、container-runtime のフレーミングの正しい処理が必要です。JSON は
+プレーンテキストより大きくなる可能性があり、機密データを自動的に削除するものでもありません。
+テスト済みの複数行形式が必要な場合を除き、1 行につき 1 イベントを出力してください。
 
-## ロギングの基礎
-
-### 構造化ロギング
-
-構造化ロギングは、一貫した形式でログメッセージを出力するため、解析と分析が容易になります。非構造化テキストログとは異なり、構造化ログはフィールドと値のペアで構成され、はるかに効率的な検索とフィルタリングを可能にします。
-
-#### 非構造化ログと構造化ログ
-
-```plaintext
-# Unstructured log (difficult to parse)
-2025-02-15 10:23:45 ERROR Failed to connect to database: connection timeout after 30s
-
-# Structured log (JSON format)
-{
-  "timestamp": "2025-02-15T10:23:45.123Z",
-  "level": "ERROR",
-  "message": "Failed to connect to database",
-  "error": "connection timeout",
-  "timeout_seconds": 30,
-  "service": "user-api",
-  "pod": "user-api-7d4f8b9c6-x2k9m",
-  "namespace": "production",
-  "trace_id": "abc123def456"
-}
-```
-
-#### 構造化ロギングの利点
-
-| 利点                  | 説明                                               |
-| ------------------------ | --------------------------------------------------------- |
-| **検索効率**    | 特定のフィールドによる高速なフィルタリング                         |
-| **一貫性**          | すべての Service で同じ形式                           |
-| **相関分析** | trace\_id、request\_id によるリクエストの追跡                 |
-| **自動化**           | 解析なしで分析ツールですぐに利用可能      |
-| **アラート設定**  | 特定のフィールド値に基づくアラートルールを簡単に作成可能 |
-
-### ログレベル
-
-ログレベルは、メッセージの重要度と重大度を示します。ログレベルを適切に使用することは、効果的なトラブルシューティングとノイズ削減に不可欠です。
-
-| レベル     | 番号 | 目的                                  | 例                                              |
-| --------- | ------ | ---------------------------------------- | ---------------------------------------------------- |
-| **TRACE** | 0      | 最も詳細なデバッグ情報      | 関数の開始/終了、変数値                 |
-| **DEBUG** | 1      | 開発中のデバッグ情報 | SQL クエリ、リクエストパラメータ                      |
-| **INFO**  | 2      | 一般的な運用情報          | Service の起動、リクエストの完了                  |
-| **WARN**  | 3      | 潜在的な問題状況             | リトライの発生、パフォーマンスの低下           |
-| **ERROR** | 4      | エラー発生（回復可能）             | API 呼び出しの失敗、バリデーションの失敗                 |
-| **FATAL** | 5      | 重大なエラー（回復不能）           | Service の起動失敗、必須依存関係の欠落 |
-
-#### 環境別の推奨ログレベル
-
-```yaml
-# Development environment
-LOG_LEVEL: DEBUG
-
-# Staging environment
-LOG_LEVEL: INFO
-
-# Production environment
-LOG_LEVEL: INFO  # or WARN (for high traffic)
-```
-
-### JSON ログ形式
-
-Kubernetes 環境では、JSON 形式が事実上の標準です。ほとんどのログコレクターと分析ツールは JSON をネイティブでサポートしています。
-
-#### 推奨 JSON フィールド
+この合成例は、現在のインシデントに関する主張ではなく形式の例示として、
+元の 2025 年の timestamp を保持しています:
 
 ```json
 {
   "timestamp": "2025-02-15T10:23:45.123Z",
-  "level": "INFO",
-  "logger": "com.example.UserService",
-  "message": "User login successful",
-  "context": {
-    "user_id": "user-12345",
-    "session_id": "sess-abc123",
-    "ip_address": "10.0.1.50"
-  },
-  "kubernetes": {
-    "namespace": "production",
-    "pod": "user-api-7d4f8b9c6-x2k9m",
-    "container": "user-api",
-    "node": "ip-10-0-1-100.ec2.internal"
-  },
-  "trace": {
-    "trace_id": "abc123def456",
-    "span_id": "789ghi",
-    "parent_span_id": "456def"
-  }
+  "level": "ERROR",
+  "message": "Database connection timed out",
+  "service": "example-api",
+  "operation": "database.connect",
+  "timeout_ms": 30000,
+  "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "span_id": "00f067aa0ba902b7"
 }
 ```
 
-#### 主要フィールドの説明
+可読性のために展開した JSON を示しています。行指向の producer は、
+改行文字を含むメッセージも含め、次のようにエンコードできます:
 
-| フィールドグループ    | フィールド         | 説明                                         |
-| -------------- | ------------- | --------------------------------------------------- |
-| **基本**      | timestamp     | ISO 8601 形式のタイムスタンプ                           |
-|                | level         | ログレベル                                           |
-|                | message       | 人間が読めるメッセージ                              |
-| **コンテキスト**    | context.\*    | ビジネスロジックに関連する情報                  |
-| **Kubernetes** | kubernetes.\* | Pod、namespace などの K8s メタデータ                    |
-| **トレース**      | trace.\*      | 分散トレーシング ID（OpenTelemetry 統合） |
+```python
+import json
 
-***
 
-## ログ収集パイプラインのアーキテクチャ
+def encode_log(record):
+    # JSON escapes embedded newlines; append exactly one record delimiter.
+    return json.dumps(record, ensure_ascii=False, separators=(",", ":")) + "\n"
+```
 
-### アーキテクチャ概要
+これらはアプリケーションのフィールド規約であり、OTLP wire schema ではありません。
+collector/backend のマッピングを、該当する場合は OpenTelemetry の Timestamp、SeverityText/SeverityNumber、
+Body、Resource、Attributes、および trace context に設定してください。
+
+Trace ID は 16-byte の値（この表現では 32 桁の 16 進文字）です。
+span ID は 8 bytes（16 桁の 16 進文字）です。すべてゼロの ID は無効です。ログごとに新しい無関係な ID ではなく、
+実際にアクティブな context を付与してください。span を持たない startup/system レコードでは trace context を省略できます。
+このフィールドは、すべての JSON log で必須ではありません。正しい ID だけでは span は作成されず、
+service 間の相関も保証されません。
+
+実際に必要な business/context フィールドを収集してください。生の
+session token、password、customer data、IP、request body を普遍的なデフォルトフィールドとして推奨しないでください。
+identity を含む audit data には正当な目的があるかもしれませんが、
+定義済みのアクセス/保持/redaction ポリシーが必要です。アプリケーション JSON に任意の tenant/namespace を
+名乗らせるのではなく、routing には信頼できる collector metadata を優先してください。
+
+### Severity は普遍的な 0–5 スケールではない
+
+framework ごとに名前と数値 level は異なります。その意味を明示的にマッピングしてください。
+OpenTelemetry log model では、範囲は次のとおりです:
+
+| Severity | SeverityNumber |
+| --- | --- |
+| TRACE | 1–4 |
+| DEBUG | 5–8 |
+| INFO | 9–12 |
+| WARN | 13–16 |
+| ERROR | 17–20 |
+| FATAL | 21–24 |
+
+この model ではゼロは未指定の severity を表します。ERROR が常に
+recoverable であるとは限らず、label だけで retry/recovery policy は決まりません。
+INFO は多くの場合、production operation の出発点です。audit/security event と
+一時的に有効化する debugging には、それぞれ固有の要件が必要です。volume を減らすためだけにすべてを
+WARN に上げると、必要な証跡を失う可能性があります。
+
+## 収集と処理
+
+以下の layers は必ずしも別プロセスではなく、責務を示します。
+宛先は意図的に選択します。すべての record をすべての backend にコピーする要件ではありません。
+managed EKS control-plane record は、worker-node log file ではなく CloudWatch を経由して取り込まれます。
 
 ```mermaid
-flowchart TB
-    subgraph Sources["Log Sources"]
-        APP[Application Logs]
-        SYS[System Logs]
-        K8S[Kubernetes Events]
-        CTRL[Control Plane Logs]
-    end
-
-    subgraph Collection["Collection Layer"]
-        DS[DaemonSet Agent<br/>FluentBit/Promtail]
-        SC[Sidecar Container]
-        OTEL[OTEL Collector]
-    end
-
-    subgraph Processing["Processing Layer"]
-        PARSE[Parsing/Normalization]
-        ENRICH[Metadata Enrichment]
-        FILTER[Filtering/Sampling]
-        BUFFER[Buffering]
-    end
-
-    subgraph Storage["Storage Layer"]
-        LOKI[(Grafana Loki)]
-        OS[(OpenSearch)]
-        CW[(CloudWatch Logs)]
-        CH[(ClickHouse)]
-    end
-
-    subgraph Analysis["Analysis Layer"]
-        GRAFANA[Grafana]
-        KIBANA[OpenSearch Dashboards]
-        CWINSIGHTS[CloudWatch Insights]
-    end
-
-    APP --> DS
-    SYS --> DS
-    K8S --> OTEL
-    CTRL --> DS
-    APP --> SC
-
-    DS --> PARSE
-    SC --> PARSE
-    OTEL --> PARSE
-
-    PARSE --> ENRICH
-    ENRICH --> FILTER
-    FILTER --> BUFFER
-
-    BUFFER --> LOKI
-    BUFFER --> OS
-    BUFFER --> CW
-    BUFFER --> CH
-
-    LOKI --> GRAFANA
-    OS --> KIBANA
-    CW --> CWINSIGHTS
-    CH --> GRAFANA
-
-    classDef source fill:#4CAF50,stroke:#333,color:white
-    classDef collect fill:#2196F3,stroke:#333,color:white
-    classDef process fill:#FF9800,stroke:#333,color:white
-    classDef store fill:#9C27B0,stroke:#333,color:white
-    classDef analyze fill:#F44336,stroke:#333,color:white
-
-    class APP,SYS,K8S,CTRL source
-    class DS,SC,OTEL collect
-    class PARSE,ENRICH,FILTER,BUFFER process
-    class LOKI,OS,CW,CH store
-    class GRAFANA,KIBANA,CWINSIGHTS analyze
+flowchart LR
+    A["Application stdout / stderr"] --> R["Runtime CRI log files"]
+    R --> N["Collector on supported nodes"]
+    L["Application files"] --> S["Optional sidecar / file collector"]
+    N --> P["Parse, enrich, redact, buffer"]
+    S --> P
+    P --> B["Selected log backend"]
+    C["Managed EKS control plane"] --> W["CloudWatch Logs"]
+    W -->|"Optional subscription / export"| P
+    Q["Authorized query client"] -->|"Query"| B
+    B -->|"Results"| Q
 ```
 
-### レイヤーの責務
+| Pattern | 適切な用途と制限 |
+| --- | --- |
+| stdout/stderr + node collector | 一般的な Linux worker-node path。runtime file と collector permission も重要 |
+| File + sidecar | legacy/file-only application または application 固有の処理。shared volume、startup/shutdown、overhead に注意が必要 |
+| Application/SDK push | 構造化 event を直接送信可能。buffering、authentication、failure behavior が application に影響する |
+| Managed platform router | 例: EKS Fargate の組み込み log router。サポートされる configuration model を使用する |
 
-#### 1. 収集レイヤー
+DaemonSet は、selector、affinity、toleration、
+OS、rollout behavior に従って eligible node にスケジュールされます。
+これは、すべての node に正常な collector があることや、すべての container が含まれることを証明するものではありません。
+複数の collector/rolling overlap により収集が重複する可能性があります。
+sidecar は自動的に強力な multi-tenant security boundary にはなりません。
 
-ログソースから生ログを収集します。
+### デフォルトの Linux log path と lifecycle
 
-| 方法          | 利点                                   | 欠点                     | 最適な用途                          |
-| --------------- | -------------------------------------------- | --------------------------------- | --------------------------------- |
-| **DaemonSet**   | リソース効率が高く、一元管理が可能   | ノードごとに 1 つのみ                 | ほとんどの標準ワークロード           |
-| **Sidecar**     | アプリケーション単位の分離、カスタム処理 | リソースのオーバーヘッド                 | 特殊なログ形式、マルチテナント |
-| **Direct Push** | リアルタイム、柔軟な配信                 | アプリケーションの変更が必要 | 高パフォーマンス要件     |
+一般的なデフォルト layout は次のとおりです:
 
-#### 2. 処理レイヤー
+```text
+Runtime log files:
+  /var/log/pods/<namespace>_<pod>_<uid>/<container>/0.log
 
-収集したログを正規化し、メタデータを追加します。
+Compatibility symlinks pointing to those files:
+  /var/log/containers/<pod>_<namespace>_<container>-<container-id>.log
+```
 
-```yaml
-# FluentBit processing pipeline example
+Kubelet は runtime の CRI log path を指定し、rotation を管理します。`podLogsDir` により
+デフォルト path が変更されることがあり、OS/runtime 固有の layout も異なります。すべての containerd workload に
+Docker 専用 mount を追加するのではなく、実際の deployment を確認してください。
+`kubectl logs` は現在の log file を公開します。保持されている場合、`--previous` は前の
+container instance にアクセスできます。これは過去の log archive ではありません。
+
+rotation は local file の範囲を制限しますが、central retention や backup を実装するものではありません。
+node の消失、eviction、削除により、収集前に record が失われる可能性があります。sidecar の
+`emptyDir` は同じ pod 内での container restart では存続しますが、pod 削除では存続しません。
+collector の offset database、queue、persistent storage は output acknowledgment/retry と合わせて設計する必要があります。
+buffering には上限があり、retry により record が重複する可能性があります。
+failure 時の loss/duplicate、backlog、storage exhaustion、recovery を測定してください。
+
+record ごとに primary route を選択してください。record を forward しつつ
+stdout にも書き出す sidecar は、node collector path と重複する可能性があります。
+collector output を再帰的に収集したり、同じ subscription 済み source log group に forward したりしないでください。
+
+### Fluent Bit 処理フラグメント
+
+以下は **classic Fluent Bit configuration** であり、YAML ではありません。これは
+filter のみを例示しています。実際の input、CRI/multiline parser、tag format、
+RBAC/cache access、storage、output は別途提供して検証してください。
+
+```text
+# Fluent Bit classic-format FILTER fragment, not YAML or a complete pipeline.
+# Requires matching tail input tags and CRI/Docker parsing.
 [FILTER]
-    Name         kubernetes
-    Match        kube.*
-    Kube_URL     https://kubernetes.default.svc:443
-    Merge_Log    On
-    K8S-Logging.Parser  On
+    Name               kubernetes
+    Match              kube.*
+    Kube_Tag_Prefix     kube.var.log.containers.
+    Merge_Log          On
+    Merge_Log_Key      app
+    Keep_Log           On
+    K8S-Logging.Parser  Off
+    Labels             Off
+    Annotations        Off
 
 [FILTER]
-    Name         modify
-    Match        *
-    Add          cluster_name eks-production
-    Add          environment production
-
-[FILTER]
-    Name         grep
-    Match        *
-    Exclude      log HealthCheck
+    Name               modify
+    Match              kube.*
+    Set                cluster_name example-cluster
+    Set                environment demo
 ```
 
-#### 3. ストレージレイヤー
+`Merge_Log_Key app` は、パースされた application field を collector metadata と分離して保持します。
+`Set` は選択した信頼できる cluster/environment value を置き換えます。`Add` では
+既に存在する value は変更されません。workload により選択される parser/annotation は、
+このフラグメントでは暗黙に信頼されません。`Kube_Tag_Prefix` を実際の input tag に一致させてください。
 
-処理済みログを保存し、インデックスを作成します。ストレージ方式はソリューションの特性によって異なります。
+`Keep_Log On` では、redaction は元の log とパース済み copy の両方を考慮する必要があります。
+テスト済みの policy の下でのみ raw copy を削除してください。`HealthCheck` を含むすべての行を
+削除しないでください。失敗した health check は、必要な証跡である可能性があります。
+application format と failure case を確認した後に、明確に定義された routine event のみを filter してください。
 
-#### 4. 分析レイヤー
+この概要では、不完全な `latest`-image DaemonSet を完全な installation として提示していません。
+実際の collector には、pinned image、実際の configuration、
+service account/RBAC、正しい mount、permission、resource が必要です。
+deployment の詳細については [collector chapter](05-collectors.md) を参照し、選択した
+platform/backend configuration を検証してください。
 
-保存されたログを検索し、可視化します。
+## EKS logging path
 
-***
+### Control-plane log
 
-## ログストレージの選定基準
+EKS は `api`、`audit`、`authenticator`、`controllerManager`、`scheduler` の
+record を account 内の CloudWatch Logs に直接送信できます。これらは異なる目的に使用されます:
+API diagnostics、audit event、IAM authentication diagnostics、controller と
+scheduler diagnostics。operation/security requirement に必要な type を選択してください。
 
-### 主な考慮事項
+この request を `control-plane-logging.json` として保存します:
 
-#### 1. コスト
-
-```
-Monthly log volume: Estimated cost based on 1TB (2025)
-
-+------------------+------------------+-----------------+
-|     Solution     |   Storage/GB     |   Query Cost    |
-+------------------+------------------+-----------------+
-| Loki (S3)        | $0.023 (S3)      | Free            |
-| OpenSearch       | $0.10-0.15       | Free            |
-| CloudWatch       | $0.50 (ingest)   | $0.005/GB scan  |
-| ClickHouse       | $0.023 (S3)      | Free            |
-+------------------+------------------+-----------------+
-```
-
-#### 2. クエリパフォーマンス
-
-| ソリューション       | リアルタイムクエリ | 集計 | 全文検索 | ダッシュボード             |
-| -------------- | --------------- | ----------- | ---------------- | --------------------- |
-| **Loki**       | 優れている       | 良好        | 制限あり          | Grafana               |
-| **OpenSearch** | 優れている       | 優れている   | 優れている        | OpenSearch Dashboards |
-| **CloudWatch** | 良好            | 良好        | 良好             | CloudWatch Console    |
-| **ClickHouse** | 優れている       | 優れている   | 良好             | Grafana               |
-
-#### 3. 保持期間
-
-```yaml
-# Recommended retention policies
-regulatory_compliance:
-  financial: 7 years
-  healthcare: 6 years
-  general: 1 year
-
-operational:
-  hot_storage: 7-14 days    # Fast queries
-  warm_storage: 30-90 days  # Investigation
-  cold_storage: 1 year+     # Compliance
-```
-
-#### 4. 運用の複雑さ
-
-| ソリューション       | インストール | 運用 | スケーラビリティ |
-| -------------- | ------------ | ---------- | ----------- |
-| **Loki**       | 低い          | 低い        | 高い        |
-| **OpenSearch** | 中程度       | 高い       | 中程度      |
-| **CloudWatch** | 非常に低い     | 非常に低い   | 高い        |
-| **ClickHouse** | 高い         | 中程度      | 高い        |
-
-***
-
-## EKS ロギング戦略
-
-### ログ収集パターン
-
-#### 1. stdout/stderr パターン（推奨）
-
-コンテナの標準出力/標準エラー経由のロギングは、デフォルトの Kubernetes パターンです。
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: app-pod
-spec:
-  containers:
-  - name: app
-    image: myapp:1.0
-    # Application outputs logs to stdout/stderr
-    # kubelet saves to files in /var/log/containers/
-    # DaemonSet agent collects
-```
-
-**利点:**
-
-* Kubernetes ネイティブなアプローチ
-* 自動ログローテーション管理（`/var/log/containers/`）
-* `kubectl logs` コマンドを利用可能
-* 別途ボリュームマウントは不要
-
-**ログファイルの場所:**
-
-```bash
-# Actual log files
-/var/log/containers/<pod-name>_<namespace>_<container-name>-<container-id>.log
-
-# Symbolic links
-/var/log/pods/<namespace>_<pod-name>_<pod-uid>/<container-name>/0.log
-```
-
-#### 2. Sidecar パターン
-
-ファイルベースのロギングまたは特殊な処理が必要な場合に使用します。
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: app-with-sidecar
-spec:
-  containers:
-  - name: app
-    image: legacy-app:1.0
-    volumeMounts:
-    - name: log-volume
-      mountPath: /var/log/app
-
-  - name: log-collector
-    image: fluent/fluent-bit:latest
-    volumeMounts:
-    - name: log-volume
-      mountPath: /var/log/app
-      readOnly: true
-    - name: fluent-bit-config
-      mountPath: /fluent-bit/etc/
-
-  volumes:
-  - name: log-volume
-    emptyDir: {}
-  - name: fluent-bit-config
-    configMap:
-      name: fluent-bit-sidecar-config
-```
-
-**ユースケース:**
-
-* レガシーアプリケーション（ファイルロギングのみ）
-* マルチテナント環境におけるログの分離
-* アプリケーションごとに特殊なパースが必要
-* 高いセキュリティ要件
-
-#### 3. DaemonSet パターン（最も一般的）
-
-ノードごとに 1 つのエージェントがすべてのコンテナログを収集します。
-
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: fluent-bit
-  namespace: logging
-spec:
-  selector:
-    matchLabels:
-      app: fluent-bit
-  template:
-    metadata:
-      labels:
-        app: fluent-bit
-    spec:
-      serviceAccountName: fluent-bit
-      tolerations:
-      - operator: Exists  # Deploy on all nodes
-      containers:
-      - name: fluent-bit
-        image: public.ecr.aws/aws-observability/aws-for-fluent-bit:latest
-        volumeMounts:
-        - name: varlog
-          mountPath: /var/log
-          readOnly: true
-        - name: varlibdockercontainers
-          mountPath: /var/lib/docker/containers
-          readOnly: true
-        resources:
-          limits:
-            memory: 200Mi
-            cpu: 200m
-          requests:
-            memory: 100Mi
-            cpu: 100m
-      volumes:
-      - name: varlog
-        hostPath:
-          path: /var/log
-      - name: varlibdockercontainers
-        hostPath:
-          path: /var/lib/docker/containers
-```
-
-### EKS コントロールプレーンロギング
-
-EKS コントロールプレーンログは CloudWatch Logs に送信されます。
-
-```bash
-# Enable control plane logging via AWS CLI
-aws eks update-cluster-config \
-  --name my-cluster \
-  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-```
-
-| ログタイプ              | 説明             | 推奨         |
-| --------------------- | ----------------------- | ------------------- |
-| **api**               | API server ログ         | 必須            |
-| **audit**             | Kubernetes 監査ログ   | 必須（セキュリティ） |
-| **authenticator**     | IAM 認証ログ | 推奨         |
-| **controllerManager** | Controller manager ログ | 任意            |
-| **scheduler**         | Scheduler ログ          | 任意            |
-
-### Container Insights ロギング
-
-```yaml
-# CloudWatch Agent ConfigMap
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cloudwatch-agent-config
-  namespace: amazon-cloudwatch
-data:
-  cwagentconfig.json: |
+```json
+{
+  "clusterLogging": [
     {
-      "logs": {
-        "metrics_collected": {
-          "kubernetes": {
-            "cluster_name": "my-cluster",
-            "metrics_collection_interval": 60
-          }
-        },
-        "force_flush_interval": 5
-      }
+      "types": [
+        "api",
+        "audit",
+        "authenticator",
+        "controllerManager",
+        "scheduler"
+      ],
+      "enabled": true
     }
+  ]
+}
+```
+```bash
+export AWS_REGION=ap-northeast-2
+export CLUSTER_NAME=my-cluster
+
+# Inspect the existing configuration before choosing a change.
+aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --query 'cluster.logging'
+
+# This changes the cluster logging configuration and can incur log charges.
+aws eks update-cluster-config --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --logging file://control-plane-logging.json
+
+# Use the actual update ID from the response, then inspect status/errors.
+: "${UPDATE_ID:?Set the returned update ID}"
+aws eks describe-update --name "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --update-id "$UPDATE_ID"
 ```
 
-***
+logging update は非同期です。EKS は、update に subnet ごと最大 5 個の利用可能な IP address が必要であると
+文書化しています。update status、出力された stream、log-group の retention/permission を検証してください。
+delivery は best effort で、通常は数分以内です。type を有効化しても、過去のすべての event が backfill されるわけではありません。
 
-## ソリューション比較
+audit event は audit policy とその level/stage/exclusion に従います。これらは、
+すべての request/body が記録されたことを証明するものではなく、`audit` を有効化するだけで
+compliance が確立されるわけでもありません。node DaemonSet は managed control-plane host を読み取りません。
+CloudWatch record を他の場所に forward することは、encoding、IAM、delivery、duplicate-handling requirement を持つ
+別の subscription/export path です。
 
-### 機能比較表
+### Fargate と Container Insights
 
-| 機能                     | Loki       | OpenSearch     | CloudWatch     | ClickHouse     |
-| --------------------------- | ---------- | -------------- | -------------- | -------------- |
-| **インストールの複雑さ** | 低い        | 中程度         | なし（マネージド） | 高い           |
-| **クエリ言語**          | LogQL      | Lucene/DQL     | Insights QL    | SQL            |
-| **全文検索**        | 制限あり    | 優れている     | 良好           | 良好           |
-| **スキーマ**                  | スキーマレス | スキーマレス   | スキーマレス   | スキーマ定義済み |
-| **圧縮**             | 高い       | 中程度         | N/A            | 非常に高い     |
-| **リアルタイムテーリング**       | サポート  | サポート       | 制限あり       | サポート       |
-| **アラート**                | Grafana    | 組み込み       | 組み込み       | Grafana        |
-| **マルチテナンシー**           | サポート  | サポート       | サポート       | サポート       |
-| **S3 バックエンド**              | ネイティブ | スナップショットのみ | N/A            | ネイティブ     |
+EKS Fargate は、`aws-observability` namespace 内の `aws-logging` により設定される
+managed Fluent Bit-based router を提供します。文書化された 5,300-character limit と
+supported-section/plugin restriction があります。通常の host DaemonSet はそこに install しません。
+宛先 permission を設定し、新しい workload log をテストしてください。
+Auto Mode/mixed/Windows environment にも、サポートされた collection path が必要です。
 
-### ユースケース別の推奨ソリューション
+namespace には `aws-observability: enabled` label が必要です。文書どおりに Fargate pod execution role に
+宛先 permission を付与してください。ConfigMap の変更は既存の pod ではなく、新しい pod に適用されます。
+制御された rollout を計画し、delivery を検証してください。
 
-```
-+-------------------------------------+---------------------+
-|           Use Case                  |  Recommended        |
-+-------------------------------------+---------------------+
-| Cost optimization is top priority   | Loki + S3           |
-| Full-text search and analytics      | OpenSearch          |
-| AWS native, simple operations       | CloudWatch Logs     |
-| Large-scale analytics, SQL pref.    | ClickHouse          |
-| Existing Grafana stack              | Loki                |
-| Compliance requirements             | OpenSearch/CloudWatch|
-| Startup/small team                  | Loki or CloudWatch  |
-| Enterprise/complex analytics        | OpenSearch          |
-+-------------------------------------+---------------------+
-```
 
-### コストシミュレーション（100GB/月のログに基づく）
+CloudWatch Agent の `logs.metrics_collected.kubernetes` は Container Insights の
+performance data を出力します。それだけでは application stdout/stderr log の収集にはなりません。
+Fluent Bit または設定済みの OTel log path が application log を別途処理します。
+実際の workload/Operator が消費しない限り、ConfigMap は効果を持ちません。
+この model と configuration の境界については、レビュー済みの [CloudWatch guide](../metrics/04-cloudwatch-metrics.md) を
+参照してください。
 
-```
-Estimated monthly cost by solution:
+## Storage、retention、cost の決定
 
-Loki (S3 Simple Scalable):
-  +- S3 storage: $2.30
-  +- S3 requests: $0.50
-  +- EC2 (3x m5.large): $180
-  +- Total: ~$183
+| Backend | 設計上の質問 |
+| --- | --- |
+| Loki | LogQL、label-indexed stream/chunk、サポートされる metadata/filter path。label、tenancy/authentication、storage、query capacity を選択する |
+| OpenSearch | Search/aggregation API と mapping/index lifecycle。self-managed、managed domain、UltraWarm、Serverless を区別する |
+| CloudWatch Logs | managed log group、IAM、retention、Logs Insights QL/SQL/PPL。feature は log class と Region により異なる |
+| ClickHouse | column-oriented SQL analytics、schema/order/partition/TTL の選択、および選択する self-managed または cloud storage model |
 
-OpenSearch (3x m5.large):
-  +- Instances: $300
-  +- EBS storage: $15
-  +- Total: ~$315
+OpenSearch は常に「S3 snapshot のみ」ではありません。UltraWarm は S3 と caching を使用し、
+Serverless は storage と compute を分離します。CloudWatch は user-configured S3 log backend ではありませんが、
+個別の export/delivery/integration path をサポートします。product の tenant identifier や sidecar は、
+authenticated routing と backend access control の代わりにはなりません。
 
-CloudWatch Logs:
-  +- Ingestion: $50
-  +- Storage: $3
-  +- Queries (estimated): $10
-  +- Total: ~$63
+full-text filtering、indexing、query latency は別の問題です。
+代表的な volume、query predicate、concurrency、cold data、recovery をテストしてください。
+測定済みの dataset/configuration がないまま、無条件の「優れている/限定的」という評価、
+「schemaless は schema がない」という主張、または compression ratio を避けてください。
 
-ClickHouse (self-hosted):
-  +- EC2 (3x m5.large): $180
-  +- S3 storage: $2.30
-  +- Total: ~$183
-```
+### Retention には実際の record に対する policy が必要
 
-> **注記**: 実際のコストは、クエリパターン、保持期間、およびリージョンに応じて大きく変動する場合があります。
+`financial` を 7 年、`healthcare` を 6 年、または一般 log を 1 年という、普遍的な法的ルールとして扱わないでください。
+適用される record category、jurisdiction、contractual requirement、legal hold、
+承認済み owner policy を判断してください。hot/warm/cold tier は operation 上の選択であり、
+これらの義務を満たした証拠ではありません。replica、object version、backup、export を削除/access plan に含め、
+restoration を個別にテストしてください。
 
-### 意思決定フローチャート
+### 同等の条件で cost を比較する
 
-```mermaid
-flowchart TD
-    START[Choose Log Storage] --> Q1{Existing Grafana<br/>stack?}
+以前の 2025 年の table は、GB あたりの storage price と ingestion price を混在させ、self-managed の
+query を無料と呼んでいました。後の 100-GB estimate には、再現可能な Region、hour、
+retention、capacity、workload の基準がありませんでした。これらは例示的な estimate であり、production measurement ではありません。
+date または 1 つの price だけを変更しても修正にはなりません。
 
-    Q1 -->|Yes| Q2{Need full-text<br/>search?}
-    Q1 -->|No| Q3{Prefer AWS<br/>native?}
+ingestion、保持/圧縮済み byte と index overhead、replica、compute、
+query scan/capacity、storage request、network transfer、backup、operation work を比較してください。
+object-store price は 1 項にすぎません。per-query service charge がなくても、
+query は provisioned CPU/memory/I/O を消費します。Loki と S3 が必ず cost 面で有利とは限らず、
+名前付き backend が自動的に compliance に適しているわけでもありません。
 
-    Q2 -->|Yes| OS[OpenSearch]
-    Q2 -->|No| LOKI[Loki]
+1. 必要な query、freshness、retention、access、recovery objective を定義する。
+2. それらの requirement を満たす deployment model を絞り込む。
+3. 代表的な data/query と failure/recovery case を再現する。
+4. 完全な cost と operation ownership を比較する。
+5. 残る assumption を記録し、production で使用する前に検証する。
 
-    Q3 -->|Yes| Q4{Analysis<br/>complexity?}
-    Q3 -->|No| Q5{Cost vs<br/>Features?}
+## 次の手順と validation scope
 
-    Q4 -->|Simple| CW[CloudWatch Logs]
-    Q4 -->|Complex| OS
+Promtail は **2026-03-02** に end of life に達しました。新規作業には Alloy または別のサポート対象 client を使用し、
+既存の Promtail deployment の migration を計画してください。引用した notice は `lambda-promtail` を明示的に別扱いにしています。
+retirement の主張を拡大解釈しないでください。
 
-    Q5 -->|Cost first| LOKI
-    Q5 -->|Features first| OS
+- [Loki](01-loki.md)
+- [OpenSearch](02-opensearch.md)
+- [CloudWatch Logs](03-cloudwatch-logs.md)
+- [ClickHouse](04-clickhouse.md)
+- [Collectors: Fluent Bit、Alloy、OpenTelemetry](05-collectors.md)
 
-    classDef decision fill:#FFE082,stroke:#333
-    classDef solution fill:#81C784,stroke:#333,color:white
+この audit では、source fact、example serialization/ID、request/configuration の
+structure を確認しました。EKS logging の変更、collector deployment、tenant/storage provisioning、
+legal determination、production cost measurement、delivery/recovery test は実行していません。
 
-    class Q1,Q2,Q3,Q4,Q5 decision
-    class OS,LOKI,CW solution
-```
+## 参考文献
 
-***
+- [Kubernetes logging architecture](https://kubernetes.io/docs/concepts/cluster-administration/logging/)
+- [Kubelet legacy log symlinks](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/kubelet/kuberuntime/legacy.go)
+- [DaemonSet behavior](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/)
+- [Kubernetes audit policy](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/)
+- [OpenTelemetry logs data model](https://opentelemetry.io/docs/specs/otel/logs/data-model/)
+- [W3C Trace Context](https://www.w3.org/TR/trace-context/)
+- [EKS control-plane logging](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
+- [EKS Fargate log router](https://docs.aws.amazon.com/eks/latest/userguide/fargate-logging.html)
+- [Fluent Bit Kubernetes filter source documentation](https://github.com/fluent/fluent-bit-docs/blob/master/pipeline/filters/kubernetes.md)
+- [Fluent Bit modify filter](https://github.com/fluent/fluent-bit-docs/blob/master/pipeline/filters/modify.md)
+- [Loki architecture](https://grafana.com/docs/loki/latest/get-started/overview/)
+- [Promtail end of life](https://grafana.com/docs/loki/latest/send-data/promtail/)
+- [OpenSearch UltraWarm](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/ultrawarm.html)
+- [OpenSearch Serverless](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/serverless-overview.html)
+- [CloudWatch Logs query languages](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AnalyzingLogData.html)
+- [CloudWatch log classes](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html)
+- [ClickHouse overview](https://github.com/ClickHouse/ClickHouse)
 
-## 次のステップ
-
-各ログストレージソリューションの詳細については、次のドキュメントを参照してください。
-
-* [Grafana Loki](01-loki.md) - コスト効率に優れたログ集約
-* [Amazon OpenSearch Service](02-opensearch.md) - 強力な検索と分析
-* [CloudWatch Logs](03-cloudwatch-logs.md) - AWS ネイティブロギング
-* [ClickHouse](04-clickhouse.md) - 高性能ログ分析
-* [ログコレクターの比較](05-collectors.md) - FluentBit、Promtail、Alloy、OTEL
-
-***
-
-## クイズ
-
-[ロギング概要クイズ](https://github.com/Atom-oh/kubernetes-docs/blob/main/en/quizzes/observability/logging/README-quiz.md)で知識を確認しましょう。
+[Quiz](../../quizzes/observability/logging/README-quiz.md)

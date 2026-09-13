@@ -1,193 +1,185 @@
 # Grafana Loki 测验
 
-测试你对 Grafana Loki 的理解。
+> **最后更新**: September 13, 2026
+
+基于[指南](../../../observability/logging/01-loki.md)中的 Loki3.7.7/chart18.12.1 示例。
 
 ---
 
-1. Loki 比 Elasticsearch 更具成本效益的主要原因是什么？
+1. 在 TSDB/chunk 模型中，Loki 主要索引什么？
 
-   - A) 更快的查询性能
-   - B) 仅索引标签而非日志内容
-   - C) 使用更好的压缩算法
-   - D) 云原生设计
+   - A) 每条日志行中的每个词
+   - B) 流 labels
+   - C) 仅请求 ID
+   - D) 仅时间戳
 
 <details>
-<summary>显示答案</summary>
+<summary>查看答案</summary>
 
-**答案：B) 仅索引标签而非日志内容**
+**答案：B**
 
-**解释：**
-Loki 不会索引日志内容，只索引元数据（标签）。这可显著减小索引大小，并能够使用廉价的对象存储（如 S3），与 Elasticsearch 相比可将运营成本降低 10 倍。
+Labels 可缩小需要扫描的流范围。这并不能证明固定的 10× 成本优势，也不能消除解析/chunk 读取成本。
 
 </details>
 
 ---
 
-2. Loki 架构中，哪个组件会在内存中缓冲日志数据并将其存储到存储系统？
+2. 哪个组件会缓冲日志流、在启用时写入 WAL，并刷新 chunks？
 
    - A) Distributor
-   - B) Querier
+   - B) Query frontend
    - C) Ingester
-   - D) Compactor
+   - D) Index gateway
 
 <details>
-<summary>显示答案</summary>
+<summary>查看答案</summary>
 
-**答案：C) Ingester**
+**答案：C**
 
-**解释：**
-Ingester 从 Distributor 接收日志数据，在内存中进行缓冲（创建 chunks），管理 WAL，并将 chunks 刷新到存储系统。它还会提供实时查询服务。
+Ingester 也提供近期数据。WAL 需要持久化存储，其本身并不能保证无损交付或 HA。
 
 </details>
 
 ---
 
-3. 生产 EKS 环境中推荐使用哪种 Loki 部署模式？
+3. 哪项说法符合本章节采用的当前部署指导？
 
-   - A) Monolithic 模式
-   - B) Simple Scalable 模式
-   - C) Microservices 模式
-   - D) Standalone 模式
+   - A) SSD 永远是所有生产 EKS 集群的默认选项
+   - B) 任意三个 Pod 都能保证跨三个 AZ 的弹性
+   - C) SingleBinary 是唯一的 chart18.12.1 模式名称
+   - D) SSD 已弃用；生产扩展/HA 指导建议使用 Distributed，并进行明确的运维规划
 
 <details>
-<summary>显示答案</summary>
+<summary>查看答案</summary>
 
-**答案：B) Simple Scalable 模式**
+**答案：D**
 
-**解释：**
-Simple Scalable 模式为实现可扩展性而分离了读写路径，同时比 Microservices 模式更易于运维。它适用于大多数每日日志量为 100GB 到 10TB 的生产 EKS 集群。
+SSD 计划在 Loki4.0 中移除。容量和可用性取决于工作负载、存储、拓扑以及经过测试的故障处理，而非固定的 GB/天表格。
 
 </details>
 
 ---
 
-4. 用于计算每秒错误日志速率的正确 LogQL 查询是什么？
+4. 哪个查询会返回五分钟内匹配 error 日志行的每秒速率？
 
-   - A) `count({app="nginx"} |= "error")`
-   - B) `rate({app="nginx"} |= "error" [5m])`
+   - A) `rate({app="nginx"} |= "error" [5m])`
+   - B) `count({app="nginx"} |= "error")`
    - C) `sum({app="nginx"} |= "error")`
-   - D) `avg({app="nginx"} |= "error" [5m])`
+   - D) `increase(count_over_time({app="nginx"}[5m]))`
 
 <details>
-<summary>显示答案</summary>
+<summary>查看答案</summary>
 
-**答案：B) `rate({app="nginx"} |= "error" [5m])`**
+**答案：A**
 
-**解释：**
-`rate()` 函数计算指定时间范围内每秒的日志行数。`[5m]` 表示 5 分钟的范围。`count()` 不会以这种方式用于指标查询，`sum()` 和 `avg()` 也不会像这样单独使用。
+这是每个流的日志行速率，并不会自动成为 HTTP 请求错误比率。LogQL 支持 count 向量聚合，但 B 未提供所需的 metric-vector 输入。
 
 </details>
 
 ---
 
-5. 以下哪项是应在 Loki 标签设计中避免使用的高基数标签示例？
+5. 调查时需要唯一的请求 ID。更好的起点是什么？
 
-   - A) namespace
-   - B) app
-   - C) pod_name
-   - D) environment
+   - A) 索引每个请求 ID 以加快查询
+   - B) 在访问/隐私控制下，将必要的 ID 保留在日志内容或结构化元数据中
+   - C) 删除所有 cluster/namespace labels
+   - D) 假设总流数始终等于 label 基数的乘积
 
 <details>
-<summary>显示答案</summary>
+<summary>查看答案</summary>
 
-**答案：C) pod_name**
+**答案：B**
 
-**解释：**
-pod_name 可能有数千个唯一值，因此是高基数标签。高基数标签会大幅增加流数量，导致索引更大且内存使用量更高。namespace、app 和 environment 通常只有数十个或更少的值，因此比较合适。
+高基数索引值会创建许多流。结构化元数据并不是脱敏，基数乘积也只是已观测组合数的上限。
 
 </details>
 
 ---
 
-6. 在 EKS 中，推荐使用哪种身份验证方法来访问 Loki S3 后端？
+6. 在 IRSA 示例中，如何保持 ServiceAccount 所有权一致？
 
-   - A) Access Key ID/Secret Access Key
-   - B) IAM Roles for Service Accounts (IRSA)
-   - C) EC2 Instance Profile
-   - D) AWS STS AssumeRole
+   - A) eksctl 和 Helm 都创建相同的 ServiceAccount
+   - B) 将 S3 访问密钥放入 Helm values
+   - C) 使用 eksctl --role-only；Helm 创建匹配的带注释 ServiceAccount
+   - D) 授予所有节点 bucket policy 并禁用身份验证
 
 <details>
-<summary>显示答案</summary>
+<summary>查看答案</summary>
 
-**答案：B) IAM Roles for Service Accounts (IRSA)**
+**答案：C**
 
-**解释：**
-IRSA 将 IAM roles 关联到 Kubernetes service accounts，无需在代码或配置中存储 Access Keys。这是最安全的推荐方法，并且在 EKS 环境中得到原生支持。
+role trust 必须与确切的 cluster OIDC provider、audience 和 namespace/service-account subject 相匹配。当其平台/SDK 前提条件满足时，Pod Identity 也是一种选择。
 
 </details>
 
 ---
 
-7. 解析 JSON 日志后，按特定字段值进行筛选的正确 LogQL 语法是什么？
+7. 哪个查询可筛选 JSON 字段并排除解析失败？
 
-   - A) `{app="api"} | json | level="error"`
-   - B) `{app="api"} | json | filter level="error"`
-   - C) `{app="api"} | json | where level="error"`
-   - D) `{app="api"} | json | select level="error"`
+   - A) `{app="api"} | json | level="error" | __error__=""`
+   - B) `{app="api"} | json | where level="error"`
+   - C) `{app="api"} | json | select level="error"`
+   - D) `{app="api"} | json | filter level="error"`
 
 <details>
-<summary>显示答案</summary>
+<summary>查看答案</summary>
 
-**答案：A) `{app="api"} | json | level="error"`**
+**答案：A**
 
-**解释：**
-在 LogQL 中，JSON 解析后的标签筛选使用 `| field_name="value"` 格式。`filter`、`where` 和 `select` 不是 LogQL 语法。
+LogQL 在解析后使用 label-filter 阶段。对于 unwrapped numeric metric，请将错误过滤器置于 unwrap 之后，以同时排除转换错误。
 
 </details>
 
 ---
 
-8. 以下哪项不是 Loki Compactor 的主要职责？
+8. Compactor 在此 TSDB 部署中的作用是什么？
 
-   - A) 将小 chunks 合并为更大的 chunks
-   - B) 应用保留策略（删除数据）
-   - C) 从客户端接收日志
-   - D) 索引优化
+   - A) 对 gateway 用户进行身份验证
+   - B) 接收所有客户端 push 请求
+   - C) 保证所有日志会在摄取后恰好 31 天过期
+   - D) 在启用 retention 时压缩索引文件，并异步删除已标记的 chunks
 
 <details>
-<summary>显示答案</summary>
+<summary>查看答案</summary>
 
-**答案：C) 从客户端接收日志**
+**答案：D**
 
-**解释：**
-从客户端接收日志是 Distributor 的职责。Compactor 会在后台优化已存储的数据，并根据保留策略删除旧数据。
+它并非通用的小日志 chunk 合并器。Retention 需要兼容的 schema/index period、已启用的处理、deletion store 以及持久化 marker state；31 天只是一个示例策略。
 
 </details>
 
 ---
 
-9. 在 Loki 中遇到“rate limit exceeded”错误时，应调整哪些设置？
+9. 收到 ingestion429 响应后，首先应做什么？
 
-   - A) max_streams_per_user
-   - B) ingestion_rate_mb, ingestion_burst_size_mb
-   - C) max_query_parallelism
-   - D) chunk_idle_period
+   - A) 在未测量容量的情况下提高所有 limit
+   - B) 区分 tenant byte rate/burst、per-stream rate 和 active-stream limit，然后检查容量/客户端重试
+   - C) 仅增加 query timeout
+   - D) 永久禁用所有 limit
 
 <details>
-<summary>显示答案</summary>
+<summary>查看答案</summary>
 
-**答案：B) ingestion_rate_mb, ingestion_burst_size_mb**
+**答案：B**
 
-**解释：**
-当日志摄取速率超过限制时，会发生“rate limit exceeded”错误。可通过增加 `ingestion_rate_mb`（每秒最大摄取量）和 `ingestion_burst_size_mb`（突发额度）来解决。
+摄取速率和突发 limit 位于 limits_config 下。提高 limit 可能会使后端过载，重试需要 backoff 和有界的丢失/缓冲策略。
 
 </details>
 
 ---
 
-10. 在 Loki 性能调优中，Ingester 的 `chunk_idle_period` 设置是什么意思？
+10. 哪项说法正确描述了 chunk_idle_period 和 /flush？
 
-    - A) 从 chunk 创建到删除的时间
-    - B) 空闲流在被刷新前等待的时间
-    - C) 查询超时时长
-    - D) 日志保留期限
+   - A) 两者都是只读状态端点
+   - B) chunk_idle_period 是日志 retention period
+   - C) chunk_idle_period 控制空闲刷新；POST /flush 会主动触发刷新
+   - D) 降低 chunk_idle_period 总是会降低总成本
 
 <details>
-<summary>显示答案</summary>
+<summary>查看答案</summary>
 
-**答案：B) 空闲流在被刷新前等待的时间**
+**答案：C**
 
-**解释：**
-`chunk_idle_period` 是指当某个流不再有新日志到达时，将 chunk 刷新到存储系统之前的等待时间。减小此值可降低内存使用量，但可能会创建许多小 chunks。
+更短的空闲时间可能产生更多小 chunks 和对象请求。flush 操作不是健康检查，readiness 也不能证明端到端持久性。
 
 </details>

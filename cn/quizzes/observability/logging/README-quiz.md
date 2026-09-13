@@ -1,195 +1,167 @@
-# 日志概述测验
+# 日志概览测验
 
-测试你对日志基本概念的理解。
+> **最后更新**: September 13, 2026
 
----
+1. 关于结构化 JSON 日志，哪项说法正确？
 
-1. 以下哪项不是结构化日志记录的主要优势？
-
-   - A) 提高搜索和筛选效率
-   - B) 减小日志文件大小
-   - C) 一致的日志格式
-   - D) 与自动化分析工具兼容
+   - A) 它们不需要解析
+   - B) 它们始终占用更少字节
+   - C) 明确的字段有助于分析，但解码、分帧和字段映射仍然很重要
+   - D) 它们会自动脱敏所有敏感数据
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 减小日志文件大小**
+**答案: C**
 
-**解释：**
-结构化日志记录（尤其是 JSON 格式）实际上可能会比非结构化文本日志产生更大的文件大小。这是因为增加了字段名称和分隔符。结构化日志记录的真正优势在于搜索效率、一致性以及与自动化工具的兼容性。
+使用经过测试的事件 schema，并且通常每行使用一个编码后的事件。JSON 可能比纯文本更大，并且原始副本和解析后的副本都需要数据处理政策。
+
+</details>
+
+2. TRACE 到 FATAL 是否在所有情况下都统一编号为 0 到 5？
+
+   - A) 否；不同 framework 有所不同，OpenTelemetry 使用 1–24 的 severity 范围，而 0 未指定
+   - B) 是，在每种语言中都是如此
+   - C) 是，仅在 Kubernetes 中如此
+   - D) FATAL 始终为 0
+
+<details>
+<summary>显示答案</summary>
+
+**答案: A**
+
+应映射 severity 的含义，而不是照搬虚构的数字标度。仅凭日志级别无法决定可恢复性，并且将所有生产日志提高到 WARN 可能会丢失证据。
+
+</details>
+
+3. 常见的默认 Linux 容器日志布局是什么？
+
+   - A) 实际文件位于 /var/log/containers；符号链接位于 /var/log/pods
+   - B) 实际文件位于 /var/log/pods；兼容性符号链接位于 /var/log/containers
+   - C) 每个 runtime 都仅写入 /var/lib/docker
+   - D) kubectl logs 包含无限归档
+
+<details>
+<summary>显示答案</summary>
+
+**答案: B**
+
+原始路径颠倒了。podLogsDir/OS/runtime 可能会改变布局。轮转和 --previous 不会创建集中式历史归档。
+
+</details>
+
+4. 公平比较 backend 成本需要什么？
+
+   - A) 只需 S3 的 GB 价格
+   - B) 始终选择 Loki 以获得最低账单
+   - C) 假设自行管理的查询是免费的
+   - D) 在相同 workload 下比较摄取、保留/索引的数据、计算、查询、请求、网络、恢复和运维
+
+<details>
+<summary>显示答案</summary>
+
+**答案: D**
+
+旧的 2025 和 100-GB 数字混用了单位，并且缺乏可复现的配置。它们并非经过测量的生产结果；只更新日期无法修复这些问题。
+
+</details>
+
+5. 应如何将 trace context 附加到日志？
+
+   - A) 为每条记录生成无关联的 ID
+   - B) 使用实际活动的 context；所示的 trace/span ID 分别有 32/16 个十六进制字符，并且不能全为零
+   - C) 要求每条启动记录都包含 trace ID
+   - D) 使用 session token 作为 span ID
+
+<details>
+<summary>显示答案</summary>
+
+**答案: B**
+
+没有 trace 的事件是有效的。JSON 字段名需要映射到目标模型；仅有 ID 并不能创建分布式 trace 或证明关联性。
+
+</details>
+
+6. 对于示例 pipeline，哪种处理选择更安全？
+
+   - A) 丢弃每一行包含 HealthCheck 的日志
+   - B) 信任应用 JSON 作为 tenant 身份
+   - C) 将应用字段与可信元数据分开，并验证脱敏/过滤、offset、buffer 和 retry
+   - D) 假设缓冲可防止所有丢失和重复
+
+<details>
+<summary>显示答案</summary>
+
+**答案: C**
+
+Fluent Bit 示例是一个经典格式的 filter 片段。Keep_Log 会保留另一个副本以供脱敏。失败的健康检查可能是有价值的证据，且交付保证取决于完整路径。
+
+</details>
+
+7. 应如何选择法规要求的保留期限？
+
+   - A) 根据适用的记录类型、司法管辖区、合同、法律保留要求和已批准的政策
+   - B) 所有财务日志均保留七年
+   - C) 所有医疗保健日志均保留六年
+   - D) 使用指定的 backend 即可证明合规
+
+<details>
+<summary>显示答案</summary>
+
+**答案: A**
+
+行业标签并不是完整的法律规则。在保留/删除/访问计划中纳入副本、对象版本、备份和导出，并测试恢复。
+
+</details>
+
+8. 关于 sidecar 和 DaemonSet，哪项正确？
+
+   - A) 两者都保证 tenant 隔离
+   - B) emptyDir 在 Pod 删除后仍然保留
+   - C) DaemonSet 能证明所有节点日志均已交付
+   - D) Sidecar 可以帮助仅写入文件的应用；但仍需验证调度、共享存储、生命周期和安全性
+
+<details>
+<summary>显示答案</summary>
+
+**答案: D**
+
+emptyDir 会在 Pod 内的 container 重启期间保留，但不会在 Pod 删除后保留。DaemonSet 面向符合条件的节点，并且可能存在 rollout 重叠；多条路由可能会重复记录。
+
+</details>
+
+9. 哪项存储/client 说法正确？
+
+   - A) 在每种 Deployment 中，OpenSearch 都仅将 S3 用于 snapshot
+   - B) Deployment/index/query 设计很重要；UltraWarm 使用 S3/cache，且 Promtail 在其声明的 EOL 后需要迁移
+   - C) 所有 CloudWatch 日志类别都具有相同功能
+   - D) 没有 dataset 的压缩排名是有效的
+
+<details>
+<summary>显示答案</summary>
+
+**答案: B**
+
+比较实际的 Deployment 模型和查询需求。Promtail 的 EOL 是 2026-03-02；该通知将 lambda-promtail 视为单独项目。选择 backend 并不保证成本或合规性。
+
+</details>
+
+10. 启用 EKS control-plane audit logging 确立了什么？
+
+   - A) 每个请求和请求正文都会被无损记录
+   - B) Worker DaemonSet 会读取受管理的 API-server host
+   - C) audit 记录遵循 policy，并通过必须验证的尽力而为 CloudWatch 交付路径传递
+   - D) 应用 stdout 收集会自动完整
+
+<details>
+<summary>显示答案</summary>
+
+**答案: C**
+
+检查异步更新状态、实际 stream 以及保留/访问。Fargate 使用其受管理的 router；Container Insights performance logs 与应用 stdout/stderr 不同。
 
 </details>
 
 ---
 
-2. 生产环境推荐使用哪种日志级别？
-
-   - A) DEBUG
-   - B) TRACE
-   - C) INFO 或 WARN
-   - D) FATAL
-
-<details>
-<summary>显示答案</summary>
-
-**答案：C) INFO 或 WARN**
-
-**解释：**
-生产环境推荐使用 INFO 或 WARN 级别。DEBUG 或 TRACE 过于冗长，会导致日志量过大，而仅使用 FATAL 则可能遗漏重要的运行信息。
-
-</details>
-
----
-
-3. Kubernetes 中最推荐的日志收集模式是什么？
-
-   - A) 基于文件的日志记录 + Sidecar
-   - B) stdout/stderr + DaemonSet agent
-   - C) 直接传输到远程日志服务器
-   - D) 使用本地文件存储并手动收集
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) stdout/stderr + DaemonSet agent**
-
-**解释：**
-在 Kubernetes 中，标准方法是让容器将日志输出到 stdout/stderr，并由以 DaemonSet 部署的 agent 从节点上的 `/var/log/containers/` 收集日志。这种方法具有与 kubectl logs 命令兼容、自动轮换以及无需单独卷等优点。
-
-</details>
-
----
-
-4. 当日志存储选择的最高优先级是“成本优化”时，推荐使用哪种解决方案？
-
-   - A) Amazon OpenSearch Service
-   - B) CloudWatch Logs
-   - C) Grafana Loki + S3
-   - D) EC2 上的 Elasticsearch
-
-<details>
-<summary>显示答案</summary>
-
-**答案：C) Grafana Loki + S3**
-
-**解释：**
-Loki 仅对标签建立索引，而不对日志内容建立索引，因此可显著降低存储成本。使用 S3 作为后端时，存储成本最低可达每 GB $0.023。
-
-</details>
-
----
-
-5. 在分布式追踪中，JSON 日志格式必须包含哪些字段？
-
-   - A) user_id, session_id
-   - B) trace_id, span_id
-   - C) request_id, response_time
-   - D) level, message
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) trace_id, span_id**
-
-**解释：**
-对于分布式追踪，必须包含 trace_id（追踪整个请求）和 span_id（标识单个操作）。这些字段可用于追踪请求在多个 Service 间的流转。
-
-</details>
-
----
-
-6. 以下哪项不是日志收集管道中“处理层”的职责？
-
-   - A) 日志解析和规范化
-   - B) 添加 Kubernetes 元数据
-   - C) 日志存储和索引
-   - D) 筛选和采样
-
-<details>
-<summary>显示答案</summary>
-
-**答案：C) 日志存储和索引**
-
-**解释：**
-日志存储和索引属于“存储层”的职责。处理层负责解析、添加元数据、筛选、缓冲等工作。
-
-</details>
-
----
-
-7. 为满足金融监管合规要求，推荐的日志保留期限是多久？
-
-   - A) 30 天
-   - B) 1 年
-   - C) 7 年
-   - D) 90 天
-
-<details>
-<summary>显示答案</summary>
-
-**答案：C) 7 年**
-
-**解释：**
-对于金融监管合规（例如与 SOX、PCI-DSS 相关的要求），通常建议将日志保留 7 年。医疗保健（HIPAA）要求保留 6 年，而一般运行日志通常需要保留约 1 年。
-
-</details>
-
----
-
-8. 何时应使用 Sidecar 模式收集日志？
-
-   - A) 所有标准 Kubernetes 工作负载
-   - B) 当旧版应用程序仅将日志输出到文件时
-   - C) CPU 资源受限的环境
-   - D) 仅单容器 Pod
-
-<details>
-<summary>显示答案</summary>
-
-**答案：B) 当旧版应用程序仅将日志输出到文件时**
-
-**解释：**
-Sidecar 模式用于旧版应用程序（使用文件日志记录而非 stdout/stderr）、多租户环境中的日志隔离，以及需要特殊日志格式处理的情况。由于它存在资源开销，对于标准工作负载，DaemonSet 方法效率更高。
-
-</details>
-
----
-
-9. 哪种日志存储解决方案在查询性能和全文搜索方面都“出色”？
-
-   - A) Grafana Loki
-   - B) CloudWatch Logs
-   - C) Amazon OpenSearch Service
-   - D) ClickHouse
-
-<details>
-<summary>显示答案</summary>
-
-**答案：C) Amazon OpenSearch Service**
-
-**解释：**
-OpenSearch（Elasticsearch 的分支）同时支持基于 Lucene 的强大全文搜索功能和复杂的聚合查询。Loki 的全文搜索能力有限，而 CloudWatch 和 ClickHouse 的全文搜索能力适中。
-
-</details>
-
----
-
-10. 在 EKS control plane logging 中，为进行安全审计必须启用哪种日志类型？
-
-    - A) scheduler
-    - B) controllerManager
-    - C) audit
-    - D) api
-
-<details>
-<summary>显示答案</summary>
-
-**答案：C) audit**
-
-**解释：**
-审计日志会记录对 Kubernetes API server 的所有请求。它们对于安全审计和监管合规至关重要，因为可以追踪谁在何时执行了什么操作。API 日志也很重要，但对于安全审计而言，audit 是最关键的。
-
-</details>
-
----
+[返回指南](../../../observability/logging/README.md)

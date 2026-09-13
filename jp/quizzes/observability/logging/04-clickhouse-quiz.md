@@ -1,193 +1,185 @@
 # ログ分析のための ClickHouse クイズ
 
-ClickHouse を使用したログ分析についての理解を確認しましょう。
+> **最終更新**: September 13, 2026
 
----
+1. カラムナー形式のストレージが分析的なログクエリに役立つのはなぜですか？
 
-1. ClickHouse がログ分析で高いパフォーマンスを示す主な理由は何ですか？
-
-   - A) 行指向ストレージ
-   - B) カラム指向ストレージ
-   - C) ドキュメント指向ストレージ
-   - D) キー・バリューストレージ
+   - A) 常にすべてのフィールドをスキャンするため
+   - B) 選択したカラムを読み取り、繰り返される値を圧縮できるため
+   - C) 固定の圧縮率を保証するため
+   - D) スキーマ設計が不要になるため
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) カラム指向ストレージ**
+**回答: B) 選択したカラムを読み取り、繰り返される値を圧縮できるため**
 
-**解説:**
-ClickHouse は分析クエリ（特定のカラムのみをスキャン）向けに最適化されたカラム指向データベースです。同じデータ型は連続して保存されるため、高い圧縮率とベクトル化クエリ実行が可能になります。
+利点はデータ、ソートキー、クエリに依存します。このガイドは 10:1 の圧縮率や固定のスループットを保証していません。
 
 </details>
 
 ---
 
-2. ClickHouse クラスターでデータレプリケーションと分散クエリの調整に使用されるコンポーネントはどれですか？
+2. この設計における Keeper/ZooKeeper の役割は何ですか？
 
-   - A) Kafka
-   - B) Redis
-   - C) ZooKeeper/ClickHouse Keeper
-   - D) etcd
+   - A) すべての分散 SELECT を実行する
+   - B) すべてのログ行を保存する
+   - C) レプリケートされたテーブルと分散 DDL を調整する
+   - D) コレクターを置き換える
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: C) ZooKeeper/ClickHouse Keeper**
+**回答: C) レプリケートされたテーブルと分散 DDL を調整する**
 
-**解説:**
-ClickHouse クラスターは ZooKeeper または ClickHouse Keeper を使用して、レプリカ間のデータ同期、分散 DDL の実行、リーダー選出を調整します。ClickHouse Keeper は ZooKeeper に代わる ClickHouse 専用の選択肢です。
+ClickHouse のクエリイニシエーターと Distributed テーブルは分散クエリを実行します。Keeper はそれらのクエリルーターではありません。
 
 </details>
 
 ---
 
-3. レプリケーションをサポートし、ログストレージに最も適した ClickHouse テーブルエンジンはどれですか？
+3. MergeTree ストレージにレプリケーションを追加するエンジンはどれですか？
 
-   - A) MergeTree
-   - B) ReplicatedMergeTree
-   - C) Log
-   - D) Memory
+   - A) ReplicatedMergeTree
+   - B) Memory
+   - C) Buffer
+   - D) Distributed 単体
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) ReplicatedMergeTree**
+**回答: A) ReplicatedMergeTree**
 
-**解説:**
-ReplicatedMergeTree は、すべての MergeTree 機能（ソート、パーティショニング、TTL など）にレプリケーション機能を追加します。高可用性が必要な本番ログストレージに推奨されます。
+レプリカには引き続き調整、独立した永続ストレージ、適切な障害ドメイン設計が必要です。レプリケーションだけでは無条件の HA 保証にはなりません。
 
 </details>
 
 ---
 
-4. ClickHouse で低カーディナリティの文字列カラム（例: level、namespace）に使用すべき最適化タイプはどれですか？
+4. 繰り返される namespace や severity の値に対して評価する価値がある型はどれですか？
 
-   - A) String
-   - B) FixedString
-   - C) LowCardinality(String)
-   - D) Enum
+   - A) 常に FixedString(255)
+   - B) LowCardinality(String)
+   - C) ログメッセージごとに一意の整数
+   - D) 圧縮されない String のみ
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: C) LowCardinality(String)**
+**回答: B) LowCardinality(String)**
 
-**解説:**
-LowCardinality(String) は、一意の値が少ない（約 10,000 以下）文字列カラムに使用されます。内部で辞書エンコーディングを使用して、ストレージ容量とクエリパフォーマンスを最適化します。
+辞書エンコーディングは繰り返される値に役立つ場合があります。普遍的な個別値数のしきい値を前提とするのではなく、辞書サイズとクエリの挙動をベンチマークしてください。
 
 </details>
 
 ---
 
-5. ClickHouse のログテーブルを設計する際、`ORDER BY` 句でカラムの順序を指定する原則は何ですか？
+5. ログテーブルの ORDER BY はどのように選択すべきですか？
 
-   - A) アルファベット順
-   - B) カラムサイズ順（小さいものから）
-   - C) 頻繁にフィルタリングされるカラムを先に配置する
-   - D) 作成時刻順
+   - A) アルファベット順にする
+   - B) フィールドの作成時刻で決める
+   - C) 選択性の高いフィルター、局所性、代表的なクエリから決める
+   - D) クエリに関係なく常に timestamp を最後に置く
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: C) 頻繁にフィルタリングされるカラムを先に配置する**
+**回答: C) 選択性の高いフィルター、局所性、代表的なクエリから決める**
 
-**解説:**
-ClickHouse の ORDER BY はデータのソートとインデックス作成に影響します。WHERE 句で頻繁に使用されるカラムを先頭に配置すると、クエリ時にスキャンするデータ量が少なくなります。例: `ORDER BY (namespace, service, timestamp)`
+キーは順序とインデックスプルーニングに影響します。頻繁にクエリされるカラムだけでは、最適な順序は決まりません。
 
 </details>
 
 ---
 
-6. ClickHouse で大規模なデータセットを高速に分析するためのサンプリング手法の構文はどれですか？
+6. SAMPLE 0.1 を使用する前に、何が真でなければなりませんか？
 
-   - A) `LIMIT RANDOM 10%`
-   - B) `SAMPLE 0.1`
-   - C) `WHERE rand() < 0.1`
-   - D) `TABLESAMPLE (10 PERCENT)`
+   - A) どのテーブルでも自動的にサポートされる
+   - B) テーブルには正確に 10 行が含まれていなければならない
+   - C) 常に正確に行の 10% を返す
+   - D) 互換性のある MergeTree サンプリング式が定義され、主キーに含まれている
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) `SAMPLE 0.1`**
+**回答: D) 互換性のある MergeTree サンプリング式が定義され、主キーに含まれている**
 
-**解説:**
-ClickHouse の `SAMPLE` 句は、データの一部のみをスキャンして高速な近似分析を行います。`SAMPLE 0.1` はデータの 10% のみを読み取ります。適切な係数を結果に乗算することで、推定合計を得られます。
+メインのログテーブルには SAMPLE BY がありません。別の sample_demo が必要な設計を示しています。決定的なサンプリングキーの範囲が、有限の行セットの正確に 10% を含む必要はありません。
 
 </details>
 
 ---
 
-7. ログ収集のために、ログソースと ClickHouse の間に Kafka を配置する主な理由は何ですか？
+7. 設定に応じて、Kafka は何を追加しますか？
 
-   - A) データ暗号化
-   - B) バッファリングとピークトラフィックへの対応
-   - C) データ圧縮
-   - D) クエリ最適化
+   - A) メモリ上の Buffer による、保証された exactly-once 配信
+   - B) 保持期間内でのバーストバッファリングとリプレイ
+   - C) すべてのパーサーエラーの自動的な除去
+   - D) 障害発生中の無制限のストレージ
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) バッファリングとピークトラフィックへの対応**
+**回答: B) 保持期間内でのバーストバッファリングとリプレイ**
 
-**解説:**
-Kafka は、ピークトラフィック時にログをバッファリングするメッセージキューとして機能し、ClickHouse が一貫したレートでデータを消費できるようにします。また、ClickHouse の障害時にデータ損失を防ぎます。
+保持期間、確認応答、レプリケーション、容量、オフセットコミット、下流の挿入動作をテストする必要があります。メモリ上の Buffer はクラッシュ時に確認応答済みのデータを失う可能性があります。
 
 </details>
 
 ---
 
-8. ClickHouse SQL で JSON フィールド値を抽出するために使用される関数はどれですか？
+8. オプションの response_time_ms に nullable JSON 抽出を使用するのはなぜですか？
 
-   - A) JSON_EXTRACT()
-   - B) JSONExtractString(), JSONExtractFloat()
-   - C) parseJSON()
-   - D) getJSON()
+   - A) 欠落した測定値をレイテンシーゼロのリクエストにしてはならないため
+   - B) すべてのログが HTTP リクエストであるため
+   - C) JSON 検証が不要になるため
+   - D) サーバーのクロックを変更するため
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) JSONExtractString(), JSONExtractFloat()**
+**回答: A) 欠落した測定値をレイテンシーゼロのリクエストにしてはならないため**
 
-**解説:**
-ClickHouse は、`JSONExtractString(json, 'field')` や `JSONExtractFloat(json, 'field')` などの関数を使用して JSON フィールドを抽出します。型ごとに異なる関数が使用されます。
+最初に JSONType を確認してブール値と数値文字列を除外し、その後 nullable な数値を抽出します。nullable 抽出だけでは、これらの値が強制変換される可能性があります。カウントおよびパーセンタイルのクエリでは、測定されたイベントを使用する必要があります。
 
 </details>
 
 ---
 
-9. ClickHouse テーブルで古いデータを自動的に削除する機能はどれですか？
+9. TTL TO VOLUME 句が必要とするもの、および保証するものは何ですか？
 
-   - A) AUTO_DELETE
-   - B) RETENTION_POLICY
-   - C) TTL (Time To Live)
-   - D) EXPIRE_AFTER
+   - A) S3 バケットと IAM ロールを作成する
+   - B) 正確なウォールクロックの期限ですべての行を削除する
+   - C) 既存の選択済みストレージポリシーと、非同期のバックグラウンド処理
+   - D) コールドパートを独立した Parquet バックアップにする
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: C) TTL (Time To Live)**
+**回答: C) 既存の選択済みストレージポリシーと、非同期のバックグラウンド処理**
 
-**解説:**
-ClickHouse の TTL 機能は、一定期間後にデータを自動的に削除するか、別のストレージ（例: S3）へ移動します。例: `TTL date + INTERVAL 90 DAY DELETE`
+TTL ではポリシーやクラウド権限を作成できません。コールドテーブルストレージと別途検証された Parquet アーカイブでは、所有権とリカバリーのセマンティクスが異なります。
 
 </details>
 
 ---
 
-10. ClickHouse を Grafana と統合する際に使用されるデータソースプラグインはどれですか？
+10. ClickHouse をバックエンドとする Grafana アラートはどのように構築すべきですか？
 
-    - A) grafana-mysql-datasource
-    - B) grafana-clickhouse-datasource
-    - C) grafana-sql-datasource
-    - D) grafana-olap-datasource
+   - A) clickhouse_custom_query という Prometheus メトリクスをでっち上げる
+   - B) 数値の SQL 結果および Grafana Alerting とともに grafana-clickhouse-datasource を使用する
+   - C) すべてのダッシュボードに管理者アカウントを付与する
+   - D) 受信ログがないことを正常性の証拠とみなす
 
 <details>
-<summary>答えを表示</summary>
+<summary>回答を表示</summary>
 
-**答え: B) grafana-clickhouse-datasource**
+**回答: B) 数値の SQL 結果および Grafana Alerting とともに grafana-clickhouse-datasource を使用する**
 
-**解説:**
-ClickHouse を Grafana と統合するには、`grafana-clickhouse-datasource` プラグインをインストールします。このプラグインにより、SQL クエリを使用して ClickHouse データを可視化し、ダッシュボードを構築できます。
+制限された読み取り専用アカウント、検証済みの TLS、必要なタイムアウト設定の権限を使用してください。インジェストは別途監視してください。入力がなくても集計結果がゼロを返す場合があります。
 
 </details>
+
+---
+
+[ガイドに戻る](../../../observability/logging/04-clickhouse.md)
