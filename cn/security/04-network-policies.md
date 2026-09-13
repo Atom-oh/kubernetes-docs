@@ -1,9 +1,9 @@
 # 网络策略
 
-> **审查基线**：Kubernetes 1.35 OpenAPI、Cilium 1.20.1、Calico 3.32.2 以及当前 AWS 文档。离线检查无法确认集群兼容性。
+> **审查基线**：Kubernetes 1.35 OpenAPI、Cilium 1.20.1、Calico 3.32.2 以及当前 AWS 文档。离线检查不能确定集群兼容性。
 > **最后更新**：September 13, 2026
 
-Kubernetes NetworkPolicy 是控制 Pod 间流量的防火墙规则。本文涵盖基础 NetworkPolicy 以及 Cilium/Calico 扩展。各章节均为独立示例；合并所有策略会改变实际生效的权限。未执行任何集群/云部署或实时连通性测试。
+Kubernetes NetworkPolicy 是控制 Pod 之间流量的防火墙规则。本文介绍基础 NetworkPolicy 及 Cilium/Calico 扩展。各节是独立示例；合并每项策略会改变实际生效的权限。未执行集群/云部署或实时连通性测试。
 
 ## 目录
 
@@ -24,9 +24,9 @@ Kubernetes NetworkPolicy 是控制 Pod 间流量的防火墙规则。本文涵�
 
 ### 什么是网络策略？
 
-Kubernetes NetworkPolicy 在其所在的 namespace 中选择 Pod，并控制所支持的入站和出站流量。若某个方向没有选中该 Pod 的策略，该方向不会被 NetworkPolicy 隔离；路由、安全组、NACL 和其他策略引擎仍可阻止连通性。
+Kubernetes NetworkPolicy 在其自身 namespace 中选择 Pod，并控制受支持的入站和出站流量。某方向上没有选择该 Pod 的策略时，该方向上的 Pod 不会被 NetworkPolicy 隔离；路由、安全组、NACL 和其他策略引擎仍可阻止连通性。
 
-**两个端点都必须允许** Pod 到 Pod 的连接：源端有效的 egress 规则和目的端有效的 ingress 规则都必须允许该连接。已允许连接的返回流量会被隐式允许。策略由支持它的网络插件异步实施；仅有 API 对象不能证明已实施。Node/hostNetwork 流量以及 TCP/UDP/SCTP 以外的协议需要按实现进行审查。下图展示的是策略意图，而非可达性保证。
+Pod 到 Pod 的连接**两端都必须允许**：源端的有效出站规则和目标端的有效入站规则都必须允许该连接。允许连接的返回流量会被隐式允许。策略由支持它的网络插件异步实施；仅有 API 对象并不能证明已实施。节点/hostNetwork 流量以及 TCP/UDP/SCTP 之外的协议需要针对具体实现进行审查。下图展示的是策略意图，并非可达性保证。
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -56,25 +56,25 @@ Kubernetes NetworkPolicy 在其所在的 namespace 中选择 Pod，并控制所�
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 网络策略特性
+### 网络策略特征
 
 | 属性 | 说明 |
 |----------|-------------|
-| **Namespace 作用域** | NetworkPolicy 适用于 namespace 内的资源 |
-| **可叠加** | 选中目标的 Kubernetes NetworkPolicy 的允许规则会按方向组成并集；Cilium 拒绝规则、Calico tier 和 AWS 管理策略具有独立语义 |
+| **Namespace 范围** | NetworkPolicy 适用于某个 namespace 内的资源 |
+| **可累加** | 选择 Kubernetes NetworkPolicy 的允许规则会在每个方向上形成并集；Cilium 拒绝、Calico tier 和 AWS 管理策略具有不同语义 |
 | **选择性应用** | 通过 podSelector 指定目标 Pod |
 | **方向控制** | 分别控制 Ingress（入站）和 Egress（出站） |
 | **依赖 CNI** | CNI 插件必须支持 NetworkPolicy |
 
-### CNI NetworkPolicy 支持情况
+### CNI NetworkPolicy 支持
 
 | CNI | 基础 NetworkPolicy | 扩展 | L7 策略 |
 |-----|---------------------|------------|-----------|
-| **Cilium** | ✓ | CiliumNetworkPolicy, CiliumClusterwideNetworkPolicy | ✓ |
-| **Calico** | ✓ | GlobalNetworkPolicy, NetworkSet, Tier | 可选 Istio/Dikastes 集成；请验证已部署的产品和版本 |
-| **Weave Net（已归档项目）** | 历史支持 | 旧版参考；新部署应评估仍在维护的实现 | ✗ |
-| **仅 Flannel** | 自身不实施策略 | 需要单独受支持的策略引擎 | ✗ |
-| **Amazon VPC CNI** | 在受支持的 EC2 Linux Node 上启用时 ✓ | 标准 NetworkPolicy；使用 VPC CNI 1.21+ 的 ClusterNetworkPolicy | EKS Auto Mode Node 上的 DNS egress；请参阅 EKS 注意事项 |
+| **Cilium** | ✓ | CiliumNetworkPolicy、CiliumClusterwideNetworkPolicy | ✓ |
+| **Calico** | ✓ | GlobalNetworkPolicy、NetworkSet、Tier | 可选的 Istio/Dikastes 集成；请验证已部署的产品和版本 |
+| **Weave Net（已归档项目）** | 曾提供支持 | 遗留参考；新部署应评估受维护的实现 | ✗ |
+| **仅 Flannel** | 本身不实施策略 | 需要单独的受支持策略引擎 | ✗ |
+| **Amazon VPC CNI** | 在受支持 EC2 Linux 节点上启用时 ✓ | 标准 NetworkPolicy；VPC CNI 1.21+ 支持 ClusterNetworkPolicy | EKS Auto Mode 节点上的 DNS egress；请参阅 EKS 注意事项 |
 
 ---
 
@@ -82,7 +82,7 @@ Kubernetes NetworkPolicy 在其所在的 namespace 中选择 Pod，并控制所�
 
 ### 基本结构
 
-请显式指定 `policyTypes`。若省略，Kubernetes 默认使用 Ingress，并在至少存在一条 egress 规则时加入 Egress。仅有空规则数组并不意味着同时包含两个方向。
+请显式指定 `policyTypes`。如果省略，Kubernetes 默认为 Ingress，并在至少存在一项 egress 规则时添加 Egress。仅有空规则数组并不表示两个方向都适用。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -133,7 +133,7 @@ spec:
 
 ### podSelector
 
-选择其所在 namespace 中应用此策略的 Pod。以下是可选的 spec 片段，而非独立的 API 资源。
+选择其自身 namespace 中应用策略的 Pod。以下是可选的 spec 片段，而非独立 API 资源。
 
 ```yaml
 # Apply to Pods with specific labels
@@ -166,7 +166,7 @@ spec:
 
 ### namespaceSelector
 
-按标签选择 namespace，若当前 namespace 匹配，也包括它。`name` 不是自动分配的 namespace 标签。请使用内置且不可变的 `kubernetes.io/metadata.name` 标签精确匹配 namespace 名称；应限制可更改自定义租户标签的人员。
+通过标签选择 namespace；如果当前 namespace 匹配，也会包含在内。`name` 不是自动分配的 namespace 标签。对于精确的 namespace 名称，请使用内置且不可变的 `kubernetes.io/metadata.name` 标签；应限制能够修改自定义租户标签的人员。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -222,7 +222,7 @@ ingress:
 
 ### ipBlock
 
-`ipBlock` 允许该规则中 CIDR 减去其 `except` 范围。例外不是全局拒绝，其他策略可以允许它。Service/load-balancer 地址转换可能改变 CNI 可见的源地址或目的地址；请验证实际路径。以下文档 CIDR 仅用于说明，并非可访问的生产端点。
+`ipBlock` 在该规则中允许一个 CIDR，但排除其 `except` 范围。例外不是全局拒绝，其他策略仍可允许它。Service/load-balancer 地址转换可能改变 CNI 可见的源地址或目标地址；请验证实际路径。下面的文档 CIDR 仅用于说明，并非可达的生产端点。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -261,7 +261,7 @@ spec:
 
 ### ports
 
-指定允许的端口和协议。`endPort` 需要数值型起始端口和 CNI 对端口范围的支持；命名端口不能作为范围的起始端口。仅 API 接受并不能证明每个插件都会实施。
+指定允许的端口和协议。`endPort` 需要数值型起始端口和 CNI 的范围支持；命名端口不能作为范围的起点。仅 API 接受并不能证明每个插件都会实施。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -295,11 +295,11 @@ spec:
 
 ## 默认拒绝策略 {#default-deny-policies}
 
-空基线不会贡献任何允许规则；其他选中目标的策略仍可允许流量。策略变更后现有连接的行为取决于实现，必须单独测试。
+空基线本身不会贡献允许规则；其他选择该 Pod 的策略仍可允许流量。策略变更后现有连接的行为取决于实现，必须单独测试。
 
-### 默认拒绝 Ingress
+### 默认拒绝入站
 
-一个自身不含允许规则的 ingress 隔离基线。其他选中目标的策略仍可允许 ingress：
+一个自身没有允许规则的入站隔离基线。其他选择该 Pod 的策略仍可允许入站：
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -314,9 +314,9 @@ spec:
   # No ingress rules = block all inbound traffic
 ```
 
-### 默认拒绝 Egress
+### 默认拒绝出站
 
-一个自身不含允许规则的 egress 隔离基线。其他选中目标的策略仍可允许 egress：
+一个自身没有允许规则的出站隔离基线。其他选择该 Pod 的策略仍可允许出站：
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -346,9 +346,9 @@ spec:
     - Egress
 ```
 
-### 默认拒绝且允许 DNS
+### 允许 DNS 的默认拒绝
 
-此配置假设 `kube-system` 中存在基于 Pod 的 CoreDNS，并且带有 `k8s-app=kube-dns`。它同时允许 TCP 和 UDP 53。若 DNS 自身存在 ingress 隔离，其策略也必须允许客户端。NodeLocal DNSCache 和 Auto Mode Node 本地 CoreDNS 需要其实际解析器路径/IP 配置；不要原样应用该 Pod selector。
+此配置假定 `kube-system` 中使用了基于 Pod 的 CoreDNS，且标签为 `k8s-app=kube-dns`。它允许 TCP 和 UDP 53。如果 DNS 本身具有入站隔离，其策略也必须允许客户端。NodeLocal DNSCache 和 Auto Mode 节点本地 CoreDNS 需要其实际的解析器路径/IP 配置；不要在这些环境中不作修改地应用此 Pod selector。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -377,7 +377,7 @@ spec:
 
 ### 零信任架构默认策略
 
-包含 frontend→API 的两个方向。它不允许到 frontend 的入站流量，也不允许 API→database；仅添加已审查的流。使用上述基于 Pod 的 DNS 假设。
+包含 frontend→API 的两个方向。这不会允许到 frontend 的入站流量或 API→database；只添加经过审查的流量。请采用以上基于 Pod 的 DNS 假定。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -461,7 +461,7 @@ spec:
 
 ### 策略评估规则
 
-对于每个端点和方向，仅按如下方式评估选中目标的 **Kubernetes NetworkPolicies**。随后检查另一个端点的方向和所有其他网络控制。仅 ingress 的策略不会隔离 egress。
+对于每个端点和方向，仅按如下方式评估选择它的 **Kubernetes NetworkPolicy**。然后检查另一端点的相应方向以及所有其他网络控制。仅入站策略不会隔离出站。
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -491,9 +491,9 @@ spec:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 组合多个策略
+### 合并多个策略
 
-当多个 NetworkPolicy 应用于同一个 Pod 时，所有策略规则会合并（并集）：
+当多个 NetworkPolicy 应用于同一 Pod 时，所有策略规则会合并（并集）：
 
 ```yaml
 ---
@@ -542,11 +542,11 @@ spec:
           port: 9090
 ```
 
-**结果：**API 的 ingress 允许 frontend Pod 使用 8080，并允许 monitoring namespace 的 Pod 使用 8080/9090。其 egress 规则、实际 listener 和其他网络控制也必须允许该连接。
+**结果：**API 的入站允许 frontend Pod 访问 8080，并允许 monitoring namespace 中的 Pod 访问 8080/9090。其出站规则、实际 listener 及其他网络控制也必须允许该连接。
 
 ### 策略评估顺序
 
-Kubernetes NetworkPolicy API 没有优先级或显式拒绝规则。它的允许并集并不描述 Calico 策略顺序/tier 操作、Cilium 显式拒绝或 AWS 管理策略的评估：
+Kubernetes NetworkPolicy API 没有优先级或显式拒绝规则。其允许规则的并集并不能描述 Calico 策略顺序/tier 操作、Cilium 显式拒绝或 AWS 管理策略评估：
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -573,11 +573,11 @@ Kubernetes NetworkPolicy API 没有优先级或显式拒绝规则。它的允许
 
 ## Cilium 网络策略扩展 {#cilium-network-policy-extensions}
 
-这些示例使用已发布的 Cilium 1.20.1 策略 schema，并非要求升级每个集群。HTTP 规则需要受支持的 L7 proxy 路径。AWS VPC CNI chaining 具有已记录的高级功能限制，包括 L7 策略；不要假定这些 HTTP 示例可在该模式下工作。数值型 Cilium security identity 是标签集合的分配结果，而不是永久的应用 ID。
+这些示例使用已发布的 Cilium 1.20.1 策略 schema，并非要求升级每个集群。HTTP 规则需要受支持的 L7 proxy 路径。AWS VPC CNI chaining 存在有文档记录的高级功能限制，包括 L7 策略；不要假定这些 HTTP 示例在该模式下可用。数值型 Cilium security identity 是为标签集分配的标识，而不是永久的应用 ID。
 
 ### CiliumNetworkPolicy
 
-Cilium 为基础 NetworkPolicy 提供了更强大的功能扩展。
+Cilium 在基础 NetworkPolicy 上扩展了更强大的功能。
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -613,7 +613,7 @@ spec:
 
 ### L7 HTTP 策略
 
-Cilium HTTP 规则会过滤其 L7 proxy 可见的请求；它们不会认证 API key 或建立 administrator role。调用者可以提供 `X-User-Role` header。该示例过滤 method、path 和精确的 `Content-Type`。请在应用或经过认证的 gateway 中实施认证和授权。端到端 TLS 不会自动解密以进行 HTTP 检查。审查可能在 L4 层允许相同流量的其他策略。
+Cilium HTTP 规则会过滤其 L7 proxy 可见的请求；它们不会验证 API key 或建立管理员角色。调用方可以提供 `X-User-Role` header。此示例过滤方法、路径和精确的 `Content-Type`。请在应用程序或经身份验证的 gateway 中实施认证和授权。端到端 TLS 不会自动解密以进行 HTTP 检查。请审查可能在 L4 层允许相同流量的其他策略。
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -650,9 +650,9 @@ spec:
 
 ### L7 Kafka 策略
 
-已发布的 Cilium 1.20.1 CNP schema 支持 HTTP 和 DNS L7 规则，但不包含 `rules.kafka`。以前的 `role`、`topic` 和 `clientID` 配方不是当前可部署的 API。请使用 network policy 限制 broker 连通性，然后通过 Kafka authentication 和 ACL 为 `orders` 与 `events` 实施 producer/consumer 权限。client ID 不是经过认证的主体。
+已发布的 Cilium 1.20.1 CNP schema 支持 HTTP 和 DNS L7 规则，但不包含 `rules.kafka`。原有的 `role`、`topic` 和 `clientID` 配方不是当前可部署的 API。使用网络策略限制 broker 连通性，然后使用 Kafka 认证和 ACL 对 `orders` 和 `events` 实施 producer/consumer 权限。client ID 不是经过认证的主体。
 
-此 L4 示例假设已在 TCP 9093 上配置 TLS broker listener、使用同 namespace 客户端，并单独授权了客户端 egress/DNS。它不配置 TLS、broker ACL 或 topic 权限。
+此 L4 示例假定 TCP 9093 上已配置 TLS broker listener、客户端位于同一 namespace，且客户端 egress/DNS 已另行授权。它不配置 TLS、broker ACL 或 topic 权限。
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -680,7 +680,7 @@ spec:
 
 ### L7 DNS 策略
 
-此示例使用基于 Pod 的 CoreDNS。端口 53 上的 `ANY` 覆盖 UDP 和 TCP。DNS 查询权限与连接返回 IP 的权限是分开的：解析以下 database 名称并不允许 database 连接。请替换示例 domain，考虑 DNS search suffix/cache/TTL，并验证实际解析器配置。FQDN 规则从 DNS 学习 IP；它们不会认证 SaaS tenant，也不能替代 TLS/应用授权。
+此示例使用基于 Pod 的 CoreDNS。端口 53 上的 `ANY` 同时涵盖 UDP 和 TCP。DNS 查询权限与连接返回 IP 的权限是不同的：解析下面的 database 名称并不允许 database 连接。请替换示例域名，考虑 DNS search suffix/cache/TTL，并验证实际的 resolver 配置。FQDN 规则从 DNS 学习 IP；它们不会认证 SaaS tenant，也不能替代 TLS/应用程序授权。
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -715,7 +715,7 @@ spec:
 
 ### CiliumClusterwideNetworkPolicy
 
-该资源为 cluster scope，而其 selector 明确将其限制为 `production/app=api`。它允许 gateway Pod 通过 TCP8080。它仅控制 ingress；egress isolation/DNS 以及 gateway 自身的 egress 需要相应的策略。此前允许全部 endpoint/cluster/world 的示例并不是默认拒绝策略。
+该资源的范围是 cluster，但其 selector 明确将其限制为 `production/app=api`。它允许 gateway Pod 通过 TCP8080 访问。它仅控制 ingress；egress isolation/DNS 和 gateway 自身的 egress 需要相应的策略。此前针对所有 endpoint/世界的 cluster allow 示例不是默认拒绝策略。
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -740,7 +740,7 @@ spec:
 
 ### 基于 Cilium Entity 的策略
 
-`host` 包含本地 Node 及其 host-network container；`cluster` 不仅包含应用 Pod。`world` 覆盖 cluster 外的 endpoint，并非细粒度的 Internet/SaaS allowlist。缩小外部访问范围时，请使用显式 CIDR/FQDN 规则。该示例仅向带标签的 Kubernetes API client 提供 TCP443 访问；请单独配置其 API endpoint、TLS trust、credentials 和 RBAC。源 identity 可在 managed-control-plane 网络路径中变化，因此应检查实际流 identity，而非将 ingress 扩大到整个 cluster。
+`host` 包含本地节点及其 host-network container；`cluster` 包含的内容不仅是应用 Pod。`world` 覆盖 cluster 外的 endpoint，不是细粒度 Internet/SaaS allowlist。缩小外部访问范围时请使用明确的 CIDR/FQDN 规则。此示例仅为带标签的 Kubernetes API client 提供 TCP443 访问；请单独配置其 API endpoint、TLS trust、凭证和 RBAC。托管 control-plane 网络路径中的源 identity 可能变化，因此应检查实际 flow identity，而不要将 ingress 扩大到整个 cluster。
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -763,9 +763,9 @@ spec:
 
 ## Calico 网络策略扩展 {#calico-network-policy-extensions}
 
-策略/Tier 示例遵循 Calico Open Source3.32.2 资源。`projectcalico.org/v3` 需要受支持的 Calico API server 或匹配的 `calicoctl` workflow；它不是原始 Kubernetes `crd.projectcalico.org/v1` storage API。应用前请验证已安装的 datastore/API。Calico 有序 action 和 tier delegation 与可叠加的 Kubernetes NetworkPolicy API 不同。
+策略/Tier 示例遵循 Calico Open Source 3.32.2 资源。`projectcalico.org/v3` 需要受支持的 Calico API server 或匹配的 `calicoctl` 工作流；它不是原始 Kubernetes `crd.projectcalico.org/v1` 存储 API。应用前请验证已安装的数据存储/API。Calico 有序 action 和 tier delegation 与可累加的 Kubernetes NetworkPolicy API 不同。
 
-当前 Open Source 文档还介绍了 [Istio/Dikastes application-layer integration](https://docs.tigera.io/calico/latest/network-policy/istio/app-layer-policy)。HTTPMatch API 需要该独立设置，并支持 ingress Allow 规则。以下 Calico 示例涵盖 L3/L4 策略；本次审查未部署或测试 L7 integration。
+当前 Open Source 文档还描述了 [Istio/Dikastes 应用层集成](https://docs.tigera.io/calico/latest/network-policy/istio/app-layer-policy)。HTTPMatch API 需要单独的设置，并支持 ingress Allow 规则。以下 Calico 示例涵盖 L3/L4 策略；本次审查未部署或测试 L7 集成。
 
 ### Calico NetworkPolicy
 
@@ -805,7 +805,7 @@ spec:
 
 ### GlobalNetworkPolicy
 
-这两个全局资源仅选择 `production` namespace 中的 workload。未受约束的 `selector: all()` 也可能影响 host endpoint；不要在没有明确范围和恢复路径的情况下应用 cluster-wide deny。在 tier 内，较低的 `order` 会先被评估。该示例允许基于 Pod 的 DNS，并在其他方面提供拒绝基线；请加入已审查的应用流并考虑更高 tier 的 action。
+这两个 global 资源仅选择 `production` namespace 中的 workload。不受约束的 `selector: all()` 也可能影响 host endpoint；不要在没有明确范围和恢复路径的情况下应用 cluster-wide deny。在 tier 中，较低 `order` 会先被评估。该示例允许基于 Pod 的 DNS，否则提供拒绝基线；请添加经过审查的应用流量并考虑更高 tier 的 action。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -851,7 +851,7 @@ spec:
 
 ### NetworkSet
 
-NetworkSet selector 匹配 `metadata.labels`，而不是资源的名称。第一个 set 有 namespace；被阻止的 set 是全局的，并由下面的 security-tier 示例使用。此处所有 CIDR 都是文档范围，必须替换为已审查的目标。egress 示例允许 TCP443 到带标签的有 namespace 的 set；DNS 是独立规则。
+NetworkSet selector 匹配 `metadata.labels`，而不是资源名称。第一个 set 具有 namespace 范围；blocked set 是 global 的，并由下方 security-tier 示例使用。此处所有 CIDR 均为文档范围，必须替换为经过审查的目标。egress 示例允许 TCP443 到带标签的 namespaced set；DNS 是单独的规则。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -896,7 +896,7 @@ spec:
 
 ### 基于 Tier 的策略
 
-所引用的 Calico Open Source 版本中包含 Tier，而不仅仅是 Enterprise。若没有规则 action，选中目标的 tier 默认使用 `Deny`。因此 deny-known-threats tier 明确使用 `defaultAction: Pass`，使不相关的流量可以到达后续策略。`Pass` 是委派，不是权限。`global()` 属于 `namespaceSelector`；单独的 label selector 用于标识 GlobalNetworkSet。在部署前填充 application-tier 策略，并验证任何最终 profile/default-tier 行为；创建空 Tier 并非完整的应用隔离策略。
+Tier 在所引用的 Calico Open Source 版本中可用，并非仅 Enterprise 可用。当没有规则生效时，选择该 tier 的流量默认为 `Deny`。因此 deny-known-threats tier 显式使用 `defaultAction: Pass`，让无关流量可以到达后续策略。`Pass` 是委派，而不是许可。在部署前填充 application-tier 策略，并验证任何最终 profile/default-tier 行为；创建空 Tier 并不构成完整的应用隔离策略。
 
 ```yaml
 apiVersion: projectcalico.org/v3
@@ -970,11 +970,11 @@ spec:
 
 ## 设计模式 {#design-patterns}
 
-这些是**可选策略配置**，而不是要一起应用的组合包。复用 `production` 并不会使无关示例兼容：它们的允许规则会累积。请先准备 namespace、workload 标签、监听端口和真实 DNS 配置。示例已在本地检查 schema/意图，但未在 cluster 上执行。
+这些是**可选的策略配置**，并非要一起应用的 bundle。复用 `production` 并不使无关示例兼容：它们的允许规则会累积。请先准备 namespace、workload label、监听端口和实际 DNS 配置。这些示例仅在本地检查 schema/意图，未在 cluster 上执行。
 
 ### 微分段
 
-此配置在两端允许 frontend→API TCP8080 和 API→database TCP5432，并允许 DNS。它特意不包含 Internet egress 或外部 frontend ingress。如有需要，请添加已批准的目标 CIDR/port 或经过认证的 egress gateway 配置；从 0.0.0.0/0 排除 RFC1918 并不是 SaaS allowlist。
+此配置允许 frontend→API TCP8080 和 API→database TCP5432 的双向流量，以及 DNS。它有意不允许 Internet egress 或外部 frontend ingress。如有需要，请添加获批的目标 CIDR/port 或经身份验证的 egress gateway 配置；从 0.0.0.0/0 排除 RFC1918 并不是 SaaS allowlist。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1096,7 +1096,7 @@ spec:
 
 ### Namespace 隔离
 
-团队配置包含同团队 ingress **和 egress**，以及 DNS。共享服务还需要允许 team-a 的目标 ingress 以及真实的 TLS443 listener。限制 namespace 标签管理；团队标签不是独立的信任边界。
+team 配置包括同 team 的 ingress **和 egress**，以及 DNS。共享服务还需要 destination ingress 允许 team-a，并有真实的 TLS443 listener。请限制 namespace 标签管理；team 标签并不是独立的信任边界。
 
 ```yaml
 apiVersion: v1
@@ -1163,7 +1163,7 @@ spec:
 
 ### 数据库保护
 
-`database` namespace 必须存在。Production 调用方和 monitoring Pod 需要其自身的 egress allow。TCP5432 peer 规则只允许假设的 PostgreSQL replication transport；请单独配置 database authentication/TLS。TCP9187 假设另行安装了 exporter。
+`database` namespace 必须存在。production 调用方和 monitoring Pod 需要各自的 egress allow。TCP5432 peer 规则仅允许假定的 PostgreSQL replication transport；请单独配置 database authentication/TLS。TCP9187 假定已单独安装 exporter。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1230,7 +1230,7 @@ spec:
 
 ### 三层架构策略
 
-假定存在一个现有的 `gateway-system/app=edge-proxy` workload，它终止客户端 TLS 并可通过 TCP80 访问 web Pod。gateway 的 egress 策略不在此 namespace 中。数据 peer ingress 和 egress 使用 TCP5432/6379；其他 replication/cluster-bus/backup port 取决于所选 database，且不会隐式包含。实际部署中应拆分 PostgreSQL 和 Redis selector。
+假定已存在一个终止客户端 TLS 的 `gateway-system/app=edge-proxy` workload，它可在 TCP80 上访问 web Pod。gateway 的 egress 策略不在此 namespace 中。data peer ingress 和 egress 使用 TCP5432/6379；额外的 replication/cluster-bus/backup 端口取决于所选 database，不能由此推断。在实际部署中应拆分 PostgreSQL 和 Redis selector。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1388,11 +1388,11 @@ spec:
 
 ### 使用 netshoot 测试
 
-使用已获批准、已预配且镜像已固定、权限已审查的诊断 Pod。选择能够实际触发策略的源标签/namespace/Node 放置位置；通用的无标签 Pod 不代表应用。预配 netshoot 会创建 workload，可能与 Pod Security admission 冲突。不要在观察脚本中创建/删除固定且共享的 `test-pod` 名称。仅针对自己拥有的测试端点运行探测。
+请使用经批准、已预配的 diagnostic Pod，配合固定版本的 image 和经过审查的权限。选择实际会触发策略的 source label/namespace/node placement；通用的无标签 Pod 并不代表应用。预配 netshoot 会创建 workload，且可能与 Pod Security admission 冲突。不要在观察脚本中创建/删除固定的共享 `test-pod` 名称。仅对自有测试 endpoint 执行 probe。
 
 ### 使用 kubectl exec 测试
 
-请显式设置 context、namespace、现有 Pod 和 container。DNS 成功并不等于 TCP 成功；连接被拒绝、listener 不健康、TLS 错误和策略丢弃是不同结果。这些命令仅测试连通性，不输出 response body。本次审查未在 cluster 上运行它们。
+请显式设置 context、namespace、现有 Pod 和 container。DNS 成功不代表 TCP 成功；连接被拒绝、不健康的 listener、TLS 错误和策略丢弃是不同结果。这些命令仅测试连通性，并不打印 response body。本次审查未针对 cluster 运行它们。
 
 ```bash
 # Both Pods already exist in the approved test environment.
@@ -1406,13 +1406,13 @@ kubectl --context="$CONTEXT" -n "$NAMESPACE" exec "$ALLOW_POD" \
 
 ### Cilium 连通性测试
 
-`cilium connectivity test` 会创建测试资源和流量；它不是只读状态命令。使用获批准的隔离 cluster/namespace、兼容的 CLI 和 image、明确的外部目标以及清理计划。请查阅 `cilium connectivity test --help` 以了解所安装 CLI 的 filter，而不要假定历史测试名称仍存在。通过的 suite 不能证明每项应用策略或 CNI chaining 功能。
+`cilium connectivity test` 会创建测试资源和流量；它不是只读状态命令。请使用获批的隔离 cluster/namespace、兼容的 CLI 和 image、明确的外部目标及清理计划。请查阅 `cilium connectivity test --help` 以了解已安装 CLI 的 filter，而不要假定历史测试名称仍然存在。通过的 suite 并不能证明每项应用策略或 CNI chaining 功能。
 
 ### 自动化测试脚本
 
-此脚本仅在两个现有 Pod 中执行有界 curl 探测；不创建或删除 cluster 资源。设置 `CONTEXT`、`NAMESPACE`、`ALLOW_POD`、`DENIED_POD`、`PROBE_CONTAINER` 和以 `/health` 结尾的非机密 `TARGET_URL`。两个 container 都需要 `sh` 和 `curl`。第一个 Pod 是到同一目标的已知允许正向对照。HTTP error response 仍可确定网络可达性，因为此测试不是应用健康验证。
+此脚本仅在两个现有 Pod 中执行受限的 curl probe；不会创建或删除 cluster 资源。设置 `CONTEXT`、`NAMESPACE`、`ALLOW_POD`、`DENIED_POD`、`PROBE_CONTAINER` 和以 `/health` 结尾的非机密 `TARGET_URL`。两个 container 都需要 `sh` 和 `curl`。第一个 Pod 是同一目标的已知允许 positive control。HTTP error response 仍能建立网络可达性，因为此测试并非应用健康验证。
 
-Exit1 表示被阻止主体意外连接；exit2 表示未知/错误；exit3 表示需要佐证的超时。超时**绝不能**自动视为 PASS：在检查 endpoint health、route 及 SG/NACL control 的同时，将精确的 source/destination/port/time 与 CNI policy-drop verdict 关联。本地 mock test 不声明实时实施结果。
+Exit1 表示被阻止的 subject 意外连接；exit2 表示未知/错误；exit3 表示需要佐证的 timeout。timeout **绝不会**自动变为 PASS：应将精确的 source/destination/port/time 与 CNI policy-drop verdict 关联，同时检查 endpoint health、route 和 SG/NACL control。局部 mock test 不主张已实施实时 enforcement。
 
 ```bash
 #!/usr/bin/env bash
@@ -1462,11 +1462,11 @@ esac
 
 ## EKS 注意事项 {#eks-considerations}
 
-### Amazon VPC CNI 和 NetworkPolicy
+### Amazon VPC CNI 与 NetworkPolicy
 
-启用后，Amazon VPC CNI 支持 network policy。当前 AWS 指南要求标准和 admin policy 均使用 VPC CNI 1.21+、兼容的 EKS platform 以及 Linux kernel 5.10+。实施适用于受支持的 EC2 Linux Node，不适用于 Fargate 或 Windows。请使用当前受支持的 EKS 版本并验证兼容的 add-on release；不要从上游 Kubernetes release 推断 EKS 支持情况。
+Amazon VPC CNI 在启用后支持 network policy。当前 AWS 指南要求标准和 admin policy 均使用 VPC CNI 1.21+、兼容的 EKS platform 和 Linux kernel 5.10+。实施适用于受支持的 EC2 Linux 节点，不适用于 Fargate 或 Windows。请使用当前受支持的 EKS 版本并验证其兼容的 add-on release；不要根据上游 Kubernetes release 推断 EKS 支持。
 
-对于 **EKS-managed** VPC CNI add-on，在设置已记录的字符串 `"enableNetworkPolicy": "true"` 时保留其现有配置。以下命令会在审查后变更所选 cluster；它不会升级 add-on version。若安装的版本不兼容，请停止操作，先遵循已记录的升级过程。
+对于 **EKS-managed** VPC CNI add-on，请在设置文档所述字符串 `"enableNetworkPolicy": "true"` 时保留其现有配置。以下操作会在审查后更改所选 cluster；不会升级 add-on 版本。如果已安装版本不兼容，请停止操作并先遵循文档规定的升级流程。
 
 ```bash
 # Requires AWS CLI, kubectl and jq; use an approved test cluster.
@@ -1480,17 +1480,35 @@ jq -e '(.addon.configurationValues // "{}") | if . == "" then {} else fromjson e
 aws eks update-addon --cluster-name "$CLUSTER_NAME" --addon-name vpc-cni   --configuration-values file://vpc-cni-network-policy.json --resolve-conflicts PRESERVE
 ```
 
-在 rollout 前检查 update status 和策略行为。`--resolve-conflicts PRESERVE` 不会为你合并替换 JSON document；示例显式保留现有值。保留 snapshot 以便恢复。由 Helm 管理的安装应使用其经审查的 chart/values 和 `enableNetworkPolicy: true`；不要通过这个 managed-add-on 命令接管它。设置虚构的 `ENABLE_NETWORK_POLICY` environment variable 不是启用过程。
+在 rollout 前检查 update status 和策略行为。`--resolve-conflicts PRESERVE` 不会为你合并 replacement JSON document；此示例显式保留现有值。请保留 snapshot 以便恢复。Helm-owned installation 应使用其经过审查的 chart/values 和 `enableNetworkPolicy: true`；不要通过此 managed-add-on command 接管其所有权。设置虚构的 `ENABLE_NETWORK_POLICY` environment variable 并非启用流程。
 
-标准 startup mode 最初可能允许新 Pod，直到其策略被编程。`NETWORK_POLICY_ENFORCING_MODE=strict` 会使符合条件的 Pod 在启动时被拒绝，需要完整的 allow matrix（包括 DNS）；更改它可能中断 workload。由 controller 管理的 Pod 是可靠的测试目标。实施发生在主 Pod interface 上，因此应分别检查额外 interface、IPv6-to-IPv4 egress、host networking 和 NAT。不要安装两个 engine 来管理相同的标准策略，也不要将删除 `aws-node` 作为迁移捷径。
+标准 startup mode 起初可能允许新 Pod，直至其策略被编程。`NETWORK_POLICY_ENFORCING_MODE=strict` 会让符合条件的 Pod 以拒绝状态启动，并要求完整的 allow matrix（包括 DNS）；改变它可能中断 workload。controller-managed Pod 是可靠的测试目标。enforcement 位于 primary Pod interface，因此请单独检查 extra interface、IPv6-to-IPv4 egress、host networking 和 NAT。不要让两个 engine 管理相同的标准策略，也不要将删除 `aws-node` 作为 migration shortcut。
 
-### EKS 增强网络安全策略（December 2025）
+### EKS 增强网络安全策略（2025 年 12 月）
 
-> **发布**：December 15, 2025 · [来源](https://aws.amazon.com/about-aws/whats-new/2025/12/amazon-eks-enhanced-network-security-policies/)
+> **发布公告**：December 15, 2025 · [来源](https://aws.amazon.com/about-aws/whats-new/2025/12/amazon-eks-enhanced-network-security-policies/)
 
-该功能确实存在，但其资源使用 **`networking.k8s.aws/v1alpha1`**。`ClusterNetworkPolicy` 为 cluster scoped 且必需包含 `tier`；基于 DNS 的 egress 在以下 namespace 示例中使用 `ApplicationNetworkPolicy`。EC2 Linux 上的标准/admin VPC CNI 策略支持并不表示每种 compute mode 都支持。DNS 规则仅在 **Auto Mode 启动的 EC2 instance** 上实施，包括混合 cluster 中的 instance。
+该功能真实存在，但其资源使用 **`networking.k8s.aws/v1alpha1`**。`ClusterNetworkPolicy` 是 cluster scoped，且必需指定 `tier`；DNS-based egress 使用下方 namespace 示例中的 `ApplicationNetworkPolicy`。EC2 Linux 上的标准/admin VPC CNI policy 支持并不意味着每种 compute mode 都受支持。DNS 规则仅在 **Auto Mode-launched EC2 instances** 上实施，包括在 mixed cluster 中。
 
-此 Admin-tier 示例拒绝从按 namespace 选择的 Pod 到 `isolated-demo` 的入站流量，包括该 namespace 中的 Pod。它不是完整的 external/host-network firewall 或 DNS allow 策略。Admin Deny 不能被 namespace NetworkPolicy 覆盖。在添加其他 action 前审查实际安装的 CRD：当前上游 AWS controller schema 将允许 action 命名为 `Accept`，而 user-guide prose 使用 “Allow”。
+**Auto Mode 前提条件：**在应用下方策略前，请启用其 Network Policy Controller。更新 EKS-managed `vpc-cni` add-on 是独立路径，不会为纯 Auto Mode cluster 启用策略实施。所需设置为 ConfigMap `kube-system/amazon-vpc-cni` 中的 `data.enable-network-policy-controller: "true"`。下面的工作流通过 merge patch 保留其他 ConfigMap data，仅在不存在时创建，并在读取或写入失败时停止。运行前请审查 cluster context 和现有配置。
+
+```bash
+set -euo pipefail
+config="$(kubectl get configmap amazon-vpc-cni -n kube-system --ignore-not-found -o name)"
+if [ -n "$config" ]; then
+  kubectl patch configmap amazon-vpc-cni -n kube-system --type merge \
+    -p '{"data":{"enable-network-policy-controller":"true"}}'
+else
+  kubectl create configmap amazon-vpc-cni -n kube-system \
+    --from-literal=enable-network-policy-controller=true
+fi
+kubectl get configmap amazon-vpc-cni -n kube-system -o json \
+  | jq -e '.data["enable-network-policy-controller"] == "true"'
+```
+
+启用后，检查相应的 `PolicyEndpoints` 对象，并在所选 Auto Mode 节点上测试允许和拒绝流量。存储的 flag 或被接受的 policy object 并不能证明实施。请参阅 [Auto Mode network policy setup](https://docs.aws.amazon.com/eks/latest/userguide/auto-net-pol.html)。本次文档审计未执行 cluster enforcement test。
+
+此 Admin-tier 示例拒绝来自由 namespace 选择的 Pod 到 `isolated-demo` 的入站流量，包括该 namespace 中的 Pod。它不是完整的 external/host-network firewall 或 DNS allow policy。Admin Deny 不能被 namespace NetworkPolicy 覆盖。在添加其他 action 前审查实际安装的 CRD：当前 upstream AWS controller schema 将允许 action 命名为 `Accept`，而 user-guide prose 使用“Allow”。
 
 ```yaml
 apiVersion: networking.k8s.aws/v1alpha1
@@ -1512,7 +1530,7 @@ spec:
         matchLabels: {}
 ```
 
-FQDN 示例在 `production` 中选择 `app=backend`。**将 `10.100.0.10/32` 替换为 cluster 实际的 Auto Mode CoreDNS IP**：它是 Service CIDR 网络地址加 10（IPv6 为 `::a/128`）。纯 Auto Mode CoreDNS 在 Node 上运行；常规 CoreDNS Pod selector 不可互换。允许 TCP 和 UDP DNS。使用不会与该 namespace 中 NetworkPolicy 冲突的唯一资源名称。
+FQDN 示例在 `production` 中选择 `app=backend`。**请将 `10.100.0.10/32` 替换为 cluster 实际的 Auto Mode CoreDNS IP**：即 Service CIDR network address 加 10（IPv6 为 `::a/128`）。纯 Auto Mode CoreDNS 运行于节点上；常规 CoreDNS Pod selector 不能互换。允许 TCP 和 UDP DNS。请使用不会与该 namespace 中 NetworkPolicy 冲突的唯一资源名称。
 
 ```yaml
 apiVersion: networking.k8s.aws/v1alpha1
@@ -1543,15 +1561,15 @@ spec:
       port: 443
 ```
 
-DNS proxy 观察被允许的 answer 及其 TTL，然后 data path 允许已学习的 destination IP/port。这不会认证 SaaS account，也不能证明 peer 的 HTTP identity；共享 IP 和 DNS 行为需要测试。TLS certificate verification、application authorization、route 及任何 Route 53 DNS Firewall rule 仍然相关。必须一并审查其他适用的策略和直接 backend path。
+DNS proxy 观察允许的 answer 及其 TTL，随后 data path 允许学习到的 destination IP/port。这不会认证 SaaS account 或证明 peer 的 HTTP identity；shared IP 和 DNS behavior 需要测试。TLS certificate verification、application authorization、route 及任何 Route 53 DNS Firewall rule 仍然相关。其他适用策略和直接 backend path 必须一并审查。
 
 [AWS NetworkPolicy](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html) · [配置](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html) · [Auto Mode 策略](https://docs.aws.amazon.com/eks/latest/userguide/auto-net-pol.html)
 
 ### Pod 的安全组
 
-此 binding 示例假设具备 EKS VPC Resource Controller、其 **cluster-role** permission、受支持的 trunking-compatible EC2 Linux Node 和已审查的 VPC CNI configuration。当前 AWS guide 排除 Windows 和 EKS Auto Mode。Fargate 使用独立的 Pod-SG model，并不会仅因拥有 security group 就获得 VPC-CNI NetworkPolicy 支持。通过其 owner 将 binding 应用于新的匹配 workload Pod；现有 Pod 不会自动改造。
+此 binding 示例假定具备 EKS VPC Resource Controller、其 **cluster-role** 权限、受支持的 trunking-compatible EC2 Linux node 和经过审查的 VPC CNI 配置。当前 AWS 指南排除 Windows 和 EKS Auto Mode。Fargate 使用独立的 Pod-SG model；仅拥有 security group 并不会获得 VPC-CNI NetworkPolicy 支持。通过 owner 将 binding 应用于新的匹配 workload Pod；现有 Pod 不会自动改造。
 
-对于 Calico 加 Pod SG，AWS 记录了 VPC CNI1.11.0+ 和 `POD_SECURITY_GROUP_ENFORCING_MODE=standard`；还应使用当前 CNI requirement，而不要把该最低值当作推荐版本。standard-mode external SNAT 可使用 Node SG 而非 Pod SG。请验证精确路径。旧的裸 PostgreSQL Pod 缺少 credentials/storage，并非可用的 database deployment。
+对于 Calico 加 Pod SG，AWS 文档指出需要 VPC CNI1.11.0+ 且 `POD_SECURITY_GROUP_ENFORCING_MODE=standard`；同时也应采用当前 CNI 要求，而不是将该最小版本视为推荐版本。标准模式 external SNAT 可以使用 node SG 而不是 Pod SG。请验证精确路径。旧的 bare PostgreSQL Pod 缺少 credentials/storage，并非可用的 database deployment。
 
 ```yaml
 # Binding example only: use an existing reviewed security group.
@@ -1569,7 +1587,7 @@ spec:
       - sg-0123456789abcdef0
 ```
 
-该 Terraform fragment 允许来自一个已审查 app SG 的 DB ingress，且不发起新的 egress connection。stateful return traffic 由 SG tracking 允许；仅单独添加所需的 DNS、replication、backup 或 external egress。变量是现有 operator input；未执行 Terraform plan/apply。
+Terraform fragment 允许来自一个经过审查的 app SG 的 DB ingress，且不发起新的 egress connection。stateful return traffic 由 SG tracking 允许；请单独添加所需的 DNS、replication、backup 或 external egress。variable 是现有 operator input；未执行 Terraform plan/apply。
 
 ```hcl
 # Fragment for an existing reviewed Terraform configuration.
@@ -1589,7 +1607,7 @@ resource "aws_security_group" "database_pods" {
 
 ### 将 VPC 级控制与 NetworkPolicy 结合
 
-NetworkPolicy、实际应用的 SG 和 NACL 都必须允许相关路径。此仅 ingress 的 NetworkPolicy 不限制 database egress；请添加选定的 egress 配置和 source-Pod egress。多个 SG 合并其 allow。NACL 是**无状态的**，因此允许 inbound5432 的 subnet rule 需要到 client ephemeral port 的匹配 return path，以及 client subnet 上适当的 rule。以下 fragment 不能替代完整且经过审查的 ACL rule set。
+NetworkPolicy、实际应用的 SG 和 NACL 都必须允许相关路径。此仅 ingress 的 NetworkPolicy 不会限制 database egress；请添加所选 egress 配置和 source-Pod egress。多个 SG 会合并其 allow。NACL 是**无状态的**，因此允许 inbound5432 的 subnet rule 需要有到 client ephemeral port 的匹配返回路径，并在 client subnet 上设置适当规则。以下 fragment 不能代替完整且经过审查的 ACL rule set。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -1639,9 +1657,9 @@ resource "aws_network_acl_rule" "database_return" {
 
 ### 在 EKS 上使用 Cilium
 
-选择 **AWS VPC CNI chaining** 或另行设计完整 CNI/IPAM migration。在 chaining mode 中，AWS VPC CNI 保留 ENI/IPAM responsibility，Cilium 附加其 datapath。保留 `aws-node`；删除它不是安装捷径。审查现有 add-on/Helm owner，并避免重叠的 policy-enforcement engine。现有 Pod 需要受控重建后 chaining policy 才会应用；请规划中断和 rollback。
+请选择 **AWS VPC CNI chaining** 或单独设计的完整 CNI/IPAM migration。chaining mode 中，AWS VPC CNI 保留 ENI/IPAM 职责，而 Cilium 挂接其 datapath。请保留 `aws-node`；删除它不是 installation shortcut。审查现有 add-on/Helm owner，并避免重叠的 policy-enforcement engine。现有 Pod 需要受控重建后 chaining policy 才会生效；请规划 disruption 和 rollback。
 
-官方1.20.1 chaining guide 提供了这些 value，但也记录了 L7/IPsec limitation。它包含旧的示例 output；那些并非当前 EKS environment 的验证。准备 chart repository/package、验证 provenance 并先 render：
+官方 1.20.1 chaining guide 提供这些 value，但也记录了 L7/IPsec limitation。它包含旧的 illustrative output；它们并不验证当前 EKS environment。请准备 chart repository/package、验证 provenance 并先 render：
 
 ```bash
 # Render locally after verifying the official chart/package provenance.
@@ -1660,7 +1678,7 @@ helm template cilium cilium/cilium --version 1.20.1 \
 
 ### Cilium Network Policy Editor
 
-策略 editor 有助于编写 policy；**Hubble UI 可视化观察到的 service flow**。二者是不同工具。启用 Hubble/UI 会变更 cluster configuration，应由 installation owner 完成。对于已安装且已认证的 Hubble service，请检查现有 service 并使用本地 port-forward。不要将 UI 公开暴露作为调试捷径。
+policy editor 有助于编写策略；**Hubble UI 可视化已观察到的 service flow**。它们是不同的工具。启用 Hubble/UI 会更改 cluster configuration，应由 installation owner 负责。对于已安装且已认证的 Hubble service，请检查现有 service 并使用 local port-forward。不要将 UI 公开暴露为 debugging shortcut。
 
 ```bash
 kubectl --context="$CONTEXT" -n kube-system port-forward --address=127.0.0.1 svc/hubble-ui 12000:80
@@ -1668,7 +1686,7 @@ kubectl --context="$CONTEXT" -n kube-system port-forward --address=127.0.0.1 svc
 
 ### Cilium 策略 Verdict 检查
 
-使用已认证的 Hubble connection。`DROPPED` 包含策略以外的原因；请检查 drop reason、endpoint identity、time 和 direction。在一个位置观察到的 `FORWARDED` 并非端到端交付保证。
+使用经过认证的 Hubble connection。`DROPPED` 包含策略以外的原因；请检查 drop reason、endpoint identity、time 和 direction。在某个点观察到 `FORWARDED` 并不能保证端到端交付。
 
 
 ```bash
@@ -1685,15 +1703,15 @@ hubble observe --output json | jq '.flow.verdict'
 
 ### Calico Enterprise UI
 
-Enterprise management UI 需要已获许可的产品及其实际 service/TLS/authentication configuration；Calico Open Source 不会自动安装它。转发前请检查已安装的 service name/port 和 access policy。不要假定每个安装都存在 `cnx-manager`。
+Enterprise management UI 需要已授权产品及其实际 service/TLS/authentication configuration；它不会随 Calico Open Source 自动安装。转发前请检查已安装的 service name/port 和 access policy。不要假定每个 installation 都存在 `cnx-manager`。
 
 ### 网络策略可视化工具
 
-使用 `kubectl get networkpolicy -n <namespace>` 和 `kubectl describe networkpolicy <name> -n <namespace>` 检查 Kubernetes policy selector/rule，并使用已安装 engine 的认证 flow tool 检查实施。必须根据第三方 viewer/plugin 当前 release 检查其可用性和 flag。仅 YAML graph 不能证明 dataplane enforcement。
+使用 `kubectl get networkpolicy -n <namespace>` 和 `kubectl describe networkpolicy <name> -n <namespace>` 检查 Kubernetes policy selector/rule，并使用已安装 engine 的 authenticated flow tool 检查 enforcement。第三方 viewer/plugin 的可用性和 flag 必须根据该项目当前 release 进行检查。仅有 YAML graph 不能证明 dataplane enforcement。
 
 ### 使用 Kube-hunter 进行安全测试
 
-kube-hunter 是 cluster exposure/security scanner，不是 NetworkPolicy allow/deny verifier。其 scan 可能生成侵入性流量；请使用明确批准的 target/scope 和已审查的 release/image。不要从通用策略教程向 live namespace 部署未固定版本的 scanner。本次审查未执行 scanner。
+kube-hunter 是 cluster exposure/security scanner，而非 NetworkPolicy allow/deny verifier。其 scan 可能生成侵入性流量；请使用明确获批的 target/scope 和经过审查的 release/image。不要根据通用策略教程将未固定版本的 scanner 部署到 live namespace。本次审查未执行 scanner。
 
 ## 最佳实践
 
@@ -1767,7 +1785,7 @@ spec:
 
 ### 4. 定期策略审计
 
-此只读 inventory 会分别列出 namespace 范围的 ingress 和 egress 空 allow baseline。它处理空 `[]` 和缺失规则数组，而规则 `{}` 会允许流量，因此不是 deny baseline。API/authorization error 会失败，而不会显示为零策略。列出的 baseline **不是隔离证明**：其他 allow rule、extension policy、未覆盖 Pod 和 CNI 状态仍需审查。
+此只读 inventory 会分别列出 namespace-wide 的空 allow baseline，针对 ingress 和 egress。它处理空 `[]` 和不存在的 rule array，而规则 `{}` 允许流量，不是 deny baseline。API/authorization error 会失败，而不会显示为零策略。列出的 baseline **不是隔离证明**：其他 allow rule、extension policy、未覆盖的 Pod 和 CNI state 仍需审查。
 
 ```bash
 #!/usr/bin/env bash
@@ -1811,19 +1829,19 @@ jq -n --slurpfile ns "$work/namespaces.json" --slurpfile np "$work/policies.json
 '
 ```
 
-## 摘要
+## 总结
 
-Kubernetes Network Policies 是控制 cluster 内 Pod 通信的核心安全机制：
+Kubernetes NetworkPolicy 是控制 cluster 内 Pod 通信的核心安全机制：
 
-1. **基础 NetworkPolicy**：namespace 作用域，支持 podSelector/namespaceSelector/ipBlock
+1. **基础 NetworkPolicy**：具备 namespace 范围，支持 podSelector/namespaceSelector/ipBlock
 2. **Cilium 扩展**：L7 策略、基于 DNS FQDN 的策略、cluster-wide 策略
 3. **Calico 扩展**：GlobalNetworkPolicy、NetworkSet、基于 Tier 的策略
-4. **EKS 注意事项**：VPC CNI NetworkPolicy 激活、Pod 的 Security Groups、ClusterNetworkPolicy 和基于 DNS（FQDN）的 egress control
+4. **EKS 注意事项**：VPC CNI NetworkPolicy 激活、Pod 的安全组、ClusterNetworkPolicy 和基于 DNS（FQDN）的 egress control
 
 ### 建议
 
 - 对所有 production namespace 应用默认拒绝策略
-- 按最小权限原则仅允许必需流量
+- 遵循最小权限原则，仅允许必需流量
 - 定期进行策略审计和测试
 - 需要 L7 策略时考虑 Cilium
 
@@ -1834,9 +1852,9 @@ Kubernetes Network Policies 是控制 cluster 内 Pod 通信的核心安全机�
 - [Kubernetes Network Policies 官方文档](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 - [Cilium Network Policy 文档](https://docs.cilium.io/en/stable/security/policy/index.html)
 - [Calico Network Policy 文档](https://docs.tigera.io/calico/latest/reference/resources/networkpolicy)
-- [EKS Security 最佳实践 - 网络安全](https://docs.aws.amazon.com/eks/latest/best-practices/network-security.html)
+- [EKS 安全最佳实践 - 网络安全](https://docs.aws.amazon.com/eks/latest/best-practices/network-security.html)
 - [Amazon EKS 增强网络安全策略（2025-12-15）](https://aws.amazon.com/about-aws/whats-new/2025/12/amazon-eks-enhanced-network-security-policies/)
 
-- [EKS Pod security groups](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
+- [EKS Pod 安全组](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
 - [Calico Tier](https://docs.tigera.io/calico/latest/reference/resources/tier)
 - [Calico NetworkSet](https://docs.tigera.io/calico/latest/reference/resources/networkset)
