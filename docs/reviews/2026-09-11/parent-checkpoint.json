@@ -707,8 +707,8 @@
   "status": "in_progress_not_complete",
   "latestCoverage": {
     "documents": 2707,
-    "fullyRead": 1007,
-    "fixed": 999,
+    "fullyRead": 1011,
+    "fixed": 1003,
     "verified": 0,
     "followup": 8
   },

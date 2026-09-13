@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="archify 2.16.0">
-  <title>Crossplane Core Concepts Diagram</title>
+  <title>Crossplane v2 concepts Diagram</title>
   <script>
     // Resolve the theme before first paint so light-preference users don't
     // see a dark flash. The toolbar script below re-applies with UI state.
@@ -4955,11 +4955,11 @@
            data-preset-badge-blueprint="BLUEPRINT / REV 01"
            data-preset-badge-editorial="EDITORIAL / FIELD NOTE">
         <div class="pulse-dot"></div>
-        <h1>Crossplane Core Concepts</h1>
+        <h1>Crossplane v2 concepts</h1>
       </div>
     </div>
 
-    <script id="archify-guided-views-data" type="application/json">[{"id":"self-service","label":"Developer self-service","focus":["xc","xr"],"note":"A namespace-scoped Claim creates the cluster-scoped Composite Resource without cluster-level permissions."},{"id":"abstraction","label":"Platform abstraction","focus":["xrd","xr","comp"],"note":"The XRD defines the schema for XR and Claim; the XR selects a Composition."},{"id":"reconcile","label":"Reconcile to AWS","focus":["comp","mr-s3","mr-rds","mr-sg","s3","rds","sg"],"note":"The Composition maps the XR to Managed Resources, each reconciled 1:1 into a real AWS resource."}]</script>
+    <script id="archify-guided-views-data" type="application/json">[{"id":"self-service","label":"Self Service","focus":["claim","xr","xrd","comp"],"note":"Crossplane v2 namespaced flow; legacy Claims are a separate compatibility path."},{"id":"provisioning","label":"Provisioning","focus":["comp","mr","providers","aws","gcp","azure"],"note":"Crossplane v2 namespaced flow; legacy Claims are a separate compatibility path."},{"id":"extension","label":"Extension","focus":["core","providers"],"note":"Crossplane v2 namespaced flow; legacy Claims are a separate compatibility path."}]</script>
 
     <script id="archify-i18n-data" type="application/json">{"locale":"en","messages":{"viewer.kind.frontend":"Frontend","viewer.kind.backend":"Backend","viewer.kind.database":"Database","viewer.kind.cloud":"Cloud","viewer.kind.security":"Security","viewer.kind.messagebus":"Message bus","viewer.kind.external":"External","viewer.kind.neutral":"Neutral","viewer.kind.node":"Node","viewer.kind.start":"Start","viewer.kind.active":"Active","viewer.kind.waiting":"Waiting","viewer.kind.decision":"Decision","viewer.kind.success":"Success","viewer.kind.failure":"Failure","viewer.toolbar.actions":"Diagram actions","viewer.theme.toggle.title":"Toggle theme (T)","viewer.theme.toggle":"Toggle color theme","viewer.theme.dark":"Dark","viewer.theme.light":"Light","viewer.preset.choose.title":"Choose visual style (S cycles)","viewer.preset.choose":"Choose visual style","viewer.preset.style":"Style","viewer.preset.menu":"Visual style","viewer.preset.identity":"Visual identity","viewer.preset.cycles":"S cycles","viewer.preset.classic":"Classic","viewer.preset.classic.short":"Classic","viewer.preset.classic.hint":"Stable technical default","viewer.preset.flow":"Signal Flow","viewer.preset.flow.short":"Flow","viewer.preset.flow.hint":"Motion-forward presentation","viewer.preset.blueprint":"Blueprint","viewer.preset.blueprint.hint":"Engineering review","viewer.preset.editorial":"Editorial","viewer.preset.editorial.hint":"Publication and launch notes","viewer.preset.badge.signalFlow":"SIGNAL FLOW","viewer.preset.badge.blueprint":"BLUEPRINT / REV 01","viewer.preset.badge.editorial":"EDITORIAL / FIELD NOTE","viewer.preset.badge.editorialPlate":"ARCHIFY / PLATE 04","viewer.preset.current":"Visual style: {style}. Choose visual style","viewer.motion.live":"Live","viewer.motion.still":"Still","viewer.motion.pause":"Pause motion","viewer.motion.resume":"Resume motion","viewer.motion.reduced":"Motion paused by reduced-motion preference","viewer.motion.hidden":"Motion paused while this page is hidden","viewer.motion.yielding":"Pause motion; currently yielding to {owner}","viewer.motion.yielding.title":"Live preview enabled · yielding to {owner}","viewer.owner.story":"the guided story","viewer.owner.chapter":"the active chapter","viewer.owner.chapterPreview":"the chapter delta preview","viewer.owner.handoff":"the chapter handoff","viewer.owner.route":"Route Probe","viewer.owner.lens":"Semantic Lens","viewer.owner.relationship":"Relationship Preview","viewer.owner.intent":"Intent Trace","viewer.owner.focus":"semantic focus","viewer.owner.legend":"legend preview","viewer.owner.reader":"reader interaction","viewer.present.enter":"Enter presentation stage","viewer.present.enter.title":"Presentation stage (F)","viewer.present.exit":"Exit presentation stage","viewer.present.exit.title":"Exit presentation stage (F or Escape)","viewer.present.present":"Present","viewer.present.exit.label":"Exit","viewer.export.button":"Export","viewer.export.button.title":"Export diagram (E)","viewer.export.diagram":"Export diagram","viewer.export.menu":"Export","viewer.export.subtitle":"Portable, clean outputs","viewer.export.share":"Share","viewer.export.shareCard":"Share Card","viewer.export.routeShareCard":"Route Share Card","viewer.export.reachShareCard":"Reach Share Card","viewer.export.copyShareCard":"Copy Share Card","viewer.export.copyDiagram":"Copy diagram","viewer.export.clipboardPng":"PNG to clipboard","viewer.export.raster":"Raster images","viewer.export.image":"Image","viewer.export.lossless":"Lossless image","viewer.export.compact":"Compact image","viewer.export.modern":"Modern image","viewer.export.vectorMotion":"Vector and motion","viewer.export.vectorMotion.heading":"Vector \u0026 motion","viewer.export.editable":"Editable vector","viewer.export.motion6s":"6s motion","viewer.export.unsupported":"Not supported by this browser","viewer.export.clipboardUnsupported":"Clipboard image write not supported by this browser","viewer.export.clipboardUnsupported.period":"Clipboard image write not supported by this browser.","viewer.export.clipboardUnsupported.short":"Clipboard image write not supported in this browser.","viewer.export.motionUnavailable":"Motion capture unavailable in this browser","viewer.export.webmUnavailable":"WebM unavailable in this browser","viewer.export.failed":"Export failed: {message}","viewer.export.unknownVariant":"Unknown Share Card variant: {variant}","viewer.export.routeRequired":"Trace a route before exporting a Route Share Card","viewer.export.reachRequired":"Trace authored reach before exporting a Reach Share Card","viewer.export.unknown":"unknown","viewer.export.routeFailed":"Route Share Card export failed: {message}","viewer.export.reachFailed":"Reach Share Card export failed: {message}","viewer.export.copyFailed":"Copy failed: {message}","viewer.export.copiedPng":"Copied PNG to clipboard","viewer.export.copiedShare":"Copied Share Card","viewer.export.downloadedShare":"Downloaded Share Card","viewer.export.downloadedRoute":"Downloaded Route Share Card","viewer.export.downloadedReach":"Downloaded Reach Share Card","viewer.export.downloadedWebm":"Downloaded WebM","viewer.export.recording":"Recording 6 seconds of motion…","viewer.export.card.routeSummary.one":"Route: {source} → {target} · {count} directed hop","viewer.export.card.routeSummary.other":"Route: {source} → {target} · {count} directed hops","viewer.export.card.reachSummary":"Authored {direction} from {origin} · {nodes} · {links} · max {hops}","viewer.export.card.node.one":"{count} node","viewer.export.card.node.other":"{count} nodes","viewer.export.card.link.one":"{count} link","viewer.export.card.link.other":"{count} links","viewer.export.card.hop.one":"{count} hop","viewer.export.card.hop.other":"{count} hops","viewer.export.card.routeBadge":"ARCHIFY · ROUTE · {hops}","viewer.export.card.reachBadge":"ARCHIFY · {direction} REACH","viewer.export.card.defaultBadge":"ARCHIFY · {preset} · {theme}","viewer.export.direction.upstream":"Upstream","viewer.export.direction.downstream":"Downstream","viewer.export.error.canvasUnavailable":"Canvas unavailable for {label}","viewer.export.error.contextUnavailable":"2D canvas context unavailable for {label}","viewer.export.error.toBlobUnavailable":"canvas.toBlob unavailable for {label}","viewer.export.error.toBlobNull":"canvas.toBlob returned no data for {label}","viewer.export.error.variantsCombined":"Share Card variants cannot be combined","viewer.export.error.viewerState":"Share Card export could not remove temporary viewer state","viewer.export.error.routeState":"Route Card export could not preserve the resolved route safely","viewer.export.error.reachState":"Reach Card export could not preserve authored reach safely","viewer.export.error.webmRequirements":"WebM motion export requires a trace animation and browser MediaRecorder support","viewer.export.error.mediaRecorder":"MediaRecorder failed","viewer.export.error.emptyWebm":"MediaRecorder produced an empty WebM","viewer.export.error.webmBackground":"SVG background could not be loaded for WebM export","viewer.guided.region":"Guided diagram views","viewer.guided.previous":"Previous guided view","viewer.guided.previous.title":"Previous guided view ([)","viewer.guided.next":"Next guided view","viewer.guided.next.title":"Next guided view (])","viewer.guided.views":"Guided views","viewer.guided.explore":"Explore this system","viewer.guided.intro":"Step through curated paths without changing the source diagram.","viewer.guided.trail":"Story trail","viewer.guided.beat":"Beat","viewer.guided.nextBeat":"Next","viewer.guided.play":"Play guided story","viewer.guided.play.title":"Play guided story (P)","viewer.guided.pause":"Pause guided story","viewer.guided.pause.title":"Pause guided story (P)","viewer.guided.replay":"Replay guided story","viewer.guided.replay.title":"Replay guided story (P)","viewer.guided.playStory":"Play story","viewer.guided.pauseStory":"Pause","viewer.guided.replayStory":"Replay story","viewer.guided.motionUnavailable":"Story playback unavailable while motion is Still","viewer.guided.enableMotion":"Switch motion to Live to play the guided story","viewer.guided.selectBeatLink":"Select a Story Beat to copy its exact link","viewer.guided.copyMoment":"Copy moment","viewer.guided.momentCopied":"Moment link copied","viewer.guided.momentCopyFailed":"Could not copy story moment link","viewer.guided.copied":"Copied","viewer.guided.copyFailed":"Copy failed","viewer.guided.showAll":"Show all","viewer.guided.showAll.aria":"Show entire diagram","viewer.guided.chapters":"Story chapters","viewer.guided.storyTrail":"Story trail for {label}: {count} beats","viewer.guided.chapter.open":"Open chapter {index} of {total}: {label}, {count} stops","viewer.guided.chapter.current":"Current chapter {index} of {total}: {label}, {count} stops","viewer.guided.chapter.selectedNodes":"{count} selected nodes","viewer.guided.chapter.stops":"{count} stops","viewer.guided.chapter.stop.one":"{count} stop","viewer.guided.chapter.stop.other":"{count} stops","viewer.guided.chapter.current.title":"{label} — current chapter, {count} stops","viewer.guided.chapter.delta.expanded":"{stay} stay, {enter} enter, {leave} leave","viewer.guided.chapter.delta.aria":"Open chapter {index} of {total}: {label}. Chapter focus delta: {delta}","viewer.guided.chapter.delta.title":"{label} — {delta} chapter focus","viewer.guided.handoff":"{from} → {to} · via {label}","viewer.guided.share.chapter":"Chapter {index} / {total}","viewer.guided.share.initial":"Chapter 01 / 01","viewer.guided.share.default":"Guided chapter","viewer.guided.state.ready":"Ready","viewer.guided.state.playing":"Playing","viewer.guided.state.settled":"Settled","viewer.guided.state.paused":"Paused","viewer.guided.state.pinned":"Pinned","viewer.guided.state.still":"Still","viewer.guided.share.step":"Step {index} / {total} · {label}","viewer.guided.share.staticMoment":"{step} · Static moment","viewer.guided.share.complete":"{count} steps complete · {note}","viewer.guided.share.settled":"Path settled for reading.","viewer.guided.share.staticPath":"{count} steps · Static path","viewer.guided.share.ready":"{count} steps · Ready","viewer.guided.share.aria":"{state} chapter {index} of {total}: {label}. {beat}. {route}","viewer.guided.beat.start":"Beat {index} / {total} · {label} · starting point","viewer.guided.beat.forward":"Beat {index} / {total} · {from} → {to}","viewer.guided.beat.reverse":"Beat {index} / {total} · {from} → {to} · reverse authored link","viewer.guided.beat.multiple":"Beat {index} / {total} · {from} ⇄ {to} · {count} authored links","viewer.guided.beat.group":"Beat {index} / {total} · {from} · {to} · grouped · no direct link","viewer.guided.beat.aria.prefix":"Story beat {index} of {total}: {label}. ","viewer.guided.beat.aria.start":"Starting point.","viewer.guided.beat.aria.forward":"From {from} through one authored forward relationship.","viewer.guided.beat.aria.reverse":"From {from}; the authored relationship points from {to} to {from}.","viewer.guided.beat.aria.multiple":"From {from} through {count} authored relationships; shown without arbitrary motion.","viewer.guided.beat.aria.group":"Grouped from {from} with no direct authored relationship.","viewer.guided.caption.start":"Starting point","viewer.guided.caption.grouped":"Grouped transition · no direct authored link","viewer.guided.caption.more":" +{count} more","viewer.guided.caption.reverse":"Reverse authored relationship","viewer.guided.caption.relationships":"{count} authored relationships","viewer.guided.caption.relationship":"Authored relationship","viewer.guided.caption.direction":"authored direction: {from} → {to}","viewer.guided.caption.starting":"Authored starting point","viewer.guided.beatLink":"Copy link to current story moment: Beat {index} of {total}: {label}","viewer.guided.noStory":"This diagram has no authored guided story.","viewer.guide.eyebrow":"Diagram guide","viewer.guide.close":"Close diagram guide","viewer.guide.inspecting":"Inspecting compiled semantics","viewer.guide.actions":"Diagram exploration actions","viewer.guide.find":"Find any node","viewer.guide.find.hint":"Search labels, responsibilities, kinds, and stable IDs.","viewer.guide.route":"Trace a route","viewer.guide.route.aria":"Trace a directed route","viewer.guide.route.hint":"Ask how two semantic nodes connect in authored direction.","viewer.guide.map":"See the whole system","viewer.guide.map.hint":"Open Semantic Radar with a live viewport and stable nodes.","viewer.guide.lens":"Compare semantic kinds","viewer.guide.lens.hint":"Count roles, reveal their traffic, and compare direct authored links.","viewer.guide.story":"Play the guided story","viewer.guide.story.hint":"Walk the authored chapters and real relationships.","viewer.guide.present":"Enter Presentation Stage","viewer.guide.present.hint":"Give the live diagram the viewport without changing export.","viewer.guide.shortcuts":"Additional keyboard shortcuts","viewer.guide.shortcut.export":"Export","viewer.guide.shortcut.theme":"Theme","viewer.guide.shortcut.style":"Style","viewer.guide.shortcut.reset":"Reset","viewer.guide.shortcut.zoomIn":"Zoom in","viewer.guide.shortcut.zoomOut":"Zoom out","viewer.guide.shortcut.close":"Close","viewer.guide.facts":"{nodes} · {relationships} · {views}","viewer.guide.fact.node.one":"{count} semantic node","viewer.guide.fact.node.other":"{count} semantic nodes","viewer.guide.fact.relationship.one":"{count} relationship","viewer.guide.fact.relationship.other":"{count} relationships","viewer.guide.fact.view.one":"{count} guided view","viewer.guide.fact.view.other":"{count} guided views","viewer.guide.story.available.one":"Walk {count} authored chapter and its real relationships.","viewer.guide.story.available.other":"Walk {count} authored chapters and their real relationships.","viewer.guide.story.unavailable":"No authored guided story in this diagram.","viewer.guide.open":"Open diagram guide","viewer.guide.noStory":"This diagram has no authored guided story.","viewer.finder.title":"Find a node","viewer.finder.close":"Close node finder","viewer.finder.placeholder":"Search labels or IDs","viewer.finder.search":"Search diagram nodes","viewer.finder.results":"Diagram nodes","viewer.finder.empty":"No matching nodes","viewer.finder.result.focus":"Focus {label}","viewer.finder.result.routeStart":"Choose {label} as route start","viewer.finder.result.routeTarget":"Choose {label} as route destination, {links}","viewer.finder.status.empty":"No matching nodes","viewer.finder.status.count.one":"{count} matching node","viewer.finder.status.count.other":"{count} matching nodes","viewer.finder.noun.nodes":"nodes","viewer.finder.link.one":"{count} link","viewer.finder.link.other":"{count} links","viewer.finder.result.focus.one":"Focus {label}, {count} related connection","viewer.finder.result.focus.other":"Focus {label}, {count} related connections","viewer.finder.status.filtered":"{visible} of {available} {noun}","viewer.finder.status.all":"{available} {noun}","viewer.passport.eyebrow":"Semantic passport","viewer.passport.metadata":"Node metadata","viewer.passport.evidence":"Verified source evidence","viewer.passport.verified":"Verified source","viewer.passport.reach":"Authored reach","viewer.passport.reach.trace":"Trace authored reachability","viewer.passport.upstream":"Upstream","viewer.passport.downstream":"Downstream","viewer.passport.upstream.trace":"Trace upstream authored reachability","viewer.passport.downstream.trace":"Trace downstream authored reachability","viewer.passport.close":"Close semantic passport","viewer.passport.copy":"Copy link","viewer.passport.copy.focus":"Copy link to focused node","viewer.passport.relations":"Relations","viewer.passport.relations.show":"Show connected relationships","viewer.passport.relations.hide":"Hide connected relationships","viewer.passport.relations.list":"Connected relationships","viewer.passport.copyRelation":"Copy relation","viewer.passport.copyNode":"Copy node","viewer.passport.copyPinned":"Copy link to pinned relationship","viewer.passport.copySource":"Copy link to source node","viewer.passport.copy.focused.success":"Focused node link copied","viewer.passport.copy.pinned.success":"Pinned relationship link copied","viewer.passport.copy.focused.failed":"Could not copy focused node link","viewer.passport.copy.pinned.failed":"Could not copy pinned relationship link","viewer.passport.relationship.none":"No connected relationships","viewer.passport.relationship.count.one":"{count} relation","viewer.passport.relationship.count.other":"{count} relations","viewer.passport.relationship.show.one":"Show {count} connected relationship","viewer.passport.relationship.show.other":"Show {count} connected relationships","viewer.passport.relationship.summary":"{out} outgoing · {in} incoming{loops}","viewer.passport.relationship.loops":" · {count} loop","viewer.passport.relationship.explorer":"Direct relationship explorer","viewer.passport.relationship.help":"Use arrow keys to explore relationships. Press Enter or Space to pin details; Escape clears.","viewer.passport.relationship.loopsBack":"loops back","viewer.passport.relationship.connectsTo":"connects to","viewer.passport.relationship.connectsFrom":"connects from","viewer.passport.relationship.pinned":"Pinned relationship · {from} → {to} · {label}","viewer.passport.relationship.inspect":"Inspect relationship {index} of {total}: {from} to {to}, {label}. Press Enter for details.","viewer.passport.relationship.group.out":"Outgoing","viewer.passport.relationship.group.in":"Incoming","viewer.passport.relationship.group.loop":"Self loops","viewer.passport.relationship.row":"{group}: {relationship}, {neighbor}","viewer.passport.relationship.direction.out":"OUT →","viewer.passport.relationship.direction.in":"← IN","viewer.passport.relationship.direction.loop":"LOOP","viewer.passport.sourceCount.one":"{count} verified source reference","viewer.passport.sourceCount.other":"{count} verified source references","viewer.passport.sourceMarker":"SRC","viewer.passport.beacon.one":"{count} verified source; focus this node to inspect","viewer.passport.beacon.other":"{count} verified sources; focus this node to inspect","viewer.passport.repository.open":"Open verified repository revision {revision}","viewer.passport.source.open":"Open verified source {path} at revision {revision}","viewer.passport.source.openLink":"Open ↗","viewer.passport.reach.upstream.one":"Trace {count} upstream authored node","viewer.passport.reach.upstream.other":"Trace {count} upstream authored nodes","viewer.passport.reach.downstream.one":"Trace {count} downstream authored node","viewer.passport.reach.downstream.other":"Trace {count} downstream authored nodes","viewer.passport.reach.noUpstream":"No upstream authored nodes","viewer.passport.reach.noDownstream":"No downstream authored nodes","viewer.passport.reach.status":"{direction} · {nodes} nodes · {links} links · max {hops} hops","viewer.route.eyebrow":"Route probe","viewer.route.start":"Choose a start node","viewer.route.start.find":"Find start","viewer.route.start.find.aria":"Find a route start","viewer.route.copy":"Copy link","viewer.route.copy.aria":"Copy link to traced route","viewer.route.clear":"Clear","viewer.route.clear.aria":"Clear route probe","viewer.route.traced":"Traced route","viewer.route.pickTwo":"Pick two semantic nodes on the diagram","viewer.route.pickOne":"Pick a semantic node on the diagram","viewer.route.controls":"Route journey controls","viewer.route.previous":"Previous route position","viewer.route.play":"Play route journey","viewer.route.pause":"Pause route journey","viewer.route.replay":"Replay route journey","viewer.route.next":"Next route position","viewer.route.journey":"Journey","viewer.route.pause.label":"Pause","viewer.route.replay.label":"Replay","viewer.route.overview":"Overview","viewer.route.overview.aria":"Show complete route overview","viewer.route.instructions":"Choose the source, then the destination. Direction matters.","viewer.route.destination":"Choose a destination from {label}","viewer.route.destination.find":"Find target","viewer.route.destination.find.aria":"Find a reachable route destination","viewer.route.differentDestination":"Choose a different destination","viewer.route.distinct":"A route needs two distinct semantic nodes.","viewer.route.unreachable":"No directed route to {label}","viewer.route.unreachable.detail":"{target} is not reachable from {source}. Pick a highlighted destination.","viewer.route.start.instructions":"Select the source. The next step will reveal only directed destinations.","viewer.route.copy.success":"Traced route link copied","viewer.route.copy.failed":"Could not copy traced route link","viewer.route.position":"Route position {index} of {total}: {label}","viewer.route.step":"Step {index} of {total} · {phase} · {label}","viewer.route.motionRequired":"Automatic journey requires Live motion","viewer.route.trigger.clear":"Clear traced route","viewer.route.overview.status":"{nodes} · {hops} · shortest authored route","viewer.route.overview.node.one":"{count} node","viewer.route.overview.node.other":"{count} nodes","viewer.route.overview.hop.one":"{count} directed hop","viewer.route.overview.hop.other":"{count} directed hops","viewer.route.phase.playing":"Playing","viewer.route.phase.complete":"Complete","viewer.route.phase.inspecting":"Inspecting","viewer.route.destination.count.one":"{count} directed destination available. Pick a highlighted node.","viewer.route.destination.count.other":"{count} directed destinations available. Pick a highlighted node.","viewer.route.noOutgoing":"No outgoing route starts here. Clear and choose another source.","viewer.route.result.title":"{source} to {target}","viewer.route.finder.source.title":"Choose route start","viewer.route.finder.source.placeholder":"Search route sources","viewer.route.finder.source.empty":"No matching route sources","viewer.route.finder.source.results":"Nodes that can start a route","viewer.route.finder.source.noun":"route sources","viewer.route.finder.source.badge":"start","viewer.route.finder.target.title":"Destination from {label}","viewer.route.finder.target.placeholder":"Search reachable destinations","viewer.route.finder.target.empty":"No matching reachable destinations","viewer.route.finder.target.results":"Reachable route destinations","viewer.route.finder.target.noun":"reachable destinations","viewer.route.hop.one":"{count} hop","viewer.route.hop.other":"{count} hops","viewer.lens.eyebrow":"Semantic lens","viewer.lens.title":"Compare system roles","viewer.lens.close":"Close semantic lens","viewer.lens.instruction":"Choose up to two semantic kinds. One reveals its real traffic; two compare only direct authored relationships.","viewer.lens.kinds":"Semantic kinds","viewer.lens.choose":"Choose a kind to inspect its nodes and touching relationships.","viewer.lens.copy":"Copy link to semantic lens","viewer.lens.clear":"Clear semantic lens","viewer.lens.open":"Open semantic lens","viewer.lens.openActive":"Open active semantic lens","viewer.lens.legend":"Semantic legend","viewer.lens.legend.inspect.one":"Inspect {label}, {count} node","viewer.lens.legend.inspect.other":"Inspect {label}, {count} nodes","viewer.lens.kind.count.one":"{label}, {count} node","viewer.lens.kind.count.other":"{label}, {count} nodes","viewer.lens.compare.one":"{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationship","viewer.lens.compare.other":"{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationships","viewer.lens.single":"{nodes} · {relationships} · connected peers remain visible","viewer.lens.node.one":"{count} {label} node","viewer.lens.node.other":"{count} {label} nodes","viewer.lens.relationship.one":"{count} touching relationship","viewer.lens.relationship.other":"{count} touching relationships","viewer.radar.title":"Semantic radar","viewer.radar.building":"Building overview","viewer.radar.openFull":"Open full semantic radar","viewer.radar.open":"Open radar","viewer.radar.close":"Close semantic radar","viewer.radar.surface":"Diagram overview. Click a node to focus it, or use arrow keys to pan.","viewer.radar.click":"Click node","viewer.radar.drag":"Drag to pan","viewer.radar.space":"Semantic radar needs more MAP space.","viewer.radar.nodes":"Semantic diagram radar nodes","viewer.radar.focus":"Focus {label} from Semantic Radar","viewer.radar.status":"{count} nodes · {viewport}","viewer.radar.fullMap":"{count} nodes · full map","viewer.radar.compacted":"Radar compacted to avoid covering the Semantic Passport or MAP controls.","viewer.radar.cancelWaiting":"Cancel semantic radar waiting for more MAP space","viewer.radar.needsSpace":"Semantic radar needs more visible MAP space","viewer.radar.viewport.full":"full map","viewer.radar.viewport.width":"{percent}% width","viewer.radar.viewport.scale":"{percent}% viewport","viewer.nav.controls":"Diagram view controls","viewer.nav.route":"Trace a directed route","viewer.nav.route.title":"Trace route (R)","viewer.nav.route.short":"PATH","viewer.nav.radar":"Open semantic radar","viewer.nav.radar.title":"Semantic radar (M)","viewer.nav.radar.short":"MAP","viewer.nav.lens":"Open semantic lens","viewer.nav.lens.title":"Semantic lens (L)","viewer.nav.lens.short":"LENS","viewer.nav.find":"Find a node","viewer.nav.find.title":"Find a node (/)","viewer.nav.guide":"Open diagram guide","viewer.nav.guide.title":"Diagram guide (?)","viewer.nav.zoomOut":"Zoom out","viewer.nav.zoomOut.title":"Zoom out (-)","viewer.nav.reset":"Reset diagram view","viewer.nav.reset.title":"Reset view (0)","viewer.nav.read":"READ","viewer.nav.zoomIn":"Zoom in","viewer.nav.zoomIn.title":"Zoom in (+)","viewer.nav.camera":"{hint}. Reset diagram view","viewer.nav.camera.title":"{semantic}{hint} · reset view (0)","viewer.nav.camera.semantic":"Semantic camera active · ","viewer.nav.level.map":"MAP","viewer.nav.level.read":"READ","viewer.nav.level.full":"FULL","viewer.nav.level.auto":"AUTO","viewer.nav.detail.map":"Zoom in to reveal relationship labels and node context","viewer.nav.detail.read":"Zoom in again to reveal tags and annotations","viewer.nav.detail.full":"Full diagram detail","viewer.intent.summary":"{label}. {out} outgoing, {in} incoming{loops}. {total} connections. Press Enter for details.","viewer.intent.loops":", {count} self loop","viewer.common.copied":"Copied","viewer.common.copyFailed":"Copy failed","viewer.common.copyLink":"Copy link","viewer.common.clear":"Clear","viewer.common.close":"Close"}}</script>
     <div class="guided-views no-print" id="guided-views" hidden aria-label="Guided diagram views">
@@ -5004,8 +5004,8 @@
     <!-- Main Diagram -->
     <div class="diagram-container" data-detail-level="read"
          data-preset-badge-editorial-plate="ARCHIFY / PLATE 04">
-      <svg viewBox="0 0 1130 738" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="classic" data-quality-profile="showcase">
-        <title id="archify-diagram-title">Crossplane Core Concepts</title>
+      <svg viewBox="0 0 1380 740" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="classic" data-quality-profile="showcase">
+        <title id="archify-diagram-title">Crossplane v2 concepts</title>
         <desc id="archify-diagram-description">An architecture diagram generated by Archify.</desc>
         <!-- Definitions -->
         <defs>
@@ -5030,211 +5030,182 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Developer Interface" x="570" y="10" width="240" height="114" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="Kubernetes resources" x="10" y="270" width="220" height="110" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="Platform Abstraction Layer" x="200" y="190" width="890" height="114" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="Kubernetes resources" x="235" y="70" width="945" height="524" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="2" data-composition-frame-label="Cloud Provider Layer" x="310" y="380" width="760" height="114" rx="12" class="c-region" stroke-width="1"/>
-
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="3" data-composition-frame-label="AWS Account" x="310" y="560" width="760" height="110" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="2" data-composition-frame-label="Cloud provider" x="1190" y="370" width="190" height="330" rx="12" class="c-region" stroke-width="1"/>
 
         <!-- Connection paths (before components for correct z-order) -->
-        <path data-edge-from="xc" data-edge-to="xr" data-edge-label="creates" data-edge-key="0" data-edge-id="xc-creates-xr" data-composition-points="690,104;690,220" d="M 690 104 L 690 220" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="xrd" data-edge-to="xr" data-edge-label="defines schema" data-edge-key="1" data-edge-id="xrd-schema-xr" data-composition-points="480,252;590,252" d="M 480 252 L 590 252" class="a-default" data-animate="edge" style="--step:1" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="xrd" data-edge-to="xc" data-edge-label="defines schema" data-edge-key="2" data-edge-id="xrd-schema-xc" data-composition-points="355,220;355,196;576,196;576,72;600,72" d="M 355 220 L 355 204 Q 355 196 363 196 L 568 196 Q 576 196 576 188 L 576 80 Q 576 72 584 72 L 600 72" class="a-dashed" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="xr" data-edge-to="comp" data-edge-label="selects" data-edge-key="3" data-edge-id="xr-selects-comp" data-composition-points="790,252;840,252" d="M 790 252 L 840 252" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="comp" data-edge-to="mr-s3" data-edge-key="4" data-edge-id="comp-maps-s3" data-composition-points="936,284;936,347;430,347;430,410" d="M 936 284 L 936 339 Q 936 347 928 347 L 438 347 Q 430 347 430 355 L 430 410" class="a-default" data-animate="edge" style="--step:4" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="comp" data-edge-to="mr-rds" data-edge-label="maps to" data-edge-key="5" data-edge-id="comp-maps-rds" data-composition-points="950,284;950,347;690,347;690,410" d="M 950 284 L 950 339 Q 950 347 942 347 L 698 347 Q 690 347 690 355 L 690 410" class="a-emphasis" data-animate="edge" style="--step:5" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="comp" data-edge-to="mr-sg" data-edge-key="6" data-edge-id="comp-maps-sg" data-composition-points="964,284;964,410" d="M 964 284 L 964 410" class="a-default" data-animate="edge" style="--step:6" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="mr-s3" data-edge-to="s3" data-edge-key="7" data-edge-id="s3-reconcile" data-composition-points="430,474;430,590" d="M 430 474 L 430 590" class="a-default" data-animate="edge" style="--step:7" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="mr-rds" data-edge-to="rds" data-edge-label="reconciles" data-edge-key="8" data-edge-id="rds-reconcile" data-composition-points="690,474;690,590" d="M 690 474 L 690 590" class="a-emphasis" data-animate="edge" style="--step:8" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="mr-sg" data-edge-to="sg" data-edge-key="9" data-edge-id="sg-reconcile" data-composition-points="950,474;950,590" d="M 950 474 L 950 590" class="a-default" data-animate="edge" style="--step:9" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="claim" data-edge-to="xr" data-edge-label="request" data-edge-key="0" data-edge-id="claim-to-xr" data-composition-points="200,330;280,330" d="M 200 330 L 280 330" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="xr" data-edge-to="xrd" data-edge-label="schema" data-edge-key="1" data-edge-id="xr-to-xrd" data-composition-points="385,300;385,164" d="M 385 300 L 385 164" class="a-default" data-animate="edge" style="--step:1" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="xr" data-edge-to="comp" data-edge-label="pipeline" data-edge-key="2" data-edge-id="xr-to-comp" data-composition-points="490,332;610,332" d="M 490 332 L 610 332" class="a-emphasis" data-animate="edge" style="--step:2" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="comp" data-edge-to="mr" data-edge-label="desired MRs" data-edge-key="3" data-edge-id="comp-to-mr" data-composition-points="790,332;920,332" d="M 790 332 L 920 332" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="mr" data-edge-to="providers" data-edge-label="watch" data-edge-key="4" data-edge-id="mr-to-providers" data-composition-points="1028,364;1028,510" d="M 1028 364 L 1028 510" class="a-emphasis" data-animate="edge" style="--step:4" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="core" data-edge-to="providers" data-edge-key="5" data-edge-id="core-to-providers" data-composition-points="790,540;920,540" d="M 790 540 L 920 540" class="a-dashed" data-animate="edge" style="--step:5" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="providers" data-edge-to="aws" data-edge-key="6" data-edge-id="providers-to-aws" data-composition-points="1042,510;1042,486;1196,486;1196,430;1220,430" d="M 1042 510 L 1042 494 Q 1042 486 1050 486 L 1188 486 Q 1196 486 1196 478 L 1196 438 Q 1196 430 1204 430 L 1220 430" class="a-emphasis" data-animate="edge" style="--step:6" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="providers" data-edge-to="gcp" data-edge-label="API" data-edge-key="7" data-edge-id="providers-to-gcp" data-composition-points="1150,542;1220,542" d="M 1150 542 L 1220 542" class="a-default" data-animate="edge" style="--step:7" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="providers" data-edge-to="azure" data-edge-key="8" data-edge-id="providers-to-azure" data-composition-points="1035,574;1035,598;1196,598;1196,650;1220,650" d="M 1035 574 L 1035 590 Q 1035 598 1043 598 L 1188 598 Q 1196 598 1196 606 L 1196 642 Q 1196 650 1204 650 L 1220 650" class="a-default" data-animate="edge" style="--step:8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
 
         <!-- Components -->
-        <g id="node-xc" data-node-id="xc" data-node-label="Claim (XC)" tabindex="0" role="button" aria-label="Focus Claim (XC), namespace-scoped, Developer Interface" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="namespace-scoped" data-node-context="Developer Interface">
-          <title>Claim (XC) · namespace-scoped · Developer Interface</title>
-          <rect x="600" y="40" width="180" height="64" rx="6" class="c-mask"/>
-          <rect x="600" y="40" width="180" height="64" rx="6" class="c-frontend" data-animate="node" style="--step:0" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(606 46) scale(0.6875)">
-            <rect x="2" y="3" width="12" height="10" rx="2"/>
-            <path d="M2 6.5h12"/>
-            <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
-            <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="690" y="70" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Claim (XC)</text>
-        <text data-detail="context" x="690" y="86" class="t-muted" font-size="9" text-anchor="middle">namespace-scoped</text>
-        </g>
-
-        <g id="node-xrd" data-node-id="xrd" data-node-label="CompositeResourceDefinition (XRD)" tabindex="0" role="button" aria-label="Focus CompositeResourceDefinition (XRD), defines schema for XR and XC, Platform Abstraction Layer" aria-pressed="false" data-node-kind="backend" data-node-sublabel="defines schema for XR and XC" data-node-context="Platform Abstraction Layer">
-          <title>CompositeResourceDefinition (XRD) · defines schema for XR and XC · Platform Abstraction Layer</title>
-          <rect x="230" y="220" width="250" height="64" rx="6" class="c-mask"/>
-          <rect x="230" y="220" width="250" height="64" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(236 226) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="355" y="250" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">CompositeResourceDefinition (XRD)</text>
-        <text data-detail="context" x="355" y="266" class="t-muted" font-size="9" text-anchor="middle">defines schema for XR and XC</text>
-        </g>
-
-        <g id="node-xr" data-node-id="xr" data-node-label="Composite Resource (XR)" tabindex="0" role="button" aria-label="Focus Composite Resource (XR), cluster-scoped, Platform Abstraction Layer" aria-pressed="false" data-node-kind="backend" data-node-sublabel="cluster-scoped" data-node-context="Platform Abstraction Layer">
-          <title>Composite Resource (XR) · cluster-scoped · Platform Abstraction Layer</title>
-          <rect x="590" y="220" width="200" height="64" rx="6" class="c-mask"/>
-          <rect x="590" y="220" width="200" height="64" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(596 226) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="690" y="250" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Composite Resource (XR)</text>
-        <text data-detail="context" x="690" y="266" class="t-muted" font-size="9" text-anchor="middle">cluster-scoped</text>
-        </g>
-
-        <g id="node-comp" data-node-id="comp" data-node-label="Composition" tabindex="0" role="button" aria-label="Focus Composition, maps XR to Managed Resources, Platform Abstraction Layer" aria-pressed="false" data-node-kind="backend" data-node-sublabel="maps XR to Managed Resources" data-node-context="Platform Abstraction Layer">
-          <title>Composition · maps XR to Managed Resources · Platform Abstraction Layer</title>
-          <rect x="840" y="220" width="220" height="64" rx="6" class="c-mask"/>
-          <rect x="840" y="220" width="220" height="64" rx="6" class="c-backend" data-animate="node" style="--step:4" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(846 226) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="950" y="250" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Composition</text>
-        <text data-detail="context" x="950" y="266" class="t-muted" font-size="9" text-anchor="middle">maps XR to Managed Resources</text>
-        </g>
-
-        <g id="node-mr-s3" data-node-id="mr-s3" data-node-label="Managed Resource" tabindex="0" role="button" aria-label="Focus Managed Resource, S3 Bucket, Cloud Provider Layer" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="S3 Bucket" data-node-context="Cloud Provider Layer">
-          <title>Managed Resource · S3 Bucket · Cloud Provider Layer</title>
-          <rect x="340" y="410" width="180" height="64" rx="6" class="c-mask"/>
-          <rect x="340" y="410" width="180" height="64" rx="6" class="c-cloud" data-animate="node" style="--step:5" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(346 416) scale(0.6875)">
-            <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="430" y="440" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Managed Resource</text>
-        <text data-detail="context" x="430" y="456" class="t-muted" font-size="9" text-anchor="middle">S3 Bucket</text>
-        </g>
-
-        <g id="node-mr-rds" data-node-id="mr-rds" data-node-label="Managed Resource" tabindex="0" role="button" aria-label="Focus Managed Resource, RDS Instance, Cloud Provider Layer" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="RDS Instance" data-node-context="Cloud Provider Layer">
-          <title>Managed Resource · RDS Instance · Cloud Provider Layer</title>
-          <rect x="600" y="410" width="180" height="64" rx="6" class="c-mask"/>
-          <rect x="600" y="410" width="180" height="64" rx="6" class="c-cloud" data-animate="node" style="--step:6" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(606 416) scale(0.6875)">
-            <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="690" y="440" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Managed Resource</text>
-        <text data-detail="context" x="690" y="456" class="t-muted" font-size="9" text-anchor="middle">RDS Instance</text>
-        </g>
-
-        <g id="node-mr-sg" data-node-id="mr-sg" data-node-label="Managed Resource" tabindex="0" role="button" aria-label="Focus Managed Resource, Security Group, Cloud Provider Layer" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="Security Group" data-node-context="Cloud Provider Layer">
-          <title>Managed Resource · Security Group · Cloud Provider Layer</title>
-          <rect x="860" y="410" width="180" height="64" rx="6" class="c-mask"/>
-          <rect x="860" y="410" width="180" height="64" rx="6" class="c-cloud" data-animate="node" style="--step:7" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(866 416) scale(0.6875)">
-            <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="950" y="440" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Managed Resource</text>
-        <text data-detail="context" x="950" y="456" class="t-muted" font-size="9" text-anchor="middle">Security Group</text>
-        </g>
-
-        <g id="node-s3" data-node-id="s3" data-node-label="S3 Bucket" tabindex="0" role="button" aria-label="Focus S3 Bucket, AWS Account" aria-pressed="false" data-node-kind="external" data-node-context="AWS Account">
-          <title>S3 Bucket · AWS Account</title>
-          <rect x="340" y="590" width="180" height="60" rx="6" class="c-mask"/>
-          <rect x="340" y="590" width="180" height="60" rx="6" class="c-external" data-animate="node" style="--step:8" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(346 596) scale(0.6875)">
+        <g id="node-claim" data-node-id="claim" data-node-label="Developer" tabindex="0" role="button" aria-label="Focus Developer, Namespaced XR request, Kubernetes resources" aria-pressed="false" data-node-kind="external" data-node-sublabel="Namespaced XR request" data-node-context="Kubernetes resources">
+          <title>Developer · Namespaced XR request · Kubernetes resources</title>
+          <rect x="40" y="300" width="160" height="60" rx="6" class="c-mask"/>
+          <rect x="40" y="300" width="160" height="60" rx="6" class="c-external" data-animate="node" style="--step:0" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(46 306) scale(0.6875)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" x="430" y="624" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">S3 Bucket</text>
+          <text data-node-label="" data-detail-anchor="" x="120" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Developer</text>
+        <text data-detail="context" x="120" y="344" class="t-muted" font-size="9" text-anchor="middle">Namespaced XR request</text>
         </g>
 
-        <g id="node-rds" data-node-id="rds" data-node-label="RDS Instance" tabindex="0" role="button" aria-label="Focus RDS Instance, AWS Account" aria-pressed="false" data-node-kind="external" data-node-context="AWS Account">
-          <title>RDS Instance · AWS Account</title>
-          <rect x="600" y="590" width="180" height="60" rx="6" class="c-mask"/>
-          <rect x="600" y="590" width="180" height="60" rx="6" class="c-external" data-animate="node" style="--step:9" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(606 596) scale(0.6875)">
-            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
-            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
+        <g id="node-xr" data-node-id="xr" data-node-label="Composite Resource" tabindex="0" role="button" aria-label="Focus Composite Resource, v2 namespaced XR, Kubernetes resources" aria-pressed="false" data-node-kind="backend" data-node-sublabel="v2 namespaced XR" data-node-context="Kubernetes resources">
+          <title>Composite Resource · v2 namespaced XR · Kubernetes resources</title>
+          <rect x="280" y="300" width="210" height="64" rx="6" class="c-mask"/>
+          <rect x="280" y="300" width="210" height="64" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(286 306) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" x="690" y="624" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">RDS Instance</text>
+          <text data-node-label="" data-detail-anchor="" x="385" y="330" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Composite Resource</text>
+        <text data-detail="context" x="385" y="346" class="t-muted" font-size="9" text-anchor="middle">v2 namespaced XR</text>
         </g>
 
-        <g id="node-sg" data-node-id="sg" data-node-label="Security Group" tabindex="0" role="button" aria-label="Focus Security Group, AWS Account" aria-pressed="false" data-node-kind="external" data-node-context="AWS Account">
-          <title>Security Group · AWS Account</title>
-          <rect x="860" y="590" width="180" height="60" rx="6" class="c-mask"/>
-          <rect x="860" y="590" width="180" height="60" rx="6" class="c-external" data-animate="node" style="--step:10" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(866 596) scale(0.6875)">
-            <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
-            <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
+        <g id="node-xrd" data-node-id="xrd" data-node-label="CompositeResourceDefinition" tabindex="0" role="button" aria-label="Focus CompositeResourceDefinition, API schema, Kubernetes resources" aria-pressed="false" data-node-kind="backend" data-node-sublabel="API schema" data-node-context="Kubernetes resources">
+          <title>CompositeResourceDefinition · API schema · Kubernetes resources</title>
+          <rect x="265" y="100" width="240" height="64" rx="6" class="c-mask"/>
+          <rect x="265" y="100" width="240" height="64" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(271 106) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" x="950" y="624" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Security Group</text>
+          <text data-node-label="" data-detail-anchor="" x="385" y="130" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">CompositeResourceDefinition</text>
+        <text data-detail="context" x="385" y="146" class="t-muted" font-size="9" text-anchor="middle">API schema</text>
+        </g>
+
+        <g id="node-comp" data-node-id="comp" data-node-label="Composition" tabindex="0" role="button" aria-label="Focus Composition, Function pipeline, Kubernetes resources" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Function pipeline" data-node-context="Kubernetes resources">
+          <title>Composition · Function pipeline · Kubernetes resources</title>
+          <rect x="610" y="300" width="180" height="64" rx="6" class="c-mask"/>
+          <rect x="610" y="300" width="180" height="64" rx="6" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(616 306) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="700" y="330" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Composition</text>
+        <text data-detail="context" x="700" y="346" class="t-muted" font-size="9" text-anchor="middle">Function pipeline</text>
+        </g>
+
+        <g id="node-mr" data-node-id="mr" data-node-label="Managed resources" tabindex="0" role="button" aria-label="Focus Managed resources, v2 namespaced MRs, Kubernetes resources" aria-pressed="false" data-node-kind="backend" data-node-sublabel="v2 namespaced MRs" data-node-context="Kubernetes resources">
+          <title>Managed resources · v2 namespaced MRs · Kubernetes resources</title>
+          <rect x="920" y="300" width="230" height="64" rx="6" class="c-mask"/>
+          <rect x="920" y="300" width="230" height="64" rx="6" class="c-backend" data-animate="node" style="--step:4" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(926 306) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="1035" y="330" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Managed resources</text>
+        <text data-detail="context" x="1035" y="346" class="t-muted" font-size="9" text-anchor="middle">v2 namespaced MRs</text>
+        </g>
+
+        <g id="node-core" data-node-id="core" data-node-label="Crossplane core" tabindex="0" role="button" aria-label="Focus Crossplane core, Controller, Kubernetes resources" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Controller" data-node-context="Kubernetes resources">
+          <title>Crossplane core · Controller · Kubernetes resources</title>
+          <rect x="610" y="510" width="180" height="60" rx="6" class="c-mask"/>
+          <rect x="610" y="510" width="180" height="60" rx="6" class="c-backend" data-animate="node" style="--step:5" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(616 516) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="700" y="538" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Crossplane core</text>
+        <text data-detail="context" x="700" y="554" class="t-muted" font-size="9" text-anchor="middle">Controller</text>
+        </g>
+
+        <g id="node-providers" data-node-id="providers" data-node-label="Providers" tabindex="0" role="button" aria-label="Focus Providers, Selected service controllers, Kubernetes resources" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Selected service controllers" data-node-context="Kubernetes resources">
+          <title>Providers · Selected service controllers · Kubernetes resources</title>
+          <rect x="920" y="510" width="230" height="64" rx="6" class="c-mask"/>
+          <rect x="920" y="510" width="230" height="64" rx="6" class="c-backend" data-animate="node" style="--step:5" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(926 516) scale(0.6875)">
+            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="1035" y="540" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Providers</text>
+        <text data-detail="context" x="1035" y="556" class="t-muted" font-size="9" text-anchor="middle">Selected service controllers</text>
+        </g>
+
+        <g id="node-aws" data-node-id="aws" data-node-label="AWS" tabindex="0" role="button" aria-label="Focus AWS, Cloud API, Cloud provider" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="Cloud API" data-node-context="Cloud provider">
+          <title>AWS · Cloud API · Cloud provider</title>
+          <rect x="1220" y="400" width="130" height="60" rx="6" class="c-mask"/>
+          <rect x="1220" y="400" width="130" height="60" rx="6" class="c-cloud" data-animate="node" style="--step:7" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(1226 406) scale(0.6875)">
+            <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="1285" y="428" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">AWS</text>
+        <text data-detail="context" x="1285" y="444" class="t-muted" font-size="9" text-anchor="middle">Cloud API</text>
+        </g>
+
+        <g id="node-gcp" data-node-id="gcp" data-node-label="GCP" tabindex="0" role="button" aria-label="Focus GCP, Selected provider, Cloud provider" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="Selected provider" data-node-context="Cloud provider">
+          <title>GCP · Selected provider · Cloud provider</title>
+          <rect x="1220" y="510" width="130" height="60" rx="6" class="c-mask"/>
+          <rect x="1220" y="510" width="130" height="60" rx="6" class="c-cloud" data-animate="node" style="--step:8" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(1226 516) scale(0.6875)">
+            <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="1285" y="538" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">GCP</text>
+        <text data-detail="context" x="1285" y="554" class="t-muted" font-size="9" text-anchor="middle">Selected provider</text>
+        </g>
+
+        <g id="node-azure" data-node-id="azure" data-node-label="Azure" tabindex="0" role="button" aria-label="Focus Azure, Selected provider, Cloud provider" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="Selected provider" data-node-context="Cloud provider">
+          <title>Azure · Selected provider · Cloud provider</title>
+          <rect x="1220" y="620" width="130" height="60" rx="6" class="c-mask"/>
+          <rect x="1220" y="620" width="130" height="60" rx="6" class="c-cloud" data-animate="node" style="--step:9" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(1226 626) scale(0.6875)">
+            <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
+          </g>
+          <text data-node-label="" data-detail-anchor="" x="1285" y="648" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Azure</text>
+        <text data-detail="context" x="1285" y="664" class="t-muted" font-size="9" text-anchor="middle">Selected provider</text>
         </g>
 
         <!-- Connection labels -->
-        <g data-detail="context" data-edge-from="xc" data-edge-to="xr" data-edge-label="creates" data-edge-key="0" data-edge-id="xc-creates-xr">
-          <rect x="668.2" y="108" width="43.6" height="14" rx="3" class="c-mask"/>
-          <text x="690" y="118" class="t-backend" font-size="8" text-anchor="middle">creates</text>
+        <g data-detail="context" data-edge-from="claim" data-edge-to="xr" data-edge-label="request" data-edge-key="0" data-edge-id="claim-to-xr">
+          <rect x="218.2" y="310" width="43.6" height="14" rx="3" class="c-mask"/>
+          <text x="240" y="320" class="t-backend" font-size="8" text-anchor="middle">request</text>
         </g>
-        <g data-detail="context" data-edge-from="xrd" data-edge-to="xr" data-edge-label="defines schema" data-edge-key="1" data-edge-id="xrd-schema-xr">
-          <rect x="496.4" y="232" width="77.2" height="14" rx="3" class="c-mask"/>
-          <text x="535" y="242" class="t-muted" font-size="8" text-anchor="middle">defines schema</text>
+        <g data-detail="context" data-edge-from="xr" data-edge-to="xrd" data-edge-label="schema" data-edge-key="1" data-edge-id="xr-to-xrd">
+          <rect x="365.6" y="280" width="38.8" height="14" rx="3" class="c-mask"/>
+          <text x="385" y="290" class="t-muted" font-size="8" text-anchor="middle">schema</text>
         </g>
-        <g data-detail="context" data-edge-from="xrd" data-edge-to="xc" data-edge-label="defines schema" data-edge-key="2" data-edge-id="xrd-schema-xc">
-          <rect x="426.9" y="176" width="77.2" height="14" rx="3" class="c-mask"/>
-          <text x="465.5" y="186" class="t-messagebus" font-size="8" text-anchor="middle">defines schema</text>
+        <g data-detail="context" data-edge-from="xr" data-edge-to="comp" data-edge-label="pipeline" data-edge-key="2" data-edge-id="xr-to-comp">
+          <rect x="525.8" y="312" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="550" y="322" class="t-backend" font-size="8" text-anchor="middle">pipeline</text>
         </g>
-        <g data-detail="context" data-edge-from="xr" data-edge-to="comp" data-edge-label="selects" data-edge-key="3" data-edge-id="xr-selects-comp">
-          <rect x="793.2" y="232" width="43.6" height="14" rx="3" class="c-mask"/>
-          <text x="815" y="242" class="t-backend" font-size="8" text-anchor="middle">selects</text>
+        <g data-detail="context" data-edge-from="comp" data-edge-to="mr" data-edge-label="desired MRs" data-edge-key="3" data-edge-id="comp-to-mr">
+          <rect x="823.6" y="312" width="62.8" height="14" rx="3" class="c-mask"/>
+          <text x="855" y="322" class="t-backend" font-size="8" text-anchor="middle">desired MRs</text>
+        </g>
+        <g data-detail="context" data-edge-from="mr" data-edge-to="providers" data-edge-label="watch" data-edge-key="4" data-edge-id="mr-to-providers">
+          <rect x="1011" y="368" width="34" height="14" rx="3" class="c-mask"/>
+          <text x="1028" y="378" class="t-backend" font-size="8" text-anchor="middle">watch</text>
         </g>
 
-        <g data-detail="context" data-edge-from="comp" data-edge-to="mr-rds" data-edge-label="maps to" data-edge-key="5" data-edge-id="comp-maps-rds">
-          <rect x="798.2" y="327" width="43.6" height="14" rx="3" class="c-mask"/>
-          <text x="820" y="337" class="t-backend" font-size="8" text-anchor="middle">maps to</text>
-        </g>
 
-
-        <g data-detail="context" data-edge-from="mr-rds" data-edge-to="rds" data-edge-label="reconciles" data-edge-key="8" data-edge-id="rds-reconcile">
-          <rect x="661" y="478" width="58" height="14" rx="3" class="c-mask"/>
-          <text x="690" y="488" class="t-backend" font-size="8" text-anchor="middle">reconciles</text>
+        <g data-detail="context" data-edge-from="providers" data-edge-to="gcp" data-edge-label="API" data-edge-key="7" data-edge-id="providers-to-gcp">
+          <rect x="1170" y="522" width="30" height="14" rx="3" class="c-mask"/>
+          <text x="1185" y="532" class="t-muted" font-size="8" text-anchor="middle">API</text>
         </g>
 
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="0" data-composition-frame-kind="region" data-composition-frame-label="Developer Interface">
-          <rect data-graph-role="structural-frame-label-mask" x="574" y="20" width="112.6" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="578" y="33" class="t-cloud" font-size="9" font-weight="600">Developer Interface</text>
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="0" data-composition-frame-kind="region" data-composition-frame-label="Kubernetes resources">
+          <rect data-graph-role="structural-frame-label-mask" x="14" y="280" width="118" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="18" y="293" class="t-cloud" font-size="9" font-weight="600">Kubernetes resources</text>
         </g>
 
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="1" data-composition-frame-kind="region" data-composition-frame-label="Platform Abstraction Layer">
-          <rect data-graph-role="structural-frame-label-mask" x="204" y="200" width="150.4" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="208" y="213" class="t-cloud" font-size="9" font-weight="600">Platform Abstraction Layer</text>
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="1" data-composition-frame-kind="region" data-composition-frame-label="Kubernetes resources">
+          <rect data-graph-role="structural-frame-label-mask" x="239" y="80" width="118" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="243" y="93" class="t-cloud" font-size="9" font-weight="600">Kubernetes resources</text>
         </g>
 
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="2" data-composition-frame-kind="region" data-composition-frame-label="Cloud Provider Layer">
-          <rect data-graph-role="structural-frame-label-mask" x="314" y="390" width="118" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="318" y="403" class="t-cloud" font-size="9" font-weight="600">Cloud Provider Layer</text>
-        </g>
-
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="3" data-composition-frame-kind="region" data-composition-frame-label="AWS Account">
-          <rect data-graph-role="structural-frame-label-mask" x="314" y="570" width="69.4" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="318" y="583" class="t-cloud" font-size="9" font-weight="600">AWS Account</text>
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="2" data-composition-frame-kind="region" data-composition-frame-label="Cloud provider">
+          <rect data-graph-role="structural-frame-label-mask" x="1194" y="380" width="85.6" height="16" rx="3" class="c-mask"/>
+          <text data-boundary-label="" x="1198" y="393" class="t-cloud" font-size="9" font-weight="600">Cloud provider</text>
         </g>
 
         <!-- Legend -->
-        <g data-legend="" data-legend-bridge="">
-          <text x="40" y="702" class="t-primary" font-size="12" font-weight="650">Legend</text>
-          <g data-legend-semantic-kind="frontend" data-legend-kind="frontend" data-legend-label="Frontend" data-legend-x="40" data-legend-baseline="722" data-legend-width="83">
-            <rect x="40" y="713" width="16" height="10" rx="2.5" class="c-frontend" stroke-width="1"/>
-            <text x="62" y="722" class="t-muted" font-size="10" font-weight="500">Frontend</text>
-          </g>
-          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="Backend" data-legend-x="145" data-legend-baseline="722" data-legend-width="78">
-            <rect x="145" y="713" width="16" height="10" rx="2.5" class="c-backend" stroke-width="1"/>
-            <text x="167" y="722" class="t-muted" font-size="10" font-weight="500">Backend</text>
-          </g>
-          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="Cloud" data-legend-x="245" data-legend-baseline="722" data-legend-width="68">
-            <rect x="245" y="713" width="16" height="10" rx="2.5" class="c-cloud" stroke-width="1"/>
-            <text x="267" y="722" class="t-muted" font-size="10" font-weight="500">Cloud</text>
-          </g>
-          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="External" data-legend-x="335" data-legend-baseline="722" data-legend-width="83">
-            <rect x="335" y="713" width="16" height="10" rx="2.5" class="c-external" stroke-width="1"/>
-            <text x="357" y="722" class="t-muted" font-size="10" font-weight="500">External</text>
-          </g>
-        </g>
+
       </svg>
       <p class="intent-trace-status no-print" id="intent-trace-status" role="status" aria-live="polite" aria-atomic="true"></p>
       <div class="share-chapter-cue no-print" id="share-chapter-cue" hidden role="status" aria-live="polite">
@@ -5423,34 +5394,25 @@
     <div class="cards">
       <div class="card">
         <div class="card-header">
-          <div class="card-dot emerald"></div>
-          <h3>Developer interface</h3>
+          <div class="card-dot cyan"></div>
+          <h3>v2 scope</h3>
         </div>
         <ul>
-          <li>&bull; Claim (XC) is a namespace-scoped projection of a Composite Resource</li>
-          <li>&bull; A developer in team-alpha can create a DatabaseClaim without cluster-level permissions</li>
+          <li>&bull; XRD v2 defaults to Namespaced</li>
+          <li>&bull; Example MRs use *.aws.m.upbound.io/v1beta1</li>
+          <li>&bull; LegacyCluster retains the older Claim path</li>
         </ul>
       </div>
 
       <div class="card">
         <div class="card-header">
           <div class="card-dot amber"></div>
-          <h3>Platform abstraction</h3>
+          <h3>Reconciliation and permissions</h3>
         </div>
         <ul>
-          <li>&bull; XRD defines the schema for both the XR and its Claim</li>
-          <li>&bull; Composition is the recipe: given an XR, create these Managed Resources and patch XR spec values into MR fields</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-dot violet"></div>
-          <h3>Cloud provider layer</h3>
-        </div>
-        <ul>
-          <li>&bull; Managed Resource is a 1:1 cluster-scoped representation of an external cloud resource</li>
-          <li>&bull; Provider controllers continuously reconcile MRs against the AWS API</li>
+          <li>&bull; Functions calculate desired resources</li>
+          <li>&bull; Provider controllers call cloud APIs</li>
+          <li>&bull; Namespaces and ProviderConfigs alone do not isolate IAM access</li>
         </ul>
       </div>
     </div>

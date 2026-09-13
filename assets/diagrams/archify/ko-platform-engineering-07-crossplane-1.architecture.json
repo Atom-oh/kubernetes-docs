@@ -16,7 +16,7 @@
           "comp",
           "mr"
         ],
-        "note": "개발자 Namespace의 Claim이 클러스터 스코프의 XR, Composition, Managed Resource로 이어지는 흐름."
+        "note": "v2 namespaced XR와 MR의 흐름. v1 LegacyCluster Claims는 별도 호환 경로입니다."
       },
       {
         "id": "provider-path",
@@ -27,7 +27,7 @@
           "pcrd",
           "aws"
         ],
-        "note": "Managed Resource를 Provider-AWS 컨트롤러가 감지해 실제 AWS API를 호출한다."
+        "note": "v2 namespaced XR와 MR의 흐름. v1 LegacyCluster Claims는 별도 호환 경로입니다."
       },
       {
         "id": "core-plane",
@@ -39,7 +39,7 @@
           "etcd",
           "pctrl"
         ],
-        "note": "crossplane-system의 코어 컨트롤러와 Package Manager가 API 서버·etcd 위에서 Provider를 설치한다."
+        "note": "v2 namespaced XR와 MR의 흐름. v1 LegacyCluster Claims는 별도 호환 경로입니다."
       }
     ],
     "viewBox": [
@@ -124,8 +124,8 @@
     {
       "id": "claim",
       "type": "external",
-      "label": "Claim",
-      "sublabel": "네임스페이스 스코프",
+      "label": "개발자",
+      "sublabel": "namespace XR 요청",
       "pos": [
         60,
         340
@@ -139,7 +139,7 @@
       "id": "xr",
       "type": "backend",
       "label": "Composite Resource",
-      "sublabel": "XR",
+      "sublabel": "v2: Namespaced XR",
       "pos": [
         270,
         340
@@ -167,7 +167,7 @@
       "id": "mr",
       "type": "backend",
       "label": "Managed Resources",
-      "sublabel": "클라우드 리소스와 1:1",
+      "sublabel": "v2: Namespaced MR",
       "pos": [
         710,
         340
@@ -195,7 +195,7 @@
       "id": "pcrd",
       "type": "database",
       "label": "AWS CRDs",
-      "sublabel": "900+",
+      "sublabel": "선택한 서비스 API",
       "pos": [
         950,
         530
@@ -345,28 +345,20 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "crossplane-system",
+      "title": "v2 범위",
       "items": [
-        "Crossplane Core Controller가 Claim → XR → MR 조정 루프를 실행한다",
-        "Package Manager가 Provider 패키지를 설치하고 RBAC Manager가 권한을 관리한다",
-        "모든 상태는 Kubernetes API Server를 거쳐 etcd에 저장된다"
-      ]
-    },
-    {
-      "dot": "emerald",
-      "title": "리소스 체인",
-      "items": [
-        "Claim은 개발자 Namespace에 만드는 네임스페이스 스코프 요청이다",
-        "XR은 XRD가 스키마를 정의하는 클러스터 스코프 리소스다",
-        "Composition은 XR당 어떤 Managed Resource를 만들지 정하는 레시피다"
+        "XRD v2 기본 scope는 Namespaced",
+        "예제 MR은 *.aws.m.upbound.io/v1beta1",
+        "v1 LegacyCluster XRD에서만 기존 Claim 경로 사용"
       ]
     },
     {
       "dot": "amber",
-      "title": "Provider Runtime",
+      "title": "조정과 권한",
       "items": [
-        "Provider-AWS는 900+ AWS CRD를 제공한다",
-        "Managed Resource 변경을 감지해 AWS API를 호출하고 .status를 동기화한다"
+        "Composition Functions가 원하는 리소스를 계산",
+        "Provider controller가 AWS API를 호출",
+        "namespace / ProviderConfig만으로 IAM 격리가 완성되지 않음"
       ]
     }
   ]

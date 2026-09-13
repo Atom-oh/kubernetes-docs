@@ -1,630 +1,591 @@
 # Datadog
 
-> **Last Updated**: February 20, 2026
-
-## Table of Contents
-
-- [Introduction](#introduction)
-- [EKS Integration Architecture](#eks-integration-architecture)
-- [Datadog Agent Installation](#datadog-agent-installation)
-- [Infrastructure Monitoring](#infrastructure-monitoring)
-- [APM and Distributed Tracing](#apm-and-distributed-tracing)
-- [Log Management](#log-management)
-- [Dashboards and Alerts](#dashboards-and-alerts)
-- [Cost Structure](#cost-structure)
-- [Best Practices](#best-practices)
-- [Troubleshooting](#troubleshooting)
+> **Last Updated**: September 13, 2026
+> Helm chart 3.244.0; matching Agent/Cluster Agent 7.83.1.
+> Configuration, SDK and local validation limits are stated below; no Datadog tenant was modified.
 
 ## Introduction
 
-Datadog is a unified observability platform for monitoring cloud-scale infrastructure, applications, and logs. Delivered as a SaaS model, it provides powerful monitoring capabilities without infrastructure management.
+Datadog supplies a SaaS observability backend. Teams still own collectors, identity,
+network access, instrumentation, data disclosure, retention, monitors and cost.
+Infrastructure Monitoring, APM, profiling, logs and other products have distinct
+entitlements and billing dimensions; installing an Agent does not include every product.
 
-### Key Features
+| Topic | Datadog | CloudWatch | Self-managed Prometheus / Grafana |
+| --- | --- | --- | --- |
+| Backend | Datadog SaaS, with site-specific availability | AWS-managed services | Operated storage, query and visualization |
+| Collection | Agent/Cluster Agent, libraries and supported OTel paths | AWS service metrics, agents/SDKs/OTLP | Exporters, scraping, agents and remote write |
+| APM/logs | Select and configure the required products | Application Signals, tracing and Logs integrations | Configure the relevant backends and collectors |
+| Operations | Collector/configuration and application responsibilities remain | Collection/configuration and response responsibilities remain | Backend and collection responsibilities remain |
+| Cost | Host and other product-specific usage/retention units | Metric/observation/OTLP/log/query/alarm units | Infrastructure and operating effort |
 
-| Feature | Description |
-|---------|-------------|
-| **Unified Platform** | Integrated metrics, logs, traces, and profiling |
-| **750+ Integrations** | Extensive integrations with AWS, Kubernetes, databases, etc. |
-| **Auto Instrumentation** | APM auto-instrumentation support |
-| **AI-based Analysis** | Automatic anomaly detection with Watchdog AI |
-| **Real-time Monitoring** | 1-second granularity metric collection possible |
-| **Global Infrastructure** | Worldwide data centers |
-| **SSO/RBAC** | Enterprise security features |
+Choose the correct Datadog **site** for the organization and its credentials;
+API endpoints, data residency, available products and pricing terms are not
+interchangeable across sites. Use the integration catalogue rather than a fixed
+integration-count claim or a universal “easy/advanced/cheap” ranking.
 
-### Datadog vs Open Source vs CloudWatch
+## EKS integration architecture
 
-![Three side-by-side profiles comparing Datadog, Amazon CloudWatch, and a self-hosted open-source stack across platform model, intelligence, integration breadth, and pricing shape.](../../.gitbook/assets/en-observability-metrics-05-datadog-0.png)
+| Component | Responsibility / boundary |
+| --- | --- |
+| Node Agent | Host/container checks; typically a DaemonSet on supported EC2 nodes |
+| Cluster Agent | Shared Kubernetes metadata/checks, event coordination and optional admission/external-metric features |
+| Trace Agent | Receives application trace payloads and forwards them |
+| Process collection / system-probe | Optional process/network/security features with their own OS, privilege and product requirements |
+| Admission Controller | Injects connection settings and, when configured, supported client libraries into new pods |
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-05-datadog-0.html)
+Application instrumentation produces traces/profiles; an Agent listener or a pod
+label alone does not prove instrumentation. The Cluster Agent is not the ordinary
+application-log or trace forwarding path.
 
-| Item | Datadog | CloudWatch | Prometheus+Grafana |
-|------|---------|------------|-------------------|
-| Deployment Model | SaaS | Managed | Self-hosted |
-| Initial Setup | Very Easy | Easy | Medium |
-| Operational Burden | None | Low | High |
-| Cost Predictability | High (host-based) | Low (usage-based) | High (infrastructure-based) |
-| Scalability | Automatic | Automatic | Manual |
-| APM | Included | Separate (X-Ray) | Requires separate setup |
-| Alerting | Advanced | Basic | Alertmanager |
+This chapter's installation targets **Linux EC2-backed EKS nodes**. EKS Fargate
+uses the documented per-pod/sidecar collection model, not this host DaemonSet.
+UDS is local to the host and is not supported on Windows. Windows, Bottlerocket,
+Auto Mode and mixed compute need their distribution/feature-specific settings and
+supported host access. Do not disable TLS verification or claim all eBPF/process
+features work everywhere.
 
-## EKS Integration Architecture
+Datadog documents Agent and Cluster Agent 7.67+ for Kubernetes 1.33+ compatibility
+with `AllocatedResources`, and recommends matching their versions. Such minimum
+feature requirements are not the current EKS support matrix.
 
-### Overall Architecture
+## Datadog Agent installation
 
-![The Datadog Agent DaemonSet and Cluster Agent forward an EKS cluster's metrics, logs, traces and profiles into the Datadog platform, which feeds dashboards while Watchdog AI detects anomalies and raises monitor alerts.](../../.gitbook/assets/en-observability-metrics-05-datadog-1.png)
+Datadog recommends its Operator for higher-level lifecycle configuration and also
+supports Helm installation. This example owns the node/Cluster Agents through the
+**Datadog Agent Helm chart**. Chart 3.244.0 bundles an optional Operator dependency;
+`datadog.operator.enabled: false` keeps that additional controller out of this example.
+It does not mean the Operator is obsolete.
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-05-datadog-1.html)
+The chart defaults to Agent/Cluster Agent 7.82.3. This example explicitly pins both
+to **7.83.1** and the verified image-index digests. The release includes network-test
+billing, containerd snapshot cleanup and Cluster Agent leader-lock shutdown fixes.
+The Agent/Cluster Agent image indexes include Linux amd64/arm64. A successful
+template render is not a Kubernetes deployment or runtime compatibility test.
 
-### Components
+### Credentials and installation ownership
 
-| Component | Role |
-|-----------|------|
-| **Datadog Agent** | Per-node metric, log, trace collection (DaemonSet) |
-| **Cluster Agent** | Cluster level metric and event collection |
-| **Admission Controller** | Automatic APM instrumentation injection |
-| **Trace Agent** | APM trace collection and forwarding |
-| **Process Agent** | Process and container metrics |
+Baseline Agent ingestion needs an API key in the same namespace as the Agent.
+An application key is needed for API read/control features such as the external
+metrics provider; it is not required just to install the baseline Agent. Use a
+scoped application key only when the chosen feature requires one.
 
-## Datadog Agent Installation
-
-### Installation with Helm
+Keep credentials in an approved Secret workflow. The file command below avoids the
+old unquoted `<YOUR_API_KEY>` shell-redirection problem and exposing a key in process
+arguments. Protect and remove temporary key files according to the credential
+workflow. Kubernetes Secrets also require appropriate access and encryption controls.
+Do not run this installation over resources owned by another release or controller.
 
 ```bash
-# Add Helm repository
 helm repo add datadog https://helm.datadoghq.com
-helm repo update
+helm repo update datadog
+kubectl create namespace datadog --dry-run=client -o yaml | kubectl apply -f -
 
-# Create API key secret
-kubectl create namespace datadog
-kubectl create secret generic datadog-secret \
-  --namespace datadog \
-  --from-literal api-key=<YOUR_API_KEY> \
-  --from-literal app-key=<YOUR_APP_KEY>
+# The protected file contains only the API key; obtain it through your approved secret process.
+# Do not put the key in command-line literals, Git or terminal output.
+: "${DATADOG_API_KEY_FILE:?Set the path to the protected API-key file}"
+kubectl create secret generic datadog-secret --namespace datadog \
+  --from-file="api-key=$DATADOG_API_KEY_FILE" --dry-run=client -o yaml | kubectl apply -f -
 
-# Install Datadog Agent
-helm install datadog datadog/datadog \
-  --namespace datadog \
-  -f values.yaml
+helm template datadog datadog/datadog --version 3.244.0 \
+  --namespace datadog --include-crds --values datadog-values.yaml > datadog-rendered.yaml
+
+# This changes the cluster. Review the rendered resources and installation ownership first.
+helm upgrade --install datadog datadog/datadog --version 3.244.0 \
+  --namespace datadog --values datadog-values.yaml
 ```
 
-### values.yaml
+### Reviewed values
+
+Save the following as `datadog-values.yaml`. Logs are opt-in by container
+configuration, APM/DogStatsD use UDS, and cluster-wide automatic library injection,
+external HPA metrics, discovery network statistics and optional process/network
+collection are not enabled here.
+The application namespace should be separate from the Agent namespace; SSI does
+not instrument pods in the Agent's own namespace.
 
 ```yaml
-# API key configuration
+targetSystem: linux
+registry: gcr.io/datadoghq
 datadog:
   apiKeyExistingSecret: datadog-secret
-  appKeyExistingSecret: datadog-secret
-
-  # Cluster name
   clusterName: my-eks-cluster
-
-  # Site (US1, US3, US5, EU1, AP1, etc.)
   site: datadoghq.com
-
-  # Tags
   tags:
-    - env:production
-    - team:platform
-    - service:eks
-
-  # Log collection
+  - env:demo
+  - team:platform
   logs:
     enabled: true
-    containerCollectAll: true
+    containerCollectAll: false
     containerCollectUsingFiles: true
-
-  # APM configuration
   apm:
-    portEnabled: true
     socketEnabled: true
-
-  # Process monitoring
+    portEnabled: false
+    instrumentation:
+      enabled: false
+  dogstatsd:
+    useSocketVolume: true
+    useHostPort: false
+    nonLocalTraffic: false
   processAgent:
-    enabled: true
-    processCollection: true
-
-  # Network monitoring
+    processCollection: false
+    processDiscovery: false
+    containerCollection: true
   networkMonitoring:
-    enabled: true
-
-  # Profiling
+    enabled: false
+  discovery:
+    enabled: false
+    networkStats:
+      enabled: false
+  autoscaling:
+    workload:
+      enabled: false
   profiling:
-    enabled: true
-
-  # Kubernetes events
+    enabled: null
   collectEvents: true
-
-  # Prometheus metrics collection
   prometheusScrape:
+    enabled: false
+  kubeStateMetricsCore:
     enabled: true
-    serviceEndpoints: true
-
-  # Live containers
-  containerExclude: "image:datadog/agent"
-
-# Cluster Agent
+    collectSecretMetrics: false
+    collectConfigMaps: false
+  operator:
+    enabled: false
 clusterAgent:
   enabled: true
   replicas: 2
-
-  # Metrics server (for HPA)
+  image:
+    tag: 7.83.1
+    digest: sha256:8e420c81e68abec34ab792c72a6513b739dcba8f7682c52e1e7e276363827b1a
   metricsProvider:
-    enabled: true
-    useDatadogMetrics: true
-
-  # Admission Controller (auto instrumentation)
+    enabled: false
+    useDatadogMetrics: false
   admissionController:
     enabled: true
     mutateUnlabelled: false
-
-  resources:
-    requests:
-      cpu: 200m
-      memory: 256Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
-
-# Agent configuration
 agents:
-  # DaemonSet configuration
-  rbac:
-    create: true
-
-  # Resource limits
-  resources:
-    requests:
-      cpu: 200m
-      memory: 256Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
-
-  # Volume mounts
-  volumeMounts:
-    - name: passwd
-      mountPath: /etc/passwd
-      readOnly: true
-    - name: group
-      mountPath: /etc/group
-      readOnly: true
-
-  volumes:
-    - name: passwd
-      hostPath:
-        path: /etc/passwd
-    - name: group
-      hostPath:
-        path: /etc/group
-
-  # Tolerations (deploy to all nodes)
-  tolerations:
-    - operator: Exists
-
-  # Priority class
-  priorityClassName: system-node-critical
-
-# Kubernetes integration
-kubeStateMetricsEnabled: true
-
-# Prometheus operator integration
-prometheus:
-  enabled: true
+  image:
+    tag: 7.83.1
+    digest: sha256:ed0bd588e955d82f661d1b8dd1cdf179c1023e74a2817e7a812c99d52f05c319
 ```
 
-### IRSA Setup (Optional - for AWS integration)
+`processAgent.enabled` is deprecated; use the individual collection options.
+The chart already mounts `/etc/passwd` when applicable, so do not add duplicate
+manual `passwd` volumes/mounts. Resource overrides are per component, such as
+`agents.containers.agent.resources`; size the actual rendered containers under load.
+Two Cluster Agent replicas do not replace placement, disruption and failure testing.
 
-```bash
-# IAM policy
-cat <<EOF > datadog-aws-policy.json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "cloudwatch:GetMetricStatistics",
-                "cloudwatch:ListMetrics",
-                "ec2:DescribeInstances",
-                "ec2:DescribeVolumes",
-                "ec2:DescribeTags",
-                "tag:GetResources",
-                "tag:GetTagKeys",
-                "tag:GetTagValues"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-EOF
+The original top-level `kubeStateMetricsEnabled` and `prometheus.enabled` entries
+do not configure the claimed integrations. The legacy KSM option is nested under
+`datadog`; the example uses `datadog.kubeStateMetricsCore.enabled` and avoids
+duplicate legacy collection. Explicit Datadog Autodiscovery checks are separate
+from turning on annotation-wide `prometheusScrape`.
 
-aws iam create-policy \
-  --policy-name DatadogAWSIntegration \
-  --policy-document file://datadog-aws-policy.json
+`datadog.profiling.enabled` **is valid**. It injects `DD_PROFILING_ENABLED` into
+eligible pods and requires installed client libraries and Cluster Agent 7.57+.
+It does not install a profiler into an arbitrary uninstrumented application.
+Choose its `null`/`false`/`auto`/`true` behavior deliberately. Likewise, enabling
+external HPA metrics requires its application key, API permissions, service/CRDs
+and actual metric availability; network monitoring requires supported system-probe access.
 
-# Create service account
-eksctl create iamserviceaccount \
-  --name datadog-agent \
-  --namespace datadog \
-  --cluster my-cluster \
-  --attach-policy-arn arn:aws:iam::123456789012:policy/DatadogAWSIntegration \
-  --approve
-```
+### AWS account integration is a separate path
+
+The SaaS AWS account integration uses an authorized cross-account role and
+Datadog-provided external ID, with the permissions needed by selected integrations.
+An arbitrary IRSA role attached to a node Agent SA does not configure that SaaS
+integration. Ordinary Kubernetes Agent collection does not require the broad
+CloudWatch/EC2/tag policy previously shown here.
+
+Use Pod Identity or IRSA only for an Agent/check that actually calls AWS, with its
+specific role, trust and permissions. Resolve the **rendered** service-account name;
+creating an IAM association for a guessed `datadog-agent` SA does not bind a
+different SA used by the Helm release. Never treat a local STS caller check as
+proof of the workload's identity.
 
 ## Infrastructure Monitoring
 
-### Automatically Collected Metrics
+### Check the metric's collector, unit and tags
 
-Datadog Agent automatically collects various infrastructure metrics.
+| Metric / source | Meaning |
+| --- | --- |
+| `system.cpu.idle` / System check | CPU idle **percent**; suitable for a percentage-based node threshold |
+| `system.mem.total`, `system.mem.used`, `system.mem.free` | Memory measurements; free is not interchangeable with usable/reclaimable memory |
+| `kubernetes.cpu.usage.total` / Kubelet | **Nanocores**, not percent; one core is 1,000,000,000 nanocores |
+| `kubernetes.memory.usage`, `kubernetes.memory.limits` | Bytes; usage versus limit requires matching the same entity/tag set |
+| `kubernetes.pods.running`, `kubernetes.containers.restarts` | Valid Kubelet gauges: running pods and cumulative container restarts |
+| `kubernetes_state.deployment.replicas_available`, `kubernetes_state.deployment.replicas_desired` | Kubernetes State Metrics Core deployment state |
+| `kubernetes_state.pod.status_phase`, `kubernetes_state.service.count` | Pod phase/service inventory; inspect their documented grouping tags |
+| `kubernetes_state.container.restarts` | State Core's restart gauge, with namespace/pod/container tags |
 
-**System Metrics**:
-```yaml
-# CPU
-system.cpu.user           # User CPU usage
-system.cpu.system         # System CPU usage
-system.cpu.idle           # Idle CPU
-system.load.1             # 1-minute load average
+The legacy Kubernetes integration, Kubelet check and State Core have different
+catalogues. A metric absent from one catalogue is not necessarily removed from the
+Agent. Do not rename valid Kubelet metrics blindly. Filesystem/network availability
+and rate units depend on the collector/runtime; read that metric's actual definition.
 
-# Memory
-system.mem.total          # Total memory
-system.mem.used           # Used memory
-system.mem.free           # Available memory
-system.mem.cached         # Cached memory
+Use the standard `kube_cluster_name` tag for this Kubernetes installation and inspect
+real metric tags before grouping. Cluster-centric State Core metrics do not always
+carry a `host` tag. `cluster_name` and `kube_cluster_name` are not interchangeable.
+A raw nanocore value compared with 80 does not mean 80% CPU.
 
-# Disk
-system.disk.total         # Total disk
-system.disk.used          # Used disk
-system.disk.free          # Available disk
-system.io.r_s             # Disk reads/sec
-system.io.w_s             # Disk writes/sec
+### OpenMetrics Autodiscovery
 
-# Network
-system.net.bytes_rcvd     # Received bytes
-system.net.bytes_sent     # Sent bytes
-```
-
-**Kubernetes Metrics**:
-```yaml
-# Nodes
-kubernetes.cpu.usage.total
-kubernetes.memory.usage
-kubernetes.memory.limits
-kubernetes.filesystem.usage
-
-# Pods
-kubernetes.pods.running
-kubernetes.containers.running
-kubernetes.containers.restarts
-
-# Deployments
-kubernetes.deployment.replicas
-kubernetes.deployment.replicas_available
-kubernetes.deployment.replicas_desired
-
-# Services
-kubernetes.endpoint.address_available
-kubernetes.service.count
-```
-
-### Custom Metric Collection
-
-#### Prometheus Annotation-based
+Merge the following **metadata fragment** into a workload whose container is named
+`app` and serves the gauge `queue_depth` on port 9464. It does not create that
+application or endpoint. The annotation's container identifier must match.
+Protect the endpoint and configure TLS/authentication if required.
 
 ```yaml
-apiVersion: v1
-kind: Pod
 metadata:
-  name: my-app
   annotations:
-    # Datadog Agent automatically scrapes
-    ad.datadoghq.com/my-app.checks: |
-      {
-        "prometheus": {
-          "instances": [
-            {
-              "prometheus_url": "http://%%host%%:8080/metrics",
-              "namespace": "my_app",
-              "metrics": ["http_requests_total", "http_request_duration_*"]
-            }
-          ]
-        }
-      }
-spec:
-  containers:
-  - name: my-app
-    image: my-app:latest
+    ad.datadoghq.com/app.checks: "{\n  \"openmetrics\": {\n    \"init_config\": {},\n\
+      \    \"instances\": [\n      {\n        \"openmetrics_endpoint\": \"http://%%host%%:9464/metrics\"\
+      ,\n        \"namespace\": \"my_app\",\n        \"metrics\": [\n          {\n\
+      \            \"queue_depth\": \"queue_depth\"\n          }\n        ]\n    \
+      \  }\n    ]\n  }\n}"
 ```
 
-#### Using DogStatsD
+The current `openmetrics` check uses `openmetrics_endpoint`. These Datadog
+Autodiscovery annotations do not require a separate Prometheus server or the
+chart's broad `prometheusScrape` discovery. Restrict selected metrics/labels.
+For counters and histograms, verify name normalization, emitted `.count`/bucket
+series and check-version behavior instead of assuming the Prometheus name is
+also the final Datadog name.
+
+### DogStatsD: use an endpoint reachable from the application
+
+An application pod's `localhost` is not the node Agent. The Linux example uses
+the host-local UDS directory. The Admission Controller's `socket` mode can inject
+`DD_DOGSTATSD_URL`, `DD_TRACE_AGENT_URL` and the volume; otherwise configure matching
+mounts and permissions explicitly. A Pod-specific `admission.datadoghq.com/config.mode`
+is a **label**, not an annotation. Mount the parent directory so socket replacement
+after an Agent restart remains visible.
+
+The Python helper was checked with `datadog==0.53.0`. Pass the actual filesystem
+path, such as `/var/run/datadog/dsd.socket`, to `socket_path`; the `unix://` URL
+used by other SDKs/environment settings is not the same argument format.
+Call `emit_batch` with actual interval counts, including zero good/error values.
 
 ```python
-# Python example
-from datadog import initialize, statsd
+from datadog import DogStatsd
 
-initialize(statsd_host='localhost', statsd_port=8125)
 
-# Counter
-statsd.increment('my_app.requests', tags=['endpoint:/api/users', 'method:get'])
+def emit_batch(client, total, errors):
+    """Report one real reporting interval; explicit zeros keep the series present."""
+    if any(isinstance(x, bool) or not isinstance(x, int) for x in (total, errors)):
+        raise ValueError("counts must be integers")
+    if not 0 <= errors <= total:
+        raise ValueError("require 0 <= errors <= total")
+    client.increment("requests.total", total)
+    client.increment("requests.error", errors)
+    client.increment("requests.good", total - errors)
 
-# Gauge
-statsd.gauge('my_app.queue_size', 150, tags=['queue:orders'])
 
-# Histogram
-statsd.histogram('my_app.response_time', 0.25, tags=['endpoint:/api/users'])
-
-# Distribution
-statsd.distribution('my_app.request_size', 1024, tags=['content_type:json'])
-
-# Service check
-statsd.service_check('my_app.database', 0)  # 0=OK, 1=WARNING, 2=CRITICAL
+# Create once in an application with the Agent's UDS directory mounted.
+# This construction does not mean that the socket or receiving Agent is ready.
+def make_metrics_client(socket_path):
+    return DogStatsd(
+        socket_path=socket_path,
+        namespace="my_app",
+        constant_tags=["env:demo", "service:orders"],
+        disable_telemetry=True,
+        disable_buffering=True,
+    )
 ```
 
+The Go helper uses datadog-go/v5. Create the client with `WithNamespace("my_app.")`
+and the same `env:demo,service:orders` tags. Check constructor, send and close
+errors; do not discard the `statsd.New` error. The helper does not close a shared
+client supplied by the caller.
+
 ```go
-// Go example
-package main
+package metrics
 
 import (
+    "fmt"
+
     "github.com/DataDog/datadog-go/v5/statsd"
 )
 
-func main() {
-    client, _ := statsd.New("localhost:8125",
-        statsd.WithNamespace("my_app."),
-        statsd.WithTags([]string{"env:production"}),
-    )
-    defer client.Close()
-
-    // Counter
-    client.Incr("requests", []string{"endpoint:/api/users"}, 1)
-
-    // Gauge
-    client.Gauge("queue_size", 150, []string{"queue:orders"}, 1)
-
-    // Histogram
-    client.Histogram("response_time", 0.25, []string{"endpoint:/api/users"}, 1)
+// The caller creates/reuses the client, checks New's error, and closes it at shutdown.
+// For the Linux UDS example, use unix:///var/run/datadog/dsd.socket.
+func EmitBatch(client *statsd.Client, total, errors int64) error {
+    if errors < 0 || total < errors {
+        return fmt.Errorf("require 0 <= errors <= total")
+    }
+    for _, item := range []struct {
+        name string
+        value int64
+    }{
+        {"requests.total", total},
+        {"requests.error", errors},
+        {"requests.good", total - errors},
+    } {
+        if err := client.Count(item.name, item.value, nil, 1); err != nil {
+            return err
+        }
+    }
+    return nil
 }
 ```
 
-### Service Discovery
+| DogStatsD type | Interpretation |
+| --- | --- |
+| Counter | Interval count; Datadog may store it as a rate. `.as_count()` reconstructs counts for a query window |
+| Gauge | Snapshot such as queue depth; summing snapshots is not a processed-request count |
+| Histogram | Aggregated by the receiving Agent; averaging per-host percentiles does not create a global percentile |
+| Distribution | Supports backend distribution aggregation; review enabled percentiles, tags and billing |
+| Service check | Status from a real health check: 0 OK, 1 warning, 2 critical, 3 unknown |
+
+Local datagram delivery does not acknowledge SaaS ingestion. UDP can lose packets;
+UDS/client buffering and Agent queues also need monitoring. The sample helper does
+not enable DogStatsD client telemetry, so choose a separate collection-health signal
+for deployment. Counter retries/duplicate sends are not an exactly-once business ledger.
+
+### File-based Autodiscovery configuration
+
+For Helm-owned configuration, `datadog.confd` creates and mounts the check files.
+A standalone ConfigMap named `datadog-checks` is not automatically discovered merely
+because it exists. The following NGINX fragment requires a matching image identity
+and a configured, authorized `stub_status` endpoint.
 
 ```yaml
-# Auto discovery configuration via ConfigMap
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: datadog-checks
-  namespace: datadog
-data:
-  nginx.yaml: |
-    ad_identifiers:
-      - nginx
-    init_config:
-    instances:
-      - nginx_status_url: http://%%host%%:80/nginx_status
-
-  redis.yaml: |
-    ad_identifiers:
-      - redis
-    init_config:
-    instances:
-      - host: "%%host%%"
-        port: "6379"
-        password: "%%env_REDIS_PASSWORD%%"
+datadog:
+  confd:
+    nginx.yaml: "ad_identifiers:\n  - nginx\ninit_config: {}\ninstances:\n  - nginx_status_url:\
+      \ http://%%host%%:80/nginx_status\n"
 ```
+
+An authenticated Redis check additionally needs the correct port/TLS and credential
+delivery. `%%env_REDIS_PASSWORD%%` reads the **Agent's** environment, not the Redis
+application pod's environment. Prefer a configured Datadog secret backend or protected
+file delivery with the specific permissions it needs; do not expose passwords in
+public check examples or grant cluster-wide Secret reads just for discovery.
 
 ## APM and Distributed Tracing
 
-### Auto Instrumentation Setup
+### Local SDK injection and SSI are explicit choices
 
-Auto instrumentation via Admission Controller:
+The admission opt-in label allows mutation/connection-setting injection. To install
+a tracing library, configure SSI targets or a supported language/version annotation.
+The label alone is not proof that an SDK was installed or traces reached Datadog.
+Java/Python/Node.js local injection requires Cluster Agent 7.40+; .NET/Ruby requires
+7.44+. Current 7.83.1 also excludes `kube-system` and its own namespace from injection.
+
+For a controlled Java example, merge the following **pod-template fragment** into
+an existing Deployment in an application namespace, preserving its selector,
+containers and security settings. It is not a complete Deployment to apply alone.
+The Java init image `gcr.io/datadoghq/dd-lib-java-init:v1.66.0` was verified for
+Linux amd64/arm64. Verify the actual application's JVM/framework/image compatibility.
 
 ```yaml
-# Enable auto instrumentation by adding label to pod
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-app
 spec:
   template:
     metadata:
       labels:
-        # Enable automatic APM instrumentation
-        admission.datadoghq.com/enabled: "true"
+        admission.datadoghq.com/enabled: 'true'
+        admission.datadoghq.com/config.mode: socket
+        tags.datadoghq.com/env: demo
+        tags.datadoghq.com/service: orders
+        tags.datadoghq.com/version: 1.0.0
       annotations:
-        # Specify library version (optional)
-        admission.datadoghq.com/java-lib.version: "v1.24.0"
-    spec:
-      containers:
-      - name: my-app
-        image: my-java-app:latest
-        env:
-        # Service name
-        - name: DD_SERVICE
-          value: "my-app"
-        # Environment
-        - name: DD_ENV
-          value: "production"
-        # Version
-        - name: DD_VERSION
-          value: "1.0.0"
+        admission.datadoghq.com/java-lib.version: v1.66.0
 ```
 
-### Manual Instrumentation (Java)
+The `tags.datadoghq.com/*` labels supply unified service/environment/version tagging.
+Do not put the label only on Deployment metadata and expect its pods to inherit it.
+Injection happens when **new pods** are admitted. Confirm the injected init
+containers, library files, UDS mounts/permissions and the non-secret connectivity
+settings, then verify actual traffic/traces. Namespace exclusions, webhook failures,
+security policies and unsupported images can prevent instrumentation.
 
+Cluster-wide SSI is an alternative configured through
+`datadog.apm.instrumentation`, with reviewed namespace/pod targets and library versions.
+Avoid combining manual and injected tracers unintentionally: an injected library can
+take precedence over a manually installed one. Profiler enablement still requires
+a supported client library and its own product/runtime conditions.
+
+### Manual Java instrumentation
+
+Use a staged, versioned `dd-java-agent.jar` when starting the application JVM, or the
+validated injection route above. Merely adding `dd-trace-api` gives access to the
+annotation/API; it does **not** start runtime bytecode instrumentation.
+The Maven dependency below and Java source are separate files.
+
+```xml
+<dependency>
+  <groupId>com.datadoghq</groupId>
+  <artifactId>dd-trace-api</artifactId>
+  <version>1.66.0</version>
+</dependency>
+```
 ```java
-// build.gradle
-dependencies {
-    implementation 'com.datadoghq:dd-trace-api:1.24.0'
-}
-
-// Java code
+import java.util.function.Supplier;
 import datadog.trace.api.Trace;
-import datadog.trace.api.DDTags;
-import io.opentracing.Span;
-import io.opentracing.util.GlobalTracer;
 
-public class OrderService {
+public final class TraceMethods {
+    private TraceMethods() {}
 
-    @Trace(operationName = "order.process", resourceName = "processOrder")
-    public Order processOrder(OrderRequest request) {
-        Span span = GlobalTracer.get().activeSpan();
-        if (span != null) {
-            span.setTag("order.id", request.getOrderId());
-            span.setTag("customer.id", request.getCustomerId());
-        }
-
-        // Business logic
-        return doProcessOrder(request);
+    @Trace(operationName = "order.process", resourceName = "process_order")
+    public static <T> T process(Supplier<T> handler) {
+        return handler.get();
     }
 }
 ```
 
-### Manual Instrumentation (Python)
+The handler represents application code supplied by the caller. Use bounded
+operation/resource names. The old example's per-order/customer identifier tags
+are unnecessary for this demonstration and can create disclosure/cardinality risks.
+Manual span APIs require their corresponding supported bridge/library; do not add
+OpenTracing imports to a project that only has the annotation API.
 
+### Manual Python instrumentation
+
+Use the current `ddtrace.trace` import for this checked 4.14.0 example. Keep the
+dependency declaration in `requirements.txt`, not inside a Python code block.
+For framework auto-instrumentation, follow the selected `ddtrace-run`/SSI setup
+before application imports; do not assume this helper patches an entire framework.
+
+```text
+ddtrace==4.14.0
+```
 ```python
-# requirements.txt
-ddtrace==2.5.0
+from ddtrace.trace import tracer
 
-# Application code
-from ddtrace import tracer, patch_all
 
-# Auto patch
-patch_all()
-
-# Manual span creation
-@tracer.wrap(service='order-service', resource='process_order')
-def process_order(order_id):
-    span = tracer.current_span()
-    if span:
-        span.set_tag('order.id', order_id)
-
-    # Business logic
-    return do_process_order(order_id)
-
-# Using context manager
-with tracer.trace('custom.operation', service='my-service') as span:
-    span.set_tag('custom.tag', 'value')
-    # Perform work
+def process_order(handler):
+    with tracer.trace("order.process", service="orders", resource="process_order") as span:
+        span.set_tag("operation.kind", "order")
+        return handler()
 ```
 
-### Service Map
+The equivalent `tracer.wrap` decorator is available for method tracing. Exceptions
+from the handler must propagate; recording a span is not an application retry or
+success guarantee. Use correct service/env/version tags and context propagation
+across supported HTTP/message integrations. Service maps come from observed
+instrumented relationships, not from arbitrary `DD_TAGS` alone.
 
-Service maps are automatically generated based on trace data:
-
-```yaml
-# Service relationship tagging
-env:
-  - name: DD_SERVICE
-    value: "api-gateway"
-  - name: DD_ENV
-    value: "production"
-  - name: DD_VERSION
-    value: "2.1.0"
-  - name: DD_TAGS
-    value: "team:platform,component:gateway"
-```
+Do not tag raw customer/order identifiers, tokens or request bodies by default.
+Review instrumentation capture, error messages and sampling/redaction rules for
+the actual application. Auto-instrumentation does not guarantee complete PII removal.
 
 ## Log Management
 
-### Automatic Log Collection
+### Select collection and parsing deliberately
+
+The installation enables log collection but leaves `containerCollectAll: false`.
+Merge this metadata into the pod template for the container named `app`.
+The multiline rule applies to **plain-text Java records beginning with a date**.
+It is not a general JSON-log parser. Container runtime framing and application
+message parsing are separate stages; verify the actual collected records.
 
 ```yaml
-# Enable in values.yaml
-datadog:
-  logs:
-    enabled: true
-    containerCollectAll: true  # Collect all container logs
-```
-
-### Per-pod Log Configuration
-
-```yaml
-apiVersion: v1
-kind: Pod
 metadata:
-  name: my-app
   annotations:
-    # Enable log collection
-    ad.datadoghq.com/my-app.logs: |
-      [{
-        "source": "java",
-        "service": "my-app",
-        "log_processing_rules": [
-          {
-            "type": "multi_line",
-            "name": "log_start_with_date",
-            "pattern": "\\d{4}-\\d{2}-\\d{2}"
-          }
-        ]
-      }]
-spec:
-  containers:
-  - name: my-app
-    image: my-app:latest
+    ad.datadoghq.com/app.logs: "[\n  {\n    \"source\": \"java\",\n    \"service\"\
+      : \"orders\",\n    \"log_processing_rules\": [\n      {\n        \"type\": \"\
+      multi_line\",\n        \"name\": \"java_timestamp_start\",\n        \"pattern\"\
+      : \"^\\\\d{4}-\\\\d{2}-\\\\d{2}\"\n      }\n    ]\n  }\n]"
 ```
 
-### Log Pipelines
+For one-JSON-event-per-line applications, use the supported JSON path rather than
+joining unrelated JSON events with this rule. File access, runtime paths, annotation
+matching, exclusion settings and backend pipeline filters all affect collection.
+Check selective collection with both a matching application and an excluded one.
 
-Configure log pipelines in Datadog UI or via API:
+### Pipeline request structure
+
+This request uses the actual API fields **`match_rules` and `support_rules`**.
+The old camelCase fields were not the Logs API model. The sample message defines
+the expected line format; use the application's actual format/timezone and test
+unmatched/multiline/error cases. A valid request model does not prove Grok parsing
+or ingestion/indexing in a Datadog tenant.
 
 ```json
 {
-  "name": "Java Application Logs",
+  "name": "Java application logs",
   "is_enabled": true,
   "filter": {
-    "query": "source:java"
+    "query": "source:java service:orders"
   },
   "processors": [
     {
       "type": "grok-parser",
-      "name": "Parse Java logs",
+      "name": "Parse the documented Java line format",
       "is_enabled": true,
       "source": "message",
-      "samples": [],
+      "samples": [
+        "2026-09-13 12:00:00,123 INFO [main] example.Service - completed"
+      ],
       "grok": {
-        "supportRules": "",
-        "matchRules": "java_log %{date(\"yyyy-MM-dd HH:mm:ss,SSS\"):timestamp} %{word:level} \\[%{notSpace:thread}\\] %{notSpace:logger} - %{data:message}"
+        "support_rules": "",
+        "match_rules": "java_log %{date(\"yyyy-MM-dd HH:mm:ss,SSS\"):timestamp} %{word:level} \\[%{notSpace:thread}\\] %{notSpace:logger} - %{data:message}"
       }
     },
     {
       "type": "status-remapper",
-      "name": "Set status from level",
+      "name": "Use level as status",
       "is_enabled": true,
-      "sources": ["level"]
+      "sources": [
+        "level"
+      ]
     },
     {
       "type": "date-remapper",
-      "name": "Set timestamp",
+      "name": "Use parsed timestamp",
       "is_enabled": true,
-      "sources": ["timestamp"]
+      "sources": [
+        "timestamp"
+      ]
     }
   ]
 }
 ```
 
-### Trace-Log Correlation
+Pipeline creation/reordering changes processing for matching logs. Configure it
+under the correct site, scoped API permissions and existing pipeline ownership.
+No pipeline request was sent during this audit.
+
+### Trace-log correlation and MDC ownership
+
+Use supported automatic log injection where possible and preserve trace/span IDs
+as strings in structured logs. Correct service/env/version, timestamps, parsing and
+available trace data are also needed; two ID fields alone do not guarantee correlation.
+There is no useful active trace ID when a process has not been instrumented.
+
+For applications that explicitly manage SLF4J MDC, this helper restores the caller's
+**whole previous context** on success and failure. The old unconditional `MDC.clear()`
+lost unrelated caller fields. It is a synchronous helper, not an async context
+propagation mechanism or a complete servlet filter.
 
 ```java
-// Include trace ID in logs for Java
-import org.slf4j.MDC;
+import java.util.Map;
+import java.util.function.Supplier;
 import datadog.trace.api.CorrelationIdentifier;
+import org.slf4j.MDC;
 
-// Add trace ID to log pattern
-// logback.xml: %d{ISO8601} [%thread] %-5level %logger - dd.trace_id=%X{dd.trace_id} dd.span_id=%X{dd.span_id} - %msg%n
+public final class TraceLogContext {
+    private TraceLogContext() {}
 
-public class LoggingFilter implements Filter {
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) {
-        MDC.put("dd.trace_id", CorrelationIdentifier.getTraceId());
-        MDC.put("dd.span_id", CorrelationIdentifier.getSpanId());
+    public static <T> T withTraceContext(Supplier<T> handler) {
+        Map<String, String> previous = MDC.getCopyOfContextMap();
         try {
-            chain.doFilter(request, response);
+            MDC.put("dd.trace_id", CorrelationIdentifier.getTraceId());
+            MDC.put("dd.span_id", CorrelationIdentifier.getSpanId());
+            return handler.get();
         } finally {
-            MDC.clear();
+            if (previous == null) {
+                MDC.clear();
+            } else {
+                MDC.setContextMap(previous);
+            }
         }
     }
 }
 ```
+
+It requires `dd-trace-api` and the application's compatible SLF4J API/provider.
+The logging pattern or JSON encoder must include the MDC values. Do not copy a
+servlet example without the servlet API, imports and checked-exception contract.
 
 ## Dashboards and Alerts
 
@@ -688,7 +649,7 @@ with ApiClient(configuration) as api_client:
 
 ### Monitor (Alert) Configuration
 
-```yaml
+```hcl
 # Create monitors with Terraform
 resource "datadog_monitor" "high_cpu" {
   name    = "High CPU Usage on EKS Nodes"
@@ -761,7 +722,7 @@ resource "datadog_monitor" "error_rate" {
 
 Watchdog automatically detects anomalies and generates alerts:
 
-```yaml
+```hcl
 # Watchdog alert configuration
 resource "datadog_monitor" "watchdog" {
   name    = "Watchdog Alert"

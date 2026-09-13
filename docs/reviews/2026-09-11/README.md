@@ -3,7 +3,7 @@
 This is a progress report, not a claim that the full corpus has been semantically reviewed.
 
 - Initial inventory: 2701 Markdown documents across five languages; the current coverage inventory includes 2707 existing documents after restoration and removal of retired site utilities.
-- Fully read source/quiz/lab files recorded so far: 1007 (999 fixed, 0 verified, 8 with follow-up).
+- Fully read source/quiz/lab files recorded so far: 1011 (1003 fixed, 0 verified, 8 with follow-up).
 - Source files are maintained in Korean and English; translations are checked structurally and repaired through automation.
 
 | Batch | Files recorded | Fixed | Verified | Follow-up |
@@ -138,12 +138,13 @@ This is a progress report, not a claim that the full corpus has been semanticall
 | [ops-zonal-foundation](batches/ops-zonal-foundation.json) | 6 | 6 | 0 | 0 |
 | [platform-ack](batches/platform-ack.json) | 10 | 10 | 0 | 0 |
 | [platform-backstage](batches/platform-backstage.json) | 4 | 4 | 0 | 0 |
-| [platform-crossplane](batches/platform-crossplane.json) | 4 | 0 | 0 | 4 |
+| [platform-crossplane](batches/platform-crossplane.json) | 4 | 4 | 0 | 0 |
 | [platform-examplecorp](batches/platform-examplecorp.json) | 2 | 2 | 0 | 0 |
 | [platform-extensions](batches/platform-extensions.json) | 4 | 4 | 0 | 0 |
 | [platform-helm](batches/platform-helm.json) | 4 | 4 | 0 | 0 |
 | [platform-kro](batches/platform-kro.json) | 4 | 4 | 0 | 0 |
 | [platform-overview](batches/platform-overview.json) | 4 | 4 | 0 | 0 |
+| [platform-vcluster](batches/platform-vcluster.json) | 4 | 0 | 0 | 4 |
 | [ray-foundation](batches/ray-foundation.json) | 6 | 6 | 0 | 0 |
 | [ray-operator](batches/ray-operator.json) | 4 | 4 | 0 | 0 |
 | [ray-serve](batches/ray-serve.json) | 4 | 4 | 0 | 0 |

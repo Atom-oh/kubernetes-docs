@@ -2,36 +2,35 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Backstage + Crossplane Integration Architecture",
-    "locale": "en",
+    "title": "Backstage and Crossplane v2",
     "output": "en-platform-engineering-07-crossplane-4.html",
     "quality_profile": "showcase",
     "animation": "trace",
     "views": [
       {
         "id": "self-service",
-        "label": "Self-service request",
+        "label": "Self Service",
         "focus": [
           "ui",
           "tpl",
           "scf"
         ],
-        "note": "A developer fills in the Backstage form and the Scaffolder generates the Crossplane Claim YAML."
+        "note": "Crossplane v2 namespaced resources and explicit lifecycle boundaries."
       },
       {
         "id": "gitops",
-        "label": "GitOps delivery",
+        "label": "Gitops",
         "focus": [
           "scf",
           "repo",
           "argo",
           "claim"
         ],
-        "note": "The Claim YAML is pushed to Git and ArgoCD applies it to the cluster."
+        "note": "Crossplane v2 namespaced resources and explicit lifecycle boundaries."
       },
       {
         "id": "provisioning",
-        "label": "Crossplane provisioning",
+        "label": "Provisioning",
         "focus": [
           "claim",
           "xr",
@@ -40,9 +39,13 @@
           "s3",
           "sg"
         ],
-        "note": "The Claim becomes a Composite Resource and Managed Resources that provision the AWS resources."
+        "note": "Crossplane v2 namespaced resources and explicit lifecycle boundaries."
       }
-    ]
+    ],
+    "legend": {
+      "mode": "auto"
+    },
+    "locale": "en"
   },
   "components": [
     {
@@ -63,7 +66,7 @@
       "id": "tpl",
       "type": "backend",
       "label": "Software Template",
-      "sublabel": "Form definition",
+      "sublabel": "Form and skeleton",
       "pos": [
         250,
         80
@@ -77,7 +80,7 @@
       "id": "scf",
       "type": "backend",
       "label": "Scaffolder",
-      "sublabel": "Generates Claim YAML",
+      "sublabel": "Generate XR YAML",
       "pos": [
         470,
         80
@@ -90,8 +93,8 @@
     {
       "id": "repo",
       "type": "external",
-      "label": "Git Repository",
-      "sublabel": "GitHub",
+      "label": "Git PR → Merge",
+      "sublabel": "Reviewed main branch",
       "pos": [
         700,
         80
@@ -118,8 +121,8 @@
     {
       "id": "claim",
       "type": "backend",
-      "label": "Claim",
-      "sublabel": "Namespace-scoped",
+      "label": "Namespaced XR",
+      "sublabel": "PostgreSQLDatabase",
       "pos": [
         910,
         300
@@ -132,8 +135,8 @@
     {
       "id": "xr",
       "type": "backend",
-      "label": "Composite Resource",
-      "sublabel": "XR",
+      "label": "Pipeline",
+      "sublabel": "Composition Functions",
       "pos": [
         690,
         300
@@ -146,8 +149,8 @@
     {
       "id": "mr",
       "type": "backend",
-      "label": "Managed Resources",
-      "sublabel": "Provider resources",
+      "label": "Managed resources",
+      "sublabel": "Selected provider APIs",
       "pos": [
         470,
         300
@@ -189,7 +192,7 @@
       "id": "sg",
       "type": "security",
       "label": "SecurityGroup",
-      "sublabel": "Security group",
+      "sublabel": "Network policy",
       "pos": [
         710,
         520
@@ -203,7 +206,7 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "Backstage IDP",
+      "label": "Kubernetes control plane",
       "wraps": [
         "ui",
         "tpl",
@@ -212,7 +215,7 @@
     },
     {
       "kind": "region",
-      "label": "GitOps",
+      "label": "Kubernetes control plane",
       "wraps": [
         "repo",
         "argo"
@@ -220,7 +223,7 @@
     },
     {
       "kind": "region",
-      "label": "Crossplane",
+      "label": "Kubernetes control plane",
       "wraps": [
         "claim",
         "xr",
@@ -229,7 +232,7 @@
     },
     {
       "kind": "region",
-      "label": "AWS",
+      "label": "Kubernetes control plane",
       "wraps": [
         "rds",
         "s3",
@@ -242,7 +245,7 @@
       "id": "ui-tpl",
       "from": "ui",
       "to": "tpl",
-      "label": "1. Fill in form",
+      "label": "1. Input",
       "variant": "emphasis",
       "labelDy": -24
     },
@@ -250,7 +253,7 @@
       "id": "tpl-scf",
       "from": "tpl",
       "to": "scf",
-      "label": "2. Generate Claim YAML",
+      "label": "2. XR YAML",
       "variant": "emphasis",
       "labelDy": -24
     },
@@ -258,15 +261,16 @@
       "id": "scf-repo",
       "from": "scf",
       "to": "repo",
-      "label": "3. Git Push",
+      "label": "3. Open PR",
       "variant": "emphasis"
     },
     {
       "id": "repo-argo",
       "from": "repo",
       "to": "argo",
-      "label": "4. Sync",
-      "variant": "emphasis"
+      "label": "4. Merged main",
+      "variant": "emphasis",
+      "labelDy": -24
     },
     {
       "id": "argo-claim",
@@ -282,7 +286,7 @@
       "id": "claim-xr",
       "from": "claim",
       "to": "xr",
-      "label": "6. Create XR",
+      "label": "6. Pipeline",
       "variant": "emphasis",
       "labelDy": -24
     },
@@ -298,7 +302,7 @@
       "to": "rds",
       "fromSide": "bottom",
       "toSide": "top",
-      "label": "Provision",
+      "label": "provider calls",
       "labelDy": 54,
       "labelDx": -75
     },
@@ -320,18 +324,20 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "Self-service",
+      "title": "Portal and delivery",
       "items": [
-        "Developers request infrastructure such as databases by filling in a form in the Backstage UI",
-        "The Software Template turns the form input into Crossplane Claim YAML"
+        "Scaffolder runs prepared skeletons and actions",
+        "A PR is not completed cloud provisioning",
+        "Register catalog sources after merge"
       ]
     },
     {
-      "dot": "emerald",
-      "title": "GitOps + Crossplane",
+      "dot": "amber",
+      "title": "Lifecycle",
       "items": [
-        "The Claim is committed to Git and ArgoCD applies it to the cluster",
-        "The Composition expands the Claim into Managed Resources such as RDS, S3 and SecurityGroup"
+        "XR pruning can delete composed resources",
+        "Review management policies, database protection and backups",
+        "Git history is not a complete cloud audit trail"
       ]
     }
   ]

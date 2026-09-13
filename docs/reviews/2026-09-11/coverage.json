@@ -12127,7 +12127,7 @@
       "sha256": "6625e324486a171d073da093a7d5a864b8cb9eb7584602b489fd656d1f6a41c3",
       "lines": 1828,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 5,
       "linkCount": 103,
       "structuralFindings": [],
@@ -12143,12 +12143,12 @@
       "sha256": "cad5f38a90ae8a759601bfd32fa4102693d813f4c65fdef7efe852119a7e3b48",
       "lines": 2172,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 5,
       "linkCount": 111,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-vcluster"
     },
     {
       "path": "en/platform-engineering/ack/01-s3-iam.md",
@@ -15647,7 +15647,7 @@
       "sha256": "dc36317e67f85cc3e10987a6474fb6e7a8281ced2e3b9cc960d4bfd5c65d458a",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
@@ -15663,12 +15663,12 @@
       "sha256": "f69ee33f10bc8bd1e07f78242695e49cc69d0d191578599fb03d2c293b6cb125",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-vcluster"
     },
     {
       "path": "en/quizzes/roadmap-quiz.md",
@@ -37847,7 +37847,7 @@
       "sha256": "fa138e3d06e6f3bfdf0e4e08548a7b75c73b768a0c081270e4059fc0b0aacc4d",
       "lines": 1959,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 5,
       "linkCount": 120,
       "structuralFindings": [],
@@ -37863,12 +37863,12 @@
       "sha256": "13283a5746487c2d90f39193f7fef357f89fbdb642b2d861e6b46d0af96fdd6d",
       "lines": 1999,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 9,
       "linkCount": 108,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-vcluster"
     },
     {
       "path": "ko/platform-engineering/ack/01-s3-iam.md",
@@ -41367,7 +41367,7 @@
       "sha256": "299088265cc89817b72dfd691eebbd2e6ac4a73ea411a22ef0aeff392c5df959",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
@@ -41383,12 +41383,12 @@
       "sha256": "b0fdc7ac6e5477f7ab743e7bc514456499e99fcf3d3338f78004f0a795607dde",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-vcluster"
     },
     {
       "path": "ko/quizzes/roadmap-quiz.md",

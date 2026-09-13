@@ -1,0 +1,42 @@
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: provider-aws-s3-reviewed
+spec:
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        spec:
+          containers:
+          - name: package-runtime
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+            ports:
+            - name: metrics
+              containerPort: 8080
+        metadata:
+          labels:
+            app: provider-aws-s3-reviewed
+  serviceAccountTemplate:
+    metadata:
+      name: provider-aws-s3-reviewed
+      annotations:
+        eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ReplaceApprovedS3ProviderRole
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-s3
+spec:
+  package: xpkg.crossplane.io/crossplane-contrib/provider-aws-s3:v2.7.0
+  packagePullPolicy: IfNotPresent
+  revisionActivationPolicy: Manual
+  revisionHistoryLimit: 2
+  runtimeConfigRef:
+    name: provider-aws-s3-reviewed

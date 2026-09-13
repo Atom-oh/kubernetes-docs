@@ -2,29 +2,33 @@
   {
     "path": "ko/platform-engineering/07-crossplane.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "reviewedSha256": "fa138e3d06e6f3bfdf0e4e08548a7b75c73b768a0c081270e4059fc0b0aacc4d",
-    "summary": "AllKO1958/EN1827guidelines143quizlines83uniquefencedblocksplusinlineindentedblocksread;currentCrossplane/provider/functionschemasverificationnext."
+    "status": "fixed",
+    "reviewedSha256": "616fd7d45abaf1c7a1762ff5ed9daf46f534bb84f9d9fa23e2cf955493919b34",
+    "summary": "All4originalMD83fencedplusindentedblocks/8quiztopicseachreviewed;actualCLI/core/functions3renders/schema/CELnegative/XRDconvert/4MD10figures30responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-crossplane-validation.json"
   },
   {
     "path": "ko/quizzes/platform-engineering/07-crossplane-quiz.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "reviewedSha256": "299088265cc89817b72dfd691eebbd2e6ac4a73ea411a22ef0aeff392c5df959",
-    "summary": "AllKO1958/EN1827guidelines143quizlines83uniquefencedblocksplusinlineindentedblocksread;currentCrossplane/provider/functionschemasverificationnext."
+    "status": "fixed",
+    "reviewedSha256": "b224c757be1f053e47633d35956c549c1a3da63167fe02301740217cedf5d8d2",
+    "summary": "All4originalMD83fencedplusindentedblocks/8quiztopicseachreviewed;actualCLI/core/functions3renders/schema/CELnegative/XRDconvert/4MD10figures30responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-crossplane-validation.json"
   },
   {
     "path": "en/platform-engineering/07-crossplane.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "reviewedSha256": "6625e324486a171d073da093a7d5a864b8cb9eb7584602b489fd656d1f6a41c3",
-    "summary": "AllKO1958/EN1827guidelines143quizlines83uniquefencedblocksplusinlineindentedblocksread;currentCrossplane/provider/functionschemasverificationnext."
+    "status": "fixed",
+    "reviewedSha256": "7df89961163abe216adac4ef4209ca53db0eb697e60b186e5b4ed0e98fd8dc11",
+    "summary": "All4originalMD83fencedplusindentedblocks/8quiztopicseachreviewed;actualCLI/core/functions3renders/schema/CELnegative/XRDconvert/4MD10figures30responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-crossplane-validation.json"
   },
   {
     "path": "en/quizzes/platform-engineering/07-crossplane-quiz.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "reviewedSha256": "dc36317e67f85cc3e10987a6474fb6e7a8281ced2e3b9cc960d4bfd5c65d458a",
-    "summary": "AllKO1958/EN1827guidelines143quizlines83uniquefencedblocksplusinlineindentedblocksread;currentCrossplane/provider/functionschemasverificationnext."
+    "status": "fixed",
+    "reviewedSha256": "5a8c341b0b57951d2b83a55aaccc7c257db031adfcee7340cbe316a63deca8c5",
+    "summary": "All4originalMD83fencedplusindentedblocks/8quiztopicseachreviewed;actualCLI/core/functions3renders/schema/CELnegative/XRDconvert/4MD10figures30responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-crossplane-validation.json"
   }
 ]

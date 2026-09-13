@@ -1,0 +1,27 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: crossplane
+  namespace: crossplane-system
+spec:
+  jobLabel: app
+  selector:
+    matchLabels:
+      app: crossplane
+  podMetricsEndpoints:
+  - port: metrics
+    interval: 30s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: provider-aws-s3
+  namespace: crossplane-system
+spec:
+  jobLabel: app
+  selector:
+    matchLabels:
+      app: provider-aws-s3-reviewed
+  podMetricsEndpoints:
+  - port: metrics
+    interval: 30s

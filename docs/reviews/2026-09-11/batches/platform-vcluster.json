@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/platform-engineering/08-vcluster.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "reviewedSha256": "13283a5746487c2d90f39193f7fef357f89fbdb642b2d861e6b46d0af96fdd6d",
+    "summary": "AllKO1998/EN2171guidelines143quizlines106uniqueblocksread;current0.36.1schema/CLI/isolation/lifecycle/nativechecksnext."
+  },
+  {
+    "path": "ko/quizzes/platform-engineering/08-vcluster-quiz.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "reviewedSha256": "b0fdc7ac6e5477f7ab743e7bc514456499e99fcf3d3338f78004f0a795607dde",
+    "summary": "AllKO1998/EN2171guidelines143quizlines106uniqueblocksread;current0.36.1schema/CLI/isolation/lifecycle/nativechecksnext."
+  },
+  {
+    "path": "en/platform-engineering/08-vcluster.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "reviewedSha256": "cad5f38a90ae8a759601bfd32fa4102693d813f4c65fdef7efe852119a7e3b48",
+    "summary": "AllKO1998/EN2171guidelines143quizlines106uniqueblocksread;current0.36.1schema/CLI/isolation/lifecycle/nativechecksnext."
+  },
+  {
+    "path": "en/quizzes/platform-engineering/08-vcluster-quiz.md",
+    "fullyRead": true,
+    "status": "needs_followup",
+    "reviewedSha256": "f69ee33f10bc8bd1e07f78242695e49cc69d0d191578599fb03d2c293b6cb125",
+    "summary": "AllKO1998/EN2171guidelines143quizlines106uniqueblocksread;current0.36.1schema/CLI/isolation/lifecycle/nativechecksnext."
+  }
+]
