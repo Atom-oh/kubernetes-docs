@@ -21,7 +21,7 @@ import {
 } from './seo.mjs'
 
 const ADSENSE_CLIENT = 'ca-pub-6267917556914416'
-const FAVICON = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50" y="78" font-size="80" text-anchor="middle">☸️</text></svg>')}`
+const FAVICON = '/kubernetes-docs/favicon.svg'
 
 // Build-memory bisection toggles (all default OFF — normal builds are unaffected):
 //   VP_DISABLE_SEARCH=1     drop local search (MiniSearch indexing of every page)
@@ -245,7 +245,8 @@ const config = defineConfig({
       })
   },
   head: [
-    ['link', { rel: 'icon', href: FAVICON }],
+    ['link', { rel: 'icon', type: 'image/x-icon', sizes: '16x16 32x32 48x48', href: '/kubernetes-docs/favicon.ico' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', sizes: 'any', href: FAVICON }],
     ['link', { rel: 'alternate', type: 'text/plain', title: 'LLM documentation index', href: 'https://www.atomai.click/kubernetes-docs/llms.txt' }],
     ['link', { rel: 'alternate', type: 'application/json', title: 'Document manifest', href: 'https://www.atomai.click/kubernetes-docs/llms/manifest.json' }],
     ['link', { rel: 'sitemap', type: 'application/xml', title: 'Sitemap', href: 'https://www.atomai.click/kubernetes-docs/sitemap.xml' }],
