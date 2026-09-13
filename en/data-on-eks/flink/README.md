@@ -5,7 +5,8 @@ JobManagers coordinate execution/recovery; TaskManagers execute operator tasks a
 exchange data. Checkpoint consistency and exactly-once behavior at an external sink
 have separate requirements. Part 3 examines sources, state and sinks together.
 
-> Reviewed: 2026-09-12. Integration baseline: **Flink 2.2.1 / Java 17 / Operator 1.15.0**.
+> **Last Updated**: September 12, 2026
+> Integration baseline: **Flink 2.2.1 / Java 17 / Operator 1.15.0**.
 
 Part 3's Iceberg example separately uses **Flink 2.1.3 / Iceberg 1.11.0** to match its runtime.
 Check each chapter's limits for S3-plugin SDK support and managed-service differences.
