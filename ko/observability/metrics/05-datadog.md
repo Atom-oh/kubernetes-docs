@@ -47,6 +47,12 @@ Datadog은 Kubernetes 1.33+의 `AllocatedResources` 호환성에 Agent/Cluster A
 7.67+를 명시하며 같은 버전을 권장합니다. 이런 최소 기능 요구사항이 현재 EKS
 지원 matrix를 대신하지는 않습니다.
 
+다음은 가능한 수집 경로의 개요입니다. Trace/profile에는 application 계측과 해당 상품이 필요하며 Watchdog notification routing도 설정해야 합니다.
+
+![Datadog node Agent telemetry and Cluster Agent metadata reach the configured SaaS products.](../../.gitbook/assets/ko-observability-metrics-05-datadog-1.png)
+
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-metrics-05-datadog-1.html)
+
 ## Datadog Agent 설치
 
 Datadog은 상위 lifecycle 설정을 위한 Operator를 권장하며 Helm 설치도 지원합니다.
@@ -63,57 +69,48 @@ Kubernetes 배포나 runtime 호환성 시험을 뜻하지는 않습니다.
 
 ### Credential과 설치 소유권
 
-이 profile은 native `aws.secrets` backend와 IRSA로 AWS Secrets Manager의 API key와
-공유 Cluster Agent token을 조회합니다. 기본 수집에는 application key가 필요하지
-않으며 external metrics는 계속 비활성화합니다.
+기본 Agent 수집에는 Agent와 같은 namespace의 API key가 필요합니다.
+Application key는 external metrics provider 같은 API 조회/제어 기능에 필요하며
+기본 Agent 설치만을 위해 요구되지는 않습니다. 선택한 기능에 필요한 범위로 제한해 사용합니다.
 
-`ap-northeast-2`에 `observability/datadog` secret을 준비하고 JSON string key `api-key`,
-`cluster-token`을 저장합니다. Token은 32자 이상의 암호학적 난수이며 API key는 선택한
-Datadog site와 일치해야 합니다. `datadog` namespace의 `datadog`,
-`datadog-cluster-agent` ServiceAccount에는 해당 secret으로 제한한 IRSA role,
-regional STS/Secrets Manager 연결과 필요한 KMS 권한이 있어야 합니다. 예제 role ARN
-두 개를 교체합니다. EC2 metadata credential fallback은 끕니다.
-[전체 전제조건과 재사용 profile](https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md)을 확인합니다.
-
-Python 3/PyYAML 6.0.3과 해당 repository의 실행 가능한 pinned-chart postrenderer를
-사용합니다. Chart에 고정된 SecretKeyRef 7개를 **`ENC[...]` 문자열 handle**로 바꾸며,
-node·trace·init·Cluster Agent 소비자를 모두 보존합니다. Native resolver는 값을
-환경 변수가 아닌 메모리 설정에 반영합니다. Init script는 비어 있지 않은 `DD_API_KEY`를
-요구하므로 대체 경로 없이 삭제하면 시작이 실패합니다. `must-use-secret-postrenderer`
-Secret은 의도적으로 만들지 않습니다. Renderer 누락을 우회하려고 생성하지 마세요.
-모든 install/upgrade에 renderer를 유지하고 chart·image·profile 계약 변경을 검토합니다.
-
-다음 명령은 install 단계에서 cluster를 변경하며 감사에서 배포를 실행한 것은 아닙니다.
-IAM/secret 전제조건, 기존 `datadog` namespace와 release 소유권을 확인한 뒤 repository
-root에서 실행합니다.
+승인된 Secret 관리 절차를 사용합니다. 다음 파일 기반 명령은 기존 예제의 따옴표 없는
+`<YOUR_API_KEY>`가 shell redirect로 해석되는 문제와 process argument의 key 노출을
+피합니다. 임시 key 파일의 보호·삭제도 credential 절차에 따릅니다.
+Kubernetes Secret에도 접근·암호화 통제가 필요합니다. 다른 release/controller가
+소유한 자원 위에 이 설치를 그대로 실행하지 않습니다.
 
 ```bash
-PROFILE=examples/observability/secret-profiles
 helm repo add datadog https://helm.datadoghq.com
 helm repo update datadog
+kubectl create namespace datadog --dry-run=client -o yaml | kubectl apply -f -
+
+# The protected file contains only the API key; obtain it through your approved secret process.
+# Do not put the key in command-line literals, Git or terminal output.
+: "${DATADOG_API_KEY_FILE:?Set the path to the protected API-key file}"
+kubectl create secret generic datadog-secret --namespace datadog \
+  --from-file="api-key=$DATADOG_API_KEY_FILE" --dry-run=client -o yaml | kubectl apply -f -
+
 helm template datadog datadog/datadog --version 3.244.0 \
-  --namespace datadog --include-crds -f "$PROFILE/datadog-values.yaml" \
-  --post-renderer "$PROFILE/datadog_postrender.py" > datadog-reviewed-render.yaml
-# Review resources and ownership first; retain the renderer on EVERY upgrade.
+  --namespace datadog --include-crds --values datadog-values.yaml > datadog-rendered.yaml
+
+# This changes the cluster. Review the rendered resources and installation ownership first.
 helm upgrade --install datadog datadog/datadog --version 3.244.0 \
-  --namespace datadog -f "$PROFILE/datadog-values.yaml" \
-  --post-renderer "$PROFILE/datadog_postrender.py"
+  --namespace datadog --values datadog-values.yaml
 ```
 
 ### 검토한 values
 
-다음은 재사용 `datadog-values.yaml`과 같은 설정입니다. Log는 container 설정으로 선택하고
+다음을 `datadog-values.yaml`로 저장합니다. Log는 container 설정으로 선택하고
 APM/DogStatsD는 UDS를 사용합니다. Cluster 전체 자동 library 주입, external HPA
 metric, discovery network statistics, 선택적 process/network 수집은 여기서 켜지 않습니다.
 Application은 Agent와 다른 namespace에 둡니다. SSI는 Agent 자체 namespace의
 Pod를 계측하지 않습니다.
 
 ```yaml
-# datadog 3.244.0: postrenderer required; replace example IRSA role ARNs.
 targetSystem: linux
 registry: gcr.io/datadoghq
 datadog:
-  apiKeyExistingSecret: must-use-secret-postrenderer
+  apiKeyExistingSecret: datadog-secret
   clusterName: my-eks-cluster
   site: datadoghq.com
   tags:
@@ -156,19 +153,6 @@ datadog:
     collectConfigMaps: false
   operator:
     enabled: false
-  secretBackend:
-    type: aws.secrets
-    config:
-      aws_session:
-        aws_region: ap-northeast-2
-    enableGlobalPermissions: false
-  env: &id001
-  - name: AWS_EC2_METADATA_DISABLED
-    value: 'true'
-  - name: DD_SECRET_REFRESH_INTERVAL
-    value: '0'
-  - name: DD_SECRET_REFRESH_ON_API_KEY_FAILURE_INTERVAL
-    value: '0'
 clusterAgent:
   enabled: true
   replicas: 2
@@ -181,35 +165,11 @@ clusterAgent:
   admissionController:
     enabled: true
     mutateUnlabelled: false
-  tokenExistingSecret: must-use-secret-postrenderer
-  rbac:
-    create: true
-    serviceAccountAnnotations:
-      eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/datadog-cluster-agent-secrets
-  env: *id001
 agents:
   image:
     tag: 7.83.1
     digest: sha256:ed0bd588e955d82f661d1b8dd1cdf179c1023e74a2817e7a812c99d52f05c319
-  rbac:
-    create: true
-    serviceAccountAnnotations:
-      eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/datadog-agent-secrets
 ```
-
-Postrenderer 출력의 credential 관련 환경 변수 값은
-`ENC[observability/datadog;api-key]`, `ENC[observability/datadog;cluster-token]`
-handle뿐입니다. `DD_SECRET_BACKEND_TYPE`/`CONFIG`에는 backend 종류와 region만 들어갑니다.
-Shell이 실제 값을 export하지 않으며 Helm values나 Kubernetes credential Secret에 실제
-key를 넣지 않습니다. 두 init-volume container는 image 설정만 복사하고, init-config는
-API-key handle로 bootstrap 검사를 통과합니다. 실제 native backend 권한과 Datadog 수집은
-runtime에서 별도로 확인해야 합니다.
-
-예약/API 실패 시 secret refresh는 명시적으로 끕니다. 승인된 절차로 node/trace·Cluster
-Agent Pod를 함께 재시작해 rotation하고 전체 fleet 전환 전에는 기존 API key를 유지합니다.
-Cluster token 변경 중 구·신 Pod가 공존하면 인증이 끊길 수 있으므로 maintenance window나
-별도로 검증한 전환 절차를 준비합니다. 무중단 rotation을 보장하지 않습니다.
-[Datadog secret backend 문서](https://docs.datadoghq.com/agent/guide/secrets-management/)를 참고합니다.
 
 `processAgent.enabled`는 deprecated이며 개별 collection 옵션을 사용합니다.
 필요한 경우 chart가 이미 `/etc/passwd`를 mount하므로 수동 `passwd` volume/mount를
@@ -307,7 +267,7 @@ from datadog import DogStatsd
 
 
 def emit_batch(client, total, errors):
-    """Report one real reporting interval; explicit zeros keep the series present."""
+    """Report one real interval; send zeros instead of omitting counters."""
     if any(isinstance(x, bool) or not isinstance(x, int) for x in (total, errors)):
         raise ValueError("counts must be integers")
     if not 0 <= errors <= total:
@@ -622,387 +582,307 @@ import·checked exception 계약 없이 그대로 복사하지 않습니다.
 
 ## 대시보드 및 알림
 
-### 대시보드 생성 (API)
+### Dashboard 요청 생성
+
+다음 helper는 `datadog-api-client==2.60.0`으로 요청 body를 만듭니다.
+Query가 cluster/namespace template variable을 실제 참조합니다.
+Host widget은 percent 지표, Pod widget은 memory byte와 namespace filter를
+사용합니다. 실제 데이터에 해당 grouping tag가 있는지 확인합니다.
 
 ```python
-from datadog_api_client import ApiClient, Configuration
-from datadog_api_client.v1.api.dashboards_api import DashboardsApi
 from datadog_api_client.v1.model.dashboard import Dashboard
 from datadog_api_client.v1.model.dashboard_layout_type import DashboardLayoutType
 
-configuration = Configuration()
-with ApiClient(configuration) as api_client:
-    api_instance = DashboardsApi(api_client)
 
-    dashboard = Dashboard(
-        title="EKS Cluster Overview",
-        description="Kubernetes cluster monitoring dashboard",
+def build_dashboard(cluster_name):
+    return Dashboard(
+        title="EKS observability example",
         layout_type=DashboardLayoutType.ORDERED,
         widgets=[
-            {
-                "definition": {
-                    "type": "timeseries",
-                    "title": "CPU Usage by Node",
-                    "requests": [
-                        {
-                            "q": "avg:kubernetes.cpu.usage.total{cluster_name:my-cluster} by {host}",
-                            "display_type": "line"
-                        }
-                    ]
-                }
-            },
-            {
-                "definition": {
-                    "type": "toplist",
-                    "title": "Top Pods by Memory",
-                    "requests": [
-                        {
-                            "q": "top(avg:kubernetes.memory.usage{cluster_name:my-cluster} by {pod_name}, 10, 'mean', 'desc')"
-                        }
-                    ]
-                }
-            }
+            {"definition": {
+                "type": "timeseries",
+                "title": "CPU idle by host (%)",
+                "requests": [{"q": "avg:system.cpu.idle{$cluster} by {host}", "display_type": "line"}],
+            }},
+            {"definition": {
+                "type": "toplist",
+                "title": "Top 10 pod memory series by mean (bytes)",
+                "requests": [{"q": "top(sum:kubernetes.memory.usage{$cluster,$namespace} by {pod_name,kube_namespace}, 10, 'mean', 'desc')"}],
+            }},
         ],
         template_variables=[
-            {
-                "name": "cluster",
-                "default": "my-cluster",
-                "prefix": "cluster_name"
-            },
-            {
-                "name": "namespace",
-                "default": "*",
-                "prefix": "kube_namespace"
-            }
-        ]
+            {"name": "cluster", "prefix": "kube_cluster_name", "default": cluster_name},
+            {"name": "namespace", "prefix": "kube_namespace", "default": "*"},
+        ],
     )
-
-    response = api_instance.create_dashboard(body=dashboard)
 ```
 
-### 모니터(알림) 설정
+Caller가 올바른 `ApiClient`를 구성하고 `DashboardsApi`로 의도한 dashboard를
+생성/수정합니다. 반환 ID를 저장·대조하며 title만으로 반복 생성하면 중복될 수
+있습니다. Site와 제한된 automation credential은 node Agent API key와 별개입니다.
+이번 감사에서는 dashboard API를 호출하지 않았습니다.
+
+### Monitor query와 단위
+
+Datadog Terraform provider와 project의 version constraints/lock file을 구성합니다.
+아래는 resource fragment이며 완전한 provider/credential 설정이 아닙니다.
+Threshold는 예시이므로 실제 단위·tag·평가 구간·application 목표를 확인합니다.
+첫 monitor는 nanocore를 80과 비교해 CPU percent라고 부르지 않고 idle percent를
+직접 평가합니다.
 
 ```hcl
-# Terraform으로 모니터 생성
-resource "datadog_monitor" "high_cpu" {
-  name    = "High CPU Usage on EKS Nodes"
+# Fragments for a configured, version-pinned Datadog Terraform provider.
+# Replace notification destinations with approved, tested destinations.
+resource "datadog_monitor" "low_cpu_idle" {
+  name    = "Low CPU idle on EKS nodes"
   type    = "metric alert"
-  message = <<-EOT
-    CPU usage is high on {{host.name}}.
-
-    Current value: {{value}}%
-
-    @slack-alerts @pagerduty-critical
-  EOT
-
-  query = "avg(last_5m):avg:kubernetes.cpu.usage.total{cluster_name:my-cluster} by {host} > 80"
-
+  message = "CPU idle on {{host.name}} is {{value}}%. Inspect the host and collection health."
+  query   = "avg(last_5m):avg:system.cpu.idle{kube_cluster_name:my-eks-cluster} by {host} < 20"
   monitor_thresholds {
-    warning  = 70
-    critical = 80
+    warning  = 30
+    critical = 20
   }
-
-  notify_no_data    = false
-  renotify_interval = 60
-
-  tags = ["env:production", "team:platform", "cluster:my-cluster"]
+  require_full_window = false
+  notify_no_data      = false
+  tags               = ["env:demo", "team:platform"]
 }
 
-resource "datadog_monitor" "pod_restarts" {
-  name    = "Pod Restart Alert"
+resource "datadog_monitor" "restart_total" {
+  name    = "Container restart total exceeds example threshold"
   type    = "metric alert"
-  message = <<-EOT
-    Pod {{pod_name.name}} in namespace {{kube_namespace.name}} is restarting frequently.
-
-    @slack-alerts
-  EOT
-
-  query = "change(sum(last_5m),last_5m):sum:kubernetes.containers.restarts{cluster_name:my-cluster} by {pod_name,kube_namespace} > 3"
-
+  message = "Inspect {{pod_name.name}} / {{kube_container_name.name}}. This is a restart total, not a count of new restarts in five minutes."
+  query   = "max(last_5m):max:kubernetes_state.container.restarts{kube_cluster_name:my-eks-cluster} by {pod_name,kube_namespace,kube_container_name} > 3"
   monitor_thresholds {
     warning  = 2
     critical = 3
   }
-
-  tags = ["env:production", "cluster:my-cluster"]
+  require_full_window = false
+  notify_no_data      = false
+  tags               = ["env:demo", "team:platform"]
 }
 
-resource "datadog_monitor" "error_rate" {
-  name    = "High Error Rate"
+resource "datadog_monitor" "request_error_rate" {
+  name    = "High request error ratio"
   type    = "metric alert"
-  message = <<-EOT
-    Error rate is high for service {{service.name}}.
-
-    Current error rate: {{value}}%
-
-    [View APM Dashboard](https://app.datadoghq.com/apm/service/{{service.name}})
-
-    @slack-alerts @pagerduty-warning
-  EOT
-
-  query = "sum(last_5m):sum:trace.http.request.errors{env:production} by {service}.as_count() / sum:trace.http.request.hits{env:production} by {service}.as_count() * 100 > 5"
-
+  message = "Error ratio for {{service.name}} is {{value}}%. Check traffic volume and the reporting path."
+  query   = "sum(last_5m):sum:my_app.requests.error{env:demo} by {service}.as_count() / sum:my_app.requests.total{env:demo} by {service}.as_count() * 100 > 5"
   monitor_thresholds {
     warning  = 2
     critical = 5
   }
-
-  tags = ["env:production", "type:apm"]
+  require_full_window = false
+  notify_no_data      = false
+  tags               = ["env:demo", "type:application"]
 }
 ```
 
-### Watchdog AI
+Restart gauge는 **누적 total**입니다. 두 구간에서 반복 수집한 gauge sample 합의
+차이는 reset·Pod 교체·수집 간격 차이가 있으면 새 재시작 횟수가 아닙니다.
+최근 재시작 monitor에는 검증된 delta/reset 설계가 필요합니다.
+이 예제는 total threshold임을 명시합니다.
 
-Watchdog은 자동으로 이상을 감지하고 알림을 생성합니다:
+Error monitor는 `emit_batch`의 세 counter를 사용하며 errors/good가 0인 경우도
+발행합니다. `.as_count()` 경로는 **나누기 전에** 시간축을 집계하여
+sum(errors)/sum(total)을 계산합니다. 각 시간 bucket의 비율을 합하는 것과 다르며
+이 경로에는 sum aggregator를 사용합니다.
+
+무트래픽·telemetry 누락·실제 오류 없는 traffic은 다릅니다. 최소 traffic과 수집 상태
+조건을 정하고 monitor의 no-data 동작을 검증합니다. `notify_no_data: false`는
+여기서 누락 데이터 알림을 보내지 않을 뿐 정상 상태의 증거가 아닙니다.
+
+내장 APM 지표는 선택한 integration의 실제 `trace.<operation>.hits/errors`와 tag를
+사용합니다. Java/Python 등 모든 integration이 `trace.http.request.*`를 발행하지는
+않습니다. Trace analytics·생성된 trace metric·custom DogStatsD metric은 다른 수집원입니다.
+
+### Watchdog과 알림 전달
+
+Watchdog은 모든 threshold를 수동 지정하지 않아도 탐지한 anomaly/insight를 보여줄 수
+있습니다. Insight가 있다는 사실은 notification 전달의 증거가 아닙니다.
+해당 site의 지원 Watchdog/monitor 절차와 event source·상품 가용성·routing을 확인합니다.
+
+다음 event-monitor fragment는 조직에 `source:watchdog`과 일치하는 실제 event가
+있다는 전제입니다. `story_category` group tag를 임의 가정하거나 모든 Watchdog
+결과가 이 stream에 들어온다고 보장하지 않습니다. 알림을 켜기 전에 실제 event로
+filter를 검증합니다.
 
 ```hcl
-# Watchdog 알림 설정
-resource "datadog_monitor" "watchdog" {
-  name    = "Watchdog Alert"
+resource "datadog_monitor" "watchdog_events" {
+  name    = "Review matching Watchdog events"
   type    = "event-v2 alert"
-  message = <<-EOT
-    Watchdog detected an anomaly:
-    {{event.title}}
-
-    {{event.text}}
-
-    @slack-alerts
-  EOT
-
-  query = "events(\"source:watchdog\").rollup(\"count\").by(\"story_category\").last(\"5m\") > 0"
-
-  tags = ["env:production", "type:watchdog"]
+  message = "Review the matching Watchdog event and affected services. Add an approved notification destination."
+  query   = "events(\"source:watchdog\").rollup(\"count\").last(\"5m\") > 0"
+  tags    = ["env:demo", "type:watchdog"]
 }
 ```
+
+### SLO 요청 생성
+
+Metric 기반 SLO에는 명확한 good/total count 정의가 필요합니다.
+다음 helper는 앞에서 명시적으로 발행한 counter를 사용합니다.
+Good은 application SLI 정책과 맞춰야 하며 HTTP 2xx만 성공으로 세는 것이
+보편적 availability 정의는 아닙니다. 무트래픽·누락 데이터 동작을 검증하고 부재를
+100% 성공으로 취급하지 않습니다.
+
+```python
+from datadog_api_client.v1.model.service_level_objective_request import ServiceLevelObjectiveRequest
+
+
+def build_success_slo():
+    return ServiceLevelObjectiveRequest(
+        name="Orders successful-request SLO",
+        type="metric",
+        description="Successful requests divided by all reported requests",
+        query={
+            "numerator": "sum:my_app.requests.good{env:demo,service:orders}.as_count()",
+            "denominator": "sum:my_app.requests.total{env:demo,service:orders}.as_count()",
+        },
+        thresholds=[{"timeframe": "30d", "target": 99.9, "warning": 99.95}],
+        tags=["env:demo", "service:orders"],
+    )
+```
+
+이 함수는 요청을 만들며 live SLO를 생성하지 않습니다. 구성된 caller가 소유권·
+데이터·권한을 확인한 뒤 `ServiceLevelObjectivesApi.create_slo`에 전달할 수 있습니다.
+Monitor 기반과 time-slice SLO도 지원하므로 gauge/restart total을 good-event count로
+억지 변환하지 말고 SLI에 맞는 모델을 선택합니다.
 
 ## 비용 구조
 
-### 요금제 개요
+### 실제 상품·계약 단위로 계산
 
-| 플랜 | 인프라 | APM | 로그 | 특징 |
-|------|--------|-----|------|------|
-| **Free** | 5 호스트 | - | - | 1일 보존 |
-| **Pro** | $15/호스트/월 | $31/호스트/월 | $0.10/GB | 15개월 보존 |
-| **Enterprise** | $23/호스트/월 | $40/호스트/월 | $0.10/GB | 커스텀 보존 |
+| 구성요소 | 계산에 필요한 입력 |
+| --- | --- |
+| Infrastructure | Billable host/container 또는 해당 플랫폼 모델, plan과 약정 조건 |
+| APM | Billable APM host와 plan/model, 포함량, ingested/indexed span |
+| Logs | 수집량과 indexing/retention/search/archive 선택 |
+| Custom metrics / distribution | 고유 metric/tag 조합, 활성 aggregation과 포함량 |
+| 추가 상품 | Profiling·network/security·serverless 등 활성화한 상품 비용 |
 
-### 비용 계산 예시
+모든 상품을 하나의 Free/Pro/Enterprise 표로 합치지 않습니다. 가격표는 상품,
+연간/on-demand 조건, 다른 상품에 결합한 경우와 standalone 조건을 구분합니다.
+Infrastructure metric·검색 가능한 trace·indexed log의 retention이 모두 같은
+“15개월” 설정인 것은 아닙니다.
 
-**100 노드 EKS 클러스터**:
-```
-인프라 모니터링: 100 × $15 = $1,500/월
-APM (50개 서비스): 50 × $31 = $1,550/월
-로그 (100GB/일): 100 × 30 × $0.10 = $300/월
------------------------------------------
-예상 총 비용: ~$3,350/월
-```
+기존 100-node 예제에서 **service 50개가 APM host 50개를 뜻하지 않습니다**.
+Host 단위 계약이라면 실제 billable Infrastructure/APM host 수를 먼저 확인합니다.
+100 GB/day를 30일 수집하면 3,000 GB이지만 수집료만으로 전체 log 비용을 계산할 수 없습니다.
 
-### 비용 최적화 전략
-
-![Datadog 비용 최적화가 메트릭 최적화, 로그 최적화, APM 최적화 세 갈래로 나뉘고 각 갈래마다 세부 실행 방법 세 가지가 딸린 트리 구조를 보여준다.](../../.gitbook/assets/ko-observability-metrics-05-datadog-2.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-metrics-05-datadog-2.html)
-
-#### 1. 메트릭 최적화
-
-```yaml
-# values.yaml
-datadog:
-  # 불필요한 메트릭 제외
-  ignoreAutoConfig:
-    - docker
-    - containerd
-
-  # 커스텀 메트릭 제한
-  dogstatsd:
-    nonLocalTraffic: false
-
-  # 태그 카디널리티 제한
-  containerExcludeLogs: "name:datadog-agent"
-  containerExcludeMetrics: "name:pause"
+```text
+예상 비용 =
+  billable infrastructure 단위 × 적용 단가
+  + billable APM 단위 × 적용 단가
+  + 계약상 ingested/indexed span 초과분
+  + 3,000 GB × 적용 log 수집 단가
+  + indexed event/retention/search/archive 비용
+  + custom metric 및 기타 활성 상품 비용
 ```
 
-#### 2. 로그 최적화
+기존 약 $3,350 합계는 APM 단위를 혼동하고 일부 과금 항목을 누락했으며 실제 측정한
+production 청구액이 아닙니다. 현재 site/상품 견적과 측정 사용량을 사용하고
+그 예시를 예산 보장으로 취급하지 않습니다.
 
-```yaml
-# 로그 필터링 및 샘플링
-datadog:
-  logs:
-    enabled: true
-    containerCollectAll: false  # 선별적 수집
+### Metric·log·trace 제어는 역할이 다름
 
-# 파드 레벨에서 로그 제외
-metadata:
-  annotations:
-    ad.datadoghq.com/my-app.logs: |
-      [{
-        "source": "java",
-        "service": "my-app",
-        "log_processing_rules": [
-          {
-            "type": "exclude_at_match",
-            "name": "exclude_health_checks",
-            "pattern": "GET /health"
-          }
-        ]
-      }]
-```
-
-#### 3. APM 샘플링
-
-```yaml
-# 트레이스 샘플링 설정
-env:
-  - name: DD_TRACE_SAMPLE_RATE
-    value: "0.1"  # 10% 샘플링
-  - name: DD_TRACE_RATE_LIMIT
-    value: "100"  # 초당 최대 100 트레이스
-```
+- `dogstatsd.nonLocalTraffic`은 receiver 접근 범위이며 custom metric quota가
+  아닙니다. Receiver를 닫으면 telemetry가 유실될 수 있습니다.
+- `ignoreAutoConfig`는 선택한 자동 check를 끕니다. Container exclude는 container를
+  선택하며 어느 것도 일반적인 tag-cardinality limiter가 아닙니다.
+- 수집 소유자에서 metric/tag 값을 검토합니다. Origin tag cardinality를 바꾸면
+  grouping tag도 달라질 수 있으므로 monitor/SLO를 다시 확인합니다.
+- Source log exclude는 선택한 record 전송을 막지만 index exclude는 이후 단계여서
+  ingestion 비용을 없애지 않습니다. 사고 증거와 실패 log를 보존하고 성공 여부와
+  무관하게 모든 health-check line을 버리지 않습니다.
+- Sampling과 indexing/retention은 별도입니다. `DD_TRACE_SAMPLE_RATE`나 sampling
+  rule은 library/version·matching 범위에 따릅니다. Python의 문서화된
+  `DD_TRACE_RATE_LIMIT`은 설정한 sampling rule/rate와 함께 적용하는 process별 제한이며
+  cluster 전체/금액 상한이 아닙니다. Trace 10% sampling이 전체 비용 90% 절감을 뜻하지 않습니다.
 
 ## 모범 사례
 
-### 1. 태깅 전략
+Service/env/version label과 유한한 tag를 일관되게 사용하고 API-key 수집 권한과
+application-key automation 권한을 구분합니다. 모든 log·process argument·profile을
+수집하기 전에 application capture와 secret/redaction 경로를 검토합니다.
+Collector queue/drop을 관측하고 filter 변경 후 실제 결과를 확인합니다.
 
-```yaml
-# 일관된 태깅 체계
-datadog:
-  tags:
-    - env:production
-    - team:platform
-    - cost-center:engineering
-    - cluster:my-eks-cluster
-
-# 서비스 태그
-env:
-  - name: DD_SERVICE
-    value: "order-service"
-  - name: DD_ENV
-    value: "production"
-  - name: DD_VERSION
-    valueFrom:
-      fieldRef:
-        fieldPath: metadata.labels['app.kubernetes.io/version']
-```
-
-### 2. 알림 계층화
-
-```yaml
-# P1 (Critical) - 즉시 대응
-- name: "Service Down"
-  priority: P1
-  notify: "@pagerduty-critical @slack-incidents"
-
-# P2 (High) - 1시간 내 대응
-- name: "High Error Rate"
-  priority: P2
-  notify: "@pagerduty-warning @slack-alerts"
-
-# P3 (Medium) - 업무 시간 내 대응
-- name: "High Latency"
-  priority: P3
-  notify: "@slack-alerts"
-
-# P4 (Low) - 다음 스프린트
-- name: "Resource Warning"
-  priority: P4
-  notify: "@slack-monitoring"
-```
-
-### 3. SLO 설정
-
-```python
-# API로 SLO 생성
-from datadog_api_client.v1.api.service_level_objectives_api import ServiceLevelObjectivesApi
-from datadog_api_client.v1.model.service_level_objective_request import ServiceLevelObjectiveRequest
-
-slo = ServiceLevelObjectiveRequest(
-    name="API Availability SLO",
-    type="metric",
-    description="99.9% availability for API endpoints",
-    query={
-        "numerator": "sum:trace.http.request.hits{service:api-gateway,http.status_code:2*}.as_count()",
-        "denominator": "sum:trace.http.request.hits{service:api-gateway}.as_count()"
-    },
-    thresholds=[
-        {
-            "timeframe": "30d",
-            "target": 99.9,
-            "warning": 99.95
-        }
-    ],
-    tags=["service:api-gateway", "env:production"]
-)
-```
+운영팀과 severity·담당자·응답 목표를 합의합니다. Runbook의 P1/P2 표기는 운영 정책이며
+단독 Datadog resource 정의가 아닙니다. 실제 destination·missing data·recovery 알림을
+시험합니다. 예시 숫자만으로 threshold를 정하지 말고 SLI/SLO와 traffic 상황을 사용합니다.
 
 ## 문제 해결
 
-### 일반적인 문제
-
-#### 1. Agent가 메트릭을 전송하지 않음
-
-```bash
-# Agent 상태 확인
-kubectl exec -it $(kubectl get pods -n datadog -l app=datadog -o jsonpath='{.items[0].metadata.name}') -n datadog -- agent status
-
-# 연결 테스트
-kubectl exec -it <agent-pod> -n datadog -- agent diagnose
-
-# 로그 확인
-kubectl logs -n datadog -l app=datadog --tail=100
-```
-
-#### 2. APM 트레이스 누락
+설치 소유자·실제 Pod/container 이름·의도한 site부터 확인합니다.
+API-key Secret 참조, Agent/Cluster Agent 상태, Kubelet/RBAC 접근, scrape config,
+queue/drop을 조사합니다. 이 release에서 렌더링한 node Agent에는 `agent`와
+`trace-agent` container가 있습니다. 기존 `app=datadog` selector를 현재 label 확인
+대신 무조건 사용하지 않습니다.
 
 ```bash
-# Trace Agent 상태 확인
-kubectl exec -it <agent-pod> -n datadog -- agent status | grep -A 20 "APM Agent"
+kubectl get pods -n datadog \
+  -l app.kubernetes.io/instance=datadog,app.kubernetes.io/component=agent -o wide
 
-# 트레이스 엔드포인트 확인
-kubectl exec -it <app-pod> -- env | grep DD_
+# Select the actual node Agent pod after inspecting the list.
+: "${DD_AGENT_POD:?Set the node Agent pod name}"
+kubectl exec -n datadog "$DD_AGENT_POD" -c agent -- agent status
+kubectl logs -n datadog "$DD_AGENT_POD" -c agent --tail=100
+kubectl logs -n datadog "$DD_AGENT_POD" -c trace-agent --tail=100
 
-# 연결 테스트
-kubectl exec -it <app-pod> -- nc -zv <agent-service> 8126
+# Check new application pods without dumping credentials/environment values.
+: "${APP_NAMESPACE:?Set the application namespace}"
+: "${APP_POD:?Set the application pod name}"
+kubectl get pod -n "$APP_NAMESPACE" "$APP_POD" \
+  -o jsonpath='{.spec.initContainers[*].image}'
+kubectl get pod -n "$APP_NAMESPACE" "$APP_POD" \
+  -o jsonpath='{range .spec.containers[*]}{.name}{": "}{.env[*].name}{"\n"}{end}'
+
+# Create a local diagnostic archive only; review it before any authorized sharing.
+kubectl exec -n datadog "$DD_AGENT_POD" -c agent -- agent flare --local
 ```
 
-#### 3. 로그 수집 안됨
+Trace는 실제 library 주입/시작, socket 또는 host endpoint, 권한과 tag를 확인합니다.
+TCP 연결 성공이 UDS 경로나 trace payload 수신 성공을 검증하지는 않습니다.
+`env | grep DD_`는 API/application key나 proxy credential을 노출할 수 있으므로 사용하지 않습니다.
 
-```bash
-# 로그 설정 확인
-kubectl exec -it <agent-pod> -n datadog -- agent configcheck | grep logs
+Log는 실제 annotation/container identifier와 file 접근을 먼저 확인하고
+collection exclude·parser·index filter를 조사합니다. `agent configcheck`, status,
+log와 archive에는 configuration/application data가 포함될 수 있으므로 공유 전에 검토·마스킹합니다.
 
-# 파드 어노테이션 확인
-kubectl get pod <pod-name> -o jsonpath='{.metadata.annotations}'
+`agent flare --local`은 검토할 로컬 bundle을 만듭니다. Upload나 remote flare 수집은
+별도로 승인된 support 작업입니다. 내장 redaction이 application에서 수집한 데이터의
+검토를 대신하지는 않습니다.
 
-# Agent 로그 확인
-kubectl logs -n datadog <agent-pod> -c agent | grep -i logs
-```
+## 검증 범위
 
-### 디버깅 명령어
+Chart 렌더·공식 schema/source 확인, 로컬 DogStatsD Unix datagram, export/telemetry를
+끈 Python 3.12의 ddtrace 4.14.0 manual span, Java 17 대상 dd-trace-api 1.66.0 compile·동기 MDC test,
+API client 2.60.0 request model/serialization을 사용했습니다.
+Datadog tenant 호출, EKS 설치, admission webhook 실행, SaaS trace/log 전송,
+dashboard/monitor/SLO 생성이나 비용 측정은 하지 않았습니다.
 
-```bash
-# 전체 Agent 상태
-kubectl exec -it <agent-pod> -n datadog -- agent status
-
-# 설정 확인
-kubectl exec -it <agent-pod> -n datadog -- agent configcheck
-
-# 연결 진단
-kubectl exec -it <agent-pod> -n datadog -- agent diagnose
-
-# 실시간 로그
-kubectl exec -it <agent-pod> -n datadog -- agent stream-logs
-
-# 플레어 생성 (지원 요청 시)
-kubectl exec -it <agent-pod> -n datadog -- agent flare <case-id>
-```
+Monitor 의미는 문서화된 단위·집계 규칙과 대조했으며 Datadog query engine이나
+Terraform provider plan은 호출하지 않았습니다. Grok 요청 schema와 실제 parsing도
+다릅니다. Application·credential·traffic·runtime 지원·destination 소유권은
+실제 배포 시 준비해야 합니다.
 
 ## 참고 자료
 
-- [Datadog 공식 문서](https://docs.datadoghq.com/)
-- [Kubernetes Integration](https://docs.datadoghq.com/integrations/kubernetes/)
-- [Datadog Helm Charts](https://github.com/DataDog/helm-charts)
-- [APM 설정 가이드](https://docs.datadoghq.com/tracing/)
-- [Datadog 요금](https://www.datadoghq.com/pricing/)
+- [Kubernetes installation and version prerequisites](https://docs.datadoghq.com/containers/kubernetes/installation.md)
+- [Helm chart 3.244.0](https://github.com/DataDog/helm-charts/releases/tag/datadog-3.244.0)
+- [Agent 7.83.1 release](https://github.com/DataDog/datadog-agent/releases/tag/7.83.1)
+- [Kubernetes distributions](https://docs.datadoghq.com/containers/kubernetes/distributions.md)
+- [Kubelet metrics](https://docs.datadoghq.com/integrations/kubelet.md)
+- [Kubernetes State Metrics Core](https://docs.datadoghq.com/integrations/kubernetes_state_core.md)
+- [System metrics](https://docs.datadoghq.com/integrations/system.md)
+- [AWS account integration](https://docs.datadoghq.com/integrations/amazon-web-services.md)
+- [Admission Controller](https://docs.datadoghq.com/containers/cluster_agent/admission_controller.md)
+- [Local SDK injection](https://docs.datadoghq.com/tracing/guide/local_sdk_injection.md)
+- [OpenMetrics on Kubernetes](https://docs.datadoghq.com/containers/kubernetes/prometheus.md)
+- [DogStatsD UDS](https://docs.datadoghq.com/extend/dogstatsd/unix_socket.md)
+- [Python tracing configuration](https://docs.datadoghq.com/tracing/trace_collection/library_config/python.md)
+- [Custom instrumentation](https://docs.datadoghq.com/tracing/trace_collection/custom_instrumentation/server-side.md)
+- [Log parsing](https://docs.datadoghq.com/logs/log_configuration/parsing.md)
+- [as_count monitor evaluation](https://docs.datadoghq.com/monitors/guide/as-count-in-monitor-evaluations.md)
+- [Metric-based SLOs](https://docs.datadoghq.com/service_level_objectives/metric.md)
+- [Datadog pricing and billing FAQs](https://www.datadoghq.com/pricing/)
+- [Agent flare handling](https://docs.datadoghq.com/agent/troubleshooting/send_a_flare.md)
 
-## 퀴즈
-
-이 장에서 배운 내용을 테스트하려면 [Datadog 퀴즈](../../quizzes/observability/metrics/05-datadog-quiz.md)를 풀어보세요.
+[퀴즈](../../quizzes/observability/metrics/05-datadog-quiz.md)

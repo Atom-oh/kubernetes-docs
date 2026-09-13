@@ -1,0 +1,1711 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-13T08:01:31.094091+00:00",
+  "scope": [
+    "en/observability/tracing/01-tempo.md",
+    "en/quizzes/observability/tracing/01-tempo-quiz.md",
+    "ko/observability/tracing/01-tempo.md",
+    "ko/quizzes/observability/tracing/01-tempo-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/observability/tracing/01-tempo.md": {
+      "lines": 795,
+      "sha256": "913d8534975946f07bead13c3352f654c02af980a793d56f8fe20986bd82b33f"
+    },
+    "en/quizzes/observability/tracing/01-tempo-quiz.md": {
+      "lines": 185,
+      "sha256": "0e9b745843496c22fae339f46276a7dd67da447944dc5aa96f74021a01d31733"
+    },
+    "ko/observability/tracing/01-tempo.md": {
+      "lines": 1004,
+      "sha256": "d463df4950ab2113076528b634ca27c0385ce822c03f0a4694bb4be68bb6bcb7"
+    },
+    "ko/quizzes/observability/tracing/01-tempo-quiz.md": {
+      "lines": 185,
+      "sha256": "46ac19c3d80a266d2037a8eaac61199e10985ebc99ba9ebde005239a3ee36ee0"
+    }
+  },
+  "checks": {
+    "files": [
+      {
+        "path": "en/observability/tracing/01-tempo.md",
+        "sha256": "bee56435f2b0b6201bd8ae44a76c33139c3276a56d329b2c6983571ad431daba",
+        "lines": 618,
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/observability/tracing/01-tempo-quiz.md",
+        "sha256": "8a8b654e65bcf4e86d0ef8f745019abad9c7a453530128059ef25297302ba4fc",
+        "lines": 189,
+        "passed": true
+      },
+      {
+        "path": "ko/observability/tracing/01-tempo.md",
+        "sha256": "ea6827bf796d73b6e419159b73dabee99115fc38a98789da50a9a8401b772074",
+        "lines": 619,
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/observability/tracing/01-tempo-quiz.md",
+        "sha256": "cdcc95d62811fd2b496b1dd3b476135187ea46bdf4115dc5442def5365802f9d",
+        "lines": 189,
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "checks": [
+      {
+        "name": "current Markdown hash en/observability/tracing/01-tempo.md",
+        "passed": true
+      },
+      {
+        "name": "original anchors en/observability/tracing/01-tempo.md",
+        "passed": true
+      },
+      {
+        "name": "unique IDs en/observability/tracing/01-tempo.md",
+        "passed": true
+      },
+      {
+        "name": "no placeholders en/observability/tracing/01-tempo.md",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/tracing/01-tempo.md README.md#linking-logs-via-traceid",
+        "passed": true
+      },
+      {
+        "name": "local fragment en/observability/tracing/01-tempo.md linking-logs-via-traceid",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/tracing/01-tempo.md ../../quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "exact checked fixture en/observability/tracing/01-tempo.md tempo-distributed-values.yaml",
+        "passed": true
+      },
+      {
+        "name": "exact checked fixture en/observability/tracing/01-tempo.md metrics-generator-values.yaml",
+        "passed": true
+      },
+      {
+        "name": "exact checked fixture en/observability/tracing/01-tempo.md tempo-local.yaml",
+        "passed": true
+      },
+      {
+        "name": "exact checked fixture en/observability/tracing/01-tempo.md tempo-s3.tf",
+        "passed": true
+      },
+      {
+        "name": "exact checked fixture en/observability/tracing/01-tempo.md datasources.yaml",
+        "passed": true
+      },
+      {
+        "name": "exact checked fixture en/observability/tracing/01-tempo.md trace_logging.py",
+        "passed": true
+      },
+      {
+        "name": "old architecture removed en/observability/tracing/01-tempo.md",
+        "passed": true
+      },
+      {
+        "name": "query macro preservation en/observability/tracing/01-tempo.md",
+        "passed": true
+      },
+      {
+        "name": "current Markdown hash en/quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "original anchors en/quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "unique IDs en/quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "no placeholders en/quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "local target en/quizzes/observability/tracing/01-tempo-quiz.md ../../../observability/tracing/01-tempo.md",
+        "passed": true
+      },
+      {
+        "name": "ten questions en/quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "forty choices en/quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "ten answer folds en/quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "answer parity en/quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "current Markdown hash ko/observability/tracing/01-tempo.md",
+        "passed": true
+      },
+      {
+        "name": "original anchors ko/observability/tracing/01-tempo.md",
+        "passed": true
+      },
+      {
+        "name": "unique IDs ko/observability/tracing/01-tempo.md",
+        "passed": true
+      },
+      {
+        "name": "no placeholders ko/observability/tracing/01-tempo.md",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/tracing/01-tempo.md README.md#traceid를-통한-로그-연결",
+        "passed": true
+      },
+      {
+        "name": "local fragment ko/observability/tracing/01-tempo.md traceid를-통한-로그-연결",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/tracing/01-tempo.md ../../quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "exact checked fixture ko/observability/tracing/01-tempo.md tempo-distributed-values.yaml",
+        "passed": true
+      },
+      {
+        "name": "exact checked fixture ko/observability/tracing/01-tempo.md metrics-generator-values.yaml",
+        "passed": true
+      },
+      {
+        "name": "exact checked fixture ko/observability/tracing/01-tempo.md tempo-local.yaml",
+        "passed": true
+      },
+      {
+        "name": "exact checked fixture ko/observability/tracing/01-tempo.md tempo-s3.tf",
+        "passed": true
+      },
+      {
+        "name": "exact checked fixture ko/observability/tracing/01-tempo.md datasources.yaml",
+        "passed": true
+      },
+      {
+        "name": "exact checked fixture ko/observability/tracing/01-tempo.md trace_logging.py",
+        "passed": true
+      },
+      {
+        "name": "old architecture removed ko/observability/tracing/01-tempo.md",
+        "passed": true
+      },
+      {
+        "name": "query macro preservation ko/observability/tracing/01-tempo.md",
+        "passed": true
+      },
+      {
+        "name": "current Markdown hash ko/quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "original anchors ko/quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "unique IDs ko/quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "no placeholders ko/quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "local target ko/quizzes/observability/tracing/01-tempo-quiz.md ../../../observability/tracing/01-tempo.md",
+        "passed": true
+      },
+      {
+        "name": "ten questions ko/quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "forty choices ko/quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "ten answer folds ko/quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "answer parity ko/quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "bilingual runnable code parity",
+        "passed": true
+      },
+      {
+        "name": "base exact Pod identity",
+        "passed": true
+      },
+      {
+        "name": "base OTLP service ports",
+        "passed": true
+      },
+      {
+        "name": "base query port",
+        "passed": true
+      },
+      {
+        "name": "base no Kafka autocreate",
+        "passed": true
+      },
+      {
+        "name": "base S3 encryption transport",
+        "passed": true
+      },
+      {
+        "name": "base retention",
+        "passed": true
+      },
+      {
+        "name": "metrics exact Pod identity",
+        "passed": true
+      },
+      {
+        "name": "metrics OTLP service ports",
+        "passed": true
+      },
+      {
+        "name": "metrics query port",
+        "passed": true
+      },
+      {
+        "name": "metrics no Kafka autocreate",
+        "passed": true
+      },
+      {
+        "name": "metrics S3 encryption transport",
+        "passed": true
+      },
+      {
+        "name": "metrics retention",
+        "passed": true
+      },
+      {
+        "name": "processors activated",
+        "passed": true
+      },
+      {
+        "name": "remote-write TLS file config",
+        "passed": true
+      },
+      {
+        "name": "native config positive/negative",
+        "passed": true
+      },
+      {
+        "name": "current TraceQL Compile",
+        "passed": true
+      },
+      {
+        "name": "original invalid TraceQL reproduced",
+        "passed": true
+      },
+      {
+        "name": "valid old trace:id and nestedSetParent retained as valid",
+        "passed": true
+      },
+      {
+        "name": "local ingestion/query/metrics",
+        "passed": true
+      },
+      {
+        "name": "eight actual OTel logging checks",
+        "passed": true
+      },
+      {
+        "name": "five real PromQL cases",
+        "passed": true
+      },
+      {
+        "name": "Terraform fmt/schema",
+        "passed": true
+      },
+      {
+        "name": "four native Mermaid graphs",
+        "passed": true
+      },
+      {
+        "name": "official links resolve",
+        "passed": true
+      },
+      {
+        "name": "four recognized update dates",
+        "passed": true
+      },
+      {
+        "name": "scoped diff check",
+        "passed": true
+      }
+    ],
+    "counts": {
+      "documents": 4,
+      "staticChecks": 75,
+      "nativeConfigCases": 4,
+      "helmVariants": [
+        {
+          "variant": "base",
+          "resources": 24,
+          "configSha256": "4d0edce013aca726d3d1c6876513f62cbd7cd5005f0bc7b3bb5349e738b66b88"
+        },
+        {
+          "variant": "metrics",
+          "resources": 27,
+          "configSha256": "4df567412ab086481918533de648533c49b0523abbdf171a3654f692c408956c"
+        }
+      ],
+      "traceQLCompiled": 30,
+      "originalTraceQLFailures": 3,
+      "localSmokeAssertions": 5,
+      "loggingAssertions": 8,
+      "promQLCases": 5,
+      "quizQuestions": 20,
+      "quizChoices": 80,
+      "preservedIDs": 65,
+      "originalPNGsViewed": 2,
+      "newMermaidGraphs": 4,
+      "externalURLs": 9
+    },
+    "nativeConfigs": [
+      {
+        "case": "base",
+        "passed": true,
+        "exit": 0,
+        "output": ""
+      },
+      {
+        "case": "metrics",
+        "passed": true,
+        "exit": 0,
+        "output": ""
+      },
+      {
+        "case": "local",
+        "passed": true,
+        "exit": 0,
+        "output": ""
+      },
+      {
+        "case": "removed ingester/compactor rejected",
+        "passed": true,
+        "exit": 1,
+        "output": "failed parsing config: failed to parse configFile /home/atomoh/kubernetes-docs/.vitepress/cache/observability-tempo-audit/removed-components.yaml: yaml: unmarshal errors:\n  line 1: field compactor not found in type app.Config\n  line 4: field ingester not found in type app.Config\n"
+      }
+    ],
+    "traceQL": [
+      {
+        "error": "",
+        "kind": "original",
+        "query": "{ trace:id = \"abc123def456\" }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "original",
+        "query": "{ resource.service.name = \"payment-service\" }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "original",
+        "query": "{ span.http.status_code >= 400 }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "original",
+        "query": "{ duration > 1s }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "original",
+        "query": "{ resource.service.name = \"order-service\" && span.http.status_code = 500 }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "original",
+        "query": "{ status = error }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "original",
+        "query": "{ span.db.system = \"postgresql\" && duration > 100ms }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "original",
+        "query": "{ span.user.id = \"user123\" }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "original",
+        "query": "{ span.http.url =~ \"/api/payment.*\" && status = error }",
+        "valid": true
+      },
+      {
+        "error": "parse error at line 1, col 35: syntax error: unexpected by",
+        "kind": "original",
+        "query": "{ duration > 2s } | avg(duration) by (resource.service.name)",
+        "valid": false
+      },
+      {
+        "error": "",
+        "kind": "original",
+        "query": "{ resource.service.name = \"api-gateway\" } >> { resource.service.name = \"payment-service\" }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "original",
+        "query": "{ resource.service.name = \"order-service\" } > { span.db.system = \"postgresql\" }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "original",
+        "query": "{ resource.service.name = \"order-service\" } ~ { resource.service.name = \"inventory-service\" }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "original",
+        "query": "{ nestedSetParent > 0 }",
+        "valid": true
+      },
+      {
+        "error": "parse error at line 1, col 38: unknown identifier: traceSpanCount",
+        "kind": "original",
+        "query": "{ rootServiceName = \"api-gateway\" && traceSpanCount > 50 }",
+        "valid": false
+      },
+      {
+        "error": "parse error at line 1, col 30: syntax error: unexpected by",
+        "kind": "original",
+        "query": "{ status = error } | count() by (resource.service.name) | rate()",
+        "valid": false
+      },
+      {
+        "error": "",
+        "kind": "current",
+        "query": "{ trace:id = \"4bf92f3577b34da6a3ce929d0e0e4736\" }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "current",
+        "query": "{ resource.service.name = \"payment-service\" }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "current",
+        "query": "{ span.http.response.status_code >= 400 }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "current",
+        "query": "{ duration > 1s }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "current",
+        "query": "{ status = error }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "current",
+        "query": "{ span.db.system.name = \"postgresql\" && duration > 100ms }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "current",
+        "query": "{ span.http.route = \"/api/payment\" && status = error }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "current",
+        "query": "{ resource.service.name = \"api-gateway\" } >> { resource.service.name = \"payment-service\" }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "current",
+        "query": "{ resource.service.name = \"order-service\" } > { span.db.system.name = \"postgresql\" }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "current",
+        "query": "{ resource.service.name = \"order-service\" } ~ { resource.service.name = \"inventory-service\" }",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "current",
+        "query": "{ trace:rootService = \"api-gateway\" } | count() > 50",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "current",
+        "query": "{ duration > 2s } | by(resource.service.name) | avg(duration) > 2s",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "current",
+        "query": "{ status = error } | rate() by (resource.service.name)",
+        "valid": true
+      },
+      {
+        "error": "",
+        "kind": "current",
+        "query": "{ } | avg_over_time(duration) by (resource.service.name)",
+        "valid": true
+      }
+    ],
+    "localSmoke": {
+      "scope": "One synthetic span, monolithic local storage and loopback only; no Kafka/S3/EKS/HA validation",
+      "checks": [
+        {
+          "case": "ready",
+          "passed": true
+        },
+        {
+          "case": "OTLP JSON POST",
+          "passed": true,
+          "response": "{\"partialSuccess\":{}}"
+        },
+        {
+          "case": "trace-by-ID",
+          "passed": true
+        },
+        {
+          "case": "TraceQL service and error search",
+          "passed": true,
+          "response": {
+            "traces": [
+              {
+                "traceID": "4bf92f3577b34da6a3ce929d0e0e4736",
+                "rootServiceName": "payment-service",
+                "rootTraceName": "audit-payment",
+                "startTimeUnixNano": "1789285900436921326",
+                "durationMs": 200,
+                "spanSet": {
+                  "spans": [
+                    {
+                      "spanID": "00f067aa0ba902b7",
+                      "startTimeUnixNano": "1789285900436921326",
+                      "durationNanos": "200000000",
+                      "attributes": [
+                        {
+                          "key": "service.name",
+                          "value": {
+                            "stringValue": "payment-service"
+                          }
+                        },
+                        {
+                          "key": "status",
+                          "value": {
+                            "stringValue": "error"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "matched": 1
+                },
+                "spanSets": [
+                  {
+                    "spans": [
+                      {
+                        "spanID": "00f067aa0ba902b7",
+                        "startTimeUnixNano": "1789285900436921326",
+                        "durationNanos": "200000000",
+                        "attributes": [
+                          {
+                            "key": "service.name",
+                            "value": {
+                              "stringValue": "payment-service"
+                            }
+                          },
+                          {
+                            "key": "status",
+                            "value": {
+                              "stringValue": "error"
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    "matched": 1
+                  }
+                ],
+                "serviceStats": {
+                  "payment-service": {
+                    "spanCount": 1,
+                    "errorCount": 1
+                  }
+                }
+              }
+            ],
+            "metrics": {
+              "inspectedBytes": "19985",
+              "completedJobs": 3,
+              "totalJobs": 3
+            }
+          }
+        },
+        {
+          "case": "spans counter counts spans",
+          "passed": true
+        }
+      ],
+      "allPassed": true
+    },
+    "logging": [
+      {
+        "case": "valid nonrecording unsampled context retained",
+        "passed": true
+      },
+      {
+        "case": "span ID 16 hex",
+        "passed": true
+      },
+      {
+        "case": "UTC timestamp",
+        "passed": true
+      },
+      {
+        "case": "JSON whitespace regex",
+        "passed": true
+      },
+      {
+        "case": "interpolated log",
+        "passed": true
+      },
+      {
+        "case": "invalid context omits IDs",
+        "passed": true
+      },
+      {
+        "case": "exception retained",
+        "passed": true
+      },
+      {
+        "case": "parent logger disabled",
+        "passed": true
+      }
+    ],
+    "promQL": {
+      "cases": 5,
+      "passed": true,
+      "output": "  SUCCESS\n\n"
+    },
+    "terraform": [
+      {
+        "command": [
+          "fmt",
+          "-check"
+        ],
+        "exit": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": [
+          "validate",
+          "-json"
+        ],
+        "exit": 0,
+        "stdout": "{\n  \"format_version\": \"1.0\",\n  \"valid\": true,\n  \"error_count\": 0,\n  \"warning_count\": 0,\n  \"diagnostics\": []\n}\n",
+        "stderr": ""
+      }
+    ],
+    "mermaid": {
+      "version": "11.16.0",
+      "scope": "FourinlineMermaidgraphsparsed/renderedinnativebrowser;privateSVG/PNG;no sitebuild/server",
+      "results": [
+        {
+          "path": "en/observability/tracing/01-tempo.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 9,
+          "edges": 8,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "en/observability/tracing/01-tempo.md",
+          "index": 1,
+          "parsed": true,
+          "nodes": 6,
+          "edges": 5,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "ko/observability/tracing/01-tempo.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 9,
+          "edges": 8,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "ko/observability/tracing/01-tempo.md",
+          "index": 1,
+          "parsed": true,
+          "nodes": 6,
+          "edges": 5,
+          "errors": [],
+          "passed": true
+        }
+      ]
+    },
+    "externalReferences": [
+      {
+        "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+        "status": 200,
+        "finalUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
+      },
+      {
+        "url": "https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html",
+        "status": 200,
+        "finalUrl": "https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html"
+      },
+      {
+        "url": "https://github.com/grafana-community/helm-charts/blob/tempo-distributed-3.6.0/charts/tempo-distributed/values.yaml",
+        "status": 200,
+        "finalUrl": "https://github.com/grafana-community/helm-charts/blob/tempo-distributed-3.6.0/charts/tempo-distributed/values.yaml"
+      },
+      {
+        "url": "https://github.com/grafana/tempo/blob/v3.0.3/pkg/ingest/writer_client.go",
+        "status": 200,
+        "finalUrl": "https://github.com/grafana/tempo/blob/v3.0.3/pkg/ingest/writer_client.go"
+      },
+      {
+        "url": "https://github.com/grafana/tempo/releases/tag/v3.0.3",
+        "status": 200,
+        "finalUrl": "https://github.com/grafana/tempo/releases/tag/v3.0.3"
+      },
+      {
+        "url": "https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/provision/",
+        "status": 200,
+        "finalUrl": "https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/provision/"
+      },
+      {
+        "url": "https://grafana.com/docs/tempo/latest/introduction/architecture/",
+        "status": 200,
+        "finalUrl": "https://grafana.com/docs/tempo/latest/introduction/architecture/"
+      },
+      {
+        "url": "https://grafana.com/docs/tempo/latest/set-up-for-tracing/setup-tempo/upgrade/",
+        "status": 200,
+        "finalUrl": "https://grafana.com/docs/tempo/latest/set-up-for-tracing/setup-tempo/upgrade/"
+      },
+      {
+        "url": "https://grafana.com/docs/tempo/latest/traceql/construct-traceql-queries/",
+        "status": 200,
+        "finalUrl": "https://grafana.com/docs/tempo/latest/traceql/construct-traceql-queries/"
+      }
+    ],
+    "limits": [
+      "No cloud, EKS, Kafka, S3, live IAM authorization, distributed failover, production capacity or full site build executed.",
+      "Tempo config.verify exits before component initialization; chart rendering and config parsing do not prove arbitrary receiver internals, broker authentication or remote-write TLS connectivity.",
+      "Local smoke test used one synthetic span on loopback/local storage; recent search initially empty, then older timestamps and polling succeeded. This does not isolate a single cause or guarantee immediate search visibility.",
+      "TraceQL examples compiled against the exact Tempo3.0.3 module; only one service/error search and one TraceID lookup executed against local Tempo.",
+      "Grafana provisioning and macro/label contracts source-reviewed with actual PromQL cases; no Grafana/Loki production correlation or remote-write deployment executed.",
+      "Java MDC uses the closed tracing-overview helper and prior API evidence; no Java runtime test.",
+      "Old Tempo2 architecture PNG/HTML remain untouched for parent translation/asset ownership; source references replaced by four correct inline Mermaid graphs."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/observability/tracing/01-tempo.md",
+        "sha256": "bee56435f2b0b6201bd8ae44a76c33139c3276a56d329b2c6983571ad431daba",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "grafana-tempo"
+          },
+          {
+            "tag": "h2",
+            "id": "introduction"
+          },
+          {
+            "tag": "h2",
+            "id": "key-features"
+          },
+          {
+            "tag": "h2",
+            "id": "architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "component-details"
+          },
+          {
+            "tag": "h2",
+            "id": "helm-installation-distributed-mode"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-add-helm-repository"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-values-yaml-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-irsa-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-run-installation"
+          },
+          {
+            "tag": "h2",
+            "id": "traceql-queries"
+          },
+          {
+            "tag": "h3",
+            "id": "basic-syntax"
+          },
+          {
+            "tag": "h3",
+            "id": "advanced-query-examples"
+          },
+          {
+            "tag": "h3",
+            "id": "using-traceql-in-grafana"
+          },
+          {
+            "tag": "h2",
+            "id": "s3-backend-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "s3-bucket-setup"
+          },
+          {
+            "tag": "h3",
+            "id": "s3-and-irsa-setup-with-terraform"
+          },
+          {
+            "tag": "h2",
+            "id": "trace-to-log-correlation-loki-integration"
+          },
+          {
+            "tag": "h3",
+            "id": "grafana-data-source-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "application-logging"
+          },
+          {
+            "tag": "h2",
+            "id": "performance-tuning"
+          },
+          {
+            "tag": "h3",
+            "id": "ingestion-rate-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "compaction-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "query-performance-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "resource-recommendations"
+          },
+          {
+            "tag": "h2",
+            "id": "troubleshooting"
+          },
+          {
+            "tag": "h3",
+            "id": "common-issues-and-solutions"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-trace-data-not-showing"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-s3-permission-errors"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-query-timeouts"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-live-store-memory-pressure"
+          },
+          {
+            "tag": "h3",
+            "id": "useful-debugging-commands"
+          },
+          {
+            "tag": "h3",
+            "id": "monitoring-dashboard"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "grafana-tempo",
+          "introduction",
+          "key-features",
+          "architecture",
+          "mermaid-88",
+          "mermaid-92",
+          "component-details",
+          "helm-installation-distributed-mode",
+          "_1-add-helm-repository",
+          "_2-values-yaml-configuration",
+          "_3-irsa-configuration",
+          "_4-run-installation",
+          "traceql-queries",
+          "basic-syntax",
+          "advanced-query-examples",
+          "using-traceql-in-grafana",
+          "s3-backend-configuration",
+          "s3-bucket-setup",
+          "s3-and-irsa-setup-with-terraform",
+          "trace-to-log-correlation-loki-integration",
+          "grafana-data-source-configuration",
+          "application-logging",
+          "performance-tuning",
+          "ingestion-rate-optimization",
+          "compaction-optimization",
+          "query-performance-optimization",
+          "resource-recommendations",
+          "troubleshooting",
+          "common-issues-and-solutions",
+          "_1-trace-data-not-showing",
+          "_2-s3-permission-errors",
+          "_3-query-timeouts",
+          "_4-live-store-memory-pressure",
+          "useful-debugging-commands",
+          "monitoring-dashboard",
+          "references",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/observability/tracing/01-tempo.md",
+        "sha256": "ea6827bf796d73b6e419159b73dabee99115fc38a98789da50a9a8401b772074",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "grafana-tempo"
+          },
+          {
+            "tag": "h2",
+            "id": "소개"
+          },
+          {
+            "tag": "h2",
+            "id": "주요-특징"
+          },
+          {
+            "tag": "h2",
+            "id": "아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "구성-요소-상세"
+          },
+          {
+            "tag": "h2",
+            "id": "helm-설치-distributed-모드"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-helm-저장소-추가"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-values-yaml-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-irsa-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-설치-실행"
+          },
+          {
+            "tag": "h2",
+            "id": "traceql-쿼리"
+          },
+          {
+            "tag": "h3",
+            "id": "기본-문법"
+          },
+          {
+            "tag": "h3",
+            "id": "고급-쿼리-예시"
+          },
+          {
+            "tag": "h3",
+            "id": "grafana에서-traceql-사용"
+          },
+          {
+            "tag": "h2",
+            "id": "s3-백엔드-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "s3-버킷-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "terraform으로-s3-및-irsa-설정"
+          },
+          {
+            "tag": "h2",
+            "id": "trace-to-log-상관분석-loki-연동"
+          },
+          {
+            "tag": "h3",
+            "id": "grafana-데이터-소스-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "애플리케이션-로깅-설정"
+          },
+          {
+            "tag": "h2",
+            "id": "성능-튜닝"
+          },
+          {
+            "tag": "h3",
+            "id": "ingestion-rate-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "compaction-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "쿼리-성능-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "리소스-권장-사항"
+          },
+          {
+            "tag": "h2",
+            "id": "트러블슈팅"
+          },
+          {
+            "tag": "h3",
+            "id": "일반적인-문제와-해결책"
+          },
+          {
+            "tag": "h4",
+            "id": "_1-추적-데이터가-표시되지-않음"
+          },
+          {
+            "tag": "h4",
+            "id": "_2-s3-권한-오류"
+          },
+          {
+            "tag": "h4",
+            "id": "_3-쿼리-타임아웃"
+          },
+          {
+            "tag": "h4",
+            "id": "_4-live-store-메모리-압력"
+          },
+          {
+            "tag": "h3",
+            "id": "유용한-디버깅-명령어"
+          },
+          {
+            "tag": "h3",
+            "id": "모니터링-대시보드"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "grafana-tempo",
+          "소개",
+          "주요-특징",
+          "아키텍처",
+          "mermaid-88",
+          "mermaid-92",
+          "구성-요소-상세",
+          "helm-설치-distributed-모드",
+          "_1-helm-저장소-추가",
+          "_2-values-yaml-구성",
+          "_3-irsa-설정",
+          "_4-설치-실행",
+          "traceql-쿼리",
+          "기본-문법",
+          "고급-쿼리-예시",
+          "grafana에서-traceql-사용",
+          "s3-백엔드-구성",
+          "s3-버킷-설정",
+          "terraform으로-s3-및-irsa-설정",
+          "trace-to-log-상관분석-loki-연동",
+          "grafana-데이터-소스-설정",
+          "애플리케이션-로깅-설정",
+          "성능-튜닝",
+          "ingestion-rate-최적화",
+          "compaction-최적화",
+          "쿼리-성능-최적화",
+          "리소스-권장-사항",
+          "트러블슈팅",
+          "일반적인-문제와-해결책",
+          "_1-추적-데이터가-표시되지-않음",
+          "_2-s3-권한-오류",
+          "_3-쿼리-타임아웃",
+          "_4-ingester-oom",
+          "_4-live-store-메모리-압력",
+          "유용한-디버깅-명령어",
+          "모니터링-대시보드",
+          "참고-자료",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/tracing/01-tempo-quiz.md",
+        "sha256": "8a8b654e65bcf4e86d0ef8f745019abad9c7a453530128059ef25297302ba4fc",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "grafana-tempo-quiz"
+          }
+        ],
+        "renderedIds": [
+          "grafana-tempo-quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/tracing/01-tempo-quiz.md",
+        "sha256": "cdcc95d62811fd2b496b1dd3b476135187ea46bdf4115dc5442def5365802f9d",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "grafana-tempo-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "grafana-tempo-퀴즈"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://api.github.com/repos/grafana/tempo/releases/latest",
+      "cacheKey": "c2c7d3e5e7b3",
+      "fetchedAt": "2026-09-13T07:40:17.713643+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/grafana/tempo/releases/latest",
+      "sha256": "2800dd54295259647b0dc69c2ed758c12562166b45bb4214b738ddab02c9abc5"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana-community/helm-charts/main/charts/tempo-distributed/Chart.yaml",
+      "cacheKey": "4bb0c0f4913e",
+      "fetchedAt": "2026-09-13T07:40:17.650683+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana-community/helm-charts/main/charts/tempo-distributed/Chart.yaml",
+      "sha256": "28963189e968ae472063f6ab0ee88e926461e0259835ed7473acfcecd2d74cb7"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana-community/helm-charts/tempo-distributed-3.6.0/charts/tempo-distributed/values.yaml",
+      "cacheKey": "90fedc59b877",
+      "fetchedAt": "2026-09-13T07:45:27.621906+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana-community/helm-charts/tempo-distributed-3.6.0/charts/tempo-distributed/values.yaml",
+      "sha256": "b342557260a2c98a25c0b3492e82c71700d89fbb4800c8badac046ac4e5704c4"
+    },
+    {
+      "url": "https://api.github.com/repos/grafana-community/helm-charts/releases/tags/tempo-distributed-3.6.0",
+      "cacheKey": "0984388daf41",
+      "fetchedAt": "2026-09-13T07:42:22.409276+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/grafana-community/helm-charts/releases/tags/tempo-distributed-3.6.0",
+      "sha256": "c81694e0c74985061a2302e382639d9c5ec5c281cea57f2c7a581ccc068de580"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/cmd/tempo/main.go",
+      "cacheKey": "8400e6b1b1d8",
+      "fetchedAt": "2026-09-13T07:42:22.415506+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/cmd/tempo/main.go",
+      "sha256": "e5ca3b54428559602801a9c803e0a7993971d850fe694fb17ec801df831d1834"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/pkg/ingest/config.go",
+      "cacheKey": "0a98c83dc92e",
+      "fetchedAt": "2026-09-13T07:45:27.064754+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/pkg/ingest/config.go",
+      "sha256": "7e989242ab1e3af866b7c2dcd770ecb85d9a23cc8c3b10fa1a238a4a2e98bf3e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/pkg/ingest/writer_client.go",
+      "cacheKey": "38ba23550a7c",
+      "fetchedAt": "2026-09-13T07:49:02.794276+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/pkg/ingest/writer_client.go",
+      "sha256": "78a3a0c8b7016f6aea38ffbba0fb849b6cd0ce4864ac65ec102d2b7094c5f8d6"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/pkg/ingest/reader_client.go",
+      "cacheKey": "510fe52ccb4b",
+      "fetchedAt": "2026-09-13T07:49:03.032279+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/pkg/ingest/reader_client.go",
+      "sha256": "2229d3d7449e90efc18fbd3a4c19e3493c671c1a52198f4e5b91dd6686f6952c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/docs/sources/tempo/introduction/architecture.md",
+      "cacheKey": "bca6d23f9192",
+      "fetchedAt": "2026-09-13T07:45:26.882843+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/docs/sources/tempo/introduction/architecture.md",
+      "sha256": "ba01258f7cb1423cc15fbb91b52af9dfed7fe9a413959b9567e41b6ed5736b09"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/docs/sources/tempo/set-up-for-tracing/setup-tempo/upgrade.md",
+      "cacheKey": "1936d77c1d21",
+      "fetchedAt": "2026-09-13T07:45:27.157658+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/docs/sources/tempo/set-up-for-tracing/setup-tempo/upgrade.md",
+      "sha256": "472aa0fb0d8a3c8fd5a29f5d5257b9e77a87f6286b08731b1eb4844092aa95ed"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/tempodb/backend/s3/config.go",
+      "cacheKey": "3abb3eb1803d",
+      "fetchedAt": "2026-09-13T07:49:34.865060+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/tempodb/backend/s3/config.go",
+      "sha256": "e189ee9c2857831814b2512b4bcdb202783aa3dcc2ad3c9ae785ad6e3a71c10a"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/tempodb/backend/s3/s3.go",
+      "cacheKey": "f23e532d448e",
+      "fetchedAt": "2026-09-13T07:49:34.635110+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/tempodb/backend/s3/s3.go",
+      "sha256": "b467a24b7c5bc447f4decbe58f1f71717728f7ed01d7b3d170921d2aaecc6aff"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/pkg/traceql/engine.go",
+      "cacheKey": "64d9d1bea8d9",
+      "fetchedAt": "2026-09-13T07:49:34.397746+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/pkg/traceql/engine.go",
+      "sha256": "58d127e1fce6483e5738e636a15681349bb4afc23e8e252e1171e63d612280b3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/modules/generator/processor/spanmetrics/spanmetrics.go",
+      "cacheKey": "5a8f7cc9d8b1",
+      "fetchedAt": "2026-09-13T07:57:40.030840+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/modules/generator/processor/spanmetrics/spanmetrics.go",
+      "sha256": "7fbda05e1c423e0e7dce03d4840fc8bce2375c2c016ab4bb811e9754d4ec162a"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/modules/generator/registry/histogram.go",
+      "cacheKey": "e4dccada2010",
+      "fetchedAt": "2026-09-13T07:57:40.242619+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/modules/generator/registry/histogram.go",
+      "sha256": "23e6edca596b116c5aa80d9e67babdb35e022416deec83e62a5fb410965528fc"
+    },
+    {
+      "url": "https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/provision/",
+      "cacheKey": "8bed54ebd2dd",
+      "fetchedAt": "2026-09-13T07:49:35.037783+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/provision/",
+      "sha256": "89c77972c17227ac4c3a2e9149e4320211186a45594cdbf6c8ee7a17bb11448f"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html",
+      "cacheKey": "029f31af45f1",
+      "fetchedAt": "2026-09-13T07:52:19.996528+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html",
+      "sha256": "aacc0de7d93d53696c6b18b02aaf33c24dca2f437dc4f698e31c51f5742845dc"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+      "cacheKey": "3402cc49aabf",
+      "fetchedAt": "2026-09-13T07:52:19.785414+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
+      "sha256": "b5c8bab7a9d7ccd1613f3f6dfc17cb0daf34234826745941762be368b606acdf"
+    },
+    {
+      "url": "https://grafana.com/docs/tempo/latest/traceql/construct-traceql-queries/",
+      "cacheKey": "1c6d8c1da63b",
+      "fetchedAt": "2026-09-13T07:49:35.133570+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/tempo/latest/traceql/construct-traceql-queries/",
+      "sha256": "a7b2f004495d5a5a1abcecf5965e9a693307a64252bbc69591cfa19cd220e884"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/example/docker-compose/single-binary/tempo.yaml",
+      "cacheKey": "5cc77be0488b",
+      "fetchedAt": "2026-09-13T07:49:03.196605+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/example/docker-compose/single-binary/tempo.yaml",
+      "sha256": "85fc97739e982e4b79c901404152bcb5dee5334ef7921b2e5d5b3984bfbcb4e1"
+    },
+    {
+      "url": "https://opentelemetry.io/docs/specs/semconv/http/http-spans/",
+      "cacheKey": "533be7768708",
+      "fetchedAt": "2026-09-13T07:09:54.517961+00:00",
+      "status": 200,
+      "finalURL": "https://opentelemetry.io/docs/specs/semconv/http/http-spans/",
+      "sha256": "c16beeae0872298834c9bcc938e02f6cb542721e0531cf65b6c62e63034f4293"
+    },
+    {
+      "url": "https://opentelemetry.io/docs/specs/semconv/db/database-spans/",
+      "cacheKey": "dd7291976f4c",
+      "fetchedAt": "2026-09-13T07:09:53.872090+00:00",
+      "status": 200,
+      "finalURL": "https://opentelemetry.io/docs/specs/semconv/db/database-spans/",
+      "sha256": "f4c95893e96e16a4377868180d2c0d4b6e72489f39f30177298dc8ceb456beb7"
+    },
+    {
+      "url": "https://grafana.com/docs/tempo/latest/set-up-for-tracing/setup-tempo/upgrade/",
+      "cacheKey": "784b87aeaffd",
+      "fetchedAt": "2026-09-13T07:57:39.740016+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/tempo/latest/set-up-for-tracing/setup-tempo/upgrade/",
+      "sha256": "2b9c4156c5b58c190d585aa9e23edef00b8543a3fad40787d9e91ee76e4ff1f5"
+    },
+    {
+      "url": "https://grafana.com/docs/tempo/latest/introduction/architecture/",
+      "cacheKey": "151b717992d8",
+      "fetchedAt": "2026-09-13T07:57:40.009536+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/tempo/latest/introduction/architecture/",
+      "sha256": "ec1a023a4d5cde21f2f332da5506a23694850352f3c9fe3474c1908875e6ee4c"
+    }
+  ],
+  "findings": [
+    "Fully read all four original documents (EN795, KO1004, quizzes185 each;2169 lines). Preserved all65 original rendered heading IDs, including Korean numeric-section anchors. Updated actual content metadata through recognized Last Updated/마지막 업데이트 headers.",
+    "Pinned Tempo3.0.3 and maintained community tempo-distributed3.6.0/app3.0.3 using official releases/checksums. Chart Kubernetes constraint is explicitly not an EKS compatibility/test matrix; no blind latest-version compatibility assertion.",
+    "Replaced obsolete Tempo2 ingester/compactor setup with Tempo3 Kafka microservices and a separate no-Kafka monolithic loopback example. Explained Kafka durability/ISR/retention, live-store/block-builder emptyDir, backend scheduler/workers, vParquet4+ side-by-side2→3 migration and unsupported downgrade.",
+    "Confirmed exact Tempo3.0.3 common Kafka client options expose SASL/PLAIN without Kafka TLS/SCRAM/MSK-IAM configuration. Distributed values are explicitly render-only until broker transport/authentication, all advertised addresses, topic partitions, ownership and recovery are verified. No fabricated secure MSK recipe or cloud deployment claim.",
+    "Rendered24 base and27 generator resources. Explicit ServiceAccount monitoring:tempo, role annotation, OTLP service ports4317/4318, query frontend3200, S3 HTTPS, tenant ingestion limits and correct max_recv_msg_size_mib. No guessed legacy chart keys, internal-ALB-as-auth or anti-affinity-as-PDB claims.",
+    "Enabled span-metrics/service-graphs through tenant processors as well as generator Deployment; mounted existing remote-write TLS certificate Secret and scoped destination prerequisites. Documented ephemeral WAL and unverified replay/destination behavior.",
+    "Replaced undefined KMS resource/old IAM module/duplicate CLI ownership with complete provider6.64 S3+IRSA Terraform. Bucket Block Public Access/owner-enforced/SSE-S3/TLS deny, exact OIDC aud/sub and bucket/account-scoped role grants; deletion protection and optional KMS key-policy requirements. No blanket S3 object expiry conflicting with Tempo retention; versioning/noncurrent costs explained.",
+    "Actual Tempo3.0.3 TraceQL Compile checked30 queries:3 original syntax errors reproduced;14 current queries valid. trace:id and nestedSetParent are valid in this release, not incorrectly removed; nestedSetParent is not nesting depth. Corrected count/avg/rate syntax, invalid traceSpanCount, right-side child/descendant semantics, time-range and HTTP/DB semantic-convention distinctions.",
+    "Local Tempo3.0.3 synthetic one-span test passed ready, OTLP POST, TraceID lookup, service/error TraceQL search and spans counter. Initial immediate search was empty; later older timestamps/polling returned data. Scope is one loopback process/local storage, not Kafka/S3/HA or causal isolation of search delay.",
+    "Corrected Grafana tracesToLogsV2 Trace→Logs versus Loki derivedFields Logs→Trace (including quiz7). Current macro escaping, exact data-source UIDs/service-label mapping, whitespace-safe32hex log regex, no span filter without IDs, exemplar label mapping and span-metrics status labels are explicit.",
+    "Error-ratio PromQL now fills missing numerator from total and divides only by positive total. Actual promtool3.14 cases pass healthy0/all-errors1/mixed0.2/zero-trafficempty/absentempty. No false healthy result from missing telemetry.",
+    "Python trace logging now checks valid SpanContext rather than is_recording, keeps unsampled nonrecording IDs, UTC/message formatting/exceptions and avoids propagation duplicates;8 actual OTel1.44 assertions. Java points to previously reviewed scoped-MDC helper with explicit source/API-only validation limitation.",
+    "Removed destructive/obsolete forced-flush diagnostics and credential-environment dumps; do not assume Tempo image contains shell/AWSCLI. Distinguish readiness, valid OTLP ingestion, query lag and full distributed health. Dashboard uses actual spans counter, process RSS and HTTP search histogram/route rather than byte counter-as-memory or invented metric.",
+    "Personally viewed2 old architecture PNGs; replaced their source references with4 native Mermaid11.16 parsed/rendered/personally viewed write/read flows. Old HTML/PNG and foreign translations remain untouched for parent ownership.",
+    "Final75 scoped static checks,4 Markdown/Vue compiles,4 parsed update dates,65 retained IDs,9 official links HTTP200,20 quiz answers/80 choices,3 positive nativeconfigs+1 removed-component negative test,Terraform fmt/schema,30 TraceQL Compile cases,5 loopback assertions,8 logging assertions and5 PromQL cases passed. Scoped git diff --check clean."
+  ],
+  "figures": {
+    "originals": [
+      {
+        "path": "en/.gitbook/assets/en-observability-tracing-01-tempo-0.png",
+        "sha256": "9aea6bcba96c150a965e11ee6422a5d69734ac035c7548005978b42c4cc3c47f",
+        "personallyViewed": true,
+        "disposition": "Obsolete Tempo2 ingester/compactor architecture and generator-to-Grafana path replaced by two accurate inline Tempo3 write/read diagrams per locale. Original asset unchanged."
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-tracing-01-tempo-0.png",
+        "sha256": "2ae00b2b02bd5b34748de3b1fef04dfb86b39efcf6da45fc63ec48de3190775d",
+        "personallyViewed": true,
+        "disposition": "Obsolete Tempo2 ingester/compactor architecture and generator-to-Grafana path replaced by two accurate inline Tempo3 write/read diagrams per locale. Original asset unchanged."
+      }
+    ],
+    "mermaid": {
+      "version": "11.16.0",
+      "scope": "FourinlineMermaidgraphsparsed/renderedinnativebrowser;privateSVG/PNG;no sitebuild/server",
+      "results": [
+        {
+          "path": "en/observability/tracing/01-tempo.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 9,
+          "edges": 8,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "en/observability/tracing/01-tempo.md",
+          "index": 1,
+          "parsed": true,
+          "nodes": 6,
+          "edges": 5,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "ko/observability/tracing/01-tempo.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 9,
+          "edges": 8,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "ko/observability/tracing/01-tempo.md",
+          "index": 1,
+          "parsed": true,
+          "nodes": 6,
+          "edges": 5,
+          "errors": [],
+          "passed": true
+        }
+      ]
+    },
+    "newPersonallyViewed": [
+      "figures/en-0.png",
+      "figures/en-1.png",
+      "figures/ko-0.png",
+      "figures/ko-1.png"
+    ],
+    "scopeExternalFollowup": "Parent owns regeneration/foreign source-sync of old Tempo2 HTML/PNG references; no foreign prose or shared rendering helpers edited."
+  },
+  "artifactDirectory": ".vitepress/cache/observability-tempo-audit",
+  "limits": [
+    "No cloud, EKS, Kafka, S3, live IAM authorization, distributed failover, production capacity or full site build executed.",
+    "Tempo config.verify exits before component initialization; chart rendering and config parsing do not prove arbitrary receiver internals, broker authentication or remote-write TLS connectivity.",
+    "Local smoke test used one synthetic span on loopback/local storage; recent search initially empty, then older timestamps and polling succeeded. This does not isolate a single cause or guarantee immediate search visibility.",
+    "TraceQL examples compiled against the exact Tempo3.0.3 module; only one service/error search and one TraceID lookup executed against local Tempo.",
+    "Grafana provisioning and macro/label contracts source-reviewed with actual PromQL cases; no Grafana/Loki production correlation or remote-write deployment executed.",
+    "Java MDC uses the closed tracing-overview helper and prior API evidence; no Java runtime test.",
+    "Old Tempo2 architecture PNG/HTML remain untouched for parent translation/asset ownership; source references replaced by four correct inline Mermaid graphs."
+  ],
+  "sourceAccessNotes": [
+    "Official binary/chart SHA256 verified; reused cached Terraform6.64 provider, promtool3.14 and Python OTel1.44.",
+    "TraceQL helper reused exact Tempo3.0.3 module; Go1.26.8 cached toolchain, offline modules,CPU2/512MiB. Private module go directive lowered from parent fixture1.27.1 to1.26.8; Tempo source/dependency versions unchanged.",
+    "No full site build,cloud mutation,registry upload,GPU,other agent or external AI. Private EBS TMPDIR and telemetry-free processes."
+  ],
+  "artifactHashes": [
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/check-local.py",
+      "sha256": "26db8f38189aed18e1a80f7037b425b23bcf22357d62e60ce0743696f3f17e5d"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/check-logging.py",
+      "sha256": "a2e4b9b8e9d8e8928d4916a2e166c16280a2f4132caed0170cd9b9d9decd9e28"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/check-mermaid.mjs",
+      "sha256": "a78561e3f999010822abae652430a828aca90f19529dd738bdf0fa0db7cc69e3"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/check-static.py",
+      "sha256": "bcb2b43ce4c4a0c36389ec6ce555972d9a69f2931b08c3339335cd9668e816ad"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/close-config.json",
+      "sha256": "d5215fc02fa53404be9a3fe428f60e66c9a76b050f74b87efac78023a2c33289"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/datasources.yaml",
+      "sha256": "4edf3b24390d270f3c20de2fa06d9602aba4064cd6a71d61c87784b6f2768b61"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/helm-base.yaml",
+      "sha256": "a2d49faf804bb302002b316a395c42df67a69449f22b534d1eafc0777db0cd01"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/helm-metrics.yaml",
+      "sha256": "eae88c0d7a59d3f1062158de31b244cb3c7be7c008d0137ab66eab8a0d977436"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/link-validation.json",
+      "sha256": "94d35e710ab8c2ac736092b1677c4b352cb563150f919ddbbf992f6f291402ad"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/local-immediate-search-proof.json",
+      "sha256": "43e4f032b8ac8ab5d94977cf464a84dd5db85753e25c6a82e4d404dc3d02e91a"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/local-validation.json",
+      "sha256": "e843abb472ca39e855113c8cb980e1058fc6b6d96f0285f13a76565b482c192f"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/logging-validation.json",
+      "sha256": "e3e4a569b5ae3d8819ad976ffa23eec1e1656332b8c73a1f1cefd1fcc982418a"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/mermaid-validation.json",
+      "sha256": "166f52ebce5d42dd8dabf4e370273f6853dd2f5cc2b04ed688db826074984481"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/metadata-validation.json",
+      "sha256": "5f6d9ff540c110f7e32e18951515a6c5dcee3b5bdac736555bb0dc5f1e44b626"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/metrics-generator-values.yaml",
+      "sha256": "e25fc734db63ae7cb50bf9e7191e2db814ca95a5b0714313e62e265e2c791252"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/native-config-validation.json",
+      "sha256": "79f7d6cbd9ab0ff1e93b1a24230d6559418e62ab99d9287ca3cb6c829971b05c"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/original-render.json",
+      "sha256": "63d656da7d88ca468f5593d3a47fe4bf369f1e7c297e318e60905ecf9287a2de"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/promql-tests.yaml",
+      "sha256": "ead06d1a1c85f0f3b9c73873562ae4c6d4cab108c8093762df84a2239f3aff40"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/promql-validation.json",
+      "sha256": "cdc3fd2172a21e5adfdfcb9d1bcd5850308014e8396a3fb3ac5bda9ff642f4f4"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/publish-docs.mjs",
+      "sha256": "149e888fe21e3815c06a6ad684684613c87238c5ecbf1d5943872461a45f3708"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/published-guide-hashes.json",
+      "sha256": "74531a8a1993bcbecd587ae4fe4633f17c4a0782cb803aab2831dc21a3ed354e"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/quiz-contract.json",
+      "sha256": "f79bcd49fdc6e0b7c26529b9280c2cc0e9365d96663a27f8243b009fd0329ebc"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/removed-components.yaml",
+      "sha256": "fa448980691517b5d2769f467dadc951c7080ceda12cf60c4d30ed074ca717cb"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/render-validation.json",
+      "sha256": "266554f65a66c197f62659ca4a47f0f950bb8884931466e44b5ac39d578ad667"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/static-validation.json",
+      "sha256": "e3b452d5b8cdce53a0b4923d1a76b3b0dd038ae313ef2353e19084a06a32589b"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/tempo-base-rendered.yaml",
+      "sha256": "4d0edce013aca726d3d1c6876513f62cbd7cd5005f0bc7b3bb5349e738b66b88"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/tempo-distributed-values.yaml",
+      "sha256": "bc6e03c0acc64e200af7e4c75c310dca48f71d9687a49f1e8df61f67b324e0a4"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/tempo-local.yaml",
+      "sha256": "c68575712c96d10d45a37504d77471e0fae54eab8443c0e97c0b3e5339a5d09f"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/tempo-metrics-rendered.yaml",
+      "sha256": "4df567412ab086481918533de648533c49b0523abbdf171a3654f692c408956c"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/tempo-s3.tf",
+      "sha256": "8cc64d26b18c734f6b7c70b3b0b5ff0873d727c96661b689e76c31bc84c03ee8"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/terraform-validation.json",
+      "sha256": "75c10fe493ed53bcadef0a14811515949dcc2812ab459b6f0eb1d429ce99f52b"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/trace_logging.py",
+      "sha256": "d900b45bc93ea6e6b4af76decb45d67b1145ff123615a20fca851ca5127cc6bb"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/traceql-validation.json",
+      "sha256": "01787519a66eb294aba046433b83dfcbe1f78f34a74060d7a9abd9612a95270b"
+    },
+    {
+      "path": ".vitepress/cache/observability-tempo-audit/work-in-progress.json",
+      "sha256": "769a6aed5734555ba4772ee29d033a5ea859585f0e4c338bb984f0d4e0e801fc"
+    }
+  ],
+  "boundedToolProvenance": [
+    {
+      "url": "https://github.com/grafana/tempo/releases/download/v3.0.3/tempo_3.0.3_linux_arm64.tar.gz",
+      "sha256": "d991e906e6d56944b0c20941cef9273f6f1dd5bb2a350dc77f1acb3e9b9d8d28",
+      "bytes": 61333619,
+      "version": "tempo, version 3.0.3 (branch: HEAD, revision: 1900ed7bb)\n  build user:       \n  build date:       \n  go version:       go1.26.5\n  platform:         linux/arm64\n  tags:             unknown",
+      "binarySha256": "eb48035c14f0badd326c0d288a52b46ca75fd8bf48288565d9c040f11d0cf9cf"
+    },
+    {
+      "url": "https://github.com/grafana-community/helm-charts/releases/download/tempo-distributed-3.6.0/tempo-distributed-3.6.0.tgz",
+      "sha256": "56190e848ab2a27f551b62945b1629b5f48b2ad5a6163abf88edf90325ea8164",
+      "bytes": 101049
+    }
+  ]
+}

@@ -1,28 +1,31 @@
 # AWS X-Ray Quiz
 
-Test your understanding of AWS X-Ray.
+> **Last Updated**: September 13, 2026
+
+[AWS X-Ray](../../../observability/tracing/02-xray.md)
 
 ---
 
-1. Which is NOT a main feature of AWS X-Ray?
-   - A) Service map visualization
-   - B) Distributed tracing
-   - C) Log aggregation
-   - D) Performance analysis
+1. Which behavior is NOT automatically supplied by an X-Ray trace pipeline?
+   - A) Service dependency visualization from collected traces
+   - B) Distributed request tracing
+   - C) Collection of every application's ordinary log files
+   - D) Analysis of collected span timings
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Log aggregation**
+**Answer: C) Collection of every application's ordinary log files**
 
 **Explanation:**
-AWS X-Ray provides distributed tracing, service map visualization, and performance analysis. Log aggregation is a CloudWatch Logs feature. X-Ray can integrate with CloudWatch Logs to link traces and logs, but it doesn't collect or store logs itself.
+
+Tracing does not configure a general application-log collector. CloudWatch Transaction Search can store structured spans in aws/spans, but this is distinct from collecting all ordinary application logs. Metrics/logs need their own configured pipelines and access controls.
 
 </details>
 
 ---
 
-2. What is the recommended way to deploy the X-Ray daemon in EKS?
+2. For the legacy daemon path, which Kubernetes workload can run a daemon on each eligible EC2 worker?
    - A) Deployment
    - B) StatefulSet
    - C) DaemonSet
@@ -34,13 +37,14 @@ AWS X-Ray provides distributed tracing, service map visualization, and performan
 **Answer: C) DaemonSet**
 
 **Explanation:**
-Deploying the X-Ray Daemon as a DaemonSet is recommended. A DaemonSet runs one Pod on each node, allowing all application Pods on that node to send trace data to the local X-Ray Daemon. This minimizes network latency and ensures reliable data transmission.
+
+DaemonSet selects eligible nodes; it is not supported on EKS Fargate. A ClusterIP Service may select a daemon on another node, so DaemonSet placement alone does not guarantee node-local or lossless UDP delivery. X-Ray SDKs/daemon are in maintenance mode; the guide uses a separate OpenTelemetry collector Deployment for new instrumentation.
 
 </details>
 
 ---
 
-3. Which is NOT a parameter used when setting up centralized sampling rules in X-Ray?
+3. Which is NOT a field of an X-Ray centralized sampling rule?
    - A) FixedRate
    - B) ReservoirSize
    - C) Priority
@@ -52,133 +56,141 @@ Deploying the X-Ray Daemon as a DaemonSet is recommended. A DaemonSet runs one P
 **Answer: D) RetentionDays**
 
 **Explanation:**
-X-Ray sampling rules include FixedRate (fixed sampling ratio), ReservoirSize (minimum samples per second), and Priority (rule priority). RetentionDays is not a sampling rule parameter but is related to X-Ray data retention settings. The default data retention period is 30 days.
+
+FixedRate, ReservoirSize and Priority are sampling fields. RetentionDays is not a sampling-rule parameter. A reservoir is not a guarantee of a minimum number of traces when traffic is absent. Rules require a compatible remote sampler; head sampling cannot select a response error that has not happened yet.
 
 </details>
 
 ---
 
-4. What is the difference between Annotation and Metadata in X-Ray?
-   - A) Annotation maximum is 100, Metadata is unlimited
-   - B) Annotation is indexed and filterable, Metadata is not indexed
-   - C) Annotation supports only strings, Metadata supports all types
-   - D) Annotation is auto-generated, Metadata is manually added
+4. Which statement correctly distinguishes X-Ray annotations and metadata?
+   - A) Every segment independently receives 100 indexed annotations
+   - B) Annotations are indexed for X-Ray filtering; unindexed metadata remains stored and accessible
+   - C) Annotations accept only strings
+   - D) Metadata is automatically redacted
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Annotation is indexed and filterable, Metadata is not indexed**
+**Answer: B) Annotations are indexed for X-Ray filtering; unindexed metadata remains stored and accessible**
 
 **Explanation:**
-Annotations are indexed and can be searched using filter expressions in the X-Ray console (maximum 50). Metadata is not indexed and cannot be searched but is used to store detailed information. Use Annotations for important identifiers (user_id, order_id, etc.) and Metadata for detailed information like request/response bodies.
+
+X-Ray indexes up to50annotations per trace. Metadata is not indexed as annotations, but unindexed does not mean secret or inaccessible. Use deliberate bounded fields and remove sensitive payloads, identifiers, tokens and SQL parameters before collection. index_all_attributes=false is not a redaction processor.
 
 </details>
 
 ---
 
-5. Which is NOT an advantage of using the ADOT (AWS Distro for OpenTelemetry) Collector?
-   - A) Uses vendor-neutral standards
-   - B) Multi-backend support
-   - C) X-Ray-specific optimization
-   - D) OpenTelemetry protocol support
+5. Which statement about ADOT Collector is false?
+   - A) It accepts supported OpenTelemetry protocols
+   - B) It can connect supported pipelines to multiple backends
+   - C) Declaring an unused CloudWatch Logs exporter automatically converts traces into logs
+   - D) Its released component inventory must be checked
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) X-Ray-specific optimization**
+**Answer: C) Declaring an unused CloudWatch Logs exporter automatically converts traces into logs**
 
 **Explanation:**
-The ADOT Collector is vendor-neutral based on OpenTelemetry and can send data to various backends (Prometheus, Jaeger, Datadog, etc.) in addition to X-Ray. X-Ray-specific optimization is a characteristic of the X-Ray Daemon. ADOT's advantages are standardized instrumentation and multi-backend support.
+
+Receivers, processors and exporters must be connected in the appropriate logs/metrics/traces pipeline. ADOT includes AWS integrations such as awsxray, so AWS-specific behavior is not exclusive to the legacy daemon. Do not assume that every upstream Contrib exporter exists in the selected ADOT release.
 
 </details>
 
 ---
 
-6. When does a node appear red in the X-Ray service map?
-   - A) When response time is slow
-   - B) When traffic is high
-   - C) When error rate is high
-   - D) When it's a newly added service
+6. What does the red traffic category represent on the X-Ray/CloudWatch trace map?
+   - A) Every slow request
+   - B) High traffic volume
+   - C) Server faults such as HTTP5xx
+   - D) Newly discovered services
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) When error rate is high**
+**Answer: C) Server faults such as HTTP5xx**
 
 **Explanation:**
-Node colors in the X-Ray service map indicate service health status. Red indicates services with high error rates, yellow indicates services with warning-level issues, and green indicates normal services. This allows quick identification of problematic services.
+
+Red represents server faults, yellow client errors, purple throttling such as HTTP429, and green successful traffic. These categories are not arbitrary latency thresholds or a claim that every red service has crossed a user-defined high-error-rate alarm.
 
 </details>
 
 ---
 
-7. What configuration is needed to receive OpenTelemetry trace data in X-Ray?
-   - A) Install X-Ray SDK
-   - B) Configure AWS X-Ray Propagator and ID Generator
-   - C) Install CloudWatch Agent
-   - D) Add Lambda Layer
+7. What is required to send OpenTelemetry spans through the guide's X-Ray collection path?
+   - A) Every producer must use the legacy X-Ray SDK
+   - B) A compatible, authenticated OTLP collector/export pipeline with the correct AWS identity
+   - C) Every application must install a CloudWatch Agent
+   - D) Every EKS Pod must install a Lambda Layer
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Configure AWS X-Ray Propagator and ID Generator**
+**Answer: B) A compatible, authenticated OTLP collector/export pipeline with the correct AWS identity**
 
 **Explanation:**
-To send trace data from OpenTelemetry to X-Ray, you need to configure the AWS X-Ray Propagator (context propagation) and AWS X-Ray ID Generator (generates X-Ray format TraceIDs). This allows generating X-Ray compatible trace data while using OpenTelemetry standards.
+
+The guide sends OTLP with mTLS to ADOT, whose awsxray exporter calls the signed classic X-Ray API. X-Ray supports W3C128-bit IDs; a special X-Ray ID generator/propagator is not universally mandatory. The alternative native OTLP HTTPS endpoint requires SigV4 and Transaction Search. Configure propagation for the actual integration.
 
 </details>
 
 ---
 
-8. What is the correct X-Ray filter expression query to find requests with response time over 2 seconds?
-   - A) `duration > 2`
+8. Which X-Ray response-time filter selects values strictly greater than two seconds?
+   - A) `responsetime > 2000`
    - B) `responsetime > 2`
-   - C) `latency >= 2000`
+   - C) `responsetime >= 2`
    - D) `time > 2s`
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) responsetime > 2**
+**Answer: B) `responsetime > 2`**
 
 **Explanation:**
-In X-Ray filter expressions, the `responsetime` keyword is used for response time, and the unit is seconds. `responsetime > 2` filters requests that took more than 2 seconds. Other useful filters include `fault = true` (server errors), `error = true` (client errors), and `service("name")` (specific service).
+
+Response-time values are in seconds. >2 excludes exactly2seconds; >=2 includes it. These are X-Ray filter expressions, not shell commands or Logs Insights QL. duration is also a documented X-Ray keyword and must not be presented as an invented invalid keyword.
 
 </details>
 
 ---
 
-9. Which is NOT a feature provided when integrating X-Ray with CloudWatch ServiceLens?
-   - A) Integrated view of traces and metrics
-   - B) Display CloudWatch alarms on service map
-   - C) Automatic code instrumentation
-   - D) Link logs and traces
+9. What does merely opening the CloudWatch trace map NOT establish?
+   - A) A view of already collected trace dependencies
+   - B) Correlation with configured metrics/alarms
+   - C) Automatic instrumentation and successful collection of every application
+   - D) Links to appropriately correlated logs
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Automatic code instrumentation**
+**Answer: C) Automatic instrumentation and successful collection of every application**
 
 **Explanation:**
-CloudWatch ServiceLens provides an integrated view of X-Ray traces, CloudWatch metrics, and logs. It displays CloudWatch alarms on the service map and provides features to link logs and traces. However, automatic code instrumentation must be done through X-Ray SDK or OpenTelemetry auto-instrumentation.
+
+Instrumentation, collection, identity and correlation must be configured separately. The former ServiceLens and X-Ray map are combined in the CloudWatch trace map. Existing telemetry can be correlated there, but an unmounted ConfigMap or an empty view is not evidence that agents and applications are configured.
 
 </details>
 
 ---
 
-10. What is the main purpose of X-Ray Groups?
-    - A) User permission management
-    - B) Filter-based trace grouping and alerting
-    - C) Resource cost allocation
-    - D) Data retention policy settings
+10. What is the purpose of X-Ray Groups?
+   - A) Replacing IAM authorization
+   - B) Grouping matching traces for analysis and associated metrics/alarms
+   - C) Assigning AWS billing ownership automatically
+   - D) Setting retention through a sampling rule
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Filter-based trace grouping and alerting**
+**Answer: B) Grouping matching traces for analysis and associated metrics/alarms**
 
 **Explanation:**
-X-Ray Groups use filter expressions to group traces. For example, you can create groups for production environments, specific services, error requests, etc. For each group, you can set up CloudWatch alarms to receive alerts for specific conditions (such as increased error rates).
+
+Groups select traces with filter expressions. Review the resulting metrics and configure CloudWatch alarms separately. Creating a group does not instrument producers, override sampling, define IAM isolation or prove an end-to-end alert has fired.
 
 </details>
 

@@ -1,0 +1,1544 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-13T10:32:10.547274+00:00",
+  "scope": [
+    "en/observability/tracing/02-xray.md",
+    "en/quizzes/observability/tracing/02-xray-quiz.md",
+    "ko/observability/tracing/02-xray.md",
+    "ko/quizzes/observability/tracing/02-xray-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/observability/tracing/02-xray.md": {
+      "lines": 523,
+      "sha256": "91ec0e78af1bcdbfde2b3a717e0069682845985c4409ed3c33074d3e7f9e3e45"
+    },
+    "en/quizzes/observability/tracing/02-xray-quiz.md": {
+      "lines": 185,
+      "sha256": "a5a4846e4748396833d4c1fa4896aa6586cf53c398eafc37965ada24a55e6bb6"
+    },
+    "ko/observability/tracing/02-xray.md": {
+      "lines": 884,
+      "sha256": "0974ff20b539b2c7a16092eaed2fab29c5bb96f0c031665193003ab4d3903ac9"
+    },
+    "ko/quizzes/observability/tracing/02-xray-quiz.md": {
+      "lines": 185,
+      "sha256": "c3bf7dbe4b22b3cb0101b25b083b386d03dc708caf21e345bee4400319adeaba"
+    }
+  },
+  "checks": {
+    "files": [
+      {
+        "path": "en/observability/tracing/02-xray.md",
+        "sha256": "5ecbaf9a0bed8ea01d20c647fa18f69e36405ec2080a88a7db40a94497bcceb9",
+        "lines": 923,
+        "originalIds": 20,
+        "fullyRead": true
+      },
+      {
+        "path": "en/quizzes/observability/tracing/02-xray-quiz.md",
+        "sha256": "cccbf34b876073723c5698dee33d566a91dd52cbb4926f41adc8be086737a4e8",
+        "lines": 197,
+        "originalIds": 1,
+        "fullyRead": true
+      },
+      {
+        "path": "ko/observability/tracing/02-xray.md",
+        "sha256": "d9d8bd5992da7e466aba66b7be407e706c688a0e08534e54f378e2f3ea98d1d5",
+        "lines": 923,
+        "originalIds": 30,
+        "fullyRead": true
+      },
+      {
+        "path": "ko/quizzes/observability/tracing/02-xray-quiz.md",
+        "sha256": "45430b5cd72017ee1c741cb191734a7e42c42cda66b80fca37f81b38c5e9704a",
+        "lines": 197,
+        "originalIds": 1,
+        "fullyRead": true
+      }
+    ],
+    "checks": [
+      {
+        "name": "en/observability/tracing/02-xray.md:current render hash",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:original IDs preserved",
+        "passed": true,
+        "missing": []
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:unique IDs",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:shell syntax:0",
+        "passed": true,
+        "error": ""
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:shell syntax:1",
+        "passed": true,
+        "error": ""
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:shell syntax:2",
+        "passed": true,
+        "error": ""
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:shell syntax:3",
+        "passed": true,
+        "error": ""
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:wildcard permission is conditioned",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:IRSA aud and exact subject",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:wildcard permission is conditioned",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:request sampling fields:3",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:request sampling fields:4",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:request sampling fields:5",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:Kubernetes:ServiceAccount:0",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:Kubernetes:DaemonSet:0",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:no conflicting hostPort",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:explicit Linux placement",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:Kubernetes:Service:0",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:Kubernetes:ConfigMap:1",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:exact native-tested collector config",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:Kubernetes:ServiceAccount:2",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:Kubernetes:Deployment:2",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:no conflicting hostPort",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:explicit Linux placement",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:Kubernetes:Service:2",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:exact tested Python fence",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:exact tested Go fence",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:exact source-reviewed Java fence",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:legacy misleading diagrams replaced",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:illustrative measurements preserved",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:current lifecycle explicitly scoped",
+        "passed": true
+      },
+      {
+        "name": "en/observability/tracing/02-xray.md:local link:../../quizzes/observability/tracing/02-xray-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "en/quizzes/observability/tracing/02-xray-quiz.md:current render hash",
+        "passed": true
+      },
+      {
+        "name": "en/quizzes/observability/tracing/02-xray-quiz.md:original IDs preserved",
+        "passed": true,
+        "missing": []
+      },
+      {
+        "name": "en/quizzes/observability/tracing/02-xray-quiz.md:unique IDs",
+        "passed": true
+      },
+      {
+        "name": "en/quizzes/observability/tracing/02-xray-quiz.md:ten questions forty options",
+        "passed": true
+      },
+      {
+        "name": "en/quizzes/observability/tracing/02-xray-quiz.md:paired answer contract",
+        "passed": true
+      },
+      {
+        "name": "en/quizzes/observability/tracing/02-xray-quiz.md:local link:../../../observability/tracing/02-xray.md",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:current render hash",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:original IDs preserved",
+        "passed": true,
+        "missing": []
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:unique IDs",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:shell syntax:0",
+        "passed": true,
+        "error": ""
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:shell syntax:1",
+        "passed": true,
+        "error": ""
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:shell syntax:2",
+        "passed": true,
+        "error": ""
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:shell syntax:3",
+        "passed": true,
+        "error": ""
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:wildcard permission is conditioned",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:IRSA aud and exact subject",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:wildcard permission is conditioned",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:request sampling fields:3",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:request sampling fields:4",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:request sampling fields:5",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:Kubernetes:ServiceAccount:0",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:Kubernetes:DaemonSet:0",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:no conflicting hostPort",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:explicit Linux placement",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:Kubernetes:Service:0",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:Kubernetes:ConfigMap:1",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:exact native-tested collector config",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:Kubernetes:ServiceAccount:2",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:Kubernetes:Deployment:2",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:no conflicting hostPort",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:explicit Linux placement",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:Kubernetes:Service:2",
+        "passed": true,
+        "errors": []
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:exact tested Python fence",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:exact tested Go fence",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:exact source-reviewed Java fence",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:legacy misleading diagrams replaced",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:illustrative measurements preserved",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:current lifecycle explicitly scoped",
+        "passed": true
+      },
+      {
+        "name": "ko/observability/tracing/02-xray.md:local link:../../quizzes/observability/tracing/02-xray-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "ko/quizzes/observability/tracing/02-xray-quiz.md:current render hash",
+        "passed": true
+      },
+      {
+        "name": "ko/quizzes/observability/tracing/02-xray-quiz.md:original IDs preserved",
+        "passed": true,
+        "missing": []
+      },
+      {
+        "name": "ko/quizzes/observability/tracing/02-xray-quiz.md:unique IDs",
+        "passed": true
+      },
+      {
+        "name": "ko/quizzes/observability/tracing/02-xray-quiz.md:ten questions forty options",
+        "passed": true
+      },
+      {
+        "name": "ko/quizzes/observability/tracing/02-xray-quiz.md:paired answer contract",
+        "passed": true
+      },
+      {
+        "name": "ko/quizzes/observability/tracing/02-xray-quiz.md:local link:../../../observability/tracing/02-xray.md",
+        "passed": true
+      },
+      {
+        "name": "All six authored sampling JSON requests match AWS API model",
+        "passed": true,
+        "output": "{\"inputs\": 6, \"passed\": true, \"scope\": \"Offlinebotocoremodelonly;noclient/AWSAPI\"}\n",
+        "error": ""
+      },
+      {
+        "name": "Owned git diff whitespace",
+        "passed": true,
+        "output": ""
+      }
+    ],
+    "passed": 78,
+    "failed": [],
+    "externalUrls": [
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search-search-analyze-spans.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+      "https://docs.aws.amazon.com/xray/latest/api/API_SamplingRateBoost.html",
+      "https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-daemon-timeline.html",
+      "https://github.com/aws-observability/aws-otel-collector/releases/tag/v0.50.0"
+    ],
+    "limits": [
+      "No AWS API/cluster/IRSA/production PKI, Fargate scheduling or business-operation execution.",
+      "Java1.66 imports/lifecycle/TLS API were checked against primary tagged source; no JDK/Maven compilation.",
+      "Kubernetes1.36.0 OpenAPI validates shapes, not actual admission, platform compatibility or Secret/role ownership.",
+      "CloudWatch Logs Insights queries checked against documented fields/syntax, not a managed query engine.",
+      "Synthetic SDK/collector tests prove scoped loopback behavior, not lossless export, backend acceptance or availability.",
+      "Historical illustrative service-map numbers retained; no performance measurements fabricated."
+    ],
+    "nativeEvidence": {
+      "receiver-validation.json": {
+        "version": "ADOT0.50.0",
+        "scope": "Actual ADOT0.50 OTLP+XRay UDP input, file output and resource transform.\n\nEvery listener and proxy destination is loopback. AWS detectors/exporters are\nexcluded from this fixture; the proxy's AWS endpoint is a loopback stub.\n",
+        "results": [
+          {
+            "variant": "original",
+            "runDirectory": "/home/atomoh/kubernetes-docs/.vitepress/cache/observability-xray-audit/receiver-original-4e441943",
+            "checks": [
+              {
+                "case": "OTLP POST",
+                "passed": true
+              },
+              {
+                "case": "OTLP and XRay UDP converted",
+                "passed": true
+              },
+              {
+                "case": "original from_attribute does not read env",
+                "passed": true
+              },
+              {
+                "case": "W3C128-bit ID preserved for both protocols",
+                "passed": true
+              },
+              {
+                "case": "no proxy AWS requests made",
+                "passed": true
+              }
+            ]
+          },
+          {
+            "variant": "fixed",
+            "runDirectory": "/home/atomoh/kubernetes-docs/.vitepress/cache/observability-xray-audit/receiver-fixed-e2984e05",
+            "checks": [
+              {
+                "case": "OTLP POST",
+                "passed": true
+              },
+              {
+                "case": "OTLP and XRay UDP converted",
+                "passed": true
+              },
+              {
+                "case": "fixed env value",
+                "passed": true
+              },
+              {
+                "case": "W3C128-bit ID preserved for both protocols",
+                "passed": true
+              },
+              {
+                "case": "no proxy AWS requests made",
+                "passed": true
+              }
+            ]
+          }
+        ],
+        "allPassed": true
+      },
+      "xray-exporter-validation.json": {
+        "version": "ADOT0.50.0",
+        "scope": "ActualADOT0.50 to loopback fakeXRayHTTP;placeholder file credentials only, no cloudrequests/IAMauthclaim. Originalresource/APIproof reused;testsAWSwireconversion/indexing/SigV4headerpresence,notmanagedserviceacceptance.",
+        "results": [
+          {
+            "variant": "aws-export",
+            "runDirectory": "/home/atomoh/kubernetes-docs/.vitepress/cache/observability-xray-audit/receiver-aws-export-a6645807",
+            "checks": [
+              {
+                "case": "OTLP POST",
+                "passed": true
+              },
+              {
+                "case": "OTLP and XRay UDP converted",
+                "passed": true
+              },
+              {
+                "case": "fixed env value",
+                "passed": true
+              },
+              {
+                "case": "W3C128-bit ID preserved for both protocols",
+                "passed": true
+              },
+              {
+                "case": "local signed PutTraceSegments requests",
+                "passed": true
+              },
+              {
+                "case": "outbound W3C ID reformatted without changing bits",
+                "passed": true
+              },
+              {
+                "case": "explicit annotation indexed",
+                "passed": true
+              },
+              {
+                "case": "nonindexed is metadata not redaction",
+                "passed": true
+              }
+            ]
+          }
+        ],
+        "allPassed": true
+      },
+      "collector-tls-validation.json": {
+        "version": "ADOT0.50.0",
+        "runDirectory": "/home/atomoh/kubernetes-docs/.vitepress/cache/observability-xray-audit/tls-native-03a7182b",
+        "checks": [
+          {
+            "case": "complete proposed config starts with test TLS files",
+            "passed": true
+          },
+          {
+            "case": "client without certificate rejected",
+            "passed": true
+          },
+          {
+            "case": "trusted mTLS client accepted",
+            "passed": true
+          },
+          {
+            "case": "one authorized span sent to local fake XRay",
+            "passed": true
+          },
+          {
+            "case": "SigV4 header and selected annotation",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "scope": "Proposed config with loopback listeners, local one-day test CA/client/server certificates and fake XRay endpoint/placeholder file credentials. No Kubernetes, IRSA, real AWS API or production PKI validation."
+      },
+      "workload-schema-validation.json": {
+        "schema": "Kubernetes1.36.0OpenAPI",
+        "resources": [
+          {
+            "kind": "ServiceAccount",
+            "passed": true,
+            "errors": []
+          },
+          {
+            "kind": "Deployment",
+            "passed": true,
+            "errors": []
+          },
+          {
+            "kind": "Service",
+            "passed": true,
+            "errors": []
+          }
+        ],
+        "scope": "Local schema only; no cluster admission, IRSA, Secret, Fargate profile or network execution."
+      },
+      "sampling-config-validation.json": {
+        "scope": "Actual offline botocore model validates3current sampling JSON files includingSamplingRateBoost;no API creation or sampling outcome executed",
+        "results": [
+          {
+            "file": "sampling-production.json",
+            "valid": true
+          },
+          {
+            "file": "sampling-health.json",
+            "valid": true
+          },
+          {
+            "file": "sampling-adaptive.json",
+            "valid": true
+          }
+        ]
+      },
+      "python-sdk-validation.json": {
+        "versions": {
+          "opentelemetry": "1.44.0",
+          "Flask": "3.1.3"
+        },
+        "checks": [
+          {
+            "name": "synthetic route returns202",
+            "passed": true
+          },
+          {
+            "name": "one server and one child",
+            "passed": true
+          },
+          {
+            "name": "mixed-case HTTP header preserves W3C trace ID",
+            "passed": true
+          },
+          {
+            "name": "server honors remote parent",
+            "passed": true
+          },
+          {
+            "name": "child uses server context",
+            "passed": true
+          },
+          {
+            "name": "HTTP status recorded as integer",
+            "passed": true
+          },
+          {
+            "name": "sensitive synthetic payload/header not captured",
+            "passed": true
+          },
+          {
+            "name": "remote unsampled parent stays unsampled",
+            "passed": true
+          },
+          {
+            "name": "malformed parent produces a new valid trace",
+            "passed": true
+          },
+          {
+            "name": "batch processor flush completes",
+            "passed": true
+          },
+          {
+            "name": "one authenticated loopback OTLP POST",
+            "passed": true
+          },
+          {
+            "name": "wire payload contains both spans",
+            "passed": true
+          },
+          {
+            "name": "wire W3C IDs preserved",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "scope": "Flask test client, in-memory SDK and one loopback mTLS OTLP endpoint with one-day synthetic certificates. No payment/business/AWS/cluster call. Only the constructed test SDK is enabled; ambient telemetry exporters remain disabled.",
+        "sourceHashes": {
+          "sdk-payment-demo.py": "32863853c540610732b469776bcd69369ca4f5195e5d103a4e46bad71e56ed4f",
+          "check-python-sdk.py": "13d0389533043f1bb24018eb6bdb5857e10a7f750e0b2370ce1842e983d16853"
+        }
+      },
+      "go-sdk-validation.json": {
+        "version": "OpenTelemetryGo1.44.0",
+        "goToolchain": "1.26.8",
+        "tests": [
+          {
+            "name": "TestMTLSW3CExport",
+            "passed": true
+          },
+          {
+            "name": "TestRejectHTTP",
+            "passed": true
+          },
+          {
+            "name": "TestRejectMissingTLSFile",
+            "passed": true
+          },
+          {
+            "name": "TestUnsampledParent",
+            "passed": true
+          }
+        ],
+        "sourceHashes": {
+          "main.go": "e27a47b0f8bff6ffd5cd04523358b5084433cbf5f8184a87fa9d6a11bf4b2c61",
+          "main_test.go": "bfe4519f994b88d0d63daeaa9220aaf1ec88e3cd8ffe004119ad8c75d6611974",
+          "go.mod": "d00a27768a9e14f5c75e914e4c0c4bbf9494c246b3ba3ed22cf61775b3377957",
+          "go.sum": "e5939a18889ce5ad7a7e897f186b1ce72fae9f4d6fb0ab1bd11a48581f2de78a"
+        },
+        "command": "GOPROXY=off GOSUMDB=off GOTOOLCHAIN=local GOFLAGS=-mod=mod go1.26.8 test -v ./...",
+        "executionEvidence": "Unifiedexecsession75489exit0:fourtestsPASS;0.010s. Recordedafteractualresult,noadditionalrunclaimed.",
+        "scope": "One loopback TLS server with synthetic CA/client/server files;actualprotobufOTLP2spans/W3CtraceIDandunsampledparent;noAWS/cluster/productionendpoint."
+      },
+      "mermaid-validation.json": {
+        "version": "11.16.0",
+        "scope": "FourinlineMermaidgraphsparsed/renderedinnativebrowser;privateSVG/PNG;no sitebuild/server",
+        "results": [
+          {
+            "path": "en/observability/tracing/02-xray.md",
+            "index": 0,
+            "parsed": true,
+            "nodes": 6,
+            "edges": 5,
+            "errors": [],
+            "passed": true
+          },
+          {
+            "path": "en/observability/tracing/02-xray.md",
+            "index": 1,
+            "parsed": true,
+            "nodes": 7,
+            "edges": 6,
+            "errors": [],
+            "passed": true
+          },
+          {
+            "path": "ko/observability/tracing/02-xray.md",
+            "index": 0,
+            "parsed": true,
+            "nodes": 6,
+            "edges": 5,
+            "errors": [],
+            "passed": true
+          },
+          {
+            "path": "ko/observability/tracing/02-xray.md",
+            "index": 1,
+            "parsed": true,
+            "nodes": 7,
+            "edges": 6,
+            "errors": [],
+            "passed": true
+          }
+        ]
+      },
+      "external-link-validation.json": [
+        {
+          "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search-search-analyze-spans.html",
+          "key": "4429d970c3d9",
+          "status": 200,
+          "finalUrl": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search-search-analyze-spans.html",
+          "sha256": "0c6d5be85d3b3a1b35cb3213a8fc9bd38d26e0f66d86a5f38399b0e457b1b25c"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search.html",
+          "key": "4912b3ae747f",
+          "status": 200,
+          "finalUrl": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search.html",
+          "sha256": "ee85396fb311918dbe1cddce737584a40f8dcad64649c514f7567496a0adedba"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+          "key": "ad9fe58c3d55",
+          "status": 200,
+          "finalUrl": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+          "sha256": "d2462be4d4b563d98d33fd8e36ae1ac75769965f81f9a52b4da7abf826b9a85f"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/xray/latest/api/API_SamplingRateBoost.html",
+          "key": "2c26c92b1d5a",
+          "status": 200,
+          "finalUrl": "https://docs.aws.amazon.com/xray/latest/api/API_SamplingRateBoost.html",
+          "sha256": "0d7a630fbb969b3d268bfe6853532c97c99b87a5010d28688656112e57f333cc"
+        },
+        {
+          "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-daemon-timeline.html",
+          "key": "07b52d88956f",
+          "status": 200,
+          "finalUrl": "https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-daemon-timeline.html",
+          "sha256": "ac6dabcdd43d67893c0b594749c07946704e3a1ac1bdafede17836465a914644"
+        },
+        {
+          "url": "https://github.com/aws-observability/aws-otel-collector/releases/tag/v0.50.0",
+          "key": "2ba84fa45707",
+          "status": 200,
+          "finalUrl": "https://github.com/aws-observability/aws-otel-collector/releases/tag/v0.50.0",
+          "sha256": "6391b242cc4c57c1d360d04de93de9294c838aa1be9ac264d4571e06f6dafa68"
+        }
+      ]
+    },
+    "nativeArtifacts": [
+      {
+        "path": ".vitepress/cache/observability-xray-audit/receiver-validation.json",
+        "sha256": "485814f25fe0d74083921203103fe569cb7cf659be0ab6f8adfed400f2e1efd7"
+      },
+      {
+        "path": ".vitepress/cache/observability-xray-audit/xray-exporter-validation.json",
+        "sha256": "84a09bc2c82046a2e0c81786864c89d1b6ac79240c1e72076bdd8573ccf6c6f5"
+      },
+      {
+        "path": ".vitepress/cache/observability-xray-audit/collector-tls-validation.json",
+        "sha256": "cfb06460e44de49e748849ff6c0b7e20b058aaa9515e81032d9afeb4700b242f"
+      },
+      {
+        "path": ".vitepress/cache/observability-xray-audit/workload-schema-validation.json",
+        "sha256": "3d7ae22db55fb0812d6e8f14faa3ffcb0f66477981720936c089089923fff828"
+      },
+      {
+        "path": ".vitepress/cache/observability-xray-audit/sampling-config-validation.json",
+        "sha256": "794b545d0106666795f8c05148aa69aa1160f3866dbe74c6ee3c769e700397dc"
+      },
+      {
+        "path": ".vitepress/cache/observability-xray-audit/python-sdk-validation.json",
+        "sha256": "92636b48e26033a5da53f50368d2ed85b5400dcdfaad5ee4aaf540bbf1cb99f5"
+      },
+      {
+        "path": ".vitepress/cache/observability-xray-audit/go-sdk-validation.json",
+        "sha256": "f427474bcb627ab06ef3f3c1b3121b43861280c90ba6cac3b5a5f2e8b293e8ab"
+      },
+      {
+        "path": ".vitepress/cache/observability-xray-audit/mermaid-validation.json",
+        "sha256": "25a7da2ca87dbade1f17adb55acc54234adefb50a15d8804bbe5878c7bf71266"
+      },
+      {
+        "path": ".vitepress/cache/observability-xray-audit/external-link-validation.json",
+        "sha256": "abf97b8c1cdebb7fccabe6f90ba406c947875d635f886dcb9f012d4865f69428"
+      }
+    ],
+    "figuresPersonallyViewed": [
+      {
+        "path": ".vitepress/cache/observability-xray-audit/figures/en-0.png",
+        "sha256": "0d6328e0c4bd3dec4fd4d1d8526cf88d6d1edb4fec7a5cae0439657e3d14b142",
+        "personallyViewed": true
+      },
+      {
+        "path": ".vitepress/cache/observability-xray-audit/figures/en-1.png",
+        "sha256": "5e00acf0d8ca9e0ee1edbe8345b2325c694cfd9b0dab39a4dc4f733e1e0b1888",
+        "personallyViewed": true
+      },
+      {
+        "path": ".vitepress/cache/observability-xray-audit/figures/ko-0.png",
+        "sha256": "0d6328e0c4bd3dec4fd4d1d8526cf88d6d1edb4fec7a5cae0439657e3d14b142",
+        "personallyViewed": true
+      },
+      {
+        "path": ".vitepress/cache/observability-xray-audit/figures/ko-1.png",
+        "sha256": "5e00acf0d8ca9e0ee1edbe8345b2325c694cfd9b0dab39a4dc4f733e1e0b1888",
+        "personallyViewed": true
+      }
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 512,
+    "scope": "Four currentdocuments;two guides recompiled after URL/group/spacing fixes;unchangedtwoquizresults carried aftersourceSHAverification.",
+    "results": [
+      {
+        "path": "en/observability/tracing/02-xray.md",
+        "sha256": "5ecbaf9a0bed8ea01d20c647fa18f69e36405ec2080a88a7db40a94497bcceb9",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "aws-x-ray"
+          },
+          {
+            "tag": "h2",
+            "id": "introduction"
+          },
+          {
+            "tag": "h2",
+            "id": "key-features"
+          },
+          {
+            "tag": "h2",
+            "id": "architecture"
+          },
+          {
+            "tag": "h2",
+            "id": "x-ray-daemon-deployment"
+          },
+          {
+            "tag": "h3",
+            "id": "deploy-as-daemonset"
+          },
+          {
+            "tag": "h3",
+            "id": "irsa-configuration"
+          },
+          {
+            "tag": "h2",
+            "id": "adot-collector-deployment"
+          },
+          {
+            "tag": "h3",
+            "id": "collector-deployment-and-prerequisites"
+          },
+          {
+            "tag": "h3",
+            "id": "legacy-x-ray-receiver-and-separate-telemetry-pipelines"
+          },
+          {
+            "tag": "h2",
+            "id": "opentelemetry-to-x-ray-integration"
+          },
+          {
+            "tag": "h3",
+            "id": "application-configuration-java"
+          },
+          {
+            "tag": "h3",
+            "id": "application-configuration-python"
+          },
+          {
+            "tag": "h3",
+            "id": "application-configuration-go"
+          },
+          {
+            "tag": "h2",
+            "id": "sampling-rules"
+          },
+          {
+            "tag": "h3",
+            "id": "centralized-sampling-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "sampling-rule-management"
+          },
+          {
+            "tag": "h3",
+            "id": "filter-expression-examples"
+          },
+          {
+            "tag": "h2",
+            "id": "service-map"
+          },
+          {
+            "tag": "h3",
+            "id": "using-the-trace-map"
+          },
+          {
+            "tag": "h3",
+            "id": "read-the-service-graph"
+          },
+          {
+            "tag": "h2",
+            "id": "cloudwatch-servicelens-integration"
+          },
+          {
+            "tag": "h3",
+            "id": "configure-the-actual-collection-path"
+          },
+          {
+            "tag": "h3",
+            "id": "span-analysis-queries"
+          },
+          {
+            "tag": "h2",
+            "id": "groups-and-filters"
+          },
+          {
+            "tag": "h3",
+            "id": "create-x-ray-groups"
+          },
+          {
+            "tag": "h2",
+            "id": "best-practices"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-segment-and-subsegment-design"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-using-annotations-and-metadata"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-cost-optimization"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "aws-x-ray",
+          "introduction",
+          "key-features",
+          "architecture",
+          "mermaid-88",
+          "x-ray-daemon-deployment",
+          "deploy-as-daemonset",
+          "irsa-configuration",
+          "adot-collector-deployment",
+          "adot-collector-daemonset",
+          "collector-deployment-and-prerequisites",
+          "legacy-x-ray-receiver-and-separate-telemetry-pipelines",
+          "opentelemetry-to-x-ray-integration",
+          "application-configuration-java",
+          "application-configuration-python",
+          "application-configuration-go",
+          "sampling-rules",
+          "centralized-sampling-configuration",
+          "sampling-rule-management",
+          "filter-expression-examples",
+          "service-map",
+          "using-the-trace-map",
+          "mermaid-297",
+          "read-the-service-graph",
+          "cloudwatch-servicelens-integration",
+          "configure-the-actual-collection-path",
+          "span-analysis-queries",
+          "groups-and-filters",
+          "create-x-ray-groups",
+          "best-practices",
+          "_1-segment-and-subsegment-design",
+          "_2-using-annotations-and-metadata",
+          "_3-cost-optimization",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/observability/tracing/02-xray.md",
+        "sha256": "d9d8bd5992da7e466aba66b7be407e706c688a0e08534e54f378e2f3ea98d1d5",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "aws-x-ray"
+          },
+          {
+            "tag": "h2",
+            "id": "소개"
+          },
+          {
+            "tag": "h2",
+            "id": "주요-특징"
+          },
+          {
+            "tag": "h2",
+            "id": "아키텍처"
+          },
+          {
+            "tag": "h2",
+            "id": "x-ray-daemon-배포"
+          },
+          {
+            "tag": "h3",
+            "id": "daemonset으로-배포"
+          },
+          {
+            "tag": "h3",
+            "id": "irsa-설정"
+          },
+          {
+            "tag": "h2",
+            "id": "adot-collector-배포"
+          },
+          {
+            "tag": "h3",
+            "id": "collector-deployment와-전제-조건"
+          },
+          {
+            "tag": "h3",
+            "id": "legacy-x-ray-receiver와-별도-telemetry-pipeline"
+          },
+          {
+            "tag": "h2",
+            "id": "opentelemetry에서-x-ray로-통합"
+          },
+          {
+            "tag": "h3",
+            "id": "애플리케이션-설정-java"
+          },
+          {
+            "tag": "h3",
+            "id": "애플리케이션-설정-python"
+          },
+          {
+            "tag": "h3",
+            "id": "애플리케이션-설정-go"
+          },
+          {
+            "tag": "h2",
+            "id": "샘플링-규칙"
+          },
+          {
+            "tag": "h3",
+            "id": "중앙-집중식-샘플링-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "샘플링-규칙-관리"
+          },
+          {
+            "tag": "h2",
+            "id": "서비스-맵-시각화"
+          },
+          {
+            "tag": "h3",
+            "id": "x-ray-콘솔에서-서비스-맵-활용"
+          },
+          {
+            "tag": "h3",
+            "id": "프로그래밍-방식으로-서비스-맵-조회"
+          },
+          {
+            "tag": "h2",
+            "id": "cloudwatch-servicelens-연동"
+          },
+          {
+            "tag": "h3",
+            "id": "servicelens-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "servicelens-대시보드-쿼리"
+          },
+          {
+            "tag": "h2",
+            "id": "그룹-및-필터"
+          },
+          {
+            "tag": "h3",
+            "id": "x-ray-그룹-생성"
+          },
+          {
+            "tag": "h3",
+            "id": "필터-표현식-예시"
+          },
+          {
+            "tag": "h2",
+            "id": "best-practices"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-세그먼트-및-서브세그먼트-설계"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-주석-annotation-과-메타데이터-활용"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-비용-최적화"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "aws-x-ray",
+          "소개",
+          "주요-특징",
+          "아키텍처",
+          "mermaid-88",
+          "x-ray-daemon-배포",
+          "daemonset으로-배포",
+          "irsa-설정",
+          "adot-collector-배포",
+          "adot-collector-daemonset",
+          "collector-deployment와-전제-조건",
+          "legacy-x-ray-receiver와-별도-telemetry-pipeline",
+          "opentelemetry에서-x-ray로-통합",
+          "애플리케이션-설정-java",
+          "애플리케이션-설정-python",
+          "애플리케이션-설정-go",
+          "샘플링-규칙",
+          "중앙-집중식-샘플링-구성",
+          "샘플링-규칙-관리",
+          "서비스-맵-시각화",
+          "x-ray-콘솔에서-서비스-맵-활용",
+          "mermaid-290",
+          "프로그래밍-방식으로-서비스-맵-조회",
+          "cloudwatch-servicelens-연동",
+          "servicelens-설정",
+          "servicelens-대시보드-쿼리",
+          "그룹-및-필터",
+          "x-ray-그룹-생성",
+          "필터-표현식-예시",
+          "best-practices",
+          "_1-세그먼트-및-서브세그먼트-설계",
+          "_2-주석-annotation-과-메타데이터-활용",
+          "_3-비용-최적화",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/tracing/02-xray-quiz.md",
+        "sha256": "cccbf34b876073723c5698dee33d566a91dd52cbb4926f41adc8be086737a4e8",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "aws-x-ray-quiz"
+          }
+        ],
+        "renderedIds": [
+          "aws-x-ray-quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/tracing/02-xray-quiz.md",
+        "sha256": "45430b5cd72017ee1c741cb191734a7e42c42cda66b80fca37f81b38c5e9704a",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "aws-x-ray-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "aws-x-ray-퀴즈"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-daemon-timeline.html",
+      "cacheKey": "07b52d88956f",
+      "fetchedAt": "2026-09-13T10:24:33.193953+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-daemon-timeline.html",
+      "sha256": "ac6dabcdd43d67893c0b594749c07946704e3a1ac1bdafede17836465a914644"
+    },
+    {
+      "url": "https://github.com/aws-observability/aws-otel-collector/releases/tag/v0.50.0",
+      "cacheKey": "2ba84fa45707",
+      "fetchedAt": "2026-09-13T10:24:34.038833+00:00",
+      "status": 200,
+      "finalURL": "https://github.com/aws-observability/aws-otel-collector/releases/tag/v0.50.0",
+      "sha256": "6391b242cc4c57c1d360d04de93de9294c838aa1be9ac264d4571e06f6dafa68"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws-observability/aws-otel-collector/v0.50.0/pkg/defaultcomponents/defaults.go",
+      "cacheKey": "6c80b5db7514",
+      "fetchedAt": "2026-09-13T08:04:54.707765+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/aws-observability/aws-otel-collector/v0.50.0/pkg/defaultcomponents/defaults.go",
+      "sha256": "0ab1f4366a69570b8872e3f98057205b038bd8a63d6ea9d4e051f5615e91cd0a"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.158.0/receiver/awsxrayreceiver/config.go",
+      "cacheKey": "20ed0233ff03",
+      "fetchedAt": "2026-09-13T08:04:12.859257+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.158.0/receiver/awsxrayreceiver/config.go",
+      "sha256": "f2ed6580dee98f3c9284aa2dc6915c055bb6ffc33ae8925ebfc5a4df4930b625"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.158.0/receiver/awsxrayreceiver/factory.go",
+      "cacheKey": "69b39c88696f",
+      "fetchedAt": "2026-09-13T08:26:52.584373+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.158.0/receiver/awsxrayreceiver/factory.go",
+      "sha256": "59e13ee251cd1a79f230430b4fc056811d5f9df42f28b6fc2016c2748414b1b2"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.158.0/exporter/awsxrayexporter/README.md",
+      "cacheKey": "7b22ad5b1784",
+      "fetchedAt": "2026-09-13T08:04:13.109076+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.158.0/exporter/awsxrayexporter/README.md",
+      "sha256": "2a22b6f15062633720dcdfcb6abf69884175d14a97f53bc25f3c6a442e10f56d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws-observability/aws-otel-collector/v0.50.0/cmd/awscollector/Dockerfile",
+      "cacheKey": "a7b305d057a6",
+      "fetchedAt": "2026-09-13T08:24:17.409313+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/aws-observability/aws-otel-collector/v0.50.0/cmd/awscollector/Dockerfile",
+      "sha256": "fd6e164b486a999214125c4e5e1314cedd1146d7b889394c3312343e4cd9ec09"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws-observability/aws-otel-collector/v0.50.0/pkg/extraconfig/container.go",
+      "cacheKey": "607ab0ca4916",
+      "fetchedAt": "2026-09-13T08:25:19.289725+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/aws-observability/aws-otel-collector/v0.50.0/pkg/extraconfig/container.go",
+      "sha256": "0e45216a0e0e92a1d5148023fffe528b5b53e911dfe9a36643e5a5cdbaa84b3f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws/aws-xray-daemon/v3.7.0/Dockerfile",
+      "cacheKey": "c07557b45365",
+      "fetchedAt": "2026-09-13T08:33:23.385115+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/aws/aws-xray-daemon/v3.7.0/Dockerfile",
+      "sha256": "58603c30ecc93002517666eebbbff8efe7d5fe5f807b4c865c581cab2cd00bad"
+    },
+    {
+      "url": "https://hub.docker.com/v2/namespaces/amazon/repositories/aws-xray-daemon/tags/3.7.0",
+      "cacheKey": "56d8bc341f8a",
+      "fetchedAt": "2026-09-13T08:33:23.628811+00:00",
+      "status": 200,
+      "finalURL": "https://hub.docker.com/v2/namespaces/amazon/repositories/aws-xray-daemon/tags/3.7.0",
+      "sha256": "910e17de0d36dee25df0a1a39a2e08944c85e4a73230ce653b3c4014ef9deee0"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "cacheKey": "231ba2678238",
+      "fetchedAt": "2026-09-13T08:33:23.592945+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "sha256": "4e90c68d514f556e88e5f862e619d0cd3884e1454c02d1d3c9a219ff1bb31d2e"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-api-sampling.html",
+      "cacheKey": "f2cadba62eb6",
+      "fetchedAt": "2026-09-13T08:03:22.296693+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/xray/latest/devguide/xray-api-sampling.html",
+      "sha256": "051f5fce8896c17938dfd13099da1b7892f44405773a716c7d3e89edde718de7"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/xray/latest/api/API_SamplingRule.html",
+      "cacheKey": "cb00e95db664",
+      "fetchedAt": "2026-09-13T08:21:37.463400+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/xray/latest/api/API_SamplingRule.html",
+      "sha256": "3dbe0f106d3897371042fd3eaddb045143a48f20377e7e8339b271c467ec0f21"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-console-sampling.html",
+      "cacheKey": "d807efb8548c",
+      "fetchedAt": "2026-09-13T08:32:19.049797+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/xray/latest/devguide/xray-console-sampling.html",
+      "sha256": "0fe50f55b523ff223575a25758204d56ec8a0e1f70c4b287bee71ef7a62628dd"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/xray/latest/api/API_SamplingRateBoost.html",
+      "cacheKey": "2c26c92b1d5a",
+      "fetchedAt": "2026-09-13T10:24:32.856787+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/xray/latest/api/API_SamplingRateBoost.html",
+      "sha256": "0d7a630fbb969b3d268bfe6853532c97c99b87a5010d28688656112e57f333cc"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-console-filters.html",
+      "cacheKey": "8225dd4fbe31",
+      "fetchedAt": "2026-09-13T08:03:22.685681+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/xray/latest/devguide/xray-console-filters.html",
+      "sha256": "f4dbd35cdf08959aa90619fb326980e69d25dd9ec376fb632028d081f1c50599"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-java-segment.html",
+      "cacheKey": "57aed6e9c1f7",
+      "fetchedAt": "2026-09-13T08:32:18.805108+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-java-segment.html",
+      "sha256": "b1f8617c8927a1fdf24ef6cbfebb0cbc47a20be5b9b9c2d5a54512ec54467781"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search.html",
+      "cacheKey": "4912b3ae747f",
+      "fetchedAt": "2026-09-13T10:24:32.646621+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search.html",
+      "sha256": "ee85396fb311918dbe1cddce737584a40f8dcad64649c514f7567496a0adedba"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search-ingesting-span-log-groups.html",
+      "cacheKey": "87c76c5a143b",
+      "fetchedAt": "2026-09-13T08:04:04.223136+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search-ingesting-span-log-groups.html",
+      "sha256": "1a4ff2e44cdbd61f3cab24790929fdd3b9988fc187d9886ab698976adb42f8b7"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-OTLPEndpoint.html",
+      "cacheKey": "0abf6d354956",
+      "fetchedAt": "2026-09-13T08:04:04.015044+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-OTLPEndpoint.html",
+      "sha256": "11be838b9290f37839326a34ba2b5a53f4b9989debc47a6ea05b683b37c9379b"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-OTLPGettingStarted.html",
+      "cacheKey": "c19236d506f9",
+      "fetchedAt": "2026-09-13T08:04:55.219341+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-OTLPGettingStarted.html",
+      "sha256": "0bf33c7c535ce2a8eb1e324586619cf3cabbe1bb7795f69846dbace2a4d7d304"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search-search-analyze-spans.html",
+      "cacheKey": "4429d970c3d9",
+      "fetchedAt": "2026-09-13T10:24:32.638554+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Transaction-Search-search-analyze-spans.html",
+      "sha256": "0c6d5be85d3b3a1b35cb3213a8fc9bd38d26e0f66d86a5f38399b0e457b1b25c"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+      "cacheKey": "ad9fe58c3d55",
+      "fetchedAt": "2026-09-13T10:26:30.810218+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+      "sha256": "d2462be4d4b563d98d33fd8e36ae1ac75769965f81f9a52b4da7abf826b9a85f"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-console-servicemap.html",
+      "cacheKey": "be3f2e7fa168",
+      "fetchedAt": "2026-09-13T08:04:55.213700+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/xray/latest/devguide/xray-console-servicemap.html",
+      "sha256": "98ea369bbf803da136367c5af0f729ca40e6cb19134baed05c9e854a990c753d"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/xray/latest/devguide/xray-api-segmentdocuments.html",
+      "cacheKey": "ae45b79bdf7f",
+      "fetchedAt": "2026-09-13T08:04:04.441453+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/xray/latest/devguide/xray-api-segmentdocuments.html",
+      "sha256": "a2781a21d9dfbf2ed996d300d5a59f23f23f834241d59134625d532460df86f0"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws/aws-xray-sdk-java/v2.21.1/aws-xray-recorder-sdk-core/src/main/java/com/amazonaws/xray/entities/SegmentImpl.java",
+      "cacheKey": "3c178e6652f1",
+      "fetchedAt": "2026-09-13T08:21:37.728715+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/aws/aws-xray-sdk-java/v2.21.1/aws-xray-recorder-sdk-core/src/main/java/com/amazonaws/xray/entities/SegmentImpl.java",
+      "sha256": "5b9df6159955eb35a680143213b7af25aa597fe0feb1dfe5706778aea7ddc966"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws/aws-xray-sdk-java/v2.21.1/aws-xray-recorder-sdk-core/src/main/java/com/amazonaws/xray/entities/SubsegmentImpl.java",
+      "cacheKey": "294461a1b543",
+      "fetchedAt": "2026-09-13T08:21:37.910533+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/aws/aws-xray-sdk-java/v2.21.1/aws-xray-recorder-sdk-core/src/main/java/com/amazonaws/xray/entities/SubsegmentImpl.java",
+      "sha256": "8960fa07c7beac5db18fc2c71748021c627ab7858a1ebbad126464e0e170b03e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-java/v1.66.0/sdk-extensions/autoconfigure/src/main/java/io/opentelemetry/sdk/autoconfigure/AutoConfiguredOpenTelemetrySdk.java",
+      "cacheKey": "24bccb73946b",
+      "fetchedAt": "2026-09-13T10:24:33.702774+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-java/v1.66.0/sdk-extensions/autoconfigure/src/main/java/io/opentelemetry/sdk/autoconfigure/AutoConfiguredOpenTelemetrySdk.java",
+      "sha256": "1bf98878f42603c4d5246d6b43dd25302d51ac546a44232e0b7e6ad8e00f6386"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-java/v1.66.0/exporters/otlp/all/src/main/java/io/opentelemetry/exporter/otlp/internal/OtlpConfigUtil.java",
+      "cacheKey": "13518c3efee4",
+      "fetchedAt": "2026-09-13T10:24:33.933847+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-java/v1.66.0/exporters/otlp/all/src/main/java/io/opentelemetry/exporter/otlp/internal/OtlpConfigUtil.java",
+      "sha256": "1d1e33b4f7596a864611c15e5d0470a584d1a4b6da0013a760d73034b76d92ef"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-java/v1.66.0/sdk/all/src/main/java/io/opentelemetry/sdk/OpenTelemetrySdk.java",
+      "cacheKey": "501514647a5c",
+      "fetchedAt": "2026-09-13T10:24:34.143355+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-java/v1.66.0/sdk/all/src/main/java/io/opentelemetry/sdk/OpenTelemetrySdk.java",
+      "sha256": "7392c923c08e40ef7ac0b7dbc67a175a880456f7439ac42b71094759e45a63a2"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-go/v1.44.0/exporters/otlp/otlptrace/otlptracehttp/internal/otlpconfig/envconfig.go",
+      "cacheKey": "910a53682f48",
+      "fetchedAt": "2026-09-13T10:28:51.105451+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-go/v1.44.0/exporters/otlp/otlptrace/otlptracehttp/internal/otlpconfig/envconfig.go",
+      "sha256": "3629c9cb8431e260ab4dd2cde247da48cbb4972e6d82d7a7b1028795452d68b4"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-python/v1.44.0/exporter/opentelemetry-exporter-otlp-proto-http/src/opentelemetry/exporter/otlp/proto/http/trace_exporter/__init__.py",
+      "cacheKey": "a8e4a89362a2",
+      "fetchedAt": "2026-09-13T10:28:51.112443+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-python/v1.44.0/exporter/opentelemetry-exporter-otlp-proto-http/src/opentelemetry/exporter/otlp/proto/http/trace_exporter/__init__.py",
+      "sha256": "55cb85cc18ad6545f01a03fe88509f0501b946dcd0032bccc5b324e9452805b4"
+    }
+  ],
+  "findings": [
+    "X-Ray SDK/daemon maintenance begins2026-02-25 with security fixes and no announced end date; backend service lifecycle remains separate.",
+    "Legacydaemon3.7.0 pinned officialLinuxamd64/arm64manifest;corrected/xrayentrypoint,UDP+TCPsamplingroute,ClusterIP/node-localityandFargateDaemonSetlimits.",
+    "ReplacedobsoleteADOT0.36/unboundServiceAccount/hostPortconfigurationwithADOT0.50(Contrib0.158)centralmTLSDeployment,explicitIRSAidentityandscopedpermissions;noHA/deploymentclaim.",
+    "ActualADOToriginal/fixedtestprovedfrom_attribute doesnotreadCLUSTER_NAMEprocessenv;value:${env:CLUSTER_NAME}nowsetsanexplicitstaticclusterlabel.",
+    "RetainedvalidawsxrayUDP receiver and documented its defaultTCPsamplingproxy;unusedlog/metricexporterdeclarationsdonotconnecttracepipelines.",
+    "HeadsamplingcannotselectfutureHTTPerrors/finalduration. ClassicSDKignoresAttributesrules. Replacedbroadfakeerror/slowruleswithrequest-matchedJSONandrealoptionalSamplingRateBoost;upstreamdropscannotberecoveredbytail sampling.",
+    "Unindexedattributesremainstoredmetadata;removedrawrequest/response/SQLparameterandidentifierexamples;50indexedannotationsispertrace.",
+    "AddedpairedJava/Python/GoexampleswithmTLSHTTP,parentcontextandshutdown. Python1.44/Flask3.1.3andGo1.44nativechecks pass;Java1.66APIverifiedwithoutJDKcompile. SpecialXRayIDgeneratornotuniversallyrequiredforW3CIDs.",
+    "ReplacedincorrectarchitecturefigureswithcorrectsignedHTTPSPutTraceSegments/legacyUDPpaths. Preserved250/50/30/100/150/5/20msand2%asillustrativeaggregates;fanoutdoesnotestablishQPS.",
+    "Correctedtrace-mapfault/error/throttlecolors,strictgreater-than2secondsandvaliddurationkeyword. FiltersareXRayexpressionsratherthanBash.",
+    "ReplacedunmountedCloudWatchAgentConfigMapandfictionalxray.tracesSQLwithactualagentownership/prerequisitesandaws/spansLogsInsightsfieldcontracts. NativeOTLPHTTP requiresSigV4andTransactionSearch;classicexportisseparate.",
+    "Correctedall10quiztopicsperlocale;groupsuseactualindexedattributesandexplicitoperatorRegion/ownership. No alarmdelivery,IRSA,cloudquery,productionPKIorbusinessoperationclaim."
+  ],
+  "figures": {
+    "replacement": "FourinlineMermaidgraphs(two perlocale),privatePNG/SVGinspection;actualsourcefigurenodes/arrowscorrected.",
+    "oldFiguresReviewed": [
+      {
+        "path": "en/.gitbook/assets/en-observability-tracing-02-xray-0.png",
+        "sha256": "2e06f910e0f78c35baab9c53b8cf0b4766cb0702795c2ea5d172c995f7ec6004",
+        "personallyViewed": true
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-tracing-02-xray-0.png",
+        "sha256": "a6461d7dbf6a14c25e003c91cb4693640323aaa07e7a2c99019d12d6f2433aaa",
+        "personallyViewed": true
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-tracing-02-xray-1.png",
+        "sha256": "df658eff853596c2c09b111f24e9e1ec5d6710c0e9a259b9507648c710a5aa6d",
+        "personallyViewed": true
+      }
+    ],
+    "currentFigures": [
+      {
+        "path": ".vitepress/cache/observability-xray-audit/figures/en-0.png",
+        "sha256": "0d6328e0c4bd3dec4fd4d1d8526cf88d6d1edb4fec7a5cae0439657e3d14b142",
+        "personallyViewed": true
+      },
+      {
+        "path": ".vitepress/cache/observability-xray-audit/figures/en-1.png",
+        "sha256": "5e00acf0d8ca9e0ee1edbe8345b2325c694cfd9b0dab39a4dc4f733e1e0b1888",
+        "personallyViewed": true
+      },
+      {
+        "path": ".vitepress/cache/observability-xray-audit/figures/ko-0.png",
+        "sha256": "0d6328e0c4bd3dec4fd4d1d8526cf88d6d1edb4fec7a5cae0439657e3d14b142",
+        "personallyViewed": true
+      },
+      {
+        "path": ".vitepress/cache/observability-xray-audit/figures/ko-1.png",
+        "sha256": "5e00acf0d8ca9e0ee1edbe8345b2325c694cfd9b0dab39a4dc4f733e1e0b1888",
+        "personallyViewed": true
+      }
+    ],
+    "scopeExternalFollowup": [
+      "Parentownsretiredpublic/archmaps/en-observability-tracing-02-xray-0.html andko equivalents0/1 pluscorrespondingdiagramspec/assets/foreigntranslationreference sync. Auditedko/enMDnowusecorrectinlineMermaid;noasset/foreignproseedited."
+    ]
+  },
+  "artifactDirectory": ".vitepress/cache/observability-xray-audit",
+  "limits": [
+    "No AWS API/cluster/IRSA/production PKI, Fargate scheduling or business-operation execution.",
+    "Java1.66 imports/lifecycle/TLS API were checked against primary tagged source; no JDK/Maven compilation.",
+    "Kubernetes1.36.0 OpenAPI validates shapes, not actual admission, platform compatibility or Secret/role ownership.",
+    "CloudWatch Logs Insights queries checked against documented fields/syntax, not a managed query engine.",
+    "Synthetic SDK/collector tests prove scoped loopback behavior, not lossless export, backend acceptance or availability.",
+    "Historical illustrative service-map numbers retained; no performance measurements fabricated."
+  ],
+  "sourceAccessNotes": [
+    "Rejected a CloudWatch installation link that returnedHTTP200butredirectedtothemonitoringindex;usedtheverifiedcanonicaladd-onpageinstead.",
+    "OfficialADOTUbuntuarm64v0.50DEBdownloaded/extractedonlythebinary;versionedHTTPS+SHArecorded,nopublishersignatureverificationclaimed."
+  ]
+}

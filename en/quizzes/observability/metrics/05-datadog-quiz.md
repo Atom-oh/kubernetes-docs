@@ -1,183 +1,167 @@
 # Datadog Quiz
 
-A quiz to test your understanding of Datadog.
+> **Last Updated**: September 13, 2026
 
----
+1. What remains the team's responsibility with Datadog SaaS?
 
-1. What is Datadog's primary deployment model?
-   - A) Self-hosted only
-   - B) SaaS (Software as a Service)
-   - C) On-premises only
-   - D) Hybrid required
+   - A) Nothing after installing the Agent
+   - B) Only selecting a dashboard color
+   - C) Collectors, identity, instrumentation, data handling, monitors and cost
+   - D) Datadog's physical database servers
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) SaaS (Software as a Service)**
+**Answer: C**
 
-**Explanation:**
-Datadog is a unified observability platform provided as a SaaS model. Users only need to deploy the Datadog Agent, while data storage, processing, and visualization are handled by Datadog's cloud infrastructure. This allows using powerful monitoring capabilities without operational overhead.
+SaaS manages the backend. APM, profiling, logs and other products have distinct entitlements and billing; an Agent does not include everything.
+
+</details>
+
+2. Which credential/integration statement is correct?
+
+   - A) Baseline Agent ingestion needs an API key; application keys and AWS account roles serve additional, specific features
+   - B) Every Agent needs an application key and broad AWS read role
+   - C) Adding IRSA automatically configures Datadog SaaS AWS integration
+   - D) A guessed service-account name is sufficient
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: A**
+
+The external metrics provider needs additional API permissions/key configuration. SaaS AWS integration uses an authorized cross-account role/external ID. Resolve the actual rendered Agent SA.
+
+</details>
+
+3. Does admission.datadoghq.com/enabled=true alone prove APM SDK injection?
+
+   - A) Yes, including every language/version automatically
+   - B) No; configure SDK annotations or SSI targets, then verify newly admitted pods and actual trace data
+   - C) Yes, even in the Cluster Agent namespace
+   - D) Yes, if a trace socket exists
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B**
+
+Mutation/connection settings and library injection are distinct. Current local injection excludes kube-system and the Cluster Agent namespace. Library, runtime, mount and security compatibility still matter.
+
+</details>
+
+4. How should an application pod reach the node DogStatsD Agent?
+
+   - A) Always use the application's localhost
+   - B) Put the API key in every UDP packet
+   - C) Create an unrelated ConfigMap
+   - D) Use the configured reachable endpoint, such as a mounted Linux UDS directory
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: D**
+
+The application localhost is not a node Agent. UDS paths, permissions and SDK argument formats must match. Datagrams do not acknowledge SaaS ingestion; counters are not an exactly-once ledger.
+
+</details>
+
+5. Which metric interpretation is correct?
+
+   - A) kubernetes.cpu.usage.total is percent
+   - B) All missing legacy-catalogue metrics were removed
+   - C) kubernetes.cpu.usage.total is nanocores; Kubelet restart metrics are cumulative gauges
+   - D) Summing repeated restart samples counts new restarts
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: C**
+
+system.cpu.idle is percent. Kubelet and State Core have different valid metric names and tags. The example restart monitor explicitly evaluates a total; recent increases need reset-aware validation.
+
+</details>
+
+6. What does the .as_count() error-ratio path calculate?
+
+   - A) The ratio of time-aggregated error and total counts
+   - B) A sum of every time-bucket ratio
+   - C) A global p95
+   - D) Automatic 100% success for zero traffic
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: A**
+
+Use sum aggregation and matching groups. The helper emits zero good/error counts explicitly. Zero traffic, missing data and error-free traffic remain different states.
+
+</details>
+
+7. Which OpenMetrics/log configuration statement is correct?
+
+   - A) Any ConfigMap is automatically mounted
+   - B) Use matching container annotations/current check fields; Logs Grok rules use match_rules/support_rules
+   - C) prometheus.enabled at chart root configures everything
+   - D) Grok camelCase keys and snake_case keys are equivalent
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B**
+
+The current OpenMetrics check uses openmetrics_endpoint. datadog.confd provides chart-owned mounting; standalone ConfigMaps do not self-install. Request-schema validation is not a live scrape or Grok parse.
+
+</details>
+
+8. What should manual trace-log correlation preserve?
+
+   - A) Only dd.trace_id, deleting all other MDC fields
+   - B) An arbitrary numeric cast of a 128-bit ID
+   - C) A hardcoded successful trace ID
+   - D) The caller's prior MDC context, string IDs and actual instrumentation/data prerequisites
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: D**
+
+The helper restores context even when application code raises. It is synchronous. Automatic injection/parsing, consistent service tags and available traces are separate requirements.
+
+</details>
+
+9. What is wrong with pricing 50 services as 50 APM hosts?
+
+   - A) APM is always free
+   - B) Log ingestion is the whole log bill
+   - C) Services and billable hosts are different units; product/contract allotments and usage must be counted
+   - D) Every cluster has one host
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: C**
+
+The old estimate was not a measured bill. Indexing/retention, span allotments, custom metrics and other products matter. nonLocalTraffic is reachability, not a cost quota.
+
+</details>
+
+10. Which Watchdog/SLO/diagnostic practice is correct?
+
+   - A) A Watchdog insight proves a page was delivered
+   - B) Match the SLO model and good/total policy, test routing, and inspect local diagnostic bundles before sharing
+   - C) A local flare automatically authorizes upload
+   - D) Dump every DD_ environment value when traces are missing
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B**
+
+Datadog supports metric-, monitor- and time-slice SLOs. Notification and no-data behavior need validation. env dumps can expose keys; --local keeps the initial flare collection local.
 
 </details>
 
 ---
 
-2. What is the role of Datadog Cluster Agent?
-   - A) Container log collection
-   - B) Cluster-level metrics and event collection
-   - C) APM trace processing
-   - D) Dashboard rendering
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: B) Cluster-level metrics and event collection**
-
-**Explanation:**
-Datadog Cluster Agent collects cluster-level metrics and events from Kubernetes clusters. It also provides a custom metrics server role for HPA (Horizontal Pod Autoscaler) and automatic APM instrumentation injection through Admission Controller.
-
-</details>
-
----
-
-3. How do you enable automatic APM instrumentation in Datadog?
-   - A) Application code modification required
-   - B) Use Admission Controller and pod labels
-   - C) Deploy separate APM server
-   - D) Manually inject libraries
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: B) Use Admission Controller and pod labels**
-
-**Explanation:**
-When Datadog Admission Controller is enabled, APM instrumentation libraries are automatically injected into pods with the `admission.datadoghq.com/enabled: "true"` label. It supports major languages including Java, Python, Node.js, .NET, and Ruby, allowing you to start tracing without code modifications.
-
-</details>
-
----
-
-4. What is the role of DogStatsD?
-   - A) Log collection
-   - B) Custom metrics collection (StatsD compatible)
-   - C) Dashboard creation
-   - D) Alert routing
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: B) Custom metrics collection (StatsD compatible)**
-
-**Explanation:**
-DogStatsD is a StatsD-compatible metrics collection daemon included in the Datadog Agent. Applications can send custom metrics (counters, gauges, histograms, distributions) via UDP. It's compatible with the StatsD protocol with added tag functionality.
-
-</details>
-
----
-
-5. How do you connect traces and logs in Datadog?
-   - A) Manually upload log files
-   - B) Include trace_id and span_id in logs
-   - C) Deploy separate connection service
-   - D) Match log and trace timestamps
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: B) Include trace_id and span_id in logs**
-
-**Explanation:**
-To connect traces and logs in Datadog, logs must include `dd.trace_id` and `dd.span_id`. Datadog APM libraries can automatically inject this information through MDC (Mapped Diagnostic Context). This allows viewing related logs directly from APM.
-
-</details>
-
----
-
-6. What is the billing unit for infrastructure monitoring in Datadog's cost structure?
-   - A) Number of metrics
-   - B) Number of hosts
-   - C) Number of API calls
-   - D) Data transfer volume
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: B) Number of hosts**
-
-**Explanation:**
-Datadog infrastructure monitoring is billed based on the number of hosts. Each node, instance, and container host is a billable item. APM, log management, and other features have separate billing structures, with host-based billing making cost prediction easier.
-
-</details>
-
----
-
-7. What is the function of Datadog Watchdog?
-   - A) Manual alert configuration
-   - B) AI-based automatic anomaly detection
-   - C) Log search
-   - D) Dashboard creation
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: B) AI-based automatic anomaly detection**
-
-**Explanation:**
-Watchdog is Datadog's AI/ML-based automatic anomaly detection feature. It automatically detects abnormal patterns in infrastructure, APM, and log data and generates alerts. You can identify anomalies without manually setting thresholds.
-
-</details>
-
----
-
-8. How do you collect Prometheus metrics with Datadog Agent?
-   - A) Separate Prometheus server required
-   - B) Configure auto-discovery with pod annotations
-   - C) Manually register each endpoint
-   - D) Replace Prometheus with Datadog
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: B) Configure auto-discovery with pod annotations**
-
-**Explanation:**
-Datadog Agent uses `ad.datadoghq.com/<container>.checks` annotations to automatically discover and collect Prometheus metric endpoints. Configuration is similar to Prometheus scrape settings, and metrics can be collected without a separate Prometheus server.
-
-</details>
-
----
-
-9. What types of metrics can be used when setting up SLO (Service Level Objective) in Datadog?
-   - A) Log events only
-   - B) Metric-based, monitor-based, time slice-based
-   - C) APM traces only
-   - D) Infrastructure metrics only
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: B) Metric-based, monitor-based, time slice-based**
-
-**Explanation:**
-Datadog SLO supports three types: metric-based (success/failure counts), monitor-based (existing monitor status), and time slice-based (status per time interval). Various data sources including APM traces, custom metrics, and log-based metrics can be utilized.
-
-</details>
-
----
-
-10. Which is NOT a valid Datadog cost optimization strategy?
-    - A) Adjust APM trace sampling rate
-    - B) Filter unnecessary logs
-    - C) Collect all metrics at highest resolution
-    - D) Manage custom metric cardinality
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: C) Collect all metrics at highest resolution**
-
-**Explanation:**
-For Datadog cost optimization, APM trace sampling, log filtering, and custom metric cardinality management are important. Collecting all metrics at highest resolution causes costs to surge. Selectively collect only necessary metrics and apply appropriate sampling.
-
-</details>
+[Return to the guide](../../../observability/metrics/05-datadog.md)

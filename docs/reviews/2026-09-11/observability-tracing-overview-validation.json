@@ -1,0 +1,1242 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-13T07:34:37.061885+00:00",
+  "scope": [
+    "en/observability/tracing/README.md",
+    "ko/observability/tracing/README.md"
+  ],
+  "fullyRead": 2,
+  "fixedAndValidated": 2,
+  "originalRead": {
+    "en/observability/tracing/README.md": {
+      "lines": 325,
+      "sha256": "e9c9f5823770b8e03c3545234c3126449ee6a46d7dbdd04e39507a67aa9f503a"
+    },
+    "ko/observability/tracing/README.md": {
+      "lines": 325,
+      "sha256": "0fd753983620a7b0e20e4084c7806894c6bbee7ad95ac6f0acbeea98e425e9fd"
+    }
+  },
+  "checks": {
+    "files": [
+      {
+        "path": "en/observability/tracing/README.md",
+        "sha256": "1c5b21cbe53a32d6049fd5201066c7fcae20476bef9ab9845c21389f8975af35",
+        "lines": 355,
+        "passed": true
+      },
+      {
+        "path": "ko/observability/tracing/README.md",
+        "sha256": "7a485b3820674b67c7e5696fc32b22726bf264c3db3a7c198fe91a356ce12f79",
+        "lines": 355,
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "checks": [
+      {
+        "name": "currentMD en/observability/tracing/README.md",
+        "passed": true
+      },
+      {
+        "name": "oldIDs en/observability/tracing/README.md",
+        "passed": true
+      },
+      {
+        "name": "uniqueIDs en/observability/tracing/README.md",
+        "passed": true
+      },
+      {
+        "name": "no unresolved placeholders en/observability/tracing/README.md",
+        "passed": true
+      },
+      {
+        "name": "historicaltimestampretained en/observability/tracing/README.md",
+        "passed": true
+      },
+      {
+        "name": "tested/source-reviewedartifact en/observability/tracing/README.md TraceMdc.java",
+        "passed": true
+      },
+      {
+        "name": "tested/source-reviewedartifact en/observability/tracing/README.md tail-sampling.yaml",
+        "passed": true
+      },
+      {
+        "name": "tested/source-reviewedartifact en/observability/tracing/README.md metrics.openmetrics",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/tracing/README.md ../../.gitbook/assets/en-observability-tracing-readme-0.png",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/tracing/README.md ../../.gitbook/assets/en-observability-tracing-readme-3.png",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/tracing/README.md ../../.gitbook/assets/en-observability-tracing-readme-4.png",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/tracing/README.md ../../.gitbook/assets/en-observability-tracing-readme-6.png",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/tracing/README.md ./01-tempo.md",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/tracing/README.md ./02-xray.md",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/tracing/README.md ./03-opentelemetry.md",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/tracing/README.md ./04-dynatrace.md",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/tracing/README.md ../../quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/tracing/README.md ../../quizzes/observability/tracing/02-xray-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/tracing/README.md ../../quizzes/observability/tracing/03-opentelemetry-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "local target en/observability/tracing/README.md ../../quizzes/observability/tracing/04-dynatrace-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "currentMD ko/observability/tracing/README.md",
+        "passed": true
+      },
+      {
+        "name": "oldIDs ko/observability/tracing/README.md",
+        "passed": true
+      },
+      {
+        "name": "uniqueIDs ko/observability/tracing/README.md",
+        "passed": true
+      },
+      {
+        "name": "no unresolved placeholders ko/observability/tracing/README.md",
+        "passed": true
+      },
+      {
+        "name": "historicaltimestampretained ko/observability/tracing/README.md",
+        "passed": true
+      },
+      {
+        "name": "tested/source-reviewedartifact ko/observability/tracing/README.md TraceMdc.java",
+        "passed": true
+      },
+      {
+        "name": "tested/source-reviewedartifact ko/observability/tracing/README.md tail-sampling.yaml",
+        "passed": true
+      },
+      {
+        "name": "tested/source-reviewedartifact ko/observability/tracing/README.md metrics.openmetrics",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/tracing/README.md ../../.gitbook/assets/ko-observability-tracing-readme-0.png",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/tracing/README.md ../../.gitbook/assets/ko-observability-tracing-readme-3.png",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/tracing/README.md ../../.gitbook/assets/ko-observability-tracing-readme-4.png",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/tracing/README.md ../../.gitbook/assets/ko-observability-tracing-readme-6.png",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/tracing/README.md ./01-tempo.md",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/tracing/README.md ./02-xray.md",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/tracing/README.md ./03-opentelemetry.md",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/tracing/README.md ./04-dynatrace.md",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/tracing/README.md ../../quizzes/observability/tracing/01-tempo-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/tracing/README.md ../../quizzes/observability/tracing/02-xray-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/tracing/README.md ../../quizzes/observability/tracing/03-opentelemetry-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "local target ko/observability/tracing/README.md ../../quizzes/observability/tracing/04-dynatrace-quiz.md",
+        "passed": true
+      },
+      {
+        "name": "bilingualcodeparity",
+        "passed": true
+      },
+      {
+        "name": "verifiedheader en traceparent",
+        "passed": true
+      },
+      {
+        "name": "verifiedheader en tracestate",
+        "passed": true
+      },
+      {
+        "name": "verifiedheader en b3",
+        "passed": true
+      },
+      {
+        "name": "verifiedheader en X-B3-TraceId",
+        "passed": true
+      },
+      {
+        "name": "verifiedheader en X-B3-SpanId",
+        "passed": true
+      },
+      {
+        "name": "verifiedheader en X-B3-Sampled",
+        "passed": true
+      },
+      {
+        "name": "verifiedheader ko traceparent",
+        "passed": true
+      },
+      {
+        "name": "verifiedheader ko tracestate",
+        "passed": true
+      },
+      {
+        "name": "verifiedheader ko b3",
+        "passed": true
+      },
+      {
+        "name": "verifiedheader ko X-B3-TraceId",
+        "passed": true
+      },
+      {
+        "name": "verifiedheader ko X-B3-SpanId",
+        "passed": true
+      },
+      {
+        "name": "verifiedheader ko X-B3-Sampled",
+        "passed": true
+      },
+      {
+        "name": "native19protocolassertions",
+        "passed": true
+      },
+      {
+        "name": "native130traces",
+        "passed": true
+      },
+      {
+        "name": "illustrativetimelinemath",
+        "passed": true
+      },
+      {
+        "name": "childintervalscontained",
+        "passed": true
+      },
+      {
+        "name": "MDCfinallyrestore-sourcecontract",
+        "passed": true
+      },
+      {
+        "name": "MDCvalidity-sourcecontract",
+        "passed": true
+      },
+      {
+        "name": "2Mermaidgraphs",
+        "passed": true
+      },
+      {
+        "name": "22externalreferences200",
+        "passed": true
+      },
+      {
+        "name": "2recognizeddates",
+        "passed": true
+      },
+      {
+        "name": "scopeddiffcheck",
+        "passed": true
+      }
+    ],
+    "protocol": {
+      "status": "PASS",
+      "sdk": "OpenTelemetryPython1.44.0",
+      "openmetricsParser": "prometheus-client0.26.0",
+      "checks": [
+        {
+          "name": "validW3CIDs",
+          "passed": true
+        },
+        {
+          "name": "W3Cremoteandsampled",
+          "passed": true
+        },
+        {
+          "name": "reject original-nonhex",
+          "passed": true
+        },
+        {
+          "name": "reject zeroTrace",
+          "passed": true
+        },
+        {
+          "name": "reject zeroParent",
+          "passed": true
+        },
+        {
+          "name": "reject uppercaseTrace",
+          "passed": true
+        },
+        {
+          "name": "reject shortTrace",
+          "passed": true
+        },
+        {
+          "name": "injectcurrentspan-as-parent",
+          "passed": true
+        },
+        {
+          "name": "validB3single",
+          "passed": true
+        },
+        {
+          "name": "validB3multi",
+          "passed": true
+        },
+        {
+          "name": "B3-64bittraceaccepted",
+          "passed": true
+        },
+        {
+          "name": "originalB3single-rejected",
+          "passed": true
+        },
+        {
+          "name": "originalB3multi-rejected",
+          "passed": true
+        },
+        {
+          "name": "parentbased-honors-True",
+          "passed": true
+        },
+        {
+          "name": "parentbased-honors-False",
+          "passed": true
+        },
+        {
+          "name": "ratio-decisions-repeat",
+          "passed": true
+        },
+        {
+          "name": "ratio-synthetic-mixture",
+          "passed": true
+        },
+        {
+          "name": "OpenMetricsexemplar-value",
+          "passed": true
+        },
+        {
+          "name": "missing-exemplar-observation-rejected",
+          "passed": true
+        }
+      ],
+      "limits": "Localpropagator/sampler/OpenMetricsparserobjects;no tracingexporter/network/realrequests/productionstatistics"
+    },
+    "tailSampling": {
+      "status": "PASS",
+      "collector": "0.160.0",
+      "sentTraces": 130,
+      "retained": 15,
+      "ordinaryRetained": 13,
+      "errorAndSlowRetained": true,
+      "duplicateTraceIds": false,
+      "limits": [
+        "Syntheticcompleteone-spantracesonsingleloopbackcollector;noactualservice/cluster/traceaffinitytest.",
+        "decision_waitshortenedto1sinthefixtureonly;samplingpercentage10unchanged.",
+        "Observedordinarycountisnotastatisticalguaranteeofexact10percentanddoesnotproveallfutureerrortracesretained."
+      ],
+      "stateDirectory": "/home/atomoh/kubernetes-docs/.vitepress/cache/observability-tracing-overview-audit/tail-proof-tmtx34n_"
+    },
+    "mermaid": {
+      "version": "11.16.0",
+      "scope": "TwoinlineMermaidgraphsparsed/renderedinnativebrowser;privateSVG/PNG;no sitebuild/server",
+      "results": [
+        {
+          "path": "en/observability/tracing/README.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 6,
+          "edges": 5,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "ko/observability/tracing/README.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 6,
+          "edges": 5,
+          "errors": [],
+          "passed": true
+        }
+      ]
+    },
+    "externalReferences": [
+      {
+        "url": "https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html",
+        "status": 200,
+        "finalURL": "https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html",
+        "bytes": 13755
+      },
+      {
+        "url": "https://docs.datadoghq.com/tracing/",
+        "status": 200,
+        "finalURL": "https://docs.datadoghq.com/tracing/",
+        "bytes": 125379
+      },
+      {
+        "url": "https://docs.dynatrace.com/docs/observe/application-observability/distributed-tracing",
+        "status": 200,
+        "finalURL": "https://docs.dynatrace.com/docs/observe/application-observability/distributed-tracing",
+        "bytes": 780260
+      },
+      {
+        "url": "https://github.com/grafana/tempo/tree/v3.0.3",
+        "status": 200,
+        "finalURL": "https://github.com/grafana/tempo/tree/v3.0.3",
+        "bytes": 391879
+      },
+      {
+        "url": "https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/processor/tailsamplingprocessor/README.md",
+        "status": 200,
+        "finalURL": "https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/processor/tailsamplingprocessor/README.md",
+        "bytes": 542022
+      },
+      {
+        "url": "https://github.com/openzipkin/b3-propagation",
+        "status": 200,
+        "finalURL": "https://github.com/openzipkin/b3-propagation",
+        "bytes": 379818
+      },
+      {
+        "url": "https://github.com/prometheus/OpenMetrics/blob/main/specification/OpenMetrics.md",
+        "status": 200,
+        "finalURL": "https://github.com/prometheus/OpenMetrics/blob/main/specification/OpenMetrics.md",
+        "bytes": 785911
+      },
+      {
+        "url": "https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/",
+        "status": 200,
+        "finalURL": "https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/",
+        "bytes": 99859
+      },
+      {
+        "url": "https://opentelemetry.io/docs/specs/otel/trace/api/",
+        "status": 200,
+        "finalURL": "https://opentelemetry.io/docs/specs/otel/trace/api/",
+        "bytes": 120230
+      },
+      {
+        "url": "https://opentelemetry.io/docs/specs/semconv/db/database-spans/",
+        "status": 200,
+        "finalURL": "https://opentelemetry.io/docs/specs/semconv/db/database-spans/",
+        "bytes": 232706
+      },
+      {
+        "url": "https://opentelemetry.io/docs/specs/semconv/http/http-spans/",
+        "status": 200,
+        "finalURL": "https://opentelemetry.io/docs/specs/semconv/http/http-spans/",
+        "bytes": 259300
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-0.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-0.html",
+        "bytes": 710483
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-3.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-3.html",
+        "bytes": 704802
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-4.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-4.html",
+        "bytes": 705815
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-6.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-readme-6.html",
+        "bytes": 705566
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-readme-0.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-readme-0.html",
+        "bytes": 712974
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-readme-3.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-readme-3.html",
+        "bytes": 706195
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-readme-4.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-readme-4.html",
+        "bytes": 705962
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-readme-6.html",
+        "status": 200,
+        "finalURL": "https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-tracing-readme-6.html",
+        "bytes": 705762
+      },
+      {
+        "url": "https://www.jaegertracing.io/docs/2.20/architecture/",
+        "status": 200,
+        "finalURL": "https://www.jaegertracing.io/docs/2.20/architecture/",
+        "bytes": 51327
+      },
+      {
+        "url": "https://www.slf4j.org/apidocs/org/slf4j/MDC.html",
+        "status": 200,
+        "finalURL": "https://www.slf4j.org/apidocs/org/slf4j/MDC.html",
+        "bytes": 35934
+      },
+      {
+        "url": "https://www.w3.org/TR/trace-context/",
+        "status": 200,
+        "finalURL": "https://www.w3.org/TR/trace-context/",
+        "bytes": 100612
+      }
+    ],
+    "localTargets": [
+      "en/.gitbook/assets/en-observability-tracing-readme-0.png",
+      "en/.gitbook/assets/en-observability-tracing-readme-3.png",
+      "en/.gitbook/assets/en-observability-tracing-readme-4.png",
+      "en/.gitbook/assets/en-observability-tracing-readme-6.png",
+      "en/observability/tracing/01-tempo.md",
+      "en/observability/tracing/02-xray.md",
+      "en/observability/tracing/03-opentelemetry.md",
+      "en/observability/tracing/04-dynatrace.md",
+      "en/quizzes/observability/tracing/01-tempo-quiz.md",
+      "en/quizzes/observability/tracing/02-xray-quiz.md",
+      "en/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+      "en/quizzes/observability/tracing/04-dynatrace-quiz.md",
+      "ko/.gitbook/assets/ko-observability-tracing-readme-0.png",
+      "ko/.gitbook/assets/ko-observability-tracing-readme-3.png",
+      "ko/.gitbook/assets/ko-observability-tracing-readme-4.png",
+      "ko/.gitbook/assets/ko-observability-tracing-readme-6.png",
+      "ko/observability/tracing/01-tempo.md",
+      "ko/observability/tracing/02-xray.md",
+      "ko/observability/tracing/03-opentelemetry.md",
+      "ko/observability/tracing/04-dynatrace.md",
+      "ko/quizzes/observability/tracing/01-tempo-quiz.md",
+      "ko/quizzes/observability/tracing/02-xray-quiz.md",
+      "ko/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+      "ko/quizzes/observability/tracing/04-dynatrace-quiz.md"
+    ],
+    "counts": {
+      "documents": 2,
+      "staticChecks": 63,
+      "protocolAssertions": 19,
+      "syntheticTailTraces": 130,
+      "retainedTailTraces": 15,
+      "originalPNGsViewed": 16,
+      "newMermaidGraphs": 2,
+      "preservedGuideIDs": 60
+    },
+    "limits": [
+      "No real distributed app/cloud/vendor backend/trace-affinity cluster or performance test.",
+      "JavaMDCsource/API-reviewedonly;noJavaexecution/JDKinstallationclaimed.",
+      "Tailfixtureuses1sdecisionwaitratherthan10s;singlecompleteone-spantracesandlocalfileoutput;notproofallimportanttracesretained.",
+      "Symbols/abbreviatedIDsremaininginretainedconceptualfiguresexplicitlydistinguishedfromrealwireIDs.",
+      "Oldwrongfigures1/2/5/7referencesreplacedbycorrecttable/text/flow;imageassetsandforeigntranslationsunchanged."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/observability/tracing/README.md",
+        "sha256": "1c5b21cbe53a32d6049fd5201066c7fcae20476bef9ab9845c21389f8975af35",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "distributed-tracing-overview"
+          },
+          {
+            "tag": "h2",
+            "id": "introduction"
+          },
+          {
+            "tag": "h2",
+            "id": "the-need-for-distributed-tracing"
+          },
+          {
+            "tag": "h3",
+            "id": "limitations-of-traditional-monitoring"
+          },
+          {
+            "tag": "h2",
+            "id": "core-concepts"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-trace"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-span"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-span-relationships-and-hierarchy"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-spancontext"
+          },
+          {
+            "tag": "h2",
+            "id": "context-propagation"
+          },
+          {
+            "tag": "h3",
+            "id": "w3c-trace-context-recommended"
+          },
+          {
+            "tag": "h3",
+            "id": "b3-propagation-zipkin-compatible"
+          },
+          {
+            "tag": "h3",
+            "id": "propagation-format-comparison"
+          },
+          {
+            "tag": "h2",
+            "id": "sampling-strategies"
+          },
+          {
+            "tag": "h3",
+            "id": "head-based-sampling"
+          },
+          {
+            "tag": "h3",
+            "id": "tail-based-sampling"
+          },
+          {
+            "tag": "h3",
+            "id": "sampling-strategy-comparison"
+          },
+          {
+            "tag": "h2",
+            "id": "trace-log-metric-correlation"
+          },
+          {
+            "tag": "h3",
+            "id": "linking-logs-via-traceid"
+          },
+          {
+            "tag": "h3",
+            "id": "linking-metrics-via-exemplars"
+          },
+          {
+            "tag": "h3",
+            "id": "correlation-in-grafana"
+          },
+          {
+            "tag": "h2",
+            "id": "solution-comparison"
+          },
+          {
+            "tag": "h3",
+            "id": "distributed-tracing-solution-comparison"
+          },
+          {
+            "tag": "h3",
+            "id": "selection-guide"
+          },
+          {
+            "tag": "h2",
+            "id": "best-practices"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-instrumentation-strategy"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-span-naming-conventions"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-tag-standardization"
+          },
+          {
+            "tag": "h2",
+            "id": "next-steps"
+          },
+          {
+            "tag": "h2",
+            "id": "references-and-validation-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "distributed-tracing-overview",
+          "introduction",
+          "the-need-for-distributed-tracing",
+          "limitations-of-traditional-monitoring",
+          "core-concepts",
+          "_1-trace",
+          "_2-span",
+          "_3-span-relationships-and-hierarchy",
+          "_4-spancontext",
+          "context-propagation",
+          "w3c-trace-context-recommended",
+          "b3-propagation-zipkin-compatible",
+          "propagation-format-comparison",
+          "sampling-strategies",
+          "head-based-sampling",
+          "tail-based-sampling",
+          "mermaid-421",
+          "sampling-strategy-comparison",
+          "trace-log-metric-correlation",
+          "linking-logs-via-traceid",
+          "linking-metrics-via-exemplars",
+          "correlation-in-grafana",
+          "solution-comparison",
+          "distributed-tracing-solution-comparison",
+          "selection-guide",
+          "best-practices",
+          "_1-instrumentation-strategy",
+          "_2-span-naming-conventions",
+          "_3-tag-standardization",
+          "next-steps",
+          "references-and-validation-scope",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/observability/tracing/README.md",
+        "sha256": "7a485b3820674b67c7e5696fc32b22726bf264c3db3a7c198fe91a356ce12f79",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "분산-추적-개요"
+          },
+          {
+            "tag": "h2",
+            "id": "소개"
+          },
+          {
+            "tag": "h2",
+            "id": "분산-추적의-필요성"
+          },
+          {
+            "tag": "h3",
+            "id": "기존-모니터링의-한계"
+          },
+          {
+            "tag": "h2",
+            "id": "핵심-개념"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-trace-추적"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-span-스팬"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-span-관계와-계층-구조"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-spancontext-스팬-컨텍스트"
+          },
+          {
+            "tag": "h2",
+            "id": "context-propagation-컨텍스트-전파"
+          },
+          {
+            "tag": "h3",
+            "id": "w3c-trace-context-권장"
+          },
+          {
+            "tag": "h3",
+            "id": "b3-propagation-zipkin-호환"
+          },
+          {
+            "tag": "h3",
+            "id": "전파-방식-비교"
+          },
+          {
+            "tag": "h2",
+            "id": "샘플링-전략"
+          },
+          {
+            "tag": "h3",
+            "id": "head-based-sampling-헤드-기반"
+          },
+          {
+            "tag": "h3",
+            "id": "tail-based-sampling-테일-기반"
+          },
+          {
+            "tag": "h3",
+            "id": "샘플링-전략-비교"
+          },
+          {
+            "tag": "h2",
+            "id": "트레이스-로그-메트릭-상관분석"
+          },
+          {
+            "tag": "h3",
+            "id": "traceid를-통한-로그-연결"
+          },
+          {
+            "tag": "h3",
+            "id": "exemplar를-통한-메트릭-연결"
+          },
+          {
+            "tag": "h3",
+            "id": "grafana에서의-상관분석"
+          },
+          {
+            "tag": "h2",
+            "id": "솔루션-비교"
+          },
+          {
+            "tag": "h3",
+            "id": "분산-추적-솔루션-비교표"
+          },
+          {
+            "tag": "h3",
+            "id": "선택-가이드"
+          },
+          {
+            "tag": "h2",
+            "id": "best-practices"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-계측-전략"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-span-네이밍-규칙"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-태그-표준화"
+          },
+          {
+            "tag": "h2",
+            "id": "다음-단계"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료와-검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "분산-추적-개요",
+          "소개",
+          "분산-추적의-필요성",
+          "기존-모니터링의-한계",
+          "핵심-개념",
+          "_1-trace-추적",
+          "_2-span-스팬",
+          "_3-span-관계와-계층-구조",
+          "_4-spancontext-스팬-컨텍스트",
+          "context-propagation-컨텍스트-전파",
+          "w3c-trace-context-권장",
+          "b3-propagation-zipkin-호환",
+          "전파-방식-비교",
+          "샘플링-전략",
+          "head-based-sampling-헤드-기반",
+          "tail-based-sampling-테일-기반",
+          "mermaid-421",
+          "샘플링-전략-비교",
+          "트레이스-로그-메트릭-상관분석",
+          "traceid를-통한-로그-연결",
+          "exemplar를-통한-메트릭-연결",
+          "grafana에서의-상관분석",
+          "솔루션-비교",
+          "분산-추적-솔루션-비교표",
+          "선택-가이드",
+          "best-practices",
+          "_1-계측-전략",
+          "_2-span-네이밍-규칙",
+          "_3-태그-표준화",
+          "다음-단계",
+          "참고-자료와-검증-범위",
+          "퀴즈"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://www.w3.org/TR/trace-context/",
+      "cacheKey": "6a0029787a22",
+      "fetchedAt": "2026-09-13T07:08:28.232518+00:00",
+      "status": 200,
+      "finalURL": "https://www.w3.org/TR/trace-context/",
+      "sha256": "9e7228d2a91c5aa4bef6e7f610366a2000274ee51699053e10c8ac3f0b8965be"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/openzipkin/b3-propagation/master/README.md",
+      "cacheKey": "ff1b868c890e",
+      "fetchedAt": "2026-09-13T07:08:28.395424+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/openzipkin/b3-propagation/master/README.md",
+      "sha256": "b0b14a361c04c15002dc32f6630c76aa82b4de65a419a874fc37b6b4e4cc0a54"
+    },
+    {
+      "url": "https://opentelemetry.io/docs/specs/otel/trace/api/",
+      "cacheKey": "9495556bb983",
+      "fetchedAt": "2026-09-13T07:08:28.546302+00:00",
+      "status": 200,
+      "finalURL": "https://opentelemetry.io/docs/specs/otel/trace/api/",
+      "sha256": "c23bd928ad45e6615af467c9ee216c53dfcb7e78d58e75a76027a86cc2018767"
+    },
+    {
+      "url": "https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/",
+      "cacheKey": "b4b11da775ed",
+      "fetchedAt": "2026-09-13T07:08:29.285617+00:00",
+      "status": 200,
+      "finalURL": "https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/",
+      "sha256": "97e88c5630b1bed8b25cdb59f338b3da4fd0fec9392ce4973ed8a6170c2eac78"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/processor/tailsamplingprocessor/README.md",
+      "cacheKey": "6972b6c25420",
+      "fetchedAt": "2026-09-13T07:08:28.788702+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.160.0/processor/tailsamplingprocessor/README.md",
+      "sha256": "cc848d941b4469e849448e54a0704f128204e94708f40ea0af50459cff7f9639"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/prometheus/OpenMetrics/main/specification/OpenMetrics.md",
+      "cacheKey": "e60b738fd5de",
+      "fetchedAt": "2026-09-13T07:08:29.042452+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/prometheus/OpenMetrics/main/specification/OpenMetrics.md",
+      "sha256": "3115ed69476ddb5e4b64ebf363f1a8f5d0f0a7cc2a6263ea612360d5357f877e"
+    },
+    {
+      "url": "https://api.github.com/repos/open-telemetry/opentelemetry-python/releases/latest",
+      "cacheKey": "a55ea3e2cc95",
+      "fetchedAt": "2026-09-13T07:09:53.799061+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/open-telemetry/opentelemetry-python/releases/latest",
+      "sha256": "baa0c9abb289dba1f7ca9f457580dc128bb39e4cc258f40d561235554dac1e0f"
+    },
+    {
+      "url": "https://api.github.com/repos/open-telemetry/opentelemetry-java/releases/latest",
+      "cacheKey": "ef5798067be8",
+      "fetchedAt": "2026-09-13T07:09:53.818892+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/open-telemetry/opentelemetry-java/releases/latest",
+      "sha256": "61274412ce771cf67fd90e5fe3be1997c28428a79557088337dc8d1017e39fec"
+    },
+    {
+      "url": "https://opentelemetry.io/docs/specs/semconv/http/http-spans/",
+      "cacheKey": "533be7768708",
+      "fetchedAt": "2026-09-13T07:09:54.517961+00:00",
+      "status": 200,
+      "finalURL": "https://opentelemetry.io/docs/specs/semconv/http/http-spans/",
+      "sha256": "c16beeae0872298834c9bcc938e02f6cb542721e0531cf65b6c62e63034f4293"
+    },
+    {
+      "url": "https://opentelemetry.io/docs/specs/semconv/db/database-spans/",
+      "cacheKey": "dd7291976f4c",
+      "fetchedAt": "2026-09-13T07:09:53.872090+00:00",
+      "status": 200,
+      "finalURL": "https://opentelemetry.io/docs/specs/semconv/db/database-spans/",
+      "sha256": "f4c95893e96e16a4377868180d2c0d4b6e72489f39f30177298dc8ceb456beb7"
+    },
+    {
+      "url": "https://pypi.org/pypi/opentelemetry-propagator-b3/1.44.0/json",
+      "cacheKey": "9f91f4395b73",
+      "fetchedAt": "2026-09-13T07:11:16.995216+00:00",
+      "status": 200,
+      "finalURL": "https://pypi.org/pypi/opentelemetry-propagator-b3/1.44.0/json",
+      "sha256": "4fd6567845c9f5547468924b838996e77cf8b0cbc0df85713caba54f0fabfd34"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-python/v1.44.0/opentelemetry-api/src/opentelemetry/trace/propagation/tracecontext.py",
+      "cacheKey": "cf54d00da872",
+      "fetchedAt": "2026-09-13T07:11:17.043097+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-python/v1.44.0/opentelemetry-api/src/opentelemetry/trace/propagation/tracecontext.py",
+      "sha256": "94fef4c502e2a56e6a4eb02598a821a387e40f17c54a7771bf1b9652cabf8faa"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-java/v1.66.0/api/all/src/main/java/io/opentelemetry/api/trace/SpanContext.java",
+      "cacheKey": "7c6f24701c42",
+      "fetchedAt": "2026-09-13T07:11:17.229515+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-java/v1.66.0/api/all/src/main/java/io/opentelemetry/api/trace/SpanContext.java",
+      "sha256": "e1c03df3910e349a0aa16dd57249c6ffb106a97e09deadaf382a4c212bf689ff"
+    },
+    {
+      "url": "https://www.slf4j.org/apidocs/org/slf4j/MDC.html",
+      "cacheKey": "b977acbf9fe1",
+      "fetchedAt": "2026-09-13T07:11:18.695243+00:00",
+      "status": 200,
+      "finalURL": "https://www.slf4j.org/apidocs/org/slf4j/MDC.html",
+      "sha256": "af0e894d7b9b37548e6a2457debc020e1c7eab461d7c9c0f1b6dea4d8bb771d3"
+    },
+    {
+      "url": "https://grafana.com/docs/tempo/latest/introduction/",
+      "cacheKey": "c44f029751a6",
+      "fetchedAt": "2026-09-13T07:19:34.368543+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/tempo/latest/introduction/",
+      "sha256": "c46e23d2a682f4de0be2ece288485d0043add587d807df28f651567f01a06106"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html",
+      "cacheKey": "8b9a5d5ca360",
+      "fetchedAt": "2026-09-13T07:19:33.864526+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/xray/latest/devguide/aws-xray.html",
+      "sha256": "2741daeb86551680d94ff1a23b24115fa14a3da347d74ab10c4b21649ed8cad0"
+    },
+    {
+      "url": "https://www.jaegertracing.io/docs/latest/architecture/",
+      "cacheKey": "70451313b134",
+      "fetchedAt": "2026-09-13T07:19:34.466737+00:00",
+      "status": 200,
+      "finalURL": "https://www.jaegertracing.io/docs/2.20/architecture/",
+      "sha256": "3885acc86e21366a2e3fd5d381884984b0d4d64e0cca3365e44e2969d7329016"
+    },
+    {
+      "url": "https://docs.datadoghq.com/tracing/",
+      "cacheKey": "0008dd7abc98",
+      "fetchedAt": "2026-09-13T07:19:35.247613+00:00",
+      "status": 200,
+      "finalURL": "https://docs.datadoghq.com/tracing/",
+      "sha256": "3f366bb8e518723f8a93fef232ec637d9921f449b0946dde0ad3d88b7c759d6c"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/observe/application-observability/distributed-tracing",
+      "cacheKey": "a48976e6872e",
+      "fetchedAt": "2026-09-13T07:19:35.872953+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/observe/application-observability/distributed-tracing",
+      "sha256": "d39fabb65194403475e77497cb9605a9b4cfb69dc3b7fefdb46f55b57e25b4a3"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/README.md",
+      "cacheKey": "2eddab9bd606",
+      "fetchedAt": "2026-09-13T07:24:31.631642+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/tempo/v3.0.3/README.md",
+      "sha256": "e5e068feb7acf0cd43eb1d77d3dc2fd3de38a76269f58ed8fabf5a485edea587"
+    },
+    {
+      "url": "https://docs.datadoghq.com/tracing.md",
+      "cacheKey": "9a7656f3463b",
+      "fetchedAt": "2026-09-13T07:24:32.061983+00:00",
+      "status": 200,
+      "finalURL": "https://docs.datadoghq.com/tracing.md",
+      "sha256": "83d0994d3fcc1921870393858954e3824a92cb020e9e8eb04112c57805d6535b"
+    }
+  ],
+  "findings": [
+    "Fullyreadboth325-lineoriginals(650total);all60guideheadingIDspreserved,includingnumeric/Koreanslugs;2025-02-15illustrativetimestampretainedwithoutbenchmarkretagging.",
+    "Replacedshort/nonhexTraceID/SpanID/W3C/B3exampleswithvalid32/16hexidentitiesandcorrectsender-spanparent_idsemantics. ActualOTelPython1.44propagatorsrejectoriginals/zeroIDs/invalidlengthandroundtripvalidheaders;B3supports64/128bittraceIDs.",
+    "Clarifiedobservedtracecoveragevscompleteexecution,attributes/events/status,immutableSpanContext/is_remote,baggageseparation,nonrecordingcontexts,andparent-childtreeversuscross-tracelinks.",
+    "Fixed650msdiagramdoublecount:parentinclusiveandchilddurationswerenotadditive. Newillustrativeintervaltableusesroot650/order500/payment300withoverlap;sum1600isnotelapsed650. Removedduration-at-span-startdiagramclaim.",
+    "ReplacedfictitiousSDKsamplingYAMLwithstandardparentbased_traceidratioenvironmentvariablesandlanguage-supportscope. Parentbasedremoteparentoverrideandrepeatableprobabilisticdecisionsnative-tested;noexact10percentcountguarantee.",
+    "Tailnever-miss-important/all-spans-completeguaranteesremoved. Documentedtimer-basedtrace-completevsnewspan-ingeststrategy,traceaffinity,latearrivals/caches/upstreamsampling/eviction/resourcebounds;ERRORpolicymatchesSpanstatusnotarbitrarylogstrings.",
+    "NativeCollector0.160received130syntheticcompleteone-spantraces,retainederror+slow+13ordinary(15total);1sfixturewaitonly. Noactualcluster/traceaffinityorlosslesscaptureclaimed.",
+    "JavaMDCnowvalidatesSpanContext,removesinvalidIDswithinloggingscopeandrestorespriorcontextinfinally. Formatter/MDCbackend/asynccontextrequirementsstated. API/source-reviewed;noJDKfoundandnoJavaexecutionclaim.",
+    "FixedOpenMetricsexemplarswithobservationvalueandEOF/fullhistogramsyntax,correctnon-YAMLfence/fulltraceID. Nativeprometheus-clientparseracceptsnewandrejectsmissingvalue;exemplarrepresentativeobservationnotexactp99boundary.",
+    "UpdatedHTTP/DBsemconvexamplesandmigrationcaveat,low-cardinalityspannameswithoutRedisuserkey/SQLliterals;appversion1.2.3remainsillustrative.",
+    "Backendtable/selectionguideavoidTempo-storage-onlycost,Jaeger-head-only,uniformOTelsupport,permanentAIyes/noandfixedvendorbillingunitclaims;linkofficialsolutiondocsandrequireactualplatform/planvalidation.",
+    "Viewed16originalPNGs;types1/2/5/7incorrecttiming/lifecycle/guarantee/pricingrefsreplacedbycorrecttable/textand2Mermaidflows. Types0/3/4/6retainedwithcontext/symbolicID/probability/linkcoveragequalifications. Originalassetsandforeigntranslationsunchanged.",
+    "2Markdown/Vueandmetadata-datechecks,63staticcontracts,19protocol/OpenMetricschecks,22externalHTTP200URLs/localpathsand2nativeMermaidrender/viewcheckspassed;scopeddiffcheckclean."
+  ],
+  "figures": {
+    "originals": [
+      {
+        "path": "en/.gitbook/assets/en-observability-tracing-readme-0.png",
+        "sha256": "e5adcd90fcbd9fe52a66cf4fd98bb3766499e6d47c3a690ccf126c776c847219",
+        "disposition": "retainwithscope/symbolic-IDcaption"
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-tracing-readme-1.png",
+        "sha256": "680aaadaaf29d63fd8059b6cd562546181fbcf23cfd4101dd95f1f1c37bf05ac",
+        "disposition": "replaceincorrectfigurewithcorrecttable/text/flow"
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-tracing-readme-2.png",
+        "sha256": "4a42a29b5922241e93ae713d3e6a4db6d9b58f020babd34113f5bfd17f0b78f7",
+        "disposition": "replaceincorrectfigurewithcorrecttable/text/flow"
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-tracing-readme-3.png",
+        "sha256": "f5d5d1348b73343c2ece0424fda818139d96b8cb69b2beacf7b70a7f32745f96",
+        "disposition": "retainwithscope/symbolic-IDcaption"
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-tracing-readme-4.png",
+        "sha256": "3ce634da939d16d9bdb169f700943465dfacfe894152127349c4b342bc56237d",
+        "disposition": "retainwithscope/symbolic-IDcaption"
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-tracing-readme-5.png",
+        "sha256": "0f713a77b22a1d39d1b7f8f8e37343da2cc120cfa5d0cb556f38a9c8ab8b3d59",
+        "disposition": "replaceincorrectfigurewithcorrecttable/text/flow"
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-tracing-readme-6.png",
+        "sha256": "011b2e1b0d742d335b2b6b15b4dc9e8afc3321551b909aed3a285bc5d4bb8e44",
+        "disposition": "retainwithscope/symbolic-IDcaption"
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-tracing-readme-7.png",
+        "sha256": "a1e4571185d9af470ec791b840d6f261c9cb1917166d5d75d6204f14812355eb",
+        "disposition": "replaceincorrectfigurewithcorrecttable/text/flow"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-tracing-readme-0.png",
+        "sha256": "dddafc9a7ca589f1b1e1c41daf728ecea59ec4a7b91afe1cdb1c9842cf266a5f",
+        "disposition": "retainwithscope/symbolic-IDcaption"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-tracing-readme-1.png",
+        "sha256": "1757221b75e742e207c141f795e2569b5dadf3ca3a3b6e5d3bc0fea88214f8e8",
+        "disposition": "replaceincorrectfigurewithcorrecttable/text/flow"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-tracing-readme-2.png",
+        "sha256": "10ce863b0dcb4b1b69afe320a67fcf39b714bd089033d3fe5ad911fd0395bb49",
+        "disposition": "replaceincorrectfigurewithcorrecttable/text/flow"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-tracing-readme-3.png",
+        "sha256": "7d21a22a2d4b464dea993dc6fd15b6cb636a3ce6e2fa4de75e9c5a10beb78670",
+        "disposition": "retainwithscope/symbolic-IDcaption"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-tracing-readme-4.png",
+        "sha256": "3a2116d418a0f1ef87691579c0b760c3119c44949f81158bb7f4578961915c35",
+        "disposition": "retainwithscope/symbolic-IDcaption"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-tracing-readme-5.png",
+        "sha256": "8349c469c733682296934321b98af08b8d2bae1e3a1d6d7d91e54beab675a69a",
+        "disposition": "replaceincorrectfigurewithcorrecttable/text/flow"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-tracing-readme-6.png",
+        "sha256": "ac9b6dc5e2e372f1dbd44cafc1178efc93f15951adc5caf0351bfe941a5d3a4a",
+        "disposition": "retainwithscope/symbolic-IDcaption"
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-tracing-readme-7.png",
+        "sha256": "3bc65cba438b685d06982939e7733b159e49b0252a309679b218d89f32821785",
+        "disposition": "replaceincorrectfigurewithcorrecttable/text/flow"
+      }
+    ],
+    "mermaid": {
+      "version": "11.16.0",
+      "scope": "TwoinlineMermaidgraphsparsed/renderedinnativebrowser;privateSVG/PNG;no sitebuild/server",
+      "results": [
+        {
+          "path": "en/observability/tracing/README.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 6,
+          "edges": 5,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "ko/observability/tracing/README.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 6,
+          "edges": 5,
+          "errors": [],
+          "passed": true
+        }
+      ]
+    },
+    "newPersonallyViewed": [
+      "figures/en-0.png",
+      "figures/ko-0.png"
+    ],
+    "scopeExternalFollowup": "Oldfigures1/2/5/7andforeigntranslationrefsneedparentautomatedsource-sync;noforeignprose/assetsmanuallyedited."
+  },
+  "artifactDirectory": ".vitepress/cache/observability-tracing-overview-audit",
+  "limits": [
+    "No real distributed app/cloud/vendor backend/trace-affinity cluster or performance test.",
+    "JavaMDCsource/API-reviewedonly;noJavaexecution/JDKinstallationclaimed.",
+    "Tailfixtureuses1sdecisionwaitratherthan10s;singlecompleteone-spantracesandlocalfileoutput;notproofallimportanttracesretained.",
+    "Symbols/abbreviatedIDsremaininginretainedconceptualfiguresexplicitlydistinguishedfromrealwireIDs.",
+    "Oldwrongfigures1/2/5/7referencesreplacedbycorrecttable/text/flow;imageassetsandforeigntranslationsunchanged."
+  ],
+  "sourceAccessNotes": [
+    "ReusedexistingPython3.12OTelAPI/SDK1.44andprometheus-client0.26;only8KBofficialB3wheelextractedwithPyPI SHAverification.",
+    "Java/JDKnotinPATH/usualsystem/privateFlinklocations;no largeJDKinstallationorfalseJava-executionclaim. MDCAPIandJava1.66SpanContextsourceverified.",
+    "TempointroHTMLandDatadogHTMLincludednavigation;usedpinnedTempoREADMEandDatadogMarkdownplusofficialbackenddocumentsforactualcontent."
+  ]
+}
