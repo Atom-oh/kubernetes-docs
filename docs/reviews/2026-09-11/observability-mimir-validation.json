@@ -1,0 +1,1225 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-12T22:42:14.943009+00:00",
+  "scope": [
+    "en/observability/metrics/03-mimir.md",
+    "en/quizzes/observability/metrics/03-mimir-quiz.md",
+    "ko/observability/metrics/03-mimir.md",
+    "ko/quizzes/observability/metrics/03-mimir-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/observability/metrics/03-mimir.md": {
+      "lines": 832,
+      "sha256": "e5fba2793f5294e4cb92ad18dbbfd6532931290b4547018f87b9ed5372732d1b"
+    },
+    "en/quizzes/observability/metrics/03-mimir-quiz.md": {
+      "lines": 183,
+      "sha256": "75e29331e08389320eea508bec6ef55ae93a5db7b3b7b0cc0cf74f1e474030cc"
+    },
+    "ko/observability/metrics/03-mimir.md": {
+      "lines": 832,
+      "sha256": "3bd1919e4fce3278c2d7fba6f36ec3dd2c50041632b3781b22f580abde3747ef"
+    },
+    "ko/quizzes/observability/metrics/03-mimir-quiz.md": {
+      "lines": 183,
+      "sha256": "80738ba01958c0196f2e3b609451ca3cca5f82f095cdd06e534f0735499d6a42"
+    }
+  },
+  "checks": {
+    "files": [
+      {
+        "path": "en/observability/metrics/03-mimir.md",
+        "sha256": "2ea6302806b1d7f496e97d7c384e0ee7bf01a9e307015ee029faf832b73e68e7",
+        "lines": 405,
+        "codeBlocks": {
+          "mermaid": 2,
+          "yaml": 4,
+          "bash": 3,
+          "json": 1
+        },
+        "quizQuestions": 0
+      },
+      {
+        "path": "en/quizzes/observability/metrics/03-mimir-quiz.md",
+        "sha256": "c26f6fbd8e7fedbd2c236c3de786df5cc36e2fde8d85f0b715b3d75a7ae76297",
+        "lines": 165,
+        "codeBlocks": {},
+        "quizQuestions": 10
+      },
+      {
+        "path": "ko/observability/metrics/03-mimir.md",
+        "sha256": "6e1450873fb012c18c7225440e7b93967ee690a3cb3883ed8188a0be22a605ce",
+        "lines": 405,
+        "codeBlocks": {
+          "mermaid": 2,
+          "yaml": 4,
+          "bash": 3,
+          "json": 1
+        },
+        "quizQuestions": 0
+      },
+      {
+        "path": "ko/quizzes/observability/metrics/03-mimir-quiz.md",
+        "sha256": "b5c9037793a2e4dc0224578dc2306f1a0200afaafd5a667045f14e3ba0c5503e",
+        "lines": 165,
+        "codeBlocks": {},
+        "quizQuestions": 10
+      }
+    ],
+    "passed": true,
+    "links": [
+      {
+        "source": "en/observability/metrics/03-mimir.md",
+        "target": "en/observability/metrics/02-victoriametrics.md",
+        "passed": true
+      },
+      {
+        "source": "en/observability/metrics/03-mimir.md",
+        "target": "en/quizzes/observability/metrics/03-mimir-quiz.md",
+        "passed": true
+      },
+      {
+        "source": "en/quizzes/observability/metrics/03-mimir-quiz.md",
+        "target": "en/observability/metrics/03-mimir.md",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/metrics/03-mimir.md",
+        "target": "ko/observability/metrics/02-victoriametrics.md",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/metrics/03-mimir.md",
+        "target": "ko/quizzes/observability/metrics/03-mimir-quiz.md",
+        "passed": true
+      },
+      {
+        "source": "ko/quizzes/observability/metrics/03-mimir-quiz.md",
+        "target": "ko/observability/metrics/03-mimir.md",
+        "passed": true
+      }
+    ],
+    "bilingualCodeAndAnswerParity": true,
+    "publishedValuesMatchNativeRenderedFixture": true,
+    "runtimeConfigMapMatched": true,
+    "nativeTargets": {
+      "binary": "3.2.1",
+      "chart": "6.2.0",
+      "cases": [
+        {
+          "target": "distributor",
+          "workloads": [
+            "mimir-distributor"
+          ],
+          "exitCode": 0,
+          "error": ""
+        },
+        {
+          "target": "overrides-exporter",
+          "workloads": [
+            "mimir-overrides-exporter"
+          ],
+          "exitCode": 0,
+          "error": ""
+        },
+        {
+          "target": "querier",
+          "workloads": [
+            "mimir-querier"
+          ],
+          "exitCode": 0,
+          "error": ""
+        },
+        {
+          "target": "query-frontend",
+          "workloads": [
+            "mimir-query-frontend"
+          ],
+          "exitCode": 0,
+          "error": ""
+        },
+        {
+          "target": "query-scheduler",
+          "workloads": [
+            "mimir-query-scheduler"
+          ],
+          "exitCode": 0,
+          "error": ""
+        },
+        {
+          "target": "compactor",
+          "workloads": [
+            "mimir-compactor"
+          ],
+          "exitCode": 0,
+          "error": ""
+        },
+        {
+          "target": "ingester",
+          "workloads": [
+            "mimir-ingester-zone-a",
+            "mimir-ingester-zone-b",
+            "mimir-ingester-zone-c"
+          ],
+          "exitCode": 0,
+          "error": ""
+        },
+        {
+          "target": "store-gateway",
+          "workloads": [
+            "mimir-store-gateway-zone-a",
+            "mimir-store-gateway-zone-b",
+            "mimir-store-gateway-zone-c"
+          ],
+          "exitCode": 0,
+          "error": ""
+        }
+      ],
+      "scope": "Config parse/Validate and print.config exit, actual deployed targets. Only TLS filesystem paths overridden to synthetic local certificate/key; no Kafka/S3/STS connections or workload execution. Shared config requires TLS files even for non-Kafka component targets.",
+      "allTargetCaveat": "Shared chart config is for separate component processes; default all causes an artificial compactor/TSDB directory overlap."
+    },
+    "configurationRegressions": {
+      "version": "3.2.1",
+      "cases": [
+        {
+          "case": "old-frontend",
+          "input": {
+            "query_frontend": {
+              "cache_results": true
+            }
+          },
+          "expectedValid": false,
+          "exitCode": 1,
+          "passed": true,
+          "stderr": "error loading config from .vitepress/cache/observability-mimir-audit/negative-configs/old-frontend.yaml: error parsing config file: yaml: unmarshal errors:\n  line 1: field query_frontend not found in type mimir.Config"
+        },
+        {
+          "case": "main-overrides",
+          "input": {
+            "overrides": {
+              "tenant1": {
+                "ingestion_rate": 50000
+              }
+            }
+          },
+          "expectedValid": false,
+          "exitCode": 1,
+          "passed": true,
+          "stderr": "error loading config from .vitepress/cache/observability-mimir-audit/negative-configs/main-overrides.yaml: error parsing config file: yaml: unmarshal errors:\n  line 1: field overrides not found in type mimir.Config"
+        },
+        {
+          "case": "fake-downsampling",
+          "input": {
+            "compactor": {
+              "downsampling_enabled": true
+            }
+          },
+          "expectedValid": false,
+          "exitCode": 1,
+          "passed": true,
+          "stderr": "error loading config from .vitepress/cache/observability-mimir-audit/negative-configs/fake-downsampling.yaml: error parsing config file: yaml: unmarshal errors:\n  line 2: field downsampling_enabled not found in type compactor.Config"
+        },
+        {
+          "case": "old-sample-limit",
+          "input": {
+            "limits": {
+              "max_fetched_samples_per_query": 50000000
+            }
+          },
+          "expectedValid": false,
+          "exitCode": 1,
+          "passed": true,
+          "stderr": "error loading config from .vitepress/cache/observability-mimir-audit/negative-configs/old-sample-limit.yaml: error parsing config file: yaml: unmarshal errors:\n  line 2: field max_fetched_samples_per_query not found in type validation.plainLimits"
+        },
+        {
+          "case": "old-query-length",
+          "input": {
+            "limits": {
+              "max_query_length": "30d"
+            }
+          },
+          "expectedValid": false,
+          "exitCode": 1,
+          "passed": true,
+          "stderr": "error loading config from .vitepress/cache/observability-mimir-audit/negative-configs/old-query-length.yaml: error parsing config file: yaml: unmarshal errors:\n  line 2: field max_query_length not found in type validation.plainLimits"
+        },
+        {
+          "case": "bucket-collision",
+          "input": {
+            "common": {
+              "storage": {
+                "backend": "s3",
+                "s3": {
+                  "bucket_name": "example-mimir-collision",
+                  "endpoint": "s3.ap-northeast-2.amazonaws.com",
+                  "region": "ap-northeast-2"
+                }
+              }
+            }
+          },
+          "expectedValid": false,
+          "exitCode": 1,
+          "passed": true,
+          "stderr": "error validating config: invalid bucket config: ruler storage: S3 bucket name and storage prefix cannot be the same as the one used in blocks storage config",
+          "target": "ruler",
+          "note": "Conflict checked when corresponding store is enabled; distributor/ingester alone do not validate the ruler storage path."
+        },
+        {
+          "case": "classic",
+          "input": {
+            "ingest_storage": {
+              "enabled": false
+            },
+            "ingester": {
+              "push_grpc_method_enabled": true
+            }
+          },
+          "expectedValid": true,
+          "exitCode": 0,
+          "passed": true,
+          "stderr": ""
+        },
+        {
+          "case": "supported-drop-labels",
+          "input": {
+            "limits": {
+              "drop_labels": [
+                "pod_template_hash"
+              ]
+            }
+          },
+          "expectedValid": true,
+          "exitCode": 0,
+          "passed": true,
+          "stderr": ""
+        },
+        {
+          "case": "tenant-limit-override-as-main-limits",
+          "input": {
+            "limits": {
+              "ingestion_rate": 50000,
+              "ingestion_burst_size": 100000,
+              "max_global_series_per_user": 1000000
+            }
+          },
+          "expectedValid": true,
+          "exitCode": 0,
+          "passed": true,
+          "stderr": ""
+        }
+      ],
+      "scope": "Native strict parsing/validation only. Per-tenant limit keys checked as mainlimits; no runtime reload. limits.drop_labels is supported, not obsolete."
+    },
+    "alertRuleTimeSeriesCases": {
+      "promtool": "3.14.0",
+      "cases": [
+        "healthy",
+        "two-failures",
+        "shutdown-not-failure",
+        "missing-target",
+        "counter-reset-without-new-failure",
+        "one-per-pod-not-two-per-pod"
+      ],
+      "passed": true,
+      "scope": "Synthetic time-series evaluation, not metrics emitted by a live Mimir/Kafka deployment."
+    },
+    "mermaid": {
+      "version": "11.16.0",
+      "scope": "Native local browser parse/render; no VitePress build/server",
+      "results": [
+        {
+          "path": "en/observability/metrics/03-mimir.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 6,
+          "edges": 5,
+          "consoleErrors": []
+        },
+        {
+          "path": "en/observability/metrics/03-mimir.md",
+          "index": 1,
+          "parsed": true,
+          "nodes": 9,
+          "edges": 8,
+          "consoleErrors": []
+        },
+        {
+          "path": "ko/observability/metrics/03-mimir.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 6,
+          "edges": 5,
+          "consoleErrors": []
+        },
+        {
+          "path": "ko/observability/metrics/03-mimir.md",
+          "index": 1,
+          "parsed": true,
+          "nodes": 9,
+          "edges": 8,
+          "consoleErrors": []
+        }
+      ]
+    },
+    "sourceLinkKeys": [
+      "3891b84a0796",
+      "f079a32c5149",
+      "029f31af45f1",
+      "c3f4f115afef",
+      "bc46b7480208",
+      "1f3b09700a36",
+      "59d8eefab48f",
+      "a997c4c1c8d0",
+      "ba2d21199e86",
+      "7ab7e62e3f06",
+      "fd834ea3c009",
+      "30f4a521ea41",
+      "ee88085b0689",
+      "9c90f598c055",
+      "b7b629cf6268",
+      "85128498bc85",
+      "b9e877d876dc"
+    ],
+    "scopedDiffCheck": true,
+    "limits": [
+      "No live Kafka/mTLS/IRSA/S3/STS/cloud/Kubernetes/PVC or application execution; no capacity/HA guarantee.",
+      "Native config checks use actual chart component targets and synthetic local TLS file-path overrides, exiting before service initialization.",
+      "Runtime override keys validated as supported limits; no live reload checked.",
+      "Prometheus remote_write check is syntax-only; credential/gateway connection requires separately prepared files and deployment.",
+      "Original10PNGs semantically reviewed; obsolete/wrong figures replaced inownedMarkdown with currentdiagrams/tables/text. Sharedoriginalarchmaps/foreignbackfill remainsparentfollowup.",
+      "No full local VitePress build/devserver;4explicitMarkdown Vuecompiles and4nativeMermaid browserrenders only."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/observability/metrics/03-mimir.md",
+        "sha256": "2ea6302806b1d7f496e97d7c384e0ee7bf01a9e307015ee029faf832b73e68e7",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "grafana-mimir"
+          },
+          {
+            "tag": "h2",
+            "id": "mimir-cortex-and-thanos"
+          },
+          {
+            "tag": "h2",
+            "id": "core-architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "ingest-storage-and-the-classic-write-path"
+          },
+          {
+            "tag": "h3",
+            "id": "query-path-and-components"
+          },
+          {
+            "tag": "h2",
+            "id": "multi-tenancy-and-authentication"
+          },
+          {
+            "tag": "h3",
+            "id": "tenant-limits-and-runtime-configuration"
+          },
+          {
+            "tag": "h2",
+            "id": "helm-configuration-on-eks"
+          },
+          {
+            "tag": "h3",
+            "id": "prepare-dependencies"
+          },
+          {
+            "tag": "h3",
+            "id": "values-and-local-rendering"
+          },
+          {
+            "tag": "h3",
+            "id": "existing-classic-installations"
+          },
+          {
+            "tag": "h2",
+            "id": "s3-and-workload-identity"
+          },
+          {
+            "tag": "h3",
+            "id": "buckets-and-irsa"
+          },
+          {
+            "tag": "h3",
+            "id": "lifecycle-and-retention"
+          },
+          {
+            "tag": "h2",
+            "id": "queries-caching-and-performance"
+          },
+          {
+            "tag": "h3",
+            "id": "current-configuration-keys"
+          },
+          {
+            "tag": "h3",
+            "id": "cache-roles"
+          },
+          {
+            "tag": "h3",
+            "id": "capacity-and-availability"
+          },
+          {
+            "tag": "h2",
+            "id": "comparison-with-victoriametrics"
+          },
+          {
+            "tag": "h2",
+            "id": "monitoring-and-troubleshooting"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-and-references"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "grafana-mimir",
+          "mimir-cortex-and-thanos",
+          "core-architecture",
+          "ingest-storage-and-the-classic-write-path",
+          "mermaid-67",
+          "query-path-and-components",
+          "mermaid-80",
+          "multi-tenancy-and-authentication",
+          "tenant-limits-and-runtime-configuration",
+          "helm-configuration-on-eks",
+          "prepare-dependencies",
+          "values-and-local-rendering",
+          "existing-classic-installations",
+          "s3-and-workload-identity",
+          "buckets-and-irsa",
+          "lifecycle-and-retention",
+          "queries-caching-and-performance",
+          "current-configuration-keys",
+          "cache-roles",
+          "capacity-and-availability",
+          "comparison-with-victoriametrics",
+          "monitoring-and-troubleshooting",
+          "validation-and-references",
+          "quiz"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/metrics/03-mimir-quiz.md",
+        "sha256": "c26f6fbd8e7fedbd2c236c3de786df5cc36e2fde8d85f0b715b3d75a7ae76297",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "grafana-mimir-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-which-backend-is-intended-for-production-mimir-block-storage"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-what-does-the-distributor-do-in-ingest-storage-architecture"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-how-should-tenant-selection-be-secured-for-untrusted-callers"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-why-do-ingesters-upload-tsdb-blocks-to-object-storage"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-which-responsibilities-belong-to-the-compactor"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-which-is-not-a-query-frontend-responsibility"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-which-comparison-with-victoriametrics-is-accurate"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-what-does-the-store-gateway-provide"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-what-does-compactor-blocks-retention-period-control"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-which-is-not-a-sound-availability-assumption"
+          }
+        ],
+        "renderedIds": [
+          "grafana-mimir-quiz",
+          "_1-which-backend-is-intended-for-production-mimir-block-storage",
+          "_2-what-does-the-distributor-do-in-ingest-storage-architecture",
+          "_3-how-should-tenant-selection-be-secured-for-untrusted-callers",
+          "_4-why-do-ingesters-upload-tsdb-blocks-to-object-storage",
+          "_5-which-responsibilities-belong-to-the-compactor",
+          "_6-which-is-not-a-query-frontend-responsibility",
+          "_7-which-comparison-with-victoriametrics-is-accurate",
+          "_8-what-does-the-store-gateway-provide",
+          "_9-what-does-compactor-blocks-retention-period-control",
+          "_10-which-is-not-a-sound-availability-assumption"
+        ]
+      },
+      {
+        "path": "ko/observability/metrics/03-mimir.md",
+        "sha256": "6e1450873fb012c18c7225440e7b93967ee690a3cb3883ed8188a0be22a605ce",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "grafana-mimir"
+          },
+          {
+            "tag": "h2",
+            "id": "mimir-cortex-thanos-비교"
+          },
+          {
+            "tag": "h2",
+            "id": "핵심-아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "ingest-storage와-classic-쓰기-경로"
+          },
+          {
+            "tag": "h3",
+            "id": "쿼리-경로와-컴포넌트"
+          },
+          {
+            "tag": "h2",
+            "id": "멀티테넌시와-인증"
+          },
+          {
+            "tag": "h3",
+            "id": "테넌트-제한과-runtime-configuration"
+          },
+          {
+            "tag": "h2",
+            "id": "eks의-helm-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "의존성-준비"
+          },
+          {
+            "tag": "h3",
+            "id": "values와-로컬-렌더링"
+          },
+          {
+            "tag": "h3",
+            "id": "기존-classic-설치"
+          },
+          {
+            "tag": "h2",
+            "id": "s3와-workload-identity"
+          },
+          {
+            "tag": "h3",
+            "id": "버킷과-irsa"
+          },
+          {
+            "tag": "h3",
+            "id": "lifecycle과-보존"
+          },
+          {
+            "tag": "h2",
+            "id": "쿼리-캐시와-성능"
+          },
+          {
+            "tag": "h3",
+            "id": "현재-설정-키"
+          },
+          {
+            "tag": "h3",
+            "id": "캐시의-역할"
+          },
+          {
+            "tag": "h3",
+            "id": "용량과-가용성"
+          },
+          {
+            "tag": "h2",
+            "id": "victoriametrics와-비교"
+          },
+          {
+            "tag": "h2",
+            "id": "모니터링과-문제-해결"
+          },
+          {
+            "tag": "h2",
+            "id": "검증과-참고-자료"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "grafana-mimir",
+          "mimir-cortex-thanos-비교",
+          "핵심-아키텍처",
+          "ingest-storage와-classic-쓰기-경로",
+          "mermaid-67",
+          "쿼리-경로와-컴포넌트",
+          "mermaid-80",
+          "멀티테넌시와-인증",
+          "테넌트-제한과-runtime-configuration",
+          "eks의-helm-구성",
+          "의존성-준비",
+          "values와-로컬-렌더링",
+          "기존-classic-설치",
+          "s3와-workload-identity",
+          "버킷과-irsa",
+          "lifecycle과-보존",
+          "쿼리-캐시와-성능",
+          "현재-설정-키",
+          "캐시의-역할",
+          "용량과-가용성",
+          "victoriametrics와-비교",
+          "모니터링과-문제-해결",
+          "검증과-참고-자료",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/metrics/03-mimir-quiz.md",
+        "sha256": "b5c9037793a2e4dc0224578dc2306f1a0200afaafd5a667045f14e3ba0c5503e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "grafana-mimir-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-운영-mimir-블록-저장소로-사용하는-백엔드는-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-ingest-storage-아키텍처에서-distributor의-역할은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-신뢰하지-않는-호출자의-테넌트-선택을-어떻게-보호해야-하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-ingester가-tsdb-블록을-객체-스토리지에-업로드하는-이유는-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-compactor가-담당하는-작업은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-query-frontend의-역할이-아닌-것은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-victoriametrics와의-비교로-올바른-것은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-store-gateway가-제공하는-기능은-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-compactor-blocks-retention-period는-무엇을-제어하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "_10-가용성-구성에서-타당하지-않은-가정은-무엇인가요"
+          }
+        ],
+        "renderedIds": [
+          "grafana-mimir-퀴즈",
+          "_1-운영-mimir-블록-저장소로-사용하는-백엔드는-무엇인가요",
+          "_2-ingest-storage-아키텍처에서-distributor의-역할은-무엇인가요",
+          "_3-신뢰하지-않는-호출자의-테넌트-선택을-어떻게-보호해야-하나요",
+          "_4-ingester가-tsdb-블록을-객체-스토리지에-업로드하는-이유는-무엇인가요",
+          "_5-compactor가-담당하는-작업은-무엇인가요",
+          "_6-query-frontend의-역할이-아닌-것은-무엇인가요",
+          "_7-victoriametrics와의-비교로-올바른-것은-무엇인가요",
+          "_8-store-gateway가-제공하는-기능은-무엇인가요",
+          "_9-compactor-blocks-retention-period는-무엇을-제어하나요",
+          "_10-가용성-구성에서-타당하지-않은-가정은-무엇인가요"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://api.github.com/repos/grafana/mimir/releases/latest",
+      "cacheKey": "971e1b2b67ad",
+      "fetchedAt": "2026-09-12T21:54:02.536135+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/grafana/mimir/releases/latest",
+      "sha256": "1a328f1d63e70f2eab676db608db6b65289c534e3fbdfaa4a179ee5c24d3b910"
+    },
+    {
+      "url": "https://grafana.github.io/helm-charts/index.yaml",
+      "cacheKey": "63093a22ee4f",
+      "fetchedAt": "2026-09-12T21:54:02.264181+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.github.io/helm-charts/index.yaml",
+      "sha256": "668222d829af33ac0add2305488343be8d03b8ac866783e91b9e12a69a09c725"
+    },
+    {
+      "url": "https://grafana.com/docs/mimir/latest/references/architecture/",
+      "cacheKey": "9832dcc81d10",
+      "fetchedAt": "2026-09-12T21:54:02.844502+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/mimir/latest/references/architecture/",
+      "sha256": "eaa535244159d1037b44d19c98ffc06efe25802c6f898b6115383733494fdbcd"
+    },
+    {
+      "url": "https://grafana.com/docs/mimir/latest/configure/configuration-parameters/",
+      "cacheKey": "a997c4c1c8d0",
+      "fetchedAt": "2026-09-12T21:54:03.468364+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/mimir/latest/configure/configuration-parameters/",
+      "sha256": "1f117f5105c79f1462faef770520dbe75b6097e80312799410c84b27f322bf3f"
+    },
+    {
+      "url": "https://grafana.com/docs/mimir/latest/manage/secure/authentication-and-authorization/",
+      "cacheKey": "fd834ea3c009",
+      "fetchedAt": "2026-09-12T21:54:03.523020+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/mimir/latest/manage/secure/authentication-and-authorization/",
+      "sha256": "083c36d726c8aeec051b9f81c9e4e9c32caa0ce0172119c8c91f3d648b6589c9"
+    },
+    {
+      "url": "https://grafana.com/docs/mimir/latest/get-started/about-grafana-mimir-architecture/about-ingest-storage-architecture/",
+      "cacheKey": "7ab7e62e3f06",
+      "fetchedAt": "2026-09-12T21:59:12.979127+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/mimir/latest/get-started/about-grafana-mimir-architecture/about-ingest-storage-architecture/",
+      "sha256": "848ccbaca9e9e6773363b0d742945c575bd71f0bf3ccbc89f00dfe2ec8453abd"
+    },
+    {
+      "url": "https://grafana.com/docs/mimir/latest/configure/configure-object-storage-backend/",
+      "cacheKey": "ba2d21199e86",
+      "fetchedAt": "2026-09-12T21:59:13.223327+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/mimir/latest/configure/configure-object-storage-backend/",
+      "sha256": "546cbeccc544359638d92d5f6ecc1e613c04c0cc5fefb93c48d1fbe41fb9e3c5"
+    },
+    {
+      "url": "https://grafana.com/docs/helm-charts/mimir-distributed/latest/run-production-environment-with-helm/",
+      "cacheKey": "1f3b09700a36",
+      "fetchedAt": "2026-09-12T22:18:18.441611+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/helm-charts/mimir-distributed/latest/run-production-environment-with-helm/",
+      "sha256": "61bb714a667d4c14f3e29c84530af1201d5b2ca9aaa4975d94226de6a83439f6"
+    },
+    {
+      "url": "https://grafana.com/docs/helm-charts/mimir-distributed/latest/migration-guides/migrate-helm-chart-5.x-to-6.0/",
+      "cacheKey": "bc46b7480208",
+      "fetchedAt": "2026-09-12T22:18:18.028981+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/helm-charts/mimir-distributed/latest/migration-guides/migrate-helm-chart-5.x-to-6.0/",
+      "sha256": "5a863ad9bcf915355e88569adb2f0753ff97fdf1063dc303b389b39c08686367"
+    },
+    {
+      "url": "https://grafana.com/docs/mimir/latest/configure/about-runtime-configuration/",
+      "cacheKey": "59d8eefab48f",
+      "fetchedAt": "2026-09-12T22:18:18.484145+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/mimir/latest/configure/about-runtime-configuration/",
+      "sha256": "14e796b74d947ae7787ceac1c0fc6344dbbd334936e99ac448967404bec9eb15"
+    },
+    {
+      "url": "https://grafana.com/docs/mimir/latest/references/architecture/components/compactor/",
+      "cacheKey": "1a5fb951eeec",
+      "fetchedAt": "2026-09-12T22:18:18.700060+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/mimir/latest/references/architecture/components/compactor/",
+      "sha256": "3b4cf33361585d30af54a92e6fd9ff6fc2a38ebf5274b55105fb973fc8fd58b6"
+    },
+    {
+      "url": "https://grafana.com/docs/mimir/latest/references/architecture/components/store-gateway/",
+      "cacheKey": "ee88085b0689",
+      "fetchedAt": "2026-09-12T22:18:18.765446+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/mimir/latest/references/architecture/components/store-gateway/",
+      "sha256": "f8dd8519042d61f2cda734a5feefa4fd693157e1d9907c57ac14124cea8bc915"
+    },
+    {
+      "url": "https://api.github.com/repos/grafana/mimir/git/trees/mimir-3.2.1?recursive=1",
+      "cacheKey": "3e23c3651d39",
+      "fetchedAt": "2026-09-12T22:18:19.223286+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/grafana/mimir/git/trees/mimir-3.2.1?recursive=1",
+      "sha256": "454c4936fc749cb002a3535346172ba23bdaaf593e78e27dbb60a966c404dce0"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/pkg/storage/bucket/s3/config.go",
+      "cacheKey": "21cda0966f95",
+      "fetchedAt": "2026-09-12T22:20:09.328833+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/pkg/storage/bucket/s3/config.go",
+      "sha256": "01149d5a13ee27c18da2d621f41d683fa2b5a6e86ae5f0666d6268738375e18e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/pkg/storage/bucket/s3/bucket_client.go",
+      "cacheKey": "b9964ddd211e",
+      "fetchedAt": "2026-09-12T22:20:09.330116+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/pkg/storage/bucket/s3/bucket_client.go",
+      "sha256": "a5465366e381ac3e07ad72a0be3a8e7d4de1e3b7a295e65d4fb071128ba42954"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/vendor/github.com/thanos-io/objstore/providers/s3/s3.go",
+      "cacheKey": "68e3cdaab700",
+      "fetchedAt": "2026-09-12T22:20:40.687726+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/vendor/github.com/thanos-io/objstore/providers/s3/s3.go",
+      "sha256": "c043d672bb8280315ea43e749a02638af396133afe3f9f86c8b10ca9162a511b"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/vendor/github.com/minio/minio-go/v7/pkg/credentials/iam_aws.go",
+      "cacheKey": "3175547bb323",
+      "fetchedAt": "2026-09-12T22:20:40.691218+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/vendor/github.com/minio/minio-go/v7/pkg/credentials/iam_aws.go",
+      "sha256": "45d3e477411cf7f2b3cbf343f25b05467b6da4af931ca0adaf1834ea76e8eb5a"
+    },
+    {
+      "url": "https://grafana.com/docs/mimir/latest/set-up/migrate/migrate-ingest-storage/",
+      "cacheKey": "85128498bc85",
+      "fetchedAt": "2026-09-12T22:20:41.371452+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/mimir/latest/set-up/migrate/migrate-ingest-storage/",
+      "sha256": "928f07886a5c1e9d73ce53bff90de1870b0a2f67a5ce4e03bac145c2445be74c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/operations/mimir-mixin/alerts/compactor.libsonnet",
+      "cacheKey": "c22cbd2aae31",
+      "fetchedAt": "2026-09-12T22:20:09.573298+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/operations/mimir-mixin/alerts/compactor.libsonnet",
+      "sha256": "291140a9fa77505d418dd70d138623cad3c841cac401b8a0753116df132f90e5"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/operations/mimir-mixin/alerts/ingest-storage.libsonnet",
+      "cacheKey": "98da28bbeb58",
+      "fetchedAt": "2026-09-12T22:20:09.568850+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/operations/mimir-mixin/alerts/ingest-storage.libsonnet",
+      "sha256": "32b84fdad4ad149798b4fa26411e0c51f6b16643c31a91be38334aa2fea919ea"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/cmd/mimir/main.go",
+      "cacheKey": "6eec8950e692",
+      "fetchedAt": "2026-09-12T21:59:13.767701+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/cmd/mimir/main.go",
+      "sha256": "b73606ce68c8ee00032f9b707487146d11ecdfe2f68e86b09ff406c120b7a61f"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/pkg/mimir/mimir.go",
+      "cacheKey": "d233f8a863e0",
+      "fetchedAt": "2026-09-12T21:59:14.010225+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/pkg/mimir/mimir.go",
+      "sha256": "45382c33f3cc5127889b0e9170b291731792c99bdaae49c5628dc9c126d122e7"
+    },
+    {
+      "url": "https://cortexmetrics.io/docs/",
+      "cacheKey": "3891b84a0796",
+      "fetchedAt": "2026-09-12T22:25:19.236425+00:00",
+      "status": 200,
+      "finalURL": "https://cortexmetrics.io/docs/",
+      "sha256": "eabd2689d64632288f90ade7c54969d8e9df3c1d7293d575692c2662b87e64d4"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-transition-general-considerations.html",
+      "cacheKey": "f079a32c5149",
+      "fetchedAt": "2026-09-12T22:25:20.386531+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/lifecycle-transition-general-considerations.html",
+      "sha256": "9d800480d711accd3fba613a27fa15ef52fa2a96e5b9a9896ecaa480879bcf2c"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html",
+      "cacheKey": "029f31af45f1",
+      "fetchedAt": "2026-09-12T22:25:20.177090+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html",
+      "sha256": "aacc0de7d93d53696c6b18b02aaf33c24dca2f437dc4f698e31c51f5742845dc"
+    },
+    {
+      "url": "https://grafana.com/docs/helm-charts/mimir-distributed/latest/",
+      "cacheKey": "c3f4f115afef",
+      "fetchedAt": "2026-09-12T21:59:13.480872+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/helm-charts/mimir-distributed/latest/",
+      "sha256": "16663893cc69b9192b6b1accb57aa3af47c2ab3957f8cd3c9a6013b0285888cc"
+    },
+    {
+      "url": "https://grafana.com/docs/mimir/latest/references/architecture/components/query-frontend/",
+      "cacheKey": "30f4a521ea41",
+      "fetchedAt": "2026-09-12T21:59:13.527220+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/mimir/latest/references/architecture/components/query-frontend/",
+      "sha256": "2e0e21ea91e14db583d4007ca522dddaf72d5e702f0b7b31fafe557bda2b42c9"
+    },
+    {
+      "url": "https://grafana.com/docs/mimir/latest/references/architecture/deployment-modes/",
+      "cacheKey": "9c90f598c055",
+      "fetchedAt": "2026-09-12T22:25:19.913667+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/mimir/latest/references/architecture/deployment-modes/",
+      "sha256": "211ac21b2dd5f128af3ba13aa2b14ebb41e094705d3788d1efdff39b6faa495e"
+    },
+    {
+      "url": "https://grafana.com/docs/mimir/latest/references/http-api/",
+      "cacheKey": "b7b629cf6268",
+      "fetchedAt": "2026-09-12T21:59:14.311414+00:00",
+      "status": 200,
+      "finalURL": "https://grafana.com/docs/mimir/latest/references/http-api/",
+      "sha256": "dc0286526a951441eee833434c119b380303803eb553c3c54bb14b2906d4d69c"
+    },
+    {
+      "url": "https://thanos.io/tip/components/receive.md/",
+      "cacheKey": "b9e877d876dc",
+      "fetchedAt": "2026-09-12T22:25:19.952582+00:00",
+      "status": 200,
+      "finalURL": "https://thanos.io/tip/components/receive.md/",
+      "sha256": "132e56e5c62fd32ce3a9e8c99980c907e17b271096f56ddf72f7d475015405b7"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/pkg/distributor/distributor.go",
+      "cacheKey": "5432e77929ad",
+      "fetchedAt": "2026-09-12T22:20:10.969363+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/pkg/distributor/distributor.go",
+      "sha256": "d1b0c6d9b3fc159dcc7fb15490c71182983df52afe8cf4e6d749bfe93a30b99e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/pkg/ingester/metrics.go",
+      "cacheKey": "962c1bf558bc",
+      "fetchedAt": "2026-09-12T22:20:10.563376+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/grafana/mimir/mimir-3.2.1/pkg/ingester/metrics.go",
+      "sha256": "ad4b2698dad3bfc6ae0dca1f8b84f057eebbf38299dc949a27e83008f18e3759"
+    },
+    {
+      "url": "https://docs.victoriametrics.com/victoriametrics/metricsql/",
+      "cacheKey": "24e7a199cbe8",
+      "fetchedAt": "2026-09-12T20:16:37.248711+00:00",
+      "status": 200,
+      "finalURL": "https://docs.victoriametrics.com/victoriametrics/metricsql/",
+      "sha256": "95710c4bf1aa0a34e0ddbeebed73474bc0b62e4790272385649e53c199a950db"
+    },
+    {
+      "url": "https://docs.victoriametrics.com/victoriametrics/cluster-victoriametrics/",
+      "cacheKey": "242594b0e7de",
+      "fetchedAt": "2026-09-12T20:18:00.991203+00:00",
+      "status": 200,
+      "finalURL": "https://docs.victoriametrics.com/victoriametrics/cluster-victoriametrics/",
+      "sha256": "e74a56ffdb1153494fc13505950af149112967e92eae43d08be62f536e954069"
+    },
+    {
+      "url": "https://docs.victoriametrics.com/victoriametrics/single-server-victoriametrics/",
+      "cacheKey": "7968d8e31e18",
+      "fetchedAt": "2026-09-12T20:18:00.045915+00:00",
+      "status": 200,
+      "finalURL": "https://docs.victoriametrics.com/victoriametrics/single-server-victoriametrics/",
+      "sha256": "820251b0e1d68625950a05f802d5fbc64dd3db070f674f491b2701ddd7a73c3d"
+    }
+  ],
+  "findings": [
+    "Updated current guidance to Mimir3.2.1 and stablechart6.2.0(defaultapp3.2.0); chartKubernetes^1.32constraint is not an EKSsupportmatrix; weeklydevelopment releases not conflatedwithstable.",
+    "Distinguished preferredKafkaingeststorage from classicdistributor→ingesterquorum and binaryversusHelmdefaults; clarified asynchronousconsumption/read-after-write,strongconsistencycosts,WAL/blockhandoff/retention andpartitionidentity.",
+    "Replaced tenant-header/basic-auth-as-authentication claims with trustedgateway identitymapping/headeroverwrite and backendaccessboundaries; singlePrometheusremote_write/filecredential example.",
+    "Corrected Mimir frontend versus Helm query_frontend namespaces,querier.max_samples,limits.max_total_query_length/query_sharding_total_shards/align_queries_with_step;per-tenantoverrides now runtimeConfig.",
+    "Replaced obsolete chartcachevalues with results/index/chunks/metadata-cache;removedfalsecachestaircaseandcompactor.downsampling_enabled;recordingrules do notdelete rawseries.",
+    "PreparedlocalHelmprofilewith externalKafka/S3,optionalcomponentsdisabled,realserviceaccountnamewiring,threezonephysicalselectors,andmTLSSecretvolumes. Rendered3ingesters+3storegateways total;singlecompactor notblanketHA. SharedTLSvalidationrequiresfilesinallMimirprocesses,notonlyKafkaconsumers.",
+    "Corrected samebucket/prefix collision with threebuckets and scopedS3IAMpolicy; IRSAtrustsub/aud andprojectedtokenrequirements; nativeproviderchainconfirmedIRSAhandling. Collisionvalidationtestedwithrulertarget;distributor-onlycheckcannotvalidateallroles.",
+    "Corrected asynchronousblockretention/deletiondelay andS3lifecycleversion/backup implications; removeduniversal90dIAcostrule andcompliance/deletionguarantees.",
+    "Retained limits.drop_labels after native3.2.1 confirmed it is supported; correctedinitialauditcandidate and documentedidentitycollisionrisk. Validexistingfeature not falselyremoved.",
+    "Replaced unsupportedMimir/Cortex/Thanos/VMspeed,compression,unlimitedretention/scaling comparisonswitharchitecture/query/tenant/recoveryandmeasuredcostcriteria;ThanosReceive andMimirfilesystemdevelopmentexceptionsincluded.",
+    "Corrected buildinfo-as-slowqueries andexampleServicenames;privateport-forward diagnostics,actualmetricnames,partition/queue/storage investigation andprotectedadminpaths. Compactoralert countswindowfailures ratherthanclaimsconsecutivefailures;syntheticshutdown/reset/missing/per-Podtests pass.",
+    "Fullyreviewedall20quizquestionsandrewroteanswersalignedwithcurrentarchitecture,identity,storage,retentionandHAconditions. All10originalfiguretopicsinspected/reconciled;4currentMermaiddiagramsvalidatedinbrowser,sharedassetfollowuprecorded."
+  ],
+  "figures": {
+    "original": [
+      {
+        "locale": "en",
+        "originalPNG": "en/.gitbook/assets/en-observability-metrics-03-mimir-0.png",
+        "sha256": "0cfce9c03820c8aa7b48fafa2d15046cd17ee7526b67795ece942435b6d047c6",
+        "visuallyReviewed": true,
+        "finding": "Cortex is treated as retired predecessor, Thanos sidecar as mandatory, and unsupported speed/overhead rankings.",
+        "action": "Removed inaccurate duplicate figure/reference from ownedsource; replaced topic with corrected text/tables and current in-source architecture diagrams.",
+        "scopeExternalFollowup": [
+          "assets/diagrams/archify/en-observability-metrics-03-mimir-0.architecture.json",
+          "public/archmaps/en-observability-metrics-03-mimir-0.html"
+        ],
+        "note": "Shared/foreign assets unchanged; parent must sync semantics before any generated-language asset backfill."
+      },
+      {
+        "locale": "en",
+        "originalPNG": "en/.gitbook/assets/en-observability-metrics-03-mimir-1.png",
+        "sha256": "2cbb45185c7833fde0664977ae970b83a991364e8700407b83c87b5eebf40f72",
+        "visuallyReviewed": true,
+        "finding": "Classic write diagram presented as general architecture; frontend-to-store-gateway edge and omitted scheduler misrepresent current query flow.",
+        "action": "Removed inaccurate duplicate figure/reference from ownedsource; replaced topic with corrected text/tables and current in-source architecture diagrams.",
+        "scopeExternalFollowup": [
+          "assets/diagrams/archify/en-observability-metrics-03-mimir-1.architecture.json",
+          "public/archmaps/en-observability-metrics-03-mimir-1.html"
+        ],
+        "note": "Shared/foreign assets unchanged; parent must sync semantics before any generated-language asset backfill."
+      },
+      {
+        "locale": "en",
+        "originalPNG": "en/.gitbook/assets/en-observability-metrics-03-mimir-2.png",
+        "sha256": "87016d90f9a0e2f8df2f035d2ea3a0edd7829a9c5d6be1b1081578c1d497bb3f",
+        "visuallyReviewed": true,
+        "finding": "Client-controlled tenant header/basic-auth username portrayed as isolation without trusted authentication/mapping; classic write path.",
+        "action": "Removed inaccurate duplicate figure/reference from ownedsource; replaced topic with corrected text/tables and current in-source architecture diagrams.",
+        "scopeExternalFollowup": [
+          "assets/diagrams/archify/en-observability-metrics-03-mimir-2.architecture.json",
+          "public/archmaps/en-observability-metrics-03-mimir-2.html"
+        ],
+        "note": "Shared/foreign assets unchanged; parent must sync semantics before any generated-language asset backfill."
+      },
+      {
+        "locale": "en",
+        "originalPNG": "en/.gitbook/assets/en-observability-metrics-03-mimir-3.png",
+        "sha256": "70ab370625ec8db659c0ace9d2b8c0bfce1b07912b3550a8afa37a32990f345e",
+        "visuallyReviewed": true,
+        "finding": "Metadata/chunk cache hits incorrectly presented as terminal complete query responses in a three-stage cascade.",
+        "action": "Removed inaccurate duplicate figure/reference from ownedsource; replaced topic with corrected text/tables and current in-source architecture diagrams.",
+        "scopeExternalFollowup": [
+          "assets/diagrams/archify/en-observability-metrics-03-mimir-3.workflow.json",
+          "public/archmaps/en-observability-metrics-03-mimir-3.html"
+        ],
+        "note": "Shared/foreign assets unchanged; parent must sync semantics before any generated-language asset backfill."
+      },
+      {
+        "locale": "en",
+        "originalPNG": "en/.gitbook/assets/en-observability-metrics-03-mimir-4.png",
+        "sha256": "be2ad90c2e6b177915d6d9902d1c2cba0abd15f117c978af6da872d369cec8ed",
+        "visuallyReviewed": true,
+        "finding": "Universal product selection from ecosystem/cost/scalability assumptions lacks workload evidence.",
+        "action": "Removed inaccurate duplicate figure/reference from ownedsource; replaced topic with corrected text/tables and current in-source architecture diagrams.",
+        "scopeExternalFollowup": [
+          "assets/diagrams/archify/en-observability-metrics-03-mimir-4.workflow.json",
+          "public/archmaps/en-observability-metrics-03-mimir-4.html"
+        ],
+        "note": "Shared/foreign assets unchanged; parent must sync semantics before any generated-language asset backfill."
+      },
+      {
+        "locale": "ko",
+        "originalPNG": "ko/.gitbook/assets/ko-observability-metrics-03-mimir-0.png",
+        "sha256": "c6533897a53dbe008c1391f44c4c4bf2d4f0317425ab5ffe9268cace00c20b7e",
+        "visuallyReviewed": true,
+        "finding": "Cortex is treated as retired predecessor, Thanos sidecar as mandatory, and unsupported speed/overhead rankings.",
+        "action": "Removed inaccurate duplicate figure/reference from ownedsource; replaced topic with corrected text/tables and current in-source architecture diagrams.",
+        "scopeExternalFollowup": [
+          "assets/diagrams/archify/ko-observability-metrics-03-mimir-0.architecture.json",
+          "public/archmaps/ko-observability-metrics-03-mimir-0.html"
+        ],
+        "note": "Shared/foreign assets unchanged; parent must sync semantics before any generated-language asset backfill."
+      },
+      {
+        "locale": "ko",
+        "originalPNG": "ko/.gitbook/assets/ko-observability-metrics-03-mimir-1.png",
+        "sha256": "7dc998688276cb918333c863f3a11313c83474fc48bf39fac8c0872acd013e0e",
+        "visuallyReviewed": true,
+        "finding": "Classic write diagram presented as general architecture; frontend-to-store-gateway edge and omitted scheduler misrepresent current query flow.",
+        "action": "Removed inaccurate duplicate figure/reference from ownedsource; replaced topic with corrected text/tables and current in-source architecture diagrams.",
+        "scopeExternalFollowup": [
+          "assets/diagrams/archify/ko-observability-metrics-03-mimir-1.architecture.json",
+          "public/archmaps/ko-observability-metrics-03-mimir-1.html"
+        ],
+        "note": "Shared/foreign assets unchanged; parent must sync semantics before any generated-language asset backfill."
+      },
+      {
+        "locale": "ko",
+        "originalPNG": "ko/.gitbook/assets/ko-observability-metrics-03-mimir-2.png",
+        "sha256": "b3b59a5c7b81cdb53c01844836d2bdfa84611d84afe137fc944f851da6d712f9",
+        "visuallyReviewed": true,
+        "finding": "Client-controlled tenant header/basic-auth username portrayed as isolation without trusted authentication/mapping; classic write path.",
+        "action": "Removed inaccurate duplicate figure/reference from ownedsource; replaced topic with corrected text/tables and current in-source architecture diagrams.",
+        "scopeExternalFollowup": [
+          "assets/diagrams/archify/ko-observability-metrics-03-mimir-2.architecture.json",
+          "public/archmaps/ko-observability-metrics-03-mimir-2.html"
+        ],
+        "note": "Shared/foreign assets unchanged; parent must sync semantics before any generated-language asset backfill."
+      },
+      {
+        "locale": "ko",
+        "originalPNG": "ko/.gitbook/assets/ko-observability-metrics-03-mimir-3.png",
+        "sha256": "82e81bc2345698323f8175a4f13b918710dddd53be748c96e20dcc3f3a442a78",
+        "visuallyReviewed": true,
+        "finding": "Metadata/chunk cache hits incorrectly presented as terminal complete query responses in a three-stage cascade.",
+        "action": "Removed inaccurate duplicate figure/reference from ownedsource; replaced topic with corrected text/tables and current in-source architecture diagrams.",
+        "scopeExternalFollowup": [
+          "assets/diagrams/archify/ko-observability-metrics-03-mimir-3.workflow.json",
+          "public/archmaps/ko-observability-metrics-03-mimir-3.html"
+        ],
+        "note": "Shared/foreign assets unchanged; parent must sync semantics before any generated-language asset backfill."
+      },
+      {
+        "locale": "ko",
+        "originalPNG": "ko/.gitbook/assets/ko-observability-metrics-03-mimir-4.png",
+        "sha256": "a119e0cf1553c2213510e79119a298766a605c9d2d6e374e86a527198281bc8a",
+        "visuallyReviewed": true,
+        "finding": "Universal product selection from ecosystem/cost/scalability assumptions lacks workload evidence.",
+        "action": "Removed inaccurate duplicate figure/reference from ownedsource; replaced topic with corrected text/tables and current in-source architecture diagrams.",
+        "scopeExternalFollowup": [
+          "assets/diagrams/archify/ko-observability-metrics-03-mimir-4.workflow.json",
+          "public/archmaps/ko-observability-metrics-03-mimir-4.html"
+        ],
+        "note": "Shared/foreign assets unchanged; parent must sync semantics before any generated-language asset backfill."
+      }
+    ],
+    "replacement": "Twoin-sourcecurrentwrite/readMermaiddiagramsperlocale pluscorrectedcomparison/cachetablesandtenanttext. No publicsharedassetorforeignproseediting."
+  },
+  "artifactDirectory": ".vitepress/cache/observability-mimir-audit",
+  "limits": [
+    "No live Kafka/mTLS/IRSA/S3/STS/cloud/Kubernetes/PVC or application execution; no capacity/HA guarantee.",
+    "Native config checks use actual chart component targets and synthetic local TLS file-path overrides, exiting before service initialization.",
+    "Runtime override keys validated as supported limits; no live reload checked.",
+    "Prometheus remote_write check is syntax-only; credential/gateway connection requires separately prepared files and deployment.",
+    "Original10PNGs semantically reviewed; obsolete/wrong figures replaced inownedMarkdown with currentdiagrams/tables/text. Sharedoriginalarchmaps/foreignbackfill remainsparentfollowup.",
+    "No full local VitePress build/devserver;4explicitMarkdown Vuecompiles and4nativeMermaid browserrenders only."
+  ],
+  "sourceAccessNotes": [
+    "PrimaryHTTPSdocs/releases/sourcecachedwithURL/date/status/SHA;officialreleasebinaryandHelmchartdigestsverified. No web.run result used.",
+    "Nativeconfiginitialattemptwithtargetallincorrectlymixedmicroservicepaths;actualcomponenttargetchecksused. TLSfilesvalidatedforalltargets;fixturepathsusedfornativecheckswithoutconnections.",
+    "Initialcandidate removaloflimits.drop_labelsdisprovedbyactualbinaryandnormalizedoutput;finaldocsretainsupportedfeature.",
+    "No fullsitebuild/cloudprovisioning/GPU/model/Kafka/S3/STSconnection;runtime/HA/network/credentialvalidationleft explicit."
+  ]
+}

@@ -685,4 +685,4 @@ spec:
 - [QUIC transport protocol (RFC 9000)](https://www.rfc-editor.org/rfc/rfc9000)
 - [HTTP/3 (RFC 9114)](https://www.rfc-editor.org/rfc/rfc9114)
 - [gRPC over HTTP/2 and load balancing](https://grpc.io/blog/grpc-load-balancing/)
-- [Gateway API GRPCRoute](https://gateway-api.sigs.k8s.io/api-types/grpcroute/)
+- [Gateway API GRPCRoute](https://gateway-api.sigs.k8s.io/guides/user-guides/grpc-routing/)

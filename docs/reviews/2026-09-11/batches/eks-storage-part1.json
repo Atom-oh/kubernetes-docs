@@ -19,7 +19,8 @@
       "https://raw.githubusercontent.com/kubernetes-sigs/aws-efs-csi-driver/v3.5.0/pkg/driver/controller.go",
       "https://docs.aws.amazon.com/efs/latest/ug/manage-fs-access-create-delete-mount-targets.html",
       "https://docs.aws.amazon.com/efs/latest/ug/performance.html",
-      "https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystemLustreConfiguration.html"
+      "https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystemLustreConfiguration.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html"
     ],
     "findings": [
       "Corrected generic volume lifetime/rawblock, PVC ownership and RWOone-node versus RWOPone-Pod; accessmodeisnotcompletewriteauthorization.",
@@ -32,14 +33,16 @@
       "GeneralPurpose/MaxIOandthroughputmodesqualified; currentOneZoneElasticisrealandretained. Regional/OneZonefailurepropertiesnotperformanceguarantees.",
       "OrdinaryEBSAZscopednetworkstorage distinguishedfromrealnode-localcachefeature; io2rawblockMultiAttachpreservedwithcoordinationconstraints.",
       "CorrectedSCreclaimPolicyversusPVfield,defaultclassoptout/multipledefaults,driver-dependentDelete(EFSAPversusdata)androot-directorydeletionflag. FSxs3ImportPathvalid; incompatibleSCRATCHpersistentthroughput/backupparamsremoved.",
-      "Parentdiagram2needscontrollerattachversusnode-mountrolecorrection;embedscommented, noassetfileedits."
+      "Parentdiagram2needscontrollerattachversusnode-mountrolecorrection;embedscommented, noassetfileedits.",
+      "2026-09-12 targetedreconciliation: currentAWSmigrate-auto also describesstopped-workloadRetain/staticPV-PVCrecreation; snapshotwordingqualified, noinplacedriveredit oruntesteddatarecoveryclaim."
     ],
     "validation": [
       "Fulloriginal490linesreadinthislocale; hashes/readrangesstored beforeedits.",
       "Pairedstaticchecks:12Bashblocks,30nativeKubernetes1.36objects,4snapshot8.6CRDobjects,12embeddedPythonblocks,12locallinks;PVC/Pod/classreferences andscopeddiffcheck pass.",
       "36mockedflows:EFSsetup18casesandEBS/EFSaddon18cases;wrongAZ/VPC/SG/token/context/version/owner andAPI/readiness failures prevent later mutations. AllAWS/Kubernetes commands stubbed.",
       "4actualAWSCLIinput-skeletonchecks, EKSAddonActivewaitermodel andEFSCreateFileSystemshapevalidate withoutAPIrequests.",
-      "NoAWScreation,volumeattach/mount,filesystemresize,snapshotrestoreorperformancebenchmarkexecuted. Evidence:/tmp/eks-storage-part1-audit/{source-static-validation,source-flow-validation,source-cli-validation}.json."
+      "NoAWScreation,volumeattach/mount,filesystemresize,snapshotrestoreorperformancebenchmarkexecuted. Evidence:/tmp/eks-storage-part1-audit/{source-static-validation,source-flow-validation,source-cli-validation}.json.",
+      "Pairedproseonlyfollowup; no command/testchanges. Evidence:.vitepress/cache/core-audit/eks-auto-mode-migration/storage-reconciliation.json"
     ]
   },
   {
@@ -62,7 +65,8 @@
       "https://raw.githubusercontent.com/kubernetes-sigs/aws-efs-csi-driver/v3.5.0/pkg/driver/controller.go",
       "https://docs.aws.amazon.com/efs/latest/ug/manage-fs-access-create-delete-mount-targets.html",
       "https://docs.aws.amazon.com/efs/latest/ug/performance.html",
-      "https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystemLustreConfiguration.html"
+      "https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystemLustreConfiguration.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/migrate-auto.html"
     ],
     "findings": [
       "Corrected generic volume lifetime/rawblock, PVC ownership and RWOone-node versus RWOPone-Pod; accessmodeisnotcompletewriteauthorization.",
@@ -75,14 +79,16 @@
       "GeneralPurpose/MaxIOandthroughputmodesqualified; currentOneZoneElasticisrealandretained. Regional/OneZonefailurepropertiesnotperformanceguarantees.",
       "OrdinaryEBSAZscopednetworkstorage distinguishedfromrealnode-localcachefeature; io2rawblockMultiAttachpreservedwithcoordinationconstraints.",
       "CorrectedSCreclaimPolicyversusPVfield,defaultclassoptout/multipledefaults,driver-dependentDelete(EFSAPversusdata)androot-directorydeletionflag. FSxs3ImportPathvalid; incompatibleSCRATCHpersistentthroughput/backupparamsremoved.",
-      "Parentdiagram2needscontrollerattachversusnode-mountrolecorrection;embedscommented, noassetfileedits."
+      "Parentdiagram2needscontrollerattachversusnode-mountrolecorrection;embedscommented, noassetfileedits.",
+      "2026-09-12 targetedreconciliation: currentAWSmigrate-auto also describesstopped-workloadRetain/staticPV-PVCrecreation; snapshotwordingqualified, noinplacedriveredit oruntesteddatarecoveryclaim."
     ],
     "validation": [
       "Fulloriginal490linesreadinthislocale; hashes/readrangesstored beforeedits.",
       "Pairedstaticchecks:12Bashblocks,30nativeKubernetes1.36objects,4snapshot8.6CRDobjects,12embeddedPythonblocks,12locallinks;PVC/Pod/classreferences andscopeddiffcheck pass.",
       "36mockedflows:EFSsetup18casesandEBS/EFSaddon18cases;wrongAZ/VPC/SG/token/context/version/owner andAPI/readiness failures prevent later mutations. AllAWS/Kubernetes commands stubbed.",
       "4actualAWSCLIinput-skeletonchecks, EKSAddonActivewaitermodel andEFSCreateFileSystemshapevalidate withoutAPIrequests.",
-      "NoAWScreation,volumeattach/mount,filesystemresize,snapshotrestoreorperformancebenchmarkexecuted. Evidence:/tmp/eks-storage-part1-audit/{source-static-validation,source-flow-validation,source-cli-validation}.json."
+      "NoAWScreation,volumeattach/mount,filesystemresize,snapshotrestoreorperformancebenchmarkexecuted. Evidence:/tmp/eks-storage-part1-audit/{source-static-validation,source-flow-validation,source-cli-validation}.json.",
+      "Pairedproseonlyfollowup; no command/testchanges. Evidence:.vitepress/cache/core-audit/eks-auto-mode-migration/storage-reconciliation.json"
     ]
   },
   {

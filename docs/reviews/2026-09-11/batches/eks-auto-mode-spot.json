@@ -1,0 +1,160 @@
+[
+  {
+    "path": "en/eks-auto-mode/04-spot-strategies.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Completed Spot source/quiz pair review: fixed interruption/grace, voluntary budgets and UTC schedule, real app configuration and capacity/savings claims; preserved original monetary illustrations as unverified.",
+    "sources": [
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-instance-termination-notices.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ml-node-pools.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://karpenter.sh/v1.14/concepts/disruption/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/downward-api/",
+      "https://nginx.org/en/docs/control.html",
+      "https://aws.amazon.com/ec2/spot/",
+      "https://aws.amazon.com/ec2/spot/instance-advisor/",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/go.mod"
+    ],
+    "findings": [
+      "Mixed capacity/soft affinity does not guarantee baseline capacity, ratio, fallback latency or stability; commented required-affinity example is at wrong indentation.",
+      "Diversification does not double capacity by enabling two architectures; generation ceiling5-7 excludes newer compatible types.",
+      "Disruption budgets do not limit EC2 interruptions;10% and3 are jointly restrictive, not OR. Hourly9-18 cron with9h duration creates an unintended window and needs explicitUTC semantics.",
+      "preStop sleep90 consumes120s Pod grace and does not extend EC2 notice;120+seconds recommendation is unsafe as a Spot guarantee.",
+      "Topology maxSkew alone does not ensure threeAZs or distinct instance-type/AZ Spot pools. Placeholderimages/resources/readiness and OnDemand=data-integrity implications need correction.",
+      "Monthly$ examples and60-90%savings lack provenance; SpotAdvisor is not preciseAZpricehistory and formula maydouble-count recovery/omitAutoMode fees andothercosts.",
+      "Replaced90s sleeps/undefined health scripts andmy-app placeholders withcomplete nginxexample, explicitQUITHook,60s illustrativePodbudget,resources/readiness/PDB. NoclaimEC2deadlinecanbeextended.",
+      "CorrectedSPOT_INSTANCEDownwardAPI misuse toNODE_NAME;removed brokenextraNTHDaemonSet fromAutoModerecipe.Nativeinterruptionhandling needsnoadditionalNTH/SQSforAutoNodes.",
+      "Budget10%and3 combinewithminimumallowance,notOR;UTC00weekday9h windowrepresentsSeoul09-18. Nodebudgets/PDBdonotstopEC2Spotinterruptions.",
+      "Softaffinity/weightsdonotguaranteeratio,warmbaselineorimmediatefallback. AddedhardODselectionandscopedlabtaints;topologyrequires2eligibledomainsandmayleavePodsPending.",
+      "Preservedlegitimatearchitecture/typechoiceswithoutclaiming2xcapacity;diversificationusescompatible5+generationsinsteadunintentional5-7upperbound.",
+      "Preserved$1000/300,$2000/500,$500/150,$3000/1200and70/75/70/60%originalillustrations;qualified90%advertisementandlegacyARM20%estimates. CorrectedpricehistoryvsAdvisorandbilled-hourcostaccountingincludingAutoModefeeswithoutdoublecountedrecovery."
+    ],
+    "validation": [
+      "Full read1-295; original snapshot/hash preserved.",
+      "Allfour originals fullyread: EN295/KO306 source+209quizlines each,1019total; snapshots/hashes preserved.",
+      "FiveNodePools passedKarpenter1.14.1structuralschema;namespace,twoDeployments,PDBandhardODvariant passedKubernetes1.36.2strictOpenAPI;selectors,tolerations,PDBmatch,knownnginxQUITHookandnodeName fieldchecked.",
+      "NativeGo robfig/cron v3.0.1 (sameversionasKarpenter1.14.1) passed5UTC/KSTboundarycases and reproducedoldwindowstillactive22UTC.Publishedbudgetformula3casesand4originalcostarithmeticpairschecked.",
+      "Pairedfences,YAMLduplicatekey/Bashsyntax,locallinks,quizkeysBBBCBCandgitdiff--checkpassed;noSpotinstances,GPU,customerbilling/priceHistoryAPIqueriesorfullbuilds.Evidence:.vitepress/cache/core-audit/eks-auto-mode-spot/final-validation.json."
+    ]
+  },
+  {
+    "path": "ko/eks-auto-mode/04-spot-strategies.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Completed Spot source/quiz pair review: fixed interruption/grace, voluntary budgets and UTC schedule, real app configuration and capacity/savings claims; preserved original monetary illustrations as unverified.",
+    "sources": [
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-instance-termination-notices.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ml-node-pools.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://karpenter.sh/v1.14/concepts/disruption/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/downward-api/",
+      "https://nginx.org/en/docs/control.html",
+      "https://aws.amazon.com/ec2/spot/",
+      "https://aws.amazon.com/ec2/spot/instance-advisor/",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/go.mod"
+    ],
+    "findings": [
+      "Same hourly cron/window, effective-minimum budget, Spot-vs-voluntary disruption and 90s preStop problems.",
+      "SPOT_INSTANCE environment gets spec.nodeName, not capacity type; DownwardAPI is mislabeled as Spot detection.",
+      "Extra app requires an unexplained /tmp/healthy marker and missing /app/graceful-shutdown.sh.",
+      "NTH described as built-in AutoMode DaemonSet; supplied DS lacks template labels/RBAC and could conflict with managed interruption handling.",
+      "Cost examples preserve$1000/$300,$2000/$500,$500/$150,$3000/$1200; no measurement/pricing provenance established.",
+      "Replaced90s sleeps/undefined health scripts andmy-app placeholders withcomplete nginxexample, explicitQUITHook,60s illustrativePodbudget,resources/readiness/PDB. NoclaimEC2deadlinecanbeextended.",
+      "CorrectedSPOT_INSTANCEDownwardAPI misuse toNODE_NAME;removed brokenextraNTHDaemonSet fromAutoModerecipe.Nativeinterruptionhandling needsnoadditionalNTH/SQSforAutoNodes.",
+      "Budget10%and3 combinewithminimumallowance,notOR;UTC00weekday9h windowrepresentsSeoul09-18. Nodebudgets/PDBdonotstopEC2Spotinterruptions.",
+      "Softaffinity/weightsdonotguaranteeratio,warmbaselineorimmediatefallback. AddedhardODselectionandscopedlabtaints;topologyrequires2eligibledomainsandmayleavePodsPending.",
+      "Preservedlegitimatearchitecture/typechoiceswithoutclaiming2xcapacity;diversificationusescompatible5+generationsinsteadunintentional5-7upperbound.",
+      "Preserved$1000/300,$2000/500,$500/150,$3000/1200and70/75/70/60%originalillustrations;qualified90%advertisementandlegacyARM20%estimates. CorrectedpricehistoryvsAdvisorandbilled-hourcostaccountingincludingAutoModefeeswithoutdoublecountedrecovery."
+    ],
+    "validation": [
+      "Fullread1-306; original snapshot/hash saved.",
+      "Allfour originals fullyread: EN295/KO306 source+209quizlines each,1019total; snapshots/hashes preserved.",
+      "FiveNodePools passedKarpenter1.14.1structuralschema;namespace,twoDeployments,PDBandhardODvariant passedKubernetes1.36.2strictOpenAPI;selectors,tolerations,PDBmatch,knownnginxQUITHookandnodeName fieldchecked.",
+      "NativeGo robfig/cron v3.0.1 (sameversionasKarpenter1.14.1) passed5UTC/KSTboundarycases and reproducedoldwindowstillactive22UTC.Publishedbudgetformula3casesand4originalcostarithmeticpairschecked.",
+      "Pairedfences,YAMLduplicatekey/Bashsyntax,locallinks,quizkeysBBBCBCandgitdiff--checkpassed;noSpotinstances,GPU,customerbilling/priceHistoryAPIqueriesorfullbuilds.Evidence:.vitepress/cache/core-audit/eks-auto-mode-spot/final-validation.json."
+    ]
+  },
+  {
+    "path": "en/quizzes/eks-auto-mode/04-spot-strategies-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Completed Spot source/quiz pair review: fixed interruption/grace, voluntary budgets and UTC schedule, real app configuration and capacity/savings claims; preserved original monetary illustrations as unverified.",
+    "sources": [
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-instance-termination-notices.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ml-node-pools.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://karpenter.sh/v1.14/concepts/disruption/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/downward-api/",
+      "https://nginx.org/en/docs/control.html",
+      "https://aws.amazon.com/ec2/spot/",
+      "https://aws.amazon.com/ec2/spot/instance-advisor/",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/go.mod"
+    ],
+    "findings": [
+      "Q3 treats two-minute notice as guaranteed full Pod shutdown time.",
+      "Q4 overgeneralizes all databases/queues/stateful jobs as requiringOnDemand and implies that capacity type alone protectsdata.",
+      "Q5 asks capacity selection withinmixedpool but answersweightsbetweenpools; weightsdo notsetratio/fallbackguarantee.",
+      "Q6 conflates up-to90% advertisedEC2discount with70-90%minimumrange andunverifiedGraviton20%/combined90% forecasts.",
+      "Architecture diversification requirescompatibleimages anddoesnotdoubleactualcapacity.",
+      "Replaced90s sleeps/undefined health scripts andmy-app placeholders withcomplete nginxexample, explicitQUITHook,60s illustrativePodbudget,resources/readiness/PDB. NoclaimEC2deadlinecanbeextended.",
+      "CorrectedSPOT_INSTANCEDownwardAPI misuse toNODE_NAME;removed brokenextraNTHDaemonSet fromAutoModerecipe.Nativeinterruptionhandling needsnoadditionalNTH/SQSforAutoNodes.",
+      "Budget10%and3 combinewithminimumallowance,notOR;UTC00weekday9h windowrepresentsSeoul09-18. Nodebudgets/PDBdonotstopEC2Spotinterruptions.",
+      "Softaffinity/weightsdonotguaranteeratio,warmbaselineorimmediatefallback. AddedhardODselectionandscopedlabtaints;topologyrequires2eligibledomainsandmayleavePodsPending.",
+      "Preservedlegitimatearchitecture/typechoiceswithoutclaiming2xcapacity;diversificationusescompatible5+generationsinsteadunintentional5-7upperbound.",
+      "Preserved$1000/300,$2000/500,$500/150,$3000/1200and70/75/70/60%originalillustrations;qualified90%advertisementandlegacyARM20%estimates. CorrectedpricehistoryvsAdvisorandbilled-hourcostaccountingincludingAutoModefeeswithoutdoublecountedrecovery."
+    ],
+    "validation": [
+      "Fullyread1-209; snapshot/hash saved.",
+      "Allfour originals fullyread: EN295/KO306 source+209quizlines each,1019total; snapshots/hashes preserved.",
+      "FiveNodePools passedKarpenter1.14.1structuralschema;namespace,twoDeployments,PDBandhardODvariant passedKubernetes1.36.2strictOpenAPI;selectors,tolerations,PDBmatch,knownnginxQUITHookandnodeName fieldchecked.",
+      "NativeGo robfig/cron v3.0.1 (sameversionasKarpenter1.14.1) passed5UTC/KSTboundarycases and reproducedoldwindowstillactive22UTC.Publishedbudgetformula3casesand4originalcostarithmeticpairschecked.",
+      "Pairedfences,YAMLduplicatekey/Bashsyntax,locallinks,quizkeysBBBCBCandgitdiff--checkpassed;noSpotinstances,GPU,customerbilling/priceHistoryAPIqueriesorfullbuilds.Evidence:.vitepress/cache/core-audit/eks-auto-mode-spot/final-validation.json."
+    ]
+  },
+  {
+    "path": "ko/quizzes/eks-auto-mode/04-spot-strategies-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Completed Spot source/quiz pair review: fixed interruption/grace, voluntary budgets and UTC schedule, real app configuration and capacity/savings claims; preserved original monetary illustrations as unverified.",
+    "sources": [
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-instance-termination-notices.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/ml-node-pools.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://karpenter.sh/v1.14/concepts/disruption/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/",
+      "https://kubernetes.io/docs/concepts/workloads/pods/downward-api/",
+      "https://nginx.org/en/docs/control.html",
+      "https://aws.amazon.com/ec2/spot/",
+      "https://aws.amazon.com/ec2/spot/instance-advisor/",
+      "https://aws.amazon.com/eks/pricing/",
+      "https://raw.githubusercontent.com/kubernetes-sigs/karpenter/v1.14.1/go.mod"
+    ],
+    "findings": [
+      "Same guaranteed2minute inference, blanketstatefulworkload guidance andwithinpool-vs-betweenpoolweight confusion.",
+      "Advertisedup-to90%EC2discount mustnotbe70-90%minimum orwholebill guarantee;Graviton20%andcombined90%values areunverifiedteachingestimates.",
+      "Replaced90s sleeps/undefined health scripts andmy-app placeholders withcomplete nginxexample, explicitQUITHook,60s illustrativePodbudget,resources/readiness/PDB. NoclaimEC2deadlinecanbeextended.",
+      "CorrectedSPOT_INSTANCEDownwardAPI misuse toNODE_NAME;removed brokenextraNTHDaemonSet fromAutoModerecipe.Nativeinterruptionhandling needsnoadditionalNTH/SQSforAutoNodes.",
+      "Budget10%and3 combinewithminimumallowance,notOR;UTC00weekday9h windowrepresentsSeoul09-18. Nodebudgets/PDBdonotstopEC2Spotinterruptions.",
+      "Softaffinity/weightsdonotguaranteeratio,warmbaselineorimmediatefallback. AddedhardODselectionandscopedlabtaints;topologyrequires2eligibledomainsandmayleavePodsPending.",
+      "Preservedlegitimatearchitecture/typechoiceswithoutclaiming2xcapacity;diversificationusescompatible5+generationsinsteadunintentional5-7upperbound.",
+      "Preserved$1000/300,$2000/500,$500/150,$3000/1200and70/75/70/60%originalillustrations;qualified90%advertisementandlegacyARM20%estimates. CorrectedpricehistoryvsAdvisorandbilled-hourcostaccountingincludingAutoModefeeswithoutdoublecountedrecovery."
+    ],
+    "validation": [
+      "Fullyread1-209; originalsnapshot/hashsaved.",
+      "Allfour originals fullyread: EN295/KO306 source+209quizlines each,1019total; snapshots/hashes preserved.",
+      "FiveNodePools passedKarpenter1.14.1structuralschema;namespace,twoDeployments,PDBandhardODvariant passedKubernetes1.36.2strictOpenAPI;selectors,tolerations,PDBmatch,knownnginxQUITHookandnodeName fieldchecked.",
+      "NativeGo robfig/cron v3.0.1 (sameversionasKarpenter1.14.1) passed5UTC/KSTboundarycases and reproducedoldwindowstillactive22UTC.Publishedbudgetformula3casesand4originalcostarithmeticpairschecked.",
+      "Pairedfences,YAMLduplicatekey/Bashsyntax,locallinks,quizkeysBBBCBCandgitdiff--checkpassed;noSpotinstances,GPU,customerbilling/priceHistoryAPIqueriesorfullbuilds.Evidence:.vitepress/cache/core-audit/eks-auto-mode-spot/final-validation.json."
+    ]
+  }
+]

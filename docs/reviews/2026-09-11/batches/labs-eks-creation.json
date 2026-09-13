@@ -1,0 +1,71 @@
+[
+  {
+    "path": "en/labs/eks/01-eks-cluster-creation-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full bilingual lab review completed. Replaced extended-support default and unsafe public-LB/cleanup path with current supported example, guarded private lab state and bounded validation; live provisioning remains unverified.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/view-upgrade-policy.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html",
+      "https://docs.aws.amazon.com/eks/latest/eksctl/minimum-iam-policies.html",
+      "https://docs.aws.amazon.com/eks/latest/eksctl/creating-and-managing-clusters.html",
+      "https://kubernetes.io/releases/version-skew-policy/",
+      "https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx"
+    ],
+    "findings": [
+      "CurrentlabpinsEKS1.31inextendedsupport(cost6xbase) andoldnginx1.25;requiresverifiedcurrentstandardversion/toolskew/image.",
+      "IAMuser/AdminAccessframinginsteadtemporaryroleandnecessarypermissions;AWS_DEFAULT_REGIONcanconflictwithAWS_REGION;noaccount/contextguard/uniqueclusteridentity/privatekubeconfig.",
+      "Predictable/tmpconfig/fixedlab-clustername;eksctlconfiglacksendpointscope/networkcostassumptions;creation15-20minnotguarantee.",
+      "kubectlcurrentcontextcouldwrongcluster;nodefirstelementselectedwithoutscope;topanyfailuremisreportedMetricsServerabsent.",
+      "LoadBalancerexampleunpreparedcontroller/permissions/publicexposure/cost;deploymentavailabledoesnotmeanLBready;unboundedwatch/unvalidatedhostname/curlnoTLS-or-statusbounds.",
+      "Cleanupfixedsleep60notLBdeletionproof,clusterdeletewithoutidentityproof,rmconfigbeforeverifyingremainingresources. No actualAWSprovisioninginaudit.",
+      "EKS 1.36 standard support and nginx 1.30.4 confirmed from primary sources; explicitly distinguishes current advice from historical/default versions.",
+      "Added expected account, unique lab ID, narrow public API CIDR plus private endpoint, private node networking, encrypted node disks and private kubeconfig; describes NAT cost and STANDARD automatic-upgrade behavior.",
+      "Changed unprepared LoadBalancer exercise to ClusterIP plus loopback port-forward; retained external-LB extension link with controller/permission prerequisites.",
+      "Account/ARN/creation-time/tag/kubeconfig endpoint checks precede mutations; namespace ownership and explicit waits replace blind deletion and fixed sleep. Partial creation and retained resources require manual reconciliation.",
+      "Metrics API errors are preserved; corrected replica readiness checks and expected Ctrl+C handling. No images or diagrams exist in this lab pair."
+    ],
+    "validation": [
+      "Fullread1-216;originalsnapshot/hashpreserved;no cloud/clusterexecution.",
+      "Final full read: 376 lines per locale; 18 executable Bash fences identical across languages; bash -n passed.",
+      "eksctl 0.229.0 schema and native --dry-run passed against loopback-only STS/EKS/EC2 metadata fixtures; no real AWS credentials or requests.",
+      "Three Kubernetes 1.36.2 strict OpenAPI objects; four invalid CIDR cases; thirteen account/cluster/namespace/deletion guard cases; three port-forward exit cases passed.",
+      "Local references and git diff --check passed. Evidence: .vitepress/cache/core-audit/labs-eks-creation/final-validation.json. No cloud/cluster mutation, live nginx execution or full site build."
+    ]
+  },
+  {
+    "path": "ko/labs/eks/01-eks-cluster-creation-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full bilingual lab review completed. Replaced extended-support default and unsafe public-LB/cleanup path with current supported example, guarded private lab state and bounded validation; live provisioning remains unverified.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/view-upgrade-policy.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html",
+      "https://docs.aws.amazon.com/eks/latest/eksctl/minimum-iam-policies.html",
+      "https://docs.aws.amazon.com/eks/latest/eksctl/creating-and-managing-clusters.html",
+      "https://kubernetes.io/releases/version-skew-policy/",
+      "https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/",
+      "https://raw.githubusercontent.com/docker-library/official-images/master/library/nginx"
+    ],
+    "findings": [
+      "All216Koreanlines independentlyfullyread; confirms same fixedEKS1.31extendedcost,legacyIAMuser/AdminAccess,defaultregion/context/noownershipguard,tmpconfig/namecollision,unguaranteedcreationtimes,metricsfailuremisclassification,unpreparedpublicLoadBalancer/noHTTPbounds,andfixedsleepcleanup flaws.",
+      "EKS 1.36 standard support and nginx 1.30.4 confirmed from primary sources; explicitly distinguishes current advice from historical/default versions.",
+      "Added expected account, unique lab ID, narrow public API CIDR plus private endpoint, private node networking, encrypted node disks and private kubeconfig; describes NAT cost and STANDARD automatic-upgrade behavior.",
+      "Changed unprepared LoadBalancer exercise to ClusterIP plus loopback port-forward; retained external-LB extension link with controller/permission prerequisites.",
+      "Account/ARN/creation-time/tag/kubeconfig endpoint checks precede mutations; namespace ownership and explicit waits replace blind deletion and fixed sleep. Partial creation and retained resources require manual reconciliation.",
+      "Metrics API errors are preserved; corrected replica readiness checks and expected Ctrl+C handling. No images or diagrams exist in this lab pair."
+    ],
+    "validation": [
+      "Fullread1-216;originalsnapshot/hashsaved;noAWSorclusterexecution.",
+      "Final full read: 376 lines per locale; 18 executable Bash fences identical across languages; bash -n passed.",
+      "eksctl 0.229.0 schema and native --dry-run passed against loopback-only STS/EKS/EC2 metadata fixtures; no real AWS credentials or requests.",
+      "Three Kubernetes 1.36.2 strict OpenAPI objects; four invalid CIDR cases; thirteen account/cluster/namespace/deletion guard cases; three port-forward exit cases passed.",
+      "Local references and git diff --check passed. Evidence: .vitepress/cache/core-audit/labs-eks-creation/final-validation.json. No cloud/cluster mutation, live nginx execution or full site build."
+    ]
+  }
+]

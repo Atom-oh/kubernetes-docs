@@ -1,0 +1,152 @@
+[
+  {
+    "path": "en/eks-auto-mode/05-operations.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full bilingual operations/quiz audit: accurate disruption/PDB semantics, actual signal publishers and safe structured diagnostics.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://karpenter.sh/v1.14/concepts/disruption/",
+      "https://kubernetes.io/docs/tasks/run-application/configure-pdb/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-static-capacity.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/zone-shift-enable.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Dashboard-Body-Structure.html",
+      "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+      "https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/cluster/node-metrics.md",
+      "https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/workload/pod-metrics.md",
+      "https://github.com/nginx/docker-nginx-unprivileged"
+    ],
+    "findings": [
+      "Corrected active-budget minimum, UTC/KST overlapping windows, forceful-disruption scope and expiration/grace limits.",
+      "Corrected PDB rounding/Ready health, current generation, intentional zero allowance, quorum and non-equivalent min/max settings.",
+      "Preserved original numeric operational thresholds as unverified planning examples; no measurements fabricated.",
+      "Replaced false per-AZ minimum/reservation/failover claims with bounded topology and actual existing reservation/static-capacity interfaces.",
+      "Replaced nonexistent NodeClaim phase/CloudWatch metrics and brittle table parsing with structured, scoped read-only diagnostics and actual metric metadata.",
+      "Repaired Auto NodeClass fields and nonroot Restricted nginx workload; distinguished node EBS encryption from application PVCs.",
+      "PromQL now states collector label requirements, filters Auto nodes, deduplicates KSM replicas and distinguishes missing metrics."
+    ],
+    "validation": [
+      "Original fully read before editing; original snapshots and counts in persistent scope.json.",
+      "Karpenter1.14.1 + Kubernetes1.36.2 structural validation: 8 complete objects.",
+      "Native Kubernetes Restricted policy: 30 checks and privilege-escalation negative case; percentage rounding3 and cron/calendar7 cases passed.",
+      "26 mocked native Bash/jq/Python diagnostic cases including API errors, account/context mismatch, stale PDB, bad/future timestamps and wrong metric catalog.",
+      "Promtool3.14 query/rule fixtures passed including duplicate scrapes and missing labels.",
+      "Paired executable fences, eight quiz keys BBBBBBBB, Bash syntax/YAML unique keys,10 local references and git diff --check passed.",
+      "No cloud mutation, live Pod/image execution or full site build; source/API/collector assumptions documented.",
+      "Evidence: .vitepress/cache/core-audit/eks-auto-mode-operations/final-validation.json"
+    ]
+  },
+  {
+    "path": "ko/eks-auto-mode/05-operations.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full bilingual operations/quiz audit: accurate disruption/PDB semantics, actual signal publishers and safe structured diagnostics.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://karpenter.sh/v1.14/concepts/disruption/",
+      "https://kubernetes.io/docs/tasks/run-application/configure-pdb/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-static-capacity.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/zone-shift-enable.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Dashboard-Body-Structure.html",
+      "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+      "https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/cluster/node-metrics.md",
+      "https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/workload/pod-metrics.md",
+      "https://github.com/nginx/docker-nginx-unprivileged"
+    ],
+    "findings": [
+      "Corrected active-budget minimum, UTC/KST overlapping windows, forceful-disruption scope and expiration/grace limits.",
+      "Corrected PDB rounding/Ready health, current generation, intentional zero allowance, quorum and non-equivalent min/max settings.",
+      "Preserved original numeric operational thresholds as unverified planning examples; no measurements fabricated.",
+      "Replaced false per-AZ minimum/reservation/failover claims with bounded topology and actual existing reservation/static-capacity interfaces.",
+      "Replaced nonexistent NodeClaim phase/CloudWatch metrics and brittle table parsing with structured, scoped read-only diagnostics and actual metric metadata.",
+      "Repaired Auto NodeClass fields and nonroot Restricted nginx workload; distinguished node EBS encryption from application PVCs.",
+      "PromQL now states collector label requirements, filters Auto nodes, deduplicates KSM replicas and distinguishes missing metrics."
+    ],
+    "validation": [
+      "Original fully read before editing; original snapshots and counts in persistent scope.json.",
+      "Karpenter1.14.1 + Kubernetes1.36.2 structural validation: 8 complete objects.",
+      "Native Kubernetes Restricted policy: 30 checks and privilege-escalation negative case; percentage rounding3 and cron/calendar7 cases passed.",
+      "26 mocked native Bash/jq/Python diagnostic cases including API errors, account/context mismatch, stale PDB, bad/future timestamps and wrong metric catalog.",
+      "Promtool3.14 query/rule fixtures passed including duplicate scrapes and missing labels.",
+      "Paired executable fences, eight quiz keys BBBBBBBB, Bash syntax/YAML unique keys,10 local references and git diff --check passed.",
+      "No cloud mutation, live Pod/image execution or full site build; source/API/collector assumptions documented.",
+      "Evidence: .vitepress/cache/core-audit/eks-auto-mode-operations/final-validation.json"
+    ]
+  },
+  {
+    "path": "en/quizzes/eks-auto-mode/05-operations-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full bilingual operations/quiz audit: accurate disruption/PDB semantics, actual signal publishers and safe structured diagnostics.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://karpenter.sh/v1.14/concepts/disruption/",
+      "https://kubernetes.io/docs/tasks/run-application/configure-pdb/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-static-capacity.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/zone-shift-enable.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Dashboard-Body-Structure.html",
+      "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+      "https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/cluster/node-metrics.md",
+      "https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/workload/pod-metrics.md",
+      "https://github.com/nginx/docker-nginx-unprivileged"
+    ],
+    "findings": [
+      "Corrected active-budget minimum, UTC/KST overlapping windows, forceful-disruption scope and expiration/grace limits.",
+      "Corrected PDB rounding/Ready health, current generation, intentional zero allowance, quorum and non-equivalent min/max settings.",
+      "Preserved original numeric operational thresholds as unverified planning examples; no measurements fabricated.",
+      "All eight quiz answers reconciled with guide; removed blanket always-running/drift immunity/latest-patch guarantees and shell embedded in YAML."
+    ],
+    "validation": [
+      "Original fully read before editing; original snapshots and counts in persistent scope.json.",
+      "Karpenter1.14.1 + Kubernetes1.36.2 structural validation: 8 complete objects.",
+      "Native Kubernetes Restricted policy: 30 checks and privilege-escalation negative case; percentage rounding3 and cron/calendar7 cases passed.",
+      "26 mocked native Bash/jq/Python diagnostic cases including API errors, account/context mismatch, stale PDB, bad/future timestamps and wrong metric catalog.",
+      "Promtool3.14 query/rule fixtures passed including duplicate scrapes and missing labels.",
+      "Paired executable fences, eight quiz keys BBBBBBBB, Bash syntax/YAML unique keys,10 local references and git diff --check passed.",
+      "No cloud mutation, live Pod/image execution or full site build; source/API/collector assumptions documented.",
+      "Evidence: .vitepress/cache/core-audit/eks-auto-mode-operations/final-validation.json"
+    ]
+  },
+  {
+    "path": "ko/quizzes/eks-auto-mode/05-operations-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Full bilingual operations/quiz audit: accurate disruption/PDB semantics, actual signal publishers and safe structured diagnostics.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-pool.html",
+      "https://karpenter.sh/v1.14/concepts/disruption/",
+      "https://kubernetes.io/docs/tasks/run-application/configure-pdb/",
+      "https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-static-capacity.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/auto-managed-component-logs.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/zone-shift-enable.html",
+      "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Dashboard-Body-Structure.html",
+      "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+      "https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/cluster/node-metrics.md",
+      "https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/workload/pod-metrics.md",
+      "https://github.com/nginx/docker-nginx-unprivileged"
+    ],
+    "findings": [
+      "Corrected active-budget minimum, UTC/KST overlapping windows, forceful-disruption scope and expiration/grace limits.",
+      "Corrected PDB rounding/Ready health, current generation, intentional zero allowance, quorum and non-equivalent min/max settings.",
+      "Preserved original numeric operational thresholds as unverified planning examples; no measurements fabricated.",
+      "All eight quiz answers reconciled with guide; removed blanket always-running/drift immunity/latest-patch guarantees and shell embedded in YAML."
+    ],
+    "validation": [
+      "Original fully read before editing; original snapshots and counts in persistent scope.json.",
+      "Karpenter1.14.1 + Kubernetes1.36.2 structural validation: 8 complete objects.",
+      "Native Kubernetes Restricted policy: 30 checks and privilege-escalation negative case; percentage rounding3 and cron/calendar7 cases passed.",
+      "26 mocked native Bash/jq/Python diagnostic cases including API errors, account/context mismatch, stale PDB, bad/future timestamps and wrong metric catalog.",
+      "Promtool3.14 query/rule fixtures passed including duplicate scrapes and missing labels.",
+      "Paired executable fences, eight quiz keys BBBBBBBB, Bash syntax/YAML unique keys,10 local references and git diff --check passed.",
+      "No cloud mutation, live Pod/image execution or full site build; source/API/collector assumptions documented.",
+      "Evidence: .vitepress/cache/core-audit/eks-auto-mode-operations/final-validation.json"
+    ]
+  }
+]

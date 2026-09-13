@@ -1,0 +1,1148 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-13T00:05:18.619164+00:00",
+  "scope": [
+    "en/observability/metrics/04-cloudwatch-metrics.md",
+    "en/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md",
+    "ko/observability/metrics/04-cloudwatch-metrics.md",
+    "ko/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/observability/metrics/04-cloudwatch-metrics.md": {
+      "lines": 1132,
+      "sha256": "e80b356c043a28f5a677e950feb520322c18961569a789a877ff7dc82e0b71d7"
+    },
+    "en/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md": {
+      "lines": 183,
+      "sha256": "0c41717368f3b334d4da681546649735d42941122aab52000296fadc9d9b17a7"
+    },
+    "ko/observability/metrics/04-cloudwatch-metrics.md": {
+      "lines": 1207,
+      "sha256": "21760873856a08adcf36c818258f07d8a5e104ce49e359a2659b25d3759c2998"
+    },
+    "ko/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md": {
+      "lines": 183,
+      "sha256": "8dd625e2ca5273831b42e73a1bfa6f34c8244635b9e6abeb90f7b743b822164a"
+    }
+  },
+  "checks": {
+    "files": [
+      {
+        "path": "en/observability/metrics/04-cloudwatch-metrics.md",
+        "sha256": "48ab5757987ee9f46289bf50c554145075e76589eac237a87255275bd7e9f35f",
+        "lines": 1317,
+        "codeBlocks": {
+          "mermaid": 1,
+          "bash": 5,
+          "yaml": 6,
+          "json": 3,
+          "python": 1,
+          "go": 1,
+          "hcl": 4
+        },
+        "quizQuestions": 0
+      },
+      {
+        "path": "en/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md",
+        "sha256": "3de8d72ff5266c697407edeaadcf49a616c2cfa45f29fc4ee66706325dd80a3d",
+        "lines": 167,
+        "codeBlocks": {},
+        "quizQuestions": 10
+      },
+      {
+        "path": "ko/observability/metrics/04-cloudwatch-metrics.md",
+        "sha256": "a79a1b1d336ad692e37ae691bed10b8f95abb7b975f5acf7bf3c75ad6b3c05b9",
+        "lines": 1293,
+        "codeBlocks": {
+          "mermaid": 1,
+          "bash": 5,
+          "yaml": 6,
+          "json": 3,
+          "python": 1,
+          "go": 1,
+          "hcl": 4
+        },
+        "quizQuestions": 0
+      },
+      {
+        "path": "ko/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md",
+        "sha256": "2beee9607e03e7ccd8fee72ea4415d7c99806d845b3f1fc029abd23067301026",
+        "lines": 167,
+        "codeBlocks": {},
+        "quizQuestions": 10
+      }
+    ],
+    "passed": true,
+    "links": [
+      {
+        "source": "en/observability/metrics/04-cloudwatch-metrics.md",
+        "target": "en/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md",
+        "passed": true
+      },
+      {
+        "source": "en/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md",
+        "target": "en/observability/metrics/04-cloudwatch-metrics.md",
+        "passed": true
+      },
+      {
+        "source": "ko/observability/metrics/04-cloudwatch-metrics.md",
+        "target": "ko/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md",
+        "passed": true
+      },
+      {
+        "source": "ko/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md",
+        "target": "ko/observability/metrics/04-cloudwatch-metrics.md",
+        "passed": true
+      }
+    ],
+    "bilingualCodeAndAnswerParity": true,
+    "nativeChecks": {
+      "status": "passed",
+      "checks": [
+        {
+          "case": "fence-syntax",
+          "path": "en/observability/metrics/04-cloudwatch-metrics.md",
+          "passed": true
+        },
+        {
+          "case": "fence-syntax",
+          "path": "en/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md",
+          "passed": true
+        },
+        {
+          "case": "fence-syntax",
+          "path": "ko/observability/metrics/04-cloudwatch-metrics.md",
+          "passed": true
+        },
+        {
+          "case": "fence-syntax",
+          "path": "ko/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md",
+          "passed": true
+        },
+        {
+          "case": "bilingual-machine-readable-code-identical",
+          "passed": true
+        },
+        {
+          "case": "official-agent-schema-classic",
+          "version": "v1.300071.0",
+          "passed": true
+        },
+        {
+          "case": "official-agent-schema-prometheus",
+          "version": "v1.300071.0",
+          "passed": true
+        },
+        {
+          "case": "old-metrics-root-kubernetes-rejected",
+          "passed": true
+        },
+        {
+          "case": "old-inline-json-comment-rejected",
+          "passed": true
+        },
+        {
+          "case": "helm-traditional",
+          "version": "6.6.0",
+          "objects": 34,
+          "agents": 3,
+          "linuxAgents": 1,
+          "windowsAgents": 2,
+          "passed": true,
+          "scope": "Helm creates custom resources; agent reconciliation was not executed."
+        },
+        {
+          "case": "helm-dual-metrics",
+          "version": "6.6.0",
+          "objects": 47,
+          "agents": 4,
+          "linuxAgents": 2,
+          "windowsAgents": 2,
+          "passed": true,
+          "scope": "Helm creates custom resources; agent reconciliation was not executed."
+        },
+        {
+          "case": "sdk-payload-utc-dimensions-count",
+          "passed": true
+        },
+        {
+          "case": "sdk-zero-count",
+          "passed": true
+        },
+        {
+          "case": "sdk-invalid-count-no-request",
+          "cases": 3,
+          "passed": true
+        },
+        {
+          "case": "sdk-error-propagation",
+          "passed": true
+        },
+        {
+          "case": "dashboard-json-and-template-references",
+          "widgets": 6,
+          "passed": true
+        },
+        {
+          "case": "alarm-api-input-HighCPU",
+          "passed": true,
+          "scope": "Botocore input shape only; not CloudFormation or CloudWatch service evaluation."
+        },
+        {
+          "case": "alarm-api-input-HighMemory",
+          "passed": true,
+          "scope": "Botocore input shape only; not CloudFormation or CloudWatch service evaluation."
+        },
+        {
+          "case": "alarm-api-input-PodRestartTotal",
+          "passed": true,
+          "scope": "Botocore input shape only; not CloudFormation or CloudWatch service evaluation."
+        },
+        {
+          "case": "documented-ratio-arithmetic",
+          "cases": [
+            {
+              "errors": 0,
+              "requests": 100,
+              "expected": 0,
+              "passed": true
+            },
+            {
+              "errors": 5,
+              "requests": 100,
+              "expected": 5,
+              "passed": true
+            },
+            {
+              "errors": null,
+              "requests": 100,
+              "expected": 0,
+              "passed": true
+            },
+            {
+              "errors": 0,
+              "requests": 0,
+              "expected": null,
+              "passed": true
+            },
+            {
+              "errors": null,
+              "requests": null,
+              "expected": null,
+              "passed": true
+            }
+          ],
+          "passed": true,
+          "scope": "Arithmetic consequences of the documented missing/IF semantics, not a CloudWatch expression-engine execution."
+        }
+      ],
+      "limitations": [
+        "No cloud calls, Kubernetes execution, metric/log transmission or infrastructure mutation.",
+        "JSON schema is agent v1.300071.0; Helm 6.6.0 keeps its actual 1.300072.0b1766 image. No agent binary validation claimed.",
+        "ADOT component fields verified against v0.50.0 dependencies; no ADOT process or scrape executed.",
+        "HCL syntax parsed with python-hcl2 7.3.1; no Terraform provider init/plan/apply.",
+        "Go SDK v1.72.0 type definitions/source inspected; no Go compiler available, no Go compilation claimed.",
+        "Botocore model validation is not live metric existence, expression evaluation or CloudFormation deployment."
+      ]
+    },
+    "supportedPythonSdk": {
+      "python": "3.12.13",
+      "boto3": "1.42.97",
+      "checks": [
+        {
+          "case": "sdk-payload-utc-dimensions-count",
+          "passed": true
+        },
+        {
+          "case": "sdk-zero-count",
+          "passed": true
+        },
+        {
+          "case": "sdk-invalid-count-no-request",
+          "cases": 3,
+          "passed": true
+        },
+        {
+          "case": "sdk-error-propagation",
+          "passed": true
+        }
+      ],
+      "scope": "Stubber only; fake credentials and loopback endpoint, no network/API request"
+    },
+    "mermaid": {
+      "version": "11.16.0",
+      "scope": "Native local browser parse/render; no VitePress build/server",
+      "results": [
+        {
+          "path": "en/observability/metrics/04-cloudwatch-metrics.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 8,
+          "edges": 8,
+          "consoleErrors": []
+        },
+        {
+          "path": "ko/observability/metrics/04-cloudwatch-metrics.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 8,
+          "edges": 8,
+          "consoleErrors": []
+        }
+      ]
+    },
+    "sourceLinkKeys": [
+      "974fb876660a",
+      "3f339f3070b3",
+      "d3ee07d77954",
+      "59459ded3836",
+      "69e0a0732ab4",
+      "3d623fa89c36",
+      "560f843b9723",
+      "e7c9e69b5722",
+      "d2268d22fb02",
+      "f7292718cc4f",
+      "6c8e97a5592b",
+      "9769820769f2",
+      "ea0d9e5cb9f9",
+      "ad9fe58c3d55",
+      "8d134e0c818f",
+      "219504f3aa8f",
+      "2ba84fa45707",
+      "767db13c6f44"
+    ],
+    "scopedDiffCheck": true,
+    "originalFiguresViewed": 4,
+    "limits": [
+      "No cloud calls, Kubernetes execution, metric/log transmission or infrastructure mutation.",
+      "JSON schema is agent v1.300071.0; Helm 6.6.0 keeps its actual 1.300072.0b1766 image. No agent binary validation claimed.",
+      "ADOT component fields verified against v0.50.0 dependencies; no ADOT process or scrape executed.",
+      "HCL syntax parsed with python-hcl2 7.3.1; no Terraform provider init/plan/apply.",
+      "Go SDK v1.72.0 type definitions/source inspected; no Go compiler available, no Go compilation claimed.",
+      "Botocore model validation is not live metric existence, expression evaluation or CloudFormation deployment.",
+      "Python helper additionally exercised on Python3.12.13/boto3 1.42.97 under Stubber; no transport.",
+      "No full VitePress build or cloud/Kubernetes/HA/metric/alarm/retention execution.",
+      "All4originalPNGs visually reviewed; wrong metric names and absolute cost/platform/retention claims replaced with tables and2in-source diagrams. Sharedspec/HTML/foreignbackfill remains parent followup."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/observability/metrics/04-cloudwatch-metrics.md",
+        "sha256": "48ab5757987ee9f46289bf50c554145075e76589eac237a87255275bd7e9f35f",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cloudwatch-metrics"
+          },
+          {
+            "tag": "h2",
+            "id": "introduction"
+          },
+          {
+            "tag": "h2",
+            "id": "container-insights-choose-a-metric-model"
+          },
+          {
+            "tag": "h3",
+            "id": "installation-and-platform-scope"
+          },
+          {
+            "tag": "h3",
+            "id": "otel-migration-and-historical-announcements"
+          },
+          {
+            "tag": "h2",
+            "id": "cloudwatch-agent-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "correct-traditional-container-insights-json"
+          },
+          {
+            "tag": "h2",
+            "id": "custom-metric-collection"
+          },
+          {
+            "tag": "h3",
+            "id": "target-selection-and-dimension-labels"
+          },
+          {
+            "tag": "h3",
+            "id": "cloudwatch-agent-prometheus-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-distro-for-opentelemetry-adot"
+          },
+          {
+            "tag": "h3",
+            "id": "send-custom-metrics-via-sdk"
+          },
+          {
+            "tag": "h2",
+            "id": "metric-math-and-anomaly-detection"
+          },
+          {
+            "tag": "h3",
+            "id": "metric-math"
+          },
+          {
+            "tag": "h3",
+            "id": "anomaly-detection"
+          },
+          {
+            "tag": "h3",
+            "id": "anomaly-detection-with-terraform"
+          },
+          {
+            "tag": "h2",
+            "id": "dashboard-creation"
+          },
+          {
+            "tag": "h3",
+            "id": "cloudformation"
+          },
+          {
+            "tag": "h3",
+            "id": "terraform"
+          },
+          {
+            "tag": "h2",
+            "id": "alert-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "terraform-alarms"
+          },
+          {
+            "tag": "h2",
+            "id": "cost-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "match-the-billing-model-to-collection"
+          },
+          {
+            "tag": "h3",
+            "id": "retention-is-a-data-deletion-decision"
+          },
+          {
+            "tag": "h3",
+            "id": "infrequent-access-has-feature-constraints"
+          },
+          {
+            "tag": "h3",
+            "id": "cost-visibility"
+          },
+          {
+            "tag": "h2",
+            "id": "best-practices"
+          },
+          {
+            "tag": "h2",
+            "id": "troubleshooting"
+          },
+          {
+            "tag": "h3",
+            "id": "no-metrics-or-unexpected-values"
+          },
+          {
+            "tag": "h3",
+            "id": "high-cost-or-inactive-alarms"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "cloudwatch-metrics",
+          "introduction",
+          "container-insights-choose-a-metric-model",
+          "mermaid-179",
+          "installation-and-platform-scope",
+          "otel-migration-and-historical-announcements",
+          "cloudwatch-agent-configuration",
+          "correct-traditional-container-insights-json",
+          "custom-metric-collection",
+          "target-selection-and-dimension-labels",
+          "cloudwatch-agent-prometheus-configuration",
+          "aws-distro-for-opentelemetry-adot",
+          "send-custom-metrics-via-sdk",
+          "metric-math-and-anomaly-detection",
+          "metric-math",
+          "anomaly-detection",
+          "anomaly-detection-with-terraform",
+          "dashboard-creation",
+          "cloudformation",
+          "terraform",
+          "alert-configuration",
+          "terraform-alarms",
+          "cost-optimization",
+          "match-the-billing-model-to-collection",
+          "retention-is-a-data-deletion-decision",
+          "infrequent-access-has-feature-constraints",
+          "cost-visibility",
+          "best-practices",
+          "troubleshooting",
+          "no-metrics-or-unexpected-values",
+          "high-cost-or-inactive-alarms",
+          "validation-scope",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/observability/metrics/04-cloudwatch-metrics.md",
+        "sha256": "a79a1b1d336ad692e37ae691bed10b8f95abb7b975f5acf7bf3c75ad6b3c05b9",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cloudwatch-metrics"
+          },
+          {
+            "tag": "h2",
+            "id": "소개"
+          },
+          {
+            "tag": "h2",
+            "id": "container-insights-지표-모델-선택"
+          },
+          {
+            "tag": "h3",
+            "id": "설치와-플랫폼-범위"
+          },
+          {
+            "tag": "h3",
+            "id": "otel-전환과-과거-발표-기록"
+          },
+          {
+            "tag": "h2",
+            "id": "cloudwatch-agent-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "올바른-기존-container-insights-json"
+          },
+          {
+            "tag": "h2",
+            "id": "커스텀-메트릭-수집"
+          },
+          {
+            "tag": "h3",
+            "id": "target-선택과-dimension-label"
+          },
+          {
+            "tag": "h3",
+            "id": "cloudwatch-agent-prometheus-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-distro-for-opentelemetry-adot"
+          },
+          {
+            "tag": "h3",
+            "id": "sdk를-통한-커스텀-메트릭-전송"
+          },
+          {
+            "tag": "h2",
+            "id": "metric-math-및-이상-탐지"
+          },
+          {
+            "tag": "h3",
+            "id": "metric-math"
+          },
+          {
+            "tag": "h3",
+            "id": "이상-탐지-anomaly-detection"
+          },
+          {
+            "tag": "h3",
+            "id": "terraform으로-이상-탐지-설정"
+          },
+          {
+            "tag": "h2",
+            "id": "대시보드-생성"
+          },
+          {
+            "tag": "h3",
+            "id": "cloudformation"
+          },
+          {
+            "tag": "h3",
+            "id": "terraform"
+          },
+          {
+            "tag": "h2",
+            "id": "알림-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "terraform-알림"
+          },
+          {
+            "tag": "h2",
+            "id": "비용-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "수집-경로별-과금-모델"
+          },
+          {
+            "tag": "h3",
+            "id": "retention은-데이터-삭제-결정"
+          },
+          {
+            "tag": "h3",
+            "id": "infrequent-access의-기능-제약"
+          },
+          {
+            "tag": "h3",
+            "id": "비용-확인"
+          },
+          {
+            "tag": "h2",
+            "id": "모범-사례"
+          },
+          {
+            "tag": "h2",
+            "id": "문제-해결"
+          },
+          {
+            "tag": "h3",
+            "id": "지표가-없거나-값이-예상과-다른-경우"
+          },
+          {
+            "tag": "h3",
+            "id": "비용이-높거나-alarm이-작동하지-않는-경우"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "cloudwatch-metrics",
+          "소개",
+          "container-insights-지표-모델-선택",
+          "mermaid-179",
+          "설치와-플랫폼-범위",
+          "otel-전환과-과거-발표-기록",
+          "cloudwatch-agent-구성",
+          "올바른-기존-container-insights-json",
+          "커스텀-메트릭-수집",
+          "target-선택과-dimension-label",
+          "cloudwatch-agent-prometheus-설정",
+          "aws-distro-for-opentelemetry-adot",
+          "sdk를-통한-커스텀-메트릭-전송",
+          "metric-math-및-이상-탐지",
+          "metric-math",
+          "이상-탐지-anomaly-detection",
+          "terraform으로-이상-탐지-설정",
+          "대시보드-생성",
+          "cloudformation",
+          "terraform",
+          "알림-설정",
+          "terraform-알림",
+          "비용-최적화",
+          "수집-경로별-과금-모델",
+          "retention은-데이터-삭제-결정",
+          "infrequent-access의-기능-제약",
+          "비용-확인",
+          "모범-사례",
+          "문제-해결",
+          "지표가-없거나-값이-예상과-다른-경우",
+          "비용이-높거나-alarm이-작동하지-않는-경우",
+          "검증-범위",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md",
+        "sha256": "3de8d72ff5266c697407edeaadcf49a616c2cfa45f29fc4ee66706325dd80a3d",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cloudwatch-metrics-quiz"
+          }
+        ],
+        "renderedIds": [
+          "cloudwatch-metrics-quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md",
+        "sha256": "2beee9607e03e7ccd8fee72ea4415d7c99806d845b3f1fc029abd23067301026",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cloudwatch-metrics-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "cloudwatch-metrics-퀴즈"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html",
+      "cacheKey": "e7c9e69b5722",
+      "fetchedAt": "2026-09-12T23:26:05.566736+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html",
+      "sha256": "0ad3a8bee3328be447f33fb594bb1404d0ba7c41923bddb6e512b06431329b42"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+      "cacheKey": "ad9fe58c3d55",
+      "fetchedAt": "2026-09-12T23:26:05.582118+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Observability-EKS-addon.html",
+      "sha256": "d2462be4d4b563d98d33fd8e36ae1ac75769965f81f9a52b4da7abf826b9a85f"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/container-insights-eks-otel-quickstart.html",
+      "cacheKey": "6c8e97a5592b",
+      "fetchedAt": "2026-09-12T23:26:05.764602+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/container-insights-eks-otel-quickstart.html",
+      "sha256": "a512b188ee0d705afe9786e90fd23aef5dbd27a96ec9f4adb1b5f8c310ef07cd"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html",
+      "cacheKey": "219504f3aa8f",
+      "fetchedAt": "2026-09-12T23:26:05.785203+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html",
+      "sha256": "33c6d4e4cfd1b09ff5dda8c0f7fa067b60c97dfd0b2a275ad5fa475112b1c83e"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html",
+      "cacheKey": "3d623fa89c36",
+      "fetchedAt": "2026-09-12T23:26:05.979609+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html",
+      "sha256": "51f78deee32b8c5fb48d484c93cb8bf45817832a82ec61e805915bcc5bb4a974"
+    },
+    {
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/04/cloudwatch-otel-container-insights-eks/",
+      "cacheKey": "974fb876660a",
+      "fetchedAt": "2026-09-12T23:26:06.285236+00:00",
+      "status": 200,
+      "finalURL": "https://aws.amazon.com/about-aws/whats-new/2026/04/cloudwatch-otel-container-insights-eks/",
+      "sha256": "7334a9b503fc1c51f6b127cd2a2d12a7b671bbe62b55e5b6b9cb549c48dc2062"
+    },
+    {
+      "url": "https://aws.amazon.com/about-aws/whats-new/2026/06/cloudwatch-service-events/",
+      "cacheKey": "3f339f3070b3",
+      "fetchedAt": "2026-09-12T23:26:06.281614+00:00",
+      "status": 200,
+      "finalURL": "https://aws.amazon.com/about-aws/whats-new/2026/06/cloudwatch-service-events/",
+      "sha256": "2106149ba056921202bf878e046451b2bf486502f3b6d9fc0ae24fddfcbf8f06"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/container-insights-eks-otel.html",
+      "cacheKey": "9769820769f2",
+      "fetchedAt": "2026-09-12T23:27:31.518331+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/container-insights-eks-otel.html",
+      "sha256": "fa7ddc20521f6e1cd4ba904790cb266b5c5ffe6fec0b37b594bb0efac069044a"
+    },
+    {
+      "url": "https://api.github.com/repos/aws-observability/aws-otel-collector/releases/latest",
+      "cacheKey": "7011d4895852",
+      "fetchedAt": "2026-09-12T23:27:31.772426+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/aws-observability/aws-otel-collector/releases/latest",
+      "sha256": "35d0750da9adf0eb69d992b8d775f90ebb8e79be61875bfce3c13cf850374670"
+    },
+    {
+      "url": "https://api.github.com/repos/aws-observability/helm-charts/contents/charts",
+      "cacheKey": "a47d0bacb2fe",
+      "fetchedAt": "2026-09-12T23:27:31.794972+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/aws-observability/helm-charts/contents/charts",
+      "sha256": "2942ab6fa9e9e95cdfb07810de93be5745f9fbd9936cda1a3f2167e4bf3c5d10"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonVersions.html",
+      "cacheKey": "49246134f52f",
+      "fetchedAt": "2026-09-12T23:27:31.982277+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonVersions.html",
+      "sha256": "0ba3ec4762708f827f14854383bfff4021ffc1ec70f9ca9400d8872795b88bd9"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonConfiguration.html",
+      "cacheKey": "be0569fddc42",
+      "fetchedAt": "2026-09-12T23:27:32.002541+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonConfiguration.html",
+      "sha256": "e92cd2a78f3809567042b075010801e4073a21a58b473c9fdee9b5d894c05b57"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_concepts.html",
+      "cacheKey": "87ccc36e9e32",
+      "fetchedAt": "2026-09-12T23:27:32.183749+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_concepts.html",
+      "sha256": "c51342bdf0f68e9c37c4cbecf7a3ded9dbcb227d65ebe56d990d8e17d9f16340"
+    },
+    {
+      "url": "https://api.github.com/repos/aws/amazon-cloudwatch-agent/releases/latest",
+      "cacheKey": "ac373e4ad4ad",
+      "fetchedAt": "2026-09-12T23:29:54.791284+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/aws/amazon-cloudwatch-agent/releases/latest",
+      "sha256": "fedd8455b24f14bdc5fdb6143417c9d43a26ac987e38f5ecb91058db25b4d850"
+    },
+    {
+      "url": "https://api.github.com/repos/aws-observability/helm-charts/releases/latest",
+      "cacheKey": "e3132718f593",
+      "fetchedAt": "2026-09-12T23:29:54.757674+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/aws-observability/helm-charts/releases/latest",
+      "sha256": "921b89455bc3e089ffe8704cbfceb4bce3effd9ecaf3e5a0a92d576dc9b8c3af"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws-observability/helm-charts/main/charts/amazon-cloudwatch-observability/Chart.yaml",
+      "cacheKey": "94c8a765a982",
+      "fetchedAt": "2026-09-12T23:29:55.016807+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/aws-observability/helm-charts/main/charts/amazon-cloudwatch-observability/Chart.yaml",
+      "sha256": "64a9063ba3a497a8b165ffbdcdb0633b47ba5802285fe542e5fa638e2cab8b89"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws-observability/helm-charts/main/charts/amazon-cloudwatch-observability/values.yaml",
+      "cacheKey": "0d90e708a78c",
+      "fetchedAt": "2026-09-12T23:29:55.036796+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/aws-observability/helm-charts/main/charts/amazon-cloudwatch-observability/values.yaml",
+      "sha256": "bea2da81209fe0a1e0f2dbe9c122cf09c40ddb698a8528d7a12c92ab2d52e840"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "cacheKey": "231ba2678238",
+      "fetchedAt": "2026-09-12T23:29:55.239044+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/userguide/fargate.html",
+      "sha256": "4e90c68d514f556e88e5f862e619d0cd3884e1454c02d1d3c9a219ff1bb31d2e"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/monitor_estimated_charges_with_cloudwatch.html",
+      "cacheKey": "8d134e0c818f",
+      "fetchedAt": "2026-09-12T23:29:55.438355+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/monitor_estimated_charges_with_cloudwatch.html",
+      "sha256": "e7d3de773f49b56368acaf866a14a603dec91f8ae7fc81d9b4e92590672c6ef1"
+    },
+    {
+      "url": "https://aws.amazon.com/cloudwatch/pricing/",
+      "cacheKey": "d3ee07d77954",
+      "fetchedAt": "2026-09-12T23:26:06.817494+00:00",
+      "status": 200,
+      "finalURL": "https://aws.amazon.com/cloudwatch/pricing/",
+      "sha256": "dec89303d1f28a7523420187cb323c4b6b8b4cf6faff5a717b40e141fe898b34"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html",
+      "cacheKey": "69e0a0732ab4",
+      "fetchedAt": "2026-09-12T23:29:55.644557+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CloudWatch_Logs_Log_Classes.html",
+      "sha256": "e068cd7f0c7b72790480a5babbbbe2928a8a0b597b75bf9536caf70ac7e8cd0d"
+    },
+    {
+      "url": "https://api.github.com/repos/aws/amazon-cloudwatch-agent/git/trees/v1.300071.0?recursive=1",
+      "cacheKey": "f1fc2333947d",
+      "fetchedAt": "2026-09-12T23:43:59.385531+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/aws/amazon-cloudwatch-agent/git/trees/v1.300071.0?recursive=1",
+      "sha256": "fb1870eabb66303b83096df1acea772cfde17bf9bdfa9fb6147e5bf1fce2164c"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-enhanced-EKS.html",
+      "cacheKey": "d2268d22fb02",
+      "fetchedAt": "2026-09-12T23:43:59.186240+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-enhanced-EKS.html",
+      "sha256": "4c838b0f6c36fda2f51b79ee4310bb5581b0d4bd21e58fbbbf22b1bba59c252a"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws/amazon-cloudwatch-agent/v1.300071.0/translator/config/schema.json",
+      "cacheKey": "f7b5898b9312",
+      "fetchedAt": "2026-09-12T23:44:21.902153+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/aws/amazon-cloudwatch-agent/v1.300071.0/translator/config/schema.json",
+      "sha256": "2823cf4a6de048e0398f6a2a21a08079f5a3910c9698ccda86c443ad8e208469"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws/amazon-cloudwatch-agent/v1.300071.0/translator/config/sampleSchema/validPrometheusMetrics.json",
+      "cacheKey": "c2a5bcabea4a",
+      "fetchedAt": "2026-09-12T23:44:21.903749+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/aws/amazon-cloudwatch-agent/v1.300071.0/translator/config/sampleSchema/validPrometheusMetrics.json",
+      "sha256": "b38a5dc7034682b5bab8f3342238f3be3fd8f95f8a635d264589fdf7fb8bda42"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws/amazon-cloudwatch-agent/v1.300071.0/translator/config/sampleSchema/invalidMetricsWithInvalidMetrics_Collected.json",
+      "cacheKey": "4710ce39d870",
+      "fetchedAt": "2026-09-12T23:44:22.145885+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/aws/amazon-cloudwatch-agent/v1.300071.0/translator/config/sampleSchema/invalidMetricsWithInvalidMetrics_Collected.json",
+      "sha256": "8d0a161ea25ffd49e5f2d55b03d5271e58ee341b010578e38f0ff0e94d6cd907"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights-Prometheus-Setup-configure.html",
+      "cacheKey": "f7292718cc4f",
+      "fetchedAt": "2026-09-12T23:44:22.113690+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights-Prometheus-Setup-configure.html",
+      "sha256": "b245455522639d3f19efc2c3e1aac8719bfbbb10d1c81f6bce556a14269bb62d"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricData.html",
+      "cacheKey": "59459ded3836",
+      "fetchedAt": "2026-09-12T23:53:13.883407+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricData.html",
+      "sha256": "bf7daf45c2d0cbea86a50c79a24d45411a604e96b66023cbb67ef79fe2f6b395"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Dashboard-Body-Structure.html",
+      "cacheKey": "560f843b9723",
+      "fetchedAt": "2026-09-13T00:01:59.957158+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Dashboard-Body-Structure.html",
+      "sha256": "effc172b5a01b362ed63f9de31052e6da9f1bc9b2ada096ea4443ac1c590cf6f"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/iam-cw-condition-keys-namespace.html",
+      "cacheKey": "ea0d9e5cb9f9",
+      "fetchedAt": "2026-09-12T23:55:35.751770+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/iam-cw-condition-keys-namespace.html",
+      "sha256": "23890d7d000f05a36966337d170e270ec5438c2b7c006e92b041bc8754a9231e"
+    },
+    {
+      "url": "https://github.com/aws-observability/aws-otel-collector/releases/tag/v0.50.0",
+      "cacheKey": "2ba84fa45707",
+      "fetchedAt": "2026-09-13T00:02:00.251703+00:00",
+      "status": 200,
+      "finalURL": "https://github.com/aws-observability/aws-otel-collector/releases/tag/v0.50.0",
+      "sha256": "1200a9d98ba167d0af8c7c4c7621eaa464c1f393e87d7d167ac2729df14a3a18"
+    },
+    {
+      "url": "https://github.com/aws-observability/helm-charts/releases/tag/amazon-cloudwatch-observability-6.6.0",
+      "cacheKey": "767db13c6f44",
+      "fetchedAt": "2026-09-13T00:02:00.450763+00:00",
+      "status": 200,
+      "finalURL": "https://github.com/aws-observability/helm-charts/releases/tag/amazon-cloudwatch-observability-6.6.0",
+      "sha256": "0028dde98b875b2342d2e80459fa5da4dd40cb6e6a63452e4058f1caf6efaab6"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_MetricDataQuery.html",
+      "cacheKey": "468b8d835deb",
+      "fetchedAt": "2026-09-12T23:53:13.882344+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_MetricDataQuery.html",
+      "sha256": "d3294240cdff3f60ea46a6c755a10489cf42b6c11994c053f2223c536f7bacee"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws-observability/aws-otel-collector/v0.50.0/go.mod",
+      "cacheKey": "d201884efe6a",
+      "fetchedAt": "2026-09-12T23:53:14.125497+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/aws-observability/aws-otel-collector/v0.50.0/go.mod",
+      "sha256": "1c0bba91544fb7a66a1e7723df22c4d6a53b5ee7fc00fa6840e07cd5c04a637c"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/publishingMetrics.html",
+      "cacheKey": "dbef8a881d81",
+      "fetchedAt": "2026-09-12T23:55:35.756030+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/publishingMetrics.html",
+      "sha256": "4f57bc1be753cfff7bb90fa0ee42b29cf2880916d94fade19bbe174cd8e5919d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.158.0/exporter/awsemfexporter/config.go",
+      "cacheKey": "1232a6fe36f8",
+      "fetchedAt": "2026-09-12T23:55:35.999352+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.158.0/exporter/awsemfexporter/config.go",
+      "sha256": "a48b5e6f644c7b00bc998ce9e2cab5db9b53146de501f20899aff5ecd5a2c66c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.158.0/exporter/awsemfexporter/README.md",
+      "cacheKey": "9255a487e98b",
+      "fetchedAt": "2026-09-12T23:55:35.998571+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/v0.158.0/exporter/awsemfexporter/README.md",
+      "sha256": "02cb355a2b1de73504f794f08e720309d0da88a2287b87a54492c1935289b629"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricAlarm.html",
+      "cacheKey": "4cdc607da335",
+      "fetchedAt": "2026-09-12T23:57:27.248858+00:00",
+      "status": 200,
+      "finalURL": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_PutMetricAlarm.html",
+      "sha256": "44456a75a3e74d0225b3e385d5b1888229f8a1cdaab2f241e95dd09dad47a97b"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws/aws-sdk-go-v2/b189f382f4924bc6c948c9942e17c547553faf0d/service/cloudwatch/api_op_PutMetricData.go",
+      "cacheKey": "a5322b3e5381",
+      "fetchedAt": "2026-09-12T23:57:27.251337+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/aws/aws-sdk-go-v2/b189f382f4924bc6c948c9942e17c547553faf0d/service/cloudwatch/api_op_PutMetricData.go",
+      "sha256": "c7567c87fb9a138fea43779beee1fe2c42def5a9607f6257b7fbfb9ddd795e69"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/aws/aws-sdk-go-v2/b189f382f4924bc6c948c9942e17c547553faf0d/service/cloudwatch/types/types.go",
+      "cacheKey": "0449dcd34b73",
+      "fetchedAt": "2026-09-12T23:57:27.503689+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/aws/aws-sdk-go-v2/b189f382f4924bc6c948c9942e17c547553faf0d/service/cloudwatch/types/types.go",
+      "sha256": "3ee7fce9c99250dda693708ce507023e20b63aacc7317eee3a40121fe788e862"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/hashicorp/terraform-provider-aws/main/website/docs/r/cloudwatch_metric_alarm.html.markdown",
+      "cacheKey": "cee57d028af1",
+      "fetchedAt": "2026-09-12T23:59:59.947011+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/hashicorp/terraform-provider-aws/main/website/docs/r/cloudwatch_metric_alarm.html.markdown",
+      "sha256": "2a4da7add6ee42f3ed4cf838c694150f3738a8d93029984fcc0a156c2aa693bf"
+    }
+  ],
+  "findings": [
+    "Separated traditional/enhanced/OTel ContainerInsights naming, dimensions, billing and platform requirements; removed nonexistent cluster_cpu_utilization/cluster_memory_utilization, corrected node/pod network rates and node-versus-pod-limit denominators.",
+    "Replaced obsolete add-on pin and false eksctl control-plane-logging activation with actual version/architecture/compute compatibility discovery and a pinned Helm6.6.0 LinuxEC2 example. Agent image1.300072.0b1766 retained separately from GitHub agentv1.300071.0.",
+    "Corrected Kubernetes agent JSON to logs.metrics_collected; removed invalid duplicate metrics-root collector and JSONcomments. Replaced incomplete manually mounted/RBAC-less DaemonSet with reviewed chart ownership and explicit custom-collector prerequisites.",
+    "Verified chartagent/FluentBit serviceAccount cloudwatch-agent; roleArn is not an EKSIRSAshortcut. Documented PodIdentity/IRSA prerequisites, runtime identity versus localSTS, and Windows/Fargate/AutoMode limits.",
+    "Native Helm revealed2Windows-specificCRs even in Linuxexample and despite LinuxApplicationSignalsdisabled; documented mixed-cluster review requirement. Traditionalrender3agentCRs/dualmetrics4, including1/2Linuxagents respectively.",
+    "Preserved April2preview and July6ServiceEvents actual dates, separated historicallaunchregions fromcurrentavailability; OTel offbydefault, minimum6.2+ notcurrentcompatibilitymatrix, optionaldualmetrics and explicitlogcollectionownership avoidduplicateingestion.",
+    "Repaired Prometheus namedport/namespace selection and explicitClusterName/Namespace/Servicelabelvalues; separategaugeexample avoidsfalsecounter/histogram semantics. ADOTv0.50 componentconfig sourceverified withscopedpoddiscoveryRBAC andsinglecollectionowner prerequisites.",
+    "Corrected unsupported MetricMathPERCENTILE/movingaverage expressions; ALBcountSum andzero-trafficIF; scalarvsseries, missingzero/divisiondrop, p95distributionboundary andtop10SORT/SLICE explained.",
+    "Replaced PythonnaiveUTC/modulecalls and brokenGoimports with injected-clienthelpers; matchingdimensions/intervalcount/Sum, exceptions, noidempotencytoken guarantee. Python3.12Stubberpassed; GoSDKv1.72actualtypes inspected, noGocompilerclaim.",
+    "Preserved Korean-onlypodcount/network/top10/restarttopics inbothlocales. FullCFNparameters/dynamicdashboardname, validmetrictable/dimensions andHCLinputdeclarations. PodrestarttotalMaximum no longerclaimswindowincrement; failednodecountnotexclusivelyNotReady.",
+    "Retained correct anomalyalarmsbothReturnDatatrue after officialproviderexampleverification; clarifiedexpectedband/history, metricidentity, missingdata andSNSdeliveryconditions.",
+    "Removedaccount-wide logretentionshortening andfixedSeoul/freeTier/highresolutionpricing assumptions. Explicitownedloggroupretention, IAdoesnotsupportEMF/ContainerInsights andcannotchangeexistingclass, billingus-east-1prerequisite, discoverynotbilling/cardinalityinventory.",
+    "Rewroteall20quizquestions/answers to currentprose; viewed4originalPNGs and replacedwrongmetric/absoluteoperatingcost/platform/retentionfigures withaccuratetableand2inlineMermaiddiagrams. Sharedforeignassetsleftforparent-source-sync."
+  ],
+  "figures": {
+    "original": [
+      {
+        "path": "en/.gitbook/assets/en-observability-metrics-04-cloudwatch-metrics-0.png",
+        "sha256": "e0055631aef7f54d84c11eb546095b6eced64faf7c7c6cfe33bf1212471f017f",
+        "visuallyReviewed": true,
+        "finding": "Falsezerooperations/AWSonly/infrastructurecostonly/unlimitedretentionandunqualified15months",
+        "action": "Replaced owned Markdown reference with corrected comparison table or current in-source collection diagram",
+        "scopeExternalFollowup": [
+          "assets/diagrams/archify/en-observability-metrics-04-cloudwatch-metrics-0.architecture.json",
+          "public/archmaps/en-observability-metrics-04-cloudwatch-metrics-0.html"
+        ],
+        "note": "Sharedspec/HTMLandforeignprose/PNGsunchanged; parentmustsource-syncbeforetranslationbackfill."
+      },
+      {
+        "path": "en/.gitbook/assets/en-observability-metrics-04-cloudwatch-metrics-1.png",
+        "sha256": "b7fb5e6369e4c8ae82c00d9a2f44a252149406eb97f4e5e18faa977e3509314b",
+        "visuallyReviewed": true,
+        "finding": "Figurecardpublishesnonexistentcluster_cpu_utilizationandimpliesdirecttraditionalmetricpath",
+        "action": "Replaced owned Markdown reference with corrected comparison table or current in-source collection diagram",
+        "scopeExternalFollowup": [
+          "assets/diagrams/archify/en-observability-metrics-04-cloudwatch-metrics-1.architecture.json",
+          "public/archmaps/en-observability-metrics-04-cloudwatch-metrics-1.html"
+        ],
+        "note": "Sharedspec/HTMLandforeignprose/PNGsunchanged; parentmustsource-syncbeforetranslationbackfill."
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-metrics-04-cloudwatch-metrics-0.png",
+        "sha256": "85070ebf521103cdfc556849adf31e10a4f784cdd64d1ee2af43aaf9b31ffa5f",
+        "visuallyReviewed": true,
+        "finding": "Falsezerooperations/AWSonly/infrastructurecostonly/unlimitedretentionandunqualified15months",
+        "action": "Replaced owned Markdown reference with corrected comparison table or current in-source collection diagram",
+        "scopeExternalFollowup": [
+          "assets/diagrams/archify/ko-observability-metrics-04-cloudwatch-metrics-0.architecture.json",
+          "public/archmaps/ko-observability-metrics-04-cloudwatch-metrics-0.html"
+        ],
+        "note": "Sharedspec/HTMLandforeignprose/PNGsunchanged; parentmustsource-syncbeforetranslationbackfill."
+      },
+      {
+        "path": "ko/.gitbook/assets/ko-observability-metrics-04-cloudwatch-metrics-1.png",
+        "sha256": "a6d643601d0de5a01237203ca73ce9b83fdb289f69a07968798161384f82784a",
+        "visuallyReviewed": true,
+        "finding": "Figurecardpublishesnonexistentcluster_cpu_utilizationandimpliesdirecttraditionalmetricpath",
+        "action": "Replaced owned Markdown reference with corrected comparison table or current in-source collection diagram",
+        "scopeExternalFollowup": [
+          "assets/diagrams/archify/ko-observability-metrics-04-cloudwatch-metrics-1.architecture.json",
+          "public/archmaps/ko-observability-metrics-04-cloudwatch-metrics-1.html"
+        ],
+        "note": "Sharedspec/HTMLandforeignprose/PNGsunchanged; parentmustsource-syncbeforetranslationbackfill."
+      }
+    ],
+    "replacement": {
+      "version": "11.16.0",
+      "scope": "Native local browser parse/render; no VitePress build/server",
+      "results": [
+        {
+          "path": "en/observability/metrics/04-cloudwatch-metrics.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 8,
+          "edges": 8,
+          "consoleErrors": []
+        },
+        {
+          "path": "ko/observability/metrics/04-cloudwatch-metrics.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 8,
+          "edges": 8,
+          "consoleErrors": []
+        }
+      ]
+    }
+  },
+  "artifactDirectory": ".vitepress/cache/observability-cloudwatch-metrics-audit",
+  "limits": [
+    "No cloud calls, Kubernetes execution, metric/log transmission or infrastructure mutation.",
+    "JSON schema is agent v1.300071.0; Helm 6.6.0 keeps its actual 1.300072.0b1766 image. No agent binary validation claimed.",
+    "ADOT component fields verified against v0.50.0 dependencies; no ADOT process or scrape executed.",
+    "HCL syntax parsed with python-hcl2 7.3.1; no Terraform provider init/plan/apply.",
+    "Go SDK v1.72.0 type definitions/source inspected; no Go compiler available, no Go compilation claimed.",
+    "Botocore model validation is not live metric existence, expression evaluation or CloudFormation deployment.",
+    "Python helper additionally exercised on Python3.12.13/boto3 1.42.97 under Stubber; no transport.",
+    "No full VitePress build or cloud/Kubernetes/HA/metric/alarm/retention execution.",
+    "All4originalPNGs visually reviewed; wrong metric names and absolute cost/platform/retention claims replaced with tables and2in-source diagrams. Sharedspec/HTML/foreignbackfill remains parent followup."
+  ],
+  "sourceAccessNotes": [
+    "OfficialpublicHTTPsourcescachedpersistently;genericmonitoringredirectcandidatesexcluded.",
+    "AWSdocumentationMCPusedforcurrentplatform/SDK/modelclarification.",
+    "Charttgz179511bytes SHA256 183da12d8bf42642c08d0f04f0f06c2bdeed8f7ab8c25e2de8295a7f9a68ba9b verifiedagainstGitHubreleasedigest."
+  ]
+}

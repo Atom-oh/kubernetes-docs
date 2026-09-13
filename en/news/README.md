@@ -1,7 +1,9 @@
 # News
-> **Last Updated**: August 31, 2026
+> **Last Updated**: September 12, 2026
 
-Kubernetes, Amazon EKS, and CNCF ecosystem news isn't collected into separate digest documents here. Each week, GitHub Actions applies relevant news directly to the existing doc it relates to, and this update log records only which doc changed and why. News with no matching doc is recorded here as a link only.
+This page records documentation changes prompted by Kubernetes, Amazon EKS and CNCF news. GitHub Actions prepares updates each Monday at 09:00 KST and opens a PR after its quality gate passes. Changes reach the site after review, merge and deployment.
+
+Week labels identify log-entry weeks and may differ from source publication dates. These are historical records; consult the linked guides and official sources for current support, security patches and operating requirements. “No matching doc” describes the automated match at that time.
 
 ## Update Log
 
@@ -27,7 +29,7 @@ Kubernetes, Amazon EKS, and CNCF ecosystem news isn't collected into separate di
 - 2026-W34: no matching doc — Cloud Native Buildpacks becomes a CNCF graduated project ([source](https://www.cncf.io/announcements/2026/08/11/cncf-announces-graduation-of-cloud-native-buildpacks-advancing-the-standard-for-container-builds/))
 - 2026-W34: no matching doc — KubeCon + CloudNativeCon North America 2026 schedule revealed, new AI Inference + Agentic track added ([source](https://www.cncf.io/announcements/2026/08/10/cncf-reveals-kubecon-cloudnativecon-north-america-2026-schedule-adds-new-ai-inference-agentic-track/))
 - 2026-W34: no matching doc — How to pretty-print your Kubernetes YAML as KYAML, Kubernetes blog ([source](https://kubernetes.io/blog/2026/08/11/how-to-pretty-print-kubernetes-yaml-as-kyaml/))
-- 2026-W33: [networking/04-gateway-api.md](../networking/04-gateway-api.md) — applied Gateway API v1.6 (TCPRoute/UDPRoute graduated to Standard v1, experimental resources moved to the x-k8s.io API group)
+- 2026-W33: [networking/04-gateway-api.md](../networking/04-gateway-api.md) — applied Gateway API v1.6 (TCPRoute/UDPRoute graduated to Standard v1, channel-specific deprecated API serving changes)
 - 2026-W33: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied ArgoCD v3.5.0 GA (Helm 4 migration, source integrity verification alpha, ApplicationSet improvements)
 - 2026-W33: [networking/cilium/README.md](../networking/cilium/README.md) — applied Cilium 1.20.0 GA (Gateway API v1.6.1, KCNP, multi-pool IPAM migration) and 1.21.0-pre.0
 - 2026-W33: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied the Kubernetes v1.37 sneak peek, Docs Freeze taking effect, and the v1.38.0-alpha.0 tag
@@ -49,7 +51,7 @@ Kubernetes, Amazon EKS, and CNCF ecosystem news isn't collected into separate di
 - 2026-W30: [service-mesh/linkerd/README.md](../service-mesh/linkerd/README.md) — applied Linkerd edge-26.7.1 (requests to undefined service ports disallowed, breaking)
 - 2026-W30: [eks-auto-mode/README.md](../eks-auto-mode/README.md) — applied ARC zonal shift/autoshift support for EKS Auto Mode
 - 2026-W30: [ops/15-zonal-operations-guide.md](../ops/15-zonal-operations-guide.md) — applied ARC zonal shift support for EKS Auto Mode
-- 2026-W30: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — applied coordinated Karpenter patch releases across all maintained lines (v1.3.8–v1.11.3)
+- 2026-W30: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — applied Karpenter patch releases for older lines (v1.3.8–v1.11.3)
 - 2026-W30: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied Kubernetes v1.37.0-beta.0 and the v1.37 release schedule
 - 2026-W30: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied ArgoCon Japan 2026 and the upcoming Argo CD 3.5 roadmap session
 - 2026-W30: [observability/metrics/01-prometheus.md](../observability/metrics/01-prometheus.md) — applied the Kubernetes blog's custom metrics exporter guide

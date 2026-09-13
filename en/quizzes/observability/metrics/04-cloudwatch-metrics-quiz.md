@@ -1,183 +1,167 @@
 # CloudWatch Metrics Quiz
 
-A quiz to test your understanding of CloudWatch Metrics.
+Reviewed with the 2026-09-13 guide.
 
----
+1. What does a managed CloudWatch backend remove from the team's responsibilities?
 
-1. What is the primary function of Amazon CloudWatch Container Insights?
-   - A) Container image building
-   - B) Container/pod-level monitoring for EKS clusters
-   - C) Container orchestration
-   - D) CI/CD pipeline management
+   - A) Every collection and IAM task
+   - B) Only the AWS backend operation; collectors, identity, retention and response still need ownership
+   - C) Every network prerequisite
+   - D) All query and log charges
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Container/pod-level monitoring for EKS clusters**
+**Answer: B**
 
-**Explanation:**
-Container Insights is a CloudWatch feature for monitoring containerized workloads in EKS, ECS, and Kubernetes environments. It automatically collects and visualizes cluster, node, pod, and container-level CPU, memory, network, and filesystem metrics.
+Traditional, enhanced and OTel collection have different naming and billing models. Managed storage is not zero operational work.
+
+</details>
+
+2. Which EKS installation statement is correct?
+
+   - A) update-cluster-logging installs Container Insights
+   - B) Every platform runs the same host DaemonSet
+   - C) Select a compatible add-on or owned Helm installation and verify platform/identity prerequisites
+   - D) Helm 6.6.0 is necessarily the EKS add-on version
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: C**
+
+Control-plane logging is separate. Fargate does not run the shown host DaemonSet; Auto Mode/mixed compute needs compatibility checks. Pod Identity/IRSA still needs real setup.
+
+</details>
+
+3. What produces a top-ten dashboard view from SEARCH?
+
+   - A) SEARCH alone always limits results to ten
+   - B) SLICE(SORT(SEARCH(...), AVG, DESC), 0, 10)
+   - C) PERCENTILE(SEARCH(...), 10)
+   - D) An ordinary alarm on the SEARCH array
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B**
+
+SEARCH returns matching series. Sort and slice explicitly; the ranking uses the evaluated range. SEARCH is not directly alarmable.
+
+</details>
+
+4. Which percentile and ratio statement is correct?
+
+   - A) PERCENTILE(METRICS(),95) gives global request p95
+   - B) Every zero-traffic period is a healthy zero-error result
+   - C) AVG(METRICS()) PERIOD(300) is a moving average
+   - D) Use a supported p95 statistic; guard a count ratio against zero traffic and inspect missing telemetry
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: D**
+
+The guide uses Sum for ALB counts and IF(m2>0,100*m1/m2). CloudWatch arithmetic treats missing values as zero and drops division-by-zero results; service p95 values cannot reconstruct a global p95.
+
+</details>
+
+5. What must an ADOT/EMF metric declaration contain in actual telemetry?
+
+   - A) The dimension labels and values, supplied by discovery/relabeling or the application
+   - B) Only dimension names in the exporter config
+   - C) A secret access key in every label
+   - D) A replica on every node scraping every pod
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: A**
+
+awsemf sends log events for extraction into traditional metrics. The example creates ClusterName/Namespace/Service and uses a gauge. Modern direct OTLP paths are a different option.
+
+</details>
+
+6. Which cost action is unsafe or incompatible with this guide?
+
+   - A) Measure ingestion and query usage
+   - B) Set approved retention on one owned log group
+   - C) Move EMF/Container Insights logs to Infrequent Access and shorten every unbounded log group's retention
+   - D) Review duplicate scrapes and unnecessary labels
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: C**
+
+Infrequent Access does not support EMF or Container Insights log ingestion. Retention reduction may expire existing history. High resolution can increase request/alarm cost, not a universal tenfold metric-storage rate.
+
+</details>
+
+7. What is true of the PutMetricData helpers?
+
+   - A) They provision IAM automatically
+   - B) They use caller-provided clients and UTC timestamps, and errors must reach the caller
+   - C) Retries guarantee exactly-once business counts
+   - D) CloudWatch creates every aggregate dimension set
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B**
+
+The complete dimension set identifies the custom metric. PutMetricData has no idempotency token; ambiguous retries can duplicate samples. The example reports interval counts and uses Sum.
+
+</details>
+
+8. How do traditional metric dimensions and OTel labels differ?
+
+   - A) Both are always unlimited
+   - B) The 150-label limit replaces PutMetricData's limit
+   - C) Traditional metrics allow 30 dimensions; the documented OTel model supports up to 150 labels
+   - D) Labels never affect payload cost or disclosure
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: C**
+
+They are separate ingestion models. Extra labels add payload and metadata exposure; dimension names alone do not measure cardinality.
+
+</details>
+
+9. Which metric interpretation is correct?
+
+   - A) node_network_total_bytes is bytes/second; namespace_number_of_running_pods counts pods
+   - B) cluster_cpu_utilization is the standard published metric
+   - C) Running containers always equal running pods
+   - D) All reserved-capacity metrics are enhanced-only
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: A**
+
+Verify actual metric catalogues and dimension sets. Pod CPU/memory utilization can use node limits as the denominator. Enhanced observability adds metrics/dimensions and has its own billing model.
+
+</details>
+
+10. What must be checked for an anomaly or restart alarm?
+
+   - A) A created alarm proves live telemetry
+   - B) A restart total is always a per-window increment
+   - C) Remove ReturnData from the observed anomaly series unconditionally
+   - D) History, exact metric identity, total-versus-delta meaning, missing data and notification delivery
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: D**
+
+ANOMALY_DETECTION_BAND returns learned expected bounds. The documented anomaly form can return both the observed series and band. A PodName/Namespace/ClusterName restart total is not automatically five new restarts per five minutes.
 
 </details>
 
 ---
 
-2. What is the recommended method for deploying CloudWatch Agent to EKS?
-   - A) Deploy as a single Pod
-   - B) Deploy to all nodes as a DaemonSet
-   - C) Deploy as 3 replicas with Deployment
-   - D) Deploy as a StatefulSet
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: B) Deploy to all nodes as a DaemonSet**
-
-**Explanation:**
-CloudWatch Agent is deployed as a DaemonSet to collect metrics and logs from each node. This ensures consistent collection of system metrics, container metrics, and logs from all nodes.
-
-</details>
-
----
-
-3. What is the purpose of the `SEARCH()` function in CloudWatch Metric Math?
-   - A) Log search
-   - B) Dynamically search for metrics matching a pattern
-   - C) Alert search
-   - D) Dashboard search
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: B) Dynamically search for metrics matching a pattern**
-
-**Explanation:**
-The `SEARCH()` function dynamically searches for metrics using namespace, dimension, and metric name patterns. For example, `SEARCH('{AWS/EC2,InstanceId} MetricName="CPUUtilization"', 'Average')` searches for CPU utilization of all EC2 instances.
-
-</details>
-
----
-
-4. How does CloudWatch Anomaly Detection work?
-   - A) Detection based on manually set thresholds
-   - B) ML-based automatic anomaly pattern detection
-   - C) Log pattern analysis
-   - D) Network traffic analysis
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: B) ML-based automatic anomaly pattern detection**
-
-**Explanation:**
-CloudWatch Anomaly Detection uses machine learning to learn normal patterns of metrics and automatically detect abnormal values. It generates dynamic expected ranges (bands) considering seasonality, trends, and day-of-week patterns, and identifies anomalies when values fall outside these ranges.
-
-</details>
-
----
-
-5. When using AWS Distro for OpenTelemetry (ADOT) to send Prometheus metrics to CloudWatch, which exporter is used?
-   - A) prometheus-exporter
-   - B) awsemf (AWS EMF Exporter)
-   - C) cloudwatch-exporter
-   - D) metric-exporter
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: B) awsemf (AWS EMF Exporter)**
-
-**Explanation:**
-To send Prometheus metrics to CloudWatch in ADOT, use the AWS EMF (Embedded Metric Format) Exporter. This exporter converts metrics to EMF format in CloudWatch Logs and sends them, which CloudWatch then extracts as metrics.
-
-</details>
-
----
-
-6. Which is NOT a valid method for CloudWatch cost optimization?
-   - A) Set log retention periods
-   - B) Remove unnecessary high-resolution metrics
-   - C) Collect all metrics at 1-second intervals
-   - D) Use Infrequent Access log class
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: C) Collect all metrics at 1-second intervals**
-
-**Explanation:**
-High-resolution metrics (1-second intervals) are expensive. For cost optimization, collect only necessary metrics at high resolution and most metrics at 60-second intervals (default). Setting log retention periods, filtering unnecessary metrics, and using Infrequent Access log class also help reduce costs.
-
-</details>
-
----
-
-7. Which API is used to create custom metrics in CloudWatch?
-   - A) CreateMetric
-   - B) PutMetricData
-   - C) PublishMetric
-   - D) SendMetric
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: B) PutMetricData**
-
-**Explanation:**
-The `PutMetricData` API is used to send custom metrics to CloudWatch. You can specify namespace, metric name, dimensions, value, unit, timestamp, etc. It can be called through AWS SDK or CLI.
-
-</details>
-
----
-
-8. What is the role of Dimensions in CloudWatch?
-   - A) Specify metric units
-   - B) Key-value pairs that segment metrics
-   - C) Specify alert severity
-   - D) Specify log groups
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: B) Key-value pairs that segment metrics**
-
-**Explanation:**
-Dimensions are key-value pairs that segment and identify metrics. For example, in EC2 instance metrics, the `InstanceId` dimension identifies specific instances. Up to 30 dimensions can be specified for a single metric.
-
-</details>
-
----
-
-9. How does Enhanced Container Insights differ from basic Container Insights?
-   - A) Provided for free
-   - B) Provides additional metrics and more detailed monitoring
-   - C) Removes log collection functionality
-   - D) Provides only alerting functionality
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: B) Provides additional metrics and more detailed monitoring**
-
-**Explanation:**
-Enhanced Container Insights collects more metrics than basic Container Insights. It provides additional information such as reserved CPU/memory capacity, GPU metrics (when applicable), and Kubernetes control plane metrics. It costs more but enables more detailed monitoring.
-
-</details>
-
----
-
-10. What is the role of the `ANOMALY_DETECTION_BAND()` function in CloudWatch alerts?
-    - A) Set fixed thresholds
-    - B) Return expected range from anomaly detection model
-    - C) Log filtering
-    - D) Dashboard creation
-
-<details>
-<summary>Show Answer</summary>
-
-**Answer: B) Return expected range from anomaly detection model**
-
-**Explanation:**
-The `ANOMALY_DETECTION_BAND()` function returns the expected value range (upper/lower bounds) learned by the anomaly detection model. This range can be used in alerts to trigger notifications when metrics fall outside the expected range. The second argument specifies the standard deviation multiplier to adjust the band width.
-
-</details>
+[Return to the guide](../../../observability/metrics/04-cloudwatch-metrics.md)

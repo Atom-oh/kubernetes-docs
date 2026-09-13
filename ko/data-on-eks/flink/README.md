@@ -7,6 +7,9 @@ JobManager는 실행·복구를 조정하고, TaskManager는 operator task와 �
 
 > 검토: 2026-09-12. 이 시리즈의 연동 기준은 **Flink 2.2.1 / Java 17 / Operator 1.15.0**입니다.
 
+Part 3의 Iceberg 예제는 호환 runtime에 맞춰 **Flink 2.1.3 / Iceberg 1.11.0**을 별도로 사용합니다.
+S3 플러그인의 SDK 지원 상태와 관리형 서비스의 차이는 각 장의 검증 제한을 확인합니다.
+
 Flink 최신 안정 릴리스는 2.3.0이지만, 공개 Operator·커넥터 지원 표와 함께 확인할
 예제 기준선을 2.2.1로 고정했습니다. 버전 문자열이 CRD enum에 들어 있다는 사실만으로
 그 조합의 통합 검증을 대신하지 않습니다. Kubernetes와 kubectl은 현재 EKS 지원 및

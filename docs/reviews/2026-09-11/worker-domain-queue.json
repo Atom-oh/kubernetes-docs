@@ -24,7 +24,7 @@
     },
     {
       "domain": "networking",
-      "status": "active",
+      "status": "complete",
       "scope": [
         "ko/networking/**",
         "en/networking/**",
@@ -37,14 +37,15 @@
         "ko": 54
       },
       "inventoryNote": "Path inventory only; not a full-read or semantic-review claim.",
-      "fullyRead": 88,
-      "fixedAndValidated": 88,
-      "currentBatch": "networking-cilium L2-L7",
-      "progress": "docs/reviews/2026-09-11/networking-progress.json"
+      "fullyRead": 108,
+      "fixedAndValidated": 108,
+      "currentBatch": null,
+      "progress": "docs/reviews/2026-09-11/networking-progress.json",
+      "coverage": "docs/reviews/2026-09-11/networking-coverage.json"
     },
     {
       "domain": "observability",
-      "status": "queued",
+      "status": "active",
       "scope": [
         "ko/observability/**",
         "en/observability/**",
@@ -58,7 +59,11 @@
         "en": 58,
         "ko": 58
       },
-      "inventoryNote": "Path inventory only; not a full-read or semantic-review claim."
+      "inventoryNote": "Path inventory only; not a full-read or semantic-review claim.",
+      "fullyRead": 26,
+      "fixedAndValidated": 22,
+      "currentBatch": "observability-metrics Datadog",
+      "progress": "docs/reviews/2026-09-11/observability-domain-progress.json"
     }
   ],
   "requirements": [
@@ -104,14 +109,16 @@
     }
   ],
   "latestWorkerCheckpoint": {
-    "date": "2026-09-12",
-    "fullyRead": 258,
-    "fixedAndValidated": 258,
-    "current": "Cilium04IPAM-policy4complete. Next05L2-L7fourselected,unread.258read/complete;20Cilium+116observabilityremain.",
+    "date": "2026-09-13",
+    "fullyRead": 304,
+    "fixedAndValidated": 300,
+    "current": "Current observability-metrics Datadog: 4/4 sources fully read; primary verification/fixes pending. Last completed read: ko/quizzes/observability/metrics/05-datadog-quiz.md.",
     "remaining": {
       "networkingPending": 0,
-      "networkingUnread": 20,
-      "observability": 116
+      "networkingUnread": 0,
+      "observability": 94,
+      "observabilityUnread": 90,
+      "observabilityPending": 4
     },
     "blockers": []
   },

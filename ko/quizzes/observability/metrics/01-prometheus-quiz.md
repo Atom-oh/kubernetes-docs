@@ -1,28 +1,25 @@
 # Prometheus 퀴즈
 
-Prometheus에 대한 이해도를 테스트하는 퀴즈입니다.
+> 검토: 2026-09-12
 
----
+1. Prometheus의 일반적인 메트릭 수집 경로는 무엇인가요?
 
-1. Prometheus의 데이터 수집 방식은?
-   - A) Push 기반 - 애플리케이션이 메트릭을 전송
-   - B) Pull 기반 - Prometheus가 타겟에서 메트릭을 스크랩
-   - C) 스트리밍 기반 - 실시간 데이터 스트림
-   - D) 배치 기반 - 주기적 파일 전송
+   - A) 애플리케이션이 모든 샘플을 직접 push해야 한다
+   - B) Prometheus가 설정한 대상을 HTTP로 scrape한다
+   - C) 스트리밍 이벤트 로그만 사용한다
+   - D) CSV 파일만 주기적으로 가져온다
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Pull 기반 - Prometheus가 타겟에서 메트릭을 스크랩**
+**정답: B**
 
-**설명:**
-Prometheus는 Pull 기반 메트릭 수집 시스템으로, HTTP를 통해 타겟의 /metrics 엔드포인트에서 주기적으로 메트릭을 스크랩합니다. 이 방식의 장점은 중앙에서 수집 대상과 주기를 제어할 수 있고, 타겟의 가용성을 자동으로 감지할 수 있다는 것입니다.
+기본 경로는 pull/scrape입니다. Remote write·선택적 배치 통합은 다른 전달 경로를 추가합니다. up은 scrape 성공이며 애플리케이션의 전체 가용성을 증명하지 않습니다.
 
 </details>
 
----
+2. Counter의 최근 5분 평균 초당 변화율을 계산하는 식은 무엇인가요?
 
-2. PromQL에서 최근 5분간의 HTTP 요청 rate를 계산하는 올바른 쿼리는?
    - A) `rate(http_requests_total, 5m)`
    - B) `rate(http_requests_total[5m])`
    - C) `increase(http_requests_total[5m])`
@@ -31,52 +28,46 @@ Prometheus는 Pull 기반 메트릭 수집 시스템으로, HTTP를 통해 타�
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) `rate(http_requests_total[5m])`**
+**정답: B**
 
-**설명:**
-`rate()` 함수는 Counter 메트릭의 초당 평균 증가율을 계산합니다. 범위 벡터는 대괄호 `[]` 안에 시간을 지정합니다. `increase()`는 총 증가량을 반환하고, `avg()`는 평균값을 계산하는 집계 함수입니다. `rate(http_requests_total[5m])`은 5분 동안의 초당 요청 수를 계산합니다.
+rate()는 range vector를 사용해 관측한 리셋·외삽을 처리합니다. increase()는 초당 변화율이 아니라 총 증가량 추정입니다. 집계 전에 rate를 적용하며 놓친 모든 증가량이 복원된다고 해석하지 않습니다.
 
 </details>
 
----
+3. 정상적으로 동작할 ServiceMonitor는 무엇을 설명해야 하나요?
 
-3. Prometheus Operator에서 ServiceMonitor의 역할은?
-   - A) Prometheus 서버를 배포한다
-   - B) 알림 규칙을 정의한다
-   - C) 모니터링할 서비스와 스크랩 설정을 정의한다
-   - D) Grafana 대시보드를 생성한다
+   - A) Grafana 대시보드
+   - B) Prometheus container image만
+   - C) Prometheus 설정과 selector·port 이름이 일치하는 대상 Service와 scrape endpoint
+   - D) 완전한 애플리케이션 Deployment
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) 모니터링할 서비스와 스크랩 설정을 정의한다**
+**정답: C**
 
-**설명:**
-ServiceMonitor는 Prometheus Operator의 CRD로, Kubernetes 서비스를 모니터링하기 위한 스크랩 설정을 선언적으로 정의합니다. 대상 서비스 선택자, 엔드포인트, 스크랩 간격, 레이블 재작성 등을 설정할 수 있습니다. PrometheusRule은 알림 규칙을, Prometheus CRD는 서버 배포를 담당합니다.
+Prometheus가 먼저 monitor의 namespace·레이블을 선택하고 monitor가 Service를 선택합니다. Endpoint port는 Service port 이름입니다. RBAC·TLS/네트워크·계측한 애플리케이션도 필요합니다.
 
 </details>
 
----
+4. Classic histogram에서 histogram_quantile()이 반환하는 값은 무엇인가요?
 
-4. histogram_quantile 함수에 대한 설명으로 올바른 것은?
-   - A) Summary 메트릭에서만 사용할 수 있다
-   - B) Histogram 버킷에서 분위수를 계산한다
-   - C) 정확한 분위수 값을 반환한다
-   - D) Counter 메트릭의 변화율을 계산한다
+   - A) 정확한 Summary 분위수
+   - B) 버킷 기반 분위수 추정값
+   - C) 버킷 해상도와 무관한 정확한 분위수
+   - D) Counter의 요청 변화율
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Histogram 버킷에서 분위수를 계산한다**
+**정답: B**
 
-**설명:**
-`histogram_quantile()`은 Histogram 버킷 데이터에서 분위수를 계산합니다. 예를 들어, `histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))`은 p95 지연시간을 계산합니다. 버킷 경계에 따른 근사값을 반환하며, 정확한 분위수를 원하면 Summary를 사용해야 합니다.
+호환되는 classic 버킷을 합칠 때 le를 유지합니다. 결과는 버킷 내부 보간값입니다. Summary 분위수에도 알고리즘·시간 구간에 따른 오차가 있으며 평균으로 전체 분위수를 만들 수 없습니다.
 
 </details>
 
----
+5. kube-prometheus-stack 패키지에 포함되지 않는 것은 무엇인가요?
 
-5. kube-prometheus-stack Helm 차트에 포함되지 않는 컴포넌트는?
    - A) Prometheus Operator
    - B) Grafana
    - C) VictoriaMetrics
@@ -85,99 +76,90 @@ ServiceMonitor는 Prometheus Operator의 CRD로, Kubernetes 서비스를 모니�
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) VictoriaMetrics**
+**정답: C**
 
-**설명:**
-kube-prometheus-stack은 Prometheus Operator, Prometheus, Alertmanager, Grafana, kube-state-metrics, node-exporter 등을 포함하는 Helm 차트입니다. VictoriaMetrics는 별도의 프로젝트로, victoria-metrics-k8s-stack 차트를 통해 설치합니다.
+차트는 활성 values에 따라 Prometheus·Alertmanager·Operator·Grafana·exporter를 제공합니다. VictoriaMetrics는 별도 배포입니다. 임의의 이미지 버전을 혼합하기보다 확인한 차트 조합을 고정합니다.
 
 </details>
 
----
+6. Remote write의 용도는 무엇인가요?
 
-6. Prometheus에서 Remote Write의 주요 용도는?
-   - A) 로컬 스토리지 성능 향상
-   - B) 장기 메트릭 저장소로 데이터 전송
-   - C) 실시간 알림 전송
+   - A) Alertmanager 알림 전송
+   - B) 설정한 외부 수신기에 샘플을 비동기로 전달
+   - C) 무제한 장애 버퍼 보장
    - D) Grafana 대시보드 동기화
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 장기 메트릭 저장소로 데이터 전송**
+**정답: B**
 
-**설명:**
-Remote Write는 Prometheus가 수집한 메트릭을 외부 시스템(VictoriaMetrics, Mimir, AMP, Cortex 등)으로 전송하는 기능입니다. Prometheus의 로컬 스토리지는 보존 기간과 확장성에 제한이 있어, 장기 저장이 필요한 경우 Remote Write를 통해 전용 저장소로 데이터를 전송합니다.
+AMP·VictoriaMetrics·Mimir 등 수신기는 각각의 endpoint·identity·쿼터·HA 계약을 가집니다. WAL 버퍼는 유한합니다. Local Prometheus 보존 기간도 설정 가능하며 보편적으로 30일에 제한되는 것은 아닙니다.
 
 </details>
 
----
+7. Alert rule의 for 시간은 무엇을 제어하나요?
 
-7. PrometheusRule CRD에서 `for` 필드의 역할은?
-   - A) 규칙 평가 간격 설정
-   - B) 알림 발화 전 조건 유지 시간 설정
-   - C) 알림 재전송 간격 설정
-   - D) 메트릭 보존 기간 설정
+   - A) 메트릭 보존 기간
+   - B) 같은 조건·레이블 집합이 firing 전에 pending으로 유지되는 시간
+   - C) Alertmanager 재전송 주기
+   - D) Prometheus 복제본 수
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 알림 발화 전 조건 유지 시간 설정**
+**정답: B**
 
-**설명:**
-PrometheusRule의 `for` 필드는 알림 조건이 충족된 후 실제로 알림이 발화되기까지 대기하는 시간을 설정합니다. 예를 들어, `for: 5m`은 조건이 5분 동안 지속되어야 알림이 발화됩니다. 이를 통해 일시적인 스파이크로 인한 불필요한 알림을 방지할 수 있습니다.
+해당 alert 식별자가 평가마다 조건을 계속 충족해야 합니다. 데이터 누락·레이블 변경은 pending을 끊을 수 있습니다. Notification 그룹화·시간은 별도의 Alertmanager 설정입니다.
 
 </details>
 
----
+8. predict_linear()를 어떻게 해석해야 하나요?
 
-8. PromQL에서 `predict_linear` 함수의 용도는?
-   - A) 현재 값의 절대값 계산
-   - B) 선형 회귀 기반 미래 값 예측
-   - C) 시계열 데이터 정렬
-   - D) 레이블 값 변환
+   - A) 보장된 디스크 장애 시각
+   - B) Gauge의 선형 추세를 미래로 외삽한 값
+   - C) 계절성 triple-exponential 예측
+   - D) 모든 용량 측정을 대신하는 값
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 선형 회귀 기반 미래 값 예측**
+**정답: B**
 
-**설명:**
-`predict_linear(v range-vector, t scalar)`는 선형 회귀를 사용하여 미래 값을 예측합니다. 예를 들어, `predict_linear(node_filesystem_avail_bytes[6h], 24*60*60) < 0`은 현재 추세로 24시간 후 디스크 공간이 소진될지 예측합니다. 용량 계획과 사전 경고에 유용합니다.
+관측한 선형 추세를 투영합니다. 부하 변화·정리 작업·희소 데이터·비선형 동작에 따라 맞지 않을 수 있습니다. Prometheus 3의 옛 holt_winters 대체 함수는 명시적인 실험적 double-exponential 평활화이며 계절성 모델이 아닙니다.
 
 </details>
 
----
+9. AlertmanagerConfig의 groupBy는 무엇을 하나요?
 
-9. Alertmanager의 `groupBy` 설정의 역할은?
-   - A) 알림을 특정 그룹에만 전송
-   - B) 알림을 지정된 레이블로 그룹화
-   - C) 알림 우선순위 설정
-   - D) 알림 중복 제거
+   - A) 모든 namespace의 alert를 자동 승인
+   - B) 선택한 레이블로 notification 그룹화
+   - C) Prometheus for 시간 정의
+   - D) 일치하는 모든 형제 route 실행
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 알림을 지정된 레이블로 그룹화**
+**정답: B**
 
-**설명:**
-`groupBy`는 알림을 지정된 레이블 기준으로 그룹화하여 하나의 알림으로 묶어 전송합니다. 예를 들어, `groupBy: ['alertname', 'namespace']`는 같은 alertname과 namespace를 가진 알림을 그룹화합니다. 이를 통해 알림 폭주를 방지하고 관련 알림을 함께 확인할 수 있습니다.
+groupBy는 native 설정의 group_by가 됩니다. Continue를 설정하지 않으면 보통 첫 형제 route 일치에서 멈춥니다. Inhibition은 다른 서비스·노드 warning을 억제하지 않도록 의미 있는 자원 식별 equal 레이블이 필요합니다.
 
 </details>
 
----
+10. TSDB의 WAL이 제공하는 것은 무엇인가요?
 
-10. Prometheus TSDB에서 WAL(Write-Ahead Log)의 역할은?
-    - A) 쿼리 캐싱
-    - B) 데이터 손실 방지를 위한 선행 기록
-    - C) 알림 히스토리 저장
-    - D) 대시보드 설정 저장
+   - A) 쿼리 결과 캐시
+   - B) Block에 저장하기 전 비정상 종료 복구를 돕는 순차 기록
+   - C) 볼륨을 잃어도 보존되는 백업
+   - D) 무제한 remote-write 전송 queue
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 데이터 손실 방지를 위한 선행 기록**
+**정답: B**
 
-**설명:**
-WAL(Write-Ahead Log)은 데이터가 메모리에서 디스크 블록으로 완전히 기록되기 전에 먼저 순차적으로 기록되는 로그입니다. Prometheus가 비정상 종료되어도 WAL을 통해 데이터를 복구할 수 있어 데이터 손실을 방지합니다. 이는 데이터베이스에서 일반적으로 사용되는 내구성 보장 메커니즘입니다.
+WAL replay는 내구성 장치이지 손상·볼륨 장애·긴 원격 장애에서 무손실을 보장하지 않습니다. Retention과 WAL·head·compaction 디스크 요구도 구분해야 하며 검증한 백업·복구 절차를 보존합니다.
 
 </details>
+
+[학습 자료로 돌아가기](../../../observability/metrics/01-prometheus.md)

@@ -1,0 +1,996 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-12T16:12:24.331491+00:00",
+  "scope": [
+    "en/networking/cilium/06-security-visibility.md",
+    "en/quizzes/networking/cilium/06-security-visibility-quiz.md",
+    "ko/networking/cilium/06-security-visibility.md",
+    "ko/quizzes/networking/cilium/06-security-visibility-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/networking/cilium/06-security-visibility.md": {
+      "lines": 537,
+      "sha256": "1a6181f9c62519cdf669468713aca15663af73d4ff362c348482afcf65964ba7"
+    },
+    "en/quizzes/networking/cilium/06-security-visibility-quiz.md": {
+      "lines": 252,
+      "sha256": "5aa98074292191106bd06d44f305221e3c228cd0e2362e5eb77d39c86cb01877"
+    },
+    "ko/networking/cilium/06-security-visibility.md": {
+      "lines": 536,
+      "sha256": "7083f8c700b63a21f3541e0334ac342e45aac338441299b8e491f2e2fcc5b2ff"
+    },
+    "ko/quizzes/networking/cilium/06-security-visibility-quiz.md": {
+      "lines": 252,
+      "sha256": "5b7c59c9987a7efc3e44507367aab7e44240ecc6da183ea6177076244f573ccf"
+    }
+  },
+  "checks": {
+    "files": [
+      {
+        "path": "en/networking/cilium/06-security-visibility.md",
+        "sha256": "87652fc2340f9baf00248cafb9876d08b13d6a97208d145d2c9223dcfa350fd3",
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/networking/cilium/06-security-visibility-quiz.md",
+        "sha256": "ff8e9be1cf844a54113ee1d1d440bbb0148d779c235a976f7f21c5c9335343cd",
+        "passed": true
+      },
+      {
+        "path": "ko/networking/cilium/06-security-visibility.md",
+        "sha256": "0e9975aa37a440f34f99a3f5f63c79790e557d49190a3f75e8954685b986f3db",
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/networking/cilium/06-security-visibility-quiz.md",
+        "sha256": "3bda2babdef1e9170e819e6f5ce209183a589c96c8e5c7fbe7b4cecf0b35c414",
+        "passed": true
+      }
+    ],
+    "schemaObjects": 14,
+    "helmFragments": 10,
+    "bashBlocks": 18,
+    "questions": 40,
+    "defaultDenyCases": [
+      {
+        "ingress": [],
+        "unqualifiedAllow": false
+      },
+      {
+        "ingress": [
+          {}
+        ],
+        "unqualifiedAllow": true
+      },
+      {
+        "ingress": [
+          {},
+          {}
+        ],
+        "unqualifiedAllow": true
+      }
+    ],
+    "dnsEgressCases": 6,
+    "originalRegressions": [
+      {
+        "language": "en",
+        "originalDenyAllActuallyAllowsIngress": true,
+        "originalWrongDNSLabel": true
+      },
+      {
+        "language": "ko",
+        "originalDenyAllActuallyAllowsIngress": true,
+        "originalWrongDNSLabel": true
+      }
+    ],
+    "jqCases": [
+      {
+        "input": [],
+        "result": {
+          "flow_records": 0,
+          "other_records": 0,
+          "policy_denied_records": 0,
+          "dropped_by_reason": []
+        }
+      },
+      {
+        "input": [
+          {
+            "flow": {
+              "verdict": "FORWARDED"
+            }
+          }
+        ],
+        "result": {
+          "flow_records": 1,
+          "other_records": 0,
+          "policy_denied_records": 0,
+          "dropped_by_reason": []
+        }
+      },
+      {
+        "input": [
+          {
+            "flow": {
+              "verdict": "DROPPED",
+              "drop_reason_desc": "POLICY_DENIED"
+            }
+          }
+        ],
+        "result": {
+          "flow_records": 1,
+          "other_records": 0,
+          "policy_denied_records": 1,
+          "dropped_by_reason": [
+            {
+              "reason": "POLICY_DENIED",
+              "records": 1
+            }
+          ]
+        }
+      },
+      {
+        "input": [
+          {
+            "flow": {
+              "verdict": "DROPPED",
+              "drop_reason_desc": "POLICY_DENIED"
+            }
+          },
+          {
+            "flow": {
+              "verdict": "DROPPED",
+              "drop_reason_desc": "POLICY_DENIED"
+            }
+          },
+          {
+            "flow": {
+              "verdict": "DROPPED",
+              "drop_reason_desc": "INVALID_SOURCE_IP"
+            }
+          },
+          {
+            "flow": {
+              "verdict": "FORWARDED"
+            }
+          },
+          {
+            "lost_events": {
+              "num_events_lost": "3"
+            }
+          }
+        ],
+        "result": {
+          "flow_records": 4,
+          "other_records": 1,
+          "policy_denied_records": 2,
+          "dropped_by_reason": [
+            {
+              "reason": "INVALID_SOURCE_IP",
+              "records": 1
+            },
+            {
+              "reason": "POLICY_DENIED",
+              "records": 2
+            }
+          ]
+        }
+      },
+      {
+        "input": [
+          {
+            "flow": {
+              "verdict": "DROPPED"
+            }
+          },
+          {
+            "node_status": {
+              "state_change": "NODE_UNAVAILABLE"
+            }
+          }
+        ],
+        "result": {
+          "flow_records": 1,
+          "other_records": 1,
+          "policy_denied_records": 0,
+          "dropped_by_reason": [
+            {
+              "reason": "UNKNOWN",
+              "records": 1
+            }
+          ]
+        }
+      },
+      {
+        "input": [
+          {
+            "verdict": "DROPPED",
+            "drop_reason_desc": "POLICY_DENIED"
+          }
+        ],
+        "result": {
+          "flow_records": 0,
+          "other_records": 1,
+          "policy_denied_records": 0,
+          "dropped_by_reason": []
+        }
+      }
+    ],
+    "httpStatusCases": [
+      {
+        "pattern": "4+",
+        "code": 403,
+        "matched": true,
+        "valid": true
+      },
+      {
+        "pattern": "4+",
+        "code": 500,
+        "matched": false,
+        "valid": true
+      },
+      {
+        "pattern": "5+",
+        "code": 503,
+        "matched": true,
+        "valid": true
+      },
+      {
+        "pattern": "5+",
+        "code": 0,
+        "matched": false,
+        "valid": true
+      },
+      {
+        "pattern": "404",
+        "code": 404,
+        "matched": true,
+        "valid": true
+      },
+      {
+        "pattern": "404",
+        "code": 403,
+        "matched": false,
+        "valid": true
+      },
+      {
+        "pattern": "40+",
+        "code": 403,
+        "matched": true,
+        "valid": true
+      },
+      {
+        "pattern": "4..",
+        "code": 403,
+        "matched": false,
+        "valid": false
+      },
+      {
+        "pattern": "5..",
+        "code": 503,
+        "matched": false,
+        "valid": false
+      }
+    ],
+    "primaryContracts": {
+      "metricsServiceHeadless": true,
+      "metricsServiceAgentSelector": true,
+      "metricsMonitorNamedPort": true,
+      "metricsMonitorLabels": true,
+      "port9965": true,
+      "hubbleMetricPrefix": true,
+      "dropReasonEnum": true,
+      "httpV2ResponseOnly": true,
+      "jsonpbEnvelope": true,
+      "cliDropReason": true,
+      "cliPodNamespaceConflict": true,
+      "nodeEncryptionDefaultFalse": true,
+      "headerLiteral": true
+    },
+    "cleanupCases": [
+      {
+        "mode": "owned",
+        "exit": 0,
+        "deleteCalls": 2
+      },
+      {
+        "mode": "other",
+        "exit": 1,
+        "deleteCalls": 0
+      },
+      {
+        "mode": "failure",
+        "exit": 1,
+        "deleteCalls": 0
+      },
+      {
+        "mode": "failure_with_owner_text",
+        "exit": 1,
+        "deleteCalls": 0
+      }
+    ],
+    "sources": [
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/intro.rst",
+        "key": "fd538e21d24a",
+        "status": 200,
+        "sha256": "6637079366667549bfd67c339f99e472056e987205494d1ce2e50cf5a8f7c446",
+        "fetchedAt": "2026-09-12T16:06:50.736476+00:00"
+      },
+      {
+        "url": "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+        "key": "953450b4076f",
+        "status": 200,
+        "sha256": "d537cebf90aee2ca121c56a6cda0b52969f99be62cdb54692dfe5bef7a95da02",
+        "fetchedAt": "2026-09-12T16:06:50.607761+00:00"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer7.rst",
+        "key": "f79fc9587de7",
+        "status": 200,
+        "sha256": "65c36cebf69b753e96c14193632a9fc964cff434d4cc1e18dbf41f8414ac4797",
+        "fetchedAt": "2026-09-12T13:56:49.524401+00:00"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/dns.rst",
+        "key": "46e8184d152f",
+        "status": 200,
+        "sha256": "1c12754bd76b392f4f8b661ddcb7f7b02cd3397eddf232d0f74f86a4dea9f2c0",
+        "fetchedAt": "2026-09-12T14:32:54.821365+00:00"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/observability/hubble/setup.rst",
+        "key": "2f1862bb8cb7",
+        "status": 200,
+        "sha256": "9d71d637584ddb2b40b3390be7a812bee15147cdaaca892a2c73e094b593f662",
+        "fetchedAt": "2026-09-12T15:55:34.700595+00:00"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/observability/metrics.rst",
+        "key": "15c7cb160654",
+        "status": 200,
+        "sha256": "bcc059cfd323dbd5b98d1f24a06e611e8ffc503c5cca4203a75a226eb0a70764",
+        "fetchedAt": "2026-09-12T15:55:35.182608+00:00"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/observability/hubble/configuration/export.rst",
+        "key": "ec4efe20f068",
+        "status": 200,
+        "sha256": "662567567902b1a5e6f23c9bee4abcc326e64445d1199c48aa0c351ecc91d28d",
+        "fetchedAt": "2026-09-12T15:55:34.972394+00:00"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-wireguard.rst",
+        "key": "93d5e022335e",
+        "status": 200,
+        "sha256": "b0130d160fedb18ff0c5cee1fb17d2a1bd4328ca69137050b29ca4902995984d",
+        "fetchedAt": "2026-09-12T15:55:34.736451+00:00"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-ipsec.rst",
+        "key": "4089ae7aa86f",
+        "status": 200,
+        "sha256": "48396f60c7dcf387c1195b8db2a0bb00c90b02278da68c620d8a8ab8e093e2b4",
+        "fetchedAt": "2026-09-12T15:55:34.458671+00:00"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst",
+        "key": "2e97c35c1c5d",
+        "status": 200,
+        "sha256": "62be30f49546fc787dd42d83b3b184c8ab5c706ffbf33252f6e3551fbd971672",
+        "fetchedAt": "2026-09-12T15:55:34.463939+00:00"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-ztunnel.rst",
+        "key": "6050aa75f1a1",
+        "status": 200,
+        "sha256": "6cfda4c36fd22aeaa063a67034c747675a381fba2d9eabaef4d642153e0293c0",
+        "fetchedAt": "2026-09-12T13:56:49.743616+00:00"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/tetragon/main/README.md",
+        "key": "f1df28edb4b7",
+        "status": 200,
+        "sha256": "41946c5c9b872b62b45cbaf7f3d5ea6ed3d6daf5d4fb7703271fe16c9af7c8af",
+        "fetchedAt": "2026-09-12T15:55:35.650745+00:00"
+      },
+      {
+        "url": "https://raw.githubusercontent.com/cilium/hubble/v1.19.4/vendor/github.com/cilium/cilium/hubble/cmd/observe/flows.go",
+        "key": "fb5a80ebedc3",
+        "status": 200,
+        "sha256": "b7fdcb44b1e9455ef37ffd63c63a79efa2331ea821a687b8a352ffbeb88d9cd7",
+        "fetchedAt": "2026-09-12T16:02:58.770154+00:00"
+      }
+    ],
+    "gitDiffCheck": "passed",
+    "limitations": [
+      "Structural schemas, source contracts and small local decision models; no API admission/CEL or complete policy engine emulation.",
+      "jq was executed; HTTP/status/DNS/policy fixtures model the reviewed contracts, not live packets.",
+      "No Cilium/Hubble/Envoy/Prometheus deployment, encryption, SPIRE/ztunnel enrollment, Helm render, external notifications, full build or devserver."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 1024,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/networking/cilium/06-security-visibility.md",
+        "sha256": "87652fc2340f9baf00248cafb9876d08b13d6a97208d145d2c9223dcfa350fd3",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "security-and-visibility"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-environment-setup"
+          },
+          {
+            "tag": "h3",
+            "id": "hubble-installation-and-setup"
+          },
+          {
+            "tag": "h2",
+            "id": "cilium-s-security-features"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium-security-architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "network-and-application-security"
+          },
+          {
+            "tag": "h3",
+            "id": "identity-authentication-and-encryption"
+          },
+          {
+            "tag": "h3",
+            "id": "encryption-configuration"
+          },
+          {
+            "tag": "h2",
+            "id": "network-visibility-with-hubble"
+          },
+          {
+            "tag": "h3",
+            "id": "hubble-cli-usage-examples"
+          },
+          {
+            "tag": "h2",
+            "id": "network-visibility-and-monitoring"
+          },
+          {
+            "tag": "h3",
+            "id": "hubble-metrics"
+          },
+          {
+            "tag": "h3",
+            "id": "prometheus-integration"
+          },
+          {
+            "tag": "h3",
+            "id": "flow-export-and-retention"
+          },
+          {
+            "tag": "h2",
+            "id": "real-time-threat-detection"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-hubble-installation-and-usage"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-create-and-check-the-workloads"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-apply-and-observe-http-policy"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-verify-default-deny-separately"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-inspect-json-and-export-a-local-summary"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-clean-up-the-test-namespaces"
+          },
+          {
+            "tag": "h2",
+            "id": "primary-references"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "security-and-visibility",
+          "lab-environment-setup",
+          "hubble-installation-and-setup",
+          "cilium-s-security-features",
+          "cilium-security-architecture",
+          "network-and-application-security",
+          "identity-authentication-and-encryption",
+          "encryption-configuration",
+          "network-visibility-with-hubble",
+          "hubble-cli-usage-examples",
+          "network-visibility-and-monitoring",
+          "hubble-metrics",
+          "prometheus-integration",
+          "flow-export-and-retention",
+          "real-time-threat-detection",
+          "lab-hubble-installation-and-usage",
+          "_1-create-and-check-the-workloads",
+          "_2-apply-and-observe-http-policy",
+          "_3-verify-default-deny-separately",
+          "_4-inspect-json-and-export-a-local-summary",
+          "_5-clean-up-the-test-namespaces",
+          "primary-references",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/networking/cilium/06-security-visibility.md",
+        "sha256": "0e9975aa37a440f34f99a3f5f63c79790e557d49190a3f75e8954685b986f3db",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "보안-및-가시성"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-설정"
+          },
+          {
+            "tag": "h3",
+            "id": "hubble-설치-및-설정"
+          },
+          {
+            "tag": "h2",
+            "id": "cilium의-보안-기능"
+          },
+          {
+            "tag": "h3",
+            "id": "cilium-보안-아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "네트워크-및-애플리케이션-보안"
+          },
+          {
+            "tag": "h3",
+            "id": "id-인증과-암호화"
+          },
+          {
+            "tag": "h3",
+            "id": "암호화-구성"
+          },
+          {
+            "tag": "h2",
+            "id": "hubble을-통한-네트워크-가시성"
+          },
+          {
+            "tag": "h3",
+            "id": "hubble-cli-사용-예제"
+          },
+          {
+            "tag": "h2",
+            "id": "네트워크-가시성-및-모니터링"
+          },
+          {
+            "tag": "h3",
+            "id": "hubble-메트릭"
+          },
+          {
+            "tag": "h3",
+            "id": "prometheus-통합"
+          },
+          {
+            "tag": "h3",
+            "id": "흐름-내보내기와-보존"
+          },
+          {
+            "tag": "h2",
+            "id": "실시간-위협-탐지"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-hubble-설치-및-활용"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-워크로드-생성과-기준-상태-확인"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-http-정책-적용과-관찰"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-기본-거부를-별도로-검증"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-json-확인과-로컬-요약"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-테스트-네임스페이스-정리"
+          },
+          {
+            "tag": "h2",
+            "id": "공식-근거"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "보안-및-가시성",
+          "실습-환경-설정",
+          "hubble-설치-및-설정",
+          "cilium의-보안-기능",
+          "cilium-보안-아키텍처",
+          "네트워크-및-애플리케이션-보안",
+          "id-인증과-암호화",
+          "암호화-구성",
+          "hubble을-통한-네트워크-가시성",
+          "hubble-cli-사용-예제",
+          "네트워크-가시성-및-모니터링",
+          "hubble-메트릭",
+          "prometheus-통합",
+          "흐름-내보내기와-보존",
+          "실시간-위협-탐지",
+          "실습-hubble-설치-및-활용",
+          "_1-워크로드-생성과-기준-상태-확인",
+          "_2-http-정책-적용과-관찰",
+          "_3-기본-거부를-별도로-검증",
+          "_4-json-확인과-로컬-요약",
+          "_5-테스트-네임스페이스-정리",
+          "공식-근거",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/quizzes/networking/cilium/06-security-visibility-quiz.md",
+        "sha256": "ff8e9be1cf844a54113ee1d1d440bbb0148d779c235a976f7f21c5c9335343cd",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cilium-security-and-visibility-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "network-policy-basics"
+          },
+          {
+            "tag": "h2",
+            "id": "l7-policies"
+          },
+          {
+            "tag": "h2",
+            "id": "encryption-and-security"
+          },
+          {
+            "tag": "h2",
+            "id": "visibility-and-monitoring"
+          }
+        ],
+        "renderedIds": [
+          "cilium-security-and-visibility-quiz",
+          "network-policy-basics",
+          "l7-policies",
+          "encryption-and-security",
+          "visibility-and-monitoring"
+        ]
+      },
+      {
+        "path": "ko/quizzes/networking/cilium/06-security-visibility-quiz.md",
+        "sha256": "3bda2babdef1e9170e819e6f5ce209183a589c96c8e5c7fbe7b4cecf0b35c414",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "cilium-보안-및-가시성-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "네트워크-정책-기본"
+          },
+          {
+            "tag": "h2",
+            "id": "l7-정책"
+          },
+          {
+            "tag": "h2",
+            "id": "암호화-및-보안"
+          },
+          {
+            "tag": "h2",
+            "id": "가시성-및-모니터링"
+          }
+        ],
+        "renderedIds": [
+          "cilium-보안-및-가시성-퀴즈",
+          "네트워크-정책-기본",
+          "l7-정책",
+          "암호화-및-보안",
+          "가시성-및-모니터링"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst",
+      "cacheKey": "2e97c35c1c5d",
+      "fetchedAt": "2026-09-12T15:55:34.463939+00:00",
+      "status": 200,
+      "sha256": "62be30f49546fc787dd42d83b3b184c8ab5c706ffbf33252f6e3551fbd971672"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-wireguard.rst",
+      "cacheKey": "93d5e022335e",
+      "fetchedAt": "2026-09-12T15:55:34.736451+00:00",
+      "status": 200,
+      "sha256": "b0130d160fedb18ff0c5cee1fb17d2a1bd4328ca69137050b29ca4902995984d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-ipsec.rst",
+      "cacheKey": "4089ae7aa86f",
+      "fetchedAt": "2026-09-12T15:55:34.458671+00:00",
+      "status": 200,
+      "sha256": "48396f60c7dcf387c1195b8db2a0bb00c90b02278da68c620d8a8ab8e093e2b4"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-ztunnel.rst",
+      "cacheKey": "6050aa75f1a1",
+      "fetchedAt": "2026-09-12T13:56:49.743616+00:00",
+      "status": 200,
+      "sha256": "6cfda4c36fd22aeaa063a67034c747675a381fba2d9eabaef4d642153e0293c0"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/observability/hubble/setup.rst",
+      "cacheKey": "2f1862bb8cb7",
+      "fetchedAt": "2026-09-12T15:55:34.700595+00:00",
+      "status": 200,
+      "sha256": "9d71d637584ddb2b40b3390be7a812bee15147cdaaca892a2c73e094b593f662"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/observability/hubble/hubble-cli.rst",
+      "cacheKey": "df49d93d3618",
+      "fetchedAt": "2026-09-12T15:55:34.938335+00:00",
+      "status": 200,
+      "sha256": "5b919c4b81a90c88af1c08154081f3a31427765ade8d2f44676ac48cad065001"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/observability/hubble/configuration/export.rst",
+      "cacheKey": "ec4efe20f068",
+      "fetchedAt": "2026-09-12T15:55:34.972394+00:00",
+      "status": 200,
+      "sha256": "662567567902b1a5e6f23c9bee4abcc326e64445d1199c48aa0c351ecc91d28d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/observability/metrics.rst",
+      "cacheKey": "15c7cb160654",
+      "fetchedAt": "2026-09-12T15:55:35.182608+00:00",
+      "status": 200,
+      "sha256": "bcc059cfd323dbd5b98d1f24a06e611e8ffc503c5cca4203a75a226eb0a70764"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/templates/hubble/servicemonitor.yaml",
+      "cacheKey": "958a27ff04d8",
+      "fetchedAt": "2026-09-12T15:55:35.215662+00:00",
+      "status": 200,
+      "sha256": "34ee6913d2526700a2903ad8ac7d7a67c89b5e3ead0f842c8341b672187d4742"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/templates/hubble/metrics-service.yaml",
+      "cacheKey": "d2b4f69a9d82",
+      "fetchedAt": "2026-09-12T15:55:35.438481+00:00",
+      "status": 200,
+      "sha256": "d96271260c6f7b2b71077978a0aa31403532eea68dd6384487537e5a914dd586"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/tetragon/main/README.md",
+      "cacheKey": "f1df28edb4b7",
+      "fetchedAt": "2026-09-12T15:55:35.650745+00:00",
+      "status": 200,
+      "sha256": "41946c5c9b872b62b45cbaf7f3d5ea6ed3d6daf5d4fb7703271fe16c9af7c8af"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/hubble/v1.19.4/vendor/github.com/cilium/cilium/hubble/cmd/observe/flows_filter.go",
+      "cacheKey": "edea41ceb427",
+      "fetchedAt": "2026-09-12T16:00:50.894689+00:00",
+      "status": 200,
+      "sha256": "c32a5277fd76d4949e146b5ceaf236dc265206a8a5594d7df22cd2347e3dd518"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/hubble/v1.19.4/vendor/github.com/cilium/cilium/hubble/cmd/observe/flows.go",
+      "cacheKey": "fb5a80ebedc3",
+      "fetchedAt": "2026-09-12T16:02:58.770154+00:00",
+      "status": 200,
+      "sha256": "b7fdcb44b1e9455ef37ffd63c63a79efa2331ea821a687b8a352ffbeb88d9cd7"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/hubble/v1.19.4/vendor/github.com/cilium/cilium/hubble/pkg/printer/printer.go",
+      "cacheKey": "5e4a1805c8f6",
+      "fetchedAt": "2026-09-12T16:00:51.141334+00:00",
+      "status": 200,
+      "sha256": "ed2905aa14e84afef67bf405b497652c995c45e78f5516d5eac59bf2b72e8b0c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/api/v1/flow/flow.proto",
+      "cacheKey": "6f3574577311",
+      "fetchedAt": "2026-09-12T16:00:51.140543+00:00",
+      "status": 200,
+      "sha256": "c3256c0580f1538dd0e273c90d2556c600c5da11c6eb9c4c5a081a120a9cef06"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/hubble/metrics/drop/handler.go",
+      "cacheKey": "2d1000e84646",
+      "fetchedAt": "2026-09-12T16:00:51.386112+00:00",
+      "status": 200,
+      "sha256": "f5dc32c84677a223ae42cd9dfdeea9029125afd6348ac1db8716b152dc4a2529"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/hubble/metrics/http/handler.go",
+      "cacheKey": "206577258147",
+      "fetchedAt": "2026-09-12T16:00:51.628394+00:00",
+      "status": 200,
+      "sha256": "35482dccaf6b8686d174bbd567176cd8aacbfa7215ae7b381e52c6b4ea2264c1"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/hubble/metrics/api/api.go",
+      "cacheKey": "68748183ff6b",
+      "fetchedAt": "2026-09-12T16:02:58.965609+00:00",
+      "status": 200,
+      "sha256": "fc99f52b948f54fa82e983f5ebd5ac0a3fdd2d7abff7e7dccdeb90e9d2dade26"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/hubble/filters/http.go",
+      "cacheKey": "d7d04f491153",
+      "fetchedAt": "2026-09-12T16:02:59.004634+00:00",
+      "status": 200,
+      "sha256": "8345ba653b2a749282f90a1825e2a19594b41fd735bfc07427aefe00358383e9"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/values.yaml",
+      "cacheKey": "ab96902e3fca",
+      "fetchedAt": "2026-09-12T14:02:08.604636+00:00",
+      "status": 200,
+      "sha256": "48e57492486c8672b85c7fca96b3d9ae48025f1913beea12f3d3dd11b7500ae1"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/values.schema.json",
+      "cacheKey": "f8f20476ed28",
+      "fetchedAt": "2026-09-12T14:02:08.816699+00:00",
+      "status": 200,
+      "sha256": "5e0d378b3748df1dea5704cf5cc985c5709f88123f8300694e56267891036abd"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml",
+      "cacheKey": "0fe7c551ccb3",
+      "fetchedAt": "2026-09-12T14:09:04.314427+00:00",
+      "status": 200,
+      "sha256": "62c6de8f358da125b94468d39187edb1cea157d79503fdc50ccec8a6aaa79a76"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.0/api/openapi-spec/swagger.json",
+      "cacheKey": "b0fb38bb7c6c",
+      "fetchedAt": "2026-09-12T14:09:04.173705+00:00",
+      "status": 200,
+      "sha256": "dcede2063da1d7ad62ecb5af8adb6d7fabd0b52385a7fa0048afb491dac90450"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/envoy/policy/envoy_l7_rules_translator.go",
+      "cacheKey": "afd8955206b1",
+      "fetchedAt": "2026-09-12T15:21:36.961075+00:00",
+      "status": 200,
+      "sha256": "fae527ac520fb38883cbdc799c2b846514d9cc73308d3ceeacf76d2f2706221c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer7.rst",
+      "cacheKey": "f79fc9587de7",
+      "fetchedAt": "2026-09-12T13:56:49.524401+00:00",
+      "status": 200,
+      "sha256": "65c36cebf69b753e96c14193632a9fc964cff434d4cc1e18dbf41f8414ac4797"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/dns.rst",
+      "cacheKey": "46e8184d152f",
+      "fetchedAt": "2026-09-12T14:32:54.821365+00:00",
+      "status": 200,
+      "sha256": "1c12754bd76b392f4f8b661ddcb7f7b02cd3397eddf232d0f74f86a4dea9f2c0"
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+      "cacheKey": "953450b4076f",
+      "fetchedAt": "2026-09-12T16:06:50.607761+00:00",
+      "status": 200,
+      "sha256": "d537cebf90aee2ca121c56a6cda0b52969f99be62cdb54692dfe5bef7a95da02"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/intro.rst",
+      "cacheKey": "fd538e21d24a",
+      "fetchedAt": "2026-09-12T16:06:50.736476+00:00",
+      "status": 200,
+      "sha256": "6637079366667549bfd67c339f99e472056e987205494d1ce2e50cf5a8f7c446"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/compatibility.rst",
+      "cacheKey": "68e8148446c9",
+      "fetchedAt": "2026-09-12T13:53:41.051310+00:00",
+      "status": 200,
+      "sha256": "4119df582c01582bc082c529b6faf29167d07f129c1cec2583117fc37e2e4b13"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium-cli/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/defaults/defaults.go",
+      "cacheKey": "cba013385c98",
+      "fetchedAt": "2026-09-12T14:04:52.287412+00:00",
+      "status": 200,
+      "sha256": "47a15dceeb90ce400faa57c8842138c8d69f6c2080f88046fe9f92a6b1479146"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/cilium/cilium-cli/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/connectivity/check/deployment.go",
+      "cacheKey": "e2e880278f01",
+      "fetchedAt": "2026-09-12T14:04:52.313849+00:00",
+      "status": 200,
+      "sha256": "5d858fdbf408b1040a15edfa138c9a87b2b6186ce151f90492babfac3d784d3e"
+    }
+  ],
+  "findings": [
+    "Critical: original deny-all CNP ingress:[{}] allowed all ingress. Replaced with explicit namespaced Kubernetes NetworkPolicy policyTypes both directions and ingress:[], DNS-only egress; isolated from the L7 allow lab.",
+    "Fixed resolver label, TCP+UDP DNS and DNS proxy observation for optional toFQDNs dependency policy. Database/API placeholders are explicitly unprovided, not a runnable production backend.",
+    "Replaced duplicate/mismatched CNPs, Korean missing apiVersion, and TLS8443 HTTP rule with matched plaintext HTTP demo on8080; GETroot permitted, POST denied, separate unauthorizedclient.",
+    "Valued HTTP Headers matching is literal, not regex/JWT validation; header presence/format does not authenticate. Current KafkaL7 removal and HTTP Envoy versus DNS proxy distinction reflected.",
+    "Removed fictional threat/anomaly/Slack/flowlog ConfigMap configuration. Hubble supplies network observations, Tetragon supplies separately configured runtime security, external detection/response/WAF integration is required.",
+    "Separated security identities, SPIRE out-of-band mutual authentication Beta, separate ztunnel workloadmTLS Beta, and IPsec/WireGuard transport encryption; ClusterMesh/auth interoperability and encryption coverage limits explicit.",
+    "Alternative versioned Helm encryption fragments replace simultaneous raw encryption toggles; IPsec Secret/key management prerequisites, WireGuard51871/kernel, same-node/external/control-plane boundaries documented.",
+    "Hubble data path uses datapath/proxy/agent events and bounded memory; Relay is not durable storage. Real static exporter fields/rotation/minimal metadata mask plus external collector/retention requirements.",
+    "Fixed nonexistent public9091 metrics target: headlesshubble-metrics9965, Service labelk8s-app:hubble and Podselectork8s-app:cilium, per-endpoint discovery and actual ServiceMonitor label/namespace selection.",
+    "Corrected metric plugin semantics: TCPflags not arbitraryRTT/retrans/connectioncounts; DNScounts not latencyhist; httpV2 response-derived status/count/duration and no simultaneous oldhttp.",
+    "CLI corrected to hubble status, namespaced/directional Pod filters, DROPPED verdict plus POLICY_DENIED reason, 4+/5+ HTTP status filters and jsonpb envelope. Removed fakewebhook-forwarder and uncontrolled latestAMD64downloads.",
+    "Finite actual-jq summary distinguishes flow/non-flow/missingreason records and counts observations rather than unique attacks or lossless packets. No external notifications sent.",
+    "All40MCQs aligned to prose with one correctanswer; currentAPI, defaultdeny, auth/encryption, UIrole and metrics/ServiceMonitor prerequisites corrected."
+  ],
+  "artifactDirectory": ".vitepress/cache/networking-cilium-security-audit",
+  "figures": {
+    "actuallyViewed": 2,
+    "removedReferences": [
+      "en-networking-cilium-06-security-visibility-0",
+      "ko-networking-cilium-06-security-visibility-0"
+    ],
+    "reason": "Redundant figure conflated Hubble with builtinIDS/anomaly detection, identities with runtime/escape protection, and removed KafkaL7. Replaced with accurate responsibility table.",
+    "externalRepair": "Parent semantic regeneration/source-sync if figures or foreign translations are reused; no assets/foreign prose edited."
+  },
+  "limits": [
+    "Structural schemas, source contracts and small local decision models; no API admission/CEL or complete policy engine emulation.",
+    "jq was executed; HTTP/status/DNS/policy fixtures model the reviewed contracts, not live packets.",
+    "No Cilium/Hubble/Envoy/Prometheus deployment, encryption, SPIRE/ztunnel enrollment, Helm render, external notifications, full build or devserver.",
+    "Four-document Markdown/Vue compilation only, Nodeheap1GiB. No full local build/devserver.",
+    "Both source illustrations actually viewed before replacement; no incoming relative fragment references found."
+  ]
+}

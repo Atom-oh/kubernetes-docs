@@ -1,0 +1,663 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-12T16:54:54.294950+00:00",
+  "inventory": 108,
+  "fullyRead": 108,
+  "fixedAndValidated": 108,
+  "unread": [],
+  "pending": [],
+  "files": [
+    {
+      "path": "en/networking/01-vpc-cni.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "en/networking/02-vpc-lattice.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "en/networking/03-aws-lb-controller.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "en/networking/04-gateway-api.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "en/networking/05-cross-org-vpc-connectivity.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "en/networking/06-pod-network-benchmark.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "en/networking/README.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "en/networking/calico/01-introduction.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/networking/calico/02-architecture.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/networking/calico/03-networking-modes.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/networking/calico/04-bgp-deep-dive.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/networking/calico/05-network-policy.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/networking/calico/06-ebpf-dataplane.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/networking/calico/07-advanced-topics.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/networking/calico/08-eks-integration.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/networking/calico/09-operations.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/networking/calico/README.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/networking/calico/glossary.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/networking/cilium/01-introduction.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "en/networking/cilium/02-ebpf.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "en/networking/cilium/03-networking.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "en/networking/cilium/04-ipam-policy.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "en/networking/cilium/05-l2-l7-networking.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "en/networking/cilium/06-security-visibility.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "en/networking/cilium/07-advanced-topics.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "en/networking/cilium/README.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "en/networking/cilium/glossary.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "en/networking/cilium/networking-concepts.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "en/quizzes/networking/00-networking-overview-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "en/quizzes/networking/01-vpc-cni-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "en/quizzes/networking/02-vpc-lattice-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "en/quizzes/networking/03-aws-lb-controller-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "en/quizzes/networking/04-gateway-api-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "en/quizzes/networking/05-cross-org-vpc-connectivity-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "en/quizzes/networking/06-pod-network-benchmark-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "en/quizzes/networking/calico/01-introduction-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/quizzes/networking/calico/02-architecture-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/quizzes/networking/calico/03-networking-modes-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/quizzes/networking/calico/04-bgp-deep-dive-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/quizzes/networking/calico/05-network-policy-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/quizzes/networking/calico/06-ebpf-dataplane-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/quizzes/networking/calico/07-advanced-topics-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/quizzes/networking/calico/08-eks-integration-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/quizzes/networking/calico/09-operations-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/quizzes/networking/calico/glossary-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "en/quizzes/networking/cilium/01-introduction-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "en/quizzes/networking/cilium/02-ebpf-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "en/quizzes/networking/cilium/03-networking-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "en/quizzes/networking/cilium/04-ipam-policy-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "en/quizzes/networking/cilium/05-l2-l7-networking-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "en/quizzes/networking/cilium/06-security-visibility-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "en/quizzes/networking/cilium/07-advanced-topics-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "en/quizzes/networking/cilium/glossary-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "en/quizzes/networking/cilium/networking-concepts-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/networking/01-vpc-cni.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "ko/networking/02-vpc-lattice.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "ko/networking/03-aws-lb-controller.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "ko/networking/04-gateway-api.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "ko/networking/05-cross-org-vpc-connectivity.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "ko/networking/06-pod-network-benchmark.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "ko/networking/README.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "ko/networking/calico/01-introduction.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/networking/calico/02-architecture.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/networking/calico/03-networking-modes.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/networking/calico/04-bgp-deep-dive.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/networking/calico/05-network-policy.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/networking/calico/06-ebpf-dataplane.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/networking/calico/07-advanced-topics.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/networking/calico/08-eks-integration.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/networking/calico/09-operations.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/networking/calico/README.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/networking/calico/glossary.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/networking/cilium/01-introduction.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/networking/cilium/02-ebpf.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/networking/cilium/03-networking.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/networking/cilium/04-ipam-policy.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/networking/cilium/05-l2-l7-networking.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/networking/cilium/06-security-visibility.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/networking/cilium/07-advanced-topics.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/networking/cilium/README.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/networking/cilium/glossary.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/networking/cilium/networking-concepts.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/quizzes/networking/00-networking-overview-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "ko/quizzes/networking/01-vpc-cni-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "ko/quizzes/networking/02-vpc-lattice-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "ko/quizzes/networking/03-aws-lb-controller-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "ko/quizzes/networking/04-gateway-api-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "ko/quizzes/networking/05-cross-org-vpc-connectivity-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "ko/quizzes/networking/06-pod-network-benchmark-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-foundation.json"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/01-introduction-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/02-architecture-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/03-networking-modes-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/04-bgp-deep-dive-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/05-network-policy-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/06-ebpf-dataplane-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/07-advanced-topics-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/08-eks-integration-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/09-operations-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/quizzes/networking/calico/glossary-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-calico.json"
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/01-introduction-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/02-ebpf-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/03-networking-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/04-ipam-policy-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/05-l2-l7-networking-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/06-security-visibility-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/07-advanced-topics-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/glossary-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    },
+    {
+      "path": "ko/quizzes/networking/cilium/networking-concepts-quiz.md",
+      "fullyRead": true,
+      "status": "fixed",
+      "batchReport": "docs/reviews/2026-09-11/batches/networking-cilium.json"
+    }
+  ],
+  "limits": [
+    "Fullsource+quizsemanticreview;notalivecluster/productionvalidationclaim.",
+    "Out-of-scopeEKS-Hybridtyped-CiliumNodeaddressfollowupandforeignfigure/source-syncremainparent-owned."
+  ]
+}

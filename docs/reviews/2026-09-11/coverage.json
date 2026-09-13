@@ -8111,12 +8111,12 @@
       "sha256": "89c30dcc2c54ae3517f2f568df2a31488a371d19830ea44526aee675afd7d77a",
       "lines": 688,
       "navigationListed": false,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 616,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "summary-navigation"
     },
     {
       "path": "en/ai-ml/01-ai-ml-workloads.md",
@@ -8127,12 +8127,12 @@
       "sha256": "10ae15444898a8ca5bd5bf16c4907bd8c7d63cf48a69685544a29136c40229db",
       "lines": 919,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 7,
       "linkCount": 40,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ai-ml-workloads"
     },
     {
       "path": "en/ai-ml/02-vllm-deployment.md",
@@ -8143,12 +8143,12 @@
       "sha256": "793c96baea4e8871eccfda9d257b45f2bb96b5c0df99bb0b7b19798ae94b8f8a",
       "lines": 1089,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 9,
       "linkCount": 67,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "vllm-deployment"
     },
     {
       "path": "en/ai-ml/03-agentic-ai-platform.md",
@@ -8159,12 +8159,12 @@
       "sha256": "9b2e63ebb7d4f6c7e71258c678023c919c2e4a3bf30e967c9dd7207b716d86bf",
       "lines": 1992,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 5,
       "linkCount": 79,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "agentic-ai-platform"
     },
     {
       "path": "en/ai-ml/04-inference-frameworks.md",
@@ -8175,12 +8175,12 @@
       "sha256": "6cac002b255a56f92f1232e2bd711d237c8bb911edae99b90c490d846db2bdbe",
       "lines": 2630,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 4,
       "linkCount": 74,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "inference-frameworks"
     },
     {
       "path": "en/ai-ml/05-model-training.md",
@@ -8191,12 +8191,12 @@
       "sha256": "b33d8eccd0d571f702e348600f1fdbc4c750c0966da668c6861e75172e1865d9",
       "lines": 1505,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 3,
       "linkCount": 51,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "model-training"
     },
     {
       "path": "en/ai-ml/06-ai-infrastructure.md",
@@ -8207,12 +8207,12 @@
       "sha256": "2846306a7982ab85d1f70808727e1f2ab450b7572567195ac4cb95c6f67ffeb3",
       "lines": 2267,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 3,
       "linkCount": 44,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ai-infrastructure"
     },
     {
       "path": "en/ai-ml/07-ai-ml-best-practices.md",
@@ -8223,12 +8223,12 @@
       "sha256": "5c93b9ee991778824ecb1bb38aee51f2c3f65234975bc4ab161e45dc1afe8d7f",
       "lines": 1946,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 3,
       "linkCount": 63,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ai-ml-best-practices"
     },
     {
       "path": "en/ai-ml/kubeflow/01-architecture-installation.md",
@@ -8239,12 +8239,12 @@
       "sha256": "57eff7355d1e130c3e6e5370fad6dca5200f95c78eb2c1eb3f416dc2e567d441",
       "lines": 114,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 17,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-foundation"
     },
     {
       "path": "en/ai-ml/kubeflow/02-pipelines.md",
@@ -8255,12 +8255,12 @@
       "sha256": "32182626303a5e6e762e1a73481aee8068a66ea61bb9c5e20a2feb2376c66995",
       "lines": 116,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 19,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-pipelines"
     },
     {
       "path": "en/ai-ml/kubeflow/03-notebooks.md",
@@ -8271,12 +8271,12 @@
       "sha256": "51a25d2046d813152b7fc5965ffe4ad8bc89593045b49a9c382ba09765049cf8",
       "lines": 83,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 19,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-notebooks"
     },
     {
       "path": "en/ai-ml/kubeflow/04-katib.md",
@@ -8287,12 +8287,12 @@
       "sha256": "0aee0d96667afb5f9df6fcdd9ceb2f606aa5338816736949a56200158b2bd252",
       "lines": 96,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 17,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-katib"
     },
     {
       "path": "en/ai-ml/kubeflow/05-training-operator.md",
@@ -8303,12 +8303,12 @@
       "sha256": "26c6dabe31735191a4544356da1e635e3f6e0127cd88b0d438d51b811a0829c5",
       "lines": 89,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 20,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-trainer"
     },
     {
       "path": "en/ai-ml/kubeflow/06-kserve.md",
@@ -8319,12 +8319,12 @@
       "sha256": "ae56ea079cdddf3404d8afa0f0a46a82ce56ec71e11ac3ffd12b585344085ccf",
       "lines": 102,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 21,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-kserve"
     },
     {
       "path": "en/ai-ml/kubeflow/README.md",
@@ -8335,12 +8335,12 @@
       "sha256": "3792b1971c8749312e7980a19569fab65760d30abaf74523a5d871dd443794ab",
       "lines": 37,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 20,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-foundation"
     },
     {
       "path": "en/ai-ml/mlflow/01-tracking.md",
@@ -8351,12 +8351,12 @@
       "sha256": "5e73ac1f50c6a20604f0a203ae7734fc5447c3bb158cba27fff7ed4f36e28753",
       "lines": 94,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 18,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "mlflow-foundation"
     },
     {
       "path": "en/ai-ml/mlflow/02-model-registry.md",
@@ -8367,12 +8367,12 @@
       "sha256": "5764364d19257bb52de8606b8faf8c047cf3dbdc93fadf711c522ccef693e557",
       "lines": 87,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 22,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "mlflow-registry"
     },
     {
       "path": "en/ai-ml/mlflow/03-eks-deployment.md",
@@ -8383,12 +8383,12 @@
       "sha256": "1c71dc03223edcdc7856f618d611cb63d5f6ade10d8a270e24bd14c33c28a829",
       "lines": 75,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 16,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "mlflow-eks"
     },
     {
       "path": "en/ai-ml/mlflow/README.md",
@@ -8399,12 +8399,12 @@
       "sha256": "a46f1fdfcd7222a7495f9792f1fad3be1da57be3802eeb5451905792f4e6c5d5",
       "lines": 33,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 14,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "mlflow-foundation"
     },
     {
       "path": "en/ai-ml/ray/01-architecture.md",
@@ -8415,12 +8415,12 @@
       "sha256": "35c3a5636873643b0653e9d95a1a94dd91f0a29659459fa9238f31101c59a726",
       "lines": 87,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 22,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ray-foundation"
     },
     {
       "path": "en/ai-ml/ray/02-kuberay-operator.md",
@@ -8431,12 +8431,12 @@
       "sha256": "e8a78f99a738a1f14027d0f6dadc01d322674314250729be0a1116ab5ee29203",
       "lines": 75,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 18,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ray-operator"
     },
     {
       "path": "en/ai-ml/ray/03-ray-train-tune.md",
@@ -8447,12 +8447,12 @@
       "sha256": "04602e377d9984322e22f4f7784be60b7d87412adf5f09d7382c2383e138eb4a",
       "lines": 75,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 24,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ray-train-tune"
     },
     {
       "path": "en/ai-ml/ray/04-ray-serve.md",
@@ -8463,12 +8463,12 @@
       "sha256": "eb57332e513df5295313e766d5628009d507400b4c6682d47c316255e729a8d6",
       "lines": 66,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 24,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ray-serve"
     },
     {
       "path": "en/ai-ml/ray/README.md",
@@ -8479,12 +8479,12 @@
       "sha256": "b1ecc242385da5d88659895be733174eb03ce8643959c4b941be808002b4fd1d",
       "lines": 33,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 14,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ray-foundation"
     },
     {
       "path": "en/ai-ml/sagemaker-ai/01-platform-architecture.md",
@@ -8495,12 +8495,12 @@
       "sha256": "a55a630ef17cd9ed6f7eea664f2c067976bdf0f1c7ab8efc7cffb8d8598b6bf0",
       "lines": 67,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 8,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "sagemaker-foundation"
     },
     {
       "path": "en/ai-ml/sagemaker-ai/02-pii-data-tokenization.md",
@@ -8511,12 +8511,12 @@
       "sha256": "dc88a96ca34bb28a8b2d126644546b71f6882cb3d922e8a991db59b44e05fc03",
       "lines": 105,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "sagemaker-tokenization"
     },
     {
       "path": "en/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md",
@@ -8527,12 +8527,12 @@
       "sha256": "5f18fdd6c867de321fdb8ceb239167d5f715aaa4615819187c071d258c9a167e",
       "lines": 178,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 16,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "sagemaker-execution"
     },
     {
       "path": "en/ai-ml/sagemaker-ai/04-validation-results.md",
@@ -8543,12 +8543,12 @@
       "sha256": "ff8c951ddda697d3e311ada6d2f309a64f0ff738c5773ae4dfad15b9a1500b57",
       "lines": 104,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 13,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "sagemaker-results"
     },
     {
       "path": "en/ai-ml/sagemaker-ai/README.md",
@@ -8559,12 +8559,12 @@
       "sha256": "30961b77977a6c4bdc733392002685c146a7cf589d0e078d2640a704accdcb67",
       "lines": 46,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 10,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "sagemaker-foundation"
     },
     {
       "path": "en/autoscaling/01-keda.md",
@@ -9167,7 +9167,7 @@
       "sha256": "39f511766c521e030e55d3f0967a01804a297552f7a9324944032f7a977c3528",
       "lines": 194,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 21,
       "structuralFindings": [],
@@ -9183,12 +9183,12 @@
       "sha256": "ce84a1acc7882a974532c069921dd4b262cca67599a8eab98593341be51fe88c",
       "lines": 211,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 19,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "flink-state"
     },
     {
       "path": "en/data-on-eks/flink/04-operations-ha.md",
@@ -9199,12 +9199,12 @@
       "sha256": "7b3cbf32537eed6590de7b038e1e8b634f232b759856df6a36f124fdb6ce3bb5",
       "lines": 210,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 21,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "flink-operations"
     },
     {
       "path": "en/data-on-eks/flink/README.md",
@@ -9391,12 +9391,12 @@
       "sha256": "5d64f986ef70362fbbb77626077a2e653b6512d272504994c843a0b17f332255",
       "lines": 139,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 12,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "unified-studio"
     },
     {
       "path": "en/data-on-eks/sagemaker-unified-studio/README.md",
@@ -9407,12 +9407,12 @@
       "sha256": "f528e88cd63330111ea335f98d29af53147e00966a79ecb7791a28db13001bf5",
       "lines": 40,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 8,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "unified-studio"
     },
     {
       "path": "en/data-on-eks/spark/01-spark-fundamentals.md",
@@ -9551,12 +9551,12 @@
       "sha256": "9877b46519ce757a8800108f423ca02d1b78bded1dbc60c05e17da05d32cc074",
       "lines": 263,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 11,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-foundation"
     },
     {
       "path": "en/eks-auto-mode/02-nodepool-configuration.md",
@@ -9567,12 +9567,12 @@
       "sha256": "f7dc6e2e35ef9128a13bcb1c09c3b55fea9ab872b46037123aa4897e16ddf869",
       "lines": 439,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 19,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-nodepools"
     },
     {
       "path": "en/eks-auto-mode/03-scaling-behavior.md",
@@ -9583,12 +9583,12 @@
       "sha256": "9c476aab5a2107479f47732587397ae6d0572f4c352a3cab5916e516c481bac8",
       "lines": 260,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 2,
       "linkCount": 26,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-scaling"
     },
     {
       "path": "en/eks-auto-mode/04-spot-strategies.md",
@@ -9599,12 +9599,12 @@
       "sha256": "a48785382d84bb3082f7ba147bce4778e44552321d39fea31ad76600a2d41fee",
       "lines": 296,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 16,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-spot"
     },
     {
       "path": "en/eks-auto-mode/05-operations.md",
@@ -9615,12 +9615,12 @@
       "sha256": "182e57f95b3ac598e18c47ae2f78a20ab8d114ca398b69f9f7e3bc9dd4c2be7b",
       "lines": 548,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 31,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-operations"
     },
     {
       "path": "en/eks-auto-mode/06-cost-management.md",
@@ -9631,12 +9631,12 @@
       "sha256": "b14ead3db4faf26a6cd26232fae673dd82d26e1fef305141848475e9006091b0",
       "lines": 382,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 31,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-cost"
     },
     {
       "path": "en/eks-auto-mode/07-node-lifecycle.md",
@@ -9647,12 +9647,12 @@
       "sha256": "2c883903b84a134ac1152aff7e45fa9d6fd963930b1c7d61359de509a63f9eb0",
       "lines": 455,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 33,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-lifecycle"
     },
     {
       "path": "en/eks-auto-mode/08-workload-optimization.md",
@@ -9663,12 +9663,12 @@
       "sha256": "9d7fade9ca4bdb87fc964b3f8dc326d00627ad5a28d91c286c8a439b6ff8c042",
       "lines": 475,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 18,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-workloads"
     },
     {
       "path": "en/eks-auto-mode/09-migration-guide.md",
@@ -9679,12 +9679,12 @@
       "sha256": "f73057530dd9ecf265624adafe9f7b888c3361db8af823c2679289636a2a179f",
       "lines": 437,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 25,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-migration"
     },
     {
       "path": "en/eks-auto-mode/README.md",
@@ -9695,12 +9695,12 @@
       "sha256": "bc149e8dd1a020a14cfdef031657c6509def6ad7da94354a92e972b9719b8de7",
       "lines": 143,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 40,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-foundation"
     },
     {
       "path": "en/eks-hybrid-nodes/01-prerequisites.md",
@@ -9711,12 +9711,12 @@
       "sha256": "ec1f2a6990e6a4069bbc0565fa3227afccacd0615c00b0aacbcaa2e148ae6554",
       "lines": 634,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 44,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-foundation"
     },
     {
       "path": "en/eks-hybrid-nodes/02-network-configuration.md",
@@ -9727,12 +9727,12 @@
       "sha256": "c50656c2baa40899b1e5e9b17dfb93d063c48d93e84741ebed0ec3ea5f471ec2",
       "lines": 1351,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 11,
       "linkCount": 94,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-networking"
     },
     {
       "path": "en/eks-hybrid-nodes/03-airgap-setup.md",
@@ -9743,12 +9743,12 @@
       "sha256": "18cda4cc6ad872c28f97306cdd760d5cf7a890d2aca3052accde7b592d3391ed",
       "lines": 1123,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 2,
       "linkCount": 50,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-private-setup"
     },
     {
       "path": "en/eks-hybrid-nodes/04-node-bootstrap.md",
@@ -9759,12 +9759,12 @@
       "sha256": "165383eee9c18600b247dbd6ba07489071551a080bca35d087a90dcb7272ee3c",
       "lines": 814,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 58,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-bootstrap"
     },
     {
       "path": "en/eks-hybrid-nodes/05-gpu-integration.md",
@@ -9775,12 +9775,12 @@
       "sha256": "8583a1b9776fb37871b70d91225d606aa72cd059593846da886414efc03415c8",
       "lines": 165,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 16,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-gpu"
     },
     {
       "path": "en/eks-hybrid-nodes/06-workload-placement.md",
@@ -9791,12 +9791,12 @@
       "sha256": "b37b05f4499c99e1e2f97fe13208b8753ce44200eb8443590f498ef84ab04a31",
       "lines": 448,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 21,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-placement"
     },
     {
       "path": "en/eks-hybrid-nodes/07-node-lifecycle.md",
@@ -9871,12 +9871,12 @@
       "sha256": "88040ca3d178f4402bbc79b8e06db310b888254fb247fb9c00adeedf4a77a15c",
       "lines": 149,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 2,
       "linkCount": 49,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-foundation"
     },
     {
       "path": "en/eks/01-eks-introduction.md",
@@ -10223,7 +10223,7 @@
       "sha256": "2fcfefb2a03ba90cc19720d659f8a5287d231609b028a0a5c8d2615408d2f8bc",
       "lines": 2858,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 19,
       "linkCount": 164,
       "structuralFindings": [],
@@ -10495,12 +10495,12 @@
       "sha256": "69dca3cb22ef43ea25afdf591324babe34976496c94037306f01ad64fd1c8fd5",
       "lines": 67,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 15,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/governance/01-landing-zone-and-ou.md",
@@ -10511,12 +10511,12 @@
       "sha256": "ec6419e3588dc1e5d0b090ddc33c23f0cbbac4785201dcee68142dd9a1ba16ea",
       "lines": 147,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 28,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/governance/02-account-and-iam.md",
@@ -10527,12 +10527,12 @@
       "sha256": "f95a67398c288a622cb4cd95240ba3c09634f2f22262a3e9b5ef5cdfffd95d51",
       "lines": 113,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 23,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/governance/03-eks-multi-account-multi-cluster.md",
@@ -10543,12 +10543,12 @@
       "sha256": "b18e64f99dd9af7d20d07c84f6cac02f55366c9d17fe7597d918c4dbb370397e",
       "lines": 128,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 23,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/governance/04-shared-vpc-and-connectivity.md",
@@ -10559,12 +10559,12 @@
       "sha256": "e696f23bf1fff6a8da18c136c1e01b0a59e0c8e615f66fb43064e9b8d3eafcbe",
       "lines": 187,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 37,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/governance/05-data-security-boundaries.md",
@@ -10575,12 +10575,12 @@
       "sha256": "1cf9cfc6f9b15794c0b43456aa812a4e7a8c3695f234523ee0d2d13ac3c08a0f",
       "lines": 133,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 27,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/governance/06-decision-framework-and-poc.md",
@@ -10591,12 +10591,12 @@
       "sha256": "db4f5ff7387bb0b34e849114ac06ef0c8dd2e7d4ad729df2a88b2f15c4434a93",
       "lines": 147,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 32,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/lab-guides/labs/observability-end-to-end/README.md",
@@ -10607,12 +10607,12 @@
       "sha256": "cbfe92b306794addcb88f5e3f5e1a152077260c162ca97c72177f213830a7fd5",
       "lines": 3,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "navigation-index"
     },
     {
       "path": "en/labs/README.md",
@@ -10751,12 +10751,12 @@
       "sha256": "623eb8a126b1bd81c194f4cd4d65a2afb17229ff96a1632215dfd8ad7ee43bd3",
       "lines": 217,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 19,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "labs-eks-creation"
     },
     {
       "path": "en/labs/observability/01-infrastructure-setup-lab.md",
@@ -11247,12 +11247,12 @@
       "sha256": "fb92cbeec609d2a14cf92a62e29f757ac91c089381b290922249b22b4d19a8f1",
       "lines": 508,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 41,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "en/networking/cilium/06-security-visibility.md",
@@ -11263,12 +11263,12 @@
       "sha256": "1a6181f9c62519cdf669468713aca15663af73d4ff362c348482afcf65964ba7",
       "lines": 538,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 35,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "en/networking/cilium/07-advanced-topics.md",
@@ -11279,12 +11279,12 @@
       "sha256": "acadd4b89d27724a9d044c0b3a98ef27288edc0e2ecb673ac4deb0b6ec60bccb",
       "lines": 646,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 45,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "en/networking/cilium/README.md",
@@ -11311,12 +11311,12 @@
       "sha256": "2f8fc118f1dcff9a455c48524edd6288dadc945561ce11b89c83e96fab8525aa",
       "lines": 295,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 33,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "en/networking/cilium/networking-concepts.md",
@@ -11327,12 +11327,12 @@
       "sha256": "ae8e45aa501208d5cf7815df7734ba40d52b7e5720c8631fb129dae521344e5d",
       "lines": 1206,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 15,
       "linkCount": 158,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "en/news/README.md",
@@ -11343,12 +11343,12 @@
       "sha256": "a3431bc2679c83e97bf77a4f8f399860ccf92c7c6d7da4233d87bff67a43b514",
       "lines": 70,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 64,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "news-log"
     },
     {
       "path": "en/observability/09-observability-optimization.md",
@@ -11375,12 +11375,12 @@
       "sha256": "8d611da2449115c9949cc65e4efd063cbce3a82d11c759e524fea728a9e6e8d9",
       "lines": 217,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 6,
       "linkCount": 37,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-foundation"
     },
     {
       "path": "en/observability/alerting/01-alertmanager.md",
@@ -11567,12 +11567,12 @@
       "sha256": "bb6da90afd436fd5ad228369c1dca445383d4b4ae38b0508585a72d90f676a8e",
       "lines": 924,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 2,
       "linkCount": 71,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "en/observability/metrics/02-victoriametrics.md",
@@ -11583,12 +11583,12 @@
       "sha256": "123def1cb59aca4c2b7e6e7e894bf5e12a756e67353a71d10291d576f71a677d",
       "lines": 1179,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 3,
       "linkCount": 72,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "en/observability/metrics/03-mimir.md",
@@ -11599,12 +11599,12 @@
       "sha256": "e5fba2793f5294e4cb92ad18dbbfd6532931290b4547018f87b9ed5372732d1b",
       "lines": 833,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 5,
       "linkCount": 69,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "en/observability/metrics/04-cloudwatch-metrics.md",
@@ -11615,12 +11615,12 @@
       "sha256": "e80b356c043a28f5a677e950feb520322c18961569a789a877ff7dc82e0b71d7",
       "lines": 1133,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 3,
       "linkCount": 70,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "en/observability/metrics/05-datadog.md",
@@ -11631,12 +11631,12 @@
       "sha256": "762a33a8add45c94cb141bf47b695eaf1ebb9f647377180872d422b8f6213ebb",
       "lines": 1015,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 3,
       "linkCount": 70,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "en/observability/metrics/README.md",
@@ -11647,12 +11647,12 @@
       "sha256": "99002c40fe050f2c0fd764f5f9c156af801fb6be0fc2372dc54d9417822ba439",
       "lines": 420,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 4,
       "linkCount": 49,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "en/observability/tracing/01-tempo.md",
@@ -12015,12 +12015,12 @@
       "sha256": "cfa14ca0e38e30b2189f4b28ec8d1da103fc0f7fe51ba7c0d13f7fdebf1a1256",
       "lines": 232,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 93,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-overview"
     },
     {
       "path": "en/platform-engineering/01-helm.md",
@@ -12031,12 +12031,12 @@
       "sha256": "719e6f8c1b7fa6137a2b0d0076019729d0d80a6748c6432e055da8420319083a",
       "lines": 765,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 45,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-helm"
     },
     {
       "path": "en/platform-engineering/02-ack.md",
@@ -12047,12 +12047,12 @@
       "sha256": "df3e962c154f5de522046d3f0632482ae3f4a7340908783e3c3e8559aaa4dc7e",
       "lines": 579,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 72,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-ack"
     },
     {
       "path": "en/platform-engineering/03-kro.md",
@@ -12063,12 +12063,12 @@
       "sha256": "6a0631a86bb3d68dc032d33abfd4a6dff49b3f5ad35bbb6b48192158d02d3b35",
       "lines": 505,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 36,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-kro"
     },
     {
       "path": "en/platform-engineering/04-kubernetes-extensions.md",
@@ -12079,12 +12079,12 @@
       "sha256": "94f3aa60ddb26c8aece60985f3991d13aac3096aa16c9eac27d4199c1164fb62",
       "lines": 988,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 25,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-extensions"
     },
     {
       "path": "en/platform-engineering/05-example-corp-app.md",
@@ -12095,12 +12095,12 @@
       "sha256": "aea0e765c6f236d092921bfb7b98f0f4ab794296024228cf0fe9cd1645dae681",
       "lines": 220,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 19,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-examplecorp"
     },
     {
       "path": "en/platform-engineering/06-backstage-idp.md",
@@ -12111,12 +12111,12 @@
       "sha256": "aa3446b01113e190acba45e1e418918aaaa06ae3ed61ee94daecf3a14c1c593f",
       "lines": 2227,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 3,
       "linkCount": 114,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-backstage"
     },
     {
       "path": "en/platform-engineering/07-crossplane.md",
@@ -12127,12 +12127,12 @@
       "sha256": "6625e324486a171d073da093a7d5a864b8cb9eb7584602b489fd656d1f6a41c3",
       "lines": 1828,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 5,
       "linkCount": 103,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-crossplane"
     },
     {
       "path": "en/platform-engineering/08-vcluster.md",
@@ -12143,12 +12143,12 @@
       "sha256": "cad5f38a90ae8a759601bfd32fa4102693d813f4c65fdef7efe852119a7e3b48",
       "lines": 2172,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 5,
       "linkCount": 111,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-vcluster"
     },
     {
       "path": "en/platform-engineering/ack/01-s3-iam.md",
@@ -12159,12 +12159,12 @@
       "sha256": "a826e28a3f7d1ed7a174dfc5503f5dc5cab6133b072216685818c8d47f00881b",
       "lines": 117,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 7,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-ack"
     },
     {
       "path": "en/platform-engineering/ack/02-sqs-sns.md",
@@ -12175,12 +12175,12 @@
       "sha256": "bc39d20c1b4788c25ea4b85aadff5a812bf77fdc6fb3022238f260011cbac9b0",
       "lines": 100,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 8,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-ack"
     },
     {
       "path": "en/platform-engineering/ack/03-elbv2-route53-rds.md",
@@ -12191,12 +12191,12 @@
       "sha256": "f7fa462c2b780f352e72355d12bc8087b43129ca44c5241496b9e77f9cb2f4d8",
       "lines": 256,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 16,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-ack"
     },
     {
       "path": "en/quizzes/README.md",
@@ -12207,12 +12207,12 @@
       "sha256": "8ee22e3e3c298ec3d3e135178cd9a880286e8cdf7ddc398fa8537290492d3e1f",
       "lines": 189,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 151,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "navigation-index"
     },
     {
       "path": "en/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
@@ -12223,12 +12223,12 @@
       "sha256": "26f13a836cf8375426f414ef25d7faab91a579d8952165e8e70b67b074fc4c57",
       "lines": 2051,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 8,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ai-ml-workloads"
     },
     {
       "path": "en/quizzes/ai-ml/04-inference-frameworks-quiz.md",
@@ -12239,12 +12239,12 @@
       "sha256": "b24f514f2cd2d2455ff593d618df4f9fc1a1ef6873bb7a48f49ba596baac40ca",
       "lines": 789,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 17,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "inference-frameworks"
     },
     {
       "path": "en/quizzes/ai-ml/04-vllm-deployment-quiz.md",
@@ -12255,12 +12255,12 @@
       "sha256": "825e5e3c2dde427cb3990e7b7198dd8be5a1ba7e4c7145689c7198868a8496c9",
       "lines": 1826,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "vllm-deployment"
     },
     {
       "path": "en/quizzes/ai-ml/05-model-training-quiz.md",
@@ -12271,12 +12271,12 @@
       "sha256": "25a94411418cc0a46bb5fd5f9714892ade3013d49eb4273ceb88dbebf4ac742c",
       "lines": 670,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 19,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "model-training"
     },
     {
       "path": "en/quizzes/ai-ml/06-ai-infrastructure-quiz.md",
@@ -12287,12 +12287,12 @@
       "sha256": "ec91aea9d3ad6665a793f48b49b837a23b8fb727be34e591f33fafe6aa3c44db",
       "lines": 660,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 19,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ai-infrastructure"
     },
     {
       "path": "en/quizzes/ai-ml/07-ai-ml-best-practices-quiz.md",
@@ -12303,12 +12303,12 @@
       "sha256": "b8e634783ac2685787cb619a8200d09c86edfed190fb47d86ca2566a042174ab",
       "lines": 681,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 17,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ai-ml-best-practices"
     },
     {
       "path": "en/quizzes/ai-ml/08-agentic-ai-platform-quiz.md",
@@ -12319,12 +12319,12 @@
       "sha256": "b3cf34ee42899a5f233c8b8f6fa258a3a635b46b2f0b057f06feb3213540b80b",
       "lines": 1926,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 26,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "agentic-ai-platform"
     },
     {
       "path": "en/quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md",
@@ -12335,12 +12335,12 @@
       "sha256": "1be59cee9c2b1626d27ade606ff88394fabafb765061fd6ccadbc0e7e38b1e4c",
       "lines": 120,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 7,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-foundation"
     },
     {
       "path": "en/quizzes/ai-ml/kubeflow/02-pipelines-quiz.md",
@@ -12351,12 +12351,12 @@
       "sha256": "f59f1c375fd907745b925e9855c5627bdc0ffdfd0ce6069d7b9ed00a9828bbd6",
       "lines": 224,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 6,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-pipelines"
     },
     {
       "path": "en/quizzes/ai-ml/kubeflow/03-notebooks-quiz.md",
@@ -12367,12 +12367,12 @@
       "sha256": "294a98a9fb1e31f026a43d5fff782a7db3d85fafb999dae0e085c16a8abed2d3",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 4,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-notebooks"
     },
     {
       "path": "en/quizzes/ai-ml/kubeflow/04-katib-quiz.md",
@@ -12383,12 +12383,12 @@
       "sha256": "359798679421080cbb49990a49ffcf9ce73c33574491e9a78571141d37b77636",
       "lines": 167,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-katib"
     },
     {
       "path": "en/quizzes/ai-ml/kubeflow/05-training-operator-quiz.md",
@@ -12399,12 +12399,12 @@
       "sha256": "b4a7e41490ddc1ba82e6f177df5a259d41ee55152052cb72779936c320d08e47",
       "lines": 160,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-trainer"
     },
     {
       "path": "en/quizzes/ai-ml/kubeflow/06-kserve-quiz.md",
@@ -12415,12 +12415,12 @@
       "sha256": "d88cffffa4515dc777280a8b3b35961c90a7666b26c235cdb295e2fda750f6fd",
       "lines": 165,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 4,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-kserve"
     },
     {
       "path": "en/quizzes/ai-ml/mlflow/01-tracking-quiz.md",
@@ -12431,12 +12431,12 @@
       "sha256": "41fa3502772aba967bc87fff3f2e113c3994a8d588216d802d1fd7e16ac57245",
       "lines": 164,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "mlflow-foundation"
     },
     {
       "path": "en/quizzes/ai-ml/mlflow/02-model-registry-quiz.md",
@@ -12447,12 +12447,12 @@
       "sha256": "7c55a4b87947f68ef44898147dfe66f97fdf5ad7764a0072f7b60e58b6f3feeb",
       "lines": 164,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "mlflow-registry"
     },
     {
       "path": "en/quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md",
@@ -12463,12 +12463,12 @@
       "sha256": "6186c61aeaf2ef209753a11ac88c0cbc582c96224450951afa7846c753d7e0e4",
       "lines": 168,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 4,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "mlflow-eks"
     },
     {
       "path": "en/quizzes/ai-ml/ray/01-architecture-quiz.md",
@@ -12479,12 +12479,12 @@
       "sha256": "f91f472f112d2931f8fa52e2e62e4b8750da71a40245071431b281a468a4954e",
       "lines": 164,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ray-foundation"
     },
     {
       "path": "en/quizzes/ai-ml/ray/02-kuberay-operator-quiz.md",
@@ -12495,12 +12495,12 @@
       "sha256": "c1df707eb450eca0ba03cabfaa71cdf9fbcc101c21b6e63279974be861e4a19b",
       "lines": 168,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ray-operator"
     },
     {
       "path": "en/quizzes/ai-ml/ray/03-ray-train-tune-quiz.md",
@@ -12511,12 +12511,12 @@
       "sha256": "12838b990f1eed651fb8b792f55032eaaa3e19104764a41134e3fb59d2a2f057",
       "lines": 164,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ray-train-tune"
     },
     {
       "path": "en/quizzes/ai-ml/ray/04-ray-serve-quiz.md",
@@ -12527,12 +12527,12 @@
       "sha256": "312ab9e8e340664af95a96b0d53ca8dc30a326ace572d74c26ae9014a0440e1c",
       "lines": 166,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 4,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ray-serve"
     },
     {
       "path": "en/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md",
@@ -12543,12 +12543,12 @@
       "sha256": "0c9eab5c857bac9c31a152591706ce47d1a41dd2fa503166a6affc96508c59ea",
       "lines": 80,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 3,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "sagemaker-foundation"
     },
     {
       "path": "en/quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md",
@@ -12559,12 +12559,12 @@
       "sha256": "c919304020641debbf37e3b5558ef77aba83da89b25f2b9dbc8dc90f3e8e72b0",
       "lines": 78,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 3,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "sagemaker-tokenization"
     },
     {
       "path": "en/quizzes/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md",
@@ -12575,12 +12575,12 @@
       "sha256": "7d203088c7fc6edc767fc524f4e89a0fee665f99b93b537ea26fa7e5725739e5",
       "lines": 78,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 3,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "sagemaker-execution"
     },
     {
       "path": "en/quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md",
@@ -12591,12 +12591,12 @@
       "sha256": "25ac906dd969769df7ac0fcf1ef835a0c4c3abfc36373abf8bf45c814bb06a54",
       "lines": 78,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 3,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "sagemaker-results"
     },
     {
       "path": "en/quizzes/autoscaling/03-knative-quiz.md",
@@ -13151,7 +13151,7 @@
       "sha256": "089aff91f5794676af8fd3020622582796d7bdfd2585bcf931d51df6eb6bc3b5",
       "lines": 345,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
@@ -13167,12 +13167,12 @@
       "sha256": "e2defe22006988ee403cb7eda024969d8083f33e19146a012c5beedbd09129f1",
       "lines": 250,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 3,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "flink-state"
     },
     {
       "path": "en/quizzes/data-on-eks/flink/04-operations-ha-quiz.md",
@@ -13183,12 +13183,12 @@
       "sha256": "dbf04a42f6662e3aa22711e30f63115baad56595c98aff3f908c4aceea405ed7",
       "lines": 205,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 6,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "flink-operations"
     },
     {
       "path": "en/quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md",
@@ -13343,12 +13343,12 @@
       "sha256": "15cb477f4fa1212a4c1b0a26da7005f32291af5484e1b603b0eb12c34a36719d",
       "lines": 78,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 3,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "unified-studio"
     },
     {
       "path": "en/quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md",
@@ -13455,12 +13455,12 @@
       "sha256": "fc75f848a7b3a59ff528084a10ddc36ac66956c520de9508c109f3b175fa854b",
       "lines": 189,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-foundation"
     },
     {
       "path": "en/quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md",
@@ -13471,12 +13471,12 @@
       "sha256": "a7ab17b5396eb81d67b5aceeccb1b29c6292a0d96b2a244c9edcb8a34e71c9a6",
       "lines": 192,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-nodepools"
     },
     {
       "path": "en/quizzes/eks-auto-mode/03-scaling-behavior-quiz.md",
@@ -13487,12 +13487,12 @@
       "sha256": "564d8ad5b2f9cd9b1d0f9bb4714b5c8c02ae177c262e5c717d5db5a2d61fd758",
       "lines": 161,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-scaling"
     },
     {
       "path": "en/quizzes/eks-auto-mode/04-spot-strategies-quiz.md",
@@ -13503,12 +13503,12 @@
       "sha256": "ced47886c78af06c2847622c81da3835cca78b7e581f39ec594dd1f6f984bf1c",
       "lines": 210,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-spot"
     },
     {
       "path": "en/quizzes/eks-auto-mode/05-operations-quiz.md",
@@ -13519,12 +13519,12 @@
       "sha256": "50985f13418f65d5f0d04876eead58551c3dbabbb4401deb032ca065d3906a97",
       "lines": 268,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 11,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-operations"
     },
     {
       "path": "en/quizzes/eks-auto-mode/06-cost-management-quiz.md",
@@ -13535,12 +13535,12 @@
       "sha256": "de9cb8b3c8ae266bd078ebce0aacfed6efa690b3823731d14e549249201dc989",
       "lines": 291,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 11,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-cost"
     },
     {
       "path": "en/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md",
@@ -13551,12 +13551,12 @@
       "sha256": "f7a7ec1333375b3e84ef9fca2bf57e3bde35a705600d6bad7606fa2b0c95caa4",
       "lines": 283,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 11,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-lifecycle"
     },
     {
       "path": "en/quizzes/eks-auto-mode/08-workload-optimization-quiz.md",
@@ -13567,12 +13567,12 @@
       "sha256": "67b20aca8e037b489a3b47c29a10da49d783fb1f16c236c4e168a37e85130202",
       "lines": 297,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-workloads"
     },
     {
       "path": "en/quizzes/eks-auto-mode/09-migration-guide-quiz.md",
@@ -13583,12 +13583,12 @@
       "sha256": "98b763c12c1cdb51c664b9dd6da77c32ba70bc8eea13c74fc2afd558c009ce48",
       "lines": 323,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 11,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-migration"
     },
     {
       "path": "en/quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md",
@@ -13599,12 +13599,12 @@
       "sha256": "1c8556656b09d7e1f332e527b61f6a04e2147bf7c6a89c2422c4b27a2550318d",
       "lines": 181,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-foundation"
     },
     {
       "path": "en/quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md",
@@ -13615,12 +13615,12 @@
       "sha256": "20f2b848eb208e56b0522830c4fa08729985359479b5253b996b93a6ce030032",
       "lines": 218,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-networking"
     },
     {
       "path": "en/quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md",
@@ -13631,12 +13631,12 @@
       "sha256": "bfd0037184737e8236b1827cf373f206e90ccb74ca409f2731df170e18109025",
       "lines": 429,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 13,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-private-setup"
     },
     {
       "path": "en/quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md",
@@ -13647,12 +13647,12 @@
       "sha256": "33fee49b49eeda9e7854615a69bb8359bd1f624f81fdb9979cb982458f06b41e",
       "lines": 300,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 10,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-bootstrap"
     },
     {
       "path": "en/quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md",
@@ -13663,12 +13663,12 @@
       "sha256": "734aca728e12fd75c6f98c125fd5512275ec1d408f9bbe907baeb7e8584c57cb",
       "lines": 286,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 10,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-gpu"
     },
     {
       "path": "en/quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md",
@@ -13679,12 +13679,12 @@
       "sha256": "5d46c7577a9359355c7d1d6605cf5792b72d76ed5f97828b4f85014b6c191e05",
       "lines": 301,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-placement"
     },
     {
       "path": "en/quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md",
@@ -14063,7 +14063,7 @@
       "sha256": "4491be2cd9fb07445cb33313bef98e5d63e6d9fde3280242f3860f64b0729feb",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
@@ -14319,12 +14319,12 @@
       "sha256": "5cdf9a0d9b104082d1d06414584b88710050b465e6abdda18272eb58e027153d",
       "lines": 58,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/quizzes/governance/01-landing-zone-and-ou-quiz.md",
@@ -14335,12 +14335,12 @@
       "sha256": "a22a1bc7f29655aba292b8498b2dc9a84e2227ac5befc00d7a579fd8f0dc3955",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/quizzes/governance/02-account-and-iam-quiz.md",
@@ -14351,12 +14351,12 @@
       "sha256": "7bab89ad749d72e0aa8ba58d9559b6db3ad75e6c7472ebf3b1db3f583f62fcef",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
@@ -14367,12 +14367,12 @@
       "sha256": "fe1a87ab732fc5c5edfc8de62fb25079a1b9a4566ab4e528ba780a17d40ef959",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/quizzes/governance/04-shared-vpc-and-connectivity-quiz.md",
@@ -14383,12 +14383,12 @@
       "sha256": "1b49f9e5176d5fa51b8c5690954093583aad5598aed148913c919a0e8c50fbe6",
       "lines": 94,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/quizzes/governance/05-data-security-boundaries-quiz.md",
@@ -14399,12 +14399,12 @@
       "sha256": "0f8c9527c9ba3d713f98bbf4099717b6229f791f8226a69ce89ec92ad56362c0",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/quizzes/governance/06-decision-framework-and-poc-quiz.md",
@@ -14415,12 +14415,12 @@
       "sha256": "14db0ce3bc16fa1da08ded19ca639eba074a196a5ec07b6257820a524e81a13c",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/quizzes/llm-guide-quiz.md",
@@ -14783,12 +14783,12 @@
       "sha256": "51fc46ce3cd315be9c96bbb55de6802b694272061b8e540f2e6da7212acda1fa",
       "lines": 453,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 6,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "en/quizzes/networking/cilium/06-security-visibility-quiz.md",
@@ -14799,12 +14799,12 @@
       "sha256": "5aa98074292191106bd06d44f305221e3c228cd0e2362e5eb77d39c86cb01877",
       "lines": 253,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "en/quizzes/networking/cilium/07-advanced-topics-quiz.md",
@@ -14815,12 +14815,12 @@
       "sha256": "e987268cbe04e32958575573eda4def961d0136fb6f82f3f8a2c56170c205b9c",
       "lines": 319,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 8,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "en/quizzes/networking/cilium/glossary-quiz.md",
@@ -14831,12 +14831,12 @@
       "sha256": "7f391d139fd6bad63bab9d1791c583e5ff3c07cc82702312e61a762e09071f38",
       "lines": 405,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 6,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "en/quizzes/networking/cilium/networking-concepts-quiz.md",
@@ -14847,12 +14847,12 @@
       "sha256": "8e0e960eed1892d958f733ebe30c6deafeda0cb26798e59ccf0641f115e1a05f",
       "lines": 257,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 7,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "en/quizzes/observability/09-observability-optimization-quiz.md",
@@ -15135,12 +15135,12 @@
       "sha256": "8b1794042c54277118fa53537b81773cf710482ba9a7cc33e7c6ee94aa41b1a6",
       "lines": 186,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "en/quizzes/observability/metrics/01-prometheus-quiz.md",
@@ -15151,12 +15151,12 @@
       "sha256": "e373d92b8e99eed7101c5b9dce61f1eace909ed38eea174a87680917d7f1e297",
       "lines": 184,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "en/quizzes/observability/metrics/02-victoriametrics-quiz.md",
@@ -15167,12 +15167,12 @@
       "sha256": "aae2b59de920033ea79e3f16b6f1c52cbedecf1236c25ec6db1ff733021f738f",
       "lines": 186,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "en/quizzes/observability/metrics/03-mimir-quiz.md",
@@ -15183,12 +15183,12 @@
       "sha256": "75e29331e08389320eea508bec6ef55ae93a5db7b3b7b0cc0cf74f1e474030cc",
       "lines": 184,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "en/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md",
@@ -15199,12 +15199,12 @@
       "sha256": "0c41717368f3b334d4da681546649735d42941122aab52000296fadc9d9b17a7",
       "lines": 184,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "en/quizzes/observability/metrics/05-datadog-quiz.md",
@@ -15215,12 +15215,12 @@
       "sha256": "cf400cd43577e814a3ba818c347dec5dc16d8aaa7788fb8910ac436f1cec83b6",
       "lines": 184,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "en/quizzes/observability/tracing/01-tempo-quiz.md",
@@ -15551,12 +15551,12 @@
       "sha256": "8486b384662f34922d58854046a9ec7571cdfa88fb668e350b1c562504ed434b",
       "lines": 148,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-overview"
     },
     {
       "path": "en/quizzes/platform-engineering/01-helm-quiz.md",
@@ -15567,12 +15567,12 @@
       "sha256": "d6b6ea572c37cf646a6192d11e02094b89c11c3f673825b43dcb8865d845efce",
       "lines": 463,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 26,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-helm"
     },
     {
       "path": "en/quizzes/platform-engineering/02-ack-quiz.md",
@@ -15583,12 +15583,12 @@
       "sha256": "efceecf17f5253bc60bb45ad5586a064b5d7567a211dafb19062ba31af867966",
       "lines": 289,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-ack"
     },
     {
       "path": "en/quizzes/platform-engineering/03-kro-quiz.md",
@@ -15599,12 +15599,12 @@
       "sha256": "3dbccb462462b7e246d996b0136734ba5760fe764df0fb705e40e4ac2936db90",
       "lines": 424,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 26,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-kro"
     },
     {
       "path": "en/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
@@ -15615,12 +15615,12 @@
       "sha256": "8604229ad6ccc1895e6e1e2086f31a078977866d14ca6324c2501883f9f538ec",
       "lines": 653,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 26,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-extensions"
     },
     {
       "path": "en/quizzes/platform-engineering/06-backstage-idp-quiz.md",
@@ -15631,12 +15631,12 @@
       "sha256": "ceff79aca3076d11e456e8181fb85e4bf0279a72f5fc6aa962528b5b26e332c0",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-backstage"
     },
     {
       "path": "en/quizzes/platform-engineering/07-crossplane-quiz.md",
@@ -15647,12 +15647,12 @@
       "sha256": "dc36317e67f85cc3e10987a6474fb6e7a8281ced2e3b9cc960d4bfd5c65d458a",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-crossplane"
     },
     {
       "path": "en/quizzes/platform-engineering/08-vcluster-quiz.md",
@@ -15663,12 +15663,12 @@
       "sha256": "f69ee33f10bc8bd1e07f78242695e49cc69d0d191578599fb03d2c293b6cb125",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-vcluster"
     },
     {
       "path": "en/quizzes/roadmap-quiz.md",
@@ -17599,12 +17599,12 @@
       "sha256": "bcc61b38a08d15710c2da551be2cac63947c271473e022b9c40fc28ad623b3ff",
       "lines": 515,
       "navigationListed": false,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 74,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "auto-mode-curriculum"
     },
     {
       "path": "es/README.md",
@@ -33831,12 +33831,12 @@
       "sha256": "0fa1dc5fb49390623cf7ca59a3d921450acf7f67f89d9833d72fd99e692f8b4b",
       "lines": 688,
       "navigationListed": false,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 616,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "summary-navigation"
     },
     {
       "path": "ko/ai-ml/01-ai-ml-workloads.md",
@@ -33847,12 +33847,12 @@
       "sha256": "786e6eb653ec52186bcb63f52e7af53a2c549221d84f128052dcd204351c6cf3",
       "lines": 919,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 7,
       "linkCount": 40,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ai-ml-workloads"
     },
     {
       "path": "ko/ai-ml/02-vllm-deployment.md",
@@ -33863,12 +33863,12 @@
       "sha256": "9a35b31fb34afd9b506e67aedc46f32408e7de6b60261826b002188d5d112343",
       "lines": 1089,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 9,
       "linkCount": 67,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "vllm-deployment"
     },
     {
       "path": "ko/ai-ml/03-agentic-ai-platform.md",
@@ -33879,12 +33879,12 @@
       "sha256": "cfe4dd50b836558709e158435be89ad69288bc38db5e9b9dadea257b348ba76e",
       "lines": 1992,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 5,
       "linkCount": 79,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "agentic-ai-platform"
     },
     {
       "path": "ko/ai-ml/04-inference-frameworks.md",
@@ -33895,12 +33895,12 @@
       "sha256": "e5ff1d82b9ef5ab03dc0c7da9538e15746c0e9c7c2f54bad1b351fec8bb858ac",
       "lines": 1773,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 4,
       "linkCount": 69,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "inference-frameworks"
     },
     {
       "path": "ko/ai-ml/05-model-training.md",
@@ -33911,12 +33911,12 @@
       "sha256": "6521ff2dfbde2eb3caaaf8b861efee7fe33b1d8494602dbe68b9b1cdcf2b0a6d",
       "lines": 1505,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 3,
       "linkCount": 51,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "model-training"
     },
     {
       "path": "ko/ai-ml/06-ai-infrastructure.md",
@@ -33927,12 +33927,12 @@
       "sha256": "7682f073beb13c435d30e589a1f1e97de3efaaf8a868f5fe9088857ef446ce58",
       "lines": 1615,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 3,
       "linkCount": 42,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ai-infrastructure"
     },
     {
       "path": "ko/ai-ml/07-ai-ml-best-practices.md",
@@ -33943,12 +33943,12 @@
       "sha256": "c93c8204d4108efab053f9c01adc9a200c66919bd50a374ebacf0da74b189032",
       "lines": 1946,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 3,
       "linkCount": 63,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ai-ml-best-practices"
     },
     {
       "path": "ko/ai-ml/kubeflow/01-architecture-installation.md",
@@ -33959,12 +33959,12 @@
       "sha256": "826672aee98a3109861eff18364407061ccd936292d048ba8460299a1c752a36",
       "lines": 114,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 17,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-foundation"
     },
     {
       "path": "ko/ai-ml/kubeflow/02-pipelines.md",
@@ -33975,12 +33975,12 @@
       "sha256": "0df53e4ed0418a4e74176fe69d41516ea890f79ae89804e354b7240d67a550c5",
       "lines": 116,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 19,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-pipelines"
     },
     {
       "path": "ko/ai-ml/kubeflow/03-notebooks.md",
@@ -33991,12 +33991,12 @@
       "sha256": "2c38a5ed6caff26b399ae34d68c6d79d72aea078f580d8aed6846f7dd477471b",
       "lines": 83,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 19,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-notebooks"
     },
     {
       "path": "ko/ai-ml/kubeflow/04-katib.md",
@@ -34007,12 +34007,12 @@
       "sha256": "9a3fd75cb4fa9a94fcb13857ec0715d187dfee3ed3a6990e5576f029d6c27407",
       "lines": 96,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 17,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-katib"
     },
     {
       "path": "ko/ai-ml/kubeflow/05-training-operator.md",
@@ -34023,12 +34023,12 @@
       "sha256": "fa679bb244c45df37a19a9afcad8364d0af382222e0d6aa8e28ccffe561f94e5",
       "lines": 89,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 20,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-trainer"
     },
     {
       "path": "ko/ai-ml/kubeflow/06-kserve.md",
@@ -34039,12 +34039,12 @@
       "sha256": "5215c23177ac8980f4e12a3d67ec9b09425448c860c9b7ac18896799d3ceeb48",
       "lines": 102,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 21,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-kserve"
     },
     {
       "path": "ko/ai-ml/kubeflow/README.md",
@@ -34055,12 +34055,12 @@
       "sha256": "1353ae5c1a8853d7d2bb33d3f0d2c09182858712b9078cc686fa9db1b4f6ddc7",
       "lines": 37,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 20,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-foundation"
     },
     {
       "path": "ko/ai-ml/mlflow/01-tracking.md",
@@ -34071,12 +34071,12 @@
       "sha256": "cb35131333014d21573a10c601a913470ca8e1a898362f5c69db9e8ee419de6c",
       "lines": 94,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 18,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "mlflow-foundation"
     },
     {
       "path": "ko/ai-ml/mlflow/02-model-registry.md",
@@ -34087,12 +34087,12 @@
       "sha256": "c876b19c1b6391d9406776ff0360ded6d680322de8322da54ac86426c3b14857",
       "lines": 87,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 22,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "mlflow-registry"
     },
     {
       "path": "ko/ai-ml/mlflow/03-eks-deployment.md",
@@ -34103,12 +34103,12 @@
       "sha256": "498e4ef9a70515237983d08f301af6835abcc4301d8d9ef6a5f28d60d804b9a1",
       "lines": 75,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 16,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "mlflow-eks"
     },
     {
       "path": "ko/ai-ml/mlflow/README.md",
@@ -34119,12 +34119,12 @@
       "sha256": "ed991c34bc4fd4aeee84d1918582c4b5c1237a82f79d8af021ffa674e836a793",
       "lines": 33,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 14,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "mlflow-foundation"
     },
     {
       "path": "ko/ai-ml/ray/01-architecture.md",
@@ -34135,12 +34135,12 @@
       "sha256": "8a1bbabbe5acc0775c3506bba6b26ebd3379b2438a7906f2ebf0c33efeca7e5a",
       "lines": 87,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 22,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ray-foundation"
     },
     {
       "path": "ko/ai-ml/ray/02-kuberay-operator.md",
@@ -34151,12 +34151,12 @@
       "sha256": "507e61f235c71c9c562d49b474ed1ed0b8388ab9b3e3e67dd1e29b451a0677be",
       "lines": 75,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 18,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ray-operator"
     },
     {
       "path": "ko/ai-ml/ray/03-ray-train-tune.md",
@@ -34167,12 +34167,12 @@
       "sha256": "21ac37f45f21b723698052707a3d42a4037dc115a868fc9977bb7f0b2e526be6",
       "lines": 75,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 24,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ray-train-tune"
     },
     {
       "path": "ko/ai-ml/ray/04-ray-serve.md",
@@ -34183,12 +34183,12 @@
       "sha256": "d5734c1ca759b35671e7fdc8a586cf9f6434c64d658145872426c20d0320fc37",
       "lines": 66,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 24,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ray-serve"
     },
     {
       "path": "ko/ai-ml/ray/README.md",
@@ -34199,12 +34199,12 @@
       "sha256": "856f57bde96cfdd9982ba4fa1f53e9d6ff1a39597206ae4567f5e287030eb39f",
       "lines": 33,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 14,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ray-foundation"
     },
     {
       "path": "ko/ai-ml/sagemaker-ai/01-platform-architecture.md",
@@ -34215,12 +34215,12 @@
       "sha256": "6d7677f590bfeed315d1bf205497f9ecd0069325d2ac063c244e29ccdc905815",
       "lines": 69,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 8,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "sagemaker-foundation"
     },
     {
       "path": "ko/ai-ml/sagemaker-ai/02-pii-data-tokenization.md",
@@ -34231,12 +34231,12 @@
       "sha256": "25037aebf4e24e99fa7343064c59f1de3de63097dbdae966aebeafcc510cdad8",
       "lines": 105,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "sagemaker-tokenization"
     },
     {
       "path": "ko/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md",
@@ -34247,12 +34247,12 @@
       "sha256": "9164b12a18eb48645c2b5da910167762db0ff405355af95ff2adefbcc3281701",
       "lines": 180,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 16,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "sagemaker-execution"
     },
     {
       "path": "ko/ai-ml/sagemaker-ai/04-validation-results.md",
@@ -34263,12 +34263,12 @@
       "sha256": "7df29a4c03c807909c146b82c22129fc66598c228e280ed36ebb010f4eee35e5",
       "lines": 106,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 13,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "sagemaker-results"
     },
     {
       "path": "ko/ai-ml/sagemaker-ai/README.md",
@@ -34279,12 +34279,12 @@
       "sha256": "e688749979623c047e1d0ad7d2c4fed6603a79444fa4447bdf13ef2646d5c571",
       "lines": 46,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 10,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "sagemaker-foundation"
     },
     {
       "path": "ko/autoscaling/01-keda.md",
@@ -34887,7 +34887,7 @@
       "sha256": "3c960e14a2c84e720fb6cc09e97799ebbaf6663646ffd5edc78a4b85b0886702",
       "lines": 194,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 21,
       "structuralFindings": [],
@@ -34903,12 +34903,12 @@
       "sha256": "27d7b13dfd10da71f2e557c577b96c128cacd268a2d74dadb697449c243d1302",
       "lines": 211,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 19,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "flink-state"
     },
     {
       "path": "ko/data-on-eks/flink/04-operations-ha.md",
@@ -34919,12 +34919,12 @@
       "sha256": "ea769f05c3b1fb7aa2d088b8e5661feb0aeea0cb7fc0a56ddc38f282233da637",
       "lines": 210,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 21,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "flink-operations"
     },
     {
       "path": "ko/data-on-eks/flink/README.md",
@@ -35111,12 +35111,12 @@
       "sha256": "7f386880ca6a6d9109f5ebf0b6e3d54de41823a255f41983786cbd26dfe3c88a",
       "lines": 139,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 12,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "unified-studio"
     },
     {
       "path": "ko/data-on-eks/sagemaker-unified-studio/README.md",
@@ -35127,12 +35127,12 @@
       "sha256": "4ad3d8c495ece6abf684ced6406131914a0f3e79c007a88665e5634ee02bbcbf",
       "lines": 40,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 8,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "unified-studio"
     },
     {
       "path": "ko/data-on-eks/spark/01-spark-fundamentals.md",
@@ -35271,12 +35271,12 @@
       "sha256": "ed44de973c2f2fa4cbfa2025b02b318fe89658b074407a06350c707ff7fbf7e0",
       "lines": 239,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 13,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-foundation"
     },
     {
       "path": "ko/eks-auto-mode/02-nodepool-configuration.md",
@@ -35287,12 +35287,12 @@
       "sha256": "1d4d821bfc234eb96ed5a7fd3f1bbb15f4e390af1d085212bbe35c7f146a2e88",
       "lines": 399,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 18,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-nodepools"
     },
     {
       "path": "ko/eks-auto-mode/03-scaling-behavior.md",
@@ -35303,12 +35303,12 @@
       "sha256": "6d51a6904c24a7367db11d92cadfb4ad227c13b97e330dd2fafb2f38e88bf3f4",
       "lines": 172,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 2,
       "linkCount": 18,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-scaling"
     },
     {
       "path": "ko/eks-auto-mode/04-spot-strategies.md",
@@ -35319,12 +35319,12 @@
       "sha256": "38bd7dceac9e8631383d65aed4cf9d6a3fd3332ab3c14feafd320440543eb113",
       "lines": 307,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 15,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-spot"
     },
     {
       "path": "ko/eks-auto-mode/05-operations.md",
@@ -35335,12 +35335,12 @@
       "sha256": "984228d4b169558afcfc46f6d27a90488cdc2b62e775a337a184b7a14a3fcedf",
       "lines": 639,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 35,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-operations"
     },
     {
       "path": "ko/eks-auto-mode/06-cost-management.md",
@@ -35351,12 +35351,12 @@
       "sha256": "95e90b08f4ea52ee272b92bc6d42f57ea3c98d99964661e60c1ca817aa2d9f78",
       "lines": 437,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 27,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-cost"
     },
     {
       "path": "ko/eks-auto-mode/07-node-lifecycle.md",
@@ -35367,12 +35367,12 @@
       "sha256": "d2be7aea05222ccfa7bb7c5d7e6bbd7a7c9d90fc33d26f0f3b422acaa8735da5",
       "lines": 457,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 3,
       "linkCount": 36,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-lifecycle"
     },
     {
       "path": "ko/eks-auto-mode/08-workload-optimization.md",
@@ -35383,12 +35383,12 @@
       "sha256": "26b5c51cf85c7cf035cba1c9057110bffbdb96fd56a08d35b30e5f0365e73c11",
       "lines": 403,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 15,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-workloads"
     },
     {
       "path": "ko/eks-auto-mode/09-migration-guide.md",
@@ -35399,12 +35399,12 @@
       "sha256": "8e7d1798a493701f501530ac16116774fd373ac418aeaf7015868d75404ffbf4",
       "lines": 299,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 25,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-migration"
     },
     {
       "path": "ko/eks-auto-mode/README.md",
@@ -35415,12 +35415,12 @@
       "sha256": "7564d207a216fac134b0fc037b120086e1d46ac2a00157a0bfdc367e11da57d1",
       "lines": 137,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 37,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-foundation"
     },
     {
       "path": "ko/eks-hybrid-nodes/01-prerequisites.md",
@@ -35431,12 +35431,12 @@
       "sha256": "440fe94fdb2f0e4d9bd9ba50c8feed947d40ac9d15d1e8bb8171089c15ce166e",
       "lines": 634,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 44,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-foundation"
     },
     {
       "path": "ko/eks-hybrid-nodes/02-network-configuration.md",
@@ -35447,12 +35447,12 @@
       "sha256": "a3847d92b796f55b7eb60005866d86eef0d88f218b8befafedaa4b323288099f",
       "lines": 1351,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 11,
       "linkCount": 94,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-networking"
     },
     {
       "path": "ko/eks-hybrid-nodes/03-airgap-setup.md",
@@ -35463,12 +35463,12 @@
       "sha256": "2bf16d61432ca44eb9f3e702d46208688f7b7b787ce7bdae9b92235fbc511be6",
       "lines": 1123,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 2,
       "linkCount": 50,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-private-setup"
     },
     {
       "path": "ko/eks-hybrid-nodes/04-node-bootstrap.md",
@@ -35479,12 +35479,12 @@
       "sha256": "879a1b31f53ff898cfec684a730c5f3533fb09808a367507b16894677beefcba",
       "lines": 807,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 56,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-bootstrap"
     },
     {
       "path": "ko/eks-hybrid-nodes/05-gpu-integration.md",
@@ -35495,12 +35495,12 @@
       "sha256": "b99cbf5b26e65aa31607f19845d9424e817f180e0335f6759e354255d43846bc",
       "lines": 179,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 16,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-gpu"
     },
     {
       "path": "ko/eks-hybrid-nodes/06-workload-placement.md",
@@ -35511,12 +35511,12 @@
       "sha256": "d6eb56080a0d6c5e70f2d14a99a302156bc9adde49516e9b02aa77aac8d0389c",
       "lines": 448,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 21,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-placement"
     },
     {
       "path": "ko/eks-hybrid-nodes/07-node-lifecycle.md",
@@ -35591,12 +35591,12 @@
       "sha256": "ec88a7bb15580f77f096424bb5a6d41b2187843cdbef0b96343f1b2f25cd1ad6",
       "lines": 151,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 2,
       "linkCount": 49,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-foundation"
     },
     {
       "path": "ko/eks/01-eks-introduction.md",
@@ -35943,7 +35943,7 @@
       "sha256": "b242c669c91398afced5b403096b838dff8d97f400810e86d40ddd3ae29c8972",
       "lines": 2892,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 19,
       "linkCount": 201,
       "structuralFindings": [],
@@ -36215,12 +36215,12 @@
       "sha256": "d30fa57886c18b15baba648d118b95134887697a9561137c5bfcbc3f6c800350",
       "lines": 67,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 15,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/governance/01-landing-zone-and-ou.md",
@@ -36231,12 +36231,12 @@
       "sha256": "5386cae4f1044379eb6f2bca1ee44e3281e4e0657a5226e75a948edb7b3a10b7",
       "lines": 147,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 28,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/governance/02-account-and-iam.md",
@@ -36247,12 +36247,12 @@
       "sha256": "6b7f81d5673dc51b31e728e5dc42846673b59a8d5802788e1cef673eee2379dd",
       "lines": 113,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 23,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/governance/03-eks-multi-account-multi-cluster.md",
@@ -36263,12 +36263,12 @@
       "sha256": "6f6bdcf0d67154dc31262705ee01a06620d871efe2e5399d689f3478fb84c2bd",
       "lines": 128,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 23,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/governance/04-shared-vpc-and-connectivity.md",
@@ -36279,12 +36279,12 @@
       "sha256": "c3dd59ce4727b9be7caba7d46999acd083b0dc2faf4ac18e29ad0e12bd16941c",
       "lines": 187,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 37,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/governance/05-data-security-boundaries.md",
@@ -36295,12 +36295,12 @@
       "sha256": "4fe63d3c6b176b1f1c0777e4667a589a8e05b9a0cf51a830a776a986fa55717a",
       "lines": 133,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 27,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/governance/06-decision-framework-and-poc.md",
@@ -36311,12 +36311,12 @@
       "sha256": "2aeecb29226a8ca789efbda747d6451c82503cace0f553f22bb7088140e929b1",
       "lines": 147,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 32,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/lab-guides/labs/observability-end-to-end/README.md",
@@ -36327,12 +36327,12 @@
       "sha256": "bacd275963c2854eb99f99bdd0a0620d8cde3aee203eb417faca29880fc5942c",
       "lines": 3,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "navigation-index"
     },
     {
       "path": "ko/labs/README.md",
@@ -36471,12 +36471,12 @@
       "sha256": "f95e7be227fa0690aa828286ab39872e6046992d3744a28ddb63d59a63a547ad",
       "lines": 217,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 19,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "labs-eks-creation"
     },
     {
       "path": "ko/labs/observability/01-infrastructure-setup-lab.md",
@@ -36967,12 +36967,12 @@
       "sha256": "1567ad6f5a8ef184f81ae9b225bfcf0d51bdd65f4c8ce67593c77516036c67af",
       "lines": 507,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 41,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "ko/networking/cilium/06-security-visibility.md",
@@ -36983,12 +36983,12 @@
       "sha256": "7083f8c700b63a21f3541e0334ac342e45aac338441299b8e491f2e2fcc5b2ff",
       "lines": 537,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 35,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "ko/networking/cilium/07-advanced-topics.md",
@@ -36999,12 +36999,12 @@
       "sha256": "6043926f1962cd9010975dc0b40b08c02596b48cf0b19228f844ded7f3301766",
       "lines": 645,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 45,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "ko/networking/cilium/README.md",
@@ -37031,12 +37031,12 @@
       "sha256": "523befddf6ab856146e55f4a9f4b6cbf10e5b7a684fbd5629ad8cae58042d7eb",
       "lines": 295,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 33,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "ko/networking/cilium/networking-concepts.md",
@@ -37047,12 +37047,12 @@
       "sha256": "24c451da083132bdf55af24bc92d5cc07c7de181a27ab86b31d58d3d6c0089e4",
       "lines": 1212,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 15,
       "linkCount": 158,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "ko/news/README.md",
@@ -37063,12 +37063,12 @@
       "sha256": "6e2e125527eb355eb3b5019cea17d0f0bed6824cb739a6c702caef248a9ae151",
       "lines": 70,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 64,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "news-log"
     },
     {
       "path": "ko/observability/09-observability-optimization.md",
@@ -37095,12 +37095,12 @@
       "sha256": "60e146b7fa8169b21ab20ba4404844bb1706de4638b4117b9eaa33cfaf41d375",
       "lines": 217,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 6,
       "linkCount": 37,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-foundation"
     },
     {
       "path": "ko/observability/alerting/01-alertmanager.md",
@@ -37287,12 +37287,12 @@
       "sha256": "2461f91f90ea222684253de34ed25d3039eda30fc1dcaf142888be8a931a527a",
       "lines": 1376,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 2,
       "linkCount": 81,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "ko/observability/metrics/02-victoriametrics.md",
@@ -37303,12 +37303,12 @@
       "sha256": "a556c6a511bfe35117ccb448547ee6cbf34d886834d3c03a176dace5d992f67a",
       "lines": 1179,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 3,
       "linkCount": 72,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "ko/observability/metrics/03-mimir.md",
@@ -37319,12 +37319,12 @@
       "sha256": "3bd1919e4fce3278c2d7fba6f36ec3dd2c50041632b3781b22f580abde3747ef",
       "lines": 833,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 5,
       "linkCount": 69,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "ko/observability/metrics/04-cloudwatch-metrics.md",
@@ -37335,12 +37335,12 @@
       "sha256": "21760873856a08adcf36c818258f07d8a5e104ce49e359a2659b25d3759c2998",
       "lines": 1208,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 3,
       "linkCount": 70,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "ko/observability/metrics/05-datadog.md",
@@ -37351,12 +37351,12 @@
       "sha256": "562bb0edac7ec5b42f631fea53ee5b641c778b29d5d8b175ba8ade8e1b477c2c",
       "lines": 1015,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 3,
       "linkCount": 70,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "ko/observability/metrics/README.md",
@@ -37367,12 +37367,12 @@
       "sha256": "c33fefe8439225e3b12ddd8446f5fc8471f68c1179c07cbb1c504ade68cff801",
       "lines": 420,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 4,
       "linkCount": 49,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "ko/observability/tracing/01-tempo.md",
@@ -37735,12 +37735,12 @@
       "sha256": "c81186ebd087d74316624e192ed745707899780220f8736f2523f4e4c703d651",
       "lines": 232,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 93,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-overview"
     },
     {
       "path": "ko/platform-engineering/01-helm.md",
@@ -37751,12 +37751,12 @@
       "sha256": "e484ae57e3de01b303cf818385e4f44b10fe9e635609e7b468414c66eb8d966d",
       "lines": 765,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 45,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-helm"
     },
     {
       "path": "ko/platform-engineering/02-ack.md",
@@ -37767,12 +37767,12 @@
       "sha256": "c61a7ed9f5332f64a254c59d7f79a072b2e2bcb67abb7e3d22888105c41e4ea3",
       "lines": 583,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 73,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-ack"
     },
     {
       "path": "ko/platform-engineering/03-kro.md",
@@ -37783,12 +37783,12 @@
       "sha256": "3ff30b029247baddfc110c389144169a8b61b9718f2292125473dfa01f82f0b3",
       "lines": 505,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 36,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-kro"
     },
     {
       "path": "ko/platform-engineering/04-kubernetes-extensions.md",
@@ -37799,12 +37799,12 @@
       "sha256": "a8752fe45ff9ad14ebc052b888d2d3914b863fef232a14c295fd420359cda755",
       "lines": 984,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 25,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-extensions"
     },
     {
       "path": "ko/platform-engineering/05-example-corp-app.md",
@@ -37815,12 +37815,12 @@
       "sha256": "2d393d357c74e1e49f082e9595b112caa70b64c9c4bc65c6082523b32a797359",
       "lines": 217,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 19,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-examplecorp"
     },
     {
       "path": "ko/platform-engineering/06-backstage-idp.md",
@@ -37831,12 +37831,12 @@
       "sha256": "a6245fd18b740ce74ab3ffd559f4faebcb93a99bf4f078ae61ce7405761006c7",
       "lines": 2280,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 4,
       "linkCount": 106,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-backstage"
     },
     {
       "path": "ko/platform-engineering/07-crossplane.md",
@@ -37847,12 +37847,12 @@
       "sha256": "fa138e3d06e6f3bfdf0e4e08548a7b75c73b768a0c081270e4059fc0b0aacc4d",
       "lines": 1959,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 5,
       "linkCount": 120,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-crossplane"
     },
     {
       "path": "ko/platform-engineering/08-vcluster.md",
@@ -37863,12 +37863,12 @@
       "sha256": "13283a5746487c2d90f39193f7fef357f89fbdb642b2d861e6b46d0af96fdd6d",
       "lines": 1999,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 9,
       "linkCount": 108,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-vcluster"
     },
     {
       "path": "ko/platform-engineering/ack/01-s3-iam.md",
@@ -37879,12 +37879,12 @@
       "sha256": "cc5abe2a3a8f276bd03a0fff7ed8d8ee281f9ede8668f65ea3ce169a63e60b7d",
       "lines": 115,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 6,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-ack"
     },
     {
       "path": "ko/platform-engineering/ack/02-sqs-sns.md",
@@ -37895,12 +37895,12 @@
       "sha256": "1f8521efd46998934248ad26c7572a88f6177bcbd78acb7954443bfe2a09e276",
       "lines": 98,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 7,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-ack"
     },
     {
       "path": "ko/platform-engineering/ack/03-elbv2-route53-rds.md",
@@ -37911,12 +37911,12 @@
       "sha256": "02bf0b12de89e833046742bc44b23d3d0bc94cfdd8cba1b19b0eb906e7f66922",
       "lines": 254,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 15,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-ack"
     },
     {
       "path": "ko/quizzes/README.md",
@@ -37927,12 +37927,12 @@
       "sha256": "29029761a833f92474e817fad68b7283ab6a62148f0f3d1635a3b024728b5ec6",
       "lines": 193,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 155,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "navigation-index"
     },
     {
       "path": "ko/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
@@ -37943,12 +37943,12 @@
       "sha256": "fda2b46f1412f347bf3f484ff76075b777ae85c1728786890cffff5c67857669",
       "lines": 2051,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 8,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ai-ml-workloads"
     },
     {
       "path": "ko/quizzes/ai-ml/04-inference-frameworks-quiz.md",
@@ -37959,12 +37959,12 @@
       "sha256": "2c75f728f396a2234bbabb406db4f06d483131e019c3b21bbae074f5a9f3144f",
       "lines": 789,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 17,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "inference-frameworks"
     },
     {
       "path": "ko/quizzes/ai-ml/04-vllm-deployment-quiz.md",
@@ -37975,12 +37975,12 @@
       "sha256": "da6bd5e2450d3bd9b62ceffa6d82fccd77b91bffdc0d70eae4cbca185c8405ea",
       "lines": 1826,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "vllm-deployment"
     },
     {
       "path": "ko/quizzes/ai-ml/05-model-training-quiz.md",
@@ -37991,12 +37991,12 @@
       "sha256": "2c90d4e7f543816d9a52b1ace6fb5537c3ade9eb88ff090c7e3217c88d010a2f",
       "lines": 670,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 19,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "model-training"
     },
     {
       "path": "ko/quizzes/ai-ml/06-ai-infrastructure-quiz.md",
@@ -38007,12 +38007,12 @@
       "sha256": "b1a8b74b5a81c8190c5ee3ff8f7070792c9e9f5de8d66100e51ed5f452e21130",
       "lines": 660,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 19,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ai-infrastructure"
     },
     {
       "path": "ko/quizzes/ai-ml/07-ai-ml-best-practices-quiz.md",
@@ -38023,12 +38023,12 @@
       "sha256": "da4fb61c089f8317c115d615f7b83d471f1570d8a037900f1464efc14398cf98",
       "lines": 681,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 17,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ai-ml-best-practices"
     },
     {
       "path": "ko/quizzes/ai-ml/08-agentic-ai-platform-quiz.md",
@@ -38039,12 +38039,12 @@
       "sha256": "4bb60a32a5345aa70d850447c42411a910a07ed7bd54f3188bcf56e8bfdf7a93",
       "lines": 2209,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 26,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "agentic-ai-platform"
     },
     {
       "path": "ko/quizzes/ai-ml/kubeflow/01-architecture-installation-quiz.md",
@@ -38055,12 +38055,12 @@
       "sha256": "78a2e6cca16503f44a405b405395fdb7d82f03f85fa2c0165cbd259f3a903e76",
       "lines": 120,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 7,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-foundation"
     },
     {
       "path": "ko/quizzes/ai-ml/kubeflow/02-pipelines-quiz.md",
@@ -38071,12 +38071,12 @@
       "sha256": "823b31fae80bc601e163a79421020f990e18f20dcd661e80bb5772f897978411",
       "lines": 224,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 6,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-pipelines"
     },
     {
       "path": "ko/quizzes/ai-ml/kubeflow/03-notebooks-quiz.md",
@@ -38087,12 +38087,12 @@
       "sha256": "e4a4cafb84e120002594fa8230ad792a2b36d45045cf714aac970750d02079ec",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 4,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-notebooks"
     },
     {
       "path": "ko/quizzes/ai-ml/kubeflow/04-katib-quiz.md",
@@ -38103,12 +38103,12 @@
       "sha256": "8696b6dbb064d46f73505eb514db156dd8e140efaa44fb703c0e22b3c95ea851",
       "lines": 167,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-katib"
     },
     {
       "path": "ko/quizzes/ai-ml/kubeflow/05-training-operator-quiz.md",
@@ -38119,12 +38119,12 @@
       "sha256": "b5b8e967c168adff4548c073388052f4865b0813d6054a7d8cda5b7b3a57df28",
       "lines": 160,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-trainer"
     },
     {
       "path": "ko/quizzes/ai-ml/kubeflow/06-kserve-quiz.md",
@@ -38135,12 +38135,12 @@
       "sha256": "f0bc71fdd3cc0d974bf8f31817cd1c3d073803016afe18a3f6383e9168ed68b9",
       "lines": 165,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 4,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "kubeflow-kserve"
     },
     {
       "path": "ko/quizzes/ai-ml/mlflow/01-tracking-quiz.md",
@@ -38151,12 +38151,12 @@
       "sha256": "334663112c51874f47994c77aa2695de5fd5dcb15a2a779376429854ec4cb097",
       "lines": 164,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "mlflow-foundation"
     },
     {
       "path": "ko/quizzes/ai-ml/mlflow/02-model-registry-quiz.md",
@@ -38167,12 +38167,12 @@
       "sha256": "823b8dbdd6e1a6c7d8e84739116072a0e9d267b0492b777002ae0bfa25e1505b",
       "lines": 164,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "mlflow-registry"
     },
     {
       "path": "ko/quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md",
@@ -38183,12 +38183,12 @@
       "sha256": "3f8e9595710721287c4032d6ec8c2a505adbc64277268291d17b15cd30e37211",
       "lines": 168,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 4,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "mlflow-eks"
     },
     {
       "path": "ko/quizzes/ai-ml/ray/01-architecture-quiz.md",
@@ -38199,12 +38199,12 @@
       "sha256": "565e038ecfab7d9c4203f917ec7a9028c82d7ed7b6beb9e952839029cb9e2f17",
       "lines": 164,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ray-foundation"
     },
     {
       "path": "ko/quizzes/ai-ml/ray/02-kuberay-operator-quiz.md",
@@ -38215,12 +38215,12 @@
       "sha256": "be358b35c6efa83d605490477c21e7bd63f3997789493e1ef1707d209f4614c3",
       "lines": 168,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ray-operator"
     },
     {
       "path": "ko/quizzes/ai-ml/ray/03-ray-train-tune-quiz.md",
@@ -38231,12 +38231,12 @@
       "sha256": "c12934c9e86925625baf49200b9a7a7ef7bd41e3d2a5aa92a73d85d17becefb1",
       "lines": 164,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ray-train-tune"
     },
     {
       "path": "ko/quizzes/ai-ml/ray/04-ray-serve-quiz.md",
@@ -38247,12 +38247,12 @@
       "sha256": "4a8348add57b56d3678ee5ff2459fa4a959c1854bd6e1ed800b2f746e78c730d",
       "lines": 166,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 4,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "ray-serve"
     },
     {
       "path": "ko/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md",
@@ -38263,12 +38263,12 @@
       "sha256": "4f6f803acdd90702437c9eb7908c055a7093eb63388513c3510ad2d2275ab8f6",
       "lines": 80,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 3,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "sagemaker-foundation"
     },
     {
       "path": "ko/quizzes/ai-ml/sagemaker-ai/02-pii-data-tokenization-quiz.md",
@@ -38279,12 +38279,12 @@
       "sha256": "bd122740e90c1740df1ba4555f15fa1b65890dad533696cdfd7fd6cd50754a5d",
       "lines": 78,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 3,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "sagemaker-tokenization"
     },
     {
       "path": "ko/quizzes/ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution-quiz.md",
@@ -38295,12 +38295,12 @@
       "sha256": "15ea33942b890109d39008fc9cead6a7290a434407e9fb5b1a5fb730f8c5cb03",
       "lines": 78,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 3,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "sagemaker-execution"
     },
     {
       "path": "ko/quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md",
@@ -38311,12 +38311,12 @@
       "sha256": "e7eeb9378f2324dfb35dc31a51d429d9384259dbeaaa621ab44c7a920497f3b2",
       "lines": 78,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 3,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "sagemaker-results"
     },
     {
       "path": "ko/quizzes/autoscaling/03-knative-quiz.md",
@@ -38871,7 +38871,7 @@
       "sha256": "0aa3d370580b7672e2eeb363078b282c6542e6dc9078fa58f47b2e2ca40c6dce",
       "lines": 345,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
@@ -38887,12 +38887,12 @@
       "sha256": "3162be50a752a100388ebdca82b6517f636e6121addea586f180b19909993ff9",
       "lines": 250,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 3,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "flink-state"
     },
     {
       "path": "ko/quizzes/data-on-eks/flink/04-operations-ha-quiz.md",
@@ -38903,12 +38903,12 @@
       "sha256": "13298b840b44a2a713033c3d879b4204cabf13a5bd3148a72e1aa30ab4180822",
       "lines": 205,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 6,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "flink-operations"
     },
     {
       "path": "ko/quizzes/data-on-eks/kafka/01-kafka-fundamentals-quiz.md",
@@ -39063,12 +39063,12 @@
       "sha256": "d3b4a3e4a7856106ce4d3ed10ec69ab9203e15d271ecaa9d6c4cfc10f271042f",
       "lines": 78,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 3,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "unified-studio"
     },
     {
       "path": "ko/quizzes/data-on-eks/spark/01-spark-fundamentals-quiz.md",
@@ -39175,12 +39175,12 @@
       "sha256": "f472cf35a66a8833d53a6337598cb52b729bc4cba69c0b7cd9830d0f197913f4",
       "lines": 189,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-foundation"
     },
     {
       "path": "ko/quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md",
@@ -39191,12 +39191,12 @@
       "sha256": "caf67e9fc45868314e67f853f529e2298159626b9d3d1c712958d73989d67faa",
       "lines": 192,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-nodepools"
     },
     {
       "path": "ko/quizzes/eks-auto-mode/03-scaling-behavior-quiz.md",
@@ -39207,12 +39207,12 @@
       "sha256": "1f3736a2f98ec1f7e625c6a9eeaa6b82f7663d327b7bba4d7b8231ce1f7c3218",
       "lines": 161,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-scaling"
     },
     {
       "path": "ko/quizzes/eks-auto-mode/04-spot-strategies-quiz.md",
@@ -39223,12 +39223,12 @@
       "sha256": "1d8a031dd43236e76e13c5a3f1892e69f1629e14b5fb351d4371267778a46203",
       "lines": 210,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-spot"
     },
     {
       "path": "ko/quizzes/eks-auto-mode/05-operations-quiz.md",
@@ -39239,12 +39239,12 @@
       "sha256": "17d68a6dadd1de5fba04afcc11d7a9934fe2b83b0c555003566c1b98601f984f",
       "lines": 268,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 11,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-operations"
     },
     {
       "path": "ko/quizzes/eks-auto-mode/06-cost-management-quiz.md",
@@ -39255,12 +39255,12 @@
       "sha256": "788d5186a1aa10c3aed217a5704def7ef49b50a37669794e326e49b1d11f14d8",
       "lines": 291,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 11,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-cost"
     },
     {
       "path": "ko/quizzes/eks-auto-mode/07-node-lifecycle-quiz.md",
@@ -39271,12 +39271,12 @@
       "sha256": "5f3386172d9160cb454696865e1098049800645f4f4b51d5fc6bc9b2b97207b7",
       "lines": 283,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 11,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-lifecycle"
     },
     {
       "path": "ko/quizzes/eks-auto-mode/08-workload-optimization-quiz.md",
@@ -39287,12 +39287,12 @@
       "sha256": "c06bae634f2aa9588075b253653fe1692c5621aab5a894585aaead9eee4a41c9",
       "lines": 297,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-workloads"
     },
     {
       "path": "ko/quizzes/eks-auto-mode/09-migration-guide-quiz.md",
@@ -39303,12 +39303,12 @@
       "sha256": "35e33864971b13085b61b151ccfcf8c27ece496639b0a02b59f4e1297535d7a2",
       "lines": 323,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 11,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-auto-mode-migration"
     },
     {
       "path": "ko/quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md",
@@ -39319,12 +39319,12 @@
       "sha256": "985c5c6aee1f38921310651b8cd93813de5d659067703737bfd4cb1bf5fbf3db",
       "lines": 181,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-foundation"
     },
     {
       "path": "ko/quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md",
@@ -39335,12 +39335,12 @@
       "sha256": "478ed450b623047f000b393e99551e6b9655c505a4f2b06f78ff8c2d059eceac",
       "lines": 218,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-networking"
     },
     {
       "path": "ko/quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md",
@@ -39351,12 +39351,12 @@
       "sha256": "6c47776770996779b1ed37e5e88726459ba4ee0e6e4983ae91693a121f514981",
       "lines": 428,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 13,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-private-setup"
     },
     {
       "path": "ko/quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md",
@@ -39367,12 +39367,12 @@
       "sha256": "c199c5539d1999705173c7eda1c503ce5c468e05fa627a3e6d5168058cc22ff7",
       "lines": 293,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 10,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-bootstrap"
     },
     {
       "path": "ko/quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md",
@@ -39383,12 +39383,12 @@
       "sha256": "4a2f7c71f4d3e3cfde335720f5757bb3a504c987585046603e1e55dec09c4f8b",
       "lines": 286,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 10,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-gpu"
     },
     {
       "path": "ko/quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md",
@@ -39399,12 +39399,12 @@
       "sha256": "6b9eef3873b072fa82142fbeb20c4f26f6893da991e256b2346ac8832f88373c",
       "lines": 301,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 9,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-hybrid-placement"
     },
     {
       "path": "ko/quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md",
@@ -39783,7 +39783,7 @@
       "sha256": "fcb41b9e31514e43d09696255cdd736ebbc7a01b4804b0b4112a7bc98ecb3fdf",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
@@ -40039,12 +40039,12 @@
       "sha256": "dbae310f86075557339862bb9154287dee4781d6bc95f211302a74dbfe100d36",
       "lines": 58,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/quizzes/governance/01-landing-zone-and-ou-quiz.md",
@@ -40055,12 +40055,12 @@
       "sha256": "51333e306970c6c4c8d0e7dbdd54508dc6cad79378ee1c3626a66a349366f2c7",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/quizzes/governance/02-account-and-iam-quiz.md",
@@ -40071,12 +40071,12 @@
       "sha256": "54f48d381d56179b420c2f225bae4b2d8fe8826696164efb255eb9027c163dd4",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
@@ -40087,12 +40087,12 @@
       "sha256": "bd6136dbfbc06baf09bc467f777842214bfff78b1ec66444472148e8a0b5aa3c",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/quizzes/governance/04-shared-vpc-and-connectivity-quiz.md",
@@ -40103,12 +40103,12 @@
       "sha256": "00f998af2ec2d2b39cdda5244bee2359c6202dc65bfd4d35a131c17a862aac9d",
       "lines": 94,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/quizzes/governance/05-data-security-boundaries-quiz.md",
@@ -40119,12 +40119,12 @@
       "sha256": "77fd7621aba0e76765f74f0b6fcddd95592a6cd77fcce335637ef8a681beac30",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/quizzes/governance/06-decision-framework-and-poc-quiz.md",
@@ -40135,12 +40135,12 @@
       "sha256": "c5ace1b8c080fe590276f797851f43c3282b7fb60b69ac922c1c340752773d50",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/quizzes/llm-guide-quiz.md",
@@ -40503,12 +40503,12 @@
       "sha256": "65536aa03b27c28ae55dc817864e7b78c27db84dd3b34744e639da519c8647f2",
       "lines": 453,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 6,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "ko/quizzes/networking/cilium/06-security-visibility-quiz.md",
@@ -40519,12 +40519,12 @@
       "sha256": "5b7c59c9987a7efc3e44507367aab7e44240ecc6da183ea6177076244f573ccf",
       "lines": 253,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "ko/quizzes/networking/cilium/07-advanced-topics-quiz.md",
@@ -40535,12 +40535,12 @@
       "sha256": "6391f5ca5392bd70b4f0c8d19c8801ee0bf7b0262c1f95ff938bef55b694d444",
       "lines": 319,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 8,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "ko/quizzes/networking/cilium/glossary-quiz.md",
@@ -40551,12 +40551,12 @@
       "sha256": "2a93f961cdafa40f48d96be14bd59f14cebd24df0463451acc7220cc1b41fac7",
       "lines": 405,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 6,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "ko/quizzes/networking/cilium/networking-concepts-quiz.md",
@@ -40567,12 +40567,12 @@
       "sha256": "0e8e6d3159f995071b4ba6a561dc55d06734367b4d2a65f5448a92fb35fa9f79",
       "lines": 257,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 7,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "ko/quizzes/observability/09-observability-optimization-quiz.md",
@@ -40855,12 +40855,12 @@
       "sha256": "8e8cf1a8176de238b17f3f82be160fec916a393e486fff67f14cfcbbbd0b1641",
       "lines": 184,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "ko/quizzes/observability/metrics/01-prometheus-quiz.md",
@@ -40871,12 +40871,12 @@
       "sha256": "96246500eaffa4e4b7de7a5dbb87fa70cc88d86c65e2dfa5ccad5c6b77e04ca5",
       "lines": 184,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "ko/quizzes/observability/metrics/02-victoriametrics-quiz.md",
@@ -40887,12 +40887,12 @@
       "sha256": "f78c97d5d5b98f013f87b567c8fddccc6ff79c474031ab1ab1cb65c12b630ef6",
       "lines": 184,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "ko/quizzes/observability/metrics/03-mimir-quiz.md",
@@ -40903,12 +40903,12 @@
       "sha256": "80738ba01958c0196f2e3b609451ca3cca5f82f095cdd06e534f0735499d6a42",
       "lines": 184,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "ko/quizzes/observability/metrics/04-cloudwatch-metrics-quiz.md",
@@ -40919,12 +40919,12 @@
       "sha256": "8dd625e2ca5273831b42e73a1bfa6f34c8244635b9e6abeb90f7b743b822164a",
       "lines": 184,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "ko/quizzes/observability/metrics/05-datadog-quiz.md",
@@ -40935,12 +40935,12 @@
       "sha256": "447f9e363985b87b0a131e9618120f7d7dafebf72080089711ed2e01913070c5",
       "lines": 184,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "observability-metrics"
     },
     {
       "path": "ko/quizzes/observability/tracing/01-tempo-quiz.md",
@@ -41271,12 +41271,12 @@
       "sha256": "f1e118724460f14f930a6731300ffccfba37afa3dfb0561db83210dba7349e23",
       "lines": 148,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-overview"
     },
     {
       "path": "ko/quizzes/platform-engineering/01-helm-quiz.md",
@@ -41287,12 +41287,12 @@
       "sha256": "3876adf6089e3a8d440cc252c49868e8dca29c25052887a1cd2e7bf676a592cf",
       "lines": 463,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 26,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-helm"
     },
     {
       "path": "ko/quizzes/platform-engineering/02-ack-quiz.md",
@@ -41303,12 +41303,12 @@
       "sha256": "018df347c2565e41c9ce8f2fa784571cf7c0b3cce221f5bf5acdc9fbe44fb900",
       "lines": 289,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-ack"
     },
     {
       "path": "ko/quizzes/platform-engineering/03-kro-quiz.md",
@@ -41319,12 +41319,12 @@
       "sha256": "0504cf233760b2d1f6d3ec252ff0475da49e2441d0e4a1f77dfbae31efea55bb",
       "lines": 424,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 26,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-kro"
     },
     {
       "path": "ko/quizzes/platform-engineering/04-kubernetes-extensions-quiz.md",
@@ -41335,12 +41335,12 @@
       "sha256": "e893fa98932ace1cd25834a874224c6ab687378550bfc2e158692ea0205781bc",
       "lines": 653,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 26,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-extensions"
     },
     {
       "path": "ko/quizzes/platform-engineering/06-backstage-idp-quiz.md",
@@ -41351,12 +41351,12 @@
       "sha256": "d71e5592eb6a9bb9f9bdfa12821d031359f5200595644a44025dc6e07ad94afc",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-backstage"
     },
     {
       "path": "ko/quizzes/platform-engineering/07-crossplane-quiz.md",
@@ -41367,12 +41367,12 @@
       "sha256": "299088265cc89817b72dfd691eebbd2e6ac4a73ea411a22ef0aeff392c5df959",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-crossplane"
     },
     {
       "path": "ko/quizzes/platform-engineering/08-vcluster-quiz.md",
@@ -41383,12 +41383,12 @@
       "sha256": "b0fdc7ac6e5477f7ab743e7bc514456499e99fcf3d3338f78004f0a795607dde",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "platform-vcluster"
     },
     {
       "path": "ko/quizzes/roadmap-quiz.md",
@@ -43321,12 +43321,12 @@
       "sha256": "de344d92a084d05062129f86db22f87558b98249bd394661f4e4f0f1a63109bc",
       "lines": 515,
       "navigationListed": false,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 74,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "auto-mode-curriculum"
     }
   ]
 }
