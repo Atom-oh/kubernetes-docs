@@ -19,6 +19,8 @@ DestinationRule es un recurso central de Istio que define cómo manejar el tráf
 9. [Prácticas recomendadas](#best-practices)
 10. [Resolución de problemas](#troubleshooting)
 
+<span id="what-is-destinationrule"></span>
+
 ## ¿Qué es DestinationRule?
 
 DestinationRule define las **políticas de tráfico después del enrutamiento**. Si VirtualService determina «adónde» enviar el tráfico, DestinationRule determina «cómo» manejarlo.
@@ -68,6 +70,8 @@ flowchart LR
 | **Connection Pool** | Configuración del grupo de conexiones | Máximo de conexiones, Timeout |
 | **Circuit Breaker** | Aislamiento de fallos | Outlier Detection |
 | **Configuración de TLS** | Política de cifrado | mTLS, SIMPLE TLS |
+
+<span id="virtualservice-vs-destinationrule"></span>
 
 ## VirtualService frente a DestinationRule
 
@@ -165,6 +169,8 @@ spec:
       loadBalancer:
         simple: ROUND_ROBIN
 ```
+
+<span id="subset-concept"></span>
 
 ## Concepto de Subset
 
@@ -297,6 +303,8 @@ spec:
       env: staging
 ```
 
+<span id="basic-structure"></span>
+
 ## Estructura básica
 
 ### Campos obligatorios
@@ -343,6 +351,8 @@ spec:
 spec:
   host: api.external.com
 ```
+
+<span id="defining-subsets"></span>
 
 ## Definición de Subsets
 
@@ -414,6 +424,8 @@ spec:
       region: us-east
       tier: standard
 ```
+
+<span id="traffic-policy-overview"></span>
 
 ## Descripción general de Traffic Policy
 
@@ -516,6 +528,8 @@ trafficPolicy:
     tls:
       mode: SIMPLE
 ```
+
+<span id="using-with-virtualservice"></span>
 
 ## Uso con VirtualService
 
@@ -650,6 +664,8 @@ spec:
         host: api-service
         subset: v1
 ```
+
+<span id="practical-examples"></span>
 
 ## Ejemplos prácticos
 
@@ -861,6 +877,8 @@ spec:
           maxConnections: 100  # More for replicas
 ```
 
+<span id="best-practices"></span>
+
 ## Prácticas recomendadas
 
 ### 1. Convenciones de nomenclatura de Subset
@@ -991,6 +1009,8 @@ spec:
   host: payment-service
   # ...
 ```
+
+<span id="troubleshooting"></span>
 
 ## Resolución de problemas
 

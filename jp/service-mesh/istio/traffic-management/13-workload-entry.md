@@ -19,6 +19,8 @@ WorkloadEntry は、Virtual Machine（VM）またはベアメタルサーバー�
 10. [トラブルシューティング](#troubleshooting)
 11. [ベストプラクティス](#best-practices)
 
+<span id="overview"></span>
+
 ## 概要
 
 ### WorkloadEntry とは？
@@ -80,6 +82,8 @@ flowchart TB
 3. **データベース統合**: 外部データベースを mesh に組み込む
 4. **高性能ワークロード**: GPU サーバーなどの専用ハードウェアを活用
 
+<span id="workloadentry-vs-kubernetes-pod"></span>
+
 ## WorkloadEntry と Kubernetes Pod
 
 ### 比較表
@@ -128,6 +132,8 @@ flowchart LR
     class K8sService,K8sPod k8s;
     class ServiceEntry,WorkloadEntry vm;
 ```
+
+<span id="architecture"></span>
 
 ## アーキテクチャ
 
@@ -178,6 +184,8 @@ flowchart TB
 3. **Envoy Proxy**: VM に手動でインストールする sidecar
 4. **istiod**: 設定の配布と証明書管理
 5. **Service Account**: VM のアイデンティティ認証
+
+<span id="basic-usage"></span>
 
 ## 基本的な使用方法
 
@@ -275,6 +283,8 @@ spec:
   ports:
     http: 8080
 ```
+
+<span id="serviceentry-integration"></span>
 
 ## ServiceEntry との統合
 
@@ -404,6 +414,8 @@ spec:
     role: replica
   weight: 50
 ```
+
+<span id="vm-registration-practical-guide"></span>
 
 ## VM 登録の実践ガイド
 
@@ -583,6 +595,8 @@ kubectl run -it --rm debug \
 # mydb=#
 ```
 
+<span id="security-settings-mtls"></span>
+
 ## セキュリティ設定（mTLS）
 
 ### mTLS の自動有効化
@@ -670,6 +684,8 @@ kubectl exec -it <pod-name> -c istio-proxy -- \
 # listener.0.0.0.0_15006.ssl.connection_error: 0
 # listener.0.0.0.0_15006.ssl.handshake: 1234
 ```
+
+<span id="health-checks-and-monitoring"></span>
 
 ## ヘルスチェックとモニタリング
 
@@ -760,6 +776,8 @@ histogram_quantile(0.99,
   sum(rate(istio_request_duration_milliseconds_bucket{destination_workload="postgres-vm-1"}[5m])) by (le)
 )
 ```
+
+<span id="advanced-configuration"></span>
 
 ## 高度な設定
 
@@ -907,6 +925,8 @@ spec:
     labels:
       version: v2
 ```
+
+<span id="troubleshooting"></span>
 
 ## トラブルシューティング
 
@@ -1065,6 +1085,8 @@ spec:
     labels:
       app: postgres
 ```
+
+<span id="best-practices"></span>
 
 ## ベストプラクティス
 
@@ -1268,7 +1290,7 @@ kubectl delete workloadentry legacy-api-vm -n vm-workloads
 - [Virtual Machine のインストール](https://istio.io/latest/docs/setup/install/virtual-machine/)
 
 ### 関連ドキュメント
-- [基本概念 - VM ワークロードの登録](../02-basic-concepts.md#vm-workload-registration)
+- [基本概念 - VM ワークロードの登録 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/02-basic-concepts#vm-workload-registration)
 - [ServiceEntry](12-service-entry.md)
 - [Egress Control](11-egress-control.md)
 - [セキュリティ - mTLS](../security/01-mtls.md)

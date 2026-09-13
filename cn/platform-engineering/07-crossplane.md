@@ -1311,6 +1311,8 @@ ACK 和 Crossplane 并不互斥。一个务实的做法是：
 
 ---
 
+<span id="backstage--crossplane-integration"></span>
+
 ## Backstage + Crossplane Integration
 
 将 [Backstage](./06-backstage-idp.md) 作为开发者门户、Crossplane 作为基础设施配置引擎进行组合，可以创建强大的自助服务平台。开发人员在 Backstage 的目录中选择基础设施，Backstage 生成提交到 Git 的 Crossplane Claims，再由 ArgoCD 部署。

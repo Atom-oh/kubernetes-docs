@@ -18,6 +18,8 @@ Este documento proporciona una comparación exhaustiva entre Kubernetes Service 
 10. [Arquitectura híbrida](02-istio-vs-lattice.md#hybrid-architecture)
 11. [Guía de selección](02-istio-vs-lattice.md#selection-guide)
 
+<span id="overview-and-key-differences"></span>
+
 ## Descripción general y diferencias clave
 
 ### Istio Service Mesh
@@ -58,6 +60,8 @@ Este documento proporciona una comparación exhaustiva entre Kubernetes Service 
 | **Modelo de costos**               | Basado en recursos | Basado en uso           |
 | **Curva de aprendizaje**           | Pronunciada          | Suave                |
 | **Multi-cloud**              | Compatible      | Solo AWS              |
+
+<span id="architecture-comparison"></span>
 
 ## Comparación de arquitectura
 
@@ -190,6 +194,8 @@ flowchart TB
 | **Data Plane**              | Envoy Proxy              | AWS PrivateLink         |
 | **Interfaz de configuración** | Kubernetes CRD           | AWS API                 |
 | **Actualizaciones**                | Manual (Canary posible) | Automáticas (administradas por AWS) |
+
+<span id="traffic-management-features"></span>
 
 ## Características de gestión de tráfico
 
@@ -439,6 +445,8 @@ aws vpc-lattice create-target-group \
 
 **Conclusión**: En la gestión de tráfico, **Istio tiene una ventaja abrumadora**
 
+<span id="security-model"></span>
+
 ## Modelo de seguridad
 
 ### Configuración de mTLS
@@ -630,6 +638,8 @@ spec:
 
 **Conclusión**: En seguridad, **Istio proporciona un control más granular**, mientras que VPC Lattice destaca en la integración con AWS IAM
 
+<span id="observability-and-monitoring"></span>
+
 ## Observabilidad y monitoreo
 
 ### Recopilación de métricas
@@ -816,6 +826,8 @@ aws vpc-lattice create-access-log-subscription \
 
 **Conclusión**: En observabilidad, **Istio tiene una ventaja abrumadora**
 
+<span id="operational-complexity"></span>
+
 ## Complejidad operativa
 
 ### Desafíos reales de las operaciones de Istio
@@ -983,6 +995,8 @@ Las actualizaciones de Istio están entre las operaciones más riesgosas y compl
 
 **Conclusión**: En complejidad operativa, **VPC Lattice tiene una ventaja abrumadora**
 
+<span id="cost-analysis"></span>
+
 ## Análisis de costos
 
 ### Modelo de costos de Istio (detallado)
@@ -1053,6 +1067,8 @@ Las actualizaciones de Istio están entre las operaciones más riesgosas y compl
 
 **Conclusión**: VPC Lattice es **aproximadamente $42,000 más barato al año y $260,000 más barato durante 5 años**
 
+<span id="performance-comparison"></span>
+
 ## Comparación de rendimiento
 
 ### Sobrecarga de latencia
@@ -1088,6 +1104,8 @@ Las actualizaciones de Istio están entre las operaciones más riesgosas y compl
 | **Pods adicionales**   | -        | +100 (Sidecar) | 0           |
 
 **Conclusión**: VPC Lattice es **abrumadoramente eficiente**
+
+<span id="multi-cloud-strategy"></span>
 
 ## Estrategia multi-cloud
 
@@ -1141,6 +1159,8 @@ flowchart TB
 * Integración a nivel de aplicación
 * API Gateway
 
+<span id="hybrid-architecture"></span>
+
 ## Arquitectura híbrida
 
 ### Uso conjunto de Istio + VPC Lattice
@@ -1191,6 +1211,8 @@ flowchart TB
 
 * **Dentro del cluster**: Istio (características avanzadas)
 * **Entre clusters/externo**: VPC Lattice (conectividad sencilla)
+
+<span id="selection-guide"></span>
 
 ## Guía de selección
 

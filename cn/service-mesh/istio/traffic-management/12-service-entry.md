@@ -14,6 +14,8 @@ ServiceEntry 会在 Istio service mesh 中注册外部服务，使其能够像�
 8. [监控与控制](#monitoring-and-control)
 9. [最佳实践](#best-practices)
 
+<span id="why-serviceentry"></span>
+
 ## 为什么使用 ServiceEntry？
 
 ### 外部服务管理的必要性
@@ -56,6 +58,8 @@ flowchart TB
 | **安全** | 有限 | mTLS、证书管理 |
 | **出口控制** | 允许所有外部流量 | 显式允许/阻止 |
 | **服务发现** | 手动管理 | 自动 DNS 查找 |
+
+<span id="serviceentry-overview"></span>
 
 ## ServiceEntry 概述
 
@@ -105,6 +109,8 @@ spec:
   location: MESH_EXTERNAL # External/internal location
   resolution: DNS         # Address resolution method
 ```
+
+<span id="resolution-modes"></span>
 
 ## 解析模式
 
@@ -195,6 +201,8 @@ spec:
 
 使用 DNS round robin（现已整合到 DNS 模式中）。
 
+<span id="location-settings"></span>
+
 ## 位置设置
 
 ### MESH_EXTERNAL（外部服务）
@@ -250,6 +258,8 @@ spec:
 - 将 VM workload 纳入 mesh
 - 多集群环境
 - 混合云配置
+
+<span id="practical-examples"></span>
 
 ## 实战示例
 
@@ -473,6 +483,8 @@ spec:
         connectTimeout: 3s
 ```
 
+<span id="combining-with-egress-gateway"></span>
+
 ## 结合 Egress Gateway
 
 通过 Egress Gateway 集中控制外部流量。
@@ -579,6 +591,8 @@ spec:
         mode: SIMPLE  # HTTP -> HTTPS conversion
 ```
 
+<span id="security-and-tls"></span>
+
 ## 安全与 TLS
 
 ### 到外部服务的 mTLS
@@ -669,6 +683,8 @@ spec:
           number: 443
 ```
 
+<span id="monitoring-and-control"></span>
+
 ## 监控与控制
 
 ### 指标收集
@@ -715,6 +731,8 @@ spec:
   outboundTrafficPolicy:
     mode: REGISTRY_ONLY  # Allow only those registered in ServiceEntry
 ```
+
+<span id="best-practices"></span>
 
 ## 最佳实践
 

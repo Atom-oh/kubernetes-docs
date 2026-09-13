@@ -14,6 +14,8 @@ ServiceEntry は、外部サービスを Istio service mesh に登録し、内�
 8. [モニタリングと制御](#monitoring-and-control)
 9. [ベストプラクティス](#best-practices)
 
+<span id="why-serviceentry"></span>
+
 ## ServiceEntry が必要な理由
 
 ### 外部サービス管理の必要性
@@ -56,6 +58,8 @@ flowchart TB
 | **セキュリティ** | 限定的 | mTLS、証明書管理 |
 | **Egress 制御** | すべての外部トラフィックを許可 | 明示的な許可/ブロック |
 | **Service Discovery** | 手動管理 | 自動 DNS ルックアップ |
+
+<span id="serviceentry-overview"></span>
 
 ## ServiceEntry の概要
 
@@ -105,6 +109,8 @@ spec:
   location: MESH_EXTERNAL # External/internal location
   resolution: DNS         # Address resolution method
 ```
+
+<span id="resolution-modes"></span>
 
 ## 名前解決モード
 
@@ -195,6 +201,8 @@ spec:
 
 DNS round robin を使用します（現在は DNS モードに統合されています）。
 
+<span id="location-settings"></span>
+
 ## ロケーション設定
 
 ### MESH_EXTERNAL（外部サービス）
@@ -250,6 +258,8 @@ spec:
 - VM workload を mesh に含める
 - マルチクラスター環境
 - ハイブリッドクラウド構成
+
+<span id="practical-examples"></span>
 
 ## 実践例
 
@@ -473,6 +483,8 @@ spec:
         connectTimeout: 3s
 ```
 
+<span id="combining-with-egress-gateway"></span>
+
 ## Egress Gateway との組み合わせ
 
 Egress Gateway を通じて外部トラフィックを一元的に制御します。
@@ -579,6 +591,8 @@ spec:
         mode: SIMPLE  # HTTP -> HTTPS conversion
 ```
 
+<span id="security-and-tls"></span>
+
 ## セキュリティと TLS
 
 ### 外部サービスへの mTLS
@@ -669,6 +683,8 @@ spec:
           number: 443
 ```
 
+<span id="monitoring-and-control"></span>
+
 ## モニタリングと制御
 
 ### メトリクス収集
@@ -715,6 +731,8 @@ spec:
   outboundTrafficPolicy:
     mode: REGISTRY_ONLY  # Allow only those registered in ServiceEntry
 ```
+
+<span id="best-practices"></span>
 
 ## ベストプラクティス
 

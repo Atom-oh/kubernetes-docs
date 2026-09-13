@@ -23,6 +23,8 @@
 7. [ロードバランシングの概念](#load-balancing-concepts)
 8. [ネットワークセキュリティの基礎](#network-security-basics)
 
+<span id="osi-model-and-tcpip-stack"></span>
+
 ## OSIモデルとTCP/IPスタック
 
 > **主要な概念**: OSIモデルは、ネットワーク通信を7つの抽象レイヤーに分類する概念的なフレームワークであり、複雑なネットワーキング処理を理解しやすくします。
@@ -173,6 +175,8 @@ Ciliumはさまざまなネットワークレイヤーで機能を提供しま�
 - **L3（ネットワーク層）**: IPアドレスベースのルーティングとフィルタリング、IPAM
 - **L4（トランスポート層）**: ポートベースのフィルタリング、ロードバランシング、コネクショントラッキング
 - **L7（アプリケーション層）**: HTTP、gRPC、Kafkaなどに対するプロトコル認識型フィルタリングとロードバランシング
+
+<span id="container-networking-basics"></span>
 
 ## コンテナネットワーキングの基礎
 
@@ -336,6 +340,8 @@ CiliumはeBPFを活用して、高性能でスケーラブルなコンテナネ�
 4. **ネットワークポリシー**: L3-L7レベルのきめ細かなポリシー
 5. **統合IPAM**: さまざまなIPアドレス割り当て戦略をサポート
 
+<span id="overlay-networks"></span>
+
 ## オーバーレイネットワーク
 
 オーバーレイネットワークは、既存のネットワークインフラストラクチャの上に仮想ネットワークレイヤーを構築する技術です。この技術により、物理ネットワークトポロジーとは独立して仮想ネットワークトポロジーを作成できます。コンテナ環境では、複数のホストにまたがるコンテナ間通信を可能にするために広く使用されています。
@@ -441,6 +447,8 @@ data:
   ipv4-range: "10.0.0.0/16"
   ipv4-tunnel-endpoint-selector: "kubernetes.io/hostname"
 ```
+
+<span id="network-address-translation-nat"></span>
 
 ## ネットワークアドレス変換（NAT）
 
@@ -604,6 +612,8 @@ data:
   # Exclude specific CIDRs from masquerading
   ipv4-masquerade-exclude-cidr: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
 ```
+
+<span id="routing-protocols"></span>
 
 ## ルーティングプロトコル
 
@@ -781,6 +791,8 @@ data:
   enable-ipv4: "true"
   ipv4-range: "10.0.0.0/16"
 ```
+
+<span id="dns-and-service-discovery"></span>
 
 ## DNSとサービスディスカバリー
 
@@ -967,6 +979,8 @@ data:
   # Enable global services
   enable-global-services: "true"
 ```
+
+<span id="load-balancing-concepts"></span>
 
 ## ロードバランシングの概念
 
@@ -1193,6 +1207,8 @@ data:
   # Enable L7 load balancing
   enable-l7-proxy: "true"
 ```
+
+<span id="network-security-basics"></span>
 
 ## ネットワークセキュリティの基礎
 

@@ -15,6 +15,8 @@ Istio は Envoy を通じてさまざまなロードバランシングアルゴ�
 9. [ベストプラクティス](#best-practices)
 10. [トラブルシューティング](#troubleshooting)
 
+<span id="why-load-balancing"></span>
+
 ## ロードバランシングが必要な理由
 
 ### 効率的なリソース活用
@@ -61,6 +63,8 @@ flowchart TB
 | **レスポンスタイム** | 不安定（0～1000ms以上） | 一貫したレスポンスタイム |
 | **リソース活用** | 非効率（部分的な使用） | 効率的なリソース使用 |
 
+<span id="load-balancing-overview"></span>
+
 ## ロードバランシングの概要
 
 ```mermaid
@@ -92,6 +96,8 @@ flowchart TB
     class Algorithm lb;
     class Pod1,Pod2,Pod3 pod;
 ```
+
+<span id="load-balancing-algorithms"></span>
 
 ## ロードバランシングアルゴリズム
 
@@ -321,6 +327,8 @@ trafficPolicy:
   loadBalancer:
     simple: LEAST_REQUEST
 ```
+
+<span id="consistent-hash-details"></span>
 
 ## Consistent Hash の詳細
 
@@ -560,6 +568,8 @@ flowchart LR
 - 外部セッションストレージ（Redis、Memcached）を使用する
 - 段階的にスケールする
 
+<span id="locality-based-load-balancing"></span>
+
 ## ローカリティベースのロードバランシング
 
 ローカリティベースのロードバランシングは、地理的に近いエンドポイントを優先します。
@@ -661,6 +671,8 @@ spec:
 - リージョン間の災害復旧
 - コスト最適化（同一 AZ 通信）
 
+<span id="connection-pool-settings"></span>
+
 ## Connection Pool の設定
 
 パフォーマンスを最適化するため、ロードバランシングと併せて Connection Pool を設定します。
@@ -707,6 +719,8 @@ spec:
         maxRequestsPerConnection: 0 # Unlimited (HTTP/2 multiplexing)
         h2UpgradePolicy: UPGRADE    # Allow HTTP/2 upgrade
 ```
+
+<span id="practical-examples"></span>
 
 ## 実践例
 
@@ -922,6 +936,8 @@ spec:
 - ログ収集
 - 大規模データ処理
 
+<span id="algorithm-selection-guide"></span>
+
 ## アルゴリズム選択ガイド
 
 ### 決定木
@@ -1015,6 +1031,8 @@ trafficPolicy:
     localityLbSetting:
       enabled: true
 ```
+
+<span id="best-practices"></span>
 
 ## ベストプラクティス
 
@@ -1223,6 +1241,8 @@ metadata:
       - Dashboard: grafana.example.com/d/istio-workload
       - Alert: High P95 latency > 500ms
 ```
+
+<span id="troubleshooting"></span>
 
 ## トラブルシューティング
 

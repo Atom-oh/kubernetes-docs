@@ -16,6 +16,8 @@
 8. [コスト分析](01-service-mesh-comparison.md#cost-analysis)
 9. [ユースケースの推奨事項](01-service-mesh-comparison.md#use-case-recommendations)
 
+<span id="overview-and-architecture"></span>
+
 ## 概要とアーキテクチャ
 
 ### Service Mesh とは？
@@ -832,6 +834,8 @@ flowchart TB
 * **Consul Client**: 各ノードで実行、Service 登録
 * **Envoy Sidecar**: トラフィック Proxy
 
+<span id="performance-comparison"></span>
+
 ## パフォーマンス比較
 
 ### レイテンシーオーバーヘッド
@@ -927,6 +931,8 @@ flowchart LR
 * **Linkerd**: 最小のオーバーヘッド、軽量な Proxy
 * **Istio/Consul**: 機能が多いため、オーバーヘッドはやや大きい
 * **Kong Mesh**: 中程度のパフォーマンスレベル
+
+<span id="feature-comparison"></span>
 
 ## 機能比較
 
@@ -1106,6 +1112,8 @@ Splits = [
 * **Kong Mesh**: Kuma CRD、直感的
 * **Consul**: HCL 設定、Service Discovery と統合
 
+<span id="security-features"></span>
+
 ## セキュリティ機能
 
 ### mTLS 設定の比較
@@ -1270,6 +1278,8 @@ Sources = [
 * **Kong Mesh**: Service レベルの権限
 * **Consul**: Intentions ベース、直感的
 
+<span id="observability-features"></span>
+
 ## 可観測性機能
 
 ### メトリクス収集
@@ -1363,6 +1373,8 @@ ui_config {
   }
 }
 ```
+
+<span id="multi-cluster-support"></span>
 
 ## マルチクラスターサポート
 
@@ -1497,6 +1509,8 @@ flowchart TB
 | **ネットワーク要件**     | Flat または Gateway | Gateway         | Flat または Gateway | Gateway   |
 | **ポリシー同期**              | はい             | 限定的         | Global CP       | はい       |
 | **最大クラスター数**        | 数十個          | \~10            | 数十個          | 数十個    |
+
+<span id="operational-complexity"></span>
 
 ## 運用の複雑さ
 
@@ -1641,6 +1655,8 @@ flowchart LR
     class Hard hard;
 ```
 
+<span id="cost-analysis"></span>
+
 ## コスト分析
 
 ### インフラストラクチャコスト
@@ -1682,6 +1698,8 @@ flowchart LR
 * **Kong Mesh Enterprise**: マルチゾーン GUI、RBAC、24/7 サポート
 * **Consul Enterprise**: 監査ログ、Namespace、冗長化ゾーン
 * **Buoyant Enterprise**: HA Control Plane、24/7 サポート、SLA
+
+<span id="use-case-recommendations"></span>
 
 ## ユースケースの推奨事項
 

@@ -16,6 +16,8 @@ EnvoyFilter 是一项高级功能，可让你直接自定义 Envoy proxy 配置�
 7. [最佳实践](#best-practices)
 8. [故障排除](#troubleshooting)
 
+<span id="overview"></span>
+
 ## 概述
 
 使用 EnvoyFilter 可以：
@@ -23,6 +25,8 @@ EnvoyFilter 是一项高级功能，可让你直接自定义 Envoy proxy 配置�
 - Rate Limiting
 - External Authorization
 - WASM plugin 集成
+
+<span id="structure"></span>
 
 ## 结构
 
@@ -55,6 +59,8 @@ spec:
               request_handle:headers():add("x-custom-header", "value")
             end
 ```
+
+<span id="main-use-cases"></span>
 
 ## 主要使用场景
 
@@ -142,6 +148,8 @@ spec:
                 local:
                   filename: "/var/local/lib/wasm-filters/my_plugin.wasm"
 ```
+
+<span id="x-forwarded-for-and-hop-settings"></span>
 
 ## X-Forwarded-For 和 Hop 设置
 
@@ -1281,6 +1289,8 @@ spec:
    - 在 Edge 防止 XFF 欺骗
    - 忽略来自不受信任来源的 XFF
 
+<span id="static-response-configuration"></span>
+
 ## 静态响应配置
 
 无需经过 backend Service 即可直接为特定请求返回静态响应。这适用于维护模式、错误页面、health check 响应等。
@@ -1559,7 +1569,7 @@ spec:
         - "198.51.100.0/24"
 ```
 
-**重要**：要使 `remoteIpBlocks` 生效，必须在 Gateway 正确配置 `xff_num_trusted_hops`（请参阅上方的 [XFF 设置](#xff-configuration-options)）。
+**重要**：要使 `remoteIpBlocks` 生效，必须在 Gateway 正确配置 `xff_num_trusted_hops`（请参阅上方的 [XFF 设置 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/03-envoy-filter#xff-configuration-options)）。
 
 #### 4. 自定义拒绝响应
 
@@ -2196,6 +2206,8 @@ curl http://localhost:15000/config_dump | jq '.configs[] | select(.["@type"] == 
 4. **缓存**：静态响应也需要 `Cache-Control` header 设置
 5. **Metrics**：静态响应生成的 metrics 与正常响应不同
 
+<span id="practical-examples"></span>
+
 ## 实践示例
 
 ### 示例 1：请求/响应日志
@@ -2262,12 +2274,16 @@ spec:
                   timeout: 5s
 ```
 
+<span id="best-practices"></span>
+
 ## 最佳实践
 
 1. **使用 workloadSelector**：仅应用于特定 workload
 2. **先在测试环境中验证**：生产环境前充分测试
 3. **Istio 版本兼容性**：检查每个版本的 API
 4. **性能监控**：添加 EnvoyFilter 后监控性能
+
+<span id="troubleshooting"></span>
 
 ## 故障排除
 

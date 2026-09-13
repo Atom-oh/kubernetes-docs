@@ -10,6 +10,8 @@
 4. [モニタリングと可観測性](#monitoring-and-observability)
 5. [本番環境チェックリスト](#production-checklist)
 
+<span id="performance-optimization"></span>
+
 ## パフォーマンスの最適化
 
 ### 1. Control Planeリソースの最適化
@@ -139,6 +141,8 @@ spec:
 - Memory使用量の削減
 - 設定プッシュの高速化
 
+<span id="security-hardening"></span>
+
 ## セキュリティ強化
 
 ### 1. Strict mTLSの適用
@@ -250,6 +254,8 @@ spec:
       values: ["https://auth.example.com"]
 ```
 
+<span id="operations-guide"></span>
+
 ## 運用ガイド
 
 ### 1. Deployment戦略
@@ -316,6 +322,8 @@ spec:
 - Authorization Policy
 - Rate Limiting
 
+<span id="upgrade-strategy"></span>
+
 ### 2. アップグレード戦略
 
 #### Canaryアップグレード
@@ -371,6 +379,8 @@ kubectl get vs,dr,gw,se,pa,ra,ap -A -o yaml > istio-config-backup.yaml
 kubectl apply -f istio-operator-backup.yaml
 kubectl apply -f istio-config-backup.yaml
 ```
+
+<span id="monitoring-and-observability"></span>
 
 ## モニタリングと可観測性
 
@@ -459,6 +469,8 @@ groups:
     annotations:
       summary: "Pilot is not ready"
 ```
+
+<span id="production-checklist"></span>
 
 ## 本番環境チェックリスト
 
@@ -559,6 +571,8 @@ groups:
    Don't deploy to production without checking metrics
    Do require Golden Signals monitoring
    ```
+
+<span id="cost-optimization"></span>
 
 ## コスト最適化
 

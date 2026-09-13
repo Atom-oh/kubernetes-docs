@@ -65,12 +65,14 @@ kubectl -n workloads-demo get deployments,pods
 - [StatefulSet](#statefulset)
 - [DaemonSet](#daemonset)
 - [Job 和 CronJob](#jobs-and-cronjobs)
-- [资源管理](#resource-management)
-- [Pod 中断预算](#pod-disruption-budget)
-- [水平 Pod 自动扩缩容](#horizontal-pod-autoscaling)
-- [垂直 Pod 自动扩缩容](#vertical-pod-autoscaling)
-- [工作负载最佳实践](#workload-best-practices)
-- [Amazon EKS 工作负载注意事项](#amazon-eks-workload-considerations)
+- [资源管理 (English)](https://www.atomai.click/kubernetes-docs/en/core/07-policies#resource-management)
+- [Pod 中断预算 (English)](https://www.atomai.click/kubernetes-docs/en/core/08-scheduling-preemption-eviction#pod-disruption-budget-pdb)
+- [水平 Pod 自动扩缩容 (English)](https://www.atomai.click/kubernetes-docs/en/core/09-cluster-administration#horizontal-pod-autoscaler-hpa)
+- [垂直 Pod 自动扩缩容 (English)](https://www.atomai.click/kubernetes-docs/en/core/09-cluster-administration#vertical-pod-autoscaler-vpa)
+- [工作负载最佳实践 (English)](https://www.atomai.click/kubernetes-docs/en/core/02-pods-and-workloads#pod-design-patterns)
+- [Amazon EKS 工作负载注意事项 (English)](https://www.atomai.click/kubernetes-docs/en/core/09-cluster-administration#eks-specific-best-practices)
+
+<span id="pod-concepts"></span>
 
 ## Pod 概念
 
@@ -357,6 +359,8 @@ spec:
       name: app-config
 ```
 
+<span id="pod-lifecycle"></span>
+
 ## Pod 生命周期
 
 Pod 从创建到终止会经历多个生命周期阶段。理解该生命周期对于确保应用程序的稳定性和可用性非常重要。
@@ -481,6 +485,8 @@ Pod 中断可分为自愿中断或非自愿中断：
 2. **非自愿中断**：由硬件故障、内核崩溃、网络分区等导致的中断。
 
 PodDisruptionBudget 可以在自愿中断期间确保最低可用性。
+
+<span id="pod-design-patterns"></span>
 
 ## Pod 设计模式
 
@@ -679,6 +685,8 @@ spec:
   - name: app
     image: myapp:1.0
 ```
+
+<span id="workload-resources-overview"></span>
 
 ## 工作负载资源概览
 
@@ -1343,6 +1351,8 @@ spec:
         hostPath:
           path: /
 ```
+
+<span id="jobs-and-cronjobs"></span>
 
 ## Job 和 CronJob
 

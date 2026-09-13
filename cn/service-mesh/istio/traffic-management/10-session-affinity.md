@@ -7,8 +7,10 @@
 1. [会话亲和性概述](#session-affinity-overview)
 2. [基于一致性哈希](#consistent-hash-based)
 3. [基于 Cookie](#cookie-based)
-4. [基于 Header](#header-based)
-5. [实践示例](#practical-examples)
+4. [基于 Header (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/10-session-affinity#http-header-based)
+5. [实践示例 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/10-session-affinity#consistent-hash-based)
+
+<span id="session-affinity-overview"></span>
 
 ## 会话亲和性概述
 
@@ -40,6 +42,8 @@ flowchart TB
     class Pod1,Pod2,Pod3 pod;
 ```
 
+<span id="consistent-hash-based"></span>
+
 ## 基于一致性哈希
 
 ### 基于 HTTP Header
@@ -56,6 +60,8 @@ spec:
       consistentHash:
         httpHeaderName: "x-user-id"
 ```
+
+<span id="cookie-based"></span>
 
 ### 基于 Cookie
 

@@ -65,12 +65,14 @@ kubectl -n workloads-demo get deployments,pods
 - [StatefulSet](#statefulset)
 - [DaemonSet](#daemonset)
 - [Jobs y CronJobs](#jobs-and-cronjobs)
-- [Gestión de recursos](#resource-management)
-- [Presupuesto de interrupción de Pod](#pod-disruption-budget)
-- [Escalado automático horizontal de Pod](#horizontal-pod-autoscaling)
-- [Escalado automático vertical de Pod](#vertical-pod-autoscaling)
-- [Prácticas recomendadas para cargas de trabajo](#workload-best-practices)
-- [Consideraciones sobre cargas de trabajo de Amazon EKS](#amazon-eks-workload-considerations)
+- [Gestión de recursos (English)](https://www.atomai.click/kubernetes-docs/en/core/07-policies#resource-management)
+- [Presupuesto de interrupción de Pod (English)](https://www.atomai.click/kubernetes-docs/en/core/08-scheduling-preemption-eviction#pod-disruption-budget-pdb)
+- [Escalado automático horizontal de Pod (English)](https://www.atomai.click/kubernetes-docs/en/core/09-cluster-administration#horizontal-pod-autoscaler-hpa)
+- [Escalado automático vertical de Pod (English)](https://www.atomai.click/kubernetes-docs/en/core/09-cluster-administration#vertical-pod-autoscaler-vpa)
+- [Prácticas recomendadas para cargas de trabajo (English)](https://www.atomai.click/kubernetes-docs/en/core/02-pods-and-workloads#pod-design-patterns)
+- [Consideraciones sobre cargas de trabajo de Amazon EKS (English)](https://www.atomai.click/kubernetes-docs/en/core/09-cluster-administration#eks-specific-best-practices)
+
+<span id="pod-concepts"></span>
 
 ## Conceptos de Pod
 
@@ -357,6 +359,8 @@ spec:
       name: app-config
 ```
 
+<span id="pod-lifecycle"></span>
+
 ## Ciclo de vida del Pod
 
 Los Pods pasan por varias etapas de ciclo de vida, desde su creación hasta su terminación. Comprender este ciclo de vida es importante para garantizar la estabilidad y disponibilidad de la aplicación.
@@ -481,6 +485,8 @@ Las interrupciones de Pod se pueden dividir en interrupciones voluntarias o invo
 2. **Interrupciones involuntarias**: Interrupciones debidas a fallos de hardware, kernel panics, particiones de red, etc.
 
 PodDisruptionBudget puede garantizar una disponibilidad mínima durante las interrupciones voluntarias.
+
+<span id="pod-design-patterns"></span>
 
 ## Patrones de diseño de Pod
 
@@ -679,6 +685,8 @@ spec:
   - name: app
     image: myapp:1.0
 ```
+
+<span id="workload-resources-overview"></span>
 
 ## Descripción general de los recursos de carga de trabajo
 
@@ -1343,6 +1351,8 @@ spec:
         hostPath:
           path: /
 ```
+
+<span id="jobs-and-cronjobs"></span>
 
 ## Jobs y CronJobs
 

@@ -43,6 +43,8 @@ sudo bpftool feature
 
 ---
 
+<span id="1-introduction-to-ebpf"></span>
+
 ## 1. Introducción a eBPF
 
 ### 1.1 ¿Qué es eBPF?
@@ -134,6 +136,8 @@ graph LR
 | **Dificultad de desarrollo** | Relativamente fácil | Requiere alta experiencia |
 
 ---
+
+<span id="2-ebpf-architecture"></span>
 
 ## 2. Arquitectura de eBPF
 
@@ -274,6 +278,8 @@ stateDiagram-v2
 ```
 
 ---
+
+<span id="3-ebpf-program-types"></span>
 
 ## 3. Tipos de programas eBPF
 
@@ -464,6 +470,8 @@ int restrict_connect(struct bpf_sock_addr *ctx) {
 
 ---
 
+<span id="4-ebpf-development-tools"></span>
+
 ## 4. Herramientas de desarrollo de eBPF
 
 ### 4.1 bpftool
@@ -618,6 +626,8 @@ bpftool prog show id <ID> --pretty
 
 ---
 
+<span id="5-ebpf-and-kubernetes-networking"></span>
+
 ## 5. eBPF y redes en Kubernetes
 
 ### 5.1 Cilium: CNI basado en eBPF
@@ -766,6 +776,8 @@ cilium policy get
 ```
 
 ---
+
+<span id="6-ebpf-based-observability"></span>
 
 ## 6. Observabilidad basada en eBPF
 
@@ -933,6 +945,8 @@ graph LR
 ```
 
 ---
+
+<span id="7-ebpf-based-security"></span>
 
 ## 7. Seguridad basada en eBPF
 
@@ -1140,6 +1154,8 @@ int BPF_PROG(restrict_connect, struct socket *sock, struct sockaddr *address, in
 
 ---
 
+<span id="8-practical-ebpf-examples"></span>
+
 ## 8. Ejemplos prácticos de eBPF
 
 ### 8.1 Análisis de rendimiento del sistema con bpftrace
@@ -1328,6 +1344,8 @@ END {
 ```
 
 ---
+
+<span id="9-ebpf-limitations-and-considerations"></span>
 
 ## 9. Limitaciones y consideraciones de eBPF
 
@@ -1520,6 +1538,8 @@ echo 2 | sudo tee /proc/sys/kernel/bpf_spec_v4
 ```
 
 ---
+
+<span id="10-next-steps"></span>
 
 ## 10. Próximos pasos
 

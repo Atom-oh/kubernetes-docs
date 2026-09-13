@@ -23,6 +23,8 @@
 7. [负载均衡概念](#load-balancing-concepts)
 8. [网络安全基础](#network-security-basics)
 
+<span id="osi-model-and-tcpip-stack"></span>
+
 ## OSI 模型和 TCP/IP 协议栈
 
 > **关键概念**：OSI 模型是一个将网络通信划分为 7 个抽象层的概念框架，使复杂的网络过程更易于理解。
@@ -173,6 +175,8 @@ Cilium 在不同网络层提供功能：
 - **L3（网络层）**：基于 IP 地址的路由和过滤、IPAM
 - **L4（传输层）**：基于端口的过滤、负载均衡、连接跟踪
 - **L7（应用层）**：针对 HTTP、gRPC、Kafka 等的协议感知过滤和负载均衡
+
+<span id="container-networking-basics"></span>
 
 ## 容器网络基础
 
@@ -336,6 +340,8 @@ Cilium 利用 eBPF 提供高性能、可扩展的容器网络解决方案：
 4. **网络策略**：L3-L7 层级的细粒度策略
 5. **集成 IPAM**：支持多种 IP 地址分配策略
 
+<span id="overlay-networks"></span>
+
 ## 覆盖网络
 
 覆盖网络是一种在现有网络基础设施之上构建虚拟网络层的技术。这项技术使创建虚拟网络拓扑时无需依赖物理网络拓扑成为可能。在容器环境中，它被广泛用于实现跨多个主机的容器通信。
@@ -441,6 +447,8 @@ data:
   ipv4-range: "10.0.0.0/16"
   ipv4-tunnel-endpoint-selector: "kubernetes.io/hostname"
 ```
+
+<span id="network-address-translation-nat"></span>
 
 ## 网络地址转换 (NAT)
 
@@ -604,6 +612,8 @@ data:
   # Exclude specific CIDRs from masquerading
   ipv4-masquerade-exclude-cidr: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
 ```
+
+<span id="routing-protocols"></span>
 
 ## 路由协议
 
@@ -781,6 +791,8 @@ data:
   enable-ipv4: "true"
   ipv4-range: "10.0.0.0/16"
 ```
+
+<span id="dns-and-service-discovery"></span>
 
 ## DNS 和服务发现
 
@@ -967,6 +979,8 @@ data:
   # Enable global services
   enable-global-services: "true"
 ```
+
+<span id="load-balancing-concepts"></span>
 
 ## 负载均衡概念
 
@@ -1193,6 +1207,8 @@ data:
   # Enable L7 load balancing
   enable-l7-proxy: "true"
 ```
+
+<span id="network-security-basics"></span>
 
 ## 网络安全基础
 

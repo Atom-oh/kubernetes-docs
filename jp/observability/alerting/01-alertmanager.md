@@ -21,6 +21,8 @@
 
 ---
 
+<span id="alertmanager-overview"></span>
+
 ## Alertmanager の概要
 
 Prometheus Alertmanager は、Prometheus server から送信されたアラートを処理するコンポーネントです。アラートの重複排除、グループ化、ルーティング、Inhibition、サイレンスなどの機能を提供します。
@@ -56,6 +58,8 @@ sequenceDiagram
 ```
 
 ---
+
+<span id="architecture"></span>
 
 ## アーキテクチャ
 
@@ -114,6 +118,8 @@ graph TB
 | **nflog** | 送信済みアラートを記録する（重複排除用） |
 
 ---
+
+<span id="installation-and-configuration"></span>
 
 ## インストールと設定
 
@@ -225,6 +231,8 @@ data:
 
 ---
 
+<span id="defining-alert-rules"></span>
+
 ## アラートルールの定義
 
 ### PrometheusRule CRD
@@ -311,6 +319,8 @@ stateDiagram-v2
 ```
 
 ---
+
+<span id="routing-configuration"></span>
 
 ## ルーティング設定
 
@@ -438,6 +448,8 @@ time_intervals:
 ```
 
 ---
+
+<span id="receiver-configuration"></span>
 
 ## Receiver の設定
 
@@ -587,6 +599,8 @@ receivers:
 
 ---
 
+<span id="inhibition-rules"></span>
+
 ## Inhibition ルール
 
 ### Inhibition の概念
@@ -676,6 +690,8 @@ inhibit_rules:
 
 ---
 
+<span id="silencing"></span>
+
 ## サイレンス
 
 ### サイレンスの作成
@@ -754,6 +770,8 @@ graph TB
 4. **通知を設定する**: サイレンスの期限切れ前にアラートを受け取る
 
 ---
+
+<span id="template-customization"></span>
 
 ## テンプレートのカスタマイズ
 
@@ -846,6 +864,8 @@ data:
 ```
 
 ---
+
+<span id="high-availability-configuration"></span>
 
 ## 高可用性の設定
 
@@ -1063,6 +1083,8 @@ spec:
 ```
 
 ---
+
+<span id="production-alert-rule-examples"></span>
 
 ## 本番環境向けアラートルールの例
 
@@ -1307,6 +1329,8 @@ spec:
 ```
 
 ---
+
+<span id="troubleshooting"></span>
 
 ## トラブルシューティング
 

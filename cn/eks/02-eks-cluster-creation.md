@@ -15,6 +15,8 @@
 9. [Cluster 升级](#cluster-upgrade)
 10. [Cluster 删除](#cluster-deletion)
 
+<span id="prerequisites"></span>
+
 ## 先决条件
 
 在创建 EKS cluster 之前，需要满足以下先决条件：
@@ -160,6 +162,8 @@ EKS cluster 需要 VPC 和 subnets。你可以使用现有 VPC，也可以创建
 **Private Subnet Tags**:
 - `kubernetes.io/cluster/<cluster-name>`: `shared` or `owned`
 - `kubernetes.io/role/internal-elb`: `1`
+
+<span id="creating-a-cluster-using-eksctl"></span>
 
 ## 使用 eksctl 创建 Cluster
 
@@ -535,6 +539,8 @@ eksctl upgrade nodegroup --cluster=my-cluster --name=my-nodegroup
 eksctl delete cluster --name=my-cluster --region=us-west-2
 ```
 
+<span id="creating-a-cluster-using-aws-management-console"></span>
+
 ## 使用 AWS Management Console 创建 Cluster
 
 使用 AWS Management Console 创建 EKS cluster 的步骤如下：
@@ -655,6 +661,8 @@ eksctl delete cluster --name=my-cluster --region=us-west-2
 
 4. 在 "Review and create" 页面上，检查配置并点击 "Create" 按钮。
 
+<span id="creating-a-cluster-using-aws-cli"></span>
+
 ## 使用 AWS CLI 创建 Cluster
 
 你可以使用 AWS CLI 创建 EKS cluster。此方法适用于 script automation 或 CI/CD pipelines。
@@ -750,6 +758,8 @@ aws eks describe-nodegroup \
   --nodegroup-name my-nodegroup \
   --region us-west-2
 ```
+
+<span id="creating-a-cluster-using-terraform"></span>
 
 ## 使用 Terraform 创建 Cluster
 
@@ -1003,6 +1013,8 @@ resource "aws_eks_node_group" "main" {
 }
 ```
 
+<span id="creating-a-cluster-using-aws-cdk"></span>
+
 ## 使用 AWS CDK 创建 Cluster
 
 你可以使用 AWS CDK (Cloud Development Kit) 创建 EKS cluster。
@@ -1182,6 +1194,8 @@ cdk deploy
 aws eks update-kubeconfig --name my-auto-cluster --region us-west-2
 ```
 
+<span id="configuring-cluster-access"></span>
+
 ## 配置 Cluster 访问
 
 访问 EKS cluster 需要适当的权限和配置。
@@ -1225,6 +1239,8 @@ data:
 ```bash
 kubectl apply -f rbac.yaml
 ```
+
+<span id="cluster-validation"></span>
 
 ## Cluster 验证
 
@@ -1302,6 +1318,8 @@ kubectl get pods
 kubectl get services
 ```
 
+<span id="cluster-upgrade"></span>
+
 ## Cluster 升级
 
 以下是升级 EKS cluster 的 Kubernetes version 的方法。
@@ -1327,6 +1345,8 @@ eksctl upgrade cluster --name my-cluster --version 1.32
 # Upgrade node group
 eksctl upgrade nodegroup --cluster my-cluster --name my-nodegroup
 ```
+
+<span id="cluster-deletion"></span>
 
 ## Cluster 删除
 

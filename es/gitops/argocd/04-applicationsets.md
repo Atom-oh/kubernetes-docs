@@ -11,6 +11,8 @@
 - [Patrones multi-cluster](#multi-cluster-patterns)
 - [Parches de plantilla](#template-patches)
 
+<span id="applicationset-overview"></span>
+
 ## Descripción general de ApplicationSet
 
 ApplicationSet es un controller de Kubernetes que añade soporte para generar Applications de ArgoCD a partir de plantillas. Permite administrar varias aplicaciones con configuraciones similares entre clusters, entornos o repositorios.
@@ -54,6 +56,8 @@ spec:
         server: '{{url}}'
         namespace: myapp
 ```
+
+<span id="generators"></span>
 
 ## Generadores
 
@@ -653,6 +657,8 @@ spec:
         namespace: '{{namespace}}'
 ```
 
+<span id="go-templating"></span>
+
 ## Plantillas de Go
 
 ApplicationSet utiliza plantillas de Go para la sustitución de parámetros.
@@ -712,6 +718,8 @@ spec:
       annotations:
         regions: '{{range $i, $r := .regions}}{{if $i}},{{end}}{{$r}}{{end}}'
 ```
+
+<span id="progressive-sync"></span>
 
 ## Sincronización progresiva
 
@@ -815,6 +823,8 @@ flowchart TB
     class PAUSE pause
     class P1,P2,P3,P4,P5,P6 prod
 ```
+
+<span id="multi-cluster-patterns"></span>
 
 ## Patrones multi-cluster
 
@@ -931,6 +941,8 @@ gitRevision: v1.2.3
 imageTag: v1.2.3
 syncWave: "2"
 ```
+
+<span id="template-patches"></span>
 
 ## Parches de plantilla
 

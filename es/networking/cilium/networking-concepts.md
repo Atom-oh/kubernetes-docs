@@ -23,6 +23,8 @@ A través de este documento, comprenderá:
 7. [Conceptos de balanceo de carga](#load-balancing-concepts)
 8. [Conceptos básicos de seguridad de red](#network-security-basics)
 
+<span id="osi-model-and-tcpip-stack"></span>
+
 ## Modelo OSI y pila TCP/IP
 
 > **Concepto clave**: El modelo OSI es un marco conceptual que clasifica la comunicación de red en 7 capas abstractas, lo que facilita la comprensión de procesos de red complejos.
@@ -173,6 +175,8 @@ Cilium proporciona funcionalidades en diversas capas de red:
 - **L3 (capa de red)**: Enrutamiento y filtrado basados en direcciones IP, IPAM
 - **L4 (capa de transporte)**: Filtrado basado en puertos, balanceo de carga, seguimiento de conexiones
 - **L7 (capa de aplicación)**: Filtrado y balanceo de carga conscientes del protocolo para HTTP, gRPC, Kafka, etc.
+
+<span id="container-networking-basics"></span>
 
 ## Conceptos básicos de redes de contenedores
 
@@ -336,6 +340,8 @@ Cilium aprovecha eBPF para proporcionar una solución de redes de contenedores e
 4. **Políticas de red**: Políticas granulares en los niveles L3-L7
 5. **IPAM integrado**: Compatibilidad con diversas estrategias de asignación de direcciones IP
 
+<span id="overlay-networks"></span>
+
 ## Redes de superposición
 
 Las redes de superposición son una tecnología que construye una capa de red virtual sobre la infraestructura de red existente. Esta tecnología permite crear topologías de red virtuales independientemente de la topología de red física. En entornos de contenedores, se utiliza ampliamente para habilitar la comunicación entre contenedores en varios hosts.
@@ -441,6 +447,8 @@ data:
   ipv4-range: "10.0.0.0/16"
   ipv4-tunnel-endpoint-selector: "kubernetes.io/hostname"
 ```
+
+<span id="network-address-translation-nat"></span>
 
 ## Traducción de direcciones de red (NAT)
 
@@ -604,6 +612,8 @@ data:
   # Exclude specific CIDRs from masquerading
   ipv4-masquerade-exclude-cidr: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
 ```
+
+<span id="routing-protocols"></span>
 
 ## Protocolos de enrutamiento
 
@@ -781,6 +791,8 @@ data:
   enable-ipv4: "true"
   ipv4-range: "10.0.0.0/16"
 ```
+
+<span id="dns-and-service-discovery"></span>
 
 ## DNS y descubrimiento de servicios
 
@@ -967,6 +979,8 @@ data:
   # Enable global services
   enable-global-services: "true"
 ```
+
+<span id="load-balancing-concepts"></span>
 
 ## Conceptos de balanceo de carga
 
@@ -1193,6 +1207,8 @@ data:
   # Enable L7 load balancing
   enable-l7-proxy: "true"
 ```
+
+<span id="network-security-basics"></span>
 
 ## Conceptos básicos de seguridad de red
 

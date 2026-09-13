@@ -12,9 +12,11 @@ ClickHouse はカラム型の分析データベースです。インジェスト
 4. [ログインジェストパイプライン](#log-ingestion-pipeline)
 5. [SQL クエリ](#sql-queries)
 6. [Grafana 統合](#grafana-integration)
-7. [HyperDX](#hyperdx-clickhouse-native-viewer)
+7. [HyperDX (English)](https://www.atomai.click/kubernetes-docs/en/observability/logging/04-clickhouse#hyperdx-clickhouse-native-viewer)
 8. [パフォーマンス最適化](#performance-optimization)
-9. [S3 アーカイブ](#s3-archiving-and-long-term-retention)
+9. [S3 アーカイブ (English)](https://www.atomai.click/kubernetes-docs/en/observability/logging/04-clickhouse#s3-archiving-and-long-term-retention)
+
+<span id="overview"></span>
 
 ## 概要
 
@@ -45,6 +47,8 @@ ClickHouse はカラム型の分析データベースです。インジェスト
 
 圧縮率、クエリ速度、運用の複雑性について、普遍的な順位付けは避けてください。各システムには複数のデプロイモードとインデックス/クエリオプションがあります。同じデータ、クエリ、レプリカ、保持期間を比較してください。
 
+<span id="architecture"></span>
+
 ## アーキテクチャ
 
 ### ClickHouse クラスタアーキテクチャ
@@ -62,6 +66,8 @@ ClickHouse はカラム型の分析データベースです。インジェスト
 [インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-logging-04-clickhouse-1.html)
 
 矢印はデータの移動を示します。Kafka-engine バリアントでは、ClickHouse consumer が Kafka をポーリングします。この図は、Kafka が insert を push することや、exactly-once 配信を保証することを意味しません。S3 の cold table part と独立した Parquet archive は異なる仕組みです。
+
+<span id="kubernetes-deployment"></span>
 
 ## Kubernetes デプロイ
 
@@ -157,6 +163,8 @@ kubectl -n clickhouse get chi logs-demo
 kubectl -n clickhouse get pods,pvc,services,endpointslices
 kubectl -n clickhouse get events --sort-by=.metadata.creationTimestamp
 ```
+
+<span id="log-ingestion-pipeline"></span>
 
 ## ログインジェストパイプライン
 
@@ -347,6 +355,8 @@ ClickHouse Kafka engine は consumer group を通じて topic を消費し、mat
 
 Kafka-engine table は、上記で使用した通常の default column をサポートしません。そこでは incoming field だけを定義し、destination/view で default/materialized value を計算してください。offset commit、downstream insert acknowledgement、retry behavior はまとめてテストする必要があります。durable processing の acknowledge が必要な場合は memory Buffer destination を避け、experimental Keeper-backed offset storage を無条件の production default として有効にしないでください。
 
+<span id="sql-queries"></span>
+
 ## SQL クエリ
 
 ### 基本クエリ
@@ -424,6 +434,8 @@ GROUP BY namespace, pod_name;
 ```
 
 `message_bytes` は圧縮済み table storage や network billing ではなく、message text byte をカウントします。“Back-off” message の一致は log event をカウントするものであり、信頼できる container restart count ではありません。そのためには Kubernetes state metrics を使用してください。SQL の `SELECT` は snapshot query です。dashboard が定期的に refresh されるのは refresh interval によるもので、この query の特別な live-stream property によるものではありません。
+
+<span id="grafana-integration"></span>
 
 ## Grafana 統合
 
@@ -550,6 +562,8 @@ Buffer/Store/Distributed の naming convention を自動 source discovery と見
 | SigNoz | 独自の observability ingestion/model と UI。ClickHouse も使用する |
 
 各 component の実際の ingestion schema、authentication、query workflow、対応 release、license を比較してください。既存の ClickHouse database があるからといって、すべての observability UI がそのまま交換可能な frontend になるわけではありません。
+
+<span id="performance-optimization"></span>
 
 ## パフォーマンス最適化
 

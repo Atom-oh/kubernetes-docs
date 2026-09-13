@@ -9,6 +9,8 @@
 3. [EKS 固有の最適化](04-aws-integration.md#eks-specific-optimization)
 4. [ベストプラクティス](04-aws-integration.md#best-practices)
 
+<span id="aws-load-balancer-integration"></span>
+
 ## AWS Load Balancer 統合
 
 Istio Ingress Gateway は AWS Load Balancer と統合し、外部トラフィックを処理できます。
@@ -349,6 +351,8 @@ spec:
 | **gRPC**            | ネイティブサポート                         | HTTP/2 が必要                          |
 | **推奨用途** | 高性能、WebSocket、gRPC      | HTTP ルーティング、WAF、認証        |
 
+<span id="istio-vs-other-solutions-comparison"></span>
+
 ## Istio と他のソリューションの比較
 
 ### Istio と VPC Lattice
@@ -609,6 +613,8 @@ Cilium は eBPF を使用する Kubernetes のネットワーキングおよび�
 
 * Cilium を CNI、Istio を Service Mesh として使用できる
 * ただし、機能の重複と複雑性の増加を考慮する
+
+<span id="eks-specific-optimization"></span>
 
 ## EKS 固有の最適化
 
@@ -914,6 +920,8 @@ spec:
     matchLabels:
       app: istio-ingressgateway
 ```
+
+<span id="best-practices"></span>
 
 ## ベストプラクティス
 

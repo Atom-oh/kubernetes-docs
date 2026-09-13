@@ -11,6 +11,8 @@ Gateway 和 VirtualService 是 Istio 中用于管理流量的核心资源。
 5. [高级模式](#advanced-patterns)
 6. [故障排除](#troubleshooting)
 
+<span id="gateway-overview"></span>
+
 ## Gateway 概述
 
 Gateway 定义了外部流量进入网格的入口点。
@@ -42,6 +44,8 @@ spec:
     - "myapp.example.com"
 ```
 
+<span id="virtualservice-overview"></span>
+
 ## VirtualService 概述
 
 VirtualService 定义如何路由通过 Gateway 进入的流量。
@@ -72,6 +76,8 @@ spec:
         port:
           number: 3000
 ```
+
+<span id="basic-configuration"></span>
 
 ## 基本配置
 
@@ -140,6 +146,8 @@ spec:
     hosts:
     - "myapp.example.com"
 ```
+
+<span id="practical-examples"></span>
 
 ## 实践示例
 
@@ -277,6 +285,8 @@ spec:
         host: admin-service
 ```
 
+<span id="advanced-patterns"></span>
+
 ## 高级模式
 
 ### HTTP 重定向到 HTTPS
@@ -382,6 +392,8 @@ spec:
       uri: "/new-page"
       authority: "newapp.example.com"
 ```
+
+<span id="troubleshooting"></span>
 
 ## 故障排除
 

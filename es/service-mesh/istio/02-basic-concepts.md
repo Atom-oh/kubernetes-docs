@@ -15,6 +15,8 @@ Este documento explica los conceptos fundamentales y la arquitectura de Istio. C
 9. [Namespaces y Service Mesh](02-basic-concepts.md#namespaces-and-service-mesh)
 10. [Siguientes pasos](02-basic-concepts.md#next-steps)
 
+<span id="background-and-history"></span>
+
 ## Contexto e historia
 
 ### El nacimiento de Service Mesh
@@ -259,6 +261,8 @@ Mixer completely removed (functionality moved to Envoy)
 * Operaciones simplificadas (gestión de un único proceso)
 * Eficiencia de recursos (menor uso de memoria y CPU)
 
+<span id="why-istio"></span>
+
 ## ¿Por qué Istio?
 
 Kubernetes proporciona orquestación de contenedores, pero tiene limitaciones para gestionar la comunicación compleja entre microservicios. Istio es una solución de Service Mesh para abordar estos problemas.
@@ -483,6 +487,8 @@ Para una comparación detallada, consulta el documento de [integración con AWS]
 * Se necesitan funcionalidades avanzadas y flexibilidad → **Istio**
 * Se necesita una malla simple y ligera → **Linkerd**
 
+<span id="deployment-modes-sidecar-vs-ambient"></span>
+
 ## Modos de despliegue: Sidecar vs Ambient
 
 Istio admite dos modos de despliegue: **Sidecar Mode** y **Ambient Mode**.
@@ -600,6 +606,8 @@ flowchart TB
 
 **Para más detalles**, consulta el documento [Avanzado: Ambient Mode](advanced/01-ambient-mode.md).
 
+<span id="istio-architecture"></span>
+
 ## Arquitectura de Istio
 
 Istio consta de dos componentes principales: **Control Plane** y **Data Plane**.
@@ -610,6 +618,8 @@ Istio consta de dos componentes principales: **Control Plane** y **Data Plane**.
 | **Data Plane (Envoy Proxy)** | Desplegado como sidecar en cada Pod; gestiona el tráfico real (enrutamiento, mTLS y métricas)                             |
 
 **Para conocer en detalle la estructura de la arquitectura, los principios de funcionamiento interno y los mecanismos de interceptación de tráfico**, consulta el [documento de arquitectura](03-architecture.md).
+
+<span id="core-resources"></span>
 
 ## Recursos principales
 
@@ -795,6 +805,8 @@ spec:
         methods: ["GET"]
 ```
 
+<span id="traffic-management-concepts"></span>
+
 ## Conceptos de gestión de tráfico
 
 ### Flujo de enrutamiento de tráfico
@@ -866,6 +878,8 @@ spec:
       maxEjectionPercent: 50
 ```
 
+<span id="security-concepts"></span>
+
 ## Conceptos de seguridad
 
 ### mTLS (TLS mutuo)
@@ -934,6 +948,8 @@ spec:
         notRequestPrincipals: ["*"]
 ```
 
+<span id="observability-concepts"></span>
+
 ## Conceptos de observabilidad
 
 Istio genera automáticamente métricas, registros y trazas.
@@ -997,6 +1013,8 @@ spec:
         zipkin:
           address: jaeger-collector.istio-system:9411
 ```
+
+<span id="namespaces-and-service-mesh"></span>
 
 ## Namespaces y Service Mesh
 
@@ -1433,6 +1451,8 @@ Mediante las capacidades flexibles de registro de cargas de trabajo de Istio:
 * **Virtual Machine**: aplicaciones heredadas, bases de datos, entornos híbridos
 
 Todas las cargas de trabajo reciben funcionalidades coherentes de seguridad, gestión de tráfico y observabilidad.
+
+<span id="next-steps"></span>
 
 ## Siguientes pasos
 

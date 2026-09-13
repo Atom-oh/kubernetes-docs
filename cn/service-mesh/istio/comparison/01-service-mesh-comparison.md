@@ -16,6 +16,8 @@
 8. [成本分析](01-service-mesh-comparison.md#cost-analysis)
 9. [使用场景推荐](01-service-mesh-comparison.md#use-case-recommendations)
 
+<span id="overview-and-architecture"></span>
+
 ## 概述与架构
 
 ### 什么是 Service Mesh？
@@ -832,6 +834,8 @@ flowchart TB
 * **Consul Client**: 在每个节点上运行，进行服务注册
 * **Envoy Sidecar**: 流量 Proxy
 
+<span id="performance-comparison"></span>
+
 ## 性能对比
 
 ### 延迟开销
@@ -927,6 +931,8 @@ flowchart LR
 * **Linkerd**: 开销最低，轻量级 Proxy
 * **Istio/Consul**: 因功能更多，开销略高
 * **Kong Mesh**: 中等性能水平
+
+<span id="feature-comparison"></span>
 
 ## 功能对比
 
@@ -1106,6 +1112,8 @@ Splits = [
 * **Kong Mesh**: Kuma CRD，直观易用
 * **Consul**: HCL 配置，与 Service Discovery 集成
 
+<span id="security-features"></span>
+
 ## 安全功能
 
 ### mTLS 配置对比
@@ -1270,6 +1278,8 @@ Sources = [
 * **Kong Mesh**: Service 级别权限
 * **Consul**: 基于 Intentions，直观易用
 
+<span id="observability-features"></span>
+
 ## 可观测性功能
 
 ### 指标收集
@@ -1363,6 +1373,8 @@ ui_config {
   }
 }
 ```
+
+<span id="multi-cluster-support"></span>
 
 ## 多集群支持
 
@@ -1497,6 +1509,8 @@ flowchart TB
 | **网络要求**               | 扁平网络或 Gateway | Gateway      | 扁平网络或 Gateway | Gateway |
 | **策略同步**               | 是              | 有限            | Global CP       | 是        |
 | **最大集群数**             | 数十个          | \~10            | 数十个          | 数十个    |
+
+<span id="operational-complexity"></span>
 
 ## 运维复杂度
 
@@ -1641,6 +1655,8 @@ flowchart LR
     class Hard hard;
 ```
 
+<span id="cost-analysis"></span>
+
 ## 成本分析
 
 ### 基础设施成本
@@ -1682,6 +1698,8 @@ flowchart LR
 * **Kong Mesh Enterprise**: 多 zone GUI、RBAC、24/7 支持
 * **Consul Enterprise**: 审计日志、Namespaces、冗余 zone
 * **Buoyant Enterprise**: HA Control Plane、24/7 支持、SLA
+
+<span id="use-case-recommendations"></span>
 
 ## 使用场景推荐
 

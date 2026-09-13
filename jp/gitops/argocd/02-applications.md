@@ -13,6 +13,8 @@
 - [差分の無視](#ignore-differences)
 - [App of Apps パターン](#app-of-apps-pattern)
 
+<span id="application-crd-overview"></span>
+
 ## Application CRD の概要
 
 Application CRD は、アプリケーションをデプロイする方法と場所を定義する ArgoCD の中核リソースです。ソースリポジトリをターゲット Kubernetes クラスタに接続します。
@@ -87,6 +89,8 @@ spec:
 | `ignoreDifferences` | 比較時に無視するフィールド |
 | `info` | 表示用のカスタムメタデータ |
 | `revisionHistoryLimit` | 保持するデプロイメントリビジョン数 |
+
+<span id="source-types"></span>
 
 ## ソースタイプ
 
@@ -312,6 +316,8 @@ spec:
     namespace: production
 ```
 
+<span id="multiple-sources"></span>
+
 ## 複数のソース
 
 ArgoCD v2.6+ では、1 つのアプリケーションで複数のソースをサポートしており、複雑なデプロイメントシナリオを実現できます。
@@ -380,6 +386,8 @@ spec:
     namespace: observability
 ```
 
+<span id="destination-configuration"></span>
+
 ## 宛先設定
 
 ### Server URL を使用
@@ -405,6 +413,8 @@ syncPolicy:
   syncOptions:
     - CreateNamespace=true
 ```
+
+<span id="health-assessment"></span>
 
 ## ヘルス評価
 
@@ -501,6 +511,8 @@ resource.customizations.health.s3.services.k8s.aws_Bucket: |
   end
   return hs
 ```
+
+<span id="resource-hooks"></span>
 
 ## リソースフック
 
@@ -618,6 +630,8 @@ spec:
               exit 1
 ```
 
+<span id="ignore-differences"></span>
+
 ## 差分の無視
 
 比較時に特定の差分を無視するよう ArgoCD を設定します。
@@ -686,6 +700,8 @@ data:
     jsonPointers:
       - /metadata/annotations/kubectl.kubernetes.io~1last-applied-configuration
 ```
+
+<span id="app-of-apps-pattern"></span>
 
 ## App of Apps パターン
 

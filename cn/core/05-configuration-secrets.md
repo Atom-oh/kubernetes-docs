@@ -73,7 +73,7 @@ kubectl -n config-demo logs config-test-pod
 3. [环境变量](#environment-variables)
 4. [通过 Volume 挂载配置](#mounting-configuration-through-volumes)
 5. [配置最佳实践](#configuration-best-practices)
-6. [外部配置管理工具](#external-configuration-management-tools)
+6. [外部配置管理工具 (English)](https://www.atomai.click/kubernetes-docs/en/core/05-configuration-secrets#eks-configuration-management-tools)
 
 ## ConfigMap
 
@@ -470,6 +470,8 @@ resources:
     - identity: {}
 ```
 
+<span id="environment-variables"></span>
+
 ## 环境变量
 
 环境变量是向 container 传递配置信息的简单方式。Kubernetes 提供了多种设置环境变量的方法。
@@ -580,6 +582,8 @@ spec:
           resource: requests.cpu
   restartPolicy: Never
 ```
+
+<span id="mounting-configuration-through-volumes"></span>
 
 ## 通过 Volume 挂载配置
 
@@ -703,6 +707,8 @@ spec:
       name: my-config
   restartPolicy: Never
 ```
+
+<span id="configuration-best-practices"></span>
 
 ## 配置最佳实践
 

@@ -527,7 +527,7 @@ if not logger.handlers:
 
 这段代码保留了 UTC 时间戳、消息格式化和异常信息，并且会省略无效 ID，而不是伪造全零的 trace。handler 只需配置一次；请在异步边界之间传播 OTel context，并在源头对敏感消息/异常做脱敏处理。
 
-对于 Java，请使用[追踪概览中的作用域化 MDC 辅助方法](README.md#linking-logs-via-traceid)：校验当前的 `SpanContext`，为日志作用域设置 ID，并在 `finally` 中恢复先前的 MDC 值。仅调用 `MDC.put` 可能在复用线程上泄漏上一个请求的 ID。我们检查了 Java API 契约；本章未运行任何 Java 应用。
+对于 Java，请使用[追踪概览中的作用域化 MDC 辅助方法 (English)](https://www.atomai.click/kubernetes-docs/en/observability/tracing/#linking-logs-via-traceid)：校验当前的 `SpanContext`，为日志作用域设置 ID，并在 `finally` 中恢复先前的 MDC 值。仅调用 `MDC.put` 可能在复用线程上泄漏上一个请求的 ID。我们检查了 Java API 契约；本章未运行任何 Java 应用。
 
 ## 性能调优
 

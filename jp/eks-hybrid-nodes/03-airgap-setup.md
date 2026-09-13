@@ -474,7 +474,7 @@ aws s3api put-bucket-policy \
 
 ### S3 Interface VPC Endpoint
 
-S3 Interface VPC Endpoint は、[Network Configuration ドキュメント](./02-network-configuration.md#vpc-private-endpoints-air-gapprivate-environments)ですでに作成済みです。endpoint DNS 名を確認します。
+S3 Interface VPC Endpoint は、[Network Configuration ドキュメント (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/02-network-configuration#vpc-private-endpoints-air-gap-private-connectivity)ですでに作成済みです。endpoint DNS 名を確認します。
 
 ```bash
 # Get S3 Interface VPC Endpoint DNS name
@@ -625,7 +625,7 @@ EKS Hybrid Nodes の運用に必要な container images は ECR を通じて提�
 
 ### ECR VPC Endpoint 経由の Image Access
 
-ECR API (`ecr.api`) と ECR DKR (`ecr.dkr`) Interface VPC Endpoints は、[Network Configuration ドキュメント](./02-network-configuration.md#vpc-private-endpoints-air-gapprivate-environments)ですでに作成済みです。これにより、Air-Gap 環境でも ECR から直接 images を pull できます。
+ECR API (`ecr.api`) と ECR DKR (`ecr.dkr`) Interface VPC Endpoints は、[Network Configuration ドキュメント (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/02-network-configuration#vpc-private-endpoints-air-gap-private-connectivity)ですでに作成済みです。これにより、Air-Gap 環境でも ECR から直接 images を pull できます。
 
 ### ecr-credential-provider 設定
 

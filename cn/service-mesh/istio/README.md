@@ -72,6 +72,8 @@ Service Mesh 是管理 microservice 之间通信的基础设施层。Istio 会�
 
 应用 Istio 后，Envoy Proxy 会作为 sidecar container 自动部署到每个 microservice，透明地拦截和控制所有网络流量。
 
+<span id="do-you-really-need-a-service-mesh"></span>
+
 ## 是否真的需要 Service Mesh？
 
 Service Mesh 是一个强大的工具，但并不适合所有情况。采用前需要认真评估。

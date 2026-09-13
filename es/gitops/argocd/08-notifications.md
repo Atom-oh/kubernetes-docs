@@ -13,6 +13,8 @@
 - [Configuración avanzada](#advanced-configuration)
 - [Integración con AWS](#aws-integration)
 
+<span id="overview"></span>
+
 ## Descripción general
 
 ArgoCD Notifications es un componente que supervisa las aplicaciones de ArgoCD y envía notificaciones cuando se cumplen determinadas condiciones. Admite múltiples servicios de notificaciones y proporciona plantillas flexibles.
@@ -26,6 +28,8 @@ ArgoCD Notifications es un componente que supervisa las aplicaciones de ArgoCD y
 | Plantillas de Go | Sintaxis de plantillas enriquecida para el formato de mensajes |
 | Modelo de suscripción | Suscripciones a notificaciones por aplicación |
 | Disparadores integrados | Disparadores preconfigurados para eventos comunes |
+
+<span id="architecture"></span>
 
 ## Arquitectura
 
@@ -76,6 +80,8 @@ ArgoCD Notifications está incluido en ArgoCD v2.4+. Para versiones anteriores:
 ```bash
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/notifications_catalog/install.yaml
 ```
+
+<span id="notification-services"></span>
 
 ## Servicios de notificaciones
 
@@ -243,6 +249,8 @@ data:
       staging: $pagerduty-key-staging
 ```
 
+<span id="triggers"></span>
+
 ## Disparadores
 
 Los disparadores definen cuándo enviar notificaciones según el estado de la aplicación.
@@ -320,6 +328,8 @@ Campos disponibles:
 - `app.status.*` - Estado de la aplicación
 - `app.operation.*` - Operación actual
 - `time.Now()` - Hora actual
+
+<span id="templates"></span>
 
 ## Plantillas
 
@@ -545,6 +555,8 @@ Funciones disponibles en las plantillas:
 | `indent spaces` | Aplicar sangría al texto |
 | `nindent spaces` | Nueva línea + sangría |
 
+<span id="subscriptions"></span>
+
 ## Suscripciones
 
 ### Suscripciones a nivel de aplicación
@@ -612,6 +624,8 @@ metadata:
 spec:
   # ...
 ```
+
+<span id="advanced-configuration"></span>
 
 ## Configuración avanzada
 
@@ -684,6 +698,8 @@ trigger.on-sync-status-change: |
     send: [sync-status-change]
     oncePer: app.status.sync.revision
 ```
+
+<span id="aws-integration"></span>
 
 ## Integración con AWS
 

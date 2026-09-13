@@ -13,6 +13,8 @@
 - [远程写入与 AMP](#remote-write-and-amp)
 - [性能、HA 与故障排查](#performance-ha-and-troubleshooting)
 
+<span id="introduction-and-versions"></span>
+
 ## 简介与版本
 
 Prometheus 是最初在 SoundCloud 开发的 CNCF 监控工具集。它采集数值型时间序列，将其存储在本地 TSDB 中，评估 PromQL 以及 recording/alert 规则，并把告警发送给 Alertmanager。常规采集使用 HTTP 抓取（scraping）；远程写入和可选的批处理集成提供了其他投递路径。它不是事件日志、trace 存储，也不是精确的按请求计费账本。
@@ -38,6 +40,8 @@ Prometheus 是最初在 SoundCloud 开发的 CNCF 监控工具集。它采集数
 
 - [7 月 14 日的 Kubernetes exporter 文章](https://kubernetes.io/blog/2026/07/14/custom-metrics-exporter-kubernetes/) 讲解了应用埋点（instrumentation）与自定义 exporter。使用 HPA 还需要相应的 metrics API/adapter；仅靠抓取并不能把任意指标接入 HPA。
 - [7 月 21 日的 AMP 公告](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-managed-service-prometheus-1500m-metrics-workspace/) 描述了每个 workspace 最多 15 亿个活跃序列以及 200,000 条 recording/alerting 规则。这些是公布的扩展上限，并不是自动授予的默认配额或审批保证。请检查目标 workspace/账户的当前配额。
+
+<span id="architecture-and-components"></span>
 
 ## 架构与组件
 
@@ -179,6 +183,8 @@ Prometheus 3 将 `holt_winters` 更名为 `double_exponential_smoothing`。这�
 
 观测到健康流量时结果为 0，全部为 5xx 时结果为 100，分母为零时结果仍然未定义。缺失的遥测数据依旧缺失；请单独监控采集失败。
 
+<span id="discovery-and-operator-selectors"></span>
+
 ## 发现机制与 Operator 选择器
 
 ![Operator workload reconciliation and monitor/rule selection.](../../.gitbook/assets/en-observability-metrics-01-prometheus-1.png)
@@ -291,6 +297,8 @@ spec:
 - 对服务做 blackbox 探测需要安装 exporter、定义探测模块、设置合适的目标 URL/scheme，以及 `Probe`/抓取配置。`up` 描述的是对 exporter 的抓取；探测成功与否是另一个独立信号。
 - 节点发现到达的是 kubelet 端点，并不会自动指向 node-exporter。请验证服务证书、正确的 CA 以及节点指标相关的 RBAC。Kubernetes API 的 CA 并不能证明对任意节点证书的信任。
 - 使用经过审查的 namespace/service/team 标签，而不是不加限制的节点 `labelmap`。移除身份标签并不是一种聚合操作。
+
+<span id="kube-prometheus-stack-installation"></span>
 
 ## kube-prometheus-stack 安装
 
@@ -440,6 +448,8 @@ helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
 检查 CRD 是否建立、Operator 是否健康、PVC 是否绑定以及实际的抓取目标。只有在相关 CRD 建立之后，再应用所选的应用 monitor/规则。
 
 Chart 的 CRD 升级处理方式与版本相关。请阅读升级说明，不要假定普通的 Helm upgrade 就能覆盖所有 CRD 迁移。Chart 90 还将 Grafana 依赖切换到社区仓库；升级时请校验现有的认证/provisioning values，并保留数据库/PVC 备份。
+
+<span id="rules-and-alertmanager"></span>
 
 ## 规则与 Alertmanager
 
@@ -623,6 +633,8 @@ helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
 
 原生路由检查使用了接收器名称，但没有实际发送通知。Secret 获取、provider 认证以及真实的通知投递仍需要受控验证。
 
+<span id="remote-write-and-amp"></span>
+
 ## 远程写入与 AMP
 
 远程写入会异步地把样本转发给配置的后端。它不投递告警，不保证无限缓冲，也不能替代备份。请监控积压（backlog）、重试与接收端限制。除非有经过审查的聚合/丢弃策略明确了其后果，否则应保留完整的 histogram 分布。
@@ -687,6 +699,8 @@ AMP 的 HA 去重依赖 `cluster` 与 `__replica__`。Operator 的 `replicaExter
 VictoriaMetrics 单节点通常在其配置的 HTTP 端口上接受 `/api/v1/write`。集群版的 vminsert 端点使用 `/insert/<tenant>/prometheus/api/v1/write`；必须由 vmauth 或其他经批准的访问层提供预期的路由/认证。Tenant ID 不是凭据。Mimir 及其他接收端有各自的 URL、身份与 HA 契约。
 
 不要照搬那条丢弃所有亚秒级 histogram bucket 或整个控制平面延迟指标族的旧规则，除非评估过由此造成的分位数/SLO 损失。队列的默认值只是一个起点，而不是经过实测的生产最优值。
+
+<span id="performance-ha-and-troubleshooting"></span>
 
 ## 性能、HA 与故障排查
 

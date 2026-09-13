@@ -12,6 +12,8 @@
 4. [使用 Amazon EFS 的存储](04-eks-storage-part1.md#storage-with-amazon-efs)
 5. [StorageClass 与动态预配](04-eks-storage-part1.md#storage-classes-and-dynamic-provisioning)
 
+<span id="kubernetes-storage-basic-concepts"></span>
+
 ## Kubernetes 存储基本概念
 
 让我们先了解在 Kubernetes 中管理存储的关键概念。
@@ -44,6 +46,8 @@ Kubernetes 支持以下访问模式：
 * **ReadOnlyMany (ROX)**：可由多个节点以只读方式挂载
 * **ReadWriteMany (RWX)**：可由多个节点以读/写方式挂载
 * **ReadWriteOncePod (RWOP)**：只能由单个 Pod 以读/写方式挂载（Kubernetes 1.22+）
+
+<span id="amazon-eks-storage-options-overview"></span>
 
 ## Amazon EKS 存储选项概览
 
@@ -86,6 +90,8 @@ Kubernetes 支持以下访问模式：
 | FSx for Lustre     | 文件               | RWX            | 非常高                     | HPC、ML 训练、大数据                                          |
 | Amazon S3          | 对象             | API 访问     | 中                        | 备份、归档、静态内容                                     |
 | EC2 Instance Store | 块（本地 NVMe） | RWO，临时 | 非常高（超低延迟） | AI/ML 临时数据、本地缓存、高吞吐量日志处理 |
+
+<span id="storage-with-amazon-ebs"></span>
 
 ## 使用 Amazon EBS 的存储
 
@@ -209,6 +215,8 @@ Amazon EBS 提供多种 Volume 类型：
 | sc1         | Cold HDD                 | 不经常访问的数据                  |
 
 对于 EKS，建议使用 gp3 Volume 类型。gp3 在提供一致性能的同时具有良好的成本效益。
+
+<span id="storage-with-amazon-efs"></span>
 
 ## 使用 Amazon EFS 的存储
 
@@ -372,6 +380,8 @@ Amazon EFS 提供两种性能模式和三种吞吐量模式：
 * **Bursting**：默认模式，根据文件系统大小提供突增积分
 * **Provisioned**：需要一致吞吐量时使用
 * **Elastic**：根据工作负载自动调整吞吐量（推荐）
+
+<span id="storage-classes-and-dynamic-provisioning"></span>
 
 ## StorageClass 与动态预配
 

@@ -11,6 +11,8 @@
 - [GitOps en Amazon EKS](#gitops-on-amazon-eks)
 - [Primeros pasos](#getting-started)
 
+<span id="what-is-gitops"></span>
+
 ## ¿Qué es GitOps?
 
 GitOps es un marco operativo que aplica las prácticas recomendadas de DevOps para la automatización de la infraestructura, como el control de versiones, la colaboración, el cumplimiento y CI/CD, a la gestión de infraestructura. El término fue acuñado por Weaveworks en 2017 y desde entonces se ha convertido en una metodología reconocida por CNCF para el despliegue de aplicaciones cloud-native.
@@ -70,6 +72,8 @@ El proyecto OpenGitOps define GitOps mediante cuatro principios:
 3. **Extraído automáticamente**: Los agentes de software extraen automáticamente las declaraciones del estado deseado desde la fuente
 4. **Conciliado continuamente**: Los agentes de software observan continuamente el estado real del sistema e intentan aplicar el estado deseado
 
+<span id="core-principles"></span>
+
 ## Principios fundamentales
 
 ### Configuración declarativa
@@ -128,6 +132,8 @@ Los agentes de GitOps continuamente:
 
 Cuando el estado real se desvía del estado deseado (cambios manuales, fallos, etc.), los agentes de GitOps restauran automáticamente el estado correcto.
 
+<span id="push-vs-pull-model"></span>
+
 ## Modelo Push vs Pull
 
 GitOps admite dos modelos de despliegue:
@@ -176,6 +182,8 @@ En el modelo Pull de GitOps:
 - Registro de auditoría completo en Git
 - Detección y corrección automática de desviaciones
 - Funciona detrás de firewalls
+
+<span id="gitops-tools-overview"></span>
 
 ## Descripción general de las herramientas GitOps
 
@@ -233,6 +241,8 @@ Jenkins X proporciona CI/CD para aplicaciones cloud-native en Kubernetes.
 | Uso de recursos | Medio | Bajo | Alto |
 | Estado en CNCF | Graduado | Graduado | Sandbox |
 
+<span id="tool-selection-guide"></span>
+
 ## Guía de selección de herramientas
 
 ### Elige ArgoCD cuando:
@@ -279,6 +289,8 @@ flowchart TD
     class FLUX flux
     class BOTH both
 ```
+
+<span id="gitops-on-amazon-eks"></span>
 
 ## GitOps en Amazon EKS
 
@@ -363,6 +375,8 @@ GitOps puede gestionar recursos de AWS mediante:
     ├── monitoring/              # Observability stack
     └── security/                # Security policies
 ```
+
+<span id="getting-started"></span>
 
 ## Primeros pasos
 

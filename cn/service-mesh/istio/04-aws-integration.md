@@ -9,6 +9,8 @@
 3. [EKS 专属优化](04-aws-integration.md#eks-specific-optimization)
 4. [最佳实践](04-aws-integration.md#best-practices)
 
+<span id="aws-load-balancer-integration"></span>
+
 ## AWS 负载均衡器集成
 
 Istio Ingress Gateway 可与 AWS Load Balancer 集成以处理外部流量。
@@ -349,6 +351,8 @@ spec:
 | **gRPC**            | 原生支持                         | 需要 HTTP/2                          |
 | **推荐用途** | 高性能、WebSocket、gRPC      | HTTP 路由、WAF、身份验证        |
 
+<span id="istio-vs-other-solutions-comparison"></span>
+
 ## Istio 与其他解决方案对比
 
 ### Istio 与 VPC Lattice
@@ -609,6 +613,8 @@ Cilium 是使用 eBPF 的 Kubernetes 网络和安全解决方案。
 
 * 可以使用 Cilium 作为 CNI，Istio 作为 Service Mesh
 * 但应考虑功能重叠和增加的复杂性
+
+<span id="eks-specific-optimization"></span>
 
 ## EKS 专属优化
 
@@ -914,6 +920,8 @@ spec:
     matchLabels:
       app: istio-ingressgateway
 ```
+
+<span id="best-practices"></span>
 
 ## 最佳实践
 

@@ -22,6 +22,8 @@ PSS define políticas; PSA es la implementación de admisión integrada que las 
 
 ---
 
+<span id="evolution-from-psp-to-pss"></span>
+
 ## Evolución de PSP a PSS
 
 ### Historia de PodSecurityPolicy (PSP)
@@ -65,6 +67,8 @@ Los Estándares de seguridad de Pod (PSS) y Pod Security Admission (PSA) se intr
 
 ---
 
+<span id="pod-security-admission-psa-controller"></span>
+
 ## Controlador de Pod Security Admission (PSA)
 
 ### Arquitectura de PSA
@@ -96,6 +100,8 @@ kubectl --context "$PSS_CONTEXT" get --raw /metrics
 Utilice los controles de dry-run de Pod positivo/negativo que aparecen abajo para probar la ruta de admisión real. Nunca infiera cumplimiento únicamente a partir de un dry-run correcto de Deployment.
 
 ---
+
+<span id="security-levels"></span>
 
 ## Niveles de seguridad
 
@@ -265,6 +271,8 @@ Los controles se aplican a los contenedores regulares, init y efímeros aplicabl
 
 ---
 
+<span id="enforcement-modes"></span>
+
 ## Modos de aplicación
 
 PSA proporciona tres modos de aplicación. Estos modos se pueden utilizar de forma independiente o conjunta.
@@ -417,6 +425,8 @@ metadata:
 
 ---
 
+<span id="namespace-level-configuration"></span>
+
 ## Configuración a nivel de Namespace
 
 ### Configuración básica de etiquetas
@@ -508,6 +518,8 @@ kubectl get namespace my-namespace -o yaml | grep pod-security
 ```
 
 ---
+
+<span id="migration-from-psp-to-pss"></span>
 
 ## Migración de PSP a PSS
 
@@ -697,6 +709,8 @@ subprocess.run(base + [
 
 ---
 
+<span id="eks-defaults-and-configuration"></span>
+
 ## Valores predeterminados y configuración de EKS
 
 ### Configuración predeterminada de PSA en EKS
@@ -777,6 +791,8 @@ resource "kubernetes_namespace_v1" "app" {
 ```
 
 ---
+
+<span id="security-profile-details"></span>
 
 ## Detalles de perfiles de seguridad
 
@@ -1009,6 +1025,8 @@ data:
 
 ---
 
+<span id="exemptions-configuration"></span>
+
 ## Configuración de exenciones
 
 ### Configuración de exenciones a nivel de clúster
@@ -1075,6 +1093,8 @@ Kyverno no puede convertir una denegación de PSA en una autorización. Si un ag
 Consulte [gestión de políticas de Kyverno](./01-kyverno-policy-management.md) para las API de políticas revisadas y los límites de versión/deprecación. No copie una `ClusterPolicy` heredada con `validationFailureAction: enforce` en minúsculas; no es un valor válido y ClusterPolicy está deprecada en Kyverno 1.19. Un reemplazo debe probarse tanto con las cargas de trabajo normales como con las de excepción.
 
 ---
+
+<span id="best-practices-for-gradual-adoption"></span>
 
 ## Prácticas recomendadas para la adopción gradual
 

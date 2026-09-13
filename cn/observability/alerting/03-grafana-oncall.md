@@ -19,6 +19,8 @@
 
 ---
 
+<span id="grafana-oncall-overview"></span>
+
 ## Grafana OnCall 概述
 
 Grafana OnCall 是一款开源值班管理工具，提供告警路由、值班计划管理和升级策略。它可通过 Grafana Cloud 以 SaaS 形式使用，也可自行托管。
@@ -46,6 +48,8 @@ Grafana OnCall 是一款开源值班管理工具，提供告警路由、值班�
 | **企业支持** | 付费 | 包含 | 包含 |
 
 ---
+
+<span id="architecture"></span>
 
 ## 架构
 
@@ -148,6 +152,8 @@ sequenceDiagram
 ```
 
 ---
+
+<span id="installation"></span>
 
 ## 安装
 
@@ -366,6 +372,8 @@ kubectl create secret generic twilio-secret \
 
 ---
 
+<span id="integration-setup"></span>
+
 ## 集成设置
 
 ### Alertmanager 集成
@@ -458,6 +466,8 @@ response = requests.post(
 ```
 
 ---
+
+<span id="on-call-schedule-configuration"></span>
 
 ## 值班计划配置
 
@@ -590,6 +600,8 @@ curl -X POST https://oncall.example.com/api/v1/schedules/<schedule-id>/overrides
 ```
 
 ---
+
+<span id="escalation-chains"></span>
 
 ## 升级链
 
@@ -753,6 +765,8 @@ warning-chain:
 
 ---
 
+<span id="alert-grouping-and-routing"></span>
+
 ## 告警分组与路由
 
 ### 路由设置
@@ -840,6 +854,8 @@ templates:
 ```
 
 ---
+
+<span id="chatops-integration"></span>
 
 ## ChatOps 集成
 
@@ -955,6 +971,8 @@ telegram:
 
 ---
 
+<span id="grafana-irm-integration"></span>
+
 ## Grafana IRM 集成
 
 ### 事件响应管理
@@ -1002,6 +1020,8 @@ escalation-policy:
 ```
 
 ---
+
+<span id="mobile-app"></span>
 
 ## 移动应用
 
@@ -1063,6 +1083,8 @@ graph TB
 ```
 
 ---
+
+<span id="pagerdutyopsgenie-comparison"></span>
 
 ## PagerDuty/OpsGenie 对比
 
@@ -1143,6 +1165,8 @@ migration-checklist:
 ```
 
 ---
+
+<span id="best-practices"></span>
 
 ## 最佳实践
 

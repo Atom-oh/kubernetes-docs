@@ -20,6 +20,8 @@ Kubernetes Network Policies 是控制 Pod（容器组）之间流量的防火墙
 
 ---
 
+<span id="network-policy-overview"></span>
+
 ## Network Policy 概述
 
 ### 什么是 Network Policy？
@@ -75,6 +77,8 @@ Network Policies 在 Kubernetes 中充当 Pod 级防火墙。默认情况下，K
 | **Amazon VPC CNI** | ✗（需要单独安装） | Security Groups for Pods | ✗ |
 
 ---
+
+<span id="kubernetes-networkpolicy-spec"></span>
 
 ## Kubernetes NetworkPolicy 规范
 
@@ -286,6 +290,8 @@ spec:
 
 ---
 
+<span id="default-deny-policies"></span>
+
 ## 默认拒绝策略
 
 ### 默认拒绝 Ingress
@@ -424,6 +430,8 @@ spec:
 
 ---
 
+<span id="policy-order-and-evaluation"></span>
+
 ## 策略顺序与评估
 
 ### 策略评估规则
@@ -537,6 +545,8 @@ NetworkPolicy 没有优先级概念。所有策略都被同等对待：
 ```
 
 ---
+
+<span id="cilium-network-policy-extensions"></span>
 
 ## Cilium Network Policy 扩展
 
@@ -774,6 +784,8 @@ spec:
 
 ---
 
+<span id="calico-network-policy-extensions"></span>
+
 ## Calico Network Policy 扩展
 
 ### Calico NetworkPolicy
@@ -974,6 +986,8 @@ spec:
 ```
 
 ---
+
+<span id="design-patterns"></span>
 
 ## 设计模式
 
@@ -1309,6 +1323,8 @@ spec:
 
 ---
 
+<span id="testing-network-policies"></span>
+
 ## 测试 Network Policies
 
 ### 使用 netshoot 测试
@@ -1398,6 +1414,8 @@ kubectl delete pod test-pod --force --grace-period=0
 ```
 
 ---
+
+<span id="eks-considerations"></span>
 
 ## EKS 注意事项
 
@@ -1598,6 +1616,8 @@ helm install cilium cilium/cilium --version 1.15.0 \
 ```
 
 ---
+
+<span id="visualization-tools"></span>
 
 ## 可视化工具
 

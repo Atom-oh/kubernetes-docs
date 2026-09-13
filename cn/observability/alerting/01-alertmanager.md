@@ -21,6 +21,8 @@
 
 ---
 
+<span id="alertmanager-overview"></span>
+
 ## Alertmanager 概述
 
 Prometheus Alertmanager 是一个处理 Prometheus server 发送告警的组件。它提供告警去重、分组、路由、抑制和静默等功能。
@@ -56,6 +58,8 @@ sequenceDiagram
 ```
 
 ---
+
+<span id="architecture"></span>
 
 ## 架构
 
@@ -114,6 +118,8 @@ graph TB
 | **nflog** | 记录已发送的告警（用于去重） |
 
 ---
+
+<span id="installation-and-configuration"></span>
 
 ## 安装与配置
 
@@ -225,6 +231,8 @@ data:
 
 ---
 
+<span id="defining-alert-rules"></span>
+
 ## 定义告警规则
 
 ### PrometheusRule CRD
@@ -311,6 +319,8 @@ stateDiagram-v2
 ```
 
 ---
+
+<span id="routing-configuration"></span>
 
 ## 路由配置
 
@@ -438,6 +448,8 @@ time_intervals:
 ```
 
 ---
+
+<span id="receiver-configuration"></span>
 
 ## 接收器配置
 
@@ -587,6 +599,8 @@ receivers:
 
 ---
 
+<span id="inhibition-rules"></span>
+
 ## 抑制规则
 
 ### 抑制概念
@@ -676,6 +690,8 @@ inhibit_rules:
 
 ---
 
+<span id="silencing"></span>
+
 ## 静默
 
 ### 创建静默
@@ -754,6 +770,8 @@ graph TB
 4. **设置通知**：在静默过期前发出告警
 
 ---
+
+<span id="template-customization"></span>
 
 ## 模板自定义
 
@@ -846,6 +864,8 @@ data:
 ```
 
 ---
+
+<span id="high-availability-configuration"></span>
 
 ## 高可用配置
 
@@ -1063,6 +1083,8 @@ spec:
 ```
 
 ---
+
+<span id="production-alert-rule-examples"></span>
 
 ## 生产环境告警规则示例
 
@@ -1307,6 +1329,8 @@ spec:
 ```
 
 ---
+
+<span id="troubleshooting"></span>
 
 ## 故障排查
 

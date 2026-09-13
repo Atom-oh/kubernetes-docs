@@ -207,7 +207,7 @@ On-premises node
 | SSM          | `com.amazonaws.<region>.ssm`         | Yes         | SSM credential provider 使用時                       |
 | SSM Messages | `com.amazonaws.<region>.ssmmessages` | Yes         | SSM Session Manager 通信                             |
 
-> **注記**: S3 Interface endpoint は `private_dns_enabled` を自動的にはサポートしません。S3 ドメインに対してプライベート DNS 解決が必要な場合、別途 Private Hosted Zone (PHZ) を設定する必要があります。`hybrid-assets.eks.amazonaws.com` のプライベートミラーリングパターンについては、[Air-Gap セットアップ - hybrid-assets Private Mirroring](03-airgap-setup.md#hybrid-assets-private-mirroring-s3--phz-pattern) を参照してください。
+> **注記**: S3 Interface endpoint は `private_dns_enabled` を自動的にはサポートしません。S3 ドメインに対してプライベート DNS 解決が必要な場合、別途 Private Hosted Zone (PHZ) を設定する必要があります。`hybrid-assets.eks.amazonaws.com` のプライベートミラーリングパターンについては、[Air-Gap セットアップ - hybrid-assets Private Mirroring (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/03-airgap-setup#dns-and-private-endpoint-requirements) を参照してください。
 
 ### Terraform による VPC Endpoint の作成
 
@@ -452,6 +452,8 @@ sudo iptables -A OUTPUT -d 172.20.0.0/16 -j ACCEPT
 
 ***
 
+<span id="dns-configuration"></span>
+
 ## DNS 設定
 
 ### Route 53 Resolver Inbound Endpoint
@@ -677,7 +679,7 @@ API server は Hybrid Nodes 上で実行される webhook pods への直接接�
 
 ### パターン 5: Hybrid Nodes 上の Pod ↔ Pod
 
-異なる Hybrid Nodes 上の Pods は、[VXLAN encapsulation](../networking/cilium/03-networking.md#vxlan-technology-deep-dive)（または Geneve、IP-in-IP などの類似した overlay protocol）を使用して通信します。CNI は、送信元/宛先 node IP を使用する外側のヘッダーで、元の pod-to-pod パケットをカプセル化します。受信 node の CNI はカプセル化を解除して宛先 pod に配信します。
+異なる Hybrid Nodes 上の Pods は、[VXLAN encapsulation (English)](https://www.atomai.click/kubernetes-docs/en/networking/cilium/03-networking#vxlan-technology-deep-dive)（または Geneve、IP-in-IP などの類似した overlay protocol）を使用して通信します。CNI は、送信元/宛先 node IP を使用する外側のヘッダーで、元の pod-to-pod パケットをカプセル化します。受信 node の CNI はカプセル化を解除して宛先 pod に配信します。
 
 ![Hybrid Nodes 上の Pod から Pod](../.gitbook/assets/hybrid-nodes-pod-to-pod.svg)
 
@@ -1053,7 +1055,7 @@ hybrid-node-002     10.80.1.11    10.85.0.128/25
 hybrid-node-003     10.80.1.12    10.85.1.0/25
 ```
 
-> CiliumNode CR 構造、scripting での使用方法、詳細については、[Cilium IPAM — CiliumNode CR による Node ごとの PodCIDR のクエリ](../networking/cilium/04-ipam-policy.md#querying-per-node-podcidrs-via-ciliumnode-cr) を参照してください。
+> CiliumNode CR 構造、scripting での使用方法、詳細については、[Cilium IPAM — CiliumNode CR による Node ごとの PodCIDR のクエリ (English)](https://www.atomai.click/kubernetes-docs/en/networking/cilium/04-ipam-policy#querying-per-node-podcidrs-via-ciliumnode-cr) を参照してください。
 
 **Calico** — `BlockAffinity` CR が node ごとの CIDR block を追跡します。
 
@@ -1064,7 +1066,7 @@ CIDR:.spec.cidr,\
 NODE:.spec.node'
 ```
 
-> **⚠ 非推奨**: Calico は EKS Hybrid Nodes で正式にはサポートされなくなりました。新しい Deployment には Cilium を使用してください。BlockAffinity の詳細なクエリについては、[Calico Advanced Topics — BlockAffinity による Node ごとの PodCIDR のクエリ](../networking/calico/07-advanced-topics.md#querying-per-node-podcidrs-via-blockaffinity) を参照してください。
+> **⚠ 非推奨**: Calico は EKS Hybrid Nodes で正式にはサポートされなくなりました。新しい Deployment には Cilium を使用してください。BlockAffinity の詳細なクエリについては、[Calico Advanced Topics — BlockAffinity による Node ごとの PodCIDR のクエリ (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/07-advanced-topics#inspect-node-affine-cidr-blocks) を参照してください。
 
 #### 静的ルートの設定
 
@@ -1166,7 +1168,7 @@ ip route add 10.85.1.0/25 via 10.80.1.12
 > **推奨**:
 >
 > * **PoC / 小規模環境**（1～5 nodes）: 静的ルートにより迅速に開始できます
-> * **本番環境 / 5+ nodes**: [BGP（オプション 1）](02-network-configuration.md#option-1-bgp-recommended) を使用してください。node の変更に自動的に対応し、運用オーバーヘッドを大幅に削減します
+> * **本番環境 / 5+ nodes**: [BGP（オプション 1） (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/02-network-configuration#option-1-bgp-recommended) を使用してください。node の変更に自動的に対応し、運用オーバーヘッドを大幅に削減します
 > * **ポリシーにより BGP が許可されない環境**: 上記の自動化スクリプトと静的ルートを使用してルート変更を管理してください
 
 ### オプション 3: ARP Proxying
@@ -1296,6 +1298,8 @@ spec:
 > **推奨**: Hybrid 環境では、意図しない境界をまたぐトラフィックを防ぐために明示的な network policy を定義してください。機密性の高い workload は、厳格な Ingress/Egress policy で保護する必要があります。
 
 ***
+
+<span id="webhook-configuration"></span>
 
 ## Webhook 設定
 

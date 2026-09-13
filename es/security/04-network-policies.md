@@ -20,6 +20,8 @@ Las Network Policies de Kubernetes son reglas de firewall que controlan el tráf
 
 ---
 
+<span id="network-policy-overview"></span>
+
 ## Descripción general de Network Policy
 
 ### ¿Qué es una Network Policy?
@@ -75,6 +77,8 @@ Las Network Policies actúan como firewalls a nivel de Pod en Kubernetes. De for
 | **Amazon VPC CNI** | ✗ (requiere instalación separada) | Security Groups for Pods | ✗ |
 
 ---
+
+<span id="kubernetes-networkpolicy-spec"></span>
 
 ## Especificación NetworkPolicy de Kubernetes
 
@@ -286,6 +290,8 @@ spec:
 
 ---
 
+<span id="default-deny-policies"></span>
+
 ## Políticas de denegación predeterminada
 
 ### Denegación predeterminada de Ingress
@@ -424,6 +430,8 @@ spec:
 
 ---
 
+<span id="policy-order-and-evaluation"></span>
+
 ## Orden y evaluación de políticas
 
 ### Reglas de evaluación de políticas
@@ -537,6 +545,8 @@ NetworkPolicy no tiene concepto de prioridad. Todas las políticas se tratan por
 ```
 
 ---
+
+<span id="cilium-network-policy-extensions"></span>
 
 ## Extensiones de Cilium Network Policy
 
@@ -774,6 +784,8 @@ spec:
 
 ---
 
+<span id="calico-network-policy-extensions"></span>
+
 ## Extensiones de Calico Network Policy
 
 ### Calico NetworkPolicy
@@ -974,6 +986,8 @@ spec:
 ```
 
 ---
+
+<span id="design-patterns"></span>
 
 ## Patrones de diseño
 
@@ -1309,6 +1323,8 @@ spec:
 
 ---
 
+<span id="testing-network-policies"></span>
+
 ## Pruebas de Network Policies
 
 ### Pruebas con netshoot
@@ -1398,6 +1414,8 @@ kubectl delete pod test-pod --force --grace-period=0
 ```
 
 ---
+
+<span id="eks-considerations"></span>
 
 ## Consideraciones de EKS
 
@@ -1598,6 +1616,8 @@ helm install cilium cilium/cilium --version 1.15.0 \
 ```
 
 ---
+
+<span id="visualization-tools"></span>
 
 ## Herramientas de visualización
 

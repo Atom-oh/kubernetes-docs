@@ -16,6 +16,8 @@ EnvoyFilter es una funcionalidad avanzada que permite personalizar directamente 
 7. [Prácticas recomendadas](#best-practices)
 8. [Resolución de problemas](#troubleshooting)
 
+<span id="overview"></span>
+
 ## Descripción general
 
 Con EnvoyFilter puedes:
@@ -23,6 +25,8 @@ Con EnvoyFilter puedes:
 - Limitación de tasa
 - Autorización externa
 - Integración de plugins WASM
+
+<span id="structure"></span>
 
 ## Estructura
 
@@ -55,6 +59,8 @@ spec:
               request_handle:headers():add("x-custom-header", "value")
             end
 ```
+
+<span id="main-use-cases"></span>
 
 ## Principales casos de uso
 
@@ -142,6 +148,8 @@ spec:
                 local:
                   filename: "/var/local/lib/wasm-filters/my_plugin.wasm"
 ```
+
+<span id="x-forwarded-for-and-hop-settings"></span>
 
 ## Configuración de X-Forwarded-For y saltos
 
@@ -1281,6 +1289,8 @@ spec:
    - Evita la suplantación de XFF en el perímetro
    - Ignora XFF de fuentes no confiables
 
+<span id="static-response-configuration"></span>
+
 ## Configuración de respuestas estáticas
 
 Puedes devolver respuestas estáticas directamente, sin pasar por Services de backend, para solicitudes específicas. Esto es útil para el modo de mantenimiento, páginas de error, respuestas de health check, etc.
@@ -1559,7 +1569,7 @@ spec:
         - "198.51.100.0/24"
 ```
 
-**Importante**: para que `remoteIpBlocks` funcione, `xff_num_trusted_hops` debe configurarse correctamente en Gateway (consulta [Configuración de XFF](#xff-configuration-options) arriba).
+**Importante**: para que `remoteIpBlocks` funcione, `xff_num_trusted_hops` debe configurarse correctamente en Gateway (consulta [Configuración de XFF (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/03-envoy-filter#xff-configuration-options) arriba).
 
 #### 4. Respuesta de denegación personalizada
 
@@ -2196,6 +2206,8 @@ curl http://localhost:15000/config_dump | jq '.configs[] | select(.["@type"] == 
 4. **Caché**: las respuestas estáticas también necesitan configuración del encabezado `Cache-Control`
 5. **Métricas**: las respuestas estáticas generan métricas diferentes de las respuestas normales
 
+<span id="practical-examples"></span>
+
 ## Ejemplos prácticos
 
 ### Ejemplo 1: registro de solicitudes/respuestas
@@ -2262,12 +2274,16 @@ spec:
                   timeout: 5s
 ```
 
+<span id="best-practices"></span>
+
 ## Prácticas recomendadas
 
 1. **Usa workloadSelector**: aplícalo solo a workloads específicos
 2. **Primero el entorno de prueba**: realiza pruebas suficientes antes de producción
 3. **Compatibilidad de versiones de Istio**: comprueba la API para cada versión
 4. **Monitoreo del rendimiento**: supervisa el rendimiento después de agregar EnvoyFilter
+
+<span id="troubleshooting"></span>
 
 ## Resolución de problemas
 

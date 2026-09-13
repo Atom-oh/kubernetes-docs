@@ -13,6 +13,8 @@
 - [忽略差异](#ignore-differences)
 - [App of Apps 模式](#app-of-apps-pattern)
 
+<span id="application-crd-overview"></span>
+
 ## Application CRD 概览
 
 Application CRD 是 ArgoCD 中的核心资源，用于定义如何以及在何处部署应用程序。它将源代码仓库连接到目标 Kubernetes 集群。
@@ -87,6 +89,8 @@ spec:
 | `ignoreDifferences` | 比较时要忽略的字段 |
 | `info` | 用于显示的自定义元数据 |
 | `revisionHistoryLimit` | 要保留的部署修订版本数量 |
+
+<span id="source-types"></span>
 
 ## 源类型
 
@@ -312,6 +316,8 @@ spec:
     namespace: production
 ```
 
+<span id="multiple-sources"></span>
+
 ## 多个源
 
 ArgoCD v2.6+ 支持在单个应用程序中使用多个源，从而实现复杂的部署场景。
@@ -380,6 +386,8 @@ spec:
     namespace: observability
 ```
 
+<span id="destination-configuration"></span>
+
 ## 目标配置
 
 ### 使用服务器 URL
@@ -405,6 +413,8 @@ syncPolicy:
   syncOptions:
     - CreateNamespace=true
 ```
+
+<span id="health-assessment"></span>
 
 ## 健康状态评估
 
@@ -501,6 +511,8 @@ resource.customizations.health.s3.services.k8s.aws_Bucket: |
   end
   return hs
 ```
+
+<span id="resource-hooks"></span>
 
 ## 资源 Hook
 
@@ -618,6 +630,8 @@ spec:
               exit 1
 ```
 
+<span id="ignore-differences"></span>
+
 ## 忽略差异
 
 将 ArgoCD 配置为在比较期间忽略特定差异。
@@ -686,6 +700,8 @@ data:
     jsonPointers:
       - /metadata/annotations/kubectl.kubernetes.io~1last-applied-configuration
 ```
+
+<span id="app-of-apps-pattern"></span>
 
 ## App of Apps 模式
 

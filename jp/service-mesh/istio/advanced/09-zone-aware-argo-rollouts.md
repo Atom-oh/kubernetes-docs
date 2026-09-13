@@ -14,6 +14,8 @@
 6. [トラブルシューティング](09-zone-aware-argo-rollouts.md#troubleshooting)
 7. [ベストプラクティス](09-zone-aware-argo-rollouts.md#best-practices)
 
+<span id="problem-definition"></span>
+
 ## 問題の定義
 
 ### 実運用のユースケース: Spot Instance 環境における PDB 管理
@@ -147,6 +149,8 @@ spec:
 
 **重要**: Argo Rollouts は、指定された Route 名の **destinations 配列全体を管理します**。したがって、複数の Rollout が同じ Route 名を参照すると、各 Rollout が互いの設定を上書きします。subset の設定が異なる場合でも競合が発生します。
 
+<span id="architecture-overview"></span>
+
 ## アーキテクチャの概要
 
 ### 全体構成
@@ -217,6 +221,8 @@ flowchart TB
 3. **subset ベースの分離**: 各 Rollout は固有の subset ペア（stable-a/canary-a など）を管理します
 4. **locality-aware DestinationRule**: Zone 内ルーティングとフェイルオーバーを自動化します
 
+<span id="key-design-decisions"></span>
+
 ## 主要な設計判断
 
 ### 1. 単一の VirtualService + Zone 固有 Route の分離
@@ -279,6 +285,8 @@ curl http://test.default.svc.cluster.local:8080
 
 # Istio automatically routes to zone-local endpoint
 ```
+
+<span id="implementation-guide"></span>
 
 ## 実装ガイド
 
@@ -732,6 +740,8 @@ spec:
       - pause: {duration: 5m}
 ```
 
+<span id="traffic-flow"></span>
+
 ## トラフィックフロー
 
 ### 通常状態（Zone 内トラフィック）
@@ -832,6 +842,8 @@ sequenceDiagram
     Note over VS: Argo Rollouts<br/>gradually changes weight<br/>10 -> 20 -> 50 -> 80 -> 100
 ```
 
+<span id="troubleshooting"></span>
+
 ## トラブルシューティング
 
 ### 1. VirtualService 競合エラー
@@ -926,6 +938,8 @@ kubectl exec <pod-name> -c istio-proxy -- curl localhost:15000/clusters | grep o
 # 5. Check Argo Rollouts logs
 kubectl logs -n argo-rollouts deployment/argo-rollouts
 ```
+
+<span id="best-practices"></span>
 
 ## ベストプラクティス
 

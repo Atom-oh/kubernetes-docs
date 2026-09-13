@@ -10,6 +10,8 @@ Istio 支持服务到服务身份验证（Peer Authentication）和最终用户�
 4. [实践示例](#practical-examples)
 5. [故障排除](#troubleshooting)
 
+<span id="authentication-overview"></span>
+
 ## 身份验证概述
 
 <p align="center">
@@ -63,6 +65,8 @@ flowchart TB
     class App app;
 ```
 
+<span id="request-authentication-jwt"></span>
+
 ## 请求身份验证 (JWT)
 
 ### 基本 JWT 验证
@@ -115,6 +119,8 @@ spec:
       prefix: "Bearer "
 ```
 
+<span id="oauthoidc-integration"></span>
+
 ## OAuth/OIDC 集成
 
 ### AWS Cognito
@@ -161,6 +167,8 @@ spec:
     - "https://your-api.example.com"
 ```
 
+<span id="practical-examples"></span>
+
 ## 实践示例
 
 ### JWT 验证 + 授权
@@ -196,6 +204,8 @@ spec:
     - source:
         notRequestPrincipals: ["*"]
 ```
+
+<span id="troubleshooting"></span>
 
 ## 故障排除
 

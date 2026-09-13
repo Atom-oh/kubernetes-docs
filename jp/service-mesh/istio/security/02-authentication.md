@@ -10,6 +10,8 @@ Istio はサービス間認証（Peer Authentication）とエンドユーザー�
 4. [実践例](#practical-examples)
 5. [トラブルシューティング](#troubleshooting)
 
+<span id="authentication-overview"></span>
+
 ## 認証の概要
 
 <p align="center">
@@ -115,6 +117,8 @@ spec:
       prefix: "Bearer "
 ```
 
+<span id="oauthoidc-integration"></span>
+
 ## OAuth/OIDC 統合
 
 ### AWS Cognito
@@ -161,6 +165,8 @@ spec:
     - "https://your-api.example.com"
 ```
 
+<span id="practical-examples"></span>
+
 ## 実践例
 
 ### JWT Verification + Authorization
@@ -196,6 +202,8 @@ spec:
     - source:
         notRequestPrincipals: ["*"]
 ```
+
+<span id="troubleshooting"></span>
 
 ## トラブルシューティング
 

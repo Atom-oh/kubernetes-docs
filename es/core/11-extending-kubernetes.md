@@ -20,6 +20,8 @@ Kubernetes es una plataforma diseñada pensando en la extensibilidad, lo que per
 12. [Prácticas recomendadas](#best-practices)
 13. [Conclusión](#conclusion)
 
+<span id="kubernetes-extension-overview"></span>
+
 ## Descripción general de las extensiones de Kubernetes
 
 Kubernetes ofrece diversos puntos de extensión para ampliar y personalizar su funcionalidad base. Los principales puntos de extensión son:
@@ -49,6 +51,8 @@ Consideraciones al elegir un método de extensión apropiado:
 3. **Impacto en el rendimiento**: Impacto de la extensión en el rendimiento del clúster
 4. **Compatibilidad de actualización**: Compatibilidad con las actualizaciones de versión de Kubernetes
 5. **Soporte de la comunidad**: Nivel de soporte de la comunidad para el método de extensión
+
+<span id="custom-resources"></span>
 
 ## Recursos personalizados
 
@@ -202,6 +206,8 @@ spec:
       - v1
 ```
 
+<span id="operator-pattern"></span>
+
 ## Patrón Operator
 
 El patrón Operator es una forma de automatizar el conocimiento operativo de aplicaciones complejas mediante la combinación de recursos personalizados y controladores.
@@ -334,6 +340,8 @@ Operators populares de código abierto:
 5. **Jaeger Operator**: Administra el sistema de rastreo distribuido Jaeger
 6. **Strimzi Kafka Operator**: Administra clústeres de Apache Kafka
 7. **Istio Operator**: Administra la malla de servicios Istio
+<span id="admission-controllers"></span>
+
 ## Controladores de admisión
 
 Los controladores de admisión son plugins que interceptan las solicitudes al API server de Kubernetes y las modifican o validan.
@@ -535,6 +543,8 @@ func validateHandler(w http.ResponseWriter, r *http.Request) {
 3. **Istio**: Inyección de sidecar de malla de servicios
 4. **cert-manager**: Administración de certificados TLS
 
+<span id="api-server-extensions"></span>
+
 ## Extensiones de API Server
 
 Las extensiones de API server son una forma de añadir nuevos endpoints al API server de Kubernetes.
@@ -632,6 +642,8 @@ La capa de agregación hace que varios servidores de API aparezcan como un únic
           |                       |               |                         |
           +-----------------------+               +-------------------------+
 ```
+
+<span id="scheduler-extensions"></span>
 
 ## Extensiones del programador
 
@@ -1159,6 +1171,8 @@ Ejemplo de instalación del plugin CNI Calico:
 kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
 ```
 
+<span id="device-plugins"></span>
+
 ## Plugins de dispositivo
 
 Los plugins de dispositivo proporcionan una interfaz entre Kubernetes y hardware especial.
@@ -1260,6 +1274,8 @@ spec:
 3. **FPGA Device Plugin**: Administración de dispositivos FPGA
 4. **InfiniBand Device Plugin**: Administración de dispositivos InfiniBand
 5. **SR-IOV Network Device Plugin**: Administración de dispositivos de red SR-IOV
+
+<span id="extension-features-in-amazon-eks"></span>
 
 ## Características de extensión en Amazon EKS
 
@@ -1385,6 +1401,8 @@ spec:
     - "3600"
 EOF
 ```
+
+<span id="best-practices"></span>
 
 ## Prácticas recomendadas
 

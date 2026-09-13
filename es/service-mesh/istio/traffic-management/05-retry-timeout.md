@@ -13,6 +13,8 @@ El reintento y el tiempo de espera son mecanismos fundamentales para mejorar la 
 7. [Prácticas recomendadas](#prácticas-recomendadas)
 8. [Solución de problemas](#solución-de-problemas)
 
+<span id="descripción-general"></span>
+
 ## Descripción general
 
 ### ¿Por qué tiempo de espera y reintento?
@@ -20,6 +22,8 @@ El reintento y el tiempo de espera son mecanismos fundamentales para mejorar la 
 ![Sin tiempo de espera/reintento, el cliente espera indefinidamente a un Service que no responde y desperdicia recursos; con el tiempo de espera/reintento de Istio, se detiene después de 1 s, reintenta en otra instancia y tiene éxito.](../../../.gitbook/assets/en-service-mesh-istio-traffic-management-05-retry-timeout-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-traffic-management-05-retry-timeout-0.html)
+
+<span id="configuración-de-tiempo-de-espera"></span>
 
 ## Configuración de tiempo de espera
 
@@ -78,6 +82,8 @@ spec:
         host: api-service
     timeout: 30s
 ```
+
+<span id="configuración-de-reintentos"></span>
 
 ## Configuración de reintentos
 
@@ -155,6 +161,8 @@ spec:
       attempts: 0
 ```
 
+<span id="combinación-de-reintentos-y-tiempo-de-espera"></span>
+
 ## Combinación de reintentos y tiempo de espera
 
 ### Tiempos de espera en capas
@@ -218,6 +226,8 @@ spec:
 ```
 
 Desactive de forma predeterminada los reintentos de la malla para POST/PATCH y cualquier operación que el dominio defina como escritura. No deduzca que PUT o DELETE son seguros simplemente por el método HTTP: reinténtelos solo cuando el contrato real de la aplicación haga segura la ejecución repetida.
+
+<span id="ejemplos-prácticos"></span>
 
 ## Ejemplos prácticos
 
@@ -608,6 +618,8 @@ spec:
 3. **PUT/DELETE**: Use Istio Retry solo cuando se garantice la idempotencia
 4. **Operaciones críticas (pago/inventario/puntos)**: Deben tener validación en el nivel de la aplicación + Idempotency Key
 
+<span id="prácticas-recomendadas"></span>
+
 ## Prácticas recomendadas
 
 ### 1. Guía de configuración de tiempo de espera
@@ -725,6 +737,8 @@ spec:
 
 # Each layer should consider downstream timeout + overhead
 ```
+
+<span id="solución-de-problemas"></span>
 
 ## Solución de problemas
 

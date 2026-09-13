@@ -19,6 +19,8 @@ Este documento cubre habilidades esenciales de operaciones en Linux para trabaja
 
 ***
 
+<span id="1-environment-variables-and-shell-configuration"></span>
+
 ## 1. Environment Variables and Shell Configuration
 
 Las variables de entorno son el mecanismo central para gestionar la configuración en Linux y Kubernetes.
@@ -90,6 +92,8 @@ spec:
 
 ***
 
+<span id="2-shell-scripting-basics"></span>
+
 ## 2. Shell Scripting Basics
 
 ### 2.1 Variables
@@ -156,6 +160,8 @@ spec:
 
 ***
 
+<span id="3-text-processing-tools"></span>
+
 ## 3. Text Processing Tools
 
 ### 3.1 grep with kubectl
@@ -194,6 +200,8 @@ yq -i '.spec.replicas = 5' deployment.yaml
 
 ***
 
+<span id="4-ssh-and-remote-access"></span>
+
 ## 4. SSH and Remote Access
 
 ### 4.1 SSH Key Generation
@@ -222,6 +230,8 @@ rsync -avzP ./local/ user@remote:/path/
 ```
 
 ***
+
+<span id="5-performance-monitoring-and-troubleshooting"></span>
 
 ## 5. Performance Monitoring and Troubleshooting
 
@@ -253,6 +263,8 @@ kubectl top pods --sort-by=memory
 ```
 
 ***
+
+<span id="6-storage-management-basics"></span>
 
 ## 6. Storage Management Basics
 
@@ -288,6 +300,8 @@ spec:
 
 ***
 
+<span id="7-curl-and-api-calls"></span>
+
 ## 7. curl and API Calls
 
 ### 7.1 HTTP Methods
@@ -311,6 +325,8 @@ curl -s -o /dev/null -w "%{http_code}" https://api.example.com/health
 ```
 
 ***
+
+<span id="8-practical-one-liners-collection"></span>
 
 ## 8. Practical One-Liners Collection
 

@@ -17,6 +17,8 @@
 - [最佳实践](#best-practices)
 - [故障排除](#troubleshooting)
 
+<span id="introduction"></span>
+
 ## 简介
 
 Grafana Mimir 是由 Grafana Labs 开发的开源、可水平扩展的长期指标存储系统。作为 Prometheus 指标的企业级存储，它利用对象存储提供多租户、高可用性和无限扩展能力。
@@ -73,6 +75,8 @@ flowchart LR
 | 运维开销 | 低 | 高 | 中等 |
 | Prometheus 修改 | 不需要 | 不需要 | 需要 Sidecar |
 | 多租户 | 原生 | 原生 | 有限 |
+
+<span id="architecture"></span>
 
 ## 架构
 
@@ -161,6 +165,8 @@ flowchart TB
 3. **后台进程**：
    - Compactor 将小块合并为大块
    - 应用降采样和保留策略
+
+<span id="core-components"></span>
 
 ## 核心组件
 
@@ -308,6 +314,8 @@ query_frontend:
 - 管理查询队列
 - 处理重试
 
+<span id="multi-tenancy"></span>
+
 ## 多租户
 
 Mimir 支持原生多租户，以隔离来自多个团队/组织的指标。
@@ -388,6 +396,8 @@ flowchart TD
     class D,I mimir
     class B1,B2,B3 storage
 ```
+
+<span id="helm-installation"></span>
 
 ## Helm 安装
 
@@ -562,6 +572,8 @@ mimir:
       data_dir: /data/compactor
 ```
 
+<span id="s3-backend-configuration"></span>
+
 ## S3 后端配置
 
 ### IRSA 设置
@@ -663,6 +675,8 @@ mimir:
 }
 ```
 
+<span id="query-and-data-retention"></span>
+
 ## 查询与数据保留
 
 ### 保留策略配置
@@ -738,6 +752,8 @@ flowchart LR
     class R1,M1,C1,S3 storage
 ```
 
+<span id="comparison-with-victoriametrics"></span>
+
 ## 与 VictoriaMetrics 的比较
 
 ### 详细比较
@@ -794,6 +810,8 @@ flowchart TD
 - 偏好基于本地磁盘的存储
 - 最大压缩率和性能很重要
 - 成本效率是优先事项
+
+<span id="performance-tuning"></span>
 
 ## 性能调优
 
@@ -858,6 +876,8 @@ querier:
   timeout: 2m
 ```
 
+<span id="best-practices"></span>
+
 ## 最佳实践
 
 ### 生产检查清单
@@ -918,6 +938,8 @@ limits:
 compactor:
   downsampling_enabled: true
 ```
+
+<span id="troubleshooting"></span>
 
 ## 故障排除
 

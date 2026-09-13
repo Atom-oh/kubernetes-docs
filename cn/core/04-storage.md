@@ -454,6 +454,8 @@ parameters:
   type: gp3
 ```
 
+<span id="dynamic-provisioning"></span>
+
 ## 动态预配
 
 动态预配是一项在创建 PVC 时自动创建 PVs 的功能。这样，用户可以按需请求存储，而无需管理员预先创建 PVs。
@@ -560,6 +562,8 @@ spec:
     requests:
       storage: 10Gi
 ```
+
+<span id="volume-expansion"></span>
 
 ## Volume 扩容
 
@@ -676,6 +680,8 @@ spec:
           audience: my-api-service
 ```
 
+<span id="generic-ephemeral-volumes"></span>
+
 ## 通用临时 Volumes
 
 通用临时 Volumes 提供与 PVC 类似、且与 Pod 生命周期绑定的存储。与 emptyDir 不同，它们会使用 PVCs 和 StorageClasses 的完整功能，包括动态预配。
@@ -765,6 +771,8 @@ spec:
                   storage: 50Gi
 ```
 
+<span id="block-volume-mode"></span>
+
 ## 块 Volume 模式
 
 除文件系统 Volumes 外，Kubernetes 还支持原始块 Volumes。块 Volumes 将存储呈现为不带文件系统的原始块设备，适用于自行管理数据布局的应用程序。
@@ -842,6 +850,8 @@ spec:
 2. **自定义文件系统**：使用 ZFS 或 LVM 等专用文件系统的应用程序
 3. **高性能存储**：需要直接 I/O 且不承受文件系统开销的应用程序
 4. **存储虚拟化**：软件定义存储解决方案
+
+<span id="volume-cloning"></span>
 
 ## Volume 克隆
 
@@ -936,6 +946,8 @@ spec:
       claimName: test-db-clone
 ```
 
+<span id="storage-resourcequota"></span>
+
 ## 存储 ResourceQuota
 
 ResourceQuota 可以限制 namespace 内的存储消耗，包括 PVCs 的数量和总存储容量。
@@ -1012,6 +1024,8 @@ spec:
 - 最小 PVC 大小为 1Gi
 - 最大 PVC 大小为 100Gi
 - 默认大小（未指定时）为 10Gi
+
+<span id="storage-options-in-eks"></span>
 
 ## EKS 中的存储选项
 

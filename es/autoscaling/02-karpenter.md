@@ -7,14 +7,16 @@
 - [Introducción](#introducción)
 - [Arquitectura](#arquitectura)
 - [Instalación y configuración](#instalación-y-configuración)
-- [Provisioner](#provisioner)
-- [Plantillas de nodos](#plantillas-de-nodos)
+- [Provisioner (English)](https://www.atomai.click/kubernetes-docs/en/autoscaling/02-karpenter#nodepool)
+- [Plantillas de nodos (English)](https://www.atomai.click/kubernetes-docs/en/autoscaling/02-karpenter#node-classes)
 - [Manejo de interrupciones](#manejo-de-interrupciones)
 - [Integración](#integración)
 - [Integración con Amazon EKS](#integración-con-amazon-eks)
 - [Mejores prácticas](#mejores-prácticas)
 - [Solución de problemas](#solución-de-problemas)
 - [Conclusión](#conclusión)
+
+<span id="introducción"></span>
 
 ## Introducción
 
@@ -145,6 +147,8 @@ sequenceDiagram
 4. Llama a la API del proveedor de nube para aprovisionar nodos
 5. Programa los Pod una vez que los nodos se unen al clúster
 6. Elimina nodos mediante el manejo integrado de interrupciones cuando ya no se necesitan
+
+<span id="instalación-y-configuración"></span>
 
 ## Instalación y configuración
 
@@ -675,6 +679,8 @@ spec:
       app: my-app
 ```
 
+<span id="integración"></span>
+
 ## Integración
 
 Karpenter se integra con diversos servicios de Kubernetes y de nube.
@@ -820,6 +826,8 @@ spec:
     name: my-launch-template
     version: "1"
 ```
+<span id="integración-con-amazon-eks"></span>
+
 ## Integración con Amazon EKS
 
 Karpenter se integra sin problemas con Amazon EKS para proporcionar autoscaling de clústeres.
@@ -1227,6 +1235,8 @@ spec:
   # Other configuration...
 ```
 
+<span id="mejores-prácticas"></span>
+
 ## Mejores prácticas
 
 ```mermaid
@@ -1396,6 +1406,8 @@ spec:
     enabled: true
 ```
 
+<span id="solución-de-problemas"></span>
+
 ## Solución de problemas
 
 ### Problemas comunes
@@ -1481,6 +1493,8 @@ kubectl get events --sort-by='.lastTimestamp'
 # Enable debug logs
 kubectl patch configmap -n karpenter karpenter-global-settings --type merge -p '{"data":{"logLevel":"debug"}}'
 ```
+
+<span id="conclusión"></span>
 
 ## Conclusión
 

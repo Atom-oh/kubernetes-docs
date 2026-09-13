@@ -21,6 +21,8 @@
 
 ---
 
+<span id="alertmanager-overview"></span>
+
 ## Descripción general de Alertmanager
 
 Prometheus Alertmanager es un componente que procesa las alertas enviadas desde servidores Prometheus. Proporciona funcionalidades como deduplicación, agrupación, enrutamiento, inhibición y silenciamiento de alertas.
@@ -56,6 +58,8 @@ sequenceDiagram
 ```
 
 ---
+
+<span id="architecture"></span>
 
 ## Arquitectura
 
@@ -114,6 +118,8 @@ graph TB
 | **nflog** | Registra las alertas enviadas (para la deduplicación) |
 
 ---
+
+<span id="installation-and-configuration"></span>
 
 ## Instalación y configuración
 
@@ -225,6 +231,8 @@ data:
 
 ---
 
+<span id="defining-alert-rules"></span>
+
 ## Definición de reglas de alerta
 
 ### CRD PrometheusRule
@@ -311,6 +319,8 @@ stateDiagram-v2
 ```
 
 ---
+
+<span id="routing-configuration"></span>
 
 ## Configuración de enrutamiento
 
@@ -438,6 +448,8 @@ time_intervals:
 ```
 
 ---
+
+<span id="receiver-configuration"></span>
 
 ## Configuración de receptores
 
@@ -587,6 +599,8 @@ receivers:
 
 ---
 
+<span id="inhibition-rules"></span>
+
 ## Reglas de inhibición
 
 ### Concepto de inhibición
@@ -676,6 +690,8 @@ inhibit_rules:
 
 ---
 
+<span id="silencing"></span>
+
 ## Silenciamiento
 
 ### Creación de silenciamientos
@@ -754,6 +770,8 @@ graph TB
 4. **Configure notificaciones**: Alerte antes de que expire el silenciamiento
 
 ---
+
+<span id="template-customization"></span>
 
 ## Personalización de plantillas
 
@@ -846,6 +864,8 @@ data:
 ```
 
 ---
+
+<span id="high-availability-configuration"></span>
 
 ## Configuración de alta disponibilidad
 
@@ -967,6 +987,8 @@ alerting:
 
 ---
 
+<span id="alertmanagerconfig-crd"></span>
+
 ## CRD AlertmanagerConfig
 
 ### Configuración con ámbito de namespace
@@ -1063,6 +1085,8 @@ spec:
 ```
 
 ---
+
+<span id="production-alert-rule-examples"></span>
 
 ## Ejemplos de reglas de alerta para producción
 
@@ -1307,6 +1331,8 @@ spec:
 ```
 
 ---
+
+<span id="troubleshooting"></span>
 
 ## Solución de problemas
 

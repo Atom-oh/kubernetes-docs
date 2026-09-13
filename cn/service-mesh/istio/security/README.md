@@ -9,10 +9,12 @@ Istio 在服务网格中提供强大的安全功能。它基于 Zero Trust 安�
 
 1. [安全架构概述](#security-architecture-overview)
 2. [核心安全功能](#core-security-features)
-3. [安全组件](#security-components)
-4. [详细文档](#detailed-documentation)
+3. [安全组件 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/#security-components)
+4. [详细文档 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/#next-steps)
 5. [安全最佳实践](#security-best-practices)
 6. [安全监控](#security-monitoring)
+
+<span id="security-architecture-overview"></span>
 
 ## 安全架构概述
 
@@ -100,6 +102,8 @@ flowchart TB
    - 细粒度访问控制（RBAC）
    - 支持审计日志
 
+<span id="core-security-features"></span>
+
 ## 核心安全功能
 
 Istio 提供以下核心安全功能：
@@ -181,6 +185,8 @@ spec:
         paths: ["/api/*"]
 ```
 
+<span id="security-best-practices"></span>
+
 ## 安全最佳实践
 
 ### 1. 深度防御
@@ -250,6 +256,8 @@ spec:
 - 仅向每个服务授予所需的最低权限
 - 细粒度地拆分 ServiceAccounts
 - 利用 Namespace 隔离
+
+<span id="security-monitoring"></span>
 
 ### 3. 安全监控
 

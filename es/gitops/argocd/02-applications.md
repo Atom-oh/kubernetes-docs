@@ -13,6 +13,8 @@
 - [Ignorar diferencias](#ignore-differences)
 - [Patrón App of Apps](#app-of-apps-pattern)
 
+<span id="application-crd-overview"></span>
+
 ## Descripción general del CRD Application
 
 El CRD Application es el recurso principal de ArgoCD que define cómo y dónde implementar tus aplicaciones. Conecta un repositorio de origen con un clúster Kubernetes de destino.
@@ -87,6 +89,8 @@ spec:
 | `ignoreDifferences` | Campos que se deben ignorar durante la comparación |
 | `info` | Metadatos personalizados para mostrar |
 | `revisionHistoryLimit` | Número de revisiones de implementación que se deben conservar |
+
+<span id="source-types"></span>
 
 ## Tipos de fuentes
 
@@ -312,6 +316,8 @@ spec:
     namespace: production
 ```
 
+<span id="multiple-sources"></span>
+
 ## Fuentes múltiples
 
 ArgoCD v2.6+ admite múltiples fuentes en una sola aplicación, lo que permite escenarios de implementación complejos.
@@ -380,6 +386,8 @@ spec:
     namespace: observability
 ```
 
+<span id="destination-configuration"></span>
+
 ## Configuración de destino
 
 ### Uso de URL de servidor
@@ -405,6 +413,8 @@ syncPolicy:
   syncOptions:
     - CreateNamespace=true
 ```
+
+<span id="health-assessment"></span>
 
 ## Evaluación de estado
 
@@ -501,6 +511,8 @@ resource.customizations.health.s3.services.k8s.aws_Bucket: |
   end
   return hs
 ```
+
+<span id="resource-hooks"></span>
 
 ## Hooks de recursos
 
@@ -618,6 +630,8 @@ spec:
               exit 1
 ```
 
+<span id="ignore-differences"></span>
+
 ## Ignorar diferencias
 
 Configura ArgoCD para ignorar diferencias específicas durante la comparación.
@@ -686,6 +700,8 @@ data:
     jsonPointers:
       - /metadata/annotations/kubectl.kubernetes.io~1last-applied-configuration
 ```
+
+<span id="app-of-apps-pattern"></span>
 
 ## Patrón App of Apps
 

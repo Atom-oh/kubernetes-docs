@@ -540,7 +540,7 @@ istioctl proxy-config secret <pod-name> -o json
 **参考资料:**
 
 * [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-* [证书管理](../../../service-mesh/istio/03-architecture.md#certificate-management)
+* [证书管理 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture#_3-certificate-management-citadel-functionality)
 
 </details>
 

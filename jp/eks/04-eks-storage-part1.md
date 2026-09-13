@@ -12,6 +12,8 @@ Amazon EKS でアプリケーションを実行する場合、データを保存
 4. [Amazon EFS を使用したストレージ](04-eks-storage-part1.md#storage-with-amazon-efs)
 5. [StorageClass と動的プロビジョニング](04-eks-storage-part1.md#storage-classes-and-dynamic-provisioning)
 
+<span id="kubernetes-storage-basic-concepts"></span>
+
 ## Kubernetes ストレージの基本概念
 
 まず、Kubernetes でストレージを管理するための主要な概念を理解しましょう。
@@ -44,6 +46,8 @@ Kubernetes は次のアクセスモードをサポートしています。
 * **ReadOnlyMany (ROX)**: 複数のノードによって読み取り専用としてマウント可能
 * **ReadWriteMany (RWX)**: 複数のノードによって読み取り/書き込みとしてマウント可能
 * **ReadWriteOncePod (RWOP)**: 単一の Pod のみが読み取り/書き込みとしてマウント可能 (Kubernetes 1.22+)
+
+<span id="amazon-eks-storage-options-overview"></span>
 
 ## Amazon EKS ストレージオプションの概要
 
@@ -86,6 +90,8 @@ Amazon EKS では、さまざまな AWS ストレージサービスを活用し�
 | FSx for Lustre     | ファイル           | RWX            | 非常に高い                     | HPC、ML トレーニング、ビッグデータ                                 |
 | Amazon S3          | オブジェクト       | API アクセス   | 中                             | バックアップ、アーカイブ、静的コンテンツ                           |
 | EC2 Instance Store | ブロック (ローカル NVMe) | RWO、一時的 | 非常に高い (超低レイテンシー) | AI/ML 一時データ、ローカルキャッシュ、高スループットログ処理 |
+
+<span id="storage-with-amazon-ebs"></span>
 
 ## Amazon EBS を使用したストレージ
 
@@ -209,6 +215,8 @@ Amazon EBS はさまざまな Volume タイプを提供します。
 | sc1         | コールド HDD             | アクセス頻度の低いデータ                    |
 
 EKS では、gp3 Volume タイプが推奨されます。gp3 は一貫したパフォーマンスを提供しながら、費用対効果にも優れています。
+
+<span id="storage-with-amazon-efs"></span>
 
 ## Amazon EFS を使用したストレージ
 
@@ -372,6 +380,8 @@ Amazon EFS は、2 つのパフォーマンスモードと 3 つのスループ�
 * **Bursting**: デフォルトモード。ファイルシステムサイズに基づくバーストクレジットを提供
 * **Provisioned**: 一貫したスループットが必要な場合に使用
 * **Elastic**: ワークロードに基づいてスループットを自動調整（推奨）
+
+<span id="storage-classes-and-dynamic-provisioning"></span>
 
 ## StorageClass と動的プロビジョニング
 

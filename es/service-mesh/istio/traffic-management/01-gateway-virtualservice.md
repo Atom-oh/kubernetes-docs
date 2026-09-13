@@ -11,6 +11,8 @@ Gateway y VirtualService son recursos fundamentales para gestionar el tráfico e
 5. [Patrones avanzados](#advanced-patterns)
 6. [Solución de problemas](#troubleshooting)
 
+<span id="gateway-overview"></span>
+
 ## Descripción general de Gateway
 
 Gateway define el punto de entrada para el tráfico externo hacia la malla.
@@ -42,6 +44,8 @@ spec:
     - "myapp.example.com"
 ```
 
+<span id="virtualservice-overview"></span>
+
 ## Descripción general de VirtualService
 
 VirtualService define cómo enrutar el tráfico que entra a través de Gateway.
@@ -72,6 +76,8 @@ spec:
         port:
           number: 3000
 ```
+
+<span id="basic-configuration"></span>
 
 ## Configuración básica
 
@@ -140,6 +146,8 @@ spec:
     hosts:
     - "myapp.example.com"
 ```
+
+<span id="practical-examples"></span>
 
 ## Ejemplos prácticos
 
@@ -277,6 +285,8 @@ spec:
         host: admin-service
 ```
 
+<span id="advanced-patterns"></span>
+
 ## Patrones avanzados
 
 ### Redirección de HTTP a HTTPS
@@ -382,6 +392,8 @@ spec:
       uri: "/new-page"
       authority: "newapp.example.com"
 ```
+
+<span id="troubleshooting"></span>
 
 ## Solución de problemas
 

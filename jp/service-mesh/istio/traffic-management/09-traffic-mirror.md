@@ -7,8 +7,10 @@ Traffic Mirroring（またはShadow Traffic）は、本番トラフィックを�
 1. [トラフィックミラーリングの概要](#traffic-mirroring-overview)
 2. [基本設定](#basic-configuration)
 3. [部分ミラーリング](#partial-mirroring)
-4. [実践例](#practical-examples)
-5. [ベストプラクティス](#best-practices)
+4. [実践例 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/09-traffic-mirror#basic-configuration)
+5. [ベストプラクティス (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/09-traffic-mirror#best-practices)
+
+<span id="traffic-mirroring-overview"></span>
 
 ## トラフィックミラーリングの概要
 
@@ -40,6 +42,8 @@ flowchart LR
     class V2 shadow;
 ```
 
+<span id="basic-configuration"></span>
+
 ## 基本設定
 
 ```yaml
@@ -62,6 +66,8 @@ spec:
     mirrorPercentage:
       value: 100  # 100% mirroring
 ```
+
+<span id="partial-mirroring"></span>
 
 ## 部分ミラーリング
 

@@ -20,6 +20,8 @@ Pod Security Standards (PSS) 是 Kubernetes 中用于 Pod 安全的标准化 pol
 
 ---
 
+<span id="evolution-from-psp-to-pss"></span>
+
 ## 从 PSP 到 PSS 的演进
 
 ### PodSecurityPolicy (PSP) 的历史
@@ -132,6 +134,8 @@ kubectl get --raw /metrics | grep pod_security
 ```
 
 ---
+
+<span id="security-levels"></span>
 
 ## 安全级别
 
@@ -287,6 +291,8 @@ spec:
 
 ---
 
+<span id="enforcement-modes"></span>
+
 ## 执行模式
 
 PSA 提供三种执行模式。这些模式可以独立使用，也可以组合使用。
@@ -437,6 +443,8 @@ metadata:
 
 ---
 
+<span id="namespace-level-configuration"></span>
+
 ## Namespace 级别配置
 
 ### 基本 Label 配置
@@ -528,6 +536,8 @@ kubectl get namespace my-namespace -o yaml | grep pod-security
 ```
 
 ---
+
+<span id="migration-from-psp-to-pss"></span>
 
 ## 从 PSP 迁移到 PSS
 
@@ -703,6 +713,8 @@ kubectl get events --all-namespaces --field-selector reason=FailedCreate | grep 
 
 ---
 
+<span id="eks-defaults-and-configuration"></span>
+
 ## EKS 默认值和配置
 
 ### EKS 中的 PSA 默认设置
@@ -808,6 +820,8 @@ resource "kubernetes_labels" "kube_system_pss" {
 ```
 
 ---
+
+<span id="security-profile-details"></span>
 
 ## 安全 Profile 详细信息
 
@@ -1081,6 +1095,8 @@ data:
 
 ---
 
+<span id="exemptions-configuration"></span>
+
 ## 豁免配置
 
 ### Cluster 级别豁免配置
@@ -1218,6 +1234,8 @@ spec:
 ```
 
 ---
+
+<span id="best-practices-for-gradual-adoption"></span>
 
 ## 渐进式采用的最佳实践
 

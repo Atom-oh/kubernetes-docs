@@ -16,6 +16,8 @@
 7. [故障排除](#troubleshooting)
 8. [最佳实践](#best-practices)
 
+<span id="dns-proxy-overview"></span>
+
 ## DNS Proxy 概述
 
 Istio DNS Proxy 是一项功能，其中 Envoy 作为 DNS 服务器拦截并处理应用程序的 DNS 请求。
@@ -85,6 +87,8 @@ flowchart TB
     class API,CoreDNS external;
 ```
 
+<span id="dns-proxy-vs-dns-caching"></span>
+
 ## DNS Proxy 与 DNS 缓存
 
 这两项功能具有不同的用途和行为：
@@ -135,6 +139,8 @@ flowchart LR
     class DNS_Proxy,DNS_Cache envoy;
     class SE,CoreDNS external;
 ```
+
+<span id="dns-proxy-configuration"></span>
 
 ## DNS Proxy 配置
 
@@ -231,6 +237,8 @@ pkts bytes target     prot opt in     out     source               destination
    0     0 REDIRECT   udp  --  *      *       0.0.0.0/0            0.0.0.0/0            udp dpt:53 redir ports 15053
 ```
 
+<span id="serviceentry-integration"></span>
+
 ## ServiceEntry 集成
 
 DNS Proxy 与 ServiceEntry 紧密集成。
@@ -306,6 +314,8 @@ spec:
   - address: 203.0.113.11
   - address: 203.0.113.12
 ```
+
+<span id="dns-caching-configuration"></span>
 
 ## DNS 缓存配置
 
@@ -394,6 +404,8 @@ spec:
         dns_lookup_family: V4_ONLY
 ```
 
+<span id="automatic-address-allocation"></span>
+
 ## 自动地址分配
 
 DNS Proxy 会自动为注册在 ServiceEntry 中的服务分配虚拟 IP。
@@ -473,6 +485,8 @@ istioctl proxy-config clusters <pod-name> -n <namespace> --fqdn api.example.com 
   }
 }
 ```
+
+<span id="troubleshooting"></span>
 
 ## 故障排除
 
@@ -589,6 +603,8 @@ kubectl cp <pod-name>:/tmp/dns.pcap ./dns.pcap -c istio-proxy
 # Analyze with Wireshark
 wireshark dns.pcap
 ```
+
+<span id="best-practices"></span>
 
 ## 最佳实践
 

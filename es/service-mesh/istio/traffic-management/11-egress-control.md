@@ -7,8 +7,10 @@ El control de Egress es una característica que administra el tráfico saliente 
 1. [Descripción general de Egress](#egress-overview)
 2. [Configuración de ServiceEntry](#serviceentry-configuration)
 3. [Egress Gateway](#egress-gateway)
-4. [Originación de TLS](#tls-origination)
-5. [Ejemplos prácticos](#practical-examples)
+4. [Originación de TLS (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/11-egress-control#tls-origination)
+5. [Ejemplos prácticos (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/11-egress-control#serviceentry-configuration)
+
+<span id="egress-overview"></span>
 
 ## Descripción general de Egress
 
@@ -37,6 +39,8 @@ flowchart LR
     class Sidecar,EgressGW mesh;
     class External external;
 ```
+
+<span id="serviceentry-configuration"></span>
 
 ## Configuración de ServiceEntry
 

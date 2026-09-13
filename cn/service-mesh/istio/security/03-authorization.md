@@ -7,8 +7,10 @@ AuthorizationPolicy 让您能够精细地控制服务访问权限。
 1. [授权概述](#authorization-overview)
 2. [基础策略](#basic-policies)
 3. [高级策略](#advanced-policies)
-4. [实践示例](#practical-examples)
-5. [最佳实践](#best-practices)
+4. [实践示例 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/03-authorization#practical-examples)
+5. [最佳实践 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/03-authorization#best-practices)
+
+<span id="authorization-overview"></span>
 
 ## 授权概述
 
@@ -62,6 +64,8 @@ flowchart TB
     class Deny deny;
 ```
 
+<span id="basic-policies"></span>
+
 ## 基础策略
 
 ### 默认拒绝（拒绝所有请求）
@@ -110,6 +114,8 @@ spec:
     - operation:
         methods: ["GET"]  # Allow only GET
 ```
+
+<span id="advanced-policies"></span>
 
 ## 高级策略
 

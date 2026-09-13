@@ -367,7 +367,7 @@ Los términos están organizados en las siguientes categorías:
 ### Análisis profundo de arquitectura
 - **Felix**: Consulte [Part 2: Architecture](02-architecture.md)
 - **BGP Configuration**: Consulte [Part 4: BGP Deep Dive](04-bgp-deep-dive.md)
-- **Typha Scaling**: Consulte [Part 7: Advanced Topics](07-advanced-topics.md#typha-sizing-formula)
+- **Typha Scaling**: Consulte [Part 7: Advanced Topics (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/07-advanced-topics#operator-typha-scaling)
 
 ### Política de red
 - **Kubernetes NetworkPolicy**: Consulte [Part 5: Network Policy](05-network-policy.md)
@@ -375,13 +375,13 @@ Los términos están organizados en las siguientes categorías:
 - **Tier-Based Policies**: Consulte [Part 5: Network Policy](05-network-policy.md)
 
 ### Operaciones
-- **Métodos de instalación**: Consulte [Part 9: Operations](09-operations.md#installation-guide)
-- **Comandos calicoctl**: Consulte [Part 9: Operations](09-operations.md#calicoctl-command-reference)
-- **Solución de problemas**: Consulte [Part 9: Operations](09-operations.md#troubleshooting)
+- **Métodos de instalación**: Consulte [Part 9: Operations (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/09-operations#installation-guide)
+- **Comandos calicoctl**: Consulte [Part 9: Operations (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/09-operations#calicoctl-command-reference)
+- **Solución de problemas**: Consulte [Part 9: Operations (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/09-operations#log-analysis-and-troubleshooting)
 
 ### Integración con EKS
-- **VPC CNI + Calico**: Consulte [Part 8: EKS Integration](08-eks-integration.md#vpc-cni--calico-architecture)
-- **Métodos de instalación**: Consulte [Part 8: EKS Integration](08-eks-integration.md#installation-methods-comparison)
+- **VPC CNI + Calico**: Consulte [Part 8: EKS Integration (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/08-eks-integration#vpc-cni-calico-architecture)
+- **Métodos de instalación**: Consulte [Part 8: EKS Integration (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/08-eks-integration#choose-a-policy-engine-and-installation-method)
 
 ---
 

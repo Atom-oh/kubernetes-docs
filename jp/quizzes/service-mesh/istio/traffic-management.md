@@ -60,7 +60,7 @@ spec:
 **参照:**
 
 * [Routing](../../../service-mesh/istio/traffic-management/02-routing.md)
-* [VirtualService Concepts](../../../service-mesh/istio/02-basic-concepts.md#virtualservice)
+* [VirtualService Concepts (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/02-basic-concepts#_1-virtualservice)
 
 </details>
 

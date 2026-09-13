@@ -19,6 +19,8 @@
 - [ベストプラクティス](#best-practices)
 - [トラブルシューティング](#troubleshooting)
 
+<span id="introduction"></span>
+
 ## 概要
 
 VictoriaMetrics は、高性能でコスト効率に優れた時系列データベースおよび監視ソリューションです。Prometheus と完全に互換性があり、より優れた圧縮率、クエリパフォーマンス、スケーラビリティを提供します。
@@ -75,6 +77,8 @@ flowchart LR
 | カーディナリティ上限 | 約 1,000 万時系列 | 約 1 億以上の時系列 |
 | クエリ言語 | PromQL | MetricsQL（スーパーセット） |
 
+<span id="architecture-options"></span>
+
 ## アーキテクチャオプション
 
 VictoriaMetrics は 2 つのデプロイモードを提供します。
@@ -100,6 +104,8 @@ flowchart TD
     class A,B,C,F decision
     class D,E,G solution
 ```
+
+<span id="single-node-mode"></span>
 
 ## Single-Node モード
 
@@ -211,6 +217,8 @@ spec:
 | `/api/v1/label/{name}/values` | ラベル値リスト |
 | `/vmui` | 組み込み UI |
 | `/metrics` | 自己メトリクス |
+
+<span id="cluster-mode"></span>
 
 ## Cluster モード
 
@@ -858,6 +866,8 @@ rate(http_requests_total{status=~"5.."}[5m])
 histogram_share(0.5, http_request_duration_seconds_bucket)  # Ratio below 500ms
 ```
 
+<span id="helm-installation"></span>
+
 ## Helm インストール
 
 ### victoria-metrics-k8s-stack
@@ -1009,6 +1019,8 @@ victoria-metrics-single:
   enabled: false
 ```
 
+<span id="long-term-storage-configuration"></span>
+
 ## 長期ストレージ設定
 
 ### 保持期間の設定
@@ -1070,6 +1082,8 @@ spec:
           restartPolicy: OnFailure
 ```
 
+<span id="downsampling"></span>
+
 ## ダウンサンプリング
 
 VictoriaMetrics Enterprise はダウンサンプリングをサポートします。オープンソース版では、recording rule を使用します。
@@ -1099,6 +1113,8 @@ groups:
       or
       histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service))
 ```
+
+<span id="performance-optimization"></span>
 
 ## パフォーマンス最適化
 
@@ -1147,6 +1163,8 @@ args:
   # Maximum label value length
   - "--maxLabelValueLen=1024"
 ```
+
+<span id="best-practices"></span>
 
 ## ベストプラクティス
 
@@ -1201,6 +1219,8 @@ vmctl prometheus --prometheus.snapshot-path=/prometheus/snapshots/xxx \
 # Step 4: Complete transition
 # Remove Prometheus remote_write, change Grafana default data source
 ```
+
+<span id="troubleshooting"></span>
 
 ## トラブルシューティング
 

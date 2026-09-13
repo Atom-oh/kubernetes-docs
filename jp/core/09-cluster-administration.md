@@ -47,6 +47,8 @@ curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 curl -sS https://webinstall.dev/k9s | bash
 ```
 
+<span id="cluster-administration-overview"></span>
+
 ## クラスター管理の概要
 
 Kubernetes クラスター管理とは、クラスターのライフサイクル全体を管理するプロセスです。主な領域は次のとおりです。
@@ -58,6 +60,8 @@ Kubernetes クラスター管理とは、クラスターのライフサイクル
 5. **バックアップとリカバリ**: クラスターデータのバックアップ、災害復旧計画
 
 次の図は、Kubernetes クラスター管理の主な領域と関連ツールを示します。
+
+<span id="cluster-component-management"></span>
 
 ## クラスターコンポーネント管理
 
@@ -278,6 +282,8 @@ systemctl status docker  # When using Docker
 systemctl status containerd  # When using containerd
 ```
 
+<span id="resource-management"></span>
+
 ## リソース管理
 
 Kubernetes クラスターでリソースを効果的に管理することは、クラスターの安定性とパフォーマンスの維持に重要です。
@@ -378,6 +384,8 @@ spec:
 ```
 
 上記の例では、`frontend` Deployment の Pod は実際のリソース使用量に基づいて CPU とメモリの request が自動調整されます。
+<span id="cluster-networking"></span>
+
 ## クラスターNetworking
 
 Kubernetes クラスターNetworking は Pod、Service、node 間の通信を管理します。
@@ -514,6 +522,8 @@ spec:
 ```
 
 上記の例では、`role=db` label を持つ Pod は、`role=frontend` label を持つ Pod からの TCP port 3306 の inbound traffic と、`role=monitoring` label を持つ Pod への TCP port 9090 の outbound traffic だけを許可します。
+
+<span id="authentication-and-authorization-management"></span>
 
 ## Authentication と Authorization 管理
 
@@ -716,6 +726,8 @@ spec:
 
 上記の例では、Pod は UID 1000 および GID 3000 で実行され、コンテナは特権昇格ができず、すべての Linux capability が削除され、root filesystem は read-only で mount されます。
 
+<span id="cluster-upgrades"></span>
+
 ## クラスターアップグレード
 
 Kubernetes クラスターのアップグレードは、新機能、パフォーマンス改善、security patch を適用するために必要です。
@@ -806,6 +818,8 @@ kubectl create deployment nginx --image=nginx
 kubectl expose deployment nginx --port=80
 kubectl get svc nginx
 ```
+<span id="backup-and-recovery"></span>
+
 ## バックアップとリカバリ
 
 Kubernetes クラスターのバックアップとリカバリは、災害復旧計画の重要な一部です。
@@ -927,6 +941,8 @@ spec:
               claimName: etcd-backup-pvc
 ```
 
+<span id="monitoring-and-logging"></span>
+
 ## 監視とロギング
 
 効果的な監視とロギングはクラスター管理のコア要素です。
@@ -1042,6 +1058,8 @@ data:
     </match>
 ```
 
+<span id="troubleshooting"></span>
+
 ## トラブルシューティング
 
 Kubernetes クラスターのトラブルシューティングは、クラスター管理の重要な一部です。
@@ -1137,6 +1155,8 @@ kubectl logs -n kube-system kube-scheduler-<node-name>
 # Check etcd logs
 kubectl logs -n kube-system etcd-<node-name>
 ```
+
+<span id="amazon-eks-cluster-administration"></span>
 
 ## Amazon EKS クラスター管理
 
@@ -1261,6 +1281,8 @@ eksctl utils update-cluster-logging \
   --approve
 ```
 
+<span id="cluster-administration-best-practices"></span>
+
 ## クラスター管理のベストプラクティス
 
 Kubernetes および EKS クラスター管理のベストプラクティス:
@@ -1304,6 +1326,8 @@ Kubernetes および EKS クラスター管理のベストプラクティス:
 3. **EKS Add-on**: 公式 EKS add-on を使用する
 4. **IAM Roles for Service Accounts (IRSA)**: Pod ごとに IAM 権限を管理する
 5. **VPC CNI Customization**: networking 要件に応じて VPC CNI を設定する
+
+<span id="conclusion"></span>
 
 ## まとめ
 

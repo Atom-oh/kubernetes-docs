@@ -18,6 +18,8 @@
 
 ---
 
+<span id="the-role-and-importance-of-alerting"></span>
+
 ## アラートの役割と重要性
 
 ### オブザーバビリティの 3 つの柱におけるアラートの位置付け
@@ -53,6 +55,8 @@ Prometheus rule は metrics を評価します。logs と traces は backend 固
 | **重複** | 関連するアラートをグループ化 | 同じ issue に対して多数のアラート |
 
 ---
+
+<span id="alert-lifecycle"></span>
 
 ## アラートのライフサイクル
 
@@ -108,6 +112,8 @@ groups:
 - **解決通知**: 問題が修正されたときに解決通知を送信する
 
 ---
+
+<span id="alert-design-principles"></span>
 
 ## アラート設計の原則
 
@@ -204,6 +210,8 @@ annotations:
 
 ---
 
+<span id="alert-routing-and-escalation"></span>
+
 ## アラートのルーティングとエスカレーション
 
 ### Routing 戦略
@@ -264,6 +272,8 @@ inhibit_rules:
 
 ---
 
+<span id="on-call-rotation"></span>
+
 ## オンコールローテーション
 
 ### オンコールの概念
@@ -292,6 +302,8 @@ inhibit_rules:
 - **Reporting**: オンコール activity の分析
 
 ---
+
+<span id="alerting-strategy-for-eks-environments"></span>
 
 ## EKS 環境におけるアラート戦略
 
@@ -455,6 +467,8 @@ EKS 1.28+ は AWS/EKS に選択された control-plane metric を提供します
 | VPC / NAT Gateway | NAT metric、個別に有効化した Flow Logs の accepted/rejected record | CloudWatch metrics/Logs。Flow Logs は alarm engine ではありません |
 
 ---
+
+<span id="solution-comparison"></span>
 
 ## ソリューション比較
 

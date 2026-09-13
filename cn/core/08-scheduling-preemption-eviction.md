@@ -127,6 +127,8 @@ EOF
 15. [调度最佳实践](#scheduling-best-practices)
 16. [结论](#conclusion)
 
+<span id="scheduling-overview"></span>
+
 ## 调度概览
 
 Kubernetes scheduler 是一个控制平面组件，可将 Pod 放置在合适的 Node 上。scheduler 会考虑多种因素来确定放置 Pod 的最佳 Node：
@@ -151,6 +153,8 @@ Kubernetes scheduler 是一个控制平面组件，可将 Pod 放置在合适的
    - Pod 间 affinity/anti-affinity
    - 数据本地性
    - Taints/tolerations
+
+<span id="how-the-scheduler-works"></span>
 
 ## Scheduler 的工作方式
 
@@ -200,6 +204,8 @@ spec:
 
 在上面的示例中，`schedulerName` 字段指定用于调度该 Pod 的 scheduler。
 
+<span id="node-selection"></span>
+
 ## Node 选择
 
 Kubernetes 提供多种机制，可将 Pod 放置在特定 Node 上。
@@ -244,6 +250,8 @@ spec:
 ```
 
 在上面的示例中，该 Pod 被直接放置在名为 `worker-node-1` 的 Node 上。
+
+<span id="pod-affinity-and-anti-affinity"></span>
 
 ## Pod Affinity 和 Anti-Affinity
 
@@ -333,6 +341,8 @@ affinity:
 ```
 
 在上面的示例中，`weight` 字段表示此偏好的权重。当存在多个偏好时，权重较高的偏好被视为更重要。
+
+<span id="taints-and-tolerations"></span>
 
 ## Taints 和 Tolerations
 
@@ -453,6 +463,8 @@ Node affinity 支持多种 operator：
 - **Gt**：标签值大于指定值
 - **Lt**：标签值小于指定值
 
+<span id="pod-priority-and-preemption"></span>
+
 ## Pod 优先级和抢占
 
 Kubernetes 提供 Pod 优先级和抢占功能，以确保重要工作负载能够获得集群资源。
@@ -512,6 +524,8 @@ spec:
 3. **系统 PriorityClass**：Kubernetes 为系统组件提供 PriorityClass
    - `system-cluster-critical`：对集群运行至关重要的 Pod
    - `system-node-critical`：对 Node 运行至关重要的 Pod
+
+<span id="pod-eviction"></span>
 
 ## Pod 驱逐
 
@@ -628,6 +642,8 @@ spec:
 2. **选择合适的值**：选择适合工作负载特性的 `minAvailable` 或 `maxUnavailable` 值
 3. **考虑副本数**：PDB 值必须小于副本数
 4. **定期测试**：通过 Node drain 和类似任务测试 PDB 运行情况
+
+<span id="node-pressure-eviction"></span>
 
 ## Node 压力驱逐
 
@@ -782,6 +798,8 @@ spec:
 | **多层级** | 使用不同 topologyKey 的多个约束 | 需要复杂的嵌套规则 |
 | **性能** | 大规模场景下 scheduler 性能更好 | Pod 较多时可能减慢调度 |
 | **使用场景** | 可容忍偏差的均匀分布 | 严格隔离 |
+
+<span id="pod-deletion-cost"></span>
 
 ## Pod 删除成本
 
@@ -1030,6 +1048,8 @@ spec:
 > - [自定义 Scheduler 第 2 部分：实现](../scheduling/02-custom-scheduler-part2.md)
 > - [自定义 Scheduler 第 3 部分：高级功能](../scheduling/03-custom-scheduler-part3.md)
 
+<span id="scheduling-optimization-in-amazon-eks"></span>
+
 ## Amazon EKS 中的调度优化
 
 在 Amazon EKS 中，您可以使用 Kubernetes 调度功能优化工作负载。
@@ -1155,6 +1175,8 @@ spec:
     updateMode: "Auto"
 ```
 
+<span id="scheduling-best-practices"></span>
+
 ## 调度最佳实践
 
 在 Kubernetes 和 EKS 中优化调度的最佳实践：
@@ -1188,6 +1210,8 @@ spec:
    - 为专用工作负载设置专用 Node
    - 对维护中的 Node 应用 taint
    - 设置合适的 toleration
+
+<span id="conclusion"></span>
 
 ## 结论
 

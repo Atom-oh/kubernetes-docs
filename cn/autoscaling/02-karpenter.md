@@ -7,14 +7,16 @@
 - [简介](#introduction)
 - [架构](#architecture)
 - [安装和配置](#installation-and-configuration)
-- [Provisioner](#provisioner)
-- [节点模板](#node-templates)
+- [Provisioner (English)](https://www.atomai.click/kubernetes-docs/en/autoscaling/02-karpenter#nodepool)
+- [节点模板 (English)](https://www.atomai.click/kubernetes-docs/en/autoscaling/02-karpenter#node-classes)
 - [中断处理](#interruption-handling)
 - [集成](#integration)
 - [与 Amazon EKS 集成](#integration-with-amazon-eks)
 - [最佳实践](#best-practices)
 - [故障排除](#troubleshooting)
 - [结论](#conclusion)
+
+<span id="introduction"></span>
 
 ## 简介
 
@@ -43,6 +45,8 @@ Karpenter 是一个开源集群自动扩缩器，可自动为 Kubernetes 集群�
 | 中断处理 | 集成 | 有限 | 有限 |
 
 > **注意**：如果您选择继续使用传统 EKS Managed Node Groups 和 Cluster Autoscaler，而非 Karpenter，EC2 Auto Scaling Warm Pools（自 2026 年 4 月起可用）可让您保留已预初始化的实例处于待机状态，从而实现无冷启动的扩容。您可以选择 Stopped 状态（成本更低）或 Running 状态（转换更快），并且它会自动与 Cluster Autoscaler 集成——但这是 Managed Node Group 功能，并非 Karpenter 使用的功能。
+
+<span id="architecture"></span>
 
 ## 架构
 
@@ -145,6 +149,8 @@ sequenceDiagram
 4. 调用云提供商 API 配置节点
 5. 节点加入集群后调度 Pod
 6. 节点不再需要时通过集成式中断处理将其移除
+
+<span id="installation-and-configuration"></span>
 
 ## 安装和配置
 
@@ -603,6 +609,8 @@ flowchart LR
     class P1,P2,P3,P4,P5,P6 process
 ```
 
+<span id="interruption-handling"></span>
+
 ## 中断处理
 
 Karpenter 会自动处理节点中断，以确保工作负载可用性。
@@ -674,6 +682,8 @@ spec:
     matchLabels:
       app: my-app
 ```
+
+<span id="integration"></span>
 
 ## 集成
 
@@ -820,6 +830,8 @@ spec:
     name: my-launch-template
     version: "1"
 ```
+<span id="integration-with-amazon-eks"></span>
+
 ## 与 Amazon EKS 集成
 
 Karpenter 可与 Amazon EKS 无缝集成，以提供集群自动扩缩容。
@@ -1227,6 +1239,8 @@ spec:
   # Other configuration...
 ```
 
+<span id="best-practices"></span>
+
 ## 最佳实践
 
 ```mermaid
@@ -1396,6 +1410,8 @@ spec:
     enabled: true
 ```
 
+<span id="troubleshooting"></span>
+
 ## 故障排除
 
 ### 常见问题
@@ -1481,6 +1497,8 @@ kubectl get events --sort-by='.lastTimestamp'
 # Enable debug logs
 kubectl patch configmap -n karpenter karpenter-global-settings --type merge -p '{"data":{"logLevel":"debug"}}'
 ```
+
+<span id="conclusion"></span>
 
 ## 结论
 

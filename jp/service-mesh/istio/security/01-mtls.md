@@ -14,6 +14,8 @@ Mutual TLS（mTLS）は、サービス間通信を自動的に暗号化および
 8. [一般的な問題と解決策](#common-issues-and-solutions)
 9. [パフォーマンスとモニタリング](#performance-and-monitoring)
 
+<span id="mtls-overview"></span>
+
 ## mTLS の概要
 
 <p align="center">
@@ -77,6 +79,8 @@ flowchart LR
     class Istiod control;
 ```
 
+<span id="mtls-modes"></span>
+
 ## mTLS モード
 
 ### STRICT モード（推奨）
@@ -117,6 +121,8 @@ spec:
   mtls:
     mode: DISABLE  # mTLS disabled
 ```
+
+<span id="certificate-management"></span>
 
 ## 証明書管理
 
@@ -390,6 +396,8 @@ for ns in $(kubectl get ns -o jsonpath='{.items[*].metadata.name}'); do
 done
 ```
 
+<span id="peerauthentication-configuration"></span>
+
 ## PeerAuthentication の設定
 
 ### グローバル設定
@@ -453,6 +461,8 @@ spec:
     8080:
       mode: DISABLE  # mTLS disabled for port 8080
 ```
+
+<span id="mtls-integration-with-aws-services"></span>
 
 ## AWS サービスとの mTLS 統合
 
@@ -809,6 +819,8 @@ flowchart TB
 3. **ALB -> Istio Gateway**: TLS + 証明書情報ヘッダー
 4. **Istio Mesh 内部**: 自動 mTLS（Envoy 間）
 
+<span id="mtls-with-external-services"></span>
+
 ## 外部サービスでの mTLS
 
 ### レガシーシステム統合
@@ -973,6 +985,8 @@ spec:
       caCertificates: /etc/istio/egress-certs/ca.crt
 ```
 
+<span id="migration-strategy"></span>
+
 ## 移行戦略
 
 ### ステップ 1: 現在の状態を確認する
@@ -1022,6 +1036,8 @@ spec:
   mtls:
     mode: STRICT  # Only mTLS allowed
 ```
+
+<span id="common-issues-and-solutions"></span>
 
 ## 一般的な問題と解決策
 
@@ -1301,6 +1317,8 @@ spec:
     - protocol: TCP
       port: 15008
 ```
+
+<span id="performance-and-monitoring"></span>
 
 ## パフォーマンスとモニタリング
 

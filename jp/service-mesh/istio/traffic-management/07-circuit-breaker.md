@@ -15,6 +15,8 @@ Circuit Breaker は、障害が発生しているサービスを自動的に隔�
 9. [重要な考慮事項](#important-considerations)
 10. [ベストプラクティス](#best-practices)
 
+<span id="why-circuit-breaker"></span>
+
 ## Circuit Breaker が必要な理由
 
 ### カスケード障害の防止
@@ -55,6 +57,8 @@ flowchart TB
 | **障害の伝播** | カスケード障害が発生 | 障害を隔離 |
 | **復旧時間** | 手動介入が必要 | 自動復旧を試行 |
 
+<span id="circuit-breaker-overview"></span>
+
 ## Circuit Breaker の概要
 
 ```mermaid
@@ -80,6 +84,8 @@ stateDiagram-v2
         Limited requests allowed
     end note
 ```
+
+<span id="connection-pool-settings"></span>
 
 ## 接続プールの設定
 
@@ -147,6 +153,8 @@ spec:
       # Success rate based
       splitExternalLocalOriginErrors: true
 ```
+
+<span id="combination-with-retry-policy"></span>
 
 ## Retry ポリシーとの組み合わせ
 
@@ -223,6 +231,8 @@ spec:
       interval: 5s
       baseEjectionTime: 60s          # Long recovery time
 ```
+
+<span id="practical-examples"></span>
 
 ## 実践例
 
@@ -410,6 +420,8 @@ spec:
       consecutiveLocalOriginFailures: 5
 ```
 
+<span id="external-service-circuit-breaker"></span>
+
 ## 外部サービスの Circuit Breaker
 
 ServiceEntry とともに使用して、外部サービスを保護します。
@@ -540,6 +552,8 @@ spec:
     timeout: 10s
 ```
 
+<span id="monitoring-and-debugging"></span>
+
 ## モニタリングとデバッグ
 
 ### Envoy メトリクスを確認する
@@ -606,6 +620,8 @@ istioctl proxy-config cluster <pod-name> -o json | \
 istioctl proxy-config cluster <pod-name> -o json | \
   jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .outlierDetection'
 ```
+
+<span id="important-considerations"></span>
 
 ## 重要な考慮事項
 
@@ -906,6 +922,8 @@ kubectl exec -n <namespace> <pod> -c istio-proxy -- \
 # Check logs for suspected duplicate requests
 kubectl logs -n <namespace> <pod> | grep -i "duplicate\|idempotency"
 ```
+
+<span id="best-practices"></span>
 
 ## ベストプラクティス
 

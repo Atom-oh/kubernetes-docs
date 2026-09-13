@@ -367,7 +367,7 @@
 ### 架构深入解析
 - **Felix**: 请参阅 [Part 2: Architecture](02-architecture.md)
 - **BGP Configuration**: 请参阅 [Part 4: BGP Deep Dive](04-bgp-deep-dive.md)
-- **Typha Scaling**: 请参阅 [Part 7: Advanced Topics](07-advanced-topics.md#typha-sizing-formula)
+- **Typha Scaling**: 请参阅 [Part 7: Advanced Topics (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/07-advanced-topics#operator-typha-scaling)
 
 ### 网络策略
 - **Kubernetes NetworkPolicy**: 请参阅 [Part 5: Network Policy](05-network-policy.md)
@@ -375,13 +375,13 @@
 - **Tier-Based Policies**: 请参阅 [Part 5: Network Policy](05-network-policy.md)
 
 ### 运维
-- **Installation Methods**: 请参阅 [Part 9: Operations](09-operations.md#installation-guide)
-- **calicoctl Commands**: 请参阅 [Part 9: Operations](09-operations.md#calicoctl-command-reference)
-- **Troubleshooting**: 请参阅 [Part 9: Operations](09-operations.md#troubleshooting)
+- **Installation Methods**: 请参阅 [Part 9: Operations (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/09-operations#installation-guide)
+- **calicoctl Commands**: 请参阅 [Part 9: Operations (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/09-operations#calicoctl-command-reference)
+- **Troubleshooting**: 请参阅 [Part 9: Operations (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/09-operations#log-analysis-and-troubleshooting)
 
 ### EKS 集成
-- **VPC CNI + Calico**: 请参阅 [Part 8: EKS Integration](08-eks-integration.md#vpc-cni--calico-architecture)
-- **Installation Methods**: 请参阅 [Part 8: EKS Integration](08-eks-integration.md#installation-methods-comparison)
+- **VPC CNI + Calico**: 请参阅 [Part 8: EKS Integration (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/08-eks-integration#vpc-cni-calico-architecture)
+- **Installation Methods**: 请参阅 [Part 8: EKS Integration (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/08-eks-integration#choose-a-policy-engine-and-installation-method)
 
 ---
 

@@ -47,6 +47,8 @@ curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 curl -sS https://webinstall.dev/k9s | bash
 ```
 
+<span id="cluster-administration-overview"></span>
+
 ## 集群管理概述
 
 Kubernetes 集群管理是管理集群整个生命周期的过程，包含以下主要领域：
@@ -58,6 +60,8 @@ Kubernetes 集群管理是管理集群整个生命周期的过程，包含以下
 5. **备份和恢复**: 集群数据备份、灾难恢复规划
 
 下图展示了 Kubernetes 集群管理的主要领域和相关工具：
+
+<span id="cluster-component-management"></span>
 
 ## 集群组件管理
 
@@ -278,6 +282,8 @@ systemctl status docker  # When using Docker
 systemctl status containerd  # When using containerd
 ```
 
+<span id="resource-management"></span>
+
 ## 资源管理
 
 在 Kubernetes 集群中有效管理资源，对于保持集群稳定性和性能十分重要。
@@ -378,6 +384,8 @@ spec:
 ```
 
 在上例中，`frontend` Deployment 中 Pod 的 CPU 和内存 requests 会根据实际资源使用情况自动调整。
+<span id="cluster-networking"></span>
+
 ## 集群网络
 
 Kubernetes 集群网络管理 Pod、Service 和 Node 之间的通信。
@@ -514,6 +522,8 @@ spec:
 ```
 
 在上例中，带有 `role=db` 标签的 Pod 仅允许来自带有 `role=frontend` 标签的 Pod 的 TCP 端口 3306 入站流量，以及到带有 `role=monitoring` 标签的 Pod 的 TCP 端口 9090 出站流量。
+
+<span id="authentication-and-authorization-management"></span>
 
 ## 身份验证和授权管理
 
@@ -716,6 +726,8 @@ spec:
 
 在上例中，Pod 以 UID 1000 和 GID 3000 运行，容器无法提升权限、移除了所有 Linux capability，且 root filesystem 以只读方式挂载。
 
+<span id="cluster-upgrades"></span>
+
 ## 集群升级
 
 Kubernetes 集群升级是应用新功能、性能改进和安全补丁所必需的。
@@ -806,6 +818,8 @@ kubectl create deployment nginx --image=nginx
 kubectl expose deployment nginx --port=80
 kubectl get svc nginx
 ```
+<span id="backup-and-recovery"></span>
+
 ## 备份和恢复
 
 Kubernetes 集群备份和恢复是灾难恢复规划的重要组成部分。
@@ -927,6 +941,8 @@ spec:
               claimName: etcd-backup-pvc
 ```
 
+<span id="monitoring-and-logging"></span>
+
 ## 监控和日志
 
 有效的监控和日志记录是集群管理的核心要素。
@@ -1042,6 +1058,8 @@ data:
     </match>
 ```
 
+<span id="troubleshooting"></span>
+
 ## 故障排除
 
 Kubernetes 集群故障排除是集群管理的重要组成部分。
@@ -1137,6 +1155,8 @@ kubectl logs -n kube-system kube-scheduler-<node-name>
 # Check etcd logs
 kubectl logs -n kube-system etcd-<node-name>
 ```
+
+<span id="amazon-eks-cluster-administration"></span>
 
 ## Amazon EKS 集群管理
 
@@ -1261,6 +1281,8 @@ eksctl utils update-cluster-logging \
   --approve
 ```
 
+<span id="cluster-administration-best-practices"></span>
+
 ## 集群管理最佳实践
 
 Kubernetes 和 EKS 集群管理的最佳实践：
@@ -1304,6 +1326,8 @@ Kubernetes 和 EKS 集群管理的最佳实践：
 3. **EKS Add-ons**: 使用官方 EKS add-on
 4. **IAM Roles for Service Accounts (IRSA)**: 按 Pod 管理 IAM 权限
 5. **VPC CNI Customization**: 根据网络要求配置 VPC CNI
+
+<span id="conclusion"></span>
 
 ## 结论
 

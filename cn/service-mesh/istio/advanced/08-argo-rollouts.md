@@ -18,6 +18,8 @@
 8. [故障排除](#troubleshooting)
 9. [最佳实践](#best-practices)
 
+<span id="overview"></span>
+
 ## 概述
 
 ### 什么是 Argo Rollouts？
@@ -72,6 +74,8 @@ flowchart LR
 | **VirtualService** | 流量路由规则 | ✅ 自动调整路由权重 |
 | **DestinationRule** | Subset 定义 | ⚠️ 需要手动创建 |
 | **Service** | Stable/Canary 端点 | ⚠️ 需要手动创建 |
+
+<span id="architecture"></span>
 
 ## 架构
 
@@ -193,6 +197,8 @@ sequenceDiagram
         Rollouts->>VS: setWeight: 0<br/>Auto rollback
     end
 ```
+
+<span id="core-concepts"></span>
 
 ## 核心概念
 
@@ -395,6 +401,8 @@ flowchart TD
     class C1,C2,C3,C4,C5 check;
 ```
 
+<span id="setup-and-configuration"></span>
+
 ## 安装与配置
 
 ### 创建所需资源
@@ -591,6 +599,8 @@ kubectl argo rollouts abort test
 kubectl argo rollouts retry rollout test
 ```
 
+<span id="traffic-routing-strategies"></span>
+
 ## 流量路由策略
 
 ### 1. 基本 Canary（基于权重）
@@ -760,6 +770,8 @@ spec:
       steps:
       - setWeight: 10  # Adjusts both routes to 10%
 ```
+
+<span id="analysis-and-metrics"></span>
 
 ## 分析与指标
 
@@ -950,6 +962,8 @@ spec:
           value: test
 ```
 
+<span id="advanced-deployment-patterns"></span>
+
 ## 高级部署模式
 
 ### 1. Blue/Green 部署
@@ -1089,6 +1103,8 @@ spec:
         startingStep: 1
 ```
 
+<span id="troubleshooting"></span>
+
 ## 故障排除
 
 ### 1. VirtualService 未更新
@@ -1210,6 +1226,8 @@ kubectl get analysisrun -l rollout=test
 # 7. Rollout Controller logs
 kubectl logs -n argo-rollouts deployment/argo-rollouts
 ```
+
+<span id="best-practices"></span>
 
 ## 最佳实践
 

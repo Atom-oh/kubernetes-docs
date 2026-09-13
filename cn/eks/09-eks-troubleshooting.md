@@ -17,6 +17,8 @@
 9. [升级问题](#upgrade-issues)
 10. [常见错误消息和解决方案](#common-error-messages-and-solutions)
 
+<span id="troubleshooting-basics"></span>
+
 ## 故障排查基础
 
 ```mermaid
@@ -251,6 +253,8 @@ kubectl run netshoot --image=nicolaka/netshoot --restart=Never -- sleep 3600
 kubectl exec -it netshoot -- ping <target-ip>
 kubectl exec -it netshoot -- traceroute <target-ip>
 ```
+
+<span id="cluster-creation-and-management-issues"></span>
 
 ## Cluster 创建和管理问题
 
@@ -598,6 +602,8 @@ aws elbv2 describe-load-balancers | jq -r '.LoadBalancers[].LoadBalancerArn' | x
 # Delete security groups
 aws ec2 describe-security-groups --filters "Name=tag:kubernetes.io/cluster/<cluster-name>,Values=owned" | jq -r '.SecurityGroups[].GroupId' | xargs -I {} aws ec2 delete-security-group --group-id {}
 ```
+
+<span id="networking-issues"></span>
 
 ## 网络问题
 
@@ -1235,6 +1241,8 @@ aws iam attach-role-policy \
   --policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
 ```
 
+<span id="node-and-pod-issues"></span>
+
 ## Node 和 Pod 问题
 
 ```mermaid
@@ -1575,6 +1583,8 @@ aws eks update-nodegroup-config \
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
 ```
 
+<span id="iam-and-authentication-issues"></span>
+
 ## IAM 和身份验证问题
 
 ```mermaid
@@ -1911,6 +1921,8 @@ aws ssm start-session --target <instance-id>
 sudo /etc/eks/bootstrap.sh my-cluster
 ```
 
+<span id="storage-issues"></span>
+
 ## 存储问题
 
 ### EBS Volume 问题
@@ -2066,6 +2078,8 @@ aws efs create-mount-target \
   --security-groups <security-group-id>
 ```
 
+<span id="logging-and-monitoring-issues"></span>
+
 ## 日志记录和监控问题
 
 ### CloudWatch 问题
@@ -2188,6 +2202,8 @@ spec:
 EOF
 ```
 
+<span id="performance-issues"></span>
+
 ## 性能问题
 
 ### Node 性能问题
@@ -2293,6 +2309,8 @@ kubectl patch deployment <deployment-name> -n <namespace> -p '{"spec":{"template
 # Create HPA
 kubectl autoscale deployment <deployment-name> -n <namespace> --cpu-percent=70 --min=2 --max=10
 ```
+
+<span id="upgrade-issues"></span>
 
 ## 升级问题
 
@@ -2433,6 +2451,8 @@ kubectl patch pdb <pdb-name> -n <namespace> -p '{"spec":{"minAvailable":0}}'
 # Force drain node
 kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data --force
 ```
+
+<span id="common-error-messages-and-solutions"></span>
 
 ## 常见错误消息和解决方案
 

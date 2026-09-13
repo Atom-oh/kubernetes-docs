@@ -19,6 +19,8 @@
 
 ---
 
+<span id="grafana-oncall-overview"></span>
+
 ## Descripción general de Grafana OnCall
 
 Grafana OnCall es una herramienta de código abierto para la gestión de guardias que proporciona enrutamiento de alertas, gestión de calendarios de guardias y políticas de escalamiento. Está disponible como SaaS mediante Grafana Cloud o puede autoalojarse.
@@ -46,6 +48,8 @@ Grafana OnCall es una herramienta de código abierto para la gestión de guardia
 | **Soporte empresarial** | De pago | Incluido | Incluido |
 
 ---
+
+<span id="architecture"></span>
 
 ## Arquitectura
 
@@ -148,6 +152,8 @@ sequenceDiagram
 ```
 
 ---
+
+<span id="installation"></span>
 
 ## Instalación
 
@@ -366,6 +372,8 @@ kubectl create secret generic twilio-secret \
 
 ---
 
+<span id="integration-setup"></span>
+
 ## Configuración de integraciones
 
 ### Integración con Alertmanager
@@ -458,6 +466,8 @@ response = requests.post(
 ```
 
 ---
+
+<span id="on-call-schedule-configuration"></span>
 
 ## Configuración del calendario de guardias
 
@@ -590,6 +600,8 @@ curl -X POST https://oncall.example.com/api/v1/schedules/<schedule-id>/overrides
 ```
 
 ---
+
+<span id="escalation-chains"></span>
 
 ## Cadenas de escalamiento
 
@@ -753,6 +765,8 @@ warning-chain:
 
 ---
 
+<span id="alert-grouping-and-routing"></span>
+
 ## Agrupación y enrutamiento de alertas
 
 ### Configuración de rutas
@@ -840,6 +854,8 @@ templates:
 ```
 
 ---
+
+<span id="chatops-integration"></span>
 
 ## Integración de ChatOps
 
@@ -955,6 +971,8 @@ telegram:
 
 ---
 
+<span id="grafana-irm-integration"></span>
+
 ## Integración de Grafana IRM
 
 ### Gestión de respuesta a incidentes
@@ -1002,6 +1020,8 @@ escalation-policy:
 ```
 
 ---
+
+<span id="mobile-app"></span>
 
 ## Aplicación móvil
 
@@ -1063,6 +1083,8 @@ graph TB
 ```
 
 ---
+
+<span id="pagerdutyopsgenie-comparison"></span>
 
 ## Comparación con PagerDuty/OpsGenie
 
@@ -1143,6 +1165,8 @@ migration-checklist:
 ```
 
 ---
+
+<span id="best-practices"></span>
 
 ## Prácticas recomendadas
 

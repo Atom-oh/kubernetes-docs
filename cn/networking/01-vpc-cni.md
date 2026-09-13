@@ -13,6 +13,8 @@
 - [故障排除](#troubleshooting)
 - [最佳实践](#best-practices)
 
+<span id="vpc-cni-overview"></span>
+
 ## VPC CNI 概览
 
 Amazon VPC CNI（Container Network Interface）是 Amazon EKS 的默认网络插件。它从 VPC 子网为每个 Pod 分配真实 IP 地址，使 Pod 能够在 VPC 网络内进行原生通信。
@@ -75,6 +77,8 @@ VPC CNI 支持两种 IP 分配模式：
 | 可用起始版本 | 初始版本 | v1.9+ |
 | 推荐场景 | 小型集群 | 大型集群 |
 
+<span id="networking-model"></span>
+
 ## 网络模型
 
 ### ENI 架构
@@ -129,6 +133,8 @@ Prefix Delegation 的优势：
 - **更高的 Pod 密度**：每个 /28 前缀提供 16 个 IP，可显著增加每个节点的 Pod 数量
 - **更快的 IP 分配**：一次 API 调用即可获取 16 个 IP
 - **Nitro 实例优化**：在基于 Nitro 的实例上获得最佳性能
+
+<span id="installation-and-configuration"></span>
 
 ## 安装与配置
 
@@ -210,6 +216,8 @@ kubectl set env daemonset aws-node -n kube-system AWS_VPC_K8S_CNI_CUSTOM_NETWORK
 kubectl set env daemonset aws-node -n kube-system ENI_CONFIG_LABEL_DEF=topology.kubernetes.io/zone
 ```
 
+<span id="ip-address-management"></span>
+
 ## IP 地址管理
 
 ### WARM_IP_TARGET 调优
@@ -250,6 +258,8 @@ eksctl create cluster \
   --version 1.28 \
   --ip-family ipv6
 ```
+
+<span id="network-policy-support"></span>
 
 ## Network Policy 支持
 
@@ -301,6 +311,8 @@ kubectl get networkpolicy -A
 # Check eBPF policy maps
 kubectl exec -n kube-system ds/aws-node -c aws-node -- ebpf-sdk list-maps
 ```
+
+<span id="advanced-features"></span>
 
 ## 高级功能
 
@@ -373,6 +385,8 @@ eksctl create nodegroup \
   --node-ami-family WindowsServer2022FullContainer
 ```
 
+<span id="troubleshooting"></span>
+
 ## 故障排除
 
 ### IP 耗尽
@@ -432,6 +446,8 @@ kubectl exec -n kube-system ds/aws-node -c aws-node -- curl http://localhost:616
 | `ENI limit reached` | ENI 数量超限 | 使用更大型的实例类型 |
 | `Failed to create ENI` | IAM 权限不足 | 向节点角色添加 ENI 创建权限 |
 | `Timeout waiting for pod IP` | IPAMD 延迟 | 重启 IPAMD 并检查日志 |
+
+<span id="best-practices"></span>
 
 ## 最佳实践
 

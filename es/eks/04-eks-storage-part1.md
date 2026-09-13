@@ -12,6 +12,8 @@ Al ejecutar aplicaciones en Amazon EKS, existen varias opciones de almacenamient
 4. [Almacenamiento con Amazon EFS](04-eks-storage-part1.md#storage-with-amazon-efs)
 5. [Storage Classes y aprovisionamiento dinámico](04-eks-storage-part1.md#storage-classes-and-dynamic-provisioning)
 
+<span id="kubernetes-storage-basic-concepts"></span>
+
 ## Conceptos básicos de almacenamiento de Kubernetes
 
 Primero, comprendamos los conceptos clave para administrar el almacenamiento en Kubernetes.
@@ -44,6 +46,8 @@ Kubernetes admite los siguientes modos de acceso:
 * **ReadOnlyMany (ROX)**: Puede montarse como solo lectura en muchos nodos
 * **ReadWriteMany (RWX)**: Puede montarse como lectura/escritura en muchos nodos
 * **ReadWriteOncePod (RWOP)**: Puede montarse como lectura/escritura únicamente en un solo Pod (Kubernetes 1.22+)
+
+<span id="amazon-eks-storage-options-overview"></span>
 
 ## Descripción general de las opciones de almacenamiento de Amazon EKS
 
@@ -86,6 +90,8 @@ En Amazon EKS, puede aprovechar varios servicios de almacenamiento de AWS para p
 | FSx for Lustre           | Archivo            | RWX            | Muy alto                      | HPC, entrenamiento de ML, big data                                  |
 | Amazon S3                | Objeto             | Acceso mediante API | Medio                     | Copia de seguridad, archivo, contenido estático                     |
 | EC2 Instance Store       | Bloque (NVMe local) | RWO, efímero  | Muy alto (latencia ultrabaja) | Datos efímeros de AI/ML, caché local, procesamiento de logs de alto rendimiento |
+
+<span id="storage-with-amazon-ebs"></span>
 
 ## Almacenamiento con Amazon EBS
 
@@ -209,6 +215,8 @@ Amazon EBS proporciona varios tipos de volume:
 | sc1            | HDD frío                 | Datos a los que se accede con poca frecuencia |
 
 Para EKS, se recomienda el tipo de volume gp3. gp3 es rentable y proporciona un rendimiento uniforme.
+
+<span id="storage-with-amazon-efs"></span>
 
 ## Almacenamiento con Amazon EFS
 
@@ -372,6 +380,8 @@ Amazon EFS proporciona dos modos de rendimiento y tres modos de throughput:
 * **Bursting**: Modo predeterminado, proporciona créditos de ráfaga según el tamaño del sistema de archivos
 * **Provisioned**: Úselo cuando se necesite un throughput uniforme
 * **Elastic**: Ajusta automáticamente el throughput según la carga de trabajo (recomendado)
+
+<span id="storage-classes-and-dynamic-provisioning"></span>
 
 ## Storage Classes y aprovisionamiento dinámico
 

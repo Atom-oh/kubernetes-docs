@@ -7,8 +7,10 @@ Egress 制御は、mesh からのアウトバウンドトラフィックを管�
 1. [Egress の概要](#egress-overview)
 2. [ServiceEntry の設定](#serviceentry-configuration)
 3. [Egress Gateway](#egress-gateway)
-4. [TLS Origination](#tls-origination)
-5. [実践例](#practical-examples)
+4. [TLS Origination (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/11-egress-control#tls-origination)
+5. [実践例 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/11-egress-control#serviceentry-configuration)
+
+<span id="egress-overview"></span>
 
 ## Egress の概要
 
@@ -37,6 +39,8 @@ flowchart LR
     class Sidecar,EgressGW mesh;
     class External external;
 ```
+
+<span id="serviceentry-configuration"></span>
 
 ## ServiceEntry の設定
 

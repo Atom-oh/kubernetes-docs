@@ -271,7 +271,7 @@ Cilium 1.20.1 的双向认证功能处于 **beta 阶段，且与普通连接是�
 
 ### Linkerd
 
-不要在 Linkerd 期望 PEM 格式根证书的位置传入 SPIRE bundle JSON，也不要把 SPIRE CA 私钥复制为 issuer 密钥。Linkerd 需要合适的 issuer 证书/密钥和受信任的根证书，并具备续期和根证书轮转能力。参见[已审阅的 cert-manager/Linkerd 方案](./10-cert-manager.md#linkerd-and-trust-manager)。仅共享根信任并不等于集成了 SPIFFE Workload API 或 SDS。
+不要在 Linkerd 期望 PEM 格式根证书的位置传入 SPIRE bundle JSON，也不要把 SPIRE CA 私钥复制为 issuer 密钥。Linkerd 需要合适的 issuer 证书/密钥和受信任的根证书，并具备续期和根证书轮转能力。参见[已审阅的 cert-manager/Linkerd 方案 (English)](https://www.atomai.click/kubernetes-docs/en/security/10-cert-manager#linkerd-and-trust-manager)。仅共享根信任并不等于集成了 SPIFFE Workload API 或 SDS。
 
 <span id="federation-trust-establishment"></span>
 <span id="configuring-federation"></span>

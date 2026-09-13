@@ -271,7 +271,7 @@ Cilium 1.20.1 の相互認証は **beta であり、通常の接続とは帯域�
 
 ### Linkerd
 
-Linkerd が PEM の root を期待する箇所に SPIRE の bundle JSON を渡したり、SPIRE の CA 秘密鍵を issuer の鍵としてコピーしたりしないでください。Linkerd には適切な issuer 証明書/鍵と信頼された root が必要で、更新と root のロールオーバーも必要です。[検証済みの cert-manager/Linkerd の手順](./10-cert-manager.md#linkerd-and-trust-manager)を参照してください。root の信頼を共有するだけでは、SPIFFE Workload API や SDS の統合にはなりません。
+Linkerd が PEM の root を期待する箇所に SPIRE の bundle JSON を渡したり、SPIRE の CA 秘密鍵を issuer の鍵としてコピーしたりしないでください。Linkerd には適切な issuer 証明書/鍵と信頼された root が必要で、更新と root のロールオーバーも必要です。[検証済みの cert-manager/Linkerd の手順 (English)](https://www.atomai.click/kubernetes-docs/en/security/10-cert-manager#linkerd-and-trust-manager)を参照してください。root の信頼を共有するだけでは、SPIFFE Workload API や SDS の統合にはなりません。
 
 <span id="federation-trust-establishment"></span>
 <span id="configuring-federation"></span>

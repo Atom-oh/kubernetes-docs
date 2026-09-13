@@ -43,6 +43,8 @@ sudo bpftool feature
 
 ---
 
+<span id="1-introduction-to-ebpf"></span>
+
 ## 1. eBPF 简介
 
 ### 1.1 什么是 eBPF？
@@ -134,6 +136,8 @@ graph LR
 | **开发难度** | 相对容易 | 需要高度专业知识 |
 
 ---
+
+<span id="2-ebpf-architecture"></span>
 
 ## 2. eBPF 架构
 
@@ -274,6 +278,8 @@ stateDiagram-v2
 ```
 
 ---
+
+<span id="3-ebpf-program-types"></span>
 
 ## 3. eBPF 程序类型
 
@@ -464,6 +470,8 @@ int restrict_connect(struct bpf_sock_addr *ctx) {
 
 ---
 
+<span id="4-ebpf-development-tools"></span>
+
 ## 4. eBPF 开发工具
 
 ### 4.1 bpftool
@@ -618,6 +626,8 @@ bpftool prog show id <ID> --pretty
 
 ---
 
+<span id="5-ebpf-and-kubernetes-networking"></span>
+
 ## 5. eBPF 与 Kubernetes 网络
 
 ### 5.1 Cilium: 基于 eBPF 的 CNI
@@ -766,6 +776,8 @@ cilium policy get
 ```
 
 ---
+
+<span id="6-ebpf-based-observability"></span>
 
 ## 6. 基于 eBPF 的可观测性
 
@@ -933,6 +945,8 @@ graph LR
 ```
 
 ---
+
+<span id="7-ebpf-based-security"></span>
 
 ## 7. 基于 eBPF 的安全
 
@@ -1140,6 +1154,8 @@ int BPF_PROG(restrict_connect, struct socket *sock, struct sockaddr *address, in
 
 ---
 
+<span id="8-practical-ebpf-examples"></span>
+
 ## 8. eBPF 实践示例
 
 ### 8.1 使用 bpftrace 进行系统性能分析
@@ -1328,6 +1344,8 @@ END {
 ```
 
 ---
+
+<span id="9-ebpf-limitations-and-considerations"></span>
 
 ## 9. eBPF 限制与注意事项
 
@@ -1520,6 +1538,8 @@ echo 2 | sudo tee /proc/sys/kernel/bpf_spec_v4
 ```
 
 ---
+
+<span id="10-next-steps"></span>
 
 ## 10. 下一步
 

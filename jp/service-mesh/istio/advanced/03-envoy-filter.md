@@ -16,6 +16,8 @@ EnvoyFilter は、Envoy proxy 設定を直接カスタマイズできる高度�
 7. [ベストプラクティス](#best-practices)
 8. [トラブルシューティング](#troubleshooting)
 
+<span id="overview"></span>
+
 ## 概要
 
 EnvoyFilter では、次のことができます。
@@ -23,6 +25,8 @@ EnvoyFilter では、次のことができます。
 - Rate Limiting
 - 外部認可
 - WASM plugin の統合
+
+<span id="structure"></span>
 
 ## 構造
 
@@ -55,6 +59,8 @@ spec:
               request_handle:headers():add("x-custom-header", "value")
             end
 ```
+
+<span id="main-use-cases"></span>
 
 ## 主なユースケース
 
@@ -142,6 +148,8 @@ spec:
                 local:
                   filename: "/var/local/lib/wasm-filters/my_plugin.wasm"
 ```
+
+<span id="x-forwarded-for-and-hop-settings"></span>
 
 ## X-Forwarded-For とホップ設定
 
@@ -1281,6 +1289,8 @@ spec:
    - Edge で XFF スプーフィングを防止する
    - 信頼できない送信元からの XFF を無視する
 
+<span id="static-response-configuration"></span>
+
 ## 静的レスポンスの設定
 
 特定のリクエストに対して、backend Service を経由せずに静的レスポンスを直接返すことができます。これは、メンテナンスモード、エラーページ、health check レスポンスなどに役立ちます。
@@ -1559,7 +1569,7 @@ spec:
         - "198.51.100.0/24"
 ```
 
-**重要**: `remoteIpBlocks` を動作させるには、Gateway で `xff_num_trusted_hops` を正しく設定する必要があります（上記の [XFF 設定](#xff-configuration-options) を参照）。
+**重要**: `remoteIpBlocks` を動作させるには、Gateway で `xff_num_trusted_hops` を正しく設定する必要があります（上記の [XFF 設定 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/advanced/03-envoy-filter#xff-configuration-options) を参照）。
 
 #### 4. カスタム拒否レスポンス
 
@@ -2196,6 +2206,8 @@ curl http://localhost:15000/config_dump | jq '.configs[] | select(.["@type"] == 
 4. **Caching**: 静的レスポンスにも `Cache-Control` ヘッダーの設定が必要です
 5. **Metrics**: 静的レスポンスは通常のレスポンスとは異なる metrics を生成します
 
+<span id="practical-examples"></span>
+
 ## 実践例
 
 ### 例 1: Request/Response Logging
@@ -2262,12 +2274,16 @@ spec:
                   timeout: 5s
 ```
 
+<span id="best-practices"></span>
+
 ## ベストプラクティス
 
 1. **workloadSelector を使用する**: 特定の workload にのみ適用する
 2. **まずテスト環境で実施する**: 本番前に十分にテストする
 3. **Istio version の互換性**: version ごとに API を確認する
 4. **パフォーマンス監視**: EnvoyFilter の追加後にパフォーマンスを監視する
+
+<span id="troubleshooting"></span>
 
 ## トラブルシューティング
 

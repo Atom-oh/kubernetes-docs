@@ -14,6 +14,8 @@ La inyección de fallos es una técnica que introduce intencionadamente fallos p
 8. [Estrategias de prueba](#estrategias-de-prueba)
 9. [Mejores prácticas](#mejores-prácticas)
 
+<span id="por-qué-la-inyección-de-fallos"></span>
+
 ## ¿Por qué la inyección de fallos?
 
 ### Prueba de resiliencia en entornos de producción
@@ -94,6 +96,8 @@ Al implementar nuevas versiones, puede verificar **si son seguras incluso cuando
 - ¿La nueva versión gestiona correctamente los tiempos de espera?
 - ¿Realiza una degradación gradual cuando fallan los servicios dependientes?
 - ¿La lógica de gestión de errores funciona correctamente?
+
+<span id="cuándo-usar-la-inyección-de-fallos"></span>
 
 ## Cuándo usar la inyección de fallos
 
@@ -312,6 +316,8 @@ spec:
 - Probar de forma segura sin afectar a los usuarios reales
 - Mejorar a partir de los comentarios de los beta testers
 
+<span id="descripción-general-de-la-inyección-de-fallos"></span>
+
 ## Descripción general de la inyección de fallos
 
 ```mermaid
@@ -341,6 +347,8 @@ flowchart LR
     class Service service;
 ```
 
+<span id="inyección-de-retraso"></span>
+
 ## Inyección de retraso
 
 ```yaml
@@ -362,6 +370,8 @@ spec:
         host: reviews
 ```
 
+<span id="inyección-de-aborto"></span>
+
 ## Inyección de aborto
 
 ```yaml
@@ -382,6 +392,8 @@ spec:
     - destination:
         host: reviews
 ```
+
+<span id="ejemplos-prácticos"></span>
 
 ## Ejemplos prácticos
 
@@ -965,6 +977,8 @@ spec:
 - Tasa de errores
 - Tiempo de respuesta (P50, P95, P99)
 - Indicadores de experiencia del usuario
+
+<span id="mejores-prácticas"></span>
 
 ## Mejores prácticas
 

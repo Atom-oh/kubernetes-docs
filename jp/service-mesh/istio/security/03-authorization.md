@@ -7,8 +7,10 @@ AuthorizationPolicy を使用すると、サービスへのアクセス権限を
 1. [認可の概要](#authorization-overview)
 2. [基本ポリシー](#basic-policies)
 3. [高度なポリシー](#advanced-policies)
-4. [実践例](#practical-examples)
-5. [ベストプラクティス](#best-practices)
+4. [実践例 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/03-authorization#practical-examples)
+5. [ベストプラクティス (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/03-authorization#best-practices)
+
+<span id="authorization-overview"></span>
 
 ## 認可の概要
 
@@ -62,6 +64,8 @@ flowchart TB
     class Deny deny;
 ```
 
+<span id="basic-policies"></span>
+
 ## 基本ポリシー
 
 ### デフォルト拒否（すべて拒否）
@@ -110,6 +114,8 @@ spec:
     - operation:
         methods: ["GET"]  # Allow only GET
 ```
+
+<span id="advanced-policies"></span>
 
 ## 高度なポリシー
 

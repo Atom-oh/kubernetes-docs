@@ -43,6 +43,8 @@ sudo bpftool feature
 
 ---
 
+<span id="1-introduction-to-ebpf"></span>
+
 ## 1. eBPF 入門
 
 ### 1.1 eBPF とは？
@@ -134,6 +136,8 @@ graph LR
 | **開発難易度** | 比較的容易 | 高い専門性が必要 |
 
 ---
+
+<span id="2-ebpf-architecture"></span>
 
 ## 2. eBPF アーキテクチャ
 
@@ -274,6 +278,8 @@ stateDiagram-v2
 ```
 
 ---
+
+<span id="3-ebpf-program-types"></span>
 
 ## 3. eBPF Program Type
 
@@ -464,6 +470,8 @@ int restrict_connect(struct bpf_sock_addr *ctx) {
 
 ---
 
+<span id="4-ebpf-development-tools"></span>
+
 ## 4. eBPF 開発ツール
 
 ### 4.1 bpftool
@@ -618,6 +626,8 @@ bpftool prog show id <ID> --pretty
 
 ---
 
+<span id="5-ebpf-and-kubernetes-networking"></span>
+
 ## 5. eBPF と Kubernetes Networking
 
 ### 5.1 Cilium: eBPF ベースの CNI
@@ -766,6 +776,8 @@ cilium policy get
 ```
 
 ---
+
+<span id="6-ebpf-based-observability"></span>
 
 ## 6. eBPF ベースの Observability
 
@@ -933,6 +945,8 @@ graph LR
 ```
 
 ---
+
+<span id="7-ebpf-based-security"></span>
 
 ## 7. eBPF ベースの Security
 
@@ -1140,6 +1154,8 @@ int BPF_PROG(restrict_connect, struct socket *sock, struct sockaddr *address, in
 
 ---
 
+<span id="8-practical-ebpf-examples"></span>
+
 ## 8. 実践的な eBPF の例
 
 ### 8.1 bpftrace による System Performance Analysis
@@ -1328,6 +1344,8 @@ END {
 ```
 
 ---
+
+<span id="9-ebpf-limitations-and-considerations"></span>
 
 ## 9. eBPF の制限と考慮事項
 
@@ -1520,6 +1538,8 @@ echo 2 | sudo tee /proc/sys/kernel/bpf_spec_v4
 ```
 
 ---
+
+<span id="10-next-steps"></span>
 
 ## 10. 次のステップ
 

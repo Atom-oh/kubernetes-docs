@@ -15,6 +15,8 @@ Circuit Breaker aísla automáticamente los servicios que fallan para evitar fal
 9. [Consideraciones importantes](#important-considerations)
 10. [Mejores prácticas](#best-practices)
 
+<span id="why-circuit-breaker"></span>
+
 ## ¿Por qué Circuit Breaker?
 
 ### Prevención de fallos en cascada
@@ -55,6 +57,8 @@ flowchart TB
 | **Propagación de fallos** | Se producen fallos en cascada | Aislamiento de fallos |
 | **Tiempo de recuperación** | Requiere intervención manual | Intentos de recuperación automática |
 
+<span id="circuit-breaker-overview"></span>
+
 ## Descripción general de Circuit Breaker
 
 ```mermaid
@@ -81,6 +85,8 @@ stateDiagram-v2
     end note
 ```
 
+<span id="connection-pool-settings"></span>
+
 ## Configuración del Connection Pool
 
 ```yaml
@@ -99,6 +105,8 @@ spec:
         http2MaxRequests: 100
         maxRequestsPerConnection: 2
 ```
+
+<span id="outlier-detection"></span>
 
 ## Detección de valores atípicos
 
@@ -147,6 +155,8 @@ spec:
       # Success rate based
       splitExternalLocalOriginErrors: true
 ```
+
+<span id="combination-with-retry-policy"></span>
 
 ## Combinación con la política de Retry
 
@@ -223,6 +233,8 @@ spec:
       interval: 5s
       baseEjectionTime: 60s          # Long recovery time
 ```
+
+<span id="practical-examples"></span>
 
 ## Ejemplos prácticos
 
@@ -410,6 +422,8 @@ spec:
       consecutiveLocalOriginFailures: 5
 ```
 
+<span id="external-service-circuit-breaker"></span>
+
 ## Circuit Breaker para servicios externos
 
 Úselo con ServiceEntry para proteger servicios externos.
@@ -540,6 +554,8 @@ spec:
     timeout: 10s
 ```
 
+<span id="monitoring-and-debugging"></span>
+
 ## Monitoreo y depuración
 
 ### Comprobar métricas de Envoy
@@ -606,6 +622,8 @@ istioctl proxy-config cluster <pod-name> -o json | \
 istioctl proxy-config cluster <pod-name> -o json | \
   jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .outlierDetection'
 ```
+
+<span id="important-considerations"></span>
 
 ## Consideraciones importantes
 
@@ -906,6 +924,8 @@ kubectl exec -n <namespace> <pod> -c istio-proxy -- \
 # Check logs for suspected duplicate requests
 kubectl logs -n <namespace> <pod> | grep -i "duplicate\|idempotency"
 ```
+
+<span id="best-practices"></span>
 
 ## Mejores prácticas
 

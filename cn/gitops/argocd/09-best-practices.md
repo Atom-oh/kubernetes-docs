@@ -14,6 +14,8 @@
 - [EKS 最佳实践](#eks-best-practices)
 - [生产环境检查清单](#production-checklist)
 
+<span id="repository-structure"></span>
+
 ## 仓库结构
 
 ### Monorepo 模式
@@ -123,6 +125,8 @@ gitops-root/
 | Namespace | `{app}` or `{app}-{env}` | `frontend`, `frontend-prod` |
 | 仓库 | `gitops-{scope}` | `gitops-platform` |
 
+<span id="environment-promotion"></span>
+
 ## 环境提升
 
 ### Git 分支策略
@@ -217,6 +221,8 @@ jobs:
           commit-message: "chore: promote ${{ github.event.inputs.version }} to production"
 ```
 
+<span id="resource-management"></span>
+
 ## 资源管理
 
 ### ArgoCD 组件资源
@@ -298,6 +304,8 @@ spec:
           type: Utilization
           averageUtilization: 80
 ```
+
+<span id="performance-tuning"></span>
 
 ## 性能调优
 
@@ -385,6 +393,8 @@ spec:
       managedFieldsManagers:
         - kube-controller-manager
 ```
+
+<span id="disaster-recovery"></span>
 
 ## 灾难恢复
 
@@ -476,6 +486,8 @@ spec:
       selfHeal: true
 ```
 
+<span id="upgrade-strategies"></span>
+
 ## 升级策略
 
 ### 升级前检查清单
@@ -521,6 +533,8 @@ kubectl port-forward svc/argocd-server -n argocd-new 8081:443
 kubectl delete namespace argocd
 kubectl rename namespace argocd-new argocd
 ```
+
+<span id="troubleshooting"></span>
 
 ## 故障排除
 
@@ -629,6 +643,8 @@ argocd app get <app-name> --hard-refresh
 kubectl patch application <app-name> -n argocd -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}' --type merge
 ```
 
+<span id="eks-best-practices"></span>
+
 ## EKS 最佳实践
 
 ### IRSA 配置
@@ -690,6 +706,8 @@ spec:
 2. 升级后测试连接性
 3. 重新 Sync applications 以验证兼容性
 4. 如果 Application manifests 中硬编码了 Kubernetes version，请进行更新
+
+<span id="production-checklist"></span>
 
 ## 生产环境检查清单
 

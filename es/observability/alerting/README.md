@@ -18,6 +18,8 @@
 
 ---
 
+<span id="the-role-and-importance-of-alerting"></span>
+
 ## El rol y la importancia de las alertas
 
 ### Posición de las alertas en los tres pilares de la observabilidad
@@ -53,6 +55,8 @@ Las reglas de Prometheus evalúan métricas. Los logs y las trazas alimentan ale
 | **Duplicación** | Alertas relacionadas agrupadas | Docenas de alertas para el mismo problema |
 
 ---
+
+<span id="alert-lifecycle"></span>
 
 ## Ciclo de vida de las alertas
 
@@ -108,6 +112,8 @@ groups:
 - **Notificación de resolución**: Enviar una notificación de resolución cuando se solucione el problema
 
 ---
+
+<span id="alert-design-principles"></span>
 
 ## Principios de diseño de alertas
 
@@ -204,6 +210,8 @@ annotations:
 
 ---
 
+<span id="alert-routing-and-escalation"></span>
+
 ## Enrutamiento y escalamiento de alertas
 
 ### Estrategia de enrutamiento
@@ -264,6 +272,8 @@ Lo siguiente es ilustrativo. Configure las zonas horarias, las ventanas de confi
 
 ---
 
+<span id="on-call-rotation"></span>
+
 ## Rotación de guardia
 
 ### Concepto de guardia
@@ -292,6 +302,8 @@ La guardia se refiere a un respondedor designado responsable de los problemas de
 - **Informes**: Análisis de actividad de guardia
 
 ---
+
+<span id="alerting-strategy-for-eks-environments"></span>
 
 ## Estrategia de alertas para entornos EKS
 
@@ -455,6 +467,8 @@ EKS 1.28+ proporciona métricas seleccionadas del plano de control en AWS/EKS; e
 | VPC / NAT Gateway | Métricas de NAT; registros aceptados/rechazados en Flow Logs habilitados por separado | Métricas/logs de CloudWatch; Flow Logs no es un motor de alarmas |
 
 ---
+
+<span id="solution-comparison"></span>
 
 ## Comparación de soluciones
 

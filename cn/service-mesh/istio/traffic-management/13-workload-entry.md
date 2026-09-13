@@ -19,6 +19,8 @@ WorkloadEntry 是一种资源，用于将 Virtual Machines (VMs) 或裸金属服
 10. [故障排除](#troubleshooting)
 11. [最佳实践](#best-practices)
 
+<span id="overview"></span>
+
 ## 概述
 
 ### 什么是 WorkloadEntry？
@@ -80,6 +82,8 @@ flowchart TB
 3. **数据库集成**：将外部数据库纳入 mesh
 4. **高性能工作负载**：使用 GPU 服务器等专用硬件
 
+<span id="workloadentry-vs-kubernetes-pod"></span>
+
 ## WorkloadEntry 与 Kubernetes Pod
 
 ### 对比表
@@ -128,6 +132,8 @@ flowchart LR
     class K8sService,K8sPod k8s;
     class ServiceEntry,WorkloadEntry vm;
 ```
+
+<span id="architecture"></span>
 
 ## 架构
 
@@ -178,6 +184,8 @@ flowchart TB
 3. **Envoy Proxy**：手动安装在 VM 上的 sidecar
 4. **istiod**：配置下发和证书管理
 5. **Service Account**：VM 身份认证
+
+<span id="basic-usage"></span>
 
 ## 基本用法
 
@@ -275,6 +283,8 @@ spec:
   ports:
     http: 8080
 ```
+
+<span id="serviceentry-integration"></span>
 
 ## ServiceEntry 集成
 
@@ -404,6 +414,8 @@ spec:
     role: replica
   weight: 50
 ```
+
+<span id="vm-registration-practical-guide"></span>
 
 ## VM 注册实战指南
 
@@ -583,6 +595,8 @@ kubectl run -it --rm debug \
 # mydb=#
 ```
 
+<span id="security-settings-mtls"></span>
+
 ## 安全设置 (mTLS)
 
 ### 自动启用 mTLS
@@ -670,6 +684,8 @@ kubectl exec -it <pod-name> -c istio-proxy -- \
 # listener.0.0.0.0_15006.ssl.connection_error: 0
 # listener.0.0.0.0_15006.ssl.handshake: 1234
 ```
+
+<span id="health-checks-and-monitoring"></span>
 
 ## 健康检查和监控
 
@@ -760,6 +776,8 @@ histogram_quantile(0.99,
   sum(rate(istio_request_duration_milliseconds_bucket{destination_workload="postgres-vm-1"}[5m])) by (le)
 )
 ```
+
+<span id="advanced-configuration"></span>
 
 ## 高级配置
 
@@ -907,6 +925,8 @@ spec:
     labels:
       version: v2
 ```
+
+<span id="troubleshooting"></span>
 
 ## 故障排除
 
@@ -1065,6 +1085,8 @@ spec:
     labels:
       app: postgres
 ```
+
+<span id="best-practices"></span>
 
 ## 最佳实践
 
@@ -1268,7 +1290,7 @@ kubectl delete workloadentry legacy-api-vm -n vm-workloads
 - [Virtual Machine 安装](https://istio.io/latest/docs/setup/install/virtual-machine/)
 
 ### 相关文档
-- [基本概念 - VM 工作负载注册](../02-basic-concepts.md#vm-workload-registration)
+- [基本概念 - VM 工作负载注册 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/02-basic-concepts#vm-workload-registration)
 - [ServiceEntry](12-service-entry.md)
 - [Egress 控制](11-egress-control.md)
 - [安全性 - mTLS](../security/01-mtls.md)

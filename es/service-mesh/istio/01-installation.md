@@ -15,6 +15,8 @@ Este documento explica cómo instalar y configurar inicialmente Istio en un clú
 9. [Eliminación de Istio](#istio-removal)
 10. [Solución de problemas](#troubleshooting)
 
+<span id="prerequisites"></span>
+
 ## Requisitos previos
 
 Antes de instalar Istio, se deben cumplir los siguientes requisitos:
@@ -47,6 +49,8 @@ Requisitos mínimos de recursos:
 - **Control Plane**: 1 vCPU, 1.5GB de RAM
 - **Sidecar (por Pod)**: 0.1 vCPU, 128MB de RAM
 
+<span id="choosing-an-installation-method"></span>
+
 ## Elección de un método de instalación
 
 Istio proporciona tres métodos principales de instalación:
@@ -56,6 +60,8 @@ Istio proporciona tres métodos principales de instalación:
 | **istioctl** | Simple y rápido, proporciona funciones de validación | Difícil de automatizar | Entornos de desarrollo y prueba |
 | **Helm** | Compatible con GitOps, gestión de versiones sencilla | La configuración puede ser compleja | Entornos de producción, pipelines de CI/CD |
 | **Istio Operator** | Gestión declarativa, actualizaciones automáticas | Se necesitan recursos adicionales | Entornos de producción a gran escala |
+
+<span id="installation-using-istioctl"></span>
 
 ## Instalación con istioctl
 
@@ -104,6 +110,8 @@ kubectl get all -n istio-system
 # Check istiod logs
 kubectl logs -n istio-system -l app=istiod
 ```
+
+<span id="installation-using-helm"></span>
 
 ## Instalación con Helm
 
@@ -191,6 +199,8 @@ helm install istiod istio/istiod \
   --wait
 ```
 
+<span id="installation-using-istio-operator"></span>
+
 ## Instalación con Istio Operator
 
 Istio Operator administra Istio de manera declarativa.
@@ -244,6 +254,8 @@ kubectl apply -f istio-operator.yaml
 kubectl get istiooperator -n istio-system
 ```
 
+<span id="installation-profiles"></span>
+
 ## Perfiles de instalación
 
 Istio proporciona varios perfiles para distintos casos de uso.
@@ -292,6 +304,8 @@ istioctl install --set profile=default \
   -y
 ```
 
+<span id="installation-verification"></span>
+
 ## Verificación de la instalación
 
 ### 1. Comprobar el Control Plane
@@ -336,6 +350,8 @@ kubectl get mutatingwebhookconfiguration
 # Check ValidatingWebhookConfiguration
 kubectl get validatingwebhookconfiguration
 ```
+
+<span id="sample-application-deployment"></span>
 
 ## Despliegue de aplicación de ejemplo
 
@@ -404,6 +420,8 @@ echo "http://$GATEWAY_URL/productpage"
 curl -s "http://$GATEWAY_URL/productpage" | grep -o "<title>.*</title>"
 ```
 
+<span id="istio-removal"></span>
+
 ## Eliminación de Istio
 
 ### Eliminación con istioctl
@@ -453,6 +471,8 @@ istioctl operator remove
 kubectl delete namespace istio-system
 kubectl delete namespace istio-operator
 ```
+
+<span id="troubleshooting"></span>
 
 ## Solución de problemas
 

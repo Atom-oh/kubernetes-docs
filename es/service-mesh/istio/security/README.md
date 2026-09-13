@@ -9,10 +9,12 @@ Istio proporciona sólidas características de seguridad dentro de la service me
 
 1. [Descripción general de la arquitectura de seguridad](#security-architecture-overview)
 2. [Características principales de seguridad](#core-security-features)
-3. [Componentes de seguridad](#security-components)
-4. [Documentación detallada](#detailed-documentation)
+3. [Componentes de seguridad (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/#security-components)
+4. [Documentación detallada (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/security/#next-steps)
 5. [Mejores prácticas de seguridad](#security-best-practices)
 6. [Monitoreo de seguridad](#security-monitoring)
+
+<span id="security-architecture-overview"></span>
 
 ## Descripción general de la arquitectura de seguridad
 
@@ -100,6 +102,8 @@ flowchart TB
    - Control de acceso granular (RBAC)
    - Compatibilidad con registros de auditoría
 
+<span id="core-security-features"></span>
+
 ## Características principales de seguridad
 
 Istio proporciona las siguientes características principales de seguridad:
@@ -181,6 +185,8 @@ spec:
         paths: ["/api/*"]
 ```
 
+<span id="security-best-practices"></span>
+
 ## Mejores prácticas de seguridad
 
 ### 1. Defensa en profundidad
@@ -250,6 +256,8 @@ spec:
 - Otorgue solo los permisos mínimos necesarios a cada servicio
 - Separe los ServiceAccounts de forma granular
 - Utilice el aislamiento de namespace
+
+<span id="security-monitoring"></span>
 
 ### 3. Monitoreo de seguridad
 

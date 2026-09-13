@@ -7,8 +7,10 @@ Session Affinity（または Sticky Session）は、同じユーザーからの�
 1. [Session Affinity の概要](#session-affinity-overview)
 2. [Consistent Hash ベース](#consistent-hash-based)
 3. [Cookie ベース](#cookie-based)
-4. [Header ベース](#header-based)
-5. [実践例](#practical-examples)
+4. [Header ベース (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/10-session-affinity#http-header-based)
+5. [実践例 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/10-session-affinity#consistent-hash-based)
+
+<span id="session-affinity-overview"></span>
 
 ## Session Affinity の概要
 
@@ -40,6 +42,8 @@ flowchart TB
     class Pod1,Pod2,Pod3 pod;
 ```
 
+<span id="consistent-hash-based"></span>
+
 ## Consistent Hash ベース
 
 ### HTTP Header ベース
@@ -56,6 +60,8 @@ spec:
       consistentHash:
         httpHeaderName: "x-user-id"
 ```
+
+<span id="cookie-based"></span>
 
 ### Cookie ベース
 

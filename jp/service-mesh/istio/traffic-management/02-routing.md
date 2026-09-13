@@ -15,6 +15,8 @@ Istio の高度なルーティング機能により、さまざまなリクエ�
 9. [実践例](#practical-examples)
 10. [トラブルシューティング](#troubleshooting)
 
+<span id="routing-overview"></span>
+
 ## ルーティングの概要
 
 VirtualService のルーティングルールは、**マッチ条件**と**ルート宛先**で構成されます。
@@ -87,6 +89,8 @@ spec:
         host: web-app
 ```
 
+<span id="match-conditions"></span>
+
 ## マッチ条件
 
 ### マッチ条件の種類
@@ -150,6 +154,8 @@ http:
   - destination:
       host: api-service
 ```
+
+<span id="uri-based-routing"></span>
 
 ## URI ベースのルーティング
 
@@ -273,6 +279,8 @@ spec:
     - destination:
         host: image-service
 ```
+
+<span id="header-based-routing"></span>
 
 ## Header ベースのルーティング
 
@@ -400,6 +408,8 @@ spec:
         subset: v1
 ```
 
+<span id="query-parameter-based-routing"></span>
+
 ## Query Parameter ベースのルーティング
 
 ### 基本的な Query Parameter マッチング
@@ -490,6 +500,8 @@ spec:
         subset: production
 ```
 
+<span id="http-method-based-routing"></span>
+
 ## HTTP メソッドベースのルーティング
 
 ```yaml
@@ -541,6 +553,8 @@ spec:
     - destination:
         host: api-read-service
 ```
+
+<span id="source-based-routing"></span>
 
 ## 送信元ベースのルーティング
 
@@ -609,6 +623,8 @@ spec:
         host: payment-service
         subset: v1
 ```
+
+<span id="priority-and-fallback"></span>
 
 ## 優先順位とフォールバック
 
@@ -692,6 +708,8 @@ spec:
         subset: stable
       weight: 100
 ```
+
+<span id="practical-examples"></span>
 
 ## 実践例
 
@@ -908,6 +926,8 @@ spec:
     - destination:
         host: error-service
 ```
+
+<span id="troubleshooting"></span>
 
 ## トラブルシューティング
 

@@ -7,8 +7,10 @@
 1. [流量镜像概览](#traffic-mirroring-overview)
 2. [基本配置](#basic-configuration)
 3. [部分镜像](#partial-mirroring)
-4. [实践示例](#practical-examples)
-5. [最佳实践](#best-practices)
+4. [实践示例 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/09-traffic-mirror#basic-configuration)
+5. [最佳实践 (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/traffic-management/09-traffic-mirror#best-practices)
+
+<span id="traffic-mirroring-overview"></span>
 
 ## 流量镜像概览
 
@@ -40,6 +42,8 @@ flowchart LR
     class V2 shadow;
 ```
 
+<span id="basic-configuration"></span>
+
 ## 基本配置
 
 ```yaml
@@ -62,6 +66,8 @@ spec:
     mirrorPercentage:
       value: 100  # 100% mirroring
 ```
+
+<span id="partial-mirroring"></span>
 
 ## 部分镜像
 

@@ -19,6 +19,8 @@
 
 ***
 
+<span id="1-environment-variables-and-shell-configuration"></span>
+
 ## 1. 環境変数と Shell 設定
 
 環境変数は、Linux と Kubernetes で設定を管理するための中核的な仕組みです。
@@ -90,6 +92,8 @@ spec:
 
 ***
 
+<span id="2-shell-scripting-basics"></span>
+
 ## 2. Shell スクリプティングの基礎
 
 ### 2.1 変数
@@ -156,6 +160,8 @@ spec:
 
 ***
 
+<span id="3-text-processing-tools"></span>
+
 ## 3. テキスト処理ツール
 
 ### 3.1 kubectl での grep
@@ -194,6 +200,8 @@ yq -i '.spec.replicas = 5' deployment.yaml
 
 ***
 
+<span id="4-ssh-and-remote-access"></span>
+
 ## 4. SSH とリモートアクセス
 
 ### 4.1 SSH キー生成
@@ -222,6 +230,8 @@ rsync -avzP ./local/ user@remote:/path/
 ```
 
 ***
+
+<span id="5-performance-monitoring-and-troubleshooting"></span>
 
 ## 5. パフォーマンス監視とトラブルシューティング
 
@@ -253,6 +263,8 @@ kubectl top pods --sort-by=memory
 ```
 
 ***
+
+<span id="6-storage-management-basics"></span>
 
 ## 6. ストレージ管理の基礎
 
@@ -288,6 +300,8 @@ spec:
 
 ***
 
+<span id="7-curl-and-api-calls"></span>
+
 ## 7. curl と API 呼び出し
 
 ### 7.1 HTTP メソッド
@@ -311,6 +325,8 @@ curl -s -o /dev/null -w "%{http_code}" https://api.example.com/health
 ```
 
 ***
+
+<span id="8-practical-one-liners-collection"></span>
 
 ## 8. 実用的なワンライナー集
 

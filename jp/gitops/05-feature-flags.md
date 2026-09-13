@@ -22,6 +22,8 @@ Feature flag は、Kubernetes におけるモダンなプログレッシブデ�
 
 ---
 
+<span id="overview-and-learning-objectives"></span>
+
 ## 概要と学習目標
 
 ### 学習目標
@@ -113,6 +115,8 @@ OpenFeature の主な利点:
 - **マルチ言語サポート**: Go、Java、Python、Node.js、.NET、PHP などの公式 SDK
 
 ---
+
+<span id="openfeature-architecture"></span>
 
 ## OpenFeature アーキテクチャ
 
@@ -235,6 +239,8 @@ sequenceDiagram
 ```
 
 ---
+
+<span id="flagd-on-kubernetes"></span>
 
 ## Kubernetes 上の flagd
 
@@ -620,6 +626,8 @@ sequenceDiagram
 
 ---
 
+<span id="application-integration"></span>
+
 ## アプリケーション統合
 
 ### Go SDK
@@ -979,6 +987,8 @@ targeting:
 ```
 
 ---
+<span id="canary-release-and-feature-flag-combination"></span>
+
 ## Canary リリースと Feature Flag の組み合わせ
 
 Feature Flag と Canary リリースは相互補完的な戦略です。Canary リリースはインフラストラクチャレベル（どの Pod バージョンがリクエストを処理するか）でトラフィックを制御し、Feature Flag はアプリケーションレベル（どのコードパスを実行するか）で動作を制御します。両方を組み合わせることで、最高レベルのリリース安全性を提供します。
@@ -1191,6 +1201,8 @@ spec:
 
 ---
 
+<span id="gitops-integration"></span>
+
 ## GitOps 統合
 
 ### コードとしての Feature Flag
@@ -1398,6 +1410,8 @@ spec:
 ```
 
 ---
+<span id="observability"></span>
+
 ## オブザーバビリティ
 
 ### Flag 評価メトリクス（Prometheus）
@@ -1541,6 +1555,8 @@ spec:
 ```
 
 ---
+
+<span id="production-best-practices"></span>
 
 ## 本番環境のベストプラクティス
 
@@ -1765,6 +1781,8 @@ resources:
 ```
 
 ---
+
+<span id="references"></span>
 
 ## 参考資料
 

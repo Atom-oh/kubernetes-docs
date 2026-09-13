@@ -58,6 +58,8 @@ ssh -i your-key.pem ec2-user@your-instance-public-ip
 * [重要な Linux コマンド](01-linux-basics.md#essential-linux-commands)
 * [コンテナ関連の Linux 機能](01-linux-basics.md#container-related-linux-features)
 
+<span id="linux-kernel-and-user-space"></span>
+
 ## Linux カーネルとユーザー空間
 
 ### カーネルの役割
@@ -96,6 +98,8 @@ Linux カーネルはオペレーティングシステムの中核であり、�
 ![レイヤー化された Linux カーネルアーキテクチャ: アプリケーションとシェルはシステムライブラリおよびシステムコールインターフェースを通じてカーネルに入り、カーネルサブシステムはデバイスドライバーを通じてハードウェアを駆動します。](../.gitbook/assets/en-basics-01-linux-basics-1.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-1.html)
+
+<span id="process-management"></span>
 
 ## プロセス管理
 
@@ -137,6 +141,8 @@ fg %<job-number>
 bg %<job-number>
 ```
 
+<span id="namespaces"></span>
+
 ## 名前空間
 
 名前空間は、プロセスグループを分離し、各グループがシステムリソースを独立して認識できるようにする Linux カーネル機能です。これはコンテナ技術の中核要素です。
@@ -174,6 +180,8 @@ unshare --user --map-root-user --mount --net bash
 # Using time namespace (Linux 5.6+)
 unshare --time bash
 ```
+
+<span id="cgroups-control-groups"></span>
 
 ## cgroups（コントロールグループ）
 
@@ -221,6 +229,8 @@ podman stats  # Monitor container resource usage
 docker run --cpus=0.5 --memory=512m nginx  # Set resource limits
 ```
 
+<span id="file-system"></span>
+
 ## ファイルシステム
 
 ### ファイルシステム階層
@@ -261,6 +271,8 @@ df -h
 umount <mount-point>
 ```
 
+<span id="networking-basics"></span>
+
 ## ネットワークの基礎
 
 ### ネットワークインターフェース
@@ -300,6 +312,8 @@ ip link add <veth1> type veth peer name <veth2>
 # Connect virtual interface to namespace
 ip link set <veth2> netns <namespace-name>
 ```
+
+<span id="security-context"></span>
 
 ## セキュリティコンテキスト
 
@@ -353,6 +367,8 @@ aa-status
 aa-enforce /etc/apparmor.d/<profile>
 aa-complain /etc/apparmor.d/<profile>
 ```
+
+<span id="systemd-and-service-management"></span>
 
 ## systemd とサービス管理
 
@@ -445,6 +461,8 @@ systemctl set-property kubelet IOWeight=500
 # Check settings
 systemctl show kubelet | grep -E 'CPUQuota|MemoryLimit|IOWeight'
 ```
+
+<span id="kernel-parameters-and-modules"></span>
 
 ## カーネルパラメータとモジュール
 
@@ -540,6 +558,8 @@ cat /proc/filesystems  # Supported file systems
 cat /proc/sys/net/ipv4/ip_forward  # IP forwarding status
 ```
 
+<span id="system-resource-limits"></span>
+
 ## システムリソースの制限
 
 ### ulimit - ユーザーごとのリソース制限
@@ -596,6 +616,8 @@ cat /proc/<PID>/limits
 # Check file descriptors for a specific process
 ls -l /proc/<PID>/fd | wc -l
 ```
+
+<span id="log-management"></span>
 
 ## ログ管理
 
@@ -700,6 +722,8 @@ sudo vi /etc/logrotate.d/kubernetes
 sudo logrotate -f /etc/logrotate.d/kubernetes
 ```
 
+<span id="dns-and-network-configuration"></span>
+
 ## DNS とネットワーク設定
 
 ### DNS の設定
@@ -764,6 +788,8 @@ network:
 # Apply configuration
 sudo netplan apply
 ```
+
+<span id="time-synchronization"></span>
 
 ## 時刻同期
 
@@ -857,6 +883,8 @@ sudo timedatectl set-time "2025-11-24 12:00:00"
 # Enable/disable NTP
 sudo timedatectl set-ntp true
 ```
+
+<span id="package-management"></span>
 
 ## パッケージ管理
 
@@ -961,6 +989,8 @@ sudo yum versionlock add kubelet kubeadm kubectl
 sudo yum versionlock delete kubelet kubeadm kubectl
 ```
 
+<span id="essential-linux-commands"></span>
+
 ## 重要な Linux コマンド
 
 ### ファイルとディレクトリの管理
@@ -1003,6 +1033,8 @@ systemctl status <service> # Check service status
 systemctl start/stop/restart <service> # Service control
 journalctl -u <service> # View service logs
 ```
+
+<span id="container-related-linux-features"></span>
 
 ## コンテナ関連の Linux 機能
 

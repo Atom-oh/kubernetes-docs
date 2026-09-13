@@ -21,6 +21,8 @@ Flagger は Kubernetes 向けのプログレッシブデリバリー operator �
 
 ---
 
+<span id="overview-and-learning-objectives"></span>
+
 ## 概要と学習目標
 
 ### 学習目標
@@ -117,6 +119,8 @@ graph TB
 
 ---
 
+<span id="flagger-architecture"></span>
+
 ## Flagger アーキテクチャ
 
 ### 制御ループ
@@ -199,6 +203,8 @@ sequenceDiagram
 ```
 
 ---
+
+<span id="eks-installation-and-configuration"></span>
 
 ## EKS のインストールと設定
 
@@ -427,6 +433,8 @@ spec:
 ```
 
 ---
+
+<span id="canary-deployment-strategy"></span>
 
 ## Canary Deployment 戦略
 
@@ -707,6 +715,8 @@ kubectl set image deployment/web-app web-app=myregistry/web-app:v2.0.0 -n produc
 
 ---
 
+<span id="blue-green-deployment-strategy"></span>
+
 ## Blue-Green Deployment 戦略
 
 ### Blue-Green Canary CRD
@@ -874,6 +884,8 @@ spec:
 
 ---
 
+<span id="ab-testing-strategy"></span>
+
 ## A/B テスト戦略
 
 ### ヘッダーおよび Cookie ベースのルーティング
@@ -1007,6 +1019,8 @@ done
 ```
 
 ---
+
+<span id="custom-metrics-and-webhooks"></span>
 
 ## カスタムメトリクスと Webhook
 
@@ -1309,6 +1323,8 @@ webhooks:
 ```
 
 ---
+
+<span id="gitops-integration-flux--flagger"></span>
 
 ## GitOps 統合（Flux + Flagger）
 
@@ -1648,6 +1664,8 @@ spec:
 
 ---
 
+<span id="observability-and-alerting"></span>
+
 ## 可観測性とアラート
 
 ### Grafana Dashboard（Flagger メトリクス）
@@ -1883,6 +1901,8 @@ spec:
 
 ---
 
+<span id="production-best-practices"></span>
+
 ## 本番環境のベストプラクティス
 
 ### 段階的な導入戦略
@@ -2099,6 +2119,8 @@ spec:
 8. **Flagger controller の健全性を監視してください。** Flagger Pod の再起動、高いメモリ使用量、reconciliation error に対するアラートを設定してください。
 
 ---
+
+<span id="references"></span>
 
 ## 参考資料
 

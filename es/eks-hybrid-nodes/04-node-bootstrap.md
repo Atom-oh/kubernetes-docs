@@ -640,7 +640,7 @@ Add-ons que requieren este tratamiento: AWS Load Balancer Controller, CloudWatch
 
 ### Modo mixto de CoreDNS
 
-CoreDNS debe ejecutarse en **ambos** cloud nodes y Hybrid Nodes para resiliencia de DNS. Usa `topologySpreadConstraints` con al menos 4 réplicas (2 por lado). Consulta [Configuración de red - Despliegue de CoreDNS en doble ubicación](./02-network-configuration.md#coredns-dual-location-deployment-on-premises--cloud).
+CoreDNS debe ejecutarse en **ambos** cloud nodes y Hybrid Nodes para resiliencia de DNS. Usa `topologySpreadConstraints` con al menos 4 réplicas (2 por lado). Consulta [Configuración de red - Despliegue de CoreDNS en doble ubicación (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/02-network-configuration#coredns-placement-and-locality).
 
 ### EKS Pod Identity Agent
 

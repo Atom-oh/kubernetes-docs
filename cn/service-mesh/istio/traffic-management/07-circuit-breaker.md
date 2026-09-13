@@ -15,6 +15,8 @@
 9. [重要注意事项](#important-considerations)
 10. [最佳实践](#best-practices)
 
+<span id="why-circuit-breaker"></span>
+
 ## 为什么需要熔断器？
 
 ### 防止级联故障
@@ -55,6 +57,8 @@ flowchart TB
 | **故障传播** | 发生级联故障 | 故障隔离 |
 | **恢复时间** | 需要手动干预 | 自动尝试恢复 |
 
+<span id="circuit-breaker-overview"></span>
+
 ## 熔断器概述
 
 ```mermaid
@@ -81,6 +85,8 @@ stateDiagram-v2
     end note
 ```
 
+<span id="connection-pool-settings"></span>
+
 ## 连接池设置
 
 ```yaml
@@ -99,6 +105,8 @@ spec:
         http2MaxRequests: 100
         maxRequestsPerConnection: 2
 ```
+
+<span id="outlier-detection"></span>
 
 ## 异常值检测
 
@@ -147,6 +155,8 @@ spec:
       # Success rate based
       splitExternalLocalOriginErrors: true
 ```
+
+<span id="combination-with-retry-policy"></span>
 
 ## 与重试策略结合
 
@@ -223,6 +233,8 @@ spec:
       interval: 5s
       baseEjectionTime: 60s          # Long recovery time
 ```
+
+<span id="practical-examples"></span>
 
 ## 实践示例
 
@@ -410,6 +422,8 @@ spec:
       consecutiveLocalOriginFailures: 5
 ```
 
+<span id="external-service-circuit-breaker"></span>
+
 ## 外部 Service 熔断器
 
 与 ServiceEntry 一起使用以保护外部 Service。
@@ -540,6 +554,8 @@ spec:
     timeout: 10s
 ```
 
+<span id="monitoring-and-debugging"></span>
+
 ## 监控和调试
 
 ### 检查 Envoy 指标
@@ -606,6 +622,8 @@ istioctl proxy-config cluster <pod-name> -o json | \
 istioctl proxy-config cluster <pod-name> -o json | \
   jq '.[] | select(.name=="outbound|9080||reviews.default.svc.cluster.local") | .outlierDetection'
 ```
+
+<span id="important-considerations"></span>
 
 ## 重要注意事项
 
@@ -906,6 +924,8 @@ kubectl exec -n <namespace> <pod> -c istio-proxy -- \
 # Check logs for suspected duplicate requests
 kubectl logs -n <namespace> <pod> | grep -i "duplicate\|idempotency"
 ```
+
+<span id="best-practices"></span>
 
 ## 最佳实践
 

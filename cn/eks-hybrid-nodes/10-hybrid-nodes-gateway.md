@@ -362,7 +362,7 @@ EBS: 20 GiB gp3 (minimal storage needed)
 gateway 实例必须：
 1. 作为 Kubernetes nodes 注册到 EKS cluster 中（使用 VPC CNI 的标准 cloud nodes）
 2. 具有适当的 IAM instance profile（参见 [IAM 配置](#iam-configuration)）
-3. 标记 label 以便 gateway pod 调度（参见 [安装](#installation-and-configuration)）
+3. 标记 label 以便 gateway pod 调度（参见 [安装 (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/10-hybrid-nodes-gateway#installation-and-configuration)）
 
 ### Security Group 配置
 
@@ -482,6 +482,8 @@ mtu: 1400  # Conservative value accounting for VXLAN + potential VPN overhead
 ```
 
 ---
+
+<span id="iam-configuration"></span>
 
 ## IAM 配置
 

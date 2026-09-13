@@ -67,6 +67,8 @@ minikube start
 * [Kubernetes と Amazon EKS の比較](04-kubernetes-introduction.md#kubernetes-vs-amazon-eks)
 * [Kubernetes を始める](04-kubernetes-introduction.md#getting-started-with-kubernetes)
 
+<span id="what-is-kubernetes"></span>
+
 ## Kubernetes とは？
 
 Kubernetes はギリシャ語で「舵取り役」または「操縦士」を意味し、コンテナ化されたアプリケーションのデプロイ、スケーリング、運用を自動化するオープンソースシステムです。Google の社内 Borg システムから着想を得ており、2014 年にオープンソースとして公開されました。
@@ -92,6 +94,8 @@ Kubernetes はギリシャ語で「舵取り役」または「操縦士」を意
 * **宣言的設定**: Infrastructure as Code としてインフラストラクチャを管理する
 * **マルチクラウドとハイブリッドクラウド**: 多様な環境で一貫してデプロイと管理を行う
 
+<span id="history-of-kubernetes"></span>
+
 ## Kubernetes の歴史
 
 ### 背景
@@ -109,6 +113,8 @@ Kubernetes (κυβερνήτης) はギリシャ語で「舵取り役」また�
 ### ロゴの意味
 
 Kubernetes のロゴは 7 本のスポークを持つ舵輪を描いており、コンテナ化されたアプリケーションの進路を導く Kubernetes の役割を象徴しています。
+
+<span id="kubernetes-architecture"></span>
 
 ## Kubernetes アーキテクチャ
 
@@ -149,6 +155,8 @@ Kubernetes はマスター・ノードアーキテクチャに従います。マ
 ![完全な Kubernetes クラスター: kubectl クライアントは kube-apiserver に到達し、これが etcd、kube-scheduler、kube-controller-manager、cloud-controller-manager を調整して、2 台のワーカーノード上の kubelet、Container Runtime、kube-proxy を駆動します。](../.gitbook/assets/en-basics-04-kubernetes-introduction-2.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-2.html)
+
+<span id="kubernetes-main-components"></span>
 
 ## Kubernetes の主要コンポーネント
 
@@ -248,6 +256,8 @@ kube-proxy は、Kubernetes Service の概念を実装する、各 Node で実�
 * **userspace mode**: ユーザー空間でプロキシを実行（レガシー）
 * **iptables mode**: Linux iptables を使用した NAT 実装（デフォルト）
 * **IPVS mode**: Linux カーネルの IP Virtual Server を使用（高パフォーマンス）
+
+<span id="kubernetes-basic-objects"></span>
 
 ## Kubernetes の基本オブジェクト
 
@@ -390,6 +400,8 @@ status:
       status: "True"
   # ...
 ```
+
+<span id="kubernetes-workload-resources"></span>
 
 ## Kubernetes のワークロードリソース
 
@@ -657,6 +669,8 @@ spec:
           restartPolicy: OnFailure
 ```
 
+<span id="kubernetes-services-and-networking"></span>
+
 ## Kubernetes の Service とネットワーキング
 
 Kubernetes のネットワーキングモデルは、すべての Pod が一意の IP アドレスを持ち、特別な設定なしに相互通信できるという前提に基づいています。Service は Pod セットに対して安定したエンドポイントを提供します。
@@ -892,6 +906,8 @@ spec:
         subset: v1
 ```
 
+<span id="kubernetes-storage"></span>
+
 ## Kubernetes ストレージ
 
 Kubernetes は、コンテナ化されたアプリケーション向けにさまざまなストレージオプションを提供します。Pod が再起動または再スケジュールされた場合でも、データを永続化する方法を提供します。
@@ -1065,6 +1081,8 @@ parameters:
   encrypted: "true"
 volumeBindingMode: WaitForFirstConsumer
 ```
+
+<span id="kubernetes-configuration-and-security"></span>
 
 ## Kubernetes の設定とセキュリティ
 
@@ -1322,6 +1340,8 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
+<span id="kubernetes-vs-amazon-eks"></span>
+
 ## Kubernetes と Amazon EKS の比較
 
 Amazon EKS (Elastic Kubernetes Service) は、AWS が提供するマネージド Kubernetes サービスです。EKS は Kubernetes のすべての基本機能を提供するとともに、AWS サービスとの統合および管理の利便性を追加します。
@@ -1382,6 +1402,8 @@ EKS は次の AWS サービスと統合されます。
 12. **AWS App Mesh**: Service Mesh
 13. **AWS SageMaker**: 機械学習ワークロード
 14. **AWS Bedrock**: 生成 AI ワークロード
+
+<span id="getting-started-with-kubernetes"></span>
 
 ## Kubernetes を始める
 

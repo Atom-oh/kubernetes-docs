@@ -5,10 +5,12 @@ Hay varias formas de crear un clúster de Amazon EKS. En este capítulo, aprende
 ## Tabla de contenido
 
 1. [Requisitos previos](02-eks-cluster-creation-part1.md#prerequisites)
-2. [Creación de un clúster con eksctl](02-eks-cluster-creation-part1.md#creating-a-cluster-using-eksctl)
-3. [Creación de un clúster con AWS Management Console](02-eks-cluster-creation-part1.md#creating-a-cluster-using-aws-management-console)
-4. [Creación de un clúster con AWS CLI](02-eks-cluster-creation-part1.md#creating-a-cluster-using-aws-cli)
-5. [Creación de un clúster con Terraform](02-eks-cluster-creation-part1.md#creating-a-cluster-using-terraform)
+2. [Creación de un clúster con eksctl (English)](https://www.atomai.click/kubernetes-docs/en/eks/02-eks-cluster-creation-part2#creating-a-cluster-using-eksctl)
+3. [Creación de un clúster con AWS Management Console (English)](https://www.atomai.click/kubernetes-docs/en/eks/02-eks-cluster-creation-part3#creating-a-cluster-using-aws-management-console)
+4. [Creación de un clúster con AWS CLI (English)](https://www.atomai.click/kubernetes-docs/en/eks/02-eks-cluster-creation-part3#creating-a-cluster-using-aws-cli)
+5. [Creación de un clúster con Terraform (English)](https://www.atomai.click/kubernetes-docs/en/eks/02-eks-cluster-creation-part4#three-layer-terraform-example)
+
+<span id="prerequisites"></span>
 
 ## Requisitos previos
 

@@ -14,6 +14,8 @@
 8. [监控和回滚](#monitoring-and-rollback)
 9. [故障排除](#troubleshooting)
 
+<span id="traffic-splitting-overview"></span>
+
 ## 流量拆分概述
 
 流量拆分使用 VirtualService 中的 `weight` 字段，按比例在多个 Service 版本之间分配流量。
@@ -72,6 +74,8 @@ spec:
         subset: v2
       weight: 10  # 10% of traffic
 ```
+
+<span id="canary-deployment"></span>
 
 ## Canary 部署
 
@@ -1072,6 +1076,8 @@ spec:
           value: reviews-preview
 ```
 
+<span id="bluegreen-deployment"></span>
+
 ## Blue/Green 部署
 
 Blue/Green 部署维护两个相同的生产环境，并可即时切换流量。将 Argo Rollouts 与 Istio 搭配使用可实现安全切换和自动回滚。
@@ -1474,6 +1480,8 @@ kubectl argo rollouts undo reviews
 kubectl argo rollouts undo reviews --to-revision=3
 ```
 
+<span id="ab-testing"></span>
+
 ## A/B 测试
 
 A/B 测试同时运行两个版本，并根据特定条件对用户进行分类以衡量效果。
@@ -1646,6 +1654,8 @@ spec:
         subset: version-a
 ```
 
+<span id="progressive-rollout"></span>
+
 ## 渐进式发布
 
 渐进式发布会随时间自动提高流量比例。使用 Argo Rollouts 的 Canary 策略可实现自动化渐进式部署。
@@ -1728,6 +1738,8 @@ done
 echo "Progressive rollout completed successfully!"
 ```
 
+<span id="using-with-traffic-mirroring"></span>
+
 ## 与流量镜像配合使用
 
 将流量拆分与镜像结合，可实现更安全的部署。
@@ -1758,6 +1770,8 @@ spec:
     mirrorPercentage:
       value: 100
 ```
+
+<span id="practical-examples"></span>
 
 ## 实践示例
 
@@ -1912,6 +1926,8 @@ spec:
         subset: v1
 ```
 
+<span id="monitoring-and-rollback"></span>
+
 ## 监控和回滚
 
 ### Prometheus 查询
@@ -1995,6 +2011,8 @@ fi
 
 echo "Canary metrics within acceptable range"
 ```
+
+<span id="troubleshooting"></span>
 
 ## 故障排除
 

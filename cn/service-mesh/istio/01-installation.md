@@ -15,6 +15,8 @@
 9. [移除 Istio](#istio-removal)
 10. [故障排除](#troubleshooting)
 
+<span id="prerequisites"></span>
+
 ## 前置条件
 
 在安装 Istio 之前，必须满足以下要求：
@@ -47,6 +49,8 @@ kubectl get nodes
 - **Control Plane**：1 vCPU、1.5GB RAM
 - **Sidecar（每个 Pod）**：0.1 vCPU、128MB RAM
 
+<span id="choosing-an-installation-method"></span>
+
 ## 选择安装方法
 
 Istio 提供三种主要安装方法：
@@ -56,6 +60,8 @@ Istio 提供三种主要安装方法：
 | **istioctl** | 简单快速，提供验证功能 | 难以自动化 | 开发和测试环境 |
 | **Helm** | 对 GitOps 友好，易于版本管理 | 配置可能较复杂 | 生产环境、CI/CD 流水线 |
 | **Istio Operator** | 声明式管理、自动升级 | 需要额外资源 | 大规模生产环境 |
+
+<span id="installation-using-istioctl"></span>
 
 ## 使用 istioctl 安装
 
@@ -104,6 +110,8 @@ kubectl get all -n istio-system
 # Check istiod logs
 kubectl logs -n istio-system -l app=istiod
 ```
+
+<span id="installation-using-helm"></span>
 
 ## 使用 Helm 安装
 
@@ -191,6 +199,8 @@ helm install istiod istio/istiod \
   --wait
 ```
 
+<span id="installation-using-istio-operator"></span>
+
 ## 使用 Istio Operator 安装
 
 Istio Operator 以声明式方式管理 Istio。
@@ -244,6 +254,8 @@ kubectl apply -f istio-operator.yaml
 kubectl get istiooperator -n istio-system
 ```
 
+<span id="installation-profiles"></span>
+
 ## 安装配置文件
 
 Istio 为不同使用场景提供多种配置文件。
@@ -292,6 +304,8 @@ istioctl install --set profile=default \
   -y
 ```
 
+<span id="installation-verification"></span>
+
 ## 安装验证
 
 ### 1. 检查 Control Plane
@@ -336,6 +350,8 @@ kubectl get mutatingwebhookconfiguration
 # Check ValidatingWebhookConfiguration
 kubectl get validatingwebhookconfiguration
 ```
+
+<span id="sample-application-deployment"></span>
 
 ## 示例应用程序部署
 
@@ -404,6 +420,8 @@ echo "http://$GATEWAY_URL/productpage"
 curl -s "http://$GATEWAY_URL/productpage" | grep -o "<title>.*</title>"
 ```
 
+<span id="istio-removal"></span>
+
 ## 移除 Istio
 
 ### 使用 istioctl 移除
@@ -453,6 +471,8 @@ istioctl operator remove
 kubectl delete namespace istio-system
 kubectl delete namespace istio-operator
 ```
+
+<span id="troubleshooting"></span>
 
 ## 故障排除
 

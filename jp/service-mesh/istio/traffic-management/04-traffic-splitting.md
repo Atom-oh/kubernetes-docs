@@ -14,6 +14,8 @@
 8. [監視とロールバック](#monitoring-and-rollback)
 9. [トラブルシューティング](#troubleshooting)
 
+<span id="traffic-splitting-overview"></span>
+
 ## トラフィック分割の概要
 
 トラフィック分割では、VirtualService の `weight` フィールドを使用して、複数の Service バージョン間にトラフィックを比率で分散します。
@@ -1072,6 +1074,8 @@ spec:
           value: reviews-preview
 ```
 
+<span id="bluegreen-deployment"></span>
+
 ## Blue/Green deployment
 
 Blue/Green deployment では、同一の本番環境を 2 つ維持し、トラフィックを即時に切り替えます。Istio とともに Argo Rollouts を使用すると、安全な切り替えと自動ロールバックを実現できます。
@@ -1474,6 +1478,8 @@ kubectl argo rollouts undo reviews
 kubectl argo rollouts undo reviews --to-revision=3
 ```
 
+<span id="ab-testing"></span>
+
 ## A/B testing
 
 A/B testing では、2 つのバージョンを同時に実行し、特定の基準に基づいてユーザーを分類して効果を測定します。
@@ -1728,6 +1734,8 @@ done
 echo "Progressive rollout completed successfully!"
 ```
 
+<span id="using-with-traffic-mirroring"></span>
+
 ## トラフィックミラーリングとの併用
 
 トラフィック分割とミラーリングを組み合わせることで、より安全なデプロイを実現できます。
@@ -1758,6 +1766,8 @@ spec:
     mirrorPercentage:
       value: 100
 ```
+
+<span id="practical-examples"></span>
 
 ## 実践例
 
@@ -1912,6 +1922,8 @@ spec:
         subset: v1
 ```
 
+<span id="monitoring-and-rollback"></span>
+
 ## 監視とロールバック
 
 ### Prometheus クエリ
@@ -1995,6 +2007,8 @@ fi
 
 echo "Canary metrics within acceptable range"
 ```
+
+<span id="troubleshooting"></span>
 
 ## トラブルシューティング
 

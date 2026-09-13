@@ -15,6 +15,8 @@ Istio 通过 Envoy 提供多种负载均衡算法，以高效分配流量。
 9. [最佳实践](#best-practices)
 10. [故障排除](#troubleshooting)
 
+<span id="why-load-balancing"></span>
+
 ## 为什么需要负载均衡？
 
 ### 高效的资源利用
@@ -61,6 +63,8 @@ flowchart TB
 | **响应时间** | 不一致（0-1000ms+） | 响应时间一致 |
 | **资源利用率** | 效率低（仅部分使用） | 高效使用资源 |
 
+<span id="load-balancing-overview"></span>
+
 ## 负载均衡概述
 
 ```mermaid
@@ -92,6 +96,8 @@ flowchart TB
     class Algorithm lb;
     class Pod1,Pod2,Pod3 pod;
 ```
+
+<span id="load-balancing-algorithms"></span>
 
 ## 负载均衡算法
 
@@ -321,6 +327,8 @@ trafficPolicy:
   loadBalancer:
     simple: LEAST_REQUEST
 ```
+
+<span id="consistent-hash-details"></span>
 
 ## 一致性哈希详解
 
@@ -560,6 +568,8 @@ flowchart LR
 - 使用外部会话存储（Redis、Memcached）
 - 逐步扩缩容
 
+<span id="locality-based-load-balancing"></span>
+
 ## 基于位置的负载均衡
 
 基于位置的负载均衡优先选择地理位置更近的端点。
@@ -661,6 +671,8 @@ spec:
 - 跨区域灾难恢复
 - 成本优化（同一 AZ 通信）
 
+<span id="connection-pool-settings"></span>
+
 ## 连接池设置
 
 将连接池与负载均衡一同配置，以优化性能。
@@ -707,6 +719,8 @@ spec:
         maxRequestsPerConnection: 0 # Unlimited (HTTP/2 multiplexing)
         h2UpgradePolicy: UPGRADE    # Allow HTTP/2 upgrade
 ```
+
+<span id="practical-examples"></span>
 
 ## 实践示例
 
@@ -922,6 +936,8 @@ spec:
 - 日志收集
 - 大规模数据处理
 
+<span id="algorithm-selection-guide"></span>
+
 ## 算法选择指南
 
 ### 决策树
@@ -1015,6 +1031,8 @@ trafficPolicy:
     localityLbSetting:
       enabled: true
 ```
+
+<span id="best-practices"></span>
 
 ## 最佳实践
 
@@ -1223,6 +1241,8 @@ metadata:
       - Dashboard: grafana.example.com/d/istio-workload
       - Alert: High P95 latency > 500ms
 ```
+
+<span id="troubleshooting"></span>
 
 ## 故障排除
 

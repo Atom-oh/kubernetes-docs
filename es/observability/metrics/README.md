@@ -12,6 +12,8 @@
 - [Comparación de soluciones](#solution-comparison)
 - [Arquitectura de recopilación de métricas](#metrics-collection-architecture)
 
+<span id="metrics-fundamentals"></span>
+
 ## Fundamentos de las métricas
 
 Las métricas describen numéricamente el estado y el comportamiento del sistema. Un nombre de métrica y su conjunto completo de etiquetas identifican una serie temporal; cada muestra añade un valor y una marca de tiempo. Las métricas permiten alertas, resolución de problemas, planificación de capacidad y análisis del rendimiento, pero una medición muestreada no conserva cada evento individual.
@@ -33,6 +35,8 @@ Las marcas de tiempo dependen del formato. Una marca de tiempo explícita en la 
 Para métricas nuevas, prefiera prefijos descriptivos, palabras en minúsculas separadas por guiones bajos y unidades como `_seconds` o `_bytes`. Una convención de nombres no autoriza renombrar la API establecida de un exporter.
 
 Los siguientes bloques `text` son una **exposición de texto de Prometheus** sintética, no YAML. Las expresiones de consulta son bloques `promql` independientes. Los selectores de consulta asumen los nombres de scrape-job mostrados; adáptelos a las etiquetas reales de sus destinos.
+
+<span id="metric-types"></span>
 
 ## Tipos de métricas
 
@@ -156,6 +160,8 @@ Para tráfico cero, la media puede ser `NaN`; las series ausentes pueden produci
 
 <a id="metric-collection-models"></a>
 
+<span id="pull-vs-push-model"></span>
+
 ## Modelo Pull frente a Push
 
 ![La recopilación Pull inicia solicitudes desde el recopilador; la recopilación Push inicia solicitudes desde el productor.](../../.gitbook/assets/en-observability-metrics-readme-0.png)
@@ -264,6 +270,8 @@ time() - max(example_batch_last_success_timestamp_seconds{job="example_batch"})
 
 Elija un umbral según la programación y el tiempo de ejecución esperado, y gestione por separado una serie completamente ausente. `up` para Pushgateway solo describe el scraping del gateway.
 
+<span id="cardinality-and-metric-design"></span>
+
 ## Cardinalidad y diseño de métricas
 
 La cardinalidad es el número de series distintas en un ámbito definido. El producto de los recuentos de valores de etiquetas es un **límite superior si puede ocurrir cada combinación**, no una garantía de que existan todas las combinaciones.
@@ -287,6 +295,8 @@ count(count by (endpoint) (http_requests_total{job="example-app"}))
 ```
 
 Las longitudes de los nombres/valores de métricas y etiquetas todavía afectan los límites de formato, el almacenamiento y la aceptación del backend. La cardinalidad es importante, pero no es la única restricción de diseño.
+
+<span id="long-term-storage-requirements"></span>
 
 ## Requisitos de almacenamiento a largo plazo
 
@@ -333,6 +343,8 @@ La regla explícita de descarte ilustra la exclusión de una métrica de depurac
 
 La escritura remota es asíncrona y su búfer WAL es finito. La guía de ajuste de Prometheus describe la pérdida de datos no enviados después de una interrupción prolongada más allá de la ventana WAL documentada (unas dos horas en esa guía). No es una copia de seguridad ni una garantía de que la entrega siempre tenga éxito.
 
+<span id="solution-comparison"></span>
+
 ## Comparación de soluciones
 
 ### Límites de despliegue y operación
@@ -363,6 +375,8 @@ Si **un millón es el recuento real de series exportadas**, un intervalo uniform
 Compare supuestos equivalentes de ingestión, retención, HA y funcionalidades. Obtenga precios actuales de las páginas de precios oficiales de abajo y pruebe el uso de recursos específico de la carga de trabajo. «Open source» no hace que la infraestructura y las operaciones sean gratuitas.
 
 Seleccione una solución según las consultas/resolución requeridas, la cardinalidad y la rotación, los objetivos de fallo/recuperación, los límites de tenant/acceso, las integraciones y un modelo de costes medido. El tamaño del equipo por sí solo no es un algoritmo de selección de productos.
+
+<span id="metrics-collection-architecture"></span>
 
 ## Arquitectura de recopilación de métricas
 

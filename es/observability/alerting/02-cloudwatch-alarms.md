@@ -19,6 +19,8 @@
 
 ---
 
+<span id="cloudwatch-alarms-overview"></span>
+
 ## Descripción general de CloudWatch Alarms
 
 Amazon CloudWatch Alarms es la funcionalidad de alertas del servicio de monitoreo nativo de AWS. Crea alertas basadas en métricas de CloudWatch y habilita respuestas automatizadas mediante la integración con SNS, Lambda, EC2 Auto Scaling y más.
@@ -43,6 +45,8 @@ Amazon CloudWatch Alarms es la funcionalidad de alertas del servicio de monitore
 | **Integración con AWS** | Nativa | Requiere configuración adicional |
 
 ---
+
+<span id="architecture"></span>
 
 ## Arquitectura
 
@@ -134,6 +138,8 @@ stateDiagram-v2
 ```
 
 ---
+
+<span id="metric-alarms"></span>
 
 ## Alarmas de métricas
 
@@ -269,6 +275,8 @@ math-functions:
 
 ---
 
+<span id="composite-alarms"></span>
+
 ## Alarmas compuestas
 
 ### Concepto de alarma compuesta
@@ -395,6 +403,8 @@ aws cloudwatch set-alarm-state \
 
 ---
 
+<span id="anomaly-detection"></span>
+
 ## Detección de anomalías
 
 ### Descripción general de la detección de anomalías
@@ -495,6 +505,8 @@ aws cloudwatch put-anomaly-detector \
 ```
 
 ---
+
+<span id="sns-integration"></span>
 
 ## Integración con SNS
 
@@ -616,6 +628,8 @@ def lambda_handler(event, context):
 
 ---
 
+<span id="eventbridge-integration"></span>
+
 ## Integración con EventBridge
 
 ### Creación de una regla de EventBridge
@@ -733,6 +747,8 @@ def lambda_handler(event, context):
 
 ---
 
+<span id="container-insights-alerts"></span>
+
 ## Alertas de Container Insights
 
 ### Métricas de EKS Container Insights
@@ -808,6 +824,8 @@ aws cloudwatch put-metric-alarm \
 | `service_number_of_running_pods` | Pods en ejecución por Service | ClusterName, Namespace, Service |
 
 ---
+
+<span id="cloudwatch-alarm-actions"></span>
 
 ## Acciones de CloudWatch Alarm
 
@@ -889,6 +907,8 @@ aws cloudwatch put-metric-alarm \
 
 ---
 
+<span id="cost-optimization"></span>
+
 ## Optimización de costos
 
 ### Factores de costo
@@ -963,6 +983,8 @@ aws cloudwatch delete-alarms \
 
 ---
 
+<span id="prometheus-metrics-integration"></span>
+
 ## Integración de métricas de Prometheus
 
 ### Integración con Amazon Managed Prometheus (AMP)
@@ -1030,6 +1052,8 @@ def lambda_handler(event, context):
 ```
 
 ---
+
+<span id="terraform-examples"></span>
 
 ## Ejemplos de Terraform
 

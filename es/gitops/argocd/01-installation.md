@@ -38,6 +38,8 @@ kubectl config current-context
 kubectl auth can-i create namespace --all-namespaces
 ```
 
+<span id="métodos-de-instalación"></span>
+
 ## Métodos de instalación
 
 ### Método 1: Manifiestos sin formato (recomendado para comenzar)
@@ -177,6 +179,8 @@ Aplicar con:
 kubectl apply -k .
 ```
 
+<span id="instalación-de-cli"></span>
+
 ## Instalación de CLI
 
 ### macOS
@@ -296,6 +300,8 @@ argocd account update-password
 # Delete the initial secret after changing password
 kubectl -n argocd delete secret argocd-initial-admin-secret
 ```
+
+<span id="configuración-de-alta-disponibilidad"></span>
 
 ## Configuración de alta disponibilidad
 
@@ -544,6 +550,8 @@ stringData:
     }
 ```
 
+<span id="configuración-declarativa"></span>
+
 ## Configuración declarativa
 
 ### ConfigMap argocd-cm
@@ -644,6 +652,8 @@ stringData:
     ...
     -----END OPENSSH PRIVATE KEY-----
 ```
+
+<span id="actualización-de-argocd"></span>
 
 ## Actualización de ArgoCD
 

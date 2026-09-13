@@ -10,6 +10,8 @@ Este documento cubre las mejores prácticas y recomendaciones para operar Istio 
 4. [Monitoreo y observabilidad](#monitoring-and-observability)
 5. [Lista de verificación para producción](#production-checklist)
 
+<span id="performance-optimization"></span>
+
 ## Optimización del rendimiento
 
 ### 1. Optimización de recursos del Control Plane
@@ -139,6 +141,8 @@ spec:
 - Menor uso de memoria
 - Envío de configuración más rápido
 
+<span id="security-hardening"></span>
+
 ## Fortalecimiento de la seguridad
 
 ### 1. Aplicar mTLS estricto
@@ -249,6 +253,8 @@ spec:
     - key: request.auth.claims[iss]
       values: ["https://auth.example.com"]
 ```
+
+<span id="operations-guide"></span>
 
 ## Guía de operaciones
 
@@ -372,6 +378,8 @@ kubectl apply -f istio-operator-backup.yaml
 kubectl apply -f istio-config-backup.yaml
 ```
 
+<span id="monitoring-and-observability"></span>
+
 ## Monitoreo y observabilidad
 
 ### 1. Señales doradas
@@ -459,6 +467,8 @@ groups:
     annotations:
       summary: "Pilot is not ready"
 ```
+
+<span id="production-checklist"></span>
 
 ## Lista de verificación para producción
 

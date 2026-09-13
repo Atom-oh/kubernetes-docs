@@ -11,6 +11,8 @@
 - [マルチクラスターのパターン](#multi-cluster-patterns)
 - [テンプレートパッチ](#template-patches)
 
+<span id="applicationset-overview"></span>
+
 ## ApplicationSet の概要
 
 ApplicationSet は、テンプレートから ArgoCD Application を生成する機能を追加する Kubernetes controller です。クラスター、環境、またはリポジトリ全体で類似した設定を持つ複数のアプリケーションを管理できます。
@@ -54,6 +56,8 @@ spec:
         server: '{{url}}'
         namespace: myapp
 ```
+
+<span id="generators"></span>
 
 ## Generator
 
@@ -653,6 +657,8 @@ spec:
         namespace: '{{namespace}}'
 ```
 
+<span id="go-templating"></span>
+
 ## Go テンプレート
 
 ApplicationSet は、パラメータ置換に Go テンプレートを使用します。
@@ -712,6 +718,8 @@ spec:
       annotations:
         regions: '{{range $i, $r := .regions}}{{if $i}},{{end}}{{$r}}{{end}}'
 ```
+
+<span id="progressive-sync"></span>
 
 ## 段階的同期
 
@@ -815,6 +823,8 @@ flowchart TB
     class PAUSE pause
     class P1,P2,P3,P4,P5,P6 prod
 ```
+
+<span id="multi-cluster-patterns"></span>
 
 ## マルチクラスターのパターン
 
@@ -931,6 +941,8 @@ gitRevision: v1.2.3
 imageTag: v1.2.3
 syncWave: "2"
 ```
+
+<span id="template-patches"></span>
 
 ## テンプレートパッチ
 

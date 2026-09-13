@@ -19,6 +19,8 @@
 
 ---
 
+<span id="grafana-oncall-overview"></span>
+
 ## Grafana OnCall の概要
 
 Grafana OnCall は、アラートルーティング、オンコールスケジュール管理、エスカレーションポリシーを提供するオープンソースのオンコール管理ツールです。Grafana Cloud を通じて SaaS として利用することも、セルフホストすることもできます。
@@ -46,6 +48,8 @@ Grafana OnCall は、アラートルーティング、オンコールスケジ�
 | **Enterprise Support** | Paid | Included | Included |
 
 ---
+
+<span id="architecture"></span>
 
 ## アーキテクチャ
 
@@ -148,6 +152,8 @@ sequenceDiagram
 ```
 
 ---
+
+<span id="installation"></span>
 
 ## インストール
 
@@ -366,6 +372,8 @@ kubectl create secret generic twilio-secret \
 
 ---
 
+<span id="integration-setup"></span>
+
 ## 統合のセットアップ
 
 ### Alertmanager 統合
@@ -458,6 +466,8 @@ response = requests.post(
 ```
 
 ---
+
+<span id="on-call-schedule-configuration"></span>
 
 ## オンコールスケジュールの設定
 
@@ -590,6 +600,8 @@ curl -X POST https://oncall.example.com/api/v1/schedules/<schedule-id>/overrides
 ```
 
 ---
+
+<span id="escalation-chains"></span>
 
 ## エスカレーションチェーン
 
@@ -753,6 +765,8 @@ warning-chain:
 
 ---
 
+<span id="alert-grouping-and-routing"></span>
+
 ## アラートのグループ化とルーティング
 
 ### ルート設定
@@ -840,6 +854,8 @@ templates:
 ```
 
 ---
+
+<span id="chatops-integration"></span>
 
 ## ChatOps 統合
 
@@ -955,6 +971,8 @@ telegram:
 
 ---
 
+<span id="grafana-irm-integration"></span>
+
 ## Grafana IRM 統合
 
 ### インシデントレスポンス管理
@@ -1002,6 +1020,8 @@ escalation-policy:
 ```
 
 ---
+
+<span id="mobile-app"></span>
 
 ## モバイルアプリ
 
@@ -1063,6 +1083,8 @@ graph TB
 ```
 
 ---
+
+<span id="pagerdutyopsgenie-comparison"></span>
 
 ## PagerDuty/OpsGenie の比較
 
@@ -1143,6 +1165,8 @@ migration-checklist:
 ```
 
 ---
+
+<span id="best-practices"></span>
 
 ## ベストプラクティス
 

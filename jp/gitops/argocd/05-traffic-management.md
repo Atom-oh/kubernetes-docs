@@ -14,6 +14,8 @@
 - [実験](#experiments)
 - [通知](#notifications)
 
+<span id="argo-rollouts-overview"></span>
+
 ## Argo Rollouts の概要
 
 Argo Rollouts は、Blue-Green デプロイメント、Canary デプロイメント、プログレッシブデリバリー機能などの高度なデプロイメント機能を提供する Kubernetes controller です。
@@ -78,6 +80,8 @@ flowchart TB
     class PROM,DD,NR metrics
 ```
 
+<span id="installation"></span>
+
 ## インストール
 
 ### Argo Rollouts Controller のインストール
@@ -138,6 +142,8 @@ dashboard:
     hosts:
       - rollouts.example.com
 ```
+
+<span id="blue-green-deployments"></span>
 
 ## Blue-Green デプロイメント
 
@@ -271,6 +277,8 @@ strategy:
     autoPromotionSeconds: 60  # Wait 60s before auto-promoting
     previewReplicaCount: 3
 ```
+
+<span id="canary-deployments"></span>
 
 ## Canary デプロイメント
 
@@ -432,6 +440,8 @@ flowchart TB
     class S1,S2,S3 stable
     class C1 canary
 ```
+
+<span id="analysis-and-verification"></span>
 
 ## 分析と検証
 
@@ -626,6 +636,8 @@ spec:
             ))
 ```
 
+<span id="ingress-integration"></span>
+
 ## Ingress 統合
 
 Argo Rollouts は 10 種類を超える traffic provider をサポートします。Kong のようにネイティブ統合を持たない provider は、代わりに **Gateway API plugin** を通じてサポートされます。
@@ -633,7 +645,7 @@ Argo Rollouts は 10 種類を超える traffic provider をサポートしま�
 | Provider | 統合 | 注記 |
 |---|---|---|
 | NGINX Ingress | ネイティブ（`trafficRouting.nginx`） | `canary-weight` annotation を直接操作 |
-| AWS ALB | ネイティブ（`trafficRouting.alb`） | Ingress backend port は `use-annotation` である必要があります。詳細は[検証結果](#verification-results-on-eks)を参照 |
+| AWS ALB | ネイティブ（`trafficRouting.alb`） | Ingress backend port は `use-annotation` である必要があります。詳細は[検証結果 (English)](https://www.atomai.click/kubernetes-docs/en/gitops/argocd/05-traffic-management#verification-results-on-eks)を参照 |
 | Istio | ネイティブ（`trafficRouting.istio`） | VirtualService/DestinationRule を直接操作 |
 | SMI | ネイティブ（`trafficRouting.smi`） | SMI プロジェクト自体は実質的にメンテナンスされていません。新規採用には非推奨です |
 | Ambassador、Apache APISIX、Traefik、Google Cloud | ネイティブ | このドキュメントでは扱いません。[公式ドキュメント](https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/)を参照 |
@@ -940,7 +952,7 @@ spec:
   controllerName: konghq.com/kic-gateway-controller   # note: different from KIC's IngressClass controller string
 ```
 
-以降は、上記と同じ [Gateway API plugin](#gateway-api-plugin-universal) 設定を適用します。Rollout と HTTPRoute の YAML は同一です。
+以降は、上記と同じ [Gateway API plugin (English)](https://www.atomai.click/kubernetes-docs/en/gitops/argocd/05-traffic-management#gateway-api-plugin-httproute) 設定を適用します。Rollout と HTTPRoute の YAML は同一です。
 
 ### EKS での検証結果
 
@@ -952,6 +964,8 @@ spec:
 | Istio | VirtualService weight の 20→50→100% への遷移、および `abort` 時の 0% への即時復帰 | ✅ 確認済み — curl 比率が weight と一致し、abort の直後にトラフィックが以前の stable version に戻る |
 | AWS ALB | listener rule の forward weight 遷移。`aws elbv2 describe-rules` によるライブ AWS state とのクロスチェック | ✅ 確認済み（ただし上記の [`use-annotation` に関する注意](#aws-alb-ingress)が必要） |
 | Kong（Gateway API plugin） | `HTTPRoute.backendRefs[].weight` の遷移、および Kong の data plane を通る実トラフィック | ✅ 確認済み — ただし、`gatewayclass-unmanaged` annotation と正確な `controllerName` は間違えやすいため注意が必要です（上記参照） |
+
+<span id="rollback-strategies"></span>
 
 ## ロールバック戦略
 
@@ -1000,6 +1014,8 @@ spec:
             # Analysis runs continuously
             # Failure at any point triggers rollback
 ```
+
+<span id="experiments"></span>
 
 ## 実験
 
@@ -1060,6 +1076,8 @@ spec:
           valueFrom:
             podTemplateHashValue: canary
 ```
+
+<span id="notifications"></span>
 
 ## 通知
 

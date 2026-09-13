@@ -15,6 +15,8 @@ Istio proporciona varios algoritmos de balanceo de carga mediante Envoy para dis
 9. [Mejores prácticas](#best-practices)
 10. [Solución de problemas](#troubleshooting)
 
+<span id="why-load-balancing"></span>
+
 ## ¿Por qué el balanceo de carga?
 
 ### Uso eficiente de recursos
@@ -61,6 +63,8 @@ flowchart TB
 | **Tiempo de respuesta** | Inconsistente (0-1000 ms+) | Tiempo de respuesta consistente |
 | **Uso de recursos** | Ineficiente (uso parcial) | Uso eficiente de recursos |
 
+<span id="load-balancing-overview"></span>
+
 ## Descripción general del balanceo de carga
 
 ```mermaid
@@ -92,6 +96,8 @@ flowchart TB
     class Algorithm lb;
     class Pod1,Pod2,Pod3 pod;
 ```
+
+<span id="load-balancing-algorithms"></span>
 
 ## Algoritmos de balanceo de carga
 
@@ -321,6 +327,8 @@ trafficPolicy:
   loadBalancer:
     simple: LEAST_REQUEST
 ```
+
+<span id="consistent-hash-details"></span>
 
 ## Detalles de Consistent Hash
 
@@ -560,6 +568,8 @@ flowchart LR
 - Use almacenamiento de sesión externo (Redis, Memcached)
 - Escale gradualmente
 
+<span id="locality-based-load-balancing"></span>
+
 ## Balanceo de carga basado en localidad
 
 El balanceo de carga basado en localidad prioriza endpoints geográficamente más cercanos.
@@ -661,6 +671,8 @@ spec:
 - Recuperación ante desastres entre regiones
 - Optimización de costes (comunicación dentro de la misma AZ)
 
+<span id="connection-pool-settings"></span>
+
 ## Configuración de Connection Pool
 
 Configure Connection Pool junto con el balanceo de carga para optimizar el rendimiento.
@@ -707,6 +719,8 @@ spec:
         maxRequestsPerConnection: 0 # Unlimited (HTTP/2 multiplexing)
         h2UpgradePolicy: UPGRADE    # Allow HTTP/2 upgrade
 ```
+
+<span id="practical-examples"></span>
 
 ## Ejemplos prácticos
 
@@ -922,6 +936,8 @@ spec:
 - Recopilación de logs
 - Procesamiento de datos a gran escala
 
+<span id="algorithm-selection-guide"></span>
+
 ## Guía de selección de algoritmos
 
 ### Árbol de decisión
@@ -1015,6 +1031,8 @@ trafficPolicy:
     localityLbSetting:
       enabled: true
 ```
+
+<span id="best-practices"></span>
 
 ## Mejores prácticas
 
@@ -1223,6 +1241,8 @@ metadata:
       - Dashboard: grafana.example.com/d/istio-workload
       - Alert: High P95 latency > 500ms
 ```
+
+<span id="troubleshooting"></span>
 
 ## Solución de problemas
 

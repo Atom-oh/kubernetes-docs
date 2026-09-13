@@ -13,6 +13,8 @@
 - [重试策略](#retry-policies)
 - [选择性同步](#selective-sync)
 
+<span id="manual-vs-automated-sync"></span>
+
 ## 手动同步与自动同步
 
 ArgoCD 支持两种同步模式：手动和自动。
@@ -109,6 +111,8 @@ flowchart LR
     class RESOURCES cluster
 ```
 
+<span id="auto-sync-policies"></span>
+
 ## 自动同步策略
 
 ### 清理
@@ -187,6 +191,8 @@ spec:
       selfHeal: true     # Revert manual changes
       allowEmpty: false  # Fail if no resources
 ```
+
+<span id="sync-options"></span>
 
 ## 同步选项
 
@@ -276,6 +282,8 @@ metadata:
 - Job（不可变 spec）
 - 更改 PVC storage class
 - 不可变的 ConfigMap/Secret 字段
+
+<span id="sync-waves-and-phases"></span>
 
 ## 同步波次和阶段
 
@@ -530,6 +538,8 @@ spec:
                   number: 80
 ```
 
+<span id="sync-windows"></span>
+
 ## 同步窗口
 
 同步窗口限制应用程序可以进行同步的时间。
@@ -622,6 +632,8 @@ syncWindows:
 argocd app sync my-app --force
 ```
 
+<span id="diffing-customization"></span>
+
 ## 差异比较自定义
 
 ### 忽略差异
@@ -708,6 +720,8 @@ resource.compareoptions: |
   ignoreResourceStatusField: crd
 ```
 
+<span id="retry-policies"></span>
+
 ## 重试策略
 
 配置在同步失败时自动重试。
@@ -786,6 +800,8 @@ spec:
               echo "Prerequisites met"
       restartPolicy: Never
 ```
+
+<span id="selective-sync"></span>
 
 ## 选择性同步
 

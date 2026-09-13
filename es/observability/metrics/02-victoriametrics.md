@@ -19,6 +19,8 @@
 - [Prácticas recomendadas](#best-practices)
 - [Solución de problemas](#troubleshooting)
 
+<span id="introduction"></span>
+
 ## Introducción
 
 VictoriaMetrics es una base de datos de series temporales y una solución de monitoreo de alto rendimiento y rentable. Aunque es totalmente compatible con Prometheus, ofrece mejores tasas de compresión, rendimiento de consultas y escalabilidad.
@@ -75,6 +77,8 @@ flowchart LR
 | Límite de cardinalidad | ~10 M de series temporales | ~100 M+ de series temporales |
 | Lenguaje de consulta | PromQL | MetricsQL (superconjunto) |
 
+<span id="architecture-options"></span>
+
 ## Opciones de arquitectura
 
 VictoriaMetrics ofrece dos modos de despliegue:
@@ -100,6 +104,8 @@ flowchart TD
     class A,B,C,F decision
     class D,E,G solution
 ```
+
+<span id="single-node-mode"></span>
 
 ## Modo de nodo único
 
@@ -211,6 +217,8 @@ spec:
 | `/api/v1/label/{name}/values` | Lista de valores de labels |
 | `/vmui` | UI integrada |
 | `/metrics` | Métricas propias |
+
+<span id="cluster-mode"></span>
 
 ## Modo de clúster
 
@@ -858,6 +866,8 @@ rate(http_requests_total{status=~"5.."}[5m])
 histogram_share(0.5, http_request_duration_seconds_bucket)  # Ratio below 500ms
 ```
 
+<span id="helm-installation"></span>
+
 ## Instalación con Helm
 
 ### victoria-metrics-k8s-stack
@@ -1009,6 +1019,8 @@ victoria-metrics-single:
   enabled: false
 ```
 
+<span id="long-term-storage-configuration"></span>
+
 ## Configuración de almacenamiento a largo plazo
 
 ### Configuración del período de retención
@@ -1100,6 +1112,8 @@ groups:
       histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service))
 ```
 
+<span id="performance-optimization"></span>
+
 ## Optimización del rendimiento
 
 ### Optimización de memoria
@@ -1147,6 +1161,8 @@ args:
   # Maximum label value length
   - "--maxLabelValueLen=1024"
 ```
+
+<span id="best-practices"></span>
 
 ## Prácticas recomendadas
 
@@ -1201,6 +1217,8 @@ vmctl prometheus --prometheus.snapshot-path=/prometheus/snapshots/xxx \
 # Step 4: Complete transition
 # Remove Prometheus remote_write, change Grafana default data source
 ```
+
+<span id="troubleshooting"></span>
 
 ## Solución de problemas
 

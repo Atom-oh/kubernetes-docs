@@ -15,6 +15,8 @@ El monitoreo y el logging efectivos son esenciales para mantener la confiabilida
 7. [Mejores prácticas de monitoreo y logging](#monitoring-and-logging-best-practices)
 8. [Solución de problemas y depuración](#troubleshooting-and-debugging)
 
+<span id="monitoring-and-logging-overview"></span>
+
 ## Descripción general de monitoreo y logging
 
 ### Importancia del monitoreo y logging
@@ -89,6 +91,8 @@ Sigue estos pasos para desarrollar una estrategia efectiva de monitoreo y loggin
 5. **Configurar alertas**: Configura alertas para eventos y umbrales importantes
 6. **Automatizar**: Automatiza los procesos de monitoreo y logging tanto como sea posible
 7. **Revisión periódica**: Revisa y mejora periódicamente la estrategia de monitoreo y logging
+
+<span id="eks-control-plane-logging"></span>
 
 ## Logging del Control Plane de EKS
 
@@ -178,6 +182,8 @@ Esto cierra una brecha de visibilidad que antes requería inspeccionar directame
 - **Transiciones de estado de workflow** desde kro
 
 Habilita la entrega de logs para las capacidades que ejecutas junto con el logging estándar del Control Plane; luego consulta los resultados con CloudWatch Logs Insights del mismo modo en que consultarías logs del API server o de auditoría. Consulta el [announcement](https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-eks-capabilities-logging/) (June 4, 2026) para ver la lista actual de tipos de logs de capacidades admitidos.
+
+<span id="container-logging"></span>
 
 ## Logging de contenedores
 
@@ -385,6 +391,8 @@ Configuración para el análisis de logs en Fluent Bit:
     Time_Format %Y-%m-%dT%H:%M:%S%z
 ```
 
+<span id="cluster-monitoring"></span>
+
 ## Monitoreo del cluster
 
 El monitoreo efectivo del cluster es esencial para hacer seguimiento del estado, rendimiento y uso de recursos de tu cluster de EKS. Esta sección explora varias herramientas y técnicas para monitorear clusters de EKS.
@@ -540,7 +548,7 @@ aws eks update-addon \
   --addon-version v5.0.0-eksbuild.1
 ```
 
-Consulta las [release notes](https://aws.amazon.com/about-aws/whats-new/2026/02/application-performance-monitoring-cloudwatch-eks/) (February 26, 2026) para obtener orientación de actualización si estás pasando desde una versión del add-on donde Application Signals era opcional. Para la evolución más reciente basada en OTel de la recopilación de métricas de Container Insights, consulta [CloudWatch Metrics](../observability/metrics/04-cloudwatch-metrics.md#opentelemetry-based-container-insights-preview).
+Consulta las [release notes](https://aws.amazon.com/about-aws/whats-new/2026/02/application-performance-monitoring-cloudwatch-eks/) (February 26, 2026) para obtener orientación de actualización si estás pasando desde una versión del add-on donde Application Signals era opcional. Para la evolución más reciente basada en OTel de la recopilación de métricas de Container Insights, consulta [CloudWatch Metrics (English)](https://www.atomai.click/kubernetes-docs/en/observability/metrics/04-cloudwatch-metrics#otel-migration-and-historical-announcements).
 
 ### EKS Node Monitoring Agent
 
@@ -881,6 +889,8 @@ Crea dashboards personalizados en Grafana para visualizar métricas de aplicaci�
 5. Escribe una consulta PromQL (por ejemplo, `rate(app_requests_total[5m])`)
 6. Configura el título del panel, la descripción y el tipo de visualización
 7. Haz clic en "Save"
+<span id="alerting-and-event-management"></span>
+
 ## Alertas y gestión de eventos
 
 Las alertas y la gestión de eventos efectivas son esenciales para detectar y responder rápidamente a problemas en tu cluster de EKS. Esta sección explora varias herramientas y técnicas para gestionar alertas y eventos en clusters de EKS.
@@ -1345,6 +1355,8 @@ Implementa estrategias para reducir la fatiga por alertas:
 2. **Filtrado de alertas**: Filtra para entregar solo alertas importantes
 3. **Limitación de alertas**: Limita la frecuencia de alertas repetidas
 4. **Ventanas horarias de alertas**: Entrega alertas no críticas para el negocio solo durante horario laboral
+<span id="log-analysis-and-visualization"></span>
+
 ## Análisis y visualización de logs
 
 El análisis y la visualización de logs desempeñan un papel importante en el diagnóstico y la resolución de problemas que ocurren en tu cluster de EKS. Esta sección explora varias herramientas y técnicas para analizar y visualizar logs en clusters de EKS.
@@ -1721,6 +1733,8 @@ lifecycle-config.json:
   ]
 }
 ```
+<span id="monitoring-and-logging-best-practices"></span>
+
 ## Mejores prácticas de monitoreo y logging
 
 Exploremos mejores prácticas para implementar efectivamente monitoreo y logging en clusters de EKS.
@@ -1893,6 +1907,8 @@ Implementa una jerarquización de almacenamiento rentable:
 1. **Hot Storage**: Logs recientes y consultados frecuentemente
 2. **Warm Storage**: Logs consultados con menor frecuencia
 3. **Cold Storage**: Logs archivados
+
+<span id="troubleshooting-and-debugging"></span>
 
 ## Solución de problemas y depuración
 

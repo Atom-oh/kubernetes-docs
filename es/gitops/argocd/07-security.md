@@ -12,6 +12,8 @@
 - [Credenciales de repositorio](#repository-credentials)
 - [Verificación de firmas GPG](#gpg-signature-verification)
 
+<span id="sso-integration"></span>
+
 ## Integración de SSO
 
 ArgoCD admite varios proveedores de SSO para la autenticación.
@@ -245,6 +247,8 @@ data:
     g, argocd-admins, role:admin
 ```
 
+<span id="secret-management"></span>
+
 ## Gestión de Secret
 
 ### Sealed Secrets
@@ -451,6 +455,8 @@ data:
   kustomize.buildOptions: --enable-alpha-plugins
 ```
 
+<span id="tls-configuration"></span>
+
 ## Configuración de TLS
 
 ### Certificado TLS personalizado
@@ -508,6 +514,8 @@ data:
     ...
     -----END CERTIFICATE-----
 ```
+
+<span id="audit-logging"></span>
 
 ## Registro de auditoría
 
@@ -580,6 +588,8 @@ spec:
           configMap:
             name: fluentbit-config
 ```
+
+<span id="network-security"></span>
 
 ## Seguridad de red
 
@@ -682,6 +692,8 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
+<span id="repository-credentials"></span>
+
 ## Credenciales de repositorio
 
 ### HTTPS con Personal Access Token
@@ -763,6 +775,8 @@ stringData:
   username: admin
   password: secretpassword
 ```
+
+<span id="gpg-signature-verification"></span>
 
 ## Verificación de firmas GPG
 

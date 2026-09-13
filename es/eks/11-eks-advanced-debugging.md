@@ -20,6 +20,8 @@ Para el funcionamiento estable de clusters de Amazon EKS, son esenciales un fram
 
 ---
 
+<span id="1-incident-response-framework"></span>
+
 ## 1. Incident Response Framework
 
 ### First 5-Minute Checklist (Initial Triage)
@@ -127,6 +129,8 @@ flowchart TD
 ```
 
 ---
+
+<span id="2-control-plane-debugging"></span>
 
 ## 2. Control Plane Debugging
 
@@ -385,6 +389,8 @@ aws eks update-addon \
 
 ---
 
+<span id="3-node-level-troubleshooting"></span>
+
 ## 3. Node-Level Troubleshooting
 
 ### Node Join Failure Diagnosis (8 Common Causes)
@@ -618,6 +624,8 @@ data:
 
 ---
 
+<span id="4-workload-debugging"></span>
+
 ## 4. Workload Debugging
 
 ### Pod State Flow Diagram
@@ -845,6 +853,8 @@ spec:
 ```
 
 ---
+
+<span id="5-networking-diagnostics"></span>
 
 ## 5. Networking Diagnostics
 
@@ -1093,6 +1103,8 @@ iperf3 -c <target-ip> -p 5201
 
 ---
 
+<span id="6-storage-troubleshooting"></span>
+
 ## 6. Storage Troubleshooting
 
 ### EBS CSI Driver Error Patterns
@@ -1252,6 +1264,8 @@ ZONE:'{.spec.nodeAffinity}'
 ```
 
 ---
+
+<span id="7-observability-architecture"></span>
 
 ## 7. Observability Architecture
 
@@ -1507,6 +1521,8 @@ spec:
 ```
 
 ---
+
+<span id="8-failure-detection-architecture"></span>
 
 ## 8. Failure Detection Architecture
 
@@ -1801,6 +1817,8 @@ def lambda_handler(event, context):
 
 ---
 
+<span id="9-quick-reference"></span>
+
 ## 9. Quick Reference
 
 ### Error Pattern Lookup Table
@@ -1911,6 +1929,8 @@ Información recopilada:
 - Uso de disco
 
 ---
+
+<span id="10-next-steps"></span>
 
 ## 10. Next Steps
 

@@ -13,6 +13,8 @@
 - [Remote write y AMP](#remote-write-and-amp)
 - [Rendimiento, HA y solución de problemas](#performance-ha-and-troubleshooting)
 
+<span id="introduction-and-versions"></span>
+
 ## Introducción y versiones
 
 Prometheus es el conjunto de herramientas de monitoreo de la CNCF desarrollado originalmente en SoundCloud. Recopila series temporales numéricas, las almacena en una TSDB local, evalúa PromQL y reglas de registro (recording) y de alerta, y envía alertas a Alertmanager. La recopilación normal usa scraping por HTTP; remote write y las integraciones por lotes opcionales añaden otras rutas de entrega. No es un registro de eventos, un almacén de trazas ni un libro contable exacto de facturación por solicitud.
@@ -38,6 +40,8 @@ El perfil está orientado a **workers de EKS con Linux sobre EC2**. Fargate no t
 
 - El [artículo del 14 de julio sobre exporters de Kubernetes](https://kubernetes.io/blog/2026/07/14/custom-metrics-exporter-kubernetes/) explica la instrumentación de aplicaciones y los exporters personalizados. El uso de HPA también requiere la API/adaptador de métricas adecuado; el scraping por sí solo no conecta métricas arbitrarias con HPA.
 - El [anuncio de AMP del 21 de julio](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-managed-service-prometheus-1500m-metrics-workspace/) describe hasta 1500 millones de series activas y 200 000 reglas de registro/alerta por workspace. Son límites de escalado anunciados, no cuotas por defecto concedidas automáticamente ni garantías de aprobación. Revise las cuotas actuales del workspace/cuenta previstos.
+
+<span id="architecture-and-components"></span>
 
 ## Arquitectura y componentes
 
@@ -179,6 +183,8 @@ Para el porcentaje de errores, un servicio saludable puede no tener series 5xx. 
 
 El tráfico saludable observado da 0, el tráfico totalmente 5xx da 100 y un denominador cero permanece indefinido. La telemetría ausente sigue ausente; monitorice los fallos de recopilación por separado.
 
+<span id="discovery-and-operator-selectors"></span>
+
 ## Descubrimiento y selectores del Operator
 
 ![Operator workload reconciliation and monitor/rule selection.](../../.gitbook/assets/en-observability-metrics-01-prometheus-1.png)
@@ -291,6 +297,8 @@ spec:
 - El sondeo blackbox de servicios necesita un exporter instalado, un módulo de sondeo definido, una URL/esquema de destino adecuados y una configuración `Probe`/de scraping. `up` describe el scraping del exporter; el éxito del sondeo es una señal distinta.
 - El descubrimiento de nodos alcanza los endpoints de kubelet, no automáticamente node-exporter. Verifique los certificados de servicio, la CA correcta y el RBAC de métricas de nodo. La CA de la API de Kubernetes no acredita la confianza en certificados de nodo arbitrarios.
 - Use etiquetas revisadas de namespace/servicio/equipo en lugar de un `labelmap` de nodo sin restricciones. Eliminar etiquetas de identidad no es una operación de agregación.
+
+<span id="kube-prometheus-stack-installation"></span>
 
 ## Instalación de kube-prometheus-stack
 
@@ -440,6 +448,8 @@ helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
 Compruebe el establecimiento de las CRDs, la salud del Operator, el binding de los PVC y los targets reales. Aplique el monitor/las reglas de aplicación elegidos solo después de que sus CRDs estén establecidas.
 
 La gestión de la actualización de CRDs del chart depende de la versión. Lea las notas de actualización en lugar de asumir que toda migración de CRD queda cubierta por un simple `helm upgrade`. El chart 90 también cambia la dependencia de Grafana al repositorio de la comunidad; valide los valores existentes de autenticación/aprovisionamiento y conserve copias de seguridad de la base de datos/PVC al actualizar.
+
+<span id="rules-and-alertmanager"></span>
 
 ## Reglas y Alertmanager
 
@@ -623,6 +633,8 @@ helm upgrade --install kube-prom prometheus-community/kube-prometheus-stack \
 
 La comprobación del enrutamiento nativo usó nombres de receptores sin enviar notificaciones. La recuperación de secretos, la autenticación con el proveedor y la entrega real de notificaciones siguen requiriendo una verificación controlada.
 
+<span id="remote-write-and-amp"></span>
+
 ## Remote write y AMP
 
 Remote write reenvía muestras de forma asíncrona a un backend configurado. No entrega alertas, no garantiza un almacenamiento en búfer ilimitado ni sustituye a una copia de seguridad. Monitorice el backlog, los reintentos y los límites del receptor. Conserve las distribuciones completas de los histogramas a menos que una política revisada de agregación/descarte establezca las consecuencias.
@@ -687,6 +699,8 @@ Estas consultas describen un clúster local. Las consultas centrales/de AMP que 
 VictoriaMetrics de nodo único acepta habitualmente `/api/v1/write` en su puerto HTTP configurado. El endpoint vminsert de un clúster usa `/insert/<tenant>/prometheus/api/v1/write`; vmauth u otra capa de acceso aprobada debe proporcionar el enrutamiento/la autenticación previstos. Los IDs de tenant no son credenciales. Mimir y otros receptores tienen sus propias URLs, identidad y contratos de HA.
 
 No copie la vieja regla que descartaba todos los buckets de histograma por debajo del segundo o familias enteras de latencia del plano de control sin evaluar la pérdida resultante de cuantiles/SLO. Los valores por defecto de la cola son un punto de partida, no un óptimo de producción medido.
+
+<span id="performance-ha-and-troubleshooting"></span>
 
 ## Rendimiento, HA y solución de problemas
 

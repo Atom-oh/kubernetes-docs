@@ -10,6 +10,8 @@ Istio admite la autenticación de servicio a servicio (Peer Authentication) y la
 4. [Ejemplos prácticos](#practical-examples)
 5. [Solución de problemas](#troubleshooting)
 
+<span id="authentication-overview"></span>
+
 ## Descripción general de la autenticación
 
 <p align="center">
@@ -63,6 +65,8 @@ flowchart TB
     class App app;
 ```
 
+<span id="request-authentication-jwt"></span>
+
 ## Autenticación de solicitudes (JWT)
 
 ### Verificación básica de JWT
@@ -115,6 +119,8 @@ spec:
       prefix: "Bearer "
 ```
 
+<span id="oauthoidc-integration"></span>
+
 ## Integración de OAuth/OIDC
 
 ### AWS Cognito
@@ -161,6 +167,8 @@ spec:
     - "https://your-api.example.com"
 ```
 
+<span id="practical-examples"></span>
+
 ## Ejemplos prácticos
 
 ### Verificación de JWT + autorización
@@ -196,6 +204,8 @@ spec:
     - source:
         notRequestPrincipals: ["*"]
 ```
+
+<span id="troubleshooting"></span>
 
 ## Solución de problemas
 

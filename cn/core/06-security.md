@@ -88,8 +88,10 @@ EOF
 6. [Secret 管理](#secret-management)
 7. [镜像安全](#image-security)
 8. [Pod Security Standards](#pod-security-standards)
-9. [审计日志](#audit-logging)
-10. [EKS 安全最佳实践](#eks-security-best-practices)
+9. [审计日志 (English)](https://www.atomai.click/kubernetes-docs/en/core/06-security#audit)
+10. [EKS 安全最佳实践 (English)](https://www.atomai.click/kubernetes-docs/en/core/06-security#amazon-eks-security-enhancement)
+
+<span id="security-overview"></span>
 
 ## 安全概述
 
@@ -112,6 +114,8 @@ Kubernetes 安全包含以下主要领域：
 3. **默认拒绝**: 拒绝所有未明确允许的内容
 4. **安全加固**: 应用比默认值更严格的安全设置
 5. **持续监控**: 检测并响应安全事件
+
+<span id="authentication"></span>
 
 ## 身份验证
 
@@ -205,6 +209,8 @@ kubectl config set-credentials oidc-user \
 
 一种在 API server 前放置 Authentication Proxy 以处理用户身份验证的方法。该代理会在 HTTP headers 中包含经过身份验证的用户信息，并将其转发给 API server。
 
+<span id="authorization"></span>
+
 ## 授权
 
 如果身份验证是验证“您是谁”的过程，那么授权就是确定“您可以做什么”的过程。Kubernetes 支持多种授权模式：
@@ -295,6 +301,8 @@ Node 授权是一种供 kubelets 访问 API server 时使用的特殊授权模�
 
 一种通过外部服务作出授权决策的方法。API server 将授权请求转发到外部服务，由该服务决定允许还是拒绝请求。
 
+<span id="security-context"></span>
+
 ## 安全上下文
 
 安全上下文定义 Pod 或 container 层面的安全设置。这可以对权限、访问控制、capabilities 等进行细粒度控制。
@@ -354,6 +362,8 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
+<span id="network-policy"></span>
+
 ## 网络策略
 
 网络策略提供了一种控制 Pods 之间通信的方式。默认情况下，Kubernetes 集群中的所有 Pods 都可以彼此通信，但可以使用网络策略加以限制。
@@ -400,6 +410,8 @@ spec:
 
 要使用网络策略，集群的网络插件必须支持网络策略。Calico、Cilium 和 Antrea 等 CNI 插件支持网络策略。
 
+<span id="secret-management"></span>
+
 ## Secret 管理
 
 Kubernetes Secrets 用于存储和管理密码、API keys 和证书等敏感信息。但是，默认情况下，secrets 仅采用 base64 编码，并未加密。因此，需要额外的安全措施。
@@ -431,6 +443,8 @@ resources:
 - Azure Key Vault
 - Google Secret Manager
 - External Secrets Operator
+
+<span id="image-security"></span>
 
 ## 镜像安全
 

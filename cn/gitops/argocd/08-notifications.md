@@ -13,6 +13,8 @@
 - [高级配置](#advanced-configuration)
 - [AWS 集成](#aws-integration)
 
+<span id="overview"></span>
+
 ## 概述
 
 ArgoCD Notifications 是一个监控 ArgoCD Application 并在满足特定条件时发送通知的组件。它支持多种通知服务，并提供灵活的模板功能。
@@ -26,6 +28,8 @@ ArgoCD Notifications 是一个监控 ArgoCD Application 并在满足特定条件
 | Go 模板 | 用于消息格式化的丰富模板语法 |
 | 订阅模型 | 按 Application 配置的通知订阅 |
 | 内置触发器 | 为常见事件预先配置的触发器 |
+
+<span id="architecture"></span>
 
 ## 架构
 
@@ -76,6 +80,8 @@ ArgoCD v2.4+ 已包含 ArgoCD Notifications。对于较旧版本：
 ```bash
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/notifications_catalog/install.yaml
 ```
+
+<span id="notification-services"></span>
 
 ## 通知服务
 
@@ -243,6 +249,8 @@ data:
       staging: $pagerduty-key-staging
 ```
 
+<span id="triggers"></span>
+
 ## 触发器
 
 触发器根据 Application 状态定义何时发送通知。
@@ -320,6 +328,8 @@ trigger.custom: |
 - `app.status.*` - Application 状态
 - `app.operation.*` - 当前操作
 - `time.Now()` - 当前时间
+
+<span id="templates"></span>
 
 ## 模板
 
@@ -545,6 +555,8 @@ data:
 | `indent spaces` | 缩进文本 |
 | `nindent spaces` | 换行 + 缩进 |
 
+<span id="subscriptions"></span>
+
 ## 订阅
 
 ### Application 级订阅
@@ -612,6 +624,8 @@ metadata:
 spec:
   # ...
 ```
+
+<span id="advanced-configuration"></span>
 
 ## 高级配置
 
@@ -684,6 +698,8 @@ trigger.on-sync-status-change: |
     send: [sync-status-change]
     oncePer: app.status.sync.revision
 ```
+
+<span id="aws-integration"></span>
 
 ## AWS 集成
 

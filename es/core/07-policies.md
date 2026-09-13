@@ -134,6 +134,8 @@ spec:
 9. [Prácticas recomendadas de políticas](#policy-best-practices)
 10. [Conclusión](#conclusion)
 
+<span id="policy-overview"></span>
+
 ## Descripción general de las políticas
 
 Las políticas de Kubernetes proporcionan una forma para que los administradores de clusters definan restricciones sobre los recursos y las cargas de trabajo dentro del cluster. Las políticas se utilizan para los siguientes propósitos:
@@ -144,6 +146,8 @@ Las políticas de Kubernetes proporcionan una forma para que los administradores
 4. **Estandarización**: Aplicar prácticas coherentes de configuración y despliegue
 
 Kubernetes puede implementar diversos tipos de políticas mediante recursos integrados (por ejemplo, NetworkPolicy, ResourceQuota, LimitRange) o motores de políticas de terceros (por ejemplo, OPA Gatekeeper, Kyverno).
+
+<span id="resource-allocation-policies"></span>
 
 ## Políticas de asignación de recursos
 
@@ -197,6 +201,8 @@ Las clases QoS determinan el orden de expulsión de pods durante la escasez de r
 2. Los pods Burstable se expulsan después
 3. Los pods Guaranteed se expulsan al final
 
+<span id="pod-security-policies"></span>
+
 ## Políticas de seguridad de Pod
 
 Pod Security Policy (PSP) quedó obsoleta a partir de Kubernetes 1.21 y se eliminó por completo en la versión 1.25. En su lugar, se introdujeron Pod Security Standards y Pod Security Admission.
@@ -232,6 +238,8 @@ Significado de cada etiqueta:
 - **enforce**: Bloquea la creación de pods que infringen la política
 - **audit**: Registra las infracciones en los registros de auditoría
 - **warn**: Muestra mensajes de advertencia sobre las infracciones
+
+<span id="network-policies"></span>
 
 ## Políticas de red
 
@@ -308,6 +316,8 @@ ingress:
       except:
       - 172.17.1.0/24
 ```
+
+<span id="resource-quotas"></span>
 
 ## Cuotas de recursos
 
@@ -419,6 +429,8 @@ LimitRange se puede aplicar a los siguientes tipos de recursos:
 - Container
 - Pod
 - PersistentVolumeClaim
+
+<span id="policy-engines"></span>
 
 ## Motores de políticas
 
@@ -542,6 +554,8 @@ spec:
       - owner
 ```
 
+<span id="policy-management-in-amazon-eks"></span>
+
 ## Gestión de políticas en Amazon EKS
 
 En Amazon EKS, puedes gestionar políticas mediante los mecanismos de políticas predeterminados de Kubernetes junto con diversos servicios de AWS.
@@ -611,6 +625,8 @@ Puedes aplicar políticas a nivel de organización a clusters de EKS mediante AW
 ### AWS Firewall Manager
 
 Puedes usar AWS Firewall Manager para gestionar de forma centralizada las políticas de red de varios clusters de EKS. Esto permite aplicar políticas de seguridad coherentes en toda la organización.
+
+<span id="policy-best-practices"></span>
 
 ## Prácticas recomendadas de políticas
 

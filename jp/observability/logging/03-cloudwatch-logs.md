@@ -15,6 +15,8 @@ Amazon CloudWatch Logs は、ログの取り込み、保存、分析を管理し
 6. [サブスクリプションフィルター](#subscription-filters)
 7. [コスト最適化](#cost-optimization)
 
+<span id="overview"></span>
+
 ## 概要
 
 <span id="cloudwatch-logs-features"></span>
@@ -62,6 +64,8 @@ flowchart LR
 | ログストリーム | グループ内のログイベントのシーケンス |
 | ログイベント | タイムスタンプとメッセージ。サービス制限の対象です |
 | 保持期間 | サポートされる離散的な保持期間、または保持期間が未設定の場合は無期限 |
+
+<span id="eks-control-plane-logging"></span>
 
 ## EKS コントロールプレーンログ
 
@@ -269,6 +273,8 @@ IAM 権限は**インストール前に**設定してください。この chart
 サポート対象の add-on/chart には Linux と Windows の経路がありますが、Application Signals は EKS Windows ではサポートされません。Fargate はこの手動 DaemonSet ではなく、プラットフォームのログルーターを使用します。Hybrid Nodes と Auto Mode は個別に検証してください。従来の EC2 ホストパスがどこでも存在すると仮定しないでください。
 
 EKS Auto Mode の AWS 管理 Karpenter、EBS CSI、load-balancer-controller、IPAM ログは、別の **vended log delivery** 設定を使用します。そのログタイプは `AUTO_MODE_COMPUTE_LOGS`、`AUTO_MODE_BLOCK_STORAGE_LOGS`、`AUTO_MODE_LOAD_BALANCING_LOGS`、`AUTO_MODE_IPAM_LOGS` です。ドキュメント化された `PutDeliverySource` → `PutDeliveryDestination` → `CreateDelivery` フローでは、ロググループ、S3、Firehose をターゲットにできます。これは `PutSubscriptionFilter` や 5 つのコントロールプレーンログタイプの有効化とは別物です。
+
+<span id="fluentbit-integration"></span>
 
 ## FluentBit 統合
 
@@ -630,6 +636,8 @@ SOURCE logGroups(accountIdentifier:['111122223333'], namePrefix:['/aws/container
 
 `accountIdentifier` は単数形です。クロスアカウントクエリには、承認済みの monitoring/source-account 設定と権限が必要です。2 つ目の account または group に言及しても、そのアクセスは作成されません。account/prefix の選択を省略すると、クエリ範囲が大幅に広がる可能性があります。
 
+<span id="subscription-filters"></span>
+
 ## サブスクリプションフィルター
 
 サブスクリプションフィルターは、新しい一致イベントを非同期に転送します。配信は少なくとも 1 回です。重複が発生する場合があります。再試行可能な宛先障害は最大 24 時間再試行できますが、再試行不可能なエラーと継続的な障害では配信を失う可能性があります。クォータ、`DeliveryErrors`、`DeliveryThrottling` を監視してください。サブスクリプションは、すべての過去ログをバックフィルしません。
@@ -884,6 +892,8 @@ resource "aws_cloudwatch_metric_alarm" "high_error_count" {
 範囲を限定した履歴エクスポートには、CloudWatch の別の S3 export task API と、その bucket/KMS 権限を使用します。エクスポートの可用性は最大 12 時間遅れる場合があり、順序は保証されず、サービスは継続的なアーカイブに定期的な export task を推奨していません。
 
 アーカイブのライフサイクルルールは、バケットの単一の設定所有者に属します。既存のルールを 2 つ目の Terraform resource で置き換えるのではなく、レビュー済みの prefix スコープルールをその設定にマージしてください。Standard-IA または Glacier tier を選択する前に、小さなオブジェクトの移行動作、最小保存期間、取り出しコスト、Object Lock を検討してください。
+
+<span id="cost-optimization"></span>
 
 ## コスト最適化
 

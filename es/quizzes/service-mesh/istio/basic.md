@@ -407,7 +407,7 @@ Monthly cost savings: $4,536 - $181 = $4,355 (96%)
 **Referencia:**
 
 * [Ambient Mode](../../../service-mesh/istio/advanced/01-ambient-mode.md#resource-usage-comparison)
-* [Cost Optimization](../../../service-mesh/istio/best-practices.md#cost-optimization)
+* [Cost Optimization (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/best-practices#cost-optimization)
 
 </details>
 
@@ -540,7 +540,7 @@ istioctl proxy-config secret <pod-name> -o json
 **Referencia:**
 
 * [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-* [Certificate Management](../../../service-mesh/istio/03-architecture.md#certificate-management)
+* [Certificate Management (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture#_3-certificate-management-citadel-functionality)
 
 </details>
 
@@ -1064,7 +1064,7 @@ istioctl uninstall --revision=1-28-0 -y
 **Referencia:**
 
 * [Canary Upgrade](https://istio.io/latest/docs/setup/upgrade/canary/)
-* [Upgrade Strategy](../../../service-mesh/istio/best-practices.md#upgrade-strategy)
+* [Upgrade Strategy (English)](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/best-practices#_2-upgrade-strategy)
 
 </details>
 

@@ -24,6 +24,8 @@
 7. [故障排除](#troubleshooting)
 8. [参考：KEDA 安装](#reference-keda-installation)
 
+<span id="overview"></span>
+
 ## 概述
 
 本文重点介绍**使用 Istio 指标的实用自动扩缩容策略**。KEDA 扩展了 Kubernetes HPA，使其能够基于来自 Prometheus 和 CloudWatch 的复杂指标查询进行扩缩容。
@@ -67,6 +69,8 @@
 | **复合指标** | RPS + Latency + Error | 生产服务 | 稳定、准确的扩缩容 |
 | **基于 Circuit Breaker** | overflow、连接池 | 外部依赖较多的服务 | 防止级联故障 |
 | **基于时间的预测** | Cron + 指标 | 可预测的流量模式 | 成本优化、主动响应 |
+
+<span id="architecture"></span>
 
 ## 架构
 
@@ -136,6 +140,8 @@ spec:
         }[1m]))
       threshold: '1000'    # Threshold: 1000 RPS
 ```
+
+<span id="prometheus-metrics-based-scaling"></span>
 
 ## 基于 Prometheus 指标的扩缩容
 
@@ -411,6 +417,8 @@ spec:
       threshold: '200'  # P95 > 200ms
 ```
 
+<span id="cloudwatch-metrics-based-scaling"></span>
+
 ## 基于 CloudWatch 指标的扩缩容
 
 ### 概述
@@ -502,6 +510,8 @@ spec:
       awsRegion: us-west-2
       identityOwner: operator
 ```
+
+<span id="practical-scaling-strategies"></span>
 
 ## 实用扩缩容策略
 
@@ -769,6 +779,8 @@ spec:
         })
       threshold: '500'  # 500+ concurrent requests
 ```
+
+<span id="best-practices"></span>
 
 ## 最佳实践
 
@@ -1128,6 +1140,8 @@ spec:
           periodSeconds: 10
 ```
 
+<span id="troubleshooting"></span>
+
 ## 故障排除
 
 ### 1. KEDA 未获取指标
@@ -1482,6 +1496,8 @@ spec:
         )
       threshold: '150'  # EU allows 150ms
 ```
+
+<span id="reference-keda-installation"></span>
 
 ## 参考：KEDA 安装
 

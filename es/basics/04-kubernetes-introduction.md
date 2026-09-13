@@ -67,6 +67,8 @@ minikube start
 * [Kubernetes frente a Amazon EKS](04-kubernetes-introduction.md#kubernetes-vs-amazon-eks)
 * [Primeros pasos con Kubernetes](04-kubernetes-introduction.md#getting-started-with-kubernetes)
 
+<span id="what-is-kubernetes"></span>
+
 ## ¿Qué es Kubernetes?
 
 Kubernetes significa «timonel» o «piloto» en griego y es un sistema de código abierto que automatiza la implementación, el escalado y la operación de aplicaciones en contenedores. Se inspiró en el sistema interno Borg de Google y se publicó como código abierto en 2014.
@@ -92,6 +94,8 @@ Kubernetes significa «timonel» o «piloto» en griego y es un sistema de códi
 * **Configuración declarativa**: Administra la infraestructura como código
 * **Multinube y nube híbrida**: Implementación y administración uniformes en diversos entornos
 
+<span id="history-of-kubernetes"></span>
+
 ## Historia de Kubernetes
 
 ### Antecedentes
@@ -109,6 +113,8 @@ Kubernetes (κυβερνήτης) significa «timonel» o «piloto» en griego. 
 ### Significado del logotipo
 
 El logotipo de Kubernetes representa un timón (la rueda de dirección de un barco) con 7 radios, que simboliza el papel de Kubernetes al guiar el rumbo de las aplicaciones en contenedores.
+
+<span id="kubernetes-architecture"></span>
 
 ## Arquitectura de Kubernetes
 
@@ -149,6 +155,8 @@ Kubernetes sigue una arquitectura master-node. Los nodos master (control plane) 
 ![Clúster de Kubernetes completo: los clientes kubectl llegan a kube-apiserver, que coordina etcd, kube-scheduler, kube-controller-manager y cloud-controller-manager, e impulsa kubelet, container runtime y kube-proxy en dos nodos worker.](../.gitbook/assets/en-basics-04-kubernetes-introduction-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-2.html)
+
+<span id="kubernetes-main-components"></span>
 
 ## Componentes principales de Kubernetes
 
@@ -248,6 +256,8 @@ kube-proxy es un proxy de red que se ejecuta en cada nodo e implementa el concep
 * **modo userspace**: Ejecuta el proxy en el espacio de usuario (heredado)
 * **modo iptables**: Implementación de NAT mediante iptables de Linux (predeterminado)
 * **modo IPVS**: Utiliza IP Virtual Server del kernel de Linux (alto rendimiento)
+
+<span id="kubernetes-basic-objects"></span>
 
 ## Objetos básicos de Kubernetes
 
@@ -390,6 +400,8 @@ status:
       status: "True"
   # ...
 ```
+
+<span id="kubernetes-workload-resources"></span>
 
 ## Recursos de carga de trabajo de Kubernetes
 
@@ -657,6 +669,8 @@ spec:
           restartPolicy: OnFailure
 ```
 
+<span id="kubernetes-services-and-networking"></span>
+
 ## Servicios y redes de Kubernetes
 
 El modelo de red de Kubernetes se basa en la premisa de que todos los Pods tienen direcciones IP únicas y pueden comunicarse entre sí sin configuración especial. Los Services proporcionan endpoints estables para conjuntos de Pods.
@@ -892,6 +906,8 @@ spec:
         subset: v1
 ```
 
+<span id="kubernetes-storage"></span>
+
 ## Almacenamiento de Kubernetes
 
 Kubernetes proporciona diversas opciones de almacenamiento para aplicaciones en contenedores. Ofrece formas de conservar datos incluso cuando los Pods se reinician o se reprograman.
@@ -1065,6 +1081,8 @@ parameters:
   encrypted: "true"
 volumeBindingMode: WaitForFirstConsumer
 ```
+
+<span id="kubernetes-configuration-and-security"></span>
 
 ## Configuración y seguridad de Kubernetes
 
@@ -1322,6 +1340,8 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
+<span id="kubernetes-vs-amazon-eks"></span>
+
 ## Kubernetes frente a Amazon EKS
 
 Amazon EKS (Elastic Kubernetes Service) es un servicio administrado de Kubernetes proporcionado por AWS. EKS ofrece todas las características básicas de Kubernetes y añade integración con servicios de AWS y facilidad de administración.
@@ -1382,6 +1402,8 @@ EKS se integra con los siguientes servicios de AWS:
 12. **AWS App Mesh**: Service mesh
 13. **AWS SageMaker**: Cargas de trabajo de machine learning
 14. **AWS Bedrock**: Cargas de trabajo de IA generativa
+
+<span id="getting-started-with-kubernetes"></span>
 
 ## Primeros pasos con Kubernetes
 

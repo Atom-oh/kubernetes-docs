@@ -14,6 +14,8 @@ ServiceEntry registra servicios externos en la malla de servicios de Istio, lo q
 8. [Monitorización y control](#monitoring-and-control)
 9. [Prácticas recomendadas](#best-practices)
 
+<span id="why-serviceentry"></span>
+
 ## ¿Por qué ServiceEntry?
 
 ### La necesidad de gestionar servicios externos
@@ -56,6 +58,8 @@ flowchart TB
 | **Seguridad** | Limitada | mTLS, gestión de certificados |
 | **Control de Egress** | Se permite todo el tráfico externo | Permitir/bloquear explícitamente |
 | **Descubrimiento de servicios** | Gestión manual | Búsqueda DNS automática |
+
+<span id="serviceentry-overview"></span>
 
 ## Descripción general de ServiceEntry
 
@@ -105,6 +109,8 @@ spec:
   location: MESH_EXTERNAL # External/internal location
   resolution: DNS         # Address resolution method
 ```
+
+<span id="resolution-modes"></span>
 
 ## Modos de resolución
 
@@ -195,6 +201,8 @@ spec:
 
 Usa DNS round robin (ahora integrado en el modo DNS).
 
+<span id="location-settings"></span>
+
 ## Configuración de ubicación
 
 ### MESH_EXTERNAL (servicio externo)
@@ -250,6 +258,8 @@ spec:
 - Incluye cargas de trabajo de VM en la malla
 - Entornos multiclúster
 - Configuraciones de nube híbrida
+
+<span id="practical-examples"></span>
 
 ## Ejemplos prácticos
 
@@ -473,6 +483,8 @@ spec:
         connectTimeout: 3s
 ```
 
+<span id="combining-with-egress-gateway"></span>
+
 ## Combinación con Egress Gateway
 
 Controla centralizadamente el tráfico externo mediante Egress Gateway.
@@ -579,6 +591,8 @@ spec:
         mode: SIMPLE  # HTTP -> HTTPS conversion
 ```
 
+<span id="security-and-tls"></span>
+
 ## Seguridad y TLS
 
 ### mTLS para un servicio externo
@@ -669,6 +683,8 @@ spec:
           number: 443
 ```
 
+<span id="monitoring-and-control"></span>
+
 ## Monitorización y control
 
 ### Recopilación de métricas
@@ -715,6 +731,8 @@ spec:
   outboundTrafficPolicy:
     mode: REGISTRY_ONLY  # Allow only those registered in ServiceEntry
 ```
+
+<span id="best-practices"></span>
 
 ## Prácticas recomendadas
 

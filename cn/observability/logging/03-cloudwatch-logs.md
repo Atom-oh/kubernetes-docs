@@ -15,6 +15,8 @@ Amazon CloudWatch Logs 用于管理日志摄取、存储和分析。你仍需配
 6. [订阅筛选器](#subscription-filters)
 7. [成本优化](#cost-optimization)
 
+<span id="overview"></span>
+
 ## 概述
 
 <span id="cloudwatch-logs-features"></span>
@@ -62,6 +64,8 @@ flowchart LR
 | 日志流 | 组内的一系列日志事件 |
 | 日志事件 | 时间戳和消息，受服务限制约束 |
 | 保留期 | 受支持的离散保留期，或者在未设置保留期时永不过期 |
+
+<span id="eks-control-plane-logging"></span>
 
 ## EKS Control Plane 日志记录
 
@@ -269,6 +273,8 @@ helm upgrade --install cloudwatch-observability \
 受支持的 add-on/chart 具有 Linux 和 Windows 路径，但 EKS Windows 不支持 Application Signals。Fargate 使用其平台日志路由器，而非此手动 DaemonSet。请分别验证 Hybrid Nodes 和 Auto Mode；不要假定传统 EC2 host 路径在所有环境中都存在。
 
 EKS Auto Mode 的 AWS 托管 Karpenter、EBS CSI、load-balancer-controller 和 IPAM 日志使用独立的 **vended log delivery** 设置。其日志类型为 `AUTO_MODE_COMPUTE_LOGS`、`AUTO_MODE_BLOCK_STORAGE_LOGS`、`AUTO_MODE_LOAD_BALANCING_LOGS` 和 `AUTO_MODE_IPAM_LOGS`。有文档说明的 `PutDeliverySource` → `PutDeliveryDestination` → `CreateDelivery` 流程可将目标设为日志组、S3 或 Firehose。这与 `PutSubscriptionFilter` 以及启用五种 Control Plane 日志类型不同。
+
+<span id="fluentbit-integration"></span>
 
 ## FluentBit 集成
 
@@ -630,6 +636,8 @@ SOURCE logGroups(accountIdentifier:['111122223333'], namePrefix:['/aws/container
 
 `accountIdentifier` 为单数。跨账户查询需要已批准的 monitoring/source-account 设置和权限；提及第二个账户或组并不会创建该访问权限。省略账户/prefix 选择可能会大幅扩大查询范围。
 
+<span id="subscription-filters"></span>
+
 ## 订阅筛选器
 
 订阅筛选器会异步转发新的匹配事件。传输至少一次；可能发生重复。可重试的目标失败最多可重试 24 小时；不可重试错误和持续失败可能丢失传输。请监控配额、`DeliveryErrors` 和 `DeliveryThrottling`。订阅不会回填所有历史日志。
@@ -884,6 +892,8 @@ resource "aws_cloudwatch_metric_alarm" "high_error_count" {
 对于有界历史导出，请使用 CloudWatch 独立的 S3 export task API 及其 bucket/KMS 权限。导出可用性最多可能延迟 12 小时，顺序无法保证，并且该服务不建议将定期导出任务用于持续归档。
 
 归档 lifecycle rule 属于 bucket 的单一配置所有者。请将经过审查的 prefix-scoped rule 合并到该配置中，而不是用第二个 Terraform resource 替换现有规则。选择 Standard-IA 或 Glacier tier 前，请考虑小对象转换行为、最短存储期限、检索成本和 Object Lock。
+
+<span id="cost-optimization"></span>
 
 ## 成本优化
 

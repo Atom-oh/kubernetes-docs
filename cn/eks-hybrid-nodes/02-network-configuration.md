@@ -207,7 +207,7 @@ On-premises node
 | SSM          | `com.amazonaws.<region>.ssm`             | 是          | 使用 SSM 凭证提供程序时                              |
 | SSM Messages | `com.amazonaws.<region>.ssmmessages`     | 是          | SSM Session Manager 通信                             |
 
-> **注意**：S3 Interface endpoints 不会自动支持 `private_dns_enabled`。如果需要对 S3 域名进行私有 DNS 解析，必须配置单独的 Private Hosted Zone (PHZ)。有关 `hybrid-assets.eks.amazonaws.com` 私有镜像模式，请参阅 [Air-Gap 设置 - hybrid-assets 私有镜像](03-airgap-setup.md#hybrid-assets-private-mirroring-s3--phz-pattern)。
+> **注意**：S3 Interface endpoints 不会自动支持 `private_dns_enabled`。如果需要对 S3 域名进行私有 DNS 解析，必须配置单独的 Private Hosted Zone (PHZ)。有关 `hybrid-assets.eks.amazonaws.com` 私有镜像模式，请参阅 [Air-Gap 设置 - hybrid-assets 私有镜像 (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/03-airgap-setup#dns-and-private-endpoint-requirements)。
 
 ### 使用 Terraform 创建 VPC Endpoints
 
@@ -452,6 +452,8 @@ sudo iptables -A OUTPUT -d 172.20.0.0/16 -j ACCEPT
 
 ***
 
+<span id="dns-configuration"></span>
+
 ## DNS 配置
 
 ### Route 53 Resolver Inbound Endpoint
@@ -677,7 +679,7 @@ API server 会与运行在 hybrid 节点上的 webhook pods 建立直接连接�
 
 ### 模式 5：Hybrid Nodes 上的 Pod ↔ Pod
 
-不同 hybrid 节点上的 Pods 使用 [VXLAN 封装](../networking/cilium/03-networking.md#vxlan-technology-deep-dive)（或 Geneve、IP-in-IP 等类似 overlay 协议）进行通信。CNI 使用源/目标 node IP 的外部报头封装原始 pod-to-pod 数据包。接收 node 的 CNI 会解封装并将其交付给目标 pod。
+不同 hybrid 节点上的 Pods 使用 [VXLAN 封装 (English)](https://www.atomai.click/kubernetes-docs/en/networking/cilium/03-networking#vxlan-technology-deep-dive)（或 Geneve、IP-in-IP 等类似 overlay 协议）进行通信。CNI 使用源/目标 node IP 的外部报头封装原始 pod-to-pod 数据包。接收 node 的 CNI 会解封装并将其交付给目标 pod。
 
 ![Hybrid Nodes 上的 Pod 到 Pod](../.gitbook/assets/hybrid-nodes-pod-to-pod.svg)
 
@@ -1053,7 +1055,7 @@ hybrid-node-002     10.80.1.11    10.85.0.128/25
 hybrid-node-003     10.80.1.12    10.85.1.0/25
 ```
 
-> 有关 CiliumNode CR 结构、脚本用法和更多详细信息，请参阅 [Cilium IPAM — 通过 CiliumNode CR 查询每 Node PodCIDRs](../networking/cilium/04-ipam-policy.md#querying-per-node-podcidrs-via-ciliumnode-cr)。
+> 有关 CiliumNode CR 结构、脚本用法和更多详细信息，请参阅 [Cilium IPAM — 通过 CiliumNode CR 查询每 Node PodCIDRs (English)](https://www.atomai.click/kubernetes-docs/en/networking/cilium/04-ipam-policy#querying-per-node-podcidrs-via-ciliumnode-cr)。
 
 **Calico** — `BlockAffinity` CR 跟踪每 node 的 CIDR blocks：
 
@@ -1064,7 +1066,7 @@ CIDR:.spec.cidr,\
 NODE:.spec.node'
 ```
 
-> **⚠ 弃用**：Calico 不再受到 EKS Hybrid Nodes 的官方支持。新部署请使用 Cilium。有关详细的 BlockAffinity 查询，请参阅 [Calico 高级主题 — 通过 BlockAffinity 查询每 Node PodCIDRs](../networking/calico/07-advanced-topics.md#querying-per-node-podcidrs-via-blockaffinity)。
+> **⚠ 弃用**：Calico 不再受到 EKS Hybrid Nodes 的官方支持。新部署请使用 Cilium。有关详细的 BlockAffinity 查询，请参阅 [Calico 高级主题 — 通过 BlockAffinity 查询每 Node PodCIDRs (English)](https://www.atomai.click/kubernetes-docs/en/networking/calico/07-advanced-topics#inspect-node-affine-cidr-blocks)。
 
 #### 配置静态路由
 
@@ -1166,7 +1168,7 @@ ip route add 10.85.1.0/25 via 10.80.1.12
 > **建议**：
 >
 > * **PoC / 小型环境**（1–5 个 nodes）：静态路由可快速开始
-> * **生产环境 / 5+ nodes**：使用 [BGP（选项 1）](02-network-configuration.md#option-1-bgp-recommended)。它会自动响应 node 变化，并显著减少运维开销
+> * **生产环境 / 5+ nodes**：使用 [BGP（选项 1） (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/02-network-configuration#option-1-bgp-recommended)。它会自动响应 node 变化，并显著减少运维开销
 > * **因策略不允许 BGP 的环境**：使用上述自动化脚本配合静态路由来管理路由变化
 
 ### 选项 3：ARP 代理
@@ -1296,6 +1298,8 @@ spec:
 > **建议**：在 hybrid 环境中，定义显式网络策略以防止意外的跨边界流量。应使用严格的 Ingress/Egress 策略保护敏感 workloads。
 
 ***
+
+<span id="webhook-configuration"></span>
 
 ## Webhook 配置
 

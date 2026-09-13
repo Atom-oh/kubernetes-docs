@@ -24,25 +24,29 @@
 
 ***
 
+<span id="30-second-summary-symptom--first-command--most-common-cause"></span>
+
 ## 30秒サマリー: 症状 → 最初のコマンド → 最も一般的な原因
 
 各症状セルは、以下の対応するプレイブック節へリンクしています。
 
 | 症状（`kubectl get pods`/`nodes` の表示） | 最初のコマンド | 最も一般的な原因 |
 |---|---|---|
-| [`Pending`](#1-pod-stuck-in-pending) | `kubectl describe pod <pod>` → Events の `FailedScheduling` メッセージ | リソース不足（`Insufficient cpu/memory`）、toleration 不足、nodeSelector 不一致、未バインドの PVC |
+| [`Pending` (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#1-pod-stuck-in-pending) | `kubectl describe pod <pod>` → Events の `FailedScheduling` メッセージ | リソース不足（`Insufficient cpu/memory`）、toleration 不足、nodeSelector 不一致、未バインドの PVC |
 | [`ImagePullBackOff` / `ErrImagePull`](#2-imagepullbackoff--errimagepull) | `kubectl describe pod <pod>` → `Failed to pull image` 行 | tag のタイプミス、private registry 認証（imagePullSecrets/node IAM）、ECR region/account 不一致 |
-| [`CrashLoopBackOff`](#3-crashloopbackoff-exit-137-oomkilled-probe-failures-config-errors) | `kubectl logs <pod> --previous` + `lastState.terminated` を確認 | 起動時の app 失敗（exit 1）、`OOMKilled`（exit 137）、liveness probe 失敗、ConfigMap/Secret 不足 |
-| [`Running` だが READY `0/1`](#4-running-but-not-ready--empty-endpoints) | `kubectl describe pod <pod>` → `Readiness probe failed` | 誤った readiness path/port、依存先待ち、sidecar が Ready でない |
-| [リクエストが Service に到達しない](#5-service-is-unreachable) | `kubectl get endpointslices -l kubernetes.io/service-name=<svc>` | selector label 不一致、誤った `targetPort`、NetworkPolicy block、CoreDNS 障害 |
-| [Node `NotReady`](#6-node-notready--kubelet-pressure-diskpressure-memorypressure-pidpressure) | `kubectl describe node <node>` → Conditions | kubelet 停止/network partition、`DiskPressure`、`MemoryPressure`、`PIDPressure` |
-| [PVC `Pending`](#7-pvc-stuck-in-pending) | `kubectl describe pvc <pvc>` → Events | `WaitForFirstConsumer`（正常な待機）、StorageClass の欠落/スペルミス、AZ 不一致 |
-| [app logs の `AccessDenied`（AWS API）](#8-eks-irsa--pod-identity-accessdenied) | `kubectl get sa <sa> -o yaml` + pod の `env \| grep AWS` | IRSA（IAM Roles for Service Accounts）の annotation/trust policy エラー、Pod Identity association 不足、pods が再起動されていない |
-| [`ContainerCreating` で停止 + `failed to assign an IP address`](#9-eks-enivpc-cni-ip-exhaustion) | `kubectl describe pod <pod>` → `FailedCreatePodSandBox` | Subnet IP 枯渇、node max-pods 到達、`aws-node` が不健全 |
-| [Karpenter が node を起動しない](#10-eks-karpenter-does-not-launch-a-node) | `kubectl get events -A --field-selector reason=FailedScheduling` | NodePool `limits` 到達、requirements/taint 不一致、instance type 制限 |
-| [Service 作成が `failed calling webhook` で拒否される](#11-no-service-can-be-created-failed-calling-webhook) | `kubectl -n kube-system get endpointslices -l kubernetes.io/service-name=aws-load-balancer-webhook-service` | すべての namespace に一致する `failurePolicy: Fail` webhook の背後にある Webhook Deployment が不健全（CrashLoop） |
+| [`CrashLoopBackOff` (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#3-crashloopbackoff-exit-137-oomkilled-probe-failures-config-errors) | `kubectl logs <pod> --previous` + `lastState.terminated` を確認 | 起動時の app 失敗（exit 1）、`OOMKilled`（exit 137）、liveness probe 失敗、ConfigMap/Secret 不足 |
+| [`Running` だが READY `0/1` (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#4-running-but-not-ready--empty-endpoints) | `kubectl describe pod <pod>` → `Readiness probe failed` | 誤った readiness path/port、依存先待ち、sidecar が Ready でない |
+| [リクエストが Service に到達しない (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#5-service-is-unreachable) | `kubectl get endpointslices -l kubernetes.io/service-name=<svc>` | selector label 不一致、誤った `targetPort`、NetworkPolicy block、CoreDNS 障害 |
+| [Node `NotReady` (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#6-node-notready--kubelet-pressure-diskpressure-memorypressure-pidpressure) | `kubectl describe node <node>` → Conditions | kubelet 停止/network partition、`DiskPressure`、`MemoryPressure`、`PIDPressure` |
+| [PVC `Pending` (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#7-pvc-stuck-in-pending) | `kubectl describe pvc <pvc>` → Events | `WaitForFirstConsumer`（正常な待機）、StorageClass の欠落/スペルミス、AZ 不一致 |
+| [app logs の `AccessDenied`（AWS API） (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#8-eks-irsa--pod-identity-accessdenied) | `kubectl get sa <sa> -o yaml` + pod の `env \| grep AWS` | IRSA（IAM Roles for Service Accounts）の annotation/trust policy エラー、Pod Identity association 不足、pods が再起動されていない |
+| [`ContainerCreating` で停止 + `failed to assign an IP address` (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#9-eks-enivpc-cni-ip-exhaustion) | `kubectl describe pod <pod>` → `FailedCreatePodSandBox` | Subnet IP 枯渇、node max-pods 到達、`aws-node` が不健全 |
+| [Karpenter が node を起動しない (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#10-eks-karpenter-does-not-launch-a-node) | `kubectl get events -A --field-selector reason=FailedScheduling` | NodePool `limits` 到達、requirements/taint 不一致、instance type 制限 |
+| [Service 作成が `failed calling webhook` で拒否される (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#11-no-service-can-be-created-failed-calling-webhook) | `kubectl -n kube-system get endpointslices -l kubernetes.io/service-name=aws-load-balancer-webhook-service` | すべての namespace に一致する `failurePolicy: Fail` webhook の背後にある Webhook Deployment が不健全（CrashLoop） |
 
 ***
+
+<span id="diagnostic-decision-tree"></span>
 
 ## 診断判断ツリー
 
@@ -61,6 +65,8 @@ kubectl get events -A --field-selector type=Warning --sort-by=.lastTimestamp | t
 ```
 
 ***
+
+<span id="playbook-by-symptom"></span>
 
 ## 症状別プレイブック
 
@@ -87,14 +93,16 @@ Warning  FailedScheduling  default-scheduler  0/15 nodes are available: 1 Insuff
 
 | メッセージ断片 | 原因 | 修正 |
 |---|---|---|
-| `Insufficient cpu` / `Insufficient memory` | requests が残り node capacity を超過 | requests を適正化し、autoscaler を確認（→ [10. Karpenter](#10-eks-karpenter-does-not-launch-a-node)）、`kubectl describe node` の `Allocated resources` を確認 |
-| `Too many pods` | node max-pods 到達（VPC CNI ENI limit） | → [9. ENI/IP 枯渇](#9-eks-enivpc-cni-ip-exhaustion) |
+| `Insufficient cpu` / `Insufficient memory` | requests が残り node capacity を超過 | requests を適正化し、autoscaler を確認（→ [10. Karpenter (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#10-eks-karpenter-does-not-launch-a-node)）、`kubectl describe node` の `Allocated resources` を確認 |
+| `Too many pods` | node max-pods 到達（VPC CNI ENI limit） | → [9. ENI/IP 枯渇 (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#9-eks-enivpc-cni-ip-exhaustion) |
 | `node(s) had untolerated taint(s)` | node taints に対応する toleration がない | `kubectl get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints[*].key` で taints を列挙し、toleration を追加するか NodePool を調整 |
 | `node(s) didn't match Pod's node affinity/selector` | nodeSelector/affinity label を持つ node がない | `kubectl get nodes --show-labels` を確認。Karpenter では key を NodePool requirements に含めないと node は作成されません |
-| `pod has unbound immediate PersistentVolumeClaims` | PVC が `Pending` | → [7. PVC Pending](#7-pvc-stuck-in-pending) |
+| `pod has unbound immediate PersistentVolumeClaims` | PVC が `Pending` | → [7. PVC Pending (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#7-pvc-stuck-in-pending) |
 | `node(s) had volume node affinity conflict` | PV（EBS）が存在する AZ に schedulable node がない | PV の `nodeAffinity` zone を確認し、その AZ に capacity を用意 |
 | `node(s) didn't match pod topology spread constraints` / `pod anti-affinity rules` | spread constraint を満たす node がない | `whenUnsatisfiable: ScheduleAnyway` で緩和するか nodes を追加 |
 | events がまったくない | scheduler の問題、または `schedulerName` のスペルミス | `kubectl get pod <pod> -o jsonpath='{.spec.schedulerName}'` を確認 |
+
+<span id="2-imagepullbackoff--errimagepull"></span>
 
 ### 2. `ImagePullBackOff` / `ErrImagePull`
 
@@ -226,7 +234,7 @@ kube-dns-xc4bb   IPv4          53,53,9153   10.0.2.106,10.0.3.14   145d
 | Events に `Readiness probe failed` が繰り返し出る | probe path/port が誤っている、または app が dependency（DB など）をまだ待っている | probe を app の実際の health endpoint に向ける。dependency wait は liveness ではなく readiness に置く |
 | reason `ReadinessGatesNotReady` で Condition `Ready False` | pod readiness gate を待機 — 通常は AWS Load Balancer Controller の `target-health.elbv2.k8s.aws/*` gate | Target Group health check が失敗する理由を調べる → [AWS Load Balancer Controller](../networking/03-aws-lb-controller.md) |
 | `1/2` Running で app container だけが Ready | sidecar（istio-proxy など）が Ready でない、または sidecar が app の後で起動し初期 connection が失敗 | sidecar logs を確認。sidecar を native sidecar（`initContainers` + `restartPolicy: Always`）に変更 |
-| Ready なのに EndpointSlice が空 | Service selector が pod labels と一致しない | → [5. Service unreachable](#5-service-is-unreachable) |
+| Ready なのに EndpointSlice が空 | Service selector が pod labels と一致しない | → [5. Service unreachable (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#5-service-is-unreachable) |
 
 ### 5. Service に到達できない
 
@@ -313,7 +321,7 @@ df -h /var/lib/containerd
 crictl ps -a | head
 ```
 
-`kubectl get nodes` に**一度も表示されない** node（join failure: IAM role/access entry、subnet routing、security group、AMI mismatch）は別のトピックです → [EKS Advanced Debugging — Node Join Failure Diagnosis](../eks/11-eks-advanced-debugging.md#node-join-failure-diagnosis-8-common-causes)、[EKS Troubleshooting — Node and Pod Issues](../eks/09-eks-troubleshooting.md#node-and-pod-issues)。Karpenter nodes では、まず [section 10](#10-eks-karpenter-does-not-launch-a-node) の NodeClaim check から始めます。
+`kubectl get nodes` に**一度も表示されない** node（join failure: IAM role/access entry、subnet routing、security group、AMI mismatch）は別のトピックです → [EKS Advanced Debugging — Node Join Failure Diagnosis](../eks/11-eks-advanced-debugging.md#node-join-failure-diagnosis-8-common-causes)、[EKS Troubleshooting — Node and Pod Issues](../eks/09-eks-troubleshooting.md#node-and-pod-issues)。Karpenter nodes では、まず [section 10 (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#10-eks-karpenter-does-not-launch-a-node) の NodeClaim check から始めます。
 
 ### 7. `Pending` で停止した PVC
 
@@ -342,7 +350,7 @@ gp3    ebs.csi.aws.com         Delete          WaitForFirstConsumer   true      
 | `FailedBinding: no persistent volumes available for this claim and no storage class is set` | `storageClassName` も default StorageClass もない | PVC に `storageClassName: gp3` を設定するか、SC に `storageclass.kubernetes.io/is-default-class: "true"` を annotation |
 | `ProvisioningFailed: storageclass.storage.k8s.io "<name>" not found` | StorageClass のスペルミス、別 cluster から manifest を copy | `kubectl get sc` の実際の name を使用 |
 | `ProvisioningFailed: error generating accessibility requirements: no topology key found for node <node>` | EBS CSI node plugin が pod 配置 node に登録されていない（`CSINode` に driver がない） | `kubectl get csinode <node>` の DRIVERS column を確認。`ebs-csi-node` DaemonSet がその node で実行中か確認 |
-| `ProvisioningFailed` + `UnauthorizedOperation`/`AccessDenied` | EBS CSI controller の IRSA/Pod Identity に permission がない | → [8. IRSA/Pod Identity](#8-eks-irsa--pod-identity-accessdenied) — subject は `ebs-csi-controller-sa` |
+| `ProvisioningFailed` + `UnauthorizedOperation`/`AccessDenied` | EBS CSI controller の IRSA/Pod Identity に permission がない | → [8. IRSA/Pod Identity (English)](https://www.atomai.click/kubernetes-docs/en/ops/16-troubleshooting-playbook#8-eks-irsa--pod-identity-accessdenied) — subject は `ebs-csi-controller-sa` |
 | Pod-side `node(s) had volume node affinity conflict` | 既存 PV（EBS）が AZ `ap-northeast-2a` にあり、schedulable nodes は別 AZ | EBS は AZ をまたげません。`kubectl get pv <pv> -o jsonpath='{.spec.nodeAffinity}'` で zone を読み、そこで capacity を用意（NodePool zone requirement または nodeSelector） |
 | Pod-side `FailedAttachVolume: Multi-Attach error for volume` | RWO volume が前の node にまだ attach されている（node failure 後に StatefulSet が reschedule） | `kubectl get volumeattachments` で stale attachments を確認。node が失われた場合、cleanup を数分待つ |
 
@@ -436,7 +444,7 @@ VPC CNI の**default**は `WARM_ENI_TARGET=1` のみです（`WARM_IP_TARGET`/`M
 | 該当 node の `aws-node` が `CrashLoopBackOff` | CNI 自体の failure（`AmazonEKS_CNI_Policy` 不足、version mismatch） | `kubectl logs -n kube-system <aws-node-pod> -c aws-node`、node 上の `/var/log/aws-routed-eni/ipamd.log` |
 | Security Groups for Pods を使用し `vpc.amazonaws.com/pod-eni` が不足 | Branch ENI limit | trunk ENIs 対応 instances に移行。`ENABLE_POD_ENI=true` を確認 |
 
-IPAM behavior（warm pool、prefix delegation、custom networking）は [VPC CNI — IP Address Management](../networking/01-vpc-cni.md#ip-address-management) に、段階的な IP exhaustion handling は [EKS Advanced Debugging — Networking Diagnostics](../eks/11-eks-advanced-debugging.md#5-networking-diagnostics) と [EKS Troubleshooting — VPC CNI Issues](../eks/09-eks-troubleshooting.md#networking-issues) にあります。
+IPAM behavior（warm pool、prefix delegation、custom networking）は [VPC CNI — IP Address Management (English)](https://www.atomai.click/kubernetes-docs/en/networking/01-vpc-cni#ip-address-management) に、段階的な IP exhaustion handling は [EKS Advanced Debugging — Networking Diagnostics](../eks/11-eks-advanced-debugging.md#5-networking-diagnostics) と [EKS Troubleshooting — VPC CNI Issues](../eks/09-eks-troubleshooting.md#networking-issues) にあります。
 
 ### 10. EKS: Karpenter が node を起動しない
 
@@ -537,6 +545,8 @@ kubectl -n kube-system logs deploy/aws-load-balancer-controller --previous
 
 ***
 
+<span id="kubectl-diagnostic-cheat-sheet"></span>
+
 ## kubectl 診断チートシート
 
 このドキュメントで使用したすべての commands を目的別にまとめています。いずれも read-only です。
@@ -599,6 +609,8 @@ kubectl rollout history deploy/<name> -n <ns>
 
 ***
 
+<span id="going-deeper-related-documents"></span>
+
 ## より深く調べる: 関連ドキュメント
 
 このプレイブックは「次にどこへ進むか」を決める入口です。原因を絞り込んだら、以下のドキュメントへ進んでください。
@@ -617,6 +629,8 @@ kubectl rollout history deploy/<name> -n <ns>
 | Incident response process、severity、最初の5分 checklist | — | [EKS Advanced Debugging — Incident Response Framework](../eks/11-eks-advanced-debugging.md#1-incident-response-framework) |
 
 ***
+
+<span id="references"></span>
 
 ## 参照先
 
