@@ -1,1021 +1,188 @@
 # パート 5: アラートと AIOps
 
-> **難易度**: 上級 **推定所要時間**: 60 分 **最終更新**: February 22, 2026
+<span id="architecture-overview"></span>
+<span id="cleanup"></span>
+<span id="exercise-1-alertmanager-prometheusrules"></span>
+<span id="exercise-2-cloudwatch-alarms"></span>
+<span id="exercise-3-grafana-oncall-setup"></span>
+<span id="exercise-4-sns-topic-and-email-subscription"></span>
+<span id="exercise-5-cloudwatch-investigations"></span>
+<span id="exercise-6-aiops-agent-with-lambda-and-bedrock"></span>
+<span id="exercise-7-load-and-fault-injection"></span>
+<span id="exercise-8-verify-aiops-pipeline"></span>
+<span id="exercise-9-advanced-a2a-multi-agent-pattern"></span>
+<span id="learning-objectives"></span>
+<span id="next-steps"></span>
+<span id="prerequisites"></span>
+<span id="references"></span>
+<span id="steps"></span>
+<span id="steps-1"></span>
+<span id="steps-2"></span>
+<span id="steps-3"></span>
+<span id="steps-4"></span>
+<span id="steps-5"></span>
+<span id="steps-6"></span>
+<span id="steps-7"></span>
+<span id="steps-8"></span>
+<span id="summary"></span>
+<span id="troubleshooting"></span>
+<span id="verification-1"></span>
+<span id="verification-checklist"></span>
 
-## 学習目標
+> **難易度**: 上級 · **推定所要時間**: 60 分
+> **最終更新**: September 13, 2026
 
-* 一般的な障害パターン向けに AlertManager 検出ルールを設定する
-* インシデント管理用に Grafana OnCall をセットアップする
-* AI を活用した分析に CloudWatch Investigations を使用する
-* 自動化されたインシデント対応のために Lambda と Bedrock Claude を使用して AIOps Agent を構築する
+アラートを受信し、実際のメトリクスと集約ログを調査してから、人によるレビューのための診断仮説を作成します。[実行可能な例](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/aiops)は、入力/出力 SNS トピックを分離した Lambda レポーターです。自動修復や匿名 HTTP webhook は含まれていません。
 
-## 前提条件
+前提条件は、[パート 2](./02-observability-stack-lab.md)の取り込み、[パート 3](./03-msa-deployment-lab.md)のサービス、および[パート 4](./04-load-testing-scaling-lab.md)の smoke test の成功です。コードとテンプレートはローカルで確認済みですが、この監査では AWS デプロイ、モデル呼び出し、通知は実行していません。
 
-* [ ] [パート 4: 負荷テスト](04-load-testing-scaling-lab.md) を完了していること
-* [ ] メトリクス、ログ、トレースを収集する Observability スタック
-* [ ] 通知用に設定された SNS Topic
-* [ ] AWS Bedrock アクセスが有効化されていること（AIOps セクション用）
+![アラート入力と診断出力用の分離されたトピック](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-0.png)
 
-***
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-05-alerting-aiops-lab-0.html)
 
-## アーキテクチャ概要
+## 1. 評価とルーティングを分離する {#rules-and-routing}
 
-![AIOps アーキテクチャ](../../.gitbook/assets/aiops-architecture.png)
+**Prometheus がアラートルールを評価**し、**Alertmanager がグループ化、重複排除、ルーティング、抑制、通知を処理**します。`PrometheusRule` は Prometheus Operator の CRD であり、Alertmanager 自体が評価するリソースではありません。
 
-```mermaid
-flowchart TB
-    subgraph Detection["Alert Detection"]
-        AM["Alertmanager"]
-        CWA["CloudWatch Alarms"]
-        GO["Grafana OnCall"]
-    end
+| 設定 | 確認事項 |
+|---|---|
+| Prometheus `for` | 評価をまたいで条件が継続している間は Pending となり、その後 firing になる |
+| ルールセレクター | Prometheus CR 内の実際の namespace/label セレクターがルールを選択する |
+| Alertmanager ルート | `matchers`、ルート順序、子、`continue`、receiver の一致 |
+| メトリクス | 実際の SDK 名、単位、ラベル、不足している series、トラフィックなし、counter reset |
+| Service ラベル | レポーターカタログ内のサービスのみ許可される |
 
-    subgraph Analysis["AI Analysis"]
-        CWI["CloudWatch Investigations"]
-        AIOPS["AIOps Agent (Lambda)"]
-        Bedrock["Bedrock Claude"]
-    end
-
-    subgraph Notification["Notification"]
-        SNS["SNS Topic"]
-        Email["Email"]
-        Slack["Slack"]
-        PD["PagerDuty"]
-    end
-
-    AM -->|webhook| GO
-    AM -->|webhook| AIOPS
-    CWA -->|trigger| SNS
-    CWA -->|anomaly| CWI
-
-    CWI -->|hypothesis| AIOPS
-    AIOPS -->|query| Bedrock
-    AIOPS -->|analysis| SNS
-
-    SNS --> Email & Slack & PD
-    GO -->|escalation| SNS
-```
-
-***
-
-## 演習 1: AlertManager PrometheusRules
-
-### 手順
-
-**ステップ 1.1: 包括的なアラートルールを作成する**
+`up == 0` は、すでに認識されている scrape target の障害を検出しますが、未発見のすべての target を検出するものではありません。再起動の増加は CrashLoopBackOff とは異なり、古い OOMKilled 状態は新しい OOM event とは異なります。PromQL の SQS メトリクス名だけでは、exporter なしにデータを作成できません。
 
 ```bash
-kubectl config use-context $(kubectl config get-contexts -o name | grep obs-managed)
-
-cat <<'EOF' | kubectl apply -f -
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: msa-alerts
-  namespace: monitoring
-  labels:
-    prometheus: kube-prometheus-stack-prometheus
-    role: alert-rules
-spec:
-  groups:
-    - name: msa.availability
-      rules:
-        - alert: HighErrorRate
-          expr: |
-            (
-              sum(rate(http_server_request_count{namespace="msa",http_status_code=~"5.."}[5m])) by (service)
-              /
-              sum(rate(http_server_request_count{namespace="msa"}[5m])) by (service)
-            ) > 0.05
-          for: 2m
-          labels:
-            severity: critical
-            team: platform
-          annotations:
-            summary: "High error rate on {{ $labels.service }}"
-            description: "Service {{ $labels.service }} has error rate of {{ $value | humanizePercentage }} (threshold: 5%)"
-            runbook_url: "https://runbooks.obs-lab.io/high-error-rate"
-            dashboard_url: "http://grafana.obs-lab.io/d/msa-overview?var-service={{ $labels.service }}"
-
-        - alert: HighLatency
-          expr: |
-            histogram_quantile(0.99,
-              sum(rate(http_server_request_duration_seconds_bucket{namespace="msa"}[5m])) by (le, service)
-            ) > 1
-          for: 5m
-          labels:
-            severity: warning
-            team: platform
-          annotations:
-            summary: "High latency on {{ $labels.service }}"
-            description: "P99 latency for {{ $labels.service }} is {{ $value | humanizeDuration }} (threshold: 1s)"
-            runbook_url: "https://runbooks.obs-lab.io/high-latency"
-
-        - alert: ServiceDown
-          expr: |
-            up{job=~".*msa.*"} == 0
-          for: 1m
-          labels:
-            severity: critical
-            team: platform
-          annotations:
-            summary: "Service {{ $labels.job }} is down"
-            description: "Prometheus target {{ $labels.instance }} for job {{ $labels.job }} has been down for more than 1 minute"
-
-    - name: msa.pods
-      rules:
-        - alert: PodCrashLoopBackOff
-          expr: |
-            max_over_time(kube_pod_container_status_waiting_reason{namespace="msa",reason="CrashLoopBackOff"}[5m]) >= 1
-          for: 5m
-          labels:
-            severity: critical
-            team: platform
-          annotations:
-            summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping"
-            description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is in CrashLoopBackOff state"
-            runbook_url: "https://runbooks.obs-lab.io/crashloop"
-
-        - alert: PodHighMemoryUsage
-          expr: |
-            (
-              container_memory_working_set_bytes{namespace="msa",container!=""}
-              /
-              container_spec_memory_limit_bytes{namespace="msa",container!=""}
-            ) > 0.9
-          for: 5m
-          labels:
-            severity: warning
-            team: platform
-          annotations:
-            summary: "High memory usage in {{ $labels.pod }}"
-            description: "Container {{ $labels.container }} memory usage is {{ $value | humanizePercentage }} of limit"
-
-        - alert: PodHighCPUUsage
-          expr: |
-            (
-              sum(rate(container_cpu_usage_seconds_total{namespace="msa",container!=""}[5m])) by (pod, container)
-              /
-              sum(container_spec_cpu_quota{namespace="msa",container!=""}/container_spec_cpu_period{namespace="msa",container!=""}) by (pod, container)
-            ) > 0.9
-          for: 10m
-          labels:
-            severity: warning
-            team: platform
-          annotations:
-            summary: "High CPU usage in {{ $labels.pod }}"
-            description: "Container {{ $labels.container }} CPU usage is {{ $value | humanizePercentage }} of limit"
-
-    - name: msa.sqs
-      rules:
-        - alert: SQSQueueBacklog
-          expr: |
-            aws_sqs_approximate_number_of_messages_visible_average{queue_name="obs-lab-orders"} > 1000
-          for: 5m
-          labels:
-            severity: warning
-            team: platform
-          annotations:
-            summary: "SQS queue backlog detected"
-            description: "Queue obs-lab-orders has {{ $value }} messages waiting (threshold: 1000)"
-            runbook_url: "https://runbooks.obs-lab.io/sqs-backlog"
-
-        - alert: SQSMessageAge
-          expr: |
-            aws_sqs_approximate_age_of_oldest_message_seconds_average{queue_name="obs-lab-orders"} > 300
-          for: 5m
-          labels:
-            severity: critical
-            team: platform
-          annotations:
-            summary: "SQS messages are aging"
-            description: "Oldest message in obs-lab-orders is {{ $value | humanizeDuration }} old (threshold: 5m)"
-
-    - name: msa.nodes
-      rules:
-        - alert: NodeNotReady
-          expr: |
-            kube_node_status_condition{condition="Ready",status="true"} == 0
-          for: 5m
-          labels:
-            severity: critical
-            team: infra
-          annotations:
-            summary: "Node {{ $labels.node }} is not ready"
-            description: "Node {{ $labels.node }} has been in NotReady state for more than 5 minutes"
-
-        - alert: NodeHighDiskUsage
-          expr: |
-            (
-              node_filesystem_avail_bytes{fstype!~"tmpfs|overlay",mountpoint="/"}
-              /
-              node_filesystem_size_bytes{fstype!~"tmpfs|overlay",mountpoint="/"}
-            ) < 0.1
-          for: 10m
-          labels:
-            severity: warning
-            team: infra
-          annotations:
-            summary: "Node {{ $labels.instance }} disk space low"
-            description: "Node has only {{ $value | humanizePercentage }} disk space available"
-
-    - name: msa.database
-      rules:
-        - alert: AuroraHighCPU
-          expr: |
-            aws_rds_cpuutilization_average{dbinstance_identifier=~"obs-lab-aurora.*"} > 80
-          for: 10m
-          labels:
-            severity: warning
-            team: database
-          annotations:
-            summary: "Aurora high CPU usage"
-            description: "Aurora instance {{ $labels.dbinstance_identifier }} CPU is {{ $value }}%"
-
-        - alert: AuroraHighConnections
-          expr: |
-            aws_rds_database_connections_average{dbinstance_identifier=~"obs-lab-aurora.*"} > 100
-          for: 5m
-          labels:
-            severity: warning
-            team: database
-          annotations:
-            summary: "Aurora high connection count"
-            description: "Aurora instance {{ $labels.dbinstance_identifier }} has {{ $value }} connections"
-EOF
+kubectl --context managed -n monitoring get prometheus,alertmanager,prometheusrule
+kubectl --context managed -n monitoring get services
+# Use the actual Prometheus Service name in the next command.
+kubectl --context managed -n monitoring port-forward svc/REPLACE_WITH_PROMETHEUS_SERVICE 9090:9090
 ```
-
-**ステップ 1.2: アラート重要度マトリクス**
-
-| アラート               | 重要度 | 対応時間 | エスカレーション         |
-| ------------------- | -------- | ------------- | ------------------ |
-| HighErrorRate       | 重大 | 5 分         | オンコールエンジニア   |
-| HighLatency         | 警告  | 15 分        | Slack 通知 |
-| PodCrashLoopBackOff | 重大 | 5 分         | オンコール + リード     |
-| SQSQueueBacklog     | 警告  | 15 分        | Slack 通知 |
-| NodeNotReady        | 重大 | 5 分         | インフラチーム         |
-| AuroraHighCPU       | 警告  | 15 分        | データベースチーム      |
-
-### 検証
 
 ```bash
-# Check rules loaded
-kubectl get prometheusrules -n monitoring
-
-# Verify rules in Prometheus
-kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090 &
-curl -s http://localhost:9090/api/v1/rules | jq '.data.groups[].name'
+curl --fail --silent http://127.0.0.1:9090/api/v1/rules
+curl --fail --silent http://127.0.0.1:9090/api/v1/alerts
 ```
 
-***
+インストール済みの chart release から名前を置き換えてください。別の release 名を想定したり、存在しない ConfigMap を検索したりしないでください。リソースの存在と、実際に Prometheus が読み込み/評価していることは別々に確認する必要があります。
 
-## 演習 2: CloudWatch Alarms
+## 2. CloudWatch アラームのセマンティクス {#cloudwatch-alarms}
 
-### 手順
+テンプレートの backlog アラームでは、`AWS/SQS`、`ApproximateNumberOfMessagesVisible`、完全一致の `QueueName`、`Maximum`、`Period=60`、`EvaluationPeriods=3`、`DatapointsToAlarm=2` を使用します。これは評価された datapoint の**3 つ中 2 つ**を意味し、違反は連続している必要はありません。`Period` は集計の粒度であり、評価頻度の同義語ではありません。
 
-**ステップ 2.1: AWS サービス用の CloudWatch Alarms を作成する**
+このラボでは欠損データを `missing` のまま扱います。非アクティブな queue や壊れた取り込みから健全なゼロ値を推測しないでください。RDS CPU を追加する際は、実際の instance メトリクス dimension `DBInstanceIdentifier` を使用してください。cluster aggregate や別の statistic を使用する前に、サポートされている dimension を確認します。
+
+Alertmanager の再送、CloudWatch の状態遷移、SNS 配信、Lambda の非同期 retry は別々のレイヤーです。1 つのレイヤーでの重複排除では、エンドツーエンドの exactly-once 配信を保証できません。
+
+## 3. サポートされている on-call パスを選択する {#oncall}
+
+Grafana OnCall OSS は**2026 年 3 月 24 日にアーカイブ**され、Cloud Connection ベースの SMS、電話、push サポートも終了しました。古い新規インストールの手順や架空の escalation YAML を再利用しないでください。[公式のメンテナンス通知](https://grafana.com/docs/oncall/latest/set-up/open-source/)に従い、既存の incident/notification システムや Grafana Cloud IRM など、現在サポートされているパスを選択してください。
+
+この例では出力 SNS トピックを提供します。選択したシステムで responder、escalation、acknowledgement、resolution を設定し、実際の配信を検証してください。テンプレートでは email、Slack、PagerDuty の subscription は自動作成されません。
+
+## 4. 診断レポーターを準備する {#reporter}
+
+
+![制限された読み取り、重複排除、結果配信](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-10.png)
+
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-05-alerting-aiops-lab-10.html)
+| ファイル | 責務 |
+|---|---|
+| `alerts.py` | SNS topic/format/allowlist と CloudWatch/Alertmanager の正規化 |
+| `evidence.py` | 設定された CloudWatch メトリクスと集約ログの読み取り |
+| `analysis.py` | 利用可能な evidence のみで Converse を実行し、出力 token は 1024、完了を確認 |
+| `handler.py` | 2 worker による収集、Powertools idempotency、出力 topic への publish |
+| `template.yaml` | 15 個の SAM/CloudFormation リソースとスコープを限定した IAM |
+| `tests/` | 成功、失敗、重複、timeout、欠損データ |
 
 ```bash
-# Aurora CPU Alarm
-aws cloudwatch put-metric-alarm \
-  --alarm-name "obs-lab-aurora-cpu-high" \
-  --alarm-description "Aurora CPU utilization is high" \
-  --metric-name CPUUtilization \
-  --namespace AWS/RDS \
-  --statistic Average \
-  --period 300 \
-  --threshold 80 \
-  --comparison-operator GreaterThanThreshold \
-  --dimensions Name=DBClusterIdentifier,Value=obs-lab-aurora \
-  --evaluation-periods 2 \
-  --alarm-actions $SNS_TOPIC_ARN \
-  --ok-actions $SNS_TOPIC_ARN \
-  --region $AWS_REGION
-
-# SQS Message Age Alarm
-aws cloudwatch put-metric-alarm \
-  --alarm-name "obs-lab-sqs-message-age" \
-  --alarm-description "SQS messages are aging" \
-  --metric-name ApproximateAgeOfOldestMessage \
-  --namespace AWS/SQS \
-  --statistic Maximum \
-  --period 60 \
-  --threshold 300 \
-  --comparison-operator GreaterThanThreshold \
-  --dimensions Name=QueueName,Value=obs-lab-orders \
-  --evaluation-periods 3 \
-  --alarm-actions $SNS_TOPIC_ARN \
-  --region $AWS_REGION
-
-# OpenSearch Cluster Health Alarm
-aws cloudwatch put-metric-alarm \
-  --alarm-name "obs-lab-opensearch-health" \
-  --alarm-description "OpenSearch cluster health is not green" \
-  --metric-name ClusterStatus.green \
-  --namespace AWS/ES \
-  --statistic Minimum \
-  --period 60 \
-  --threshold 1 \
-  --comparison-operator LessThanThreshold \
-  --dimensions Name=DomainName,Value=obs-lab-logs Name=ClientId,Value=$ACCOUNT_ID \
-  --evaluation-periods 2 \
-  --alarm-actions $SNS_TOPIC_ARN \
-  --region $AWS_REGION
+cd examples/labs/observability/aiops
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m unittest discover -s tests -v
 ```
 
-**ステップ 2.2: 複合アラームを作成する**
+コードは boto3 **1.43.93**、Powertools **3.34.0**、Python **3.12** で確認しました。実際にデプロイするには、既存の SQS queue/log group、承認済みの Service 名、現在利用可能な Converse model/inference-profile ID、およびその**完全一致の model/profile ARN**を指定してください。廃止された Claude model を hard-code しないでください。cross-region profile では、destination-model ARN の permission も必要になる場合があります。
+
+ログには構造化された `service` および `level` フィールドが必要です。レポーターは生の message ではなく集約された error count をクエリし、モデルが生成したリソース ID やクエリを実行することはありません。不足/失敗した source は `no_data`/`error` のままとなり、分析が skip される可能性があります。設定されていない AMP 値や X-Ray trace を収集すると主張するものではありません。
+
+## 5. Alertmanager をデプロイして接続する {#deploy}
 
 ```bash
-aws cloudwatch put-composite-alarm \
-  --alarm-name "obs-lab-critical-composite" \
-  --alarm-description "Critical issues detected across multiple services" \
-  --alarm-rule "ALARM(obs-lab-aurora-cpu-high) OR ALARM(obs-lab-sqs-message-age)" \
-  --alarm-actions $SNS_TOPIC_ARN \
-  --region $AWS_REGION
+sam build --template-file template.yaml
+sam deploy --guided --capabilities CAPABILITY_IAM
 ```
 
-### 検証
+operator は、change set を確認した後、承認済みのラボアカウントでこれらを実行します。テンプレートは暗号化された入力/出力 SNS topic、Lambda、idempotency table、failure queue、queue alarm を作成します。`AWS_REGION` など、予約済みの Lambda environment variable を上書きしません。
 
-```bash
-aws cloudwatch describe-alarms \
-  --alarm-name-prefix "obs-lab" \
-  --query "MetricAlarms[].{Name:AlarmName,State:StateValue}" \
-  --output table
-```
-
-***
-
-## 演習 3: Grafana OnCall のセットアップ
-
-### 手順
-
-**ステップ 3.1: Alertmanager との OnCall 統合を設定する**
-
-```bash
-# Get OnCall webhook URL (from Grafana OnCall UI after setup)
-ONCALL_WEBHOOK_URL="http://grafana-oncall-engine.monitoring.svc.cluster.local:8080/integrations/v1/alertmanager/<integration-id>/"
-
-# Update Alertmanager config
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: Secret
-metadata:
-  name: alertmanager-kube-prometheus-stack-alertmanager
-  namespace: monitoring
-stringData:
-  alertmanager.yaml: |
-    global:
-      resolve_timeout: 5m
-
-    route:
-      receiver: 'oncall-default'
-      group_by: ['alertname', 'namespace', 'severity']
-      group_wait: 30s
-      group_interval: 5m
-      repeat_interval: 4h
-      routes:
-        - match:
-            severity: critical
-          receiver: 'oncall-critical'
-          continue: true
-        - match:
-            severity: warning
-          receiver: 'oncall-warning'
-
-    receivers:
-      - name: 'oncall-default'
-        webhook_configs:
-          - url: '${ONCALL_WEBHOOK_URL}'
-            send_resolved: true
-
-      - name: 'oncall-critical'
-        webhook_configs:
-          - url: '${ONCALL_WEBHOOK_URL}'
-            send_resolved: true
-        sns_configs:
-          - topic_arn: '${SNS_TOPIC_ARN}'
-            sigv4:
-              region: '${AWS_REGION}'
-            subject: '[CRITICAL] {{ .GroupLabels.alertname }}'
-
-      - name: 'oncall-warning'
-        webhook_configs:
-          - url: '${ONCALL_WEBHOOK_URL}'
-            send_resolved: true
-
-    inhibit_rules:
-      - source_match:
-          severity: 'critical'
-        target_match:
-          severity: 'warning'
-        equal: ['alertname', 'namespace']
-EOF
-```
-
-**ステップ 3.2: OnCall エスカレーションチェーンを作成する**
+以下のデプロイ済み InputTopicArn と実際の Region に置き換えてください。`toJson` のシリアル化は Alertmanager **0.34.0** の native template で検証済みです。receiver/route を丸ごと上書きするのではなく、インストール環境で実際に読み込まれている設定へマージしてください。
 
 ```yaml
-# OnCall escalation chain (configure via UI or Terraform)
-# Level 1: Slack notification (0 min)
-# Level 2: On-call engineer page (5 min)
-# Level 3: Team lead page (15 min)
-# Level 4: Manager escalation (30 min)
+receivers:
+- name: lab-diagnostics
+  sns_configs:
+  - topic_arn: REPLACE_WITH_INPUT_TOPIC_ARN
+    sigv4:
+      region: REPLACE_WITH_REGION
+    message: '{{ . | toJson }}'
+    send_resolved: true
 ```
 
-***
+`toJson` は JSON tag を尊重し、`alerts`、`labels`、`status`、`startsAt` のような camelCase key を生成します。先頭が大文字の Go template access（`.Alerts`）は、シリアル化された JSON key とは異なります。parser が大文字のサポートを保持しているのは互換性のためだけです。デフォルトの人間が読める SNS message はこの JSON format ではありません。
 
-## 演習 4: SNS Topic とメールサブスクリプション
+テンプレートの AlertmanagerPublishPolicyArn は、既存の**Alertmanager workload role**にのみアタッチしてください。Pod の credential path と KMS/SNS permission を確認し、共有 node role を拡張しないでください。`service` ラベルと許可されるアラート名を catalog/rule に一致させます。レポーターを OutputTopicArn に subscribe してはなりません。
 
-### 手順
+## 6. Retry、evidence、完了 {#execution}
 
-**ステップ 4.1: SNS Topic にメールサブスクリプションを追加する**
 
-```bash
-# Add email subscription
-aws sns subscribe \
-  --topic-arn $SNS_TOPIC_ARN \
-  --protocol email \
-  --notification-endpoint your-email@example.com \
-  --region $AWS_REGION
+![SNS message ID から診断出力までの検証](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-2.png)
 
-echo "Check your email and confirm the subscription"
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-05-alerting-aiops-lab-2.html)
+成功した SNS message ID は、DynamoDB で**24 時間**重複排除されます。同じ ID で payload が変更された場合は拒否されます。SNS 配信は at least once であり、publish と idempotency commit の間で障害が発生すると通知が重複する可能性があります。これは exactly-once 配信ではありません。
+
+Lambda の reserved concurrency は 2、非同期 retry は 2、最大 event age は Lambda が event を受け入れてから 1 時間です。SNS 配信 retry は別です。結果、failure queue、replay 手順を調査してください。生の event や credential を出力しないでください。
+
+読み取りは現在時刻から遡って最大 15 分を使用し、実際の開始/終了時刻を報告します。元の alarm period を正確に再構築するものではありません。Logs Insights は制限付きで poll し、完了していない query を cancel します。切り詰められた（`max_tokens`）、ブロックされた、または空の model output は、完了した診断として publish されません。
+
+## 7. CloudWatch Investigations を別途設定する {#investigations}
+
+
+![グループとアラームアクションを使用する investigation workflow](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-1.png)
+
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-05-alerting-aiops-lab-1.html)
+まず、アカウント用に investigation group、permission、retention、encryption を準備します。次に、group ARN をアラームの**Investigation action**として追加します。metric または composite alarm で investigation を開始できます。ARN の形式は次のとおりです。
+
+```text
+arn:aws:aiops:REGION:ACCOUNT_ID:investigation-group/GROUP_ID
 ```
 
-**ステップ 4.2: SMS サブスクリプションを追加する（任意）**
+[公式手順](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Investigations-configure-alarm-procedures.html)に従い、action を追加する際は既存の alarm 設定を保持してください。`put-anomaly-detector`、`put-insight-rule`、`list-dashboards` は、investigation-group の作成/list-investigation API ではありません。Application Signals discovery を有効化するだけでは、この設定は完了しません。サンプルの SAM stack は investigation group を作成しません。
 
-```bash
-aws sns subscribe \
-  --topic-arn $SNS_TOPIC_ARN \
-  --protocol sms \
-  --notification-endpoint +1234567890 \
-  --region $AWS_REGION
-```
+## 8. Fault injection と運用検証 {#verification}
 
-***
+最初に、健全な smoke baseline と通知パスを記録してください。アプリケーションが実際に実装している fault control のみを、時間制限、target、recovery plan を備えた専用 canary で使用します。存在しない `/admin/chaos` endpoint や未使用の environment flag を呼び出さないでください。Pod を削除しても CrashLoopBackOff が発生する保証はありません。
 
-## 演習 5: CloudWatch Investigations
+GitOps が所有する workload の変更と復旧は、Git/サポートされている Rollouts フローを通じて行います。Deployment と Rollout を混同したり、負の JSON Patch index を使用して environment variable を削除したりしないでください。
 
-### 手順
+1. Prometheus がルールを読み込み、pending/firing を経て遷移することを確認します。
+2. 選択された Alertmanager receiver と入力 SNS message を調査します。
+3. Lambda の完了/失敗、DLQ、idempotency の結果を確認します。
+4. 出力 topic が異なり、レポーターに再入できないことを検証します。
+5. レポートの time bound、observation、unknown を、実際の responder 配信と比較します。
+6. 注入した変更を復元し、retry/load test が停止したことを確認します。
 
-**ステップ 5.1: CloudWatch Investigations を有効にする**
+## 9. オプションの拡張とクリーンアップ {#extensions}
 
-CloudWatch Investigations は AI を使用して、異常を自動的に分析し、仮説を提示します。
 
-```mermaid
-stateDiagram-v2
-    [*] --> AnomalyDetected: CloudWatch detects anomaly
-    AnomalyDetected --> InvestigationStarted: Auto-create investigation
-    InvestigationStarted --> DataCollection: Collect related signals
-    DataCollection --> CorrelationAnalysis: Correlate metrics/logs/traces
-    CorrelationAnalysis --> HypothesisGeneration: AI generates hypotheses
-    HypothesisGeneration --> RootCauseProposal: Propose root cause
-    RootCauseProposal --> RecommendedActions: Suggest remediation
-    RecommendedActions --> [*]: Investigation complete
-```
+![別途設計が必要なオプションの専門分析モジュール](../../.gitbook/assets/en-labs-observability-05-alerting-aiops-lab-3.png)
 
-**ステップ 5.2: Investigation トリガーを作成する**
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-labs-observability-05-alerting-aiops-lab-3.html)
+複数の analysis module を呼び出しても、A2A protocol を実装したことにはなりません。agent discovery、authentication、message/task contract、timeout、permission には別途設計が必要です。このレポーターは単一の診断 function です。
 
-```bash
-# Enable automatic investigation on critical alarms
-aws cloudwatch put-anomaly-detector \
-  --namespace "AWS/ApplicationSignals" \
-  --metric-name "ErrorCount" \
-  --dimensions Name=Service,Value=order-service \
-  --stat "Sum" \
-  --region $AWS_REGION
+クリーンアップの前に evidence を保持し、入力 alarm action/subscription を停止してください。SAM stack、外部 workload-role policy attachment、追加 subscription を、所有権記録と照合します。既存の application queue/log group を削除しないでください。[パート 6](./06-distributed-tracing-lab.md#cleanup)の dependency order と cost check に従ってください。
 
-# Configure investigation settings
-aws cloudwatch put-insight-rule \
-  --rule-name "obs-lab-error-investigation" \
-  --rule-state "ENABLED" \
-  --rule-definition '{
-    "Schema": {
-      "Name": "CloudWatchLogRule",
-      "Version": 1
-    },
-    "LogGroupNames": ["/obs-lab/kubernetes"],
-    "LogFormat": "JSON",
-    "Fields": {
-      "level": "$.level",
-      "message": "$.message",
-      "traceId": "$.traceId",
-      "service": "$.kubernetes.labels.app"
-    },
-    "Contribution": {
-      "Keys": ["$.service"],
-      "Filters": [
-        {
-          "Match": "$.level",
-          "In": ["ERROR", "FATAL"]
-        }
-      ]
-    },
-    "AggregateOn": "Count"
-  }' \
-  --region $AWS_REGION
-```
+## 検証範囲
 
-***
-
-## 演習 6: Lambda と Bedrock を使用する AIOps Agent
-
-### 手順
-
-**ステップ 6.1: AIOps Agent アーキテクチャ**
-
-```mermaid
-sequenceDiagram
-    participant AM as Alertmanager
-    participant APIGW as API Gateway
-    participant Lambda as Lambda Function
-    participant CW as CloudWatch
-    participant Loki as Loki
-    participant Tempo as Tempo
-    participant Bedrock as Bedrock Claude
-    participant SNS as SNS
-
-    AM->>APIGW: Alert webhook
-    APIGW->>Lambda: Invoke
-    activate Lambda
-
-    par Collect Telemetry
-        Lambda->>CW: Query metrics
-        Lambda->>Loki: Query logs
-        Lambda->>Tempo: Query traces
-    end
-
-    Lambda->>Lambda: Prepare context
-    Lambda->>Bedrock: Analyze with Claude
-    Bedrock-->>Lambda: Analysis result
-
-    Lambda->>SNS: Send analysis report
-    deactivate Lambda
-    SNS->>SNS: Notify teams
-```
-
-**ステップ 6.2: Lambda 関数を作成する**
-
-```bash
-# Create Lambda execution role
-aws iam create-role \
-  --role-name obs-lab-aiops-lambda \
-  --assume-role-policy-document '{
-    "Version": "2012-10-17",
-    "Statement": [{
-      "Effect": "Allow",
-      "Principal": {"Service": "lambda.amazonaws.com"},
-      "Action": "sts:AssumeRole"
-    }]
-  }'
-
-# Attach policies
-aws iam attach-role-policy \
-  --role-name obs-lab-aiops-lambda \
-  --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-
-aws iam attach-role-policy \
-  --role-name obs-lab-aiops-lambda \
-  --policy-arn arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
-
-# Create inline policy for Bedrock and SNS
-aws iam put-role-policy \
-  --role-name obs-lab-aiops-lambda \
-  --policy-name aiops-permissions \
-  --policy-document '{
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Allow",
-        "Action": [
-          "bedrock:InvokeModel",
-          "bedrock:InvokeModelWithResponseStream"
-        ],
-        "Resource": "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-sonnet*"
-      },
-      {
-        "Effect": "Allow",
-        "Action": "sns:Publish",
-        "Resource": "'$SNS_TOPIC_ARN'"
-      },
-      {
-        "Effect": "Allow",
-        "Action": [
-          "logs:GetQueryResults",
-          "logs:StartQuery",
-          "logs:StopQuery"
-        ],
-        "Resource": "*"
-      }
-    ]
-  }'
-```
-
-**ステップ 6.3: Lambda 関数コード**
-
-```python
-# aiops_handler.py
-import json
-import boto3
-import os
-from datetime import datetime, timedelta
-
-bedrock = boto3.client('bedrock-runtime', region_name=os.environ['AWS_REGION'])
-cloudwatch = boto3.client('cloudwatch', region_name=os.environ['AWS_REGION'])
-logs = boto3.client('logs', region_name=os.environ['AWS_REGION'])
-sns = boto3.client('sns', region_name=os.environ['AWS_REGION'])
-
-SNS_TOPIC_ARN = os.environ['SNS_TOPIC_ARN']
-GRAFANA_URL = os.environ.get('GRAFANA_URL', 'http://grafana.obs-lab.io')
-
-def lambda_handler(event, context):
-    """Process Alertmanager webhook and perform AI analysis."""
-
-    # Parse alert
-    alert = json.loads(event['body'])
-    alerts = alert.get('alerts', [])
-
-    if not alerts:
-        return {'statusCode': 200, 'body': 'No alerts to process'}
-
-    for alert_item in alerts:
-        if alert_item.get('status') != 'firing':
-            continue
-
-        analysis = analyze_alert(alert_item)
-        send_analysis_report(alert_item, analysis)
-
-    return {'statusCode': 200, 'body': 'Analysis complete'}
-
-def analyze_alert(alert):
-    """Collect telemetry and analyze with Bedrock Claude."""
-
-    labels = alert.get('labels', {})
-    annotations = alert.get('annotations', {})
-
-    service = labels.get('service', 'unknown')
-    namespace = labels.get('namespace', 'msa')
-    alert_name = labels.get('alertname', 'unknown')
-
-    # Collect metrics
-    metrics_data = collect_metrics(service, namespace)
-
-    # Collect logs
-    logs_data = collect_logs(service, namespace)
-
-    # Prepare prompt for Claude
-    prompt = f"""You are an SRE expert analyzing a Kubernetes alert. Provide a concise root cause analysis and recommended actions.
-
-## Alert Information
-- Alert Name: {alert_name}
-- Service: {service}
-- Namespace: {namespace}
-- Summary: {annotations.get('summary', 'N/A')}
-- Description: {annotations.get('description', 'N/A')}
-- Severity: {labels.get('severity', 'unknown')}
-
-## Recent Metrics
-{json.dumps(metrics_data, indent=2)}
-
-## Recent Error Logs
-{logs_data[:5000]}
-
-## Analysis Required
-1. Identify the most likely root cause
-2. List any correlated issues
-3. Provide 3-5 specific remediation steps
-4. Estimate the blast radius (affected services/users)
-5. Suggest preventive measures
-
-Format your response as:
-### Root Cause
-[Your analysis]
-
-### Correlated Issues
-[List any related problems]
-
-### Remediation Steps
-1. [Step 1]
-2. [Step 2]
-...
-
-### Blast Radius
-[Impact assessment]
-
-### Prevention
-[Future prevention measures]
-"""
-
-    # Call Bedrock Claude
-    response = bedrock.invoke_model(
-        modelId='anthropic.claude-3-sonnet-20240229-v1:0',
-        contentType='application/json',
-        accept='application/json',
-        body=json.dumps({
-            'anthropic_version': 'bedrock-2023-05-31',
-            'max_tokens': 2000,
-            'messages': [
-                {'role': 'user', 'content': prompt}
-            ]
-        })
-    )
-
-    result = json.loads(response['body'].read())
-    return result['content'][0]['text']
-
-def collect_metrics(service, namespace):
-    """Collect relevant metrics from CloudWatch."""
-
-    end_time = datetime.utcnow()
-    start_time = end_time - timedelta(minutes=30)
-
-    metrics = {}
-
-    # Request rate
-    try:
-        response = cloudwatch.get_metric_statistics(
-            Namespace='ContainerInsights',
-            MetricName='pod_cpu_utilization',
-            Dimensions=[
-                {'Name': 'Namespace', 'Value': namespace},
-                {'Name': 'Service', 'Value': service}
-            ],
-            StartTime=start_time,
-            EndTime=end_time,
-            Period=300,
-            Statistics=['Average', 'Maximum']
-        )
-        metrics['cpu_utilization'] = response.get('Datapoints', [])
-    except Exception as e:
-        metrics['cpu_error'] = str(e)
-
-    return metrics
-
-def collect_logs(service, namespace):
-    """Collect recent error logs from CloudWatch Logs."""
-
-    log_group = f'/obs-lab/kubernetes'
-
-    try:
-        query = f"""
-        fields @timestamp, @message
-        | filter kubernetes.labels.app = '{service}'
-        | filter level = 'ERROR' or level = 'FATAL'
-        | sort @timestamp desc
-        | limit 50
-        """
-
-        response = logs.start_query(
-            logGroupName=log_group,
-            startTime=int((datetime.utcnow() - timedelta(hours=1)).timestamp()),
-            endTime=int(datetime.utcnow().timestamp()),
-            queryString=query
-        )
-
-        query_id = response['queryId']
-
-        # Wait for query to complete (simplified)
-        import time
-        time.sleep(5)
-
-        results = logs.get_query_results(queryId=query_id)
-
-        log_messages = []
-        for result in results.get('results', []):
-            for field in result:
-                if field['field'] == '@message':
-                    log_messages.append(field['value'])
-
-        return '\n'.join(log_messages)
-    except Exception as e:
-        return f"Error collecting logs: {str(e)}"
-
-def send_analysis_report(alert, analysis):
-    """Send analysis report via SNS."""
-
-    labels = alert.get('labels', {})
-    annotations = alert.get('annotations', {})
-
-    message = f"""
-=== AIOps Alert Analysis Report ===
-
-Alert: {labels.get('alertname')}
-Service: {labels.get('service')}
-Severity: {labels.get('severity')}
-Time: {datetime.utcnow().isoformat()}
-
-{analysis}
-
----
-Dashboard: {GRAFANA_URL}/d/msa-overview?var-service={labels.get('service')}
-Runbook: {annotations.get('runbook_url', 'N/A')}
-
-Generated by obs-lab AIOps Agent
-"""
-
-    sns.publish(
-        TopicArn=SNS_TOPIC_ARN,
-        Subject=f"[AIOps] Analysis: {labels.get('alertname')} - {labels.get('service')}",
-        Message=message
-    )
-```
-
-**ステップ 6.4: Lambda 関数をデプロイする**
-
-```bash
-# Create deployment package
-mkdir -p /tmp/aiops-lambda
-cat > /tmp/aiops-lambda/aiops_handler.py << 'PYEOF'
-# [Insert the Python code from Step 6.3 above]
-PYEOF
-
-cd /tmp/aiops-lambda
-zip -r function.zip aiops_handler.py
-
-# Create Lambda function
-aws lambda create-function \
-  --function-name obs-lab-aiops-agent \
-  --runtime python3.11 \
-  --role arn:aws:iam::${ACCOUNT_ID}:role/obs-lab-aiops-lambda \
-  --handler aiops_handler.lambda_handler \
-  --zip-file fileb://function.zip \
-  --timeout 60 \
-  --memory-size 256 \
-  --environment "Variables={SNS_TOPIC_ARN=${SNS_TOPIC_ARN},AWS_REGION=${AWS_REGION}}" \
-  --region $AWS_REGION
-
-# Create API Gateway trigger
-aws apigateway create-rest-api \
-  --name obs-lab-aiops-webhook \
-  --region $AWS_REGION
-```
-
-***
-
-## 演習 7: 負荷と障害の注入
-
-### 手順
-
-**ステップ 7.1: アラートをトリガーするために障害を注入する**
-
-```bash
-# Inject high error rate
-kubectl exec -n msa deployment/order-service -- \
-  curl -X POST localhost:8000/admin/chaos/error-rate -d '{"rate": 0.3}'
-
-# Inject latency
-kubectl exec -n msa deployment/order-service -- \
-  curl -X POST localhost:8000/admin/chaos/latency -d '{"delay_ms": 2000}'
-
-# Simulate pod crash
-kubectl delete pod -n msa -l app=order-service --wait=false
-```
-
-**ステップ 7.2: 発火中のアラートを監視する**
-
-```bash
-# Watch Alertmanager
-kubectl port-forward -n monitoring svc/kube-prometheus-stack-alertmanager 9093:9093 &
-curl -s http://localhost:9093/api/v2/alerts | jq '.[].labels.alertname'
-
-# Watch for SNS notifications
-# Check email for alerts
-```
-
-***
-
-## 演習 8: AIOps パイプラインを検証する
-
-### 手順
-
-**ステップ 8.1: CloudWatch Investigations を確認する**
-
-```bash
-# List recent investigations
-aws cloudwatch list-dashboards --region $AWS_REGION
-
-# In AWS Console:
-# 1. Go to CloudWatch > Investigations
-# 2. View auto-generated hypotheses
-# 3. Check correlated signals
-```
-
-**ステップ 8.2: Lambda 実行を確認する**
-
-```bash
-# Get Lambda logs
-aws logs tail /aws/lambda/obs-lab-aiops-agent --follow --region $AWS_REGION
-```
-
-**ステップ 8.3: SNS 配信を検証する**
-
-AIOps 分析レポートが届いているかメールを確認してください。
-
-***
-
-## 演習 9: （上級）A2A マルチエージェントパターン
-
-### 手順
-
-**ステップ 9.1: 複雑なインシデント向けのマルチエージェントアーキテクチャ**
-
-```mermaid
-flowchart TB
-    Alert[Alert Received]
-
-    subgraph Coordinator["Coordinator Agent"]
-        Triage[Triage Alert]
-        Assign[Assign Specialists]
-        Synthesize[Synthesize Results]
-    end
-
-    subgraph Specialists["Specialist Agents"]
-        Metrics["Metrics Analyst<br/>(Prometheus Expert)"]
-        Logs["Log Analyst<br/>(Loki Expert)"]
-        Traces["Trace Analyst<br/>(Tempo Expert)"]
-        Infra["Infra Analyst<br/>(K8s/AWS Expert)"]
-    end
-
-    Alert --> Triage
-    Triage --> Assign
-    Assign --> Metrics & Logs & Traces & Infra
-    Metrics & Logs & Traces & Infra --> Synthesize
-    Synthesize --> Report[Final Report]
-```
-
-この上級パターンでは、複数の専門 AI Agent が連携して複雑なインシデントに対応します。実装には以下が必要です。
-
-1. オーケストレーション用の AWS Step Functions
-2. 複数の Lambda 関数（各スペシャリストにつき 1 つ）
-3. Agent 間通信のための SQS
-4. 共有コンテキストのための DynamoDB
-
-***
-
-## まとめ
-
-このラボでは、以下を行いました。
-
-| タスク                         | ステータス     |
-| ---------------------------- | ---------- |
-| PrometheusRules（10 以上のアラート） | 作成済み    |
-| CloudWatch Alarms            | 設定済み |
-| Grafana OnCall               | セットアップ済み   |
-| SNS 通知            | 有効化済み    |
-| CloudWatch Investigations    | 設定済み |
-| AIOps Lambda Agent           | デプロイ済み   |
-| 障害注入テスト         | 完了  |
-
-## 検証チェックリスト
-
-* [ ] Alertmanager が高いエラー率でアラートを発火する
-* [ ] OnCall がアラートを受信してルーティングする
-* [ ] CloudWatch Investigations が仮説を生成する
-* [ ] Lambda AIOps Agent がアラートを分析する
-* [ ] SNS が分析レポートをメールに配信する
-
-## クリーンアップ
-
-クリーンアップは[パート 6](06-distributed-tracing-lab.md#cleanup)で実施します。
-
-## トラブルシューティング
-
-<details>
-
-<summary>アラートが発火しない</summary>
-
-* PrometheusRule 構文を確認します: `kubectl describe prometheusrules -n monitoring`
-* メトリクスが存在することを確認します: Grafana Explore でクエリをテスト
-* Prometheus ターゲットを確認します: `curl localhost:9090/api/v1/targets`
-
-</details>
-
-<details>
-
-<summary>Lambda が webhook を受信しない</summary>
-
-* API Gateway 設定を確認します
-* Alertmanager webhook 設定を確認します
-* Lambda CloudWatch ログにエラーがないか確認します
-
-</details>
-
-<details>
-
-<summary>Bedrock の呼び出しに失敗する</summary>
-
-* IAM role に bedrock:InvokeModel 権限があることを確認します
-* model ID が正しいことを確認します
-* リージョンで Bedrock が有効になっていることを確認します
-
-</details>
-
-## 次のステップ
-
-[パート 6: 分散トレーシング分析](06-distributed-tracing-lab.md)に進み、詳細なトレース分析を実施してください。
-
-## 参考資料
-
-* [Alertmanager ドキュメント](../../observability/alerting/01-alertmanager.md)
-* [Grafana OnCall ドキュメント](../../observability/alerting/03-grafana-oncall.md)
-* [CloudWatch Alarms ドキュメント](../../observability/alerting/02-cloudwatch-alarms.md)
-* [AWS Bedrock ドキュメント](https://docs.aws.amazon.com/bedrock/)
+確認では、24 個のローカル test、in-memory store を使用する実際の Powertools、6 件の botocore Stubber case、Alertmanager 0.34.0 native JSON template、CloudFormation lint、15 個の policy statement を対象としました。これらは、ライブ AWS IAM/KMS authorization、SNS 配信、DynamoDB persistence、CloudWatch query 実行、Bedrock response-quality、cluster deployment の test を構成するものではありません。
