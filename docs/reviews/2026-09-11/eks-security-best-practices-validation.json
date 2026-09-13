@@ -1,0 +1,877 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-13T12:04:31.126146+00:00",
+  "originalRead": [
+    {
+      "path": "en/security/06-eks-security-best-practices.md",
+      "lines": 1204,
+      "originalSHA256": "8ab7714caf4f19370e8d048902efa6f0860b2db74c4f6a9323d5d88068c08443",
+      "fullyRead": true,
+      "readAt": "2026-09-13T11:31:35.965653+00:00"
+    },
+    {
+      "path": "en/quizzes/security/06-eks-security-best-practices-quiz.md",
+      "lines": 469,
+      "originalSHA256": "36d4563064cd73a045aab5c419ad8a45d1b3a7d1784a59e115aa0ac03a8be3d8",
+      "fullyRead": true,
+      "readAt": "2026-09-13T11:31:35.965664+00:00"
+    },
+    {
+      "path": "ko/security/06-eks-security-best-practices.md",
+      "lines": 1204,
+      "originalSHA256": "703a9dbb116db31a2e0d91ad70923964bf49578a3c10753cae0a055ac1335b60",
+      "fullyRead": true,
+      "readAt": "2026-09-13T11:31:35.965666+00:00"
+    },
+    {
+      "path": "ko/quizzes/security/06-eks-security-best-practices-quiz.md",
+      "lines": 469,
+      "originalSHA256": "17a1d0d7bf81d7304f779ed2c6a5eb979ef21c5543ef96adf741ef83471e73ce",
+      "fullyRead": true,
+      "readAt": "2026-09-13T11:31:35.965668+00:00"
+    }
+  ],
+  "originalLines": 3346,
+  "scope": [
+    "en/security/06-eks-security-best-practices.md",
+    "en/quizzes/security/06-eks-security-best-practices-quiz.md",
+    "ko/security/06-eks-security-best-practices.md",
+    "ko/quizzes/security/06-eks-security-best-practices-quiz.md",
+    "examples/security/eks-security/ecr_scan_gate.py",
+    "examples/security/eks-security/tenant-baseline.yaml",
+    "examples/security/eks-security/guardduty-event-pattern.json",
+    "examples/security/eks-security/guardduty-features.json",
+    "examples/security/eks-security/README.md",
+    "examples/security/eks-security/control-plane-logging.json",
+    "examples/security/eks-security/tests/test_ecr_scan_gate.py",
+    "examples/security/eks-security/private-endpoints/main.tf"
+  ],
+  "correctedFindings": [
+    "IRSAgraphwrongissueractor;SDKSTSexchangeandtemporarycredentials;eksctlroleARNguessnotactualoutput;PodIdentitynotuniversalIRSAreplacement.",
+    "PodSGpolicyAmazonEKSVPCResourceControllerbelongsclusterIAMrole,notnoderole;CNI/instance/platform/enforcingmodeconstraints;multipleSGsallowunionnotintersection.",
+    "Endpointmappingusesout-of-range split index4formostservices;EKSserviceAPIendpointisnotKubernetesAPI;eks-authmissingforPodIdentity;ec2messagesavailabilityvaries.",
+    "EKS1.31pinoutdated/currentencryptiondefaultwrong;privateAPIrequiresoperatornetworkrouteDNSauth;ClientVPNassociationalonewithoutauthorization/routesnotcomplete.",
+    "GuardDutyplans/audit/runtime/foundationconflated;oldfeatureenumandfictionalfindingnames/severity;EventBridgeprefixKubernetes/Runtimedoesnotmatchactualtypes;incompleteCFNmissingIAM/targetsandno-opisolationcode.",
+    "InspectorCIundefinedECR_REGISTRY/noOIDCrolepermissions/fixedsleep/null-as-zero/digestambiguityfalsegreen;queryfiltershapeinvalid.",
+    "kube-benchmutableimage/remotejobunbounded/obsoletebenchmark/missinghostfiles/onePodnocoverage/awsCLInotinimage;CISscoreisnotcertification.",
+    "KMSunconditionedwildcardkeypolicyplusincompletecluster;Bottlerocketlabelsnottrustedsecurityboundary;sysctlsnotsecurityhardening.",
+    "TenantpolicyDNSUDPonlyandbroadkube-systemselector;mutabletenantlabels/clusteradminboundary;RBACnamespaceadminstillsecret/Podprivilege;missingEKSaccessentriesandunsafeaws-authsystemmastersquiz.",
+    "Quizreferencespointtoself/otherquizzesinsteadofguides;manualtokenprojectionnotcompleteIRSAsetupandexpirationnotunconditional1hourguarantee."
+  ],
+  "newCrossCuttingFacts": [
+    "OfficialcurrentEKSdocsnowdocumentoidc-eksPrivateLinkforOIDCdiscovery/JWKS;checkearlierpublic-only/NXDOMAINclaimsduringfinalglobalreconciliation.",
+    "Officialcurrentprivateclusterendpointtableincludescom.amazonaws.route53;quizcannotblanketassertRoute53hasnoPrivateLink.",
+    "GuardDutyruntimecurrentdocsincludeAutoModebutexcludeEKSHybridNodesandEKSFargate;PodSGexcludesAutoMode/Windows."
+  ],
+  "sources": [
+    {
+      "name": "pod-sg",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html",
+      "status": 200,
+      "sha256": "d52a88f59626facc3a0f11d7692340fa42479b32df0ccc3307f158dca9bd77d2",
+      "bytes": 21491,
+      "excerpts": []
+    },
+    {
+      "name": "pod-sg-role",
+      "url": "https://docs.aws.amazon.com/eks/latest/best-practices/sgpp.html",
+      "status": 200,
+      "sha256": "ceb3bda2b743ab9547233445654bdd27916576e1d7dd43df5aa428a89f9999cf",
+      "bytes": 31642,
+      "excerpts": [
+        "a standard network interface attached to the instance. To manage trunk interfaces, you must add the AmazonEKSVPCResourceController managed policy to the cluster role that goes with your Amazon EKS cluster. The controller also creates branch interfaces named \"aws-k8s-branch-eni\" and associates them with the trunk interface. Pods are assigned a security group using the SecurityGroupPolicy custom resource and are associated with a branch interface. Since secu"
+      ]
+    },
+    {
+      "name": "private-clusters",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html",
+      "status": 200,
+      "sha256": "63138fe644c3715d743b814404b75ac513d9bca974e33fa7bd1cc931d330603b",
+      "bytes": 33227,
+      "excerpts": [
+        "et access, create and use a VPC endpoint for the cluster OIDC endpoint: com.amazonaws. region-code .oidc-eks . This is separate from the AWS STS VPC endpoint. STS fetches the cluster’s JWKS from within AWS, so the OIDC endpoint privatizes your VPC-originated OIDC traffic, while the STS endpoint privatizes the AssumeRoleWithWebIdentity call. For more information, see Access the cluster OIDC endpoint using AWS PrivateLink . Your cluster",
+        "(required to set up IAM roles for service accounts from inside the VPC) com.amazonaws. region-code .oidc-eks Amazon EKS Auth (required when using Pod Identity associations) com.amazonaws. region-code .eks-auth Amazon EKS com.amazonaws. region-code .eks Amazon Route 53 com.amazonaws.route53 Any self-managed nodes must be deployed to subnets that have the VPC interface endpoints that you require. If you create a managed node group, the ",
+        "rnet access, you must create and use a VPC endpoint for the EKS Auth API: com.amazonaws.region-code.eks-auth . For more information about the EKS and EKS Auth VPC endpoints, see Access Amazon EKS using AWS PrivateLink . IRSA - Pods configured with IAM roles for service accounts acquire credentials from an AWS Security Token Service (AWS STS) API call. If there is no outbound internet access, you must create and use an AWS STS VPC endp",
+        "idc-eks Amazon EKS Auth (required when using Pod Identity associations) com.amazonaws. region-code .eks-auth Amazon EKS com.amazonaws. region-code .eks Amazon Route 53 com.amazonaws.route53 Any self-managed nodes must be deployed to subnets that have the VPC interface endpoints that you require. If you create a managed node group, the VPC interface endpoint security group must allow the CIDR for the subnets, or you must add the create"
+      ]
+    },
+    {
+      "name": "sts-endpoint",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/configure-sts-endpoint.html",
+      "status": 200,
+      "sha256": "2037e258c96e234b55ae61a44892b6b5d862b7d38a2ef1e1648a6cd38f0537ff",
+      "bytes": 22804,
+      "excerpts": [
+        "or provider setup and token validators), create a separate VPC endpoint ( com.amazonaws.region-code.oidc-eks ). For more information, see Access the cluster OIDC endpoint using AWS PrivateLink . The following examples all use the aws-node Kubernetes service account used by the Amazon VPC CNI plugin . You can replace the example values with your own service accounts, Pods, namespaces, and other resources. Select a Pod that uses a servi"
+      ]
+    },
+    {
+      "name": "guardduty-runtime",
+      "url": "https://docs.aws.amazon.com/guardduty/latest/ug/how-runtime-monitoring-works-eks.html",
+      "status": 200,
+      "sha256": "41b767d3350108480c022af1b5a2b8f569c8858c08965741479970630f94a0d0",
+      "bytes": 28139,
+      "excerpts": []
+    },
+    {
+      "name": "guardduty-audit",
+      "url": "https://docs.aws.amazon.com/guardduty/latest/ug/kubernetes-protection.html",
+      "status": 200,
+      "sha256": "e8f26fbf8113ef5b7d30e3793670854ea5e852d536292d46da289c489801ad15",
+      "bytes": 16513,
+      "excerpts": []
+    },
+    {
+      "name": "ecr-api",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_DescribeImageScanFindings.html",
+      "status": 200,
+      "sha256": "28cf862c5e5a617accfaecba6a460d19ecfdb8bcc42f45cebcb2336c30d2e9ad",
+      "bytes": 51825,
+      "excerpts": [
+        "CVSS:3.1/AV:L/AC:H/PR:N/UI:N/S:C/C:H/I:H/A:H\", \"version\": \"3.1\" } }, \"severity\": \"HIGH\", \"status\": \"ACTIVE\", \"title\": \"CVE-2022-49043 - libxml2\", \"type\": \"PACKAGE_VULNERABILITY\", \"updatedAt\": \"2025-06-09T07:08:40.144000+00:00\", \"fixAvailable\": \"NO\", \"exploitAvailable\": \"NO\" }, ], \"imageScanCompletedAt\": \"2025-06-09T07:08:40.144000+00:00\", \"vulnerabilitySourceUpdatedAt\": \"2025-06-09T07:08:40.144000+00:00\", \"findingSeverityCounts\": { ",
+        "4b2c688c700ec95a93e478cdb959737c148df3fbf5ea706abe0318726e885e6\" }, \"imageScanStatus\": { \"status\": \"ACTIVE\", \"description\": \"Continuous scan is selected for image.\" } } See Also For more information about using this API in one of the language-specific AWS SDKs, see the following: AWS Command Line Interface V2 AWS SDK for .NET V4 AWS SDK for C++ AWS SDK for Go v2 AWS SDK for Java V2 AWS SDK for JavaScript V3 AWS SDK for Kotlin AWS SD",
+        "erity \": \" string \", \" uri \": \" string \" } ], \" findingSeverityCounts \": { \" string \" : number }, \" imageScanCompletedAt \": number , \" vulnerabilitySourceUpdatedAt \": number }, \" imageScanStatus \": { \" description \": \" string \", \" status \": \" string \" }, \" nextToken \": \" string \", \" registryId \": \" string \", \" repositoryName \": \" string \" } Response Elements If the action is successful, the service sends back an HTTP 200 response. The following d",
+        "_VECTOR\", \"value\": \"AV:L/AC:L/Au:N/C:P/I:P/A:P\" }, { \"key\": \"CVSS2_SCORE\", \"value\": \"4.6\" } ] } ], \"imageScanCompletedAt\": 1579839105.0, \"vulnerabilitySourceUpdatedAt\": 1579811117.0, \"findingSeverityCounts\": { \"MEDIUM\": 1 } }, \"registryId\": \"012345678910\", \"repositoryName\": \"sample-repo\", \"imageId\": { \"imageDigest\": \"sha256:74b2c688c700ec95a93e478cdb959737c148df3fbf5ea706abe0318726e885e6\" }, \"imageScanStatus\": { \"status\": \"COMPLETE\", \"description"
+      ]
+    },
+    {
+      "name": "ecr-enhanced",
+      "url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html",
+      "status": 200,
+      "sha256": "f797c7137c2b84b227fe83a2e5ffe1ab97f35519f7bff61cdc949fdc75d03563",
+      "bytes": 19164,
+      "excerpts": []
+    },
+    {
+      "name": "inspector-events",
+      "url": "https://docs.aws.amazon.com/inspector/latest/user/eventbridge-integration.html",
+      "status": 200,
+      "sha256": "70157bedd43a196f7db6a0b3fc1969effee22877976e32c76424e1929127a7b8",
+      "bytes": 67988,
+      "excerpts": [
+        "6789012\", \"region\": \"eu-central-1\", \"type\": \"AWS_EC2_INSTANCE\" }], \"severity\": \"MEDIUM\", \"status\": \"ACTIVE\", \"title\": \"Port 22 is reachable from an Internet Gateway - TCP\", \"type\": \"NETWORK_REACHABILITY\", \"updatedAt\": \"Thu Sep 05 13:06:56.334 UTC 2024\" } } Amazon ECR package vulnerability finding { \"version\": \"0\", \"id\": \"5325facf-a1aa-7d97-6bce-25fde6f6d2fc\", \"detail-type\": \"Inspector2 Finding\", \"source\": \"aws.inspector2\", \"account\"",
+        ", \"region\": \"eu-central-1\", \"type\": \"AWS_ECR_CONTAINER_IMAGE\" } ], \"severity\": \"MEDIUM\", \"status\": \"ACTIVE\", \"title\": \"CVE-2024-6119 - libssl3t64, openssl\", \"type\": \"PACKAGE_VULNERABILITY\", \"updatedAt\": \"Wed Sep 04 16:55:38.411 UTC 2024\" } } Lambda package vulnerability finding { \"version\": \"0\", \"id\": \"9eadd71a-e49c-9864-6ba9-2a5d3f83c88f\", \"detail-type\": \"Inspector2 Finding\", \"source\": \"aws.inspector2\", \"account\": \"123456789012\", \""
+      ]
+    },
+    {
+      "name": "access-entries",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html",
+      "status": 200,
+      "sha256": "638db2fc78855d3fdcb3d0a123f24660a66268876694cf6450efef622f78a249",
+      "bytes": 19092,
+      "excerpts": []
+    },
+    {
+      "name": "gd-k8s-types",
+      "url": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_finding-types-kubernetes.html",
+      "status": 200,
+      "sha256": "f98534a0ed2b12803d4980572379dc69361255f90ea3fb1a3190a9dd3547603a",
+      "types": [
+        "CredentialAccess:Kubernetes/AnomalousBehavior.SecretsAccessed",
+        "CredentialAccess:Kubernetes/MaliciousIPCaller",
+        "CredentialAccess:Kubernetes/MaliciousIPCaller.Custom",
+        "CredentialAccess:Kubernetes/SuccessfulAnonymousAccess",
+        "CredentialAccess:Kubernetes/TorIPCaller",
+        "DefenseEvasion:Kubernetes/MaliciousIPCaller",
+        "DefenseEvasion:Kubernetes/MaliciousIPCaller.Custom",
+        "DefenseEvasion:Kubernetes/SuccessfulAnonymousAccess",
+        "DefenseEvasion:Kubernetes/TorIPCaller",
+        "Discovery:Kubernetes/AnomalousBehavior.PermissionChecked",
+        "Discovery:Kubernetes/MaliciousIPCaller",
+        "Discovery:Kubernetes/MaliciousIPCaller.Custom",
+        "Discovery:Kubernetes/SuccessfulAnonymousAccess",
+        "Discovery:Kubernetes/TorIPCaller",
+        "Execution:Kubernetes/AnomalousBehavior.ExecInPod",
+        "Execution:Kubernetes/AnomalousBehavior.WorkloadDeployed",
+        "Execution:Kubernetes/ExecInKubeSystemPod",
+        "Impact:Kubernetes/MaliciousIPCaller",
+        "Impact:Kubernetes/MaliciousIPCaller.Custom",
+        "Impact:Kubernetes/SuccessfulAnonymousAccess",
+        "Impact:Kubernetes/TorIPCaller",
+        "Persistence:Kubernetes/AnomalousBehavior.WorkloadDeployed",
+        "Persistence:Kubernetes/MaliciousIPCaller",
+        "Persistence:Kubernetes/MaliciousIPCaller.Custom",
+        "Persistence:Kubernetes/SuccessfulAnonymousAccess",
+        "Persistence:Kubernetes/TorIPCaller",
+        "Policy:Kubernetes/AdminAccessToDefaultServiceAccount",
+        "Policy:Kubernetes/AnonymousAccessGranted",
+        "Policy:Kubernetes/ExposedDashboard",
+        "Policy:Kubernetes/KubeflowDashboardExposed",
+        "PrivilegeEscalation:Kubernetes/AnomalousBehavior.RoleBindingCreated",
+        "PrivilegeEscalation:Kubernetes/AnomalousBehavior.RoleCreated",
+        "PrivilegeEscalation:Kubernetes/AnomalousBehavior.WorkloadDeployed"
+      ]
+    },
+    {
+      "name": "gd-runtime-types",
+      "url": "https://docs.aws.amazon.com/guardduty/latest/ug/findings-runtime-monitoring.html",
+      "status": 200,
+      "sha256": "bf17edb270b8d8a3289af916c4b88ae3663bb785f2045284d137055da7d1238c",
+      "types": [
+        "Backdoor:Runtime/C",
+        "CryptoCurrency:Runtime/BitcoinTool.B",
+        "DefenseEvasion:Runtime/FilelessExecution",
+        "DefenseEvasion:Runtime/KernelModuleLoaded",
+        "DefenseEvasion:Runtime/ProcessInjection.Proc",
+        "DefenseEvasion:Runtime/ProcessInjection.Ptrace",
+        "DefenseEvasion:Runtime/ProcessInjection.VirtualMemoryWrite",
+        "DefenseEvasion:Runtime/PtraceAntiDebugging",
+        "DefenseEvasion:Runtime/SensitiveFileModified",
+        "DefenseEvasion:Runtime/SuspiciousCommand",
+        "Discovery:Runtime/SuspiciousCommand",
+        "Execution:Runtime/MaliciousFileExecuted",
+        "Execution:Runtime/MaliciousFileExecuted.Custom",
+        "Execution:Runtime/NewBinaryExecuted",
+        "Execution:Runtime/NewLibraryLoaded",
+        "Execution:Runtime/ReverseShell",
+        "Execution:Runtime/SuspiciousCommand",
+        "Execution:Runtime/SuspiciousShellCreated",
+        "Execution:Runtime/SuspiciousTool",
+        "Impact:Runtime/AbusedDomainRequest.Reputation",
+        "Impact:Runtime/BitcoinDomainRequest.Reputation",
+        "Impact:Runtime/CryptoMinerExecuted",
+        "Impact:Runtime/MaliciousDomainRequest.Reputation",
+        "Impact:Runtime/SuspiciousDomainRequest.Reputation",
+        "Persistence:Runtime/SensitiveFileModified",
+        "Persistence:Runtime/SuspiciousCommand",
+        "PrivilegeEscalation:Runtime/CGroupsReleaseAgentModified",
+        "PrivilegeEscalation:Runtime/ContainerMountsHostDirectory",
+        "PrivilegeEscalation:Runtime/DockerSocketAccessed",
+        "PrivilegeEscalation:Runtime/ElevationToRoot",
+        "PrivilegeEscalation:Runtime/RuncContainerEscape",
+        "PrivilegeEscalation:Runtime/SensitiveFileModified",
+        "PrivilegeEscalation:Runtime/SuspiciousCommand",
+        "PrivilegeEscalation:Runtime/UserfaultfdUsage",
+        "Trojan:Runtime/BlackholeTraffic",
+        "Trojan:Runtime/DGADomainRequest.C",
+        "Trojan:Runtime/DriveBySourceTraffic",
+        "Trojan:Runtime/DropPoint",
+        "Trojan:Runtime/PhishingDomainRequest",
+        "UnauthorizedAccess:Runtime/MetadataDNSRebind",
+        "UnauthorizedAccess:Runtime/TorClient",
+        "UnauthorizedAccess:Runtime/TorRelay"
+      ]
+    },
+    {
+      "name": "gd-update",
+      "url": "https://docs.aws.amazon.com/guardduty/latest/APIReference/API_UpdateDetector.html",
+      "status": 200,
+      "sha256": "24da4b79ffc5c65a5209a39f41a3ca5f8596b08b60d25de302a8802ea558940d",
+      "types": []
+    },
+    {
+      "name": "gd-events",
+      "url": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_findings_eventbridge.html",
+      "status": 200,
+      "sha256": "f23027c40fc2dada73b1b8e52651e382621cf2e09301f66d56a13699438868e2",
+      "types": []
+    }
+  ],
+  "native": {
+    "ecr-gate-validation.json": {
+      "status": "passed",
+      "verifiedAt": "2026-09-13T11:36:30.992949+00:00",
+      "tests": 12,
+      "command": "AWS_EC2_METADATA_DISABLED=true <audit-python> -m unittest discover -s examples/security/eks-security/tests -v",
+      "scope": "Pure response classification and real boto3/botocore Stubber contract; synthetic credentials and fake time only; no AWS/network/sleep execution.",
+      "artifacts": [
+        {
+          "path": "examples/security/eks-security/ecr_scan_gate.py",
+          "sha256": "98417fb7129f8fa8c1ce9377084716475586f67d65c2ba46153073a3996ff0ff"
+        },
+        {
+          "path": "examples/security/eks-security/tests/test_ecr_scan_gate.py",
+          "sha256": "bf99b785fd52dabce013c5146119a222fa625ac452373e10f38cd9a0cea78ae5"
+        }
+      ]
+    },
+    "terraform-validation.json": {
+      "status": "passed",
+      "results": [
+        {
+          "command": [
+            "fmt",
+            "-check"
+          ],
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        {
+          "command": [
+            "validate",
+            "-json"
+          ],
+          "exitCode": 0,
+          "stdout": "{\n  \"format_version\": \"1.0\",\n  \"valid\": true,\n  \"error_count\": 0,\n  \"warning_count\": 0,\n  \"diagnostics\": []\n}\n",
+          "stderr": ""
+        }
+      ],
+      "scope": "Terraform1.15.7/AWSprovider6.64.0cachedschema;noinitnetwork,plan,apply,credentialsorcloudresources"
+    },
+    "guardduty-pattern-validation.json": {
+      "status": "passed",
+      "cases": 6,
+      "library": "AWS EventRuler2.2.0 Ruler.matchesRule",
+      "results": [
+        {
+          "command": [
+            "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-openfeature/java-sdk/jdk/amazon-corretto-21.0.12.9.1-linux-aarch64/bin/javac",
+            "-cp",
+            "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-eks-security06/event-ruler/jackson-core-2.22.2.jar:/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-eks-security06/event-ruler/jackson-databind-2.22.2.jar:/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-eks-security06/event-ruler/jackson-annotations-2.22.jar:/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-eks-security06/event-ruler/fastdoubleparser-2.0.1.jar:/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-eks-security06/event-ruler/jsr305-3.0.2.jar:/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-eks-security06/event-ruler/event-ruler-2.2.0.jar",
+            "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-eks-security06/event-ruler/PatternCheck.java"
+          ],
+          "stdout": "",
+          "stderr": "Picked up JAVA_TOOL_OPTIONS: -Xmx512m -XX:ActiveProcessorCount=2\n"
+        },
+        {
+          "command": [
+            "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-openfeature/java-sdk/jdk/amazon-corretto-21.0.12.9.1-linux-aarch64/bin/java",
+            "-cp",
+            "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-eks-security06/event-ruler:/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-eks-security06/event-ruler/jackson-core-2.22.2.jar:/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-eks-security06/event-ruler/jackson-databind-2.22.2.jar:/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-eks-security06/event-ruler/jackson-annotations-2.22.jar:/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-eks-security06/event-ruler/fastdoubleparser-2.0.1.jar:/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-eks-security06/event-ruler/jsr305-3.0.2.jar:/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-eks-security06/event-ruler/event-ruler-2.2.0.jar",
+            "PatternCheck",
+            "/home/atomoh/kubernetes-docs/examples/security/eks-security/guardduty-event-pattern.json",
+            "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-eks-security06/event-ruler/old-pattern.json",
+            "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-eks-security06/event-ruler/cases.json"
+          ],
+          "stdout": "PASS 6 native event pattern cases; old prefix failure reproduced\n",
+          "stderr": "Picked up JAVA_TOOL_OPTIONS: -Xmx512m -XX:ActiveProcessorCount=2\n"
+        }
+      ],
+      "limits": "Nativeofficialmatchinglibraryonly;noEventBridgeAWSAPI/rule/targetexecution."
+    },
+    "tenant-validation.json": {
+      "status": "passed",
+      "checks": [
+        {
+          "case": "Namespace schema",
+          "passed": true
+        },
+        {
+          "case": "ResourceQuota schema",
+          "passed": true
+        },
+        {
+          "case": "LimitRange schema",
+          "passed": true
+        },
+        {
+          "case": "NetworkPolicy schema",
+          "passed": true
+        },
+        {
+          "case": "Role schema",
+          "passed": true
+        },
+        {
+          "case": "RoleBinding schema",
+          "passed": true
+        },
+        {
+          "case": "same-namespace peers;namespace+PodANDDNSselector;TCP/UDP53",
+          "passed": true
+        },
+        {
+          "case": "noNamespace/RBAC/NetPolicy/SecretAPIprivileges;Podindirectaccessdocumented",
+          "passed": true
+        }
+      ],
+      "schemaExtensionHandling": "KubernetesOpenAPIint-or-stringnormalizedtointeger|stringunion",
+      "limits": "OfflineAPIshapeandexplicitcontracts;notadmission/CNIproof"
+    },
+    "guardduty-model-validation.json": {
+      "status": "passed",
+      "serviceAPIVersion": "2017-11-28",
+      "operation": "UpdateDetector",
+      "enumAndShapeValidation": true,
+      "mutuallyExclusiveFeaturesChecked": true,
+      "scope": "Offlinebotocoremodel;nosessionclientorAWSrequest"
+    },
+    "shell-validation.json": {
+      "status": "passed",
+      "checks": [
+        {
+          "path": "en/security/06-eks-security-best-practices.md",
+          "bashBlock": 0,
+          "passed": true
+        },
+        {
+          "path": "en/security/06-eks-security-best-practices.md",
+          "bashBlock": 4,
+          "passed": true
+        },
+        {
+          "path": "en/security/06-eks-security-best-practices.md",
+          "bashBlock": 6,
+          "passed": true
+        },
+        {
+          "path": "en/security/06-eks-security-best-practices.md",
+          "bashBlock": 8,
+          "passed": true
+        },
+        {
+          "path": "en/security/06-eks-security-best-practices.md",
+          "bashBlock": 15,
+          "passed": true
+        },
+        {
+          "path": "ko/security/06-eks-security-best-practices.md",
+          "bashBlock": 0,
+          "passed": true
+        },
+        {
+          "path": "ko/security/06-eks-security-best-practices.md",
+          "bashBlock": 4,
+          "passed": true
+        },
+        {
+          "path": "ko/security/06-eks-security-best-practices.md",
+          "bashBlock": 6,
+          "passed": true
+        },
+        {
+          "path": "ko/security/06-eks-security-best-practices.md",
+          "bashBlock": 8,
+          "passed": true
+        },
+        {
+          "path": "ko/security/06-eks-security-best-practices.md",
+          "bashBlock": 15,
+          "passed": true
+        },
+        {
+          "case": "obsoletepatternsabsentfromexecutablefences;historicalexplanatoryprosepreserved",
+          "passed": true
+        }
+      ]
+    },
+    "inline-validation.json": {
+      "status": "passed",
+      "objects": 24,
+      "results": [
+        {
+          "path": "en/security/06-eks-security-best-practices.md",
+          "block": 0,
+          "kind": "Pod",
+          "passed": true
+        },
+        {
+          "path": "en/security/06-eks-security-best-practices.md",
+          "block": 1,
+          "kind": "ServiceAccount",
+          "passed": true
+        },
+        {
+          "path": "en/security/06-eks-security-best-practices.md",
+          "block": 1,
+          "kind": "ServiceAccount",
+          "passed": true
+        },
+        {
+          "path": "en/security/06-eks-security-best-practices.md",
+          "block": 2,
+          "kind": "ServiceAccount",
+          "passed": true
+        },
+        {
+          "path": "en/security/06-eks-security-best-practices.md",
+          "block": 2,
+          "kind": "Pod",
+          "passed": true
+        },
+        {
+          "path": "en/security/06-eks-security-best-practices.md",
+          "block": 3,
+          "kind": "SecurityGroupPolicy",
+          "passed": true
+        },
+        {
+          "path": "en/security/06-eks-security-best-practices.md",
+          "block": 4,
+          "kind": "Namespace",
+          "passed": true
+        },
+        {
+          "path": "en/security/06-eks-security-best-practices.md",
+          "block": 4,
+          "kind": "ResourceQuota",
+          "passed": true
+        },
+        {
+          "path": "en/security/06-eks-security-best-practices.md",
+          "block": 4,
+          "kind": "LimitRange",
+          "passed": true
+        },
+        {
+          "path": "en/security/06-eks-security-best-practices.md",
+          "block": 4,
+          "kind": "NetworkPolicy",
+          "passed": true
+        },
+        {
+          "path": "en/security/06-eks-security-best-practices.md",
+          "block": 4,
+          "kind": "Role",
+          "passed": true
+        },
+        {
+          "path": "en/security/06-eks-security-best-practices.md",
+          "block": 4,
+          "kind": "RoleBinding",
+          "passed": true
+        },
+        {
+          "path": "ko/security/06-eks-security-best-practices.md",
+          "block": 0,
+          "kind": "Pod",
+          "passed": true
+        },
+        {
+          "path": "ko/security/06-eks-security-best-practices.md",
+          "block": 1,
+          "kind": "ServiceAccount",
+          "passed": true
+        },
+        {
+          "path": "ko/security/06-eks-security-best-practices.md",
+          "block": 1,
+          "kind": "ServiceAccount",
+          "passed": true
+        },
+        {
+          "path": "ko/security/06-eks-security-best-practices.md",
+          "block": 2,
+          "kind": "ServiceAccount",
+          "passed": true
+        },
+        {
+          "path": "ko/security/06-eks-security-best-practices.md",
+          "block": 2,
+          "kind": "Pod",
+          "passed": true
+        },
+        {
+          "path": "ko/security/06-eks-security-best-practices.md",
+          "block": 3,
+          "kind": "SecurityGroupPolicy",
+          "passed": true
+        },
+        {
+          "path": "ko/security/06-eks-security-best-practices.md",
+          "block": 4,
+          "kind": "Namespace",
+          "passed": true
+        },
+        {
+          "path": "ko/security/06-eks-security-best-practices.md",
+          "block": 4,
+          "kind": "ResourceQuota",
+          "passed": true
+        },
+        {
+          "path": "ko/security/06-eks-security-best-practices.md",
+          "block": 4,
+          "kind": "LimitRange",
+          "passed": true
+        },
+        {
+          "path": "ko/security/06-eks-security-best-practices.md",
+          "block": 4,
+          "kind": "NetworkPolicy",
+          "passed": true
+        },
+        {
+          "path": "ko/security/06-eks-security-best-practices.md",
+          "block": 4,
+          "kind": "Role",
+          "passed": true
+        },
+        {
+          "path": "ko/security/06-eks-security-best-practices.md",
+          "block": 4,
+          "kind": "RoleBinding",
+          "passed": true
+        }
+      ],
+      "fixtures": "Bothlanguagesexactlyembedthreevalidatedfiles",
+      "limits": "OfflineAPIshapeonly;noactualadmissionorCNI"
+    }
+  },
+  "markdown": {
+    "status": "passed",
+    "files": [
+      {
+        "path": "en/security/06-eks-security-best-practices.md",
+        "originalLines": 1204,
+        "originalHash": "8ab7714caf4f19370e8d048902efa6f0860b2db74c4f6a9323d5d88068c08443",
+        "sha256": "2fd2d39ee4443358cc99b433c3714e3b4de993869e531716907c7494d3813f62",
+        "originalIds": 50,
+        "aliases": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": [],
+        "errors": [],
+        "links": [
+          {
+            "target": "./05-secrets-management.md",
+            "exists": true
+          }
+        ],
+        "lastUpdated": "2026-09-13",
+        "questions": [],
+        "answers": [],
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/security/06-eks-security-best-practices-quiz.md",
+        "originalLines": 469,
+        "originalHash": "36d4563064cd73a045aab5c419ad8a45d1b3a7d1784a59e115aa0ac03a8be3d8",
+        "sha256": "8255ffeeaf29206d6a85c28f42f17dfbb70e8cd51a97c5eee43801255a7699fa",
+        "originalIds": 16,
+        "aliases": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": [],
+        "errors": [],
+        "links": [
+          {
+            "target": "../../security/06-eks-security-best-practices.md",
+            "exists": true
+          },
+          {
+            "target": "../../security/03-pod-security-standards.md",
+            "exists": true
+          },
+          {
+            "target": "../../security/05-secrets-management.md",
+            "exists": true
+          }
+        ],
+        "lastUpdated": "2026-09-13",
+        "questions": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "answers": [
+          "C",
+          "C",
+          "C",
+          "B",
+          "C",
+          "D",
+          "B",
+          "B",
+          "B",
+          "D",
+          "B",
+          "C"
+        ],
+        "passed": true
+      },
+      {
+        "path": "ko/security/06-eks-security-best-practices.md",
+        "originalLines": 1204,
+        "originalHash": "703a9dbb116db31a2e0d91ad70923964bf49578a3c10753cae0a055ac1335b60",
+        "sha256": "4768e532e245a89e399f63f456e67ad1bbbdbb2e9b25aeaa4ae5d06001ef4373",
+        "originalIds": 50,
+        "aliases": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": [],
+        "errors": [],
+        "links": [
+          {
+            "target": "./05-secrets-management.md",
+            "exists": true
+          }
+        ],
+        "lastUpdated": "2026-09-13",
+        "questions": [],
+        "answers": [],
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/security/06-eks-security-best-practices-quiz.md",
+        "originalLines": 469,
+        "originalHash": "17a1d0d7bf81d7304f779ed2c6a5eb979ef21c5543ef96adf741ef83471e73ce",
+        "sha256": "e1621c0085c2318d0fd4eb7474a18da61cd0ef4694d9b38e87d7097b0497586b",
+        "originalIds": 16,
+        "aliases": [],
+        "missingOld": [],
+        "missingLinks": [],
+        "duplicateIds": [],
+        "errors": [],
+        "links": [
+          {
+            "target": "../../security/06-eks-security-best-practices.md",
+            "exists": true
+          },
+          {
+            "target": "../../security/03-pod-security-standards.md",
+            "exists": true
+          },
+          {
+            "target": "../../security/05-secrets-management.md",
+            "exists": true
+          }
+        ],
+        "lastUpdated": "2026-09-13",
+        "questions": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "answers": [
+          "C",
+          "C",
+          "C",
+          "B",
+          "C",
+          "D",
+          "B",
+          "B",
+          "B",
+          "D",
+          "B",
+          "C"
+        ],
+        "passed": true
+      }
+    ],
+    "quizParity": true,
+    "scope": "Actual VitePress/Vue compile, current fragments, original anchors and 12-question parity; no site build."
+  },
+  "eventRulerJars": [
+    {
+      "name": "event-ruler-2.2.0.jar",
+      "url": "https://repo.maven.apache.org/maven2/software/amazon/event/ruler/event-ruler/2.2.0/event-ruler-2.2.0.jar",
+      "sha256": "5a65f9182b3f0ca4e6039796dd71b33aa79d7daaf881b721222d93cace850cb7"
+    },
+    {
+      "name": "jackson-databind-2.22.2.jar",
+      "url": "https://repo.maven.apache.org/maven2/com/fasterxml/jackson/core/jackson-databind/2.22.2/jackson-databind-2.22.2.jar",
+      "sha256": "d0da14c12b16b5d54719aa172d83b542ff4abeb8b0fb7db476fde8ceece760ca"
+    },
+    {
+      "name": "jackson-core-2.22.2.jar",
+      "url": "https://repo.maven.apache.org/maven2/com/fasterxml/jackson/core/jackson-core/2.22.2/jackson-core-2.22.2.jar",
+      "sha256": "ff167a6317be15895706c26668f45b898efe40ab8780970658210fe1393d52a6"
+    },
+    {
+      "name": "jackson-annotations-2.22.jar",
+      "url": "https://repo.maven.apache.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.22/jackson-annotations-2.22.jar",
+      "sha256": "21ddb598807d3a51a876704eb979d9296e1c6a6f47ab1826ff88c6d6a127a2d0"
+    },
+    {
+      "name": "fastdoubleparser-2.0.1.jar",
+      "url": "https://repo.maven.apache.org/maven2/ch/randelshofer/fastdoubleparser/2.0.1/fastdoubleparser-2.0.1.jar",
+      "sha256": "4242e2335299026524d331355a6cd75abdc38c8fed4402f25b5c7ce9d7668cc1"
+    },
+    {
+      "name": "jsr305-3.0.2.jar",
+      "url": "https://repo.maven.apache.org/maven2/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar",
+      "sha256": "766ad2a0783f2687962c8ad74ceecc38a28b9f72a2d085ee438b7813e928d0c7"
+    }
+  ],
+  "kubeBenchSource": {
+    "tag": "v0.16.0",
+    "publishedAt": "2026-08-05T12:16:28Z",
+    "url": "https://raw.githubusercontent.com/aquasecurity/kube-bench/v0.16.0/job-eks.yaml",
+    "sha256": "b679fe183c3c9d78c8cadc52f9b5b5305a228aa308fccd800cf6694b095a9ed7",
+    "eksConfigs": [
+      "eks-1.0.1",
+      "eks-1.1.0",
+      "eks-1.2.0",
+      "eks-1.5.0",
+      "eks-1.7.0",
+      "eks-1.8.0",
+      "eks-stig-kubernetes-v1r6"
+    ]
+  },
+  "podSGSchemaSource": {
+    "api": "repos/aws/amazon-vpc-resource-controller-k8s/contents/config/crd/bases/vpcresources.k8s.aws_securitygrouppolicies.yaml",
+    "url": "https://github.com/aws/amazon-vpc-resource-controller-k8s/blob/master/config/crd/bases/vpcresources.k8s.aws_securitygrouppolicies.yaml",
+    "blob": "a037bddc65fadad2c566b903fc61cb1433b6f752",
+    "sha256": "c5d5bde7330ae7626de19e073419544eff939aee3bd13295defb91ad4cbd467b"
+  },
+  "artifacts": [
+    {
+      "path": "en/security/06-eks-security-best-practices.md",
+      "sha256": "2fd2d39ee4443358cc99b433c3714e3b4de993869e531716907c7494d3813f62"
+    },
+    {
+      "path": "en/quizzes/security/06-eks-security-best-practices-quiz.md",
+      "sha256": "8255ffeeaf29206d6a85c28f42f17dfbb70e8cd51a97c5eee43801255a7699fa"
+    },
+    {
+      "path": "ko/security/06-eks-security-best-practices.md",
+      "sha256": "4768e532e245a89e399f63f456e67ad1bbbdbb2e9b25aeaa4ae5d06001ef4373"
+    },
+    {
+      "path": "ko/quizzes/security/06-eks-security-best-practices-quiz.md",
+      "sha256": "e1621c0085c2318d0fd4eb7474a18da61cd0ef4694d9b38e87d7097b0497586b"
+    },
+    {
+      "path": "examples/security/eks-security/ecr_scan_gate.py",
+      "sha256": "98417fb7129f8fa8c1ce9377084716475586f67d65c2ba46153073a3996ff0ff"
+    },
+    {
+      "path": "examples/security/eks-security/tenant-baseline.yaml",
+      "sha256": "4378de513d9320fe5342f7cd47ef2d15683432424abe42be4dbd11c51d04ccf8"
+    },
+    {
+      "path": "examples/security/eks-security/guardduty-event-pattern.json",
+      "sha256": "c7322bc12694cf46631403fb708605b230413b916c3603ff4556429121f6cc46"
+    },
+    {
+      "path": "examples/security/eks-security/guardduty-features.json",
+      "sha256": "f6d8558bec90d798cb8af2e17b0cff032d28e6078999e02faf26ec65d70da06c"
+    },
+    {
+      "path": "examples/security/eks-security/README.md",
+      "sha256": "337345c44be4b56be4a8023dc1213d63096ec8731e9565a4f2448c1af12024bf"
+    },
+    {
+      "path": "examples/security/eks-security/control-plane-logging.json",
+      "sha256": "d0de8d09e0a6ffa0b8e413164ad28cd1d150d2af3868525e24718607cb57b14b"
+    },
+    {
+      "path": "examples/security/eks-security/tests/test_ecr_scan_gate.py",
+      "sha256": "bf99b785fd52dabce013c5146119a222fa625ac452373e10f38cd9a0cea78ae5"
+    },
+    {
+      "path": "examples/security/eks-security/private-endpoints/main.tf",
+      "sha256": "72e95e607ea484f7f2664e1745352bcb9efd51ab9cfd2b2fba138fb24cdde1c3"
+    }
+  ],
+  "sourcePreservation": "All50guideheadingsperlocaleand12quiztopicsretained;8changedquizIDsaliasednearequivalentquestions. Broken/incompleteTerraform,CFN,CI,CISandVPNrecipesreplacedwithvalidatedboundedexamplesorconcreteprerequisites. All132originalrenderedIDsretained.",
+  "limits": [
+    "NoAWSresource/APIcallsorKubernetescluster,networkisolation,GuardDutyagent,Inspectorbackend,CISnodeorOSexecution.",
+    "ECRtestsuseactualboto3/botocoreStubber,faketimeandsyntheticcredentials;notrealregistry/scanproof.",
+    "TerraformusescachedAWS6.64providerwithvalidateonly;noinitnetwork/plan/apply.",
+    "EventRuler2.2.0nativeJava2.22JacksonmatchingisnotdeployedEventBridge/notification/containmentproof.",
+    "TenantandPodSGchecksvalidateAPIshapesandselectorcontracts,notactualCNIbehavior.",
+    "No full local site build."
+  ]
+}
