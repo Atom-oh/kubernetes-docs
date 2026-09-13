@@ -1,7 +1,7 @@
 # EKS Hybrid Nodes
 
 > **지원 버전**: 현재 EKS 지원 버전; 예제 검토 기준 EKS 1.36 / nodeadm 1.0.20
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 9월 13일
 
 Amazon EKS Hybrid Nodes는 고객이 운영하는 온프레미스·엣지 노드를 AWS 관리형 EKS control plane에 연결합니다. Host·OS·연결·workload 운영은 계속 사용자 책임입니다. 이 가이드는 지원 인터페이스와 예제 구성을 구분하며 특정 온프레미스 프로덕션 배포를 검증했다는 증거가 아닙니다.
 
@@ -83,8 +83,10 @@ nodeSelector:
 | 이름 | SSM 생성 `mi-...` 이름 | 인증서 identity에 연결된 custom node name |
 | Session 수명 | 고정 1시간, SSM이 갱신 | 기본 1시간; request/profile은 15분–12시간 범위, effective duration·role maximum 적용 |
 | 단절 | 갱신 불가; 복구 후 retry backoff로 재연결이 지연될 수 있음 | Offline에서 새 자격 증명 획득 불가; 연결 복구 후 credential-process가 필요 시 획득 |
-| 규모/비용 | 계정·리전당 standard hybrid SSM node 1,000개까지 추가 SSM 요금 없음; advanced tier 별도 과금 | 같은 SSM tier 기준은 없지만 Roles Anywhere quota·PKI 운영 제약은 존재 |
+| 규모/비용 | SSM node 등록·node 수 기준 관리 요금 없음; 기능별 사용 요금 조건은 별도 | IAM Roles Anywhere quota와 PKI 운영 요건 확인 |
 | 일반적인 선택 | 기존 PKI가 없고 간단한 등록이 필요할 때 | 기존 PKI·인증서 수명 관리가 있을 때 |
+
+**요금 확인일: 2026년 9월 13일.** SSM은 2026년 6월 30일부로 Advanced Instances Tier를 폐지했습니다. Session Manager·Run Command 사용 요금 조건은 [현재 SSM 요금표](https://aws.amazon.com/systems-manager/pricing/)를 확인하며, [EKS Hybrid Nodes vCPU 요금](https://aws.amazon.com/eks/pricing/)은 별도입니다.
 
 Roles Anywhere profile은 custom role session name을 허용해야 하며 trust policy가 그 이름을 선택한 인증서 속성에 연결해야 합니다. Effective session duration은 IAM role maximum을 **초과하면 안 되며**, CreateSession API상 같은 값도 허용됩니다. [사전 요구 사항](01-prerequisites.md)에서 이 계약과 안전한 준비를 설명합니다.
 

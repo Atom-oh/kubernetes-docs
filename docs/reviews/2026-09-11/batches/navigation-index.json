@@ -3,7 +3,7 @@
     "path": "ko/quizzes/README.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "2f7975373e35b7a92e3ecf5fa21f9a5e61fc87031d434f75df8c4c871ba5404f",
+    "reviewedSha256": "3de7e38f887e9309d52d1f281442c0f1f6ad5253b9bef2607a6d0a623a487aaf",
     "summary": "Fullyreadoriginalindex/landingpage;quizindexnowlistsall253currentmainquizfilesineachlocale;emptyobservabilitylegacypagepointstomaintainedseries;Markdownandlocalmain-targetlinkspassed.",
     "validationReport": "docs/reviews/2026-09-11/navigation-index-validation.json"
   },
@@ -11,7 +11,7 @@
     "path": "en/quizzes/README.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "6e74dc7d2a23cf8ef419383777679c782e087216e5880a6351acec20c19538e2",
+    "reviewedSha256": "06b7441ddb88ea48bf903305b1d32acf7d691a1aeee91e7637357ef1e6a63e9b",
     "summary": "Fullyreadoriginalindex/landingpage;quizindexnowlistsall253currentmainquizfilesineachlocale;emptyobservabilitylegacypagepointstomaintainedseries;Markdownandlocalmain-targetlinkspassed.",
     "validationReport": "docs/reviews/2026-09-11/navigation-index-validation.json"
   },

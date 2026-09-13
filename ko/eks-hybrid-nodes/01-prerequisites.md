@@ -1,7 +1,7 @@
 # 사전 요구 사항
 
 > **지원 버전**: 예제 검토 기준 EKS 1.36 / hybrid nodeadm 1.0.20; OS별 조건은 아래 참조
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 9월 13일
 
 Hybrid node join 전에 host·network·credential·cluster access를 준비합니다. 로컬 schema/crypto/input 검사는 실제 물리 네트워크·GPU runtime·프로덕션 cluster 검증이 아닙니다. 이번 감사에서 cloud·host network·GPU driver·image build 변경은 실행하지 않았습니다.
 
@@ -283,7 +283,7 @@ if not re.fullmatch(r"[\w+=,.@-]{1,64}", role, re.ASCII):
     raise SystemExit("Use the actual IAM role name, not a role ARN")
 limit = int(os.environ["REGISTRATION_LIMIT"])
 if not 1 <= limit <= 1000:
-    raise SystemExit("RegistrationLimit must be 1..1000; also review account tier/quota")
+    raise SystemExit("RegistrationLimit must be 1..1000 per activation; review service quotas separately")
 body = {"DefaultInstanceName": "eks-hybrid-node", "IamRole": role, "RegistrationLimit": limit,
         "Description": "Reviewed EKS hybrid activation",
         "Tags": [{"Key": "EKSClusterARN", "Value": f"arn:aws:eks:{region}:{account}:cluster/{cluster}"}],
@@ -302,7 +302,7 @@ chmod 600 "$WORK_DIR/activation-response.json"
 # The response contains the secret ActivationCode. Do not print or commit it.
 ```
 
-ActivationCode는 한 번 반환됩니다. ActivationId와 함께 안전하게 전달하세요. Activation 만료/삭제는 기존 managed instance의 deregistration이 아닙니다. Activation별 1–1,000 한도와 계정 standard/advanced tier는 별개입니다.
+ActivationCode는 한 번 반환됩니다. ActivationId와 함께 안전하게 전달하세요. Activation 만료/삭제는 기존 managed instance의 deregistration이 아닙니다. [CreateActivation RegistrationLimit](https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_CreateActivation.html)은 activation별 1–1,000 범위를 유지합니다. 전체 fleet의 무료 구간 한도가 아니며, 현재 요금 조건은 [자격 증명 provider 비교](README.md)에서 설명합니다.
 
 SSM node name은 `mi-...`, credential 수명은 고정 1시간입니다. Network 복구 후에도 refresh backoff로 재연결이 지연될 수 있습니다. Credential을 log에 출력하지 마세요.
 

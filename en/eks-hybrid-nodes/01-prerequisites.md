@@ -1,7 +1,7 @@
 # Prerequisites
 
 > **Supported Versions**: Examples reviewed for EKS 1.36 / hybrid nodeadm 1.0.20; OS-specific requirements below
-> **Last Updated**: September 12, 2026
+> **Last Updated**: September 13, 2026
 
 Prepare host, network, credentials and cluster access before joining a hybrid node. Local schema/crypto/input checks do not validate your physical network, GPU runtime or production cluster. No cloud, host-network, GPU-driver or image-build changes were executed during this audit.
 
@@ -283,7 +283,7 @@ if not re.fullmatch(r"[\w+=,.@-]{1,64}", role, re.ASCII):
     raise SystemExit("Use the actual IAM role name, not a role ARN")
 limit = int(os.environ["REGISTRATION_LIMIT"])
 if not 1 <= limit <= 1000:
-    raise SystemExit("RegistrationLimit must be 1..1000; also review account tier/quota")
+    raise SystemExit("RegistrationLimit must be 1..1000 per activation; review service quotas separately")
 body = {"DefaultInstanceName": "eks-hybrid-node", "IamRole": role, "RegistrationLimit": limit,
         "Description": "Reviewed EKS hybrid activation",
         "Tags": [{"Key": "EKSClusterARN", "Value": f"arn:aws:eks:{region}:{account}:cluster/{cluster}"}],
@@ -302,7 +302,7 @@ chmod 600 "$WORK_DIR/activation-response.json"
 # The response contains the secret ActivationCode. Do not print or commit it.
 ```
 
-ActivationCode is returned once; distribute it securely with ActivationId. Expiration/deletion of the activation is not deregistration of existing managed instances. The per-activation 1–1,000 limit and account standard/advanced tiers are separate.
+ActivationCode is returned once; distribute it securely with ActivationId. Expiration/deletion of the activation is not deregistration of existing managed instances. The [CreateActivation RegistrationLimit](https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_CreateActivation.html) remains 1–1,000 per activation. It is not a fleet-wide free-tier threshold; current pricing is explained in the [credential-provider comparison](README.md#credential-providers).
 
 SSM uses an `mi-...` node name and fixed one-hour credentials. Refresh backoff can delay reconnection after a network outage. Do not log credentials.
 

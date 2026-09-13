@@ -1,7 +1,7 @@
 # EKS Hybrid Nodes
 
 > **Supported Versions**: Current EKS-supported versions; examples reviewed for EKS 1.36 / nodeadm 1.0.20
-> **Last Updated**: September 12, 2026
+> **Last Updated**: September 13, 2026
 
 Amazon EKS Hybrid Nodes connects customer-operated on-premises or edge nodes to an AWS-managed EKS control plane. You continue to operate the hosts, operating systems, connectivity and workloads. This guide distinguishes supported interfaces from example configurations; it is not evidence that a particular on-premises production deployment has been tested.
 
@@ -83,8 +83,10 @@ Both providers need access to AWS service endpoints to refresh credentials. A lo
 | Naming | SSM-generated `mi-...` name | Custom node name bound to the certificate identity |
 | Session duration | Fixed one hour, refreshed by SSM | Default one hour; supported request/profile durations 15 minutes–12 hours, subject to effective duration and role maximum |
 | Disconnection | Cannot refresh; retry backoff can delay reconnection after network recovery | Cannot obtain new credentials offline; credential-process obtains them on demand when connectivity returns |
-| Scale / cost | Up to 1,000 standard hybrid-activated SSM nodes per account/Region without additional SSM cost; advanced tier has separate charges | No identical SSM tier threshold; IAM Roles Anywhere quotas and PKI operations still apply |
+| Scale / cost | No SSM node-registration or per-node management charge; feature-usage pricing is separate | Review IAM Roles Anywhere quotas and PKI operating requirements |
 | Typical choice | No existing PKI; simpler registration | Existing PKI and managed certificate lifecycle |
+
+**Pricing checked September 13, 2026:** SSM removed the Advanced Instances Tier effective June 30, 2026. Consult [current SSM pricing](https://aws.amazon.com/systems-manager/pricing/) for Session Manager and Run Command usage terms; [EKS Hybrid Nodes vCPU charges](https://aws.amazon.com/eks/pricing/) remain separate.
 
 The Roles Anywhere profile must accept a custom role session name, and the trust policy must bind it to the chosen certificate attribute. Its effective session duration must **not exceed** the IAM role maximum; equality is allowed by the CreateSession API. The [prerequisites](01-prerequisites.md) detail these contracts and secure preparation.
 

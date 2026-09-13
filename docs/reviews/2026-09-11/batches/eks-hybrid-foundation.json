@@ -30,7 +30,7 @@
       "SSMinstall/upgrade requiresnodeadm>=1.0.19 aftersigningkeyrotation;reviewedrelease1.0.20. Install/configcheck/initdifferent;DockerEnginenotrequired.",
       "PreservedvalidatedOSmatrixwithAL2023onpremVM-only/OSsupportboundary,BottlerocketVMwarex86only,ARMv8.2+crypto;oldproxy1.30workaroundpastJuly2026support.",
       "1vCPU/1GiB and100Mbps/200msareAWSgeneralrecommendationsnotstrictminimum;unsupportedhardwaresizing/driver/MTUvaluesqualified.",
-      "RolesAnywhereisnotoffline/localCAcredentialissuer;SSMfixed1h/mi-name/1000standardtierfactsconfirmedandpreserved.",
+      "RolesAnywhereisnotoffline/localCAcredentialissuer;SSMfixed1h/mi-nameverified.PricingclarifiedbypricingRevision.",
       "RoleSessionNameboundtoCNandprofileacceptRoleSessionNametrue;CreateSessionAPI effectiveDuration<=roleMax allows equality,correctingoverstrictEKSprose.",
       "HybridroleDescribeCluster/ECR/SSMcleanuppermissionsseparatedfromMinimalPolicy;activationClusterARNtagandprivate0600output,CSRname/keyprotection/CAJSONserializationfixed.",
       "Removedfullaws-authreplacement;HYBRID_LINUXaccessplan/nativeAPI/eksctl0.229SSM-IRA/providerfields andprivateendpointplansprovided.",
@@ -47,7 +47,15 @@
       "Pairedfences,6quizkeysCBDBCD,Bash/YAML/JSONsyntax,61localrefs,gitdiffcheckpassed.",
       "Noactualcloud/hostnetwork/driver/GPU/VMbuild/sitebuildchanges. Nativefixturecorrections:OpenSSLstatusappearsstdout;fixedoneBashparameter-errorapostropheinrenderedinstallfence.",
       "Evidence:.vitepress/cache/core-audit/eks-hybrid-foundation/final-validation.json"
-    ]
+    ],
+    "pricingRevision": {
+      "checkedAt": "2026-09-13",
+      "sources": [
+        "https://aws.amazon.com/systems-manager/pricing/",
+        "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_CreateActivation.html"
+      ],
+      "scope": "Correct obsolete account-tier wording; preserve the 1..1000 per-activation validator. No AWS billing/account calls."
+    }
   },
   {
     "path": "ko/eks-hybrid-nodes/README.md",
@@ -80,7 +88,7 @@
       "SSMinstall/upgrade requiresnodeadm>=1.0.19 aftersigningkeyrotation;reviewedrelease1.0.20. Install/configcheck/initdifferent;DockerEnginenotrequired.",
       "PreservedvalidatedOSmatrixwithAL2023onpremVM-only/OSsupportboundary,BottlerocketVMwarex86only,ARMv8.2+crypto;oldproxy1.30workaroundpastJuly2026support.",
       "1vCPU/1GiB and100Mbps/200msareAWSgeneralrecommendationsnotstrictminimum;unsupportedhardwaresizing/driver/MTUvaluesqualified.",
-      "RolesAnywhereisnotoffline/localCAcredentialissuer;SSMfixed1h/mi-name/1000standardtierfactsconfirmedandpreserved.",
+      "RolesAnywhereisnotoffline/localCAcredentialissuer;SSMfixed1h/mi-nameverified.PricingclarifiedbypricingRevision.",
       "RoleSessionNameboundtoCNandprofileacceptRoleSessionNametrue;CreateSessionAPI effectiveDuration<=roleMax allows equality,correctingoverstrictEKSprose.",
       "HybridroleDescribeCluster/ECR/SSMcleanuppermissionsseparatedfromMinimalPolicy;activationClusterARNtagandprivate0600output,CSRname/keyprotection/CAJSONserializationfixed.",
       "Removedfullaws-authreplacement;HYBRID_LINUXaccessplan/nativeAPI/eksctl0.229SSM-IRA/providerfields andprivateendpointplansprovided.",
@@ -97,7 +105,15 @@
       "Pairedfences,6quizkeysCBDBCD,Bash/YAML/JSONsyntax,61localrefs,gitdiffcheckpassed.",
       "Noactualcloud/hostnetwork/driver/GPU/VMbuild/sitebuildchanges. Nativefixturecorrections:OpenSSLstatusappearsstdout;fixedoneBashparameter-errorapostropheinrenderedinstallfence.",
       "Evidence:.vitepress/cache/core-audit/eks-hybrid-foundation/final-validation.json"
-    ]
+    ],
+    "pricingRevision": {
+      "checkedAt": "2026-09-13",
+      "sources": [
+        "https://aws.amazon.com/systems-manager/pricing/",
+        "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_CreateActivation.html"
+      ],
+      "scope": "Correct obsolete account-tier wording; preserve the 1..1000 per-activation validator. No AWS billing/account calls."
+    }
   },
   {
     "path": "en/eks-hybrid-nodes/01-prerequisites.md",
@@ -130,7 +146,7 @@
       "SSMinstall/upgrade requiresnodeadm>=1.0.19 aftersigningkeyrotation;reviewedrelease1.0.20. Install/configcheck/initdifferent;DockerEnginenotrequired.",
       "PreservedvalidatedOSmatrixwithAL2023onpremVM-only/OSsupportboundary,BottlerocketVMwarex86only,ARMv8.2+crypto;oldproxy1.30workaroundpastJuly2026support.",
       "1vCPU/1GiB and100Mbps/200msareAWSgeneralrecommendationsnotstrictminimum;unsupportedhardwaresizing/driver/MTUvaluesqualified.",
-      "RolesAnywhereisnotoffline/localCAcredentialissuer;SSMfixed1h/mi-name/1000standardtierfactsconfirmedandpreserved.",
+      "RolesAnywhereisnotoffline/localCAcredentialissuer;SSMfixed1h/mi-nameverified.PricingclarifiedbypricingRevision.",
       "RoleSessionNameboundtoCNandprofileacceptRoleSessionNametrue;CreateSessionAPI effectiveDuration<=roleMax allows equality,correctingoverstrictEKSprose.",
       "HybridroleDescribeCluster/ECR/SSMcleanuppermissionsseparatedfromMinimalPolicy;activationClusterARNtagandprivate0600output,CSRname/keyprotection/CAJSONserializationfixed.",
       "Removedfullaws-authreplacement;HYBRID_LINUXaccessplan/nativeAPI/eksctl0.229SSM-IRA/providerfields andprivateendpointplansprovided.",
@@ -149,7 +165,15 @@
       "Noactualcloud/hostnetwork/driver/GPU/VMbuild/sitebuildchanges. Nativefixturecorrections:OpenSSLstatusappearsstdout;fixedoneBashparameter-errorapostropheinrenderedinstallfence.",
       "Evidence:.vitepress/cache/core-audit/eks-hybrid-foundation/final-validation.json",
       "Targetedreconciliationevidence:.vitepress/cache/core-audit/eks-hybrid-bootstrap/foundation-reconciliation.json;closedfullreadproofpreserved."
-    ]
+    ],
+    "pricingRevision": {
+      "checkedAt": "2026-09-13",
+      "sources": [
+        "https://aws.amazon.com/systems-manager/pricing/",
+        "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_CreateActivation.html"
+      ],
+      "scope": "Correct obsolete account-tier wording; preserve the 1..1000 per-activation validator. No AWS billing/account calls."
+    }
   },
   {
     "path": "ko/eks-hybrid-nodes/01-prerequisites.md",
@@ -182,7 +206,7 @@
       "SSMinstall/upgrade requiresnodeadm>=1.0.19 aftersigningkeyrotation;reviewedrelease1.0.20. Install/configcheck/initdifferent;DockerEnginenotrequired.",
       "PreservedvalidatedOSmatrixwithAL2023onpremVM-only/OSsupportboundary,BottlerocketVMwarex86only,ARMv8.2+crypto;oldproxy1.30workaroundpastJuly2026support.",
       "1vCPU/1GiB and100Mbps/200msareAWSgeneralrecommendationsnotstrictminimum;unsupportedhardwaresizing/driver/MTUvaluesqualified.",
-      "RolesAnywhereisnotoffline/localCAcredentialissuer;SSMfixed1h/mi-name/1000standardtierfactsconfirmedandpreserved.",
+      "RolesAnywhereisnotoffline/localCAcredentialissuer;SSMfixed1h/mi-nameverified.PricingclarifiedbypricingRevision.",
       "RoleSessionNameboundtoCNandprofileacceptRoleSessionNametrue;CreateSessionAPI effectiveDuration<=roleMax allows equality,correctingoverstrictEKSprose.",
       "HybridroleDescribeCluster/ECR/SSMcleanuppermissionsseparatedfromMinimalPolicy;activationClusterARNtagandprivate0600output,CSRname/keyprotection/CAJSONserializationfixed.",
       "Removedfullaws-authreplacement;HYBRID_LINUXaccessplan/nativeAPI/eksctl0.229SSM-IRA/providerfields andprivateendpointplansprovided.",
@@ -201,7 +225,15 @@
       "Noactualcloud/hostnetwork/driver/GPU/VMbuild/sitebuildchanges. Nativefixturecorrections:OpenSSLstatusappearsstdout;fixedoneBashparameter-errorapostropheinrenderedinstallfence.",
       "Evidence:.vitepress/cache/core-audit/eks-hybrid-foundation/final-validation.json",
       "Targetedreconciliationevidence:.vitepress/cache/core-audit/eks-hybrid-bootstrap/foundation-reconciliation.json;closedfullreadproofpreserved."
-    ]
+    ],
+    "pricingRevision": {
+      "checkedAt": "2026-09-13",
+      "sources": [
+        "https://aws.amazon.com/systems-manager/pricing/",
+        "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_CreateActivation.html"
+      ],
+      "scope": "Correct obsolete account-tier wording; preserve the 1..1000 per-activation validator. No AWS billing/account calls."
+    }
   },
   {
     "path": "en/quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md",
@@ -234,7 +266,7 @@
       "SSMinstall/upgrade requiresnodeadm>=1.0.19 aftersigningkeyrotation;reviewedrelease1.0.20. Install/configcheck/initdifferent;DockerEnginenotrequired.",
       "PreservedvalidatedOSmatrixwithAL2023onpremVM-only/OSsupportboundary,BottlerocketVMwarex86only,ARMv8.2+crypto;oldproxy1.30workaroundpastJuly2026support.",
       "1vCPU/1GiB and100Mbps/200msareAWSgeneralrecommendationsnotstrictminimum;unsupportedhardwaresizing/driver/MTUvaluesqualified.",
-      "RolesAnywhereisnotoffline/localCAcredentialissuer;SSMfixed1h/mi-name/1000standardtierfactsconfirmedandpreserved.",
+      "RolesAnywhereisnotoffline/localCAcredentialissuer;SSMfixed1h/mi-nameverified.PricingclarifiedbypricingRevision.",
       "RoleSessionNameboundtoCNandprofileacceptRoleSessionNametrue;CreateSessionAPI effectiveDuration<=roleMax allows equality,correctingoverstrictEKSprose.",
       "HybridroleDescribeCluster/ECR/SSMcleanuppermissionsseparatedfromMinimalPolicy;activationClusterARNtagandprivate0600output,CSRname/keyprotection/CAJSONserializationfixed.",
       "Removedfullaws-authreplacement;HYBRID_LINUXaccessplan/nativeAPI/eksctl0.229SSM-IRA/providerfields andprivateendpointplansprovided.",
@@ -251,7 +283,15 @@
       "Pairedfences,6quizkeysCBDBCD,Bash/YAML/JSONsyntax,61localrefs,gitdiffcheckpassed.",
       "Noactualcloud/hostnetwork/driver/GPU/VMbuild/sitebuildchanges. Nativefixturecorrections:OpenSSLstatusappearsstdout;fixedoneBashparameter-errorapostropheinrenderedinstallfence.",
       "Evidence:.vitepress/cache/core-audit/eks-hybrid-foundation/final-validation.json"
-    ]
+    ],
+    "pricingRevision": {
+      "checkedAt": "2026-09-13",
+      "sources": [
+        "https://aws.amazon.com/systems-manager/pricing/",
+        "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_CreateActivation.html"
+      ],
+      "scope": "Correct obsolete account-tier wording; preserve the 1..1000 per-activation validator. No AWS billing/account calls."
+    }
   },
   {
     "path": "ko/quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md",
@@ -284,7 +324,7 @@
       "SSMinstall/upgrade requiresnodeadm>=1.0.19 aftersigningkeyrotation;reviewedrelease1.0.20. Install/configcheck/initdifferent;DockerEnginenotrequired.",
       "PreservedvalidatedOSmatrixwithAL2023onpremVM-only/OSsupportboundary,BottlerocketVMwarex86only,ARMv8.2+crypto;oldproxy1.30workaroundpastJuly2026support.",
       "1vCPU/1GiB and100Mbps/200msareAWSgeneralrecommendationsnotstrictminimum;unsupportedhardwaresizing/driver/MTUvaluesqualified.",
-      "RolesAnywhereisnotoffline/localCAcredentialissuer;SSMfixed1h/mi-name/1000standardtierfactsconfirmedandpreserved.",
+      "RolesAnywhereisnotoffline/localCAcredentialissuer;SSMfixed1h/mi-nameverified.PricingclarifiedbypricingRevision.",
       "RoleSessionNameboundtoCNandprofileacceptRoleSessionNametrue;CreateSessionAPI effectiveDuration<=roleMax allows equality,correctingoverstrictEKSprose.",
       "HybridroleDescribeCluster/ECR/SSMcleanuppermissionsseparatedfromMinimalPolicy;activationClusterARNtagandprivate0600output,CSRname/keyprotection/CAJSONserializationfixed.",
       "Removedfullaws-authreplacement;HYBRID_LINUXaccessplan/nativeAPI/eksctl0.229SSM-IRA/providerfields andprivateendpointplansprovided.",
@@ -301,6 +341,14 @@
       "Pairedfences,6quizkeysCBDBCD,Bash/YAML/JSONsyntax,61localrefs,gitdiffcheckpassed.",
       "Noactualcloud/hostnetwork/driver/GPU/VMbuild/sitebuildchanges. Nativefixturecorrections:OpenSSLstatusappearsstdout;fixedoneBashparameter-errorapostropheinrenderedinstallfence.",
       "Evidence:.vitepress/cache/core-audit/eks-hybrid-foundation/final-validation.json"
-    ]
+    ],
+    "pricingRevision": {
+      "checkedAt": "2026-09-13",
+      "sources": [
+        "https://aws.amazon.com/systems-manager/pricing/",
+        "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_CreateActivation.html"
+      ],
+      "scope": "Correct obsolete account-tier wording; preserve the 1..1000 per-activation validator. No AWS billing/account calls."
+    }
   }
 ]
