@@ -1,5 +1,5 @@
 {
-  "status": "primary-review-and-recorded-checks-complete-release-verification-pending",
+  "status": "complete",
   "checkedAt": "2026-09-13T15:14:41.085324+00:00",
   "primaryCorpus": {
     "main": "aaa9779ca506e01ae04c0dd7f2f6a116b49b823d",
@@ -71503,12 +71503,57 @@
     "hasDocsSitemap": true
   },
   "releaseVerification": {
-    "status": "final content and translation merges complete; Pages deployment verification pending",
-    "mainCommit": "ed82b7e219b29a42229e6b661db96994ce887737",
-    "integrationPR": 308,
-    "deploymentRun": 34767324040,
-    "pendingSourceOrTranslationPRs": [],
-    "pendingMechanicalPRs": []
+    "status": "passed",
+    "checkedAt": "2026-09-13T16:12:26.746548+00:00",
+    "deployment": {
+      "run": 34767324040,
+      "commit": "ed82b7e219b29a42229e6b661db96994ce887737",
+      "status": "success"
+    },
+    "publicEndpoints": {
+      "rootRobots": {
+        "url": "https://www.atomai.click/robots.txt",
+        "status": 200,
+        "bytes": 132,
+        "sha256": "b8505d2d9fe9ca0c2b91bd1ae88a6686618383ac99ea1e8447208b69820b3c92",
+        "contentType": "text/plain; charset=utf-8"
+      },
+      "sitemap": {
+        "url": "https://www.atomai.click/kubernetes-docs/sitemap.xml",
+        "status": 200,
+        "bytes": 161538,
+        "sha256": "eae85da719787e25bfab56615de75a7973e827a00063c0ed28c482a511103854",
+        "contentType": "application/xml"
+      },
+      "manifest": {
+        "url": "https://www.atomai.click/kubernetes-docs/llms/manifest.json",
+        "status": 200,
+        "bytes": 1274786,
+        "sha256": "aabbc8b8959722d90a383510f5078070b538b9c58d587d8806c3f69a68c3ae70",
+        "contentType": "application/json; charset=utf-8"
+      },
+      "userReportedPage": {
+        "url": "https://www.atomai.click/kubernetes-docs/ko/service-mesh/istio/01-installation",
+        "status": 200,
+        "bytes": 529197,
+        "sha256": "45f2215ea8a7c11fdc3e1259a405f699799be32282efb7e8417ab741e402cfec",
+        "contentType": "text/html; charset=utf-8"
+      },
+      "alertmanagerPage": {
+        "url": "https://www.atomai.click/kubernetes-docs/ko/observability/alerting/01-alertmanager",
+        "status": 200,
+        "bytes": 781131,
+        "sha256": "a8cee2010aa13cc0cc2bea738b37c33ab9d5a8384a37bdebeb4f7e696735bc28",
+        "contentType": "text/html; charset=utf-8"
+      }
+    },
+    "manifestDocuments": 680,
+    "sitemapURLs": 1259,
+    "allManifestEntriesMatchAuditedSource": true,
+    "allManifestCanonicalURLsInSitemap": true,
+    "rootRobotsAdvertisesDocsSitemap": true,
+    "ga4TagPresent": "G-GWVLEW5JLL",
+    "limits": "HTTPandpublished-sourceconsistencychecked;noanalyticscollectioneventsentandnoindexingguarantee."
   },
   "limits": [
     "No claim that every search engine or AI has indexed every page.",
@@ -71534,8 +71579,9 @@
     "images": 2672,
     "imageReferences": 2764,
     "nativeInputsClean": true,
-    "status": "merged; every input hash matches final main",
-    "mainCommit": "ed82b7e219b29a42229e6b661db96994ce887737"
+    "status": "merged and successfully deployed; public endpoints verified",
+    "mainCommit": "ed82b7e219b29a42229e6b661db96994ce887737",
+    "deploymentRun": 34767324040
   },
   "finalMainBinding": {
     "status": "passed",
@@ -71551,5 +71597,7 @@
     },
     "failures": [],
     "scope": "AllfinalpublishedlocaleMarkdown/config/imageGitblobs matchtheexactinputhashesofnativeverification. Evidencefilesoutsidepublicationinputsarenotinthiscomparison."
-  }
+  },
+  "completedAt": "2026-09-13T16:12:47.977551+00:00",
+  "completionScope": "All1260Korean/Englishsource-documentshavevalidatedreviewprovenance;allfive-locale2700+documentlinks/images/structureschecked;newtranslationsindependentlyreviewed. Unchangedlegacytranslatedprosewasnotnewlysemanticallyreviewed."
 }
