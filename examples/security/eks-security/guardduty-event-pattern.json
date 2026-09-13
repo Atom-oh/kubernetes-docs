@@ -1,0 +1,10 @@
+{
+  "source": ["aws.guardduty"],
+  "detail-type": ["GuardDuty Finding"],
+  "detail": {
+    "type": [
+      {"wildcard": "*:Kubernetes/*"},
+      {"wildcard": "*:Runtime/*"}
+    ]
+  }
+}

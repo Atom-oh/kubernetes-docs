@@ -1,12 +1,16 @@
 # EKS Security Best Practices Quiz
 
+> **Last Updated**: September 13, 2026
+
 Test your understanding of Amazon EKS security best practices with the following questions.
 
 ***
 
 ## Questions
 
-### 1. What authentication method does a Pod use when calling AWS APIs with IRSA (IAM Roles for Service Accounts)?
+<span id="_1-what-authentication-method-does-a-pod-use-when-calling-aws-apis-with-irsa-iam-roles-for-service-accounts"></span>
+
+### 1. How does a Pod obtain temporary AWS credentials through IRSA?
 
 * A) IAM User Access Key
 * B) EC2 Instance Profile
@@ -19,23 +23,7 @@ Test your understanding of Amazon EKS security best practices with the following
 
 **Answer: C) OIDC token-based AssumeRoleWithWebIdentity**
 
-**Explanation:** How IRSA works:
-
-1. EKS cluster's OIDC Provider issues ServiceAccount token
-2. Pod calls AWS STS `AssumeRoleWithWebIdentity` API
-3. OIDC token is validated and temporary credentials are issued
-4. Pod calls AWS APIs with temporary credentials
-
-```yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: s3-reader
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/S3ReaderRole
-```
-
-IRSA enables fine-grained permission management at Pod level rather than node level.
+**Explanation:** The Kubernetes API server issues the projected ServiceAccount JWT. A supported SDK exchanges it with STS AssumeRoleWithWebIdentity; STS checks the trusted issuer/JWKS, audience and subject and returns temporary AWS credentials. The IAM OIDC provider object is not the token issuer, and the JWT is not directly substituted for AWS API credentials.
 
 </details>
 
@@ -54,34 +42,20 @@ IRSA enables fine-grained permission management at Pod level rather than node le
 
 **Answer: C) No OIDC Provider setup required, simplified management**
 
-**Explanation:** Benefits of EKS Pod Identity:
-
-* No OIDC Provider setup required
-* Simplified IAM Role Trust Policy
-* Automatic credential management through Pod Identity Agent
-* Simplified cross-account access
-
-```bash
-# Pod Identity association (simple CLI setup)
-aws eks create-pod-identity-association \
-  --cluster-name my-cluster \
-  --namespace production \
-  --service-account myapp-sa \
-  --role-arn arn:aws:iam::123456789012:role/MyAppRole
-```
-
-IRSA requires OIDC Provider setup and complex Trust Policy for each cluster.
+**Explanation:** Pod Identity avoids per-cluster IAM OIDC-provider setup and uses an association, supported agent/SDK and EKS Auth. Roles still require trust and least-privilege permissions. Auto Mode includes the agent; other platforms and cross-account/chained roles have specific requirements. It does not retire IRSA or automatically strengthen every application's security.
 
 </details>
 
 ***
 
-### 3. Which is NOT a requirement for using Security Groups for Pods?
+<span id="_3-which-is-not-a-requirement-for-using-security-groups-for-pods"></span>
 
-* A) Nitro-based instance types
+### 3. Which is NOT required for the EC2-backed Security Groups for Pods path?
+
+* A) Supported trunking-compatible EC2 instance types
 * B) Amazon VPC CNI plugin
 * C) Fargate profile
-* D) ENIConfig or SecurityGroupPolicy CRD
+* D) SecurityGroupPolicy configuration
 
 <details>
 
@@ -89,28 +63,7 @@ IRSA requires OIDC Provider setup and complex Trust Policy for each cluster.
 
 **Answer: C) Fargate profile**
 
-**Explanation:** Security Groups for Pods requirements:
-
-* **Required**: Nitro-based EC2 instances (m5, c5, r5, etc.)
-* **Required**: Amazon VPC CNI plugin v1.7.7+
-* **Required**: SecurityGroupPolicy CRD configuration
-* **Optional**: Fargate (separate configuration method)
-
-```yaml
-apiVersion: vpcresources.k8s.aws/v1beta1
-kind: SecurityGroupPolicy
-metadata:
-  name: db-access-policy
-spec:
-  podSelector:
-    matchLabels:
-      app: backend
-  securityGroups:
-    groupIds:
-      - sg-0123456789abcdef0
-```
-
-Fargate assigns ENI to each Pod automatically, requiring separate configuration.
+**Explanation:** For the EC2-backed path, use a trunking-compatible supported instance type, compatible Amazon VPC CNI and SecurityGroupPolicy. Not every Nitro instance qualifies. The VPC Resource Controller policy belongs to the cluster role. Fargate has a separate supported model; Windows and Auto Mode are excluded by current Pod-SG documentation. ENIConfig is not a substitute for SecurityGroupPolicy.
 
 </details>
 
@@ -129,21 +82,7 @@ Fargate assigns ENI to each Pod automatically, requiring separate configuration.
 
 **Answer: B) Accessible only from within VPC or connected networks**
 
-**Explanation:** When private endpoint is configured:
-
-* Accessible from within VPC
-* Accessible from networks connected via VPN, Direct Connect, VPC Peering
-* Not accessible from public internet
-
-```bash
-# Endpoint configuration
-aws eks update-cluster-config \
-  --name my-cluster \
-  --resources-vpc-config \
-    endpointPublicAccess=false,endpointPrivateAccess=true
-```
-
-Using private endpoint only is recommended for security.
+**Explanation:** Private API reachability needs a connected network, DNS, routes and security groups plus IAM authentication/Kubernetes authorization. Test operator, CI and recovery access before removing public access. An EKS management PrivateLink endpoint does not replace the private Kubernetes API endpoint.
 
 </details>
 
@@ -162,55 +101,28 @@ Using private endpoint only is recommended for security.
 
 **Answer: C) Pod resource usage exceeding limits**
 
-**Explanation:** Threats detected by GuardDuty EKS Protection:
-
-* Communication with malicious IP addresses
-* Cryptocurrency mining (Kubernetes API abuse)
-* Tor network connections
-* DNS Rebinding attacks
-* Privilege escalation attempts
-* Abnormal API call patterns
-
-Resource usage monitoring is performed by:
-
-* Kubernetes Metrics Server
-* Prometheus/Grafana
-* CloudWatch Container Insights
+**Explanation:** Distinguish EKS audit analysis, agent-based Runtime Monitoring and foundational GuardDuty sources. Coverage varies by enabled plan and platform; ECS Fargate support is not EKS Fargate support. CPU/memory limit monitoring belongs to operational metrics tooling, and a quiet detector does not prove the absence of compromise.
 
 </details>
 
 ***
 
-### 6. Which AWS service does NOT require VPC endpoints in an EKS cluster?
+<span id="_6-which-aws-service-does-not-require-vpc-endpoints-in-an-eks-cluster"></span>
 
-* A) ECR (dkr, api)
-* B) S3
-* C) STS
-* D) Route 53
+### 6. What is the correct way to reason about DNS and private AWS API access?
+
+* A) An EKS management endpoint replaces the Kubernetes API
+* B) Pod Identity always uses the global STS endpoint
+* C) Every AWS Region supports the same endpoint names
+* D) Distinguish DNS resolution from Route 53 management API PrivateLink
 
 <details>
 
 <summary>Show Answer</summary>
 
-**Answer: D) Route 53**
+**Answer: D) Distinguish DNS resolution from Route 53 management API PrivateLink**
 
-**Explanation:** Recommended VPC endpoints for EKS:
-
-* **ECR (dkr, api)**: Container image pulls
-* **S3**: Image layer storage
-* **STS**: IRSA/Pod Identity authentication
-* **CloudWatch Logs**: Log transmission
-* **EC2, ELB, Auto Scaling**: Node management
-
-Route 53 is a global DNS service that uses standard DNS resolution, not VPC endpoints.
-
-```bash
-# Create required VPC endpoint
-aws ec2 create-vpc-endpoint \
-  --vpc-id vpc-xxx \
-  --service-name com.amazonaws.region.ecr.dkr \
-  --vpc-endpoint-type Interface
-```
+**Explanation:** Ordinary DNS resolution uses the configured resolver/network path. Route 53 management API calls are different; current EKS private-cluster documentation lists a Route 53 PrivateLink service. EKS Auth, regional STS, OIDC discovery and ECR/S3 also have distinct paths, so verify actual service/Region requirements.
 
 </details>
 
@@ -219,7 +131,7 @@ aws ec2 create-vpc-endpoint \
 ### 7. What benchmark is used when checking EKS cluster security with kube-bench?
 
 * A) PCI-DSS
-* B) CIS Kubernetes Benchmark
+* B) The applicable CIS Amazon EKS benchmark profile
 * C) NIST Cybersecurity Framework
 * D) SOC 2
 
@@ -227,25 +139,9 @@ aws ec2 create-vpc-endpoint \
 
 <summary>Show Answer</summary>
 
-**Answer: B) CIS Kubernetes Benchmark**
+**Answer: B) The applicable CIS Amazon EKS benchmark profile**
 
-**Explanation:** kube-bench checks cluster security against the CIS (Center for Internet Security) Kubernetes Benchmark:
-
-```bash
-# Run kube-bench on EKS node
-kubectl apply -f https://raw.githubusercontent.com/aquasecurity/kube-bench/main/job-eks.yaml
-
-# Check results
-kubectl logs job/kube-bench
-```
-
-Inspection items:
-
-* Control Plane configuration (some N/A as EKS managed)
-* Worker Node configuration
-* Policies and Pod security
-* Network policies
-* Logging and auditing
+**Explanation:** Choose the CIS Amazon EKS benchmark edition and kube-bench profile appropriate to the environment. kube-bench0.16.0 includes several EKS profiles; a single mutable upstream Job is not proof of fleet coverage. Manual/not-applicable checks and managed-control-plane limits remain, and a quiz/tool score is not certification.
 
 </details>
 
@@ -264,30 +160,7 @@ Inspection items:
 
 **Answer: B) Bound tokens and expiration time settings**
 
-**Explanation:** Security benefits of Service Account Token Volume Projection:
-
-* **Bound tokens**: Valid only for specific Pod
-* **Expiration time**: Automatic token expiration (default 1 hour)
-* **Audience specification**: Valid only for specific audience
-
-```yaml
-spec:
-  containers:
-    - name: app
-      volumeMounts:
-        - name: token
-          mountPath: /var/run/secrets/tokens
-  volumes:
-    - name: token
-      projected:
-        sources:
-          - serviceAccountToken:
-              path: token
-              expirationSeconds: 3600
-              audience: sts.amazonaws.com
-```
-
-Legacy tokens never expired, posing risks if leaked.
+**Explanation:** Projection supports an audience and requested lifetime with object binding. Check the token's actual expiry and receiver validation; do not assume every token expires exactly one hour later. A stolen bearer token may still be replayed while accepted, so projection does not remove token-protection requirements. Projection alone is not a complete IRSA configuration.
 
 </details>
 
@@ -306,24 +179,7 @@ Legacy tokens never expired, posing risks if leaked.
 
 **Answer: B) Container image vulnerabilities**
 
-**Explanation:** Amazon Inspector's EKS integration:
-
-* Scan container images stored in ECR
-* Scan images of running workloads
-* Detect OS package vulnerabilities
-* Detect application package vulnerabilities (npm, pip, etc.)
-
-```bash
-# Enable Inspector
-aws inspector2 enable \
-  --resource-types ECR
-
-# Check scan results
-aws inspector2 list-findings \
-  --filter-criteria resourceType=AWS_ECR_CONTAINER_IMAGE
-```
-
-Continuous scanning provides alerts when new CVEs are discovered.
+**Explanation:** ECR enhanced scanning uses Inspector for supported image package vulnerabilities. Running-image usage information differs from runtime behavior detection. Gate the exact digest only after a successful status, completion timestamp and explicit findings-count map; pending/missing/error results must not become zero vulnerabilities.
 
 </details>
 
@@ -342,22 +198,7 @@ Continuous scanning provides alerts when new CVEs are discovered.
 
 **Answer: D) kubelet**
 
-**Explanation:** EKS Control Plane log types:
-
-* **api**: API server logs
-* **audit**: Audit logs (who did what)
-* **authenticator**: IAM authentication logs
-* **controllerManager**: Controller manager logs
-* **scheduler**: Scheduler logs
-
-kubelet logs are generated on worker nodes and are not Control Plane logs.
-
-```bash
-# Enable Control Plane logging
-aws eks update-cluster-config \
-  --name my-cluster \
-  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-```
+**Explanation:** The five EKS control-plane categories are api, audit, authenticator, controllerManager and scheduler. Kubelet/container logs require a separate node/runtime collection path. Enable exports through the cluster owner, inspect the asynchronous update and actual arrival, and configure retention and access.
 
 </details>
 
@@ -376,74 +217,28 @@ aws eks update-cluster-config \
 
 **Answer: B) Applying least privilege principle**
 
-**Explanation:** Importance of permission separation:
-
-**Node IAM Role (broad scope):**
-
-* Accessible by all Pods (Instance Metadata)
-* Only basic permissions like ECR pull, CloudWatch logs
-
-**IRSA (narrow scope):**
-
-* Connected to specific ServiceAccount only
-* Grant only permissions needed per application
-
-```yaml
-# Wrong example: S3 full access on Node Role
-# -> All Pods can access S3
-
-# Correct example: Grant permissions only to specific Pod via IRSA
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: s3-processor
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::xxx:role/S3ProcessorRole
-```
+**Explanation:** Workload roles limit application permissions independently of node responsibilities. Node-role exposure depends on metadata reachability and privilege; not every Pod always has access. IRSA alone does not block IMDS. Review IMDSv2, network controls, hostNetwork/privileged workloads, SDK credential precedence and node compromise.
 
 </details>
 
 ***
 
-### 12. Which component is responsible for integrating Kubernetes RBAC with AWS IAM in EKS?
+<span id="_12-which-component-is-responsible-for-integrating-kubernetes-rbac-with-aws-iam-in-eks"></span>
 
-* A) kube-apiserver
-* B) aws-auth ConfigMap
-* C) aws-iam-authenticator
-* D) kube-proxy
+### 12. Which approach grants an EKS developer only the required namespace access?
+
+* A) Add every developer to system:masters
+* B) Share the node role with all developers
+* C) Use an access entry with scoped access policy or group/RBAC mapping
+* D) Disable API authentication
 
 <details>
 
 <summary>Show Answer</summary>
 
-**Answer: C) aws-iam-authenticator**
+**Answer: C) Use an access entry with scoped access policy or group/RBAC mapping**
 
-**Explanation:** EKS authentication flow:
-
-1. kubectl obtains token from AWS STS
-2. aws-iam-authenticator validates IAM credentials
-3. aws-auth ConfigMap maps IAM -> Kubernetes user/group
-4. Kubernetes RBAC determines permissions
-
-```yaml
-# aws-auth ConfigMap
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: aws-auth
-  namespace: kube-system
-data:
-  mapRoles: |
-    - rolearn: arn:aws:iam::123456789012:role/DevTeamRole
-      username: dev-user
-      groups:
-        - dev-team
-  mapUsers: |
-    - userarn: arn:aws:iam::123456789012:user/admin
-      username: admin
-      groups:
-        - system:masters
-```
+**Explanation:** Use an access entry with the required scoped EKS access policy or Kubernetes group/RBAC mapping. Authentication and authorization are separate. The aws-auth ConfigMap is a legacy path, and authentication-mode migration has one-way constraints. Avoid system:masters for ordinary developers; either EKS access policies or RBAC may independently allow an operation.
 
 </details>
 
@@ -455,7 +250,7 @@ Calculate 1 point per question.
 
 | Score | Rating                                                     |
 | ----- | ---------------------------------------------------------- |
-| 11-12 | Excellent - EKS security expert level                      |
+| 11-12 | Review complete; validate operational scenarios next                      |
 | 8-10  | Good - Basic concepts understood, review advanced features |
 | 5-7   | Average - Additional study recommended                     |
 | 0-4   | Basic learning needed                                      |
@@ -464,6 +259,6 @@ Calculate 1 point per question.
 
 ## Related Documentation
 
-* [EKS Security Best Practices](06-eks-security-best-practices-quiz.md)
-* [Pod Security Standards](03-pod-security-standards-quiz.md)
-* [Secrets Management](05-secrets-management-quiz.md)
+* [EKS Security Best Practices](../../security/06-eks-security-best-practices.md)
+* [Pod Security Standards](../../security/03-pod-security-standards.md)
+* [Secrets Management](../../security/05-secrets-management.md)

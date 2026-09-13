@@ -1,0 +1,10 @@
+[
+  {"Name": "EKS_AUDIT_LOGS", "Status": "ENABLED"},
+  {
+    "Name": "RUNTIME_MONITORING",
+    "Status": "ENABLED",
+    "AdditionalConfiguration": [
+      {"Name": "EKS_ADDON_MANAGEMENT", "Status": "ENABLED"}
+    ]
+  }
+]
