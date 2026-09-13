@@ -1,0 +1,438 @@
+{
+  "status": "passed-scoped-live-check",
+  "verifiedAt": "2026-09-13T03:20:31.883175+00:00",
+  "deploymentRun": 34734160444,
+  "layout": {
+    "status": "passed",
+    "cases": [
+      {
+        "route": "ko/service-mesh/istio/01-installation",
+        "width": 375,
+        "state": {
+          "viewport": 375,
+          "scroll": 375,
+          "articleWidth": 327,
+          "missingImages": [],
+          "iframes": [
+            {
+              "width": 0,
+              "src": "https://googleads.g.doubleclick.net/pagead/ads?client=ca-pub-6267917556914416&output=html&adk=1812271804&adf=3025194257&abgtt=6&lmt=1789269054&plat=3%3A65536%2C4%3A65536%2C16%3A8388608%2C17%3A32%2C24%3A32%2C25%3A32%2C30%3A1048576%2C32%3A32%2C41%3A32%2C42%3A32%2C43%3A32%2C44%3A32&format=0x0&url=https%3A%2F%2Fwww.atomai.click%2Fkubernetes-docs%2Fko%2Fservice-mesh%2Fistio%2F01-installation&pra=5&asro=0&aimartd=4&aieuf=1&aicrs=1&uach=WyJMaW51eCIsIiIsImFybSIsIiIsIjE0OC4wLjc3NzguMCIsbnVsbCwwLG51bGwsIjY0IixbWyJDaHJvbWl1bSIsIjE0OC4wLjc3NzguMCJdLFsiSGVhZGxlc3NDaHJvbWUiLCIxNDguMC43Nzc4LjAiXSxbIk5vdC9BKUJyYW5kIiwiOTkuMC4wLjAiXV0sMF0.&dt=1789269528949&bpp=3&bdt=696&idt=142&shv=r20260909&mjsv=m202609040101&ptt=9&saldr=aa&abxe=1&cookie_enabled=1&eoidce=1&nras=1&correlator=5741764859176&frm=20&pv=2&u_tz=0&u_his=2&u_h=1080&u_w=375&u_ah=1080&u_aw=375&u_cd=24&u_sd=1&dmc=32&adx=-12245933&ady=-12245933&biw=375&bih=1080&scr_x=0&scr_y=0&eid=95399630%2C95400774&oid=2&pvsid=1980409872371919&tmod=630807913&uas=0&nvt=1&fsapi=1&fc=1920&brdim=0%2C0%2C0%2C0%2C375%2C0%2C375%2C1080%2C375%2C1080&vis=1&rsz=%7C%7Cs%7C&abl=NS&fu=32768&bc=31&bz=1&pgls=CAA.~CAs.&ifi=1&uci=a!1&fsb=1&dtd=168"
+            },
+            {
+              "width": 0,
+              "src": "https://www.google.com/recaptcha/api2/aframe"
+            },
+            {
+              "width": 0,
+              "src": "https://googleads.g.doubleclick.net/pagead/html/r20260909/r20190131/zrt_lookup.html"
+            }
+          ],
+          "dateModified": []
+        },
+        "errors": [],
+        "blocked": [
+          "www.googletagmanager.com",
+          "googleads.g.doubleclick.net"
+        ],
+        "passed": true
+      },
+      {
+        "route": "ko/service-mesh/istio/01-installation",
+        "width": 768,
+        "state": {
+          "viewport": 768,
+          "scroll": 768,
+          "articleWidth": 704,
+          "missingImages": [],
+          "iframes": [
+            {
+              "width": 0,
+              "src": "https://googleads.g.doubleclick.net/pagead/ads?client=ca-pub-6267917556914416&output=html&adk=1812271804&adf=3025194257&abgtt=6&lmt=1789269054&plat=3%3A65536%2C4%3A65536%2C9%3A32768%2C16%3A8388608%2C17%3A32%2C24%3A32%2C25%3A32%2C30%3A1048576%2C32%3A32%2C41%3A32%2C42%3A32%2C43%3A32%2C44%3A32&format=0x0&url=https%3A%2F%2Fwww.atomai.click%2Fkubernetes-docs%2Fko%2Fservice-mesh%2Fistio%2F01-installation&pra=5&aiof=11&asro=0&aimartd=4&aieuf=1&aicrs=1&uach=WyJMaW51eCIsIiIsImFybSIsIiIsIjE0OC4wLjc3NzguMCIsbnVsbCwwLG51bGwsIjY0IixbWyJDaHJvbWl1bSIsIjE0OC4wLjc3NzguMCJdLFsiSGVhZGxlc3NDaHJvbWUiLCIxNDguMC43Nzc4LjAiXSxbIk5vdC9BKUJyYW5kIiwiOTkuMC4wLjAiXV0sMF0.&dt=1789269530962&bpp=4&bdt=339&idt=116&shv=r20260909&mjsv=m202609080101&ptt=9&saldr=aa&abxe=1&cookie_enabled=1&eoidce=1&nras=1&correlator=2326889723121&frm=20&pv=2&u_tz=0&u_his=2&u_h=1080&u_w=768&u_ah=1080&u_aw=768&u_cd=24&u_sd=1&dmc=32&adx=-12245933&ady=-12245933&biw=768&bih=1080&scr_x=0&scr_y=0&eid=95396000%2C95399629%2C95400348%2C95400775%2C122880936%2C122880973&oid=2&pvsid=1352448149134280&tmod=1017854746&uas=0&nvt=1&fsapi=1&fc=1920&brdim=0%2C0%2C0%2C0%2C768%2C0%2C768%2C1080%2C768%2C1080&vis=1&rsz=%7C%7Cs%7C&abl=NS&fu=32768&bc=31&bz=1&pgls=CAA.~CAs.&ifi=1&uci=a!1&fsb=1&dtd=140"
+            },
+            {
+              "width": 0,
+              "src": "https://www.google.com/recaptcha/api2/aframe"
+            },
+            {
+              "width": 0,
+              "src": "https://googleads.g.doubleclick.net/pagead/html/r20260909/r20190131/zrt_lookup.html"
+            }
+          ],
+          "dateModified": []
+        },
+        "errors": [],
+        "blocked": [
+          "www.googletagmanager.com",
+          "googleads.g.doubleclick.net"
+        ],
+        "passed": true
+      },
+      {
+        "route": "ko/service-mesh/istio/01-installation",
+        "width": 1920,
+        "state": {
+          "viewport": 1920,
+          "scroll": 1920,
+          "articleWidth": 952,
+          "missingImages": [],
+          "iframes": [
+            {
+              "width": 0,
+              "src": "https://googleads.g.doubleclick.net/pagead/ads?client=ca-pub-6267917556914416&output=html&adk=1812271804&adf=3025194257&abgtt=6&lmt=1789269054&plat=1%3A16777216%2C2%3A16777216%2C3%3A16%2C9%3A32776%2C16%3A8388608%2C17%3A32%2C24%3A32%2C25%3A32%2C30%3A1081344%2C32%3A32%2C41%3A32%2C42%3A32%2C43%3A32%2C44%3A32&format=0x0&url=https%3A%2F%2Fwww.atomai.click%2Fkubernetes-docs%2Fko%2Fservice-mesh%2Fistio%2F01-installation&pra=5&aiof=11&asro=0&aimartd=4&aieuf=1&aicrs=1&uach=WyJMaW51eCIsIiIsImFybSIsIiIsIjE0OC4wLjc3NzguMCIsbnVsbCwwLG51bGwsIjY0IixbWyJDaHJvbWl1bSIsIjE0OC4wLjc3NzguMCJdLFsiSGVhZGxlc3NDaHJvbWUiLCIxNDguMC43Nzc4LjAiXSxbIk5vdC9BKUJyYW5kIiwiOTkuMC4wLjAiXV0sMF0.&dt=1789269532954&bpp=3&bdt=344&idt=145&shv=r20260909&mjsv=m202609080101&ptt=9&saldr=aa&abxe=1&cookie_enabled=1&eoidce=1&nras=1&correlator=2592045859958&frm=20&pv=2&u_tz=0&u_his=2&u_h=1080&u_w=1920&u_ah=1080&u_aw=1920&u_cd=24&u_sd=1&dmc=32&adx=-12245933&ady=-12245933&biw=1920&bih=1080&scr_x=0&scr_y=0&eid=95399630%2C95400480%2C95400775%2C122880931&oid=2&pvsid=7030985384050436&tmod=119513035&uas=0&nvt=1&fsapi=1&fc=1920&brdim=0%2C0%2C0%2C0%2C1920%2C0%2C1920%2C1080%2C1920%2C1080&vis=1&rsz=%7C%7Cs%7C&abl=NS&fu=32768&bc=31&plas=202x854_r&bz=1&pgls=CAA.~CAs.&ifi=1&uci=a!1&fsb=1&dtd=197"
+            },
+            {
+              "width": 0,
+              "src": "https://www.google.com/recaptcha/api2/aframe"
+            },
+            {
+              "width": 0,
+              "src": "https://googleads.g.doubleclick.net/pagead/html/r20260909/r20190131/zrt_lookup.html"
+            }
+          ],
+          "dateModified": []
+        },
+        "errors": [],
+        "blocked": [
+          "www.googletagmanager.com",
+          "googleads.g.doubleclick.net"
+        ],
+        "passed": true
+      },
+      {
+        "route": "ko/platform-engineering/07-crossplane",
+        "width": 375,
+        "state": {
+          "viewport": 375,
+          "scroll": 375,
+          "articleWidth": 327,
+          "missingImages": [],
+          "iframes": [
+            {
+              "width": 0,
+              "src": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-0.html"
+            },
+            {
+              "width": 0,
+              "src": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-1.html"
+            },
+            {
+              "width": 0,
+              "src": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-2.html"
+            },
+            {
+              "width": 0,
+              "src": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-3.html"
+            },
+            {
+              "width": 0,
+              "src": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-4.html"
+            },
+            {
+              "width": 0,
+              "src": "https://googleads.g.doubleclick.net/pagead/ads?client=ca-pub-6267917556914416&output=html&adk=1812271804&adf=3025194257&abgtt=6&lmt=1789269052&plat=3%3A65536%2C4%3A65536%2C16%3A8388608%2C17%3A32%2C24%3A32%2C25%3A32%2C30%3A1048576%2C32%3A32%2C41%3A32%2C42%3A32%2C43%3A32%2C44%3A32&format=0x0&url=https%3A%2F%2Fwww.atomai.click%2Fkubernetes-docs%2Fko%2Fplatform-engineering%2F07-crossplane&pra=5&aiof=11&asro=0&aimartd=4&aieuf=1&aicrs=1&uach=WyJMaW51eCIsIiIsImFybSIsIiIsIjE0OC4wLjc3NzguMCIsbnVsbCwwLG51bGwsIjY0IixbWyJDaHJvbWl1bSIsIjE0OC4wLjc3NzguMCJdLFsiSGVhZGxlc3NDaHJvbWUiLCIxNDguMC43Nzc4LjAiXSxbIk5vdC9BKUJyYW5kIiwiOTkuMC4wLjAiXV0sMF0.&dt=1789269535134&bpp=3&bdt=220&idt=156&shv=r20260909&mjsv=m202609040101&ptt=9&saldr=aa&abxe=1&cookie_enabled=1&eoidce=1&nras=1&correlator=5864397812036&frm=20&pv=2&u_tz=0&u_his=2&u_h=1080&u_w=375&u_ah=1080&u_aw=375&u_cd=24&u_sd=1&dmc=32&adx=-12245933&ady=-12245933&biw=375&bih=1080&scr_x=0&scr_y=0&eid=95399629%2C95400775%2C95401792&oid=2&pvsid=3301221695955473&tmod=718240232&uas=0&nvt=1&fsapi=1&fc=1920&brdim=0%2C0%2C0%2C0%2C375%2C0%2C375%2C1080%2C375%2C1080&vis=1&rsz=%7C%7Cs%7C&abl=NS&fu=32768&bc=31&bz=1&pgls=CAA.~CAs.&ifi=1&uci=a!1&fsb=1&dtd=186"
+            },
+            {
+              "width": 0,
+              "src": "https://www.google.com/recaptcha/api2/aframe"
+            },
+            {
+              "width": 0,
+              "src": "https://googleads.g.doubleclick.net/pagead/html/r20260909/r20190131/zrt_lookup.html"
+            }
+          ],
+          "dateModified": [
+            "2026-09-13"
+          ]
+        },
+        "errors": [],
+        "blocked": [
+          "www.googletagmanager.com",
+          "googleads.g.doubleclick.net"
+        ],
+        "passed": true
+      },
+      {
+        "route": "ko/platform-engineering/07-crossplane",
+        "width": 768,
+        "state": {
+          "viewport": 768,
+          "scroll": 768,
+          "articleWidth": 704,
+          "missingImages": [],
+          "iframes": [
+            {
+              "width": 0,
+              "src": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-0.html"
+            },
+            {
+              "width": 0,
+              "src": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-1.html"
+            },
+            {
+              "width": 0,
+              "src": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-2.html"
+            },
+            {
+              "width": 0,
+              "src": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-3.html"
+            },
+            {
+              "width": 0,
+              "src": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-4.html"
+            },
+            {
+              "width": 0,
+              "src": "https://googleads.g.doubleclick.net/pagead/ads?client=ca-pub-6267917556914416&output=html&adk=1812271804&adf=3025194257&abgtt=6&lmt=1789269052&plat=3%3A65536%2C4%3A65536%2C9%3A32768%2C16%3A8388608%2C17%3A32%2C24%3A32%2C25%3A32%2C30%3A1048576%2C32%3A32%2C41%3A32%2C42%3A32%2C43%3A32%2C44%3A32&format=0x0&url=https%3A%2F%2Fwww.atomai.click%2Fkubernetes-docs%2Fko%2Fplatform-engineering%2F07-crossplane&pra=5&asro=0&aimartd=4&aieuf=1&aicrs=1&uach=WyJMaW51eCIsIiIsImFybSIsIiIsIjE0OC4wLjc3NzguMCIsbnVsbCwwLG51bGwsIjY0IixbWyJDaHJvbWl1bSIsIjE0OC4wLjc3NzguMCJdLFsiSGVhZGxlc3NDaHJvbWUiLCIxNDguMC43Nzc4LjAiXSxbIk5vdC9BKUJyYW5kIiwiOTkuMC4wLjAiXV0sMF0.&dt=1789269537233&bpp=3&bdt=378&idt=119&shv=r20260909&mjsv=m202609090101&ptt=9&saldr=aa&abxe=1&cookie_enabled=1&eoidce=1&nras=1&correlator=143490962530&frm=20&pv=2&u_tz=0&u_his=2&u_h=1080&u_w=768&u_ah=1080&u_aw=768&u_cd=24&u_sd=1&dmc=32&adx=-12245933&ady=-12245933&biw=768&bih=1080&scr_x=0&scr_y=0&eid=95399630%2C95400774%2C95401791%2C122880974%2C95340252%2C95340254&oid=2&pvsid=3118114388908221&tmod=140889310&uas=0&nvt=1&fsapi=1&fc=1920&brdim=0%2C0%2C0%2C0%2C768%2C0%2C768%2C1080%2C768%2C1080&vis=1&rsz=%7C%7Cs%7C&abl=NS&fu=32768&bc=31&bz=1&pgls=CAA.~CAs.&ifi=1&uci=a!1&fsb=1&dtd=149"
+            },
+            {
+              "width": 0,
+              "src": "https://www.google.com/recaptcha/api2/aframe"
+            },
+            {
+              "width": 0,
+              "src": "https://googleads.g.doubleclick.net/pagead/html/r20260909/r20190131/zrt_lookup.html"
+            }
+          ],
+          "dateModified": [
+            "2026-09-13"
+          ]
+        },
+        "errors": [],
+        "blocked": [
+          "www.googletagmanager.com",
+          "googleads.g.doubleclick.net"
+        ],
+        "passed": true
+      },
+      {
+        "route": "ko/platform-engineering/07-crossplane",
+        "width": 1920,
+        "state": {
+          "viewport": 1920,
+          "scroll": 1920,
+          "articleWidth": 952,
+          "missingImages": [],
+          "iframes": [
+            {
+              "width": 952,
+              "src": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-0.html"
+            },
+            {
+              "width": 952,
+              "src": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-1.html"
+            },
+            {
+              "width": 952,
+              "src": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-2.html"
+            },
+            {
+              "width": 952,
+              "src": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-3.html"
+            },
+            {
+              "width": 952,
+              "src": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-07-crossplane-4.html"
+            },
+            {
+              "width": 0,
+              "src": "https://googleads.g.doubleclick.net/pagead/ads?client=ca-pub-6267917556914416&output=html&adk=1812271804&adf=3025194257&abgtt=6&lmt=1789269052&plat=1%3A16777216%2C2%3A16777216%2C3%3A16%2C9%3A32776%2C16%3A8388608%2C17%3A32%2C24%3A32%2C25%3A32%2C30%3A1081344%2C32%3A32%2C41%3A32%2C42%3A32%2C43%3A32%2C44%3A32&format=0x0&url=https%3A%2F%2Fwww.atomai.click%2Fkubernetes-docs%2Fko%2Fplatform-engineering%2F07-crossplane&pra=5&aiof=11&asro=0&aimartd=4&aieuf=1&aicrs=1&uach=WyJMaW51eCIsIiIsImFybSIsIiIsIjE0OC4wLjc3NzguMCIsbnVsbCwwLG51bGwsIjY0IixbWyJDaHJvbWl1bSIsIjE0OC4wLjc3NzguMCJdLFsiSGVhZGxlc3NDaHJvbWUiLCIxNDguMC43Nzc4LjAiXSxbIk5vdC9BKUJyYW5kIiwiOTkuMC4wLjAiXV0sMF0.&dt=1789269539255&bpp=3&bdt=358&idt=699&shv=r20260909&mjsv=m202609040101&ptt=9&saldr=aa&abxe=1&cookie_enabled=1&eoidce=1&nras=1&correlator=8200009349904&frm=20&pv=2&u_tz=0&u_his=2&u_h=1080&u_w=1920&u_ah=1080&u_aw=1920&u_cd=24&u_sd=1&dmc=32&adx=-12245933&ady=-12245933&biw=1920&bih=1080&scr_x=0&scr_y=0&eid=95399630%2C95400775%2C95340252%2C95340254&oid=2&pvsid=2567334334080463&tmod=1678855738&uas=0&nvt=1&fsapi=1&fc=1920&brdim=0%2C0%2C0%2C0%2C1920%2C0%2C1920%2C1080%2C1920%2C1080&vis=1&rsz=%7C%7Cs%7C&abl=NS&fu=32768&bc=31&plas=202x854_r&bz=1&pgls=CAA.~CAs.&ifi=1&uci=a!1&fsb=1&dtd=755"
+            },
+            {
+              "width": 0,
+              "src": "https://www.google.com/recaptcha/api2/aframe"
+            },
+            {
+              "width": 0,
+              "src": "https://googleads.g.doubleclick.net/pagead/html/r20260909/r20190131/zrt_lookup.html"
+            }
+          ],
+          "dateModified": [
+            "2026-09-13"
+          ]
+        },
+        "errors": [],
+        "blocked": [
+          "www.googletagmanager.com",
+          "fonts.googleapis.com",
+          "googleads.g.doubleclick.net"
+        ],
+        "passed": true
+      },
+      {
+        "route": "en/security/07-image-security",
+        "width": 375,
+        "state": {
+          "viewport": 375,
+          "scroll": 375,
+          "articleWidth": 327,
+          "missingImages": [],
+          "iframes": [
+            {
+              "width": 0,
+              "src": "https://googleads.g.doubleclick.net/pagead/ads?client=ca-pub-6267917556914416&output=html&adk=1812271804&adf=3025194257&abgtt=6&lmt=1789269052&plat=3%3A65536%2C4%3A65536%2C16%3A8388608%2C17%3A32%2C24%3A32%2C25%3A32%2C30%3A1048576%2C32%3A32%2C41%3A32%2C42%3A32%2C43%3A32%2C44%3A32&format=0x0&url=https%3A%2F%2Fwww.atomai.click%2Fkubernetes-docs%2Fen%2Fsecurity%2F07-image-security&pra=5&aiof=11&asro=0&aimartd=4&aieuf=1&aicrs=1&uach=WyJMaW51eCIsIiIsImFybSIsIiIsIjE0OC4wLjc3NzguMCIsbnVsbCwwLG51bGwsIjY0IixbWyJDaHJvbWl1bSIsIjE0OC4wLjc3NzguMCJdLFsiSGVhZGxlc3NDaHJvbWUiLCIxNDguMC43Nzc4LjAiXSxbIk5vdC9BKUJyYW5kIiwiOTkuMC4wLjAiXV0sMF0.&dt=1789269542077&bpp=3&bdt=174&idt=175&shv=r20260909&mjsv=m202609040101&ptt=9&saldr=aa&abxe=1&cookie_enabled=1&eoidce=1&nras=1&correlator=4363058863072&frm=20&pv=2&u_tz=0&u_his=2&u_h=1080&u_w=375&u_ah=1080&u_aw=375&u_cd=24&u_sd=1&dmc=32&adx=-12245933&ady=-12245933&biw=375&bih=1080&scr_x=0&scr_y=0&eid=95399629%2C95400775%2C95401792%2C95390277&oid=2&pvsid=2273973697478034&tmod=461831124&uas=0&nvt=1&fsapi=1&fc=1920&brdim=0%2C0%2C0%2C0%2C375%2C0%2C375%2C1080%2C375%2C1080&vis=1&rsz=%7C%7Cs%7C&abl=NS&fu=32768&bc=31&bz=1&pgls=CAA.&ifi=1&uci=a!1&fsb=1&dtd=200"
+            },
+            {
+              "width": 0,
+              "src": "https://www.google.com/recaptcha/api2/aframe"
+            },
+            {
+              "width": 0,
+              "src": "https://googleads.g.doubleclick.net/pagead/html/r20260909/r20190131/zrt_lookup.html"
+            }
+          ],
+          "dateModified": [
+            "2026-09-13"
+          ]
+        },
+        "errors": [],
+        "blocked": [
+          "www.googletagmanager.com",
+          "googleads.g.doubleclick.net"
+        ],
+        "passed": true
+      },
+      {
+        "route": "en/security/07-image-security",
+        "width": 768,
+        "state": {
+          "viewport": 768,
+          "scroll": 768,
+          "articleWidth": 704,
+          "missingImages": [],
+          "iframes": [
+            {
+              "width": 0,
+              "src": "https://googleads.g.doubleclick.net/pagead/ads?client=ca-pub-6267917556914416&output=html&adk=1812271804&adf=3025194257&abgtt=6&lmt=1789269052&plat=3%3A65536%2C4%3A65536%2C9%3A32768%2C16%3A8388608%2C17%3A32%2C24%3A32%2C25%3A32%2C30%3A1048576%2C32%3A32%2C41%3A32%2C42%3A32%2C43%3A32%2C44%3A32&format=0x0&url=https%3A%2F%2Fwww.atomai.click%2Fkubernetes-docs%2Fen%2Fsecurity%2F07-image-security&pra=5&aiof=11&asro=0&aimartd=4&aieuf=1&aicrs=1&uach=WyJMaW51eCIsIiIsImFybSIsIiIsIjE0OC4wLjc3NzguMCIsbnVsbCwwLG51bGwsIjY0IixbWyJDaHJvbWl1bSIsIjE0OC4wLjc3NzguMCJdLFsiSGVhZGxlc3NDaHJvbWUiLCIxNDguMC43Nzc4LjAiXSxbIk5vdC9BKUJyYW5kIiwiOTkuMC4wLjAiXV0sMF0.&dt=1789269544209&bpp=3&bdt=298&idt=116&shv=r20260909&mjsv=m202609040101&ptt=9&saldr=aa&abxe=1&cookie_enabled=1&eoidce=1&nras=1&correlator=1854072173909&frm=20&pv=2&u_tz=0&u_his=2&u_h=1080&u_w=768&u_ah=1080&u_aw=768&u_cd=24&u_sd=1&dmc=32&adx=-12245933&ady=-12245933&biw=768&bih=1080&scr_x=0&scr_y=0&eid=95399630%2C95400775&oid=2&pvsid=7489014590402797&tmod=1759941864&uas=0&nvt=1&fsapi=1&fc=1920&brdim=0%2C0%2C0%2C0%2C768%2C0%2C768%2C1080%2C768%2C1080&vis=1&rsz=%7C%7Cs%7C&abl=NS&fu=32768&bc=31&bz=1&pgls=CAA.~CAs.&ifi=1&uci=a!1&fsb=1&dtd=140"
+            },
+            {
+              "width": 0,
+              "src": "https://www.google.com/recaptcha/api2/aframe"
+            },
+            {
+              "width": 0,
+              "src": "https://googleads.g.doubleclick.net/pagead/html/r20260909/r20190131/zrt_lookup.html"
+            }
+          ],
+          "dateModified": [
+            "2026-09-13"
+          ]
+        },
+        "errors": [],
+        "blocked": [
+          "www.googletagmanager.com",
+          "googleads.g.doubleclick.net"
+        ],
+        "passed": true
+      },
+      {
+        "route": "en/security/07-image-security",
+        "width": 1920,
+        "state": {
+          "viewport": 1920,
+          "scroll": 1920,
+          "articleWidth": 952,
+          "missingImages": [],
+          "iframes": [
+            {
+              "width": 0,
+              "src": "https://googleads.g.doubleclick.net/pagead/ads?client=ca-pub-6267917556914416&output=html&adk=1812271804&adf=3025194257&abgtt=6&lmt=1789269052&plat=1%3A16777216%2C2%3A16777216%2C3%3A16%2C9%3A32776%2C16%3A8388608%2C17%3A32%2C24%3A32%2C25%3A32%2C30%3A1081344%2C32%3A32%2C41%3A32%2C42%3A32%2C43%3A32%2C44%3A32&format=0x0&url=https%3A%2F%2Fwww.atomai.click%2Fkubernetes-docs%2Fen%2Fsecurity%2F07-image-security&pra=5&aiof=11&asro=0&aimartd=4&aieuf=1&aicrs=1&uach=WyJMaW51eCIsIiIsImFybSIsIiIsIjE0OC4wLjc3NzguMCIsbnVsbCwwLG51bGwsIjY0IixbWyJDaHJvbWl1bSIsIjE0OC4wLjc3NzguMCJdLFsiSGVhZGxlc3NDaHJvbWUiLCIxNDguMC43Nzc4LjAiXSxbIk5vdC9BKUJyYW5kIiwiOTkuMC4wLjAiXV0sMF0.&dt=1789269546149&bpp=3&bdt=293&idt=113&shv=r20260909&mjsv=m202609040101&ptt=9&saldr=aa&abxe=1&cookie_enabled=1&eoidce=1&nras=1&correlator=6201319521370&frm=20&pv=2&u_tz=0&u_his=2&u_h=1080&u_w=1920&u_ah=1080&u_aw=1920&u_cd=24&u_sd=1&dmc=32&adx=-12245933&ady=-12245933&biw=1920&bih=1080&scr_x=0&scr_y=0&eid=95399630%2C95400775&oid=2&pvsid=1943262771234331&tmod=2140184408&uas=0&nvt=1&fsapi=1&fc=1920&brdim=0%2C0%2C0%2C0%2C1920%2C0%2C1920%2C1080%2C1920%2C1080&vis=1&rsz=%7C%7Cs%7C&abl=NS&fu=32768&bc=31&plas=202x854_r&bz=1&pgls=CAA.~CAs.&ifi=1&uci=a!1&fsb=1&dtd=164"
+            },
+            {
+              "width": 0,
+              "src": "https://www.google.com/recaptcha/api2/aframe"
+            },
+            {
+              "width": 0,
+              "src": "https://googleads.g.doubleclick.net/pagead/html/r20260909/r20190131/zrt_lookup.html"
+            }
+          ],
+          "dateModified": [
+            "2026-09-13"
+          ]
+        },
+        "errors": [],
+        "blocked": [
+          "www.googletagmanager.com",
+          "googleads.g.doubleclick.net"
+        ],
+        "passed": true
+      }
+    ],
+    "scope": "Three live pages at375/768/1920; analytics and external fonts blocked; layout/image/console validation only"
+  },
+  "llmEndpoints": [
+    {
+      "path": "llms/manifest.json",
+      "status": 200,
+      "bytes": 1229156,
+      "sha256": "0908d2cb2442cf8fce66404c6a03f7a90740541ab44715b25d29ac3a8372d4df",
+      "contentType": "application/json; charset=utf-8"
+    },
+    {
+      "path": "llms-full-ko.txt",
+      "status": 200,
+      "bytes": 10036743,
+      "sha256": "788f9cfad7a3243f8998d59a2c58cbe649bc0f1c5db5c12dc6b93550217c9a16",
+      "contentType": "text/plain; charset=utf-8"
+    },
+    {
+      "path": "llms-full-en.txt",
+      "status": 200,
+      "bytes": 9394175,
+      "sha256": "8414f702cd0521d3cefd5b9c7c6ad020d2c18bf4e6992940b45086f27352f3b2",
+      "contentType": "text/plain; charset=utf-8"
+    },
+    {
+      "path": "llms/ko/service-mesh/istio/01-installation.md",
+      "status": 200,
+      "bytes": 17822,
+      "sha256": "145375f1e31ea4053fc6de0e32e73e8f0109ab661bb880259b38ae2624c2f8ad",
+      "contentType": "text/markdown; charset=utf-8"
+    }
+  ],
+  "manifest": {
+    "status": "passed",
+    "manifestDocuments": 644,
+    "locales": [
+      "ko",
+      "en"
+    ],
+    "allManifestURLsInSitemap": true,
+    "sample": [
+      {
+        "id": "ko/service-mesh/istio/01-installation.md",
+        "sha256": "145375f1e31ea4053fc6de0e32e73e8f0109ab661bb880259b38ae2624c2f8ad",
+        "bytes": 17822,
+        "matchesManifest": true
+      },
+      {
+        "id": "en/platform-engineering/07-crossplane.md",
+        "sha256": "26f854abf2942907307da2638c2b207839fbbd907b4ba910ba1cc830a9fcfa2d",
+        "bytes": 27283,
+        "matchesManifest": true
+      },
+      {
+        "id": "ko/security/07-image-security.md",
+        "sha256": "f9f47a75c0af6293fb6351ca199e30991c47e393a639fb73e0fddbb9ea074307",
+        "bytes": 32106,
+        "matchesManifest": true
+      },
+      {
+        "id": "en/observability/metrics/01-prometheus.md",
+        "sha256": "57b509300e076608a75961419b18279a895ec44bd62a98484f880e681976e049",
+        "bytes": 42533,
+        "matchesManifest": true
+      }
+    ],
+    "scope": "Four representative raw Markdown hashes/byte lengths match the live manifest; no inference of universal AI indexing."
+  },
+  "sitemapURLs": 1193,
+  "interpretation": [
+    "At1920px the measured article content width is952px; at375px it is327px; at768px it is704px on allthree testedpages. No documentoverflow,missingimages orpageerrors.",
+    "The language-specific fullcontent endpoints are llms-full-ko.txt andllms-full-en.txt. There is no requirement oradvertisedgeneric llms-full.txt endpoint.",
+    "644manifestentries(322perlocale) cover the documented content boundary; quizanswers andlabs are deliberately excluded frommanifest/MCP. Fullcontent bundles include labs asdocumented.",
+    "All644manifest canonicalURLs are insitemap; foursampledrawMarkdownfiles matchmanifest SHA256andbytelength.",
+    "The repository provides a localstdioMCPserver,notanHTTPMCP endpoint attheGitHubPagessite.",
+    "This verifies deployment andmachine-readability,not actualGoogleindexing/ranking oranalyticsusercounts. Analyticsnetworkrequests wereblocked duringbrowserchecks."
+  ]
+}
