@@ -27,7 +27,8 @@
     "validation": [
       "kafka-schema-registry-validation.json"
     ],
-    "reviewedSha256": "afdb00e593b8d1e7e9d177f4d48a30ad7b6fce67ab569b5d1b81db4a45bb3002"
+    "reviewedSha256": "09e8278533ae40ea2431c58d906c024965f7008b85c3d3ec71bbfd6eed39c28c",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md",
@@ -87,7 +88,8 @@
     "validation": [
       "kafka-schema-registry-validation.json"
     ],
-    "reviewedSha256": "9eafdcd6e66b5a05423dda16b919bb03b300190118776bcf4901df3823be661d"
+    "reviewedSha256": "12219ed70c556abd793b0236081c91e07e0f431b9dafac367984acf2de1e331b",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/data-on-eks/kafka/04-schema-registry-quiz.md",

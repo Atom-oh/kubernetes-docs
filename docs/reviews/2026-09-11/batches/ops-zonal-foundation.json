@@ -42,7 +42,8 @@
       "docs/reviews/2026-09-11/ops-zonal-validation.json",
       "docs/reviews/2026-09-11/ops-zonal-diagrams-validation.json"
     ],
-    "reviewedSha256": "13ab42c9030d7794d0805b8f7fda0c77891bd1f0cf0a70116a9240774f17e062"
+    "reviewedSha256": "8154981d49ffe1c1347de61946e29103675c58d0cccedbbf2ec22b8592e7b8b7",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/ops/README.md",
@@ -87,7 +88,8 @@
       "docs/reviews/2026-09-11/ops-zonal-validation.json",
       "docs/reviews/2026-09-11/ops-zonal-diagrams-validation.json"
     ],
-    "reviewedSha256": "f49d1d74c14dc69ddf99397656ab1a9ac5dd17073ee78823469cce6e11d4d8a0"
+    "reviewedSha256": "ddabe1df91658543a43f1c451478642ac2af752070dce14cdabf4623eab2db9e",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/ops/15-zonal-operations-guide.md",

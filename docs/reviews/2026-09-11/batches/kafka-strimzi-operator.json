@@ -77,7 +77,7 @@
     "validation": [
       "kafka-strimzi-validation.json"
     ],
-    "reviewedSha256": "475e7bf0812d1ee3e4ce70213a42878e3399c2e33f811d19d26fa7ffc4e6a216",
+    "reviewedSha256": "1884fc62a04ad4298683650d7e154bb02022fd55e0c4e0210d287781f882f938",
     "findings": [
       "UpdatedtoStrimzi1.2.0/Kafka4.3.1/v1APIswithfresh-installscopeandexplicitbetaCRDmigration;minimumK8s1.30confirmed.",
       "ValidatedHelmdefault/additionalnamespacewatchandcorrespondingRoleBindings;removedenv-onlywatchchangesandcurlsedapplypath.",
@@ -87,7 +87,8 @@
       "SeparatedstandardEBSCSIandAutoModeStorageClasses;verifiedgp3baseline3000IOPS125MiBs;explicitretainandmetadatavolumeplacement.",
       "CorrectedallbrokerNLBannotationcoverageandcontrollerclass;JSONmergepatchpreservesinternalTLSlistener;alladvertisedendpointsrequired.",
       "QualifiedReadyTrue/observedGeneration/Podhealth,quorumodd-countreasoning,JBODbalanceandOperatorautomationclaims;updated40quizzes."
-    ]
+    ],
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md",
@@ -107,7 +108,7 @@
     "validation": [
       "kafka-strimzi-validation.json"
     ],
-    "reviewedSha256": "a6f891f375dd33b192a4e54c2bcf95a6b3d39744e65efda72fda4ab849ac3ddc",
+    "reviewedSha256": "a50a899ad43cc62435b82c41afe9a413688f751c8f70feb119f67ee5e8fbc93a",
     "findings": [
       "UpdatedtoStrimzi1.2.0/Kafka4.3.1/v1APIswithfresh-installscopeandexplicitbetaCRDmigration;minimumK8s1.30confirmed.",
       "ValidatedHelmdefault/additionalnamespacewatchandcorrespondingRoleBindings;removedenv-onlywatchchangesandcurlsedapplypath.",
@@ -117,6 +118,7 @@
       "SeparatedstandardEBSCSIandAutoModeStorageClasses;verifiedgp3baseline3000IOPS125MiBs;explicitretainandmetadatavolumeplacement.",
       "CorrectedallbrokerNLBannotationcoverageandcontrollerclass;JSONmergepatchpreservesinternalTLSlistener;alladvertisedendpointsrequired.",
       "QualifiedReadyTrue/observedGeneration/Podhealth,quorumodd-countreasoning,JBODbalanceandOperatorautomationclaims;updated40quizzes."
-    ]
+    ],
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   }
 ]

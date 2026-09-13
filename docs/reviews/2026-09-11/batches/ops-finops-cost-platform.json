@@ -142,7 +142,7 @@
       "ops-finops-validation.json",
       "ops-finops-diagrams-validation.json"
     ],
-    "reviewedSha256": "d09df3703855e01391d625e82557247ca962884709fb76db648b5bd8f26a3afd",
+    "reviewedSha256": "e73b3fc1752a8d64c69cff6f1210cf58b44dd1dac7b23265f476e035ba59eacc",
     "findings": [
       "Replaced stale OpenCost/Kubecost2 configuration with rendered current charts; corrected repository, values nesting, ServiceAccount identity and model architecture.",
       "Separated CUR source from Athena result buckets; current CUR2 delivery service, scoped IRSA, BPA, SSE-S3 and explicit Glue prerequisites.",
@@ -153,7 +153,8 @@
       "Migrated new cost policies to current CEL ValidatingPolicy; tested Pod, sidecar, Deployment, CronJob and namespace exclusion.",
       "Clarified dashboard filtering is not authorization, anomaly SERVICE scope, EMAIL/SNS frequency, delayed budget actions and 12-month historical tag backfill.",
       "Reviewed/rebuilt six diagrams, replaced unsupported maturity timelines and unexplained allocation numbers; updated both eight-question quizzes."
-    ]
+    ],
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/ops/13-finops-cost-platform-quiz.md",

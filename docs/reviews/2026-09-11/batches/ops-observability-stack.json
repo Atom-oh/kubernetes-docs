@@ -110,7 +110,7 @@
       "ops-stack-validation.json",
       "6 pinned Helm renders;234 Kubernetes objects;5 native config checks;18 query parser cases;60 code fences;2 Terraform mock runs;20 quiz questions;rendered datasource UIDs and inline list assembly"
     ],
-    "reviewedSha256": "64c67413c58a6dee4b710c491c670a5a7c52f02fe9a18fcf254bcf8acb163bea",
+    "reviewedSha256": "27c5da258628b2016062e623571bf079b566d71c5629089a4b655549873ff957",
     "findings": [
       "LokiSSDdeprecatedand4.0removal;communitychart18.12.2;oldmixedchartvaluesremoved.",
       "ActualPVCinspectioncaughtsilentlyignoredLoki20GiandmissingaccessModes;claimsnowrendergp3/20Gi/RWO.",
@@ -123,7 +123,8 @@
       "AMP1095dayretentionnot150hardmax;scopedwriterreaderIRSAroles,exactSAsub/aud,HAclusterand__replica__,noautomaticworkspacefederation/downsampling.",
       "GrafanaKPSdefaultDatasourcekeyfoundunder sidecar.datasources;fixedduplicateprometheusUIDthroughactualrenderedConfigMapchecks;threebaseUIDsplusexplicitAMPoverlaylistassembly.",
       "LogQLnumericerrorfilters/linevsbyterateandTraceQLintrinsics/hierarchy/spanaggregationcorrected;20matchingquizquestions."
-    ]
+    ],
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/ops/09-observability-stack-quiz.md",

@@ -32,7 +32,8 @@
     "fullyRead": true,
     "status": "fixed",
     "summary": "Reviewed Flink2.2.1/Operator1.15 baseline versus latest2.3.0 and moving docs; corrected slot sharing/chaining/noCPUisolation,application versus job lifecycle and sharednode limits,NativeANDStandaloneOperator support,Java11/17/21 nuance,CLIrun target/currentimagekey and packagedexample path;16questions/4regeneratedfigures.",
-    "reviewedSha256": "73436cb9a240a7cb86e14fc363fdb0d5bb1b5d0e64f3f7f3b712a6fbea829927"
+    "reviewedSha256": "2c7b0ea3d722e1a25abbf9fb97f870dbf8b69663864b5547c92f4edf64ca8ea8",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/data-on-eks/flink/01-architecture-quiz.md",

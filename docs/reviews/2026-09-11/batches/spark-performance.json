@@ -25,6 +25,7 @@
     "fullyRead": true,
     "status": "fixed",
     "summary": "Removed unsafe format-all-unmounted-NVMe loop and hostPath assumption; AL2023KarpenterRAID0+emptyDir, corrected scratchprefix nativecounterexample, metrics-servernotprereq,Spotbest-effort/fallback/driverfailure,DRAallocator/consolidationtimers,CPUlimits4505MiB.28questions13schemaobjects12nativecases12fences2figuresdesktop4mobile;noEC2disk/cloudoperations.",
-    "reviewedSha256": "f480f218d2cacf15e425a7874d95fbfcd6ddee642264e3a7b7a0c5f559e0c79a"
+    "reviewedSha256": "86d5b47e3e8f9050711089d86fd5acde06763f7db35a3e585fd8e4b0e8afb212",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   }
 ]

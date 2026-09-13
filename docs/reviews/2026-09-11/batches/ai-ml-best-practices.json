@@ -3,17 +3,19 @@
     "path": "ko/ai-ml/07-ai-ml-best-practices.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "5cb43ef54e097879c08669205ce89021dffc5c409d6e57cf4fef00a55ca080b0",
+    "reviewedSha256": "3f1c27511e69ce3674b54674edb064e9a2a36e04c22d6bad89502beb7ebc4d4c",
     "summary": "Allprose87uniqueblocksreviewed;nativeinference-perf3mockrequests/SOCIlocalOCI8blobs/cache6cases/schema3/cron6+boundary/6figures18responsivepassed. PR233MajorAMI-familyconditioncorrectedwithsemanticregressionassertion. PR233S3bucketABACsupportandexplicitenablementcorrected.",
-    "validationReport": "docs/reviews/2026-09-11/ai-ml-best-practices-validation.json"
+    "validationReport": "docs/reviews/2026-09-11/ai-ml-best-practices-validation.json",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/ai-ml/07-ai-ml-best-practices.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "4079a831c6c888adbae27470b7b49b7735704045a50100d023f3a368ef7426ba",
+    "reviewedSha256": "5b2ba606573c532602cf990446fe787f0801b4e8bd7e0b7ef0c3660e35b61507",
     "summary": "Allprose87uniqueblocksreviewed;nativeinference-perf3mockrequests/SOCIlocalOCI8blobs/cache6cases/schema3/cron6+boundary/6figures18responsivepassed. PR233MajorAMI-familyconditioncorrectedwithsemanticregressionassertion. PR233S3bucketABACsupportandexplicitenablementcorrected.",
-    "validationReport": "docs/reviews/2026-09-11/ai-ml-best-practices-validation.json"
+    "validationReport": "docs/reviews/2026-09-11/ai-ml-best-practices-validation.json",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/ai-ml/07-ai-ml-best-practices-quiz.md",

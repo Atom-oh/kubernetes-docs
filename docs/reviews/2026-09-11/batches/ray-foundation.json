@@ -3,8 +3,9 @@
     "path": "ko/ai-ml/ray/README.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "d22dfbdaaf62d525bb473b1414e0fbe75ba5c02137983b550f72fbf9b9b658ef",
-    "summary": "FullreadandRay2.58/KubeRay1.7source+boundednativeCorechecks;task/actor/dependencies/resources/objectstore/ownership/GCS/recovery/layeringcorrected;6MD/20questions/4figures/12responsive."
+    "reviewedSha256": "698cd7db3ff5ba05278d8b8cba8b8dc0a3ee4c8787b229f9943f9c422c0a6d79",
+    "summary": "FullreadandRay2.58/KubeRay1.7source+boundednativeCorechecks;task/actor/dependencies/resources/objectstore/ownership/GCS/recovery/layeringcorrected;6MD/20questions/4figures/12responsive.",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/ai-ml/ray/01-architecture.md",

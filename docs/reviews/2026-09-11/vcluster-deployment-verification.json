@@ -1,0 +1,745 @@
+{
+  "status": "passed",
+  "verifiedAt": "2026-09-13T02:18:30.423492+00:00",
+  "mergeCommit": "22ce63c75d635cbb8cac1ba217ebfcef68a6556f",
+  "deploymentRun": 34732145245,
+  "http": {
+    "status": "passed",
+    "verifiedAt": "2026-09-13T02:18:30.423492+00:00",
+    "deploymentRun": 34732145245,
+    "mergeCommit": "22ce63c75d635cbb8cac1ba217ebfcef68a6556f",
+    "pagesAndViewers": [
+      {
+        "type": "page",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/platform-engineering/08-vcluster",
+        "status": 200,
+        "sha256": "d2e09be2e910e557d3dab87ce67706717c386049e2317f0903e650ee8744e385",
+        "imageURLs": [
+          "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-08-vcluster-10.DRHKCg1H.png",
+          "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-08-vcluster-11.BlcD9ZFP.png",
+          "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-08-vcluster-12.B3RG4WkS.png",
+          "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-08-vcluster-14.Cw10kPEU.png",
+          "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-08-vcluster-13.CMrjkB8w.png"
+        ]
+      },
+      {
+        "type": "page",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/platform-engineering/08-vcluster-quiz",
+        "status": 200,
+        "sha256": "6fb29d71737ac37f66a742e65cb13b6c4602e6675b366ac42763d187cfbd806a",
+        "imageURLs": []
+      },
+      {
+        "type": "viewer",
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-08-vcluster-10.html",
+        "status": 200,
+        "sha256": "01a4d4299caab3158f51ecfd53cbf1b09d2bb117aae66a594d337ed11483ec9d",
+        "motionGuard": true
+      },
+      {
+        "type": "viewer",
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-08-vcluster-11.html",
+        "status": 200,
+        "sha256": "a818dcd0bd6799f42e3e5b7d66e0c824257f843278423daa1c82bb9fb6859618",
+        "motionGuard": true
+      },
+      {
+        "type": "viewer",
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-08-vcluster-12.html",
+        "status": 200,
+        "sha256": "04a775f045685ad8f801d526cb231ab87117c45193d6e0542dc90814f88ca5b1",
+        "motionGuard": true
+      },
+      {
+        "type": "viewer",
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-08-vcluster-13.html",
+        "status": 200,
+        "sha256": "e69cdf5232ed318110714d1bfde2362e4ad12ff2fae245e5549727614cfcb5a9",
+        "motionGuard": true
+      },
+      {
+        "type": "viewer",
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-08-vcluster-14.html",
+        "status": 200,
+        "sha256": "843e666de67c0cfa00844c3c29df2b777f078f1556fda48a8d6e22eaf8eefa2d",
+        "motionGuard": true
+      },
+      {
+        "type": "page",
+        "url": "https://www.atomai.click/kubernetes-docs/en/platform-engineering/08-vcluster",
+        "status": 200,
+        "sha256": "41850cde335e54385206b6170854aa98576cdae30a6385e8777ecc33cbd1a333",
+        "imageURLs": [
+          "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-08-vcluster-10.X5wl5irg.png",
+          "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-08-vcluster-11.C3PyQtTV.png",
+          "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-08-vcluster-12.psm49jGF.png",
+          "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-08-vcluster-14.7SqL0-8v.png",
+          "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-08-vcluster-13.Be8Tg_iy.png"
+        ]
+      },
+      {
+        "type": "page",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/platform-engineering/08-vcluster-quiz",
+        "status": 200,
+        "sha256": "0690f9c5cffa28fd0613bc8a199a8bbd5e3b560eef58e4c49eaa1647d1d84d8e",
+        "imageURLs": []
+      },
+      {
+        "type": "viewer",
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-10.html",
+        "status": 200,
+        "sha256": "883690422f86073de4f424f53a2b9c841e69ec32f53cfb2658da614cc5b63552",
+        "motionGuard": true
+      },
+      {
+        "type": "viewer",
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-11.html",
+        "status": 200,
+        "sha256": "d0e607e58682402c2cd210f4ee3ce98d0832c3744d5c114245b3b28e8b36186b",
+        "motionGuard": true,
+        "englishPhasesPresent": true
+      },
+      {
+        "type": "viewer",
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-12.html",
+        "status": 200,
+        "sha256": "803a6ea66034687ebbcf134e3a12f5d66dbc70648e8882eab55e009d962cb3e9",
+        "motionGuard": true
+      },
+      {
+        "type": "viewer",
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-13.html",
+        "status": 200,
+        "sha256": "3dd2d4fa84ec9e86b10c05f70e2a350e1ab6e2adf644199a45f20ddb34689220",
+        "motionGuard": true,
+        "englishPhasesPresent": true
+      },
+      {
+        "type": "viewer",
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-08-vcluster-14.html",
+        "status": 200,
+        "sha256": "da7913ec1d974e4a5215ead87461ed1fe4c20e6f128d0c4711c71ac407b079ce",
+        "motionGuard": true
+      }
+    ],
+    "images": [
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-08-vcluster-10.DRHKCg1H.png",
+        "status": 200,
+        "sha256": "7af21f031c4cf767411edfd57581edb3e53c2e71615aed54df9a494eb9d64991",
+        "matchesReviewedSource": true
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-08-vcluster-11.BlcD9ZFP.png",
+        "status": 200,
+        "sha256": "ca407eaf9305157b44afa951895fb35972447f6d38e57adb9b2a7ce597cfe4de",
+        "matchesReviewedSource": true
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-08-vcluster-12.B3RG4WkS.png",
+        "status": 200,
+        "sha256": "da1cf8055a1d9535e3323fbb586f8e09485eb2669d36c6551fa0088ad9fa58d0",
+        "matchesReviewedSource": true
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-08-vcluster-14.Cw10kPEU.png",
+        "status": 200,
+        "sha256": "e00d039c92f7070ec8e0601ba601401caedc3d460c5b039cc5ad8772eb9ee0c0",
+        "matchesReviewedSource": true
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-08-vcluster-13.CMrjkB8w.png",
+        "status": 200,
+        "sha256": "7876be4307e449fb9f163a667f4d9cf25eed0a40d0fd5f504464c8e202ecae0d",
+        "matchesReviewedSource": true
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-08-vcluster-10.X5wl5irg.png",
+        "status": 200,
+        "sha256": "18955908af4af465a262c96b596279652683f07fdfe12ddf9101bbc332fa3ec3",
+        "matchesReviewedSource": true
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-08-vcluster-11.C3PyQtTV.png",
+        "status": 200,
+        "sha256": "0f24698bfa9d786d68f33938080d3bcc5f0bea8297cc557d0849dc365b57e610",
+        "matchesReviewedSource": true
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-08-vcluster-12.psm49jGF.png",
+        "status": 200,
+        "sha256": "6fb6db5f6981bcab20a0a89fcf0046ea275d65ae612785439a5f84330c2b5780",
+        "matchesReviewedSource": true
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-08-vcluster-14.7SqL0-8v.png",
+        "status": 200,
+        "sha256": "050d2a06049d358c17b6e2b76958d1d2a7b783546d2da0dbc51b8bc6bb4ab4ff",
+        "matchesReviewedSource": true
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-08-vcluster-13.Be8Tg_iy.png",
+        "status": 200,
+        "sha256": "91e6f3d1d86776bb5edcaa0790c472a794831df734bbfde6810664b08b838c4b",
+        "matchesReviewedSource": true
+      }
+    ]
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-platform-engineering-08-vcluster-10.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 923,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-10.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 923,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-10.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 923,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 59931,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-11.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1022,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-11.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1022,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-11.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1022,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53865,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-12.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 801,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-12.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 801,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-12.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 801,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56595,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-13.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1040,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-13.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1040,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-13.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1040,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54160,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-14.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1014,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-14.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1014,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-08-vcluster-14.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1014,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56599,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-08-vcluster-10.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 657,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-08-vcluster-10.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 657,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-08-vcluster-10.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 657,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 58512,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-08-vcluster-11.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 797,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-08-vcluster-11.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 797,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-08-vcluster-11.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 797,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53687,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-08-vcluster-12.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 512,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-08-vcluster-12.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 512,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-08-vcluster-12.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 512,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55133,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-08-vcluster-13.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 769,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-08-vcluster-13.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 769,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-08-vcluster-13.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 769,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 53789,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-08-vcluster-14.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 719,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-08-vcluster-14.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 719,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-08-vcluster-14.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 719,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55953,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "30caseson10fetchedproductionviewers; motion/reduced-motion/visibility/theme/guided controls and10SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  },
+  "scope": "Four live documentation/quiz pages, ten viewer HTML pages and ten hashed PNGs; thirty responsive browser cases; traffic to analytics blocked. Verification applies to the recorded deployment."
+}

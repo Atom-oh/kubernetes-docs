@@ -35,7 +35,8 @@
       "34 fences,24 YAML blocks,4 Bash blocks,10 strict Argo3.5.2 CRDs passed",
       "Six allow/deny cases passed with actual ArgoCD3.5.2 CLI and generated RBAC policy"
     ],
-    "reviewedSha256": "d35d3a309877b0476fea8d14f1e16ae474a8753df6d7bf9bae38b3ba4662cc7e"
+    "reviewedSha256": "1c54ebad482125bc61bb2a7673b879397bf27d74e6ca73d37f9726152d31a772",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/ops/04-gitops-multi-cluster-quiz.md",
@@ -111,7 +112,8 @@
       "34 fences,24 YAML blocks,4 Bash blocks,10 strict Argo3.5.2 CRDs passed",
       "Six allow/deny cases passed with actual ArgoCD3.5.2 CLI and generated RBAC policy"
     ],
-    "reviewedSha256": "ccaff1f932c1f8e9b82c1ce527a124ba49bdf208d87d997b53fa535d333e4164"
+    "reviewedSha256": "e2bd7604bb4cb31c66290811a611508157a865166000cf7c4cfcb6b0d0e8461b",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/ops/04-gitops-multi-cluster-quiz.md",

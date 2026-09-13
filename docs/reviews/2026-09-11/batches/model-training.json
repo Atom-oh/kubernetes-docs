@@ -3,17 +3,19 @@
     "path": "ko/ai-ml/05-model-training.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "da465e2ada0c56a4a156a2a8bce2667aa1285b9604231b9895ff88a38455ca70",
+    "reviewedSha256": "bcc3bd48faa32292cf6f29eeb3f64063b3f861c9530baf56d65f59973b58783c",
     "summary": "Reviewedallprose/76uniqueblocks;currentSlurm/MPI/Volcano/Neuronsemantics,correctlaunch/globalbatch/checkpoints;nativeCPUresumeandlauncherfixture+Helm/CRDs+6figures18responsivepassed.",
-    "validationReport": "docs/reviews/2026-09-11/model-training-validation.json"
+    "validationReport": "docs/reviews/2026-09-11/model-training-validation.json",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/ai-ml/05-model-training.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "33e57526c6df689e042d8821d216f6cfbafc6c5e509fc90cc7f583672cfab538",
+    "reviewedSha256": "189ed60d12185ed24e06c567dc664a987d557d988c0b9533b21a0bfbbd7cc343",
     "summary": "Reviewedallprose/76uniqueblocks;currentSlurm/MPI/Volcano/Neuronsemantics,correctlaunch/globalbatch/checkpoints;nativeCPUresumeandlauncherfixture+Helm/CRDs+6figures18responsivepassed.",
-    "validationReport": "docs/reviews/2026-09-11/model-training-validation.json"
+    "validationReport": "docs/reviews/2026-09-11/model-training-validation.json",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/ai-ml/05-model-training-quiz.md",

@@ -30,7 +30,8 @@
     "validation": [
       "kafka-monitoring-validation.json"
     ],
-    "reviewedSha256": "fb9f1666dbbfd47f8a6a9b08b48a02eb2c5bbbbf8e38b27385a4147eb4e2da92"
+    "reviewedSha256": "51b5db934d700b0db3a23f6081a7596fc503e9f1271b92725ad33f216509f2a5",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "ko/quizzes/data-on-eks/kafka/07-monitoring-quiz.md",
@@ -96,7 +97,8 @@
     "validation": [
       "kafka-monitoring-validation.json"
     ],
-    "reviewedSha256": "6b3957477db224b04194451db786ff0cc86f82b057486e847ec0d6e579d9b9fe"
+    "reviewedSha256": "698cb8c42b5b0bc1bd600b0dbdf085c14297df236c46e3043e1492628e3e83ff",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/data-on-eks/kafka/07-monitoring-quiz.md",
