@@ -1,380 +1,195 @@
 # Cuestionario de Kubescape
 
-Pon a prueba tu comprensión de la gestión de postura de seguridad con Kubescape con las siguientes preguntas.
-
----
+> **Última actualización**: September 13, 2026
 
 ## Preguntas
 
-### 1. ¿Cuál es el estado del proyecto Kubescape en la CNCF?
+<span id="_1-what-is-kubescape-s-project-status-in-the-cncf"></span>
 
-- A) Proyecto Graduated
-- B) Proyecto Incubating
-- C) Proyecto Sandbox
-- D) No es un proyecto de la CNCF
+### 1. ¿Cuál es el nivel actual de madurez de Kubescape en CNCF?
 
-<details>
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: C) Proyecto Sandbox**
-
-**Explicación:**
-Kubescape fue aceptado como proyecto CNCF Sandbox en 2022. Fue desarrollado originalmente por ARMO y donado a la CNCF. Como proyecto Sandbox, es un proyecto en etapa inicial que la CNCF considera con potencial de crecimiento.
-
-</details>
-
----
-
-### 2. ¿Qué frameworks de seguridad admite Kubescape para escaneos de cumplimiento?
-
-- A) Solo NSA-CISA
-- B) Solo CIS Benchmarks
-- C) NSA-CISA, CIS Benchmarks y MITRE ATT&CK
-- D) Solo OWASP y PCI-DSS
+- A) Graduated
+- B) Incubating
+- C) Sandbox
+- D) Archived
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) NSA-CISA, CIS Benchmarks y MITRE ATT&CK**
+**Respuesta: B) Incubating**
 
-**Explicación:**
-Kubescape admite múltiples frameworks de seguridad:
-
-```bash
-# Scan with NSA-CISA framework
-kubescape scan framework nsa
-
-# Scan with CIS Kubernetes Benchmark
-kubescape scan framework cis-v1.23-t1.0.1
-
-# Scan with MITRE ATT&CK
-kubescape scan framework mitre
-```
-
-- **NSA-CISA**: Kubernetes Hardening Guide de agencias gubernamentales de EE. UU.
-- **CIS**: Center for Internet Security Kubernetes Benchmarks
-- **MITRE ATT&CK**: Framework de seguridad basado en amenazas que mapea técnicas de ataque
+Kubescape se unió a CNCF el 13 de diciembre de 2022 y pasó a Incubating el 13 de enero de 2025. Esto no garantiza la seguridad ni la disponibilidad de una instalación individual.
 
 </details>
 
----
+<span id="_2-which-security-frameworks-does-kubescape-support-for-compliance-scanning"></span>
 
-### 3. ¿Cuál es la sintaxis correcta de la CLI para escanear un cluster de Kubernetes con Kubescape?
+### 2. ¿Cómo se deben verificar los nombres de los frameworks y los recuentos de controles?
 
-- A) kubescape check cluster
-- B) kubescape scan
-- C) kubescape audit cluster
-- D) kubescape analyze
+- A) Usar siempre alias antiguos de CIS
+- B) Registrar las versiones del binario/de la política e inspeccionar la lista real
+- C) Los recuentos de controles de NSA nunca cambian
+- D) Aprobar un análisis SOC2 completa la certificación
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) kubescape scan**
+**Respuesta: B) Registrar las versiones del binario/de la política e inspeccionar la lista real**
 
-**Explicación:**
-Comandos de escaneo de la CLI de Kubescape:
-
-```bash
-# Scan current cluster
-kubescape scan
-
-# Scan specific namespace
-kubescape scan --include-namespaces production
-
-# Scan YAML files before deployment
-kubescape scan *.yaml
-
-# Scan with specific framework
-kubescape scan framework nsa
-
-# Scan specific control
-kubescape scan control C-0034
-```
-
-El subcomando `scan` es la interfaz principal para todas las operaciones de escaneo.
+Use kubescape list frameworks y list controls --framework NSA. La instantánea revisada de NSA contiene 26 controles, cuya aplicabilidad se determina mediante la entrada. Conserve los hashes de las políticas al comparar puntuaciones.
 
 </details>
 
----
+<span id="_3-what-is-the-correct-cli-syntax-to-scan-a-kubernetes-cluster-with-kubescape"></span>
 
-### 4. ¿Cuál es la diferencia clave entre los modos Kubescape Operator y CLI?
+### 3. ¿Qué ocurre cuando se omite un destino de archivo local de kubescape scan?
 
-- A) El modo Operator solo escanea nodes
-- B) El modo CLI proporciona monitoreo continuo; Operator es de una sola ejecución
-- C) Operator proporciona monitoreo continuo con componentes dentro del cluster; CLI realiza escaneos de una sola ejecución
-- D) No hay diferencia
+- A) Siempre falla
+- B) Puede analizar el clúster del kubeconfig actual
+- C) Siempre analiza únicamente archivos locales
+- D) Siempre realiza una ejecución de prueba
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Operator proporciona monitoreo continuo con componentes dentro del cluster; CLI realiza escaneos de una sola ejecución**
+**Respuesta: B) Puede analizar el clúster del kubeconfig actual**
 
-**Explicación:**
-Modos de despliegue de Kubescape:
-
-**Modo CLI:**
-```bash
-# One-time scan from local machine
-kubescape scan
-```
-- Escaneo ad hoc
-- Integración con CI/CD
-- Desarrollo local
-
-**Modo Operator:**
-```bash
-# Install in-cluster operator
-helm repo add kubescape https://kubescape.github.io/helm-charts
-helm install kubescape kubescape/kubescape-operator
-```
-- Monitoreo continuo
-- Escaneos programados
-- Escaneo de vulnerabilidades dentro del cluster
-- Integración con la plataforma ARMO para visualización
+CI debe pasar un archivo local explícito existente y rechazar destinos vacíos o inexistentes. --keep-local, una caché aislada y una política fijada no sustituyen la comprobación del alcance de entrada.
 
 </details>
 
----
+<span id="_4-what-is-the-key-difference-between-kubescape-operator-and-cli-modes"></span>
 
-### 5. ¿Cómo calcula Kubescape las puntuaciones de riesgo para los controles?
+### 4. ¿Qué afirmación distingue correctamente el funcionamiento del Operator y de la CLI?
 
-- A) Solo binario aprobado/fallido
-- B) Basado en la severidad multiplicada por el recuento de recursos afectados
-- C) Asignación aleatoria
-- D) Basado en la prioridad del namespace
+- A) El Operator solo proporciona una GUI
+- B) La CLI gestiona análisis explícitos/ad hoc; el Operator ejecuta capacidades continuas/programadas habilitadas
+- C) Instalar el Operator demuestra que todas las funcionalidades de tiempo de ejecución funcionan
+- D) Las imágenes de la CLI y del Operator siempre tienen la misma versión
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Basado en la severidad multiplicada por el recuento de recursos afectados**
+**Respuesta: B) La CLI gestiona análisis explícitos/ad hoc; el Operator ejecuta capacidades continuas/programadas habilitadas**
 
-**Explicación:**
-Puntuación de riesgo de Kubescape:
-
-```
-Risk Score = Severity Score x (Failed Resources / Total Resources)
-```
-
-Salida de ejemplo:
-```
-┌──────────────────────────────────────────────────┬────────────────┬───────┐
-│ Control Name                                      │ Failed Resources│ Score │
-├──────────────────────────────────────────────────┼────────────────┼───────┤
-│ Privileged container                              │ 3/50           │ 18%   │
-│ Resource limits                                   │ 25/50          │ 35%   │
-│ Non-root containers                               │ 10/50          │ 42%   │
-└──────────────────────────────────────────────────┴────────────────┴───────┘
-```
-
-Las puntuaciones más altas indican mayor riesgo que requiere atención inmediata.
+Chart 1.40.4 genera la imagen del scanner 4.0.13, mientras que la CLI local probada es 4.0.14. El alcance y los permisos de nodo/imagen/tiempo de ejecución/remediación requieren elecciones y validación independientes.
 
 </details>
 
----
+<span id="_5-how-does-kubescape-calculate-risk-scores-for-controls"></span>
 
-### 6. ¿Qué flag aplica un umbral de cumplimiento en pipelines de CI/CD?
+### 5. ¿Cómo se relacionan score y complianceScore?
 
-- A) --min-score
-- B) --compliance-threshold
-- C) --fail-threshold
-- D) --severity-threshold
+- A) Siempre son iguales
+- B) Siempre suman 100
+- C) Son agregados independientes en el esquema de resultados
+- D) Ambos son valores CVSS promedio
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) --compliance-threshold**
+**Respuesta: C) Son agregados independientes en el esquema de resultados**
 
-**Explicación:**
-Uso de Kubescape en pipelines de CI/CD:
-
-```bash
-# Fail pipeline if compliance drops below 80%
-kubescape scan --compliance-threshold 80
-
-# Example GitLab CI
-kubescape-scan:
-  script:
-    - kubescape scan framework nsa --compliance-threshold 75
-    - kubescape scan framework cis --compliance-threshold 80
-```
-
-El umbral es un porcentaje (0-100). El escaneo falla (salida distinta de cero) si la puntuación general de cumplimiento cae por debajo del umbral.
-
-```bash
-# Exit codes
-# 0: Passed threshold
-# 1: Failed threshold
-# 2: Error during scan
-```
+El Pod inseguro sintético produjo compliance 55 y score 62.5. Lea summaryDetails.complianceScore y summaryDetails.score. Estos valores locales no miden la seguridad de un clúster real.
 
 </details>
 
----
+<span id="_6-which-flag-enforces-a-compliance-threshold-in-ci-cd-pipelines"></span>
 
-### 7. ¿En qué se diferencia Kubescape de kube-bench?
+### 6. ¿Qué ocurre con compliance 55 y --compliance-threshold 56?
 
-- A) kube-bench solo escanea aplicaciones; Kubescape escanea infraestructura
-- B) Kubescape escanea configuraciones de workload; kube-bench se centra en CIS benchmarks a nivel de node
-- C) Son herramientas idénticas
-- D) kube-bench es solo para cloud providers
+- A) Se aprueba porque este es un límite máximo de riesgo
+- B) Sale con 1 porque no se alcanza el cumplimiento mínimo
+- C) Siempre sale con 2
+- D) Es equivalente a la puerta actual --fail-threshold 0
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Kubescape escanea configuraciones de workload; kube-bench se centra en CIS benchmarks a nivel de node**
+**Respuesta: B) Sale con 1 porque no se alcanza el cumplimiento mínimo**
 
-**Explicación:**
-Comparación de Kubescape vs kube-bench:
-
-| Característica | Kubescape | kube-bench |
-|---------|-----------|------------|
-| Enfoque | Seguridad de workload/configuración | Seguridad de node/control plane |
-| Alcance | Deployments, Pods, RBAC | kubelet, API server, etcd |
-| Frameworks | NSA, CIS, MITRE | Solo CIS Benchmarks |
-| Ubicación de ejecución | Fuera del cluster (CLI) o dentro del cluster | Debe ejecutarse en cada node |
-| Escaneo de imágenes | Sí (con Grype) | No |
-| Análisis RBAC | Sí | No |
-
-Usa ambos juntos para una seguridad integral:
-- kube-bench: Fortalecimiento de la infraestructura del cluster
-- Kubescape: Seguridad de workloads y configuración
+El mismo fixture devolvió la salida 0 con el umbral 55 y la salida 1 con 56. La versión 4.0.14 acepta el obsoleto --fail-threshold, pero ignora su valor; no lo use como puerta.
 
 </details>
 
----
+<span id="_7-how-does-kubescape-differ-from-kube-bench"></span>
 
-### 8. ¿Qué característica proporciona Kubescape para el análisis de seguridad de RBAC?
+### 7. ¿Cuál es una base sólida para comparar kube-bench y Kubescape?
 
-- A) Generación de políticas RBAC
-- B) Visualización de RBAC que muestra permisos y riesgos
-- C) Remediación automática de RBAC
-- D) Herramientas de migración de RBAC
+- A) Suponer que uno reemplaza cada comprobación basándose en su nombre
+- B) Comparar el alcance y el acceso reales de nodo/CIS frente a workload/configuración
+- C) Ambos pueden inspeccionar cada ajuste del control plane sin acceso
+- D) Una aprobación de Kubescape es un certificado CIS
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Visualización de RBAC que muestra permisos y riesgos**
+**Respuesta: B) Comparar el alcance y el acceso reales de nodo/CIS frente a workload/configuración**
 
-**Explicación:**
-Capacidades de análisis RBAC de Kubescape:
-
-```bash
-# Scan RBAC configurations
-kubescape scan control C-0035  # Cluster-admin binding
-kubescape scan control C-0036  # Wildcard permissions
-kubescape scan control C-0039  # Risky service accounts
-```
-
-Características de visualización de RBAC:
-- Mapea ServiceAccounts a Roles/ClusterRoles
-- Identifica bindings excesivamente permisivos
-- Resalta permisos peligrosos (acceso a secrets, pod exec)
-- Muestra rutas de ataque a través de RBAC
-
-Hallazgo de ejemplo:
-```
-ServiceAccount 'default' in namespace 'production' has:
-- Cluster-admin binding (CRITICAL)
-- Secrets list/get permissions (HIGH)
-- Pod exec permissions (HIGH)
-```
+Los control planes administrados de EKS, los manifests locales y el acceso a archivos del nodo ofrecen visibilidad diferente. Distinga las comprobaciones no disponibles/no evaluadas de las aprobadas y seleccione las herramientas en consecuencia.
 
 </details>
 
----
+<span id="_8-what-feature-does-kubescape-provide-for-rbac-security-analysis"></span>
 
-### 9. ¿Con qué escáner de vulnerabilidades se integra Kubescape para escaneo de imágenes?
+### 8. ¿Qué afirmación sobre los controles RBAC es correcta?
 
-- A) Trivy
-- B) Clair
-- C) Grype
-- D) Anchore
+- A) C-0036 siempre comprueba RBAC con comodines
+- B) Un RoleBinding concede acceso en todos los namespaces
+- C) Verificar los IDs/nombres de controles actuales y el alcance de la recopilación
+- D) scan rbac es un subcomando independiente en la CLI revisada
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Grype**
+**Respuesta: C) Verificar los IDs/nombres de controles actuales y el alcance de la recopilación**
 
-**Explicación:**
-Kubescape se integra con Grype (de Anchore) para el escaneo de vulnerabilidades de imágenes de contenedor:
-
-```bash
-# Enable image scanning
-kubescape scan --enable-host-scan
-
-# Operator mode includes automatic image scanning
-helm install kubescape kubescape/kubescape-operator \
-  --set capabilities.vulnerabilityScan=enable
-```
-
-La integración con Grype proporciona:
-- Detección de CVE en imágenes de contenedor
-- Generación de SBOM (Software Bill of Materials)
-- Priorización basada en severidad
-- Integración con hallazgos de seguridad
-
-Los resultados combinan problemas de configuración con datos de vulnerabilidades para una evaluación integral del riesgo.
+El bundle revisado asigna C-0035 a Administrative Roles y C-0036/0039 a comprobaciones de admisión de validación/mutación. Los RoleBindings tienen ámbito de namespace; el análisis estático no valida automáticamente IAM externo.
 
 </details>
 
----
+<span id="_9-which-vulnerability-scanner-does-kubescape-integrate-with-for-image-scanning"></span>
 
-### 10. ¿Cómo gestiona Kubescape las excepciones de controles?
+### 9. ¿Qué afirmación distingue correctamente los análisis de imagen y de host?
 
-- A) Las excepciones no son compatibles
-- B) Usando archivos YAML de excepciones que especifican controles y recursos a excluir
-- C) Solo mediante flags de línea de comandos
-- D) Modificando el código fuente
+- A) El análisis de host solo comprueba CVE de imagen
+- B) Los análisis explícitos de imagen necesitan acceso al registry/DB; los análisis de host tienen un alcance independiente
+- C) Grype solo genera SBOM
+- D) Las versiones de imagen/plataforma/base de datos no importan
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Usando archivos YAML de excepciones que especifican controles y recursos a excluir**
+**Respuesta: B) Los análisis explícitos de imagen necesitan acceso al registry/DB; los análisis de host tienen un alcance independiente**
 
-**Explicación:**
-Kubescape admite excepciones mediante archivos de configuración:
-
-```yaml
-# exceptions.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: kubescape-exceptions
-data:
-  exceptions: |
-    - name: "Allow privileged kube-system pods"
-      policyType: postureExceptionPolicy
-      actions:
-        - alertOnly
-      resources:
-        - designatorType: Attributes
-          attributes:
-            namespace: kube-system
-      posturePolicies:
-        - controlID: C-0057  # Privileged container
-```
-
-Aplicar excepciones:
-```bash
-kubescape scan --exceptions exceptions.yaml
-```
-
-Esto permite:
-- Suprimir falsos positivos conocidos
-- Aceptar el riesgo para recursos específicos
-- Mantener informes de escaneo limpios
+La CLI usa Grype y Syft; el kubevuln del Operator tiene versiones independientes. Los análisis de host pueden necesitar recursos o permisos adicionales. En esta auditoría no se ejecutaron descargas de imágenes ni análisis de host.
 
 </details>
 
----
+<span id="_10-how-does-kubescape-handle-control-exceptions"></span>
+
+### 10. ¿Cuáles son los formatos correctos de excepción para la CLI y dentro del clúster?
+
+- A) La CLI consume directamente un ConfigMap arbitrario
+- B) Distinguir alertOnly en un array JSON de CLI de alert_only en SecurityException v1beta1
+- C) Cada anotación ignore es automáticamente una excepción
+- D) Registrar una excepción remedia el problema
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B) Distinguir alertOnly en un array JSON de CLI de alert_only en SecurityException v1beta1**
+
+En la prueba, alertOnly reconoció un fallo sin cambiar compliance. exclude-controls cambia el denominador de evaluación. Realice el seguimiento de la propiedad, el alcance, la caducidad y la revisión por separado de la remediación.
+
+</details>
 
 ## Cálculo de puntuación
 
-- **9-10 correctas**: Excelente: tienes una comprensión profunda de Kubescape.
-- **7-8 correctas**: Bien: tienes un conocimiento sólido de los conceptos clave.
-- **5-6 correctas**: Aceptable: hay áreas que necesitan estudio adicional.
-- **4 o menos**: Revisa la documentación de nuevo.
+- 9–10: Comprensión sólida
+- 7–8: Repase los conceptos de alcance/puerta no acertados
+- 6 o menos: Revise la guía y los ejemplos probados
 
 ## Documentación relacionada
 
-- [Gestión de postura de seguridad con Kubescape](../../security/11-kubescape.md)
+- [Kubescape](../../security/11-kubescape.md)
