@@ -1,6 +1,6 @@
 {
   "status": "passed-scoped-audit",
-  "reviewedAt": "2026-09-13T05:00:16.542462+00:00",
+  "reviewedAt": "2026-09-13T05:36:03.180874+00:00",
   "scope": {
     "documents": 4,
     "originalLines": 3477,
@@ -38,7 +38,7 @@
     "results": [
       {
         "path": "ko/security/12-spiffe-spire.md",
-        "sha256": "a8d4ef5dd6a5b7b40826e83157ef9425512733003e4d77e1f85e45022686687b",
+        "sha256": "a852b27b88b7b988e2d8f5bb9c9a6e66e6059acc0556ab901d113495e3226450",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -216,7 +216,7 @@
       },
       {
         "path": "en/security/12-spiffe-spire.md",
-        "sha256": "c1b213ee40d6ab4cf25ea817df72a8399bdc4bf038ee711b73b51a6b915b4d5c",
+        "sha256": "3ff65183a4caafd2f5cd0c5d08813454730a2edf471ebec8b9ce6addfad21265",
         "passed": true,
         "errors": [],
         "oneH1": true,
@@ -577,8 +577,8 @@
   "examples": [
     {
       "path": "examples/security/spiffe/README.md",
-      "sha256": "2a8f06d4a05301806db65d36794bb7ce63dbfa29d90fe2193a4096e69b41a09f",
-      "bytes": 3165
+      "sha256": "39f99cce8c1fa77aa7c40b09bf0c6e1e6e577061d379e8d99f6e8d734a25cc2a",
+      "bytes": 3732
     },
     {
       "path": "examples/security/spiffe/aws-pca-plugin.conf",
@@ -602,8 +602,8 @@
     },
     {
       "path": "examples/security/spiffe/ha-values.yaml",
-      "sha256": "2d3c22b3dff867be1317b8c853a7290673a323f0496d90ac7d14b1014efc22d6",
-      "bytes": 1639
+      "sha256": "dd5e5347434523defbb03abd7e53f9cc178cbf6a23eaec1dadad094dedb1d5aa",
+      "bytes": 1811
     },
     {
       "path": "examples/security/spiffe/lab-values.yaml",
@@ -974,6 +974,24 @@
     {
       "url": "https://raw.githubusercontent.com/spiffe/spire/v1.15.3/doc/plugin_server_upstreamauthority_aws_pca.md",
       "path": ".vitepress/cache/content-review-spiffe/sources/plugin_server_upstreamauthority_aws_pca.md"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/spiffe/spire/v1.15.3/pkg/server/datastore/sqlstore/postgres.go",
+      "status": 200,
+      "sha256": "c4f959f078a6adbb2589d69b359afd77911bcbadd780107695309e4c376f1428",
+      "bytes": 2151
+    },
+    {
+      "url": "https://raw.githubusercontent.com/lib/pq/v1.12.3/connector.go",
+      "status": 200,
+      "sha256": "a9a03e1168c72b8b5c63c2294828161d6b720e585eccaa61c6905562e58adcb4",
+      "bytes": 37770
+    },
+    {
+      "url": "https://raw.githubusercontent.com/jinzhu/gorm/v1.9.16/dialects/postgres/postgres.go",
+      "status": 200,
+      "sha256": "168670e1a75aca324a7d353428dcc79d35faeba6f2d6ae7c5ef628aaf744196b",
+      "bytes": 1371
     }
   ],
   "changes": [
@@ -987,7 +1005,8 @@
     "Chartdefaultidentityselectorsemptybroad;disabledefault/testkeys/OIDCidentitiesinminimalprofile",
     "ChartkeynodeAttestor.k8sPSATisuppercasePSAT;chartidentityjwtTTLvsCRDjwtTtl;federatesWithbaretrustdomainnames",
     "Lab1SQLitevsHA3sharedPostgres,DBpasswordexistingSecret/verify-fullCAvolume/actualPodlabelsverified",
-    "Actualchart0.30.2CSIimage0.2.7(notlateststandalone0.2.13);bothpinnedREADMEsconfirmsocketdelivery;guidesversiondistinctionupdated"
+    "Actualchart0.30.2CSIimage0.2.7(notlateststandalone0.2.13);bothpinnedREADMEsconfirmsocketdelivery;guidesversiondistinctionupdated",
+    "SPIFFE-R1-001fixed: rawSecretPGPASSWORDbypassJSON/DSNinterpolation;6nativeSPIRE+libpqcases,quotes/backslashes/whitespace/dollarsunchanged;TLSverify-fullretained."
   ],
   "validation": {
     "config": {
@@ -2234,7 +2253,64 @@
           }
         ]
       }
-    ]
+    ],
+    "haPasswordFix": {
+      "status": "passed",
+      "spire": "1.15.3",
+      "libpq": "1.12.3",
+      "chart": "0.30.2",
+      "configSha256": "7caf1050f8af8193bc4529c0dca25d35bf25e770afd1118b9f8cc759c26ca153",
+      "cases": [
+        {
+          "case": "plain",
+          "spireValidateExit": 0,
+          "driverPasswordExact": true,
+          "TLS": "verify-full",
+          "passed": true
+        },
+        {
+          "case": "quote",
+          "spireValidateExit": 0,
+          "driverPasswordExact": true,
+          "TLS": "verify-full",
+          "passed": true
+        },
+        {
+          "case": "backslash",
+          "spireValidateExit": 0,
+          "driverPasswordExact": true,
+          "TLS": "verify-full",
+          "passed": true
+        },
+        {
+          "case": "whitespace",
+          "spireValidateExit": 0,
+          "driverPasswordExact": true,
+          "TLS": "verify-full",
+          "passed": true
+        },
+        {
+          "case": "single-quote",
+          "spireValidateExit": 0,
+          "driverPasswordExact": true,
+          "TLS": "verify-full",
+          "passed": true
+        },
+        {
+          "case": "dollar",
+          "spireValidateExit": 0,
+          "driverPasswordExact": true,
+          "TLS": "verify-full",
+          "passed": true
+        }
+      ],
+      "secretDelivery": "PGPASSWORD SecretKeyRef; no password text or DBPW interpolation in JSON/DSN",
+      "scope": "ActualSPIREvalidate+libpqNewConfig only; noDBconnectionorcredentialsprinted;syntheticpasswordsinmemory.",
+      "originalReviewedHead": "028d0b3b9a547f19b5a83bc98114efff50842893",
+      "valuesSha256": "dd5e5347434523defbb03abd7e53f9cc178cbf6a23eaec1dadad094dedb1d5aa",
+      "renderedSha256": "41ccca360811bd1d63314da705e0d406ee42e25db78d25ed441ec7742ec4460e",
+      "initialHelmReport": "validation.helm preserves original lab/HA execution; haPasswordFix records currentHA rerender and password/nativeconfig checks."
+    }
   },
   "limits": [
     "No real SPIRE server/agent run, node/workload attestation, cluster installation, DB connection, AWS CA issuance, federation endpoint exchange or mTLS traffic was executed.",

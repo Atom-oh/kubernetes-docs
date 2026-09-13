@@ -137,7 +137,9 @@ Install/delete hooks are disabled in this profile; perform any required migratio
 
 [ha-values.yaml](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/spiffe/ha-values.yaml) uses three replicas, shared PostgreSQL, an existing password Secret, verify-full TLS with a mounted CA, and anti-affinity matching actual Pod labels. Three independent SQLite replicas are not a shared HA datastore.
 
-Prepare PostgreSQL/DNS, the CA ConfigMap, spire-database Secret/password key, StorageClass, and connectivity first. The chart's Secret environment reference and -expandEnv argument were verified, but database connectivity/failover was not. HA also requires key persistence, backups, bundle rollover, and recovery testing.
+Prepare PostgreSQL/DNS, the CA ConfigMap, `spire-database` Secret key `password`, StorageClass, and connectivity first. The example supplies the raw password through `PGPASSWORD` using `extraEnv.valueFrom.secretKeyRef`. It disables the chart's `dataStore.sql.externalSecret` interpolation and leaves `password` empty, so the generated connection string contains no password. SPIRE's PostgreSQL driver reads `PGPASSWORD` separately: quotes, backslashes, whitespace and dollar signs do not enter the JSON/DSN parser. Do not pre-escape or URI-encode the actual password.
+
+Native SPIRE 1.15.3 configuration and lib/pq 1.12.3 parsing checks covered six synthetic password cases while retaining `sslmode=verify-full` and the CA path. These checks did not connect to PostgreSQL or test failover. Secret changes delivered as environment variables require restarting the server Pods; coordinate database password rotation with the restart and verify availability. HA also requires key persistence, backups, bundle rollover, and recovery testing.
 
 <span id="attestation-flow"></span>
 <span id="kubernetes-psat-projected-service-account-token"></span>

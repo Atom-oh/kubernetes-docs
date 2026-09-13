@@ -145,7 +145,9 @@ spiffe-csi-driver:
 
 [ha-values.yaml](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/spiffe/ha-values.yaml)은 3 replicas와 공유 PostgreSQL, existing password Secret, verify-full TLS CA mount, 실제 label과 일치하는 anti-affinity를 사용합니다. 단순히 SQLite replicas를 3으로 늘리는 것은 공유 HA datastore 구성이 아닙니다.
 
-PostgreSQL endpoint·DNS·CA ConfigMap·spire-database Secret/password key·StorageClass·네트워크 경로를 먼저 준비합니다. chart가 Secret을 env로 연결하고 `-expandEnv`를 사용하는 것을 확인했지만 DB 연결·failover는 실행하지 않았습니다. HA는 replicas뿐 아니라 DB·키 저장·backup·bundle rollover·장애 복구 시험을 포함합니다.
+PostgreSQL endpoint·DNS·CA ConfigMap·`spire-database` Secret의 `password` key·StorageClass·네트워크 경로를 먼저 준비합니다. 예제는 `extraEnv.valueFrom.secretKeyRef`로 원본 비밀번호를 `PGPASSWORD`에 전달합니다. chart의 `dataStore.sql.externalSecret` 치환을 비활성화하고 `password`를 비워 생성된 connection string에서 비밀번호를 제외합니다. SPIRE의 PostgreSQL driver가 `PGPASSWORD`를 별도로 읽으므로 따옴표·역슬래시·공백·달러 기호가 JSON/DSN 파서로 들어가지 않습니다. 실제 비밀번호를 미리 escape하거나 URI encode하지 않습니다.
+
+SPIRE 1.15.3 설정 검사와 lib/pq 1.12.3 파싱으로 합성 비밀번호 6개를 검증했으며 `sslmode=verify-full`과 CA 경로도 확인했습니다. PostgreSQL 연결·failover는 실행하지 않았습니다. 환경 변수로 전달된 Secret 변경은 서버 Pod 재시작이 필요하므로 DB 비밀번호 교체와 재시작을 함께 조율하고 가용성을 확인합니다. HA는 replicas뿐 아니라 DB·키 저장·backup·bundle rollover·장애 복구 시험을 포함합니다.
 
 <span id="어테스테이션-방식-비교"></span>
 <span id="노드-및-워크로드-어테스테이션-플로우"></span>

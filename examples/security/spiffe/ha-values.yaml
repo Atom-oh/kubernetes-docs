@@ -40,8 +40,14 @@ spire-server:
       options:
       - sslmode: verify-full
       rootCAPath: /run/spire/db-ca/ca.crt
+      # Omit password from the rendered DSN: SPIRE -expandEnv is not JSON escaping.
+      password: ""
       externalSecret:
-        enabled: true
+        enabled: false
+  extraEnv:
+  - name: PGPASSWORD
+    valueFrom:
+      secretKeyRef:
         name: spire-database
         key: password
   extraVolumes:

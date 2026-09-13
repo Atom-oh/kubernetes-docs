@@ -3,16 +3,16 @@
     "path": "ko/security/12-spiffe-spire.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "a8d4ef5dd6a5b7b40826e83157ef9425512733003e4d77e1f85e45022686687b",
-    "summary": "Read4MD3477lines/20quiz;correctedCSIWorkloadAPIsocket,identityvalidation/replay,CA/keyownership,PSAT/HA,mesh/federation/IAMscope;8examples8figures24browser/20nativeID-SVIDcases;111legacyanchorsplus11mainaliases.",
+    "reviewedSha256": "a852b27b88b7b988e2d8f5bb9c9a6e66e6059acc0556ab901d113495e3226450",
+    "summary": "Read4MD3477lines/20quiz;correctedCSIWorkloadAPIsocket,identityvalidation/replay,CA/keyownership,PSAT/HA,mesh/federation/IAMscope;8examples8figures24browser/20nativeID-SVIDcases;111legacyanchorsplus11mainaliases. HApasswordrawPGPASSWORD6nativeSPIRE/libpqcasesverified;DBconnectnotexecuted.",
     "validationReport": "docs/reviews/2026-09-11/spiffe-validation.json"
   },
   {
     "path": "en/security/12-spiffe-spire.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "c1b213ee40d6ab4cf25ea817df72a8399bdc4bf038ee711b73b51a6b915b4d5c",
-    "summary": "Read4MD3477lines/20quiz;correctedCSIWorkloadAPIsocket,identityvalidation/replay,CA/keyownership,PSAT/HA,mesh/federation/IAMscope;8examples8figures24browser/20nativeID-SVIDcases;111legacyanchorsplus11mainaliases.",
+    "reviewedSha256": "3ff65183a4caafd2f5cd0c5d08813454730a2edf471ebec8b9ce6addfad21265",
+    "summary": "Read4MD3477lines/20quiz;correctedCSIWorkloadAPIsocket,identityvalidation/replay,CA/keyownership,PSAT/HA,mesh/federation/IAMscope;8examples8figures24browser/20nativeID-SVIDcases;111legacyanchorsplus11mainaliases. HApasswordrawPGPASSWORD6nativeSPIRE/libpqcasesverified;DBconnectnotexecuted.",
     "validationReport": "docs/reviews/2026-09-11/spiffe-validation.json"
   },
   {
@@ -20,7 +20,7 @@
     "fullyRead": true,
     "status": "fixed",
     "reviewedSha256": "36195c5ff8ecf8fa61940b281217214e5d593ce2a5b722a359ffcf86c2ff7822",
-    "summary": "Read4MD3477lines/20quiz;correctedCSIWorkloadAPIsocket,identityvalidation/replay,CA/keyownership,PSAT/HA,mesh/federation/IAMscope;8examples8figures24browser/20nativeID-SVIDcases;111legacyanchorsplus11mainaliases.",
+    "summary": "Read4MD3477lines/20quiz;correctedCSIWorkloadAPIsocket,identityvalidation/replay,CA/keyownership,PSAT/HA,mesh/federation/IAMscope;8examples8figures24browser/20nativeID-SVIDcases;111legacyanchorsplus11mainaliases. HApasswordrawPGPASSWORD6nativeSPIRE/libpqcasesverified;DBconnectnotexecuted.",
     "validationReport": "docs/reviews/2026-09-11/spiffe-validation.json"
   },
   {
@@ -28,7 +28,7 @@
     "fullyRead": true,
     "status": "fixed",
     "reviewedSha256": "8426f4c83e75c9f785e992f5c10ef715fa807e5213d76c35dbd93d8f5499de34",
-    "summary": "Read4MD3477lines/20quiz;correctedCSIWorkloadAPIsocket,identityvalidation/replay,CA/keyownership,PSAT/HA,mesh/federation/IAMscope;8examples8figures24browser/20nativeID-SVIDcases;111legacyanchorsplus11mainaliases.",
+    "summary": "Read4MD3477lines/20quiz;correctedCSIWorkloadAPIsocket,identityvalidation/replay,CA/keyownership,PSAT/HA,mesh/federation/IAMscope;8examples8figures24browser/20nativeID-SVIDcases;111legacyanchorsplus11mainaliases. HApasswordrawPGPASSWORD6nativeSPIRE/libpqcasesverified;DBconnectnotexecuted.",
     "validationReport": "docs/reviews/2026-09-11/spiffe-validation.json"
   }
 ]
