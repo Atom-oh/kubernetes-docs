@@ -1,380 +1,195 @@
 # Kubescape 测验
 
-通过以下问题测试你对 Kubescape 安全态势管理的理解。
-
----
+> **最后更新**: September 13, 2026
 
 ## 问题
 
-### 1. Kubescape 在 CNCF 中的项目状态是什么？
+<span id="_1-what-is-kubescape-s-project-status-in-the-cncf"></span>
+
+### 1. Kubescape 当前在 CNCF 中的成熟度级别是什么？
 
 - A) 毕业项目
 - B) 孵化项目
-- C) Sandbox project
-- D) 不是 CNCF 项目
+- C) Sandbox
+- D) 已归档
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) Sandbox project**
+**答案：B) 孵化项目**
 
-**解释：**
-Kubescape 于 2022 年被接纳为 CNCF Sandbox project。它最初由 ARMO 开发，并捐赠给 CNCF。作为 Sandbox project，它是一个早期阶段项目，CNCF 认为它具有增长潜力。
+Kubescape 于 2022 年 12 月 13 日加入 CNCF，并于 2025 年 1 月 13 日成为孵化项目。这并不保证某个单独安装实例的安全性或可用性。
 
 </details>
 
----
+<span id="_2-which-security-frameworks-does-kubescape-support-for-compliance-scanning"></span>
 
-### 2. Kubescape 支持哪些安全框架用于合规扫描？
+### 2. 应如何验证框架名称和控制项数量？
 
-- A) 仅 NSA-CISA
-- B) 仅 CIS Benchmarks
-- C) NSA-CISA、CIS Benchmarks 和 MITRE ATT&CK
-- D) 仅 OWASP 和 PCI-DSS
+- A) 始终使用旧版 CIS 别名
+- B) 记录二进制文件/策略版本并检查实际列表
+- C) NSA 控制项数量永远不会改变
+- D) 通过 SOC2 扫描即可完成认证
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) NSA-CISA、CIS Benchmarks 和 MITRE ATT&CK**
+**答案：B) 记录二进制文件/策略版本并检查实际列表**
 
-**解释：**
-Kubescape 支持多个安全框架：
-
-```bash
-# Scan with NSA-CISA framework
-kubescape scan framework nsa
-
-# Scan with CIS Kubernetes Benchmark
-kubescape scan framework cis-v1.23-t1.0.1
-
-# Scan with MITRE ATT&CK
-kubescape scan framework mitre
-```
-
-- **NSA-CISA**：来自美国政府机构的 Kubernetes Hardening Guide
-- **CIS**：Center for Internet Security Kubernetes Benchmarks
-- **MITRE ATT&CK**：基于威胁的安全框架，用于映射攻击技术
+使用 kubescape list frameworks 和 list controls --framework NSA。经审查的 NSA 快照包含 26 个控制项，适用性由输入决定。比较评分时请保留策略哈希值。
 
 </details>
 
----
+<span id="_3-what-is-the-correct-cli-syntax-to-scan-a-kubernetes-cluster-with-kubescape"></span>
 
-### 3. 使用 Kubescape 扫描 Kubernetes cluster 的正确 CLI 语法是什么？
+### 3. 在 kubescape scan 中省略本地文件目标时会发生什么？
 
-- A) kubescape check cluster
-- B) kubescape scan
-- C) kubescape audit cluster
-- D) kubescape analyze
+- A) 它总是失败
+- B) 它可以扫描当前 kubeconfig 集群
+- C) 它总是只扫描本地文件
+- D) 它总是执行 dry run
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) kubescape scan**
+**答案：B) 它可以扫描当前 kubeconfig 集群**
 
-**解释：**
-Kubescape CLI 扫描命令：
-
-```bash
-# Scan current cluster
-kubescape scan
-
-# Scan specific namespace
-kubescape scan --include-namespaces production
-
-# Scan YAML files before deployment
-kubescape scan *.yaml
-
-# Scan with specific framework
-kubescape scan framework nsa
-
-# Scan specific control
-kubescape scan control C-0034
-```
-
-`scan` 子命令是所有扫描操作的主要接口。
+CI 应传入一个存在的明确本地文件，并拒绝空缺或缺失的目标。--keep-local、隔离的缓存和固定的策略不能替代对输入范围的检查。
 
 </details>
 
----
+<span id="_4-what-is-the-key-difference-between-kubescape-operator-and-cli-modes"></span>
 
-### 4. Kubescape Operator 和 CLI 模式之间的关键区别是什么？
+### 4. 哪项陈述正确区分了 Operator 和 CLI 操作？
 
-- A) Operator 模式只扫描 nodes
-- B) CLI 模式提供持续监控，Operator 是一次性的
-- C) Operator 通过集群内组件提供持续监控，CLI 是一次性扫描
-- D) 没有区别
+- A) Operator 只提供 GUI
+- B) CLI 处理明确的/临时的扫描；Operator 运行已启用的持续/计划功能
+- C) 安装 Operator 可证明所有运行时功能均可工作
+- D) CLI 和 Operator 镜像始终使用相同版本
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) Operator 通过集群内组件提供持续监控，CLI 是一次性扫描**
+**答案：B) CLI 处理明确的/临时的扫描；Operator 运行已启用的持续/计划功能**
 
-**解释：**
-Kubescape 部署模式：
-
-**CLI 模式：**
-```bash
-# One-time scan from local machine
-kubescape scan
-```
-- 临时扫描
-- CI/CD 集成
-- 本地开发
-
-**Operator 模式：**
-```bash
-# Install in-cluster operator
-helm repo add kubescape https://kubescape.github.io/helm-charts
-helm install kubescape kubescape/kubescape-operator
-```
-- 持续监控
-- 定期扫描
-- 集群内漏洞扫描
-- 与 ARMO 平台集成以实现可视化
+Chart 1.40.4 渲染 scanner 镜像 4.0.13，而经过测试的本地 CLI 是 4.0.14。Node/镜像/运行时/修复的范围和权限需要分别选择并验证。
 
 </details>
 
----
+<span id="_5-how-does-kubescape-calculate-risk-scores-for-controls"></span>
 
-### 5. Kubescape 如何计算 controls 的风险评分？
+### 5. score 和 complianceScore 有何关联？
 
-- A) 仅二元通过/失败
-- B) 基于严重性乘以受影响的 resources 数量
-- C) 随机分配
-- D) 基于 namespace 优先级
+- A) 它们始终相等
+- B) 它们的总和始终为 100
+- C) 它们是结果 schema 中独立的聚合值
+- D) 它们都是平均 CVSS 值
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 基于严重性乘以受影响的 resources 数量**
+**答案：C) 它们是结果 schema 中独立的聚合值**
 
-**解释：**
-Kubescape 风险评分：
-
-```
-Risk Score = Severity Score x (Failed Resources / Total Resources)
-```
-
-示例输出：
-```
-┌──────────────────────────────────────────────────┬────────────────┬───────┐
-│ Control Name                                      │ Failed Resources│ Score │
-├──────────────────────────────────────────────────┼────────────────┼───────┤
-│ Privileged container                              │ 3/50           │ 18%   │
-│ Resource limits                                   │ 25/50          │ 35%   │
-│ Non-root containers                               │ 10/50          │ 42%   │
-└──────────────────────────────────────────────────┴────────────────┴───────┘
-```
-
-更高的评分表示风险更大，需要立即关注。
+该合成的不安全 Pod 产生了 55 的 compliance 和 62.5 的 score。读取 summaryDetails.complianceScore 和 summaryDetails.score。这些本地值无法衡量真实集群的安全性。
 
 </details>
 
----
+<span id="_6-which-flag-enforces-a-compliance-threshold-in-ci-cd-pipelines"></span>
 
-### 6. 哪个标志会在 CI/CD pipelines 中强制执行合规阈值？
+### 6. 当 compliance 为 55 且 --compliance-threshold 为 56 时会发生什么？
 
-- A) --min-score
-- B) --compliance-threshold
-- C) --fail-threshold
-- D) --severity-threshold
+- A) 它会通过，因为这是最大风险限制
+- B) 它以退出代码 1 退出，因为未达到最低 compliance
+- C) 它始终以退出代码 2 退出
+- D) 它等同于当前的 --fail-threshold 0 gate
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) --compliance-threshold**
+**答案：B) 它以退出代码 1 退出，因为未达到最低 compliance**
 
-**解释：**
-在 CI/CD pipelines 中使用 Kubescape：
-
-```bash
-# Fail pipeline if compliance drops below 80%
-kubescape scan --compliance-threshold 80
-
-# Example GitLab CI
-kubescape-scan:
-  script:
-    - kubescape scan framework nsa --compliance-threshold 75
-    - kubescape scan framework cis --compliance-threshold 80
-```
-
-阈值是百分比（0-100）。如果整体合规评分低于该阈值，扫描会失败（非零退出）。
-
-```bash
-# Exit codes
-# 0: Passed threshold
-# 1: Failed threshold
-# 2: Error during scan
-```
+同一 fixture 在阈值为 55 时返回退出代码 0，在 56 时返回退出代码 1。版本 4.0.14 接受已弃用的 --fail-threshold，但会忽略其值；请勿将其用作 gate。
 
 </details>
 
----
+<span id="_7-how-does-kubescape-differ-from-kube-bench"></span>
 
-### 7. Kubescape 与 kube-bench 有何不同？
+### 7. 比较 kube-bench 和 Kubescape 的合理依据是什么？
 
-- A) kube-bench 只扫描 applications，Kubescape 扫描 infrastructure
-- B) Kubescape 扫描 workload 配置，kube-bench 侧重于 node-level CIS benchmarks
-- C) 它们是完全相同的工具
-- D) kube-bench 仅适用于 cloud providers
+- A) 根据名称假定其中一个可替代所有检查
+- B) 比较实际的 Node/CIS 与 workload/config 范围和访问权限
+- C) 两者无需访问权限即可检查每项 control-plane 设置
+- D) Kubescape 通过即表示获得 CIS 证书
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) Kubescape 扫描 workload 配置，kube-bench 侧重于 node-level CIS benchmarks**
+**答案：B) 比较实际的 Node/CIS 与 workload/config 范围和访问权限**
 
-**解释：**
-Kubescape 与 kube-bench 对比：
-
-| 功能 | Kubescape | kube-bench |
-|---------|-----------|------------|
-| 重点 | Workload/config 安全 | Node/control plane 安全 |
-| 范围 | Deployments, Pods, RBAC | kubelet, API server, etcd |
-| 框架 | NSA, CIS, MITRE | 仅 CIS Benchmarks |
-| 运行位置 | 集群外部（CLI）或集群内 | 必须在每个 node 上运行 |
-| Image 扫描 | 是（使用 Grype） | 否 |
-| RBAC 分析 | 是 | 否 |
-
-结合使用两者以获得全面安全性：
-- kube-bench：Cluster infrastructure 加固
-- Kubescape：Workload 和配置安全
+托管 EKS control plane、本地 manifest 和 Node 文件访问提供不同的可见性。请区分不可用/未评估的检查与通过的检查，并据此选择工具。
 
 </details>
 
----
+<span id="_8-what-feature-does-kubescape-provide-for-rbac-security-analysis"></span>
 
-### 8. Kubescape 为 RBAC 安全分析提供了什么功能？
+### 8. 关于 RBAC 控制项，哪项陈述正确？
 
-- A) RBAC policy 生成
-- B) RBAC 可视化，显示权限和风险
-- C) 自动 RBAC 修复
-- D) RBAC 迁移工具
+- A) C-0036 始终检查 wildcard RBAC
+- B) RoleBinding 会授予所有 namespace 中的访问权限
+- C) 验证当前 control ID/名称和收集范围
+- D) 在经审查的 CLI 中，scan rbac 是一个独立子命令
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) RBAC 可视化，显示权限和风险**
+**答案：C) 验证当前 control ID/名称和收集范围**
 
-**解释：**
-Kubescape RBAC 分析能力：
-
-```bash
-# Scan RBAC configurations
-kubescape scan control C-0035  # Cluster-admin binding
-kubescape scan control C-0036  # Wildcard permissions
-kubescape scan control C-0039  # Risky service accounts
-```
-
-RBAC 可视化功能：
-- 将 ServiceAccounts 映射到 Roles/ClusterRoles
-- 识别权限过大的 bindings
-- 突出显示危险权限（secrets access、pod exec）
-- 显示通过 RBAC 的攻击路径
-
-示例发现：
-```
-ServiceAccount 'default' in namespace 'production' has:
-- Cluster-admin binding (CRITICAL)
-- Secrets list/get permissions (HIGH)
-- Pod exec permissions (HIGH)
-```
+经审查的 bundle 将 C-0035 映射到 Administrative Roles，并将 C-0036/0039 映射到 validating/mutating admission 检查。RoleBinding 具有 namespace 范围；静态分析不会自动验证外部 IAM。
 
 </details>
 
----
+<span id="_9-which-vulnerability-scanner-does-kubescape-integrate-with-for-image-scanning"></span>
 
-### 9. Kubescape 集成了哪个漏洞扫描器用于 image 扫描？
+### 9. 哪项陈述正确区分了镜像扫描和主机扫描？
 
-- A) Trivy
-- B) Clair
-- C) Grype
-- D) Anchore
+- A) 主机扫描只检查镜像 CVE
+- B) 明确的镜像扫描需要 registry/DB 访问权限；主机扫描具有独立范围
+- C) Grype 只生成 SBOM
+- D) 镜像/platform/database 版本无关紧要
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C) Grype**
+**答案：B) 明确的镜像扫描需要 registry/DB 访问权限；主机扫描具有独立范围**
 
-**解释：**
-Kubescape 与 Grype（由 Anchore 提供）集成，用于 container image 漏洞扫描：
-
-```bash
-# Enable image scanning
-kubescape scan --enable-host-scan
-
-# Operator mode includes automatic image scanning
-helm install kubescape kubescape/kubescape-operator \
-  --set capabilities.vulnerabilityScan=enable
-```
-
-Grype 集成提供：
-- container images 中的 CVE 检测
-- SBOM（Software Bill of Materials）生成
-- 基于严重性的优先级排序
-- 与安全发现集成
-
-结果会将配置问题与漏洞数据结合起来，以进行全面的风险评估。
+CLI 使用 Grype 和 Syft；Operator kubevuln 具有独立版本。主机扫描可能需要额外资源/权限。本次审计未运行镜像拉取或主机扫描。
 
 </details>
 
----
+<span id="_10-how-does-kubescape-handle-control-exceptions"></span>
 
-### 10. Kubescape 如何处理 control exceptions？
+### 10. 正确的 CLI 和集群内例外格式是什么？
 
-- A) 不支持 exceptions
-- B) 使用 exception YAML 文件，指定要排除的 controls 和 resources
-- C) 仅通过 command-line flags
-- D) 通过修改源代码
+- A) CLI 直接使用任意 ConfigMap
+- B) 区分 CLI JSON 数组中的 alertOnly 与 v1beta1 SecurityException 中的 alert_only
+- C) 每个 ignore annotation 都会自动成为例外
+- D) 记录例外即可修复问题
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B) 使用 exception YAML 文件，指定要排除的 controls 和 resources**
+**答案：B) 区分 CLI JSON 数组中的 alertOnly 与 v1beta1 SecurityException 中的 alert_only**
 
-**解释：**
-Kubescape 通过配置文件支持 exceptions：
-
-```yaml
-# exceptions.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: kubescape-exceptions
-data:
-  exceptions: |
-    - name: "Allow privileged kube-system pods"
-      policyType: postureExceptionPolicy
-      actions:
-        - alertOnly
-      resources:
-        - designatorType: Attributes
-          attributes:
-            namespace: kube-system
-      posturePolicies:
-        - controlID: C-0057  # Privileged container
-```
-
-应用 exceptions：
-```bash
-kubescape scan --exceptions exceptions.yaml
-```
-
-这允许：
-- 抑制已知误报
-- 接受特定 resources 的风险
-- 保持扫描报告整洁
+在测试中，alertOnly 确认了失败，但没有改变 compliance。exclude-controls 会改变评估分母。应将所有权、范围、到期时间和重新审查与修复分开跟踪。
 
 </details>
-
----
 
 ## 评分计算
 
-- **9-10 correct**：优秀 - 你对 Kubescape 有深入理解。
-- **7-8 correct**：良好 - 你扎实掌握了关键概念。
-- **5-6 correct**：一般 - 有些领域需要进一步学习。
-- **4 or fewer**：请再次查阅文档。
+- 9–10：理解扎实
+- 7–8：重新学习遗漏的范围/gate 概念
+- 6 或以下：复习指南和经过测试的示例
 
 ## 相关文档
 
-- [使用 Kubescape 进行安全态势管理](../../security/11-kubescape.md)
+- [Kubescape](../../security/11-kubescape.md)
