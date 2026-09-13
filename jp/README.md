@@ -102,6 +102,7 @@
 1. [AI/ML Workloads](./ai-ml/01-ai-ml-workloads.md) | [クイズ](./quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
 2. [AI Infrastructure](./ai-ml/06-ai-infrastructure.md) | [クイズ](./quizzes/ai-ml/06-ai-infrastructure-quiz.md)
 3. [EKS での Model Training](./ai-ml/05-model-training.md) | [クイズ](./quizzes/ai-ml/05-model-training-quiz.md)
+   - [SageMaker AI（英語ガイド）](./ai-ml/sagemaker-ai/README.md)
 4. [Inference Frameworks](./ai-ml/04-inference-frameworks.md) | [クイズ](./quizzes/ai-ml/04-inference-frameworks-quiz.md)
 5. [vLLM Deployment と Optimization](./ai-ml/02-vllm-deployment.md) | [クイズ](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
 6. [EKS 上の Agentic AI Platform](./ai-ml/03-agentic-ai-platform.md) | [クイズ](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)

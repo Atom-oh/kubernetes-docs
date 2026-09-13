@@ -102,6 +102,7 @@ Este contenido de formación proporciona cuestionarios para cada tema junto con 
 1. [AI/ML Workloads](./ai-ml/01-ai-ml-workloads.md) | [Cuestionario](./quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
 2. [Infraestructura de AI](./ai-ml/06-ai-infrastructure.md) | [Cuestionario](./quizzes/ai-ml/06-ai-infrastructure-quiz.md)
 3. [Entrenamiento de modelos en EKS](./ai-ml/05-model-training.md) | [Cuestionario](./quizzes/ai-ml/05-model-training-quiz.md)
+   - [SageMaker AI (guía en inglés)](./ai-ml/sagemaker-ai/README.md)
 4. [Inference Frameworks](./ai-ml/04-inference-frameworks.md) | [Cuestionario](./quizzes/ai-ml/04-inference-frameworks-quiz.md)
 5. [Deployment y optimización de vLLM](./ai-ml/02-vllm-deployment.md) | [Cuestionario](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
 6. [Agentic AI Platform en EKS](./ai-ml/03-agentic-ai-platform.md) | [Cuestionario](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)

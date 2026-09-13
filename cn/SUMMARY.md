@@ -96,6 +96,7 @@
 * [AI/ML 工作负载](ai-ml/01-ai-ml-workloads.md)
 * [AI 基础设施](ai-ml/06-ai-infrastructure.md)
 * [在 EKS 上训练模型](ai-ml/05-model-training.md)
+  * [SageMaker AI（英文指南）](ai-ml/sagemaker-ai/README.md)
 * [推理框架](ai-ml/04-inference-frameworks.md)
 * [vLLM 部署与优化](ai-ml/02-vllm-deployment.md)
 * [EKS 上的 Agentic AI 平台](ai-ml/03-agentic-ai-platform.md)

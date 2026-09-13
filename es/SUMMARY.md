@@ -96,6 +96,7 @@
 * [Cargas de trabajo de IA/ML](ai-ml/01-ai-ml-workloads.md)
 * [Infraestructura de IA](ai-ml/06-ai-infrastructure.md)
 * [Entrenamiento de modelos en EKS](ai-ml/05-model-training.md)
+  * [SageMaker AI (guía en inglés)](ai-ml/sagemaker-ai/README.md)
 * [Frameworks de inferencia](ai-ml/04-inference-frameworks.md)
 * [Implementación y optimización de vLLM](ai-ml/02-vllm-deployment.md)
 * [Plataforma de IA agéntica en EKS](ai-ml/03-agentic-ai-platform.md)

@@ -96,6 +96,7 @@
 * [AI/ML ワークロード](ai-ml/01-ai-ml-workloads.md)
 * [AI インフラストラクチャ](ai-ml/06-ai-infrastructure.md)
 * [EKS でのモデル学習](ai-ml/05-model-training.md)
+  * [SageMaker AI（英語ガイド）](ai-ml/sagemaker-ai/README.md)
 * [推論フレームワーク](ai-ml/04-inference-frameworks.md)
 * [vLLM のデプロイと最適化](ai-ml/02-vllm-deployment.md)
 * [EKS 上の Agentic AI プラットフォーム](ai-ml/03-agentic-ai-platform.md)

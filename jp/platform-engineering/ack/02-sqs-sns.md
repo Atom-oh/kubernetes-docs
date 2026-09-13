@@ -111,9 +111,7 @@ spec:
   rawMessageDelivery: 'true'
 ```
 
-<span id="verification-and-operational-prerequisites"></span>
-
-## 検証と運用上の前提条件
+## 検証と運用上の前提条件 {#verification-and-operational-prerequisites}
 
 フィールドは公式のバージョン指定 CRD と照合済みです。スキーマの成功は、IAM 権限、AWS サービスの制約、作成、接続性、または復旧を保証するものではありません。適用前に、保持されるリソースの所有権、コスト、クリーンアップ、およびバックアップの責任を割り当ててください。
 

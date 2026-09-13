@@ -102,6 +102,7 @@
 1. [AI/ML Workload](./ai-ml/01-ai-ml-workloads.md) | [测验](./quizzes/ai-ml/03-ai-ml-workloads-quiz.md)
 2. [AI 基础设施](./ai-ml/06-ai-infrastructure.md) | [测验](./quizzes/ai-ml/06-ai-infrastructure-quiz.md)
 3. [在 EKS 上进行模型训练](./ai-ml/05-model-training.md) | [测验](./quizzes/ai-ml/05-model-training-quiz.md)
+   - [SageMaker AI（英文指南）](./ai-ml/sagemaker-ai/README.md)
 4. [推理框架](./ai-ml/04-inference-frameworks.md) | [测验](./quizzes/ai-ml/04-inference-frameworks-quiz.md)
 5. [vLLM 部署和优化](./ai-ml/02-vllm-deployment.md) | [测验](./quizzes/ai-ml/04-vllm-deployment-quiz.md)
 6. [EKS 上的 Agentic AI 平台](./ai-ml/03-agentic-ai-platform.md) | [测验](./quizzes/ai-ml/08-agentic-ai-platform-quiz.md)

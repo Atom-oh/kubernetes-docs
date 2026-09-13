@@ -2,21 +2,15 @@
 
 > **確認基準**: MLflow 3.16.0 · 2026-09-12
 
-<span id="lab-environment-setup"></span>
-
-## ラボ環境の準備
+## ラボ環境の準備 {#lab-environment-setup}
 
 Python 3.10 以降と `mlflow==3.16.0` を使用します。Registry API はローカル SQLite でも動作します。個別の HTTP サーバーは必須ではありません。チームでの Deployment については [Part 3](03-eks-deployment.md)、Tracking のセットアップについては [Part 1](01-tracking.md) を参照してください。この章では OSS MLflow について説明します。Databricks Unity Catalog などのマネージド Registry では、権限、コピー、および保持の動作が異なる場合があります。
 
-<span id="what-the-model-registry-is"></span>
-
-## Model Registry とは
+## Model Registry とは {#what-the-model-registry-is}
 
 Registry は、論理的なモデル名、番号付きバージョン、エイリアス、メタデータを管理します。候補の記録、昇格の承認、エンドポイントの Deployment はそれぞれ別の操作です。Registry を持つだけでは、承認や serving の動作は自動的に実装されません。
 
-<span id="core-concepts"></span>
-
-## 基本概念
+## 基本概念 {#core-concepts}
 
 | Entity | Meaning and mutation boundary |
 |---|---|
@@ -41,9 +35,7 @@ Registry は、論理的なモデル名、番号付きバージョン、エイ�
 
 レガシー stage は `None`、`Staging`、`Production`、`Archived` です。`transition_model_version_stage` は **2.9.0 以降非推奨** であり、3.16.0 API には引き続き存在します。すべての現行バージョンから削除されたものとして説明しないでください。新しいワークフローでは、Alias とタグを環境固有の Registered Models および明示的な権限と組み合わせることができます。stage 名またはタグはアクセス制御ではありません。
 
-<span id="registering-a-model"></span>
-
-## モデルの登録
+## モデルの登録 {#registering-a-model}
 
 実際の flavor model をログに記録した後、`mlflow.register_model(model_uri, name)` を呼び出すか、flavor の `log_model` 呼び出しに `registered_model_name` を渡します。より低レベルの `MlflowClient.create_model_version` API では、ソースを直接指定できます。登録と Alias の再割り当ては別の操作です。
 
@@ -81,9 +73,7 @@ assert client.get_model_version_by_alias(name, "champion").version == second.ver
 
 `READY` は登録ステータスです。上記のように、model flavor や weights を持たないメタデータ fixture でも登録できます。推論互換性と評価基準は別途テストしてください。この演習では、ローカル DB と fixture が `.registry-demo` に残ります。
 
-<span id="governance-and-the-handoff-workflow"></span>
-
-## ガバナンスと引き継ぎワークフロー
+## ガバナンスと引き継ぎワークフロー {#governance-and-the-handoff-workflow}
 
 1. 実際のソース artifact、model/code/data hash、依存関係、Run/model 参照を記録します。
 2. 品質、安全性、ビジネス基準を評価し、承認の証拠を保存します。
@@ -96,23 +86,17 @@ assert client.get_model_version_by_alias(name, "champion").version == second.ver
 
 [インタラクティブ図](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-mlflow-02-model-registry-0.html)
 
-<span id="lineage-and-reproducibility"></span>
-
-## Lineage と再現性
+## Lineage と再現性 {#lineage-and-reproducibility}
 
 Lineage の完全性は、記録および保持された情報と同程度に限られます。Registry は、欠落した `run_id`、`model_id`、コードリビジョン、データセットハッシュを後から復元できません。ソースファイルの変更、Run/Model Version の削除、artifact のクリーンアップによっても、リンクが不完全になる可能性があります。
 
 監査には、実際に serving しているバージョン/model ID、artifact hash と場所、ソース commit、データセット snapshot、依存関係、評価/承認記録が必要です。メタデータ DB と artifact-store のバックアップおよび保持を一緒に運用してください。Alias はすべての変更に対する恒久的な監査ログではありません。
 
-<span id="next-steps"></span>
-
-## 次のステップ
+## 次のステップ {#next-steps}
 
 [Part 3: EKS Deployment](03-eks-deployment.md) では、サーバー、データベース、artifact の権限境界について扱います。
 
-<span id="primary-sources"></span>
-
-## 一次資料
+## 一次資料 {#primary-sources}
 
 - [Model Registry](https://mlflow.org/docs/3.16.0/ml/model-registry/)
 - [3.16.0 Registry client API](https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/tracking/client.py)

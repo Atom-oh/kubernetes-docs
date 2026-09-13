@@ -145,9 +145,7 @@ AI/ML 工作负载需要高性能存储：
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-01-ai-ml-workloads-2.html)
 
-<span id="nvidia-gpu-operator-and-device-allocation"></span>
-
-### NVIDIA GPU Operator 和设备分配
+### NVIDIA GPU Operator 和设备分配 {#nvidia-gpu-operator-and-device-allocation}
 
 EKS AL2023 NVIDIA AMI 已包含驱动程序和 Container Toolkit，因此请通过 GPU Operator 禁用其安装。它们不包含 device plugin/DRA driver，后者需要配置。Bottlerocket NVIDIA AMI 包含 device plugin。避免安装重复的管理方。
 
@@ -185,9 +183,7 @@ spec:
           nvidia.com/gpu: 1
 ```
 
-<span id="kubeflow-and-distributed-training"></span>
-
-### Kubeflow 和分布式训练
+### Kubeflow 和分布式训练 {#kubeflow-and-distributed-training}
 
 请使用固定版本的 [26.03.1 安装指南](kubeflow/01-architecture-installation.md) 来配置依赖项、身份和存储，而不是使用 master 分支的一行安装方式。服务项目是 KServe；KFServing 是其历史名称。
 
@@ -248,9 +244,7 @@ helm template nvdp nvdp/nvidia-device-plugin \
 
 这会暴露 nvidia.com/gpu.shared；Pod 请求 1 个该资源单位（整数 1）。replicas=2 并不保证获得一半的 GPU 内存。请在真实 GPU 硬件上验证所选节点、分配和争用。
 
-<span id="placement-and-topology"></span>
-
-### 放置和拓扑
+### 放置和拓扑 {#placement-and-topology}
 
 区域/region 注释不会控制 Pod 放置。请根据实际节点标签使用 nodeSelector/affinity；anti-affinity/spread selector 也必须匹配 Pod 标签。请将以下实际 AZ 替换进去。同一 AZ 放置、跨节点分散和 gang admission 是不同的约束。
 
@@ -287,9 +281,7 @@ spec:
           memory: 128Mi
 ```
 
-<span id="storage-and-caching"></span>
-
-### 存储和缓存
+### 存储和缓存 {#storage-and-caching}
 
 静态 FSx CSI 供应将**现有文件系统**连接到 PV/PVC。请将文件系统 ID、DNS、挂载名称、容量和 namespace 替换为实际值。Retain 会避免自动删除文件系统；费用仍会持续，直到另行清理。
 
@@ -337,9 +329,7 @@ spec:
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-01-ai-ml-workloads-6.html)
 
-<span id="prometheus-and-grafana"></span>
-
-### Prometheus 和 Grafana
+### Prometheus 和 Grafana {#prometheus-and-grafana}
 
 DCGM Exporter 提供 GPU 指标，这与 device-plugin 的可分配容量不同。避免使用另一个 DaemonSet 重复部署由 Operator 管理的 exporter。containerd 设置不需要 Docker-socket 挂载。
 
@@ -370,15 +360,11 @@ containerd CRI 日志帧和应用程序 JSON 是不同层次。请配置 Fluent 
 
 ## 成本优化
 
-<span id="spot-and-node-provisioning"></span>
-
-### Spot 和节点供应
+### Spot 和节点供应 {#spot-and-node-provisioning}
 
 Spot 中断/容量短缺需要外部 checkpoint、retry/idempotency 和恢复时间验证。请使用 [Karpenter 指南](../autoscaling/02-karpenter.md)中的当前 NodePool/EC2NodeClass 配置，包括镜像/AMI 修订版、taint/toleration、limits 和中断处理。混合 CPU/GPU node group 与 EKS Hybrid Nodes 产品不同。
 
-<span id="hpa-and-metrics"></span>
-
-### HPA 和指标
+### HPA 和指标 {#hpa-and-metrics}
 
 对于由 metrics-server 提供的 CPU/内存，请使用 HPA Resource 指标。nvidia.com/gpu 分配不是 GPU 利用率 Resource 指标。GPU/请求信号需要 exporter 和 custom/external metrics adapter。
 
@@ -409,9 +395,7 @@ spec:
 
 不正确的聚合/标签分组可能会阻止 adapter 返回按 Pod 划分的值。直方图百分位数或模型准确性并不自动适合作为成比例的 HPA 信号。请同时测量负载/队列/延迟/利用率和实际吞吐量。减少 Pod 后，EC2 费用会持续到节点终止；仅靠一天中的时间并不会降低 On-Demand 费率。
 
-<span id="data-and-model-access"></span>
-
-### 数据和模型访问
+### 数据和模型访问 {#data-and-model-access}
 
 Kubernetes RBAC 管理 API 访问；S3/KMS 权限使用工作负载 IAM。请使用对象存储、加密和基于文件的凭证，而非大型模型 Secret 或环境变量中的解密密钥。Secret base64 不是加密。同一个 peer 中的 NetworkPolicy namespaceSelector 和 podSelector 是 AND；单独的条目是 OR。也请允许实际的 DNS/存储/指标方向。
 

@@ -145,9 +145,7 @@ AI/ML ワークロードには高性能ストレージが必要です。
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-01-ai-ml-workloads-2.html)
 
-<span id="nvidia-gpu-operator-and-device-allocation"></span>
-
-### NVIDIA GPU Operator とデバイス割り当て
+### NVIDIA GPU Operator とデバイス割り当て {#nvidia-gpu-operator-and-device-allocation}
 
 EKS AL2023 NVIDIA AMI にはすでにドライバーと Container Toolkit が含まれているため、GPU Operator によるそれらのインストールを無効にします。これらには device plugin/DRA driver は含まれないため、構成が必要です。Bottlerocket NVIDIA AMI には device plugin が含まれます。所有者の重複インストールを避けてください。
 
@@ -185,9 +183,7 @@ spec:
           nvidia.com/gpu: 1
 ```
 
-<span id="kubeflow-and-distributed-training"></span>
-
-### Kubeflow と分散学習
+### Kubeflow と分散学習 {#kubeflow-and-distributed-training}
 
 master ブランチのワンラインインストールではなく、依存関係、アイデンティティ、ストレージには固定された [26.03.1 installation guide](kubeflow/01-architecture-installation.md) を使用してください。サービングプロジェクトは KServe であり、KFServing はその旧称です。
 
@@ -248,9 +244,7 @@ helm template nvdp nvdp/nvidia-device-plugin \
 
 これにより nvidia.com/gpu.shared が公開され、Pod はそのリソースを整数 1 単位で request します。replicas=2 は GPU メモリの半分を保証しません。実際の GPU ハードウェア上で、選択したノード、割り当て、競合を検証してください。
 
-<span id="placement-and-topology"></span>
-
-### 配置とトポロジー
+### 配置とトポロジー {#placement-and-topology}
 
 ゾーン/リージョンの annotation は Pod の配置を制御しません。実際のノードラベルに対して nodeSelector/affinity を使用してください。anti-affinity/spread selector も Pod ラベルと一致している必要があります。以下の実際の AZ に置き換えてください。同一 AZ への配置、ノード間への分散、gang admission はそれぞれ異なる制約です。
 
@@ -287,9 +281,7 @@ spec:
           memory: 128Mi
 ```
 
-<span id="storage-and-caching"></span>
-
-### ストレージとキャッシュ
+### ストレージとキャッシュ {#storage-and-caching}
 
 静的 FSx CSI プロビジョニングは、既存のファイルシステムを PV/PVC で接続します。ファイルシステム ID、DNS、mount name、容量、namespace を実際の値に置き換えてください。Retain はファイルシステムの自動削除を回避しますが、別途クリーンアップするまで料金は発生し続けます。
 
@@ -337,9 +329,7 @@ Alluxio worker DaemonSet だけでは完全なキャッシュデプロイでは�
 
 [🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-01-ai-ml-workloads-6.html)
 
-<span id="prometheus-and-grafana"></span>
-
-### Prometheus と Grafana
+### Prometheus と Grafana {#prometheus-and-grafana}
 
 DCGM Exporter は GPU metrics を提供し、device-plugin の allocatable capacity とは異なります。Operator が所有する exporter を別の DaemonSet で重複させないでください。containerd のセットアップでは Docker-socket mount は不要です。
 
@@ -370,15 +360,11 @@ containerd の CRI ログフレーミングとアプリケーション JSON は�
 
 ## コスト最適化
 
-<span id="spot-and-node-provisioning"></span>
-
-### Spot とノードプロビジョニング
+### Spot とノードプロビジョニング {#spot-and-node-provisioning}
 
 Spot interruption/capacity shortage には、外部チェックポイント、retry/idempotency、復旧時間の検証が必要です。イメージ/AMI revision、taint/toleration、limits、interruption handling を含め、[Karpenter guide](../autoscaling/02-karpenter.md) の最新の NodePool/EC2NodeClass 構成を使用してください。CPU/GPU node group の混在は EKS Hybrid Nodes 製品とは異なります。
 
-<span id="hpa-and-metrics"></span>
-
-### HPA とメトリクス
+### HPA とメトリクス {#hpa-and-metrics}
 
 metrics-server が提供する CPU/メモリには HPA Resource metrics を使用します。nvidia.com/gpu の割り当ては GPU-utilization Resource metric ではありません。GPU/request シグナルには exporter と custom/external metrics adapter が必要です。
 
@@ -409,9 +395,7 @@ spec:
 
 不適切な集約/ラベルグループ化により、adapter が Pod ごとの値を返せなくなる場合があります。histogram percentile やモデル精度は、自動的に適切な比例 HPA シグナルになるわけではありません。負荷/キュー/レイテンシー/utilization と達成スループットを合わせて測定してください。Pod を削減しても、ノードが終了するまで EC2 料金は残る場合があります。時刻だけでは On-Demand 料金は下がりません。
 
-<span id="data-and-model-access"></span>
-
-### データとモデルへのアクセス
+### データとモデルへのアクセス {#data-and-model-access}
 
 Kubernetes RBAC は API アクセスを制御し、S3/KMS 権限にはワークロード IAM を使用します。大規模モデルの Secret や環境変数内の復号鍵ではなく、オブジェクトストレージ、暗号化、ファイルベースの認証情報を使用してください。Secret の base64 は暗号化ではありません。一つの peer 内の NetworkPolicy namespaceSelector と podSelector は AND であり、別々のエントリは OR です。実際の DNS/ストレージ/metrics の通信方向も許可してください。
 
