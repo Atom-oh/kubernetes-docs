@@ -1,121 +1,84 @@
 # 告警概述
 
-> **最后更新**: February 20, 2026
+> **最后更新**: September 13, 2026
+
+
+> 审阅基线: Prometheus 3.14.0 与 Alertmanager 0.34.0。示例假定为单个集群且时间序列已去重。请先确认实际的 job、标签、exporter 以及指标可用性，然后再调整阈值。仅执行了本地规则/路由检查；未对任何集群或通知渠道进行实际验证。
+
 
 ## 目录
 
-- [告警的角色与重要性](#告警的角色与重要性)
-- [告警生命周期](#告警生命周期)
-- [告警设计原则](#告警设计原则)
-- [告警路由与升级](#告警路由与升级)
-- [值班轮换](#值班轮换)
-- [EKS 环境的告警策略](#eks-环境的告警策略)
-- [解决方案对比](#解决方案对比)
+- [告警的作用与重要性](#the-role-and-importance-of-alerting)
+- [告警生命周期](#alert-lifecycle)
+- [告警设计原则](#alert-design-principles)
+- [告警路由与升级](#alert-routing-and-escalation)
+- [On-Call 轮值](#on-call-rotation)
+- [EKS 环境的告警策略](#alerting-strategy-for-eks-environments)
+- [方案对比](#solution-comparison)
 
 ---
 
-## 告警的角色与重要性
+## 告警的作用与重要性
 
 ### 告警在可观测性三大支柱中的位置
 
-现代可观测性由三大核心支柱构成：
+指标（Metrics）、日志（Logs）和链路追踪（Traces）是常见的可观测性信号；此外还存在 profiles 等其他信号。规则引擎并不一定直接评估这三者：
 
-```mermaid
-graph TB
-    subgraph Observability["Observability"]
-        M[Metrics]
-        L[Logs]
-        T[Traces]
-    end
+![Common observability signals feed compatible backend rules or derived metrics, then configured notification and incident integrations.](../../.gitbook/assets/en-observability-alerting-readme-0.png)
 
-    subgraph Alerting["Alerting"]
-        A[Alert Rules]
-        N[Notifications]
-        E[Escalation]
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-0.html)
 
-    M --> A
-    L --> A
-    T --> A
-    A --> N
-    N --> E
+- **Metrics**: 系统的量化状态（CPU、内存、请求数等）
+- **Logs**: 事件的详细记录
+- **Traces**: 分布式系统中的请求流转
 
-    style Observability fill:#e1f5fe
-    style Alerting fill:#fff3e0
-```
-
-- **Metrics**：系统的量化状态（CPU、内存、请求数等）
-- **Logs**：事件的详细记录
-- **Traces**：分布式系统中的请求流
-
-**Alerting** 基于这三类数据源检测异常，并及时通知相关负责人，从而实现快速响应。
+Prometheus 规则评估指标。日志和链路追踪需要通过各后端专有的规则或派生指标来产生告警。检测、通知与人工确认是彼此独立的阶段，而投递是否成功需要单独监控。
 
 ### 为什么需要告警
 
-1. **主动响应问题**：在用户遇到问题之前检测问题
-2. **最小化停机时间**：通过快速检测和响应提高服务可用性
-3. **降低成本**：通过自动化监控降低人力成本
-4. **遵守 SLA/SLO**：实现服务级别目标的重要组成部分
-5. **事件记录**：跟踪和分析问题发生历史
+1. **主动响应问题**: 在用户感知到问题之前发现问题
+2. **最小化停机时间**: 通过快速检测与响应提升服务可用性
+3. **降低成本**: 通过自动化监控减少人力成本
+4. **满足 SLA/SLO**: 达成服务级别目标的必要组成部分
+5. **事件记录**: 追踪并分析问题发生历史
 
-### 好的告警与差的告警
+### 好的告警 vs 坏的告警
 
-| 方面 | 好的告警 | 差的告警 |
+| 方面 | 好的告警 | 坏的告警 |
 |--------|-------------|------------|
-| **可操作性** | 需要立即采取行动 | 仅提供信息，无需行动 |
-| **清晰度** | 明确说明问题所在 | 模糊不清 |
-| **紧急程度** | 紧急程度与严重性相符 | 所有事情都很紧急 |
-| **频率** | 频率适当 | 过于频繁或过于罕见 |
-| **重复性** | 相关告警已分组 | 同一问题触发数十个告警 |
+| **可操作性** | 需要立即采取行动 | 仅为信息，无需任何行动 |
+| **清晰度** | 问题是什么很明确 | 含糊不清 |
+| **紧急度** | 紧急度与严重程度匹配 | 所有事情都很紧急 |
+| **频率** | 频率适当 | 过于频繁或过于稀少 |
+| **重复性** | 相关告警被分组 | 同一问题产生数十条告警 |
 
 ---
 
 ## 告警生命周期
 
-告警会经历以下生命周期：
+下图将规则状态与事件响应结合在一起展示。Prometheus 使用 inactive/pending/firing 状态；确认（acknowledgment）和处理中（work-in-progress）属于 on-call 工具的范畴。关闭一个事件并不会消除处于 firing 状态的规则。时间序列消失同样会使规则回到非激活状态，但不能将其视为已恢复的证据：
 
-```mermaid
-stateDiagram-v2
-    [*] --> Inactive: Normal state
-    Inactive --> Pending: Threshold exceeded
-    Pending --> Firing: Wait time elapsed
-    Firing --> Notified: Alert sent
-    Notified --> Acknowledged: Responder confirmed
-    Acknowledged --> InProgress: Action in progress
-    InProgress --> Resolved: Problem solved
-    Resolved --> [*]: End
+![Prometheus rule states and separate incident-response states; closing an incident or losing a series does not prove service recovery.](../../.gitbook/assets/en-observability-alerting-readme-1.png)
 
-    Pending --> Inactive: Returns within threshold
-    Firing --> Inactive: Auto-resolved
-
-    note right of Pending
-        Held during the wait time
-        specified in the for clause
-    end note
-
-    note right of Firing
-        Alert is active
-        Waiting to be sent to receivers
-    end note
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-1.html)
 
 ### 1. 检测
 
-- **基于阈值**：特定值超过配置的阈值时
-- **基于变化率**：变化率异常时
-- **异常检测**：基于机器学习的异常模式检测
-- **日志模式**：特定日志模式出现时
+- **基于阈值**: 当某个特定值超过配置的阈值时
+- **基于变化率**: 当变化率异常时
+- **异常检测**: 基于机器学习的异常模式检测
+- **日志模式**: 当出现特定日志模式时
 
 ```yaml
-# Prometheus alert rule example
 groups:
   - name: node-alerts
     rules:
       - alert: HighCPUUsage
-        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
-        for: 5m  # Alert fires if condition persists for 5 minutes
+        expr: 100 * (1 - avg by (cluster, instance) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 80
+        for: 5m
         labels:
           severity: warning
+          team: sre
         annotations:
           summary: "High CPU usage detected"
           description: "CPU usage is above 80% for 5 minutes on {{ $labels.instance }}"
@@ -123,36 +86,26 @@ groups:
 
 ### 2. 通知
 
-- **渠道选择**：Slack、Email、SMS、PagerDuty 等
-- **路由**：根据告警类型发送给合适的接收者
-- **分组**：将相关告警打包在一起
-- **去重**：防止重复发送相同的告警
+- **渠道选择**: Slack、Email、SMS、PagerDuty 等
+- **路由**: 根据告警类型投递给合适的接收者
+- **分组**: 将相关告警合并在一起
+- **去重**: 减少重复通知；repeat_interval 提醒和重试仍可能发生，不存在精确一次（exactly-once）的保证
 
 ### 3. 升级
 
-- **基于时间**：在指定时间内未响应时升级给下一位响应者
-- **基于严重性**：根据严重性采用不同的升级路径
-- **自动升级**：根据定义的规则自动升级
+- **基于时间**: 在指定时间内无人响应则升级给下一位响应人
+- **基于严重程度**: 根据严重程度使用不同的升级路径
+- **自动升级**: 需要在 on-call 服务中配置。Alertmanager 的 repeat_interval 既不检查确认状态，也不会轮换响应人
 
-```mermaid
-graph LR
-    A[Alert Fired] --> B{Primary<br/>Response?}
-    B -->|Yes| C[Action Proceeds]
-    B -->|No, 15min elapsed| D{Secondary<br/>Response?}
-    D -->|Yes| C
-    D -->|No, 15min elapsed| E{Team Lead<br/>Response?}
-    E -->|Yes| C
-    E -->|No, 15min elapsed| F[Entire Team Alert]
+![Illustrative escalation windows implemented in an on-call service, with acknowledgment and backup behavior set by policy.](../../.gitbook/assets/en-observability-alerting-readme-2.png)
 
-    style A fill:#ffcdd2
-    style C fill:#c8e6c9
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-2.html)
 
 ### 4. 解决
 
-- **手动解决**：响应者修复问题后关闭告警
-- **自动解决**：指标恢复到正常范围后自动关闭
-- **解决通知**：问题修复后发送解决通知
+- **手动解决**: 由响应人在事件管理工具中关闭该事件；规则状态需单独检查
+- **自动解决**: 在检查规则与采集健康状况之后，按照集成策略更新事件状态
+- **解决通知**: 问题修复后发送解决通知
 
 ---
 
@@ -160,82 +113,73 @@ graph LR
 
 ### 1. 可操作的告警
 
-所有告警都应使接收者能够立即采取行动。
+会打断人的呼叫（page）必须对应可立即执行的响应动作。信息性事件和更长期的工作则可以进入工单或仪表板。
 
-**不良示例：**
+**不好的示例:**
 ```
 Alert: Database connection count increased
 ```
 
-**良好示例：**
+**好的示例:**
 ```
 Alert: Database connection pool exhausted
-Action Required: Scale up database or investigate connection leaks
-Runbook: https://wiki.company.com/db-connection-exhausted
+Action Required: Confirm user impact; inspect pool saturation and connection leaks using the runbook
+Runbook: https://example.com/runbooks/replace-db-runbook
 ```
 
 ### 2. 防止告警疲劳
 
-过多的告警可能导致重要告警被忽略。
+告警过多会导致重要告警被忽略。
 
-```mermaid
-graph TB
-    subgraph Problem["Alert Fatigue Vicious Cycle"]
-        A[Excessive Alerts] --> B[Alerts Ignored]
-        B --> C[Important Alerts Missed]
-        C --> D[Incident Occurs]
-        D --> E[More Alerts Added]
-        E --> A
-    end
+![Alert fatigue and a review cycle that improves actionability, grouping and the handling of non-urgent work.](../../.gitbook/assets/en-observability-alerting-readme-3.png)
 
-    subgraph Solution["Solution"]
-        F[Alert Refinement] --> G[Appropriate Thresholds]
-        G --> H[Alert Grouping]
-        H --> I[Regular Review]
-        I --> F
-    end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-3.html)
 
-    style Problem fill:#ffcdd2
-    style Solution fill:#c8e6c9
-```
+**防止告警疲劳的策略:**
 
-**防止告警疲劳的策略：**
+1. **调整阈值**: 不要设置过于敏感的阈值
+2. **告警分组**: 将相关告警合并为一条
+3. **抑制（Inhibition）**: 当父告警触发时抑制子告警
+4. **定期审查**: 移除不必要的告警
+5. **逐步引入**: 新告警先从较低严重程度开始
 
-1. **调整阈值**：不要设置过于敏感的阈值
-2. **告警分组**：将相关告警合并为一个
-3. **抑制**：父级告警触发时抑制子级告警
-4. **定期审查**：移除不必要的告警
-5. **逐步引入**：先以低严重性引入新告警
+### 3. 严重程度级别
 
-### 3. 严重性级别
+以下响应时间仅为示例性的组织策略，并非产品 SLA 或通用建议：
 
-定义并遵循一致的严重性体系：
-
-| 严重性 | 描述 | 响应时间 | 示例 |
+| 严重程度 | 说明 | 响应时间 | 示例 |
 |----------|-------------|---------------|----------|
-| **Critical** | 完全服务中断 | 立即（5 分钟内） | 整个服务宕机、存在数据丢失风险 |
+| **Critical** | 服务完全中断 | 立即（5 分钟内） | 服务整体不可用、存在数据丢失风险 |
 | **High** | 主要功能故障 | 15 分钟内 | 支付系统错误、登录失败 |
-| **Warning** | 潜在问题 | 1 小时内 | 磁盘使用率 80%、响应延迟增加 |
-| **Info** | 信息性告警 | 工作时间内 | Deployment 完成、备份成功 |
+| **Warning** | 潜在问题 | 1 小时内 | 磁盘使用率 80%、响应延迟上升 |
+| **Info** | 信息性告警 | 工作时间内 | 部署完成、备份成功 |
 
 ```yaml
-# Alert rules by severity example
 groups:
   - name: disk-alerts
     rules:
       - alert: DiskSpaceCritical
-        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 5
+        expr: |
+          (100 * node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs"}
+            / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs"} < 5)
+          and node_filesystem_readonly == 0
+          and node_filesystem_size_bytes > 0
         for: 5m
         labels:
           severity: critical
+          team: sre
         annotations:
           summary: "Disk space critical"
-
       - alert: DiskSpaceWarning
-        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 20
+        expr: |
+          (100 * node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs"}
+            / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs"} < 20)
+          and node_filesystem_readonly == 0
+          and node_filesystem_size_bytes > 0
         for: 10m
         labels:
           severity: warning
+          team: sre
         annotations:
           summary: "Disk space low"
 ```
@@ -244,23 +188,18 @@ groups:
 
 所有告警都应包含以下信息：
 
-- **描述**：告警的含义
-- **影响**：该问题如何影响服务
-- **操作步骤**：解决问题的分步指南
-- **Runbook 链接**：详细的响应流程文档
+- **说明**: 该告警意味着什么
+- **影响**: 该问题会如何影响服务
+- **处理步骤**: 解决该问题的分步指南
+- **Runbook 链接**: 详细的响应流程文档
 
 ```yaml
 annotations:
-  summary: "High memory usage on {{ $labels.instance }}"
-  description: |
-    Memory usage is above 90% on {{ $labels.instance }}.
-    Current value: {{ $value | printf "%.2f" }}%
-  impact: "Application may experience OOM kills and service degradation"
-  action: |
-    1. Check for memory leaks: kubectl top pods -n {{ $labels.namespace }}
-    2. Review recent deployments
-    3. Consider scaling horizontally
-  runbook_url: "https://wiki.company.com/runbooks/high-memory"
+  summary: "Investigate the affected operation"
+  description: "Check the rule expression, its units, labels, and collection health."
+  impact: "Document the affected user operation before paging."
+  action: "Use the owning team's reviewed runbook; do not scale resources blindly."
+  runbook_url: "https://example.com/runbooks/replace-with-reviewed-runbook"
 ```
 
 ---
@@ -269,391 +208,314 @@ annotations:
 
 ### 路由策略
 
-应根据各种条件将告警发送给合适的接收者：
+告警应根据各种条件投递给合适的接收者：
 
-```mermaid
-graph TB
-    A[Alert Fired] --> B{Severity?}
+![Alert labels select on-call and team receivers before delivery; critical-only matches do not also call the default receiver.](../../.gitbook/assets/en-observability-alerting-readme-5.png)
 
-    B -->|Critical| C[Immediate Phone/SMS]
-    B -->|High| D[Slack + PagerDuty]
-    B -->|Warning| E[Slack Channel]
-    B -->|Info| F[Email]
-
-    C --> G{Team?}
-    D --> G
-    E --> G
-
-    G -->|Infrastructure| H[SRE Team]
-    G -->|Application| I[Dev Team]
-    G -->|Database| J[DBA Team]
-    G -->|Security| K[Security Team]
-
-    style C fill:#ffcdd2
-    style D fill:#fff3e0
-    style E fill:#fff9c4
-    style F fill:#e8f5e9
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-5.html)
 
 ### 路由树设计
 
+以下是一份完整的**不发送通知**的路由验证配置。空的 receiver 是有意为之；投入生产使用前请配置经过审阅的集成与 Secret 文件。critical 告警会同时分发到 on-call receiver 和匹配的团队。缺少 team 标签时会回落到 default，但仅匹配 critical 的情况不会额外调用 default。由于存在分组延迟，因此不存在立即电话呼叫的保证。磁盘 critical 仅对相同的 instance/device/mountpoint 抑制 warning。
+
 ```yaml
-# Alertmanager routing configuration example
 route:
-  receiver: 'default-receiver'
-  group_by: ['alertname', 'cluster', 'service']
+  receiver: default-receiver
+  group_by: [alertname, cluster, namespace, service]
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 4h
-
   routes:
-    # Critical alerts - immediate phone call
-    - match:
-        severity: critical
-      receiver: 'pagerduty-critical'
+    - matchers: ['severity="critical"']
+      receiver: critical-oncall
       continue: true
-
-    # Infrastructure team alerts
-    - match_re:
-        alertname: ^(Node|Disk|CPU|Memory).*
-      receiver: 'sre-team'
-      routes:
-        - match:
-            severity: critical
-          receiver: 'sre-oncall'
-
-    # Application team alerts
-    - match_re:
-        namespace: ^(app|api|web).*
-      receiver: 'dev-team'
-
-    # Database alerts
-    - match_re:
-        alertname: ^(MySQL|PostgreSQL|Redis|MongoDB).*
-      receiver: 'dba-team'
+    - matchers: ['team="sre"']
+      receiver: sre-team
+    - matchers: ['team="app"']
+      receiver: dev-team
+    - matchers: ['team="database"']
+      receiver: dba-team
+    - matchers: ['team="security"']
+      receiver: security-team
+receivers:
+  - name: default-receiver
+  - name: critical-oncall
+  - name: sre-team
+  - name: dev-team
+  - name: dba-team
+  - name: security-team
+inhibit_rules:
+  - source_matchers: ['alertname="DiskSpaceCritical"', 'instance!=""', 'device!=""', 'mountpoint!=""']
+    target_matchers: ['alertname="DiskSpaceWarning"', 'instance!=""', 'device!=""', 'mountpoint!=""']
+    equal: [cluster, instance, device, mountpoint]
 ```
 
 ### 升级策略
 
-设置基于时间的升级策略，确保告警不会被忽略：
+以下内容仅为示例。请在 on-call 服务中配置时区、确认时间窗口、备份人员和重新呼叫行为，并通过演练进行测试：
 
-| 步骤 | 时间 | 目标 | 渠道 |
+| 步骤 | 时间 | 对象 | 渠道 |
 |------|------|--------|---------|
-| 1 | 0 分钟 | 主要值班人员 | Slack、PagerDuty |
-| 2 | 15 分钟 | 次要值班人员 | Slack、PagerDuty、SMS |
-| 3 | 30 分钟 | 团队负责人 | Slack、PagerDuty、电话 |
-| 4 | 45 分钟 | 工程经理 | 电话 |
-| 5 | 60 分钟 | CTO/VP Engineering | 电话 |
+| 1 | 0 分钟 | 主 on-call | Slack, PagerDuty |
+| 2 | 15 分钟 | 备 on-call | Slack, PagerDuty, SMS |
+| 3 | 30 分钟 | 团队负责人 | Slack, PagerDuty, Phone |
+| 4 | 45 分钟 | 工程经理 | Phone |
+| 5 | 60 分钟 | CTO/工程副总裁 | Phone |
 
 ---
 
-## 值班轮换
+## On-Call 轮值
 
-### 值班概念
+### On-Call 概念
 
-值班是指在指定期间内负责处理系统问题的指定响应者。
+On-Call 指在指定时间段内负责处理系统问题的指定响应人。
 
-```mermaid
-gantt
-    title Weekly On-Call Rotation
-    dateFormat  YYYY-MM-DD
-    section SRE Team
-    Engineer A    :a1, 2025-02-17, 7d
-    Engineer B    :a2, after a1, 7d
-    Engineer C    :a3, after a2, 7d
-    Engineer D    :a4, after a3, 7d
-```
+![An illustrative four-week rotation with handoffs; actual time zones, staffing, backup and compensation require an agreed policy.](../../.gitbook/assets/en-observability-alerting-readme-8.png)
 
-### 值班最佳实践
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-8.html)
 
-1. **明确的交接计划**：每周或每两周轮换
-2. **交接流程**：在换班期间移交进行中的问题
-3. **备用响应者**：主要响应者不可用时提供备份
-4. **适当的补偿**：值班津贴或补休
-5. **防止倦怠**：采用适当的轮换周期
 
-### 值班工具要求
+### On-Call 最佳实践
 
-- **排班管理**：日历集成、班次管理
-- **替换**：临时更改响应者
-- **升级**：自动升级
-- **移动支持**：随时随地接收告警
-- **报告**：值班活动分析
+1. **明确的交接排班**: 每周或每两周轮换
+2. **交接流程**: 换班时移交正在处理的问题
+3. **备份响应人**: 主响应人不可用时接替
+4. **合理的补偿**: On-Call 津贴或补休
+5. **防止倦怠**: 设置合理的轮换周期
+
+### On-Call 工具需求
+
+- **排班管理**: 日历集成、班次管理
+- **临时替换（Override）**: 临时更换响应人
+- **升级**: 自动升级
+- **移动端支持**: 随时随地接收告警
+- **报表**: On-Call 活动分析
 
 ---
 
 ## EKS 环境的告警策略
 
-### EKS 专属告警领域
+### EKS 特有的告警领域
 
-```mermaid
-graph TB
-    subgraph EKS["Amazon EKS Alerting Areas"]
-        subgraph Control["Control Plane"]
-            API[API Server]
-            ETCD[etcd]
-            SCH[Scheduler]
-            CM[Controller Manager]
-        end
+![EKS monitoring scopes and collection limits, separating scrape failures, target absence, readiness and resource signals.](../../.gitbook/assets/en-observability-alerting-readme-4.png)
 
-        subgraph Data["Data Plane"]
-            Node[Node Status]
-            Pod[Pod Status]
-            Cont[Container Status]
-        end
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-4.html)
 
-        subgraph Network["Networking"]
-            VPC[VPC CNI]
-            SVC[Service/Ingress]
-            DNS[CoreDNS]
-        end
+### 按层次划分的告警策略
 
-        subgraph Storage["Storage"]
-            EBS[EBS CSI]
-            EFS[EFS CSI]
-            PV[PV/PVC]
-        end
-    end
+#### 1. 集群级别告警
 
-    style Control fill:#e3f2fd
-    style Data fill:#e8f5e9
-    style Network fill:#fff3e0
-    style Storage fill:#fce4ec
-```
-
-### 按层划分的告警策略
-
-#### 1. 集群级告警
+请将 job 名称替换为实际部署的目标。up=0 只能证明抓取（scrape）失败，而不能证明 API 完全不可用。absent 规则只覆盖一个采集范围；多集群环境需要预期目标清单和 cluster 标签。对于 Cluster Autoscaler 的累积错误计数器，请使用 increase。近期出现的 increase 持续五分钟并不意味着错误在五分钟内持续发生。该规则无法原样适用于 Karpenter 或 EKS Auto Mode。
 
 ```yaml
-# Cluster-level alert examples
 groups:
   - name: eks-cluster
     rules:
-      - alert: EKSAPIServerDown
+      - alert: EKSAPIServerScrapeFailed
         expr: up{job="kubernetes-apiservers"} == 0
         for: 1m
         labels:
           severity: critical
+          team: sre
         annotations:
-          summary: "EKS API Server is down"
-
+          summary: "Prometheus cannot scrape the configured API server target"
+      - alert: EKSAPIServerTargetMissing
+        expr: absent(up{job="kubernetes-apiservers"})
+        for: 5m
+        labels:
+          severity: warning
+          team: sre
+        annotations:
+          summary: "No API server target series in this Prometheus"
       - alert: EKSNodeNotReady
         expr: kube_node_status_condition{condition="Ready",status="true"} == 0
         for: 5m
         labels:
           severity: critical
+          team: sre
         annotations:
           summary: "Node {{ $labels.node }} is not ready"
-
-      - alert: EKSClusterAutoscalerError
-        expr: cluster_autoscaler_errors_total > 0
+      - alert: EKSClusterAutoscalerRecentErrors
+        expr: increase(cluster_autoscaler_errors_total[10m]) > 0
         for: 5m
         labels:
           severity: warning
+          team: sre
         annotations:
-          summary: "Cluster Autoscaler is experiencing errors"
+          summary: "Cluster Autoscaler recorded failed loops in the last 10 minutes"
 ```
 
-#### 2. 工作负载级告警
+#### 2. 工作负载级别告警
+
+CrashLoopBackOff 时间序列可能在两次重试之间短暂消失。该规则在最近五分钟的观测窗口持续十分钟保持非空后触发。它检测的是反复出现的观测结果，而不是当前持续处于 Waiting 状态，并且在最后一次观测之后最多可能继续保持激活五分钟。原生规则测试能够区分短暂瞬时状态、反复重试和已恢复。
 
 ```yaml
-# Workload-level alert examples
 groups:
   - name: eks-workloads
     rules:
       - alert: PodCrashLooping
-        expr: rate(kube_pod_container_status_restarts_total[15m]) * 60 * 15 > 3
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Pod {{ $labels.pod }} is crash looping"
-
-      - alert: PodNotReady
-        expr: |
-          sum by (namespace, pod) (
-            kube_pod_status_phase{phase=~"Pending|Unknown"}
-          ) > 0
-        for: 15m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Pod {{ $labels.pod }} has been pending for 15 minutes"
-
-      - alert: DeploymentReplicasMismatch
-        expr: |
-          kube_deployment_spec_replicas != kube_deployment_status_replicas_available
+        expr: max_over_time(kube_pod_container_status_waiting_reason{reason="CrashLoopBackOff"}[5m]) >= 1
         for: 10m
         labels:
           severity: warning
+          team: app
         annotations:
-          summary: "Deployment {{ $labels.deployment }} has replica mismatch"
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} repeatedly observed in CrashLoopBackOff"
+      - alert: PodFrequentRestarts
+        expr: increase(kube_pod_container_status_restarts_total[15m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          team: app
+        annotations:
+          summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has frequent restarts"
+      - alert: PodNotReady
+        expr: |
+          (kube_pod_status_ready{condition="true"} == 0)
+          and on (namespace, pod, uid)
+          (kube_pod_status_phase{phase=~"Pending|Running|Unknown"} == 1)
+        for: 15m
+        labels:
+          severity: warning
+          team: app
+        annotations:
+          summary: "Active pod {{ $labels.namespace }}/{{ $labels.pod }} is not ready"
+      - alert: DeploymentReplicasMismatch
+        expr: |
+          kube_deployment_spec_replicas
+            > on (namespace, deployment) kube_deployment_status_replicas_available
+        for: 10m
+        labels:
+          severity: warning
+          team: app
+        annotations:
+          summary: "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has fewer available replicas than desired"
 ```
 
-#### 3. 资源级告警
+#### 3. 资源级别告警
+
+CFS 示例衡量的是**受限周期数 / 总周期数**，而不是已耗时间的比例。请确认 cAdvisor 是否导出了这些指标。未设置内存上限时可能显示为 0 或一个非常大的值；请将内存规则限定在显式设置了 limits 的容器上。PVC 统计信息取决于 CSI 驱动和卷类型。分母为零的情况已被排除，但指标缺失并不能证明系统健康。
 
 ```yaml
-# Resource-level alert examples
 groups:
   - name: eks-resources
     rules:
       - alert: ContainerCPUThrottling
         expr: |
-          rate(container_cpu_cfs_throttled_seconds_total[5m]) > 0.25
+          (
+            sum by (namespace, pod, container) (
+              rate(container_cpu_cfs_throttled_periods_total{container!="",container!="POD"}[5m]))
+            / sum by (namespace, pod, container) (
+              rate(container_cpu_cfs_periods_total{container!="",container!="POD"}[5m]))
+          ) > 0.25
+          and sum by (namespace, pod, container) (
+            rate(container_cpu_cfs_periods_total{container!="",container!="POD"}[5m])) > 0
         for: 5m
         labels:
           severity: warning
+          team: app
         annotations:
-          summary: "Container {{ $labels.container }} is being CPU throttled"
-
+          summary: "More than 25% of CFS periods throttled for {{ $labels.pod }}/{{ $labels.container }}"
       - alert: ContainerMemoryNearLimit
         expr: |
-          (container_memory_working_set_bytes / container_spec_memory_limit_bytes) > 0.9
+          (
+            container_memory_working_set_bytes{container!="",container!="POD"}
+            / container_spec_memory_limit_bytes{container!="",container!="POD"}
+          ) > 0.9
+          and container_spec_memory_limit_bytes{container!="",container!="POD"} > 0
         for: 5m
         labels:
           severity: warning
+          team: app
         annotations:
-          summary: "Container {{ $labels.container }} memory usage is near limit"
-
+          summary: "Container {{ $labels.pod }}/{{ $labels.container }} memory is near its reported limit"
       - alert: PVCAlmostFull
         expr: |
-          (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes) > 0.85
+          (kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes > 0.85)
+          and kubelet_volume_stats_capacity_bytes > 0
         for: 5m
         labels:
           severity: warning
+          team: sre
         annotations:
-          summary: "PVC {{ $labels.persistentvolumeclaim }} is almost full"
+          summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} is almost full"
 ```
 
 ### AWS 服务集成告警
 
-EKS 与多种 AWS 服务集成，因此也需要为这些服务设置告警：
+EKS 1.28+ 在 AWS/EKS 命名空间中提供部分控制平面指标；这并不意味着所有内部组件都可被抓取。要排查认证错误，需要单独启用控制平面日志。请结合采集健康状况、API 请求失败情况和外部探测来评估可用性：
 
 | AWS 服务 | 监控项 | 告警工具 |
 |-------------|------------------|------------|
-| EKS Control Plane | API Server 可用性、身份验证错误 | CloudWatch |
+| EKS Control Plane | API Server 可用性、认证错误 | CloudWatch |
 | EC2 (Nodes) | 实例状态、系统检查 | CloudWatch |
-| EBS | Volume 状态、IOPS 使用情况 | CloudWatch |
+| EBS | 卷状态、IOPS 使用率 | CloudWatch |
 | EFS | 吞吐量、连接数 | CloudWatch |
-| ALB/NLB | 请求数、错误率、延迟 | CloudWatch |
-| VPC | 网络流量、NAT Gateway | CloudWatch/VPC Flow Logs |
+| ALB / NLB | ALB HTTP 请求/错误/响应时间；NLB 流量/TCP 重置/目标健康状况 | CloudWatch: 使用各产品专有指标 |
+| VPC / NAT Gateway | NAT 指标；单独启用的 Flow Logs 中的接受/拒绝记录 | CloudWatch 指标/Logs；Flow Logs 不是告警引擎 |
 
 ---
 
-## 解决方案对比
+## 方案对比
 
-### 主要告警解决方案对比表
+### 主要告警方案对比表
 
-| 功能 | Alertmanager | CloudWatch Alarms | Grafana OnCall | PagerDuty | OpsGenie |
-|---------|--------------|-------------------|----------------|-----------|----------|
-| **类型** | Open Source | AWS Native | Open Source/SaaS | SaaS | SaaS |
-| **成本** | 免费 | 按告警收费 | 免费/付费 | 付费 | 付费 |
-| **EKS 集成** | Prometheus 集成 | 原生 | Alertmanager 集成 | 多种集成 | 多种集成 |
-| **值班管理** | 无 | 无 | 是 | 是 | 是 |
-| **升级** | 基础 | 无 | 是 | 高级 | 高级 |
-| **移动应用** | 无 | 无 | 是 | 是 | 是 |
-| **ChatOps** | Webhook | SNS | Slack、Teams | 多种 | 多种 |
-| **复杂度** | 中 | 低 | 中 | 低 | 低 |
+| 产品 | 定位与运维约束 |
+|---------|--------------------------------|
+| Alertmanager | 开源的分组、路由、抑制和提醒能力；需要自行托管与运维。不提供 on-call 排班或基于确认的升级 |
+| CloudWatch Alarms | 评估 AWS 指标/受支持的查询，改变状态并触发已配置的动作；排班需另行处理 |
+| Grafana OnCall OSS | 已于 2026-03-24 归档；不适合作为新生产部署的默认选择 |
+| Grafana Cloud IRM / PagerDuty | On-call/升级的候选方案；请确认当前的套餐、渠道、区域和合同 |
+| Opsgenie | 2025-06-04 停止销售；支持与服务计划于 2027-04-05 终止。现有用户需要制定迁移计划 |
 
-### 解决方案选择指南
+### 方案选型指南
 
-```mermaid
-graph TB
-    A[Select Alerting Solution] --> B{Need On-Call<br/>Management?}
+![Select maintained rule, routing and on-call tools by requirements; plan migration for archived OnCall OSS and ending Opsgenie.](../../.gitbook/assets/en-observability-alerting-readme-6.png)
 
-    B -->|No| C{Prefer AWS<br/>Native?}
-    B -->|Yes| D{Budget?}
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-6.html)
 
-    C -->|Yes| E[CloudWatch Alarms]
-    C -->|No| F[Alertmanager]
+#### 按场景推荐的方案
 
-    D -->|Open Source| G[Grafana OnCall]
-    D -->|Enterprise| H{Existing Tools?}
+1. 以 Prometheus 为中心: 使用 Alertmanager 进行分组/路由，并接入所需的渠道。
+2. 以 AWS 指标为中心: 评估 CloudWatch Alarms 配合 SNS 或受支持的事件管理集成。
+3. 全天候响应: 综合考虑人员配置、备份、时区、确认、升级和成本，选择一款仍在维护的 on-call 服务。
+4. 已有 Grafana OnCall OSS/Opsgenie: 确认功能、历史数据、排班和集成的迁移方案。
 
-    H -->|None| I[PagerDuty]
-    H -->|Atlassian| J[OpsGenie]
+### 混合方案
 
-    style E fill:#ff9800
-    style F fill:#4caf50
-    style G fill:#2196f3
-    style I fill:#8bc34a
-    style J fill:#03a9f4
-```
+各方案可以组合使用。CloudWatch 不会自动直接发送到 Alertmanager。本示例通过 SNS/受支持的集成对接 on-call 服务；若要经由 Alertmanager 路由，则需要单独设计适配器、认证以及重复/解决状态的处理：
 
-#### 按场景推荐的解决方案
+![Prometheus uses Alertmanager; CloudWatch uses explicit SNS or service integrations to an on-call service, with no automatic direct bridge.](../../.gitbook/assets/en-observability-alerting-readme-7.png)
 
-1. **小型团队、成本敏感**：Alertmanager + Slack
-2. **完全采用 AWS 的环境**：CloudWatch Alarms + SNS + Lambda
-3. **中型规模、需要值班**：Grafana OnCall
-4. **大型组织、复杂升级**：PagerDuty
-5. **Atlassian 生态系统**：OpsGenie
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-alerting-readme-7.html)
 
-### 混合方法
+**架构示例:**
 
-大多数生产环境会组合使用多种解决方案：
-
-```mermaid
-graph LR
-    subgraph Sources["Alert Sources"]
-        P[Prometheus]
-        CW[CloudWatch]
-    end
-
-    subgraph Routing["Routing"]
-        AM[Alertmanager]
-    end
-
-    subgraph OnCall["On-Call Management"]
-        GO[Grafana OnCall]
-        PD[PagerDuty]
-    end
-
-    subgraph Notification["Notification Channels"]
-        S[Slack]
-        E[Email]
-        SMS[SMS]
-    end
-
-    P --> AM
-    CW --> AM
-    AM --> GO
-    AM --> PD
-    GO --> S
-    GO --> SMS
-    PD --> S
-    PD --> E
-    PD --> SMS
-
-    style Sources fill:#e3f2fd
-    style Routing fill:#fff3e0
-    style OnCall fill:#e8f5e9
-    style Notification fill:#fce4ec
-```
-
-**推荐架构：**
-
-1. **Prometheus + Alertmanager**：指标收集和主要告警处理
-2. **CloudWatch**：AWS 服务指标收集
-3. **Grafana OnCall 或 PagerDuty**：值班管理和升级
-4. **Slack**：实时告警和协作
+1. **Prometheus + Alertmanager**: 指标采集与主要告警处理
+2. **CloudWatch**: AWS 服务指标采集
+3. **仍在维护的 on-call 服务**: On-Call 管理与升级
+4. **Slack**: 实时告警与协作
 
 ---
 
 ## 后续步骤
 
-本节介绍了告警的基本概念和策略。有关各解决方案的详细配置方法，请参阅以下文档：
+本节介绍了告警的基本概念与策略。各方案的详细配置方法请参考以下文档：
 
-- [Prometheus Alertmanager](./01-alertmanager.md)：开源告警管理
-- [CloudWatch Alarms](./02-cloudwatch-alarms.md)：AWS 原生告警
-- [Grafana OnCall](./03-grafana-oncall.md)：值班和事件管理
+- [Prometheus Alertmanager](./01-alertmanager.md): 开源告警管理
+- [CloudWatch Alarms](./02-cloudwatch-alarms.md): AWS 原生告警
+- [Grafana OnCall](./03-grafana-oncall.md): 现有部署的评估与迁移注意事项
 
 ---
 
 ## 参考资料
 
-- [Prometheus 告警最佳实践](https://prometheus.io/docs/practices/alerting/)
-- [Google SRE Book - 实用告警](https://sre.google/sre-book/practical-alerting/)
-- [AWS CloudWatch Alarms 文档](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html)
-- [Grafana OnCall 文档](https://grafana.com/docs/oncall/latest/)
-- [PagerDuty 运维指南](https://www.pagerduty.com/resources/operations/)
+- [Prometheus Alerting Best Practices](https://prometheus.io/docs/practices/alerting/)
+- [Google SRE Book - Practical Alerting](https://sre.google/sre-book/practical-alerting/)
+- [AWS CloudWatch Alarms Documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html)
+- [Grafana OnCall Documentation](https://grafana.com/docs/oncall/latest/)
+- [PagerDuty Operations Guide](https://www.pagerduty.com/resources/operations/)
+
+- [Alertmanager configuration](https://prometheus.io/docs/alerting/latest/configuration/)
+- [EKS control-plane metrics](https://docs.aws.amazon.com/eks/latest/userguide/cloudwatch.html)
+- [Opsgenie lifecycle and migration](https://www.atlassian.com/software/opsgenie)
