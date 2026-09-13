@@ -44,7 +44,7 @@
           "compactor",
           "s3"
         ],
-        "note": "The Compactor merges small chunks in S3, optimizes indexes, and applies retention policies."
+        "note": "Compactor compacts TSDB indexes and handles retention/deletion markers; it does not merge small log chunks into larger chunks."
       }
     ]
   },
@@ -53,7 +53,7 @@
       "id": "agents",
       "type": "external",
       "label": "Log Collection Agents",
-      "sublabel": "Promtail · FluentBit · Grafana Alloy",
+      "sublabel": "Alloy / Fluent Bit / supported clients",
       "pos": [
         60,
         40
@@ -151,7 +151,7 @@
       "id": "compactor",
       "type": "backend",
       "label": "Compactor",
-      "sublabel": "chunk merging · retention",
+      "sublabel": "Index compaction / retention",
       "pos": [
         200,
         580
@@ -223,7 +223,7 @@
       "id": "agents-to-distributor",
       "from": "agents",
       "to": "distributor",
-      "label": "push log streams",
+      "label": "Authenticated push",
       "variant": "emphasis",
       "labelDy": 24
     },
@@ -307,7 +307,9 @@
       "dot": "violet",
       "title": "Backend",
       "items": [
-        "The Compactor merges small chunks into larger ones, optimizes indexes, and applies retention policies"
+        "TSDB index compaction and retention deletion",
+        "Authenticate clients and assign tenants before write/query APIs",
+        "See the Loki chapter for the full TSDB/index-gateway path"
       ]
     }
   ]

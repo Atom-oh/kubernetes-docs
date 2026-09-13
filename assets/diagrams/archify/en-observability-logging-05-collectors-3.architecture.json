@@ -47,7 +47,7 @@
       },
       {
         "id": "export",
-        "label": "Export (Exporters)",
+        "label": "State and export",
         "focus": [
           "memory_limiter",
           "batch",
@@ -55,7 +55,7 @@
           "otlphttp",
           "debug"
         ],
-        "note": "Batched logs go to Loki and an OTLP/HTTP backend. debug sits on a separate logs/debug pipeline, fed straight from memory_limiter."
+        "note": "Persist reader offsets and exporter queues separately. Export to authenticated Loki OTLP; avoid unredacted debug output."
       }
     ],
     "locale": "en"
@@ -79,7 +79,7 @@
       "id": "filelog",
       "type": "external",
       "label": "filelog",
-      "sublabel": "/var/log/pods/*.log",
+      "sublabel": "Container / CRI log files",
       "pos": [
         60,
         195
@@ -190,8 +190,8 @@
     {
       "id": "loki",
       "type": "cloud",
-      "label": "loki",
-      "sublabel": "Loki backend",
+      "label": "otlp_http/loki",
+      "sublabel": "Authenticated Loki OTLP",
       "pos": [
         880,
         240
@@ -203,9 +203,9 @@
     },
     {
       "id": "otlphttp",
-      "type": "cloud",
-      "label": "otlphttp",
-      "sublabel": "OTLP/HTTP backend",
+      "type": "database",
+      "label": "Persistent queue",
+      "sublabel": "file_storage",
       "pos": [
         880,
         330
@@ -217,12 +217,12 @@
     },
     {
       "id": "debug",
-      "type": "cloud",
-      "label": "debug",
-      "sublabel": "Debug output",
+      "type": "database",
+      "label": "Persistent offsets",
+      "sublabel": "Reader state",
       "pos": [
-        880,
-        60
+        60,
+        510
       ],
       "size": [
         180,
@@ -254,10 +254,16 @@
     },
     {
       "kind": "region",
-      "label": "Exporters",
+      "label": "Persistent state and export",
       "wraps": [
         "loki",
-        "otlphttp",
+        "otlphttp"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Reader state",
+      "wraps": [
         "debug"
       ]
     }
@@ -309,21 +315,18 @@
       "variant": "emphasis"
     },
     {
-      "id": "out-loki",
+      "id": "batch-queue",
       "from": "batch",
-      "to": "loki",
+      "to": "otlphttp",
       "variant": "emphasis"
     },
     {
-      "id": "out-otlphttp",
-      "from": "batch",
-      "to": "otlphttp"
-    },
-    {
-      "id": "out-debug",
-      "from": "memory_limiter",
-      "to": "debug",
-      "variant": "dashed"
+      "id": "queue-loki",
+      "from": "otlphttp",
+      "to": "loki",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
     }
   ],
   "cards": [
@@ -338,10 +341,12 @@
     },
     {
       "dot": "cyan",
-      "title": "OTLP Proto encoding",
+      "title": "Delivery conditions to verify",
       "items": [
-        "Field names become numeric tags: 40-60% smaller than JSON on the wire",
-        "1,000 events ≈ 7 messages (150 per batch), far fewer messages"
+        "Offsets and exporter queues are distinct state",
+        "Test retries, duplicates, shutdown and backend records",
+        "Do not promise fixed compression or message-count savings",
+        "Offsets apply to file readers; queue state applies to exporters."
       ]
     }
   ]

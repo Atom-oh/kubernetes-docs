@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Promtail Architecture",
+    "title": "Historical Promtail data path — EOL",
     "locale": "en",
     "output": "en-observability-logging-05-collectors-2.html",
     "quality_profile": "showcase",
@@ -287,18 +287,18 @@
       "dot": "amber",
       "title": "Promtail overview",
       "items": [
-        "Written in Go, ~50MB memory",
-        "Loki-only destination, native K8s integration",
-        "AGPL-3.0 license (Grafana Labs)"
+        "EOL March 2,2026; migrate to maintained clients",
+        "Promtail client source has an Apache-2.0 licensing exception",
+        "Check the actual artifact and dependency licenses"
       ]
     },
     {
       "dot": "cyan",
       "title": "Loki client settings",
       "items": [
-        "batchwait 1s, batchsize 1MiB",
-        "backoff 500ms to 5m, up to 10 retries",
-        "external_labels attach cluster and environment"
+        "Review legacy parser, label, offset and retry settings",
+        "Positions do not prove backend delivery",
+        "Verify backend records after migrating collectors"
       ]
     }
   ]

@@ -1,0 +1,1357 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-13T10:03:44.137978+00:00",
+  "scope": "16 previously stale sharedloggingdiagramtriples andlegacyClickHouseHTML;no source-language Markdown replacements removed",
+  "changes": [
+    "ManagedEKScontrolplanelogpathseparatefromnodecollector;queryarrowsandbackendselectionqualified",
+    "Lokiindexcompactionandobservedlabelcombinations replacechunkmerge/exactproductclaims;Promtailremovedfromnewclientchoices",
+    "CloudWatchsubscriptiondestinationsKinesis/Firehose/Lambda;S3viaFirehose,notdirectsubscription",
+    "PromtailEOLandclientlicensequalified;maintainedcollectorselectionreplacesKeepPromtail",
+    "OTelreader-offset/exporter-queueconceptsseparate;LokiOTLPexportandnounredacteddebugbranch;unverifiedcompressionclaimsremoved",
+    "LegacyClickHousepageclarifiesvolatileBuffer/Distributedrouter/separatearchive/simulatedvalues;mobilecontrols/innercanvaspan/fallbackCSS/resetcallbacksfixed"
+  ],
+  "artifacts": [
+    {
+      "path": "assets/diagrams/archify/ko-observability-logging-readme-0.architecture.json",
+      "sha256": "c18edd88255520f31d91577f512c8a9998ae67abfc49d8716f60c9843309f1e9"
+    },
+    {
+      "path": "public/archmaps/ko-observability-logging-readme-0.html",
+      "sha256": "67d2735beb9ef420a73aa9b6a5750ce0c2324aba42a055990915371a702c49d9"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-logging-readme-0.png",
+      "sha256": "feb6bb7f921ca73fe0e1087e14cff7faea3a9f0da02ed1328bb604cdc35c54d6"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-logging-readme-1.workflow.json",
+      "sha256": "1a5f19a22ed553775c5f0da65ce998e698409fc86def58004976bb365d408682"
+    },
+    {
+      "path": "public/archmaps/ko-observability-logging-readme-1.html",
+      "sha256": "240e8b28ebac8bbd89f54486969d5fb1090037a27341e64380661a964bc04d92"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-logging-readme-1.png",
+      "sha256": "09f42b9364025f34da9d65aaf1bac043daaeb783624ed6827caf3af9164c292c"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-logging-01-loki-0.architecture.json",
+      "sha256": "22ee9a514fc6b3f28d8955f2adeec698cadbed3692c0548e6b2c791478206802"
+    },
+    {
+      "path": "public/archmaps/ko-observability-logging-01-loki-0.html",
+      "sha256": "7d490ff016c6983a7763340a20dec0fadcf490f1cb20b7a5a1db444c93b04b9b"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-logging-01-loki-0.png",
+      "sha256": "b0d311a4d6e5f032f858c34ec54c0917dfa5747de59a5f03e2db5d0fd0972d94"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-logging-01-loki-1.workflow.json",
+      "sha256": "64a8311a79063e5593a8e1a6f1059173aefedecad514431a07758629a17bf124"
+    },
+    {
+      "path": "public/archmaps/ko-observability-logging-01-loki-1.html",
+      "sha256": "ef91d059cd79f002f5351fc8dc809febe4f8359cfa070c9902e6f52283c3d8c3"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-logging-01-loki-1.png",
+      "sha256": "609e873c2d654a48890730f16bacec0923e268d483685d941ae0a076c06a41fc"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-logging-03-cloudwatch-logs-0.architecture.json",
+      "sha256": "aa60e8804a3cd9f044dfe4df8c61f3717ff9e0c0daffe08a21a7f86eb71b2d75"
+    },
+    {
+      "path": "public/archmaps/ko-observability-logging-03-cloudwatch-logs-0.html",
+      "sha256": "5ca9467be374c77ca4b0114d701df5d2c538e9400e600a06c9448f247770035e"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-logging-03-cloudwatch-logs-0.png",
+      "sha256": "bd57e12ba5eb44ccc2dea0d4d97f1851f3fda12dedd5391227a61401c6557cc1"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-logging-05-collectors-2.architecture.json",
+      "sha256": "c994a7aa39e5b950e611459bb07287331ec5bae881635bc61d0ac84c88725fd5"
+    },
+    {
+      "path": "public/archmaps/ko-observability-logging-05-collectors-2.html",
+      "sha256": "186274f388cdfbee413e8acd892b8a54320861fd4cfd4ec504af907c2c027c09"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-logging-05-collectors-2.png",
+      "sha256": "97082c0eaa0d73ab3441a5b09f1c1b24d6169b744a8d6a6886f532254b2f9178"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-logging-05-collectors-3.architecture.json",
+      "sha256": "c59bcb17878c7464bdc96785a8721f5ed27014bc91e316cd99edd59e2fb731a5"
+    },
+    {
+      "path": "public/archmaps/ko-observability-logging-05-collectors-3.html",
+      "sha256": "f57368003eb07598db2f89cce22393f7e45ee673f41555f3ddb2e80effb1e233"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-logging-05-collectors-3.png",
+      "sha256": "e99dc3561423079038f848e73e4813e1627021743c396ff7ae85287e61140790"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-logging-05-collectors-4.workflow.json",
+      "sha256": "626880ee16214fcddaf02168c3a1b909e5705504042d0929ec8ddd2c8919a799"
+    },
+    {
+      "path": "public/archmaps/ko-observability-logging-05-collectors-4.html",
+      "sha256": "dad8034f1236ded8fb21738a5c21f2591a55635376c81f2e3ff012a5edf63e92"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-logging-05-collectors-4.png",
+      "sha256": "e476aea614fe2c3109dc2eead0cce3d48b594d06562810a17b466ebe6815a131"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-logging-readme-0.architecture.json",
+      "sha256": "96a64c0bbdaebe38e25770ef4c53d45463efb98d1b0b61cac539b76d911827e1"
+    },
+    {
+      "path": "public/archmaps/en-observability-logging-readme-0.html",
+      "sha256": "1b8901881039d4316e76d6a773aeb2dc7fba03197c4a84686a7e1c6b7e1ada8f"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-logging-readme-0.png",
+      "sha256": "126b9589556b1bbb93bf7b93384fbd66f6451539ed70c2a9a71d14c57ce51ef4"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-logging-readme-1.workflow.json",
+      "sha256": "cca0394fa6674ffe19a225e906c5a35868adbb2c4c266ce8302fa05af0441da9"
+    },
+    {
+      "path": "public/archmaps/en-observability-logging-readme-1.html",
+      "sha256": "94d0fd413c256c4b222fee3d72844fdf85b81268bde519d5d1b8fbe1464fa2a8"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-logging-readme-1.png",
+      "sha256": "977f841d522e1cf24afc3570f6911e71d6abdef276195afb470bba332feb8421"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-logging-01-loki-0.architecture.json",
+      "sha256": "8c2e1ff60c5f0fe353e01618b94e3e2d74a27acf863bb47bc57de2b39b460636"
+    },
+    {
+      "path": "public/archmaps/en-observability-logging-01-loki-0.html",
+      "sha256": "ecb325b8a3208386fc2d5261729d30077581a86ef27c3a556582059982891e4a"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-logging-01-loki-0.png",
+      "sha256": "f938314d363c2e7c71180fa56db8278d622cbb4eec1655a9ffabcc5a37247a93"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-logging-01-loki-1.workflow.json",
+      "sha256": "62966f8eb739833acb28bfb231f1835a9d32d214b28ff083b86756df62f4bc47"
+    },
+    {
+      "path": "public/archmaps/en-observability-logging-01-loki-1.html",
+      "sha256": "379a6d6fec2c3caae78f75804e317184d5238705653f7c8c4a7c697e999e6d7b"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-logging-01-loki-1.png",
+      "sha256": "ff597fe84a4d5140a4a47bc7319fe0bf54cd223df3d609c1b53f357fe951e06e"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-logging-03-cloudwatch-logs-0.architecture.json",
+      "sha256": "27fd0dde1f0ae863931396f48235c710767389187fc5d745b7fadb1e603e8b02"
+    },
+    {
+      "path": "public/archmaps/en-observability-logging-03-cloudwatch-logs-0.html",
+      "sha256": "812bfce4080625174121d4f3ef7eacbdd8ee5ff5fb749bfd0f94a6e2da45c673"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-logging-03-cloudwatch-logs-0.png",
+      "sha256": "cc0a6be6cb32652f1f60c46dc617ab6f2c83d1bf23e485a0dcac4dafc0032b28"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-logging-05-collectors-2.architecture.json",
+      "sha256": "8a11bd35ddc6ebcc203ac34304bccfbeaf487c724f0bf28b7fb6deea91fbc07a"
+    },
+    {
+      "path": "public/archmaps/en-observability-logging-05-collectors-2.html",
+      "sha256": "8ca6a0f6425dbe745e4ac75aa9f3c2a8636e9a4ac22dfe819c54442adf5946d1"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-logging-05-collectors-2.png",
+      "sha256": "73c4afbdbbfd7da3cbcb28c10c085c92fb4fe8ef35b793fd7797e408185f3664"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-logging-05-collectors-3.architecture.json",
+      "sha256": "362f9b7057086c79b91ae7b2cc96ecfbe9915eaa49b9285f670425fff469bcde"
+    },
+    {
+      "path": "public/archmaps/en-observability-logging-05-collectors-3.html",
+      "sha256": "aa835765e77257edc65f333caf13983604d36fd3fec22030c8a7fa6e53e7c7b1"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-logging-05-collectors-3.png",
+      "sha256": "f57849f7c665d1015398d8aceb201b62eadffd8fa1c443d3ce2982a108caf713"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-logging-05-collectors-4.workflow.json",
+      "sha256": "677ac6813899bb992848acdfc32d9fe13e0f3ab11e6cb964983ae63167acc005"
+    },
+    {
+      "path": "public/archmaps/en-observability-logging-05-collectors-4.html",
+      "sha256": "3e05e092f62b2dab800955096e3eb2ff47a73d29f86dfbdfbd2967dc9b814ca9"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-logging-05-collectors-4.png",
+      "sha256": "3d1917ec897380bff78227abea5e70e60ba080158bf3a60efda8c16f0113ce34"
+    },
+    {
+      "path": "assets/clickhouse-3tier-pipeline.html",
+      "sha256": "a7175cfaa66295abae1ffc6a2c853f05b6e4374abcef3bebc624a8765ff726e6"
+    }
+  ],
+  "delivery": [
+    {
+      "stem": "ko-observability-logging-readme-0",
+      "spec": "assets/diagrams/archify/ko-observability-logging-readme-0.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-logging-readme-1",
+      "spec": "assets/diagrams/archify/ko-observability-logging-readme-1.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-logging-01-loki-0",
+      "spec": "assets/diagrams/archify/ko-observability-logging-01-loki-0.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-logging-01-loki-1",
+      "spec": "assets/diagrams/archify/ko-observability-logging-01-loki-1.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-logging-03-cloudwatch-logs-0",
+      "spec": "assets/diagrams/archify/ko-observability-logging-03-cloudwatch-logs-0.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-logging-05-collectors-2",
+      "spec": "assets/diagrams/archify/ko-observability-logging-05-collectors-2.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-logging-05-collectors-3",
+      "spec": "assets/diagrams/archify/ko-observability-logging-05-collectors-3.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-logging-05-collectors-4",
+      "spec": "assets/diagrams/archify/ko-observability-logging-05-collectors-4.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-logging-readme-0",
+      "spec": "assets/diagrams/archify/en-observability-logging-readme-0.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-logging-readme-1",
+      "spec": "assets/diagrams/archify/en-observability-logging-readme-1.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-logging-01-loki-0",
+      "spec": "assets/diagrams/archify/en-observability-logging-01-loki-0.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-logging-01-loki-1",
+      "spec": "assets/diagrams/archify/en-observability-logging-01-loki-1.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-logging-03-cloudwatch-logs-0",
+      "spec": "assets/diagrams/archify/en-observability-logging-03-cloudwatch-logs-0.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-logging-05-collectors-2",
+      "spec": "assets/diagrams/archify/en-observability-logging-05-collectors-2.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-logging-05-collectors-3",
+      "spec": "assets/diagrams/archify/en-observability-logging-05-collectors-3.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-logging-05-collectors-4",
+      "spec": "assets/diagrams/archify/en-observability-logging-05-collectors-4.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    }
+  ],
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-observability-logging-01-loki-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1269,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-01-loki-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1269,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-01-loki-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1269,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57920,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-01-loki-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 476,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-01-loki-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 476,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-01-loki-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 476,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 48492,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-03-cloudwatch-logs-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 908,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-03-cloudwatch-logs-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 908,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-03-cloudwatch-logs-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 908,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 58203,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-05-collectors-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1035,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-05-collectors-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1035,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-05-collectors-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1035,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57971,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-05-collectors-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1175,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-05-collectors-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1175,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-05-collectors-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1175,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 59517,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-05-collectors-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 310,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-05-collectors-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 310,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-05-collectors-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 310,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 45956,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-readme-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 728,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-readme-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 728,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-readme-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 728,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 52126,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-readme-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 288,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-readme-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 288,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-logging-readme-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 288,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 45890,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-01-loki-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 842,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-01-loki-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 842,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-01-loki-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 842,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57121,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-01-loki-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 328,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-01-loki-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 328,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-01-loki-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 328,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 48043,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-03-cloudwatch-logs-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 657,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-03-cloudwatch-logs-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 657,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-03-cloudwatch-logs-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 657,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57451,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-05-collectors-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 796,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-05-collectors-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 796,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-05-collectors-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 796,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57687,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-05-collectors-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 885,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-05-collectors-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 885,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-05-collectors-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 885,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 59065,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-05-collectors-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 211,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-05-collectors-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 211,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-05-collectors-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 211,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 45649,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-readme-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 521,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-readme-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 521,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-readme-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 521,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51815,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-readme-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 193,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-readme-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 193,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-logging-readme-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 193,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 45577,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "Current16viewers×375/768/1920;2Loki refinementsrechecked andmergedinto48cases"
+  },
+  "visual": {
+    "status": "passed",
+    "individuallyInspected": [
+      "ko/.gitbook/assets/ko-observability-logging-readme-0.png",
+      "ko/.gitbook/assets/ko-observability-logging-readme-1.png",
+      "ko/.gitbook/assets/ko-observability-logging-01-loki-0.png",
+      "ko/.gitbook/assets/ko-observability-logging-01-loki-1.png",
+      "ko/.gitbook/assets/ko-observability-logging-03-cloudwatch-logs-0.png",
+      "ko/.gitbook/assets/ko-observability-logging-05-collectors-2.png",
+      "ko/.gitbook/assets/ko-observability-logging-05-collectors-3.png",
+      "ko/.gitbook/assets/ko-observability-logging-05-collectors-4.png",
+      "en/.gitbook/assets/en-observability-logging-readme-0.png",
+      "en/.gitbook/assets/en-observability-logging-readme-1.png",
+      "en/.gitbook/assets/en-observability-logging-01-loki-0.png",
+      "en/.gitbook/assets/en-observability-logging-01-loki-1.png",
+      "en/.gitbook/assets/en-observability-logging-03-cloudwatch-logs-0.png",
+      "en/.gitbook/assets/en-observability-logging-05-collectors-2.png",
+      "en/.gitbook/assets/en-observability-logging-05-collectors-3.png",
+      "en/.gitbook/assets/en-observability-logging-05-collectors-4.png"
+    ],
+    "legacyViewsInspected": [
+      375,
+      1920
+    ],
+    "notes": "All16 finalPNGs individuallyviewed;Loki narrowedbyfourthcardrefinedtothreecardsandreverified."
+  },
+  "legacyClickHouse": {
+    "status": "passed",
+    "viewports": [
+      {
+        "width": 375,
+        "layout": {
+          "width": 375,
+          "scroll": 375,
+          "canvasWidth": 960,
+          "wrapWidth": 375,
+          "controls": [
+            {
+              "left": 16,
+              "right": 115
+            },
+            {
+              "left": 123,
+              "right": 219
+            },
+            {
+              "left": 227,
+              "right": 297
+            },
+            {
+              "left": 16,
+              "right": 83
+            }
+          ],
+          "notice": "\n    Illustrative animation, not a benchmark or a durability model. Buffer is optional and can lose unflushed rows;\n    prefer collector batching or tested asynchronous inserts for new pipelines. Kafka consumers normally write to a durable destination.\n    Distributed routes queries/inserts and is not another stored copy. S3 Parquet export is a separate job, not TTL movement of table parts.\n    All counters and delays below are simulated. On narrow screens, scroll within the diagram.\n  "
+        },
+        "reset": {
+          "inserting": false,
+          "querying": false,
+          "latency": null,
+          "parts": 0,
+          "timeouts": 0,
+          "intervals": 0,
+          "text": "[09:58:47] Pipeline reset — all state cleared"
+        },
+        "errors": [],
+        "pass": true
+      },
+      {
+        "width": 768,
+        "layout": {
+          "width": 768,
+          "scroll": 768,
+          "canvasWidth": 960,
+          "wrapWidth": 768,
+          "controls": [
+            {
+              "left": 16,
+              "right": 115
+            },
+            {
+              "left": 123,
+              "right": 219
+            },
+            {
+              "left": 227,
+              "right": 297
+            },
+            {
+              "left": 305,
+              "right": 372
+            }
+          ],
+          "notice": "\n    Illustrative animation, not a benchmark or a durability model. Buffer is optional and can lose unflushed rows;\n    prefer collector batching or tested asynchronous inserts for new pipelines. Kafka consumers normally write to a durable destination.\n    Distributed routes queries/inserts and is not another stored copy. S3 Parquet export is a separate job, not TTL movement of table parts.\n    All counters and delays below are simulated. On narrow screens, scroll within the diagram.\n  "
+        },
+        "reset": {
+          "inserting": false,
+          "querying": false,
+          "latency": null,
+          "parts": 0,
+          "timeouts": 0,
+          "intervals": 0,
+          "text": "[09:58:51] Pipeline reset — all state cleared"
+        },
+        "errors": [],
+        "pass": true
+      },
+      {
+        "width": 1920,
+        "layout": {
+          "width": 1920,
+          "scroll": 1920,
+          "canvasWidth": 1920,
+          "wrapWidth": 1920,
+          "controls": [
+            {
+              "left": 1548,
+              "right": 1647
+            },
+            {
+              "left": 1655,
+              "right": 1751
+            },
+            {
+              "left": 1759,
+              "right": 1829
+            },
+            {
+              "left": 1837,
+              "right": 1904
+            }
+          ],
+          "notice": "\n    Illustrative animation, not a benchmark or a durability model. Buffer is optional and can lose unflushed rows;\n    prefer collector batching or tested asynchronous inserts for new pipelines. Kafka consumers normally write to a durable destination.\n    Distributed routes queries/inserts and is not another stored copy. S3 Parquet export is a separate job, not TTL movement of table parts.\n    All counters and delays below are simulated. On narrow screens, scroll within the diagram.\n  "
+        },
+        "reset": {
+          "inserting": false,
+          "querying": false,
+          "latency": null,
+          "parts": 0,
+          "timeouts": 0,
+          "intervals": 0,
+          "text": "[09:58:55] Pipeline reset — all state cleared"
+        },
+        "errors": [],
+        "pass": true
+      }
+    ],
+    "mergeResetPassed": true,
+    "scope": "Localbrowserwithallnetworkblocked;fallbackCSS/controls/mobileinnercanvaspan/queryandmergeresetcancellation; noClickHouseorcloudconnection."
+  },
+  "semanticSources": [
+    "docs/reviews/2026-09-11/observability-logging-overview-validation.json",
+    "docs/reviews/2026-09-11/observability-loki-validation.json",
+    "docs/reviews/2026-09-11/observability-cloudwatch-logs-validation.json",
+    "docs/reviews/2026-09-11/observability-collectors-validation.json",
+    "docs/reviews/2026-09-11/observability-clickhouse-validation.json"
+  ],
+  "limits": [
+    "Conceptualfigures;noAWS/Loki/ClickHousedeploymentorperformancebenchmark.",
+    "Foreigntexttranslationbackfill/removalofoldreferencesstillrequiresfinalintegration.",
+    "ClickHouseanimationexplicitlyillustrative;not a databaseengine/durabilitysimulator."
+  ]
+}

@@ -184,11 +184,27 @@ gateway:
   nginxConfig:
     locationSnippet: proxy_set_header X-Scope-OrgID $remote_user;
     ssl: true
-    serverSnippet: 'ssl_certificate /etc/nginx/tls/tls.crt;
-
+    serverSnippet: |-
+      ssl_certificate /etc/nginx/tls/tls.crt;
       ssl_certificate_key /etc/nginx/tls/tls.key;
-
-      ssl_protocols TLSv1.2 TLSv1.3;'
+      ssl_protocols TLSv1.2 TLSv1.3;
+      if ($tenant_api_allowed = 0) { return 403; }
+    httpSnippet: |-
+      map $uri $tenant_api_allowed {
+        default 0;
+        / 1;
+        /loki/api/v1/push 1;
+        /otlp/v1/logs 1;
+        /loki/api/v1/query 1;
+        /loki/api/v1/query_range 1;
+        /loki/api/v1/labels 1;
+        ~^/loki/api/v1/label/[^/]+/values$ 1;
+        /loki/api/v1/series 1;
+        /loki/api/v1/tail 1;
+        /loki/api/v1/index/stats 1;
+        /loki/api/v1/index/volume 1;
+        /loki/api/v1/index/volume_range 1;
+      }
   containerPort: 8443
   metrics:
     enabled: false
@@ -219,6 +235,10 @@ lokiCanary:
 test:
   enabled: false
 ```
+
+테넌트 gateway는 위 allowlist의 데이터 API와 비민감한 `/` readiness만 노출합니다. 유효한 tenant 계정이라도 `/ingester/shutdown`, `/flush`, `/config`, ring/memberlist/status·삭제·ruler 관리 경로는 403으로 거절합니다. 관리 작업은 별도로 권한을 부여한 내부 경로/port-forward에서 수행합니다. 추가 client API가 필요하면 기능과 권한을 검토해 allowlist를 확장하고, backend 직접 접근 차단도 유지합니다.
+
+
 
 `loki.*`는 애플리케이션 설정이고, 최상위 `ingester`, `querier`, `compactor` 등은 Kubernetes 워크로드 설정입니다. 예제는 Compactor 1개와 Ingester 3개를 사용합니다. Zone-aware replication을 끄므로 **AZ 장애 내성을 주장하지 않습니다**. 운영 전에 적절한 requests/limits, anti-affinity·topology spread, PDB와 검증된 용량을 마련합니다. 기존 고정 CPU·메모리 규모표를 그대로 적용하지 않습니다.
 

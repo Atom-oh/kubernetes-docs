@@ -184,11 +184,27 @@ gateway:
   nginxConfig:
     locationSnippet: proxy_set_header X-Scope-OrgID $remote_user;
     ssl: true
-    serverSnippet: 'ssl_certificate /etc/nginx/tls/tls.crt;
-
+    serverSnippet: |-
+      ssl_certificate /etc/nginx/tls/tls.crt;
       ssl_certificate_key /etc/nginx/tls/tls.key;
-
-      ssl_protocols TLSv1.2 TLSv1.3;'
+      ssl_protocols TLSv1.2 TLSv1.3;
+      if ($tenant_api_allowed = 0) { return 403; }
+    httpSnippet: |-
+      map $uri $tenant_api_allowed {
+        default 0;
+        / 1;
+        /loki/api/v1/push 1;
+        /otlp/v1/logs 1;
+        /loki/api/v1/query 1;
+        /loki/api/v1/query_range 1;
+        /loki/api/v1/labels 1;
+        ~^/loki/api/v1/label/[^/]+/values$ 1;
+        /loki/api/v1/series 1;
+        /loki/api/v1/tail 1;
+        /loki/api/v1/index/stats 1;
+        /loki/api/v1/index/volume 1;
+        /loki/api/v1/index/volume_range 1;
+      }
   containerPort: 8443
   metrics:
     enabled: false
@@ -219,6 +235,10 @@ lokiCanary:
 test:
   enabled: false
 ```
+
+The tenant gateway exposes only the listed data APIs and nonsensitive `/` readiness. Valid tenant credentials still receive403 for `/ingester/shutdown`, `/flush`, `/config`, ring/memberlist/status, deletion and ruler administration paths. Use separately authorized internal access/port-forward for administration. Review any additional client API before extending the allowlist, and keep direct backend access blocked.
+
+
 
 The `loki.*` fields configure the application; top-level `ingester`, `querier`, `compactor` and other component fields configure Kubernetes workloads. The example deliberately uses one compactor and three ingesters. It disables zone-aware replication, so it makes **no AZ-resilience claim**. Add appropriate requests/limits, anti-affinity/topology spread, PDBs and tested capacity before production; do not copy the old fixed CPU/memory sizing table.
 

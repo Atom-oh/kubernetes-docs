@@ -3077,5 +3077,431 @@
     "Terraform resource syntax/provider-source semantics and Alloy stage structure were checked; no Terraform plan/apply or complete Alloy runtime was executed.",
     "4originalPNGs personally viewed; incorrect Compactor chunk-merging and exact cardinality-product claims replaced with2inlineMermaid diagrams and an observed-combination table. Shared/foreign image sync remains parent-owned."
   ],
-  "sourceAccessNotes": []
+  "sourceAccessNotes": [],
+  "reviewFix": {
+    "finding": "LOGGING-R1-001",
+    "change": "Tenant-facing Nginx uses explicitdataAPIallowlist;admin/config/ring/memberlist/ingester/flush/ruler/delete pathsdenybeforebackend;rootreadinessremainspublicnonsensitive.",
+    "native": {
+      "status": "passed",
+      "cases": [
+        {
+          "path": "/",
+          "method": "GET",
+          "auth": "none",
+          "status": 200,
+          "backendReached": false
+        },
+        {
+          "path": "/loki/api/v1/query?query=test",
+          "method": "GET",
+          "auth": "valid",
+          "status": 200,
+          "backendReached": true
+        },
+        {
+          "path": "/loki/api/v1/query_range?query=test",
+          "method": "GET",
+          "auth": "valid",
+          "status": 200,
+          "backendReached": true
+        },
+        {
+          "path": "/loki/api/v1/labels",
+          "method": "GET",
+          "auth": "valid",
+          "status": 200,
+          "backendReached": true
+        },
+        {
+          "path": "/loki/api/v1/label/service/values",
+          "method": "GET",
+          "auth": "valid",
+          "status": 200,
+          "backendReached": true
+        },
+        {
+          "path": "/loki/api/v1/series",
+          "method": "GET",
+          "auth": "valid",
+          "status": 200,
+          "backendReached": true
+        },
+        {
+          "path": "/loki/api/v1/index/stats",
+          "method": "GET",
+          "auth": "valid",
+          "status": 200,
+          "backendReached": true
+        },
+        {
+          "path": "/loki/api/v1/push",
+          "method": "POST",
+          "auth": "valid",
+          "status": 200,
+          "backendReached": true
+        },
+        {
+          "path": "/otlp/v1/logs",
+          "method": "POST",
+          "auth": "valid",
+          "status": 200,
+          "backendReached": true
+        },
+        {
+          "path": "/loki/api/v1/query",
+          "method": "GET",
+          "auth": "none",
+          "status": 401,
+          "backendReached": false
+        },
+        {
+          "path": "/loki/api/v1/query",
+          "method": "GET",
+          "auth": "wrong",
+          "status": 401,
+          "backendReached": false
+        },
+        {
+          "path": "/ingester/shutdown",
+          "method": "POST",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/flush",
+          "method": "POST",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/config",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/ring",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/memberlist",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/distributor/ring",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/scheduler/ring",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/indexgateway/ring",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/compactor/ring",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/ruler/ring",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/loki/api/v1/delete",
+          "method": "POST",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/loki/api/v1/rules",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/ui",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/stub_status",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "/ingester%2fshutdown",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        },
+        {
+          "path": "//ingester/shutdown",
+          "method": "GET",
+          "auth": "valid",
+          "status": 403,
+          "backendReached": false
+        }
+      ],
+      "imageId": "sha256:dc8131a57e4eefe6a6cc8344d03efb8085d12158abd9dea2b96457b63b71a5f3",
+      "architecture": "arm64",
+      "scope": "Actual pinned-chart Nginx config and matching image; loopbackTLS withhostnameverification/basicAuth/mockbackends. Onlylisten/upstreams/resolver/files andworker count changedforfixture. All adminattempts blockedbeforemockbackend; clienttenantheadersoverwritten. NoAWS/cluster/Lokishutdownexecuted."
+    },
+    "markdown": {
+      "nodeHeapMiB": 512,
+      "scope": "Explicit documents only; no site build",
+      "results": [
+        {
+          "path": "ko/observability/logging/01-loki.md",
+          "sha256": "5c83f568e1243f0173f92526df1b55b7112764c3baf9b36325df273de01e65d0",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "grafana-loki"
+            },
+            {
+              "tag": "h2",
+              "id": "개요"
+            },
+            {
+              "tag": "h2",
+              "id": "아키텍처"
+            },
+            {
+              "tag": "h2",
+              "id": "배포-모드"
+            },
+            {
+              "tag": "h2",
+              "id": "helm-설치"
+            },
+            {
+              "tag": "h3",
+              "id": "사전-조건과-소유권"
+            },
+            {
+              "tag": "h3",
+              "id": "버전을-고정한-분산-설정"
+            },
+            {
+              "tag": "h2",
+              "id": "s3-백엔드와-워크로드-자격-증명"
+            },
+            {
+              "tag": "h3",
+              "id": "iam과-serviceaccount"
+            },
+            {
+              "tag": "h3",
+              "id": "비공개-버킷-예제"
+            },
+            {
+              "tag": "h2",
+              "id": "logql"
+            },
+            {
+              "tag": "h3",
+              "id": "선택자·필터·파서"
+            },
+            {
+              "tag": "h3",
+              "id": "로그-기반-메트릭"
+            },
+            {
+              "tag": "h2",
+              "id": "레이블-설계와-수집기"
+            },
+            {
+              "tag": "h2",
+              "id": "성능-튜닝"
+            },
+            {
+              "tag": "h2",
+              "id": "보존-정책"
+            },
+            {
+              "tag": "h2",
+              "id": "트러블슈팅과-모니터링"
+            },
+            {
+              "tag": "h2",
+              "id": "검증과-참고-자료"
+            },
+            {
+              "tag": "h2",
+              "id": "퀴즈"
+            }
+          ],
+          "renderedIds": [
+            "grafana-loki",
+            "개요",
+            "아키텍처",
+            "mermaid-77",
+            "배포-모드",
+            "helm-설치",
+            "사전-조건과-소유권",
+            "버전을-고정한-분산-설정",
+            "s3-백엔드와-워크로드-자격-증명",
+            "iam과-serviceaccount",
+            "비공개-버킷-예제",
+            "logql",
+            "선택자·필터·파서",
+            "로그-기반-메트릭",
+            "레이블-설계와-수집기",
+            "성능-튜닝",
+            "보존-정책",
+            "트러블슈팅과-모니터링",
+            "검증과-참고-자료",
+            "퀴즈"
+          ]
+        },
+        {
+          "path": "en/observability/logging/01-loki.md",
+          "sha256": "8416385d76e60115a2e5a8e283df18249c584cda3398c33cfa7c4c60a0c82cc0",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "grafana-loki"
+            },
+            {
+              "tag": "h2",
+              "id": "overview"
+            },
+            {
+              "tag": "h2",
+              "id": "architecture"
+            },
+            {
+              "tag": "h2",
+              "id": "deployment-modes"
+            },
+            {
+              "tag": "h2",
+              "id": "helm-installation"
+            },
+            {
+              "tag": "h3",
+              "id": "prerequisites-and-ownership"
+            },
+            {
+              "tag": "h3",
+              "id": "versioned-distributed-values"
+            },
+            {
+              "tag": "h2",
+              "id": "s3-backend-and-workload-identity"
+            },
+            {
+              "tag": "h3",
+              "id": "iam-and-serviceaccount"
+            },
+            {
+              "tag": "h3",
+              "id": "private-bucket-example"
+            },
+            {
+              "tag": "h2",
+              "id": "logql"
+            },
+            {
+              "tag": "h3",
+              "id": "selectors-filters-and-parsers"
+            },
+            {
+              "tag": "h3",
+              "id": "metrics-derived-from-logs"
+            },
+            {
+              "tag": "h2",
+              "id": "label-design-and-collectors"
+            },
+            {
+              "tag": "h2",
+              "id": "performance-tuning"
+            },
+            {
+              "tag": "h2",
+              "id": "retention"
+            },
+            {
+              "tag": "h2",
+              "id": "troubleshooting-and-monitoring"
+            },
+            {
+              "tag": "h2",
+              "id": "validation-and-references"
+            },
+            {
+              "tag": "h2",
+              "id": "quiz"
+            }
+          ],
+          "renderedIds": [
+            "grafana-loki",
+            "overview",
+            "architecture",
+            "mermaid-77",
+            "deployment-modes",
+            "helm-installation",
+            "prerequisites-and-ownership",
+            "versioned-distributed-values",
+            "s3-backend-and-workload-identity",
+            "iam-and-serviceaccount",
+            "private-bucket-example",
+            "logql",
+            "selectors-filters-and-parsers",
+            "metrics-derived-from-logs",
+            "label-design-and-collectors",
+            "performance-tuning",
+            "retention",
+            "troubleshooting-and-monitoring",
+            "validation-and-references",
+            "quiz"
+          ]
+        }
+      ]
+    },
+    "sourceHashes": {
+      "ko/observability/logging/01-loki.md": "5c83f568e1243f0173f92526df1b55b7112764c3baf9b36325df273de01e65d0",
+      "en/observability/logging/01-loki.md": "8416385d76e60115a2e5a8e283df18249c584cda3398c33cfa7c4c60a0c82cc0"
+    },
+    "limits": "Mockbackendsverifyproxyboundary;noactualLokiadminactionorEKSnetworktest."
+  }
 }

@@ -252,7 +252,9 @@
       "15Helm/nativeconfiguration+94Loki3.7.7localLogQL/API+5additionalchecks;35queriesparseandexecute;3promtoolrules;2Mermaid11.16browserrender/imagesviewed.",
       "OfficialreleasearchivesandnativebinariesSHAverified;allcheckswithoutcloud/GPU/fullbuild. Terraform/Alloy complete integration, liveTLS/IAM/S3/HA/capacity not executed.",
       "Evidence:docs/reviews/2026-09-11/observability-loki-validation.json"
-    ]
+    ],
+    "reviewedSha256": "8416385d76e60115a2e5a8e283df18249c584cda3398c33cfa7c4c60a0c82cc0",
+    "reviewFix": "LOGGING-R1-001fixed:27nativeNginxTLS/auth/allowlistcasespass;tenantcredentials donotgrantinstanceadminroutes."
   },
   {
     "path": "en/quizzes/observability/logging/01-loki-quiz.md",
@@ -370,7 +372,9 @@
       "15Helm/nativeconfiguration+94Loki3.7.7localLogQL/API+5additionalchecks;35queriesparseandexecute;3promtoolrules;2Mermaid11.16browserrender/imagesviewed.",
       "OfficialreleasearchivesandnativebinariesSHAverified;allcheckswithoutcloud/GPU/fullbuild. Terraform/Alloy complete integration, liveTLS/IAM/S3/HA/capacity not executed.",
       "Evidence:docs/reviews/2026-09-11/observability-loki-validation.json"
-    ]
+    ],
+    "reviewedSha256": "5c83f568e1243f0173f92526df1b55b7112764c3baf9b36325df273de01e65d0",
+    "reviewFix": "LOGGING-R1-001fixed:27nativeNginxTLS/auth/allowlistcasespass;tenantcredentials donotgrantinstanceadminroutes."
   },
   {
     "path": "ko/quizzes/observability/logging/01-loki-quiz.md",

@@ -2,322 +2,179 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "로그 수집 파이프라인 아키텍처",
+    "title": "로그 수집과 조회 경로",
     "output": "ko-observability-logging-readme-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
-    "legend": {
-      "mode": "auto",
-      "entries": {
-        "external": {
-          "label": "로그 소스"
-        },
-        "backend": {
-          "label": "수집 · 처리 계층"
-        },
-        "database": {
-          "label": "로그 저장소"
-        },
-        "frontend": {
-          "label": "시각화 · 조회 도구"
-        }
-      }
-    },
-    "viewBox": [
-      1260,
-      640
-    ],
-    "views": [
-      {
-        "id": "ingest-path",
-        "label": "수집·처리 경로",
-        "focus": [
-          "sources",
-          "collect",
-          "process"
-        ],
-        "note": "로그 소스에서 수집 계층을 거쳐 처리 계층까지 이어지는 메인 경로."
-      },
-      {
-        "id": "storage-fanout",
-        "label": "저장 계층 팬아웃",
-        "focus": [
-          "process",
-          "loki",
-          "clickhouse",
-          "opensearch",
-          "cloudwatch"
-        ],
-        "note": "처리된 로그가 Loki·ClickHouse·OpenSearch·CloudWatch Logs 네 저장소로 적재된다."
-      },
-      {
-        "id": "analysis",
-        "label": "분석 도구 연결",
-        "focus": [
-          "loki",
-          "clickhouse",
-          "opensearch",
-          "cloudwatch",
-          "grafana",
-          "osd",
-          "cwi"
-        ],
-        "note": "각 저장소는 짝이 되는 분석 도구가 조회한다. Grafana는 Loki와 ClickHouse를 함께 다룬다."
-      }
-    ]
+    "animation": "trace"
   },
   "components": [
     {
-      "id": "sources",
+      "id": "app",
       "type": "external",
-      "label": "로그 소스",
-      "sublabel": "앱 · 시스템 · K8s · 컨트롤 플레인",
+      "label": "컨테이너 stdout/stderr",
+      "sublabel": "Application logs",
       "pos": [
         30,
-        290
+        70
       ],
       "size": [
-        200,
+        210,
         64
       ]
     },
     {
-      "id": "collect",
-      "type": "backend",
-      "label": "수집 계층",
-      "sublabel": "DaemonSet · Sidecar · OTEL Collector",
+      "id": "cri",
+      "type": "database",
+      "label": "런타임 CRI 파일",
+      "sublabel": "Node filesystem",
       "pos": [
-        280,
-        290
+        320,
+        70
       ],
       "size": [
-        190,
+        210,
+        64
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "backend",
+      "label": "지원 수집기",
+      "sublabel": "Node / sidecar choices",
+      "pos": [
+        610,
+        70
+      ],
+      "size": [
+        210,
         64
       ]
     },
     {
       "id": "process",
       "type": "backend",
-      "label": "처리 계층",
-      "sublabel": "Parse → Enrich → Filter → Buffer",
+      "label": "파싱·정규화·buffer",
+      "sublabel": "Redaction policy",
       "pos": [
-        520,
-        290
+        900,
+        70
       ],
       "size": [
-        190,
+        230,
         64
       ]
     },
     {
-      "id": "loki",
+      "id": "backend",
       "type": "database",
-      "label": "Loki",
-      "sublabel": "S3 객체 저장",
+      "label": "선택한 로그 저장소",
+      "sublabel": "Evaluate requirements",
       "pos": [
-        800,
-        80
+        900,
+        340
       ],
       "size": [
-        150,
-        60
+        230,
+        64
       ]
     },
     {
-      "id": "clickhouse",
-      "type": "database",
-      "label": "ClickHouse",
-      "sublabel": "S3 객체 저장",
+      "id": "query",
+      "type": "frontend",
+      "label": "권한 있는 조회자",
+      "sublabel": "Query / results",
       "pos": [
-        800,
-        220
+        610,
+        340
       ],
       "size": [
-        150,
-        60
+        210,
+        64
       ]
     },
     {
-      "id": "opensearch",
-      "type": "database",
-      "label": "OpenSearch",
-      "sublabel": "인덱스 저장",
+      "id": "control",
+      "type": "cloud",
+      "label": "관리형 EKS 제어 영역",
+      "sublabel": "Configured log types",
       "pos": [
-        800,
-        360
+        30,
+        340
       ],
       "size": [
-        150,
-        60
+        210,
+        64
       ]
     },
     {
-      "id": "cloudwatch",
-      "type": "database",
+      "id": "cw",
+      "type": "cloud",
       "label": "CloudWatch Logs",
-      "sublabel": "관리형 로그 그룹",
+      "sublabel": "Source-specific groups",
       "pos": [
-        800,
-        500
+        320,
+        340
       ],
       "size": [
-        150,
-        60
-      ]
-    },
-    {
-      "id": "grafana",
-      "type": "frontend",
-      "label": "Grafana",
-      "sublabel": "Loki · ClickHouse 대시보드",
-      "pos": [
-        1040,
-        150
-      ],
-      "size": [
-        180,
-        60
-      ]
-    },
-    {
-      "id": "osd",
-      "type": "frontend",
-      "label": "OpenSearch Dashboards",
-      "sublabel": "전문 검색 · 집계",
-      "pos": [
-        1040,
-        360
-      ],
-      "size": [
-        180,
-        60
-      ]
-    },
-    {
-      "id": "cwi",
-      "type": "frontend",
-      "label": "CloudWatch Logs Insights",
-      "sublabel": "CloudWatch 콘솔 쿼리",
-      "pos": [
-        1040,
-        500
-      ],
-      "size": [
-        180,
-        60
-      ]
-    }
-  ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "저장 계층",
-      "wraps": [
-        "loki",
-        "clickhouse",
-        "opensearch",
-        "cloudwatch"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "분석 계층",
-      "wraps": [
-        "grafana",
-        "osd",
-        "cwi"
+        210,
+        64
       ]
     }
   ],
   "connections": [
     {
-      "id": "src-collect",
-      "from": "sources",
-      "to": "collect",
-      "label": "수집",
+      "id": "app-cri",
+      "from": "app",
+      "to": "cri",
       "variant": "emphasis"
     },
     {
-      "id": "collect-process",
-      "from": "collect",
+      "id": "cri-agent",
+      "from": "cri",
+      "to": "agent",
+      "variant": "emphasis"
+    },
+    {
+      "id": "agent-process",
+      "from": "agent",
       "to": "process",
-      "label": "전달",
       "variant": "emphasis"
     },
     {
-      "id": "process-loki",
+      "id": "process-backend",
       "from": "process",
-      "to": "loki"
+      "to": "backend",
+      "variant": "emphasis"
     },
     {
-      "id": "process-clickhouse",
-      "from": "process",
-      "to": "clickhouse",
-      "label": "적재",
-      "labelSegment": 2
+      "id": "control-cw",
+      "from": "control",
+      "to": "cw",
+      "variant": "emphasis"
     },
     {
-      "id": "process-opensearch",
-      "from": "process",
-      "to": "opensearch"
-    },
-    {
-      "id": "process-cloudwatch",
-      "from": "process",
-      "to": "cloudwatch"
-    },
-    {
-      "id": "loki-grafana",
-      "from": "loki",
-      "to": "grafana",
-      "variant": "dashed"
-    },
-    {
-      "id": "clickhouse-grafana",
-      "from": "clickhouse",
-      "to": "grafana",
-      "variant": "dashed",
-      "label": "조회"
-    },
-    {
-      "id": "opensearch-osd",
-      "from": "opensearch",
-      "to": "osd",
-      "variant": "dashed"
-    },
-    {
-      "id": "cloudwatch-cwi",
-      "from": "cloudwatch",
-      "to": "cwi",
+      "id": "query-backend",
+      "from": "query",
+      "to": "backend",
+      "label": "조회",
       "variant": "dashed"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "수집 계층",
+      "title": "수집 경로 분리",
       "items": [
-        "DaemonSet: 노드당 하나, 리소스 효율적이며 중앙 관리",
-        "Sidecar: 애플리케이션별 격리와 커스텀 처리",
-        "OTEL Collector: OpenTelemetry 기반 통합 수집"
+        "관리형 control-plane 로그를 노드 파일로 가정하지 않음",
+        "앱 파일은 별도 file/sidecar 수집 설정 필요"
       ]
     },
     {
-      "dot": "orange",
-      "title": "처리 계층",
+      "dot": "amber",
+      "title": "저장소 선택",
       "items": [
-        "Kubernetes 메타데이터 병합과 파싱(Parse)",
-        "cluster_name·environment 같은 필드 추가(Enrich)",
-        "HealthCheck 등 노이즈 제외(Filter) 후 버퍼링(Buffer)"
-      ]
-    },
-    {
-      "dot": "emerald",
-      "title": "저장·분석 계층",
-      "items": [
-        "Loki·ClickHouse는 S3 기반으로 저장 비용이 낮고 Grafana로 조회",
-        "OpenSearch는 전문 검색에 강하며 OpenSearch Dashboards로 조회",
-        "CloudWatch Logs는 CloudWatch 콘솔의 Logs Insights로 조회"
+        "모든 저장소로 복제해야 하는 구조가 아님",
+        "보존·조회·권한·전체 비용을 실측 비교"
       ]
     }
   ]
