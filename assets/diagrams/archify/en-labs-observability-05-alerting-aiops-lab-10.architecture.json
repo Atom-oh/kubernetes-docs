@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Alert Analysis and AIOps Response Architecture",
+    "title": "Diagnostic reporter: permissions, evidence and deduplication",
     "locale": "en",
     "output": "en-labs-observability-05-alerting-aiops-lab-10.html",
     "quality_profile": "showcase",
@@ -10,52 +10,6 @@
     "viewBox": [
       1320,
       560
-    ],
-    "views": [
-      {
-        "id": "detect-route",
-        "label": "1. Detect and route",
-        "focus": [
-          "alertmanager",
-          "cloudwatch",
-          "oncall",
-          "sns",
-          "apigw"
-        ],
-        "note": "PrometheusRules and CloudWatch Alarms detect anomalies; alerts route to Grafana OnCall, the SNS Topic, and the API Gateway webhook."
-      },
-      {
-        "id": "investigate",
-        "label": "2. Investigate",
-        "focus": [
-          "sns",
-          "apigw",
-          "lambda",
-          "context"
-        ],
-        "note": "The SNS subscription and API Gateway webhook invoke the Lambda AIOps Agent, which normalizes the alert into an incident context."
-      },
-      {
-        "id": "evidence",
-        "label": "3. Collect evidence",
-        "focus": [
-          "lambda",
-          "logs",
-          "metrics",
-          "traces"
-        ],
-        "note": "The agent queries logs, metrics, and traces in parallel to gather the telemetry evidence the analysis needs."
-      },
-      {
-        "id": "analyze",
-        "label": "4. Analyze and respond",
-        "focus": [
-          "context",
-          "bedrock",
-          "responders"
-        ],
-        "note": "The incident context is sent to Amazon Bedrock for root-cause analysis, and the result is published through SNS to responders."
-      }
     ]
   },
   "components": [
@@ -63,7 +17,7 @@
       "id": "alertmanager",
       "type": "backend",
       "label": "Alertmanager",
-      "sublabel": "PrometheusRule",
+      "sublabel": "JSON routing",
       "pos": [
         40,
         260
@@ -89,11 +43,11 @@
     },
     {
       "id": "oncall",
-      "type": "frontend",
-      "label": "Grafana OnCall",
-      "sublabel": "Incident routing",
+      "type": "database",
+      "label": "DynamoDB",
+      "sublabel": "Idempotency · 24h",
       "pos": [
-        40,
+        540,
         400
       ],
       "size": [
@@ -104,8 +58,8 @@
     {
       "id": "sns",
       "type": "messagebus",
-      "label": "SNS Topic",
-      "sublabel": "Alert fan-out",
+      "label": "Input SNS",
+      "sublabel": "Encrypted alerts",
       "pos": [
         290,
         260
@@ -117,9 +71,9 @@
     },
     {
       "id": "apigw",
-      "type": "cloud",
-      "label": "API Gateway",
-      "sublabel": "Direct webhook",
+      "type": "messagebus",
+      "label": "Failure queue",
+      "sublabel": "SNS / Lambda failures",
       "pos": [
         290,
         400
@@ -132,8 +86,8 @@
     {
       "id": "lambda",
       "type": "backend",
-      "label": "Lambda AIOps Agent",
-      "sublabel": "Normalize alert context",
+      "label": "Diagnostic reporter",
+      "sublabel": "Lambda · no remediation",
       "pos": [
         540,
         230
@@ -145,11 +99,11 @@
     },
     {
       "id": "context",
-      "type": "database",
-      "label": "Incident Context",
-      "sublabel": "Service, metric, time range",
+      "type": "messagebus",
+      "label": "Output SNS",
+      "sublabel": "Encrypted results",
       "pos": [
-        540,
+        1080,
         400
       ],
       "size": [
@@ -161,7 +115,7 @@
       "id": "logs",
       "type": "database",
       "label": "Logs",
-      "sublabel": "CloudWatch Logs / Loki",
+      "sublabel": "CW Logs aggregate only",
       "pos": [
         830,
         60
@@ -175,7 +129,7 @@
       "id": "metrics",
       "type": "database",
       "label": "Metrics",
-      "sublabel": "AMP",
+      "sublabel": "CW SQS / RDS values",
       "pos": [
         830,
         160
@@ -186,24 +140,10 @@
       ]
     },
     {
-      "id": "traces",
-      "type": "database",
-      "label": "Traces",
-      "sublabel": "X-Ray / Tempo",
-      "pos": [
-        830,
-        260
-      ],
-      "size": [
-        170,
-        60
-      ]
-    },
-    {
       "id": "bedrock",
-      "type": "backend",
+      "type": "cloud",
       "label": "Amazon Bedrock",
-      "sublabel": "Root-cause analysis",
+      "sublabel": "Converse · maxTokens 1024",
       "pos": [
         830,
         400
@@ -217,10 +157,10 @@
       "id": "responders",
       "type": "external",
       "label": "Responders",
-      "sublabel": "Slack / Email / PagerDuty",
+      "sublabel": "Human reviews hypothesis",
       "pos": [
         1080,
-        400
+        230
       ],
       "size": [
         170,
@@ -228,138 +168,122 @@
       ]
     }
   ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "1. Detect",
-      "wraps": [
-        "cloudwatch",
-        "alertmanager"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "Incident management",
-      "wraps": [
-        "oncall"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "2. Route",
-      "wraps": [
-        "sns",
-        "apigw"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "3. Investigate",
-      "wraps": [
-        "lambda",
-        "context"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "Telemetry Evidence",
-      "wraps": [
-        "logs",
-        "metrics",
-        "traces"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "4. Analyze and respond",
-      "wraps": [
-        "bedrock",
-        "responders"
-      ]
-    }
-  ],
+  "boundaries": [],
   "connections": [
     {
-      "id": "am-oncall",
-      "from": "alertmanager",
-      "to": "oncall",
-      "label": "webhook",
-      "fromSide": "bottom",
-      "toSide": "top",
-      "labelDy": 24
-    },
-    {
-      "id": "am-sns",
+      "id": "am-input",
       "from": "alertmanager",
       "to": "sns",
-      "variant": "emphasis"
+      "label": "toJson / SNS",
+      "labelDy": 50
     },
     {
-      "id": "cw-sns",
+      "id": "cw-input",
       "from": "cloudwatch",
-      "to": "sns"
+      "to": "sns",
+      "label": "alarm action"
     },
     {
-      "id": "am-apigw",
-      "from": "alertmanager",
-      "to": "apigw",
-      "label": "webhook"
-    },
-    {
-      "id": "sns-lambda",
+      "id": "input-reporter",
       "from": "sns",
       "to": "lambda",
-      "label": "subscription",
       "variant": "emphasis",
-      "labelDy": -24
+      "label": "SNS event"
     },
     {
-      "id": "apigw-lambda",
-      "from": "apigw",
-      "to": "lambda"
-    },
-    {
-      "id": "lambda-context",
-      "from": "lambda",
-      "to": "context",
-      "label": "normalize",
+      "id": "delivery-failure",
+      "from": "sns",
+      "to": "apigw",
+      "variant": "dashed",
+      "label": "delivery failure",
       "fromSide": "bottom",
       "toSide": "top",
-      "labelDy": 24
+      "labelDy": 40
     },
     {
-      "id": "lambda-logs",
+      "id": "reporter-state",
+      "from": "lambda",
+      "to": "oncall",
+      "label": "deduplicate",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "read-logs",
       "from": "lambda",
       "to": "logs",
-      "label": "parallel query",
-      "variant": "dashed"
+      "variant": "dashed",
+      "label": "fixed query"
     },
     {
-      "id": "lambda-metrics",
+      "id": "read-metrics",
       "from": "lambda",
       "to": "metrics",
-      "variant": "dashed"
+      "variant": "dashed",
+      "label": "fixed resources",
+      "labelAt": [
+        915,
+        148
+      ]
     },
     {
-      "id": "lambda-traces",
+      "id": "model",
       "from": "lambda",
-      "to": "traces",
-      "variant": "dashed"
-    },
-    {
-      "id": "context-bedrock",
-      "from": "context",
       "to": "bedrock",
-      "label": "analysis request",
       "variant": "emphasis",
-      "labelDy": 22
+      "label": "evidence only",
+      "labelAt": [
+        870,
+        382
+      ]
     },
     {
-      "id": "bedrock-responders",
-      "from": "bedrock",
+      "id": "output",
+      "from": "lambda",
+      "to": "context",
+      "label": "publish result",
+      "fromSide": "right",
+      "toSide": "left",
+      "via": [
+        [
+          755,
+          262
+        ],
+        [
+          755,
+          350
+        ],
+        [
+          1045,
+          350
+        ],
+        [
+          1045,
+          432
+        ]
+      ],
+      "labelAt": [
+        1020,
+        375
+      ]
+    },
+    {
+      "id": "review",
+      "from": "context",
       "to": "responders",
-      "label": "publish via SNS",
-      "labelDy": -24
+      "label": "notify",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Evidence boundaries",
+      "items": [
+        "Read only configured CloudWatch metrics and log aggregates",
+        "Do not invent absent AMP or X-Ray evidence"
+      ]
     }
   ]
 }

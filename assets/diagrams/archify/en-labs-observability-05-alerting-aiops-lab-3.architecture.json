@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "A2A Multi-Agent Architecture",
+    "title": "Optional extension: specialist analysis",
     "locale": "en",
     "output": "en-labs-observability-05-alerting-aiops-lab-3.html",
     "quality_profile": "showcase",
@@ -19,7 +19,7 @@
           "trigger",
           "collaborator"
         ],
-        "note": "An operator or a firing alert invokes the Collaborator Agent to start the analysis."
+        "note": "Optional design example. This lab Lambda does not implement a multi-agent protocol."
       },
       {
         "id": "consult",
@@ -30,7 +30,7 @@
           "log",
           "trace"
         ],
-        "note": "The Collaborator consults the metric, log and trace specialists in both directions, each analyzing its own data sources."
+        "note": "A coordinator calls specialist analysis modules and collects results."
       },
       {
         "id": "synthesis",
@@ -39,7 +39,7 @@
           "collaborator",
           "report"
         ],
-        "note": "The Collaborator synthesizes the three agents' findings into a root cause report."
+        "note": "Separate observations, hypotheses and unknowns for human review."
       }
     ]
   },
@@ -61,7 +61,7 @@
     {
       "id": "collaborator",
       "type": "backend",
-      "label": "Collaborator Agent",
+      "label": "Coordinator",
       "sublabel": "coordinate & synthesize",
       "pos": [
         320,
@@ -117,8 +117,8 @@
     {
       "id": "report",
       "type": "external",
-      "label": "Root Cause Report",
-      "sublabel": "synthesized analysis",
+      "label": "Diagnostic hypotheses",
+      "sublabel": "Human review required",
       "pos": [
         320,
         490
@@ -183,10 +183,10 @@
   "cards": [
     {
       "dot": "orange",
-      "title": "Agent roles",
+      "title": "Implementation boundary",
       "items": [
-        "Collaborator: coordinates and synthesizes, taking the other agents' results as input",
-        "Metric / Log / Trace Agent: each analyzes its own signal type"
+        "This is an extension design, not runnable code.",
+        "Multiple module calls alone do not implement the A2A protocol."
       ]
     }
   ]

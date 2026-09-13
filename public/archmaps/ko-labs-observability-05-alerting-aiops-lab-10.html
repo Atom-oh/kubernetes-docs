@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="archify 2.16.0">
-  <title>알림 분석 및 AIOps 대응 아키텍처 Diagram</title>
+  <title>진단 Reporter: 권한·증거·중복 처리 Diagram</title>
   <script>
     // Resolve the theme before first paint so light-preference users don't
     // see a dark flash. The toolbar script below re-applies with UI state.
@@ -3581,6 +3581,9 @@
       }
       .toolbar {
         position: relative;
+        top: auto;
+        right: auto;
+        flex-wrap: wrap;
         justify-content: flex-end;
         width: max-content;
         max-width: 100%;
@@ -4955,11 +4958,11 @@
            data-preset-badge-blueprint="BLUEPRINT / REV 01"
            data-preset-badge-editorial="EDITORIAL / FIELD NOTE">
         <div class="pulse-dot"></div>
-        <h1>알림 분석 및 AIOps 대응 아키텍처</h1>
+        <h1>진단 Reporter: 권한·증거·중복 처리</h1>
       </div>
     </div>
 
-    <script id="archify-guided-views-data" type="application/json">[{"id":"detect-route","label":"1. 탐지와 라우팅","focus":["alertmanager","cloudwatch","oncall","sns","apigw"],"note":"PrometheusRule과 CloudWatch Alarms가 이상을 탐지하면 Grafana OnCall, SNS Topic, API Gateway 웹훅으로 알림이 라우팅된다."},{"id":"investigate","label":"2. 조사","focus":["sns","apigw","lambda","context"],"note":"SNS 구독과 API Gateway 웹훅이 Lambda AIOps Agent를 호출하고, Agent는 알림을 인시던트 컨텍스트로 정규화한다."},{"id":"evidence","label":"3. 증거 수집","focus":["lambda","logs","metrics","traces"],"note":"Agent가 로그·지표·트레이스를 병렬로 조회해 분석에 필요한 텔레메트리 증거를 모은다."},{"id":"analyze","label":"4. 분석과 대응","focus":["context","bedrock","responders"],"note":"인시던트 컨텍스트를 Amazon Bedrock에 전달해 근본 원인을 분석하고, 결과를 SNS로 발행해 담당자에게 전달한다."}]</script>
+    <script id="archify-guided-views-data" type="application/json">[]</script>
 
     <script id="archify-i18n-data" type="application/json">{"locale":"en","messages":{"viewer.kind.frontend":"Frontend","viewer.kind.backend":"Backend","viewer.kind.database":"Database","viewer.kind.cloud":"Cloud","viewer.kind.security":"Security","viewer.kind.messagebus":"Message bus","viewer.kind.external":"External","viewer.kind.neutral":"Neutral","viewer.kind.node":"Node","viewer.kind.start":"Start","viewer.kind.active":"Active","viewer.kind.waiting":"Waiting","viewer.kind.decision":"Decision","viewer.kind.success":"Success","viewer.kind.failure":"Failure","viewer.toolbar.actions":"Diagram actions","viewer.theme.toggle.title":"Toggle theme (T)","viewer.theme.toggle":"Toggle color theme","viewer.theme.dark":"Dark","viewer.theme.light":"Light","viewer.preset.choose.title":"Choose visual style (S cycles)","viewer.preset.choose":"Choose visual style","viewer.preset.style":"Style","viewer.preset.menu":"Visual style","viewer.preset.identity":"Visual identity","viewer.preset.cycles":"S cycles","viewer.preset.classic":"Classic","viewer.preset.classic.short":"Classic","viewer.preset.classic.hint":"Stable technical default","viewer.preset.flow":"Signal Flow","viewer.preset.flow.short":"Flow","viewer.preset.flow.hint":"Motion-forward presentation","viewer.preset.blueprint":"Blueprint","viewer.preset.blueprint.hint":"Engineering review","viewer.preset.editorial":"Editorial","viewer.preset.editorial.hint":"Publication and launch notes","viewer.preset.badge.signalFlow":"SIGNAL FLOW","viewer.preset.badge.blueprint":"BLUEPRINT / REV 01","viewer.preset.badge.editorial":"EDITORIAL / FIELD NOTE","viewer.preset.badge.editorialPlate":"ARCHIFY / PLATE 04","viewer.preset.current":"Visual style: {style}. Choose visual style","viewer.motion.live":"Live","viewer.motion.still":"Still","viewer.motion.pause":"Pause motion","viewer.motion.resume":"Resume motion","viewer.motion.reduced":"Motion paused by reduced-motion preference","viewer.motion.hidden":"Motion paused while this page is hidden","viewer.motion.yielding":"Pause motion; currently yielding to {owner}","viewer.motion.yielding.title":"Live preview enabled · yielding to {owner}","viewer.owner.story":"the guided story","viewer.owner.chapter":"the active chapter","viewer.owner.chapterPreview":"the chapter delta preview","viewer.owner.handoff":"the chapter handoff","viewer.owner.route":"Route Probe","viewer.owner.lens":"Semantic Lens","viewer.owner.relationship":"Relationship Preview","viewer.owner.intent":"Intent Trace","viewer.owner.focus":"semantic focus","viewer.owner.legend":"legend preview","viewer.owner.reader":"reader interaction","viewer.present.enter":"Enter presentation stage","viewer.present.enter.title":"Presentation stage (F)","viewer.present.exit":"Exit presentation stage","viewer.present.exit.title":"Exit presentation stage (F or Escape)","viewer.present.present":"Present","viewer.present.exit.label":"Exit","viewer.export.button":"Export","viewer.export.button.title":"Export diagram (E)","viewer.export.diagram":"Export diagram","viewer.export.menu":"Export","viewer.export.subtitle":"Portable, clean outputs","viewer.export.share":"Share","viewer.export.shareCard":"Share Card","viewer.export.routeShareCard":"Route Share Card","viewer.export.reachShareCard":"Reach Share Card","viewer.export.copyShareCard":"Copy Share Card","viewer.export.copyDiagram":"Copy diagram","viewer.export.clipboardPng":"PNG to clipboard","viewer.export.raster":"Raster images","viewer.export.image":"Image","viewer.export.lossless":"Lossless image","viewer.export.compact":"Compact image","viewer.export.modern":"Modern image","viewer.export.vectorMotion":"Vector and motion","viewer.export.vectorMotion.heading":"Vector \u0026 motion","viewer.export.editable":"Editable vector","viewer.export.motion6s":"6s motion","viewer.export.unsupported":"Not supported by this browser","viewer.export.clipboardUnsupported":"Clipboard image write not supported by this browser","viewer.export.clipboardUnsupported.period":"Clipboard image write not supported by this browser.","viewer.export.clipboardUnsupported.short":"Clipboard image write not supported in this browser.","viewer.export.motionUnavailable":"Motion capture unavailable in this browser","viewer.export.webmUnavailable":"WebM unavailable in this browser","viewer.export.failed":"Export failed: {message}","viewer.export.unknownVariant":"Unknown Share Card variant: {variant}","viewer.export.routeRequired":"Trace a route before exporting a Route Share Card","viewer.export.reachRequired":"Trace authored reach before exporting a Reach Share Card","viewer.export.unknown":"unknown","viewer.export.routeFailed":"Route Share Card export failed: {message}","viewer.export.reachFailed":"Reach Share Card export failed: {message}","viewer.export.copyFailed":"Copy failed: {message}","viewer.export.copiedPng":"Copied PNG to clipboard","viewer.export.copiedShare":"Copied Share Card","viewer.export.downloadedShare":"Downloaded Share Card","viewer.export.downloadedRoute":"Downloaded Route Share Card","viewer.export.downloadedReach":"Downloaded Reach Share Card","viewer.export.downloadedWebm":"Downloaded WebM","viewer.export.recording":"Recording 6 seconds of motion…","viewer.export.card.routeSummary.one":"Route: {source} → {target} · {count} directed hop","viewer.export.card.routeSummary.other":"Route: {source} → {target} · {count} directed hops","viewer.export.card.reachSummary":"Authored {direction} from {origin} · {nodes} · {links} · max {hops}","viewer.export.card.node.one":"{count} node","viewer.export.card.node.other":"{count} nodes","viewer.export.card.link.one":"{count} link","viewer.export.card.link.other":"{count} links","viewer.export.card.hop.one":"{count} hop","viewer.export.card.hop.other":"{count} hops","viewer.export.card.routeBadge":"ARCHIFY · ROUTE · {hops}","viewer.export.card.reachBadge":"ARCHIFY · {direction} REACH","viewer.export.card.defaultBadge":"ARCHIFY · {preset} · {theme}","viewer.export.direction.upstream":"Upstream","viewer.export.direction.downstream":"Downstream","viewer.export.error.canvasUnavailable":"Canvas unavailable for {label}","viewer.export.error.contextUnavailable":"2D canvas context unavailable for {label}","viewer.export.error.toBlobUnavailable":"canvas.toBlob unavailable for {label}","viewer.export.error.toBlobNull":"canvas.toBlob returned no data for {label}","viewer.export.error.variantsCombined":"Share Card variants cannot be combined","viewer.export.error.viewerState":"Share Card export could not remove temporary viewer state","viewer.export.error.routeState":"Route Card export could not preserve the resolved route safely","viewer.export.error.reachState":"Reach Card export could not preserve authored reach safely","viewer.export.error.webmRequirements":"WebM motion export requires a trace animation and browser MediaRecorder support","viewer.export.error.mediaRecorder":"MediaRecorder failed","viewer.export.error.emptyWebm":"MediaRecorder produced an empty WebM","viewer.export.error.webmBackground":"SVG background could not be loaded for WebM export","viewer.guided.region":"Guided diagram views","viewer.guided.previous":"Previous guided view","viewer.guided.previous.title":"Previous guided view ([)","viewer.guided.next":"Next guided view","viewer.guided.next.title":"Next guided view (])","viewer.guided.views":"Guided views","viewer.guided.explore":"Explore this system","viewer.guided.intro":"Step through curated paths without changing the source diagram.","viewer.guided.trail":"Story trail","viewer.guided.beat":"Beat","viewer.guided.nextBeat":"Next","viewer.guided.play":"Play guided story","viewer.guided.play.title":"Play guided story (P)","viewer.guided.pause":"Pause guided story","viewer.guided.pause.title":"Pause guided story (P)","viewer.guided.replay":"Replay guided story","viewer.guided.replay.title":"Replay guided story (P)","viewer.guided.playStory":"Play story","viewer.guided.pauseStory":"Pause","viewer.guided.replayStory":"Replay story","viewer.guided.motionUnavailable":"Story playback unavailable while motion is Still","viewer.guided.enableMotion":"Switch motion to Live to play the guided story","viewer.guided.selectBeatLink":"Select a Story Beat to copy its exact link","viewer.guided.copyMoment":"Copy moment","viewer.guided.momentCopied":"Moment link copied","viewer.guided.momentCopyFailed":"Could not copy story moment link","viewer.guided.copied":"Copied","viewer.guided.copyFailed":"Copy failed","viewer.guided.showAll":"Show all","viewer.guided.showAll.aria":"Show entire diagram","viewer.guided.chapters":"Story chapters","viewer.guided.storyTrail":"Story trail for {label}: {count} beats","viewer.guided.chapter.open":"Open chapter {index} of {total}: {label}, {count} stops","viewer.guided.chapter.current":"Current chapter {index} of {total}: {label}, {count} stops","viewer.guided.chapter.selectedNodes":"{count} selected nodes","viewer.guided.chapter.stops":"{count} stops","viewer.guided.chapter.stop.one":"{count} stop","viewer.guided.chapter.stop.other":"{count} stops","viewer.guided.chapter.current.title":"{label} — current chapter, {count} stops","viewer.guided.chapter.delta.expanded":"{stay} stay, {enter} enter, {leave} leave","viewer.guided.chapter.delta.aria":"Open chapter {index} of {total}: {label}. Chapter focus delta: {delta}","viewer.guided.chapter.delta.title":"{label} — {delta} chapter focus","viewer.guided.handoff":"{from} → {to} · via {label}","viewer.guided.share.chapter":"Chapter {index} / {total}","viewer.guided.share.initial":"Chapter 01 / 01","viewer.guided.share.default":"Guided chapter","viewer.guided.state.ready":"Ready","viewer.guided.state.playing":"Playing","viewer.guided.state.settled":"Settled","viewer.guided.state.paused":"Paused","viewer.guided.state.pinned":"Pinned","viewer.guided.state.still":"Still","viewer.guided.share.step":"Step {index} / {total} · {label}","viewer.guided.share.staticMoment":"{step} · Static moment","viewer.guided.share.complete":"{count} steps complete · {note}","viewer.guided.share.settled":"Path settled for reading.","viewer.guided.share.staticPath":"{count} steps · Static path","viewer.guided.share.ready":"{count} steps · Ready","viewer.guided.share.aria":"{state} chapter {index} of {total}: {label}. {beat}. {route}","viewer.guided.beat.start":"Beat {index} / {total} · {label} · starting point","viewer.guided.beat.forward":"Beat {index} / {total} · {from} → {to}","viewer.guided.beat.reverse":"Beat {index} / {total} · {from} → {to} · reverse authored link","viewer.guided.beat.multiple":"Beat {index} / {total} · {from} ⇄ {to} · {count} authored links","viewer.guided.beat.group":"Beat {index} / {total} · {from} · {to} · grouped · no direct link","viewer.guided.beat.aria.prefix":"Story beat {index} of {total}: {label}. ","viewer.guided.beat.aria.start":"Starting point.","viewer.guided.beat.aria.forward":"From {from} through one authored forward relationship.","viewer.guided.beat.aria.reverse":"From {from}; the authored relationship points from {to} to {from}.","viewer.guided.beat.aria.multiple":"From {from} through {count} authored relationships; shown without arbitrary motion.","viewer.guided.beat.aria.group":"Grouped from {from} with no direct authored relationship.","viewer.guided.caption.start":"Starting point","viewer.guided.caption.grouped":"Grouped transition · no direct authored link","viewer.guided.caption.more":" +{count} more","viewer.guided.caption.reverse":"Reverse authored relationship","viewer.guided.caption.relationships":"{count} authored relationships","viewer.guided.caption.relationship":"Authored relationship","viewer.guided.caption.direction":"authored direction: {from} → {to}","viewer.guided.caption.starting":"Authored starting point","viewer.guided.beatLink":"Copy link to current story moment: Beat {index} of {total}: {label}","viewer.guided.noStory":"This diagram has no authored guided story.","viewer.guide.eyebrow":"Diagram guide","viewer.guide.close":"Close diagram guide","viewer.guide.inspecting":"Inspecting compiled semantics","viewer.guide.actions":"Diagram exploration actions","viewer.guide.find":"Find any node","viewer.guide.find.hint":"Search labels, responsibilities, kinds, and stable IDs.","viewer.guide.route":"Trace a route","viewer.guide.route.aria":"Trace a directed route","viewer.guide.route.hint":"Ask how two semantic nodes connect in authored direction.","viewer.guide.map":"See the whole system","viewer.guide.map.hint":"Open Semantic Radar with a live viewport and stable nodes.","viewer.guide.lens":"Compare semantic kinds","viewer.guide.lens.hint":"Count roles, reveal their traffic, and compare direct authored links.","viewer.guide.story":"Play the guided story","viewer.guide.story.hint":"Walk the authored chapters and real relationships.","viewer.guide.present":"Enter Presentation Stage","viewer.guide.present.hint":"Give the live diagram the viewport without changing export.","viewer.guide.shortcuts":"Additional keyboard shortcuts","viewer.guide.shortcut.export":"Export","viewer.guide.shortcut.theme":"Theme","viewer.guide.shortcut.style":"Style","viewer.guide.shortcut.reset":"Reset","viewer.guide.shortcut.zoomIn":"Zoom in","viewer.guide.shortcut.zoomOut":"Zoom out","viewer.guide.shortcut.close":"Close","viewer.guide.facts":"{nodes} · {relationships} · {views}","viewer.guide.fact.node.one":"{count} semantic node","viewer.guide.fact.node.other":"{count} semantic nodes","viewer.guide.fact.relationship.one":"{count} relationship","viewer.guide.fact.relationship.other":"{count} relationships","viewer.guide.fact.view.one":"{count} guided view","viewer.guide.fact.view.other":"{count} guided views","viewer.guide.story.available.one":"Walk {count} authored chapter and its real relationships.","viewer.guide.story.available.other":"Walk {count} authored chapters and their real relationships.","viewer.guide.story.unavailable":"No authored guided story in this diagram.","viewer.guide.open":"Open diagram guide","viewer.guide.noStory":"This diagram has no authored guided story.","viewer.finder.title":"Find a node","viewer.finder.close":"Close node finder","viewer.finder.placeholder":"Search labels or IDs","viewer.finder.search":"Search diagram nodes","viewer.finder.results":"Diagram nodes","viewer.finder.empty":"No matching nodes","viewer.finder.result.focus":"Focus {label}","viewer.finder.result.routeStart":"Choose {label} as route start","viewer.finder.result.routeTarget":"Choose {label} as route destination, {links}","viewer.finder.status.empty":"No matching nodes","viewer.finder.status.count.one":"{count} matching node","viewer.finder.status.count.other":"{count} matching nodes","viewer.finder.noun.nodes":"nodes","viewer.finder.link.one":"{count} link","viewer.finder.link.other":"{count} links","viewer.finder.result.focus.one":"Focus {label}, {count} related connection","viewer.finder.result.focus.other":"Focus {label}, {count} related connections","viewer.finder.status.filtered":"{visible} of {available} {noun}","viewer.finder.status.all":"{available} {noun}","viewer.passport.eyebrow":"Semantic passport","viewer.passport.metadata":"Node metadata","viewer.passport.evidence":"Verified source evidence","viewer.passport.verified":"Verified source","viewer.passport.reach":"Authored reach","viewer.passport.reach.trace":"Trace authored reachability","viewer.passport.upstream":"Upstream","viewer.passport.downstream":"Downstream","viewer.passport.upstream.trace":"Trace upstream authored reachability","viewer.passport.downstream.trace":"Trace downstream authored reachability","viewer.passport.close":"Close semantic passport","viewer.passport.copy":"Copy link","viewer.passport.copy.focus":"Copy link to focused node","viewer.passport.relations":"Relations","viewer.passport.relations.show":"Show connected relationships","viewer.passport.relations.hide":"Hide connected relationships","viewer.passport.relations.list":"Connected relationships","viewer.passport.copyRelation":"Copy relation","viewer.passport.copyNode":"Copy node","viewer.passport.copyPinned":"Copy link to pinned relationship","viewer.passport.copySource":"Copy link to source node","viewer.passport.copy.focused.success":"Focused node link copied","viewer.passport.copy.pinned.success":"Pinned relationship link copied","viewer.passport.copy.focused.failed":"Could not copy focused node link","viewer.passport.copy.pinned.failed":"Could not copy pinned relationship link","viewer.passport.relationship.none":"No connected relationships","viewer.passport.relationship.count.one":"{count} relation","viewer.passport.relationship.count.other":"{count} relations","viewer.passport.relationship.show.one":"Show {count} connected relationship","viewer.passport.relationship.show.other":"Show {count} connected relationships","viewer.passport.relationship.summary":"{out} outgoing · {in} incoming{loops}","viewer.passport.relationship.loops":" · {count} loop","viewer.passport.relationship.explorer":"Direct relationship explorer","viewer.passport.relationship.help":"Use arrow keys to explore relationships. Press Enter or Space to pin details; Escape clears.","viewer.passport.relationship.loopsBack":"loops back","viewer.passport.relationship.connectsTo":"connects to","viewer.passport.relationship.connectsFrom":"connects from","viewer.passport.relationship.pinned":"Pinned relationship · {from} → {to} · {label}","viewer.passport.relationship.inspect":"Inspect relationship {index} of {total}: {from} to {to}, {label}. Press Enter for details.","viewer.passport.relationship.group.out":"Outgoing","viewer.passport.relationship.group.in":"Incoming","viewer.passport.relationship.group.loop":"Self loops","viewer.passport.relationship.row":"{group}: {relationship}, {neighbor}","viewer.passport.relationship.direction.out":"OUT →","viewer.passport.relationship.direction.in":"← IN","viewer.passport.relationship.direction.loop":"LOOP","viewer.passport.sourceCount.one":"{count} verified source reference","viewer.passport.sourceCount.other":"{count} verified source references","viewer.passport.sourceMarker":"SRC","viewer.passport.beacon.one":"{count} verified source; focus this node to inspect","viewer.passport.beacon.other":"{count} verified sources; focus this node to inspect","viewer.passport.repository.open":"Open verified repository revision {revision}","viewer.passport.source.open":"Open verified source {path} at revision {revision}","viewer.passport.source.openLink":"Open ↗","viewer.passport.reach.upstream.one":"Trace {count} upstream authored node","viewer.passport.reach.upstream.other":"Trace {count} upstream authored nodes","viewer.passport.reach.downstream.one":"Trace {count} downstream authored node","viewer.passport.reach.downstream.other":"Trace {count} downstream authored nodes","viewer.passport.reach.noUpstream":"No upstream authored nodes","viewer.passport.reach.noDownstream":"No downstream authored nodes","viewer.passport.reach.status":"{direction} · {nodes} nodes · {links} links · max {hops} hops","viewer.route.eyebrow":"Route probe","viewer.route.start":"Choose a start node","viewer.route.start.find":"Find start","viewer.route.start.find.aria":"Find a route start","viewer.route.copy":"Copy link","viewer.route.copy.aria":"Copy link to traced route","viewer.route.clear":"Clear","viewer.route.clear.aria":"Clear route probe","viewer.route.traced":"Traced route","viewer.route.pickTwo":"Pick two semantic nodes on the diagram","viewer.route.pickOne":"Pick a semantic node on the diagram","viewer.route.controls":"Route journey controls","viewer.route.previous":"Previous route position","viewer.route.play":"Play route journey","viewer.route.pause":"Pause route journey","viewer.route.replay":"Replay route journey","viewer.route.next":"Next route position","viewer.route.journey":"Journey","viewer.route.pause.label":"Pause","viewer.route.replay.label":"Replay","viewer.route.overview":"Overview","viewer.route.overview.aria":"Show complete route overview","viewer.route.instructions":"Choose the source, then the destination. Direction matters.","viewer.route.destination":"Choose a destination from {label}","viewer.route.destination.find":"Find target","viewer.route.destination.find.aria":"Find a reachable route destination","viewer.route.differentDestination":"Choose a different destination","viewer.route.distinct":"A route needs two distinct semantic nodes.","viewer.route.unreachable":"No directed route to {label}","viewer.route.unreachable.detail":"{target} is not reachable from {source}. Pick a highlighted destination.","viewer.route.start.instructions":"Select the source. The next step will reveal only directed destinations.","viewer.route.copy.success":"Traced route link copied","viewer.route.copy.failed":"Could not copy traced route link","viewer.route.position":"Route position {index} of {total}: {label}","viewer.route.step":"Step {index} of {total} · {phase} · {label}","viewer.route.motionRequired":"Automatic journey requires Live motion","viewer.route.trigger.clear":"Clear traced route","viewer.route.overview.status":"{nodes} · {hops} · shortest authored route","viewer.route.overview.node.one":"{count} node","viewer.route.overview.node.other":"{count} nodes","viewer.route.overview.hop.one":"{count} directed hop","viewer.route.overview.hop.other":"{count} directed hops","viewer.route.phase.playing":"Playing","viewer.route.phase.complete":"Complete","viewer.route.phase.inspecting":"Inspecting","viewer.route.destination.count.one":"{count} directed destination available. Pick a highlighted node.","viewer.route.destination.count.other":"{count} directed destinations available. Pick a highlighted node.","viewer.route.noOutgoing":"No outgoing route starts here. Clear and choose another source.","viewer.route.result.title":"{source} to {target}","viewer.route.finder.source.title":"Choose route start","viewer.route.finder.source.placeholder":"Search route sources","viewer.route.finder.source.empty":"No matching route sources","viewer.route.finder.source.results":"Nodes that can start a route","viewer.route.finder.source.noun":"route sources","viewer.route.finder.source.badge":"start","viewer.route.finder.target.title":"Destination from {label}","viewer.route.finder.target.placeholder":"Search reachable destinations","viewer.route.finder.target.empty":"No matching reachable destinations","viewer.route.finder.target.results":"Reachable route destinations","viewer.route.finder.target.noun":"reachable destinations","viewer.route.hop.one":"{count} hop","viewer.route.hop.other":"{count} hops","viewer.lens.eyebrow":"Semantic lens","viewer.lens.title":"Compare system roles","viewer.lens.close":"Close semantic lens","viewer.lens.instruction":"Choose up to two semantic kinds. One reveals its real traffic; two compare only direct authored relationships.","viewer.lens.kinds":"Semantic kinds","viewer.lens.choose":"Choose a kind to inspect its nodes and touching relationships.","viewer.lens.copy":"Copy link to semantic lens","viewer.lens.clear":"Clear semantic lens","viewer.lens.open":"Open semantic lens","viewer.lens.openActive":"Open active semantic lens","viewer.lens.legend":"Semantic legend","viewer.lens.legend.inspect.one":"Inspect {label}, {count} node","viewer.lens.legend.inspect.other":"Inspect {label}, {count} nodes","viewer.lens.kind.count.one":"{label}, {count} node","viewer.lens.kind.count.other":"{label}, {count} nodes","viewer.lens.compare.one":"{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationship","viewer.lens.compare.other":"{first} → {second}: {forward} · {second} → {first}: {reverse} · {count} direct relationships","viewer.lens.single":"{nodes} · {relationships} · connected peers remain visible","viewer.lens.node.one":"{count} {label} node","viewer.lens.node.other":"{count} {label} nodes","viewer.lens.relationship.one":"{count} touching relationship","viewer.lens.relationship.other":"{count} touching relationships","viewer.radar.title":"Semantic radar","viewer.radar.building":"Building overview","viewer.radar.openFull":"Open full semantic radar","viewer.radar.open":"Open radar","viewer.radar.close":"Close semantic radar","viewer.radar.surface":"Diagram overview. Click a node to focus it, or use arrow keys to pan.","viewer.radar.click":"Click node","viewer.radar.drag":"Drag to pan","viewer.radar.space":"Semantic radar needs more MAP space.","viewer.radar.nodes":"Semantic diagram radar nodes","viewer.radar.focus":"Focus {label} from Semantic Radar","viewer.radar.status":"{count} nodes · {viewport}","viewer.radar.fullMap":"{count} nodes · full map","viewer.radar.compacted":"Radar compacted to avoid covering the Semantic Passport or MAP controls.","viewer.radar.cancelWaiting":"Cancel semantic radar waiting for more MAP space","viewer.radar.needsSpace":"Semantic radar needs more visible MAP space","viewer.radar.viewport.full":"full map","viewer.radar.viewport.width":"{percent}% width","viewer.radar.viewport.scale":"{percent}% viewport","viewer.nav.controls":"Diagram view controls","viewer.nav.route":"Trace a directed route","viewer.nav.route.title":"Trace route (R)","viewer.nav.route.short":"PATH","viewer.nav.radar":"Open semantic radar","viewer.nav.radar.title":"Semantic radar (M)","viewer.nav.radar.short":"MAP","viewer.nav.lens":"Open semantic lens","viewer.nav.lens.title":"Semantic lens (L)","viewer.nav.lens.short":"LENS","viewer.nav.find":"Find a node","viewer.nav.find.title":"Find a node (/)","viewer.nav.guide":"Open diagram guide","viewer.nav.guide.title":"Diagram guide (?)","viewer.nav.zoomOut":"Zoom out","viewer.nav.zoomOut.title":"Zoom out (-)","viewer.nav.reset":"Reset diagram view","viewer.nav.reset.title":"Reset view (0)","viewer.nav.read":"READ","viewer.nav.zoomIn":"Zoom in","viewer.nav.zoomIn.title":"Zoom in (+)","viewer.nav.camera":"{hint}. Reset diagram view","viewer.nav.camera.title":"{semantic}{hint} · reset view (0)","viewer.nav.camera.semantic":"Semantic camera active · ","viewer.nav.level.map":"MAP","viewer.nav.level.read":"READ","viewer.nav.level.full":"FULL","viewer.nav.level.auto":"AUTO","viewer.nav.detail.map":"Zoom in to reveal relationship labels and node context","viewer.nav.detail.read":"Zoom in again to reveal tags and annotations","viewer.nav.detail.full":"Full diagram detail","viewer.intent.summary":"{label}. {out} outgoing, {in} incoming{loops}. {total} connections. Press Enter for details.","viewer.intent.loops":", {count} self loop","viewer.common.copied":"Copied","viewer.common.copyFailed":"Copy failed","viewer.common.copyLink":"Copy link","viewer.common.clear":"Clear","viewer.common.close":"Close"}}</script>
     <div class="guided-views no-print" id="guided-views" hidden aria-label="Guided diagram views">
@@ -5005,7 +5008,7 @@
     <div class="diagram-container" data-detail-level="read"
          data-preset-badge-editorial-plate="ARCHIFY / PLATE 04">
       <svg viewBox="0 0 1320 560" role="img" lang="en" aria-labelledby="archify-diagram-title archify-diagram-description" data-animation="trace" data-preset="classic" data-quality-profile="showcase">
-        <title id="archify-diagram-title">알림 분석 및 AIOps 대응 아키텍처</title>
+        <title id="archify-diagram-title">진단 Reporter: 권한·증거·중복 처리</title>
         <desc id="archify-diagram-description">An architecture diagram generated by Archify.</desc>
         <!-- Definitions -->
         <defs>
@@ -5030,48 +5033,36 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="1. 탐지" x="10" y="90" width="220" height="250" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="인시던트 관리" x="10" y="370" width="220" height="110" rx="12" class="c-region" stroke-width="1"/>
-
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="2" data-composition-frame-label="2. 라우팅" x="260" y="230" width="220" height="250" rx="12" class="c-region" stroke-width="1"/>
-
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="3" data-composition-frame-label="3. 조사" x="510" y="200" width="250" height="284" rx="12" class="c-region" stroke-width="1"/>
-
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="4" data-composition-frame-label="텔레메트리 증거" x="800" y="30" width="230" height="310" rx="12" class="c-region" stroke-width="1"/>
-
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="5" data-composition-frame-label="4. 분석과 대응" x="800" y="370" width="480" height="110" rx="12" class="c-region" stroke-width="1"/>
 
         <!-- Connection paths (before components for correct z-order) -->
-        <path data-edge-from="alertmanager" data-edge-to="oncall" data-edge-label="webhook" data-edge-key="0" data-edge-id="am-oncall" data-composition-points="120,320;120,400" d="M 120 320 L 120 400" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="alertmanager" data-edge-to="sns" data-edge-key="1" data-edge-id="am-sns" data-composition-points="200,283;224,283;224,313;266,313;266,297;290,297" d="M 200 283 L 216 283 Q 224 283 224 291 L 224 305 Q 224 313 232 313 L 258 313 Q 266 313 266 305 L 266 305 Q 266 297 274 297 L 290 297" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="cloudwatch" data-edge-to="sns" data-edge-key="2" data-edge-id="cw-sns" data-composition-points="200,150;245,150;245,283;290,283" d="M 200 150 L 237 150 Q 245 150 245 158 L 245 275 Q 245 283 253 283 L 290 283" class="a-default" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="alertmanager" data-edge-to="apigw" data-edge-label="webhook" data-edge-key="3" data-edge-id="am-apigw" data-composition-points="200,297;245,297;245,430;290,430" d="M 200 297 L 237 297 Q 245 297 245 305 L 245 422 Q 245 430 253 430 L 290 430" class="a-default" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="sns" data-edge-to="lambda" data-edge-label="Lambda 구독" data-edge-key="4" data-edge-id="sns-lambda" data-composition-points="450,290;495,290;495,255;540,255" d="M 450 290 L 487 290 Q 495 290 495 282 L 495 263 Q 495 255 503 255 L 540 255" class="a-emphasis" data-animate="edge" style="--step:4" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="apigw" data-edge-to="lambda" data-edge-key="5" data-edge-id="apigw-lambda" data-composition-points="450,430;495,430;495,269;540,269" d="M 450 430 L 487 430 Q 495 430 495 422 L 495 277 Q 495 269 503 269 L 540 269" class="a-default" data-animate="edge" style="--step:5" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="lambda" data-edge-to="context" data-edge-label="정규화" data-edge-key="6" data-edge-id="lambda-context" data-composition-points="635,294;635,400" d="M 635 294 L 635 400" class="a-default" data-animate="edge" style="--step:6" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path data-edge-from="lambda" data-edge-to="logs" data-edge-label="병렬 조회" data-edge-key="7" data-edge-id="lambda-logs" data-composition-points="730,248;780,248;780,90;830,90" d="M 730 248 L 772 248 Q 780 248 780 240 L 780 98 Q 780 90 788 90 L 830 90" class="a-dashed" data-animate="edge" style="--step:7" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="lambda" data-edge-to="metrics" data-edge-key="8" data-edge-id="lambda-metrics" data-composition-points="730,262;780,262;780,190;830,190" d="M 730 262 L 772 262 Q 780 262 780 254 L 780 198 Q 780 190 788 190 L 830 190" class="a-dashed" data-animate="edge" style="--step:8" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="lambda" data-edge-to="traces" data-edge-key="9" data-edge-id="lambda-traces" data-composition-points="730,276;830,276" d="M 730 276 L 830 276" class="a-dashed" data-animate="edge" style="--step:9" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path data-edge-from="context" data-edge-to="bedrock" data-edge-label="분석 요청" data-edge-key="10" data-edge-id="context-bedrock" data-composition-points="730,432;830,432" d="M 730 432 L 830 432" class="a-emphasis" data-animate="edge" style="--step:10" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="bedrock" data-edge-to="responders" data-edge-label="SNS 발행" data-edge-key="11" data-edge-id="bedrock-responders" data-composition-points="990,430;1080,430" d="M 990 430 L 1080 430" class="a-default" data-animate="edge" style="--step:11" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="alertmanager" data-edge-to="sns" data-edge-label="toJson / SNS" data-edge-key="0" data-edge-id="am-input" data-composition-points="200,297;290,297" d="M 200 297 L 290 297" class="a-default" data-animate="edge" style="--step:0" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="cloudwatch" data-edge-to="sns" data-edge-label="alarm action" data-edge-key="1" data-edge-id="cw-input" data-composition-points="200,150;245,150;245,283;290,283" d="M 200 150 L 237 150 Q 245 150 245 158 L 245 275 Q 245 283 253 283 L 290 283" class="a-default" data-animate="edge" style="--step:1" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="sns" data-edge-to="lambda" data-edge-label="SNS event" data-edge-key="2" data-edge-id="input-reporter" data-composition-points="450,290;495,290;495,262;540,262" d="M 450 290 L 487 290 Q 495 290 495 282 L 495 270 Q 495 262 503 262 L 540 262" class="a-emphasis" data-animate="edge" style="--step:2" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="sns" data-edge-to="apigw" data-edge-label="delivery failure" data-edge-key="3" data-edge-id="delivery-failure" data-composition-points="370,320;370,400" d="M 370 320 L 370 400" class="a-dashed" data-animate="edge" style="--step:3" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="lambda" data-edge-to="oncall" data-edge-label="deduplicate" data-edge-key="4" data-edge-id="reporter-state" data-composition-points="635,294;635,318;651,318;651,376;620,376;620,400" d="M 635 294 L 635 310 Q 635 318 643 318 L 643 318 Q 651 318 651 326 L 651 368 Q 651 376 643 376 L 628 376 Q 620 376 620 384 L 620 400" class="a-default" data-animate="edge" style="--step:4" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="lambda" data-edge-to="logs" data-edge-label="fixed query" data-edge-key="5" data-edge-id="read-logs" data-composition-points="730,262;780,262;780,90;830,90" d="M 730 262 L 772 262 Q 780 262 780 254 L 780 98 Q 780 90 788 90 L 830 90" class="a-dashed" data-animate="edge" style="--step:5" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="lambda" data-edge-to="metrics" data-edge-label="fixed resources" data-edge-key="6" data-edge-id="read-metrics" data-composition-points="730,262;780,262;780,190;830,190" d="M 730 262 L 772 262 Q 780 262 780 254 L 780 198 Q 780 190 788 190 L 830 190" class="a-dashed" data-animate="edge" style="--step:6" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="lambda" data-edge-to="bedrock" data-edge-label="evidence only" data-edge-key="7" data-edge-id="model" data-composition-points="730,262;780,262;780,430;830,430" d="M 730 262 L 772 262 Q 780 262 780 270 L 780 422 Q 780 430 788 430 L 830 430" class="a-emphasis" data-animate="edge" style="--step:7" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="lambda" data-edge-to="context" data-edge-label="publish result" data-edge-key="8" data-edge-id="output" data-composition-points="730,262;755,262;755,350;1045,350;1045,432;1080,432" d="M 730 262 L 747 262 Q 755 262 755 270 L 755 342 Q 755 350 763 350 L 1037 350 Q 1045 350 1045 358 L 1045 424 Q 1045 432 1053 432 L 1080 432" class="a-default" data-animate="edge" style="--step:8" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path data-edge-from="context" data-edge-to="responders" data-edge-label="notify" data-edge-key="9" data-edge-id="review" data-composition-points="1175,400;1175,376;1191,376;1191,314;1165,314;1165,290" d="M 1175 400 L 1175 384 Q 1175 376 1183 376 L 1183 376 Q 1191 376 1191 368 L 1191 322 Q 1191 314 1183 314 L 1173 314 Q 1165 314 1165 306 L 1165 290" class="a-default" data-animate="edge" style="--step:9" stroke-width="1.5" marker-end="url(#arrowhead)"/>
 
         <!-- Components -->
-        <g id="node-alertmanager" data-node-id="alertmanager" data-node-label="Alertmanager" tabindex="0" role="button" aria-label="Focus Alertmanager, PrometheusRule, 1. 탐지" aria-pressed="false" data-node-kind="backend" data-node-sublabel="PrometheusRule" data-node-context="1. 탐지">
-          <title>Alertmanager · PrometheusRule · 1. 탐지</title>
+        <g id="node-alertmanager" data-node-id="alertmanager" data-node-label="Alertmanager" tabindex="0" role="button" aria-label="Focus Alertmanager, JSON routing, Architecture component" aria-pressed="false" data-node-kind="backend" data-node-sublabel="JSON routing" data-node-context="Architecture component">
+          <title>Alertmanager · JSON routing · Architecture component</title>
           <rect x="40" y="260" width="160" height="60" rx="6" class="c-mask"/>
           <rect x="40" y="260" width="160" height="60" rx="6" class="c-backend" data-animate="node" style="--step:0" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(46 266) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="120" y="288" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Alertmanager</text>
-        <text data-detail="context" x="120" y="304" class="t-muted" font-size="9" text-anchor="middle">PrometheusRule</text>
+        <text data-detail="context" x="120" y="304" class="t-muted" font-size="9" text-anchor="middle">JSON routing</text>
         </g>
 
-        <g id="node-cloudwatch" data-node-id="cloudwatch" data-node-label="CloudWatch" tabindex="0" role="button" aria-label="Focus CloudWatch, 경보 및 이벤트, 1. 탐지" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="경보 및 이벤트" data-node-context="1. 탐지">
-          <title>CloudWatch · 경보 및 이벤트 · 1. 탐지</title>
+        <g id="node-cloudwatch" data-node-id="cloudwatch" data-node-label="CloudWatch" tabindex="0" role="button" aria-label="Focus CloudWatch, 경보 및 이벤트, Architecture component" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="경보 및 이벤트" data-node-context="Architecture component">
+          <title>CloudWatch · 경보 및 이벤트 · Architecture component</title>
           <rect x="40" y="120" width="160" height="60" rx="6" class="c-mask"/>
-          <rect x="40" y="120" width="160" height="60" rx="6" class="c-cloud" data-animate="node" style="--step:2" stroke-width="1.5"/>
+          <rect x="40" y="120" width="160" height="60" rx="6" class="c-cloud" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(46 126) scale(0.6875)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
@@ -5079,219 +5070,185 @@
         <text data-detail="context" x="120" y="164" class="t-muted" font-size="9" text-anchor="middle">경보 및 이벤트</text>
         </g>
 
-        <g id="node-oncall" data-node-id="oncall" data-node-label="Grafana OnCall" tabindex="0" role="button" aria-label="Focus Grafana OnCall, 인시던트 라우팅, 인시던트 관리" aria-pressed="false" data-node-kind="frontend" data-node-sublabel="인시던트 라우팅" data-node-context="인시던트 관리">
-          <title>Grafana OnCall · 인시던트 라우팅 · 인시던트 관리</title>
-          <rect x="40" y="400" width="160" height="60" rx="6" class="c-mask"/>
-          <rect x="40" y="400" width="160" height="60" rx="6" class="c-frontend" data-animate="node" style="--step:1" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="frontend" class="semantic-sigil s-frontend" transform="translate(46 406) scale(0.6875)">
-            <rect x="2" y="3" width="12" height="10" rx="2"/>
-            <path d="M2 6.5h12"/>
-            <circle cx="4.1" cy="4.8" r=".7" class="sigil-fill"/>
-            <circle cx="6.3" cy="4.8" r=".7" class="sigil-fill"/>
+        <g id="node-oncall" data-node-id="oncall" data-node-label="DynamoDB" tabindex="0" role="button" aria-label="Focus DynamoDB, Idempotency · 24h, Architecture component" aria-pressed="false" data-node-kind="database" data-node-sublabel="Idempotency · 24h" data-node-context="Architecture component">
+          <title>DynamoDB · Idempotency · 24h · Architecture component</title>
+          <rect x="540" y="400" width="160" height="60" rx="6" class="c-mask"/>
+          <rect x="540" y="400" width="160" height="60" rx="6" class="c-database" data-animate="node" style="--step:5" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(546 406) scale(0.6875)">
+            <ellipse cx="8" cy="4" rx="5" ry="2"/>
+            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="120" y="428" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Grafana OnCall</text>
-        <text data-detail="context" x="120" y="444" class="t-muted" font-size="9" text-anchor="middle">인시던트 라우팅</text>
+          <text data-node-label="" data-detail-anchor="" x="620" y="428" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">DynamoDB</text>
+        <text data-detail="context" x="620" y="444" class="t-muted" font-size="9" text-anchor="middle">Idempotency · 24h</text>
         </g>
 
-        <g id="node-sns" data-node-id="sns" data-node-label="SNS Topic" tabindex="0" role="button" aria-label="Focus SNS Topic, 알림 팬아웃, 2. 라우팅" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="알림 팬아웃" data-node-context="2. 라우팅">
-          <title>SNS Topic · 알림 팬아웃 · 2. 라우팅</title>
+        <g id="node-sns" data-node-id="sns" data-node-label="Input SNS" tabindex="0" role="button" aria-label="Focus Input SNS, Encrypted alerts, Architecture component" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="Encrypted alerts" data-node-context="Architecture component">
+          <title>Input SNS · Encrypted alerts · Architecture component</title>
           <rect x="290" y="260" width="160" height="60" rx="6" class="c-mask"/>
-          <rect x="290" y="260" width="160" height="60" rx="6" class="c-messagebus" data-animate="node" style="--step:2" stroke-width="1.5"/>
+          <rect x="290" y="260" width="160" height="60" rx="6" class="c-messagebus" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(296 266) scale(0.6875)">
             <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
             <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
             <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
             <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="370" y="288" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">SNS Topic</text>
-        <text data-detail="context" x="370" y="304" class="t-muted" font-size="9" text-anchor="middle">알림 팬아웃</text>
+          <text data-node-label="" data-detail-anchor="" x="370" y="288" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Input SNS</text>
+        <text data-detail="context" x="370" y="304" class="t-muted" font-size="9" text-anchor="middle">Encrypted alerts</text>
         </g>
 
-        <g id="node-apigw" data-node-id="apigw" data-node-label="API Gateway" tabindex="0" role="button" aria-label="Focus API Gateway, 직접 웹훅, 2. 라우팅" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="직접 웹훅" data-node-context="2. 라우팅">
-          <title>API Gateway · 직접 웹훅 · 2. 라우팅</title>
+        <g id="node-apigw" data-node-id="apigw" data-node-label="Failure queue" tabindex="0" role="button" aria-label="Focus Failure queue, SNS / Lambda failures, Architecture component" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="SNS / Lambda failures" data-node-context="Architecture component">
+          <title>Failure queue · SNS / Lambda failures · Architecture component</title>
           <rect x="290" y="400" width="160" height="60" rx="6" class="c-mask"/>
-          <rect x="290" y="400" width="160" height="60" rx="6" class="c-cloud" data-animate="node" style="--step:4" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(296 406) scale(0.6875)">
-            <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
+          <rect x="290" y="400" width="160" height="60" rx="6" class="c-messagebus" data-animate="node" style="--step:4" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(296 406) scale(0.6875)">
+            <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
+            <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
+            <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
+            <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="370" y="428" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">API Gateway</text>
-        <text data-detail="context" x="370" y="444" class="t-muted" font-size="9" text-anchor="middle">직접 웹훅</text>
+          <text data-node-label="" data-detail-anchor="" x="370" y="428" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Failure queue</text>
+        <text data-detail="context" x="370" y="444" class="t-muted" font-size="9" text-anchor="middle">SNS / Lambda failures</text>
         </g>
 
-        <g id="node-lambda" data-node-id="lambda" data-node-label="Lambda AIOps Agent" tabindex="0" role="button" aria-label="Focus Lambda AIOps Agent, 알림 컨텍스트 정규화, 3. 조사" aria-pressed="false" data-node-kind="backend" data-node-sublabel="알림 컨텍스트 정규화" data-node-context="3. 조사">
-          <title>Lambda AIOps Agent · 알림 컨텍스트 정규화 · 3. 조사</title>
+        <g id="node-lambda" data-node-id="lambda" data-node-label="Diagnostic reporter" tabindex="0" role="button" aria-label="Focus Diagnostic reporter, Lambda · no remediation, Architecture component" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Lambda · no remediation" data-node-context="Architecture component">
+          <title>Diagnostic reporter · Lambda · no remediation · Architecture component</title>
           <rect x="540" y="230" width="190" height="64" rx="6" class="c-mask"/>
-          <rect x="540" y="230" width="190" height="64" rx="6" class="c-backend" data-animate="node" style="--step:5" stroke-width="1.5"/>
+          <rect x="540" y="230" width="190" height="64" rx="6" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(546 236) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="635" y="260" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Lambda AIOps Agent</text>
-        <text data-detail="context" x="635" y="276" class="t-muted" font-size="9" text-anchor="middle">알림 컨텍스트 정규화</text>
+          <text data-node-label="" data-detail-anchor="" x="635" y="260" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Diagnostic reporter</text>
+        <text data-detail="context" x="635" y="276" class="t-muted" font-size="9" text-anchor="middle">Lambda · no remediation</text>
         </g>
 
-        <g id="node-context" data-node-id="context" data-node-label="인시던트 컨텍스트" tabindex="0" role="button" aria-label="Focus 인시던트 컨텍스트, 서비스·지표·시간 범위, 3. 조사" aria-pressed="false" data-node-kind="database" data-node-sublabel="서비스·지표·시간 범위" data-node-context="3. 조사">
-          <title>인시던트 컨텍스트 · 서비스·지표·시간 범위 · 3. 조사</title>
-          <rect x="540" y="400" width="190" height="64" rx="6" class="c-mask"/>
-          <rect x="540" y="400" width="190" height="64" rx="6" class="c-database" data-animate="node" style="--step:7" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(546 406) scale(0.6875)">
-            <ellipse cx="8" cy="4" rx="5" ry="2"/>
-            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
+        <g id="node-context" data-node-id="context" data-node-label="Output SNS" tabindex="0" role="button" aria-label="Focus Output SNS, Encrypted results, Architecture component" aria-pressed="false" data-node-kind="messagebus" data-node-sublabel="Encrypted results" data-node-context="Architecture component">
+          <title>Output SNS · Encrypted results · Architecture component</title>
+          <rect x="1080" y="400" width="190" height="64" rx="6" class="c-mask"/>
+          <rect x="1080" y="400" width="190" height="64" rx="6" class="c-messagebus" data-animate="node" style="--step:9" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="messagebus" class="semantic-sigil s-messagebus" transform="translate(1086 406) scale(0.6875)">
+            <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/>
+            <circle cx="5" cy="4.5" r="1" class="sigil-fill"/>
+            <circle cx="10.5" cy="8" r="1" class="sigil-fill"/>
+            <circle cx="7" cy="11.5" r="1" class="sigil-fill"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="635" y="430" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">인시던트 컨텍스트</text>
-        <text data-detail="context" x="635" y="446" class="t-muted" font-size="9" text-anchor="middle">서비스·지표·시간 범위</text>
+          <text data-node-label="" data-detail-anchor="" x="1175" y="430" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Output SNS</text>
+        <text data-detail="context" x="1175" y="446" class="t-muted" font-size="9" text-anchor="middle">Encrypted results</text>
         </g>
 
-        <g id="node-logs" data-node-id="logs" data-node-label="로그" tabindex="0" role="button" aria-label="Focus 로그, CloudWatch Logs / Loki, 텔레메트리 증거" aria-pressed="false" data-node-kind="database" data-node-sublabel="CloudWatch Logs / Loki" data-node-context="텔레메트리 증거">
-          <title>로그 · CloudWatch Logs / Loki · 텔레메트리 증거</title>
+        <g id="node-logs" data-node-id="logs" data-node-label="로그" tabindex="0" role="button" aria-label="Focus 로그, CW Logs aggregate only, Architecture component" aria-pressed="false" data-node-kind="database" data-node-sublabel="CW Logs aggregate only" data-node-context="Architecture component">
+          <title>로그 · CW Logs aggregate only · Architecture component</title>
           <rect x="830" y="60" width="170" height="60" rx="6" class="c-mask"/>
-          <rect x="830" y="60" width="170" height="60" rx="6" class="c-database" data-animate="node" style="--step:8" stroke-width="1.5"/>
+          <rect x="830" y="60" width="170" height="60" rx="6" class="c-database" data-animate="node" style="--step:6" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(836 66) scale(0.6875)">
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="915" y="88" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">로그</text>
-        <text data-detail="context" x="915" y="104" class="t-muted" font-size="9" text-anchor="middle">CloudWatch Logs / Loki</text>
+        <text data-detail="context" x="915" y="104" class="t-muted" font-size="9" text-anchor="middle">CW Logs aggregate only</text>
         </g>
 
-        <g id="node-metrics" data-node-id="metrics" data-node-label="지표" tabindex="0" role="button" aria-label="Focus 지표, AMP, 텔레메트리 증거" aria-pressed="false" data-node-kind="database" data-node-sublabel="AMP" data-node-context="텔레메트리 증거">
-          <title>지표 · AMP · 텔레메트리 증거</title>
+        <g id="node-metrics" data-node-id="metrics" data-node-label="지표" tabindex="0" role="button" aria-label="Focus 지표, CW SQS / RDS values, Architecture component" aria-pressed="false" data-node-kind="database" data-node-sublabel="CW SQS / RDS values" data-node-context="Architecture component">
+          <title>지표 · CW SQS / RDS values · Architecture component</title>
           <rect x="830" y="160" width="170" height="60" rx="6" class="c-mask"/>
-          <rect x="830" y="160" width="170" height="60" rx="6" class="c-database" data-animate="node" style="--step:9" stroke-width="1.5"/>
+          <rect x="830" y="160" width="170" height="60" rx="6" class="c-database" data-animate="node" style="--step:7" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(836 166) scale(0.6875)">
             <ellipse cx="8" cy="4" rx="5" ry="2"/>
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="915" y="188" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">지표</text>
-        <text data-detail="context" x="915" y="204" class="t-muted" font-size="9" text-anchor="middle">AMP</text>
+        <text data-detail="context" x="915" y="204" class="t-muted" font-size="9" text-anchor="middle">CW SQS / RDS values</text>
         </g>
 
-        <g id="node-traces" data-node-id="traces" data-node-label="트레이스" tabindex="0" role="button" aria-label="Focus 트레이스, X-Ray / Tempo, 텔레메트리 증거" aria-pressed="false" data-node-kind="database" data-node-sublabel="X-Ray / Tempo" data-node-context="텔레메트리 증거">
-          <title>트레이스 · X-Ray / Tempo · 텔레메트리 증거</title>
-          <rect x="830" y="260" width="170" height="60" rx="6" class="c-mask"/>
-          <rect x="830" y="260" width="170" height="60" rx="6" class="c-database" data-animate="node" style="--step:10" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(836 266) scale(0.6875)">
-            <ellipse cx="8" cy="4" rx="5" ry="2"/>
-            <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
-          </g>
-          <text data-node-label="" data-detail-anchor="" x="915" y="288" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">트레이스</text>
-        <text data-detail="context" x="915" y="304" class="t-muted" font-size="9" text-anchor="middle">X-Ray / Tempo</text>
-        </g>
-
-        <g id="node-bedrock" data-node-id="bedrock" data-node-label="Amazon Bedrock" tabindex="0" role="button" aria-label="Focus Amazon Bedrock, 근본 원인 분석, 4. 분석과 대응" aria-pressed="false" data-node-kind="backend" data-node-sublabel="근본 원인 분석" data-node-context="4. 분석과 대응">
-          <title>Amazon Bedrock · 근본 원인 분석 · 4. 분석과 대응</title>
+        <g id="node-bedrock" data-node-id="bedrock" data-node-label="Amazon Bedrock" tabindex="0" role="button" aria-label="Focus Amazon Bedrock, Converse · maxTokens 1024, Architecture component" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="Converse · maxTokens 1024" data-node-context="Architecture component">
+          <title>Amazon Bedrock · Converse · maxTokens 1024 · Architecture component</title>
           <rect x="830" y="400" width="160" height="60" rx="6" class="c-mask"/>
-          <rect x="830" y="400" width="160" height="60" rx="6" class="c-backend" data-animate="node" style="--step:11" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(836 406) scale(0.6875)">
-            <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
+          <rect x="830" y="400" width="160" height="60" rx="6" class="c-cloud" data-animate="node" style="--step:8" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(836 406) scale(0.6875)">
+            <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="910" y="428" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Amazon Bedrock</text>
-        <text data-detail="context" x="910" y="444" class="t-muted" font-size="9" text-anchor="middle">근본 원인 분석</text>
+        <text data-detail="context" x="910" y="444" class="t-muted" font-size="9" text-anchor="middle">Converse · maxTokens 1024</text>
         </g>
 
-        <g id="node-responders" data-node-id="responders" data-node-label="담당자" tabindex="0" role="button" aria-label="Focus 담당자, Slack / Email / PagerDuty, 4. 분석과 대응" aria-pressed="false" data-node-kind="external" data-node-sublabel="Slack / Email / PagerDuty" data-node-context="4. 분석과 대응">
-          <title>담당자 · Slack / Email / PagerDuty · 4. 분석과 대응</title>
-          <rect x="1080" y="400" width="170" height="60" rx="6" class="c-mask"/>
-          <rect x="1080" y="400" width="170" height="60" rx="6" class="c-external" data-animate="node" style="--step:12" stroke-width="1.5"/>
-          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(1086 406) scale(0.6875)">
+        <g id="node-responders" data-node-id="responders" data-node-label="담당자" tabindex="0" role="button" aria-label="Focus 담당자, Human reviews hypothesis, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="Human reviews hypothesis" data-node-context="Architecture component">
+          <title>담당자 · Human reviews hypothesis · Architecture component</title>
+          <rect x="1080" y="230" width="170" height="60" rx="6" class="c-mask"/>
+          <rect x="1080" y="230" width="170" height="60" rx="6" class="c-external" data-animate="node" style="--step:10" stroke-width="1.5"/>
+          <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(1086 236) scale(0.6875)">
             <rect x="2.5" y="5" width="8.5" height="8" rx="1.5"/>
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="1165" y="428" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">담당자</text>
-        <text data-detail="context" x="1165" y="444" class="t-muted" font-size="9" text-anchor="middle">Slack / Email / PagerDuty</text>
+          <text data-node-label="" data-detail-anchor="" x="1165" y="258" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">담당자</text>
+        <text data-detail="context" x="1165" y="274" class="t-muted" font-size="9" text-anchor="middle">Human reviews hypothesis</text>
         </g>
 
         <!-- Connection labels -->
-        <g data-detail="context" data-edge-from="alertmanager" data-edge-to="oncall" data-edge-label="webhook" data-edge-key="0" data-edge-id="am-oncall">
-          <rect x="98.2" y="324" width="43.6" height="14" rx="3" class="c-mask"/>
-          <text x="120" y="334" class="t-muted" font-size="8" text-anchor="middle">webhook</text>
+        <g data-detail="context" data-edge-from="alertmanager" data-edge-to="sns" data-edge-label="toJson / SNS" data-edge-key="0" data-edge-id="am-input">
+          <rect x="211.2" y="327" width="67.6" height="14" rx="3" class="c-mask"/>
+          <text x="245" y="337" class="t-muted" font-size="8" text-anchor="middle">toJson / SNS</text>
         </g>
-
-
-        <g data-detail="context" data-edge-from="alertmanager" data-edge-to="apigw" data-edge-label="webhook" data-edge-key="3" data-edge-id="am-apigw">
-          <rect x="223.2" y="343.5" width="43.6" height="14" rx="3" class="c-mask"/>
-          <text x="245" y="353.5" class="t-muted" font-size="8" text-anchor="middle">webhook</text>
+        <g data-detail="context" data-edge-from="cloudwatch" data-edge-to="sns" data-edge-label="alarm action" data-edge-key="1" data-edge-id="cw-input">
+          <rect x="211.2" y="196.5" width="67.6" height="14" rx="3" class="c-mask"/>
+          <text x="245" y="206.5" class="t-muted" font-size="8" text-anchor="middle">alarm action</text>
         </g>
-        <g data-detail="context" data-edge-from="sns" data-edge-to="lambda" data-edge-label="Lambda 구독" data-edge-key="4" data-edge-id="sns-lambda">
-          <rect x="463.6" y="228.5" width="62.8" height="14" rx="3" class="c-mask"/>
-          <text x="495" y="238.5" class="t-backend" font-size="8" text-anchor="middle">Lambda 구독</text>
+        <g data-detail="context" data-edge-from="sns" data-edge-to="lambda" data-edge-label="SNS event" data-edge-key="2" data-edge-id="input-reporter">
+          <rect x="468.4" y="256" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
+          <text x="495" y="266" class="t-backend" font-size="8" text-anchor="middle">SNS event</text>
         </g>
-
-        <g data-detail="context" data-edge-from="lambda" data-edge-to="context" data-edge-label="정규화" data-edge-key="6" data-edge-id="lambda-context">
-          <rect x="615.6" y="298" width="38.8" height="14" rx="3" class="c-mask"/>
-          <text x="635" y="308" class="t-muted" font-size="8" text-anchor="middle">정규화</text>
+        <g data-detail="context" data-edge-from="sns" data-edge-to="apigw" data-edge-label="delivery failure" data-edge-key="3" data-edge-id="delivery-failure">
+          <rect x="326.6" y="340" width="86.8" height="14" rx="3" class="c-mask"/>
+          <text x="370" y="350" class="t-messagebus" font-size="8" text-anchor="middle">delivery failure</text>
         </g>
-        <g data-detail="context" data-edge-from="lambda" data-edge-to="logs" data-edge-label="병렬 조회" data-edge-key="7" data-edge-id="lambda-logs">
-          <rect x="753.4" y="149" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
-          <text x="780" y="159" class="t-messagebus" font-size="8" text-anchor="middle">병렬 조회</text>
+        <g data-detail="context" data-edge-from="lambda" data-edge-to="oncall" data-edge-label="deduplicate" data-edge-key="4" data-edge-id="reporter-state">
+          <rect x="611.6" y="298" width="62.8" height="14" rx="3" class="c-mask"/>
+          <text x="643" y="308" class="t-muted" font-size="8" text-anchor="middle">deduplicate</text>
         </g>
-
-
-        <g data-detail="context" data-edge-from="context" data-edge-to="bedrock" data-edge-label="분석 요청" data-edge-key="10" data-edge-id="context-bedrock">
-          <rect x="753.4" y="434" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
-          <text x="780" y="444" class="t-backend" font-size="8" text-anchor="middle">분석 요청</text>
+        <g data-detail="context" data-edge-from="lambda" data-edge-to="logs" data-edge-label="fixed query" data-edge-key="5" data-edge-id="read-logs">
+          <rect x="748.6" y="156" width="62.8" height="14" rx="3" class="c-mask"/>
+          <text x="780" y="166" class="t-messagebus" font-size="8" text-anchor="middle">fixed query</text>
         </g>
-        <g data-detail="context" data-edge-from="bedrock" data-edge-to="responders" data-edge-label="SNS 발행" data-edge-key="11" data-edge-id="bedrock-responders">
-          <rect x="1010.8" y="386" width="48.4" height="14" rx="3" class="c-mask"/>
-          <text x="1035" y="396" class="t-muted" font-size="8" text-anchor="middle">SNS 발행</text>
+        <g data-detail="context" data-edge-from="lambda" data-edge-to="metrics" data-edge-label="fixed resources" data-edge-key="6" data-edge-id="read-metrics">
+          <rect x="874" y="138" width="82" height="14" rx="3" class="c-mask"/>
+          <text x="915" y="148" class="t-messagebus" font-size="8" text-anchor="middle">fixed resources</text>
+        </g>
+        <g data-detail="context" data-edge-from="lambda" data-edge-to="bedrock" data-edge-label="evidence only" data-edge-key="7" data-edge-id="model">
+          <rect x="833.8" y="372" width="72.4" height="14" rx="3" class="c-mask"/>
+          <text x="870" y="382" class="t-backend" font-size="8" text-anchor="middle">evidence only</text>
+        </g>
+        <g data-detail="context" data-edge-from="lambda" data-edge-to="context" data-edge-label="publish result" data-edge-key="8" data-edge-id="output">
+          <rect x="981.4" y="365" width="77.2" height="14" rx="3" class="c-mask"/>
+          <text x="1020" y="375" class="t-muted" font-size="8" text-anchor="middle">publish result</text>
+        </g>
+        <g data-detail="context" data-edge-from="context" data-edge-to="responders" data-edge-label="notify" data-edge-key="9" data-edge-id="review">
+          <rect x="1163.6" y="356" width="38.8" height="14" rx="3" class="c-mask"/>
+          <text x="1183" y="366" class="t-muted" font-size="8" text-anchor="middle">notify</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="0" data-composition-frame-kind="region" data-composition-frame-label="1. 탐지">
-          <rect data-graph-role="structural-frame-label-mask" x="14" y="100" width="47.8" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="18" y="113" class="t-cloud" font-size="9" font-weight="600">1. 탐지</text>
-        </g>
 
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="1" data-composition-frame-kind="region" data-composition-frame-label="인시던트 관리">
-          <rect data-graph-role="structural-frame-label-mask" x="14" y="380" width="80.2" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="18" y="393" class="t-cloud" font-size="9" font-weight="600">인시던트 관리</text>
-        </g>
-
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="2" data-composition-frame-kind="region" data-composition-frame-label="2. 라우팅">
-          <rect data-graph-role="structural-frame-label-mask" x="264" y="240" width="58.6" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="268" y="253" class="t-cloud" font-size="9" font-weight="600">2. 라우팅</text>
-        </g>
-
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="3" data-composition-frame-kind="region" data-composition-frame-label="3. 조사">
-          <rect data-graph-role="structural-frame-label-mask" x="514" y="210" width="47.8" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="518" y="223" class="t-cloud" font-size="9" font-weight="600">3. 조사</text>
-        </g>
-
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="4" data-composition-frame-kind="region" data-composition-frame-label="텔레메트리 증거">
-          <rect data-graph-role="structural-frame-label-mask" x="804" y="40" width="91" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="808" y="53" class="t-cloud" font-size="9" font-weight="600">텔레메트리 증거</text>
-        </g>
-
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="5" data-composition-frame-kind="region" data-composition-frame-label="4. 분석과 대응">
-          <rect data-graph-role="structural-frame-label-mask" x="804" y="380" width="85.6" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="808" y="393" class="t-cloud" font-size="9" font-weight="600">4. 분석과 대응</text>
-        </g>
 
         <!-- Legend -->
         <g data-legend="" data-legend-bridge="">
           <text x="40" y="524" class="t-primary" font-size="12" font-weight="650">Legend</text>
-          <g data-legend-semantic-kind="frontend" data-legend-kind="frontend" data-legend-label="프런트엔드" data-legend-x="40" data-legend-baseline="544" data-legend-width="93">
-            <rect x="40" y="535" width="16" height="10" rx="2.5" class="c-frontend" stroke-width="1"/>
-            <text x="62" y="544" class="t-muted" font-size="10" font-weight="500">프런트엔드</text>
+          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="백엔드 서비스" data-legend-x="40" data-legend-baseline="544" data-legend-width="108">
+            <rect x="40" y="535" width="16" height="10" rx="2.5" class="c-backend" stroke-width="1"/>
+            <text x="62" y="544" class="t-muted" font-size="10" font-weight="500">백엔드 서비스</text>
           </g>
-          <g data-legend-semantic-kind="backend" data-legend-kind="backend" data-legend-label="백엔드 서비스" data-legend-x="155" data-legend-baseline="544" data-legend-width="108">
-            <rect x="155" y="535" width="16" height="10" rx="2.5" class="c-backend" stroke-width="1"/>
-            <text x="177" y="544" class="t-muted" font-size="10" font-weight="500">백엔드 서비스</text>
+          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="데이터 저장소" data-legend-x="170" data-legend-baseline="544" data-legend-width="108">
+            <rect x="170" y="535" width="16" height="10" rx="2.5" class="c-database" stroke-width="1"/>
+            <text x="192" y="544" class="t-muted" font-size="10" font-weight="500">데이터 저장소</text>
           </g>
-          <g data-legend-semantic-kind="database" data-legend-kind="database" data-legend-label="데이터 저장소" data-legend-x="285" data-legend-baseline="544" data-legend-width="108">
-            <rect x="285" y="535" width="16" height="10" rx="2.5" class="c-database" stroke-width="1"/>
-            <text x="307" y="544" class="t-muted" font-size="10" font-weight="500">데이터 저장소</text>
+          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="클라우드 서비스" data-legend-x="300" data-legend-baseline="544" data-legend-width="118">
+            <rect x="300" y="535" width="16" height="10" rx="2.5" class="c-cloud" stroke-width="1"/>
+            <text x="322" y="544" class="t-muted" font-size="10" font-weight="500">클라우드 서비스</text>
           </g>
-          <g data-legend-semantic-kind="cloud" data-legend-kind="cloud" data-legend-label="클라우드 서비스" data-legend-x="415" data-legend-baseline="544" data-legend-width="118">
-            <rect x="415" y="535" width="16" height="10" rx="2.5" class="c-cloud" stroke-width="1"/>
-            <text x="437" y="544" class="t-muted" font-size="10" font-weight="500">클라우드 서비스</text>
+          <g data-legend-semantic-kind="messagebus" data-legend-kind="messagebus" data-legend-label="메시지 버스" data-legend-x="440" data-legend-baseline="544" data-legend-width="98">
+            <rect x="440" y="535" width="16" height="10" rx="2.5" class="c-messagebus" stroke-width="1"/>
+            <text x="462" y="544" class="t-muted" font-size="10" font-weight="500">메시지 버스</text>
           </g>
-          <g data-legend-semantic-kind="messagebus" data-legend-kind="messagebus" data-legend-label="메시지 버스" data-legend-x="555" data-legend-baseline="544" data-legend-width="98">
-            <rect x="555" y="535" width="16" height="10" rx="2.5" class="c-messagebus" stroke-width="1"/>
-            <text x="577" y="544" class="t-muted" font-size="10" font-weight="500">메시지 버스</text>
-          </g>
-          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="외부 시스템" data-legend-x="675" data-legend-baseline="544" data-legend-width="98">
-            <rect x="675" y="535" width="16" height="10" rx="2.5" class="c-external" stroke-width="1"/>
-            <text x="697" y="544" class="t-muted" font-size="10" font-weight="500">외부 시스템</text>
+          <g data-legend-semantic-kind="external" data-legend-kind="external" data-legend-label="외부 시스템" data-legend-x="560" data-legend-baseline="544" data-legend-width="98">
+            <rect x="560" y="535" width="16" height="10" rx="2.5" class="c-external" stroke-width="1"/>
+            <text x="582" y="544" class="t-muted" font-size="10" font-weight="500">외부 시스템</text>
           </g>
         </g>
       </svg>
@@ -5480,7 +5437,16 @@
 
     <!-- Info Cards -->
     <div class="cards">
-
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot amber"></div>
+          <h3>검증 범위</h3>
+        </div>
+        <ul>
+          <li>&bull; 설정된 CloudWatch 지표·집계 로그만 조회</li>
+          <li>&bull; AMP/X-Ray가 없으면 데이터를 만들어내지 않음</li>
+        </ul>
+      </div>
     </div>
 
   </div>
@@ -7274,7 +7240,7 @@
         btn.setAttribute('aria-pressed', paused ? 'false' : 'true');
         btn.disabled = systemPaused;
         label.textContent = viewerText(paused ? 'viewer.motion.still' : 'viewer.motion.live');
-        if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.isPlaying()) {
+        if (paused && lastEffectivePaused !== true && Archify.guidedViews && typeof Archify.guidedViews.isPlaying === 'function' && typeof Archify.guidedViews.pause === 'function' && Archify.guidedViews.isPlaying()) {
           Archify.guidedViews.pause();
         }
         if (paused && lastEffectivePaused !== true && Archify.guidedViews && Archify.guidedViews.settleHandoff) {

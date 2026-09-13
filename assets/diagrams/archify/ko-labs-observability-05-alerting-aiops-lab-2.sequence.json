@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "AIOps Agent 아키텍처",
+    "title": "SNS 진단 처리 흐름",
     "quality_profile": "showcase",
     "column_fit": "spread",
     "viewBox": [
@@ -13,32 +13,32 @@
     "views": [
       {
         "id": "trigger",
-        "label": "알림 수신",
+        "label": "정규화",
         "focus": [
           "alertmanager",
           "lambda"
         ],
-        "note": "AlertManager 웹훅이 API Gateway를 거쳐 Lambda를 호출하고, 알림에서 service·metric·시간 범위를 추출한다."
+        "note": "입력 토픽·allowlist·SNS message ID를 검사하고 DynamoDB 중복 기록을 확인합니다."
       },
       {
         "id": "collect",
-        "label": "원격 측정 수집",
+        "label": "증거 수집",
         "focus": [
           "lambda",
           "telemetry"
         ],
-        "note": "CloudWatch Logs Insights, AMP PromQL, X-Ray GetTraceSummaries를 순서대로 조회해 근거 데이터를 모은다."
+        "note": "metrics/log 집계는 2 workers로 실행합니다. 그림의 행은 호출 종류이며 직렬 실행을 뜻하지 않습니다."
       },
       {
         "id": "analyze",
-        "label": "AI 분석과 통지",
+        "label": "가설 전달",
         "focus": [
           "lambda",
           "bedrock",
           "sns",
           "oncall"
         ],
-        "note": "알림+지표+로그+트레이스를 Bedrock Claude에 넘겨 분석하고, 결과를 SNS로 게시해 이메일로 전달한다."
+        "note": "출력은 다른 SNS 토픽으로 전달합니다. 정상 완료된 message ID는 24시간 중복 처리합니다."
       }
     ],
     "legend": {
@@ -63,38 +63,38 @@
     {
       "id": "alertmanager",
       "type": "external",
-      "label": "AlertManager",
-      "sublabel": "웹훅 발신"
+      "label": "Input SNS",
+      "sublabel": "허용된 알림"
     },
     {
       "id": "lambda",
       "type": "backend",
       "label": "Lambda",
-      "sublabel": "AIOps Agent"
+      "sublabel": "Diagnostic reporter"
     },
     {
       "id": "telemetry",
       "type": "database",
       "label": "Telemetry",
-      "sublabel": "Logs · AMP · X-Ray"
+      "sublabel": "CW metrics · log counts"
     },
     {
       "id": "bedrock",
       "type": "cloud",
       "label": "Bedrock",
-      "sublabel": "Claude"
+      "sublabel": "Converse"
     },
     {
       "id": "sns",
       "type": "messagebus",
-      "label": "SNS",
-      "sublabel": "알림 토픽"
+      "label": "Output SNS",
+      "sublabel": "다른 토픽"
     },
     {
       "id": "oncall",
       "type": "external",
       "label": "온콜 팀",
-      "sublabel": "이메일 구독"
+      "sublabel": "구성한 구독"
     }
   ],
   "segments": [
@@ -106,7 +106,7 @@
     {
       "from": 220,
       "to": 410,
-      "label": "원격 측정 수집 (순차)"
+      "label": "설정된 소스 조회 · 2 workers"
     },
     {
       "from": 425,
@@ -120,16 +120,15 @@
       "from": "alertmanager",
       "to": "lambda",
       "y": 180,
-      "label": "웹훅 (API Gateway 경유)",
-      "variant": "emphasis",
-      "note": "service · metric · 시간 범위 추출"
+      "label": "SNS 전달 · 중복 처리 확인",
+      "variant": "emphasis"
     },
     {
       "id": "logs-query",
       "from": "lambda",
       "to": "telemetry",
       "y": 245,
-      "label": "Logs Insights 쿼리",
+      "label": "집계 로그 조회 시작",
       "variant": "default"
     },
     {
@@ -137,7 +136,7 @@
       "from": "telemetry",
       "to": "lambda",
       "y": 275,
-      "label": "로그 결과",
+      "label": "완료 상태 또는 누락",
       "variant": "return"
     },
     {
@@ -145,7 +144,7 @@
       "from": "lambda",
       "to": "telemetry",
       "y": 305,
-      "label": "PromQL 쿼리 (AMP)",
+      "label": "설정된 CloudWatch 지표",
       "variant": "default"
     },
     {
@@ -153,23 +152,7 @@
       "from": "telemetry",
       "to": "lambda",
       "y": 335,
-      "label": "지표 결과",
-      "variant": "return"
-    },
-    {
-      "id": "trace-query",
-      "from": "lambda",
-      "to": "telemetry",
-      "y": 365,
-      "label": "GetTraceSummaries (X-Ray)",
-      "variant": "default"
-    },
-    {
-      "id": "trace-result",
-      "from": "telemetry",
-      "to": "lambda",
-      "y": 395,
-      "label": "트레이스 결과",
+      "label": "실제 값과 timestamp",
       "variant": "return"
     },
     {
@@ -177,16 +160,15 @@
       "from": "lambda",
       "to": "bedrock",
       "y": 455,
-      "label": "Claude 호출 (알림 + 지표·로그·트레이스)",
-      "variant": "emphasis",
-      "note": "시스템 프롬프트: SRE 전문가"
+      "label": "근거가 있을 때 Converse",
+      "variant": "emphasis"
     },
     {
       "id": "analysis-result",
       "from": "bedrock",
       "to": "lambda",
       "y": 500,
-      "label": "분석 결과",
+      "label": "가설 · 누락 근거",
       "variant": "return"
     },
     {
@@ -194,7 +176,7 @@
       "from": "lambda",
       "to": "sns",
       "y": 535,
-      "label": "분석 결과 Publish",
+      "label": "다른 결과 토픽에 Publish",
       "variant": "emphasis"
     },
     {
@@ -202,7 +184,7 @@
       "from": "sns",
       "to": "oncall",
       "y": 560,
-      "label": "이메일 통지",
+      "label": "사람이 검토할 알림",
       "variant": "dashed"
     }
   ],

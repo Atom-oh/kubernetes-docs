@@ -1,978 +1,180 @@
 # Part 5: 알림 및 AIOps
 
-> **난이도**: 고급 (Advanced) **예상 소요 시간**: 60분 **마지막 업데이트**: 2026년 2월 23일
+<span id="aiops-agent-아키텍처"></span>
+<span id="step-5-1-alertmanager-prometheusrule-구성"></span>
+<span id="step-5-2-cloudwatch-alarms-구성"></span>
+<span id="step-5-3-grafana-oncall-구성"></span>
+<span id="step-5-4-sns-토픽-이메일-구독"></span>
+<span id="step-5-5-cloudwatch-investigations"></span>
+<span id="step-5-6-aiops-agent-lambda-bedrock-claude"></span>
+<span id="step-5-7-부하-fault-injection-테스트"></span>
+<span id="step-5-8-aiops-동작-확인"></span>
+<span id="step-5-9-심화-a2a-멀티-에이전트-패턴"></span>
+<span id="검증-verification"></span>
+<span id="다음-단계"></span>
+<span id="멀티-에이전트-아키텍처"></span>
+<span id="아키텍처-개요"></span>
+<span id="알림-규칙-목록"></span>
+<span id="알림-흐름-확인"></span>
+<span id="정리-이-part에서-정리하지-않음"></span>
+<span id="조사-프로세스"></span>
+<span id="참조-문서"></span>
+<span id="학습-목표"></span>
 
-## 학습 목표
+> **난이도**: 고급 · **예상 소요 시간**: 60분
+> **마지막 업데이트**: 2026년 9월 13일
 
-* AlertManager PrometheusRule을 통한 이상 감지
-* Grafana OnCall 인시던트 관리 구성
-* CloudWatch Investigations AI 분석 활용
-* AIOps Agent (Lambda + Bedrock Claude) 구현
+알림을 수신하고 실제 지표·집계 로그를 확인한 뒤, 사람이 검토할 진단 가설을 만드는 실습입니다. [실행 예제](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/labs/observability/aiops)는 입력/결과 SNS 토픽을 분리한 Lambda reporter입니다. 자동 복구나 익명 HTTP webhook은 포함하지 않습니다.
 
-## 아키텍처 개요
+[Part 2](./02-observability-stack-lab.md)의 수집, [Part 3](./03-msa-deployment-lab.md)의 서비스, [Part 4](./04-load-testing-scaling-lab.md)의 정상 smoke test가 선행 조건입니다. 예제 코드와 템플릿은 로컬 검증했으며 이번 감사에서 AWS 배포·모델 호출·알림 전송은 실행하지 않았습니다.
 
-![Alertmanager PrometheusRule과 CloudWatch Alarms가 탐지한 알림이 Grafana OnCall, SNS Topic, API Gateway 웹훅으로 라우팅되어 Lambda AIOps Agent를 호출하고, Agent가 로그·지표·트레이스를 병렬 조회한 뒤 Amazon Bedrock으로 근본 원인을 분석해 SNS로 담당자에게 전달하는 아키텍처를 보여준다.](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-10.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-05-alerting-aiops-lab-10.html)
-
-![CloudWatch Alarms와 Prometheus AlertManager의 경보가 SNS Topic과 Grafana OnCall로 라우팅되고, SNS가 트리거한 AIOps Agent(Lambda)가 Bedrock Claude로 근본 원인을 분석해 결과를 SNS에 게시하면 Slack·Email·PagerDuty 대응 채널로 전달되는 구조를 보여준다.](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-0.png)
+![알림 입력과 진단 결과를 다른 토픽으로 분리한 흐름](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-05-alerting-aiops-lab-0.html)
 
-***
+## 1. 알림 평가와 라우팅을 구분 {#rules-and-routing}
 
-## Step 5.1: AlertManager PrometheusRule 구성
+**Prometheus가 alert rule을 평가**하고, **Alertmanager가 grouping·deduplication·routing·inhibition·notification을 담당**합니다. `PrometheusRule`은 Prometheus Operator CRD이며 Alertmanager가 직접 평가하는 리소스가 아닙니다.
 
-### 알림 규칙 목록
+| 설정 | 확인 사항 |
+|---|---|
+| Prometheus `for` | 평가마다 조건이 지속되는 동안 pending, 지정 기간 후 firing |
+| rule selector | Prometheus CR의 namespace/label selector가 실제 rule을 선택하는지 |
+| Alertmanager route | `matchers`, route 순서, child route, `continue`와 receiver 일치 |
+| metrics | 실제 SDK 이름·단위·label, missing series·무트래픽·counter reset |
+| service label | reporter catalog에 등록한 service만 허용 |
 
-| 알림 이름               | 조건              | Severity | For |
-| ------------------- | --------------- | -------- | --- |
-| HighErrorRate       | 5xx > 5%        | critical | 2m  |
-| HighLatency         | p99 > 2s        | warning  | 5m  |
-| PodCrashLoopBackOff | restarts > 5    | critical | 5m  |
-| SQSQueueBacklog     | messages > 1000 | warning  | 10m |
-| NodeNotReady        | node not ready  | critical | 5m  |
+`up == 0`은 이미 알려진 scrape target의 실패를 보여주며 발견 자체가 안 된 target의 부재를 모두 감지하지는 않습니다. 재시작 증가와 CrashLoopBackOff, 과거 OOMKilled 상태와 방금 발생한 OOM은 다른 신호입니다. exporter가 없는 SQS metric 이름을 PromQL에 적어도 값은 생성되지 않습니다.
 
-**Step 5.1.1: PrometheusRule 생성**
+```bash
+kubectl --context managed -n monitoring get prometheus,alertmanager,prometheusrule
+kubectl --context managed -n monitoring get services
+# Use the actual Prometheus Service name in the next command.
+kubectl --context managed -n monitoring port-forward svc/REPLACE_WITH_PROMETHEUS_SERVICE 9090:9090
+```
+
+```bash
+curl --fail --silent http://127.0.0.1:9090/api/v1/rules
+curl --fail --silent http://127.0.0.1:9090/api/v1/alerts
+```
+
+설치한 chart의 release/Service 이름을 확인해 치환합니다. 고정된 다른 release 이름이나 존재하지 않는 ConfigMap을 검색하지 않습니다. rule 리소스가 존재하는지와 Prometheus가 실제로 로드·평가하는지는 별도 확인입니다.
+
+## 2. CloudWatch alarm의 의미 {#cloudwatch-alarms}
+
+템플릿의 SQS backlog alarm은 `AWS/SQS`, `ApproximateNumberOfMessagesVisible`, 정확한 `QueueName`, `Maximum`, `Period=60`, `EvaluationPeriods=3`, `DatapointsToAlarm=2`를 사용합니다. 이는 최근 평가 범위에서 **3개 중 2개**가 위반하는 조건이며 반드시 연속 위반이라는 뜻이 아닙니다. `Period`는 집계 간격이고 평가 수행 빈도와 동의어가 아닙니다.
+
+missing data는 이번 실습에서 `missing`으로 남깁니다. inactive queue나 수집 문제를 정상 0으로 단정하지 않습니다. RDS CPU를 추가한다면 실제 instance metric의 `DBInstanceIdentifier` dimension을 사용합니다. cluster aggregate나 다른 통계가 필요하면 해당 metric이 실제 지원하는 dimension 조합을 먼저 확인합니다.
+
+Alertmanager의 알림 재전송, CloudWatch state transition, SNS delivery, Lambda async retry는 서로 다른 계층입니다. 한 계층의 dedup 설정으로 전체 파이프라인의 exactly-once를 보장하지 않습니다.
+
+## 3. 현재 온콜 경로 선택 {#oncall}
+
+Grafana OnCall OSS는 **2026년 3월 24일 보관 처리**되었고 Cloud Connection 기반 SMS·전화·push 지원도 종료됐습니다. 이전 실습의 OnCall 신규 설치·가짜 escalation YAML을 그대로 사용하지 않습니다. 기존에 운영하는 incident/notification 시스템이나 Grafana Cloud IRM 등 현재 지원되는 경로를 조직에 맞게 선택합니다. [공식 유지보수 공지](https://grafana.com/docs/oncall/latest/set-up/open-source/)를 확인합니다.
+
+이 예제는 결과 SNS topic만 제공합니다. 담당자 구독·escalation·acknowledge·resolve는 선택한 시스템에서 구성하고 실제 전달을 검증합니다. 템플릿이 자동으로 이메일·Slack·PagerDuty 구독을 만든다고 가정하지 않습니다.
+
+## 4. 진단 reporter 준비 {#reporter}
+
+
+![제한된 조회·중복 처리·결과 전송 구성](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-10.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-05-alerting-aiops-lab-10.html)
+| 파일 | 책임 |
+|---|---|
+| `alerts.py` | SNS topic·형식·allowlist 검사, CloudWatch/Alertmanager 정규화 |
+| `evidence.py` | 고정 source catalog의 CloudWatch metrics와 집계 로그 조회 |
+| `analysis.py` | 근거가 있을 때만 Converse, 1024 output token, 완료 상태 검사 |
+| `handler.py` | 2-worker 수집, Powertools idempotency, 결과 전용 topic publish |
+| `template.yaml` | 15개 SAM/CloudFormation 리소스와 제한된 IAM |
+| `tests/` | 정상·실패·중복·timeout·없는 데이터 검증 |
+
+```bash
+cd examples/labs/observability/aiops
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m unittest discover -s tests -v
+```
+
+코드는 boto3 **1.43.93**, Powertools **3.34.0**, Python **3.12**로 확인했습니다. 실제 배포에서는 기존 SQS queue·로그 그룹과 승인한 service name, 현재 사용 가능한 Converse model/inference-profile ID, 필요한 **정확한 model/profile ARN**을 입력합니다. 오래된 Claude 모델 ID를 하드코딩하지 않습니다. cross-region profile은 대상 모델 ARN 권한도 필요할 수 있습니다.
+
+로그는 `service`·`level` structured field를 가져야 합니다. reporter는 raw message 대신 error count를 조회하며 모델이 만든 resource ID/쿼리를 실행하지 않습니다. 지표·로그가 없으면 no_data/error로 남기고 분석을 생략할 수 있습니다. 이번 예제는 실제로 구성하지 않은 AMP 값·X-Ray trace를 수집했다고 표시하지 않습니다.
+
+## 5. 배포와 Alertmanager 연결 {#deploy}
+
+```bash
+sam build --template-file template.yaml
+sam deploy --guided --capabilities CAPABILITY_IAM
+```
+
+위 명령은 승인한 실습 계정에서 operator가 change set을 검토한 뒤 실행합니다. 템플릿은 암호화된 입력/결과 SNS, Lambda, idempotency table, failure queue, queue alarm 등을 생성합니다. `AWS_REGION` 같은 Lambda 예약 환경 변수를 직접 설정하지 않습니다.
+
+배포 output의 InputTopicArn과 실제 Region을 아래에 대입합니다. Alertmanager **0.34.0**의 native template로 `toJson` 직렬화를 검증했습니다. 기존 설정 전체를 덮지 말고 실제로 로드되는 receiver·route에 병합합니다.
 
 ```yaml
-# alerting/prometheus-rules.yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: msa-alerts
-  namespace: monitoring
-  labels:
-    release: kube-prometheus
-spec:
-  groups:
-    - name: msa.availability
-      rules:
-        - alert: HighErrorRate
-          expr: |
-            (
-              sum(rate(http_requests_total{namespace="msa", status=~"5.."}[5m])) /
-              sum(rate(http_requests_total{namespace="msa"}[5m]))
-            ) > 0.05
-          for: 2m
-          labels:
-            severity: critical
-            team: platform
-          annotations:
-            summary: "High error rate detected in MSA services"
-            description: "Error rate is {{ $value | humanizePercentage }} for namespace msa, which exceeds the 5% threshold."
-            runbook_url: "https://runbooks.obs-lab.local/high-error-rate"
-            dashboard_url: "https://grafana.obs-lab.local/d/msa-overview"
-
-        - alert: HighLatency
-          expr: |
-            histogram_quantile(0.99,
-              sum(rate(http_request_duration_seconds_bucket{namespace="msa"}[5m])) by (le, service)
-            ) > 2
-          for: 5m
-          labels:
-            severity: warning
-            team: platform
-          annotations:
-            summary: "High latency detected for {{ $labels.service }}"
-            description: "P99 latency is {{ $value | humanizeDuration }} for {{ $labels.service }}, exceeding 2s threshold."
-            dashboard_url: "https://grafana.obs-lab.local/d/msa-latency"
-
-        - alert: ServiceDown
-          expr: |
-            up{namespace="msa"} == 0
-          for: 1m
-          labels:
-            severity: critical
-            team: platform
-          annotations:
-            summary: "Service {{ $labels.service }} is down"
-            description: "The service {{ $labels.service }} in namespace msa has been down for more than 1 minute."
-
-    - name: msa.pods
-      rules:
-        - alert: PodCrashLoopBackOff
-          expr: |
-            increase(kube_pod_container_status_restarts_total{namespace="msa"}[1h]) > 5
-          for: 5m
-          labels:
-            severity: critical
-            team: platform
-          annotations:
-            summary: "Pod {{ $labels.pod }} is crash looping"
-            description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has restarted {{ $value }} times in the last hour."
-
-        - alert: PodNotReady
-          expr: |
-            kube_pod_status_ready{namespace="msa", condition="true"} == 0
-          for: 5m
-          labels:
-            severity: warning
-            team: platform
-          annotations:
-            summary: "Pod {{ $labels.pod }} is not ready"
-            description: "Pod {{ $labels.pod }} has been in a non-ready state for more than 5 minutes."
-
-        - alert: ContainerOOMKilled
-          expr: |
-            kube_pod_container_status_last_terminated_reason{namespace="msa", reason="OOMKilled"} == 1
-          for: 0m
-          labels:
-            severity: critical
-            team: platform
-          annotations:
-            summary: "Container OOM killed"
-            description: "Container {{ $labels.container }} in pod {{ $labels.pod }} was OOM killed."
-
-    - name: msa.sqs
-      rules:
-        - alert: SQSQueueBacklog
-          expr: |
-            aws_sqs_approximate_number_of_messages_visible_average{queue_name="obs-lab-order-events"} > 1000
-          for: 10m
-          labels:
-            severity: warning
-            team: platform
-          annotations:
-            summary: "SQS queue backlog is high"
-            description: "SQS queue obs-lab-order-events has {{ $value }} messages waiting, indicating processing delays."
-
-        - alert: SQSMessageAge
-          expr: |
-            aws_sqs_approximate_age_of_oldest_message_maximum{queue_name="obs-lab-order-events"} > 300
-          for: 5m
-          labels:
-            severity: warning
-            team: platform
-          annotations:
-            summary: "SQS messages are aging"
-            description: "Oldest message in queue is {{ $value | humanizeDuration }} old."
-
-    - name: msa.nodes
-      rules:
-        - alert: NodeNotReady
-          expr: |
-            kube_node_status_condition{condition="Ready", status="true"} == 0
-          for: 5m
-          labels:
-            severity: critical
-            team: infrastructure
-          annotations:
-            summary: "Node {{ $labels.node }} is not ready"
-            description: "Node {{ $labels.node }} has been in NotReady state for more than 5 minutes."
-
-        - alert: NodeHighCPU
-          expr: |
-            (1 - avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 0.9
-          for: 10m
-          labels:
-            severity: warning
-            team: infrastructure
-          annotations:
-            summary: "High CPU usage on node"
-            description: "Node {{ $labels.instance }} CPU usage is above 90% for more than 10 minutes."
-
-        - alert: NodeHighMemory
-          expr: |
-            (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.9
-          for: 10m
-          labels:
-            severity: warning
-            team: infrastructure
-          annotations:
-            summary: "High memory usage on node"
-            description: "Node {{ $labels.instance }} memory usage is above 90% for more than 10 minutes."
+receivers:
+- name: lab-diagnostics
+  sns_configs:
+  - topic_arn: REPLACE_WITH_INPUT_TOPIC_ARN
+    sigv4:
+      region: REPLACE_WITH_REGION
+    message: '{{ . | toJson }}'
+    send_resolved: true
 ```
 
-```bash
-kubectl apply -f alerting/prometheus-rules.yaml
+`toJson`의 template Data는 대문자 필드(`Alerts`, `Labels`, `Status`)를 사용하므로 parser가 이를 처리합니다. webhook의 소문자 JSON도 지원합니다. 기본 human-readable SNS 메시지를 이 JSON으로 오해하지 않습니다.
 
-# 알림 규칙 확인
-kubectl get prometheusrules -n monitoring
-```
+템플릿의 AlertmanagerPublishPolicyArn은 기존 **Alertmanager workload role에만** 연결합니다. node role에 공유 권한을 추가하지 않고 실제 Pod의 IAM credential 경로·KMS/SNS 권한을 확인합니다. `service` label은 catalog와 일치해야 하며 allowed alert 목록도 실제 rule과 맞춥니다. 결과 OutputTopicArn에는 reporter를 구독하지 않습니다.
 
-***
+## 6. 재시도·근거·완료 상태 {#execution}
 
-## Step 5.2: CloudWatch Alarms 구성
 
-**Step 5.2.1: Aurora 알람**
-
-```bash
-# Aurora CPU 알람
-aws cloudwatch put-metric-alarm \
-  --alarm-name "obs-lab-aurora-cpu-critical" \
-  --alarm-description "Aurora PostgreSQL CPU usage critical" \
-  --metric-name CPUUtilization \
-  --namespace AWS/RDS \
-  --statistic Average \
-  --period 300 \
-  --threshold 80 \
-  --comparison-operator GreaterThanThreshold \
-  --dimensions Name=DBClusterIdentifier,Value=obs-lab-aurora \
-  --evaluation-periods 2 \
-  --alarm-actions ${SNS_ALERTS_TOPIC_ARN} \
-  --ok-actions ${SNS_ALERTS_TOPIC_ARN} \
-  --treat-missing-data notBreaching
-
-# Aurora 연결 수 알람
-aws cloudwatch put-metric-alarm \
-  --alarm-name "obs-lab-aurora-connections-high" \
-  --alarm-description "Aurora PostgreSQL connection count high" \
-  --metric-name DatabaseConnections \
-  --namespace AWS/RDS \
-  --statistic Average \
-  --period 300 \
-  --threshold 100 \
-  --comparison-operator GreaterThanThreshold \
-  --dimensions Name=DBClusterIdentifier,Value=obs-lab-aurora \
-  --evaluation-periods 2 \
-  --alarm-actions ${SNS_ALERTS_TOPIC_ARN}
-
-# Aurora Replication Lag 알람
-aws cloudwatch put-metric-alarm \
-  --alarm-name "obs-lab-aurora-replication-lag" \
-  --alarm-description "Aurora replication lag high" \
-  --metric-name AuroraReplicaLag \
-  --namespace AWS/RDS \
-  --statistic Average \
-  --period 60 \
-  --threshold 100 \
-  --comparison-operator GreaterThanThreshold \
-  --dimensions Name=DBClusterIdentifier,Value=obs-lab-aurora \
-  --evaluation-periods 3 \
-  --alarm-actions ${SNS_ALERTS_TOPIC_ARN}
-```
-
-**Step 5.2.2: SQS 알람**
-
-```bash
-# SQS 메시지 나이 알람
-aws cloudwatch put-metric-alarm \
-  --alarm-name "obs-lab-sqs-message-age" \
-  --alarm-description "SQS oldest message age exceeds threshold" \
-  --metric-name ApproximateAgeOfOldestMessage \
-  --namespace AWS/SQS \
-  --statistic Maximum \
-  --period 60 \
-  --threshold 300 \
-  --comparison-operator GreaterThanThreshold \
-  --dimensions Name=QueueName,Value=obs-lab-order-events \
-  --evaluation-periods 3 \
-  --alarm-actions ${SNS_ALERTS_TOPIC_ARN}
-
-# SQS DLQ 메시지 알람
-aws cloudwatch put-metric-alarm \
-  --alarm-name "obs-lab-sqs-dlq-messages" \
-  --alarm-description "Messages in DLQ detected" \
-  --metric-name ApproximateNumberOfMessagesVisible \
-  --namespace AWS/SQS \
-  --statistic Sum \
-  --period 60 \
-  --threshold 1 \
-  --comparison-operator GreaterThanOrEqualToThreshold \
-  --dimensions Name=QueueName,Value=obs-lab-order-events-dlq \
-  --evaluation-periods 1 \
-  --alarm-actions ${SNS_ALERTS_TOPIC_ARN}
-```
-
-***
-
-## Step 5.3: Grafana OnCall 구성
-
-**Step 5.3.1: OnCall Integration 설정**
-
-```yaml
-# alerting/oncall-integration.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: oncall-integration
-  namespace: monitoring
-data:
-  alertmanager-integration.yaml: |
-    name: alertmanager
-    type: alertmanager
-    settings:
-      url: http://alertmanager-operated.monitoring.svc:9093
-```
-
-**Step 5.3.2: Escalation Chain**
-
-```yaml
-# Escalation Chain 구성 (OnCall UI 또는 Terraform)
-# Level 1: 5분 대기 후 다음 레벨
-# Level 2: 10분 대기 후 다음 레벨
-# Level 3: 매니저 호출
-
-escalation_chains:
-  - name: "msa-critical"
-    steps:
-      - type: notify_persons
-        persons:
-          - "@on-call-engineer"
-        duration: 300  # 5 minutes
-      - type: notify_persons
-        persons:
-          - "@senior-engineer"
-        duration: 600  # 10 minutes
-      - type: notify_persons
-        persons:
-          - "@engineering-manager"
-        important: true
-```
-
-**Step 5.3.3: OnCall Terraform 구성**
-
-```hcl
-# oncall.tf
-resource "grafana_oncall_integration" "alertmanager" {
-  name = "AlertManager Integration"
-  type = "alertmanager"
-}
-
-resource "grafana_oncall_escalation_chain" "critical" {
-  name = "MSA Critical Alerts"
-}
-
-resource "grafana_oncall_escalation" "step1" {
-  escalation_chain_id = grafana_oncall_escalation_chain.critical.id
-  type                = "notify_on_call_from_schedule"
-  position            = 0
-  notify_on_call_from_schedule = grafana_oncall_schedule.primary.id
-  duration            = 300
-}
-
-resource "grafana_oncall_escalation" "step2" {
-  escalation_chain_id = grafana_oncall_escalation_chain.critical.id
-  type                = "notify_persons"
-  position            = 1
-  persons_to_notify   = [data.grafana_oncall_user.senior.id]
-  duration            = 600
-}
-
-resource "grafana_oncall_schedule" "primary" {
-  name      = "Primary On-Call"
-  type      = "calendar"
-  time_zone = "Asia/Seoul"
-}
-
-resource "grafana_oncall_route" "critical" {
-  integration_id      = grafana_oncall_integration.alertmanager.id
-  escalation_chain_id = grafana_oncall_escalation_chain.critical.id
-  routing_regex       = "severity=critical"
-  position            = 0
-}
-```
-
-***
-
-## Step 5.4: SNS 토픽 + 이메일 구독
-
-```bash
-# 알림용 SNS 토픽 확인
-aws sns list-topics --query "Topics[?contains(TopicArn, 'obs-lab-alerts')]"
-
-# 이메일 구독 추가
-aws sns subscribe \
-  --topic-arn ${SNS_ALERTS_TOPIC_ARN} \
-  --protocol email \
-  --notification-endpoint "oncall-team@example.com"
-
-# Lambda 구독 추가 (AIOps Agent용)
-aws sns subscribe \
-  --topic-arn ${SNS_ALERTS_TOPIC_ARN} \
-  --protocol lambda \
-  --notification-endpoint arn:aws:lambda:us-east-1:${AWS_ACCOUNT_ID}:function:obs-lab-aiops-agent
-
-# 구독 확인
-aws sns list-subscriptions-by-topic --topic-arn ${SNS_ALERTS_TOPIC_ARN}
-```
-
-***
-
-## Step 5.5: CloudWatch Investigations
-
-### 조사 프로세스
-
-![CloudWatch 경보 발생부터 Investigation 시작, 리소스 스캔, 주요 발견 사항 수집, AI 근본 원인 가설, 제안 조치, 인시던트 보고서 생성까지 CloudWatch Investigations의 7단계 조사 흐름을 보여준다.](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-1.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-05-alerting-aiops-lab-1.html)
-
-**Step 5.5.1: CloudWatch Investigations 활성화**
-
-```bash
-# Application Signals 활성화 (필요한 경우)
-aws application-signals start-discovery \
-  --region us-east-1
-
-# Investigation 권한 확인
-aws iam get-role --role-name CloudWatchInvestigationsRole
-```
-
-**Step 5.5.2: Investigation 시작 (수동)**
-
-CloudWatch Console에서:
-
-1. **CloudWatch > Investigations** 이동
-2. **Start investigation** 클릭
-3. 알람 또는 시간 범위 선택
-4. 관련 리소스 (EKS, RDS, SQS) 선택
-5. **Investigate** 클릭
-
-**Step 5.5.3: Investigation 결과 분석**
-
-| 분석 항목             | 설명               |
-| ----------------- | ---------------- |
-| Timeline          | 이벤트 발생 타임라인      |
-| Key Findings      | AI가 식별한 주요 발견 사항 |
-| Related Resources | 영향받은 리소스 목록      |
-| Hypothesis        | 근본 원인에 대한 AI 가설  |
-| Suggestions       | 권장 조치 사항         |
-
-***
-
-## Step 5.6: AIOps Agent (Lambda + Bedrock Claude)
-
-### AIOps Agent 아키텍처
-
-![AlertManager 웹훅으로 트리거된 AIOps Lambda가 CloudWatch Logs·AMP 지표·X-Ray 트레이스를 순서대로 조회한 뒤 Bedrock Claude에 분석을 요청하고, 결과를 SNS로 게시해 온콜 팀에 이메일로 통지하는 시간순 흐름을 보여준다.](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-2.png)
+![SNS message ID부터 진단 결과까지의 검증 단계](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-2.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-05-alerting-aiops-lab-2.html)
+성공한 SNS message ID는 DynamoDB로 **24시간** 중복 처리합니다. 같은 ID에 다른 payload를 넣으면 거부합니다. SNS delivery는 at-least-once이며 publish와 idempotency commit 사이 장애는 결과 통지를 중복시킬 수 있습니다. exactly-once라고 설명하지 않습니다.
 
-**Step 5.6.1: Lambda 함수 코드**
+Lambda reserved concurrency=2, async retry=2, 최대 event age=1시간입니다. 이는 Lambda가 받은 이후 설정이며 SNS 재전송 정책은 별도입니다. 결과·실패 큐와 재처리 절차를 함께 확인합니다. raw event나 비밀번호를 로그에 출력하지 않습니다.
 
-```python
-# lambda/aiops_agent.py
-import json
-import boto3
-import os
-from datetime import datetime, timedelta
-from typing import Dict, Any, List
+조회는 현재 시각 기준 최대 15분 window를 사용하고 결과에 실제 start/end를 표시합니다. 원래 알람 시각의 완전한 재구성을 주장하지 않습니다. Logs Insights는 완료 상태까지 제한적으로 polling하고 미완료 query를 취소합니다. model response가 `max_tokens`·차단·빈 text이면 성공한 분석으로 게시하지 않습니다.
 
-# AWS Clients
-bedrock_runtime = boto3.client('bedrock-runtime', region_name='us-east-1')
-logs_client = boto3.client('logs', region_name='us-east-1')
-amp_client = boto3.client('amp', region_name='us-east-1')
-xray_client = boto3.client('xray', region_name='us-east-1')
-sns_client = boto3.client('sns', region_name='us-east-1')
+## 7. CloudWatch Investigations는 별도 구성 {#investigations}
 
-# Configuration
-AMP_WORKSPACE_ID = os.environ.get('AMP_WORKSPACE_ID')
-SNS_TOPIC_ARN = os.environ.get('SNS_TOPIC_ARN')
-LOG_GROUP = os.environ.get('LOG_GROUP', '/aws/eks/obs-lab/application')
 
-SYSTEM_PROMPT = """You are an expert Site Reliability Engineer (SRE) analyzing production incidents.
-Your role is to:
-1. Analyze the provided alert, metrics, logs, and traces
-2. Identify the root cause of the issue
-3. Provide actionable recommendations
+![조사 그룹과 alarm action을 사용하는 조사 과정](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-1.png)
 
-Format your response as follows:
-## Summary
-[Brief summary of the incident]
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-05-alerting-aiops-lab-1.html)
+계정의 investigation group·권한·보존·암호화 설정을 먼저 준비한 다음, alarm의 **Investigation action에 group ARN을 추가**합니다. metric/composite alarm을 통해 시작할 수 있습니다. ARN 형식은 다음과 같습니다.
 
-## Root Cause Analysis
-[Detailed analysis of what caused the issue]
-
-## Evidence
-- Metrics: [relevant metric observations]
-- Logs: [relevant log patterns]
-- Traces: [trace observations if available]
-
-## Recommendations
-1. [Immediate action]
-2. [Short-term fix]
-3. [Long-term prevention]
-
-## Severity Assessment
-[Critical/High/Medium/Low] - [Justification]
-"""
-
-def lambda_handler(event: Dict[str, Any], context) -> Dict[str, Any]:
-    """Main Lambda handler for AIOps agent"""
-    print(f"Received event: {json.dumps(event)}")
-
-    # Parse alert from SNS or AlertManager webhook
-    alert = parse_alert(event)
-    if not alert:
-        return {'statusCode': 400, 'body': 'Invalid alert format'}
-
-    print(f"Parsed alert: {json.dumps(alert)}")
-
-    # Determine time range for analysis
-    end_time = datetime.utcnow()
-    start_time = end_time - timedelta(minutes=30)
-
-    # Collect telemetry data in parallel (simulated)
-    telemetry = collect_telemetry(
-        alert=alert,
-        start_time=start_time,
-        end_time=end_time
-    )
-
-    # Invoke Bedrock Claude for analysis
-    analysis = analyze_with_claude(alert, telemetry)
-
-    # Publish analysis to SNS
-    publish_analysis(alert, analysis)
-
-    return {
-        'statusCode': 200,
-        'body': json.dumps({
-            'alert': alert.get('alertname'),
-            'analysis_sent': True
-        })
-    }
-
-def parse_alert(event: Dict[str, Any]) -> Dict[str, Any]:
-    """Parse alert from various sources"""
-    # SNS message
-    if 'Records' in event:
-        for record in event['Records']:
-            if record.get('EventSource') == 'aws:sns':
-                message = json.loads(record['Sns']['Message'])
-                return parse_alertmanager_payload(message)
-
-    # Direct AlertManager webhook
-    if 'alerts' in event:
-        return parse_alertmanager_payload(event)
-
-    # API Gateway
-    if 'body' in event:
-        body = json.loads(event['body'])
-        return parse_alertmanager_payload(body)
-
-    return None
-
-def parse_alertmanager_payload(payload: Dict[str, Any]) -> Dict[str, Any]:
-    """Parse AlertManager payload"""
-    if 'alerts' in payload and len(payload['alerts']) > 0:
-        alert = payload['alerts'][0]
-        return {
-            'alertname': alert.get('labels', {}).get('alertname'),
-            'severity': alert.get('labels', {}).get('severity'),
-            'service': alert.get('labels', {}).get('service'),
-            'namespace': alert.get('labels', {}).get('namespace'),
-            'summary': alert.get('annotations', {}).get('summary'),
-            'description': alert.get('annotations', {}).get('description'),
-            'status': alert.get('status'),
-            'startsAt': alert.get('startsAt'),
-            'labels': alert.get('labels', {})
-        }
-    return payload
-
-def collect_telemetry(alert: Dict[str, Any], start_time: datetime, end_time: datetime) -> Dict[str, Any]:
-    """Collect relevant telemetry data"""
-    telemetry = {
-        'logs': [],
-        'metrics': [],
-        'traces': []
-    }
-
-    service = alert.get('service', '')
-    namespace = alert.get('namespace', 'msa')
-
-    # 1. CloudWatch Logs Insights query
-    try:
-        query = f"""
-        fields @timestamp, @message, @logStream
-        | filter @message like /error|Error|ERROR|exception|Exception/
-        | filter @logStream like /{service}/
-        | sort @timestamp desc
-        | limit 20
-        """
-
-        query_response = logs_client.start_query(
-            logGroupName=LOG_GROUP,
-            startTime=int(start_time.timestamp()),
-            endTime=int(end_time.timestamp()),
-            queryString=query
-        )
-
-        query_id = query_response['queryId']
-
-        # Wait for query to complete (simplified)
-        import time
-        time.sleep(5)
-
-        results = logs_client.get_query_results(queryId=query_id)
-        telemetry['logs'] = results.get('results', [])[:10]
-
-    except Exception as e:
-        print(f"Error querying logs: {e}")
-        telemetry['logs'] = [{'error': str(e)}]
-
-    # 2. AMP (Prometheus) metrics
-    try:
-        # Query error rate
-        error_rate_query = f'sum(rate(http_requests_total{{namespace="{namespace}", service="{service}", status=~"5.."}}[5m])) / sum(rate(http_requests_total{{namespace="{namespace}", service="{service}"}}[5m]))'
-
-        # Query latency
-        latency_query = f'histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket{{namespace="{namespace}", service="{service}"}}[5m])) by (le))'
-
-        # Note: AMP queries require workspace query API
-        telemetry['metrics'] = {
-            'error_rate_query': error_rate_query,
-            'latency_query': latency_query,
-            'note': 'Actual values would be fetched from AMP workspace'
-        }
-
-    except Exception as e:
-        print(f"Error querying metrics: {e}")
-        telemetry['metrics'] = {'error': str(e)}
-
-    # 3. X-Ray traces
-    try:
-        trace_response = xray_client.get_trace_summaries(
-            StartTime=start_time,
-            EndTime=end_time,
-            FilterExpression=f'service("{service}") AND responseTime > 2'
-        )
-
-        telemetry['traces'] = [
-            {
-                'id': t.get('Id'),
-                'duration': t.get('Duration'),
-                'has_error': t.get('HasError'),
-                'http_status': t.get('Http', {}).get('HttpStatus')
-            }
-            for t in trace_response.get('TraceSummaries', [])[:5]
-        ]
-
-    except Exception as e:
-        print(f"Error querying traces: {e}")
-        telemetry['traces'] = [{'error': str(e)}]
-
-    return telemetry
-
-def analyze_with_claude(alert: Dict[str, Any], telemetry: Dict[str, Any]) -> str:
-    """Invoke Bedrock Claude for analysis"""
-
-    user_message = f"""
-Please analyze this production incident:
-
-## Alert Details
-- Alert Name: {alert.get('alertname')}
-- Severity: {alert.get('severity')}
-- Service: {alert.get('service')}
-- Namespace: {alert.get('namespace')}
-- Summary: {alert.get('summary')}
-- Description: {alert.get('description')}
-- Started At: {alert.get('startsAt')}
-
-## Collected Telemetry
-
-### Logs (last 30 minutes)
-{json.dumps(telemetry.get('logs', []), indent=2)}
-
-### Metrics Queries
-{json.dumps(telemetry.get('metrics', {}), indent=2)}
-
-### Trace Summaries
-{json.dumps(telemetry.get('traces', []), indent=2)}
-
-Please provide your analysis following the specified format.
-"""
-
-    try:
-        response = bedrock_runtime.invoke_model(
-            modelId='anthropic.claude-3-5-sonnet-20241022-v2:0',
-            contentType='application/json',
-            accept='application/json',
-            body=json.dumps({
-                'anthropic_version': 'bedrock-2023-05-31',
-                'max_tokens': 2048,
-                'system': SYSTEM_PROMPT,
-                'messages': [
-                    {
-                        'role': 'user',
-                        'content': user_message
-                    }
-                ]
-            })
-        )
-
-        response_body = json.loads(response['body'].read())
-        return response_body['content'][0]['text']
-
-    except Exception as e:
-        print(f"Error invoking Bedrock: {e}")
-        return f"Error analyzing alert: {str(e)}"
-
-def publish_analysis(alert: Dict[str, Any], analysis: str) -> None:
-    """Publish analysis to SNS"""
-
-    message = f"""
-=== AIOps Alert Analysis ===
-
-Alert: {alert.get('alertname')}
-Service: {alert.get('service')}
-Severity: {alert.get('severity')}
-Time: {datetime.utcnow().isoformat()}
-
-{analysis}
-
----
-Generated by Observability Lab AIOps Agent
-"""
-
-    try:
-        sns_client.publish(
-            TopicArn=SNS_TOPIC_ARN,
-            Subject=f"[AIOps Analysis] {alert.get('alertname')} - {alert.get('severity')}",
-            Message=message
-        )
-        print("Analysis published to SNS")
-
-    except Exception as e:
-        print(f"Error publishing to SNS: {e}")
+```text
+arn:aws:aiops:REGION:ACCOUNT_ID:investigation-group/GROUP_ID
 ```
 
-**Step 5.6.2: Lambda IAM Role**
+[공식 절차](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Investigations-configure-alarm-procedures.html)에 따라 기존 alarm 설정을 보존하며 action을 추가합니다. `put-anomaly-detector`, `put-insight-rule`, `list-dashboards`는 investigation group 생성이나 조사 목록 API가 아닙니다. Application Signals discovery 활성화만으로 모든 조사 설정이 끝나는 것도 아닙니다. 이 예제 SAM stack은 investigation group을 생성하지 않습니다.
 
-```hcl
-# lambda-iam.tf
-resource "aws_iam_role" "aiops_lambda" {
-  name = "obs-lab-aiops-lambda-role"
+## 8. 장애 주입과 운영 검증 {#verification}
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-      }
-    ]
-  })
-}
+먼저 정상 smoke 결과와 알림 경로를 기록합니다. 앱이 실제 지원하는 지연/오류 주입 기능만 전용 canary에 사용하고 제한 시간·대상·원복 방법을 정합니다. 구현하지 않은 `/admin/chaos` endpoint나 읽지 않는 환경 변수를 호출하지 않습니다. Pod 삭제는 CrashLoopBackOff를 보장하지 않습니다.
 
-resource "aws_iam_role_policy" "aiops_lambda_policy" {
-  name = "aiops-lambda-policy"
-  role = aws_iam_role.aiops_lambda.id
+GitOps가 소유한 workload는 Git/지원하는 Rollouts 흐름으로 변경·복구합니다. Deployment와 Rollout을 혼동하거나 JSON Patch의 음수 index로 환경 변수를 지우지 않습니다.
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-          "logs:StartQuery",
-          "logs:GetQueryResults"
-        ]
-        Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "bedrock:InvokeModel"
-        ]
-        Resource = "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "xray:GetTraceSummaries",
-          "xray:BatchGetTraces"
-        ]
-        Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "aps:QueryMetrics"
-        ]
-        Resource = "arn:aws:aps:us-east-1:*:workspace/*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "sns:Publish"
-        ]
-        Resource = var.sns_alerts_topic_arn
-      }
-    ]
-  })
-}
-```
+1. Prometheus rule이 실제 로드되고 pending/firing을 거치는지 확인합니다.
+2. Alertmanager가 선택한 receiver와 SNS 입력 message를 확인합니다.
+3. Lambda의 완료/실패·DLQ·idempotency 결과를 확인합니다.
+4. 결과 topic이 다른 topic이고 reporter 재진입이 없는지 확인합니다.
+5. 보고서의 시간 범위·실제 관측·미확인 사항과 담당자 수신을 대조합니다.
+6. 주입한 변경을 원복하고 재시도·부하 실행이 종료됐는지 확인합니다.
 
-**Step 5.6.3: Lambda 배포**
+## 9. 선택 확장과 정리 {#extensions}
 
-```bash
-# Lambda 함수 패키징
-cd lambda
-zip -r aiops_agent.zip aiops_agent.py
 
-# Lambda 생성
-aws lambda create-function \
-  --function-name obs-lab-aiops-agent \
-  --runtime python3.11 \
-  --handler aiops_agent.lambda_handler \
-  --role arn:aws:iam::${AWS_ACCOUNT_ID}:role/obs-lab-aiops-lambda-role \
-  --zip-file fileb://aiops_agent.zip \
-  --timeout 60 \
-  --memory-size 512 \
-  --environment Variables="{AMP_WORKSPACE_ID=${AMP_WORKSPACE_ID},SNS_TOPIC_ARN=${SNS_ALERTS_TOPIC_ARN},LOG_GROUP=/aws/eks/obs-lab/application}"
-
-# SNS 트리거 추가
-aws lambda add-permission \
-  --function-name obs-lab-aiops-agent \
-  --statement-id sns-trigger \
-  --action lambda:InvokeFunction \
-  --principal sns.amazonaws.com \
-  --source-arn ${SNS_ALERTS_TOPIC_ARN}
-```
-
-***
-
-## Step 5.7: 부하 + Fault Injection 테스트
-
-**Step 5.7.1: Order Service에 지연 주입**
-
-```bash
-# Order service에 인위적 지연 추가
-kubectl --context service patch deployment order-service -n msa --type='json' -p='[
-  {
-    "op": "add",
-    "path": "/spec/template/spec/containers/0/env/-",
-    "value": {
-      "name": "INJECT_DELAY_MS",
-      "value": "3000"
-    }
-  }
-]'
-```
-
-**Step 5.7.2: Payment Service 버그 버전 배포**
-
-```bash
-# 5xx 에러를 발생시키는 버전 배포
-kubectl --context service set image deployment/payment-service \
-  payment-service=${ECR_REPO}/payment-service:v2-buggy \
-  -n msa
-```
-
-**Step 5.7.3: 부하 생성**
-
-```bash
-# k6로 부하 생성
-k6 run --vus 50 --duration 5m load-test/k6-scenario.js
-```
-
-***
-
-## Step 5.8: AIOps 동작 확인
-
-**Step 5.8.1: CloudWatch Investigations 확인**
-
-1. AWS Console > CloudWatch > Investigations 이동
-2. 활성 알람에 대한 Investigation 확인
-3. AI Hypothesis 및 Suggestions 검토
-
-**Step 5.8.2: Lambda 로그 확인**
-
-```bash
-# Lambda 실행 로그 확인
-aws logs tail /aws/lambda/obs-lab-aiops-agent --follow
-
-# 최근 실행 확인
-aws logs filter-log-events \
-  --log-group-name /aws/lambda/obs-lab-aiops-agent \
-  --start-time $(date -d '1 hour ago' +%s000) \
-  --filter-pattern "analysis"
-```
-
-**Step 5.8.3: SNS 이메일 확인**
-
-* 이메일 수신함에서 AIOps 분석 결과 확인
-* Alert Name, Root Cause Analysis, Recommendations 검토
-
-***
-
-## Step 5.9: (심화) A2A 멀티 에이전트 패턴
-
-### 멀티 에이전트 아키텍처
-
-![운영자 또는 경보가 Collaborator Agent를 트리거하면 Collaborator가 지표·로그·트레이스 세 전문 에이전트와 양방향으로 협의한 뒤 그 결과를 종합해 근본 원인 보고서를 만드는 허브-스포크 구조를 보여준다.](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-3.png)
+![별도로 설계할 전문 분석 모듈 협업](../../.gitbook/assets/ko-labs-observability-05-alerting-aiops-lab-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-labs-observability-05-alerting-aiops-lab-3.html)
+여러 분석 모듈의 호출만으로 A2A 프로토콜을 구현했다고 하지 않습니다. 실제 agent discovery·인증·메시지/task 계약·timeout·권한을 별도로 설계해야 합니다. 이 실습의 reporter는 단일 진단 함수입니다.
 
-| Agent        | 역할      | 데이터 소스                      |
-| ------------ | ------- | --------------------------- |
-| Collaborator | 조율 및 종합 | 다른 에이전트 결과                  |
-| Metric Agent | 메트릭 분석  | Prometheus, AMP, CloudWatch |
-| Log Agent    | 로그 분석   | Loki, CloudWatch Logs       |
-| Trace Agent  | 트레이스 분석 | Tempo, X-Ray                |
+정리 전 증거를 보관하고 입력 alarm action/구독을 중지합니다. 생성한 SAM stack과 외부 workload-role policy attachment·추가 구독을 소유권 inventory로 대조해 제거합니다. 운영 중인 queue/log group까지 지우지 않습니다. [Part 6](./06-distributed-tracing-lab.md#cleanup)의 의존성 순서와 비용 확인을 따릅니다.
 
-> **참고**: A2A 멀티 에이전트 패턴 구현은 고급 주제로, Amazon Bedrock Agents 또는 LangGraph를 사용하여 구현할 수 있습니다.
+## 검증 범위
 
-***
-
-## 검증 (Verification)
-
-### 알림 흐름 확인
-
-| 단계                | 확인 방법                | 예상 결과                |
-| ----------------- | -------------------- | -------------------- |
-| AlertManager      | Prometheus UI Alerts | Alert firing         |
-| Grafana OnCall    | OnCall Dashboard     | Incident created     |
-| SNS               | Email inbox          | Alert email received |
-| Lambda            | CloudWatch Logs      | Analysis executed    |
-| AIOps             | Email inbox          | Analysis report      |
-| CW Investigations | Console              | Hypothesis generated |
-
-```bash
-# AlertManager 알람 확인
-kubectl --context managed port-forward svc/alertmanager-operated 9093:9093 -n monitoring &
-curl -s http://localhost:9093/api/v2/alerts | jq '.[] | {alertname: .labels.alertname, status: .status.state}'
-
-# Lambda 실행 횟수 확인
-aws cloudwatch get-metric-statistics \
-  --namespace AWS/Lambda \
-  --metric-name Invocations \
-  --dimensions Name=FunctionName,Value=obs-lab-aiops-agent \
-  --start-time $(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%SZ) \
-  --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
-  --period 300 \
-  --statistics Sum
-```
-
-***
-
-## 정리 (이 Part에서 정리하지 않음)
-
-Fault injection 원복:
-
-```bash
-# Order service 지연 제거
-kubectl --context service patch deployment order-service -n msa --type='json' -p='[
-  {
-    "op": "remove",
-    "path": "/spec/template/spec/containers/0/env/-1"
-  }
-]'
-
-# Payment service 정상 버전 복구
-kubectl --context service set image deployment/payment-service \
-  payment-service=${ECR_REPO}/payment-service:v1.0.0 \
-  -n msa
-```
-
-***
-
-## 참조 문서
-
-* [Alertmanager](../../observability/alerting/01-alertmanager.md)
-* [CloudWatch Alarms](../../observability/alerting/02-cloudwatch-alarms.md)
-* [Grafana OnCall](../../observability/alerting/03-grafana-oncall.md)
-
-***
-
-## 다음 단계
-
-알림 및 AIOps 구성이 완료되었습니다. [Part 6: 분산 추적 분석](06-distributed-tracing-lab.md)로 진행하여 Tempo와 Grafana를 활용한 end-to-end 트레이스 분석을 수행합니다.
+로컬 24개 테스트, 실제 Powertools의 메모리 저장소 중복 처리, botocore Stubber 6개 사례, Alertmanager 0.34.0의 native JSON template, CloudFormation lint·15개 policy statement를 확인했습니다. 이는 AWS IAM/KMS 유효 권한, 실제 SNS 전달·DynamoDB 저장·CloudWatch query·Bedrock 답변 품질·클러스터 배포를 실행한 결과가 아닙니다.

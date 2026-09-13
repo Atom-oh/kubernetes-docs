@@ -13,36 +13,33 @@
     "views": [
       {
         "id": "detect-route",
-        "label": "이상 탐지와 라우팅",
+        "label": "알림 수신",
         "focus": [
-          "alertmanager",
           "cw-alarms",
-          "oncall",
+          "alertmanager",
           "sns"
         ],
-        "note": "AlertManager는 OnCall 웹훅과 SNS로, CloudWatch Alarms는 alarm-actions로 SNS 토픽에 경보를 보낸다."
+        "note": "Prometheus가 rule을 평가하고 Alertmanager가 JSON을 SNS로 보냅니다."
       },
       {
         "id": "ai-analysis",
-        "label": "AI 분석",
+        "label": "제한된 분석",
         "focus": [
-          "alertmanager",
           "sns",
           "aiops",
-          "bedrock",
-          "investigations"
+          "bedrock"
         ],
-        "note": "SNS 또는 AlertManager 웹훅이 Lambda를 트리거하고, Lambda가 Bedrock Claude로 근본 원인을 분석해 결과를 SNS에 게시한다."
+        "note": "입력 토픽의 알림만 분석합니다. 쓰기 도구나 자동 복구는 없습니다."
       },
       {
         "id": "respond",
-        "label": "대응 채널",
+        "label": "결과 전달",
         "focus": [
+          "aiops",
           "oncall",
-          "sns",
           "channels"
         ],
-        "note": "OnCall 에스컬레이션과 SNS 구독을 통해 경보와 분석 리포트가 담당자에게 전달된다."
+        "note": "결과는 다른 토픽으로 보냅니다. CloudWatch Investigations는 별도 설정입니다."
       }
     ],
     "legend": {
@@ -67,22 +64,22 @@
     {
       "id": "alertmanager",
       "type": "backend",
-      "label": "Prometheus AlertManager",
-      "sublabel": "PrometheusRule 평가",
+      "label": "Prometheus + Alertmanager",
+      "sublabel": "평가 → 라우팅",
       "pos": [
         40,
         200
       ],
       "size": [
-        190,
+        220,
         64
       ]
     },
     {
       "id": "sns",
       "type": "messagebus",
-      "label": "SNS Topic",
-      "sublabel": "obs-lab-alerts",
+      "label": "Input SNS",
+      "sublabel": "알림 JSON",
       "pos": [
         310,
         200
@@ -94,11 +91,11 @@
     },
     {
       "id": "oncall",
-      "type": "external",
-      "label": "Grafana OnCall",
-      "sublabel": "인시던트 관리",
+      "type": "messagebus",
+      "label": "Output SNS",
+      "sublabel": "진단 결과 전용",
       "pos": [
-        310,
+        810,
         360
       ],
       "size": [
@@ -110,7 +107,7 @@
       "id": "investigations",
       "type": "cloud",
       "label": "CloudWatch Investigations",
-      "sublabel": "AI 가설 · Console",
+      "sublabel": "별도 group/action 설정",
       "pos": [
         570,
         60
@@ -123,8 +120,8 @@
     {
       "id": "aiops",
       "type": "backend",
-      "label": "AIOps Agent",
-      "sublabel": "Lambda",
+      "label": "Diagnostic reporter",
+      "sublabel": "Lambda · read only",
       "tag": "핵심",
       "pos": [
         570,
@@ -138,8 +135,8 @@
     {
       "id": "bedrock",
       "type": "cloud",
-      "label": "Bedrock Claude",
-      "sublabel": "근본 원인 분석",
+      "label": "Amazon Bedrock",
+      "sublabel": "검토할 가설",
       "pos": [
         810,
         200
@@ -153,7 +150,7 @@
       "id": "channels",
       "type": "external",
       "label": "대응 채널",
-      "sublabel": "Slack · Email · PagerDuty",
+      "sublabel": "운영자가 연결한 구독",
       "pos": [
         1050,
         360
@@ -167,7 +164,7 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "이상 탐지",
+      "label": "탐지·전달",
       "wraps": [
         "cw-alarms",
         "alertmanager"
@@ -175,25 +172,24 @@
     },
     {
       "kind": "region",
-      "label": "알림 라우팅",
+      "label": "입력",
       "wraps": [
-        "sns",
-        "oncall"
+        "sns"
       ]
     },
     {
       "kind": "region",
-      "label": "AI 분석",
+      "label": "분석",
       "wraps": [
-        "investigations",
         "aiops",
         "bedrock"
       ]
     },
     {
       "kind": "region",
-      "label": "대응",
+      "label": "결과 · 재입력 금지",
       "wraps": [
+        "oncall",
         "channels"
       ]
     }
@@ -203,7 +199,7 @@
       "id": "cw-to-investigations",
       "from": "cw-alarms",
       "to": "investigations",
-      "label": "알람 조사",
+      "label": "group ARN action",
       "variant": "dashed"
     },
     {
@@ -215,37 +211,11 @@
       "toSide": "top"
     },
     {
-      "id": "am-to-oncall",
-      "from": "alertmanager",
-      "to": "oncall",
-      "label": "웹훅",
-      "fromSide": "right",
-      "toSide": "left"
-    },
-    {
       "id": "am-to-sns",
       "from": "alertmanager",
       "to": "sns",
-      "label": "sns_configs"
-    },
-    {
-      "id": "am-to-aiops",
-      "from": "alertmanager",
-      "to": "aiops",
-      "label": "웹훅",
-      "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "bottom",
-      "via": [
-        [
-          135,
-          318
-        ],
-        [
-          655,
-          318
-        ]
-      ]
+      "label": "sns_configs",
+      "labelDy": 56
     },
     {
       "id": "sns-to-aiops",
@@ -259,31 +229,30 @@
       "id": "aiops-to-bedrock",
       "from": "aiops",
       "to": "bedrock",
-      "label": "InvokeModel",
-      "variant": "emphasis"
+      "label": "Converse · maxTokens 1024",
+      "variant": "emphasis",
+      "labelAt": [
+        780,
+        188
+      ]
     },
     {
-      "id": "aiops-to-sns",
+      "id": "reporter-output",
       "from": "aiops",
-      "to": "sns",
-      "label": "분석 결과 게시",
-      "variant": "dashed",
-      "fromSide": "left",
-      "toSide": "right"
+      "to": "oncall",
+      "label": "결과 게시",
+      "fromSide": "bottom",
+      "toSide": "left",
+      "labelAt": [
+        725,
+        325
+      ]
     },
     {
-      "id": "sns-to-channels",
-      "from": "sns",
-      "to": "channels",
-      "label": "이메일 구독",
-      "fromSide": "top",
-      "toSide": "top"
-    },
-    {
-      "id": "oncall-to-channels",
+      "id": "output-human",
       "from": "oncall",
       "to": "channels",
-      "label": "에스컬레이션"
+      "label": "사람 검토"
     }
   ]
 }

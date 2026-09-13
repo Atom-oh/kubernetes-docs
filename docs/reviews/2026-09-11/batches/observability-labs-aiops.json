@@ -1,0 +1,34 @@
+[
+  {
+    "path": "ko/labs/observability/05-alerting-aiops-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "85c151fbae8ad7f1ee3baefd763e31795629adb91deaca9b044ebcd0eb217e9b",
+    "summary": "FullPart5review;20quiz11examples/tests10diagrams30browser10SVG;24unit6SDK1AMnativeJSON15resourceCFNlint/15policystatements;50anchors;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-aiops-validation.json"
+  },
+  {
+    "path": "ko/quizzes/observability/labs/05-alerting-aiops-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "c61f469a3397371be3de7f46f2c857725909789d10d80be732366b78f958eff7",
+    "summary": "FullPart5review;20quiz11examples/tests10diagrams30browser10SVG;24unit6SDK1AMnativeJSON15resourceCFNlint/15policystatements;50anchors;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-aiops-validation.json"
+  },
+  {
+    "path": "en/labs/observability/05-alerting-aiops-lab.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "740b8d9c6e5db03f779cbc074cc1a1ada3c1644d79f308cf454b7cc8ccf9bec9",
+    "summary": "FullPart5review;20quiz11examples/tests10diagrams30browser10SVG;24unit6SDK1AMnativeJSON15resourceCFNlint/15policystatements;50anchors;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-aiops-validation.json"
+  },
+  {
+    "path": "en/quizzes/observability/labs/05-alerting-aiops-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "cfe85a0466a7471a57c0124a2076a77d519a9a1701cb85c23a3af0e03cfb009d",
+    "summary": "FullPart5review;20quiz11examples/tests10diagrams30browser10SVG;24unit6SDK1AMnativeJSON15resourceCFNlint/15policystatements;50anchors;noAWSdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-aiops-validation.json"
+  }
+]

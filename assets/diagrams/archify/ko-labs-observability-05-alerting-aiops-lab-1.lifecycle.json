@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "lifecycle",
   "meta": {
-    "title": "CloudWatch Investigations 조사 프로세스",
+    "title": "CloudWatch Investigations: group → alarm action → review",
     "animation": "trace",
     "quality_profile": "showcase",
     "legend": {
@@ -45,7 +45,7 @@
       "id": "alarm",
       "type": "start",
       "label": "경보 발생",
-      "sublabel": "CloudWatch 알람",
+      "sublabel": "준비된 group · 권한",
       "lane": "main",
       "col": 0,
       "step": "01"
@@ -54,7 +54,7 @@
       "id": "start",
       "type": "active",
       "label": "조사 시작",
-      "sublabel": "알람 또는 시간 범위 선택",
+      "sublabel": "group ARN alarm action",
       "lane": "main",
       "col": 1,
       "step": "02"
@@ -63,7 +63,7 @@
       "id": "scan",
       "type": "active",
       "label": "리소스 스캔 및 분석",
-      "sublabel": "EKS, RDS, SQS",
+      "sublabel": "권한·연결된 자원 범위",
       "lane": "main",
       "col": 2,
       "step": "03"
@@ -81,7 +81,7 @@
       "id": "hypothesis",
       "type": "decision",
       "label": "근본 원인 가설",
-      "sublabel": "AI 생성 Hypothesis",
+      "sublabel": "확정 원인이 아닌 가설",
       "lane": "main",
       "col": 4,
       "step": "05"
@@ -90,7 +90,7 @@
       "id": "actions",
       "type": "active",
       "label": "제안 조치",
-      "sublabel": "Suggestions",
+      "sublabel": "운영자 검토 후 판단",
       "lane": "analyze",
       "col": 2,
       "step": "06"
@@ -99,7 +99,7 @@
       "id": "report",
       "type": "success",
       "label": "인시던트 보고서 생성",
-      "sublabel": "조사 완료",
+      "sublabel": "근거·미확인 항목 기록",
       "lane": "terminal",
       "col": 2,
       "step": "07"
