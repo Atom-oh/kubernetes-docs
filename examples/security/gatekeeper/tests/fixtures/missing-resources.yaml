@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: case
+  namespace: policy-lab
+  labels:
+    app.kubernetes.io/name: demo
+spec:
+  containers:
+  - name: app
+    image: registry.example.com/team/app:v1

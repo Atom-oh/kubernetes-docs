@@ -1,0 +1,24 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: docsnoprivileged
+spec:
+  crd:
+    spec:
+      names:
+        kind: DocsNoPrivileged
+      validation:
+        openAPIV3Schema:
+          type: object
+  targets:
+  - target: admission.k8s.gatekeeper.sh
+    code:
+    - engine: Rego
+      source:
+        version: v1
+        rego: "package docsnoprivileged\ncontainers contains c if { c := input.review.object.spec.containers[_]\
+          \ }\ncontainers contains c if { c := input.review.object.spec.initContainers[_]\
+          \ }\ncontainers contains c if { c := input.review.object.spec.ephemeralContainers[_]\
+          \ }\nviolation contains {\"msg\": sprintf(\"privileged container: %v\",\
+          \ [c.name])} if {\n  some c in containers\n  c.securityContext.privileged\
+          \ == true\n}\n"

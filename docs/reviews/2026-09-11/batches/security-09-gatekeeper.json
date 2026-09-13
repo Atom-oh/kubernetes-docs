@@ -1,0 +1,34 @@
+[
+  {
+    "path": "ko/security/09-opa-gatekeeper.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "df303cb8988acef4d9777755e2ab0d2ea294d260aa1656ab39e14135705e1a46",
+    "summary": "Full3338original-line/24quizreview;Gator3.23.1native33policycases+3modes,8CRD+2metricsbindings,nativeModifySet5assertions,54example/licensefiles,2figures6browser2SVG93aliases; noK8sdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/gatekeeper-validation.json"
+  },
+  {
+    "path": "ko/quizzes/security/09-opa-gatekeeper-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "16eefce10c39a6c409640e6a8a7bff82d9af2fe361fcc426bca4f6d40e00da40",
+    "summary": "Full3338original-line/24quizreview;Gator3.23.1native33policycases+3modes,8CRD+2metricsbindings,nativeModifySet5assertions,54example/licensefiles,2figures6browser2SVG93aliases; noK8sdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/gatekeeper-validation.json"
+  },
+  {
+    "path": "en/security/09-opa-gatekeeper.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "aaca3958a9d1588368de04ca63e8dd9cb70a863adcb13cb10b2fb8adf2e7e43d",
+    "summary": "Full3338original-line/24quizreview;Gator3.23.1native33policycases+3modes,8CRD+2metricsbindings,nativeModifySet5assertions,54example/licensefiles,2figures6browser2SVG93aliases; noK8sdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/gatekeeper-validation.json"
+  },
+  {
+    "path": "en/quizzes/security/09-opa-gatekeeper-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "45fe1f7ccd09751e55ebc825f636cfbcf1366796ae0e8bc82feaa576c2013f2d",
+    "summary": "Full3338original-line/24quizreview;Gator3.23.1native33policycases+3modes,8CRD+2metricsbindings,nativeModifySet5assertions,54example/licensefiles,2figures6browser2SVG93aliases; noK8sdeployment.",
+    "validationReport": "docs/reviews/2026-09-11/gatekeeper-validation.json"
+  }
+]
