@@ -4,19 +4,19 @@
 
 ---
 
-1. A/B EKS Runtime(두 클러스터로 장애 경계를 나누는 방식)이 실질적인 가용성 향상을 주는 주된 이유는?
-   - A) EKS managed control plane이 Multi-AZ가 아니기 때문에 발생하는 AZ 장애를 방어하기 위해서
-   - B) 클러스터 업그레이드 실패, add-on 회귀, 잘못된 cluster-wide policy처럼 조직이 직접 만드는 장애를 격리하기 위해서
-   - C) AWS가 공식적으로 권장하는 표준 패턴이기 때문에
-   - D) 비용을 절감하기 위해서
+1. 두 EKS 클러스터를 사용하는 A/B 구성의 타당한 검증 목표는?
+   - A) EKS control plane이 단일 AZ임을 해결
+   - B) 업그레이드·add-on·webhook 오류가 한 클러스터에 격리되는지 시험
+   - C) 모든 Region 장애를 자동 방어
+   - D) 비용이 항상 감소함을 보장
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 클러스터 업그레이드 실패, add-on 회귀, 잘못된 cluster-wide policy처럼 조직이 직접 만드는 장애를 격리하기 위해서**
+**정답: B) 업그레이드·add-on·webhook 오류가 한 클러스터에 격리되는지 시험**
 
 **설명:**
-EKS managed control plane은 이미 Multi-AZ이고, ARC zonal shift/autoshift는 data plane에만 작용합니다. A/B EKS Runtime의 가치는 AZ 장애 대비가 아니라 조직이 직접 만들어내는 장애에 대한 방어이며, 이는 AWS의 공식 권장 패턴이 아니라 조직이 직접 검증해야 하는 작업 가설입니다.
+클러스터별 장애 격리가 목표가 될 수 있습니다. 공유 VPC·DNS·계정·데이터 계층의 공통 장애는 별도 검토해야 합니다.
 
 </details>
 
@@ -34,42 +34,42 @@ EKS managed control plane은 이미 Multi-AZ이고, ARC zonal shift/autoshift는
 **정답: B) 워크로드의 endpoint가 전부 장애 AZ에만 있으면, EKS는 그 AZ로 트래픽을 계속 보낸다**
 
 **설명:**
-이것이 fail-safe 동작입니다. 즉 1-AZ에만 배포된 워크로드는 zonal shift로 보호받지 못합니다. 이 때문에 "ARC zonal autoshift 대상 클러스터에는 1-AZ 워크로드를 두지 않는다"를 명문 규칙으로 두는 것이 권장됩니다.
+이것이 fail-safe 동작입니다. 즉 1-AZ에만 배포된 워크로드는 zonal shift로 보호받지 못합니다. N-1 부하와 single-AZ 예외를 시험해야 하며 practice run이 이 워크로드를 항상 중단시킨다는 뜻은 아닙니다.
 
 </details>
 
 ---
 
-3. EC2 인스턴스의 ENI 하나가 Route 53 Resolver로 보낼 수 있는 패킷 수 제약과 관련해 옳은 것은?
-   - A) 초당 1,024개(조정 불가)이며, Pod 밀도가 높은 노드에서 CoreDNS 실패의 원인이 될 수 있다
-   - B) 제한이 없으며 얼마든지 늘릴 수 있다
-   - C) AZ당 100 Gbps로 제한된다
-   - D) NAU(Network Address Usage) 계산에 포함되지 않는다
+3. EC2의 link-local1,024packet/s 제한에 대한 설명은?
+   - A) DNS·IMDS·NTP 등 합계이므로 실제 지표와 DNS 경로를 함께 점검
+   - B) DNS만 독점하는 무제한 quota
+   - C) AZ당100Gbps를 뜻함
+   - D) CoreDNS가 가장 흔한 장애임을 증명함
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: A) 초당 1,024개(조정 불가)이며, Pod 밀도가 높은 노드에서 CoreDNS 실패의 원인이 될 수 있다**
+**정답: A) DNS·IMDS·NTP 등 합계이므로 실제 지표와 DNS 경로를 함께 점검**
 
 **설명:**
-이 한도는 조정 불가능하며, CoreDNS는 A/B 구조와 AZ 이중화 모두에서 가장 흔한 단일 실패 지점입니다. 고밀도 Pod 노드에서는 이 패킷 한도가 DNS 실패의 실제 원인이 될 수 있어 NodeLocal DNS 도입을 검토해야 합니다.
+Link-local allowance와 VPC DNS ENI 제한을 확인합니다. 높은 Pod 밀도만으로 원인을 단정하지 말고 linklocal_allowance_exceeded·DNS 지연 등을 확인합니다.
 
 </details>
 
 ---
 
-4. ALB target group의 cross-zone load balancing을 비활성화할 때의 위험은?
-   - A) 비용이 오히려 증가한다
-   - B) sticky session과 Lambda target을 쓸 수 없고, 특정 AZ에 healthy target이 하나도 없으면 그 AZ로 들어온 요청이 전부 503이 된다
-   - C) EKS 클러스터가 자동으로 재시작된다
-   - D) NAT Gateway quota가 초과된다
+4. ALB target group의 cross-zone을 끌 때 확인할 것은?
+   - A) ALB cross-zone 전송 요금이 반드시 절감됨
+   - B) AZ별 target capacity와 empty-AZ503, unhealthy-target failover를 구분
+   - C) 클러스터가 자동 재시작됨
+   - D) 모든 target이 항상 healthy로 바뀜
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) sticky session과 Lambda target을 쓸 수 없고, 특정 AZ에 healthy target이 하나도 없으면 그 AZ로 들어온 요청이 전부 503이 된다**
+**정답: B) AZ별 target capacity와 empty-AZ503, unhealthy-target failover를 구분**
 
 **설명:**
-cross-zone load balancing 비활성화는 cross-AZ 비용을 줄이는 수단이지만 제약이 큽니다. AZ별 capacity를 확실히 보장할 수 없다면 기본값(활성화 상태)을 유지하는 것이 AWS 권고입니다.
+Target stickiness와 Lambda target에 제약이 있고 empty AZ와 unhealthy target은 다르게 동작합니다. ALB 자체의 cross-zone regional data transfer에는 추가 전송 요금이 없습니다.
 
 </details>

@@ -1,6 +1,6 @@
 # Inference Frameworks for LLM Serving
 
-> **Reviewed**: September 12, 2026
+> **Last Updated**: September 12, 2026
 > **Scope**: Official releases, APIs, charts and local checks; no GPU/Neuron model execution.
 
 Select inference engines, distributed execution layers, Kubernetes controllers and provider gateways separately. “OpenAI-compatible” does not mean identical endpoints, fields, streaming, tool calls or authentication.

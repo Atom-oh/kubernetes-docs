@@ -1,6 +1,6 @@
 # Advanced
 
-> **Reviewed**: September 11, 2026 · Istio1.31. These independent examples assume the named workloads, Services and controllers exist. Follow each detailed chapter for installation/compatibility and validation; snippets are not a production-tested stack.
+> **Last Updated**: September 11, 2026 · Istio1.31. These independent examples assume the named workloads, Services and controllers exist. Follow each detailed chapter for installation/compatibility and validation; snippets are not a production-tested stack.
 
 This section covers advanced Istio features including Ambient Mode, Multi-cluster, EnvoyFilter, gRPC/WebSocket support, and more.
 

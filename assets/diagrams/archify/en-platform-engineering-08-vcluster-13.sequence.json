@@ -1,0 +1,219 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Reviewed GitOps and scoped access",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "column_fit": "spread",
+    "viewBox": [
+      1080,
+      700
+    ],
+    "views": [
+      {
+        "id": "request",
+        "label": "Request",
+        "focus": [
+          "dev",
+          "backstage",
+          "github"
+        ],
+        "note": "Conceptual vCluster0.37 Shared Nodes flow; actual runtime, access and recovery require validation."
+      },
+      {
+        "id": "provision",
+        "label": "Provision",
+        "focus": [
+          "github",
+          "argocd",
+          "vcluster"
+        ],
+        "note": "Conceptual vCluster0.37 Shared Nodes flow; actual runtime, access and recovery require validation."
+      },
+      {
+        "id": "access",
+        "label": "Access",
+        "focus": [
+          "argocd",
+          "backstage",
+          "dev",
+          "vcluster"
+        ],
+        "note": "Conceptual vCluster0.37 Shared Nodes flow; actual runtime, access and recovery require validation."
+      }
+    ],
+    "legend": {
+      "mode": "auto"
+    },
+    "output": "en-platform-engineering-08-vcluster-13.html",
+    "locale": "en"
+  },
+  "participants": [
+    {
+      "id": "dev",
+      "type": "external",
+      "label": "Developer",
+      "sublabel": "Environment requester"
+    },
+    {
+      "id": "backstage",
+      "type": "frontend",
+      "label": "Backstage",
+      "sublabel": "Portal / templates"
+    },
+    {
+      "id": "github",
+      "type": "backend",
+      "label": "GitHub",
+      "sublabel": "Reviewed GitOps source"
+    },
+    {
+      "id": "argocd",
+      "type": "cloud",
+      "label": "ArgoCD",
+      "sublabel": "ApplicationSet"
+    },
+    {
+      "id": "vcluster",
+      "type": "database",
+      "label": "vCluster on EKS",
+      "sublabel": "Host namespace"
+    }
+  ],
+  "segments": [
+    {
+      "from": 160,
+      "to": 280,
+      "label": "Environment request and PR approval"
+    },
+    {
+      "from": 300,
+      "to": 435,
+      "label": "GitOps provisioning"
+    },
+    {
+      "from": 455,
+      "to": 590,
+      "label": "Completion notification and access"
+    }
+  ],
+  "messages": [
+    {
+      "id": "request",
+      "from": "dev",
+      "to": "backstage",
+      "y": 190,
+      "label": "Request reviewed environment",
+      "variant": "default"
+    },
+    {
+      "id": "pr",
+      "from": "backstage",
+      "to": "github",
+      "y": 235,
+      "label": "Create PR; review and merge",
+      "variant": "default"
+    },
+    {
+      "id": "detect",
+      "from": "argocd",
+      "to": "github",
+      "y": 325,
+      "label": "Observe merged source",
+      "variant": "default"
+    },
+    {
+      "id": "sync",
+      "from": "argocd",
+      "to": "vcluster",
+      "y": 365,
+      "label": "Sync chart and values",
+      "variant": "emphasis"
+    },
+    {
+      "id": "init",
+      "from": "vcluster",
+      "to": "argocd",
+      "y": 410,
+      "label": "Actual readiness result",
+      "variant": "return"
+    },
+    {
+      "id": "status",
+      "from": "argocd",
+      "to": "backstage",
+      "y": 480,
+      "label": "Report deployment state",
+      "variant": "return"
+    },
+    {
+      "id": "ready",
+      "from": "backstage",
+      "to": "dev",
+      "y": 520,
+      "label": "Show status and approved access path",
+      "variant": "return"
+    },
+    {
+      "id": "kubectl",
+      "from": "dev",
+      "to": "vcluster",
+      "y": 570,
+      "label": "Access with scoped expiring credentials",
+      "variant": "emphasis"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "dev",
+      "from": 185,
+      "to": 580,
+      "type": "external"
+    },
+    {
+      "participant": "backstage",
+      "from": 190,
+      "to": 527,
+      "type": "frontend"
+    },
+    {
+      "participant": "github",
+      "from": 235,
+      "to": 335,
+      "type": "backend"
+    },
+    {
+      "participant": "argocd",
+      "from": 315,
+      "to": 488,
+      "type": "cloud"
+    },
+    {
+      "participant": "vcluster",
+      "from": 365,
+      "to": 580,
+      "type": "database"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "GitOps",
+      "items": [
+        "Prepared templates/actions create a PR",
+        "ArgoCD applies reviewed chart and values after merge",
+        "A debug log is not approval or readiness waiting"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Access and deletion",
+      "items": [
+        "Never expose kubeconfig credentials in public PRs",
+        "Verify endpoints, forwarding lifetime and token expiry",
+        "Review application/namespace deletion and retained data"
+      ]
+    }
+  ]
+}

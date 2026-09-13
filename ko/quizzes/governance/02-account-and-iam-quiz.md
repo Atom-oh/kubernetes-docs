@@ -4,72 +4,72 @@
 
 ---
 
-1. IAM Identity Center에서 순수 RBAC 확장의 실제 상한이 되는 조정 불가 quota는?
-   - A) 전체 Permission Set 수 3,500개
-   - B) Account당 프로비저닝된 Permission Set 500개
-   - C) Account당 Permission Set에 할당 가능한 group 수 100개
-   - D) API 전체 throttle 20 TPS
+1. Identity Center의100group 한도가 적용되는 범위는?
+   - A) 전체 조직의 group
+   - B) Account 전체의 모든 group
+   - C) 한 Account의 한 Permission Set 또는 한 application에 할당된 group
+   - D) 동시 로그인 사용자
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) Account당 Permission Set에 할당 가능한 group 수 100개**
+**정답: C) 한 Account의 한 Permission Set 또는 한 application에 할당된 group**
 
 **설명:**
-이 quota는 조정 불가능하며, 다수 팀이 공동으로 접근하는 Account(Shared Cluster Account 등)에서 팀×직무 조합의 group을 할당하면 100개에서 멈춥니다. 이 제약 때문에 다수 팀이 접근하는 Account에서는 "RBAC + 제한된 ABAC"가 조건별 선택이 아니라 필수로 격상되어야 합니다.
+Permission Set–Account 조합별 한도입니다. 서로 다른 Permission Set의 group을 합산한 Account 전체 상한이 아니며 ABAC를 무조건 강제하지 않습니다.
 
 </details>
 
 ---
 
-2. 분사(carve-out) 가능성이 있는 조직 단위에 대해 Shared VPC를 유지한 채 Account만 나누는 구조가 위험한 이유는?
-   - A) Shared VPC는 애초에 여러 Account를 지원하지 않는다
-   - B) RAM 기반 subnet 공유는 동일 Organization 내에서만 가능해서, 분사 시점에 Shared VPC 관계가 먼저 끊어진다
-   - C) IAM Identity Center가 분사된 조직을 인식하지 못한다
-   - D) EKS 클러스터가 자동으로 삭제된다
+2. Shared VPC를 사용하는 Account의 분사를 계획할 때 맞는 설명은?
+   - A) 기존 resource가 즉시 전부 삭제됨
+   - B) 동일 Organization 요건과 공유 해제 후 생성·교체 제한을 고려해 network 이전을 준비함
+   - C) RAM subnet은 외부 조직에도 그대로 공유 가능
+   - D) EKS가 자동으로 다른 VPC로 이동함
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) RAM 기반 subnet 공유는 동일 Organization 내에서만 가능해서, 분사 시점에 Shared VPC 관계가 먼저 끊어진다**
+**정답: B) 동일 Organization 요건과 공유 해제 후 생성·교체 제한을 고려해 network 이전을 준비함**
 
 **설명:**
-RAM(Resource Access Manager)의 subnet 공유는 동일 Organization 내에서만 가능합니다. 분사 가능성이 실재하면 Shared VPC를 유지한 채 Account만 나누는 구조로는 대응할 수 없고, 전용 VPC가 사실상 강제됩니다.
+공유 해제 후 기존 resource는 실행될 수 있지만 새 생성과 managed-service scaling/replacement가 영향을 받습니다. 장기 운영 가능한 독립 경로를 이탈 전에 설계합니다.
 
 </details>
 
 ---
 
-3. Workload Account + Shared Cluster Account 패턴에서 cross-account 리소스 접근이 필수적으로 갖는 구조는?
-   - A) 단일 role로 모든 Account에 직접 접근
-   - B) association role → target role(AssumeRole)의 2단 구조
-   - C) IAM user의 access key를 워크로드마다 발급
-   - D) aws-auth ConfigMap을 통한 직접 매핑
+3. Shared Cluster에서 다른 Account의 AWS resource를 접근하는 방법은?
+   - A) 항상 IAM user key 필요
+   - B) Target-role chaining, 지원 resource policy 또는 IRSA 등 요구에 맞는 경로 선택
+   - C) 모든 workload에 반드시2개씩 role 생성
+   - D) aws-auth만 수정하면 AWS 권한 부여됨
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) association role → target role(AssumeRole)의 2단 구조**
+**정답: B) Target-role chaining, 지원 resource policy 또는 IRSA 등 요구에 맞는 경로 선택**
 
 **설명:**
-EKS Pod Identity role은 클러스터와 같은 Account에만 존재할 수 있으므로, Shared Cluster Account 패턴에서 다른 Account의 리소스에 접근하려면 항상 association role이 target role을 assume하는 2단 구조가 필요합니다. 이는 최적화가 아니라 필수 구조입니다.
+Pod Identity 기본 role의 같은 Account 제약은 모든 요청에 target role을 강제하지 않습니다. EKS를 생성한 Cluster Account와 DB만 소유한 Workload Account도 구분합니다.
 
 </details>
 
 ---
 
-4. EKS Access Entries에서 Access Policy와 Kubernetes RBAC(group mapping)를 함께 사용할 때 주의해야 할 점은?
-   - A) 나중에 연결한 방식만 적용된다
-   - B) 두 경로의 허용 권한은 합쳐지며, 한쪽으로 다른 쪽을 제한할 수 없다
-   - C) 두 방식은 동시에 사용할 수 없다
-   - D) RBAC이 항상 Access Policy를 덮어쓴다
+4. Access Policy와 Kubernetes RBAC를 함께 쓰면?
+   - A) 마지막 설정만 적용
+   - B) 허용 권한이 합쳐지고 한쪽으로 다른 쪽을 제한할 수 없음
+   - C) 동시 사용 불가
+   - D) RBAC가 항상 덮어씀
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 두 경로의 허용 권한은 합쳐지며, 한쪽으로 다른 쪽을 제한할 수 없다**
+**정답: B) 허용 권한이 합쳐지고 한쪽으로 다른 쪽을 제한할 수 없음**
 
 **설명:**
-Access Policy와 RBAC를 함께 쓰면 허용 권한이 합쳐집니다. 따라서 Principal별로 주 권한 부여 경로를 하나만 지정하고, 두 경로의 중복 grant를 자동으로 검사하는 절차가 필수 통제로 필요합니다. 자동화하지 않으면 시간이 지나며 권한이 의도치 않게 확대됩니다.
+의도된 grant와 중복 권한을 검토합니다. 자동 검사는 유용하지만 API 사용의 필수 조건은 아닙니다.
 
 </details>

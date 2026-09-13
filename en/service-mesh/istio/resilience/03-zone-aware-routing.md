@@ -1,6 +1,6 @@
 # Zone Aware Routing
 
-> **Reviewed**: September 11, 2026 · Istio1.31. This chapter uses `localityLbSetting` for locality weighting/priority failover. The separate `zoneAwareLbSetting` API has different prerequisites and semantics; do not mix their fields. Examples assume a sidecar mesh and independent same-host policy alternatives. They have not been deployed or load-tested.
+> **Last Updated**: September 11, 2026 · Istio1.31. This chapter uses `localityLbSetting` for locality weighting/priority failover. The separate `zoneAwareLbSetting` API has different prerequisites and semantics; do not mix their fields. Examples assume a sidecar mesh and independent same-host policy alternatives. They have not been deployed or load-tested.
 
 Zone Aware Routing is a feature that optimizes traffic by recognizing Kubernetes Availability Zones. It reduces latency and cross-AZ data transfer costs by prioritizing communication within the same AZ.
 

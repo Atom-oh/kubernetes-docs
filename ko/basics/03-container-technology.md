@@ -717,7 +717,7 @@ AWS의 관리형 컨테이너 이미지 레지스트리 서비스입니다.
 * [Docker 공식 문서](https://docs.docker.com/)
 * [OCI (Open Container Initiative)](https://opencontainers.org/)
 * [containerd 프로젝트](https://containerd.io/)
-* [CNCF 컨테이너 런타임 개요](https://www.cncf.io/blog/2019/06/27/an-introduction-to-container-runtimes/)
+* [Kubernetes 컨테이너 런타임 개요](https://kubernetes.io/docs/setup/production-environment/container-runtimes/)
 * [AWS 컨테이너 서비스](https://aws.amazon.com/containers/)
 
 ## 검증 참고 자료

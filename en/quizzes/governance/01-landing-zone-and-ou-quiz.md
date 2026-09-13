@@ -4,72 +4,72 @@
 
 ---
 
-1. What is the prerequisite for activating `IdentityCenterBaseline` in Control Tower Landing Zone 4.0?
-   - A) No baseline is required — it can be activated independently
-   - B) `CentralSecurityRolesBaseline` must already be active, which in turn requires `CentralConfigBaseline`
-   - C) `BackupCentralVaultBaseline` must already be active
-   - D) The Security OU must be manually created first
+1. What precedes IdentityCenterBaseline activation in Control Tower 4.0?
+   - A) No baseline
+   - B) CentralSecurityRolesBaseline and its prerequisite CentralConfigBaseline
+   - C) BackupCentralVaultBaseline
+   - D) Identity Center itself requires Config in every environment
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) `CentralSecurityRolesBaseline` must already be active, which in turn requires `CentralConfigBaseline`**
+**Answer: B) CentralSecurityRolesBaseline and its prerequisite CentralConfigBaseline**
 
 **Explanation:**
-Landing Zone 4.0's baseline activation dependency chain is `CentralConfigBaseline` → `CentralSecurityRolesBaseline` → `IdentityCenterBaseline`/`BackupAdminBaseline`/`BackupCentralVaultBaseline`. This means whether Config is enabled directly determines whether the Identity Center baseline is usable, so the two can't be treated as independent decisions.
+This is a dependency of the Control Tower-managed baseline, not a universal Config prerequisite for the Identity Center service.
 
 </details>
 
 ---
 
-2. Which statement correctly describes the Security OU in Control Tower Landing Zone 4.0?
-   - A) Administrators can freely designate a Security OU, just like in 3.x
-   - B) The OU containing the service integration Accounts is automatically designated as the Security OU
-   - C) The Security OU has been fully deprecated as of 4.0
-   - D) Every Account belongs to the Security OU by default
+2. Which statement describes the Control Tower 4.0 Security OU?
+   - A) Every OU is a Security OU
+   - B) The OU containing service-integration Accounts is designated the Security OU
+   - C) Security OUs were removed
+   - D) Every general Account there receives all baselines
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) The OU containing the service integration Accounts is automatically designated as the Security OU**
+**Answer: B) The OU containing service-integration Accounts is designated the Security OU**
 
 **Explanation:**
-In 4.0, administrators no longer manually designate a Security OU — it's automatically assigned to the OU holding the service integration Accounts. This causes derived constraints, such as AWSControlTowerBaseline and the Config Baseline not being applicable to that OU, and general Accounts placed there not receiving baseline resources.
+Integration Accounts share a parent OU and are managed through the landing zone. AWSControlTowerBaseline/ConfigBaseline do not apply to that Security OU. Separate placement of general operations Accounts is a design choice.
 
 </details>
 
 ---
 
-3. Why is the "Layered bundle" SCP attachment strategy favorable from a quota perspective?
-   - A) Because SCP document size limits are larger
-   - B) Because inherited policies don't consume the per-entity attachment limit (10)
-   - C) Because it shares the same quota as RCP
-   - D) Because Root has no limit on the number of SCPs
+3. Why can layered SCP bundles conserve direct-attachment quota?
+   - A) Document limits disappear
+   - B) Inherited policies do not consume the child’s direct attachments
+   - C) Child allows override parent denies
+   - D) Root has unlimited quota
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Because inherited policies don't consume the per-entity attachment limit (10)**
+**Answer: B) Inherited policies do not consume the child’s direct attachments**
 
 **Explanation:**
-The Layered bundle strategy keeps a minimal, exception-free SCP at Root and inherits per-OU policy bundles down the tree, actively leveraging inheritance to conserve the direct-attach limit per OU. In contrast, fully-specified per-OU direct attachment doesn't use inheritance, so a single OU can consume the entire 10-attachment limit on its own.
+The direct-attachment limit is 10 SCPs per entity. Inheritance does not consume these slots, but effective constraints from parent policies still apply.
 
 </details>
 
 ---
 
-4. Why does RCP (Resource Control Policy) need to be treated differently from SCP?
-   - A) RCP has a larger document size than SCP
-   - B) RCP allows more total org-wide attachments than SCP
-   - C) RCP only has 4 usable slots and its document size is half that of SCP, leaving no room for a layered-bundle-style strategy
-   - D) RCP is a policy that grants permissions to a principal
+4. Which statement correctly describes RCP attachments and inheritance?
+   - A) They grant permissions directly
+   - B) They cannot be inherited
+   - C) RCPFullAWSAccess uses one of five slots; design the remaining direct slots and inheritance together
+   - D) Their size limit equals SCPs
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) RCP only has 4 usable slots and its document size is half that of SCP, leaving no room for a layered-bundle-style strategy**
+**Answer: C) RCPFullAWSAccess uses one of five slots; design the remaining direct slots and inheritance together**
 
 **Explanation:**
-RCP allows at most 5 attachments per entity (including RCPFullAWSAccess, 4 usable) and a document size of 5,120 characters, half of SCP's. Because of this, RCP is recommended to be reserved for a small number of absolute organization-wide rules, like blocking external principal access or confused-deputy defense, leaving fine-grained control to SCPs and resource policies.
+Four direct slots remain and documents allow 5,120 characters. This budget does not prohibit layered inheritance. Check supported resources and principal exceptions.
 
 </details>

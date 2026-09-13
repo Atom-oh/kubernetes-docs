@@ -1,0 +1,2531 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-13T01:06:33.866061+00:00",
+  "scope": {
+    "markdown": 28,
+    "guides": 14,
+    "quizQuestions": 56,
+    "originalLines": 2880,
+    "uniqueOriginalCodeBlocks": 1,
+    "images": 0
+  },
+  "originalFiles": [
+    {
+      "path": "ko/governance/00-governance-overview.md",
+      "lines": 66,
+      "sha256": "d30fa57886c18b15baba648d118b95134887697a9561137c5bfcbc3f6c800350"
+    },
+    {
+      "path": "ko/governance/01-landing-zone-and-ou.md",
+      "lines": 146,
+      "sha256": "5386cae4f1044379eb6f2bca1ee44e3281e4e0657a5226e75a948edb7b3a10b7"
+    },
+    {
+      "path": "ko/governance/02-account-and-iam.md",
+      "lines": 112,
+      "sha256": "6b7f81d5673dc51b31e728e5dc42846673b59a8d5802788e1cef673eee2379dd"
+    },
+    {
+      "path": "ko/governance/03-eks-multi-account-multi-cluster.md",
+      "lines": 127,
+      "sha256": "6f6bdcf0d67154dc31262705ee01a06620d871efe2e5399d689f3478fb84c2bd"
+    },
+    {
+      "path": "ko/governance/04-shared-vpc-and-connectivity.md",
+      "lines": 186,
+      "sha256": "c3dd59ce4727b9be7caba7d46999acd083b0dc2faf4ac18e29ad0e12bd16941c"
+    },
+    {
+      "path": "ko/governance/05-data-security-boundaries.md",
+      "lines": 132,
+      "sha256": "4fe63d3c6b176b1f1c0777e4667a589a8e05b9a0cf51a830a776a986fa55717a"
+    },
+    {
+      "path": "ko/governance/06-decision-framework-and-poc.md",
+      "lines": 146,
+      "sha256": "2aeecb29226a8ca789efbda747d6451c82503cace0f553f22bb7088140e929b1"
+    },
+    {
+      "path": "ko/quizzes/governance/00-governance-overview-quiz.md",
+      "lines": 57,
+      "sha256": "dbae310f86075557339862bb9154287dee4781d6bc95f211302a74dbfe100d36"
+    },
+    {
+      "path": "ko/quizzes/governance/01-landing-zone-and-ou-quiz.md",
+      "lines": 75,
+      "sha256": "51333e306970c6c4c8d0e7dbdd54508dc6cad79378ee1c3626a66a349366f2c7"
+    },
+    {
+      "path": "ko/quizzes/governance/02-account-and-iam-quiz.md",
+      "lines": 75,
+      "sha256": "54f48d381d56179b420c2f225bae4b2d8fe8826696164efb255eb9027c163dd4"
+    },
+    {
+      "path": "ko/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+      "lines": 75,
+      "sha256": "bd6136dbfbc06baf09bc467f777842214bfff78b1ec66444472148e8a0b5aa3c"
+    },
+    {
+      "path": "ko/quizzes/governance/04-shared-vpc-and-connectivity-quiz.md",
+      "lines": 93,
+      "sha256": "00f998af2ec2d2b39cdda5244bee2359c6202dc65bfd4d35a131c17a862aac9d"
+    },
+    {
+      "path": "ko/quizzes/governance/05-data-security-boundaries-quiz.md",
+      "lines": 75,
+      "sha256": "77fd7621aba0e76765f74f0b6fcddd95592a6cd77fcce335637ef8a681beac30"
+    },
+    {
+      "path": "ko/quizzes/governance/06-decision-framework-and-poc-quiz.md",
+      "lines": 75,
+      "sha256": "c5ace1b8c080fe590276f797851f43c3282b7fb60b69ac922c1c340752773d50"
+    },
+    {
+      "path": "en/governance/00-governance-overview.md",
+      "lines": 66,
+      "sha256": "69dca3cb22ef43ea25afdf591324babe34976496c94037306f01ad64fd1c8fd5"
+    },
+    {
+      "path": "en/governance/01-landing-zone-and-ou.md",
+      "lines": 146,
+      "sha256": "ec6419e3588dc1e5d0b090ddc33c23f0cbbac4785201dcee68142dd9a1ba16ea"
+    },
+    {
+      "path": "en/governance/02-account-and-iam.md",
+      "lines": 112,
+      "sha256": "f95a67398c288a622cb4cd95240ba3c09634f2f22262a3e9b5ef5cdfffd95d51"
+    },
+    {
+      "path": "en/governance/03-eks-multi-account-multi-cluster.md",
+      "lines": 127,
+      "sha256": "b18e64f99dd9af7d20d07c84f6cac02f55366c9d17fe7597d918c4dbb370397e"
+    },
+    {
+      "path": "en/governance/04-shared-vpc-and-connectivity.md",
+      "lines": 186,
+      "sha256": "e696f23bf1fff6a8da18c136c1e01b0a59e0c8e615f66fb43064e9b8d3eafcbe"
+    },
+    {
+      "path": "en/governance/05-data-security-boundaries.md",
+      "lines": 132,
+      "sha256": "1cf9cfc6f9b15794c0b43456aa812a4e7a8c3695f234523ee0d2d13ac3c08a0f"
+    },
+    {
+      "path": "en/governance/06-decision-framework-and-poc.md",
+      "lines": 146,
+      "sha256": "db4f5ff7387bb0b34e849114ac06ef0c8dd2e7d4ad729df2a88b2f15c4434a93"
+    },
+    {
+      "path": "en/quizzes/governance/00-governance-overview-quiz.md",
+      "lines": 57,
+      "sha256": "5cdf9a0d9b104082d1d06414584b88710050b465e6abdda18272eb58e027153d"
+    },
+    {
+      "path": "en/quizzes/governance/01-landing-zone-and-ou-quiz.md",
+      "lines": 75,
+      "sha256": "a22a1bc7f29655aba292b8498b2dc9a84e2227ac5befc00d7a579fd8f0dc3955"
+    },
+    {
+      "path": "en/quizzes/governance/02-account-and-iam-quiz.md",
+      "lines": 75,
+      "sha256": "7bab89ad749d72e0aa8ba58d9559b6db3ad75e6c7472ebf3b1db3f583f62fcef"
+    },
+    {
+      "path": "en/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+      "lines": 75,
+      "sha256": "fe1a87ab732fc5c5edfc8de62fb25079a1b9a4566ab4e528ba780a17d40ef959"
+    },
+    {
+      "path": "en/quizzes/governance/04-shared-vpc-and-connectivity-quiz.md",
+      "lines": 93,
+      "sha256": "1b49f9e5176d5fa51b8c5690954093583aad5598aed148913c919a0e8c50fbe6"
+    },
+    {
+      "path": "en/quizzes/governance/05-data-security-boundaries-quiz.md",
+      "lines": 75,
+      "sha256": "0f8c9527c9ba3d713f98bbf4099717b6229f791f8226a69ce89ec92ad56362c0"
+    },
+    {
+      "path": "en/quizzes/governance/06-decision-framework-and-poc-quiz.md",
+      "lines": 75,
+      "sha256": "14db0ce3bc16fa1da08ded19ca639eba074a196a5ec07b6257820a524e81a13c"
+    }
+  ],
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/governance/00-governance-overview.md",
+        "sha256": "774ba3048039f9fa32b9cf4c7663d4f5a2c6f7fd30aefc119bad6658b1432d5e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "enterprise-cloud-governance-overview"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-the-problem-this-section-addresses"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-why-account-vpc-eks-and-data-boundaries-should-be-considered-separately"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-service-constraints-to-check-when-connecting-boundaries"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-shared-first-vs-dedicated-first"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-a-stable-workload-id-and-mutable-metadata"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-what-s-in-this-section"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "enterprise-cloud-governance-overview",
+          "_1-the-problem-this-section-addresses",
+          "_2-why-account-vpc-eks-and-data-boundaries-should-be-considered-separately",
+          "_3-four-conditions-where-aws-forces-boundaries-together",
+          "_3-service-constraints-to-check-when-connecting-boundaries",
+          "_4-shared-first-vs-dedicated-first",
+          "_5-a-stable-workload-id-and-mutable-metadata",
+          "_6-what-s-in-this-section",
+          "references"
+        ]
+      },
+      {
+        "path": "en/governance/01-landing-zone-and-ou.md",
+        "sha256": "ac97656f0abd1f071e9d48a3a5252da96e7d0a56bc1965ff5419070a98c9fd98",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "landing-zone-ous-and-organizational-control"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-control-tower-landing-zone-4-0-s-baseline-dependency-chain"
+          },
+          {
+            "tag": "h3",
+            "id": "the-activation-dependency-chain"
+          },
+          {
+            "tag": "h3",
+            "id": "security-ou-placement-and-baseline-scope"
+          },
+          {
+            "tag": "h3",
+            "id": "centralizedlogging-deactivation-behavior-changed"
+          },
+          {
+            "tag": "h3",
+            "id": "splitting-responsibility-between-control-tower-and-the-internal-pipeline"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-auto-enrollment"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-quotas-per-organizational-policy-type"
+          },
+          {
+            "tag": "h3",
+            "id": "scp-attachment-location-strategies"
+          },
+          {
+            "tag": "h3",
+            "id": "role-separation-by-policy-type-confirmed-facts"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-allow-list-vs-deny-list"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-ou-design-options"
+          },
+          {
+            "tag": "h2",
+            "id": "next"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "landing-zone-ous-and-organizational-control",
+          "_1-control-tower-landing-zone-4-0-s-baseline-dependency-chain",
+          "the-activation-dependency-chain",
+          "the-security-ou-is-no-longer-freely-designable",
+          "security-ou-placement-and-baseline-scope",
+          "centralizedlogging-deactivation-behavior-changed",
+          "splitting-responsibility-between-control-tower-and-the-internal-pipeline",
+          "_2-auto-enrollment",
+          "_3-quotas-per-organizational-policy-type",
+          "scp-attachment-location-strategies",
+          "role-separation-by-policy-type-confirmed-facts",
+          "_4-allow-list-vs-deny-list",
+          "_5-ou-design-options",
+          "next",
+          "references"
+        ]
+      },
+      {
+        "path": "en/governance/02-account-and-iam.md",
+        "sha256": "92b5ab6197f40dd76662ed0388f84122eb53e1ea771cffced03353ef7d4356af",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "account-structure-and-iam-boundaries"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-account-partitioning-what-should-the-basis-be"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-account-and-eks-runtime-relationship"
+          },
+          {
+            "tag": "h3",
+            "id": "eks-related-quotas-—-where-there-s-headroom-and-where-you-ll-actually-hit-a-wall"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-human-access-to-aws-workforce-iam"
+          },
+          {
+            "tag": "h3",
+            "id": "the-actual-ceilings-for-iam-identity-center"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-workload-application-automation-access-to-aws"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-kubernetes-api-access"
+          },
+          {
+            "tag": "h2",
+            "id": "next"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "account-structure-and-iam-boundaries",
+          "_1-account-partitioning-what-should-the-basis-be",
+          "_2-account-and-eks-runtime-relationship",
+          "eks-related-quotas-—-where-there-s-headroom-and-where-you-ll-actually-hit-a-wall",
+          "_3-human-access-to-aws-workforce-iam",
+          "the-actual-ceilings-for-iam-identity-center",
+          "_4-workload-application-automation-access-to-aws",
+          "_5-kubernetes-api-access",
+          "next",
+          "references"
+        ]
+      },
+      {
+        "path": "en/governance/03-eks-multi-account-multi-cluster.md",
+        "sha256": "9670da603db2c838b4be6889e4d3f7db0e3a4d33d76aa4820cc13a005be45b18",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "multi-account-multi-cluster-eks-architecture"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-cluster-consolidation-approaches"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-a-b-eks-runtime-splitting-the-blast-radius-across-two-clusters"
+          },
+          {
+            "tag": "h3",
+            "id": "define-what-you-re-protecting-against-first"
+          },
+          {
+            "tag": "h3",
+            "id": "check-shared-dns-failure-modes-and-capacity"
+          },
+          {
+            "tag": "h3",
+            "id": "arc-zonal-shift-can-cause-outages-if-you-haven-t-pre-provisioned-spare-capacity"
+          },
+          {
+            "tag": "h3",
+            "id": "the-pitfall-in-pre-provisioned-capacity-multiplier-math"
+          },
+          {
+            "tag": "h3",
+            "id": "cross-az-cost-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "upgrade-strategy-is-tied-directly-to-the-reason-a-b-exists"
+          },
+          {
+            "tag": "h3",
+            "id": "worker-az-count-and-control-plane-subnets-are-separate-concepts"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-full-workload-cell-—-an-alternative-for-stronger-isolation"
+          },
+          {
+            "tag": "h2",
+            "id": "next"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "multi-account-multi-cluster-eks-architecture",
+          "_1-cluster-consolidation-approaches",
+          "_2-a-b-eks-runtime-splitting-the-blast-radius-across-two-clusters",
+          "define-what-you-re-protecting-against-first",
+          "coredns-is-the-most-common-single-point-of-failure",
+          "check-shared-dns-failure-modes-and-capacity",
+          "arc-zonal-shift-can-cause-outages-if-you-haven-t-pre-provisioned-spare-capacity",
+          "the-pitfall-in-pre-provisioned-capacity-multiplier-math",
+          "cross-az-cost-optimization",
+          "upgrade-strategy-is-tied-directly-to-the-reason-a-b-exists",
+          "worker-az-count-and-control-plane-subnets-are-separate-concepts",
+          "_3-full-workload-cell-—-an-alternative-for-stronger-isolation",
+          "next",
+          "references"
+        ]
+      },
+      {
+        "path": "en/governance/04-shared-vpc-and-connectivity.md",
+        "sha256": "6891079fbf559391c9f05d5c1e64d095018543df99111d4bc638a4b4904aaea8",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "shared-vpc-and-connectivity"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-shared-vpc-owner-participant-permissions-—-a-common-misunderstanding"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-calculate-shared-vpc-quotas-by-their-actual-scope"
+          },
+          {
+            "tag": "h3",
+            "id": "minimal-shared-vpc-pool-vs-per-workload-group-shared-vpcs"
+          },
+          {
+            "tag": "h3",
+            "id": "key-transit-gateway-quotas"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-az-ids-and-shared-vpc"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-regional-nat-gateway"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-tgw-network-firewall-central-inspection"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-aws-apis-and-vpc-endpoints"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-route-53-profiles-and-hybrid-dns"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-vpc-to-vpc-connectivity-options"
+          },
+          {
+            "tag": "h3",
+            "id": "vpc-lattice-constraints"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-east-west-inspection-options"
+          },
+          {
+            "tag": "h2",
+            "id": "next"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "shared-vpc-and-connectivity",
+          "_1-shared-vpc-owner-participant-permissions-—-a-common-misunderstanding",
+          "_2-the-real-ceiling-on-shared-vpc-—-it-s-not-the-cidr",
+          "_2-calculate-shared-vpc-quotas-by-their-actual-scope",
+          "minimal-shared-vpc-pool-vs-per-workload-group-shared-vpcs",
+          "key-transit-gateway-quotas",
+          "_3-az-ids-and-shared-vpc",
+          "_4-regional-nat-gateway",
+          "_5-tgw-network-firewall-central-inspection",
+          "_6-aws-apis-and-vpc-endpoints",
+          "_7-route-53-profiles-and-hybrid-dns",
+          "_8-vpc-to-vpc-connectivity-options",
+          "vpc-lattice-constraints",
+          "_9-east-west-inspection-options",
+          "next",
+          "references"
+        ]
+      },
+      {
+        "path": "en/governance/05-data-security-boundaries.md",
+        "sha256": "374ef3e2b35efe4e1510a13c477c0b394f425b23f65028558ca2cf64707ab46c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "data-and-security-boundaries"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-data-ownership-options"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-validate-cross-account-recovery-by-resource-and-vault-type"
+          },
+          {
+            "tag": "h3",
+            "id": "sharing-rds-snapshots"
+          },
+          {
+            "tag": "h3",
+            "id": "standard-aws-backup-vault-copy-then-restore"
+          },
+          {
+            "tag": "h3",
+            "id": "logically-air-gapped-vault-restore-directly-from-a-shared-account"
+          },
+          {
+            "tag": "h3",
+            "id": "restrict-unapproved-copy-and-sharing"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-isolating-the-pii-data-tier"
+          },
+          {
+            "tag": "h3",
+            "id": "blocking-dev-qa-access-to-production-s-original-pii-data"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-secrets-manager-kms-cross-account"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-aws-native-security-telemetry-vs-existing-cnapp"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-services-confirmed-to-support-resource-creation-in-a-shared-subnet"
+          },
+          {
+            "tag": "h2",
+            "id": "next"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "data-and-security-boundaries",
+          "_1-data-ownership-options",
+          "_2-cross-account-data-recovery-constraints-—-the-conditions-that-actually-change-your-decision",
+          "_2-validate-cross-account-recovery-by-resource-and-vault-type",
+          "rds-snapshots",
+          "sharing-rds-snapshots",
+          "aws-backup-cross-account-copy",
+          "standard-aws-backup-vault-copy-then-restore",
+          "logically-air-gapped-vault-restore-directly-from-a-shared-account",
+          "summary",
+          "restrict-unapproved-copy-and-sharing",
+          "_3-isolating-the-pii-data-tier",
+          "blocking-dev-qa-access-to-production-s-original-pii-data",
+          "_4-secrets-manager-kms-cross-account",
+          "_5-aws-native-security-telemetry-vs-existing-cnapp",
+          "_6-services-confirmed-to-support-resource-creation-in-a-shared-subnet",
+          "next",
+          "references"
+        ]
+      },
+      {
+        "path": "en/governance/06-decision-framework-and-poc.md",
+        "sha256": "bdba3df8a55677f15b19bdbe3a67120049359b60192252adda346f1a950c24fd",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "decision-framework-and-poc-design"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-easily-missed-decision-factors"
+          },
+          {
+            "tag": "h3",
+            "id": "cuj-level-rto-rpo-targets-—-the-biggest-gap"
+          },
+          {
+            "tag": "h3",
+            "id": "on-call-ownership-during-incidents"
+          },
+          {
+            "tag": "h3",
+            "id": "target-kubernetes-version-and-upgrade-strategy"
+          },
+          {
+            "tag": "h3",
+            "id": "separate-weighted-forwarding-from-target-group-fail-open"
+          },
+          {
+            "tag": "h3",
+            "id": "controlling-unused-regions"
+          },
+          {
+            "tag": "h3",
+            "id": "cost-observability-and-when-tag-enforcement-happens"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-designing-the-decision-matrix"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-poc-design-patterns"
+          },
+          {
+            "tag": "h3",
+            "id": "poc-0-decision-matrix-dry-run-run-before-all-other-pocs"
+          },
+          {
+            "tag": "h3",
+            "id": "poc-1-shared-cluster-workload-account"
+          },
+          {
+            "tag": "h3",
+            "id": "poc-2-a-b-eks-runtime-and-az-configuration-prerequisite-cuj-level-rto-rpo-defined"
+          },
+          {
+            "tag": "h3",
+            "id": "poc-3-minimal-shared-vpc-shared-vpc-pool"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-relationship-to-ai-driven-operations"
+          },
+          {
+            "tag": "h2",
+            "id": "related-documents"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "decision-framework-and-poc-design",
+          "_1-easily-missed-decision-factors",
+          "cuj-level-rto-rpo-targets-—-the-biggest-gap",
+          "on-call-ownership-during-incidents",
+          "target-kubernetes-version-and-upgrade-strategy",
+          "alb-weighted-target-group-s-fail-open-behavior",
+          "separate-weighted-forwarding-from-target-group-fail-open",
+          "controlling-unused-regions",
+          "cost-observability-and-when-tag-enforcement-happens",
+          "_2-designing-the-decision-matrix",
+          "_3-poc-design-patterns",
+          "poc-0-decision-matrix-dry-run-run-before-all-other-pocs",
+          "poc-1-shared-cluster-workload-account",
+          "poc-2-a-b-eks-runtime-and-az-configuration-prerequisite-cuj-level-rto-rpo-defined",
+          "poc-3-minimal-shared-vpc-shared-vpc-pool",
+          "_4-relationship-to-ai-driven-operations",
+          "related-documents",
+          "references"
+        ]
+      },
+      {
+        "path": "en/quizzes/governance/00-governance-overview-quiz.md",
+        "sha256": "5ff0de05d1a8e2b469ab6197ffb6ccacda44aeb3d7411d0a238cc6b80ea7b2f8",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "enterprise-cloud-governance-overview-quiz"
+          }
+        ],
+        "renderedIds": [
+          "enterprise-cloud-governance-overview-quiz"
+        ]
+      },
+      {
+        "path": "en/quizzes/governance/01-landing-zone-and-ou-quiz.md",
+        "sha256": "d0c3cb1db92dd8a2c9f2e5738da5fc1b6d02e7a0dc49774fb5b17fedf477f410",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "landing-zone-ous-and-organizational-control-quiz"
+          }
+        ],
+        "renderedIds": [
+          "landing-zone-ous-and-organizational-control-quiz"
+        ]
+      },
+      {
+        "path": "en/quizzes/governance/02-account-and-iam-quiz.md",
+        "sha256": "979ab2bd08634d9a4ac5768ffcd6694eca7a969ac833d1acf2a709aafc3c3386",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "account-structure-and-iam-boundaries-quiz"
+          }
+        ],
+        "renderedIds": [
+          "account-structure-and-iam-boundaries-quiz"
+        ]
+      },
+      {
+        "path": "en/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+        "sha256": "b6c454eec258ab040f96e668a8c6cf67273724c0610297a8085576608a11670c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "multi-account-multi-cluster-eks-architecture-quiz"
+          }
+        ],
+        "renderedIds": [
+          "multi-account-multi-cluster-eks-architecture-quiz"
+        ]
+      },
+      {
+        "path": "en/quizzes/governance/04-shared-vpc-and-connectivity-quiz.md",
+        "sha256": "284b3874d23206af1083aafe5e35b84f042020ac3b956403ab42d5abd4ee6c46",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "shared-vpc-and-connectivity-quiz"
+          }
+        ],
+        "renderedIds": [
+          "shared-vpc-and-connectivity-quiz"
+        ]
+      },
+      {
+        "path": "en/quizzes/governance/05-data-security-boundaries-quiz.md",
+        "sha256": "468bd61e631e2e8c21587b5807b38e49cf01f71e94ef1289f39977be051ccf95",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "data-and-security-boundaries-quiz"
+          }
+        ],
+        "renderedIds": [
+          "data-and-security-boundaries-quiz"
+        ]
+      },
+      {
+        "path": "en/quizzes/governance/06-decision-framework-and-poc-quiz.md",
+        "sha256": "f9c12cad632999b5a41799b8e5fbf8e3d606848891b217ff06fa9dd570b071a2",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "decision-framework-and-poc-design-quiz"
+          }
+        ],
+        "renderedIds": [
+          "decision-framework-and-poc-design-quiz"
+        ]
+      },
+      {
+        "path": "ko/governance/00-governance-overview.md",
+        "sha256": "bd07d7eb8a10278329b793334110d206075b5ac68f6784fb9802e52c9eb02979",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "엔터프라이즈-클라우드-거버넌스-개요"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-이-섹션이-다루는-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-왜-account-vpc-eks-data-경계를-따로-생각해야-하는가"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-경계를-연결할-때-확인할-서비스-제약"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-공유-우선-vs-전용-우선"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-안정적인-workload-id와-변경-가능한-metadata"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-이-섹션의-구성"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "엔터프라이즈-클라우드-거버넌스-개요",
+          "_1-이-섹션이-다루는-문제",
+          "_2-왜-account-vpc-eks-data-경계를-따로-생각해야-하는가",
+          "_3-aws가-경계를-강제로-묶는-4가지-조건",
+          "_3-경계를-연결할-때-확인할-서비스-제약",
+          "_4-공유-우선-vs-전용-우선",
+          "_5-안정적인-workload-id와-변경-가능한-metadata",
+          "_6-이-섹션의-구성",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "ko/governance/01-landing-zone-and-ou.md",
+        "sha256": "6b1c4059046750710fc59651d367a7c4b309421dc4dc80edb03b836981b46f52",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "landing-zone-ou와-조직-control"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-control-tower-landing-zone-4-0의-baseline-의존-관계"
+          },
+          {
+            "tag": "h3",
+            "id": "활성화-의존-체인"
+          },
+          {
+            "tag": "h3",
+            "id": "security-ou의-배치와-baseline-범위"
+          },
+          {
+            "tag": "h3",
+            "id": "centralizedlogging-비활성화-동작-변경"
+          },
+          {
+            "tag": "h3",
+            "id": "control-tower와-내부-파이프라인의-책임-분리"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-auto-enrollment"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-ou와-조직-control-정책-유형별-quota"
+          },
+          {
+            "tag": "h3",
+            "id": "scp-연결-위치-전략"
+          },
+          {
+            "tag": "h3",
+            "id": "정책-유형별-역할-구분-확인된-사실"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-허용·차단-방식-allow-list-vs-deny-list"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-ou-설계-옵션"
+          },
+          {
+            "tag": "h2",
+            "id": "다음"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "landing-zone-ou와-조직-control",
+          "_1-control-tower-landing-zone-4-0의-baseline-의존-관계",
+          "활성화-의존-체인",
+          "security-ou는-더-이상-자유롭게-설계할-수-없다",
+          "security-ou의-배치와-baseline-범위",
+          "centralizedlogging-비활성화-동작-변경",
+          "control-tower와-내부-파이프라인의-책임-분리",
+          "_2-auto-enrollment",
+          "_3-ou와-조직-control-정책-유형별-quota",
+          "scp-연결-위치-전략",
+          "정책-유형별-역할-구분-확인된-사실",
+          "_4-허용·차단-방식-allow-list-vs-deny-list",
+          "_5-ou-설계-옵션",
+          "다음",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "ko/governance/02-account-and-iam.md",
+        "sha256": "0facecdfd7ec4fc5da3ac42bf3ba7f44970943d582fb9540c9a74a8248f7f050",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "account-구성과-iam-경계"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-account-partitioning-무엇을-기준으로-나눌-것인가"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-account와-eks-실행-관계"
+          },
+          {
+            "tag": "h3",
+            "id": "eks-관련-quota-—-여유-있는-항목과-먼저-막히는-항목"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-사람의-aws-접근-workforce-iam"
+          },
+          {
+            "tag": "h3",
+            "id": "iam-identity-center의-실제-상한"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-워크로드-애플리케이션·자동화-의-aws-접근"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-kubernetes-api-접근"
+          },
+          {
+            "tag": "h2",
+            "id": "다음"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "account-구성과-iam-경계",
+          "_1-account-partitioning-무엇을-기준으로-나눌-것인가",
+          "_2-account와-eks-실행-관계",
+          "eks-관련-quota-—-여유-있는-항목과-먼저-막히는-항목",
+          "_3-사람의-aws-접근-workforce-iam",
+          "iam-identity-center의-실제-상한",
+          "_4-워크로드-애플리케이션·자동화-의-aws-접근",
+          "_5-kubernetes-api-접근",
+          "다음",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "ko/governance/03-eks-multi-account-multi-cluster.md",
+        "sha256": "33b7f351537a13c591c4e24f9f4d27c8a7c73de51734d6eb813af6a1df476fae",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "eks-멀티-계정·멀티-클러스터-아키텍처"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-클러스터-수용-방식"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-a-b-eks-runtime-두-클러스터로-장애-경계-나누기"
+          },
+          {
+            "tag": "h3",
+            "id": "무엇으로부터-보호하는가를-먼저-정의한다"
+          },
+          {
+            "tag": "h3",
+            "id": "dns의-공통-장애와-용량-확인"
+          },
+          {
+            "tag": "h3",
+            "id": "arc-zonal-shift는-사전-확보된-여유-capacity-없이는-오히려-장애를-유발한다"
+          },
+          {
+            "tag": "h3",
+            "id": "사전-capacity-배수-계산의-함정"
+          },
+          {
+            "tag": "h3",
+            "id": "cross-az-비용-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "업그레이드-전략은-a-b의-존재-이유와-직결된다"
+          },
+          {
+            "tag": "h3",
+            "id": "worker-az-수와-control-plane-subnet은-별개-개념"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-full-workload-cell-—-더-강한-격리가-필요할-때의-대안"
+          },
+          {
+            "tag": "h2",
+            "id": "다음"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "eks-멀티-계정·멀티-클러스터-아키텍처",
+          "_1-클러스터-수용-방식",
+          "_2-a-b-eks-runtime-두-클러스터로-장애-경계-나누기",
+          "무엇으로부터-보호하는가를-먼저-정의한다",
+          "coredns가-가장-흔한-단일-실패-지점",
+          "dns의-공통-장애와-용량-확인",
+          "arc-zonal-shift는-사전-확보된-여유-capacity-없이는-오히려-장애를-유발한다",
+          "사전-capacity-배수-계산의-함정",
+          "cross-az-비용-최적화",
+          "업그레이드-전략은-a-b의-존재-이유와-직결된다",
+          "worker-az-수와-control-plane-subnet은-별개-개념",
+          "_3-full-workload-cell-—-더-강한-격리가-필요할-때의-대안",
+          "다음",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "ko/governance/04-shared-vpc-and-connectivity.md",
+        "sha256": "acd59c6701af220bb33d6463aae3941fa726a5697be1a72b6e622cb45cc884df",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "shared-vpc와-connectivity"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-shared-vpc의-owner-participant-권한-—-흔히-오해하는-부분"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-shared-vpc-quota는-적용-범위를-나눠-계산한다"
+          },
+          {
+            "tag": "h3",
+            "id": "최소-shared-vpc-pool-vs-workload별-전용-shared-vpc"
+          },
+          {
+            "tag": "h3",
+            "id": "transit-gateway-주요-quota"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-az-id와-shared-vpc"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-regional-nat-gateway"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-tgw-network-firewall-중앙-inspection"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-aws-api와-vpc-endpoint"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-route-53-profiles와-hybrid-dns"
+          },
+          {
+            "tag": "h2",
+            "id": "_8-vpc-간-connectivity-선택지"
+          },
+          {
+            "tag": "h3",
+            "id": "vpc-lattice-제약"
+          },
+          {
+            "tag": "h2",
+            "id": "_9-east-west-inspection-선택지"
+          },
+          {
+            "tag": "h2",
+            "id": "다음"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "shared-vpc와-connectivity",
+          "_1-shared-vpc의-owner-participant-권한-—-흔히-오해하는-부분",
+          "_2-shared-vpc의-실제-상한-—-cidr이-아니다",
+          "_2-shared-vpc-quota는-적용-범위를-나눠-계산한다",
+          "최소-shared-vpc-pool-vs-workload별-전용-shared-vpc",
+          "transit-gateway-주요-quota",
+          "_3-az-id와-shared-vpc",
+          "_4-regional-nat-gateway",
+          "_5-tgw-network-firewall-중앙-inspection",
+          "_6-aws-api와-vpc-endpoint",
+          "_7-route-53-profiles와-hybrid-dns",
+          "_8-vpc-간-connectivity-선택지",
+          "vpc-lattice-제약",
+          "_9-east-west-inspection-선택지",
+          "다음",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "ko/governance/05-data-security-boundaries.md",
+        "sha256": "03e494d082ccae5eec5adeb07f6198f387d18f25954432cd763261f03ac8b55f",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "data·security-경계"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-data-ownership-옵션"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-cross-account-복구는-리소스와-vault-유형별로-검증한다"
+          },
+          {
+            "tag": "h3",
+            "id": "rds-snapshot-공유"
+          },
+          {
+            "tag": "h3",
+            "id": "aws-backup의-일반-vault-copy-후-restore"
+          },
+          {
+            "tag": "h3",
+            "id": "logically-air-gapped-vault-공유받은-account에서-직접-restore"
+          },
+          {
+            "tag": "h3",
+            "id": "승인되지-않은-copy-share-차단"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-개인정보-저장-계층-분리"
+          },
+          {
+            "tag": "h3",
+            "id": "개발-qa의-프로덕션-원본-데이터-직접-접근-차단"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-secrets-manager-kms-cross-account"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-aws-native-security-telemetry-vs-기존-cnapp"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-shared-subnet에서-리소스를-생성할-수-있는-서비스-목록"
+          },
+          {
+            "tag": "h2",
+            "id": "다음"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "data·security-경계",
+          "_1-data-ownership-옵션",
+          "_2-cross-account-데이터-복구-제약-—-실제로-선택을-바꾸는-조건",
+          "_2-cross-account-복구는-리소스와-vault-유형별로-검증한다",
+          "rds-스냅샷",
+          "rds-snapshot-공유",
+          "aws-backup-cross-account-copy",
+          "aws-backup의-일반-vault-copy-후-restore",
+          "logically-air-gapped-vault-공유받은-account에서-직접-restore",
+          "정리",
+          "승인되지-않은-copy-share-차단",
+          "_3-개인정보-저장-계층-분리",
+          "개발-qa의-프로덕션-원본-데이터-직접-접근-차단",
+          "_4-secrets-manager-kms-cross-account",
+          "_5-aws-native-security-telemetry-vs-기존-cnapp",
+          "_6-shared-subnet에서-리소스를-생성할-수-있는-서비스-목록",
+          "다음",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "ko/governance/06-decision-framework-and-poc.md",
+        "sha256": "127bdb80b82b6b8def2756cd00119f53cf73f98ead9c26a46f8b521c64c5d960",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "의사결정-프레임워크와-poc-설계"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-누락되기-쉬운-결정-요소"
+          },
+          {
+            "tag": "h3",
+            "id": "cuj별-rto-rpo-목표-—-가장-큰-누락"
+          },
+          {
+            "tag": "h3",
+            "id": "장애-시-복구-주체-on-call-ownership"
+          },
+          {
+            "tag": "h3",
+            "id": "kubernetes-목표-버전과-업그레이드-전략"
+          },
+          {
+            "tag": "h3",
+            "id": "alb-weighted-forwarding과-target-group-fail-open-구분"
+          },
+          {
+            "tag": "h3",
+            "id": "미사용-리전-통제"
+          },
+          {
+            "tag": "h3",
+            "id": "비용-관측성과-태그-강제-시점"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-판정표-설계"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-poc-설계-패턴"
+          },
+          {
+            "tag": "h3",
+            "id": "poc-0-판정표-dry-run-다른-poc보다-먼저-수행"
+          },
+          {
+            "tag": "h3",
+            "id": "poc-1-shared-cluster-workload-account"
+          },
+          {
+            "tag": "h3",
+            "id": "poc-2-a-b-eks-runtime과-az-구성-선행-조건-cuj별-rto-rpo-정의"
+          },
+          {
+            "tag": "h3",
+            "id": "poc-3-최소-shared-vpc-shared-vpc-pool"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-ai-기반-운영과의-관계"
+          },
+          {
+            "tag": "h2",
+            "id": "관련-문서"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "의사결정-프레임워크와-poc-설계",
+          "_1-누락되기-쉬운-결정-요소",
+          "cuj별-rto-rpo-목표-—-가장-큰-누락",
+          "장애-시-복구-주체-on-call-ownership",
+          "kubernetes-목표-버전과-업그레이드-전략",
+          "alb-weighted-target-group의-fail-open-동작",
+          "alb-weighted-forwarding과-target-group-fail-open-구분",
+          "미사용-리전-통제",
+          "비용-관측성과-태그-강제-시점",
+          "_2-판정표-설계",
+          "_3-poc-설계-패턴",
+          "poc-0-판정표-dry-run-다른-poc보다-먼저-수행",
+          "poc-1-shared-cluster-workload-account",
+          "poc-2-a-b-eks-runtime과-az-구성-선행-조건-cuj별-rto-rpo-정의",
+          "poc-3-최소-shared-vpc-shared-vpc-pool",
+          "_4-ai-기반-운영과의-관계",
+          "관련-문서",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "ko/quizzes/governance/00-governance-overview-quiz.md",
+        "sha256": "2310ee39faff922f430935e7c297f81e2c74d700ae21041dafa58e4b9fcdcd37",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "엔터프라이즈-클라우드-거버넌스-개요-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "엔터프라이즈-클라우드-거버넌스-개요-퀴즈"
+        ]
+      },
+      {
+        "path": "ko/quizzes/governance/01-landing-zone-and-ou-quiz.md",
+        "sha256": "2d8d06225fc20d333645273c788036b7f30e15dbdd04516ce78b8a8ee7c82c60",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "landing-zone-ou와-조직-control-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "landing-zone-ou와-조직-control-퀴즈"
+        ]
+      },
+      {
+        "path": "ko/quizzes/governance/02-account-and-iam-quiz.md",
+        "sha256": "0465d4012c68db044517c18f7281eadcaf991f6076be7d570cf3736c190b4e2e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "account-구성과-iam-경계-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "account-구성과-iam-경계-퀴즈"
+        ]
+      },
+      {
+        "path": "ko/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+        "sha256": "ffff29928e0e75f8c095c4c3086e8440beb8cd8e9e998b4cd42646a48ec5645f",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "eks-멀티-계정·멀티-클러스터-아키텍처-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "eks-멀티-계정·멀티-클러스터-아키텍처-퀴즈"
+        ]
+      },
+      {
+        "path": "ko/quizzes/governance/04-shared-vpc-and-connectivity-quiz.md",
+        "sha256": "b378ee3c0fbfc04ae7cebba86e4321d48e6d276ec85e40a7f6b8893333b30685",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "shared-vpc와-connectivity-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "shared-vpc와-connectivity-퀴즈"
+        ]
+      },
+      {
+        "path": "ko/quizzes/governance/05-data-security-boundaries-quiz.md",
+        "sha256": "4b34f2980a4eae9ecbe5f0f14f76c2efd55ce04b9de81fb8cd0492201d77150c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "data·security-경계-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "data·security-경계-퀴즈"
+        ]
+      },
+      {
+        "path": "ko/quizzes/governance/06-decision-framework-and-poc-quiz.md",
+        "sha256": "2f8867e062ffeb38ffa27a43c25a6af99ca59f20c5e40b203eeacf3b2b895eff",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "의사결정-프레임워크와-poc-설계-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "의사결정-프레임워크와-poc-설계-퀴즈"
+        ]
+      }
+    ]
+  },
+  "quiz": {
+    "status": "passed",
+    "questions": 56,
+    "files": [
+      {
+        "path": "en/quizzes/governance/00-governance-overview-quiz.md",
+        "questions": 3,
+        "answerMatchesOptions": true
+      },
+      {
+        "path": "en/quizzes/governance/01-landing-zone-and-ou-quiz.md",
+        "questions": 4,
+        "answerMatchesOptions": true
+      },
+      {
+        "path": "en/quizzes/governance/02-account-and-iam-quiz.md",
+        "questions": 4,
+        "answerMatchesOptions": true
+      },
+      {
+        "path": "en/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+        "questions": 4,
+        "answerMatchesOptions": true
+      },
+      {
+        "path": "en/quizzes/governance/04-shared-vpc-and-connectivity-quiz.md",
+        "questions": 5,
+        "answerMatchesOptions": true
+      },
+      {
+        "path": "en/quizzes/governance/05-data-security-boundaries-quiz.md",
+        "questions": 4,
+        "answerMatchesOptions": true
+      },
+      {
+        "path": "en/quizzes/governance/06-decision-framework-and-poc-quiz.md",
+        "questions": 4,
+        "answerMatchesOptions": true
+      },
+      {
+        "path": "ko/quizzes/governance/00-governance-overview-quiz.md",
+        "questions": 3,
+        "answerMatchesOptions": true
+      },
+      {
+        "path": "ko/quizzes/governance/01-landing-zone-and-ou-quiz.md",
+        "questions": 4,
+        "answerMatchesOptions": true
+      },
+      {
+        "path": "ko/quizzes/governance/02-account-and-iam-quiz.md",
+        "questions": 4,
+        "answerMatchesOptions": true
+      },
+      {
+        "path": "ko/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
+        "questions": 4,
+        "answerMatchesOptions": true
+      },
+      {
+        "path": "ko/quizzes/governance/04-shared-vpc-and-connectivity-quiz.md",
+        "questions": 5,
+        "answerMatchesOptions": true
+      },
+      {
+        "path": "ko/quizzes/governance/05-data-security-boundaries-quiz.md",
+        "questions": 4,
+        "answerMatchesOptions": true
+      },
+      {
+        "path": "ko/quizzes/governance/06-decision-framework-and-poc-quiz.md",
+        "questions": 4,
+        "answerMatchesOptions": true
+      }
+    ]
+  },
+  "metadataDates": [
+    {
+      "path": "en/governance/00-governance-overview.md",
+      "date": "2026-09-13"
+    },
+    {
+      "path": "en/governance/01-landing-zone-and-ou.md",
+      "date": "2026-09-13"
+    },
+    {
+      "path": "en/governance/02-account-and-iam.md",
+      "date": "2026-09-13"
+    },
+    {
+      "path": "en/governance/03-eks-multi-account-multi-cluster.md",
+      "date": "2026-09-13"
+    },
+    {
+      "path": "en/governance/04-shared-vpc-and-connectivity.md",
+      "date": "2026-09-13"
+    },
+    {
+      "path": "en/governance/05-data-security-boundaries.md",
+      "date": "2026-09-13"
+    },
+    {
+      "path": "en/governance/06-decision-framework-and-poc.md",
+      "date": "2026-09-13"
+    },
+    {
+      "path": "ko/governance/00-governance-overview.md",
+      "date": "2026-09-13"
+    },
+    {
+      "path": "ko/governance/01-landing-zone-and-ou.md",
+      "date": "2026-09-13"
+    },
+    {
+      "path": "ko/governance/02-account-and-iam.md",
+      "date": "2026-09-13"
+    },
+    {
+      "path": "ko/governance/03-eks-multi-account-multi-cluster.md",
+      "date": "2026-09-13"
+    },
+    {
+      "path": "ko/governance/04-shared-vpc-and-connectivity.md",
+      "date": "2026-09-13"
+    },
+    {
+      "path": "ko/governance/05-data-security-boundaries.md",
+      "date": "2026-09-13"
+    },
+    {
+      "path": "ko/governance/06-decision-framework-and-poc.md",
+      "date": "2026-09-13"
+    }
+  ],
+  "legacyAnchors": [
+    {
+      "path": "ko/governance/00-governance-overview.md",
+      "originalHeadings": 7,
+      "allPreserved": true
+    },
+    {
+      "path": "ko/governance/01-landing-zone-and-ou.md",
+      "originalHeadings": 14,
+      "allPreserved": true
+    },
+    {
+      "path": "ko/governance/02-account-and-iam.md",
+      "originalHeadings": 10,
+      "allPreserved": true
+    },
+    {
+      "path": "ko/governance/03-eks-multi-account-multi-cluster.md",
+      "originalHeadings": 13,
+      "allPreserved": true
+    },
+    {
+      "path": "ko/governance/04-shared-vpc-and-connectivity.md",
+      "originalHeadings": 15,
+      "allPreserved": true
+    },
+    {
+      "path": "ko/governance/05-data-security-boundaries.md",
+      "originalHeadings": 13,
+      "allPreserved": true
+    },
+    {
+      "path": "ko/governance/06-decision-framework-and-poc.md",
+      "originalHeadings": 17,
+      "allPreserved": true
+    },
+    {
+      "path": "en/governance/00-governance-overview.md",
+      "originalHeadings": 7,
+      "allPreserved": true
+    },
+    {
+      "path": "en/governance/01-landing-zone-and-ou.md",
+      "originalHeadings": 14,
+      "allPreserved": true
+    },
+    {
+      "path": "en/governance/02-account-and-iam.md",
+      "originalHeadings": 10,
+      "allPreserved": true
+    },
+    {
+      "path": "en/governance/03-eks-multi-account-multi-cluster.md",
+      "originalHeadings": 13,
+      "allPreserved": true
+    },
+    {
+      "path": "en/governance/04-shared-vpc-and-connectivity.md",
+      "originalHeadings": 15,
+      "allPreserved": true
+    },
+    {
+      "path": "en/governance/05-data-security-boundaries.md",
+      "originalHeadings": 13,
+      "allPreserved": true
+    },
+    {
+      "path": "en/governance/06-decision-framework-and-poc.md",
+      "originalHeadings": 17,
+      "allPreserved": true
+    }
+  ],
+  "primaryFacts": [
+    {
+      "claim": "ControlTower4.0 baseline dependencies vs independent IAM Identity Center",
+      "source": "https://docs.aws.amazon.com/controltower/latest/userguide/key-changes-lz-v4.html",
+      "sourceSha256": "11d23ab6f64241d11c6414aeb994533759bce600d77514bfc059ed331fc2f58c",
+      "verified": true
+    },
+    {
+      "claim": "SCP/RCPcurrent quotas and direct attachment scope",
+      "source": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_reference_limits.html",
+      "sourceSha256": "cfbed6164dd3934a07c15af46f52206aab2f8223f172767d2be8bf657889b4ce",
+      "verified": true
+    },
+    {
+      "claim": "Identity Center group quota per permission-set/Account",
+      "source": "https://docs.aws.amazon.com/singlesignon/latest/userguide/limits.html",
+      "sourceSha256": "93d7f506f67d5bc9e651c9fd928a29c1f69d626d2835a8d8889653851a386e15",
+      "verified": true
+    },
+    {
+      "claim": "EKS shared subnet cluster/node roles in cluster participant",
+      "source": "https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html",
+      "sourceSha256": "90a165be6bc5032605b44d17d228be19a2c794e6ec2b6de58f6e2450ac1417d1",
+      "verified": true
+    },
+    {
+      "claim": "Resource-policy alternative to role chaining",
+      "source": "https://docs.aws.amazon.com/eks/latest/best-practices/subnets.html",
+      "sourceSha256": "f9bbcee9d08062976722b339e2a59a659457ac40c2d94b6d05d018afcd99535a",
+      "verified": true
+    },
+    {
+      "claim": "Existing resources after subnet unsharing",
+      "source": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing-share-subnet-working-with.html",
+      "sourceSha256": "0f154168d827e99c9307ea7f4f7af71b3189979b22de6e4b85474b76ab5e52bb",
+      "verified": true
+    },
+    {
+      "claim": "SharedVPCparticipantNATvisibilityandresourceownership",
+      "source": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-share-limitations.html",
+      "sourceSha256": "0ddf5b6b8b80bf30014f5b26a6718b77b69bb6c3b205c5255b07d7ee2268c809",
+      "verified": true
+    },
+    {
+      "claim": "TGWtoVPCautomaticpropagationdoesnotoccur",
+      "source": "https://aws.amazon.com/transit-gateway/faqs/",
+      "sourceSha256": "ac645b3070c4440573bbcac5784706ad5c67165566b39a20f99a9d3aa53c2dcd",
+      "verified": true
+    },
+    {
+      "claim": "SameTGW-VPCpairattachmentversus5TGWsperVPC",
+      "source": "https://docs.aws.amazon.com/vpc/latest/tgw/transit-gateway-quotas.html",
+      "sourceSha256": "0c253f20894cb2e383b890a41c2fb7e8b8677eb4f0f538528a0e15f08df45fc7",
+      "verified": true
+    },
+    {
+      "claim": "RegionalNAT current60minexpansion/TGWroute/privateNATlimit",
+      "source": "https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateways-regional.html",
+      "sourceSha256": "8958236413c05e3547308b3db6e947b2b0e2bcb74f3a9448d92f399e923ab3ec",
+      "verified": true
+    },
+    {
+      "claim": "Lattice service/resource distinct connection bounds",
+      "source": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/quotas.html",
+      "sourceSha256": "2436a5dc4cf165e81de5b4011036f4e635108fa9263bedb70f8aae1a0762fb42",
+      "verified": true
+    },
+    {
+      "claim": "Lattice WebSocket alternatives",
+      "source": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/listeners.html",
+      "sourceSha256": "82628162d457b8945d79502b8fa6c4c3baff5966b1ca155cf1c54f24db047cc6",
+      "verified": true
+    },
+    {
+      "claim": "ENIConfignamesandactualnodezonelabel",
+      "source": "https://docs.aws.amazon.com/eks/latest/best-practices/custom-networking.html",
+      "sourceSha256": "041af0ccb00acdf5d48a3f8e627519cf77fe9aa83d15a08f17f66f166b1e2a1e",
+      "verified": true
+    },
+    {
+      "claim": "DNSlinklocalsharedallowance",
+      "source": "https://docs.aws.amazon.com/vpc/latest/userguide/AmazonDNS-concepts.html",
+      "sourceSha256": "959154ea9bf4a608f73f721b48320d311d0d2c1fda33f6e2be66f2d4d1f3e1e5",
+      "verified": true
+    },
+    {
+      "claim": "ALBcrosszonefee",
+      "source": "https://aws.amazon.com/elasticloadbalancing/faqs/",
+      "sourceSha256": "28fb1ad477698408636bacaa4d5339424b057cdf5e199380af68ed409e9bdfc7",
+      "verified": true
+    },
+    {
+      "claim": "ALBweightedforwardvsintragroupfailover",
+      "source": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/rule-action-types.html",
+      "sourceSha256": "f766577532c7b433b4a16c4c84d9d01f4ea4dfe5227b4ab075d4b4347769d2ca",
+      "verified": true
+    },
+    {
+      "claim": "KubernetesServicefieldnameandvalues",
+      "source": "https://kubernetes.io/docs/concepts/services-networking/service/#traffic-distribution",
+      "sourceSha256": "c79c12d9beb86cb6057bd06daded0f384c6b5d0f7b2068146855a1109edcd0d2",
+      "verified": true
+    },
+    {
+      "claim": "RDSMultiAZsnapshotsharinglimitedpath",
+      "source": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ShareSnapshot.html",
+      "sourceSha256": "ab8e2742a66a2e62fc16ba599fca339391c1393ef7b71c7f9bfbc5c8ec1b778c",
+      "verified": true
+    },
+    {
+      "claim": "StandardBackupcopypermissions",
+      "source": "https://docs.aws.amazon.com/aws-backup/latest/devguide/create-cross-account-backup.html",
+      "sourceSha256": "15c652e8765bf94ef0a1798e2595123e151a50765a21cf13caf2f22bcf18a3ba",
+      "verified": true
+    },
+    {
+      "claim": "Sharedairgappedvaultdirectrestore",
+      "source": "https://docs.aws.amazon.com/aws-backup/latest/devguide/logicallyairgappedvault.html",
+      "sourceSha256": "0455bd3a730c27b6ab51e94cc52a61944d071bda1acc9843575404c50cdeb7c6",
+      "verified": true
+    },
+    {
+      "claim": "SharedVPCservicelistnonexhaustive",
+      "source": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing-service-behavior.html",
+      "sourceSha256": "58da4031f236259402e7a37a9ac9f91552e21ef9b2529a28d8216d1fd0e6c7eb",
+      "verified": true
+    },
+    {
+      "claim": "CSPMConfigcontrolsscope",
+      "source": "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
+      "sourceSha256": "9a75e8de7bf29822fae8ca941b88a5a3abcec001f81cfcdd1d0760a145e19672",
+      "verified": true
+    },
+    {
+      "claim": "AWSMCPendpointregions",
+      "source": "https://docs.aws.amazon.com/general/latest/gr/aws-mcp.html",
+      "sourceSha256": "948ebb6a898fe47995cf37a8f2d8004783a8cf6d5c25f3d5837c124afdecdd28",
+      "verified": true
+    },
+    {
+      "claim": "DisabledRegionresourcesstillcharged",
+      "source": "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/checklistforunwantedcharges.html",
+      "sourceSha256": "f449db4832caa1585df0ba6011a3c0a08fa1397f8935e4c7becbeab59d4b543c",
+      "verified": true
+    }
+  ],
+  "primaryLinks": [
+    {
+      "url": "https://aws.amazon.com/builders-library/static-stability-using-availability-zones/",
+      "status": 200,
+      "finalUrl": "https://aws.amazon.com/builders-library/static-stability-using-availability-zones/",
+      "sha256": "9c5905ac91ec0ba1c4922f1c51c3fca31ab46fb9b9c7b6a21123477059146d05",
+      "textPath": "sources/c6033b90ef04.txt",
+      "characters": 31865
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ShareSnapshot.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ShareSnapshot.html",
+      "sha256": "ab8e2742a66a2e62fc16ba599fca339391c1393ef7b71c7f9bfbc5c8ec1b778c",
+      "textPath": "sources/cdb2f0a3cf07.txt",
+      "characters": 8000
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/share-encrypted-snapshot.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/share-encrypted-snapshot.html",
+      "sha256": "3044feb19f8de925371683b25f7bb2d820ae67d65bc2e2ce457b52dee9652ca3",
+      "textPath": "sources/11d667a61322.txt",
+      "characters": 4887
+    },
+    {
+      "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/profiles.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/profiles.html",
+      "sha256": "ed008b9b84568fa3d3f5e0b23b52d4cc5a28a974059bcc50a183ee4c85a30621",
+      "textPath": "sources/19a536568715.txt",
+      "characters": 3776
+    },
+    {
+      "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html",
+      "sha256": "669fbcb6989a150b248cf0d5d032a6cb66f5edd6f3a75cfa053712e9bd5a7f9e",
+      "textPath": "sources/af685119eb73.txt",
+      "characters": 4608
+    },
+    {
+      "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-failover.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-failover.html",
+      "sha256": "2911cda130a1517a3c9a768bb5e2d24d7f295cae0e18c039f6c989488267c6ce",
+      "textPath": "sources/9eb544625fd0.txt",
+      "characters": 1493
+    },
+    {
+      "url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-weighted.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-weighted.html",
+      "sha256": "6320245c54f98a96ecaf06f66ec750a7c4dd432b49bc48079819a0bc74280357",
+      "textPath": "sources/d00f40608c9b.txt",
+      "characters": 3792
+    },
+    {
+      "url": "https://docs.aws.amazon.com/agent-toolkit/latest/userguide/mcp-server.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/agent-toolkit/latest/userguide/mcp-server.html",
+      "sha256": "c5258d1200efb738c15dae8c295a258d65496ea102d3e1dffea6e51580c024dd",
+      "textPath": "sources/f9645fe83758.txt",
+      "characters": 1329
+    },
+    {
+      "url": "https://docs.aws.amazon.com/agent-toolkit/latest/userguide/security_iam_service-with-iam.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/agent-toolkit/latest/userguide/security_iam_service-with-iam.html",
+      "sha256": "85117c87cfdf1437b1560e345f5a135a30d12b18af439b9f7e82b9c09bf771a8",
+      "textPath": "sources/c5db77f9033e.txt",
+      "characters": 6495
+    },
+    {
+      "url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/create-cross-account-backup.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/aws-backup/latest/devguide/create-cross-account-backup.html",
+      "sha256": "15c652e8765bf94ef0a1798e2595123e151a50765a21cf13caf2f22bcf18a3ba",
+      "textPath": "sources/6f40bc744d86.txt",
+      "characters": 21675
+    },
+    {
+      "url": "https://docs.aws.amazon.com/controltower/latest/controlreference/controls.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/controltower/latest/controlreference/controls.html",
+      "sha256": "2139b116ff74232912b0d9b191e3576294b3e14eaa2d6b0679454453c41c3652",
+      "textPath": "sources/5d987650c24e.txt",
+      "characters": 2572
+    },
+    {
+      "url": "https://docs.aws.amazon.com/controltower/latest/userguide/account-auto-enrollment.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/controltower/latest/userguide/account-auto-enrollment.html",
+      "sha256": "c22e31e171ba9a79fe5169f346be360c24caa15efab3a3061ca6f0f897f2d1c9",
+      "textPath": "sources/31b3df2f4771.txt",
+      "characters": 4323
+    },
+    {
+      "url": "https://docs.aws.amazon.com/controltower/latest/userguide/config-updates-v4.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/controltower/latest/userguide/config-updates-v4.html",
+      "sha256": "b2c1493a3c2f7920392c1a8d348d872dd2c00271377263d279507d483e8f8025",
+      "textPath": "sources/bbd258f0deac.txt",
+      "characters": 6657
+    },
+    {
+      "url": "https://docs.aws.amazon.com/controltower/latest/userguide/enroll-account.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/controltower/latest/userguide/enroll-account.html",
+      "sha256": "0148b0d2162a4af323f102eea7365324c0170ee2d66457837b148c8643453b84",
+      "textPath": "sources/98af63584af3.txt",
+      "characters": 6283
+    },
+    {
+      "url": "https://docs.aws.amazon.com/controltower/latest/userguide/key-changes-lz-v4.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/controltower/latest/userguide/key-changes-lz-v4.html",
+      "sha256": "11d23ab6f64241d11c6414aeb994533759bce600d77514bfc059ed331fc2f58c",
+      "textPath": "sources/0c83e8de55d6.txt",
+      "characters": 8002
+    },
+    {
+      "url": "https://docs.aws.amazon.com/controltower/latest/userguide/types-of-baselines.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/controltower/latest/userguide/types-of-baselines.html",
+      "sha256": "648e1c039406393cbdb7fe18c12d460a7ed714763d32a9fa74caf28a0357841d",
+      "textPath": "sources/c875a597a841.txt",
+      "characters": 8660
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/best-practices/cost-opt-networking.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/best-practices/cost-opt-networking.html",
+      "sha256": "001e9ed42b4d60fd26fcfa9534f184950dbf2bde85f6874769d85ccd703b5aa2",
+      "textPath": "sources/83b331dc50e1.txt",
+      "characters": 36684
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/best-practices/identity-and-access-management.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/best-practices/identity-and-access-management.html",
+      "sha256": "845ee4f7cb6182a0ab2dc1145bb78083b1c2bd6281324acb1a19fdab1014879f",
+      "textPath": "sources/f8153f94f1a6.txt",
+      "characters": 55834
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/best-practices/multi-account-strategy.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/best-practices/multi-account-strategy.html",
+      "sha256": "3eb4e7b04abc667fcbf745e9192e9541e773d7e907ad9bd5323c5dd42a1f6b47",
+      "textPath": "sources/109b35c03ca9.txt",
+      "characters": 19175
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/best-practices/subnets.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/best-practices/subnets.html",
+      "sha256": "f9bbcee9d08062976722b339e2a59a659457ac40c2d94b6d05d018afcd99535a",
+      "textPath": "sources/f27bd4c5e296.txt",
+      "characters": 21472
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/best-practices/tenant-isolation.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/best-practices/tenant-isolation.html",
+      "sha256": "de8d5caa3fb01f3cb4aa725d6cf2db757b54da619d5a3c79f323bb97f422fc31",
+      "textPath": "sources/70c91a092e4f.txt",
+      "characters": 25058
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html",
+      "sha256": "638db2fc78855d3fdcb3d0a123f24660a66268876694cf6450efef622f78a249",
+      "textPath": "sources/1ee1fbe38eba.txt",
+      "characters": 4733
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html",
+      "sha256": "0093fe2759ad1cfc3f1f43719a6df2699637280cda1d044242b1311fcbbb9e9c",
+      "textPath": "sources/095df313c905.txt",
+      "characters": 6660
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/pod-id-assign-target-role.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/userguide/pod-id-assign-target-role.html",
+      "sha256": "6ed31aa082fccf70d877dad59737fa00091943b955a36c5024fe12cb477271c8",
+      "textPath": "sources/27545de77e23.txt",
+      "characters": 9780
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html",
+      "sha256": "79a8583d24b8838bf6298ee8fe087d244b48473bf79a86ca64b9f8c42f5487ff",
+      "textPath": "sources/58a56c4bd3c9.txt",
+      "characters": 9149
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/zone-shift.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/userguide/zone-shift.html",
+      "sha256": "5913b532cc990bed10703e6c9bee794d4315374838545b313e60c1e7c2fae8d9",
+      "textPath": "sources/f89661e67b65.txt",
+      "characters": 24056
+    },
+    {
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-target-group-attributes.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/edit-target-group-attributes.html",
+      "sha256": "642a59d4e4aea00df7e981abbcb082436b4fe3c9d6d8cfa0f8fb3e0d6dff3c0e",
+      "textPath": "sources/400dadae7f5f.txt",
+      "characters": 37705
+    },
+    {
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/rule-action-types.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/rule-action-types.html",
+      "sha256": "f766577532c7b433b4a16c4c84d9d01f4ea4dfe5227b4ab075d4b4347769d2ca",
+      "textPath": "sources/fb131f9bf603.txt",
+      "characters": 10155
+    },
+    {
+      "url": "https://docs.aws.amazon.com/general/latest/gr/eks.html#limits_eks",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/general/latest/gr/eks.html#limits_eks",
+      "sha256": "591cfeda4c445f87a58dc186c51d265105e9422cf511a11c15e1f8808b9bbeab",
+      "textPath": "sources/3fcdd6f91c41.txt",
+      "characters": 10759
+    },
+    {
+      "url": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_regions.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_regions.html",
+      "sha256": "9662d13ae5863b63d439ab3e9c2f3072cc85be8071075bdb0b8f460967b2e475",
+      "textPath": "sources/737afc112c98.txt",
+      "characters": 4543
+    },
+    {
+      "url": "https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/kms/latest/developerguide/key-policy-modifying-external-accounts.html",
+      "sha256": "056d634ee1cc4974ad5c83a09919ea49eda5e7b983e3875009badc9f1237dd33",
+      "textPath": "sources/ab981fa5d441.txt",
+      "characters": 15383
+    },
+    {
+      "url": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/asymmetric-routing.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/asymmetric-routing.html",
+      "sha256": "7a2821b03e3d07bcee414e5fb7ecd2db1eac4e207e0917a00ba1023540ee2844",
+      "textPath": "sources/724a09cc5c55.txt",
+      "characters": 3524
+    },
+    {
+      "url": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/tgw-firewall.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/tgw-firewall.html",
+      "sha256": "cb3aae2f20a62692c42c7dcc369e395eb628edf78275f4cdd7b5934c77687e98",
+      "textPath": "sources/2c97e9365b94.txt",
+      "characters": 3012
+    },
+    {
+      "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_declarative_policies.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_declarative_policies.html",
+      "sha256": "56f9643fb12a686a8c82a9c1958246f8446625401a7cc44c3143d6055c60eac4",
+      "textPath": "sources/bf13d22a895b.txt",
+      "characters": 5197
+    },
+    {
+      "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_rcps.html",
+      "sha256": "ae5770a25d9366946e4765ba590993f20529b8097b609b26399cae745488c494",
+      "textPath": "sources/312b73779b41.txt",
+      "characters": 10926
+    },
+    {
+      "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_evaluation.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps_evaluation.html",
+      "sha256": "349dc67656d75b58762bc03a1fe5820bf3e46349db7d40598debfeb76a1f6252",
+      "textPath": "sources/d6b8114e42df.txt",
+      "characters": 9668
+    },
+    {
+      "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies.html",
+      "sha256": "c260c2c9b4cce4b073cfa04bd013bcc143fb9b1595975e488486dd2101ba96e8",
+      "textPath": "sources/d64a9382b467.txt",
+      "characters": 4654
+    },
+    {
+      "url": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_reference_limits.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_reference_limits.html",
+      "sha256": "cfbed6164dd3934a07c15af46f52206aab2f8223f172767d2be8bf657889b4ce",
+      "textPath": "sources/526ee24af99e.txt",
+      "characters": 13001
+    },
+    {
+      "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/security-reference-architecture/security-tooling.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/prescriptive-guidance/latest/security-reference-architecture/security-tooling.html",
+      "sha256": "07f0880f0e567116a6493974e9ac64cf57c5c22ae9c00be884853af91958fe70",
+      "textPath": "sources/8320e159f6d0.txt",
+      "characters": 90762
+    },
+    {
+      "url": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_examples_cross.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_examples_cross.html",
+      "sha256": "c80fa49488338c799107b05e8a69e371961e4b96a0b3aac648ebd3ddfa68d64c",
+      "textPath": "sources/6e7ae7e9e0b7.txt",
+      "characters": 4584
+    },
+    {
+      "url": "https://docs.aws.amazon.com/securityhub/latest/userguide/regions-controls.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/regions-controls.html",
+      "sha256": "97e24709ba5e983aa93785aa84af38302261ee20bfb05bd0f962e00b1ed121ec",
+      "textPath": "sources/81bb4ebc72ae.txt",
+      "characters": 471114
+    },
+    {
+      "url": "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub.html",
+      "sha256": "9a75e8de7bf29822fae8ca941b88a5a3abcec001f81cfcdd1d0760a145e19672",
+      "textPath": "sources/ce2e8e0fe1c5.txt",
+      "characters": 10741
+    },
+    {
+      "url": "https://docs.aws.amazon.com/singlesignon/latest/userguide/abac.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/singlesignon/latest/userguide/abac.html",
+      "sha256": "f1e1dbc8b1e6dcefd6f8e708a9901574974987abbd7406042225af2064f5d31f",
+      "textPath": "sources/8a7f0146d36b.txt",
+      "characters": 4102
+    },
+    {
+      "url": "https://docs.aws.amazon.com/singlesignon/latest/userguide/limits.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/singlesignon/latest/userguide/limits.html",
+      "sha256": "93d7f506f67d5bc9e651c9fd928a29c1f69d626d2835a8d8889653851a386e15",
+      "textPath": "sources/88c686ea0f17.txt",
+      "characters": 6986
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/quotas.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/quotas.html",
+      "sha256": "2436a5dc4cf165e81de5b4011036f4e635108fa9263bedb70f8aae1a0762fb42",
+      "textPath": "sources/30fdd009e7e2.txt",
+      "characters": 6990
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/what-is-vpc-lattice.html",
+      "sha256": "be55a97fac8d0c44cc2d0f2c05354d048ffb26ad78e3e8f4e9e0573283cbbb94",
+      "textPath": "sources/57229010cd53.txt",
+      "characters": 13481
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc/latest/peering/vpc-peering-basics.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/vpc/latest/peering/vpc-peering-basics.html",
+      "sha256": "6ee27c20086066f788e1da1e43cef62ad594d4beb8ef7bca48c4d40c89bef99b",
+      "textPath": "sources/2750a6f82396.txt",
+      "characters": 10207
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc/latest/privatelink/aws-services-privatelink-support.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/vpc/latest/privatelink/aws-services-privatelink-support.html",
+      "sha256": "12fccc680a19808eec48e1a53f776047327d21e52dedc32541f0e972e0c4294f",
+      "textPath": "sources/4555beb2cbf7.txt",
+      "characters": 29276
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc/latest/tgw/tgw-transit-gateways.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/vpc/latest/tgw/tgw-transit-gateways.html",
+      "sha256": "8d01da736ce7e69752718b7e2338d406a107a27fa6f88fc1f7b4ac53a4c5593a",
+      "textPath": "sources/4121b88cde1d.txt",
+      "characters": 3535
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc/latest/tgw/transit-gateway-quotas.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/vpc/latest/tgw/transit-gateway-quotas.html",
+      "sha256": "0c253f20894cb2e383b890a41c2fb7e8b8677eb4f0f538528a0e15f08df45fc7",
+      "textPath": "sources/f26c7aeabbbb.txt",
+      "characters": 8954
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html",
+      "sha256": "b1091cfdf82246fa97789c04913ef076cdddccd174f803ebfdd81e3ea5045bef",
+      "textPath": "sources/8ef69608763e.txt",
+      "characters": 10787
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateways-regional.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/nat-gateways-regional.html",
+      "sha256": "8958236413c05e3547308b3db6e947b2b0e2bcb74f3a9448d92f399e923ab3ec",
+      "textPath": "sources/45ad773e8981.txt",
+      "characters": 7714
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/security-group-rules.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/security-group-rules.html",
+      "sha256": "fcbb2dc1c01d6bb32d5407dc3d93e9f47850effad12839572e47789f549a71a9",
+      "textPath": "sources/5594f61a25d6.txt",
+      "characters": 10155
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/security-group-sharing.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/security-group-sharing.html",
+      "sha256": "4c73b49fb85f6c4be5c84c4d33359b8a64028d54c9c1a850d74b0df9f3a7d793",
+      "textPath": "sources/20d9db6d0cdb.txt",
+      "characters": 8508
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-share-limitations.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-share-limitations.html",
+      "sha256": "0ddf5b6b8b80bf30014f5b26a6718b77b69bb6c3b205c5255b07d7ee2268c809",
+      "textPath": "sources/20154b48cc9a.txt",
+      "characters": 6356
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing-service-behavior.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing-service-behavior.html",
+      "sha256": "58da4031f236259402e7a37a9ac9f91552e21ef9b2529a28d8216d1fd0e6c7eb",
+      "textPath": "sources/91d780ae6145.txt",
+      "characters": 2234
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing-share-subnet-working-with.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing-share-subnet-working-with.html",
+      "sha256": "0f154168d827e99c9307ea7f4f7af71b3189979b22de6e4b85474b76ab5e52bb",
+      "textPath": "sources/85df9a6a2deb.txt",
+      "characters": 4236
+    },
+    {
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/security-group-policies-audit.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/waf/latest/developerguide/security-group-policies-audit.html",
+      "sha256": "ff268df9cf4d4d8e3d28ce9d4919481c3f62a0d359a1dbfb7e1672a90caf1df2",
+      "textPath": "sources/d22eea2bb507.txt",
+      "characters": 6703
+    },
+    {
+      "url": "https://docs.aws.amazon.com/waf/latest/developerguide/security-group-policies-common.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/waf/latest/developerguide/security-group-policies-common.html",
+      "sha256": "9ed598ec6f12b0eb686070a55e7b0de9f16a9c553c7a3b300f3f94d09a19c099",
+      "textPath": "sources/99a8deea6de0.txt",
+      "characters": 7178
+    },
+    {
+      "url": "https://docs.aws.amazon.com/wellarchitected/latest/framework/rel_fault_isolation_multiaz_region_system.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/wellarchitected/latest/framework/rel_fault_isolation_multiaz_region_system.html",
+      "sha256": "8c856369881800f5d6ebdf5b48b76c1951e5032a6d74d156e06e3d38cf932916",
+      "textPath": "sources/1d623bcf9688.txt",
+      "characters": 19473
+    },
+    {
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/aws-vpc-connectivity-options/amazon-vpc-to-amazon-vpc-connectivity-options.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/whitepapers/latest/aws-vpc-connectivity-options/amazon-vpc-to-amazon-vpc-connectivity-options.html",
+      "sha256": "88a1cce8dad8f47af3dd3383e45ba51dc944d61f8d0aa84b3bb3a0cfa7ebe822",
+      "textPath": "sources/5437e23bbcb7.txt",
+      "characters": 3325
+    },
+    {
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/building-scalable-secure-multi-vpc-network-infrastructure/centralized-network-security-for-vpc-to-vpc-and-on-premises-to-vpc-traffic.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/whitepapers/latest/building-scalable-secure-multi-vpc-network-infrastructure/centralized-network-security-for-vpc-to-vpc-and-on-premises-to-vpc-traffic.html",
+      "sha256": "47bd841543f0d7f414b1eda89a73f0b9ff1b6f353e978506da113b8881d4ebac",
+      "textPath": "sources/b60d4265b09b.txt",
+      "characters": 5686
+    },
+    {
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/organizing-your-aws-environment/design-principles-for-your-multi-account-strategy.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/whitepapers/latest/organizing-your-aws-environment/design-principles-for-your-multi-account-strategy.html",
+      "sha256": "0c3bb87b33eaf0f7ff0cc780e3e7146c92975fabec0dd69e965a5c82a64ea5a4",
+      "textPath": "sources/4bc7a8b05112.txt",
+      "characters": 15674
+    },
+    {
+      "url": "https://docs.aws.amazon.com/whitepapers/latest/organizing-your-aws-environment/recommended-ous-and-accounts.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/whitepapers/latest/organizing-your-aws-environment/recommended-ous-and-accounts.html",
+      "sha256": "11cad1547bad1a14ebc969b4afef6380bf1f2f3c939d1fa060fa69a7a7fa414e",
+      "textPath": "sources/3b5c0a79af5c.txt",
+      "characters": 4137
+    },
+    {
+      "url": "https://docs.aws.amazon.com/aws-backup/latest/devguide/logicallyairgappedvault.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/aws-backup/latest/devguide/logicallyairgappedvault.html",
+      "sha256": "0455bd3a730c27b6ab51e94cc52a61944d071bda1acc9843575404c50cdeb7c6",
+      "textPath": "sources/f843cf30d856.txt",
+      "characters": 43573
+    },
+    {
+      "url": "https://docs.aws.amazon.com/general/latest/gr/aws-mcp.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/general/latest/gr/aws-mcp.html",
+      "sha256": "948ebb6a898fe47995cf37a8f2d8004783a8cf6d5c25f3d5837c124afdecdd28",
+      "textPath": "sources/85179685521e.txt",
+      "characters": 1796
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html",
+      "sha256": "90a165be6bc5032605b44d17d228be19a2c794e6ec2b6de58f6e2450ac1417d1",
+      "textPath": "sources/eac221c8942a.txt",
+      "characters": 19709
+    },
+    {
+      "url": "https://aws.amazon.com/elasticloadbalancing/faqs/",
+      "status": 200,
+      "finalUrl": "https://aws.amazon.com/elasticloadbalancing/faqs/",
+      "sha256": "28fb1ad477698408636bacaa4d5339424b057cdf5e199380af68ed409e9bdfc7",
+      "textPath": "sources/150f390b6987.txt",
+      "characters": 58708
+    },
+    {
+      "url": "https://aws.amazon.com/transit-gateway/faqs/",
+      "status": 200,
+      "finalUrl": "https://aws.amazon.com/transit-gateway/faqs/",
+      "sha256": "ac645b3070c4440573bbcac5784706ad5c67165566b39a20f99a9d3aa53c2dcd",
+      "textPath": "sources/ec4af89297b1.txt",
+      "characters": 24292
+    },
+    {
+      "url": "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/checklistforunwantedcharges.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/checklistforunwantedcharges.html",
+      "sha256": "f449db4832caa1585df0ba6011a3c0a08fa1397f8935e4c7becbeab59d4b543c",
+      "textPath": "sources/18e412159c34.txt",
+      "characters": 13778
+    },
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/best-practices/custom-networking.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/best-practices/custom-networking.html",
+      "sha256": "041af0ccb00acdf5d48a3f8e627519cf77fe9aa83d15a08f17f66f166b1e2a1e",
+      "textPath": "sources/28f7c5dd5402.txt",
+      "characters": 13114
+    },
+    {
+      "url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html#target-group-health",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html#target-group-health",
+      "sha256": "32ae28ae8906508532fab27a389ff28122e6df0b072e594fbe9ac4ea46bdfc57",
+      "textPath": "sources/583992331b86.txt",
+      "characters": 24157
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/listeners.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/vpc-lattice/latest/ug/listeners.html",
+      "sha256": "82628162d457b8945d79502b8fa6c4c3baff5966b1ca155cf1c54f24db047cc6",
+      "textPath": "sources/6a3e6feee947.txt",
+      "characters": 2506
+    },
+    {
+      "url": "https://docs.aws.amazon.com/vpc/latest/userguide/AmazonDNS-concepts.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/vpc/latest/userguide/AmazonDNS-concepts.html",
+      "sha256": "959154ea9bf4a608f73f721b48320d311d0d2c1fda33f6e2be66f2d4d1f3e1e5",
+      "textPath": "sources/c0df9c5ebb95.txt",
+      "characters": 11133
+    },
+    {
+      "url": "https://kubernetes.io/docs/concepts/services-networking/service/#traffic-distribution",
+      "status": 200,
+      "finalUrl": "https://kubernetes.io/docs/concepts/services-networking/service/#traffic-distribution",
+      "sha256": "c79c12d9beb86cb6057bd06daded0f384c6b5d0f7b2068146855a1109edcd0d2",
+      "textPath": "sources/92086a392d40.txt",
+      "characters": 65111
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_ModifyDBClusterSnapshotAttribute.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_ModifyDBClusterSnapshotAttribute.html",
+      "sha256": "2c27410f137b2278b3c5af2586b0113f432f48bda7ad408a74ba18355706b7ad",
+      "textPath": "sources/9859b221bb99.txt",
+      "characters": 6481
+    },
+    {
+      "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-allowed-amis.html",
+      "status": 200,
+      "finalUrl": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-allowed-amis.html",
+      "sha256": "b6bbc60b6f2dcdecf646879520e28a86285afa1807b6991a526e8c6fcb2be4d3",
+      "textPath": "sources/848063e73905.txt",
+      "characters": 16130
+    }
+  ],
+  "contentPreservation": [
+    {
+      "topic": "IndependentAccountVPCClusterDataBoundaries;stableWorkloadID",
+      "status": "INCLUDED"
+    },
+    {
+      "topic": "ControlTowerbaseline/OU/enrollment/SCP/RCP/Tag/Declarativepolicy",
+      "status": "INCLUDED"
+    },
+    {
+      "topic": "Accountportfolio/workforceIAM/workloadIAM/AccessEntries",
+      "status": "INCLUDED"
+    },
+    {
+      "topic": "A-Bclusters/DNS/ARC/N-1/cost/upgrade/cells",
+      "status": "INCLUDED"
+    },
+    {
+      "topic": "SharedVPCownership/quota/TGW/AZID/NAT/Firewall/endpoints/DNS/Lattice",
+      "status": "INCLUDED"
+    },
+    {
+      "topic": "Dataownership/RDS/Backup/PII/Secrets/KMS/CSPM/SharedVPCservices",
+      "status": "INCLUDED"
+    },
+    {
+      "topic": "Decisionmatrix/RTO-RPO/oncall/ALB/Region/tagging/3PoCs/AIoperations",
+      "status": "INCLUDED"
+    }
+  ],
+  "limits": [
+    "NoAWSaccount/servicequotaAPIrequests,resourcecreation,backup/restore,policyapplication,failover/loadtestorMCPAPIexecution.",
+    "PoCthresholdsandhybridtopologiesareproposals,notmeasuredresultsorAWSmandates.",
+    "PublicsourcefetchandboundedMarkdown/quiz/date/anchorchecksarenotaproductioncompliancecertification.",
+    "AWSBackupcopydocumentationhasbothdestinationkeytypesanddefault-vaultwarning;guiderecommendsexplicitdedicatedvaultconfigurationwithoutclaimingavariantwasruntime-tested.",
+    "OriginalgovernancepageshaveoneASCIIbaselinechain,noimageassets;all56questiontopicsretained.",
+    "FullVitePressbuildrunsinCI;localNodeheap512MiB."
+  ],
+  "reviewFixes": {
+    "ids": [
+      "GOV-R1-001",
+      "GOV-R1-002",
+      "GOV-R1-003",
+      "GOV-R1-004",
+      "GOV-R1-005"
+    ],
+    "scope": "RCPsupported-resourcepermissionceiling;separateRDSinstance/AurorasnapshotsharingAPIs;separateEBSsharingfromAllowedAMIconsumption",
+    "validation": "4exact-sourceMarkdowncompilations;officialRDS/AllowedAMI/ControlTowerreferences;noAWSrequestexecution",
+    "apiModelValidation": {
+      "status": "passed",
+      "botocoreVersion": "1.43.93",
+      "apiVersion": "2014-10-31",
+      "operations": [
+        {
+          "operation": "ModifyDBSnapshotAttribute",
+          "identifierField": "DBSnapshotIdentifier",
+          "modelFields": [
+            "AttributeName",
+            "DBSnapshotIdentifier",
+            "ValuesToAdd",
+            "ValuesToRemove"
+          ],
+          "syntheticInputValid": true
+        },
+        {
+          "operation": "DescribeDBSnapshotAttributes",
+          "identifierField": "DBSnapshotIdentifier",
+          "modelFields": [
+            "DBSnapshotIdentifier"
+          ],
+          "syntheticInputValid": true
+        },
+        {
+          "operation": "ModifyDBClusterSnapshotAttribute",
+          "identifierField": "DBClusterSnapshotIdentifier",
+          "modelFields": [
+            "AttributeName",
+            "DBClusterSnapshotIdentifier",
+            "ValuesToAdd",
+            "ValuesToRemove"
+          ],
+          "syntheticInputValid": true
+        },
+        {
+          "operation": "DescribeDBClusterSnapshotAttributes",
+          "identifierField": "DBClusterSnapshotIdentifier",
+          "modelFields": [
+            "DBClusterSnapshotIdentifier"
+          ],
+          "syntheticInputValid": true
+        }
+      ],
+      "scope": "LocalbotocoreRDSrequest-shapes;noclients/credentials/APIcalls/IAMenforcementoractualsnapshots"
+    }
+  }
+}

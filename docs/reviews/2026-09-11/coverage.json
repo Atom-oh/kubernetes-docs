@@ -10495,12 +10495,12 @@
       "sha256": "69dca3cb22ef43ea25afdf591324babe34976496c94037306f01ad64fd1c8fd5",
       "lines": 67,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 15,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/governance/01-landing-zone-and-ou.md",
@@ -10511,12 +10511,12 @@
       "sha256": "ec6419e3588dc1e5d0b090ddc33c23f0cbbac4785201dcee68142dd9a1ba16ea",
       "lines": 147,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 28,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/governance/02-account-and-iam.md",
@@ -10527,12 +10527,12 @@
       "sha256": "f95a67398c288a622cb4cd95240ba3c09634f2f22262a3e9b5ef5cdfffd95d51",
       "lines": 113,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 23,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/governance/03-eks-multi-account-multi-cluster.md",
@@ -10543,12 +10543,12 @@
       "sha256": "b18e64f99dd9af7d20d07c84f6cac02f55366c9d17fe7597d918c4dbb370397e",
       "lines": 128,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 23,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/governance/04-shared-vpc-and-connectivity.md",
@@ -10559,12 +10559,12 @@
       "sha256": "e696f23bf1fff6a8da18c136c1e01b0a59e0c8e615f66fb43064e9b8d3eafcbe",
       "lines": 187,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 37,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/governance/05-data-security-boundaries.md",
@@ -10575,12 +10575,12 @@
       "sha256": "1cf9cfc6f9b15794c0b43456aa812a4e7a8c3695f234523ee0d2d13ac3c08a0f",
       "lines": 133,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 27,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/governance/06-decision-framework-and-poc.md",
@@ -10591,12 +10591,12 @@
       "sha256": "db4f5ff7387bb0b34e849114ac06ef0c8dd2e7d4ad729df2a88b2f15c4434a93",
       "lines": 147,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 32,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/lab-guides/labs/observability-end-to-end/README.md",
@@ -12143,7 +12143,7 @@
       "sha256": "cad5f38a90ae8a759601bfd32fa4102693d813f4c65fdef7efe852119a7e3b48",
       "lines": 2172,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 5,
       "linkCount": 111,
       "structuralFindings": [],
@@ -14319,12 +14319,12 @@
       "sha256": "5cdf9a0d9b104082d1d06414584b88710050b465e6abdda18272eb58e027153d",
       "lines": 58,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/quizzes/governance/01-landing-zone-and-ou-quiz.md",
@@ -14335,12 +14335,12 @@
       "sha256": "a22a1bc7f29655aba292b8498b2dc9a84e2227ac5befc00d7a579fd8f0dc3955",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/quizzes/governance/02-account-and-iam-quiz.md",
@@ -14351,12 +14351,12 @@
       "sha256": "7bab89ad749d72e0aa8ba58d9559b6db3ad75e6c7472ebf3b1db3f583f62fcef",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
@@ -14367,12 +14367,12 @@
       "sha256": "fe1a87ab732fc5c5edfc8de62fb25079a1b9a4566ab4e528ba780a17d40ef959",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/quizzes/governance/04-shared-vpc-and-connectivity-quiz.md",
@@ -14383,12 +14383,12 @@
       "sha256": "1b49f9e5176d5fa51b8c5690954093583aad5598aed148913c919a0e8c50fbe6",
       "lines": 94,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/quizzes/governance/05-data-security-boundaries-quiz.md",
@@ -14399,12 +14399,12 @@
       "sha256": "0f8c9527c9ba3d713f98bbf4099717b6229f791f8226a69ce89ec92ad56362c0",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/quizzes/governance/06-decision-framework-and-poc-quiz.md",
@@ -14415,12 +14415,12 @@
       "sha256": "14db0ce3bc16fa1da08ded19ca639eba074a196a5ec07b6257820a524e81a13c",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "en/quizzes/llm-guide-quiz.md",
@@ -15663,7 +15663,7 @@
       "sha256": "f69ee33f10bc8bd1e07f78242695e49cc69d0d191578599fb03d2c293b6cb125",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
@@ -36215,12 +36215,12 @@
       "sha256": "d30fa57886c18b15baba648d118b95134887697a9561137c5bfcbc3f6c800350",
       "lines": 67,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 15,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/governance/01-landing-zone-and-ou.md",
@@ -36231,12 +36231,12 @@
       "sha256": "5386cae4f1044379eb6f2bca1ee44e3281e4e0657a5226e75a948edb7b3a10b7",
       "lines": 147,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 28,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/governance/02-account-and-iam.md",
@@ -36247,12 +36247,12 @@
       "sha256": "6b7f81d5673dc51b31e728e5dc42846673b59a8d5802788e1cef673eee2379dd",
       "lines": 113,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 23,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/governance/03-eks-multi-account-multi-cluster.md",
@@ -36263,12 +36263,12 @@
       "sha256": "6f6bdcf0d67154dc31262705ee01a06620d871efe2e5399d689f3478fb84c2bd",
       "lines": 128,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 23,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/governance/04-shared-vpc-and-connectivity.md",
@@ -36279,12 +36279,12 @@
       "sha256": "c3dd59ce4727b9be7caba7d46999acd083b0dc2faf4ac18e29ad0e12bd16941c",
       "lines": 187,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 37,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/governance/05-data-security-boundaries.md",
@@ -36295,12 +36295,12 @@
       "sha256": "4fe63d3c6b176b1f1c0777e4667a589a8e05b9a0cf51a830a776a986fa55717a",
       "lines": 133,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 27,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/governance/06-decision-framework-and-poc.md",
@@ -36311,12 +36311,12 @@
       "sha256": "2aeecb29226a8ca789efbda747d6451c82503cace0f553f22bb7088140e929b1",
       "lines": 147,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 32,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/lab-guides/labs/observability-end-to-end/README.md",
@@ -37863,7 +37863,7 @@
       "sha256": "13283a5746487c2d90f39193f7fef357f89fbdb642b2d861e6b46d0af96fdd6d",
       "lines": 1999,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 9,
       "linkCount": 108,
       "structuralFindings": [],
@@ -40039,12 +40039,12 @@
       "sha256": "dbae310f86075557339862bb9154287dee4781d6bc95f211302a74dbfe100d36",
       "lines": 58,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/quizzes/governance/01-landing-zone-and-ou-quiz.md",
@@ -40055,12 +40055,12 @@
       "sha256": "51333e306970c6c4c8d0e7dbdd54508dc6cad79378ee1c3626a66a349366f2c7",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/quizzes/governance/02-account-and-iam-quiz.md",
@@ -40071,12 +40071,12 @@
       "sha256": "54f48d381d56179b420c2f225bae4b2d8fe8826696164efb255eb9027c163dd4",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/quizzes/governance/03-eks-multi-account-multi-cluster-quiz.md",
@@ -40087,12 +40087,12 @@
       "sha256": "bd6136dbfbc06baf09bc467f777842214bfff78b1ec66444472148e8a0b5aa3c",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/quizzes/governance/04-shared-vpc-and-connectivity-quiz.md",
@@ -40103,12 +40103,12 @@
       "sha256": "00f998af2ec2d2b39cdda5244bee2359c6202dc65bfd4d35a131c17a862aac9d",
       "lines": 94,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/quizzes/governance/05-data-security-boundaries-quiz.md",
@@ -40119,12 +40119,12 @@
       "sha256": "77fd7621aba0e76765f74f0b6fcddd95592a6cd77fcce335637ef8a681beac30",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/quizzes/governance/06-decision-framework-and-poc-quiz.md",
@@ -40135,12 +40135,12 @@
       "sha256": "c5ace1b8c080fe590276f797851f43c3282b7fb60b69ac922c1c340752773d50",
       "lines": 76,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 2,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "governance"
     },
     {
       "path": "ko/quizzes/llm-guide-quiz.md",
@@ -41383,7 +41383,7 @@
       "sha256": "b0fdc7ac6e5477f7ab743e7bc514456499e99fcf3d3338f78004f0a795607dde",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],

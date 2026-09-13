@@ -4,72 +4,72 @@
 
 ---
 
-1. Control Tower Landing Zone 4.0에서 `IdentityCenterBaseline`을 활성화하기 위한 전제 조건은?
-   - A) 아무 baseline도 필요 없이 독립적으로 활성화할 수 있다
-   - B) `CentralSecurityRolesBaseline`이 먼저 활성화되어 있어야 하며, 이는 다시 `CentralConfigBaseline`을 요구한다
-   - C) `BackupCentralVaultBaseline`이 먼저 활성화되어 있어야 한다
-   - D) Security OU가 수동으로 생성되어 있어야 한다
+1. Control Tower4.0의 IdentityCenterBaseline 활성화 전제는?
+   - A) 아무 baseline도 필요 없음
+   - B) CentralSecurityRolesBaseline과 그 선행 CentralConfigBaseline
+   - C) BackupCentralVaultBaseline
+   - D) IAM Identity Center 자체가 모든 환경에서 Config를 요구함
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) `CentralSecurityRolesBaseline`이 먼저 활성화되어 있어야 하며, 이는 다시 `CentralConfigBaseline`을 요구한다**
+**정답: B) CentralSecurityRolesBaseline과 그 선행 CentralConfigBaseline**
 
 **설명:**
-Landing Zone 4.0의 baseline 활성화 의존 체인은 `CentralConfigBaseline` → `CentralSecurityRolesBaseline` → `IdentityCenterBaseline`/`BackupAdminBaseline`/`BackupCentralVaultBaseline` 순서입니다. 즉 Config 활성화 여부가 Identity Center baseline 사용 가능 여부를 직접 결정하므로, 이 둘을 독립적인 결정으로 다룰 수 없습니다.
+Control Tower가 관리하는 baseline의 의존 관계입니다. IAM Identity Center 서비스 자체의 AWS Config 요구사항으로 확대하지 않습니다.
 
 </details>
 
 ---
 
-2. Control Tower Landing Zone 4.0에서 Security OU에 대한 설명으로 옳은 것은?
-   - A) 3.x와 동일하게 관리자가 자유롭게 지정 Security OU를 만들 수 있다
-   - B) service integration Account들이 위치한 OU가 자동으로 Security OU로 지정된다
-   - C) Security OU는 4.0부터 완전히 폐지되었다
-   - D) 모든 Account가 기본적으로 Security OU에 속한다
+2. Control Tower4.0 Security OU에 대한 설명으로 맞는 것은?
+   - A) 모든 OU가 Security OU임
+   - B) Service integration Account가 있는 OU가 Security OU로 지정됨
+   - C) Security OU가 폐지됨
+   - D) 일반 Account에 모든 baseline을 자동 제공함
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) service integration Account들이 위치한 OU가 자동으로 Security OU로 지정된다**
+**정답: B) Service integration Account가 있는 OU가 Security OU로 지정됨**
 
 **설명:**
-4.0에서는 지정 Security OU를 관리자가 만들지 않고, service integration Account들이 위치한 OU가 자동으로 Security OU로 지정됩니다. 이 OU에는 AWSControlTowerBaseline과 Config Baseline을 적용할 수 없고, 일반 Account를 여기 두면 baseline 리소스를 받지 못하는 등의 파생 제약이 생깁니다.
+Integration Account는 같은 parent OU에 두며 landing zone이 관리합니다. AWSControlTowerBaseline/ConfigBaseline은 해당 Security OU에 적용되지 않습니다. 일반 운영 Account를 별도 OU에 두는 것은 설계 선택입니다.
 
 </details>
 
 ---
 
-3. Organizations의 SCP 연결 전략 중 "Layered bundle"이 quota 관점에서 유리한 이유는?
-   - A) SCP 문서 크기 한도가 더 크기 때문이다
-   - B) 상속된 정책은 entity당 연결 개수 한도(10개)를 소비하지 않기 때문이다
-   - C) RCP와 동일한 quota를 공유하기 때문이다
-   - D) Root에는 SCP 개수 제한이 없기 때문이다
+3. Layered SCP bundle이 direct-attachment quota를 절약하는 이유는?
+   - A) 문서 크기 제한이 사라짐
+   - B) 상속된 정책은 하위 entity의 직접 연결 개수를 소비하지 않음
+   - C) 상위 Deny를 하위 Allow가 해제함
+   - D) Root의 quota가 무제한임
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 상속된 정책은 entity당 연결 개수 한도(10개)를 소비하지 않기 때문이다**
+**정답: B) 상속된 정책은 하위 entity의 직접 연결 개수를 소비하지 않음**
 
 **설명:**
-Root에 예외 없는 최소 SCP만 두고 나머지는 OU별 정책 묶음으로 상속시키는 Layered bundle 전략은 상속을 적극 활용하므로 OU별 direct-attach 한도를 절약합니다. 반면 OU별 완성형 직접 연결 전략은 상속을 쓰지 않아 OU 하나에서 10개 한도를 그대로 소비합니다.
+SCP direct-attachment 한도는 entity당10개입니다. 상속은 별도이지만 모든 상위 정책의 유효 권한 제약은 계속 적용됩니다.
 
 </details>
 
 ---
 
-4. RCP(Resource Control Policy)를 SCP와 다르게 다뤄야 하는 이유는?
-   - A) RCP는 SCP보다 문서 크기가 더 크다
-   - B) RCP는 조직 전체 최대 연결 수가 SCP보다 많다
-   - C) RCP는 실사용 4개뿐이고 문서 크기도 SCP의 절반이라, 계층적 bundle 전략을 쓸 여유가 없다
-   - D) RCP는 principal의 권한을 부여하는 정책이다
+4. RCP의 연결 한도와 상속을 올바르게 설명한 것은?
+   - A) 권한을 직접 부여함
+   - B) 상속을 지원하지 않음
+   - C) 5개 중 RCPFullAWSAccess가1개를 쓰며 나머지 direct slot과 상속을 함께 설계함
+   - D) SCP와 같은 문서 크기 한도
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C) RCP는 실사용 4개뿐이고 문서 크기도 SCP의 절반이라, 계층적 bundle 전략을 쓸 여유가 없다**
+**정답: C) 5개 중 RCPFullAWSAccess가1개를 쓰며 나머지 direct slot과 상속을 함께 설계함**
 
 **설명:**
-RCP는 entity당 최대 5개(RCPFullAWSAccess 포함, 실사용 4개)이고 문서 크기도 5,120자로 SCP의 절반입니다. 이 때문에 RCP는 외부 principal 접근 차단, confused deputy 방어처럼 조직 전체의 소수 절대 규칙에 한정하고, 세분화는 SCP와 리소스 정책에 위임하는 것이 권장됩니다.
+RCP의 direct slot은4개 남고 문서는5,120자입니다. 작은 예산이 계층적 상속을 금지하는 것은 아닙니다. 지원 resource와 principal 예외를 확인합니다.
 
 </details>

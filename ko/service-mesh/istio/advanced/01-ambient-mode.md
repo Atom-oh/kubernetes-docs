@@ -1,6 +1,6 @@
 # Ambient Mode
 
-> **검토일**: 2026년 9월 11일 · Istio 1.31. 호환 Linux Node·node-agent/CNI 권한·새 실습 namespace를 전제합니다. 감사에서 배포 명령을 실행하지 않았습니다.
+> **마지막 업데이트**: 2026년 9월 11일 · Istio 1.31. 호환 Linux Node·node-agent/CNI 권한·새 실습 namespace를 전제합니다. 감사에서 배포 명령을 실행하지 않았습니다.
 
 Ambient는 2022년 실험적 preview로 소개되어 Istio 1.18에 Alpha로 처음 포함되고 1.22 Beta·1.24 core GA에 도달했습니다. Preview는 정식 1.15 릴리스의 GA 기능이 아니었습니다. 리소스 절감량·전환 안전성은 실제 topology·정책·트래픽에 달려 있습니다.
 

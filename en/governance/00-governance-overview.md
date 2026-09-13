@@ -1,6 +1,6 @@
 # Enterprise Cloud Governance Overview
 
-> **Last Updated**: September 9, 2026
+> **Last Updated**: September 13, 2026
 
 ## 1. The Problem This Section Addresses
 
@@ -11,7 +11,7 @@ The EKS, networking, and security documents so far assumed "one cluster, one VPC
 - Should EKS clusters be dedicated per team, or shared?
 - Do these three boundaries (Account/VPC/EKS) and the data boundary need to line up 1:1?
 
-This section is based on an architecture standardization review that a large e-commerce organization actually running multi-account, multi-EKS infrastructure conducted with an AWS Solutions Architect. It contains no account IDs, costs, or organizational details of any specific company. It is generalized into principles based purely on **quotas, API behavior, and service constraints verified against official AWS documentation**. In other words, this isn't "this company did it this way" — it's a fact-based guide to "AWS services actually behave this way under these conditions."
+This section covers standardization decisions for large multi-account, multi-EKS environments. Service constraints are checked against linked AWS documentation; hybrid designs, split criteria, and PoC thresholds are proposals for organizational validation. It does not establish a particular company’s private review findings or production success.
 
 ## 2. Why Account, VPC, EKS, and Data Boundaries Should Be Considered Separately
 
@@ -28,14 +28,16 @@ The alternative this section proposes is **judging each boundary independently**
 
 This makes fine-grained judgments possible, such as "this workload doesn't need its own VPC, but regulatory requirements mean it needs a dedicated Account." There's a cost, too — you now have to maintain judging criteria per boundary, and exceptions can multiply.
 
-## 3. Four Conditions Where AWS Forces Boundaries Together
+<span id="_3-four-conditions-where-aws-forces-boundaries-together"></span>
 
-Even with an independent-judgment principle in place, AWS service behavior itself forces certain boundaries to merge. These aren't optional — they're constraints that need to be locked in early in the design.
+## 3. Service Constraints to Check When Connecting Boundaries
 
-1. **An EKS cluster cannot span multiple VPCs.** If you want to split two clusters into separate failure domains (e.g., A/B cluster redundancy), those two clusters automatically end up in separate VPCs. The EKS boundary is always a subset of the VPC boundary.
-2. **An EKS Pod Identity role can only exist in the same Account as the cluster.** If you want to run Kubernetes workloads in a separate "shared cluster Account" while resources (Lambda, SQS, RDS, etc.) live in each workload's own Account, cross-account access is always a two-hop structure: association role → target role. This isn't an optimization — it's mandatory structure.
-3. **Even in a Shared VPC, EKS security groups and IAM roles must live in the participant Account.** Sharing the VPC doesn't change the fact that SG/IAM boundaries follow the Account boundary.
-4. **Data boundaries split by service.** Some services are placed directly inside a VPC (RDS, etc.), while others have no VPC concept at all (S3, etc.). AWS explicitly maintains the list of services that can create resources in a Shared VPC subnet (see [Chapter 5](./05-data-security-boundaries.md)), and any workload using a service outside that list must be treated as an exception to the Shared VPC strategy.
+Independent decisions must still account for service placement and authorization constraints. These constraints do not automatically imply one mandatory organizational structure.
+
+1. **An EKS cluster’s configured subnets must belong to one VPC.** Two independent clusters can use the same VPC. Separate VPCs are an additional decision about shared routing, DNS, and address-space failure domains.
+2. **The primary IAM role in a Pod Identity association must be in the cluster Account.** The target-role feature uses association role → target role chaining. Alternatives include direct resource-policy access for services such as S3 and direct IRSA federation to a target-account role. Two roles are not mandatory for every cross-account request.
+3. **In a Shared VPC, design EKS cluster/node IAM roles and associated SGs around the participant Account creating the cluster.** This may differ from the Workload Account owning a database or queue. Sharing a subnet does not transfer resource ownership.
+4. **Data boundaries differ by service.** RDS instances use VPC subnets; S3 buckets are not placed in subnets. The Shared VPC support list explicitly allows for omissions, so absence alone does not establish lack of support ([Data and Security Boundaries](./05-data-security-boundaries.md)).
 
 ## 4. Shared-First vs. Dedicated-First
 
@@ -64,3 +66,8 @@ The recommended approach is to keep one **stable Workload ID**, and manage domai
 | [Decision Framework and PoC Design](./06-decision-framework-and-poc.md) | Building a decision matrix, easily-missed decision factors, PoC measurement metrics |
 
 Each document prioritizes verified facts — "AWS services actually behave this way under this condition" — over opinion, and clearly marks the parts that still require organizational judgment.
+
+## References
+
+- [EKS networking requirements](https://docs.aws.amazon.com/eks/latest/userguide/network-reqs.html)
+- [EKS multi-account resource-policy patterns](https://docs.aws.amazon.com/eks/latest/best-practices/subnets.html)

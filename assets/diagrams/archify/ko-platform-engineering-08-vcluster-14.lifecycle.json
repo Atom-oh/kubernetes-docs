@@ -1,0 +1,263 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "vCluster 수명 주기와 보존",
+    "output": "ko-platform-engineering-08-vcluster-14.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1040,
+      640
+    ],
+    "views": [
+      {
+        "id": "provision",
+        "label": "요청 → Running",
+        "focus": [
+          "requested",
+          "approved",
+          "provisioning",
+          "running"
+        ],
+        "note": "검토한 vCluster 0.37.0 Shared Nodes profile의 개념도입니다. 실제 실행·복구·격리는 별도 검증합니다."
+      },
+      {
+        "id": "sleep-wake",
+        "label": "Sleep / Pause",
+        "focus": [
+          "running",
+          "sleeping",
+          "paused"
+        ],
+        "note": "검토한 vCluster 0.37.0 Shared Nodes profile의 개념도입니다. 실제 실행·복구·격리는 별도 검증합니다."
+      },
+      {
+        "id": "ttl",
+        "label": "TTL 삭제",
+        "focus": [
+          "running",
+          "sleeping",
+          "deleting",
+          "deleted"
+        ],
+        "note": "검토한 vCluster 0.37.0 Shared Nodes profile의 개념도입니다. 실제 실행·복구·격리는 별도 검증합니다."
+      }
+    ],
+    "legend": {
+      "mode": "auto",
+      "entries": {
+        "active": {
+          "label": "진행 중"
+        },
+        "failure": {
+          "label": "실패 · 복구"
+        },
+        "neutral": {
+          "label": "중립 상태"
+        },
+        "start": {
+          "label": "시작"
+        },
+        "success": {
+          "label": "성공 · 완료"
+        },
+        "waiting": {
+          "label": "대기"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "main",
+      "label": "프로비저닝 경로"
+    },
+    {
+      "id": "idle",
+      "label": "일시중지 · 절전"
+    },
+    {
+      "id": "terminal",
+      "label": "삭제"
+    }
+  ],
+  "states": [
+    {
+      "id": "requested",
+      "type": "start",
+      "label": "Requested",
+      "sublabel": "개발자 요청",
+      "lane": "main",
+      "col": 0
+    },
+    {
+      "id": "approved",
+      "type": "active",
+      "label": "Approved",
+      "sublabel": "PR 머지",
+      "lane": "main",
+      "col": 1
+    },
+    {
+      "id": "provisioning",
+      "type": "active",
+      "label": "Provisioning",
+      "sublabel": "GitOps 동기화",
+      "lane": "main",
+      "col": 2
+    },
+    {
+      "id": "running",
+      "type": "success",
+      "label": "Running",
+      "sublabel": "사용 가능",
+      "lane": "main",
+      "col": 3
+    },
+    {
+      "id": "sleeping",
+      "type": "waiting",
+      "label": "Sleeping",
+      "sublabel": "자동 절전",
+      "lane": "idle",
+      "col": 0
+    },
+    {
+      "id": "paused",
+      "type": "waiting",
+      "label": "Paused",
+      "sublabel": "수동 일시중지",
+      "lane": "idle",
+      "col": 2
+    },
+    {
+      "id": "deleting",
+      "type": "failure",
+      "label": "Deleting",
+      "sublabel": "TTL 만료 · 수동 삭제",
+      "lane": "terminal",
+      "col": 1
+    },
+    {
+      "id": "deleted",
+      "type": "neutral",
+      "label": "Deleted",
+      "sublabel": "정리 완료",
+      "lane": "terminal",
+      "col": 0
+    }
+  ],
+  "transitions": [
+    {
+      "from": "requested",
+      "to": "approved",
+      "label": "PR 머지",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "approved",
+      "to": "provisioning",
+      "label": "동기화",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "provisioning",
+      "to": "running",
+      "label": "준비 완료",
+      "variant": "emphasis",
+      "route": "straight",
+      "labelDy": -25
+    },
+    {
+      "from": "running",
+      "to": "sleeping",
+      "label": "설정한 idle 조건",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 1,
+      "labelDy": -12
+    },
+    {
+      "from": "sleeping",
+      "to": "running",
+      "label": "설정된 wake 조건",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "labelSegment": 0,
+      "labelDx": 8,
+      "labelDy": 14
+    },
+    {
+      "from": "running",
+      "to": "paused",
+      "label": "수동 일시중지",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": -14,
+      "labelSegment": 1
+    },
+    {
+      "from": "paused",
+      "to": "running",
+      "label": "수동 재개",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "right",
+      "labelSegment": 0,
+      "labelDy": 0,
+      "labelDx": 42
+    },
+    {
+      "from": "running",
+      "to": "deleting",
+      "label": "설정된 삭제 조건",
+      "fromSide": "right",
+      "toSide": "right",
+      "route": "right-channel",
+      "channelX": 840
+    },
+    {
+      "from": "sleeping",
+      "to": "deleting",
+      "label": "설정된 삭제 조건",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelSegment": 1,
+      "labelDy": -12
+    },
+    {
+      "from": "deleting",
+      "to": "deleted",
+      "label": "완료",
+      "route": "straight",
+      "fromSide": "left",
+      "toSide": "right"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Pause / Resume",
+      "items": [
+        "pause는 workload를 삭제하고 resume 시 재생성",
+        "PVC/Service는 별도 보존 정책에 따름",
+        "수동 pause와 자동 wake 조건은 같지 않음"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "자동화 범위",
+      "items": [
+        "sleep.auto / deletion.auto는 실제 지원·권한을 확인",
+        "TTL label만으로 자동 삭제가 실행되지는 않음",
+        "활성 시간 감소율은 실제 청구 비용 절감률이 아님"
+      ]
+    }
+  ]
+}

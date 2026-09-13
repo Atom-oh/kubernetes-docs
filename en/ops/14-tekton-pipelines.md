@@ -1,6 +1,6 @@
 # Tekton Pipelines: Kubernetes-Native CI
 
-> **Reviewed**: 2026-09-12. Pipelines 1.16.0, Triggers 0.37.0, Chains 0.29.0, Dashboard 0.72.0, tkn 0.46.0.
+> **Last Updated**: September 12, 2026. Pipelines 1.16.0, Triggers 0.37.0, Chains 0.29.0, Dashboard 0.72.0, tkn 0.46.0.
 > **Validation**: Release CRD schemas, Task dependencies, local scripts and mocked programs. No live EKS installation, image build/push, KMS signing, external webhooks or notifications were executed.
 
 < [Previous: FinOps](./13-finops-cost-platform.md) | [Contents](./README.md) | [Next: Zonal operations](./15-zonal-operations-guide.md) >

@@ -223,7 +223,7 @@
           "bottom": 112,
           "left": 16
         },
-        "sourceSha256": "75c0dfe62e7ce4b8980730c55f93e33c2148cdfb8d2026d39980b2a1f453d1ad"
+        "sourceSha256": "d79afac21f1dbf7d5aca6b13f6ff2c5fd3a9a06b6e033f4e974db4d8eed19a04"
       },
       {
         "figure": 0,
@@ -243,7 +243,7 @@
           "bottom": 76,
           "left": 32
         },
-        "sourceSha256": "75c0dfe62e7ce4b8980730c55f93e33c2148cdfb8d2026d39980b2a1f453d1ad"
+        "sourceSha256": "d79afac21f1dbf7d5aca6b13f6ff2c5fd3a9a06b6e033f4e974db4d8eed19a04"
       },
       {
         "figure": 0,
@@ -263,7 +263,7 @@
           "bottom": 60,
           "left": 1417
         },
-        "sourceSha256": "75c0dfe62e7ce4b8980730c55f93e33c2148cdfb8d2026d39980b2a1f453d1ad"
+        "sourceSha256": "d79afac21f1dbf7d5aca6b13f6ff2c5fd3a9a06b6e033f4e974db4d8eed19a04"
       },
       {
         "figure": 0,
@@ -283,7 +283,7 @@
           "bottom": 112,
           "left": 16
         },
-        "sourceSha256": "7e9dad3989015b46252d977cb704d10fe34945508b62db274185ebc9828a199d"
+        "sourceSha256": "218f56eab6d3289c17497e6003723725e33b798d7fa911ad712e49e00c8a903a"
       },
       {
         "figure": 0,
@@ -303,7 +303,7 @@
           "bottom": 76,
           "left": 32
         },
-        "sourceSha256": "7e9dad3989015b46252d977cb704d10fe34945508b62db274185ebc9828a199d"
+        "sourceSha256": "218f56eab6d3289c17497e6003723725e33b798d7fa911ad712e49e00c8a903a"
       },
       {
         "figure": 0,
@@ -323,7 +323,7 @@
           "bottom": 60,
           "left": 1417
         },
-        "sourceSha256": "7e9dad3989015b46252d977cb704d10fe34945508b62db274185ebc9828a199d"
+        "sourceSha256": "218f56eab6d3289c17497e6003723725e33b798d7fa911ad712e49e00c8a903a"
       }
     ],
     "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
@@ -331,23 +331,23 @@
   "diagrams": [
     {
       "path": "assets/diagrams/archify/ko-platform-engineering-05-example-corp-app-0.architecture.json",
-      "sha256": "77a6550654a6eedc4cd6530a8fc39c2d5246ba9d7fab5dad851d655c39252eae"
+      "sha256": "afa23f02c50faf9d90849594160bc3a3534d5ab811b00f97b6947fcf7811db44"
     },
     {
       "path": "public/archmaps/ko-platform-engineering-05-example-corp-app-0.html",
-      "sha256": "75c0dfe62e7ce4b8980730c55f93e33c2148cdfb8d2026d39980b2a1f453d1ad"
+      "sha256": "d79afac21f1dbf7d5aca6b13f6ff2c5fd3a9a06b6e033f4e974db4d8eed19a04"
     },
     {
       "path": "ko/.gitbook/assets/ko-platform-engineering-05-example-corp-app-0.png",
-      "sha256": "b3b6c87c29f2d3c97cb9d70e78c1f34cd886e4057680c9710b0b1a910fc63bb2"
+      "sha256": "a70a0ec47eec73e22edf8d98b3dc234ad1600244f10cf2d1c3115e31aee60d92"
     },
     {
       "path": "assets/diagrams/archify/en-platform-engineering-05-example-corp-app-0.architecture.json",
-      "sha256": "164c20a7f7d215f1fa65fd2003df46d1faa0a470fea2b2a764686b42d711fc78"
+      "sha256": "da439654406fea3962b03eb15fd1630bd94f47a1d05b88ec6d876048b171e401"
     },
     {
       "path": "public/archmaps/en-platform-engineering-05-example-corp-app-0.html",
-      "sha256": "7e9dad3989015b46252d977cb704d10fe34945508b62db274185ebc9828a199d"
+      "sha256": "218f56eab6d3289c17497e6003723725e33b798d7fa911ad712e49e00c8a903a"
     },
     {
       "path": "en/.gitbook/assets/en-platform-engineering-05-example-corp-app-0.png",
@@ -372,5 +372,8 @@
     "CELdynamicfixturesandversionedRGD/TGBstructuresonly;notactualkrographcompiler/admission/LBCruntime.",
     "NamespacegateinjectionandService/TGBexistencerequirementscheckedagainstofficial3.5.0docs;actualinjectionremainsdeploymentvalidation.",
     "No full local VitePress build;2MDand6standaloneviewerchecks."
+  ],
+  "reviewFixes": [
+    "PLATFORM-R1-003:guidedviewnotesuseOrderAppinbothlocales;HTML/PNGregeneratedand6responsivecasespassed"
   ]
 }

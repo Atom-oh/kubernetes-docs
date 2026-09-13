@@ -34,7 +34,7 @@
           "cm",
           "lbc"
         ],
-        "note": "WebApp CR 하나가 Service, TargetGroupBinding, Deployment, ConfigMap을 함께 생성한다."
+        "note": "OrderApp CR 하나가 Service, TargetGroupBinding, Deployment, ConfigMap을 함께 생성한다."
       },
       {
         "id": "traffic-path",

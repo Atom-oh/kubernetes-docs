@@ -2,29 +2,33 @@
   {
     "path": "ko/platform-engineering/08-vcluster.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "reviewedSha256": "13283a5746487c2d90f39193f7fef357f89fbdb642b2d861e6b46d0af96fdd6d",
-    "summary": "AllKO1998/EN2171guidelines143quizlines106uniqueblocksread;current0.36.1schema/CLI/isolation/lifecycle/nativechecksnext."
+    "status": "fixed",
+    "reviewedSha256": "44172aad7c90a2cb7b1c4e8107eb6ee4981973e711c0e29165457418c7635fbc",
+    "summary": "All4MD106uniqueblocks/8quiztopicseachreviewed;0.37schema/Helm/lifecycle/network/usage3/4MD10figures30responsivepassed;runtime/APIattemptlimitsexplicit.",
+    "validationReport": "docs/reviews/2026-09-11/platform-vcluster-validation.json"
   },
   {
     "path": "ko/quizzes/platform-engineering/08-vcluster-quiz.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "reviewedSha256": "b0fdc7ac6e5477f7ab743e7bc514456499e99fcf3d3338f78004f0a795607dde",
-    "summary": "AllKO1998/EN2171guidelines143quizlines106uniqueblocksread;current0.36.1schema/CLI/isolation/lifecycle/nativechecksnext."
+    "status": "fixed",
+    "reviewedSha256": "a07a76d24245d3612754d99485dd2051980abacc2a7bb98fdeeeae1d1d9c2e03",
+    "summary": "All4MD106uniqueblocks/8quiztopicseachreviewed;0.37schema/Helm/lifecycle/network/usage3/4MD10figures30responsivepassed;runtime/APIattemptlimitsexplicit.",
+    "validationReport": "docs/reviews/2026-09-11/platform-vcluster-validation.json"
   },
   {
     "path": "en/platform-engineering/08-vcluster.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "reviewedSha256": "cad5f38a90ae8a759601bfd32fa4102693d813f4c65fdef7efe852119a7e3b48",
-    "summary": "AllKO1998/EN2171guidelines143quizlines106uniqueblocksread;current0.36.1schema/CLI/isolation/lifecycle/nativechecksnext."
+    "status": "fixed",
+    "reviewedSha256": "78343173c79ca5372e8ff6a12731b3900347aa324d834d7e545cda5e82c2e2d9",
+    "summary": "All4MD106uniqueblocks/8quiztopicseachreviewed;0.37schema/Helm/lifecycle/network/usage3/4MD10figures30responsivepassed;runtime/APIattemptlimitsexplicit.",
+    "validationReport": "docs/reviews/2026-09-11/platform-vcluster-validation.json"
   },
   {
     "path": "en/quizzes/platform-engineering/08-vcluster-quiz.md",
     "fullyRead": true,
-    "status": "needs_followup",
-    "reviewedSha256": "f69ee33f10bc8bd1e07f78242695e49cc69d0d191578599fb03d2c293b6cb125",
-    "summary": "AllKO1998/EN2171guidelines143quizlines106uniqueblocksread;current0.36.1schema/CLI/isolation/lifecycle/nativechecksnext."
+    "status": "fixed",
+    "reviewedSha256": "208dee146f3b193ed0db2bb9117613513d20c4f6893b2b7d932db8a1b0c9652e",
+    "summary": "All4MD106uniqueblocks/8quiztopicseachreviewed;0.37schema/Helm/lifecycle/network/usage3/4MD10figures30responsivepassed;runtime/APIattemptlimitsexplicit.",
+    "validationReport": "docs/reviews/2026-09-11/platform-vcluster-validation.json"
   }
 ]

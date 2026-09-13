@@ -1,6 +1,6 @@
 # Part 1: Kafka Fundamentals
 
-> **Reviewed**: 2026-09-12. Apache Kafka 4.3.1, supported by Strimzi 1.2.0.
+> **Last Updated**: September 12, 2026. Apache Kafka 4.3.1, supported by Strimzi 1.2.0.
 > **Validation**: Nineteen checks used Kafka 4.3.1's actual configuration classes for validity, defaults and conflicts. No broker or EKS cluster was started.
 
 ## 1. Brokers, Topics and Partitions

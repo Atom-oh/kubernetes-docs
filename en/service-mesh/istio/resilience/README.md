@@ -1,6 +1,6 @@
 # Resilience
 
-> **Reviewed**: September 11, 2026 · Istio 1.31. These are independent sidecar examples in `default` with HTTP `myapp` on port 8080. Do not apply every same-host example together. Validate actual proxy configuration and capacity; these examples have not been deployed or load-tested. Ambient L7 behavior requires a waypoint and a supported policy attachment.
+> **Last Updated**: September 11, 2026 · Istio 1.31. These are independent sidecar examples in `default` with HTTP `myapp` on port 8080. Do not apply every same-host example together. Validate actual proxy configuration and capacity; these examples have not been deployed or load-tested. Ambient L7 behavior requires a waypoint and a supported policy attachment.
 
 Istio's resilience features help contain failures when configured for the application's semantics and capacity.
 

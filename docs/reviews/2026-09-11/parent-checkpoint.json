@@ -707,10 +707,10 @@
   "status": "in_progress_not_complete",
   "latestCoverage": {
     "documents": 2707,
-    "fullyRead": 1011,
-    "fixed": 1003,
+    "fullyRead": 1039,
+    "fixed": 1035,
     "verified": 0,
-    "followup": 8
+    "followup": 4
   },
   "currentWorkspaceBranch": "docs/review-followup-2026-09-12",
   "branch": "audit/full-content-2026-09",

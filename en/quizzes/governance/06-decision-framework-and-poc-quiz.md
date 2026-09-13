@@ -22,19 +22,19 @@ Without RTO/RPO targets defined per CUJ, you can't judge whether an A/B EKS Runt
 
 ---
 
-2. Which statement correctly describes ALB weighted target group's "fail-open" behavior?
-   - A) Traffic is never sent to unhealthy targets
-   - B) If there aren't enough healthy targets, traffic is sent to all registered targets, including unhealthy ones
-   - C) The entire target group immediately becomes unavailable
-   - D) It automatically fails over to another Region
+2. How do ALB weighted forwarding and fail-open relate?
+   - A) An unhealthy group always fails over to another
+   - B) Automatic inter-group failover and unhealthy routing inside a group are distinct
+   - C) Weights guarantee RTO
+   - D) Targets replicate across Regions
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) If there aren't enough healthy targets, traffic is sent to all registered targets, including unhealthy ones**
+**Answer: B) Automatic inter-group failover and unhealthy routing inside a group are distinct**
 
 **Explanation:**
-The claim that "it won't automatically fail over to unhealthy targets" is only half true — ALB's fail-open behavior kicks in when healthy targets run short, and this must be mitigated with `minimum_healthy_targets` settings. The default of "1 healthy target is enough" can be dangerous for large target groups.
+Weighted forwarding does not automatically transfer an empty/unhealthy group’s weight to another group. Evaluate the selected group’s DNS/routing health thresholds separately.
 
 </details>
 
@@ -52,24 +52,24 @@ The claim that "it won't automatically fail over to unhealthy targets" is only h
 **Answer: B) Because every other option — independent boundary judgment, Hybrid configurations, etc. — sets "reproducible via a decision matrix" as its condition for validity, so no PoC result converts into a standard without one**
 
 **Explanation:**
-The decision matrix dry-run has two people independently apply the matrix to 10–15 representative workloads, targeting a disagreement rate under 20% and an exception rate under 15%. The resulting estimated Account/VPC/cluster counts determine the measurement targets for the remaining PoCs.
+The decision matrix dry-run has two people independently apply the matrix to 10–15 representative workloads, using local example targets of disagreement under 20% and exceptions under 15%. The resulting estimated Account/VPC/cluster counts determine the measurement targets for the remaining PoCs.
 
 </details>
 
 ---
 
-4. What's the strongest control for managing unused Regions?
-   - A) SCP `aws:RequestedRegion` Deny
-   - B) Enabling Security Hub CSPM
-   - C) Disabling Region opt-in
-   - D) Enabling GuardDuty
+4. Which statement correctly describes unused-Region controls?
+   - A) Every default Region can be disabled
+   - B) Combine SCPs, detection, supported opt-in disabling, and existing-resource cost checks
+   - C) GuardDuty alone blocks APIs
+   - D) Disabling a Region deletes all resources
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Disabling Region opt-in**
+**Answer: B) Combine SCPs, detection, supported opt-in disabling, and existing-resource cost checks**
 
 **Explanation:**
-SCP Deny is a preventive control, and Security Hub CSPM/GuardDuty are detective controls (they only process findings in Regions where enabled and don't retroactively collect), but disabling Region opt-in is the strongest available control.
+Regions enabled by default cannot be disabled. Opt-in disabling does not delete existing resources or ensure charges stop, so plan cleanup and access controls together.
 
 </details>

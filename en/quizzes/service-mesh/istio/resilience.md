@@ -1,6 +1,6 @@
 # Resilience Quiz
 
-> **Reviewed**: September 11, 2026 · Istio1.31 · Kubernetes1.32–1.36; see the installation chapter for EKS compatibility.
+> **Last Updated**: September 11, 2026 · Istio1.31 · Kubernetes1.32–1.36; see the installation chapter for EKS compatibility.
 
 This quiz tests your understanding of Istio's Resilience features.
 

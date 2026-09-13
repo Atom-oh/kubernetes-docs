@@ -1,6 +1,6 @@
 # Zone Aware Routing
 
-> **검토일**: 2026년 9월 11일 · Istio1.31. 이 장은 locality 가중치·우선순위 장애조치를 위한 `localityLbSetting`을 사용합니다. 별도 `zoneAwareLbSetting` API는 전제·의미가 다르므로 필드를 섞지 않습니다. 사이드카 메시를 가정하며 같은 host 정책들은 독립적인 대안입니다. 배포·부하 검증된 예제가 아닙니다.
+> **마지막 업데이트**: 2026년 9월 11일 · Istio1.31. 이 장은 locality 가중치·우선순위 장애조치를 위한 `localityLbSetting`을 사용합니다. 별도 `zoneAwareLbSetting` API는 전제·의미가 다르므로 필드를 섞지 않습니다. 사이드카 메시를 가정하며 같은 host 정책들은 독립적인 대안입니다. 배포·부하 검증된 예제가 아닙니다.
 
 Zone Aware Routing은 Kubernetes 가용 영역(Availability Zone)을 인식하여 트래픽을 최적화하는 기능입니다. 같은 AZ 내 통신을 우선하여 지연시간을 줄이고 크로스 AZ 데이터 전송 비용을 절감합니다.
 

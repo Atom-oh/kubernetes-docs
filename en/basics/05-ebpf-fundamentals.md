@@ -1514,8 +1514,8 @@ To verify your understanding of this document, try the following quiz:
 - [bpftrace Tutorial](https://github.com/iovisor/bpftrace/blob/master/docs/tutorial_one_liners.md) - bpftrace one-liner tutorial
 
 **Community**:
-- [eBPF Summit](https://ebpf.io/summit/) - Annual eBPF conference
-- [Cilium Slack](https://cilium.io/slack) - Cilium community
+- [eBPF Summit](https://ebpf.io/events/?conference=eBPF%20Summit) - Annual eBPF conference
+- [Cilium Slack](https://slack.cilium.io/) - Cilium community
 
 ### 10.3 Related Documents
 

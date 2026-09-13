@@ -1,6 +1,6 @@
 # Rate Limiting
 
-> **Reviewed**: September 11, 2026 · Istio 1.31. Independent examples; select one local policy per workload/listener. Sidecar applications use HTTP 8080 in `default`; gateway examples select a dedicated gateway with `istio: ingressgateway` in `istio-system`. Verify actual labels/listeners before applying. These configurations have not been deployed or load-tested.
+> **Last Updated**: September 11, 2026 · Istio 1.31. Independent examples; select one local policy per workload/listener. Sidecar applications use HTTP 8080 in `default`; gateway examples select a dedicated gateway with `istio: ingressgateway` in `istio-system`. Verify actual labels/listeners before applying. These configurations have not been deployed or load-tested.
 
 Rate Limiting is a feature that limits request rates to protect services from overload, ensure fair resource usage, and control costs.
 

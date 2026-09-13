@@ -1,6 +1,6 @@
 # Linkerd 설치 및 설정
 
-> **검토일**: 2026년 9월 11일 · 공개 CLI: edge-26.9.1 · 대응 chart: 2026.9.1
+> **마지막 업데이트**: 2026년 9월 11일 · 공개 CLI: edge-26.9.1 · 대응 chart: 2026.9.1
 
 통제된 Kubernetes 설치, Helm/CLI 소유권, HA, 선택적 확장, EKS 고려사항, 업그레이드와 제거를 다룹니다. Upstream은 edge 산출물을 배포하며 stable 배포판의 설치·지원은 vendor 안내를 따라야 합니다. 2.20 같은 milestone이 upstream stable-2.20.0 다운로드를 뜻하지는 않습니다.
 

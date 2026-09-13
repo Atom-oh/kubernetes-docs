@@ -638,4 +638,4 @@ Amazon EKS를 사용하는 경우, AWS의 다양한 보안 서비스와 통합�
 - [Amazon EKS 공식 문서 - 보안](https://docs.aws.amazon.com/eks/latest/userguide/security.html)
 - [Amazon EKS 공식 문서 - IAM 역할 및 서비스 계정](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
 - [Amazon EKS 공식 문서 - 시크릿 암호화](https://docs.aws.amazon.com/eks/latest/userguide/enable-kms.html)
-- [AWS 보안 블로그 - EKS 보안 모범 사례](https://aws.amazon.com/blogs/containers/amazon-eks-security-best-practices/)
+- [Amazon EKS 보안 모범 사례](https://docs.aws.amazon.com/eks/latest/best-practices/security.html)

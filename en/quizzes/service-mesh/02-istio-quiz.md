@@ -1,6 +1,6 @@
 # Istio Quiz
 
-> **Reviewed**: September 11, 2026 · Example checks: Istio 1.31.0 / Argo Rollouts 1.10.0
+> **Last Updated**: September 11, 2026 · Example checks: Istio 1.31.0 / Argo Rollouts 1.10.0
 
 This quiz covers the [maintained Istio guides](../../service-mesh/istio/README.md). Compatibility belongs in the [installation guide](../../service-mesh/istio/01-installation.md); a generic Kubernetes minimum is not a support matrix. Examples are learning aids, not production-tested deployments. Replace illustrative namespaces, hostnames, identities and backend endpoints with verified inputs.
 

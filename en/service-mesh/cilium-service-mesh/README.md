@@ -1,6 +1,6 @@
 # Cilium Service Mesh Overview
 
-> **Reviewed**: September 11, 2026 · Cilium/chart 1.20.1 · CLI 0.20.0 · Hubble CLI 1.19.4
+> **Last Updated**: September 11, 2026 · Cilium/chart 1.20.1 · CLI 0.20.0 · Hubble CLI 1.19.4
 
 Cilium combines Kubernetes networking, eBPF policy/load balancing and optional application-layer proxy features. Selected L7 traffic is handled by Cilium's Envoy integration; removing per-application sidecars does not remove the proxy, kernel requirements or operational components.
 
