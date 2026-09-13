@@ -1,0 +1,34 @@
+[
+  {
+    "path": "ko/platform-engineering/01-helm.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "37a5866ee3f747a7f6b63fd8069fb7551ed2be8325163a34f021f7d6d6636f5d",
+    "summary": "All original prose/58unique blocks and20quiztopics perlocale reviewed. Complete8filechart, Helm3/4nativechecks,16exactsnippetmatches and4MDcompilation passed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-helm-validation.json"
+  },
+  {
+    "path": "ko/quizzes/platform-engineering/01-helm-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "370f4d255669860fce5c12071879e0c27ea97352e21664e22cc11abd2707706e",
+    "summary": "All original prose/58unique blocks and20quiztopics perlocale reviewed. Complete8filechart, Helm3/4nativechecks,16exactsnippetmatches and4MDcompilation passed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-helm-validation.json"
+  },
+  {
+    "path": "en/platform-engineering/01-helm.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "75655f8c26dbf238f1869ab3d1443114957627c359858845793d35251d277999",
+    "summary": "All original prose/58unique blocks and20quiztopics perlocale reviewed. Complete8filechart, Helm3/4nativechecks,16exactsnippetmatches and4MDcompilation passed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-helm-validation.json"
+  },
+  {
+    "path": "en/quizzes/platform-engineering/01-helm-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "5216eb2bede4b0aa517259cde9d62beff356136b6da0a914f9e9293ee435178b",
+    "summary": "All original prose/58unique blocks and20quiztopics perlocale reviewed. Complete8filechart, Helm3/4nativechecks,16exactsnippetmatches and4MDcompilation passed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-helm-validation.json"
+  }
+]

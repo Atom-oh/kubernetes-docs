@@ -5127,8 +5127,8 @@
         <text data-detail="context" x="750" y="376" class="t-muted" font-size="9" text-anchor="middle">Catalog · TechDocs · Scaffolder · Auth · Kubernetes</text>
         </g>
 
-        <g id="node-pg" data-node-id="pg" data-node-label="PostgreSQL" tabindex="0" role="button" aria-label="Focus PostgreSQL, Amazon RDS · Catalog 데이터, 데이터 저장소" aria-pressed="false" data-node-kind="database" data-node-sublabel="Amazon RDS · Catalog 데이터" data-node-context="데이터 저장소">
-          <title>PostgreSQL · Amazon RDS · Catalog 데이터 · 데이터 저장소</title>
+        <g id="node-pg" data-node-id="pg" data-node-label="PostgreSQL" tabindex="0" role="button" aria-label="Focus PostgreSQL, RDS · 플러그인 데이터, 데이터 저장소" aria-pressed="false" data-node-kind="database" data-node-sublabel="RDS · 플러그인 데이터" data-node-context="데이터 저장소">
+          <title>PostgreSQL · RDS · 플러그인 데이터 · 데이터 저장소</title>
           <rect x="990" y="40" width="190" height="60" rx="6" class="c-mask"/>
           <rect x="990" y="40" width="190" height="60" rx="6" class="c-database" data-animate="node" style="--step:5" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(996 46) scale(0.6875)">
@@ -5136,7 +5136,7 @@
             <path d="M3 4v8c0 1.1 2.2 2 5 2s5-.9 5-2V4M3 8c0 1.1 2.2 2 5 2s5-.9 5-2"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="1085" y="68" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">PostgreSQL</text>
-        <text data-detail="context" x="1085" y="84" class="t-muted" font-size="9" text-anchor="middle">Amazon RDS · Catalog 데이터</text>
+        <text data-detail="context" x="1085" y="84" class="t-muted" font-size="9" text-anchor="middle">RDS · 플러그인 데이터</text>
         </g>
 
         <g id="node-s3" data-node-id="s3" data-node-label="S3" tabindex="0" role="button" aria-label="Focus S3, TechDocs 산출물, 데이터 저장소" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="TechDocs 산출물" data-node-context="데이터 저장소">
@@ -5173,8 +5173,8 @@
         <text data-detail="context" x="1085" y="384" class="t-muted" font-size="9" text-anchor="middle">Kubernetes 플러그인</text>
         </g>
 
-        <g id="node-argo" data-node-id="argo" data-node-label="ArgoCD" tabindex="0" role="button" aria-label="Focus ArgoCD, Kubernetes 플러그인 · GitOps, 외부 시스템" aria-pressed="false" data-node-kind="external" data-node-sublabel="Kubernetes 플러그인 · GitOps" data-node-context="외부 시스템">
-          <title>ArgoCD · Kubernetes 플러그인 · GitOps · 외부 시스템</title>
+        <g id="node-argo" data-node-id="argo" data-node-label="ArgoCD" tabindex="0" role="button" aria-label="Focus ArgoCD, ArgoCD 플러그인 · GitOps, 외부 시스템" aria-pressed="false" data-node-kind="external" data-node-sublabel="ArgoCD 플러그인 · GitOps" data-node-context="외부 시스템">
+          <title>ArgoCD · ArgoCD 플러그인 · GitOps · 외부 시스템</title>
           <rect x="990" y="430" width="190" height="60" rx="6" class="c-mask"/>
           <rect x="990" y="430" width="190" height="60" rx="6" class="c-external" data-animate="node" style="--step:9" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="external" class="semantic-sigil s-external" transform="translate(996 436) scale(0.6875)">
@@ -5182,7 +5182,7 @@
             <path d="M8 2.5h5.5V8M13.5 2.5 7.5 8.5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="1085" y="458" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">ArgoCD</text>
-        <text data-detail="context" x="1085" y="474" class="t-muted" font-size="9" text-anchor="middle">Kubernetes 플러그인 · GitOps</text>
+        <text data-detail="context" x="1085" y="474" class="t-muted" font-size="9" text-anchor="middle">ArgoCD 플러그인 · GitOps</text>
         </g>
 
         <g id="node-oidc" data-node-id="oidc" data-node-label="Cognito / Okta" tabindex="0" role="button" aria-label="Focus Cognito / Okta, Auth 플러그인 · OIDC, 외부 시스템" aria-pressed="false" data-node-kind="security" data-node-sublabel="Auth 플러그인 · OIDC" data-node-context="외부 시스템">
@@ -5479,6 +5479,18 @@
         <ul>
           <li>&bull; Catalog 데이터는 PostgreSQL(RDS), TechDocs 산출물은 S3에 저장된다</li>
           <li>&bull; GitHub/GitLab, EKS, ArgoCD, Cognito/Okta와 플러그인 백엔드가 연동된다</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot rose"></div>
+          <h3>권한 경계</h3>
+        </div>
+        <ul>
+          <li>&bull; OIDC 로그인과 Permission Policy는 별도</li>
+          <li>&bull; 공유 Kubernetes credential은 사용자별 RBAC가 아님</li>
+          <li>&bull; 외부 시스템 권한과 Secret 파일 전달을 별도로 검토</li>
         </ul>
       </div>
     </div>

@@ -13,7 +13,7 @@
           "label": "KRO custom resource"
         },
         "backend": {
-          "label": "KRO child resources"
+          "label": "Kubernetes components"
         },
         "cloud": {
           "label": "ACK-managed AWS infrastructure"
@@ -32,7 +32,8 @@
           "svc",
           "tgb",
           "dep",
-          "cm"
+          "cm",
+          "lbc"
         ],
         "note": "A single WebApp CR creates the Service, TargetGroupBinding, Deployment, and ConfigMap together."
       },
@@ -44,7 +45,8 @@
           "nlb",
           "tg",
           "tgb",
-          "svc"
+          "svc",
+          "lbc"
         ],
         "note": "Traffic arriving via Route 53 → NLB → Target Group is wired to the Service's Pods by the TargetGroupBinding."
       },
@@ -64,7 +66,7 @@
     {
       "id": "cr",
       "type": "frontend",
-      "label": "WebApp CR",
+      "label": "OrderApp CR",
       "sublabel": "Single application API",
       "pos": [
         40,
@@ -93,7 +95,7 @@
       "id": "tgb",
       "type": "backend",
       "label": "TargetGroupBinding",
-      "sublabel": "Pod ↔ Target Group link",
+      "sublabel": "Binding reconciled by LBC",
       "pos": [
         300,
         200
@@ -121,7 +123,7 @@
       "id": "cm",
       "type": "backend",
       "label": "ConfigMap",
-      "sublabel": "DB connection info",
+      "sublabel": "Non-secret DB endpoints",
       "pos": [
         300,
         440
@@ -185,6 +187,20 @@
       "size": [
         180,
         60
+      ]
+    },
+    {
+      "id": "lbc",
+      "type": "backend",
+      "label": "AWS Load Balancer Controller",
+      "sublabel": "Register / deregister targets",
+      "pos": [
+        980,
+        620
+      ],
+      "size": [
+        265,
+        70
       ]
     }
   ],
@@ -250,7 +266,7 @@
       "id": "tgb-tg",
       "from": "tgb",
       "to": "tg",
-      "label": "targetGroupARN",
+      "label": "ARN reference",
       "variant": "dashed"
     },
     {
@@ -281,6 +297,64 @@
       "to": "tg",
       "fromSide": "bottom",
       "toSide": "top"
+    },
+    {
+      "id": "tgb-lbc",
+      "from": "tgb",
+      "to": "lbc",
+      "label": "binding event",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "left",
+      "labelAt": [
+        925,
+        565
+      ],
+      "via": [
+        [
+          580,
+          230
+        ],
+        [
+          580,
+          300
+        ],
+        [
+          940,
+          300
+        ],
+        [
+          940,
+          655
+        ]
+      ]
+    },
+    {
+      "id": "lbc-tg",
+      "from": "lbc",
+      "to": "tg",
+      "label": "target API",
+      "fromSide": "top",
+      "toSide": "right",
+      "variant": "emphasis",
+      "labelAt": [
+        1120,
+        550
+      ],
+      "via": [
+        [
+          1112.5,
+          280
+        ],
+        [
+          900,
+          280
+        ],
+        [
+          900,
+          230
+        ]
+      ]
     }
   ],
   "cards": [
@@ -295,11 +369,20 @@
     },
     {
       "dot": "cyan",
-      "title": "KRO (Application)",
+      "title": "kro (Application)",
       "items": [
-        "A ResourceGraphDefinition defines the WebApp CR",
-        "One CR manages Deployment, Service, TargetGroupBinding, and ConfigMap",
-        "References ACK infrastructure via targetGroupARN and endpoints"
+        "RGD defines OrderApp API and CEL dependencies",
+        "Prepare Service → TGB → Deployment",
+        "Deliver DB credentials through prepared Secret files"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Verification boundary",
+      "items": [
+        "AWS LBC reconciles TGB; ACK owns AWS infrastructure",
+        "Local schema/CEL checks; no actual app/DB execution",
+        "A Deployment update does not guarantee Blue/Green or zero downtime"
       ]
     }
   ]

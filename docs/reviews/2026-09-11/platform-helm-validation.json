@@ -1,0 +1,707 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T23:10:28.377731+00:00",
+  "scope": {
+    "documents": 4,
+    "quizQuestions": 40,
+    "originalUniqueBlocksRead": 58,
+    "chartFiles": 8
+  },
+  "contentPreservation": {
+    "guidesOriginalLinesEach": 764,
+    "quizzesOriginalLinesEach": 462,
+    "quizTopicsPerLocale": 20,
+    "topics": "Concepts, repositories, commands, templates, values, dependencies, hooks, CRDs, GitOps, security, progressive delivery, troubleshooting retained; incomplete/stale fragments replaced with complete local chart and explicit prerequisites."
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/platform-engineering/01-helm.md",
+        "sha256": "37a5866ee3f747a7f6b63fd8069fb7551ed2be8325163a34f021f7d6d6636f5d",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "helm-패키지-매니저"
+          },
+          {
+            "tag": "h2",
+            "id": "핵심-개념과-권한"
+          },
+          {
+            "tag": "h2",
+            "id": "완전한-로컬-chart-예제"
+          },
+          {
+            "tag": "h3",
+            "id": "chart-yaml"
+          },
+          {
+            "tag": "h3",
+            "id": "values-yaml"
+          },
+          {
+            "tag": "h3",
+            "id": "values-schema-json"
+          },
+          {
+            "tag": "h3",
+            "id": "templates-helpers-tpl"
+          },
+          {
+            "tag": "h3",
+            "id": "templates-deployment-yaml"
+          },
+          {
+            "tag": "h3",
+            "id": "templates-service-yaml"
+          },
+          {
+            "tag": "h3",
+            "id": "templates-notes-txt"
+          },
+          {
+            "tag": "h3",
+            "id": "helmignore"
+          },
+          {
+            "tag": "h3",
+            "id": "로컬-검사"
+          },
+          {
+            "tag": "h2",
+            "id": "명령과-helm-3-4-차이"
+          },
+          {
+            "tag": "h3",
+            "id": "dry-run과-대기"
+          },
+          {
+            "tag": "h2",
+            "id": "템플릿과-values"
+          },
+          {
+            "tag": "h2",
+            "id": "의존성-관리"
+          },
+          {
+            "tag": "h2",
+            "id": "hooks-crds와-테스트"
+          },
+          {
+            "tag": "h2",
+            "id": "gitops와-보안"
+          },
+          {
+            "tag": "h2",
+            "id": "문제-해결-순서"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위와-참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "helm-패키지-매니저",
+          "핵심-개념과-권한",
+          "완전한-로컬-chart-예제",
+          "chart-yaml",
+          "values-yaml",
+          "values-schema-json",
+          "templates-helpers-tpl",
+          "templates-deployment-yaml",
+          "templates-service-yaml",
+          "templates-notes-txt",
+          "helmignore",
+          "로컬-검사",
+          "명령과-helm-3-4-차이",
+          "dry-run과-대기",
+          "템플릿과-values",
+          "의존성-관리",
+          "hooks-crds와-테스트",
+          "gitops와-보안",
+          "문제-해결-순서",
+          "검증-범위와-참고-자료"
+        ]
+      },
+      {
+        "path": "ko/quizzes/platform-engineering/01-helm-quiz.md",
+        "sha256": "370f4d255669860fce5c12071879e0c27ea97352e21664e22cc11abd2707706e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "helm-패키지-매니저-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "객관식"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-tiller-제거의-의미는-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-values-yaml의-역할은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-helm-upgrade-install의-동작은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-release-name은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-dependency의-condition은-무엇을-지정하나요"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-pre-upgrade-hook은-언제-실행되나요"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-기본-helm-template의-목적은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-helpers-tpl의-역할은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-helm-get-values-demo-all은-무엇을-출력하나요"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-toyaml과-nindent를-함께-사용하는-이유는-무엇인가요"
+          },
+          {
+            "tag": "h2",
+            "id": "단답형"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-release-정보의-기본-저장-리소스는-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-dependency-update가-만드는-lock-파일과-한계는-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-default-함수에서-주의할-empty-값은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-hook-실행-순서를-지정하는-annotation은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-notes-txt는-언제-어떤-목적으로-사용하나요"
+          },
+          {
+            "tag": "h2",
+            "id": "실습형"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-예제-chart를-web-server라는-이름으로-frontend에-설치하고-replica를-3으로-설정하세요"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-log-level-debug-max-connections-100-을-env로-렌더링하면-어떤-형태인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-chart·release·appversion-label을-반환하는-helper를-작성하세요"
+          },
+          {
+            "tag": "h2",
+            "id": "심화"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-helm으로-blue-green·canary를-구현할-때-필요한-구성은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-chart-보안과-비밀-관리-전략을-설계하세요"
+          }
+        ],
+        "renderedIds": [
+          "helm-패키지-매니저-퀴즈",
+          "객관식",
+          "_1-tiller-제거의-의미는-무엇인가요",
+          "_2-values-yaml의-역할은-무엇인가요",
+          "_3-helm-upgrade-install의-동작은-무엇인가요",
+          "_4-release-name은-무엇인가요",
+          "_5-dependency의-condition은-무엇을-지정하나요",
+          "_6-pre-upgrade-hook은-언제-실행되나요",
+          "_7-기본-helm-template의-목적은-무엇인가요",
+          "_8-helpers-tpl의-역할은-무엇인가요",
+          "_9-helm-get-values-demo-all은-무엇을-출력하나요",
+          "_10-toyaml과-nindent를-함께-사용하는-이유는-무엇인가요",
+          "단답형",
+          "_1-release-정보의-기본-저장-리소스는-무엇인가요",
+          "_2-dependency-update가-만드는-lock-파일과-한계는-무엇인가요",
+          "_3-default-함수에서-주의할-empty-값은-무엇인가요",
+          "_4-hook-실행-순서를-지정하는-annotation은-무엇인가요",
+          "_5-notes-txt는-언제-어떤-목적으로-사용하나요",
+          "실습형",
+          "_1-예제-chart를-web-server라는-이름으로-frontend에-설치하고-replica를-3으로-설정하세요",
+          "_2-log-level-debug-max-connections-100-을-env로-렌더링하면-어떤-형태인가요",
+          "_3-chart·release·appversion-label을-반환하는-helper를-작성하세요",
+          "심화",
+          "_1-helm으로-blue-green·canary를-구현할-때-필요한-구성은-무엇인가요",
+          "_2-chart-보안과-비밀-관리-전략을-설계하세요"
+        ]
+      },
+      {
+        "path": "en/platform-engineering/01-helm.md",
+        "sha256": "75655f8c26dbf238f1869ab3d1443114957627c359858845793d35251d277999",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "helm-package-manager"
+          },
+          {
+            "tag": "h2",
+            "id": "core-concepts-and-permissions"
+          },
+          {
+            "tag": "h2",
+            "id": "complete-local-chart-example"
+          },
+          {
+            "tag": "h3",
+            "id": "chart-yaml"
+          },
+          {
+            "tag": "h3",
+            "id": "values-yaml"
+          },
+          {
+            "tag": "h3",
+            "id": "values-schema-json"
+          },
+          {
+            "tag": "h3",
+            "id": "templates-helpers-tpl"
+          },
+          {
+            "tag": "h3",
+            "id": "templates-deployment-yaml"
+          },
+          {
+            "tag": "h3",
+            "id": "templates-service-yaml"
+          },
+          {
+            "tag": "h3",
+            "id": "templates-notes-txt"
+          },
+          {
+            "tag": "h3",
+            "id": "helmignore"
+          },
+          {
+            "tag": "h3",
+            "id": "local-checks"
+          },
+          {
+            "tag": "h2",
+            "id": "commands-and-helm-3-4-differences"
+          },
+          {
+            "tag": "h3",
+            "id": "dry-runs-and-waiting"
+          },
+          {
+            "tag": "h2",
+            "id": "templates-and-values"
+          },
+          {
+            "tag": "h2",
+            "id": "dependency-management"
+          },
+          {
+            "tag": "h2",
+            "id": "hooks-crds-and-tests"
+          },
+          {
+            "tag": "h2",
+            "id": "gitops-and-security"
+          },
+          {
+            "tag": "h2",
+            "id": "troubleshooting-order"
+          },
+          {
+            "tag": "h2",
+            "id": "verification-and-references"
+          }
+        ],
+        "renderedIds": [
+          "helm-package-manager",
+          "core-concepts-and-permissions",
+          "complete-local-chart-example",
+          "chart-yaml",
+          "values-yaml",
+          "values-schema-json",
+          "templates-helpers-tpl",
+          "templates-deployment-yaml",
+          "templates-service-yaml",
+          "templates-notes-txt",
+          "helmignore",
+          "local-checks",
+          "commands-and-helm-3-4-differences",
+          "dry-runs-and-waiting",
+          "templates-and-values",
+          "dependency-management",
+          "hooks-crds-and-tests",
+          "gitops-and-security",
+          "troubleshooting-order",
+          "verification-and-references"
+        ]
+      },
+      {
+        "path": "en/quizzes/platform-engineering/01-helm-quiz.md",
+        "sha256": "5216eb2bede4b0aa517259cde9d62beff356136b6da0a914f9e9293ee435178b",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "helm-package-manager-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "multiple-choice"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-what-did-removing-tiller-change"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-what-is-values-yaml-for"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-what-does-helm-upgrade-install-do"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-what-is-release-name"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-what-does-a-dependency-condition-specify"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-when-does-a-pre-upgrade-hook-run"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-what-is-the-purpose-of-ordinary-helm-template"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-what-is-helpers-tpl-for"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-what-does-helm-get-values-demo-all-output"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-why-combine-toyaml-with-nindent"
+          },
+          {
+            "tag": "h2",
+            "id": "short-answer"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-what-is-the-default-release-storage-resource"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-which-lock-file-does-dependency-update-create-and-what-are-its-limits"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-which-empty-values-matter-when-using-default"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-which-annotation-controls-hook-ordering"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-when-and-why-is-notes-txt-used"
+          },
+          {
+            "tag": "h2",
+            "id": "hands-on"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-install-the-example-as-web-server-in-frontend-with-three-replicas"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-how-should-log-level-debug-and-max-connections-100-render-as-env"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-write-a-helper-for-chart-release-and-appversion-labels"
+          },
+          {
+            "tag": "h2",
+            "id": "advanced"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-what-is-needed-for-blue-green-and-canary-delivery-with-helm"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-design-chart-security-and-secret-management"
+          }
+        ],
+        "renderedIds": [
+          "helm-package-manager-quiz",
+          "multiple-choice",
+          "_1-what-did-removing-tiller-change",
+          "_2-what-is-values-yaml-for",
+          "_3-what-does-helm-upgrade-install-do",
+          "_4-what-is-release-name",
+          "_5-what-does-a-dependency-condition-specify",
+          "_6-when-does-a-pre-upgrade-hook-run",
+          "_7-what-is-the-purpose-of-ordinary-helm-template",
+          "_8-what-is-helpers-tpl-for",
+          "_9-what-does-helm-get-values-demo-all-output",
+          "_10-why-combine-toyaml-with-nindent",
+          "short-answer",
+          "_1-what-is-the-default-release-storage-resource",
+          "_2-which-lock-file-does-dependency-update-create-and-what-are-its-limits",
+          "_3-which-empty-values-matter-when-using-default",
+          "_4-which-annotation-controls-hook-ordering",
+          "_5-when-and-why-is-notes-txt-used",
+          "hands-on",
+          "_1-install-the-example-as-web-server-in-frontend-with-three-replicas",
+          "_2-how-should-log-level-debug-and-max-connections-100-render-as-env",
+          "_3-write-a-helper-for-chart-release-and-appversion-labels",
+          "advanced",
+          "_1-what-is-needed-for-blue-green-and-canary-delivery-with-helm",
+          "_2-design-chart-security-and-secret-management"
+        ]
+      }
+    ]
+  },
+  "native": {
+    "status": "passed",
+    "helm3": "v3.21.3+g1ad6e68",
+    "helm4": "v4.3.0+gbec5b06",
+    "checks": [
+      {
+        "binary": "/home/atomoh/.local/bin/helm",
+        "clientDryRunReturnCode": 1,
+        "clientDryRun": "clusteraccessattemptedandfailed",
+        "stderr": "Error: INSTALLATION FAILED: Kubernetes cluster unreachable: the server has asked for the client to provide credentials\n"
+      },
+      {
+        "binary": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-platform/helm/bin/helm4",
+        "clientDryRunReturnCode": 0,
+        "clientDryRun": "passed",
+        "stderr": ""
+      },
+      {
+        "binary": "/home/atomoh/.local/bin/helm",
+        "localDependencyUpdateBuildAliasCondition": "passed"
+      },
+      {
+        "binary": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-platform/helm/bin/helm4",
+        "localDependencyUpdateBuildAliasCondition": "passed"
+      }
+    ],
+    "render3Equals4": true,
+    "packagedOverrideReplicas": 3,
+    "stringOverridePreserved": true,
+    "negativeReplicaRejected": true,
+    "imageTagVerified": "https://hub.docker.com/v2/repositories/nginxinc/nginx-unprivileged/tags/1.30.4-alpine",
+    "scope": "LocalHelm3/4lint/template/package/clientdry-runandfiledependencies;imageindexmetadataonly.NoKubernetesinstall/upgrade/hooks/rollback/HTTPserviceexecution."
+  },
+  "exactPublishedChartMatches": [
+    {
+      "locale": "ko",
+      "file": "examples/platform/helm/reviewed-app/Chart.yaml",
+      "sha256": "69d8f3f631cbb11340d29291e00bca5f1802fe0461d4c5ce4177dc24baac1247"
+    },
+    {
+      "locale": "ko",
+      "file": "examples/platform/helm/reviewed-app/values.yaml",
+      "sha256": "84a53c248209c864536140dd092605d93b57dd239833a63124ed688002596cf9"
+    },
+    {
+      "locale": "ko",
+      "file": "examples/platform/helm/reviewed-app/templates/_helpers.tpl",
+      "sha256": "107bf2cbda3f0eda9f5070b868dc594301f576e39eb13e0fcd3f36d20dbe7155"
+    },
+    {
+      "locale": "ko",
+      "file": "examples/platform/helm/reviewed-app/templates/deployment.yaml",
+      "sha256": "285052e5a5879731cb7a1760b8d2e903dc6fa934236045aa6a975f3b2706287b"
+    },
+    {
+      "locale": "ko",
+      "file": "examples/platform/helm/reviewed-app/templates/service.yaml",
+      "sha256": "a1369753306422c04e7f3d2465650120e31ffc94f7ae6c666254b48c604f65e5"
+    },
+    {
+      "locale": "ko",
+      "file": "examples/platform/helm/reviewed-app/templates/NOTES.txt",
+      "sha256": "9075be8d117c68c435012cbcf0c56f35eb76897ef824031e616af208defb197a"
+    },
+    {
+      "locale": "ko",
+      "file": "examples/platform/helm/reviewed-app/.helmignore",
+      "sha256": "19c7981d5076dcd42e688388d76341bb1ab7997e5b5a6f0a0320fea2e98498e1"
+    },
+    {
+      "locale": "ko",
+      "file": "examples/platform/helm/reviewed-app/values.schema.json",
+      "sha256": "4f0d864aacbdef0f92f3734b7b47a901b47d32c089674dbfbcedb0c4cc0a6a00"
+    },
+    {
+      "locale": "en",
+      "file": "examples/platform/helm/reviewed-app/Chart.yaml",
+      "sha256": "69d8f3f631cbb11340d29291e00bca5f1802fe0461d4c5ce4177dc24baac1247"
+    },
+    {
+      "locale": "en",
+      "file": "examples/platform/helm/reviewed-app/values.yaml",
+      "sha256": "84a53c248209c864536140dd092605d93b57dd239833a63124ed688002596cf9"
+    },
+    {
+      "locale": "en",
+      "file": "examples/platform/helm/reviewed-app/templates/_helpers.tpl",
+      "sha256": "107bf2cbda3f0eda9f5070b868dc594301f576e39eb13e0fcd3f36d20dbe7155"
+    },
+    {
+      "locale": "en",
+      "file": "examples/platform/helm/reviewed-app/templates/deployment.yaml",
+      "sha256": "285052e5a5879731cb7a1760b8d2e903dc6fa934236045aa6a975f3b2706287b"
+    },
+    {
+      "locale": "en",
+      "file": "examples/platform/helm/reviewed-app/templates/service.yaml",
+      "sha256": "a1369753306422c04e7f3d2465650120e31ffc94f7ae6c666254b48c604f65e5"
+    },
+    {
+      "locale": "en",
+      "file": "examples/platform/helm/reviewed-app/templates/NOTES.txt",
+      "sha256": "9075be8d117c68c435012cbcf0c56f35eb76897ef824031e616af208defb197a"
+    },
+    {
+      "locale": "en",
+      "file": "examples/platform/helm/reviewed-app/.helmignore",
+      "sha256": "19c7981d5076dcd42e688388d76341bb1ab7997e5b5a6f0a0320fea2e98498e1"
+    },
+    {
+      "locale": "en",
+      "file": "examples/platform/helm/reviewed-app/values.schema.json",
+      "sha256": "4f0d864aacbdef0f92f3734b7b47a901b47d32c089674dbfbcedb0c4cc0a6a00"
+    }
+  ],
+  "primarySources": [
+    {
+      "file": "migration.html",
+      "url": "https://helm.sh/docs/overview/helm-4-overview/",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "install.html",
+      "url": "https://helm.sh/docs/helm/helm_install/",
+      "status": 200,
+      "finalUrl": "https://helm.sh/docs/helm/helm_install/"
+    },
+    {
+      "file": "upgrade.html",
+      "url": "https://helm.sh/docs/helm/helm_upgrade/",
+      "status": 200,
+      "finalUrl": "https://helm.sh/docs/helm/helm_upgrade/"
+    },
+    {
+      "file": "hooks.html",
+      "url": "https://helm.sh/docs/topics/charts_hooks/",
+      "status": 200,
+      "finalUrl": "https://helm.sh/docs/topics/charts_hooks/"
+    },
+    {
+      "file": "dependencies.html",
+      "url": "https://helm.sh/docs/helm/helm_dependency_build/",
+      "status": 200,
+      "finalUrl": "https://helm.sh/docs/helm/helm_dependency_build/"
+    },
+    {
+      "file": "charts.html",
+      "url": "https://helm.sh/docs/topics/charts/",
+      "status": 200,
+      "finalUrl": "https://helm.sh/docs/topics/charts/"
+    }
+  ],
+  "publishedLinks": [
+    {
+      "url": "https://github.com/helm/helm/releases/tag/v4.3.0",
+      "status": 200,
+      "finalUrl": "https://github.com/helm/helm/releases/tag/v4.3.0"
+    },
+    {
+      "url": "https://helm.sh/docs/helm/helm_dependency_build/",
+      "status": 200,
+      "finalUrl": "https://helm.sh/docs/helm/helm_dependency_build/"
+    },
+    {
+      "url": "https://helm.sh/docs/helm/helm_install/",
+      "status": 200,
+      "finalUrl": "https://helm.sh/docs/helm/helm_install/"
+    },
+    {
+      "url": "https://helm.sh/docs/helm/helm_upgrade/",
+      "status": 200,
+      "finalUrl": "https://helm.sh/docs/helm/helm_upgrade/"
+    },
+    {
+      "url": "https://helm.sh/docs/topics/charts/",
+      "status": 200,
+      "finalUrl": "https://helm.sh/docs/topics/charts/"
+    },
+    {
+      "url": "https://helm.sh/docs/topics/charts_hooks/",
+      "status": 200,
+      "finalUrl": "https://helm.sh/docs/topics/charts_hooks/"
+    }
+  ],
+  "limitations": [
+    "No Kubernetes installation, upgrade, rollback, hook execution, application HTTP check or image execution.",
+    "Helm3.21.3 install client dry-run attempted cluster access and failed authentication; Helm4.3.0 client dry-run passed. No cluster resources mutated.",
+    "Offline lint/template/schema checks do not validate admission/CEL/RBAC/runtime readiness.",
+    "Image metadata was verified; deployment digest/platform/namespace policies remain operator prerequisites.",
+    "No full local VitePress build."
+  ]
+}

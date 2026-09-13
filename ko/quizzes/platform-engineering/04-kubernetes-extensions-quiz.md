@@ -1,251 +1,150 @@
 # Kubernetes 확장 메커니즘 퀴즈
 
-> **관련 문서**: [Kubernetes 확장 메커니즘](../../platform-engineering/04-kubernetes-extensions.md)
+[Kubernetes extensions](../../platform-engineering/04-kubernetes-extensions.md)
 
-## 객관식 문제
+원문의 20개 문제 주제를 현재 API·동작에 맞춰 검토했습니다.
 
-### 1. CRD(Custom Resource Definition)의 주요 목적은 무엇입니까?
-
-- A) 기존 Kubernetes 리소스를 수정
-- B) Kubernetes API를 확장하여 사용자 정의 리소스를 정의
-- C) 파드의 네트워크를 구성
-- D) 스토리지 볼륨을 프로비저닝
+## 1. CRD의 목적은 무엇인가요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Kubernetes API를 확장하여 사용자 정의 리소스를 정의**
-
-**설명:**
-CRD는 Kubernetes API를 확장하여 네이티브 Kubernetes 리소스처럼 동작하는 사용자 정의 리소스 유형을 정의할 수 있게 해줍니다.
+Kubernetes API에 사용자 리소스 타입과 입력 schema를 등록합니다. 자체로 workload 동작을 구현하지 않습니다.
 
 </details>
 
-### 2. 커스텀 컨트롤러의 조정 루프(Reconciliation Loop)에서 수행하는 주요 작업은?
-
-- A) 리소스를 즉시 삭제
-- B) 현재 상태와 원하는 상태의 차이를 조정
-- C) API 서버에 새로운 API를 등록
-- D) 네트워크 정책을 적용
+## 2. reconciliation loop는 무엇을 하나요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 현재 상태와 원하는 상태의 차이를 조정**
-
-**설명:**
-커스텀 컨트롤러의 조정 루프는 리소스의 현재 상태를 관찰하고, 원하는 상태(spec)와 비교하여 차이가 있으면 원하는 상태를 달성하기 위한 조치를 취합니다.
+관찰된 상태와 원하는 상태의 차이를 조정합니다. 반복·중복 이벤트, 재시작과 conflict에도 일관되게 처리하고 상태가 같으면 불필요한 update를 줄입니다.
 
 </details>
 
-### 3. Operator 패턴의 핵심 구성 요소는?
-
-- A) Deployment와 Service
-- B) CRD와 커스텀 컨트롤러
-- C) ConfigMap과 Secret
-- D) Ingress와 NetworkPolicy
+## 3. Operator의 핵심 구성과 한계는 무엇인가요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) CRD와 커스텀 컨트롤러**
-
-**설명:**
-Operator 패턴은 CRD로 애플리케이션의 구성을 정의하고, 커스텀 컨트롤러로 애플리케이션의 배포, 업그레이드, 복구 등 운영 지식을 자동화합니다.
+사용자 API와 controller에 도메인 운영 지식을 구현하는 패턴입니다. CRD/controller를 만들었다는 이유만으로 안전한 backup·failover·upgrade가 완성되지는 않습니다.
 
 </details>
 
-### 4. MutatingAdmissionWebhook의 주요 용도는?
-
-- A) API 요청을 거부
-- B) API 요청을 수정
-- C) API 응답을 로깅
-- D) API 버전을 업그레이드
+## 4. mutating webhook은 무엇을 반환하나요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) API 요청을 수정**
-
-**설명:**
-MutatingAdmissionWebhook은 API 요청이 저장되기 전에 요청을 수정할 수 있습니다. 일반적인 용도: 사이드카 컨테이너 주입, 기본값 설정 등입니다.
+AdmissionReview 응답으로 허용·거절과 선택적인 JSONPatch를 반환합니다. request UID와 version을 맞추며 patch byte는 Base64로 전달합니다.
 
 </details>
 
-### 5. 스케줄러 프레임워크의 Filter 플러그인의 역할은?
-
-- A) 노드에 점수를 부여
-- B) 파드를 실행할 수 없는 노드를 제외
-- C) 파드를 노드에 바인딩
-- D) 노드의 리소스를 예약
+## 5. Filter plugin의 역할은 무엇인가요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 파드를 실행할 수 없는 노드를 제외**
-
-**설명:**
-Filter 플러그인은 파드의 요구사항을 충족하지 못하는 노드를 필터링하여 제외합니다.
+Pod 조건을 충족하지 못하는 node를 후보에서 제외합니다. filter가 성공했다고 실제 binding이나 실행이 완료된 것은 아닙니다.
 
 </details>
 
-### 6. Aggregated API Server와 CRD의 차이점은?
-
-- A) 차이 없음, 동일함
-- B) Aggregated API는 더 많은 제어를 제공하지만 별도 서버 실행 필요
-- C) CRD가 Aggregated API보다 더 많은 기능 제공
-- D) Aggregated API는 더 이상 사용되지 않음
+## 6. aggregation과 CRD는 어떻게 다른가요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) Aggregated API는 더 많은 제어를 제공하지만 별도 서버 실행 필요**
-
-**설명:**
-Aggregated API Server는 API 동작, 커스텀 스토리지 백엔드, 고급 기능에 대한 완전한 제어를 제공하지만 별도의 API 서버를 배포하고 유지 관리해야 합니다. CRD는 더 간단하지만 제한이 있습니다.
+CRD는 기존 API server의 사용자 리소스 저장·검증 기능을 사용합니다. aggregation은 별도 API server로 요청을 위임하므로 TLS·인증·인가·discovery·storage 운영이 필요합니다.
 
 </details>
 
-### 7. Kubernetes에서 Finalizer의 목적은?
-
-- A) 리소스 삭제 속도 향상
-- B) 정리가 완료될 때까지 리소스 삭제 방지
-- C) 실패한 파드 자동 재시작
-- D) 리소스 생성 검증
+## 7. finalizer는 무엇을 보장하나요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 정리가 완료될 때까지 리소스 삭제 방지**
-
-**설명:**
-Finalizer는 컨트롤러가 필요한 정리 작업(외부 리소스 삭제 등)을 수행하고 finalizer를 제거할 때까지 리소스 삭제를 차단합니다.
+삭제 완료 전에 controller가 정리할 기회를 제공합니다. finalizer 문자열 자체가 정리 작업을 실행하지는 않으며, 원인 확인 없이 제거하면 외부 리소스를 남길 수 있습니다.
 
 </details>
 
-### 8. 파드가 노드에 바인딩된 후 실행되는 스케줄러 확장 지점은?
-
-- A) PreFilter
-- B) PostBind
-- C) Reserve
-- D) Score
+## 8. PostBind는 언제 실행되나요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) PostBind**
-
-**설명:**
-PostBind 플러그인은 파드가 노드에 성공적으로 바인딩된 후 호출됩니다. 정보 제공용이며 정리나 알림에 사용됩니다.
+성공적인 binding 뒤의 정보성 단계입니다. 모든 작업 정리에 사용되는 보편적 오류 복구 hook이 아니며 Reserve 실패/취소에는 Unreserve 같은 해당 경로를 구현합니다.
 
 </details>
 
-### 9. Istio에서 어드미션 웹훅을 통해 사이드카를 주입하는 데 사용되는 어노테이션은?
-
-- A) istio.io/inject
-- B) sidecar.istio.io/inject
-- C) istio-injection
-- D) auto-inject.istio.io
+## 9. 현재 Istio Pod별 주입 제어는 어디에 설정하나요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) sidecar.istio.io/inject**
-
-**설명:**
-`sidecar.istio.io/inject` 어노테이션은 Istio의 mutating 웹훅이 파드에 Envoy 사이드카를 주입할지 제어합니다. 네임스페이스 수준 제어는 `istio-injection` 레이블을 사용합니다.
+Pod 또는 workload의 Pod template labels에 sidecar.istio.io/inject를 설정합니다. namespace의 istio-injection/revision label과 우선순위도 확인하며 이전 annotation을 새 기본값으로 쓰지 않습니다.
 
 </details>
 
-### 10. 스케줄러 프레임워크에서 Score 플러그인의 목적은?
-
-- A) 부적합한 노드 필터링
-- B) 노드 순위 지정 및 최적 노드 선택
-- C) 선택된 노드에 파드 바인딩
-- D) 파드 사양 검증
+## 10. Score는 어떻게 사용되나요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 노드 순위 지정 및 최적 노드 선택**
-
-**설명:**
-Score 플러그인은 필터링을 통과한 노드에 점수를 할당합니다. 스케줄러는 모든 Score 플러그인에서 가장 높은 합산 점수를 가진 노드를 선택합니다.
+적합한 node의 점수를 정하고 NormalizeScore와 plugin weight를 반영해 결합합니다. 동률 선택과 실패 처리도 scheduler 동작의 일부입니다.
 
 </details>
 
-## 단답형 문제
-
-### 1. CRD에서 스키마 검증에 사용되는 표준은 무엇입니까?
+## 11. CRD의 schema와 required는 어디에 두나요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: OpenAPI v3 Schema (openAPIV3Schema)**
-
-**설명:**
-CRD의 `spec.versions[].schema.openAPIV3Schema`에서 OpenAPI v3 스키마를 사용하여 커스텀 리소스의 구조와 유효성 검사 규칙을 정의합니다.
+spec.versions[].schema.openAPIV3Schema 아래에 정의합니다. 최상위 required: [spec]과 spec 내부 required: [image]는 서로 다른 조건입니다.
 
 </details>
 
-### 2. Kubernetes 컨트롤러에서 Owner Reference의 역할은?
+## 12. ownerReference는 무엇을 확인해야 하나요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: 리소스 간 소유 관계를 정의하여 가비지 컬렉션과 이벤트 전파를 관리**
-
-**설명:**
-Owner Reference는 부모-자식 관계를 정의하고, 부모 삭제 시 Kubernetes 가비지 컬렉션을 통해 자식을 자동 삭제합니다.
+owner UID와 namespace/scope, 기존 controller 소유권을 확인합니다. GC는 propagation/finalizer 영향을 받으며 이름만 같다고 다른 workload를 가져오지 않습니다.
 
 </details>
 
-### 3. ValidatingAdmissionPolicy와 ValidatingAdmissionWebhook의 차이점은?
+## 13. VAP와 validating webhook은 어떻게 다른가요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: ValidatingAdmissionPolicy는 CEL 표현식을 사용하고 프로세스 내에서 실행되며, ValidatingAdmissionWebhook은 외부 HTTP 엔드포인트를 호출합니다.**
-
-**설명:**
-ValidatingAdmissionPolicy(1.26에서 도입)는 더 나은 성능을 제공하고 외부 웹훅 인프라가 필요 없지만, 웹훅보다 유연성이 떨어집니다.
+ValidatingAdmissionPolicy는 1.30부터 stable이며 API server 안에서 CEL을 평가합니다. webhook은 외부 호출과 TLS·가용성 관리가 필요합니다. VAP에는 적용 범위와 validationActions를 연결하는 binding도 필요합니다.
 
 </details>
 
-### 4. controller-runtime 라이브러리란 무엇이며 왜 일반적으로 사용됩니까?
+## 14. controller-runtime은 무엇을 제공하나요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: controller-runtime은 클라이언트 캐싱, 리더 선출, 조정 루프 관리를 포함하여 Kubernetes 컨트롤러 구축을 위한 공통 패턴을 제공하는 라이브러리입니다.**
-
-**설명:**
-Kubebuilder 프로젝트의 일부인 controller-runtime은 보일러플레이트 코드와 모범 사례를 추상화하여 신뢰할 수 있는 operator를 더 쉽게 구축할 수 있게 합니다.
+manager, client/cache, reconcile 구성과 leader election 등을 제공합니다. 사용자 API 타입·scheme·RBAC와 도메인 로직을 대신 만들어 주지는 않으며 library/Kubernetes Go module 버전을 맞춥니다.
 
 </details>
 
-### 5. CRD에서 conversion 웹훅의 목적은?
+## 15. conversion webhook의 역할은 무엇인가요?
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: Conversion 웹훅은 동일한 CRD의 다른 API 버전 간에 리소스를 변환합니다.**
-
-**설명:**
-CRD에 여러 버전(예: v1alpha1, v1beta1, v1)이 있는 경우, conversion 웹훅은 API 진화를 지원하기 위해 버전 간 변환을 처리합니다.
+같은 CRD의 API version 사이에서 표현을 변환합니다. serving/storage version, storedVersions와 기존 데이터의 의미 보존을 검토합니다. 모든 CRD가 conversion webhook을 필요로 하는 것은 아닙니다.
 
 </details>
 
-## 실습 문제
-
-### 1. 다음 요구사항을 충족하는 CRD를 작성하세요.
-
-- 이름: WebApp
-- 그룹: apps.example.com
-- 필드: replicas (정수, 최소 1), image (문자열, 필수)
+## 16. image가 필수이며 replica가 1~5인 WebApp CRD를 작성하세요.
 
 <details>
 <summary>정답 보기</summary>
+
+아래 예제는 spec 자체도 필수로 지정하고 status/scale 경로를 분리합니다. controller가 실제 status.replicas와 selector를 채워야 합니다.
 
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -258,8 +157,7 @@ spec:
     kind: WebApp
     plural: webapps
     singular: webapp
-    shortNames:
-      - wa
+    shortNames: [wa]
   scope: Namespaced
   versions:
     - name: v1
@@ -268,385 +166,79 @@ spec:
       schema:
         openAPIV3Schema:
           type: object
+          required: [spec]
           properties:
             spec:
               type: object
-              required: ["image"]
+              required: [image]
               properties:
                 replicas:
                   type: integer
-                  minimum: 1
                   default: 1
+                  minimum: 1
+                  maximum: 5
                 image:
                   type: string
+                  minLength: 1
+                port:
+                  type: integer
+                  default: 8080
+                  minimum: 1
+                  maximum: 65535
             status:
               type: object
-              properties:
-                availableReplicas:
-                  type: integer
-                conditions:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                      status:
-                        type: string
-                      lastTransitionTime:
-                        type: string
-                        format: date-time
-      subresources:
-        status: {}
-      additionalPrinterColumns:
-        - name: Replicas
-          type: integer
-          jsonPath: .spec.replicas
-        - name: Available
-          type: integer
-          jsonPath: .status.availableReplicas
-        - name: Age
-          type: date
-          jsonPath: .metadata.creationTimestamp
-```
-
-</details>
-
-### 2. "production" 네임스페이스의 모든 Deployment를 검증하는 ValidatingAdmissionWebhook 구성을 작성하세요.
-
-<details>
-<summary>정답 보기</summary>
-
-```yaml
-apiVersion: admissionregistration.k8s.io/v1
-kind: ValidatingWebhookConfiguration
-metadata:
-  name: deployment-validator
-webhooks:
-  - name: validate-deployment.example.com
-    clientConfig:
-      service:
-        name: webhook-service
-        namespace: webhook-system
-        path: /validate-deployment
-      caBundle: <base64-encoded-ca-cert>
-    rules:
-      - apiGroups: ["apps"]
-        apiVersions: ["v1"]
-        operations: ["CREATE", "UPDATE"]
-        resources: ["deployments"]
-        scope: Namespaced
-    namespaceSelector:
-      matchLabels:
-        environment: production
-    failurePolicy: Fail
-    sideEffects: None
-    admissionReviewVersions: ["v1"]
-    timeoutSeconds: 10
-```
-
-**설명:**
-- `namespaceSelector`는 `environment: production` 레이블이 있는 네임스페이스로 웹훅을 제한
-- `failurePolicy: Fail`은 웹훅을 사용할 수 없을 때 요청을 거부
-- `sideEffects: None`은 웹훅에 부작용이 없음을 나타냄
-
-</details>
-
-### 3. 커스텀 컨트롤러의 간단한 조정 루프 의사 코드를 작성하세요.
-
-<details>
-<summary>정답 보기</summary>
-
-```go
-func (r *WebAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-    log := log.FromContext(ctx)
-
-    // 1. WebApp 리소스 가져오기
-    var webapp appsv1.WebApp
-    if err := r.Get(ctx, req.NamespacedName, &webapp); err != nil {
-        if errors.IsNotFound(err) {
-            // 리소스 삭제됨, 할 일 없음
-            return ctrl.Result{}, nil
-        }
-        return ctrl.Result{}, err
-    }
-
-    // 2. 삭제 중인지 확인 (finalizer 처리)
-    if !webapp.DeletionTimestamp.IsZero() {
-        if containsFinalizer(webapp, finalizerName) {
-            // 정리 수행
-            if err := r.cleanupExternalResources(&webapp); err != nil {
-                return ctrl.Result{}, err
-            }
-            // finalizer 제거
-            removeFinalizer(&webapp, finalizerName)
-            if err := r.Update(ctx, &webapp); err != nil {
-                return ctrl.Result{}, err
-            }
-        }
-        return ctrl.Result{}, nil
-    }
-
-    // 3. finalizer가 없으면 추가
-    if !containsFinalizer(webapp, finalizerName) {
-        addFinalizer(&webapp, finalizerName)
-        if err := r.Update(ctx, &webapp); err != nil {
-            return ctrl.Result{}, err
-        }
-    }
-
-    // 4. Deployment 생성 또는 업데이트
-    deployment := r.constructDeployment(&webapp)
-    if err := controllerutil.SetControllerReference(&webapp, deployment, r.Scheme); err != nil {
-        return ctrl.Result{}, err
-    }
-    
-    if err := r.CreateOrUpdate(ctx, deployment); err != nil {
-        return ctrl.Result{}, err
-    }
-
-    // 5. Service 생성 또는 업데이트
-    service := r.constructService(&webapp)
-    if err := controllerutil.SetControllerReference(&webapp, service, r.Scheme); err != nil {
-        return ctrl.Result{}, err
-    }
-    
-    if err := r.CreateOrUpdate(ctx, service); err != nil {
-        return ctrl.Result{}, err
-    }
-
-    // 6. 상태 업데이트
-    webapp.Status.AvailableReplicas = deployment.Status.AvailableReplicas
-    if err := r.Status().Update(ctx, &webapp); err != nil {
-        return ctrl.Result{}, err
-    }
-
-    // 7. 주기적 조정을 위해 재큐
-    return ctrl.Result{RequeueAfter: time.Minute * 5}, nil
-}
-```
-
-**핵심 포인트:**
-- 항상 리소스를 찾을 수 없는 경우 처리 (삭제되었을 수 있음)
-- 외부 리소스 정리를 위해 finalizer 사용
-- 가비지 컬렉션을 위해 소유자 참조 설정
-- 상태 하위 리소스를 별도로 업데이트
-- 주기적 검사를 위한 재큐 간격 고려
-
-</details>
-
-## 심화 문제
-
-### 1. 복잡한 분산 시스템을 위한 Kubernetes Operator를 설계하세요.
-
-<details>
-<summary>정답 보기</summary>
-
-**CRD 설계:**
-```yaml
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: postgresclusters.database.example.com
-spec:
-  group: database.example.com
-  names:
-    kind: PostgresCluster
-    plural: postgresclusters
-    shortNames:
-      - pg
-  scope: Namespaced
-  versions:
-    - name: v1
-      served: true
-      storage: true
-      schema:
-        openAPIV3Schema:
-          type: object
-          properties:
-            spec:
-              type: object
-              required: ["replicas", "version"]
               properties:
                 replicas:
                   type: integer
-                  minimum: 1
-                  maximum: 10
-                version:
+                availableReplicas:
+                  type: integer
+                selector:
                   type: string
-                  enum: ["14", "15", "16"]
-                storage:
-                  type: object
-                  properties:
-                    size:
-                      type: string
-                      default: "10Gi"
-                    storageClass:
-                      type: string
-                backup:
-                  type: object
-                  properties:
-                    enabled:
-                      type: boolean
-                      default: true
-                    schedule:
-                      type: string
-                      default: "0 2 * * *"
-                    retention:
-                      type: integer
-                      default: 7
-            status:
-              type: object
-              properties:
-                phase:
-                  type: string
-                  enum: ["Creating", "Running", "Upgrading", "Failed", "Deleting"]
-                primaryEndpoint:
-                  type: string
-                replicaEndpoints:
-                  type: array
-                  items:
-                    type: string
-                currentVersion:
-                  type: string
-                conditions:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                      status:
-                        type: string
-                      reason:
-                        type: string
-                      message:
-                        type: string
-                      lastTransitionTime:
-                        type: string
-                        format: date-time
+                observedGeneration:
+                  type: integer
+                  format: int64
       subresources:
         status: {}
         scale:
           specReplicasPath: .spec.replicas
-          statusReplicasPath: .status.readyReplicas
-```
-
-**컨트롤러 핵심 로직:**
-- **Phase별 상태 관리** (Creating, Running, Upgrading, Failed)
-- **자동 장애 복구** (Primary 장애 시 Failover)
-- **Rolling upgrade 전략** (Replica 먼저 업그레이드, 그 다음 Primary)
-- **백업 관리** (예약된 백업을 위한 CronJob)
-
-**아키텍처:**
-```
-PostgresCluster CR
-       |
-       v
-   Controller
-       |
-       +---> StatefulSet (PostgreSQL 파드)
-       +---> Service (Primary 엔드포인트)
-       +---> Service (Replica 엔드포인트)
-       +---> Secret (자격 증명)
-       +---> ConfigMap (PostgreSQL 구성)
-       +---> CronJob (백업)
-       +---> PodDisruptionBudget
+          statusReplicasPath: .status.replicas
+          labelSelectorPath: .status.selector
 ```
 
 </details>
 
-### 2. 스케줄러 프레임워크를 사용하여 커스텀 스케줄러를 구현하는 방법을 설명하세요.
+## 17. production namespace의 Deployment 검증 webhook을 어떻게 제한하나요?
 
 <details>
 <summary>정답 보기</summary>
 
-**스케줄러 플러그인 구현:**
+rules를 apps/v1 deployments의 CREATE/UPDATE로 제한하고 namespaceSelector에 kubernetes.io/metadata.name: production을 사용합니다. 실제 validating server/Service/path, CA bundle, failurePolicy, timeoutSeconds, sideEffects와 admissionReviewVersions를 설정합니다. 본문의 /mutate handler는 Deployment validator가 아니므로 그 경로를 재사용하지 않습니다. replica 범위만 필요하면 본문의 VAP+binding 예제를 사용할 수 있습니다.
 
-```go
-// 여러 확장 지점을 구현하는 플러그인
-type CustomSchedulerPlugin struct {
-    handle framework.Handle
-}
+</details>
 
-// PreFilter 구현 - 파드 요구사항 확인
-func (p *CustomSchedulerPlugin) PreFilter(ctx context.Context, state *framework.CycleState, pod *v1.Pod) (*framework.PreFilterResult, *framework.Status) {
-    // 파드에 필수 어노테이션이 있는지 검증
-    if _, ok := pod.Annotations["custom-scheduler/zone"]; !ok {
-        return nil, framework.NewStatus(framework.Unschedulable, "zone 어노테이션 누락")
-    }
-    return nil, framework.NewStatus(framework.Success, "")
-}
+## 18. 안전한 reconcile 순서를 설명하세요.
 
-// Filter 구현 - 부적합한 노드 제외
-func (p *CustomSchedulerPlugin) Filter(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeInfo *framework.NodeInfo) *framework.Status {
-    requiredZone := pod.Annotations["custom-scheduler/zone"]
-    nodeZone := nodeInfo.Node().Labels["topology.kubernetes.io/zone"]
-    
-    if requiredZone != nodeZone {
-        return framework.NewStatus(framework.Unschedulable, "zone 불일치")
-    }
-    return framework.NewStatus(framework.Success, "")
-}
+<details>
+<summary>정답 보기</summary>
 
-// Score 구현 - 적합한 노드 순위 지정
-func (p *CustomSchedulerPlugin) Score(ctx context.Context, state *framework.CycleState, pod *v1.Pod, nodeName string) (int64, *framework.Status) {
-    nodeInfo, err := p.handle.SnapshotSharedLister().NodeInfos().Get(nodeName)
-    if err != nil {
-        return 0, framework.NewStatus(framework.Error, err.Error())
-    }
-    
-    // 사용 가능한 리소스 기반으로 점수 계산
-    allocatable := nodeInfo.Node().Status.Allocatable
-    requested := nodeInfo.Requested
-    
-    cpuScore := calculateResourceScore(allocatable.Cpu(), requested.Cpu)
-    memScore := calculateResourceScore(allocatable.Memory(), requested.Memory)
-    
-    return (cpuScore + memScore) / 2, framework.NewStatus(framework.Success, "")
-}
+NotFound를 정상 종료하고 삭제 중이면 idempotent cleanup 후 자신의 finalizer만 제거합니다. 외부 자원을 만들기 전 finalizer를 저장하고, 기존 child 소유권을 확인한 뒤 관리 필드만 조정합니다. conflict를 재시도하고 관찰한 상태가 바뀔 때 status를 patch합니다. 의사코드를 완성된 실행 controller로 표시하지 않습니다.
 
-// 플러그인 등록
-func New(_ runtime.Object, h framework.Handle) (framework.Plugin, error) {
-    return &CustomSchedulerPlugin{handle: h}, nil
-}
-```
+</details>
 
-**스케줄러 구성:**
+## 19. 분산 DB Operator를 설계할 때 무엇이 필요한가요?
 
-```yaml
-apiVersion: kubescheduler.config.k8s.io/v1
-kind: KubeSchedulerConfiguration
-profiles:
-  - schedulerName: custom-scheduler
-    plugins:
-      preFilter:
-        enabled:
-          - name: CustomSchedulerPlugin
-      filter:
-        enabled:
-          - name: CustomSchedulerPlugin
-      score:
-        enabled:
-          - name: CustomSchedulerPlugin
-        disabled:
-          - name: NodeResourcesBalancedAllocation
-```
+<details>
+<summary>정답 보기</summary>
 
-**확장 지점 요약:**
+API/schema와 workload 생성 외에 primary fencing, quorum, replica 동기화, backup/WAL 복구 시험, storage lifecycle, migration 호환성과 실패 상태를 설계합니다. Service/StatefulSet/CronJob을 생성하는 것만으로 데이터 안전성이 검증되지 않습니다.
 
-| 확장 지점 | 목적 | 실행 시점 |
-|-----------|------|----------|
-| PreFilter | 파드 수준 검사 | 필터링 전 |
-| Filter | 노드 제거 | 각 노드에 대해 |
-| PostFilter | 스케줄 불가 처리 | 적합한 노드 없을 때 |
-| PreScore | 점수 계산 준비 | 점수 계산 전 |
-| Score | 노드 순위 지정 | 필터링된 노드에 대해 |
-| NormalizeScore | 점수 정규화 | 모든 점수 계산 후 |
-| Reserve | 리소스 예약 | 노드 선택 후 |
-| Permit | 최종 승인 | 바인딩 전 |
-| PreBind | 바인딩 전 작업 | API 바인딩 전 |
-| Bind | 실제 바인딩 | API 서버 업데이트 |
-| PostBind | 바인딩 후 정리 | 바인딩 후 |
+</details>
+
+## 20. custom scheduler 구현과 검증 절차는 무엇인가요?
+
+<details>
+<summary>정답 보기</summary>
+
+정확한 Kubernetes minor의 framework interface로 plugin을 compile·register한 binary를 만듭니다. profile plugin 이름과 Pod schedulerName을 맞추고 Filter/Score 및 Reserve/Unreserve/Permit/binding 실패를 검증합니다. YAML만 추가해서 plugin을 설치할 수 없으며 단순 zone 요구라면 node affinity를 먼저 검토합니다.
 
 </details>

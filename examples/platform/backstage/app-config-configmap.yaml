@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backstage-app-config
+  namespace: backstage
+data:
+  app-config.production.yaml: "app:\n  title: Example Developer Portal\n  baseUrl:\
+    \ https://backstage.example.com\nbackend:\n  baseUrl: https://backstage.example.com\n\
+    \  listen:\n    port: 7007\n  cors:\n    origin: https://backstage.example.com\n\
+    \    credentials: true\n  database:\n    client: pg\n    pluginDivisionMode: schema\n\
+    \    ensureExists: false\n    ensureSchemaExists: false\n    connection:\n   \
+    \   host: backstage-db.example.invalid\n      port: 5432\n      database: backstage\n\
+    \      user: backstage\n      password:\n        $file: /var/run/backstage-secrets/postgres-password\n\
+    \      ssl:\n        rejectUnauthorized: true\n        ca:\n          $file: /var/run/backstage-public/rds-ca.pem\n\
+    \    knexConfig:\n      pool:\n        min: 0\n        max: 10\n  auditor:\n \
+    \   severityLogLevelMappings:\n      low: debug\n      medium: info\n      high:\
+    \ warn\n      critical: error\nauth:\n  environment: production\n  session:\n\
+    \    secret:\n      $file: /var/run/backstage-secrets/auth-session-secret\n  providers:\n\
+    \    oidc:\n      production:\n        metadataUrl: https://issuer.example.invalid/.well-known/openid-configuration\n\
+    \        clientId: replace-with-approved-client-id\n        clientSecret:\n  \
+    \        $file: /var/run/backstage-secrets/oidc-client-secret\n        additionalScopes:\
+    \ [profile, email]\n        signIn:\n          resolvers:\n            - resolver:\
+    \ emailMatchingUserEntityProfileEmail\npermission:\n  enabled: true\nintegrations:\n\
+    \  github:\n    - host: github.com\n      token:\n        $file: /var/run/backstage-secrets/github-token\n\
+    catalog:\n  providers:\n    github:\n      approvedOrg:\n        organization:\
+    \ replace-approved-org\n        catalogPath: /catalog-info.yaml\n        filters:\n\
+    \          branch: main\n          repository: \"^approved-.*$\"\n        schedule:\n\
+    \          frequency: {minutes: 30}\n          timeout: {minutes: 3}\n  rules:\n\
+    \    - allow: [Component, API, Resource, System, Domain, Group, User, Template,\
+    \ Location]\ntechdocs:\n  builder: external\n  publisher:\n    type: awsS3\n \
+    \   awsS3:\n      bucketName: replace-approved-techdocs-bucket\n      region:\
+    \ us-west-2\n"

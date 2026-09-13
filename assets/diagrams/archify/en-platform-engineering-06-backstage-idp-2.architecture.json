@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "TechDocs publishing and reading",
+    "output": "en-platform-engineering-06-backstage-idp-2.html",
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "viewBox": [
+      1360,
+      330
+    ],
+    "legend": {
+      "mode": "auto"
+    },
+    "locale": "en"
+  },
+  "components": [
+    {
+      "id": "dev",
+      "type": "external",
+      "label": "Developer",
+      "sublabel": "Documentation author",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "git",
+      "type": "external",
+      "label": "Git repository",
+      "sublabel": "docs/ + mkdocs.yml",
+      "pos": [
+        260,
+        120
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "build",
+      "type": "backend",
+      "label": "MkDocs build",
+      "sublabel": "CI job",
+      "pos": [
+        480,
+        120
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "cloud",
+      "label": "S3 bucket",
+      "sublabel": "Private artifacts",
+      "pos": [
+        700,
+        120
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "techdocs",
+      "type": "frontend",
+      "label": "TechDocs UI",
+      "sublabel": "Documentation viewer",
+      "pos": [
+        1150,
+        120
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "backend",
+      "type": "backend",
+      "label": "TechDocs backend",
+      "sublabel": "Auth / S3 reader",
+      "pos": [
+        920,
+        120
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "dev-write",
+      "from": "dev",
+      "to": "git",
+      "label": "Markdown",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "git-build",
+      "from": "git",
+      "to": "build",
+      "label": "CI build",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "build-upload",
+      "from": "build",
+      "to": "s3",
+      "label": "publish",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "s3-render",
+      "from": "s3",
+      "to": "backend",
+      "label": "artifacts",
+      "variant": "emphasis",
+      "labelDy": -24
+    },
+    {
+      "id": "dev-read",
+      "from": "dev",
+      "to": "techdocs",
+      "label": "read docs",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "bottom"
+    },
+    {
+      "id": "backend-ui",
+      "from": "backend",
+      "to": "techdocs",
+      "label": "documents",
+      "variant": "emphasis",
+      "labelDy": -24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "External builder",
+      "items": [
+        "Version docs and mkdocs.yml with code",
+        "CI builds and publishes artifacts"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "S3 access",
+      "items": [
+        "Separate publisher and reader permissions",
+        "Serve documents through the authenticated backend",
+        "Keep the bucket private"
+      ]
+    }
+  ]
+}

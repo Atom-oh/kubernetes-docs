@@ -1,6 +1,6 @@
 # Platform Engineering Overview
 
-> **Last Updated**: February 23, 2026
+> **Last Updated**: September 12, 2026
 
 ## 1. What is Platform Engineering?
 
@@ -14,8 +14,8 @@ An IDP is a self-service platform that abstracts operational tasks such as infra
 
 **Core Values of an IDP:**
 
-- **Self-Service**: Developers provision infrastructure directly without filing tickets
-- **Guardrails**: Security and compliance built in by default
+- **Self-Service**: Request approved resources/actions through APIs, CLIs or portals
+- **Guardrails**: Implement and verify security policies, approval and audit paths
 - **Standardization**: Consistent deployment patterns through Golden Paths
 - **Automation**: Reduced cognitive load by eliminating repetitive tasks
 
@@ -27,7 +27,7 @@ An IDP is a self-service platform that abstracts operational tasks such as infra
 | **Key Deliverables** | Internal Developer Platform | CI/CD pipelines, automation scripts | SLO/SLI, error budgets, toil automation |
 | **Primary Metrics** | Developer productivity, onboarding time | Deployment frequency, lead time | Availability, error budget burn rate |
 | **Team Structure** | Dedicated platform team | Cross-functional teams | SRE team or embedded SREs |
-| **Relationship** | Product layer on top of DevOps + SRE | Culture and methodology | Operational engineering practice |
+| **Relationship** | Product-oriented platform practice collaborating with DevOps and SRE | Culture and methodology | Operational engineering practice |
 
 > **Note**: These three approaches are complementary, not mutually exclusive. Platform Engineering is about **packaging DevOps principles and SRE practices as a product**.
 
@@ -48,15 +48,11 @@ An IDP is a self-service platform that abstracts operational tasks such as infra
 
 ### Introduction to AWS Cloud Adoption Framework
 
-The [AWS Cloud Adoption Framework (CAF)](https://docs.aws.amazon.com/prescriptive-guidance/latest/aws-caf-platform-perspective/platform-eng.html) provides organizational guidelines for cloud adoption. The **Platform Perspective** covers three key areas:
-
-1. **Platform Engineering** -- The focus of this section
-2. **Platform Architecture** -- Cloud architecture design principles
-3. **Data Architecture** -- Data management and analytics strategy
+The [AWS CAF Platform perspective](https://docs.aws.amazon.com/whitepapers/latest/overview-aws-cloud-adoption-framework/platform-perspective.html) has seven capabilities: platform architecture, data architecture, platform engineering, data engineering, provisioning and orchestration, modern application development, and continuous integration/continuous delivery. This guide focuses on platform engineering.
 
 ### Maturity Model: START → ADVANCE → EXCEL
 
-AWS CAF defines cloud platform maturity in three stages. Let's examine how Kubernetes ecosystem tools map to each stage.
+AWS's detailed platform-engineering guide organizes improvement tasks as Start, Advance and Excel. The Kubernetes mappings/checklist below are this guide's teaching examples, not an official certification scorecard or mandatory sequence for every organization.
 
 #### START: Foundation Building
 
@@ -67,9 +63,9 @@ The stage of establishing foundational infrastructure and setting up security gu
 | **Landing Zone & Guardrails** | Multi-account environment, preventive/detective controls | EKS cluster configuration, [OPA Gatekeeper](../security/09-opa-gatekeeper.md) / [Kyverno](../security/01-kyverno-policy-management.md) |
 | **Authentication** | Centralized identity management, IdP integration | [K8s Authentication & Authorization](../security/02-kubernetes-auth-authz.md), OIDC, IRSA |
 | **Networking** | Centralized network management | VPC CNI, [Calico](../networking/calico/README.md), [Cilium](../networking/cilium/README.md) |
-| **Logging** | Cross-account observability | [Prometheus](../observability/metrics/01-prometheus.md), [Loki](../observability/logging/01-loki.md), [OpenTelemetry](../observability/tracing/03-opentelemetry.md) |
+| **Observability** | Collect/protect logs, metrics and traces | [Prometheus](../observability/metrics/01-prometheus.md), [Loki](../observability/logging/01-loki.md), [OpenTelemetry](../observability/tracing/03-opentelemetry.md) |
 | **Controls** | Programmatic security controls | [Pod Security Standards](../security/03-pod-security-standards.md), [Network Policies](../security/04-network-policies.md) |
-| **Cost Management** | Tagging strategy, cost allocation | Resource Quotas, LimitRange, [EKS Cost Optimization](../eks/07-eks-cost-optimization.md) |
+| **Cost Management** | Tagging strategy, cost allocation | Billing tags, usage and cost allocation, [EKS Cost Optimization](../eks/07-eks-cost-optimization.md) |
 
 #### ADVANCE: Operational Scaling
 
@@ -121,7 +117,7 @@ The stage of achieving automated governance and continuous improvement.
 
 | Layer | Role | Key Tools | Repo Docs |
 |-------|------|-----------|-----------|
-| **Developer Interface** | UI/CLI that developers interact with | Backstage, Port, Argo Workflows UI | - |
+| **Developer Interface** | UI/CLI that developers interact with | Backstage, Port, Argo Workflows UI | [Backstage](./06-backstage-idp.md) |
 | **Integration/Orchestration** | Declarative state management, deployment automation | ArgoCD, FluxCD, KRO | [GitOps](../gitops/README.md), [KRO](./03-kro.md) |
 | **Resource** | Abstraction of cloud/K8s resources | ACK, Helm, Operators | [ACK](./02-ack.md), [Helm](./01-helm.md), [K8s Extensions](./04-kubernetes-extensions.md) |
 | **Infrastructure** | Actual compute/network/storage | EKS, VPC, IAM | [EKS](../eks/01-eks-introduction.md) |
@@ -145,22 +141,19 @@ spec:
     instanceClass: db.t3.medium
 ```
 
-From this single manifest, KRO internally creates:
-1. **Deployment + Service** (Kubernetes native)
-2. **RDS Instance** (AWS resource via ACK)
-3. **IAM Role** (Permission setup via ACK)
+WebApplication above is a **custom platform API that must be defined beforehand**, not a built-in Kubernetes/kro kind. Without its RGD/generated CRD, the object cannot be applied. This overview does not provide a complete RGD or create resources.
 
-For detailed examples, see [ExampleCorp Integration Example](./05-example-corp-app.md).
+When an RGD explicitly declares Deployment, Service and ACK RDS/IAM resources, kro manages the Kubernetes objects/dependencies and the relevant ACK service controllers call AWS APIs. The resulting resource set depends on that RGD. Validate controllers/CRDs, RBAC/IAM, quotas, readiness/errors, credential delivery and deletion/retention policies separately. Creating one CR does not guarantee immediate AWS readiness or transactional provisioning. See the [ExampleCorp example](./05-example-corp-app.md) and [kro guide](./03-kro.md).
 
 ### Golden Path Concept
 
 A Golden Path is the **recommended deployment path** provided by the platform team:
 
 - **Purpose**: Guide developers to get started quickly using validated methods
-- **Characteristics**: Recommended, not enforced -- developers can deviate when needed, but it's the optimal choice in most cases
+- **Characteristics**: Supported recommended path; exceptions follow organizational approval and cannot bypass mandatory security/data policies
 - **Examples**:
-  - "New Microservice Deployment" Golden Path: Helm Chart template → ArgoCD integration → Automatic Prometheus metrics collection
-  - "Database Provisioning" Golden Path: KRO RGD manifest → RDS creation via ACK → Automatic Secret injection
+  - "New Microservice Deployment" Golden Path: Validated Helm template → ArgoCD integration → configured metrics publishing/collection
+  - "Database Provisioning" Golden Path: Validated RGD → ACK RDS lifecycle → approved credential delivery
 
 ---
 
@@ -214,7 +207,7 @@ Assess your organization's platform engineering maturity. Each item links to the
 | Check | Item | Related Docs |
 |-------|------|-------------|
 | [ ] | Is a self-service catalog provided to developers? | [KRO](./03-kro.md), [ExampleCorp](./05-example-corp-app.md) |
-| [ ] | Are DORA metrics measured and improved? | - |
+| [ ] | Are DORA metrics measured/improved at an appropriate service scope? | [Current DORA definitions](https://dora.dev/guides/dora-metrics/) |
 | [ ] | Is runtime security monitoring operational? | [Runtime Security](../security/08-runtime-security.md) |
 | [ ] | Is autoscaling optimized for workloads? | [KEDA](../autoscaling/01-keda.md), [Karpenter](../autoscaling/02-karpenter.md) |
 | [ ] | Are platform SLOs defined and tracked? | [Observability Analysis](../ops/08-observability-analysis.md) |
@@ -222,10 +215,17 @@ Assess your organization's platform engineering maturity. Each item links to the
 
 ---
 
+### Metrics and Platform Product Success
+
+Current DORA guidance describes five metrics: change lead time, deployment frequency, failed deployment recovery time, change fail rate and deployment rework rate. Do not mix the older four metrics or generic MTTR with current definitions. Use them to improve delivery and stability within a service/team context, not rank individuals. Also measure onboarding time, task success, user satisfaction and adoption. Measurement need not wait until Excel.
+
+An IDP is more than a portal: it includes APIs, CLIs, templates, documentation, support and operating responsibilities. It does not transfer every application-security responsibility away from development teams. Validate guardrail enforcement, exceptions, changes and recovery.
+
 ## 6. References
 
 - [AWS CAF Platform Perspective - Platform Engineering](https://docs.aws.amazon.com/prescriptive-guidance/latest/aws-caf-platform-perspective/platform-eng.html)
 - [CNCF Platform White Paper](https://tag-app-delivery.cncf.io/whitepapers/platforms/)
-- [Platform Engineering on Kubernetes (O'Reilly)](https://www.oreilly.com/library/view/platform-engineering-on/9781617299322/)
 - [Backstage.io - Open Source IDP Framework](https://backstage.io/)
 - [Internal Developer Platform](https://internaldeveloperplatform.org/)
+
+- [Current DORA metrics](https://dora.dev/guides/dora-metrics/)
