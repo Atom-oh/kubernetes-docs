@@ -4,8 +4,42 @@ metadata:
   name: ${EXPERIMENT_ID}
   region: ap-northeast-2
   version: "1.36"
+  tags:
+    Experiment: qwen-pii-finetuning
+    ExperimentId: ${BASE_EXPERIMENT_ID}
+    OwnershipToken: ${OWNERSHIP_TOKEN}
 iam:
-  withOIDC: true
+  withOIDC: false
+  podIdentityAssociations:
+    - namespace: qwen-pii
+      serviceAccountName: qwen-input-reader
+      createServiceAccount: true
+      roleName: ${INPUT_ROLE_NAME}
+      disableSessionTags: false
+      tags:
+        Experiment: qwen-pii-finetuning
+        ExperimentId: ${BASE_EXPERIMENT_ID}
+        OwnershipToken: ${OWNERSHIP_TOKEN}
+      permissionPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: ReadOnlyThisExecutionInputs
+            Effect: Allow
+            Action: s3:GetObject
+            Resource:
+              - arn:aws:s3:::${BUCKET_NAME}/qwen-pii/${BASE_EXPERIMENT_ID}/source/source.tar.gz
+              - arn:aws:s3:::${BUCKET_NAME}/qwen-pii/${BASE_EXPERIMENT_ID}/dataset/train.jsonl
+              - arn:aws:s3:::${BUCKET_NAME}/qwen-pii/${BASE_EXPERIMENT_ID}/dataset/validation.jsonl
+              - arn:aws:s3:::${BUCKET_NAME}/qwen-pii/${BASE_EXPERIMENT_ID}/dataset/test.jsonl
+              - arn:aws:s3:::${BUCKET_NAME}/qwen-pii/${BASE_EXPERIMENT_ID}/dataset/dataset-manifest.json
+            Condition:
+              StringEquals:
+                s3:ResourceAccount: "${ACCOUNT_ID}"
+                aws:PrincipalTag/eks-cluster-arn: arn:aws:eks:ap-northeast-2:${ACCOUNT_ID}:cluster/${EXPERIMENT_ID}
+                aws:PrincipalTag/kubernetes-namespace: qwen-pii
+                aws:PrincipalTag/kubernetes-service-account: qwen-input-reader
+addons:
+  - name: eks-pod-identity-agent
 managedNodeGroups:
   - name: gpu
     instanceType: g6e.4xlarge
@@ -21,4 +55,5 @@ managedNodeGroups:
       workload: qwen-pii-training
     tags:
       Experiment: qwen-pii-finetuning
-      ExperimentId: ${EXPERIMENT_ID}
+      ExperimentId: ${BASE_EXPERIMENT_ID}
+      OwnershipToken: ${OWNERSHIP_TOKEN}

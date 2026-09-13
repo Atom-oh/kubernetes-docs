@@ -1,6 +1,6 @@
 # Cilium Service Mesh 관측성
 
-> **검토일**: 2026년 9월 11일 · Cilium/chart 1.20.1 · Hubble CLI 1.19.4 · Collector Contrib 0.160.0 · Loki 3.7.7. Kubernetes/EKS와 플랫폼 요건은 [개요](./README.md)를 참고하세요.
+> **마지막 업데이트**: 2026년 9월 11일 · Cilium/chart 1.20.1 · Hubble CLI 1.19.4 · Collector Contrib 0.160.0 · Loki 3.7.7. Kubernetes/EKS와 플랫폼 요건은 [개요](./README.md)를 참고하세요.
 
 ## 개요
 

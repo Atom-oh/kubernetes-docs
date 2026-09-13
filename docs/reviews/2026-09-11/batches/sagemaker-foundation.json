@@ -1,0 +1,51 @@
+[
+  {
+    "path": "ko/ai-ml/sagemaker-ai/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed7docs:historicalvsfreshcomponentvalidation,30.5Btotal/3.3BactiveMoE,targetQLoRAconfignotGPUproof;revision/directpins/environmentreprolimits;deterministicreplacementnotcompletedetection;privateinventoryIDs/publiclogs;ownedcleanup/tagpolicyexceptions;governancechosenworkflow/membershipnotatomicguarantee;10MCquestions/2source-backedfigures.",
+    "reviewedSha256": "c77777e76ff26af3584dd155afe75dbf3f26c75f1de04b0284faea61bbba4b23"
+  },
+  {
+    "path": "ko/ai-ml/sagemaker-ai/01-platform-architecture.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed7docs:historicalvsfreshcomponentvalidation,30.5Btotal/3.3BactiveMoE,targetQLoRAconfignotGPUproof;revision/directpins/environmentreprolimits;deterministicreplacementnotcompletedetection;privateinventoryIDs/publiclogs;ownedcleanup/tagpolicyexceptions;governancechosenworkflow/membershipnotatomicguarantee;10MCquestions/2source-backedfigures.",
+    "reviewedSha256": "5a03432de6e5ed7daa60b665f3c50e975ff1627ebe9f1f7a9eed6cdf45d1fd17"
+  },
+  {
+    "path": "ko/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed7docs:historicalvsfreshcomponentvalidation,30.5Btotal/3.3BactiveMoE,targetQLoRAconfignotGPUproof;revision/directpins/environmentreprolimits;deterministicreplacementnotcompletedetection;privateinventoryIDs/publiclogs;ownedcleanup/tagpolicyexceptions;governancechosenworkflow/membershipnotatomicguarantee;10MCquestions/2source-backedfigures.",
+    "reviewedSha256": "fb9b081e888a540bb7229d6532a7639fc27fd1b596b0eced01174888c155f3a7"
+  },
+  {
+    "path": "en/ai-ml/sagemaker-ai/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed7docs:historicalvsfreshcomponentvalidation,30.5Btotal/3.3BactiveMoE,targetQLoRAconfignotGPUproof;revision/directpins/environmentreprolimits;deterministicreplacementnotcompletedetection;privateinventoryIDs/publiclogs;ownedcleanup/tagpolicyexceptions;governancechosenworkflow/membershipnotatomicguarantee;10MCquestions/2source-backedfigures.",
+    "reviewedSha256": "f4fdbbdc548056b383cf75ed9df53aeaee0f907e8f9598e14a20aacf93f8ce56"
+  },
+  {
+    "path": "en/ai-ml/sagemaker-ai/01-platform-architecture.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed7docs:historicalvsfreshcomponentvalidation,30.5Btotal/3.3BactiveMoE,targetQLoRAconfignotGPUproof;revision/directpins/environmentreprolimits;deterministicreplacementnotcompletedetection;privateinventoryIDs/publiclogs;ownedcleanup/tagpolicyexceptions;governancechosenworkflow/membershipnotatomicguarantee;10MCquestions/2source-backedfigures.",
+    "reviewedSha256": "8eb4c25489f6921cabb3f3e230c92a997e69d0f9ff93e2068c243dcefb893b26"
+  },
+  {
+    "path": "en/quizzes/ai-ml/sagemaker-ai/01-platform-architecture-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed7docs:historicalvsfreshcomponentvalidation,30.5Btotal/3.3BactiveMoE,targetQLoRAconfignotGPUproof;revision/directpins/environmentreprolimits;deterministicreplacementnotcompletedetection;privateinventoryIDs/publiclogs;ownedcleanup/tagpolicyexceptions;governancechosenworkflow/membershipnotatomicguarantee;10MCquestions/2source-backedfigures.",
+    "reviewedSha256": "35e59d390af0c582c1216acaf05b1f3c338da91aa4085da14ce3e1f7c647ab6b"
+  },
+  {
+    "path": "examples/ai-ml/qwen-pii-finetuning/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "3c4c621883838ec1f5959bcb69b90b26f7388f0f8e4b8293470036b6730b9e1e",
+    "summary": "Reviewed7docs:historicalvsfreshcomponentvalidation,30.5Btotal/3.3BactiveMoE,targetQLoRAconfignotGPUproof;revision/directpins/environmentreprolimits;deterministicreplacementnotcompletedetection;privateinventoryIDs/publiclogs;ownedcleanup/tagpolicyexceptions;governancechosenworkflow/membershipnotatomicguarantee;10MCquestions/2source-backedfigures."
+  }
+]

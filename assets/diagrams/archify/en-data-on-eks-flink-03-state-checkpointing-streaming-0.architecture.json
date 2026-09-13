@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Flink Streaming Pattern: Kafka to S3/Iceberg",
+    "title": "Flink state and sink-commit boundaries",
     "output": "en-data-on-eks-flink-03-state-checkpointing-streaming-0.html",
     "quality_profile": "showcase",
     "animation": "trace",
@@ -19,7 +19,7 @@
           "flink",
           "rocksdb"
         ],
-        "note": "The Flink job consumes the MSK source topic and keeps operator state in the RocksDB state backend inside its TaskManagers."
+        "note": "Validate state, source replay and sink delivery together."
       },
       {
         "id": "checkpoint",
@@ -29,7 +29,7 @@
           "rocksdb",
           "s3ckpt"
         ],
-        "note": "RocksDB state is snapshotted to S3 checkpoint storage on a fixed interval."
+        "note": "Check shared SST references, compaction, retention and recoverable storage."
       },
       {
         "id": "sinks",
@@ -39,10 +39,13 @@
           "kafkaout",
           "iceberg"
         ],
-        "note": "KafkaSink writes to the Kafka output topic with EXACTLY_ONCE 2PC; the Dynamic Iceberg Sink writes to Iceberg tables on S3."
+        "note": "Choose matching runtime/connectors for each sink; there is no global atomic commit across sinks."
       }
     ],
-    "locale": "en"
+    "locale": "en",
+    "legend": {
+      "mode": "hidden"
+    }
   },
   "components": [
     {
@@ -62,43 +65,43 @@
     {
       "id": "flink",
       "type": "backend",
-      "label": "Flink Job",
-      "sublabel": "Stream processing",
+      "label": "Flink runtime",
+      "sublabel": "Match the connector profile",
       "pos": [
-        480,
+        445,
         300
       ],
       "size": [
-        150,
-        60
+        220,
+        64
       ]
     },
     {
       "id": "rocksdb",
       "type": "database",
-      "label": "RocksDB",
-      "sublabel": "State backend",
+      "label": "RocksDB keyed state",
+      "sublabel": "Memory / local SST",
       "pos": [
-        480,
+        435,
         100
       ],
       "size": [
-        150,
-        60
+        240,
+        64
       ]
     },
     {
       "id": "s3ckpt",
       "type": "cloud",
-      "label": "S3 Checkpoint",
-      "sublabel": "Storage",
+      "label": "S3 checkpoint storage",
+      "sublabel": "Shared SST + metadata",
       "pos": [
-        480,
+        435,
         500
       ],
       "size": [
-        150,
-        60
+        240,
+        64
       ]
     },
     {
@@ -111,22 +114,22 @@
         180
       ],
       "size": [
-        170,
-        60
+        220,
+        64
       ]
     },
     {
       "id": "iceberg",
       "type": "cloud",
       "label": "S3 / Iceberg",
-      "sublabel": "Tables",
+      "sublabel": "Catalog / table commits",
       "pos": [
         1000,
         420
       ],
       "size": [
-        170,
-        60
+        230,
+        64
       ]
     }
   ],
@@ -151,7 +154,7 @@
       "id": "flink-state",
       "from": "flink",
       "to": "rocksdb",
-      "label": "operator state",
+      "label": "Keyed state",
       "fromSide": "top",
       "toSide": "bottom"
     },
@@ -159,7 +162,7 @@
       "id": "checkpoint",
       "from": "flink",
       "to": "s3ckpt",
-      "label": "periodic checkpoint",
+      "label": "Checkpoint / restore",
       "variant": "dashed",
       "fromSide": "bottom",
       "toSide": "top",
@@ -169,30 +172,38 @@
       "id": "kafka-sink",
       "from": "flink",
       "to": "kafkaout",
-      "label": "KafkaSink · EXACTLY_ONCE 2PC"
+      "label": "Checkpoint → transaction commit"
     },
     {
       "id": "iceberg-sink",
       "from": "flink",
       "to": "iceberg",
-      "label": "Dynamic Iceberg Sink"
+      "label": "DynamicRecord → table commit"
     }
   ],
   "cards": [
     {
       "dot": "amber",
-      "title": "Checkpoints",
+      "title": "Checkpoint state",
       "items": [
-        "EmbeddedRocksDBStateBackend state is snapshotted to S3 periodically",
-        "Incremental checkpoints transfer only changed SSTable files"
+        "Shared SST references and compaction",
+        "Storage, retention and restore requirements"
       ]
     },
     {
       "dot": "emerald",
-      "title": "Exactly-once delivery",
+      "title": "Sink commit",
       "items": [
-        "KafkaWriter writes records inside an open Kafka transaction",
-        "KafkaCommitter commits the transaction after the checkpoint completes"
+        "Kafka: checkpoint + transaction + read_committed",
+        "No global transaction across sinks/tables"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Checked version profiles",
+      "items": [
+        "Kafka 5.0.0-2.2 / Flink 2.2.1",
+        "Iceberg 1.11.0 / Flink 2.1.3"
       ]
     }
   ]

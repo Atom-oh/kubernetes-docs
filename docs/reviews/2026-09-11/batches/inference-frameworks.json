@@ -1,0 +1,34 @@
+[
+  {
+    "path": "ko/ai-ml/04-inference-frameworks.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "26645e389fe09f779328531e49fe6ea34bd4bd639da0a8b44be3e6b899a3085d",
+    "summary": "Fullyreviewedprose/78uniqueblocks;updated9frameworks+15quiztopics;official3charts/4schemacases/6loopbackclientcases/8diagrams24responsivechecks passed.",
+    "validationReport": "docs/reviews/2026-09-11/inference-frameworks-validation.json"
+  },
+  {
+    "path": "en/ai-ml/04-inference-frameworks.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "7cf4307deead70faf4db5d1d9cbbf6496c9f03d145c33ff8b6c68b47799ec81e",
+    "summary": "Fullyreviewedprose/78uniqueblocks;updated9frameworks+15quiztopics;official3charts/4schemacases/6loopbackclientcases/8diagrams24responsivechecks passed.",
+    "validationReport": "docs/reviews/2026-09-11/inference-frameworks-validation.json"
+  },
+  {
+    "path": "ko/quizzes/ai-ml/04-inference-frameworks-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "b50a9e32253b5828387984486a1fd1771e77b371ebba422267b0ee72adebad90",
+    "summary": "Fullyreviewedprose/78uniqueblocks;updated9frameworks+15quiztopics;official3charts/4schemacases/6loopbackclientcases/8diagrams24responsivechecks passed.",
+    "validationReport": "docs/reviews/2026-09-11/inference-frameworks-validation.json"
+  },
+  {
+    "path": "en/quizzes/ai-ml/04-inference-frameworks-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "a2658712eee830734bce06c51e6b95cc762e530ca49f9e59a063d605f0714954",
+    "summary": "Fullyreviewedprose/78uniqueblocks;updated9frameworks+15quiztopics;official3charts/4schemacases/6loopbackclientcases/8diagrams24responsivechecks passed.",
+    "validationReport": "docs/reviews/2026-09-11/inference-frameworks-validation.json"
+  }
+]

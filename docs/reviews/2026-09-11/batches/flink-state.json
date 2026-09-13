@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/data-on-eks/flink/03-state-checkpointing-streaming.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed state backends/ForSt/keyedstate andsharedSSTretention;completeIRSA/S3plugin/schemafixtures withSDKv1EOSlimit;demo2sapplicationoverride;freshsnapshotCRretention;compiledKafka2.2andIceberg2.1realAPIhelpers;SQLtime-attributepositive/negativeplans;transactionprefix/timeout/pooling/non-globalatomicity;lateevents;30questions2figures.",
+    "reviewedSha256": "737749436e6076a94d1ab2692037315848d0a605205ee6e3b623162bcd291825"
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed state backends/ForSt/keyedstate andsharedSSTretention;completeIRSA/S3plugin/schemafixtures withSDKv1EOSlimit;demo2sapplicationoverride;freshsnapshotCRretention;compiledKafka2.2andIceberg2.1realAPIhelpers;SQLtime-attributepositive/negativeplans;transactionprefix/timeout/pooling/non-globalatomicity;lateevents;30questions2figures.",
+    "reviewedSha256": "fc582b47e8c14555015e346c848d9fee210be01e367a42083838df69633841b5"
+  },
+  {
+    "path": "en/data-on-eks/flink/03-state-checkpointing-streaming.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed state backends/ForSt/keyedstate andsharedSSTretention;completeIRSA/S3plugin/schemafixtures withSDKv1EOSlimit;demo2sapplicationoverride;freshsnapshotCRretention;compiledKafka2.2andIceberg2.1realAPIhelpers;SQLtime-attributepositive/negativeplans;transactionprefix/timeout/pooling/non-globalatomicity;lateevents;30questions2figures.",
+    "reviewedSha256": "6b11f1263c796f4ae3f899b3f3ea9a0a1fb749d8bb7e2050f0a27045bd68ddd1"
+  },
+  {
+    "path": "en/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed state backends/ForSt/keyedstate andsharedSSTretention;completeIRSA/S3plugin/schemafixtures withSDKv1EOSlimit;demo2sapplicationoverride;freshsnapshotCRretention;compiledKafka2.2andIceberg2.1realAPIhelpers;SQLtime-attributepositive/negativeplans;transactionprefix/timeout/pooling/non-globalatomicity;lateevents;30questions2figures.",
+    "reviewedSha256": "054ba6f01203f8c9900bd6ccdc335d9bd9bb67200cf1e9f728322acc555bd9e6"
+  }
+]

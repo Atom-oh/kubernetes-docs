@@ -22,19 +22,19 @@ Account는 보안·quota·비용 책임·lifecycle, VPC는 네트워크 정책�
 
 ---
 
-2. EKS Pod Identity role의 위치에 대한 제약으로 옳은 것은?
-   - A) 클러스터와 다른 Account에 자유롭게 둘 수 있다
-   - B) 반드시 클러스터와 같은 Account에만 존재할 수 있다
-   - C) Organization 내 모든 Account에 자동으로 복제된다
-   - D) Region당 하나만 존재할 수 있다
+2. Pod Identity association의 기본 IAM role은 어디에 있어야 하는가?
+   - A) 아무 Account
+   - B) 클러스터와 같은 Account
+   - C) Management Account에만
+   - D) Region당 하나의 Account
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: B) 반드시 클러스터와 같은 Account에만 존재할 수 있다**
+**정답: B) 클러스터와 같은 Account**
 
 **설명:**
-EKS Pod Identity role은 클러스터와 같은 Account에만 존재할 수 있습니다. Kubernetes 워크로드를 별도의 Shared Cluster Account에서 실행하면서 리소스는 각 워크로드 Account에 두는 패턴을 쓰면, cross-account 접근은 항상 "association role → target role"의 2단 구조가 되는 것이 선택이 아니라 필수 구조입니다.
+기본 association role은 클러스터 Account에 있어야 합니다. target-role 기능은 역할 연결을 사용하지만, 지원 서비스 resource policy나 IRSA 등 다른 cross-account 경로도 있습니다.
 
 </details>
 

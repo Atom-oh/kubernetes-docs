@@ -1,7 +1,7 @@
 # Part 1: Introduction to Calico
 
 > **Review baseline**: Calico Open Source 3.32.2, kind 0.33.0, Kubernetes 1.36.4
-> **Reviewed**: September 12, 2026. Calico 3.32 is tested against Kubernetes 1.34–1.36.
+> **Last Updated**: September 12, 2026. Calico 3.32 is tested against Kubernetes 1.34–1.36.
 
 ## Lab environment
 

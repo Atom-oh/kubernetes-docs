@@ -1,6 +1,6 @@
 # Observability stack configuration and operations
 
-> Reviewed 2026-09-11: Loki 3.7.7, Tempo 3.0.3, Alloy 1.19.2,
+> **Last Updated**: September 11, 2026: Loki 3.7.7, Tempo 3.0.3, Alloy 1.19.2,
 > OpenTelemetry Collector Contrib 0.160.0, kube-prometheus-stack 90.1.1.
 
 This chapter configures collection, storage, permissions, retention and cross-signal navigation.

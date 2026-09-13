@@ -47,4 +47,19 @@ for (const locale of ['ko', 'en']) {
     assert.deepEqual(errors, [])
     assert.match(html, /update\/&lt;group&gt;\/&lt;kind&gt;\/&lt;namespace&gt;\/&lt;name&gt;/)
   })
+
+  test(`${locale}: EKS diagnostic paths with placeholders compile as literal text`, async () => {
+    const source = await readFile(new URL(`../../${locale}/eks/11-eks-advanced-debugging.md`, import.meta.url), 'utf8')
+    const { html, errors } = await render(source)
+    assert.deepEqual(errors, [])
+    assert.match(html, /\/etc\/alertmanager\/secrets\/&lt;secret-name&gt;\//)
+  })
+
+  test(`${locale}: EKS diagnostic quiz commands compile with literal placeholders`, async () => {
+    const source = await readFile(new URL(`../../${locale}/quizzes/eks/11-eks-advanced-debugging-quiz.md`, import.meta.url), 'utf8')
+    const { html, errors } = await render(source)
+    assert.deepEqual(errors, [])
+    assert.match(html, /\/aws\/eks\/&lt;cluster-name&gt;\/cluster/)
+    assert.match(html, /kubectl debug node\/&lt;node-name&gt; --image=&lt;reviewed-image&gt;/)
+  })
 }

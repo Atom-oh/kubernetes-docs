@@ -6,7 +6,7 @@
     "locale": "en",
     "output": "en-ai-ml-02-vllm-deployment-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "viewBox": [
       1380,
       520
@@ -49,7 +49,7 @@
           "kvcache",
           "apiserver"
         ],
-        "note": "The scheduler and model loader feed the inference engine, which drives the KV cache manager and the OpenAI-compatible API server."
+        "note": "API requests are processed through scheduler/engine; loader and KV manager support execution."
       }
     ]
   },
@@ -58,7 +58,7 @@
       "id": "batching",
       "type": "external",
       "label": "Continuous Batching",
-      "sublabel": "Maximizes GPU utilization",
+      "sublabel": "queues / token budgets apply",
       "pos": [
         50,
         70
@@ -100,7 +100,7 @@
       "id": "quant",
       "type": "external",
       "label": "Quantization",
-      "sublabel": "INT8 / INT4 / FP16",
+      "sublabel": "weight / KV formats differ",
       "pos": [
         50,
         340
@@ -114,7 +114,7 @@
       "id": "throughput",
       "type": "cloud",
       "label": "High Throughput",
-      "sublabel": "Up to 2x improvement",
+      "sublabel": "workload-dependent benefit",
       "pos": [
         330,
         70
@@ -128,7 +128,7 @@
       "id": "scalability",
       "type": "cloud",
       "label": "Scalability",
-      "sublabel": "175B+ parameter models",
+      "sublabel": "model / backend constraints",
       "pos": [
         330,
         160
@@ -142,7 +142,7 @@
       "id": "memory",
       "type": "cloud",
       "label": "Memory Efficiency",
-      "sublabel": "Up to 2x improvement",
+      "sublabel": "workload-dependent benefit",
       "pos": [
         330,
         250
@@ -158,8 +158,8 @@
       "label": "Request Scheduler",
       "sublabel": "Dynamic batching",
       "pos": [
-        610,
-        130
+        880,
+        40
       ],
       "size": [
         170,
@@ -173,7 +173,7 @@
       "sublabel": "Loads model weights",
       "pos": [
         610,
-        290
+        350
       ],
       "size": [
         170,
@@ -186,7 +186,7 @@
       "label": "Inference Engine",
       "sublabel": "vLLM Engine",
       "pos": [
-        880,
+        1150,
         210
       ],
       "size": [
@@ -201,7 +201,7 @@
       "sublabel": "Block-level KV cache",
       "pos": [
         1150,
-        130
+        380
       ],
       "size": [
         170,
@@ -214,8 +214,8 @@
       "label": "API Server",
       "sublabel": "OpenAI-compatible API",
       "pos": [
-        1150,
-        290
+        610,
+        40
       ],
       "size": [
         170,
@@ -295,13 +295,30 @@
       "from": "engine",
       "to": "kvcache",
       "label": "KV blocks",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1265,
+        325
+      ]
     },
     {
-      "id": "engine-apiserver",
-      "from": "engine",
-      "to": "apiserver",
-      "label": "responses"
+      "id": "api-scheduler",
+      "from": "apiserver",
+      "to": "scheduler",
+      "label": "requests",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Execution boundaries",
+      "items": [
+        "Capabilities do not guarantee fixed speedups or queue-free responses.",
+        "Model Runner V2 is an internal runner, not an API version."
+      ]
     }
   ]
 }

@@ -1,6 +1,6 @@
 # Linkerd Observability
 
-> **Reviewed**: September 11, 2026 · Linkerd edge-26.9.1 / charts 2026.9.1 · Prometheus Operator examples checked against 0.93.1
+> **Last Updated**: September 11, 2026 · Linkerd edge-26.9.1 / charts 2026.9.1 · Prometheus Operator examples checked against 0.93.1
 
 Linkerd exposes proxy and protocol metrics; Viz adds Prometheus, metrics-api, tap, tap-injector and the web dashboard. The current Viz chart does **not** install Grafana. Distributed tracing additionally needs a configured collector/backend, trace context and sampling; it is not enabled by installing a metrics dashboard.
 

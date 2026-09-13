@@ -10,7 +10,7 @@
       1070,
       625
     ],
-    "animation": "trace",
+    "animation": "none",
     "views": [
       {
         "id": "spawn",
@@ -20,7 +20,7 @@
           "dash",
           "crd"
         ],
-        "note": "The spec the user picks in the spawner is recorded as a Notebook CR inside the Profile namespace."
+        "note": "Web app creates the Notebook CR in the selected namespace."
       },
       {
         "id": "reconcile",
@@ -30,7 +30,7 @@
           "ctrl",
           "k8s"
         ],
-        "note": "The controller watches CR events, reconciles into a StatefulSet/Pod, and applies the PVC mount and GPU request."
+        "note": "Notebook controller reconciles StatefulSet/Service; Kubernetes creates and places Pods."
       },
       {
         "id": "expose",
@@ -40,7 +40,7 @@
           "istio",
           "user"
         ],
-        "note": "The pod with the injected Istio sidecar is exposed to the user through the Dashboard proxy."
+        "note": "Access uses configured gateway/routing/authorization, not the dashboard as a proxy."
       }
     ]
   },
@@ -54,14 +54,14 @@
     {
       "id": "dash",
       "type": "frontend",
-      "label": "Central Dashboard",
-      "sublabel": "spawner UI"
+      "label": "Notebooks web app",
+      "sublabel": "dashboard entry point"
     },
     {
       "id": "crd",
       "type": "database",
       "label": "Notebook CR",
-      "sublabel": "in Profile namespace"
+      "sublabel": "selected namespace"
     },
     {
       "id": "ctrl",
@@ -72,14 +72,14 @@
     {
       "id": "k8s",
       "type": "cloud",
-      "label": "StatefulSet / Pod",
-      "sublabel": "notebook server"
+      "label": "Kubernetes workloads",
+      "sublabel": "StatefulSet / Pod"
     },
     {
       "id": "istio",
       "type": "security",
-      "label": "Istio Sidecar",
-      "sublabel": "namespace routing"
+      "label": "Istio access path",
+      "sublabel": "gateway / routing / authz"
     }
   ],
   "segments": [
@@ -128,25 +128,25 @@
       "from": "ctrl",
       "to": "k8s",
       "y": 365,
-      "label": "Reconcile to StatefulSet/Pod",
+      "label": "Reconcile StatefulSet / Service",
       "variant": "emphasis",
-      "note": "PVC mount · nvidia.com/gpu request"
+      "note": "volumes/resources in PodSpec"
     },
     {
       "id": "inject",
       "from": "k8s",
       "to": "istio",
       "y": 445,
-      "label": "Inject Istio sidecar",
+      "label": "Configured admission / routing",
       "variant": "security",
-      "note": "namespace-scoped routing"
+      "note": "injection belongs to webhook"
     },
     {
       "id": "expose",
       "from": "istio",
       "to": "user",
       "y": 505,
-      "label": "Expose notebook UI through Dashboard proxy",
+      "label": "Authenticated notebook HTTP access",
       "variant": "return"
     }
   ],
@@ -174,6 +174,24 @@
       "from": 440,
       "to": 512,
       "type": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Stop and resume",
+      "items": [
+        "Stop annotation present → StatefulSet 0; removed → 1",
+        "Notebook spec has no replicas field."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Persistence and culling",
+      "items": [
+        "PVC data persists; kernel memory is lost.",
+        "Culling defaults off and uses Jupyter kernel API activity."
+      ]
     }
   ]
 }

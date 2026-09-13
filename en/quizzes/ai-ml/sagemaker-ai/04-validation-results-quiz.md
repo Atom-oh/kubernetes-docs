@@ -13,7 +13,7 @@
 
 **Answer: B**
 
-The App, S3, and IAM resources were reclaimed, but one project remains.
+The historical record reported reclaimed App, S3, and IAM resources with one project remaining. The September 12 documentation review did not re-query current AWS state.
 </details>
 
 2. What was the key failure in attempt 3?
@@ -41,12 +41,12 @@ The caller role group profile was not assigned as an owner/member.
 
 **Answer: C**
 
-GPU training was not executed, so those values were not measured.
+GPU training was not executed, so those comparison values were not measured. This does not imply zero total cost for resources such as the MLflow App and S3.
 </details>
 
 4. What is the first rerun gate?
    - A) Submit the full Job
-   - B) Verify that no `qwen-pii-*` project remains
+   - B) Reconcile inventory and resolve remaining or unknown experiment-owned resources
    - C) Create an EKS cluster
    - D) Publish tuned metrics
 
@@ -55,7 +55,7 @@ GPU training was not executed, so those values were not measured.
 
 **Answer: B**
 
-Preflight must block a new run while the project remains.
+Permission errors or absence from a list do not prove deletion. A shared name prefix does not authorize deleting someone else's resources.
 </details>
 
 5. How do the target architecture and actual workflow differ?
@@ -69,7 +69,7 @@ Preflight must block a new run while the project remains.
 
 **Answer: B**
 
-The actual workflow terminates at `stop before spend`.
+The historical workflow stops before GPU training. It does not prove the current account state or zero total experiment cost.
 </details>
 
 ---

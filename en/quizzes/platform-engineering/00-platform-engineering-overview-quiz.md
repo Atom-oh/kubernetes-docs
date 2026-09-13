@@ -1,147 +1,67 @@
 # Platform Engineering Overview Quiz
 
-> This quiz tests your understanding of the [Platform Engineering Overview](../../platform-engineering/00-platform-engineering-overview.md) document.
+[Related guide](../../platform-engineering/00-platform-engineering-overview.md)
 
----
-
-1. What is the core goal of Platform Engineering?
-   - A) Training all developers to manage infrastructure directly
-   - B) Building an Internal Developer Platform (IDP) for developer self-service
-   - C) Completely replacing the operations team's role with automation
-   - D) Migrating all applications to serverless
+## 1. What is the core goal of platform engineering?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: B) Building an Internal Developer Platform (IDP) for developer self-service**
-
-**Explanation:**
-Platform Engineering is the discipline of building an IDP that enables developers to deploy applications quickly and securely without dealing directly with infrastructure complexity. The goal is not to teach developers infrastructure management, but to provide abstracted self-service interfaces.
-
+Understand developer needs and provide approved self-service APIs, CLIs, portals, templates and operational support as an internal product. It does not eliminate operations teams or assume every application responsibility.
 </details>
 
----
-
-2. In the AWS CAF maturity model, which stage corresponds to "infrastructure automation through IaC" and "self-service product delivery"?
-   - A) START
-   - B) ADVANCE
-   - C) EXCEL
-   - D) Common across all stages
+## 2. How should Start, Advance, Excel and tool mappings be interpreted?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: B) ADVANCE**
-
-**Explanation:**
-In the AWS CAF maturity model, the ADVANCE stage focuses on expanding automation and building centralized observability. Infrastructure automation (IaC, self-service products) is an ADVANCE capability built on top of the START foundation. START covers foundation building, while EXCEL covers continuous optimization.
-
+They organize improvement tasks in AWS platform-engineering guidance. Advance discusses IaC/self-service automation; this guide’s Kubernetes mappings are teaching examples, not official certification scores or a universal sequence.
 </details>
 
----
-
-3. Which statement correctly describes the relationship between Platform Engineering, DevOps, and SRE?
-   - A) The three are mutually exclusive approaches
-   - B) Platform Engineering replaces DevOps and SRE
-   - C) Platform Engineering packages DevOps principles and SRE practices as a product
-   - D) SRE is a superset that encompasses Platform Engineering and DevOps
+## 3. How do platform engineering, DevOps and SRE relate?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: C) Platform Engineering packages DevOps principles and SRE practices as a product**
-
-**Explanation:**
-The three approaches are complementary. DevOps provides culture and methodology, SRE provides operational engineering practices, and Platform Engineering packages these into a product called the Internal Developer Platform.
-
+They are complementary: platforms emphasize developer experience/reusable products, DevOps collaboration/delivery, and SRE reliability/operations engineering. Team structures and hierarchy are not universal.
 </details>
 
----
-
-4. In the Kubernetes-based IDP reference architecture, which layer do ArgoCD, FluxCD, and KRO belong to?
-   - A) Developer Interface Layer
-   - B) Integration/Orchestration Layer
-   - C) Resource Layer
-   - D) Infrastructure Layer
+## 4. What are the IDP layers and the scope of a Backstage portal?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: B) Integration/Orchestration Layer**
-
-**Explanation:**
-The Integration/Orchestration Layer handles declarative state management and deployment automation. ArgoCD and FluxCD provide GitOps-based deployment, and KRO provides resource graph orchestration. The Developer Interface Layer is for UIs/CLIs like Backstage, the Resource Layer is for ACK/Helm/Operators, and the Infrastructure Layer is for EKS/VPC/IAM.
-
+Interface, orchestration, resources and infrastructure form a reference model. A Backstage-style portal is part of the interface, not a replacement for provisioning, policy, runtime, documentation and support.
 </details>
 
----
-
-5. Which statement about Golden Paths is NOT correct?
-   - A) They are recommended deployment paths provided by the platform team
-   - B) They are mandatory rules that developers must follow
-   - C) They guide developers to get started quickly using validated methods
-   - D) Developers can deviate when needed, but they're the optimal choice in most cases
+## 5. Can deviating from a Golden Path bypass mandatory security policy?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: B) They are mandatory rules that developers must follow**
-
-**Explanation:**
-Golden Paths are "recommended," not "enforced." They provide deployment methods that the platform team has validated and optimized, but developers can choose different approaches when needed. The goal is to design Golden Paths so they are the optimal choice for most use cases.
-
+No. It is a supported recommended path, but exceptions still follow organizational approval and mandatory security/data policies. It is not guaranteed optimal for every case.
 </details>
 
----
-
-6. In the self-service pattern combining KRO's ResourceGraphDefinition (RGD) and ACK, what combination of resources is automatically created when a developer submits a single manifest?
-   - A) Deployment + ConfigMap + PVC
-   - B) Deployment + Service + RDS Instance + IAM Role
-   - C) StatefulSet + Service + DynamoDB Table
-   - D) Pod + Ingress + S3 Bucket
+## 6. Does one WebApplication always make kro create Deployments, RDS and IAM?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: B) Deployment + Service + RDS Instance + IAM Role**
-
-**Explanation:**
-In the KRO RGD + ACK self-service pattern, a developer's single WebApplication manifest triggers KRO to automatically create Kubernetes native resources (Deployment + Service) and AWS resources via ACK (RDS Instance, IAM Role). This is the core value of an IDP: abstracting infrastructure complexity.
-
+No. WebApplication is an example custom API requiring an RGD/CRD. kro manages the declared Kubernetes resources; authorized ACK service controllers call AWS APIs. Resource combinations, readiness and deletion policies depend on the definitions.
 </details>
 
----
-
-7. In the AWS CAF maturity model, which stage and capability area do DORA metrics belong to?
-   - A) START - Cost Management
-   - B) ADVANCE - Central Observability
-   - C) EXCEL - Platform Metrics
-   - D) Common across all stages
+## 7. What are current DORA metrics and how should they be used?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: C) EXCEL - Platform Metrics**
-
-**Explanation:**
-DORA metrics (Deployment Frequency, Lead Time, MTTR, Change Failure Rate) belong to the "Platform Metrics" capability in the EXCEL stage. This represents the highest maturity level, achieving continuous optimization through metrics aligned with organizational goals.
-
+Change lead time, deployment frequency, failed deployment recovery time, change fail rate and deployment rework rate. Improve service/team delivery and stability rather than substitute generic MTTR or individual rankings. Measurement can start before Excel.
 </details>
 
----
-
-8. Among the core values of an IDP, which one embeds security and compliance by default so developers can work in a secure environment without explicit security configuration?
-   - A) Self-Service
-   - B) Guardrails
-   - C) Standardization
-   - D) Automation
+## 8. Do guardrails automatically guarantee security and compliance?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer and explanation</summary>
 
-**Answer: B) Guardrails**
-
-**Explanation:**
-Guardrails embed security and compliance into the platform by default. Even without developers explicitly configuring security, the platform automatically applies security policies (Pod Security Standards, network policies, image scanning, etc.). Self-Service relates to direct provisioning, Standardization to Golden Paths, and Automation to eliminating repetitive tasks.
-
+No. Enforce and verify policies, bypass/exception handling, permissions and changes, with audit and recovery. Guardrails do not replace application data-handling responsibilities or assessment of legal requirements.
 </details>

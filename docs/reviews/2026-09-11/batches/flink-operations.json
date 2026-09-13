@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/data-on-eks/flink/04-operations-ha.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed Flink2.2.1/Operator1.15 operations: realreporterplugins/ports/selectors andseparateOperatormetrics;cachebytes/CounterGauge/HistogramSummary;native4GiBmemorycalculations/separatemanagednetwork;ConfigMapLock/HAstorage/RBAC/forbiddenclusterIDs/replicarecoverylimits;couplednodeandjobloops;ManagedFlink2.3limits/KPU/responsibilities;26questions2workflows.",
+    "reviewedSha256": "6cd60d6079f21016230fa135dab4895c34217d2d226c8f39da4070313a37693b"
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/flink/04-operations-ha-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed Flink2.2.1/Operator1.15 operations: realreporterplugins/ports/selectors andseparateOperatormetrics;cachebytes/CounterGauge/HistogramSummary;native4GiBmemorycalculations/separatemanagednetwork;ConfigMapLock/HAstorage/RBAC/forbiddenclusterIDs/replicarecoverylimits;couplednodeandjobloops;ManagedFlink2.3limits/KPU/responsibilities;26questions2workflows.",
+    "reviewedSha256": "ae4aad51bff6eaf213d6301eb638a61180dbc8896e4dea40186d2553114a5319"
+  },
+  {
+    "path": "en/data-on-eks/flink/04-operations-ha.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed Flink2.2.1/Operator1.15 operations: realreporterplugins/ports/selectors andseparateOperatormetrics;cachebytes/CounterGauge/HistogramSummary;native4GiBmemorycalculations/separatemanagednetwork;ConfigMapLock/HAstorage/RBAC/forbiddenclusterIDs/replicarecoverylimits;couplednodeandjobloops;ManagedFlink2.3limits/KPU/responsibilities;26questions2workflows.",
+    "reviewedSha256": "ba6e0e8562d29667aa82e8261b31a9f3411d39ba7e15574d58da3926eef78e76"
+  },
+  {
+    "path": "en/quizzes/data-on-eks/flink/04-operations-ha-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed Flink2.2.1/Operator1.15 operations: realreporterplugins/ports/selectors andseparateOperatormetrics;cachebytes/CounterGauge/HistogramSummary;native4GiBmemorycalculations/separatemanagednetwork;ConfigMapLock/HAstorage/RBAC/forbiddenclusterIDs/replicarecoverylimits;couplednodeandjobloops;ManagedFlink2.3limits/KPU/responsibilities;26questions2workflows.",
+    "reviewedSha256": "763ed2fd780f0d6758e169877f07c467fb03fdb446e30d43d0ca70d6ecc0c02c"
+  }
+]

@@ -3,10 +3,10 @@
   "date": "2026-09-11",
   "branch": "audit/full-content-2026-09",
   "latestCoverage": {
-    "documents": 2709,
-    "fullyRead": 692,
-    "fixed": 680,
-    "verified": 4,
+    "documents": 2707,
+    "fullyRead": 726,
+    "fixed": 718,
+    "verified": 0,
     "followup": 8
   },
   "parentCompleted": [
@@ -469,15 +469,15 @@
     "googleCloudProject": "Owner supplied project identifiers but then cancelled integration. No Google resource was created by this agent; project left untouched. Private setup script archived as cancelled.",
     "implementation": "Bilingual stats pages+doc footer,30day aggregate+daily graph,staticpublicJSON,scheduleddeploy fetch viaGoogleOIDCanalytics.readonly,previoussnapshotfallback,unavailable honeststate. Excluded fromLLM,quizexception.",
     "checks": "Threefullko/enbuildspassed; latestreviewedbuild88292passesinclloaderfix beforemainrebaseonlyadditiveREADMEredirectpostproc. 114testspassafterrebaseandPRCI34609387279;GitBookko/enchecksallgreen. FinalPlaywright12cases+darkpass /tmp/kubernetes-docs-site-stats-research/browser-results.json; finalKOmobile+ENdarkshotsvisuallyinspected. Sitemapsstatistics0,LLMmanifestnone,bothHTMLnoindex/noMarkdownalt,JSONunavailable verified.",
-    "next": "Complete isolated fix/ga4-dashboard-only cleanup PR, merge and deploy; verify nav/footer removal and retained GA4 docs_page_view collection.",
+    "next": "Use GA4property396631876 dashboard; no Cloud Shell/service-account setup requested.",
     "sessions": {
       "previews": "Completed; finalpreviewPID2483155terminated afterliveQA. 4197/4198 no longer needed. Code/evidence kept."
     },
-    "pending": "No owner input or Google Cloud setup requested anymore.",
+    "pending": "None for statistics integration",
     "worktreeMove": "Movedfrom/tmpafterinode1852. gitworktreemoveEXDEV; copiedall11065files verifiedtext hashes/sizes/status, gitworktreerepair updatedpath, removedONLY ownold/tmpworktree. Parenthas30GBdisk andlargeinodecapacity.",
     "review": "Peirce readonlyreviewcomplete /tmp/public-statistics-review-core-worker-2026-09-11.json. OneP2:asyncIIFE synchronouscatch requestreset overwrittenbyouterassignment. ParentrealChromiumreproducedcalls1->1 /tmp/.../retry-before.json. FixedcreateStatisticsLoader Promise.resolve().then+AbortController timer,3regressions;15statisticsunitpass. Peirceimmediatelyresumedoriginalauditatcheckpoint (EKSCLIoptionsnext).",
     "pr": 218,
-    "status": "USER CANCELLED onsite statistics; keep GA4 collection and use GA4 dashboard",
+    "status": "REMOVED per user request; GA4 dashboard and existing tracker retained",
     "mergeCommit": "ba54131649f73dd577f571fe3b53010c41ef353d",
     "mergedAt": "2026-09-11T14:20:43Z",
     "branchCommit": "99fe3a4aa73b93a95d45dc9ae569ad3acf75e616",
@@ -763,7 +763,7 @@
       ]
     },
     "airflowHelm": {
-      "status": "4filesreadANDguides/quizzesrewritten;2figuresdelivery9of9pass;5chartvariants+24SQLcasespass;finalschema/browser/PNGpendingwhilepriorityGA4cleanup",
+      "status": "COMPLETE4files36questions5chartvariants18fences2figures6viewports;historical24SQLcasesrecorded",
       "sources": "/tmp/kubernetes-docs-full-review/airflow-helm-sources",
       "fixtures": "/tmp/kubernetes-docs-full-review/airflow-helm-fixtures",
       "preparedExamples": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-airflow/helm-examples",
@@ -780,25 +780,69 @@
         "Officialconstraints3.3.1Python3.12:providerCelery3.23.1,cncf-kubernetes10.21.0,FAB3.8.0. OCIairflow3.3.1existsamd64arm64digestsha256:0c4bcc0370e526de1b7892a3bf4343d260c6c82359c66f77155b53cd773d6339;Noimagepull.",
         "Needremovefixed1-2mincoldstart/universalisolation/scalability/noidlecost/arbitraryK8sexecutorimageclaims;K8sexecutortaskimageneedsAirflowruntime;KPOarbitrarychildimage separate. FailedtaskPodretentionconfigurable. ValuesfuturePart3DAGdelivery+Part5logsnecessaryforendtoendsmoketest."
       ],
-      "sessions": "Alltools/processesfinished;noPGserverbecauseWASM in-memoryclosed. NoAirflowinstalled.NoDOC02orquiz02editsyet.",
-      "next": "Preparesecret/key/bootstrap/installverificationexamples;readK8sexecutorproviderconfigandFABCLIsource;writeko/en02guides36quizzes;update2figures/checkschemaKEDA2.20.2/nativePGreceipts+browser/PNG;continueAirflow03-05."
+      "sessions": "No local processes left;boundedbrowser closed",
+      "next": "Airflow03DAGpatterns,04MWAA,05operations;thenFlink/UnifiedStudio/AIremaining",
+      "evidence": "docs/reviews/2026-09-11/airflow-helm-validation.json"
     },
     "statisticsOwnerSetup": {
       "status": "CANCELLED by explicit user instruction. Do not ask for Cloud Shell, GA4 Viewer grant, credentials or project setup. Three GitHub API variables removed and 404 readback verified.",
       "privateState": "/home/atomoh/kubernetes-docs/.vitepress/cache/site-statistics-connection.json"
     },
     "statisticsRemoval": {
-      "status": "cleanupcodecomplete/118testspass/link-image-paritypass/fullbuildrunning/reviewrequestedPeirce",
+      "status": "COMPLETE PR220merged/deployed/liveverified;118tests;AI26/26noCriticalMajor;content90/90;hostedbuildpass",
       "worktree": "/home/atomoh/kubernetes-docs/.vitepress/cache/site-statistics",
       "branch": "fix/ga4-dashboard-only",
       "base": "54c446c1",
       "change": "Revert PR218 ba541316 without commit, plus docs/operations/search-and-analytics.md updated for GA4 property396631876 only. RemovesstatsUIpages/footer/nav/publicJSON/serverfetch/OIDCauth/dailyschedule. Analytics.mjs+GA4measurementG-GWVLEW5JLL+docs_page_viewpreserved. node_modules pre-existinguntrackedsymlinkNEVERstage.",
       "validation": "/tmp/kubernetes-docs-full-review/ga4-dashboard-only-validate.log:118/118allpass+links/assets/parity. Fullbuild custom staging /dev/shm but samebuildfunctions/localecommands, script /tmp/.../ga4-dashboard-build.mjs, log /tmp/.../ga4-dashboard-build.log.",
       "buildSession": 45305,
-      "review": "PeirceinterruptedbrieflyforreadOnlyreviewthenshouldresumeoriginalauditscope",
-      "next": "Finishfullbuild/browserQA;reviewresolve;commit/pushPR;waitchecks;mergeauthorized;verifydeployliveandGAinterceptwithoutcountingtestvisits. Continuewholecontentaudit."
+      "review": "Peirce resumed forREADONLY latestHEAD code+contentreview; reporttarget worktree/.vitepress/cache/ga4-dashboard-only/ai-review.json",
+      "next": "No further onsite statistics or Google Cloud setup. Continue original whole-content audit.",
+      "pr": 220,
+      "head": "7885e131d1da12db4a90b6503e215b065b622936",
+      "localBuild": "INTERRUPTED byinstance stop/start; /tmp and/dev/shm lost. Do notrestartfullbuild. Bounded1GBdevpreviewalsoOOM; stopped. No localfullbuildorbrowserpass claimed.",
+      "ciRun": 34697080975,
+      "deploymentRun": 34697657957,
+      "evidence": "docs/reviews/2026-09-11/ga4-dashboard-deployment.json"
+    },
+    "instanceIncident": {
+      "observed": "2026-09-12T13:26Z restart",
+      "evidence": "/home/atomoh/kubernetes-docs/.vitepress/cache/incidents/2026-09-12/incident-summary.json",
+      "confirmed": "ConsoleStopInstances skipOsShutdown=true thenStart. Swap100%,rootdiskmax99.95%;EC2statuschecksnormal, noOOMkernelentryfound. Resourcepressureplausiblecauseofunresponsiveness,notprovenOOM.",
+      "prevention": "FullbuildoffloadedtoGitHubhostedARMPRCI. No large localbuild. Persist logs/checkpoints underworkspaceEBS nottmp. Do notkillotheruserprocesses orresizecloudresourcewithoutauthorization.",
+      "recovery": "Sourceedits+90batchledgerspreserved. Temporarytestfixturesandlongbuildoutputs lost; reconstituteonlynecessaryfromdurablereports/code. Latestrootgitc817a1fd/75e16992 containfollowupedits;do notrepeatclosedreviews."
+    },
+    "airflowDagPatterns": {
+      "status": "COMPLETE4filesfixed/30questions/13releasedmergemethodcases/2diagrams/6responsivecases",
+      "sources": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-airflow/dag-patterns/sources",
+      "workspace": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-airflow/dag-patterns",
+      "next": "Airflow04MWAA,05operations, then Flink/UnifiedStudio/AI remaining",
+      "resourcePolicy": "NofullVitepress/localdevserver;boundedtests;persistallartifactsworkspace.",
+      "evidence": "docs/reviews/2026-09-11/airflow-dag-patterns-validation.json"
+    },
+    "airflowMwaa": {
+      "status": "COMPLETE4files/24questions/2diagrams/6responsivecases",
+      "evidence": "docs/reviews/2026-09-11/airflow-mwaa-validation.json",
+      "next": "Airflow05operations then Flink/UnifiedStudio/AI remaining"
+    },
+    "airflowOperations": {
+      "status": "COMPLETE4files/20questions/5nativeuploadfilecases",
+      "evidence": "docs/reviews/2026-09-11/airflow-operations-validation.json",
+      "next": "Flink README01–04,UnifiedStudioREADME01,AIremaining"
+    },
+    "flinkFoundation": {
+      "status": "COMPLETE6files/16questions/4figures/12responsivecases",
+      "workspace": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-flink",
+      "evidence": "docs/reviews/2026-09-11/flink-foundation-validation.json",
+      "next": "Flink02Operator,03state/checkpoints,04operations;UnifiedStudioREADME01;AIremaining"
+    },
+    "flinkOperator": {
+      "status": "4filesfullyread;primarysources/chartchecked;public02noteditedyet",
+      "workspace": ".vitepress/cache/content-review-flink/operator",
+      "checkpoint": ".vitepress/cache/content-review-flink/operator/work-in-progress.json",
+      "next": "Continue02then03/04;UnifiedStudio/AIremaining"
     }
   },
-  "aggregationScope": "Counts reflect the batch records. Historical worker/check fields are not the latest PR validation or a whole-corpus completion claim.",
+  "aggregationScope": "Counts reflect existing document paths and committed batch records, grouping followup/needs_followup together. Other worker/check fields are historical checkpoints, not a whole-corpus completion claim.",
   "currentWorkspaceBranch": "docs/review-followup-2026-09-12"
 }

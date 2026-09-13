@@ -2,187 +2,184 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "MLflow Tracking Structure: Backend Store and Artifact Store",
-    "locale": "en",
-    "output": "en-ai-ml-mlflow-01-tracking-0.html",
+    "title": "MLflow: metadata and artifact paths",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
+    "viewBox": [
+      1120,
+      500
+    ],
     "views": [
       {
-        "id": "write-path",
-        "label": "Experiment logging path",
+        "id": "proxy",
+        "label": "Server proxy",
         "focus": [
-          "script",
-          "api",
+          "client",
           "server",
           "backend",
           "artifact"
         ],
-        "note": "The training script never talks to either store directly; it always logs through the Tracking API."
+        "note": "Metadata and proxied artifacts use server APIs."
       },
       {
-        "id": "read-path",
-        "label": "UI read path",
+        "id": "direct",
+        "label": "Direct artifacts",
         "focus": [
-          "ui",
-          "backend",
+          "client",
           "artifact"
         ],
-        "note": "The Tracking UI reads from both stores to render experiments, runs, logged models, and traces."
+        "note": "Direct URIs require client storage permissions."
+      },
+      {
+        "id": "browser",
+        "label": "Web UI",
+        "focus": [
+          "ui",
+          "server",
+          "backend"
+        ],
+        "note": "The browser calls HTTP APIs, not the SQL database directly."
       }
-    ]
+    ],
+    "locale": "en",
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "Stores"
+        }
+      }
+    }
   },
   "components": [
     {
-      "id": "script",
+      "id": "client",
       "type": "external",
-      "label": "Training Script",
-      "sublabel": "mlflow.log_param / log_metric",
+      "label": "MLflow SDK client",
+      "sublabel": "training / evaluation",
       "pos": [
         40,
-        60
+        70
       ],
       "size": [
-        170,
-        64
-      ]
-    },
-    {
-      "id": "api",
-      "type": "backend",
-      "label": "MLflow Tracking API",
-      "sublabel": "Python / REST",
-      "pos": [
-        290,
-        60
-      ],
-      "size": [
-        180,
-        64
+        220,
+        70
       ]
     },
     {
       "id": "server",
       "type": "backend",
-      "label": "Tracking Server",
-      "sublabel": "routes metadata / file writes",
+      "label": "Tracking server",
+      "sublabel": "metadata + artifact API",
       "pos": [
-        550,
-        60
+        410,
+        70
       ],
       "size": [
-        200,
-        64
+        230,
+        70
       ]
     },
     {
       "id": "backend",
       "type": "database",
-      "label": "Backend Store",
-      "sublabel": "metadata: params, metrics, tags",
+      "label": "SQL backend",
+      "sublabel": "experiments / runs / models",
       "pos": [
-        300,
-        230
+        830,
+        30
       ],
       "size": [
-        220,
-        64
+        230,
+        70
       ]
     },
     {
       "id": "artifact",
-      "type": "cloud",
-      "label": "Artifact Store",
-      "sublabel": "files: models, plots, datasets",
+      "type": "database",
+      "label": "Artifact store",
+      "sublabel": "files / model weights",
       "pos": [
-        640,
-        230
+        830,
+        290
       ],
       "size": [
-        220,
-        64
+        230,
+        70
       ]
     },
     {
       "id": "ui",
       "type": "frontend",
-      "label": "Tracking UI",
-      "sublabel": "browse experiments · runs · models · traces",
+      "label": "Browser UI",
+      "sublabel": "HTTP API requests",
       "pos": [
-        470,
-        400
+        410,
+        270
       ],
       "size": [
-        220,
-        64
+        230,
+        70
       ]
     }
   ],
   "connections": [
     {
-      "id": "script-to-api",
-      "from": "script",
-      "to": "api",
-      "label": "mlflow API calls",
-      "variant": "emphasis",
-      "labelDy": -26
-    },
-    {
-      "id": "api-to-server",
-      "from": "api",
+      "id": "metadata",
+      "from": "client",
       "to": "server",
+      "label": "metadata / proxy",
       "variant": "emphasis"
     },
     {
-      "id": "server-to-backend",
+      "id": "db",
       "from": "server",
       "to": "backend",
-      "label": "write metadata",
-      "fromSide": "bottom",
+      "label": "SQL",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "proxy-file",
+      "from": "server",
+      "to": "artifact",
+      "label": "proxy files",
+      "fromSide": "right",
       "toSide": "top"
     },
     {
-      "id": "server-to-artifact",
-      "from": "server",
+      "id": "ui-api",
+      "from": "ui",
+      "to": "server",
+      "label": "HTTP",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "variant": "dashed"
+    },
+    {
+      "id": "direct-file",
+      "from": "client",
       "to": "artifact",
-      "label": "write files",
+      "label": "direct mode: client credentials",
       "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "ui-to-backend",
-      "from": "ui",
-      "to": "backend",
-      "label": "read",
-      "variant": "dashed",
-      "fromSide": "top",
-      "toSide": "bottom"
-    },
-    {
-      "id": "ui-to-artifact",
-      "from": "ui",
-      "to": "artifact",
-      "label": "read",
-      "variant": "dashed",
-      "fromSide": "top",
-      "toSide": "bottom"
+      "toSide": "bottom",
+      "variant": "dashed"
     }
   ],
   "cards": [
     {
       "dot": "cyan",
-      "title": "Backend Store",
+      "title": "Metadata",
       "items": [
-        "Params, metrics, tags, and experiment · run · logged model records",
-        "At team scale, a relational DB such as PostgreSQL or MySQL"
+        "New default: SQLite; choose an explicit production DB",
+        "Local SDK can use SQL without a separate HTTP server"
       ]
     },
     {
       "dot": "amber",
-      "title": "Artifact Store",
+      "title": "Artifact permissions",
       "items": [
-        "Large binaries: model files, plots, datasets",
-        "Typically object storage such as an S3-compatible bucket"
+        "Proxy: server permissions / direct: client permissions",
+        "Changing server flags does not rewrite existing artifact URIs"
       ]
     }
   ]

@@ -1,7 +1,7 @@
 # AWS Load Balancer Controller
 
 > **검토 기준**: AWS Load Balancer Controller / Helm 차트 v3.5.0
-> **검토일**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 9월 11일
 
 ## 개요
 

@@ -9,6 +9,7 @@ from src.pii_tokens import (
     THINK_PATTERN,
     VALID_TYPES,
     Entity,
+    find_entity_spans,
     parse_tsv,
     pseudonymize_text,
     reassemble_text,
@@ -85,7 +86,18 @@ def _raw_whitelisted_rows(content: str) -> list[Entity]:
 
 def evaluate_predictions(records: list[dict], predictions: list[dict]) -> dict:
     """Evaluate predictions without returning source text or entity values."""
-    predictions_by_id = {prediction["id"]: prediction for prediction in predictions}
+    record_ids = [record["id"] for record in records]
+    if len(set(record_ids)) != len(record_ids):
+        raise ValueError("Duplicate record IDs cannot be evaluated")
+    allowed_ids = set(record_ids)
+    predictions_by_id = {}
+    for prediction in predictions:
+        identifier = prediction["id"]
+        if identifier not in allowed_ids:
+            raise ValueError("Prediction ID is not present in the evaluated records")
+        if identifier in predictions_by_id:
+            raise ValueError("Duplicate prediction IDs cannot be evaluated")
+        predictions_by_id[identifier] = prediction
     overall_counts = {"tp": 0, "fp": 0, "fn": 0}
     per_type_counts: dict[str, dict[str, int]] = {}
 
@@ -98,6 +110,7 @@ def evaluate_predictions(records: list[dict], predictions: list[dict]) -> dict:
     round_trip = 0
     expected_entity_count = 0
     predicted_entity_count = 0
+    raw_row_count = 0
 
     for record in records:
         prediction = predictions_by_id.get(
@@ -115,9 +128,11 @@ def evaluate_predictions(records: list[dict], predictions: list[dict]) -> dict:
             predicted = []
 
         raw_rows = _raw_whitelisted_rows(content)
-        parsed_pairs = {_pair(entity) for entity in predicted}
+        raw_row_count += len(raw_rows)
+        # Source absence is independent of the caller's parse-success flag.
+        source_present_pairs = {_pair(entity) for entity in parse_tsv(content, source)}
         hallucinated += sum(
-            1 for entity in raw_rows if _pair(entity) not in parsed_pairs
+            1 for entity in raw_rows if _pair(entity) not in source_present_pairs
         )
 
         document_metrics = score_entities(expected, predicted)
@@ -126,18 +141,27 @@ def evaluate_predictions(records: list[dict], predictions: list[dict]) -> dict:
 
         expected_pairs = {_pair(entity) for entity in expected}
         predicted_pairs = {_pair(entity) for entity in predicted}
+        expected_spans = {
+            pair: find_entity_spans(source, Entity(*pair)) for pair in expected_pairs
+        }
+        if any(not spans for spans in expected_spans.values()):
+            raise ValueError("Expected entity does not match a supported source span")
         expected_entity_count += len(expected_pairs)
         predicted_entity_count += len(predicted_pairs)
         for entity_type in {
             entity_type for entity_type, _original in expected_pairs | predicted_pairs
         }:
-            expected_for_type = [
-                entity for entity in expected if entity.type == entity_type
-            ]
-            predicted_for_type = [
-                entity for entity in predicted if entity.type == entity_type
-            ]
-            type_metrics = score_entities(expected_for_type, predicted_for_type)
+            expected_for_type = {
+                pair for pair in expected_pairs if pair[0] == entity_type
+            }
+            predicted_for_type = {
+                pair for pair in predicted_pairs if pair[0] == entity_type
+            }
+            type_metrics = _metrics_from_counts(
+                len(expected_for_type & predicted_for_type),
+                len(predicted_for_type - expected_for_type),
+                len(expected_for_type - predicted_for_type),
+            )
             counts = per_type_counts.setdefault(
                 entity_type, {"tp": 0, "fp": 0, "fn": 0}
             )
@@ -152,17 +176,14 @@ def evaluate_predictions(records: list[dict], predictions: list[dict]) -> dict:
             round_trip += 1
 
         document_leaks = 0
-        for entity in expected:
-            original = unicodedata.normalize("NFC", entity.original)
-            if original and original in tokenized.masked_text:
+        for spans in expected_spans.values():
+            if any(not _span_is_covered(span, tokenized.spans) for span in spans):
                 leaked_entities += 1
                 document_leaks += 1
         if document_leaks:
             leaked_documents += 1
 
-        over_redacted += sum(
-            1 for entity in predicted if _pair(entity) not in expected_pairs
-        )
+        over_redacted += len(predicted_pairs - expected_pairs)
 
     overall = _metrics_from_counts(**overall_counts)
     per_type = {
@@ -187,7 +208,7 @@ def evaluate_predictions(records: list[dict], predictions: list[dict]) -> dict:
             "over_redacted": over_redacted,
             "over_redaction_rate": _rate(over_redacted, predicted_entity_count),
             "hallucinated": hallucinated,
-            "hallucination_rate": _rate(hallucinated, len(_raw_rows(predictions))),
+            "hallucination_rate": _rate(hallucinated, raw_row_count),
         },
         "parse": {
             "total": total_documents,
@@ -204,9 +225,17 @@ def evaluate_predictions(records: list[dict], predictions: list[dict]) -> dict:
     }
 
 
-def _raw_rows(predictions: list[dict]) -> list[Entity]:
-    return [
-        entity
-        for prediction in predictions
-        for entity in _raw_whitelisted_rows(prediction.get("content", ""))
-    ]
+def _span_is_covered(
+    expected: tuple[int, int], replacements: tuple[tuple[int, int], ...]
+) -> bool:
+    """Whether ordered replacement spans cover every character of a gold span."""
+    cursor, end = expected
+    for start, stop in replacements:
+        if stop <= cursor:
+            continue
+        if start > cursor:
+            return False
+        cursor = max(cursor, stop)
+        if cursor >= end:
+            return True
+    return False

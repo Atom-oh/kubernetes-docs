@@ -1,39 +1,50 @@
 # SageMaker Unified Studio 거버넌스
 
-> **마지막 업데이트**: 2026년 9월 2일
+> 문서 검토: 2026-09-12. 실험 결과는 2026-09-01 기록과 9월 2일 문서의 과거 상태입니다.
 
-## 개요
+Amazon SageMaker Unified Studio는 데이터·AI 팀의 협업, 도구와 catalog 자산을
+관리하는 workspace입니다. EKS 데이터 파이프라인의 자산·사용자·실행 권한을
+어느 domain/project에서 관리할지 설명합니다.
+여기의 **Unified Studio/DataZone project**는 SageMaker AI의 MLOps Project나
+SageMaker AI Studio domain과 같은 API 객체가 아닙니다.
 
-Amazon SageMaker Unified Studio는 데이터와 AI 팀이 project 안에서 파일, 도구, 데이터 자산과 컴퓨팅 구성을 공유하도록 하는 관리형 작업 공간입니다. 이 섹션에서는 Unified Studio를 EKS에 배포하지 않습니다. 대신 Kafka, Spark, Airflow, Flink, ML 학습이 생산·소비하는 데이터와 실행 권한을 **어떤 domain과 project 경계에서 관리할지** 설명합니다.
+## 이 섹션에서 확인할 것
 
-Data on EKS와 함께 보는 이유는 다음과 같습니다.
+| 주제 | 확인할 경계 |
+| --- | --- |
+| Domain 유형 | IAM-based와 IAM Identity Center-based의 로그인·관리 방식 |
+| Project profile / blueprint | 생성 시 제공할 도구와 on-demand로 활성화할 도구 |
+| Member / execution role | Portal·project 접근 identity와 실제 AWS resource 실행 identity |
+| Membership / data access | Owner 등 관리 designation과 IAM·Lake Formation·catalog 데이터 권한 |
+| Lifecycle | Project 존재·environment 준비·실제 도구 접근·소유 자원 정리 |
 
-- EKS 데이터 파이프라인이 생성한 데이터셋을 catalog asset으로 발견·공유할 수 있습니다.
-- project profile과 blueprint를 통해 SQL, data engineering, ML experiment 도구의 준비 범위를 표준화할 수 있습니다.
-- project membership으로 사용자와 자동화 role의 협업 권한을 분리할 수 있습니다.
-- 관리형 SageMaker AI와 자체 운영 EKS 학습을 같은 데이터 거버넌스 원칙 아래 둘 수 있습니다.
+[Part 4: Domain, Project, Membership](01-domains-projects-governance.md)는 Qwen 실험의
+실패 기록을 위 경계로 설명합니다. Unified Studio project는 이 가이드가 선택한
+거버넌스 절차이며 모든 SageMaker Training Job/EKS 학습에 필수인 기술 의존성은 아닙니다.
 
-## 이 가이드의 범위
+## 실험 기록과 현재 상태를 구분
 
-| 주제 | 다루는 내용 |
-|---|---|
-| domain | 조직의 데이터·AI 거버넌스 경계 |
-| project profile | project 생성 시 적용할 blueprint와 도구 템플릿 |
-| project | 한 비즈니스 use case의 협업·자원 공유 경계 |
-| catalog asset | 데이터 발견, 구독, 게시를 위한 메타데이터 |
-| membership | project owner와 member의 권한 |
-| lifecycle | 생성, ACTIVE 확인, 사용, 삭제, 잔존 확인 |
+저장된 2026-09-01 validation JSON은 학습 시작 전 중단, App/S3/IAM 실험 자원 정리,
+Unified Studio project 1개 잔존을 기록합니다. 9월 2일 문서에는 당시 ACTIVE
+재확인이 기록되어 있습니다. **이번 문서 검토에서 AWS 계정을 다시 조회하지 않았으므로
+현재도 1개가 남아 있다고 주장하지 않습니다.**
 
-[Part 4: Domain, Project, Membership 거버넌스](01-domains-projects-governance.md)에서 Qwen PII 실험의 실제 실패 경로와 안전한 재실행 순서를 확인할 수 있습니다.
-
-## 현재 검증 상태
-
-2026년 9월 2일 읽기 전용 재확인에서 `qwen-pii-*` 프로젝트 **1개가 `ACTIVE`** 상태로 남아 있습니다. App, S3, IAM 실험 자원은 정리됐지만 project membership이 없는 현재 자동화 역할은 이 프로젝트를 삭제할 수 없습니다.
-
-따라서 잔존 프로젝트를 domain owner가 삭제하거나 owner membership을 부여하기 전에는 새 실험을 시작하지 않습니다.
+이 실험을 재개할 때는 권한 있는 주체가 최신 inventory·membership·정리 상태를
+확인해야 합니다. 과거 오류를 해결하기 위해 무조건 새 권한을 부여하거나 공유 자원을
+삭제하는 절차로 일반화하지 않습니다.
 
 관련 가이드:
 
 - [SageMaker Qwen PII 가이드북](../../ai-ml/sagemaker-ai/README.md)
-- [Part 3: SageMaker AI와 MLflow 실행](../../ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md)
+- [Part 3: SageMaker AI와 MLflow](../../ai-ml/sagemaker-ai/03-sagemaker-mlflow-execution.md)
 - [Part 5: 실제 검증 결과](../../ai-ml/sagemaker-ai/04-validation-results.md)
+
+## 참고 자료
+
+- [IAM-based domains](https://docs.aws.amazon.com/sagemaker-unified-studio/latest/adminguide/iam-based-domains.html)
+- [Project member and execution roles](https://docs.aws.amazon.com/sagemaker-unified-studio/latest/adminguide/projects-iam-based-domains.html)
+- [User and group profiles](https://docs.aws.amazon.com/sagemaker-unified-studio/latest/adminguide/user-management.html)
+- [CreateProject request and deployment status](https://docs.aws.amazon.com/boto3/latest/reference/services/datazone/client/create_project.html)
+- [All capabilities profiles and on-demand provisioning](https://docs.aws.amazon.com/help-panel/sagemaker-unified-studio/latest/console/project-profiles-all-capabilities-hp.html)
+- [Project deletion and external resources](https://docs.aws.amazon.com/sagemaker-unified-studio/latest/userguide/delete-project.html)
+- [Recorded Qwen provisioning validation](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/results/provisioning-validation.json)

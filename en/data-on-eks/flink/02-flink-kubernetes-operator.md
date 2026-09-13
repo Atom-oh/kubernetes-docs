@@ -1,193 +1,250 @@
 # Part 2: Flink Kubernetes Operator
 
-> **Supported Versions**: apache/flink-kubernetes-operator 1.15+, Kubernetes 1.21+\
-> **Last Updated**: July 15, 2026
+> **Last Updated**: September 12, 2026. Operator/Helm chart 1.15.0; Flink 2.2.1 / Java 17.
 
-## Lab Environment Setup
+The Operator reconciles desired cluster/job state and manages upgrades, snapshots,
+recovery and autoscaling. It does not guarantee zero downtime or zero data loss
+for every change. See Part 1 for Native/Standalone and Application/Session boundaries.
 
-To follow along with the examples in this document, you will need the following tools and environment:
+## 1. Resources and operating boundaries
 
-### Required Tools
+| CR | Role |
+| --- | --- |
+| FlinkDeployment | Desired state of an Application or Session cluster |
+| FlinkSessionJob | Job submitted to an existing managed Session cluster |
+| FlinkStateSnapshot | Savepoint/checkpoint management for a linked Deployment/SessionJob |
+| FlinkBlueGreenDeployment | Blue/green transitions through two child deployments |
 
-* kubectl v1.21 or later
-* Helm v3.12 or later
-* A working Kubernetes cluster (Amazon EKS recommended)
-* cert-manager is not required for a default install — the operator's Helm chart generates a self-signed webhook certificate through an internal Job. Only install cert-manager if you intend to bring your own PKI for the admission webhook.
+SessionJobs have separate specs but share JM/TM capacity and underlying cluster
+failures. Application clusters are not fully isolated from shared EKS nodes,
+network, storage or quotas. A blue/green CR does not automatically guarantee safe
+Kafka consumer-group, transactional-ID or sink-write transitions. Validate state/
+data-path compatibility, duplicate processing and temporary additional capacity.
 
-## What is the Flink Kubernetes Operator?
+## 2. Installation: prepare cert-manager and namespaces
 
-The [Apache Flink Kubernetes Operator](https://github.com/apache/flink-kubernetes-operator) manages the full lifecycle of Flink deployments on Kubernetes using the Operator pattern. You could submit Flink jobs directly with the `flink run-application` CLI against a Kubernetes target, but that leaves a set of ongoing, error-prone tasks entirely on you:
+Use supported EKS/Kubernetes versions and compatible kubectl/Helm.
+This release's default webhook chart creates **cert-manager Certificate and Issuer
+resources**, not an internal certificate-generation Job. First verify a compatible
+cert-manager installation and its controller/webhook/cainjector.
+Disabling validation is not the default remedy for installation failures.
 
-* Sequencing safe upgrades and rollbacks of running jobs without losing state
-* Continuously reconciling a job's desired parallelism against its actual load
-* Managing savepoints and checkpoints as part of routine operations, not just disaster recovery
-* Declaratively running both long-lived Session clusters and one-off Application clusters through the same tooling
+operator-values.yaml below restricts the workload namespace to data-processing and
+pins the verified Operator image digest. The chart's short default tag and the
+1.15.0 tag resolved to the same multi-architecture digest.
 
-The Operator abstracts all of this behind two CRDs (Custom Resource Definitions) — `FlinkDeployment` and `FlinkSessionJob`. You declare the desired job spec in YAML, and the Operator continuously reconciles the cluster's actual state to match it, including deciding *how* to apply a change (a full restart, a fast in-place upgrade, or something in between).
-
-The latest release, **1.15.0** (May 2026), supports Flink **2.2.x, 2.1.x, 2.0.x, 1.20.x, and 1.19.x** as job runtimes, and requires **Kubernetes 1.21+** — the minimum version needed for the automatic namespace-labeling support that the operator's admission webhook relies on. Two notable capabilities landed recently:
-
-* **1.14.0** (February 2026) added native **Blue/Green deployment** support, letting you run two versions of a job side by side and shift traffic/state between them under Operator control instead of scripting it externally.
-* **1.15.0** adds Kubernetes-native `Conditions` on `FlinkDeployment.status` (so you can `kubectl wait --for=condition=...` on a deployment instead of polling `.status.jobStatus.state`), an optional Logback logging configuration alongside the default Log4j2, and bundles the `flink-metrics-dropwizard` reporter into the Helm chart by default.
-
-### Core CRDs
-
-* **FlinkDeployment**: Defines either an Application-mode cluster (a JobManager, TaskManagers, and exactly one job baked into the deployment) or a Session-mode cluster with no job attached (just a long-lived JobManager/TaskManager pool waiting for work)
-* **FlinkSessionJob**: Submits a job onto an already-running Session-mode `FlinkDeployment`. One session cluster can host many `FlinkSessionJob` resources, each independently managed, upgraded, and deleted without touching the underlying cluster
-
-Application mode gives each job its own dedicated cluster and full lifecycle isolation — the natural default for production jobs. Session mode trades that isolation for faster job startup and shared cluster overhead, which suits short-lived or exploratory jobs that don't justify spinning up a dedicated JobManager each time.
-
-## Installation
+```yaml
+watchNamespaces:
+- data-processing
+image:
+  repository: ghcr.io/apache/flink-kubernetes-operator
+  tag: 1.15.0
+  digest: sha256:5372e4461b433ee37391b0ee3fc3e4029980d14e9b64576b0cb78493d1cafe3a
+webhook:
+  create: true
+```
 
 ```bash
-# Add the Flink Kubernetes Operator Helm repository
+# Existing cert-manager installation; adjust its namespace if necessary.
+kubectl get crd certificates.cert-manager.io issuers.cert-manager.io
+kubectl rollout status deployment/cert-manager -n cert-manager --timeout=180s
+kubectl rollout status deployment/cert-manager-webhook -n cert-manager --timeout=180s
+kubectl rollout status deployment/cert-manager-cainjector -n cert-manager --timeout=180s
+
+# Create the watched workload namespace before Helm creates its SA/RBAC.
+kubectl create namespace data-processing --dry-run=client -o yaml | kubectl apply -f -
+
 helm repo add flink-operator-repo https://downloads.apache.org/flink/flink-kubernetes-operator-1.15.0/
-helm repo update
+helm repo update flink-operator-repo
+helm upgrade --install flink-kubernetes-operator flink-operator-repo/flink-kubernetes-operator \
+  --version 1.15.0 \
+  --namespace flink-operator --create-namespace \
+  -f operator-values.yaml \
+  --wait --timeout 10m
 
-# Install the operator into the flink namespace
-helm install flink-kubernetes-operator flink-operator-repo/flink-kubernetes-operator \
-  --namespace flink \
-  --create-namespace
-
-# Verify the installation
-kubectl get pods -n flink
-kubectl get crd | grep flink
+kubectl wait --for=condition=Ready certificate/flink-operator-serving-cert \
+  -n flink-operator --timeout=180s
+kubectl get serviceaccount/flink -n data-processing
 ```
 
-By default, the operator watches every namespace in the cluster. To scope it to a specific set of namespaces, set `watchNamespaces` in the Helm chart values:
+An empty watchNamespaces watches all namespaces. With the explicit list above,
+the chart also creates the flink job service account, Role and RoleBinding in
+that workload namespace, which must already exist. Inspect watch scope, actual
+RBAC and other grants together; namespace scoping is not complete isolation
+between untrusted tenants.
 
-```bash
-helm upgrade flink-kubernetes-operator flink-operator-repo/flink-kubernetes-operator \
-  --namespace flink \
-  --set watchNamespaces="{flink,flink-staging}"
-```
+For upgrades, review CRD changes, webhook compatibility and running jobs alongside
+chart version/values. Helm upgrade alone does not update every existing CRD from
+crds/. Keep CRDs and the image aligned to the reviewed release.
 
-### Minimal FlinkDeployment Example
+## 3. First verify execution with a bundled job
+
+flink-smoke.yaml runs StateMachineExample from the official image.
+It does not assume that a fictitious order-events JAR or entry class exists in
+that image. This is a **long-running demo with stateless upgrades**, not a
+production state-preservation configuration.
 
 ```yaml
 apiVersion: flink.apache.org/v1beta1
 kind: FlinkDeployment
 metadata:
-  name: order-events-processor
-  namespace: flink
+  name: flink-smoke
+  namespace: data-processing
 spec:
-  image: apache/flink:2.1.0
-  flinkVersion: v2_1
+  image: flink:2.2.1-java17
+  flinkVersion: v2_2
+  mode: native
   flinkConfiguration:
-    taskmanager.numberOfTaskSlots: "2"
-    execution.checkpointing.savepoint-dir: s3://my-flink-bucket/savepoints
-    execution.checkpointing.dir: s3://my-flink-bucket/checkpoints
+    taskmanager.numberOfTaskSlots: '2'
   serviceAccount: flink
   jobManager:
     resource:
-      memory: "2048m"
+      memory: 2048m
       cpu: 1
   taskManager:
     resource:
-      memory: "4096m"
-      cpu: 2
+      memory: 2048m
+      cpu: 1
   job:
-    jarURI: local:///opt/flink/usrlib/order-events-processor.jar
-    entryClass: com.example.flink.OrderEventsJob
-    parallelism: 4
-    upgradeMode: last-state
+    jarURI: local:///opt/flink/examples/streaming/StateMachineExample.jar
+    parallelism: 2
+    upgradeMode: stateless
+    state: running
 ```
-
-Once applied, the operator creates the JobManager Deployment, TaskManager Deployment, and supporting Services, then submits the job defined under `spec.job`.
 
 ```bash
-kubectl apply -f order-events-processor.yaml -n flink
-kubectl get flinkdeployment -n flink
-kubectl wait --for=condition=Available flinkdeployment/order-events-processor -n flink --timeout=180s
+# This readiness sequence is for the initial deployment.
+kubectl apply -f flink-smoke.yaml
+kubectl wait --for=condition=Running flinkdeployment/flink-smoke \
+  -n data-processing --timeout=300s
+kubectl get flinkdeployment/flink-smoke -n data-processing -o yaml
+kubectl get pods -n data-processing -l app=flink-smoke
+kubectl logs deployment/flink-smoke -n data-processing --tail=100
 ```
 
-## EKS Deployment Considerations
+In Native mode, Operator/Flink creates the JM Deployment and the JM ResourceManager
+dynamically manages TM pods. Native TMs are not invariably Deployments.
+Distinguish this from externally managed TM Deployments in Standalone mode.
 
-### 1. IAM Role for Service Accounts (IRSA) for Checkpoints/Savepoints
+The 1.15.0 condition is **Running**, not Available. It becomes True for an observed
+RUNNING application job or a READY Session JM Deployment. It does not prove data
+correctness, successful checkpoints or target throughput.
+This implementation does not populate condition observedGeneration. After updating
+an existing CR, do not treat a retained Running=True as proof that the new spec
+was reconciled. Also inspect reconciliation status and actual image/config/job state.
 
-The example above points `execution.checkpointing.dir` and `execution.checkpointing.savepoint-dir` at S3. For the JobManager and TaskManager Pods to write there, the `serviceAccount` referenced in `spec.serviceAccount` needs an IAM role bound via IRSA (or EKS Pod Identity) with permissions scoped to that bucket/prefix — not a node-wide IAM role, so that only Flink workloads can read/write checkpoint and savepoint data.
+## 4. Additional requirements for stateful deployments
 
-```yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: flink
-  namespace: flink
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/flink-checkpoint-access
-```
+Package a real application JAR with compatible runtime/connectors or use a supported
+artifact-delivery path. Check the Operator's allowed artifact schemes/hosts for
+SessionJobs as well.
 
-### 2. Node Sizing and Scheduling for TaskManagers
+An S3 URL and service-account annotation alone do not complete a stateful deployment:
 
-TaskManager Pods are long-running and hold in-memory/RocksDB state, so unlike stateless web workloads they don't tolerate being rescheduled casually. A few practical guidelines:
+- Install the appropriate S3 filesystem plugin and credential provider in JM/TM images.
+- Verify IRSA or Pod Identity trust/association, Agent/SDK and bucket-prefix/KMS permissions.
+- Configure checkpoint intervals, accessible checkpoint/savepoint storage and HA metadata/recovery.
+- Verify state serializers, operator UIDs, maximum parallelism and connector-state compatibility.
 
-* Size a dedicated [Karpenter](../../autoscaling/02-karpenter.md) NodePool for Flink TaskManagers with instance types that have enough local NVMe/EBS throughput if you're using the RocksDB state backend, since RocksDB does substantial local disk I/O for spilled state.
-* Use `taskManager.podTemplate` to add `topologySpreadConstraints` or anti-affinity across AZs for jobs where a full AZ outage taking down all TaskManagers would be unacceptable.
-* Avoid mixing TaskManagers with bursty, unrelated workloads on the same nodes — a noisy neighbor competing for CPU directly inflates a vertex's busy time, which can trigger unwanted autoscaler rescales.
+Part 3 covers backend/plugin/checkpoint configuration; Part 4 covers HA.
+RocksDB uses local disk I/O and recovery may require state downloads. Measure TM
+memory/disk/network capacity and relocation time. Node/AZ spreading alone does not
+guarantee job continuity; plan requests, taints, affinity and spare capacity.
 
-## Upgrade Modes
+## 5. Choose upgrade modes together with restore prerequisites
 
-`spec.job.upgradeMode` controls how the operator applies a change to a running job — a spec edit, a manual savepoint-triggered redeploy, or an autoscaler-driven rescale all go through the same mechanism. There are three modes:
+| Mode | State handling | What to check |
+| --- | --- | --- |
+| stateless | Restart without prior state | Whether replay is acceptable, including source offsets and external side effects |
+| savepoint | Create and restore a savepoint | Runnable job, storage/state compatibility and failure-fallback policy |
+| last-state | Restore using accessible HA metadata or the last checkpoint/savepoint | Checkpointing, valid metadata/state, credentials and actual recoverability |
 
-* **`stateless`**: The job restarts from scratch with no state carried over. Only appropriate for jobs that don't need continuity across restarts (idempotent consumers, jobs with trivial or externally-persisted state).
-* **`savepoint`**: The operator takes an explicit savepoint, tears the cluster down cleanly, and restores the new deployment from that savepoint. This is the safest option — a savepoint is a full, portable, verified snapshot — but it is also the slowest, since it requires a clean stop-the-world savepoint before anything else can happen.
-* **`last-state`**: The operator uses the latest checkpoint's metadata to restore the job, without taking a fresh savepoint. This is fast, and — critically — it works even when the job is unhealthy or actively failing, since it doesn't depend on being able to cleanly quiesce the job to take a savepoint. `last-state` became usable specifically with `FlinkSessionJob` as of operator 1.10.0; before that it was only available for `FlinkDeployment`.
+Savepoints are not universally the slowest, safest, stop-the-world option.
+Timing and restorability depend on the job, backend and state changes.
+With the default last-state fallback and accessible HA metadata, an unhealthy
+job's savepoint upgrade may switch to last-state. Make the fallback policy explicit.
 
-In practice, `last-state` is the default recommendation for production jobs with checkpointing enabled — it's the fastest path and the only one of the three that degrades gracefully when a job is already unhealthy. Reach for `savepoint` when you need a durable, externally verifiable snapshot (e.g., before a risky schema change), and `stateless` only when state genuinely doesn't matter.
+Last-state does not guarantee recovery after metadata loss or from stale/
+incompatible state. Checkpoint-age limits can also trigger a savepoint for healthy
+jobs. SessionJobs can use last-state, but require the underlying Session
+configuration and checkpoint storage; a mode string alone is not sufficient.
 
-## Autoscaler
+## 6. Autoscaler: begin with observation
 
-The operator ships a built-in autoscaler that is meaningfully different from a typical Kubernetes HPA: instead of scaling pod replica counts based on CPU/memory, **it scales the parallelism of each individual vertex in the job graph** — source, map, join, sink, etc. — independently, based on how much data that specific vertex needs to process.
+The autoscaler's main target is job-vertex parallelism. Its throughput model uses
+source ingestion/lag, processing rate/busy time and edge output ratios.
+For downstream vertices, it sums **upstream target rate × that edge's output ratio**.
+This is different from merely adding observed upstream output rates.
 
-### How it decides parallelism
+It differs from CPU-based HPA, but it does not ignore every CPU/memory signal.
+The reviewed code checks GC/memory pressure and CPU/memory quotas and can optionally
+tune TM memory. Memory tuning defaults to false.
 
-For each vertex, the autoscaler computes a *target processing rate*:
-
-* **Source vertices**: the target rate is the incoming data rate (how fast records are arriving from Kafka, Kinesis, etc., including any backlog that needs to be caught up on).
-* **Downstream vertices**: the target rate is the sum of the output rates of all upstream vertices feeding into it.
-
-It then solves for the parallelism value that lets a vertex sustain that target rate at a configured utilization target — i.e., it looks at the vertex's current per-instance processing rate and busy time, and computes how many parallel instances would be needed to handle the target load without running the vertex flat-out at 100% busy.
-
-Notably, the autoscaler does **not** use CPU or memory metrics at all. It relies on:
-
-* Source backlog and source incoming rate
-* Per-vertex record processing (output) rate
-* Busy time / backpressured time per vertex
-
-This is a deliberate design choice: in a streaming job, a vertex can be CPU-idle while still being the bottleneck (e.g., waiting on a slow external I/O call), or CPU-busy without actually being under load-driven pressure. Busy-time and processing-rate metrics reflect actual throughput pressure directly, which is what determines whether Flink can keep up with its input — CPU/memory utilization is a poor proxy for that in a dataflow engine where vertices have very different per-record costs.
-
-### Key configuration
+Merge the following **observation-mode** configuration under an existing spec.
+Actual rescaling is disabled. Choose pipeline.max-parallelism when designing a new
+job; do not change it casually for existing state.
 
 ```yaml
 flinkConfiguration:
-  job.autoscaler.enabled: "true"
-  job.autoscaler.target.utilization: "0.6"
-  job.autoscaler.target.utilization.boundary: "0.2"
-  job.autoscaler.stabilization.interval: "5m"
-  job.autoscaler.metrics.window: "10m"
-  job.autoscaler.catch-up.duration: "10m"
-  pipeline.max-parallelism: "360"
+  job.autoscaler.enabled: 'true'
+  job.autoscaler.scaling.enabled: 'false'
+  job.autoscaler.utilization.target: '0.6'
+  job.autoscaler.utilization.min: '0.4'
+  job.autoscaler.utilization.max: '0.8'
+  job.autoscaler.stabilization.interval: 5m
+  job.autoscaler.metrics.window: 10m
+  job.autoscaler.catch-up.duration: 10m
+  pipeline.max-parallelism: '360'
 ```
 
-* **`job.autoscaler.target.utilization`** (e.g. `0.6`): the busy-time ratio the autoscaler tries to keep each vertex at. Below this, it scales down; above it, it scales up.
-* Scale-up/down thresholds are derived from the utilization target plus a boundary — in practice, treat roughly above 0.8 busy as the scale-up trigger and below 0.4 as the scale-down trigger, with a dead zone in between so the autoscaler doesn't oscillate on every small fluctuation.
-* **`job.autoscaler.stabilization.interval`**: how long to wait after a rescale before considering another one, to let the job settle.
-* **`job.autoscaler.metrics.window`**: the rolling window used to smooth metrics before making a scaling decision. A window of 3–60 minutes is the recommended range — too short reacts to noise, too long reacts too slowly to real load changes.
-* **`job.autoscaler.catch-up.duration`**: extra time budget given to a vertex that's working through backlog, so the autoscaler doesn't over-scale in response to a temporary catch-up spike.
-* **`pipeline.max-parallelism`**: sets the ceiling the autoscaler can choose parallelism values within. Set this to a **highly composite number** (120, 180, 240, 360, 720, etc.) — Flink's key-group model divides `max-parallelism` evenly among the chosen parallelism, so a highly composite ceiling gives the autoscaler far more valid divisor values to pick from than, say, a prime number would.
+Current keys are utilization.target/min/max; older target.utilization and boundary
+settings are deprecated. Here 0.4/0.8 define the utilization band, while decisions
+also account for backlog, restart time, metric windows, quotas, bounds and
+stabilization. Crossing an instantaneous busy-time threshold does not guarantee
+an immediate rescale.
 
-Under the hood, when the autoscaler decides to rescale a vertex, it triggers the rescale through the exact same mechanism described above — a `last-state` upgrade. That's why `last-state` needs to be fast and resilient: it's not just the upgrade mode for manual deploys, it's also the mechanism the autoscaler leans on continuously as load shifts.
+catch-up.duration is the **target time to process backlog after rescaling**.
+A backlog of 6,000 records requires an extra 10 records/second over 600 seconds,
+or 100 records/second over 60 seconds. Shorter durations demand more capacity;
+zero disables backlog-based scaling. This is not a grace period for ignoring backlog.
 
-![The Flink Kubernetes Operator watches FlinkDeployment and FlinkSessionJob custom resources and manages a JobManager pod and TaskManager pods, whose emitted per-vertex metrics an Autoscaler reads to trigger a last-state rescale back through the Operator.](../../.gitbook/assets/en-data-on-eks-flink-02-flink-kubernetes-operator-0.png)
+A 3–60 minute metrics window is a tuning starting point, not a universal requirement.
+Tune it together with stabilization, scale-down intervals and SLOs. Divisor-rich
+maximum parallelism can help autoscaler key-group/partition alignment, but
+**Flink itself does not require every parallelism to divide the maximum evenly**.
+Alignment mode, source partitions and keyed/non-keyed inputs affect selection.
 
-[🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-flink-02-flink-kubernetes-operator-0.html)
+Scaling applies parallelism overrides and, where possible, uses the adaptive
+scheduler's resource-requirements API in place. Depending on support, change type,
+configuration and success, it can fall back to full redeployment. It is not
+invariably a last-state upgrade. In-place scaling can still restart tasks and
+recover state. Enable scaling.enabled only after reviewing recommendations and
+testing stateful recovery and peak load.
 
-## Next Steps
+![Flink Operator lifecycle and metrics-based scaling with recovery prerequisites.](../../.gitbook/assets/en-data-on-eks-flink-02-flink-kubernetes-operator-0.png)
 
-With the operator installed and the upgrade/autoscaling mechanics in place, the next step is deploying real stream processing jobs — configuring checkpointing and state backends, wiring up Kafka sources/sinks, and tuning resource sizing for production workloads.
+[Interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-data-on-eks-flink-02-flink-kubernetes-operator-0.html)
 
-[Return to Main Page](./README.md)
+## Validation scope
 
-## Quiz
+The official chart digest was verified and default, namespace-scoped and
+webhook-disabled comparison variants were rendered with Helm. CRD schemas, image
+manifests, released readiness/scaling source and example structure were checked.
+No Kubernetes deployment, certificate issuance, S3/HA operation, live job
+throughput test or rescaling was performed.
 
-To test what you've learned in this chapter, try the [Topic Quiz](../../quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md).
+## References
+
+- [Released Operator 1.15.0 chart](https://downloads.apache.org/flink/flink-kubernetes-operator-1.15.0/)
+- [Released chart values](https://github.com/apache/flink-kubernetes-operator/blob/release-1.15.0/helm/flink-kubernetes-operator/values.yaml)
+- [Custom resources and Native/Standalone modes](https://github.com/apache/flink-kubernetes-operator/blob/release-1.15.0/docs/content/docs/custom-resource/overview.md)
+- [Job management and recovery](https://github.com/apache/flink-kubernetes-operator/blob/release-1.15.0/docs/content/docs/custom-resource/job-management.md)
+- [Autoscaler configuration](https://github.com/apache/flink-kubernetes-operator/blob/release-1.15.0/flink-autoscaler/src/main/java/org/apache/flink/autoscaler/config/AutoScalerOptions.java)
+- [Autoscaler metric evaluation](https://github.com/apache/flink-kubernetes-operator/blob/release-1.15.0/flink-autoscaler/src/main/java/org/apache/flink/autoscaler/ScalingMetricEvaluator.java)
+- [Running condition implementation](https://github.com/apache/flink-kubernetes-operator/blob/release-1.15.0/flink-kubernetes-operator-api/src/main/java/org/apache/flink/kubernetes/operator/api/utils/ConditionsUtils.java)
+
+[Part 3: State and checkpoints](03-state-checkpointing-streaming.md)
+
+[README](README.md)
+
+[Quiz](../../quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md)

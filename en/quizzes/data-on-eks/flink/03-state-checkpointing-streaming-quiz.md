@@ -1,247 +1,170 @@
-# State, Checkpointing, and Streaming Patterns Quiz
+# State, Checkpointing and Streaming Patterns Quiz
 
-This quiz tests your understanding of the HashMap vs RocksDB state backend trade-off, the difference between checkpoints and savepoints, how Kafka exactly-once delivery works through Flink's two-phase-commit protocol, and when Flink SQL/Table API is the better fit over the DataStream API.
+Distinguish the chapter's Flink/Kafka and Flink/Iceberg version combinations.
 
-## Multiple Choice Questions
-
-1. What is the core trade-off between `HashMapStateBackend` and `EmbeddedRocksDBStateBackend`?
-   - A) HashMap is off-heap and RocksDB is on-heap
-   - B) HashMap is faster but limited by heap memory; RocksDB is slower per-access but can spill state to disk, scaling beyond memory
-   - C) RocksDB doesn't support checkpointing at all
-   - D) There is no functional difference — it's purely a naming choice
+1. Does choosing RocksDB remove heap, GC and memory-sizing concerns?
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: B) HashMap is faster but limited by heap memory; RocksDB is slower per-access but can spill state to disk, scaling beyond memory**
+**Answer:** No. Native caches, managed memory, user objects, operator state and buffers still consume resources.
 
-**Explanation:**
-HashMapStateBackend keeps state as native Java objects on the JVM heap, which is fast but bounded by available memory and adds GC pressure as state grows. EmbeddedRocksDBStateBackend stores state off-heap in a local RocksDB instance that spills to disk, trading some per-record latency (serialization overhead) for the ability to hold state far larger than memory.
+**Explanation:** Keyed-operator backends can share a slot memory budget. Measure workloads/state and checkpoint/restore rather than using a fixed MB cutoff.
+
 </details>
 
-2. Which state backend is required to enable incremental checkpoints?
-   - A) HashMapStateBackend
-   - B) EmbeddedRocksDBStateBackend
-   - C) Either one, with no configuration difference
-   - D) Neither — incremental checkpoints are always on
+2. Are incremental snapshots exclusive to RocksDB in Flink 2.2?
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: B) EmbeddedRocksDBStateBackend**
+**Answer:** No. Experimental ForSt also uses asynchronous incremental snapshots.
 
-**Explanation:**
-Incremental checkpointing (`execution.checkpointing.incremental: true`) relies on persisting only the RocksDB SSTable files that changed since the previous checkpoint. HashMapStateBackend has no equivalent on-disk file structure to diff against, so it only supports full checkpoints.
+**Explanation:** Check its remote-SST/local-cache model and API/snapshot limitations. This chapter's configuration example uses RocksDB.
+
 </details>
 
-3. What exactly does an incremental checkpoint persist?
-   - A) A full copy of every key's current value
-   - B) Only the changed RocksDB SSTable files since the last checkpoint, plus a manifest referencing still-valid prior files
-   - C) Only the job's configuration, not its state
-   - D) A diff computed by re-reading every key from the previous checkpoint
+3. Does incremental-checkpoint upload size depend only on logical key changes?
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: B) Only the changed RocksDB SSTable files since the last checkpoint, plus a manifest referencing still-valid prior files**
+**Answer:** No. It persists new SSTs/metadata, and compaction can rewrite large files.
 
-**Explanation:**
-Rather than re-uploading the entire state, an incremental checkpoint persists only the SSTable deltas produced since the previous checkpoint, along with a manifest recording which earlier SSTable files are still needed to reconstruct full state on restore.
+**Explanation:** Reusable shared SSTs are referenced. Expiring files that are still referenced can break recovery.
+
 </details>
 
-4. Under what condition can restoring from an incremental checkpoint actually be slower than restoring from a full checkpoint?
-   - A) It is never slower under any condition
-   - B) When checkpoint storage access is network-bound, since recovery may require fetching many more individual files
-   - C) When the job has no state at all
-   - D) When `execution.checkpointing.mode` is set to `AT_LEAST_ONCE`
+4. Does incremental restore replay all earlier checkpoints sequentially?
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: B) When checkpoint storage access is network-bound, since recovery may require fetching many more individual files**
+**Answer:** No. It restores files referenced by the selected checkpoint.
 
-**Explanation:**
-Recovering from an incremental checkpoint means fetching the latest delta plus every prior file the manifest still references — more individual fetches than a full checkpoint's single snapshot. If the path to storage (e.g., S3) is network-bound, that extra fetch count can make recovery slower. If the bottleneck is instead CPU/IOPS on the TaskManager, incremental checkpoints typically recover faster because there's less total data to write back to RocksDB.
+**Explanation:** Full checkpoints are not necessarily single files. Recovery depends on networking, file counts, I/O and canonical-state reconstruction costs.
+
 </details>
 
-5. What is the fundamental difference between a checkpoint and a savepoint?
-   - A) They are the same mechanism with different names
-   - B) Checkpoints are automatic and used for failure recovery; savepoints are explicit, user-triggered snapshots for planned upgrades and migrations
-   - C) Savepoints are stored in memory, checkpoints on disk
-   - D) Checkpoints can only be taken once per job's lifetime
+5. Is a savepoint always permanent until someone manually deletes it?
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: B) Checkpoints are automatic and used for failure recovery; savepoints are explicit, user-triggered snapshots for planned upgrades and migrations**
+**Answer:** No. Operator retention/disposal and CLAIM/NO_CLAIM ownership affect its lifecycle.
 
-**Explanation:**
-Both use the same filesystem-based checkpoint storage backend, but they serve different purposes: checkpoints are triggered automatically by Flink on a fixed interval and used for failure recovery, while savepoints are explicitly triggered (by a user or the Operator's `FlinkStateSnapshot`) and retained as durable artifacts for deliberate upgrades, migrations, or version bumps.
+**Explanation:** Checkpoints can also have explicit triggers and externalized retention. Check storage, references and deletion responsibility.
+
 </details>
 
-6. The Flink Kubernetes Operator's `last-state` upgrade mode restores from which artifact?
-   - A) The most recent savepoint
-   - B) The most recent checkpoint
-   - C) A full re-read of the source topic from the beginning
-   - D) A manually exported state file
+6. Does Operator last-state always use one last checkpoint file?
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: B) The most recent checkpoint**
+**Answer:** Recovery depends on accessible HA metadata or the last checkpoint/savepoint and the applicable path.
 
-**Explanation:**
-`last-state` upgrade mode restores from the last completed checkpoint rather than a savepoint, which is what makes it fast and fully automatic — at the cost of being tied to the specific job graph that produced that checkpoint. Deliberate version bumps or migrations should use an explicit savepoint instead.
+**Explanation:** Valid metadata, state compatibility, UIDs and serializers are required; the label alone does not guarantee recovery or migration safety.
+
 </details>
 
-7. In Flink's `KafkaSink` two-phase-commit protocol for exactly-once delivery, what does the **KafkaCommitter** do?
-   - A) It writes records to Kafka inside an open transaction
-   - B) It commits the Kafka transaction only after the corresponding Flink checkpoint completes successfully
-   - C) It deletes old checkpoints from S3
-   - D) It negotiates the initial TCP connection to the broker
+7. What do Kafka EXACTLY_ONCE guarantees require from checkpoints and consumers?
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: B) It commits the Kafka transaction only after the corresponding Flink checkpoint completes successfully**
+**Answer:** Transaction commits are coordinated with checkpoint completion, and downstream consumers must use read_committed.
 
-**Explanation:**
-The KafkaWriter writes records inside an open Kafka transaction between checkpoints; those records stay invisible to `read_committed` consumers. Only once the enclosing Flink checkpoint completes does the KafkaCommitter commit the transaction, making the records visible downstream.
+**Explanation:** Replayable sources and recoverable state are also needed. Different sinks/all subtasks do not become one global transaction.
+
 </details>
 
-8. Why does `KafkaSink` with `EXACTLY_ONCE` require a stable `transactionalIdPrefix`?
-   - A) It's purely cosmetic and shows up in logs only
-   - B) Flink derives each subtask's transactional ID from it, and on restore it must match prior IDs so open transactions from before a failure can be correctly resolved
-   - C) It sets the Kafka topic's replication factor
-   - D) It determines the number of partitions in the sink topic
+8. When should transactionalIdPrefix be unique, and when should it remain stable?
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: B) Flink derives each subtask's transactional ID from it, and on restore it must match prior IDs so open transactions from before a failure can be correctly resolved**
+**Answer:** Unique across independent concurrent sinks/jobs; stable across restarts of the same logical execution.
 
-**Explanation:**
-Each sink subtask's actual Kafka transactional ID is derived from the configured prefix. If this prefix changes between runs, Flink can't line up the IDs used before a restart with the ones it uses after, breaking its ability to correctly abort or resolve transactions left open by a failure.
+**Explanation:** Collisions can cause fencing, while changes can delay lingering-transaction cleanup and consumer progress.
+
 </details>
 
-9. What is the direct latency cost of using `KafkaSink` with `DeliveryGuarantee.EXACTLY_ONCE`?
-   - A) None — output latency is unaffected
-   - B) Output becomes visible to `read_committed` consumers roughly one checkpoint interval later, since commits only happen after checkpoints complete
-   - C) It doubles the number of Kafka partitions required
-   - D) It requires disabling checkpointing entirely
+9. Does a 60-second checkpoint interval cap added Kafka latency at 60 seconds?
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: B) Output becomes visible to `read_committed` consumers roughly one checkpoint interval later, since commits only happen after checkpoints complete**
+**Answer:** No. Checkpoint duration, commits, failures/recovery and consumer delay also contribute.
 
-**Explanation:**
-Because a Kafka transaction only commits once its enclosing Flink checkpoint completes, downstream consumers reading with `read_committed` see output delayed by roughly one checkpoint interval — a 60-second interval means up to ~60 seconds of added end-to-end latency.
+**Explanation:** Align transaction timeout with broker limits and worst-case recovery. The 5.0.0 builder defaults to one hour.
+
 </details>
 
-10. What risk does setting the checkpoint interval too short introduce when using exactly-once `KafkaSink`?
-    - A) It has no downside — shorter is always better
-    - B) It can flood the Kafka broker's transaction coordinator with transactional IDs to track, since each checkpoint cycle opens a fresh transaction per sink subtask
-    - C) It disables incremental checkpoints automatically
-    - D) It forces the job to switch to `AT_LEAST_ONCE` mode
+10. Does every Kafka connector transaction-naming strategy create a new ID each time?
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: B) It can flood the Kafka broker's transaction coordinator with transactional IDs to track, since each checkpoint cycle opens a fresh transaction per sink subtask**
+**Answer:** No. Optional POOLING reuses names, unlike default INCREMENTING.
 
-**Explanation:**
-Every checkpoint cycle opens a new transaction per sink subtask. Pushing the checkpoint interval down to just a few seconds across many parallel subtasks means the coordinator has to track many more transactional IDs, adding load. Checkpoint interval should be tuned as a balance between output latency and coordinator load, not purely for faster recovery.
+**Explanation:** POOLING requires Kafka 3+, additional topic-read permissions and migration checks. Measure frequent-commit load separately.
+
 </details>
 
-11. What capability does Flink's Dynamic Iceberg Sink add over the standard Iceberg sink?
-    - A) It can only write to a single, statically defined table
-    - B) It can write to multiple Iceberg tables from one sink, choosing the destination table per record and evolving schema automatically based on record content
-    - C) It removes the need for a schema entirely
-    - D) It replaces the need for a Kafka source
+11. What real DynamicIcebergSink API and runtime combination were checked?
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: B) It can write to multiple Iceberg tables from one sink, choosing the destination table per record and evolving schema automatically based on record content**
+**Answer:** forInput → generator → catalogLoader → append; Iceberg 1.11.0 with Flink 2.1.3.
 
-**Explanation:**
-The Dynamic Iceberg Sink extends the standard Iceberg sink to route each record to a table determined at runtime from its content, and to evolve that table's schema automatically as needed — a strong fit for CDC fan-out from a shared Kafka topic across many source tables.
+**Explanation:** The generator emits DynamicRecords to a Collector. A Flink 2.1 runtime JAR is not presented as validated with Flink 2.2.1.
+
 </details>
 
-12. When is a simpler connector-based pipeline (e.g., MSK → Data Firehose → S3 Tables/Iceberg, or MSK Connect with an Iceberg sink connector) preferable to Flink on EKS?
-    - A) Never — Flink is always the better choice
-    - B) When the pipeline is a straight passthrough or simple format conversion with no real computation needed
-    - C) Only when using DataStream API instead of Table API
-    - D) Only when the source is not Kafka
+12. Can the insert-only Dynamic Iceberg helper serve unchanged as a Debezium CDC processor?
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: B) When the pipeline is a straight passthrough or simple format conversion with no real computation needed**
+**Answer:** No. Validate RowKind, equality fields, upsert, table formats and schema-evolution limits.
 
-**Explanation:**
-Flink earns its operational cost when a pipeline needs actual computation — joins, windowed aggregation, per-record routing, complex event-time handling, or dynamic multi-table fan-out. For simple passthrough or format conversion, a fully managed Firehose pipeline or an MSK Connect sink connector is less to build and operate.
+**Explanation:** Managed Firehose/MSK Connect alternatives also need source, permissions, keys, formats, buffering and failure handling checked.
+
 </details>
 
-13. For which kind of use case is Flink SQL / Table API the recommended starting point?
-    - A) Typical ETL, aggregation, and windowing that can be expressed declaratively
-    - B) Only for jobs that need custom operators with fine-grained checkpoint control
-    - C) Only for jobs with no state at all
-    - D) Table API cannot connect to Kafka or Iceberg
+13. Is declaring an event_time TIMESTAMP column enough for the SQL window query?
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: A) Typical ETL, aggregation, and windowing that can be expressed declaratively**
+**Answer:** A streaming event-time window needs a time attribute; the example declares a WATERMARK.
 
-**Explanation:**
-Flink SQL/Table API is the recommended entry point for most jobs because it requires far less code and ships with built-in connectors for Kafka, Iceberg, JDBC, and more. DataStream API remains necessary when a job needs custom operators, complex event-time/state logic, or fine control over checkpointing and backpressure behavior that the Table API planner doesn't expose.
+**Explanation:** The reviewed planner rejects the plain-timestamp variant without it. Connector/format JARs are also needed.
+
 </details>
 
-14. Why would a job need to drop down to the DataStream API instead of staying in Flink SQL / Table API?
-    - A) DataStream API is always faster for every workload
-    - B) The job needs custom operators, complex event-time/state logic, or fine-grained control over checkpointing/backpressure that the SQL planner doesn't expose
-    - C) SQL cannot read from Kafka
-    - D) DataStream API requires less code in every case
+14. What version-specific limits apply to the S3 plugin and bundled demo?
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: B) The job needs custom operators, complex event-time/state logic, or fine-grained control over checkpointing/backpressure that the SQL planner doesn't expose**
+**Answer:** The plugin contains end-of-support AWS SDK v1.12.779; StateMachineExample sets a two-second checkpoint interval in code.
 
-**Explanation:**
-The Table API planner decides operator behavior on your behalf, which is fine for standard ETL/aggregation logic but limiting when a job needs a hand-written operator, direct access to custom state, or manual control over checkpoint alignment and backpressure — cases where DataStream API's lower-level control is necessary.
+**Explanation:** Do not mix in v2 provider classes blindly. Inspect min-pause and application overrides rather than inferring cadence only from config.
+
 </details>
 
-15. What role do watermarks play in event-time windowing?
-    - A) They set the number of partitions for a window
-    - B) They are a heuristic signal asserting no more records older than the watermark should arrive, letting windows know when it's safe to close and emit results
-    - C) They control which state backend is used
-    - D) They determine the Kafka transactional ID prefix
+15. Are late records after a watermark always dropped or automatically sent to a side output?
 
 <details>
-
 <summary>Show Answer</summary>
 
-**Answer: B) They are a heuristic signal asserting no more records older than the watermark should arrive, letting windows know when it's safe to close and emit results**
+**Answer:** No. Watermarks estimate progress; windows can fire again during allowed lateness.
 
-**Explanation:**
-Watermarks are periodically injected into the stream and assert that no further records with an older event-time timestamp should arrive. Windows rely on this signal, rather than wall-clock processing time, to decide when to close and emit a correct result — which keeps output consistent even under consumer lag or replay of historical data.
+**Explanation:** Side output after cleanup requires explicit configuration. Check timestamp extraction, idleness and SQL/DataStream differences.
+
 </details>
 
 ---

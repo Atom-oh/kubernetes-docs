@@ -2,10 +2,10 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Kubeflow 컴포넌트 맵",
+    "title": "Kubeflow 컴포넌트와 명시적 연동",
     "output": "ko-ai-ml-kubeflow-readme-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "viewBox": [
       1080,
       560
@@ -30,7 +30,7 @@
       "id": "dashboard",
       "type": "frontend",
       "label": "Central Dashboard",
-      "sublabel": "Profile 기반 멀티테넌시",
+      "sublabel": "컴포넌트 UI 탐색",
       "pos": [
         40,
         250
@@ -115,38 +115,68 @@
     {
       "id": "dash-notebooks",
       "from": "dashboard",
-      "to": "notebooks"
+      "to": "notebooks",
+      "label": "UI 링크"
     },
     {
       "id": "dash-pipelines",
       "from": "dashboard",
       "to": "pipelines",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "label": "UI 링크",
+      "labelAt": [
+        300,
+        335
+      ]
     },
     {
       "id": "dash-katib",
       "from": "dashboard",
-      "to": "katib"
+      "to": "katib",
+      "label": "UI 링크"
     },
     {
       "id": "pipelines-trainer",
       "from": "pipelines",
       "to": "trainer",
-      "label": "학습 단계 실행",
-      "variant": "emphasis"
+      "label": "구현 시 제출",
+      "variant": "dashed"
     },
     {
       "id": "katib-trainer",
       "from": "katib",
       "to": "trainer",
-      "label": "Trial 학습 실행"
+      "label": "Trial 템플릿",
+      "variant": "dashed"
     },
     {
       "id": "trainer-kserve",
       "from": "trainer",
       "to": "kserve",
-      "label": "학습된 모델",
-      "variant": "emphasis"
+      "label": "별도 모델 배포",
+      "variant": "dashed",
+      "labelAt": [
+        845,
+        335
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "UI와 워크로드",
+      "items": [
+        "대시보드는 학습 실행기나 모든 API의 인가 계층이 아닙니다.",
+        "Pipelines와 Katib이 Trainer를 사용하려면 명시적 연동이 필요합니다."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "모델 수명 주기",
+      "items": [
+        "학습 결과의 KServe 배포·승격은 별도 단계입니다.",
+        "26.03.1의 Hub와 Spark Operator는 이 그림 범위 밖입니다."
+      ]
     }
   ]
 }

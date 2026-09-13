@@ -56,7 +56,7 @@ flowchart TB
     subgraph Trial1["Trial 1: Ray Train run"]
         T1W1["Worker Actor 1"]
         T1W2["Worker Actor 2"]
-        T1OS[(("Object Store"))]
+        T1OS[("Object Store")]
         T1W1 <--> T1OS
         T1W2 <--> T1OS
     end
@@ -64,7 +64,7 @@ flowchart TB
     subgraph Trial2["Trial 2: Ray Train run"]
         T2W1["Worker Actor 1"]
         T2W2["Worker Actor 2"]
-        T2OS[(("Object Store"))]
+        T2OS[("Object Store")]
         T2W1 <--> T2OS
         T2W2 <--> T2OS
     end

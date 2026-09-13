@@ -620,7 +620,7 @@ flowchart LR
 
     subgraph Global["Global Control Plane"]
         direction TB
-        ServiceRegistry[Unified Service Registry<br/>api: [Zone1, Zone2]<br/>database: [Zone3]]
+        ServiceRegistry["Unified Service Registry<br/>api: [Zone1, Zone2]<br/>database: [Zone3]"]
     end
 
     ZCP1 -->|Send Service Info| ServiceRegistry

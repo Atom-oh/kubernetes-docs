@@ -4,72 +4,72 @@
 
 ---
 
-1. How does the Multi-AZ DB cluster snapshot-sharing constraint differ from the other cross-account constraints?
-   - A) It only differs in cost
-   - B) It's the only constraint that actually forces a choice between centralized and workload-owned data
-   - C) It only occurs in the Seoul Region
-   - D) It only occurs if you don't use AWS Backup
+1. What follows from the inability to share a Multi-AZ DB cluster snapshot?
+   - A) Every recovery path is impossible
+   - B) That RDS sharing path is unavailable; validate engine-specific recovery alternatives
+   - C) Workload-owned databases are mandatory
+   - D) Every AWS Backup vault behaves identically
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) It's the only constraint that actually forces a choice between centralized and workload-owned data**
+**Answer: B) That RDS sharing path is unavailable; validate engine-specific recovery alternatives**
 
 **Explanation:**
-Multi-AZ DB cluster snapshots can't be shared, meaning there's no cross-account recovery path at all — making workload-owned data effectively mandatory in that case. The other cross-account backup constraints are common guardrails that apply equally to either ownership model.
+One API restriction does not rule out every logical-backup or replication alternative. Validate support and RTO/RPO before choosing ownership.
 
 </details>
 
 ---
 
-2. What element must be included in RTO calculations but is commonly overlooked?
-   - A) IAM policy simulation time
-   - B) The time it takes to copy a snapshot into a manual snapshot
-   - C) VPC route table update time
-   - D) Security Hub finding generation time
+2. What belongs in RTO for a recovery path requiring a post-incident copy?
+   - A) Only tag naming
+   - B) Copy, restore, and application validation time
+   - C) Only historical retention
+   - D) Only Security Hub score
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) The time it takes to copy a snapshot into a manual snapshot**
+**Answer: B) Copy, restore, and application validation time**
 
 **Explanation:**
-RDS automated backups can't be shared, so moving them cross-account requires copying into a manual snapshot first. This copy time is non-trivial for a terabyte-scale database and must be included in the RTO calculation.
+With pre-existing copies, copy cadence affects RPO. Distinguish shared air-gapped-vault restore paths that do not need a recipient copy.
 
 </details>
 
 ---
 
-3. What risk must a security team confirm when cross-account backup is enabled?
-   - A) Backup costs double
-   - B) Any member Account user in the org can set their own Account as a destination, creating a risk that PII backups get copied to unauthorized Accounts
-   - C) Backups aren't automatically encrypted
-   - D) The backup vault automatically becomes public
+3. Which authorization statement is correct after enabling cross-account backup?
+   - A) Every user bypasses IAM denies
+   - B) Review IAM, vault, KMS, copy-destination conditions, and RAM sharing together
+   - C) Vaults become public
+   - D) Copied backups are deleted on organizational exit
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Any member Account user in the org can set their own Account as a destination, creating a risk that PII backups get copied to unauthorized Accounts**
+**Answer: B) Review IAM, vault, KMS, copy-destination conditions, and RAM sharing together**
 
 **Explanation:**
-To prevent this, enforce `backup:CopyTargets`/`backup:CopyTargetOrgPaths` conditions on `backup:CopyFromBackupVault` to require approved vaults/OUs. The backup copy path exists as a separate channel even if IAM, KMS, resource policies, and VPC endpoint policies are all locked down.
+Enabling a feature does not grant permission. Standard-vault copy and air-gapped-vault sharing are distinct paths; test approved destinations and source unavailability.
 
 </details>
 
 ---
 
-4. What does the fact that "Security Hub CSPM requires AWS Config for most controls" imply?
-   - A) All control findings are generated normally regardless of Config
-   - B) Whether Config is enabled becomes the common prerequisite for three decisions: Landing Zone, Identity Center, and Security Hub CSPM
-   - C) Config is completely unrelated to Security Hub CSPM
-   - D) It can replace GuardDuty
+4. What does Security Hub CSPM’s Config dependency mean?
+   - A) All controls work without Config
+   - B) Most CSPM controls need recording; this is not an Identity Center service dependency
+   - C) It replaces GuardDuty
+   - D) Every AWS MCP request needs Config
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Whether Config is enabled becomes the common prerequisite for three decisions: Landing Zone, Identity Center, and Security Hub CSPM**
+**Answer: B) Most CSPM controls need recording; this is not an Identity Center service dependency**
 
 **Explanation:**
-If Config is disabled, most Security Hub CSPM control findings won't be generated. Combined with the Landing Zone baseline dependency chain, whether Config is enabled ends up constraining three important decisions at once.
+Distinguish Control Tower-managed baseline dependencies from Identity Center service requirements. Check Security Hub capability scope and Region coverage.
 
 </details>

@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/ai-ml/ray/03-ray-train-tune.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "7efddbcd81f89ea3b1faea02491ff83925f0ec4d5ed0f4e899c1edaddf0f1642",
+    "summary": "Fullread/version2.58source/native6APIchecks+2scalarTune trials;V2/integration/reportbarrier/checkpoint/retry/resourcescorrected;4MD/20questions/2figures/6responsive;noframework/GPU/cloudrun."
+  },
+  {
+    "path": "ko/quizzes/ai-ml/ray/03-ray-train-tune-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "f510c298aeea307aa643764c624b75d18ac5cb4a6ba6c7e2eeb958a809f1a76c",
+    "summary": "Fullread/version2.58source/native6APIchecks+2scalarTune trials;V2/integration/reportbarrier/checkpoint/retry/resourcescorrected;4MD/20questions/2figures/6responsive;noframework/GPU/cloudrun."
+  },
+  {
+    "path": "en/ai-ml/ray/03-ray-train-tune.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "9ed2fe3ddb1f3ec97daca59ff2d18ed4e1f37ef8d927823b5311b00cd32f9277",
+    "summary": "Fullread/version2.58source/native6APIchecks+2scalarTune trials;V2/integration/reportbarrier/checkpoint/retry/resourcescorrected;4MD/20questions/2figures/6responsive;noframework/GPU/cloudrun."
+  },
+  {
+    "path": "en/quizzes/ai-ml/ray/03-ray-train-tune-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "87c30d435db681b0fe90d997736916e59ae83dafe7561de49afad79a310b77e4",
+    "summary": "Fullread/version2.58source/native6APIchecks+2scalarTune trials;V2/integration/reportbarrier/checkpoint/retry/resourcescorrected;4MD/20questions/2figures/6responsive;noframework/GPU/cloudrun."
+  }
+]

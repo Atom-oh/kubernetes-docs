@@ -1,0 +1,6 @@
+apiVersion: v2
+name: reviewed-app
+description: Offline Helm teaching chart
+type: application
+version: 0.1.0
+appVersion: "1.30.4"

@@ -1,0 +1,599 @@
+{
+  "status": "passed",
+  "files": [
+    "ko/data-on-eks/flink/03-state-checkpointing-streaming.md",
+    "ko/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
+    "en/data-on-eks/flink/03-state-checkpointing-streaming.md",
+    "en/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md"
+  ],
+  "fences": 14,
+  "quizQuestions": 30,
+  "relativeLinks": 10,
+  "exampleSchemas": {
+    "status": "passed",
+    "crdSchemaCases": 2,
+    "accessObjects": 2,
+    "checks": [
+      "StatefuldeploymentandFlinkStateSnapshotvalidateagainstofficial1.15CRDs",
+      "GeneratedsnapshotnamespreventreusingoldcompletedCR",
+      "Snapshotdisposalexplicitfalse",
+      "SharedpodtemplatehaspluginandwritablefsGroup/localvol",
+      "Demo2sintervalmatcheshardcodedbundledapplication;30sminpauseapplies"
+    ],
+    "limits": "Schema and fixture checks only; no deployment, IAM setup, S3 state access or recovery."
+  },
+  "javaCompilation": {
+    "profiles": [
+      {
+        "profile": "kafka",
+        "returncode": 0,
+        "seconds": 2.12,
+        "jdk": "Corretto21.0.12",
+        "targetRelease": 17,
+        "mavenHeapMiB": 512
+      },
+      {
+        "profile": "iceberg",
+        "returncode": 0,
+        "seconds": 2.82,
+        "jdk": "Corretto21.0.12",
+        "targetRelease": 17,
+        "mavenHeapMiB": 512
+      }
+    ],
+    "scope": "Compilation only; no Kafka/Iceberg catalog/storage/Kubernetes calls and no running Flink job."
+  },
+  "sqlPlanning": {
+    "returncode": 0,
+    "heapMiB": 512,
+    "jdk": "21.0.12",
+    "targetRelease": 17,
+    "cases": 2,
+    "scope": "Flink SQL parsing/planning only. No execute/collect/query job or Kafka connection."
+  },
+  "s3PluginArchive": {
+    "url": "https://repo.maven.apache.org/maven2/org/apache/flink/flink-s3-fs-hadoop/2.2.1/flink-s3-fs-hadoop-2.2.1.jar",
+    "bytes": 31696397,
+    "sha256": "f1a7f8647de3f7ac2c4677f9ba221ca3ed32e9541f61967da445c36aadcaf927",
+    "repositorySha1Verified": true,
+    "credentialClasses": {
+      "com/amazonaws/auth/WebIdentityTokenCredentialsProvider.class": true,
+      "com/amazonaws/auth/DefaultAWSCredentialsProviderChain.class": true,
+      "com/amazonaws/auth/EC2ContainerCredentialsProviderWrapper.class": true,
+      "com/amazonaws/services/securitytoken/AWSSecurityTokenService.class": true
+    },
+    "scope": "Archive inspection only; no provider initialization, credential lookup or S3 call."
+  },
+  "markdownVueCompilation": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/data-on-eks/flink/03-state-checkpointing-streaming.md",
+        "sha256": "737749436e6076a94d1ab2692037315848d0a605205ee6e3b623162bcd291825",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-3-상태-체크포인트와-스트리밍-패턴"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-버전-조합부터-고정"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-state-backend와-checkpoint-storage는-별개"
+          },
+          {
+            "tag": "h3",
+            "id": "incremental-checkpoint가-줄이는-것"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-s3-상태-보존-예제의-실제-전제"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-checkpoint와-savepoint의-수명"
+          },
+          {
+            "tag": "h3",
+            "id": "새-savepoint를-고유-cr로-요청"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-kafka-exactly-once-checkpoint-transaction-consumer를-함께"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-dynamic-iceberg-sink-실제-api와-별도-runtime"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-sql-time-attribute와-늦은-데이터"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          }
+        ],
+        "renderedIds": [
+          "part-3-상태-체크포인트와-스트리밍-패턴",
+          "_1-버전-조합부터-고정",
+          "_2-state-backend와-checkpoint-storage는-별개",
+          "incremental-checkpoint가-줄이는-것",
+          "_3-s3-상태-보존-예제의-실제-전제",
+          "_4-checkpoint와-savepoint의-수명",
+          "새-savepoint를-고유-cr로-요청",
+          "_5-kafka-exactly-once-checkpoint-transaction-consumer를-함께",
+          "_6-dynamic-iceberg-sink-실제-api와-별도-runtime",
+          "_7-sql-time-attribute와-늦은-데이터",
+          "검증-범위",
+          "참고-자료"
+        ]
+      },
+      {
+        "path": "en/data-on-eks/flink/03-state-checkpointing-streaming.md",
+        "sha256": "6b11f1263c796f4ae3f899b3f3ea9a0a1fb749d8bb7e2050f0a27045bd68ddd1",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-3-state-checkpointing-and-streaming-patterns"
+          },
+          {
+            "tag": "h2",
+            "id": "_1-pin-compatible-combinations-first"
+          },
+          {
+            "tag": "h2",
+            "id": "_2-state-backends-differ-from-checkpoint-storage"
+          },
+          {
+            "tag": "h3",
+            "id": "what-incremental-checkpoints-reduce"
+          },
+          {
+            "tag": "h2",
+            "id": "_3-actual-prerequisites-for-s3-state-preservation"
+          },
+          {
+            "tag": "h2",
+            "id": "_4-checkpoint-and-savepoint-lifecycle"
+          },
+          {
+            "tag": "h3",
+            "id": "request-a-fresh-savepoint-through-a-unique-cr"
+          },
+          {
+            "tag": "h2",
+            "id": "_5-kafka-exactly-once-requires-checkpoints-transactions-and-consumers"
+          },
+          {
+            "tag": "h2",
+            "id": "_6-dynamic-iceberg-sink-real-apis-and-a-separate-runtime"
+          },
+          {
+            "tag": "h2",
+            "id": "_7-sql-time-attributes-and-late-data"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          }
+        ],
+        "renderedIds": [
+          "part-3-state-checkpointing-and-streaming-patterns",
+          "_1-pin-compatible-combinations-first",
+          "_2-state-backends-differ-from-checkpoint-storage",
+          "what-incremental-checkpoints-reduce",
+          "_3-actual-prerequisites-for-s3-state-preservation",
+          "_4-checkpoint-and-savepoint-lifecycle",
+          "request-a-fresh-savepoint-through-a-unique-cr",
+          "_5-kafka-exactly-once-requires-checkpoints-transactions-and-consumers",
+          "_6-dynamic-iceberg-sink-real-apis-and-a-separate-runtime",
+          "_7-sql-time-attributes-and-late-data",
+          "validation-scope",
+          "references"
+        ]
+      },
+      {
+        "path": "ko/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
+        "sha256": "fc582b47e8c14555015e346c848d9fee210be01e367a42083838df69633841b5",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "상태·체크포인트·스트리밍-패턴-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "상태·체크포인트·스트리밍-패턴-퀴즈"
+        ]
+      },
+      {
+        "path": "en/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
+        "sha256": "054ba6f01203f8c9900bd6ccdc335d9bd9bb67200cf1e9f728322acc555bd9e6",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "state-checkpointing-and-streaming-patterns-quiz"
+          }
+        ],
+        "renderedIds": [
+          "state-checkpointing-and-streaming-patterns-quiz"
+        ]
+      }
+    ]
+  },
+  "viewerChecks": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "136a04b5675289820d9d15bf0fab1bd5456ef4dd3bdc0abd963f62e36e1893fd"
+      },
+      {
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "136a04b5675289820d9d15bf0fab1bd5456ef4dd3bdc0abd963f62e36e1893fd"
+      },
+      {
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "136a04b5675289820d9d15bf0fab1bd5456ef4dd3bdc0abd963f62e36e1893fd"
+      },
+      {
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "db1a3270c9abba940b69710212c35d2af6fab135349337acdf3acf1043ff98df"
+      },
+      {
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "db1a3270c9abba940b69710212c35d2af6fab135349337acdf3acf1043ff98df"
+      },
+      {
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1417,
+          "y": 16,
+          "width": 487,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1417
+        },
+        "sourceSha256": "db1a3270c9abba940b69710212c35d2af6fab135349337acdf3acf1043ff98df"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "diagramDeliveries": [
+    {
+      "schemaVersion": 1,
+      "ok": true,
+      "command": "deliver",
+      "type": "architecture",
+      "input": "/home/atomoh/kubernetes-docs/assets/diagrams/archify/ko-data-on-eks-flink-03-state-checkpointing-streaming-0.architecture.json",
+      "output": "/home/atomoh/kubernetes-docs/public/archmaps/ko-data-on-eks-flink-03-state-checkpointing-streaming-0.html",
+      "specification": {
+        "sha256": "edf84a2e92835a791fc1ac859f88af1157722243d1c168c27cb1e3b255e5192f",
+        "bytes": 4227
+      },
+      "artifact": {
+        "sha256": "136a04b5675289820d9d15bf0fab1bd5456ef4dd3bdc0abd963f62e36e1893fd",
+        "bytes": 707241
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "ok": true,
+      "command": "deliver",
+      "type": "architecture",
+      "input": "/home/atomoh/kubernetes-docs/assets/diagrams/archify/en-data-on-eks-flink-03-state-checkpointing-streaming-0.architecture.json",
+      "output": "/home/atomoh/kubernetes-docs/public/archmaps/en-data-on-eks-flink-03-state-checkpointing-streaming-0.html",
+      "specification": {
+        "sha256": "a2fcbf94a96c989ae178b631be6dfb79644b9ee9783bad41c88271ee93cb2958",
+        "bytes": 4205
+      },
+      "artifact": {
+        "sha256": "db1a3270c9abba940b69710212c35d2af6fab135349337acdf3acf1043ff98df",
+        "bytes": 707198
+      },
+      "validation": {
+        "checksPassed": 9,
+        "checkCount": 9,
+        "compositionProfile": "showcase",
+        "compositionStatus": "pass",
+        "errors": 0,
+        "warnings": 0
+      }
+    }
+  ],
+  "pngVisualInspection": "Both current ko/en PNGs inspected: shared-SST/checkpoint and sink commit boundaries plus separate version profiles; no clipped labels/cards.",
+  "sources": [
+    {
+      "name": "backends",
+      "url": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/ops/state/state_backends/",
+      "resolvedUrl": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/ops/state/state_backends/",
+      "bytes": 174027,
+      "sha256": "987fd50d9d4e3e43aa00df246a08048bab4a59ba93d27e11a97f11ad8a5728bd"
+    },
+    {
+      "name": "checkpointing",
+      "url": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/datastream/fault-tolerance/checkpointing/",
+      "resolvedUrl": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/datastream/fault-tolerance/checkpointing/",
+      "bytes": 148137,
+      "sha256": "3cec52a41915c9d6dbde05caee7585281052a5a858625c1eedee0e074eeccb06"
+    },
+    {
+      "name": "savepoints",
+      "url": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/ops/state/savepoints/",
+      "resolvedUrl": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/ops/state/savepoints/",
+      "bytes": 128417,
+      "sha256": "6979e74ae346dd0de3645710b8cb2ebe9d5825be791422ca6695e8f36da313f1"
+    },
+    {
+      "name": "s3",
+      "url": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/filesystems/s3/",
+      "resolvedUrl": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/deployment/filesystems/s3/",
+      "bytes": 118878,
+      "sha256": "8593170b41b4c2dedb02b0e4612295e1afc8aae4975539692cdb6ff5491e4dad"
+    },
+    {
+      "name": "windows",
+      "url": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/datastream/operators/windows/",
+      "resolvedUrl": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/datastream/operators/windows/",
+      "bytes": 304939,
+      "sha256": "b85e9b32c497cbb6763baf2cbbd937914185d8a505656d07754291f3157d1d41"
+    },
+    {
+      "name": "watermarks",
+      "url": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/datastream/event-time/generating_watermarks/",
+      "resolvedUrl": "https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/datastream/event-time/generating_watermarks/",
+      "bytes": 163526,
+      "sha256": "69de171271c97458603499afd330062a157bc02c30e6cb3ae9d7089da161ae25"
+    },
+    {
+      "name": "iceberg-releases",
+      "url": "https://iceberg.apache.org/releases/",
+      "resolvedUrl": "https://iceberg.apache.org/releases/",
+      "bytes": 775526,
+      "sha256": "de8870d3daf45dd119ec228d600824015e8c2b116dd3211f2f5b7c936985f082"
+    },
+    {
+      "name": "iceberg-writes",
+      "url": "https://iceberg.apache.org/docs/latest/flink-writes/",
+      "resolvedUrl": "https://iceberg.apache.org/docs/latest/flink-writes/",
+      "bytes": 654556,
+      "sha256": "dff02252ac4bce3eb49b7884aac9bf2da8f1fd8c6c4a135f268bad1b4b7f90f8"
+    },
+    {
+      "name": "kafka-sink",
+      "url": "https://raw.githubusercontent.com/apache/flink-connector-kafka/v5.0.0/flink-connector-kafka/src/main/java/org/apache/flink/connector/kafka/sink/KafkaSink.java",
+      "resolvedUrl": "https://raw.githubusercontent.com/apache/flink-connector-kafka/v5.0.0/flink-connector-kafka/src/main/java/org/apache/flink/connector/kafka/sink/KafkaSink.java",
+      "bytes": 10869,
+      "sha256": "c224c24e1b5136dc2bee6ef5da9784fe2eb700637be1a1bf0c9928cef432ed76"
+    },
+    {
+      "name": "kafka-builder",
+      "url": "https://raw.githubusercontent.com/apache/flink-connector-kafka/v5.0.0/flink-connector-kafka/src/main/java/org/apache/flink/connector/kafka/sink/KafkaSinkBuilder.java",
+      "bytes": 9392,
+      "sha256": "06dd0fbcea7cbaa39641c60faba1c8e82081b12f263b4b802fec505cd346bc7e"
+    },
+    {
+      "name": "kafka-naming",
+      "url": "https://raw.githubusercontent.com/apache/flink-connector-kafka/v5.0.0/flink-connector-kafka/src/main/java/org/apache/flink/connector/kafka/sink/TransactionNamingStrategy.java",
+      "bytes": 3798,
+      "sha256": "8d2ebff139817ae6ba1c3cad6ad83b60233caad556be981e9801bfd4567b4317"
+    },
+    {
+      "name": "kafka-metadata",
+      "url": "https://repo.maven.apache.org/maven2/org/apache/flink/flink-connector-kafka/maven-metadata.xml",
+      "bytes": 1633,
+      "sha256": "59757a8144df2c537a7abd73cddb62a3c95b76a0f8a2ddc1bec3fa967fb6ba9b"
+    },
+    {
+      "name": "iceberg-dynamic",
+      "url": "https://raw.githubusercontent.com/apache/iceberg/apache-iceberg-1.11.0/flink/v2.1/flink/src/main/java/org/apache/iceberg/flink/sink/dynamic/DynamicIcebergSink.java",
+      "bytes": 23423,
+      "sha256": "f0a03605a6ffd87d4bb27d766b6861db412ece49fb6ec5912a6e649602883c3c"
+    },
+    {
+      "name": "iceberg-record",
+      "url": "https://raw.githubusercontent.com/apache/iceberg/apache-iceberg-1.11.0/flink/v2.1/flink/src/main/java/org/apache/iceberg/flink/sink/dynamic/DynamicRecord.java",
+      "bytes": 5026,
+      "sha256": "094d9fbd289f4bb7d953d130efa3e9d8f2f625863f6adb268ecc2f9c0fc98072"
+    },
+    {
+      "name": "iceberg-generator",
+      "url": "https://raw.githubusercontent.com/apache/iceberg/apache-iceberg-1.11.0/flink/v2.1/flink/src/main/java/org/apache/iceberg/flink/sink/dynamic/DynamicRecordGenerator.java",
+      "bytes": 1409,
+      "sha256": "baf4e17064781c32b4d708b9a3320ab1e93058d4c1bafab3fbba7066fe44b109"
+    },
+    {
+      "name": "s3hadoop-pom",
+      "url": "https://raw.githubusercontent.com/apache/flink/release-2.2.1/flink-filesystems/flink-s3-fs-hadoop/pom.xml",
+      "bytes": 9217,
+      "sha256": "c543cde1cbd3057ce99ee0724c004740a88194d1fa16c61f76995a1caab038fe"
+    },
+    {
+      "name": "s3common-pom",
+      "url": "https://raw.githubusercontent.com/apache/flink/release-2.2.1/flink-filesystems/flink-s3-fs-base/pom.xml",
+      "bytes": 9200,
+      "sha256": "bc654f242c5cb0027bac6930e49086122622a1963591b5cf5acd14ae542f1bfd"
+    },
+    {
+      "name": "s3factory",
+      "url": "https://raw.githubusercontent.com/apache/flink/release-2.2.1/flink-filesystems/flink-s3-fs-hadoop/src/main/java/org/apache/flink/fs/s3hadoop/S3FileSystemFactory.java",
+      "bytes": 3488,
+      "sha256": "e9c0c5366e6396ff37466d61e972660f6fde3d56256a05221da6c659c72f76cc"
+    },
+    {
+      "name": "s3abstractfactory",
+      "url": "https://raw.githubusercontent.com/apache/flink/release-2.2.1/flink-filesystems/flink-s3-fs-base/src/main/java/org/apache/flink/fs/s3/common/AbstractS3FileSystemFactory.java",
+      "bytes": 11472,
+      "sha256": "67255be66da71b49997711f8605cc3833d257316fc3c0a61bb2810d277b4b8ff"
+    },
+    {
+      "name": "filesystems-pom",
+      "url": "https://raw.githubusercontent.com/apache/flink/release-2.2.1/flink-filesystems/pom.xml",
+      "bytes": 2726,
+      "sha256": "56656727ff3208a9cd4594be2c8c8042489e75bdf8628f7a7f3ee82a7bb53dd1"
+    },
+    {
+      "name": "docker-entrypoint",
+      "url": "https://raw.githubusercontent.com/apache/flink-docker/983be3455636eb12cd1d3dee1efc8e32c4b875db/2.2/scala_2.12-java17-ubuntu/docker-entrypoint.sh",
+      "bytes": 5821,
+      "sha256": "4c539bc22adf0b3486b052020fe26d6bcf153483709d81deea53ac03e631f7ef"
+    },
+    {
+      "name": "iceberg111gettingstarted",
+      "url": "https://iceberg.apache.org/docs/1.11.0/flink/",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "name": "iceberg111writes",
+      "url": "https://iceberg.apache.org/docs/1.11.0/flink-writes/",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "name": "snapshots115",
+      "url": "https://raw.githubusercontent.com/apache/flink-kubernetes-operator/release-1.15.0/docs/content/docs/custom-resource/snapshots.md",
+      "bytes": 10698,
+      "sha256": "dabfbc65fa2edcffb5d93d6aca66e2589499ac21ca26eb7dc9c4dbaaf032f539"
+    },
+    {
+      "name": "dockerfile221",
+      "url": "https://raw.githubusercontent.com/apache/flink-docker/983be3455636eb12cd1d3dee1efc8e32c4b875db/2.2/scala_2.12-java17-ubuntu/Dockerfile",
+      "bytes": 3054,
+      "sha256": "eebc3ca0c814e7d32fb0f6170a39ba538b038e7eb38bd7adc02f6837dbd16105"
+    },
+    {
+      "name": "statemachine221",
+      "url": "https://raw.githubusercontent.com/apache/flink/release-2.2.1/flink-examples/flink-examples-streaming/src/main/java/org/apache/flink/streaming/examples/statemachine/StateMachineExample.java",
+      "bytes": 12345,
+      "sha256": "a9415ec4222cd4bf13e7d52305d323fbd83d9e7c7b8a43215311c155ab809f9f"
+    }
+  ],
+  "awsPrimaryDocuments": [
+    {
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/pod-id-minimum-sdk.html",
+      "fact": "Java1minimum1.12.746;defaultchaincontainerproviderandearliercredentialprecedence"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/document-history.html",
+      "fact": "JavaSDK1endofsupport2025-12-31"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/firehose/latest/dev/apache-iceberg-prereq.html",
+      "fact": "IcebergV2,Parquet,MOR;keysandpermissionsrequired"
+    }
+  ],
+  "knownUpstreamLimit": "ReviewedFlink2.2.1S3HadooppluginbundlesAWSJavaSDK1.12.779whichisendofsupport;explicitlydocumented,noclaimsupportedSDK2migrationverified.",
+  "limits": "Compilationtarget17usingCorretto21;SQLplanningonly,nojobexecution/Kafkaconnection. NoAWSmutation,IRSA/PIcredentiallookup,S3dataaccess,Icebergcatalog/CDC/commit,HAorstate-restoredrill. Schema,archive,sourceandboundedbrowserchecksonly."
+}

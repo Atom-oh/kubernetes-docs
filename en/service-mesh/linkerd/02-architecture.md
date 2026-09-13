@@ -1,6 +1,6 @@
 # Linkerd Architecture
 
-> **Reviewed**: September 11, 2026 · Linkerd edge-26.9.1 / proxy release/v2.368.0
+> **Last Updated**: September 11, 2026 · Linkerd edge-26.9.1 / proxy release/v2.368.0
 
 This chapter explains the current component roles, identity hierarchy, traffic capture and injection lifecycle. Use the [installation guide](01-installation.md) for the supported release/cluster combination and pinned artifacts. The examples below are configuration illustrations; no live deployment or CA rotation was performed in this audit.
 

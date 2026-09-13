@@ -1,7 +1,7 @@
 # Part 3: Networking Modes
 
 > **Review baseline**: Calico Open Source 3.32.2 / operator 1.42.6; Kubernetes 1.34–1.36 is Calico 3.32's tested range.
-> **Reviewed**: September 12, 2026. Historical benchmark values below are retained as unverified reports, not new measurements.
+> **Last Updated**: September 12, 2026. Historical benchmark values below are retained as unverified reports, not new measurements.
 
 ## Scope and mode selection
 

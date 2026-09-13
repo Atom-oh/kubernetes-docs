@@ -5,7 +5,7 @@
     "title": "MLflow 트래킹 서버 EKS 배포 아키텍처",
     "output": "ko-ai-ml-mlflow-03-eks-deployment-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "viewBox": [
       1360,
       620
@@ -21,7 +21,7 @@
           "pod1",
           "pod2"
         ],
-        "note": "학습 스크립트와 MLflow UI 사용자는 ALB/Ingress와 Service를 거쳐 무상태 트래킹 서버 Pod에 도달한다."
+        "note": "보호된 진입 경로와 Service를 거치며 애플리케이션 인증·인가는 별도로 적용합니다."
       },
       {
         "id": "stores",
@@ -32,7 +32,7 @@
           "db",
           "s3"
         ],
-        "note": "지속 상태는 모두 클러스터 밖의 RDS/Aurora PostgreSQL과 S3에 있어 Pod를 여러 개로 늘려도 안전하다."
+        "note": "공유 metadata/auth DB와 artifact를 구성하고 추가 queue/cache 상태까지 검증한 뒤 replica를 확장합니다."
       },
       {
         "id": "iam",
@@ -43,7 +43,7 @@
           "pod2",
           "s3"
         ],
-        "note": "IRSA 또는 Pod Identity가 연결된 ServiceAccount가 정적 자격 증명 없이 S3 접근 권한을 Pod에 부여한다."
+        "note": "Workload identity는 S3 AWS 권한을 제공하며 PostgreSQL 로그인은 별도입니다."
       }
     ],
     "legend": {
@@ -71,7 +71,7 @@
     {
       "id": "user",
       "type": "external",
-      "label": "학습 스크립트 / MLflow UI 사용자",
+      "label": "SDK / UI client",
       "sublabel": "클라이언트 SDK · 웹 UI",
       "pos": [
         30,
@@ -84,9 +84,9 @@
     },
     {
       "id": "alb",
-      "type": "cloud",
-      "label": "ALB / Ingress",
-      "sublabel": "AWS Load Balancer Controller",
+      "type": "security",
+      "label": "보호된 진입점",
+      "sublabel": "TLS / ingress policy",
       "pos": [
         290,
         270
@@ -128,7 +128,7 @@
       "id": "sa",
       "type": "security",
       "label": "ServiceAccount",
-      "sublabel": "IRSA / Pod Identity 연결",
+      "sublabel": "S3 workload identity",
       "pos": [
         740,
         270
@@ -155,8 +155,8 @@
     {
       "id": "db",
       "type": "database",
-      "label": "RDS / Aurora PostgreSQL",
-      "sublabel": "백엔드 저장소",
+      "label": "PostgreSQL",
+      "sublabel": "metadata / auth DBs",
       "pos": [
         990,
         270
@@ -237,7 +237,7 @@
       "id": "pod1-db",
       "from": "pod1",
       "to": "db",
-      "label": "메타데이터",
+      "label": "DB login + TLS",
       "fromSide": "right",
       "toSide": "top"
     },
@@ -281,6 +281,24 @@
           1275,
           560
         ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "공유 상태 검증",
+      "items": [
+        "Tracking/auth DB · session secret · 사용 기능의 queue/cache",
+        "제안된 replica 구성; 실제 공유 상태 검증 후 확장"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "권한 경계",
+      "items": [
+        "S3 IAM과 DB 로그인·TLS를 각각 구성",
+        "ClusterIP·TLS·host 검사는 사용자 인가를 대신하지 않음"
       ]
     }
   ]

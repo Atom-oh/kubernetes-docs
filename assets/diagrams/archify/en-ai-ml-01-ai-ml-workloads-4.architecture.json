@@ -6,7 +6,7 @@
     "locale": "en",
     "output": "en-ai-ml-01-ai-ml-workloads-4.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "views": [
       {
         "id": "request-path",
@@ -25,7 +25,7 @@
           "inference",
           "storage"
         ],
-        "note": "Inference services read the models and images kept in Amazon S3, ECR, and EFS."
+        "note": "Model-byte access and container-image pulling are different paths."
       },
       {
         "id": "autoscale",
@@ -34,7 +34,7 @@
           "scaling",
           "inference"
         ],
-        "note": "HorizontalPodAutoscaler, KEDA, and VerticalPodAutoscaler scale the inference service pods."
+        "note": "HPA/KEDA affect replicas; VPA affects resource requests, subject to modes and metric support."
       }
     ]
   },
@@ -71,7 +71,7 @@
       "id": "inference",
       "type": "backend",
       "label": "Inference Services",
-      "sublabel": "KServe · TorchServe · Triton Inference Server",
+      "sublabel": "KServe / validated model server",
       "pos": [
         560,
         60
@@ -85,7 +85,7 @@
       "id": "storage",
       "type": "database",
       "label": "Model Storage",
-      "sublabel": "Amazon S3 · Amazon ECR · Amazon EFS",
+      "sublabel": "models: S3/EFS; images: ECR",
       "pos": [
         930,
         60
@@ -99,7 +99,7 @@
       "id": "scaling",
       "type": "backend",
       "label": "Scaling Options",
-      "sublabel": "HorizontalPodAutoscaler · KEDA · VerticalPodAutoscaler",
+      "sublabel": "Pods: HPA/KEDA; resources: VPA",
       "pos": [
         560,
         240
@@ -156,11 +156,10 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "Inference service deployment examples",
+      "title": "Access and runtime",
       "items": [
-        "KServe: InferenceService pointing at the model via storageUri s3://",
-        "TorchServe: Deployment + PVC model-store, LoadBalancer Service (8080/8081)",
-        "Triton Inference Server: Deployment + PVC model-repository, LoadBalancer Service (8000/8001/8002)"
+        "Do not publish inference, management and metrics together on an unauthenticated LB.",
+        "Validate URI, model format, runtime, credentials and probes together."
       ]
     }
   ]

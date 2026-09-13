@@ -1,6 +1,6 @@
 # Kubernetes Networking
 
-> **Reviewed**: September 12, 2026. Feature references include Cilium 1.20.1, Calico Open Source 3.32, Flannel 0.28.9 and AWS VPC CNI 1.23.0. Check each product's Kubernetes/platform matrix before installation; these are not a jointly tested cluster configuration.
+> **Last Updated**: September 13, 2026. Feature references include Cilium 1.20.1, Calico Open Source 3.32, Flannel 0.28.9 and AWS VPC CNI 1.23.0. Check each product's Kubernetes/platform matrix before installation; these are not a jointly tested cluster configuration.
 
 ## Overview
 
@@ -355,11 +355,11 @@ The items below get named in passing elsewhere in this overview. Full setup proc
 | Layer | Device/function | Decision basis | Kubernetes/AWS mapping |
 |---|---|---|---|
 | L2 (link) | Switch, bridge | Destination MAC address | veth pairs and Linux bridges created by the CNI, the virtual NIC an ENI exposes |
-| L3 (network) | Router | Destination IP, longest-prefix match in a route table | The VPC's implicit router, TGW, GWLB (passes packets through to an appliance unmodified) |
-| L4 (transport) | L4 load balancer | 5-tuple (source/destination IP and port, protocol) per connection | NLB, kube-proxy's Service distribution (iptables, IPVS, eBPF) |
+| L3 (network) | Router or transparent appliance insertion | Destination IP for routing; flow identity for appliance selection | The VPC's implicit router, TGW; GWLB encapsulates IP packets for appliances |
+| L4 (transport) | L4 load balancer | Connection/flow identity, commonly the 5-tuple | NLB; kube-proxy (iptables, IPVS, nftables); separate eBPF Service implementations |
 | L7 (application) | L7 load balancer/reverse proxy | Per-request host, path, headers; protocol-aware | ALB, Ingress/Gateway API implementations, service-mesh sidecars (Envoy) |
 
-The key difference is the **unit of distribution**. An L4 load balancer picks a target once, when the connection opens, and keeps it for the life of that flow without inspecting payload. An L7 load balancer can pick a target per request — even on the same underlying connection — at the cost of having to parse the protocol. GWLB has "load balancer" in its name, but it doesn't change traffic between target groups the way ALB/NLB do; it's an L3 insertion point that encapsulates the original packet in GENEVE and passes it through to appliances such as firewalls or IDS/IPS. It preserves flow stickiness (the same flow always reaches the same appliance) via flow hashing, but it isn't rebalancing application content.
+The key difference is the **unit of distribution**. An L4 load balancer normally selects a target for a TCP connection or tracked UDP flow. An L7 proxy can select a target for each supported application request, including requests sharing a connection. GWLB distributes encapsulated IP flows across security appliances rather than parsing application requests. Flow stickiness depends on configured timeout, health and failover behavior; it is not a guarantee that a flow can never be reassigned or interrupted.
 
 > 📎 Protocol-level definitions of L2/L3 concepts are in [Network Fundamentals Part 1](../basics/06-network-fundamentals-part1.md); ALB/NLB target types and real configuration are in [AWS Load Balancer Controller](03-aws-lb-controller.md).
 
@@ -370,43 +370,43 @@ These five connectivity options differ in layer and traffic model. Measured late
 | Connectivity | Layer/model | Characteristics |
 |---|---|---|
 | VPC Peering | L3, bidirectional IP routing | Not transitive; can't be configured across overlapping CIDRs |
-| Transit Gateway (TGW) | L3, hub-and-spoke IP routing | Centralizes routing for multiple VPCs/peerings into one route table; shared cross-account via RAM |
+| Transit Gateway (TGW) | L3, hub-and-spoke IP routing | Uses attachment associations and propagation across one or more TGW route tables; shared cross-account via RAM |
 | Gateway Load Balancer (GWLB) | L3, transparent appliance insertion | Encapsulates the original packet in GENEVE (UDP 6081); a VPC endpoint service model connects consumer traffic to the provider's appliance fleet |
-| PrivateLink | L4 service endpoint | Consumer interface endpoint → provider NLB/service; tolerates overlapping CIDRs |
-| VPC Lattice | L7 application networking | A managed HTTP/gRPC service mesh with service DNS names, IAM authorization and weighted routing |
+| PrivateLink | Private endpoint connectivity | An NLB-backed endpoint service is one model; resource endpoints also exist. Consumer/provider CIDRs may overlap |
+| VPC Lattice | Application and resource networking | HTTP/HTTPS services support L7 routing and optional IAM authorization; TLS passthrough and resource configurations have different capabilities |
 
-GWLB specializes in inserting inspection/blocking appliances (firewalls, IDS/IPS) transparently into the network path without involving them in application-level routing. Pointing a consumer subnet's route at a GWLB endpoint sends that traffic through the provider's appliance fleet and back. GWLB uses 5-tuple flow hashing so the same flow always lands on the same appliance instance — that's stickiness for stateful inspection, not weighted application distribution. Like TGW, Peering, PrivateLink and Lattice, GWLB still needs security groups, NACLs and routing prerequisites in place before traffic actually flows.
+GWLB inserts inspection appliances such as firewalls and IDS/IPS into an IP path through a Gateway Load Balancer endpoint. Its default flow stickiness uses five fields; supported configurations can instead use two or three. Validate forward and return routes, appliance health, encapsulation MTU, NACLs and the security groups of the actual workloads/appliances. GWLB itself does not have an ALB-style security group, and flow stickiness does not replace failure testing.
 
 > 📎 The full EKS/VPC Lattice integration (Gateway API Controller, IAM authorization, routing) is in [VPC Lattice](02-vpc-lattice.md).
 
 ### How DNS Resolver and Route Tables Actually Behave
 
-**DNS resolver:** Creating a VPC reserves the Amazon-provided DNS resolver at the second address of the VPC's network range (e.g., `10.0.0.2` for a `10.0.0.0/16` VPC). That resolver answers VPC-internal names (private hosted zones, an ENI's internal DNS name) and forwards everything else to Route 53 Resolver. Inside the cluster, CoreDNS answers the `kube-dns` namespace and forwards anything outside `cluster.local` to the upstream named in the node's `/etc/resolv.conf` — usually this same VPC resolver. Resolving names between on-premises and the VPC in both directions needs Route 53 Resolver's inbound/outbound endpoints and resolver rules. Auto Mode's node-local DNS doesn't fully replace this forwarding path either; upstream resolution can still require network access.
+**DNS resolver:** AmazonProvidedDNS **is Route 53 Resolver**. Its addresses include the primary VPC IPv4 network address plus two (`10.0.0.2` for `10.0.0.0/16`) and `169.254.169.253`; it resolves associated private zones and public names according to Resolver rules. CoreDNS normally serves the configured Kubernetes cluster domain, often `cluster.local`; `kube-dns` is its Service name, not a namespace or DNS zone. External forwarding follows the Corefile and the resolver file visible to the DNS Pod. Inspect those settings instead of assuming the node's resolver file is used unchanged. In a Resolver endpoint design, inbound endpoints accept on-premises queries, while outbound endpoints and associated rules forward selected VPC queries to on-premises DNS. Auto Mode's node-local resolver does not eliminate upstream dependencies.
 
-**Route tables:** VPC route evaluation follows the usual longest-prefix-match rule, with a few VPC-specific wrinkles. The `local` route for the VPC's CIDR is always treated as the most specific and can't be deleted or overridden. When a static route and a propagated route (from TGW, VPN, etc.) exist for the same destination prefix, the static route wins. A route whose target is no longer valid (a deleted NAT Gateway, a detached attachment) automatically becomes a `blackhole` route and silently drops traffic. A subnet with no explicitly associated route table falls back to the VPC's main route table — a common cause of "I added the route and it still doesn't work" is that the intended subnet is actually associated with a different table.
+**Route tables:** VPC route evaluation generally uses longest-prefix matching. AWS permits replacing a `local` route's target and adding supported more-specific subnet routes for appliance routing; `local` is not unconditionally the most specific route. For identical destinations, static VPC routes take precedence over routes propagated from a virtual private gateway. A VPC route targeting a TGW is static; propagation inside a TGW belongs to its separate route tables. Invalid targets can leave `blackhole` entries that drop traffic, so inspect route state as well as the destination. A subnet without an explicit route-table association uses the VPC's main route table.
 
 > 📎 TGW/Peering route priority and static-route configuration examples are in [Cross-Org VPC Connectivity's operational findings](05-cross-org-vpc-connectivity.md#operational-findings).
 
 ### The Kernel Data Plane: iptables, IPVS, eBPF and Packet Filtering
 
-Turning a Kubernetes Service's virtual IP into an actual Pod (and enforcing network policy) happens on top of Linux's packet-filtering subsystem. Netfilter is the set of hooks the kernel places along the packet path; iptables and nftables are the userspace tools that install rules on those hooks. eBPF takes a different approach: instead of going through netfilter hooks, programs attach directly at XDP (as early as the driver), the tc (traffic control) layer, or socket hooks.
+Linux Service forwarding and network-policy enforcement can use different mechanisms. Netfilter provides packet-path hooks used by iptables and nftables. eBPF implementations can attach at XDP, tc or socket hooks and perform Service selection there. This does not mean every packet in an eBPF-enabled cluster bypasses Netfilter or connection tracking; the path depends on the CNI, kernel, routing and feature configuration.
 
 | Implementation | Where it sits | Characteristics |
 |---|---|---|
 | iptables | Sequential rule chains on netfilter hooks | Evaluation time scales with rule count (O(n)); kube-proxy's long-standing default mode |
 | IPVS | Kernel-native L4 load balancer, a netfilter extension | Hash-based lookup (near O(1)); deprecated as a kube-proxy mode starting with Kubernetes 1.35 |
 | nftables | netfilter's successor framework to iptables | kube-proxy's stable mode since 1.33; check kernel/CNI compatibility first |
-| eBPF (e.g., Cilium) | XDP, tc and socket layers, bypassing netfilter | Can replace kube-proxy entirely, but this isn't a kube-proxy "mode" — it's a separate implementation |
+| eBPF (e.g., Cilium) | Configured XDP, tc and socket hooks | Can replace kube-proxy Service handling; it is a separate implementation, with path-specific Netfilter/conntrack behavior |
 
-Switching between these modes carries real risk. Reverting kube-proxy from IPVS back to iptables requires the documented procedure and a planned node restart. Replacing kube-proxy with an eBPF-based CNI also requires respecting the cutover order so the two implementations don't handle the same Service at once.
+Switching implementations can leave kernel rules and active connections behind. Follow the distribution/CNI migration procedure, drain workloads as required, and plan for node restarts where cleanup requires them. Replacing kube-proxy with an eBPF-based CNI also requires a supported cutover order so the implementations do not compete for the same Service traffic.
 
 > 📎 The IPVS deprecation timeline and the nftables stable transition are covered in [Introduction to Kubernetes](../basics/04-kubernetes-introduction.md); Cilium's eBPF kube-proxy replacement is in [Cilium eBPF](cilium/02-ebpf.md); Calico's eBPF data plane and its migration procedure are in [Calico eBPF](calico/06-ebpf-dataplane.md).
 
 ### Compute-Intensive Networking: ENI, EFA, NVLink and Optical Transceivers
 
-ENI, EFA and NVLink cover different distances and purposes. An **ENI** is the virtual NIC attached to an EC2 instance that routes ordinary IP traffic within the VPC (configuration is in [VPC CNI](01-vpc-cni.md)). **EFA** adds an OS-bypass path (libfabric) on top of an ENA-based ENI to lower latency for collective communication such as MPI/NCCL, but like a plain ENI, it **cannot cross a VPC or Availability Zone boundary**. **NVLink** sits at a different layer entirely: EFA is an inter-node network fabric, while NVLink is a direct GPU-to-GPU interconnect within a single node (and, in newer rack-scale systems with NVSwitch, within a rack). Whether two GPUs share an NVLink domain or sit on different nodes and must communicate over EFA can swing collective-communication performance by an order of magnitude, which is why topology awareness matters for Kubernetes scheduling.
+ENI, EFA and NVLink serve different paths. An **ENI** is a virtual network interface attached to an EC2 instance in one Availability Zone; its normal IP traffic can reach other AZs and connected VPCs when routing and policy allow it (see [VPC CNI](01-vpc-cni.md)). **EFA** provides an OS-bypass device used through libfabric by compatible MPI/NCCL software. **EFA device traffic is non-routable and cannot cross VPC/AZ boundaries**; normal IP traffic through the ENA device of an EFA-with-ENA interface remains routable. EFA-only interfaces have no ENA device or IP addressing. **NVLink** connects GPUs within supported systems, including supported rack-scale NVLink domains. Measure the selected hardware, collective operations and placement rather than assuming a fixed speedup over EFA.
 
-**Optical transceivers** are a general data-center networking concept. Copper DAC (Direct Attach Copper) cables suit short runs at low cost; optical transceivers (QSFP/OSFP) and fiber are used when longer distances (between racks, between switches) or higher bandwidth are needed. AWS doesn't publish the physical cabling or transceiver specifications inside a Region, so this is general data-center networking background, not a description of AWS's specific infrastructure.
+**Optical transceivers** are a general data-center networking concept. Copper DAC (Direct Attach Copper) cables suit short runs; optical modules and fiber support other reach and bandwidth requirements. QSFP and OSFP describe module form factors, not a guarantee of optical media. Treat this as general background: it does not establish the physical cabling of a particular AWS workload.
 
 > 📎 NVLink/IMEX topology-aware scheduling and GPU Pod placement examples are in [AI/ML Infrastructure](../ai-ml/06-ai-infrastructure.md); EFA's VPC/AZ boundary constraint and measurements are in [Cross-Org VPC Connectivity](05-cross-org-vpc-connectivity.md).
 
@@ -414,7 +414,7 @@ ENI, EFA and NVLink cover different distances and purposes. An **ENI** is the vi
 
 The protocol mechanics of HTTP/3 (RFC 9114) and its QUIC transport (RFC 9000) are covered in [Network Fundamentals Part 2](../basics/06-network-fundamentals-part2.md) and [Part 3](../basics/06-network-fundamentals-part3.md). Here we cover only what actually affects Kubernetes traffic distribution.
 
-- **gRPC and L4 load balancers:** gRPC multiplexes many requests over one long-lived HTTP/2 connection. An L4 load balancer (NLB, kube-proxy's Service distribution) picks a target per connection, so once a connection is established, every request on it goes to the same Pod. Scaling out Pod count doesn't rebalance traffic on connections that are already open. Getting genuine per-request distribution needs a gRPC-aware L7 proxy (Envoy, a supported ALB gRPC configuration), client-side load balancing, or a service mesh.
+- **gRPC and L4 load balancers:** gRPC multiplexes requests over HTTP/2 connections. An L4 balancer normally keeps an established TCP connection on its selected endpoint; if that endpoint is a proxy, it can make further routing decisions. Adding Pods alone does not redistribute existing connections. Per-RPC distribution requires a compatible L7 proxy or client-side policy. A streaming RPC remains one call; its individual messages are not independently balanced.
 - **Gateway API's GRPCRoute:** Ingress has no gRPC-specific resource, but Gateway API standardizes service/method-level routing with `GRPCRoute`. Support varies by implementation (how many header matches, retry policies, etc.), so check the controller's own documentation.
 - **How far HTTP/3/QUIC actually reaches into the cluster:** HTTP/3 support between a client and the edge (a CDN, a load balancer) is a separate question from HTTP/3 support inside the cluster or on an Ingress's backend connection. Many Ingress/Gateway implementations still speak HTTP/1.1 or HTTP/2 to the backend, and whether end-to-end HTTP/3 is supported varies by implementation and version — don't generalize; check the documentation for the controller actually in use.
 
@@ -673,7 +673,13 @@ spec:
 - [VPC DNS resolver](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-dns.html)
 - [Route 53 Resolver endpoints and rules](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html)
 - [VPC route table evaluation order](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html)
+- [Local routes and more-specific subnet routes](https://docs.aws.amazon.com/vpc/latest/userguide/subnet-route-tables.html)
+- [Static and propagated route priority](https://docs.aws.amazon.com/vpc/latest/userguide/route-tables-priority.html)
+- [AmazonProvidedDNS addresses and behavior](https://docs.aws.amazon.com/vpc/latest/userguide/AmazonDNS-concepts.html)
+- [GWLB flow stickiness and failover](https://docs.aws.amazon.com/elasticloadbalancing/latest/gateway/edit-target-group-attributes.html)
 - [Kubernetes Service virtual IPs and kube-proxy modes](https://kubernetes.io/docs/reference/networking/virtual-ips/)
+- [CoreDNS Service names and forwarding configuration](https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/)
+- [PrivateLink resource endpoints](https://docs.aws.amazon.com/vpc/latest/privatelink/privatelink-access-resources.html)
 - [Netfilter/iptables project documentation](https://www.netfilter.org/documentation/index.html)
 - [EC2 Elastic Fabric Adapter](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/efa.html)
 - [QUIC transport protocol (RFC 9000)](https://www.rfc-editor.org/rfc/rfc9000)

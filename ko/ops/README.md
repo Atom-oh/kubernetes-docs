@@ -1,6 +1,6 @@
 # 운영 가이드
 
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 9월 12일
 
 이 섹션은 EKS Auto Mode 기반 프로덕션 환경의 실전 운영 가이드입니다. Terraform을 사용한 인프라 프로비저닝부터 CI/CD 파이프라인, GitOps 기반 배포, 스케일링, 관측성, 리소스 최적화, 업그레이드까지 포괄합니다.
 
@@ -44,6 +44,7 @@
 | 14 | [Tekton Pipelines](./14-tekton-pipelines.md) | Kubernetes 기반 CI 파이프라인 |
 | 15 | [Zonal 클러스터 운영 전략](./15-zonal-operations-guide.md) | LB weight 전환과 TargetGroupBinding, 네이티브 롤백, Kafka/Redis/Aurora AZ 친화 read |
 | 16 | [트러블슈팅 플레이북](./16-troubleshooting-playbook.md) | 증상 → 진단 → 원인 → 조치: Pending/ImagePull/CrashLoop/NotReady/PVC, IRSA·VPC CNI·Karpenter, kubectl 치트시트 |
+| 17 | [EKS Spot 운영 적용 실험](./17-spot-production-experiments.md) | 중단·동시 회수·폴백 실험, 결과 기록, SLO·비용 판정, 롤백 |
 
 ---
 

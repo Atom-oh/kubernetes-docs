@@ -80,7 +80,7 @@ kubeProxyReplacement requests Cilium’s Service handling. API/bootstrap access 
 **Answer: A) IPsec and WireGuard**
 
 **Explanation:**
-The encryption.type choices are IPsec and WireGuard with mode/platform prerequisites. Separate beta ztunnel workload mTLS is not the same setting; saying that Cilium never uses TLS would be incorrect.
+IPsec and WireGuard are the established pair in this question. The same `encryption.type` key also accepts beta `ztunnel` for workload mTLS, with its own namespace enrollment, CA/bootstrap, traffic and policy prerequisites. These are different modes under the same key; saying that Cilium never uses TLS would be incorrect.
 
 </details>
 

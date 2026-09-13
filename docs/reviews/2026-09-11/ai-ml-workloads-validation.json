@@ -1,0 +1,1776 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T21:23:48.504419+00:00",
+  "scope": {
+    "documents": 4,
+    "quizQuestions": 20,
+    "figures": 14
+  },
+  "versions": {
+    "gpuOperator": "26.7.0",
+    "devicePlugin": "0.20.0",
+    "FSxCSI": "1.10.0",
+    "KubernetesSchema": "1.36.2"
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/01-ai-ml-workloads.md",
+        "sha256": "a2e713847d83d54903bda9167118639d40531eb9f16ab5338021eb2b8ca4a05a",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ai-ml-워크로드"
+          },
+          {
+            "tag": "h2",
+            "id": "ai-ml-워크로드의-특성"
+          },
+          {
+            "tag": "h2",
+            "id": "ai-ml-설계에서-구분할-사항"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-대규모-언어-모델-llm-배포"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-ai-오케스트레이션-프레임워크"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-gpu-공유-및-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-mlops-및-gitops-통합"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-벡터-데이터베이스-통합"
+          },
+          {
+            "tag": "h2",
+            "id": "eks에서의-ai-ml-인프라-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "노드-유형-선택"
+          },
+          {
+            "tag": "h3",
+            "id": "스토리지-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "네트워킹-구성"
+          },
+          {
+            "tag": "h2",
+            "id": "ai-ml-워크로드-배포"
+          },
+          {
+            "tag": "h3",
+            "id": "gpu-allocation"
+          },
+          {
+            "tag": "h3",
+            "id": "kubeflow-and-distributed-training"
+          },
+          {
+            "tag": "h3",
+            "id": "모델-서빙"
+          },
+          {
+            "tag": "h2",
+            "id": "ai-ml-워크로드-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "gpu-공유와-메모리"
+          },
+          {
+            "tag": "h3",
+            "id": "placement-and-topology"
+          },
+          {
+            "tag": "h3",
+            "id": "storage-and-caching"
+          },
+          {
+            "tag": "h2",
+            "id": "모니터링-및-로깅"
+          },
+          {
+            "tag": "h3",
+            "id": "prometheus-and-grafana"
+          },
+          {
+            "tag": "h3",
+            "id": "로그-수집"
+          },
+          {
+            "tag": "h2",
+            "id": "비용-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "spot-and-node-provisioning"
+          },
+          {
+            "tag": "h3",
+            "id": "hpa-and-metrics"
+          },
+          {
+            "tag": "h3",
+            "id": "data-and-model-access"
+          },
+          {
+            "tag": "h2",
+            "id": "검증과-참고-자료"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "ai-ml-워크로드",
+          "ai-ml-워크로드의-특성",
+          "ai-ml-설계에서-구분할-사항",
+          "_1-대규모-언어-모델-llm-배포",
+          "_2-ai-오케스트레이션-프레임워크",
+          "_3-gpu-공유-및-최적화",
+          "_4-mlops-및-gitops-통합",
+          "_5-벡터-데이터베이스-통합",
+          "eks에서의-ai-ml-인프라-구성",
+          "노드-유형-선택",
+          "스토리지-구성",
+          "네트워킹-구성",
+          "ai-ml-워크로드-배포",
+          "gpu-allocation",
+          "kubeflow-and-distributed-training",
+          "모델-서빙",
+          "ai-ml-워크로드-최적화",
+          "gpu-공유와-메모리",
+          "placement-and-topology",
+          "storage-and-caching",
+          "모니터링-및-로깅",
+          "prometheus-and-grafana",
+          "로그-수집",
+          "비용-최적화",
+          "spot-and-node-provisioning",
+          "hpa-and-metrics",
+          "data-and-model-access",
+          "검증과-참고-자료",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/ai-ml/01-ai-ml-workloads.md",
+        "sha256": "31f1f6b18b81001df45f7ab26c2c866483b01e3542c4695884d8a3c247e8476b",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ai-ml-workloads"
+          },
+          {
+            "tag": "h2",
+            "id": "characteristics-of-ai-ml-workloads"
+          },
+          {
+            "tag": "h2",
+            "id": "distinctions-for-ai-ml-design"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-large-language-model-llm-deployment"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-ai-orchestration-frameworks"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-gpu-sharing-and-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-mlops-and-gitops-integration"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-vector-database-integration"
+          },
+          {
+            "tag": "h2",
+            "id": "ai-ml-infrastructure-configuration-in-eks"
+          },
+          {
+            "tag": "h3",
+            "id": "node-type-selection"
+          },
+          {
+            "tag": "h3",
+            "id": "storage-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "networking-configuration"
+          },
+          {
+            "tag": "h2",
+            "id": "ai-ml-workload-deployment"
+          },
+          {
+            "tag": "h3",
+            "id": "nvidia-gpu-operator-and-device-allocation"
+          },
+          {
+            "tag": "h3",
+            "id": "kubeflow-and-distributed-training"
+          },
+          {
+            "tag": "h3",
+            "id": "model-serving"
+          },
+          {
+            "tag": "h2",
+            "id": "ai-ml-workload-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "gpu-sharing-and-memory"
+          },
+          {
+            "tag": "h3",
+            "id": "placement-and-topology"
+          },
+          {
+            "tag": "h3",
+            "id": "storage-and-caching"
+          },
+          {
+            "tag": "h2",
+            "id": "monitoring-and-logging"
+          },
+          {
+            "tag": "h3",
+            "id": "prometheus-and-grafana"
+          },
+          {
+            "tag": "h3",
+            "id": "log-collection"
+          },
+          {
+            "tag": "h2",
+            "id": "cost-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "spot-and-node-provisioning"
+          },
+          {
+            "tag": "h3",
+            "id": "hpa-and-metrics"
+          },
+          {
+            "tag": "h3",
+            "id": "data-and-model-access"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-and-references"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "ai-ml-workloads",
+          "characteristics-of-ai-ml-workloads",
+          "distinctions-for-ai-ml-design",
+          "_1-large-language-model-llm-deployment",
+          "_2-ai-orchestration-frameworks",
+          "_3-gpu-sharing-and-optimization",
+          "_4-mlops-and-gitops-integration",
+          "_5-vector-database-integration",
+          "ai-ml-infrastructure-configuration-in-eks",
+          "node-type-selection",
+          "storage-configuration",
+          "networking-configuration",
+          "ai-ml-workload-deployment",
+          "nvidia-gpu-operator-and-device-allocation",
+          "kubeflow-and-distributed-training",
+          "model-serving",
+          "ai-ml-workload-optimization",
+          "gpu-sharing-and-memory",
+          "placement-and-topology",
+          "storage-and-caching",
+          "monitoring-and-logging",
+          "prometheus-and-grafana",
+          "log-collection",
+          "cost-optimization",
+          "spot-and-node-provisioning",
+          "hpa-and-metrics",
+          "data-and-model-access",
+          "validation-and-references",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+        "sha256": "0b9d67dbd0a206879183466416ab57daa81f2eb6c14c7b2037f725852ec91bec",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ai-ml-워크로드-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈-문제"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-nvidia-device-plugin의-gpu를-pod에-할당하는-올바른-방법은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-tensorflow의-분산-역할을-지원하는-설치된-레거시-kubeflow-리소스는-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-기존-fsx-for-lustre-파일시스템을-csi로-연결할-때-올바른-구분은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-ai-ml-자원-할당을-정하는-근거로-가장-적절한-것은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-kserve-같은-서빙-플랫폼을-선택할-때-확인할-것은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-gpu-활용률이나-요청량으로-hpa를-구성할-때-올바른-설명은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-분산-학습-네트워크와-배치에-대한-올바른-설명은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-모델·데이터-접근을-보호하는-올바른-설명은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-ml-서비스의-관측에서-무엇을-구분해야-하나요"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-비용-최적화를-검증하는-올바른-방식은-무엇인가요"
+          }
+        ],
+        "renderedIds": [
+          "ai-ml-워크로드-퀴즈",
+          "퀴즈-문제",
+          "_1-nvidia-device-plugin의-gpu를-pod에-할당하는-올바른-방법은-무엇인가요",
+          "_2-tensorflow의-분산-역할을-지원하는-설치된-레거시-kubeflow-리소스는-무엇인가요",
+          "_3-기존-fsx-for-lustre-파일시스템을-csi로-연결할-때-올바른-구분은-무엇인가요",
+          "_4-ai-ml-자원-할당을-정하는-근거로-가장-적절한-것은-무엇인가요",
+          "_5-kserve-같은-서빙-플랫폼을-선택할-때-확인할-것은-무엇인가요",
+          "_6-gpu-활용률이나-요청량으로-hpa를-구성할-때-올바른-설명은-무엇인가요",
+          "_7-분산-학습-네트워크와-배치에-대한-올바른-설명은-무엇인가요",
+          "_8-모델·데이터-접근을-보호하는-올바른-설명은-무엇인가요",
+          "_9-ml-서비스의-관측에서-무엇을-구분해야-하나요",
+          "_10-비용-최적화를-검증하는-올바른-방식은-무엇인가요"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+        "sha256": "01f62a1942fcfe94b8c8a7c478e35028c7b18a7db6fd15c4f57e9c0e34bdc0ab",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "ai-ml-workloads-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz-questions"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-how-should-a-pod-request-gpus-exposed-by-the-nvidia-device-plugin"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-which-installed-legacy-kubeflow-resource-understands-tensorflow-distributed-roles"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-how-should-an-existing-fsx-for-lustre-filesystem-be-connected-through-csi"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-what-should-guide-ai-ml-resource-allocation"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-what-should-be-checked-when-selecting-a-serving-platform-such-as-kserve"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-what-is-required-for-hpa-scaling-on-gpu-utilization-or-request-load"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-which-statement-about-distributed-training-networking-is-correct"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-which-model-data-protection-statement-is-correct"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-what-should-ml-service-observability-distinguish"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-how-should-cost-optimization-be-validated"
+          }
+        ],
+        "renderedIds": [
+          "ai-ml-workloads-quiz",
+          "quiz-questions",
+          "_1-how-should-a-pod-request-gpus-exposed-by-the-nvidia-device-plugin",
+          "_2-which-installed-legacy-kubeflow-resource-understands-tensorflow-distributed-roles",
+          "_3-how-should-an-existing-fsx-for-lustre-filesystem-be-connected-through-csi",
+          "_4-what-should-guide-ai-ml-resource-allocation",
+          "_5-what-should-be-checked-when-selecting-a-serving-platform-such-as-kserve",
+          "_6-what-is-required-for-hpa-scaling-on-gpu-utilization-or-request-load",
+          "_7-which-statement-about-distributed-training-networking-is-correct",
+          "_8-which-model-data-protection-statement-is-correct",
+          "_9-what-should-ml-service-observability-distinguish",
+          "_10-how-should-cost-optimization-be-validated"
+        ]
+      }
+    ]
+  },
+  "nativeHelm": {
+    "status": "passed",
+    "GPUOperator": "v26.7.0",
+    "devicePlugin": "0.20.0",
+    "operatorDriverDisabled": true,
+    "operatorToolkitDisabled": true,
+    "timeSlicing": {
+      "version": "v1",
+      "sharing": {
+        "timeSlicing": {
+          "renameByDefault": true,
+          "failRequestsGreaterThanOne": true,
+          "resources": [
+            {
+              "name": "nvidia.com/gpu",
+              "replicas": 2
+            }
+          ]
+        }
+      }
+    },
+    "sharedResource": "nvidia.com/gpu.shared",
+    "helmCharts": [
+      {
+        "file": "gpu-operator-v26.7.0.tgz",
+        "sha256": "6d1b282d74288be206c66dfe49073b7c85c209e92826c27f6507429055e2e102"
+      },
+      {
+        "file": "nvidia-device-plugin-0.20.0.tgz",
+        "sha256": "9e5642bcdd3805c6e931f9d3ca542677d1f714d68c14c1364892011e67d9a606"
+      }
+    ],
+    "scope": "Helm render only. No NVIDIA hardware/plugin allocation, driver validation or cluster deployment. Operator and standalone plugin are alternative ownership paths, not two installations to combine."
+  },
+  "manifests": {
+    "status": "passed",
+    "kubernetesSchema": "official kubernetes/kubernetes v1.36.2 OpenAPI v3",
+    "results": [
+      {
+        "path": "ko/ai-ml/01-ai-ml-workloads.md",
+        "sourceSha256": "a2e713847d83d54903bda9167118639d40531eb9f16ab5338021eb2b8ca4a05a",
+        "cases": [
+          "Pod",
+          "Sharing config matches rendered chart",
+          "Pod",
+          "PersistentVolume",
+          "PersistentVolumeClaim",
+          "ServiceMonitor matches pinned exporter Service",
+          "HorizontalPodAutoscaler"
+        ],
+        "pvPVCBindingMatched": true,
+        "placementSelectorMatched": true
+      },
+      {
+        "path": "en/ai-ml/01-ai-ml-workloads.md",
+        "sourceSha256": "31f1f6b18b81001df45f7ab26c2c866483b01e3542c4695884d8a3c247e8476b",
+        "cases": [
+          "Pod",
+          "Sharing config matches rendered chart",
+          "Pod",
+          "PersistentVolume",
+          "PersistentVolumeClaim",
+          "ServiceMonitor matches pinned exporter Service",
+          "HorizontalPodAutoscaler"
+        ],
+        "pvPVCBindingMatched": true,
+        "placementSelectorMatched": true
+      }
+    ],
+    "scope": "JSON Schema and pinned service/chart configuration matching only; no API admission/defaulting, GPU allocation, CSI mounting or workloads executed. Examples with site-specific values remain templates."
+  },
+  "anchors": {
+    "status": "passed",
+    "checks": [
+      {
+        "path": "ko/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+        "target": "ko/ai-ml/01-ai-ml-workloads.md",
+        "anchor": "gpu-allocation",
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+        "target": "ko/ai-ml/01-ai-ml-workloads.md",
+        "anchor": "storage-and-caching",
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+        "target": "ko/ai-ml/01-ai-ml-workloads.md",
+        "anchor": "placement-and-topology",
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+        "target": "ko/ai-ml/01-ai-ml-workloads.md",
+        "anchor": "hpa-and-metrics",
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+        "target": "ko/ai-ml/01-ai-ml-workloads.md",
+        "anchor": "kubeflow-and-distributed-training",
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+        "target": "ko/ai-ml/01-ai-ml-workloads.md",
+        "anchor": "data-and-model-access",
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+        "target": "ko/ai-ml/01-ai-ml-workloads.md",
+        "anchor": "prometheus-and-grafana",
+        "passed": true
+      },
+      {
+        "path": "ko/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+        "target": "ko/ai-ml/01-ai-ml-workloads.md",
+        "anchor": "spot-and-node-provisioning",
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+        "target": "en/ai-ml/01-ai-ml-workloads.md",
+        "anchor": "nvidia-gpu-operator-and-device-allocation",
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+        "target": "en/ai-ml/01-ai-ml-workloads.md",
+        "anchor": "storage-and-caching",
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+        "target": "en/ai-ml/01-ai-ml-workloads.md",
+        "anchor": "placement-and-topology",
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+        "target": "en/ai-ml/01-ai-ml-workloads.md",
+        "anchor": "hpa-and-metrics",
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+        "target": "en/ai-ml/01-ai-ml-workloads.md",
+        "anchor": "kubeflow-and-distributed-training",
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+        "target": "en/ai-ml/01-ai-ml-workloads.md",
+        "anchor": "data-and-model-access",
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+        "target": "en/ai-ml/01-ai-ml-workloads.md",
+        "anchor": "prometheus-and-grafana",
+        "passed": true
+      },
+      {
+        "path": "en/quizzes/ai-ml/03-ai-ml-workloads-quiz.md",
+        "target": "en/ai-ml/01-ai-ml-workloads.md",
+        "anchor": "spot-and-node-provisioning",
+        "passed": true
+      }
+    ],
+    "correction": "Explicit ASCII fragment IDs used for Korean headings to avoid NFC/NFD mismatch with generated IDs."
+  },
+  "responsive": {
+    "status": "passed",
+    "cases": [
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "1e09202bcd9456c546614e00902724bbb09b6a93170e193e3dab82180eeb7246"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "1e09202bcd9456c546614e00902724bbb09b6a93170e193e3dab82180eeb7246"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "1e09202bcd9456c546614e00902724bbb09b6a93170e193e3dab82180eeb7246"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "fb5b08c8608c96f1a36167fcaa7d64262b43900b0a174749df5788a6348c30b3"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "fb5b08c8608c96f1a36167fcaa7d64262b43900b0a174749df5788a6348c30b3"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "fb5b08c8608c96f1a36167fcaa7d64262b43900b0a174749df5788a6348c30b3"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "98915f6c9451dd99bca91f436f07518fa6d07bb9bb551afc02da8d19a6de05d2"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "98915f6c9451dd99bca91f436f07518fa6d07bb9bb551afc02da8d19a6de05d2"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "98915f6c9451dd99bca91f436f07518fa6d07bb9bb551afc02da8d19a6de05d2"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "fdd71831dbf1984cf0e2c94fb3339a72b7b6d211141778d7d8b3196fdc398017"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "fdd71831dbf1984cf0e2c94fb3339a72b7b6d211141778d7d8b3196fdc398017"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "fdd71831dbf1984cf0e2c94fb3339a72b7b6d211141778d7d8b3196fdc398017"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "9511f6e46914f7bd0644bee879637eb768b84d0e19bb8037bc7e44d5e7950bc2"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "9511f6e46914f7bd0644bee879637eb768b84d0e19bb8037bc7e44d5e7950bc2"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "9511f6e46914f7bd0644bee879637eb768b84d0e19bb8037bc7e44d5e7950bc2"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "6180fbed4d38bcd5945d691fb2e101adfc827e8af5a5f31a6c83ffd40638e5a4"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "6180fbed4d38bcd5945d691fb2e101adfc827e8af5a5f31a6c83ffd40638e5a4"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "6180fbed4d38bcd5945d691fb2e101adfc827e8af5a5f31a6c83ffd40638e5a4"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "1bbbb10d5c7d47d570098b7e93a3875a8092b593498868f090ef535f4b052294"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "1bbbb10d5c7d47d570098b7e93a3875a8092b593498868f090ef535f4b052294"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "1bbbb10d5c7d47d570098b7e93a3875a8092b593498868f090ef535f4b052294"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "52c466a7c13b8b214c44b6fcf2d8c2964ceb1e9942bd0870659f6d0cb6f116c5"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "52c466a7c13b8b214c44b6fcf2d8c2964ceb1e9942bd0870659f6d0cb6f116c5"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "52c466a7c13b8b214c44b6fcf2d8c2964ceb1e9942bd0870659f6d0cb6f116c5"
+      },
+      {
+        "figure": 4,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "46ebd0cc3046a6e37b923ff4532b32d0e85f5373dd6e23b6fa203dce83a3056c"
+      },
+      {
+        "figure": 4,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "46ebd0cc3046a6e37b923ff4532b32d0e85f5373dd6e23b6fa203dce83a3056c"
+      },
+      {
+        "figure": 4,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "46ebd0cc3046a6e37b923ff4532b32d0e85f5373dd6e23b6fa203dce83a3056c"
+      },
+      {
+        "figure": 4,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "7c1adacf61b74770766e4bbde9ed31b51253f87f9d9bb6fc785bf112aa73dec7"
+      },
+      {
+        "figure": 4,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "7c1adacf61b74770766e4bbde9ed31b51253f87f9d9bb6fc785bf112aa73dec7"
+      },
+      {
+        "figure": 4,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "7c1adacf61b74770766e4bbde9ed31b51253f87f9d9bb6fc785bf112aa73dec7"
+      },
+      {
+        "figure": 5,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "07cd90eadca9b4425d05dd87dd719fbe15c790e63fb7709615169e13baf90a90"
+      },
+      {
+        "figure": 5,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "07cd90eadca9b4425d05dd87dd719fbe15c790e63fb7709615169e13baf90a90"
+      },
+      {
+        "figure": 5,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "07cd90eadca9b4425d05dd87dd719fbe15c790e63fb7709615169e13baf90a90"
+      },
+      {
+        "figure": 5,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "28ba41577ec6d7d0cdfce6372b035b1136549e2eb711b5d9c6985dc5a2395696"
+      },
+      {
+        "figure": 5,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "28ba41577ec6d7d0cdfce6372b035b1136549e2eb711b5d9c6985dc5a2395696"
+      },
+      {
+        "figure": 5,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "28ba41577ec6d7d0cdfce6372b035b1136549e2eb711b5d9c6985dc5a2395696"
+      },
+      {
+        "figure": 6,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "c9fced588cfd86677239b5685d4e35fce49a595811fda9dd627a9fb856acc3b2"
+      },
+      {
+        "figure": 6,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "c9fced588cfd86677239b5685d4e35fce49a595811fda9dd627a9fb856acc3b2"
+      },
+      {
+        "figure": 6,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "c9fced588cfd86677239b5685d4e35fce49a595811fda9dd627a9fb856acc3b2"
+      },
+      {
+        "figure": 6,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "109a36e7fb308de4b3eb9f5ed7648ac30ac038fb6e4d3a7d342227d74f369e2a"
+      },
+      {
+        "figure": 6,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "109a36e7fb308de4b3eb9f5ed7648ac30ac038fb6e4d3a7d342227d74f369e2a"
+      },
+      {
+        "figure": 6,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "109a36e7fb308de4b3eb9f5ed7648ac30ac038fb6e4d3a7d342227d74f369e2a"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build.",
+    "reuseExplanation": "Figures1/2 rerun after boundary-label correction;30unchanged cases carried only after sourceSHA256verification."
+  },
+  "contentPreservation": {
+    "sourceReadCoverage": {
+      "guides": {
+        "koLines": 918,
+        "enLines": 918
+      },
+      "quizzes": {
+        "koLines": 2050,
+        "enLines": 2050,
+        "proseLinesEach": 683,
+        "distinctCodeBlocksFullyRead": 78
+      }
+    },
+    "preservedQuizTopics": [
+      "GPUallocation/sharing",
+      "TensorFlow/distributed-training",
+      "Storageaccess/performance",
+      "Resourceprofiling",
+      "Modelserving",
+      "Autoscalingmetrics",
+      "Networking/topology",
+      "Security/dataaccess",
+      "Observability",
+      "Cost/recovery"
+    ],
+    "replacementRationale": [
+      {
+        "original": "GPU0.5 and privilegedMPSRuntimeClassdaemon",
+        "replacement": "IntegerGPUallocation andpinneddevice-pluginsharedconfiguration;explainsisolationlimits"
+      },
+      {
+        "original": "onePodtorchrun2nodes,missingtrainingfiles,legacyTF/MPIinstallURLs",
+        "replacement": "Explainsrequiredworker/DNS/code/runtimeconditionsandlinksverifiedTrainer/Kubeflowguides;doesnotclaimrunnabletraining"
+      },
+      {
+        "original": "TorchServepublicmanagementLB/Triton21.08andmissingmodelPVC",
+        "replacement": "Maintenancestatus,privatecontrolports,currentKServe/runtimecompatibilityguide"
+      },
+      {
+        "original": "FSxLustreundefinedCR/mixedstaticdynamicoptions/unmountedFIObenchmark",
+        "replacement": "PinnedCSIstaticPV/PVC,linksactualdynamicexample,explicitprerequisites/testpath"
+      },
+      {
+        "original": "Seldonv1graphs/invalidmixedpredictors/canary/multimodeloverclaims",
+        "replacement": "Version-specificplatformselection/featureboundariesandverifiedKServeguide"
+      },
+      {
+        "original": "duplicateHPAowners/GPUResourceutilization/unboundPythonmetricsglobals/legacyGrafanagraph",
+        "replacement": "Single-ownercustomPodRPSexample,adapterlabelrequirements,realqualityvsservicevsresourceobservationandcurrentobservabilityguide"
+      },
+      {
+        "original": "GenericSRIOV/RDMAhostPath/GPUDirectcopypaste",
+        "replacement": "EFA/OFINCCL/libfabric/device-driver-networkrequirements;genericNICexamplesnotEKSinstallation"
+      },
+      {
+        "original": "Secretmodelweights/decryptionkeyenv/in-treeEBS/NetworkPolicyOR/unusedCAConfigMap",
+        "replacement": "Objectstore/IAM/encryption/filecredentials,NetworkPolicyANDvsOR/DNSandactualcontrollerconfiguration"
+      }
+    ],
+    "scopePreserved": "All10questiontopics and7figuretopics retained; duplicated nonfunctional manifests replaced by focused configurations, requirements and cross-links rather than relabeled as tested execution."
+  },
+  "diagrams": [
+    {
+      "name": "ko-ai-ml-01-ai-ml-workloads-0",
+      "layoutPassed": true,
+      "pngSha256": "98c5c999b0b3f336bb1d5bbaef3be325b0e301ff9ef4a856e1a4d0fb955a54ac",
+      "htmlSha256": "fb5b08c8608c96f1a36167fcaa7d64262b43900b0a174749df5788a6348c30b3"
+    },
+    {
+      "name": "ko-ai-ml-01-ai-ml-workloads-1",
+      "layoutPassed": true,
+      "pngSha256": "d8b497d0e692a1c07d7e8639ab2db4e79c0307b77baf15e346b3b82aade33c9d",
+      "htmlSha256": "fdd71831dbf1984cf0e2c94fb3339a72b7b6d211141778d7d8b3196fdc398017"
+    },
+    {
+      "name": "ko-ai-ml-01-ai-ml-workloads-2",
+      "layoutPassed": true,
+      "pngSha256": "1b49221d19e08eefa685cf297d354b051453f0b8243394835892dd10dffc0d81",
+      "htmlSha256": "6180fbed4d38bcd5945d691fb2e101adfc827e8af5a5f31a6c83ffd40638e5a4"
+    },
+    {
+      "name": "ko-ai-ml-01-ai-ml-workloads-3",
+      "layoutPassed": true,
+      "pngSha256": "5350652c223affcb6af6ee3d81efa59ab87c15d2fc9ee40b27dcc8046a7bf9a9",
+      "htmlSha256": "52c466a7c13b8b214c44b6fcf2d8c2964ceb1e9942bd0870659f6d0cb6f116c5"
+    },
+    {
+      "name": "ko-ai-ml-01-ai-ml-workloads-4",
+      "layoutPassed": true,
+      "pngSha256": "90ac6fc0f7f36b1a1f1cbf6e54a2e1d59c7213d4792a87d5581be69c452ab77d",
+      "htmlSha256": "7c1adacf61b74770766e4bbde9ed31b51253f87f9d9bb6fc785bf112aa73dec7"
+    },
+    {
+      "name": "ko-ai-ml-01-ai-ml-workloads-5",
+      "layoutPassed": true,
+      "pngSha256": "b0c0e7a9340a977107c8d303d940c9fa4362154bbbf424f591135f392427b8b5",
+      "htmlSha256": "28ba41577ec6d7d0cdfce6372b035b1136549e2eb711b5d9c6985dc5a2395696"
+    },
+    {
+      "name": "ko-ai-ml-01-ai-ml-workloads-6",
+      "layoutPassed": true,
+      "pngSha256": "28965d1a7ff0040ea568523f10fc681c87d05845b14457fbe74599db381f85ae",
+      "htmlSha256": "109a36e7fb308de4b3eb9f5ed7648ac30ac038fb6e4d3a7d342227d74f369e2a"
+    },
+    {
+      "name": "en-ai-ml-01-ai-ml-workloads-0",
+      "layoutPassed": true,
+      "pngSha256": "05e30a94f73a31a88d13b73a075d104ea114f3e63d8cff795ff3f9423be43ad6",
+      "htmlSha256": "1e09202bcd9456c546614e00902724bbb09b6a93170e193e3dab82180eeb7246"
+    },
+    {
+      "name": "en-ai-ml-01-ai-ml-workloads-1",
+      "layoutPassed": true,
+      "pngSha256": "477bc335aebb09e2972ce639784959e52cf3a9dae70fe15b24767ca465c4dfab",
+      "htmlSha256": "98915f6c9451dd99bca91f436f07518fa6d07bb9bb551afc02da8d19a6de05d2"
+    },
+    {
+      "name": "en-ai-ml-01-ai-ml-workloads-2",
+      "layoutPassed": true,
+      "pngSha256": "aa12410dc8771cce4c836d1db3ac9c76edf0e84317d2682e34134ec707120c1c",
+      "htmlSha256": "9511f6e46914f7bd0644bee879637eb768b84d0e19bb8037bc7e44d5e7950bc2"
+    },
+    {
+      "name": "en-ai-ml-01-ai-ml-workloads-3",
+      "layoutPassed": true,
+      "pngSha256": "4366964b9bbfd4a7bd878a47f165ab88a2ed7453184d43a7a28a405b4730a9d6",
+      "htmlSha256": "1bbbb10d5c7d47d570098b7e93a3875a8092b593498868f090ef535f4b052294"
+    },
+    {
+      "name": "en-ai-ml-01-ai-ml-workloads-4",
+      "layoutPassed": true,
+      "pngSha256": "1c0dfea12da5a80da2d26a18d6267c791c30cba96e6db481df47378175487a55",
+      "htmlSha256": "46ebd0cc3046a6e37b923ff4532b32d0e85f5373dd6e23b6fa203dce83a3056c"
+    },
+    {
+      "name": "en-ai-ml-01-ai-ml-workloads-5",
+      "layoutPassed": true,
+      "pngSha256": "3fb422388b52504fe252782dcd4b335a1ef41cb09248cfbcad5f52238ef268fc",
+      "htmlSha256": "07cd90eadca9b4425d05dd87dd719fbe15c790e63fb7709615169e13baf90a90"
+    },
+    {
+      "name": "en-ai-ml-01-ai-ml-workloads-6",
+      "layoutPassed": true,
+      "pngSha256": "b63eb22c56d2a2edad76b350f19b0bb1f136e53f93fddbf714f65dc0453973dd",
+      "htmlSha256": "c9fced588cfd86677239b5685d4e35fce49a595811fda9dd627a9fb856acc3b2"
+    }
+  ],
+  "sources": [
+    {
+      "file": "gpu-operator-release.json",
+      "url": "https://api.github.com/repos/NVIDIA/gpu-operator/releases/latest",
+      "status": 200
+    },
+    {
+      "file": "device-plugin-release.json",
+      "url": "https://api.github.com/repos/NVIDIA/k8s-device-plugin/releases/latest",
+      "status": 200
+    },
+    {
+      "file": "device-plugin-readme.md",
+      "url": "https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/main/README.md",
+      "status": 200
+    },
+    {
+      "file": "fsx-release.json",
+      "url": "https://api.github.com/repos/kubernetes-sigs/aws-fsx-csi-driver/releases/latest",
+      "status": 200
+    },
+    {
+      "file": "fsx-parameters.md",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-fsx-csi-driver/master/docs/parameters.md",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "file": "k8s-gpu.html",
+      "url": "https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/",
+      "status": 200
+    },
+    {
+      "file": "eks-accelerated.html",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/ml-eks-optimized-ami.html",
+      "status": 200
+    },
+    {
+      "file": "efs-throughput.html",
+      "url": "https://docs.aws.amazon.com/efs/latest/ug/performance.html",
+      "status": 200
+    },
+    {
+      "file": "ec2-g4.html",
+      "url": "https://aws.amazon.com/ec2/instance-types/g4/",
+      "status": 200
+    },
+    {
+      "file": "device-plugin-0.20-readme.md",
+      "url": "https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.20.0/README.md",
+      "status": 200
+    },
+    {
+      "file": "fsx-tree.json",
+      "url": "https://api.github.com/repos/kubernetes-sigs/aws-fsx-csi-driver/git/trees/v1.10.0?recursive=1",
+      "status": 200
+    },
+    {
+      "file": "gpu-operator-tree.json",
+      "url": "https://api.github.com/repos/NVIDIA/gpu-operator/git/trees/v26.7.0?recursive=1",
+      "status": 200
+    },
+    {
+      "file": "gpu-operator-eks.html",
+      "url": "https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/amazon-eks.html",
+      "status": 200
+    },
+    {
+      "file": "k8s-hpa.html",
+      "url": "https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/",
+      "status": 200
+    },
+    {
+      "file": "fsx-docs_README.md",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-fsx-csi-driver/v1.10.0/docs/README.md",
+      "status": 200
+    },
+    {
+      "file": "fsx-examples_kubernetes_static_provisioning_specs_pv.yaml",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-fsx-csi-driver/v1.10.0/examples/kubernetes/static_provisioning/specs/pv.yaml",
+      "status": 200
+    },
+    {
+      "file": "fsx-examples_kubernetes_static_provisioning_specs_claim.yaml",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-fsx-csi-driver/v1.10.0/examples/kubernetes/static_provisioning/specs/claim.yaml",
+      "status": 200
+    },
+    {
+      "file": "fsx-examples_kubernetes_dynamic_provisioning_specs_storageclass.yaml",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-fsx-csi-driver/v1.10.0/examples/kubernetes/dynamic_provisioning/specs/storageclass.yaml",
+      "status": 200
+    },
+    {
+      "file": "fsx-examples_kubernetes_efa_README.md",
+      "url": "https://raw.githubusercontent.com/kubernetes-sigs/aws-fsx-csi-driver/v1.10.0/examples/kubernetes/efa/README.md",
+      "status": 200
+    },
+    {
+      "file": "secrets.html",
+      "url": "https://kubernetes.io/docs/concepts/configuration/secret/",
+      "status": 200
+    },
+    {
+      "file": "rbac.html",
+      "url": "https://kubernetes.io/docs/reference/access-authn-authz/rbac/",
+      "status": 200
+    },
+    {
+      "file": "networkpolicy.html",
+      "url": "https://kubernetes.io/docs/concepts/services-networking/network-policies/",
+      "status": 200
+    },
+    {
+      "file": "deprecations.html",
+      "url": "https://kubernetes.io/docs/reference/using-api/deprecation-guide/",
+      "status": 200
+    },
+    {
+      "file": "api__v1_openapi.json",
+      "bytes": 2128765,
+      "status": 200,
+      "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.2/api/openapi-spec/v3/api__v1_openapi.json"
+    },
+    {
+      "file": "apis__autoscaling__v2_openapi.json",
+      "bytes": 197195,
+      "status": 200,
+      "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.2/api/openapi-spec/v3/apis__autoscaling__v2_openapi.json"
+    }
+  ],
+  "limitations": [
+    "No full local site build or cloud/GPU/model/CSI mount/workload execution.",
+    "Official OpenAPI schema checks do not prove admission/runtime/plugin behavior; site-specific values remain templates.",
+    "All original quiz topics retained; broken duplicate snippets replaced with current guide examples and explicit operating constraints."
+  ]
+}

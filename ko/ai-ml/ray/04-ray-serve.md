@@ -1,65 +1,121 @@
 # Part 4: Ray Serve로 모델 서빙하기
 
-> **지원 버전**: Ray 2.57.0
-> **마지막 업데이트**: 2026년 8월 20일
+> **검토 기준**: Ray 2.58.0 · KubeRay 1.7.0 · 2026-09-12
 
-## 실습 환경 준비
+## 실습 환경 준비와 검증 범위
 
-이 문서의 예제를 따라 하려면 다음 도구와 환경이 필요합니다.
+Python 3.12와 `ray[serve]==2.58.0`으로 작은 CPU 응답 예제를 확인했습니다. 이 환경에서는 HAProxy 관련 module이 Jinja2를 import하지만 extra 설치에 포함되지 않아, `Jinja2==3.1.6`을 추가한 뒤 정상 import됐습니다. 이미 다른 의존성으로 설치된 환경과 구분합니다.
 
-### 필수 도구
+LLM용 `ray[llm]`은 vLLM 등 큰 추론 의존성을 추가합니다. 여기서는 이를 설치하거나 모델 가중치·GPU·EKS를 실행하지 않았습니다. 아래 검증은 Serve 설정, HTTP 응답과 DeploymentHandle 호출에 한정됩니다.
 
-* Python 3.10+
-* 일반적인 Ray Serve 배포에는 `pip install "ray[serve]"`, 아래 Ray Serve LLM 섹션을 따라 하려면 대신 `pip install "ray[llm]"` — `ray[serve]`에는 포함되지 않는 vLLM 등 관련 의존성을 함께 설치합니다
-* RayService 경로를 테스트하려면 정상 동작하는 Amazon EKS 클러스터를 가리키는 kubectl v1.34 이상
-* GPU 기반 모델을 서빙하려면 Karpenter로 프로비저닝한 GPU 지원 `NodePool`/`EC2NodeClass` 쌍
+## Deployment, Application과 요청 경로
 
-## Ray Serve란 무엇인가
+Serve의 **Deployment**는 actor replica를 관리하는 논리 단위이며 Kubernetes Deployment와 다른 개념입니다. 한 Ray Pod 안에 여러 replica actor가 배치될 수 있으므로 replica 수와 Pod 수를 같게 취급하지 않습니다.
 
-[Part 1](01-architecture.md)에서는 actor를 호출 사이에 메모리 상태를 유지하는, 상태를 갖고 주소로 접근 가능한 Ray의 기본 프리미티브로 소개했습니다. Ray Serve는 바로 이 프리미티브 위에 만들어진 모델 서빙 라이브러리입니다. Serve deployment는 Ray actor 하나, 또는 actor replica 그룹으로 구현되고, Ray Serve는 들어오는 HTTP/gRPC 요청을 그 replica들로 라우팅합니다. replica 메모리에 한 번 로드된 모델은 다시 로드하지 않고도 여러 요청에 응답할 수 있는데, 이는 정확히 actor가 설계된 목적에 부합하는 사용 패턴입니다.
+**Application**은 하나 이상의 deployment와 ingress deployment를 포함합니다. DeploymentHandle을 사용해 전처리와 추론 등을 연결할 수 있습니다. 모든 내부 호출이 HTTP를 다시 거치거나 Kubernetes Service를 하나씩 생성하는 구조는 아닙니다.
 
-하나의 deployment는 Ray Serve의 요청 라우터 뒤에 actor replica를 더 추가하는 것만으로 수평 확장됩니다. 이는 Ray에서 actor 기반 서비스가 확장되는 방식과 동일합니다. 더 흥미로운 점은, Ray Serve가 여러 deployment를 하나의 서빙 파이프라인 — application이라 부르는 단위 — 으로 조합할 수 있게 해준다는 것입니다. 흔한 예로 2단계 파이프라인을 들 수 있습니다. 한 deployment가 전처리(토큰화, 이미지 리사이즈, 피처 추출)를 담당하고, 그 출력을 실제 모델 추론을 수행하는 두 번째 deployment로 넘기는 구조입니다. 파이프라인의 각 deployment는 여전히 그 아래에서는 단순히 actor replica 그룹일 뿐이므로, 각각 독립적으로 스케일을 조절하고, 버전을 관리하고, 리소스를 배정할 수 있습니다.
+Controller는 Serve control 상태와 actor 수명주기를 관리합니다. Proxy는 HTTP/gRPC 진입 요청을 받아 적절한 deployment로 전달합니다. 2.58.0의 기본 proxy 위치는 **replica가 있는 node의 `EveryNode`**이며 `HeadOnly`, `Disabled`도 명시적으로 선택할 수 있습니다. 문서의 오래된 “head에 하나가 기본” 설명을 현재 API 기본값으로 사용하지 않습니다.
 
-![Ray Serve의 요청 처리 흐름(클라이언트 → 인그레스 → 전처리·모델 추론 deployment → 응답)과, 그 위에서 replica 수·worker Pod 수·노드 수를 차례로 조정하는 3단계 오토스케일링 체인(Ray Serve Autoscaler → Ray/KubeRay Autoscaler → Karpenter)을 보여준다.](../../.gitbook/assets/ko-ai-ml-ray-04-ray-serve-0.png)
+Proxy 또는 DeploymentHandle의 queue와 replica에 전달된 ongoing 요청을 구분합니다. 요청 처리 함수의 동기/async 동작, blocking 작업, timeout과 취소 전파도 application에서 검토해야 합니다.
 
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-ray-04-ray-serve-0.html)
+## 작은 로컬 HTTP/Handle 예제
 
-## Ray Serve LLM
+다음은 모델 추론이 아닌 응답 API 확인입니다. 검증에서는 private loopback의 비어 있는 port를 사용했고 HTTP 200과 `double(4) == 8`을 확인했습니다.
 
-LLM 서빙은 continuous batching, 토큰 스트리밍, OpenAI 호환 요청 형식 등 그 자체로 하나의 독립된 패턴을 이룰 만큼 특수합니다. Ray는 이를 위한 전용 빌딩 블록으로 `ray.serve.llm` 모듈을 제공합니다. vLLM 엔진 인스턴스를 직접 관리하는 deployment를 손으로 조립하는 대신, `ray.serve.llm`은 앞서 설명한 Ray Serve의 일반적인 deployment 모델 위에 계층화된, LLM 서빙에 특화된 더 높은 수준의 구성 요소를 제공합니다.
+```python
+import requests
+import ray
+from ray import serve
 
-`ray.serve.llm`은 vLLM을 지원 추론 엔진으로 문서화하고 있으며, 그 OpenAI 호환 API는 vLLM 자체의 OpenAI 호환 서버와 최대한 맞춰서 설계되어 있어, 일반적인 `vllm serve` 실행에서 동작하는 대부분의 `engine_kwargs`가 그대로 이어집니다. 실무적으로는, autoscaling, 다중 모델 서빙, Ray의 일반적인 분산 actor 배치 같은 기존 Ray Serve의 프로덕션 기능이 LLM 서빙에도 그대로 적용되고, LLM에 특화된 배선(vLLM 엔진 로딩·구성, OpenAI 호환 엔드포인트 노출)은 직접 만드는 대신 `ray.serve.llm`이 처리해준다는 뜻입니다. 이 영역은 Ray Serve에서도 특히 활발히 발전하는 부분이므로, 구체적인 필드명에 의존하기 전에 `docs.ray.io/en/latest/serve/llm/`의 최신 문서로 실제 구성 항목을 확인하십시오.
+try:
+    ray.init(address="local", num_cpus=2, include_dashboard=False,
+             object_store_memory=80 * 1024 * 1024)
+    serve.start(proxy_location="HeadOnly",
+                http_options={"host": "127.0.0.1", "port": 18080})
 
-## Serve Deployment의 Autoscaling
+    @serve.deployment(num_replicas=1,
+                      ray_actor_options={"num_cpus": 1},
+                      max_ongoing_requests=2, max_queued_requests=4)
+    class Echo:
+        async def __call__(self, request):
+            return {"echo": request.query_params.get("value", "")}
+        def double(self, value):
+            return value * 2
 
-Ray Serve deployment는 [Part 2](02-kuberay-operator.md)에서 다룬 클러스터 수준 autoscaling과는 별개의, 자체 autoscaling 계층을 갖습니다. Ray/KubeRay autoscaler가 RayCluster에 필요한 worker Pod 수를 결정하는 것과 달리, Ray Serve의 autoscaler는 한 단계 위에서 더 좁은 질문에 답합니다. "지금 이 deployment는 실제로 받고 있는 요청 부하를 기준으로 몇 개의 replica가 필요한가?"라는 질문입니다. Ray Serve는 replica당 진행 중인 요청 수(대기 중 + 처리 중)를 목표값과 비교해, 설정된 최소·최대 replica 수 범위 안에서 실제 부하가 목표값에 가깝도록 replica 수를 늘리거나 줄입니다.
+    handle = serve.run(Echo.bind(), name="echo", route_prefix="/echo")
+    response = requests.get("http://127.0.0.1:18080/echo",
+                            params={"value": "fixture"}, timeout=15)
+    assert response.status_code == 200
+    assert response.json() == {"echo": "fixture"}
+    assert handle.double.remote(4).result(timeout_s=15) == 8
+finally:
+    serve.shutdown()
+    ray.shutdown()
+```
 
-이로써 EKS에서 실행되는 Serve application에도 이 문서 사이트에서 이제 익숙해진 3단계 autoscaling 구조가 그대로 적용됩니다.
+Port 18080이 비어 있는 별도 실습 process에서 실행합니다. Ray 논리 자원과 object store 설정은 전체 OS memory/CPU 제한이 아닙니다. `serve.shutdown()`은 연결된 Serve instance를 종료하므로 공유 운영 cluster에서 예제 cleanup을 실행하지 않습니다.
 
-1. **Ray Serve의 autoscaler**가 요청 부하를 기준으로 각 deployment에 필요한 actor replica 수를 결정합니다.
-2. [Part 2](02-kuberay-operator.md)에서 다룬 **Ray/KubeRay autoscaler**가, Ray Serve autoscaler가 방금 요청한 replica를 포함해 대기 중인 actor 배치를 기준으로 하위 RayCluster에 필요한 worker Pod 수를 결정합니다.
-3. **Karpenter**가 그 worker Pod들을 실제로 실행할 EC2 노드 수를 결정합니다. [Karpenter](../../autoscaling/02-karpenter.md)에서 설명한 것과 동일한 메커니즘입니다.
+## Replica 수, autoscaling과 backpressure
 
-각 계층은 바로 아래 계층만 봅니다. Ray Serve의 autoscaler는 새 replica가 기존 노드에 배치되는지, 새 노드를 유발하는지 전혀 알지 못합니다. 그저 replica를 더 요청할 뿐입니다. 그 요청이 실제로 새 EC2 노드로 이어지는지, 그리고 그게 얼마나 걸리는지는 한 단계 더 아래에 있는 Karpenter의 몫입니다.
+2.58.0에서 확인한 기본값을 구분합니다.
 
-## GPU 추론
+| 구성 | 확인한 값·의미 |
+|---|---|
+| 기본 Deployment | replica 1, autoscaling 미설정 |
+| `num_replicas="auto"` | min 1, max 100, target ongoing 2를 적용 |
+| 직접 `AutoscalingConfig()` | min 1, **max 1**; max를 명시하지 않으면 확대가 제한됨 |
+| `max_ongoing_requests` | replica에 응답 없이 보낼 수 있는 요청 상한; 기본 5 |
+| `max_queued_requests` | **각 caller**(proxy/handle)의 대기열 상한; 기본 -1(무제한) |
+| scale 지연 | 기본 upscale 30초, downscale 600초; 실제 준비 완료 시간과는 다름 |
 
-GPU가 필요한 모델 추론 deployment는 다른 Ray 워크로드와 동일한 방식으로 GPU를 요청합니다. 즉 [Part 3](03-ray-train-tune.md)에서 Ray Train·Ray Tune worker에 대해 다룬 것과 같은, actor 단위의 일반적인 Ray 리소스 요청 메커니즘을 그대로 사용합니다. Ray Serve는 요청된 GPU 수를 충족할 수 있는 worker에 해당 deployment의 actor replica를 스케줄링하며, [Part 2](02-kuberay-operator.md)에서 다룬 대로 worker group의 Pod spec이야말로 Ray 스케줄러에 GPU 용량을 알리는 실제 근거입니다.
+Autoscaling target은 처리 중·대기 부하를 관측하는 제어 값이며 max ongoing이나 전체 queue 한도와 동일하지 않습니다. Queue limit을 넘으면 handle은 BackPressureError, HTTP는 기본 503으로 거부할 수 있습니다. HTTP 거부 응답은 별도 backpressure 설정으로 바꿀 수 있습니다.
 
-이 지점에서 Ray Serve의 autoscaling과 Karpenter의 노드 프로비저닝 소요 시간은 이 사이트의 다른 GPU 워크로드와 정확히 같은 방식으로 상호작용합니다. Ray Serve의 autoscaler가 추론 deployment에 replica가 더 필요하다고 판단했는데 기존 GPU worker Pod에 여유가 없다면, 그 replica 요청은 대기 중인 Pod가 되고, Karpenter가 새 GPU 기반 EC2 노드를 프로비저닝해야 비로소 그 replica가 실제로 트래픽을 서빙할 수 있게 됩니다. GPU replica 수를 적극적으로 스케일하는 서빙 애플리케이션이라면 이 프로비저닝 소요 시간을 감안해야 합니다 — GPU 인스턴스 타입의 노드 프로비저닝 지연에 대한 더 깊은 설명은 [Karpenter](../../autoscaling/02-karpenter.md)를 참고하십시오.
+Min/max, 측정 window·지연, cold start, 모델 로딩, batching과 실제 처리 시간을 함께 조정합니다. `min_replicas=0`의 scale-to-zero는 재시작 지연을 없애지 않습니다. 설정된 replica 목표 수가 모두 준비됐다는 보장도 아닙니다.
 
-## 프로덕션에서의 RayService
+## EKS의 여러 제어 계층
 
-Kubernetes 밖에서 Serve application을 단독으로 실행하는 것은 로컬 개발에는 적합하지만, EKS 프로덕션 배포는 [Part 2](02-kuberay-operator.md)에서 소개한 `RayService` CRD를 사용합니다. RayService는 하위 RayCluster와 그 위에 배포된 Serve application을 하나의 단위로 함께 관리하며, 진행 중인 요청을 끊지 않는 것을 목표로 새 애플리케이션 버전이나 변경된 RayCluster spec을 롤아웃하는 기능을 지원하는 것이 바로 이 리소스입니다 — 이 업그레이드 경로의 성숙도와 전제 조건은 현재 KubeRay 릴리스 노트에서 확인하세요. 이 문서는 RayService의 CRD 동작 방식을 다시 설명하지 않습니다. 자세한 내용은 Part 2를 참고하십시오.
+1. Serve는 요청 부하와 정책에 따라 deployment의 replica 목표를 조정합니다.
+2. Ray는 actor/placement 요구를 배치하고, 켜져 있는 Ray autoscaler와 KubeRay가 필요하면 worker Pod 규모를 조정합니다.
+3. Kubernetes가 Pod를 배치하고 Karpenter 등은 필요할 때 실제 node 용량을 공급합니다.
 
-실무적으로 이는, 이 문서 앞부분에서 설명한 배포 구조 — 각자 자신의 actor replica 수를 autoscaling하는 하나 이상의 deployment로 구성된 application — 가 실제 EKS 클러스터에서 `RayService` 오브젝트가 생명주기를 관리하는 대상이 되며, 그 아래에서는 Ray/KubeRay와 Karpenter의 autoscaling 계층이 다른 RayCluster와 똑같이 동작한다는 뜻입니다.
+**Pending actor가 자동으로 Pending Pod 하나 또는 EC2 node 하나로 변환되는 것은 아닙니다.** 기존 Ray Pod에 여유가 생기면 그곳에 배치될 수도 있고, group 한도·placement·quota 때문에 더 진행하지 못할 수도 있습니다. 각 계층에 전달되는 수요와 준비 상태를 확인합니다.
 
-## 다음 단계
+![HTTP/Handle 요청이 Serve proxy와 deployment replica에 도달하는 경로와, actor 목표·Ray Pod 규모·Kubernetes node 공급을 분리한 구조. Pending actor와 Pod/node 수가 일대일 대응하지 않는다.](../../.gitbook/assets/ko-ai-ml-ray-04-ray-serve-0.png)
 
-이것으로 4부작 Ray 시리즈를 마칩니다. [Part 1](01-architecture.md)은 task, actor, object store라는 Ray의 핵심 프리미티브를 다뤘습니다. [Part 2](02-kuberay-operator.md)는 KubeRay의 `RayCluster`, `RayJob`, `RayService` CRD를 통해 Ray 클러스터를 Kubernetes에서 선언적으로 운영하는 방법과, Ray/KubeRay와 Karpenter로 나뉘는 autoscaling 구조를 다뤘습니다. [Part 3](03-ray-train-tune.md)은 그 클러스터 위에서 이루어지는 분산 학습과 하이퍼파라미터 튜닝을 다뤘습니다. 이번 파트는 Ray Serve로 마무리를 지었습니다. Part 1의 actor 프리미티브 위에 세워진 deployment, 그것들이 조합된 application, 자체 요청 부하 지표로 이루어지는 autoscaling, 그리고 프로덕션에서는 Part 2의 RayService CRD로 처음부터 끝까지 관리되는 흐름까지입니다.
+[인터랙티브 다이어그램](https://www.atomai.click/kubernetes-docs/archmaps/ko-ai-ml-ray-04-ray-serve-0.html)
 
-[메인 페이지로 돌아가기](./README.md)
+## GPU 추론과 Ray Serve LLM
 
-## 퀴즈
+일반 GPU replica는 `ray_actor_options` 등의 Ray 자원 설정을 사용합니다. 실제 GPU device·driver·Pod limit과 Ray의 structured resources/rayStartParams 우선순위를 함께 확인합니다. [Part 2](02-kuberay-operator.md)에서 설명했듯 Pod limit만이 언제나 유일한 값은 아닙니다.
 
-이 장에서 배운 내용을 확인하려면 [주제 퀴즈](../../quizzes/ai-ml/ray/04-ray-serve-quiz.md)를 풀어보세요.
+Ray Serve LLM의 `LLMConfig`, `build_openai_app` 같은 API는 별도 LLM 구성 계층입니다. 2.58.0 문서와 패키지에는 **vLLM과 SGLang backend**가 나타납니다. `ray[llm]`의 확인된 의존성에는 `vllm[audio]==0.26.0`과 NIXL 관련 package가 있으며, 이것이 SGLang의 모든 의존성까지 준비한다는 뜻은 아닙니다.
+
+`model_loading_config`, `deployment_config`, `engine_kwargs`, `server_cls`를 구분합니다. Engine별 field와 지원 조합을 확인하며 모든 `vllm serve` CLI 옵션이 그대로 동작한다고 가정하지 않습니다. 예를 들어 backend마다 tensor-parallel 설정 이름·worker 배치 방식이 다를 수 있습니다. 일부 API는 beta이며 이전 LLMServer/LLMRouter 경로에는 deprecation 안내가 있습니다.
+
+모델 접근 권한·revision·가중치 다운로드, engine/CUDA/driver 호환성, KV cache와 tensor/pipeline parallel 자원도 따로 검증해야 합니다. OpenAI 호환 형식은 인증·보안·모든 기능의 동일성을 보장하지 않습니다. 이 장의 CPU Echo 검증으로 LLM의 성능이나 호환성을 주장하지 않습니다.
+
+## RayService와 운영 업데이트
+
+RayService는 EKS에서 Serve application과 RayCluster의 수명주기를 선언적으로 관리하는 선택지입니다. 모든 운영 배포가 반드시 RayService여야 하는 것은 아닙니다. Application config 변경과 cluster 변경, `NewCluster`와 Gateway 기반 incremental upgrade 전략을 구분합니다.
+
+KubeRay 1.7의 incremental feature gate가 기본 활성이어도 Gateway API/구현, 여유 용량, readiness와 draining 조건을 맞춰야 합니다. 진행 중인 streaming 요청·긴 작업이 제한 시간 안에 종료되는지도 시험합니다. “업데이트하면 항상 요청 손실 0”으로 설명하지 않습니다.
+
+HTTP 설정 같은 cluster-scoped 시작 옵션은 동적 변경에 제한이 있습니다. Deployment 설정 변경도 가벼운 재설정인지 actor 교체인지 확인합니다. 모델을 메모리에 로드한 replica는 재시작·교체 시 초기화 비용과 상태 복구가 필요합니다.
+
+## 접근 제어와 검증 범위
+
+API/Dashboard/Client 진입점, model artifact 접근, application 사용자 인증을 각각 제한합니다. Ray cluster token 설정이나 ClusterIP가 모든 Serve application endpoint의 인증·인가를 자동 제공하지는 않습니다. 요청·응답·prompt·로그에 민감정보를 남기지 않도록 검토하고 queue·timeout·resource 한도를 설정합니다.
+
+이번에 확인한 것은 native 설정/decorator 검증과 작은 단일 노드 HTTP/Handle 실행입니다. Replica autoscaling 부하 시험, GPU/LLM, 다중 노드 장애 전환, RayService 롤아웃은 실행하지 않았습니다.
+
+## 공식 근거
+
+- [Serve 2.58.0](https://docs.ray.io/en/releases-2.58.0/serve/index.html)
+- [Autoscaling](https://docs.ray.io/en/releases-2.58.0/serve/autoscaling-guide.html)
+- [Serve LLM](https://docs.ray.io/en/releases-2.58.0/serve/llm/index.html)
+- [Serve API·proxy 기본값](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/api.py)
+- [Serve configuration](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/config.py)
+- [Replica·queue configuration](https://github.com/ray-project/ray/blob/ray-2.58.0/python/ray/serve/_private/config.py)
+- [KubeRay 1.7](https://github.com/ray-project/kuberay/releases/tag/v1.7.0)
+
+[메인 페이지](README.md) · [퀴즈](../../quizzes/ai-ml/ray/04-ray-serve-quiz.md)

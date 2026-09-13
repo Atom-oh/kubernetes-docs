@@ -1,6 +1,6 @@
 # Kubernetes 버전별 신규 기능과 로드맵
 
-> **지원 버전**: Kubernetes 1.29 - 1.36
+> **기능 이력 범위**: Kubernetes 1.29~1.36; 현재 EKS 지원 범위는 별도 표 참고
 > **마지막 업데이트**: 2026년 7월 15일
 
 Kubernetes는 연 3회 릴리스 주기를 통해 빠르게 진화하고 있으며, 각 버전마다 중요한 기능이 추가되거나 졸업(GA)합니다. 기업 환경에서 EKS 클러스터를 운영하는 팀에게 버전별 변경 사항을 체계적으로 파악하는 것은 안정적인 업그레이드 계획 수립과 새로운 기능의 적시 채택을 위해 필수적입니다.
@@ -62,235 +62,125 @@ Kubernetes 생태계는 빠르게 변화하고 있으며, 매 릴리스마다 �
 
 ## 2. Kubernetes 릴리스 사이클
 
-### 2.1 릴리스 개요
+### 릴리스 주기와 단계
 
-Kubernetes는 매년 3회 메이저 릴리스를 발행합니다. 각 릴리스 주기는 약 15주(약 4개월)이며, 체계적인 개발-테스트-릴리스 파이프라인을 통해 진행됩니다.
+Kubernetes는 보통 약 4개월 간격으로 연 3회 **마이너** 버전을 릴리스합니다. Patch release는 별도로 보통 월 단위로 진행됩니다. Upstream patch branch는 약 14개월 동안 지원되며, 일반 유지보수 약 12개월과 CVE·중대한 오류를 위한 maintenance 약 2개월로 나뉩니다. EKS 출시일부터 계산하는 EKS의 14개월 standard support와는 별개의 기간입니다.
+
+Release team은 enhancement 포함, code freeze, 안정화, release candidate의 일정을 공지합니다. 기존 그림의 “Week 15”는 개략적인 주기이며 고정 일정이나 모든 릴리스에 공통인 주차표가 아닙니다. 대상 릴리스의 일정과 예외 승인 절차를 따릅니다.
 
 ![Kubernetes 연간 릴리스 사이클이 Enhancement Freeze, Code Freeze, 테스트 및 안정화 단계를 거쳐 약 4개월마다 세 차례 릴리스되는 반복 주기를 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-1.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-1.html)
 
-### 2.2 릴리스 주기 상세
+### 기능 성숙도·API 안정성·Feature Gate
 
-각 릴리스 주기는 다음 단계를 거칩니다.
+| 단계 | 해석 |
+|---|---|
+| Alpha | 보통 기본 비활성화이며 동작·API가 바뀌거나 제거될 수 있습니다. 실제 gate와 전제 조건을 확인합니다. |
+| Beta | 검증 범위가 넓어지지만 기본값·호환성은 기능과 버전에 따릅니다. 비활성화 상태로 남는 beta gate도 있습니다. |
+| Stable / GA | API 안정성 정책을 적용합니다. 특정 workload·driver·OS·배포의 안전성을 인증하는 것은 아닙니다. |
 
-| 단계 | 기간 | 설명 |
-|------|------|------|
-| **Enhancements Freeze** | Week 5~6 | 해당 릴리스에 포함될 Enhancement 확정. KEP(Kubernetes Enhancement Proposal)가 승인 상태여야 함 |
-| **Code Freeze** | Week 10~11 | 새로운 기능 코드 병합 중단. 버그 수정만 허용 |
-| **Test Freeze** | Week 12 | 테스트 코드 변경 중단 |
-| **Release Candidate** | Week 13~14 | RC 빌드 생성 및 최종 검증 |
-| **Release** | Week 15 | 공식 릴리스 |
+1.24부터 **새 beta API**는 기본 비활성화되지만, 기존에 활성화된 beta API와 그 새 버전은 다르게 취급합니다. API serving 설정과 feature gate는 관련되어 있지만 같은 개념은 아닙니다. 모든 beta 기능에 opt-in이 필요하거나 stable 기능은 workload 설정 없이 사용할 수 있다고 가정하지 않습니다.
 
-### 2.3 Alpha / Beta / GA 성숙도 모델
+GA API version은 같은 Kubernetes major version 안에서 제거할 수 없습니다. Feature gate 제거 규칙은 별개이며 beta→GA gate의 최소 유예 기간은 6개월 또는 2회 릴리스 중 더 긴 쪽입니다. 실제 제거 버전은 따로 확인해야 합니다. 잠기거나 제거된 gate를 지원되는 비활성화 수단으로 보지 않습니다. 예를 들어 출시된 1.36.2 소스에도 잠긴 `SidecarContainers` gate가 남아 있으므로 1.33 GA가 1.35 제거를 증명하지는 않습니다.
 
-Kubernetes의 모든 새 기능은 단계적 성숙도 모델을 통해 진행됩니다. 이 모델은 안정성과 하위 호환성에 대한 보증 수준을 나타냅니다.
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     기능 성숙도 모델                               │
-├──────────┬──────────────┬──────────────┬───────────────────────┤
-│ 단계      │ Feature Gate │ 기본 활성화     │ 보증                   │
-├──────────┼──────────────┼──────────────┼───────────────────────┤
-│ Alpha    │ 비활성 (Off)   │ ✗            │ 없음, 언제든 변경/제거 가능 │
-│ Beta     │ 활성 (On)     │ ✓            │ 최소 1 릴리스 유지       │
-│ GA       │ 잠금 (Locked) │ ✓ (항상)      │ 하위 호환성 보장         │
-├──────────┴──────────────┴──────────────┴───────────────────────┤
-│ GA 후 2 릴리스: Feature Gate 제거 (코드에서 삭제)                     │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-#### Alpha 단계
-
-- Feature Gate를 명시적으로 활성화해야 사용 가능
-- API 스키마나 동작이 예고 없이 변경될 수 있음
-- 프로덕션 환경에서 사용 비권장
-- 주로 개발/테스트 클러스터에서 검증 목적으로 활용
+다음은 **과거 버전의 설정 조각**으로, 완전한 KubeletConfiguration이나 EKS 컨트롤 플레인 변경이 아닙니다. 현재 노드에는 해당 버전이 지원하는 설정을 사용하며 제거된 gate를 새 bootstrap 파일에 복사하지 않습니다.
 
 ```yaml
-# Feature Gate 활성화 예시 (kube-apiserver)
-apiVersion: v1
-kind: Pod
-metadata:
-  name: kube-apiserver
-  namespace: kube-system
-spec:
-  containers:
-  - command:
-    - kube-apiserver
-    - --feature-gates=InPlacePodVerticalScaling=true
-    # Alpha 기능을 명시적으로 활성화
+# Historical fragment for a self-managed Kubernetes 1.33 test node.
+# Merge through the supported node bootstrap/configuration mechanism.
+featureGates:
+  InPlacePodVerticalScaling: true
+  UserNamespacesSupport: true
 ```
 
-#### Beta 단계
+EKS 컨트롤 플레인 설정은 AWS가 관리하므로 고객이 kube-apiserver static Pod를 편집하거나 임의 server flag를 넣을 수 없습니다. EKS version FAQ는 alpha 기능을 지원하지 않는다고 명시합니다. Self-managed node의 gate를 바꿔도 제공되지 않는 컨트롤 플레인 API가 활성화되지는 않습니다. AWS의 기능별 안내와 node runtime·OS 조건을 확인합니다.
 
-- 기본적으로 활성화되어 있음
-- API가 안정화되어 있으나 세부 사항이 변경될 수 있음
-- 최소 1개 릴리스 동안 유지 보장
-- 프로덕션 환경에서 신중하게 사용 가능 (단, 변경 가능성 인지 필요)
-
-#### GA (Generally Available) 단계
-
-- Feature Gate가 잠금 상태 (항상 활성화)
-- API의 하위 호환성이 보장됨
-- Kubernetes API Deprecation 정책에 따라 관리
-- 프로덕션 환경에서 안심하고 사용 가능
-
-### 2.4 Feature Gate 관리
-
-Feature Gate는 Kubernetes에서 기능의 활성화/비활성화를 제어하는 핵심 메커니즘입니다.
+Node `configz`는 선택한 kubelet의 설정을 보여 주며 생략된 기본값이나 컨트롤 플레인의 동작을 입증하지 않습니다. `/metrics`에는 적절한 non-resource URL 인가가 필요하고 feature metric이 제공되지 않거나 추가 label을 가질 수 있습니다. 출력 부재·접근 오류를 “비활성화”로 해석하지 않습니다.
 
 ```bash
-# 현재 클러스터에서 활성화된 Feature Gate 확인
-kubectl get --raw /metrics | grep kubernetes_feature_enabled
-
-# 특정 Feature Gate 상태 확인
-kubectl get --raw /metrics | grep "kubernetes_feature_enabled" | grep "InPlacePodVerticalScaling"
-
-# kube-apiserver의 Feature Gate 설정 확인
-kubectl -n kube-system get pod kube-apiserver-<node> -o yaml | grep feature-gates
+# Authorized, read-only diagnostics; these endpoints may be restricted.
+: "${KUBE_CONTEXT:?}"; : "${NODE_NAME:?Choose the actual node}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s \
+  get --raw="/api/v1/nodes/$NODE_NAME/proxy/configz" | jq '.kubeletconfig.featureGates'
 ```
 
-> **참고**: EKS에서는 컨트롤 플레인의 Feature Gate를 직접 설정할 수 없습니다. AWS가 각 EKS 버전에 적합한 Feature Gate를 관리합니다. Beta 이상의 기본 활성화 Feature Gate만 사용할 수 있으며, Alpha 기능은 일반적으로 사용할 수 없습니다.
+```bash
+# Run separately; absence of a metric is not proof that a feature is disabled.
+: "${KUBE_CONTEXT:?}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s get --raw='/metrics' \
+  | awk '/^kubernetes_feature_enabled/ { print }'
+```
 
-### 2.5 SIG (Special Interest Group) 거버넌스
+### SIG와 Enhancement Proposal
 
-Kubernetes의 개발은 약 30개 이상의 SIG(Special Interest Group)에 의해 분산적으로 이루어집니다. 각 SIG는 특정 영역의 기능 개발, 유지보수, 문서화를 담당합니다.
+SIG는 관련 영역을 담당합니다. Node는 runtime·lifecycle, Auth는 인증·인가, Network는 Service routing, Storage는 CSI·volume을 맡으며 Scheduling·Apps·API Machinery·Instrumentation·Autoscaling 등의 SIG가 있습니다. 주요 enhancement의 KEP에는 동기·설계·졸업 기준·테스트·production-readiness 검토가 포함됩니다. 계획한 milestone은 출시 확약이 아니므로 실제 릴리스 API와 gate 이력을 확인합니다.
 
-| SIG | 담당 영역 | 주요 기능 (1.29-1.36) |
-|-----|----------|----------------------|
-| SIG Node | 노드, 컨테이너 런타임, Pod 라이프사이클 | Sidecar Containers, In-Place Pod Resize |
-| SIG Network | 네트워킹, Service, DNS | ServiceCIDR, Topology Aware Routing |
-| SIG Auth | 인증, 인가, 보안 정책 | StructuredAuthorizationConfiguration, ValidatingAdmissionPolicy |
-| SIG Storage | 스토리지, CSI, 볼륨 | VolumeAttributesClass, ReadWriteOncePod |
-| SIG Scheduling | 스케줄링, 리소스 관리 | Pod Scheduling Readiness, Gang Scheduling |
-| SIG Apps | 워크로드 API (Deployment, StatefulSet 등) | Job Success Policy |
-| SIG API Machinery | API 서버, API 확장, CRD | KYAML, CEL Admission |
-| SIG Instrumentation | 메트릭, 로깅, 트레이싱 | Component Health SLI |
-| SIG Autoscaling | HPA, VPA, Cluster Autoscaler | HPA Container Resource Metrics |
-| SIG Cloud Provider | 클라우드 프로바이더 통합 | External Cloud Provider (Out-of-tree) |
-
-### 2.6 KEP (Kubernetes Enhancement Proposal) 프로세스
-
-모든 주요 기능 변경은 KEP를 통해 제안, 검토, 승인됩니다.
-
-![KEP(Kubernetes Enhancement Proposal)가 아이디어에서 초안 작성, SIG 리뷰, 승인 심사를 거쳐 Alpha에서 Beta, GA로 졸업하고 최종적으로 Feature Gate가 제거되기까지의 절차를 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-2.png)
-
-[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-2.html)
-
-KEP 문서에는 다음이 포함됩니다:
-
-- **동기(Motivation)**: 왜 이 기능이 필요한가
-- **제안(Proposal)**: 기능의 설계와 구현 방법
-- **졸업 기준(Graduation Criteria)**: alpha → beta → GA 각 단계의 요구사항
-- **테스트 계획(Test Plan)**: 기능 검증을 위한 테스트 전략
-- **프로덕션 준비(Production Readiness Review)**: 운영 환경 적합성 검토
+[Upstream patch policy](https://kubernetes.io/releases/patch-releases/) · [Feature gates](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) · [Deprecation policy](https://kubernetes.io/docs/reference/deprecation-policy/) · [Kubernetes 1.36.2 gate implementation](https://github.com/kubernetes/kubernetes/blob/v1.36.2/pkg/features/kube_features.go)
 
 ---
 
 ## 3. EKS 버전 지원 매트릭스
 
-### 3.1 EKS 버전 지원 정책 개요
+### 지원 기간과 비용 기준
 
-Amazon EKS는 Kubernetes 업스트림 릴리스를 기반으로 매니지드 환경을 제공하며, 자체적인 버전 지원 정책을 운영합니다.
+| 구분 | EKS 출시일부터의 기간 | 버전 지원 요금 |
+|---|---|---|
+| Standard | 첫 14개월 | 클러스터 시간당 $0.10 |
+| Extended | 이후 12개월 | 클러스터 시간당 총 $0.60 ($0.10 + $0.50) |
+
+이는 공시된 버전 지원 요금이며 전체 클러스터 운영 비용이 아닙니다. Provisioned Control Plane tier·compute·Auto Mode/Hybrid Nodes·다른 capability·storage·network 비용이 추가될 수 있습니다. 동일 요율로 365일 운영하면 클러스터당 $876과 $5,256이며 차액은 $4,380입니다. 월 730시간 예시에서는 $73과 $438입니다. 실제 청구 측정값이 아닌 산술 예시입니다.
+
+### 확인한 지원 일정 — 2026년 9월 12일 기준 (UTC)
+
+| 버전 | Upstream 출시 | EKS 출시 | Standard 종료 | Extended 종료 | 검토일 상태 |
+|---|---|---|---|---|---|
+| 1.31 | 2024-08-13 | 2024-09-26 | 2025-11-26 | 2026-11-26 | Extended |
+| 1.32 | 2024-12-11 | 2025-01-23 | 2026-03-23 | 2027-03-23 | Extended |
+| 1.33 | 2025-04-23 | 2025-05-29 | 2026-07-29 | 2027-07-29 | Extended |
+| 1.34 | 2025-08-27 | 2025-10-02 | 2026-12-02 | 2027-12-02 | Standard |
+| 1.35 | 2025-12-17 | 2026-01-27 | 2027-03-27 | 2028-03-27 | Standard |
+| 1.36 | 2026-04-22 | 2026-06-02 | 2027-08-02 | 2028-08-02 | Standard |
+
+현재 AWS 일정은 1.31~1.36을 제공합니다. 본문의 1.29·1.30은 과거 기능 이력이며 지원되는 배포 대상이 아닙니다. Upstream 1.37 출시만으로 EKS 지원을 추론하지 않습니다. Extended 요금은 표의 standard 종료일 UTC 0시부터 적용됩니다. 변경 전에 실제 일정·API를 다시 확인하며 AWS가 월 단위로만 공지한 향후 날짜는 추정입니다.
+
+일정상 EKS 1.35 출시는 **2026년 1월 27일**, 1.36은 **2026년 6월 2일**입니다. EKS Distro 발표일은 별개의 출시 이벤트이므로 기존의 1월 28일 통합 표기로 EKS 일정을 대신하지 않습니다. 기능별 runtime·admission 조건은 아래 해당 버전 섹션을 참고합니다. EKS 버전 롤백과 컨트롤 플레인 scaling·SLA는 [EKS 업그레이드](08-eks-upgrades.md)에서 다룹니다.
+
+```bash
+# Read-only when executed with your normal authorized AWS identity.
+: "${AWS_REGION:?Choose the intended Region}"
+aws eks describe-cluster-versions --region "$AWS_REGION" --no-cli-pager \
+  --query clusterVersions --output json
+```
+
+첫 배열 원소를 최신 버전으로 가정하거나 과거 예시의 status를 재사용하지 않고 서비스가 반환하는 버전 기록을 조회합니다. 감사에서는 AWS query를 실행하지 않았습니다.
+
+### Upgrade policy와 자동 업그레이드
+
+기본 cluster upgrade policy는 `EXTENDED`입니다. `STANDARD`를 선택하면 standard support 종료 후 자동 업그레이드될 수 있으므로 extended까지 유지할지는 비용·수명주기 관점에서 결정합니다. Extended 종료 후 EKS는 남은 컨트롤 플레인을 지원 버전으로 점진적으로 업그레이드합니다. AWS는 정확한 실행 시점을 약속하지 않으며 해당 자동 업데이트 직전 알림도 제공하지 않는다고 명시합니다. 최소 60일 전 고지는 **standard support 종료일**에 대한 고지이지 extended 종료 후 새 60일 유예나 60/30/7일 순차 알림 보장이 아닙니다.
+
+Managed node group·self-managed node·Fargate Pod·Hybrid Node는 각각의 업데이트·교체 절차가 필요합니다. Auto Mode node는 자동 갱신될 수 있으며 일반적으로 설치한 add-on은 호환성과 소유권을 별도로 검토합니다. 지원 가능한 최대 skew를 목표로 삼지 말고 가능한 한 node와 컨트롤 플레인 버전을 맞춥니다. 컨트롤 플레인 버전 문자열뿐 아니라 실제 update 상태와 workload readiness를 확인합니다. Extended 종료로 자동 업그레이드된 클러스터에는 EKS의 7일 native rollback을 사용할 수 없습니다. 자격 조건과 node-first rollback 순서는 업그레이드 문서를 따릅니다.
+
+[EKS support calendar and FAQ](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) · [EKS pricing](https://aws.amazon.com/eks/pricing/)
+
+<!-- Parent diagram repair pending: stage/default guarantees and support status/notification timing are stale.
+![KEP(Kubernetes Enhancement Proposal)가 아이디어에서 초안 작성, SIG 리뷰, 승인 심사를 거쳐 Alpha에서 Beta, GA로 졸업하고 최종적으로 Feature Gate가 제거되기까지의 절차를 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-2.png)
+
+[🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-2.html)
 
 ![EKS 버전 지원 체계가 Standard Support(14개월, $0.10/cluster/hour)에서 Extended Support(+12개월, $0.60/cluster/hour)를 거쳐 지원 종료(End of Life)로 이어지는 3단계 흐름과, Extended 진입 전 업그레이드 계획 수립, 종료 60일 전 AWS 사전 알림, 종료일 컨트롤 플레인 자동 업그레이드(노드 그룹은 수동)를 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-3.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-3.html)
 
-### 3.2 현재 지원 버전 상태 (2026년 9월 기준)
-
-| Kubernetes 버전 | EKS 릴리스 날짜 | Standard Support 종료 | Extended Support 종료 | 현재 상태 |
-|:---:|:---:|:---:|:---:|:---:|
-| 1.29 | 2024년 1월 | 2025년 3월 | 2026년 3월 | **지원 종료** |
-| 1.30 | 2024년 5월 | 2025년 7월 | 2026년 7월 | **지원 종료** |
-| 1.31 | 2024년 9월 | 2025년 11월 | 2026년 11월 | **Extended Support** |
-| 1.32 | 2025년 1월 | 2026년 3월 | 2027년 3월 | **Extended Support** |
-| 1.33 | 2025년 5월 | 2026년 7월 | 2027년 7월 | **Extended Support** |
-| 1.34 | 2025년 10월 | 2026년 12월 | 2027년 12월 | **Standard Support** |
-| 1.35 | 2026년 1월 | 2027년 3월 | 2028년 3월 | **Standard Support** |
-| 1.36 | 2026년 6월 | 2027년 8월 | 2028년 8월 | **Standard Support (최신)** |
-
-출처: [Amazon EKS Kubernetes 릴리스 캘린더](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) (현재 상태 열은 2026년 9월 기준)
-
-> **참고**: 위 날짜는 대략적인 예상이며, 실제 날짜는 AWS 공식 문서를 확인하세요. EKS 릴리스는 upstream Kubernetes 릴리스 후 통상 2~8주 후에 이루어집니다.
-
-### 3.3 버전 라이프사이클 다이어그램
-
 ![Kubernetes 1.29부터 1.36까지 EKS 각 버전의 Standard Support와 Extended Support 종료 시점, 그리고 2026년 9월 기준 지원 상태를 버전 순서대로 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-4.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-4.html)
-
-### 3.4 Standard Support vs Extended Support 비용 비교
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    EKS 버전 지원 비용 구조                                 │
-├───────────────────┬────────────────────┬────────────────────────────────┤
-│                   │ Standard Support   │ Extended Support               │
-├───────────────────┼────────────────────┼────────────────────────────────┤
-│ 시간당 비용         │ $0.10/cluster      │ $0.60/cluster                  │
-│ 월간 비용 (1클러스터)│ ~$73               │ ~$438                          │
-│ 연간 비용 (1클러스터)│ ~$876              │ ~$5,256                        │
-│ 월간 비용 (10클러스터)│ ~$730             │ ~$4,380                        │
-│ 연간 비용 (10클러스터)│ ~$8,760           │ ~$52,560                       │
-├───────────────────┼────────────────────┼────────────────────────────────┤
-│ 비용 대비 6배       │ 기본               │ Standard 대비 6배 비용           │
-├───────────────────┴────────────────────┴────────────────────────────────┤
-│ 권장: Extended Support에 진입하기 전에 업그레이드 계획 수립                    │
-│       10개 클러스터 운영 시 Extended 1년 = 추가 $43,800                     │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-### 3.5 EOL(End of Life) 시 자동 업그레이드 동작
-
-Extended Support 기간이 종료되면 EKS는 자동으로 클러스터를 다음 지원 버전으로 업그레이드합니다.
 
 ![Extended Support 종료 시점이 다가오면 AWS EKS가 관리자에게 단계적으로 알림을 보내고, 종료일에 컨트롤 플레인만 자동 업그레이드되며 노드 그룹은 관리자가 수동으로 업그레이드해야 함을 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-5.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-5.html)
 
-**자동 업그레이드의 위험성:**
-
-- 컨트롤 플레인만 자동 업그레이드되며, 노드 그룹은 그대로 유지됨
-- 버전 스큐(skew) 정책에 따라 노드는 컨트롤 플레인보다 최대 3개 마이너 버전 낮을 수 있음
-- Deprecated API를 사용하는 매니페스트가 갑자기 동작하지 않을 수 있음
-- 애드온 호환성 문제 발생 가능
-- **권장**: 자동 업그레이드에 의존하지 말고, 반드시 사전에 계획된 업그레이드를 수행
-
-### 3.6 최근 EKS 버전 지원 발표 (2026년)
-
-AWS는 2026년에 EKS 버전 지원과 관련해 다음과 같은 발표를 진행했습니다.
-
-| 발표일 | 내용 | 핵심 요약 |
-|:---:|------|------|
-| 2026-06-02 | EKS & EKS Distro, Kubernetes 1.36 지원 시작 | User Namespaces GA, Mutating Admission Policies, In-Place Pod Vertical Scaling, Resource Health Status, EKS Cluster Insights 사전 점검 |
-| 2026-01-28 | EKS & EKS Distro, Kubernetes 1.35 지원 시작 | In-Place Pod Resource Updates, PreferSameNode Traffic Distribution, Downward API 기반 Node Topology Labels, Image Volumes |
-
-#### Kubernetes 1.36 지원 시작 (2026-06-02)
-
-Amazon EKS와 EKS Distro가 Kubernetes 1.36 지원을 시작했습니다. 발표에서 강조된 기능은 다음과 같습니다 (상세 내용은 4.8절 참조).
-
-- **User Namespaces GA**: 컨테이너의 root 사용자를 호스트의 비특권 사용자로 매핑하여 멀티테넌트 환경의 보안을 강화
-- **Mutating Admission Policies**: CEL 기반으로 동작하며 별도 webhook 서버가 불필요
-- **In-Place Pod Vertical Scaling**: Pod를 재시작하지 않고 CPU/메모리를 조정
-- **Resource Health Status**: Device Health, Hardware Failure 등의 상태를 Pod Status에 노출
-- **EKS Cluster Insights**: 업그레이드 전 Deprecated API 사용 여부와 애드온 호환성을 사전 점검
-
-> 출처: [Amazon EKS Distro Kubernetes version 1.36 지원 발표](https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-eks-distro-kubernetes-version-1-36/)
-
-#### Kubernetes 1.35 지원 시작 (2026-01-28)
-
-Amazon EKS와 EKS Distro가 Kubernetes 1.35 지원을 시작하며 다음 기능이 함께 제공되었습니다.
-
-- **In-Place Pod Resource Updates**: 4.7절의 In-Place Pod Vertical Scaling GA와 동일한 재시작 없는 리소스 조정 기능
-- **PreferSameNode Traffic Distribution**: 동일 노드 내 엔드포인트로 트래픽 우선 라우팅
-- **Node Topology Labels via Downward API**: Downward API를 통해 노드 토폴로지 레이블을 Pod에 노출
-- **Image Volumes**: OCI 이미지를 볼륨으로 마운트하여 데이터·모델 파일을 전달
-
-> 출처: [Amazon EKS Distro Kubernetes version 1.35 지원 발표](https://aws.amazon.com/about-aws/whats-new/2026/01/amazon-eks-distro-kubernetes-version-1-35)
-
-> **관련 발표**: EKS 버전 롤백 지원(2026-07-01)과 컨트롤 플레인 99.99% SLA·8XL 스케일링 티어(2026-03-20)는 업그레이드 프로세스와 직결되는 내용이므로 [EKS 업그레이드 문서](08-eks-upgrades.md)에서 다룹니다.
+-->
 
 ---
 
@@ -300,103 +190,82 @@ Amazon EKS와 EKS Distro가 Kubernetes 1.35 지원을 시작하며 다음 기능
 
 ### 4.1 Kubernetes 1.29 "Mandala" (2023년 12월)
 
-Kubernetes 1.29는 코드네임 "Mandala"(Universe)로, 49개의 Enhancement를 포함합니다. 이 중 11개가 Stable(GA), 19개가 Beta, 19개가 Alpha로 졸업했습니다.
+2023년 12월 13일 릴리스 발표의 수치는 **49개 enhancement: stable 11개, beta 19개, alpha 19개**입니다. 과거 릴리스 통계이며 EKS 1.29가 현재 지원된다는 뜻이 아닙니다. 그림의 기본값·production 표기는 일반화된 설명이므로 위의 기능별 gate 이력과 runtime 조건을 함께 확인합니다.
 
 ![Kubernetes 1.29 "Mandala" 릴리스의 전체 49개 Enhancement가 Stable(GA) 11개, Beta 19개, Alpha 19개로 나뉘어 성숙도 단계별로 분포하고 각 단계의 대표 기능이 무엇인지 보여준다.](../.gitbook/assets/ko-eks-12-kubernetes-version-roadmap-6.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-12-kubernetes-version-roadmap-6.html)
 
-#### 핵심 GA 기능
+#### KMS v2 저장 시 암호화 — GA
 
-##### KMS v2 GA (KEP-3299)
+KMS v2는 secret seed에서 일회용 data encryption key를 파생하고 seed 보호·교체 시 KMS plugin을 사용하여 매 object 쓰기마다 원격 암호화를 요구하지 않도록 envelope encryption 성능을 개선합니다. Envelope encryption의 data-encryption·key-encryption 계층은 v1에도 있으므로 v1을 “단일 계층”으로 설명하면 안 됩니다. 개선이 일정한 latency를 보장하지는 않습니다.
 
-Kubernetes Secrets의 저장 시 암호화(Encryption at Rest)를 위한 KMS(Key Management Service) v2 프로바이더가 GA로 졸업했습니다.
+KMS v1은 1.28에서 deprecated, 1.29에서 기본 비활성화되었습니다. 현재 upstream KMS 문서에도 legacy 구현이 설명되어 있으므로 기존의 “1.31에서 제거”는 잘못된 설명입니다. 지원되는 v2 마이그레이션 경로를 우선합니다.
 
-**변경 사항:**
-- KMS v2 API가 안정화되어 프로덕션 사용에 적합
-- v1 대비 성능 향상: DEK(Data Encryption Key) 캐싱으로 KMS 호출 횟수 대폭 감소
-- Health check 및 Status API 추가
-- v1 API는 Deprecated (1.31에서 제거 예정)
+아래는 관리자가 운영하는 upstream API server에 검토한 v2 plugin을 지정한 socket으로 설치한 경우의 설정이며 **EKS 컨트롤 플레인 매니페스트가 아닙니다**. V2는 `cachesize`를 받지 않습니다. 마지막 `identity` provider는 마이그레이션 중 기존 평문을 읽기 위한 것으로, 첫 provider의 쓰기 암호화 실패 시 평문 fallback이 아닙니다. 암호화 마이그레이션을 검토하고 완료를 검증한 뒤 평문 읽기 허용을 제거합니다.
 
 ```yaml
-# KMS v2 암호화 설정 예시
 apiVersion: apiserver.config.k8s.io/v1
 kind: EncryptionConfiguration
 resources:
-  - resources:
-      - secrets
-    providers:
-      - kms:
-          apiVersion: v2       # v2 사용
-          name: aws-encryption-provider
-          endpoint: unix:///var/run/kmsplugin/socket.sock
-          cachesize: 1000       # DEK 캐시 크기
-          timeout: 3s
-      - identity: {}           # 암호화 실패 시 평문 폴백
+- resources:
+  - secrets
+  providers:
+  - kms:
+      apiVersion: v2
+      name: reviewed-kms-provider
+      endpoint: unix:///var/run/kmsplugin/socket.sock
+      timeout: 3s
+  - identity: {}
 ```
 
-**EKS 영향:** EKS는 기본적으로 AWS KMS를 사용한 envelope encryption을 지원하며, EKS 1.29부터 KMS v2 프로바이더가 기본으로 활성화됩니다.
+**EKS 구분:** 현재 AWS 안내는 EKS 1.28 이상에서 모든 Kubernetes API data에 KMS v2 envelope encryption을 기본 제공하며 customer-managed key를 설정하지 않으면 AWS-owned key를 사용합니다. Secrets·ConfigMaps 같은 API data에 적용되고 node나 EBS volume의 임의 data까지 암호화하는 것은 아닙니다. EKS 1.29부터 시작한다고 추론하거나 위 upstream 설정을 EKS에 적용하지 않습니다.
 
-##### ReadWriteOncePod PV Access Mode GA (KEP-2485)
+#### ReadWriteOncePod — GA
 
-PersistentVolume에 대해 단일 Pod 전용 접근 모드(ReadWriteOncePod)가 GA로 졸업했습니다.
+`ReadWriteOncePod`는 클러스터 전체에서 PVC를 한 Pod로 제한합니다. `ReadWriteOnce`는 한 node의 여러 Pod가 접근할 수 있습니다. RWOP에는 호환되는 CSI volume·driver가 필요하며 upstream 최소 sidecar는 csi-provisioner 3.0.0, csi-attacher 3.3.0, csi-resizer 1.3.0입니다. 이는 기능 최소 조건이지 현재 권장 release가 아닙니다. 실제 클러스터와 provisioner가 지원하는 버전을 선택합니다.
+
+예시는 기존 `version-lab` namespace와 적합한 `reviewed-csi-class`를 필요로 합니다. Access mode 조정은 privileged host 접근을 막는 kernel 보안 경계나 DB leader election이 아니며 앱 fencing·backup을 대신하지 않습니다.
 
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: database-pvc
+  namespace: version-lab
 spec:
   accessModes:
-    - ReadWriteOncePod    # 단일 Pod에서만 읽기/쓰기 가능
+  - ReadWriteOncePod
+  storageClassName: reviewed-csi-class
   resources:
     requests:
       storage: 100Gi
-  storageClassName: gp3-csi
 ```
 
-**기존 ReadWriteOnce와의 차이:**
+#### 주요 beta·alpha 기능
 
-| 접근 모드 | 범위 | 사용 사례 |
-|----------|------|----------|
-| ReadWriteOnce (RWO) | 단일 노드의 여러 Pod | 일반적인 단일 쓰기 워크로드 |
-| ReadWriteOncePod (RWOP) | 단일 Pod 전용 | 데이터베이스, 리더 선출이 필요한 워크로드 |
+| 기능 | 1.29 상태 | 의미 |
+|---|---|---|
+| SidecarContainers | Beta, 기본 활성화 | 재시작 가능한 init container. Alpha는 1.28, GA는 1.33 |
+| NFTablesProxyMode | Alpha, 기본 비활성화 | Linux Service proxy backend. Kernel·CNI·NodePort 동작 확인 필요 |
+| LoadBalancerIPMode | Alpha | Controller가 보고하는 LoadBalancer ingress status mode이며 임의 Pod 필드가 아님 |
+| PodSchedulingReadiness | Beta | Scheduling gate로 scheduler의 검토를 보류 |
+| NodeLogQuery | Alpha | 해당 kubelet 설정·접근 권한 필요 |
+| KubeletTracing | Beta | 1.29 GA가 아니며 GA는 1.34 |
+| MinDomainsInPodTopologySpread | Beta | 1.30에서 GA |
 
-**실무 활용:** 데이터베이스처럼 반드시 단일 인스턴스만 볼륨에 접근해야 하는 워크로드에서 RWOP를 사용하면, 동일 노드 내 다른 Pod의 볼륨 접근을 커널 레벨에서 차단할 수 있습니다.
-
-##### Sidecar Containers Beta 도입 (KEP-753)
-
-Native Sidecar Containers가 beta로 처음 도입되었습니다. `restartPolicy: Always`를 가진 init container로 정의하며, Pod의 전체 수명 동안 실행됩니다.
+Native sidecar는 아래 **Pod spec 조각**처럼 정의합니다. 예시 image를 검토한 구현으로 바꾸고 실제 log pipeline을 설정해야 합니다. 설치된 Fluent Bit 배포가 아닙니다. Sidecar 시작과, 있을 경우 startup probe 성공 후 다음 시작 단계로 진행합니다. Readiness·정상 종료에는 적절한 probe·앱 동작·충분한 termination budget이 필요합니다.
 
 ```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: app-with-sidecar
-spec:
-  initContainers:
-    - name: log-collector
-      image: fluent-bit:latest
-      restartPolicy: Always    # 이 설정이 sidecar를 만듦
-      resources:
-        requests:
-          cpu: 100m
-          memory: 128Mi
-  containers:
-    - name: main-app
-      image: my-app:v1.0
+initContainers:
+- name: log-helper
+  image: example.invalid/version-lab/log-helper:reviewed
+  restartPolicy: Always
 ```
 
-> **참고**: Sidecar Containers는 1.28에서 Alpha, 1.29에서 Beta로 승격되었으며, 이후 1.33에서 GA로 졸업합니다. 상세 내용은 1.33 섹션을 참조하세요.
+이 릴리스에서 CSI `NodeExpandSecret`도 GA가 되어 driver의 node-side 확장 요청에 적절한 credential을 전달할 수 있습니다. Deprecated `flowcontrol.apiserver.k8s.io/v1beta2` endpoint는 1.29에서 serving이 중단되었으므로 stable `v1` API와 필드 변경을 검토합니다. `SecurityContextDeny`는 그 전에 deprecated되었고 1.30에서 제거되었으며 1.29에서 새로 deprecated된 것이 아닙니다. 여기서 모든 환경에 공통인 “Service 5,000개” 성능 경계나 proxy benchmark를 측정하지 않았습니다.
 
-#### 기타 주요 변경 사항 (1.29)
-
-| 기능 | 단계 | 설명 |
-|------|------|------|
-| nftables kube-proxy 모드 | Alpha | iptables 대신 nftables 사용 |
-| Node Log Query | Alpha | kubelet API를 통한 노드 로그 조회 |
-| Pod Scheduling Readiness | Beta | Pod가 스케줄링 준비 완료를 명시적으로 표시 |
-| Load Balancer IP Mode | Beta | LoadBalancer Service의 IP 모드 설정 |
+[Kubernetes 1.29 release](https://kubernetes.io/blog/2023/12/13/kubernetes-v1-29-release/) · [KMS provider](https://kubernetes.io/docs/tasks/administer-cluster/kms-provider/) · [EKS envelope encryption](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html) · [Persistent volumes and RWOP](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) · [API migration guide](https://kubernetes.io/docs/reference/using-api/deprecation-guide/)
 
 ---
 

@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/ai-ml/kubeflow/05-training-operator.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "5333b6f7ea951216180ff31cf780a919edfb643ba6cfd67444dd44baa8c3db51",
+    "summary": "Reviewed2.2baseline/2.3upgrade; native OCI chart+16runtime/2TrainJob schema checks; corrected alpha status gate/default-off, optional gang policy, Pod/process/node counts, runtime hooks/CRD changes and limited migration-guide scope."
+  },
+  {
+    "path": "ko/quizzes/ai-ml/kubeflow/05-training-operator-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "37f7cd2c853f3fcf7917ac298706021f9cf2bd62899681457c82f698311d5d83",
+    "summary": "Reviewed2.2baseline/2.3upgrade; native OCI chart+16runtime/2TrainJob schema checks; corrected alpha status gate/default-off, optional gang policy, Pod/process/node counts, runtime hooks/CRD changes and limited migration-guide scope."
+  },
+  {
+    "path": "en/ai-ml/kubeflow/05-training-operator.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "346705687d40df29dccfabe52d680d20ae44023bd61a525f1158f90de32b6a97",
+    "summary": "Reviewed2.2baseline/2.3upgrade; native OCI chart+16runtime/2TrainJob schema checks; corrected alpha status gate/default-off, optional gang policy, Pod/process/node counts, runtime hooks/CRD changes and limited migration-guide scope."
+  },
+  {
+    "path": "en/quizzes/ai-ml/kubeflow/05-training-operator-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "5f053f1626aef4521561f62648e34ba1a5eeca237a905d84b95a05d850eafee3",
+    "summary": "Reviewed2.2baseline/2.3upgrade; native OCI chart+16runtime/2TrainJob schema checks; corrected alpha status gate/default-off, optional gang policy, Pod/process/node counts, runtime hooks/CRD changes and limited migration-guide scope."
+  }
+]

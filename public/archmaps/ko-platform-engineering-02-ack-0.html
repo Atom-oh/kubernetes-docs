@@ -5036,11 +5036,12 @@
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="user" data-edge-to="cr" data-edge-label="YAML 적용" data-edge-key="0" data-edge-id="apply-yaml" data-composition-points="220,250;290,250" d="M 220 250 L 290 250" class="a-emphasis" data-animate="edge" style="--step:0" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="cr" data-edge-to="controller" data-edge-label="감시(Watch)" data-edge-key="1" data-edge-id="watch" data-composition-points="470,250;540,250" d="M 470 250 L 540 250" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="controller" data-edge-to="crd" data-edge-label="조정(Reconcile)" data-edge-key="2" data-edge-id="reconcile" data-composition-points="640,220;640,124" d="M 640 220 L 640 124" class="a-dashed" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="cr" data-edge-to="controller" data-edge-label="CR 변경 알림" data-edge-key="1" data-edge-id="watch" data-composition-points="470,250;540,250" d="M 470 250 L 540 250" class="a-emphasis" data-animate="edge" style="--step:1" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path data-edge-from="crd" data-edge-to="cr" data-edge-label="API schema" data-edge-key="2" data-edge-id="reconcile" data-composition-points="530,92;380,92;380,220" d="M 530 92 L 388 92 Q 380 92 380 100 L 380 220" class="a-dashed" data-animate="edge" style="--step:2" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
         <path data-edge-from="controller" data-edge-to="awsapi" data-edge-label="생성 / 업데이트 / 삭제" data-edge-key="3" data-edge-id="cud" data-composition-points="740,250;920,250" d="M 740 250 L 920 250" class="a-emphasis" data-animate="edge" style="--step:3" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
         <path data-edge-from="awsapi" data-edge-to="awsres" data-edge-label="관리" data-edge-key="4" data-edge-id="manage" data-composition-points="1007,280;1007,400" d="M 1007 280 L 1007 400" class="a-emphasis" data-animate="edge" style="--step:4" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path data-edge-from="awsapi" data-edge-to="controller" data-edge-label="상태 모니터링" data-edge-key="5" data-edge-id="status" data-composition-points="993,280;993,304;640,304;640,280" d="M 993 280 L 993 296 Q 993 304 985 304 L 648 304 Q 640 304 640 296 L 640 280" class="a-dashed" data-animate="edge" style="--step:5" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="awsapi" data-edge-to="controller" data-edge-label="AWS 응답" data-edge-key="5" data-edge-id="status" data-composition-points="993,280;993,304;647,304;647,280" d="M 993 280 L 993 296 Q 993 304 985 304 L 655 304 Q 647 304 647 296 L 647 280" class="a-dashed" data-animate="edge" style="--step:5" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path data-edge-from="controller" data-edge-to="cr" data-edge-label="status 갱신" data-edge-key="6" data-edge-id="status-update" data-composition-points="633,280;633,304;380,304;380,280" d="M 633 280 L 633 296 Q 633 304 625 304 L 388 304 Q 380 304 380 296 L 380 280" class="a-dashed" data-animate="edge" style="--step:6" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
 
         <!-- Components -->
         <g id="node-user" data-node-id="user" data-node-label="Kubernetes 사용자 / 운영자" tabindex="0" role="button" aria-label="Focus Kubernetes 사용자 / 운영자, kubectl apply, Architecture component" aria-pressed="false" data-node-kind="external" data-node-sublabel="kubectl apply" data-node-context="Architecture component">
@@ -5055,21 +5056,21 @@
         <text data-detail="context" x="125" y="264" class="t-muted" font-size="9" text-anchor="middle">kubectl apply</text>
         </g>
 
-        <g id="node-cr" data-node-id="cr" data-node-label="Custom Resources" tabindex="0" role="button" aria-label="Focus Custom Resources, AWS 리소스 인스턴스, Kubernetes 클러스터" aria-pressed="false" data-node-kind="backend" data-node-sublabel="AWS 리소스 인스턴스" data-node-context="Kubernetes 클러스터">
-          <title>Custom Resources · AWS 리소스 인스턴스 · Kubernetes 클러스터</title>
+        <g id="node-cr" data-node-id="cr" data-node-label="Custom Resources" tabindex="0" role="button" aria-label="Focus Custom Resources, Kubernetes의 spec / status, Kubernetes 클러스터" aria-pressed="false" data-node-kind="backend" data-node-sublabel="Kubernetes의 spec / status" data-node-context="Kubernetes 클러스터">
+          <title>Custom Resources · Kubernetes의 spec / status · Kubernetes 클러스터</title>
           <rect x="290" y="220" width="180" height="60" rx="6" class="c-mask"/>
           <rect x="290" y="220" width="180" height="60" rx="6" class="c-backend" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(296 226) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
           <text data-node-label="" data-detail-anchor="" x="380" y="248" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Custom Resources</text>
-        <text data-detail="context" x="380" y="264" class="t-muted" font-size="9" text-anchor="middle">AWS 리소스 인스턴스</text>
+        <text data-detail="context" x="380" y="264" class="t-muted" font-size="9" text-anchor="middle">Kubernetes의 spec / status</text>
         </g>
 
         <g id="node-crd" data-node-id="crd" data-node-label="Custom Resource Definitions" tabindex="0" role="button" aria-label="Focus Custom Resource Definitions, AWS 리소스의 Kubernetes API 정의, Kubernetes 클러스터" aria-pressed="false" data-node-kind="backend" data-node-sublabel="AWS 리소스의 Kubernetes API 정의" data-node-context="Kubernetes 클러스터">
           <title>Custom Resource Definitions · AWS 리소스의 Kubernetes API 정의 · Kubernetes 클러스터</title>
           <rect x="530" y="60" width="220" height="64" rx="6" class="c-mask"/>
-          <rect x="530" y="60" width="220" height="64" rx="6" class="c-backend" data-animate="node" style="--step:3" stroke-width="1.5"/>
+          <rect x="530" y="60" width="220" height="64" rx="6" class="c-backend" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(536 66) scale(0.6875)">
             <path d="M6 3 3 8l3 5M10 3l3 5-3 5"/>
           </g>
@@ -5115,13 +5116,13 @@
           <rect x="228.4" y="230" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
           <text x="255" y="240" class="t-backend" font-size="8" text-anchor="middle">YAML 적용</text>
         </g>
-        <g data-detail="context" data-edge-from="cr" data-edge-to="controller" data-edge-label="감시(Watch)" data-edge-key="1" data-edge-id="watch">
-          <rect x="473.6" y="230" width="62.8" height="14" rx="3" class="c-mask"/>
-          <text x="505" y="240" class="t-backend" font-size="8" text-anchor="middle">감시(Watch)</text>
+        <g data-detail="context" data-edge-from="cr" data-edge-to="controller" data-edge-label="CR 변경 알림" data-edge-key="1" data-edge-id="watch">
+          <rect x="471.2" y="230" width="67.6" height="14" rx="3" class="c-mask"/>
+          <text x="505" y="240" class="t-backend" font-size="8" text-anchor="middle">CR 변경 알림</text>
         </g>
-        <g data-detail="context" data-edge-from="controller" data-edge-to="crd" data-edge-label="조정(Reconcile)" data-edge-key="2" data-edge-id="reconcile">
-          <rect x="599" y="200" width="82" height="14" rx="3" class="c-mask"/>
-          <text x="640" y="210" class="t-messagebus" font-size="8" text-anchor="middle">조정(Reconcile)</text>
+        <g data-detail="context" data-edge-from="crd" data-edge-to="cr" data-edge-label="API schema" data-edge-key="2" data-edge-id="reconcile">
+          <rect x="351" y="136" width="58" height="14" rx="3" class="c-mask"/>
+          <text x="380" y="146" class="t-messagebus" font-size="8" text-anchor="middle">API schema</text>
         </g>
         <g data-detail="context" data-edge-from="controller" data-edge-to="awsapi" data-edge-label="생성 / 업데이트 / 삭제" data-edge-key="3" data-edge-id="cud">
           <rect x="772.2" y="230" width="115.6" height="14" rx="3" class="c-mask"/>
@@ -5131,9 +5132,13 @@
           <rect x="992" y="314" width="30" height="14" rx="3" class="c-mask"/>
           <text x="1007" y="324" class="t-backend" font-size="8" text-anchor="middle">관리</text>
         </g>
-        <g data-detail="context" data-edge-from="awsapi" data-edge-to="controller" data-edge-label="상태 모니터링" data-edge-key="5" data-edge-id="status">
-          <rect x="780.3" y="284" width="72.4" height="14" rx="3" class="c-mask"/>
-          <text x="816.5" y="294" class="t-messagebus" font-size="8" text-anchor="middle">상태 모니터링</text>
+        <g data-detail="context" data-edge-from="awsapi" data-edge-to="controller" data-edge-label="AWS 응답" data-edge-key="5" data-edge-id="status">
+          <rect x="795.8" y="284" width="48.4" height="14" rx="3" class="c-mask"/>
+          <text x="820" y="294" class="t-messagebus" font-size="8" text-anchor="middle">AWS 응답</text>
+        </g>
+        <g data-detail="context" data-edge-from="controller" data-edge-to="cr" data-edge-label="status 갱신" data-edge-key="6" data-edge-id="status-update">
+          <rect x="475.1" y="284" width="62.8" height="14" rx="3" class="c-mask"/>
+          <text x="506.5" y="294" class="t-messagebus" font-size="8" text-anchor="middle">status 갱신</text>
         </g>
 
         <!-- Boundary labels (foreground masks keep routes out of titles) -->
@@ -5357,7 +5362,7 @@
         <ul>
           <li>&bull; 서비스 컨트롤러: 각 AWS 서비스에 대한 전용 컨트롤러</li>
           <li>&bull; CRD: AWS 리소스를 Kubernetes API로 정의</li>
-          <li>&bull; CR: AWS 리소스의 인스턴스</li>
+          <li>&bull; CR: AWS 리소스의 원하는 상태와 관찰된 상태</li>
           <li>&bull; 조정 루프: 원하는 상태와 실제 상태의 차이를 감지하고 해결</li>
         </ul>
       </div>
@@ -5372,6 +5377,18 @@
           <li>&bull; 2. ACK 컨트롤러가 CR 변경 사항을 감지</li>
           <li>&bull; 3. 컨트롤러가 AWS API를 호출하여 리소스를 생성, 업데이트, 삭제</li>
           <li>&bull; 4. 컨트롤러가 AWS 리소스 상태를 모니터링하고 Kubernetes 리소스 상태를 업데이트</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-dot amber"></div>
+          <h3>권한과 준비 상태</h3>
+        </div>
+        <ul>
+          <li>&bull; Kubernetes RBAC와 controller의 AWS IAM 권한은 별도</li>
+          <li>&bull; CR 생성 / ResourceSynced가 app readiness를 증명하지 않음</li>
+          <li>&bull; 기본 감시 범위는 cluster이며 namespace 분리만으로 격리되지 않음</li>
         </ul>
       </div>
     </div>

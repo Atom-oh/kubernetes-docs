@@ -1,0 +1,371 @@
+{
+  "reviewedAt": "2026-09-12T19:10:57.451180+00:00",
+  "version": "MLflow3.16.0/community-chart1.11.7",
+  "fullyReadFiles": 4,
+  "quizQuestions": 20,
+  "findings": [
+    "SeparateupstreamSQLitefiledefaultfromchartmemorySQLite;noinstant2userfailureclaim",
+    "Metadata+S3aloneisnotall-featurestatelessHA;separateauthDB/session/queue/cache/migration",
+    "Verifiedchart/app/imageversionseparately;officialsourcechart0.1.1OCIwasnotfound",
+    "Secretreferencescanstillinjectenvsecrets;clearlynotproductionapprovedundernosecret-envpolicy",
+    "PodIdentityLinuxEC2/Agent/SDKassociationconstraints;S3IAMnotDBlogin",
+    "Verified/healthstaticOK200doesnotproveDB/S3;host/CORSnotauthentication",
+    "Batchwrites/poolaggregation/Auroracapacitylimits;noinfiniteburst/costpromise"
+  ],
+  "helm": {
+    "chart": "community-charts/mlflow",
+    "chartVersion": "1.11.7",
+    "appVersion": "3.16.0",
+    "image": "burakince/mlflow:3.16.0",
+    "nativeHelmProfiles": 2,
+    "default": {
+      "replicas": 1,
+      "metadata": ":memory:",
+      "authentication": false,
+      "ingress": false
+    },
+    "configured": {
+      "replicas": 2,
+      "backend": "postgresql+psycopg2://",
+      "artifactProxy": true,
+      "authentication": "basic-auth",
+      "probes": "/health",
+      "staticAWSKeys": false,
+      "databasePasswordStillInjectedViaEnvironment": true
+    },
+    "limitation": "render-only fixtures. Existing Secret refs still inject DB/auth environment secrets; not approved under a no-environment-secret policy. NoAWS/Kubernetes/RDS/S3deployment calls."
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/mlflow/03-eks-deployment.md",
+        "sha256": "bfcbdd9906176bd6f19e437a81d632a50b97ed9c0501bd80ecd68c6a24a133b3",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-3-mlflow를-eks에-배포하기"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-준비"
+          },
+          {
+            "tag": "h2",
+            "id": "mlflow-트래킹-서버를-eks에서-운영하는-이유"
+          },
+          {
+            "tag": "h2",
+            "id": "아키텍처"
+          },
+          {
+            "tag": "h2",
+            "id": "설치-방식과-버전-고정"
+          },
+          {
+            "tag": "h3",
+            "id": "중요한-chart-1-11-7-기본값"
+          },
+          {
+            "tag": "h2",
+            "id": "iam과-데이터베이스-인증"
+          },
+          {
+            "tag": "h2",
+            "id": "서버-접근과-상태-확인"
+          },
+          {
+            "tag": "h2",
+            "id": "운영-시-고려사항"
+          },
+          {
+            "tag": "h2",
+            "id": "공식-근거"
+          }
+        ],
+        "renderedIds": [
+          "part-3-mlflow를-eks에-배포하기",
+          "실습-환경-준비",
+          "mlflow-트래킹-서버를-eks에서-운영하는-이유",
+          "아키텍처",
+          "설치-방식과-버전-고정",
+          "중요한-chart-1-11-7-기본값",
+          "iam과-데이터베이스-인증",
+          "서버-접근과-상태-확인",
+          "운영-시-고려사항",
+          "공식-근거"
+        ]
+      },
+      {
+        "path": "en/ai-ml/mlflow/03-eks-deployment.md",
+        "sha256": "779dec0575012dad0eaffc193d0012ec10147edba43223a03cffb14d9b979a2f",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-3-deploying-mlflow-on-eks"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-environment-setup"
+          },
+          {
+            "tag": "h2",
+            "id": "why-run-mlflow-s-tracking-server-on-eks"
+          },
+          {
+            "tag": "h2",
+            "id": "architecture"
+          },
+          {
+            "tag": "h2",
+            "id": "installation-approaches-and-version-pins"
+          },
+          {
+            "tag": "h3",
+            "id": "important-chart-1-11-7-defaults"
+          },
+          {
+            "tag": "h2",
+            "id": "iam-and-database-authentication"
+          },
+          {
+            "tag": "h2",
+            "id": "server-access-and-health-checks"
+          },
+          {
+            "tag": "h2",
+            "id": "operational-notes"
+          },
+          {
+            "tag": "h2",
+            "id": "primary-sources"
+          }
+        ],
+        "renderedIds": [
+          "part-3-deploying-mlflow-on-eks",
+          "lab-environment-setup",
+          "why-run-mlflow-s-tracking-server-on-eks",
+          "architecture",
+          "installation-approaches-and-version-pins",
+          "important-chart-1-11-7-defaults",
+          "iam-and-database-authentication",
+          "server-access-and-health-checks",
+          "operational-notes",
+          "primary-sources"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md",
+        "sha256": "26bc201f4e64c0f10f30e741478dbf64ad5cdff400442f3967db5b4bdd742d3a",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "mlflow-eks-배포-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "객관식-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "서술형-문제"
+          }
+        ],
+        "renderedIds": [
+          "mlflow-eks-배포-퀴즈",
+          "객관식-문제",
+          "서술형-문제"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/mlflow/03-eks-deployment-quiz.md",
+        "sha256": "e968a24665bf13fb8265238556cecb7aaca800762c568f6fd544c2ebf963ba3e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "mlflow-eks-deployment-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "multiple-choice-questions"
+          },
+          {
+            "tag": "h2",
+            "id": "short-answer-questions"
+          }
+        ],
+        "renderedIds": [
+          "mlflow-eks-deployment-quiz",
+          "multiple-choice-questions",
+          "short-answer-questions"
+        ]
+      }
+    ]
+  },
+  "figures": {
+    "ko": {
+      "checksPassed": 9,
+      "checkCount": 9,
+      "compositionProfile": "showcase",
+      "compositionStatus": "pass",
+      "errors": 0,
+      "warnings": 0
+    },
+    "en": {
+      "checksPassed": 9,
+      "checkCount": 9,
+      "compositionProfile": "showcase",
+      "compositionStatus": "pass",
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  "responsive": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "2cbfd3d8ab3423ecbe5dc12d56dea3aaefbfa36fd0de83766dd38138c3b6bd6c"
+      },
+      {
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "2cbfd3d8ab3423ecbe5dc12d56dea3aaefbfa36fd0de83766dd38138c3b6bd6c"
+      },
+      {
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "2cbfd3d8ab3423ecbe5dc12d56dea3aaefbfa36fd0de83766dd38138c3b6bd6c"
+      },
+      {
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "85ea08d8965a4bfbc525d56b36e9543a16be78acd54b30a01925f891e54033a6"
+      },
+      {
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "85ea08d8965a4bfbc525d56b36e9543a16be78acd54b30a01925f891e54033a6"
+      },
+      {
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "85ea08d8965a4bfbc525d56b36e9543a16be78acd54b30a01925f891e54033a6"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "pngVisualInspection": "Both finalproposed-layoutPNGsexamined;noactualdeploymentclaim",
+  "sources": [
+    "https://github.com/community-charts/helm-charts/tree/main/charts/mlflow",
+    "https://github.com/mlflow/mlflow/tree/v3.16.0/charts",
+    "https://mlflow.org/docs/3.16.0/self-hosting/architecture/tracking-server/",
+    "https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/server/__init__.py",
+    "https://docs.aws.amazon.com/eks/latest/userguide/pod-identities.html",
+    "https://www.sqlite.org/whentouse.html",
+    "https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless-v2.setting-capacity.html"
+  ],
+  "limits": [
+    "NativeHelmtemplatesandsourceinspectiononly;noAWS/Kubernetes/RDS/S3/GPUdeployment",
+    "Chartreferencevaluesareinspectionfixtures;secretfilepolicyrequiresdeploymentadaptation",
+    "Publicationreview/CIpendingforMLflowcohort"
+  ]
+}

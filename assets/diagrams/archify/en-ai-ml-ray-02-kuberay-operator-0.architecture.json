@@ -2,310 +2,242 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "The KubeRay Operator and Two-Tier Autoscaling",
-    "output": "en-ai-ml-ray-02-kuberay-operator-0.html",
+    "title": "Ray demand, Pod reconciliation, and EC2 capacity",
     "quality_profile": "showcase",
-    "animation": "trace",
-    "legend": {
-      "entries": {
-        "database": {
-          "label": "Custom resource"
-        },
-        "backend": {
-          "label": "Controller / Pod"
-        },
-        "cloud": {
-          "label": "Node provisioner"
-        }
-      }
-    },
-    "views": [
-      {
-        "id": "reconcile",
-        "label": "Reconcile",
-        "focus": [
-          "rc",
-          "op",
-          "hp",
-          "wg1",
-          "wg2"
-        ],
-        "note": "The KubeRay operator creates, updates, and deletes the Head Pod and worker group Pods to match the RayCluster spec."
-      },
-      {
-        "id": "ray-autoscaler",
-        "label": "Ray autoscaler loop",
-        "focus": [
-          "wg1",
-          "wg2",
-          "ra",
-          "rc"
-        ],
-        "note": "The Ray autoscaler watches pending tasks and actors and adjusts a worker group's replica count (Pod count)."
-      },
-      {
-        "id": "karpenter",
-        "label": "Karpenter loop",
-        "focus": [
-          "ra",
-          "kp",
-          "wg1",
-          "wg2"
-        ],
-        "note": "Karpenter reacts only to pending Pods and provisions EC2 nodes sized to match them (node count)."
-      }
-    ],
-    "locale": "en",
+    "animation": "none",
     "viewBox": [
-      1300,
-      620
-    ]
+      1360,
+      550
+    ],
+    "locale": "en"
   },
   "components": [
     {
       "id": "rc",
       "type": "database",
       "label": "RayCluster CR",
-      "sublabel": "head + worker group specs",
+      "sublabel": "desired worker groups",
       "pos": [
-        230,
+        37,
         60
       ],
       "size": [
-        190,
-        64
+        214,
+        80
+      ]
+    },
+    {
+      "id": "head",
+      "type": "backend",
+      "label": "Ray head Pod",
+      "sublabel": "autoscaler sidecar if enabled",
+      "pos": [
+        381,
+        60
+      ],
+      "size": [
+        232,
+        80
       ]
     },
     {
       "id": "op",
       "type": "backend",
-      "label": "KubeRay Operator",
-      "sublabel": "reconciles",
+      "label": "KubeRay operator",
+      "sublabel": "reconcile Pods / Services",
       "pos": [
-        230,
-        300
+        37,
+        320
       ],
       "size": [
-        190,
-        64
+        214,
+        80
       ]
     },
     {
-      "id": "hp",
+      "id": "workers",
       "type": "backend",
-      "label": "Head Pod",
-      "sublabel": "Ray head",
+      "label": "Ray worker Pods",
+      "sublabel": "CPU / GPU / multi-host groups",
       "pos": [
-        20,
-        300
+        381,
+        320
       ],
       "size": [
-        150,
-        64
+        232,
+        80
       ]
     },
     {
-      "id": "wg1",
+      "id": "pending",
       "type": "backend",
-      "label": "CPU Worker Group Pods",
-      "sublabel": "replicas",
+      "label": "Unschedulable Pods",
+      "sublabel": "capacity / placement demand",
       "pos": [
-        520,
-        140
+        735,
+        320
       ],
       "size": [
-        180,
-        64
-      ]
-    },
-    {
-      "id": "wg2",
-      "type": "backend",
-      "label": "GPU Worker Group Pods",
-      "sublabel": "nvidia.com/gpu limit",
-      "pos": [
-        520,
-        500
-      ],
-      "size": [
-        180,
-        64
-      ]
-    },
-    {
-      "id": "ra",
-      "type": "backend",
-      "label": "Ray Autoscaler",
-      "sublabel": "decides Pod count",
-      "pos": [
-        990,
-        300
-      ],
-      "size": [
-        190,
-        64
+        223,
+        80
       ]
     },
     {
       "id": "kp",
       "type": "cloud",
-      "label": "Karpenter",
-      "sublabel": "decides EC2 node count",
+      "label": "Karpenter / CA",
+      "sublabel": "node provisioning layer",
       "pos": [
-        740,
-        300
+        735,
+        60
       ],
       "size": [
-        150,
-        64
+        223,
+        80
+      ]
+    },
+    {
+      "id": "nodes",
+      "type": "cloud",
+      "label": "EC2 nodes",
+      "sublabel": "actual capacity",
+      "pos": [
+        1079,
+        60
+      ],
+      "size": [
+        214,
+        80
+      ]
+    },
+    {
+      "id": "scheduler",
+      "type": "backend",
+      "label": "Kubernetes scheduler",
+      "sublabel": "Pod placement",
+      "pos": [
+        1079,
+        320
+      ],
+      "size": [
+        214,
+        80
       ]
     }
   ],
   "connections": [
     {
-      "id": "rc-op",
+      "id": "desired",
+      "from": "head",
+      "to": "rc",
+      "label": "desired workers",
+      "variant": "emphasis"
+    },
+    {
+      "id": "watch",
       "from": "rc",
       "to": "op",
-      "label": "watches spec",
-      "variant": "emphasis",
+      "label": "watch spec",
       "fromSide": "bottom",
       "toSide": "top",
-      "labelDy": 40
+      "labelAt": [
+        144,
+        220
+      ]
     },
     {
-      "id": "op-hp",
+      "id": "pods",
       "from": "op",
-      "to": "hp",
-      "label": "creates",
-      "fromSide": "left",
-      "toSide": "right"
+      "to": "workers",
+      "label": "create / reconcile",
+      "variant": "emphasis"
     },
     {
-      "id": "op-wg1",
-      "from": "op",
-      "to": "wg1",
-      "label": "creates",
-      "variant": "emphasis",
-      "fromSide": "right",
-      "toSide": "left",
-      "via": [
-        [
-          470,
-          332
-        ],
-        [
-          470,
-          172
-        ]
-      ]
-    },
-    {
-      "id": "op-wg2",
-      "from": "op",
-      "to": "wg2",
-      "label": "creates",
-      "fromSide": "bottom",
-      "toSide": "left",
-      "via": [
-        [
-          325,
-          532
-        ]
-      ]
-    },
-    {
-      "id": "wg1-ra",
-      "from": "wg1",
-      "to": "ra",
-      "label": "monitored by",
-      "variant": "dashed",
-      "fromSide": "right",
-      "toSide": "top",
-      "via": [
-        [
-          1085,
-          172
-        ]
-      ]
-    },
-    {
-      "id": "wg2-ra",
-      "from": "wg2",
-      "to": "ra",
-      "label": "monitored by",
-      "variant": "dashed",
-      "fromSide": "right",
-      "toSide": "bottom",
-      "via": [
-        [
-          1085,
-          532
-        ]
-      ]
-    },
-    {
-      "id": "ra-rc",
-      "from": "ra",
-      "to": "rc",
-      "label": "requests more replicas",
-      "variant": "emphasis",
-      "fromSide": "right",
-      "toSide": "right",
-      "via": [
-        [
-          1230,
-          332
-        ],
-        [
-          1230,
-          92
-        ]
-      ],
-      "labelSegment": 2
-    },
-    {
-      "id": "ra-kp",
-      "from": "ra",
-      "to": "kp",
-      "label": "pending Pods",
-      "variant": "dashed",
-      "fromSide": "left",
-      "toSide": "right"
-    },
-    {
-      "id": "kp-wg1",
-      "from": "kp",
-      "to": "wg1",
-      "label": "provisions EC2 nodes",
+      "id": "demand",
+      "from": "workers",
+      "to": "head",
+      "label": "Ray demand",
       "fromSide": "top",
       "toSide": "bottom",
-      "via": [
-        [
-          815,
-          250
-        ],
-        [
-          610,
-          250
-        ]
+      "labelAt": [
+        498,
+        230
+      ],
+      "variant": "dashed"
+    },
+    {
+      "id": "pending",
+      "from": "workers",
+      "to": "pending",
+      "label": "no fitting node"
+    },
+    {
+      "id": "provision",
+      "from": "pending",
+      "to": "kp",
+      "label": "capacity demand",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        846,
+        230
+      ],
+      "variant": "dashed"
+    },
+    {
+      "id": "nodes",
+      "from": "kp",
+      "to": "nodes",
+      "label": "provision nodes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "capacity",
+      "from": "nodes",
+      "to": "scheduler",
+      "label": "capacity",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        1186,
+        230
       ]
     },
     {
-      "id": "kp-wg2",
-      "from": "kp",
-      "to": "wg2",
-      "label": "provisions EC2 nodes",
+      "id": "place",
+      "from": "scheduler",
+      "to": "workers",
+      "label": "place Pods",
       "fromSide": "bottom",
-      "toSide": "top",
+      "toSide": "bottom",
       "via": [
         [
-          815,
-          430
+          1186.0,
+          480
         ],
         [
-          610,
-          430
+          497.0,
+          480
         ]
+      ],
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Separate responsibilities",
+      "items": [
+        "Ray autoscaler does not send Pods directly to Karpenter",
+        "KubeRay reconciles Pods; Kubernetes places them on nodes"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Conditions and limits",
+      "items": [
+        "Check Pending causes; image/PVC/auth failures are not solved by node scaling",
+        "Group replicas and Pod counts can differ with numOfHosts"
       ]
     }
   ]

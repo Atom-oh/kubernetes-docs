@@ -182,7 +182,9 @@ test('merged diagram viewers normalize CJK fonts and mobile toolbars without cha
   const stack = "'JetBrains Mono', ui-monospace, monospace"
   const viewer = `<html><head><style>body { font-family: ${stack}; }</style></head>
 <body><script id="archify-i18n-data" type="application/json">{}</script>
-<script>const exportFont = "600 12px ${stack}";</script>
+<script>const exportFont = "600 12px ${stack}";
+if (paused && Archify.guidedViews && Archify.guidedViews.isPlaying()) { Archify.guidedViews.pause(); }
+</script>
 <p>Generator가 만든 파라미터 조합마다 Application 하나가 생성된다</p></body></html>`
   try {
     await mkdir(path.join(source, 'archmaps'), { recursive: true })
@@ -199,6 +201,8 @@ test('merged diagram viewers normalize CJK fonts and mobile toolbars without cha
     assert.ok(korean.includes('Generator가 만든 파라미터 조합마다'))
     assert.equal((korean.match(/id="docs-archmap-responsive"/g) || []).length, 1)
     assert.equal((japanese.match(/id="docs-archmap-responsive"/g) || []).length, 1)
+    assert.ok(korean.includes("typeof Archify.guidedViews.isPlaying === 'function'"))
+    assert.ok(japanese.includes("typeof Archify.guidedViews.pause === 'function'"))
     assert.equal(await readFile(path.join(dist, 'ordinary.html'), 'utf8'), viewer)
 
     const second = path.join(root, 'second')

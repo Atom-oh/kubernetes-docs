@@ -1,6 +1,6 @@
 # Kubernetes 네트워킹
 
-> **검토일**: 2026년 9월 12일. 기능 근거는 Cilium 1.20.1, Calico Open Source 3.32, Flannel 0.28.9, AWS VPC CNI 1.23.0을 포함합니다. 설치 전 제품별 Kubernetes·플랫폼 지원 범위를 확인합니다. 이 버전들을 하나의 클러스터에서 함께 검증했다는 의미는 아닙니다.
+> **마지막 업데이트**: 2026년 9월 13일. 기능 근거는 Cilium 1.20.1, Calico Open Source 3.32, Flannel 0.28.9, AWS VPC CNI 1.23.0을 포함합니다. 설치 전 제품별 Kubernetes·플랫폼 지원 범위를 확인합니다. 이 버전들을 하나의 클러스터에서 함께 검증했다는 의미는 아닙니다.
 
 ## 개요
 
@@ -355,11 +355,11 @@ spec:
 | 계층 | 장비·기능 | 판단 기준 | Kubernetes·AWS 매핑 |
 |---|---|---|---|
 | L2 (링크) | 스위치, 브리지 | 목적지 MAC 주소 | CNI가 만드는 veth pair·Linux 브리지, ENI가 노출하는 가상 NIC |
-| L3 (네트워크) | 라우터 | 목적지 IP, 라우팅 테이블의 최장 접두사 일치 | VPC의 암묵적 라우터, TGW, GWLB(패킷을 변형하지 않고 어플라이언스로 투과) |
-| L4 (전송) | L4 로드밸런서 | 5-tuple(출발지/목적지 IP·포트, 프로토콜) 단위 연결 | NLB, kube-proxy의 Service 분산(iptables·IPVS·eBPF) |
+| L3 (네트워크) | 라우터 또는 투과형 어플라이언스 삽입 | 라우팅은 목적지 IP, 어플라이언스 선택은 흐름 식별자 | VPC의 암묵적 라우터·TGW, IP 패킷을 캡슐화하는 GWLB |
+| L4 (전송) | L4 로드밸런서 | 연결·흐름 식별자, 흔히 5-tuple | NLB, kube-proxy(iptables·IPVS·nftables), 별도 eBPF Service 구현 |
 | L7 (애플리케이션) | L7 로드밸런서·리버스 프록시 | 요청 단위 호스트·경로·헤더, 프로토콜 인식 | ALB, Ingress/Gateway API 구현체, 서비스 메시 사이드카(Envoy) |
 
-핵심 차이는 **분산 단위**입니다. L4 로드밸런서는 연결이 열릴 때 대상을 한 번 고르고 그 흐름이 끝날 때까지 유지하며 페이로드를 보지 않습니다. L7 로드밸런서는 요청마다(같은 연결 위에서도) 대상을 다시 고를 수 있지만 그만큼 프로토콜을 해석해야 하는 비용이 있습니다. GWLB는 이름에 "로드밸런서"가 들어가지만 대상 그룹 사이에서 트래픽 성격을 바꾸는 것이 아니라, 원본 패킷을 GENEVE로 캡슐화해 방화벽·IDS/IPS 같은 어플라이언스로 투과시키는 L3 삽입 지점입니다. 흐름의 고정성(같은 연결은 같은 어플라이언스로)을 흐름 해시로 보장하지만, ALB/NLB처럼 백엔드의 응답 콘텐츠를 바꾸지 않습니다.
+핵심 차이는 **분산 단위**입니다. L4 로드밸런서는 보통 TCP 연결이나 추적하는 UDP 흐름의 대상을 선택합니다. L7 프록시는 같은 연결을 공유하더라도 지원하는 애플리케이션 요청별로 대상을 선택할 수 있습니다. GWLB는 애플리케이션 요청을 해석하는 대신 캡슐화한 IP 흐름을 보안 어플라이언스에 분배합니다. 흐름 고정성은 timeout·상태 검사·failover 설정에 영향을 받으며, 대상 재선택이나 연결 중단이 절대 없다는 보장은 아닙니다.
 
 > 📎 L2/L3 개념의 프로토콜별 정의는 [네트워크 기초 Part 1](../basics/06-network-fundamentals-part1.md), ALB/NLB 대상 유형과 실제 설정은 [AWS Load Balancer Controller](03-aws-lb-controller.md) 참고.
 
@@ -370,43 +370,43 @@ spec:
 | 연결 방식 | 계층·모델 | 특징 |
 |---|---|---|
 | VPC Peering | L3, 양방향 IP 라우팅 | 전이(transitive)되지 않음, CIDR 중복 시 구성 불가 |
-| Transit Gateway (TGW) | L3, 허브-스포크 IP 라우팅 | 여러 VPC/Peering을 하나의 라우팅 테이블로 중앙화, RAM으로 계정 간 공유 |
+| Transit Gateway (TGW) | L3, 허브-스포크 IP 라우팅 | 하나 이상의 TGW route table에서 attachment association·propagation을 구성, RAM으로 계정 간 공유 |
 | Gateway Load Balancer (GWLB) | L3, 투과형 어플라이언스 삽입 | GENEVE(UDP 6081)로 원본 패킷 캡슐화, VPC 엔드포인트 서비스 모델로 소비자 트래픽을 공급자의 어플라이언스 fleet에 연결 |
-| PrivateLink | L4 서비스 엔드포인트 | 소비자 인터페이스 엔드포인트 → 공급자 NLB/서비스, CIDR 중복 허용 |
-| VPC Lattice | L7 애플리케이션 네트워킹 | 서비스 DNS 이름·IAM 인가·가중치 라우팅을 갖춘 관리형 HTTP/gRPC 서비스망 |
+| PrivateLink | 사설 엔드포인트 연결 | NLB 기반 endpoint service 외에 resource endpoint도 지원, 소비자·공급자 CIDR 중복 허용 |
+| VPC Lattice | 애플리케이션·리소스 네트워킹 | HTTP/HTTPS service는 L7 라우팅과 선택적 IAM 인가 지원, TLS passthrough·resource configuration은 기능 범위가 다름 |
 
-GWLB는 트래픽을 검사·차단하는 어플라이언스(방화벽, IDS/IPS)를 애플리케이션 라우팅에 개입시키지 않고 네트워크 경로에 투과적으로 끼워 넣는 데 특화되어 있습니다. 소비자 측 서브넷의 라우트를 GWLB 엔드포인트로 향하게 하면, 해당 트래픽이 공급자의 어플라이언스를 거쳐 되돌아옵니다. 같은 흐름이 항상 같은 어플라이언스 인스턴스로 가도록 5-tuple 기반 흐름 해시를 사용하지만, 이는 상태 있는 검사를 위한 고정성이며 애플리케이션 가중치 분배가 아닙니다. TGW·Peering·PrivateLink·Lattice와 마찬가지로 GWLB도 보안 그룹, NACL, 라우팅 전제가 충족되어야 실제로 트래픽이 흐릅니다.
+GWLB는 Gateway Load Balancer endpoint를 통해 방화벽·IDS/IPS 같은 검사 어플라이언스를 IP 경로에 삽입합니다. 기본 흐름 고정성은 5개 필드를 사용하며 지원되는 설정에서는 2개 또는 3개로 바꿀 수 있습니다. 왕복 라우트, 어플라이언스 상태, 캡슐화 MTU, NACL 및 실제 workload·어플라이언스의 security group을 확인합니다. GWLB 자체에는 ALB 형태의 security group이 없으며, 흐름 고정성이 장애 검증을 대신하지 않습니다.
 
 > 📎 EKS와 VPC Lattice의 전체 연동(Gateway API Controller, IAM 인가, 라우팅)은 [VPC Lattice](02-vpc-lattice.md) 참고.
 
 ### DNS resolver와 Route Table의 실제 동작
 
-**DNS resolver:** VPC를 만들면 AWS가 VPC 네트워크 범위의 두 번째 주소(예: `10.0.0.0/16`이면 `10.0.0.2`)에 예약된 Amazon-provided DNS resolver를 둡니다. 이 resolver는 VPC 내부 이름(예: private hosted zone, ENI의 내부 DNS 이름)을 해석하고, 그 외 요청은 Route 53 Resolver로 전달합니다. 클러스터 안에서는 CoreDNS가 `kube-dns` 이름 공간을 해석하고, `cluster.local`이 아닌 조회는 노드의 `/etc/resolv.conf`가 가리키는 업스트림(보통 이 VPC resolver)으로 전달합니다. 온프레미스와 VPC 간 이름을 서로 풀어야 하면 Route 53 Resolver의 인바운드/아웃바운드 엔드포인트와 Resolver 규칙이 필요합니다. Auto Mode의 노드 로컬 DNS는 이 전달 경로를 완전히 대체하지 않으며, 업스트림 해석에는 여전히 네트워크 접근이 필요할 수 있습니다.
+**DNS resolver:** AmazonProvidedDNS는 **Route 53 Resolver 자체**입니다. 주소에는 기본 VPC IPv4 network 주소에 2를 더한 값(`10.0.0.0/16`이면 `10.0.0.2`)과 `169.254.169.253`이 있으며, 연결된 private zone과 public 이름을 Resolver 규칙에 따라 해석합니다. CoreDNS는 보통 `cluster.local` 같은 설정된 Kubernetes cluster domain을 담당합니다. `kube-dns`는 Service 이름이며 namespace나 DNS zone이 아닙니다. 외부 조회 전달은 Corefile과 DNS Pod에서 보이는 resolver 파일에 따르므로 node 설정을 그대로 쓴다고 가정하지 말고 실제 구성을 확인합니다. Resolver endpoint를 사용하는 설계에서는 inbound endpoint가 온프레미스 조회를 받고, outbound endpoint와 연결된 규칙이 선택한 VPC 조회를 온프레미스 DNS로 보냅니다. Auto Mode의 node-local resolver도 upstream 의존성을 없애지는 않습니다.
 
-**Route Table:** VPC 라우팅 테이블 평가는 일반적인 최장 접두사 일치를 따르되 몇 가지 VPC 고유 규칙이 있습니다. VPC CIDR을 위한 `local` 라우트는 항상 가장 구체적으로 취급되며 삭제·재정의할 수 없습니다. 같은 목적지 접두사에 정적 라우트와 (TGW·VPN 등에서) 전파된 라우트가 동시에 존재하면 정적 라우트가 우선합니다. 대상(예: 삭제된 NAT Gateway, 분리된 attachment)이 더 이상 유효하지 않은 라우트는 자동으로 `blackhole` 상태가 되어 트래픽을 조용히 폐기합니다. 서브넷에 명시적으로 연결된 라우팅 테이블이 없으면 VPC의 메인 라우팅 테이블이 적용되므로, "라우트를 추가했는데도 안 된다"의 흔한 원인은 의도한 서브넷이 다른 테이블에 연결되어 있는 경우입니다.
+**Route Table:** VPC 라우팅은 일반적으로 최장 접두사 일치를 사용합니다. AWS는 `local` route의 target 교체와 어플라이언스 경로를 위한 지원 범위 내의 더 구체적인 subnet route를 허용하므로 `local`이 무조건 가장 구체적인 것은 아닙니다. 목적지가 같으면 정적 VPC route가 virtual private gateway에서 전파된 route보다 우선합니다. TGW를 target으로 하는 VPC route는 정적이며, TGW 내부 propagation은 별도의 TGW route table에 속합니다. 유효하지 않은 target이 `blackhole` 항목을 남기면 트래픽이 폐기되므로 목적지와 route 상태를 함께 확인합니다. 명시적으로 route table을 연결하지 않은 subnet은 VPC의 main route table을 사용합니다.
 
 > 📎 TGW/Peering 라우트 우선순위와 정적 라우트 구성 예시는 [Cross-Org VPC 연결의 운영 시 확인할 사항](05-cross-org-vpc-connectivity.md#운영-시-확인할-사항) 참고.
 
 ### 커널 데이터 플레인: iptables·IPVS·eBPF·packet filter
 
-Kubernetes Service의 가상 IP를 실제 Pod로 바꾸는 작업(그리고 네트워크 정책 강제)은 Linux의 패킷 필터링 하위 시스템 위에서 이루어집니다. Netfilter는 커널이 패킷 경로에 두는 후크(hook) 집합이고, iptables·nftables는 그 후크에 규칙을 설치하는 사용자 공간 도구입니다. eBPF는 다른 접근입니다. netfilter 후크를 거치지 않고 XDP(드라이버 초입)나 tc(트래픽 컨트롤) 계층, 소켓 후크에 프로그램을 직접 붙입니다.
+Linux의 Service 전달과 network policy 적용은 서로 다른 메커니즘을 사용할 수 있습니다. Netfilter는 iptables·nftables에서 사용하는 패킷 경로 hook을 제공합니다. eBPF 구현은 XDP·tc·socket hook에서 Service 대상을 선택할 수 있습니다. 그렇다고 eBPF를 쓰는 cluster의 모든 패킷이 Netfilter나 connection tracking을 우회하는 것은 아닙니다. 실제 경로는 CNI·kernel·라우팅·기능 설정에 따라 달라집니다.
 
 | 구현 | 위치 | 특징 |
 |---|---|---|
 | iptables | Netfilter 후크의 순차 규칙 체인 | 규칙 수에 비례해 평가 시간 증가(O(n)), kube-proxy의 오랜 기본 모드 |
 | IPVS | 커널 네이티브 L4 로드밸런서, netfilter 확장 | 해시 기반 조회(O(1) 근사), Kubernetes 1.35부터 kube-proxy 모드로는 deprecated |
 | nftables | iptables의 후속 netfilter 프레임워크 | 1.33부터 kube-proxy의 stable 모드, 커널·CNI 호환성 확인 필요 |
-| eBPF (예: Cilium) | XDP·tc·소켓 계층, netfilter 우회 | kube-proxy를 완전히 대체할 수 있으나 이는 kube-proxy의 "모드"가 아니라 별도 구현 |
+| eBPF (예: Cilium) | 구성한 XDP·tc·socket hook | kube-proxy의 Service 처리를 대체하는 별도 구현, Netfilter·conntrack 동작은 경로별로 다름 |
 
-이 표의 모드 전환에는 실제 위험이 있습니다. kube-proxy를 IPVS에서 iptables로 되돌릴 때는 공식 절차와 계획된 노드 재시작이 필요합니다. eBPF 기반 CNI로 kube-proxy를 대체할 때도 두 구현이 동시에 같은 Service를 처리하지 않도록 전환 순서를 지켜야 합니다.
+구현을 바꾸면 kernel rule과 활성 연결이 남을 수 있습니다. 배포판·CNI의 마이그레이션 절차에 따라 필요한 workload drain을 수행하고, 정리에 필요한 경우 node 재시작을 계획합니다. eBPF 기반 CNI로 kube-proxy를 대체할 때도 두 구현이 같은 Service 트래픽을 두고 충돌하지 않도록 지원되는 전환 순서를 지켜야 합니다.
 
 > 📎 IPVS deprecation 일정과 nftables stable 전환은 [Kubernetes 소개](../basics/04-kubernetes-introduction.md), Cilium의 eBPF kube-proxy 대체 구현은 [Cilium eBPF](cilium/02-ebpf.md), Calico eBPF 데이터 플레인과 전환 절차는 [Calico eBPF](calico/06-ebpf-dataplane.md) 참고.
 
 ### 컴퓨팅 집약 네트워킹: ENI·EFA·NVLink·광 트랜시버
 
-ENI·EFA·NVLink 세 상호연결은 서로 다른 거리와 목적을 갖습니다. **ENI**는 EC2 인스턴스에 붙는 가상 NIC로, 일반 IP 트래픽을 VPC에서 라우팅합니다(구성은 [VPC CNI](01-vpc-cni.md) 참고). **EFA**는 ENA 기반 ENI 위에 OS-bypass 경로(libfabric)를 추가해 MPI/NCCL 같은 집단 통신의 지연을 낮추지만, 일반 ENI와 마찬가지로 **VPC나 가용 영역을 넘어서는 경로에는 쓸 수 없습니다**. **NVLink**는 EFA와 계층이 다릅니다. EFA는 노드 사이(inter-node) 네트워크 패브릭이고, NVLink는 한 노드 안(그리고 NVSwitch를 갖춘 최신 랙 스케일 시스템에서는 랙 안) GPU 간 직접 상호연결입니다. 두 GPU가 NVLink로 묶여 있는지, 서로 다른 노드에 있어 EFA를 거쳐야 하는지는 집단 통신 성능에 수십 배 차이를 만들 수 있으므로 Kubernetes 스케줄링에서 이 토폴로지를 인식하는 것이 중요합니다.
+ENI·EFA·NVLink는 서로 다른 경로를 담당합니다. **ENI**는 하나의 AZ에 있는 EC2 instance에 연결되는 가상 network interface이지만, 일반 IP 트래픽은 라우팅·정책이 허용하면 다른 AZ와 연결된 VPC에 도달할 수 있습니다([VPC CNI](01-vpc-cni.md) 참고). **EFA**는 호환되는 MPI/NCCL 소프트웨어가 libfabric으로 사용하는 OS-bypass device를 제공합니다. **EFA device 트래픽은 라우팅할 수 없고 VPC/AZ 경계를 넘지 못합니다.** EFA-with-ENA interface의 ENA device를 지나는 일반 IP 트래픽은 여전히 라우팅할 수 있습니다. EFA-only interface에는 ENA device와 IP 주소가 없습니다. **NVLink**는 지원되는 시스템의 GPU를 연결하며, 지원되는 rack-scale NVLink domain도 포함합니다. EFA 대비 고정 배수의 성능 향상을 가정하지 말고 실제 hardware·collective 연산·배치를 측정합니다.
 
-**광 트랜시버(광학 카드)**는 일반적인 데이터센터 네트워킹 개념입니다. 구리 DAC(Direct Attach Copper) 케이블은 짧은 거리·저비용에 적합하고, QSFP/OSFP 같은 광 트랜시버와 광케이블은 더 먼 거리(랙 간·스위치 간)와 더 높은 대역폭이 필요할 때 사용됩니다. AWS는 리전 안의 실제 물리 배선이나 트랜시버 사양을 공개하지 않으므로, 이 내용은 데이터센터 네트워킹의 일반 배경 지식이며 AWS 특정 인프라를 설명하는 것이 아닙니다.
+**광 트랜시버**는 일반적인 데이터센터 네트워킹 개념입니다. 구리 DAC(Direct Attach Copper)는 짧은 구간에 사용하고, 광 모듈과 광섬유는 다른 거리·대역폭 요구를 지원합니다. QSFP·OSFP는 모듈의 form factor이며 반드시 광 매체라는 의미는 아닙니다. 이 설명만으로 특정 AWS workload의 실제 물리 배선을 알 수는 없습니다.
 
 > 📎 NVLink/IMEX 토폴로지 인식 스케줄링과 GPU 파드 배치 예시는 [AI/ML 인프라](../ai-ml/06-ai-infrastructure.md), EFA의 VPC/AZ 경계 제약과 실측은 [Cross-Org VPC 연결](05-cross-org-vpc-connectivity.md) 참고.
 
@@ -414,7 +414,7 @@ ENI·EFA·NVLink 세 상호연결은 서로 다른 거리와 목적을 갖습니
 
 HTTP/3(RFC 9114)와 그 전송 기반인 QUIC(RFC 9000)의 프로토콜 동작 자체는 [네트워크 기초 Part 2](../basics/06-network-fundamentals-part2.md)·[Part 3](../basics/06-network-fundamentals-part3.md)에서 다룹니다. 여기서는 Kubernetes 트래픽 분산에 실제로 영향을 주는 지점만 짚습니다.
 
-- **gRPC와 L4 로드밸런서:** gRPC는 하나의 장기 유지 HTTP/2 연결 위에서 여러 요청을 다중화합니다. L4 로드밸런서(NLB, kube-proxy의 Service 분산)는 연결 단위로 대상을 고르므로, 연결이 한 번 맺어지면 그 안의 모든 요청이 같은 Pod로만 갑니다. Pod 수를 늘려도 이미 열린 연결의 트래픽은 재분배되지 않습니다. 실제로 요청 단위 분산이 필요하면 gRPC를 인식하는 L7 프록시(Envoy, 지원되는 ALB gRPC 설정)나 클라이언트 측 로드밸런싱, 또는 서비스 메시가 필요합니다.
+- **gRPC와 L4 로드밸런서:** gRPC는 HTTP/2 연결에서 요청을 다중화합니다. L4 로드밸런서는 보통 이미 맺어진 TCP 연결을 선택한 endpoint에 유지하며, 그 endpoint가 프록시라면 추가 라우팅을 수행할 수 있습니다. Pod 추가만으로 기존 연결을 재분배하지는 않습니다. RPC 단위 분산에는 호환되는 L7 프록시나 client-side 정책이 필요합니다. streaming RPC는 하나의 호출이므로 내부 메시지를 각각 분산하지 않습니다.
 - **Gateway API의 GRPCRoute:** Ingress에는 gRPC 전용 리소스가 없지만 Gateway API는 `GRPCRoute`로 서비스·메서드 단위 라우팅을 표준화합니다. 구현체별 지원 범위(헤더 매칭 개수, 재시도 정책 등)는 컨트롤러 문서를 확인해야 합니다.
 - **HTTP/3/QUIC의 클러스터 도달 범위:** 클라이언트와 엣지(예: CDN·로드밸런서) 사이의 HTTP/3 지원과, 클러스터 내부·Ingress 백엔드까지의 HTTP/3 지원은 별개입니다. 다수의 Ingress/Gateway 구현체는 여전히 백엔드 연결에 HTTP/1.1 또는 HTTP/2를 사용하며, 엔드투엔드 HTTP/3 지원 여부는 구현체와 버전마다 다르므로 일반화하지 말고 실제 사용 중인 컨트롤러의 문서를 확인해야 합니다.
 
@@ -673,7 +673,13 @@ spec:
 - [VPC DNS resolver](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-dns.html)
 - [Route 53 Resolver endpoints and rules](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html)
 - [VPC route table evaluation order](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html)
+- [Local routes and more-specific subnet routes](https://docs.aws.amazon.com/vpc/latest/userguide/subnet-route-tables.html)
+- [Static and propagated route priority](https://docs.aws.amazon.com/vpc/latest/userguide/route-tables-priority.html)
+- [AmazonProvidedDNS addresses and behavior](https://docs.aws.amazon.com/vpc/latest/userguide/AmazonDNS-concepts.html)
+- [GWLB flow stickiness and failover](https://docs.aws.amazon.com/elasticloadbalancing/latest/gateway/edit-target-group-attributes.html)
 - [Kubernetes Service virtual IPs and kube-proxy modes](https://kubernetes.io/docs/reference/networking/virtual-ips/)
+- [CoreDNS Service names and forwarding configuration](https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/)
+- [PrivateLink resource endpoints](https://docs.aws.amazon.com/vpc/latest/privatelink/privatelink-access-resources.html)
 - [Netfilter/iptables project documentation](https://www.netfilter.org/documentation/index.html)
 - [EC2 Elastic Fabric Adapter](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/efa.html)
 - [QUIC transport protocol (RFC 9000)](https://www.rfc-editor.org/rfc/rfc9000)

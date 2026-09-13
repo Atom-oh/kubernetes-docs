@@ -9071,7 +9071,7 @@
       "sha256": "20c942edae5d00cf00e14ed3d2adbf3ec3ed8a01e619d80fe5ce686154e3535c",
       "lines": 198,
       "navigationListed": true,
-      "semanticStatus": "followup",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 20,
       "structuralFindings": [],
@@ -9087,12 +9087,12 @@
       "sha256": "129ea58d585d214cbc92a6ccbbe764f53de2404961f588bd8ff8dac2cdb1f55f",
       "lines": 171,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 17,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "airflow-dag-patterns"
     },
     {
       "path": "en/data-on-eks/airflow/04-mwaa-integration.md",
@@ -9103,12 +9103,12 @@
       "sha256": "d317cf81b40a2446ff96952e69d07be3a233383c13c6c14227921111d33f0b9a",
       "lines": 138,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 18,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "airflow-mwaa"
     },
     {
       "path": "en/data-on-eks/airflow/05-operations.md",
@@ -9119,12 +9119,12 @@
       "sha256": "9be505d87960b739a953b2f4485c97b38f0def5ea9b9eb427bf459d61d5b0f4e",
       "lines": 149,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 13,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "airflow-operations"
     },
     {
       "path": "en/data-on-eks/airflow/README.md",
@@ -9151,12 +9151,12 @@
       "sha256": "95e04b27da0deeb7e108da9f1498652b4d44762dc60022ff59fb8e3cc24bbe3c",
       "lines": 104,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 16,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "flink-foundation"
     },
     {
       "path": "en/data-on-eks/flink/02-flink-kubernetes-operator.md",
@@ -9167,12 +9167,12 @@
       "sha256": "39f511766c521e030e55d3f0967a01804a297552f7a9324944032f7a977c3528",
       "lines": 194,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 1,
       "linkCount": 21,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "flink-operator"
     },
     {
       "path": "en/data-on-eks/flink/03-state-checkpointing-streaming.md",
@@ -9215,12 +9215,12 @@
       "sha256": "3617c27a945a824e19392dc49bd030a00561fe4f3f370b77d5926269fec29db5",
       "lines": 55,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 17,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "flink-foundation"
     },
     {
       "path": "en/data-on-eks/kafka/01-kafka-fundamentals.md",
@@ -10207,7 +10207,7 @@
       "sha256": "ec7a1c7ba546c3560a547bcce562e9decf8202e2e30959103e554ea018c72b56",
       "lines": 1850,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 4,
       "linkCount": 117,
       "structuralFindings": [],
@@ -10223,12 +10223,12 @@
       "sha256": "2fcfefb2a03ba90cc19720d659f8a5287d231609b028a0a5c8d2615408d2f8bc",
       "lines": 2858,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 19,
       "linkCount": 164,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-version-roadmap"
     },
     {
       "path": "en/gitops/02-fluxcd.md",
@@ -11199,7 +11199,7 @@
       "sha256": "c6e99a22e523e9e0a205fcd1173f615447b9206ea5fc4d4c49fdea24ae33a0ba",
       "lines": 1270,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 2,
       "linkCount": 59,
       "structuralFindings": [],
@@ -11215,12 +11215,12 @@
       "sha256": "942569e326157ef8b09a98fe7eed99f7261cae4f5234caacd6504ae5bee00bd7",
       "lines": 353,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 3,
       "linkCount": 38,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "en/networking/cilium/04-ipam-policy.md",
@@ -11231,12 +11231,12 @@
       "sha256": "71f860169d7a875e8a9a223162f968faf123f3ee4939cd60300a40c2b1945389",
       "lines": 609,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 44,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "en/networking/cilium/05-l2-l7-networking.md",
@@ -13071,7 +13071,7 @@
       "sha256": "8fa4fb1652d6aca403373ad758c5d5e27784dcc7b180b5fe727945b31ec8b690",
       "lines": 319,
       "navigationListed": true,
-      "semanticStatus": "followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 6,
       "structuralFindings": [],
@@ -13087,12 +13087,12 @@
       "sha256": "e3fcec44a71dbc4e4875169d707aa8d099bd086d66ea819caf974bc9ea026168",
       "lines": 249,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "airflow-dag-patterns"
     },
     {
       "path": "en/quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md",
@@ -13103,12 +13103,12 @@
       "sha256": "327e90174dca67c59f4ad1ff2c203e29f8e4545718b628f34ea38860241e7ea8",
       "lines": 212,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "airflow-mwaa"
     },
     {
       "path": "en/quizzes/data-on-eks/airflow/05-operations-quiz.md",
@@ -13119,12 +13119,12 @@
       "sha256": "52a22391ee50d3a4ae558b120608c518bce7a7f7e716daf9371fee2adfc6e47a",
       "lines": 164,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "airflow-operations"
     },
     {
       "path": "en/quizzes/data-on-eks/flink/01-architecture-quiz.md",
@@ -13135,12 +13135,12 @@
       "sha256": "917470e01c75796146ebda2f0632582837c574d6d7592726e7a4cf085e7a277a",
       "lines": 146,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 3,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "flink-foundation"
     },
     {
       "path": "en/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
@@ -13151,12 +13151,12 @@
       "sha256": "089aff91f5794676af8fd3020622582796d7bdfd2585bcf931d51df6eb6bc3b5",
       "lines": 345,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "flink-operator"
     },
     {
       "path": "en/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
@@ -14047,7 +14047,7 @@
       "sha256": "6e55949855696379aa971ad44935accd24c60ff48924514673873f2974b30073",
       "lines": 1015,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 26,
       "structuralFindings": [],
@@ -14063,12 +14063,12 @@
       "sha256": "4491be2cd9fb07445cb33313bef98e5d63e6d9fde3280242f3860f64b0729feb",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-version-roadmap"
     },
     {
       "path": "en/quizzes/gitops/01-argocd-quiz.md",
@@ -14735,7 +14735,7 @@
       "sha256": "bc0410636b764966e08315fc151af0938498fddbb00b2c7745bce7972e75e1ba",
       "lines": 253,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
@@ -14751,12 +14751,12 @@
       "sha256": "56bbaefc477077f4edb93474c1f8255b5c5929a3bd3e2aa99288bae491adab40",
       "lines": 434,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 37,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "en/quizzes/networking/cilium/04-ipam-policy-quiz.md",
@@ -14767,12 +14767,12 @@
       "sha256": "4b68e65e9210eb34a7c3567afbb1b37c57d2a196f944b25615ba08210f841add",
       "lines": 253,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "en/quizzes/networking/cilium/05-l2-l7-networking-quiz.md",
@@ -34791,7 +34791,7 @@
       "sha256": "7a365293c3a2a31e33e46d73c63b868280f2dcf1d5689cb5bc16c56e04d7d1ef",
       "lines": 198,
       "navigationListed": true,
-      "semanticStatus": "followup",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 20,
       "structuralFindings": [],
@@ -34807,12 +34807,12 @@
       "sha256": "b0334178550bc11a7c415ca25e6c26e005c22cad29a233f09efbd8b0b5f2e2a9",
       "lines": 171,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 17,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "airflow-dag-patterns"
     },
     {
       "path": "ko/data-on-eks/airflow/04-mwaa-integration.md",
@@ -34823,12 +34823,12 @@
       "sha256": "cf56cb5557abe10935ff99b87c3bdaef12ea88878d8bfb61c7fe777c7b110b86",
       "lines": 138,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 18,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "airflow-mwaa"
     },
     {
       "path": "ko/data-on-eks/airflow/05-operations.md",
@@ -34839,12 +34839,12 @@
       "sha256": "f43089642e756477db1615cc6c880380f35b58eb1d67c8b6f34bfbdbce8b1ea9",
       "lines": 149,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 13,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "airflow-operations"
     },
     {
       "path": "ko/data-on-eks/airflow/README.md",
@@ -34871,12 +34871,12 @@
       "sha256": "11ee99fbcca3f36418f257ba4325fdd64c4d4514f44129a87b224a3bcba09a42",
       "lines": 104,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 16,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "flink-foundation"
     },
     {
       "path": "ko/data-on-eks/flink/02-flink-kubernetes-operator.md",
@@ -34887,12 +34887,12 @@
       "sha256": "3c960e14a2c84e720fb6cc09e97799ebbaf6663646ffd5edc78a4b85b0886702",
       "lines": 194,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 1,
       "linkCount": 21,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "flink-operator"
     },
     {
       "path": "ko/data-on-eks/flink/03-state-checkpointing-streaming.md",
@@ -34935,12 +34935,12 @@
       "sha256": "7233c13f950e0eb92e4d7dd97b77bd61e2d532a5c77746019d167731bd2660d7",
       "lines": 55,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 17,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "flink-foundation"
     },
     {
       "path": "ko/data-on-eks/kafka/01-kafka-fundamentals.md",
@@ -35927,7 +35927,7 @@
       "sha256": "3ce4e0f51c4e400d829dc2c1f5c29b18ae02f9c28eae42ae7c86aa7e05a65595",
       "lines": 1850,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 4,
       "linkCount": 117,
       "structuralFindings": [],
@@ -35943,12 +35943,12 @@
       "sha256": "b242c669c91398afced5b403096b838dff8d97f400810e86d40ddd3ae29c8972",
       "lines": 2892,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 19,
       "linkCount": 201,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-version-roadmap"
     },
     {
       "path": "ko/gitops/02-fluxcd.md",
@@ -36919,7 +36919,7 @@
       "sha256": "a978ae0ccacf6836ffccc35905ac4fe4eae2de95f02d154e20599a67c32ccda2",
       "lines": 1270,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 2,
       "linkCount": 59,
       "structuralFindings": [],
@@ -36935,12 +36935,12 @@
       "sha256": "b712a1f1d8c443c254934957bd2e8a1e1fc871089781b26eed12803c46502f17",
       "lines": 354,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 3,
       "linkCount": 39,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "ko/networking/cilium/04-ipam-policy.md",
@@ -36951,12 +36951,12 @@
       "sha256": "318b69b925accb428544c21fc44557b3bd66a3f98944d98b3f5d5d723df73763",
       "lines": 609,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 1,
       "linkCount": 44,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "ko/networking/cilium/05-l2-l7-networking.md",
@@ -38791,7 +38791,7 @@
       "sha256": "4c75851aafe7fd3313c93e9694fc1449251354516ca35f11faf2ca26e62f0cef",
       "lines": 319,
       "navigationListed": true,
-      "semanticStatus": "followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 6,
       "structuralFindings": [],
@@ -38807,12 +38807,12 @@
       "sha256": "2828ff02996a821cc2c1077bda9c96bf5706b2e6ca8285b75d54d65a454258a4",
       "lines": 249,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "airflow-dag-patterns"
     },
     {
       "path": "ko/quizzes/data-on-eks/airflow/04-mwaa-integration-quiz.md",
@@ -38823,12 +38823,12 @@
       "sha256": "7372280f1dee0672068046a17fc6ca7f8690dd94f4607bfb9a121c39766300bc",
       "lines": 212,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "airflow-mwaa"
     },
     {
       "path": "ko/quizzes/data-on-eks/airflow/05-operations-quiz.md",
@@ -38839,12 +38839,12 @@
       "sha256": "5ca41eb7e4e9b13d4eba722912db5570d4ed9200e5bb7242b20e417b6a4b637f",
       "lines": 164,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "airflow-operations"
     },
     {
       "path": "ko/quizzes/data-on-eks/flink/01-architecture-quiz.md",
@@ -38855,12 +38855,12 @@
       "sha256": "64a7d332141b10b5bbec21b954e65ed186ff3377627b8e5cd4ac06c65cf06b98",
       "lines": 146,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 3,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "flink-foundation"
     },
     {
       "path": "ko/quizzes/data-on-eks/flink/02-flink-kubernetes-operator-quiz.md",
@@ -38871,12 +38871,12 @@
       "sha256": "0aa3d370580b7672e2eeb363078b282c6542e6dc9078fa58f47b2e2ca40c6dce",
       "lines": 345,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "flink-operator"
     },
     {
       "path": "ko/quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md",
@@ -39767,7 +39767,7 @@
       "sha256": "b2fff2ac8474086b367c9d4f90edca21f136ac04273faeb7abf08894bdc351f8",
       "lines": 1015,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 26,
       "structuralFindings": [],
@@ -39783,12 +39783,12 @@
       "sha256": "fcb41b9e31514e43d09696255cdd736ebbc7a01b4804b0b4112a7bc98ecb3fdf",
       "lines": 144,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "needs_followup",
       "imageCount": 0,
       "linkCount": 1,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "eks-version-roadmap"
     },
     {
       "path": "ko/quizzes/gitops/01-argocd-quiz.md",
@@ -40455,7 +40455,7 @@
       "sha256": "9ea6520dc0e1fbcb62d1f39622940789803aefaa3e764aa4a3a952f3c92f5137",
       "lines": 253,
       "navigationListed": true,
-      "semanticStatus": "needs_followup",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
@@ -40471,12 +40471,12 @@
       "sha256": "3ea2a7dd3215922d17c91622f122156f5eafc77c87ba2b775edc0d345cfc526a",
       "lines": 434,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 37,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "ko/quizzes/networking/cilium/04-ipam-policy-quiz.md",
@@ -40487,12 +40487,12 @@
       "sha256": "8908a6a520331e04d45eb4935316061c76bb0ece9cedf78edd349688dd341d35",
       "lines": 253,
       "navigationListed": true,
-      "semanticStatus": "pending",
+      "semanticStatus": "fixed",
       "imageCount": 0,
       "linkCount": 5,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
+      "fullyRead": true,
+      "reviewBatch": "networking-cilium"
     },
     {
       "path": "ko/quizzes/networking/cilium/05-l2-l7-networking-quiz.md",
@@ -43325,30 +43325,6 @@
       "imageCount": 0,
       "linkCount": 74,
       "structuralFindings": [],
-      "fullyRead": false,
-      "reviewBatch": null
-    },
-    {
-      "path": "ko/statistics.md",
-      "locale": "ko",
-      "kind": "restored-document",
-      "section": "ko",
-      "bytes": 565,
-      "sha256": "8827b6a4148bd8d3e10e32b78bcf791f08d31d9a5e7e922979eb3c7e97c1d92c",
-      "lines": 25,
-      "semanticStatus": "pending",
-      "fullyRead": false,
-      "reviewBatch": null
-    },
-    {
-      "path": "en/statistics.md",
-      "locale": "en",
-      "kind": "restored-document",
-      "section": "en",
-      "bytes": 573,
-      "sha256": "739eddbe7d45d69416b5ed08985023b164febed160a495c943a5406e5843a369",
-      "lines": 25,
-      "semanticStatus": "pending",
       "fullyRead": false,
       "reviewBatch": null
     }

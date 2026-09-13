@@ -1,6 +1,6 @@
 # Part 2: Strimzi Operator
 
-> **Reviewed**: 2026-09-12. Strimzi 1.2.0, Kafka 4.3.1. Strimzi requires Kubernetes 1.30 or later; local schema validation used 1.36.2.
+> **Last Updated**: September 12, 2026. Strimzi 1.2.0, Kafka 4.3.1. Strimzi requires Kubernetes 1.30 or later; local schema validation used 1.36.2.
 > **Validation**: Two Helm configurations, 67 Kubernetes/CRD objects and five credential-file cases through Kafka's native JAAS parser. No live EKS installation, TLS connection, broker ACL enforcement, EBS or NLB provisioning was performed.
 
 ## 1. Scope and Prerequisites

@@ -1,6 +1,6 @@
 # Linkerd Security
 
-> **Reviewed**: September 11, 2026 · Linkerd edge-26.9.1 · cert-manager examples checked against 1.21.1
+> **Last Updated**: September 11, 2026 · Linkerd edge-26.9.1 · cert-manager examples checked against 1.21.1
 
 Linkerd provides workload authentication, transport encryption and inbound authorization for traffic handled by its proxies. Enrollment, policy, certificate lifecycle and application security still need explicit design. Use the supported Kubernetes/Gateway API combination in the [installation guide](01-installation.md); the examples here assume that installation and existing application workloads.
 

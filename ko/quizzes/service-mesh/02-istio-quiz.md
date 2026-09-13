@@ -1,6 +1,6 @@
 # Istio 퀴즈
 
-> **검토일**: 2026년 9월 11일 · 예제 검증: Istio 1.31.0 / Argo Rollouts 1.10.0
+> **마지막 업데이트**: 2026년 9월 11일 · 예제 검증: Istio 1.31.0 / Argo Rollouts 1.10.0
 
 [유지 관리되는 Istio 가이드](../../service-mesh/istio/README.md)를 다루는 퀴즈입니다. 호환성은 [설치 가이드](../../service-mesh/istio/01-installation.md)에서 확인하세요. Kubernetes 최소 버전 하나는 지원 매트릭스가 아닙니다. 예제는 학습 보조이며 운영 배포 검증을 거치지 않았습니다. Namespace, hostname, identity와 backend endpoint는 검증한 실제 값으로 바꾸세요.
 

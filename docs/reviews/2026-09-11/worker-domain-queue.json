@@ -37,9 +37,9 @@
         "ko": 54
       },
       "inventoryNote": "Path inventory only; not a full-read or semantic-review claim.",
-      "fullyRead": 80,
-      "fixedAndValidated": 76,
-      "currentBatch": "networking-cilium eBPF",
+      "fullyRead": 88,
+      "fixedAndValidated": 88,
+      "currentBatch": "networking-cilium L2-L7",
       "progress": "docs/reviews/2026-09-11/networking-progress.json"
     },
     {
@@ -77,7 +77,7 @@
   "extraAuthorizedWritePaths": [
     "scripts/__tests__/service-mesh-mtls-retry-guidance.test.mjs"
   ],
-  "parentCurrentOwnership": "Shared frontend/statistics/analytics workflows, other previously assigned domains and mechanical/translation pipelines; no GA4credentials supplied in worker context. Max2workers; no delegation.",
+  "parentCurrentOwnership": "ParentownsPR220onsitestatisticsremoval/GA4,latestHEADAIreview+CIandotherdomains;workerdoesnoteditstatsworktree.",
   "networkingSteering": [
     {
       "topic": "EKS AutoMode node-local CoreDNS",
@@ -104,14 +104,14 @@
     }
   ],
   "latestWorkerCheckpoint": {
-    "date": "2026-09-11",
-    "fullyRead": 250,
-    "fixedAndValidated": 246,
-    "current": "Cilium02eBPF4fullyread;primaryverificationpending",
+    "date": "2026-09-12",
+    "fullyRead": 258,
+    "fixedAndValidated": 258,
+    "current": "Cilium04IPAM-policy4complete. Next05L2-L7fourselected,unread.258read/complete;20Cilium+116observabilityremain.",
     "remaining": {
-      "networkingPending": 4,
-      "networkingUnread": 28,
-      "observabilityUnread": 116
+      "networkingPending": 0,
+      "networkingUnread": 20,
+      "observability": 116
     },
     "blockers": []
   },

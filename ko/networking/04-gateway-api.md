@@ -1,7 +1,7 @@
 # Kubernetes Gateway API
 
 > **API 기준**: Gateway API v1.6 Standard. 정확한 번들은 컨트롤러 지원 버전에 맞춰 선택하세요.
-> **검토일**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 9월 12일
 
 ## 개요
 

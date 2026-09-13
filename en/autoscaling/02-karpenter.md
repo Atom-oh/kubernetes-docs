@@ -1358,7 +1358,7 @@ Using Karpenter, you can simplify cluster management, optimize resource utilizat
 - [Karpenter Official Documentation](https://karpenter.sh/)
 - [Karpenter AWS Provider Repository](https://github.com/aws/karpenter-provider-aws)
 - [Amazon EKS Workshop - Karpenter](https://www.eksworkshop.com/docs/autoscaling/compute/karpenter/)
-- [AWS Blog - Karpenter](https://aws.amazon.com/blogs/containers/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/)
+- [AWS Blog - Karpenter](https://aws.amazon.com/blogs/aws/introducing-karpenter-an-open-source-high-performance-kubernetes-cluster-autoscaler/)
 - [Karpenter Best Practices](https://aws.github.io/aws-eks-best-practices/karpenter/)
 - [Karpenter GitHub Releases](https://github.com/aws/karpenter-provider-aws/releases)
 - [AWS What's New - Karpenter ARC Zonal Shift Support](https://aws.amazon.com/about-aws/whats-new/2026/05/karpenter-arc-zonal-shift/)

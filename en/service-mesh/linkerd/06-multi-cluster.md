@@ -1,6 +1,6 @@
 # Linkerd Multi-cluster
 
-> **Reviewed**: September 11, 2026 · Linkerd edge-26.9.1 / charts 2026.9.1 · Gateway API 1.5.1
+> **Last Updated**: September 11, 2026 · Linkerd edge-26.9.1 / charts 2026.9.1 · Gateway API 1.5.1
 
 Linkerd mirrors selected service information across cluster boundaries. This requires both a working control-plane discovery path and the appropriate data-plane network path. It does not merge clusters, replicate application data or duplicate every request for shadow testing.
 

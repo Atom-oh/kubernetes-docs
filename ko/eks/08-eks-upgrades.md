@@ -706,7 +706,7 @@ API server와 해당 노드에 호환되는 kube-proxy를 사용하며 API serve
 
 ```bash
 kubectl --context "$KUBE_CONTEXT" -n kube-system get deployment coredns -o wide
-kubectl --context "$KUBE_CONTEXT" -n kube-system get daemonset kube-proxy,aws-node -o wide
+kubectl --context "$KUBE_CONTEXT" -n kube-system get daemonset kube-proxy aws-node -o wide
 ```
 
 ### 애드온 업그레이드 문제 해결

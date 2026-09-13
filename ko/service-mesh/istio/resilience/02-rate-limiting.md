@@ -1,6 +1,6 @@
 # Rate Limiting
 
-> **검토일**: 2026년9월11일 · Istio1.31. 독립적인 예제이며 workload/listener별 local 정책을 하나 선택합니다. 사이드카 앱은 `default`의 HTTP8080, gateway 예제는 `istio-system`의 `istio: ingressgateway` 전용 gateway를 가정합니다. 실제 레이블·listener를 확인해야 하며 배포·부하 검증한 구성이 아닙니다.
+> **마지막 업데이트**: 2026년 9월 11일 · Istio1.31. 독립적인 예제이며 workload/listener별 local 정책을 하나 선택합니다. 사이드카 앱은 `default`의 HTTP8080, gateway 예제는 `istio-system`의 `istio: ingressgateway` 전용 gateway를 가정합니다. 실제 레이블·listener를 확인해야 하며 배포·부하 검증한 구성이 아닙니다.
 
 Rate Limiting은 서비스를 과부하로부터 보호하고, 공정한 리소스 사용을 보장하며, 비용을 제어하기 위해 요청 속도를 제한하는 기능입니다.
 

@@ -642,4 +642,4 @@ To test what you learned in this chapter, try the [Security Quiz](../quizzes/cor
 - [Amazon EKS Official Documentation - Security](https://docs.aws.amazon.com/eks/latest/userguide/security.html)
 - [Amazon EKS Official Documentation - IAM Roles for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
 - [Amazon EKS Official Documentation - Secret Encryption](https://docs.aws.amazon.com/eks/latest/userguide/enable-kms.html)
-- [AWS Security Blog - EKS Security Best Practices](https://aws.amazon.com/blogs/containers/amazon-eks-security-best-practices/)
+- [Amazon EKS Security Best Practices](https://docs.aws.amazon.com/eks/latest/best-practices/security.html)

@@ -1,0 +1,42 @@
+{
+  "body_mismatches": 0,
+  "completed": 3600,
+  "duration_seconds": 180.0,
+  "errors": 0,
+  "failure_span_is_downtime": false,
+  "failure_span_seconds": null,
+  "first_failed_request_utc_start": null,
+  "full_60s_windows": 121,
+  "generator_valid": true,
+  "http_error_rate": 0.0,
+  "http_errors": 0,
+  "last_failed_completion_utc": null,
+  "launched": 3600,
+  "p50_ms": 1.8461749999687527,
+  "p95_ms": 2.703454999959831,
+  "p99_ms": 5.930995999960942,
+  "percentile_method": "nearest_rank",
+  "request_error_rate": 0.0,
+  "scheduled": 3600,
+  "scheduled_origin_utc": "2026-09-12T14:00:41.674722Z",
+  "skipped": 0,
+  "success": 3600,
+  "timeouts": 0,
+  "transport_errors": 0,
+  "worst_60s_p99_ms": 6.024327999966772,
+  "worst_60s_p99_window": {
+    "completed": 1200,
+    "errors": 0,
+    "start_second": 0,
+    "utc_end": "2026-09-12T14:01:41.674722Z",
+    "utc_start": "2026-09-12T14:00:41.674722Z"
+  },
+  "worst_60s_request_error_rate": 0.0,
+  "worst_60s_request_error_window": {
+    "completed": 1200,
+    "errors": 0,
+    "start_second": 0,
+    "utc_end": "2026-09-12T14:01:41.674722Z",
+    "utc_start": "2026-09-12T14:00:41.674722Z"
+  }
+}

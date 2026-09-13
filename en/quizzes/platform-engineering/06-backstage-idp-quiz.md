@@ -1,143 +1,77 @@
 # Backstage IDP Quiz
 
-1. Which Entity Kind is used to register a microservice in the Backstage Software Catalog?
-   - A) Service
-   - B) Component
-   - C) Application
-   - D) Workload
+[Backstage](../../platform-engineering/06-backstage-idp.md)
+
+The original eight topics have been updated to the Backstage 1.54.7 review.
+
+## 1. Which catalog kind represents a microservice?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Component**
-
-**Explanation:**
-In the Backstage Software Catalog, microservices, websites, and libraries are all registered as `Component` Kind. The `spec.type` field distinguishes between service, website, library, etc.
+Component, with spec.type such as service. A catalog Resource describes infrastructure; it is not a controller provisioning AWS resources.
 
 </details>
 
----
-
-2. What is the primary purpose of Backstage Software Templates (Golden Paths)?
-   - A) Monitor existing service performance
-   - B) Automatically create new services/infrastructure in a standardized way
-   - C) Audit Kubernetes cluster security
-   - D) Monitor CI/CD pipelines
+## 2. What does a Software Template actually create?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Automatically create new services/infrastructure in a standardized way**
-
-**Explanation:**
-Software Templates (Golden Paths) allow developers to enter a few parameters in the Backstage UI and automatically scaffold a standardized project structure (Dockerfile, Helm chart, CI/CD, catalog-info.yaml, etc.), naturally applying organizational best practices.
+Only the files and external operations implemented by registered actions and supplied skeletons. The guide's small example creates three catalog/TechDocs files, not an application runtime or database. Golden paths do not replace authorization or mandatory policies.
 
 </details>
 
----
-
-3. Which annotation is required in catalog-info.yaml to display Kubernetes Pod status in Backstage?
-   - A) kubernetes.io/pod-name
-   - B) backstage.io/kubernetes-id
-   - C) app.kubernetes.io/managed-by
-   - D) backstage.io/k8s-cluster
+## 3. How are Kubernetes workloads matched to catalog entities?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) backstage.io/kubernetes-id**
-
-**Explanation:**
-The `backstage.io/kubernetes-id` annotation is used by the Backstage Kubernetes plugin to match catalog entities with Kubernetes resources. This value must match the `backstage.io/kubernetes-id` label on the Kubernetes Deployment.
+Match backstage.io/kubernetes-id or supported label-selector annotations to actual workload labels. Namespace/cluster selection, credentials and RBAC are also required. Metadata matching is not per-user authorization.
 
 </details>
 
----
-
-4. What is the most appropriate PostgreSQL setup for Backstage in an EKS production environment?
-   - A) Built-in SQLite
-   - B) In-cluster PostgreSQL StatefulSet
-   - C) Amazon RDS PostgreSQL (external managed)
-   - D) DynamoDB
+## 4. How should PostgreSQL and secrets be prepared on EKS?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) Amazon RDS PostgreSQL (external managed)**
-
-**Explanation:**
-Production environments should use managed databases like Amazon RDS for automatic backups, high availability (Multi-AZ), and monitoring. Set `postgresql.enabled: false` in Helm values and provide external RDS connection details via Secrets.
+When selecting external PostgreSQL such as RDS, disable the bundled database and configure TLS, networking, schemas, migrations and backups. Use approved secret-file mounts with matching $file paths. A managed database alone does not complete HA/recovery verification.
 
 </details>
 
----
-
-5. Which documentation build tool does Backstage TechDocs use?
-   - A) Docusaurus
-   - B) GitBook
-   - C) MkDocs
-   - D) Sphinx
+## 5. How is TechDocs built and served?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: C) MkDocs**
-
-**Explanation:**
-Backstage TechDocs is built on MkDocs. It generates documentation from a service repo's `docs/` directory and `mkdocs.yml` file, publishes to storage like S3, and makes it accessible directly from the catalog.
+Use MkDocs and techdocs-core. With external builders, CI publishes to storage such as S3 and the Backstage backend reads it for the UI. Align entity keys/root paths and separate publisher/reader permissions; public bucket access is unnecessary.
 
 </details>
 
----
-
-6. When adopting Backstage incrementally, which feature should you start with?
-   - A) Software Templates
-   - B) Software Catalog
-   - C) TechDocs
-   - D) RBAC Permission Framework
+## 6. What should be established during incremental adoption?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Software Catalog**
-
-**Explanation:**
-The Software Catalog is the foundation of Backstage and all other features build upon it. Start by registering your organization's services, APIs, and team information, then incrementally add Templates and TechDocs.
+Start with a small, accurate catalog and trusted ownership/sources, then expand templates and TechDocs. Establish authentication, authorization and trust boundaries from the outset.
 
 </details>
 
----
-
-7. How can a Backstage Software Template automate both GitHub repo creation and ArgoCD Application creation?
-   - A) Backstage calls the Kubernetes API directly
-   - B) Template steps sequentially execute publish:github and argocd:create-resources actions
-   - C) GitHub Webhooks automatically trigger ArgoCD
-   - D) The Helm chart includes all resources
+## 7. What connects GitHub publication and ArgoCD actions?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Template steps sequentially execute publish:github and argocd:create-resources actions**
-
-**Explanation:**
-The Backstage Scaffolder executes actions defined in the Template's `steps` section sequentially. `publish:github` creates the repo, and its output (remoteUrl) is passed as input to `argocd:create-resources` to automatically create the ArgoCD Application. Finally, `catalog:register` adds it to the catalog.
+Register action modules and configure credentials, permissions and real input/output schemas. Roadie 1.8.1's argocd:create-resources takes the deployment namespace and has no revision input. Do not register a main-branch catalog file immediately after opening its unmerged PR.
 
 </details>
 
----
-
-8. How do you restrict teams to only modify their own entities in the Backstage Permission Framework?
-   - A) Kubernetes RBAC ClusterRole
-   - B) Use conditions field in policy to match spec.owner
-   - C) GitHub repository permissions
-   - D) Ingress network policies
+## 8. How can catalog deletion be restricted by ownership?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Use conditions field in policy to match spec.owner**
-
-**Explanation:**
-The Backstage Permission Framework policy's `conditions` field can match entities where `spec.owner` equals the team name, granting update permissions only for their own entities. This maintains team autonomy while restricting modification of other teams' entities to read-only.
+Register a real PermissionPolicy module, return an IS_ENTITY_OWNER condition for catalog deletion and let the catalog backend evaluate it. The example denies actions without explicit grants. Catalog ownership, GitHub writes and ArgoCD deployment permissions are distinct; protect Group/User sources too.
 
 </details>

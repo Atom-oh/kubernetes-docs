@@ -1,0 +1,30 @@
+[
+  {
+    "path": "ko/ai-ml/kubeflow/02-pipelines.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "327a5e4cd36c7c91c0309d24707ff9aa75719703d3eb70c7f9a03383f736a1a4",
+    "summary": "Reviewed KFP2.16.1 compilation/runtime/cache source; fixed missing pandas dependency, SDK image-build claim, artifact IDs vs byte hashing, Run/Argo/K8s boundaries, S3 costs/identity and matching quizzes."
+  },
+  {
+    "path": "ko/quizzes/ai-ml/kubeflow/02-pipelines-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "f290c1220d4b24b52dd0b89081439513d3b02bb517e7e48efb1123d5d02b7821",
+    "summary": "Reviewed KFP2.16.1 compilation/runtime/cache source; fixed missing pandas dependency, SDK image-build claim, artifact IDs vs byte hashing, Run/Argo/K8s boundaries, S3 costs/identity and matching quizzes."
+  },
+  {
+    "path": "en/ai-ml/kubeflow/02-pipelines.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "1ad6b7a5e73826926a7343772cf2fdbe58637e8c4df918e1b61a377bced76c4e",
+    "summary": "Reviewed KFP2.16.1 compilation/runtime/cache source; fixed missing pandas dependency, SDK image-build claim, artifact IDs vs byte hashing, Run/Argo/K8s boundaries, S3 costs/identity and matching quizzes."
+  },
+  {
+    "path": "en/quizzes/ai-ml/kubeflow/02-pipelines-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "cc4800aeb2a61f237569864ff505a806745df2491e80b1951a45d619874c1102",
+    "summary": "Reviewed KFP2.16.1 compilation/runtime/cache source; fixed missing pandas dependency, SDK image-build claim, artifact IDs vs byte hashing, Run/Argo/K8s boundaries, S3 costs/identity and matching quizzes."
+  }
+]

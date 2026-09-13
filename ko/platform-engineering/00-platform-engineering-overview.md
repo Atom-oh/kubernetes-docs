@@ -1,6 +1,6 @@
 # Platform Engineering 개요
 
-> **마지막 업데이트**: 2026년 2월 23일
+> **마지막 업데이트**: 2026년 9월 12일
 
 ## 1. Platform Engineering이란?
 
@@ -14,8 +14,8 @@ IDP는 개발자가 코드 작성에 집중할 수 있도록 인프라 프로비
 
 **IDP의 핵심 가치:**
 
-- **셀프서비스**: 개발자가 티켓 없이 직접 인프라를 프로비저닝
-- **가드레일**: 보안과 규정 준수를 기본으로 내장
+- **셀프서비스**: 승인된 범위의 리소스와 작업을 API·CLI·포털에서 요청
+- **가드레일**: 보안 정책과 승인·감사 경로를 구현하고 적용 여부를 검증
 - **표준화**: Golden Path를 통한 일관된 배포 패턴
 - **자동화**: 반복 작업의 제거를 통한 인지 부하 감소
 
@@ -27,7 +27,7 @@ IDP는 개발자가 코드 작성에 집중할 수 있도록 인프라 프로비
 | **핵심 산출물** | Internal Developer Platform | CI/CD 파이프라인, 자동화 스크립트 | SLO/SLI, 에러 버짓, 토일 자동화 |
 | **주요 메트릭** | 개발자 생산성, 온보딩 시간 | 배포 빈도, 리드 타임 | 가용성, 에러 버짓 소비율 |
 | **팀 구조** | 전담 플랫폼 팀 | 크로스 펑셔널 팀 | SRE 팀 또는 임베디드 SRE |
-| **관계** | DevOps + SRE 위에 제품화 계층 | 문화와 방법론 | 운영 엔지니어링 실천 |
+| **관계** | DevOps·SRE와 협력하는 제품 중심의 플랫폼 접근 | 문화와 방법론 | 운영 엔지니어링 실천 |
 
 > **참고**: 세 가지 접근법은 상호 배타적이 아니라 보완적입니다. Platform Engineering은 DevOps 원칙과 SRE 관행을 **제품으로 패키징**하는 것입니다.
 
@@ -48,15 +48,11 @@ IDP는 개발자가 코드 작성에 집중할 수 있도록 인프라 프로비
 
 ### AWS Cloud Adoption Framework 소개
 
-[AWS Cloud Adoption Framework(CAF)](https://docs.aws.amazon.com/prescriptive-guidance/latest/aws-caf-platform-perspective/platform-eng.html)은 클라우드 도입을 위한 조직적 가이드라인을 제공합니다. **플랫폼 관점(Platform Perspective)**은 세 가지 핵심 영역을 다룹니다:
-
-1. **Platform Engineering** -- 이 섹션의 초점
-2. **Platform Architecture** -- 클라우드 아키텍처 설계 원칙
-3. **Data Architecture** -- 데이터 관리 및 분석 전략
+[AWS CAF](https://docs.aws.amazon.com/whitepapers/latest/overview-aws-cloud-adoption-framework/platform-perspective.html)의 Platform 관점에는 일곱 역량이 있습니다: platform architecture, data architecture, platform engineering, data engineering, provisioning and orchestration, modern application development, continuous integration and continuous delivery. 이 문서는 그중 platform engineering을 중심으로 설명합니다.
 
 ### 성숙도 모델: START → ADVANCE → EXCEL
 
-AWS CAF는 클라우드 플랫폼 성숙도를 세 단계로 정의합니다. 각 단계에서 Kubernetes 생태계의 도구가 어떻게 매핑되는지 살펴봅니다.
+AWS의 platform engineering 상세 가이드는 Start·Advance·Excel로 개선 과제를 설명합니다. 아래 Kubernetes 도구 매핑과 체크리스트는 이 문서의 학습 예시이며 AWS의 공식 인증 점수표나 모든 조직의 필수 도입 순서가 아닙니다.
 
 #### START: 기반 구축
 
@@ -67,9 +63,9 @@ AWS CAF는 클라우드 플랫폼 성숙도를 세 단계로 정의합니다. �
 | **랜딩 존 & 가드레일** | 멀티 어카운트 환경, 예방적/탐지적 통제 | EKS 클러스터 구성, [OPA Gatekeeper](../security/09-opa-gatekeeper.md) / [Kyverno](../security/01-kyverno-policy-management.md) |
 | **인증** | 중앙 집중식 ID 관리, IdP 연동 | [K8s 인증 및 권한 부여](../security/02-kubernetes-auth-authz.md), OIDC, IRSA |
 | **네트워크** | 중앙 집중식 네트워크 관리 | VPC CNI, [Calico](../networking/calico/README.md), [Cilium](../networking/cilium/README.md) |
-| **로깅** | 크로스 어카운트 관측성 | [Prometheus](../observability/metrics/01-prometheus.md), [Loki](../observability/logging/01-loki.md), [OpenTelemetry](../observability/tracing/03-opentelemetry.md) |
+| **관측성** | 로그·메트릭·트레이스 수집과 보호 | [Prometheus](../observability/metrics/01-prometheus.md), [Loki](../observability/logging/01-loki.md), [OpenTelemetry](../observability/tracing/03-opentelemetry.md) |
 | **통제** | 프로그래밍 방식의 보안 통제 | [Pod Security Standards](../security/03-pod-security-standards.md), [네트워크 정책](../security/04-network-policies.md) |
-| **비용 관리** | 태깅 전략, 비용 할당 | 리소스 쿼터, LimitRange, [EKS 비용 최적화](../eks/07-eks-cost-optimization.md) |
+| **비용 관리** | 태깅 전략, 비용 할당 | 청구 태그·사용량·비용 배분, [EKS 비용 최적화](../eks/07-eks-cost-optimization.md) |
 
 #### ADVANCE: 운영 확장
 
@@ -121,7 +117,7 @@ AWS CAF는 클라우드 플랫폼 성숙도를 세 단계로 정의합니다. �
 
 | 계층 | 역할 | 주요 도구 | 이 레포 문서 |
 |------|------|----------|------------|
-| **개발자 인터페이스** | 개발자가 상호작용하는 UI/CLI | Backstage, Port, Argo Workflows UI | - |
+| **개발자 인터페이스** | 개발자가 상호작용하는 UI/CLI | Backstage, Port, Argo Workflows UI | [Backstage](./06-backstage-idp.md) |
 | **통합/오케스트레이션** | 선언적 상태 관리, 배포 자동화 | ArgoCD, FluxCD, KRO | [GitOps](../gitops/README.md), [KRO](./03-kro.md) |
 | **리소스** | 클라우드/K8s 리소스의 추상화 | ACK, Helm, Operator | [ACK](./02-ack.md), [Helm](./01-helm.md), [K8s 확장](./04-kubernetes-extensions.md) |
 | **인프라** | 실제 컴퓨팅/네트워크/스토리지 | EKS, VPC, IAM | [EKS](../eks/01-eks-introduction.md) |
@@ -145,22 +141,19 @@ spec:
     instanceClass: db.t3.medium
 ```
 
-이 단일 매니페스트를 통해 KRO가 내부적으로:
-1. **Deployment + Service** (Kubernetes 네이티브)
-2. **RDS 인스턴스** (ACK를 통한 AWS 리소스)
-3. **IAM Role** (ACK를 통한 권한 설정)
+위 WebApplication은 **플랫폼이 사전에 정의해야 하는 사용자 API 예시**입니다. Kubernetes나 kro의 내장 kind가 아니며, 대응하는 RGD/생성 CRD가 없으면 적용할 수 없습니다. 이 개요에서는 완전한 RGD를 제공하거나 실제 리소스를 생성하지 않습니다.
 
-을 자동 생성합니다. 자세한 예제는 [ExampleCorp 통합 예제](./05-example-corp-app.md)를 참조하세요.
+RGD가 Deployment·Service·ACK의 RDS/IAM 리소스를 명시했을 때 kro는 Kubernetes 리소스와 의존성을 관리하고, ACK의 해당 service controller가 AWS API를 호출합니다. 생성되는 조합은 RGD 내용에 따라 달라집니다. controller 설치·CRD·RBAC/IAM, quota, readiness·오류 처리, credential 전달과 삭제/보존 정책을 별도로 검증해야 합니다. 단일 CR 생성이 AWS 리소스의 즉시 준비나 transaction을 보장하지는 않습니다. [ExampleCorp 예제](./05-example-corp-app.md)와 [kro 가이드](./03-kro.md)를 함께 확인하세요.
 
 ### Golden Path 개념
 
 Golden Path(골든 패스)는 플랫폼 팀이 제공하는 **권장 배포 경로**입니다:
 
 - **목적**: 개발자가 검증된 방법으로 빠르게 시작할 수 있도록 가이드
-- **특징**: 강제가 아닌 권장 -- 필요시 벗어날 수 있지만 대부분의 경우 최적의 선택
+- **특징**: 지원되는 권장 경로 -- 예외는 조직의 승인 절차를 따르며 필수 보안·데이터 정책을 우회하지 않음
 - **예시**:
-  - "신규 마이크로서비스 배포" Golden Path: Helm Chart 템플릿 → ArgoCD 연동 → Prometheus 메트릭 자동 수집
-  - "데이터베이스 프로비저닝" Golden Path: KRO RGD 매니페스트 → ACK를 통한 RDS 생성 → Secret 자동 주입
+  - "신규 마이크로서비스 배포" Golden Path: 검증한 Helm template → ArgoCD 연동 → 실제 metrics publisher/수집 구성
+  - "데이터베이스 프로비저닝" Golden Path: 검증한 RGD → ACK의 RDS lifecycle → 승인된 credential 전달
 
 ---
 
@@ -214,7 +207,7 @@ Golden Path(골든 패스)는 플랫폼 팀이 제공하는 **권장 배포 경�
 | 체크 | 항목 | 관련 문서 |
 |------|------|----------|
 | [ ] | 셀프서비스 카탈로그가 개발자에게 제공되는가? | [KRO](./03-kro.md), [ExampleCorp](./05-example-corp-app.md) |
-| [ ] | DORA 메트릭을 측정하고 개선하는가? | - |
+| [ ] | DORA 메트릭을 적절한 서비스 범위에서 측정하고 개선하는가? | [현재 DORA 정의](https://dora.dev/guides/dora-metrics/) |
 | [ ] | 런타임 보안 모니터링이 운영되는가? | [런타임 보안](../security/08-runtime-security.md) |
 | [ ] | 오토스케일링이 워크로드에 최적화되는가? | [KEDA](../autoscaling/01-keda.md), [Karpenter](../autoscaling/02-karpenter.md) |
 | [ ] | 플랫폼 SLO가 정의되고 추적되는가? | [Observability 분석](../ops/08-observability-analysis.md) |
@@ -222,10 +215,17 @@ Golden Path(골든 패스)는 플랫폼 팀이 제공하는 **권장 배포 경�
 
 ---
 
+### 지표와 플랫폼 제품의 성공
+
+현재 DORA 안내는 change lead time, deployment frequency, failed deployment recovery time, change fail rate, deployment rework rate의 다섯 지표를 설명합니다. 예전 네 지표나 일반 MTTR을 현재 정의와 혼용하지 마세요. 개인 성과 순위를 매기기보다 같은 서비스·팀의 개선과 안정성을 함께 보며, 플랫폼 온보딩 시간·작업 성공률·사용자 만족도·채택률도 측정합니다. 측정은 Excel에 도달한 뒤에만 시작하는 활동이 아닙니다.
+
+IDP는 포털 하나와 동일하지 않습니다. API·CLI·template·문서·지원과 운영 책임을 포함하는 내부 제품이며, 개발팀이 모든 application 보안 책임을 넘기는 구조도 아닙니다. Golden Path와 guardrail은 실제 적용·예외·변경·복구를 검증해야 합니다.
+
 ## 6. 참고 자료
 
 - [AWS CAF Platform Perspective - Platform Engineering](https://docs.aws.amazon.com/prescriptive-guidance/latest/aws-caf-platform-perspective/platform-eng.html)
 - [CNCF Platform White Paper](https://tag-app-delivery.cncf.io/whitepapers/platforms/)
-- [Platform Engineering on Kubernetes (O'Reilly)](https://www.oreilly.com/library/view/platform-engineering-on/9781617299322/)
 - [Backstage.io - Open Source IDP Framework](https://backstage.io/)
 - [Internal Developer Platform](https://internaldeveloperplatform.org/)
+
+- [DORA 현재 지표](https://dora.dev/guides/dora-metrics/)

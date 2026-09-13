@@ -1,0 +1,1898 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-12T21:38:10.472358+00:00",
+  "scope": {
+    "documents": 4,
+    "quizQuestions": 22,
+    "figures": 18
+  },
+  "baseline": "vLLM0.29.0;cu129amd64image;historical0.6.4.post1benchmarkseparate",
+  "imageDigest": "sha256:3e10e8189823e0f7ae4620c271bcdaaf64127ec7d0edc351591a508498b7684a",
+  "modelRevision": "c1899de289a04d12100db370d81485cdf75e47ca",
+  "imageModelMetadataMatched": true,
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/02-vllm-deployment.md",
+        "sha256": "4d31a9ab5c74340c417446b1662073446034e406c8cfe220140dac7d1f6b3041",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "vllm-배포-및-최적화"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-설정"
+          },
+          {
+            "tag": "h2",
+            "id": "vllm-소개"
+          },
+          {
+            "tag": "h3",
+            "id": "기능과-지원-범위"
+          },
+          {
+            "tag": "h3",
+            "id": "현재-cli에서의-기능-설정"
+          },
+          {
+            "tag": "h2",
+            "id": "시스템-요구-사항"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-인프라-구성"
+          },
+          {
+            "tag": "h2",
+            "id": "스토리지와-모델-준비"
+          },
+          {
+            "tag": "h2",
+            "id": "vllm-배포"
+          },
+          {
+            "tag": "h3",
+            "id": "배포-아키텍처"
+          },
+          {
+            "tag": "h3",
+            "id": "단일-gpu-구성-예제"
+          },
+          {
+            "tag": "h3",
+            "id": "멀티노드와-독립-replica-구분"
+          },
+          {
+            "tag": "h2",
+            "id": "성능-최적화"
+          },
+          {
+            "tag": "h3",
+            "id": "메모리·scheduler·통신-옵션"
+          },
+          {
+            "tag": "h2",
+            "id": "과거-측정-기록-l4의-qwen2-5-7b"
+          },
+          {
+            "tag": "h3",
+            "id": "구성"
+          },
+          {
+            "tag": "h3",
+            "id": "재현-방법"
+          },
+          {
+            "tag": "h3",
+            "id": "결과"
+          },
+          {
+            "tag": "h3",
+            "id": "해석"
+          },
+          {
+            "tag": "h3",
+            "id": "한계"
+          },
+          {
+            "tag": "h2",
+            "id": "모니터링-및-로깅"
+          },
+          {
+            "tag": "h3",
+            "id": "메트릭과-로그"
+          },
+          {
+            "tag": "h2",
+            "id": "오토스케일링"
+          },
+          {
+            "tag": "h3",
+            "id": "autoscaling과-가용성"
+          },
+          {
+            "tag": "h2",
+            "id": "보안-구성"
+          },
+          {
+            "tag": "h2",
+            "id": "클라이언트-통합"
+          },
+          {
+            "tag": "h3",
+            "id": "클라이언트-요청"
+          },
+          {
+            "tag": "h2",
+            "id": "검증-범위"
+          },
+          {
+            "tag": "h2",
+            "id": "참고-자료"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "vllm-배포-및-최적화",
+          "실습-환경-설정",
+          "vllm-소개",
+          "기능과-지원-범위",
+          "현재-cli에서의-기능-설정",
+          "시스템-요구-사항",
+          "eks-인프라-구성",
+          "스토리지와-모델-준비",
+          "vllm-배포",
+          "배포-아키텍처",
+          "단일-gpu-구성-예제",
+          "멀티노드와-독립-replica-구분",
+          "성능-최적화",
+          "메모리·scheduler·통신-옵션",
+          "과거-측정-기록-l4의-qwen2-5-7b",
+          "구성",
+          "재현-방법",
+          "결과",
+          "해석",
+          "한계",
+          "모니터링-및-로깅",
+          "메트릭과-로그",
+          "오토스케일링",
+          "autoscaling과-가용성",
+          "보안-구성",
+          "클라이언트-통합",
+          "클라이언트-요청",
+          "검증-범위",
+          "참고-자료",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "en/ai-ml/02-vllm-deployment.md",
+        "sha256": "72e299ae1d6c4466954953bed9285e34cb2e0c8b84d027fe7a0307e4b014caff",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "vllm-deployment-optimization"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-environment-setup"
+          },
+          {
+            "tag": "h2",
+            "id": "introduction-to-vllm"
+          },
+          {
+            "tag": "h3",
+            "id": "capabilities-and-support-boundaries"
+          },
+          {
+            "tag": "h3",
+            "id": "current-cli-feature-configuration"
+          },
+          {
+            "tag": "h2",
+            "id": "system-requirements"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-infrastructure-configuration"
+          },
+          {
+            "tag": "h2",
+            "id": "storage-and-model-preparation"
+          },
+          {
+            "tag": "h2",
+            "id": "vllm-deployment"
+          },
+          {
+            "tag": "h3",
+            "id": "deployment-architecture"
+          },
+          {
+            "tag": "h3",
+            "id": "single-gpu-configuration-example"
+          },
+          {
+            "tag": "h3",
+            "id": "multi-node-sharding-versus-independent-replicas"
+          },
+          {
+            "tag": "h2",
+            "id": "performance-optimization"
+          },
+          {
+            "tag": "h3",
+            "id": "memory-scheduler-and-communication-options"
+          },
+          {
+            "tag": "h2",
+            "id": "historical-measurement-qwen2-5-7b-on-a-single-l4-gpu"
+          },
+          {
+            "tag": "h3",
+            "id": "setup"
+          },
+          {
+            "tag": "h3",
+            "id": "reproduce"
+          },
+          {
+            "tag": "h3",
+            "id": "results"
+          },
+          {
+            "tag": "h3",
+            "id": "interpretation"
+          },
+          {
+            "tag": "h3",
+            "id": "caveats"
+          },
+          {
+            "tag": "h2",
+            "id": "monitoring-and-logging"
+          },
+          {
+            "tag": "h3",
+            "id": "metrics-and-logs"
+          },
+          {
+            "tag": "h2",
+            "id": "autoscaling"
+          },
+          {
+            "tag": "h3",
+            "id": "autoscaling-and-availability"
+          },
+          {
+            "tag": "h2",
+            "id": "security-configuration"
+          },
+          {
+            "tag": "h2",
+            "id": "client-integration"
+          },
+          {
+            "tag": "h3",
+            "id": "client-request"
+          },
+          {
+            "tag": "h2",
+            "id": "validation-scope"
+          },
+          {
+            "tag": "h2",
+            "id": "references"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "vllm-deployment-optimization",
+          "lab-environment-setup",
+          "introduction-to-vllm",
+          "capabilities-and-support-boundaries",
+          "current-cli-feature-configuration",
+          "system-requirements",
+          "eks-infrastructure-configuration",
+          "storage-and-model-preparation",
+          "vllm-deployment",
+          "deployment-architecture",
+          "single-gpu-configuration-example",
+          "multi-node-sharding-versus-independent-replicas",
+          "performance-optimization",
+          "memory-scheduler-and-communication-options",
+          "historical-measurement-qwen2-5-7b-on-a-single-l4-gpu",
+          "setup",
+          "reproduce",
+          "results",
+          "interpretation",
+          "caveats",
+          "monitoring-and-logging",
+          "metrics-and-logs",
+          "autoscaling",
+          "autoscaling-and-availability",
+          "security-configuration",
+          "client-integration",
+          "client-request",
+          "validation-scope",
+          "references",
+          "quiz"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/04-vllm-deployment-quiz.md",
+        "sha256": "db04e64985f0cf4680184b199e57a560bd7aad9fcc48a9e4de58941d98ec6e18",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "vllm-배포-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈-문제"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-vllm의-주요-역할에-대한-올바른-설명은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-gpu-메모리-요구량을-평가하는-올바른-방법은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-vllm-모델-스토리지에-대한-올바른-설명은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-tp·pp·독립-replica의-차이를-올바르게-설명한-것은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-가용성-구성에-대한-올바른-설명은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-연속-batching과-cache-옵션의-올바른-설명은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-현재-메트릭-구성은-무엇을-기준으로-해야-하나요"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-멀티노드-네트워크의-올바른-운영-경계는-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-확장성과-요청-라우팅에-대한-올바른-설명은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-0-29-0-api-key와-보안에-대한-올바른-설명은-무엇인가요"
+          },
+          {
+            "tag": "h3",
+            "id": "_11-과거-l4-벤치마크의-5-65s→7-52s-결과를-어떻게-해석해야-하나요"
+          }
+        ],
+        "renderedIds": [
+          "vllm-배포-퀴즈",
+          "퀴즈-문제",
+          "_1-vllm의-주요-역할에-대한-올바른-설명은-무엇인가요",
+          "_2-gpu-메모리-요구량을-평가하는-올바른-방법은-무엇인가요",
+          "_3-vllm-모델-스토리지에-대한-올바른-설명은-무엇인가요",
+          "_4-tp·pp·독립-replica의-차이를-올바르게-설명한-것은-무엇인가요",
+          "_5-가용성-구성에-대한-올바른-설명은-무엇인가요",
+          "_6-연속-batching과-cache-옵션의-올바른-설명은-무엇인가요",
+          "_7-현재-메트릭-구성은-무엇을-기준으로-해야-하나요",
+          "_8-멀티노드-네트워크의-올바른-운영-경계는-무엇인가요",
+          "_9-확장성과-요청-라우팅에-대한-올바른-설명은-무엇인가요",
+          "_10-0-29-0-api-key와-보안에-대한-올바른-설명은-무엇인가요",
+          "_11-과거-l4-벤치마크의-5-65s→7-52s-결과를-어떻게-해석해야-하나요"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/04-vllm-deployment-quiz.md",
+        "sha256": "864ce43a4f55e3dfae9e3f703e38b6e217696799500aea93332c80118cf4da6c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "vllm-deployment-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz-questions"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-which-statement-correctly-describes-vllm"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-how-should-gpu-memory-requirements-be-estimated"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-which-storage-statement-is-correct"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-how-do-tp-pp-and-independent-replicas-differ"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-which-availability-statement-is-correct"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-which-batching-cache-statement-is-correct"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-what-should-current-metrics-configuration-use"
+          },
+          {
+            "tag": "h3",
+            "id": "_8-which-multi-node-networking-statement-is-correct"
+          },
+          {
+            "tag": "h3",
+            "id": "_9-which-scaling-routing-statement-is-correct"
+          },
+          {
+            "tag": "h3",
+            "id": "_10-which-api-key-security-statement-is-correct-in-0-29-0"
+          },
+          {
+            "tag": "h3",
+            "id": "_11-how-should-the-historical-l4-result-5-65s→7-52s-be-interpreted"
+          }
+        ],
+        "renderedIds": [
+          "vllm-deployment-quiz",
+          "quiz-questions",
+          "_1-which-statement-correctly-describes-vllm",
+          "_2-how-should-gpu-memory-requirements-be-estimated",
+          "_3-which-storage-statement-is-correct",
+          "_4-how-do-tp-pp-and-independent-replicas-differ",
+          "_5-which-availability-statement-is-correct",
+          "_6-which-batching-cache-statement-is-correct",
+          "_7-what-should-current-metrics-configuration-use",
+          "_8-which-multi-node-networking-statement-is-correct",
+          "_9-which-scaling-routing-statement-is-correct",
+          "_10-which-api-key-security-statement-is-correct-in-0-29-0",
+          "_11-how-should-the-historical-l4-result-5-65s→7-52s-be-interpreted"
+        ]
+      }
+    ]
+  },
+  "examples": {
+    "status": "passed",
+    "documents": [
+      {
+        "path": "ko/ai-ml/02-vllm-deployment.md",
+        "sha256": "4d31a9ab5c74340c417446b1662073446034e406c8cfe220140dac7d1f6b3041",
+        "nativeSchemaCases": 2,
+        "serviceSelectorAndPortMatched": true,
+        "CLIFlagsFoundInPinnedSource": true,
+        "clientScript": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-ai-root/vllm/ko-client.py"
+      },
+      {
+        "path": "en/ai-ml/02-vllm-deployment.md",
+        "sha256": "72e299ae1d6c4466954953bed9285e34cb2e0c8b84d027fe7a0307e4b014caff",
+        "nativeSchemaCases": 2,
+        "serviceSelectorAndPortMatched": true,
+        "CLIFlagsFoundInPinnedSource": true,
+        "clientScript": "/home/atomoh/kubernetes-docs/.vitepress/cache/content-review-ai-root/vllm/en-client.py"
+      }
+    ],
+    "HTTPFixtureRequests": 2,
+    "scope": "Official K8s1.36.2 OpenAPI schemas and local loopbackHTTP fixture; flag-presence AST inspection, not actual vLLM argparse/runtime validation. No weights/GPU/server/cloud execution."
+  },
+  "authMiddleware": {
+    "status": "passed",
+    "source": "vLLM v0.29.0 AuthenticationMiddleware",
+    "sourceSha256": "0633540cb788738dfee5a69075fbdc30eb98a510e26f69a0b43c57c50d9ef5ab",
+    "starlette": "1.6.0",
+    "cases": [
+      {
+        "path": "/v1/chat/completions",
+        "authenticated": false,
+        "method": "POST",
+        "status": 401,
+        "passed": true
+      },
+      {
+        "path": "/v1/chat/completions",
+        "authenticated": true,
+        "method": "POST",
+        "status": 401,
+        "passed": true
+      },
+      {
+        "path": "/v1/chat/completions",
+        "authenticated": true,
+        "method": "POST",
+        "status": 204,
+        "passed": true
+      },
+      {
+        "path": "/v2/embed",
+        "authenticated": false,
+        "method": "POST",
+        "status": 401,
+        "passed": true
+      },
+      {
+        "path": "/cohere/v1/embed",
+        "authenticated": false,
+        "method": "POST",
+        "status": 401,
+        "passed": true
+      },
+      {
+        "path": "/invocations",
+        "authenticated": false,
+        "method": "POST",
+        "status": 204,
+        "passed": true
+      },
+      {
+        "path": "/metrics",
+        "authenticated": false,
+        "method": "GET",
+        "status": 204,
+        "passed": true
+      },
+      {
+        "path": "/health",
+        "authenticated": false,
+        "method": "GET",
+        "status": 204,
+        "passed": true
+      },
+      {
+        "path": "/v1/chat/completions",
+        "authenticated": false,
+        "method": "OPTIONS",
+        "status": 204,
+        "passed": true
+      }
+    ],
+    "scope": "Unmodified ASGI middleware with in-memory scope/receive/send and synthetic token. No network, vLLM server/model/GPU or cloud execution."
+  },
+  "arithmetic": {
+    "status": "passed",
+    "modelRevision": "a09a35458c702b33eeacc393d103063234e8bc28",
+    "KVFormula": "2*layers*KV_heads*head_dim*cached_tokens*bytes_per_element",
+    "KVBytesPerToken": 57344,
+    "KVBytes4096Tokens": 234881024,
+    "p50IncreasePercent": 33.09734513274334,
+    "reportedConcurrency4To8Ratio": 1.8585307652974263,
+    "reportedConcurrency8To16Ratio": 1.9082905355832722,
+    "scope": "Arithmetic on pinned model config and historical reported values; not GPU profiling or benchmark reproduction."
+  },
+  "responsive": {
+    "status": "passed",
+    "cases": [
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "3cd3c401ed998614a7b8b2fb10ee0fa4f8d0bd53955c1023154c160e5e1f15ad"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "3cd3c401ed998614a7b8b2fb10ee0fa4f8d0bd53955c1023154c160e5e1f15ad"
+      },
+      {
+        "figure": 0,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "3cd3c401ed998614a7b8b2fb10ee0fa4f8d0bd53955c1023154c160e5e1f15ad"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "4a787d44bccba3d2e12bbcb3b4972baa7198d5feadd853c013e2fe5eec8fc8b6"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "4a787d44bccba3d2e12bbcb3b4972baa7198d5feadd853c013e2fe5eec8fc8b6"
+      },
+      {
+        "figure": 0,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "4a787d44bccba3d2e12bbcb3b4972baa7198d5feadd853c013e2fe5eec8fc8b6"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "418d2d7b2f3f63d88d81b664ea691c555b8c400bfdeb48ad9d7f7f531ffba0ef"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "418d2d7b2f3f63d88d81b664ea691c555b8c400bfdeb48ad9d7f7f531ffba0ef"
+      },
+      {
+        "figure": 1,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "418d2d7b2f3f63d88d81b664ea691c555b8c400bfdeb48ad9d7f7f531ffba0ef"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "da86dc0a994f5c3adfd2a76bd7c98666a42a49d3d72468852803940a1ab561d7"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "da86dc0a994f5c3adfd2a76bd7c98666a42a49d3d72468852803940a1ab561d7"
+      },
+      {
+        "figure": 1,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "da86dc0a994f5c3adfd2a76bd7c98666a42a49d3d72468852803940a1ab561d7"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "072866b9f32002a3ccaf2fe1150cea9062a2f9523eca99bf603981b16f8ae5d7"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "072866b9f32002a3ccaf2fe1150cea9062a2f9523eca99bf603981b16f8ae5d7"
+      },
+      {
+        "figure": 2,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "072866b9f32002a3ccaf2fe1150cea9062a2f9523eca99bf603981b16f8ae5d7"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "880ffe269ef343494f0d1fc8aee027f1dc9c54d9a017c21d5718fd64c41c4ce2"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "880ffe269ef343494f0d1fc8aee027f1dc9c54d9a017c21d5718fd64c41c4ce2"
+      },
+      {
+        "figure": 2,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "880ffe269ef343494f0d1fc8aee027f1dc9c54d9a017c21d5718fd64c41c4ce2"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "cdda760c78c8bdd89f201effa6532bff1c9686678398291a7a58151758025eef"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "cdda760c78c8bdd89f201effa6532bff1c9686678398291a7a58151758025eef"
+      },
+      {
+        "figure": 3,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "cdda760c78c8bdd89f201effa6532bff1c9686678398291a7a58151758025eef"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "43f10aefcf6260e4bbae6033840bc7e0a6e2a7bf9834d0f81f330096a982d141"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "43f10aefcf6260e4bbae6033840bc7e0a6e2a7bf9834d0f81f330096a982d141"
+      },
+      {
+        "figure": 3,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "43f10aefcf6260e4bbae6033840bc7e0a6e2a7bf9834d0f81f330096a982d141"
+      },
+      {
+        "figure": 4,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "c475b1bbb64f69dd2c6a29225195272c2c62cf28a28c484c5c9452e714301a99"
+      },
+      {
+        "figure": 4,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "c475b1bbb64f69dd2c6a29225195272c2c62cf28a28c484c5c9452e714301a99"
+      },
+      {
+        "figure": 4,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "c475b1bbb64f69dd2c6a29225195272c2c62cf28a28c484c5c9452e714301a99"
+      },
+      {
+        "figure": 4,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "7d4b962f32b9d987f585507c8f9fcc55f466d65c898728a191d801df932100dc"
+      },
+      {
+        "figure": 4,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "7d4b962f32b9d987f585507c8f9fcc55f466d65c898728a191d801df932100dc"
+      },
+      {
+        "figure": 4,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "7d4b962f32b9d987f585507c8f9fcc55f466d65c898728a191d801df932100dc"
+      },
+      {
+        "figure": 5,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "335c2c36f99fc1f9b2e742a0768dc54f13e0309f6f042624932fcb2fe1b60b4d"
+      },
+      {
+        "figure": 5,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "335c2c36f99fc1f9b2e742a0768dc54f13e0309f6f042624932fcb2fe1b60b4d"
+      },
+      {
+        "figure": 5,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "335c2c36f99fc1f9b2e742a0768dc54f13e0309f6f042624932fcb2fe1b60b4d"
+      },
+      {
+        "figure": 5,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "8fd1ee118dcf43e5de23a2ca658d6ca16a3cab3bc31dba900c6a188beca0e8b3"
+      },
+      {
+        "figure": 5,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "8fd1ee118dcf43e5de23a2ca658d6ca16a3cab3bc31dba900c6a188beca0e8b3"
+      },
+      {
+        "figure": 5,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "8fd1ee118dcf43e5de23a2ca658d6ca16a3cab3bc31dba900c6a188beca0e8b3"
+      },
+      {
+        "figure": 6,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "e55e3ae2b8875fa78f0ed776e7a35caad7895d179957179eceed795babacf905"
+      },
+      {
+        "figure": 6,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "e55e3ae2b8875fa78f0ed776e7a35caad7895d179957179eceed795babacf905"
+      },
+      {
+        "figure": 6,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "e55e3ae2b8875fa78f0ed776e7a35caad7895d179957179eceed795babacf905"
+      },
+      {
+        "figure": 6,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "1cd5a0e2f3a838b1ee22cdd58b6d53be0dfedc7fb55f278437da453bba7c9d4a"
+      },
+      {
+        "figure": 6,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "1cd5a0e2f3a838b1ee22cdd58b6d53be0dfedc7fb55f278437da453bba7c9d4a"
+      },
+      {
+        "figure": 6,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "1cd5a0e2f3a838b1ee22cdd58b6d53be0dfedc7fb55f278437da453bba7c9d4a"
+      },
+      {
+        "figure": 7,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "f6b0440e97b6c34290a691e09a31b15177d6376270d2e6d7b62d1b364d5b4b30"
+      },
+      {
+        "figure": 7,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "f6b0440e97b6c34290a691e09a31b15177d6376270d2e6d7b62d1b364d5b4b30"
+      },
+      {
+        "figure": 7,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "f6b0440e97b6c34290a691e09a31b15177d6376270d2e6d7b62d1b364d5b4b30"
+      },
+      {
+        "figure": 7,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "3638573ac3e78d088ae39086f8dc37874ad7547a25fec7d7e6919cf357be9d95"
+      },
+      {
+        "figure": 7,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "3638573ac3e78d088ae39086f8dc37874ad7547a25fec7d7e6919cf357be9d95"
+      },
+      {
+        "figure": 7,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "3638573ac3e78d088ae39086f8dc37874ad7547a25fec7d7e6919cf357be9d95"
+      },
+      {
+        "figure": 10,
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "0dd1832ea896bbb2b2060b9d2c2f86c4a3e6c59a8fe27fb9f2efe84531039267"
+      },
+      {
+        "figure": 10,
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "0dd1832ea896bbb2b2060b9d2c2f86c4a3e6c59a8fe27fb9f2efe84531039267"
+      },
+      {
+        "figure": 10,
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "0dd1832ea896bbb2b2060b9d2c2f86c4a3e6c59a8fe27fb9f2efe84531039267"
+      },
+      {
+        "figure": 10,
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "72299e781c859c0676d1844d3c47ab0736b0ff37faadf742121382cdc66713de"
+      },
+      {
+        "figure": 10,
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "72299e781c859c0676d1844d3c47ab0736b0ff37faadf742121382cdc66713de"
+      },
+      {
+        "figure": 10,
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "72299e781c859c0676d1844d3c47ab0736b0ff37faadf742121382cdc66713de"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "publishedLinks": [
+    {
+      "url": "https://github.com/Atom-oh/kubernetes-docs/commit/8622d388cb684dc4f68083af7be6d91f80b79106",
+      "status": 200,
+      "finalUrl": "https://github.com/Atom-oh/kubernetes-docs/commit/8622d388cb684dc4f68083af7be6d91f80b79106"
+    },
+    {
+      "url": "https://github.com/vllm-project/vllm/blob/v0.29.0/docs/features/lora.md",
+      "status": 200,
+      "finalUrl": "https://github.com/vllm-project/vllm/blob/v0.29.0/docs/features/lora.md"
+    },
+    {
+      "url": "https://github.com/vllm-project/vllm/blob/v0.29.0/docs/features/structured_outputs.md",
+      "status": 200,
+      "finalUrl": "https://github.com/vllm-project/vllm/blob/v0.29.0/docs/features/structured_outputs.md"
+    },
+    {
+      "url": "https://github.com/vllm-project/vllm/blob/v0.29.0/docs/serving/parallelism_scaling.md",
+      "status": 200,
+      "finalUrl": "https://github.com/vllm-project/vllm/blob/v0.29.0/docs/serving/parallelism_scaling.md"
+    },
+    {
+      "url": "https://github.com/vllm-project/vllm/blob/v0.29.0/docs/usage/metrics.md",
+      "status": 200,
+      "finalUrl": "https://github.com/vllm-project/vllm/blob/v0.29.0/docs/usage/metrics.md"
+    },
+    {
+      "url": "https://github.com/vllm-project/vllm/blob/v0.29.0/docs/usage/security.md",
+      "status": 200,
+      "finalUrl": "https://github.com/vllm-project/vllm/blob/v0.29.0/docs/usage/security.md"
+    },
+    {
+      "url": "https://github.com/vllm-project/vllm/releases/tag/v0.29.0",
+      "status": 200,
+      "finalUrl": "https://github.com/vllm-project/vllm/releases/tag/v0.29.0"
+    },
+    {
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-0.html",
+      "status": 200,
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-0.html"
+    },
+    {
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-1.html",
+      "status": 200,
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-1.html"
+    },
+    {
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-10.html",
+      "status": 200,
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-10.html"
+    },
+    {
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-2.html",
+      "status": 200,
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-2.html"
+    },
+    {
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-3.html",
+      "status": 200,
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-3.html"
+    },
+    {
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-4.html",
+      "status": 200,
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-4.html"
+    },
+    {
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-5.html",
+      "status": 200,
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-5.html"
+    },
+    {
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-6.html",
+      "status": 200,
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-6.html"
+    },
+    {
+      "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-7.html",
+      "status": 200,
+      "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-ai-ml-02-vllm-deployment-7.html"
+    }
+  ],
+  "diagrams": [
+    {
+      "name": "ko-ai-ml-02-vllm-deployment-0",
+      "layoutPassed": true,
+      "pngSha256": "37fb62ba5bb0487417d1bb59cdf5080fea479872996a7266230ac2f853c2e0c9",
+      "htmlSha256": "3cd3c401ed998614a7b8b2fb10ee0fa4f8d0bd53955c1023154c160e5e1f15ad"
+    },
+    {
+      "name": "ko-ai-ml-02-vllm-deployment-1",
+      "layoutPassed": true,
+      "pngSha256": "5651554f2583c9d6311f63b63b4b0cc33417e996aa7d6e7236d25874faa68379",
+      "htmlSha256": "418d2d7b2f3f63d88d81b664ea691c555b8c400bfdeb48ad9d7f7f531ffba0ef"
+    },
+    {
+      "name": "ko-ai-ml-02-vllm-deployment-2",
+      "layoutPassed": true,
+      "pngSha256": "7ca755b65667e8ab1440573fba890e3cd4126cdaabcd81fb1b114670bacaf0fa",
+      "htmlSha256": "072866b9f32002a3ccaf2fe1150cea9062a2f9523eca99bf603981b16f8ae5d7"
+    },
+    {
+      "name": "ko-ai-ml-02-vllm-deployment-3",
+      "layoutPassed": true,
+      "pngSha256": "bdfa50d027fd951489dfa0b5e4240fbae8396233256afa595c8bb3f12b12d981",
+      "htmlSha256": "cdda760c78c8bdd89f201effa6532bff1c9686678398291a7a58151758025eef"
+    },
+    {
+      "name": "ko-ai-ml-02-vllm-deployment-4",
+      "layoutPassed": true,
+      "pngSha256": "f86a1a21d64c0836fbff85e4cde7799e11ca73a58d7a2d6ed07d6b5893ca57d9",
+      "htmlSha256": "c475b1bbb64f69dd2c6a29225195272c2c62cf28a28c484c5c9452e714301a99"
+    },
+    {
+      "name": "ko-ai-ml-02-vllm-deployment-5",
+      "layoutPassed": true,
+      "pngSha256": "650dbb3e47afb4c74ef1818ea1043d26cfa50d4d60b0ea77d38dfcca06607e10",
+      "htmlSha256": "335c2c36f99fc1f9b2e742a0768dc54f13e0309f6f042624932fcb2fe1b60b4d"
+    },
+    {
+      "name": "ko-ai-ml-02-vllm-deployment-6",
+      "layoutPassed": true,
+      "pngSha256": "5ff4c18c303ae1a994381f1502f49ba76b94778210ddd79683d0e3e4c1c6a12f",
+      "htmlSha256": "e55e3ae2b8875fa78f0ed776e7a35caad7895d179957179eceed795babacf905"
+    },
+    {
+      "name": "ko-ai-ml-02-vllm-deployment-7",
+      "layoutPassed": true,
+      "pngSha256": "f9c60576acba9377adffc853b55a0992ae99e7108e2baac937b3dac189c1566f",
+      "htmlSha256": "f6b0440e97b6c34290a691e09a31b15177d6376270d2e6d7b62d1b364d5b4b30"
+    },
+    {
+      "name": "ko-ai-ml-02-vllm-deployment-10",
+      "layoutPassed": true,
+      "pngSha256": "f0cbe43ec202179d1a0cb73391808397c945d7bd8f431a09b1e9968093271c4b",
+      "htmlSha256": "0dd1832ea896bbb2b2060b9d2c2f86c4a3e6c59a8fe27fb9f2efe84531039267"
+    },
+    {
+      "name": "en-ai-ml-02-vllm-deployment-0",
+      "layoutPassed": true,
+      "pngSha256": "4ff86bcdee062071430b639cb061ee9db96a0a75d64ab90ab3c5d2f6425cba83",
+      "htmlSha256": "4a787d44bccba3d2e12bbcb3b4972baa7198d5feadd853c013e2fe5eec8fc8b6"
+    },
+    {
+      "name": "en-ai-ml-02-vllm-deployment-1",
+      "layoutPassed": true,
+      "pngSha256": "e1308861c69628753c6a8c892061df00768cf135e8b5892f9bf0013b5a8d9956",
+      "htmlSha256": "da86dc0a994f5c3adfd2a76bd7c98666a42a49d3d72468852803940a1ab561d7"
+    },
+    {
+      "name": "en-ai-ml-02-vllm-deployment-2",
+      "layoutPassed": true,
+      "pngSha256": "6c08dabd82fce6b833e1b923b51f2353588c56f2f11352616635a6d67a32be1d",
+      "htmlSha256": "880ffe269ef343494f0d1fc8aee027f1dc9c54d9a017c21d5718fd64c41c4ce2"
+    },
+    {
+      "name": "en-ai-ml-02-vllm-deployment-3",
+      "layoutPassed": true,
+      "pngSha256": "626af6b86de7229429f9939a4037b5f2eb06d0445cd082ba0888db6df808da25",
+      "htmlSha256": "43f10aefcf6260e4bbae6033840bc7e0a6e2a7bf9834d0f81f330096a982d141"
+    },
+    {
+      "name": "en-ai-ml-02-vllm-deployment-4",
+      "layoutPassed": true,
+      "pngSha256": "6cc848a0028a6cc3df5feb25eaec6a6b3ffa3c8b6105792b30f893cc3e67def2",
+      "htmlSha256": "7d4b962f32b9d987f585507c8f9fcc55f466d65c898728a191d801df932100dc"
+    },
+    {
+      "name": "en-ai-ml-02-vllm-deployment-5",
+      "layoutPassed": true,
+      "pngSha256": "36cda77c7ab396b1b9f8a3516a42a27b9fbb2da96c687ad15da4fdbc9fc880b4",
+      "htmlSha256": "8fd1ee118dcf43e5de23a2ca658d6ca16a3cab3bc31dba900c6a188beca0e8b3"
+    },
+    {
+      "name": "en-ai-ml-02-vllm-deployment-6",
+      "layoutPassed": true,
+      "pngSha256": "44a235bd65261ad865f99edf2f26718fbf5103ed2289867a4045638a281b2da7",
+      "htmlSha256": "1cd5a0e2f3a838b1ee22cdd58b6d53be0dfedc7fb55f278437da453bba7c9d4a"
+    },
+    {
+      "name": "en-ai-ml-02-vllm-deployment-7",
+      "layoutPassed": true,
+      "pngSha256": "a1fd16d1bedeffa0211063a3e903f8cc833be2bb5e4e969a46a947c9c6fea3c1",
+      "htmlSha256": "3638573ac3e78d088ae39086f8dc37874ad7547a25fec7d7e6919cf357be9d95"
+    },
+    {
+      "name": "en-ai-ml-02-vllm-deployment-10",
+      "layoutPassed": true,
+      "pngSha256": "0bc752be1b6bd47c589ea52975290c9ba14a10b756fdb40f3fe7c0239457a526",
+      "htmlSha256": "72299e781c859c0676d1844d3c47ab0736b0ff37faadf742121382cdc66713de"
+    }
+  ],
+  "contentPreservation": {
+    "originalGuidesLinesEach": 1088,
+    "originalQuizzesLinesEach": 1825,
+    "distinctCodeBlocksRead": 109,
+    "quizTopicsPreserved": 11,
+    "historicalBenchmarkTablePreserved": true,
+    "replacements": [
+      "Unsupported/incompletedeploymentvariantsreplacedwithpinnedboundedtemplateandcurrentparallelismcommands",
+      "Inventedmetrics/flagsandVectorLanguageModelexpansionremoved",
+      "Genericsecurityregex/auditannotation/Secretbodyloggingreplacedwithactualmiddlewareandtrustboundaries",
+      "Benchmarkvaluesretainedfrom8622d388withrawlogunavailableandno-new-runlimits",
+      "Oldduplicatedcrosscloudstorage/servingsnippetsreplacedwithcurrentreviewedcrosslinks"
+    ]
+  },
+  "limitations": [
+    "No vLLM/Torch installation, model-weight download, GPU/server/cloud execution.",
+    "CLI verification is AST flag-presence inspection, not actual full argparse/runtime admission.",
+    "Image metadata/digest and Kubernetes schemas do not prove non-root container/kernel/model behavior.",
+    "Historical benchmark source commit found, but raw request/server logs and full client artifact were not located; no independent reproduction claimed.",
+    "No web.run result exists; research provenance is actual official HTTP retrieval and AWS Knowledge MCP only."
+  ]
+}

@@ -1,6 +1,6 @@
 # Linkerd Best Practices
 
-> **Reviewed**: September 11, 2026 · Linkerd edge-26.9.1 / charts 2026.9.1
+> **Last Updated**: September 11, 2026 · Linkerd edge-26.9.1 / charts 2026.9.1
 
 Use the [installation](01-installation.md), [security](04-security.md), [observability](05-observability.md) and [multicluster](06-multi-cluster.md) guides for the selected versions and prerequisites. This chapter connects those procedures into an operational review; it does not certify an environment as production-ready.
 

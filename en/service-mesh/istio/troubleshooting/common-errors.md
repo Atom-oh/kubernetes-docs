@@ -1,6 +1,6 @@
 # Istio Common Errors and Solutions
 
-> **Reviewed**: September 11, 2026 · CLI/configuration checks: Istio 1.31.0
+> **Last Updated**: September 11, 2026 · CLI/configuration checks: Istio 1.31.0
 
 Start with the observed failure, effective configuration and workload mode. The commands below are diagnostic examples, not instructions to reset the mesh. Check the [installation compatibility guidance](../01-installation.md) for your Kubernetes/EKS version.
 

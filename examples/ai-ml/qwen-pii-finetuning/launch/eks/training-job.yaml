@@ -16,6 +16,7 @@ spec:
         experiment-id: ${EXPERIMENT_ID}
     spec:
       restartPolicy: Never
+      serviceAccountName: qwen-input-reader
       nodeSelector:
         workload: qwen-pii-training
       containers:
@@ -28,12 +29,13 @@ spec:
             - |
               set -euo pipefail
               mkdir -p /workspace/data /workspace/output /workspace/hf-cache
-              python3 -c 'import os, urllib.request; urllib.request.urlretrieve(os.environ["SOURCE_URL"], "/tmp/source.tar.gz")'
-              tar -xzf /tmp/source.tar.gz -C /workspace
-              python3 -c 'import os, urllib.request; urllib.request.urlretrieve(os.environ["TRAIN_URL"], "/workspace/data/train.jsonl")'
-              python3 -c 'import os, urllib.request; urllib.request.urlretrieve(os.environ["VALIDATION_URL"], "/workspace/data/validation.jsonl")'
-              python3 -c 'import os, urllib.request; urllib.request.urlretrieve(os.environ["TEST_URL"], "/workspace/data/test.jsonl")'
-              python3 -c 'import os, urllib.request; urllib.request.urlretrieve(os.environ["MANIFEST_URL"], "/workspace/data/dataset-manifest.json")'
+              python3 /opt/qwen/bootstrap/download_inputs.py \
+                --bucket "$QWEN_INPUT_BUCKET" \
+                --prefix "$QWEN_INPUT_PREFIX" \
+                --account-id "$QWEN_EXPECTED_ACCOUNT_ID" \
+                --manifest /opt/qwen/bootstrap/input-manifest.json \
+                --output-dir /workspace
+              tar -xzf /workspace/source.tar.gz -C /workspace
               python3 -m pip install --no-cache-dir -r /workspace/requirements.lock
               cd /workspace
               python3 -m src.train \
@@ -48,16 +50,22 @@ spec:
                 --mode "${MODE}" \
                 --evaluation-batch-size 4
           env:
-            - name: SOURCE_URL
-              value: ${SOURCE_URL}
-            - name: TRAIN_URL
-              value: ${TRAIN_URL}
-            - name: VALIDATION_URL
-              value: ${VALIDATION_URL}
-            - name: TEST_URL
-              value: ${TEST_URL}
-            - name: MANIFEST_URL
-              value: ${MANIFEST_URL}
+            - name: QWEN_INPUT_BUCKET
+              value: "${BUCKET_NAME}"
+            - name: QWEN_INPUT_PREFIX
+              value: "qwen-pii/${BASE_EXPERIMENT_ID}"
+            - name: QWEN_EXPECTED_ACCOUNT_ID
+              value: "${ACCOUNT_ID}"
+            - name: QWEN_EXPERIMENT_ID
+              value: "${BASE_EXPERIMENT_ID}"
+            - name: QWEN_CLUSTER_NAME
+              value: "${EXPERIMENT_ID}"
+            - name: QWEN_EXECUTION_ID
+              value: "${EXECUTION_ID}"
+            - name: AWS_DEFAULT_REGION
+              value: ap-northeast-2
+            - name: AWS_EC2_METADATA_DISABLED
+              value: "true"
             - name: MLFLOW_TRACKING_URI
               value: http://mlflow.qwen-pii.svc.cluster.local:5000
             - name: MLFLOW_EXPERIMENT_NAME
@@ -89,11 +97,18 @@ spec:
             seccompProfile:
               type: RuntimeDefault
           volumeMounts:
+            - name: input-bootstrap
+              mountPath: /opt/qwen/bootstrap
+              readOnly: true
             - name: workspace
               mountPath: /workspace
             - name: dshm
               mountPath: /dev/shm
       volumes:
+        - name: input-bootstrap
+          configMap:
+            name: qwen-pii-input-loader
+            defaultMode: 0444
         - name: workspace
           emptyDir:
             sizeLimit: 280Gi

@@ -1,6 +1,6 @@
 # EKS upgrades: Auto Mode, rollback and blue/green
 
-> Reviewed 2026-09-12. Commands checked with AWS CLI 2.36.44, Pluto 5.24.3 and Velero 1.18.2.
+> **Last Updated**: September 12, 2026. Commands checked with AWS CLI 2.36.44, Pluto 5.24.3 and Velero 1.18.2.
 > The example transition is 1.35 → 1.36; discover actual regional availability.
 
 Plan the control plane, nodes, add-ons, applications and data together.
@@ -356,7 +356,7 @@ Replace tfvars with a real absolute file path.
 ```bash
 DOCS_TFVARS="/absolute/path/to/production.cluster.tfvars.json"
 terraform -chdir=terraform/02-cluster plan \
-  -var-file="$DOCS_TFVARS" -var="kubernetes_version=$DOCS_TARGET" -out=upgrade.tfplan
+  -var-file="$DOCS_TFVARS" -var="cluster_version=$DOCS_TARGET" -out=upgrade.tfplan
 terraform -chdir=terraform/02-cluster show upgrade.tfplan
 # Apply the reviewed saved plan:
 terraform -chdir=terraform/02-cluster apply upgrade.tfplan

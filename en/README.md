@@ -341,6 +341,7 @@ This training content provides quizzes for each topic along with the learning ma
 14. [Tekton Pipelines](./ops/14-tekton-pipelines.md) | [Quiz](./quizzes/ops/14-tekton-pipelines-quiz.md)
 15. [Zonal Cluster Operations](./ops/15-zonal-operations-guide.md) | [Quiz](./quizzes/ops/15-zonal-operations-guide-quiz.md)
 16. [Troubleshooting Playbook](./ops/16-troubleshooting-playbook.md) | [Quiz](./quizzes/ops/16-troubleshooting-playbook-quiz.md)
+17. [EKS Spot Production Experiments and Result Assessment](./ops/17-spot-production-experiments.md) | [Quiz](./quizzes/ops/17-spot-production-experiments-quiz.md)
 
 ## Lab Guides
 

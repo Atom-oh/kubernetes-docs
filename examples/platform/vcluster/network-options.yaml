@@ -1,0 +1,6 @@
+policies:
+  networkPolicy:
+    enabled: true
+    workload:
+      publicEgress:
+        enabled: false

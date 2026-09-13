@@ -1,0 +1,82 @@
+[
+  {
+    "path": "ko/platform-engineering/02-ack.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "75b3db5b1cf188c640848867494031c8c10b5c6c3e8968264dad4ce6d5dedb9b",
+    "summary": "Allprose56uniqueblocks/15quiztopicseachreviewed;7nativecharts18CRDexamples38exactmatches10MD2figures6responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-ack-validation.json"
+  },
+  {
+    "path": "ko/quizzes/platform-engineering/02-ack-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "9320388d4d8eb624a1d0d5e7892268f773c8da6a917594dea443c27a837af209",
+    "summary": "Allprose56uniqueblocks/15quiztopicseachreviewed;7nativecharts18CRDexamples38exactmatches10MD2figures6responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-ack-validation.json"
+  },
+  {
+    "path": "ko/platform-engineering/ack/01-s3-iam.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "80cfb11b624330a4569c0d8867fc4cd2d6f7cca7a1efb6739d4d12ee9026bb1a",
+    "summary": "Allprose56uniqueblocks/15quiztopicseachreviewed;7nativecharts18CRDexamples38exactmatches10MD2figures6responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-ack-validation.json"
+  },
+  {
+    "path": "ko/platform-engineering/ack/02-sqs-sns.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "7e7e7cc55c16ca37df2fda75382ca69432dc8cfe6f69e02d2dd314cc6362b3ad",
+    "summary": "Allprose56uniqueblocks/15quiztopicseachreviewed;7nativecharts18CRDexamples38exactmatches10MD2figures6responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-ack-validation.json"
+  },
+  {
+    "path": "ko/platform-engineering/ack/03-elbv2-route53-rds.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "08076620b1621305c2bd4ad6eec6b6cd824c41715103e192668060c237869cb2",
+    "summary": "Allprose56uniqueblocks/15quiztopicseachreviewed;7nativecharts18CRDexamples38exactmatches10MD2figures6responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-ack-validation.json"
+  },
+  {
+    "path": "en/platform-engineering/02-ack.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "6b94221dd069771f46747c2be0fe14c13d1e076da45151f06d2e7e7f89301348",
+    "summary": "Allprose56uniqueblocks/15quiztopicseachreviewed;7nativecharts18CRDexamples38exactmatches10MD2figures6responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-ack-validation.json"
+  },
+  {
+    "path": "en/quizzes/platform-engineering/02-ack-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "db2b2d184a8d2949b3f5b72c02f0d52177d6f838c4d69ef2222b4ad48f574d95",
+    "summary": "Allprose56uniqueblocks/15quiztopicseachreviewed;7nativecharts18CRDexamples38exactmatches10MD2figures6responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-ack-validation.json"
+  },
+  {
+    "path": "en/platform-engineering/ack/01-s3-iam.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "33b7bce5fb5f3b6ea21e9034d5b2975683c0687c3d577ce243e58fd1d1f85c0f",
+    "summary": "Allprose56uniqueblocks/15quiztopicseachreviewed;7nativecharts18CRDexamples38exactmatches10MD2figures6responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-ack-validation.json"
+  },
+  {
+    "path": "en/platform-engineering/ack/02-sqs-sns.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "f1d4fe47275a5dfb56d80cd6a42fa3d8cde3373a5c6ba7a1e59836433fa9b2b5",
+    "summary": "Allprose56uniqueblocks/15quiztopicseachreviewed;7nativecharts18CRDexamples38exactmatches10MD2figures6responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-ack-validation.json"
+  },
+  {
+    "path": "en/platform-engineering/ack/03-elbv2-route53-rds.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "reviewedSha256": "101ee6adcf367bc4e2739937a8bdb66d1fc708caa15cfc1fb74f098f3b47c0a6",
+    "summary": "Allprose56uniqueblocks/15quiztopicseachreviewed;7nativecharts18CRDexamples38exactmatches10MD2figures6responsivepassed.",
+    "validationReport": "docs/reviews/2026-09-11/platform-ack-validation.json"
+  }
+]

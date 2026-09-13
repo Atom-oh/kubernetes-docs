@@ -1,119 +1,117 @@
 # Kubeflow Architecture and Installation on EKS Quiz
 
-This quiz tests your understanding of Kubeflow's component architecture, its CNCF graduation, the Kubeflow Community Distribution's release model, EKS-specific installation patterns, and the IAM access pattern for Pipelines artifact storage.
+Baseline: Community Distribution 26.03.1 / Dashboard 2.0.0 / KFP 2.16.1.
 
 ## Multiple Choice Questions
 
-1. What milestone did Kubeflow reach with CNCF on August 17, 2026?
-   - A) It was accepted as a CNCF sandbox project
-   - B) It moved from sandbox to incubating status
-   - C) It graduated — CNCF's highest maturity tier — after a security audit and forming a steering committee
-   - D) It was archived by CNCF due to inactivity
+1. What does Kubeflow’s August 17, 2026 CNCF graduation establish?
+
+   - A) Automatic compliance of every EKS deployment
+   - B) Project maturity and governance, including an independent security audit
+   - C) No further security updates are needed
+   - D) Guaranteed tenant isolation without configuration
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) It graduated — CNCF's highest maturity tier — after a security audit and forming a steering committee**
+**Answer: B) Project maturity and governance, including an independent security audit**
 
-**Explanation:**
-Kubeflow entered CNCF as an incubating project in 2023 and [graduated on August 17, 2026](https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/), after passing an independent third-party security audit and establishing a formal steering committee for project governance. Graduation is CNCF's highest maturity tier.
+Graduation concerns the project. Deployment security, isolation and regulatory compliance still require their own assessment.
 </details>
 
-2. What versioning scheme does the Kubeflow Community Distribution use, and roughly how often does it ship a base release?
-   - A) Semantic versioning (major.minor.patch), shipped continuously
-   - B) Calendar versioning (YY.MM.patch), roughly twice a year
-   - C) A single rolling "latest" tag with no discrete releases
-   - D) LTS versioning, once every three years
+2. Which release baseline is used by this chapter?
+
+   - A) AWS Kubeflow 1.7 and Community 26.03.1 are identical
+   - B) Community 26.03.1, including KFP 2.16.1 and Dashboard 2.0.0
+   - C) Every component uses version 26.03.1
+   - D) The master branch without a release pin
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Calendar versioning (YY.MM.patch), roughly twice a year**
+**Answer: B) Community 26.03.1, including KFP 2.16.1 and Dashboard 2.0.0**
 
-**Explanation:**
-The Kubeflow Community Distribution uses calendar versioning in the form YY.MM.patch, with roughly two base releases per year. The 26.03 release is the latest base release at the time of writing (a 26.03.1 patch has since shipped with newer component versions).
+Distribution and component versions differ. The community calendar release plans roughly two base releases per year and describes support as best effort, not an SLA.
 </details>
 
-3. In Kubeflow's architecture, what is a "Kubeflow Profile"?
-   - A) A user's personal dashboard theme and layout preferences
-   - B) A Kubernetes namespace plus RBAC bindings, resource quotas, and Istio AuthorizationPolicy objects, reconciled by the Profile Controller
-   - C) A YAML file listing which components a cluster has installed
-   - D) A billing construct used only by managed Kubeflow vendors
+3. What happens when Profile resourceQuotaSpec.hard is omitted?
+
+   - A) The controller sets a default GPU quota
+   - B) Istio supplies an equivalent CPU quota
+   - C) The Profile controller does not create its ResourceQuota
+   - D) The namespace receives unlimited AWS IAM permissions
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) A Kubernetes namespace plus RBAC bindings, resource quotas, and Istio AuthorizationPolicy objects, reconciled by the Profile Controller**
+**Answer: C) The Profile controller does not create its ResourceQuota**
 
-**Explanation:**
-A Kubeflow Profile is the multi-tenancy boundary: a namespace bundled with RBAC bindings, quotas, and Istio authorization policy, all reconciled from a single Profile custom resource by the Profile Controller. Other components (Notebooks, Pipelines, Katib) create their resources inside a user's profile namespace.
+Quota is optional. Emptying hard removes the controller-managed quota. RBAC, network policy, storage and AWS access are separate boundaries.
 </details>
 
-4. Which three AWS-native services does `awslabs/kubeflow-manifests` substitute for Kubeflow's default Dex, in-cluster MySQL, and MinIO?
-   - A) IAM, DynamoDB, and EFS
-   - B) Cognito, RDS, and S3
-   - C) Secrets Manager, Aurora Serverless, and EBS
-   - D) SSO, Redshift, and Glacier
+4. What must be checked before following the old AWS distribution installation guide?
+
+   - A) Only recent repository activity
+   - B) Whether the dashboard logo changed
+   - C) Whether the release is compatible and its required images remain available
+   - D) Whether every component is a CRD
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Cognito, RDS, and S3**
+**Answer: C) Whether the release is compatible and its required images remain available**
 
-**Explanation:**
-`awslabs/kubeflow-manifests` replaces Dex with Amazon Cognito for authentication, the bundled in-cluster MySQL with Amazon RDS for Pipelines/Katib metadata, and MinIO with Amazon S3 for Pipelines artifact storage. Both a kustomize-based manifest deployment and a Terraform-based deployment document this pattern.
+The inspected v1.7.0-aws-b1.0.3 release explicitly warns that removed OIDC image availability breaks new installations. It is not a verified 26.03.1 recipe.
 </details>
 
-5. What is the documented history of IRSA support for granting Kubeflow Pipelines pods access to S3, specifically for KFPv2?
-   - A) IRSA has always fully supported KFPv2 with no caveats
-   - B) IRSA was never available on EKS for any Kubeflow Pipelines version
-   - C) IRSA support historically lagged for KFPv2, with an IAM-user-based workaround documented in the interim, while EKS Pod Identity is the broader direction of travel for IAM-to-pod bindings
-   - D) KFPv2 requires disabling IAM entirely and using anonymous S3 access
+5. Which statement about current KFP S3 identity is supported?
+
+   - A) KFPv2 universally requires a static IAM-user key
+   - B) fromEnv accepts only static access keys
+   - C) The current guide documents IRSA; actual SDK, ServiceAccount and role trust still need validation
+   - D) A Profile automatically creates a Pod Identity association
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) IRSA support historically lagged for KFPv2, with an IAM-user-based workaround documented in the interim, while EKS Pod Identity is the broader direction of travel for IAM-to-pod bindings**
+**Answer: C) The current guide documents IRSA; actual SDK, ServiceAccount and role trust still need validation**
 
-**Explanation:**
-`kubeflow-manifests` guidance historically noted IRSA was supported for KFPv1 but not yet for KFPv2, recommending a dedicated IAM user with static credentials as an interim workaround. Separately, EKS Pod Identity has become the increasingly recommended default mechanism for new IAM-to-pod bindings on EKS generally — but the current state of KFPv2-specific Pod Identity support should be checked against live documentation rather than assumed.
+KFP 2.16.1 delegates fromEnv to Go Cloud, whose pinned default uses the AWS SDK v2 credential chain. This source inspection does not prove an EKS Pod Identity deployment.
 </details>
 
-6. According to the "why run this on EKS instead of a managed alternative" trade-off discussed in this document, which condition most strongly favors running Kubeflow on EKS rather than using a fully managed platform like SageMaker?
-   - A) The team wants to avoid ever touching Kubernetes controllers or CRDs
-   - B) The team already runs mixed workloads on EKS and wants ML to share the same node pools, autoscaling, and observability stack
-   - C) The team has no existing Kubernetes operational experience
-   - D) The team wants the absolute minimum operational overhead regardless of portability
+6. Which role does the dashboard perform?
+
+   - A) Automatically trains and deploys every model
+   - B) Provides navigation to component interfaces
+   - C) Replaces all application authorization
+   - D) Stores every pipeline artifact in a CRD
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) The team already runs mixed workloads on EKS and wants ML to share the same node pools, autoscaling, and observability stack**
+**Answer: B) Provides navigation to component interfaces**
 
-**Explanation:**
-Kubeflow on EKS is most justified when a team already operates other workloads on EKS and can avoid maintaining a second, parallel operational model for ML — along with needing portability/avoiding lock-in or fine-grained control over training/serving internals. Teams without existing Kubernetes capacity, or those prioritizing minimum operational overhead, are usually better served by a fully managed platform.
+Workload controllers and application APIs perform their own operations. KFP APIs also use persistence; its Run and Experiment concepts are not universally CRDs.
 </details>
 
 ## Short Answer Questions
 
-7. In one sentence, explain what CNCF graduation (announced August 17, 2026) signals about Kubeflow's project maturity, and name one concrete requirement the project had to meet to reach it.
+7. Why preserve Profile objects and their CRD during the Dashboard v2 migration?
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer:**
-Graduation signals that a CNCF project has demonstrated production-grade maturity, broad adoption, and sound governance; to reach it, Kubeflow underwent an independent third-party security audit and formed a formal steering committee for project governance. See the [CNCF announcement](https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/) for the full details.
+The Profile controller sets namespace ownership. Deleting a Profile can cascade to its namespace and resources. Follow the release-specific cleanup of old controller resources without deleting tenant Profiles or namespaces.
 </details>
 
-8. Why does the `awslabs/kubeflow-manifests` deployment pattern replace the in-cluster MinIO artifact store and bundled Dex authentication with S3 and Cognito respectively, when deploying Kubeflow on EKS?
+8. What does a successful Profile overlay render prove, and what remains unverified?
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer:**
-Because EKS already has managed, durable, IAM-integrated equivalents for both — S3 for object storage and Cognito for identity — running the bundled in-cluster alternatives instead would mean operating extra stateful services that duplicate capabilities AWS already provides, without gaining anything Kubeflow specifically needs from the self-hosted versions.
+It proves that the selected Kustomize inputs generate manifests; the reviewed overlay produced 14 resources with Dashboard 2.0.0 images. It does not prove API admission, controller readiness, tenant isolation, or S3 access on EKS. Managed-service substitutions also need identity, compatibility, network, cost and migration checks.
 </details>
 
 ---
 
-[Return to Learning Materials](../../../ai-ml/kubeflow/01-architecture-installation.md) | [Next Quiz: Pipelines](./02-pipelines-quiz.md)
+[Return to Learning Materials](../../../ai-ml/kubeflow/01-architecture-installation.md) | [Next Quiz: Pipelines](02-pipelines-quiz.md)

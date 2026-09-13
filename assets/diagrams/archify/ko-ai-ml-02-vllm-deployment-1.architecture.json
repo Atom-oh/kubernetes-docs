@@ -5,7 +5,7 @@
     "title": "vLLM 시스템 요구 사항",
     "output": "ko-ai-ml-02-vllm-deployment-1.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "legend": {
       "mode": "auto",
       "entries": {
@@ -31,7 +31,7 @@
           "model-13b",
           "model-70b"
         ],
-        "note": "GPU 메모리 용량이 어떤 크기의 모델을 서빙할 수 있는지를 결정한다."
+        "note": "가중치 외에 GQA/MQA 구조·KV cache·workspace·통신 버퍼를 계산합니다."
       },
       {
         "id": "software-stack",
@@ -41,7 +41,7 @@
           "python",
           "pytorch"
         ],
-        "note": "vLLM 실행에 필요한 최소 소프트웨어 버전이다."
+        "note": "0.29 기본 artifact는CUDA13.0이며 cu129변형이 별도입니다. 호환성을 image별로 확인합니다."
       }
     ]
   },
@@ -50,7 +50,7 @@
       "id": "gpu",
       "type": "cloud",
       "label": "NVIDIA GPU",
-      "sublabel": "Volta / Turing / Ampere / Hopper",
+      "sublabel": "compute capability ≥7.5",
       "pos": [
         40,
         70
@@ -93,7 +93,7 @@
       "id": "model-7b",
       "type": "external",
       "label": "7B 모델",
-      "sublabel": "최소 16GB GPU 메모리",
+      "sublabel": "FP16 weights ≈14GB + extras",
       "pos": [
         400,
         70
@@ -107,7 +107,7 @@
       "id": "model-13b",
       "type": "external",
       "label": "13B 모델",
-      "sublabel": "최소 24GB GPU 메모리",
+      "sublabel": "FP16 weights ≈26GB + extras",
       "pos": [
         400,
         210
@@ -121,7 +121,7 @@
       "id": "model-70b",
       "type": "external",
       "label": "70B 모델",
-      "sublabel": "최소 80GB GPU 메모리",
+      "sublabel": "FP16 weights ≈140GB + extras",
       "pos": [
         400,
         350
@@ -129,14 +129,13 @@
       "size": [
         200,
         60
-      ],
-      "tag": "또는 다중 GPU 분산"
+      ]
     },
     {
       "id": "cuda",
       "type": "backend",
       "label": "CUDA",
-      "sublabel": "12.1 이상",
+      "sublabel": "명시적 cu129 / cu130 변형",
       "pos": [
         760,
         70
@@ -150,7 +149,7 @@
       "id": "python",
       "type": "backend",
       "label": "Python",
-      "sublabel": "3.9 이상",
+      "sublabel": "패키지·이미지의 버전 조건",
       "pos": [
         760,
         210
@@ -164,7 +163,7 @@
       "id": "pytorch",
       "type": "backend",
       "label": "PyTorch",
-      "sublabel": "2.4.0 이상",
+      "sublabel": "이미지와 함께 고정",
       "pos": [
         760,
         350
@@ -241,30 +240,18 @@
   "cards": [
     {
       "dot": "orange",
-      "title": "GPU 메모리 기준",
+      "title": "메모리 추정",
       "items": [
-        "7B 모델: 최소 16GB GPU 메모리",
-        "13B 모델: 최소 24GB GPU 메모리",
-        "70B 모델: 최소 80GB GPU 메모리 (또는 여러 GPU에 분산)"
+        "파라미터 수 × 저장 바이트 + KV / activation / workspace",
+        "Qwen2.5-7B GQA: FP16 KV ≈56KiB/token (전체 근사)"
       ]
     },
     {
       "dot": "cyan",
-      "title": "EKS GPU 노드 유형",
+      "title": "장치와 artifact",
       "items": [
-        "p5.48xlarge: 8x H100, 각 80GB",
-        "p4d.24xlarge: 8x A100, 각 40GB 또는 80GB",
-        "g6.12xlarge: 4x L4, 각 24GB (비용 효율적)",
-        "g6e.12xlarge: 4x L40S, 각 48GB"
-      ]
-    },
-    {
-      "dot": "slate",
-      "title": "소프트웨어",
-      "items": [
-        "CUDA 12.1 이상 (FP8 사용 시 CUDA 12.4 권장)",
-        "Python 3.9 이상",
-        "PyTorch 2.4.0 이상"
+        "p4d는 A10040GB; p4de80GB와 구분합니다.",
+        "V1007.0은 현재 NVIDIA 최소7.5에 미달합니다."
       ]
     }
   ]

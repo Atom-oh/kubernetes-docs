@@ -1,143 +1,77 @@
 # vCluster Quiz
 
-1. How is vCluster superior to traditional Namespace-based multi-tenancy?
-   - A) vCluster creates additional physical clusters
-   - B) Provides each tenant with a full Kubernetes API while sharing host cluster resources
-   - C) vCluster completely isolates the network
-   - D) vCluster requires dedicated nodes
+[vCluster](../../platform-engineering/08-vcluster.md)
+
+The original eight topics have been reviewed against vCluster 0.37.0.
+
+## 1. What does Shared Nodes vCluster separate and share?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Provides each tenant with a full Kubernetes API while sharing host cluster resources**
-
-**Explanation:**
-vCluster provides each tenant with an independent Kubernetes API (CRD installation, RBAC management, Namespace creation, etc.) through a virtual control plane. Actual workloads run on the host cluster, providing strong isolation without the cost of additional physical clusters.
+It can separate virtual APIs, RBAC, controllers and stores while sharing workload nodes, kernels, CNI and CSI. It does not guarantee complete hardware, network or performance isolation.
 
 </details>
 
----
-
-2. What is the core role of vCluster's Syncer component?
-   - A) Manage virtual cluster DNS
-   - B) Synchronize virtual cluster resources to the host cluster and reflect host state back
-   - C) Connect networks between virtual clusters
-   - D) Collect virtual cluster logs
+## 2. What does the Syncer do?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Synchronize virtual cluster resources to the host cluster and reflect host state back**
-
-**Explanation:**
-The Syncer is vCluster's core component that translates resources created in the virtual cluster (Pods, Services, ConfigMaps, etc.) into actual resources on the host cluster. It also syncs host information (Nodes, StorageClasses, etc.) back to the virtual cluster, performing bidirectional resource management.
+Translate configured virtual resources/references to host resources and propagate observed state back. Defaults and naming vary by mode/version; not every resource always synchronizes bidirectionally.
 
 </details>
 
----
-
-3. What is the advantage of using vCluster for per-PR preview environments?
-   - A) Deploy code to production without PR merge
-   - B) Quickly create/delete isolated Kubernetes environments per PR for integration testing
-   - C) Grant cluster admin privileges to PR reviewers
-   - D) Reduce CI pipeline execution time
+## 3. What is required for PR previews?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Quickly create/delete isolated Kubernetes environments per PR for integration testing**
-
-**Explanation:**
-vCluster can be created in under 30 seconds, allowing CI/CD pipelines to provision isolated Kubernetes environments per PR. When PRs are merged or closed, the vCluster is deleted to reclaim resources, enabling integration testing of each PR's changes in an independent environment.
+A validated profile, host capacity, trusted CI identity/events, explicit namespace/context and cleanup. Sub-30-second creation or faster tests are not guaranteed; do not give host credentials to untrusted fork code.
 
 </details>
 
----
-
-4. What is the purpose of vCluster's Sleep Mode feature?
-   - A) Enhance virtual cluster security
-   - B) Release resources of unused virtual clusters to reduce costs
-   - C) Back up virtual cluster data
-   - D) Optimize virtual cluster performance
+## 4. How should pause and automatic sleep be understood?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Release resources of unused virtual clusters to reduce costs**
-
-**Explanation:**
-Sleep Mode automatically stops workloads in vClusters that have been inactive for a specified period. When an API request comes in, the vCluster automatically wakes up. This significantly reduces costs for dev/test vClusters that are unused during nights and weekends.
+Current pause removes workloads and recreates them on resume, with separate PVC/Service retention. It is not memory-preserving suspend or backup. Validate automatic wake behavior, entitlements and actual savings separately.
 
 </details>
 
----
-
-5. How do you use the host cluster's StorageClass in a virtual cluster?
-   - A) Recreate the StorageClass in the virtual cluster
-   - B) Use syncFromHost settings to synchronize the host's StorageClass to the virtual cluster
-   - C) Manually mount PVs
-   - D) Install CSI drivers separately in the virtual cluster
+## 5. How do StorageClasses and PVCs work with Shared Nodes?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Use syncFromHost settings to synchronize the host's StorageClass to the virtual cluster**
-
-**Explanation:**
-vCluster's `syncFromHost` configuration syncs host cluster resources like StorageClasses, IngressClasses, and Nodes so they're visible in the virtual cluster. PVCs in the virtual cluster use the host cluster's StorageClasses to provision actual PVs.
+Use supported fromHost StorageClass configuration and host CSI, synchronizing PVCs to the host. Check binding mode, topology and reclaim/retention. Version 0.37 supports snapshot sync, distinct from removed deploy.volumeSnapshotController.
 
 </details>
 
----
-
-6. How does the developer self-service workflow work in Backstage + vCluster integration?
-   - A) Developers create vClusters directly with kubectl
-   - B) Backstage Template generates vCluster request → pushes to GitOps repo → ArgoCD syncs to provision vCluster
-   - C) Backstage directly calls the Kubernetes API to create vClusters
-   - D) Admins manually create vClusters and assign them to developers
+## 6. What connects Backstage and GitOps provisioning?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Backstage Template generates vCluster request → pushes to GitOps repo → ArgoCD syncs to provision vCluster**
-
-**Explanation:**
-When a developer enters parameters (environment name, resource size, etc.) in a Backstage Template, the Template generates vCluster Helm Release manifests and pushes them to the GitOps repository. ArgoCD detects the change and syncs it to the cluster, automatically provisioning the vCluster.
+Prepared actions/skeletons, reviewed PRs, real ArgoCD project/destination/repository permissions and a values source. debug:log does not approve or wait for deployment. Deliver kubeconfigs through approved credential channels.
 
 </details>
 
----
-
-7. What is the role of NetworkPolicy in vCluster security isolation?
-   - A) Limit CPU usage between virtual clusters
-   - B) Prevent virtual cluster Pods from accessing other vCluster Pods or host cluster resources via network isolation
-   - C) Encrypt Ingress traffic for virtual clusters
-   - D) Filter DNS queries
+## 7. Does adding NetworkPolicy block all host access?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) Prevent virtual cluster Pods from accessing other vCluster Pods or host cluster resources via network isolation**
-
-**Explanation:**
-Since vCluster Pods run on the host cluster, without NetworkPolicies they can network-access Pods from other vClusters. Applying NetworkPolicies to each vCluster's namespace to allow only intra-namespace communication and block external access implements strong network isolation.
+No. Allows are additive and cannot be reduced by another deny policy. The Syncer needs host API access. The profile disables workload public egress but retains control-plane port allowances, requiring actual CNI/path validation.
 
 </details>
 
----
-
-8. When should you choose vCluster over a physical cluster?
-   - A) When complete hardware isolation is required
-   - B) When fast provisioning, cost efficiency, and CRD isolation are needed but full node isolation is not
-   - C) When regulatory requirements mandate separate AWS accounts
-   - D) When running GPU workloads
+## 8. How should deployment modes be selected?
 
 <details>
-<summary>Show Answer</summary>
+<summary>Show answer</summary>
 
-**Answer: B) When fast provisioning, cost efficiency, and CRD isolation are needed but full node isolation is not**
-
-**Explanation:**
-vCluster offers sub-30-second creation, cost efficiency through host cluster resource sharing, and CRD/RBAC/Namespace isolation. It's ideal for dev/test environments, CI/CD ephemeral environments, and training environments. Physical clusters are more appropriate for production workloads requiring regulatory compliance, full hardware isolation, or dedicated network isolation.
+Evaluate API autonomy, node/kernel/CNI/CSI, account/admin boundaries, performance and lifecycle needs. Compare Shared Nodes, Dedicated/Private Nodes, Standalone and separate clusters without promising unmeasured speed, cost or regulatory suitability.
 
 </details>

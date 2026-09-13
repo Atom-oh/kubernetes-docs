@@ -1,6 +1,6 @@
 # Security 퀴즈
 
-> **검토일**: 2026-09-11 · Istio 1.31 · Kubernetes 1.32–1.36 (EKS 표준 지원: 1.34–1.36). [설치 호환성](../../../service-mesh/istio/01-installation.md)을 확인하세요.
+> **마지막 업데이트**: 2026년 9월 11일 · Istio 1.31 · Kubernetes 1.32–1.36 (EKS 표준 지원: 1.34–1.36). [설치 호환성](../../../service-mesh/istio/01-installation.md)을 확인하세요.
 
 이 퀴즈는 사이드카 예제로 Istio 보안을 다룹니다. 각 문제는 독립적인 시나리오이며 모든 ALLOW 정책을 같은 워크로드에 함께 적용하지 않습니다. Ambient의 HTTP/JWT 정책은 waypoint `targetRefs`가 필요하며 PeerAuthentication `DISABLE`은 지원하지 않습니다. 워크로드·ServiceAccount·포트·신원은 실제 배포와 일치해야 합니다.
 

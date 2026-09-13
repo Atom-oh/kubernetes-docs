@@ -6,7 +6,7 @@
     "locale": "en",
     "output": "en-ai-ml-mlflow-03-eks-deployment-0.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "viewBox": [
       1360,
       620
@@ -22,7 +22,7 @@
           "pod1",
           "pod2"
         ],
-        "note": "Training scripts and MLflow UI users reach the stateless tracking server Pods through the ALB/Ingress and the Service."
+        "note": "Use protected entry and Service; application authentication and authorization remain separate."
       },
       {
         "id": "stores",
@@ -33,7 +33,7 @@
           "db",
           "s3"
         ],
-        "note": "All durable state lives outside the cluster in RDS/Aurora PostgreSQL and S3, so running several Pods is safe."
+        "note": "Share metadata/auth databases and artifacts; check additional queue/cache state before scaling replicas."
       },
       {
         "id": "iam",
@@ -44,7 +44,7 @@
           "pod2",
           "s3"
         ],
-        "note": "A ServiceAccount bound via IRSA or Pod Identity grants the Pods S3 access without static credentials."
+        "note": "Workload identity grants S3 AWS permissions; PostgreSQL login is separate."
       }
     ]
   },
@@ -52,7 +52,7 @@
     {
       "id": "user",
       "type": "external",
-      "label": "Training Script / MLflow UI User",
+      "label": "SDK / UI client",
       "sublabel": "Client SDK · Web UI",
       "pos": [
         30,
@@ -65,9 +65,9 @@
     },
     {
       "id": "alb",
-      "type": "cloud",
-      "label": "ALB / Ingress",
-      "sublabel": "AWS Load Balancer Controller",
+      "type": "security",
+      "label": "Protected entry",
+      "sublabel": "TLS / ingress policy",
       "pos": [
         290,
         270
@@ -109,7 +109,7 @@
       "id": "sa",
       "type": "security",
       "label": "ServiceAccount",
-      "sublabel": "IRSA / Pod Identity binding",
+      "sublabel": "S3 workload identity",
       "pos": [
         740,
         270
@@ -136,8 +136,8 @@
     {
       "id": "db",
       "type": "database",
-      "label": "RDS / Aurora PostgreSQL",
-      "sublabel": "Backend store",
+      "label": "PostgreSQL",
+      "sublabel": "metadata / auth DBs",
       "pos": [
         990,
         270
@@ -218,7 +218,7 @@
       "id": "pod1-db",
       "from": "pod1",
       "to": "db",
-      "label": "metadata",
+      "label": "DB login + TLS",
       "fromSide": "right",
       "toSide": "top"
     },
@@ -262,6 +262,24 @@
           1275,
           560
         ]
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Verify shared state",
+      "items": [
+        "Tracking/auth DBs, session secrets, enabled queues/caches",
+        "Proposed replica layout; validate shared state before scaling"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Permission boundaries",
+      "items": [
+        "Configure S3 IAM and DB login/TLS separately",
+        "ClusterIP, TLS, and host checks do not replace user authorization"
       ]
     }
   ]

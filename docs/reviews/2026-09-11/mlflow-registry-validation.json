@@ -1,0 +1,374 @@
+{
+  "reviewedAt": "2026-09-12T18:21:25.422509+00:00",
+  "version": "3.16.0",
+  "fullyReadFiles": 4,
+  "quizQuestions": 20,
+  "findings": [
+    "Versionnumberidentitydoesnotmakeallmetadata/sourcebytesimmutable",
+    "run_id/model_idoptional;recordedlineageandartifactretentionnotuniversalguarantee",
+    "Aliasresolutiondoesnothotreload/routetraffic/approve/deploy;explicitconsumerworkflow",
+    "StagesNone/Staging/Production/Archived;transitionAPIdeprecatedsince2.9retained3.16",
+    "READYregistrationstatusdoesnotproveflavor/weights/inference/quality;metadatademoclearlyscoped"
+  ],
+  "native": {
+    "version": "3.16.0",
+    "checks": {
+      "optionalRunId": true,
+      "mutableDescription": true,
+      "mutableTags": true,
+      "multipleAliases": true,
+      "aliasReassignmentFreshResolution": true,
+      "previousSnapshotUnchanged": true,
+      "sourceBytesNotEnforcedImmutable": true
+    },
+    "modelVersionStatus": "READY",
+    "scope": "SQLite registry metadata fixture; no inference, GPU, cloud or real model artifact"
+  },
+  "markdown": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "ko/ai-ml/mlflow/02-model-registry.md",
+        "sha256": "f2358f449fc6042f271bc6ba28208659ca638c675cfbf018c455c1d92809a768",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-2-mlflow-model-registry"
+          },
+          {
+            "tag": "h2",
+            "id": "실습-환경-준비"
+          },
+          {
+            "tag": "h2",
+            "id": "model-registry란-무엇인가"
+          },
+          {
+            "tag": "h2",
+            "id": "핵심-개념"
+          },
+          {
+            "tag": "h3",
+            "id": "model-version"
+          },
+          {
+            "tag": "h3",
+            "id": "alias"
+          },
+          {
+            "tag": "h3",
+            "id": "참고-레거시-stage-모델"
+          },
+          {
+            "tag": "h2",
+            "id": "모델-등록하기"
+          },
+          {
+            "tag": "h2",
+            "id": "거버넌스와-핸드오프-워크플로우"
+          },
+          {
+            "tag": "h2",
+            "id": "모델-계보와-재현성"
+          },
+          {
+            "tag": "h2",
+            "id": "다음-단계"
+          },
+          {
+            "tag": "h2",
+            "id": "공식-근거"
+          }
+        ],
+        "renderedIds": [
+          "part-2-mlflow-model-registry",
+          "실습-환경-준비",
+          "model-registry란-무엇인가",
+          "핵심-개념",
+          "model-version",
+          "alias",
+          "참고-레거시-stage-모델",
+          "모델-등록하기",
+          "거버넌스와-핸드오프-워크플로우",
+          "모델-계보와-재현성",
+          "다음-단계",
+          "공식-근거"
+        ]
+      },
+      {
+        "path": "en/ai-ml/mlflow/02-model-registry.md",
+        "sha256": "eba2ba813a03ada8926b7d034129a935427fae57e6a2db3d1085855b836db4e3",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "part-2-mlflow-model-registry"
+          },
+          {
+            "tag": "h2",
+            "id": "lab-environment-setup"
+          },
+          {
+            "tag": "h2",
+            "id": "what-the-model-registry-is"
+          },
+          {
+            "tag": "h2",
+            "id": "core-concepts"
+          },
+          {
+            "tag": "h3",
+            "id": "model-version"
+          },
+          {
+            "tag": "h3",
+            "id": "aliases"
+          },
+          {
+            "tag": "h3",
+            "id": "the-legacy-stage-model"
+          },
+          {
+            "tag": "h2",
+            "id": "registering-a-model"
+          },
+          {
+            "tag": "h2",
+            "id": "governance-and-the-handoff-workflow"
+          },
+          {
+            "tag": "h2",
+            "id": "lineage-and-reproducibility"
+          },
+          {
+            "tag": "h2",
+            "id": "next-steps"
+          },
+          {
+            "tag": "h2",
+            "id": "primary-sources"
+          }
+        ],
+        "renderedIds": [
+          "part-2-mlflow-model-registry",
+          "lab-environment-setup",
+          "what-the-model-registry-is",
+          "core-concepts",
+          "model-version",
+          "aliases",
+          "the-legacy-stage-model",
+          "registering-a-model",
+          "governance-and-the-handoff-workflow",
+          "lineage-and-reproducibility",
+          "next-steps",
+          "primary-sources"
+        ]
+      },
+      {
+        "path": "ko/quizzes/ai-ml/mlflow/02-model-registry-quiz.md",
+        "sha256": "9ae5825a8c69b04a9816d1b66016516efae594f5428e30f2b4da38830794ad9e",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "mlflow-model-registry-퀴즈"
+          },
+          {
+            "tag": "h2",
+            "id": "객관식-문제"
+          },
+          {
+            "tag": "h2",
+            "id": "서술형-문제"
+          }
+        ],
+        "renderedIds": [
+          "mlflow-model-registry-퀴즈",
+          "객관식-문제",
+          "서술형-문제"
+        ]
+      },
+      {
+        "path": "en/quizzes/ai-ml/mlflow/02-model-registry-quiz.md",
+        "sha256": "1abe1231188317ea9fe6de3ac0b734eef22a24230f524666c343fb1ce981b895",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "mlflow-model-registry-quiz"
+          },
+          {
+            "tag": "h2",
+            "id": "multiple-choice-questions"
+          },
+          {
+            "tag": "h2",
+            "id": "short-answer-questions"
+          }
+        ],
+        "renderedIds": [
+          "mlflow-model-registry-quiz",
+          "multiple-choice-questions",
+          "short-answer-questions"
+        ]
+      }
+    ]
+  },
+  "figures": {
+    "ko": {
+      "checksPassed": 9,
+      "checkCount": 9,
+      "compositionProfile": "showcase",
+      "compositionStatus": "pass",
+      "errors": 0,
+      "warnings": 0
+    },
+    "en": {
+      "checksPassed": 9,
+      "checkCount": 9,
+      "compositionProfile": "showcase",
+      "compositionStatus": "pass",
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  "responsive": {
+    "status": "passed",
+    "cases": [
+      {
+        "locale": "ko",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "a524150ddcb83dcc016a76b48d581644762ffe07eb0b6fa07eaf660428e95983"
+      },
+      {
+        "locale": "ko",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "a524150ddcb83dcc016a76b48d581644762ffe07eb0b6fa07eaf660428e95983"
+      },
+      {
+        "locale": "ko",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "a524150ddcb83dcc016a76b48d581644762ffe07eb0b6fa07eaf660428e95983"
+      },
+      {
+        "locale": "en",
+        "width": 375,
+        "passed": true,
+        "innerWidth": 375,
+        "scrollWidth": 375,
+        "svg": 2,
+        "toolbar": {
+          "x": 16,
+          "y": 16,
+          "width": 343,
+          "height": 96,
+          "top": 16,
+          "right": 359,
+          "bottom": 112,
+          "left": 16
+        },
+        "sourceSha256": "d1c9b641cd2560d7f9f79acd8010db741c766de9b4b20fa90283562f773a7f5b"
+      },
+      {
+        "locale": "en",
+        "width": 768,
+        "passed": true,
+        "innerWidth": 768,
+        "scrollWidth": 768,
+        "svg": 2,
+        "toolbar": {
+          "x": 32,
+          "y": 32,
+          "width": 704,
+          "height": 44,
+          "top": 32,
+          "right": 736,
+          "bottom": 76,
+          "left": 32
+        },
+        "sourceSha256": "d1c9b641cd2560d7f9f79acd8010db741c766de9b4b20fa90283562f773a7f5b"
+      },
+      {
+        "locale": "en",
+        "width": 1920,
+        "passed": true,
+        "innerWidth": 1920,
+        "scrollWidth": 1920,
+        "svg": 2,
+        "toolbar": {
+          "x": 1496.359375,
+          "y": 16,
+          "width": 407.640625,
+          "height": 44,
+          "top": 16,
+          "right": 1904,
+          "bottom": 60,
+          "left": 1496.359375
+        },
+        "sourceSha256": "d1c9b641cd2560d7f9f79acd8010db741c766de9b4b20fa90283562f773a7f5b"
+      }
+    ],
+    "scope": "Standalone viewer after the same production font/responsive normalization; no full VitePress build."
+  },
+  "pngVisualInspection": "Both inspected; English legend overlap fixed and current PNG re-inspected",
+  "sources": [
+    "https://mlflow.org/docs/3.16.0/ml/model-registry/",
+    "https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/tracking/client.py",
+    "https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/entities/model_registry/model_version.py",
+    "https://github.com/mlflow/mlflow/blob/v3.16.0/mlflow/store/model_registry/sqlalchemy_store.py"
+  ],
+  "scope": "CPU SQLite metadata contract; no training/inference/GPU/cloud; no automaticproductionqualityclaims",
+  "publication": "pending cohort integration/review/CI"
+}

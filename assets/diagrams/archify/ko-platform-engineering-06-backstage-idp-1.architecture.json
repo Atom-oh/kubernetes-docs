@@ -7,70 +7,36 @@
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1080,
-      600
+      1280,
+      610
     ],
     "legend": {
-      "mode": "auto",
-      "entries": {
-        "cloud": {
-          "label": "Domain / System"
-        },
-        "backend": {
-          "label": "Component"
-        },
-        "external": {
-          "label": "API"
-        },
-        "database": {
-          "label": "Resource (DB)"
-        },
-        "messagebus": {
-          "label": "Resource (Queue)"
-        },
-        "security": {
-          "label": "Group (팀)"
-        }
-      }
+      "mode": "auto"
     },
     "views": [
       {
-        "id": "hierarchy",
-        "label": "Domain → System → Component",
+        "id": "structure",
+        "label": "구조",
         "focus": [
           "domain",
           "order-system",
-          "payment-system",
           "order-api",
-          "order-worker",
-          "payment-gateway"
+          "order-rest-api",
+          "order-db"
         ],
-        "note": "payments-domain이 두 System을 묶고, 각 System이 자신의 Component를 포함한다."
+        "note": "본문의 commerce/order-system/order-api 카탈로그 예제 관계"
       },
       {
         "id": "ownership",
-        "label": "소유와 구성원",
+        "label": "소유권",
         "focus": [
           "platform-team",
           "backend-team",
-          "order-system",
-          "payment-system"
+          "alice",
+          "domain",
+          "order-system"
         ],
-        "note": "Group이 System을 owns 관계로 소유하고, User(alice, bob)는 memberOf로 Group에 속한다."
-      },
-      {
-        "id": "api-resource",
-        "label": "API와 Resource 의존",
-        "focus": [
-          "order-api",
-          "order-worker",
-          "payment-gateway",
-          "order-rest-api",
-          "payment-grpc-api",
-          "order-db",
-          "payment-queue"
-        ],
-        "note": "Component는 API를 provides/consumes하고 Resource에 dependsOn으로 의존한다."
+        "note": "소유권 metadata와 실제 Permission Policy는 별도"
       }
     ]
   },
@@ -79,10 +45,10 @@
       "id": "platform-team",
       "type": "security",
       "label": "platform-team",
-      "sublabel": "Group · alice memberOf",
+      "sublabel": "Group",
       "pos": [
-        40,
-        40
+        60,
+        60
       ],
       "size": [
         190,
@@ -92,11 +58,11 @@
     {
       "id": "domain",
       "type": "cloud",
-      "label": "payments-domain",
+      "label": "commerce",
       "sublabel": "Domain",
       "pos": [
-        430,
-        40
+        400,
+        60
       ],
       "size": [
         180,
@@ -107,10 +73,10 @@
       "id": "backend-team",
       "type": "security",
       "label": "backend-team",
-      "sublabel": "Group · bob memberOf",
+      "sublabel": "Group",
       "pos": [
-        850,
-        40
+        60,
+        260
       ],
       "size": [
         190,
@@ -123,39 +89,25 @@
       "label": "order-system",
       "sublabel": "System",
       "pos": [
-        210,
-        180
+        400,
+        260
       ],
       "size": [
-        160,
+        180,
         60
       ]
     },
     {
-      "id": "payment-system",
-      "type": "cloud",
-      "label": "payment-system",
-      "sublabel": "System",
+      "id": "alice",
+      "type": "frontend",
+      "label": "alice",
+      "sublabel": "User",
       "pos": [
-        660,
-        180
+        60,
+        460
       ],
       "size": [
-        170,
-        60
-      ]
-    },
-    {
-      "id": "order-worker",
-      "type": "backend",
-      "label": "order-worker",
-      "sublabel": "Component",
-      "pos": [
-        80,
-        330
-      ],
-      "size": [
-        160,
+        190,
         60
       ]
     },
@@ -165,39 +117,11 @@
       "label": "order-api",
       "sublabel": "Component",
       "pos": [
-        340,
-        330
+        730,
+        260
       ],
       "size": [
-        160,
-        60
-      ]
-    },
-    {
-      "id": "payment-gateway",
-      "type": "backend",
-      "label": "payment-gateway",
-      "sublabel": "Component",
-      "pos": [
-        660,
-        330
-      ],
-      "size": [
-        170,
-        60
-      ]
-    },
-    {
-      "id": "payment-queue",
-      "type": "messagebus",
-      "label": "payment-queue",
-      "sublabel": "Resource",
-      "pos": [
-        40,
-        480
-      ],
-      "size": [
-        160,
+        190,
         60
       ]
     },
@@ -207,11 +131,11 @@
       "label": "order-rest-api",
       "sublabel": "API",
       "pos": [
-        260,
-        480
+        1040,
+        160
       ],
       "size": [
-        160,
+        190,
         60
       ]
     },
@@ -221,127 +145,87 @@
       "label": "order-db",
       "sublabel": "Resource",
       "pos": [
-        480,
-        480
+        1040,
+        390
       ],
       "size": [
-        160,
-        60
-      ]
-    },
-    {
-      "id": "payment-grpc-api",
-      "type": "external",
-      "label": "payment-grpc-api",
-      "sublabel": "API",
-      "pos": [
-        700,
-        480
-      ],
-      "size": [
-        170,
+        190,
         60
       ]
     }
   ],
   "connections": [
     {
-      "id": "domain-order",
-      "from": "domain",
-      "to": "order-system",
-      "variant": "emphasis",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "domain-payment",
-      "from": "domain",
-      "to": "payment-system",
-      "variant": "emphasis",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "platform-owns-order",
+      "id": "owns-domain",
       "from": "platform-team",
+      "to": "domain",
+      "label": "owns",
+      "variant": "dashed"
+    },
+    {
+      "id": "domain-system",
+      "from": "domain",
       "to": "order-system",
-      "label": "owns",
-      "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "backend-owns-payment",
-      "from": "backend-team",
-      "to": "payment-system",
-      "label": "owns",
-      "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "order-system-worker",
-      "from": "order-system",
-      "to": "order-worker",
+      "label": "contains",
       "variant": "emphasis",
       "fromSide": "bottom",
-      "toSide": "top"
+      "toSide": "top",
+      "labelAt": [
+        490,
+        190
+      ]
     },
     {
-      "id": "order-system-api",
+      "id": "owns-system",
+      "from": "backend-team",
+      "to": "order-system",
+      "label": "owns",
+      "variant": "dashed"
+    },
+    {
+      "id": "member",
+      "from": "alice",
+      "to": "backend-team",
+      "label": "memberOf",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom",
+      "labelAt": [
+        155,
+        400
+      ]
+    },
+    {
+      "id": "system-component",
       "from": "order-system",
       "to": "order-api",
-      "variant": "emphasis",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "label": "contains",
+      "variant": "emphasis"
     },
     {
-      "id": "payment-system-gateway",
-      "from": "payment-system",
-      "to": "payment-gateway",
-      "variant": "emphasis",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "order-api-provides",
+      "id": "provides",
       "from": "order-api",
       "to": "order-rest-api",
-      "label": "provides",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "label": "providesApi",
+      "variant": "emphasis"
     },
     {
-      "id": "gateway-provides",
-      "from": "payment-gateway",
-      "to": "payment-grpc-api",
-      "label": "provides",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "order-api-consumes",
-      "from": "order-api",
-      "to": "payment-grpc-api",
-      "label": "consumes",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "order-api-db",
+      "id": "dependency",
       "from": "order-api",
       "to": "order-db",
       "label": "dependsOn",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
     {
-      "id": "worker-queue",
-      "from": "order-worker",
-      "to": "payment-queue",
-      "label": "dependsOn",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "dot": "amber",
+      "title": "카탈로그 관계",
+      "items": [
+        "Resource entity 등록은 AWS 인프라 생성이 아님",
+        "owner/system/domain 참조를 fixture 내부에서 검증",
+        "소유권 metadata만으로 backend 권한이 설정되지 않음"
+      ]
     }
   ]
 }

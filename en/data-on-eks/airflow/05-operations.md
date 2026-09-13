@@ -1,148 +1,234 @@
 # Part 5: Operations and Security
 
-> **Last Updated**: July 15, 2026
+> Reviewed: Airflow 3.3.1, Helm chart 1.22.0, Amazon provider 9.34.0 / Kubernetes provider 10.21.0.
 
-Across this series we covered Airflow 3's component architecture (Part 1), Helm-based deployment and the `KubernetesExecutor`/`CeleryExecutor` decision (Part 2), DAG authoring patterns for Kubernetes (Part 3), and MWAA integration (Part 4). This final document covers what's left before a deployment is actually production-ready: scheduler HA, safe upgrades, secrets, logging, monitoring, and a security checklist — then rolls all five parts up into a single go-live checklist.
+This chapter covers HA, upgrades, secrets, logs, observability and recovery for the
+self-managed EKS deployment in Part 2. The operating criterion is **recoverable
+execution, data and logs after failure**, beyond merely having settings present.
+Use the managed environment/CloudWatch procedures from Part 4 for MWAA.
 
-## 1. Scheduler High Availability
+## 1. Validate scheduler HA together with the database
 
-Running multiple scheduler replicas is the standard way to avoid a single point of failure for scheduling. In Airflow 2, this was a genuinely fragile setup: the scheduler process both scheduled tasks *and* parsed DAG files, so multiple scheduler replicas parsing the same DAG bag concurrently created contention and duplicate work that could destabilize scheduling latency under load.
-
-Part 1 covered why this is no longer a concern in Airflow 3: DAG parsing was pulled out of the scheduler entirely and moved to the separate, mandatory `dag-processor` service. Every scheduler replica now does the same thing — read task state and the `serialized_dag` table from Postgres, and queue ready task instances — instead of also racing each other to parse files. Because parsing and scheduling are fully decoupled, adding scheduler replicas is a straightforward horizontal-scaling and HA lever, not a source of new contention.
+Airflow 2 already supported scheduler HA and standalone DAG processors.
+Airflow 3's mandatory processor separation clarifies resource and responsibility
+boundaries, but does not eliminate database contention or guarantee linear scaling.
+Schedulers use serialized DAGs and database row locks to coordinate the scheduling
+critical section. A separate scheduler leader-election service is not required.
 
 ```yaml
-# values.yaml — scheduler replica count
 scheduler:
   replicas: 2
 ```
 
-With the official Helm chart, this is a single field. Postgres itself remains the actual coordination point (schedulers use row-level locking to avoid double-queuing the same task instance), so scheduler HA doesn't require any additional leader-election mechanism on top of what the database already provides.
+This setting changes replica count only. Also validate node/AZ placement, database
+failover and connection limits, API/processor availability, probes/PDBs and executor/
+broker health. Measure scheduling delays, retries and duplicate external writes
+during node/AZ failures and database failover. A scheduler page's SQL-feature notes
+are not the complete supported-database matrix; use Part 1's version guidance.
+Triggerers are needed when using triggers, including deferrable tasks.
 
-## 2. Database Migrations and Upgrades
+## 2. Backup, restore and migration
 
-The metadata Postgres database holds every DAG run, task instance, connection, variable, and XCom in the deployment — back it up before any major version upgrade, without exception.
+The metadata database stores execution state and many Airflow settings. External
+secrets and object-storage XCom backends mean not every value resides in it.
+Preserve Fernet keys, DAG/bundle history, images/providers, external data, logs and
+secrets as well as the database. Restoring encrypted rows without the decryption
+key is insufficient.
 
-* **Hot backup**: taking a consistent snapshot (e.g. an RDS automated/manual snapshot, or `pg_dump`) while Airflow keeps running is usually sufficient, since the upgrade process itself runs the schema migration.
-* **Cold backup**: for the highest consistency guarantee, stop the scheduler, dag-processor, and triggerer first (so nothing is writing task state), then back up, then run the migration.
+Validate this sequence in an environment-specific migration runbook:
+
+1. Check the supported upgrade path and breaking changes. Rehearse with a realistic
+   database copy to measure duration, locking, disk space and DAG/provider compatibility.
+2. Use the database's consistency guarantees for hot backups and test restoration.
+   A successful snapshot request does not prove completion or recoverability.
+3. Control new execution and drain or deliberately terminate existing work.
+   Coordinate every relevant database writer, including workers/tasks, API servers
+   and external automation. Stopping only schedulers, processors and triggerers
+   does not quiesce all writes.
+4. Establish the backup/recovery point and use one migration mechanism.
+   Do not race Helm migration Jobs/hooks with manual airflow db migrate commands.
+5. Verify database state, new executions, retries, logs and secret lookup before
+   reopening traffic. Redeploying an old image against a migrated schema is not
+   a sufficient rollback plan.
+
+### Apply a deliberate history-retention policy
+
+Do not unconditionally delete a fixed number of days before every upgrade.
+Check audit/replay/depends_on_past requirements and foreign-key cascades first.
+This command is a **non-deleting preview**:
 
 ```bash
-# RDS manual snapshot before an upgrade
-aws rds create-db-snapshot \
-  --db-instance-identifier airflow-metadata-db \
-  --db-snapshot-identifier airflow-pre-upgrade-$(date +%Y%m%d)
+# Preview only: replace the cutoff and table selection with your retention policy.
+airflow db clean \
+  --clean-before-timestamp '2026-07-01T00:00:00+00:00' \
+  --tables dag_run,task_instance \
+  --dry-run \
+  --error-on-cleanup-failure
 ```
 
-Airflow 3's upgrade path includes schema changes to support the new `serialized_dag`-centric scheduler design, and `airflow db migrate` can take a long time on a database with years of accumulated task-instance and DAG-run history — the migration has to walk and rewrite a proportional number of rows. Before upgrading a long-running deployment, prune old history first so the migration has less to touch:
+Execute cleanup separately only after reviewing the cutoff/tables and backup.
+Default archive tables consume space in the same database, so cleanup does not
+guarantee immediate disk reclamation or faster execution of every migration.
+In 3.3.1, some cleanup failures can otherwise be hidden behind exit status zero;
+automation should use --error-on-cleanup-failure and inspect results/logs.
 
-```bash
-# Delete task-instance/DAG-run history older than 60 days before upgrading
-airflow db clean --clean-before-timestamp "$(date -d '60 days ago' -Iseconds)" --yes
-```
+## 3. Fernet and secret-resolution paths
 
-Run `airflow db clean` (or the equivalent retention job) on a recurring schedule going forward, not just before upgrades — it keeps the metadata database small and keeps every future migration faster.
-
-## 3. Secrets Backend Configuration
-
-Storing connections and variables as plaintext rows in the metadata database is the default, but production deployments should back them with AWS Secrets Manager instead, using the provider package's `SecretsManagerBackend`:
+Connections and variables are not simply all plaintext by default. With Fernet
+configured, connection password/extra fields and Variable values are encrypted.
+This does not encrypt every metadata field or every log; preserve/rotate keys and
+control access. AWS Secrets Manager is one supported external backend option.
 
 ```ini
-# airflow.cfg
 [secrets]
 backend = airflow.providers.amazon.aws.secrets.secrets_manager.SecretsManagerBackend
 backend_kwargs = {"connections_prefix": "airflow/connections", "variables_prefix": "airflow/variables", "config_prefix": "airflow/config"}
 ```
 
-With this configuration, a connection lookup for `airflow_remote_logging_conn` first checks Secrets Manager at `airflow/connections/airflow_remote_logging_conn` before falling back to the metadata database.
+General server-side lookup is custom backend → environment variables → metastore.
+External values are not all listed in the Airflow UI. Editing a duplicated key in
+the UI can leave the higher-priority external value in effect.
 
-**This configuration must be identical across the api-server, scheduler, and workers.** Each of these components independently resolves connections and variables at runtime — the secrets backend isn't a scheduler-only concept, and there's no shared cache that lets one component's `[secrets]` setting cover the others. If `backend_kwargs` drifts between components (a stale prefix on the workers, a missing `[secrets]` section on the api-server), that component silently falls through to the metadata database instead of Secrets Manager, and connection lookups start failing inconsistently — working from the scheduler but not from a worker pod, for example, which is a confusing failure mode to debug after the fact.
+Airflow 3 supports worker-specific [workers] secrets_backend and
+secrets_backend_kwargs. Normal Task SDK task contexts can also resolve server-side
+values through the supervisor and Execution API. Components therefore do not all
+need identical prefixes or direct database access.
 
-This matters most for remote-logging connections specifically: every component that emits logs (api-server, scheduler, dag-processor, triggerer, and every task pod under `KubernetesExecutor`) independently resolves the remote-logging connection to know where to ship its logs, so a single misconfigured component silently loses its logs to nowhere useful rather than failing loudly.
+Document the intended path and test API-side lookup, worker overrides and the
+logging supervisor's resolution/cache separately. The reviewed code logs backend
+exceptions before trying subsequent paths; not every failure is silent. Test both
+unexpected fallback values and explicit lookup failures. Do not print secret
+contents into diagnostic logs.
 
-## 4. Remote Logging
-
-Task pods are ephemeral, and this is especially true under `KubernetesExecutor` (Part 2) — a pod is created for a task and torn down once it completes. Without remote logging, a task's logs disappear the moment its pod is garbage-collected, which makes debugging a failed run after the fact impossible.
-
-Configure S3 as the remote logging destination, using a connection stored in Secrets Manager rather than inline in `airflow.cfg`:
+## 4. S3 task logs are not instant streaming of every component log
 
 ```ini
-# airflow.cfg
 [logging]
 remote_logging = True
 remote_base_log_folder = s3://my-airflow-logs-bucket/logs
 remote_log_conn_id = airflow_remote_logging_conn
+delete_local_logs = False
 ```
 
-```bash
-# The connection itself lives in Secrets Manager, resolved via the SecretsManagerBackend from section 3
-# Secret name: airflow/connections/airflow_remote_logging_conn
-# Secret value (JSON-encoded Airflow connection):
+Example secret name: airflow/connections/airflow_remote_logging_conn. Example value:
+
+```json
 {"conn_type": "aws", "extra": {"region_name": "us-east-1"}}
 ```
 
-Once this is in place, every component — including task pods that only live for the duration of a single task — ships its logs to S3 as it writes them, so the api-server can render historical logs for a task long after its pod is gone. This is the reason section 3's cross-component consistency requirement matters in practice: if the worker pods resolve `airflow_remote_logging_conn` from a differently configured secrets backend than the api-server does, task logs and UI log rendering silently diverge.
+This connection contains no static keys. Configure IRSA or Pod Identity and SDK
+credential selection for the actual S3 readers/writers, together with bucket-prefix/
+KMS permissions and networking. Receiving connection metadata through the API does
+not transfer the API server's AWS credentials. Test both API/UI reading and task/
+supervisor writing.
 
-## 5. Monitoring
+The reviewed 3.3.1 supervisor uploads remote logs after the task subprocess finishes.
+The Amazon S3 handler also stores blobs through its close/upload path. Every line
+is not guaranteed to reach S3 immediately. Test successful and failed tasks, forced
+worker termination and UI retrieval after pod deletion. SIGKILL or node failure
+before final upload can lose recent logs.
 
-Airflow components natively emit metrics through either **StatsD** or **OpenTelemetry** — pick one, not both, since they're alternative emission paths configured under `[metrics]` in `airflow.cfg`.
+S3 remote_logging configures the **Airflow task-log path**. It does not automatically
+send all scheduler/API/processor service logs to the same S3 location.
+Separate stdout/stderr collection, for example with Fluent Bit, complements it.
+If a task writes only to files, collecting container stdout does not automatically
+collect those files. PVCs or independent collectors may retain logs after pod
+deletion; inspect the actual storage, retention and loss boundaries.
+
+For KPO, the caller's get_logs behavior brings child output into the Airflow task
+log. Copying airflow.cfg into an arbitrary child image without Airflow does not
+create remote logging.
+
+## 5. Metrics transport and collection
+
+Use an image with matching OTel dependencies and choose a metrics backend.
+The following selects OTel:
 
 ```ini
-# airflow.cfg — OpenTelemetry example
 [metrics]
+statsd_on = False
 otel_on = True
-otel_host = otel-collector.monitoring.svc
-otel_port = 4318
 ```
 
-On EKS, the typical stack pairs this metrics emission with **Prometheus or Amazon Managed Prometheus** for storage and **Grafana** for dashboards, using an OpenTelemetry Collector (or the StatsD-to-Prometheus exporter, if using StatsD) as the bridge between Airflow's native emission format and Prometheus's scrape model. **Fluent Bit** typically runs as the log-shipping layer for container stdout/stderr, complementing — not replacing — the S3 remote logging from section 4: Fluent Bit ships infrastructure-level pod logs to your log backend of choice, while remote logging ships Airflow's own task-execution logs to S3 for rendering back in the UI.
+Example environment variables for each metrics-emitting process:
 
-## 6. Autoscaling Recap
+```dotenv
+OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://otel-collector.monitoring.svc:4318/v1/metrics
+OTEL_EXPORTER_OTLP_METRICS_PROTOCOL=http/protobuf
+OTEL_METRIC_EXPORT_INTERVAL=30000
+OTEL_SERVICE_NAME=airflow
+```
 
-Part 2 covered KEDA-based autoscaling for `CeleryExecutor` worker pods in depth — scaling the worker `Deployment` up and down based on queued/running task counts read from the metadata database, down to zero replicas when idle. That mechanism doesn't change here; see Part 2 for the full KEDA configuration and behavior.
+In 3.3.1, older otel_host, otel_port and otel_interval_milliseconds settings are
+deprecated in favor of standard OTel environment variables. This endpoint is an
+internal OTLP/HTTP example. Match the Collector HTTP receiver, Service port, network
+policies and required TLS/authentication.
 
-Under `KubernetesExecutor`, there is no worker `Deployment` to scale at the workload level in the first place — each task is already its own pod. What scales instead is cluster capacity: **Karpenter** or **Cluster Autoscaler** provisions nodes to fit the task pods the scheduler creates, and removes that capacity once the pods complete. The two executors push the autoscaling problem to different layers — KEDA scales a fixed worker pool for `CeleryExecutor`, while cluster-level autoscaling absorbs `KubernetesExecutor`'s per-task pod churn.
+Prometheus does not simply scrape an OTLP endpoint. Complete the metrics pipeline,
+for example by scraping a Collector Prometheus exporter or using a suitable
+remote-write exporter with authentication. For AMP, verify the workspace endpoint
+and AWS authentication. With StatsD, also inspect exporter mapping and actual series.
 
-## 7. Security Checklist
+Observe scheduler heartbeat/scheduling delay, parse errors/duration, queued-task
+age, worker/triggerer health, database connections/locks, Pending/OOM/disk-pressure
+conditions and log-upload failures. Check exported metric names/labels before
+building alerts, and test notification delivery through controlled failures.
 
-* **Secrets backend consistency**: `SecretsManagerBackend` (section 3) is configured identically — same `backend_kwargs`, same prefixes — across the api-server, scheduler, dag-processor, triggerer, and workers/task pods. No component silently falls back to the metadata database because of a drifted or missing `[secrets]` section.
-* **IRSA scoping for task-level AWS permissions**: each task pod under `KubernetesExecutor` (or each Celery worker) should assume a role scoped to only the AWS actions that task actually needs, via IRSA — not a broad, shared role reused across unrelated DAGs. See Part 3 for assigning a dedicated service account (and therefore IAM role) per task through the `KubernetesPodOperator`.
-* **Least-privilege RBAC for the Airflow service account(s)**: the Kubernetes service account(s) the scheduler and dag-processor use to create/watch task pods should be scoped to exactly the verbs and resources (`pods`, `pods/log`, `pods/exec` as needed) they require in their own namespace, not a cluster-wide admin binding.
-* **Network policies**: restrict pod-to-pod traffic so the scheduler, api-server, dag-processor, and worker/task pods can only reach what they actually need — the metadata database, the secrets backend's VPC endpoint, the remote-logging destination, and (for `CeleryExecutor`) the broker. Deny-by-default `NetworkPolicy` for the Airflow namespace, with explicit allow rules per component, closes off lateral movement between an unrelated compromised pod and the Airflow control plane.
+## 6. Autoscaling and security boundaries
 
-## 8. Series Wrap-Up: Go-Live Checklist
+Celery KEDA queries must distinguish queues, executors and aliases and account for
+concurrency and replica limits as in Part 2. Workers may use Deployments or
+StatefulSets depending on persistence. Scaling to zero depends on minimum replicas,
+triggers and cooldown; it does not remove all service idle costs.
 
-Rolling up the key items from Parts 1 through 5 of this deep dive into a single pre-production checklist:
+KubernetesExecutor creates task pods directly, so it does not need the same Celery
+worker-pool scaling pattern. This does not mean KEDA supports only Deployments.
+Node autoscalers also do not remove every node immediately after tasks finish.
+Account for capacity, quotas, PDBs, disruption policy and other workloads.
 
-- [ ] **Architecture**: all four Airflow 3 services (api-server, scheduler, dag-processor, triggerer) are deployed and DAG parsing is confirmed to happen only in the dag-processor (Part 1)
-- [ ] **Metadata database**: running on Amazon RDS for PostgreSQL (not the chart's bundled Postgres) for anything beyond a lab, with automated backups enabled (Parts 1, 5)
-- [ ] **Executor decision**: `KubernetesExecutor` vs. `CeleryExecutor` — or a deliberate per-task/per-DAG mix — is documented with its rationale, not left as the chart's default (Part 2)
-- [ ] **Autoscaling**: KEDA is wired up for `CeleryExecutor` worker pools, or cluster-level autoscaling (Karpenter/Cluster Autoscaler) is confirmed to absorb `KubernetesExecutor` task-pod churn (Parts 2, 5)
-- [ ] **DAG authoring conventions**: task-level executor overrides and `KubernetesPodOperator` usage follow the patterns established for the dag-processor (Part 3)
-- [ ] **MWAA vs. self-managed decision**: the choice between managed MWAA and a self-managed EKS deployment is documented with its operational and cost rationale (Part 4)
-- [ ] **Scheduler HA**: multiple scheduler replicas are running, relying on Airflow 3's decoupled dag-processor rather than the fragile Airflow 2 pattern (Part 5)
-- [ ] **Upgrade rehearsal**: a metadata database backup and history-pruning step have actually been exercised before a major-version upgrade in staging (Part 5)
-- [ ] **Secrets backend**: `SecretsManagerBackend` is configured identically across every component, with remote-logging connections verified end to end (Part 5)
-- [ ] **Remote logging**: S3 remote logging is enabled and task logs are confirmed viewable in the UI after a task pod has been garbage-collected (Part 5)
-- [ ] **Monitoring**: StatsD or OpenTelemetry metrics flow into Prometheus/Amazon Managed Prometheus and Grafana, with Fluent Bit shipping container logs (Part 5)
-- [ ] **Security**: IRSA scoping, least-privilege RBAC, and network policies from the section 7 checklist are all in place (Part 5)
-- [ ] **Load testing**: DAG concurrency and task volume have actually been exercised at expected peak load before go-live
+| Boundary | What to verify |
+| --- | --- |
+| AWS identity | Tasks on a shared Celery worker share its role. Use actual execution boundaries such as separate pools/executors/KPO children for isolation |
+| Kubernetes RBAC | Grant permissions to the KubernetesExecutor or KPO caller that needs them. DAG parsing alone does not require pod-creation rights |
+| Namespace/admission | Pod creation can permit selecting other service accounts or dangerous specs; inspect trust boundaries and admission controls |
+| NetworkPolicy | Verify CNI enforcement and DNS, Execution API, DB/broker, Kubernetes API, credential/secret/log endpoints |
 
-Satisfying this checklist is a reasonable bar for saying an Airflow 3 deployment is ready to run in production on EKS.
+NetworkPolicy restricts L3/L4 connectivity. It does not replace IAM/RBAC/TLS
+authentication or guarantee prevention of all lateral movement. Permit actual
+dependencies before applying default deny, without broadening unnecessary task
+access to the database.
 
-## Lab Environment Setup
+## 7. Operational acceptance
 
-To exercise the operational pieces covered in this document hands-on:
+- [ ] Record supported runtimes/providers, executor choice and DAG delivery/rerun-version policy.
+- [ ] Test a suitable production database, backup/restore and Fernet/external-data recovery. RDS is one option, not the only option.
+- [ ] Test failure/recovery and capacity limits for scheduler/API/processor and required triggerers.
+- [ ] Rehearse migration, admission of new runs, draining and rollback with a realistic database copy.
+- [ ] Verify intended secret-resolution and IAM/RBAC/admission/network boundaries.
+- [ ] Inspect logs after success, failure, forced termination and pod deletion, documenting loss limits.
+- [ ] Connect metrics, service/task logs and alerts to responsible responders and procedures.
+- [ ] Measure latency, retries, duplicate external writes and recovery under target load and failures.
 
-* **A working Airflow 3 deployment from Part 2**, with either executor.
-* **An S3 bucket** dedicated to remote logging (e.g. `my-airflow-logs-bucket`), with a lifecycle policy if you want to age out old logs automatically.
-* **A Secrets Manager secret** holding the remote-logging connection JSON, at a path matching your `connections_prefix` (e.g. `airflow/connections/airflow_remote_logging_conn`).
-* **IRSA set up** for the Airflow service account(s) that need to reach Secrets Manager and S3 — this is what lets `SecretsManagerBackend` and remote logging authenticate without static credentials.
-* **An OpenTelemetry Collector (or StatsD exporter)** plus a Prometheus/Amazon Managed Prometheus + Grafana stack, if you want to follow along with the monitoring section — an existing `kube-prometheus-stack` installation is sufficient.
-* **A staging copy of the metadata database** (an RDS snapshot restored to a separate instance works well) if you want to safely rehearse the backup-and-migrate upgrade procedure from section 2 without touching a real deployment.
+Checkboxes do not guarantee reliability. Include measured results and unresolved
+limits against the required SLOs, recovery times and retention objectives.
 
----
+## Validation scope and references
 
-[Return to Main Page](./README.md)
+Official documentation and released source were checked for configuration,
+secret-resolution paths and upload timing. Example structure and local file
+behavior of the S3 upload method were validated. No actual database migration,
+AWS secret/S3 call, Collector ingestion or failure-recovery exercise was performed.
 
-## Quiz
 
-To test what you've learned in this chapter, try the [Topic Quiz](../../quizzes/data-on-eks/airflow/05-operations-quiz.md).
+- [Scheduler HA and database coordination](https://airflow.apache.org/docs/apache-airflow/3.3.1/administration-and-deployment/scheduler.html)
+- [Database upgrades](https://airflow.apache.org/docs/apache-airflow/3.3.1/installation/upgrading.html)
+- [Database maintenance CLI](https://airflow.apache.org/docs/apache-airflow/3.3.1/cli-and-env-variables-ref.html)
+- [Fernet encryption](https://airflow.apache.org/docs/apache-airflow/3.3.1/security/secrets/fernet.html)
+- [Secrets backends and worker configuration](https://airflow.apache.org/docs/apache-airflow/3.3.1/security/secrets/secrets-backend/index.html)
+- [Task logging](https://airflow.apache.org/docs/apache-airflow/3.3.1/administration-and-deployment/logging-monitoring/logging-tasks.html)
+- [Metrics configuration](https://airflow.apache.org/docs/apache-airflow/3.3.1/administration-and-deployment/logging-monitoring/metrics.html)
+- [Amazon provider 9.34.0 S3 log implementation](https://github.com/apache/airflow/blob/providers-amazon/9.34.0/providers/amazon/src/airflow/providers/amazon/aws/log/s3_task_handler.py)
+
+[README](README.md)
+
+[Quiz](../../quizzes/data-on-eks/airflow/05-operations-quiz.md)

@@ -1,0 +1,13 @@
+apiVersion: platform.example.com/v1alpha1
+kind: NginxApp
+metadata:
+  name: reviewed-web
+  namespace: example
+spec:
+  replicas: 2
+  image: nginxinc/nginx-unprivileged:1.30.4-alpine
+  ingress:
+    enabled: false
+    className: internal
+    host: app.example.com
+    tlsSecret: app-tls

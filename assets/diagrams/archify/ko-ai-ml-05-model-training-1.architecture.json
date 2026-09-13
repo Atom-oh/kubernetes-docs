@@ -5,7 +5,7 @@
     "title": "분산 훈련 전략",
     "output": "ko-ai-ml-05-model-training-1.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "legend": {
       "entries": {
         "database": {
@@ -38,7 +38,7 @@
           "tp-gpus",
           "tp-combine"
         ],
-        "note": "단일 레이어의 가중치를 열 단위로 GPU에 나눠 계산한 뒤 결과를 결합한다."
+        "note": "레이어 tensor를 지원 방식으로 나누며 shape·통신 조건을 확인합니다."
       },
       {
         "id": "pp",
@@ -81,7 +81,7 @@
       "id": "dp-replicas",
       "type": "backend",
       "label": "모델 복제본 1-3",
-      "sublabel": "GPU당 전체 모델",
+      "sublabel": "DDP 기본 replica 예시",
       "pos": [
         250,
         90
@@ -123,7 +123,7 @@
       "id": "tp-gpus",
       "type": "backend",
       "label": "GPU 1 / GPU 2",
-      "sublabel": "열 0-N/2 · N/2-N",
+      "sublabel": "선택한 tensor 분할",
       "pos": [
         920,
         90
@@ -287,7 +287,11 @@
       "id": "tp-split",
       "from": "tp-layer",
       "to": "tp-gpus",
-      "label": "열 분할"
+      "label": "tensor 분할",
+      "labelAt": [
+        890,
+        75
+      ]
     },
     {
       "id": "tp-merge",
@@ -319,6 +323,17 @@
       "to": "ep-output",
       "label": "전문가 출력",
       "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "global batch 계산",
+      "items": [
+        "microbatch × accumulation × DP replicas",
+        "TP8 × PP4 × DP2 =64rank; batch1 ×accum32 ×DP2 =64sample",
+        "FSDP/ZeRO와 activation 메모리는 별도로 계산합니다."
+      ]
     }
   ]
 }

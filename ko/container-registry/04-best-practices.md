@@ -810,8 +810,8 @@ skopeo copy --all oci-archive:pause-3.10.tar \
 - [OCI Image Spec](https://github.com/opencontainers/image-spec)
 - [Semantic Versioning](https://semver.org/)
 - [Trivy Documentation](https://aquasecurity.github.io/trivy/)
-- [Cosign Documentation](https://docs.sigstore.dev/cosign/overview/)
-- [Kyverno Image Verification](https://kyverno.io/docs/writing-policies/verify-images/)
+- [Cosign Documentation](https://docs.sigstore.dev/quickstart/quickstart-cosign/)
+- [Kyverno Image Verification](https://kyverno.io/docs/policy-types/cluster-policy/verify-images/overview/)
 - [ArgoCD Image Updater](https://argocd-image-updater.readthedocs.io/)
 
 ### 검토 근거

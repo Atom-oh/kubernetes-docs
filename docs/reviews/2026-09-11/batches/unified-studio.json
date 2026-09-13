@@ -1,0 +1,44 @@
+[
+  {
+    "path": "ko/data-on-eks/sagemaker-unified-studio/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed6files:currentIAM/IdCdomainandmember/executionrolemodels;completeCreateProjectmembershipAssignments withtaggedunion;noassumedtransactionalrollback;ACTIVEvsenvironment/on-demandreadiness;tagsupportedbutpolicygoverned;owner/adminnotordinarymemberdelete;pagination/visibilityandownedresourcecleanup;internalcataloglocationvspublicredaction;datedhistoricalresidualcountnotcurrentclaim;10MCquestions.",
+    "reviewedSha256": "2a0f179b9c32079f34a90d7bb91fde6271baaf369f5183752a5588b47c027841"
+  },
+  {
+    "path": "ko/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed6files:currentIAM/IdCdomainandmember/executionrolemodels;completeCreateProjectmembershipAssignments withtaggedunion;noassumedtransactionalrollback;ACTIVEvsenvironment/on-demandreadiness;tagsupportedbutpolicygoverned;owner/adminnotordinarymemberdelete;pagination/visibilityandownedresourcecleanup;internalcataloglocationvspublicredaction;datedhistoricalresidualcountnotcurrentclaim;10MCquestions.",
+    "reviewedSha256": "a784bdef2d20ff5fe08c19c4c6fa932dbf855afd8f806799bbad5a76a042165f"
+  },
+  {
+    "path": "ko/quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed6files:currentIAM/IdCdomainandmember/executionrolemodels;completeCreateProjectmembershipAssignments withtaggedunion;noassumedtransactionalrollback;ACTIVEvsenvironment/on-demandreadiness;tagsupportedbutpolicygoverned;owner/adminnotordinarymemberdelete;pagination/visibilityandownedresourcecleanup;internalcataloglocationvspublicredaction;datedhistoricalresidualcountnotcurrentclaim;10MCquestions.",
+    "reviewedSha256": "106d6c6468f9e4a9d063b1db63002b84f32086a3c1808cdd93f7d34dc64fd363"
+  },
+  {
+    "path": "en/data-on-eks/sagemaker-unified-studio/README.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed6files:currentIAM/IdCdomainandmember/executionrolemodels;completeCreateProjectmembershipAssignments withtaggedunion;noassumedtransactionalrollback;ACTIVEvsenvironment/on-demandreadiness;tagsupportedbutpolicygoverned;owner/adminnotordinarymemberdelete;pagination/visibilityandownedresourcecleanup;internalcataloglocationvspublicredaction;datedhistoricalresidualcountnotcurrentclaim;10MCquestions.",
+    "reviewedSha256": "205b21759cb3502f463f9b1f6db79d09cda8de74cee9f9e4d71d2ee4e1ac09b2"
+  },
+  {
+    "path": "en/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed6files:currentIAM/IdCdomainandmember/executionrolemodels;completeCreateProjectmembershipAssignments withtaggedunion;noassumedtransactionalrollback;ACTIVEvsenvironment/on-demandreadiness;tagsupportedbutpolicygoverned;owner/adminnotordinarymemberdelete;pagination/visibilityandownedresourcecleanup;internalcataloglocationvspublicredaction;datedhistoricalresidualcountnotcurrentclaim;10MCquestions.",
+    "reviewedSha256": "8fd74cfcd4b3dcea3f87d91096c466c542a04716f521e6b07480709f8cc96cc0"
+  },
+  {
+    "path": "en/quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Reviewed6files:currentIAM/IdCdomainandmember/executionrolemodels;completeCreateProjectmembershipAssignments withtaggedunion;noassumedtransactionalrollback;ACTIVEvsenvironment/on-demandreadiness;tagsupportedbutpolicygoverned;owner/adminnotordinarymemberdelete;pagination/visibilityandownedresourcecleanup;internalcataloglocationvspublicredaction;datedhistoricalresidualcountnotcurrentclaim;10MCquestions.",
+    "reviewedSha256": "4de42a21fb745eb4204ee00b2c39cad290c8da62cee5b56af5ba14eb7b7df274"
+  }
+]

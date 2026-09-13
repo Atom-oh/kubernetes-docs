@@ -1,0 +1,402 @@
+{
+  "status": "passed",
+  "verifiedAt": "2026-09-13T01:16:44.426340+00:00",
+  "pr": 239,
+  "reviewedHead": "2f1a86822517946d920f224e0d2393ae9d61b4e8",
+  "mergeCommit": "f228ba456ae0d007755b9cf912c1e2641ecbaf8f",
+  "deploymentRun": 34729664386,
+  "aiReview": {
+    "paths": 14,
+    "rawScore": 90,
+    "maximumScore": 90,
+    "critical": 0,
+    "major": 0
+  },
+  "http": {
+    "viewers": [
+      {
+        "type": "viewer",
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-05-example-corp-app-0.html",
+        "status": 200,
+        "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-05-example-corp-app-0.html",
+        "sha256": "993299910d4b06d99b25a507a7f605991911e3eb91babff5d617190b9ab63aa7",
+        "motionGuard": true,
+        "orderApp": true
+      },
+      {
+        "type": "viewer",
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-06-backstage-idp-2.html",
+        "status": 200,
+        "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/ko-platform-engineering-06-backstage-idp-2.html",
+        "sha256": "ea975adaadfae687fc74bbb07dcf7c4490c469e8b3371312038932d5747416ff",
+        "motionGuard": true
+      },
+      {
+        "type": "viewer",
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-05-example-corp-app-0.html",
+        "status": 200,
+        "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-05-example-corp-app-0.html",
+        "sha256": "12ad06d3017db06670dbd98f841d3b172f2d1d33f4a6d1288c2ea4c4f6cbcac8",
+        "motionGuard": true,
+        "orderApp": true
+      },
+      {
+        "type": "viewer",
+        "url": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-06-backstage-idp-2.html",
+        "status": 200,
+        "finalUrl": "https://www.atomai.click/kubernetes-docs/archmaps/en-platform-engineering-06-backstage-idp-2.html",
+        "sha256": "eee8667336c57304dc0affecda2ff7f73adef64ab0949d42d7ea882c489e2ba2",
+        "motionGuard": true
+      }
+    ],
+    "pages": [
+      {
+        "type": "page",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/platform-engineering/06-backstage-idp",
+        "status": 200,
+        "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/platform-engineering/06-backstage-idp",
+        "sha256": "0c05872a069cee3bccc418776d1574dd9dec3f03e17177b934fbcfdd7ad14f97",
+        "pngLinks": [
+          "/kubernetes-docs/assets/ko-platform-engineering-06-backstage-idp-0.DxFoXPPg.png",
+          "/kubernetes-docs/assets/ko-platform-engineering-06-backstage-idp-1.K9iB-GbQ.png",
+          "/kubernetes-docs/assets/ko-platform-engineering-06-backstage-idp-2.B6dd964_.png",
+          "/kubernetes-docs/assets/ko-platform-engineering-06-backstage-idp-3.Cnp2jqZ7.png"
+        ]
+      },
+      {
+        "type": "page",
+        "url": "https://www.atomai.click/kubernetes-docs/en/platform-engineering/06-backstage-idp",
+        "status": 200,
+        "finalUrl": "https://www.atomai.click/kubernetes-docs/en/platform-engineering/06-backstage-idp",
+        "sha256": "fae0533dc11cbb3cdf648005fc91e8531529d22d3f63a47230c83d767a749a1f",
+        "pngLinks": [
+          "/kubernetes-docs/assets/en-platform-engineering-06-backstage-idp-0.C3Mrpo0A.png",
+          "/kubernetes-docs/assets/en-platform-engineering-06-backstage-idp-1.DRPbmWxK.png",
+          "/kubernetes-docs/assets/en-platform-engineering-06-backstage-idp-2.D4-zQsbP.png",
+          "/kubernetes-docs/assets/en-platform-engineering-06-backstage-idp-3.MFbDoN2U.png"
+        ]
+      },
+      {
+        "type": "page",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/platform-engineering/05-example-corp-app",
+        "status": 200,
+        "pngLinks": [
+          "/kubernetes-docs/assets/ko-platform-engineering-05-example-corp-app-0.CKN64HET.png"
+        ]
+      },
+      {
+        "type": "page",
+        "url": "https://www.atomai.click/kubernetes-docs/en/platform-engineering/05-example-corp-app",
+        "status": 200,
+        "pngLinks": [
+          "/kubernetes-docs/assets/en-platform-engineering-05-example-corp-app-0.DyA8j2O0.png"
+        ]
+      }
+    ],
+    "images": [
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-06-backstage-idp-0.DxFoXPPg.png",
+        "status": 200,
+        "sha256": "0596b28a47b83d3a66d229c92d0cc81590fe9ff5676de126b437abb23016eccc",
+        "matchesSource": true,
+        "source": "ko/.gitbook/assets/ko-platform-engineering-06-backstage-idp-0.png"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-06-backstage-idp-1.K9iB-GbQ.png",
+        "status": 200,
+        "sha256": "b475e1a702bb9e7aaf33ba704806aa0116ec6b5de99502222f2150557682e86f",
+        "matchesSource": true,
+        "source": "ko/.gitbook/assets/ko-platform-engineering-06-backstage-idp-1.png"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-06-backstage-idp-2.B6dd964_.png",
+        "status": 200,
+        "sha256": "bc3f3e1381b7228c44b888994405f5ffaf09da1190c8023e61f3b1ba4d77c7a7",
+        "matchesSource": true,
+        "source": "ko/.gitbook/assets/ko-platform-engineering-06-backstage-idp-2.png"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-06-backstage-idp-3.Cnp2jqZ7.png",
+        "status": 200,
+        "sha256": "ac6f444fb0b5837fe68bff660378ad06f4d5c471a07023e526a1d1bb6a9f6d06",
+        "matchesSource": true,
+        "source": "ko/.gitbook/assets/ko-platform-engineering-06-backstage-idp-3.png"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-06-backstage-idp-0.C3Mrpo0A.png",
+        "status": 200,
+        "sha256": "4a07f7c4f962495f4b062f668417a6e2eb5b8cbbdf925ea69955bed14b28e81c",
+        "matchesSource": true,
+        "source": "en/.gitbook/assets/en-platform-engineering-06-backstage-idp-0.png"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-06-backstage-idp-1.DRPbmWxK.png",
+        "status": 200,
+        "sha256": "46aea46453b1f42d204a723f20522acba978a3cca2047d73c8210e47a3b9a0cb",
+        "matchesSource": true,
+        "source": "en/.gitbook/assets/en-platform-engineering-06-backstage-idp-1.png"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-06-backstage-idp-2.D4-zQsbP.png",
+        "status": 200,
+        "sha256": "582ca946da89ff8c22de1fc60b221fdcf5e637d03c77034b3b623d6745eb1bfc",
+        "matchesSource": true,
+        "source": "en/.gitbook/assets/en-platform-engineering-06-backstage-idp-2.png"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-06-backstage-idp-3.MFbDoN2U.png",
+        "status": 200,
+        "sha256": "aca4663e517c4b15bc6d1ad1d169791132eb71d8bea6868ec373fcf56e37ab37",
+        "matchesSource": true,
+        "source": "en/.gitbook/assets/en-platform-engineering-06-backstage-idp-3.png"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-05-example-corp-app-0.CKN64HET.png",
+        "status": 200,
+        "sha256": "a70a0ec47eec73e22edf8d98b3dc234ad1600244f10cf2d1c3115e31aee60d92",
+        "matchesSource": true,
+        "source": "ko/.gitbook/assets/ko-platform-engineering-05-example-corp-app-0.png"
+      },
+      {
+        "url": "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-05-example-corp-app-0.DyA8j2O0.png",
+        "status": 200,
+        "sha256": "a21932ed759c7ef7608d8c8dc5f93a11995cc0b3767026c77cac2b5e976703b4",
+        "matchesSource": true,
+        "source": "en/.gitbook/assets/en-platform-engineering-05-example-corp-app-0.png"
+      }
+    ],
+    "limits": [
+      "InitialguessedunhashedassetURLswere404;verificationusestheactualhashedPNGURLsinrenderedpages."
+    ]
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-platform-engineering-05-example-corp-app-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1352,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-05-example-corp-app-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1352,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-05-example-corp-app-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1352,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 59106,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-06-backstage-idp-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 593,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-06-backstage-idp-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 593,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-06-backstage-idp-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 593,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51009,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-05-example-corp-app-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1044,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-05-example-corp-app-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1044,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-05-example-corp-app-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1044,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 58615,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-06-backstage-idp-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 489,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-06-backstage-idp-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 489,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-06-backstage-idp-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 489,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50771,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "12 cases on4fetchedproductionviewers; motion/reduced-motion/visibility/theme/guided controls and4SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  },
+  "limits": [
+    "FetchedstaticHTMLandimagesonly;noGA4pageevents.",
+    "ProductionviewerHTMLtestedlocallyinactualcachedChromiumwithremotewebfontsblocked;4viewersat375/768/1920,12casesand4SVGexports."
+  ]
+}

@@ -2,9 +2,9 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "vLLM 벤치마크 구성 — L4 GPU 1장에서 돌린 Qwen2.5-7B",
+    "title": "과거 vLLM L4 측정 보고",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "viewBox": [
       1280,
       560
@@ -29,7 +29,7 @@
           "gpu",
           "kv"
         ],
-        "note": "동시성 1~16 구간에서 지연시간은 거의 그대로, 처리량은 거의 선형으로 늘고 KV 캐시는 3% 미만이다."
+        "note": "과거 보고:p50이33.1% 증가하고 집계 처리량이 늘었습니다. 이번 검토에서 재실행하지 않았습니다."
       }
     ],
     "legend": {
@@ -122,7 +122,7 @@
   "boundaries": [
     {
       "kind": "region",
-      "label": "fsi-demo-cluster의 bench-gpu 네임스페이스 (네임스페이스는 측정 후 삭제)",
+      "label": "당시 보고된 namespace 구성",
       "wraps": [
         "client",
         "svc",
@@ -131,7 +131,7 @@
     },
     {
       "kind": "security-group",
-      "label": "bench-gpu NodePool — 전용, 측정 후 삭제",
+      "label": "당시 보고된 GPU NodePool",
       "wraps": [
         "gpu",
         "kv"
@@ -169,28 +169,26 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "처리량 스케일링 실측",
+      "title": "보고된 처리량",
       "items": [
-        "동시성 1: 서버 기준 약 17 tokens/s",
-        "동시성 8: 클라이언트 집계 109 tokens/s, 서버 피크 123~129 tokens/s",
-        "동시성 16: 클라이언트 집계 208 tokens/s, 서버 피크 최대 243 tokens/s"
+        "Concurrency4:58.67 /8:109.04 /16:208.08tokens/s (client)",
+        "서버 로그의 최대 interval average:243tokens/s; 순간 peak아님"
       ]
     },
     {
       "dot": "emerald",
-      "title": "지연시간 실측 (약 100~128 토큰 전체 응답)",
+      "title": "보고된 지연",
       "items": [
-        "동시성 1: p50 5.65 s, p90 7.43 s",
-        "동시성 16: p50 7.52 s, p90 8.74 s — 부하가 16배 늘어도 지연시간은 거의 그대로"
+        "p50:5.65s →7.52s (+33.1%), end-to-end HTTP",
+        "KV cache 보고값:최대2.6%; 전체 VRAM과 구분"
       ]
     },
     {
       "dot": "rose",
-      "title": "병목은 연산이 아니라 대역폭",
+      "title": "근거의 한계",
       "items": [
-        "GPU KV 캐시 사용률: 동시성 1에서 0.1%, 16에서 2.6% — 한계였던 적이 없음",
-        "동시성 1 디코딩: 토큰당 bf16 가중치 약 15.2GB를 약 300GB/s GDDR6로 읽어야 해 실측 17~18 tok/s 근처에서 한계",
-        "연산: 피크에서도 약 3 TFLOP/s, L4 bf16 한계(약 121 TFLOPS)의 몇 % 수준"
+        "2026-09-04 commit8622d388; raw logs/client artifact미확보",
+        "bandwidth roofline은 추정이며 profiler로 입증된 병목은 아닙니다."
       ]
     }
   ]

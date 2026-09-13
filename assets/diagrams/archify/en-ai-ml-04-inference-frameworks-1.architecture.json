@@ -5,7 +5,7 @@
     "title": "NVIDIA NIM Deployment on EKS",
     "output": "en-ai-ml-04-inference-frameworks-1.html",
     "quality_profile": "showcase",
-    "animation": "trace",
+    "animation": "none",
     "views": [
       {
         "id": "request-path",
@@ -17,7 +17,7 @@
           "engine",
           "cache"
         ],
-        "note": "A request passes through the ALB and Nginx Ingress and is served by the TensorRT-LLM engine inside the NIM container."
+        "note": "An authenticated route forwards to the selected NIM backend."
       },
       {
         "id": "gpu-nodes",
@@ -38,7 +38,7 @@
           "s3",
           "ngc"
         ],
-        "note": "Models pulled from the NGC Catalog are cached on FSx for Lustre and archived in S3."
+        "note": "Model download, sharing and S3 integration depend on the prepared storage path."
       },
       {
         "id": "monitoring",
@@ -49,7 +49,7 @@
           "prometheus",
           "grafana"
         ],
-        "note": "Prometheus scrapes NIM metrics and Grafana dashboards visualize them."
+        "note": "Inspect2.0.12 /v1/metrics and actual backend names/units."
       }
     ],
     "locale": "en",
@@ -62,8 +62,8 @@
     {
       "id": "alb",
       "type": "cloud",
-      "label": "Application Load Balancer",
-      "sublabel": "External entry point",
+      "label": "Approved entry path",
+      "sublabel": "authentication / TLS / limits",
       "pos": [
         30,
         260
@@ -76,8 +76,8 @@
     {
       "id": "nginx",
       "type": "cloud",
-      "label": "Nginx Ingress Controller",
-      "sublabel": "Request routing",
+      "label": "Supported gateway controller",
+      "sublabel": "validated route configuration",
       "pos": [
         240,
         260
@@ -104,8 +104,8 @@
     {
       "id": "engine",
       "type": "backend",
-      "label": "TensorRT-LLM Engine",
-      "sublabel": "Optimized inference",
+      "label": "Selected NIM backend",
+      "sublabel": "2.0.12: vLLM0.27.1",
       "pos": [
         720,
         260
@@ -160,8 +160,8 @@
     {
       "id": "fsx",
       "type": "database",
-      "label": "FSx for Lustre",
-      "sublabel": "Shared file system",
+      "label": "Chosen cache storage",
+      "sublabel": "local / EBS / shared FS",
       "pos": [
         950,
         450
@@ -189,7 +189,7 @@
       "id": "ngc",
       "type": "external",
       "label": "NGC Catalog",
-      "sublabel": "NIM images · models",
+      "sublabel": "approved images / models",
       "pos": [
         950,
         600
@@ -202,8 +202,8 @@
     {
       "id": "exporter",
       "type": "backend",
-      "label": "NIM Metrics Exporter",
-      "sublabel": ":8000/metrics",
+      "label": "NIM metrics endpoint",
+      "sublabel": ":8000/v1/metrics",
       "pos": [
         490,
         60
@@ -253,7 +253,7 @@
     },
     {
       "kind": "region",
-      "label": "NIM Pods (replicas: 2)",
+      "label": "NIM configuration to validate",
       "wraps": [
         "container",
         "engine",
@@ -350,7 +350,12 @@
       "id": "fsx-to-s3",
       "from": "fsx",
       "to": "s3",
-      "label": "sync"
+      "label": "configured integration",
+      "variant": "dashed",
+      "labelAt": [
+        1145,
+        430
+      ]
     },
     {
       "id": "ngc-to-fsx",
@@ -382,7 +387,7 @@
       "id": "exporter-to-prometheus",
       "from": "exporter",
       "to": "prometheus",
-      "label": "scrape",
+      "label": "metric samples",
       "variant": "dashed",
       "labelDy": -24
     },
@@ -390,8 +395,19 @@
       "id": "prometheus-to-grafana",
       "from": "prometheus",
       "to": "grafana",
-      "label": "query",
+      "label": "query results",
       "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Deployment boundaries",
+      "items": [
+        "Validate profile, revision, GPUs, cache and probes together.",
+        "One shared EBS RWO volume does not fit replicas across nodes.",
+        "NGC secret environment delivery differs from a file-only policy."
+      ]
     }
   ]
 }
