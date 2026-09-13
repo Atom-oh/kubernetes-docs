@@ -29,7 +29,7 @@
           "map_profile",
           "validate_test"
         ],
-        "note": "기존 PSP를 분석해 PSS 프로파일에 매핑하고, 테스트 네임스페이스에서 warn 모드로 먼저 검증한다."
+        "note": "과거 PSP와 현재 보안 설정을 비교한다. PSP API는1.25부터 없으므로 보관한 정책도 활용한다."
       },
       {
         "id": "rollout",
@@ -39,7 +39,7 @@
           "warn_audit",
           "fix_workloads"
         ],
-        "note": "warn/audit 모드로 위반을 드러내고, 경고와 감사 로그를 보며 워크로드를 수정한다."
+        "note": "기존 enforce 수준을 낮추지 않고 warn/audit를 추가하여 영향을 관찰하고 워크로드를 보완한다."
       },
       {
         "id": "enforce",
@@ -49,7 +49,7 @@
           "enforce_mode",
           "remove_psp"
         ],
-        "note": "위반이 해소된 뒤 enforce 모드로 전환하고 마지막에 PSP를 제거한다."
+        "note": "검증 후 목표 enforce를 적용한다. PSP 삭제는 API가 남아 있는 과거 클러스터에만 해당한다."
       }
     ]
   },
@@ -87,7 +87,7 @@
       "col": 0,
       "type": "backend",
       "label": "1. 현재 상태 분석",
-      "sublabel": "kubectl get psp",
+      "sublabel": "보관 정책·현재 보안 설정 검토",
       "width": 212
     },
     {
@@ -96,7 +96,7 @@
       "col": 1,
       "type": "backend",
       "label": "2. PSS 프로파일 매핑",
-      "sublabel": "Privileged / Baseline / Restricted",
+      "sublabel": "동등 매핑이 아닌 gap 분석",
       "width": 200
     },
     {
@@ -140,8 +140,8 @@
       "lane": "cleanup",
       "col": 3,
       "type": "backend",
-      "label": "7. PSP 제거",
-      "sublabel": "PodSecurityPolicy 삭제",
+      "label": "7. 과거 설정 정리",
+      "sublabel": "PSP API는1.24이하에만",
       "width": 220
     }
   ],
@@ -184,29 +184,29 @@
   "cards": [
     {
       "dot": "cyan",
-      "title": "PSP → PSS 매핑 기준",
+      "title": "매핑의 한계",
       "items": [
-        "privileged: true → Privileged",
-        "privileged: false + allowPrivilegeEscalation: true → Baseline",
-        "allowPrivilegeEscalation: false + MustRunAsNonRoot → Restricted (모든 capabilities drop)"
+        "PSP 필드 몇 개만으로 PSS 동등성을 결정하지 않음",
+        "Seccomp·SELinux·capabilities·OS·user namespace 확인",
+        "PSP mutation과 identity 기반 규칙도 별도 검토"
       ]
     },
     {
       "dot": "amber",
       "title": "4단계 점진적 적용 순서",
       "items": [
-        "Phase 1: enforce privileged, audit/warn baseline (모니터링만)",
-        "Phase 2: enforce baseline, audit/warn restricted",
-        "Phase 3: enforce restricted"
+        "기존 enforce 수준을 유지",
+        "추가 warn/audit로 위반 영향 확인",
+        "검증·승인한 목표 policy version으로 전환"
       ]
     },
     {
       "dot": "emerald",
       "title": "restricted 준수 워크로드 수정",
       "items": [
-        "runAsNonRoot: true, seccompProfile RuntimeDefault",
-        "allowPrivilegeEscalation: false, capabilities drop ALL",
-        "readOnlyRootFilesystem: true"
+        "Linux/default user namespace 예시; 버전별 규칙 확인",
+        "runAsNonRoot / seccomp / no privilege escalation / drop ALL",
+        "readOnlyRootFilesystem은 권장 보강이며 PSS 필수 조건 아님"
       ]
     }
   ]

@@ -1,9 +1,11 @@
 # Pod Security Standards (PSS)
 
-> **Supported Versions**: Kubernetes 1.31, 1.32, 1.33
-> **Last Updated**: February 22, 2026
+> **Validation Baseline**: Kubernetes PSA library v1.36.2; example PSS policy v1.35
+> **Last Updated**: September 13, 2026
 
 Pod Security Standards (PSS) is a standardized policy framework for Pod security in Kubernetes. This document covers PSS concepts, configuration methods, and implementation in EKS environments.
+
+PSS defines policies; PSA is the built-in admission implementation that applies them. This guide assumes **ordinary Linux Pods without user namespaces**, unless stated otherwise. Local upstream policy evaluation and schema/command checks are distinct from deployment: no live cluster, EKS, or container execution was tested. The example `v1.35` is a pinned policy definition, not a claim about the latest Kubernetes/EKS supported version. `latest` changes meaning when the API server is upgraded.
 
 ## Table of Contents
 
@@ -33,7 +35,7 @@ PodSecurityPolicy (PSP) was first introduced in Kubernetes 1.3 as a Pod security
 │ 1. Complex RBAC binding requirements                             │
 │ 2. Implicit policy application (unclear which policy applies)    │
 │ 3. User vs workload permission confusion                         │
-│ 4. No dry-run mode                                               │
+│ 4. No warn/audit rollout modes                                               │
 │ 5. Limited audit capabilities                                    │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -42,19 +44,21 @@ PodSecurityPolicy (PSP) was first introduced in Kubernetes 1.3 as a Pod security
 
 Pod Security Standards (PSS) and Pod Security Admission (PSA) were introduced as alpha in Kubernetes 1.22, became beta in 1.23, and reached GA (Generally Available) in 1.25.
 
-![Roadmap across Kubernetes releases showing PodSecurityPolicy deprecated in 1.21, Pod Security Admission moving from alpha in 1.22 to beta in 1.23, PSP removed and PSA reaching GA in 1.25, and PSS/PSA stabilizing from 1.28 onward.](../.gitbook/assets/en-security-03-pod-security-standards-0.png)
+![Roadmap distinguishing PSP deprecation, PSP removal and PSA GA in1.25, and later versioned policy evolution.](../.gitbook/assets/en-security-03-pod-security-standards-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-03-pod-security-standards-0.html)
+
+> Diagram interpretation: PSA reached GA in 1.25; 1.28 is not a separate stabilization milestone.
 
 ### PSP vs PSS Comparison
 
 | Feature | PodSecurityPolicy (PSP) | Pod Security Standards (PSS) |
 |---------|------------------------|------------------------------|
-| **Activation** | Admission Controller plugin | Built-in (enabled by default) |
+| **Activation** | Former admission plugin | PSS definitions enforced by the built-in PSA plugin |
 | **Policy Definition** | Custom PSP resources | Three pre-defined profiles |
 | **Policy Binding** | Complex RBAC binding | Simple namespace labels |
 | **Scope** | Cluster-wide or namespace | Namespace level |
-| **Dry-run** | Not supported | warn/audit modes supported |
+| **Policy preview** | No PSA-style warn/audit modes; API dry-run is separate | warn/audit modes plus API dry-run |
 | **Auditing** | Limited | Built-in audit support |
 | **Flexibility** | High (fine-grained control) | Medium (standardized profiles) |
 | **Complexity** | High | Low |
@@ -65,45 +69,31 @@ Pod Security Standards (PSS) and Pod Security Admission (PSA) were introduced as
 
 ### PSA Architecture
 
-Pod Security Admission (PSA) is a built-in Admission Controller in the Kubernetes API server that intercepts Pod creation and update requests and validates them according to Pod Security Standards.
+PSA runs **inside the API server during validating admission**, after mutating admission. Authentication, authorization, schema validation, and other admission checks also apply. This is not an external webhook, and the diagram must not imply a universal ordering between PSA and every other validator.
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         Kubernetes API Server                            │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │                    Admission Controllers                         │    │
-│  │  ┌───────────┐  ┌───────────┐  ┌─────────────────────────────┐  │    │
-│  │  │ Mutating  │──▶│Validating │──▶│  Pod Security Admission    │  │    │
-│  │  │ Webhooks  │  │ Webhooks  │  │  (PSA Controller)           │  │    │
-│  │  └───────────┘  └───────────┘  │  ┌───────────────────────┐  │  │    │
-│  │                                 │  │ Security Standards    │  │  │    │
-│  │                                 │  │ • Privileged          │  │  │    │
-│  │                                 │  │ • Baseline            │  │  │    │
-│  │                                 │  │ • Restricted          │  │  │    │
-│  │                                 │  └───────────────────────┘  │  │    │
-│  │                                 └─────────────────────────────┘  │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────────────────┘
+```text
+Request → authentication / authorization → mutating admission
+        → validating admission (PSA + other checks) → persistence if accepted
 ```
 
 ### How PSA Works
 
-![Sequence of a Pod creation request passing through the API Server to the PSA Controller, which reads the namespace enforce and audit labels and either approves the Pod for storage in etcd with 201 Created or denies it with 403 Forbidden.](../.gitbook/assets/en-security-03-pod-security-standards-1.png)
+![Simplified authenticated and authorized Pod CREATE. PSA is internal to the API server;201 additionally requires other admission checks and storage to succeed.](../.gitbook/assets/en-security-03-pod-security-standards-1.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-03-pod-security-standards-1.html)
 
+> Diagram scope: PSA is internal to the API server. A successful Pod CREATE is persisted only after all applicable checks pass; PSA approval alone does not guarantee 201 Created.
+
 ### Verifying PSA Status
 
-In Kubernetes 1.25 and above, PSA is enabled by default:
+PSA became beta and enabled by default in Kubernetes 1.23, then reached GA in 1.25. An absent explicit `--enable-admission-plugins=PodSecurity` flag does not mean it is disabled. Inspect self-managed API server configuration for explicit disabling; EKS does not expose that configuration. Metrics show evaluations, not a feature-gate setting. Access to `/metrics` needs authorization, and an unused series can be absent.
 
 ```bash
-# Check API server configuration (not directly accessible in EKS managed control plane)
-# For local clusters:
-kubectl get pods -n kube-system -l component=kube-apiserver -o yaml | grep -A5 "enable-admission-plugins"
-
-# Check PSA feature gate
-kubectl get --raw /metrics | grep pod_security
+kubectl --context "$PSS_CONTEXT" get namespace "$PSS_NAMESPACE" -o yaml
+kubectl --context "$PSS_CONTEXT" get --raw /metrics
 ```
+
+Use the positive/negative Pod dry-run controls below to test the actual admission path. Never infer compliance from a successful Deployment dry-run alone.
 
 ---
 
@@ -113,17 +103,17 @@ PSS defines three security levels (profiles). Each level applies progressively s
 
 ### 1. Privileged
 
-The most permissive policy with no restrictions. Suitable for system and infrastructure-level workloads.
+This profile adds no PSS restrictions. It neither enables container privileges automatically nor bypasses RBAC, API validation, or other admission policies.
 
 ```yaml
-# Privileged level: Everything is allowed
+# Privileged profile: PSS imposes no controls; API/RBAC/other policies still apply
 # Use cases: System daemons, CNI plugins, monitoring agents
 
 apiVersion: v1
 kind: Pod
 metadata:
   name: privileged-pod
-  namespace: kube-system
+  namespace: pss-privileged-lab
 spec:
   hostNetwork: true      # Allowed
   hostPID: true          # Allowed
@@ -133,7 +123,7 @@ spec:
     image: nginx
     securityContext:
       privileged: true   # Allowed
-      runAsRoot: true    # Allowed
+      runAsUser: 0    # Allowed
 ```
 
 **Privileged level allows:**
@@ -162,7 +152,7 @@ spec:
     securityContext:
       # The following are prohibited in Baseline:
       # privileged: true        ❌
-      # allowPrivilegeEscalation: true (under certain conditions)  ❌
+      # allowPrivilegeEscalation is not constrained by Baseline
 
       # The following are allowed in Baseline:
       runAsNonRoot: false      # ✓ (allowed but not recommended)
@@ -178,46 +168,56 @@ spec:
 | HostProcess | Windows HostProcess containers prohibited |
 | Host Namespaces | hostNetwork, hostPID, hostIPC prohibited |
 | Privileged Containers | privileged: true prohibited |
-| Capabilities | Additional capabilities beyond NET_RAW prohibited |
+| Capabilities | Explicit additions are limited to the listed baseline allowlist; `NET_RAW` is not on it |
 | HostPath Volumes | hostPath volumes prohibited |
-| Host Ports | Host port usage prohibited |
-| AppArmor | Only default profile or localhost/* allowed |
+| Host Ports | Built-in PSA permits unset/0; it has no custom port allowlist |
+| AppArmor | Unset or RuntimeDefault/Localhost; legacy annotations use runtime/default or localhost/* |
 | SELinux | Only restricted type values, user/role setting prohibited |
 | /proc Mount Type | Only default value allowed |
-| Seccomp | Only RuntimeDefault, Localhost allowed |
-| Sysctls | Only safe sysctls allowed |
+| Seccomp | Unset allowed; if specified, RuntimeDefault or Localhost (not Unconfined) |
+| Sysctls | Only the PSS version’s explicit sysctl allowlist; not every kubelet-safe sysctl |
 
 ### 3. Restricted
 
 The most restrictive policy applying Pod security hardening best practices. Suitable for security-sensitive workloads.
 
 ```yaml
-# Restricted level: Apply security best practices
-# Use cases: Security-sensitive apps, multi-tenant environments
-
 apiVersion: v1
 kind: Pod
 metadata:
   name: restricted-pod
 spec:
+  automountServiceAccountToken: false
   securityContext:
-    runAsNonRoot: true           # Required
-    seccompProfile:              # Required
+    runAsNonRoot: true
+    runAsUser: 101
+    runAsGroup: 101
+    fsGroup: 101
+    seccompProfile:
       type: RuntimeDefault
   containers:
   - name: app
-    image: nginx
+    image: ghcr.io/nginx/nginx-unprivileged@sha256:442753882674b49ae2c1de83ed67896131c0777f56df5005e356e62bc3f7e7ce
     securityContext:
-      allowPrivilegeEscalation: false  # Required
-      readOnlyRootFilesystem: true     # Recommended
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
       capabilities:
-        drop:
-          - ALL                  # Required
-      runAsNonRoot: true         # Required
+        drop: [ALL]
+    ports:
+    - containerPort: 8080
     resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
       limits:
-        memory: "128Mi"
-        cpu: "500m"
+        cpu: 500m
+        memory: 128Mi
+    volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+  volumes:
+  - name: tmp
+    emptyDir: {}
 ```
 
 **Restricted Level Additional Restrictions:**
@@ -227,9 +227,13 @@ spec:
 | Volume Types | Only configMap, csi, downwardAPI, emptyDir, ephemeral, persistentVolumeClaim, projected, secret allowed |
 | Privilege Escalation | allowPrivilegeEscalation: false required |
 | Running as Non-root | runAsNonRoot: true required |
-| Running as Non-root user | runAsUser must be non-zero (v1.23+) |
+| Running as Non-root user | Explicit runAsUser: 0 prohibited (v1.23+); field may be omitted |
 | Seccomp | RuntimeDefault or Localhost required |
 | Capabilities | Must drop all capabilities, only NET_BIND_SERVICE can be added |
+
+
+
+The controls apply to applicable regular, init, and ephemeral containers. A Pod-level non-root/seccomp value can be inherited; a conflicting container override is not compliant. Policy v1.34+ also forbids a nonempty `host` in HTTP/TCP probes and lifecycle hooks. In v1.35, `hostUsers: false` relaxes the non-root checks; Baseline also relaxes `procMount`, but Restricted still prohibits `Unmasked`. This requires actual user-namespace support, not merely a label. Windows-specific relaxations for privilege escalation, seccomp, and Linux capabilities are separate from this Linux example.
 
 ### Security Level Comparison Chart
 
@@ -267,7 +271,7 @@ PSA provides three enforcement modes. These modes can be used independently or t
 
 ### 1. enforce
 
-Blocks Pod creation when policy is violated.
+Rejects violating Pod creation and relevant Pod updates. Workload templates receive warn/audit checks; enforcement occurs on the resulting Pods. Relabeling a namespace does not evict already running Pods.
 
 ```yaml
 # enforce mode: Block Pod creation on violation
@@ -277,15 +281,15 @@ metadata:
   name: production
   labels:
     pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/enforce-version: v1.31
+    pod-security.kubernetes.io/enforce-version: v1.35
 ```
 
-**Behavior Example:**
-```bash
+**Illustrative response excerpt (not a recorded cluster execution):**
+```text
 # Attempting to create a policy-violating Pod
-$ kubectl apply -f privileged-pod.yaml -n production
+$ kubectl apply --dry-run=server -f privileged-pod.yaml -n production
 Error from server (Forbidden): error when creating "privileged-pod.yaml":
-pods "privileged-pod" is forbidden: violates PodSecurity "restricted:v1.31":
+pods "privileged-pod" is forbidden: violates PodSecurity "restricted:v1.35":
 privileged (container "app" must not set securityContext.privileged=true),
 allowPrivilegeEscalation != false (container "app" must set
 securityContext.allowPrivilegeEscalation=false)
@@ -293,7 +297,7 @@ securityContext.allowPrivilegeEscalation=false)
 
 ### 2. audit
 
-Records policy violations in audit logs but allows Pod creation.
+Adds violation annotations to audit events; this mode does not itself reject the request. Audit-policy/log-delivery configuration determines whether those events are retained. Other modes and admission checks may still reject.
 
 ```yaml
 # audit mode: Record violations in audit logs
@@ -303,16 +307,16 @@ metadata:
   name: staging
   labels:
     pod-security.kubernetes.io/audit: restricted
-    pod-security.kubernetes.io/audit-version: v1.31
+    pod-security.kubernetes.io/audit-version: v1.35
 ```
 
-**Audit Log Example:**
+**Synthetic audit-event excerpt (not a complete captured event):**
 ```json
 {
   "kind": "Event",
   "apiVersion": "audit.k8s.io/v1",
   "level": "Metadata",
-  "auditID": "abc123",
+  "auditID": "00000000-0000-4000-8000-000000000001",
   "stage": "ResponseComplete",
   "requestURI": "/api/v1/namespaces/staging/pods",
   "verb": "create",
@@ -332,7 +336,7 @@ metadata:
 
 ### 3. warn
 
-Displays warning messages to users but allows Pod creation.
+Returns client-visible warnings without itself rejecting the request; enforce or other admission checks may still reject.
 
 ```yaml
 # warn mode: Display warning messages on violation
@@ -342,21 +346,23 @@ metadata:
   name: development
   labels:
     pod-security.kubernetes.io/warn: restricted
-    pod-security.kubernetes.io/warn-version: v1.31
+    pod-security.kubernetes.io/warn-version: v1.35
 ```
 
-**Warning Message Example:**
-```bash
-$ kubectl apply -f non-compliant-pod.yaml -n development
-Warning: would violate PodSecurity "restricted:v1.31":
+**Illustrative warning excerpt (not a recorded execution):**
+```text
+$ kubectl apply --dry-run=server -f non-compliant-pod.yaml -n development
+Warning: would violate PodSecurity "restricted:v1.35":
 allowPrivilegeEscalation != false (container "app" must set
 securityContext.allowPrivilegeEscalation=false),
 unrestricted capabilities (container "app" must set
 securityContext.capabilities.drop=["ALL"])
-pod/my-pod created
+pod/my-pod created (server dry run)
 ```
 
 ### Mode Combination Strategy
+
+The initial Privileged stage is only for a namespace without a stronger existing policy. Never lower Baseline/Restricted enforcement to follow this diagram.
 
 In production environments, combining multiple modes is recommended:
 
@@ -369,13 +375,13 @@ metadata:
   labels:
     # Current enforcement level
     pod-security.kubernetes.io/enforce: baseline
-    pod-security.kubernetes.io/enforce-version: v1.31
+    pod-security.kubernetes.io/enforce-version: v1.35
     # Audit next level
     pod-security.kubernetes.io/audit: restricted
-    pod-security.kubernetes.io/audit-version: v1.31
+    pod-security.kubernetes.io/audit-version: v1.35
     # Warn next level
     pod-security.kubernetes.io/warn: restricted
-    pod-security.kubernetes.io/warn-version: v1.31
+    pod-security.kubernetes.io/warn-version: v1.35
 ```
 
 ```
@@ -425,11 +431,11 @@ metadata:
   labels:
     # Format: pod-security.kubernetes.io/<MODE>: <LEVEL>
     pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/enforce-version: v1.31
+    pod-security.kubernetes.io/enforce-version: v1.35
     pod-security.kubernetes.io/audit: restricted
-    pod-security.kubernetes.io/audit-version: v1.31
+    pod-security.kubernetes.io/audit-version: v1.35
     pod-security.kubernetes.io/warn: restricted
-    pod-security.kubernetes.io/warn-version: v1.31
+    pod-security.kubernetes.io/warn-version: v1.35
 ```
 
 ### Version Specification
@@ -444,7 +450,7 @@ metadata:
   labels:
     # Use PSS definitions from a specific version
     pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/enforce-version: v1.31  # Specific version
+    pod-security.kubernetes.io/enforce-version: v1.35  # Specific version
 
     # Using 'latest' applies PSS from current cluster version
     # pod-security.kubernetes.io/enforce-version: latest
@@ -493,7 +499,7 @@ metadata:
 # Add labels using kubectl
 kubectl label namespace my-namespace \
   pod-security.kubernetes.io/enforce=restricted \
-  pod-security.kubernetes.io/enforce-version=v1.31 \
+  pod-security.kubernetes.io/enforce-version=v1.35 \
   pod-security.kubernetes.io/audit=restricted \
   pod-security.kubernetes.io/warn=restricted
 
@@ -509,11 +515,15 @@ kubectl get namespace my-namespace -o yaml | grep pod-security
 
 Migration from PSP to PSS should be carefully planned and performed in stages.
 
-![Seven-step migration path from PodSecurityPolicy to Pod Security Standards, grouped into prepare, gradual rollout, enforce switch, and cleanup phases: analyze current PSPs, map to PSS profiles, validate in a test environment, apply warn/audit mode, modify workloads, switch to enforce, and remove PSP.](../.gitbook/assets/en-security-03-pod-security-standards-2.png)
+![Migration preserves existing enforcement while assessing gaps, observing warn/audit, remediating and validating a target policy. PSP API cleanup applies only to historical1.24-or-earlier environments.](../.gitbook/assets/en-security-03-pod-security-standards-2.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-security-03-pod-security-standards-2.html)
 
+> Diagram scope: PSP analysis/removal is historical. Never lower an existing stronger enforce policy for observation; readOnlyRootFilesystem is recommended, not required by Restricted.
+
 ### Step 1: Analyze Current PSP
+
+**Historical procedure only:** PSP commands/resources below apply to old clusters that still served `policy/v1beta1` (up to Kubernetes 1.24), or to saved manifests. Do not apply this PSP to a current cluster. Also inventory fields previously defaulted/mutated by PSP; PSA does not fill them in.
 
 ```bash
 # List current PSPs
@@ -559,15 +569,15 @@ spec:
     rule: RunAsAny
 ```
 
-**Mapping Result:** The above PSP corresponds to the `restricted` profile
+**Mapping Result:** Restricted is a candidate target, not an equivalent policy. This PSP lacks the required seccomp control and allows SELinux settings that PSS may reject. Compare every control and every resulting Pod; three selected fields cannot establish equivalence.
 
 ### PSP to PSS Mapping Table
 
-| PSP Setting | PSS Profile | Notes |
-|-------------|-------------|-------|
-| `privileged: true` | Privileged | - |
-| `privileged: false`, `allowPrivilegeEscalation: true` | Baseline | - |
-| `privileged: false`, `allowPrivilegeEscalation: false`, `runAsUser.rule: MustRunAsNonRoot` | Restricted | All capabilities must be dropped |
+| Workload requirement | Candidate PSS profile | Required review |
+|---|---|---|
+| Host namespaces, privileged container, or hostPath | Privileged | Isolate the exception and apply additional controls |
+| No host access but root process is needed | Baseline | Check every Baseline control, including capabilities and seccomp |
+| Non-root, no privilege escalation, drop ALL | Restricted | Also check volumes, seccomp, overrides, and version-specific controls |
 
 ### Step 3: Validate in Test Environment
 
@@ -578,7 +588,7 @@ kubectl create namespace pss-test
 # Apply restricted in warn mode
 kubectl label namespace pss-test \
   pod-security.kubernetes.io/warn=restricted \
-  pod-security.kubernetes.io/warn-version=v1.31
+  pod-security.kubernetes.io/warn-version=v1.35
 
 # Test existing workload deployment
 kubectl apply -f my-deployment.yaml -n pss-test
@@ -595,7 +605,7 @@ kind: Namespace
 metadata:
   name: migrating-namespace
   labels:
-    # Phase 1: Monitoring only (maintain existing behavior)
+    # Phase 1: New namespace without a previous stronger enforce policy
     pod-security.kubernetes.io/enforce: privileged
     pod-security.kubernetes.io/audit: baseline
     pod-security.kubernetes.io/warn: baseline
@@ -611,62 +621,78 @@ metadata:
 
 ### Step 5: Modify Workloads
 
-```yaml
-# Before: PSS-violating Pod
-apiVersion: v1
-kind: Pod
-metadata:
-  name: old-pod
-spec:
-  containers:
-  - name: app
-    image: nginx
-    # No securityContext
+Before: a plain `nginx` Pod with no security context fails Restricted checks. Adding `runAsNonRoot` alone is insufficient: the image user, listener, and writable paths must also be compatible. The corrected Pod uses the upstream unprivileged image (UID/GID 101), port 8080, and writable `/tmp` with a read-only root filesystem.
 
----
-# After: Restricted-compliant Pod
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
   name: new-pod
 spec:
+  automountServiceAccountToken: false
   securityContext:
     runAsNonRoot: true
+    runAsUser: 101
+    runAsGroup: 101
+    fsGroup: 101
     seccompProfile:
       type: RuntimeDefault
   containers:
   - name: app
-    image: nginx
+    image: ghcr.io/nginx/nginx-unprivileged@sha256:442753882674b49ae2c1de83ed67896131c0777f56df5005e356e62bc3f7e7ce
     securityContext:
       allowPrivilegeEscalation: false
-      capabilities:
-        drop:
-          - ALL
-      runAsNonRoot: true
       readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+    ports:
+    - containerPort: 8080
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 128Mi
+    volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+  volumes:
+  - name: tmp
+    emptyDir: {}
 ```
 
 ### Migration Automation Script
 
-```bash
-#!/bin/bash
-# psp-to-pss-migration.sh
+This deliberately targets **one reviewed namespace**, adds only previously absent warn/audit labels, preserves enforce, and uses the observed resource version to reject a concurrent edit. It is a real namespace mutation when run; inspect the target first. Existing labels cause a failure for manual comparison rather than an automatic downgrade. Warnings appear on subsequent requests, not as a retrospective scan of all running Pods.
 
-# Apply warn mode baseline to all namespaces
-for ns in $(kubectl get namespaces -o jsonpath='{.items[*].metadata.name}'); do
-  # Exclude system namespaces
-  if [[ "$ns" != "kube-system" && "$ns" != "kube-public" && "$ns" != "kube-node-lease" ]]; then
-    echo "Applying warn mode to namespace: $ns"
-    kubectl label namespace "$ns" \
-      pod-security.kubernetes.io/warn=baseline \
-      pod-security.kubernetes.io/warn-version=v1.31 \
-      --overwrite
-  fi
-done
+```python
+#!/usr/bin/env python3
+# add-pss-observation.py CONTEXT NAMESPACE
+import json, subprocess, sys
 
-# Monitor for violations
-echo "Monitoring for violations..."
-kubectl get events --all-namespaces --field-selector reason=FailedCreate | grep -i "pod security"
+if len(sys.argv) != 3:
+    raise SystemExit("Usage: add-pss-observation.py CONTEXT NAMESPACE")
+context, namespace = sys.argv[1:]
+if namespace in {"kube-system", "kube-public", "kube-node-lease"}:
+    raise SystemExit("Refusing system namespace; review its workload requirements separately")
+base = ["kubectl", "--context", context, "--request-timeout=30s"]
+obj = json.loads(subprocess.run(
+    base + ["get", "namespace", namespace, "-o", "json"],
+    check=True, text=True, capture_output=True).stdout)
+labels = obj["metadata"].get("labels", {})
+new = {
+    "pod-security.kubernetes.io/warn": "restricted",
+    "pod-security.kubernetes.io/warn-version": "v1.35",
+    "pod-security.kubernetes.io/audit": "restricted",
+    "pod-security.kubernetes.io/audit-version": "v1.35",
+}
+if any(key in labels for key in new):
+    raise SystemExit("Existing observation policy: review it; do not overwrite automatically")
+subprocess.run(base + [
+    "label", "namespace", namespace,
+    "--resource-version=" + obj["metadata"]["resourceVersion"],
+] + [key + "=" + value for key, value in new.items()], check=True)
 ```
 
 ---
@@ -675,14 +701,10 @@ kubectl get events --all-namespaces --field-selector reason=FailedCreate | grep 
 
 ### PSA Default Settings in EKS
 
-Amazon EKS enables PSA by default in Kubernetes 1.23 and above. However, no PSS labels are applied to any namespace by default.
+AWS documents PSA as enabled by default from EKS 1.23, with cluster defaults `privileged/latest` for all modes and no static exemptions. Those permissive defaults are not a workload hardening policy. Namespace labels created by platform tools or administrators can override defaults; inspect the actual namespace rather than assuming every namespace is unlabeled.
 
 ```bash
-# Check PSA status in EKS cluster
-kubectl get namespaces -o yaml | grep pod-security
-
-# Check system namespaces
-kubectl get namespace kube-system -o yaml
+kubectl --context "$PSS_CONTEXT" get namespace "$PSS_NAMESPACE" -o yaml
 ```
 
 ### Configuring PSS in EKS
@@ -694,9 +716,9 @@ kind: Namespace
 metadata:
   name: eks-app-namespace
   labels:
-    # EKS recommended configuration
+    # Example rollout choice, not a universal AWS requirement
     pod-security.kubernetes.io/enforce: baseline
-    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/enforce-version: v1.35
     pod-security.kubernetes.io/audit: restricted
     pod-security.kubernetes.io/warn: restricted
 
@@ -706,71 +728,50 @@ metadata:
 
 ### EKS System Namespace Considerations
 
+A host-access agent cannot satisfy Baseline, but that does not mean every Pod in `kube-system` needs full privileges. Review the exact add-on version and rendered Pod spec. Avoid a blanket overwrite that disables warn/audit for an entire system namespace. Where possible isolate approved host agents from ordinary applications and restrict who may deploy there. The following is a dedicated example namespace, not an instruction to relabel existing system namespaces.
+
 ```yaml
-# kube-system namespace requires privileged
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: kube-system
+  name: host-agents
   labels:
     pod-security.kubernetes.io/enforce: privileged
-    pod-security.kubernetes.io/audit: privileged
-    pod-security.kubernetes.io/warn: privileged
----
-# AWS system components like aws-for-fluent-bit
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: amazon-cloudwatch
-  labels:
-    pod-security.kubernetes.io/enforce: privileged  # Requires host access
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: v1.35
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: v1.35
 ```
 
 ### EKS Add-ons and PSS Compatibility
 
-| EKS Add-on | Recommended PSS Level | Notes |
-|------------|----------------------|-------|
-| VPC CNI (aws-node) | Privileged | Requires host networking |
-| CoreDNS | Baseline | - |
-| kube-proxy | Privileged | Requires host networking |
-| EBS CSI Driver | Privileged | Requires host volume access |
-| EFS CSI Driver | Privileged | Requires host volume access |
-| CloudWatch Agent | Privileged | Requires host access |
-| Fluent Bit | Privileged | Requires host log access |
-| ALB Controller | Baseline | - |
-| Cluster Autoscaler | Baseline | - |
+| Component / typical deployment | PSS review point |
+|---|---|
+| VPC CNI `aws-node`, kube-proxy | Host networking or privileged node operations can exceed Baseline |
+| EBS/EFS CSI node DaemonSets | Host mounts can exceed Baseline; controller Pods have different needs |
+| Node-level CloudWatch Agent / Fluent Bit | Host log/filesystem access depends on the actual configuration |
+| CoreDNS, AWS Load Balancer Controller, Cluster Autoscaler | Evaluate the rendered spec against Baseline/Restricted; a component name alone does not prove compliance |
+
+EKS Auto Mode built-in node components differ from self-managed add-ons. This table is a review aid, not a tested compatibility matrix or a requirement to install every listed add-on.
 
 ### EKS Terraform Example
 
+This fragment manages one application namespace. Configure and review the Kubernetes provider and its target context separately; no provider initialization, plan, or apply was run. Adopt/import an existing namespace through its owner rather than creating competing Terraform/GitOps ownership. The policy is deliberately pinned, and no system-namespace labels are changed.
+
 ```hcl
-# Configure EKS namespaces and PSS with Terraform
-resource "kubernetes_namespace" "app" {
+# Provider authentication/context and ownership must be configured separately.
+resource "kubernetes_namespace_v1" "app" {
   metadata {
     name = "my-app"
-
     labels = {
       "pod-security.kubernetes.io/enforce"         = "restricted"
-      "pod-security.kubernetes.io/enforce-version" = "latest"
+      "pod-security.kubernetes.io/enforce-version" = "v1.35"
       "pod-security.kubernetes.io/audit"           = "restricted"
+      "pod-security.kubernetes.io/audit-version"   = "v1.35"
       "pod-security.kubernetes.io/warn"            = "restricted"
-      "environment"                                = "production"
+      "pod-security.kubernetes.io/warn-version"    = "v1.35"
+      "environment"                              = "production"
     }
-  }
-}
-
-# Exception for system namespaces
-resource "kubernetes_labels" "kube_system_pss" {
-  api_version = "v1"
-  kind        = "Namespace"
-
-  metadata {
-    name = "kube-system"
-  }
-
-  labels = {
-    "pod-security.kubernetes.io/enforce" = "privileged"
-    "pod-security.kubernetes.io/audit"   = "privileged"
-    "pod-security.kubernetes.io/warn"    = "privileged"
   }
 }
 ```
@@ -781,7 +782,7 @@ resource "kubernetes_labels" "kube_system_pss" {
 
 ### Privileged Profile Details
 
-The Privileged profile allows all privileges with no restrictions.
+The Privileged profile imposes no PSS restrictions; API validation, RBAC, and other admission checks remain in force. The following host-root example is for policy analysis only, not a recommended workload to deploy.
 
 ```yaml
 # All options allowed in Privileged profile
@@ -816,7 +817,7 @@ spec:
 ### Baseline Profile Details
 
 ```yaml
-# Baseline profile restrictions (v1.31)
+# Baseline profile restrictions (v1.35)
 #
 # Prohibited fields and values:
 #
@@ -831,7 +832,7 @@ spec:
 # spec.containers[*].securityContext.capabilities.add restricted
 #   - Allowed: NET_BIND_SERVICE (only this in Restricted)
 #   - Additionally allowed in Baseline: AUDIT_WRITE, CHOWN, DAC_OVERRIDE,
-#     FOWNER, FSETID, KILL, MKNOD, NET_BIND_SERVICE, NET_RAW,
+#     FOWNER, FSETID, KILL, MKNOD, NET_BIND_SERVICE,
 #     SETFCAP, SETGID, SETPCAP, SETUID, SYS_CHROOT
 #
 # spec.volumes[*].hostPath prohibited
@@ -839,7 +840,7 @@ spec:
 # spec.containers[*].ports[*].hostPort prohibited (except 0)
 #
 # spec.securityContext.appArmorProfile.type restricted
-#   - Allowed: RuntimeDefault, Localhost, "" (empty)
+#   - Allowed: profile omitted, or type RuntimeDefault/Localhost
 #   - Prohibited: Unconfined
 #
 # spec.securityContext.seLinuxOptions.type restricted
@@ -849,104 +850,70 @@ spec:
 #   - Prohibited: Unconfined
 #
 # spec.securityContext.sysctls restricted
-#   - Only safe sysctls allowed
+#   - Only the explicit versioned PSS sysctl allowlist
 
 apiVersion: v1
 kind: Pod
 metadata:
   name: baseline-compliant
 spec:
+  automountServiceAccountToken: false
   containers:
   - name: app
-    image: nginx:latest
+    image: ghcr.io/nginx/nginx-unprivileged@sha256:442753882674b49ae2c1de83ed67896131c0777f56df5005e356e62bc3f7e7ce
     ports:
-    - containerPort: 80  # No hostPort
+    - containerPort: 8080
     securityContext:
-      # No privileged setting or false
       capabilities:
-        add:
-          - NET_BIND_SERVICE  # Allowed
-        drop:
-          - ALL
-    volumeMounts:
-    - name: config
-      mountPath: /etc/nginx/conf.d
-  volumes:
-  - name: config
-    configMap:  # Use configMap instead of hostPath
-      name: nginx-config
+        drop: [ALL]
 ```
 
 ### Restricted Profile Details
 
-```yaml
-# Restricted profile: Strictest security
-#
-# All Baseline restrictions + additional:
-#
-# 1. Volume type restrictions
-#    Allowed: configMap, csi, downwardAPI, emptyDir, ephemeral,
-#             persistentVolumeClaim, projected, secret
-#
-# 2. allowPrivilegeEscalation required
-#    spec.containers[*].securityContext.allowPrivilegeEscalation: false required
-#    spec.initContainers[*].securityContext.allowPrivilegeEscalation: false required
-#
-# 3. runAsNonRoot required
-#    spec.securityContext.runAsNonRoot: true required
-#    Or set individually on all containers
-#
-# 4. Seccomp profile required
-#    spec.securityContext.seccompProfile.type: RuntimeDefault or Localhost
-#
-# 5. Capabilities restrictions
-#    Must drop all capabilities
-#    Only NET_BIND_SERVICE can be added
+Restricted adds its volume allowlist, non-root execution, explicit seccomp, no privilege escalation, and dropping ALL capabilities to Baseline. `NET_BIND_SERVICE` is the only permitted addition, but this 8080 listener does not need it. `readOnlyRootFilesystem` is recommended hardening, not a PSS requirement. Setting `containerPort` is metadata; it does not reconfigure Nginx.
 
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
   name: restricted-compliant
 spec:
+  automountServiceAccountToken: false
   securityContext:
     runAsNonRoot: true
-    runAsUser: 1000
-    runAsGroup: 1000
-    fsGroup: 1000
+    runAsUser: 101
+    runAsGroup: 101
+    fsGroup: 101
     seccompProfile:
       type: RuntimeDefault
   containers:
   - name: app
-    image: nginx:latest
+    image: ghcr.io/nginx/nginx-unprivileged@sha256:442753882674b49ae2c1de83ed67896131c0777f56df5005e356e62bc3f7e7ce
     securityContext:
       allowPrivilegeEscalation: false
       readOnlyRootFilesystem: true
-      runAsNonRoot: true
-      runAsUser: 1000
       capabilities:
-        drop:
-          - ALL
-        add:
-          - NET_BIND_SERVICE  # Needed for binding ports below 1024
+        drop: [ALL]
     ports:
     - containerPort: 8080
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 128Mi
     volumeMounts:
     - name: tmp
       mountPath: /tmp
-    - name: cache
-      mountPath: /var/cache/nginx
-    - name: run
-      mountPath: /var/run
   volumes:
   - name: tmp
-    emptyDir: {}
-  - name: cache
-    emptyDir: {}
-  - name: run
     emptyDir: {}
 ```
 
 ### Complete Restricted-Compliant Nginx Example
+
+The digest was checked against upstream OCI metadata for Linux amd64/arm64 (Nginx 1.30.4, user 101); no image layers were pulled and no container was executed. Upstream documents port 8080, `/tmp/nginx.pid`, and temporary paths under `/tmp`. The ConfigMap below supplies the matching listener and health endpoint. Create it in the same namespace before the Deployment. Validate startup/readiness in your approved environment before rollout.
 
 ```yaml
 apiVersion: apps/v1
@@ -964,6 +931,7 @@ spec:
       labels:
         app: nginx
     spec:
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 101  # nginx user
@@ -973,7 +941,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: nginx
-        image: nginxinc/nginx-unprivileged:latest  # Unprivileged nginx image
+        image: ghcr.io/nginx/nginx-unprivileged@sha256:442753882674b49ae2c1de83ed67896131c0777f56df5005e356e62bc3f7e7ce
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -994,10 +962,6 @@ spec:
         volumeMounts:
         - name: tmp
           mountPath: /tmp
-        - name: cache
-          mountPath: /var/cache/nginx
-        - name: run
-          mountPath: /var/run
         - name: config
           mountPath: /etc/nginx/conf.d
           readOnly: true
@@ -1015,10 +979,6 @@ spec:
           periodSeconds: 5
       volumes:
       - name: tmp
-        emptyDir: {}
-      - name: cache
-        emptyDir: {}
-      - name: run
         emptyDir: {}
       - name: config
         configMap:
@@ -1053,10 +1013,10 @@ data:
 
 ### Cluster-Level Exemptions Configuration
 
-PSA can configure cluster-level exemptions through AdmissionConfiguration.
+Self-managed API servers can load this configuration via `--admission-control-config-file`. The example keeps every exemption list empty. Exemptions skip **all PSA modes**. `usernames` matches an exact authenticated request username, not a group, wildcard, or the future Pod’s ServiceAccount. Exempting a controller account would bypass checks for the Pods it creates on behalf of many users. Namespace and RuntimeClass names also match exactly. Configure an exception only after separately constraining who can use it.
 
 ```yaml
-# /etc/kubernetes/admission/admission-config.yaml
+# Self-managed API server configuration; not an EKS control-plane setting
 apiVersion: apiserver.config.k8s.io/v1
 kind: AdmissionConfiguration
 plugins:
@@ -1064,126 +1024,55 @@ plugins:
   configuration:
     apiVersion: pod-security.admission.config.k8s.io/v1
     kind: PodSecurityConfiguration
-
-    # Default settings (applied to namespaces without labels)
     defaults:
-      enforce: "baseline"
-      enforce-version: "latest"
-      audit: "restricted"
-      audit-version: "latest"
-      warn: "restricted"
-      warn-version: "latest"
-
-    # Exemptions configuration
+      enforce: baseline
+      enforce-version: v1.35
+      audit: restricted
+      audit-version: v1.35
+      warn: restricted
+      warn-version: v1.35
     exemptions:
-      # User exemptions: Exemptions for specific users/groups
-      usernames:
-        - "system:serviceaccount:kube-system:*"
-
-      # RuntimeClass exemptions
-      runtimeClasses:
-        - "gvisor"
-        - "kata"
-
-      # Namespace exemptions
-      namespaces:
-        - "kube-system"
-        - "kube-public"
-        - "kube-node-lease"
-        - "amazon-cloudwatch"
-        - "amazon-vpc-cni"
+      usernames: []
+      runtimeClasses: []
+      namespaces: []
 ```
 
 ### Exemptions Configuration in EKS
 
-Since EKS uses a managed control plane, you cannot directly modify AdmissionConfiguration. Instead, configure exemptions through namespace labels:
+EKS does not allow editing the managed API server’s AdmissionConfiguration. Namespace `enforce: privileged` is a permissive profile, **not a static exemption**: warn/audit can still evaluate requests. Restrict namespace write/deploy permissions and separate host agents from ordinary applications. For example, node-exporter configured with hostNetwork/hostPID/hostPath cannot pass Baseline; setting Baseline does not make those host accesses safe or permitted.
 
 ```yaml
-# Apply privileged to system namespaces
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: kube-system
+  name: host-agents
   labels:
     pod-security.kubernetes.io/enforce: privileged
-    pod-security.kubernetes.io/audit: privileged
-    pod-security.kubernetes.io/warn: privileged
----
-# CNI namespace
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: amazon-vpc-cni
-  labels:
-    pod-security.kubernetes.io/enforce: privileged
----
-# Monitoring namespace
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: monitoring
-  labels:
-    # Prometheus node-exporter requires hostNetwork
-    pod-security.kubernetes.io/enforce: baseline
     pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: v1.35
     pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: v1.35
 ```
 
 ### RuntimeClass-Based Exemptions
 
+A RuntimeClass selects a configured CRI runtime handler. Creating the resource does not install gVisor/Kata and does not grant a PSA exception. All targeted nodes must support the handler (or use appropriate scheduling constraints). This definition alone leaves PSA fully applicable:
+
 ```yaml
-# RuntimeClass definition
 apiVersion: node.k8s.io/v1
 kind: RuntimeClass
 metadata:
   name: gvisor
 handler: runsc
----
-# Pods using gVisor can have more permissive policies
-apiVersion: v1
-kind: Pod
-metadata:
-  name: sandboxed-pod
-spec:
-  runtimeClassName: gvisor
-  containers:
-  - name: app
-    image: nginx
 ```
+
+Only a separately configured `runtimeClasses: ["gvisor"]` exemption on a self-managed API server skips PSA. Any request allowed to select that class could then bypass PSA; runtime isolation does not replace admission authorization. This managed-control-plane configuration is unavailable in EKS.
 
 ### Fine-Grained Exemptions with Kyverno
 
-When PSS alone cannot handle exemption requirements, you can use Kyverno:
+Kyverno cannot turn a PSA denial into an allow. If a host agent needs an exception, first design the namespace’s PSA profile and deploy permissions, then add an independently enforcing policy with a narrowly scoped exception. A HostPath-only exclusion does not exclude hostNetwork/hostPID checks; matching an image tag or mutable Pod label alone is not authorization.
 
-```yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
-metadata:
-  name: pss-exception-for-monitoring
-spec:
-  validationFailureAction: enforce
-  background: true
-  rules:
-  - name: allow-hostpath-for-prometheus
-    match:
-      any:
-      - resources:
-          kinds:
-            - Pod
-          namespaces:
-            - monitoring
-          selector:
-            matchLabels:
-              app: prometheus-node-exporter
-    validate:
-      podSecurity:
-        level: baseline
-        version: latest
-        exclude:
-        - controlName: HostPath Volumes
-          images:
-          - 'quay.io/prometheus/node-exporter:*'
-```
+See [Kyverno policy management](./01-kyverno-policy-management.md) for the reviewed policy APIs and version/deprecation limits. Do not copy a legacy `ClusterPolicy` with lowercase `validationFailureAction: enforce`; it is not a valid value, and ClusterPolicy is deprecated in Kyverno 1.19. A replacement must be tested against both the normal and exception workloads.
 
 ---
 
@@ -1191,37 +1080,26 @@ spec:
 
 ### Step 1: Analyze Current State
 
+Preview a change to **enforce**, not warn: only an enforce-level/version change triggers the existing-Pod check. This server dry-run does not save labels or evict Pods. If the effective enforce policy is unchanged, no new scan is triggered. The scan is best effort and can limit/deduplicate warnings; silence is not a complete workload audit. Command/authentication failures remain failures.
+
 ```bash
-#!/bin/bash
-# analyze-pss-compliance.sh
-
-echo "=== Pod Security Standards Compliance Analysis ==="
-
-# Analyze Pods in all namespaces
-for ns in $(kubectl get namespaces -o jsonpath='{.items[*].metadata.name}'); do
-  echo ""
-  echo "=== Namespace: $ns ==="
-
-  # Check restricted violations
-  kubectl label namespace "$ns" \
-    pod-security.kubernetes.io/warn=restricted \
-    pod-security.kubernetes.io/warn-version=v1.31 \
-    --overwrite --dry-run=server 2>&1 | head -20
-
-  # Per-Pod analysis
-  for pod in $(kubectl get pods -n "$ns" -o jsonpath='{.items[*].metadata.name}'); do
-    echo "  Pod: $pod"
-
-    # Check privileged containers
-    kubectl get pod "$pod" -n "$ns" -o jsonpath='{range .spec.containers[*]}{.name}: privileged={.securityContext.privileged}{"\n"}{end}' 2>/dev/null
-
-    # Check hostNetwork/hostPID
-    kubectl get pod "$pod" -n "$ns" -o jsonpath='hostNetwork={.spec.hostNetwork}, hostPID={.spec.hostPID}{"\n"}' 2>/dev/null
-  done
-done
+#!/usr/bin/env bash
+# preview-pss.sh: no namespace mutation
+set -euo pipefail
+: "${PSS_CONTEXT:?Set the approved test context}"
+: "${PSS_NAMESPACE:?Set one namespace to inspect}"
+kubectl --context "$PSS_CONTEXT" --request-timeout=30s \
+  get namespace "$PSS_NAMESPACE" -o yaml
+kubectl --context "$PSS_CONTEXT" --request-timeout=30s \
+  label namespace "$PSS_NAMESPACE" \
+  pod-security.kubernetes.io/enforce=restricted \
+  pod-security.kubernetes.io/enforce-version=v1.35 \
+  --overwrite --dry-run=server
 ```
 
 ### Step 2: Gradual Rollout Strategy
+
+The day ranges are an illustrative planning schedule, not measured migration durations. Use an explicit namespace inventory, never downgrade an existing stronger policy, and advance only after testing replacement Pods and rollback capacity.
 
 ```yaml
 # Gradual rollout using GitOps
@@ -1249,8 +1127,9 @@ done
 
 ### Step 3: Set Up Monitoring and Alerts
 
+These rules require Prometheus Operator CRDs, a selector that includes this PrometheusRule, and an authorized API-server scrape exposing `pod_security_evaluations_total`. Built-in PSA is not a webhook named `pod-security-webhook`. Evaluation labels include decision, policy_level, policy_version, mode, request_operation, resource, and subresource; **there is no namespace label**. Correlate retained audit events for namespace/request details. Missing metrics are not evidence of zero violations; audit-mode denial means a violating evaluation, not necessarily a rejected API request.
+
 ```yaml
-# Prometheus alerting rules
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -1262,71 +1141,102 @@ spec:
     rules:
     - alert: PSSViolationDetected
       expr: |
-        increase(apiserver_admission_webhook_rejection_count{
-          name="pod-security-webhook",
-          error_type="no_error"
-        }[5m]) > 0
-      for: 1m
+        sum by (policy_level, policy_version, mode) (
+          increase(pod_security_evaluations_total{mode="enforce",decision="deny"}[5m])
+        ) > 0
       labels:
         severity: warning
       annotations:
-        summary: "Pod Security Standards violation detected"
-        description: "PSS violation detected in namespace {{ $labels.namespace }}."
-
+        summary: "PSA denied a Pod request"
+        description: "Policy {{ $labels.policy_level }}:{{ $labels.policy_version }}. Correlate audit logs for namespace and request identity."
     - alert: PSSAuditViolation
       expr: |
-        increase(pod_security_evaluations_total{
-          mode="audit",
-          decision="deny"
-        }[5m]) > 10
+        sum by (policy_level, policy_version, mode) (
+          increase(pod_security_evaluations_total{mode="audit",decision="deny"}[5m])
+        ) > 10
       for: 5m
       labels:
         severity: info
       annotations:
-        summary: "PSS Audit mode violations increasing"
-        description: "{{ $value }} PSS audit violations detected."
+        summary: "PSA audit violations increasing"
+        description: "{{ $value }} violating evaluations over five minutes; not a count of unique Pods."
 ```
 
 ### Step 4: Automated Compliance Checks
 
-```yaml
-# PSS compliance checks in CI/CD pipeline
-# .gitlab-ci.yml or GitHub Actions
+Save this as `check-pss.py` in the project that owns the workloads. Prerequisites: Python 3 with PyYAML, a compatible kubectl, approved cluster credentials, a Kubernetes API server supporting policy v1.35, and an existing test namespace explicitly enforcing `restricted:v1.35`. The caller needs namespace read and Pod create authorization, even for server dry-run. Do not expose cluster credentials to untrusted pull-request code.
 
-name: PSS Compliance Check
+```python
+#!/usr/bin/env python3
+# check-pss.py CONTEXT NAMESPACE pod.yaml [pod2.yaml ...]
+# Requires Python 3 + PyYAML and a preconfigured, authorized kubectl.
+import copy, json, subprocess, sys
+from pathlib import Path
+import yaml
 
-on:
-  pull_request:
-    paths:
-      - 'k8s/**'
+if len(sys.argv) < 4:
+    raise SystemExit("Usage: check-pss.py CONTEXT NAMESPACE pod.yaml [...]")
+context, namespace, *files = sys.argv[1:]
+pods = []
+for filename in files:
+    docs = list(yaml.safe_load_all(Path(filename).read_text()))
+    if not docs or any(not isinstance(p, dict) for p in docs):
+        raise SystemExit(f"{filename}: empty/non-object YAML")
+    for pod in docs:
+        if (pod.get("apiVersion"), pod.get("kind")) != ("v1", "Pod"):
+            raise SystemExit(f"{filename}: only explicit v1 Pod test inputs are supported")
+        meta = pod.setdefault("metadata", {})
+        if meta.get("namespace", namespace) != namespace:
+            raise SystemExit(f"{filename}: namespace mismatch")
+        meta["namespace"] = namespace
+        pods.append(pod)
+base = ["kubectl", "--context", context, "--request-timeout=30s"]
+ns = json.loads(subprocess.run(
+    base + ["get", "namespace", namespace, "-o", "json"],
+    check=True, text=True, capture_output=True).stdout)
+labels = ns["metadata"].get("labels", {})
+if (labels.get("pod-security.kubernetes.io/enforce"),
+    labels.get("pod-security.kubernetes.io/enforce-version")) != ("restricted", "v1.35"):
+    raise SystemExit("Test namespace must explicitly enforce restricted:v1.35")
 
-jobs:
-  pss-check:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
+def dry_run(pod):
+    return subprocess.run(
+        base + ["create", "--dry-run=server", "--validate=strict",
+                "--namespace", namespace, "-f", "-"],
+        input=json.dumps(pod), text=True, capture_output=True)
 
-    - name: Install kubeconform
-      run: |
-        wget https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz
-        tar xzf kubeconform-linux-amd64.tar.gz
-        sudo mv kubeconform /usr/local/bin/
-
-    - name: Install kubectl
-      uses: azure/setup-kubectl@v3
-
-    - name: Check PSS compliance
-      run: |
-        for file in k8s/*.yaml; do
-          echo "Checking $file..."
-
-          # Extract Pod resources and check PSS
-          if grep -q "kind: Pod\|kind: Deployment\|kind: StatefulSet\|kind: DaemonSet" "$file"; then
-            kubectl apply --dry-run=server -f "$file" 2>&1 | grep -i "pod security" && exit 1
-          fi
-        done
-        echo "All files are PSS compliant!"
+control = {
+    "apiVersion": "v1", "kind": "Pod",
+    "metadata": {"generateName": "pss-control-", "namespace": namespace},
+    "spec": {
+        "automountServiceAccountToken": False,
+        "securityContext": {"runAsNonRoot": True, "runAsUser": 65532,
+                            "seccompProfile": {"type": "RuntimeDefault"}},
+        "containers": [{"name": "probe", "image": "registry.k8s.io/pause:3.10",
+                        "securityContext": {"allowPrivilegeEscalation": False,
+                                            "capabilities": {"drop": ["ALL"]}}}],
+    },
+}
+good = dry_run(control)
+if good.returncode:
+    raise SystemExit("Positive control failed; no compliance result:\n" + good.stderr)
+bad = copy.deepcopy(control)
+bad["spec"]["hostPID"] = True
+denied = dry_run(bad)
+if denied.returncode == 0 or 'violates PodSecurity "restricted:v1.35"' not in denied.stderr:
+    raise SystemExit("Negative control did not confirm PSA rejection:\n" + denied.stderr)
+for pod in pods:
+    result = dry_run(pod)
+    if result.returncode:
+        raise SystemExit("Pod dry-run failed:\n" + result.stderr)
+print(f"{len(pods)} explicit Pod inputs passed server dry-run in {namespace}")
 ```
+
+```bash
+python3 check-pss.py "$PSS_CONTEXT" "$PSS_NAMESPACE" ./pss-inputs/web-pod.yaml
+```
+
+The explicit input list must cover each workload’s Pod template, including init containers. This example rejects Deployments, empty files, wrong namespaces, query failures, missing enforcement, and an exempt/inactive negative-control path. Template extraction, mutating webhooks, scheduling, image startup, and future runtime behavior need separate checks. The negative control must be rejected by PSA; any other error is inconclusive and fails the check. A different exemption selected by a candidate Pod (for example an exempt RuntimeClass) must also be prohibited or tested separately by the test-cluster owner.
 
 ### Step 5: Documentation and Training
 
@@ -1365,12 +1275,13 @@ jobs:
 
 #### 1. "allowPrivilegeEscalation != false" Error
 
-```yaml
-# Error message
-Error: pods "my-pod" is forbidden: violates PodSecurity "restricted:v1.31":
-allowPrivilegeEscalation != false
+Illustrative error excerpt; the YAML is a **partial Pod-spec correction**, not a standalone manifest. Preserve the existing container image/configuration. Apply relevant per-container controls to init and ephemeral containers too.
 
-# Solution: Add setting to all containers
+```text
+allowPrivilegeEscalation != false
+```
+
+```yaml
 spec:
   containers:
   - name: app
@@ -1380,51 +1291,45 @@ spec:
 
 #### 2. "unrestricted capabilities" Error
 
-```yaml
-# Error message
-Error: violates PodSecurity "restricted:v1.31":
-unrestricted capabilities (container "app" must set securityContext.capabilities.drop=["ALL"])
+Illustrative error excerpt; the YAML is a **partial Pod-spec correction**, not a standalone manifest. Preserve the existing container image/configuration. Apply relevant per-container controls to init and ephemeral containers too.
 
-# Solution: Set capabilities drop
+```text
+unrestricted capabilities
+```
+
+```yaml
 spec:
   containers:
   - name: app
     securityContext:
       capabilities:
-        drop:
-          - ALL
+        drop: [ALL]
 ```
 
 #### 3. "runAsNonRoot != true" Error
 
-```yaml
-# Error message
-Error: violates PodSecurity "restricted:v1.31":
-runAsNonRoot != true
+Illustrative error excerpt; the YAML is a **partial Pod-spec correction**, not a standalone manifest. Preserve the existing container image/configuration. Apply relevant per-container controls to init and ephemeral containers too.
 
-# Solution 1: Set at Pod level
+```text
+runAsNonRoot != true
+```
+
+```yaml
 spec:
   securityContext:
     runAsNonRoot: true
-    runAsUser: 1000
-
-# Solution 2: Set at container level
-spec:
-  containers:
-  - name: app
-    securityContext:
-      runAsNonRoot: true
-      runAsUser: 1000
+    runAsUser: 101
 ```
 
 #### 4. "seccompProfile" Error
 
-```yaml
-# Error message
-Error: violates PodSecurity "restricted:v1.31":
-seccompProfile (pod or container "app" must set securityContext.seccompProfile.type to "RuntimeDefault" or "Localhost")
+Illustrative error excerpt; the YAML is a **partial Pod-spec correction**, not a standalone manifest. Preserve the existing container image/configuration. Apply relevant per-container controls to init and ephemeral containers too.
 
-# Solution: Set seccompProfile
+```text
+seccompProfile must be RuntimeDefault or Localhost
+```
+
+```yaml
 spec:
   securityContext:
     seccompProfile:
@@ -1432,6 +1337,8 @@ spec:
 ```
 
 ### PSS Violation Checking Tools
+
+Polaris, kube-score, and Trivy provide additional static checks, not an exact substitute for the cluster’s versioned PSA policy, exemptions, and mutations. Install a reviewed version and consult its CLI help. A successful server dry-run is scoped to that request, identity, namespace, and moment; use the explicit Pod controls above.
 
 ```bash
 # Dry-run check with kubectl
@@ -1455,7 +1362,7 @@ Pod Security Standards (PSS) provides a standardized approach to managing Pod se
 
 1. **Three Security Levels**: Privileged (all privileges), Baseline (prevent known escalations), Restricted (least privilege)
 2. **Three Enforcement Modes**: enforce (block), audit (log), warn (warning)
-3. **Simple Configuration via Namespace Labels**: Apply policies with labels only, no RBAC binding required
+3. **Namespace Labels**: No PSP-style use binding; RBAC must still restrict namespace labels and workload creation
 4. **Gradual Adoption Support**: Safe migration through warn/audit modes
 
 ### Recommendations
@@ -1471,5 +1378,9 @@ Pod Security Standards (PSS) provides a standardized approach to managing Pod se
 
 - [Kubernetes Pod Security Standards Official Documentation](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
 - [Pod Security Admission Official Documentation](https://kubernetes.io/docs/concepts/security/pod-security-admission/)
-- [EKS Best Practices Guide - Pod Security](https://aws.github.io/aws-eks-best-practices/security/docs/pods/)
+- [EKS Best Practices Guide - Pod Security](https://docs.aws.amazon.com/eks/latest/best-practices/pod-security.html)
 - [Migration Guide from PSP to PSS](https://kubernetes.io/docs/tasks/configure-pod-container/migrate-from-psp/)
+
+- [PSA namespace-label preview and existing-Pod checks](https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/)
+- [PSA configuration and exemptions](https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-admission-controller/)
+- [Nginx unprivileged image and writable paths](https://github.com/nginx/docker-nginx-unprivileged)

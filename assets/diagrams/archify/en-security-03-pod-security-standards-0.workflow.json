@@ -34,7 +34,7 @@
           "psp_removed",
           "pss_stable"
         ],
-        "note": "PSP is completely removed in 1.25 alongside PSA GA, and PSS/PSA stabilize from 1.28 onward."
+        "note": "PSP removal and PSA GA occur in v1.25. Later releases evolve versioned PSS rules; v1.28 is not a second GA milestone."
       }
     ],
     "legend": {
@@ -76,7 +76,7 @@
     },
     {
       "id": "cutover",
-      "label": "Cutover · stabilization",
+      "label": "PSA GA / policy versions",
       "fromCol": 3,
       "toCol": 4,
       "variant": "emphasis"
@@ -139,10 +139,10 @@
       "id": "pss_stable",
       "lane": "psa",
       "col": 4,
-      "width": 160,
+      "width": 190,
       "type": "backend",
-      "label": "PSS/PSA stabilized",
-      "sublabel": "v1.28+ · stable"
+      "label": "Versioned policy evolution",
+      "sublabel": "PSA stable since v1.25"
     }
   ],
   "edges": [

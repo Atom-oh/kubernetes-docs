@@ -1,0 +1,163 @@
+[
+  {
+    "path": "en/security/01-kyverno-policy-management.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fullreadandpaired1.19.1CEL/API/CLI/operationalcorrectionsvalidated;20quizquestionsaligned.",
+    "sources": [
+      "https://kyverno.io/docs/installation/releases/",
+      "https://kyverno.io/docs/installation/installation/",
+      "https://kyverno.io/docs/guides/migration-to-cel/",
+      "https://kyverno.io/docs/policy-types/validating-policy/",
+      "https://kyverno.io/docs/policy-types/mutating-policy/",
+      "https://kyverno.io/docs/policy-types/generating-policy/",
+      "https://kyverno.io/docs/policy-types/deleting-policy/",
+      "https://kyverno.io/docs/policy-types/image-validating-policy/",
+      "https://kyverno.io/docs/kyverno-cli/reference/kyverno/",
+      "https://github.com/kyverno/kyverno/tree/v1.19.1/config/crds",
+      "https://kyverno.github.io/kyverno/kyverno-3.9.1.tgz",
+      "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.35.0/api/openapi-spec/swagger.json"
+    ],
+    "findings": [
+      "Replacedoutdated1.10install/CLIandsubjectiveperformanceclaimswithpinned3.9.1/1.19.1baselineandtestedK8s1.33-1.35matrix;legacydeprecationnotalreadyremoved.",
+      "CurrentCELvalidation/mutation/generation;normal/init/ephemeralsecurityscopeandeffectivePod/containerrootsettings;nonemptyprobehandlers.",
+      "CREATE-onlydefaultresourcespreservecomplete/partialvalues;CREATE-onlynodeSelector/bypasspolicywithbackgroundoffavoidsflagginglegitimatelyscheduledPods.",
+      "Opt-inNamespacegeneration,fullDeploymentselectorPDB,actualPDBRBACsubject,explicitgeneration/synchronization/lifecyclelimitsandnon-atomicNetworkPolicycreation.",
+      "Fixedtest-directorymanifest/apply-vs-install/output-pathandemptytestfalse-green;removedfakeimagecerts/GPGandunsupportedcleanup.ttl,correctPolicyReportfields/counts.",
+      "Realchartmetrics-port/ServiceMonitor/namespace/componentbindings;noautomaticCloudWatchexport;noexecutedclusterclaims."
+    ],
+    "validation": [
+      "Readalloriginalcontent;cohort4files2989lines.",
+      "26initialCLIapplycasesPASS;6affectedCREATE-onlycasesrepassed;4purecleanup-predicatepreviewsPASS;testmanifest2expectationsPASS;emptytestfolderfails.",
+      "117finalcontractchecksPASS;44publishedAPIobjectschemas+3generatedobjects;4controller/monitorbindingsfrom84-resourcerender.",
+      "4VitePress/VuecompilesPASS;94oldIDsretained/12aliases;20questions80choicespaired.",
+      "NoactualAWS/Kubernetes/admission/network/registry/signature/scheduleddeletionorfullsitebuild.",
+      "Evidence:.vitepress/cache/core-audit/security-01-kyverno/final-validation.json"
+    ],
+    "reviewedSha256": "001c84203e942422e3ca400ad0ccc91662b93af617d4806211c0d418b26e8538",
+    "updatedAt": "2026-09-13T07:20:03.094129+00:00",
+    "validationReport": "docs/reviews/2026-09-11/kyverno-validation.json",
+    "parentAssetClosure": "3KOdiagrams/captions,9browser3SVG3individualPNG andMDcompilepassed; no remainingknownassetdefect."
+  },
+  {
+    "path": "ko/security/01-kyverno-policy-management.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fullreadandpaired1.19.1CEL/API/CLI/operationalcorrectionsvalidated;20quizquestionsaligned.",
+    "sources": [
+      "https://kyverno.io/docs/installation/releases/",
+      "https://kyverno.io/docs/installation/installation/",
+      "https://kyverno.io/docs/guides/migration-to-cel/",
+      "https://kyverno.io/docs/policy-types/validating-policy/",
+      "https://kyverno.io/docs/policy-types/mutating-policy/",
+      "https://kyverno.io/docs/policy-types/generating-policy/",
+      "https://kyverno.io/docs/policy-types/deleting-policy/",
+      "https://kyverno.io/docs/policy-types/image-validating-policy/",
+      "https://kyverno.io/docs/kyverno-cli/reference/kyverno/",
+      "https://github.com/kyverno/kyverno/tree/v1.19.1/config/crds",
+      "https://kyverno.github.io/kyverno/kyverno-3.9.1.tgz",
+      "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.35.0/api/openapi-spec/swagger.json"
+    ],
+    "findings": [
+      "Replacedoutdated1.10install/CLIandsubjectiveperformanceclaimswithpinned3.9.1/1.19.1baselineandtestedK8s1.33-1.35matrix;legacydeprecationnotalreadyremoved.",
+      "CurrentCELvalidation/mutation/generation;normal/init/ephemeralsecurityscopeandeffectivePod/containerrootsettings;nonemptyprobehandlers.",
+      "CREATE-onlydefaultresourcespreservecomplete/partialvalues;CREATE-onlynodeSelector/bypasspolicywithbackgroundoffavoidsflagginglegitimatelyscheduledPods.",
+      "Opt-inNamespacegeneration,fullDeploymentselectorPDB,actualPDBRBACsubject,explicitgeneration/synchronization/lifecyclelimitsandnon-atomicNetworkPolicycreation.",
+      "Fixedtest-directorymanifest/apply-vs-install/output-pathandemptytestfalse-green;removedfakeimagecerts/GPGandunsupportedcleanup.ttl,correctPolicyReportfields/counts.",
+      "Realchartmetrics-port/ServiceMonitor/namespace/componentbindings;noautomaticCloudWatchexport;noexecutedclusterclaims.",
+      "3KOdiagramsemanticrepairs:.vitepress/cache/core-audit/security-01-kyverno/diagram-repair-handoff.json"
+    ],
+    "validation": [
+      "Readalloriginalcontent;cohort4files2989lines.",
+      "26initialCLIapplycasesPASS;6affectedCREATE-onlycasesrepassed;4purecleanup-predicatepreviewsPASS;testmanifest2expectationsPASS;emptytestfolderfails.",
+      "117finalcontractchecksPASS;44publishedAPIobjectschemas+3generatedobjects;4controller/monitorbindingsfrom84-resourcerender.",
+      "4VitePress/VuecompilesPASS;94oldIDsretained/12aliases;20questions80choicespaired.",
+      "NoactualAWS/Kubernetes/admission/network/registry/signature/scheduleddeletionorfullsitebuild.",
+      "Evidence:.vitepress/cache/core-audit/security-01-kyverno/final-validation.json"
+    ],
+    "reviewedSha256": "cc128ecf2a5a75115079cebeb19fba491b027462d0ccf022c55824b4b893c9c5",
+    "updatedAt": "2026-09-13T07:20:03.094129+00:00",
+    "validationReport": "docs/reviews/2026-09-11/kyverno-validation.json",
+    "parentAssetClosure": "3KOdiagrams/captions,9browser3SVG3individualPNG andMDcompilepassed; no remainingknownassetdefect."
+  },
+  {
+    "path": "en/quizzes/security/01-kyverno-policy-management-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fullreadandpaired1.19.1CEL/API/CLI/operationalcorrectionsvalidated;20quizquestionsaligned.",
+    "sources": [
+      "https://kyverno.io/docs/installation/releases/",
+      "https://kyverno.io/docs/installation/installation/",
+      "https://kyverno.io/docs/guides/migration-to-cel/",
+      "https://kyverno.io/docs/policy-types/validating-policy/",
+      "https://kyverno.io/docs/policy-types/mutating-policy/",
+      "https://kyverno.io/docs/policy-types/generating-policy/",
+      "https://kyverno.io/docs/policy-types/deleting-policy/",
+      "https://kyverno.io/docs/policy-types/image-validating-policy/",
+      "https://kyverno.io/docs/kyverno-cli/reference/kyverno/",
+      "https://github.com/kyverno/kyverno/tree/v1.19.1/config/crds",
+      "https://kyverno.github.io/kyverno/kyverno-3.9.1.tgz",
+      "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.35.0/api/openapi-spec/swagger.json"
+    ],
+    "findings": [
+      "Replacedoutdated1.10install/CLIandsubjectiveperformanceclaimswithpinned3.9.1/1.19.1baselineandtestedK8s1.33-1.35matrix;legacydeprecationnotalreadyremoved.",
+      "CurrentCELvalidation/mutation/generation;normal/init/ephemeralsecurityscopeandeffectivePod/containerrootsettings;nonemptyprobehandlers.",
+      "CREATE-onlydefaultresourcespreservecomplete/partialvalues;CREATE-onlynodeSelector/bypasspolicywithbackgroundoffavoidsflagginglegitimatelyscheduledPods.",
+      "Opt-inNamespacegeneration,fullDeploymentselectorPDB,actualPDBRBACsubject,explicitgeneration/synchronization/lifecyclelimitsandnon-atomicNetworkPolicycreation.",
+      "Fixedtest-directorymanifest/apply-vs-install/output-pathandemptytestfalse-green;removedfakeimagecerts/GPGandunsupportedcleanup.ttl,correctPolicyReportfields/counts.",
+      "Realchartmetrics-port/ServiceMonitor/namespace/componentbindings;noautomaticCloudWatchexport;noexecutedclusterclaims."
+    ],
+    "validation": [
+      "Readalloriginalcontent;cohort4files2989lines.",
+      "26initialCLIapplycasesPASS;6affectedCREATE-onlycasesrepassed;4purecleanup-predicatepreviewsPASS;testmanifest2expectationsPASS;emptytestfolderfails.",
+      "117finalcontractchecksPASS;44publishedAPIobjectschemas+3generatedobjects;4controller/monitorbindingsfrom84-resourcerender.",
+      "4VitePress/VuecompilesPASS;94oldIDsretained/12aliases;20questions80choicespaired.",
+      "NoactualAWS/Kubernetes/admission/network/registry/signature/scheduleddeletionorfullsitebuild.",
+      "Evidence:.vitepress/cache/core-audit/security-01-kyverno/final-validation.json"
+    ],
+    "reviewedSha256": "345a16edaa9875c077efa6ce931feda6f523febd42572965ab8592ae76fb2a6c",
+    "updatedAt": "2026-09-13T07:20:03.094129+00:00",
+    "validationReport": "docs/reviews/2026-09-11/kyverno-validation.json",
+    "parentAssetClosure": "3KOdiagrams/captions,9browser3SVG3individualPNG andMDcompilepassed; no remainingknownassetdefect."
+  },
+  {
+    "path": "ko/quizzes/security/01-kyverno-policy-management-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fullreadandpaired1.19.1CEL/API/CLI/operationalcorrectionsvalidated;20quizquestionsaligned.",
+    "sources": [
+      "https://kyverno.io/docs/installation/releases/",
+      "https://kyverno.io/docs/installation/installation/",
+      "https://kyverno.io/docs/guides/migration-to-cel/",
+      "https://kyverno.io/docs/policy-types/validating-policy/",
+      "https://kyverno.io/docs/policy-types/mutating-policy/",
+      "https://kyverno.io/docs/policy-types/generating-policy/",
+      "https://kyverno.io/docs/policy-types/deleting-policy/",
+      "https://kyverno.io/docs/policy-types/image-validating-policy/",
+      "https://kyverno.io/docs/kyverno-cli/reference/kyverno/",
+      "https://github.com/kyverno/kyverno/tree/v1.19.1/config/crds",
+      "https://kyverno.github.io/kyverno/kyverno-3.9.1.tgz",
+      "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.35.0/api/openapi-spec/swagger.json"
+    ],
+    "findings": [
+      "Replacedoutdated1.10install/CLIandsubjectiveperformanceclaimswithpinned3.9.1/1.19.1baselineandtestedK8s1.33-1.35matrix;legacydeprecationnotalreadyremoved.",
+      "CurrentCELvalidation/mutation/generation;normal/init/ephemeralsecurityscopeandeffectivePod/containerrootsettings;nonemptyprobehandlers.",
+      "CREATE-onlydefaultresourcespreservecomplete/partialvalues;CREATE-onlynodeSelector/bypasspolicywithbackgroundoffavoidsflagginglegitimatelyscheduledPods.",
+      "Opt-inNamespacegeneration,fullDeploymentselectorPDB,actualPDBRBACsubject,explicitgeneration/synchronization/lifecyclelimitsandnon-atomicNetworkPolicycreation.",
+      "Fixedtest-directorymanifest/apply-vs-install/output-pathandemptytestfalse-green;removedfakeimagecerts/GPGandunsupportedcleanup.ttl,correctPolicyReportfields/counts.",
+      "Realchartmetrics-port/ServiceMonitor/namespace/componentbindings;noautomaticCloudWatchexport;noexecutedclusterclaims."
+    ],
+    "validation": [
+      "Readalloriginalcontent;cohort4files2989lines.",
+      "26initialCLIapplycasesPASS;6affectedCREATE-onlycasesrepassed;4purecleanup-predicatepreviewsPASS;testmanifest2expectationsPASS;emptytestfolderfails.",
+      "117finalcontractchecksPASS;44publishedAPIobjectschemas+3generatedobjects;4controller/monitorbindingsfrom84-resourcerender.",
+      "4VitePress/VuecompilesPASS;94oldIDsretained/12aliases;20questions80choicespaired.",
+      "NoactualAWS/Kubernetes/admission/network/registry/signature/scheduleddeletionorfullsitebuild.",
+      "Evidence:.vitepress/cache/core-audit/security-01-kyverno/final-validation.json"
+    ],
+    "reviewedSha256": "a585c239ae5ba5100c24ae0cb550a54379bb21e07bae89321a6009ad820602d9",
+    "updatedAt": "2026-09-13T07:20:03.094129+00:00",
+    "validationReport": "docs/reviews/2026-09-11/kyverno-validation.json",
+    "parentAssetClosure": "3KOdiagrams/captions,9browser3SVG3individualPNG andMDcompilepassed; no remainingknownassetdefect."
+  }
+]

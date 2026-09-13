@@ -2,7 +2,7 @@
   "schema_version": 1,
   "diagram_type": "sequence",
   "meta": {
-    "title": "How PSA Works",
+    "title": "PSA checks during Pod CREATE",
     "locale": "en",
     "quality_profile": "showcase",
     "column_fit": "spread",
@@ -21,7 +21,7 @@
           "psa",
           "ns"
         ],
-        "note": "The API Server hands the Pod request to the PSA Controller, which reads the enforcement level from the namespace labels."
+        "note": "Simplified authenticated/authorized Pod CREATE. PSA is an internal API-server admission step, not a remote controller."
       },
       {
         "id": "allow",
@@ -32,7 +32,7 @@
           "etcd",
           "user"
         ],
-        "note": "A Pod that satisfies the restricted level is approved, stored in etcd, and answered with 201 Created."
+        "note": "PSA approval alone does not imply201; other admission checks and persistence must also succeed in this illustrated path."
       },
       {
         "id": "deny",
@@ -51,7 +51,7 @@
       "id": "user",
       "type": "external",
       "label": "User/Controller",
-      "sublabel": "kubectl · Deployment"
+      "sublabel": "Pod CREATE"
     },
     {
       "id": "api",
@@ -62,8 +62,8 @@
     {
       "id": "psa",
       "type": "security",
-      "label": "PSA Controller",
-      "sublabel": "built-in Admission"
+      "label": "PSA internal step",
+      "sublabel": "Inside kube-apiserver"
     },
     {
       "id": "ns",
@@ -109,7 +109,7 @@
       "from": "api",
       "to": "psa",
       "y": 226,
-      "label": "Admission validation request"
+      "label": "Internal policy evaluation"
     },
     {
       "id": "read-labels",
@@ -132,7 +132,7 @@
       "from": "psa",
       "to": "api",
       "y": 367,
-      "label": "Approved",
+      "label": "PSA check passed",
       "variant": "return"
     },
     {
@@ -141,7 +141,8 @@
       "to": "etcd",
       "y": 405,
       "label": "Store Pod",
-      "variant": "emphasis"
+      "variant": "emphasis",
+      "note": "Assumes other admission checks also succeeded"
     },
     {
       "id": "created",
@@ -149,7 +150,8 @@
       "to": "user",
       "y": 445,
       "label": "201 Created",
-      "variant": "return"
+      "variant": "return",
+      "note": "201 only after successful persistence"
     },
     {
       "id": "deny",
@@ -204,6 +206,17 @@
       "from": 507,
       "to": 519,
       "type": "security"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Diagram assumptions",
+      "items": [
+        "Pod CREATE, not Deployment admission",
+        "Assumes authentication, authorization and other checks pass",
+        "PSA runs inside kube-apiserver"
+      ]
     }
   ]
 }
