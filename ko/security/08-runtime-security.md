@@ -444,6 +444,8 @@ printf 'API evidence written to %s. This is not a memory or filesystem snapshot.
 <span id="falco-→-elasticsearch"></span>
 <span id="prometheus-grafana-대시보드"></span>
 
+<span id="siemsoar-통합"></span>
+
 ## SIEM/SOAR 통합
 
 ServiceMonitor의 namespace·selector·port와 실제 Service를 대조합니다. Falco chart는 metrics Service를, Falcosidekick은 HTTP port의 metrics를 노출합니다. Falcosidekick chart의 ServiceMonitor는 monitoring.coreos.com/v1 API가 존재할 때만 렌더링됩니다.

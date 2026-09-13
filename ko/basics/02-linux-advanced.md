@@ -19,6 +19,8 @@
 
 ***
 
+<span id="1-환경-변수와-쉘-설정"></span>
+
 ## 1. 환경 변수와 쉘 설정
 
 환경 변수는 Linux 시스템과 Kubernetes에서 설정을 관리하는 핵심 메커니즘입니다.
@@ -91,6 +93,8 @@ spec:
 ```
 
 ***
+
+<span id="2-쉘-스크립팅-기초"></span>
 
 ## 2. 쉘 스크립팅 기초
 
@@ -168,6 +172,8 @@ spec:
 
 ***
 
+<span id="3-텍스트-처리-도구"></span>
+
 ## 3. 텍스트 처리 도구
 
 ### 3.1 grep과 kubectl
@@ -210,6 +216,8 @@ yq -i '.spec.replicas = 5' deployment.yaml
 
 ***
 
+<span id="4-ssh와-원격-접속"></span>
+
 ## 4. SSH와 원격 접속
 
 ### 4.1 SSH 키 생성
@@ -240,6 +248,8 @@ rsync -avzP ./local/ user@remote:/path/
 ```
 
 ***
+
+<span id="5-성능-모니터링-및-트러블슈팅"></span>
 
 ## 5. 성능 모니터링 및 트러블슈팅
 
@@ -273,6 +283,8 @@ kubectl top pods --sort-by=memory
 ```
 
 ***
+
+<span id="6-스토리지-관리-기초"></span>
 
 ## 6. 스토리지 관리 기초
 
@@ -343,6 +355,8 @@ spec:
 
 로컬 볼륨은 노드 장애 시 다른 노드로 이동하지 않습니다. 위 StorageClass는 동적 디스크 생성을 하지 않으며 PVC는 소비 Pod가 스케줄될 때까지 Pending일 수 있습니다. PV 용량은 실제 파일 시스템 용량과 맞춰야 하며 값 자체가 디렉토리 사용량 제한을 만들지는 않습니다. Retain 볼륨 재사용/데이터 삭제는 별도 관리 작업입니다.
 
+<span id="7-curl과-api-호출"></span>
+
 ## 7. curl과 API 호출
 
 ### 7.1 HTTP 메서드
@@ -375,6 +389,8 @@ curl --silent --show-error -o /dev/null -w "%{http_code}\n" https://api.example.
 ```
 
 ***
+
+<span id="8-실용적인-원라이너-모음"></span>
 
 ## 8. 실용적인 원라이너 모음
 

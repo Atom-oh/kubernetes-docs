@@ -49,6 +49,8 @@ The original report states that all five patterns were established and traffic w
 
 The figure preserves the original observations. Its Lattice value is **HTTP KA**, while the other displayed values are **TCP_RR**; they are not one directly comparable metric. The “GPU” label identifies the proposed environment, not a GPU benchmark.
 
+<span id="latency-measurements-m1m7"></span>
+
 ## Latency Measurements (M1–M7)
 
 **Reported setup:** `ap-northeast-2`, matching ZoneId `apne2-az1` across accounts, `c7g.large`, and one EC2 responder with nginx returning a fixed HTTP 200. The report describes three ENIs with per-path subnets/return routes, five round-robin interleaved rounds, 1,500 persistent TCP_RR samples per path, 100 ICMP samples per path, and 275 HTTP keep-alive samples per path.

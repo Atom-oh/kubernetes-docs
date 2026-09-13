@@ -142,7 +142,7 @@
       "GrafanaAPIwrappervsdashboardbody,inventedHPA_target_metricnotdesiredreplicas;Runningphasecountcountszeros,appReadynotRunning;node_cost_hourlyproviderundefined,CloudWatchgaugeperiods;KubecostPOSTvsGETportAPImodelcurrentverify;namespaceeventlabelnotautomaticallyPod/EC2billingtag.",
       "Quizmaxcontrollersemantics/30minReadyguarantee/targetedonlyspecificpoolfalse/HPA120secondstickfalse/initcontainersallNodes+alwayscachefalse/OnDemanduptimeguaranteefalse/Spot2minbest-effortexceptionsneeded."
     ],
-    "reviewedSha256": "e20653a6afbb259aeef58a7391178ffb2734df04e5c350b05c9594a230b38e7b",
+    "reviewedSha256": "ad9499afd78a4a98f96af227f7ddc38b9951173ca367162e9f504d14be34239b",
     "findings": [
       "Replacedunmeasuredtrafficmultipliers/instantReady/zeroColdStartclaimswithSLO/profile/allocatable/quotas/failureobjectives;actualappsReadyandnodeReadyseparated.",
       "Decimalcalculator18cases:consistentRPMunits,ceil,CPU/memory/Podslots,AZsurvival,timezoneintervals,unusedreservationswithoutdoublecounting,unknownothercoststotalnull. Original26nodes15/11failsAZloss.",
@@ -156,7 +156,8 @@
       "Removedgenericsh-echoimagecacheguarantee,blindHPA/Deploymentemergencyoverwrites,deleteSOrestoresbaselineassumptionandtimedNodePooldelete/targetdestroy;documentedbaselineCron/floorrestoreandrealcleanupverification.",
       "Dashboarddesired/availablemetricscorrect,notHPAmetricthresholdnorcount0phasegauges;undefinedcost/exportermetricsqualified;APIwrapper/partialdashboardremoved,referencesFinOpschapter.",
       "Sixexistingfiguressemanticallyrewritten:properplaceholderhandoff,HPAmetricownership,controller/scheduler/Karpenter/kubeletstageswithoutfixednodecounts/latency. All9/9/currentbrowserreceipts+assistantvisualinspection+PNGs."
-    ]
+    ],
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/quizzes/ops/12-event-capacity-planning-quiz.md",

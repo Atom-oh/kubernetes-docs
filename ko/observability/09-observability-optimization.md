@@ -19,6 +19,8 @@
 
 ---
 
+<span id="1-관측성-3대-축-개요"></span>
+
 ## 1. 관측성 3대 축 개요
 
 현대 클라우드 네이티브 환경에서 **관측성(Observability)**은 시스템의 내부 상태를 외부 출력을 통해 이해하는 능력입니다. EKS 환경에서 효과적인 관측성을 구현하려면 세 가지 핵심 축을 이해해야 합니다.
@@ -44,6 +46,8 @@
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-1.html)
 
 ---
+
+<span id="2-로깅-솔루션-비교"></span>
 
 ## 2. 로깅 솔루션 비교
 
@@ -210,6 +214,8 @@ helm install loki grafana/loki \
 
 ---
 
+<span id="3-메트릭-수집-및-저장"></span>
+
 ## 3. 메트릭 수집 및 저장
 
 ### 3.1 메트릭 저장소 비교
@@ -347,6 +353,8 @@ spec:
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-2.html)
 
 ---
+
+<span id="4-분산-트레이싱"></span>
 
 ## 4. 분산 트레이싱
 
@@ -582,6 +590,8 @@ spec:
 
 ---
 
+<span id="5-ebpf-기반-no-code-모니터링"></span>
+
 ## 5. eBPF 기반 No-Code 모니터링
 
 ### 5.1 왜 eBPF 모니터링인가
@@ -809,6 +819,8 @@ topk(10, sum by (pod_name) (rate(kepler_container_joules_total[5m])))
 
 ---
 
+<span id="6-비용-모니터링"></span>
+
 ## 6. 비용 모니터링
 
 ### 6.1 KubeCost / OpenCost 설치 및 구성
@@ -975,6 +987,8 @@ done
 | **보존 기간 최적화** | 중요도 낮은 데이터 | 50-70% |
 
 ---
+
+<span id="7-통합-관측성-대시보드"></span>
 
 ## 7. 통합 관측성 대시보드
 
@@ -1241,6 +1255,8 @@ spec:
 
 ---
 
+<span id="8-운영-과제와-해결-방법"></span>
+
 ## 8. 운영 과제와 해결 방법
 
 ### 8.1 로그/메트릭 저장 비용 폭증 대응
@@ -1371,6 +1387,8 @@ spec:
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-observability-09-observability-optimization-7.html)
 
 ---
+
+<span id="9-모범-사례와-다음-단계"></span>
 
 ## 9. 모범 사례와 다음 단계
 

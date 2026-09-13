@@ -131,6 +131,8 @@ kubectl port-forward --address 127.0.0.1 -n argo-rollouts \
 
 `http://127.0.0.1:3100/rollouts`에 접속합니다. 공유 접속에는 별도의 인증·인가 프록시가 필요합니다.
 
+<span id="블루그린-배포"></span>
+
 ## 블루/그린 배포
 
 아래의 `my-app`, `myregistry`, ECR 계정·태그와 메트릭 이름은 애플리케이션에 맞게 교체하는 예시입니다. Namespace, 이미지 접근 권한, readiness 응답, 메트릭 수집과 AnalysisTemplate을 준비한 뒤 각 시나리오를 독립적으로 실행합니다. 최초 배포에는 이전 stable ReplicaSet이 없으므로, 먼저 v1을 정상 배포한 뒤 Git의 이미지 버전을 v2로 변경해야 전환 과정을 관찰할 수 있습니다.

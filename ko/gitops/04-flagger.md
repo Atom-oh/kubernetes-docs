@@ -561,6 +561,8 @@ spec:
 
 지원 provider에서 mirror는 Canary 사전 단계 또는 Blue-Green에 사용할 수 있습니다. Gateway API는 구현의 RequestMirror 지원을 확인합니다. 응답을 버려도 DB 쓰기, 결제, 메시지 발송과 부하는 발생할 수 있으므로 검증된 read-only 요청이나 격리된 환경에 제한합니다. Mirror는 DB 복제나 rollback 수단이 아닙니다.
 
+<span id="ab-testing-전략"></span>
+
 ## A/B Testing 전략
 
 ![지원되는 헤더·쿠키 조건에 맞는 요청을 canary로 라우팅한다.](../.gitbook/assets/ko-gitops-04-flagger-5.png)
@@ -973,6 +975,8 @@ flagger.app/rollback, flagger.app/suspend, flagger.app/skipAnalysis 어노테이
 spec:
   suspend: true
 ```
+
+<span id="gitops-통합-flux--flagger"></span>
 
 ## GitOps 통합 (Flux + Flagger)
 

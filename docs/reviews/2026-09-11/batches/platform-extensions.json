@@ -13,7 +13,8 @@
     "status": "fixed",
     "reviewedSha256": "7afd30f8190ac3592dc1280c043e29f5e7109e8f9e7e9a145cadd233fd06382e",
     "summary": "All36uniqueblocks/originalguides/quizzesread;40quiztopicsretained;CRD6/CEL6/nativeGo14/JSONPatch4/4MDpassed;6sourcefilesand8guideexactmatches.",
-    "validationReport": "docs/reviews/2026-09-11/platform-extensions-validation.json"
+    "validationReport": "docs/reviews/2026-09-11/platform-extensions-validation.json",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   },
   {
     "path": "en/platform-engineering/04-kubernetes-extensions.md",
@@ -29,6 +30,7 @@
     "status": "fixed",
     "reviewedSha256": "faab363fdb549182ebf48c795e6bcadad02ffe86bcb249f960abd2dc1161a08f",
     "summary": "All36uniqueblocks/originalguides/quizzesread;40quiztopicsretained;CRD6/CEL6/nativeGo14/JSONPatch4/4MDpassed;6sourcefilesand8guideexactmatches.",
-    "validationReport": "docs/reviews/2026-09-11/platform-extensions-validation.json"
+    "validationReport": "docs/reviews/2026-09-11/platform-extensions-validation.json",
+    "reconciliationReport": "docs/reviews/2026-09-11/review-evidence-reconciliation.json"
   }
 ]

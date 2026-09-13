@@ -412,6 +412,8 @@ Istio는 **Control Plane**과 **Data Plane** 두 가지 주요 구성 요소로 
 
 Istio는 Kubernetes Custom Resource Definitions (CRDs)를 사용하여 구성을 관리합니다.
 
+<span id="1-virtualservice"></span>
+
 ### 1. VirtualService
 
 VirtualService는 요청을 서비스로 라우팅하는 방법을 정의합니다.

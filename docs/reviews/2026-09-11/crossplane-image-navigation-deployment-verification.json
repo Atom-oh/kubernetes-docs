@@ -1,0 +1,854 @@
+{
+  "status": "passed",
+  "http": {
+    "status": "passed",
+    "verifiedAt": "2026-09-13T03:12:44.419623+00:00",
+    "deploymentRun": 34734160444,
+    "mergeCommit": "10c251593ffb00accbff1f61295c7ce993f4147a",
+    "includedPRs": [
+      237,
+      246,
+      247
+    ],
+    "pages": [
+      {
+        "path": "ko/security/07-image-security.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/security/07-image-security",
+        "status": 200,
+        "sha256": "28bd68a1916802a4d7dae4acf4635240058fcda1debbd5132f042c9e057aa7dd",
+        "images": [],
+        "lastUpdatedPresent": true,
+        "bodyBytes": 522539,
+        "contains": {
+          "imageSigningIdentity": true,
+          "crossplane2": null
+        }
+      },
+      {
+        "path": "en/security/07-image-security.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/security/07-image-security",
+        "status": 200,
+        "sha256": "5203600b610b08dfd4bb4a231f8d524f0ed2df3de822a279abb4e31f9f6e3eb4",
+        "images": [],
+        "lastUpdatedPresent": true,
+        "bodyBytes": 516286,
+        "contains": {
+          "imageSigningIdentity": true,
+          "crossplane2": null
+        }
+      },
+      {
+        "path": "ko/quizzes/security/07-image-security-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/security/07-image-security-quiz",
+        "status": 200,
+        "sha256": "4991b9aec9c044ae2395af5e5cd6b514112279f3f9278001687d487419152bba",
+        "images": [],
+        "lastUpdatedPresent": true,
+        "bodyBytes": 430819,
+        "contains": {
+          "imageSigningIdentity": null,
+          "crossplane2": null
+        }
+      },
+      {
+        "path": "en/quizzes/security/07-image-security-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/security/07-image-security-quiz",
+        "status": 200,
+        "sha256": "c8d92b2545e0a7fdb4b7ccf7ed60851b11fbca29132cf67aa72a9a4db7b27c66",
+        "images": [],
+        "lastUpdatedPresent": true,
+        "bodyBytes": 427143,
+        "contains": {
+          "imageSigningIdentity": null,
+          "crossplane2": null
+        }
+      },
+      {
+        "path": "ko/news/README.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/news/",
+        "status": 200,
+        "sha256": "79a3b52e58322da9ead8f97f8a34fe830e7006da7e33dafc7b398a68fc512910",
+        "images": [],
+        "lastUpdatedPresent": true,
+        "bodyBytes": 431092,
+        "contains": {
+          "imageSigningIdentity": null,
+          "crossplane2": null
+        }
+      },
+      {
+        "path": "en/news/README.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/news/",
+        "status": 200,
+        "sha256": "1f698be8f754a247f9de234bd82e0ddbe84ce84da495eb00836a9753c2f351d6",
+        "images": [],
+        "lastUpdatedPresent": true,
+        "bodyBytes": 429194,
+        "contains": {
+          "imageSigningIdentity": null,
+          "crossplane2": null
+        }
+      },
+      {
+        "path": "ko/training/eks-auto-mode-2h-curriculum.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/training/eks-auto-mode-2h-curriculum",
+        "status": 200,
+        "sha256": "99dc96e2d3c61c60bf2f9acc5728918ae06683f6d88e9b8f672e5d3b3c9d5532",
+        "images": [],
+        "lastUpdatedPresent": true,
+        "bodyBytes": 446157,
+        "contains": {
+          "imageSigningIdentity": null,
+          "crossplane2": null
+        }
+      },
+      {
+        "path": "en/training/eks-auto-mode-2h-curriculum.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/training/eks-auto-mode-2h-curriculum",
+        "status": 200,
+        "sha256": "1c277ec0bd04a8b9e6d0963f8a556ba84c0520ecd537d6359e2811d5928e32ff",
+        "images": [],
+        "lastUpdatedPresent": true,
+        "bodyBytes": 442752,
+        "contains": {
+          "imageSigningIdentity": null,
+          "crossplane2": null
+        }
+      },
+      {
+        "path": "ko/platform-engineering/07-crossplane.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/platform-engineering/07-crossplane",
+        "status": 200,
+        "sha256": "16f9d8cf6a923202634815fd86df401ae04f9ec5c9beff82462a66d5e7b452db",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-07-crossplane-0.CNSoidT3.png",
+            "status": 200,
+            "sha256": "ca33bec55fa31f5293c459ca8926d7550d6068dc3a01852712c3f806aa51269a",
+            "matchesMain": true
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-07-crossplane-1.BWMept_V.png",
+            "status": 200,
+            "sha256": "9958a284f2bfd4b3d98edade5ee3f2c9e3d5029a8323eaad582266cb62def28f",
+            "matchesMain": true
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-07-crossplane-2.C3GWkR1c.png",
+            "status": 200,
+            "sha256": "f4ace5e43f37863ef63ee5d58cdcbd85f1d758fc240a788285bc851722e2f79b",
+            "matchesMain": true
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-07-crossplane-3.Bcn5aNNk.png",
+            "status": 200,
+            "sha256": "91b220624a82c8adf8a7ceb4567b349b4665fd9624dd7010d99884b289106b07",
+            "matchesMain": true
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/ko-platform-engineering-07-crossplane-4.CFB2SENj.png",
+            "status": 200,
+            "sha256": "f9b8dfcfc58741d0c3b4c6fef8542c829bfdd06a78809244534264491ae663fb",
+            "matchesMain": true
+          }
+        ],
+        "lastUpdatedPresent": true,
+        "bodyBytes": 558434,
+        "contains": {
+          "imageSigningIdentity": null,
+          "crossplane2": true
+        }
+      },
+      {
+        "path": "en/platform-engineering/07-crossplane.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/platform-engineering/07-crossplane",
+        "status": 200,
+        "sha256": "3c41b6a333b33e52645d75e3949a74491ac29b92a5b28816e588efa982fd6cc1",
+        "images": [
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-07-crossplane-0.C_bezePI.png",
+            "status": 200,
+            "sha256": "09713167daf0526f68e864c99d0fc8b02ea3ea0b1ceccdca9ca9bb64d610e961",
+            "matchesMain": true
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-07-crossplane-1.BXkvrKXa.png",
+            "status": 200,
+            "sha256": "fc6e2c5b7dac2386bd882930df49d1ef0c67269de25724c61c08b9dd18a1cfdf",
+            "matchesMain": true
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-07-crossplane-2.Ca4WUc0G.png",
+            "status": 200,
+            "sha256": "a3ffbd9c737579f6cbf4ede0b14137e9a43678faf387a501aab2d2f23027f06d",
+            "matchesMain": true
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-07-crossplane-3.ByrIOMFM.png",
+            "status": 200,
+            "sha256": "dc5d4ac25a9ca5e141352c20ecf826e89da28a53681044ad9f36823594924333",
+            "matchesMain": true
+          },
+          {
+            "url": "https://www.atomai.click/kubernetes-docs/assets/en-platform-engineering-07-crossplane-4.ChT5cKAU.png",
+            "status": 200,
+            "sha256": "2cd8943eca93f01454297b54ce5f5e286310326342a4e989500bb235fb02f55e",
+            "matchesMain": true
+          }
+        ],
+        "lastUpdatedPresent": true,
+        "bodyBytes": 554952,
+        "contains": {
+          "imageSigningIdentity": null,
+          "crossplane2": true
+        }
+      },
+      {
+        "path": "ko/quizzes/platform-engineering/07-crossplane-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/platform-engineering/07-crossplane-quiz",
+        "status": 200,
+        "sha256": "48e7f489170c1e9d1857426865191c5e80b983dcf2e5d2000b77a0dda6eb9332",
+        "images": [],
+        "lastUpdatedPresent": false,
+        "bodyBytes": 423104,
+        "contains": {
+          "imageSigningIdentity": null,
+          "crossplane2": null
+        }
+      },
+      {
+        "path": "en/quizzes/platform-engineering/07-crossplane-quiz.md",
+        "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/platform-engineering/07-crossplane-quiz",
+        "status": 200,
+        "sha256": "f6b9b97cb3c742c17ba551ed729345bc2a4d8b10e5ea77347bce320c2bf5bd19",
+        "images": [],
+        "lastUpdatedPresent": false,
+        "bodyBytes": 420703,
+        "contains": {
+          "imageSigningIdentity": null,
+          "crossplane2": null
+        }
+      }
+    ],
+    "viewers": [
+      {
+        "name": "ko-platform-engineering-07-crossplane-0.html",
+        "status": 200,
+        "bytes": 715758,
+        "sha256": "3b52be11636ac7476da760fa1a9231f21a27fa14ef5682342b80e0cd00789038"
+      },
+      {
+        "name": "ko-platform-engineering-07-crossplane-1.html",
+        "status": 200,
+        "bytes": 720891,
+        "sha256": "49fcd43740ca7aadfd3e7750abf6587476f7b1c23267ec8639b0ae0fa62058d8"
+      },
+      {
+        "name": "ko-platform-engineering-07-crossplane-2.html",
+        "status": 200,
+        "bytes": 717662,
+        "sha256": "154664593caacf24769629e8c6a3b33ad282743b6ff1d431e1d078efe85cf61a"
+      },
+      {
+        "name": "ko-platform-engineering-07-crossplane-3.html",
+        "status": 200,
+        "bytes": 714895,
+        "sha256": "abd0ae6232fc371deb960ac30c23d0b78277a06e717dbd2717a442380f79aa13"
+      },
+      {
+        "name": "ko-platform-engineering-07-crossplane-4.html",
+        "status": 200,
+        "bytes": 719985,
+        "sha256": "964e7ab1df021b09b458cc1268447bc6c8af376fd7db7ae5c69e324b9bded0de"
+      },
+      {
+        "name": "en-platform-engineering-07-crossplane-0.html",
+        "status": 200,
+        "bytes": 715027,
+        "sha256": "dd9f383058b4ce35ef84e52bda210fe1bdd08e4affdcdefed93e531ed29339ca"
+      },
+      {
+        "name": "en-platform-engineering-07-crossplane-1.html",
+        "status": 200,
+        "bytes": 720478,
+        "sha256": "5785f7b7082466b0189664a2ba7af53abd66a3518b5dd00b68c4c33dfd9846d5"
+      },
+      {
+        "name": "en-platform-engineering-07-crossplane-2.html",
+        "status": 200,
+        "bytes": 717176,
+        "sha256": "f696e64623f9f762c0a0a561958a2a0ed125b215748aface5d4d2309c4f19b65"
+      },
+      {
+        "name": "en-platform-engineering-07-crossplane-3.html",
+        "status": 200,
+        "bytes": 714748,
+        "sha256": "69d5b106f27ee1864e7706800ae97ec8fc3f8e3c0732686c2c4f094788c61dbe"
+      },
+      {
+        "name": "en-platform-engineering-07-crossplane-4.html",
+        "status": 200,
+        "bytes": 719493,
+        "sha256": "0b5b5080e9bc50f0d57a6899baa9bb353ffd273a823a8fbc86834522d071faf5"
+      }
+    ],
+    "scope": "HTTP source and exact hashed PNG comparison; no analytics events or real application execution."
+  },
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-platform-engineering-07-crossplane-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 908,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-07-crossplane-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 908,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-07-crossplane-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 908,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56558,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-07-crossplane-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1094,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-07-crossplane-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1094,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-07-crossplane-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1094,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 61704,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-07-crossplane-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 912,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-07-crossplane-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 912,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-07-crossplane-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 912,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 58907,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-07-crossplane-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 761,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-07-crossplane-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 761,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-07-crossplane-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 761,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 57210,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-07-crossplane-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1017,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-07-crossplane-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1017,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-platform-engineering-07-crossplane-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 1017,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 60618,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-07-crossplane-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 817,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-07-crossplane-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 817,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-07-crossplane-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 817,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56437,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-07-crossplane-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 938,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-07-crossplane-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 938,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-07-crossplane-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 938,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 61283,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-07-crossplane-2.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 810,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-07-crossplane-2.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 810,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-07-crossplane-2.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 810,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 58309,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-07-crossplane-3.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 613,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-07-crossplane-3.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 613,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-07-crossplane-3.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 613,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56962,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-07-crossplane-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 887,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-07-crossplane-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 887,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-platform-engineering-07-crossplane-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 887,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 60329,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "30caseson10fetchedproductionviewers; motion/reduced-motion/visibility/theme/guided controls and10SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  },
+  "scope": "PR237 Crossplane, PR246 image security, PR247 news/curriculum verified on deployment34734160444. Twelve pages, ten viewers, ten exact PNG hashes and thirty fetched-viewer browser cases. Analytics requests blocked."
+}

@@ -580,6 +580,8 @@ evictionPressureTransitionPeriod: "30s"
 
 kubelet은 요청 초과 사용 여부, 파드 우선순위, 요청 대비 사용량을 기준으로 대상을 정합니다. 모든 BestEffort → 모든 Burstable → 모든 Guaranteed라는 고정 순서는 아닙니다. 디스크·PID 압력은 리소스 계산도 다르므로 QoS를 보편적인 축출 순서로 해석하면 안 됩니다.
 
+<span id="포드-중단-예산pdb"></span>
+
 ## 포드 중단 예산(PDB)
 
 포드 중단 예산(Pod Disruption Budget, PDB)은 자발적 중단 중에도 애플리케이션의 가용성을 유지하기 위한 방법입니다. PDB는 동시에 중단될 수 있는 포드의 수를 제한합니다.
@@ -678,6 +680,8 @@ evictionPressureTransitionPeriod: "30s"
 위 예시에서:
 - `evictionMinimumReclaim`: 축출 후 최소한으로 확보해야 할 리소스 양
 - `evictionPressureTransitionPeriod`: 압력 상태 전환 사이의 대기 시간
+
+<span id="토폴로지-분배-제약-조건topologyspreadconstraints"></span>
 
 ## 토폴로지 분배 제약 조건(TopologySpreadConstraints)
 

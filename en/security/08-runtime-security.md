@@ -442,6 +442,8 @@ A new forensic Pod does not automatically run on the target node or share the ta
 <span id="falco-to-elasticsearch"></span>
 <span id="prometheus-grafana-dashboard"></span>
 
+<span id="siemsoar-integration"></span>
+
 ## SIEM/SOAR Integration
 
 Compare ServiceMonitor namespaces, selectors, and ports with actual Services. The Falco chart has a metrics Service; Falcosidekick exposes metrics on its HTTP port. The Sidekick chart renders a ServiceMonitor only when monitoring.coreos.com/v1 is available.

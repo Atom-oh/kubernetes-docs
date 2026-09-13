@@ -120,6 +120,8 @@ spec:
 }
 ```
 
+<span id="3-certificate-management-citadel-functionality"></span>
+
 #### 3. Certificate Management (Citadel Functionality)
 
 The Istio agent creates the key and CSR, authenticates to istiod, and receives a signed certificate. Envoy obtains that certificate and key from the local agent through SDS. Certificate lifetime is configurable; rotation precedes expiry.
