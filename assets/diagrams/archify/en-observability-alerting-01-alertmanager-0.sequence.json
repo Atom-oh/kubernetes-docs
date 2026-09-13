@@ -19,7 +19,7 @@
           "prometheus",
           "alertmanager"
         ],
-        "note": "When the expr condition holds for the for duration, the alert moves from Pending to Firing and is sent to Alertmanager."
+        "note": "A zero-for rule may fire at its matching evaluation. Prometheus sends alert updates to every replica."
       },
       {
         "id": "pipeline",
@@ -27,7 +27,7 @@
         "focus": [
           "alertmanager"
         ],
-        "note": "Alerts are processed in order: deduplication → grouping → routing decision → inhibition and silence checks."
+        "note": "Select routes and aggregate groups before timers, notification suppression and deduplication."
       },
       {
         "id": "notify",
@@ -64,12 +64,12 @@
     {
       "from": 165,
       "to": 270,
-      "label": "Rule evaluation — Pending when expr matches, Firing after the for duration"
+      "label": "Rule evaluation and state updates"
     },
     {
       "from": 290,
       "to": 360,
-      "label": "Pipeline — deduplication → grouping → routing decision → inhibition · silence check"
+      "label": "Route selection → aggregation → notification pipeline"
     },
     {
       "from": 380,
@@ -85,7 +85,7 @@
       "y": 230,
       "label": "POST /api/v2/alerts",
       "variant": "emphasis",
-      "note": "send firing alerts"
+      "note": "firing and resolved updates"
     },
     {
       "id": "notify",
@@ -128,20 +128,18 @@
   "cards": [
     {
       "dot": "orange",
-      "title": "Prometheus Rule Evaluation",
+      "title": "Evaluation and delivery",
       "items": [
-        "When the alert rule's expr condition is met, the alert enters Pending",
-        "If the condition holds for the for duration, it becomes Firing and is sent to Alertmanager"
+        "Positive for uses Pending; zero for can fire immediately",
+        "Send alert updates directly to every Alertmanager replica"
       ]
     },
     {
       "dot": "violet",
-      "title": "Alertmanager pipeline",
+      "title": "Notification pipeline",
       "items": [
-        "1. Deduplication",
-        "2. Grouping",
-        "3. Routing decision",
-        "4. Inhibition · silence check"
+        "After routing/grouping: timers, inhibition, silences and nflog deduplication",
+        "Failures, partitions and retries can produce duplicate notifications"
       ]
     }
   ]

@@ -1,10 +1,10 @@
 # Prometheus Alertmanager Quiz
 
-A quiz to test your understanding of Prometheus Alertmanager.
+> **Last Updated**: September 13, 2026
 
 ---
 
-1. What is the intermediate state an alert goes through before firing in Alertmanager?
+1. When a Prometheus alert rule has a positive `for` duration, which state precedes Firing?
    - A) Active
    - B) Pending
    - C) Warning
@@ -15,95 +15,89 @@ A quiz to test your understanding of Prometheus Alertmanager.
 
 **Answer: B) Pending**
 
-**Explanation:**
-Prometheus alerts have three states: Inactive, Pending, and Firing. When an alert rule's condition (expr) is met, it first transitions to the Pending state, and if the condition persists for the duration specified in the `for` clause, it transitions to the Firing state and is sent to Alertmanager. This mechanism prevents unnecessary alerts from temporary spikes.
+Pending belongs to Prometheus rule evaluation, not an Alertmanager evaluation stage. The condition must remain present at successive evaluations for the configured duration. With no `for` (or zero), it can fire at the first matching evaluation. Notification grouping adds separate delays; `keep_firing_for` can retain Firing after the expression stops matching.
 
 </details>
 
 ---
 
-2. Which statement correctly describes the roles of `group_wait`, `group_interval`, and `repeat_interval` in Alertmanager's routing configuration?
-   - A) group_wait: Wait time before sending the first notification of an alert group
-   - B) group_interval: Interval for resending identical alerts
-   - C) repeat_interval: Wait time when new alerts are added to a group
-   - D) All perform the same function
+2. Which statement about grouping timers is correct?
+   - A) `group_wait` delays the first notification for a new group.
+   - B) `group_interval` is only the repeat interval for unchanged alerts.
+   - C) `repeat_interval` is the first delay for newly added alerts.
+   - D) All three timers are identical.
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A) group_wait: Wait time before sending the first notification of an alert group**
+**Answer: A) `group_wait` delays the first notification for a new group.**
 
-**Explanation:**
-- `group_wait`: Time to wait after a new alert group is created before sending the first notification. During this period, other alerts belonging to the same group are collected and sent together.
-- `group_interval`: Time to wait before sending the next notification when new alerts are added to the same group.
-- `repeat_interval`: Interval for resending the same alert when it hasn't been resolved yet.
+`group_interval` schedules subsequent group checks, including changes and resolved alerts. `repeat_interval` controls repeat notifications for unchanged firing alerts, checked on group intervals; use a multiple of `group_interval`. Notification-log retention can cause an earlier repeat. These timers are independent of a Prometheus rule’s `for`.
 
 </details>
 
 ---
 
-3. Which statement correctly describes Alertmanager's Inhibition feature?
-   - A) A feature to ignore all alerts for a specific period
-   - B) A feature to suppress related alerts when a specific alert fires
-   - C) A feature to automatically lower the severity of alerts
-   - D) A feature to merge duplicate alerts
+3. What does inhibition do?
+   - A) Ignore every alert for a time window.
+   - B) Suppress matching target notifications while a matching source alert is active.
+   - C) Change the alert severity automatically.
+   - D) Delete duplicate alerts from Prometheus.
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) A feature to suppress related alerts when a specific alert fires**
+**Answer: B) Suppress matching target notifications while a matching source alert is active.**
 
-**Explanation:**
-Inhibition is a feature that suppresses related alerts (target) when a specific condition alert (source) fires. For example, when a node goes down, all pod-related alerts from that node can be suppressed to prevent alert storms. Silencing is a separate feature that ignores alerts for a specific period.
+Inhibition changes notification eligibility, not the underlying alert condition. Source/target matchers and equality labels must represent the intended dependency. Missing equality labels compare like empty values, so require non-empty correlation labels such as `cluster` and `node` to avoid suppressing unrelated alerts. Rule-list order is not a priority system.
 
 </details>
 
 ---
 
-4. What does the following alert rule in PrometheusRule CRD mean?
+4. What does this rule’s `for` mean?
+
    ```yaml
    - alert: HighCPU
-     expr: node_cpu_usage > 80
+     expr: 100 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100 > 80
      for: 5m
      labels:
        severity: warning
    ```
-   - A) Alert fires immediately when CPU usage exceeds 80%
-   - B) Alert fires when CPU usage exceeds 80% for 5 minutes continuously
-   - C) CPU usage is checked every 5 minutes and alert fires if over 80%
-   - D) Alert notification is sent 5 minutes after CPU exceeds 80%
+   - A) Notify immediately when CPU exceeds 80%.
+   - B) Enter Firing after the condition persists for five minutes across evaluations.
+   - C) Evaluate CPU only once every five minutes.
+   - D) Guarantee delivery exactly five minutes after the physical CPU increase.
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Alert fires when CPU usage exceeds 80% for 5 minutes continuously**
+**Answer: B) Enter Firing after the condition persists for five minutes across evaluations.**
 
-**Explanation:**
-The `for: 5m` setting means the alert condition (expr) must be met continuously for 5 minutes before transitioning to the Firing state. When the condition is first met, the state becomes Pending, and if it continues to be met for 5 minutes, it transitions to Firing and is sent to Alertmanager. This prevents unnecessary alerts from temporary spikes.
+This assumes scraped node-exporter CPU counters and an appropriate evaluation interval. `for` does not set the scrape/evaluation interval or guarantee a delivery deadline. A changed label set identifies a different alert; recovery resets Pending unless separate firing-retention behavior applies.
 
 </details>
 
 ---
 
-5. What does `send_resolved: true` mean in Alertmanager's receiver configuration?
-   - A) Send resolved alerts to the receiver as well
-   - B) Include resolution method in the alert message
-   - C) Automatically change alert to resolved state
-   - D) Grant receiver permission to resolve alerts
+5. What does `send_resolved: true` enable?
+   - A) Resolution notifications for that integration.
+   - B) Automatic remediation instructions.
+   - C) Changing the alert condition to healthy.
+   - D) Permission for the receiver to repair the cluster.
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: A) Send resolved alerts to the receiver as well**
+**Answer: A) Resolution notifications for that integration.**
 
-**Explanation:**
-The `send_resolved: true` setting sends a resolution notification to the receiver when an alert is resolved (when the condition is no longer met). This allows responders to know that the problem has been resolved. The default value varies by receiver type, but enabling it is generally recommended.
+It controls resolved notifications for the chosen integration; defaults differ by receiver. Resolved is an alert lifecycle state, not independent proof that a service recovered. Expression changes, missing data or client update/expiry behavior can also affect that state.
 
 </details>
 
 ---
 
-6. What protocol is used to synchronize state between cluster members in Alertmanager high availability configuration?
+6. Which protocol is used for Alertmanager cluster state synchronization?
    - A) Raft
    - B) Paxos
    - C) Gossip
@@ -114,99 +108,91 @@ The `send_resolved: true` setting sends a resolution notification to the receive
 
 **Answer: C) Gossip**
 
-**Explanation:**
-Alertmanager clusters use the Gossip protocol to synchronize state between members. This allows Silence information and notification logs (nflog) to be shared across all instances, preventing duplicate alert notifications. When configuring a cluster, use the `--cluster.peer` flag to specify other members.
+Gossip shares silences and notification-log state with eventual consistency. Send the same alerts to every replica; the gossip layer does not replace that fan-out. Deduplication is best effort, and network partitions can produce duplicates. This is not exactly-once delivery or a guarantee against all notification loss.
 
 </details>
 
 ---
 
-7. In the following Alertmanager routing configuration, which receiver will an alert with `severity=critical` and `team=infra` be sent to?
+7. For `severity=critical, team=infra`, which route is selected below?
+
    ```yaml
    route:
-     receiver: 'default'
+     receiver: default
      routes:
-       - match:
-           severity: critical
-         receiver: 'critical-receiver'
-       - match:
-           team: infra
-         receiver: 'infra-team'
+       - matchers: ['severity="critical"']
+         receiver: critical-receiver
+       - matchers: ['team="infra"']
+         receiver: infra-team
    ```
    - A) default
    - B) critical-receiver
    - C) infra-team
-   - D) Both critical-receiver and infra-team
+   - D) Both child routes
 
 <details>
 <summary>Show Answer</summary>
 
 **Answer: B) critical-receiver**
 
-**Explanation:**
-Alertmanager routing operates as a tree structure, and by default, processing ends at the first matching route. In this case, the `severity=critical` condition matches first, so the alert is sent to `critical-receiver`. To send to multiple routes, the `continue: true` setting is required.
+With default `continue: false`, the first matching sibling stops sibling traversal. Set `continue: true` on it to consider later siblings. This tests label routing only: an inactive/muted route can still stop traversal, so time-window behavior needs separate checks. Multiple integrations inside one receiver do not require `continue`.
 
 </details>
 
 ---
 
-8. What is the main purpose of the AlertmanagerConfig CRD?
-   - A) Define Alertmanager's global configuration
-   - B) Separate alert configuration by namespace
-   - C) Define Prometheus alert rules
-   - D) Configure Alertmanager cluster
+8. What does namespace-owned AlertmanagerConfig enable?
+   - A) Automatically bypass all namespace restrictions.
+   - B) Manage structured routes/receivers selected by an Alertmanager instance.
+   - C) Define PromQL recording and alert rules.
+   - D) Replace gossip peer configuration.
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Separate alert configuration by namespace**
+**Answer: B) Manage structured routes/receivers selected by an Alertmanager instance.**
 
-**Explanation:**
-AlertmanagerConfig CRD is a resource provided by Prometheus Operator that allows managing Alertmanager configuration (receivers, routes, inhibition rules, etc.) separately by namespace. This allows each team to independently manage alert configuration in their own namespace.
+The Operator must select the object’s labels and namespace, and referenced Secrets must exist in the required namespace. Its matcher strategy controls namespace enforcement. The reviewed Operator 0.93.1 chart serves `v1alpha1`; do not invent a required API upgrade. Global-configuration use is a separate option, and namespace label matching is not authentication of alert senders.
 
 </details>
 
 ---
 
-9. Which is NOT an appropriate use case for creating a Silence in Alertmanager?
-   - A) Suppress alerts during planned maintenance
-   - B) Prevent repeated alerts from known issues
-   - C) Permanently disable specific alerts
-   - D) Suppress alerts during deployment
+9. Which is not an appropriate purpose for a Silence?
+   - A) Planned maintenance.
+   - B) A bounded investigation window.
+   - C) Permanently disable an alert rule.
+   - D) A reviewed deployment window.
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Permanently disable specific alerts**
+**Answer: C) Permanently disable an alert rule.**
 
-**Explanation:**
-Silence is a feature that temporarily suppresses alerts and must always specify an end time. To permanently disable alerts, you need to modify or delete the alert rule itself. Main use cases for Silence are temporary situations such as maintenance, deployment, or investigating known issues.
+A silence requires a finite end time and affects notifications. Expiration ends suppression; it is not immediate deletion from stored silence history. Permanent rule/routing changes need separate review. Record the owner, reason and approved scope; expiry reminders need an explicitly configured workflow.
 
 </details>
 
 ---
 
-10. Which of the following is NOT valid Go template syntax that can be used in Alertmanager templates?
-    - A) <code v-pre>{{ .Labels.alertname }}</code>
-    - B) <code v-pre>{{ if eq .Status "firing" }}Danger{{ end }}</code>
-    - C) <code v-pre>{{ range .Alerts }}{{ .Labels.severity }}{{ end }}</code>
-    - D) <code v-pre>{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}</code>
+10. Which expression is invalid Go template syntax?
+   - A) `{{ .CommonLabels.alertname }}`
+   - B) `{{ if eq .Status "firing" }}Danger{{ end }}`
+   - C) `{{ range .Alerts }}{{ .Labels.severity }}{{ end }}`
+   - D) `{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}`
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: D) <code v-pre>{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}</code>**
+**Answer: D) `{{ .Annotations.description | length > 100 ? substring(0, 100) : .Annotations.description }}`**
 
-**Explanation:**
-Go templates do not support the ternary operator (`? :`). Instead, you must use <code v-pre>{{ if }}</code> statements. The correct syntax would be:
-```
-{{ if gt (len .Annotations.description) 100 }}
-  {{ slice .Annotations.description 0 100 }}...
-{{ else }}
-  {{ .Annotations.description }}
+Go templates do not support this ternary expression. At the root, Alertmanager supplies Data with CommonLabels/CommonAnnotations; Labels/Annotations/StartsAt belong to an individual Alert inside `range .Alerts`. The example below formats at most 100 runes per description, avoiding a byte slice that could split Korean text. This is output formatting, not sensitive-data redaction.
+
+```text
+{{ range .Alerts }}
+{{ printf "%.100s" .Annotations.description }}
 {{ end }}
 ```
-Go templates support pipes (`|`), conditionals (`if`/`else`), loops (`range`), built-in functions, etc.
 
 </details>
 
@@ -214,6 +200,8 @@ Go templates support pipes (`|`), conditionals (`if`/`else`), loops (`range`), b
 
 ## Additional Learning Resources
 
-- [Prometheus Alerting Documentation](https://prometheus.io/docs/alerting/latest/alertmanager/)
-- [Alertmanager Configuration](https://prometheus.io/docs/alerting/latest/configuration/)
-- [Prometheus Operator - AlertmanagerConfig](https://prometheus-operator.dev/docs/user-guides/alerting/)
+- [Alertmanager 0.34 configuration](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/configuration.md)
+- [Notification template reference](https://github.com/prometheus/alertmanager/blob/v0.34.0/docs/notifications.md)
+- [Prometheus Operator alerting](https://prometheus-operator.dev/docs/developer/alerting/)
+
+[Return to the guide](../../../observability/alerting/01-alertmanager.md)

@@ -1,0 +1,910 @@
+{
+  "status": "passed",
+  "verifiedAt": "2026-09-13T14:24:55.288810+00:00",
+  "source": "Four paired validated Mermaid replacements in Alertmanager guides; original retired figure findings preserved in worker report.",
+  "changes": [
+    "Routes/aggregation precede notification suppression and deduplication.",
+    "Inhibition requires selected source/target and nonempty equal cluster/node labels; different/missing labels not inhibited.",
+    "Silence expiry ends suppression; physical removal follows retention/GC.",
+    "HA and retries do not guarantee exactly-once delivery."
+  ],
+  "delivery": [
+    {
+      "stem": "en-observability-alerting-01-alertmanager-0",
+      "spec": "assets/diagrams/archify/en-observability-alerting-01-alertmanager-0.sequence.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-alerting-01-alertmanager-1",
+      "spec": "assets/diagrams/archify/en-observability-alerting-01-alertmanager-1.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-alerting-01-alertmanager-4",
+      "spec": "assets/diagrams/archify/en-observability-alerting-01-alertmanager-4.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "en-observability-alerting-01-alertmanager-5",
+      "spec": "assets/diagrams/archify/en-observability-alerting-01-alertmanager-5.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-01-alertmanager-0",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-01-alertmanager-0.sequence.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-01-alertmanager-1",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-01-alertmanager-1.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-01-alertmanager-4",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-01-alertmanager-4.architecture.json",
+      "ok": true,
+      "diagnostics": []
+    },
+    {
+      "stem": "ko-observability-alerting-01-alertmanager-5",
+      "spec": "assets/diagrams/archify/ko-observability-alerting-01-alertmanager-5.workflow.json",
+      "ok": true,
+      "diagnostics": []
+    }
+  ],
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-observability-alerting-01-alertmanager-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 880,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 880,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 880,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 47558,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 669,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 669,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 669,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 56133,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 602,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 602,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 602,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51149,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 981,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 981,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 981,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 52523,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 567,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 567,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 567,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 47371,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 454,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 454,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 454,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55796,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-4.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 455,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-4.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 455,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-4.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 455,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 50978,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-5.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 628,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-5.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 628,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-5.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 628,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 51794,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "24caseson8retiredAlertmanagerviewers; motion/reduced-motion/visibility/theme/guided controls and8SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  },
+  "desktop": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-observability-alerting-01-alertmanager-0.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-0.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-0.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-0.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-1.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-1.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-1.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-1.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-4.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-4.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-4.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-4.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-5.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-5.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-5.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-5.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-0.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-0.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-0.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-0.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-1.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-1.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-1.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-1.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-4.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-4.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-4.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-4.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-5.html",
+        "width": 1440,
+        "height": 900,
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-5.html",
+        "width": 1600,
+        "height": 1000,
+        "scrollWidth": 1600,
+        "scrollHeight": 1000,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-5.html",
+        "width": 1920,
+        "height": 1080,
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "passed": true
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-5.html",
+        "width": 2048,
+        "height": 1320,
+        "scrollWidth": 2048,
+        "scrollHeight": 1320,
+        "passed": true
+      }
+    ],
+    "hashes": [
+      {
+        "file": "en-observability-alerting-01-alertmanager-0.html",
+        "sha256": "a2a18b1732f083346cdc6ed0e26325e17a3d31cbce387a91fcef62b26441d52f"
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-1.html",
+        "sha256": "a67ae382bd941fcae130b7b176af353470cea68aa44f2c759428c7bf0ad0d078"
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-4.html",
+        "sha256": "28bf8c7cbbaa06254ccf94d505881851b8a76704351e0bf37a05db4622bd8ddc"
+      },
+      {
+        "file": "en-observability-alerting-01-alertmanager-5.html",
+        "sha256": "24264abc3c79c8802fe6ba8a6ef477f293fe5312246b156f3144bcc7ecbabba5"
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-0.html",
+        "sha256": "fc14953f424af0ff99ea3020e03723d4bf1833c9190c2c996c63c20a8c5938e0"
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-1.html",
+        "sha256": "2bd439786dcd2f1b507923d9a596d7f40472e60ea4206be2ff287390517e3a9c"
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-4.html",
+        "sha256": "ba4b06644bd530648335b137b202adc47a4e3a7246de859f790e5f101a45bf93"
+      },
+      {
+        "file": "ko-observability-alerting-01-alertmanager-5.html",
+        "sha256": "37eed7a2ebfebad3f3586b10b0ca1075ce34a308f5e1c6ffcbd065831ff798e3"
+      }
+    ]
+  },
+  "desktopRetry": "Initial immediate measurements had2overflows; repeated aftertwoanimationframes+100mssettled responsive layout passed32cases. No artifact or CSS was changed to hide overflow.",
+  "individualPNGInspection": {
+    "count": 8,
+    "status": "viewed",
+    "findings": []
+  },
+  "artifacts": [
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-01-alertmanager-0.sequence.json",
+      "sha256": "c8ce643947dc67b5d5050ac8b9bd94d8658321c486afba41671f0064233b3e0d"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-01-alertmanager-0.html",
+      "sha256": "9453159621bb23b5210752116426081ed3153186938cbded398a91d3e7808495"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-01-alertmanager-0.png",
+      "sha256": "57362ccd2401431e05985196da7cf63b5631914529976a6f8fe4acb49e55eda1"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-01-alertmanager-1.architecture.json",
+      "sha256": "c6c03752e7498ab996d871ddb140aa9ed1d3fcc4e1ea05fd936edf62540b6b69"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-01-alertmanager-1.html",
+      "sha256": "c301aae96620b73afafdef3f5a9878c5abf968fb07d7faa5207af6a69f4f8f77"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-01-alertmanager-1.png",
+      "sha256": "15189a36ef2a7010007ec3b74fe119ddf573083d9799a1b56b385bdca4884973"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-01-alertmanager-4.architecture.json",
+      "sha256": "98bb673311894f586c65dca85131a3f454a7fb230f9031a55110024192fe3075"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-01-alertmanager-4.html",
+      "sha256": "dda15eee0af7832091cfa2f26ba035f9b76bcc5409faeb3d1747920d9539ad1d"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-01-alertmanager-4.png",
+      "sha256": "55d5483ef5a20f075dddb405f2849dba91273313cb570e2fa6ad12dae5ba341b"
+    },
+    {
+      "path": "assets/diagrams/archify/en-observability-alerting-01-alertmanager-5.workflow.json",
+      "sha256": "3291e72c57817725e7fa5bdc4bf06ed4ddb568f31f561332e124d4accf41f632"
+    },
+    {
+      "path": "public/archmaps/en-observability-alerting-01-alertmanager-5.html",
+      "sha256": "f638d5551b8e4f25703d10741c92231a157165037d9e82a66c614457bb7d7864"
+    },
+    {
+      "path": "en/.gitbook/assets/en-observability-alerting-01-alertmanager-5.png",
+      "sha256": "d8010af21490f449f585eeadff2f9c944880a14db03b65a38e5435872068d9d7"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-01-alertmanager-0.sequence.json",
+      "sha256": "b358a8af62f0fb2d779aa53f914932e8b81b90d369dab27a8b2b8dd564a802f8"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-01-alertmanager-0.html",
+      "sha256": "d54ae3565c460d4abb5c7171cd43f00a785eacc5efce412867ab93e781c4b95b"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-01-alertmanager-0.png",
+      "sha256": "6163cfbe5fc9f11d2329c349a556ff3f15f007860d165bad2ed0db586b2aba89"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-01-alertmanager-1.architecture.json",
+      "sha256": "8056754cc83021c293433e10c038adf45e39fc91a73e581ddd26ef19a1011f1a"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-01-alertmanager-1.html",
+      "sha256": "ef3079e9aa2b574d531194b41cbdcf0c8d1681ea5dc68d6e426a253a54b0f3f2"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-01-alertmanager-1.png",
+      "sha256": "9d8cc78161a392d296a2a487bdffe724d74595a93e7ddb11d6318dd394e9a54f"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-01-alertmanager-4.architecture.json",
+      "sha256": "47ff8cc33dde1a5531cf7b85dc71852d5551f79f6abc909c3ab6ea20cd8fdc38"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-01-alertmanager-4.html",
+      "sha256": "94608094aece788f1747dd70cbb969d2cbc77a2a61c012db481b6de9affbb101"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-01-alertmanager-4.png",
+      "sha256": "c892a99f7b7d4d6de418dd9765a60bbd0fa811b5bc260538d0fbe3602adc5b40"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-observability-alerting-01-alertmanager-5.workflow.json",
+      "sha256": "e916fee1072e4a9e545e8c817e0c2f510e34b86980e9092e655a81148075176e"
+    },
+    {
+      "path": "public/archmaps/ko-observability-alerting-01-alertmanager-5.html",
+      "sha256": "3f449da30062ef5b3ce3ebef64c1fb4707fbdcb2181be4283556d311f0d81b78"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-observability-alerting-01-alertmanager-5.png",
+      "sha256": "710aa1353031dd995285446c500dda14b86fc5e4b432dbd208822358571ccbb5"
+    }
+  ],
+  "limits": [
+    "No external notifications or production Alertmanager deployment.",
+    "These checks supplement the separate native Alertmanager/Prometheus contracts; not an implementation of the service evaluator."
+  ]
+}
