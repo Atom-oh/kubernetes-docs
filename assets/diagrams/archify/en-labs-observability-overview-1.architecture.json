@@ -2,346 +2,153 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Observability Lab Platform Architecture",
-    "output": "en-labs-observability-overview-1.html",
+    "title": "Baseline stack and optional extensions",
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1340,
-      780
-    ],
-    "views": [
-      {
-        "id": "gitops",
-        "label": "GitOps deployment",
-        "focus": [
-          "argocd",
-          "msa",
-          "keda",
-          "mwaa"
-        ],
-        "note": "Argo CD deploys the MSA application; KEDA and Karpenter scale it and MWAA triggers the batch job."
-      },
-      {
-        "id": "telemetry",
-        "label": "Telemetry path",
-        "focus": [
-          "msa",
-          "otel",
-          "obs",
-          "awsobs"
-        ],
-        "note": "Metrics, logs, and traces collected by the OTel Agent flow through the observability stack to the AWS managed backends."
-      },
-      {
-        "id": "appdeps",
-        "label": "Application dependencies",
-        "focus": [
-          "msa",
-          "aurora",
-          "sqssns"
-        ],
-        "note": "Orders and payments are stored in Aurora, events are published to SQS/SNS, and Alertmanager notifications also go out via SNS."
-      }
+      1250,
+      570
     ],
     "locale": "en"
   },
   "components": [
     {
-      "id": "argocd",
+      "id": "apps",
       "type": "backend",
-      "label": "ArgoCD + Argo Rollouts",
-      "sublabel": "GitOps CD · canary",
+      "label": "Five Python roles",
+      "sublabel": "HTTP + outbox + two consumers",
       "pos": [
         40,
-        180
+        80
       ],
       "size": [
-        240,
+        260,
         64
       ]
     },
     {
-      "id": "obs",
+      "id": "stack",
       "type": "database",
-      "label": "Observability Stack",
-      "sublabel": "Prometheus · Loki · Tempo · Grafana",
+      "label": "Prometheus · Loki · Tempo",
+      "sublabel": "mTLS / Grafana",
       "pos": [
-        40,
-        330
+        440,
+        80
       ],
       "size": [
-        240,
+        280,
         64
       ]
     },
     {
-      "id": "loadtest",
-      "type": "frontend",
-      "label": "Load Testing",
-      "sublabel": "k6 / Locust",
-      "pos": [
-        40,
-        60
-      ],
-      "size": [
-        240,
-        64
-      ]
-    },
-    {
-      "id": "msa",
-      "type": "backend",
-      "label": "MSA Application",
-      "sublabel": "OTel Instrumented",
-      "pos": [
-        560,
-        180
-      ],
-      "size": [
-        240,
-        64
-      ]
-    },
-    {
-      "id": "otel",
-      "type": "messagebus",
-      "label": "OTel Agent",
-      "sublabel": "DaemonSet collection",
-      "pos": [
-        360,
-        330
-      ],
-      "size": [
-        180,
-        64
-      ]
-    },
-    {
-      "id": "keda",
-      "type": "backend",
-      "label": "Karpenter + KEDA",
-      "sublabel": "Autoscaling",
-      "pos": [
-        720,
-        330
-      ],
-      "size": [
-        200,
-        64
-      ]
-    },
-    {
-      "id": "aurora",
-      "type": "database",
-      "label": "Aurora PostgreSQL",
-      "sublabel": "Order · payment store",
-      "pos": [
-        860,
-        620
-      ],
-      "size": [
-        200,
-        64
-      ]
-    },
-    {
-      "id": "sqssns",
-      "type": "messagebus",
-      "label": "SQS / SNS",
-      "sublabel": "Event queue · topic",
-      "pos": [
-        380,
-        620
-      ],
-      "size": [
-        180,
-        64
-      ]
-    },
-    {
-      "id": "awsobs",
+      "id": "aws",
       "type": "cloud",
-      "label": "Observability Backends",
-      "sublabel": "AMP · CloudWatch · OpenSearch",
+      "label": "Aurora · SNS/SQS · Logs",
+      "sublabel": "baseline AWS integrations",
+      "pos": [
+        850,
+        80
+      ],
+      "size": [
+        280,
+        64
+      ]
+    },
+    {
+      "id": "gitops",
+      "type": "external",
+      "label": "ArgoCD / Karpenter",
+      "sublabel": "Separate setup / identity / policy",
       "pos": [
         40,
-        620
+        390
       ],
       "size": [
-        240,
+        260,
         64
       ]
     },
     {
-      "id": "mwaa",
-      "type": "cloud",
-      "label": "MWAA",
-      "sublabel": "analytics-batch trigger",
+      "id": "alts",
+      "type": "external",
+      "label": "AMP · Mimir · VM / AMG",
+      "sublabel": "Optional metrics / visualization",
       "pos": [
-        1100,
-        620
+        440,
+        390
       ],
       "size": [
-        200,
+        290,
         64
       ]
-    }
-  ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "Managed Cluster (EKS)",
-      "wraps": [
-        "argocd",
-        "obs",
-        "loadtest"
-      ],
-      "pad": 20
     },
     {
-      "kind": "region",
-      "label": "Service Cluster (EKS)",
-      "wraps": [
-        "msa",
-        "otel",
-        "keda"
+      "id": "extras",
+      "type": "external",
+      "label": "ClickHouse · OpenSearch · MWAA",
+      "sublabel": "Optional logs / analytics",
+      "pos": [
+        850,
+        390
       ],
-      "pad": 48
-    },
-    {
-      "kind": "region",
-      "label": "AWS Managed Services",
-      "wraps": [
-        "aurora",
-        "sqssns",
-        "awsobs",
-        "mwaa"
+      "size": [
+        320,
+        64
       ]
     }
   ],
   "connections": [
     {
-      "id": "argocd-msa",
-      "from": "argocd",
-      "to": "msa",
-      "label": "GitOps deploy",
+      "id": "e0",
+      "from": "apps",
+      "to": "stack",
+      "label": "telemetry",
       "variant": "emphasis"
     },
     {
-      "id": "loadtest-msa",
-      "from": "loadtest",
-      "to": "msa",
-      "label": "generate load",
+      "id": "e1",
+      "from": "apps",
+      "to": "aws",
+      "label": "events / SQL",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "e2",
+      "from": "gitops",
+      "to": "apps",
+      "label": "optional",
       "variant": "dashed",
-      "fromSide": "right",
-      "toSide": "top"
-    },
-    {
-      "id": "msa-otel",
-      "from": "msa",
-      "to": "otel",
-      "label": "metrics · logs · traces",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "otel-obs",
-      "from": "otel",
-      "to": "obs",
-      "label": "send",
-      "variant": "emphasis"
-    },
-    {
-      "id": "keda-msa",
-      "from": "keda",
-      "to": "msa",
-      "label": "scale",
       "fromSide": "top",
       "toSide": "bottom"
     },
     {
-      "id": "obs-awsobs",
-      "from": "obs",
-      "to": "awsobs",
-      "label": "remote write · export",
-      "fromSide": "bottom",
-      "toSide": "top",
-      "labelAt": [
-        95,
-        560
-      ]
-    },
-    {
-      "id": "obs-sqssns",
-      "from": "obs",
-      "to": "sqssns",
-      "label": "notify (Alertmanager)",
+      "id": "e3",
+      "from": "stack",
+      "to": "alts",
+      "label": "optional",
       "variant": "dashed",
       "fromSide": "bottom",
       "toSide": "top"
     },
     {
-      "id": "msa-aurora",
-      "from": "msa",
-      "to": "aurora",
-      "label": "order · payment WRITE",
-      "variant": "emphasis",
-      "fromSide": "right",
-      "toSide": "top",
-      "labelAt": [
-        1000,
-        540
-      ]
-    },
-    {
-      "id": "msa-sqssns",
-      "from": "msa",
-      "to": "sqssns",
-      "label": "event PUBLISH/SUB",
-      "variant": "emphasis",
+      "id": "e4",
+      "from": "aws",
+      "to": "extras",
+      "label": "optional",
+      "variant": "dashed",
       "fromSide": "bottom",
       "toSide": "top"
-    },
-    {
-      "id": "mwaa-msa",
-      "from": "mwaa",
-      "to": "msa",
-      "label": "batch TRIGGER",
-      "variant": "dashed",
-      "fromSide": "top",
-      "toSide": "top",
-      "labelAt": [
-        1200,
-        420
-      ]
     }
   ],
+  "boundaries": [],
   "cards": [
     {
-      "dot": "cyan",
-      "title": "Managed Cluster",
-      "items": [
-        "ArgoCD + Argo Rollouts deploy the MSA application via GitOps and run canary rollouts",
-        "Hosts the Prometheus · Loki · Tempo · Grafana observability stack alongside k6 load testing"
-      ]
-    },
-    {
-      "dot": "emerald",
-      "title": "Service Cluster",
-      "items": [
-        "Runs the OTel-instrumented MSA application",
-        "The OTel Agent (DaemonSet) collects metrics, logs, and traces and sends them to the observability stack",
-        "Karpenter + KEDA autoscale nodes and pods"
-      ]
-    },
-    {
       "dot": "amber",
-      "title": "AWS Managed Services",
+      "title": "Extension validation",
       "items": [
-        "Aurora PostgreSQL stores order and payment data",
-        "SQS/SNS publish and consume events",
-        "AMP · CloudWatch · OpenSearch serve as observability backends; MWAA triggers analytics-batch"
+        "The baseline does not deploy every optional tool",
+        "Validate identity, transport, storage and cost per extension"
       ]
     }
   ]

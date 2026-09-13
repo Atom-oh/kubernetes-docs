@@ -2,191 +2,78 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Observability Stack Architecture",
-    "locale": "en",
-    "output": "en-labs-observability-02-observability-stack-lab-0.html",
+    "title": "Wired telemetry paths",
     "quality_profile": "showcase",
     "animation": "trace",
-    "legend": {
-      "entries": {
-        "external": {
-          "label": "Data Sources"
-        },
-        "backend": {
-          "label": "OTel Collector pipeline"
-        },
-        "database": {
-          "label": "Storage backends"
-        },
-        "frontend": {
-          "label": "Visualization"
-        }
-      }
-    },
-    "views": [
-      {
-        "id": "ingest",
-        "label": "Telemetry ingestion",
-        "focus": [
-          "app",
-          "node",
-          "k8s",
-          "receivers"
-        ],
-        "note": "MSA apps emit OTLP via the OTel SDK; node metrics and K8s events also land in the Receivers."
-      },
-      {
-        "id": "pipeline",
-        "label": "Collector pipeline",
-        "focus": [
-          "receivers",
-          "processors",
-          "exporters"
-        ],
-        "note": "Telemetry flows Receivers → Processors (memory_limiter, k8sattributes, batch) → Exporters."
-      },
-      {
-        "id": "fanout",
-        "label": "Backend fan-out",
-        "focus": [
-          "exporters",
-          "metrics",
-          "logging",
-          "tracing",
-          "grafana"
-        ],
-        "note": "Exporters fan metrics, logs and traces out to their backends; Grafana queries them all in one place."
-      }
-    ],
     "viewBox": [
-      1390,
-      542
-    ]
+      1460,
+      770
+    ],
+    "locale": "en"
   },
   "components": [
     {
       "id": "app",
-      "type": "external",
-      "label": "MSA Apps",
-      "sublabel": "OTel SDK instrumentation",
+      "type": "frontend",
+      "label": "MSA application",
       "pos": [
-        30,
-        90
+        40,
+        230
       ],
       "size": [
-        140,
+        230,
         64
       ]
     },
     {
-      "id": "node",
-      "type": "external",
-      "label": "Node Metrics",
-      "sublabel": "kubelet · node exporter",
-      "pos": [
-        30,
-        240
-      ],
-      "size": [
-        140,
-        64
-      ]
-    },
-    {
-      "id": "k8s",
-      "type": "external",
-      "label": "K8s Events",
-      "sublabel": "API server events",
-      "pos": [
-        30,
-        390
-      ],
-      "size": [
-        140,
-        64
-      ]
-    },
-    {
-      "id": "receivers",
-      "type": "backend",
-      "label": "Receivers",
-      "sublabel": "OTLP · Prometheus",
-      "pos": [
-        240,
-        240
-      ],
-      "size": [
-        140,
-        64
-      ]
-    },
-    {
-      "id": "processors",
-      "type": "backend",
-      "label": "Processors",
-      "sublabel": "k8sattributes · batch",
-      "pos": [
-        420,
-        240
-      ],
-      "size": [
-        170,
-        64
-      ]
-    },
-    {
-      "id": "exporters",
-      "type": "backend",
-      "label": "Exporters",
-      "sublabel": "Fan-out per backend",
-      "pos": [
-        630,
-        240
-      ],
-      "size": [
-        140,
-        64
-      ]
-    },
-    {
-      "id": "metrics",
+      "id": "promsvc",
       "type": "database",
-      "label": "Metrics Backends",
-      "sublabel": "Prometheus→AMP · VictoriaMetrics · Mimir · CloudWatch",
+      "label": "Service Prometheus",
       "pos": [
-        860,
-        90
+        390,
+        60
       ],
       "size": [
-        320,
+        250,
         64
       ]
     },
     {
-      "id": "logging",
-      "type": "database",
-      "label": "Logging Backends",
-      "sublabel": "Loki · ClickHouse · OpenSearch · CloudWatch Logs",
+      "id": "agent",
+      "type": "backend",
+      "label": "Service Collector",
       "pos": [
-        860,
-        240
+        390,
+        400
       ],
       "size": [
-        320,
+        250,
         64
       ]
     },
     {
-      "id": "tracing",
+      "id": "prommgmt",
       "type": "database",
-      "label": "Tracing Backends",
-      "sublabel": "Tempo · X-Ray",
+      "label": "Management Prometheus",
       "pos": [
-        860,
-        390
+        770,
+        60
       ],
       "size": [
-        320,
+        270,
+        64
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "backend",
+      "label": "Management Collector",
+      "pos": [
+        770,
+        400
+      ],
+      "size": [
+        290,
         64
       ]
     },
@@ -194,139 +81,148 @@
       "id": "grafana",
       "type": "frontend",
       "label": "Grafana",
-      "sublabel": "Unified dashboards · AMG",
       "pos": [
-        1220,
-        240
+        1130,
+        60
       ],
       "size": [
-        140,
+        250,
         64
       ]
-    }
-  ],
-  "boundaries": [
+    },
     {
-      "kind": "region",
-      "label": "Data Sources",
-      "wraps": [
-        "app",
-        "node",
-        "k8s"
+      "id": "loki",
+      "type": "database",
+      "label": "Loki",
+      "pos": [
+        1130,
+        290
+      ],
+      "size": [
+        230,
+        64
       ]
     },
     {
-      "kind": "region",
-      "label": "OTel Collector (Gateway)",
-      "wraps": [
-        "receivers",
-        "processors",
-        "exporters"
+      "id": "tempo",
+      "type": "database",
+      "label": "Tempo3",
+      "pos": [
+        1130,
+        470
+      ],
+      "size": [
+        230,
+        64
       ]
     },
     {
-      "kind": "region",
-      "label": "Observability Backends",
-      "wraps": [
-        "metrics",
-        "logging",
-        "tracing"
+      "id": "cw",
+      "type": "cloud",
+      "label": "CloudWatch Logs",
+      "pos": [
+        770,
+        600
+      ],
+      "size": [
+        290,
+        64
       ]
     }
   ],
   "connections": [
     {
-      "id": "app-to-receivers",
+      "id": "e0",
       "from": "app",
-      "to": "receivers",
-      "label": "OTLP",
+      "to": "promsvc",
+      "label": "scrape"
+    },
+    {
+      "id": "e1",
+      "from": "app",
+      "to": "agent",
+      "label": "logs / traces"
+    },
+    {
+      "id": "e2",
+      "from": "promsvc",
+      "to": "prommgmt",
+      "label": "mTLS",
       "variant": "emphasis"
     },
     {
-      "id": "node-to-receivers",
-      "from": "node",
-      "to": "receivers"
-    },
-    {
-      "id": "k8s-to-receivers",
-      "from": "k8s",
-      "to": "receivers"
-    },
-    {
-      "id": "receivers-to-processors",
-      "from": "receivers",
-      "to": "processors",
+      "id": "e3",
+      "from": "agent",
+      "to": "gateway",
+      "label": "mTLS",
       "variant": "emphasis"
     },
     {
-      "id": "processors-to-exporters",
-      "from": "processors",
-      "to": "exporters",
-      "variant": "emphasis"
+      "id": "e4",
+      "from": "gateway",
+      "to": "loki",
+      "label": "logs"
     },
     {
-      "id": "exporters-to-metrics",
-      "from": "exporters",
-      "to": "metrics",
-      "label": "metrics"
-    },
-    {
-      "id": "exporters-to-logging",
-      "from": "exporters",
-      "to": "logging",
-      "label": "logs",
-      "variant": "emphasis",
-      "labelDx": 22
-    },
-    {
-      "id": "exporters-to-tracing",
-      "from": "exporters",
-      "to": "tracing",
+      "id": "e5",
+      "from": "gateway",
+      "to": "tempo",
       "label": "traces"
     },
     {
-      "id": "metrics-to-grafana",
-      "from": "metrics",
-      "to": "grafana",
+      "id": "e6",
+      "from": "gateway",
+      "to": "cw",
+      "label": "raw logs",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        940,
+        545
+      ]
+    },
+    {
+      "id": "e7",
+      "from": "grafana",
+      "to": "prommgmt",
+      "label": "query",
       "variant": "dashed"
     },
     {
-      "id": "logging-to-grafana",
-      "from": "logging",
-      "to": "grafana",
-      "variant": "dashed"
+      "id": "e8",
+      "from": "grafana",
+      "to": "loki",
+      "label": "query",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
     },
     {
-      "id": "tracing-to-grafana",
-      "from": "tracing",
-      "to": "grafana",
-      "variant": "dashed"
+      "id": "e9",
+      "from": "grafana",
+      "to": "tempo",
+      "label": "query",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "right"
     }
   ],
+  "boundaries": [],
   "cards": [
     {
+      "dot": "cyan",
+      "title": "Transport boundary",
+      "items": [
+        "Cross-cluster traffic uses routable private endpoints",
+        "Connections without client certificates are rejected"
+      ]
+    },
+    {
       "dot": "amber",
-      "title": "Metrics Backends",
+      "title": "Retention and loss",
       "items": [
-        "Prometheus (kube-prometheus-stack) remote-writes to AMP",
-        "VictoriaMetrics and Mimir as long-term storage alternatives",
-        "CloudWatch Metrics via the ADOT (awsemf) path"
-      ]
-    },
-    {
-      "dot": "emerald",
-      "title": "Logging Backends",
-      "items": [
-        "Loki (SimpleScalable), ClickHouse",
-        "OpenSearch and CloudWatch Logs via the FluentBit path"
-      ]
-    },
-    {
-      "dot": "violet",
-      "title": "Tracing · Visualization",
-      "items": [
-        "Tempo (otlp/tempo) and X-Ray (awsxray) exporters",
-        "Grafana datasource provisioning + Amazon Managed Grafana"
+        "Lab retention: Prometheus2days, Loki/Tempo24hours",
+        "Persistent offsets/exporter queues require separate design"
       ]
     }
   ]

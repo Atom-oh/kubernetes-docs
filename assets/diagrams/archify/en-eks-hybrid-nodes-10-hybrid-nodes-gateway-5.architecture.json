@@ -26,7 +26,7 @@
           "gw2",
           "lease"
         ],
-        "note": "The standby only watches the lease; it acts once the lease expires."
+        "note": "The standby continuously maintains local CiliumNode tunnel state and participates in Lease election."
       }
     ]
   },
@@ -65,7 +65,7 @@
       "id": "lease",
       "type": "security",
       "label": "Kubernetes Lease",
-      "sublabel": "holder: gateway-pod-1",
+      "sublabel": "Instance identity; not just Pod name",
       "pos": [
         400,
         83
@@ -79,7 +79,7 @@
       "id": "vtep",
       "type": "backend",
       "label": "CiliumVTEPConfig",
-      "sublabel": "vtepIPs: [10.0.1.100]",
+      "sublabel": "spec.endpoints",
       "pos": [
         40,
         300
@@ -154,18 +154,18 @@
       "dot": "orange",
       "title": "Leader",
       "items": [
-        "Holds the Kubernetes Lease",
-        "Manages CiliumVTEPConfig vtepIPs",
-        "Programs hybrid Pod CIDR routes to its ENI"
+        "Holds hybrid-gateway-leader Lease",
+        "Programs aggregate AWS routes, then VTEP endpoints",
+        "Local tunnel state is maintained by every replica"
       ]
     },
     {
       "dot": "slate",
       "title": "Standby",
       "items": [
-        "Runs in a different AZ (topologySpreadConstraints)",
-        "Watches the lease; acquires it when it expires",
-        "End-to-end failover takes about 15-25s"
+        "Required host anti-affinity and preferred AZ anti-affinity",
+        "Prepared local state; no normal takeover reconstruction",
+        "Recovery time must be measured, not inferred from lease settings"
       ]
     }
   ]

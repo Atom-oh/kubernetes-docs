@@ -1,0 +1,460 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Private synthetic observability lab DB and SNS fanout. Uses existing VPC/subnets/client SG. No cluster
+  creation or application DB credentials.
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  PrivateSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: At least two private subnets in distinct AZs in VpcId.
+  ServiceNodeSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Actual client/node security group in this VPC; only this group can reach PostgreSQL.
+  AuroraEngineVersion:
+    Type: String
+    MinLength: 3
+    Description: Explicit aurora-postgresql engine version verified in this Region for db.serverless.
+  ServiceOidcProviderArn:
+    Type: String
+    AllowedPattern: arn:aws[a-z-]*:iam::[0-9]{12}:oidc-provider/[a-z0-9.-]+/id/[A-Z0-9]+
+    Description: Existing EKS OIDC IAM provider ARN for this cluster.
+  ServiceOidcIssuer:
+    Type: String
+    AllowedPattern: '[a-z0-9.-]+/id/[A-Z0-9]+'
+    Description: Same OIDC issuer host/path without https://; must match the provider ARN suffix.
+  ManagementOidcProviderArn:
+    Type: String
+    AllowedPattern: arn:aws[a-z-]*:iam::[0-9]{12}:oidc-provider/[a-z0-9.-]+/id/[A-Z0-9]+
+    Description: Existing EKS OIDC IAM provider ARN for this cluster.
+  ManagementOidcIssuer:
+    Type: String
+    AllowedPattern: '[a-z0-9.-]+/id/[A-Z0-9]+'
+    Description: Same OIDC issuer host/path without https://; must match the provider ARN suffix.
+Resources:
+  EventKey:
+    Type: AWS::KMS::Key
+    Properties:
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            AWS:
+              Fn::Sub: arn:${AWS::Partition}:iam::${AWS::AccountId}:root
+          Action: kms:*
+          Resource: '*'
+          Condition:
+            StringEquals:
+              aws:PrincipalAccount:
+                Ref: AWS::AccountId
+  EventTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      KmsMasterKeyId:
+        Fn::GetAtt:
+        - EventKey
+        - Arn
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: PostgreSQL only from the selected service node security group
+      VpcId:
+        Ref: VpcId
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 5432
+        ToPort: 5432
+        SourceSecurityGroupId:
+          Ref: ServiceNodeSecurityGroupId
+  DatabaseSubnets:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Private observability lab database subnets
+      SubnetIds:
+        Ref: PrivateSubnetIds
+  DatabaseCluster:
+    Type: AWS::RDS::DBCluster
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      Engine: aurora-postgresql
+      EngineMode: provisioned
+      EngineVersion:
+        Ref: AuroraEngineVersion
+      DatabaseName: observability
+      MasterUsername: labadmin
+      ManageMasterUserPassword: true
+      StorageEncrypted: true
+      BackupRetentionPeriod: 1
+      DBSubnetGroupName:
+        Ref: DatabaseSubnets
+      VpcSecurityGroupIds:
+      - Ref: DatabaseSecurityGroup
+      ServerlessV2ScalingConfiguration:
+        MinCapacity: 0.5
+        MaxCapacity: 2
+      EnableCloudwatchLogsExports:
+      - postgresql
+  DatabaseWriter:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBClusterIdentifier:
+        Ref: DatabaseCluster
+      DBInstanceClass: db.serverless
+      Engine: aurora-postgresql
+      PubliclyAccessible: false
+      DBSubnetGroupName:
+        Ref: DatabaseSubnets
+  NotificationDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      SqsManagedSseEnabled: true
+      MessageRetentionPeriod: 1209600
+  NotificationQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      SqsManagedSseEnabled: true
+      VisibilityTimeout: 30
+      ReceiveMessageWaitTimeSeconds: 5
+      MessageRetentionPeriod: 86400
+      RedrivePolicy:
+        deadLetterTargetArn:
+          Fn::GetAtt:
+          - NotificationDLQ
+          - Arn
+        maxReceiveCount: 5
+  NotificationSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn:
+        Ref: EventTopic
+      Protocol: sqs
+      Endpoint:
+        Fn::GetAtt:
+        - NotificationQueue
+        - Arn
+      RawMessageDelivery: false
+  NotificationQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+      - Ref: NotificationQueue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: sns.amazonaws.com
+          Action: sqs:SendMessage
+          Resource:
+            Fn::GetAtt:
+            - NotificationQueue
+            - Arn
+          Condition:
+            ArnEquals:
+              aws:SourceArn:
+                Ref: EventTopic
+            StringEquals:
+              aws:SourceAccount:
+                Ref: AWS::AccountId
+  NotificationConsumerPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Attach to this consumer workload role only
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - sqs:ReceiveMessage
+          - sqs:DeleteMessage
+          - sqs:GetQueueAttributes
+          Resource:
+            Fn::GetAtt:
+            - NotificationQueue
+            - Arn
+  AnalyticsDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      SqsManagedSseEnabled: true
+      MessageRetentionPeriod: 1209600
+  AnalyticsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      SqsManagedSseEnabled: true
+      VisibilityTimeout: 30
+      ReceiveMessageWaitTimeSeconds: 5
+      MessageRetentionPeriod: 86400
+      RedrivePolicy:
+        deadLetterTargetArn:
+          Fn::GetAtt:
+          - AnalyticsDLQ
+          - Arn
+        maxReceiveCount: 5
+  AnalyticsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn:
+        Ref: EventTopic
+      Protocol: sqs
+      Endpoint:
+        Fn::GetAtt:
+        - AnalyticsQueue
+        - Arn
+      RawMessageDelivery: false
+  AnalyticsQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+      - Ref: AnalyticsQueue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: sns.amazonaws.com
+          Action: sqs:SendMessage
+          Resource:
+            Fn::GetAtt:
+            - AnalyticsQueue
+            - Arn
+          Condition:
+            ArnEquals:
+              aws:SourceArn:
+                Ref: EventTopic
+            StringEquals:
+              aws:SourceAccount:
+                Ref: AWS::AccountId
+  AnalyticsConsumerPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Attach to this consumer workload role only
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - sqs:ReceiveMessage
+          - sqs:DeleteMessage
+          - sqs:GetQueueAttributes
+          Resource:
+            Fn::GetAtt:
+            - AnalyticsQueue
+            - Arn
+  PublisherPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Attach to order/payment publisher workload roles only
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: sns:Publish
+          Resource:
+            Ref: EventTopic
+        - Effect: Allow
+          Action:
+          - kms:GenerateDataKey
+          - kms:Decrypt
+          Resource:
+            Fn::GetAtt:
+            - EventKey
+            - Arn
+          Condition:
+            StringEquals:
+              kms:ViaService:
+                Fn::Sub: sns.${AWS::Region}.${AWS::URLSuffix}
+              kms:CallerAccount:
+                Ref: AWS::AccountId
+  KedaQueueMetricsPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Attach only to the configured KEDA AWS scaler identity
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: sqs:GetQueueAttributes
+          Resource:
+          - Fn::GetAtt:
+            - NotificationQueue
+            - Arn
+          - Fn::GetAtt:
+            - AnalyticsQueue
+            - Arn
+  ApplicationLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 7
+  CollectorLogsPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: Attach only to the management Collector workload role
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - logs:DescribeLogStreams
+          - logs:CreateLogStream
+          - logs:PutLogEvents
+          Resource:
+            Fn::GetAtt:
+            - ApplicationLogs
+            - Arn
+  OrderRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Fn::Sub:
+        - '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Federated":"${Provider}"},"Action":"sts:AssumeRoleWithWebIdentity","Condition":{"StringEquals":{"${Issuer}:aud":"sts.amazonaws.com","${Issuer}:sub":"system:serviceaccount:msa:order-service"}}}]}'
+        - Provider:
+            Ref: ServiceOidcProviderArn
+          Issuer:
+            Ref: ServiceOidcIssuer
+      ManagedPolicyArns:
+      - Ref: PublisherPolicy
+  PaymentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Fn::Sub:
+        - '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Federated":"${Provider}"},"Action":"sts:AssumeRoleWithWebIdentity","Condition":{"StringEquals":{"${Issuer}:aud":"sts.amazonaws.com","${Issuer}:sub":"system:serviceaccount:msa:payment-service"}}}]}'
+        - Provider:
+            Ref: ServiceOidcProviderArn
+          Issuer:
+            Ref: ServiceOidcIssuer
+      ManagedPolicyArns:
+      - Ref: PublisherPolicy
+  NotificationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Fn::Sub:
+        - '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Federated":"${Provider}"},"Action":"sts:AssumeRoleWithWebIdentity","Condition":{"StringEquals":{"${Issuer}:aud":"sts.amazonaws.com","${Issuer}:sub":"system:serviceaccount:msa:notification"}}}]}'
+        - Provider:
+            Ref: ServiceOidcProviderArn
+          Issuer:
+            Ref: ServiceOidcIssuer
+      ManagedPolicyArns:
+      - Ref: NotificationConsumerPolicy
+  AnalyticsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Fn::Sub:
+        - '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Federated":"${Provider}"},"Action":"sts:AssumeRoleWithWebIdentity","Condition":{"StringEquals":{"${Issuer}:aud":"sts.amazonaws.com","${Issuer}:sub":"system:serviceaccount:msa:analytics"}}}]}'
+        - Provider:
+            Ref: ServiceOidcProviderArn
+          Issuer:
+            Ref: ServiceOidcIssuer
+      ManagedPolicyArns:
+      - Ref: AnalyticsConsumerPolicy
+  KedaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Fn::Sub:
+        - '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Federated":"${Provider}"},"Action":"sts:AssumeRoleWithWebIdentity","Condition":{"StringEquals":{"${Issuer}:aud":"sts.amazonaws.com","${Issuer}:sub":"system:serviceaccount:keda:keda-operator"}}}]}'
+        - Provider:
+            Ref: ServiceOidcProviderArn
+          Issuer:
+            Ref: ServiceOidcIssuer
+      ManagedPolicyArns:
+      - Ref: KedaQueueMetricsPolicy
+  CollectorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Fn::Sub:
+        - '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Federated":"${Provider}"},"Action":"sts:AssumeRoleWithWebIdentity","Condition":{"StringEquals":{"${Issuer}:aud":"sts.amazonaws.com","${Issuer}:sub":"system:serviceaccount:monitoring:lab-collector"}}}]}'
+        - Provider:
+            Ref: ManagementOidcProviderArn
+          Issuer:
+            Ref: ManagementOidcIssuer
+      ManagedPolicyArns:
+      - Ref: CollectorLogsPolicy
+Outputs:
+  EventTopicArn:
+    Value:
+      Ref: EventTopic
+  PublisherPolicyArn:
+    Value:
+      Ref: PublisherPolicy
+  KedaQueueMetricsPolicyArn:
+    Value:
+      Ref: KedaQueueMetricsPolicy
+  DatabaseHost:
+    Value:
+      Fn::GetAtt:
+      - DatabaseCluster
+      - Endpoint.Address
+  DatabasePort:
+    Value:
+      Fn::GetAtt:
+      - DatabaseCluster
+      - Endpoint.Port
+  DatabaseAdminSecretArn:
+    Value:
+      Fn::GetAtt:
+      - DatabaseCluster
+      - MasterUserSecret.SecretArn
+  NotificationQueueUrl:
+    Value:
+      Ref: NotificationQueue
+  NotificationQueueArn:
+    Value:
+      Fn::GetAtt:
+      - NotificationQueue
+      - Arn
+  NotificationConsumerPolicyArn:
+    Value:
+      Ref: NotificationConsumerPolicy
+  AnalyticsQueueUrl:
+    Value:
+      Ref: AnalyticsQueue
+  AnalyticsQueueArn:
+    Value:
+      Fn::GetAtt:
+      - AnalyticsQueue
+      - Arn
+  AnalyticsConsumerPolicyArn:
+    Value:
+      Ref: AnalyticsConsumerPolicy
+  ApplicationLogGroup:
+    Value:
+      Ref: ApplicationLogs
+  CollectorLogsPolicyArn:
+    Value:
+      Ref: CollectorLogsPolicy
+  OrderRoleArn:
+    Value:
+      Fn::GetAtt:
+      - OrderRole
+      - Arn
+  PaymentRoleArn:
+    Value:
+      Fn::GetAtt:
+      - PaymentRole
+      - Arn
+  NotificationRoleArn:
+    Value:
+      Fn::GetAtt:
+      - NotificationRole
+      - Arn
+  AnalyticsRoleArn:
+    Value:
+      Fn::GetAtt:
+      - AnalyticsRole
+      - Arn
+  KedaRoleArn:
+    Value:
+      Fn::GetAtt:
+      - KedaRole
+      - Arn
+  CollectorRoleArn:
+    Value:
+      Fn::GetAtt:
+      - CollectorRole
+      - Arn

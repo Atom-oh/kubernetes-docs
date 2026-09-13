@@ -1,0 +1,120 @@
+{
+  "status": "passed-scoped-audit",
+  "reviewedAt": "2026-09-13T04:16:35.606856+00:00",
+  "files": [
+    {
+      "path": "en/eks-hybrid-nodes/08-operations.md",
+      "sha256": "eef86582b52d515871f3d390c06ea93e021bca2c9529a6c8d3eba0057153b35f",
+      "lines": 447,
+      "fullyRead": true
+    },
+    {
+      "path": "en/quizzes/eks-hybrid-nodes/08-operations-quiz.md",
+      "sha256": "5e03c58656d8d80efdea181d1eeb9eac97438f215dd24d83cbf20a6db1e42a1f",
+      "lines": 194,
+      "fullyRead": true
+    },
+    {
+      "path": "ko/eks-hybrid-nodes/08-operations.md",
+      "sha256": "bc17686d4d497ecd3b743366c697ffe715efe7f942a77a9b54be445d69fcabdb",
+      "lines": 447,
+      "fullyRead": true
+    },
+    {
+      "path": "ko/quizzes/eks-hybrid-nodes/08-operations-quiz.md",
+      "sha256": "277678b459df3ca340dab26fefdfd733b45b7cee05212d5187049ea73fcc7250",
+      "lines": 192,
+      "fullyRead": true
+    }
+  ],
+  "originalFullRead": {
+    "guides": 2,
+    "quizzes": 2,
+    "guideLinesEach": 462,
+    "quizLinesEach": 360
+  },
+  "native": {
+    "checksPassed": 43,
+    "mockCases": 11,
+    "promqlExpressions": 4,
+    "expectedPromQLSamples": 5,
+    "proof": "native-validation.json"
+  },
+  "markdown": {
+    "files": 4,
+    "originalIdsPreserved": 68,
+    "compatibilityAliasesAdded": 16,
+    "quizQuestionsPerLocale": 7,
+    "answerParity": true,
+    "proof": "markdown-validation.json"
+  },
+  "pairedOperationalCodeBlocks": 18,
+  "sources": [
+    "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html",
+    "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-webhooks.html",
+    "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+    "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-upgrade.html",
+    "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-bottlerocket.html",
+    "https://github.com/goharbor/harbor/blob/v2.15.2/api/v2.0/swagger.yaml",
+    "https://github.com/goharbor/website/blob/main/docs/administration/vulnerability-scanning/schedule-scans.md",
+    "https://github.com/goharbor/website/blob/main/docs/administration/backup-restore/_index.md",
+    "https://prometheus-operator.dev/docs/api-reference/api/",
+    "https://github.com/cilium/cilium/blob/v1.18.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumloadbalancerippools.yaml",
+    "https://github.com/cilium/cilium/blob/v1.18.3/Documentation/network/servicemesh/ingress.rst",
+    "https://github.com/cilium/cilium/blob/v1.18.3/Documentation/network/servicemesh/gateway-api/gateway-api.rst",
+    "https://github.com/esnet/iperf/blob/3.21/docs/invoking.rst",
+    "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/"
+  ],
+  "measuredBenchmarkPolicy": "Originalnetworkthresholdswereillustrative,notmeasuredbenchmarks;preservedasplanningexampleswithqualifiedscope. No network measurements fabricated.",
+  "limits": [
+    "No AWS/Kubernetes mutation or live reads were executed for this chapter.",
+    "No actual PostgreSQL dump/restore, network load test, BGP session, exporter scrape, add-on rollout, IAM authorization or DNS failover test.",
+    "Kubernetes/CRDschemaandPromQLsyntheticchecksdo not establish production readiness; explicitdeploymentprerequisitesremain.",
+    "Backup/networktestsusesubprocessdoubles;fixturevaluesarenotrealmeasurements."
+  ],
+  "artifacts": [
+    {
+      "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-operations/native-validation.json",
+      "sha256": "a0c454c6fcc4db63e921416b62106190eb377074e774c17264d31227d75af1c2"
+    },
+    {
+      "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-operations/markdown-validation.json",
+      "sha256": "e6a48b75bd06b3501470b014de25f5bda5859c2248e775d5c8fbcd0a3a05e355"
+    },
+    {
+      "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-operations/preserved-anchors.json",
+      "sha256": "0cbf2c36546264bc17674b2e0be88a2fd96880f6684b9b64f069a9e12a6b0f41"
+    },
+    {
+      "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-operations/sources/aws-addons-current.json",
+      "sha256": "7c7673e28cea37b475eb7e2a8321e8c5aac74f2350de0c32a927a764308c3234"
+    },
+    {
+      "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-operations/sources/operations-new-primary.json",
+      "sha256": "e0b6582795726ba439dba944ff58299a16d745982e98660fc093d0b66e6a5dfa"
+    },
+    {
+      "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-operations/gateway-compatibility-markdown-validation.json",
+      "sha256": "9e3b951babcff069116f676929506e3ae5fb6417bbf6a636f8d5ad2a10725a41"
+    }
+  ],
+  "followups": [
+    {
+      "date": "2026-09-13T05:36:21.545681+00:00",
+      "change": "Added paired Cilium L7/HybridNodesGateway mutually incompatible profile note; no operational code or quiz changed.",
+      "sources": [
+        "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html"
+      ],
+      "primarySourceSha256": "328ec984cd75ded976d2ec9a4ffe841e44b5bb5b47e7beef6496907b29a8eb5c",
+      "validation": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-operations/gateway-compatibility-markdown-validation.json",
+      "sha256": "9e3b951babcff069116f676929506e3ae5fb6417bbf6a636f8d5ad2a10725a41",
+      "passed": true,
+      "carryForward": "Original four-file Markdown validation remains a historical snapshot; new two-guide compile supersedes its source hashes for the guides. Unchanged quiz/code/native proofs retained."
+    }
+  ],
+  "evidenceProvenance": {
+    "originalReport": ".vitepress/cache/core-audit/eks-hybrid-operations/final-validation.json",
+    "originalSha256": "10c46a9fbfceee324af3b7d5f19d0b3df78fe6bc3661e76bb98b32254fedeb9f",
+    "adoption": "Existingdomainworkerfullread/nativeevidence preserved;current4MDhashesmatchreviewedbatchrows. No new native/cloud execution claimed."
+  }
+}

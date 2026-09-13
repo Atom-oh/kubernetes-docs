@@ -1,0 +1,530 @@
+{
+  "status": "passed",
+  "verifiedAt": "2026-09-13T06:14:03.068112+00:00",
+  "deploymentRun": 34741798581,
+  "mergeCommit": "1de964bb24bb071a874824c3fa49e8df571eeb17",
+  "includedPRs": [
+    266
+  ],
+  "pages": [
+    {
+      "path": "ko/labs/observability/04-load-testing-scaling-lab.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/labs/observability/04-load-testing-scaling-lab",
+      "status": 200,
+      "sha256": "c26ad1b3c334c555150f2de2faa46f2ceace5a7471d43309174e6ceeb79328ec",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-04-load-testing-scaling-lab-0.qxzlgdj1.png",
+          "status": 200,
+          "sha256": "398ec2dcadf6560fd1552dd0ce27427f8569389dff8a735f96c04c42ba96f83f",
+          "matchesMain": true
+        }
+      ],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 469298,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    },
+    {
+      "path": "ko/labs/observability/06-distributed-tracing-lab.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/labs/observability/06-distributed-tracing-lab",
+      "status": 200,
+      "sha256": "a0e425ff78b75e5acff7baf29b597e656972a7fef83fd3ec89e8bf5841bc5395",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-06-distributed-tracing-lab-0.CdRiRDR0.png",
+          "status": 200,
+          "sha256": "a4928e16b0680cf8bd9d89b53424d4f842b2bfd4f038294c6d5169c5343d10a2",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/ko-labs-observability-06-distributed-tracing-lab-1.DSHKk6PC.png",
+          "status": 200,
+          "sha256": "bf423a10321a4493ccda697e68cc2437f1ba18f0c667c459a4ef304ea3af1ec7",
+          "matchesMain": true
+        }
+      ],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 473189,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    },
+    {
+      "path": "ko/quizzes/observability/labs/04-load-testing-scaling-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/labs/04-load-testing-scaling-quiz",
+      "status": 200,
+      "sha256": "857b1b250e5a419b680d33976f825f45cae6119ff8c2171df3ba74b6b8e0d41e",
+      "images": [],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 446623,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    },
+    {
+      "path": "ko/quizzes/observability/labs/06-distributed-tracing-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/ko/quizzes/observability/labs/06-distributed-tracing-quiz",
+      "status": 200,
+      "sha256": "6798106998a229c2bf3e2c5ee0b1bd64fae6acdd9f49a4ae2481d2a3125fbf04",
+      "images": [],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 446627,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    },
+    {
+      "path": "en/labs/observability/04-load-testing-scaling-lab.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/labs/observability/04-load-testing-scaling-lab",
+      "status": 200,
+      "sha256": "c18c0462f6a3f3ec97f9fe2a25bf967c358044f0ab73fed759a6f0dc84841bcc",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-04-load-testing-scaling-lab-0.BtCEzBeJ.png",
+          "status": 200,
+          "sha256": "80aa975caad2b279f81942f376b8a1ad3eb3e9ee2d399e0b250fa6359e8507b0",
+          "matchesMain": true
+        }
+      ],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 466086,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    },
+    {
+      "path": "en/labs/observability/06-distributed-tracing-lab.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/labs/observability/06-distributed-tracing-lab",
+      "status": 200,
+      "sha256": "03cf744eee4a424111874db8d52088136f3fd6e61fbd7a862a1f0b93c9448e1c",
+      "images": [
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-06-distributed-tracing-lab-0.B8eb5gDl.png",
+          "status": 200,
+          "sha256": "09969d0bd79f6ea36dbdc0bc245b85d1fb3366293c5bbe320ece1a94bba46811",
+          "matchesMain": true
+        },
+        {
+          "url": "https://www.atomai.click/kubernetes-docs/assets/en-labs-observability-06-distributed-tracing-lab-1.6AMe8cYc.png",
+          "status": 200,
+          "sha256": "d548b7a7d1c472df5b7f70be6326b4893eef750ae8dc660c624a72119156e0d0",
+          "matchesMain": true
+        }
+      ],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 469649,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    },
+    {
+      "path": "en/quizzes/observability/labs/04-load-testing-scaling-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/labs/04-load-testing-scaling-quiz",
+      "status": 200,
+      "sha256": "e6a14e8dfa8c995acad751dcde2465f795cad529847edf6db8bff2f9a9e99cc8",
+      "images": [],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 445464,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    },
+    {
+      "path": "en/quizzes/observability/labs/06-distributed-tracing-quiz.md",
+      "url": "https://www.atomai.click/kubernetes-docs/en/quizzes/observability/labs/06-distributed-tracing-quiz",
+      "status": 200,
+      "sha256": "e000bd759d5e6c9e9f506359277f6c9e48c64f1156ac12d7c6fc53fb671c216e",
+      "images": [],
+      "lastUpdatedPresent": true,
+      "bodyBytes": 445528,
+      "contains": {
+        "imageSigningIdentity": null,
+        "crossplane2": null
+      }
+    }
+  ],
+  "viewers": [
+    {
+      "name": "ko-labs-observability-04-load-testing-scaling-lab-0.html",
+      "status": 200,
+      "bytes": 717173,
+      "sha256": "55a4c6953929562558f82119445fd667a8e2808950e05f78999b56d3bf51b8ec"
+    },
+    {
+      "name": "ko-labs-observability-06-distributed-tracing-lab-0.html",
+      "status": 200,
+      "bytes": 712495,
+      "sha256": "27270df3386532d50db123b18bfc9690cc055e459b36c1ac7d4e8cf840696d23"
+    },
+    {
+      "name": "ko-labs-observability-06-distributed-tracing-lab-1.html",
+      "status": 200,
+      "bytes": 706601,
+      "sha256": "5261a892de605518beab22abcba7d848c24a866ef752bf12a004e6578b35cf50"
+    },
+    {
+      "name": "en-labs-observability-04-load-testing-scaling-lab-0.html",
+      "status": 200,
+      "bytes": 717014,
+      "sha256": "2abe0b9d1297ef39c47f756bf49cf43a0ceeba4ee9f7f20bcd2be7e7c86d4e17"
+    },
+    {
+      "name": "en-labs-observability-06-distributed-tracing-lab-0.html",
+      "status": 200,
+      "bytes": 712340,
+      "sha256": "3872ee3bb0816c7ea271d9948532ec81a4979243ccdbf602dd638d1d7bea08b8"
+    },
+    {
+      "name": "en-labs-observability-06-distributed-tracing-lab-1.html",
+      "status": 200,
+      "bytes": 706364,
+      "sha256": "abcdb0ab11fe9e6c2ef4037165739858634fae140b3593c82004b7bdc43a3a65"
+    }
+  ],
+  "scope": "HTTP source and exact hashed PNG comparison; no analytics events or real application execution.",
+  "browser": {
+    "status": "passed",
+    "cases": [
+      {
+        "file": "en-labs-observability-04-load-testing-scaling-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 751,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-04-load-testing-scaling-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 751,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-04-load-testing-scaling-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 751,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 59791,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-06-distributed-tracing-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 597,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-06-distributed-tracing-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 597,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-06-distributed-tracing-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 597,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 55209,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-06-distributed-tracing-lab-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 901,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-06-distributed-tracing-lab-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 901,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "en-labs-observability-06-distributed-tracing-lab-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 901,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 47756,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-04-load-testing-scaling-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 555,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-04-load-testing-scaling-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 555,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-04-load-testing-scaling-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 555,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 59403,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-06-distributed-tracing-lab-0.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 409,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-06-distributed-tracing-lab-0.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 409,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-06-distributed-tracing-lab-0.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 409,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 54962,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-06-distributed-tracing-lab-1.html",
+        "width": 375,
+        "state": {
+          "width": 375,
+          "scroll": 375,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 673,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-06-distributed-tracing-lab-1.html",
+        "width": 768,
+        "state": {
+          "width": 768,
+          "scroll": 768,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 673,
+          "missingImages": []
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      },
+      {
+        "file": "ko-labs-observability-06-distributed-tracing-lab-1.html",
+        "width": 1920,
+        "state": {
+          "width": 1920,
+          "scroll": 1920,
+          "svg": 2,
+          "theme": "light",
+          "bodyText": 673,
+          "missingImages": [],
+          "svgExport": {
+            "bytes": 47478,
+            "valid": true
+          }
+        },
+        "errors": [],
+        "blocked": [
+          "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        ],
+        "pass": true
+      }
+    ],
+    "scope": "18caseson6fetchedproductionviewers; motion/reduced-motion/visibility/theme/guided controls and6SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+  }
+}

@@ -11,9 +11,11 @@
     "path": "ko/labs/observability/06-distributed-tracing-lab.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "22992d2bb2b1df19af33dab6071f5166bd3bd41987d7b656c4226db7e8907505",
-    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved. Reviewedhealthy/no-traffic/missing-seriesPromQL7edgecasesandstrictLocustbooleanIDfailure.",
-    "validationReport": "docs/reviews/2026-09-11/observability-labs-advanced-validation.json"
+    "reviewedSha256": "a2cec1d4cd139641cd7e46d698c345f0543851fd680fcb8596c53f8dc42c2b62",
+    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved. Reviewedhealthy/no-traffic/missing-seriesPromQL7edgecasesandstrictLocustbooleanIDfailure. UpdatedofficialGrafanaLokiURLafteroldpath404;freshMDcompile.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-advanced-validation.json",
+    "previousReviewedSha256": "22992d2bb2b1df19af33dab6071f5166bd3bd41987d7b656c4226db7e8907505",
+    "referenceFollowupReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json"
   },
   {
     "path": "ko/quizzes/observability/labs/04-load-testing-scaling-quiz.md",
@@ -43,9 +45,11 @@
     "path": "en/labs/observability/06-distributed-tracing-lab.md",
     "fullyRead": true,
     "status": "fixed",
-    "reviewedSha256": "79b821e756b668354df32d9f299f0eb52c3e64324bbf46e5b4f5bf0e592c5bb6",
-    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved. Reviewedhealthy/no-traffic/missing-seriesPromQL7edgecasesandstrictLocustbooleanIDfailure.",
-    "validationReport": "docs/reviews/2026-09-11/observability-labs-advanced-validation.json"
+    "reviewedSha256": "9cbb31f92e53814a7a5b7134b460cbfbfc3f0256dd538eb07b4caa45dd9a0208",
+    "summary": "FullyreadandcorrectedPart4/6;40questions;5examples;6diagrams18browser+6SVG;native12loadHTTPcases15TraceQL2LogQL4PromQLandJobschema;88oldanchorspreserved. Reviewedhealthy/no-traffic/missing-seriesPromQL7edgecasesandstrictLocustbooleanIDfailure. UpdatedofficialGrafanaLokiURLafteroldpath404;freshMDcompile.",
+    "validationReport": "docs/reviews/2026-09-11/observability-labs-advanced-validation.json",
+    "previousReviewedSha256": "79b821e756b668354df32d9f299f0eb52c3e64324bbf46e5b4f5bf0e592c5bb6",
+    "referenceFollowupReport": "docs/reviews/2026-09-11/observability-labs-foundation-validation.json"
   },
   {
     "path": "en/quizzes/observability/labs/04-load-testing-scaling-quiz.md",

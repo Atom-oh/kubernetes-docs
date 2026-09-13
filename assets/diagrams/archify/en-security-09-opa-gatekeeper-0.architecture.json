@@ -51,10 +51,12 @@
         "id": "audit",
         "label": "Audit",
         "focus": [
-          "gk",
-          "audit"
+          "api",
+          "audit",
+          "opa",
+          "c"
         ],
-        "note": "The Gatekeeper Controller also periodically scans resources that already exist and records audit results."
+        "note": "A separate audit Deployment periodically evaluates existing objects and updates Constraint status."
       }
     ]
   },
@@ -90,7 +92,7 @@
     {
       "id": "gk",
       "type": "backend",
-      "label": "Gatekeeper Controller",
+      "label": "Webhook controller",
       "sublabel": "controller-runtime",
       "pos": [
         470,
@@ -118,8 +120,8 @@
     {
       "id": "audit",
       "type": "database",
-      "label": "Audit Results",
-      "sublabel": "Periodic audit",
+      "label": "Audit controller",
+      "sublabel": "Separate Deployment",
       "pos": [
         470,
         240
@@ -243,14 +245,6 @@
       "toSide": "top"
     },
     {
-      "id": "gk-audit",
-      "from": "gk",
-      "to": "audit",
-      "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
       "id": "ct-rego",
       "from": "ct",
       "to": "rego",
@@ -267,6 +261,40 @@
       "fromSide": "bottom",
       "toSide": "top",
       "labelDy": 88
+    },
+    {
+      "id": "api-audit",
+      "from": "api",
+      "to": "audit",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "audit-opa",
+      "from": "audit",
+      "to": "opa",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "amber",
+      "title": "Invocation failure vs policy violation",
+      "items": [
+        "failurePolicy handles webhook invocation failures",
+        "enforcementAction handles policy violations"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Rego and inventory",
+      "items": [
+        "Select v1 with code.source.version",
+        "Synced inventory is not atomic uniqueness"
+      ]
     }
   ]
 }

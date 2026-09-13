@@ -44,7 +44,7 @@
           "vxlan",
           "dx_vpn"
         ],
-        "note": "커널 라우트 10.85.1.0/24 via hybrid_vxlan0 매칭 후 VNI 2, UDP 8472로 캡슐화해 Direct Connect/VPN으로 전달한다."
+        "note": "로컬 Pod CIDR 경로는 Hybrid node 내부 IP를 next hop으로 사용하고 hybrid_vxlan0 onlink로 전달한다. VNI2/UDP8472 캡슐화는 기존 underlay를 사용한다."
       },
       {
         "id": "onprem-delivery",
@@ -118,7 +118,7 @@
       "col": 2,
       "type": "backend",
       "label": "커널 라우트 매칭",
-      "sublabel": "10.85.1.0/24 → vxlan0",
+      "sublabel": "node IP · onlink",
       "width": 150
     },
     {

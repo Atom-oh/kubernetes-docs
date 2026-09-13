@@ -29,7 +29,7 @@
           "lease",
           "hybrid"
         ],
-        "note": "스탠바이는 Lease를 감시하며 터널만 대기 상태로 유지한다."
+        "note": "스탠바이도 CiliumNode를 감시하고 로컬 VXLAN/FDB/neighbor/route를 계속 유지한다."
       }
     ],
     "legend": {
@@ -66,7 +66,7 @@
       "id": "lease",
       "type": "backend",
       "label": "Kubernetes Lease",
-      "sublabel": "eks-hybrid-nodes-gateway",
+      "sublabel": "hybrid-gateway-leader",
       "pos": [
         470,
         130
@@ -191,18 +191,18 @@
       "dot": "orange",
       "title": "리더의 역할",
       "items": [
-        "Lease(eks-hybrid-nodes-gateway)를 주기적으로 갱신",
-        "VPC 라우트 테이블의 10.85.0.0/16 경로를 자신의 ENI로 관리",
-        "Hybrid Nodes와의 활성 VXLAN 터널 유지"
+        "hybrid-gateway-leader Lease 갱신",
+        "설정된 aggregate Pod CIDR의 AWS route를 먼저 갱신",
+        "이어서 CiliumVTEPConfig endpoints 갱신"
       ]
     },
     {
       "dot": "slate",
       "title": "스탠바이와 페일오버",
       "items": [
-        "다른 AZ의 스탠바이가 Lease를 감시 (topologySpreadConstraints)",
-        "Lease 만료(leaseDuration 40초) 후 스탠바이가 Lease를 획득",
-        "새 리더가 VPC 라우트와 CiliumVTEPConfig를 갱신하고 터널을 재구성"
+        "필수 host / 선호 AZ anti-affinity; AZ 배치 보장 아님",
+        "기본 lease3s / renew2s / retry1s; 복구 시간 보장 아님",
+        "로컬 엔트리는 미리 유지; 정상 인계 시 tunnel 재구성 없음"
       ]
     }
   ]

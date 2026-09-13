@@ -19,7 +19,7 @@
           "gw1",
           "lease"
         ],
-        "note": "The leader stops renewing; the lease expires after leaseDuration (3s)."
+        "note": "The leader stops renewing. Default lease duration3s is an election configuration, not an application recovery deadline."
       },
       {
         "id": "election",
@@ -28,16 +28,16 @@
           "lease",
           "gw2"
         ],
-        "note": "The standby acquires the expired lease on its next retryPeriod tick (1s)."
+        "note": "An eligible standby attempts leadership with default retryPeriod1s; API reachability and scheduling still matter."
       },
       {
         "id": "reconfigure",
-        "label": "Parallel reconfigure",
+        "label": "Ordered leader setup",
         "focus": [
           "gw2",
           "targets"
         ],
-        "note": "The new leader updates CiliumVTEPConfig and replaces the VPC route concurrently."
+        "note": "The new leader programs aggregate AWS routes first, then CiliumVTEPConfig endpoints; local tunnel state is already maintained."
       }
     ],
     "legend": {
@@ -84,17 +84,17 @@
     {
       "from": 172,
       "to": 250,
-      "label": "Detection — 0–3s"
+      "label": "Leadership loss / lease handling"
     },
     {
       "from": 265,
       "to": 340,
-      "label": "Election — 0–1s"
+      "label": "Eligible standby acquires leadership"
     },
     {
       "from": 355,
       "to": 520,
-      "label": "par: VTEP update + route replace (concurrent) — failover complete in ~5–10s"
+      "label": "Ordered setup: AWS routes first, VTEP endpoints second"
     }
   ],
   "messages": [
@@ -105,7 +105,7 @@
       "y": 205,
       "label": "renew lease — fails",
       "variant": "dashed",
-      "note": "Node failure / pod crash; lease expires after leaseDuration (3s)"
+      "note": "Election defaults are not a measured recovery time."
     },
     {
       "id": "acquire",
@@ -117,20 +117,20 @@
       "note": "Gateway Pod 2 becomes the new leader"
     },
     {
-      "id": "update-vtep",
-      "from": "gw2",
-      "to": "targets",
-      "y": 400,
-      "label": "update CiliumVTEPConfig vtepIPs",
-      "note": "Cilium agents reload BPF maps (1–5s)"
-    },
-    {
       "id": "replace-route",
       "from": "gw2",
       "to": "targets",
+      "y": 400,
+      "label": "First: AWS CreateRoute / ReplaceRoute",
+      "note": "Configured aggregate routes point to the new leader ENI."
+    },
+    {
+      "id": "update-vtep",
+      "from": "gw2",
+      "to": "targets",
       "y": 480,
-      "label": "ec2:ReplaceRoute",
-      "note": "VPC routes now point at the new leader's ENI (1–3s)"
+      "label": "Then: CiliumVTEPConfig endpoints",
+      "note": "Update tunnelEndpoint/cidr/mac for Cilium VTEP consumers."
     }
   ],
   "activations": [
@@ -156,21 +156,21 @@
   "cards": [
     {
       "dot": "amber",
-      "title": "Failover Timeline",
+      "title": "Recovery prerequisites",
       "items": [
-        "Detection 0–3s: leader fails to renew; lease expires after leaseDuration",
-        "Election 0–1s: standby acquires the lease on the next retryPeriod tick",
-        "Route update 1–3s (ec2:ReplaceRoute) and VTEP update 1–5s run in parallel",
-        "Total end-to-end failover: ~5–10s"
+        "Defaults3s lease /2s renew deadline /1s retry are not latency guarantees",
+        "Every replica already reconciles local tunnel state",
+        "AWS aggregate routes update before VTEP endpoints",
+        "Measure API convergence, packet loss and application recovery"
       ]
     },
     {
       "dot": "rose",
       "title": "During the Failover Window",
       "items": [
-        "VPC-to-hybrid traffic drops until VPC routes are updated",
-        "Hybrid-to-VPC traffic drops until CiliumVTEPConfig is updated",
-        "Intra-hybrid traffic is unaffected (Cilium handles it directly)"
+        "VPC-to-hybrid path depends on current AWS routes",
+        "Hybrid-to-VPC path depends on the active VTEP endpoint",
+        "Intra-hybrid paths bypass the gateway but may share failed infrastructure"
       ]
     }
   ]

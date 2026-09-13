@@ -1,0 +1,2364 @@
+{
+  "status": "passed",
+  "reviewedAt": "2026-09-13T09:25:45.369573+00:00",
+  "scope": "Parentclosureof12semanticfigurefindings across14figures +2guidecaptions; workeroriginal4MDfullyread4417lines andnativechecks retained",
+  "textReviewEvidence": {
+    "status": "text-and-local-validation-complete-assets-pending-parent",
+    "reviewedAt": "2026-09-13T06:08:08.709081+00:00",
+    "originalFullRead": {
+      "files": 4,
+      "lines": 4417,
+      "scope": [
+        {
+          "path": "en/eks-hybrid-nodes/10-hybrid-nodes-gateway.md",
+          "sha256": "f44895af83d6e390f9c03ae9f219cfdc5fb121c5c6a674f7cff103f63e14c13a",
+          "lines": 1928,
+          "fullyRead": true,
+          "rootBaseEqualsKnownMain": true,
+          "workingEqualsRootBase": true
+        },
+        {
+          "path": "en/quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md",
+          "sha256": "be55a90c332d6502997715251f2d0efda7d01828ad8af481548db2a64b83e32d",
+          "lines": 143,
+          "fullyRead": true,
+          "rootBaseEqualsKnownMain": true,
+          "workingEqualsRootBase": true
+        },
+        {
+          "path": "ko/eks-hybrid-nodes/10-hybrid-nodes-gateway.md",
+          "sha256": "850ca5ffd1c8d92c01d4dba356858a872cc1d31ff8a033f658d18049b82e8e26",
+          "lines": 2203,
+          "fullyRead": true,
+          "rootBaseEqualsKnownMain": true,
+          "workingEqualsRootBase": true
+        },
+        {
+          "path": "ko/quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md",
+          "sha256": "b51525ffd9b28ff33d2b07484bebe1ad5a99b964f8b4343997a9f1f25983928d",
+          "lines": 143,
+          "fullyRead": true,
+          "rootBaseEqualsKnownMain": true,
+          "workingEqualsRootBase": true
+        }
+      ]
+    },
+    "files": [
+      {
+        "path": "en/eks-hybrid-nodes/10-hybrid-nodes-gateway.md",
+        "sha256": "1bd921420741f15d7f5156ed5b838ecc950e2d79c58f7031c3e4249a0a2ee1d7",
+        "lines": 1189,
+        "fullyRead": true,
+        "status": "needs_followup"
+      },
+      {
+        "path": "en/quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md",
+        "sha256": "9ff7bb7ecba6db2ae28f35b5092c7e4f9aabf2fb73c77b1dcc3b1dd7e7cc829e",
+        "lines": 145,
+        "fullyRead": true,
+        "status": "fixed"
+      },
+      {
+        "path": "ko/eks-hybrid-nodes/10-hybrid-nodes-gateway.md",
+        "sha256": "84d610abe70819f8b88b99006e916e4f0927757b55dbe9347b2ed09570d730f9",
+        "lines": 1246,
+        "fullyRead": true,
+        "status": "needs_followup"
+      },
+      {
+        "path": "ko/quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md",
+        "sha256": "8166a26d467b13c3312285747030b5988b4998821aee3cc930cf168536462902",
+        "lines": 145,
+        "fullyRead": true,
+        "status": "fixed"
+      }
+    ],
+    "native": {
+      "checks": 120,
+      "allPassed": true,
+      "mockCases": 9,
+      "promqlCases": 7,
+      "schemaResources": 8,
+      "helmRenders": 3,
+      "upstreamHealthTests": 4,
+      "upstreamHealthSubcases": 4,
+      "hclParseOnly": 2
+    },
+    "markdown": {
+      "files": 4,
+      "allPassed": true,
+      "oldIDsPreserved": 211,
+      "missingIds": [],
+      "quizCounts": [
+        {
+          "path": "en/quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md",
+          "questions": 8,
+          "choices": 32,
+          "answers": [
+            "B",
+            "B",
+            "B",
+            "C",
+            "B",
+            "B",
+            "C",
+            "B"
+          ]
+        },
+        {
+          "path": "ko/quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md",
+          "questions": 8,
+          "choices": 32,
+          "answers": [
+            "B",
+            "B",
+            "B",
+            "C",
+            "B",
+            "B",
+            "C",
+            "B"
+          ]
+        }
+      ]
+    },
+    "sources": [
+      "https://github.com/aws/eks-hybrid-nodes-gateway/tree/v1.0.2",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-overview.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-getting-started.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-configuration.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-operations.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-gateway-cni.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cluster-create.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-add-ons.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-id-role.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/pod-id-abac.html",
+      "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ExamplePolicies_EC2.html",
+      "https://aws.amazon.com/blogs/containers/simplify-hybrid-kubernetes-networking-with-amazon-eks-hybrid-nodes-gateway/",
+      "https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/crds/application-crd.yaml"
+    ],
+    "limits": [
+      "No AWS/Kubernetes/controller mutation, packet forwarding, EC2 IAM authorization, real PostgreSQL or network test.",
+      "VTEP fields checked against exact released upsert implementation; the AWS-patched VTEP CRD was not present in the chart archive, so not labeled server-side CRD validation.",
+      "HCL only passed native formatting/parser; no provider init, validation, plan or apply.",
+      "Cilium chart render checks values-to-ConfigMap only; no live CNI rollout.",
+      "No full site build/devserver, AWS provider login, cloud changes or measured benchmark rerun.",
+      "Historical price/sizing/failover/MTU values retained as explicit unverified illustrations; no claim of current universal pricing or performance.",
+      "Parent owns14existingdiagramtriples;12requiresemanticcorrection. No image/HTML/spec edited by worker. Guides retain needs_followup until those drawings match corrected prose."
+    ],
+    "followups": [
+      {
+        "owner": "parent",
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-gateway/diagram-repair-handoff.json",
+        "summary": "12of14figuresemanticsneedupdates;remaining2flowsverified;all14specsread."
+      }
+    ],
+    "artifacts": [
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-gateway/native-validation.json",
+        "sha256": "00e4631777b55302afb0a7cd65789a7af43f99a1c02c7a57c87082f6ccb8c63c"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-gateway/native-executions.json",
+        "sha256": "71aafda96ba4c2f27b25d0e9adc9ca382cfc672c4ab10df8bb6d54de556e7e86"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-gateway/markdown-validation.json",
+        "sha256": "f79d437cf3593d61fe8c8461d547de73d8b782ca78d5400e63845e8fb5a8a95c"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-gateway/diagram-repair-handoff.json",
+        "sha256": "543ced38951944bdf8f0e7af1e85c83734fd4bf2e972a9f8f74927eb614a96a5"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-gateway/published-chart.json",
+        "sha256": "321cc792b8b96f3eaa9165dd996f2939317c6e503721d3ae619d654f07947239"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-gateway/chart-source-binding.json",
+        "sha256": "6e139cec3c587b7b311b0334d7467655bcc016413c74263eb16bc0aa78b55e19"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-gateway/cilium-chart.json",
+        "sha256": "a62b0569fd93904409e1b267a72ec5136fe9335525770f4758b1333dc7f78789"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-gateway/sources/iam-primary.json",
+        "sha256": "adf61e699339eb0c52b28e42021c30aba36c5a9338b4b97eb7dbfbd59ab28c35"
+      },
+      {
+        "path": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/eks-hybrid-gateway/sources/argocd-crd-source.json",
+        "sha256": "09e3b3216c80c6a51e49b5427a37074e04f5b44b27e938272e52c3fb06e85a56"
+      }
+    ]
+  },
+  "textEvidenceNote": "Originaltext/nativeresultspreservedashistoricalrecord;itsassetspendingstatusisclosedbytheparentchecksbelow. NoAWSnativeexecutionwasrepeated.",
+  "parentAssetRepairs": {
+    "expected": 14,
+    "findingsClosed": 12,
+    "alreadySemanticallyVerified": 2,
+    "delivery": [
+      {
+        "spec": "assets/diagrams/archify/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.architecture.json",
+        "html": "public/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+        "png": "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.png",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "spec": "assets/diagrams/archify/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.sequence.json",
+        "html": "public/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html",
+        "png": "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.png",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "spec": "assets/diagrams/archify/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.architecture.json",
+        "html": "public/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+        "png": "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.png",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "spec": "assets/diagrams/archify/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.sequence.json",
+        "html": "public/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html",
+        "png": "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.png",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "spec": "assets/diagrams/archify/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.sequence.json",
+        "html": "public/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html",
+        "png": "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.png",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "spec": "assets/diagrams/archify/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.architecture.json",
+        "html": "public/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+        "png": "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.png",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "spec": "assets/diagrams/archify/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.sequence.json",
+        "html": "public/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html",
+        "png": "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.png",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "spec": "assets/diagrams/archify/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.architecture.json",
+        "html": "public/archmaps/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+        "png": "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.png",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "spec": "assets/diagrams/archify/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.sequence.json",
+        "html": "public/archmaps/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html",
+        "png": "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.png",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "spec": "assets/diagrams/archify/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.workflow.json",
+        "html": "public/archmaps/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+        "png": "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.png",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "spec": "assets/diagrams/archify/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.sequence.json",
+        "html": "public/archmaps/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html",
+        "png": "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.png",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "spec": "assets/diagrams/archify/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.sequence.json",
+        "html": "public/archmaps/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html",
+        "png": "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.png",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "spec": "assets/diagrams/archify/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.architecture.json",
+        "html": "public/archmaps/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+        "png": "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.png",
+        "ok": true,
+        "diagnostics": []
+      },
+      {
+        "spec": "assets/diagrams/archify/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.architecture.json",
+        "html": "public/archmaps/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html",
+        "png": "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.png",
+        "ok": true,
+        "diagnostics": []
+      }
+    ],
+    "browser": {
+      "status": "passed",
+      "cases": [
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1224,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1224,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1224,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 54422,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 905,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 905,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 905,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 50567,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1194,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1194,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1194,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 57404,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 822,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 822,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 822,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 55240,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 757,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 757,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 757,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 50075,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 925,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 925,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 925,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 49979,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1324,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1324,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 1324,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 50530,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 962,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 962,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 962,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 53987,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 575,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 575,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 575,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 50930,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 614,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 614,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 614,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 55028,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 482,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 482,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 482,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 52763,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 639,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 639,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 639,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 52564,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 548,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 548,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 548,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 53431,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html",
+          "width": 375,
+          "state": {
+            "width": 375,
+            "scroll": 375,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 739,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html",
+          "width": 768,
+          "state": {
+            "width": 768,
+            "scroll": 768,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 739,
+            "missingImages": []
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        },
+        {
+          "file": "ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html",
+          "width": 1920,
+          "state": {
+            "width": 1920,
+            "scroll": 1920,
+            "svg": 2,
+            "theme": "light",
+            "bodyText": 739,
+            "missingImages": [],
+            "svgExport": {
+              "bytes": 50684,
+              "valid": true
+            }
+          },
+          "errors": [],
+          "blocked": [
+            "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+          ],
+          "pass": true
+        }
+      ],
+      "scope": "42cases on14locallygeneratedviewers; motion/reduced-motion/visibility/theme/guided controls and14SVGexports; web fonts blocked intentionally with local Noto fallback; no server/sitebuild"
+    },
+    "visual": {
+      "status": "passed",
+      "individuallyInspected": [
+        "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.png",
+        "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.png",
+        "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.png",
+        "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.png",
+        "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.png",
+        "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.png",
+        "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.png",
+        "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.png",
+        "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.png",
+        "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.png",
+        "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.png",
+        "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.png",
+        "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.png",
+        "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.png"
+      ],
+      "notes": "All14fullPNGsdisplayedandinspected;orderedAWS/VTEPflow,localstateandcaptionsaligned; no clippedlabels/cards."
+    },
+    "markdown": {
+      "nodeHeapMiB": 512,
+      "scope": "Explicit documents only; no site build",
+      "results": [
+        {
+          "path": "ko/eks-hybrid-nodes/10-hybrid-nodes-gateway.md",
+          "sha256": "5d5a87095446bb38b7aa7f1878331d314f497397b80a1e0964967fa4cd2e8b8b",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "eks-hybrid-nodes-gateway"
+            },
+            {
+              "tag": "h2",
+              "id": "개요-및-학습-목표"
+            },
+            {
+              "tag": "h3",
+              "id": "eks-hybrid-nodes-gateway란"
+            },
+            {
+              "tag": "h3",
+              "id": "학습-목표"
+            },
+            {
+              "tag": "h3",
+              "id": "왜-hybrid-nodes-gateway가-필요한가"
+            },
+            {
+              "tag": "h2",
+              "id": "아키텍처-심층-분석"
+            },
+            {
+              "tag": "h3",
+              "id": "전체-아키텍처-개요"
+            },
+            {
+              "tag": "h3",
+              "id": "핵심-구성-요소-상세"
+            },
+            {
+              "tag": "h4",
+              "id": "_1-ec2-게이트웨이-노드"
+            },
+            {
+              "tag": "h4",
+              "id": "_2-vxlan-터널-인터페이스-hybrid-vxlan0"
+            },
+            {
+              "tag": "h4",
+              "id": "_3-fdb-엔트리-arp-엔트리-라우트-프로그래밍"
+            },
+            {
+              "tag": "h4",
+              "id": "_4-ciliumvtepconfig-게이트웨이를-원격-vtep로-등록"
+            },
+            {
+              "tag": "h4",
+              "id": "_5-lease-기반-리더-선출"
+            },
+            {
+              "tag": "h4",
+              "id": "_6-vpc-라우트-테이블-자동-관리"
+            },
+            {
+              "tag": "h2",
+              "id": "사전-요구-사항"
+            },
+            {
+              "tag": "h3",
+              "id": "클러스터-요구-사항"
+            },
+            {
+              "tag": "h3",
+              "id": "네트워크-요구-사항"
+            },
+            {
+              "tag": "h4",
+              "id": "프라이빗-연결"
+            },
+            {
+              "tag": "h4",
+              "id": "ec2-인스턴스"
+            },
+            {
+              "tag": "h4",
+              "id": "보안-그룹"
+            },
+            {
+              "tag": "h4",
+              "id": "온프레미스-방화벽-규칙"
+            },
+            {
+              "tag": "h2",
+              "id": "iam-구성"
+            },
+            {
+              "tag": "h3",
+              "id": "필요-권한"
+            },
+            {
+              "tag": "h3",
+              "id": "iam-역할-생성-aws-cli"
+            },
+            {
+              "tag": "h3",
+              "id": "terraform을-사용한-iam-구성"
+            },
+            {
+              "tag": "h2",
+              "id": "설치-및-구성"
+            },
+            {
+              "tag": "h3",
+              "id": "helm-차트-설치"
+            },
+            {
+              "tag": "h4",
+              "id": "기본-설치"
+            },
+            {
+              "tag": "h4",
+              "id": "전체-values-yaml-예제"
+            },
+            {
+              "tag": "h4",
+              "id": "설치-및-검증"
+            },
+            {
+              "tag": "h3",
+              "id": "노드-레이블링"
+            },
+            {
+              "tag": "h2",
+              "id": "cni-구성"
+            },
+            {
+              "tag": "h3",
+              "id": "cilium-vtep-활성화"
+            },
+            {
+              "tag": "h4",
+              "id": "cilium-helm-값에서-vtep-활성화"
+            },
+            {
+              "tag": "h4",
+              "id": "cilium-설치-업데이트"
+            },
+            {
+              "tag": "h3",
+              "id": "vpc-cni-구성"
+            },
+            {
+              "tag": "h3",
+              "id": "ciliumvtepconfig-crd-상세"
+            },
+            {
+              "tag": "h3",
+              "id": "cni-구성-검증-체크리스트"
+            },
+            {
+              "tag": "h2",
+              "id": "트래픽-흐름-패턴"
+            },
+            {
+              "tag": "h3",
+              "id": "패턴-1-vpc-pod에서-hybrid-pod로"
+            },
+            {
+              "tag": "h3",
+              "id": "패턴-2-hybrid-pod에서-vpc-pod로"
+            },
+            {
+              "tag": "h3",
+              "id": "패턴-3-control-plane에서-webhook으로"
+            },
+            {
+              "tag": "h3",
+              "id": "패턴-4-aws-서비스에서-hybrid-pod로"
+            },
+            {
+              "tag": "h2",
+              "id": "고가용성-및-페일오버"
+            },
+            {
+              "tag": "h3",
+              "id": "ha-아키텍처"
+            },
+            {
+              "tag": "h3",
+              "id": "lease-기반-리더-선출-상세"
+            },
+            {
+              "tag": "h3",
+              "id": "페일오버-동작"
+            },
+            {
+              "tag": "h3",
+              "id": "multi-az-배포-전략"
+            },
+            {
+              "tag": "h2",
+              "id": "운영"
+            },
+            {
+              "tag": "h3",
+              "id": "모니터링"
+            },
+            {
+              "tag": "h4",
+              "id": "prometheus-메트릭"
+            },
+            {
+              "tag": "h4",
+              "id": "servicemonitor-설정"
+            },
+            {
+              "tag": "h4",
+              "id": "grafana-대시보드-쿼리-예시"
+            },
+            {
+              "tag": "h4",
+              "id": "cloudwatch-알람-설정"
+            },
+            {
+              "tag": "h3",
+              "id": "트러블슈팅"
+            },
+            {
+              "tag": "h4",
+              "id": "자주-발생하는-문제와-해결-방법"
+            },
+            {
+              "tag": "h4",
+              "id": "진단-명령어"
+            },
+            {
+              "tag": "h4",
+              "id": "연결-테스트"
+            },
+            {
+              "tag": "h3",
+              "id": "스케일링-고려-사항"
+            },
+            {
+              "tag": "h4",
+              "id": "hybrid-node-수에-따른-게이트웨이-스케일링"
+            },
+            {
+              "tag": "h4",
+              "id": "대역폭-모니터링"
+            },
+            {
+              "tag": "h3",
+              "id": "업그레이드"
+            },
+            {
+              "tag": "h4",
+              "id": "helm-차트-업그레이드"
+            },
+            {
+              "tag": "h4",
+              "id": "업그레이드-시-주의-사항"
+            },
+            {
+              "tag": "h3",
+              "id": "제거와-외부-라우트-정리"
+            },
+            {
+              "tag": "h2",
+              "id": "비교-게이트웨이-사용-vs-미사용"
+            },
+            {
+              "tag": "h3",
+              "id": "상세-비교표"
+            },
+            {
+              "tag": "h3",
+              "id": "아키텍처-비교"
+            },
+            {
+              "tag": "h4",
+              "id": "게이트웨이-미사용-수동-방식"
+            },
+            {
+              "tag": "h4",
+              "id": "게이트웨이-사용-자동-방식"
+            },
+            {
+              "tag": "h3",
+              "id": "마이그레이션-가이드-수동-방식에서-게이트웨이로"
+            },
+            {
+              "tag": "h4",
+              "id": "phase-1-준비"
+            },
+            {
+              "tag": "h4",
+              "id": "phase-2-cilium-vtep-활성화"
+            },
+            {
+              "tag": "h4",
+              "id": "phase-3-게이트웨이-설치"
+            },
+            {
+              "tag": "h4",
+              "id": "phase-4-검증-및-전환"
+            },
+            {
+              "tag": "h4",
+              "id": "phase-5-정리"
+            },
+            {
+              "tag": "h2",
+              "id": "모범-사례"
+            },
+            {
+              "tag": "h3",
+              "id": "보안-모범-사례"
+            },
+            {
+              "tag": "h4",
+              "id": "_1-최소-권한-원칙"
+            },
+            {
+              "tag": "h4",
+              "id": "_2-네트워크-세그먼테이션"
+            },
+            {
+              "tag": "h4",
+              "id": "_3-pod-보안-표준"
+            },
+            {
+              "tag": "h4",
+              "id": "_4-네트워크-정책"
+            },
+            {
+              "tag": "h3",
+              "id": "성능-모범-사례"
+            },
+            {
+              "tag": "h4",
+              "id": "_1-인스턴스-타입-선택"
+            },
+            {
+              "tag": "h4",
+              "id": "_2-mtu-최적화"
+            },
+            {
+              "tag": "h4",
+              "id": "_3-커널-파라미터-튜닝"
+            },
+            {
+              "tag": "h4",
+              "id": "애플리케이션-경로-확인"
+            },
+            {
+              "tag": "h3",
+              "id": "비용-최적화"
+            },
+            {
+              "tag": "h4",
+              "id": "_1-인스턴스-비용-추정"
+            },
+            {
+              "tag": "h4",
+              "id": "_2-비용-절감-전략"
+            },
+            {
+              "tag": "h3",
+              "id": "통합-모범-사례"
+            },
+            {
+              "tag": "h4",
+              "id": "_1-gitops와의-통합"
+            },
+            {
+              "tag": "h4",
+              "id": "_2-terraform과의-통합"
+            },
+            {
+              "tag": "h4",
+              "id": "_3-ci-cd-파이프라인-통합"
+            },
+            {
+              "tag": "h2",
+              "id": "전체-배포-예제-처음부터-끝까지"
+            },
+            {
+              "tag": "h3",
+              "id": "환경-가정"
+            },
+            {
+              "tag": "h3",
+              "id": "step-1-사전-요구-사항-확인"
+            },
+            {
+              "tag": "h3",
+              "id": "step-2-ec2-게이트웨이-노드-프로비저닝"
+            },
+            {
+              "tag": "h3",
+              "id": "step-3-iam-역할-설정"
+            },
+            {
+              "tag": "h3",
+              "id": "step-4-cilium-vtep-활성화"
+            },
+            {
+              "tag": "h3",
+              "id": "step-5-게이트웨이-설치"
+            },
+            {
+              "tag": "h3",
+              "id": "step-6-설치-검증"
+            },
+            {
+              "tag": "h2",
+              "id": "자주-묻는-질문-faq"
+            },
+            {
+              "tag": "h3",
+              "id": "q1-calico를-cni로-사용할-수-있나요"
+            },
+            {
+              "tag": "h3",
+              "id": "q2-게이트웨이-ec2-인스턴스가-다운되면-어떻게-되나요"
+            },
+            {
+              "tag": "h3",
+              "id": "q3-여러-vpc에서-하나의-게이트웨이를-공유할-수-있나요"
+            },
+            {
+              "tag": "h3",
+              "id": "q4-vxlan-오버헤드가-성능에-미치는-영향은"
+            },
+            {
+              "tag": "h3",
+              "id": "q5-온프레미스에서-인터넷으로-나가는-트래픽도-게이트웨이를-경유하나요"
+            },
+            {
+              "tag": "h3",
+              "id": "q6-게이트웨이-없이도-hybrid-node를-사용할-수-있나요"
+            },
+            {
+              "tag": "h3",
+              "id": "q7-기존-direct-connect-vpn-설정을-변경해야-하나요"
+            },
+            {
+              "tag": "h2",
+              "id": "참고-자료"
+            },
+            {
+              "tag": "h3",
+              "id": "aws-공식-문서"
+            },
+            {
+              "tag": "h3",
+              "id": "github"
+            },
+            {
+              "tag": "h3",
+              "id": "내부-관련-문서"
+            },
+            {
+              "tag": "h3",
+              "id": "추가-학습-자료"
+            }
+          ],
+          "renderedIds": [
+            "eks-hybrid-nodes-gateway",
+            "개요-및-학습-목표",
+            "eks-hybrid-nodes-gateway란",
+            "학습-목표",
+            "왜-hybrid-nodes-gateway가-필요한가",
+            "아키텍처-심층-분석",
+            "전체-아키텍처-개요",
+            "핵심-구성-요소-상세",
+            "_1-ec2-게이트웨이-노드",
+            "_2-vxlan-터널-인터페이스-hybrid-vxlan0",
+            "_3-fdb-엔트리-arp-엔트리-라우트-프로그래밍",
+            "_4-ciliumvtepconfig-게이트웨이를-원격-vtep로-등록",
+            "_5-lease-기반-리더-선출",
+            "_6-vpc-라우트-테이블-자동-관리",
+            "사전-요구-사항",
+            "클러스터-요구-사항",
+            "네트워크-요구-사항",
+            "프라이빗-연결",
+            "ec2-인스턴스",
+            "보안-그룹",
+            "온프레미스-방화벽-규칙",
+            "iam-구성",
+            "필요-권한",
+            "iam-역할-생성-aws-cli",
+            "terraform을-사용한-iam-구성",
+            "설치-및-구성",
+            "helm-차트-설치",
+            "기본-설치",
+            "전체-values-yaml-예제",
+            "설치-및-검증",
+            "노드-레이블링",
+            "cni-구성",
+            "cilium-vtep-활성화",
+            "cilium-helm-값에서-vtep-활성화",
+            "cilium-설치-업데이트",
+            "vpc-cni-구성",
+            "ciliumvtepconfig-crd-상세",
+            "cni-구성-검증-체크리스트",
+            "트래픽-흐름-패턴",
+            "패턴-1-vpc-pod에서-hybrid-pod로",
+            "패턴-2-hybrid-pod에서-vpc-pod로",
+            "패턴-3-control-plane에서-webhook으로",
+            "패턴-4-aws-서비스에서-hybrid-pod로",
+            "고가용성-및-페일오버",
+            "ha-아키텍처",
+            "lease-기반-리더-선출-상세",
+            "페일오버-동작",
+            "multi-az-배포-전략",
+            "운영",
+            "모니터링",
+            "prometheus-메트릭",
+            "servicemonitor-설정",
+            "grafana-대시보드-쿼리-예시",
+            "cloudwatch-알람-설정",
+            "트러블슈팅",
+            "자주-발생하는-문제와-해결-방법",
+            "진단-명령어",
+            "연결-테스트",
+            "스케일링-고려-사항",
+            "hybrid-node-수에-따른-게이트웨이-스케일링",
+            "대역폭-모니터링",
+            "업그레이드",
+            "helm-차트-업그레이드",
+            "업그레이드-시-주의-사항",
+            "제거와-외부-라우트-정리",
+            "비교-게이트웨이-사용-vs-미사용",
+            "상세-비교표",
+            "아키텍처-비교",
+            "게이트웨이-미사용-수동-방식",
+            "게이트웨이-사용-자동-방식",
+            "마이그레이션-가이드-수동-방식에서-게이트웨이로",
+            "phase-1-준비",
+            "phase-2-cilium-vtep-활성화",
+            "phase-3-게이트웨이-설치",
+            "phase-4-검증-및-전환",
+            "phase-5-정리",
+            "모범-사례",
+            "보안-모범-사례",
+            "_1-최소-권한-원칙",
+            "_2-네트워크-세그먼테이션",
+            "_3-pod-보안-표준",
+            "_4-네트워크-정책",
+            "성능-모범-사례",
+            "_1-인스턴스-타입-선택",
+            "_2-mtu-최적화",
+            "_3-커널-파라미터-튜닝",
+            "애플리케이션-경로-확인",
+            "비용-최적화",
+            "_1-인스턴스-비용-추정",
+            "_2-비용-절감-전략",
+            "통합-모범-사례",
+            "_1-gitops와의-통합",
+            "_2-terraform과의-통합",
+            "_3-ci-cd-파이프라인-통합",
+            "전체-배포-예제-처음부터-끝까지",
+            "환경-가정",
+            "step-1-사전-요구-사항-확인",
+            "step-2-ec2-게이트웨이-노드-프로비저닝",
+            "step-3-iam-역할-설정",
+            "step-4-cilium-vtep-활성화",
+            "step-5-게이트웨이-설치",
+            "step-6-설치-검증",
+            "자주-묻는-질문-faq",
+            "q1-calico를-cni로-사용할-수-있나요",
+            "q2-게이트웨이-ec2-인스턴스가-다운되면-어떻게-되나요",
+            "q3-여러-vpc에서-하나의-게이트웨이를-공유할-수-있나요",
+            "q4-vxlan-오버헤드가-성능에-미치는-영향은",
+            "q5-온프레미스에서-인터넷으로-나가는-트래픽도-게이트웨이를-경유하나요",
+            "q6-게이트웨이-없이도-hybrid-node를-사용할-수-있나요",
+            "q7-기존-direct-connect-vpn-설정을-변경해야-하나요",
+            "참고-자료",
+            "aws-공식-문서",
+            "github",
+            "내부-관련-문서",
+            "추가-학습-자료"
+          ]
+        },
+        {
+          "path": "en/eks-hybrid-nodes/10-hybrid-nodes-gateway.md",
+          "sha256": "c287fb92c55d9a0af8e4d4f558039d7715fd8de0319b9801af6c6c5ed25aaf4c",
+          "passed": true,
+          "errors": [],
+          "oneH1": true,
+          "headings": [
+            {
+              "tag": "h1",
+              "id": "eks-hybrid-nodes-gateway"
+            },
+            {
+              "tag": "h2",
+              "id": "overview"
+            },
+            {
+              "tag": "h3",
+              "id": "learning-objectives"
+            },
+            {
+              "tag": "h3",
+              "id": "the-problem-manual-pod-routing-in-hybrid-environments"
+            },
+            {
+              "tag": "h2",
+              "id": "architecture-deep-dive"
+            },
+            {
+              "tag": "h3",
+              "id": "high-level-architecture"
+            },
+            {
+              "tag": "h3",
+              "id": "vxlan-tunnel-mechanics"
+            },
+            {
+              "tag": "h4",
+              "id": "gateway-side-vxlan-interface"
+            },
+            {
+              "tag": "h4",
+              "id": "fdb-arp-and-route-programming"
+            },
+            {
+              "tag": "h4",
+              "id": "hybrid-node-side-cilium-vtep"
+            },
+            {
+              "tag": "h3",
+              "id": "leader-election-and-high-availability"
+            },
+            {
+              "tag": "h4",
+              "id": "lease-based-leader-election"
+            },
+            {
+              "tag": "h4",
+              "id": "what-the-leader-does"
+            },
+            {
+              "tag": "h4",
+              "id": "what-the-standby-does"
+            },
+            {
+              "tag": "h3",
+              "id": "vpc-route-table-auto-management"
+            },
+            {
+              "tag": "h3",
+              "id": "component-interaction-summary"
+            },
+            {
+              "tag": "h2",
+              "id": "prerequisites"
+            },
+            {
+              "tag": "h3",
+              "id": "eks-cluster-configuration"
+            },
+            {
+              "tag": "h3",
+              "id": "cni-requirements"
+            },
+            {
+              "tag": "h3",
+              "id": "network-connectivity"
+            },
+            {
+              "tag": "h3",
+              "id": "ec2-gateway-instances"
+            },
+            {
+              "tag": "h3",
+              "id": "security-group-configuration"
+            },
+            {
+              "tag": "h4",
+              "id": "terraform-security-group-example"
+            },
+            {
+              "tag": "h3",
+              "id": "on-premises-firewall-configuration"
+            },
+            {
+              "tag": "h3",
+              "id": "mtu-considerations"
+            },
+            {
+              "tag": "h2",
+              "id": "iam-configuration"
+            },
+            {
+              "tag": "h3",
+              "id": "required-iam-permissions"
+            },
+            {
+              "tag": "h3",
+              "id": "scoped-iam-policy-recommended-for-production"
+            },
+            {
+              "tag": "h3",
+              "id": "terraform-iam-configuration"
+            },
+            {
+              "tag": "h3",
+              "id": "aws-cli-iam-setup"
+            },
+            {
+              "tag": "h2",
+              "id": "installation-and-configuration"
+            },
+            {
+              "tag": "h3",
+              "id": "step-1-label-gateway-nodes"
+            },
+            {
+              "tag": "h3",
+              "id": "step-2-gather-configuration-values"
+            },
+            {
+              "tag": "h3",
+              "id": "step-3-install-via-helm"
+            },
+            {
+              "tag": "h3",
+              "id": "full-helm-values-reference"
+            },
+            {
+              "tag": "h3",
+              "id": "step-4-verify-installation"
+            },
+            {
+              "tag": "h2",
+              "id": "cni-configuration"
+            },
+            {
+              "tag": "h3",
+              "id": "cilium-vtep-configuration-on-hybrid-nodes"
+            },
+            {
+              "tag": "h4",
+              "id": "verifying-cilium-vtep-on-hybrid-nodes"
+            },
+            {
+              "tag": "h3",
+              "id": "vpc-cni-configuration-on-cloud-nodes"
+            },
+            {
+              "tag": "h3",
+              "id": "ciliumvtepconfig-crd-details"
+            },
+            {
+              "tag": "h2",
+              "id": "traffic-flow-patterns"
+            },
+            {
+              "tag": "h3",
+              "id": "pattern-1-vpc-pod-to-hybrid-pod"
+            },
+            {
+              "tag": "h3",
+              "id": "pattern-2-hybrid-pod-to-vpc-pod"
+            },
+            {
+              "tag": "h3",
+              "id": "pattern-3-control-plane-to-webhook-on-hybrid-node"
+            },
+            {
+              "tag": "h3",
+              "id": "pattern-4-aws-services-to-hybrid-pods"
+            },
+            {
+              "tag": "h3",
+              "id": "pattern-5-comparison-with-vs-without-gateway"
+            },
+            {
+              "tag": "h2",
+              "id": "high-availability-and-failover"
+            },
+            {
+              "tag": "h3",
+              "id": "deployment-architecture"
+            },
+            {
+              "tag": "h3",
+              "id": "failover-sequence"
+            },
+            {
+              "tag": "h3",
+              "id": "failover-timeline"
+            },
+            {
+              "tag": "h3",
+              "id": "multi-az-deployment-recommendations"
+            },
+            {
+              "tag": "h3",
+              "id": "pod-disruption-budget"
+            },
+            {
+              "tag": "h3",
+              "id": "recovery-after-total-gateway-failure"
+            },
+            {
+              "tag": "h2",
+              "id": "operations"
+            },
+            {
+              "tag": "h3",
+              "id": "monitoring"
+            },
+            {
+              "tag": "h4",
+              "id": "key-metrics-to-watch"
+            },
+            {
+              "tag": "h4",
+              "id": "prometheus-servicemonitor"
+            },
+            {
+              "tag": "h4",
+              "id": "sample-grafana-dashboard-queries"
+            },
+            {
+              "tag": "h4",
+              "id": "cloudwatch-integration"
+            },
+            {
+              "tag": "h3",
+              "id": "logging"
+            },
+            {
+              "tag": "h4",
+              "id": "enable-debug-logging"
+            },
+            {
+              "tag": "h3",
+              "id": "troubleshooting"
+            },
+            {
+              "tag": "h4",
+              "id": "issue-pods-cannot-communicate-across-the-gateway"
+            },
+            {
+              "tag": "h4",
+              "id": "issue-security-group-misconfiguration"
+            },
+            {
+              "tag": "h4",
+              "id": "issue-missing-vpc-routes"
+            },
+            {
+              "tag": "h4",
+              "id": "issue-frequent-leader-transitions"
+            },
+            {
+              "tag": "h4",
+              "id": "issue-mtu-problems"
+            },
+            {
+              "tag": "h4",
+              "id": "troubleshooting-decision-tree"
+            },
+            {
+              "tag": "h3",
+              "id": "scaling"
+            },
+            {
+              "tag": "h4",
+              "id": "adding-more-hybrid-nodes"
+            },
+            {
+              "tag": "h4",
+              "id": "gateway-instance-sizing"
+            },
+            {
+              "tag": "h4",
+              "id": "gateway-capacity-planning"
+            },
+            {
+              "tag": "h3",
+              "id": "upgrading-the-gateway"
+            },
+            {
+              "tag": "h3",
+              "id": "cleanup"
+            },
+            {
+              "tag": "h2",
+              "id": "comparison-with-vs-without-gateway"
+            },
+            {
+              "tag": "h3",
+              "id": "feature-comparison"
+            },
+            {
+              "tag": "h3",
+              "id": "when-to-use-the-gateway"
+            },
+            {
+              "tag": "h3",
+              "id": "performance-characteristics"
+            },
+            {
+              "tag": "h3",
+              "id": "migration-from-manual-routing-to-gateway"
+            },
+            {
+              "tag": "h2",
+              "id": "best-practices"
+            },
+            {
+              "tag": "h3",
+              "id": "security"
+            },
+            {
+              "tag": "h4",
+              "id": "least-privilege-iam"
+            },
+            {
+              "tag": "h4",
+              "id": "security-group-best-practices"
+            },
+            {
+              "tag": "h4",
+              "id": "network-segmentation"
+            },
+            {
+              "tag": "h3",
+              "id": "performance"
+            },
+            {
+              "tag": "h4",
+              "id": "gateway-instance-sizing-1"
+            },
+            {
+              "tag": "h4",
+              "id": "latency-monitoring"
+            },
+            {
+              "tag": "h3",
+              "id": "cost"
+            },
+            {
+              "tag": "h4",
+              "id": "gateway-costs"
+            },
+            {
+              "tag": "h4",
+              "id": "cost-optimization-tips"
+            },
+            {
+              "tag": "h3",
+              "id": "integration-with-existing-hybrid-nodes-features"
+            },
+            {
+              "tag": "h2",
+              "id": "references"
+            },
+            {
+              "tag": "h3",
+              "id": "aws-documentation"
+            },
+            {
+              "tag": "h3",
+              "id": "open-source"
+            },
+            {
+              "tag": "h3",
+              "id": "related-internal-documents"
+            }
+          ],
+          "renderedIds": [
+            "eks-hybrid-nodes-gateway",
+            "overview",
+            "learning-objectives",
+            "the-problem-manual-pod-routing-in-hybrid-environments",
+            "architecture-deep-dive",
+            "high-level-architecture",
+            "vxlan-tunnel-mechanics",
+            "gateway-side-vxlan-interface",
+            "fdb-arp-and-route-programming",
+            "hybrid-node-side-cilium-vtep",
+            "leader-election-and-high-availability",
+            "lease-based-leader-election",
+            "what-the-leader-does",
+            "what-the-standby-does",
+            "vpc-route-table-auto-management",
+            "component-interaction-summary",
+            "prerequisites",
+            "eks-cluster-configuration",
+            "cni-requirements",
+            "network-connectivity",
+            "ec2-gateway-instances",
+            "security-group-configuration",
+            "terraform-security-group-example",
+            "on-premises-firewall-configuration",
+            "mtu-considerations",
+            "iam-configuration",
+            "required-iam-permissions",
+            "scoped-iam-policy-recommended-for-production",
+            "terraform-iam-configuration",
+            "aws-cli-iam-setup",
+            "installation-and-configuration",
+            "step-1-label-gateway-nodes",
+            "step-2-gather-configuration-values",
+            "step-3-install-via-helm",
+            "full-helm-values-reference",
+            "step-4-verify-installation",
+            "cni-configuration",
+            "cilium-vtep-configuration-on-hybrid-nodes",
+            "verifying-cilium-vtep-on-hybrid-nodes",
+            "vpc-cni-configuration-on-cloud-nodes",
+            "ciliumvtepconfig-crd-details",
+            "traffic-flow-patterns",
+            "pattern-1-vpc-pod-to-hybrid-pod",
+            "pattern-2-hybrid-pod-to-vpc-pod",
+            "pattern-3-control-plane-to-webhook-on-hybrid-node",
+            "pattern-4-aws-services-to-hybrid-pods",
+            "pattern-5-comparison-with-vs-without-gateway",
+            "high-availability-and-failover",
+            "deployment-architecture",
+            "failover-sequence",
+            "failover-timeline",
+            "multi-az-deployment-recommendations",
+            "pod-disruption-budget",
+            "recovery-after-total-gateway-failure",
+            "operations",
+            "monitoring",
+            "key-metrics-to-watch",
+            "prometheus-servicemonitor",
+            "sample-grafana-dashboard-queries",
+            "cloudwatch-integration",
+            "logging",
+            "enable-debug-logging",
+            "troubleshooting",
+            "issue-pods-cannot-communicate-across-the-gateway",
+            "issue-security-group-misconfiguration",
+            "issue-missing-vpc-routes",
+            "issue-frequent-leader-transitions",
+            "issue-mtu-problems",
+            "troubleshooting-decision-tree",
+            "scaling",
+            "adding-more-hybrid-nodes",
+            "gateway-instance-sizing",
+            "gateway-capacity-planning",
+            "upgrading-the-gateway",
+            "cleanup",
+            "comparison-with-vs-without-gateway",
+            "feature-comparison",
+            "when-to-use-the-gateway",
+            "performance-characteristics",
+            "migration-from-manual-routing-to-gateway",
+            "best-practices",
+            "security",
+            "least-privilege-iam",
+            "security-group-best-practices",
+            "network-segmentation",
+            "performance",
+            "gateway-instance-sizing-1",
+            "latency-monitoring",
+            "cost",
+            "gateway-costs",
+            "cost-optimization-tips",
+            "integration-with-existing-hybrid-nodes-features",
+            "references",
+            "aws-documentation",
+            "open-source",
+            "related-internal-documents"
+          ]
+        }
+      ]
+    }
+  },
+  "artifacts": [
+    {
+      "path": "assets/diagrams/archify/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.architecture.json",
+      "sha256": "4241af6b1fc65d1a3f8347949d58ada5cd01686ed08063493a438ae548fa5a49"
+    },
+    {
+      "path": "public/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+      "sha256": "ac80044acab3b67ff1fdca76a6953db1e1e8d5b271f4f6297835e062efe91991"
+    },
+    {
+      "path": "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.png",
+      "sha256": "b916a788f115355e08c429bb48e0b6fbe4252dea652a012dd5820b154fe9f40e"
+    },
+    {
+      "path": "assets/diagrams/archify/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.sequence.json",
+      "sha256": "cedbabf94e8b5357238ce8067de053fd443d978d7cf9f0eba653b6aa4f7ae1bd"
+    },
+    {
+      "path": "public/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html",
+      "sha256": "eb96ac140afcf9cae570cbfe73fc22d83d3d7ac52be263ef0100c85507b52d43"
+    },
+    {
+      "path": "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.png",
+      "sha256": "51aac43a19df3a0b08b58b1771aa609e564a5d9ba57cc2006546b4c6cf4e48de"
+    },
+    {
+      "path": "assets/diagrams/archify/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.architecture.json",
+      "sha256": "8b8175b25d97c8a718da76470e2612b3010e8841d31d12421d8d310e3aea3ed6"
+    },
+    {
+      "path": "public/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+      "sha256": "c4716b4e1fef1d87cc1420e95ad3f4835f85e21d38fb688c5da51a7192b4deae"
+    },
+    {
+      "path": "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.png",
+      "sha256": "e31e84cf5045ec8a447dc4ed5c24013c6ea2b24268eac39b306950bef2226f7e"
+    },
+    {
+      "path": "assets/diagrams/archify/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.sequence.json",
+      "sha256": "bc4a9d1bbdb36b00b43cb627fed9577d1bbbf4876a6046281e9e80f8987533bb"
+    },
+    {
+      "path": "public/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html",
+      "sha256": "d7737f7544d6b212dec27e0eaf02283f5c069aafe0c0441e5a15dd29bd76867c"
+    },
+    {
+      "path": "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.png",
+      "sha256": "bf7d715c36c005e86afc796eb67a7a3e875a99955092176eceb0c3adaede7f2a"
+    },
+    {
+      "path": "assets/diagrams/archify/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.sequence.json",
+      "sha256": "9594fccc5852b029922ee9ea39f92e50015a01c372f892fe09620b6d4bcb7f4a"
+    },
+    {
+      "path": "public/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html",
+      "sha256": "93be924647bfed26aacd72f5d8051acc62c0bf08a1006a51eba314addd57ea9c"
+    },
+    {
+      "path": "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.png",
+      "sha256": "5d2ffb1adfa74476fbe85eb94b1a12188ba1e89c6bda825116d2fb2da966541f"
+    },
+    {
+      "path": "assets/diagrams/archify/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.architecture.json",
+      "sha256": "e221a653fff2ddf08dd6a02a73dd3bb8a515302525087d8e7d30444d3a7a3d15"
+    },
+    {
+      "path": "public/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+      "sha256": "15a06e3fb753438222b460f764c3a3fcaea11681aa6844270951bfb6682f4602"
+    },
+    {
+      "path": "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.png",
+      "sha256": "12931247dfcde0cf285e7abe74490c4cb771983fe49385342075d74cbbfb1e4a"
+    },
+    {
+      "path": "assets/diagrams/archify/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.sequence.json",
+      "sha256": "c89740d32afd29df5213ffb0f40f4c7f18509fd90f283195a51f021b769146e3"
+    },
+    {
+      "path": "public/archmaps/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html",
+      "sha256": "084b8687c9f0c62fb7f6d25d847568299af473a64ac2c8f39b46d5ff7f031124"
+    },
+    {
+      "path": "en/.gitbook/assets/en-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.png",
+      "sha256": "a35bc1719cf202ac84db8652333853a9d04a650d010b66fd870fc8574eba029e"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.architecture.json",
+      "sha256": "0e27b98103c17eaefca2c1eec014ff8404d2cd5ac5a1002e8a94e6da31285d1c"
+    },
+    {
+      "path": "public/archmaps/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.html",
+      "sha256": "6f50274eb7db6298ac6effba1cf7fb61df50eb4d09375ce39c81a042e8d75c4c"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-0.png",
+      "sha256": "332a64cc3d30b203199a725318eb1b36207156d38864e89baba157b97f1ae616"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.sequence.json",
+      "sha256": "ee0cfeb8d233adc74919953d57192fc98e8084d2684aacf9704775a0dfb1d793"
+    },
+    {
+      "path": "public/archmaps/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.html",
+      "sha256": "15f6f2dc107f87852d67f67ddbd8ff89fe780bc5e11ad027e7660014299b084c"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-1.png",
+      "sha256": "4f562898b4a5aa8d33a1c3d9cb795599f4aec60d37a54290d1fd66250643a064"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.workflow.json",
+      "sha256": "a93eba3e62bb8c8aa543c693df3f44575ea0284aba669ece03c7e436f4930121"
+    },
+    {
+      "path": "public/archmaps/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.html",
+      "sha256": "a2dffd21f90fc146998b254f31924eb9089960a61e808568e86b43bdfad2ba97"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-2.png",
+      "sha256": "ad1c72e46bdba37872976e8c68ab8c0825cf5079537354f8437b38a91e693188"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.sequence.json",
+      "sha256": "0876837a83e75920c6a7f270a865245e70aa3cdc34e4d46ab95d5eb86b074ad1"
+    },
+    {
+      "path": "public/archmaps/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.html",
+      "sha256": "30297a02ccb335de170ea7da1cc3c9a8d54f4249ca5e5d306423861803ffbb3e"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-3.png",
+      "sha256": "3e58355e91967739f60de787de5051791dd0d4c05420f2d0df54a9a9fda2de7a"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.sequence.json",
+      "sha256": "238c3d41ecade5994e1b041c9708bd0a8d7eb946382cf5992ddc334f07b8d02f"
+    },
+    {
+      "path": "public/archmaps/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.html",
+      "sha256": "eff8ce32a4d6a9286ea23829ed419c6612157b9d6ec6e4f190fb45f58d95d790"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-4.png",
+      "sha256": "55d729b819b794d5e082797a0356c2857d3ea48490976401d5a904c69dd8b92d"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.architecture.json",
+      "sha256": "a8e8fcbd597b6c8f312ee56042403e650ad620f4041edbcdbce8a5e55299ad4f"
+    },
+    {
+      "path": "public/archmaps/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.html",
+      "sha256": "eba2fb5cd657ed5fc64ffafa95f75d53a405925593b2ad7c8d7de78b29a75b2b"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-5.png",
+      "sha256": "83d5186caeab4a17d9c8f8d2d92bb896c8ab0b2019afefb91115dd404b31364e"
+    },
+    {
+      "path": "assets/diagrams/archify/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.architecture.json",
+      "sha256": "8f8ffe10f5ce0c4b6c1d2e413b217356137053f0538e734adbbf6b1eca83bac9"
+    },
+    {
+      "path": "public/archmaps/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.html",
+      "sha256": "167690c409c5ed9c7c793395be7d0f3efbc1b25c89832662c198ec1ba563eed6"
+    },
+    {
+      "path": "ko/.gitbook/assets/ko-eks-hybrid-nodes-10-hybrid-nodes-gateway-6.png",
+      "sha256": "6b32214ad335ab8717fe6fdded42bd108f21f528a5ecb1e514115d5516af0cc1"
+    },
+    {
+      "path": "en/eks-hybrid-nodes/10-hybrid-nodes-gateway.md",
+      "sha256": "c287fb92c55d9a0af8e4d4f558039d7715fd8de0319b9801af6c6c5ed25aaf4c"
+    },
+    {
+      "path": "ko/eks-hybrid-nodes/10-hybrid-nodes-gateway.md",
+      "sha256": "5d5a87095446bb38b7aa7f1878331d314f497397b80a1e0964967fa4cd2e8b8b"
+    }
+  ],
+  "limits": [
+    "No live AWS/Kubernetes forwarding orfailover experiment.",
+    "Lease3/2/1secondsareconfigurationdefaults,notmeasuredrecoverytargets.",
+    "Originalunverifiedtimefiguresremainclearlyidentifiedashistoricalillustrationsintheguide.",
+    "GatewayruntimeAWSaggregate routeownership andCiliumNodelocalstate areseparate."
+  ]
+}

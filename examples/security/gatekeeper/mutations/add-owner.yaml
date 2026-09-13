@@ -1,0 +1,18 @@
+apiVersion: mutations.gatekeeper.sh/v1
+kind: AssignMetadata
+metadata:
+  name: docs-owner
+spec:
+  match:
+    scope: Namespaced
+    namespaces:
+    - policy-lab
+    kinds:
+    - apiGroups:
+      - ''
+      kinds:
+      - Pod
+  location: metadata.labels.owner
+  parameters:
+    assign:
+      value: platform-team

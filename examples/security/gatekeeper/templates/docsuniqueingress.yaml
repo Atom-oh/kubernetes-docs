@@ -1,0 +1,26 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: docsuniqueingress
+spec:
+  crd:
+    spec:
+      names:
+        kind: DocsUniqueIngress
+      validation:
+        openAPIV3Schema:
+          type: object
+  targets:
+  - target: admission.k8s.gatekeeper.sh
+    code:
+    - engine: Rego
+      source:
+        version: v1
+        rego: "package docsuniqueingress\nsame_object(other) if {\n  other.metadata.namespace\
+          \ == input.review.object.metadata.namespace\n  other.metadata.name == input.review.object.metadata.name\n\
+          }\nviolation contains {\"msg\": sprintf(\"host already in synced inventory:\
+          \ %v\", [host])} if {\n  input.review.kind.group == \"networking.k8s.io\"\
+          \n  input.review.kind.kind == \"Ingress\"\n  host := input.review.object.spec.rules[_].host\n\
+          \  host != \"\"\n  other := data.inventory.namespace[_][\"networking.k8s.io/v1\"\
+          ].Ingress[_]\n  other.spec.rules[_].host == host\n  not same_object(other)\n\
+          }\n"

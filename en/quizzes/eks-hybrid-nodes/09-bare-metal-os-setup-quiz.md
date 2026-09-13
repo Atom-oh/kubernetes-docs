@@ -1,219 +1,243 @@
 # Bare Metal Server OS Installation and Migration Quiz
 
-> **Related Document**: [Bare Metal Server OS Installation and Migration Guide](../../eks-hybrid-nodes/09-bare-metal-os-setup.md)
+> **Last Updated**: September 13, 2026
+
+> **Related Document**: [Guide](../../eks-hybrid-nodes/09-bare-metal-os-setup.md)
 
 ## Multiple Choice Questions
 
-### 1. What is a key benefit of running EKS Hybrid Nodes on bare metal servers?
+<span id="_1-what-is-a-key-benefit-of-running-eks-hybrid-nodes-on-bare-metal-servers"></span>
 
-A. Faster network speeds than AWS EC2 instances
-B. VMware license cost savings and elimination of hypervisor overhead
-C. Ability to use Bottlerocket OS
-D. AWS Support Plans coverage
+### 1. What can be a reason to assess bare metal for Hybrid Nodes?
+
+- A) Automatic conversion of every VM to a container
+- B) Potential removal of the hypervisor layer, evaluated against total cost and workload requirements
+- C) Operation with no AWS connectivity
+- D) Automatic cancellation of all software licenses
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) VMware license cost savings and elimination of hypervisor overhead**
+**Answer: B) Potential removal of the hypervisor layer, evaluated against total cost and workload requirements**
 
 **Explanation:**
-Running EKS Hybrid Nodes on bare metal servers allows you to save on VMware licensing costs (which moved to a subscription model after the Broadcom acquisition) and OpenShift subscription fees. Additionally, eliminating the hypervisor layer optimizes performance.
+
+Removing a hypervisor can change licensing and execution overhead, but does not guarantee lower total cost or better performance. Containerization, data migration, availability, support and contract obligations need separate work. Do not infer savings from the guide's preserved unverified historical price estimates.
 
 </details>
 
-### 2. What are the essential components required for PXE boot infrastructure?
+<span id="_2-what-are-the-essential-components-required-for-pxe-boot-infrastructure"></span>
 
-A. DNS server and NFS server
-B. DHCP server and TFTP server
-C. FTP server and SMTP server
-D. LDAP server and Kerberos server
+### 2. Which components commonly serve a legacy PXE boot design?
+
+- A) DNS and NFS alone
+- B) DHCP/ProxyDHCP boot information and a TFTP boot server
+- C) FTP and SMTP
+- D) LDAP and Kerberos alone
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) DHCP server and TFTP server**
+**Answer: B) DHCP/ProxyDHCP boot information and a TFTP boot server**
 
 **Explanation:**
-The core components of PXE boot infrastructure are:
-- DHCP Server: Provides IP address allocation and PXE boot information (next-server, filename)
-- TFTP Server: Serves bootloader (pxelinux.0), kernel (vmlinuz), and initial RAM disk (initrd.img)
-- HTTP Server (optional): Hosts OS installation images and configuration files
+
+Legacy PXE commonly uses DHCP boot information and TFTP. HTTP can deliver installer content; UEFI HTTP/iPXE designs may use different paths. pxelinux.0 is not a universal UEFI bootloader. Verify the firmware/loader chain and isolate provisioning; private activation codes and keys must not be exposed on a shared unauthenticated server.
 
 </details>
 
-### 3. Which correctly pairs Ubuntu's automated installation method with RHEL's automated installation method?
+<span id="_3-which-correctly-pairs-ubuntu-s-automated-installation-method-with-rhel-s-automated-installation-method"></span>
 
-A. Ubuntu: Kickstart, RHEL: Autoinstall
-B. Ubuntu: Autoinstall (cloud-init), RHEL: Kickstart
-C. Ubuntu: Preseed, RHEL: Anaconda
-D. Ubuntu: YAML, RHEL: JSON
+### 3. Which pairing correctly describes automated OS installation?
+
+- A) Ubuntu: Kickstart; RHEL: Autoinstall
+- B) Ubuntu Server: Subiquity Autoinstall YAML; RHEL: Kickstart
+- C) Ubuntu: govc; RHEL: TOML
+- D) Both require an unverified latest nodeadm download inside the installer
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Ubuntu: Autoinstall (cloud-init), RHEL: Kickstart**
+**Answer: B) Ubuntu Server: Subiquity Autoinstall YAML; RHEL: Kickstart**
 
 **Explanation:**
-- Ubuntu uses Autoinstall (cloud-init based) for PXE automated installation. It uses YAML format configuration files.
-- RHEL uses Kickstart for PXE automated installation. Configuration is done via ks.cfg files.
+
+Cloud-init can deliver Ubuntu's Autoinstall configuration. RHEL uses Kickstart. Validate the selected installer version and host-specific storage/network settings. A YAML parser or ksvalidator does not prove that the intended disk is safe to erase or that the installed host can authenticate.
 
 </details>
 
-### 4. According to the OS infrastructure support matrix, what is Bottlerocket's supported environment?
+<span id="_4-according-to-the-os-infrastructure-support-matrix-what-is-bottlerocket-s-supported-environment"></span>
 
-A. Both bare metal and VMware supported
-B. Bare metal only
-C. VMware only
-D. AWS EC2 only
+### 4. Which Bottlerocket deployment is supported for EKS Hybrid Nodes in the reviewed AWS guidance?
+
+- A) Any bare-metal variant
+- B) Every hypervisor and architecture
+- C) Supported VMware variants >=1.37.0 on x86_64
+- D) Only EC2
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) VMware only**
+**Answer: C) Supported VMware variants >=1.37.0 on x86_64**
 
 **Explanation:**
-Bottlerocket is only supported in VMware environments for EKS Hybrid Nodes (v1.37.0+, x86_64 only). For bare metal servers, you must use Ubuntu, RHEL, or Amazon Linux 2023. Bottlerocket does not use nodeadm; it uses settings.toml for configuration.
+
+This is the EKS Hybrid support boundary, not a statement about every Bottlerocket product variant. For Hybrid bare metal assess supported Ubuntu/RHEL hosts. AL2023 is also an on-premises virtualized-guest option, not the supported generic bare-metal path. Check Kubernetes variant availability and current lifecycle requirements separately.
 
 </details>
 
-### 5. What configuration tool and format does Bottlerocket use differently from other operating systems?
+<span id="_5-what-configuration-tool-and-format-does-bottlerocket-use-differently-from-other-operating-systems"></span>
 
-A. nodeadm (YAML)
-B. ansible (INI)
-C. govc (TOML)
-D. terraform (HCL)
+### 5. How should Bottlerocket settings and govc be distinguished?
+
+- A) govc is the Bottlerocket TOML parser
+- B) Bottlerocket uses the same nodeadm YAML as Ubuntu
+- C) Bottlerocket uses settings/bootstrap inputs; govc manages VMware VM lifecycle and user-data delivery
+- D) settings.hybrid.ssm is a standard supported settings namespace
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) govc (TOML)**
+**Answer: C) Bottlerocket uses settings/bootstrap inputs; govc manages VMware VM lifecycle and user-data delivery**
 
 **Explanation:**
-Bottlerocket does not use nodeadm; instead, it uses settings.toml files for configuration. The govc deployment workflow is: clone template → inject user-data → power on. In contrast, Ubuntu, RHEL, and Amazon Linux 2023 use nodeadm (YAML).
+
+Use the versioned Bottlerocket settings/bootstrap process from the guide. The old settings.hybrid.* examples were invalid. govc can clone/configure/power VMs but is not the OS settings parser. Protect guestinfo and user-data; base64 encoding does not encrypt credentials.
 
 </details>
 
-### 6. When selecting a credential provider for an environment without PKI infrastructure and with internet connectivity, which option is recommended?
+<span id="_6-when-selecting-a-credential-provider-for-an-environment-without-pki-infrastructure-and-with-internet-connectivity-which-option-is-recommended"></span>
 
-A. IAM Roles Anywhere
-B. SSM Hybrid Activations
-C. Kubernetes Service Account
-D. OIDC Provider
+### 6. Which statement about Hybrid credential providers and connectivity is correct?
+
+- A) IAM Roles Anywhere works indefinitely with no AWS connection
+- B) Both providers need their required AWS APIs; private connectivity can avoid public internet access
+- C) SSM always requires direct public internet
+- D) A Kubernetes ServiceAccount replaces the host's Hybrid credential provider
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) SSM Hybrid Activations**
+**Answer: B) Both providers need their required AWS APIs; private connectivity can avoid public internet access**
 
 **Explanation:**
-Credential provider selection guide:
-- No PKI infrastructure, internet available: SSM
-- Existing PKI infrastructure: IAM Roles Anywhere
-- Air-gapped environment: IAM Roles Anywhere
-- Custom node names needed: IAM Roles Anywhere
 
-SSM is recommended for most environments due to its simple setup and no certificate requirements.
+SSM can reduce certificate-management work where no managed PKI exists. IAM Roles Anywhere uses X.509 identity but still calls AWS CreateSession for temporary credentials. Either design needs its supported API/private endpoint paths, identity lifecycle and EKS authorization. A completely disconnected/DDIL environment is not the supported EKS Hybrid operating model.
 
 </details>
 
-### 7. What option must be used when installing containerd with nodeadm on RHEL?
+<span id="_7-what-option-must-be-used-when-installing-containerd-with-nodeadm-on-rhel"></span>
 
-A. `--containerd-source distro`
-B. `--containerd-source docker`
-C. `--containerd-source eks`
-D. `--containerd-version latest`
+### 7. What are the documented nodeadm containerd-source options for RHEL?
+
+- A) distro is the only supported option
+- B) docker, or none when containerd is installed and maintained separately
+- C) eks, regardless of the OS
+- D) latest, with no compatibility check
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) `--containerd-source docker`**
+**Answer: B) docker, or none when containerd is installed and maintained separately**
 
 **Explanation:**
-On RHEL, you must use the `--containerd-source docker` option. The distribution default source (distro) is not supported on RHEL:
 
-```bash
-# Correct installation method
-sudo nodeadm install 1.31 --credential-provider ssm --containerd-source docker
-```
-
-Installation will fail without this option.
+RHEL does not support nodeadm's distro source. docker selects the compatible Docker-distributed containerd package; none skips installation and requires a separately managed runtime before init. The statement that every RHEL installation must use docker omits this supported alternative. AL2023 has a different source constraint.
 
 </details>
 
-### 8. What is the correct order of phases when migrating from VMware to bare metal + EKS Hybrid Nodes?
+<span id="_8-what-is-the-correct-order-of-phases-when-migrating-from-vmware-to-bare-metal-eks-hybrid-nodes"></span>
 
-A. Decommission VMware → Containerize workloads → Network transition → Build parallel infrastructure
-B. Containerize workloads → Build parallel infrastructure → Decommission VMware → Network transition
-C. Build parallel infrastructure → Containerize workloads → Network transition → Decommission VMware
-D. Network transition → Build parallel infrastructure → Containerize workloads → Decommission VMware
+### 8. Which migration sequence keeps a recovery path?
+
+- A) Decommission the source first
+- B) Cancel licenses before the pilot
+- C) Prepare a parallel target, migrate/test workloads and networking, accept data/operations, then decommission after the rollback window
+- D) Copy VM disks into containers and immediately wipe the source
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C) Build parallel infrastructure → Containerize workloads → Network transition → Decommission VMware**
+**Answer: C) Prepare a parallel target, migrate/test workloads and networking, accept data/operations, then decommission after the rollback window**
 
 **Explanation:**
-VMware → Bare Metal + EKS Hybrid Nodes migration phases:
-1. Phase 1: Build Parallel Infrastructure (Deploy EKS cluster and hybrid node infrastructure alongside VMware)
-2. Phase 2: Containerize Workloads (Migrate VM-based workloads to containers)
-3. Phase 3: Network Transition (Transition from NSX-T to Cilium BGP)
-4. Phase 4: Decommission VMware (After verifying all workloads have been migrated)
+
+Inventory dependencies, plan backups/restores and keep rollback capacity. Test data consistency, TLS/DNS, access policies and real workload behavior before switching traffic. Neither VM containerization nor a CSI driver installation alone migrates state. Decommissioning and license changes require the agreed acceptance/retention decisions.
 
 </details>
 
-### 9. What does OpenShift's Route concept map to in EKS Hybrid Nodes?
+<span id="_9-what-does-openshift-s-route-concept-map-to-in-eks-hybrid-nodes"></span>
 
-A. Service
-B. Ingress / Gateway API
-C. NetworkPolicy
-D. Endpoint
+### 9. How should an OpenShift Route be migrated?
+
+- A) Rename it to Service with no other changes
+- B) Design an Ingress/Gateway API mapping and verify the selected controller's TLS and routing behavior
+- C) Replace every Route with NetworkPolicy
+- D) Copy its fields unchanged into a Gateway
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Ingress / Gateway API**
+**Answer: B) Design an Ingress/Gateway API mapping and verify the selected controller's TLS and routing behavior**
 
 **Explanation:**
-Concept mapping when migrating from OpenShift to EKS Hybrid Nodes:
 
-| OpenShift | EKS Hybrid Nodes |
-|-----------|-----------------|
-| Route | Ingress / Gateway API |
-| SCC | PSS (Pod Security Standards) |
-| OLM | Helm / EKS Add-ons |
-| MachineSet | nodeadm + Ansible |
-| ImageStream | ECR |
-| BuildConfig | External CI/CD |
-| DeploymentConfig | Deployment |
+Ingress/Gateway API are candidate routing interfaces, not automatic equivalents. Preserve termination/reencrypt/passthrough, weights and annotations as applicable. The same caution applies to SCC versus PSS/PSA, OLM delivery, ImageStream triggers and DeploymentConfig hooks: ECR/Helm/Deployment do not reproduce every OpenShift behavior automatically.
 
 </details>
 
-### 10. What is the solution when Pods won't terminate on Ubuntu 24.04 due to containerd issues?
+<span id="_10-what-is-the-solution-when-pods-won-t-terminate-on-ubuntu-24-04-due-to-containerd-issues"></span>
 
-A. Disable SELinux and reboot
-B. Update containerd to v1.7.19+ or modify AppArmor profile and reboot
-C. Switch container runtime to Docker
-D. Downgrade to cgroup v1
+### 10. What is an appropriate response to the documented Ubuntu 24.04 AppArmor/container termination issue?
+
+- A) Remove all unknown AppArmor profiles on every host
+- B) Verify the actual package/profile problem, apply the supported fix, and perform a planned reboot when that transition requires it
+- C) Disable every security mechanism
+- D) Assume every stuck Pod is fixed by installing exactly containerd 1.7.19
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) Update containerd to v1.7.19+ or modify AppArmor profile and reboot**
+**Answer: B) Verify the actual package/profile problem, apply the supported fix, and perform a planned reboot when that transition requires it**
 
 **Explanation:**
-Ubuntu 24.04 requires containerd v1.7.19 or later, or AppArmor profile changes are needed (Ubuntu bug #2065423):
 
-```bash
-# Check containerd version
-containerd --version
+Bug 2065423 has released fixes and describes a restart for the affected package/profile transition. Check vendor package/backport status and actual signal-denial logs. aa-remove-unknown removes loaded profiles absent from /etc/apparmor.d; it is not a targeted editor. Use controlled drain/reboot/workload checks and do not make every AppArmor change a universal reboot rule.
 
-# If version is below 1.7.19, modify AppArmor profile
-sudo aa-remove-unknown
+</details>
 
-# Reboot required to apply changes
-sudo reboot
-```
+### 11. Which cost model matches the reviewed EKS Hybrid pricing?
 
-Without rebooting, Pods may not terminate properly.
+- A) A universal flat $0.01/vCPU-hour including every service
+- B) Monthly marginal tiers on reported vCPU-hours, plus separate cluster and other costs
+- C) Only CPU requested by running Pods is billed
+- D) No node charge while workloads are idle
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) Monthly marginal tiers on reported vCPU-hours, plus separate cluster and other costs**
+
+**Explanation:**
+
+The first 576,000 monthly vCPU-hours use $0.020/vCPU-hour, followed by the published marginal tiers. Aggregation is Regional within an account or an Organizations consolidated-billing scope. Include reported vCPUs, month lengths, cluster support tier and other services. The old $2,803.20/node-year result is preserved as an obsolete unverified assumption, not current TCO.
+
+</details>
+
+### 12. What does choosing Cilium BGP imply when replacing NSX-T functions?
+
+- A) Every NSX-T feature is automatically reproduced
+- B) BGP provides route exchange; overlay, firewall, load balancing and policy requirements need separate mapping
+- C) No return-path routing needs testing
+- D) All existing sessions survive unchanged
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) BGP provides route exchange; overlay, firewall, load balancing and policy requirements need separate mapping**
+
+**Explanation:**
+
+BGP advertisements do not supply the whole NSX platform. Inventory route, overlay, security and load-balancing behavior separately, then test target addressing, return paths, TLS/DNS and established/new connections. Select the supported mixed-CNI pattern and preserve rollback; no universal one-to-one replacement is claimed.
 
 </details>

@@ -1,0 +1,142 @@
+[
+  {
+    "path": "en/eks-hybrid-nodes/07-node-lifecycle.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read and corrected paired Hybrid07 lifecycle content and quiz: activationexpiry vsregistration, nodeadmSSMsigningfloor, kubeletgrace/reservations, safeone-nodeidentity/version/Leasechecks, stagedPKIrenewal, explicittrustJSON and read-onlyhealthobservers.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-upgrade.html",
+      "https://docs.aws.amazon.com/systems-manager/latest/userguide/hybrid-activation-managed-nodes.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html",
+      "https://docs.aws.amazon.com/botocore/latest/reference/services/rolesanywhere/client/update_trust_anchor.html",
+      "https://kubernetes.io/releases/version-skew-policy/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/",
+      "https://kubernetes.io/docs/concepts/cluster-administration/node-shutdown/",
+      "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/cluster-pool.rst",
+      "https://github.com/containerd/containerd/blob/main/docs/cri/config.md"
+    ],
+    "findings": [
+      "CorrectedSSMactivationexpiryanddangerousuninstall/re-registeradvice;nodeadm>=1.0.19SSMinstall/upgradefloor.",
+      "Removedunsafeautomaticbulkupgrade/destructivefilesystemrollback,fakeCAendpointandunconditionalservicerestarts.",
+      "Correctednodeallocatable/eviction/shutdownguarantees,CiliumusableIPv4counts,registryfallbackandinitial-registrationtaintsemantics.",
+      "Fleetqueryerrors/emptycohort/UIDmismatchandstaleLease/oldversionfailclosed;noautomaticuncordon.",
+      "Eightpairedquizanswersconsistent;historicalskewvaluespreservedasexplicitexamples."
+    ],
+    "validation": [
+      "14nativefixturetestspassed(onlyfakekubectl/localsyntheticcertificates).",
+      "49YAML/TOML/Jinja/exactfixture/paritycheckspassed.",
+      "4nativeVitePress/Vuecompilespassed;alllegacyanchorsandlocallinkspreserved.",
+      "NoAWS/Kubernetes/hostmutations/fullsitebuild."
+    ],
+    "reviewedSha256": "f2020521e23dd463aae541053508c21cd6345d29618ad7081a768d2c57dfbe40",
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-lifecycle-validation.json",
+    "reviewedAt": "2026-09-13T02:42:24.563172+00:00"
+  },
+  {
+    "path": "ko/eks-hybrid-nodes/07-node-lifecycle.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read and corrected paired Hybrid07 lifecycle content and quiz: activationexpiry vsregistration, nodeadmSSMsigningfloor, kubeletgrace/reservations, safeone-nodeidentity/version/Leasechecks, stagedPKIrenewal, explicittrustJSON and read-onlyhealthobservers.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-upgrade.html",
+      "https://docs.aws.amazon.com/systems-manager/latest/userguide/hybrid-activation-managed-nodes.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html",
+      "https://docs.aws.amazon.com/botocore/latest/reference/services/rolesanywhere/client/update_trust_anchor.html",
+      "https://kubernetes.io/releases/version-skew-policy/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/",
+      "https://kubernetes.io/docs/concepts/cluster-administration/node-shutdown/",
+      "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/cluster-pool.rst",
+      "https://github.com/containerd/containerd/blob/main/docs/cri/config.md"
+    ],
+    "findings": [
+      "CorrectedSSMactivationexpiryanddangerousuninstall/re-registeradvice;nodeadm>=1.0.19SSMinstall/upgradefloor.",
+      "Removedunsafeautomaticbulkupgrade/destructivefilesystemrollback,fakeCAendpointandunconditionalservicerestarts.",
+      "Correctednodeallocatable/eviction/shutdownguarantees,CiliumusableIPv4counts,registryfallbackandinitial-registrationtaintsemantics.",
+      "Fleetqueryerrors/emptycohort/UIDmismatchandstaleLease/oldversionfailclosed;noautomaticuncordon.",
+      "Eightpairedquizanswersconsistent;historicalskewvaluespreservedasexplicitexamples."
+    ],
+    "validation": [
+      "14nativefixturetestspassed(onlyfakekubectl/localsyntheticcertificates).",
+      "49YAML/TOML/Jinja/exactfixture/paritycheckspassed.",
+      "4nativeVitePress/Vuecompilespassed;alllegacyanchorsandlocallinkspreserved.",
+      "NoAWS/Kubernetes/hostmutations/fullsitebuild."
+    ],
+    "reviewedSha256": "fc4904daa7d0924b69ff5090c88bfc62bc523c8641125ed8ee3d8862ef9bd2a3",
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-lifecycle-validation.json",
+    "reviewedAt": "2026-09-13T02:42:24.563172+00:00"
+  },
+  {
+    "path": "en/quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read and corrected paired Hybrid07 lifecycle content and quiz: activationexpiry vsregistration, nodeadmSSMsigningfloor, kubeletgrace/reservations, safeone-nodeidentity/version/Leasechecks, stagedPKIrenewal, explicittrustJSON and read-onlyhealthobservers.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-upgrade.html",
+      "https://docs.aws.amazon.com/systems-manager/latest/userguide/hybrid-activation-managed-nodes.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html",
+      "https://docs.aws.amazon.com/botocore/latest/reference/services/rolesanywhere/client/update_trust_anchor.html",
+      "https://kubernetes.io/releases/version-skew-policy/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/",
+      "https://kubernetes.io/docs/concepts/cluster-administration/node-shutdown/",
+      "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/cluster-pool.rst",
+      "https://github.com/containerd/containerd/blob/main/docs/cri/config.md"
+    ],
+    "findings": [
+      "CorrectedSSMactivationexpiryanddangerousuninstall/re-registeradvice;nodeadm>=1.0.19SSMinstall/upgradefloor.",
+      "Removedunsafeautomaticbulkupgrade/destructivefilesystemrollback,fakeCAendpointandunconditionalservicerestarts.",
+      "Correctednodeallocatable/eviction/shutdownguarantees,CiliumusableIPv4counts,registryfallbackandinitial-registrationtaintsemantics.",
+      "Fleetqueryerrors/emptycohort/UIDmismatchandstaleLease/oldversionfailclosed;noautomaticuncordon.",
+      "Eightpairedquizanswersconsistent;historicalskewvaluespreservedasexplicitexamples."
+    ],
+    "validation": [
+      "14nativefixturetestspassed(onlyfakekubectl/localsyntheticcertificates).",
+      "49YAML/TOML/Jinja/exactfixture/paritycheckspassed.",
+      "4nativeVitePress/Vuecompilespassed;alllegacyanchorsandlocallinkspreserved.",
+      "NoAWS/Kubernetes/hostmutations/fullsitebuild."
+    ],
+    "reviewedSha256": "bbae341c663b5146902aa719a3746bc7f9c5b767f497bcc202f25f8d8d54e850",
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-lifecycle-validation.json",
+    "reviewedAt": "2026-09-13T02:42:24.563172+00:00"
+  },
+  {
+    "path": "ko/quizzes/eks-hybrid-nodes/07-node-lifecycle-quiz.md",
+    "fullyRead": true,
+    "status": "fixed",
+    "summary": "Fully read and corrected paired Hybrid07 lifecycle content and quiz: activationexpiry vsregistration, nodeadmSSMsigningfloor, kubeletgrace/reservations, safeone-nodeidentity/version/Leasechecks, stagedPKIrenewal, explicittrustJSON and read-onlyhealthobservers.",
+    "sources": [
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-upgrade.html",
+      "https://docs.aws.amazon.com/systems-manager/latest/userguide/hybrid-activation-managed-nodes.html",
+      "https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-creds.html",
+      "https://docs.aws.amazon.com/botocore/latest/reference/services/rolesanywhere/client/update_trust_anchor.html",
+      "https://kubernetes.io/releases/version-skew-policy/",
+      "https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/",
+      "https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/",
+      "https://kubernetes.io/docs/concepts/cluster-administration/node-shutdown/",
+      "https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/cluster-pool.rst",
+      "https://github.com/containerd/containerd/blob/main/docs/cri/config.md"
+    ],
+    "findings": [
+      "CorrectedSSMactivationexpiryanddangerousuninstall/re-registeradvice;nodeadm>=1.0.19SSMinstall/upgradefloor.",
+      "Removedunsafeautomaticbulkupgrade/destructivefilesystemrollback,fakeCAendpointandunconditionalservicerestarts.",
+      "Correctednodeallocatable/eviction/shutdownguarantees,CiliumusableIPv4counts,registryfallbackandinitial-registrationtaintsemantics.",
+      "Fleetqueryerrors/emptycohort/UIDmismatchandstaleLease/oldversionfailclosed;noautomaticuncordon.",
+      "Eightpairedquizanswersconsistent;historicalskewvaluespreservedasexplicitexamples."
+    ],
+    "validation": [
+      "14nativefixturetestspassed(onlyfakekubectl/localsyntheticcertificates).",
+      "49YAML/TOML/Jinja/exactfixture/paritycheckspassed.",
+      "4nativeVitePress/Vuecompilespassed;alllegacyanchorsandlocallinkspreserved.",
+      "NoAWS/Kubernetes/hostmutations/fullsitebuild."
+    ],
+    "reviewedSha256": "71c265841fd11ff42d80dc676b45d7395488e989a6083a8a74d4562724e7aa4e",
+    "validationReport": "docs/reviews/2026-09-11/eks-hybrid-lifecycle-validation.json",
+    "reviewedAt": "2026-09-13T02:42:24.563172+00:00"
+  }
+]
