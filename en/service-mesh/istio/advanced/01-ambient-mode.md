@@ -1,6 +1,6 @@
 # Ambient Mode
 
-> **Reviewed**: September 11, 2026 · Istio 1.31. This lab assumes compatible Linux nodes, node-agent/CNI permissions and a fresh demo namespace. No deployment commands were run by this audit.
+> **Last Updated**: September 11, 2026 · Istio 1.31. This lab assumes compatible Linux nodes, node-agent/CNI permissions and a fresh demo namespace. No deployment commands were run by this audit.
 
 Ambient was introduced as a 2022 experimental preview, first shipped in Istio 1.18 as Alpha, reached Beta in 1.22 and core GA in 1.24. The preview was not a generally available feature of the main 1.15 release. Resource savings and migration safety depend on actual topology, policies and traffic.
 

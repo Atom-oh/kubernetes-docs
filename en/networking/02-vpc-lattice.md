@@ -2,7 +2,7 @@
 
 Amazon VPC Lattice connects applications across VPCs and AWS accounts. This chapter explains the resource model, an EKS integration, routing, IAM authorization, monitoring, and troubleshooting.
 
-> Reviewed on 2026-09-11 against AWS Gateway API Controller **v2.1.3** and Gateway API **v1.5.0**. The examples describe configuration and validation steps; they have not been deployed to an AWS account as part of this review.
+> **Last Updated**: September 11, 2026 against AWS Gateway API Controller **v2.1.3** and Gateway API **v1.5.0**. The examples describe configuration and validation steps; they have not been deployed to an AWS account as part of this review.
 
 ## Table of Contents
 

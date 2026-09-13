@@ -1,6 +1,6 @@
 # AI/ML Best Practices on EKS
 
-> **Reviewed**: September12,2026
+> **Last Updated**: September 12, 2026
 > **Baselines**: inference-perf0.6.1 / SOCI0.15.0 / Karpenter1.14.1 / External Secrets2.10.0
 
 Evaluate improvements using latency, success rate, throughput, cost and recovery for the same workload. A GPU, snapshotter or sharing feature does not guarantee a fixed speedup or savings percentage.

@@ -1,6 +1,6 @@
 # Part 2: Flink Kubernetes Operator
 
-> Reviewed: 2026-09-12. Operator/Helm chart 1.15.0; Flink 2.2.1 / Java 17.
+> **Last Updated**: September 12, 2026. Operator/Helm chart 1.15.0; Flink 2.2.1 / Java 17.
 
 The Operator reconciles desired cluster/job state and manages upgrades, snapshots,
 recovery and autoscaling. It does not guarantee zero downtime or zero data loss

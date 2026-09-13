@@ -1,7 +1,7 @@
 # Part 2: Architecture
 
 > **Review baseline**: Calico Open Source 3.32.2 / operator 1.42.6; Calico 3.32 is tested against Kubernetes 1.34–1.36.
-> **Reviewed**: September 12, 2026. Examples are configuration references, not a live-cluster validation.
+> **Last Updated**: September 12, 2026. Examples are configuration references, not a live-cluster validation.
 
 ## Overview
 

@@ -1,6 +1,6 @@
 # Part 5: Factual SageMaker Qwen PII Validation Results
 
-> **Documentation Reviewed**: September 12, 2026
+> **Last Updated**: September 12, 2026
 > **AWS Validation Date**: September 1, 2026
 > **Historical Status**: blocked before GPU training; residual-resource record dated September 2
 

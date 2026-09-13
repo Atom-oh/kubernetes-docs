@@ -1,7 +1,7 @@
 # Istio Comparison Quiz
 
 > **Historical report**: Istio 1.30.2 / EKS 1.36.2; not a current support matrix
-> **Reviewed**: September 11, 2026
+> **Last Updated**: September 11, 2026
 
 This quiz tests your understanding of the sidecar vs. ambient mode selection criteria, especially the limitations of the reported EKS measurements. The audit did not recreate those experiments.
 

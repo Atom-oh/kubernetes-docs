@@ -1,6 +1,6 @@
 # EKS upgrades: Auto Mode, rollback and blue/green
 
-> Reviewed 2026-09-12. Commands checked with AWS CLI 2.36.44, Pluto 5.24.3 and Velero 1.18.2.
+> **Last Updated**: September 12, 2026. Commands checked with AWS CLI 2.36.44, Pluto 5.24.3 and Velero 1.18.2.
 > The example transition is 1.35 → 1.36; discover actual regional availability.
 
 Plan the control plane, nodes, add-ons, applications and data together.

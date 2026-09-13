@@ -1,6 +1,6 @@
 # Model Training on EKS
 
-> **Reviewed**: September 12, 2026
+> **Last Updated**: September 12, 2026
 > **Baselines**: Slinky1.2.2, MPI Operator0.8.2, Volcano1.15.2, PyTorch2.14.0, Neuron SDK2.32.0
 
 Distributed training requires compatible model code, data sharding, launchers, device allocation, communication and checkpoints. A valid manifest or Running Pod does not prove training or recovery works.

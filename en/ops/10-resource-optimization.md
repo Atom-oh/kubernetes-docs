@@ -1,6 +1,6 @@
 # Resource optimization: requests, limits and language runtimes
 
-> Reviewed 2026-09-11. Examples were checked with Kubernetes 1.36 schemas,
+> **Last Updated**: September 11, 2026. Examples were checked with Kubernetes 1.36 schemas,
 > Java 21 / Spring Boot 4.1.1, Python 3.12 / Gunicorn 26.2.0,
 > Node.js 24.21, Go 1.27.1 and Rust 1.98 / Tokio 1.53.1.
 

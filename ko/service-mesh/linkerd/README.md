@@ -1,6 +1,6 @@
 # Linkerd
 
-> **검토일**: 2026년 9월 11일 · 공개 CLI 예제 검증: edge-26.9.1
+> **마지막 업데이트**: 2026년 9월 11일 · 공개 CLI 예제 검증: edge-26.9.1
 
 Upstream 프로젝트는 edge 산출물을 배포하며 stable 배포판과 지원 수명 주기는 vendor가 제공합니다. Linkerd 2.20은 기능 milestone이지 내려받은 CLI의 보편적인 버전 문자열이 아닙니다. 정확한 배포판·릴리스를 고르고 Kubernetes·Gateway API 호환성을 확인하세요. 여기의 공개 예시는 2026년 9월 4일 게시된 edge-26.9.1입니다. Multicluster 원격 credential의 exec auth provider 수용 문제와 목적지 IP 충돌의 retry 가능 오류 처리를 수정했습니다. [릴리스](https://github.com/linkerd/linkerd2/releases/tag/edge-26.9.1)와 [배포 모델](https://linkerd.io/releases/)을 참고하세요.
 

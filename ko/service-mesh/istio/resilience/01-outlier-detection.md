@@ -1,6 +1,6 @@
 # Outlier Detection
 
-> **검토일**: 2026년 9월 11일 · Istio 1.31. 독립적인 사이드카 예제이며 지정한 namespace·실제 workload/endpoint가 필요합니다. 같은 host 예제는 대안 관계이고 값은 부하 검증된 권장치가 아닌 예시입니다.
+> **마지막 업데이트**: 2026년 9월 11일 · Istio 1.31. 독립적인 사이드카 예제이며 지정한 namespace·실제 workload/endpoint가 필요합니다. 같은 host 예제는 대안 관계이고 값은 부하 검증된 권장치가 아닌 예시입니다.
 
 Outlier Detection은 비정상적으로 동작하는 서비스 인스턴스를 자동으로 감지하고 트래픽 풀에서 제외하는 Circuit Breaker 패턴의 한 형태입니다.
 

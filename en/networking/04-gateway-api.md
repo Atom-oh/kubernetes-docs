@@ -1,7 +1,7 @@
 # Kubernetes Gateway API
 
 > **API baseline**: Gateway API v1.6 Standard; select the exact bundle supported by your controller.
-> **Reviewed**: September 12, 2026
+> **Last Updated**: September 12, 2026
 
 ## Overview
 

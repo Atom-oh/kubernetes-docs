@@ -1,6 +1,6 @@
 # AI Infrastructure on EKS
 
-> **Reviewed**: September12,2026
+> **Last Updated**: September 12, 2026
 > **Baselines**: GPU Operator26.7.0 / NVIDIA DRA0.5.0 / Argo Workflows4.1.3 / JupyterHub chart4.4.2 / Mountpoint CSI2.8.0
 
 AI infrastructure combines notebooks, pipelines, distributed runtimes, devices/nodes, storage/networking and authorization. A list of tools or successful Helm release does not establish platform security, availability or model execution.

@@ -1,6 +1,6 @@
 # Linkerd Traffic Management
 
-> **Reviewed**: September 11, 2026 · Linkerd edge-26.9.1 · Gateway API 1.5.1 · Flagger 1.45.0
+> **Last Updated**: September 11, 2026 · Linkerd edge-26.9.1 · Gateway API 1.5.1 · Flagger 1.45.0
 
 Current Linkerd routing uses Gateway API resources and supported annotations. ServiceProfiles remain a compatibility interface, while TrafficSplit/linkerd-smi is deprecated. These paths are not interchangeable: an existing ServiceProfile takes precedence over outbound HTTPRoutes for the same Service and prevents the newer retry/timeout/failure-accrual configuration from taking effect.
 

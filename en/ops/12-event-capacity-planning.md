@@ -1,6 +1,6 @@
 # Event capacity planning playbook
 
-> Reviewed 2026-09-12 against KEDA 2.20.2 and self-managed Karpenter AWS provider 1.14.1.
+> **Last Updated**: September 12, 2026 against KEDA 2.20.2 and self-managed Karpenter AWS provider 1.14.1.
 > Numbers are calculations from stated assumptions, not production benchmark results.
 
 PMs/planners supply demand, timing, latency and failure objectives. Operations validates app,

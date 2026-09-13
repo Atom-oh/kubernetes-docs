@@ -1,6 +1,6 @@
 # Linkerd 아키텍처
 
-> **검토일**: 2026년 9월 11일 · Linkerd edge-26.9.1 / proxy release/v2.368.0
+> **마지막 업데이트**: 2026년 9월 11일 · Linkerd edge-26.9.1 / proxy release/v2.368.0
 
 현재 구성 요소의 역할, identity 계층, 트래픽 캡처와 주입 수명 주기를 설명합니다. 지원 release/cluster 조합과 고정 산출물은 [설치 가이드](01-installation.md)를 확인하세요. 예시는 설정 설명이며 이번 감사에서 실제 배포나 CA 회전을 수행하지 않았습니다.
 

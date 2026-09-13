@@ -1,6 +1,6 @@
 # Multi-cluster
 
-> **검토일**: 2026년 9월 11일 · Istio1.31 · Kubernetes1.32–1.36. 아래 설치 예제는 **sidecar** 토폴로지의 독립적인 대안입니다. Ambient의 지원 범위는 다릅니다. 감사에서 클러스터·AWS 배포·운영 부하 시험을 실행하지 않았습니다.
+> **마지막 업데이트**: 2026년 9월 11일 · Istio1.31 · Kubernetes1.32–1.36. 아래 설치 예제는 **sidecar** 토폴로지의 독립적인 대안입니다. Ambient의 지원 범위는 다릅니다. 감사에서 클러스터·AWS 배포·운영 부하 시험을 실행하지 않았습니다.
 
 Multi-cluster Service Mesh는 여러 Kubernetes 클러스터를 하나의 통합된 서비스 메시로 연결합니다.
 

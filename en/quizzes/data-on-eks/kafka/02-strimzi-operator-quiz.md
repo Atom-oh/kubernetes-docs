@@ -1,6 +1,6 @@
 # Strimzi Operator Quiz
 
-> **Reviewed**: 2026-09-12, Strimzi 1.2.0 / Kafka 4.3.1.
+> **Last Updated**: September 12, 2026, Strimzi 1.2.0 / Kafka 4.3.1.
 
 This quiz tests your understanding of Strimzi Operator fundamentals, installation methods, core CRDs, KRaft node roles, and EKS deployment considerations.
 

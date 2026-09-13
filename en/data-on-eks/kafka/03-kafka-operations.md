@@ -1,6 +1,6 @@
 # Part 3: Kafka Operations
 
-> **Reviewed**: 2026-09-12, Strimzi 1.2.0 / Kafka 4.3.1.
+> **Last Updated**: September 12, 2026, Strimzi 1.2.0 / Kafka 4.3.1.
 > **Validation**: Current release documentation/source, local CRD/merge-patch checks, proposal generation/JSON extraction, Decimal calculations and CLI options. No Kafka reassignment, upgrade or AWS volume changes were executed.
 
 This chapter assumes the authenticated Kafka deployment and broker-only pool from [Part 2](./02-strimzi-operator.md). Operational commands can move real partitions and change resources: inspect current settings, placement and proposals before executing. Do not apply broker-scaling procedures unchanged to controller-role pools.

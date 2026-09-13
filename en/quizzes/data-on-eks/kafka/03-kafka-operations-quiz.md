@@ -1,6 +1,6 @@
 # Kafka Operations Quiz
 
-> **Reviewed**: 2026-09-12, Strimzi 1.2.0 / Kafka 4.3.1.
+> **Last Updated**: September 12, 2026, Strimzi 1.2.0 / Kafka 4.3.1.
 
 This quiz tests your understanding of storage design, broker scaling, Cruise Control rebalancing, rolling upgrades, and failure handling for a Strimzi-managed Kafka cluster on EKS.
 

@@ -4,7 +4,7 @@
 
 This guide uses Strimzi Operator as a self-managed Kafka option on EKS. The Operator reconciles Pods, storage, listeners, certificates and upgrades; it does not remove responsibility for data, availability and security policy. Part 6 compares managed alternatives such as Amazon MSK.
 
-> **Reviewed**: 2026-09-12. Strimzi 1.2.0 / Kafka 4.3.1.
+> **Last Updated**: September 12, 2026. Strimzi 1.2.0 / Kafka 4.3.1.
 > **Upgrade requirement**: Strimzi 1.0 and later only support CRD API `v1`. Convert existing `v1beta2` / `v1beta1` / `v1alpha1` resources and prepare CRDs through the official migration procedure before upgrading the Operator. Changing version numbers alone is not an upgrade plan.
 
 Strimzi 1.2.0 supports Kafka 4.2.0, 4.2.1, 4.3.0 and 4.3.1, defaulting to 4.3.1. This guide pins a compatible combination; also check the distribution, Kubernetes version and upgrade path before installation.

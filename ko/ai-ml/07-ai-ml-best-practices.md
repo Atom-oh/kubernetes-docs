@@ -1,6 +1,6 @@
 # EKS에서의 AI/ML 모범 사례
 
-> **검토일**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 9월 12일
 > **기준**: inference-perf0.6.1 / SOCI0.15.0 / Karpenter1.14.1 / External Secrets2.10.0
 
 개선의 기준은 같은 workload에서 측정한 지연·성공률·처리량·비용과 복구 가능성입니다. 특정 GPU, snapshotter 또는 sharing 기능만으로 고정 절감률이나 성능 배수를 보장하지 않습니다.

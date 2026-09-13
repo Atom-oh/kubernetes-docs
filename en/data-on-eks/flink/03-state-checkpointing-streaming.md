@@ -1,6 +1,6 @@
 # Part 3: State, Checkpointing and Streaming Patterns
 
-> Reviewed: 2026-09-12. Operator 1.15.0. Kafka examples use Flink 2.2.1; Iceberg examples use a separate Flink 2.1.3 combination.
+> **Last Updated**: September 12, 2026. Operator 1.15.0. Kafka examples use Flink 2.2.1; Iceberg examples use a separate Flink 2.1.3 combination.
 
 State is the data remembered by aggregation, joins and deduplication. Not every
 window retains every input record: incremental SUM/COUNT aggregations can keep

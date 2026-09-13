@@ -1,6 +1,6 @@
 # Calico Deep Dive: Kubernetes Networking and Policy
 
-> **Review baseline**: Calico Open Source 3.32.2 · **Reviewed**: September 12, 2026
+> **Review baseline**: Calico Open Source 3.32.2 · **Last Updated**: September 12, 2026
 > Calico 3.32 is tested against Kubernetes 1.34–1.36. This is not an open-ended `3.29+ / Kubernetes 1.28+` compatibility guarantee.
 
 ## Overview

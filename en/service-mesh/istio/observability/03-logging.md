@@ -1,7 +1,7 @@
 # Istio Logging
 
 > **Supported Versions**: Istio 1.31
-> **Last Reviewed**: September 11, 2026
+> **Last Updated**: September 11, 2026
 
 > **Validation scope**: These lab configurations were checked against official references and offline validators, without deploying a cluster. Namespace, identity, storage, backend and load assumptions are stated with each example and must be verified for the target environment.
 

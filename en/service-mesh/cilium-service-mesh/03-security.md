@@ -1,6 +1,6 @@
 # Cilium Service Mesh Security
 
-> **Reviewed**: September 11, 2026 · Cilium/chart 1.20.1 · bundled SPIRE 1.15.2. See the [overview](./README.md) for tested Kubernetes/EKS versions and platform requirements.
+> **Last Updated**: September 11, 2026 · Cilium/chart 1.20.1 · bundled SPIRE 1.15.2. See the [overview](./README.md) for tested Kubernetes/EKS versions and platform requirements.
 
 ## Overview
 

@@ -1,6 +1,6 @@
 # Cilium Service Mesh 보안
 
-> **검토일**: 2026년 9월 11일 · Cilium/chart 1.20.1 · 번들 SPIRE 1.15.2. Kubernetes/EKS 테스트 범위와 플랫폼 요건은 [개요](./README.md)를 참고하세요.
+> **마지막 업데이트**: 2026년 9월 11일 · Cilium/chart 1.20.1 · 번들 SPIRE 1.15.2. Kubernetes/EKS 테스트 범위와 플랫폼 요건은 [개요](./README.md)를 참고하세요.
 
 ## 개요
 

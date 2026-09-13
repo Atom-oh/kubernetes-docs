@@ -1,6 +1,6 @@
 # LLM 서빙을 위한 추론 프레임워크
 
-> **검토일**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 9월 12일
 > **범위**: 공식 릴리스·API·차트와 로컬 검증. GPU/Neuron 모델 실행 결과가 아닙니다.
 
 추론 엔진, 분산 실행 계층, Kubernetes controller와 provider gateway를 구분해 선택해야 합니다. 같은 “OpenAI 호환” 표현도 지원 endpoint·요청 필드·streaming·tool call·인증이 완전히 같다는 뜻은 아닙니다.

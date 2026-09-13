@@ -1,6 +1,6 @@
 # Part 1: SageMaker Qwen PII Platform Architecture
 
-> Reviewed: 2026-09-12. The diagram is a target design; neither GPU training path executed in the historical AWS record.
+> **Last Updated**: September 12, 2026. The diagram is a target design; neither GPU training path executed in the historical AWS record.
 
 GPU execution is blocked because the pinned PyTorch 2.8 DLC reached end of patch. First follow the supported-runtime upgrade requirements in the [execution chapter](03-sagemaker-mlflow-execution.md).
 
