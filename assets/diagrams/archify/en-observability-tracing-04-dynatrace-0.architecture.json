@@ -2,263 +2,223 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "Dynatrace on EKS Architecture",
-    "locale": "en",
-    "output": "en-observability-tracing-04-dynatrace-0.html",
+    "title": "Dynatrace on EKS: Injection and Telemetry",
     "quality_profile": "showcase",
     "animation": "trace",
     "viewBox": [
-      1120,
-      580
+      1360,
+      720
     ],
     "views": [
       {
         "id": "instrumentation",
-        "label": "Auto-instrumentation",
+        "label": "Injection control",
         "focus": [
-          "svc-a",
-          "svc-b",
-          "svc-c",
-          "oneagent"
+          "operator",
+          "webhook",
+          "csi",
+          "apps"
         ],
-        "note": "The OneAgent DaemonSet auto-instruments Service A/B/C with no code changes."
+        "note": "Admission injection into supported new Pods and CSI module mounts are distinct."
       },
       {
-        "id": "telemetry-path",
+        "id": "telemetry",
         "label": "Telemetry path",
         "focus": [
+          "apps",
           "oneagent",
           "activegate",
+          "api",
           "saas"
         ],
-        "note": "Metrics, traces and logs travel through ActiveGate to Dynatrace SaaS over an encrypted connection."
-      },
-      {
-        "id": "platform",
-        "label": "Dynatrace Platform",
-        "focus": [
-          "saas",
-          "davis",
-          "grail"
-        ],
-        "note": "Data arriving in SaaS feeds the Davis AI engine and the Grail data lakehouse."
+        "note": "Host/application data and Kubernetes API collection use separate paths."
       }
     ]
   },
   "components": [
     {
-      "id": "svc-a",
-      "type": "backend",
-      "label": "Service A",
-      "sublabel": "Application",
-      "pos": [
-        100,
-        60
-      ],
-      "size": [
-        150,
-        60
-      ]
-    },
-    {
-      "id": "svc-b",
-      "type": "backend",
-      "label": "Service B",
-      "sublabel": "Application",
-      "pos": [
-        285,
-        60
-      ],
-      "size": [
-        150,
-        60
-      ]
-    },
-    {
-      "id": "svc-c",
-      "type": "backend",
-      "label": "Service C",
-      "sublabel": "Application",
-      "pos": [
-        470,
-        60
-      ],
-      "size": [
-        150,
-        60
-      ]
-    },
-    {
       "id": "operator",
       "type": "security",
       "label": "Dynatrace Operator",
-      "sublabel": "Operator Pod + Webhook",
       "pos": [
-        40,
-        280
+        30,
+        60
       ],
       "size": [
-        170,
+        190,
+        64
+      ]
+    },
+    {
+      "id": "webhook",
+      "type": "security",
+      "label": "Admission webhook",
+      "pos": [
+        330,
         60
+      ],
+      "size": [
+        190,
+        64
+      ]
+    },
+    {
+      "id": "csi",
+      "type": "database",
+      "label": "CSI driver",
+      "pos": [
+        330,
+        230
+      ],
+      "size": [
+        190,
+        64
+      ],
+      "sublabel": "approved nodes"
+    },
+    {
+      "id": "apps",
+      "type": "backend",
+      "label": "Supported applications",
+      "pos": [
+        680,
+        145
+      ],
+      "size": [
+        190,
+        64
       ]
     },
     {
       "id": "oneagent",
       "type": "backend",
-      "label": "OneAgent",
-      "sublabel": "DaemonSet (worker nodes)",
+      "label": "Host OneAgent",
       "pos": [
-        290,
-        280
+        330,
+        520
       ],
       "size": [
-        160,
-        60
+        190,
+        64
       ],
-      "tag": "Auto-instrumentation"
+      "sublabel": "DaemonSet"
     },
     {
       "id": "activegate",
       "type": "backend",
       "label": "ActiveGate",
-      "sublabel": "StatefulSet",
       "pos": [
-        570,
-        280
+        1000,
+        400
       ],
       "size": [
-        150,
-        60
+        190,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "cloud",
+      "label": "Kubernetes API",
+      "pos": [
+        680,
+        590
+      ],
+      "size": [
+        190,
+        64
       ]
     },
     {
       "id": "saas",
       "type": "cloud",
-      "label": "Dynatrace SaaS",
-      "sublabel": "Tenant",
+      "label": "Dynatrace environment",
       "pos": [
-        870,
-        280
+        1000,
+        145
       ],
       "size": [
-        170,
-        60
-      ]
-    },
-    {
-      "id": "davis",
-      "type": "backend",
-      "label": "Davis AI Engine",
-      "sublabel": "Root cause analysis",
-      "pos": [
-        870,
-        100
-      ],
-      "size": [
-        170,
-        60
-      ]
-    },
-    {
-      "id": "grail",
-      "type": "database",
-      "label": "Grail Data Lakehouse",
-      "sublabel": "Data lakehouse",
-      "pos": [
-        870,
-        460
-      ],
-      "size": [
-        170,
-        60
-      ]
-    }
-  ],
-  "boundaries": [
-    {
-      "kind": "region",
-      "label": "Amazon EKS Cluster",
-      "wraps": [
-        "svc-a",
-        "svc-b",
-        "svc-c",
-        "operator",
-        "oneagent",
-        "activegate"
-      ]
-    },
-    {
-      "kind": "region",
-      "label": "Dynatrace Platform",
-      "wraps": [
-        "saas",
-        "davis",
-        "grail"
+        220,
+        64
       ]
     }
   ],
   "connections": [
     {
-      "id": "a-to-oneagent",
-      "from": "svc-a",
-      "to": "oneagent",
-      "label": "Auto-instrumentation",
-      "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "id": "operator-webhook",
+      "from": "operator",
+      "to": "webhook",
+      "label": "manages",
+      "variant": "dashed"
     },
     {
-      "id": "b-to-oneagent",
-      "from": "svc-b",
-      "to": "oneagent",
-      "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "top"
+      "id": "webhook-apps",
+      "from": "webhook",
+      "to": "apps",
+      "label": "injects new Pods",
+      "variant": "dashed"
     },
     {
-      "id": "c-to-oneagent",
-      "from": "svc-c",
-      "to": "oneagent",
-      "variant": "dashed",
-      "fromSide": "bottom",
-      "toSide": "top"
-    },
-    {
-      "id": "operator-to-oneagent",
+      "id": "operator-host",
       "from": "operator",
       "to": "oneagent",
-      "label": "Deploy / manage",
-      "variant": "dashed",
-      "labelDy": -38
+      "label": "manages",
+      "variant": "dashed"
     },
     {
-      "id": "oneagent-to-activegate",
+      "id": "csi-apps",
+      "from": "csi",
+      "to": "apps",
+      "label": "mounts modules",
+      "variant": "dashed"
+    },
+    {
+      "id": "app-data",
+      "from": "apps",
+      "to": "activegate",
+      "label": "application telemetry",
+      "variant": "default"
+    },
+    {
+      "id": "host-data",
       "from": "oneagent",
       "to": "activegate",
-      "label": "Metrics / Traces / Logs",
-      "variant": "emphasis",
-      "labelDy": -31
+      "label": "host telemetry",
+      "variant": "default"
     },
     {
-      "id": "activegate-to-saas",
+      "id": "api-query",
+      "from": "activegate",
+      "to": "api",
+      "label": "queries",
+      "variant": "default"
+    },
+    {
+      "id": "api-response",
+      "from": "api",
+      "to": "activegate",
+      "label": "cluster data",
+      "variant": "default",
+      "fromSide": "top"
+    },
+    {
+      "id": "export",
       "from": "activegate",
       "to": "saas",
-      "label": "Encrypted connection",
-      "variant": "security"
-    },
+      "label": "TLS",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
     {
-      "id": "saas-to-davis",
-      "from": "saas",
-      "to": "davis",
-      "label": "Analyze",
-      "labelDy": -30
-    },
-    {
-      "id": "saas-to-grail",
-      "from": "saas",
-      "to": "grail",
-      "label": "Store / query",
-      "labelDy": 40
+      "dot": "amber",
+      "title": "Deployment scope",
+      "items": [
+        "Cloud-native full-stack example; verify supported nodes, runtimes, and permissions",
+        "namespaceSelector limits injection, not all host or cluster collection"
+      ]
     }
   ]
 }

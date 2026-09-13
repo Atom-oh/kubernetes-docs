@@ -1,0 +1,1824 @@
+{
+  "date": "2026-09-11",
+  "completedAt": "2026-09-13T13:21:40.653207+00:00",
+  "scope": [
+    "en/observability/tracing/04-dynatrace.md",
+    "en/quizzes/observability/tracing/04-dynatrace-quiz.md",
+    "ko/observability/tracing/04-dynatrace.md",
+    "ko/quizzes/observability/tracing/04-dynatrace-quiz.md"
+  ],
+  "fullyRead": 4,
+  "fixedAndValidated": 4,
+  "originalRead": {
+    "en/observability/tracing/04-dynatrace.md": {
+      "lines": 452,
+      "sha256": "bc1f2e0e40464385f970190bb31d74e61cd09314d38cfc5e0a26301471c4f52a"
+    },
+    "en/quizzes/observability/tracing/04-dynatrace-quiz.md": {
+      "lines": 185,
+      "sha256": "6f690a64d4abbf673b03cf956c54bdeeb94edd4da2a83521debc40c5a5e6c75b"
+    },
+    "ko/observability/tracing/04-dynatrace.md": {
+      "lines": 635,
+      "sha256": "46b88c05b4cea44a3f335157ee4532c9718e2a6b4b7f9e73b21b0d94d6169b00"
+    },
+    "ko/quizzes/observability/tracing/04-dynatrace-quiz.md": {
+      "lines": 185,
+      "sha256": "b2df3c9a484f016e95dc9fb2fc25e93452fd808056a714eab20b5f204da4dda3"
+    }
+  },
+  "checks": {
+    "status": "passed",
+    "files": [
+      {
+        "path": "en/observability/tracing/04-dynatrace.md",
+        "sha256": "fa42484af372d11fa805564683d5491655e69da189c9ee229bb3d79cf2ea459c",
+        "fullyRead": true,
+        "fixed": true
+      },
+      {
+        "path": "en/quizzes/observability/tracing/04-dynatrace-quiz.md",
+        "sha256": "485f95610cb3257e783c5b60b81e545607be1e39a730b22231e37db1e2dbd995",
+        "fullyRead": true,
+        "fixed": true
+      },
+      {
+        "path": "ko/observability/tracing/04-dynatrace.md",
+        "sha256": "91fa7dcd32d97e2cd678395da71cbbe8f897d7e77e33e733a0dceeb96a69706a",
+        "fullyRead": true,
+        "fixed": true
+      },
+      {
+        "path": "ko/quizzes/observability/tracing/04-dynatrace-quiz.md",
+        "sha256": "46eab27e3389db84986ef4c310149d3e0cebdeee04b5d49a288a92a26d52ee67",
+        "fullyRead": true,
+        "fixed": true
+      }
+    ],
+    "finalSourceContracts": {
+      "status": "passed",
+      "checks": [
+        {
+          "name": "exact-fixture-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "exact-fixture-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "DynaKube-v1beta6-strict-schema",
+          "passed": true,
+          "locale": "en",
+          "errors": []
+        },
+        {
+          "name": "exact-namespace-and-credential-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "exact-fixture-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "Kubernetes-1.35-schema",
+          "passed": true,
+          "locale": "en",
+          "errors": []
+        },
+        {
+          "name": "exact-fixture-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "DynaKube-v1beta6-strict-schema",
+          "passed": true,
+          "locale": "en",
+          "errors": []
+        },
+        {
+          "name": "exact-namespace-and-credential-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "exact-fixture-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "exact-fixture-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "DynaKube-v1beta6-strict-schema",
+          "passed": true,
+          "locale": "en",
+          "errors": []
+        },
+        {
+          "name": "exact-namespace-and-credential-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "exact-fixture-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "DynaKube-v1beta6-strict-schema",
+          "passed": true,
+          "locale": "en",
+          "errors": []
+        },
+        {
+          "name": "exact-namespace-and-credential-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "exact-fixture-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "Kubernetes-1.35-schema",
+          "passed": true,
+          "locale": "en",
+          "errors": []
+        },
+        {
+          "name": "Prometheus-selector-and-pod-annotation",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "exact-fixture-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "shell-parse-only",
+          "passed": true,
+          "locale": "en",
+          "index": 0,
+          "error": ""
+        },
+        {
+          "name": "shell-parse-only",
+          "passed": true,
+          "locale": "en",
+          "index": 1,
+          "error": ""
+        },
+        {
+          "name": "shell-parse-only",
+          "passed": true,
+          "locale": "en",
+          "index": 2,
+          "error": ""
+        },
+        {
+          "name": "shell-parse-only",
+          "passed": true,
+          "locale": "en",
+          "index": 3,
+          "error": ""
+        },
+        {
+          "name": "shell-parse-only",
+          "passed": true,
+          "locale": "en",
+          "index": 4,
+          "error": ""
+        },
+        {
+          "name": "shell-parse-only",
+          "passed": true,
+          "locale": "en",
+          "index": 5,
+          "error": ""
+        },
+        {
+          "name": "shell-parse-only",
+          "passed": true,
+          "locale": "en",
+          "index": 6,
+          "error": ""
+        },
+        {
+          "name": "shell-parse-only",
+          "passed": true,
+          "locale": "en",
+          "index": 7,
+          "error": ""
+        },
+        {
+          "name": "actual-tested-event-helper-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "API-body-binding",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "quiz-questions-and-answer-key",
+          "passed": true,
+          "locale": "en",
+          "letters": "CBCBBBCBBB"
+        },
+        {
+          "name": "no-sensitive-environment-dump",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "obsolete-architecture-reference-removed",
+          "passed": true,
+          "locale": "en"
+        },
+        {
+          "name": "exact-fixture-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "exact-fixture-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "DynaKube-v1beta6-strict-schema",
+          "passed": true,
+          "locale": "ko",
+          "errors": []
+        },
+        {
+          "name": "exact-namespace-and-credential-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "exact-fixture-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "Kubernetes-1.35-schema",
+          "passed": true,
+          "locale": "ko",
+          "errors": []
+        },
+        {
+          "name": "exact-fixture-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "DynaKube-v1beta6-strict-schema",
+          "passed": true,
+          "locale": "ko",
+          "errors": []
+        },
+        {
+          "name": "exact-namespace-and-credential-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "exact-fixture-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "exact-fixture-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "DynaKube-v1beta6-strict-schema",
+          "passed": true,
+          "locale": "ko",
+          "errors": []
+        },
+        {
+          "name": "exact-namespace-and-credential-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "exact-fixture-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "DynaKube-v1beta6-strict-schema",
+          "passed": true,
+          "locale": "ko",
+          "errors": []
+        },
+        {
+          "name": "exact-namespace-and-credential-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "exact-fixture-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "Kubernetes-1.35-schema",
+          "passed": true,
+          "locale": "ko",
+          "errors": []
+        },
+        {
+          "name": "Prometheus-selector-and-pod-annotation",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "exact-fixture-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "shell-parse-only",
+          "passed": true,
+          "locale": "ko",
+          "index": 0,
+          "error": ""
+        },
+        {
+          "name": "shell-parse-only",
+          "passed": true,
+          "locale": "ko",
+          "index": 1,
+          "error": ""
+        },
+        {
+          "name": "shell-parse-only",
+          "passed": true,
+          "locale": "ko",
+          "index": 2,
+          "error": ""
+        },
+        {
+          "name": "shell-parse-only",
+          "passed": true,
+          "locale": "ko",
+          "index": 3,
+          "error": ""
+        },
+        {
+          "name": "shell-parse-only",
+          "passed": true,
+          "locale": "ko",
+          "index": 4,
+          "error": ""
+        },
+        {
+          "name": "shell-parse-only",
+          "passed": true,
+          "locale": "ko",
+          "index": 5,
+          "error": ""
+        },
+        {
+          "name": "shell-parse-only",
+          "passed": true,
+          "locale": "ko",
+          "index": 6,
+          "error": ""
+        },
+        {
+          "name": "shell-parse-only",
+          "passed": true,
+          "locale": "ko",
+          "index": 7,
+          "error": ""
+        },
+        {
+          "name": "actual-tested-event-helper-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "API-body-binding",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "quiz-questions-and-answer-key",
+          "passed": true,
+          "locale": "ko",
+          "letters": "CBCBBBCBBB"
+        },
+        {
+          "name": "no-sensitive-environment-dump",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "obsolete-architecture-reference-removed",
+          "passed": true,
+          "locale": "ko"
+        },
+        {
+          "name": "bilingual-executable-contract-parity",
+          "passed": true,
+          "language": "yaml"
+        },
+        {
+          "name": "bilingual-executable-contract-parity",
+          "passed": true,
+          "language": "bash"
+        },
+        {
+          "name": "bilingual-executable-contract-parity",
+          "passed": true,
+          "language": "python"
+        },
+        {
+          "name": "bilingual-executable-contract-parity",
+          "passed": true,
+          "language": "json"
+        },
+        {
+          "name": "settings-environment-schema-and-required-properties",
+          "passed": true
+        },
+        {
+          "name": "settings-rule-documented-enum-and-types",
+          "passed": true
+        },
+        {
+          "name": "settings-rule-documented-enum-and-types",
+          "passed": true
+        },
+        {
+          "name": "settings-rule-documented-enum-and-types",
+          "passed": true
+        },
+        {
+          "name": "custom-java-required-properties",
+          "passed": true
+        },
+        {
+          "name": "custom-java-explicit-method-signature",
+          "passed": true
+        },
+        {
+          "name": "Helm-1.10.2-final-values-render",
+          "passed": true,
+          "mode": "fullstack",
+          "error": ""
+        },
+        {
+          "name": "Helm-object-and-CSI-profile",
+          "passed": true,
+          "mode": "fullstack",
+          "objects": 59
+        },
+        {
+          "name": "Helm-approved-node-placement",
+          "passed": true,
+          "mode": "fullstack",
+          "resource": "dynatrace-oneagent-csi-driver"
+        },
+        {
+          "name": "Helm-approved-node-placement",
+          "passed": true,
+          "mode": "fullstack",
+          "resource": "dynatrace-operator"
+        },
+        {
+          "name": "Helm-approved-node-placement",
+          "passed": true,
+          "mode": "fullstack",
+          "resource": "dynatrace-webhook"
+        },
+        {
+          "name": "Helm-1.10.2-final-values-render",
+          "passed": true,
+          "mode": "app-only",
+          "error": ""
+        },
+        {
+          "name": "Helm-object-and-CSI-profile",
+          "passed": true,
+          "mode": "app-only",
+          "objects": 51
+        },
+        {
+          "name": "Helm-approved-node-placement",
+          "passed": true,
+          "mode": "app-only",
+          "resource": "dynatrace-operator"
+        },
+        {
+          "name": "Helm-approved-node-placement",
+          "passed": true,
+          "mode": "app-only",
+          "resource": "dynatrace-webhook"
+        },
+        {
+          "name": "all-original-rendered-anchors-retained",
+          "passed": true,
+          "path": "en/observability/tracing/04-dynatrace.md",
+          "missing": []
+        },
+        {
+          "name": "current-local-fragments-resolve",
+          "passed": true,
+          "path": "en/observability/tracing/04-dynatrace.md"
+        },
+        {
+          "name": "current-render-no-duplicate-IDs",
+          "passed": true,
+          "path": "en/observability/tracing/04-dynatrace.md"
+        },
+        {
+          "name": "all-original-rendered-anchors-retained",
+          "passed": true,
+          "path": "en/quizzes/observability/tracing/04-dynatrace-quiz.md",
+          "missing": []
+        },
+        {
+          "name": "current-local-fragments-resolve",
+          "passed": true,
+          "path": "en/quizzes/observability/tracing/04-dynatrace-quiz.md"
+        },
+        {
+          "name": "current-render-no-duplicate-IDs",
+          "passed": true,
+          "path": "en/quizzes/observability/tracing/04-dynatrace-quiz.md"
+        },
+        {
+          "name": "all-original-rendered-anchors-retained",
+          "passed": true,
+          "path": "ko/observability/tracing/04-dynatrace.md",
+          "missing": []
+        },
+        {
+          "name": "current-local-fragments-resolve",
+          "passed": true,
+          "path": "ko/observability/tracing/04-dynatrace.md"
+        },
+        {
+          "name": "current-render-no-duplicate-IDs",
+          "passed": true,
+          "path": "ko/observability/tracing/04-dynatrace.md"
+        },
+        {
+          "name": "all-original-rendered-anchors-retained",
+          "passed": true,
+          "path": "ko/quizzes/observability/tracing/04-dynatrace-quiz.md",
+          "missing": []
+        },
+        {
+          "name": "current-local-fragments-resolve",
+          "passed": true,
+          "path": "ko/quizzes/observability/tracing/04-dynatrace-quiz.md"
+        },
+        {
+          "name": "current-render-no-duplicate-IDs",
+          "passed": true,
+          "path": "ko/quizzes/observability/tracing/04-dynatrace-quiz.md"
+        }
+      ],
+      "counts": {
+        "dynakubes": 8,
+        "kubernetesObjects": 4,
+        "shellBlocks": 16,
+        "profiles": 6,
+        "apiBodies": 4
+      },
+      "limits": [
+        "Strict released CRD and Kubernetes OpenAPI shape checks do not execute admission CEL or the controller.",
+        "Settings/custom-service payload assertions cover the documented used fields; no tenant API validation or creation.",
+        "Helm rendered locally; no Kubernetes installation, agent injection or cloud calls.",
+        "Python helper exercised with session doubles; Collector runtime uses loopback synthetic data only."
+      ]
+    },
+    "initialRegressionProof": {
+      "checks": [
+        {
+          "kind": "currentCRD",
+          "path": "dynakube-fullstack.yaml",
+          "passed": true,
+          "errors": []
+        },
+        {
+          "kind": "currentCRD",
+          "path": "dynakube-classic.yaml",
+          "passed": true,
+          "errors": []
+        },
+        {
+          "kind": "currentCRD",
+          "path": "dynakube-app-only.yaml",
+          "passed": true,
+          "errors": []
+        },
+        {
+          "kind": "currentCRD",
+          "path": "dynakube-platform.yaml",
+          "passed": true,
+          "errors": []
+        },
+        {
+          "kind": "oldCRDapiStringOnlyUpgradeRejected",
+          "locale": "en",
+          "block": 2,
+          "originalApi": "dynatrace.com/v1beta2",
+          "passed": true,
+          "errors": [
+            "Additional properties are not allowed ('resources' was unexpected)",
+            "Additional properties are not allowed ('namespaceSelector' was unexpected)"
+          ]
+        },
+        {
+          "kind": "oldCRDapiStringOnlyUpgradeRejected",
+          "locale": "en",
+          "block": 3,
+          "originalApi": "dynatrace.com/v1beta2",
+          "passed": true,
+          "errors": [
+            "Additional properties are not allowed ('hostGroup' was unexpected)"
+          ]
+        },
+        {
+          "kind": "oldCRDapiStringOnlyUpgradeRejected",
+          "locale": "ko",
+          "block": 2,
+          "originalApi": "dynatrace.com/v1beta2",
+          "passed": true,
+          "errors": [
+            "Additional properties are not allowed ('resources' was unexpected)",
+            "Additional properties are not allowed ('namespaceSelector' was unexpected)"
+          ]
+        },
+        {
+          "kind": "oldCRDapiStringOnlyUpgradeRejected",
+          "locale": "ko",
+          "block": 3,
+          "originalApi": "dynatrace.com/v1beta2",
+          "passed": true,
+          "errors": [
+            "Additional properties are not allowed ('hostGroup' was unexpected)"
+          ]
+        },
+        {
+          "kind": "oldCRDapiStringOnlyUpgradeRejected",
+          "locale": "ko",
+          "block": 4,
+          "originalApi": "dynatrace.com/v1beta2",
+          "passed": true,
+          "errors": [
+            "Additional properties are not allowed ('useCSIDriver' was unexpected)"
+          ]
+        },
+        {
+          "kind": "oldCRDapiStringOnlyUpgradeRejected",
+          "locale": "ko",
+          "block": 7,
+          "originalApi": "dynatrace.com/v1beta2",
+          "passed": true,
+          "errors": [
+            "'apiUrl' is a required property"
+          ]
+        },
+        {
+          "kind": "HelmRender",
+          "mode": "fullstack",
+          "objects": 59,
+          "passed": true,
+          "deployments": 2,
+          "daemonsets": 1
+        },
+        {
+          "kind": "HelmRender",
+          "mode": "app-only",
+          "objects": 51,
+          "passed": true,
+          "deployments": 2,
+          "daemonsets": 0
+        },
+        {
+          "kind": "HelmRender",
+          "mode": "en-old",
+          "objects": 59,
+          "passed": true,
+          "deployments": 2,
+          "daemonsets": 1
+        },
+        {
+          "kind": "HelmRender",
+          "mode": "ko-old",
+          "objects": 59,
+          "passed": true,
+          "deployments": 2,
+          "daemonsets": 1
+        },
+        {
+          "kind": "oldValuesIgnored",
+          "mode": "en-old",
+          "passed": true,
+          "scope": "Oldoperator.image.tag=v1.0.0andoperator.resources.limits.memory=256Miignoredbyactual1.10.2chart."
+        },
+        {
+          "kind": "oldValuesIgnored",
+          "mode": "ko-old",
+          "passed": true,
+          "scope": "Oldoperator.image.tag=v1.0.0andoperator.resources.limits.memory=256Miignoredbyactual1.10.2chart."
+        }
+      ],
+      "scope": "ReleaseCRDv1beta6unknown-propertychecksandHelm3.21.3localrender;nooperatoradmission/Kubernetes/tenantcalls."
+    },
+    "collectorNative": {
+      "version": "0.160.0",
+      "checks": [
+        {
+          "name": "published-config-native-validate",
+          "passed": true,
+          "sourceSha256": "b29b3afb1f1df5b31049ce64c3959c5df3102da64014d66ccedbff1c01b923d8"
+        },
+        {
+          "name": "input-traces",
+          "passed": true
+        },
+        {
+          "name": "input-logs",
+          "passed": true
+        },
+        {
+          "name": "input-metrics",
+          "passed": true
+        },
+        {
+          "name": "input-metrics",
+          "passed": true
+        },
+        {
+          "name": "three-signal-http-protobuf-export",
+          "passed": true
+        },
+        {
+          "name": "file-header-map-applied",
+          "passed": true
+        },
+        {
+          "name": "cumulative-counter-converted-to-delta-five",
+          "passed": true,
+          "observed": [
+            [
+              "audit.requests",
+              1,
+              5
+            ]
+          ]
+        },
+        {
+          "name": "gauge-values-preserved",
+          "passed": true,
+          "observed": [
+            7,
+            7
+          ]
+        },
+        {
+          "name": "first-counter-point-is-baseline-not-ten",
+          "passed": true
+        }
+      ],
+      "scope": "Published config native validate with fake protected headers path; actual local HTTP/protobuf loopback export of traces/logs/metrics and counter delta arithmetic. Runtime substituted loopback endpoint and HTTP receiver only. No Dynatrace tenant, cloud, TLS-runtime, gRPC-runtime or Kubernetes execution claims."
+    },
+    "eventHelper": {
+      "checks": [
+        {
+          "name": "success-Api-Token",
+          "passed": true
+        },
+        {
+          "name": "wire-contract-Api-Token",
+          "passed": true
+        },
+        {
+          "name": "success-Bearer",
+          "passed": true
+        },
+        {
+          "name": "wire-contract-Bearer",
+          "passed": true
+        },
+        {
+          "name": "unauthorized",
+          "passed": true
+        },
+        {
+          "name": "throttled",
+          "passed": true
+        },
+        {
+          "name": "server-error",
+          "passed": true
+        },
+        {
+          "name": "redirect",
+          "passed": true
+        },
+        {
+          "name": "zero",
+          "passed": true
+        },
+        {
+          "name": "boolean",
+          "passed": true
+        },
+        {
+          "name": "count-mismatch",
+          "passed": true
+        },
+        {
+          "name": "failed-item",
+          "passed": true
+        },
+        {
+          "name": "missing-id",
+          "passed": true
+        },
+        {
+          "name": "not-object",
+          "passed": true
+        },
+        {
+          "name": "reject-origin-http://abc12345.live.dynatrace.com",
+          "passed": true
+        },
+        {
+          "name": "reject-origin-https://abc12345.live.apps.dynatrace.com",
+          "passed": true
+        },
+        {
+          "name": "reject-origin-https://example.com",
+          "passed": true
+        },
+        {
+          "name": "reject-origin-https://user@abc12345.live.dynatrace.com",
+          "passed": true
+        },
+        {
+          "name": "reject-origin-https://abc12345.live.dynatrace.com/path",
+          "passed": true
+        },
+        {
+          "name": "reject-origin-https://abc12345.live.dynatrace.com?x=y",
+          "passed": true
+        },
+        {
+          "name": "reject-entity-*",
+          "passed": true
+        },
+        {
+          "name": "reject-entity-SERVICE-0123456789ABCDEF),type(HOST)",
+          "passed": true
+        },
+        {
+          "name": "reject-entity-True",
+          "passed": true
+        },
+        {
+          "name": "reject-version-",
+          "passed": true
+        },
+        {
+          "name": "reject-version-True",
+          "passed": true
+        },
+        {
+          "name": "reject-version-a\nb",
+          "passed": true
+        },
+        {
+          "name": "reject-version-xxxxxxxxxxxxxxxxxxxxxxxxx",
+          "passed": true
+        },
+        {
+          "name": "reject-token-newline",
+          "passed": true
+        },
+        {
+          "name": "timeout-no-retry",
+          "passed": true
+        },
+        {
+          "name": "default-cli-preview",
+          "passed": true
+        }
+      ],
+      "scope": "Actual Python helper with requests.Response/session doubles, captured method/URL/header/payload/options and failure responses;CLIpreview executed.NoHTTP/tenant/cloudsend."
+    },
+    "hostDpsArithmetic": {
+      "cases": [
+        {
+          "hostRAMGiB": "16",
+          "coveredQuarterHourIntervals": 4,
+          "memoryGiBHours": "16.0000",
+          "passed": true
+        },
+        {
+          "hostRAMGiB": "32",
+          "coveredQuarterHourIntervals": 4,
+          "memoryGiBHours": "32.0000",
+          "passed": true
+        },
+        {
+          "hostRAMGiB": "8",
+          "coveredQuarterHourIntervals": 4,
+          "memoryGiBHours": "8.0000",
+          "passed": true
+        },
+        {
+          "hostRAMGiB": "8.3",
+          "coveredQuarterHourIntervals": 4,
+          "memoryGiBHours": "8.5000",
+          "passed": true
+        },
+        {
+          "hostRAMGiB": "2",
+          "coveredQuarterHourIntervals": 1,
+          "memoryGiBHours": "1.00",
+          "passed": true
+        },
+        {
+          "hostRAMGiB": "2",
+          "coveredQuarterHourIntervals": 2,
+          "memoryGiBHours": "2.00",
+          "passed": true
+        }
+      ],
+      "scope": "Decimal arithmetic for documentedDPSphysical/VMhostquarter-hourbilling;notinvoice/pricing/contract/containercalculation."
+    },
+    "releasedArtifacts": [
+      {
+        "url": "https://github.com/Dynatrace/dynatrace-operator/releases/download/v1.10.2/dynatrace-operator-1.10.2.tgz",
+        "path": ".vitepress/cache/observability-dynatrace-audit/sources/dynatrace-operator-1.10.2.tgz",
+        "sha256": "ddc3733bd450121325ce0d16c709b30a7df085a0eb4cb97b4c7b9a603cdb286f",
+        "githubReleaseDigestMatched": true,
+        "bytes": 50191
+      },
+      {
+        "url": "https://github.com/Dynatrace/dynatrace-operator/releases/download/v1.10.2/dynatrace-operator-crd.yaml",
+        "path": ".vitepress/cache/observability-dynatrace-audit/sources/dynatrace-operator-crd.yaml",
+        "sha256": "3ddc20a2381ba14ec7989437df8bab4b7d637a046551569c78d7f85c3835d94f",
+        "githubReleaseDigestMatched": true,
+        "bytes": 367391
+      }
+    ],
+    "nativeFixtureBindings": [
+      {
+        "path": ".vitepress/cache/observability-dynatrace-audit/deployment_event.py",
+        "sha256": "51df3dbbda212b94057c3f314bfb0b98f40cf1c2621cf872751ba77aa54bc6d2"
+      },
+      {
+        "path": ".vitepress/cache/observability-dynatrace-audit/otel-collector.yaml",
+        "sha256": "b29b3afb1f1df5b31049ce64c3959c5df3102da64014d66ccedbff1c01b923d8"
+      },
+      {
+        "path": ".vitepress/cache/observability-dynatrace-audit/check-collector.py",
+        "sha256": "3b3bcaf5622e0772e1fc32ea16fb877aa615dda88e2a0d5d5fb02ad0596c61a5"
+      },
+      {
+        "path": ".vitepress/cache/observability-dynatrace-audit/custom-java-service.json",
+        "sha256": "46b0883d35669a65fbac0bd5db0c653b18af7c42e8cde5021d2942f499cba5a0"
+      },
+      {
+        "path": ".vitepress/cache/observability-dynatrace-audit/alerting-profile.json",
+        "sha256": "9e886022a6a7db1d99b5a467d2764db06c48e65b00c2ae59e3e60ab33c915e45"
+      },
+      {
+        "path": ".vitepress/cache/observability-dynatrace-audit/values-fullstack.yaml",
+        "sha256": "23ef7692fd22384c6a70094c5287171351d1fe77c9516271d7f6c47a1903d957"
+      },
+      {
+        "path": ".vitepress/cache/observability-dynatrace-audit/values-app-only.yaml",
+        "sha256": "0352c1debd805a766c78b435064df7092a77bf90375d0767cf2b0c4f1dec6c27"
+      },
+      {
+        "path": ".vitepress/cache/observability-dynatrace-audit/dynakube-fullstack.yaml",
+        "sha256": "73d2f9eed7064cf71e5f8a9ca571d22325396b518c9e07512f772aeb38eba710"
+      },
+      {
+        "path": ".vitepress/cache/observability-dynatrace-audit/dynakube-classic.yaml",
+        "sha256": "2d07476b4f67ace2ae10832ded903eb291dbfb2dbb3fa476f525e7a1aa6b96fe"
+      },
+      {
+        "path": ".vitepress/cache/observability-dynatrace-audit/dynakube-app-only.yaml",
+        "sha256": "6e7670a6fb9e5f65b4b830db14a4eccea288dd51f597882b9f4d37567f31ff80"
+      },
+      {
+        "path": ".vitepress/cache/observability-dynatrace-audit/dynakube-platform.yaml",
+        "sha256": "c7539a473ffd37f9f0a30d48e4968878b8753d4a8631595ea7e944bb291f7767"
+      },
+      {
+        "path": ".vitepress/cache/observability-dynatrace-audit/application-namespace.yaml",
+        "sha256": "fe388a3342081dcce754e4bea9e3c9fa5f1b08ae71376dd3fe7b8132285db9c0"
+      },
+      {
+        "path": ".vitepress/cache/observability-dynatrace-audit/prometheus-application.yaml",
+        "sha256": "6f3788cbda9810047872f5069e4d599368a338ddd4f55f6e292da284c2e25c7c"
+      }
+    ],
+    "limits": [
+      "No Dynatrace tenant/API or AWS/Kubernetes/Operator installation or live injection performed.",
+      "Four DynaKube variants are alternative configurations, not one installation bundle. Schema checking does not execute conversion/admission/controller lifecycle.",
+      "Helm rendered locally; platform/version/resource assumptions require deployment-owner validation.",
+      "Python requests/session doubles and preview CLI only; no event HTTP send. Collector runtime uses synthetic loopback HTTP/protobuf, not SaaS acceptance or production capacity.",
+      "No full site build, GPU, cloud mutation, images/layers/container run, or foreign-language edits."
+    ]
+  },
+  "markdownVue": {
+    "nodeHeapMiB": 512,
+    "scope": "Explicit documents only; no site build",
+    "results": [
+      {
+        "path": "en/observability/tracing/04-dynatrace.md",
+        "sha256": "fa42484af372d11fa805564683d5491655e69da189c9ee229bb3d79cf2ea459c",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "dynatrace"
+          },
+          {
+            "tag": "h2",
+            "id": "introduction"
+          },
+          {
+            "tag": "h2",
+            "id": "key-features"
+          },
+          {
+            "tag": "h2",
+            "id": "architecture"
+          },
+          {
+            "tag": "h2",
+            "id": "eks-deployment-with-helm"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-install-dynatrace-operator"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-create-api-tokens"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-create-secret"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-values-yaml-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-install-operator"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-dynakube-cr-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-deploy-and-verify"
+          },
+          {
+            "tag": "h2",
+            "id": "cloud-native-full-stack-mode"
+          },
+          {
+            "tag": "h2",
+            "id": "application-only-monitoring"
+          },
+          {
+            "tag": "h2",
+            "id": "davis-ai-root-cause-analysis"
+          },
+          {
+            "tag": "h3",
+            "id": "how-davis-ai-works"
+          },
+          {
+            "tag": "h3",
+            "id": "problem-alert-configuration"
+          },
+          {
+            "tag": "h3",
+            "id": "custom-deployment-events"
+          },
+          {
+            "tag": "h2",
+            "id": "auto-instrumentation"
+          },
+          {
+            "tag": "h3",
+            "id": "supported-technologies"
+          },
+          {
+            "tag": "h3",
+            "id": "verify-auto-instrumentation"
+          },
+          {
+            "tag": "h3",
+            "id": "custom-service-definition"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes-monitoring-integration"
+          },
+          {
+            "tag": "h3",
+            "id": "cluster-metrics"
+          },
+          {
+            "tag": "h3",
+            "id": "prometheus-metric-collection"
+          },
+          {
+            "tag": "h2",
+            "id": "cost-structure"
+          },
+          {
+            "tag": "h3",
+            "id": "license-model"
+          },
+          {
+            "tag": "h3",
+            "id": "cost-optimization-strategies"
+          },
+          {
+            "tag": "h3",
+            "id": "host-unit-calculation"
+          },
+          {
+            "tag": "h2",
+            "id": "opentelemetry-integration"
+          },
+          {
+            "tag": "h2",
+            "id": "troubleshooting"
+          },
+          {
+            "tag": "h3",
+            "id": "common-issues"
+          },
+          {
+            "tag": "h3",
+            "id": "log-collection-verification"
+          },
+          {
+            "tag": "h2",
+            "id": "quiz"
+          }
+        ],
+        "renderedIds": [
+          "dynatrace",
+          "introduction",
+          "key-features",
+          "architecture",
+          "mermaid-88",
+          "eks-deployment-with-helm",
+          "_1-install-dynatrace-operator",
+          "_2-create-api-tokens",
+          "_3-create-secret",
+          "_4-values-yaml-configuration",
+          "_5-install-operator",
+          "_6-dynakube-cr-configuration",
+          "_7-deploy-and-verify",
+          "cloud-native-full-stack-mode",
+          "application-only-monitoring",
+          "davis-ai-root-cause-analysis",
+          "how-davis-ai-works",
+          "problem-alert-configuration",
+          "custom-deployment-events",
+          "auto-instrumentation",
+          "supported-technologies",
+          "verify-auto-instrumentation",
+          "custom-service-definition",
+          "kubernetes-monitoring-integration",
+          "cluster-metrics",
+          "prometheus-metric-collection",
+          "cost-structure",
+          "license-model",
+          "cost-optimization-strategies",
+          "host-unit-calculation",
+          "opentelemetry-integration",
+          "troubleshooting",
+          "common-issues",
+          "log-collection-verification",
+          "quiz"
+        ]
+      },
+      {
+        "path": "en/quizzes/observability/tracing/04-dynatrace-quiz.md",
+        "sha256": "485f95610cb3257e783c5b60b81e545607be1e39a730b22231e37db1e2dbd995",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "dynatrace-quiz"
+          }
+        ],
+        "renderedIds": [
+          "dynatrace-quiz"
+        ]
+      },
+      {
+        "path": "ko/observability/tracing/04-dynatrace.md",
+        "sha256": "91fa7dcd32d97e2cd678395da71cbbe8f897d7e77e33e733a0dceeb96a69706a",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "dynatrace"
+          },
+          {
+            "tag": "h2",
+            "id": "소개"
+          },
+          {
+            "tag": "h2",
+            "id": "주요-특징"
+          },
+          {
+            "tag": "h2",
+            "id": "아키텍처"
+          },
+          {
+            "tag": "h2",
+            "id": "helm을-통한-eks-배포"
+          },
+          {
+            "tag": "h3",
+            "id": "_1-dynatrace-operator-설치"
+          },
+          {
+            "tag": "h3",
+            "id": "_2-api-토큰-생성"
+          },
+          {
+            "tag": "h3",
+            "id": "_3-secret-생성"
+          },
+          {
+            "tag": "h3",
+            "id": "_4-values-yaml-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "_5-operator-설치"
+          },
+          {
+            "tag": "h3",
+            "id": "_6-dynakube-cr-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "_7-배포-및-확인"
+          },
+          {
+            "tag": "h2",
+            "id": "cloud-native-full-stack-모드"
+          },
+          {
+            "tag": "h2",
+            "id": "application-only-모니터링"
+          },
+          {
+            "tag": "h2",
+            "id": "davis-ai-기반-근본-원인-분석"
+          },
+          {
+            "tag": "h3",
+            "id": "davis-ai-작동-방식"
+          },
+          {
+            "tag": "h3",
+            "id": "문제-알림-구성"
+          },
+          {
+            "tag": "h3",
+            "id": "커스텀-이벤트-전송"
+          },
+          {
+            "tag": "h2",
+            "id": "자동-계측"
+          },
+          {
+            "tag": "h3",
+            "id": "지원-기술"
+          },
+          {
+            "tag": "h3",
+            "id": "자동-계측-검증"
+          },
+          {
+            "tag": "h3",
+            "id": "커스텀-서비스-정의"
+          },
+          {
+            "tag": "h2",
+            "id": "kubernetes-모니터링-통합"
+          },
+          {
+            "tag": "h3",
+            "id": "클러스터-메트릭"
+          },
+          {
+            "tag": "h3",
+            "id": "prometheus-메트릭-수집"
+          },
+          {
+            "tag": "h2",
+            "id": "비용-구조"
+          },
+          {
+            "tag": "h3",
+            "id": "라이선스-모델"
+          },
+          {
+            "tag": "h3",
+            "id": "비용-최적화-전략"
+          },
+          {
+            "tag": "h3",
+            "id": "host-unit-계산"
+          },
+          {
+            "tag": "h2",
+            "id": "opentelemetry-연동"
+          },
+          {
+            "tag": "h2",
+            "id": "트러블슈팅"
+          },
+          {
+            "tag": "h3",
+            "id": "일반적인-문제"
+          },
+          {
+            "tag": "h3",
+            "id": "로그-수집-확인"
+          },
+          {
+            "tag": "h2",
+            "id": "퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "dynatrace",
+          "소개",
+          "주요-특징",
+          "아키텍처",
+          "mermaid-88",
+          "helm을-통한-eks-배포",
+          "_1-dynatrace-operator-설치",
+          "_2-api-토큰-생성",
+          "_3-secret-생성",
+          "_4-values-yaml-구성",
+          "_5-operator-설치",
+          "_6-dynakube-cr-구성",
+          "_7-배포-및-확인",
+          "cloud-native-full-stack-모드",
+          "application-only-모니터링",
+          "davis-ai-기반-근본-원인-분석",
+          "davis-ai-작동-방식",
+          "문제-알림-구성",
+          "커스텀-이벤트-전송",
+          "자동-계측",
+          "지원-기술",
+          "자동-계측-검증",
+          "커스텀-서비스-정의",
+          "kubernetes-모니터링-통합",
+          "클러스터-메트릭",
+          "prometheus-메트릭-수집",
+          "비용-구조",
+          "라이선스-모델",
+          "비용-최적화-전략",
+          "host-unit-계산",
+          "opentelemetry-연동",
+          "트러블슈팅",
+          "일반적인-문제",
+          "로그-수집-확인",
+          "퀴즈"
+        ]
+      },
+      {
+        "path": "ko/quizzes/observability/tracing/04-dynatrace-quiz.md",
+        "sha256": "46eab27e3389db84986ef4c310149d3e0cebdeee04b5d49a288a92a26d52ee67",
+        "passed": true,
+        "errors": [],
+        "oneH1": true,
+        "headings": [
+          {
+            "tag": "h1",
+            "id": "dynatrace-퀴즈"
+          }
+        ],
+        "renderedIds": [
+          "dynatrace-퀴즈"
+        ]
+      }
+    ]
+  },
+  "primarySources": [
+    {
+      "url": "https://api.github.com/repos/Dynatrace/dynatrace-operator/releases/latest",
+      "cacheKey": "86b92a998b87",
+      "fetchedAt": "2026-09-13T12:29:44.057577+00:00",
+      "status": 200,
+      "finalURL": "https://api.github.com/repos/Dynatrace/dynatrace-operator/releases/latest",
+      "sha256": "cbe385c0c2d2042f7b208bdc390ee1757ffe3ace0b7504ef9a734254501212fe"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Dynatrace/dynatrace-operator/v1.10.2/README.md",
+      "cacheKey": "f2aa89cc1f78",
+      "fetchedAt": "2026-09-13T12:32:20.374778+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/Dynatrace/dynatrace-operator/v1.10.2/README.md",
+      "sha256": "6d57d74a73eed609bf8db89f860364ae02da2fde28cdfcbe9f1ffb5628233ca6"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Dynatrace/dynatrace-operator/v1.10.2/assets/samples/dynakube/v1beta6/cloudNativeFullStack.yaml",
+      "cacheKey": "4ad24bf2e91f",
+      "fetchedAt": "2026-09-13T12:38:15.594170+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/Dynatrace/dynatrace-operator/v1.10.2/assets/samples/dynakube/v1beta6/cloudNativeFullStack.yaml",
+      "sha256": "e94d4d621ccc15bdd65f9f5debf26fd3028e9edc2ffd113553a73488810fc40e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Dynatrace/dynatrace-operator/v1.10.2/assets/samples/dynakube/v1beta6/applicationMonitoring.yaml",
+      "cacheKey": "22ca7d54a90f",
+      "fetchedAt": "2026-09-13T12:38:15.929903+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/Dynatrace/dynatrace-operator/v1.10.2/assets/samples/dynakube/v1beta6/applicationMonitoring.yaml",
+      "sha256": "5dc5c91aa79dc8555cc7b2db5193007012ee567dbacd37d88813d957285c35b5"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/reference/dynakube-parameters",
+      "cacheKey": "0456973560b5",
+      "fetchedAt": "2026-09-13T12:32:23.740232+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/reference/dynakube-parameters",
+      "sha256": "9211c99d3bf35334805f723c6dddd22035f9569917410f1ab084c65d39b1d0c8"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Dynatrace/dynatrace-operator/v1.10.2/pkg/controllers/dynakube/activegate/capability/capability.go",
+      "cacheKey": "92b800c5fe26",
+      "fetchedAt": "2026-09-13T12:43:21.120570+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/Dynatrace/dynatrace-operator/v1.10.2/pkg/controllers/dynakube/activegate/capability/capability.go",
+      "sha256": "21b14eb9c74d4907f084fe6761f4390728c73c1192fffd0bd79dee98de5a39e2"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/ingest-from/opentelemetry/otlp-api",
+      "cacheKey": "0a4272ce0bab",
+      "fetchedAt": "2026-09-13T12:29:45.422436+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/ingest-from/opentelemetry/otlp-api",
+      "sha256": "248e1f78ecbffd7d8dfd5ba0eeddbea467ee5693e22aac56da861f7ecd7f4237"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment/tokens-permissions",
+      "cacheKey": "67ebf1f3cc41",
+      "fetchedAt": "2026-09-13T12:38:10.761087+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment/tokens-permissions",
+      "sha256": "42920f26c935bf86170ca9a1db81832305d013a2764c0dc10e2dfbf8b6047233"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens",
+      "cacheKey": "ff73e214f4e9",
+      "fetchedAt": "2026-09-13T12:40:33.362731+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/manage/identity-access-management/access-tokens-and-oauth-clients/platform-tokens",
+      "sha256": "15138a5d4ff3cd5c4e39e43d9ac2060d937e12c2f24b59df360241099ede1ef9"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Dynatrace/dynatrace-operator/v1.10.2/pkg/util/dttoken/token.go",
+      "cacheKey": "a4c22f77a078",
+      "fetchedAt": "2026-09-13T12:43:20.897713+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/Dynatrace/dynatrace-operator/v1.10.2/pkg/util/dttoken/token.go",
+      "sha256": "0286964251107b0cb6974cdd18c013cb71190b2e495aa113ed5d5f54c2e1e3b6"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Dynatrace/dynatrace-operator/v1.10.2/pkg/controllers/dynakube/token/token.go",
+      "cacheKey": "95770fdb52c4",
+      "fetchedAt": "2026-09-13T12:43:20.884588+00:00",
+      "status": 200,
+      "finalURL": "https://raw.githubusercontent.com/Dynatrace/dynatrace-operator/v1.10.2/pkg/controllers/dynakube/token/token.go",
+      "sha256": "5063a9c4f847db7b114d93ca65ba218fa158307ed24228a4b4b2f5671ab4150b"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/setup-and-configuration/setup-on-k8s/installation",
+      "cacheKey": "6392d22109d6",
+      "fetchedAt": "2026-09-13T12:32:23.303434+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment",
+      "sha256": "58830d88df6c667e30a58b37ea58d54cfbef8344c31def5d602273e4aface0b8"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment/supported-technologies",
+      "cacheKey": "022eef542021",
+      "fetchedAt": "2026-09-13T12:35:03.043037+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment/supported-technologies",
+      "sha256": "b0f7d9f218fdb8c90fe53b6f950d306dc61c5f727c1616cee30f1f597a34b378"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/ingest-from/technology-support/support-model-and-issues",
+      "cacheKey": "88da8e4bea97",
+      "fetchedAt": "2026-09-13T12:38:10.822109+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/ingest-from/technology-support/support-model-and-issues",
+      "sha256": "04b48517dbdb44e44e434edbedbfd9a597b98f46ae15febf2c0d196ce5605048"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment/full-stack-observability",
+      "cacheKey": "97ab13d0402b",
+      "fetchedAt": "2026-09-13T12:35:01.634346+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment/full-stack-observability",
+      "sha256": "034d3c75e9dec0efa132a569c07a18db97a06d5961bedfbe3ca15a1686772401"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment/application-observability",
+      "cacheKey": "bb4862d044fa",
+      "fetchedAt": "2026-09-13T12:35:03.249755+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment/application-observability",
+      "sha256": "7668fdc98c9e86fb37b4cf09d5643ec232708916be117bf79fd93e9025b105a6"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/guides/deployment-and-configuration/monitoring-and-instrumentation/annotate",
+      "cacheKey": "fff33de846ba",
+      "fetchedAt": "2026-09-13T12:38:12.130495+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/guides/deployment-and-configuration/monitoring-and-instrumentation/annotate",
+      "sha256": "c5bad60ed7946dd64c763e4d8b8fbff79dba61c47240afca80fa89b7eab120f6"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment/marketplaces/eks-dto",
+      "cacheKey": "383258e5efdc",
+      "fetchedAt": "2026-09-13T12:45:39.166479+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/deployment/marketplaces/eks-dto",
+      "sha256": "2bbce6d0a7a9ec3f49efea801a94a54c22ca29c2dfd744187a7e2ca2413f4b36"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/guides/deployment-and-configuration/updates-and-maintenance/update-uninstall-operator",
+      "cacheKey": "6fa7cb29df4f",
+      "fetchedAt": "2026-09-13T12:53:07.056011+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/guides/deployment-and-configuration/updates-and-maintenance/update-uninstall-operator",
+      "sha256": "73dca3ae2741efde246bdacb9283f6368120aac9b572a5d255b4aa64c632167e"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/dynatrace-api/environment-api/events-v2/post-event",
+      "cacheKey": "158787ba3dc9",
+      "fetchedAt": "2026-09-13T12:38:13.634150+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/dynatrace-api/environment-api/events-v2/post-event",
+      "sha256": "37c9b432c39822483cd80afbd7d8d5667499e963ffb2007129321714b76a721a"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/dynatrace-api/configuration-api/alerting-profiles-api/post-profile",
+      "cacheKey": "ad7728bb03f0",
+      "fetchedAt": "2026-09-13T12:38:13.803030+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/dynatrace-api/configuration-api/alerting-profiles-api/post-profile",
+      "sha256": "2ba4bcdadb83acbf2190ceff0010c7cb955ce42e6a43b1d8d81cd22fa94e704b"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/dynatrace-api/environment-api/settings/schemas/builtin-alerting-profile",
+      "cacheKey": "1ccbf1a73b2b",
+      "fetchedAt": "2026-09-13T12:43:22.531843+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/dynatrace-api/environment-api/settings/schemas/builtin-alerting-profile",
+      "sha256": "07aa5133e68743e1b45acbc6cadb907fd0a1d4ea8917de9c079761c47f05e0a0"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/dynatrace-api/environment-api/settings/objects/post-object",
+      "cacheKey": "721f273a09a3",
+      "fetchedAt": "2026-09-13T12:43:22.485247+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/dynatrace-api/environment-api/settings/objects/post-object",
+      "sha256": "da79a3fd69a2c66a4d48f363083699a61b31d6a76149a9164447a560b9a7df35"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/dynatrace-api/configuration-api/service-api/custom-services-api/post-rule",
+      "cacheKey": "7070ec246705",
+      "fetchedAt": "2026-09-13T12:45:39.171330+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/dynatrace-api/configuration-api/service-api/custom-services-api/post-rule",
+      "sha256": "94c516dea4eddc20d84a8119b17309e2f823ac754d324b67d06f6e1dddad51e5"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/observe/infrastructure-observability/container-platform-monitoring/kubernetes-monitoring/monitor-prometheus-metrics",
+      "cacheKey": "68e79bb2751b",
+      "fetchedAt": "2026-09-13T12:38:15.358524+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/observe/infrastructure-observability/container-platform-monitoring/kubernetes-monitoring/monitor-prometheus-metrics",
+      "sha256": "2297cc0e0d1be451ae06dcd42fc7ef9d9b0758356f63b57911bf8d29db96f047"
+    },
+    {
+      "url": "https://www.dynatrace.com/pricing/",
+      "cacheKey": "052a9bb9e0b1",
+      "fetchedAt": "2026-09-13T12:29:45.481798+00:00",
+      "status": 200,
+      "finalURL": "https://www.dynatrace.com/pricing/",
+      "sha256": "e6d692cda3e3ee79ce3be6167f8ff4df755b47507fd2c15592754b647da6a7bf"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/license",
+      "cacheKey": "724a1d1350d5",
+      "fetchedAt": "2026-09-13T12:29:46.865428+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/license",
+      "sha256": "504bdd44e74d9917bac5d7375c262b25ee77d6eb05b0d8ad29161e68b9dc6fe7"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/license/capabilities/app-infra-observability/full-stack-monitoring",
+      "cacheKey": "228bf59a6b19",
+      "fetchedAt": "2026-09-13T12:35:04.900315+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/license/capabilities/app-infra-observability/full-stack-monitoring",
+      "sha256": "4a953a430bf327afeedc79ab5115c6e73727ec02f079971102d81a62c07dc38b"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/license/classic-licensing/application-and-infrastructure-monitoring",
+      "cacheKey": "c9124945bd9e",
+      "fetchedAt": "2026-09-13T12:50:12.305314+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/license/classic-licensing/application-and-infrastructure-monitoring",
+      "sha256": "dde2cf25f53361bc909f0911c148d0d148f5cf8c76697153eff44fe048434528"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/ingest-from/opentelemetry/collector/configuration",
+      "cacheKey": "e34fcbc3b233",
+      "fetchedAt": "2026-09-13T12:58:10.532428+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/ingest-from/opentelemetry/collector/configuration",
+      "sha256": "053dfebe6e00f17ba76e955df87af9059a5ca41270dbf29ab5b67b2d6d0f8906"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/reference/security",
+      "cacheKey": "0bdf1ecd8dc5",
+      "fetchedAt": "2026-09-13T12:58:09.232266+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/ingest-from/setup-on-k8s/reference/security",
+      "sha256": "b26f30a97557d2d7f116a5a16af264def9bfef63d21c05cf2d7f1e7114b6f6b5"
+    },
+    {
+      "url": "https://docs.dynatrace.com/docs/dynatrace-intelligence",
+      "cacheKey": "bea21017caa5",
+      "fetchedAt": "2026-09-13T12:35:04.634557+00:00",
+      "status": 200,
+      "finalURL": "https://docs.dynatrace.com/docs/dynatrace-intelligence",
+      "sha256": "e0e9e199b38332d72e3f9b141b1a4a2924e84c23b4d2b02520397bf3f60b9faf"
+    }
+  ],
+  "findings": [
+    "Replaced unpinnedOperator1.0/v1beta2 guidance with chart1.10.2/v1beta6, freshinstallversus mandatory1.7.3stored-versionmigration path; fixed ignoredHelmkeys and currentDynaKube field placement.",
+    "Preserved realclassicFullStack/dynatrace-apicapability; correctedcloudNativeFullStackhost+webhook/CSIarchitecture, application-onlyalternatives, EKS/Fargate/Bottlerocket/AutoModescope and supportedcomponentmatrix.",
+    "Separatedplatform/Classiccredentialsandscopefamilies;removedliteral-tokenARGV/envdump diagnostics;protectedfile-basedSecretinputandboundedread-onlystatus/logguidance.",
+    "CorrectednamespaceSelectorsaswebhookinjectionselection ratherthanhost/clustercollectionscope orbillingcap; explicitapprovednodepoolplacement.",
+    "UpdateddeprecatedalertingprofiletoSettingsv2schema;preservedvalidJavaCustomServiceAPI;safeone-entitydeploymenthelpervalidatesresponse/timeout/redirect/no-auto-retry.",
+    "PreservedKorean-onlyapplication/event/customservice/K8sPrometheustopicsandmatchedEnglish;completedPodtemplateannotationsandDeploymentshape withoutinventingrunnableimage.",
+    "ReplacedincorrectCPU/RAMmaxHostUnitformula withactualClassicRAMtierexamples anddistinctmodernDPSmemoryGiB-hour/quarter-hour/minimumrules.",
+    "CompletedOTLPHTTP/protobuf/deltametricconfigurationwithfileheaders;validatedactual10→15cumulativeinputasdelta5andunchangedgauges onloopback;noSaaSacceptanceclaim.",
+    "Reviewedall4originalfigures;replaced2architecturePNG/viewerreferenceswithvalidatedMermaidseparatinginjectionandtelemetry;retained2Davisconceptfigureswithscopeclarification.Noassetfilesedited.",
+    "Alignedall20quizanswersandretainedalloriginalheadingIDs;recognizedLastUpdatedheadersdatedSeptember13."
+  ],
+  "figures": {
+    "originals": [
+      {
+        "image": "en/.gitbook/assets/en-observability-tracing-04-dynatrace-0.png",
+        "imageSha256": "536db4a64ecc77e4d65d62a77ec9dfbee0c8f7a4a9f48904ee1287c8bceb40e9",
+        "spec": "assets/diagrams/archify/en-observability-tracing-04-dynatrace-0.architecture.json",
+        "specSha256": "676ac5ae08c5eea9d84f25e70b40c9687fe9f2f2c021765fac62269db47b36bc",
+        "html": "public/archmaps/en-observability-tracing-04-dynatrace-0.html",
+        "htmlSha256": "6d7a2c9b0c0ac6f390f72e6b4872de247c4b8e5c3d1951e2f41d4e0874bf1245",
+        "individualPngViewed": true,
+        "allSpecRead": true,
+        "guidedNotesMatchDeliveredHTML": true,
+        "disposition": "replaced-in-ko-en-prose-with-validated-Mermaid",
+        "finding": "Service-to-OneAgent edges labeled auto-instrumentation conflate injection control and telemetry; missing current webhook/CSI path corrected in source Mermaid."
+      },
+      {
+        "image": "en/.gitbook/assets/en-observability-tracing-04-dynatrace-1.png",
+        "imageSha256": "730616319ac915e8b10957865e66e394a28c511b847da67c524c0b68c3892688",
+        "spec": "assets/diagrams/archify/en-observability-tracing-04-dynatrace-1.architecture.json",
+        "specSha256": "5b95508ed4e3be41e988af4ebda8317e51a60cb2e1f21bbffaa4f12d9cc5f4dc",
+        "html": "public/archmaps/en-observability-tracing-04-dynatrace-1.html",
+        "htmlSha256": "e69be0081bb0c6317b12ddd1932cc89a4c20f0896787516f592f18b5bdd16896",
+        "individualPngViewed": true,
+        "allSpecRead": true,
+        "guidedNotesMatchDeliveredHTML": true,
+        "disposition": "retained-as-explicitly-conceptual-correlation-illustration",
+        "finding": "Useful conceptual signal/problem illustration; caption explicitly avoids claiming fixed internal algorithm or certain causal diagnosis."
+      },
+      {
+        "image": "ko/.gitbook/assets/ko-observability-tracing-04-dynatrace-0.png",
+        "imageSha256": "c841243541a86936a846a558fa7731a9cf71bca4060d3fec06981937a2d4edb2",
+        "spec": "assets/diagrams/archify/ko-observability-tracing-04-dynatrace-0.architecture.json",
+        "specSha256": "53c3af93b0c3c8413f14e592f0a77e67c7e754d2d6940968e3c0691d24c37b36",
+        "html": "public/archmaps/ko-observability-tracing-04-dynatrace-0.html",
+        "htmlSha256": "c35bb2c4bb42fa636a90f56c5c01973e4a6c7909413f0964efa551220c99b5bc",
+        "individualPngViewed": true,
+        "allSpecRead": true,
+        "guidedNotesMatchDeliveredHTML": true,
+        "disposition": "replaced-in-ko-en-prose-with-validated-Mermaid",
+        "finding": "Service-to-OneAgent edges labeled auto-instrumentation conflate injection control and telemetry; missing current webhook/CSI path corrected in source Mermaid."
+      },
+      {
+        "image": "ko/.gitbook/assets/ko-observability-tracing-04-dynatrace-1.png",
+        "imageSha256": "371973b8acd11298c6097792e819d3719a60200668819867d5e395876bad898f",
+        "spec": "assets/diagrams/archify/ko-observability-tracing-04-dynatrace-1.architecture.json",
+        "specSha256": "abe104783cbb408e8e563d11107e8cd250caf735e8d2a464241e76ea49801fd4",
+        "html": "public/archmaps/ko-observability-tracing-04-dynatrace-1.html",
+        "htmlSha256": "cd4b98823e0962635a54f0a2bcdc61674b3365bbb8b3ec135a8aff2f77956f29",
+        "individualPngViewed": true,
+        "allSpecRead": true,
+        "guidedNotesMatchDeliveredHTML": true,
+        "disposition": "retained-as-explicitly-conceptual-correlation-illustration",
+        "finding": "Useful conceptual signal/problem illustration; caption explicitly avoids claiming fixed internal algorithm or certain causal diagnosis."
+      }
+    ],
+    "replacementMermaid": {
+      "version": "11.16.0",
+      "scope": "TwoinlineMermaidgraphsparsed/renderedinnativebrowser;privateSVG/PNG;no sitebuild/server",
+      "results": [
+        {
+          "path": "en/observability/tracing/04-dynatrace.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 8,
+          "edges": 9,
+          "errors": [],
+          "passed": true
+        },
+        {
+          "path": "ko/observability/tracing/04-dynatrace.md",
+          "index": 0,
+          "parsed": true,
+          "nodes": 8,
+          "edges": 9,
+          "errors": [],
+          "passed": true
+        }
+      ]
+    },
+    "parentAssetFollowup": ".vitepress/cache/observability-dynatrace-audit/retired-figure-handoff.json"
+  },
+  "artifactDirectory": ".vitepress/cache/observability-dynatrace-audit",
+  "limits": [
+    "No Dynatrace tenant/API or AWS/Kubernetes/Operator installation or live injection performed.",
+    "Four DynaKube variants are alternative configurations, not one installation bundle. Schema checking does not execute conversion/admission/controller lifecycle.",
+    "Helm rendered locally; platform/version/resource assumptions require deployment-owner validation.",
+    "Python requests/session doubles and preview CLI only; no event HTTP send. Collector runtime uses synthetic loopback HTTP/protobuf, not SaaS acceptance or production capacity.",
+    "No full site build, GPU, cloud mutation, images/layers/container run, or foreign-language edits."
+  ],
+  "sourceAccessNotes": [
+    "OfficialHTTPSprimarypagesandGitHubreleasedchart/CRDdigests;noauthenticatedAWSorDynatraceAPIcalls.",
+    "Oldguessedcustomservice/metrics/ClassicHostUnitURLswere404;replacedwithactualprimaryendpointpages."
+  ],
+  "parentAssetClosure": {
+    "status": "passed",
+    "report": "docs/reviews/2026-09-11/dynatrace-retired-assets-validation.json",
+    "assets": 6,
+    "browserCases": 6,
+    "desktopCases": 8,
+    "individualPNG": 2
+  }
+}
