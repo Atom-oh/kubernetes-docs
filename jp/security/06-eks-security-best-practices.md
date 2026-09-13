@@ -22,7 +22,7 @@
 
 ---
 
-## IRSA (IAM Roles for Service Accounts)
+## IRSA (IAM Roles for Service Accounts) {#irsa-iam-roles-for-service-accounts}
 
 ### IRSA の概要
 
@@ -164,7 +164,7 @@ metadata:
 
 ---
 
-## EKS Pod Identity
+## EKS Pod Identity {#eks-pod-identity}
 
 ### Pod Identity の概要
 
@@ -264,7 +264,7 @@ spec:
 
 ---
 
-## Security Groups for Pods
+## Security Groups for Pods {#security-groups-for-pods}
 
 ### 概要
 
@@ -315,7 +315,7 @@ spec:
 
 ---
 
-## VPC Endpoints
+## VPC Endpoints {#vpc-endpoints}
 
 ### プライベート EKS のための VPC Endpoints
 
@@ -341,7 +341,7 @@ Kubernetes のプライベート API エンドポイントと、AWS サービス
 
 ---
 
-## Control Plane Logging
+## Control Plane Logging {#control-plane-logging}
 
 ### EKS コントロールプレーンのログタイプ
 
@@ -402,7 +402,7 @@ fields @timestamp, user.username, verb, objectRef.namespace, objectRef.name, res
 
 ---
 
-## GuardDuty EKS Protection
+## GuardDuty EKS Protection {#guardduty-eks-protection}
 
 ### GuardDuty EKS Protection の概要
 
@@ -459,7 +459,7 @@ EKS 監査ログの分析、Runtime Monitoring、GuardDuty の基本データソ
 
 ---
 
-## Amazon Inspector
+## Amazon Inspector {#amazon-inspector}
 
 ### Inspector によるコンテナイメージスキャン
 
@@ -485,7 +485,7 @@ GitHub Actions との統合には、承認済みの OIDC 信頼ロール ARN、`
 
 ---
 
-## CIS Kubernetes Benchmark
+## CIS Kubernetes Benchmark {#cis-kubernetes-benchmark}
 
 ### kube-bench の実行
 
@@ -505,7 +505,7 @@ GitHub Actions との統合には、承認済みの OIDC 信頼ロール ARN、`
 
 ---
 
-## Cluster Encryption
+## Cluster Encryption {#cluster-encryption}
 
 ### EKS Secrets の暗号化 (KMS)
 
@@ -517,7 +517,7 @@ EKS **1.28 以降は、AWS 所有の KMS キーを使用してすべての Kuber
 
 ---
 
-## Node Security
+## Node Security {#node-security}
 
 ### Bottlerocket OS
 
@@ -533,7 +533,7 @@ Bottlerocket はコンテナホスト OS の選択肢であり、すべてのワ
 
 ---
 
-## Private Clusters
+## Private Clusters {#private-clusters}
 
 ### 完全プライベートな EKS 構成
 
@@ -549,7 +549,7 @@ bastion にはそれ自体のアクセス、パッチ適用、監査の責任が
 
 ---
 
-## Multi-tenancy Patterns
+## Multi-tenancy Patterns {#multi-tenancy-patterns}
 
 ### Namespace ベースのマルチテナンシー
 
