@@ -156,7 +156,7 @@ cosign sign --yes "$IMAGE_REF"
 cosign verify   --certificate-identity 'https://github.com/example-org/example-app/.github/workflows/secure-build.yaml@refs/heads/main'   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'   "$IMAGE_REF"
 ```
 
-Identity 값은 실제 승인된 workflow로 바꿉니다. `--certificate-identity-regexp`는 glob이 아닌 정규식입니다. `https://github.com/org/repo/*` 같은 느슨한 식으로 모든 workflow를 승인하지 말고 정확한 identity 또는 경계를 고정한 regexp를 사용합니다. Cosign 3의 bundle/OCI referrer와 소비하는 verifier의 지원도 함께 확인합니다.
+Identity 값은 실제 승인된 workflow로 바꿉니다. `--certificate-identity-regexp`는 glob이 아닌 정규식입니다. ``https://github.com/org/repo/*`` 같은 느슨한 식으로 모든 workflow를 승인하지 말고 정확한 identity 또는 경계를 고정한 regexp를 사용합니다. Cosign 3의 bundle/OCI referrer와 소비하는 verifier의 지원도 함께 확인합니다.
 
 <span id="kyverno-imageverify"></span>
 

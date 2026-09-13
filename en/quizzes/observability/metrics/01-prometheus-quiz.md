@@ -1,6 +1,6 @@
 # Prometheus Quiz
 
-> Reviewed: 2026-09-12
+> **Last Updated**: September 12, 2026
 
 1. What is Prometheus's normal metric collection path?
 

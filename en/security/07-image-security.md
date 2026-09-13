@@ -156,7 +156,7 @@ cosign sign --yes "$IMAGE_REF"
 cosign verify   --certificate-identity 'https://github.com/example-org/example-app/.github/workflows/secure-build.yaml@refs/heads/main'   --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'   "$IMAGE_REF"
 ```
 
-Replace the identity with the approved workflow. --certificate-identity-regexp accepts a regular expression, not a glob. Prefer an exact identity or anchored regexp over permissive expressions such as https://github.com/org/repo/*. Check Cosign 3 bundle/OCI-referrer compatibility with downstream verifiers.
+Replace the identity with the approved workflow. --certificate-identity-regexp accepts a regular expression, not a glob. Prefer an exact identity or anchored regexp over permissive expressions such as `https://github.com/org/repo/*`. Check Cosign 3 bundle/OCI-referrer compatibility with downstream verifiers.
 
 <span id="kyverno-imageverify"></span>
 

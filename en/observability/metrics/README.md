@@ -1,6 +1,6 @@
 # Metrics Overview
 
-> Reviewed: September 13, 2026. Examples were checked locally with Prometheus 3.14.0 tooling; no cluster or cloud deployment was performed.
+> **Last Updated**: September 13, 2026. Examples were checked locally with Prometheus 3.14.0 tooling; no cluster or cloud deployment was performed.
 
 ## Table of Contents
 
