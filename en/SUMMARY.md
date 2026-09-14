@@ -97,12 +97,13 @@
 
 ## Networking
 
-* [Networking Overview](networking/README.md)
+* [Kubernetes Networking Overview](networking/README.md)
 * [Network Fundamentals — 25 Protocols](basics/06-network-fundamentals-part1.md)
   * [Part 1: The Layer Model, Link and Routing Layers](basics/06-network-fundamentals-part1.md)
   * [Part 2: The Transport Layer and TLS](basics/06-network-fundamentals-part2.md)
   * [Part 3: Application Protocols](basics/06-network-fundamentals-part3.md)
   * [Part 4: A Request's Journey and the Cloud](basics/06-network-fundamentals-part4.md)
+* [Linux Network Diagnostics Practice](networking/07-linux-network-diagnostics.md)
 * [VPC CNI](networking/01-vpc-cni.md)
 * [Cilium Deep Dive](networking/cilium/README.md)
   * [Part 1: Introduction](networking/cilium/01-introduction.md)
@@ -564,7 +565,8 @@
   * [Part 3: State, Checkpointing, and Streaming Patterns Quiz](quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
   * [Part 4: Operations, High Availability, and Managed Flink Quiz](quizzes/data-on-eks/flink/04-operations-ha-quiz.md)
 * Networking
-  * [Networking Overview Quiz](quizzes/networking/00-networking-overview-quiz.md)
+  * [Kubernetes Networking Overview Quiz](quizzes/networking/00-networking-overview-quiz.md)
+  * [Linux Network Diagnostics Quiz](quizzes/networking/07-linux-network-diagnostics-quiz.md)
   * [VPC CNI Quiz](quizzes/networking/01-vpc-cni-quiz.md)
   * Cilium Deep Dive
     * [Part 1: Introduction Quiz](quizzes/networking/cilium/01-introduction-quiz.md)

@@ -97,12 +97,13 @@
 
 ## Networking
 
-* [Network Operations 개요](networking/README.md)
+* [Kubernetes 네트워킹 개요](networking/README.md)
 * [네트워크 기초 — 프로토콜 25개](basics/06-network-fundamentals-part1.md)
   * [Part 1: 계층 모델과 링크·라우팅](basics/06-network-fundamentals-part1.md)
   * [Part 2: 전송 계층과 TLS](basics/06-network-fundamentals-part2.md)
   * [Part 3: 애플리케이션 프로토콜](basics/06-network-fundamentals-part3.md)
   * [Part 4: 요청의 여정과 클라우드](basics/06-network-fundamentals-part4.md)
+* [Linux 네트워크 진단 실습](networking/07-linux-network-diagnostics.md)
 * [VPC CNI](networking/01-vpc-cni.md)
 * [Cilium 딥다이브](networking/cilium/README.md)
   * [Part 1: 소개](networking/cilium/01-introduction.md)
@@ -564,7 +565,8 @@
   * [Part 3: 상태 관리, 체크포인팅, 스트리밍 패턴 퀴즈](quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
   * [Part 4: 운영, 고가용성, 그리고 매니지드 Flink 퀴즈](quizzes/data-on-eks/flink/04-operations-ha-quiz.md)
 * Networking
-  * [Networking 개요 퀴즈](quizzes/networking/00-networking-overview-quiz.md)
+  * [Kubernetes 네트워킹 개요 퀴즈](quizzes/networking/00-networking-overview-quiz.md)
+  * [Linux 네트워크 진단 퀴즈](quizzes/networking/07-linux-network-diagnostics-quiz.md)
   * [VPC CNI 퀴즈](quizzes/networking/01-vpc-cni-quiz.md)
   * Cilium 딥다이브
     * [Part 1: 소개 퀴즈](quizzes/networking/cilium/01-introduction-quiz.md)

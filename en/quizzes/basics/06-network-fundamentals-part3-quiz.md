@@ -1,6 +1,6 @@
 # Network Fundamentals Part 3 Quiz — Application Protocols
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: September 14, 2026
 
 Tests your understanding of the 10 application-layer protocols, from DNS to MQTT.
 
@@ -102,6 +102,88 @@ SPF checks the envelope/HELO domain and DKIM verifies covered content for its si
 
 </details>
 
+7. An HTTP/1.1 request begins `POST /echo HTTP/1.1`, and its response begins `HTTP/1.1 200 OK`. Which interpretation is correct?
+   - A) `POST` is a header field and `/echo` is the response status
+   - B) `200` is the body length and `OK` determines whether the request succeeded
+   - C) The request line contains method, target and version; the status line contains version, status code and an optional reason phrase
+   - D) The first blank line terminates the entire message, including any body
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: C) The request line contains method, target and version; the status line contains version, status code and an optional reason phrase**
+
+**Explanation:**
+POST asks the target to process supplied content; 200 is a success status. Header field lines follow the start line, then a blank line ends the header section. A body follows only when message rules permit it. HTTP/1.1 uses CRLF for these wire line endings even when an illustrative display uses LF.
+
+</details>
+
+8. The only content of an HTTP/1.1 message body is the five ASCII bytes `hello`, with no trailing newline, no content coding and no transfer coding. What does `Content-Length: 5` count?
+   - A) The entire message, including start line and headers
+   - B) Only the five body bytes; `Content-Type` separately describes their media type
+   - C) Five Unicode characters, regardless of their byte encoding
+   - D) The number of TCP packets that carry the body
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) Only the five body bytes; `Content-Type` separately describes their media type**
+
+**Explanation:**
+Content-Length counts bytes, excluding the start line, headers and blank-line separator. ASCII `hello` is five bytes; a real added LF would make it six. Non-ASCII UTF-8 characters can occupy multiple bytes. Content-Type tells the recipient how to interpret the representation, not where the message ends.
+
+</details>
+
+9. A valid HTTP/1.1 `200` response to GET uses `Transfer-Encoding: chunked` and keeps the TCP connection open. How is the body delimited?
+   - A) By the boundaries of the TCP packets
+   - B) By Content-Type alone
+   - C) By a required Content-Length sent alongside Transfer-Encoding
+   - D) By chunk framing, ending with the zero-size chunk, any trailers and the final blank line
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: D) By chunk framing, ending with the zero-size chunk, any trailers and the final blank line**
+
+**Explanation:**
+Chunk framing identifies the end without closing the connection. A sender must not send Content-Length with Transfer-Encoding. TCP is a byte stream: a message can span packets, and a packet can carry bytes from more than one message.
+
+</details>
+
+10. A valid HTTP/1.1 response to HEAD includes `Content-Length: 500`. Should the client read 500 body bytes after the header section?
+   - A) No; a HEAD response has no message body, and the field describes the length a corresponding GET response would have
+   - B) Yes; Content-Length always overrides the method
+   - C) Yes, but only if Content-Type is text/plain
+   - D) No; Content-Length is forbidden in every HEAD response
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: A) No; a HEAD response has no message body, and the field describes the length a corresponding GET response would have**
+
+**Explanation:**
+The method/status rules precede generic length framing. HEAD responses carry no body; the permitted length field is metadata. Responses with 1xx, 204 or 304 status also have no body, with separate restrictions on which fields are permitted.
+
+</details>
+
+11. A client tool displays readable headers for an HTTPS request negotiated as HTTP/2. What should you expect in a passive capture without session secrets?
+   - A) The same plaintext `GET ... HTTP/1.1` request line
+   - B) Visible plaintext headers, with only the body encrypted
+   - C) Protected application data; HTTP/2 uses binary frames, and the tool is displaying decoded fields
+   - D) HTTP/1.1 chunk sizes separating every HTTP/2 stream
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: C) Protected application data; HTTP/2 uses binary frames, and the tool is displaying decoded fields**
+
+**Explanation:**
+TLS protects HTTP/2 headers and content on an HTTPS connection. HTTP/2 uses HEADERS/DATA frames on TCP; HTTP/3 uses its own frames on protected QUIC streams. Both preserve HTTP semantics, but neither uses HTTP/1.1 textual start lines or chunked transfer coding. Observe decoded messages at an authorized endpoint or termination point.
+
+</details>
+
 ---
 
 [Back to Study Material](../../basics/06-network-fundamentals-part3.md) | [Next Quiz: Part 4](./06-network-fundamentals-part4-quiz.md)
+
+Review [HTTP message structure, framing and visibility](../../basics/06-network-fundamentals-part3.md#http11-message-structure), including its primary references.

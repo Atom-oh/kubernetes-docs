@@ -1,6 +1,6 @@
 # Network Fundamentals Part 1 Quiz — Layer Model, Link and Routing
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: September 14, 2026
 
 Tests your understanding of the 11 link-layer and internet/routing-layer protocols and mechanisms.
 
@@ -86,9 +86,107 @@ Dual stack means maintaining two sets of firewall rules and security policies. M
 
 </details>
 
+6. For `192.0.2.130/26` on an ordinary IPv4 broadcast subnet, which network, broadcast and host range are correct?
+   - A) Network `.0`, broadcast `.255`, hosts `.1`–`.254`
+   - B) Network `.130`, broadcast `.193`, hosts `.131`–`.192`
+   - C) Network `.128`, broadcast `.191`, hosts `.129`–`.190`
+   - D) Network `.128`, broadcast `.190`, hosts `.129`–`.189`
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: C) Network `.128`, broadcast `.191`, hosts `.129`–`.190`**
+
+**Explanation:**
+The mask is `255.255.255.192`. Six host bits give 64 addresses, and `.130` lies in the block `.128`–`.191`. Reserving the network and broadcast addresses leaves 62 ordinary host addresses. All addresses here share the `192.0.2` prefix and are documentation examples.
+
+</details>
+
+7. A host at `192.0.2.130/26` has an on-link route for its subnet. Its selected routing table also has `198.51.100.0/24` via `.129`, `198.51.100.128/25` via `.190`, and a default via `.129` (gateways are in `192.0.2`). For destination `198.51.100.140`, which route and ARP target apply if the neighbor entry is missing?
+   - A) Default route; ARP for `192.0.2.129`
+   - B) `/25` route; ARP for `192.0.2.190`
+   - C) `/24` route; ARP for `198.51.100.140`
+   - D) `/25` route; ARP for `198.51.100.140`
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) `/25` route; ARP for `192.0.2.190`**
+
+**Explanation:**
+All three remote routes match, but `/25` is the longest prefix. ARP resolves the on-link gateway, so the frame goes to that gateway's MAC while the IP destination remains `198.51.100.140` (absent NAT). A lower default-route metric would not override the more specific match.
+
+</details>
+
+8. A host at `192.0.2.130/26` has an on-link `192.0.2.128/26` route and a default via `192.0.2.129`. With no more specific route or cached neighbor entry, how does it send to `192.0.2.150`?
+   - A) ARP for `192.0.2.150`, then send directly to its MAC
+   - B) ARP for `192.0.2.129`, because all IP traffic requires a gateway
+   - C) ARP for `192.0.2.191`, then broadcast the IP packet
+   - D) Send to the default gateway without any link-layer destination
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: A) ARP for `192.0.2.150`, then send directly to its MAC**
+
+**Explanation:**
+The selected `/26` route marks this destination as on-link. The destination host itself is the next hop. A configured default gateway is used only when the route lookup selects it; merely having one does not force local traffic through it.
+
+</details>
+
+9. Which statement correctly handles exceptions to the ordinary “total addresses minus two” calculation?
+   - A) A `/31` always has zero usable endpoints
+   - B) A `/32` always provides a host and a separate gateway address
+   - C) Every cloud `/26` allows assignment of all 62 ordinary host addresses
+   - D) A supported point-to-point `/31` uses both addresses; a `/32` identifies one address; cloud reservations require a separate check
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: D) A supported point-to-point `/31` uses both addresses; a `/32` identifies one address; cloud reservations require a separate check**
+
+**Explanation:**
+RFC 3021 permits the two `/31` addresses as point-to-point endpoints. A `/32` host route matches one address and does not itself establish on-link reachability. Standard AWS VPC IPv4 subnets reserve five addresses, so a `/26` has 59 assignable addresses; modes such as BYOIP have different rules.
+
+</details>
+
+10. A UDP traceroute receives ICMP Type 11 Code 0 from an intermediate router, then Type 3 Code 3 from the destination. What does this normally mean?
+   - A) A probe's TTL expired in transit; a later probe reached an unused UDP port at the destination
+   - B) The destination replied with UDP data at every hop
+   - C) The router reported a path-MTU problem, then the destination completed TLS
+   - D) Traceroute silently changed all outgoing probes to ICMP Echo Requests
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: A) A probe's TTL expired in transit; a later probe reached an unused UDP port at the destination**
+
+**Explanation:**
+The probe protocol and response protocol differ: UDP probes can elicit ICMP errors. ICMP Echo and TCP SYN traceroute variants also use Time Exceeded at intermediate hops, but their final responses can be Echo Reply or TCP SYN/ACK/RST. Fragmentation Needed is Type 3 Code 4, not either code in this question.
+
+</details>
+
+11. One traceroute hop shows `* * *`, while later hops and the destination reply. Which conclusion is justified?
+   - A) The silent router drops all end-to-end traffic
+   - B) No matching response arrived for those probes within the wait; more evidence is needed to claim end-to-end loss
+   - C) The forward and return paths are identical
+   - D) Every application packet size fits the path MTU
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) No matching response arrived for those probes within the wait; more evidence is needed to claim end-to-end loss**
+
+**Explanation:**
+Filtering, response suppression/rate limiting or loss on the return path can produce timeouts. Compare repeated probes with destination and application results. RTT includes the return path, and success with small probes does not rule out a PMTU black hole for larger packets.
+
+</details>
+
 ---
 
 [Back to Study Material](../../basics/06-network-fundamentals-part1.md) | [Next Quiz: Part 2](./06-network-fundamentals-part2-quiz.md)
+
+Review the [CIDR example](../../basics/06-network-fundamentals-part1.md#ipv4-cidr-subnet), [next-hop reasoning](../../basics/06-network-fundamentals-part1.md#longest-prefix-next-hop) and [ICMP interpretation](../../basics/06-network-fundamentals-part1.md#icmp-traceroute-interpretation), including their primary references.
 
 ## Verification References
 
