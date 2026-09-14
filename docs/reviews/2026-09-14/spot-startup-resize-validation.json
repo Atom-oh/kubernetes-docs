@@ -1,0 +1,288 @@
+{
+  "schemaVersion": 1,
+  "status": "local-documentation-validation-passed",
+  "checkedAt": "2026-09-14T01:57:34.792284+00:00",
+  "baseCommit": "68d319a5fd728cc42ff87a61455ade4e2519850d",
+  "scope": [
+    "ko/ops/17-spot-production-experiments.md",
+    "en/ops/17-spot-production-experiments.md",
+    "ko/quizzes/ops/17-spot-production-experiments-quiz.md",
+    "en/quizzes/ops/17-spot-production-experiments-quiz.md",
+    "examples/eks/spot-production/README.md"
+  ],
+  "change": "Connect existing MAP and phase-aware CPU resizer to Spot recovery, Guaranteed preservation, and separately unexecuted E10.",
+  "featureContract": {
+    "containerResizeStableFrom": "1.35",
+    "mutatingAdmissionPolicyStableFrom": "1.36",
+    "qos": "Guaranteed at creation and after resize; original class immutable",
+    "mutationRole": "MAP injects missing resizePolicy; template sets startup CPU; separate controller requests downscale",
+    "trigger": "A real startupProbe and started=true, followed by observed resource and application-SLO checks",
+    "scope": "Existing prototype targets regular-container CPU on eligible Linux/container-level Pods; not a general claim about all init-container feature gates."
+  },
+  "documentHashes": [
+    {
+      "path": "ko/ops/17-spot-production-experiments.md",
+      "sha256": "78b1644e0cc1a4b88650d027a57d4a6fd1dcab6de96a0e669e2c7d5843eabd87"
+    },
+    {
+      "path": "en/ops/17-spot-production-experiments.md",
+      "sha256": "f9562b524045c6cca2a7eb3536f6fb39cec4606982dacca150166d8b98d0d2fa"
+    },
+    {
+      "path": "ko/quizzes/ops/17-spot-production-experiments-quiz.md",
+      "sha256": "12ba1c640d21e0d792b0bf0d3e645221f03f17069b42aa149b8274d95d7040d2"
+    },
+    {
+      "path": "en/quizzes/ops/17-spot-production-experiments-quiz.md",
+      "sha256": "107d82c6ba13d7cb6952bbd34285bd89b13b654139fc5b141740686ab56ddd59"
+    },
+    {
+      "path": "examples/eks/spot-production/README.md",
+      "sha256": "0285879d388508e429ecef1a0566358dd9f582086a61510d88af5daacfddcd3b"
+    }
+  ],
+  "historicalPreservation": {
+    "guides": [
+      {
+        "path": "ko/ops/17-spot-production-experiments.md",
+        "allOriginalLinesRetainedExceptUpdateAndSourceCheckDates": true,
+        "changedExistingLines": [
+          "> **마지막 업데이트**: 2026년 9월 12일",
+          "공식 문서는 서비스 동작의 근거이며 이 저장소에서 실험을 수행했다는 증거가 아닙니다. 링크 확인일: 2026-09-12."
+        ]
+      },
+      {
+        "path": "en/ops/17-spot-production-experiments.md",
+        "allOriginalLinesRetainedExceptUpdateAndSourceCheckDates": true,
+        "changedExistingLines": [
+          "> **Last Updated**: September 12, 2026",
+          "Official documentation supports service-behavior claims; it is not evidence that this repository ran an experiment. Links checked: 2026-09-12."
+        ]
+      }
+    ],
+    "rawResultsAndPlotUnchanged": true,
+    "roadmapImplementationUnchanged": true,
+    "initialTemplate": {
+      "path": "examples/eks/spot-production/results/2026-09-12/resources.template.json",
+      "sha256": "ee21d5ddbf9a13e8ebcd9f4fb999678c089e9026ec11db764e29b7d4be165710",
+      "deployments": [
+        {
+          "name": "baseline",
+          "containers": [
+            {
+              "name": "http",
+              "resources": {
+                "requests": {
+                  "cpu": "50m",
+                  "memory": "64Mi"
+                },
+                "limits": {
+                  "cpu": "500m",
+                  "memory": "256Mi"
+                }
+              },
+              "startupProbePresent": false,
+              "resizePolicyPresent": false
+            }
+          ],
+          "resizeOptInPresent": false
+        },
+        {
+          "name": "mixed-stable",
+          "containers": [
+            {
+              "name": "http",
+              "resources": {
+                "requests": {
+                  "cpu": "50m",
+                  "memory": "64Mi"
+                },
+                "limits": {
+                  "cpu": "500m",
+                  "memory": "256Mi"
+                }
+              },
+              "startupProbePresent": false,
+              "resizePolicyPresent": false
+            }
+          ],
+          "resizeOptInPresent": false
+        },
+        {
+          "name": "mixed-spot",
+          "containers": [
+            {
+              "name": "http",
+              "resources": {
+                "requests": {
+                  "cpu": "50m",
+                  "memory": "64Mi"
+                },
+                "limits": {
+                  "cpu": "500m",
+                  "memory": "256Mi"
+                }
+              },
+              "startupProbePresent": false,
+              "resizePolicyPresent": false
+            }
+          ],
+          "resizeOptInPresent": false
+        }
+      ],
+      "runtimeQosInferredFromTemplate": false
+    }
+  },
+  "localChecks": {
+    "documentationTests": {
+      "passed": 126,
+      "failed": 0
+    },
+    "spotMeasurementToolTests": {
+      "python": "3.12.13",
+      "passed": 29,
+      "failed": 0,
+      "scope": "Local HTTP/record fixtures; no AWS calls"
+    },
+    "linksImagesAndLanguageParity": "passed",
+    "newDocContracts": {
+      "base": "68d319a5fd728cc42ff87a61455ade4e2519850d",
+      "guides": [
+        {
+          "path": "ko/ops/17-spot-production-experiments.md",
+          "preservedHeadingIds": 24,
+          "checkedRoadmapLinks": 2,
+          "preservedExperimentRows": 32,
+          "preservedCodeBlocks": 6,
+          "newSectionIds": [
+            "phase-aware-resizing",
+            "e10-startup-resizing"
+          ]
+        },
+        {
+          "path": "en/ops/17-spot-production-experiments.md",
+          "preservedHeadingIds": 24,
+          "checkedRoadmapLinks": 2,
+          "preservedExperimentRows": 32,
+          "preservedCodeBlocks": 6,
+          "newSectionIds": [
+            "phase-aware-resizing",
+            "e10-startup-resizing"
+          ]
+        }
+      ],
+      "quizzes": [
+        {
+          "path": "ko/quizzes/ops/17-spot-production-experiments-quiz.md",
+          "questions": 10,
+          "answerKey": "BCBCBCCBCB"
+        },
+        {
+          "path": "en/quizzes/ops/17-spot-production-experiments-quiz.md",
+          "questions": 10,
+          "answerKey": "BCBCBCCBCB"
+        }
+      ],
+      "observationFixtures": 2,
+      "historicalArtifactsUnchanged": true,
+      "roadmapImplementationUnchanged": true,
+      "runtimeResizeOrFaultTestRun": false
+    },
+    "browser": {
+      "status": "passed",
+      "viewports": [
+        {
+          "width": 1440,
+          "height": 1000
+        },
+        {
+          "width": 375,
+          "height": 812
+        }
+      ],
+      "checks": 10,
+      "screenshotsInspected": 2,
+      "errors": [],
+      "explainedExternalWarnings": [],
+      "scope": "Local KO/EN guide navigation, roadmap fragments and quiz answer expansion",
+      "implementation": "Existing cached Playwright/Chromium; MCP Chrome path unavailable; no browser install",
+      "initialAttempt": "All target flows passed; one external Google report-only CSP message was separately classified. Final run has no such messages."
+    }
+  },
+  "staticSecurityPrecheck": {
+    "procedure": "ops-security-audit PR-diff route",
+    "scope": "Added documentation only; no live cluster/account posture audit",
+    "newMandateViolations": [],
+    "newShellExample": "Explicit-context/namespace read-only get pod with request timeout; no resize or fault command executed",
+    "resourceOwnership": "Namespace opt-in is not authorization; controller/resource-owner coordination and unsupported cases remain explicit"
+  },
+  "sources": [
+    {
+      "name": "kubernetes-resize",
+      "url": "https://kubernetes.io/docs/tasks/configure-pod-container/resize-container-resources/",
+      "finalUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/resize-container-resources/",
+      "status": 200,
+      "bytes": 533545,
+      "sha256": "c5a0ff6ca0ac172fd812072dc259b0980c6cbbb37308994fb86dc5d1fb236112"
+    },
+    {
+      "name": "kubernetes-qos",
+      "url": "https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/",
+      "finalUrl": "https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/",
+      "status": 200,
+      "bytes": 517764,
+      "sha256": "7ad7d0c27014bfc485af3331306cb9635c5fd30aa03289b0df9795e90086eca4"
+    },
+    {
+      "name": "kubernetes-map",
+      "url": "https://kubernetes.io/docs/reference/access-authn-authz/mutating-admission-policy/",
+      "finalUrl": "https://kubernetes.io/docs/reference/access-authn-authz/mutating-admission-policy/",
+      "status": 200,
+      "bytes": 531008,
+      "sha256": "cefe8ff580ba8d7fbc3820ebfaf70e37076ef70f9f03ca34a68816473717b955"
+    },
+    {
+      "name": "eks-versions",
+      "url": "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html",
+      "finalUrl": "https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html",
+      "status": 200,
+      "bytes": 37436,
+      "sha256": "f58a11e5604d364ef20106bea522c9b0bcc1bf71e4416881e0737ea4e13fae28"
+    },
+    {
+      "name": "kubernetes-probes",
+      "url": "https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/",
+      "status": 200,
+      "bytes": 542697,
+      "sha256": "d948f2fc06d70e3043a47f2febbb860d9db2a3185338c71c9db5ed4f50b12592"
+    },
+    {
+      "name": "v1.36.3-validation",
+      "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.3/pkg/apis/core/validation/validation.go",
+      "status": 200,
+      "bytes": 431896,
+      "sha256": "7639b46461cf858290da4d7aa6c45e926b69929e8a0b66060dcd57b6bbb062a3"
+    },
+    {
+      "name": "v1.36.3-qos",
+      "url": "https://raw.githubusercontent.com/kubernetes/kubernetes/v1.36.3/pkg/apis/core/helper/qos/qos.go",
+      "status": 200,
+      "bytes": 5648,
+      "sha256": "4fa92fd3070a5da18e5125bde4bd6a1b75646a192e3fcd581dcde45fe899f34a"
+    }
+  ],
+  "publicationBeforeChange": {
+    "name": "published-spot",
+    "url": "https://www.atomai.click/kubernetes-docs/ko/ops/17-spot-production-experiments",
+    "finalUrl": "https://www.atomai.click/kubernetes-docs/ko/ops/17-spot-production-experiments",
+    "status": 200,
+    "bytes": 522298,
+    "sha256": "860440cdef41c1ef4a3d1e8e9920d21ffe7c5dfe33594b727ad8b1a69fe24592"
+  },
+  "limits": [
+    "No E10 run, new Spot fault, controller deployment, cgroup measurement or startup-speedup measurement was performed.",
+    "Existing EKS 1.36.1 report and local prototype tests are not evidence of this combined Spot experiment.",
+    "The initial Spot template is not a post-admission Pod observation.",
+    "Latest-HEAD independent review, remote CI and deployment are separate subsequent gates."
+  ]
+}
