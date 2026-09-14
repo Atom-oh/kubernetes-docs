@@ -2,7 +2,8 @@ import subprocess
 import unittest
 from unittest.mock import patch
 
-from routing_lab import Docker, LabError, Resources, SOCKET, check_subnets
+from routing_lab import (Docker, LabError, Resources, ROUTER_LEFT, SERVER, SOCKET,
+                         check_subnets, traceroute_reaches_expected_hops)
 
 
 class FakeDocker:
@@ -90,6 +91,28 @@ class ResourceOwnershipTests(unittest.TestCase):
         self.assertNotIn("DOCKER_HOST", docker.env)
         self.assertNotIn("DOCKER_CONTEXT", docker.env)
         self.assertNotIn("DOCKER_CERT_PATH", docker.env)
+
+
+class TracerouteEvidenceTests(unittest.TestCase):
+    header = f"traceroute to {SERVER} ({SERVER}), 4 hops max, 46 byte packets\n"
+
+    def test_two_numbered_replies_in_the_expected_order(self):
+        output = self.header + f" 1  {ROUTER_LEFT}  0.006 ms\n 2  {SERVER}  0.002 ms\n"
+        self.assertTrue(traceroute_reaches_expected_hops(output))
+
+    def test_heading_timeouts_errors_and_nonmatching_addresses_are_not_arrival(self):
+        fixtures = {
+            "destination times out": f" 1  {ROUTER_LEFT}  0.005 ms\n 2  *\n 3  *\n",
+            "router unreachable": f" 1  {ROUTER_LEFT}  0.005 ms !H\n",
+            "destination filtered": f" 1  {ROUTER_LEFT}  0.005 ms\n 2  {SERVER}  0.01 ms !X\n",
+            "heading and diagnostic only": f"gateway candidate: {ROUTER_LEFT}\n",
+            "reversed hops": f" 1  {SERVER}  0.005 ms\n 2  {ROUTER_LEFT}  0.01 ms\n",
+            "router address prefix": f" 1  {ROUTER_LEFT}0  0.005 ms\n 2  {SERVER}  0.01 ms\n",
+            "destination address prefix": f" 1  {ROUTER_LEFT}  0.005 ms\n 2  {SERVER}0  0.01 ms\n",
+        }
+        for case, rows in fixtures.items():
+            with self.subTest(case=case):
+                self.assertFalse(traceroute_reaches_expected_hops(self.header + rows))
 
 
 if __name__ == "__main__":

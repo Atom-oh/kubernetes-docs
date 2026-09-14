@@ -96,5 +96,18 @@
       "POST"
     ],
     "socketObservation": "ESTABLISHED state and skmem fields observed for the loopback lesson connection"
+  },
+  "validationUpdate": {
+    "checkedAt": "2026-09-14T10:27:45.236258+00:00",
+    "change": "Traceroute criterion now validates numbered hop replies, exact address tokens, order and absence of unreachable/timeout markers.",
+    "method": "Retained native packet observations rechecked with the new pure criterion; offline tests reject seven false-success cases. Packet generation and resource lifecycle are unchanged.",
+    "nativeTraceAccepted": true,
+    "unitTests": 20,
+    "scriptHashes": {
+      "http_lab.py": "0b2ac4e6545945baa98a3f41337c54ca822a11028a33edec18be1beefc52aa64",
+      "routing_lab.py": "79ba4a528fb220923c248d1a73cff8c7677ca42cd7e31831ed451f653623520d",
+      "test_http_lab.py": "7873c705b082b08003822be8f3a7bc2780b05aa5358311e22232bbd78c4a5a99",
+      "test_routing_lab.py": "f94b3daee88bdb8381039f6e201a5bbd7589d2a8457bfebf1e3b05df2d8eec53"
+    }
   }
 }

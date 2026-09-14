@@ -174,6 +174,21 @@ def capture_probe(docker, router, capture_filter, probe):
         process.stderr.close()
 
 
+def traceroute_reaches_expected_hops(output):
+    """Validate numbered replies from this lab's fixed Linux -n -I -q 1 trace."""
+    replies = {}
+    for line in output.splitlines():
+        if not re.match(r"^\s*[12]\s+", line):
+            continue
+        match = re.fullmatch(r"\s*([12])\s+(\S+)\s+\d+(?:\.\d+)?\s+ms\s*", line)
+        # Timeout stars, unreachable annotations and duplicate rows are not a
+        # clean reply. The heading and diagnostics never enter this map.
+        if not match or int(match[1]) in replies:
+            return False
+        replies[int(match[1])] = match[2]
+    return replies == {1: ROUTER_LEFT, 2: SERVER}
+
+
 def run_lab(docker):
     preflight(docker)
     prefix = "network-lesson-" + uuid.uuid4().hex[:10]
@@ -237,8 +252,7 @@ def run_lab(docker):
             "noRemoteL2Neighbor": not observations["remoteNeighbor"],
             "ttlOneExpires": observations["ttlOne"]["probeExit"] != 0 and
                 "time exceeded" in observations["ttlOne"]["capture"].lower(),
-            "tracerouteReachesBothHops": ROUTER_LEFT in observations["traceroute"] and
-                SERVER in observations["traceroute"],
+            "tracerouteReachesBothHops": traceroute_reaches_expected_hops(observations["traceroute"]),
             "pmtuFeedback": observations["pmtu"]["probeExit"] != 0 and
                 bool(re.search(r"(unreachable|fragmentation|need to frag)", observations["pmtu"]["capture"], re.I)),
         }

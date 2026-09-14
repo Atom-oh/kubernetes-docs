@@ -6,7 +6,7 @@
 ## What This Document Covers
 
 - The path one `send()` travels inside the kernel until it reaches the wire, and what each point does
-- How socket file descriptors connect to VFS, and how TCP buffers, windows, and queue observations differ
+- How socket file descriptors connect to the Virtual File System (VFS), and how TCP buffers, windows, and queue observations differ
 - Where you can attach hooks — and why the position of XDP, TC, and netfilter creates performance differences
 - Why Pod-to-Pod traffic actually takes different paths on the same node, the same AZ, and across AZs
 
