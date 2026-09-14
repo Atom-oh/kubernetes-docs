@@ -8,6 +8,8 @@ Assess Spot adoption by whether **service SLOs and data correctness survive node
 
 The complementary design is **more CPU at startup → in-place CPU downscale after initialization → preserved Guaranteed QoS**. It aims to shorten replacement Pod initialization while keeping steady-state resource settings consistent. See the [phase-aware resource configuration](#phase-aware-resizing) and [combined E10 experiment](#e10-startup-resizing) below. The existing E0–E9 measurements did not validate this configuration.
 
+The [original experiment report and workload mapping](#phase-aware-workloads) links the supplied Go controller document and describes its Deployment, StatefulSet, DaemonSet, and Argo Rollouts scope.
+
 The current decision is **HOLD production expansion — address errors during reclamation/transition, version compatibility, and interruption handling**. These synthetic HTTP measurements diagnose the installed configuration; they do not establish uninterrupted operation for a business service or a supported-version configuration.
 
 ## 1. Behavior and limits to verify
@@ -106,6 +108,35 @@ The existing prototype's contract also applies:
 - Reserve **startup capacity headroom** to schedule new Pods with larger CPU requests. A Pod remains Pending if its current request does not fit, even when a later downscale is planned. The existing prototype does not restore startup CPU when a container restarts within the same Pod; test that case separately. A new Pod replacing reclaimed Spot capacity follows the template and admission path again.
 
 Preserving Guaranteed maintains the resource configuration and QoS conditions, but **application SLOs must establish acceptable service quality**. A small steady CPU limit can cause throttling and latency; exceeding a memory limit can cause OOM. Guaranteed does not prevent Spot node reclamation. First establish ownership of resource settings among HPA, VPA, GitOps, and the resizer. In E7, verify the effect of changing CPU requests on the denominator used by CPU-utilization-based HPA. [S1], [S14], [S15]
+
+### Original experiment report and workload mapping {#phase-aware-workloads}
+
+> **Attached source:** [Automatic Phase-Aware Resize with a Go controller — Deployment / StatefulSet / DaemonSet / Argo Rollouts][N1]. This Notion document includes Go code, a Dockerfile, RBAC/deployment manifests, and the reported EKS observations. Access may require Notion sharing permissions.
+
+The source's central idea is **different startup and steady CPU budgets while continuously preserving Guaranteed QoS**. Once a downscale is actually applied, lower requests may create room for additional Pods, while the steady CPU limit retains a usage cap. The source describes noisy-neighbor mitigation and improved bin-packing as design benefits to evaluate; the CPU/QoS table below does not measure a performance gain, node-density improvement, or cost saving.
+
+The common entry point is the **Pod, rather than the workload kind**. Deployment and Rollout Pods normally have a ReplicaSet as their immediate controller owner; StatefulSets and DaemonSets also create Pods. The ownership paths below identify experiment cohorts; they do not require separate resizer code for each parent-controller kind.
+
+| Workload | Pod ownership path | Evidence presented in the source |
+|---|---|---|
+| Deployment | `Deployment → ReplicaSet → Pod` | Sections 6.2–6.3 report automatic resize logs and before/after values for two Pods |
+| StatefulSet | `StatefulSet → Pod` | Sections 6.2–6.3 report automatic resize logs and before/after values |
+| DaemonSet | `DaemonSet → Pod` | Sections 6.2–6.3 report automatic resize logs and before/after values |
+| Argo Rollouts | `Rollout → ReplicaSet → Pod` | Section 4.1 provides a direct `spec.template` example and a structural applicability argument; it is absent from the section 6.3 measurement table |
+
+For the source's directly authored Pod templates, apply the common settings to each resource's `spec.template`: annotations under `spec.template.metadata.annotations`, and startup resources, startupProbe, and resizePolicy on the target `spec.template.spec.containers[]`. The source distinguishes explicitly authored policies from MAP injection. **Changing only the kind of a Deployment manifest is insufficient.** Preserve workload-specific settings, including StatefulSet serviceName/Service, storage and ordering policies, DaemonSet placement, and Rollout strategy.
+
+The following are **before/after values reported by the source**. Its stated environment is EKS `1.36.1`, containerd `2.2.3`, and AL2023 with cgroup v2 on arm64/Graviton. These summarize the supplied experiment report; they were not rerun for this documentation update.
+
+| Reported workload | CPU request=limit | Memory request=limit | QoS | restartCount / containerID |
+|---|---|---|---|---|
+| Two Deployment Pods | `200m → 50m` | Remains `64Mi` | `Guaranteed → Guaranteed` | `0 → 0` / unchanged |
+| StatefulSet Pod | `200m → 50m` | Remains `64Mi` | `Guaranteed → Guaranteed` | `0 → 0` / unchanged |
+| DaemonSet Pod | `200m → 50m` | Remains `64Mi` | `Guaranteed → Guaranteed` | `0 → 0` / unchanged |
+
+Distinguish **structural applicability** from **observed validation** for Argo Rollouts. The source introduction mentions all four kinds, but its detailed measurement table contains the three above; its Argo argument relies on the shared Pod ownership structure. A `ReplicaSet` log label alone identifies neither Deployment versus Rollout nor a completed Rollout test. Record the actual stable/canary ownership chain and separately validate promotion, abort/rollback, traffic/Analysis metrics, and the effect of changing CPU requests.
+
+The source's cluster-wide watch, `resized` marker, and `sync.Map` belong to that earlier implementation. **Retain the current roadmap prototype's namespace scope, management label, CPU floor, real startupProbe, UID/resourceVersion tests, and retry queue** instead of substituting the older code as the current deployment specification. Unchanged containerID/restartCount alone does not establish cgroup application or absence of request loss: keep the source report, actual resource/SLO observations, and the still-unexecuted combined Spot E10 test separate.
 
 ## 3. Experiments and acceptance criteria
 
@@ -463,12 +494,15 @@ The experiment namespace, two NodePools, EC2NodeClass, new instance profile, FIS
 
 - [Scaling strategies](./06-scaling-strategies.md)
 - [Kubernetes version roadmap — MAP and phase-aware CPU resize](../eks/12-kubernetes-version-roadmap.md#_4-8-kubernetes-1-36-haru-april-2026)
+- [Go Phase-Aware Resize source — four-workload mapping and reported experiment results (Notion)][N1]
 - [Event capacity planning](./12-event-capacity-planning.md)
 - [FinOps cost management](./13-finops-cost-platform.md)
 - [Troubleshooting playbook](./16-troubleshooting-playbook.md)
 - [Quiz for this guide](../quizzes/ops/17-spot-production-experiments-quiz.md)
 
 Official documentation supports service-behavior claims; it is not evidence that this repository ran an experiment. Existing S1–S13 links checked: 2026-09-12. Added S14–S17 links checked: 2026-09-14.
+
+[N1] is the implementation/experiment report supplied and read on 2026-09-14, not an official Kubernetes specification or a new Spot measurement.
 
 [S1]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-instance-termination-notices.html
 [S2]: https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html
@@ -488,3 +522,4 @@ Official documentation supports service-behavior claims; it is not evidence that
 [S15]: https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/
 [S16]: https://kubernetes.io/docs/reference/access-authn-authz/mutating-admission-policy/
 [S17]: https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/
+[N1]: https://app.notion.com/p/3748907d4b01818cb232f89082536537
