@@ -4,7 +4,7 @@
 
 This section covers Cilium networking, policy and observability. Examples are reviewed against **Cilium/Helm chart 1.20.1**, Cilium CLI **0.20.0** and Hubble CLI **1.19.4**. The Cilium 1.20 Kubernetes compatibility page lists **1.33–1.36** as tested; an upstream 1.37 release does not extend that matrix automatically. Supported hosts are AMD64/AArch64 Linux with kernel **5.10+**, or the documented distribution equivalent such as RHEL 8.10's backported 4.18 kernel. Individual features have additional requirements.
 
-> **Last Updated**: September 12, 2026
+> **Last Updated**: September 14, 2026
 
 ### Historical Release Notes
 
@@ -20,6 +20,7 @@ The dates below are GitHub publication dates in UTC and describe those releases,
 | August 18, 2026 | [1.20.1](https://github.com/cilium/cilium/releases/tag/v1.20.1) | ClusterMesh documentation and bug fixes, including restart/CIDR-policy handling |
 | August 18, 2026 | [1.19.7](https://github.com/cilium/cilium/releases/tag/v1.19.7) | Includes ENI interface timing, Service/LB and other fixes |
 | August 18, 2026 | [1.18.13](https://github.com/cilium/cilium/releases/tag/v1.18.13) | VRRP/IGMP host-firewall support and related fixes |
+| September 9, 2026 | [1.21.0-pre.2](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.2) | 1.21-cycle prerelease (published as pre.2 because pre.1 was not completed due to a release issue). Previews Gateway API session persistence, AWS managed prefix lists in Cilium policies, and BPF masquerading enabled by default. Not this guide's deployment baseline |
 
 The 1.20.0 announcement reports **2,660+ new commits**, supported by a **community of 1,100+ contributors**. The latter is community size, not a count of authors in this release. Highlights include:
 

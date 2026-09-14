@@ -1,7 +1,7 @@
 # 클러스터 아키텍처
 
 > **지원 버전**: Kubernetes 1.35, 1.36, 1.37
-> **마지막 업데이트**: 2026년 9월 9일
+> **마지막 업데이트**: 2026년 9월 14일
 
 버전 헤더는 업스트림 Kubernetes 기준입니다. 2026년 9월 11일 기준 EKS 표준 지원 버전은 1.34–1.36이므로 버전 선택 전 [EKS 수명 주기](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)를 확인하세요. 아래 구성 요소 명령은 자체 관리형 클러스터 예시이며 EKS 컨트롤 플레인은 AWS가 관리합니다. 이미지 태그와 인프라 ID는 예시이므로 호환되고 유지 관리되는 이미지와 실제 값으로 바꿔 사용하세요.
 
@@ -384,6 +384,10 @@ spec:
     - --advertise-address=192.168.1.10
     # ... 추가 플래그
 ```
+
+#### 2026년 9월 업데이트: 노드 라이프사이클 컨디션 도입 (v1.37)
+
+지금까지 노드가 drain 중인지, 유지 관리 중인지, Graceful Node Shutdown이 진행 중인지를 나타내는 Kubernetes 표준 방식이 없어 taint·레이블·공급자별 API로 흩어져 표현되었습니다. [Kubernetes v1.37은 5가지 표준(well-known) 노드 컨디션](https://kubernetes.io/blog/2026/09/09/kubernetes-v1-37-node-lifecycle-conditions/)을 도입해 이를 일관되게 보고할 수 있게 했습니다: `DrainInProgress`, `Drained`, `MaintenancePlanned`, `MaintenanceInProgress`, `GracefulNodeShutdownInProgress`.
 
 ### kube-proxy
 

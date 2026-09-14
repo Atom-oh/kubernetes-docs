@@ -4,7 +4,7 @@
 
 Cilium 네트워킹, 정책, 관측성을 다룹니다. 예제 검토 기준은 **Cilium/Helm 차트 1.20.1**, Cilium CLI **0.20.0**, Hubble CLI **1.19.4**입니다. Cilium 1.20 호환성 문서의 Kubernetes 테스트 범위는 **1.33–1.36**이며 업스트림 1.37 출시만으로 자동 확대되지 않습니다. 호스트는 AMD64/AArch64 Linux, 커널 **5.10 이상** 또는 문서화된 배포판 동등 조건(예: RHEL 8.10의 backport된 4.18)을 충족해야 합니다. 개별 기능에는 추가 조건이 있습니다.
 
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 9월 14일
 
 ### 릴리스 이력
 
@@ -20,6 +20,7 @@ Cilium 네트워킹, 정책, 관측성을 다룹니다. 예제 검토 기준은 
 | 2026-08-18 | [1.20.1](https://github.com/cilium/cilium/releases/tag/v1.20.1) | ClusterMesh 문서와 restart/CIDR-policy 처리 등 버그 수정 |
 | 2026-08-18 | [1.19.7](https://github.com/cilium/cilium/releases/tag/v1.19.7) | ENI 인터페이스 타이밍, Service/LB 등 수정 |
 | 2026-08-18 | [1.18.13](https://github.com/cilium/cilium/releases/tag/v1.18.13) | VRRP/IGMP host-firewall 지원 및 관련 수정 |
+| 2026-09-09 | [1.21.0-pre.2](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.2) | 1.21 사이클 prerelease(릴리스 문제로 pre.1 대신 pre.2로 공개). Gateway API 세션 퍼시스턴스, Cilium 정책의 AWS 관리형 prefix list 지원, BPF 마스커레이딩 기본 활성화 등 예고. 이 가이드의 배포 기준이 아님 |
 
 1.20.0 발표는 **2,660개 이상의 새 커밋**과 **1,100명 이상 기여자의 커뮤니티**를 소개합니다. 후자는 해당 릴리스 작성자 수가 아닌 커뮤니티 규모입니다. 주요 변경은 다음과 같습니다.
 

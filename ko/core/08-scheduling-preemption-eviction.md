@@ -1,7 +1,7 @@
 # Kubernetes 스케줄링, 선점 및 축출
 
 > **지원 버전**: Kubernetes 1.34 - 1.36 (Descheduler v0.36 예시)
-> **마지막 업데이트**: 2026년 9월 9일
+> **마지막 업데이트**: 2026년 9월 14일
 
 Kubernetes에서 스케줄링은 포드를 적절한 노드에 배치하는 과정입니다. 선점은 우선순위가 높은 포드를 위해 우선순위가 낮은 포드를 제거하는 과정이며, 축출은 파드를 종료하며 워크로드 컨트롤러가 생성한 대체 파드를 스케줄러가 별도로 배치할 수 있습니다. 이 장에서는 Kubernetes의 스케줄링 메커니즘, 노드 선택, 선점, 축출 등의 개념과 Amazon EKS에서의 스케줄링 최적화 방법에 대해 알아보겠습니다.
 
@@ -519,6 +519,11 @@ spec:
 3. **시스템 우선순위 클래스**: Kubernetes는 시스템 컴포넌트를 위한 우선순위 클래스를 제공
    - `system-cluster-critical`: 클러스터 작동에 중요한 포드
    - `system-node-critical`: 노드 작동에 중요한 포드
+
+### 2026년 9월 업데이트: v1.37 스케줄링·선점 변경 사항
+
+- **인플레이스 파드 리사이즈를 위한 스케줄러 선점(Alpha)**: v1.35에서 GA된 인플레이스 파드 리사이즈는 노드 여유 용량이 부족하면 리사이즈 요청이 `Deferred` 상태로 무기한 대기하는 공백이 있었습니다. v1.37은 `InPlacePodVerticalScalingSchedulerPreemption` 기능 게이트(Alpha) 뒤에서 스케줄러가 우선순위가 낮은 파드를 선점해 대기 중인 리사이즈를 진행할 수 있게 합니다 ([상세 글](https://kubernetes.io/blog/2026/09/10/kubernetes-v1-37-scheduler-preemption-for-in-place-pod-resize-alpha/))
+- **워크로드 인지 스케줄링(WAS) 확장**: 갱(gang) 스케줄링을 지원하는 Workload/PodGroup API, 워크로드 인지 선점(WAP), PodGroup 공유 DRA ResourceClaim이 Beta로 승격되었고, JobSet·LeaderWorkerSet 같은 다단계 워크로드 구조를 표현하는 CompositePodGroup API와 컨트롤러 통합용 `workloadbuilder` Go 라이브러리가 새로 도입되었습니다 ([상세 글](https://kubernetes.io/blog/2026/09/08/kubernetes-v1-37-advancing-workload-aware-scheduling/))
 
 ## 포드 축출
 
