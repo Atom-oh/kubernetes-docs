@@ -9,6 +9,41 @@ The [Korean guide](../../../ko/ops/17-spot-production-experiments.md) and
 experiment protocol, compute-manager differences, evidence requirements, and
 production adoption gates.
 
+## Startup CPU and Guaranteed QoS (E10)
+
+The guides connect the existing
+[phase-aware resizer prototype](../../../en/eks/12-kubernetes-version-roadmap.md)
+to a separate **E10 experiment**: provide more CPU during application startup,
+then lower CPU requests and limits together while retaining Guaranteed QoS.
+Container-level resize is stable from Kubernetes 1.35; MAP admission mutation is
+stable from 1.36. The existing MAP injects missing resize policies; it does not
+choose startup CPU or monitor application startup.
+
+Use the [E10 protocol](../../../en/ops/17-spot-production-experiments.md#e10-startup-resizing)
+and its [Korean counterpart](../../../ko/ops/17-spot-production-experiments.md#e10-startup-resizing).
+This directory does not install a MAP, webhook, or resizer, and its HTTP probe
+does not measure kubelet resource application or application warmup milestones.
+
+For each independently identified CPU-profile run, collect these alongside the
+existing request and metrics files:
+
+- Full Pod snapshots before, during, and after resize, with observation times,
+  UID, generation, desired and reported resources, resize conditions, QoS,
+  containerID, and restartCount.
+- Application initialization and startupProbe/Ready/LB milestones; do not use
+  the first successful HTTP probe as an unqualified warmup measurement.
+- CPU throttling, memory/OOM, readiness changes, and request SLOs after the
+  steady CPU is actually applied, including the relevant peak load.
+- Node placement, image-cache state, initial CPU headroom, and the exact
+  template, admission policy, resizer build/configuration, and resource-owner
+  settings used for the run.
+
+Keep the old dataset unchanged. Its initial templates use requests `50m`/`64Mi`
+and limits `500m`/`256Mi`, without this opt-in or a startupProbe; they are not
+Guaranteed resource specifications. E10 has **not been run** in the published
+Spot measurements. The roadmap's illustrative values and older resize report
+are separate from both an observed startup speedup and a combined Spot SLO test.
+
 ## Probe
 
 Run the probe on a host or Pod outside the node-reclamation target. Use the same

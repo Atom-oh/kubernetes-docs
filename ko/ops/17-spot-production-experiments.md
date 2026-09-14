@@ -1,10 +1,12 @@
 # EKS Spot 운영 적용 실험과 결과 판정
 
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 9월 14일
 > **실측 상태**: 부분 실측 완료 — 정상 부하, drain, 단일 Spot 회수, PDB 차단, 수동 On-Demand 전환. 7절에 원시 기록과 결과를 정리했습니다.
 > **적용 범위**: EKS Auto Mode, 자체 운영 Karpenter, EKS Managed Node Group의 중단 허용 워크로드
 
 Spot 도입은 할인율보다 **노드가 회수되는 동안 서비스 SLO와 데이터 정합성을 유지하는지**로 판단합니다. On-Demand 기준선을 먼저 측정하고, 같은 부하에서 Spot 혼합 구성의 장애 대응과 실효 비용을 비교합니다. 1–6절의 제안 수치와 기간은 **실험 설계 예시**입니다. 7절의 수치는 별도로 표시한 실제 측정값이며 AWS 보장값이 아닙니다.
+
+여기에 함께 적용하는 설계가 **시작 단계의 CPU 확대 → 초기화 완료 후 in-place CPU 축소 → Guaranteed QoS 유지**입니다. 대체 Pod의 초기화를 빠르게 하고 운영 단계의 리소스 조건을 일정하게 유지하려는 방법입니다. [단계별 리소스 구성](#phase-aware-resizing)과 [E10 결합 실험](#e10-startup-resizing)을 아래에 연결했습니다. 기존 E0–E9 측정에 이 구성이 포함됐다는 뜻은 아닙니다.
 
 현재 판정은 **운영 확대 보류 — 회수·전환 구간의 오류와 버전 호환성·중단 처리 보완이 필요**입니다. 합성 HTTP 워크로드로 현재 구성을 측정했으며, 실제 업무 서비스나 지원 버전 구성의 무중단 운영을 입증한 결과는 아닙니다.
 
@@ -70,6 +72,41 @@ On-Demand 최소 용량은 임의 비율 대신 다음 가정으로 산정합니
 
 처음에는 HPA와 자발적 consolidation 설정을 고정해 변수를 줄이고, 이후 운영 설정을 복원해 상호작용을 별도로 시험합니다. hostname/AZ topology spread, `DoNotSchedule`, `minDomains`, PV의 AZ 제약은 복구를 막을 수 있으므로 실제 노드 배치를 저장합니다. [S8]
 
+### 시작 CPU 확대와 Guaranteed 유지 {#phase-aware-resizing}
+
+[Kubernetes 버전 로드맵의 1.36 절](../eks/12-kubernetes-version-roadmap.md#_4-8-kubernetes-1-36-haru-2026년-4월)에 있는 MAP·단계별 CPU downscale prototype을 Spot 교체 경로에 연결합니다. **Container-level in-place resize는 1.35 GA, MutatingAdmissionPolicy(MAP)는 1.36 GA 기능입니다.** MAP는 API server 안에서 CEL로 동작하는 mutating admission webhook의 대안입니다. 현재 예시는 외부 webhook 서버를 배포하는 구성이 아닙니다. [S14], [S16]
+
+| 단계 | 담당 동작 | 보존할 조건 |
+|---|---|---|
+| 새 Pod 생성 | Workload template에 시작 CPU와 메모리 request=limit를 선언. MAP가 opt-in Pod의 누락된 `resizePolicy`를 주입 | 생성 때부터 `Guaranteed`; 기존 명시적 resize 정책은 덮어쓰지 않음 |
+| 애플리케이션 초기화 | 시작 단계에 더 큰 CPU 예산을 사용. 실제 `startupProbe`로 초기화 완료 확인 | `Running`만으로 완료 처리하지 않으며 readiness/LB 준비도 별도 확인 |
+| CPU 축소 요청 | 별도 resizer가 `pods/resize`에 CPU request와 limit를 함께 PATCH | CPU `NotRequired`, 메모리 유지, 같은 Pod UID와 container를 대상으로 변경 |
+| 운영 단계 | Kubelet에 적용된 CPU·메모리와 `qosClass`를 확인하고 대표 부하 SLO 측정 | 축소 후에도 `Guaranteed`; API 접수와 실제 적용·서비스 품질을 구분 |
+
+시작 CPU를 정하는 것은 이 예시의 **workload template**입니다. MAP는 `resizePolicy`의 기본값을 주입하며, 스스로 warmup 종료를 감시하거나 실행 중인 Pod를 축소하지 않습니다. 시작 완료 후 축소는 별도 컨트롤러의 역할입니다.
+
+여기서 줄이려는 “init 시간”은 **애플리케이션의 CPU 사용량이 큰 초기화·warmup 구간**입니다. 완료된 일반 `initContainers`를 resize하는 방식이 아닙니다. 이미지 pull, 노드 부팅, 외부 I/O 대기나 단순 `sleep`이 지배하는 시간은 CPU 설정만으로 같은 비율로 줄지 않습니다. 로드맵의 BusyBox `sleep` 예시는 상태 전환 설명용이며 시작 시간 개선 벤치마크가 아닙니다.
+
+다음은 로드맵의 값을 사용한 **설명용 비교 프로필**입니다. 모든 프로필에서 해당 컨테이너의 메모리 request=limit를 `64Mi`로 유지합니다. 실제 앱의 시작·최대 부하·메모리 사용량을 측정해 값을 다시 정합니다.
+
+| 프로필 | 시작 CPU request=limit | 운영 CPU request=limit | 목적 |
+|---|---|---|---|
+| G-steady | `50m` | `50m` | 작은 고정 CPU 기준선 |
+| G-phase | `200m` | `50m` | 초기화에 CPU를 더 주고 완료 후 축소 |
+| G-high | `200m` | `200m` | 큰 고정 CPU에서 시작·운영 성능을 비교하는 대조군 |
+
+**Burstable로 시작한 Pod를 나중에 Guaranteed로 바꾸는 설계가 아닙니다.** QoS class는 생성 시 결정되며 resize로 변경할 수 없습니다. 이 container-level 구성은 app·sidecar·init container를 포함해 필요한 CPU·메모리 request와 limit를 같은 양수로 지정하고, CPU를 줄일 때 request와 limit를 함께 변경합니다. CPU만 같고 메모리가 다르면 Guaranteed 조건을 충족하지 못합니다. [S14], [S15]
+
+기존 prototype의 계약도 함께 충족해야 합니다.
+
+- `WATCH_NAMESPACE` 하나와 검토한 `MIN_STEADY_CPU`를 지정합니다. MAP binding은 `map-demo: "true"` namespace에 한정하며, Pod template에는 `resize.example.com/managed: "true"` label과 `resize.example.com/enabled: "true"` annotation이 필요합니다. 이 선택 표시는 인가 경계를 대신하지 않습니다.
+- `resize.example.com/trigger: StartupProbePassed`를 사용하고 대상 regular container마다 실제 `startupProbe`와 `status.containerStatuses[].started=true`를 확인합니다. `started`만 읽거나 단순 지연 시간을 warmup 증거로 삼지 않습니다. [S17]
+- `resize.example.com/steady-resources`의 container 이름은 실제 이름과 맞춥니다. 현재 Spot 예제의 이름 `http`에 대응하는 CPU-only 값은 `{"http":{"requests":{"cpu":"50m"},"limits":{"cpu":"50m"}}}`입니다. 이 annotation만 추가해도 MAP·resizer가 설치되거나 시작 CPU가 커지는 것은 아닙니다.
+- 명시적 Linux Pod·Linux node 선택과 container-level 리소스를 사용합니다. 기존 prototype은 Pod-level budget, memory 변경, upscale, 재시작이 필요한 CPU 정책, 진행 중 resize나 서로 다른 관측 리소스를 거부합니다. 일반 init·ephemeral container를 대상으로 하지 않으며, static CPU/Memory manager 등 선택한 노드의 resize 제한도 확인합니다. [S14]
+- CPU request가 큰 새 Pod를 먼저 배치할 **시작 용량 여유**가 필요합니다. 나중에 줄일 예정이어도 현재 요청이 노드에 들어가지 않으면 Pending이 됩니다. 같은 Pod 안의 container 재시작에 시작 CPU를 복원하는 기능은 기존 prototype에 없으므로 별도로 검증합니다. Spot 교체로 생성되는 새 Pod는 template·admission 경로를 다시 따릅니다.
+
+Guaranteed를 유지하면 리소스 설정과 QoS 조건을 보존할 수 있지만 **품질 이슈가 없다는 결론은 앱 SLO로 확인**합니다. 작은 steady CPU limit는 throttling·지연을 만들 수 있고 memory limit 초과는 OOM으로 이어질 수 있습니다. Guaranteed는 Spot 노드 회수 자체를 막지 못합니다. 먼저 HPA/VPA/GitOps와 resizer의 resource 소유권을 정하고, CPU requests가 바뀌면 CPU 사용률 기반 HPA의 분모도 바뀐다는 점을 E7에서 확인합니다. [S1], [S14], [S15]
+
 ## 3. 실험 목록과 합격 기준
 
 **예시 공통 기준**: 준비 부하 10분, 안정 구간 15분, 주입·복구 구간, 회복 후 15분을 분리합니다. 장애 시나리오는 독립 실행 5회 이상을 출발점으로 삼고 시간대·대상 타입을 바꿉니다. 이 표본 수가 운영 신뢰도를 입증하지는 않습니다.
@@ -88,6 +125,7 @@ On-Demand 최소 용량은 임의 비율 대신 다음 가정으로 산정합니
 | E7 | 확장·축소와 회수가 겹쳐도 SLO 유지 | 실제 HPA/CA/Karpenter 설정 복원 후 대표 피크 부하 중 E2 | Pending, quota/IP, 이미지 pull, 신규 노드에서 SLO까지 걸리는 시간 |
 | E8 | 작업 재처리가 정합성을 지킴 | 테스트 작업 ID 목록을 고정하고 처리 중 E2 | 제출·ack·영속 결과 대조. 중복 실행과 중복 부작용을 분리, 멱등성 검증 |
 | E9 | 운영 비용 절감이 지속 | A/B의 비교 가능한 기간을 교차 배치하거나 동일 부하로 충분히 관측 | 성공 작업당 비용, 재시도·중복 용량·운영비 포함, 성능 회귀 없음 |
+| E10 | 시작 CPU 확대가 교체 Pod 초기화를 단축하고 축소 후 품질을 유지 | 같은 배치·앱·부하에서 G-steady/G-phase/G-high 비교 후 E2 반복 | startup 시간, 실제 resize 적용, Guaranteed 유지, 재시작·throttling·요청 SLO |
 
 E3의 두 노드 종료는 **동시 Spot 회수**의 시험입니다. 네트워크·스토리지·On-Demand까지 상실하는 전체 AZ 장애를 재현한 것으로 보고하지 않습니다.
 
@@ -98,6 +136,40 @@ NodePool을 On-Demand 전용으로 바꾸는 것은 구성 변경·스케줄링�
 실제 부족 응답을 제어하려면 AWS FIS의 EC2 API insufficient-capacity 또는 ASG insufficient-capacity action이 해당 공급 경로에 맞는지 [공식 action reference][S9]와 현재 `get-action` 결과로 확인합니다. Karpenter가 호출하는 Fleet 경로, MNG의 ASG 경로, AWS가 관리하는 Auto Mode를 같은 방식으로 취급하지 않습니다. 전용 테스트 역할/ASG와 가용영역에 한정하고 On-Demand 공급 경로까지 막고 있지 않은지 검증합니다.
 
 재현 가능한 부족 주입 경로가 없으면 E4의 **자동 폴백은 미검증**으로 남깁니다. Spot 시장에서 자연적으로 부족이 발생한 기록은 보조 증거로 사용하며, 일부러 좁은 타입·AZ를 선택했다고 반드시 부족이 발생한다고 가정하지 않습니다.
+
+### E10: 초기화 단축과 운영 품질을 함께 검증 {#e10-startup-resizing}
+
+먼저 A 또는 B 중 한 구성을 고정하고 CPU 프로필만 바꿉니다. 앱 이미지·입력·replicas·steady memory·인스턴스 타입·AZ·이미지 cache 조건을 맞추고, 실제 CPU 작업이 있는 초기화를 사용합니다. CPU 프로필별 정상 부하 비교 후 같은 E2 회수 시험을 반복하며, 기존 E7의 autoscaler 상호작용은 별도 단계로 확인합니다.
+
+| 판정 대상 | 필요한 증거 |
+|---|---|
+| 초기화 단축 | 앱 초기화 시작/완료 시각, container 실행 시작, startupProbe 성공, Ready/LB 시각을 분리. 여러 실행의 분포를 비교하며 노드 부팅·이미지 pull과 섞지 않음 |
+| Resize 적용 | 원하는 `spec.containers[].resources`와 kubelet이 보고한 `status.containerStatuses[].resources`, generation/관측 generation, `PodResizePending`·`PodResizeInProgress`를 함께 저장 |
+| 실행 연속성과 QoS | 같은 Pod UID의 전후 CPU·메모리 request/limit, `qosClass=Guaranteed`, containerID·restartCount. 이것만으로 요청 손실 부재를 판정하지 않음 |
+| 운영 품질 | 축소 뒤 대표·피크 부하에서 오류율, p99, 처리량, CPU throttling, OOM·readiness 변동과 업무 정합성이 기존 SLO를 충족 |
+| 교체와 자원 경합 | 여러 Pod가 동시에 시작할 때의 Pending·추가 노드·시작 용량, 같은 Pod 내 재시작, controller 장애·Deferred/Infeasible resize와 복구 경로 |
+
+Resize PATCH 성공은 **요청 접수**입니다. `PodResizePending`의 `Deferred`·`Infeasible`, `PodResizeInProgress`와 실제 보고 리소스를 확인하고, 적용되지 않은 값을 steady-state 결과로 기록하지 않습니다. 아래는 소유한 Pod 하나의 **읽기 전용 스냅샷**이며 반복 관측을 대체하지 않습니다. [S14]
+
+```bash
+set -euo pipefail
+: "${KUBE_CONTEXT:?}"; : "${NAMESPACE:?}"; : "${POD_NAME:?}"
+kubectl --context "$KUBE_CONTEXT" --request-timeout=15s \
+  -n "$NAMESPACE" get pod "$POD_NAME" -o json |
+  jq '{
+    capturedAt:(now|todateiso8601),
+    uid:.metadata.uid,generation:.metadata.generation,
+    observedGeneration:.status.observedGeneration,qosClass:.status.qosClass,
+    desired:[.spec.containers[] | {name,resources}],
+    reported:[.status.containerStatuses[]? |
+      {name,started,ready,runningStartedAt:.state.running.startedAt,
+       resources,restartCount,containerID}],
+    resizeConditions:[.status.conditions[]? |
+      select(.type=="PodResizePending" or .type=="PodResizeInProgress")]
+  }'
+```
+
+한 가지 합격 조건으로 묶지 않습니다. **G-phase의 초기화 개선**, **CPU 축소의 실제 적용**, **축소 후 SLO 유지**, **Spot 회수 중 서비스 기준 충족**을 각각 판정합니다. 어느 항목이 미측정인지 남기고, QoS 이름만으로 “품질 문제 없음”을 기록하지 않습니다. CPU 확대·축소의 효과는 이 문서에서 아직 실측하지 않았습니다.
 
 ## 4. E2 재현: AWS FIS로 Spot 한 대 회수
 
@@ -257,6 +329,7 @@ LB의 5xx 지표만으로 성공 여부를 판단하지 않습니다. client의 
 | E7 | 피크 부하·HPA 상호작용 | 미실행 |
 | E8 | 업무 작업 정합성 | 미실행 |
 | E9 | 인스턴스 시간당 가격 조회 | 단가 스냅샷만 확보. 실제 청구·성공 작업당 절감률은 미측정 |
+| E10 | 시작 CPU 확대·축소와 Guaranteed 유지의 Spot 결합 시험 | 미실행. 기존 로드맵의 prototype·과거 보고와 이 문서의 Spot 실측은 별도 증거 |
 
 각 실행에는 `가설 → 주입 사실 → 관측 → 판정 → 원인 → 수정 → 재실험 run ID`를 연결합니다. 실패와 제외 표본도 남기고, run별 결과·중앙값·최악값을 함께 보고합니다. 통지 미수신, 수집 실패, 부하 발생기 포화는 결과에서 숨기지 않습니다.
 
@@ -318,6 +391,8 @@ LB의 5xx 지표만으로 성공 여부를 판단하지 않습니다. client의 
 | 요청 | 경로별 20 RPS, HTTP GET `/`, 응답 본문 0바이트, 요청마다 새 연결, 재시도 없음 |
 | 계측 | 전용 On-Demand Pod의 Python 3.12 probe, 요청별 JSONL, Kubernetes 약 5초 간격 관측, 별도 EventBridge 관측 큐 |
 | 보호 알람 | 관측한 혼합 경로 오류율 5% 초과 또는 누락 데이터, 10초 주기·2개 중 2개. 설계 예시의 합격 기준 0.1%와 구분 |
+
+**이 데이터로 단계별 resize 구성을 검증한 것은 아닙니다.** 공개된 [초기 적용 템플릿](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/eks/spot-production/results/2026-09-12/resources.template.json)의 세 Deployment는 CPU/메모리 requests가 `50m`/`64Mi`, limits가 `500m`/`256Mi`이며, 이 설정 자체는 Guaranteed 조건을 충족하지 못합니다. Template에 단계별 resize opt-in·`resizePolicy`·`startupProbe`가 없고, 공개 측정에는 resize 전후의 실제 리소스·QoS·warmup 비교 증거가 없습니다. 이 초기 템플릿을 admission 이후 실제 Pod 상태로 대체 해석하지 않으며, E10을 별도로 실행해야 합니다.
 
 **지원 버전 구성의 검증 결과가 아닙니다.** 확인한 공식 호환성 표는 Kubernetes 1.36에 Karpenter **1.13 이상**을 요구합니다. 설치된 1.4.0은 이 하한보다 낮습니다. 버전 변경의 효과는 이번에 측정하지 않았습니다. [S13]
 
@@ -387,12 +462,13 @@ E1·E4에서도 요청 실패를 관측했습니다. 노드 drain이나 Deployme
 ## 8. 관련 문서와 근거
 
 - [스케일링 전략](./06-scaling-strategies.md)
+- [Kubernetes 버전 로드맵 — MAP와 단계별 CPU resize](../eks/12-kubernetes-version-roadmap.md#_4-8-kubernetes-1-36-haru-2026년-4월)
 - [이벤트 용량 계획](./12-event-capacity-planning.md)
 - [FinOps 비용 관리](./13-finops-cost-platform.md)
 - [트러블슈팅 플레이북](./16-troubleshooting-playbook.md)
 - [이 문서의 퀴즈](../quizzes/ops/17-spot-production-experiments-quiz.md)
 
-공식 문서는 서비스 동작의 근거이며 이 저장소에서 실험을 수행했다는 증거가 아닙니다. 링크 확인일: 2026-09-12.
+공식 문서는 서비스 동작의 근거이며 이 저장소에서 실험을 수행했다는 증거가 아닙니다. 기존 S1–S13 링크 확인일: 2026-09-12. 추가 S14–S17 링크 확인일: 2026-09-14.
 
 [S1]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-instance-termination-notices.html
 [S2]: https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html
@@ -408,3 +484,7 @@ E1·E4에서도 요청 실패를 관측했습니다. 노드 drain이나 Deployme
 [S12]: https://docs.aws.amazon.com/cur/latest/userguide/what-is-cur.html
 
 [S13]: https://karpenter.sh/docs/upgrading/compatibility/
+[S14]: https://kubernetes.io/docs/tasks/configure-pod-container/resize-container-resources/
+[S15]: https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/
+[S16]: https://kubernetes.io/docs/reference/access-authn-authz/mutating-admission-policy/
+[S17]: https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/
