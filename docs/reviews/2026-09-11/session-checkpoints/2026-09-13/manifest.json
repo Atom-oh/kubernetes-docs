@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Historical local working-tree checkpoints; not current publication or runtime verification results.",
+  "capturedAt": "2026-09-14T00:04:55.952177+00:00",
+  "sourceCheckoutHead": "621d86117748779acb762e1d84e1ff278986ad98",
+  "sourceCheckoutWasDirty": true,
+  "comparisonMainCommit": "7405ceea438542f5e126927fdf4e1541e5a643d3",
+  "authoritativeAudit": "../../full-audit-verification.json",
+  "files": [
+    {
+      "path": "service-mesh-worker-checkpoint.json",
+      "sourcePath": "docs/reviews/2026-09-11/service-mesh-worker-checkpoint.json",
+      "sha256": "7208e46f1ce6a62d79da00674c860656bc74cc5813e94b631b2d169152bfc97d",
+      "bytes": 88378
+    },
+    {
+      "path": "worker-domain-queue.json",
+      "sourcePath": "docs/reviews/2026-09-11/worker-domain-queue.json",
+      "sha256": "351e4cbdffaeb204368019bca4c2d46dee4616768267d3dc6af6ffa44af0cadc",
+      "bytes": 8749
+    },
+    {
+      "path": "worker-render-compilation.json",
+      "sourcePath": "docs/reviews/2026-09-11/worker-render-compilation.json",
+      "sha256": "018b5e752b951b0757d59cda4f8350f8465ecf485a7dd90acd091b4d3079d016",
+      "bytes": 347146
+    },
+    {
+      "path": "batches/observability-metrics.json",
+      "sourcePath": "docs/reviews/2026-09-11/batches/observability-metrics.json",
+      "sha256": "0720e80c9e42e73544bb80c4bd12685c9c16f002528a6b79c306b32812b66a6d",
+      "bytes": 186004
+    },
+    {
+      "path": "batches/observability-tracing.json",
+      "sourcePath": "docs/reviews/2026-09-11/batches/observability-tracing.json",
+      "sha256": "fa51ca6c1128f02e9a140001a99bcc39c30ebba0f2a718cbdf344d747293207e",
+      "bytes": 125715
+    },
+    {
+      "path": "observability-domain-progress.json",
+      "sourcePath": "docs/reviews/2026-09-11/observability-domain-progress.json",
+      "sha256": "dcdb1479817f8415dad138b16a47af4f90c0e919a837b54a1918ffc985a37ba5",
+      "bytes": 11114
+    },
+    {
+      "path": "observability-ready-cohorts.json",
+      "sourcePath": "docs/reviews/2026-09-11/observability-ready-cohorts.json",
+      "sha256": "1a72eef94784a0c26710cc5ee189e65d991c46471dcb9b482ee517747028ffee",
+      "bytes": 10024
+    },
+    {
+      "path": "security-03-pss-validation.json",
+      "sourcePath": "docs/reviews/2026-09-11/security-03-pss-validation.json",
+      "sha256": "1145bdc14dfe3a5a6f032963009b29aa7fb8c38ddc786efb9b0228d074928f26",
+      "bytes": 10977
+    }
+  ]
+}
