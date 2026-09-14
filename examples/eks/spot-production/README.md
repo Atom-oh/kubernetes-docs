@@ -24,6 +24,14 @@ and its [Korean counterpart](../../../ko/ops/17-spot-production-experiments.md#e
 This directory does not install a MAP, webhook, or resizer, and its HTTP probe
 does not measure kubelet resource application or application warmup milestones.
 
+The supplied [Go controller source report in Notion](https://app.notion.com/p/3748907d4b01818cb232f89082536537)
+contains the earlier code, build/deployment manifests, and reported
+Deployment/StatefulSet/DaemonSet observations. Its Argo Rollouts section is a
+structural extension example, not a fourth row in its measurement table.
+See the [workload mapping and source boundaries](../../../en/ops/17-spot-production-experiments.md#phase-aware-workloads)
+before adapting the source. Notion access may require sharing permissions;
+the current scoped prototype and E10 evidence requirements still apply.
+
 For each independently identified CPU-profile run, collect these alongside the
 existing request and metrics files:
 

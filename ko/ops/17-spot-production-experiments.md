@@ -8,6 +8,8 @@ Spot 도입은 할인율보다 **노드가 회수되는 동안 서비스 SLO와 
 
 여기에 함께 적용하는 설계가 **시작 단계의 CPU 확대 → 초기화 완료 후 in-place CPU 축소 → Guaranteed QoS 유지**입니다. 대체 Pod의 초기화를 빠르게 하고 운영 단계의 리소스 조건을 일정하게 유지하려는 방법입니다. [단계별 리소스 구성](#phase-aware-resizing)과 [E10 결합 실험](#e10-startup-resizing)을 아래에 연결했습니다. 기존 E0–E9 측정에 이 구성이 포함됐다는 뜻은 아닙니다.
 
+[원문 실험 기록과 워크로드별 적용](#phase-aware-workloads)에는 제공된 Go 컨트롤러 원문과 Deployment·StatefulSet·DaemonSet·Argo Rollouts의 적용 범위를 정리했습니다.
+
 현재 판정은 **운영 확대 보류 — 회수·전환 구간의 오류와 버전 호환성·중단 처리 보완이 필요**입니다. 합성 HTTP 워크로드로 현재 구성을 측정했으며, 실제 업무 서비스나 지원 버전 구성의 무중단 운영을 입증한 결과는 아닙니다.
 
 ## 1. 먼저 확인할 동작과 한계
@@ -106,6 +108,35 @@ On-Demand 최소 용량은 임의 비율 대신 다음 가정으로 산정합니
 - CPU request가 큰 새 Pod를 먼저 배치할 **시작 용량 여유**가 필요합니다. 나중에 줄일 예정이어도 현재 요청이 노드에 들어가지 않으면 Pending이 됩니다. 같은 Pod 안의 container 재시작에 시작 CPU를 복원하는 기능은 기존 prototype에 없으므로 별도로 검증합니다. Spot 교체로 생성되는 새 Pod는 template·admission 경로를 다시 따릅니다.
 
 Guaranteed를 유지하면 리소스 설정과 QoS 조건을 보존할 수 있지만 **품질 이슈가 없다는 결론은 앱 SLO로 확인**합니다. 작은 steady CPU limit는 throttling·지연을 만들 수 있고 memory limit 초과는 OOM으로 이어질 수 있습니다. Guaranteed는 Spot 노드 회수 자체를 막지 못합니다. 먼저 HPA/VPA/GitOps와 resizer의 resource 소유권을 정하고, CPU requests가 바뀌면 CPU 사용률 기반 HPA의 분모도 바뀐다는 점을 E7에서 확인합니다. [S1], [S14], [S15]
+
+### 원문 실험 기록과 워크로드별 적용 {#phase-aware-workloads}
+
+> **첨부 원문**: [Go 컨트롤러 기반 자동 Phase-Aware Resize — Deployment / StatefulSet / DaemonSet / Argo Rollouts][N1]. Go 코드, Dockerfile, RBAC·배포 매니페스트와 당시 EKS 관측 표가 있는 Notion 문서입니다. 원문 열람에는 Notion 공유 권한이 필요할 수 있습니다.
+
+원문의 핵심은 **시작 CPU와 운영 CPU를 달리하면서 Guaranteed를 계속 유지하는 것**입니다. 축소가 실제로 적용되면 낮아진 requests로 추가 Pod 배치 여지가 생길 수 있고, steady CPU limit는 사용 상한을 유지합니다. 원문이 설명하는 noisy-neighbor 완화와 bin-packing 개선은 확인할 설계 효과이며, 아래 CPU·QoS 표만으로 성능 개선률이나 노드 밀도·비용 개선을 측정했다고 판단하지 않습니다.
+
+이 구현의 공통 진입점은 **워크로드 종류가 아니라 Pod**입니다. Deployment·Rollout의 Pod는 보통 ReplicaSet을 직접 소유자로 가지며, StatefulSet·DaemonSet도 최종적으로 Pod를 만듭니다. 아래 소유 경로는 실험 대상을 구분하기 위한 것으로, resizer가 상위 controller 종류별 코드를 필요로 한다는 뜻은 아닙니다.
+
+| 워크로드 | Pod 소유 경로 | 원문에 제시된 근거 |
+|---|---|---|
+| Deployment | `Deployment → ReplicaSet → Pod` | 6.2·6.3절에 Pod 2개의 자동 resize 로그와 전후 표 |
+| StatefulSet | `StatefulSet → Pod` | 6.2·6.3절에 자동 resize 로그와 전후 표 |
+| DaemonSet | `DaemonSet → Pod` | 6.2·6.3절에 자동 resize 로그와 전후 표 |
+| Argo Rollouts | `Rollout → ReplicaSet → Pod` | 4.1절의 직접 `spec.template` 예시와 구조상 적용 설명. 6.3절 실측 표에는 없음 |
+
+원문이 제시한 직접 Pod template 방식에서는 공통 설정을 각 리소스의 `spec.template`에 적용합니다. Annotation은 `spec.template.metadata.annotations`, 시작 resources·startupProbe·resizePolicy는 대상 `spec.template.spec.containers[]`에 둡니다. 원문은 정책을 직접 선언하는 방식과 MAP로 주입하는 방식을 구분합니다. **Deployment 매니페스트의 kind만 바꾸는 방식은 아닙니다.** StatefulSet의 `serviceName`·Service·스토리지와 순서 정책, DaemonSet의 노드 배치, Rollout의 전략 등 각 리소스 고유 설정을 유지합니다.
+
+**원문이 보고한 전후 값**은 다음과 같습니다. 테스트 환경은 EKS `1.36.1`, containerd `2.2.3`, AL2023·cgroup v2·arm64/Graviton으로 기록돼 있습니다. 아래는 제공된 실험 보고의 요약이며, 이번 문서 보완에서 재실행한 값은 아닙니다.
+
+| 원문 보고 대상 | CPU request=limit | 메모리 request=limit | QoS | restartCount / containerID |
+|---|---|---|---|---|
+| Deployment Pod 2개 | `200m → 50m` | `64Mi` 유지 | `Guaranteed → Guaranteed` | `0 → 0` / 동일 |
+| StatefulSet Pod | `200m → 50m` | `64Mi` 유지 | `Guaranteed → Guaranteed` | `0 → 0` / 동일 |
+| DaemonSet Pod | `200m → 50m` | `64Mi` 유지 | `Guaranteed → Guaranteed` | `0 → 0` / 동일 |
+
+Argo Rollouts는 **구조상 적용 가능한 예시**와 **실제 검증 결과**를 구분합니다. 원문 도입부는 네 종류를 함께 언급하지만, 구체적인 실측 표는 위 세 종류이며 Argo 설명은 동일한 Pod 소유 구조를 근거로 합니다. 로그에 `ReplicaSet`이 보인다는 것만으로 Deployment인지 Rollout인지, Rollout 검증까지 끝났는지 판정하지 않습니다. Stable/canary의 실제 상위 소유 관계를 기록하고 승격·중단·롤백, 트래픽·Analysis 지표, CPU requests 변경 영향을 별도로 검증합니다.
+
+원문의 클러스터 범위 watch, `resized` 마커와 `sync.Map`은 당시 구현입니다. **현재 로드맵의 namespace 제한·관리 label·CPU 하한·실제 startupProbe·UID/resourceVersion 검사와 재시도 queue 조건을 유지**하며 원문 코드를 현행 배포 규격으로 대체하지 않습니다. ContainerID·restartCount 보존만으로 cgroup 적용이나 요청 손실 부재를 입증하지 않으므로, 위 원문 보고와 실제 리소스·SLO 관측, 아직 미실행인 E10 Spot 결합 시험도 구분합니다.
 
 ## 3. 실험 목록과 합격 기준
 
@@ -463,12 +494,15 @@ E1·E4에서도 요청 실패를 관측했습니다. 노드 drain이나 Deployme
 
 - [스케일링 전략](./06-scaling-strategies.md)
 - [Kubernetes 버전 로드맵 — MAP와 단계별 CPU resize](../eks/12-kubernetes-version-roadmap.md#_4-8-kubernetes-1-36-haru-2026년-4월)
+- [Go Phase-Aware Resize 원문 — 4종 워크로드 적용과 보고된 실험 결과 (Notion)][N1]
 - [이벤트 용량 계획](./12-event-capacity-planning.md)
 - [FinOps 비용 관리](./13-finops-cost-platform.md)
 - [트러블슈팅 플레이북](./16-troubleshooting-playbook.md)
 - [이 문서의 퀴즈](../quizzes/ops/17-spot-production-experiments-quiz.md)
 
 공식 문서는 서비스 동작의 근거이며 이 저장소에서 실험을 수행했다는 증거가 아닙니다. 기존 S1–S13 링크 확인일: 2026-09-12. 추가 S14–S17 링크 확인일: 2026-09-14.
+
+[N1]은 2026-09-14에 제공받아 확인한 원문 구현·실험 보고이며 공식 Kubernetes 명세나 새 Spot 실측으로 취급하지 않습니다.
 
 [S1]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-instance-termination-notices.html
 [S2]: https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html
@@ -488,3 +522,4 @@ E1·E4에서도 요청 실패를 관측했습니다. 노드 drain이나 Deployme
 [S15]: https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/
 [S16]: https://kubernetes.io/docs/reference/access-authn-authz/mutating-admission-policy/
 [S17]: https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/
+[N1]: https://app.notion.com/p/3748907d4b01818cb232f89082536537
