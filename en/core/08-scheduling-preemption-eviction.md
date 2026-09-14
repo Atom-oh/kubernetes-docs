@@ -1,7 +1,7 @@
 # Kubernetes Scheduling, Preemption, and Eviction
 
 > **Supported Versions**: Kubernetes 1.34 - 1.36 (Descheduler v0.36 example)
-> **Last Updated**: September 9, 2026
+> **Last Updated**: September 14, 2026
 
 In Kubernetes, scheduling is the process of placing pods on appropriate nodes. Preemption is the process of removing lower-priority pods to make room for higher-priority pods, and eviction terminates a Pod; its workload controller may create a replacement that the scheduler places separately. In this chapter, we will learn about Kubernetes scheduling mechanisms, node selection, preemption, eviction, and scheduling optimization methods in Amazon EKS.
 
@@ -520,6 +520,11 @@ Things to consider when using preemption:
 3. **System Priority Classes**: Kubernetes provides priority classes for system components
    - `system-cluster-critical`: Pods critical for cluster operation
    - `system-node-critical`: Pods critical for node operation
+
+### September 2026 Update: v1.37 Scheduling and Preemption Changes
+
+- **Scheduler preemption for in-place Pod resize (Alpha)**: In-place Pod resize, GA since v1.35, left a gap — when a node lacked spare capacity, a resize request could sit in the `Deferred` state indefinitely. v1.37 lets the scheduler preempt lower-priority pods to make room for a pending resize, behind the `InPlacePodVerticalScalingSchedulerPreemption` feature gate (Alpha) ([details](https://kubernetes.io/blog/2026/09/10/kubernetes-v1-37-scheduler-preemption-for-in-place-pod-resize-alpha/))
+- **Workload-Aware Scheduling (WAS) advances**: The Workload/PodGroup APIs enabling gang scheduling, Workload-Aware Preemption (WAP), and shared DRA ResourceClaims for PodGroups graduate to Beta. A new CompositePodGroup API expresses multi-level workload structures such as JobSet and LeaderWorkerSet, alongside new controller integration APIs and the `workloadbuilder` Go library ([details](https://kubernetes.io/blog/2026/09/08/kubernetes-v1-37-advancing-workload-aware-scheduling/))
 
 ## Pod Eviction
 

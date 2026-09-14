@@ -1,7 +1,7 @@
 # Cluster Architecture
 
 > **Supported Versions**: Kubernetes 1.35, 1.36, 1.37
-> **Last Updated**: September 9, 2026
+> **Last Updated**: September 14, 2026
 
 The version header refers to upstream Kubernetes. As of September 11, 2026, EKS standard support covers 1.34–1.36; check the [EKS lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) before selecting a version. Component commands below illustrate self-managed clusters; EKS manages its control plane. Image tags and infrastructure IDs are examples: select compatible, maintained images and replace placeholders before use.
 
@@ -385,6 +385,10 @@ spec:
     - --advertise-address=192.168.1.10
     # ... additional flags
 ```
+
+#### September 2026 Update: Node Lifecycle Conditions Introduced (v1.37)
+
+Until now, Kubernetes had no standard, project-owned way to signal that a Node is draining, undergoing maintenance, or in a Graceful Node Shutdown — that state was scattered across taints, labels, and provider-specific APIs. [Kubernetes v1.37 introduces five well-known Node conditions](https://kubernetes.io/blog/2026/09/09/kubernetes-v1-37-node-lifecycle-conditions/) to report this consistently: `DrainInProgress`, `Drained`, `MaintenancePlanned`, `MaintenanceInProgress`, and `GracefulNodeShutdownInProgress`.
 
 ### kube-proxy
 
