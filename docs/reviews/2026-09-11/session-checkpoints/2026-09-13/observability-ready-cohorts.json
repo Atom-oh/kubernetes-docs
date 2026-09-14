@@ -1,0 +1,232 @@
+{
+  "updatedAt": "2026-09-13T14:14:46.238954+00:00",
+  "cohorts": [
+    {
+      "report": "docs/reviews/2026-09-11/observability-opensearch-validation.json",
+      "sourceFiles": [
+        {
+          "path": "en/observability/logging/02-opensearch.md",
+          "sha256": "c58462c08cacb482860ea3388990f97669c088d830cbf7b9aa988018ff99eb60"
+        },
+        {
+          "path": "en/quizzes/observability/logging/02-opensearch-quiz.md",
+          "sha256": "696ffd23f62e280057761e1ae8bdce4239ef144f49d4f1227b439d80a6810ef8"
+        },
+        {
+          "path": "ko/observability/logging/02-opensearch.md",
+          "sha256": "8953c4bf1e765178e59ec7ececc6180439339179d19de79935f809908283f570"
+        },
+        {
+          "path": "ko/quizzes/observability/logging/02-opensearch-quiz.md",
+          "sha256": "bc2d8008888fdb02d3f69b259f7ece39dca483229419b202a4ab17a007c5f73b"
+        }
+      ],
+      "batchLedger": "docs/reviews/2026-09-11/batches/observability-logging.json",
+      "status": "closed-and-current-hash-verified"
+    },
+    {
+      "report": "docs/reviews/2026-09-11/observability-cloudwatch-logs-validation.json",
+      "sourceFiles": [
+        {
+          "path": "en/observability/logging/03-cloudwatch-logs.md",
+          "sha256": "5eff47cd3d8f7a6990c437e4fc0b598049fd4bae05663d4187021416a207a9c8"
+        },
+        {
+          "path": "en/quizzes/observability/logging/03-cloudwatch-logs-quiz.md",
+          "sha256": "139f5e8d0d912cfdb2c5a8dcb1f8b23e289ddb95d0bccdce2de2647007bda1f9"
+        },
+        {
+          "path": "ko/observability/logging/03-cloudwatch-logs.md",
+          "sha256": "77b04e667bc672fe0757f73df4dbbbfee91623871c294805932e3d568c8178f7"
+        },
+        {
+          "path": "ko/quizzes/observability/logging/03-cloudwatch-logs-quiz.md",
+          "sha256": "c2949c9c6783f1592e7d68cfb45dfcb9cc19bb72cbe1d6ac5087b4adffd8eb7a"
+        }
+      ],
+      "batchLedger": "docs/reviews/2026-09-11/batches/observability-logging.json",
+      "status": "closed-and-current-hash-verified"
+    },
+    {
+      "report": "docs/reviews/2026-09-11/observability-clickhouse-validation.json",
+      "sourceFiles": [
+        {
+          "path": "en/observability/logging/04-clickhouse.md",
+          "sha256": "6ba36f08c9dfa7f166cd2ad88ffa5d4182c82bd67ed176f08a558aebc2d3442e"
+        },
+        {
+          "path": "en/quizzes/observability/logging/04-clickhouse-quiz.md",
+          "sha256": "e88d4011dfe56cf8b31ab1bead712532c2873e64d21386ebfe3c92db4f22f8d0"
+        },
+        {
+          "path": "ko/observability/logging/04-clickhouse.md",
+          "sha256": "decc462392e19e46c9f9476e4a3b0969c4d91d645eb6978f8d6e784f6ac6b0f8"
+        },
+        {
+          "path": "ko/quizzes/observability/logging/04-clickhouse-quiz.md",
+          "sha256": "c6720740f00f37ab0fbaab15731a4e768132cd3d52723c3cb1437d734d9ae970"
+        }
+      ],
+      "batchLedger": "docs/reviews/2026-09-11/batches/observability-logging.json",
+      "status": "closed-and-current-hash-verified"
+    },
+    {
+      "report": "docs/reviews/2026-09-11/observability-collectors-validation.json",
+      "sourceFiles": [
+        {
+          "path": "en/observability/logging/05-collectors.md",
+          "sha256": "3e1091fd10364f07a74bc5ea9cb3dac50deaf17f5ae4939b3d7d3af548539613"
+        },
+        {
+          "path": "en/quizzes/observability/logging/05-collectors-quiz.md",
+          "sha256": "5ef8e8bd6af23a441b5f183d1efad678fff301f58bb09428cfc9438f2e95a0a7"
+        },
+        {
+          "path": "ko/observability/logging/05-collectors.md",
+          "sha256": "ccc06fa2ba188ba1c404be4abc3a3719296d9fe552179e2242fc696559a530be"
+        },
+        {
+          "path": "ko/quizzes/observability/logging/05-collectors-quiz.md",
+          "sha256": "c5200891c0e4493052ea9f8db827209e636d9126c16437f6ffebce3f9131b051"
+        }
+      ],
+      "batchLedger": "docs/reviews/2026-09-11/batches/observability-logging.json",
+      "status": "closed-and-current-hash-verified"
+    },
+    {
+      "report": "docs/reviews/2026-09-11/observability-tracing-overview-validation.json",
+      "sourceFiles": [
+        {
+          "path": "en/observability/tracing/README.md",
+          "sha256": "1c5b21cbe53a32d6049fd5201066c7fcae20476bef9ab9845c21389f8975af35"
+        },
+        {
+          "path": "ko/observability/tracing/README.md",
+          "sha256": "7a485b3820674b67c7e5696fc32b22726bf264c3db3a7c198fe91a356ce12f79"
+        }
+      ],
+      "batchLedger": "docs/reviews/2026-09-11/batches/observability-tracing.json",
+      "status": "closed-and-current-hash-verified"
+    },
+    {
+      "report": "docs/reviews/2026-09-11/observability-tempo-validation.json",
+      "sourceFiles": [
+        {
+          "path": "en/observability/tracing/01-tempo.md",
+          "sha256": "bee56435f2b0b6201bd8ae44a76c33139c3276a56d329b2c6983571ad431daba"
+        },
+        {
+          "path": "en/quizzes/observability/tracing/01-tempo-quiz.md",
+          "sha256": "8a8b654e65bcf4e86d0ef8f745019abad9c7a453530128059ef25297302ba4fc"
+        },
+        {
+          "path": "ko/observability/tracing/01-tempo.md",
+          "sha256": "ea6827bf796d73b6e419159b73dabee99115fc38a98789da50a9a8401b772074"
+        },
+        {
+          "path": "ko/quizzes/observability/tracing/01-tempo-quiz.md",
+          "sha256": "cdcc95d62811fd2b496b1dd3b476135187ea46bdf4115dc5442def5365802f9d"
+        }
+      ],
+      "batchLedger": "docs/reviews/2026-09-11/batches/observability-tracing.json",
+      "status": "closed-and-current-hash-verified"
+    },
+    {
+      "report": "docs/reviews/2026-09-11/observability-xray-validation.json",
+      "sourceFiles": [
+        {
+          "path": "en/observability/tracing/02-xray.md",
+          "sha256": "5ecbaf9a0bed8ea01d20c647fa18f69e36405ec2080a88a7db40a94497bcceb9"
+        },
+        {
+          "path": "en/quizzes/observability/tracing/02-xray-quiz.md",
+          "sha256": "cccbf34b876073723c5698dee33d566a91dd52cbb4926f41adc8be086737a4e8"
+        },
+        {
+          "path": "ko/observability/tracing/02-xray.md",
+          "sha256": "d9d8bd5992da7e466aba66b7be407e706c688a0e08534e54f378e2f3ea98d1d5"
+        },
+        {
+          "path": "ko/quizzes/observability/tracing/02-xray-quiz.md",
+          "sha256": "45430b5cd72017ee1c741cb191734a7e42c42cda66b80fca37f81b38c5e9704a"
+        }
+      ],
+      "batchLedger": "docs/reviews/2026-09-11/batches/observability-tracing.json",
+      "status": "closed-and-current-hash-verified"
+    },
+    {
+      "report": "docs/reviews/2026-09-11/observability-opentelemetry-validation.json",
+      "sourceFiles": [
+        {
+          "path": "en/observability/tracing/03-opentelemetry.md",
+          "sha256": "37867b3657059ab26d2cacab7c93d6a78c8ebeef630b1144b55429521b32c6e4"
+        },
+        {
+          "path": "en/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+          "sha256": "76a1a067453ef824e254e5a769c9a7459cf9bc063f1166b2aae85acee55d95e6"
+        },
+        {
+          "path": "ko/observability/tracing/03-opentelemetry.md",
+          "sha256": "59f27e6612e2824b009a0f8bdc528b14c6aa3dbfb3bbbc7078f91442c0df990c"
+        },
+        {
+          "path": "ko/quizzes/observability/tracing/03-opentelemetry-quiz.md",
+          "sha256": "174d2eb3fce2ea7dff77d66767f7e1c41c8cef6e94018985cd8cd9e01303fdfb"
+        }
+      ],
+      "batchLedger": "docs/reviews/2026-09-11/batches/observability-tracing.json",
+      "status": "closed-and-current-hash-verified",
+      "assetFollowup": "TwoobsoleteCollectorviewers/PNG/specsparentowned;unlinkedfromKOENsourceandreplacedbyvalidatedMermaid."
+    },
+    {
+      "report": "docs/reviews/2026-09-11/observability-dynatrace-validation.json",
+      "sourceFiles": [
+        {
+          "path": "en/observability/tracing/04-dynatrace.md",
+          "sha256": "fa42484af372d11fa805564683d5491655e69da189c9ee229bb3d79cf2ea459c"
+        },
+        {
+          "path": "en/quizzes/observability/tracing/04-dynatrace-quiz.md",
+          "sha256": "485f95610cb3257e783c5b60b81e545607be1e39a730b22231e37db1e2dbd995"
+        },
+        {
+          "path": "ko/observability/tracing/04-dynatrace.md",
+          "sha256": "91fa7dcd32d97e2cd678395da71cbbe8f897d7e77e33e733a0dceeb96a69706a"
+        },
+        {
+          "path": "ko/quizzes/observability/tracing/04-dynatrace-quiz.md",
+          "sha256": "46eab27e3389db84986ef4c310149d3e0cebdeee04b5d49a288a92a26d52ee67"
+        }
+      ],
+      "batchLedger": "docs/reviews/2026-09-11/batches/observability-tracing.json",
+      "status": "closed-and-current-hash-verified",
+      "assetFollowup": "TwoarchitecturePNG/viewer/specsetsparentowned;proseusesvalidatedMermaid;retiredassetpathsinhandoff."
+    },
+    {
+      "report": "docs/reviews/2026-09-11/observability-alertmanager-validation.json",
+      "sourceFiles": [
+        {
+          "path": "en/observability/alerting/01-alertmanager.md",
+          "sha256": "723bcf32c7e57efaf920dd18da8ac874182369e207145da059d996c0c84212f4"
+        },
+        {
+          "path": "en/quizzes/observability/alerting/01-alertmanager-quiz.md",
+          "sha256": "3d51cbd75b5d38be8ab676d0e855c105b49de9c968a8af04be60119508f77add"
+        },
+        {
+          "path": "ko/observability/alerting/01-alertmanager.md",
+          "sha256": "01a339b47568607a2484716ab578d19c9c1f9768cf14c7cc9cfb535692c3557a"
+        },
+        {
+          "path": "ko/quizzes/observability/alerting/01-alertmanager-quiz.md",
+          "sha256": "8fe7c62031b4e24830d4cc6979ac0ccbf192c07c6c4c6a328eb2b57f2a252efb"
+        }
+      ],
+      "batchLedger": "docs/reviews/2026-09-11/batches/observability-alerting.json",
+      "status": "closed-and-current-workspace-hash-verified",
+      "assetFollowup": ".vitepress/cache/observability-alertmanager-audit/retired-figure-handoff.json"
+    }
+  ],
+  "note": "Workerowned350MDallfullyread/closed. LatestAlertmanager4ready;historicalcohortrecordsretained.Parentownsremainingtransferredcohortsandmainintegration;hashesrefercurrentsharedworkspace,notanassertionofdeployment.",
+  "hashDrift": []
+}

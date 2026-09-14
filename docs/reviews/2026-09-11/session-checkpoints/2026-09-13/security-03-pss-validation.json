@@ -1,0 +1,188 @@
+{
+  "status": "semantic-review-complete-assets-pending",
+  "updatedAt": "2026-09-13T09:41:16.845392+00:00",
+  "originalFullReadLines": 3491,
+  "files": [
+    {
+      "path": "en/security/03-pod-security-standards.md",
+      "originalSHA256": "73d67a5e7e5bb5ee3d86f07312c90dcf52f288ee88dd364b7961be83270f2bce",
+      "sha256": "95c143d27cac5ff72963ccbb7fb2ac79d8946b1d2fe66895d3338b68930077b2",
+      "fullyRead": true,
+      "status": "needs_followup"
+    },
+    {
+      "path": "en/quizzes/security/03-pod-security-standards-quiz.md",
+      "originalSHA256": "d37699b8767598cc7a8b054c6cf231a9f49a22c8e9e9f8c52d3878c1a18addbd",
+      "sha256": "de2bdd0f5cd9aa70c8c92790b8a07bbccf9ffd120179e9d35526e4d73388857b",
+      "fullyRead": true,
+      "status": "fixed"
+    },
+    {
+      "path": "ko/security/03-pod-security-standards.md",
+      "originalSHA256": "e5cc68fc524c73ef5c0a63919dbd3d03279d394676bffd87576c89e054474dc1",
+      "sha256": "624273665cd7c5b5fd827ede2305b26d155f6b3e47b79508929ec40888e9968c",
+      "fullyRead": true,
+      "status": "needs_followup"
+    },
+    {
+      "path": "ko/quizzes/security/03-pod-security-standards-quiz.md",
+      "originalSHA256": "2a5ea8cecf05f1769c1f8732673cc37fd56e7194495c6fa5b12a0d05e8dc98cf",
+      "sha256": "e77c2c1e02579e1ad88766e89c4fcab2ede1e20874e7855be4c0a93ad3911370",
+      "fullyRead": true,
+      "status": "fixed"
+    }
+  ],
+  "findings": [
+    "PSS definitions vs built-in PSA; validating-admission scope, workload-template warn/audit vs resulting Pod enforcement, non-eviction of existing Pods and best-effort enforce-label preview corrected.",
+    "Baseline explicit NET_RAW/hostPath/hostPort controls, valid runAsUser field, Restricted readOnlyRootFilesystem recommendation, policy-v1.35 user-namespace relaxations and Restricted procMount boundary verified with upstream library.",
+    "Unsafe all-namespace overwrite replaced by explicit one-namespace observation update, existing-label refusal and resourceVersion condition; existing-Pod preview uses enforce rather than warn.",
+    "False-green CI grep replaced by explicit Pod-only server-dry-run procedure with positive/negative controls and failure propagation for credentials, empty inputs, wrong namespace/kind, missing enforcement and unexpected negative-control outcomes.",
+    "Exact request-username/runtimeClass/namespace exemption semantics; EKS managed control-plane boundary; privileged namespace profile is not a static exemption; RuntimeClass alone neither installs runtime nor exempts; Kyverno cannot override PSA denial.",
+    "Root nginx/readOnly/port mismatch corrected using upstream OCI digest metadata (amd64/arm64, user101, Nginx1.30.4), writable /tmp and matching 8080 ConfigMap/probes; no image execution claimed.",
+    "Invented pod-security-webhook metric and namespace label removed; actual pod_security_evaluations_total with evaluation vs API-rejection and missing-series limits.",
+    "PSP commands/objects retained as historical <=1.24 only; mapping is not equivalence; no automatic downgrade of existing enforcement; migration day ranges explicitly illustrative.",
+    "All original headings/topics and 12questions per locale retained; 160 original rendered IDs preserved with two explicit quiz aliases; 4currentMD actualVitePress/Vue compiles passed.",
+    "All six figure specs fully read; factual captions added; six parent-owned figure repairs remain and keep the two guides needs_followup."
+  ],
+  "sources": [
+    {
+      "name": "pss",
+      "url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+      "finalURL": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+      "httpStatus": 200,
+      "sha256": "0d4edbf325a664ef8c2377fc98745c9eaf2ce47436d4d2274f69614cf4284d23"
+    },
+    {
+      "name": "psa",
+      "url": "https://kubernetes.io/docs/concepts/security/pod-security-admission/",
+      "finalURL": "https://kubernetes.io/docs/concepts/security/pod-security-admission/",
+      "httpStatus": 200,
+      "sha256": "456338d5cc7b000dbce60a80dc76dcc658b3869c873a9b367e1d91affbaf8e8e"
+    },
+    {
+      "name": "psa-config",
+      "url": "https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-admission-controller/",
+      "finalURL": "https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-admission-controller/",
+      "httpStatus": 200,
+      "sha256": "c84d151c8dca3d5ce4514aabeab6b3c4708372c059be56fbab20a17a3c7b3599"
+    },
+    {
+      "name": "psa-labels",
+      "url": "https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/",
+      "finalURL": "https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/",
+      "httpStatus": 200,
+      "sha256": "207b7cd1ed08fa2ffb6ce455951ad4cf2a16f9fa75ecceb88f26c9a8e10ef47f"
+    },
+    {
+      "name": "psp-migration",
+      "url": "https://kubernetes.io/docs/tasks/configure-pod-container/migrate-from-psp/",
+      "finalURL": "https://kubernetes.io/docs/tasks/configure-pod-container/migrate-from-psp/",
+      "httpStatus": 200,
+      "sha256": "de4682323436f732d90db4cb5f3c9becfc5d6e2670c2036a73cf4224303d625d"
+    },
+    {
+      "name": "eks-psa",
+      "url": "https://docs.aws.amazon.com/eks/latest/best-practices/pod-security.html",
+      "finalURL": "https://docs.aws.amazon.com/eks/latest/best-practices/pod-security.html",
+      "httpStatus": 200,
+      "sha256": "7939ba88a511df1f903b00bd75dfe79aad2592d22aafd16f75af62130fc2cd6e"
+    },
+    {
+      "name": "nginx-unprivileged",
+      "url": "https://raw.githubusercontent.com/nginx/docker-nginx-unprivileged/main/README.md",
+      "finalURL": "https://raw.githubusercontent.com/nginx/docker-nginx-unprivileged/main/README.md",
+      "httpStatus": 200,
+      "sha256": "440751747f2d916e03ba40e23fb74514045956a64d06e8089e93fb44ce4102ce"
+    },
+    {
+      "name": "runtimeclass",
+      "url": "https://kubernetes.io/docs/concepts/containers/runtime-class/",
+      "finalURL": "https://kubernetes.io/docs/concepts/containers/runtime-class/",
+      "httpStatus": 200,
+      "sha256": "f234a72d359dcf2fd2a0b5068fdacd56777ac609056920ee6fb1aee6f41f04ee"
+    },
+    {
+      "name": "polaris",
+      "url": "https://raw.githubusercontent.com/FairwindsOps/polaris/master/README.md",
+      "finalURL": "https://raw.githubusercontent.com/FairwindsOps/polaris/master/README.md",
+      "httpStatus": 200,
+      "sha256": "7cef3113acdf718a9a1c8b13a910b0ebf39d4bb0940d942eb0e39cf33e232cd9"
+    },
+    {
+      "name": "kube-score",
+      "url": "https://raw.githubusercontent.com/zegl/kube-score/master/README.md",
+      "finalURL": "https://raw.githubusercontent.com/zegl/kube-score/master/README.md",
+      "httpStatus": 200,
+      "sha256": "a5e7ef838e3b149f80b164fb53858db5103d7163c9a2390d098d8e9f79d8e5da"
+    },
+    {
+      "name": "kubectl-label",
+      "url": "https://kubernetes.io/docs/reference/kubectl/generated/kubectl_label/",
+      "httpStatus": 200,
+      "sha256": "cca0c1815c5e25c29e0c12bfd770a488b1d8ffbc95fa6f5ebf07be5310047dfc",
+      "bytes": 508762
+    },
+    {
+      "name": "terraform-namespace",
+      "url": "https://raw.githubusercontent.com/hashicorp/terraform-provider-kubernetes/main/kubernetes/resource_kubernetes_namespace_v1.go",
+      "httpStatus": 200,
+      "sha256": "d5155c80a22e7e8f183600a0d4d993dc663e6d5e1324a94ec9ddc38d5704daf0",
+      "bytes": 6672
+    },
+    {
+      "name": "psa-metrics-source",
+      "url": "https://raw.githubusercontent.com/kubernetes/pod-security-admission/v0.36.2/metrics/metrics.go",
+      "httpStatus": 200,
+      "sha256": "16edac3e53687c7337bda408a3c6ab9f71de96c8037ff7ad0740dc305d0da170",
+      "bytes": 8288
+    }
+  ],
+  "additionalPrimaryURLs": [
+    "https://aws.amazon.com/blogs/containers/implementing-pod-security-standards-in-amazon-eks/",
+    "https://github.com/kubernetes/pod-security-admission/tree/v0.36.2"
+  ],
+  "validation": {
+    "localChecks": 53,
+    "schemaAPIObjects": 46,
+    "nativePSABoundaryCases": 24,
+    "nativePublishedAndAdditionalCases": 36,
+    "commandDoubleCases": 16,
+    "promtoolCases": 6,
+    "markdownFiles": 4,
+    "originalRenderedIDs": 160,
+    "quizQuestionsPerLocale": 12,
+    "answerSequence": "CCBACCABDBCC"
+  },
+  "limitations": [
+    "No live Kubernetes/EKS/PSS admission deployment or Nginx container startup tested.",
+    "Native library policy checks do not prove image runtime/readiness or cloud-provider support.",
+    "Terraform fragment provider/auth/ownership must be supplied; no provider runtime validation.",
+    "No complete hosted CI workflow/credential bootstrap provided; explicit Pod inputs and approved test identity required.",
+    "Six figures remain parent-owned semantic repair; source text qualified while pending."
+  ],
+  "sourcePreservation": {
+    "topics": "All original section headings and12questions retained; unsafe scripts and invalid examples replaced within same topics.",
+    "historicalMaterial": "PSP manifests/commands retained and scoped to old <=1.24 clusters; illustrative schedule not measured."
+  },
+  "diagramHandoff": "/home/atomoh/kubernetes-docs/.vitepress/cache/core-audit/security-03-pss/diagram-repair-handoff.json",
+  "evidence": {
+    "scope.json": "e675f5a3732898f881df96cec72d12497648b424986f1ffb9e017919ce45f498",
+    "sources/index.json": "1395dceadb2c34870a11edf796353791d5c28d1a3ff0652485d492ec2a2de96a",
+    "sources/recipe-index.json": "686e09570b8a47afe68cf2ee1aa7910d2a987a97d6f057d3fa7e4d046cf99821",
+    "sources/nginx-image-metadata.json": "25bce3f1738d7ff2721e88ffd86ecbe10849ba1db3674ed17b77efc4991734c1",
+    "native-summary.json": "938fc0ed423ae08a38007f9d808c5a7924e07ea07e4e58f29e5543bd200b6f98",
+    "native-policy-test.jsonl": "5a63d6e8d0352449d11b0faa0011c664a79efddde10c3af2aec6c499554e620f",
+    "native-published-summary.json": "15ec60ec681d84e2021bc5de58589724ffefb2e191fb3c18897da554f2dd2e02",
+    "native/published_test.go": "499a40edf01ba56f57b1af45fae841634a9602298878a5e534ccdced4004f8c4",
+    "native/pods.json": "0d6915913a7309c40d9d096bb9c049755965808b563dc11e0101f10fb3717c7b",
+    "native/config.json": "e563e4d0b6a14751cea572fa50d7b923dd5e24977106b1622ff3eaf73b3ca7e0",
+    "recipe-validation.json": "d52c6954854a42b1bf51f3c829da82ec6565e4ce8fb3d7e59b527d2348bd120d",
+    "validate-recipes.py": "e67335a0939fb74293cd03f440e52fec4bb1631a21020b0e7025ed24509bbbf9",
+    "promtool-validation.json": "235746e9fbc905e097e236b4c1e880d6ae159fc6ead3da5c6fb23068c811fdfd",
+    "promtool-tests.yaml": "fc51fb5f9c689aed5e5bb2cfe1232e4a931509fa8dda4c36c7fb4029aec7c62d",
+    "promtool.log": "8289a4919870ab5b28f5e90a86b4af3cdbd8c244516c02fca90d6e3f289a6711",
+    "markdown-validation.json": "41107c2f2d8fd3be486c7ec4751c566db873ba538abfdb28387ed9bda9257761",
+    "preserved-anchors.json": "48e55c31982c06ec1ed5a1e4b9bfcdf3afa55eba3c0116795455be9d0f536461",
+    "diagram-repair-handoff.json": "709a29963f475ac304ca35ac32685b2feca152039ea36bd92fc8596c0422e42b"
+  }
+}
