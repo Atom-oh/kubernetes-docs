@@ -1,0 +1,100 @@
+{
+  "image": "nicolaka/netshoot:v0.16@sha256:b09d9b21381f47a79b3cbcb30da25266dc17186ea00ae65e99fdc51396f48e70",
+  "scope": "Temporary local IPv4 bridges; no masquerading, published ports, or container default routes",
+  "prefix": "network-lesson-1b88d3420d",
+  "observations": {
+    "defaultRoutes": {
+      "client": [],
+      "router": [],
+      "server": []
+    },
+    "route": [
+      {
+        "dst": "198.51.100.3",
+        "gateway": "192.0.2.3",
+        "dev": "eth0",
+        "prefsrc": "192.0.2.2",
+        "flags": [],
+        "uid": 0,
+        "cache": []
+      }
+    ],
+    "dns": "192.0.2.3\n",
+    "nextHopNeighbor": [
+      {
+        "dst": "192.0.2.3",
+        "dev": "eth0",
+        "lladdr": "02:42:c0:00:02:03",
+        "state": [
+          "REACHABLE"
+        ]
+      }
+    ],
+    "remoteNeighbor": [],
+    "ttlOne": {
+      "probeExit": 1,
+      "probeOutput": "PING 198.51.100.3 (198.51.100.3) 56(84) bytes of data.\nFrom 192.0.2.3 icmp_seq=1 Time to live exceeded\n\n--- 198.51.100.3 ping statistics ---\n1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms\n\n",
+      "capture": "10:01:55.159628 eth0  Out IP 192.0.2.3 > 192.0.2.2: ICMP time exceeded in-transit, length 92\n",
+      "captureStderr": "tcpdump: WARNING: any: That device doesn't support promiscuous mode\n(Promiscuous mode not supported on the \"any\" device)\ntcpdump: verbose output suppressed, use -v[v]... for full protocol decode\nlistening on any, link-type LINUX_SLL2 (Linux cooked v2), snapshot length 262144 bytes\n1 packet captured\n1 packet received by filter\n0 packets dropped by kernel\n"
+    },
+    "traceroute": "traceroute to 198.51.100.3 (198.51.100.3), 4 hops max, 46 byte packets\n 1  192.0.2.3  0.005 ms\n 2  198.51.100.3  0.002 ms\n",
+    "pmtu": {
+      "probeExit": 1,
+      "probeOutput": "PING 198.51.100.3 (198.51.100.3) 1372(1400) bytes of data.\nFrom 192.0.2.3 icmp_seq=1 Frag needed and DF set (mtu = 1280)\n\n--- 198.51.100.3 ping statistics ---\n1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms\n\n",
+      "capture": "10:01:55.618701 eth0  Out IP 192.0.2.3 > 192.0.2.2: ICMP 198.51.100.3 unreachable - need to frag (mtu 1280), length 556\n",
+      "captureStderr": "tcpdump: WARNING: any: That device doesn't support promiscuous mode\n(Promiscuous mode not supported on the \"any\" device)\ntcpdump: verbose output suppressed, use -v[v]... for full protocol decode\nlistening on any, link-type LINUX_SLL2 (Linux cooked v2), snapshot length 262144 bytes\n1 packet captured\n1 packet received by filter\n0 packets dropped by kernel\n"
+    },
+    "smallerPacket": "PING 198.51.100.3 (198.51.100.3) 1200(1228) bytes of data.\n1208 bytes from 198.51.100.3: icmp_seq=1 ttl=126 time=0.082 ms\n\n--- 198.51.100.3 ping statistics ---\n1 packets transmitted, 1 received, 0% packet loss, time 0ms\nrtt min/avg/max/mdev = 0.082/0.082/0.082/0.000 ms\n",
+    "routeAfterFeedback": [
+      {
+        "dst": "198.51.100.3",
+        "gateway": "192.0.2.3",
+        "dev": "eth0",
+        "prefsrc": "192.0.2.2",
+        "flags": [],
+        "uid": 0,
+        "cache": [],
+        "expires": 599,
+        "metrics": [
+          {
+            "mtu": 1280
+          }
+        ]
+      }
+    ]
+  },
+  "checks": {
+    "noContainerDefaultRoutes": true,
+    "routeUsesRouter": true,
+    "dockerNameResolves": true,
+    "neighborIsNextHop": true,
+    "noRemoteL2Neighbor": true,
+    "ttlOneExpires": true,
+    "tracerouteReachesBothHops": true,
+    "pmtuFeedback": true
+  },
+  "cleanup": "All IDs created by this run were removed",
+  "status": "passed",
+  "recordedAt": "2026-09-14T10:01:59.265967+00:00",
+  "environment": {
+    "docker": "25.0.16",
+    "python": "3.9.25",
+    "kernel": "6.18.35-68.127.amzn2023.aarch64",
+    "machine": "aarch64"
+  },
+  "scriptHashes": {
+    "http_lab.py": "0b2ac4e6545945baa98a3f41337c54ca822a11028a33edec18be1beefc52aa64",
+    "routing_lab.py": "dd252d559a5f55bbc0f7d87665e9ac72aacbb83647b16477221e5fb249e94f48",
+    "test_http_lab.py": "7873c705b082b08003822be8f3a7bc2780b05aa5358311e22232bbd78c4a5a99",
+    "test_routing_lab.py": "95e4449821aa344aab6f781888da03837f351cddf0f019f81435dab8963e5710"
+  },
+  "otherValidation": {
+    "unitTests": 18,
+    "httpMethods": [
+      "GET",
+      "HEAD",
+      "POST"
+    ],
+    "socketObservation": "ESTABLISHED state and skmem fields observed for the loopback lesson connection"
+  }
+}

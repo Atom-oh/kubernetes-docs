@@ -1,6 +1,6 @@
 # Network Fundamentals Part 4 — A Request's Journey and the Cloud Mapping
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: September 14, 2026
 
 ::: tip This is a four-part series
 [Part 1: The Layer Model, Link and Routing Layers](./06-network-fundamentals-part1.md) ·
@@ -94,8 +94,10 @@ When investigating a failure, use each layer’s actual guarantees and observabl
 
 ## Next Documents
 
-From this foundation, move on to cluster networking:
+Connect these protocol fundamentals to Linux observations first, then follow the [networking learning path](../networking/README.md#learning-path) through containers and Services to CNI implementations:
 
+- [Kernel Networking Stack](../kernel/02-network-stack.md) — socket/VFS entry paths, buffers, and packet processing
+- [Linux Network Diagnostics Practice](../networking/07-linux-network-diagnostics.md) — interpret observations and test hypotheses | [Quiz](../quizzes/networking/07-linux-network-diagnostics-quiz.md)
 - [eBPF Fundamentals](./05-ebpf-fundamentals.md) — how packets are processed in the kernel
 - [Cilium Networking](../networking/cilium/03-networking.md) — the eBPF-based CNI
 - [Calico BGP Deep Dive](../networking/calico/04-bgp-deep-dive.md) — BGP routing inside the cluster

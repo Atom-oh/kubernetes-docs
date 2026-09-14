@@ -104,14 +104,15 @@
 10. [마이그레이션 가이드](./eks-auto-mode/09-migration-guide.md) | [퀴즈](./quizzes/eks-auto-mode/09-migration-guide-quiz.md)
 
 ### Networking
-1. [Networking 개요](./networking/README.md) | [퀴즈](./quizzes/networking/00-networking-overview-quiz.md)
+1. [Kubernetes 네트워킹 개요](./networking/README.md) | [퀴즈](./quizzes/networking/00-networking-overview-quiz.md)
 2. [네트워크 기초 — 프로토콜 25개](./basics/06-network-fundamentals-part1.md)
    - [Part 1: 계층 모델과 링크·라우팅](./basics/06-network-fundamentals-part1.md) | [퀴즈](./quizzes/basics/06-network-fundamentals-part1-quiz.md)
    - [Part 2: 전송 계층과 TLS](./basics/06-network-fundamentals-part2.md) | [퀴즈](./quizzes/basics/06-network-fundamentals-part2-quiz.md)
    - [Part 3: 애플리케이션 프로토콜](./basics/06-network-fundamentals-part3.md) | [퀴즈](./quizzes/basics/06-network-fundamentals-part3-quiz.md)
    - [Part 4: 요청의 여정과 클라우드](./basics/06-network-fundamentals-part4.md) | [퀴즈](./quizzes/basics/06-network-fundamentals-part4-quiz.md)
-3. [VPC CNI](./networking/01-vpc-cni.md) | [퀴즈](./quizzes/networking/01-vpc-cni-quiz.md)
-4. **Cilium 딥다이브**
+3. [Linux 네트워크 진단 실습](./networking/07-linux-network-diagnostics.md) | [퀴즈](./quizzes/networking/07-linux-network-diagnostics-quiz.md)
+4. [VPC CNI](./networking/01-vpc-cni.md) | [퀴즈](./quizzes/networking/01-vpc-cni-quiz.md)
+5. **Cilium 딥다이브**
    - [Cilium 소개](./networking/cilium/README.md)
    - [Part 1: 소개](./networking/cilium/01-introduction.md) | [퀴즈](./quizzes/networking/cilium/01-introduction-quiz.md)
    - [Part 2: eBPF](./networking/cilium/02-ebpf.md) | [퀴즈](./quizzes/networking/cilium/02-ebpf-quiz.md)
@@ -122,7 +123,7 @@
    - [Part 7: 고급 주제](./networking/cilium/07-advanced-topics.md) | [퀴즈](./quizzes/networking/cilium/07-advanced-topics-quiz.md)
    - [네트워킹 개념](./networking/cilium/networking-concepts.md) | [퀴즈](./quizzes/networking/cilium/networking-concepts-quiz.md)
    - [용어집](./networking/cilium/glossary.md) | [퀴즈](./quizzes/networking/cilium/glossary-quiz.md)
-5. **Calico 딥다이브**
+6. **Calico 딥다이브**
    - [Calico 소개](./networking/calico/README.md)
    - [Part 1: 소개](./networking/calico/01-introduction.md) | [퀴즈](./quizzes/networking/calico/01-introduction-quiz.md)
    - [Part 2: 아키텍처](./networking/calico/02-architecture.md) | [퀴즈](./quizzes/networking/calico/02-architecture-quiz.md)
@@ -134,11 +135,11 @@
    - [Part 8: EKS 통합](./networking/calico/08-eks-integration.md) | [퀴즈](./quizzes/networking/calico/08-eks-integration-quiz.md)
    - [Part 9: 운영](./networking/calico/09-operations.md) | [퀴즈](./quizzes/networking/calico/09-operations-quiz.md)
    - [용어집](./networking/calico/glossary.md) | [퀴즈](./quizzes/networking/calico/glossary-quiz.md)
-6. [VPC Lattice](./networking/02-vpc-lattice.md) | [퀴즈](./quizzes/networking/02-vpc-lattice-quiz.md)
-7. [AWS Load Balancer Controller](./networking/03-aws-lb-controller.md) | [퀴즈](./quizzes/networking/03-aws-lb-controller-quiz.md)
-8. [Gateway API](./networking/04-gateway-api.md) | [퀴즈](./quizzes/networking/04-gateway-api-quiz.md)
-9. [Cross-Org VPC 연결](./networking/05-cross-org-vpc-connectivity.md) | [퀴즈](./quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
-10. [Pod 네트워크 실측 벤치마크](./networking/06-pod-network-benchmark.md) | [퀴즈](./quizzes/networking/06-pod-network-benchmark-quiz.md)
+7. [VPC Lattice](./networking/02-vpc-lattice.md) | [퀴즈](./quizzes/networking/02-vpc-lattice-quiz.md)
+8. [AWS Load Balancer Controller](./networking/03-aws-lb-controller.md) | [퀴즈](./quizzes/networking/03-aws-lb-controller-quiz.md)
+9. [Gateway API](./networking/04-gateway-api.md) | [퀴즈](./quizzes/networking/04-gateway-api-quiz.md)
+10. [Cross-Org VPC 연결](./networking/05-cross-org-vpc-connectivity.md) | [퀴즈](./quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
+11. [Pod 네트워크 실측 벤치마크](./networking/06-pod-network-benchmark.md) | [퀴즈](./quizzes/networking/06-pod-network-benchmark-quiz.md)
 
 ### Service Mesh
 1. [Istio](./service-mesh/istio/README.md) | [퀴즈](./quizzes/service-mesh/02-istio-quiz.md)

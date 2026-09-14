@@ -1,6 +1,6 @@
 # 네트워크 기초 Part 4 — 요청의 여정과 클라우드 매핑
 
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 9월 14일
 
 ::: tip 4부작 시리즈입니다
 [Part 1: 계층 모델과 링크·라우팅](./06-network-fundamentals-part1.md) ·
@@ -94,8 +94,10 @@ TCP는 복구·순서 유지 비용으로 신뢰성 있는 순차 전달을 제�
 
 ## 다음 문서
 
-이 기초 위에서 클러스터 네트워킹으로 넘어갑니다.
+먼저 프로토콜 기초를 Linux 관측에 연결한 뒤, [네트워킹 학습 경로](../networking/README.md#learning-path)를 따라 컨테이너·Service에서 CNI 구현으로 나아갑니다.
 
+- [커널 네트워킹 스택](../kernel/02-network-stack.md) — 소켓/VFS 진입 경로, 버퍼, 패킷 처리
+- [Linux 네트워크 진단 실습](../networking/07-linux-network-diagnostics.md) — 관측값 해석과 가설 확인 | [퀴즈](../quizzes/networking/07-linux-network-diagnostics-quiz.md)
 - [eBPF 기초](./05-ebpf-fundamentals.md) — 커널에서 패킷을 처리하는 방식
 - [Cilium 네트워킹](../networking/cilium/03-networking.md) — eBPF 기반 CNI
 - [Calico BGP 심화](../networking/calico/04-bgp-deep-dive.md) — 클러스터 내 BGP 라우팅

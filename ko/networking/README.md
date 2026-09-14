@@ -1,10 +1,24 @@
 # Kubernetes 네트워킹
 
-> **마지막 업데이트**: 2026년 9월 13일. 기능 근거는 Cilium 1.20.1, Calico Open Source 3.32, Flannel 0.28.9, AWS VPC CNI 1.23.0을 포함합니다. 설치 전 제품별 Kubernetes·플랫폼 지원 범위를 확인합니다. 이 버전들을 하나의 클러스터에서 함께 검증했다는 의미는 아닙니다.
+> **마지막 업데이트**: 2026년 9월 14일. 기능 근거는 Cilium 1.20.1, Calico Open Source 3.32, Flannel 0.28.9, AWS VPC CNI 1.23.0을 포함합니다. 설치 전 제품별 Kubernetes·플랫폼 지원 범위를 확인합니다. 이 버전들을 하나의 클러스터에서 함께 검증했다는 의미는 아닙니다.
 
 ## 개요
 
 Kubernetes 네트워킹은 컨테이너화된 애플리케이션 간의 통신을 가능하게 하는 핵심 인프라 계층입니다. 이 섹션에서는 Kubernetes 네트워킹의 기본 개념부터 고급 CNI(Container Network Interface) 솔루션, 그리고 AWS EKS 환경에서의 네트워킹 패턴까지 다룹니다.
+
+## 학습 경로 {#learning-path}
+
+프로토콜 개념에서 관측으로 나아간 뒤 컨테이너·클러스터·클라우드의 역할에 연결합니다. 선수 지식에 맞는 진입점을 고르고, 학습 결과를 확인한 다음 단계로 넘어갑니다.
+
+| 단계 | 역할 | 선수 지식 | 학습 결과 | 읽기 / 실습 |
+|---|---|---|---|---|
+| 프로토콜·주소·HTTP | 기본 용어 정립 | 기본 명령줄 사용 | 요청의 흐름을 따라가며 주소·전송·애플리케이션 동작 구분 | 네트워크 기초 [Part 1](../basics/06-network-fundamentals-part1.md), [Part 2](../basics/06-network-fundamentals-part2.md), [Part 3](../basics/06-network-fundamentals-part3.md), [Part 4](../basics/06-network-fundamentals-part4.md) |
+| Linux 소켓·VFS·패킷 경로 | API와 커널 연결 | TCP/IP 기초 | FD·소켓 버퍼·윈도·큐 구분 | [커널 네트워킹 스택](../kernel/02-network-stack.md) |
+| Linux 네트워크 진단 | 증거로 가설 확인 | 소켓과 패킷 경로 개념 | 소켓·패킷·애플리케이션 관측값 대조 | [진단 실습](07-linux-network-diagnostics.md) · [퀴즈](../quizzes/networking/07-linux-network-diagnostics-quiz.md) |
+| Docker·컨테이너 네트워킹 | 네임스페이스 경계 파악 | Linux 패킷 경로와 기본 진단 | 브리지 네트워킹·포트 게시·컨테이너 이름 해석 설명 | [컨테이너 기술](../basics/03-container-technology.md) |
+| Kubernetes Service·DNS·Ingress | 클러스터 추상화 연결 | 컨테이너 네트워킹 | 이름에서 Service와 엔드포인트까지 추적하고 진입점 역할 구분 | [Service와 네트워킹](../core/03-services-networking.md) · [실습](../labs/core/03-services-networking-lab.md) |
+| eBPF·CNI·정책 | 구현별 역할 비교 | Pod와 Service 경로 | 패킷 전달·정책 강제·관측성 구분 | [eBPF 기초](../basics/05-ebpf-fundamentals.md) · [Cilium](cilium/README.md) · [Calico](calico/README.md) |
+| AWS 네트워크 경계·성능 | 클라우드 경로에 모델 적용 | CNI 개념과 측정 방법 | VPC·노드·AZ 경계를 구분하고 측정 조건에 맞게 결과 해석 | [VPC CNI](01-vpc-cni.md) · [AWS Load Balancer Controller](03-aws-lb-controller.md) · [Cross-Org VPC 연결](05-cross-org-vpc-connectivity.md) · [Pod 네트워크 실측 벤치마크](06-pod-network-benchmark.md) |
 
 ## Kubernetes 네트워킹 모델
 
@@ -422,6 +436,10 @@ HTTP/3(RFC 9114)와 그 전송 기반인 QUIC(RFC 9000)의 프로토콜 동작 �
 
 이 섹션에서는 다음 주제들을 상세히 다룹니다:
 
+### [Linux 네트워크 진단 실습](07-linux-network-diagnostics.md) {#linux-network-diagnostics}
+
+CNI 구현을 살펴보기 전에 [커널 소켓·패킷 경로 개념](../kernel/02-network-stack.md)을 관측에 연결합니다. [진단 퀴즈](../quizzes/networking/07-linux-network-diagnostics-quiz.md)로 해석을 확인합니다.
+
 ### [VPC CNI](01-vpc-cni.md)
 일반 Pod의 VPC 주소와 모드별 IPAM·정책 전제를 다루는 EKS 네트워킹.
 
@@ -629,6 +647,8 @@ spec:
 - 분산 추적 구현
 
 ## 다음 단계
+
+[커널 네트워킹 스택](../kernel/02-network-stack.md)에서 시작해 [Linux 네트워크 진단 실습](07-linux-network-diagnostics.md)과 [퀴즈](../quizzes/networking/07-linux-network-diagnostics-quiz.md)로 이어갑니다. [학습 경로](#learning-path)는 이 기초를 컨테이너·Service에 연결한 뒤 아래 CNI·AWS 주제로 안내합니다.
 
 1. [VPC CNI](01-vpc-cni.md) - EKS 기본 CNI
 2. [Cilium 딥다이브](cilium/README.md) - eBPF 기반 네트워킹

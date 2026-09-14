@@ -1,6 +1,6 @@
 # Network Fundamentals Part 1 — The Layer Model, Link and Routing Layers
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: September 14, 2026
 
 ::: tip This is a four-part series
 **Part 1: The Layer Model, Link and Routing Layers** *(this document)* ·
@@ -101,6 +101,43 @@ If the link layer gets you "next door," this layer gets you "to the other side o
 
 **In practice:** IPv4 has about 4.3 billion possible addresses, and scarcity made NAT widely used and turned the private ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) into the internal-network standard. The first wall large organizations hit during cloud migration is overlap in these private ranges: overlapping on-premises/VPC CIDRs prevent straightforward routing over VPN or Direct Connect without a designed renumbering, translation or proxy solution. IP address design is something to lock down at project kickoff.
 
+#### IPv4, CIDR and a worked subnet {#ipv4-cidr-subnet}
+
+IPv4 has four 8-bit octets. In CIDR notation, `/26` fixes the first 26 bits as the network prefix and leaves `32 − 26 = 6` host bits. The addresses below are documentation examples from [RFC 5737](https://www.rfc-editor.org/rfc/rfc5737.html), not public test endpoints.
+
+For an interface address **`192.0.2.130/26`**:
+
+| Step | Calculation or result |
+|---|---|
+| Subnet mask | `255.255.255.192`; last octet `11000000` in binary |
+| Addresses per block | `2^6 = 64`; last-octet blocks start at `0`, `64`, `128`, `192` |
+| Network address | `130 AND 192 = 128` (`10000010 AND 11000000 = 10000000`), so `192.0.2.128/26` |
+| Broadcast address | Set the six host bits to 1: `192.0.2.191` |
+| Ordinary host range | `192.0.2.129`–`192.0.2.190`: 62 addresses |
+
+The interface owns `.130`; `.128/26` identifies its subnet. On an ordinary broadcast subnet, the all-zero and all-one host portions identify the network and broadcast addresses. A gateway, if configured, consumes an address from the host range; CIDR does not require it to be the first host.
+
+Do not apply “subtract two” to every prefix. [RFC 3021](https://www.rfc-editor.org/rfc/rfc3021.html) permits both addresses of a `/31` on a supported point-to-point link. A `/32` identifies one address, often as a host route; it does not imply a directly attached Ethernet peer. Cloud allocation rules are separate: standard AWS VPC IPv4 subnets reserve the first four addresses and the last, leaving **59 assignable addresses in a `/26`**, with exceptions such as BYOIP. Check the [VPC subnet rules](https://docs.aws.amazon.com/vpc/latest/userguide/subnet-sizing.html) for the allocation mode.
+
+#### Longest prefix, next hop and ARP {#longest-prefix-next-hop}
+
+Route lookup comes **before** neighbor resolution. Consider this illustrative routing table on a Linux host with `192.0.2.130/26` on `eth0`:
+
+| Destination prefix | Next hop / interface |
+|---|---|
+| `192.0.2.128/26` | Directly on `eth0` (on-link) |
+| `198.51.100.0/24` | Via `192.0.2.129` on `eth0` |
+| `198.51.100.128/25` | Via `192.0.2.190` on `eth0` |
+| `0.0.0.0/0` | Default via `192.0.2.129` on `eth0` |
+
+Within the selected table, choose the matching route with the **longest prefix** ([RFC 1812 §5.2.4.3](https://www.rfc-editor.org/rfc/rfc1812.html#section-5.2.4.3)):
+
+- For `192.0.2.150`, the `/26` route is on-link: resolve **`.150` itself** with ARP if its neighbor entry is missing.
+- For `198.51.100.140`, `/24`, `/25` and `/0` all match; `/25` wins. Resolve gateway **`192.0.2.190`**, not the remote destination, with ARP.
+- For `203.0.113.10`, only `/0` matches: use gateway **`192.0.2.129`**.
+
+For a routed packet, the Ethernet destination is the gateway's MAC while the IP destination remains the remote host (absent NAT). A lower metric on the default route does not beat a matching `/25`. Linux policy rules can select different tables; inspect the actual lookup with `ip route get` in the relevant network namespace, as described in the [ip-route(8) manual](https://man7.org/linux/man-pages/man8/ip-route.8.html). The host and a container can have different routes and neighbor tables.
+
 ### IPv6
 
 **Definition:** The next-generation internet-layer protocol with 128-bit addresses.
@@ -120,6 +157,26 @@ If the link layer gets you "next door," this layer gets you "to the other side o
 **In practice:** Blanket-blocking ICMP "for security" is common — and it is the direct cause of the MTU black hole mentioned earlier. Classical IPv4 PMTUD uses ICMP Type 3 Code 4, while IPv6 uses ICMPv6 Packet Too Big Type 2. Blocking required messages can cause black holes; PLPMTUD can instead probe packet sizes without relying on ICMP. Preserve required error/discovery traffic according to the IP version and policy.
 
 > 📎 For how this failure shows up in EKS, see [EKS Networking Deep Dive](../eks/03-eks-networking-part3.md).
+
+#### Reading ICMP and traceroute evidence {#icmp-traceroute-interpretation}
+
+For IPv4 forwarding, a router reduces the packet's TTL; if it expires, the router discards that probe and normally returns **ICMP Time Exceeded (Type 11, Code 0)**. That is expected for a deliberately short-TTL probe, not proof that ordinary application packets fail. The error quotes part of the original packet so the sender can associate the response with its probe ([RFC 792](https://www.rfc-editor.org/rfc/rfc792.html)).
+
+Keep the **outgoing probe** separate from the **returning response**. These common traceroute methods can all receive ICMP Time Exceeded from intermediate routers:
+
+| Probe sent | Typical response when the destination is reached |
+|---|---|
+| UDP to an unused destination port | ICMP Destination Unreachable, Port Unreachable (IPv4 Type 3, Code 3) |
+| ICMP Echo Request | ICMP Echo Reply |
+| TCP SYN to a chosen port | TCP SYN/ACK for a listening port, or RST for a closed port |
+
+Defaults and options vary by implementation; the [Linux traceroute(8) manual](https://man7.org/linux/man-pages/man8/traceroute.8.html) documents UDP, ICMP and TCP methods. A TCP probe tests handling of that port, but even a SYN/ACK does not prove TLS or HTTP works.
+
+A `*` means **no matching response arrived before the wait expired**. The probe may be filtered, the router may suppress or rate-limit its response, or the response may be lost on its return path. One silent hop with replies from later hops does not establish end-to-end loss. Each displayed RTT includes a return path that can differ from the forward path; load balancing can also expose different routers across probes. Compare repeated observations with destination and application results before locating a fault.
+
+Traceroute primarily explores hops; small successful probes do not validate the path MTU. A larger IPv4 packet with DF set may still need **Fragmentation Needed (Type 3, Code 4)** to discover a smaller MTU. Distinguish that message from Time Exceeded and Port Unreachable; retain the IPv6 and PLPMTUD distinctions above.
+
+> 📎 Apply route and probe reasoning in the [Linux routing and ICMP lab](../networking/07-linux-network-diagnostics.md#routing-icmp-lab), then carry it into container and Kubernetes troubleshooting.
 
 ### OSPF
 
