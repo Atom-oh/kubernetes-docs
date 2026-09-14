@@ -1,6 +1,101 @@
 /* The layout width and VPDoc's internal content cap are independent. */
 :root {
   --vp-layout-max-width: 1560px;
+  /* Inter covers Latin; name Korean families so their real bold faces can
+     be selected instead of relying only on the browser's glyph fallback. */
+  --vp-font-family-base: 'Inter', 'Noto Sans KR', 'Noto Sans CJK KR',
+    'Apple SD Gothic Neo', 'Malgun Gothic', ui-sans-serif, system-ui, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+/* Some devices only have a regular Korean face. Preserve emphasis there,
+   too; VitePress otherwise permits synthetic italics but not bold. */
+body:lang(ko) {
+  font-synthesis: weight style;
+}
+
+/* Keep the wide diagram canvas while giving prose the contrast, heading
+   hierarchy and paragraph separation of the companion GitBook site. */
+.VPDoc .vp-doc {
+  --vp-c-text-1: #1c1d1f;
+  --vp-c-text-2: #60646c;
+  color: var(--vp-c-text-1);
+  line-height: 1.75;
+}
+
+.dark .VPDoc .vp-doc {
+  --vp-c-text-1: #e7e8ec;
+  --vp-c-text-2: #b5b8c1;
+}
+
+.VPDoc .vp-doc h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+}
+
+.VPDoc .vp-doc h2 {
+  font-size: 1.5rem;
+  line-height: 1.35;
+  letter-spacing: -0.0125em;
+}
+
+.VPDoc .vp-doc h3 {
+  font-size: 1.25rem;
+  line-height: 1.4;
+}
+
+.VPDoc .vp-doc p,
+.VPDoc .vp-doc ul,
+.VPDoc .vp-doc ol,
+.VPDoc .vp-doc blockquote {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.VPDoc .vp-doc p {
+  line-height: 1.75;
+}
+
+/* Preserve compact spacing inside callouts and nested lists. */
+.VPDoc .vp-doc blockquote > p {
+  margin: 0;
+}
+
+.VPDoc .vp-doc .custom-block p {
+  margin: 8px 0;
+  line-height: 1.65;
+}
+
+.VPDoc .vp-doc .custom-block p:first-child {
+  margin-top: 0;
+}
+
+.VPDoc .vp-doc li > ul,
+.VPDoc .vp-doc li > ol {
+  margin: 8px 0 0;
+}
+
+.VPDoc .vp-doc th,
+.VPDoc .vp-doc td {
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}
+
+@media (min-width: 768px) {
+  .VPDoc .vp-doc h1 {
+    font-size: 2.25rem;
+    line-height: 1.25;
+  }
+
+  .VPDoc .vp-doc h2 {
+    font-size: 1.875rem;
+  }
+
+  .VPDoc .vp-doc h3 {
+    font-size: 1.375rem;
+  }
 }
 
 /* Target the article column directly: the outline also contains .content.
