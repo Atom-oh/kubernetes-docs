@@ -154,8 +154,8 @@ Build this mapping from actual output; never fill it from memory:
 
 ## 6. Stage A: prove L2 forwarding and separation
 
-Read h1/h2/h3/h4 data addresses with `netlab connect h1 ip -br address`, substituting one exact host at a time.
-Use data addresses, not management addresses or an unresolved hostname that could select management.
+Read h1/h2/h3/h4 data addresses with `netlab connect h1 ip address show`, substituting one exact host at a time.
+This command runs inside the host container; installing iproute2 on the VM does not change that container's BusyBox implementation. Use data addresses, not management addresses or an unresolved hostname that could select management.
 In the VM shell, replace these placeholders from your mapping:
 
 ```bash

@@ -154,7 +154,7 @@ Stage B에는 `show vrf vni`, Linux VRF device/table, red/blue에 연결된 host
 
 ## 6. Stage A: L2 전달과 분리 증명
 
-`netlab connect h1 ip -br address`에서 host 이름을 하나씩 정확히 바꾸어 h1/h2/h3/h4의 data 주소를 읽습니다.
+`netlab connect h1 ip address show`에서 host 이름을 하나씩 정확히 바꾸어 h1/h2/h3/h4의 data 주소를 읽습니다. 이 명령은 host 컨테이너 안에서 실행되므로 VM에 iproute2를 설치해도 컨테이너의 BusyBox 구현이 바뀌지는 않습니다.
 관리 주소 또는 관리망을 선택할 수 있는 미확인 hostname 대신 data 주소를 사용합니다.
 VM 셸에서 매핑을 이용해 placeholder를 바꿉니다.
 
