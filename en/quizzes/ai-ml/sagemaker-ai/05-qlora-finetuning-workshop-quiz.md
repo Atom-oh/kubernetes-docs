@@ -2,8 +2,6 @@
 
 > **Last Updated**: September 15, 2026
 
-> **Last Updated**: September 15, 2026
-
 ## Multiple Choice Questions
 
 1. Which statement correctly describes QLoRA with `load_in_4bit=True`, `bnb_4bit_quant_type="nf4"` and `bnb_4bit_compute_dtype=torch.bfloat16`?
