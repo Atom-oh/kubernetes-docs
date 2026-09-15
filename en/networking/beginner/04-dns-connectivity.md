@@ -20,7 +20,7 @@ Use guest consoles and identify lab NICs by matching their hypervisor MACs to `i
 | Ubuntu OpenBSD `nc`, or Rocky `ncat` | Make one TCP connection test |
 | `resolvectl` where systemd-resolved is active | Inspect that resolver; not a requirement on Rocky |
 
-Check availability with `command -v ip ping getent timeout dig tracepath traceroute python3 curl ss nc ncat`. Missing optional alternatives are normal; a missing tool needed for your selected exercise means return to preparation. This chapter contains no package-install commands.
+Check availability with `command -v ip ping getent timeout dig tracepath traceroute python3 curl ss nc ncat`. Missing optional alternatives are normal; a missing tool needed for your selected exercise means return to [guest tool preparation](README.md#guest-tools) for the package mapping and selected missing-tool installation. This chapter contains no package-install commands.
 
 You will distinguish NSS lookup from DNS, explain authoritative answers and caching, inspect the selected route, interpret ICMP and trace results, separate TCP from HTTP, and write a failure report with a justified next step.
 
@@ -241,6 +241,8 @@ timeout 300s python3 -m http.server 18080 --bind 192.0.2.20 --directory "${LAB_H
 ```
 
 Stop if `mktemp` fails. `${variable:?message}` prevents use of an empty path variable. Record the printed directory path. Only the new directory contains the served file; do not serve your home directory or add symlinks to it. `--bind` avoids a wildcard listener, `--directory` selects the content root, and `timeout` terminates the server after five minutes. Ctrl+C stops it earlier. A timeout exit status of 124 is expected when the time limit ends.
+
+If the timer expires mid-exercise, restart in the same server terminal A with `timeout 300s python3 -m http.server 18080 --bind 192.0.2.20 --directory "${LAB_HTTP_DIR:?missing lab directory}"`; reuse the recorded directory instead of rerunning `mktemp`.
 
 Python's built-in HTTP server is an exercise tool. It has no authentication/TLS here and is not a production deployment. No system service or boot activation is created.
 

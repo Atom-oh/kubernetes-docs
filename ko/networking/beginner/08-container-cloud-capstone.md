@@ -96,13 +96,142 @@ curl --disable --noproxy '*' --max-time 5 \
 
 **복구:** 콘솔 A에서 Ctrl+C 후 정상 상태의 `--bind 192.0.2.20` 명령으로 재시작합니다. 같은 VM의 루프백은 다른 VM의 루프백이 아닙니다.
 
-### D. 방화벽 가설은 증거와 함께
+### D. 방화벽 가설은 증거와 함께 {#firewall-fault}
 
-6장에서 선택한 **한 가지 방화벽 관리자**의 절차를 사용합니다. 정상 상태의 규칙 목록을 먼저 기록하고, **이 과정에서 추가한 TCP 8000 허용 규칙만** 해당 장의 삭제 명령으로 제거합니다. SSH 규칙이나 기본 정책은 건드리지 않습니다.
+서버 하이퍼바이저 콘솔에서 **6장에서 선택한 관리자만** 사용합니다. 이 장애는 실습에서 소유한 TCP 8000 allow만 제거합니다. TCP 22 allow, 실습 deny, 기본 정책, zone·프로필 연결, 관리 NIC는 유지합니다. 백그라운드 차단 변경이 시험에 섞이지 않도록 선택 Fail2ban 실험을 먼저 정리하세요.
 
-클라이언트에서 정상 HTTP 요청을 다시 보낸 뒤, 서버의 리스너·선택된 zone/인터페이스·현재 규칙과 7장의 캡처를 대조합니다. 패킷이 허용되어 계속 성공할 수도 있습니다. 이 경우 다른 기존 허용 규칙이나 zone의 기본 동작을 찾아 가설을 수정합니다. “규칙 하나를 지웠으니 반드시 차단됐다”라고 기록하지 않습니다.
+**서버 콘솔 B, 일반 사용자:** 기록한 하이퍼바이저 MAC으로 두 NIC를 다시 식별합니다. 6장의 변수가 남아 있다고 가정하지 않습니다.
 
-**복구:** 6장의 동일한 출처·인터페이스 범위로 TCP 8000 허용 규칙을 복원하고, 실제 유효 상태와 HTTP 200을 확인합니다. 영구 규칙까지 바꿨다면 해당 관리자 절차에 따라 런타임·영구 상태 모두 맞춥니다.
+```bash
+ip -br link
+read -r -p 'Server lab NIC verified by MAC: ' LAB_IF
+read -r -p 'Server management NIC verified by MAC: ' MGMT_IF
+ip -4 -br address show dev "$LAB_IF"
+ip -4 -br address show dev "$MGMT_IF"
+ip -4 route
+sudo ss -ltnp 'sport = :8000'
+```
+
+실습 NIC의 `.20/24`, 서로 다른 NIC 이름, 유지된 관리 상태와 정상 `.20:8000` 리스너를 확인합니다. 아래 절차대로 현재 규칙도 기록합니다. 서버 타이머가 끝났다면 서버 콘솔 A에서 기존 디렉터리를 사용하는 `timeout 300 python3 -m http.server 8000 --bind 192.0.2.20 --directory "${LAB_WEB:?missing existing web directory}"`만 다시 실행합니다. 서버 정지 장애를 동시에 만들지 마세요.
+
+**클라이언트, 일반 사용자:** 기록에서 기존 5장 키 디렉터리와 일반 서버 계정을 복구합니다. 새 키를 만들거나 검증한 호스트 기록을 우회하지 않습니다.
+
+```bash
+read -r -p 'Existing lesson-5 client key directory: ' SSH_LAB_DIR
+read -r -p 'Normal account on the server: ' SERVER_USER
+ls -l -- "${SSH_LAB_DIR:?missing key directory}/id_ed25519" \
+  "${SSH_LAB_DIR:?missing key directory}/known_hosts"
+```
+
+그 클라이언트 터미널에 다음 짧은 셸 함수를 한 번 정의합니다. `check_lab_ssh`를 부르면 **새** SSH 연결로 원격 계정·연결을 출력한 뒤 클라이언트로 돌아옵니다. 파일이나 서비스를 만들지는 않습니다.
+
+```bash
+check_lab_ssh() {
+  ssh -F /dev/null -b 192.0.2.10 \
+    -i "${SSH_LAB_DIR:?missing key directory}/id_ed25519" \
+    -o "UserKnownHostsFile=${SSH_LAB_DIR:?missing key directory}/known_hosts" \
+    -o StrictHostKeyChecking=yes -o IdentitiesOnly=yes \
+    -o PreferredAuthentications=publickey \
+    -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no \
+    -o ControlMaster=no -o ControlPath=none -o ControlPersist=no \
+    -o BatchMode=no -o ConnectTimeout=5 \
+    "${SERVER_USER:?missing account}@192.0.2.20" \
+    'whoami; printf "%s\n" "$SSH_CONNECTION"'
+}
+check_lab_ssh
+```
+
+개인 키 **암호문구 질문을 허용**하므로 잠금 해제된 agent가 없어도 됩니다. 원격 계정 비밀번호 대체 인증은 끕니다. `-F /dev/null`은 관련 없는 클라이언트 설정을 제외하고 다중화를 끄면 기존 인증 연결을 재사용하지 않습니다. 일반 계정과 `.10`에서 `.20`의 22번 포트로 접속한 정보가 나와야 합니다. 이 **장애 전** 확인이나 정상 HTTP가 실패하면 규칙 변경 전에 멈춥니다. 별도로 필요한 관리 SSH 경로도 보존·재확인하세요.
+
+#### UFW: 저장·적용된 HTTP allow만 변경
+
+**Ubuntu 서버 콘솔 B, sudo:**
+
+```bash
+sudo ufw status numbered
+sudo ufw show added
+```
+
+UFW가 active이고 6장의 세 실습 규칙이 다음 순서일 때만 진행합니다. **1: `LAB_IF`의 `.10`→`.20` TCP 22 allow, 2: 별도의 TCP 8000 allow, 3: 같은 인터페이스·목적지의 TCP `22,8000` deny**입니다. 전체 규칙 내용을 기록하세요. 예전의 `22,8000` 결합 allow가 남았거나 순서가 다르면 먼저 6장 구성을 맞춥니다. 포트 하나 삭제는 여러 포트를 묶은 규칙의 역작업이 아닙니다.
+
+HTTP만 제거합니다.
+
+```bash
+sudo ufw delete allow in on "$LAB_IF" proto tcp \
+  from 192.0.2.10 to 192.0.2.20 port 8000
+sudo ufw status numbered
+sudo ufw show added
+```
+
+TCP 22 allow가 첫째로 유지되고 실습 deny가 둘째가 되었는지 확인합니다. UFW 저장·적용 상태 모두 바뀝니다. 남은 두 규칙과 기본 정책은 그대로 두고 아래 **장애 중 확인**을 수행합니다.
+
+**같은 Ubuntu 콘솔에서 복원:** deny가 여전히 둘째인지 확인하고 HTTP를 2번 위치, 즉 **그 deny 앞에** 삽입합니다.
+
+```bash
+sudo ufw insert 2 allow in on "$LAB_IF" proto tcp \
+  from 192.0.2.10 to 192.0.2.20 port 8000 comment 'network-beginner-http'
+sudo ufw status numbered
+sudo ufw show added
+```
+
+원래 SSH allow → HTTP allow → 실습 deny 순서와 출발지·인터페이스·목적지 범위가 같아야 합니다. deny 뒤에 allow를 덧붙이면 HTTP는 여전히 막히므로 역작업에는 위치 복원도 포함됩니다. 다른 규칙 때문에 위치가 달라졌다면 오래된 번호를 쓰지 말고 멈춰 기록한 순서를 확인합니다. 이어서 아래 복구 후 확인을 수행하세요.
+
+#### firewalld: runtime HTTP만 제거하고 저장 정책 유지
+
+**Rocky 서버 콘솔 B. 변수 대입은 일반 사용자, 방화벽 조회는 sudo:**
+
+```bash
+RULE22='rule family="ipv4" source address="192.0.2.10/32" destination address="192.0.2.20/32" port port="22" protocol="tcp" accept'
+RULE8000='rule family="ipv4" source address="192.0.2.10/32" destination address="192.0.2.20/32" port port="8000" protocol="tcp" accept'
+sudo firewall-cmd --get-zone-of-interface="$LAB_IF"
+sudo firewall-cmd --get-zone-of-interface="$MGMT_IF"
+sudo firewall-cmd --zone=network-beginner --list-all
+sudo firewall-cmd --permanent --zone=network-beginner --list-all
+sudo firewall-cmd --zone=network-beginner --query-rich-rule="$RULE22"
+sudo firewall-cmd --permanent --zone=network-beginner --query-rich-rule="$RULE22"
+sudo firewall-cmd --zone=network-beginner --query-rich-rule="$RULE8000"
+sudo firewall-cmd --permanent --zone=network-beginner --query-rich-rule="$RULE8000"
+```
+
+`network-beginner`에는 실습 NIC만 있고 관리 zone은 원래대로이며 네 질의 모두 `yes`여야 합니다. 6장의 만료되는 시험 규칙이 아니라 유지한 영구 규칙을 전제로 합니다. 두 구성을 기록하고 HTTP를 여전히 허용할 수 있는 더 넓은 정책도 확인하세요.
+
+**runtime HTTP 규칙만** 제거합니다.
+
+```bash
+sudo firewall-cmd --zone=network-beginner --remove-rich-rule="$RULE8000"
+sudo firewall-cmd --zone=network-beginner --query-rich-rule="$RULE8000"
+sudo firewall-cmd --permanent --zone=network-beginner --query-rich-rule="$RULE8000"
+sudo firewall-cmd --zone=network-beginner --query-rich-rule="$RULE22"
+sudo firewall-cmd --permanent --zone=network-beginner --query-rich-rule="$RULE22"
+```
+
+결과는 `no`, `yes`, `yes`, `yes`여야 합니다. `no`의 0이 아닌 종료 상태는 여기서는 예상한 결과입니다. 장애 중 확인을 수행하세요. reload·재부팅·`--runtime-to-permanent`를 실행하지 않습니다. reload는 저장된 HTTP 규칙을 다시 가져오고 runtime을 permanent로 복사하면 의도치 않게 장애를 영구 저장합니다.
+
+**같은 Rocky 콘솔에서 복원**하며 전체 reload나 permanent 변경은 하지 않습니다.
+
+```bash
+sudo firewall-cmd --zone=network-beginner --add-rich-rule="$RULE8000"
+sudo firewall-cmd --zone=network-beginner --query-rich-rule="$RULE8000"
+sudo firewall-cmd --permanent --zone=network-beginner --query-rich-rule="$RULE8000"
+sudo firewall-cmd --zone=network-beginner --query-rich-rule="$RULE22"
+sudo firewall-cmd --permanent --zone=network-beginner --query-rich-rule="$RULE22"
+```
+
+네 질의가 다시 모두 `yes`여야 합니다. runtime·permanent 목록을 기록한 기준과 비교합니다. 저장 규칙은 바꾸지 않았고 runtime HTTP만 같은 범위로 복원했습니다. 예상 밖의 저장 정책 변경은 일괄 덮어쓰기 대신 기록과 대조하여 조사합니다.
+
+#### 장애 중과 복구 후 확인
+
+**클라이언트, 일반 사용자, 같은 터미널:** 장애 전 확인에 더해 **HTTP 제거 후와 복원 후 각각** 다음 두 명령을 실행합니다.
+
+```bash
+check_lab_ssh
+curl --disable --noproxy '*' --connect-timeout 2 --max-time 5 \
+  -i http://192.0.2.20:8000/health.txt
+```
+
+장애 중에도 새 키 전용 SSH는 성공해야 합니다. 기록한 실습 정책에서 HTTP는 실패하되 서버 리스너는 `.20:8000`을 유지해야 합니다. SSH가 실패하면 서버 콘솔에서 제거한 HTTP 권한만 복구하고 변경하지 않은 SSH 규칙·경로를 대조한 뒤 멈춥니다. HTTP만의 장애를 입증한 상태가 아닙니다. HTTP가 계속 성공하면 다른 허용, zone·기본 동작, 리스너·패킷 증거를 확인합니다. 규칙 하나를 제거했다는 이유만으로 차단됐다고 기록하지 마세요.
+
+복구 후에는 새 키 전용 SSH 성공과 HTTP 200·`healthy` 본문을 모두 요구합니다. 서버 콘솔 B에서 `sudo ss -ltnp 'sport = :8000'`, 해당 규칙 조회·목록, `ip -4 -br address show dev "$MGMT_IF"`, `ip -4 route`를 반복해 장애 전 기록과 비교하고 필요한 관리 접근도 재확인합니다. 세 단계 관측을 따로 기록하세요. 이 절차가 문서 작성 과정에서 실제 게스트 실행을 수행했다는 뜻은 아닙니다.
 
 ## 결과 보고서와 통과 기준 {#capstone-report}
 
@@ -161,6 +290,9 @@ rmdir -- "${LAB_WEB:?}"
 
 - [Python http.server](https://docs.python.org/3.12/library/http.server.html)
 - [curl 주소 매핑 옵션](https://curl.se/docs/manpage.html)
+- [Ubuntu 24.04 UFW: 규칙 순서·다중 포트·삭제](https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html)
+- [firewalld: runtime·permanent 설정과 rich rule 작업](https://firewalld.org/documentation/man-pages/firewall-cmd.html)
+- [OpenSSH 클라이언트 옵션과 연결 공유](https://man.openbsd.org/ssh_config)
 - [Docker bridge](https://docs.docker.com/engine/network/drivers/bridge/)
 - [Docker overlay](https://docs.docker.com/engine/network/drivers/overlay/)
 - [Kubernetes 네트워킹 모델](https://kubernetes.io/docs/concepts/services-networking/)

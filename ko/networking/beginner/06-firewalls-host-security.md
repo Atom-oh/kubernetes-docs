@@ -71,14 +71,16 @@ sudo ufw show added > "$FW_NOTE/ufw-added.before"
 
 UFW가 **inactive**이면 첫 활성화 경로는 예상한 기본 인바운드 거부·아웃바운드 허용 정책, 기본 DHCP·응답 처리, 그리고 **열린 방화벽에 의존하는 기존 인바운드 관리 서비스가 없음**을 전제로 합니다. 콘솔과 아웃바운드 NAT/DHCP 관리는 이 조건에 맞습니다. 기존 관리 SSH·인바운드 서비스를 유지해야 한다면 활성화 전에 이미 승인된 범위의 정책을 보존하세요. 넓은 관리 허용을 임의로 만들거나 콘솔 시험을 SSH 검증으로 여기지 않습니다. 조건이 불명확하면 정책을 해결하는 동안 UFW를 inactive로 둡니다.
 
-클라이언트 허용을 첫째, 같은 실습 끝점의 다른 출발지 거부를 둘째로 추가합니다. 일반적인 넓은 user 규칙보다 앞에 오며 어느 것도 관리 NIC를 대상으로 하지 않습니다.
+SSH와 HTTP 클라이언트 허용을 각각 만든 뒤 같은 실습 끝점의 deny를 추가합니다. **SSH allow, HTTP allow, 실습 deny** 순서로 일반적인 넓은 user 규칙보다 앞에 둡니다. 세 규칙 모두 실습 NIC만 대상으로 합니다. 허용을 분리하면 [캡스톤 방화벽 실습](08-container-cloud-capstone.md#firewall-fault)에서 SSH 권한을 제거하지 않고 HTTP 권한만 제거할 수 있습니다.
 
 **Ubuntu 서버, 일반 사용자가 sudo 호출:**
 
 ```bash
 sudo ufw insert 1 allow in on "$LAB_IF" proto tcp \
-  from 192.0.2.10 to 192.0.2.20 port 22,8000 comment 'network-beginner-client'
-sudo ufw insert 2 deny in on "$LAB_IF" proto tcp \
+  from 192.0.2.10 to 192.0.2.20 port 22 comment 'network-beginner-ssh'
+sudo ufw insert 2 allow in on "$LAB_IF" proto tcp \
+  from 192.0.2.10 to 192.0.2.20 port 8000 comment 'network-beginner-http'
+sudo ufw insert 3 deny in on "$LAB_IF" proto tcp \
   from any to 192.0.2.20 port 22,8000 comment 'network-beginner-other'
 sudo ufw show added
 ```
@@ -96,19 +98,21 @@ sudo ufw reload
 sudo ufw status numbered
 ```
 
-출발지 제한 allow가 같은 인터페이스·목적지 deny보다 앞이고 reload 후에도 유지되어야 합니다. 이 방식의 UFW 규칙은 실행 상태와 저장 설정 모두에 적용됩니다. firewalld처럼 규칙별 runtime·`--permanent` 분리나 timeout을 사용하는 절차가 아닙니다. 번호는 현재 목록 위치일 뿐이므로 정리할 때 원래 규칙 내용을 사용합니다.
+출발지 제한 allow 두 개가 같은 인터페이스·목적지 deny보다 앞에 위 순서대로 있고 reload 후에도 유지되어야 합니다. 이 방식의 UFW 규칙은 실행 상태와 저장 설정 모두에 적용됩니다. firewalld처럼 규칙별 runtime·`--permanent` 분리나 timeout을 사용하는 절차가 아닙니다. 번호는 현재 목록 위치일 뿐이므로 정리할 때 원래 규칙 내용을 사용합니다.
 
 아래 공통 시험을 진행합니다. **이 규칙만 되돌리려면** Ubuntu 서버 콘솔에서 실행합니다.
 
 ```bash
 sudo ufw delete allow in on "$LAB_IF" proto tcp \
-  from 192.0.2.10 to 192.0.2.20 port 22,8000
+  from 192.0.2.10 to 192.0.2.20 port 22
+sudo ufw delete allow in on "$LAB_IF" proto tcp \
+  from 192.0.2.10 to 192.0.2.20 port 8000
 sudo ufw delete deny in on "$LAB_IF" proto tcp \
   from any to 192.0.2.20 port 22,8000
 sudo ufw show added
 ```
 
-자신의 규칙만 승인합니다. 원래 inactive인 UFW를 이 실습 때문에 켰고 기준 상태로 복원하려면 저장 규칙을 제거한 **다음** `sudo ufw disable`을 실행합니다. 원래 active인 방화벽은 끄지 않습니다. `ufw-added.before`와 비교하세요. 7–8장까지 정책을 유지하려면 정리 상태로 두지 말고 두 규칙을 다시 적용·검증합니다.
+이 세 명령은 **이 장 전체 정리**의 역작업이며 HTTP만 고장 내는 실험에서 모두 실행할 명령이 아닙니다. 자신의 규칙만 승인합니다. 원래 inactive인 UFW를 이 실습 때문에 켰고 기준 상태로 복원하려면 저장 규칙을 제거한 **다음** `sudo ufw disable`을 실행합니다. 원래 active인 방화벽은 끄지 않습니다. `ufw-added.before`와 비교하세요. 7–8장까지 정책을 유지하려면 정리 상태로 두지 말고 세 규칙을 원래 순서로 다시 적용·검증합니다.
 
 ## 2B. Rocky: firewalld와 전용 실습 zone
 

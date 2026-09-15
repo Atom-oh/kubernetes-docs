@@ -96,13 +96,142 @@ Check that the client's original `192.0.2.20:8000` request fails while the serve
 
 **Recovery:** Press Ctrl+C in console A and restart the healthy command with `--bind 192.0.2.20`. One VM's loopback is not another VM's loopback.
 
-### D. Test a firewall hypothesis with evidence
+### D. Test a firewall hypothesis with evidence {#firewall-fault}
 
-Use the procedure for the **single firewall manager** selected in lesson 6. Record the healthy rules first, then remove **only the TCP 8000 allow rule added for this course**, using that lesson's deletion command. Leave SSH rules and default policies alone.
+Use **only the manager selected in lesson 6**, from the server's hypervisor console. This fault removes only the course-owned TCP 8000 allow. The TCP 22 allow, lab deny, default policies, zones/profile assignments, and management NIC stay in place. Finish the optional Fail2ban experiment first so no background ban change confounds this test.
 
-Repeat the healthy HTTP request from the client. Compare the server listener, selected zone/interface, current rules and lesson 7 capture. Traffic may remain allowed: if so, find another matching allow rule or the zone's default behavior and revise the hypothesis. Do not record “one rule was removed, therefore traffic was blocked”.
+**Server console B, normal user:** re-identify both NICs by their recorded hypervisor MACs; variables from lesson 6 are not assumed to survive.
 
-**Recovery:** Restore the TCP 8000 rule with the same source/interface scope from lesson 6. Verify both the effective rule and HTTP 200. If persistent rules changed too, reconcile runtime and persistent state using that manager's documented procedure.
+```bash
+ip -br link
+read -r -p 'Server lab NIC verified by MAC: ' LAB_IF
+read -r -p 'Server management NIC verified by MAC: ' MGMT_IF
+ip -4 -br address show dev "$LAB_IF"
+ip -4 -br address show dev "$MGMT_IF"
+ip -4 route
+sudo ss -ltnp 'sport = :8000'
+```
+
+Verify `.20/24` on the lab NIC, distinct NIC names, unchanged management, and the healthy `.20:8000` listener. Record the current rules as instructed below. If the server's timer expired, restart **only** `timeout 300 python3 -m http.server 8000 --bind 192.0.2.20 --directory "${LAB_WEB:?missing existing web directory}"` in server console A with its existing directory. Do not introduce a stopped-server fault at the same time.
+
+**Client, normal user:** recover the existing lesson-5 key directory and normal server account from your records. Do not create a new key or bypass the verified host record.
+
+```bash
+read -r -p 'Existing lesson-5 client key directory: ' SSH_LAB_DIR
+read -r -p 'Normal account on the server: ' SERVER_USER
+ls -l -- "${SSH_LAB_DIR:?missing key directory}/id_ed25519" \
+  "${SSH_LAB_DIR:?missing key directory}/known_hosts"
+```
+
+Define this short shell function once in that client terminal. Calling `check_lab_ssh` runs a **new** SSH connection, prints the remote account/connection, and returns to the client; it creates no file or service.
+
+```bash
+check_lab_ssh() {
+  ssh -F /dev/null -b 192.0.2.10 \
+    -i "${SSH_LAB_DIR:?missing key directory}/id_ed25519" \
+    -o "UserKnownHostsFile=${SSH_LAB_DIR:?missing key directory}/known_hosts" \
+    -o StrictHostKeyChecking=yes -o IdentitiesOnly=yes \
+    -o PreferredAuthentications=publickey \
+    -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no \
+    -o ControlMaster=no -o ControlPath=none -o ControlPersist=no \
+    -o BatchMode=no -o ConnectTimeout=5 \
+    "${SERVER_USER:?missing account}@192.0.2.20" \
+    'whoami; printf "%s\n" "$SSH_CONNECTION"'
+}
+check_lab_ssh
+```
+
+The private-key **passphrase prompt is allowed**; an unlocked agent is not required. Remote account-password fallback is disabled. `-F /dev/null` avoids unrelated client configuration, and disabling multiplexing prevents reuse of an old authenticated connection. Expect the normal account and a connection from `.10` to `.20` port 22. If this **before-fault** check or healthy HTTP fails, stop before changing any rule. Also preserve/recheck any separately required management SSH path.
+
+#### UFW: change only the saved/applied HTTP allow
+
+**Ubuntu server console B, sudo:**
+
+```bash
+sudo ufw status numbered
+sudo ufw show added
+```
+
+Proceed only with active UFW and lesson 6's three course rules in this order: **1: `.10`→`.20` TCP 22 allow on `LAB_IF`; 2: the separate TCP 8000 allow; 3: the same-interface/destination TCP `22,8000` deny**. Record their full specifications. If you still have an older combined `22,8000` allow or the order differs, reconcile the lesson-6 setup first; deleting one port is not an inverse of a multiport rule.
+
+Remove only HTTP:
+
+```bash
+sudo ufw delete allow in on "$LAB_IF" proto tcp \
+  from 192.0.2.10 to 192.0.2.20 port 8000
+sudo ufw status numbered
+sudo ufw show added
+```
+
+Confirm the TCP 22 allow remains first and the lab deny is now second. This changes both saved and applied UFW state. Leave those two rules and the default policies alone. Now perform the **during-fault checks** below.
+
+**Restore from the same Ubuntu console:** verify the deny is still second, then insert HTTP at position 2, **ahead of that deny**:
+
+```bash
+sudo ufw insert 2 allow in on "$LAB_IF" proto tcp \
+  from 192.0.2.10 to 192.0.2.20 port 8000 comment 'network-beginner-http'
+sudo ufw status numbered
+sudo ufw show added
+```
+
+Expect the original SSH allow → HTTP allow → lab deny order and original source/interface/destination scope. Appending an allow after the deny would still block HTTP; the deletion's inverse includes restoring placement. If another rule changed the positions, stop and re-establish the recorded order instead of using a stale number. Continue with the after-recovery checks below.
+
+#### firewalld: remove HTTP only at runtime and preserve the saved policy
+
+**Rocky server console B, normal user for assignments, sudo for firewall queries:**
+
+```bash
+RULE22='rule family="ipv4" source address="192.0.2.10/32" destination address="192.0.2.20/32" port port="22" protocol="tcp" accept'
+RULE8000='rule family="ipv4" source address="192.0.2.10/32" destination address="192.0.2.20/32" port port="8000" protocol="tcp" accept'
+sudo firewall-cmd --get-zone-of-interface="$LAB_IF"
+sudo firewall-cmd --get-zone-of-interface="$MGMT_IF"
+sudo firewall-cmd --zone=network-beginner --list-all
+sudo firewall-cmd --permanent --zone=network-beginner --list-all
+sudo firewall-cmd --zone=network-beginner --query-rich-rule="$RULE22"
+sudo firewall-cmd --permanent --zone=network-beginner --query-rich-rule="$RULE22"
+sudo firewall-cmd --zone=network-beginner --query-rich-rule="$RULE8000"
+sudo firewall-cmd --permanent --zone=network-beginner --query-rich-rule="$RULE8000"
+```
+
+Expect only the lab NIC in `network-beginner`, the original management zone, and all four queries returning `yes`. This requires lesson 6's retained permanent rules, not its expiring trial. Record both configurations and inspect any broader policy that could still accept HTTP.
+
+Remove **only the runtime HTTP rule**:
+
+```bash
+sudo firewall-cmd --zone=network-beginner --remove-rich-rule="$RULE8000"
+sudo firewall-cmd --zone=network-beginner --query-rich-rule="$RULE8000"
+sudo firewall-cmd --permanent --zone=network-beginner --query-rich-rule="$RULE8000"
+sudo firewall-cmd --zone=network-beginner --query-rich-rule="$RULE22"
+sudo firewall-cmd --permanent --zone=network-beginner --query-rich-rule="$RULE22"
+```
+
+Expect `no`, `yes`, `yes`, `yes`; `no` has a nonzero status and is expected here. Run the during-fault checks. Do not reload, reboot, or use `--runtime-to-permanent`: a reload would reintroduce the saved HTTP rule, while copying runtime to permanent would unintentionally persist the fault.
+
+**Restore from the same Rocky console**, without a global reload or permanent change:
+
+```bash
+sudo firewall-cmd --zone=network-beginner --add-rich-rule="$RULE8000"
+sudo firewall-cmd --zone=network-beginner --query-rich-rule="$RULE8000"
+sudo firewall-cmd --permanent --zone=network-beginner --query-rich-rule="$RULE8000"
+sudo firewall-cmd --zone=network-beginner --query-rich-rule="$RULE22"
+sudo firewall-cmd --permanent --zone=network-beginner --query-rich-rule="$RULE22"
+```
+
+All four queries should again say `yes`. Compare the runtime/permanent lists with your recorded baseline: the saved rules were never changed, and runtime HTTP has been restored with the same scope. An unexpected saved-policy change needs investigation against that record, not a bulk overwrite.
+
+#### Checks during the fault and after recovery
+
+**Client, normal user, same terminal:** run this pair **after HTTP removal and again after restoration**, in addition to the before-fault check.
+
+```bash
+check_lab_ssh
+curl --disable --noproxy '*' --connect-timeout 2 --max-time 5 \
+  -i http://192.0.2.20:8000/health.txt
+```
+
+During the fault, the fresh key-only SSH check must still succeed. HTTP should fail under the recorded course policy while the server listener remains `.20:8000`. If SSH fails, recover only the removed HTTP permission from the server console, compare the unchanged SSH rule/path, and stop: you have not demonstrated an HTTP-only fault. If HTTP still succeeds, inspect other matching accepts, zone/default behavior, listener and packet evidence; do not claim a block merely because one rule was removed.
+
+After recovery, require a fresh successful key-only SSH check and HTTP 200 with `healthy`. On server console B, repeat `sudo ss -ltnp 'sport = :8000'`, the relevant rule queries/listing, `ip -4 -br address show dev "$MGMT_IF"`, and `ip -4 route`; compare with the before-fault record and recheck required management access. Record observations for all three stages separately. These instructions are not a claim that guest execution was performed when writing the document.
 
 ## Report and completion criteria {#capstone-report}
 
@@ -161,6 +290,9 @@ Record whether lesson 6's rules will remain for subsequent practice. When ending
 
 - [Python http.server](https://docs.python.org/3.12/library/http.server.html)
 - [curl address mapping](https://curl.se/docs/manpage.html)
+- [Ubuntu 24.04 UFW: rule order, multiport rules and deletion](https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html)
+- [firewalld: runtime/permanent configuration and rich-rule operations](https://firewalld.org/documentation/man-pages/firewall-cmd.html)
+- [OpenSSH client options and connection sharing](https://man.openbsd.org/ssh_config)
 - [Docker bridge](https://docs.docker.com/engine/network/drivers/bridge/)
 - [Docker overlay](https://docs.docker.com/engine/network/drivers/overlay/)
 - [Kubernetes networking model](https://kubernetes.io/docs/concepts/services-networking/)

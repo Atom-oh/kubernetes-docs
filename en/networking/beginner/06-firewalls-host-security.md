@@ -71,19 +71,21 @@ Inspect any local `/etc/ufw/before.rules`, `after.rules`, and corresponding IPv6
 
 If UFW is **inactive**, this first activation path requires its expected default incoming deny/outgoing allow policy, stock DHCP/reply handling, and **no existing inbound management services that depend on an open firewall**. Console plus outbound NAT/DHCP management satisfies that path. If existing management SSH/inbound services must remain reachable, retain their already approved scoped policy before activation; do not invent a broad management allow or assume the console test verifies SSH. If these conditions are unclear, keep UFW inactive while resolving the policy.
 
-Add the client allow first and an explicit rejection of other sources for these same lab endpoints second. They precede ordinary broad user rules; neither targets the management NIC.
+Add separate client allows for SSH and HTTP, followed by a deny for the same lab endpoints. The order is **SSH allow, HTTP allow, lab deny**, ahead of ordinary broad user rules. All three target only the lab NIC. Separate allows let the [capstone firewall exercise](08-container-cloud-capstone.md#firewall-fault) remove HTTP permission without removing SSH permission.
 
 **Ubuntu server, normal user invoking sudo:**
 
 ```bash
 sudo ufw insert 1 allow in on "$LAB_IF" proto tcp \
-  from 192.0.2.10 to 192.0.2.20 port 22,8000 comment 'network-beginner-client'
-sudo ufw insert 2 deny in on "$LAB_IF" proto tcp \
+  from 192.0.2.10 to 192.0.2.20 port 22 comment 'network-beginner-ssh'
+sudo ufw insert 2 allow in on "$LAB_IF" proto tcp \
+  from 192.0.2.10 to 192.0.2.20 port 8000 comment 'network-beginner-http'
+sudo ufw insert 3 deny in on "$LAB_IF" proto tcp \
   from any to 192.0.2.20 port 22,8000 comment 'network-beginner-other'
 sudo ufw show added
 ```
 
-Stop if either command fails and use the exact removal below for whichever rule you successfully added. Do not duplicate an existing identical rule: record whether it predated this exercise and leave it owned by its original configuration.
+Stop if any command fails and use the exact removal below for whichever rules you successfully added. Do not duplicate an existing identical rule: record whether it predated this exercise and leave it owned by its original configuration.
 
 If UFW was inactive and the activation gate above passed, run **on the server console** `sudo ufw enable`; read the warning rather than using `--force`. If already active, rule changes are applied immediately.
 
@@ -96,19 +98,21 @@ sudo ufw reload
 sudo ufw status numbered
 ```
 
-Expect the source-specific allow before the same-interface/destination deny, and preservation after reload. UFW rules added this way are saved as well as applied; it has no firewalld-style per-rule runtime/`--permanent` split or timeout in this workflow. A rule number is only the current list position, so later cleanup uses the original rule specification.
+Expect the two source-specific allows before the same-interface/destination deny, in the order above, with preservation after reload. UFW rules added this way are saved as well as applied; it has no firewalld-style per-rule runtime/`--permanent` split or timeout in this workflow. A rule number is only the current list position, so later cleanup uses the original rule specification.
 
 Perform the shared tests below. To **undo only these rules**, from the Ubuntu server console:
 
 ```bash
 sudo ufw delete allow in on "$LAB_IF" proto tcp \
-  from 192.0.2.10 to 192.0.2.20 port 22,8000
+  from 192.0.2.10 to 192.0.2.20 port 22
+sudo ufw delete allow in on "$LAB_IF" proto tcp \
+  from 192.0.2.10 to 192.0.2.20 port 8000
 sudo ufw delete deny in on "$LAB_IF" proto tcp \
   from any to 192.0.2.20 port 22,8000
 sudo ufw show added
 ```
 
-Confirm only your rules. If you enabled an originally inactive UFW solely for this exercise and are restoring its baseline, run `sudo ufw disable` **after** removing your saved rules. Do not disable an originally active firewall. Compare with `ufw-added.before`. To keep the course policy for lessons 7–8, reapply the two rules and reverify instead of leaving it cleaned up.
+These are the three inverses for **full lesson cleanup**, not three commands to run for an HTTP-only fault. Confirm only your rules. If you enabled an originally inactive UFW solely for this exercise and are restoring its baseline, run `sudo ufw disable` **after** removing your saved rules. Do not disable an originally active firewall. Compare with `ufw-added.before`. To keep the course policy for lessons 7–8, reapply the three rules in their original order and reverify instead of leaving it cleaned up.
 
 ## 2B. Rocky: firewalld and a dedicated lab zone
 

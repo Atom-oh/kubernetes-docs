@@ -23,7 +23,7 @@
 | 7 | [관측과 성능](07-monitoring-performance.md) · [퀴즈](../../quizzes/networking/beginner/07-monitoring-performance-quiz.md) | 소켓·패킷·트래픽을 관측하고 측정 결과의 한계를 설명한다 | 2–3시간 |
 | 8 | [종합 실습과 클라우드 연결](08-container-cloud-capstone.md) · [퀴즈](../../quizzes/networking/beginner/08-container-cloud-capstone-quiz.md) | 작은 장애를 재현·분리·복구하고 다음 학습 경로를 고른다 | 3–4시간 |
 
-각 장의 완료 기준을 충족하고 퀴즈 해설을 자신의 말로 설명한 뒤 넘어가세요. 커널 튜닝과 CNI 구현 비교는 기본 실습을 마친 뒤 선택합니다.
+각 장의 완료 기준을 충족하고 퀴즈 해설을 자신의 말로 설명한 뒤 넘어가세요. 1장에서 패키지 작업을 배운 다음 [게스트 도구 준비](#guest-tools)로 돌아와 2–4장 전에 완료합니다. 커널 튜닝과 CNI 구현 비교는 기본 실습을 마친 뒤 선택합니다.
 
 ## 시작 전: 실습 VM 준비 {#lab-environment}
 
@@ -63,6 +63,120 @@
 ```
 
 `192.0.2.0/24`는 문서용 주소 대역이며 이 과정에서는 격리된 로컬 네트워크에만 사용합니다. 이 토폴로지는 인터넷에서 라우팅할 공인망 설계가 아닙니다. 두 VM의 관리 NIC는 여전히 다른 네트워크에 연결되므로 VM 전체가 air gap이라는 뜻도 아닙니다.
+
+## 1장 이후 게스트 도구 준비 {#guest-tools}
+
+먼저 [1장의 패키지 절차](01-linux-cli.md)를 배우고 **2–4장 전에 각 실습 게스트 안에서** 이 준비를 마칩니다. 저장소 연결은 기존 NAT/DHCP 관리 NIC를 사용하며 내부 실습 NIC에 업링크·게이트웨이·DNS 서버를 추가하지 않습니다. 최소 이미지는 네트워크가 정상이어도 진단 도구가 빠져 있을 수 있습니다.
+
+### 없는 명령과 제공 패키지 확인
+
+**각 게스트, 일반 사용자. 조회만 수행합니다.**
+
+```bash
+hostname
+cat /etc/os-release
+command -v ip ss ping getent grep timeout dig tracepath traceroute python3 curl nc ncat
+```
+
+실행 파일 경로가 나오면 사용할 수 있습니다. 결과가 불명확하면 `command -v dig`처럼 하나만 조회하세요. 없는 대안 도구에 경로가 나오지 않거나 종료 상태가 0이 아닌 것은 정상입니다. 없는 이름 전부가 아니라 **그 게스트에서 선택한 실습에 필요한 명령**을 기록합니다.
+
+| 명령 / 용도 | Ubuntu Server 24.04 패키지 | Rocky Linux 9 패키지 | 필요한 위치 |
+|---|---|---|---|
+| `ip`, `ss`: 인터페이스·경로·소켓 | `iproute2` | `iproute` | 두 게스트 |
+| `ping`: 제한된 ICMP 검사 | `iputils-ping` | `iputils` | 두 게스트 |
+| `dig`: DNS 프로토콜 질의 | `bind9-dnsutils` | `bind-utils` | 4장 클라이언트 |
+| `tracepath`: 기본 추적 도구 | `iputils-tracepath` | `iputils` | 클라이언트. 다음 행과 하나 선택 |
+| Linux `traceroute`: 추적 대안 | `traceroute` | `traceroute` | 이 대안을 선택한 클라이언트만 |
+| `python3`: 임시 HTTP 서버 | `python3`(인터프리터 패키지를 의존성으로 설치) | `python3` | 서버 |
+| `curl`: HTTP 요청 | `curl` | 기존 `curl-minimal` **또는** `curl` 제공 패키지 | 클라이언트와 서버 자체 검사 |
+| OpenBSD `nc` / Ncat `ncat`: TCP 검사 | `netcat-openbsd` → `nc` 사용 | `nmap-ncat` → `ncat` 사용 | 클라이언트 |
+
+이 준비는 **`tracepath`를 기본 선택**으로 합니다. 이미 설치된 Linux `traceroute`가 있다면 4장의 해당 명령으로 대신 사용할 수 있으며 둘 다 요구하지 않습니다. Rocky의 `iputils`는 `ping`과 `tracepath`를 모두 제공합니다. 비슷한 명령 이름이 같은 옵션을 보장하지 않으므로 지정한 netcat 구현을 사용하세요.
+
+`getent`, `grep`, `timeout`, sudo, 편집기는 게스트·1장의 기본 준비입니다. 이 확인이 실패하면 기본 준비부터 해결합니다. 이 표 때문에 두 번째 네트워크 관리자나 resolver를 설치하지 마세요. **이미 NetworkManager가 관리하는 Rocky 게스트**에서 선택 도구 `nmtui`는 `NetworkManager-tui` 패키지가 제공합니다. 그 인터페이스를 선택했을 때만 같은 패키지 선택 절차로 조회·설치하며 networkd 게스트에는 필요하지 않습니다.
+
+### 변경 미리 보기와 선택한 누락 도구만 설치
+
+첫 설치 전에 게스트 스냅샷 `before-guest-tools`를 만들고 설치된 패키지·제공자 상태를 기록합니다. 아래 **자신의 배포판 분기만** 사용하세요. 각 예시는 **`dig`가 없었던 경우**입니다. 이미 있으면 그 설치는 건너뜁니다. 다른 선택 도구가 없다면 `TOOL_PACKAGE`를 표의 해당 패키지 하나로 바꾸고 후보·작업 내역을 다시 확인합니다. 표 전체를 설치 명령에 붙여 넣지 않습니다.
+
+**Ubuntu 게스트, 일반 사용자. 표시한 명령만 sudo:**
+
+```bash
+TOOL_PACKAGE=bind9-dnsutils
+dpkg-query -W "$TOOL_PACKAGE"
+sudo apt update
+apt-cache policy "$TOOL_PACKAGE"
+sudo apt-get --simulate install "$TOOL_PACKAGE"
+```
+
+없는 패키지의 로컬 조회에서 “No packages found”는 정상입니다. 저장소 목록 갱신이 성공하면 `Candidate` 버전과 모의 실행의 의존성·업그레이드·제거를 읽습니다. 후보가 없거나 저장소 오류가 나면 구성된 Ubuntu 저장소와 관리 경로를 확인하며 멈춥니다. 패키지는 설치되어 있지만 명령이 없다면 충돌하는 제공자를 설치하지 말고 파일과 명령 검색 경로를 조사합니다.
+
+그 **선택 명령이 실제로 없고** 미리 보기에 의도한 패키지·의존성만 있을 때 **Ubuntu 게스트**에 설치합니다.
+
+```bash
+sudo apt install "$TOOL_PACKAGE"
+```
+
+미리 보기와 설치 사이에 메타데이터가 바뀔 수 있으므로 실제 질문도 확인합니다. 예상 밖의 업그레이드·제거를 자동 승인하지 마세요.
+
+**Rocky 게스트, 일반 사용자:** 패키지를 선택하기 전에 curl 제공자를 별도로 확인합니다.
+
+```bash
+command -v curl
+rpm -q curl curl-minimal
+```
+
+두 패키지 중 하나가 “not installed”여도 정상입니다. `curl`이 이미 동작하면 **그 제공 패키지를 유지**하고 다른 쪽을 설치 요청하지 않습니다. 명령 확인이 성공한 뒤 `rpm -qf "$(command -v curl)"`로 소유 패키지를 확인할 수 있습니다. 이 HTTP 실습에는 기존 `curl-minimal`로 충분합니다. `curl`과 `curl-minimal`은 충돌하므로 과정을 따라 하려고 `--allowerasing`이나 패키지 교체를 사용하지 마세요.
+
+`curl`이 없고 **두 제공 패키지가 모두 설치되지 않았을 때** 아래 절차에서 `curl-minimal`을 선택합니다. 제공 패키지는 있는데 명령을 찾지 못한다면 교체 대신 파일·PATH를 확인합니다.
+
+**Rocky 게스트, 일반 사용자. 아래는 `dig`가 없는 경우만의 예시입니다.**
+
+```bash
+TOOL_PACKAGE=bind-utils
+rpm -q "$TOOL_PACKAGE"
+dnf info "$TOOL_PACKAGE"
+sudo dnf --assumeno install "$TOOL_PACKAGE"
+```
+
+설치 가능한 패키지, 아키텍처, 저장소, 제안된 의존성·제거를 확인합니다. `--assumeno`는 설치하지 않고 작업을 거절합니다. 거절 때문에 종료 상태가 0이 아닌 것은 네트워크 검사 실패가 아닙니다. 후보가 없으면 구성된 Rocky 9 저장소를 조사합니다. 필수 표에는 EPEL이 필요하지 않습니다. 이어서 **선택한 명령이 없을 때만 Rocky 게스트**에 설치합니다.
+
+```bash
+sudo dnf install "$TOOL_PACKAGE"
+```
+
+최종 작업 내역을 읽고 승인하며 기존 curl 제공자와 네트워크 관리자를 보존합니다. 패키지 후보·버전은 게스트에서 관찰할 값이지 이 문서가 보장하는 고정값이 아닙니다.
+
+### 명령 재확인과 복구 기록
+
+**두 게스트, 일반 사용자:** `command -v ip ss ping getent grep timeout`으로 기본 도구를 찾아야 합니다. 위 기본 선택에서는 지정한 게스트별로 다음을 확인합니다.
+
+```bash
+# 클라이언트, 어느 배포판에서든. traceroute를 선택한 경우에만 대체:
+command -v dig tracepath curl
+```
+
+```bash
+# Ubuntu 클라이언트에서만:
+command -v nc
+```
+
+```bash
+# Rocky 클라이언트에서만:
+command -v ncat
+```
+
+```bash
+# 서버, 어느 배포판에서든:
+command -v python3 curl
+python3 --version
+```
+
+선택한 도구 경로와 Python 3.9 이상을 확인합니다. 추가한 패키지를 기록하세요. 이것은 명령 사용 가능성 확인이지 네트워크 통신 성공의 증거가 아닙니다. 4장에서 필요한 명령이 없으면 여기로 돌아옵니다.
+
+이후 장을 위해 도구를 유지합니다. 패키지 이름을 지정해 제거해도 의존성·설정·캐시·로그의 정확한 역작업은 아닙니다. 원래 있던 제공 패키지를 제거하거나 광범위한 autoremove를 정리 수단으로 사용하지 마세요. 이 준비를 완전히 되돌리려면 의존하는 실습을 마친 뒤 `before-guest-tools`로 복원합니다. 스냅샷 이후의 다른 게스트 작업도 사라집니다.
+
+2026년 9월 15일 확인한 배포판 1차 자료: Ubuntu Noble의 [iproute2](https://packages.ubuntu.com/noble/amd64/iproute2/filelist), [ping](https://packages.ubuntu.com/noble/amd64/iputils-ping/filelist), [dig](https://packages.ubuntu.com/noble/amd64/bind9-dnsutils/filelist), [tracepath](https://packages.ubuntu.com/noble/amd64/iputils-tracepath/filelist), [traceroute](https://packages.ubuntu.com/noble/amd64/traceroute/filelist), [netcat](https://packages.ubuntu.com/noble/amd64/netcat-openbsd/filelist), [curl](https://packages.ubuntu.com/noble/amd64/curl/filelist) 파일 목록과 [Python 패키지 의존성](https://packages.ubuntu.com/noble/python3), Rocky 9의 [iproute](https://git.rockylinux.org/staging/rpms/iproute/-/blob/r9/SPECS/iproute.spec), [iputils](https://git.rockylinux.org/staging/rpms/iputils/-/blob/r9/SPECS/iputils.spec), [BIND 도구](https://git.rockylinux.org/staging/rpms/bind/-/blob/r9/SPECS/bind.spec), [Ncat](https://git.rockylinux.org/staging/rpms/nmap/-/blob/r9/SPECS/nmap.spec), [curl 제공 패키지](https://git.rockylinux.org/staging/rpms/curl/-/blob/r9/SPECS/curl.spec) 명세입니다. 실제 게스트 조회로 맞는 아키텍처·버전을 선택하며 예시 x86_64 파일 목록이 그 아키텍처 사용을 요구하는 것은 아닙니다.
 
 ## 실습 명령을 읽는 규칙 {#command-conventions}
 

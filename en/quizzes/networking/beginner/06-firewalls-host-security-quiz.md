@@ -35,7 +35,7 @@ Use the client `.10`, server `.20`, separate management NIC, and console recover
 
 **Answer: A**
 
-**Explanation:** A narrow allow is additive, not a revocation. The lesson inserts the client allow before a deny for other sources on the same lab NIC/destination/ports. Custom `before.rules` can still affect results, so inspect actual ownership and earlier processing. Two competing managers make reasoning harder rather than more secure.
+**Explanation:** A narrow allow is additive, not a revocation. The lesson inserts separate client allows for TCP 22 and 8000 before a deny on the same lab NIC/destination/ports. This allows HTTP permission to be removed independently of SSH. Custom `before.rules` can still affect results, so inspect actual ownership and earlier processing. Two competing managers make reasoning harder rather than more secure.
 
 </details>
 
@@ -51,7 +51,7 @@ Use the client `.10`, server `.20`, separate management NIC, and console recover
 
 **Answer: D**
 
-**Explanation:** This UFW workflow does not have firewalld's per-rule permanent/runtime split. Positions can change, while interface/source/destination/protocol/ports define the intended rule. Initial activation also needs a management-access check: unchanged NIC configuration alone does not preserve every inbound service.
+**Explanation:** This UFW workflow does not have firewalld's per-rule permanent/runtime split. Positions can change, while interface/source/destination/protocol/ports define the intended rule. An HTTP-only fault removes just the independent TCP 8000 allow; restoring it must insert it ahead of the remaining lab deny. Do not remove the TCP 22 allow for that experiment. Initial activation also needs a management-access check: unchanged NIC configuration alone does not preserve every inbound service.
 
 </details>
 

@@ -23,7 +23,7 @@ Start at lesson 1 if you are new. Experienced Linux users still need the shared 
 | 7 | [Monitoring and performance](07-monitoring-performance.md) · [Quiz](../../quizzes/networking/beginner/07-monitoring-performance-quiz.md) | Observe sockets, packets and traffic and explain measurement limits | 2–3 hours |
 | 8 | [Capstone and cloud connections](08-container-cloud-capstone.md) · [Quiz](../../quizzes/networking/beginner/08-container-cloud-capstone-quiz.md) | Reproduce, isolate and recover from small failures and choose a next step | 3–4 hours |
 
-Meet each lesson's completion criteria and explain its quiz answers in your own words before continuing. Kernel tuning and CNI implementation comparisons come after the core exercises.
+Meet each lesson's completion criteria and explain its quiz answers in your own words before continuing. After learning package operations in lesson 1, return to [guest tool preparation](#guest-tools) before lessons 2–4. Kernel tuning and CNI implementation comparisons come after the core exercises.
 
 ## Prepare the lab VMs {#lab-environment}
 
@@ -63,6 +63,120 @@ Separate NAT/DHCP management NIC     Separate NAT/DHCP management NIC
 ```
 
 `192.0.2.0/24` is a documentation range used here only on the isolated local network, not as a publicly routed network design. The management NICs still connect the guests to another network, so this does not make the whole VM an air gap.
+
+## Prepare guest tools after lesson 1 {#guest-tools}
+
+First learn the [lesson-1 package workflow](01-linux-cli.md), then complete this checkpoint **inside each disposable guest before lessons 2–4**. Use its existing NAT/DHCP management connection for repositories; do not give the internal lab NIC an uplink, gateway, or DNS server. A minimal image may omit diagnostic tools even when its network works.
+
+### Identify missing commands and their packages
+
+**Each guest, normal user; inspect only:**
+
+```bash
+hostname
+cat /etc/os-release
+command -v ip ss ping getent grep timeout dig tracepath traceroute python3 curl nc ncat
+```
+
+A printed executable path means the command is available. For an unclear result, query one name, for example `command -v dig`. No path/nonzero status for a missing alternative is normal. Record missing commands needed for **that guest's selected exercises**, not every absent name.
+
+| Command / use | Ubuntu Server 24.04 package | Rocky Linux 9 package | Needed where |
+|---|---|---|---|
+| `ip`, `ss`: interfaces, routes, sockets | `iproute2` | `iproute` | Both guests |
+| `ping`: bounded ICMP checks | `iputils-ping` | `iputils` | Both guests |
+| `dig`: DNS protocol queries | `bind9-dnsutils` | `bind-utils` | Client in lesson 4 |
+| `tracepath`: default trace choice | `iputils-tracepath` | `iputils` | Client; choose this or the next row |
+| Linux `traceroute`: alternative trace choice | `traceroute` | `traceroute` | Client, only if selecting this alternative |
+| `python3`: temporary HTTP server | `python3` (pulls in the interpreter packages) | `python3` | Server |
+| `curl`: HTTP requests | `curl` | Existing `curl-minimal` **or** `curl` provider | Client and server self-checks |
+| OpenBSD `nc` / Ncat `ncat`: TCP probe | `netcat-openbsd` → use `nc` | `nmap-ncat` → use `ncat` | Client |
+
+This checkpoint chooses **`tracepath` by default**; an already installed Linux `traceroute` can be used instead with lesson 4's corresponding commands. Do not require both. On Rocky, `iputils` supplies both `ping` and `tracepath`. Use the indicated netcat implementation: similar command names do not guarantee identical options.
+
+`getent`, `grep`, `timeout`, sudo, and the editor belong to the guest/lesson-1 baseline. If those checks fail, resolve that baseline first. Do not install a second network manager or resolver to satisfy this table. On an **already NetworkManager-managed Rocky guest**, optional `nmtui` is supplied by `NetworkManager-tui`; inspect/install it through the same selected-package workflow only if you choose that interface. A networkd guest does not need it.
+
+### Preview and install only selected missing tooling
+
+Before a first installation, take a guest snapshot `before-guest-tools` and record installed package/provider state. Use **only your distribution's branch** below. Each example assumes **`dig` was missing**. If it is already available, skip that installation. For a different missing selected command, replace `TOOL_PACKAGE` with its one package from the table and repeat the candidate/transaction checks; do not paste the whole matrix into an install command.
+
+**Ubuntu guest, normal user; sudo only on marked lines:**
+
+```bash
+TOOL_PACKAGE=bind9-dnsutils
+dpkg-query -W "$TOOL_PACKAGE"
+sudo apt update
+apt-cache policy "$TOOL_PACKAGE"
+sudo apt-get --simulate install "$TOOL_PACKAGE"
+```
+
+“No packages found” in the local query is expected for an absent package. After a successful repository-index refresh, inspect the `Candidate` version and simulated dependencies, upgrades, and removals. No candidate or repository errors mean stop and check the configured Ubuntu repositories/management path. If a package is already installed but its command is missing, investigate its files and command search path rather than installing a conflicting provider.
+
+Only when that **selected command is absent** and the preview contains the intended package/dependencies, install on the **Ubuntu guest**:
+
+```bash
+sudo apt install "$TOOL_PACKAGE"
+```
+
+Review the real prompt too; metadata can change between preview and installation. Do not automatically confirm unexpected upgrades/removals.
+
+**Rocky guest, normal user:** check the curl provider separately before selecting any package.
+
+```bash
+command -v curl
+rpm -q curl curl-minimal
+```
+
+One of the package queries may report “not installed”; that is normal. If `curl` already works, **keep whichever provider owns it** and do not request the other package. You can identify the owner with `rpm -qf "$(command -v curl)"` after the availability check succeeds. For these HTTP exercises, existing `curl-minimal` is sufficient. `curl` and `curl-minimal` conflict; do not use `--allowerasing` or a package swap to follow this course.
+
+If `curl` is absent and **neither provider is installed**, select `curl-minimal` through the workflow below. If a provider is installed but the command cannot be found, inspect its files/PATH instead of replacing it.
+
+**Rocky guest, normal user; example only for a missing `dig`:**
+
+```bash
+TOOL_PACKAGE=bind-utils
+rpm -q "$TOOL_PACKAGE"
+dnf info "$TOOL_PACKAGE"
+sudo dnf --assumeno install "$TOOL_PACKAGE"
+```
+
+Check the available package, architecture, repository, and proposed dependencies/removals. `--assumeno` declines the transaction without installing; a nonzero status for the declined transaction is not a failed network probe. No candidate means investigate the configured Rocky 9 repositories. The mandatory table does not require EPEL. Then, **only for the selected missing command**, install on the **Rocky guest**:
+
+```bash
+sudo dnf install "$TOOL_PACKAGE"
+```
+
+Review the final transaction before confirming. Preserve installed curl providers and the existing network manager. Package candidates/versions are guest observations, not values guaranteed by this document.
+
+### Recheck commands and keep a recovery record
+
+**Both guests, normal user:** `command -v ip ss ping getent grep timeout` must find the baseline tools. For this checkpoint's default selections, check the following on the indicated guest:
+
+```bash
+# Client, either distribution; substitute traceroute only if you selected it:
+command -v dig tracepath curl
+```
+
+```bash
+# Ubuntu client only:
+command -v nc
+```
+
+```bash
+# Rocky client only:
+command -v ncat
+```
+
+```bash
+# Server, either distribution:
+command -v python3 curl
+python3 --version
+```
+
+Expect paths for your selected tools and Python 3.9 or later. Record which packages you added; these checks establish availability, not successful network communication. Return here if lesson 4 finds a missing required tool.
+
+Keep the tools for later lessons. Removing named packages is not an exact reversal of dependencies, configuration, caches, or logs; never remove a pre-existing provider or run broad autoremove as cleanup. For a complete rollback of this preparation, restore `before-guest-tools` after dependent exercises are finished, understanding that the snapshot also discards later guest work.
+
+Package mappings checked against primary distribution sources on September 15, 2026: Ubuntu Noble file lists for [iproute2](https://packages.ubuntu.com/noble/amd64/iproute2/filelist), [ping](https://packages.ubuntu.com/noble/amd64/iputils-ping/filelist), [dig](https://packages.ubuntu.com/noble/amd64/bind9-dnsutils/filelist), [tracepath](https://packages.ubuntu.com/noble/amd64/iputils-tracepath/filelist), [traceroute](https://packages.ubuntu.com/noble/amd64/traceroute/filelist), [netcat](https://packages.ubuntu.com/noble/amd64/netcat-openbsd/filelist), [curl](https://packages.ubuntu.com/noble/amd64/curl/filelist), and [Python package dependencies](https://packages.ubuntu.com/noble/python3); Rocky 9 package specifications for [iproute](https://git.rockylinux.org/staging/rpms/iproute/-/blob/r9/SPECS/iproute.spec), [iputils](https://git.rockylinux.org/staging/rpms/iputils/-/blob/r9/SPECS/iputils.spec), [BIND utilities](https://git.rockylinux.org/staging/rpms/bind/-/blob/r9/SPECS/bind.spec), [Ncat](https://git.rockylinux.org/staging/rpms/nmap/-/blob/r9/SPECS/nmap.spec), and [curl providers](https://git.rockylinux.org/staging/rpms/curl/-/blob/r9/SPECS/curl.spec). Live guest queries select the appropriate architecture/version; an example x86_64 file listing is not a requirement to use that architecture.
 
 ## Reading the commands {#command-conventions}
 

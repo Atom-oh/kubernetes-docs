@@ -20,7 +20,7 @@
 | Ubuntu OpenBSD `nc` 또는 Rocky `ncat` | TCP 연결 검사 한 번 |
 | systemd-resolved가 활성인 경우 `resolvectl` | 해당 resolver 확인, Rocky의 필수 조건 아님 |
 
-`command -v ip ping getent timeout dig tracepath traceroute python3 curl ss nc ncat`으로 확인하세요. 선택하지 않은 대안 도구가 없는 것은 정상입니다. 선택한 실습에 필요한 도구가 없으면 환경 준비로 돌아갑니다. 이 장에는 패키지 설치 명령이 없습니다.
+`command -v ip ping getent timeout dig tracepath traceroute python3 curl ss nc ncat`으로 확인하세요. 선택하지 않은 대안 도구가 없는 것은 정상입니다. 선택한 실습에 필요한 도구가 없으면 [게스트 도구 준비](README.md#guest-tools)에서 제공 패키지를 확인하고 선택한 누락 도구만 설치합니다. 이 장에는 패키지 설치 명령이 없습니다.
 
 학습을 마치면 NSS와 DNS 조회를 구분하고, 권한 있는 응답과 캐시를 설명하며, 선택된 경로를 확인할 수 있습니다. ICMP·추적 결과를 해석하고 TCP와 HTTP를 나누어 검사하며 근거와 다음 조치가 있는 장애 기록을 작성합니다.
 
@@ -241,6 +241,8 @@ timeout 300s python3 -m http.server 18080 --bind 192.0.2.20 --directory "${LAB_H
 ```
 
 `mktemp`가 실패하면 멈추세요. `${변수:?메시지}`는 빈 변수로 다음 경로를 사용하지 못하게 합니다. 출력된 디렉터리 경로를 기록합니다. 새 디렉터리의 실습 파일만 제공하며 홈 디렉터리를 제공하거나 심볼릭 링크를 추가하지 않습니다. `--bind`는 모든 주소 수신을 피하고, `--directory`는 콘텐츠 경로, `timeout`은 5분 뒤 종료입니다. Ctrl+C로 먼저 중단할 수 있습니다. 제한 시간으로 끝난 경우 종료 상태 124는 정상입니다.
+
+실습 도중 타이머가 끝나면 같은 서버 터미널 A에서 `timeout 300s python3 -m http.server 18080 --bind 192.0.2.20 --directory "${LAB_HTTP_DIR:?missing lab directory}"`로 다시 시작합니다. `mktemp`를 반복하지 말고 기록한 디렉터리를 재사용하세요.
 
 Python 내장 HTTP 서버는 실습 도구입니다. 여기에는 인증·TLS가 없으며 운영 배포가 아닙니다. 시스템 서비스나 부팅 활성화도 만들지 않습니다.
 

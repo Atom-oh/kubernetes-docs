@@ -52,19 +52,19 @@ Six questions. Explain each answer in your own words.
 
 </details>
 
-4. Deleting the lab TCP 8000 allow rule does not stop HTTP requests. What should you do?
+4. You removed only UFW's independent TCP 8000 allow. New key-only SSH still works, but HTTP fails. Which recovery preserves the intended policy?
 
-   - A) Report failure anyway
-   - B) Flush every rule
-   - C) Declare the firewall implementation broken without evidence
-   - D) Inspect other allow rules and actual zone behavior
+   - A) Append an HTTP allow after the remaining lab deny
+   - B) Delete the lab deny and all SSH rules
+   - C) Disable UFW and assume an old SSH session proves recovery
+   - D) Insert the original scoped HTTP allow ahead of the deny, then verify rule order, HTTP 200, and a fresh key-only SSH connection
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: D) Inspect other allow rules and actual zone behavior**
+**Answer: D) Insert the original scoped HTTP allow ahead of the deny, then verify rule order, HTTP 200, and a fresh key-only SSH connection**
 
-**Explanation:** Deleting one rule does not guarantee a block. When evidence contradicts the hypothesis, inspect existing policy, zones and rule scope, then revise the hypothesis.
+**Explanation:** SSH and HTTP have separate allows, so the HTTP fault must leave TCP 22 and default policies untouched. UFW placement matters: an allow appended behind a matching deny is ineffective. Test a new, non-multiplexed key login before, during, and after the fault; allow the encrypted key's passphrase prompt rather than assuming an unlocked agent. In the firewalld branch, only runtime HTTP is removed/restored and its permanent rule remains present. If HTTP never fails after removal, inspect other accepts and zone behavior instead of claiming a block.
 
 </details>
 
