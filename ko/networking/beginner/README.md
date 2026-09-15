@@ -218,6 +218,10 @@ python3 --version
 
 이후 [프로토콜 심화](../../basics/06-network-fundamentals-part1.md), [커널 패킷 경로](../../kernel/02-network-stack.md), [Linux 진단 심화](../07-linux-network-diagnostics.md), [Kubernetes Service 실습](../../labs/core/03-services-networking-lab.md)으로 확장합니다. CNI 제품 설치부터 시작할 필요는 없습니다.
 
+## 전문가 과정으로 이어가기
+
+[네트워크 전문가 과정](../expert/README.md)은 이 입문 과정의 다음 단계입니다. 프로토콜·라우팅·패킷 경로를 심화하고, 정책과 장애의 전·중·후 증거를 남기는 6개 워크북으로 이어집니다. 학습 환경은 장마다 다르므로 [진입 조건](../expert/README.md#entry-check)부터 확인하세요.
+
 ## 외부 과정 활용 {#further-study}
 
 외부 강의를 수강해야 이 과정을 진행할 수 있는 것은 아닙니다. [Bootlin의 Linux networking 과정](https://bootlin.com/training/networking/)은 커널 네트워킹 쪽 후속 학습, [Linux Foundation networking 과정 모음](https://training.linuxfoundation.org/networking/)은 관심 분야별 후속 과정 탐색에 활용할 수 있습니다. 제공 범위·가격·일정은 해당 기관에서 확인합니다.

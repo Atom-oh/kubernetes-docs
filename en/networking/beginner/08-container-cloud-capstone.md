@@ -268,6 +268,8 @@ Likewise, `localhost`, Pod IP, Service IP and an external entry point are differ
 
 ## Next practical steps {#next-path}
 
+For a structured continuation, follow the [expert networking path](../expert/README.md). It connects the individual guides below to a reading, experiment and assessment progression.
+
 1. Use [container technology](../../basics/03-container-technology.md) to study namespaces, bridges and published ports.
 2. Measure next hops, ICMP and PMTU in [Linux network diagnostics](../07-linux-network-diagnostics.md). First read that guide's Docker prerequisites, scope and cleanup.
 3. Learn the [Kubernetes introduction](../../basics/04-kubernetes-introduction.md) and [Pods/workloads](../../core/02-pods-and-workloads.md), then follow the [Service/DNS lab](../../labs/core/03-services-networking-lab.md).

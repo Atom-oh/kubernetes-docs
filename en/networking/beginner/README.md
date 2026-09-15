@@ -218,6 +218,10 @@ Completion should mean more than “the command ran”.
 
 Continue with [protocol details](../../basics/06-network-fundamentals-part1.md), [kernel packet paths](../../kernel/02-network-stack.md), [deeper Linux diagnostics](../07-linux-network-diagnostics.md), and the [Kubernetes Service lab](../../labs/core/03-services-networking-lab.md). Installing a CNI product need not be your first step.
 
+## Continue to the expert path
+
+The [expert networking path](../expert/README.md) follows this beginner course with six workbooks on protocols, routing, packet paths and before/during/after policy/failure evidence. Environments differ across chapters; start with its [entry check](../expert/README.md#entry-check).
+
 ## Using external courses {#further-study}
 
 External courses are optional. [Bootlin's Linux networking course](https://bootlin.com/training/networking/) can support later kernel networking study; the [Linux Foundation networking catalog](https://training.linuxfoundation.org/networking/) helps you find a specialist continuation. Check scope, prices and schedules with the provider.

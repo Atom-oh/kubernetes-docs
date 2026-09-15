@@ -8,6 +8,8 @@ Kubernetes networking is the core infrastructure layer that enables communicatio
 
 ## Learning Path {#learning-path}
 
+After the beginner course, use the [expert networking path](expert/README.md) to connect protocol projects, routing policy, EVPN, Linux performance, cloud design and automation assessment. Check each workbook's environment, evidence and recovery criteria first.
+
 If you are new to Linux or networking, start with the [beginner course](beginner/README.md). Its eight lessons connect the CLI, addressing, DNS, SSH, firewalls, monitoring and a capstone. The path below extends that foundation into protocols, the kernel and cluster implementations.
 
 Build from protocol concepts to observations, then connect them to container, cluster, and cloud responsibilities. Use the prerequisites to choose an entry point and the outcomes to check understanding before continuing.
@@ -441,6 +443,10 @@ This section covers the following topics in detail:
 ### [Linux Networking from the Beginning](beginner/README.md) {#beginner-course}
 
 If you are new to Linux or networking, start with the [beginner course](beginner/README.md). Its eight lessons connect the CLI, addressing, DNS, SSH, firewalls, monitoring and a capstone. The path below extends that foundation into protocols, the kernel and cluster implementations.
+
+### [Expert Networking Path](expert/README.md) {#expert-course}
+
+After the beginner course, use the [expert networking path](expert/README.md) to connect protocol projects, routing policy, EVPN, Linux performance, cloud design and automation assessment. Check each workbook's environment, evidence and recovery criteria first.
 
 ### [Linux Network Diagnostics Practice](07-linux-network-diagnostics.md) {#linux-network-diagnostics}
 
