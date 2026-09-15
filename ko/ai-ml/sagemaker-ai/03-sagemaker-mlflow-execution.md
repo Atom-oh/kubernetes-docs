@@ -1,5 +1,7 @@
 # Part 3: SageMaker AI와 MLflow 실행
 
+직접 따라가는 학습은 [QLoRA 학습 실습](05-qlora-finetuning-workshop.md)에서 시작합니다. 이 장은 기존 구현과 운영 계약을 설명합니다.
+
 > **마지막 업데이트**: 2026년 9월 12일
 
 ## 실행 전 주의

@@ -1,5 +1,7 @@
 # Part 2: 합성 PII 데이터와 결정론적 토큰화
 
+직접 따라가는 학습은 [데이터 증강 실습](06-data-augmentation-workshop.md)에서 시작합니다. 이 장은 기존 구현과 운영 계약을 설명합니다.
+
 > 구현·문서 검토: 2026-09-12. Generator 1.0.0 / seed 42의 기존 데이터 해시는 유지했습니다.
 
 ## 추출 후보와 치환을 분리
@@ -52,6 +54,12 @@ RRN/CARD는 예제의 checksum 함수에 실패하도록 만들지만 이것만�
 Train/validation/test의 record/hash가 다르더라도 template·이름·표현은 공유될 수 있습니다.
 이 데이터의 성능을 실제 업무나 unseen entity/template 일반화 성능으로 제시하지 않습니다.
 실제 평가에는 별도 holdout과 annotation 검토가 필요합니다.
+
+2026-09-15 CPU 재생성에서는 기존 해시를 유지한 채 NFC 원문 정확 중복도 확인했습니다.
+Train/validation 교집합은 22개, train/test는 36개, validation/test는 9개이며,
+두 개 이상의 split에 걸친 고유 원문 그룹은 51개입니다. 새
+[증강 실습](06-data-augmentation-workshop.md)은 family를 먼저 나누고 train만
+증강하는 별도 예제로, 이 역사적 corpus를 누수 없는 평가 세트로 재분류하지 않습니다.
 
 ## 원문 표기를 복원하는 치환 파이프라인
 
