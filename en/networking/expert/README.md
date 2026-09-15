@@ -40,10 +40,10 @@ Existing references remain useful: [protocol foundations](../../basics/06-networ
 | Direction | Priority order | Further depth |
 |---|---|---|
 | Cloud networking/SRE | 1 → 2 → 4 → 5 → 6 | Performance and failures across CNI, DNS, load balancers and hybrid boundaries |
-| Enterprise/data center | 1 → 2 → 3 → 6 | Check remaining L2/L3, security, virtualization and automation topics against Cisco's official scope |
-| Protocol/network software | 1 → 4 → 6 | Transport and kernel implementation projects after establishing C/C++ foundations |
+| Enterprise/data center | 1 → 2 → 4 → 3 → 6 | Check remaining L2/L3, security, virtualization and automation topics against Cisco's official scope |
+| Protocol/network software | 1 → 2 → 4 → 6 | Transport and kernel implementation projects after establishing C/C++ foundations |
 
-Chapters 3 and 5 are different specializations. Complete the assessment in one direction, then add the other. Allocate time for environment preparation, failed attempts, reproduction and reporting as well as reading.
+Chapters 1, 2 and 4 are common prerequisites. Add chapter 3 for the data-center path or chapter 5 for cloud. The protocol/Linux path can use chapter 4's host experiment for the corresponding chapter 6 assessment. Complete the assessment in the selected scope, then add another specialization. Allocate time for environment preparation, failed attempts, reproduction and reporting as well as reading.
 
 ## Lab boundaries and ownership {#lab-contract}
 

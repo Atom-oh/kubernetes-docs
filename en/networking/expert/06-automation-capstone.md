@@ -2,7 +2,7 @@
 
 > **Last Updated**: September 15, 2026
 
-**Prerequisites:** Observation skills from chapters 1, 2 and 4, plus either the chapter 3 fabric or chapter 5 cloud specialization. The validator exercise needs only Python 3.9+ and a new directory you own.
+**Prerequisites:** Chapters 1, 2 and 4 provide the common observation skills. Add chapter 3 for an EVPN/fabric capstone or chapter 5 for cloud. The Linux host capstone uses chapter 4's bounded experiment. The validator exercise needs only Python 3.9+ and a new directory you own.
 
 **Goal:** Separate intent from observations and submit reproducible normal, forbidden, failed and recovered states. Automation must not turn missing evidence into success.
 
