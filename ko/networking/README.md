@@ -1,12 +1,14 @@
 # Kubernetes 네트워킹
 
-> **마지막 업데이트**: 2026년 9월 14일. 기능 근거는 Cilium 1.20.1, Calico Open Source 3.32, Flannel 0.28.9, AWS VPC CNI 1.23.0을 포함합니다. 설치 전 제품별 Kubernetes·플랫폼 지원 범위를 확인합니다. 이 버전들을 하나의 클러스터에서 함께 검증했다는 의미는 아닙니다.
+> **마지막 업데이트**: 2026년 9월 15일. 기능 근거는 Cilium 1.20.1, Calico Open Source 3.32, Flannel 0.28.9, AWS VPC CNI 1.23.0을 포함합니다. 설치 전 제품별 Kubernetes·플랫폼 지원 범위를 확인합니다. 이 버전들을 하나의 클러스터에서 함께 검증했다는 의미는 아닙니다.
 
 ## 개요
 
 Kubernetes 네트워킹은 컨테이너화된 애플리케이션 간의 통신을 가능하게 하는 핵심 인프라 계층입니다. 이 섹션에서는 Kubernetes 네트워킹의 기본 개념부터 고급 CNI(Container Network Interface) 솔루션, 그리고 AWS EKS 환경에서의 네트워킹 패턴까지 다룹니다.
 
 ## 학습 경로 {#learning-path}
+
+Linux나 네트워크를 처음 접한다면 [입문 과정](beginner/README.md)부터 시작하세요. CLI·주소 설정·DNS·SSH·방화벽·성능 관측·종합 실습을 8개 장으로 연결합니다. 아래 경로는 입문 과정 이후 프로토콜·커널·클러스터 구현으로 확장하는 순서입니다.
 
 프로토콜 개념에서 관측으로 나아간 뒤 컨테이너·클러스터·클라우드의 역할에 연결합니다. 선수 지식에 맞는 진입점을 고르고, 학습 결과를 확인한 다음 단계로 넘어갑니다.
 
@@ -436,6 +438,10 @@ HTTP/3(RFC 9114)와 그 전송 기반인 QUIC(RFC 9000)의 프로토콜 동작 �
 
 이 섹션에서는 다음 주제들을 상세히 다룹니다:
 
+### [처음부터 배우는 Linux 네트워크](beginner/README.md) {#beginner-course}
+
+Linux나 네트워크를 처음 접한다면 [입문 과정](beginner/README.md)부터 시작하세요. CLI·주소 설정·DNS·SSH·방화벽·성능 관측·종합 실습을 8개 장으로 연결합니다. 아래 경로는 입문 과정 이후 프로토콜·커널·클러스터 구현으로 확장하는 순서입니다.
+
 ### [Linux 네트워크 진단 실습](07-linux-network-diagnostics.md) {#linux-network-diagnostics}
 
 CNI 구현을 살펴보기 전에 [커널 소켓·패킷 경로 개념](../kernel/02-network-stack.md)을 관측에 연결합니다. [진단 퀴즈](../quizzes/networking/07-linux-network-diagnostics-quiz.md)로 해석을 확인합니다.
@@ -648,7 +654,7 @@ spec:
 
 ## 다음 단계
 
-[커널 네트워킹 스택](../kernel/02-network-stack.md)에서 시작해 [Linux 네트워크 진단 실습](07-linux-network-diagnostics.md)과 [퀴즈](../quizzes/networking/07-linux-network-diagnostics-quiz.md)로 이어갑니다. [학습 경로](#learning-path)는 이 기초를 컨테이너·Service에 연결한 뒤 아래 CNI·AWS 주제로 안내합니다.
+[입문 과정](beginner/README.md)을 마친 뒤 [커널 네트워킹 스택](../kernel/02-network-stack.md)과 [Linux 네트워크 진단 실습](07-linux-network-diagnostics.md)과 [퀴즈](../quizzes/networking/07-linux-network-diagnostics-quiz.md)로 이어갑니다. [학습 경로](#learning-path)는 이 기초를 컨테이너·Service에 연결한 뒤 아래 CNI·AWS 주제로 안내합니다.
 
 1. [VPC CNI](01-vpc-cni.md) - EKS 기본 CNI
 2. [Cilium 딥다이브](cilium/README.md) - eBPF 기반 네트워킹

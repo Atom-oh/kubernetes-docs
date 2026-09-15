@@ -1,12 +1,14 @@
 # Kubernetes Networking
 
-> **Last Updated**: September 14, 2026. Feature references include Cilium 1.20.1, Calico Open Source 3.32, Flannel 0.28.9 and AWS VPC CNI 1.23.0. Check each product's Kubernetes/platform matrix before installation; these are not a jointly tested cluster configuration.
+> **Last Updated**: September 15, 2026. Feature references include Cilium 1.20.1, Calico Open Source 3.32, Flannel 0.28.9 and AWS VPC CNI 1.23.0. Check each product's Kubernetes/platform matrix before installation; these are not a jointly tested cluster configuration.
 
 ## Overview
 
 Kubernetes networking is the core infrastructure layer that enables communication between containerized applications. This section covers everything from basic Kubernetes networking concepts to advanced CNI (Container Network Interface) solutions and networking patterns in AWS EKS environments.
 
 ## Learning Path {#learning-path}
+
+If you are new to Linux or networking, start with the [beginner course](beginner/README.md). Its eight lessons connect the CLI, addressing, DNS, SSH, firewalls, monitoring and a capstone. The path below extends that foundation into protocols, the kernel and cluster implementations.
 
 Build from protocol concepts to observations, then connect them to container, cluster, and cloud responsibilities. Use the prerequisites to choose an entry point and the outcomes to check understanding before continuing.
 
@@ -436,6 +438,10 @@ The protocol mechanics of HTTP/3 (RFC 9114) and its QUIC transport (RFC 9000) ar
 
 This section covers the following topics in detail:
 
+### [Linux Networking from the Beginning](beginner/README.md) {#beginner-course}
+
+If you are new to Linux or networking, start with the [beginner course](beginner/README.md). Its eight lessons connect the CLI, addressing, DNS, SSH, firewalls, monitoring and a capstone. The path below extends that foundation into protocols, the kernel and cluster implementations.
+
 ### [Linux Network Diagnostics Practice](07-linux-network-diagnostics.md) {#linux-network-diagnostics}
 
 Connect the [kernel socket and packet-path concepts](../kernel/02-network-stack.md) to observations before studying CNI implementations. Use the [diagnostics quiz](../quizzes/networking/07-linux-network-diagnostics-quiz.md) to check your interpretation.
@@ -648,7 +654,7 @@ spec:
 
 ## Next Steps
 
-Start with the [Kernel Networking Stack](../kernel/02-network-stack.md), then [Linux Network Diagnostics Practice](07-linux-network-diagnostics.md) and its [quiz](../quizzes/networking/07-linux-network-diagnostics-quiz.md). The [learning path](#learning-path) connects these foundations to containers and Services before the CNI and AWS topics below.
+After the [beginner course](beginner/README.md), continue with the [Kernel Networking Stack](../kernel/02-network-stack.md), then [Linux Network Diagnostics Practice](07-linux-network-diagnostics.md) and its [quiz](../quizzes/networking/07-linux-network-diagnostics-quiz.md). The [learning path](#learning-path) connects these foundations to containers and Services before the CNI and AWS topics below.
 
 1. [VPC CNI](01-vpc-cni.md) - Default EKS CNI
 2. [Cilium Deep Dive](cilium/README.md) - eBPF-based networking

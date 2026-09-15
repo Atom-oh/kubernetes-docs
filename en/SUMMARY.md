@@ -97,6 +97,15 @@
 
 ## Networking
 
+* [Networking from Zero](networking/beginner/README.md)
+  * [1. Linux and the CLI](networking/beginner/01-linux-cli.md)
+  * [2. Addresses and Interfaces](networking/beginner/02-addressing-interfaces.md)
+  * [3. Persistent Network Configuration](networking/beginner/03-persistent-configuration.md)
+  * [4. DNS and Connectivity](networking/beginner/04-dns-connectivity.md)
+  * [5. Remote Access with SSH](networking/beginner/05-ssh-access.md)
+  * [6. Firewalls and Host Security](networking/beginner/06-firewalls-host-security.md)
+  * [7. Monitoring and Performance](networking/beginner/07-monitoring-performance.md)
+  * [8. Capstone and Cloud Connections](networking/beginner/08-container-cloud-capstone.md)
 * [Kubernetes Networking Overview](networking/README.md)
 * [Network Fundamentals — 25 Protocols](basics/06-network-fundamentals-part1.md)
   * [Part 1: The Layer Model, Link and Routing Layers](basics/06-network-fundamentals-part1.md)
@@ -565,6 +574,15 @@
   * [Part 3: State, Checkpointing, and Streaming Patterns Quiz](quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
   * [Part 4: Operations, High Availability, and Managed Flink Quiz](quizzes/data-on-eks/flink/04-operations-ha-quiz.md)
 * Networking
+  * Linux Networking from the Beginning
+    * [Linux and the CLI Quiz](quizzes/networking/beginner/01-linux-cli-quiz.md)
+    * [Addresses and Interfaces Quiz](quizzes/networking/beginner/02-addressing-interfaces-quiz.md)
+    * [Persistent Network Configuration Quiz](quizzes/networking/beginner/03-persistent-configuration-quiz.md)
+    * [DNS and Connectivity Quiz](quizzes/networking/beginner/04-dns-connectivity-quiz.md)
+    * [Remote Access with SSH Quiz](quizzes/networking/beginner/05-ssh-access-quiz.md)
+    * [Firewalls and Host Security Quiz](quizzes/networking/beginner/06-firewalls-host-security-quiz.md)
+    * [Monitoring and Performance Quiz](quizzes/networking/beginner/07-monitoring-performance-quiz.md)
+    * [Capstone and Cloud Connections Quiz](quizzes/networking/beginner/08-container-cloud-capstone-quiz.md)
   * [Kubernetes Networking Overview Quiz](quizzes/networking/00-networking-overview-quiz.md)
   * [Linux Network Diagnostics Quiz](quizzes/networking/07-linux-network-diagnostics-quiz.md)
   * [VPC CNI Quiz](quizzes/networking/01-vpc-cni-quiz.md)
