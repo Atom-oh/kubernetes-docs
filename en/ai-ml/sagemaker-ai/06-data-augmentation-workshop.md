@@ -1,6 +1,8 @@
 # Workshop: synthetic PII data and augmentation
 
-> Reviewed on 2026-09-15. This synthetic-data exercise runs with Python 3.12 and needs no model weights, AWS account, or GPU.
+> **Last Updated**: September 15, 2026
+
+This synthetic-data exercise runs with Python 3.12 and needs no model weights, AWS account, or GPU.
 
 Augmentation should add **input conditions on which the system actually fails**, rather than merely increase the number of files. Duplicating documents or generating misaligned labels can increase training work while making evaluation less trustworthy.
 

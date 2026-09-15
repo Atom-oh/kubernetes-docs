@@ -2,6 +2,8 @@
 
 > **마지막 업데이트**: 2026년 9월 15일
 
+> **마지막 업데이트**: 2026년 9월 15일
+
 ## 객관식 문제
 
 1. `load_in_4bit=True`, `bnb_4bit_quant_type="nf4"`, `bnb_4bit_compute_dtype=torch.bfloat16`을 사용하는 QLoRA에 대한 올바른 설명은 무엇인가요?

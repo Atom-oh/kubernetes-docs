@@ -1,5 +1,7 @@
 # PII Evaluation and Redaction Pipeline Quiz
 
+> **Last Updated**: September 15, 2026
+
 ## Multiple-choice questions
 
 1. The fixture candidate improves F1 to 0.8. Why not deploy it immediately?

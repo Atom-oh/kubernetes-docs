@@ -1,6 +1,8 @@
 # Fine-tuning Qwen for PII with SageMaker AI
 
-> Learning path expanded on 2026-09-15 with synthetic-data CPU exercises and QLoRA instruction. AWS provisioning observations are historical records from 2026-09-01.
+> **Last Updated**: September 15, 2026
+
+Includes synthetic-data CPU exercises and QLoRA instruction. AWS provisioning observations are historical records from September 1, 2026.
 
 This guide teaches how to train and evaluate a model that extracts PII candidates from documents. Define the annotation contract, split and augment data without leakage, choose QLoRA settings, and measure both omissions and excessive masking.
 

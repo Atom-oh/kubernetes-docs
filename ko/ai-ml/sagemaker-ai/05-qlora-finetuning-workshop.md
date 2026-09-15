@@ -97,7 +97,7 @@ print(base_parameters, adapter_parameters, alpha / rank)
 
 Rank는 업데이트의 표현 용량을 조절하며 epoch 수가 아닙니다. `lora_alpha`는 배율을 조절하고, 이 설정의 `alpha/r`는 2입니다. Alpha를 고려하지 않고 rank만 높이면 이 배율도 달라집니다. PEFT의 선택 기능인 rank-stabilized LoRA는 다른 배율 규칙을 사용하지만 현재 설정은 이를 활성화하지 않습니다.
 
-[PEFT 0.17.1의 기본 초기화](https://huggingface.co/docs/peft/v0.17.1/en/developer_guides/lora)에서는 `B`가 0에서 시작하므로 어댑터가 처음에는 기본 모델의 결과를 바꾸지 않습니다. 첫 backward에서 모든 어댑터 텐서의 gradient가 0이 아니어야 한다고 검사하지 마세요. MoE에서는 특정 batch가 선택하지 않은 expert도 있습니다. 실제로 존재하는 gradient가 유한한지, optimizer step 이후 기대한 어댑터 파라미터가 바뀌는지 확인하는 편이 유용합니다.
+[PEFT 0.17.1의 기본 초기화](https://github.com/huggingface/peft/blob/v0.17.1/docs/source/developer_guides/lora.md)에서는 `B`가 0에서 시작하므로 어댑터가 처음에는 기본 모델의 결과를 바꾸지 않습니다. 첫 backward에서 모든 어댑터 텐서의 gradient가 0이 아니어야 한다고 검사하지 마세요. MoE에서는 특정 batch가 선택하지 않은 expert도 있습니다. 실제로 존재하는 gradient가 유한한지, optimizer step 이후 기대한 어댑터 파라미터가 바뀌는지 확인하는 편이 유용합니다.
 
 ## 3. 4비트 가중치 이외의 QLoRA 메모리 계산하기
 
@@ -114,7 +114,7 @@ Rank는 업데이트의 표현 용량을 조절하며 epoch 수가 아닙니다.
 | 활성값과 임시 텐서 | sequence length, microbatch, attention 구현, checkpointing에 따라 변화 |
 | 양자화하지 않은 모듈 | embedding, normalization 등은 더 높은 정밀도를 사용할 수 있음 |
 
-Double quantization은 모델을 2비트로 바꾼다는 뜻이 아닙니다. BF16 설정도 모든 텐서가 2바이트를 차지한다는 보장이 아닙니다. K-bit 준비와 어댑터 처리 중 일부 텐서를 FP32로 유지하거나 변환할 수 있습니다. 하나의 설정 필드에서 전체 메모리를 추측하지 말고 실제 dtype과 학습 파라미터를 검사하세요. [버전이 고정된 bitsandbytes 가이드](https://huggingface.co/docs/transformers/v4.57.6/en/quantization/bitsandbytes)는 NF4, compute dtype, nested quantization을 구분합니다.
+Double quantization은 모델을 2비트로 바꾼다는 뜻이 아닙니다. BF16 설정도 모든 텐서가 2바이트를 차지한다는 보장이 아닙니다. K-bit 준비와 어댑터 처리 중 일부 텐서를 FP32로 유지하거나 변환할 수 있습니다. 하나의 설정 필드에서 전체 메모리를 추측하지 말고 실제 dtype과 학습 파라미터를 검사하세요. [버전이 고정된 bitsandbytes 가이드](https://github.com/huggingface/transformers/blob/v4.57.6/docs/source/en/quantization/bitsandbytes.md)는 NF4, compute dtype, nested quantization을 구분합니다.
 
 Gradient checkpointing은 일부 활성값 저장을 줄이고 backward에서 다시 계산합니다. 계산량과 메모리를 교환하는 방식입니다. Gradient accumulation은 여러 microbatch 이후 한 번 optimizer를 업데이트하며, 모든 microbatch의 활성값 그래프를 동시에 보관하라는 뜻이 아닙니다. 두 기능 모두 optimizer state 자체를 없애지는 않습니다.
 
@@ -556,8 +556,8 @@ aws sagemaker describe-training-job \
 아래 자료는 모두 **2026-09-15** 확인했습니다. 코드 읽기 예제에는 버전이 명시된 자료를 우선합니다.
 
 - [LoRA 논문](https://arxiv.org/abs/2106.09685), [QLoRA 논문](https://arxiv.org/abs/2305.14314)
-- [PEFT 0.17.1 LoRA 가이드](https://huggingface.co/docs/peft/v0.17.1/en/developer_guides/lora), [k-bit 준비 코드](https://github.com/huggingface/peft/blob/v0.17.1/src/peft/utils/other.py)
-- [Transformers 4.57.6 bitsandbytes 양자화](https://huggingface.co/docs/transformers/v4.57.6/en/quantization/bitsandbytes)
+- [PEFT 0.17.1 LoRA 가이드](https://github.com/huggingface/peft/blob/v0.17.1/docs/source/developer_guides/lora.md), [k-bit 준비 코드](https://github.com/huggingface/peft/blob/v0.17.1/src/peft/utils/other.py)
+- [Transformers 4.57.6 bitsandbytes 양자화](https://github.com/huggingface/transformers/blob/v4.57.6/docs/source/en/quantization/bitsandbytes.md)
 - [bitsandbytes 0.48.2 4비트 모듈](https://github.com/bitsandbytes-foundation/bitsandbytes/blob/0.48.2/docs/source/reference/nn/linear4bit.mdx)
 - [TRL 0.24.0 SFT 가이드](https://huggingface.co/docs/trl/v0.24.0/en/sft_trainer), [SFTConfig](https://github.com/huggingface/trl/blob/v0.24.0/trl/trainer/sft_config.py), [SFTTrainer](https://github.com/huggingface/trl/blob/v0.24.0/trl/trainer/sft_trainer.py)
 - [Qwen 모델 카드](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507), [모델 설정](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507/blob/main/config.json), [고정된 Transformers 구현](https://github.com/huggingface/transformers/blob/v4.57.6/src/transformers/models/qwen3_moe/modeling_qwen3_moe.py)

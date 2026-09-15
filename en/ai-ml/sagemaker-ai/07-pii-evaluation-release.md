@@ -1,6 +1,8 @@
 # Workshop: evaluating PII models and redaction pipelines
 
-> Reviewed against the implementation on 2026-09-15. The executable example uses synthetic records and manually constructed predictions on CPU. Its numbers are not trained-model performance.
+> **Last Updated**: September 15, 2026
+
+The executable example uses synthetic records and manually constructed predictions on CPU. Its numbers are not trained-model performance.
 
 A falling training loss does not establish good PII removal. A model may find names but miss emails, or mask document numbers that the annotation policy considers non-sensitive. This chapter evaluates **both entity extraction and the resulting replacements**, then connects errors to the next data experiment.
 

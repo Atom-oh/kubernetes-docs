@@ -97,7 +97,7 @@ print(base_parameters, adapter_parameters, alpha / rank)
 
 Rank controls the capacity of the update, not the number of training epochs. `lora_alpha` controls scaling; with this configuration, `alpha/r` is 2. Increasing rank without considering alpha also changes that scale. PEFT's optional rank-stabilized LoRA uses a different scaling rule; the committed configuration does not enable it.
 
-In the default [PEFT 0.17.1 initialization](https://huggingface.co/docs/peft/v0.17.1/en/developer_guides/lora), the adapter initially behaves as a no-op because `B` starts at zero. Do not require every adapter tensor to have a nonzero gradient on the first backward pass. In a MoE model, some experts may not be selected by a particular batch either. A useful diagnostic checks finite gradients where present and changes in the expected adapter parameters after an optimizer step.
+In the default [PEFT 0.17.1 initialization](https://github.com/huggingface/peft/blob/v0.17.1/docs/source/developer_guides/lora.md), the adapter initially behaves as a no-op because `B` starts at zero. Do not require every adapter tensor to have a nonzero gradient on the first backward pass. In a MoE model, some experts may not be selected by a particular batch either. A useful diagnostic checks finite gradients where present and changes in the expected adapter parameters after an optimizer step.
 
 ## 3. Budget QLoRA memory beyond the four-bit weights
 
@@ -114,7 +114,7 @@ The [QLoRA paper](https://arxiv.org/abs/2305.14314) combines a frozen quantized 
 | Activations and temporary tensors | Depend on sequence length, microbatch, attention implementation and checkpointing |
 | Unquantized modules | Embeddings, normalization and other tensors may use higher precision |
 
-Double quantization does not mean “quantize the model to two bits.” BF16 is not a guarantee that every tensor occupies two bytes: k-bit preparation and adapter handling can retain or promote selected tensors to FP32. Inspect actual dtypes and trainable parameters rather than inferring the entire memory footprint from one configuration field. The [versioned bitsandbytes guide](https://huggingface.co/docs/transformers/v4.57.6/en/quantization/bitsandbytes) explains NF4, compute dtype and nested quantization separately.
+Double quantization does not mean “quantize the model to two bits.” BF16 is not a guarantee that every tensor occupies two bytes: k-bit preparation and adapter handling can retain or promote selected tensors to FP32. Inspect actual dtypes and trainable parameters rather than inferring the entire memory footprint from one configuration field. The [versioned bitsandbytes guide](https://github.com/huggingface/transformers/blob/v4.57.6/docs/source/en/quantization/bitsandbytes.md) explains NF4, compute dtype and nested quantization separately.
 
 Gradient checkpointing saves selected activations by recomputing them during backward. It trades computation for memory. Gradient accumulation combines several microbatches before an optimizer update; it does not require storing all of those microbatches' activation graphs simultaneously. Neither feature eliminates optimizer state.
 
@@ -556,8 +556,8 @@ Only after those choices are reviewed should an authorized GPU preflight test ac
 All references below were checked on **2026-09-15**. Versioned sources govern the code-reading examples.
 
 - [LoRA paper](https://arxiv.org/abs/2106.09685) and [QLoRA paper](https://arxiv.org/abs/2305.14314)
-- [PEFT 0.17.1 LoRA guide](https://huggingface.co/docs/peft/v0.17.1/en/developer_guides/lora) and [k-bit preparation source](https://github.com/huggingface/peft/blob/v0.17.1/src/peft/utils/other.py)
-- [Transformers 4.57.6 bitsandbytes quantization](https://huggingface.co/docs/transformers/v4.57.6/en/quantization/bitsandbytes)
+- [PEFT 0.17.1 LoRA guide](https://github.com/huggingface/peft/blob/v0.17.1/docs/source/developer_guides/lora.md) and [k-bit preparation source](https://github.com/huggingface/peft/blob/v0.17.1/src/peft/utils/other.py)
+- [Transformers 4.57.6 bitsandbytes quantization](https://github.com/huggingface/transformers/blob/v4.57.6/docs/source/en/quantization/bitsandbytes.md)
 - [bitsandbytes 0.48.2 four-bit modules](https://github.com/bitsandbytes-foundation/bitsandbytes/blob/0.48.2/docs/source/reference/nn/linear4bit.mdx)
 - [TRL 0.24.0 SFT guide](https://huggingface.co/docs/trl/v0.24.0/en/sft_trainer), [SFTConfig](https://github.com/huggingface/trl/blob/v0.24.0/trl/trainer/sft_config.py) and [SFTTrainer](https://github.com/huggingface/trl/blob/v0.24.0/trl/trainer/sft_trainer.py)
 - [Qwen model card](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507), [model configuration](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507/blob/main/config.json) and [pinned Transformers implementation](https://github.com/huggingface/transformers/blob/v4.57.6/src/transformers/models/qwen3_moe/modeling_qwen3_moe.py)

@@ -1,5 +1,7 @@
 # Synthetic PII Data and Augmentation Quiz
 
+> **Last Updated**: September 15, 2026
+
 ## Multiple-choice questions
 
 1. What is the correct order for paraphrases and OCR variants of the same source?
