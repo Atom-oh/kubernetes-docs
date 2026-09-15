@@ -97,6 +97,15 @@
 
 ## Networking
 
+* [Linux 네트워크 입문](networking/beginner/README.md)
+  * [1. Linux와 CLI](networking/beginner/01-linux-cli.md)
+  * [2. 주소와 인터페이스](networking/beginner/02-addressing-interfaces.md)
+  * [3. 영구 네트워크 설정](networking/beginner/03-persistent-configuration.md)
+  * [4. DNS와 연결 진단](networking/beginner/04-dns-connectivity.md)
+  * [5. SSH 원격 접속](networking/beginner/05-ssh-access.md)
+  * [6. 방화벽과 호스트 보안](networking/beginner/06-firewalls-host-security.md)
+  * [7. 관측과 성능](networking/beginner/07-monitoring-performance.md)
+  * [8. 종합 실습·클라우드](networking/beginner/08-container-cloud-capstone.md)
 * [Kubernetes 네트워킹 개요](networking/README.md)
 * [네트워크 기초 — 프로토콜 25개](basics/06-network-fundamentals-part1.md)
   * [Part 1: 계층 모델과 링크·라우팅](basics/06-network-fundamentals-part1.md)
@@ -565,6 +574,15 @@
   * [Part 3: 상태 관리, 체크포인팅, 스트리밍 패턴 퀴즈](quizzes/data-on-eks/flink/03-state-checkpointing-streaming-quiz.md)
   * [Part 4: 운영, 고가용성, 그리고 매니지드 Flink 퀴즈](quizzes/data-on-eks/flink/04-operations-ha-quiz.md)
 * Networking
+  * 처음부터 배우는 Linux 네트워크
+    * [Linux와 CLI 퀴즈](quizzes/networking/beginner/01-linux-cli-quiz.md)
+    * [주소와 인터페이스 퀴즈](quizzes/networking/beginner/02-addressing-interfaces-quiz.md)
+    * [영구 네트워크 설정 퀴즈](quizzes/networking/beginner/03-persistent-configuration-quiz.md)
+    * [DNS와 연결 진단 퀴즈](quizzes/networking/beginner/04-dns-connectivity-quiz.md)
+    * [SSH 원격 접속 퀴즈](quizzes/networking/beginner/05-ssh-access-quiz.md)
+    * [방화벽과 호스트 보안 퀴즈](quizzes/networking/beginner/06-firewalls-host-security-quiz.md)
+    * [관측과 성능 퀴즈](quizzes/networking/beginner/07-monitoring-performance-quiz.md)
+    * [종합 실습과 클라우드 연결 퀴즈](quizzes/networking/beginner/08-container-cloud-capstone-quiz.md)
   * [Kubernetes 네트워킹 개요 퀴즈](quizzes/networking/00-networking-overview-quiz.md)
   * [Linux 네트워크 진단 퀴즈](quizzes/networking/07-linux-network-diagnostics-quiz.md)
   * [VPC CNI 퀴즈](quizzes/networking/01-vpc-cni-quiz.md)

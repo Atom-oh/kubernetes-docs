@@ -104,15 +104,25 @@ This training content provides quizzes for each topic along with the learning ma
 10. [Migration Guide](./eks-auto-mode/09-migration-guide.md) | [Quiz](./quizzes/eks-auto-mode/09-migration-guide-quiz.md)
 
 ### Networking
-1. [Kubernetes Networking Overview](./networking/README.md) | [Quiz](./quizzes/networking/00-networking-overview-quiz.md)
-2. [Network Fundamentals — 25 Protocols](./basics/06-network-fundamentals-part1.md)
+
+1. [Linux Networking from the Beginning](./networking/beginner/README.md)
+   - [1. Linux and the CLI](./networking/beginner/01-linux-cli.md) | [Quiz](./quizzes/networking/beginner/01-linux-cli-quiz.md)
+   - [2. Addresses and Interfaces](./networking/beginner/02-addressing-interfaces.md) | [Quiz](./quizzes/networking/beginner/02-addressing-interfaces-quiz.md)
+   - [3. Persistent Network Configuration](./networking/beginner/03-persistent-configuration.md) | [Quiz](./quizzes/networking/beginner/03-persistent-configuration-quiz.md)
+   - [4. DNS and Connectivity](./networking/beginner/04-dns-connectivity.md) | [Quiz](./quizzes/networking/beginner/04-dns-connectivity-quiz.md)
+   - [5. Remote Access with SSH](./networking/beginner/05-ssh-access.md) | [Quiz](./quizzes/networking/beginner/05-ssh-access-quiz.md)
+   - [6. Firewalls and Host Security](./networking/beginner/06-firewalls-host-security.md) | [Quiz](./quizzes/networking/beginner/06-firewalls-host-security-quiz.md)
+   - [7. Monitoring and Performance](./networking/beginner/07-monitoring-performance.md) | [Quiz](./quizzes/networking/beginner/07-monitoring-performance-quiz.md)
+   - [8. Capstone and Cloud Connections](./networking/beginner/08-container-cloud-capstone.md) | [Quiz](./quizzes/networking/beginner/08-container-cloud-capstone-quiz.md)
+2. [Kubernetes Networking Overview](./networking/README.md) | [Quiz](./quizzes/networking/00-networking-overview-quiz.md)
+3. [Network Fundamentals — 25 Protocols](./basics/06-network-fundamentals-part1.md)
    - [Part 1: The Layer Model, Link and Routing Layers](./basics/06-network-fundamentals-part1.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part1-quiz.md)
    - [Part 2: The Transport Layer and TLS](./basics/06-network-fundamentals-part2.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part2-quiz.md)
    - [Part 3: Application Protocols](./basics/06-network-fundamentals-part3.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part3-quiz.md)
    - [Part 4: A Request's Journey and the Cloud](./basics/06-network-fundamentals-part4.md) | [Quiz](./quizzes/basics/06-network-fundamentals-part4-quiz.md)
-3. [Linux Network Diagnostics Practice](./networking/07-linux-network-diagnostics.md) | [Quiz](./quizzes/networking/07-linux-network-diagnostics-quiz.md)
-4. [VPC CNI](./networking/01-vpc-cni.md) | [Quiz](./quizzes/networking/01-vpc-cni-quiz.md)
-5. **Cilium Deep Dive**
+4. [Linux Network Diagnostics Practice](./networking/07-linux-network-diagnostics.md) | [Quiz](./quizzes/networking/07-linux-network-diagnostics-quiz.md)
+5. [VPC CNI](./networking/01-vpc-cni.md) | [Quiz](./quizzes/networking/01-vpc-cni-quiz.md)
+6. **Cilium Deep Dive**
    - [Cilium Introduction](./networking/cilium/README.md)
    - [Part 1: Introduction](./networking/cilium/01-introduction.md) | [Quiz](./quizzes/networking/cilium/01-introduction-quiz.md)
    - [Part 2: eBPF](./networking/cilium/02-ebpf.md) | [Quiz](./quizzes/networking/cilium/02-ebpf-quiz.md)
@@ -123,7 +133,7 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 7: Advanced Topics](./networking/cilium/07-advanced-topics.md) | [Quiz](./quizzes/networking/cilium/07-advanced-topics-quiz.md)
    - [Networking Concepts](./networking/cilium/networking-concepts.md) | [Quiz](./quizzes/networking/cilium/networking-concepts-quiz.md)
    - [Glossary](./networking/cilium/glossary.md) | [Quiz](./quizzes/networking/cilium/glossary-quiz.md)
-6. **Calico Deep Dive**
+7. **Calico Deep Dive**
    - [Calico Introduction](./networking/calico/README.md)
    - [Part 1: Introduction](./networking/calico/01-introduction.md) | [Quiz](./quizzes/networking/calico/01-introduction-quiz.md)
    - [Part 2: Architecture](./networking/calico/02-architecture.md) | [Quiz](./quizzes/networking/calico/02-architecture-quiz.md)
@@ -135,11 +145,11 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 8: EKS Integration](./networking/calico/08-eks-integration.md) | [Quiz](./quizzes/networking/calico/08-eks-integration-quiz.md)
    - [Part 9: Operations](./networking/calico/09-operations.md) | [Quiz](./quizzes/networking/calico/09-operations-quiz.md)
    - [Glossary](./networking/calico/glossary.md) | [Quiz](./quizzes/networking/calico/glossary-quiz.md)
-7. [VPC Lattice](./networking/02-vpc-lattice.md) | [Quiz](./quizzes/networking/02-vpc-lattice-quiz.md)
-8. [AWS Load Balancer Controller](./networking/03-aws-lb-controller.md) | [Quiz](./quizzes/networking/03-aws-lb-controller-quiz.md)
-9. [Gateway API](./networking/04-gateway-api.md) | [Quiz](./quizzes/networking/04-gateway-api-quiz.md)
-10. [Cross-Org VPC Connectivity](./networking/05-cross-org-vpc-connectivity.md) | [Quiz](./quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
-11. [Pod Network Benchmark](./networking/06-pod-network-benchmark.md) | [Quiz](./quizzes/networking/06-pod-network-benchmark-quiz.md)
+8. [VPC Lattice](./networking/02-vpc-lattice.md) | [Quiz](./quizzes/networking/02-vpc-lattice-quiz.md)
+9. [AWS Load Balancer Controller](./networking/03-aws-lb-controller.md) | [Quiz](./quizzes/networking/03-aws-lb-controller-quiz.md)
+10. [Gateway API](./networking/04-gateway-api.md) | [Quiz](./quizzes/networking/04-gateway-api-quiz.md)
+11. [Cross-Org VPC Connectivity](./networking/05-cross-org-vpc-connectivity.md) | [Quiz](./quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
+12. [Pod Network Benchmark](./networking/06-pod-network-benchmark.md) | [Quiz](./quizzes/networking/06-pod-network-benchmark-quiz.md)
 
 ### Service Mesh
 1. [Istio](./service-mesh/istio/README.md) | [Quiz](./quizzes/service-mesh/02-istio-quiz.md)

@@ -1,9 +1,11 @@
 # Linux 네트워크 진단 — HTTP, TCP 큐, 라우팅과 MTU
 
 > **지원 환경**: Linux, Python 3.9+, curl, iproute2; 라우팅 실습에는 로컬 Docker Engine 필요
-> **마지막 업데이트**: 2026년 9월 14일
+> **마지막 업데이트**: 2026년 9월 15일
 
 Linux의 요청 하나에서 출발해 소켓과 다음 홉을 확인하고, 같은 패킷이 컨테이너 네임스페이스를 지나는 과정을 설명합니다. 쿠버네티스나 AWS 네트워크를 조사하기 전에 애플리케이션·전송·라우팅 계층의 증거를 구분하는 연습입니다.
+
+CLI·IP 설정·DNS·SSH·방화벽부터 연습하려면 [입문 8장 과정](beginner/README.md)을 먼저 진행하세요. 이 문서는 그 이후 소켓·ICMP·PMTU를 더 깊게 관측하는 실습입니다.
 
 [IPv4와 다음 홉 기초](../basics/06-network-fundamentals-part1.md#ipv4-cidr-subnet), [HTTP 메시지 구조](../basics/06-network-fundamentals-part3.md#http11-message-structure)를 함께 읽으세요.
 

@@ -1,9 +1,11 @@
 # Linux Network Diagnostics — HTTP, TCP Queues, Routing and MTU
 
 > **Supported environment**: Linux, Python 3.9+, curl and iproute2; local Docker Engine for the routing exercise
-> **Last Updated**: September 14, 2026
+> **Last Updated**: September 15, 2026
 
 Start with a request on Linux, identify the socket and next hop, then explain the same packet path across container namespaces. These exercises prepare you to distinguish application, transport and routing evidence before investigating Kubernetes or AWS networking.
+
+For practice starting with the CLI, IP configuration, DNS, SSH and firewalls, complete the [eight-lesson beginner course](beginner/README.md) first. This guide then deepens socket, ICMP and PMTU observation.
 
 Read [IPv4 and next-hop foundations](../basics/06-network-fundamentals-part1.md#ipv4-cidr-subnet) and [HTTP message structure](../basics/06-network-fundamentals-part3.md#http11-message-structure) alongside the exercises.
 
