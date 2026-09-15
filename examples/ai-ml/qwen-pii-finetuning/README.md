@@ -77,6 +77,43 @@ This flag does not make a backup.
 Generated datasets and raw predictions are runtime artifacts. Only aggregate
 metrics, hashes, non-sensitive plots, and teardown evidence are committed.
 
+## Hands-on CPU workshops
+
+The [learning path](../../../en/ai-ml/sagemaker-ai/README.md) now includes
+[QLoRA training](../../../en/ai-ml/sagemaker-ai/05-qlora-finetuning-workshop.md),
+[data augmentation](../../../en/ai-ml/sagemaker-ai/06-data-augmentation-workshop.md),
+and [PII evaluation](../../../en/ai-ml/sagemaker-ai/07-pii-evaluation-release.md).
+Korean versions are available from the
+[Korean learning path](../../../ko/ai-ml/sagemaker-ai/README.md).
+
+Run the following from this package directory with Python 3.12:
+
+```bash
+mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}/qwen-pii-lab"
+PII_AUG_RUN="$(mktemp -d "${XDG_CACHE_HOME:-$HOME/.cache}/qwen-pii-lab/run.XXXXXX")"
+python3 -m data.augmentation_lab --output-dir "$PII_AUG_RUN/dataset" --seed 42
+python3 -m data.augmentation_lab --audit-dir "$PII_AUG_RUN/dataset"
+```
+
+The output directory must not already exist. The lab creates a separate
+40-family, three-label synthetic dataset, assigns families before augmentation,
+and augments training only. It preserves the existing JSONL learning fields
+while adding provenance and an `augmentation-manifest.json`. It uses no AWS
+services, model weights, GPU packages, or external generation APIs.
+
+The audit validates this deterministic lab's schema, family/parent relationships,
+split and exact-source separation, labels/TSV, counts, and hashes. It is not a
+general validator for arbitrary customer annotations or unseen-template quality.
+Templates and some entities are shared between splits. The historical generator
+1.0.0 and its committed manifest remain unchanged; the lab manifest is not a
+drop-in replacement for the existing uploader's dataset manifest.
+
+The evaluation workshop uses manually constructed predictions to demonstrate
+better recall with worse masking on a negative document. Those fixture scores
+are not trained-model results. The historical trainer reads test records on every
+run; a real tuning loop must separate validation-based selection from final test
+evaluation rather than repeatedly selecting against that test.
+
 ## Validation result
 
 The AWS validation performed on September 1, 2026 stopped before GPU training

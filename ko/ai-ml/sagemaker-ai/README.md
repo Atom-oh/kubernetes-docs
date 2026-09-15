@@ -1,56 +1,54 @@
 # SageMaker AI로 Qwen PII 파인튜닝하기
 
-> 문서 검토: 2026-09-12. AWS provisioning 결과는 2026-09-01의 과거 실험 기록입니다.
+> 학습 경로 보강: 2026-09-15. 합성 데이터 CPU 실습과 QLoRA 학습 해설을 포함합니다. AWS provisioning 기록은 2026-09-01의 과거 실험입니다.
 
-이 가이드북은 Qwen/Qwen3-30B-A3B-Instruct-2507의 QLoRA 실험을 위한 설계와
-component-tested 예제 패키지를 설명합니다. 관리형 SageMaker Training Job과
-임시 EKS GPU Job이 같은 소스·합성 데이터·평가 코드를 사용하도록 구성되어 있습니다.
-**두 GPU 경로의 end-to-end 학습 성공을 검증한 가이드가 아닙니다.**
+이 가이드는 문서에서 개인정보 후보를 찾는 모델을 어떻게 학습시키고 평가할지 설명합니다. 학습 데이터의 정답을 정의하고, 데이터 누수를 막으며 증강한 뒤, QLoRA 설정을 선택하고 누락·과잉 가림을 측정하는 순서로 진행합니다.
 
-현재 고정한 PyTorch 2.8 DLC는 2026-08-06에 패치 지원이 종료되어 **자원 생성·GPU 실행을 차단**합니다. 지원되는 이미지·의존성 조합으로 갱신해야 하며, [실행 장](03-sagemaker-mlflow-execution.md)에서 로컬 검증과 재개 조건을 설명합니다.
+모델의 출력은 `TYPE<TAB>ORIGINAL` 후보입니다. 최종 문서는 Python 코드가 검증·치환하며, 모델이 원문 전체를 다시 작성하지 않습니다. 이 구조를 이해하면 모델의 탐지 오류와 처리 코드의 치환 오류를 따로 디버깅할 수 있습니다.
 
-모델은 `TYPE<TAB>ORIGINAL` 후보를 출력하고 Python 코드가 검증·치환·복원을 담당합니다.
-결정론적 치환이나 round-trip 성공이 모든 PII 탐지, 완전한 마스킹 또는 익명성을
-보장하지는 않습니다. 놓친 엔터티와 잘못 분류한 값은 별도로 평가합니다.
+## 먼저 따라가는 실습 경로
 
-## 5부 학습 경로
+| 순서 | 읽고 실행할 장 | 완료 후 설명할 수 있어야 하는 것 |
+| --- | --- | --- |
+| 1 | [합성 데이터와 증강 실습](06-data-augmentation-workshop.md) | Annotation 계약, family 분리, train-only 증강, 원문·label 감사 |
+| 2 | [QLoRA 학습과 SageMaker 흐름](05-qlora-finetuning-workshop.md) | NF4·LoRA·loss mask, 실제 target module, batch/step, 튜닝 변수와 진단 |
+| 3 | [PII 평가와 비식별화 파이프라인](07-pii-evaluation-release.md) | Recall/F1, 잔여 PII, 음성 문서의 과잉 가림, 최종 평가와 승인 |
+| 4 | [SageMaker AI와 MLflow 실행 계약](03-sagemaker-mlflow-execution.md) | 소스·S3 channel·Training Job·artifact·정리의 연결 |
 
-| Part | 주제 |
+Python 3.12와 JSONL을 읽을 수 있으면 데이터·평가 실습부터 시작할 수 있습니다. 이 두 CPU 실습에는 AWS 계정이나 모델 weights가 필요하지 않습니다. QLoRA 장의 학습기 해설과 GPU 점검 절차는 실제 GPU 학습 성공 기록과 구분합니다.
+
+새 증강 실습은 40개 합성 family를 먼저 분리하고 train만 증강하는 별도 데이터셋입니다. 기존 generator 1.0.0의 2,200개 레코드를 덮어쓰지 않습니다. 작은 실습 세트의 수치나 oracle 결과를 실제 업무 모델의 성능으로 제시하지 않습니다.
+
+## SageMaker 실행 준비 상태
+
+현재 역사적 실행 패키지는 Qwen/Qwen3-30B-A3B-Instruct-2507을 관리형 SageMaker Training Job 또는 임시 EKS GPU Job으로 학습하도록 설계되어 있습니다. 두 GPU 경로의 end-to-end 성공은 기록되어 있지 않습니다.
+
+고정된 PyTorch 2.8 DLC는 2026-08-06 패치 지원 종료로 자원 생성·GPU 실행이 차단됩니다. [QLoRA 실습의 런타임 설명](05-qlora-finetuning-workshop.md)과 [실행 계약](03-sagemaker-mlflow-execution.md)을 따라 이미지·의존성·MLflow 조합을 함께 검증해야 합니다. 지원 확인 코드만 제거하는 절차는 제공하지 않습니다.
+
+## 설계와 구현을 깊게 읽기
+
+| 문서 | 역할 |
 | --- | --- |
-| [1](01-platform-architecture.md) | 플랫폼 책임과 목표 아키텍처 |
-| [2](02-pii-data-tokenization.md) | 합성 데이터·토큰 치환·평가 한계 |
-| [3](03-sagemaker-mlflow-execution.md) | SageMaker/EKS 실행 계약과 MLflow |
-| [4](../../data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | Unified Studio domain/project/membership |
-| [5](04-validation-results.md) | 실행한 것과 측정하지 않은 것 |
+| [Part 1: 플랫폼 아키텍처](01-platform-architecture.md) | 모델·데이터·Python 처리·MLflow의 책임 |
+| [Part 2: 데이터와 결정론적 토큰화](02-pii-data-tokenization.md) | 기존 9유형 데이터, 치환 구간, 지표의 정확한 계산 |
+| [Part 3: 실행](03-sagemaker-mlflow-execution.md) | SageMaker/EKS 제출·저장·실패 복구·정리 |
+| [Part 4: Unified Studio 거버넌스](../../data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | Domain/project/membership |
+| [Part 5: 실제 검증 기록](04-validation-results.md) | 실행한 작업, 미실행 작업, 역사적 잔존 상태 |
 
-## 검증 기록
+## 검증 기록을 읽는 방법
 
-| 구분 | 범위 |
-| --- | --- |
-| 2026-09-12 로컬 재검사 | 초기 30개 검사 이후 토큰화·평가·실행·정리 회귀 검사 추가; GPU와 AWS API 실행 없음 |
-| 2026-09-01 AWS 기록 | 쿼터·MLflow App과 project provisioning 실패 경로 |
-| 그 기록에서 미실행 | SageMaker Training Job / EKS GPU Job |
-| 당시 정리 결과 | App/S3/IAM 실험 자원 정리, Unified Studio project 1개 잔존 |
+- 새 데이터·평가 명령은 합성 자료를 대상으로 CPU에서 검사합니다. 학습 F1·GPU peak memory·학습 시간의 측정은 별도입니다.
+- 2026-09-12 검토는 토큰화·평가·실행·정리의 로컬 회귀 검사를 보강했습니다.
+- 2026-09-01 AWS 기록은 quota·MLflow App·project provisioning 실패 경로이며, GPU 학습 제출 전에 중단됐습니다.
+- 그 기록에서는 실험 App/S3/IAM을 정리했지만 Unified Studio project 하나가 남았습니다. 현재 잔존 여부는 새 inventory 조회로 확인해야 합니다.
 
-현재 AWS 계정을 조회하지 않았으므로 잔존 project가 지금도 존재한다고 주장하지 않습니다.
-다시 실행하기 전 최신 ownership·inventory를 확인합니다. 측정하지 않은 fine-tuned F1,
-GPU peak memory·학습 시간·비용을 결과값으로 제시하지 않습니다.
+원문·추출값·token mapping·raw completion은 일반 로그나 MLflow parameter/tag에 기록하지 않습니다. Autolog/tracing과 artifact 내용도 실행 환경에서 확인합니다. 복원 가능한 mapping, 학습 adapter, private resource inventory는 서로 다른 산출물이며 보관·접근 정책을 각각 정합니다.
 
-## 실험 정책과 한계
-
-- Seed 42의 합성 데이터만 사용하고 split/hash를 기록합니다.
-- 일반 로그와 MLflow에는 원문·추출값·token mapping·raw completion을 보내지 않도록 설계합니다.
-  Autolog/tracing과 artifact 내용도 실제 실행에서 검증해야 합니다.
-- Private inventory에는 정리에 필요한 resource ID/ARN을 보관할 수 있지만 공개 보고서는 요약합니다.
-  Presigned URL은 접근 권한이 포함된 임시 URL로 취급합니다.
-- Smoke/full 전환은 검토한 실행 결과에 근거하고, 정리는 이번 실행의 소유 자원에 한정합니다.
-- Model ID/seed/direct dependency pin만으로 완전한 재현성이나 두 환경의 동등한 보안을 보장하지 않습니다.
-
-예제 패키지: `examples/ai-ml/qwen-pii-finetuning/`.
+예제 패키지: `examples/ai-ml/qwen-pii-finetuning/`. 정확한 CLI와 출력 예시는 각 실습 장에 있습니다.
 
 ## 참고 자료
 
 - [Qwen model card](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507)
 - [QLoRA paper](https://arxiv.org/abs/2305.14314)
-- [Experiment configuration](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/config/experiment.yaml)
-- [Recorded provisioning result](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/results/provisioning-validation.json)
+- [실험 설정](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/config/experiment.yaml)
+- [과거 provisioning 결과](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/results/provisioning-validation.json)

@@ -1,5 +1,13 @@
 # Part 2: Synthetic PII Data and Deterministic Tokenization
 
+For a hands-on learning path, start with the [data augmentation workshop](06-data-augmentation-workshop.md). This chapter documents the existing implementation and operational contract.
+
+The 2026-09-15 CPU regeneration preserved the historical hashes and also checked
+exact NFC-source overlap: 22 shared sources between train/validation, 36 between
+train/test, and 9 between validation/test; 51 unique source groups span at least
+two splits. The new workshop splits families before augmenting training only in
+a separate example. It does not relabel this historical corpus as leakage-free.
+
 > Implementation and documentation reviewed: 2026-09-12. Generator 1.0.0, seed 42 and existing dataset hashes are preserved.
 
 ## Extraction is separate from replacement
