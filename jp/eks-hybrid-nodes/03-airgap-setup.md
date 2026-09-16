@@ -1,1158 +1,556 @@
-# Air-Gap (エアギャップ) 環境セットアップ (S3 + VPC Endpoint)
+# 制限されたインターネット環境でのセットアップ（S3、private endpoint、プロキシ）
 
 < [前へ: Network Configuration](./02-network-configuration.md) | [目次](./README.md) | [次へ: Node Bootstrap](./04-node-bootstrap.md) >
 
-> **サポート対象バージョン**: EKS 1.31+, nodeadm 0.1+
-> **最終更新**: February 23, 2026
+> **サポート対象バージョン**: EKS Hybrid Nodes。nodeadm v1.0.20 のソースを確認済みです。クラスターに対応する Kubernetes、OS、runtime、add-on のコホートを選択してください。
+> **最終更新**: September 16, 2026
 
-このドキュメントでは、EKS Hybrid Nodes 向けの Air-Gap 環境のセットアップについて説明します。バイナリアーティファクトは VPC Endpoints 経由で private S3 bucket からアクセスし、container images は ECR VPC Endpoints 経由でアクセスします。
+この章では、パブリックインターネットへのアクセスが制限されている Hybrid Nodes を準備します。**Hybrid Nodes には、AWS でホストされる EKS control plane と、認証情報に使用する AWS サービスへの接続が引き続き必要です。** ソフトウェアを物理的に転送しても、Hybrid Nodes が切断された Kubernetes distribution になるわけではありません。
 
-## Air-Gap 環境とは
+ここでの例は準備およびレビューの手順であり、テスト済みの本番デプロイではありません。監査ではソースコード、設定、ローカルの失敗ケースを検証しましたが、OS image の構築、artifact の公開、node の登録、実際の private network の検証は行っていません。TLS hostname verification が失敗したため、監査環境ではパブリック artifact manifest を取得できませんでした。certificate check はバイパスしておらず、この失敗した取得から現在の artifact patch や digest を推定していません。
 
-Air-Gap 環境とは、public internet から完全に分離された network です。このような環境は、security が重要な業界で不可欠です。
+**セキュリティチーム向け補足資料:** [Hybrid Nodes network-separation review](11-network-separation-security.md) では、新しい control-plane-to-on-premises 接続、endpoint の種類、権限とデータの境界、レビューの証跡について説明します。private connectivity だけではコンプライアンスを満たしません。
 
-### Air-Gap が必要な理由
+## 接続性と分離の境界
 
-| 要件 | 説明 |
-|-------------|-------------|
-| **Security Compliance** | 機密データを扱う業界 (金融、医療、防衛) では、外部 network からの分離が法的に求められます |
-| **Data Exfiltration Prevention** | すべての外部通信経路をブロックすることで、データ漏えいリスクを排除します |
-| **Supply Chain Attack Prevention** | 外部 registry から悪意のある images が持ち込まれることを防ぎます |
-| **Network Stability** | 外部サービスの停止が内部システムに影響しません |
+| パターン | 提供するもの | Hybrid Nodes での考慮事項 |
+|---|---|---|
+| 物理的に切断されたネットワーク | AWS へのライブ接続なし | 必要な EKS control-plane および credential-service への接続を提供できない |
+| 制御された egress proxy | 承認済みの外部 HTTPS 宛先およびログ | installer、package manager、host daemon、該当する Pod を個別に設定する |
+| private endpoint を伴う VPN/Direct Connect | クラスターおよびサポートされる AWS API への private path | 双方向ルート、DNS、security group、authorization が必要。endpoint はすべてのパブリック download host をカバーしない |
+| offline software transfer | レビュー済み artifact をインポートする制御された方法 | private AWS connectivity と併用すると有用だが、その接続を置き換えるものではない |
 
-### Air-Gap 環境の種類
+ネットワーク制限は露出を減らせますが、規制コンプライアンスの保証、データ流出の排除、すべての supply-chain attack の防止を保証するものではありません。certificate trust、承認済み publisher、signature、patching、operator access、application data flow は別個の control です。private connectivity にも、AWS サービスおよびオンプレミスネットワークへの依存関係が残ります。
 
-```mermaid
-graph TD
-    subgraph type1["Fully Air-Gapped"]
-        A1[No Internet Connectivity] --> A2[Physical Media Delivery]
-        A2 --> A3[USB / DVD / Removable HDD]
-    end
+![物理的分離、proxy egress、private AWS connectivity の比較。接続されているパターンだけが EKS Hybrid Nodes を運用できます。](../.gitbook/assets/en-eks-hybrid-nodes-03-airgap-setup-0.png)
 
-    subgraph type2["Partially Air-Gapped - Proxy"]
-        B1[Internal Network<br/>Restricted Access] -->|Allow-listed| B2[Proxy Server]
-        B2 -->|Selective| B3[Internet]
-    end
+[🔍 対話型ダイアグラムを表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-03-airgap-setup-0.html)
 
-    subgraph type3["Private Connectivity - VPN/DX + VPC Endpoint"]
-        C1[On-Premises<br/>Network] -->|VPN / Direct Connect| C2[AWS VPC]
-        C2 --> C3[VPC Endpoints<br/>S3, ECR, etc.]
-    end
+> **ダイアグラムの明確化:** 物理的に分離された選択肢は比較用であり、サポートされる Hybrid Nodes の運用モードではありません。
 
-    style type1 fill:#fee,stroke:#c00
-    style type2 fill:#ffe,stroke:#cc0
-    style type3 fill:#efe,stroke:#0a0
-```
+## アーキテクチャと artifact の責任範囲
 
----
+![制御された準備ホストがレビュー済みソフトウェアを private storage にステージングし、node は検証済み download URL と private AWS connectivity を使用します。](../.gitbook/assets/en-eks-hybrid-nodes-03-airgap-setup-1.png)
 
-## Air-Gap アーキテクチャ概要
+[🔍 対話型ダイアグラムを表示](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-03-airgap-setup-1.html)
 
-このドキュメントで構成する Air-Gap アーキテクチャは次のとおりです。
+> **ダイアグラムの訂正:** `hybrid-assets.eks.amazonaws.com → PHZ → S3` のショートカットは、機能する透過的な mirror ではありません。以下の installation path を使用してください。DNS の変更だけでは、元の hostname の TLS certificate、S3 object routing、request authorization は提供されません。
 
-```mermaid
-graph TD
-    subgraph prep["Preparation - Internet-Connected Host"]
-        P1[hybrid-assets.eks.amazonaws.com] -->|Download manifest.yaml| P2[ekshybrid-download.sh]
-        P2 -->|Binaries + Checksums| P3[Upload to Private S3 Bucket]
-        P2 -->|Container Image List| P4[Pull from ECR via VPC Endpoint]
-    end
+| Artifact | 準備と配信 |
+|---|---|
+| Hybrid `nodeadm` | `aws/eks-hybrid` の release を承認し、root として実行する前に provenance と checksum を検証します。これは EC2 の `amazon-eks-ami` nodeadm とは異なります |
+| kubelet、kubectl、CNI plugin、ECR credential provider、IAM authenticator | 承認済み artifact manifest から、正確に 1 つの release/build/OS/architecture を選択します |
+| IAM Roles Anywhere signing helper | 独自の release を選択して検証します。任意に最初の array entry を選択しないでください |
+| SSM installer/agent | 個別の Regional download、signature、registration path です。custom EKS artifact manifest によって完全にはリダイレクトされません |
+| containerd、runc、iptables、OS dependency | transitive dependency と署名済み repository metadata を含む、承認済み OS/runtime package cohort |
+| CNI、CoreDNS、kube-proxy、sandbox、workload image | 実際の manifest、init container、image digest、platform を棚卸しします。image tag は binary manifest からは提供されません |
 
-    subgraph runtime["Runtime - Air-Gapped Environment"]
-        R1[On-Premises Node] -->|Binary Downloads| R2[PHZ: hybrid-assets.eks.amazonaws.com]
-        R2 --> R3[S3 Interface VPC Endpoint]
-        R3 --> R4[Private S3 Bucket]
-        R1 -->|Container Image Pulls| R5[ECR API/DKR VPC Endpoint]
-        R5 --> R6[ECR]
-    end
+Amazon VPC CNI（`aws-node` / `vpc-cni-init`）は Hybrid Nodes 用の CNI ではありません。[Network Configuration](./02-network-configuration.md) にあるサポート対象の Hybrid CNI 手順を使用してください。選択した CNI datapath が使用する場合にのみ kube-proxy を含めます。CNI plugin binary bundle はデプロイ済み CNI controller ではありません。
 
-    prep -.->|"Artifacts pre-staged"| runtime
+## installation path を選択する
 
-    style prep fill:#e8f4fd,stroke:#1976d2
-    style runtime fill:#fce4ec,stroke:#c62828
-```
+### Path A: preinstalled OS image
 
-### アーティファクト保存の責任範囲
-
-| アーティファクト種別 | 保存先 | アクセス経路 |
-|---------------|---------|-------------|
-| nodeadm, kubelet, kubectl, kube-proxy | S3 Bucket | S3 Interface VPC Endpoint |
-| cni-plugins, ecr-credential-provider | S3 Bucket | S3 Interface VPC Endpoint |
-| aws-iam-authenticator, aws_signing_helper | S3 Bucket | S3 Interface VPC Endpoint |
-| Checksum files (.sha256) | S3 Bucket | S3 Interface VPC Endpoint |
-| manifest.yaml | S3 Bucket | S3 Interface VPC Endpoint |
-| pause, coredns, kube-proxy images | ECR | ECR API/DKR VPC Endpoint |
-| vpc-cni, vpc-cni-init images | ECR | ECR API/DKR VPC Endpoint |
-
----
-
-## manifest.yaml に基づくアーティファクトのダウンロード
-
-### manifest.yaml の構造
-
-`hybrid-assets.eks.amazonaws.com/manifest.yaml` には、EKS Hybrid Nodes に必要なすべての binaries の URLs と checksums が含まれており、version と architecture ごとに整理されています。
-
-```yaml
-# manifest.yaml structure (excerpt)
-supported_eks_releases:
-- latest_patch_version: "3"
-  major_minor_version: "1.33"
-  patch_releases:
-  - version: "1.33.3"
-    artifacts:
-    - arch: amd64
-      checksum_uri: https://hybrid-assets.eks.amazonaws.com/artifacts/1.33.0/.../kubelet.sha256
-      name: kubelet
-      os: linux
-      uri: https://hybrid-assets.eks.amazonaws.com/artifacts/1.33.0/.../kubelet
-    - arch: amd64
-      checksum_uri: https://hybrid-assets.eks.amazonaws.com/artifacts/1.33.0/.../kubectl.sha256
-      name: kubectl
-      os: linux
-      uri: https://hybrid-assets.eks.amazonaws.com/artifacts/1.33.0/.../kubectl
-    # ... cni, cni-plugins, kube-proxy, ecr-credential-provider, aws-iam-authenticator
-```
-
-manifest.yaml に含まれる主な binaries:
-
-| Binary | 目的 |
-|--------|---------|
-| `kubelet` | Node の Kubernetes agent |
-| `kubectl` | Kubernetes CLI |
-| `kube-proxy` | Network proxy |
-| `cni` / `cni-plugins` | Container Network Interface |
-| `ecr-credential-provider` | ECR authentication helper |
-| `aws-iam-authenticator` | IAM authentication |
-
-### ダウンロードと S3 アップロードスクリプト (ekshybrid-download.sh)
-
-manifest.yaml に基づいてすべての binaries をダウンロードし、S3 にアップロードするために、internet に接続された host でこれを実行します。
+制御された builder で、承認済み Hybrid nodeadm をインストールし、クラスターで選択した Kubernetes version と credential provider を使用して `nodeadm install` を実行します。AWS はこの image-build の利用を文書化しています。インストール済み artifact と nodeadm tracker を image 内に保持します。
 
 ```bash
-#!/bin/bash
-# ekshybrid-download.sh - EKS Hybrid nodeadm air-gap setup script
-# Usage: ./ekshybrid-download.sh <S3_BUCKET_NAME> [KUBERNETES_VERSION] [ARCHITECTURE]
-# Example: ./ekshybrid-download.sh ekshybrid-my-bucket 1.33.3 amd64
+# Controlled image builder only; installs software on this host.
+set -euo pipefail
+: "${KUBERNETES_VERSION:?Approved cluster-compatible version}"
+: "${REGION:?}" "${CREDENTIAL_PROVIDER:?ssm or iam-ra}"
+case "$CREDENTIAL_PROVIDER" in ssm|iam-ra) ;; *) exit 1 ;; esac
+sudo nodeadm install "$KUBERNETES_VERSION" \
+  --credential-provider "$CREDENTIAL_PROVIDER" --region "$REGION"
+```
 
-set -e
+デフォルトの runtime source は OS distro ですが、この source は RHEL ではサポートされません。RHEL では、文書化された Docker package source を選択するか、互換性のある runtime を事前インストールして `--containerd-source none` を使用してください。Docker source は AL2023 ではサポートされません。`none` は containerd を自動的にインストールしません。
 
-# Default values
-KUBERNETES_VERSION="${2:-1.33.3}"
-ARCHITECTURE="${3:-amd64}"
-REGION="ap-northeast-2"
-MANIFEST_URL="https://hybrid-assets.eks.amazonaws.com/manifest.yaml"
-WORK_DIR="/tmp/nodeadm-offline"
-LOG_FILE="/tmp/nodeadm-offline-setup.log"
+builder を initialize/register してその identity を複製することは**しないでください**。各 node の SSM activation または IAM Roles Anywhere certificate/private key は、承認済みの node ごとのプロセスで配信してください。activation code、private key、SSM registration state、kubelet certificate、operator credential を再利用可能な image に bake しないでください。Bottlerocket には独自の preparation/bootstrap workflow があり、この nodeadm 手順は使用しません。
 
-# Color definitions
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+新しい SSM installation/upgrade には nodeadm **1.0.19 以降**が必要です。これは古い release に古い SSM signing key が含まれているためです。この章で確認したのは **v1.0.20** であり、無制限な `latest` binary ではありません。
 
-log()  { echo -e "${GREEN}[$(date '+%Y-%m-%d %H:%M:%S')] $1${NC}" | tee -a "$LOG_FILE"; }
-warn() { echo -e "${YELLOW}[$(date '+%Y-%m-%d %H:%M:%S')] WARNING: $1${NC}" | tee -a "$LOG_FILE"; }
-error(){ echo -e "${RED}[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}" | tee -a "$LOG_FILE"; exit 1; }
-info() { echo -e "${BLUE}[$(date '+%Y-%m-%d %H:%M:%S')] INFO: $1${NC}" | tee -a "$LOG_FILE"; }
+### Path B: custom artifact manifest
 
-# Parameter validation
-if [ $# -lt 1 ]; then
-    echo "Usage: $0 <S3_BUCKET_NAME> [KUBERNETES_VERSION] [ARCHITECTURE]"
-    echo ""
-    echo "Parameters:"
-    echo "  S3_BUCKET_NAME      : S3 bucket name to store binaries (required)"
-    echo "  KUBERNETES_VERSION  : Kubernetes version (default: 1.33.3)"
-    echo "  ARCHITECTURE        : Architecture (default: amd64, option: arm64)"
-    echo ""
-    echo "Examples:"
-    echo "  $0 my-nodeadm-bucket"
-    echo "  $0 my-nodeadm-bucket 1.33.3 amd64"
-    exit 1
-fi
+公開された **v1.0.20 source** は、user-guide の flag table にすべてが記載されていない場合でも、以下の flag をサポートします。
 
-S3_BUCKET="$1"
+| Command/setting | 確認した release での実際の動作 |
+|---|---|
+| `install --manifest-override file:///path/manifest.json` | ローカル manifest を読み取ります。YAML decoder が JSON を受け付けます |
+| `install --manifest-override https://mirror.example.com/manifest.json` | 通常の HTTP client で manifest を download します |
+| `install --private-mode` | `--manifest-override` が必要です。OS package installation をスキップしますが、credential および EKS artifact は引き続きインストールします |
+| `init --manifest-override ... --private-mode` | manifest argument が必要であり、そこから Region metadata を取得します。AWS authentication または EKS connectivity の要件は削除しません |
+| 個々の artifact `uri` / `checksum_uri` | S3 SigV4 signing なしで HTTP(S) 経由で取得されます。`file://` **manifest** は `file://` **artifact** URL のサポートを意味しません |
+| `gzip_uri` | 存在する場合は `uri` より優先されます。checksum verification は decompression 後に行われます |
 
-# Check prerequisites
-check_prerequisites() {
-    log "Checking prerequisites..."
-    local missing_tools=()
+これらの flag を使用する前に、正確にデプロイされる binary の `install --help` と `init --help` を確認してください。private mode は完全な offline package installer ではありません。systemd unit を含む containerd、runc、iptables、CA certificate、および必要なすべての OS dependency を事前インストールしてください。
 
-    command -v aws &>/dev/null  || missing_tools+=("aws-cli")
-    command -v curl &>/dev/null || missing_tools+=("curl")
-    command -v yq &>/dev/null   || missing_tools+=("yq (https://github.com/mikefarah/yq)")
-    command -v jq &>/dev/null   || missing_tools+=("jq")
+`--credential-provider ssm` では、v1.0.20 は引き続き Regional `ssm-setup-cli` と signature URL を個別に構築します。manifest の `ssm_releases` field はこの installation path をリダイレクトしません。これらの S3 object と後続の agent installation/registration dependency へのアクセスを計画するか、検証済みの preinstalled-image workflow を使用してください。
 
-    if [ ${#missing_tools[@]} -ne 0 ]; then
-        error "The following tools are required: ${missing_tools[*]}"
-    fi
-    log "Prerequisites check complete"
-}
+### manifest をレビューして 1 つの cohort を選択する
 
-# Setup work directory
-setup_work_directory() {
-    log "Setting up work directory..."
-    rm -rf "$WORK_DIR"
-    mkdir -p "$WORK_DIR"/{binaries,checksums,images}
-    cd "$WORK_DIR"
-}
+upstream manifest には、`supported_eks_releases`、`iam_roles_anywhere_releases`、`region_config` があります。Kubernetes record には `major_minor_version`、`latest_patch_version`、`patch_releases[].version`、**`patch_version`**、**`release_date`**、artifact ごとの URL が含まれます。複数の build が 1 つの patch version を共有する場合があります。以前の `1.33.3` の例は過去の schema illustration であり、現在承認されている patch の証拠ではありません。
 
-# Download manifest.yaml
-download_manifest() {
-    log "Downloading manifest.yaml..."
-    curl -sL "$MANIFEST_URL" -o manifest.yaml
-    [ -f manifest.yaml ] || error "Failed to download manifest.yaml"
-    log "manifest.yaml download complete"
-}
+download した upstream manifest、その取得日/hash、承認記録を保持してください。選択前に HTTPS origin を検証してください。次のローカル selector には、正確な Kubernetes patch、build date、signing-helper release、architecture が必要です。曖昧な選択、artifact の欠落、重複する YAML key、未知の Region を拒否します。ECR account を推測せず、実際の Region metadata を保持します。
 
-# Extract binary URLs from manifest.yaml (using yq)
-extract_binary_urls() {
-    log "Extracting binary URLs for Kubernetes $KUBERNETES_VERSION ($ARCHITECTURE)..."
-    local MAJOR_MINOR=$(echo "$KUBERNETES_VERSION" | cut -d. -f1,2)
+準備ホストで `select-mirror.py` として保存してください。Python 3 と PyYAML が必要です。
 
-    # Extract binary URLs
-    yq -r ".supported_eks_releases[]
-      | select(.major_minor_version == \"$MAJOR_MINOR\")
-      | .patch_releases[]
-      | select(.version == \"$KUBERNETES_VERSION\")
-      | .artifacts[]
-      | select(.os == \"linux\" and .arch == \"$ARCHITECTURE\")
-      | .uri" manifest.yaml > binary_urls.txt
+```python
+#!/usr/bin/env python3
+"""Build a local review plan, not an installer. Requires PyYAML."""
+import copy
+import datetime
+import json
+import re
+import sys
+from pathlib import Path
+from urllib.parse import urlsplit
 
-    # Extract checksum URLs
-    yq -r ".supported_eks_releases[]
-      | select(.major_minor_version == \"$MAJOR_MINOR\")
-      | .patch_releases[]
-      | select(.version == \"$KUBERNETES_VERSION\")
-      | .artifacts[]
-      | select(.os == \"linux\" and .arch == \"$ARCHITECTURE\")
-      | .checksum_uri" manifest.yaml > checksum_urls.txt
+import yaml
 
-    [ -s binary_urls.txt ] || error "No binaries found for the specified version/architecture"
 
-    # Generate additional URLs and metadata as JSON
-    local ECR_ACCOUNT_ID=$(yq -r ".region_config.\"$REGION\".ecr_account_id // \"602401143452\"" manifest.yaml)
-    local SIGNING_URI=$(yq -r "[.iam_roles_anywhere_releases[].artifacts[] | select(.os == \"linux\" and .arch == \"$ARCHITECTURE\")] | .[0].uri // \"\"" manifest.yaml)
-    local SIGNING_CHECKSUM=$(yq -r "[.iam_roles_anywhere_releases[].artifacts[] | select(.os == \"linux\" and .arch == \"$ARCHITECTURE\")] | .[0].checksum_uri // \"\"" manifest.yaml)
+class UniqueLoader(yaml.SafeLoader):
+    pass
 
-    jq -n \
-      --arg ecr "$ECR_ACCOUNT_ID" \
-      --arg nodeadm "https://hybrid-assets.eks.amazonaws.com/releases/latest/bin/linux/${ARCHITECTURE}/nodeadm" \
-      --arg ssm "https://amazon-ssm-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_${ARCHITECTURE}/ssm-setup-cli" \
-      --arg signing_uri "$SIGNING_URI" \
-      --arg signing_checksum "$SIGNING_CHECKSUM" \
-      '{ecr_account_id: $ecr, nodeadm: $nodeadm, ssm_setup_cli: $ssm,
-        aws_signing_helper: {uri: $signing_uri, checksum_uri: $signing_checksum}}' \
-      > additional_urls.json
 
-    # Generate container image list
-    # Note: image tags are not included in manifest.yaml, so they are hardcoded
-    local ECR_REGISTRY="${ECR_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
-    cat > container_images.txt <<IMGEOF
-${ECR_REGISTRY}/eks/kube-proxy:v${KUBERNETES_VERSION}-minimal-eksbuild.1
-${ECR_REGISTRY}/eks/pause:3.5
-${ECR_REGISTRY}/amazon-k8s-cni:v1.18.5-eksbuild.1
-${ECR_REGISTRY}/amazon-k8s-cni-init:v1.18.5-eksbuild.1
-${ECR_REGISTRY}/eks/coredns:v1.11.3-eksbuild.1
-IMGEOF
+def mapping(loader, node, deep=False):
+    result = {}
+    for key_node, value_node in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        if key in result:
+            raise ValueError("duplicate YAML key")
+        result[key] = loader.construct_object(value_node, deep=deep)
+    return result
 
-    log "Extraction complete: $(wc -l < binary_urls.txt) binaries, $(wc -l < checksum_urls.txt) checksums, $(wc -l < container_images.txt) images"
-}
 
-# Download binaries
-download_binaries() {
-    log "Downloading binaries..."
-    local count=0
-    local total=$(wc -l < binary_urls.txt)
-    while IFS= read -r url; do
-        [ -n "$url" ] || continue
-        count=$((count + 1))
-        filename=$(basename "$url")
-        info "[$count/$total] Downloading $filename..."
-        curl -sL -o "binaries/$filename" "$url" && log "  $filename complete" || warn "  $filename failed"
-    done < binary_urls.txt
-}
+UniqueLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, mapping
+)
 
-# Download checksums
-download_checksums() {
-    log "Downloading checksum files..."
-    local count=0
-    local total=$(wc -l < checksum_urls.txt)
-    while IFS= read -r url; do
-        [ -n "$url" ] || continue
-        count=$((count + 1))
-        filename=$(basename "$url")
-        info "[$count/$total] Downloading $filename..."
-        curl -sL -o "checksums/$filename" "$url" && log "  $filename complete" || warn "  $filename failed"
-    done < checksum_urls.txt
-}
 
-# Download additional binaries (nodeadm, ssm-setup-cli, aws_signing_helper)
-download_additional_binaries() {
-    log "Downloading additional required binaries..."
-    if [ -f additional_urls.json ]; then
-        local nodeadm_url=$(jq -r '.nodeadm // empty' additional_urls.json)
-        [ -n "$nodeadm_url" ] && { info "Downloading nodeadm..."; curl -sL -o "binaries/nodeadm" "$nodeadm_url"; chmod +x "binaries/nodeadm"; }
+def https_url(value):
+    if not isinstance(value, str) or any(c.isspace() for c in value):
+        raise ValueError("URL must be a nonempty HTTPS URL")
+    parsed = urlsplit(value)
+    if (parsed.scheme != "https" or not parsed.hostname or parsed.username
+            or parsed.password or parsed.query or parsed.fragment):
+        raise ValueError("HTTPS URL must not contain credentials, query or fragment")
+    return value
 
-        local ssm_url=$(jq -r '.ssm_setup_cli // empty' additional_urls.json)
-        [ -n "$ssm_url" ] && { info "Downloading ssm-setup-cli..."; curl -sL -o "binaries/ssm-setup-cli" "$ssm_url"; chmod +x "binaries/ssm-setup-cli"; }
 
-        local signing_helper=$(jq -r '.aws_signing_helper.uri // empty' additional_urls.json)
-        [ -n "$signing_helper" ] && { info "Downloading aws_signing_helper..."; curl -sL -o "binaries/aws_signing_helper" "$signing_helper"; chmod +x "binaries/aws_signing_helper"; }
-    fi
-}
-
-# Verify checksums
-verify_checksums() {
-    log "Verifying checksums..."
-    local verified=0 failed=0
-    for checksum_file in checksums/*.sha256; do
-        [ -f "$checksum_file" ] || continue
-        checksum_name=$(basename "$checksum_file" .sha256)
-        binary_file="binaries/$checksum_name"
-        [ -f "$binary_file" ] || continue
-        expected=$(awk '{print $1}' "$checksum_file")
-        actual=$(sha256sum "$binary_file" | awk '{print $1}')
-        if [ "$expected" = "$actual" ]; then
-            info "  $checksum_name verification passed"; verified=$((verified + 1))
-        else
-            warn "  $checksum_name verification failed"; failed=$((failed + 1))
-        fi
-    done
-    log "Checksum verification complete: $verified passed, $failed failed"
-}
-
-# Upload to S3
-upload_to_s3() {
-    log "Uploading to S3 bucket ($S3_BUCKET)..."
-    aws s3 ls "s3://$S3_BUCKET" --region "$REGION" &>/dev/null || {
-        info "Creating S3 bucket..."; aws s3 mb "s3://$S3_BUCKET" --region "$REGION"
+def select(manifest, version, build_date, iam_version, arch, region, mirror):
+    if not re.fullmatch(r"1\.\d+\.\d+", version):
+        raise ValueError("an exact approved Kubernetes patch is required")
+    datetime.date.fromisoformat(build_date)
+    if arch not in ("amd64", "arm64"):
+        raise ValueError("unsupported architecture")
+    mirror = https_url(mirror).rstrip("/")
+    region_info = manifest["region_config"][region]  # No account fallback.
+    if (region_info.get("partition") != "aws"
+            or region_info.get("dns_suffix") != "amazonaws.com"
+            or not region_info.get("cred_providers", {}).get("iam-ra")
+            or not re.fullmatch(r"\d{12}", str(region_info.get("ecr_account_id", "")))):
+        raise ValueError("review a supported commercial Region with IAM Roles Anywhere")
+    minor, patch = version.rsplit(".", 1)
+    releases = [
+        release
+        for family in manifest["supported_eks_releases"]
+        if family["major_minor_version"] == minor
+        for release in family["patch_releases"]
+        if release["version"] == version and release["patch_version"] == patch
+        and release["release_date"] == build_date
+    ]
+    iam = [
+        release for release in manifest["iam_roles_anywhere_releases"]
+        if release["version"] == iam_version
+    ]
+    if len(releases) != 1 or len(iam) != 1:
+        raise ValueError("release selection must be unique")
+    eks_release, iam_release = copy.deepcopy(releases[0]), copy.deepcopy(iam[0])
+    plan = []
+    for release, names in [
+        (eks_release, ["kubelet", "kubectl", "cni-plugins",
+                       "ecr-credential-provider", "aws-iam-authenticator"]),
+        (iam_release, ["aws_signing_helper"]),
+    ]:
+        chosen = []
+        for name in names:
+            matches = [a for a in release["artifacts"]
+                       if a["name"] == name and a["arch"] == arch and a["os"] == "linux"]
+            if len(matches) != 1:
+                raise ValueError("missing or duplicate artifact: " + name)
+            artifact = matches[0]
+            item_id = "a%02d" % len(plan)
+            plan.append({"id": item_id, "name": name,
+                         "uri": https_url(artifact["uri"]),
+                         "checksum_uri": https_url(artifact["checksum_uri"])})
+            # Use the original, uncompressed URI; its checksum is not a gzip-file hash.
+            artifact.pop("gzip_uri", None)
+            artifact["uri"] = mirror + "/" + item_id + "/data"
+            artifact["checksum_uri"] = mirror + "/" + item_id + "/data.sha256"
+            chosen.append(artifact)
+        release["artifacts"] = chosen
+    selected = {
+        "supported_eks_releases": [{
+            "major_minor_version": minor, "latest_patch_version": patch,
+            "patch_releases": [eks_release],
+        }],
+        "iam_roles_anywhere_releases": [iam_release],
+        "region_config": {region: copy.deepcopy(region_info)},
     }
-    aws s3 cp manifest.yaml "s3://$S3_BUCKET/manifest.yaml" --region "$REGION"
-    aws s3 sync binaries/  "s3://$S3_BUCKET/binaries/"  --region "$REGION"
-    aws s3 sync checksums/ "s3://$S3_BUCKET/checksums/" --region "$REGION"
-    aws s3 cp container_images.txt "s3://$S3_BUCKET/container_images.txt" --region "$REGION"
-    aws s3 cp additional_urls.json "s3://$S3_BUCKET/additional_urls.json" --region "$REGION"
-    log "S3 upload complete"
-}
+    return selected, {"artifacts": plan}
 
-# Main execution
-main() {
-    log "Starting EKS Hybrid nodeadm air-gap setup"
-    log "S3 bucket: $S3_BUCKET, Kubernetes: $KUBERNETES_VERSION, Architecture: $ARCHITECTURE"
 
-    check_prerequisites
-    setup_work_directory
-    download_manifest
-    extract_binary_urls
-    download_binaries
-    download_checksums
-    download_additional_binaries
-    verify_checksums
-    upload_to_s3
+def main():
+    if len(sys.argv) != 9:
+        raise ValueError(
+            "usage: select-mirror.py UPSTREAM VERSION BUILD_DATE IAM_VERSION "
+            "ARCH REGION HTTPS_MIRROR_PREFIX NEW_OUTPUT_DIR"
+        )
+    source, version, date, iam, arch, region, mirror, output = sys.argv[1:]
+    manifest = yaml.load(Path(source).read_text(), Loader=UniqueLoader)
+    selected, plan = select(manifest, version, date, iam, arch, region, mirror)
+    out = Path(output)
+    out.mkdir(mode=0o700, parents=False, exist_ok=False)
+    (out / "upstream.yaml").write_bytes(Path(source).read_bytes())
+    (out / "manifest.json").write_text(json.dumps(selected, indent=2) + "\n")
+    (out / "plan.json").write_text(json.dumps(plan, indent=2) + "\n")
 
-    log "=== Upload Summary ==="
-    info "Binaries: $(ls binaries/ | wc -l) files → /binaries subfolder"
-    info "Checksums: $(ls checksums/ | wc -l) files → /checksums subfolder"
-    info "Container images: $(wc -l < container_images.txt) → container_images.txt"
-    log "All tasks completed!"
-}
 
-main "$@"
+if __name__ == "__main__":
+    main()
 ```
 
-実行後の S3 bucket 構造は次のようになります。
-
-```
-s3://<BUCKET_NAME>/
-├── manifest.yaml
-├── container_images.txt
-├── additional_urls.json
-├── binaries/
-│   ├── nodeadm
-│   ├── kubelet
-│   ├── kubectl
-│   ├── kube-proxy
-│   ├── cni-plugins-linux-amd64-*.tgz
-│   ├── ecr-credential-provider
-│   ├── aws-iam-authenticator
-│   ├── ssm-setup-cli
-│   └── aws_signing_helper
-└── checksums/
-    ├── kubelet.sha256
-    ├── kubectl.sha256
-    ├── kube-proxy.sha256
-    └── ...
-```
-
----
-
-## S3 Bucket 設定
-
-### Bucket の作成と Versioning
+output directory は新規でなければなりません。HTTPS mirror prefix は、公開に使用する同じ immutable object prefix にマッピングする必要があります。この script は plan を構築するだけで、mirror への download も authentication も行いません。
 
 ```bash
-BUCKET_NAME="my-hybrid-assets-$(aws sts get-caller-identity --query Account --output text)"
-REGION="ap-northeast-2"
-
-# Create S3 bucket
-aws s3 mb s3://${BUCKET_NAME} --region ${REGION}
-
-# Enable versioning (for rollback)
-aws s3api put-bucket-versioning \
-  --bucket ${BUCKET_NAME} \
-  --versioning-configuration Status=Enabled
+set -euo pipefail
+: "${APPROVED_PATCH:?}" "${APPROVED_BUILD_DATE:?}" "${APPROVED_IAM_VERSION:?}"
+: "${ARCH:?amd64 or arm64}" "${REGION:?}"
+: "${MIRROR_PREFIX:?HTTPS URL for this reviewed candidate}"
+: "${NEW_PLAN_DIR:?A new local directory}"
+python3 select-mirror.py upstream.yaml "$APPROVED_PATCH" "$APPROVED_BUILD_DATE" \
+  "$APPROVED_IAM_VERSION" "$ARCH" "$REGION" "$MIRROR_PREFIX" "$NEW_PLAN_DIR"
 ```
 
-### S3 Bucket Policy (VPC Endpoint 制限)
+すべての source host と選択された 6 つの artifact を download 前にレビューしてください。これは **IAM Roles Anywhere artifact の例**であり、SSM installer mirror ではありません。nodeadm 自体、OS package、image、signing key、certificate は含まれません。
 
-VPC Endpoint 経由のリクエストのみを許可するようにアクセスを制限します。
+`download-plan.sh` として保存してください。
+
+```bash
+#!/usr/bin/env bash
+# Download into a new plan directory. No AWS writes or host installation.
+set -euo pipefail
+umask 077
+cd -- "${1:?Use the directory produced by select-mirror.py}"
+test ! -e checksums.sha256
+test ! -e queue.tsv
+jq -er '.artifacts[] | [.id, .uri, .checksum_uri] | @tsv' plan.json > queue.tsv
+test "$(wc -l < queue.tsv)" -eq 6
+while IFS=$'\t' read -r item_id uri checksum_uri; do
+  [[ "$item_id" =~ ^a[0-9]{2}$ ]]
+  mkdir -- "$item_id"  # Refuse a partial run or existing directory.
+  curl --fail --show-error --silent --location \
+    --proto '=https' --proto-redir '=https' --connect-timeout 10 \
+    --max-time 300 --max-filesize 268435456 \
+    "$uri" -o "$item_id/data"
+  curl --fail --show-error --silent --location \
+    --proto '=https' --proto-redir '=https' --connect-timeout 10 \
+    --max-time 30 --max-filesize 4096 \
+    "$checksum_uri" -o "$item_id/upstream.sha256"
+  expected=$(python3 - "$item_id/upstream.sha256" <<'CHECKSUM_PY'
+import pathlib, re, sys
+text = pathlib.Path(sys.argv[1]).read_text().strip()
+match = re.fullmatch(r"([0-9a-fA-F]{64})(?:[ \t]+[^\r\n]+)?", text)
+if not match:
+    raise SystemExit("missing, malformed or multi-record upstream checksum")
+print(match.group(1).lower())
+CHECKSUM_PY
+)
+  actual=$(sha256sum "$item_id/data")
+  [[ "${actual%% *}" == "$expected" ]]
+  # nodeadm v1.0.20 requires GNU format: digest, space, filename.
+  printf '%s  data\n' "$expected" > "$item_id/data.sha256"
+done < queue.tsv
+sha256sum manifest.json plan.json upstream.yaml a*/data a*/data.sha256 \
+  > checksums.sha256
+sha256sum --strict --check checksums.sha256
+printf '%s\n' 'Six artifacts verified locally; publishing and node installation remain separate.'
+```
+
+size limit は artifact あたり意図的に 256 MiB としています。承認済み artifact がこれを超える場合はレビューしてください。download、malformed checksum、hash mismatch が発生すると script は停止します。partial directory は調査用に保持されます。原因を解決した後、新しい candidate を開始してください。共有の `/tmp` directory を削除したり、欠落した checksum をスキップしたりしないでください。
+
+これらの hash は、選択した byte を取得済み checksum に結び付けます。これらは独立した signature でも、侵害された publisher が信頼できることの証明でもありません。レビュー済み manifest/checksum record を保護し、利用可能な場合は publisher verification を使用してください。
+
+## Private S3 の公開と authorization
+
+Block Public Access、承認済み encryption、versioning/retention、分離された publisher/reader permission を備えた、**事前作成済みで所有する** bucket を使用してください。以下の例では bucket を作成せず、その policy を置き換えることもありません。AccessDenied、expired credential、timeout は失敗であり、bucket/object が存在しない証拠ではありません。
+
+既存 bucket 向けの reader-policy statement の例は次のとおりです。
 
 ```json
 {
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "AllowVPCEndpointAccess",
-      "Effect": "Allow",
-      "Principal": "*",
-      "Action": [
-        "s3:GetObject",
-        "s3:ListBucket"
-      ],
-      "Resource": [
-        "arn:aws:s3:::my-hybrid-assets-<ACCOUNT_ID>",
-        "arn:aws:s3:::my-hybrid-assets-<ACCOUNT_ID>/*"
-      ],
-      "Condition": {
-        "StringEquals": {
-          "aws:sourceVpce": "<VPCE_ID>"
-        }
-      }
-    },
-    {
-      "Sid": "DenyNonVPCEndpointAccess",
-      "Effect": "Deny",
-      "Principal": "*",
-      "Action": "s3:*",
-      "Resource": [
-        "arn:aws:s3:::my-hybrid-assets-<ACCOUNT_ID>",
-        "arn:aws:s3:::my-hybrid-assets-<ACCOUNT_ID>/*"
-      ],
-      "Condition": {
-        "StringNotEquals": {
-          "aws:sourceVpce": "<VPCE_ID>"
-        }
-      }
-    }
-  ]
+  "Sid": "ReadApprovedHybridArtifacts",
+  "Effect": "Allow",
+  "Principal": {"AWS": "arn:aws:iam::111122223333:role/HybridArtifactReader"},
+  "Action": "s3:GetObject",
+  "Resource": "arn:aws:s3:::example-hybrid-artifacts/hybrid-candidates/*",
+  "Condition": {"StringEquals": {"aws:SourceVpce": "vpce-0123456789abcdef0"}}
 }
 ```
 
-```bash
-# Apply bucket policy
-aws s3api put-bucket-policy \
-  --bucket my-hybrid-assets-<ACCOUNT_ID> \
-  --policy file://bucket-policy.json
-```
+account、role、bucket、prefix、endpoint をレビュー済みの値に置き換えてください。この statement は 1 つの path を許可するものであり、他の既存 grant を取り消すものではありません。1 つの endpoint 外からのすべての request に対する bucket-wide の `Deny s3:*` は、接続された publisher と管理上の recovery も block する可能性があります。そのような boundary を適用する前に、これらの path を明示的に設計してください。
 
----
+named-principal policy には signed request が必要です。**nodeadm の通常の HTTPS downloader は、node に IAM role があるからといって IAM-authenticated S3 client にはなりません。** 検証すべき実行可能な design は次の 2 つです。
 
-## PHZ DNS Override
+1. authenticated preparation agent/CLI を使用して承認済み file を取得し、適切な network access control と独自 hostname 用の certificate を持つ組織管理下の HTTPS artifact service で提供する。
+2. runtime binary mirror dependency のない preinstalled-image path を使用する。
 
-### 問題
+private S3 object URL が `403` を返す問題は、DNS override では修復されません。bearer presigned URL や credential を manifest、process argument、公開 log に入れないでください。組織が private network に限定した非secret binary の unauthenticated read を選択する場合、それは別途明示的にレビューする policy であり、上記の named-principal policy ではありません。
 
-`hybrid-assets.eks.amazonaws.com` は、AWS が CloudFront 経由で nodeadm binaries をホストしている URL です。この domain には **標準の VPC endpoints 経由では到達できません**。
-
-- これは **CloudFront distribution** であるため、S3 または EKS VPC endpoints ではそこへ route できません
-- Air-Gap 環境では、`nodeadm install` がこの URL から binaries をダウンロードしようとして失敗します
-- internet 経路がない場合、nodeadm の installation は不可能です
-
-### 解決策
-
-アーティファクトを private S3 bucket にミラーリングし、Private Hosted Zone (PHZ) を使用して DNS を override することで、`hybrid-assets.eks.amazonaws.com` へのリクエストが S3 Interface VPC Endpoint に route されるようにします。
-
-### S3 Interface VPC Endpoint
-
-S3 Interface VPC Endpoint は、[Network Configuration ドキュメント (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/02-network-configuration#vpc-private-endpoints-air-gap-private-connectivity)ですでに作成済みです。endpoint DNS 名を確認します。
+`publish-plan.sh` として保存してください。bucket owner が candidate と permission を承認した後にのみ実行してください。この script は **S3 object を書き込みます**。
 
 ```bash
-# Get S3 Interface VPC Endpoint DNS name
-aws ec2 describe-vpc-endpoints \
-  --filters "Name=service-name,Values=com.amazonaws.<REGION>.s3" \
-             "Name=vpc-endpoint-type,Values=Interface" \
-  --query 'VpcEndpoints[0].DnsEntries[0].DnsName' \
-  --output text
-# Example output: *.vpce-0abc123def456789a-xyz12345.s3.ap-northeast-2.vpce.amazonaws.com
+#!/usr/bin/env bash
+# Owner-approved publication only; creates billable S3 objects, never a bucket.
+set -euo pipefail
+umask 077
+cd -- "${1:?Use a verified plan directory}"
+: "${REGION:?}" "${BUCKET:?}" "${EXPECTED_ACCOUNT_ID:?}" "${PREFIX:?}"
+[[ "$EXPECTED_ACCOUNT_ID" =~ ^[0-9]{12}$ ]]
+[[ "$PREFIX" =~ ^hybrid-candidates/[A-Za-z0-9-]+$ ]]
+sha256sum --strict --check checksums.sha256
+aws s3api head-bucket --region "$REGION" --bucket "$BUCKET" \
+  --expected-bucket-owner "$EXPECTED_ACCOUNT_ID"
+# Manifest is last. Any failed write stops; retain the partial prefix for review.
+for file in a{00..05}/data a{00..05}/data.sha256 checksums.sha256 \
+            upstream.yaml plan.json manifest.json; do
+  test -f "$file"
+  aws s3api put-object --region "$REGION" --bucket "$BUCKET" \
+    --expected-bucket-owner "$EXPECTED_ACCOUNT_ID" \
+    --key "$PREFIX/$file" --body "$file" --if-none-match '*' \
+    --server-side-encryption AES256 --checksum-algorithm SHA256 \
+    --output json > "${file//\//_}.upload.json"
+done
+printf '%s\n' 'Candidate uploaded. Verify readback, mirror URL mapping and hashes before promotion.'
 ```
 
-### Private Hosted Zone の作成
+SSE-KMS が必要な bucket では、AES256 の例ではなく承認済み key と KMS permission を使用してください。conditional write は既存 key の overwrite を防止しますが、multi-object upload を atomic にはしません。manifest は最後に upload され、失敗した candidate は readback と実際の HTTPS mirror mapping が検証されるまで unpublished のままです。返却される object VersionId/checksum と retention を記録してください。S3 ETag は汎用的な SHA-256 digest ではありません。
+
+## DNS と private endpoint の要件
+
+`hybrid-assets.eks.amazonaws.com` は AWS CloudFront download host です。その名前の PHZ を作成して S3 に alias しても、以下は維持されません。
+
+- TLS certificate/SNI hostname。
+- HTTP Host header と S3 bucket/object key mapping。
+- 特に uploader がすべての name を flatten した場合の、元の path。
+- request authorization。
+
+TLS check を無効化してこれを修正しないでください。承認済み origin へ制御された proxy 経由で到達可能にするか、preinstalled image を使用するか、実際の mirror URL を伴うサポート対象の manifest override を使用してください。
+
+S3 **Interface** endpoint は、VPN/Direct Connect 経由でオンプレミス client にサービスを提供できます。S3 private DNS はサポートされています。**private DNS only for inbound Resolver** option では、VPC 側で維持される S3 gateway endpoint が必要です。あるいは、VPC とオンプレミスの request の両方を interface endpoint 経由で route します。gateway endpoint 単体にはオンプレミスから直接アクセスできません。
+
+Region 内の最初の S3 endpoint ではなく、レビュー済みの VPC と endpoint ID で endpoint を選択してください。[Network Configuration](./02-network-configuration.md) の DNS/routing procedure を使用してください。EKS management API endpoint は Kubernetes API endpoint ではありません。private ECR endpoint は public ECR や CloudFront への一般的なアクセスを提供しません。
+
+## 準備済み node のインストールと初期化
+
+custom IAM Roles Anywhere path では、runtime、OS dependency、承認済み nodeadm、mirror service がすでに準備されている必要があります。この command は target node に software をインストールします。
 
 ```bash
-# 1. Create Private Hosted Zone
-HOSTED_ZONE_ID=$(aws route53 create-hosted-zone \
-  --name "hybrid-assets.eks.amazonaws.com" \
-  --vpc VPCRegion=<REGION>,VPCId=<VPC_ID> \
-  --caller-reference "hybrid-assets-phz-$(date +%s)" \
-  --hosted-zone-config PrivateZone=true \
-  --query 'HostedZone.Id' --output text)
-
-echo "PHZ created: ${HOSTED_ZONE_ID}"
-
-# 2. Get S3 Interface VPC Endpoint regional DNS name
-VPCE_DNS=$(aws ec2 describe-vpc-endpoints \
-  --filters "Name=service-name,Values=com.amazonaws.<REGION>.s3" \
-             "Name=vpc-endpoint-type,Values=Interface" \
-  --query 'VpcEndpoints[0].DnsEntries[?contains(DnsName, `vpce`)].DnsName | [0]' \
-  --output text)
-
-# 3. Get S3 VPC Endpoint Hosted Zone ID
-VPCE_HZ_ID=$(aws ec2 describe-vpc-endpoints \
-  --filters "Name=service-name,Values=com.amazonaws.<REGION>.s3" \
-             "Name=vpc-endpoint-type,Values=Interface" \
-  --query 'VpcEndpoints[0].DnsEntries[?contains(DnsName, `vpce`)].HostedZoneId | [0]' \
-  --output text)
-
-# 4. Create Alias record
-aws route53 change-resource-record-sets \
-  --hosted-zone-id ${HOSTED_ZONE_ID} \
-  --change-batch "{
-    \"Changes\": [{
-      \"Action\": \"UPSERT\",
-      \"ResourceRecordSet\": {
-        \"Name\": \"hybrid-assets.eks.amazonaws.com\",
-        \"Type\": \"A\",
-        \"AliasTarget\": {
-          \"DNSName\": \"${VPCE_DNS}\",
-          \"HostedZoneId\": \"${VPCE_HZ_ID}\",
-          \"EvaluateTargetHealth\": true
-        }
-      }
-    }]
-  }"
-
-echo "PHZ Alias record created"
+set -euo pipefail
+: "${APPROVED_PATCH:?}" "${REGION:?}" "${LOCAL_MANIFEST:?Absolute local path}"
+[[ "$LOCAL_MANIFEST" = /* ]]
+test -s "$LOCAL_MANIFEST"
+sudo nodeadm install "$APPROVED_PATCH" --region "$REGION" \
+  --credential-provider iam-ra --containerd-source none \
+  --manifest-override "file://$LOCAL_MANIFEST" --private-mode
 ```
 
-### On-Premises DNS 統合
-
-`hybrid-assets.eks.amazonaws.com` に対する query が PHZ 経由で解決され、S3 VPC Endpoint の private IP が返されるように、on-premises DNS を設定します。
-
-[Network Configuration ドキュメント](./02-network-configuration.md)に記載されているとおり Route 53 Resolver Inbound Endpoint をすでに作成している場合は、on-premises DNS の conditional forwarding に `eks.amazonaws.com` domain が含まれていることを確認します。
-
-```
-# BIND example - forward all eks.amazonaws.com to Route 53
-zone "eks.amazonaws.com" {
-    type forward;
-    forward only;
-    forwarders {
-        10.0.1.10;    # Route 53 Inbound Endpoint IP #1
-        10.0.2.10;    # Route 53 Inbound Endpoint IP #2
-    };
-};
-```
-
----
-
-## Air-Gapped Nodes へのインストール
-
-PHZ DNS override を構成したら、通常の環境と同じように `nodeadm install` と `nodeadm init` を実行します。
-`nodeadm install` は `hybrid-assets.eks.amazonaws.com` から binaries をダウンロードし、
-PHZ はこれらのリクエストを S3 VPC Endpoint に route します。
-
-```bash
-# 1. Install EKS components (downloaded from S3 via PHZ)
-sudo nodeadm install 1.31 --credential-provider ssm
-
-# 2. Verify installation
-nodeadm version
-```
-
-### nodeadm init の実行
-
-installation 後、node を EKS cluster に登録します。
+[Prerequisites](./01-prerequisites.md) と [Node Bootstrap](./04-node-bootstrap.md) を使用して node ごとの config を準備してください。たとえば、SSM config の**形式**は次のとおりです。
 
 ```yaml
-# nodeconfig.yaml
 apiVersion: node.eks.aws/v1alpha1
 kind: NodeConfig
 spec:
   cluster:
     name: my-hybrid-cluster
     region: ap-northeast-2
-    apiServerEndpoint: https://XXXXXXXX.gr7.ap-northeast-2.eks.amazonaws.com
-    certificateAuthority: |
-      -----BEGIN CERTIFICATE-----
-      ...
-      -----END CERTIFICATE-----
-    cidr: 10.100.0.0/16
-
   hybrid:
     ssm:
-      activationCode: <activation-code>
-      activationId: <activation-id>
-
-  kubelet:
-    config:
-      maxPods: 110
-    flags:
-      - --node-labels=topology.kubernetes.io/zone=on-premises
+      activationCode: REPLACE_WITH_NODE_ACTIVATION_CODE
+      activationId: REPLACE_WITH_NODE_ACTIVATION_ID
 ```
 
-```bash
-# Validate configuration file
-nodeadm config check --config-source file://nodeconfig.yaml
+node にインストールされている provider と正確に一致するものを使用してください。この SSM 形式は、上記の IAM Roles Anywhere command 用の config ではありません。入力済み file を保護し（root-owned、mode `0600`）、絶対に commit せず、shell history に secret を入れないでください。手書きの API endpoint/CA field を指定しても、文書化された cluster discovery と authentication path の必要性はなくなりません。
 
-# Initialize node
-sudo -E nodeadm init --config-source file://nodeconfig.yaml
+```bash
+# Local config validation; this is not a join or an end-to-end network test.
+sudo nodeadm config check --config-source file:///etc/eks/nodeconfig.yaml
 ```
 
----
-
-## Container Image Access (ECR VPC Endpoint)
-
-### 必要な Container Images
-
-EKS Hybrid Nodes の運用に必要な container images は ECR を通じて提供されます。
-
-| Image | 目的 | Source Registry |
-|-------|---------|-----------------|
-| `pause` | Pod infrastructure container | `602401143452.dkr.ecr.<region>.amazonaws.com/eks/pause` |
-| `coredns` | Cluster DNS | `602401143452.dkr.ecr.<region>.amazonaws.com/eks/coredns` |
-| `kube-proxy` | Network proxy | `602401143452.dkr.ecr.<region>.amazonaws.com/eks/kube-proxy` |
-| `vpc-cni-init` | VPC CNI initialization | `602401143452.dkr.ecr.<region>.amazonaws.com/amazon-k8s-cni-init` |
-| `aws-node` | AWS VPC CNI | `602401143452.dkr.ecr.<region>.amazonaws.com/amazon-k8s-cni` |
-
-### ECR VPC Endpoint 経由の Image Access
-
-ECR API (`ecr.api`) と ECR DKR (`ecr.dkr`) Interface VPC Endpoints は、[Network Configuration ドキュメント (English)](https://www.atomai.click/kubernetes-docs/en/eks-hybrid-nodes/02-network-configuration#vpc-private-endpoints-air-gap-private-connectivity)ですでに作成済みです。これにより、Air-Gap 環境でも ECR から直接 images を pull できます。
-
-### ecr-credential-provider 設定
-
-kubelet が ECR から images を pull するには authentication が必要です。`ecr-credential-provider` は ekshybrid-download.sh によりすでにダウンロードされ、`/usr/local/bin/` にインストールされています。
+network、identity、CNI の prerequisite に合格した後、owner は `nodeadm init` を実行できます。private-manifest path では、承認済み manifest を再度渡してください。
 
 ```bash
-# Create credential provider config directory
-sudo mkdir -p /etc/kubernetes/image-credential-provider
-
-# Create credential provider config file
-cat <<EOF | sudo tee /etc/kubernetes/image-credential-provider/config.json
-{
-  "apiVersion": "kubelet.config.k8s.io/v1",
-  "kind": "CredentialProviderConfig",
-  "providers": [
-    {
-      "name": "ecr-credential-provider",
-      "matchImages": [
-        "*.dkr.ecr.*.amazonaws.com",
-        "*.dkr.ecr.*.amazonaws.com.cn"
-      ],
-      "defaultCacheDuration": "12h",
-      "apiVersion": "credentialprovider.kubelet.k8s.io/v1"
-    }
-  ]
-}
-EOF
+# Mutates the target node and registers it with EKS.
+sudo nodeadm init --config-source file:///etc/eks/nodeconfig.yaml \
+  --manifest-override file:///etc/eks/manifest.json --private-mode
 ```
 
-### Fully Air-Gapped 環境向けの Image Export/Import
+確認した version には `nodeadm init --dry-run` はありません。不完全な preparation pass を成立させるために initialization validation をスキップしないでください。
 
-ECR VPC Endpoints も利用できない Fully Air-Gap 環境では、images を file に export し、physical media で転送します。
+## Container image の配信
+
+private ECR pull には、ECR API および DKR path、S3 layer-download path、DNS、適切な image-pull permission が必要です。`describe-repositories` call が成功しても、image layer を download できることは証明されません。pull-through cache を事前に投入してテストしてください。ECR endpoint documentation では、最初の未キャッシュ pull に追加のインターネット要件があることを説明しています。
+
+デプロイ済み add-on manifest にある実際の registry account/Region/image reference を使用してください。Kubernetes patch に `-eksbuild.1` を付加して image tag を構築したり、無関係な cluster から古い pause/CoreDNS version をコピーしたりしないでください。
+
+nodeadm は ECR helper を `/etc/eks/image-credential-provider/ecr-credential-provider` にインストールし、その config を `/etc/eks/image-credential-provider/config.json` に初期化します。別の directory の下に使用されない file を書き込むのではなく、生成された kubelet configuration を確認してください。`ctr images pull` は別の client であり、kubelet の exec credential provider を自動的には使用しません。
+
+### Offline image transfer
+
+承認済み digest と必要な platform を選択してください。multi-platform archive では、source/destination format が対応している場所で index と digest を保持してください。
 
 ```bash
-# Export images to tar on internet-connected environment
-IMAGES=(
-  "602401143452.dkr.ecr.ap-northeast-2.amazonaws.com/eks/pause:3.5"
-  "602401143452.dkr.ecr.ap-northeast-2.amazonaws.com/eks/coredns:v1.11.3-eksbuild.1"
-  "602401143452.dkr.ecr.ap-northeast-2.amazonaws.com/eks/kube-proxy:v1.33.3-minimal-eksbuild.1"
-)
-
-EXPORT_DIR="/media/usb/eks-images"
-mkdir -p $EXPORT_DIR
-
-for img in "${IMAGES[@]}"; do
-  filename=$(echo $img | tr '/:' '_')
-  echo "Exporting: $img"
-  skopeo copy "docker://${img}" "oci-archive:${EXPORT_DIR}/${filename}.tar"
-done
-
-# Generate checksums
-cd $EXPORT_DIR && sha256sum *.tar > checksums.sha256
+# Preparation host: downloads images; requires reviewed registry authentication.
+set -euo pipefail
+: "${SOURCE_DIGEST_REF:?registry/repository@sha256:approved-digest}"
+: "${NEW_IMAGE_DIR:?New directory}"
+[[ "$SOURCE_DIGEST_REF" =~ @sha256:[0-9a-f]{64}$ ]]
+mkdir -m 700 -- "$NEW_IMAGE_DIR"
+skopeo copy --all --preserve-digests "docker://$SOURCE_DIGEST_REF" \
+  "oci-archive:$NEW_IMAGE_DIR/image.tar:approved"
+(cd "$NEW_IMAGE_DIR" && sha256sum image.tar > image.tar.sha256)
 ```
 
+archive と、独立して保護された approval/hash record を転送してください。import または push の前に、その directory で `sha256sum --strict --check image.tar.sha256` を実行し、失敗した場合は停止してください。internal registry destination の場合は次のとおりです。
+
 ```bash
-# Import images on air-gapped environment (using containerd)
-IMPORT_DIR="/media/usb/eks-images"
-
-cd $IMPORT_DIR
-sha256sum -c checksums.sha256
-
-for tarfile in $IMPORT_DIR/*.tar; do
-  echo "Importing: $tarfile"
-  sudo ctr -n k8s.io images import "$tarfile"
-done
+# Internal staging host: writes an image to the reviewed destination registry.
+set -euo pipefail
+: "${DEST_DIGEST_REF:?approved-registry/repository@sha256:approved-digest}"
+[[ "$DEST_DIGEST_REF" =~ @sha256:[0-9a-f]{64}$ ]]
+sha256sum --strict --check image.tar.sha256
+skopeo copy --all --preserve-digests oci-archive:image.tar:approved \
+  "docker://$DEST_DIGEST_REF"
 ```
 
----
+registry TLS verification を無効化しないでください。compression/manifest format を変更すると digest を保持できない場合があります。変更されていないと黙って主張するのではなく、停止して結果の identity をレビューしてください。
 
-## Local RPM/DEB Repository 設定
+containerd を直接 preload する方法もありますが、デプロイされる runtime に対してテストする必要があります。Kubernetes は `k8s.io` namespace を使用し、import された reference は Pod/sandbox reference と一致する必要があり、必要なすべての platform blob が存在しなければなりません。archive の `approved` annotation が、Pod が要求する registry name になるわけではありません。image garbage collection と `imagePullPolicy` も後続の pull を発生させることがあります。tar import の成功だけでは offline Pod が起動することの証明にはなりません。
 
-大規模な deployment では、local package repository をセットアップできます。
+## 署名済みローカル package repository
 
-```bash
-# Ubuntu/Debian - Local APT repository setup
-mkdir -p /srv/apt-repo/pool
-cp /media/usb/nodeadm-packages/debs/* /srv/apt-repo/pool/
+OS release、architecture、transitive dependency、metadata をレビュー済み cohort として mirror してください。vendor signature を保持するか、別途信頼される key を使用して組織管理の repository に署名してください。
 
-cd /srv/apt-repo
-dpkg-scanpackages pool /dev/null | gzip -9c > Packages.gz
+**すでに準備・署名済みの**ローカル flat repository 向け Ubuntu client configuration の例は次のとおりです。
 
-# Client configuration
-echo "deb [trusted=yes] file:///srv/apt-repo ./" > /etc/apt/sources.list.d/local.list
-apt-get update
+```text
+deb [signed-by=/etc/apt/keyrings/hybrid-mirror.gpg] file:///srv/apt-repo ./
 ```
 
-```bash
-# RHEL/CentOS - Local YUM repository setup
-mkdir -p /srv/yum-repo
-cp /media/usb/nodeadm-packages/rpms/* /srv/yum-repo/
+repository には `Packages.gz` だけでなく、有効な `Release` と `InRelease` または `Release.gpg` が必要です。独立した信頼済み path を通じて key fingerprint を配布し検証してください。repository authentication を抑制するために `trusted=yes` を使用しないでください。
 
-cd /srv/yum-repo
-createrepo .
+DNF/YUM repository configuration の例は次のとおりです。
 
-# Client configuration
-cat <<EOF > /etc/yum.repos.d/local.repo
-[local]
-name=Local Repository
+```ini
+[hybrid-local]
+name=Reviewed hybrid packages
 baseurl=file:///srv/yum-repo
 enabled=1
-gpgcheck=0
-EOF
-
-yum clean all
-yum makecache
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-hybrid-mirror
 ```
 
----
+これには有効な package signature と署名済み repository metadata が必要です。metadata と package signing key は異なる場合があります。承認済み key set を設定してください。verification が失敗したときに `gpgcheck=0` を設定しないでください。package installation と service restart は、任意の live-node verification script ではなく、image build または drain 済みの maintenance operation で実施するものです。
 
-## Proxy 設定
+## Proxy configuration
 
-Partially Air-Gap 環境では、proxy 経由で制限された外部アクセスを許可できます。
+まず client ごとの destination map を作成してください。loopback、実際の private API/registry name、proxy を bypass すべき node/Pod/Service range を含めてください。CIDR と suffix matching は client によって異なります。**`.eks.amazonaws.com`** を無条件に `NO_PROXY` に入れないでください。これは public `hybrid-assets.eks.amazonaws.com` download host にも一致します。
 
-### System Proxy Settings
+レビュー済みの nonsecret proxy configuration 用の shell example は次のとおりです。
 
 ```bash
-# Add proxy settings to /etc/environment
-cat <<EOF | sudo tee -a /etc/environment
-HTTP_PROXY="http://proxy.internal.company.io:3128"
-HTTPS_PROXY="http://proxy.internal.company.io:3128"
-NO_PROXY="localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.internal.company.io,.eks.amazonaws.com"
-http_proxy="http://proxy.internal.company.io:3128"
-https_proxy="http://proxy.internal.company.io:3128"
-no_proxy="localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.internal.company.io,.eks.amazonaws.com"
-EOF
-
-source /etc/environment
+export HTTP_PROXY=http://proxy.internal.example.com:3128
+export HTTPS_PROXY=http://proxy.internal.example.com:3128
+export NO_PROXY=localhost,127.0.0.1,::1,.svc,.cluster.local,registry.internal.example.com
+export http_proxy="$HTTP_PROXY" https_proxy="$HTTPS_PROXY" no_proxy="$NO_PROXY"
 ```
 
-### containerd Proxy Settings
+実際の private API hostname/IP および他の bypass destination を追加してください。これは完全な site configuration ではありません。login shell の environment は既存の systemd service を設定しません。`/etc/environment` を source したり、繰り返し追記したりしないでください。
 
-```bash
-sudo mkdir -p /etc/systemd/system/containerd.service.d
+`containerd.service` と `kubelet.service` では、`/etc/systemd/system/UNIT.service.d/http-proxy.conf` の下に owner-managed drop-in を使用してください。
 
-cat <<EOF | sudo tee /etc/systemd/system/containerd.service.d/http-proxy.conf
+```ini
 [Service]
-Environment="HTTP_PROXY=http://proxy.internal.company.io:3128"
-Environment="HTTPS_PROXY=http://proxy.internal.company.io:3128"
-Environment="NO_PROXY=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.internal.company.io,.eks.amazonaws.com"
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl restart containerd
+Environment="HTTP_PROXY=http://proxy.internal.example.com:3128"
+Environment="HTTPS_PROXY=http://proxy.internal.example.com:3128"
+Environment="NO_PROXY=localhost,127.0.0.1,::1,.svc,.cluster.local,registry.internal.example.com"
 ```
 
-### kubelet Proxy Settings
+既存の drop-in をレビューし、影響を受ける unit は承認済みの build/maintenance phase でのみ restart してください。containerd TOML の `[proxy.http]` section は HTTP proxy configuration ではありません。
 
-```bash
-sudo mkdir -p /etc/systemd/system/kubelet.service.d
+| Component | 設定と条件 |
+|---|---|
+| nodeadm process | `sudo` 経由で渡すのはレビュー済み proxy environment のみとし、`sudo -E` で operator environment 全体を渡さない |
+| containerd / kubelet | 個別の systemd environment。生成される kubelet config と host environment は異なる layer |
+| documented snap install を使用する Ubuntu 上の SSM | `snap.amazon-ssm-agent.amazon-ssm-agent.service.d/http-proxy.conf` |
+| AL2023/RHEL 上の SSM | `amazon-ssm-agent.service.d/http-proxy.conf`。実際にインストールされた unit を確認する |
+| IAM Roles Anywhere credential process | nodeadm は `--with-proxy` の生成時に proxy variable を検出します。起動元 daemon にも正しい environment を渡す必要があります |
+| `spec.hybrid.enableCredentialsFile: true` を使用する IAM Roles Anywhere | この mode には `aws_signing_helper_update.service` が**存在します**。initialization 前にその drop-in を設定してください。すべての IAM Roles Anywhere installation に service が存在すると仮定しないでください |
+| apt | `Acquire::http::Proxy` と `Acquire::https::Proxy` を含む owner-managed `/etc/apt/apt.conf.d/` file |
+| snap | snap を実際に使用する場合は `snap set system proxy.http=... proxy.https=...` |
+| dnf / yum | 既存 configuration の `proxy` setting をレビューして更新します。他の setting を置き換えたり、重複を追記したりしないでください |
+| kube-proxy / その他の Pod | その traffic に proxy が必要な場合にのみ Pod environment を設定する |
 
-cat <<EOF | sudo tee /etc/systemd/system/kubelet.service.d/http-proxy.conf
-[Service]
-Environment="HTTP_PROXY=http://proxy.internal.company.io:3128"
-Environment="HTTPS_PROXY=http://proxy.internal.company.io:3128"
-Environment="NO_PROXY=localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.internal.company.io,.eks.amazonaws.com"
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl restart kubelet
-```
-
-### nodeadm Proxy Configuration
+文書化された proxy topology では、kube-proxy は cluster creation 後かつ hybrid node の join 前に設定してください。既存の `NODE_NAME` environment とすべての command argument を保持してください。次は standalone DaemonSet ではなく、**strategic merge patch fragment** です。
 
 ```yaml
-# Add proxy settings to nodeconfig.yaml
-apiVersion: node.eks.aws/v1alpha1
-kind: NodeConfig
-spec:
-  cluster:
-    name: my-hybrid-cluster
-    region: ap-northeast-2
-    apiServerEndpoint: https://XXXXXXXX.gr7.ap-northeast-2.eks.amazonaws.com
-    certificateAuthority: |
-      -----BEGIN CERTIFICATE-----
-      ...
-      -----END CERTIFICATE-----
-    cidr: 10.100.0.0/16
-
-  hybrid:
-    ssm:
-      activationCode: <activation-code>
-      activationId: <activation-id>
-
-  kubelet:
-    config:
-      maxPods: 110
-    flags:
-      - --node-labels=topology.kubernetes.io/zone=on-premises
-
-  containerd:
-    config: |
-      version = 2
-
-      [proxy]
-        [proxy.http]
-          address = "http://proxy.internal.company.io:3128"
-        [proxy.https]
-          address = "http://proxy.internal.company.io:3128"
-        [proxy.no_proxy]
-          addresses = ["localhost", "127.0.0.1", "10.0.0.0/8", ".eks.amazonaws.com"]
-```
-
-### OS 固有の SSM Agent Proxy Settings
-
-SSM agent には、OS に応じて異なる場所に proxy configuration files が必要です。
-
-| OS | Proxy Config Path |
-|----|-------------------|
-| Ubuntu | `/etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/http-proxy.conf` |
-| AL2023 | `/etc/systemd/system/amazon-ssm-agent.service.d/http-proxy.conf` |
-| RHEL | `/etc/systemd/system/amazon-ssm-agent.service.d/http-proxy.conf` |
-
-**Ubuntu (snap-based):**
-
-```bash
-sudo mkdir -p /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d
-
-cat <<EOF | sudo tee /etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/http-proxy.conf
-[Service]
-Environment="HTTP_PROXY=http://proxy.internal.company.io:3128"
-Environment="HTTPS_PROXY=http://proxy.internal.company.io:3128"
-Environment="NO_PROXY=localhost,127.0.0.1,169.254.169.254,10.0.0.0/8,.eks.amazonaws.com"
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl restart snap.amazon-ssm-agent.amazon-ssm-agent.service
-```
-
-**AL2023 / RHEL:**
-
-```bash
-sudo mkdir -p /etc/systemd/system/amazon-ssm-agent.service.d
-
-cat <<EOF | sudo tee /etc/systemd/system/amazon-ssm-agent.service.d/http-proxy.conf
-[Service]
-Environment="HTTP_PROXY=http://proxy.internal.company.io:3128"
-Environment="HTTPS_PROXY=http://proxy.internal.company.io:3128"
-Environment="NO_PROXY=localhost,127.0.0.1,169.254.169.254,10.0.0.0/8,.eks.amazonaws.com"
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl restart amazon-ssm-agent
-```
-
-### kube-proxy DaemonSet Proxy Settings
-
-kube-proxy DaemonSet に proxy environment variables を設定する必要がある場合があります。この設定は **cluster 作成後、nodeadm init 実行前** に適用する必要があります。
-
-```yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: kube-proxy
-  namespace: kube-system
 spec:
   template:
     spec:
       containers:
         - name: kube-proxy
-          command:
-            - kube-proxy
           env:
             - name: HTTP_PROXY
-              value: "http://proxy.internal.company.io:3128"
+              value: http://proxy.internal.example.com:3128
             - name: HTTPS_PROXY
-              value: "http://proxy.internal.company.io:3128"
+              value: http://proxy.internal.example.com:3128
             - name: NO_PROXY
-              value: "localhost,127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.eks.amazonaws.com,.svc,.cluster.local"
+              value: localhost,127.0.0.1,::1,.svc,.cluster.local
 ```
 
-```bash
-# Patch existing kube-proxy DaemonSet with environment variables
-kubectl patch daemonset kube-proxy -n kube-system --type='json' -p='[
-  {
-    "op": "add",
-    "path": "/spec/template/spec/containers/0/env",
-    "value": [
-      {"name": "HTTP_PROXY", "value": "http://proxy.internal.company.io:3128"},
-      {"name": "HTTPS_PROXY", "value": "http://proxy.internal.company.io:3128"},
-      {"name": "NO_PROXY", "value": "localhost,127.0.0.1,10.0.0.0/8,.eks.amazonaws.com,.svc,.cluster.local"}
-    ]
-  }
-]'
-```
+bypass destination をレビュー/拡張し、add-on の owner を通じて適用してください。built-in DaemonSet strategic merge は container/env name を使用します。JSON Patch の `add /containers/0/env` は既存 environment 全体を置き換える可能性があり、container index を前提とします。選択した CNI が kube-proxy を置き換える場合、この例のためだけに kube-proxy をデプロイしないでください。
 
-> **注記**: kube-proxy proxy settings は、cluster 作成後、nodeadm init 実行前に適用する必要があります。そうしないと、kube-proxy が hybrid nodes 上で正しく起動しない可能性があります。
+## 検証と制御された更新
 
-### IAM Roles Anywhere Proxy Settings
+| Check | 必要な証拠 | 不十分なもの |
+|---|---|---|
+| Artifact integrity | 選択されたすべての file、checksum、承認済み manifest、cohort が一致すること | 欠落した file のスキップ、または検証済み file が 0 件であることを受容すること |
+| DNS/TLS | 意図した route 上での正しい destination と hostname/CA validation | `10.*` address、任意の `172.*` address、または `curl -k` |
+| S3 | 正確な bucket/key/version、expected owner、hash に対する実際の authorized readback | prefix の listing、または API error を不在として扱うこと |
+| ECR | workload の credential path による、実際に必要な digest/platform と layer pull | `describe-repositories` または standalone の unauthenticated `ctr` call |
+| nodeadm config | 保護され入力済みの file で `nodeadm config check` が成功すること | config の欠落を成功として数えること、または存在しない `init --dry-run` |
+| Node operation | credential refresh、Kubernetes API trust/authentication、CNI/DNS、範囲を限定した workload test | 成功したローカル parser check または 1 回の `/healthz` response |
 
-IAM Roles Anywhere を使用する場合、`aws_signing_helper` service にも proxy configuration が必要です。
+AWS read が認可されている場合は、文書化された connectivity/identity diagnostics に `nodeadm debug --config-source file:///etc/eks/nodeconfig.yaml` を使用してください。これは service に接続し、sensitive diagnostic context を出力する場合があります。出力を非公開に保ち、共有前に機密データを除去してください。不明または失敗した check を「本番運用可能」に変えないでください。
 
-```bash
-sudo mkdir -p /etc/systemd/system/aws_signing_helper_update.service.d
+update automation は**candidate を検出**した後、promotion 前に source verification、compatibility review、OS/image scanning、local validation、representative node canary、approval を要求する必要があります。新しい immutable version/build prefix の下で公開し、以前に承認された cohort を保持して、rollback limit を記録してください。本番の `latest` key を密かに overwrite する cron job を実行しないでください。`nodeadm upgrade` は disruptive であり、workload evacuation が必要です。
 
-cat <<EOF | sudo tee /etc/systemd/system/aws_signing_helper_update.service.d/http-proxy.conf
-[Service]
-Environment="HTTP_PROXY=http://proxy.internal.company.io:3128"
-Environment="HTTPS_PROXY=http://proxy.internal.company.io:3128"
-Environment="NO_PROXY=localhost,127.0.0.1,169.254.169.254,10.0.0.0/8,.eks.amazonaws.com"
-EOF
+以前の quiz にある過去の bandwidth estimate、layer caching **50–80%**、compression **30–50%**、platform filtering **50%** には、帰属可能な measurement がありません。予測される節約量ではなく、未検証の過去の illustration としてのみ保持してください。layer reuse、platform set、compression format の実際の byte 数を測定してください。digest が変わらないと主張しながら、承認済み content を recompress しないでください。
 
-sudo systemctl daemon-reload
-sudo systemctl restart aws_signing_helper_update.service
-```
+## 主な参照先
 
-### Package Manager Proxy Settings
-
-使用している operating system の package manager にも proxy configuration が必要な場合があります。
-
-**Ubuntu - apt:**
-
-```bash
-cat <<EOF | sudo tee /etc/apt/apt.conf.d/proxy.conf
-Acquire::http::Proxy "http://proxy.internal.company.io:3128";
-Acquire::https::Proxy "http://proxy.internal.company.io:3128";
-EOF
-```
-
-**Ubuntu - snap:**
-
-```bash
-sudo snap set system proxy.http="http://proxy.internal.company.io:3128"
-sudo snap set system proxy.https="http://proxy.internal.company.io:3128"
-```
-
-**AL2023 - dnf:**
-
-```bash
-cat <<EOF | sudo tee -a /etc/dnf/dnf.conf
-proxy=http://proxy.internal.company.io:3128
-EOF
-```
-
-**RHEL - yum:**
-
-```bash
-cat <<EOF | sudo tee -a /etc/yum.conf
-proxy=http://proxy.internal.company.io:3128
-EOF
-```
-
-### Proxy Configuration Summary
-
-| Component | Configuration File |
-|-----------|-------------------|
-| System-wide | `/etc/environment` |
-| containerd | `/etc/systemd/system/containerd.service.d/http-proxy.conf` |
-| kubelet | `/etc/systemd/system/kubelet.service.d/http-proxy.conf` |
-| SSM Agent (Ubuntu) | `/etc/systemd/system/snap.amazon-ssm-agent.amazon-ssm-agent.service.d/http-proxy.conf` |
-| SSM Agent (AL2023/RHEL) | `/etc/systemd/system/amazon-ssm-agent.service.d/http-proxy.conf` |
-| IAM Roles Anywhere | `/etc/systemd/system/aws_signing_helper_update.service.d/http-proxy.conf` |
-| apt (Ubuntu) | `/etc/apt/apt.conf.d/proxy.conf` |
-| snap (Ubuntu) | `snap set system proxy.*` |
-| dnf (AL2023) | `/etc/dnf/dnf.conf` |
-| yum (RHEL) | `/etc/yum.conf` |
-| kube-proxy | DaemonSet environment variables |
-
----
-
-## Air-Gap 環境の検証
-
-### 検証スクリプト
-
-```bash
-#!/bin/bash
-# verify-airgap.sh - Air-gap environment validation script
-
-echo "=== Air-Gap Environment Validation ==="
-PASS=0
-FAIL=0
-
-# 1. DNS Resolution Test (hybrid-assets → private IP)
-echo ""
-echo "1. DNS Resolution Test"
-RESOLVED_IP=$(nslookup hybrid-assets.eks.amazonaws.com | grep "Address:" | tail -1 | awk '{print $2}')
-echo "   hybrid-assets.eks.amazonaws.com → ${RESOLVED_IP}"
-
-if [[ "$RESOLVED_IP" == 10.* ]] || [[ "$RESOLVED_IP" == 172.* ]] || [[ "$RESOLVED_IP" == 192.168.* ]]; then
-  echo "   [PASS] Resolved to private IP (via VPC Endpoint)"
-  ((PASS++))
-else
-  echo "   [FAIL] Resolved to public IP — check PHZ or DNS forwarding"
-  ((FAIL++))
-fi
-
-# 2. S3 VPC Endpoint Connectivity Test
-echo ""
-echo "2. S3 VPC Endpoint Status"
-aws ec2 describe-vpc-endpoints \
-  --filters "Name=service-name,Values=com.amazonaws.*.s3" \
-             "Name=vpc-endpoint-type,Values=Interface" \
-  --query 'VpcEndpoints[].{ID:VpcEndpointId, State:State}' \
-  --output table
-((PASS++))
-
-# 3. S3 Binary Download Test
-echo ""
-echo "3. S3 Binary Download Test"
-if aws s3 ls "s3://<BUCKET_NAME>/binaries/nodeadm" --region ap-northeast-2 &>/dev/null; then
-  echo "   [PASS] nodeadm verified in S3 bucket"
-  ((PASS++))
-else
-  echo "   [FAIL] S3 bucket access failed"
-  ((FAIL++))
-fi
-
-# 4. ECR VPC Endpoint Connectivity Test
-echo ""
-echo "4. ECR VPC Endpoint Test"
-if aws ecr describe-repositories --region ap-northeast-2 &>/dev/null; then
-  echo "   [PASS] ECR API connection successful"
-  ((PASS++))
-else
-  echo "   [FAIL] ECR API connection failed"
-  ((FAIL++))
-fi
-
-# 5. Container Image Pull Test
-echo ""
-echo "5. ECR Image Pull Test"
-if sudo ctr -n k8s.io images pull 602401143452.dkr.ecr.ap-northeast-2.amazonaws.com/eks/pause:3.5 2>/dev/null; then
-  echo "   [PASS] ECR image pull successful"
-  ((PASS++))
-else
-  echo "   [FAIL] ECR image pull failed"
-  ((FAIL++))
-fi
-
-# 6. EKS API Server Connectivity Test
-echo ""
-echo "6. EKS API Server Connectivity Test"
-if curl -sk --connect-timeout 5 https://XXXXXXXX.gr7.ap-northeast-2.eks.amazonaws.com/healthz | grep -q "ok"; then
-  echo "   [PASS] EKS API server reachable"
-  ((PASS++))
-else
-  echo "   [FAIL] EKS API server unreachable (check VPN/Direct Connect)"
-  ((FAIL++))
-fi
-
-# 7. Required Binaries Check
-echo ""
-echo "7. Required Binaries Check"
-for bin in nodeadm kubelet kubectl containerd runc; do
-  if command -v $bin &>/dev/null; then
-    echo "   [PASS] $bin installed"
-    ((PASS++))
-  else
-    echo "   [FAIL] $bin not installed"
-    ((FAIL++))
-  fi
-done
-
-# 8. nodeadm Dry-Run Test
-echo ""
-echo "8. nodeadm Configuration Validation"
-if [ -f /etc/eks/nodeconfig.yaml ]; then
-  if sudo nodeadm init -c file:///etc/eks/nodeconfig.yaml --dry-run 2>/dev/null; then
-    echo "   [PASS] nodeadm configuration valid"
-    ((PASS++))
-  else
-    echo "   [FAIL] nodeadm configuration error"
-    ((FAIL++))
-  fi
-else
-  echo "   [SKIP] No nodeconfig.yaml found"
-fi
-
-# Summary
-echo ""
-echo "=== Validation Summary ==="
-echo "Passed: ${PASS}"
-echo "Failed: ${FAIL}"
-
-if [ ${FAIL} -eq 0 ]; then
-  echo ""
-  echo "All checks passed! Ready for hybrid node initialization."
-  exit 0
-else
-  echo ""
-  echo "Some checks failed. Please resolve issues before proceeding."
-  exit 1
-fi
-```
-
----
-
-## Mirror Sync Automation
-
-新しい nodeadm versions が release されたときに private S3 bucket を自動的に同期する cron job を設定します。
-
-```bash
-#!/bin/bash
-# sync-hybrid-assets.sh - Run on an internet-connected jump host
-# crontab example: 0 2 * * 0 /opt/scripts/sync-hybrid-assets.sh
-
-BUCKET_NAME="my-hybrid-assets-$(aws sts get-caller-identity --query Account --output text)"
-LOG_FILE="/var/log/hybrid-assets-sync.log"
-
-echo "$(date): Sync started" >> ${LOG_FILE}
-
-for ARCH in amd64 arm64; do
-  REMOTE_URL="https://hybrid-assets.eks.amazonaws.com/releases/latest/bin/linux/${ARCH}/nodeadm"
-  S3_KEY="releases/latest/bin/linux/${ARCH}/nodeadm"
-  LOCAL_TMP="/tmp/nodeadm-${ARCH}"
-
-  # Download
-  curl -sLo "${LOCAL_TMP}" "${REMOTE_URL}"
-
-  # Compare checksum with existing file
-  LOCAL_SHA=$(sha256sum "${LOCAL_TMP}" | awk '{print $1}')
-  REMOTE_SHA=$(aws s3api head-object --bucket ${BUCKET_NAME} --key ${S3_KEY} \
-    --query 'Metadata.sha256' --output text 2>/dev/null || echo "none")
-
-  if [ "${LOCAL_SHA}" != "${REMOTE_SHA}" ]; then
-    echo "$(date): New version detected (${ARCH}) — uploading" >> ${LOG_FILE}
-    aws s3 cp "${LOCAL_TMP}" "s3://${BUCKET_NAME}/${S3_KEY}" \
-      --metadata sha256="${LOCAL_SHA}"
-  else
-    echo "$(date): No changes (${ARCH})" >> ${LOG_FILE}
-  fi
-
-  rm -f "${LOCAL_TMP}"
-done
-
-echo "$(date): Sync complete" >> ${LOG_FILE}
-```
-
----
+- [AWS Hybrid nodeadm reference](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html)
+- [Prepare Hybrid operating systems](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-os.html)
+- [Hybrid proxy configuration](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-proxy.html)
+- [nodeadm v1.0.20 install flags](https://github.com/aws/eks-hybrid/blob/v1.0.20/cmd/nodeadm/install/install.go) and [init flags](https://github.com/aws/eks-hybrid/blob/v1.0.20/cmd/nodeadm/init/init.go)
+- [Artifact selection/download implementation](https://github.com/aws/eks-hybrid/blob/v1.0.20/internal/aws/source.go) and [SSM source](https://github.com/aws/eks-hybrid/blob/v1.0.20/internal/ssm/source.go)
+- [S3 interface endpoints/private DNS](https://docs.aws.amazon.com/AmazonS3/latest/userguide/privatelink-interface-endpoints.html)
+- [ECR VPC endpoints](https://docs.aws.amazon.com/AmazonECR/latest/userguide/vpc-endpoints.html)
+- [Skopeo copy](https://github.com/containers/skopeo/blob/main/docs/skopeo-copy.1.md)
+- [APT repository authentication](https://manpages.ubuntu.com/manpages/noble/man8/apt-secure.8.html)
+- [DNF repository signature settings](https://github.com/rpm-software-management/dnf/blob/master/doc/conf_ref.rst)
+- [S3 PutObject conditions, encryption and checksums](https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html)
+- [Kubernetes image names, digests and pull policies](https://kubernetes.io/docs/concepts/containers/images/)
 
 < [前へ: Network Configuration](./02-network-configuration.md) | [目次](./README.md) | [次へ: Node Bootstrap](./04-node-bootstrap.md) >
