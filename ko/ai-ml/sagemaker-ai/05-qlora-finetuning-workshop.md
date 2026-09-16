@@ -536,11 +536,11 @@ aws sagemaker describe-training-job \
 | 새 계열 2.12 | `pytorch:2.12.1-cu130-amzn2023-sagemaker` | 3.12 / AL2023 | 2027-07-02 |
 | 새 계열 2.13 | `pytorch:2.13.0-cu133-amzn2023-sagemaker` | 3.12 / AL2023 | 2027-07-20 |
 
-공식 카탈로그의 확인된 항목이며, **이 패키지에서 검증한 대체 실행 환경은 아닙니다**. AWS는 Ubuntu 기반 PyTorch 2.8–2.10을 완전히 패치할 수 없다고도 안내하며 AL2023 기반 PyTorch 2.11 이상으로의 이관을 권고합니다. Launcher에는 이전 repository 이름과 tag가 함께 고정되어 있으므로 버전 숫자만 바꿔서는 부족합니다.
+공식 카탈로그의 확인된 항목이며, **과거 `src/train.py`·관리형 MLflow 경로의 대체 조합을 검증한 표는 아닙니다**. 별도 `src/train_execution.py` 경로의 2.11 GPU 시험은 [실행 기록](README.md#sagemaker-실행-준비-상태)에 있으며, 2.12·2.13은 실행 검증하지 않은 카탈로그 참고 항목입니다. AWS는 Ubuntu 기반 PyTorch 2.8–2.10을 완전히 패치할 수 없다고도 안내하며 AL2023 기반 PyTorch 2.11 이상으로의 이관을 권고합니다. 과거 launcher에는 이전 repository 이름과 tag가 함께 고정되어 있으므로 버전 숫자만 바꿔서는 부족합니다.
 
 이미지 repository/tag/digest, 리전 가용성, Python, CUDA/driver/architecture, PyTorch, HF/PEFT/TRL/bitsandbytes 의존성, training toolkit, MLflow client/service를 하나의 조합으로 맞춰야 합니다. 새 DLC에 현재 `torch==2.8.0` lock을 설치하면 의도한 framework 이관을 되돌릴 수 있습니다.
 
-이 선택들을 검토한 다음에만 승인된 GPU preflight에서 실제 CUDA/BF16 지원, 양자화 로딩, 예상 target/dtype, forward/backward 한 번, 유한한 loss, adapter 변경과 save/reload를 검증합니다. 이는 **시험 절차**이며 이미 성공했다는 증거가 아닙니다. 대체 조합을 개발하고 검증하는 동안 과거 실행 guard는 유지합니다.
+이 선택들을 검토한 다음에만 승인된 GPU preflight에서 실제 CUDA/BF16 지원, 양자화 로딩, 예상 target/dtype, forward/backward 한 번, 유한한 loss, adapter 변경과 save/reload를 검증합니다. **시험 절차를 적는 것만으로 실행 성공이 입증되지는 않습니다**. 실제 2.11 증거는 위의 별도 실행 기록으로 확인하고, 과거 경로의 실행 guard는 유지합니다.
 
 ## 12. 이해도 확인
 

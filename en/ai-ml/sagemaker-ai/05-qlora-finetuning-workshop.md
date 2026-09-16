@@ -536,11 +536,11 @@ The [AWS DLC support policy](https://aws.github.io/deep-learning-containers/refe
 | New family 2.12 | `pytorch:2.12.1-cu130-amzn2023-sagemaker` | 3.12 / AL2023 | 2027-07-02 |
 | New family 2.13 | `pytorch:2.13.0-cu133-amzn2023-sagemaker` | 3.12 / AL2023 | 2027-07-20 |
 
-These are verified catalog entries, **not validated replacement environments for this package**. AWS also warns that Ubuntu-based PyTorch 2.8–2.10 cannot be fully patched and recommends AL2023 PyTorch 2.11 or later. The launcher fixes both an old repository name and a tag; replacing a version number alone is insufficient.
+These are verified catalog entries, **not validation of a replacement for the historical `src/train.py`/managed-MLflow path**. The separate `src/train_execution.py` path's 2.11 GPU smoke is documented in the [execution record](README.md#sagemaker-execution-readiness); 2.12 and 2.13 remain unexecuted catalog references. AWS also warns that Ubuntu-based PyTorch 2.8–2.10 cannot be fully patched and recommends AL2023 PyTorch 2.11 or later. The historical launcher fixes both an old repository name and a tag; replacing a version number alone is insufficient.
 
 A migration must align the image repository/tag/digest, Region availability, Python, CUDA/driver/architecture, PyTorch, HF/PEFT/TRL/bitsandbytes dependencies, training toolkit and MLflow client/service. Installing the current `torch==2.8.0` lock into a newer DLC could undo the intended framework migration.
 
-Only after those choices are reviewed should an authorized GPU preflight test actual CUDA/BF16 support, quantized loading, expected targets/dtypes, a forward/backward step, finite loss, adapter updates and save/reload. That is a **test procedure**, not evidence that it has succeeded. Retain the historical guard while developing and validating the replacement cohort.
+Only after those choices are reviewed should an authorized GPU preflight test actual CUDA/BF16 support, quantized loading, expected targets/dtypes, a forward/backward step, finite loss, adapter updates and save/reload. **Describing a test procedure alone does not establish execution success.** Use the separate record above for actual 2.11 evidence, and retain the historical path's guard.
 
 ## 12. Check your understanding
 
