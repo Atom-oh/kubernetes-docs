@@ -1,13 +1,15 @@
 # Network Configuration
 
 > **Supported Versions**: EKS 1.36 examples; AWS-maintained Cilium 1.18.3-0 reference, compatible host/kernel required
-> **Last Updated**: September 12, 2026
+> **Last Updated**: September 16, 2026
 
 Validate routing, DNS, TLS, credentials and application traffic separately. These examples were checked with local schemas and fixtures, including a mocked Terraform provider; no AWS resources, routers, firewalls or live clusters were changed. The diagrams are repository illustrations based on AWS concepts, not AWS-published validation of this configuration.
 
 ![Hybrid prerequisites and bidirectional routing.](../.gitbook/assets/en-eks-hybrid-nodes-prereq-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-prereq-0.html)
+
+**Security-team companion:** [Hybrid Nodes network-separation review](11-network-separation-security.md) explains new control-plane-to-on-premises connections, endpoint types, permission and data boundaries, and review evidence. Private connectivity alone does not establish compliance.
 
 ## Network Architecture Overview
 

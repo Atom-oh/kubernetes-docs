@@ -1,7 +1,7 @@
 # EKS Hybrid Nodes
 
 > **Supported Versions**: Current EKS-supported versions; examples reviewed for EKS 1.36 / nodeadm 1.0.20
-> **Last Updated**: September 13, 2026
+> **Last Updated**: September 16, 2026
 
 Amazon EKS Hybrid Nodes connects customer-operated on-premises or edge nodes to an AWS-managed EKS control plane. You continue to operate the hosts, operating systems, connectivity and workloads. This guide distinguishes supported interfaces from example configurations; it is not evidence that a particular on-premises production deployment has been tested.
 
@@ -17,6 +17,7 @@ Amazon EKS Hybrid Nodes connects customer-operated on-premises or edge nodes to 
 8. [Operations and Maintenance](08-operations.md)
 9. [Bare Metal Server OS Installation and Migration Guide](09-bare-metal-os-setup.md)
 10. [Hybrid Nodes Gateway](10-hybrid-nodes-gateway.md)
+11. [Network Separation Security Review](11-network-separation-security.md)
 
 ## What Are Hybrid Nodes?
 
@@ -33,6 +34,8 @@ The following diagram shows the network prerequisites including VPC, subnets, Tr
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-prereq-0.html)
 
 The diagrams illustrate private connectivity and routing, not automatic creation of every on-premises route, firewall rule or AWS service endpoint.
+
+For security-team reviews, use the [network-separation review guide](11-network-separation-security.md). It distinguishes private cluster endpoints, EKS ENIs, and AWS service PrivateLink endpoints, and identifies evidence for management connections and data boundaries across DX.
 
 ## Use Cases and Data Boundaries
 
@@ -86,7 +89,7 @@ Both providers need access to AWS service endpoints to refresh credentials. A lo
 | Scale / cost | No SSM node-registration or per-node management charge; feature-usage pricing is separate | Review IAM Roles Anywhere quotas and PKI operating requirements |
 | Typical choice | No existing PKI; simpler registration | Existing PKI and managed certificate lifecycle |
 
-**Pricing checked September 13, 2026:** SSM removed the Advanced Instances Tier effective June 30, 2026. Consult [current SSM pricing](https://aws.amazon.com/systems-manager/pricing/) for Session Manager and Run Command usage terms; [EKS Hybrid Nodes vCPU charges](https://aws.amazon.com/eks/pricing/) remain separate.
+**Pricing checked September 16, 2026:** SSM removed the Advanced Instances Tier effective June 30, 2026. Consult [current SSM pricing](https://aws.amazon.com/systems-manager/pricing/) for Session Manager and Run Command usage terms; [EKS Hybrid Nodes vCPU charges](https://aws.amazon.com/eks/pricing/) remain separate.
 
 The Roles Anywhere profile must accept a custom role session name, and the trust policy must bind it to the chosen certificate attribute. Its effective session duration must **not exceed** the IAM role maximum; equality is allowed by the CreateSession API. The [prerequisites](01-prerequisites.md) detail these contracts and secure preparation.
 
@@ -115,6 +118,7 @@ To test your understanding of EKS Hybrid Nodes, try the following quiz:
 * [EKS Hybrid Nodes Operations Quiz](../quizzes/eks-hybrid-nodes/08-operations-quiz.md)
 * [Bare Metal Server OS Installation and Migration Quiz](../quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
 * [EKS Hybrid Nodes Gateway Quiz](../quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
+* [Network Separation Security Review Quiz](../quizzes/eks-hybrid-nodes/11-network-separation-security-quiz.md)
 
 ## Related Documents
 

@@ -1,13 +1,15 @@
 # 네트워크 구성
 
 > **지원 버전**: EKS 1.36 예제; AWS-maintained Cilium 1.18.3-0 기준, 호환 host/kernel 필요
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 9월 16일
 
 Routing·DNS·TLS·credential·앱 트래픽을 별도로 검증합니다. 아래는 Terraform mock provider 등을 사용해 로컬 schema/fixture로 확인한 예제이며 AWS 리소스·router·firewall·실제 cluster를 변경하지 않았습니다. 그림은 AWS 개념을 바탕으로 이 저장소에서 제작했으며 AWS가 이 구성을 검증한 결과물이 아닙니다.
 
 ![Hybrid 사전 조건과 양방향 routing.](../.gitbook/assets/ko-eks-hybrid-nodes-prereq-0.png)
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-prereq-0.html)
+
+**보안팀 설명 자료:** [Hybrid Nodes 망분리 검토](11-network-separation-security.md)는 control-plane→on-prem 신규 연결, endpoint 종류, 허용 권한·데이터 범위 및 심사 증거를 설명합니다. 사설 연결만으로 망분리 준수를 단정하지 않습니다.
 
 ## 네트워크 아키텍처 개요
 
