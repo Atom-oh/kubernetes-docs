@@ -6,6 +6,8 @@ An AWS control plane connecting to on-premises infrastructure through Direct Con
 
 This article supports a technical review of **a conventional routed Hybrid Nodes deployment with a private-only Kubernetes API endpoint and DX private routing**. It is not a compliance determination or approval for a customer's industry, system classification, or internal policy. “Potentially acceptable” below means the organization's policy permits controlled management communication between networks. No customer account, DX connection, firewall, or cluster was inspected for this article.
 
+Use the [glossary](#glossary) if the AWS or Kubernetes abbreviations are unfamiliar.
+
 ## An explanation to give the security team
 
 > EKS Hybrid Nodes connects on-premises nodes to an AWS-managed Kubernetes control plane. The design under review disables public access to the Kubernetes API and uses approved private routes and boundary firewalls. Connections initiated by the control plane traverse the EKS ENIs in the cluster VPC and are restricted to approved nodes on kubelet TCP 10250 and, where used, approved webhook destinations and ports. API and kubelet authentication and authorization, restricted operator permissions, and audit records are applied together.
@@ -122,6 +124,8 @@ These are **evidence requirements**, not completed inspection results. Do not at
 
 Enable the required EKS control-plane log types; Kubernetes audit and CloudTrail have different roles. Audit logs record API events according to the audit policy and level, not every `exec` input/output or `port-forward` payload. Design retention, access controls, and sensitive-data handling alongside collection. [Control-plane logs](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html), [EKS auditing](https://docs.aws.amazon.com/eks/latest/best-practices/auditing-and-logging.html), [EKS CloudTrail](https://docs.aws.amazon.com/eks/latest/userguide/logging-using-cloudtrail.html), [Flow Logs limitations](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html)
 
+Records can exclude traffic outside the configured capture scope or be delayed or skipped. EKS log delivery is best effort; inspect collection settings and missing-data signals such as Flow Logs `SKIPDATA`. **A missing record alone does not prove that a connection or operation never occurred.** Correlate firewall records with explicit allow/deny tests. [Flow Logs collection limitations](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-limitations.html), [Troubleshooting missing Flow Logs](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-troubleshooting.html)
+
 Perform validation against approved non-production targets using synthetic data. Establishing the boundary does not require scanning an entire business network, broadly opening production firewalls, or extracting customer data through `logs` or `cp`.
 
 ## Questions security teams commonly ask
@@ -141,6 +145,20 @@ It can reduce direct connections to on-premises webhooks. The kubelet TCP 10250 
 ### “Can we state that this does not violate network-separation requirements?”
 
 Not from the connection method alone. If the applicable policy permits controlled management connectivity and evidence and organizational approval cover the connections, permissions, and data boundary, record the **review scope and conditions** with the conclusion. Do not relabel a prohibited connection as permissible merely because it uses DX or a private endpoint.
+
+## Glossary {#glossary}
+
+| Abbreviation | Full name and meaning in this article |
+|---|---|
+| VPC / ENI | Virtual Private Cloud / Elastic Network Interface: an AWS logical network boundary and a virtual network interface attached within it |
+| SG / NACL | Security Group / Network Access Control List: stateful allow rules attached to interfaces and stateless allow/deny rules at subnet boundaries, respectively |
+| DLP | Data Loss Prevention: controls to detect or prevent inappropriate transfer of sensitive data; not an ENI feature |
+| CNI / SNAT | Container Network Interface / Source Network Address Translation: the interface specification and implementations for Pod networking, and packet source-address translation |
+| VGW / TGW | Virtual Private Gateway / Transit Gateway: gateways used by the selected AWS private-connectivity design |
+| VXLAN / VTEP | Virtual Extensible LAN / VXLAN Tunnel Endpoint: a network encapsulation mechanism and its tunnel endpoint, not a one-way control |
+| IAM / RBAC | Identity and Access Management / Role-Based Access Control: AWS identity and permission management, and Kubernetes role-based authorization |
+| TLS / IPsec / MACsec | Transport Layer Security / Internet Protocol Security / Media Access Control Security: security technologies with different protocol-layer and path coverage |
+| SSM | The service identifier for AWS Systems Manager; this article distinguishes node credential access from optional system-management capabilities |
 
 ## Further reading
 

@@ -9,7 +9,7 @@ Amazon EKS Hybrid Nodes connects customer-operated on-premises or edge nodes to 
 
 1. [Prerequisites and System Requirements](01-prerequisites.md)
 2. [Network Configuration](02-network-configuration.md)
-3. [Air-Gap Environment Setup (S3 + VPC Endpoints)](03-airgap-setup.md)
+3. [Restricted-Internet Setup (S3 + VPC Endpoints)](03-airgap-setup.md)
 4. [Node Bootstrap](04-node-bootstrap.md)
 5. [GPU Server Integration](05-gpu-integration.md)
 6. [Workload Placement Strategies](06-workload-placement.md)
@@ -110,7 +110,7 @@ To test your understanding of EKS Hybrid Nodes, try the following quiz:
 
 * [EKS Hybrid Nodes Prerequisites Quiz](../quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
 * [EKS Hybrid Nodes Network Configuration Quiz](../quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
-* [EKS Hybrid Nodes Air-Gap Environment Setup Quiz](../quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+* [EKS Hybrid Nodes Restricted-Internet Setup Quiz](../quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
 * [EKS Hybrid Nodes Node Bootstrapping Quiz](../quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
 * [EKS Hybrid Nodes GPU Integration Quiz](../quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
 * [EKS Hybrid Nodes Workload Placement Quiz](../quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)

@@ -114,7 +114,7 @@ S3 **interface endpoints support private DNS**. The inbound-Resolver-only option
 
 Private DNS is not a TLS rewrite. A PHZ/CNAME mapping `hybrid-assets.eks.amazonaws.com` to an S3 endpoint does not give S3 the CloudFront hostname's certificate or object/Host routing behavior. Do not disable TLS verification to make such a mirror work. Use a supported artifact-preparation/client configuration path, an approved mirror with its own hostname/certificate, or preinstalled dependencies in a validated image.
 
-## VPC Private Endpoints (Air-Gap / Private Connectivity)
+## VPC Private Endpoints (Restricted-Internet Connectivity) {#vpc-private-endpoints-air-gap-private-connectivity}
 
 Here “air-gap” means restricted internet access with required AWS connectivity, not a disconnected cluster.
 

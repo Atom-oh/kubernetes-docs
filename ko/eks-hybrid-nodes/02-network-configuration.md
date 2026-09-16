@@ -114,7 +114,7 @@ S3 **interface endpoint는 private DNS를 지원합니다**. Inbound-Resolver-on
 
 Private DNS는 TLS rewrite가 아닙니다. `hybrid-assets.eks.amazonaws.com`을 S3 endpoint로 PHZ/CNAME 매핑해도 S3가 CloudFront hostname의 인증서나 object/Host routing을 갖지는 않습니다. TLS 검증을 끄지 마세요. 지원 artifact 준비/client 설정 경로, 자체 hostname/certificate의 승인된 mirror, 검증된 image에 미리 설치한 의존성을 사용합니다.
 
-## VPC 프라이빗 엔드포인트 (에어갭/프라이빗 환경)
+## VPC 프라이빗 엔드포인트 (인터넷 제한 환경) {#vpc-프라이빗-엔드포인트-에어갭-프라이빗-환경}
 
 여기서 “에어갭”은 필요한 AWS 연결을 유지하며 인터넷 접근을 제한한다는 뜻이지 disconnected cluster가 아닙니다.
 

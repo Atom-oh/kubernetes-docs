@@ -82,7 +82,7 @@ This training content provides quizzes for each topic along with the learning ma
 1. [EKS Hybrid Nodes Introduction](./eks-hybrid-nodes/README.md)
 2. [Prerequisites](./eks-hybrid-nodes/01-prerequisites.md) | [Quiz](./quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
 3. [Network Configuration](./eks-hybrid-nodes/02-network-configuration.md) | [Quiz](./quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
-4. [Air-Gap Environment Setup](./eks-hybrid-nodes/03-airgap-setup.md) | [Quiz](./quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+4. [Restricted-Internet Setup](./eks-hybrid-nodes/03-airgap-setup.md) | [Quiz](./quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
 5. [Node Bootstrap](./eks-hybrid-nodes/04-node-bootstrap.md) | [Quiz](./quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
 6. [GPU Server Integration](./eks-hybrid-nodes/05-gpu-integration.md) | [Quiz](./quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
 7. [Workload Placement Strategies](./eks-hybrid-nodes/06-workload-placement.md) | [Quiz](./quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)

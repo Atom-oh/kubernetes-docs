@@ -6,6 +6,8 @@ EKS Hybrid Nodes에서 AWS control plane이 Direct Connect(DX)를 거쳐 온프�
 
 이 글은 **Kubernetes API private-only endpoint와 DX 사설 라우팅을 사용하는 일반적인 Hybrid Nodes 구성**의 기술 검토 자료입니다. 고객의 업종·시스템 등급·내부 보안 규정에 대한 적합성 판정이나 승인서는 아닙니다. 아래의 “허용 가능”은 해당 조직이 통제된 망 간 관리 통신을 허용한다는 조건부 설계 판단입니다. 실제 고객 계정, DX, 방화벽 또는 클러스터를 점검한 결과는 포함하지 않습니다.
 
+AWS·Kubernetes 약어가 익숙하지 않다면 [용어 참고](#glossary)를 함께 사용합니다.
+
 ## 먼저 보안팀에 전달할 설명
 
 > EKS Hybrid Nodes는 온프레미스 노드를 AWS 관리형 Kubernetes control plane에 연결하는 구성입니다. 검토 대상 설계는 Kubernetes API의 public access를 끄고, 승인된 사설 경로와 경계 방화벽을 사용합니다. Control plane에서 시작하는 통신은 클러스터 VPC의 EKS ENI를 거쳐 승인된 노드의 kubelet TCP 10250과, 사용하는 경우 승인된 webhook 목적지·포트로 제한합니다. API와 kubelet의 인증·권한 검사, 운영자 권한 제한 및 감사 기록을 함께 적용합니다.
@@ -122,6 +124,8 @@ AWS 서비스용 endpoint policy는 그 endpoint를 통과하는 해당 API 호�
 
 EKS control-plane logging은 필요한 유형을 활성화해야 하며, Kubernetes audit는 CloudTrail과 역할이 다릅니다. Audit 로그는 정책·기록 수준에 따른 API 이벤트이지 `exec`의 모든 입력·출력이나 `port-forward` payload를 녹화하는 장치가 아닙니다. 보존·접근 권한·민감정보 취급도 함께 설계합니다. [Control-plane logs](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html), [EKS 감사·로깅](https://docs.aws.amazon.com/eks/latest/best-practices/auditing-and-logging.html), [EKS CloudTrail](https://docs.aws.amazon.com/eks/latest/userguide/logging-using-cloudtrail.html), [Flow Logs 한계](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs.html)
 
+로그는 수집 범위 밖의 트래픽을 포함하지 않거나 지연·누락될 수 있습니다. EKS 로그 전달은 best effort이며, Flow Logs의 `SKIPDATA` 같은 누락 신호와 수집 설정도 확인합니다. **기록이 없다는 사실만으로 통신이나 작업이 없었다고 판단하지 않습니다.** 방화벽 기록과 명시적인 허용·거부 시험을 대조합니다. [Flow Logs 수집 한계](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-limitations.html), [Flow Logs 누락 진단](https://docs.aws.amazon.com/vpc/latest/userguide/flow-logs-troubleshooting.html)
+
 실제 검증은 승인된 비운영 대상과 합성 데이터로 수행합니다. 경계 확인을 위해 업무망 전체를 스캔하거나, 운영 방화벽을 일괄 개방하거나, 고객 데이터를 `logs`/`cp`로 추출할 필요는 없습니다.
 
 ## 자주 나오는 보안팀 질문
@@ -141,6 +145,20 @@ EKS control-plane logging은 필요한 유형을 활성화해야 하며, Kuberne
 ### “최종적으로 망분리 위반이 아니라는 문구를 써도 되나?”
 
 구성 방식만으로 쓰지 않습니다. 적용 정책이 통제된 관리 연결을 허용하고, 해당 연결·권한·데이터 경계의 증거와 조직의 승인 절차가 갖춰졌을 때 그 **검토 범위와 조건**을 함께 기록합니다. 정책상 금지된 연결을 DX나 private endpoint라는 명칭으로 허용된 것으로 바꿔 설명해서는 안 됩니다.
+
+## 용어 참고 {#glossary}
+
+| 약어 | 전체 이름과 이 글에서의 의미 |
+|---|---|
+| VPC / ENI | Virtual Private Cloud / Elastic Network Interface. AWS의 논리적 네트워크 영역과 그 영역에 연결되는 가상 네트워크 인터페이스 |
+| SG / NACL | Security Group / Network Access Control List. 각각 인터페이스에 연결하는 stateful 허용 규칙과 subnet 경계의 stateless 허용·거부 규칙 |
+| DLP | Data Loss Prevention. 민감정보의 부적절한 반출을 탐지·제어하는 통제; ENI 자체 기능이 아님 |
+| CNI / SNAT | Container Network Interface / Source Network Address Translation. Pod 네트워크를 연결하는 인터페이스 규격·구현과 패킷 출발지 주소 변환 |
+| VGW / TGW | Virtual Private Gateway / Transit Gateway. 선택한 AWS 사설 연결 설계에서 사용하는 게이트웨이 |
+| VXLAN / VTEP | Virtual Extensible LAN / VXLAN Tunnel Endpoint. 네트워크 캡슐화 방식과 그 터널의 끝점; 단방향 통제를 뜻하지 않음 |
+| IAM / RBAC | Identity and Access Management / Role-Based Access Control. AWS 신원·권한 관리와 Kubernetes 역할 기반 접근 통제 |
+| TLS / IPsec / MACsec | Transport Layer Security / Internet Protocol Security / Media Access Control Security. 보호하는 통신 계층·구간이 서로 다른 보안 기술 |
+| SSM | AWS Systems Manager를 가리키는 서비스 식별자. 이 글에서는 노드 자격 증명과 선택적인 시스템 관리 기능의 접근을 구분 |
 
 ## 함께 읽기
 

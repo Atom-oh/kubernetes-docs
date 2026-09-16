@@ -76,7 +76,7 @@
 * [EKS Hybrid Nodes](eks-hybrid-nodes/README.md)
   * [Prerequisites](eks-hybrid-nodes/01-prerequisites.md)
   * [Network Configuration](eks-hybrid-nodes/02-network-configuration.md)
-  * [Air-Gap Environment Setup](eks-hybrid-nodes/03-airgap-setup.md)
+  * [Restricted-Internet Setup](eks-hybrid-nodes/03-airgap-setup.md)
   * [Node Bootstrap](eks-hybrid-nodes/04-node-bootstrap.md)
   * [GPU Server Integration](eks-hybrid-nodes/05-gpu-integration.md)
   * [Workload Placement Strategies](eks-hybrid-nodes/06-workload-placement.md)
@@ -514,7 +514,7 @@
 * EKS Hybrid Nodes
   * [Prerequisites Quiz](quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
   * [Network Configuration Quiz](quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
-  * [Air-Gap Environment Setup Quiz](quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+  * [Restricted-Internet Setup Quiz](quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
   * [Node Bootstrap Quiz](quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
   * [GPU Server Integration Quiz](quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
   * [Workload Placement Strategies Quiz](quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)

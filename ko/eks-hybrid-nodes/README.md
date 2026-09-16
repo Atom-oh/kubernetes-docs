@@ -9,7 +9,7 @@ Amazon EKS Hybrid Nodes는 고객이 운영하는 온프레미스·엣지 노드
 
 1. [사전 요구 사항 및 시스템 요구 사항](01-prerequisites.md)
 2. [네트워크 구성](02-network-configuration.md)
-3. [에어갭 환경 구성 (S3 + VPC 엔드포인트)](03-airgap-setup.md)
+3. [인터넷 제한 환경 구성 (S3 + VPC 엔드포인트)](03-airgap-setup.md)
 4. [노드 부트스트랩](04-node-bootstrap.md)
 5. [GPU 서버 통합](05-gpu-integration.md)
 6. [워크로드 배치 전략](06-workload-placement.md)
@@ -110,7 +110,7 @@ EKS Hybrid Nodes에 대한 이해를 더욱 깊이 하고 실습을 진행하려
 
 * [EKS Hybrid Nodes 사전 요구사항 퀴즈](../quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
 * [EKS Hybrid Nodes 네트워크 구성 퀴즈](../quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
-* [EKS Hybrid Nodes 에어갭 환경 구성 퀴즈](../quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+* [EKS Hybrid Nodes 인터넷 제한 환경 구성 퀴즈](../quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
 * [EKS Hybrid Nodes 노드 부트스트래핑 퀴즈](../quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
 * [EKS Hybrid Nodes GPU 통합 퀴즈](../quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
 * [EKS Hybrid Nodes 워크로드 배치 퀴즈](../quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
