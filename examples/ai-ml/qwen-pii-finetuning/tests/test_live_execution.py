@@ -24,6 +24,15 @@ def test_cost_reserves_launch_overhead_and_incidentals():
     assert live.reservation_usd(config(), 3600) == Decimal("18.8508125000")
 
 
+def test_measured_full_run_envelope_remains_within_authorized_total():
+    smoke = {"reserved_usd": "18.8508125000"}
+    full = live.check_budget(config(), [smoke], 129600)
+    assert full == Decimal("180.4436250000")
+    assert full + Decimal(smoke["reserved_usd"]) < Decimal("300")
+    with pytest.raises(ValueError, match="budget"):
+        live.check_budget(config(), [smoke, {"reserved_usd": str(full)}], 129600)
+
+
 @pytest.mark.parametrize("seconds", [0, -1, True, 1.5, 500_000])
 def test_invalid_runtime_is_rejected(seconds):
     with pytest.raises(ValueError):

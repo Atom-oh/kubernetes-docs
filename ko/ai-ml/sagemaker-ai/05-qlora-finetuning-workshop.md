@@ -1,6 +1,6 @@
 # 실습: PII 추출을 위한 QLoRA 파인튜닝
 
-> **마지막 업데이트**: 2026년 9월 15일
+> **마지막 업데이트**: 2026년 9월 16일
 
 공식 근거는 2026년 9월 15일 확인했습니다.
 
@@ -8,7 +8,7 @@
 
 합성 문서를 사용하며 저장소의 [Qwen PII trainer](https://github.com/Atom-oh/kubernetes-docs/blob/b89fc1d3334717031227a00a894a8c0927986ba3/examples/ai-ml/qwen-pii-finetuning/src/train.py)를 따라갑니다. 제출·소유권·export·정리는 [Part 3의 실행 계약](03-sagemaker-mlflow-execution.md)을 함께 확인하세요. 이후에는 [데이터 증강 워크숍](06-data-augmentation-workshop.md)과 [PII 평가·릴리스 워크숍](07-pii-evaluation-release.md)으로 이어집니다.
 
-**실행 상태:** 커밋된 GPU 경로는 PyTorch 2.8 DLC의 패치 지원이 2026년 8월 6일 종료되어 의도적으로 중단됩니다. `src/runtime_contract.py`를 유지하세요. 아래 CPU 연습은 모델 가중치를 불러오지 않습니다. 모델 로딩·학습 코드는 고정 버전 구현의 설명이며, GPU 연습에는 별도로 검증한 런타임 이관이 필요합니다. GPU 학습에 성공했다는 실행 기록이 아닙니다.
+**실행 상태:** 이 장에서 해설하는 과거 `src/train.py` 경로는 PyTorch 2.8 DLC의 패치 지원이 2026년 8월 6일 종료되어 의도적으로 중단됩니다. `src/runtime_contract.py`를 유지하세요. 아래 CPU 연습은 모델 가중치를 불러오지 않습니다. 모델 로딩·학습 코드는 고정 버전 구현의 설명입니다. 2026-09-16의 별도 PyTorch 2.11 경로는 실제 GPU 시험 학습과 저장·재로딩 검증을 완료했으며, [학습 경로의 실행 기록](README.md#sagemaker-실행-준비-상태)에서 작은 검증 세트의 한계와 본 학습 제출 상태를 확인할 수 있습니다. 아래 과거 코드 발췌를 새 실행 경로의 성공 기록으로 해석하지 마세요.
 
 ## 1. 학습 방법을 고르기 전에 예측 결과를 정의하기
 

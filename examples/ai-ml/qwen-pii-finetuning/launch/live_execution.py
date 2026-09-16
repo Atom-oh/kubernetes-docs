@@ -105,7 +105,10 @@ def positive_decimal(value):
 
 
 def reservation_usd(config, seconds):
-    if type(seconds) is not int or not 60 <= seconds <= 86400:
+    # The real 30B smoke run needs about two minutes per optimizer step.
+    # A 36-hour cap covers the planned 600 steps and evaluation while the
+    # independent cumulative USD 300 reservation ceiling remains enforced.
+    if type(seconds) is not int or not 60 <= seconds <= 129600:
         raise ValueError("Invalid bounded runtime")
     budget = config["budget"]
     rate = positive_decimal(budget["hourly_usd"])

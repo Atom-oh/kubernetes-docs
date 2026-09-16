@@ -51,3 +51,12 @@ cluster, or managed MLflow service is part of this execution.
 The recorded Seoul on-demand Training rate is USD 4.6169375/hour for
 ml.g6e.4xlarge. Final costs will distinguish estimates based on AWS billable seconds
 from delayed billing data; unused budget is not a spending target.
+
+The first measured optimizer-step interval in the actual smoke job was
+124.021 seconds. A linear 600-step training-only estimate is 20.67 hours;
+validation and paired generation add time. The proposed full-job cap is
+36 hours (129,600 seconds). Including the original two-hour overhead and USD 5
+allowance, this reserves USD 180.443625. Together with the smoke reservation,
+the envelope is USD 199.2944375, below the unchanged USD 300 cumulative ceiling.
+The full run remains gated on verified smoke artifacts; an early-step estimate
+does not establish a guaranteed completion time.

@@ -1,6 +1,6 @@
 # Workshop: QLoRA fine-tuning for PII extraction
 
-> **Last Updated**: September 15, 2026
+> **Last Updated**: September 16, 2026
 
 Primary sources were checked on September 15, 2026.
 
@@ -8,7 +8,7 @@ The goal of this workshop is to explain an experiment you can reason about: what
 
 We follow the repository's [Qwen PII trainer](https://github.com/Atom-oh/kubernetes-docs/blob/b89fc1d3334717031227a00a894a8c0927986ba3/examples/ai-ml/qwen-pii-finetuning/src/train.py), using synthetic documents. Keep [Part 3's submission, ownership, export and cleanup contracts](03-sagemaker-mlflow-execution.md) alongside this chapter. Continue with the [data augmentation workshop](06-data-augmentation-workshop.md) and [PII evaluation and release workshop](07-pii-evaluation-release.md).
 
-**Execution status:** the committed GPU path intentionally stops because its PyTorch 2.8 DLC reached end of patch on August 6, 2026. Keep `src/runtime_contract.py` intact. The CPU exercises below do not load model weights. Model-loading and training excerpts explain the pinned implementation; GPU exercises require a separately validated runtime migration. They are not records of successful GPU training.
+**Execution status:** the historical `src/train.py` path explained in this chapter intentionally stops because its PyTorch 2.8 DLC reached end of patch on August 6, 2026. Keep `src/runtime_contract.py` intact. The CPU exercises below do not load model weights; training excerpts explain that pinned implementation. A separate PyTorch 2.11 path completed real GPU smoke training and save/reload verification on September 16, 2026. The [learning-path execution record](README.md#sagemaker-execution-readiness) explains its small validation sample and full-job submission. Do not interpret the historical excerpts below as evidence that the new execution path succeeded.
 
 ## 1. Define the prediction before choosing the training method
 
