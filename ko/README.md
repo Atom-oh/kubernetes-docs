@@ -82,7 +82,7 @@
 1. [EKS Hybrid Nodes 소개](./eks-hybrid-nodes/README.md)
 2. [사전 요구 사항](./eks-hybrid-nodes/01-prerequisites.md) | [퀴즈](./quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
 3. [네트워크 구성](./eks-hybrid-nodes/02-network-configuration.md) | [퀴즈](./quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
-4. [에어갭 환경 구성](./eks-hybrid-nodes/03-airgap-setup.md) | [퀴즈](./quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+4. [인터넷 제한 환경 구성](./eks-hybrid-nodes/03-airgap-setup.md) | [퀴즈](./quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
 5. [노드 부트스트랩](./eks-hybrid-nodes/04-node-bootstrap.md) | [퀴즈](./quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
 6. [GPU 서버 통합](./eks-hybrid-nodes/05-gpu-integration.md) | [퀴즈](./quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
 7. [워크로드 배치 전략](./eks-hybrid-nodes/06-workload-placement.md) | [퀴즈](./quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
@@ -90,6 +90,7 @@
 9. [운영 및 유지보수](./eks-hybrid-nodes/08-operations.md) | [퀴즈](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
 10. [베어메탈 서버 OS 설치](./eks-hybrid-nodes/09-bare-metal-os-setup.md) | [퀴즈](./quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
 11. [Hybrid Nodes Gateway](./eks-hybrid-nodes/10-hybrid-nodes-gateway.md) | [퀴즈](./quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
+12. [보안팀 관점의 망분리 검토](./eks-hybrid-nodes/11-network-separation-security.md) | [퀴즈](./quizzes/eks-hybrid-nodes/11-network-separation-security-quiz.md)
 
 ### EKS Auto Mode
 1. [EKS Auto Mode 소개](./eks-auto-mode/README.md)
