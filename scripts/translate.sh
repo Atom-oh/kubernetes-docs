@@ -66,7 +66,7 @@ run_once() {
   # file in the section.
   ( cd "$REPO_ROOT" && env -i PATH="$PATH" HOME="$CELL" LANG="C.UTF-8" \
       KIRO_API_KEY="${KIRO_API_KEY:-}" \
-      timeout 600 kiro-cli chat "$PROMPT" --model gpt-5.6-terra \
+      timeout 600 kiro-cli chat "$PROMPT" --model gpt-5.6-sol \
       --no-interactive --trust-tools=fs_read,fs_write --wrap never )
 }
 
