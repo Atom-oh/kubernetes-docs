@@ -76,7 +76,7 @@
 * [EKS Hybrid Nodes](eks-hybrid-nodes/README.md)
   * [Prerequisites](eks-hybrid-nodes/01-prerequisites.md)
   * [Network Configuration](eks-hybrid-nodes/02-network-configuration.md)
-  * [Air-Gap Environment Setup](eks-hybrid-nodes/03-airgap-setup.md)
+  * [Restricted-Internet Setup](eks-hybrid-nodes/03-airgap-setup.md)
   * [Node Bootstrap](eks-hybrid-nodes/04-node-bootstrap.md)
   * [GPU Server Integration](eks-hybrid-nodes/05-gpu-integration.md)
   * [Workload Placement Strategies](eks-hybrid-nodes/06-workload-placement.md)
@@ -84,6 +84,7 @@
   * [Operations and Maintenance](eks-hybrid-nodes/08-operations.md)
   * [Bare Metal OS Setup](eks-hybrid-nodes/09-bare-metal-os-setup.md)
   * [Hybrid Nodes Gateway](eks-hybrid-nodes/10-hybrid-nodes-gateway.md)
+  * [Network Separation Security Review](eks-hybrid-nodes/11-network-separation-security.md)
 * [EKS Auto Mode](eks-auto-mode/README.md)
   * [Getting Started](eks-auto-mode/01-getting-started.md)
   * [NodePool Configuration](eks-auto-mode/02-nodepool-configuration.md)
@@ -513,7 +514,7 @@
 * EKS Hybrid Nodes
   * [Prerequisites Quiz](quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
   * [Network Configuration Quiz](quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
-  * [Air-Gap Environment Setup Quiz](quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+  * [Restricted-Internet Setup Quiz](quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
   * [Node Bootstrap Quiz](quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
   * [GPU Server Integration Quiz](quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
   * [Workload Placement Strategies Quiz](quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
@@ -521,6 +522,7 @@
   * [Operations and Maintenance Quiz](quizzes/eks-hybrid-nodes/08-operations-quiz.md)
   * [Bare Metal OS Setup Quiz](quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
   * [Hybrid Nodes Gateway Quiz](quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
+  * [Network Separation Security Review Quiz](quizzes/eks-hybrid-nodes/11-network-separation-security-quiz.md)
 * EKS Auto Mode
   * [Getting Started Quiz](quizzes/eks-auto-mode/01-getting-started-quiz.md)
   * [NodePool Configuration Quiz](quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md)

@@ -76,7 +76,7 @@
 * [EKS Hybrid Nodes](eks-hybrid-nodes/README.md)
   * [사전 요구 사항](eks-hybrid-nodes/01-prerequisites.md)
   * [네트워크 구성](eks-hybrid-nodes/02-network-configuration.md)
-  * [에어갭 환경 구성](eks-hybrid-nodes/03-airgap-setup.md)
+  * [인터넷 제한 환경 구성](eks-hybrid-nodes/03-airgap-setup.md)
   * [노드 부트스트랩](eks-hybrid-nodes/04-node-bootstrap.md)
   * [GPU 서버 통합](eks-hybrid-nodes/05-gpu-integration.md)
   * [워크로드 배치 전략](eks-hybrid-nodes/06-workload-placement.md)
@@ -84,6 +84,7 @@
   * [운영 및 유지보수](eks-hybrid-nodes/08-operations.md)
   * [베어메탈 서버 OS 설치](eks-hybrid-nodes/09-bare-metal-os-setup.md)
   * [Hybrid Nodes Gateway](eks-hybrid-nodes/10-hybrid-nodes-gateway.md)
+  * [보안팀 관점의 망분리 검토](eks-hybrid-nodes/11-network-separation-security.md)
 * [EKS Auto Mode](eks-auto-mode/README.md)
   * [Auto Mode 시작하기](eks-auto-mode/01-getting-started.md)
   * [NodePool 구성](eks-auto-mode/02-nodepool-configuration.md)
@@ -513,7 +514,7 @@
 * EKS Hybrid Nodes
   * [사전 요구 사항 퀴즈](quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
   * [네트워크 구성 퀴즈](quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
-  * [에어갭 환경 구성 퀴즈](quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+  * [인터넷 제한 환경 구성 퀴즈](quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
   * [노드 부트스트랩 퀴즈](quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
   * [GPU 서버 통합 퀴즈](quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
   * [워크로드 배치 전략 퀴즈](quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
@@ -521,6 +522,7 @@
   * [운영 및 유지보수 퀴즈](quizzes/eks-hybrid-nodes/08-operations-quiz.md)
   * [베어메탈 서버 OS 설치 퀴즈](quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
   * [Hybrid Nodes Gateway 퀴즈](quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
+  * [보안팀 관점의 망분리 검토 퀴즈](quizzes/eks-hybrid-nodes/11-network-separation-security-quiz.md)
 * EKS Auto Mode
   * [Auto Mode 시작하기 퀴즈](quizzes/eks-auto-mode/01-getting-started-quiz.md)
   * [NodePool 구성 퀴즈](quizzes/eks-auto-mode/02-nodepool-configuration-quiz.md)
