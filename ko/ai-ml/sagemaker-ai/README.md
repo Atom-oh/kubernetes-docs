@@ -1,8 +1,8 @@
 # SageMaker AI로 Qwen PII 파인튜닝하기
 
-> **마지막 업데이트**: 2026년 9월 15일
+> **마지막 업데이트**: 2026년 9월 16일
 
-합성 데이터 CPU 실습과 QLoRA 학습 해설을 포함합니다. AWS provisioning 기록은 2026-09-01의 과거 실험입니다.
+합성 데이터 CPU 실습과 QLoRA 학습 해설을 포함합니다. 2026-09-16에는 별도 런타임으로 실제 GPU 시험 학습을 완료했습니다. 2026-09-01 provisioning 기록은 과거 실험으로 구분합니다.
 
 이 가이드는 문서에서 개인정보 후보를 찾는 모델을 어떻게 학습시키고 평가할지 설명합니다. 학습 데이터의 정답을 정의하고, 데이터 누수를 막으며 증강한 뒤, QLoRA 설정을 선택하고 누락·과잉 가림을 측정하는 순서로 진행합니다.
 
@@ -23,9 +23,13 @@ Python 3.12와 JSONL을 읽을 수 있으면 데이터·평가 실습부터 시�
 
 ## SageMaker 실행 준비 상태
 
+2026-09-16의 [실제 GPU 시험 기록](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/results/execution-smoke-20260916.json)은 PyTorch 2.11·AL2023·CUDA 13 환경에서 같은 Qwen 모델을 NF4로 불러와 attention projection 네 종류에 rank-16 LoRA를 적용한 별도 경로입니다. 4스텝 후 실제 어댑터 가중치 변경과 저장·재로딩 일치를 확인했습니다. 과금 시간 1,140초의 GPU 계산 비용 추정은 약 1.46달러이며 저장·로그·세금 등은 제외합니다.
+
+단, 생성 검사는 합성 검증 문서 4개뿐입니다. 원본 모델은 entity F1 1.0000이지만 형식 준수는 2/4였고, 튜닝 모델은 F1 0.8125·형식 준수 4/4와 함께 불필요한 후보 6개를 추가했습니다. **실행 성공이 성능 개선을 뜻하지 않습니다.** 같은 날 600스텝 본 학습을 제출했으며, 이 기록에는 최종 테스트 결과가 아직 포함되지 않습니다. 본 학습은 validation loss로 checkpoint를 선택한 다음 별도 테스트 400개를 평가하도록 구성했습니다. [실행 설정과 결과 보관 방식](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/README.md#recorded-gpu-execution-september-16-2026)을 참고하세요.
+
 현재 역사적 실행 패키지는 Qwen/Qwen3-30B-A3B-Instruct-2507을 관리형 SageMaker Training Job 또는 임시 EKS GPU Job으로 학습하도록 설계되어 있습니다. 두 GPU 경로의 end-to-end 성공은 기록되어 있지 않습니다.
 
-고정된 PyTorch 2.8 DLC는 2026-08-06 패치 지원 종료로 자원 생성·GPU 실행이 차단됩니다. [QLoRA 실습의 런타임 설명](05-qlora-finetuning-workshop.md)과 [실행 계약](03-sagemaker-mlflow-execution.md)을 따라 이미지·의존성·MLflow 조합을 함께 검증해야 합니다. 지원 확인 코드만 제거하는 절차는 제공하지 않습니다.
+이 과거 경로의 고정된 PyTorch 2.8 DLC는 2026-08-06 패치 지원 종료로 자원 생성·GPU 실행이 차단됩니다. [QLoRA 실습의 런타임 설명](05-qlora-finetuning-workshop.md)과 [실행 계약](03-sagemaker-mlflow-execution.md)을 따라 이미지·의존성·MLflow 조합을 함께 검증해야 합니다. 지원 확인 코드만 제거하는 절차는 제공하지 않습니다.
 
 ## 설계와 구현을 깊게 읽기
 

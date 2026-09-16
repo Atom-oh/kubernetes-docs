@@ -1,0 +1,1080 @@
+{
+  "adapter": {
+    "adapter_weights_changed": true,
+    "changed_tensors": 384,
+    "files": [
+      {
+        "bytes": 933,
+        "name": "adapter_config.json",
+        "sha256": "ca18ef1c5478ab0b7f7f4e80229e38e5efa4e81ec59f551a3ca6f34c395b1ba9"
+      },
+      {
+        "bytes": 53528920,
+        "name": "adapter_model.safetensors",
+        "sha256": "e038745b638ffd6145f6682630d92ec4de00d22805aa9aaa451c079b10879a66"
+      }
+    ],
+    "initial_state_sha256": "1aba468c9efa2ce4bfbee5f2c0182e3a6b3a6bdda92b0eef1f292baefa53f899",
+    "max_abs_reload_difference": 0.0,
+    "max_abs_training_difference": 0.011386839672923088,
+    "reload_verified": true,
+    "reloaded_state_sha256": "5d39c535c21d6c44caa21a86f1226737ff0d149e81898c3adcdff297d24fa18f",
+    "selected_state_sha256": "5d39c535c21d6c44caa21a86f1226737ff0d149e81898c3adcdff297d24fa18f",
+    "state_equal": true
+  },
+  "baseline": {
+    "documents": {
+      "leak_rate": 0.0,
+      "leaked": 0,
+      "total": 4
+    },
+    "entities": {
+      "expected": 13,
+      "hallucinated": 0,
+      "hallucination_rate": 0.0,
+      "leak_rate": 0.0,
+      "leaked": 0,
+      "over_redacted": 0,
+      "over_redaction_rate": 0.0,
+      "predicted": 13
+    },
+    "entity": {
+      "f1": 1.0,
+      "fn": 0,
+      "fp": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "tp": 13
+    },
+    "generation": {
+      "missing_eos": 0,
+      "total": 4
+    },
+    "parse": {
+      "success": 2,
+      "success_rate": 0.5,
+      "total": 4
+    },
+    "per_type": {
+      "ACCOUNT": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 1
+      },
+      "ADDRESS": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 2
+      },
+      "CARD": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 2
+      },
+      "DOB": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 1
+      },
+      "EMAIL": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 1
+      },
+      "PERSON": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 2
+      },
+      "PHONE": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 1
+      },
+      "REL": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 1
+      },
+      "RRN": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 2
+      }
+    },
+    "subgroups": {
+      "language": {
+        "en": {
+          "documents": {
+            "leak_rate": 0.0,
+            "leaked": 0,
+            "total": 2
+          },
+          "entities": {
+            "expected": 9,
+            "hallucinated": 0,
+            "hallucination_rate": 0.0,
+            "leak_rate": 0.0,
+            "leaked": 0,
+            "over_redacted": 0,
+            "over_redaction_rate": 0.0,
+            "predicted": 9
+          },
+          "entity": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 9
+          },
+          "parse": {
+            "success": 1,
+            "success_rate": 0.5,
+            "total": 2
+          },
+          "per_type": {
+            "ACCOUNT": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "ADDRESS": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "CARD": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "DOB": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "EMAIL": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "PERSON": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "PHONE": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "REL": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "RRN": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            }
+          },
+          "tokenization": {
+            "deterministic": 2,
+            "deterministic_rate": 1.0,
+            "round_trip": 2,
+            "round_trip_rate": 1.0,
+            "total": 2
+          }
+        },
+        "ko": {
+          "documents": {
+            "leak_rate": 0.0,
+            "leaked": 0,
+            "total": 2
+          },
+          "entities": {
+            "expected": 4,
+            "hallucinated": 0,
+            "hallucination_rate": 0.0,
+            "leak_rate": 0.0,
+            "leaked": 0,
+            "over_redacted": 0,
+            "over_redaction_rate": 0.0,
+            "predicted": 4
+          },
+          "entity": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 4
+          },
+          "parse": {
+            "success": 1,
+            "success_rate": 0.5,
+            "total": 2
+          },
+          "per_type": {
+            "ADDRESS": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "CARD": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "PERSON": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "RRN": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            }
+          },
+          "tokenization": {
+            "deterministic": 2,
+            "deterministic_rate": 1.0,
+            "round_trip": 2,
+            "round_trip_rate": 1.0,
+            "total": 2
+          }
+        }
+      },
+      "negative": {
+        "documents": {
+          "leak_rate": 0.0,
+          "leaked": 0,
+          "total": 2
+        },
+        "entities": {
+          "expected": 0,
+          "hallucinated": 0,
+          "hallucination_rate": 0.0,
+          "leak_rate": 0.0,
+          "leaked": 0,
+          "over_redacted": 0,
+          "over_redaction_rate": 0.0,
+          "predicted": 0
+        },
+        "entity": {
+          "f1": 0.0,
+          "fn": 0,
+          "fp": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "tp": 0
+        },
+        "parse": {
+          "success": 0,
+          "success_rate": 0.0,
+          "total": 2
+        },
+        "per_type": {},
+        "tokenization": {
+          "deterministic": 2,
+          "deterministic_rate": 1.0,
+          "round_trip": 2,
+          "round_trip_rate": 1.0,
+          "total": 2
+        }
+      },
+      "positive": {
+        "documents": {
+          "leak_rate": 0.0,
+          "leaked": 0,
+          "total": 2
+        },
+        "entities": {
+          "expected": 13,
+          "hallucinated": 0,
+          "hallucination_rate": 0.0,
+          "leak_rate": 0.0,
+          "leaked": 0,
+          "over_redacted": 0,
+          "over_redaction_rate": 0.0,
+          "predicted": 13
+        },
+        "entity": {
+          "f1": 1.0,
+          "fn": 0,
+          "fp": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "tp": 13
+        },
+        "parse": {
+          "success": 2,
+          "success_rate": 1.0,
+          "total": 2
+        },
+        "per_type": {
+          "ACCOUNT": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 1
+          },
+          "ADDRESS": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 2
+          },
+          "CARD": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 2
+          },
+          "DOB": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 1
+          },
+          "EMAIL": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 1
+          },
+          "PERSON": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 2
+          },
+          "PHONE": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 1
+          },
+          "REL": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 1
+          },
+          "RRN": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 2
+          }
+        },
+        "tokenization": {
+          "deterministic": 2,
+          "deterministic_rate": 1.0,
+          "round_trip": 2,
+          "round_trip_rate": 1.0,
+          "total": 2
+        }
+      }
+    },
+    "tokenization": {
+      "deterministic": 4,
+      "deterministic_rate": 1.0,
+      "round_trip": 4,
+      "round_trip_rate": 1.0,
+      "total": 4
+    }
+  },
+  "billable_seconds": 1140,
+  "compute_estimate_usd": "1.462030208333333333333333333",
+  "dataset": {
+    "counts": {
+      "test": 400,
+      "train": 1600,
+      "validation": 200
+    },
+    "generator_version": "execution-1.0.0",
+    "seed": 42,
+    "sha256": {
+      "test": "fbbb15dfdb0e9808d646fa293b92c6a9109aba19267e2357be34b6b639d8693e",
+      "train": "0fdea8744fb54833351408401f67c4c04b5ccb2e42b5267eec16374ba5451a0e",
+      "validation": "db7976014ead2dfc1c1b219a5092c573dc1fb269cdee4bd4004e6ff105f7838a"
+    },
+    "verified_splits": [
+      "train",
+      "validation"
+    ]
+  },
+  "evaluation_split": "validation",
+  "full_training_launch": {
+    "all_job_reservations_usd": "199.2944375000",
+    "final_test_results_included": false,
+    "max_runtime_seconds": 129600,
+    "requested_steps": 600,
+    "reserved_usd": "180.4436250000",
+    "status_at_submission": "InProgress",
+    "submitted_at_utc": "2026-09-16T11:12:53.539000+00:00",
+    "user_budget_usd": "500"
+  },
+  "generation_examples_per_model": 4,
+  "hourly_usd": "4.6169375000",
+  "limitations": [
+    "Four synthetic validation examples (two positive, two negative); not a final test or production privacy assessment.",
+    "Tuned adapter added six false-positive entity pairs; this smoke run does not demonstrate quality improvement.",
+    "Baseline entity F1 of 1.0 coexists with parse failure on both negative documents; format and entity metrics must be read together.",
+    "Template and some entity vocabulary are shared across splits; family and exact-source separation do not establish domain independence.",
+    "GPU memory is PyTorch peak allocated memory through training, not total device utilization or later generation peak.",
+    "Compute estimate uses AWS billable seconds and recorded on-demand rate; storage, logging, taxes and billing adjustments are excluded.",
+    "The full-job entry is a submission receipt, not evidence of final training completion.",
+    "Direct training dependencies are pinned; optional unused preinstalled s3fs has an fsspec dependency mismatch. This run uses local SageMaker File channels, not the S3FS backend."
+  ],
+  "model_id": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+  "model_revision": "0d7cf23991f47feeb3a57ecb4c9cee8ea4a17bfe",
+  "preparation": {
+    "forward_backward_verified": true,
+    "forward_loss": 0.0007920641801320016,
+    "gpu_memory_bytes": 47667740672,
+    "gradient_l1": 113665.06072689779,
+    "mask_verified": true,
+    "negative_forward_loss": 30.421037673950195,
+    "negative_supervision_verified": true,
+    "runtime_verified": true,
+    "train_masks": {
+      "eos_supervised_examples": 32,
+      "examples": 32,
+      "max_sequence_length_observed": 389,
+      "negative_examples": 5,
+      "negative_supervised_tokens": 5,
+      "prompt_tokens": 5745,
+      "response_tokens": 2349,
+      "supervised_tokens": 2381
+    },
+    "trainable_parameters": 13369344,
+    "validation_masks": {
+      "eos_supervised_examples": 8,
+      "examples": 8,
+      "max_sequence_length_observed": 375,
+      "negative_examples": 2,
+      "negative_supervised_tokens": 2,
+      "prompt_tokens": 1362,
+      "response_tokens": 505,
+      "supervised_tokens": 513
+    }
+  },
+  "recorded_date": "2026-09-16",
+  "runtime": {
+    "accelerator": "NVIDIA L40S",
+    "image_digest": "sha256:ecb2d8361928ee5465c615ae970f32c475ca3fcbfe57fdcb2f9415aac227f84a",
+    "image_tag": "2.11.0-cu130-amzn2023-sagemaker",
+    "instance_type": "ml.g6e.4xlarge",
+    "region": "ap-northeast-2",
+    "torch": "2.11.0+cu130"
+  },
+  "source_bundle_sha256": "84e4438196c947519998372d2648bb7455bbe6f8d2d082355d7d628a8a500b33",
+  "status": "gpu_smoke_completed",
+  "train_examples": 32,
+  "training": {
+    "best_checkpoint": "checkpoint-4",
+    "best_checkpoint_state_verified": true,
+    "best_eval_loss": 4.9649763107299805,
+    "best_model_selected": true,
+    "peak_gpu_memory_bytes": 22961986048,
+    "steps": 4,
+    "train_metrics": {
+      "epoch": 1.0,
+      "train_loss": 0.08977476321160793,
+      "train_runtime": 510.5993,
+      "train_samples_per_second": 0.063,
+      "train_steps_per_second": 0.008
+    },
+    "training_seconds": 517.7014177210001,
+    "training_verified": true
+  },
+  "tuned": {
+    "documents": {
+      "leak_rate": 0.0,
+      "leaked": 0,
+      "total": 4
+    },
+    "entities": {
+      "expected": 13,
+      "hallucinated": 0,
+      "hallucination_rate": 0.0,
+      "leak_rate": 0.0,
+      "leaked": 0,
+      "over_redacted": 6,
+      "over_redaction_rate": 0.3157894736842105,
+      "predicted": 19
+    },
+    "entity": {
+      "f1": 0.8125000000000001,
+      "fn": 0,
+      "fp": 6,
+      "precision": 0.6842105263157895,
+      "recall": 1.0,
+      "tp": 13
+    },
+    "generation": {
+      "missing_eos": 0,
+      "total": 4
+    },
+    "parse": {
+      "success": 4,
+      "success_rate": 1.0,
+      "total": 4
+    },
+    "per_type": {
+      "ACCOUNT": {
+        "f1": 0.5,
+        "fn": 0,
+        "fp": 2,
+        "precision": 0.3333333333333333,
+        "recall": 1.0,
+        "tp": 1
+      },
+      "ADDRESS": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 2
+      },
+      "CARD": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 2
+      },
+      "DOB": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 1
+      },
+      "EMAIL": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 1
+      },
+      "PERSON": {
+        "f1": 0.8,
+        "fn": 0,
+        "fp": 1,
+        "precision": 0.6666666666666666,
+        "recall": 1.0,
+        "tp": 2
+      },
+      "PHONE": {
+        "f1": 0.5,
+        "fn": 0,
+        "fp": 2,
+        "precision": 0.3333333333333333,
+        "recall": 1.0,
+        "tp": 1
+      },
+      "REL": {
+        "f1": 1.0,
+        "fn": 0,
+        "fp": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 1
+      },
+      "RRN": {
+        "f1": 0.8,
+        "fn": 0,
+        "fp": 1,
+        "precision": 0.6666666666666666,
+        "recall": 1.0,
+        "tp": 2
+      }
+    },
+    "subgroups": {
+      "language": {
+        "en": {
+          "documents": {
+            "leak_rate": 0.0,
+            "leaked": 0,
+            "total": 2
+          },
+          "entities": {
+            "expected": 9,
+            "hallucinated": 0,
+            "hallucination_rate": 0.0,
+            "leak_rate": 0.0,
+            "leaked": 0,
+            "over_redacted": 3,
+            "over_redaction_rate": 0.25,
+            "predicted": 12
+          },
+          "entity": {
+            "f1": 0.8571428571428571,
+            "fn": 0,
+            "fp": 3,
+            "precision": 0.75,
+            "recall": 1.0,
+            "tp": 9
+          },
+          "parse": {
+            "success": 2,
+            "success_rate": 1.0,
+            "total": 2
+          },
+          "per_type": {
+            "ACCOUNT": {
+              "f1": 0.6666666666666666,
+              "fn": 0,
+              "fp": 1,
+              "precision": 0.5,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "ADDRESS": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "CARD": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "DOB": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "EMAIL": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "PERSON": {
+              "f1": 0.6666666666666666,
+              "fn": 0,
+              "fp": 1,
+              "precision": 0.5,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "PHONE": {
+              "f1": 0.6666666666666666,
+              "fn": 0,
+              "fp": 1,
+              "precision": 0.5,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "REL": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "RRN": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            }
+          },
+          "tokenization": {
+            "deterministic": 2,
+            "deterministic_rate": 1.0,
+            "round_trip": 2,
+            "round_trip_rate": 1.0,
+            "total": 2
+          }
+        },
+        "ko": {
+          "documents": {
+            "leak_rate": 0.0,
+            "leaked": 0,
+            "total": 2
+          },
+          "entities": {
+            "expected": 4,
+            "hallucinated": 0,
+            "hallucination_rate": 0.0,
+            "leak_rate": 0.0,
+            "leaked": 0,
+            "over_redacted": 3,
+            "over_redaction_rate": 0.42857142857142855,
+            "predicted": 7
+          },
+          "entity": {
+            "f1": 0.7272727272727273,
+            "fn": 0,
+            "fp": 3,
+            "precision": 0.5714285714285714,
+            "recall": 1.0,
+            "tp": 4
+          },
+          "parse": {
+            "success": 2,
+            "success_rate": 1.0,
+            "total": 2
+          },
+          "per_type": {
+            "ACCOUNT": {
+              "f1": 0.0,
+              "fn": 0,
+              "fp": 1,
+              "precision": 0.0,
+              "recall": 0.0,
+              "tp": 0
+            },
+            "ADDRESS": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "CARD": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "PERSON": {
+              "f1": 1.0,
+              "fn": 0,
+              "fp": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "tp": 1
+            },
+            "PHONE": {
+              "f1": 0.0,
+              "fn": 0,
+              "fp": 1,
+              "precision": 0.0,
+              "recall": 0.0,
+              "tp": 0
+            },
+            "RRN": {
+              "f1": 0.6666666666666666,
+              "fn": 0,
+              "fp": 1,
+              "precision": 0.5,
+              "recall": 1.0,
+              "tp": 1
+            }
+          },
+          "tokenization": {
+            "deterministic": 2,
+            "deterministic_rate": 1.0,
+            "round_trip": 2,
+            "round_trip_rate": 1.0,
+            "total": 2
+          }
+        }
+      },
+      "negative": {
+        "documents": {
+          "leak_rate": 0.0,
+          "leaked": 0,
+          "total": 2
+        },
+        "entities": {
+          "expected": 0,
+          "hallucinated": 0,
+          "hallucination_rate": 0.0,
+          "leak_rate": 0.0,
+          "leaked": 0,
+          "over_redacted": 6,
+          "over_redaction_rate": 1.0,
+          "predicted": 6
+        },
+        "entity": {
+          "f1": 0.0,
+          "fn": 0,
+          "fp": 6,
+          "precision": 0.0,
+          "recall": 0.0,
+          "tp": 0
+        },
+        "parse": {
+          "success": 2,
+          "success_rate": 1.0,
+          "total": 2
+        },
+        "per_type": {
+          "ACCOUNT": {
+            "f1": 0.0,
+            "fn": 0,
+            "fp": 2,
+            "precision": 0.0,
+            "recall": 0.0,
+            "tp": 0
+          },
+          "PERSON": {
+            "f1": 0.0,
+            "fn": 0,
+            "fp": 1,
+            "precision": 0.0,
+            "recall": 0.0,
+            "tp": 0
+          },
+          "PHONE": {
+            "f1": 0.0,
+            "fn": 0,
+            "fp": 2,
+            "precision": 0.0,
+            "recall": 0.0,
+            "tp": 0
+          },
+          "RRN": {
+            "f1": 0.0,
+            "fn": 0,
+            "fp": 1,
+            "precision": 0.0,
+            "recall": 0.0,
+            "tp": 0
+          }
+        },
+        "tokenization": {
+          "deterministic": 2,
+          "deterministic_rate": 1.0,
+          "round_trip": 2,
+          "round_trip_rate": 1.0,
+          "total": 2
+        }
+      },
+      "positive": {
+        "documents": {
+          "leak_rate": 0.0,
+          "leaked": 0,
+          "total": 2
+        },
+        "entities": {
+          "expected": 13,
+          "hallucinated": 0,
+          "hallucination_rate": 0.0,
+          "leak_rate": 0.0,
+          "leaked": 0,
+          "over_redacted": 0,
+          "over_redaction_rate": 0.0,
+          "predicted": 13
+        },
+        "entity": {
+          "f1": 1.0,
+          "fn": 0,
+          "fp": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "tp": 13
+        },
+        "parse": {
+          "success": 2,
+          "success_rate": 1.0,
+          "total": 2
+        },
+        "per_type": {
+          "ACCOUNT": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 1
+          },
+          "ADDRESS": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 2
+          },
+          "CARD": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 2
+          },
+          "DOB": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 1
+          },
+          "EMAIL": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 1
+          },
+          "PERSON": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 2
+          },
+          "PHONE": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 1
+          },
+          "REL": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 1
+          },
+          "RRN": {
+            "f1": 1.0,
+            "fn": 0,
+            "fp": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "tp": 2
+          }
+        },
+        "tokenization": {
+          "deterministic": 2,
+          "deterministic_rate": 1.0,
+          "round_trip": 2,
+          "round_trip_rate": 1.0,
+          "total": 2
+        }
+      }
+    },
+    "tokenization": {
+      "deterministic": 4,
+      "deterministic_rate": 1.0,
+      "round_trip": 4,
+      "round_trip_rate": 1.0,
+      "total": 4
+    }
+  },
+  "validation_examples": 8
+}

@@ -1,8 +1,8 @@
 # Fine-tuning Qwen for PII with SageMaker AI
 
-> **Last Updated**: September 15, 2026
+> **Last Updated**: September 16, 2026
 
-Includes synthetic-data CPU exercises and QLoRA instruction. AWS provisioning observations are historical records from September 1, 2026.
+Includes synthetic-data CPU exercises and QLoRA instruction. A separate runtime completed a real GPU smoke run on September 16, 2026. September 1 provisioning observations remain historical records.
 
 This guide teaches how to train and evaluate a model that extracts PII candidates from documents. Define the annotation contract, split and augment data without leakage, choose QLoRA settings, and measure both omissions and excessive masking.
 
@@ -23,9 +23,13 @@ The new augmentation exercise splits 40 synthetic families before augmenting tra
 
 ## SageMaker execution readiness
 
+The [actual GPU smoke receipt](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/results/execution-smoke-20260916.json) records a separate PyTorch 2.11/AL2023/CUDA 13 path on September 16, 2026. It loads the same Qwen model in NF4 and applies rank-16 LoRA to four attention projections. Four optimizer steps produced changed adapter weights with matching saved/reloaded states. The 1,140 billable seconds imply approximately USD 1.46 of GPU compute, excluding storage, logs, taxes, and adjustments.
+
+Generation covered only four synthetic validation documents. The baseline had entity F1 1.0000 but only 2/4 correctly formatted responses. The tuned model had F1 0.8125 and 4/4 formatted responses, while adding six false-positive entity pairs. **Successful execution is not evidence of improved quality.** A 600-step full job was submitted that day; this receipt does not contain final test results. The full job selects a checkpoint by validation loss before evaluating a separate 400-document test set. See the [execution settings and artifact retention](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/ai-ml/qwen-pii-finetuning/README.md#recorded-gpu-execution-september-16-2026).
+
 The historical package proposes Qwen/Qwen3-30B-A3B-Instruct-2507 training through a managed SageMaker Training Job or an ephemeral EKS GPU Job. Neither GPU path has a recorded end-to-end success.
 
-The pinned PyTorch 2.8 DLC ended patch support on 2026-08-06, so resource creation and GPU execution are blocked. Follow the [QLoRA runtime discussion](05-qlora-finetuning-workshop.md) and [execution contract](03-sagemaker-mlflow-execution.md) to validate the image, dependencies, and MLflow pairing together. Removing only the support check is not a migration procedure.
+That historical path's pinned PyTorch 2.8 DLC ended patch support on 2026-08-06, so its resource creation and GPU execution remain blocked. Follow the [QLoRA runtime discussion](05-qlora-finetuning-workshop.md) and [execution contract](03-sagemaker-mlflow-execution.md) to validate the image, dependencies, and MLflow pairing together. Removing only the support check is not a migration procedure.
 
 ## Read the design and implementation in depth
 
