@@ -40,7 +40,7 @@ This training content provides quizzes for each topic along with the learning ma
 6. [Configuration](./core/05-configuration-secrets.md) | [Quiz](./quizzes/core/05-configuration-secrets-quiz.md)
 7. [Security](./core/06-security.md) | [Quiz](./quizzes/core/06-security-quiz.md)
 8. [Policies](./core/07-policies.md) | [Quiz](./quizzes/core/07-policies-quiz.md)
-9. [Scheduling, Preemption and Eviction](./core/08-scheduling-preemption-eviction.md) | [Quiz](./quizzes/core/08-scheduling-preemption-eviction-quiz.md)
+9. [Scheduling, Preemption and Eviction](./core/08-scheduling-preemption-eviction.md) | [Quiz](./quizzes/core/08-scheduling-preemption-eviction-quiz.md) | [Lab](./labs/core/08-scheduling-preemption-eviction-lab.md)
 10. [Cluster Administration](./core/09-cluster-administration.md) | [Quiz](./quizzes/core/09-cluster-administration-quiz.md)
 11. [Windows in Kubernetes](./core/10-windows-in-kubernetes.md) | [Quiz](./quizzes/core/10-windows-in-kubernetes-quiz.md)
 12. [Extending Kubernetes](./core/11-extending-kubernetes.md) | [Quiz](./quizzes/core/11-extending-kubernetes-quiz.md)

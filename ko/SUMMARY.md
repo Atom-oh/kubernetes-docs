@@ -437,6 +437,7 @@
   * [서비스와 네트워킹 실습](labs/core/03-services-networking-lab.md)
   * [스토리지 실습](labs/core/04-storage-lab.md)
   * [ConfigMap과 Secret 실습](labs/core/05-configuration-secrets-lab.md)
+  * [스케줄러 스코어링 전략 실습](labs/core/08-scheduling-preemption-eviction-lab.md)
   * [EKS 클러스터 생성 실습](labs/eks/01-eks-cluster-creation-lab.md)
   * [Observability End-to-End 실습](lab-guides/labs/observability-end-to-end/README.md)
     * [실습 시리즈 소개](labs/observability/README.md)
