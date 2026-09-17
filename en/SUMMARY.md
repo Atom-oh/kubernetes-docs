@@ -437,6 +437,7 @@
   * [Services and Networking Lab](labs/core/03-services-networking-lab.md)
   * [Storage Lab](labs/core/04-storage-lab.md)
   * [ConfigMap and Secret Lab](labs/core/05-configuration-secrets-lab.md)
+  * [Scheduler Scoring Strategy Lab](labs/core/08-scheduling-preemption-eviction-lab.md)
   * [EKS Cluster Creation Lab](labs/eks/01-eks-cluster-creation-lab.md)
   * [Observability End-to-End Labs](lab-guides/labs/observability-end-to-end/README.md)
     * [Lab Series Introduction](labs/observability/README.md)

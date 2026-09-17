@@ -885,3 +885,19 @@ kubelet은 QoS 자체로 순서를 정하지 않고 요청 초과 사용 여부,
 
 QoS 클래스는 포드의 리소스 요청과 제한 설정에 따라 자동으로 할당되며, 포드 스펙에서 직접 지정할 수 없습니다.
 </details>
+
+6. **NodeResourcesFit 스코어링 전략**: 배치(batch) Job 워크로드가 Karpenter/Cluster Autoscaler와 함께 실행되며, 완전히 비어서 통합(consolidation) 대상이 될 수 있는 노드 수를 최대화하고자 합니다. 어떤 `NodeResourcesFit` 스코어링 전략이 가장 적합하며, 그 이유는 무엇인가요?
+
+   - A) `LeastAllocated` — 모든 노드의 CPU/메모리 사용률을 균등하게 맞추기 때문
+   - B) `MostAllocated` — 이미 가장 바쁜 노드부터 새 포드를 채우고 다른 노드는 비워두기 때문
+   - C) `LeastAllocated`와 동일한 선형 곡선의 `RequestedToCapacityRatio`
+   - D) EKS는 기본 스케줄러 설정을 직접 수정할 수 있으므로 전략 선택이 중요하지 않다
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B) `MostAllocated` — 이미 가장 바쁜 노드부터 새 포드를 채우고 다른 노드는 비워두기 때문**
+
+**설명:**
+워커 노드 3개짜리 임시 `kind` 클러스터에서 CPU 사용률을 75%/37%/0%로 불균등하게 만든 뒤 검증했습니다. 기본 `LeastAllocated` 스케줄러는 새 포드 6개를 가장 비어 있던 노드로 몰아 최종 사용률이 75%/37%/37%가 되어 세 노드 모두 사용 중이 되었고(스케일 다운 불가), `scoringStrategy.type: MostAllocated`로 설정한 두 번째 스케줄러는 동일한 6개 포드를 가장 바쁜 두 노드로 보내 93%/56%/0%가 되어 유휴 노드를 그대로 유지했습니다(통합 대상 가능). Amazon EKS는 컨트롤 플레인이 관리형이므로, `MostAllocated`를 적용하려면 기본 스케줄러를 수정하는 대신 추가 스케줄러 `Deployment`를 배포하고 `schedulerName`으로 대상 포드를 지정해야 합니다.
+</details>

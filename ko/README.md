@@ -40,7 +40,7 @@
 6. [구성](./core/05-configuration-secrets.md) | [퀴즈](./quizzes/core/05-configuration-secrets-quiz.md)
 7. [보안](./core/06-security.md) | [퀴즈](./quizzes/core/06-security-quiz.md)
 8. [정책](./core/07-policies.md) | [퀴즈](./quizzes/core/07-policies-quiz.md)
-9. [스케줄링, 선점 및 축출](./core/08-scheduling-preemption-eviction.md) | [퀴즈](./quizzes/core/08-scheduling-preemption-eviction-quiz.md)
+9. [스케줄링, 선점 및 축출](./core/08-scheduling-preemption-eviction.md) | [퀴즈](./quizzes/core/08-scheduling-preemption-eviction-quiz.md) | [실습](./labs/core/08-scheduling-preemption-eviction-lab.md)
 10. [클러스터 관리](./core/09-cluster-administration.md) | [퀴즈](./quizzes/core/09-cluster-administration-quiz.md)
 11. [Windows in Kubernetes](./core/10-windows-in-kubernetes.md) | [퀴즈](./quizzes/core/10-windows-in-kubernetes-quiz.md)
 12. [Kubernetes 확장](./core/11-extending-kubernetes.md) | [퀴즈](./quizzes/core/11-extending-kubernetes-quiz.md)
