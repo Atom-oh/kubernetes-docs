@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **Supported Versions**: Argo CD 3.5.2, Argo Rollouts 1.10.0 (reviewed baseline)
-> **Last Updated**: September 11, 2026
+> **Last Updated**: September 21, 2026
 
 ## Table of Contents
 - [What is ArgoCD?](#what-is-argocd)
@@ -224,6 +224,8 @@ This is the upstream test matrix recorded in the 3.5.2 repository. It differs fr
 - 3.5.0: released **2026-08-04**. Check migration guidance for changes including the server's Helm 4 renderer.
 - 3.5.1: released 2026-08-12.
 - 3.5.2: released 2026-08-27. Check official releases for patch details and current supported lines.
+- [3.5.3](https://github.com/argoproj/argo-cd/releases/tag/v3.5.3) / [3.4.9](https://github.com/argoproj/argo-cd/releases/tag/v3.4.9): patch releases published 2026-09-14. 3.5.3 includes bug fixes such as KubeVirt VirtualMachine and FlinkDeployment health checks, correct operationState values on sync retry, and guarding the SSO redirect against a 401 retry loop.
+- [3.6.0-rc1](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc1): first release candidate of the 3.6 line, published 2026-09-15. Not a production baseline.
 
 ### Argo Rollouts
 

@@ -1,7 +1,7 @@
 # 클러스터 아키텍처
 
 > **지원 버전**: Kubernetes 1.35, 1.36, 1.37
-> **마지막 업데이트**: 2026년 9월 9일
+> **마지막 업데이트**: 2026년 9월 21일
 
 버전 헤더는 업스트림 Kubernetes 기준입니다. 2026년 9월 11일 기준 EKS 표준 지원 버전은 1.34–1.36이므로 버전 선택 전 [EKS 수명 주기](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)를 확인하세요. 아래 구성 요소 명령은 자체 관리형 클러스터 예시이며 EKS 컨트롤 플레인은 AWS가 관리합니다. 이미지 태그와 인프라 ID는 예시이므로 호환되고 유지 관리되는 이미지와 실제 값으로 바꿔 사용하세요.
 
@@ -1539,6 +1539,14 @@ Kubernetes 클러스터 업그레이드는 새로운 기능, 보안 패치, 버�
 - **사용 중단(deprecation)**: kube-dns와 `kubectl run --filename/-f`가 사용 중단되었고(`ipvs` 모드는 이미 v1.35부터 사용 중단),, 정적(static) 파드의 Secret/ConfigMap 참조가 금지되었습니다. cgroup v1 지원 제거도 계속 진행 중입니다.
 
 업그레이드 전에는 [공식 릴리스 노트](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.37.md)에서 사용 중단·제거 항목을 반드시 확인하세요.
+
+### 2026년 9월 업데이트: v1.37 주요 기능 심층 소개
+
+2026년 9월 14~16일 Kubernetes 블로그에 v1.37 기능을 심층 소개하는 글이 연이어 게시되었습니다:
+
+- **[Memory QoS Beta 승격](https://kubernetes.io/blog/2026/09/14/kubernetes-v1-37-memory-qos-graduates-to-beta/)**: `MemoryQoS` 기능 게이트가 Beta로 승격되어 v1.37 kubelet에서 기본 활성화됩니다. cgroup v2 Linux 노드에서 메모리 컨트롤러를 통해 커널에 컨테이너 메모리 처리 힌트를 제공합니다. 다만 기본 kubelet 설정은 `memory.high`/`memory.min`/`memory.low` 값을 쓰지 않으므로, `memoryThrottlingFactor` 등을 명시적으로 설정하기 전까지 동작 변화는 없습니다.
+- **[파드 수준 리소스 매니저 Beta 승격](https://kubernetes.io/blog/2026/09/15/kubernetes-v1-37-pod-level-resource-managers-beta/)** (기본 비활성화): kubelet의 Topology Manager, CPU Manager, Memory Manager가 파드 수준 리소스 선언(`.spec.resources`)을 직접 사용해 NUMA 정렬 배치를 결정합니다. 주 컨테이너에는 전용 코어를 할당하면서 경량 사이드카는 파드 격리 풀에 배치하는 하이브리드 할당이 가능해집니다.
+- **[컨테이너 스토리지 보안 강화](https://kubernetes.io/blog/2026/09/16/kubernetes-v1-37-hardening-container-storage/)**: `emptyDir` 권한 모드와 바인드 마운트 옵션(`noexec`, `nosuid`, `nodev`)이 도입되어, 쓰기 가능한 볼륨에서 임의 바이너리 실행을 금지하는 등의 보안 정책을 우회 수단 없이 Kubernetes에서 직접 구현할 수 있습니다.
 
 ### 업그레이드 전략
 

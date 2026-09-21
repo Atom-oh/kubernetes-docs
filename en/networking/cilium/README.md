@@ -4,7 +4,7 @@
 
 This section covers Cilium networking, policy and observability. Examples are reviewed against **Cilium/Helm chart 1.20.1**, Cilium CLI **0.20.0** and Hubble CLI **1.19.4**. The Cilium 1.20 Kubernetes compatibility page lists **1.33–1.36** as tested; an upstream 1.37 release does not extend that matrix automatically. Supported hosts are AMD64/AArch64 Linux with kernel **5.10+**, or the documented distribution equivalent such as RHEL 8.10's backported 4.18 kernel. Individual features have additional requirements.
 
-> **Last Updated**: September 12, 2026
+> **Last Updated**: September 21, 2026
 
 ### Historical Release Notes
 
@@ -20,6 +20,10 @@ The dates below are GitHub publication dates in UTC and describe those releases,
 | August 18, 2026 | [1.20.1](https://github.com/cilium/cilium/releases/tag/v1.20.1) | ClusterMesh documentation and bug fixes, including restart/CIDR-policy handling |
 | August 18, 2026 | [1.19.7](https://github.com/cilium/cilium/releases/tag/v1.19.7) | Includes ENI interface timing, Service/LB and other fixes |
 | August 18, 2026 | [1.18.13](https://github.com/cilium/cilium/releases/tag/v1.18.13) | VRRP/IGMP host-firewall support and related fixes |
+| September 15, 2026 | [1.20.2](https://github.com/cilium/cilium/releases/tag/v1.20.2) | Numerous fixes, including ENI IPAM prefix-delegation release/allocation bugs, LocalRedirectPolicy regressions, Gateway API listener status and ExternalAuth fail-closed handling, and agent crashes |
+| September 15, 2026 | [1.19.8](https://github.com/cilium/cilium/releases/tag/v1.19.8), [1.18.14](https://github.com/cilium/cilium/releases/tag/v1.18.14) | Backport patch releases for the older lines published the same day; check each release's notes for its backport scope |
+
+On September 14, 2026, the CNCF blog published a [Cilium 1.20 feature recap](https://www.cncf.io/blog/2026/09/14/cilium-1-20-gateway-api-externalauth-tcproute-udproute-eni-ipam-for-ipv6-and-more/) (Gateway API ExternalAuth, TCPRoute/UDPRoute, IPv6 ENI IPAM, and more), covering the same scope as the 1.20.0 announcement summary below.
 
 The 1.20.0 announcement reports **2,660+ new commits**, supported by a **community of 1,100+ contributors**. The latter is community size, not a count of authors in this release. Highlights include:
 

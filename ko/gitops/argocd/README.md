@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **지원 버전**: Argo CD 3.5.2, Argo Rollouts 1.10.0 (검토 기준)
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 9월 21일
 
 ## 목차
 
@@ -218,6 +218,8 @@ spec:
 - 3.5.0: **2026-08-04** 공개. 서버가 사용하는 Helm 렌더러의 4.x 전환 등은 업그레이드 가이드를 확인합니다.
 - 3.5.1: 2026-08-12 공개.
 - 3.5.2: 2026-08-27 공개. 패치 내용과 최신 지원 라인은 공식 릴리스 기록으로 확인합니다.
+- [3.5.3](https://github.com/argoproj/argo-cd/releases/tag/v3.5.3)·[3.4.9](https://github.com/argoproj/argo-cd/releases/tag/v3.4.9): 2026-09-14 공개된 패치 릴리스. 3.5.3에는 KubeVirt VirtualMachine·FlinkDeployment 헬스 체크, sync 재시도 시 operationState 설정, SSO 리다이렉트 401 재시도 루프 방지 등 버그 수정이 포함됩니다.
+- [3.6.0-rc1](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc1): 2026-09-15 공개된 3.6 라인 첫 release candidate. 프로덕션 기준 버전이 아닙니다.
 
 ### Argo Rollouts
 
