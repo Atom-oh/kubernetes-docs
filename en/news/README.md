@@ -1,5 +1,5 @@
 # News
-> **Last Updated**: September 12, 2026
+> **Last Updated**: September 28, 2026
 
 This page records documentation changes prompted by Kubernetes, Amazon EKS and CNCF news. GitHub Actions prepares updates each Monday at 09:00 KST and opens a PR after its quality gate passes. Changes reach the site after review, merge and deployment.
 
@@ -7,6 +7,13 @@ Week labels identify log-entry weeks and may differ from source publication date
 
 ## Update Log
 
+- 2026-W40: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied the Kubernetes v1.37.1/v1.36.5/v1.35.9/v1.34.12 patch releases and the v1.37 PVC `Unused` condition (Beta) blog post
+- 2026-W40: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — applied the Istio 1.31.1/1.30.5/1.29.8 patch releases (including the BackendTLSPolicy fail-open security fix GHSA-qm8v-g4f9-qhjx)
+- 2026-W40: [eks/04-eks-storage-part1.md](../eks/04-eks-storage-part1.md) — applied the EFS CSI driver mount option injection vulnerability CVE-2026-6437 (fixed in v3.0.1)
+- 2026-W40: [ai-ml/08-llm-gateway.md](../ai-ml/08-llm-gateway.md) — applied the Amazon SageMaker HyperPod Inference Gateway launch (EKS managed add-on, GPU-aware routing)
+- 2026-W40: no matching doc — Amazon EMR on EKS now supports IPv6 Amazon EKS clusters ([source](https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-emr-eks-ipv6-support))
+- 2026-W40: no matching doc — Run interactive workloads on Amazon EMR on EKS with Spark Connect ([source](https://aws.amazon.com/about-aws/whats-new/2026/09/emr-eks-spark-connect-interactive/))
+- 2026-W40: no matching doc — Amazon CloudWatch Omni general availability (AI-first observability experience, OpenTelemetry interoperability) ([source](https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-cloudwatch-omni-ai/))
 - 2026-W36: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied the Kubernetes v1.37 "Garhwal" release (Pod certificates/ClusterTrustBundles Stable, Metrics API GA, kube-dns and IPVS-mode deprecations, and more)
 - 2026-W36: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — applied the Istio 1.30.4/1.29.7 security patch releases (ISTIO-SECURITY-2026-006, 13 Envoy CVEs)
 - 2026-W36: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied the ArgoCD v3.5.2/v3.4.8 patch releases

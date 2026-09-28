@@ -1,6 +1,6 @@
 # Istio
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: September 28, 2026
 
 A practical guide for utilizing Istio Service Mesh on Amazon EKS.
 
@@ -9,6 +9,10 @@ A practical guide for utilizing Istio Service Mesh on Amazon EKS.
 Istio 1.31.0 is GA; its [release announcement](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/) was published on August 31, 2026. For new installations, this guide uses 1.31.0 with an EKS version in both support windows: Kubernetes 1.34–1.36. Istio 1.31 supports Kubernetes 1.32–1.36; EKS standard support currently covers 1.34–1.36. Recheck the [Istio support matrix](https://istio.io/latest/docs/releases/supported-releases/) and [EKS version lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) before installation.
 
 Istio 1.30 and 1.29 are also supported as of this review. Existing installations on those branches need at least 1.30.4 or 1.29.7 for [ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/), which covers Envoy vulnerabilities, a BackendTLSPolicy fail-open, and an EnvoyFilter control-plane denial of service. Istio 1.28 is out of support. Istio 1.31 charts use `https://blob.istio.io/istio-release/charts`; the previous Google-hosted repository no longer receives new releases.
+
+### September 2026 update: 1.31.1, 1.30.5 and 1.29.8 patch releases
+
+On September 21, 2026, patch releases shipped for all three supported branches: [1.31.1](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.1/), 1.30.5 and 1.29.8. 1.31.1 includes the security fix [GHSA-qm8v-g4f9-qhjx](https://github.com/istio/istio/security/advisories/GHSA-qm8v-g4f9-qhjx) (CVSS 6.8, Moderate): `BackendTLSPolicy` fails open to plaintext on sidecar proxies when its CA reference is unresolved. Other fixes include the ambient-mode CNI node agent's auto-detected iptables backend (legacy vs nft) flipping between agent restarts, istiod CPU usage growing with the number of `AuthorizationPolicies`, and a memory leak in ambient multi-cluster mode when rotating a remote cluster's credentials. New installations and existing 1.31 installations should update to 1.31.1.
 
 ## Table of Contents
 

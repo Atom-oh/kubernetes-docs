@@ -1,7 +1,7 @@
 # Cluster Architecture
 
 > **Supported Versions**: Kubernetes 1.35, 1.36, 1.37
-> **Last Updated**: September 9, 2026
+> **Last Updated**: September 28, 2026
 
 The version header refers to upstream Kubernetes. As of September 11, 2026, EKS standard support covers 1.34–1.36; check the [EKS lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) before selecting a version. Component commands below illustrate self-managed clusters; EKS manages its control plane. Image tags and infrastructure IDs are examples: select compatible, maintained images and replace placeholders before use.
 
@@ -1542,6 +1542,12 @@ Kubernetes cluster upgrades are necessary to apply new features, security patche
 - **Deprecations**: kube-dns and `kubectl run --filename/-f` are deprecated; `ipvs` was already deprecated in v1.35, and static Pods can no longer reference Secrets or ConfigMaps. The removal of cgroup v1 support also continues to progress.
 
 Before upgrading, be sure to review the deprecations and removals in the [official release notes](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.37.md).
+
+### September 2026 Update: v1.37.1 and Other Routine Patch Releases
+
+On September 23, 2026, patch releases shipped for every supported minor version: [v1.37.1](https://github.com/kubernetes/kubernetes/releases/tag/v1.37.1), v1.36.5, v1.35.9 and v1.34.12. v1.37.1 is a routine bug-fix release: it moves the build to Go 1.26.8 and fixes, among others, a bug where a DeviceTaintRule without `spec.deviceSelector` made every DRA device unschedulable, and a panic that could terminate the Windows kube-proxy (winkernel) when it enumerated an HNS load balancer without port mappings.
+
+Also published that week is the v1.37 deep-dive post [Tracking When a PersistentVolumeClaim Was Last Used (Beta)](https://kubernetes.io/blog/2026/09/21/kubernetes-v1-37-pvc-last-used-time/): the `PersistentVolumeClaimUnusedSinceTime` feature gate graduated to Beta (enabled by default), so the PVC protection controller now adds an `Unused` condition to each PVC, letting you identify orphaned PVCs that no running pod references without custom tooling.
 
 ### Upgrade Strategies
 

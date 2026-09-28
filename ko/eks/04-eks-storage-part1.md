@@ -1,6 +1,6 @@
 # EKS 스토리지
 
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 9월 28일
 
 Amazon EKS에서 애플리케이션을 실행할 때 데이터를 저장하고 관리하기 위한 다양한 스토리지 옵션이 있습니다. 이 문서에서는 EKS 스토리지의 기본 개념과 Amazon EBS(Elastic Block Store) 및 Amazon EFS(Elastic File System)를 사용하는 방법에 대해 알아보겠습니다.
 
@@ -366,6 +366,10 @@ Amazon EFS는 완전 관리형 NFS 파일 시스템으로, 여러 EC2 인스턴�
 ### EFS CSI 드라이버 설치
 
 지원 Linux EC2 컴퓨팅에서는 앞의 공통 add-on 절차에 `CSI_ADDON_NAME=aws-efs-csi-driver`, 호환 EFS 버전과 `kube-system/efs-csi-controller-sa`용 역할을 사용합니다. `AmazonEFSCSIDriverPolicy` 또는 제한한 동등 정책을 검토하세요. Fargate는 관리형 통합으로 EFS를 마운트하며 동적이 아닌 static provisioning을 지원합니다. 관리형 EFS CSI 지원 범위에서는 Windows/Hybrid Nodes가 제외됩니다. S3 Files는 EFS CSI3.0+를 사용하지만 컨트롤러 **및 노드** IAM 요건이 별도이고 Fargate를 지원하지 않습니다.
+
+### 2026년 9월 업데이트: EFS CSI 드라이버 마운트 옵션 주입 취약점(CVE-2026-6437)
+
+2026년 9월 25일 AWS가 EFS CSI 드라이버의 마운트 옵션 주입 취약점 [CVE-2026-6437](https://aws.amazon.com/security/security-bulletins/2026-016-aws/)에 대한 보안 공지를 게시했습니다. PersistentVolume 생성 권한을 가진 행위자가 `volumeHandle`의 액세스 포인트 ID와 `mounttargetip` volumeAttribute 두 필드에 쉼표로 구분된 값을 덧붙이면, mount 유틸리티가 이를 별도의 마운트 옵션으로 해석해 임의 마운트 옵션이 주입될 수 있습니다. EFS CSI 드라이버 **v3.0.0 이하**가 영향을 받으며 **v3.0.1**에서 수정되었습니다. 드라이버(EKS 관리형 add-on 포함)를 v3.0.1 이상으로 업데이트하고, 신뢰할 수 없는 사용자가 임의 필드 값을 넣을 수 없도록 PersistentVolume·StorageClass 생성 권한을 RBAC로 클러스터 관리자에게만 제한하세요.
 
 ### EFS 파일 시스템 생성
 
