@@ -1,5 +1,5 @@
 # 소식
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 10월 5일
 
 Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. GitHub Actions는 매주 월요일 09:00 KST에 갱신안을 만들고 품질 검사를 통과하면 PR을 엽니다. 실제 사이트에는 PR 검토·머지와 배포가 완료된 뒤 반영됩니다.
 
@@ -7,6 +7,13 @@ Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. G
 
 ## 갱신 로그
 
+- 2026-W41: [eks/08-eks-upgrades.md](../eks/08-eks-upgrades.md) — Amazon EKS·EKS Distro의 Kubernetes 1.37 지원(Metrics API GA, DRA 디바이스 taint GA, HPA scale-to-zero 베타) 반영
+- 2026-W41: [gitops/argocd/README.md](../gitops/argocd/README.md) — Argo CD 4.0 비저닝 시작 및 ArgoCon North America 2026 소식 반영
+- 2026-W41: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — Atlassian의 OTel·Kafka·Flink 기반 사고 감지 재구축 사례(CNCF 블로그) 반영
+- 2026-W41: 매칭 문서 없음 — Amazon ECS, VPC Lattice 블루/그린·선형·카나리 배포 지원 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-ecs-vpc-lattice-blue-green-deployments))
+- 2026-W41: 매칭 문서 없음 — Amazon Managed Grafana, Grafana 13.2 워크스페이스 생성 지원 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-managed-grafana-now-supports-creating-grafana-13-2-workspaces))
+- 2026-W41: 매칭 문서 없음 — Grafana Tempo 3.1 릴리스(Kafka 신기능, TraceQL 메트릭 개선, 트레이스 레드액션 등) ([원문](https://grafana.com/blog/tempo-3-1-release-all-the-latest-features))
+- 2026-W41: 매칭 문서 없음 — 게이트가 아닌 가드레일: 플랫폼 팀의 정책 다시 생각하기, CNCF 블로그 ([원문](https://www.cncf.io/blog/2026/10/01/guardrails-not-gates-rethinking-policy-in-platform-teams/))
 - 2026-W36: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37 "Garhwal" 정식 릴리스(파드 인증서/ClusterTrustBundle Stable, Metrics API GA, kube-dns·IPVS 모드 사용 중단 등) 반영
 - 2026-W36: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.30.4/1.29.7 보안 패치 릴리스(ISTIO-SECURITY-2026-006, Envoy CVE 13건) 반영
 - 2026-W36: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCD v3.5.2/v3.4.8 패치 릴리스 반영

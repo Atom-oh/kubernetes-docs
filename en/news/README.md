@@ -1,5 +1,5 @@
 # News
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 5, 2026
 
 This page records documentation changes prompted by Kubernetes, Amazon EKS and CNCF news. GitHub Actions prepares updates each Monday at 09:00 KST and opens a PR after its quality gate passes. Changes reach the site after review, merge and deployment.
 
@@ -7,6 +7,13 @@ Week labels identify log-entry weeks and may differ from source publication date
 
 ## Update Log
 
+- 2026-W41: [eks/08-eks-upgrades.md](../eks/08-eks-upgrades.md) — applied Kubernetes 1.37 support on Amazon EKS and EKS Distro (Metrics API GA, DRA device taints GA, HPA scale-to-zero beta)
+- 2026-W41: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied the start of Argo CD 4.0 visioning and ArgoCon North America 2026 news
+- 2026-W41: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — applied Atlassian's incident-detection rebuild on OTel, Kafka, and Flink (CNCF blog)
+- 2026-W41: no matching doc — Amazon ECS adds Amazon VPC Lattice support for blue/green, linear, and canary deployments ([source](https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-ecs-vpc-lattice-blue-green-deployments))
+- 2026-W41: no matching doc — Amazon Managed Grafana now supports creating Grafana 13.2 workspaces ([source](https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-managed-grafana-now-supports-creating-grafana-13-2-workspaces))
+- 2026-W41: no matching doc — Grafana Tempo 3.1 release (new Kafka features, TraceQL metrics updates, trace redaction, and more) ([source](https://grafana.com/blog/tempo-3-1-release-all-the-latest-features))
+- 2026-W41: no matching doc — Guardrails, not gates: rethinking policy in platform teams, CNCF blog ([source](https://www.cncf.io/blog/2026/10/01/guardrails-not-gates-rethinking-policy-in-platform-teams/))
 - 2026-W36: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied the Kubernetes v1.37 "Garhwal" release (Pod certificates/ClusterTrustBundles Stable, Metrics API GA, kube-dns and IPVS-mode deprecations, and more)
 - 2026-W36: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — applied the Istio 1.30.4/1.29.7 security patch releases (ISTIO-SECURITY-2026-006, 13 Envoy CVEs)
 - 2026-W36: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied the ArgoCD v3.5.2/v3.4.8 patch releases

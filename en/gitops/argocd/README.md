@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **Supported Versions**: Argo CD 3.5.2, Argo Rollouts 1.10.0 (reviewed baseline)
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 5, 2026
 
 ## Table of Contents
 - [What is ArgoCD?](#what-is-argocd)
@@ -224,6 +224,10 @@ This is the upstream test matrix recorded in the 3.5.2 repository. It differs fr
 - 3.5.0: released **2026-08-04**. Check migration guidance for changes including the server's Helm 4 renderer.
 - 3.5.1: released 2026-08-12.
 - 3.5.2: released 2026-08-27. Check official releases for patch details and current supported lines.
+
+### October 2026 Update: Argo CD 4.0 Visioning Begins
+
+Per the [September 30 CNCF post](https://www.cncf.io/blog/2026/09/30/argocon-north-america-2026-what-to-expect-as-the-argo-community-looks-toward-cd-4-0/), the Argo community has begun the visioning process for Argo CD 4.0, and ArgoCon North America 2026 (a full-day, two-track event co-located with KubeCon NA) will open with maintainer keynotes covering recent developments and upcoming versions. This is early roadmap direction-setting; 4.0 features and timing are not yet committed.
 
 ### Argo Rollouts
 

@@ -1,7 +1,7 @@
 # OpenTelemetry
 
 > **Review baseline**: Collector Contrib 0.160.0; Operator 0.158.0; language versions below
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 5, 2026
 
 ## Introduction
 
@@ -1467,6 +1467,10 @@ The [July 8 CNCF article](https://www.cncf.io/blog/2026/07/08/network-boundary-f
 ### August 2026 Update: Distilling Slow SQL Queries into Reliability Metrics
 
 The [August 21 CNCF article](https://www.cncf.io/blog/2026/08/21/how-to-turn-slow-queries-into-actionable-reliability-metrics-with-opentelemetry/) and its [lab](https://github.com/causely-oss/slow-query-lab) compare query duration, traffic-weighted impact and span-derived metrics with anomaly baselines. Preserve the article's historical examples as examples, not capacity measurements for your cluster. The article itself warns about raw SQL in metric labels, sensitive parameters, cardinality and baseline warm-up. Sanitize and bound dimensions before adopting a lab configuration; a latency anomaly is a symptom, not proof of a root cause.
+
+### October 2026 Update: Rebuilding Incident Detection on OTel Streams
+
+In the [September 30 CNCF post](https://www.cncf.io/blog/2026/09/30/from-40-seconds-to-under-10-rebuilding-incident-detection-on-opentelemetry-apache-kafka-and-apache-flink-on-kubernetes/), Atlassian describes eighteen months of rebuilding its automated incident-creation platform on OpenTelemetry, Apache Kafka, and Apache Flink on Kubernetes, cutting event-to-metric latency from over 40 seconds to under 10. As the post itself notes, in-scope recall rose from about 60% to 86% but fell back to 64% in a bad month, and precision remains below target. Treat the numbers as that organization's measurements, not an outcome the architecture guarantees; the post is most useful for its trade-off discussion, such as isolating noisy neighbors on shared queues and cost.
 
 ## Best Practices
 
