@@ -560,7 +560,7 @@ Check remote API/gateway reachability, certificate trust, DNS, namespace/service
 
 | Checked source/artifact | Compatibility evidence and limitation |
 |---|---|
-| Istio 1.31.0 | Supported Kubernetes 1.32–1.36; follow its actual upgrade/skew rules and platform requirements |
+| Istio 1.31.0 | Supported Kubernetes 1.32–1.37; follow its actual upgrade/skew rules and platform requirements |
 | Linkerd edge-26.9.1 CLI/CRDs | Edge guidance belongs to that artifact. The separate published **2.20** table lists Kubernetes 1.31–1.35 and Gateway API 1.2.1–1.5.1; do not treat these as automatic bounds for every later edge/vendor build. |
 | Kong Mesh/chart 2.14.4 | Released September 3 with Kuma 2.14.4. The published Kubernetes validation table currently stops at 2.13; no 2.14 compatibility certification is inferred from a chart render. The support table separately lists 2.13 LTS. |
 | Consul/chart 2.0.4 | Released application and Helm artifact checked separately. The chart's Kubernetes minimum is metadata, not a complete supported-version matrix or upgrade assessment. |

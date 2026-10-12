@@ -1,7 +1,7 @@
 # Istio Glossary
 
 > **Reviewed Version**: Istio 1.31.0
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 12, 2026
 
 This glossary organizes key terms related to Istio and Service Mesh in grouped reference sections.
 
@@ -911,7 +911,7 @@ An infrastructure layer that manages communication between microservices.
 - Istio
 - Linkerd
 - Consul Connect
-- AWS App Mesh ([support ends September 30, 2026](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html))
+- AWS App Mesh ([support ended September 30, 2026](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html))
 
 ---
 
