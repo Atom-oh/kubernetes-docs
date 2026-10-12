@@ -1,6 +1,7 @@
 # Airflow on EKS 딥다이브
 
-> **검토 기준**: Airflow 3.3.1 · 공식 Helm chart 1.22.0 · 2026년 9월 12일
+> **검토 기준**: Airflow 3.3.1 · 공식 Helm chart 1.22.0
+> **최신 upstream patch 확인**: Airflow 3.3.2 (2026년 9월 17일); 예제는 3.3.1 기준 · 2026년 10월 12일
 
 Apache Airflow는 DAG로 작업 의존성을 정의하고 예약·실행·관찰하는 플랫폼입니다.
 EKS에서 어떤 작업이 별도 Pod로 실행되는지는 **executor와 operator 선택**에
@@ -11,6 +12,13 @@ Airflow 2는 2026년 4월 22일 EOL에 도달했습니다. 신규 구성은 지�
 기준으로 합니다. 다만 chart 1.22.0의 기본 Airflow는 **3.2.2**이므로 chart 버전과
 Airflow image/설정 버전을 별도로 확인해야 합니다. 이 시리즈는 3.3.1 동작을
 검토하고 해당 버전 override로 chart를 렌더링했습니다.
+
+upstream 3.3.2는 2026년 9월 17일 공개됐습니다. 명시적 Bearer token이 session
+cookie보다 우선하고, 유효하지 않은 Bearer token은 유효한 cookie가 함께 있어도
+요청을 거부합니다. 브라우저 cookie와 service credential을 섞는 API client에
+영향을 줄 수 있습니다.
+
+이 시리즈 예제와 Helm 검증은 3.3.1 기준이며 3.3.2에서 재검증하지 않았습니다.
 
 ## 핵심 구조
 
@@ -42,6 +50,7 @@ Parser 분리도 모든 지연·DB 병목이나 HA 문제를 없애지는 않습
 
 
 - [Airflow 3.3.1 architecture](https://airflow.apache.org/docs/apache-airflow/3.3.1/core-concepts/overview.html)
+- [Airflow 3.3.2 release notes](https://airflow.apache.org/docs/apache-airflow/3.3.2/release_notes.html)
 - [Supported versions and lifecycle](https://airflow.apache.org/docs/apache-airflow/3.3.1/installation/supported-versions.html)
 - [Airflow prerequisites](https://airflow.apache.org/docs/apache-airflow/3.3.1/installation/prerequisites.html)
 - [Executor configuration and history](https://airflow.apache.org/docs/apache-airflow/3.3.1/core-concepts/executor/index.html)

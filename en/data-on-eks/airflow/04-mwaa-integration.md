@@ -1,6 +1,7 @@
 # Part 4: Amazon MWAA Integration
 
-> **Last Updated**: September 12, 2026; MWAA Airflow 3.3.1 / Python 3.12; Kubernetes provider 10.21.0.
+> **Last Updated**: October 12, 2026; MWAA Airflow 3.3.1 / Python 3.12; Kubernetes provider 10.21.0.
+> **Latest upstream patch checked**: Airflow 3.3.2 (not listed by MWAA as of October 12, 2026).
 
 This chapter targets **provisioned Amazon MWAA environments** submitting work to
 customer EKS clusters. **MWAA Serverless**, with YAML workflow definitions, is a
@@ -22,6 +23,9 @@ or capacity planning.
 
 The official support table lists Airflow **3.3.1 available since 2026-09-01** and
 3.2.1 since 2026-05-19. Upstream 3.3.1 was released on 2026-08-12.
+Upstream 3.3.2 followed on 2026-09-17; as of 2026-10-12 the MWAA table still lists
+3.3.1 as the newest version. An upstream patch is not automatically available in MWAA. Check the [AWS MWAA supported-version table](https://docs.aws.amazon.com/mwaa/latest/userguide/airflow-versions.html)
+for current versions and Region availability.
 Instead of assuming a fixed three-month delay, check the required patch, providers,
 region and actual environment version. Existing environments do not automatically
 switch to each newly supported Airflow release.
