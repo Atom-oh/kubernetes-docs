@@ -1,6 +1,6 @@
 # EKS upgrades: Auto Mode, rollback and blue/green
 
-> **Last Updated**: September 12, 2026. Commands checked with AWS CLI 2.36.44, Pluto 5.24.3 and Velero 1.18.2.
+> **Last Updated**: October 12, 2026. Commands checked on September 12, 2026 with AWS CLI 2.36.44, Pluto 5.24.3 and Velero 1.18.2.
 > The example transition is 1.35 → 1.36; discover actual regional availability.
 
 Plan the control plane, nodes, add-ons, applications and data together.
@@ -9,8 +9,11 @@ readiness, reconnect behavior, sessions, state and recovery against availability
 
 ## 1. Versions and management responsibilities
 
-Upstream Kubernetes maintains the most recent three minor releases, not the current release
-plus three previous versions. EKS has a separate lifecycle: generally 14 months of standard
+Upstream Kubernetes maintains release branches for the three most recent minor releases
+(1.35–1.37 as of October 12, 2026), not the current release plus three previous versions.
+Each minor gets roughly 14 months of patches, the last two months in maintenance mode; 1.34 is in
+maintenance mode until its end of life on October 27, 2026.
+EKS has a separate lifecycle: generally 14 months of standard
 support and 12 months of extended support. Check exact dates, policy and regional availability.
 
 The ordinary EKS base control-plane fee is $0.10/hour under standard support and a total of
@@ -802,6 +805,8 @@ snapshots/restores or application load tests.
 - [Auto Mode upgrades](https://docs.aws.amazon.com/eks/latest/userguide/auto-upgrade.html)
 - [EKS pricing](https://aws.amazon.com/eks/pricing/)
 - [Kubernetes version skew](https://kubernetes.io/releases/version-skew-policy/)
+- [Kubernetes release history](https://kubernetes.io/releases/)
+- [Kubernetes patch releases and support period](https://kubernetes.io/releases/patch-releases/)
 - [Kubernetes deprecation policy](https://kubernetes.io/docs/reference/using-api/deprecation-policy/)
 - [Pluto 5.24.3](https://github.com/FairwindsOps/pluto/releases/tag/v5.24.3)
 - [Velero 1.18.2](https://github.com/velero-io/velero/releases/tag/v1.18.2)
