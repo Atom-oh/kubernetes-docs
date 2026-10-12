@@ -1,27 +1,27 @@
-# Kubernetes Authentication and Authorization System
+# Kubernetes 認証および認可システム
 
-> **対象範囲**: Kubernetes の安定版 API および Amazon EKS のユーザーアクセス管理
-> **最終更新**: September 13, 2026
+> **対象範囲**: Kubernetes stable API および Amazon EKS ユーザーアクセス管理
+> **最終更新**: October 12, 2026
 
-## Overview
+## 概要
 
-Authentication (認証) はリクエストの ID を確立し、Authorization (認可) はその ID がどの API 操作を実行できるかを決定し、Admission (アドミッション) は認可された変更に対して追加のポリシーを適用します。以下の manifest は独立した学習用の例です。あらかじめ namespace、管理者権限、証明書、webhook サーバーを準備してください。稼働中のクラスター/API 呼び出しや EKS アクセスの変更はテストしていません。
+認証はリクエストの識別情報を確立し、認可はその識別情報が実行できる API 操作を決定し、admission は認可された変更に追加のポリシーを適用します。以下のマニフェストは互いに独立した学習用の例です。最初に namespace、管理者権限、証明書、および webhook サーバーを準備してください。実行中の cluster/API 呼び出しまたは EKS アクセス変更はテストしていません。
 
-`kube-apiserver` の flag の例は **セルフマネージドな control plane** に適用されるものです。EKS ではマネージドなアクセス設定を使用してください。これらの例は、EKS の API server の flag を設定したり、その CA 秘密鍵を取得するための手順ではありません。
+`kube-apiserver` フラグの例は、**セルフマネージド control plane** に適用されます。EKS ではマネージドアクセス設定を使用してください。これらの例は、API server フラグの設定や CA private key の取得を指示するものではありません。
 
-## Authentication
+## 認証
 
-Authentication は、ユーザーまたはサービスが本人であると主張するとおりの存在であることを検証するプロセスです。Kubernetes は複数の認証方式をサポートしており、それらを同時に有効化できます。
+認証は、ユーザーまたはサービスが主張するとおりの存在であることを検証するプロセスです。Kubernetes は複数の認証方式をサポートしており、これらは同時に有効化できます。
 
-複数の authenticator がある場合、最初に成功した結果が使用されますが、その評価順序は保証されません。無効な資格情報は認証に失敗する可能性があります。資格情報のないリクエストの扱いは anonymous authentication の設定に依存し、匿名の ID であっても認可は必要です。
+複数の authenticator がある場合、最初に成功した結果が使用されますが、評価順序は保証されません。無効な認証情報は認証に失敗する可能性があります。認証情報のないリクエストの処理は匿名認証の設定に依存し、匿名の識別情報にも認可が必要です。
 
-### Authentication Strategies
+### 認証戦略
 
-#### 1. X.509 Certificates
+#### 1. X.509 証明書
 
-API server の `--client-ca-file` を通じて信頼された **client CA** が署名した証明書を使用します。subject の CN がユーザー名を、O が group を提供し、証明書には client authentication (`clientAuth`) の usage が必要です。server の TLS 証明書を検証する CA は、client を認証する CA とは目的が異なります。
+API server の `--client-ca-file` で信頼される **client CA** によって署名された証明書を使用します。subject の CN はユーザー名を、O は group を提供します。証明書には client authentication (`clientAuth`) usage が必要です。server の TLS 証明書を検証する CA は、client を認証する CA とは異なる目的を果たします。
 
-**ローカルでの秘密鍵と CSR の例:**
+**ローカル private key および CSR の例:**
 
 ```bash
 umask 077
@@ -32,7 +32,7 @@ openssl req -new -key "$auth_lab_dir/john.key" \
 openssl req -in "$auth_lab_dir/john.csr" -noout -verify
 ```
 
-これらのコマンドは証明書を発行しません。**CSR のみ** を承認された発行者に送信し、発行者は ID、group、usage、有効期間を審査する必要があります。CA の秘密鍵をユーザーにコピーしたり、審査なしに organization 名を承認したりしないでください。EKS の `beta.eks.amazonaws.com/app-serving` signer は serving 証明書向けであり、ユーザーの client 証明書への署名はサポートしていません。EKS のユーザーアクセスには、以下の IAM/OIDC の経路を使用してください。
+これらのコマンドは証明書を発行しません。**CSR のみ**を、識別情報、group、usage、有効期間をレビューする必要がある承認済みの発行者に送信してください。CA private key をユーザーにコピーしたり、レビューなしで組織名を承認したりしないでください。EKS の `beta.eks.amazonaws.com/app-serving` signer は serving certificate 用であり、ユーザー client-certificate signing をサポートしません。EKS ユーザーアクセスには、以下の IAM/OIDC 経路を使用してください。
 
 **発行後の kubeconfig:**
 
@@ -58,13 +58,13 @@ contexts:
 current-context: john@my-cluster
 ```
 
-パスは発行されたファイルに置き換え、秘密鍵と kubeconfig へのアクセスを制限してください。`*-data` フィールドの Base64 は暗号化ではありません。信頼できない kubeconfig ファイルは使用前に検査してください。credential plugin を通じてコマンドが実行される可能性があります。
+パスを発行済みのファイルに置き換え、private key と kubeconfig へのアクセスを制限してください。`*-data` フィールド内の Base64 は暗号化ではありません。信頼できない kubeconfig ファイルは使用前に検査してください。credential plugin を通じてコマンドを実行される可能性があります。
 
-#### 2. Service Account Tokens
+#### 2. Service Account Token
 
-ServiceAccount は namespace スコープのワークロード ID です。すべての namespace には `default` アカウントが存在し、Pod の `serviceAccountName` は同じ namespace 内のアカウントを参照します。アカウントを選択すること自体が、アプリケーションリソースへのアクセスを付与するわけではありません。
+ServiceAccount は namespace スコープの workload identity です。すべての namespace には `default` account があり、Pod の `serviceAccountName` は同じ namespace 内の account を参照します。account を選択するだけでは、application resource へのアクセスは付与されません。
 
-この例は API を呼び出さず、token の自動マウントを無効化しています。この例のイメージはネットワークサービスを提供しません。
+この例は API を呼び出さず、token の自動マウントを無効にしています。例の image は network service を提供しません。
 
 ```yaml
 apiVersion: v1
@@ -87,15 +87,15 @@ spec:
     image: registry.k8s.io/pause:3.10
 ```
 
-`automountServiceAccountToken` は ServiceAccount のトップレベルフィールドであり、かつ Pod の `spec` フィールドでもあります。Pod 側の設定が優先されます。これはデフォルトのマウントを制御するものであり、明示的に宣言された `serviceAccountToken` の projected volume を防ぐものではありません。
+`automountServiceAccountToken` はトップレベルの ServiceAccount フィールドおよび Pod の `spec` フィールドです。Pod の設定が優先されます。これはデフォルトの mount を制御するものであり、明示的に宣言された `serviceAccountToken` projected volume を防ぐものではありません。
 
-API アクセスが必要な Pod では、kubelet が TokenRequest を通じてデフォルトの projected token を取得し、ローテーションします。デフォルトの token ファイルは `/var/run/secrets/kubernetes.io/serviceaccount/token` です。アプリケーションはローテーションされたファイルを再読み込みする必要があります。有効期限と audience のバインディングは露出を軽減しますが、bearer token を開示しても安全になるわけではありません。アカウントを作成すれば長期間有効な Secret token が自動的に作られる、と想定しないでください。[quiz の projected volume の例](../quizzes/security/02-kubernetes-auth-authz-quiz.md) では、カスタム audience と要求する有効期間を扱っています。
+API アクセスを必要とする Pod では、kubelet が TokenRequest を介してデフォルトの projected token を取得およびローテーションします。デフォルトの token ファイルは `/var/run/secrets/kubernetes.io/serviceaccount/token` です。application はローテーションされたファイルを再読み込みする必要があります。有効期限と audience binding は露出を減らしますが、bearer token を安全に開示できるようにするものではありません。account を作成すると長期間有効な Secret token が自動的に作成されると想定しないでください。[quiz の projected-volume の例](../quizzes/security/02-kubernetes-auth-authz-quiz.md)では、カスタム audience と要求される有効期間を扱っています。
 
 #### 3. OpenID Connect (OIDC)
 
-OIDC により、API server は外部 identity provider が発行した **ID token** を検証できます。issuer、audience、署名/有効期限の検証、ID のマッピングを設定します。API server は対話的なログインを提供せず、refresh token も発行しません。クライアントは、自身の identity provider 向けに審査済みのツールまたは `exec` credential plugin を使用します。
+OIDC により、API server は外部 identity provider からの **ID token** を検証できます。issuer、audience、signature/expiry validation、および identity mapping を設定します。API server は対話型ログインを提供せず、refresh token も発行しません。client は、identity provider 用にレビュー済みのツールまたは `exec` credential plugin を使用します。
 
-以下は **セルフマネージドな API server 向けの追加 flag** であり、完全な起動コマンドや kubeconfig ではありません。例に示した HTTPS の issuer と client ID は置き換えてください。
+これらは**セルフマネージド API server の追加フラグ**であり、完全な起動コマンドや kubeconfig ではありません。例の HTTPS issuer および client ID を置き換えてください。
 
 ```text
 --oidc-issuer-url=https://idp.example.com
@@ -106,11 +106,11 @@ OIDC により、API server は外部 identity provider が発行した **ID tok
 --oidc-groups-prefix=oidc:
 ```
 
-`system:` group などの既存の ID との衝突を避けるため、ユーザー名と group に prefix を付けてください。構造化された `AuthenticationConfiguration` も代替手段です。`--authentication-config` と `--oidc-*` flag を併用しないでください。EKS で外部 OIDC provider を設定する場合は、後述の個別のマネージド手順に従ってください。
+既存の `system:` group などの identity との衝突を避けるため、ユーザー名と group に prefix を付けてください。構造化された `AuthenticationConfiguration` は代替手段です。`--authentication-config` と `--oidc-*` フラグを組み合わせないでください。EKS 用の外部 OIDC provider は、以下の別のマネージド手順で設定してください。
 
-#### 4. Webhook Token Authentication
+#### 4. Webhook Token 認証
 
-セルフマネージドな API server は、`authentication.k8s.io/v1` の **TokenReview** を外部サービスに送信します。以下は **API server がそのサービスに到達するために使用する別個の kubeconfig** です。ユーザーの kubeconfig 内の `authentication.webhook` フィールドではありません。
+セルフマネージド API server は、`authentication.k8s.io/v1` **TokenReview** を外部サービスに送信します。以下は、**API server がそのサービスに到達するために使用する別個の kubeconfig** です。ユーザーの kubeconfig における `authentication.webhook` フィールドではありません。
 
 ```yaml
 apiVersion: v1
@@ -133,13 +133,13 @@ contexts:
 current-context: webhook
 ```
 
-`/etc/kubernetes/authn-webhook.kubeconfig` に配置する場合は、API server に `--authentication-token-webhook-config-file=/etc/kubernetes/authn-webhook.kubeconfig` と `--authentication-token-webhook-version=v1` を設定します。参照されている証明書とサービスは別途プロビジョニングしてください。サービスは token と意図された audience を検証し、TokenReview のレスポンスを返す必要があります。相互 TLS、資格情報の保護、キャッシュの TTL、障害時の挙動を設計してください。この例は webhook の実装も可用性の検証も提供しません。
+`/etc/kubernetes/authn-webhook.kubeconfig` にインストールする場合は、API server に `--authentication-token-webhook-config-file=/etc/kubernetes/authn-webhook.kubeconfig` および `--authentication-token-webhook-version=v1` を設定してください。参照される証明書とサービスは別途プロビジョニングしてください。サービスは token と想定する audience を検証し、TokenReview response を返す必要があります。mutual TLS、credential protection、cache TTL、および failure behavior を設計してください。この例には webhook 実装も可用性の検証も含まれません。
 
 #### 5. Authentication Proxy
 
-authenticating proxy は呼び出し元を検証し、その結果として得られたユーザー名と group を転送します。信頼する header を指定するだけでは信頼は確立されません。まず、専用の front-proxy CA と許可された client 証明書の CN を使用して、proxy の TLS ID を認証します。
+認証 proxy は呼び出し元を検証し、結果のユーザー名と group を転送します。信頼する header に名前を付けるだけでは信頼を確立できません。まず、専用の front-proxy CA と許可された client-certificate CN を使用して、proxy の TLS identity を認証してください。
 
-**セルフマネージドな API server の flag 抜粋:**
+**セルフマネージド API server フラグの抜粋:**
 
 ```text
 --requestheader-client-ca-file=/etc/kubernetes/front-proxy-ca.crt
@@ -148,37 +148,37 @@ authenticating proxy は呼び出し元を検証し、その結果として得�
 --requestheader-group-headers=X-Remote-Group
 ```
 
-proxy は、呼び出し元が指定した ID header を除去し、検証済みの値に置き換える必要があります。通常のユーザー client 用 CA を proxy CA として再利用したり、許可 CN を空にしてすべての client 証明書を信頼したりしないでください。この抜粋は proxy 自体を実装するものではありません。
+proxy は呼び出し元が指定した identity header を取り除き、検証済みの値に置き換える必要があります。通常の user-client CA を proxy CA として再利用したり、許可する CN を空のままにしてすべての client certificate を信頼したりしないでください。この抜粋は proxy 自体を実装するものではありません。
 
-### Users and Groups
+### ユーザーと Group
 
 Kubernetes では、ユーザーは次のように分類されます。
 
-1. **Regular Users**: クラスター外部で管理され、Kubernetes が直接管理することはありません。
-2. **Service Accounts**: Kubernetes API によって管理されるアカウントです。
+1. **通常ユーザー**: cluster の外部で管理され、Kubernetes が直接管理することはありません。
+2. **Service Account**: Kubernetes API により管理される account です。
 
 ユーザーは 1 つ以上の group に所属でき、group は認可ポリシーで使用されます。
 
-## Authorization
+## 認可
 
-Authorization は、認証済みのユーザーが要求されたアクションを実行する権限を持つかどうかを検証するプロセスです。Kubernetes は複数の認可モジュールをサポートしています。
+認可は、認証済みユーザーが要求されたアクションを実行する権限を持つかどうかを検証するプロセスです。Kubernetes は複数の認可 module をサポートしています。
 
-### Authorization Modes
+### 認可モード
 
 #### 1. RBAC (Role-Based Access Control)
 
-RBAC はロールベースのアクセス制御を提供し、現在 Kubernetes で最も広く使われている認可メカニズムです。
+RBAC は role-based access control を提供し、現在 Kubernetes で最も広く使用されている認可メカニズムです。
 
 **主要な概念:**
 
 1. **Role**: namespace 内の権限を定義します。
-2. **ClusterRole**: クラスターリソース、非リソース URL、または namespace スコープのリソースに対する再利用可能な権限を、クラスタースコープで定義します。
-3. **RoleBinding**: 同じ namespace の Role または ClusterRole を参照し、**binding の namespace 内でのみ** 権限を付与します。ServiceAccount の subject は、明示的に別の namespace に属することができます。
-4. **ClusterRoleBinding**: ClusterRole の権限をクラスター全体に付与します。Role を参照することはできません。
+2. **ClusterRole**: cluster resource、non-resource URL、または namespace スコープ resource に対して再利用可能な権限のための cluster スコープ定義です。
+3. **RoleBinding**: 同じ namespace 内の Role または ClusterRole を参照し、**binding namespace 内でのみ**権限を付与します。ServiceAccount subject は別の namespace に明示的に所属できます。
+4. **ClusterRoleBinding**: ClusterRole の権限を cluster 全体に付与します。Role を参照することはできません。
 
-role の定義は binding がなければ何も付与しません。RBAC は許可される権限を加算するのみで、明示的な拒否ルールはありません。Secret の `get/list/watch` は secret のデータの読み取りを許可するため、これらの例では代わりに Pod の読み取りを使用しています。
+role 定義は binding がなければ何も付与しません。RBAC は許可された権限を追加し、明示的な deny ルールはありません。Secret の `get/list/watch` は secret data の読み取りを許可するため、これらの例では Pod の読み取りを使用します。
 
-**Role Example:**
+**Role の例:**
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -192,7 +192,7 @@ rules:
   verbs: ["get", "watch", "list"]
 ```
 
-**RoleBinding Example:**
+**RoleBinding の例:**
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -210,7 +210,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-**ClusterRole Example:**
+**ClusterRole の例:**
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -223,7 +223,7 @@ rules:
   verbs: ["get", "watch", "list"]
 ```
 
-**ClusterRoleBinding Example:**
+**ClusterRoleBinding の例:**
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -240,13 +240,13 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-この ClusterRoleBinding は、**すべての namespace にまたがる Pod 情報** を明示的に必要とする運用 group を示したものであり、デフォルトの推奨ではありません。単一の namespace が対象であれば、代わりにその namespace で `roleRef.kind: ClusterRole` と `roleRef.name: pod-reader-reusable` を指定した RoleBinding を使用してください。
+この ClusterRoleBinding は、**すべての namespace にまたがる Pod 情報**を明示的に必要とする operations group を示すものであり、デフォルトの推奨事項ではありません。単一の namespace の場合は、代わりに `roleRef.kind: ClusterRole` および `roleRef.name: pod-reader-reusable` を使用する RoleBinding をその namespace 内で使用してください。
 
 #### 2. ABAC (Attribute-Based Access Control)
 
-ABAC は属性ベースのアクセス制御を提供します。ポリシーは JSON ファイルで定義します。
+ABAC は attribute-based access control を提供します。ポリシーは JSON ファイルで定義されます。
 
-**Policy Example:**
+**ポリシーの例:**
 
 ```json
 {
@@ -262,53 +262,53 @@ ABAC は属性ベースのアクセス制御を提供します。ポリシーは
 }
 ```
 
-ABAC は既存のセルフマネージドクラスターを理解するために取り上げています。`--authorization-policy-file` が読み込むポリシーは、Kubernetes の API リソースではなく **1 行に 1 つの JSON オブジェクト** を記述したファイルです。上記のインデントは説明のためのものであり、実際のファイルでは各ポリシーを 1 行にシリアライズしてください。変更には API server の再起動が必要です。新規の構成では RBAC を優先してください。この flag は EKS の設定メカニズムではありません。
+ABAC は既存のセルフマネージド cluster を理解するために含まれています。`--authorization-policy-file` が読み込むポリシーは、Kubernetes API resource ではなく、**1 行に 1 つの JSON object** を含むファイルです。上記のインデントは説明のためのものです。実際のファイルでは各ポリシーを 1 行にシリアライズしてください。変更には API server の再起動が必要です。新しい構成には RBAC を推奨します。このフラグは EKS 構成メカニズムではありません。
 
-#### 3. Node Authorization
+#### 3. Node 認可
 
-Node authorization は kubelet に固有のものです。その ID は `system:nodes` に属し、実際のノード名と一致する `system:node:<nodeName>` というユーザー名を使用する必要があります。これはワークロードのアクセスメカニズムではありません。セルフマネージドクラスターでは、NodeRestriction admission と組み合わせて、kubelet による変更を Node および Pod オブジェクトに制限してください。
+Node 認可は kubelet 固有です。その identity は `system:nodes` に所属し、実際の node 名と一致するユーザー名 `system:node:<nodeName>` を使用する必要があります。これは workload のアクセスメカニズムではありません。セルフマネージド cluster では、kubelet による Node および Pod object への変更を制限するために、NodeRestriction admission と組み合わせてください。
 
-#### 4. Webhook Authorization
+#### 4. Webhook 認可
 
-セルフマネージドな API server は、`authorization.k8s.io/v1` の **SubjectAccessReview** を外部サービスに送信します。上記の authentication webhook と同じ接続ファイル形式を使用し、認可用のエンドポイント、CA、client 証明書は別に用意します。`--authorization-webhook-config-file` と `--authorization-webhook-version=v1` を設定するか、構造化された `AuthorizationConfiguration` でチェーンと失敗時のポリシーを設定します。ユーザーの kubeconfig に `authorization.webhook` フィールドは存在しません。
+セルフマネージド API server は、`authorization.k8s.io/v1` **SubjectAccessReview** を外部サービスに送信します。認証 webhook と同じ connection-file format を、別個の authorization endpoint、CA、および client certificate とともに使用してください。`--authorization-webhook-config-file` および `--authorization-webhook-version=v1` を設定するか、構造化された `AuthorizationConfiguration` を使用して chain と failure policy を設定してください。ユーザーの kubeconfig に `authorization.webhook` フィールドはありません。
 
-authorizer は設定された順序で実行され、最初の **Allow または Deny** が決定となります。`NoOpinion` は次の authorizer に処理を継続し、すべてが NoOpinion の場合はアクセスが拒否されます。後続の webhook が、RBAC が既に許可したリクエストを拒否 (veto) することはできません。`system:masters` は RBAC と webhook 認可をバイパスする特別な group です。通常の管理者に割り当てたり、role binding を削除すればそのアクセスを取り消せると想定したりしないでください。
+authorizer は設定された順序で実行され、最初の **Allow または Deny** が決定します。`NoOpinion` は次の authorizer に進み、すべてが NoOpinion の結果はアクセスを拒否します。後続の webhook は、RBAC がすでに許可したリクエストを拒否できません。`system:masters` は RBAC と webhook 認可をバイパスする特別な group です。通常の管理者に割り当てたり、role binding を削除すればアクセスが取り消されると考えたりしないでください。
 
-### Authorization Best Practices
+### 認可のベストプラクティス
 
-1. **Principle of Least Privilege**: 必要最小限の権限のみを付与します。
-2. **Role Separation**: 管理者、開発者、運用者などのロールに応じて適切な権限を付与します。
-3. **Namespace Separation**: チームやプロジェクトごとに namespace を分離し、適切な権限を付与します。
-4. **Service Account Separation**: アプリケーションごとに個別の service account を使用します。
-5. **Regular Auditing**: 認可ポリシーを定期的にレビューし、更新します。
+1. **最小権限の原則**: 必要最小限の権限のみを付与します。
+2. **Role の分離**: 管理者、開発者、operator などの role に基づき、適切な権限を付与します。
+3. **Namespace の分離**: team または project ごとに namespace を分離し、適切な権限を付与します。
+4. **Service Account の分離**: application ごとに個別の service account を使用します。
+5. **定期的な監査**: 認可ポリシーを定期的にレビューおよび更新します。
 
 ## Admission Control
 
-Admission control は、認証と認可の後、リクエストを処理する前に追加の検証と変更を行います。
+admission control は、認証および認可の後、リクエストを処理する前に追加の検証と変更を実行します。
 
-Admission は作成、変更、削除、および一部の接続リクエストを扱います。**get/list/watch の読み取りは admission をバイパスします**。Mutation が validation より先に実行され、どちらのフェーズでもリクエストを拒否できます。
+admission は作成、変更、削除、および一部の接続リクエストを処理します。**get/list/watch の読み取りは admission をバイパスします**。mutation は validation より先に行われ、どちらのフェーズでもリクエストを拒否できます。
 
-### Admission Controller Types
+### Admission Controller の種類
 
-1. **Mutating Admission Controllers**: リクエストを変更できます。
-2. **Validating Admission Controllers**: 変更せずにリクエストを検証するだけです。
+1. **Mutating Admission Controller**: リクエストを変更できます。
+2. **Validating Admission Controller**: 変更せずにリクエストを検証するだけです。
 
-### Key Admission Controllers
+### 主要な Admission Controller
 
-1. **LimitRanger**: LimitRange で定義されたデフォルト値と最小/最大の制約を適用します。
-2. **ResourceQuota**: 設定された namespace の quota を、オブジェクト数、リソース request などの数量についてチェックします。実測の CPU/メモリ消費量や支出の上限ではありません。
-3. **PodSecurity**: namespace の label に従って Pod Security Standards を適用します。旧来の PodSecurityPolicy は Kubernetes 1.25 で削除されました。
+1. **LimitRanger**: LimitRange で定義されたデフォルト値と最小/最大制約を適用します。
+2. **ResourceQuota**: object 数、resource request、および類似の量に対して設定された namespace quota を確認します。測定された CPU/memory 消費量や支出の上限ではありません。
+3. **PodSecurity**: namespace label に従って Pod Security Standards を適用します。以前の PodSecurityPolicy は Kubernetes 1.25 で削除されました。
 4. **ServiceAccount**: Pod に service account を自動的に割り当てます。
-5. **DefaultStorageClass**: class が指定されていない PVC に対してデフォルトの StorageClass を選択します。StorageClass を作成するわけではありません。
+5. **DefaultStorageClass**: class が指定されていない PVC にデフォルトの StorageClass を選択します。StorageClass を作成するものではありません。
 
 ### Dynamic Admission Control
 
-Dynamic admission control は webhook を通じて実装されます。
+動的 admission control は webhook により実装されます。
 
 1. **MutatingAdmissionWebhook**: リクエストを変更できます。
 2. **ValidatingAdmissionWebhook**: 変更せずにリクエストを検証するだけです。
 
-**Webhook Configuration Example:**
+**Webhook 構成の例:**
 
 ```yaml
 apiVersion: admissionregistration.k8s.io/v1
@@ -336,17 +336,17 @@ webhooks:
   timeoutSeconds: 5
 ```
 
-この webhook は、明示的に label が付いた namespace のみを対象とします。実際の HTTPS サービス、CA、およびリクエストの UID を保持する AdmissionReview の実装なしにインストールしないでください。`failurePolicy: Fail` は、呼び出しのエラー/タイムアウト時に一致するリクエストをブロックします。`Ignore` は呼び出しの失敗を無視するもので、正常に返された拒否を許可に変えるものではありません。可用性と復旧は専用の namespace でテストしてください。検証には CEL の ValidatingAdmissionPolicy も選択肢になります。
+この webhook は、明示的に label 付けされた namespace のみを対象にします。実際の HTTPS service、CA、およびリクエスト UID を保持する AdmissionReview 実装なしでインストールしないでください。`failurePolicy: Fail` は、呼び出しエラー/timeout 時に一致するリクエストをブロックします。`Ignore` は呼び出し失敗を無視します。正常に返された拒否を許可に変えるものではありません。専用の namespace で可用性と復旧をテストしてください。CEL ValidatingAdmissionPolicy は validation のもう 1 つの選択肢です。
 
-## Practical Implementation Examples
+## 実践的な実装例
 
-### Authentication and Authorization Configuration in EKS
+### EKS における認証および認可の構成
 
-#### IAM and RBAC Integration
+#### IAM と RBAC の統合
 
-現在の EKS の IAM ユーザーアクセスには **access entry** を使用します。IAM role が認証済みの ID を提供し、関連付けられた EKS access policy または Kubernetes RBAC が Kubernetes の権限を付与します。両方の経路で許可された権限は加算されます。EKS access policy は IAM policy ではありません。
+現在の EKS IAM ユーザーアクセスには **access entry** を使用してください。IAM role は認証された identity を提供し、関連付けられた EKS access policy または Kubernetes RBAC は Kubernetes 権限を付与します。両方の経路からの許可された権限は累積されます。EKS access policy は IAM policy ではありません。
 
-以下は、既存のクラスターと IAM role に対する管理者による変更の例です。まず、アカウント、Region、クラスター、`API` または `API_AND_CONFIG_MAP` モード、既存の `development` namespace、重複する access entry がないこと、そして `eks:CreateAccessEntry` と RBAC 変更に対する権限を確認してください。これはインフラ作成スクリプトでも、完全な移行手順でもありません。
+以下は、既存の cluster と IAM role に対する管理者の変更例です。最初に account、Region、cluster、`API` または `API_AND_CONFIG_MAP` mode、既存の `development` namespace、重複する access entry がないこと、および `eks:CreateAccessEntry` と RBAC 変更の権限を確認してください。これは infrastructure 作成 script や完全な migration 手順ではありません。
 
 ```bash
 # Example inputs: replace with the approved cluster and existing IAM role.
@@ -388,29 +388,29 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-RBAC オブジェクトを適用した後は、その role の実際の資格情報でアクセスを検証してください。この例では access policy を関連付けておらず、access entry を作成しても RBAC オブジェクトは作成されません。既存の binding や policy によって、実効権限がこれらの Pod 読み取りより広くなることがあります。伝播の遅延も考慮してください。
+RBAC object を適用した後、role の実際の認証情報でアクセスを検証してください。この例では access policy を関連付けておらず、access entry を作成しても RBAC object は作成されません。既存の binding または policy により、有効な権限がこれらの Pod 読み取りより広くなる可能性があります。伝播遅延を考慮してください。
 
-`aws-auth` ConfigMap は従来のメカニズムです。ConfigMap 全体を置き換えると、node/Fargate のマッピングが削除される可能性があります。`CONFIG_MAP` から `API_AND_CONFIG_MAP` への移行を計画し、マッピングを移行して検証した後に `API` を使用してください。いったん有効化すると、モードを元に戻しても API アクセスは削除できません。`API` から ConfigMap モードに戻すことはできません。両方を使用している間は、同じ IAM principal に対して access entry が優先されます。既存のマッピングがすべて自動的に移行されるわけではありません。
+`aws-auth` ConfigMap はレガシーなメカニズムです。ConfigMap 全体を置き換えると、node/Fargate mapping が削除される可能性があります。`CONFIG_MAP` から `API_AND_CONFIG_MAP` への migration を計画し、mapping を移行して検証した後、`API` を使用してください。一度有効にすると、mode を戻しても API access は削除できません。`API` は ConfigMap mode に戻せません。両方を使用している間、同じ IAM principal に対しては access entry が優先されます。既存のすべての mapping が自動的に移行されるわけではありません。
 
-`kubectl auth can-i --list` は EKS access policy による権限を表示しません。`--as`/`--as-group` による impersonation は Kubernetes RBAC の評価を強制するため、IAM role の access policy の権限をテストすることにはなりません。namespace 外や Secret の読み取りで拒否されることの確認を含め、実際の role として個々のアクションを検証してください。
+`kubectl auth can-i --list` は EKS access policy からの権限を表示しません。`--as`/`--as-group` による impersonation は Kubernetes RBAC 評価を強制するため、IAM role の access-policy 権限をテストしません。namespace 外部での期待される拒否と Secret 読み取りを含め、実際の role として個別のアクションを検証してください。
 
-#### OIDC Provider Configuration
+#### OIDC Provider の構成
 
-以下の 3 つの経路は、方向と目的が異なります。
+これら 3 つの経路は、方向と目的が異なります。
 
-| Path | Authentication target and configuration |
+| 経路 | 認証対象と構成 |
 |---|---|
-| External OIDC user → Kubernetes API | EKS の `AssociateIdentityProviderConfig` で外部 IdP を関連付け、そのユーザー/group を RBAC にバインドします。EKS は public HTTPS 経由で issuer に到達できる必要があり、自己署名の issuer 証明書はサポートされません。これによって IAM 認証が無効になるわけではありません。 |
-| Pod → AWS API through IRSA | クラスターの ServiceAccount OIDC issuer に対して IAM の信頼関係を確立し、role の信頼関係を意図した namespace/ServiceAccount に限定し、必要な AWS リソースのみを許可します。`eksctl utils associate-iam-oidc-provider` はこの経路のためのもので、外部ユーザーのログイン用ではありません。 |
-| Pod → AWS API through EKS Pod Identity | サポートされる実行環境で Pod Identity Agent と role の関連付けを使用します。これは IRSA の IAM OIDC provider の設定とは異なります。 |
+| 外部 OIDC ユーザー → Kubernetes API | EKS `AssociateIdentityProviderConfig` を通じて外部 IdP を関連付け、そのユーザー/group を RBAC に bind します。EKS は public HTTPS 経由で issuer に到達する必要があります。customer-routed control-plane egress (`controlPlaneEgressMode=CUSTOMER_ROUTED`) では、issuer も VPC で構成する egress path を介して到達可能である必要があります。自己署名 issuer 証明書はサポートされません。これは IAM 認証を無効化しません。 |
+| Pod → IRSA を通じた AWS API | cluster の ServiceAccount OIDC issuer に IAM trust を確立し、role trust を対象の namespace/ServiceAccount に制限し、必要な AWS resource のみを付与します。`eksctl utils associate-iam-oidc-provider` は外部ユーザーログインではなく、この経路に使用します。 |
+| Pod → EKS Pod Identity を通じた AWS API | サポートされている execution environment で Pod Identity Agent と role association を使用します。これは IRSA の IAM OIDC provider 設定とは異なります。 |
 
-いずれのワークロード向けメカニズムも、それ自体で Kubernetes API の RBAC を付与するわけではありません。アカウント全体を対象とする S3 読み取りのマネージドポリシーをデフォルトの例として使うのは避け、実際の bucket/object の ARN に権限を絞り込んでください。設定の詳細は [EKS external OIDC](https://docs.aws.amazon.com/eks/latest/userguide/authenticate-oidc-identity-provider.html) と [workload IAM roles](https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html) を参照してください。
+どちらの workload メカニズムも、それだけでは Kubernetes API RBAC を付与しません。account 全体の S3 読み取り managed policy をデフォルト例として使用せず、実際の bucket/object ARN に権限をスコープしてください。構成の詳細は、[EKS 外部 OIDC](https://docs.aws.amazon.com/eks/latest/userguide/authenticate-oidc-identity-provider.html) および [workload IAM role](https://docs.aws.amazon.com/eks/latest/userguide/service-accounts.html) に従ってください。
 
-### Multi-tenant Cluster Security
+### マルチテナント Cluster のセキュリティ
 
-マルチテナント環境では、テナント間の分離が重要です。
+マルチテナント環境では、tenant 間の分離が重要です。
 
-**Namespace Isolation:**
+**Namespace の分離:**
 
 ```yaml
 apiVersion: v1
@@ -435,9 +435,9 @@ spec:
           tenant: a
 ```
 
-このポリシーは、`tenant: a` の label が付いた **すべての** namespace からの ingress を許可します。他の ingress ポリシーが許可を追加することがあり、egress は制限されていません。CNI による NetworkPolicy の適用が必要であり、namespace の label とポリシーは信頼できる管理者のみが制御すべきです。namespace だけでは、敵対的なテナント間の強い分離は保証されません。quiz では双方向のデフォルト拒否を扱っています。DNS と必要なトラフィックについては、個別の許可を検討してください。
+この policy は `tenant: a` の label を持つ**すべての** namespace からの ingress を許可します。他の ingress policy は許可を追加でき、egress は制限されません。CNI による NetworkPolicy の enforcement が必要です。信頼できる管理者のみが namespace label と policy を制御する必要があります。namespace だけでは、敵対的な tenant 間の強力な分離を保証できません。quiz には両方向の default deny が含まれています。DNS と必要な traffic に対する個別の許可をレビューしてください。
 
-**Resource Quotas:**
+**Resource Quota:**
 
 ```yaml
 apiVersion: v1
@@ -454,36 +454,36 @@ spec:
     limits.memory: 16Gi
 ```
 
-## Security Best Practices
+## セキュリティのベストプラクティス
 
-1. **Regular Certificate Rotation**: 証明書を定期的に更新します。
-2. **Disable Service Account Token Auto-mount**: 不要な場合は service account token の自動マウントを無効化します。
-3. **Minimize RBAC Policies**: 必要最小限の権限のみを付与します。
-4. **Implement Network Policies**: Pod 間の通信を制限します。
-5. **Enable Audit Logging**: audit policy の対象範囲、機密データの除外、保持期間、ログへのアクセスを検証します。EKS では `audit` control plane ログタイプを有効化し、CloudWatch への配信を確認してください。すべてのリクエストボディが記録されると想定しないでください。
-6. **Configure Security Contexts**: Pod と container の security context を適切に設定します。
-7. **Image Scanning**: container イメージの脆弱性を定期的にスキャンします。
+1. **定期的な証明書ローテーション**: 証明書を定期的に更新します。
+2. **Service Account Token の自動マウントを無効化**: 必要でない場合は、service account token の自動マウントを無効にします。
+3. **RBAC ポリシーの最小化**: 必要最小限の権限のみを付与します。
+4. **Network Policy の実装**: Pod 間の通信を制限します。
+5. **Audit Logging の有効化**: audit-policy coverage、sensitive-data exclusion、retention、および log access を検証してください。EKS では `audit` control-plane log type を有効にし、CloudWatch への配信を検証します。すべてのリクエスト本文が記録されると想定しないでください。
+6. **Security Context の構成**: Pod と container の security context を適切に構成します。
+7. **Image Scanning**: container image の脆弱性を定期的にスキャンします。
 
-## Conclusion
+## 結論
 
-Kubernetes の認証・認可システムは、クラスターセキュリティの中核要素です。適切な認証方式を選択し、RBAC によるきめ細かなアクセス制御を実装し、admission controller で追加のセキュリティポリシーを適用することで、安全な Kubernetes 環境を構築できます。
+Kubernetes の認証および認可システムは、cluster セキュリティの中核要素です。適切な認証方式を選択し、RBAC によるきめ細かなアクセス制御を実装し、admission controller を使用して追加のセキュリティポリシーを適用することで、安全な Kubernetes 環境を構築できます。
 
-Authentication、Authorization、Admission control は互いを補完するものであり、これらを組み合わせて Defense in Depth (多層防御) 戦略を実装することが重要です。
+認証、認可、および admission control は相互に補完し合うため、Defense in Depth 戦略を実装するにはこれらを組み合わせて使用することが重要です。
 
-## Official References
+## 公式リファレンス
 
-- [Kubernetes authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/)
-- [Kubernetes authorization](https://kubernetes.io/docs/reference/access-authn-authz/authorization/)
+- [Kubernetes 認証](https://kubernetes.io/docs/reference/access-authn-authz/authentication/)
+- [Kubernetes 認可](https://kubernetes.io/docs/reference/access-authn-authz/authorization/)
 - [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
-- [ServiceAccount configuration](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/)
+- [ServiceAccount 構成](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/)
 - [ABAC](https://kubernetes.io/docs/reference/access-authn-authz/abac/)
-- [Node authorization](https://kubernetes.io/docs/reference/access-authn-authz/node/)
-- [Admission controllers](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/)
-- [Admission webhooks](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
+- [Node 認可](https://kubernetes.io/docs/reference/access-authn-authz/node/)
+- [Admission controller](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/)
+- [Admission webhook](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
 - [NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-- [EKS certificate signing](https://docs.aws.amazon.com/eks/latest/userguide/cert-signing.html)
-- [EKS access entries](https://docs.aws.amazon.com/eks/latest/userguide/creating-access-entries.html)
-- [EKS authentication modes](https://docs.aws.amazon.com/eks/latest/userguide/setting-up-access-entries.html)
-- [EKS access policy evaluation](https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html)
-- [EKS audit logs](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
-- [Trusted kubeconfig](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/)
+- [EKS 証明書署名](https://docs.aws.amazon.com/eks/latest/userguide/cert-signing.html)
+- [EKS access entry](https://docs.aws.amazon.com/eks/latest/userguide/creating-access-entries.html)
+- [EKS 認証モード](https://docs.aws.amazon.com/eks/latest/userguide/setting-up-access-entries.html)
+- [EKS access policy 評価](https://docs.aws.amazon.com/eks/latest/userguide/access-policies.html)
+- [EKS audit log](https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html)
+- [信頼できる kubeconfig](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/)

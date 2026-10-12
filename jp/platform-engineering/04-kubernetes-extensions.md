@@ -1,25 +1,25 @@
 # Kubernetes 拡張メカニズム
 
-> **最終更新**: September 12, 2026
+> **最終更新**: October 12, 2026
 
 ## 拡張ポイントの選択
 
-Kubernetes は API とワークロードの動作を拡張する方法を複数提供しています。CRD を登録することと、その動作を実装することは別物です。
+Kubernetes には、API とワークロードの動作を拡張する複数の方法があります。CRD の登録と、その動作の実装は別のものです。
 
 | メカニズム | 役割 | 運用上の要件 |
 | --- | --- | --- |
-| CRD + controller | カスタム API と desired-state の reconciliation | スキーマ、reconciliation、RBAC、status と削除処理 |
-| API aggregation | リクエストを別の API server へ委譲 | APIService、TLS、委譲された認証/認可、discovery/storage |
+| CRD + controller | カスタム API と望ましい状態の調整 | スキーマ、調整、RBAC、status、削除 |
+| API aggregation | リクエストを別の API server に委譲 | APIService、TLS、委譲された認証/認可、discovery/storage |
 | Admission policy/webhook | API リクエストの検証または変更 | スコープ、失敗時の処理、CEL または webhook の可用性 |
-| Scheduler plugin/extender | filtering、scoring、binding の拡張 | 互換性のある scheduler バイナリ、登録/設定、失敗時の処理 |
-| CNI | コンテナネットワーキング | 実際のインターフェース、IPAM、ルート、クリーンアップ |
-| CSI | Volume のライフサイクルと node でのマウント | 機能に応じた RPC とバックエンド/node 操作 |
+| Scheduler plugin/extender | フィルタリング、スコアリング、またはバインディングを拡張 | 互換性のある scheduler binary、登録/設定、失敗時の処理 |
+| CNI | コンテナネットワーク | 実際の interface、IPAM、route、クリーンアップ |
+| CSI | Volume のライフサイクルと node へのマウント | capability に適した RPC と backend/node 操作 |
 
-選択した API、ライブラリ、ディストリビューションの互換性を確認してください。現行の controller-runtime 0.25.0 は Go 1.26 と Kubernetes Go モジュール 0.37.0 を使用します。以下の scheduler インターフェースに関する記述は Kubernetes 1.36.2 のソースに対して確認したものです。scheduler-plugins 0.35.7 がそれと互換であると想定しないでください。
+選択した API、library、distribution の互換性を確認してください。レビュー対象の controller-runtime 0.25.0 の go.mod は Go 1.26.0 と Kubernetes Go module 0.37.0 を使用しています（2026 年 10 月 12 日時点の最新リリースは v0.25.2）。以下の Scheduler interface に関する注記は Kubernetes 1.36.2 のソースに照らして確認しました。scheduler-plugins 0.35.7 がこれと置き換え可能であると仮定しないでください。
 
 ## CRD とインスタンス
 
-CRD は OpenAPI v3 構造を用いてカスタム API を定義します。required フィールドはそれを含むレベルに適用されるため、トップレベルの spec と spec.image の両方を明示的に required に指定してください。status はその subresource を通じて管理し、scale では実際の replicas と availableReplicas を区別してください。controller がなければ、この API はデータを保存するだけで Deployment を作成しません。
+CRD は OpenAPI v3 構造を持つカスタム API を定義します。必須フィールドはそれを含むレベルに適用されるため、トップレベルの spec と spec.image の両方を明示的に必須にします。status はその subresource を通じて管理し、スケールのために実際の replicas と availableReplicas を区別してください。controller がなければ、この API はデータを保存するだけで Deployment は作成しません。
 
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -92,15 +92,15 @@ spec:
   port: 8080
 ```
 
-controller は observed state から status.replicas、availableReplicas、selector、observedGeneration を設定しなければなりません。status が欠落していたり古いままであることは成功ではありません。served な API バージョンが複数ある場合は、storage バージョン、status.storedVersions、conversion を確認してください。conversion webhook は必要な変換を実装しなければならず、バージョン名を変更してもデータは移行されません。
+controller は、観測した状態から status.replicas、availableReplicas、selector、observedGeneration を設定する必要があります。status が欠落している、または古い状態は成功ではありません。複数の提供する API version については、storage version、status.storedVersions、conversion を確認してください。conversion webhook は必要な変換を実装しなければなりません。version 名を変更してもデータは移行されません。
 
 ## client-go、controller-runtime、Operator
 
-client-go はクライアント、informer/キャッシュ、workqueue を提供します。1 回だけ List してから Watch するのは完全な controller ではありません。resourceVersion の連続性、watch のクローズ、410 Gone、再接続、キャッシュ同期、さらに context のキャンセルとクリーンアップを扱う必要があります。
+client-go は client、informer/cache、workqueue を提供します。一度だけ List してから Watch するだけでは完全な controller ではありません。resourceVersion の継続性、watch の終了、410 Gone、再接続、cache の同期に加えて、context のキャンセルとクリーンアップを処理してください。
 
-controller-runtime は manager、キャッシュ/クライアント、workqueue、leader election、reconciliation パターンを提供します。カスタム WebApp の Go 型と scheme 登録を生成または用意し、選択したライブラリバージョンに対してコンパイルしてください。存在しない example.com/api 型や appsv1.WebApp への参照は、実行可能な実装にはなりません。
+controller-runtime は manager、cache/client、workqueue、leader election、調整パターンを提供します。カスタム WebApp Go type と scheme registration を生成または提供してから、選択した library version に対してコンパイルしてください。存在しない example.com/api type や appsv1.WebApp への参照では、実行可能な実装になりません。
 
-以下は **擬似コード** であり、その関数とデプロイ設定は別途実装する必要があります。
+以下は**疑似コード**です。その関数と Deployment 設定は別途実装する必要があります。
 
 ```text
 Reconcile(namespace, name):
@@ -118,21 +118,21 @@ Reconcile(namespace, name):
   report failure/readiness and requeue when another observation is needed
 ```
 
-ownerReferences は name だけでなく、UID、namespace、スコープの制約にも一致しなければなりません。同名の Deployment を無条件に更新すると、別の controller のワークロードを変更してしまう可能性があります。ガベージコレクションは propagation、owner、finalizer に依存します。ownerReference は任意の外部 AWS データをクリーンアップするものではありません。
+ownerReferences は、name だけでなく UID、namespace、scope の制約にも一致しなければなりません。同名の Deployment を無条件に更新すると、別の controller のワークロードを変更する可能性があります。garbage collection は propagation、owner、finalizer に依存します。ownerReference は任意の外部 AWS データをクリーンアップしません。
 
-Operator はドメイン知識を実装するものであり、フェイルオーバー、ローリングアップグレード、バックアップが自動的に安全になるわけではありません。データベースの設計では、primary の fencing、quorum、レプリカの追従、WAL/バックアップのリストアテスト、スキーマ互換性、disruption budget、シャットダウン順序が必要です。
+Operator はドメイン知識を実装します。failover、rolling upgrade、backup が自動的に安全になるわけではありません。データベース設計では、primary fencing、quorum、replica の追いつき、WAL/backup 復元テスト、schema の互換性、disruption budget、shutdown の順序が必要です。
 
-公式の Operator SDK 1.42.3 のインストール手順に従って、OS/アーキテクチャとチェックサムを選択してください。古い amd64 専用の 1.25.0 バイナリをどこにでもインストールしないでください。init/create api/make manifests は選択した SDK/plugin に対して検証し、生成されたプロジェクトをコンパイル/テストしたうえで、イメージのビルド/プッシュとデプロイを別途行ってください。
+公式の Operator SDK 1.42.3 インストール手順を使用して、OS/architecture と checksum を選択してください。古い amd64 専用の 1.25.0 binary をあらゆる場所にインストールしないでください。選択した SDK/plugin に対して init/create api/make manifests を検証し、生成した project をコンパイル/テストしてから、image を個別に build/push して deploy してください。
 
 ## API Aggregation
 
-APIService は group/version のパスを拡張 API server の Service にルーティングします。その server には TLS、discovery、storage、および list/watch などの API 動作が必要です。front-proxy 証明書の CA/CN を検証し、転送されるユーザー identity を巡る信頼境界を維持し、委譲された認可を設定してください。
+APIService は、group/version のパスを拡張 API server の Service にルーティングします。server には TLS、discovery、storage、list/watch などの API 動作が必要です。front-proxy certificate の CA/CN を検証し、転送された user identity に関する trust boundary を維持し、委譲された authorization を設定してください。
 
-metrics-server の実際の API バージョンは、インストール済みの discovery を調べて確認してください。実在しない v1.metrics.k8s.io の APIService や、既定値としての insecureSkipTLSVerify:true を使用しないでください。group/version、Service、caBundle は実際の server と一致しなければなりません。単純な HTTP ハンドラーや空の API group は、完全な Kubernetes API server ではありません。
+実際の metrics-server API version について、インストール済みの discovery を調べてください。架空の v1.metrics.k8s.io APIService や insecureSkipTLSVerify:true をデフォルトとして使用しないでください。group/version、Service、caBundle は実際の server と一致する必要があります。単純な HTTP handler や空の API group は完全な Kubernetes API server ではありません。
 
 ## Admission Policy と Webhook
 
-ValidatingAdmissionPolicy は Kubernetes 1.30 以降で stable であり、CEL による検証をプロセス内で実行します。以下の policy/binding は、production namespace の Deployment および deployments/scale リクエストに対して replicas を 1〜5 に制限します。HPA や kubectl scale による更新もチェックされるため、HPA の maxReplicas をこの制限に合わせてください。namespace 名は任意の環境ラベルと同等ではありません。policy を適用する前に運用への影響を確認してください。
+ValidatingAdmissionPolicy は Kubernetes 1.30 以降 stable であり、CEL validation をプロセス内で実行します。この policy/binding は、production namespace における Deployment と deployments/scale リクエストの replicas を 1～5 に制限します。HPA と kubectl scale の更新もチェックするため、HPA の maxReplicas をこの制限と合わせてください。namespace 名は任意の environment label と同等ではありません。policy を適用する前に運用上の影響を確認してください。
 
 ```yaml
 apiVersion: admissionregistration.k8s.io/v1
@@ -164,13 +164,13 @@ spec:
         kubernetes.io/metadata.name: production
 ```
 
-Validating webhook はリクエストを許可または拒否し、mutating webhook は JSON Patch を返すことができます。応答は同じ AdmissionReview バージョンとリクエストの UID を使用してください。patchType は JSONPatch であり、patch のバイト列は JSON 内で Base64 エンコードされます。
+Validating webhook はリクエストを許可または拒否します。mutating webhook は JSON Patch を返すことができます。同じ AdmissionReview version と request UID を使用して応答してください。patchType は JSONPatch であり、patch bytes は JSON 内で Base64 エンコードされます。
 
-次の Go ハンドラーは、Pod の CREATE 時に説明用のラベルを追加します。labels マップが存在しない/null の場合は作成し、既存のラベルは保持し、値が既に一致している場合は patch を省略します。サイズ、メソッド、コンテンツタイプ、バージョン、UID、null のリクエスト/オブジェクトをチェックします。このラベルは実際にサイドカーを注入するものではありません。
+この Go handler は Pod CREATE 時に例示的な label を追加します。label map が存在しない/null の場合は作成し、既存の label を保持し、値がすでに一致する場合は patch を省略します。size、method、content type、version、UID、null の request/object をチェックします。この label は実際に sidecar を inject するものではありません。
 
-### テスト済みの Webhook コード
+### テスト済み Webhook コード
 
-examples/platform/extensions/webhook には go.mod、この実装、およびそのテストが含まれています。Go 1.25 の標準ライブラリのみを使用しています。構造体は使用する AdmissionReview のフィールドを宣言し、それ以外のフィールドは無視します。
+examples/platform/extensions/webhook には、go.mod、この実装、およびそのテストが含まれます。Go 1.25 の標準 library のみを使用します。struct は使用する AdmissionReview field を宣言し、追加の field は無視します。
 
 ```go
 package main
@@ -317,44 +317,44 @@ cd examples/platform/extensions/webhook
 go test ./...
 ```
 
-テストは TLS リスナーを開かず、httptest を通じてハンドラーを呼び出しました。デプロイには依然としてイメージ、Service、証明書/キーのファイル、実際の CA バンドル、API server への接続性、呼び出し元の認証、ネットワークポリシーが必要です。この TLS server は既定ではクライアント認証を設定しません。webhook のリソース、operation、パスをハンドラーに一致させてください。
+テストは TLS listener を開かずに httptest を介して handler を呼び出しました。Deployment には依然として image、Service、certificate/key file、実際の CA bundle、API-server connectivity、caller authentication、network policy が必要です。この TLS server はデフォルトでは client authentication を設定しません。webhook resource、operation、path を handler に一致させてください。
 
-failurePolicy、timeoutSeconds、sideEffects/dryRun、reinvocationPolicy、selector を確認してください。Fail は webhook が利用できないときに API リクエストをブロックし得ます。Ignore はそのチェックをバイパスし得ます。None を宣言する場合は、外部への副作用が実際に存在しないことを反映していなければなりません。
+failurePolicy、timeoutSeconds、sideEffects/dryRun、reinvocationPolicy、selector を確認してください。webhook が利用できない場合、Fail は API リクエストをブロックする可能性があり、Ignore はそのチェックをバイパスする可能性があります。None を宣言する場合は、外部 side effect が実際に存在しないことを反映しなければなりません。
 
-現行の Istio における Pod 単位の注入は sidecar.istio.io/inject **ラベル** を使用します。namespace では istio-injection またはリビジョンのラベルを使用します。古い annotation の例を既定として残すのではなく、Pod テンプレートでのラベル配置とバージョン固有の注入ルールを確認してください。
+現在の Istio の Pod 単位の injection には sidecar.istio.io/inject **label** を使用します。namespace では istio-injection または revision label を使用します。古い annotation の例をデフォルトのままにするのではなく、Pod template の label 配置と version 固有の injection rule を検証してください。
 
 ## Scheduler Framework と Extender
 
-Framework plugin は scheduler バイナリの内部でコンパイルされ登録されます。YAML で CustomFilter という名前を指定しても、存在しないコードは読み込まれません。別の scheduler を選択するには、profile の schedulerName を Pod の spec.schedulerName と一致させてください。
+Framework plugin は scheduler binary 内にコンパイルされ、登録されます。YAML で CustomFilter という名前を指定しても、存在しない code は読み込まれません。別の scheduler を選択するには、profile の schedulerName を Pod spec.schedulerName と一致させてください。
 
-Filter は候補を除外し、Score は実行可能な node をランク付けします。NormalizeScore、plugin の weight、同点時の選択を考慮してください。Reserve/Unreserve は plugin の予約状態を維持するもので、恒久的な容量予約 API ではありません。Permit は allow、reject、wait が可能で、PreBind/Bind/PostBind は binding の各段階を扱います。
+Filter は候補を除外し、Score は実行可能な node をランク付けします。NormalizeScore、plugin weight、同点時の選択を考慮してください。Reserve/Unreserve は plugin の予約状態を維持するものであり、永続的な capacity-reservation API ではありません。Permit は許可、拒否、待機を行うことができます。PreBind/Bind/PostBind はバインディング段階を処理します。
 
-Kubernetes 1.36.2 の公開 framework は k8s.io/kube-scheduler/framework の CycleState/NodeInfo を使用し、Score に NodeInfo を渡します。古い nodeName の文字列/ポインタのシグネチャを無条件にコピーせず、正確なマイナーバージョンに対してコンパイルしてください。scheduler-plugins 0.35.7 は 1.36/1.37 のバイナリと自動的に互換になるわけではありません。
+Kubernetes 1.36.2 の公開 framework は k8s.io/kube-scheduler/framework の CycleState/NodeInfo を使用し、Score に NodeInfo を渡します。古い nodeName-string/pointer signature を無批判にコピーせず、正確な minor version に対してコンパイルしてください。scheduler-plugins 0.35.7 は 1.36/1.37 binary と自動的に置き換え可能ではありません。
 
-Extender は別個の HTTP(S) エンドポイントを公開します。実装済みの filter/prioritize/bind ハンドラーのみを設定し、nodeCacheCapable に応じて Nodes と NodeNames をサポートしてください。以前の例では bindVerb を実装せずに設定していました。nil 入力、ボディサイズ制限、タイムアウト、TLS/認証、失敗時のポリシー、スコア範囲を扱ってください。単純な zone の選択であれば、まず組み込みの node affinity を検討してください。
+extender は個別の HTTP(S) endpoint を公開します。実装済みの filter/prioritize/bind handler のみを設定し、nodeCacheCapable に応じて Nodes と NodeNames をサポートしてください。以前の例では、実装していない bindVerb を設定していました。nil input、body limit、timeout、TLS/authentication、failure policy、score range を処理してください。単純な zone 選択では、まず組み込みの node affinity を検討してください。
 
 ## CNI
 
-CNI は runtime とネットワーク plugin の実行契約です。CNI ライブラリ 1.3.1 は設定の cniVersion とは別物です。共有される spec のバージョンと、ADD、DEL、CHECK、STATUS、GC などの操作のサポート状況を確認してください。
+CNI は runtime/network-plugin の実行契約です。CNI library 1.3.1 は config の cniVersion とは異なります。共有する spec version と、ADD、DEL、CHECK、STATUS、GC などの operation のサポートを検証してください。
 
-ADD の成功は、実際の namespace インターフェース、IPAM、ルート設定を反映していなければなりません。JSON で固定 IP を返しても接続は作られず、衝突を引き起こす可能性があります。DEL は部分的な失敗や namespace の欠落をクリーンアップしなければならず、CHECK は実際の状態を検査しなければなりません。同じ host-local サブネットを複数の node にコピーしても、クラスター全体の IPAM にはなりません。
+成功した ADD は、実際の namespace interface、IPAM、route 設定を反映しなければなりません。JSON で固定 IP を返しても接続は作成されず、競合を引き起こす可能性があります。DEL は部分的な失敗または存在しない namespace をクリーンアップする必要があり、CHECK は実際の状態を検査する必要があります。同じ host-local subnet を複数の node にコピーしても、cluster IPAM は提供されません。
 
-選択した Calico、Cilium、Flannel のリリースについて、機能とディストリビューションの互換性を確認してください。オリジナルの Weave Net リポジトリはアーカイブ済みであり、新規導入の既定の選択肢として提示していません。この監査では host のネットワーキング、veth、ルート、CNI 設定を一切変更していません。
+選択した Calico、Cilium、Flannel のリリースについて、機能と distribution の互換性を確認してください。元の Weave Net repository はアーカイブされており、新規インストールのデフォルト選択肢として提示されていません。この監査では、host networking、veth、route、CNI 設定を変更していません。
 
 ## CSI
 
-CSI 1.13.0 は Identity、Controller、Node の RPC セットと capability を定義します。すべてのデプロイが 1 つのプロセスで 3 つすべてを提供する必要はありません。Node のみの plugin も可能であり、公表する capability は実際の RPC の動作と一致していなければなりません。
+CSI 1.13.0 は Identity、Controller、Node の RPC set と capability を定義します。すべての Deployment が 3 つすべてを 1 つの process で提供する必要はありません。Node 専用 plugin も可能であり、提示する capability は実際の RPC 動作と一致しなければなりません。
 
-CreateVolume は冪等性、容量範囲、topology、バックエンド ID、エラーを扱わなければなりません。NodePublishVolume は要求された権限/読み取り専用の動作で正しくマウントしなければならず、NodeUnpublish/Delete はリトライを扱わなければなりません。常に vol-123 を返したり、マウントせずに成功を報告することは、実際のドライバーの実装ではありません。
+CreateVolume は、idempotency、capacity range、topology、backend ID、error を処理する必要があります。NodePublishVolume は要求された permission/read-only 動作で正しく mount する必要があり、NodeUnpublish/Delete は retry を処理する必要があります。常に vol-123 を返す、または mount せずに成功を報告することは、実際の driver の実装ではありません。
 
-StorageClass/PVC はドライバーのデプロイではありません。provisioner 名はインストール済みのドライバーと一致しなければならず、parameters はドライバー固有です。controller サイドカー、node の登録/ソケット/host マウント、認証情報、topology、volumeBindingMode、reclaimPolicy を確認してください。EBS、PD、Azure Disk、Ceph CSI については公式のインストール/サポートガイダンスに従ってください。
+StorageClass/PVC は driver deployment ではありません。provisioner 名はインストールされた driver と一致し、parameter は driver 固有です。controller sidecar、node registration/socket/host mount、credential、topology、volumeBindingMode、reclaimPolicy を確認してください。EBS、PD、Azure Disk、Ceph CSI については、公式のインストール/サポートガイダンスに従ってください。
 
 ## 検証と参考資料
 
-元の 983 行の韓国語ガイドと 987 行の英語ガイド、いずれも 652 行のクイズ 2 本、および 36 個の一意なコードブロックを読みました。チェックは CRD の入力 6 ケース、policy の CEL 6 ケース、Go webhook の 14 ケース、および RFC6902 patch の実適用 4 件を対象としました。完全なクラスター controller、aggregated API server、scheduler、CNI/CSI ドライバーは実行していません。説明用の擬似コードはテスト済みの実装として表示していません。
+元の 983 行の韓国語ガイドと 987 行の英語ガイド、どちらも 652 行の quiz、および 36 個の一意な code block を読みました。6 件の CRD input case、6 件の policy CEL case、14 件の Go webhook case、4 件の実際の RFC6902 patch application を確認しました。完全な cluster controller、aggregated API server、scheduler、CNI/CSI driver は実行していません。説明用の疑似コードは、テスト済み実装としては示していません。
 
-- [CRDs](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/)
-- [Admission webhooks](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
+- [CRD](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/)
+- [Admission webhook](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
 - [ValidatingAdmissionPolicy](https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/)
 - [Aggregation](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/)
 - [Scheduler framework](https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/)
@@ -365,4 +365,4 @@ StorageClass/PVC はドライバーのデプロイではありません。provis
 - [CSI 1.13.0](https://github.com/container-storage-interface/spec/blob/v1.13.0/spec.md)
 - [Istio injection](https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/)
 
-[拡張メカニズムのクイズ](../quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
+[拡張メカニズム quiz](../quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)

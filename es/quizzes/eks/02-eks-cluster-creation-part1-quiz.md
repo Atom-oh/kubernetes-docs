@@ -1,10 +1,14 @@
-# Cuestionario sobre creación de clusters EKS - Parte 1
+# Cuestionario de creación de clústeres EKS - Parte 1
 
-Este cuestionario evalúa tu comprensión de conceptos, herramientas y prácticas recomendadas relacionadas con la creación de clusters de Amazon EKS. Cubre temas como métodos de creación de clusters, configuración de VPC y configuración de node groups.
+> **Última actualización**: October 12, 2026
+
+> Los comandos son ejemplos independientes, no un script que deba ejecutarse de arriba abajo. Use una cuenta o un clúster de formación dedicados, permisos de IAM revisados y un kubeconfig temporal privado (`EXAMPLE_KUBECONFIG`). Sustituya los ID de ejemplo y las variables obligatorias. Los comandos de creación generan cargos. Esta auditoría comprobó las fuentes, la sintaxis y los elementos locales; no aprovisionó recursos de AWS ni verificó la disponibilidad de aplicaciones.
+
+Este cuestionario evalúa su comprensión de los conceptos, herramientas y prácticas recomendadas relacionados con la creación de clústeres de Amazon EKS. Abarca temas como los métodos de creación de clústeres, la configuración de VPC y la configuración de grupos de nodos.
 
 ## Preguntas de conceptos básicos
 
-1. ¿Cuál NO es una herramienta que se puede usar para crear un cluster de Amazon EKS?
+1. ¿Qué herramienta no tiene un comando integrado que aprovisione directamente un plano de control de EKS?
    * A) AWS Management Console
    * B) AWS CLI
    * C) eksctl
@@ -16,19 +20,19 @@ Este cuestionario evalúa tu comprensión de conceptos, herramientas y práctica
 
 **Respuesta: D) kubectl**
 
-**Explicación:** kubectl es una herramienta de línea de comandos para administrar clusters de Kubernetes, pero no se puede usar para crear clusters de EKS. kubectl se usa para conectarse a un cluster de Kubernetes existente y administrar recursos.
+kubectl administra recursos mediante una API de Kubernetes y no tiene un comando nativo para aprovisionar EKS. Un controlador de infraestructura ya instalado, como ACK, puede reconciliar un recurso enviado con kubectl en un clúster de EKS; es una integración de controlador, no una operación de AWS integrada en kubectl.
 
-Las herramientas que se pueden usar para crear clusters de Amazon EKS incluyen:
+Las herramientas que pueden utilizarse para crear clústeres de Amazon EKS incluyen:
 
 1. **AWS Management Console**:
-   * Crear clusters de EKS mediante una interfaz web.
-   * Adecuado para principiantes, ya que permite la configuración visual de los componentes del cluster.
-   * Guía el proceso de creación del cluster mediante un asistente paso a paso.
+   * Cree clústeres de EKS mediante una interfaz web.
+   * Adecuada para principiantes, ya que permite configurar visualmente los componentes del clúster.
+   * Guía el proceso de creación del clúster mediante un asistente paso a paso.
 2.  **AWS CLI**:
 
-    * Crear clusters de EKS desde la línea de comandos.
-    * Usa el comando `aws eks create-cluster`.
-    * Adecuado para scripts y automatización.
+    * Cree clústeres de EKS desde la línea de comandos.
+    * Utiliza el comando `aws eks create-cluster`.
+    * Adecuada para scripts y automatización.
 
     ```bash
     aws eks create-cluster \
@@ -38,64 +42,64 @@ Las herramientas que se pueden usar para crear clusters de Amazon EKS incluyen:
     ```
 3.  **eksctl**:
 
-    * Una herramienta de línea de comandos diseñada específicamente para la creación de clusters de EKS.
-    * Una herramienta de código abierto desarrollada por Weaveworks que simplifica la creación y administración de clusters de EKS.
-    * Puede crear un cluster con un solo comando.
+    * Una herramienta de línea de comandos diseñada específicamente para crear clústeres de EKS.
+    * Desarrollada originalmente por Weaveworks; el proyecto actual se mantiene en la organización eksctl-io con contribuciones de AWS y la comunidad.
+    * Puede crear un clúster con un único comando.
 
     ```bash
     eksctl create cluster --name my-cluster --region us-west-2 --nodegroup-name standard-workers --node-type t3.medium --nodes 3 --nodes-min 1 --nodes-max 4
     ```
-4.  **Herramientas de Infrastructure as Code (IaC)**:
+4.  **Herramientas de infraestructura como código (IaC)**:
 
     * AWS CloudFormation
     * Terraform
     * AWS CDK
     * Pulumi
 
-    Estas herramientas permiten definir e implementar clusters de EKS como código.
+    Estas herramientas permiten definir y desplegar clústeres de EKS como código.
 
-kubectl se usa para administrar recursos de Kubernetes (pods, services, deployments, etc.) después de crear un cluster. Para conectarte a un cluster de EKS, primero debes actualizar la configuración de kubectl usando el comando `aws eks update-kubeconfig`.
+kubectl se utiliza para administrar recursos de Kubernetes (Pods, Services, Deployments, etc.) después de crear un clúster. Para conectarse a un clúster de EKS, configure un kubeconfig autorizado, normalmente con `aws eks update-kubeconfig`.
 
 ```bash
 aws eks update-kubeconfig --name my-cluster --region us-west-2
 ```
 
-Después de eso, puedes usar kubectl para administrar los recursos del cluster.
+Después, puede utilizar kubectl para administrar los recursos del clúster.
 
 </details>
 
-2. ¿Qué componente de VPC debe especificarse al crear un cluster de Amazon EKS?
-   * A) Solo subnets públicas
-   * B) Solo subnets privadas
-   * C) Subnets en al menos 2 availability zones
+2. ¿Qué componente de VPC se debe especificar al crear un clúster de Amazon EKS?
+   * A) Solo subredes públicas
+   * B) Solo subredes privadas
+   * C) Subredes en al menos 2 zonas de disponibilidad
    * D) NAT Gateway
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Subnets en al menos 2 availability zones**
+**Respuesta: C) Subredes en al menos 2 zonas de disponibilidad**
 
-**Explicación:** Al crear un cluster de Amazon EKS, el componente de VPC que debe especificarse son subnets en al menos 2 availability zones. Este es un requisito de AWS para garantizar la alta disponibilidad de los clusters de EKS.
+**Explicación:** Al crear un clúster de Amazon EKS, el componente de VPC que se debe especificar son subredes en al menos 2 zonas de disponibilidad. Es un requisito de AWS para garantizar la alta disponibilidad de los clústeres de EKS.
 
-**Requisitos de VPC para clusters de EKS:**
+**Requisitos de VPC para clústeres de EKS:**
 
-1. **Subnets requeridas en al menos 2 availability zones (AZs)**:
-   * Dado que el control plane de EKS se implementa en varias availability zones, se deben especificar subnets en al menos 2 availability zones al crear un cluster.
-   * Esto garantiza que el cluster siga funcionando incluso durante fallos de una sola availability zone.
-2. **Tipos de subnet**:
-   * Puedes usar solo subnets públicas, solo subnets privadas o una mezcla de subnets públicas y privadas.
-   * Para entornos de producción, se recomienda ubicar los worker nodes en subnets privadas por seguridad y usar subnets públicas para load balancers.
-3. **Tamaño de CIDR de subnet**:
-   * Cada subnet debe tener suficientes direcciones IP.
-   * Como EKS asigna direcciones IP de VPC a cada pod, se necesitan bloques CIDR suficientemente grandes según la cantidad esperada de pods.
-4. **Requisitos de tags**:
-   * Se requieren tags específicos para que EKS identifique y use correctamente las subnets:
-     * Subnets compartidas: `kubernetes.io/cluster/<cluster-name>: shared`
-     * Subnets públicas: `kubernetes.io/role/elb: 1`
-     * Subnets privadas: `kubernetes.io/role/internal-elb: 1`
+1. **Se requieren subredes en al menos 2 zonas de disponibilidad (AZ)**:
+   * Puesto que el plano de control de EKS se despliega en varias zonas de disponibilidad, se deben especificar subredes en al menos 2 zonas de disponibilidad al crear un clúster.
+   * Esto admite la disponibilidad regional del plano de control. La disponibilidad de las cargas de trabajo también necesita planificación de la ubicación de réplicas, capacidad, almacenamiento y dependencias.
+2. **Tipos de subredes**:
+   * Puede utilizar solo subredes públicas, solo subredes privadas o una combinación de subredes públicas y privadas.
+   * Para entornos de producción, se recomienda ubicar los nodos worker en subredes privadas por seguridad y utilizar subredes públicas para los balanceadores de carga.
+3. **Tamaño de CIDR de la subred**:
+   * Cada subred del clúster necesita al menos seis IP disponibles para EKS; AWS recomienda dieciséis. Planifique por separado la capacidad de nodos/Pods/balanceadores de carga.
+   * Puesto que EKS asigna direcciones IP de VPC a cada Pod, se necesitan bloques CIDR suficientemente grandes según el número previsto de Pods.
+4. **Requisitos de etiquetas**:
+   * Las siguientes etiquetas se refieren a detección/propiedad para integraciones específicas, no son requisitos universales para crear EKS:
+     * Etiqueta de propiedad heredada o específica de controlador: `kubernetes.io/cluster/<cluster-name>: shared`
+     * Subredes públicas: `kubernetes.io/role/elb: 1`
+     * Subredes privadas: `kubernetes.io/role/internal-elb: 1`
 
-**Ejemplo de configuración de VPC (usando eksctl):**
+**Ejemplo de configuración de VPC (mediante eksctl):**
 
 ```yaml
 apiVersion: eksctl.io/v1alpha5
@@ -106,10 +110,11 @@ metadata:
   region: us-west-2
 
 vpc:
-  cidr: 192.168.0.0/16
+  id: vpc-0123456789abcdef0
   clusterEndpoints:
     publicAccess: true
     privateAccess: true
+  publicAccessCIDRs: ["203.0.113.10/32"]
   subnets:
     private:
       us-west-2a:
@@ -123,7 +128,7 @@ vpc:
         id: subnet-0123456789abcdef3
 ```
 
-**Configuración de VPC usando AWS CLI:**
+**Configuración de VPC mediante AWS CLI:**
 
 ```bash
 aws eks create-cluster \
@@ -132,133 +137,74 @@ aws eks create-cluster \
   --resources-vpc-config subnetIds=subnet-0123456789abcdef0,subnet-0123456789abcdef1,subnet-0123456789abcdef2,subnet-0123456789abcdef3
 ```
 
-Se requiere un NAT Gateway cuando los worker nodes en subnets privadas necesitan acceso a internet, pero no es un componente obligatorio para la creación del cluster de EKS en sí. Si usas solo subnets públicas, puedes crear un cluster sin un NAT Gateway (no recomendado para entornos de producción).
+Una NAT gateway es una posible ruta de salida a Internet. Los endpoints de VPC obligatorios, las imágenes replicadas y la conectividad privada pueden permitir la operación sin acceso a Internet. La ubicación en subredes privadas y la eliminación de la salida a Internet son decisiones independientes. Sustituya la VPC, las subredes y el CIDR del cliente de ejemplo por valores reales revisados.
 
 </details>
 
-3. ¿Qué IAM roles se requieren al crear un cluster de Amazon EKS?
-   * A) Solo EKS service role
-   * B) Solo node instance role
-   * C) EKS service role y node instance role
-   * D) Fargate execution role
+3. ¿Qué separación de roles se aplica al configurar un plano de control de EKS convencional con workers de EC2?
+   * A) Solo se necesita un rol de clúster
+   * B) Solo se necesita un rol de nodo de EC2
+   * C) Roles separados de clúster y de nodo de EC2
+   * D) Reemplazar ambos por un rol de ejecución de Fargate
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) EKS service role y node instance role**
+**Respuesta: C) Roles separados de clúster y de nodo de EC2**
 
-**Explicación:** Para crear y operar un cluster de Amazon EKS, se requieren dos IAM roles principales: el EKS service role y el node instance role. Estos dos roles tienen propósitos diferentes y ambos son necesarios para el funcionamiento correcto del cluster.
+El rol de clúster confía en `eks.amazonaws.com` y permite que EKS administre la infraestructura del clúster. EKS convencional necesita `AmazonEKSClusterPolicy` o permisos equivalentes. El rol de nodo de EC2 confía en `ec2.amazonaws.com` y se proporciona mediante un perfil de instancia. EKS configura el perfil de instancia para grupos de nodos administrados; el arranque del nodo no crea roles de IAM.
 
-**1. EKS Service Role (EKS Cluster Role):**
+La base de EC2 es `AmazonEKSWorkerNodePolicy` y `AmazonEC2ContainerRegistryPullOnly`, o privilegio mínimo equivalente. También se requieren permisos de CNI; prefiera un rol independiente de IRSA/Pod Identity. Sin ello, el rol de nodo necesita los permisos de CNI. `AmazonEKS_CNI_Policy` de IPv4 no es una política de IPv6. Los permisos de controladores de almacenamiento, balanceador de carga y registro no se requieren universalmente en cada nodo.
 
-* **Propósito**: Permite que el servicio AWS EKS llame a otros servicios de AWS en nombre de los usuarios.
-* **Permisos requeridos**:
-  * Acceso a servicios de AWS como EC2, ELB, CloudWatch, KMS, etc.
-  * Administración de recursos de VPC
-  * Creación y administración de log groups
-* **Managed policy**: `AmazonEKSClusterPolicy`
-*   **Método de creación**:
-
-    ```bash
-    # Create role using AWS CLI
-    aws iam create-role \
-      --role-name EKSClusterRole \
-      --assume-role-policy-document file://eks-cluster-trust-policy.json
-
-    # Attach managed policy
-    aws iam attach-role-policy \
-      --role-name EKSClusterRole \
-      --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
-    ```
-
-    Trust policy (eks-cluster-trust-policy.json):
-
-    ```json
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Effect": "Allow",
-          "Principal": {
-            "Service": "eks.amazonaws.com"
-          },
-          "Action": "sts:AssumeRole"
-        }
-      ]
-    }
-    ```
-
-**2. Node Instance Role (Node Instance Role):**
-
-* **Propósito**: Permite que los worker nodes de EKS (instancias EC2) interactúen con servicios de AWS.
-* **Permisos requeridos**:
-  * Descargar imágenes de contenedor desde ECR
-  * Escribir logs en CloudWatch
-  * Administrar volúmenes EBS/EFS
-  * Registro/desregistro de load balancers
-* **Managed policies**:
-  * `AmazonEKSWorkerNodePolicy`
-  * `AmazonEC2ContainerRegistryReadOnly`
-  * `AmazonEKS_CNI_Policy`
-*   **Método de creación**:
-
-    ```bash
-    # Create role using AWS CLI
-    aws iam create-role \
-      --role-name EKSNodeRole \
-      --assume-role-policy-document file://ec2-trust-policy.json
-
-    # Attach managed policies
-    aws iam attach-role-policy \
-      --role-name EKSNodeRole \
-      --policy-arn arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
-
-    aws iam attach-role-policy \
-      --role-name EKSNodeRole \
-      --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-
-    aws iam attach-role-policy \
-      --role-name EKSNodeRole \
-      --policy-arn arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
-    ```
-
-    Trust policy (ec2-trust-policy.json):
-
-    ```json
-    {
-      "Version": "2012-10-17",
-      "Statement": [
-        {
-          "Effect": "Allow",
-          "Principal": {
-            "Service": "ec2.amazonaws.com"
-          },
-          "Action": "sts:AssumeRole"
-        }
-      ]
-    }
-    ```
-
-**Creación automática de roles usando eksctl:**
-
-Al crear un cluster usando eksctl, los IAM roles requeridos se pueden crear automáticamente:
+Este ejemplo crea nuevos roles convencionales de clúster/nodo. Utilice una cuenta o rol autorizado y deténgase ante errores. Un conflicto de nombre no adjunta políticas al rol existente.
 
 ```bash
-eksctl create cluster --name my-cluster --region us-west-2
+IAM_EXAMPLE_DIR=$(mktemp -d /tmp/eks-iam-example.XXXXXX)
+: "${IAM_EXAMPLE_DIR:?}"
+: "${NEW_CLUSTER_ROLE_NAME:?Choose an unused role name for this example}"
+: "${NEW_NODE_ROLE_NAME:?Choose a different unused role name}"
+cat > "$IAM_EXAMPLE_DIR/cluster-trust.json" << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": {"Service": "eks.amazonaws.com"},
+    "Action": "sts:AssumeRole"
+  }]
+}
+EOF
+cat > "$IAM_EXAMPLE_DIR/node-trust.json" << 'EOF'
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": {"Service": "ec2.amazonaws.com"},
+    "Action": "sts:AssumeRole"
+  }]
+}
+EOF
+# Attach policies only after successfully creating the new role.
+aws iam create-role --role-name "$NEW_CLUSTER_ROLE_NAME" \
+  --assume-role-policy-document "file://$IAM_EXAMPLE_DIR/cluster-trust.json" &&
+aws iam attach-role-policy --role-name "$NEW_CLUSTER_ROLE_NAME" \
+  --policy-arn arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+
+if aws iam create-role --role-name "$NEW_NODE_ROLE_NAME" \
+  --assume-role-policy-document "file://$IAM_EXAMPLE_DIR/node-trust.json"; then
+  aws iam attach-role-policy --role-name "$NEW_NODE_ROLE_NAME" \
+    --policy-arn arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy &&
+  aws iam attach-role-policy --role-name "$NEW_NODE_ROLE_NAME" \
+    --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly
+fi
 ```
 
-**Roles adicionales (opcionales):**
+Crear solo un plano de control con `CreateCluster` todavía no requiere un rol de nodo de EC2. Añádalo para cómputo de EC2. Fargate utiliza un rol de ejecución de Pod distinto, separado de los permisos de AWS de la aplicación. Auto Mode necesita sus políticas adicionales de clúster/`sts:TagSession` y políticas mínimas de rol de nodo. Revise por separado permisos de identidad de aprovisionamiento como `iam:PassRole`.
 
-* **Fargate execution role**: Requerido solo al usar Fargate profiles.
-* **Service account IAM roles**: Requeridos al usar IRSA (IAM Roles for Service Accounts).
-* **ALB controller role**: Requerido al usar AWS Load Balancer Controller.
-
-El Fargate execution role solo se requiere al usar Fargate profiles y no es obligatorio para la creación básica de clusters de EKS. Por lo tanto, los IAM roles necesarios para crear un cluster de EKS son el EKS service role y el node instance role.
+[Requisitos de rol de nodo](https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html) · [Roles de Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html)
 
 </details>
 
-4. ¿Cuál es el comando correcto para crear un cluster de EKS usando eksctl?
+4. ¿Cuál es el comando correcto para crear un clúster de EKS mediante eksctl?
    * A) `eksctl create-cluster --name my-cluster --region us-west-2`
    * B) `eksctl create cluster --name my-cluster --region us-west-2`
    * C) `eksctl new cluster --name my-cluster --region us-west-2`
@@ -270,29 +216,23 @@ El Fargate execution role solo se requiere al usar Fargate profiles y no es obli
 
 **Respuesta: B) `eksctl create cluster --name my-cluster --region us-west-2`**
 
-**Explicación:** El comando correcto para crear un cluster de EKS usando eksctl es `eksctl create cluster --name my-cluster --region us-west-2`. Este comando crea un cluster de EKS con la configuración predeterminada en el nombre y la región especificados.
+**Explicación:** El comando correcto para crear un clúster de EKS mediante eksctl es `eksctl create cluster --name my-cluster --region us-west-2`. Este comando crea un clúster de EKS con la configuración predeterminada en el nombre y la región especificados.
 
-**Estructura del comando eksctl:**
+**Estructura de comandos de eksctl:**
 
 * `eksctl`: Comando base
 * `create`: Acción para crear un recurso
-* `cluster`: Tipo de recurso que se va a crear (cluster)
-* `--name my-cluster`: Especificar el nombre del cluster
-* `--region us-west-2`: Especificar la región de AWS
+* `cluster`: Tipo de recurso que se va a crear (clúster)
+* `--name my-cluster`: Especifica el nombre del clúster
+* `--region us-west-2`: Especifica la región de AWS
 
-**Comando básico de creación de cluster:**
+**Comando básico de creación de clúster:**
 
 ```bash
 eksctl create cluster --name my-cluster --region us-west-2
 ```
 
-Este comando crea un cluster con la siguiente configuración predeterminada:
-
-* 2 nodos m5.large
-* Creación de una VPC nueva
-* AMI predeterminada de Amazon Linux 2
-* Managed node groups
-* Creación automática de los IAM roles requeridos
+Los valores predeterminados dependen de la versión de eksctl. Seleccione explícitamente la versión de EKS, AL2023, el número de nodos y los endpoints en el archivo siguiente. La creación puede aprovisionar recursos de VPC, nodos e IAM; revise la configuración y los costos en una cuenta de prueba autorizada.
 
 **Comando avanzado con opciones adicionales:**
 
@@ -306,12 +246,12 @@ eksctl create cluster \
   --nodes-min 1 \
   --nodes-max 5 \
   --with-oidc \
-  --ssh-access \
-  --ssh-public-key my-key \
+  --node-ami-family AmazonLinux2023 \
+  --node-private-networking \
   --managed
 ```
 
-**Creación de cluster usando un archivo de configuración:**
+**Creación de clúster mediante un archivo de configuración:**
 
 ```bash
 # Create cluster.yaml file
@@ -322,17 +262,24 @@ kind: ClusterConfig
 metadata:
   name: my-cluster
   region: us-west-2
-  version: "1.28"
+  version: "1.36"
 
-nodeGroups:
+vpc:
+  clusterEndpoints:
+    publicAccess: true
+    privateAccess: true
+  publicAccessCIDRs: ["${APPROVED_API_CIDR:?Set your approved client CIDR}"]
+
+managedNodeGroups:
   - name: ng-1
     instanceType: t3.medium
+    amiFamily: AmazonLinux2023
+    privateNetworking: true
     desiredCapacity: 2
     minSize: 1
     maxSize: 3
     ssh:
-      allow: true
-      publicKeyName: my-key
+      allow: false
 EOF
 
 # Create cluster using configuration file
@@ -341,127 +288,101 @@ eksctl create cluster -f cluster.yaml
 
 **Problemas con las otras opciones:**
 
-* `eksctl create-cluster`: Formato de comando incorrecto. eksctl usa espacios, no guiones (-), para separar comandos.
+* `eksctl create-cluster`: Formato de comando incorrecto. eksctl utiliza espacios, no guiones (-), para separar comandos.
 * `eksctl new cluster`: 'new' no es un comando válido de eksctl.
-* `eksctl start cluster`: 'start' no es un comando válido de eksctl. El concepto de iniciar un cluster existente no se aplica a EKS.
+* `eksctl start cluster`: 'start' no es un comando válido de eksctl. Utilice los comandos de ciclo de vida documentados en lugar de inventar un verbo.
 
-eksctl proporciona varios comandos para la administración de clusters de EKS:
+eksctl proporciona diversos comandos para administrar clústeres de EKS:
 
-* `eksctl create cluster`: Crear un cluster nuevo
-* `eksctl get cluster`: Listar clusters
-* `eksctl update cluster`: Actualizar un cluster
-* `eksctl delete cluster`: Eliminar un cluster
-* `eksctl create nodegroup`: Agregar un node group
-* `eksctl scale nodegroup`: Escalar un node group
+* `eksctl create cluster`: Crear un nuevo clúster
+* `eksctl get cluster`: Enumerar clústeres
+* `eksctl upgrade cluster`: Actualizar un clúster
+* `eksctl delete cluster`: Eliminar un clúster
+* `eksctl create nodegroup`: Agregar un grupo de nodos
+* `eksctl scale nodegroup`: Escalar un grupo de nodos
 
 </details>
 
-5. ¿Qué es correcto con respecto a las versiones de Kubernetes que se pueden especificar al crear un cluster de Amazon EKS?
-   * A) Solo se admite la versión más reciente
-   * B) Solo se admiten la versión más reciente y las 2 versiones anteriores
-   * C) Todas las versiones de Kubernetes admitidas por AWS
+5. ¿Qué versiones de Kubernetes puede elegir para un nuevo clúster de EKS?
+   * A) Solo la versión upstream más reciente
+   * B) Siempre exactamente la más reciente más dos versiones
+   * C) Versiones ofrecidas con soporte estándar o extendido de EKS en la región de destino
    * D) Todas las versiones de Kubernetes
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Todas las versiones de Kubernetes admitidas por AWS**
+**Respuesta: C) Versiones ofrecidas con soporte estándar o extendido de EKS en la región de destino**
 
-**Explicación:** Al crear un cluster de Amazon EKS, puedes elegir entre las versiones de Kubernetes que AWS admite actualmente. AWS normalmente admite varias versiones de Kubernetes simultáneamente, incluida la versión más reciente y varias versiones anteriores.
+Una versión secundaria de EKS recibe **14 meses de soporte estándar desde su fecha de lanzamiento de EKS**, seguidos de **12 meses de soporte extendido de pago**. La lista oficial el 12 de octubre de 2026 es soporte estándar **1.34–1.37** y soporte extendido **1.31–1.33**. EKS 1.37 estuvo disponible el 1 de octubre de 2026, después de su lanzamiento upstream del 26 de agosto. Consulte la región de destino para conocer las versiones disponibles para nuevos clústeres.
 
-**Política de soporte de versiones de Kubernetes en EKS:**
+El soporte extendido está habilitado de forma predeterminada; la política de actualización y las fechas de fin de soporte pueden desencadenar actualizaciones automáticas del plano de control. Planifique por separado las actualizaciones de nodos/add-ons. Siga los avisos de fechas de soporte de AWS en lugar de considerar la ventana máxima de soporte como un motivo para retrasar actualizaciones.
 
-1. **Período de soporte**:
-   * Cada versión de Kubernetes recibe soporte durante 14 meses después de su lanzamiento en EKS.
-   * Las fechas de fin de soporte se anuncian con al menos 60 días de anticipación.
-2. **Versiones admitidas**:
-   * Normalmente, EKS admite 3-4 versiones de Kubernetes simultáneamente.
-   * Las versiones nuevas están disponibles en EKS unos meses después del lanzamiento de la comunidad de Kubernetes.
-3.  **Cómo verificar versiones**:
+Estos son ejemplos distintos para descubrimiento, generación de configuración, creación de AWS y actualización de un clúster existente. Prepare el destino autorizado, los roles, las subredes y el CIDR; no ejecute a ciegas ejemplos de creación y actualización como un único flujo de trabajo.
 
-    ```bash
-    # Check supported versions using AWS CLI
-    aws eks describe-addon-versions | grep kubernetesVersion | sort -u
+```bash
+aws eks describe-cluster-versions --region "${EXAMPLE_REGION:?}" --output table
 
-    # Or
-    aws eks get-cluster-version-list
-    ```
-4.  **Ejemplos de especificación de versión**:
+# Generate a versioned config for review; this does not create the cluster.
+EKS_VERSION_DIR=$(mktemp -d /tmp/eks-version.XXXXXX)
+: "${EKS_VERSION_DIR:?}"
+eksctl create cluster --name "${NEW_CLUSTER_NAME:?}" --region "$EXAMPLE_REGION" \
+  --version 1.36 --dry-run > "$EKS_VERSION_DIR/version-example.yaml"
+# Review all generated defaults, AMI, endpoint CIDRs and costs before creating.
 
-    ```bash
-    # Specify a specific version using eksctl
-    eksctl create cluster --name my-cluster --version 1.28 --region us-west-2
+# AWS CLI creation uses --kubernetes-version; the API JSON field is version.
+aws eks create-cluster --name "$NEW_CLUSTER_NAME" --region "$EXAMPLE_REGION" \
+  --kubernetes-version 1.36 --role-arn "${CLUSTER_ROLE_ARN:?}" \
+  --access-config authenticationMode=API \
+  --resources-vpc-config "subnetIds=${SUBNET_A:?},${SUBNET_B:?},endpointPrivateAccess=true,endpointPublicAccess=true,publicAccessCidrs=${APPROVED_API_CIDR:?}"
 
-    # Specify a specific version using AWS CLI
-    aws eks create-cluster \
-      --name my-cluster \
-      --kubernetes-version 1.28 \
-      --role-arn arn:aws:iam::123456789012:role/EksClusterRole \
-      --resources-vpc-config subnetIds=subnet-12345,subnet-67890
-    ```
-5.  **Actualizaciones de versión**:
+# Updating an existing control plane is a separate operation.
+aws eks describe-cluster --name "${EXAMPLE_CLUSTER:?}" --region "$EXAMPLE_REGION" \
+  --query cluster.version
+# Only after upgrade-readiness checks and choosing the next supported minor:
+aws eks update-cluster-version --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --kubernetes-version "${NEXT_MINOR_VERSION:?}"
+```
 
-    * Después de crear el cluster, puedes actualizar a versiones admitidas.
-    * En general, se recomienda actualizar una versión minor a la vez.
+Las actualizaciones del plano de control deben avanzar una versión secundaria cada vez. Revise conjuntamente las características necesarias, el soporte restante y la compatibilidad de add-ons/cargas de trabajo. Pruebe la versión de destino en lugar de asumir que una versión anterior siempre es más segura. Buscar cadenas de versión en los metadatos de add-ons no sustituye el descubrimiento de versiones de clúster.
 
-    ```bash
-    # Cluster version upgrade
-    aws eks update-cluster-version \
-      --name my-cluster \
-      --kubernetes-version 1.28
-    ```
-
-**Consideraciones al seleccionar una versión:**
-
-1. **Estabilidad**:
-   * La versión más reciente proporciona características nuevas, pero puede tener errores iniciales.
-   * Para entornos de producción donde la estabilidad es importante, puede ser mejor seleccionar una versión anterior ya probada.
-2. **Requisitos de características**:
-   * Si se necesitan características específicas de Kubernetes, debes seleccionar la versión mínima que admita esas características.
-3. **Período de soporte**:
-   * Para soporte a largo plazo, selecciona una versión lanzada recientemente para maximizar el período de soporte.
-4. **Compatibilidad del ecosistema**:
-   * Asegúrate de que las herramientas, add-ons y operators que usas sean compatibles con la versión de Kubernetes seleccionada.
-
-Problemas con las otras opciones:
-
-* No solo se admite la versión más reciente; se admiten varias versiones simultáneamente.
-* La cantidad de versiones admitidas no está fija en "la versión más reciente y las 2 versiones anteriores", sino que varía según la política de soporte de AWS.
-* No todas las versiones de Kubernetes son admitidas; solo se pueden usar versiones probadas y admitidas por AWS.
+[Ciclo de vida de versiones de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
 
 </details>
 
-6. ¿Cuál NO es una opción para crear node groups en un cluster de Amazon EKS?
-   * A) Managed node groups
-   * B) Self-managed node groups
-   * C) Fargate profiles
-   * D) Serverless node groups
+6. ¿Qué opción no aprovisiona por sí misma cómputo para una carga de trabajo de EKS?
+   * A) Grupos de nodos administrados
+   * B) Grupos de nodos autoadministrados
+   * C) Perfiles de Fargate
+   * D) Un namespace de Kubernetes
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: D) Serverless node groups**
+**Respuesta: D) Un namespace de Kubernetes**
 
-**Explicación:** "Serverless node groups" no es un concepto que exista en Amazon EKS. Las tres opciones principales para ejecutar cargas de trabajo en EKS son managed node groups, self-managed node groups y Fargate profiles.
+Un namespace organiza recursos de Kubernetes, pero no proporciona cómputo. Los grupos de nodos administrados de EC2, los nodos autoadministrados de EC2 y los perfiles de Fargate son rutas de cómputo válidas. EKS Auto Mode también aprovisiona nodos administrados, y Hybrid Nodes conecta capacidad local/perimetral administrada por el cliente. Estos mecanismos no utilizan todos la API de grupos de nodos administrados.
 
-**1. Managed Node Groups:**
+
+Los comandos de creación siguientes son alternativas para un clúster existente y nombres de grupo/perfil no utilizados. Sustituya todas las variables obligatorias por valores revisados. Compruebe la autorización de CNI/nodos y la conectividad de subredes privadas. Fargate requiere un rol de ejecución de Pod, Pods compatibles y subredes privadas; su perfil no crea Pods de aplicación.
+
+**1. Grupos de nodos administrados:**
 
 * **Características**:
   * AWS administra el aprovisionamiento y el ciclo de vida de los nodos
-  * Creación y registro automáticos de instancias EC2
+  * Creación y registro automáticos de instancias de EC2
   * Configuración automática de ASG (Auto Scaling Group)
-  * Actualizaciones automáticas de la versión de Kubernetes
-  * Reemplazo automático de nodos dañados
-  * Actualizaciones automáticas de AMI de nodos
+  * Actualizaciones de versión de Kubernetes del nodo iniciadas por el operador
+  * Reemplazo por estado de EC2; la reparación de nodos de EKS necesita sus señales/configuración de estado compatibles
+  * Actualizaciones de AMI iniciadas por el operador mediante el flujo administrado
 *   **Método de creación**:
 
     ```bash
     # Create managed node group using eksctl
     eksctl create nodegroup \
-      --cluster my-cluster \
-      --name my-mng \
+      --cluster "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+      --name my-mng --managed --node-ami-family AmazonLinux2023 --node-private-networking \
       --node-type t3.medium \
       --nodes 3 \
       --nodes-min 1 \
@@ -469,28 +390,28 @@ Problemas con las otras opciones:
 
     # Create managed node group using AWS CLI
     aws eks create-nodegroup \
-      --cluster-name my-cluster \
-      --nodegroup-name my-mng \
-      --subnets subnet-12345 subnet-67890 \
+      --cluster-name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+      --nodegroup-name my-mng --ami-type AL2023_x86_64_STANDARD \
+      --subnets "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" \
       --instance-types t3.medium \
       --scaling-config minSize=1,maxSize=5,desiredSize=3 \
-      --node-role arn:aws:iam::123456789012:role/EksNodeRole
+      --node-role "${NODE_ROLE_ARN:?}"
     ```
 
-**2. Self-managed Node Groups:**
+**2. Grupos de nodos autoadministrados:**
 
 * **Características**:
   * El usuario administra el aprovisionamiento y el ciclo de vida de los nodos
   * Más opciones de personalización
-  * Puede usar AMIs personalizadas o bootstrap scripts
-  * Adecuado para instance types o requisitos de configuración específicos
+  * Puede utilizar AMI personalizadas o scripts de arranque
+  * Adecuados para tipos de instancia o requisitos de configuración específicos
 *   **Método de creación**:
 
     ```bash
     # Create self-managed node group using eksctl
     eksctl create nodegroup \
-      --cluster my-cluster \
-      --name my-smng \
+      --cluster "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+      --name my-smng --node-ami-family AmazonLinux2023 --node-private-networking \
       --node-type t3.medium \
       --nodes 3 \
       --nodes-min 1 \
@@ -500,342 +421,195 @@ Problemas con las otras opciones:
     # Can also be created manually using CloudFormation or EC2 launch templates.
     ```
 
-**3. Fargate Profiles:**
+**3. Perfiles de Fargate:**
 
 * **Características**:
-  * Entorno serverless de ejecución de contenedores
+  * Entorno de ejecución de contenedores sin servidor
   * No se requiere administración de nodos
-  * Asignación de recursos y facturación por pod
-  * Ejecución selectiva basada en namespaces y labels específicos
+  * Asignación y facturación de recursos por Pod
+  * Ejecución selectiva según namespaces y etiquetas específicos
 *   **Método de creación**:
 
     ```bash
     # Create Fargate profile using eksctl
     eksctl create fargateprofile \
-      --cluster my-cluster \
+      --cluster "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
       --name my-fargate-profile \
       --namespace my-namespace \
       --labels app=my-app
 
     # Create Fargate profile using AWS CLI
     aws eks create-fargate-profile \
-      --cluster-name my-cluster \
+      --cluster-name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
       --fargate-profile-name my-fargate-profile \
-      --pod-execution-role-arn arn:aws:iam::123456789012:role/FargatePodExecutionRole \
-      --selectors namespace=my-namespace,labels={app=my-app}
+      --pod-execution-role-arn "${FARGATE_EXECUTION_ROLE_ARN:?}" \
+      --subnets "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" \
+      --selectors '[{"namespace":"my-namespace","labels":{"app":"my-app"}}]'
     ```
 
-**Comparison of each option:**
+**Comparación de cada opción:**
 
-| Feature             | Managed Node Groups | Self-managed Node Groups | Fargate Profiles             |
-| ------------------- | ------------------- | ------------------------ | ---------------------------- |
-| Management overhead | Low                 | High                     | None                         |
-| Customization       | Medium              | High                     | Low                          |
-| Cost efficiency     | Medium              | High (when optimized)    | Low (paying for convenience) |
-| Scalability         | Automatic           | Manual/Automatic         | Automatic                    |
-| Use case            | General workloads   | Special requirements     | Variable workloads, dev/test |
+| Característica | Grupos de nodos administrados | Nodos autoadministrados | Fargate |
+| --- | --- | --- | --- |
+| Administración de infraestructura | AWS administra el flujo de reemplazo; los operadores configuran actualizaciones/escalado | Los operadores administran AMI, arranque y ciclo de vida | AWS administra los hosts; los usuarios administran aplicaciones, perfiles y solicitudes |
+| Costo | Evalúe instancia, utilización, compromisos y operaciones | Evalúe la optimización junto con las operaciones | Compare tamaños de Pod asignados, tiempo de ejecución y restricciones |
+| Escalado | Se requiere un escalador/política de nodos independiente | Se requiere automatización independiente | Proporciona cómputo para los Pods coincidentes; el escalado de réplicas de aplicación es independiente |
 
-El término "serverless node groups" no existe oficialmente. Fargate proporciona un entorno serverless de ejecución de contenedores, pero se configura como "Fargate profiles", no como "node groups". Al usar Fargate, no necesitas administrar nodos directamente, y solo se aprovisionan los recursos de cómputo necesarios para la ejecución de pods.
+Los NodePools de Auto Mode y los perfiles de Fargate son recursos distintos de los grupos de nodos administrados de EC2. Fargate aún requiere la administración de cargas de trabajo, seguridad y disponibilidad, y no es universalmente más barato ni más caro.
 
 </details>
 
-7. ¿Cuál NO es un tipo de AMI de nodo admitido en clusters de Amazon EKS?
-   * A) Amazon Linux 2
-   * B) Amazon Linux 2023
-   * C) Bottlerocket
+7. ¿Cuál no es una familia de AMI optimizada para EKS publicada por AWS para nuevos nodos de EKS 1.36?
+   * A) Amazon Linux 2023
+   * B) Bottlerocket
+   * C) Windows Server 2022
    * D) Ubuntu Core
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
 **Respuesta: D) Ubuntu Core**
 
-**Explicación:** Ubuntu Core no es un tipo de AMI de nodo oficialmente admitido en Amazon EKS. Los tipos de AMI de nodo oficialmente admitidos en EKS son Amazon Linux 2, Amazon Linux 2023 y Bottlerocket.
+No considere Ubuntu Core como una AMI optimizada para EKS publicada por AWS. Las imágenes de Ubuntu Server de Canonical y las AMI creadas por clientes tienen publicadores, compatibilidad y rutas de soporte distintos; no son el mismo producto que Ubuntu Core.
 
-**Tipos de AMI de nodo admitidos en EKS:**
+**Opciones para este ejemplo**
 
-1.  **Amazon Linux 2 (AL2)**:
+- **AL2023**: Use una AMI optimizada para EKS y el arranque `nodeadm`. Compruebe la versión secundaria de Kubernetes, la arquitectura de CPU, la región y la compatibilidad de CNI.
+- **Bottlerocket**: Un sistema operativo centrado en contenedores con mecanismos de configuración y actualización distintos de los nodos Linux de propósito general.
+- **Windows**: Haga coincidir las versiones compatibles de host/contenedor de Windows Server y prepare los requisitos previos de redes, autenticación y cargas de trabajo del sistema de Windows. Este no es un ejemplo de Windows para Auto Mode/Fargate.
 
-    * Distribución Linux predeterminada proporcionada por AWS
-    * Disponible como AMI optimizada para EKS
-    * Recomendada para la mayoría de las cargas de trabajo de EKS
-    * Soporte a largo plazo y actualizaciones de seguridad
-
-    ```bash
-    # Create Amazon Linux 2 based node group
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name al2-nodes \
-      --node-ami-family AmazonLinux2
-    ```
-2.  **Amazon Linux 2023 (AL2023)**:
-
-    * Última versión de Amazon Linux
-    * Seguridad y rendimiento mejorados
-    * Último kernel y paquetes de software
-    * Disponible como AMI optimizada para EKS
-
-    ```bash
-    # Create Amazon Linux 2023 based node group
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name al2023-nodes \
-      --node-ami-family AmazonLinux2023
-    ```
-3.  **Bottlerocket**:
-
-    * OS de código abierto basado en Linux y optimizado para cargas de trabajo de contenedores
-    * Superficie de ataque minimizada
-    * Actualizaciones basadas en transacciones
-    * Diseño centrado en contenedores
-
-    ```bash
-    # Create Bottlerocket based node group
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name bottlerocket-nodes \
-      --node-ami-family Bottlerocket
-    ```
-
-**Otras opciones de AMI admitidas:**
-
-1.  **Windows**:
-
-    * AMIs basadas en Windows Server 2019, 2022
-    * Puede ejecutar cargas de trabajo de contenedores Windows
-
-    ```bash
-    # Create Windows based node group
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name windows-nodes \
-      --node-ami-family WindowsServer2022FullContainer
-    ```
-2.  **AMIs personalizadas**:
-
-    * Se pueden usar AMIs personalizadas para requisitos específicos
-    * Se usan principalmente con self-managed node groups
-
-    ```bash
-    # Create custom AMI based node group
-    eksctl create nodegroup \
-      --cluster my-cluster \
-      --name custom-nodes \
-      --node-ami ami-1234567890abcdef0
-    ```
-
-**Cómo usar Ubuntu en EKS:**
-
-Ubuntu Core no está oficialmente admitido, pero puedes crear self-managed node groups usando AMIs estándar de Ubuntu Server. En este caso, se requiere configuración adicional:
-
-1. Seleccionar AMI de Ubuntu Server
-2. Instalar los componentes necesarios de Kubernetes
-3. Usar bootstrap script para conectar los nodos al cluster
+**AL2 es una fuente de migración para entornos heredados.** La publicación/el soporte de AMI AL2 optimizadas para EKS finalizó el 26 de noviembre de 2025; el soporte de SO AL2 finalizó el 30 de junio de 2026. El soporte extendido de Kubernetes de EKS no extiende el soporte de AL2. No recomiende AL2 para nuevos despliegues de EKS 1.36.
 
 ```bash
-# Example of creating Ubuntu-based self-managed node group
-eksctl create nodegroup \
-  --cluster my-cluster \
-  --name ubuntu-nodes \
-  --node-ami ami-ubuntu-server-id \
-  --managed=false \
-  --ssh-access \
-  --ssh-public-key my-key \
-  --pre-bootstrap-commands 'apt-get update && apt-get install -y docker.io'
+# Alternative examples; create only the reviewed group needed by your workload.
+eksctl create nodegroup --cluster "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}"   --name al2023-nodes --managed --node-ami-family AmazonLinux2023 --node-private-networking
+
+eksctl create nodegroup --cluster "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION"   --name bottlerocket-nodes --managed --node-ami-family Bottlerocket --node-private-networking
+
+# Only after preparing the cluster for Windows:
+eksctl create nodegroup --cluster "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION"   --name windows-nodes --managed --node-ami-family WindowsServer2022FullContainer --node-private-networking
 ```
 
-**Consideraciones al seleccionar AMI:**
+También se pueden utilizar AMI personalizadas en plantillas de lanzamiento de grupos de nodos administrados. Fijar una AMI requiere verificar su SO/runtime, metadatos de clúster y configuración de arranque. Instalar únicamente `docker.io` en una imagen arbitraria de Ubuntu no produce un nodo de EKS funcional. Utilice una imagen de Canonical para la versión de EKS objetivo con una configuración revisada de eksctl/plantilla de lanzamiento. La pregunta avanzada distingue `ImageId` de plantilla de lanzamiento, `amiType` de grupo de nodos y las restricciones de combinación de datos de usuario.
 
-* **Seguridad**: Actualizaciones y parches de seguridad regulares
-* **Rendimiento**: Kernel y configuración optimizados para la carga de trabajo
-* **Compatibilidad**: Compatibilidad con la versión de Kubernetes
-* **Facilidad de administración**: Procesos de actualización y mantenimiento
-* **Requisitos especiales**: Soporte de GPU, kernel modules, etc.
+Revise las actualizaciones de seguridad, el rendimiento medido de la carga de trabajo, la compatibilidad de Kubernetes/controladores, las operaciones y requisitos especiales como GPU al seleccionar una imagen.
 
-Ubuntu Core es un sistema operativo ligero para dispositivos IoT y edge, y no está oficialmente admitido ni optimizado para usarse como nodos de EKS. Por lo tanto, Ubuntu Core no es un tipo de AMI de nodo admitido en clusters de EKS.
+[Transición de AL2](https://docs.aws.amazon.com/eks/latest/userguide/eks-ami-deprecation-faqs.html) · [AL2023/nodeadm](https://docs.aws.amazon.com/eks/latest/userguide/al2023.html) · [Requisitos previos de Windows](https://docs.aws.amazon.com/eks/latest/userguide/windows-support.html)
 
 </details>
 
-8. ¿Qué es correcto con respecto a la configuración de acceso a endpoints para clusters de Amazon EKS?
-   * A) De forma predeterminada, solo el endpoint público está habilitado
-   * B) De forma predeterminada, solo el endpoint privado está habilitado
-   * C) De forma predeterminada, tanto el endpoint público como el privado están habilitados
-   * D) El acceso a endpoints no se puede cambiar después de crear el cluster
+8. ¿Cuáles son los valores predeterminados cuando se omite el acceso a endpoints en la API CreateCluster?
+   * A) Público habilitado, privado deshabilitado
+   * B) Solo privado
+   * C) Ambos endpoints habilitados
+   * D) El acceso no se puede cambiar después de la creación
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: A) De forma predeterminada, solo el endpoint público está habilitado**
+**Respuesta: A) Público habilitado, privado deshabilitado**
 
-**Explicación:** Al crear un cluster de Amazon EKS, de forma predeterminada, solo el endpoint público está habilitado y el endpoint privado está deshabilitado. Esta configuración se puede cambiar después de crear el cluster, y se pueden seleccionar varias configuraciones de acceso a endpoints según los requisitos de seguridad.
+La API tiene de forma predeterminada el acceso público habilitado y el privado deshabilitado. Las rutas de creación con eksctl, CDK y consola pueden seleccionar explícitamente configuraciones diferentes; no es un valor predeterminado universal de herramientas. La configuración de acceso se puede cambiar después de la creación.
 
-**Opciones de acceso a endpoints del cluster de EKS:**
+| Público | Privado | Ruta de acceso |
+| --- | --- | --- |
+| Activado | Desactivado | Endpoint público y publicAccessCidrs; considere también las direcciones reales de salida de nodo/CI |
+| Activado | Activado | Ruta privada para solicitudes en la VPC; CIDR públicos permitidos externamente |
+| Desactivado | Activado | Ruta privada desde la VPC o redes conectadas |
+| Desactivado | Desactivado | Configuración no válida |
 
-1.  **Solo endpoint público habilitado (configuración predeterminada)**:
-
-    * Cluster API server accesible a través de internet
-    * El acceso se puede restringir mediante security groups
-    * Adecuado para entornos de desarrollo o prueba
-
-    ```bash
-    # Configuration using AWS CLI
-    aws eks update-cluster-config \
-      --name my-cluster \
-      --resources-vpc-config endpointPublicAccess=true,endpointPrivateAccess=false
-    ```
-2.  **Endpoints público y privado habilitados**:
-
-    * Accesible mediante IP privada desde dentro de la VPC
-    * También accesible a través de internet
-    * Adecuado para entornos híbridos
-
-    ```bash
-    # Configuration using AWS CLI
-    aws eks update-cluster-config \
-      --name my-cluster \
-      --resources-vpc-config endpointPublicAccess=true,endpointPrivateAccess=true
-    ```
-3.  **Solo endpoint privado habilitado**:
-
-    * Cluster API server accesible solo desde dentro de la VPC
-    * Sin acceso a través de internet
-    * Proporciona el nivel más alto de seguridad
-    * Recomendado para entornos de producción
-
-    ```bash
-    # Configuration using AWS CLI
-    aws eks update-cluster-config \
-      --name my-cluster \
-      --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true
-    ```
-4.  **Restricción de acceso público**:
-
-    * Permitir acceso al endpoint público solo desde bloques CIDR específicos
-    * Restringir el acceso solo desde la red corporativa o VPN
-
-    ```bash
-    # Configuration using AWS CLI
-    aws eks update-cluster-config \
-      --name my-cluster \
-      --resources-vpc-config endpointPublicAccess=true,endpointPrivateAccess=true,publicAccessCidrs=["203.0.113.0/24","198.51.100.0/24"]
-    ```
-
-**Configuración de endpoints al crear un cluster con eksctl:**
-
-```yaml
-# cluster.yaml
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-
-metadata:
-  name: my-cluster
-  region: us-west-2
-
-vpc:
-  clusterEndpoints:
-    publicAccess: true   # Enable public endpoint
-    privateAccess: true  # Enable private endpoint
-  publicAccessCIDRs: ["203.0.113.0/24"]  # Restrict public access
-```
+**El grupo de seguridad del clúster controla el tráfico del endpoint privado y de kubelet, no el acceso al endpoint público.** `publicAccessCidrs` se aplica solo al endpoint público. La autenticación/autorización sigue siendo obligatoria independientemente de la accesibilidad de red. Sustituya el CIDR IPv4 de ejemplo por la dirección de salida real del cliente aprobada.
 
 ```bash
-eksctl create cluster -f cluster.yaml
+aws eks describe-cluster --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --query cluster.resourcesVpcConfig
+
+# Select the actual approved client egress CIDR, not an arbitrary example range.
+ENDPOINT_UPDATE_ID=$(aws eks update-cluster-config --name "$EXAMPLE_CLUSTER" \
+  --region "$EXAMPLE_REGION" \
+  --resources-vpc-config "endpointPublicAccess=true,endpointPrivateAccess=true,publicAccessCidrs=${APPROVED_API_CIDR:?}" \
+  --query update.id --output text)
+: "${ENDPOINT_UPDATE_ID:?Update request failed}"
+aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --update-id "$ENDPOINT_UPDATE_ID" --query 'update.{status:status,errors:errors}'
 ```
 
-**Cambio de la configuración de acceso a endpoints:**
+Verifique que la actualización anterior sea `Successful` y que las redes de administración/CI puedan utilizar DNS privado, enrutamiento y acceso a API antes de deshabilitar el acceso público. No envíe de inmediato actualizaciones asíncronas superpuestas; establezca ambas marcas de acceso en una única solicitud.
 
 ```bash
-# Enable private endpoint
-aws eks update-cluster-config \
-  --name my-cluster \
-  --resources-vpc-config endpointPrivateAccess=true
-
-# Disable public endpoint
-aws eks update-cluster-config \
-  --name my-cluster \
-  --resources-vpc-config endpointPublicAccess=false
+# Separate alternative: run only after verifying private DNS/routing/API access
+# from the administration and CI/CD network, and after prior updates succeeded.
+PRIVATE_UPDATE_ID=$(aws eks update-cluster-config \
+  --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true \
+  --query update.id --output text)
+: "${PRIVATE_UPDATE_ID:?Update request failed}"
+aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --update-id "$PRIVATE_UPDATE_ID" --query 'update.{status:status,errors:errors}'
 ```
 
-**Consideraciones al configurar el acceso a endpoints:**
+El acceso privado a la API y la eliminación de la salida a Internet son decisiones de diseño independientes. Evalúe conjuntamente los controles de identidad, red y operación; el acceso privado por sí solo no garantiza seguridad ni disponibilidad. Considere VPN/Direct Connect/hosts de administración y los costos de conectividad. Los endpoints IPv6 y Hybrid Nodes tienen consideraciones adicionales de DNS/CIDR cubiertas en la guía oficial.
 
-1. **Requisitos de seguridad**:
-   * Usar solo endpoint privado proporciona el nivel más alto de seguridad
-   * Aplica restricciones CIDR cuando se necesita acceso público
-2. **Conectividad de red**:
-   * Al usar solo endpoint privado, el acceso solo es posible desde dentro de la VPC o mediante VPN/Direct Connect
-   * Habilitar ambos endpoints puede ser útil en entornos de trabajo híbridos
-3. **Requisitos operativos**:
-   * Considera cuándo CI/CD pipelines, herramientas externas, etc. necesitan acceso al cluster
-4. **Costo**:
-   * No hay costo adicional por la configuración de endpoints en sí
-   * Considera los costos de VPN o Direct Connect al usar solo endpoint privado
-
-Problemas con las otras opciones:
-
-* De forma predeterminada, solo el endpoint público está habilitado, no el endpoint privado.
-* De forma predeterminada, no están habilitados tanto el endpoint público como el privado; solo el endpoint público está habilitado.
-* El acceso a endpoints se puede cambiar después de crear el cluster.
+[Controles de acceso a endpoints de clúster](https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html)
 
 </details>
 
-9. ¿Cuál NO es una consideración al seleccionar instance types para node groups en clusters de Amazon EKS?
+9. ¿Qué NO es una consideración al seleccionar tipos de instancia para grupos de nodos en clústeres de Amazon EKS?
    * A) Requisitos de la carga de trabajo (CPU, memoria, almacenamiento)
    * B) Optimización de costos
-   * C) Número de availability zones
+   * C) El alias de contexto kubeconfig local
    * D) Generación de instancia (por ejemplo, t3 frente a t2)
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Número de availability zones**
+**Respuesta: C) El alias de contexto kubeconfig local**
 
-**Explicación:** El número de availability zones no es una consideración directa al seleccionar instance types para node groups. Las availability zones están relacionadas con dónde se implementan los node groups, y son independientes de la selección de los instance types en sí. Los instance types deben seleccionarse considerando los requisitos de carga de trabajo, la optimización de costos, la generación de instancia, etc.
+Un alias de kubeconfig es un nombre de cliente local y no cambia el rendimiento, los precios ni la disponibilidad de instancias. En cambio, son restricciones de selección importantes que un tipo se ofrezca en las AZ requeridas, la capacidad real y las cuotas de cuenta.
 
-**Consideraciones reales al seleccionar instance types para node groups:**
+**Consideraciones reales al seleccionar tipos de instancia para grupos de nodos:**
 
-1. **Requisitos de la carga de trabajo (CPU, memoria, almacenamiento)**:
-   * Seleccionar instance types que coincidan con los requisitos de recursos de la aplicación
-   * Cargas de trabajo intensivas en memoria: instancias optimizadas para memoria, como r5, r6g
-   * Cargas de trabajo intensivas en cómputo: instancias optimizadas para cómputo, como c5, c6g
-   * Cargas de trabajo equilibradas: instancias de uso general, como m5, m6g
-   * Cargas de trabajo de GPU: instancias de accelerated computing, como p3, g4dn
+1. **Requisitos de carga de trabajo (CPU, memoria, almacenamiento)**:
+   * Seleccione tipos de instancia que coincidan con los requisitos de recursos de la aplicación
+   * Cargas de trabajo intensivas en memoria: instancias optimizadas para memoria como r5, r6g
+   * Cargas de trabajo intensivas en cómputo: instancias optimizadas para cómputo como c5, c6g
+   * Cargas de trabajo equilibradas: instancias de propósito general como m5, m6g
+   * Cargas de trabajo de GPU: instancias de cómputo acelerado como p3, g4dn
 2. **Optimización de costos**:
-   * Instancias On-Demand frente a Spot instances
+   * Instancias bajo demanda frente a Spot
    * Reserved Instances o Savings Plans
-   * Selección de tamaño de instancia adecuado (evitar sobreaprovisionamiento)
-   * Ahorro de costos mediante instancias basadas en ARM Graviton (por ejemplo, m6g, c6g)
+   * Selección correcta del tamaño de instancia (evite el sobreaprovisionamiento)
+   * Ahorro de costos mediante instancias Graviton basadas en ARM (por ejemplo, m6g, c6g)
 3. **Generación de instancia**:
-   * Las instancias de última generación generalmente ofrecen mejor rendimiento y eficiencia de costos
-   * Ejemplo: t3 ofrece mejor rendimiento y relación precio-rendimiento que t2
-   * Las últimas generaciones proporcionan enhanced networking, rendimiento de almacenamiento, etc.
+   * Compare el precio/rendimiento específico de la generación para la carga de trabajo real
+   * Para familias con ráfagas, incluya el comportamiento de créditos de CPU y el rendimiento de referencia
+   * Las generaciones más recientes proporcionan redes mejoradas, rendimiento de almacenamiento, etc.
 4. **Requisitos de red**:
-   * Soporte de enhanced networking (ENA, EFA, etc.)
+   * Compatibilidad con redes mejoradas (ENA, EFA, etc.)
    * Requisitos de ancho de banda de red
-   * Límites de red relacionados con el máximo de pods por instancia
+   * Límites de red relacionados con el número máximo de Pods por instancia
 5. **Requisitos de almacenamiento**:
    * Si se necesita almacenamiento local de instancia (por ejemplo, instancias i3, d3)
-   * Soporte de optimización de EBS
-   * Requisitos de throughput e IOPS de almacenamiento
+   * Compatibilidad con optimización de EBS
+   * Requisitos de rendimiento de almacenamiento e IOPS
 6. **Arquitectura de CPU**:
    * x86 (Intel, AMD) frente a ARM (AWS Graviton)
    * Consideraciones de compatibilidad de aplicaciones
 
-**Availability zones e implementación de node groups:**
+**Zonas de disponibilidad y despliegue de grupos de nodos:**
 
-El número de availability zones está relacionado con la estrategia de implementación de node groups, no con la selección de instance types:
+La cobertura de AZ requerida limita los tipos de instancia utilizables. Una oferta de catálogo no garantiza capacidad inmediata:
 
-* Implementar node groups en varias availability zones para alta disponibilidad
-* Distribuir nodos de manera uniforme en cada availability zone
-* Se pueden seleccionar todas las availability zones de la región o availability zones específicas
+* Despliegue grupos de nodos en varias zonas de disponibilidad para alta disponibilidad
+* Planifique la capacidad de nodos y la distribución de topología de Pods y después verifique la ubicación real
+* Puede seleccionar todas las zonas de disponibilidad de la región o zonas de disponibilidad específicas
 
 ```bash
 # Deploy node group to specific availability zones
 eksctl create nodegroup \
-  --cluster my-cluster \
-  --name my-nodegroup \
+  --cluster "${EXAMPLE_CLUSTER:?}" --region us-west-2 \
+  --name my-nodegroup --managed --node-ami-family AmazonLinux2023 --node-private-networking \
   --node-type m5.large \
   --nodes 3 \
   --nodes-min 1 \
@@ -843,26 +617,26 @@ eksctl create nodegroup \
   --node-zones us-west-2a,us-west-2b
 ```
 
-**Ejemplos de selección de instance type:**
+**Ejemplos de selección de tipo de instancia:**
 
 1. **Servidores de aplicaciones web**:
-   * Instancias de uso general: t3.medium, m5.large
+   * Instancias de propósito general: t3.medium, m5.large
    * Rentables con rendimiento equilibrado
 2. **Bases de datos**:
    * Instancias optimizadas para memoria: r5.xlarge, r6g.xlarge
-   * Alta relación memoria/CPU
-3. **Trabajos de procesamiento batch**:
+   * Alta relación de memoria a CPU
+3. **Trabajos de procesamiento por lotes**:
    * Instancias optimizadas para cómputo: c5.xlarge, c6g.xlarge
    * Alto rendimiento de CPU
-4. **Cargas de trabajo de machine learning**:
-   * Instancias GPU: p3.2xlarge, g4dn.xlarge
-   * Capacidades de accelerated computing
+4. **Cargas de trabajo de aprendizaje automático**:
+   * Instancias de GPU: p3.2xlarge, g4dn.xlarge
+   * Capacidades de cómputo acelerado
 
-La selección de instance types debe determinarse por las características de la carga de trabajo, las restricciones de costo, los requisitos de rendimiento, etc., y el número de availability zones está relacionado con la estrategia de implementación de node groups en lugar de con la selección de los instance types en sí.
+Las familias anteriores son ejemplos, no un catálogo actual de productos ni una clasificación de rendimiento medida. Revise en conjunto la carga de trabajo, el precio, la arquitectura, los controladores y las ofertas/capacidad en las AZ requeridas.
 
 </details>
 
-10. ¿Cuál es el comando correcto para configurar kubectl después de crear un cluster de Amazon EKS?
+10. ¿Cuál es el comando correcto para configurar kubectl después de crear un clúster de Amazon EKS?
     * A) `aws eks update-kubeconfig --name my-cluster --region us-west-2`
     * B) `aws eks get-kubeconfig --name my-cluster --region us-west-2`
     * C) `kubectl config set-cluster my-cluster --region us-west-2`
@@ -874,1107 +648,819 @@ La selección de instance types debe determinarse por las características de la
 
 **Respuesta: A) `aws eks update-kubeconfig --name my-cluster --region us-west-2`**
 
-**Explicación:** El comando correcto para configurar kubectl después de crear un cluster de Amazon EKS es `aws eks update-kubeconfig --name my-cluster --region us-west-2`. Este comando usa el módulo EKS de AWS CLI para actualizar el archivo kubeconfig del cluster especificado.
+**Explicación:** El comando correcto para configurar kubectl después de crear un clúster de Amazon EKS es `aws eks update-kubeconfig --name my-cluster --region us-west-2`. Este comando utiliza el módulo EKS de AWS CLI para actualizar el archivo kubeconfig del clúster especificado.
 
 **Proceso de configuración de kubectl:**
 
 1. **Actualización del archivo kubeconfig**:
-   * El archivo kubeconfig almacena la información de configuración necesaria para que kubectl se comunique con clusters de Kubernetes.
-   * De forma predeterminada, se almacena en `~/.kube/config`.
-   * El comando `aws eks update-kubeconfig` actualiza este archivo automáticamente.
+   * El archivo kubeconfig almacena la información de configuración que kubectl necesita para comunicarse con clústeres de Kubernetes.
+   * El orden de selección es `--kubeconfig` explícito, la primera ruta `KUBECONFIG` y después `~/.kube/config`.
+   * El comando combina la configuración de clúster/autenticación exec y cambia el contexto actual en el archivo seleccionado; no concede permisos de clúster.
 2. **Componentes del comando**:
-   * `--name`: Nombre del cluster de EKS
-   * `--region`: Región de AWS donde se encuentra el cluster
-   * `--kubeconfig` (opcional): Ruta del archivo kubeconfig personalizado
-   * `--role-arn` (opcional): IAM role que se usará para el acceso al cluster
+   * `--name`: Nombre de clúster de EKS
+   * `--region`: Región de AWS donde se encuentra el clúster
+   * `--kubeconfig` (opcional): Ruta de archivo kubeconfig personalizada
+   * `--role-arn` (opcional): Rol de IAM que se utilizará para el acceso al clúster
 3.  **Ejemplo de comando completo**:
 
     ```bash
-    aws eks update-kubeconfig --name my-cluster --region us-west-2
+    aws eks update-kubeconfig --name my-cluster --region us-west-2 --kubeconfig "${EXAMPLE_KUBECONFIG:?}"
     ```
 4.  **Opciones adicionales**:
 
     ```bash
     # Use custom kubeconfig file
-    aws eks update-kubeconfig --name my-cluster --region us-west-2 --kubeconfig ~/.kube/eks-config
+    aws eks update-kubeconfig --name my-cluster --region us-west-2 --kubeconfig "${EXAMPLE_KUBECONFIG:?}"
 
     # Use specific IAM role
-    aws eks update-kubeconfig --name my-cluster --region us-west-2 --role-arn arn:aws:iam::123456789012:role/EksAdminRole
+    aws eks update-kubeconfig --name my-cluster --region us-west-2 --role-arn arn:aws:iam::123456789012:role/EksAdminRole --kubeconfig "${EXAMPLE_KUBECONFIG:?}"
 
     # Set alias
-    aws eks update-kubeconfig --name my-cluster --region us-west-2 --alias my-cluster-alias
+    aws eks update-kubeconfig --name my-cluster --region us-west-2 --alias my-cluster-alias --kubeconfig "${EXAMPLE_KUBECONFIG:?}"
     ```
 5.  **Verificar la configuración**:
 
     ```bash
     # Check current context
-    kubectl config current-context
+    kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" config current-context
 
     # List all contexts
-    kubectl config get-contexts
+    kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" config get-contexts
 
     # Test cluster connection
-    kubectl cluster-info
+    kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" cluster-info
     ```
 
 **Problemas con las otras opciones:**
 
-* `aws eks get-kubeconfig --name my-cluster --region us-west-2`: Este comando no existe. No hay un subcomando `get-kubeconfig` en AWS CLI.
-* `kubectl config set-cluster my-cluster --region us-west-2`: Este comando tiene sintaxis incorrecta. `kubectl config set-cluster` no admite la flag `--region` y no configura automáticamente la información de autenticación necesaria para clusters de EKS.
-* `eksctl configure kubectl --name my-cluster --region us-west-2`: Este comando no existe. eksctl no tiene un subcomando `configure kubectl`. Al crear un cluster con eksctl, kubeconfig se configura automáticamente, pero para clusters existentes, debes usar el comando `aws eks update-kubeconfig`.
+* `aws eks get-kubeconfig --name my-cluster --region us-west-2`: Este comando no existe. No hay ningún subcomando `get-kubeconfig` en AWS CLI.
+* `kubectl config set-cluster my-cluster --region us-west-2`: Este comando tiene sintaxis incorrecta. `kubectl config set-cluster` no admite la marca `--region` y no configura automáticamente la información de autenticación necesaria para clústeres de EKS.
+* `eksctl configure kubectl --name my-cluster --region us-west-2`: Este comando no existe. eksctl no tiene un subcomando `configure kubectl`. Al crear un clúster con eksctl, kubeconfig se configura automáticamente, pero para clústeres existentes use `aws eks update-kubeconfig` o `eksctl utils write-kubeconfig`.
 
-**Creación y configuración de cluster usando eksctl:**
+**Escritura de configuración para un clúster existente con eksctl:**
 
-Al crear un cluster usando eksctl, kubeconfig se actualiza automáticamente:
+Para un clúster existente, escriba su configuración sin crear otro clúster:
 
 ```bash
-eksctl create cluster --name my-cluster --region us-west-2
+eksctl utils write-kubeconfig --cluster my-cluster --region us-west-2 --kubeconfig "${EXAMPLE_KUBECONFIG:?}"
 ```
 
-Este comando crea el cluster y actualiza kubeconfig automáticamente. Sin embargo, para conectarte a un cluster existente o a un cluster creado por otra herramienta, debes usar el comando `aws eks update-kubeconfig`.
+Esto escribe kubeconfig para el clúster existente. Verifique por separado la autenticación de IAM y la autorización de entrada de acceso/RBAC. La creación del clúster también escribe kubeconfig de forma predeterminada, salvo que se deshabilite.
 
-**Administración de múltiples clusters:**
+**Administración de varios clústeres:**
 
-Al administrar varios clusters de EKS, puedes agregarlos al archivo kubeconfig ejecutando el comando `aws eks update-kubeconfig` para cada cluster:
+Al administrar varios clústeres de EKS, puede agregarlos al archivo kubeconfig ejecutando el comando `aws eks update-kubeconfig` para cada clúster:
 
 ```bash
 # Configure first cluster
-aws eks update-kubeconfig --name cluster1 --region us-west-2
+aws eks update-kubeconfig --name cluster1 --region us-west-2 --alias cluster1-west --kubeconfig "${EXAMPLE_KUBECONFIG:?}"
 
 # Configure second cluster
-aws eks update-kubeconfig --name cluster2 --region us-east-1
+aws eks update-kubeconfig --name cluster2 --region us-east-1 --alias cluster2-east --kubeconfig "${EXAMPLE_KUBECONFIG:?}"
 
 # Switch context
-kubectl config use-context arn:aws:eks:us-west-2:123456789012:cluster/cluster1
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" --context cluster1-west get nodes
 ```
 
-Por lo tanto, el comando correcto para configurar kubectl después de crear un cluster de Amazon EKS es `aws eks update-kubeconfig --name my-cluster --region us-west-2`.
+Por tanto, el comando correcto para configurar kubectl después de crear un clúster de Amazon EKS es `aws eks update-kubeconfig --name my-cluster --region us-west-2`.
 
 </details>
 
 ## Ejercicios prácticos
 
-### Ejercicio 1: Crear un cluster de EKS usando eksctl
+### Ejercicio 1: Crear un clúster de EKS mediante eksctl
 
-**Escenario:** Eres un ingeniero DevOps en tu empresa y necesitas crear un cluster de Amazon EKS para el equipo de desarrollo. El cluster debe ser rentable pero escalable, con configuraciones básicas de seguridad.
+**Escenario:** prepare un clúster convencional de grupos de nodos administrados de EC2 para un equipo de desarrollo. Este es un diseño de formación, no evidencia de preparación de producción probada ni de un resultado de costo medido.
 
-**Requisitos:**
-
-1. Crear un cluster de EKS usando eksctl
-2. Implementar en 2 availability zones
-3. Usar instance type t3.medium
-4. Configurar auto-scaling (mínimo 2, máximo 5 nodos)
-5. Habilitar endpoints privados y públicos
-
-**Solución:**
+**Requisitos:** use dos AZ, inicialmente dos nodos AL2023 `t3.medium`, límites de escalado de 2–5, redes privadas de nodos y ambos endpoints de API con un CIDR público aprobado. Los límites por sí solos no instalan un autoscaler. Compruebe los créditos de CPU de instancias con ráfagas, la memoria, la capacidad de IP, las cuotas y las necesidades reales de carga de trabajo antes de elegir `t3.medium`.
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**1. Instalar eksctl (si aún no está instalado)**
+**1. Prepare las herramientas y la identidad.** Use las instrucciones de instalación específicas de arquitectura y con suma de comprobación de la [Parte 1](../../eks/02-eks-cluster-creation-part1.md). Este ejemplo se revisó con EKS 1.36 y eksctl 0.230.0; compruebe las versiones de EKS disponibles en la región y las versiones compatibles de cliente/add-on antes de ejecutarlo. `kubectl` debe cumplir los límites de diferencia de versiones. Utilice un rol de IAM de operador aprobado y existente que su inicio de sesión pueda asumir; los permisos de aprovisionamiento y el acceso a Kubernetes son independientes.
+
+**2. Genere y revise una configuración local privada.** El nombre generado es para un nuevo clúster de formación. El CIDR público debe ser su rango de salida permitido real. Las dos AZ son ejemplos para `us-west-2`, sujetos a ofertas y capacidad.
 
 ```bash
-# macOS
-brew tap weaveworks/tap
-brew install weaveworks/tap/eksctl
-
-# Linux
-curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-sudo mv /tmp/eksctl /usr/local/bin
+# Use a dedicated training account/role with reviewed provisioning permissions.
+aws sts get-caller-identity
 eksctl version
-```
+kubectl version --client
+EKS_LAB_DIR=$(mktemp -d /tmp/eks-creation-lab.XXXXXX)
+: "${EKS_LAB_DIR:?}"
+EKS_LAB_CLUSTER="creation-quiz-$(date +%s)-$$"
+EKS_LAB_REGION=us-west-2
+EKS_LAB_KUBECONFIG="$EKS_LAB_DIR/kubeconfig"
+: "${APPROVED_API_CIDR:?Set your actual approved administration egress CIDR}"
+: "${OPERATOR_ROLE_ARN:?Set an existing IAM role ARN, not an STS session ARN}"
 
-**2. Crear archivo de configuración del cluster**
-
-```bash
-cat > eks-cluster.yaml << EOF
+cat > "$EKS_LAB_DIR/cluster.yaml" << EOF
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
-
 metadata:
-  name: dev-cluster
-  region: us-west-2
-  version: "1.28"
-
+  name: ${EKS_LAB_CLUSTER}
+  region: ${EKS_LAB_REGION}
+  version: "1.36"
+availabilityZones: ["us-west-2a", "us-west-2b"]
 vpc:
   clusterEndpoints:
     publicAccess: true
     privateAccess: true
-
-availabilityZones: ["us-west-2a", "us-west-2b"]
-
+  publicAccessCIDRs: ["${APPROVED_API_CIDR}"]
+accessConfig:
+  authenticationMode: API
+  bootstrapClusterCreatorAdminPermissions: false
+  accessEntries:
+    - principalARN: "${OPERATOR_ROLE_ARN}"
+      type: STANDARD
+      accessPolicies:
+        - policyARN: arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy
+          accessScope:
+            type: cluster
 managedNodeGroups:
-  - name: ng-1
+  - name: dev-ng
+    amiFamily: AmazonLinux2023
     instanceType: t3.medium
     desiredCapacity: 2
     minSize: 2
     maxSize: 5
-    iam:
-      withAddonPolicies:
-        imageBuilder: true
-        autoScaler: true
-        externalDNS: true
-        certManager: true
-        ebs: true
-        albIngress: true
-        cloudWatch: true
+    privateNetworking: true
+    disableIMDSv1: true
     ssh:
       allow: false
-    privateNetworking: true
     tags:
       Environment: development
-      Owner: devops-team
+      Owner: training
 EOF
+
+# Review the local configuration; this command does not create resources.
+eksctl create cluster -f "$EKS_LAB_DIR/cluster.yaml" --dry-run \
+  > "$EKS_LAB_DIR/resolved.yaml"
 ```
 
-**3. Crear el cluster**
+Esto concede al operador nombrado acceso de cluster-admin específicamente para el laboratorio y deshabilita el acceso automático de administrador del creador. No crea el rol de operador ni concede a quien llama permiso para asumirlo. eksctl crea los roles de clúster/nodo requeridos; revise el ámbito de sus políticas generadas. La base convencional puede colocar permisos de VPC CNI en el rol de nodo. Para un aislamiento más fuerte de las cargas de trabajo, configure un rol `aws-node` dedicado mediante la guía oficial de IAM de CNI. No agregue permisos amplios de envío de imágenes, DNS, almacenamiento, balanceador de carga o registro a todos los nodos simplemente porque esos add-ons podrían utilizarse más adelante.
+
+**3. Aprovisione solo después de revisar la configuración y los costos.** La topología predeterminada de nueva VPC puede crear NAT y otra infraestructura facturable. `eksctl` utiliza CloudFormation para recursos de VPC/subred/grupo de seguridad/rol/clúster/grupo de nodos. Los errores pueden dejar recursos parciales; inspeccione los eventos de stack en lugar de asumir una limpieza completa automática.
 
 ```bash
-eksctl create cluster -f eks-cluster.yaml
+# Provisioning step: creates billable AWS resources.
+if eksctl create cluster -f "${EKS_LAB_DIR:?}/cluster.yaml" --write-kubeconfig=false; then
+  EKS_LAB_ARN=$(aws eks describe-cluster \
+    --name "${EKS_LAB_CLUSTER:?}" --region "${EKS_LAB_REGION:?}" \
+    --query cluster.arn --output text)
+  : "${EKS_LAB_ARN:?Could not record the created cluster ARN}"
+  aws eks update-kubeconfig --name "$EKS_LAB_CLUSTER" \
+    --region "$EKS_LAB_REGION" --role-arn "${OPERATOR_ROLE_ARN:?}" \
+    --kubeconfig "${EKS_LAB_KUBECONFIG:?}" --alias "$EKS_LAB_CLUSTER"
+fi
 ```
 
-Este comando realiza las siguientes tareas:
-
-* Crea stacks de CloudFormation
-* Crea VPC y subnets
-* Configura security groups
-* Crea el cluster de EKS
-* Crea managed node groups
-* Inicializa nodos y los conecta al cluster
-* Configura kubeconfig
-
-**4. Verificar el cluster**
+**4. Verifique el estado, acceso y límites de escalado reales.** Espere los estados `ACTIVE` de grupo de nodos/clúster y nodos `Ready`, inspeccione Pods de sistema no saludables y verifique la ubicación esperada en AZ. Una solicitud de creación correcta o una lista de RBAC por sí sola no establece un clúster seguro y funcional.
 
 ```bash
-# Check cluster status
-eksctl get cluster --name dev-cluster --region us-west-2
-
-# Check nodes
-kubectl get nodes -o wide
-
-# Check system pods
-kubectl get pods -n kube-system
+aws eks describe-cluster --name "${EKS_LAB_CLUSTER:?}" \
+  --region "${EKS_LAB_REGION:?}" \
+  --query 'cluster.{status:status,version:version,endpoint:resourcesVpcConfig,access:accessConfig}'
+aws eks describe-nodegroup --cluster-name "$EKS_LAB_CLUSTER" \
+  --nodegroup-name dev-ng --region "$EKS_LAB_REGION" \
+  --query 'nodegroup.{status:status,scaling:scalingConfig,ami:amiType}'
+kubectl --kubeconfig "${EKS_LAB_KUBECONFIG:?}" config current-context
+kubectl --kubeconfig "$EKS_LAB_KUBECONFIG" get nodes -o wide
+kubectl --kubeconfig "$EKS_LAB_KUBECONFIG" get pods -n kube-system
+kubectl --kubeconfig "$EKS_LAB_KUBECONFIG" auth can-i get nodes
 ```
 
-**5. Configurar acceso al cluster**
+**5. Agregue solo los componentes necesarios.** Cluster Autoscaler requiere la configuración de IAM/cuenta de servicio/detección con alcance de la pregunta avanzada 2; los límites no reaccionan por sí solos a la demanda de carga de trabajo. `kubectl top` requiere un Metrics Server instalado y saludable. En la base auditada de Metrics Server 0.9.0, Kubernetes 1.34+ es compatible; verifique la versión realmente instalada. Mida el uso representativo antes de afirmar ahorros de costos o un dimensionamiento correcto.
+
+**6. Limpie este clúster de formación.** Primero elimine cualquier Service/Ingress de tipo LoadBalancer creado por el laboratorio y espere que sus controladores liberen recursos de AWS; inspeccione las políticas de reclamación de PVC y los volúmenes retenidos. Este ejercicio no crea recursos de aplicación de ese tipo. Después elimine solo el clúster registrado:
 
 ```bash
-# Verify kubeconfig
-kubectl config current-context
-
-# Check cluster information
-kubectl cluster-info
+# Only after removing this lab's workloads and checking retained resources.
+if CURRENT_LAB_ARN=$(aws eks describe-cluster \
+  --name "${EKS_LAB_CLUSTER:?}" --region "${EKS_LAB_REGION:?}" \
+  --query cluster.arn --output text) &&
+  [ "$CURRENT_LAB_ARN" = "${EKS_LAB_ARN:?Original cluster ARN required}" ]; then
+  eksctl delete cluster --name "$EKS_LAB_CLUSTER" --region "$EKS_LAB_REGION" --wait
+else
+  printf '%s\n' 'Cluster lookup/identity mismatch; no deletion attempted.' >&2
+fi
 ```
 
-**6. Verificar configuraciones básicas de seguridad**
-
-```bash
-# Check namespaces
-kubectl get namespaces
-
-# Check RBAC settings
-kubectl get clusterroles
-kubectl get clusterrolebindings
-```
-
-**7. Monitorear recursos del cluster**
-
-```bash
-# Check node resource usage
-kubectl top nodes
-
-# Check pod resource usage
-kubectl top pods --all-namespaces
-```
-
-A través de este ejercicio, aprendiste cómo crear un cluster de EKS rentable y escalable usando eksctl. Las instancias t3.medium son una opción rentable, y la configuración de auto-scaling permite ajustar automáticamente la cantidad de nodos según la carga de trabajo. Se habilitaron endpoints privados y públicos para permitir el acceso al cluster desde fuentes internas y externas.
+Compruebe después CloudFormation e inventarios de recursos de AWS para eliminaciones fallidas, volúmenes retenidos y roles/endpoints creados independientemente. Conserve el registro de configuración/ARN hasta confirmar la limpieza; elimine localmente el directorio kubeconfig temporal cuando ya no sea necesario.
 
 </details>
 
-### Ejercicio 2: Crear un cluster de EKS usando AWS Management Console
+### Ejercicio 2: Crear un clúster de EKS mediante AWS Management Console
 
-**Escenario:** Necesitas crear y configurar un cluster de EKS usando AWS Management Console. Este cluster es para un entorno de producción donde la seguridad y la alta disponibilidad son importantes.
-
-**Requisitos:**
-
-1. Crear un cluster de EKS usando AWS Management Console
-2. Colocar nodos en subnets privadas
-3. Restringir el acceso público al endpoint del cluster
-4. Configurar managed node groups
-5. Crear los IAM roles requeridos
-
-**Solución:**
+**Escenario:** revise un diseño convencional de grupos de nodos administrados que podría orientar un despliegue de producción posterior. Su dimensionamiento de carga de trabajo, enrutamiento, IAM, disponibilidad, actualizaciones y recuperación siguen siendo supuestos específicos del entorno que requieren pruebas. Este recorrido no se aprovisionó ni sometió a pruebas de carga durante la auditoría.
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**1. Crear los IAM roles requeridos**
+**1. Prepare roles de IAM independientes.**
 
-**Crear EKS cluster role:**
+- Rol de clúster: confía en `eks.amazonaws.com` y adjunta `AmazonEKSClusterPolicy`.
+- Rol de nodo de EC2: confía en `ec2.amazonaws.com`, adjunta `AmazonEKSWorkerNodePolicy` y `AmazonEC2ContainerRegistryPullOnly`. Otorgue a VPC CNI su propio rol de IRSA/Pod Identity cuando sea compatible. Si utiliza deliberadamente el respaldo más simple de rol de nodo IPv4, adjunte explícitamente `AmazonEKS_CNI_Policy` y documente la compensación de permisos compartidos.
+- Identidad de aprovisionamiento/operador: use permisos de IAM aprobados y con ámbito de recursos, y `iam:PassRole` para estos roles. Agregue una entrada de acceso de EKS para el rol de operador existente con la política de acceso requerida del laboratorio. Crear kubeconfig por sí solo no concede autorización de Kubernetes.
 
-1. Inicia sesión en AWS Management Console y navega al servicio IAM.
-2. Selecciona "Roles" en el menú izquierdo y haz clic en "Create role".
-3. Selecciona "AWS service" como tipo de entidad de confianza.
-4. En caso de uso, selecciona "EKS" y luego "EKS - Cluster".
-5. Haz clic en "Next".
-6. Verifica que `AmazonEKSClusterPolicy` se haya seleccionado automáticamente.
-7. Haz clic en "Next".
-8. Ingresa "EKSClusterRole" como nombre del role y haz clic en "Create role".
+**2. Revise VPC y subredes.** El siguiente ejemplo oficial sigue siendo una referencia utilizable; la fecha de su URL no es una versión de EKS:
 
-**Crear EKS node role:**
+```text
+https://s3.us-west-2.amazonaws.com/amazon-eks/cloudformation/2020-10-29/amazon-eks-vpc-private-subnets.yaml
+```
 
-1. Haz clic en "Create role" nuevamente en el servicio IAM.
-2. Selecciona "AWS service" como tipo de entidad de confianza.
-3. Selecciona "EC2" en caso de uso.
-4. Haz clic en "Next".
-5. Busca y selecciona las siguientes policies:
-   * `AmazonEKSWorkerNodePolicy`
-   * `AmazonEC2ContainerRegistryReadOnly`
-   * `AmazonEKS_CNI_Policy`
-6. Haz clic en "Next".
-7. Ingresa "EKSNodeRole" como nombre del role y haz clic en "Create role".
+Lea la plantilla de CloudFormation antes de crear un stack de formación con un nombre único. Sus valores predeterminados crean una VPC con **dos subredes públicas y dos privadas en dos AZ, una Internet gateway y dos NAT gateways/EIP**. Por lo tanto, es un diseño respaldado por NAT con Internet saliente, no un clúster privado sin salida. Revise la superposición de CIDR, AZ, capacidad de IP y cargos de NAT en lugar de conservar valores predeterminados para producción.
 
-**2. Preparar VPC y subnets**
+Registre `VpcId`, `SubnetIds` y `SecurityGroups`. `SubnetIds` contiene **subredes públicas y privadas**; inspeccione cada tabla de rutas y seleccione las subredes privadas reales para los nodos. El grupo de seguridad personalizado de salida no prueba que existan todas las reglas de comunicación requeridas. Revise el grupo de seguridad del clúster de EKS, los grupos adicionales y las reglas de comunicación entre plano de control/nodos.
 
-Se requiere una configuración de VPC adecuada para entornos de producción. Puedes usar una plantilla de AWS CloudFormation para crear una VPC optimizada para EKS:
+**3. Cree un clúster convencional.** En la consola de EKS, elija la ruta de configuración personalizada y deshabilite Auto Mode para este ejercicio. Seleccione una versión disponible y compatible en soporte estándar de EKS (1.36 es el ejemplo auditado), el rol de servicio del clúster y la VPC/subredes revisadas.
 
-1. Navega a la consola de CloudFormation.
-2. Selecciona "Create stack" > "With new resources (standard)".
-3.  Ingresa la siguiente dirección en Amazon S3 URL:
+- Seleccione autenticación de entrada de acceso a API y conceda acceso adecuado al operador nombrado; no se base en un valor predeterminado de administrador del creador sin explicación.
+- Para acceso solo de API privada, verifique primero el enrutamiento/DNS privado de la red de administración. Como alternativa, habilite el acceso público y privado y limite `publicAccessCidrs` al rango de salida de administración aprobado.
+- Mantenga add-ons compatibles de VPC CNI, kube-proxy y CoreDNS para este clúster de EC2 convencional; revise su configuración/permisos. Habilite los registros de plano de control necesarios y considere los cargos de registro.
+- Revise y cree el clúster; después espere a `ACTIVE`. La duración de creación es variable; un número de minutos citado no es una prueba de finalización.
 
-    ```
-    https://s3.us-west-2.amazonaws.com/amazon-eks/cloudformation/2020-10-29/amazon-eks-vpc-private-subnets.yaml
-    ```
-4. Haz clic en "Next".
-5. Ingresa "eks-vpc" como nombre del stack.
-6. Deja los parámetros predeterminados y haz clic en "Next".
-7. Deja las opciones predeterminadas en la siguiente página y haz clic en "Next".
-8. Haz clic en "Create stack".
-9. Una vez que se complete la creación del stack, anota los siguientes valores de la pestaña "Outputs":
-   * VpcId
-   * SubnetIds
-   * SecurityGroups
+**4. Agregue un grupo de nodos administrados.** Seleccione el rol de nodo de EC2, AMI AL2023 x86_64 y un tipo de instancia compatible como el ilustrativo `m5.large`. El ejemplo usa un disco raíz de 50 GiB, tamaño deseado 3, mínimo 2, máximo 5 y las subredes privadas revisadas. Son ejemplos de dimensionamiento, no recomendaciones de producción. Configure acceso, IMDS y cifrado de almacenamiento según sea necesario; espere que el grupo de nodos alcance `ACTIVE` y los nodos estén `Ready`.
 
-**3. Crear cluster de EKS**
+**5. Verifique el acceso e inspeccione los grupos de seguridad reales de AWS.** Use el nombre de clúster registrado en la consola y su rol de operador aprobado:
 
-1. Navega al servicio EKS en AWS Management Console.
-2. Haz clic en "Create cluster".
-3. En la página "Cluster configuration":
-   * Nombre del cluster: "prod-cluster"
-   * Versión de Kubernetes: Selecciona la versión más reciente (por ejemplo, 1.28)
-   * Cluster service role: Selecciona "EKSClusterRole" creado previamente
-   * Haz clic en "Next".
-4. En la página "Specify networking":
-   * VPC: Selecciona la VPC creada previamente
-   * Subnets: Selecciona solo subnets privadas (desmarca subnets públicas)
-   * Security groups: Selecciona el security group predeterminado
-   * Cluster endpoint access:
-     * Selecciona "Private" o
-     * Selecciona "Public and Private" y restringe los bloques CIDR al rango IP de la empresa
-   * Haz clic en "Next".
-5. En la página "Configure logging":
-   * Selecciona los tipos de log requeridos (API server, Audit, Authenticator, Controller manager, Scheduler)
-   * Haz clic en "Next".
-6. En la página "Select add-ons":
-   * Mantén los add-ons predeterminados (kube-proxy, CoreDNS, VPC CNI)
-   * Haz clic en "Next".
-7. Revisa todas las configuraciones en la página de revisión y haz clic en "Create".
-8. Espera a que se complete la creación del cluster (aproximadamente 15-20 minutos).
+```bash
+CONSOLE_LAB_DIR=$(mktemp -d /tmp/eks-console-lab.XXXXXX)
+: "${CONSOLE_LAB_DIR:?}"
+CONSOLE_KUBECONFIG="$CONSOLE_LAB_DIR/kubeconfig"
+aws eks update-kubeconfig --name "${CONSOLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --role-arn "${OPERATOR_ROLE_ARN:?}" \
+  --kubeconfig "$CONSOLE_KUBECONFIG" --alias "$CONSOLE_CLUSTER"
+kubectl --kubeconfig "$CONSOLE_KUBECONFIG" get nodes
+kubectl --kubeconfig "$CONSOLE_KUBECONFIG" get pods -n kube-system
 
-**4. Crear managed node group**
+# Security groups are AWS resources; kubeconfig does not contain their rules.
+aws eks describe-cluster --name "$CONSOLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --query 'cluster.resourcesVpcConfig.{clusterSG:clusterSecurityGroupId,additionalSGs:securityGroupIds,cidrs:publicAccessCidrs}'
+aws ec2 describe-security-groups --region "$EXAMPLE_REGION" \
+  --group-ids "${REVIEWED_CLUSTER_SG_ID:?Copy the cluster SG ID from the result above}"
+```
 
-1. Una vez creado el cluster, haz clic en el nombre del cluster.
-2. Ve a la pestaña "Compute" y haz clic en "Add node group".
-3. En la página "Node group configuration":
-   * Nombre: "prod-nodes"
-   * Node IAM role: Selecciona "EKSNodeRole" creado previamente
-   * Haz clic en "Next".
-4. En la página "Set compute and scaling configuration":
-   * AMI type: Amazon Linux 2 (x86)
-   * Instance type: Selecciona m5.large
-   * Disk size: 50 GiB
-   * Configuración de escalado del node group:
-     * Tamaño mínimo: 2
-     * Tamaño máximo: 5
-     * Tamaño deseado: 3
-   * Haz clic en "Next".
-5. En la página "Specify networking":
-   * Subnets: Selecciona solo subnets privadas
-   * Haz clic en "Next".
-6. Revisa todas las configuraciones en la página "Review and create" y haz clic en "Create".
-7. Espera a que se complete la creación del node group (aproximadamente 5 minutos).
+**6. Ejercicio opcional de NetworkPolicy.** Primero verifique que el CNI seleccionado y su configuración apliquen NetworkPolicy. La compatibilidad de políticas de AWS VPC CNI debe estar habilitada y ser compatible con la configuración de nodo/SO. La siguiente denegación predeterminada solo de entrada se limita a un nuevo namespace de laboratorio vacío; no deniega la salida ni prueba la aplicación de políticas simplemente porque `apply` tenga éxito.
 
-**5. Configurar kubectl y acceder al cluster**
+```bash
+# An optional isolated policy example, after enabling CNI policy enforcement.
+NP_LAB_NAMESPACE="np-quiz-$(date +%s)-$$"
+if kubectl --kubeconfig "${CONSOLE_KUBECONFIG:?}" create namespace "$NP_LAB_NAMESPACE"; then
+  NP_LAB_UID=$(kubectl --kubeconfig "$CONSOLE_KUBECONFIG" \
+    get namespace "$NP_LAB_NAMESPACE" -o jsonpath='{.metadata.uid}')
+  : "${NP_LAB_UID:?Namespace identity lookup failed}"
+  cat > "${CONSOLE_LAB_DIR:?}/default-deny.yaml" << EOF
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: ${NP_LAB_NAMESPACE}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+EOF
+  kubectl --kubeconfig "$CONSOLE_KUBECONFIG" \
+    apply -f "$CONSOLE_LAB_DIR/default-deny.yaml"
+fi
+```
 
-1. Verifica que AWS CLI esté instalado.
-2.  Ejecuta el siguiente comando para actualizar el archivo de configuración de kubectl:
+Pruebe el tráfico permitido y denegado con Pods de prueba dedicados y agregue las políticas de permiso requeridas por la aplicación antes de utilizar este patrón para cargas de trabajo reales. No lo aplique a un namespace `default` compartido existente. Elimine el namespace aislado al finalizar:
 
-    ```bash
-    aws eks update-kubeconfig --name prod-cluster --region us-west-2
-    ```
-3.  Verifica la conexión al cluster:
+```bash
+# Remove only the namespace created above, after confirming its UID.
+if CURRENT_NP_UID=$(kubectl --kubeconfig "${CONSOLE_KUBECONFIG:?}" \
+  get namespace "${NP_LAB_NAMESPACE:?}" -o jsonpath='{.metadata.uid}') &&
+  [ "$CURRENT_NP_UID" = "${NP_LAB_UID:?Original namespace UID required}" ]; then
+  kubectl --kubeconfig "$CONSOLE_KUBECONFIG" delete namespace "$NP_LAB_NAMESPACE" --wait=true
+else
+  printf '%s\n' 'Namespace lookup/identity mismatch; no deletion attempted.' >&2
+fi
+```
 
-    ```bash
-    kubectl get nodes
-    kubectl cluster-info
-    ```
-
-**6. Mejorar la seguridad básica**
-
-1.  Revisa y restringe las reglas de AWS security group:
-
-    ```bash
-    # Check cluster information for current context
-    kubectl config view --minify
-    ```
-2.  Aplica network policies (opcional):
-
-    ```yaml
-    # default-deny.yaml
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: default-deny
-      namespace: default
-    spec:
-      podSelector: {}
-      policyTypes:
-      - Ingress
-    ```
-
-    ```bash
-    kubectl apply -f default-deny.yaml
-    ```
-
-A través de este ejercicio, aprendiste cómo crear un cluster de EKS con configuraciones de seguridad y alta disponibilidad adecuadas para entornos de producción usando AWS Management Console. La seguridad se mejoró al colocar nodos en subnets privadas y restringir el acceso público al endpoint del cluster, y la administración de nodos se simplificó al usar managed node groups.
+**7. Limpieza de consola:** elimine las cargas de trabajo de laboratorio y espere que se liberen los recursos de nube asociados; luego elimine el grupo de nodos administrados de este laboratorio, espere su eliminación y elimine el clúster de laboratorio. Elimine el stack de CloudFormation de VPC del laboratorio solo después de que desaparezcan sus recursos de EKS y dependencias externas. Elimine únicamente roles/endpoints de IAM creados exclusivamente para este laboratorio; conserve los recursos compartidos e inspeccione cualquier recurso fallido o retenido. Esta revisión no ejecutó esas operaciones.
 
 </details>
 
 ## Temas avanzados
 
-Las siguientes son preguntas sobre temas avanzados relacionados con la creación de clusters de Amazon EKS. Esta sección evalúa tu comprensión de conceptos avanzados y prácticas recomendadas para la creación de clusters de EKS.
+Las siguientes son preguntas sobre temas avanzados relacionados con la creación de clústeres de Amazon EKS. Esta sección evalúa su comprensión de conceptos avanzados y prácticas recomendadas para la creación de clústeres de EKS.
 
-1. ¿Cuál es el principal beneficio de usar Launch Templates personalizados en clusters de Amazon EKS?
-   * A) Tiempo de creación del cluster reducido
-   * B) Bootstrap scripts de nodos personalizables y configuración de volúmenes adicionales
-   * C) Personalización del control plane del cluster
-   * D) Usa automáticamente la versión de AMI más reciente
-
-<details>
-
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Bootstrap scripts de nodos personalizables y configuración de volúmenes adicionales**
-
-**Explicación:** El principal beneficio de usar Launch Templates personalizados en clusters de Amazon EKS es la capacidad de personalizar bootstrap scripts de nodos y configurar volúmenes adicionales. Los launch templates permiten un control detallado sobre varios aspectos de las instancias EC2, lo que habilita configuraciones avanzadas que no son posibles con las opciones predeterminadas de creación de node groups.
-
-**Elementos personalizables con Launch Templates:**
-
-1. **Bootstrap scripts personalizados**:
-   * Definir scripts personalizados que se ejecutan antes de que los nodos se unan al cluster
-   * Instalar y configurar software adicional
-   * Ajustar configuraciones del sistema (parámetros del kernel, configuraciones de red, etc.)
-   *   Ejemplo:
-
-       ```bash
-       #!/bin/bash
-       # Custom bootstrap script
-       echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
-       sysctl -p
-
-       # Install additional packages
-       yum install -y amazon-cloudwatch-agent
-
-       # Run EKS bootstrap script
-       /etc/eks/bootstrap.sh my-cluster --kubelet-extra-args '--node-labels=node.kubernetes.io/role=worker'
-       ```
-2. **Configuración de volúmenes adicionales**:
-   * Personalizar tamaño, tipo e IOPS del volumen raíz
-   * Adjuntar volúmenes EBS adicionales para datos, logs, almacenamiento temporal
-   * Configurar volúmenes de instance store
-   *   Ejemplo:
-
-       ```json
-       {
-         "DeviceName": "/dev/xvda",
-         "Ebs": {
-           "VolumeSize": 100,
-           "VolumeType": "gp3",
-           "Iops": 3000,
-           "Throughput": 125,
-           "DeleteOnTermination": true
-         }
-       },
-       {
-         "DeviceName": "/dev/sdf",
-         "Ebs": {
-           "VolumeSize": 500,
-           "VolumeType": "gp3",
-           "DeleteOnTermination": true
-         }
-       }
-       ```
-3. **Configuración avanzada de red**:
-   * Habilitar enhanced networking
-   * Configurar múltiples interfaces de red
-   * Especificar placement groups
-   *   Ejemplo:
-
-       ```json
-       {
-         "NetworkInterfaces": [
-           {
-             "DeviceIndex": 0,
-             "Groups": ["sg-12345"],
-             "DeleteOnTermination": true
-           }
-         ]
-       }
-       ```
-4. **Opciones de metadatos de instancia**:
-   * Requerir IMDSv2 (seguridad mejorada)
-   * Establecer hop limit
-   *   Ejemplo:
-
-       ```json
-       {
-         "MetadataOptions": {
-           "HttpTokens": "required",
-           "HttpPutResponseHopLimit": 2
-         }
-       }
-       ```
-5. **User data scripts**:
-   * Proporcionar scripts que se ejecutan al iniciar la instancia
-   * Realizar configuración personalizada antes de unirse al cluster
-   *   Ejemplo:
-
-       ```bash
-       #!/bin/bash
-       # User data script
-       mkdir -p /opt/app
-       mount -t tmpfs -o size=10G tmpfs /opt/app
-       ```
-
-**Creación y uso de Launch Templates:**
-
-1. **Crear Launch Template en AWS Management Console**:
-   * EC2 Console > Launch Templates > Create launch template
-   * Configurar AMI, instance type, key pair, security groups, etc.
-   * Configurar ajustes avanzados como almacenamiento, interfaces de red, user data
-2.  **Crear node group basado en launch template usando eksctl**:
-
-    ```yaml
-    apiVersion: eksctl.io/v1alpha5
-    kind: ClusterConfig
-
-    metadata:
-      name: my-cluster
-      region: us-west-2
-
-    managedNodeGroups:
-      - name: custom-ng
-        launchTemplate:
-          id: lt-12345abcdef
-          version: "1"
-    ```
-3.  **Crear node group basado en launch template usando AWS CLI**:
-
-    ```bash
-    aws eks create-nodegroup \
-      --cluster-name my-cluster \
-      --nodegroup-name custom-ng \
-      --launch-template id=lt-12345abcdef,version=1 \
-      --subnets subnet-12345 subnet-67890 \
-      --node-role arn:aws:iam::123456789012:role/EKSNodeRole
-    ```
-
-**Problemas con las otras opciones:**
-
-* **Tiempo de creación del cluster reducido**: Usar launch templates no reduce el tiempo de creación del cluster. De hecho, la configuración adicional puede hacer que tarde un poco más.
-* **Personalización del control plane del cluster**: Los launch templates solo se aplican a worker nodes; el control plane de EKS es administrado por AWS y no se puede personalizar mediante launch templates.
-* **Usa automáticamente la versión de AMI más reciente**: Los launch templates especifican un ID de AMI específico, lo que en realidad tiene el efecto de bloquear la versión de AMI. Para usar automáticamente la AMI más reciente, debes no usar launch templates o actualizar regularmente el launch template.
-
-Los launch templates son particularmente útiles cuando se necesita personalización avanzada de node groups de EKS, y deben usarse cuando hay requisitos especiales que no se pueden cumplir con la configuración estándar.
-
-</details>
-
-2. ¿Cuál NO es una estrategia de optimización de costos para clusters de Amazon EKS?
-   * A) Usar Spot instances
-   * B) Configurar Cluster Autoscaler
-   * C) Usar los instance types más recientes para todos los worker nodes
-   * D) Uso selectivo de Fargate profiles
+1. ¿Cuál es un beneficio principal de las plantillas de lanzamiento personalizadas para grupos de nodos administrados de EKS EC2?
+   * A) Creación de clúster garantizada más corta
+   * B) Datos de usuario de nodo y configuración de volumen personalizados
+   * C) Instalación de complementos de plano de control
+   * D) Actualizaciones automáticas de todos los nodos existentes a cada AMI recién publicada
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) Usar los instance types más recientes para todos los worker nodes**
+**Respuesta: B) Datos de usuario de nodo y configuración de volumen personalizados**
 
-**Explicación:** Usar los instance types más recientes para todos los worker nodes no es necesariamente una estrategia de optimización de costos. Los instance types más recientes suelen ofrecer mejor rendimiento y características, pero no siempre son rentables. Es más importante seleccionar instance types adecuados que coincidan con los requisitos de la carga de trabajo.
+Las plantillas de lanzamiento personalizan los **grupos de nodos administrados de EC2**, incluido el almacenamiento, los metadatos de instancia y los datos de usuario específicos del SO. No configuran el plano de control de EKS ni los nodos de EKS Auto Mode.
 
-**Estrategias reales de optimización de costos para clusters de EKS:**
+**Datos de usuario de AL2023:** use datos MIME multipartes. Con una AMI seleccionada por EKS (sin `ImageId` en la plantilla), EKS proporciona/combina la configuración de nodo. Con un ID de AMI personalizado, proporcione el `NodeConfig` completo descrito en la pregunta avanzada 5. Los servicios systemd de AL2023 ejecutan `nodeadm`; no llame a `/etc/eks/bootstrap.sh`, no ejecute de nuevo `nodeadm init` ni inicie kubelet manualmente. El software adicional debe ser compatible con el SO seleccionado y tener una fuente de paquetes confiable y accesible.
 
-1. **Usar Spot instances**:
-   * Hasta 90% de ahorro de costos en comparación con instancias On-Demand
-   * Adecuado para cargas de trabajo interrumpibles (batch jobs, entornos dev/test, etc.)
-   *   Configurar Spot instances en managed node groups:
+Esta personalización mínima es para el caso de AMI AL2023 seleccionada por EKS; solo crea un directorio de aplicación:
 
-       ```bash
-       eksctl create nodegroup \
-         --cluster my-cluster \
-         --name spot-ng \
-         --node-type m5.large \
-         --nodes 2 \
-         --nodes-min 1 \
-         --nodes-max 5 \
-         --spot
-       ```
-   *   Mezclar múltiples instance types para mejorar la disponibilidad:
+```text
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="EKS_CUSTOMIZATION"
 
-       ```yaml
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       managedNodeGroups:
-         - name: spot-ng
-           instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m5ad.large"]
-           spot: true
-       ```
-2. **Configurar Cluster Autoscaler**:
-   * Ajustar automáticamente la cantidad de nodos según los requisitos de la carga de trabajo
-   * Ahorro de costos al eliminar automáticamente nodos no utilizados
-   *   Instalación y configuración:
+--EKS_CUSTOMIZATION
+Content-Type: text/x-shellscript; charset="us-ascii"
 
-       ```bash
-       # Install Cluster Autoscaler using Helm
-       helm repo add autoscaler https://kubernetes.github.io/autoscaler
-
-       helm install cluster-autoscaler autoscaler/cluster-autoscaler \
-         --namespace kube-system \
-         --set autoDiscovery.clusterName=my-cluster \
-         --set awsRegion=us-west-2 \
-         --set rbac.create=true
-       ```
-3. **Uso selectivo de Fargate profiles**:
-   * El entorno serverless de ejecución de contenedores elimina la carga de administración de nodos
-   * Paga solo por los recursos utilizados
-   * Adecuado para cargas de trabajo intermitentes o entornos dev/test
-   *   Usar Fargate solo para namespaces o labels específicos:
-
-       ```bash
-       eksctl create fargateprofile \
-         --cluster my-cluster \
-         --name fp-dev \
-         --namespace dev
-       ```
-4. **Seleccionar tamaños de instancia adecuados**:
-   * Seleccionar tamaños de instancia que coincidan con los requisitos de la carga de trabajo
-   * Evitar el sobreaprovisionamiento
-   *   Monitorear y analizar el uso de recursos:
-
-       ```bash
-       kubectl top nodes
-       kubectl top pods --all-namespaces
-       ```
-5. **Usar instancias basadas en Graviton (ARM)**:
-   * Hasta 40% de ahorro de costos en comparación con instancias basadas en x86
-   * Proporciona rendimiento equivalente
-   * Se requiere verificación de compatibilidad
-   *   Ejemplo:
-
-       ```bash
-       eksctl create nodegroup \
-         --cluster my-cluster \
-         --name arm-ng \
-         --node-type m6g.large \
-         --nodes 2
-       ```
-6. **Utilizar Reserved Instances o Savings Plans**:
-   * Ahorro de costos mediante compromisos a largo plazo
-   * Adecuado para cargas de trabajo predecibles
-   * Hasta 72% de ahorro de costos en comparación con On-Demand
-7. **Optimizar resource requests y limits**:
-   * Mejorar la utilización de nodos configurando correctamente los resource requests de pods
-   * Evitar el sobreaprovisionamiento
-   *   Ejemplo:
-
-       ```yaml
-       resources:
-         requests:
-           cpu: 100m
-           memory: 128Mi
-         limits:
-           cpu: 500m
-           memory: 256Mi
-       ```
-8. **Monitoreo y análisis de costos**:
-   * Usar AWS Cost Explorer
-   * Configurar Kubernetes cost allocation tags
-   * Usar herramientas de monitoreo de costos de terceros (Kubecost, CloudHealth, etc.)
-
-**Problemas con el uso de los instance types más recientes:**
-
-1. **Costos incrementados**:
-   * Los instance types más recientes a menudo pueden ser más costosos que generaciones anteriores
-   * No todas las cargas de trabajo requieren características de las instancias más recientes
-2. **Sobreaprovisionamiento**:
-   * Proporcionar recursos que exceden los requisitos de la carga de trabajo
-   * Produce costos innecesarios
-3. **Limitaciones de disponibilidad**:
-   * Los instance types más recientes pueden no estar disponibles en todas las regiones o availability zones
-   * Disponibilidad especialmente limitada al usar Spot instances
-4. **Problemas de compatibilidad**:
-   * Algunas cargas de trabajo pueden estar optimizadas para instance types específicos
-   * Se requieren pruebas al migrar a nuevos instance types
-
-Para la optimización de costos, es importante considerar integralmente las características de la carga de trabajo, los requisitos de recursos, los requisitos de disponibilidad, etc., y seleccionar instance types y tamaños adecuados. Los instance types más recientes no siempre son la opción más rentable, y es más importante seleccionar instance types adecuados para la carga de trabajo.
-
-</details>
-
-3. ¿Cuál es la forma correcta de configurar un cluster privado en Amazon EKS?
-   * A) Colocar nodos solo en subnets privadas y deshabilitar el endpoint público
-   * B) Colocar nodos solo en subnets privadas y habilitar el endpoint público
-   * C) Colocar nodos en subnets públicas y deshabilitar el endpoint público
-   * D) Colocar nodos solo en subnets privadas sin VPC endpoints
-
-<details>
-
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: A) Colocar nodos solo en subnets privadas y deshabilitar el endpoint público**
-
-**Explicación:** Para configurar un cluster completamente privado en Amazon EKS, necesitas colocar nodos solo en subnets privadas y deshabilitar el endpoint público. Esto garantiza que el Kubernetes API server del cluster no sea accesible desde internet y que todo el tráfico ocurra solo dentro de la VPC.
-
-**Componentes de configuración de un cluster privado de EKS:**
-
-1. **Configuración de acceso a endpoints**:
-   * Deshabilitar endpoint público
-   * Habilitar endpoint privado
-   *   Ejemplo de configuración de AWS CLI:
-
-       ```bash
-       aws eks update-cluster-config \
-         --name my-cluster \
-         --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true
-       ```
-   *   Ejemplo de configuración de eksctl:
-
-       ```yaml
-       apiVersion: eksctl.io/v1alpha5
-       kind: ClusterConfig
-       metadata:
-         name: my-cluster
-         region: us-west-2
-       vpc:
-         clusterEndpoints:
-           publicAccess: false
-           privateAccess: true
-       ```
-2. **Ubicación de nodos**:
-   * Colocar nodos solo en subnets privadas
-   * Sin asignación de IP pública
-   *   Ejemplo de configuración de managed node group:
-
-       ```bash
-       eksctl create nodegroup \
-         --cluster my-cluster \
-         --name private-ng \
-         --node-type m5.large \
-         --nodes 3 \
-         --node-private-networking \
-         --subnet-ids subnet-private1,subnet-private2
-       ```
-3.  **Configuración de VPC endpoints**: VPC endpoints requeridos para que los clusters privados accedan a servicios de AWS:
-
-    * com.amazonaws.region.ecr.api
-    * com.amazonaws.region.ecr.dkr
-    * com.amazonaws.region.s3
-    * com.amazonaws.region.logs (opcional)
-    * com.amazonaws.region.sts (opcional)
-
-    ```bash
-    # Create ECR API endpoint
-    aws ec2 create-vpc-endpoint \
-      --vpc-id vpc-12345 \
-      --service-name com.amazonaws.us-west-2.ecr.api \
-      --vpc-endpoint-type Interface \
-      --subnet-ids subnet-private1 subnet-private2 \
-      --security-group-ids sg-12345 \
-      --private-dns-enabled
-
-    # Create ECR Docker endpoint
-    aws ec2 create-vpc-endpoint \
-      --vpc-id vpc-12345 \
-      --service-name com.amazonaws.us-west-2.ecr.dkr \
-      --vpc-endpoint-type Interface \
-      --subnet-ids subnet-private1 subnet-private2 \
-      --security-group-ids sg-12345 \
-      --private-dns-enabled
-
-    # Create S3 endpoint (Gateway type)
-    aws ec2 create-vpc-endpoint \
-      --vpc-id vpc-12345 \
-      --service-name com.amazonaws.us-west-2.s3 \
-      --vpc-endpoint-type Gateway \
-      --route-table-ids rtb-12345
-    ```
-4. **Configuración de red**:
-   * NAT Gateway o VPC endpoints requeridos en subnets privadas
-   * Restricción de tráfico con reglas de security group
-   * Configuración de routing table
-
-**Métodos para acceder a clusters privados:**
-
-1. **Acceso mediante VPN o Direct Connect**:
-   * AWS Client VPN
-   * AWS Site-to-Site VPN
-   * AWS Direct Connect
-2.  **Acceso mediante Bastion Host**:
-
-    * Colocar bastion host en subnet pública
-    * Acceder al cluster API server desde bastion host
-
-    ```bash
-    # Configure kubeconfig on bastion host
-    aws eks update-kubeconfig --name my-cluster --region us-west-2
-    ```
-3. **Acceso mediante AWS Systems Manager Session Manager**:
-   * Acceder a instancias EC2 sin internet gateway
-   * Control de acceso mediante permisos IAM y logging
-
-**Problemas con las otras opciones:**
-
-* **Colocar nodos solo en subnets privadas y habilitar endpoint público**: Cuando el endpoint público está habilitado, el cluster API server es accesible desde internet, por lo que no es un cluster completamente privado. El acceso se puede restringir con security groups o restricciones CIDR, pero sigue expuesto a redes públicas.
-* **Colocar nodos en subnets públicas y deshabilitar endpoint público**: Cuando los nodos están en subnets públicas, pueden ser accedidos directamente desde internet, por lo que no es un cluster completamente privado. El acceso se puede restringir con security groups, pero los nodos pueden tener IPs públicas asignadas.
-* **Colocar nodos solo en subnets privadas sin VPC endpoints**: Colocar nodos en subnets privadas sin VPC endpoints impide que los nodos accedan a servicios de AWS como ECR, S3, etc. En este caso, se requeriría acceso a internet mediante NAT Gateway, lo que no es una configuración de cluster completamente privado.
-
-Los clusters privados de EKS son adecuados para entornos que requieren alta seguridad, ya que garantizan que todo el tráfico del cluster ocurra solo dentro de la VPC. Sin embargo, la configuración es más compleja, y puede necesitarse infraestructura adicional (VPN, Direct Connect, bastion hosts, etc.) para acceder al cluster.
-
-</details>
-
-4. ¿Cuál NO es una estrategia válida de actualización de node groups en clusters de Amazon EKS?
-   * A) Rolling upgrade
-   * B) Blue/Green deployment
-   * C) In-place upgrade
-   * D) Canary deployment
-
-<details>
-
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: C) In-place upgrade**
-
-**Explicación:** "In-place upgrade" no es una estrategia oficial de actualización para node groups de Amazon EKS. Los managed node groups de EKS usan un enfoque de rolling upgrade de forma predeterminada, y para self-managed node groups se pueden implementar estrategias como blue/green deployment o canary deployment.
-
-**Estrategias de actualización de node groups de EKS:**
-
-1. **Rolling Upgrade**:
-   * Método de actualización predeterminado para managed node groups de EKS
-   * Minimiza la interrupción de cargas de trabajo reemplazando los nodos uno a la vez
-   * Proceso:
-     1. Crear nodo nuevo
-     2. Aplicar cordoning al nodo existente (evitar scheduling de pods nuevos)
-     3. Drenar pods del nodo existente (migrar pods)
-     4. Terminar el nodo existente
-     5. Repetir para el siguiente nodo
-   *   Ejemplo de configuración:
-
-       ```bash
-       # Managed node group upgrade
-       aws eks update-nodegroup-version \
-         --cluster-name my-cluster \
-         --nodegroup-name my-nodegroup
-
-       # Check upgrade status
-       aws eks describe-update \
-         --name <update-id> \
-         --nodegroup-name my-nodegroup \
-         --cluster-name my-cluster
-       ```
-2. **Blue/Green Deployment**:
-   * Crear un node group completamente nuevo y luego cambiar el tráfico
-   * Rollback sencillo y bajo riesgo
-   * El uso de recursos aumenta temporalmente (el doble de nodos en ejecución)
-   * Pasos de implementación:
-     1. Crear node group nuevo (green)
-     2. Implementar y probar cargas de trabajo en el node group nuevo
-     3. Cambiar el tráfico al node group nuevo
-     4. Eliminar el node group existente (blue)
-   *   Ejemplo de configuración:
-
-       ```bash
-       # Create new node group
-       eksctl create nodegroup \
-         --cluster my-cluster \
-         --name my-nodegroup-v2 \
-         --node-type m5.large \
-         --nodes 3 \
-         --node-ami-family AmazonLinux2
-
-       # Check node labels
-       kubectl get nodes --show-labels
-
-       # Delete existing node group
-       eksctl delete nodegroup \
-         --cluster my-cluster \
-         --name my-nodegroup-v1
-       ```
-3. **Canary Deployment**:
-   * Minimizar el riesgo actualizando primero solo algunos nodos
-   * Limita el alcance del impacto si ocurren problemas
-   * Posible despliegue gradual
-   * Pasos de implementación:
-     1. Crear node group nuevo pequeño
-     2. Mover algunas cargas de trabajo al node group nuevo
-     3. Monitorear y verificar
-     4. Actualizar los nodos restantes si no hay problemas
-   *   Ejemplo de configuración:
-
-       ```bash
-       # Create canary node group (small scale)
-       eksctl create nodegroup \
-         --cluster my-cluster \
-         --name canary-ng \
-         --node-type m5.large \
-         --nodes 1 \
-         --node-labels "deployment=canary"
-
-       # Deploy specific workloads to canary nodes
-       apiVersion: apps/v1
-       kind: Deployment
-       metadata:
-         name: my-app
-       spec:
-         template:
-           spec:
-             nodeSelector:
-               deployment: canary
-       ```
-
-**Problemas con las actualizaciones in-place:**
-
-El término "in-place upgrade" puede significar actualizar nodos existentes sin terminarlos. Esto no es adecuado para node groups de EKS por las siguientes razones:
-
-1. **Viola los principios de infraestructura inmutable**:
-   * Los entornos cloud-native recomiendan reemplazar recursos en lugar de modificarlos
-   * Evita la deriva de configuración de nodos
-2. **Riesgo de fallo en la actualización**:
-   * Los nodos pueden volverse inestables si falla la actualización in-place
-   * El rollback es difícil
-3. **Estructura de AMI de nodo de EKS**:
-   * Las AMIs optimizadas para EKS tienen IDs de AMI diferentes por versión
-   * La AMI no se puede cambiar mediante actualización in-place
-4. **Limitaciones de managed node groups**:
-   * Los managed node groups de EKS no admiten actualizaciones in-place
-   * Siempre usan el método de rolling upgrade
-
-**Prácticas recomendadas para actualizar node groups:**
-
-1.  **Configurar PodDisruptionBudget**:
-
-    * Garantiza la disponibilidad de la aplicación durante las actualizaciones
-
-    ```yaml
-    apiVersion: policy/v1
-    kind: PodDisruptionBudget
-    metadata:
-      name: app-pdb
-    spec:
-      minAvailable: 2  # or maxUnavailable: 1
-      selector:
-        matchLabels:
-          app: my-app
-    ```
-2. **Garantizar recursos suficientes**:
-   * Se necesita capacidad de reserva para reubicar pods durante el drenaje de nodos
-   * Considerar la configuración de Cluster Autoscaler
-3. **Probar antes de actualizar**:
-   * Probar actualizaciones primero en entornos no productivos
-   * Verificar la compatibilidad de la aplicación
-4. **Monitoreo mejorado**:
-   * Monitorear el sistema durante y después de la actualización
-   * Detección temprana de anomalías
-
-Las actualizaciones de node groups de EKS son tareas importantes para aplicar parches de seguridad, correcciones de errores y nuevas características mientras se minimiza la interrupción de las cargas de trabajo. Elige estrategias como rolling upgrade, blue/green deployment o canary deployment según tu situación para realizar actualizaciones de forma segura.
-
-</details>
-
-5. ¿Qué NO ocurre durante el proceso de bootstrap de nodos en clusters de Amazon EKS?
-   * A) Configuración e inicio de kubelet
-   * B) Instalación de componentes del control plane del cluster
-   * C) Configuración de AWS IAM Authenticator
-   * D) Registro del nodo con el cluster
-
-<details>
-
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Instalación de componentes del control plane del cluster**
-
-**Explicación:** Durante el proceso de bootstrap de nodos de Amazon EKS, no se instalan componentes del control plane del cluster. EKS es un servicio administrado donde el control plane (API server, controller manager, scheduler, etc.) es administrado por AWS y se ejecuta por separado de los worker nodes. Durante el proceso de bootstrap de nodos, solo se realiza la configuración para conectar el nodo al cluster de EKS existente.
-
-**Qué ocurre realmente durante el bootstrap de nodos de EKS:**
-
-1. **Configuración e inicio de kubelet**:
-   * Crear archivo de configuración de kubelet (`/etc/kubernetes/kubelet/kubelet-config.json`)
-   * Configurar endpoint del cluster, certificados, DNS del cluster, etc.
-   * Iniciar el servicio kubelet
-   *   Ejemplo de configuración:
-
-       ```json
-       {
-         "kind": "KubeletConfiguration",
-         "apiVersion": "kubelet.config.k8s.io/v1beta1",
-         "address": "0.0.0.0",
-         "authentication": {
-           "anonymous": {
-             "enabled": false
-           },
-           "webhook": {
-             "cacheTTL": "2m0s",
-             "enabled": true
-           },
-           "x509": {
-             "clientCAFile": "/etc/kubernetes/pki/ca.crt"
-           }
-         },
-         "clusterDomain": "cluster.local",
-         "clusterDNS": ["10.100.0.10"],
-         "podCIDR": "",
-         "maxPods": 58
-       }
-       ```
-2. **Configuración de AWS IAM Authenticator**:
-   * Configurar aws-iam-authenticator para autenticación IAM
-   * Crear archivo kubeconfig
-   * Configurar node IAM role
-   *   Ejemplo de configuración:
-
-       ```yaml
-       apiVersion: v1
-       kind: Config
-       clusters:
-       - cluster:
-           certificate-authority: /etc/kubernetes/pki/ca.crt
-           server: https://my-cluster.eks.amazonaws.com
-         name: kubernetes
-       contexts:
-       - context:
-           cluster: kubernetes
-           user: kubelet
-         name: kubelet
-       current-context: kubelet
-       users:
-       - name: kubelet
-         user:
-           exec:
-             apiVersion: client.authentication.k8s.io/v1beta1
-             command: aws-iam-authenticator
-             args:
-               - token
-               - -i
-               - my-cluster
-               - --role
-               - arn:aws:iam::123456789012:role/EKSNodeRole
-       ```
-3. **Registro del nodo con el cluster**:
-   * Crear objeto node
-   * Establecer labels y taints del nodo
-   * Registrarse con el cluster API server
-   *   Ejemplo de log:
-
-       ```
-       Node my-node-1 successfully registered with API server
-       ```
-4. **Configuración del CNI plugin**:
-   * Configurar Amazon VPC CNI plugin
-   * Configurar networking de pods
-   * Configurar asignación de direcciones IP
-   *   Ejemplo de configuración:
-
-       ```json
-       {
-         "cniVersion": "0.3.1",
-         "name": "aws-vpc",
-         "plugins": [
-           {
-             "name": "aws-vpc",
-             "type": "vpc-cni",
-             "vethPrefix": "eni",
-             "mtu": "9001",
-             "ipam": {
-               "type": "aws-cni"
-             }
-           }
-         ]
-       }
-       ```
-5. **Configuración de kube-proxy**:
-   * Configurar kube-proxy para networking del cluster
-   * Configurar enrutamiento de IPs de service
-   *   Ejemplo de configuración:
-
-       ```yaml
-       apiVersion: kubeproxy.config.k8s.io/v1alpha1
-       kind: KubeProxyConfiguration
-       bindAddress: 0.0.0.0
-       clientConnection:
-         acceptContentTypes: ""
-         burst: 10
-         contentType: application/vnd.kubernetes.protobuf
-         kubeconfig: /var/lib/kube-proxy/kubeconfig
-         qps: 5
-       ```
-6. **Aplicación de labels y taints de nodos**:
-   * Establecer labels basados en instance type, availability zone, etc.
-   * Aplicar labels personalizados
-   * Aplicar taints si es necesario
-   *   Ejemplo de comandos:
-
-       ```bash
-       kubectl label node my-node-1 eks.amazonaws.com/nodegroup=my-nodegroup
-       kubectl label node my-node-1 topology.kubernetes.io/zone=us-west-2a
-       ```
-
-**Bootstrap script:**
-
-El bootstrap de nodos de EKS se realiza mediante el script `/etc/eks/bootstrap.sh`. Este script puede recibir los siguientes parámetros:
-
-```bash
-/etc/eks/bootstrap.sh my-cluster \
-  --kubelet-extra-args '--node-labels=node.kubernetes.io/role=worker' \
-  --b64-cluster-ca <base64-encoded-ca> \
-  --apiserver-endpoint <api-server-endpoint> \
-  --dns-cluster-ip 10.100.0.10
-```
-
-Al usar un launch template personalizado, puedes llamar a este script en la sección user data para realizar configuración adicional:
-
-```bash
 #!/bin/bash
-set -ex
-/etc/eks/bootstrap.sh my-cluster \
-  --kubelet-extra-args '--node-labels=environment=prod,node-type=worker' \
-  --max-pods 110
+set -euo pipefail
+install -d -m 0755 /opt/company
+
+--EKS_CUSTOMIZATION--
 ```
 
-**Componentes del control plane del cluster:**
+**Almacenamiento:** lo siguiente es un fragmento `LaunchTemplateData` válido. Confirme el nombre del dispositivo raíz de la AMI. Adjuntar un volumen no lo formatea ni lo monta. Ambos volúmenes de ejemplo están cifrados y se eliminan con la instancia; use un PV administrado por CSI y una política de reclamación/copia de seguridad adecuada para datos de aplicación que deban sobrevivir al reemplazo de nodos.
 
-Los componentes del control plane del cluster de EKS son administrados por AWS y están separados del proceso de bootstrap de nodos:
+```json
+{
+  "BlockDeviceMappings": [
+    {
+      "DeviceName": "/dev/xvda",
+      "Ebs": {
+        "VolumeSize": 100,
+        "VolumeType": "gp3",
+        "Iops": 3000,
+        "Throughput": 125,
+        "Encrypted": true,
+        "DeleteOnTermination": true
+      }
+    },
+    {
+      "DeviceName": "/dev/sdf",
+      "Ebs": {
+        "VolumeSize": 500,
+        "VolumeType": "gp3",
+        "Encrypted": true,
+        "DeleteOnTermination": true
+      }
+    }
+  ]
+}
+```
 
-* API server
-* Controller manager
-* Scheduler
-* etcd
-* CoreDNS
+**Redes y metadatos:** sustituya el grupo de seguridad de ejemplo por uno cuyas reglas permitan el tráfico requerido de plano de control, nodo, DNS y carga de trabajo. Cuando se proporcionan grupos de seguridad personalizados, EKS **no** agrega automáticamente el grupo de seguridad del clúster. Especifique grupos de seguridad en el nivel de instancia o de interfaz de red, no en ambos.
 
-Estos componentes se ejecutan en infraestructura administrada por AWS y garantizan alta disponibilidad y escalabilidad. Los nodos solo se conectan a estos componentes del control plane; no los instalan ni administran directamente.
+```json
+{
+  "NetworkInterfaces": [
+    {
+      "DeviceIndex": 0,
+      "Groups": ["sg-0123456789abcdef0"],
+      "DeleteOnTermination": true
+    }
+  ],
+  "MetadataOptions": {
+    "HttpEndpoint": "enabled",
+    "HttpTokens": "required",
+    "HttpPutResponseHopLimit": 1
+  }
+}
+```
 
-Por lo tanto, lo que NO ocurre durante el bootstrap de nodos de Amazon EKS es la "instalación de componentes del control plane del cluster".
+El límite de saltos de 1 supone que los Pods utilizan IRSA o EKS Pod Identity en lugar de credenciales de nodo. Las cargas de trabajo que requieren acceso IMDSv2 desde un contenedor pueden necesitar un límite de saltos de 2. Ni esta configuración ni IMDSv2 crean aislamiento para Pods `hostNetwork`. Múltiples interfaces, ubicación y dispositivos de almacenamiento de instancia requieren tipos de instancia compatibles y las restricciones de plantilla de lanzamiento de EKS; no son opciones universalmente intercambiables.
+
+**Cree el grupo de nodos:** elija la configuración de eksctl o el ejemplo de AWS CLI después de revisar ID, permisos y rutas de red reales. Son alternativas, no instrucciones secuenciales:
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+  - name: custom-ng
+    launchTemplate:
+      id: lt-0123456789abcdef0
+      version: "1"
+    subnets: ["subnet-0123456789abcdef0", "subnet-0123456789abcdef1"]
+```
+
+```bash
+# Use an existing reviewed template version and a new node group name.
+aws eks create-nodegroup \
+  --cluster-name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --nodegroup-name "${NEW_NODEGROUP_NAME:?}" \
+  --launch-template "id=${LAUNCH_TEMPLATE_ID:?},version=${LAUNCH_TEMPLATE_VERSION:?}" \
+  --subnets "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" \
+  --node-role "${NODE_ROLE_ARN:?}"
+```
+
+Mantenga `SubnetId` e `IamInstanceProfile` fuera de la plantilla de lanzamiento: las subredes y el rol de IAM de nodo pertenecen a la solicitud de grupo de nodos. Con una plantilla de lanzamiento, no establezca también `diskSize` ni `remoteAccess` de grupo de nodos. Establezca los tipos de instancia en la plantilla **o** en la solicitud de grupo de nodos. Cuando existe `ImageId`, omita `amiType`, `releaseVersion` y `version` de grupo de nodos, y verifique la compatibilidad kubelet/plano de control de la AMI personalizada.
+
+Un `ImageId` explícito fija una AMI; una plantilla sin él puede utilizar una AMI seleccionada por EKS. Ningún caso actualiza automáticamente los nodos existentes cada vez que se publica una AMI. Actualizar una plantilla personalizada requiere una nueva versión de la **misma** plantilla y una actualización explícita de grupo de nodos, que reemplaza instancias.
+
+Referencias: [restricciones de plantilla de lanzamiento](https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html), [campos CreateNodegroup](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html), [inicialización de AL2023](https://docs.aws.amazon.com/eks/latest/userguide/al2023.html).
 
 </details>
+
+2. ¿Qué enfoque es insuficiente por sí solo para optimizar los costos de EKS?
+   * A) Utilizar Spot para cargas de trabajo tolerantes a interrupciones
+   * B) Configurar y autorizar Cluster Autoscaler
+   * C) Elegir la generación de instancia más reciente para cada carga de trabajo sin medición
+   * D) Evaluar Fargate selectivamente frente a las necesidades de carga de trabajo y el costo total
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C) Elegir la generación de instancia más reciente para cada carga de trabajo sin medición**
+
+Elegir cada nodo únicamente porque pertenece a la generación más reciente no constituye un análisis de costos suficiente. Compare la arquitectura, rendimiento, latencia, memoria, disponibilidad regional y tolerancia a interrupciones de la carga de trabajo. Una generación más reciente puede ser más económica; ni la más reciente ni la más antigua es siempre más barata para el mismo trabajo útil.
+
+1. **Spot y diversificación:** AWS anuncia descuentos de hasta el 90 % frente a On-Demand para Spot; este es un posible descuento de precios, no un ahorro medido o garantizado para este laboratorio. Considere las interrupciones y la capacidad de reemplazo. Para Cluster Autoscaler, los tipos mezclados en un grupo de nodos deben tener la misma forma de CPU/memoria/GPU porque la simulación de programación utiliza el primer tipo. Verifique por separado cualquier dependencia de disco local.
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+  - name: spot-ng
+    amiFamily: AmazonLinux2023
+    instanceTypes: ["m5.large", "m5a.large", "m5d.large", "m5ad.large"]
+    spot: true
+    privateNetworking: true
+    desiredCapacity: 2
+    minSize: 1
+    maxSize: 5
+```
+
+2. **Cluster Autoscaler:** los tamaños mínimo/máximo solo establecen límites de escalado. Instale y autorice un controlador para cambiar la capacidad deseada en respuesta a Pods no programables y capacidad que se pueda eliminar. No conceda a cada nodo permisos amplios de autoscaling. Antes de esta **nueva instalación**, prepare una cuenta de servicio `kube-system/cluster-autoscaler` con un rol de IRSA dedicado (confianza OIDC limitada a esa cuenta de servicio) o una configuración compatible de Pod Identity. Limite las escrituras de escalado a los Auto Scaling groups del clúster previsto y etiquete esos grupos con `k8s.io/cluster-autoscaler/enabled=true` y `k8s.io/cluster-autoscaler/<cluster-name>=owned`. Las etiquetas de recursos de grupo de nodos por sí solas no demuestran que la detección de ASG esté configurada.
+
+La versión secundaria del controlador debe coincidir con el clúster. El chart 9.59.0 usa de forma predeterminada el controlador 1.35.0, por lo que este ejemplo de EKS 1.36 selecciona explícitamente 1.36.1. Otras versiones de clúster necesitan una versión de controlador coincidente. Confirme que no existe una instalación de CA que administre los mismos grupos.
+
+```bash
+# EKS 1.36 example: first prepare the dedicated service account/IAM role
+# and discovery tags on the target Auto Scaling groups.
+helm repo add autoscaler https://kubernetes.github.io/autoscaler
+helm repo update autoscaler
+helm install cluster-autoscaler autoscaler/cluster-autoscaler \
+  --version 9.59.0 --namespace kube-system \
+  --kubeconfig "${EXAMPLE_KUBECONFIG:?}" \
+  --set-string "autoDiscovery.clusterName=${EXAMPLE_CLUSTER:?}" \
+  --set-string "awsRegion=${EXAMPLE_REGION:?}" \
+  --set-string image.tag=v1.36.1 \
+  --set rbac.serviceAccount.create=false \
+  --set-string rbac.serviceAccount.name=cluster-autoscaler \
+  --wait --timeout 5m
+```
+
+3. **Fargate y dimensionamiento adecuado:** Fargate reduce el trabajo de administración de hosts, pero cobra por recursos asignados y tiempo de ejecución, no solo por CPU medida. Haga coincidir perfiles con Pods compatibles y redes de subred privada; compare el costo total con EC2. `kubectl top` requiere Metrics Server y una muestra corta no es un plan de capacidad.
+4. **Graviton:** pruebe imágenes y dependencias ARM64 antes de crear un grupo de nodos ARM. Una afirmación de “hasta un 40 % mejor precio/rendimiento” específica de una generación no es una reducción universal del 40 % de la factura ni una garantía de rendimiento igual.
+
+```bash
+# Metrics Server must already be installed and healthy.
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" top nodes
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" top pods --all-namespaces
+
+# Alternative compute examples: each creates separately billed resources.
+eksctl create fargateprofile --cluster "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --name fp-dev --namespace dev
+eksctl create nodegroup --cluster "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --name arm-ng \
+  --managed --node-ami-family AmazonLinux2023 \
+  --node-type m6g.large --nodes 2 --node-private-networking
+```
+
+5. **Compromisos:** Reserved Instances y Savings Plans pueden reducir costos de uso predecible que cumpla los requisitos. Los ahorros anunciados de hasta el 72 % dependen del producto, plazo, opción de pago y uso; los compromisos sin uso pueden eliminar los ahorros.
+6. **Solicitudes y límites:** mida cargas de trabajo representativas antes de elegir valores. Las solicitudes afectan la programación y las decisiones de autoscaler; límites demasiado pequeños pueden causar limitación de CPU o terminación OOM. Estos son valores ilustrativos por contenedor:
+
+```yaml
+# Fragment inside spec.template.spec.containers[].
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+```
+
+7. **Asignación de costos:** use Cost Explorer y herramientas/informes de asignación configurados. Las etiquetas de Kubernetes no se convierten automáticamente en etiquetas de asignación de costos activadas de AWS. Incluya plano de control, tarifas de Auto Mode cuando corresponda, almacenamiento, balanceadores de carga, NAT, transferencia y costos de registro.
+
+Referencias: [CA en EKS](https://docs.aws.amazon.com/eks/latest/best-practices/cas.html), [chart de CA](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/charts/cluster-autoscaler), [CA 1.36.1](https://github.com/kubernetes/autoscaler/releases/tag/cluster-autoscaler-1.36.1), [precios Spot](https://aws.amazon.com/ec2/spot/), [precios Fargate](https://aws.amazon.com/fargate/pricing/), [Graviton](https://aws.amazon.com/ec2/graviton/), [Savings Plans](https://aws.amazon.com/savingsplans/).
+
+</details>
+
+3. ¿Qué diseño satisface tanto el acceso solo privado a la API de Kubernetes como la ausencia de Internet saliente desde nodos/Pods?
+   * A) API privada, subredes de nodo privadas sin salida a Internet, endpoints de servicio requeridos y una ruta de administración privada
+   * B) Solo nodos privados, dejando sin cambios toda la configuración de API y salida
+   * C) Deshabilitar endpoints de API pública y privada de Kubernetes
+   * D) Deshabilitar la API pública mientras se mantiene salida NAT sin restricciones
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: A) API privada, subredes de nodo privadas sin salida a Internet, endpoints de servicio requeridos y una ruta de administración privada**
+
+Separe dos decisiones: **quién puede alcanzar la API de Kubernetes** y **a dónde pueden enviar tráfico los nodos/Pods**. Una API solo privada no elimina rutas NAT, bloquea la salida de cargas de trabajo ni garantiza que todos los paquetes permanezcan en una VPC. Las redes conectadas pueden alcanzar la API privada cuando el enrutamiento, DNS, grupos de seguridad y autorización lo permiten.
+
+Para esta pregunta, el requisito es tanto acceso de API solo privado como nodos/Pods sin Internet saliente. Habilite el endpoint privado, deshabilite el endpoint público, use subredes de nodo privadas sin ruta de salida a Internet y proporcione los endpoints de servicio, las imágenes de registro y la ruta de administración que necesitan las cargas de trabajo.
+
+**Transición de endpoint:** primero habilite el acceso privado, espere que esa actualización tenga éxito y pruebe el acceso `kubectl` autenticado desde la red privada prevista. Solo entonces utilice la alternativa independiente solo privada a continuación. Compruebe la actualización devuelta hasta que sea `Successful` y después vuelva a comprobar el acceso. El endpoint público se restringe mediante `publicAccessCidrs`, no el grupo de seguridad del clúster; este último gobierna el tráfico de endpoint privado.
+
+```bash
+# Separate alternative: run only after verifying private DNS/routing/API access
+# from the administration and CI/CD network, and after prior updates succeeded.
+PRIVATE_UPDATE_ID=$(aws eks update-cluster-config \
+  --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true \
+  --query update.id --output text)
+: "${PRIVATE_UPDATE_ID:?Update request failed}"
+aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --update-id "$PRIVATE_UPDATE_ID" --query 'update.{status:status,errors:errors}'
+```
+
+**Ubicación de nodos:** este fragmento utiliza una VPC existente y subredes privadas; reemplace los ID y verifique las rutas antes de usarlo. No crea endpoints de VPC ni elimina rutas NAT existentes. Ejecutar eksctl desde una estación de trabajo no relacionada con solo Internet no proporcionará acceso a una API de Kubernetes solo privada.
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+vpc:
+  id: vpc-0123456789abcdef0
+  clusterEndpoints:
+    publicAccess: false
+    privateAccess: true
+  subnets:
+    private:
+      us-west-2a:
+        id: subnet-0123456789abcdef0
+      us-west-2b:
+        id: subnet-0123456789abcdef1
+managedNodeGroups:
+  - name: private-ng
+    amiFamily: AmazonLinux2023
+    instanceType: m5.large
+    desiredCapacity: 3
+    privateNetworking: true
+```
+
+**Conectividad de servicios de AWS:** los siguientes ejemplos de ECR y S3 son solo parte del diseño. Revise primero los endpoints existentes para evitar conflictos de DNS privado duplicados. Los endpoints de interfaz necesitan DNS privado y entrada HTTPS de clientes previstos; el endpoint de gateway de S3 necesita las tablas de rutas privadas y políticas de endpoint/bucket adecuadas.
+
+```bash
+# Example fragments for a reviewed no-internet VPC design.
+# Interface endpoint SG must allow HTTPS from the intended nodes/clients.
+aws ec2 create-vpc-endpoint --region "${EXAMPLE_REGION:?}" \
+  --vpc-id "${EXAMPLE_VPC:?}" \
+  --service-name "com.amazonaws.${EXAMPLE_REGION}.ecr.api" \
+  --vpc-endpoint-type Interface --private-dns-enabled \
+  --subnet-ids "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" \
+  --security-group-ids "${ENDPOINT_SG_ID:?}"
+aws ec2 create-vpc-endpoint --region "${EXAMPLE_REGION:?}" \
+  --vpc-id "${EXAMPLE_VPC:?}" \
+  --service-name "com.amazonaws.${EXAMPLE_REGION}.ecr.dkr" \
+  --vpc-endpoint-type Interface --private-dns-enabled \
+  --subnet-ids "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" \
+  --security-group-ids "${ENDPOINT_SG_ID:?}"
+aws ec2 create-vpc-endpoint --region "${EXAMPLE_REGION:?}" \
+  --vpc-id "${EXAMPLE_VPC:?}" \
+  --service-name "com.amazonaws.${EXAMPLE_REGION}.s3" \
+  --vpc-endpoint-type Gateway \
+  --route-table-ids "${PRIVATE_ROUTE_TABLE_A:?}" "${PRIVATE_ROUTE_TABLE_B:?}"
+```
+
+| Dependencia | Conectividad privada cuando no existe ruta a Internet |
+| --- | --- |
+| Descargas de imágenes de ECR privado | `ecr.api`, `ecr.dkr` y gateway de S3; copie imágenes públicas a un registro privado accesible |
+| API de EC2 utilizadas por nodos/CNI | `ec2`, permisos adecuados y política de endpoint |
+| Credenciales de IRSA | `sts` regional; configure los SDK para usar el endpoint regional |
+| Descubrimiento OIDC/JWKS desde dentro de la VPC | `oidc-eks`, por ejemplo al configurar el proveedor OIDC de IAM; separado de STS |
+| Credenciales de EKS Pod Identity | `eks-auth` más una configuración/agente de Pod Identity compatible |
+| API de administración de EKS | `eks`; esto no reemplaza el endpoint privado de API de Kubernetes |
+| Registros, autoscaling, balanceo de carga, SSM | Endpoints y permisos para los servicios realmente utilizados; SSM también necesita su conectividad de mensajería |
+
+Los servicios de endpoint y los nombres DNS varían según la región/partición. Compruebe todas las dependencias de cada carga de trabajo, incluidos registros de imágenes, descargas de paquetes, API externas y características de add-ons. Un endpoint para un servicio de AWS no sustituye Internet de propósito general.
+
+**Administración:** use conectividad VPN/Direct Connect enrutada, un host controlado con acceso privado o una sesión SSM configurada adecuadamente. Un bastion no necesita inherentemente una IP pública. SSM aún necesita su agente, autorización de IAM y conectividad de servicio.
+
+Una API privada con nodos privados respaldados por NAT también es un diseño de EKS válido, pero no satisface el requisito de esta pregunta de no tener salida a Internet. De forma similar, una ruta pública de una subred por sí sola no demuestra que un nodo individual sea accesible desde Internet; importan la asignación de direcciones y los controles de seguridad.
+
+Referencias: [requisitos de clúster privado](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html), [acceso a endpoint de API](https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html), [EKS PrivateLink y OIDC](https://docs.aws.amazon.com/eks/latest/userguide/vpc-interface-endpoints.html).
+
+</details>
+
+4. ¿Cuál NO es el mecanismo de grupos de nodos administrados de EKS para aplicar una nueva AMI de nodo?
+   * A) Reemplazar instancias mediante una actualización gradual administrada
+   * B) Crear y validar un grupo de nodos blue/green independiente
+   * C) Actualizar paquetes de SO en instancias en ejecución en lugar de reemplazarlas
+   * D) Validar una AMI nueva en un grupo de nodos canary pequeño antes de un reemplazo más amplio
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C) Actualizar paquetes de SO en instancias en ejecución en lugar de reemplazarlas**
+
+Las actualizaciones de grupos de nodos administrados de EKS reemplazan instancias de EC2. Actualizar paquetes de SO en las instancias en ejecución no es el mecanismo de actualización de AMI administrado. Evite la afirmación ambigua de que no se admiten todas las “actualizaciones in situ”: AWS también utiliza esa frase para conservar el recurso de grupo de nodos al cambiar su versión de AMI de plantilla de lanzamiento, lo que aun así reemplaza instancias.
+
+**Actualización gradual:** `DEFAULT` crea capacidad de reemplazo antes de retirar nodos antiguos; `MINIMAL` puede terminar nodos antiguos seleccionados antes de crear reemplazos. `maxUnavailable` tiene como valor predeterminado 1, pero es configurable, por lo que no siempre es exactamente un nodo a la vez. Compruebe cuotas, capacidad de AZ, ubicación de Pods y estrategia de actualización. Con una AMI personalizada, seleccione explícitamente la nueva versión de la misma plantilla de lanzamiento; el siguiente comando muestra en cambio el caso de AMI seleccionada por EKS:
+
+```bash
+# EKS-selected AMI case: inspect first, then initiate a reviewed update.
+aws eks describe-nodegroup \
+  --cluster-name "${EXAMPLE_CLUSTER:?}" --nodegroup-name "${EXAMPLE_NODEGROUP:?}" \
+  --region "${EXAMPLE_REGION:?}" \
+  --query 'nodegroup.{status:status,version:version,ami:amiType,release:releaseVersion,update:updateConfig}'
+if NODE_UPDATE_ID=$(aws eks update-nodegroup-version \
+  --cluster-name "${EXAMPLE_CLUSTER:?}" --nodegroup-name "${EXAMPLE_NODEGROUP:?}" \
+  --region "${EXAMPLE_REGION:?}" --query update.id --output text); then
+  aws eks describe-update --name "$EXAMPLE_CLUSTER" \
+    --nodegroup-name "$EXAMPLE_NODEGROUP" --update-id "$NODE_UPDATE_ID" \
+    --region "$EXAMPLE_REGION" \
+    --query 'update.{status:status,errors:errors}'
+fi
+```
+
+Registre el ID de actualización devuelto y repita `describe-update` hasta un estado terminal. El envío correcto de una API no es la finalización. Investigue los errores informados antes de continuar. Un PDB que impide la expulsión puede provocar `PodEvictionFailure`; no lo omita con `--force` simplemente para terminar el comando.
+
+**Blue/green:** cree un grupo de nodos AL2023 compatible e independiente, pruebe la programación y preparación de cargas de trabajo y después migre gradualmente. Conserve la capacidad anterior hasta que se satisfagan las comprobaciones de aplicación, restricciones de volumen/AZ y requisitos de reversión. Solo enumerar etiquetas de nodo no es validación, y el tráfico sigue los endpoints/Pods de Service en lugar de los nombres de grupo de nodos. No elimine automáticamente el grupo anterior inmediatamente después de crear el nuevo.
+
+**Canary:** use un grupo pequeño, etiquetado y con taints independientes. El taint desalienta que Pods no relacionados lleguen allí; solo la carga de trabajo de prueba lo selecciona y tolera. Los DaemonSets del sistema aún pueden ejecutarse cuando sus tolerations lo permiten. Esta es una configuración ilustrativa para un clúster de prueba existente:
+
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+  - name: canary-ng
+    amiFamily: AmazonLinux2023
+    instanceType: m5.large
+    desiredCapacity: 1
+    minSize: 1
+    maxSize: 2
+    privateNetworking: true
+    labels:
+      example.com/upgrade-track: canary
+    taints:
+      - key: example.com/upgrade-track
+        value: canary
+        effect: NoSchedule
+```
+
+Cree un namespace `upgrade-lab` no utilizado en su contexto de prueba dedicado antes de aplicar este Deployment de demostración completo. Un canary real también debe ejercitar las dependencias propias de la aplicación y el tráfico representativo; este Pod NGINX solo comprueba la programación y preparación básicas.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: upgrade-canary
+  namespace: upgrade-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: upgrade-canary
+  template:
+    metadata:
+      labels:
+        app: upgrade-canary
+    spec:
+      nodeSelector:
+        example.com/upgrade-track: canary
+      tolerations:
+        - key: example.com/upgrade-track
+          operator: Equal
+          value: canary
+          effect: NoSchedule
+      containers:
+        - name: nginx
+          image: nginx:1.30.4
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+```
+
+**Presupuestos de interrupción y capacidad:** este ejemplo independiente supone una carga de trabajo `my-app` real en `app-namespace`, normalmente con al menos tres réplicas listas. No es el PDB del canary de una sola réplica anterior:
+
+```yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: app-pdb
+  namespace: app-namespace
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: my-app
+```
+
+Un PDB limita las expulsiones voluntarias gestionadas mediante la API de expulsión; no garantiza disponibilidad, no evita fallos de hardware ni impide la eliminación directa de Pod/Deployment. `minAvailable: 2` bloquea la expulsión cuando solo hay dos Pods coincidentes saludables. Verifique la capacidad sobrante, topología, probes, comportamiento de terminación y recuperación de fallos. Los planes blue/green o canary no demuestran por sí solos una reversión segura, especialmente para datos con estado.
+
+Referencias: [comportamiento de actualización administrada](https://docs.aws.amazon.com/eks/latest/userguide/managed-node-update-behavior.html), [migración de AL2023](https://docs.aws.amazon.com/eks/latest/userguide/al2023.html), [presupuestos de interrupción de Pods](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/).
+
+</details>
+
+5. ¿Qué acción no forma parte del arranque de un worker EC2 AL2023 optimizado para EKS?
+   * A) Configurar kubelet/runtime de contenedor
+   * B) Instalar componentes de plano de control administrados por AWS en el worker
+   * C) Configurar autenticación/conectividad de cliente de nodo
+   * D) Registrar el nodo
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B) Instalar componentes de plano de control administrados por AWS en el worker**
+
+Los workers no instalan el servidor de API, etcd, controller manager ni scheduler; estos pertenecen al plano de control administrado por AWS. **CoreDNS en EKS convencional es un add-on de clúster del plano de datos, no uno de esos componentes de plano de control.**
+
+Las AMI AL2023 optimizadas para EKS usan `nodeadm` para configurar containerd y kubelet. `nodeadm-config` establece la configuración base antes de los datos de usuario, y `nodeadm-run` completa la configuración e inicia los daemons posteriormente. La AMI ejecuta esto automáticamente; no invoque `nodeadm init` otra vez desde los datos de usuario. El flujo `/etc/eks/bootstrap.sh` de AL2 no es la ruta de arranque actual de AL2023.
+
+**Separe la unión de nodo de las redes de clúster**
+
+1. Aprovisione el rol de IAM/perfil de instancia de nodo y la autorización de acceso de nodo necesaria antes del lanzamiento. El arranque no crea roles de IAM. Utilice la ruta kubeconfig/autenticación generada por la AMI en lugar de un kubeconfig manual que asuma innecesariamente de nuevo el rol propio de la instancia.
+2. Kubelet registra el nodo. La preparación depende del estado del runtime/CNI y de la conectividad de clúster.
+3. EKS convencional despliega/administra `aws-node`, `kube-proxy` y CoreDNS como add-ons de clúster. El arranque del host no instala todos estos add-ons; no sobrescriba la configuración de CNI con un archivo inventado.
+4. No falsifique manualmente etiquetas propiedad del proveedor `eks.amazonaws.com/nodegroup` o `topology.kubernetes.io/zone`. Administre etiquetas/taints personalizados mediante la configuración de grupo de nodos/provisionador.
+
+**Ejemplo de entrada NodeConfig**
+
+Lo siguiente se ejecuta en la estación de trabajo de administración para generar datos de usuario a partir de los metadatos reales de un clúster IPv4 existente. Es para AMI personalizadas/nodos autoadministrados basados en AL2023 optimizados para EKS revisados; los grupos de nodos administrados sin ID de AMI personalizada usan la generación/combinación de metadatos de EKS. `NodeConfig` es configuración de arranque de host, no un recurso normal de Kubernetes que se deba enviar con `kubectl apply`.
+
+```bash
+# Run on the administration workstation to prepare reviewed IPv4 node user data.
+NODE_CONFIG_DIR=$(mktemp -d /tmp/eks-nodeconfig.XXXXXX)
+: "${NODE_CONFIG_DIR:?}"
+aws eks describe-cluster --name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --query cluster --output json > "$NODE_CONFIG_DIR/cluster.json" || exit 1
+
+jq -e '
+  (.name | type == "string" and length > 0) and
+  (.endpoint | startswith("https://")) and
+  (.certificateAuthority.data | type == "string" and length > 0) and
+  (.kubernetesNetworkConfig.ipFamily == "ipv4") and
+  (.kubernetesNetworkConfig.serviceIpv4Cidr | type == "string" and length > 0)
+' "$NODE_CONFIG_DIR/cluster.json" >/dev/null || exit 1
+
+jq '{
+  apiVersion: "node.eks.aws/v1alpha1",
+  kind: "NodeConfig",
+  spec: {
+    cluster: {
+      name: .name,
+      apiServerEndpoint: .endpoint,
+      certificateAuthority: .certificateAuthority.data,
+      cidr: .kubernetesNetworkConfig.serviceIpv4Cidr
+    }
+  }
+}' "$NODE_CONFIG_DIR/cluster.json" > "$NODE_CONFIG_DIR/nodeconfig.json" || exit 1
+
+{
+  printf 'MIME-Version: 1.0\n'
+  printf 'Content-Type: multipart/mixed; boundary="EKS_NODE_CONFIG"\n\n'
+  printf '%s\n' '--EKS_NODE_CONFIG' 'Content-Type: application/node.eks.aws' ''
+  cat "$NODE_CONFIG_DIR/nodeconfig.json"
+  printf '\n%s\n' '--EKS_NODE_CONFIG--'
+} > "$NODE_CONFIG_DIR/user-data.mime"
+printf 'Review user data: %s\n' "$NODE_CONFIG_DIR/user-data.mime"
+# An EC2 LaunchTemplateData.UserData JSON field needs the MIME file base64 encoded.
+# The console user-data editor can accept raw text when its encoding option is set accordingly.
+```
+
+No codifique de forma rígida una única IP de servicio DNS ni un valor maxPods para cada nodo. Siga las reglas documentadas de CIDR de servicio de clúster, configuración de instancia/CNI/prefijo y dimensionamiento. Estos comandos de inspección describen configuraciones convencionales de EC2; los componentes administrados difieren en Auto Mode/Fargate.
+
+```bash
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" get nodes \
+  -L eks.amazonaws.com/nodegroup,topology.kubernetes.io/zone
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" describe node "${EXAMPLE_NODE:?}"
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n kube-system get daemonset aws-node kube-proxy
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" -n kube-system get deployment coredns
+```
+
+La unión de nodos, la ejecución de daemons, el comportamiento de red y los registros de runtime no se ejecutaron ni recopilaron durante esta auditoría.
+
+[Ciclo de vida de AL2023/nodeadm](https://docs.aws.amazon.com/eks/latest/userguide/al2023.html) · [API NodeConfig](https://awslabs.github.io/amazon-eks-ami/nodeadm/doc/api/)
+
+</details>
+
+## Referencias oficiales
+
+- [Versiones compatibles de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
+- [Rol de IAM de nodo EKS](https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html)
+- [Rol de IAM de VPC CNI](https://docs.aws.amazon.com/eks/latest/userguide/cni-iam-role.html)
+- [Requisitos previos de NetworkPolicy](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)
+- [Entradas de acceso de EKS](https://docs.aws.amazon.com/eks/latest/userguide/access-entries.html)
+- [Requisitos de Metrics Server](https://github.com/kubernetes-sigs/metrics-server#requirements)
+- [Esquema de configuración de eksctl](https://schema.eksctl.io/)

@@ -1,883 +1,441 @@
-# Parte 8: Integración con EKS
+# Parte 8: Integración de EKS
 
-> **Versiones compatibles**: Calico v3.29+ / Kubernetes 1.28+ / EKS 1.28+ **Última actualización**: February 23, 2026
+> **Línea base revisada**: Calico 3.32.2 / Tigera Operator 1.42.6 / Kubernetes 1.34–1.36 probado por Calico. **Última actualización**: October 12, 2026
 
 ## Descripción general
 
-Este capítulo cubre la integración de Calico con Amazon EKS, incluidos patrones de arquitectura, métodos de instalación y optimizaciones específicas de EKS. Aprenda a aprovechar las capacidades de política de red de Calico junto con AWS VPC CNI para lograr una red de EKS óptima.
+Esta guía utiliza Calico para aplicar políticas en **nodos de trabajo EC2 Linux comunes con Amazon VPC CNI**. VPC CNI asigna IP de Pod y configura las redes de VPC; Calico programa las políticas en el dataplane del nodo. La instalación siguiente mantiene el dataplane Iptables y kube-proxy. Las redes de Calico y eBPF son opciones de despliegue independientes con requisitos previos adicionales.
 
-![El servidor de API de EKS llega a dos nodos worker, donde VPC CNI gestiona la red de los pods y Calico aplica políticas de red en los mismos pods.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-0.svg)
+En el momento de esta revisión, EKS incluye 1.34–1.37 en soporte estándar y 1.31–1.33 en soporte extendido ([ciclo de vida de versiones de Kubernetes de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)). El rango de pruebas de Kubernetes publicado para Calico 3.32 es 1.34–1.36. La disponibilidad de EKS, los lanzamientos de Kubernetes upstream y la compatibilidad de Calico son comprobaciones independientes; que EKS ofrezca 1.37 no incorpora 1.37 a la matriz probada de Calico 3.32. Confirme las versiones de EKS y de complementos de la Region objetivo antes de la instalación.
 
 ## Arquitectura de VPC CNI + Calico
 
-![En EKS, Typha observa kube-apiserver y envía las políticas a calico-node (Felix) en cada nodo worker, donde aws-node (VPC CNI) administra las ENI y asigna IP de pod desde el CIDR de VPC, mientras Calico aplica NetworkPolicy en los mismos pods.](../../.gitbook/assets/en-networking-calico-08-eks-integration-4.png)
+![VPC CNI administra las interfaces de Pod y la asignación de IP de VPC, mientras Felix programa el dataplane de políticas del nodo; estas son relaciones de control y configuración, no una ruta de paquetes a través de los procesos.](../../.gitbook/assets/en-networking-calico-08-eks-integration-0.png)
 
-[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-08-eks-integration-4.html)
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-08-eks-integration-0.html)
 
-Amazon EKS usa AWS VPC CNI de forma predeterminada para la red de los pods. Calico se puede añadir para obtener capacidades avanzadas de política de red, mientras VPC CNI gestiona la administración de direcciones IP.
+La figura resume las responsabilidades de los componentes. Un paquete no atraviesa el contenedor pause ni el proceso Felix como proxy de reenvío. Felix programa reglas que evalúa el kernel Linux. Su etiqueta `iptables / eBPF` representa dataplanes alternativos; esta guía instala Iptables. Typha y kube-controllers se ejecutan en capacidad de trabajo del cliente, no dentro del plano de control EKS administrado por AWS.
 
-### Análisis detallado de la arquitectura
+| Componente | Responsabilidad en esta configuración |
+| --- | --- |
+| `aws-node` / IPAMD y complemento VPC CNI | Administrar ENI/asignación de IP y configurar la conectividad de Pod |
+| Felix en `calico-node` | Programar reglas de política para endpoints locales |
+| Typha | Distribuir actualizaciones del almacén de datos a Felix; el operador administra el escalado |
+| kube-controllers | Conciliar datos de Calico con recursos de Kubernetes |
+| kube-proxy | Proporcionar reenvío de Kubernetes Service en esta línea base |
 
-![El tráfico de un pod cruza un par veth hacia una ENI secundaria gestionada por VPC CNI, mientras el agente Felix de Calico programa reglas de iptables/eBPF en esa misma ruta, antes de que la ENI principal transporte el tráfico a la subred de VPC y a la puerta de enlace de Internet.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-1.svg)
+Para tráfico entre nodos, el kernel evalúa la política aplicable y utiliza la ruta de VPC. El tráfico en el mismo nodo puede permanecer en el host. Un paquete descartado se elimina; una denegación por política no devuelve el paquete al remitente. Los controles aplicables de salida del origen y de entrada del destino deben permitir ambos la conexión.
 
-### Flujo de tráfico con VPC CNI + Calico
+## Elegir un motor de políticas y método de instalación
 
-![El tráfico de salida de Pod A es evaluado por Calico en su nodo antes de que VPC CNI lo enrute a través de AWS VPC hasta el nodo de destino, donde Calico evalúa la política de entrada antes de entregar el paquete a Pod B.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-2.svg)
+| Opción | Qué instala | Ciclo de vida y alcance |
+| --- | --- | --- |
+| Política de red de Amazon VPC CNI | Implementación de políticas de AWS | Configurar el complemento `vpc-cni` compatible; esto no instala Calico |
+| Manifiestos de Tigera Operator | Operador y recursos personalizados de Calico | Fijar la versión, administrar CRD y después conciliar la Installation |
+| Helm chart de Tigera Operator | El mismo operador, con configuración administrada por Helm | Renderizar y revisar valores; utilizar la versión existente para actualizaciones |
+| Manifiestos directos de Calico | Componentes de Calico sin el operador | Conservar la personalización de la plataforma y asumir el procedimiento de actualización |
 
-## Comparación de métodos de instalación
+Los complementos de EKS no se actualizan automáticamente cuando se publica una nueva versión del complemento o cambia la versión menor del clúster. Los complementos de AWS, Marketplace y la comunidad también tienen propietarios de soporte distintos. No suponga que existe un complemento llamado `calico` ni que un producto de Marketplace sea igual que esta instalación OSS; inspeccione el catálogo, editor, versión, licencia y compatibilidad de cómputo reales.
 
-### Descripción general de los métodos
+**Utilice un motor de políticas de red para los mismos endpoints.** La guía de Calico para EKS requiere que la política de red de AWS VPC CNI esté deshabilitada. Una migración necesita una transición revisada de políticas, estado de nodos y disponibilidad; simplemente alternar un indicador mientras se ejecutan ambos motores no es un procedimiento de migración. AWS advierte que las reglas pueden permanecer tras eliminar un agente de políticas y recomienda reemplazar los nodos afectados al migrar desde un motor de terceros. Consulte las [consideraciones sobre políticas de AWS](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html) y el [procedimiento para deshabilitar](https://docs.aws.amazon.com/eks/latest/userguide/network-policy-disable.html).
 
-| Método          | Complejidad | Flexibilidad | Ruta de actualización | Integración con EKS |
-| --------------- | ---------- | ----------- | --------------------- | ------------------- |
-| Complemento de EKS      | Baja        | Limitada     | Automática    | Nativa          |
-| Tigera Operator | Media     | Alta        | Semiautomática    | Buena            |
-| Helm            | Media     | Máxima     | Manual       | Buena            |
-| Manifest        | Alta       | Media      | Manual       | Básica           |
+## Preparar la instalación existente de VPC CNI
 
-### Método 1: Complemento de EKS (el más sencillo)
-
-El complemento de EKS proporciona integración nativa con la administración del ciclo de vida de EKS.
+Los comandos siguientes inspeccionan un complemento administrado `vpc-cni` existente. Utilice la Region y el nombre de clúster reales; una instalación de VPC CNI autoadministrada debe cambiarse mediante su propio manifiesto o propietario de Helm.
 
 ```bash
-# Enable via AWS CLI
-aws eks create-addon \
-  --cluster-name my-cluster \
-  --addon-name vpc-cni \
-  --addon-version v1.18.0-eksbuild.1 \
-  --configuration-values '{"enableNetworkPolicy": "true"}'
+EKS_CLUSTER=my-cluster
+EKS_REGION=us-east-1
+EKS_VERSION=$(aws eks describe-cluster --name "$EKS_CLUSTER" \
+  --region "$EKS_REGION" --query cluster.version --output text)
 
-# Or enable Calico as separate add-on (if available)
-aws eks create-addon \
-  --cluster-name my-cluster \
-  --addon-name calico \
-  --service-account-role-arn arn:aws:iam::ACCOUNT:role/CalicoRole
+aws eks describe-addon-versions --addon-name vpc-cni \
+  --kubernetes-version "$EKS_VERSION" --region "$EKS_REGION" \
+  --query 'addons[0].addonVersions[].{version:addonVersion,compatibility:compatibilities,compute:computeTypes}'
+
+aws eks describe-addon --cluster-name "$EKS_CLUSTER" \
+  --addon-name vpc-cni --region "$EKS_REGION" > vpc-cni-current.json
+
+VPC_CNI_VERSION=$(jq -r '.addon.addonVersion' vpc-cni-current.json)
+aws eks describe-addon-configuration --addon-name vpc-cni \
+  --addon-version "$VPC_CNI_VERSION" --region "$EKS_REGION" \
+  --query configurationSchema --output text > vpc-cni-schema.json
 ```
 
+Calico requiere `ANNOTATE_POD_IP=true` para que VPC CNI publique con prontitud `vpc.amazonaws.com/pod-ips`. El ServiceAccount `aws-node` necesita permiso para aplicar parches a Pods. La documentación actual de VPC CNI indica que el complemento de EKS actualiza este permiso automáticamente; verifíquelo en lugar de sobrescribir el ClusterRole existente:
+
+```bash
+kubectl auth can-i patch pods --all-namespaces \
+  --as=system:serviceaccount:kube-system:aws-node
+```
+
+Esta comprobación de autorización requiere permiso para suplantar ese ServiceAccount. Si el permiso está ausente, una vinculación independiente puede agregar la regla necesaria sin reemplazar reglas existentes. Para una instalación no estándar, use su nombre real de ServiceAccount.
+
 ```yaml
-# eksctl configuration
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
 metadata:
-  name: my-cluster
-  region: us-east-1
-  version: "1.30"
-
-addons:
-  - name: vpc-cni
-    version: latest
-    configurationValues: |
-      enableNetworkPolicy: "true"
-      nodeAgent:
-        enablePolicyEventLogs: "true"
+  name: calico-vpc-pod-annotations
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: calico-vpc-pod-annotations
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: calico-vpc-pod-annotations
+subjects:
+  - kind: ServiceAccount
+    name: aws-node
+    namespace: kube-system
 ```
 
-**Ventajas:**
-
-* Actualizaciones automáticas con EKS
-* Incluye soporte de AWS
-* Configuración sencilla
-* Integración nativa con CloudWatch
-
-**Desventajas:**
-
-* Limitado a Kubernetes NetworkPolicy
-* Sin características específicas de Calico
-* Menor flexibilidad de configuración
-
-### Método 2: Tigera Operator (recomendado)
+Para la **configuración nueva o ya solo de políticas** revisada, prepare el candidato siguiente y conserve la configuración actual del complemento:
 
 ```bash
-# Install Tigera Operator
-kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.29.0/manifests/tigera-operator.yaml
+jq '(.addon.configurationValues // "") as $current
+  | (if $current == "" then {} else ($current | fromjson) end)
+  | .enableNetworkPolicy = "false"
+  | .env.ANNOTATE_POD_IP = "true"
+  | del(.env.NETWORK_POLICY_ENFORCING_MODE)' \
+  vpc-cni-current.json > vpc-cni-calico.json
 ```
 
+Este comando espera valores de configuración JSON; si los valores existentes son YAML, analícelos y conviértalos sin eliminar campos antes de preparar el candidato. Deténgase ante un error de análisis. Valide el candidato frente al esquema de compilación de EKS recuperado y revise la diferencia. La variable `NETWORK_POLICY_ENFORCING_MODE` pertenece al agente de políticas de AWS; dejarla configurada cuando ese agente está ausente puede impedir la creación de Pods. Si la política de AWS está activa actualmente, complete el plan de migración antes de usar este candidato. Aplique la configuración aprobada mediante el propietario del complemento:
+
+```bash
+aws eks update-addon --cluster-name "$EKS_CLUSTER" \
+  --addon-name vpc-cni --region "$EKS_REGION" \
+  --configuration-values file://vpc-cni-calico.json \
+  --resolve-conflicts PRESERVE
+```
+
+Inspeccione el estado de actualización devuelto y el DaemonSet resultante. Un conflicto conservado puede impedir que el campo deseado surta efecto. No considere el análisis correcto de JSON ni una solicitud de actualización aceptada como prueba de aplicación de políticas.
+
+## Instalar Calico con el operador
+
+Elija **una** de las rutas de manifiestos o Helm siguientes para una instalación nueva. No instale un segundo operador sobre una versión existente. Estos ejemplos suponen trabajadores EC2 Linux comunes, API/DNS de Kubernetes accesible, VPC CNI compatible y ningún motor de políticas en competencia.
+
+### Ruta de manifiestos del operador
+
+Calico 3.32 separa los CRD de Calico del manifiesto del operador:
+
+```bash
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/v1_crd_projectcalico_org.yaml
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.32.2/manifests/tigera-operator.yaml
+```
+
+Guarde lo siguiente como `calico-eks-installation.yaml`:
+
 ```yaml
-# Installation resource for EKS
 apiVersion: operator.tigera.io/v1
 kind: Installation
 metadata:
   name: default
 spec:
-  # Specify EKS as the Kubernetes provider
-  kubernetesProvider: EKS
-
-  # Use VPC CNI for networking
-  cni:
-    type: AmazonVPC
-
-  calicoNetwork:
-    # Disable Calico networking (using VPC CNI)
-    bgp: Disabled
-
-    # No IP pools needed (VPC CNI handles IPAM)
-    ipPools: []
-
-    # Linux dataplane
-    linuxDataplane: Iptables  # or BPF for eBPF mode
-
-  # Component resources
-  componentResources:
-    - componentName: Node
-      resourceRequirements:
-        requests:
-          cpu: 100m
-          memory: 128Mi
-        limits:
-          cpu: 500m
-          memory: 256Mi
-
-  # Enable Typha for clusters > 50 nodes
-  typhaDeployment:
-    spec:
-      replicas: 3
-```
-
-```bash
-# Apply installation
-kubectl apply -f installation.yaml
-
-# Verify installation
-kubectl get tigerastatus
-kubectl get pods -n calico-system
-```
-
-**Ventajas:**
-
-* Todas las características de Calico (GlobalNetworkPolicy, Tiers, etc.)
-* El Operator administra el ciclo de vida
-* Conciliación automática de componentes
-* Soporte para dataplane eBPF
-
-**Desventajas:**
-
-* Implementación de Operator adicional
-* Requiere actualizaciones independientes de EKS
-
-### Método 3: Instalación con Helm
-
-```bash
-# Add Tigera Helm repository
-helm repo add projectcalico https://docs.tigera.io/calico/charts
-helm repo update
-
-# Install with EKS-specific values
-helm install calico projectcalico/tigera-operator \
-  --namespace tigera-operator \
-  --create-namespace \
-  --version v3.29.0 \
-  -f eks-values.yaml
-```
-
-```yaml
-# eks-values.yaml
-installation:
   kubernetesProvider: EKS
   cni:
     type: AmazonVPC
   calicoNetwork:
     bgp: Disabled
     linuxDataplane: Iptables
-
-  # Node configuration
   nodeUpdateStrategy:
+    type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 1
-    type: RollingUpdate
-
-# Typha configuration
-typhaDeployment:
-  replicas: 3
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-    limits:
-      cpu: 500m
-      memory: 256Mi
-
-# Felix configuration via operator
-felixConfiguration:
-  prometheusMetricsEnabled: true
-  prometheusMetricsPort: 9091
-  flowLogsFlushInterval: "15s"
-  flowLogsFileEnabled: true
-
-# API server (for calicoctl access)
-apiServer:
-  enabled: false  # Set to true for Calico Enterprise
-```
-
-**Ventajas:**
-
-* Compatible con GitOps
-* Control de versiones para la configuración
-* Reversión sencilla
-* Valores personalizables
-
-**Desventajas:**
-
-* Requiere conocimientos de Helm
-* Administración manual de actualizaciones
-
-## Controlador de políticas de red de EKS (v1.14+)
-
-EKS 1.25+ incluye soporte nativo para Network Policy mediante VPC CNI.
-
-### Habilitación de Network Policy nativa
-
-```yaml
-# eksctl configuration
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-metadata:
-  name: network-policy-cluster
-  region: us-east-1
-  version: "1.30"
-
-addons:
-  - name: vpc-cni
-    version: latest
-    configurationValues: |
-      enableNetworkPolicy: "true"
-      nodeAgent:
-        enablePolicyEventLogs: "true"
-        enableCloudWatchLogs: "true"
-```
-
-```bash
-# Enable via kubectl
-kubectl set env daemonset aws-node -n kube-system ENABLE_NETWORK_POLICY=true
-
-# Verify network policy agent
-kubectl get pods -n kube-system -l k8s-app=aws-node
-kubectl logs -n kube-system -l k8s-app=aws-node -c aws-network-policy-agent
-```
-
-### Network Policy nativa de EKS frente a Calico
-
-| Característica                  | EKS nativo (VPC CNI) | Calico           |
-| ------------------------ | -------------------- | ---------------- |
-| Kubernetes NetworkPolicy | Sí                  | Sí              |
-| GlobalNetworkPolicy      | No                   | Sí              |
-| Tiers de políticas             | No                   | Sí              |
-| Política L7 (HTTP)         | No                   | Sí (Enterprise) |
-| Política basada en DNS         | No                   | Sí              |
-| Reglas de salida FQDN        | No                   | Sí              |
-| Política de Host Endpoint     | No                   | Sí              |
-| Vista previa de políticas           | No                   | Sí (Enterprise) |
-| Flow Logs                | CloudWatch           | Prometheus/archivo  |
-| Rendimiento              | Optimizado para eBPF       | iptables/eBPF    |
-
-## Consideraciones sobre el tipo de nodo
-
-### Matriz de características por tipo de nodo
-
-| Característica        | Nodos administrados | Autoadministrados | Fargate |
-| -------------- | ------------- | ------------ | ------- |
-| Calico CNI     | No (VPC CNI)  | Sí          | No      |
-| Política de Calico  | Sí           | Sí          | Limitada |
-| Dataplane eBPF | Sí           | Sí          | No      |
-| BGP            | No            | Sí          | No      |
-| WireGuard      | Sí           | Sí          | No      |
-| Host Endpoints | Sí           | Sí          | No      |
-| IPAM personalizado    | No            | Sí          | No      |
-| Taints de nodo    | Sí           | Sí          | N/A     |
-
-### Grupos de nodos administrados
-
-```yaml
-# eksctl with managed nodes and Calico
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-metadata:
-  name: managed-calico-cluster
-  region: us-east-1
-  version: "1.30"
-
-managedNodeGroups:
-  - name: calico-nodes
-    instanceType: m5.large
-    desiredCapacity: 3
-    minSize: 2
-    maxSize: 10
-    volumeSize: 100
-    volumeType: gp3
-
-    # Labels for Calico node selector
-    labels:
-      calico-enabled: "true"
-
-    # IAM policies for Calico
-    iam:
-      withAddonPolicies:
-        cloudWatch: true
-
-    # Taints (optional)
-    taints:
-      - key: calico
-        value: "true"
-        effect: NoSchedule
-```
-
-### Nodos autoadministrados (Calico completo)
-
-```yaml
-# Self-managed nodes with full Calico networking
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-metadata:
-  name: self-managed-calico
-  region: us-east-1
-  version: "1.30"
-
-# Disable VPC CNI for self-managed nodes
-addons:
-  - name: vpc-cni
-    version: latest
-    configurationValues: |
-      enableNetworkPolicy: "false"
-
-nodeGroups:
-  - name: calico-full-nodes
-    instanceType: m5.xlarge
-    desiredCapacity: 3
-
-    # Custom AMI with Calico pre-installed (optional)
-    ami: ami-0123456789abcdef0
-
-    # Disable VPC CNI on these nodes
-    overrideBootstrapCommand: |
-      #!/bin/bash
-      # Remove VPC CNI
-      /etc/eks/bootstrap.sh my-cluster \
-        --kubelet-extra-args '--network-plugin=cni'
-
-    labels:
-      networking: calico-full
-
-# Then install full Calico CNI on these nodes
-```
-
-### Consideraciones sobre Fargate
-
-```yaml
-# Fargate profile with limited Calico support
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-metadata:
-  name: fargate-cluster
-  region: us-east-1
-
-fargateProfiles:
-  - name: default
-    selectors:
-      - namespace: default
-      - namespace: production
-    # Note: Only Kubernetes NetworkPolicy works on Fargate
-    # Calico GlobalNetworkPolicy does NOT apply to Fargate pods
-```
-
-**Limitaciones de Fargate:**
-
-* Solo Kubernetes NetworkPolicy estándar
-* Sin Calico GlobalNetworkPolicy
-* Sin dataplane eBPF
-* Sin políticas de host endpoint
-* Sin IPAM personalizado
-
-## Configuración de IRSA
-
-IAM Roles for Service Accounts (IRSA) proporciona permisos IAM detallados para los componentes de Calico.
-
-```yaml
-# Create IAM policy for Calico
-# calico-policy.json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "logs:CreateLogGroup",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents",
-        "logs:DescribeLogGroups",
-        "logs:DescribeLogStreams"
-      ],
-      "Resource": "arn:aws:logs:*:*:log-group:/aws/calico/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:DescribeInstances",
-        "ec2:DescribeNetworkInterfaces",
-        "ec2:DescribeSecurityGroups",
-        "ec2:DescribeSubnets",
-        "ec2:DescribeVpcs"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-```
-
-```bash
-# Create IAM policy
-aws iam create-policy \
-  --policy-name CalicoPolicy \
-  --policy-document file://calico-policy.json
-
-# Create IRSA for Calico
-eksctl create iamserviceaccount \
-  --cluster my-cluster \
-  --namespace calico-system \
-  --name calico-node \
-  --attach-policy-arn arn:aws:iam::ACCOUNT:policy/CalicoPolicy \
-  --approve
-```
-
-```yaml
-# Calico installation with IRSA
+---
 apiVersion: operator.tigera.io/v1
-kind: Installation
+kind: APIServer
 metadata:
   name: default
-spec:
+spec: {}
+---
+apiVersion: operator.tigera.io/v1
+kind: Goldmane
+metadata:
+  name: default
+spec: {}
+---
+apiVersion: operator.tigera.io/v1
+kind: Whisker
+metadata:
+  name: default
+spec: {}
+```
+
+```bash
+kubectl apply -f calico-eks-installation.yaml
+kubectl get tigerastatus
+kubectl get pods -n calico-system
+```
+
+El servidor de API, el agregador de flujos Goldmane y la interfaz de usuario Whisker están disponibles en OSS. Configure su acceso y capacidad de recursos para su entorno. Establecer `cni.type: AmazonVPC` delega IPAM/redes a VPC CNI; `bgp: Disabled` por sí solo no selecciona el CNI. Deje que el operador administre las réplicas de Typha; `typhaDeployment.spec.replicas` no es una anulación de Installation compatible. Consulte los [detalles de escalado](07-advanced-topics.md).
+
+### Ruta de Helm
+
+Guarde esto como `calico-eks-values.yaml`. `installation` se asigna a la API Installation. El `nodeSelector` de nivel superior controla el Pod del operador, no todos los componentes de Calico. Helm puede ignorar silenciosamente valores no compatibles, por lo que debe inspeccionar los recursos renderizados.
+
+```yaml
+installation:
+  enabled: true
   kubernetesProvider: EKS
   cni:
     type: AmazonVPC
-
-  # Reference the IRSA service account
-  nodeMetadata: "true"
-
   calicoNetwork:
     bgp: Disabled
+    linuxDataplane: Iptables
+  nodeUpdateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+apiServer:
+  enabled: true
+goldmane:
+  enabled: true
+whisker:
+  enabled: true
+manageCRDs: true
 ```
 
-## Security Group frente a política de Calico
+```bash
+helm repo add projectcalico https://docs.tigera.io/calico/charts
+helm repo update projectcalico
+helm template calico projectcalico/tigera-operator \
+  --version v3.32.2 --namespace tigera-operator \
+  -f calico-eks-values.yaml > calico-rendered.yaml
 
-### Comparación
+# After reviewing the rendered configuration for the prepared cluster:
+helm install calico projectcalico/tigera-operator \
+  --version v3.32.2 --namespace tigera-operator --create-namespace \
+  -f calico-eks-values.yaml
+```
 
-![Los security groups de AWS aplican reglas L3-L4 generales a nivel de instancia y ENI, mientras GlobalNetworkPolicy, NetworkPolicy de namespace y HostEndpointPolicy de Calico convergen en el mismo pod, que también intercambia tráfico directamente con su pod par.](../../../assets/diagrams/rendered/en-networking-calico-08-eks-integration-3.svg)
+Con `manageCRDs: true`, el operador administra los CRD necesarios después de iniciarse. Para una actualización que usa inmediatamente campos nuevos, aplique primero los CRD coincidentes mediante su propietario existente, siguiendo el [procedimiento de actualización de Calico](https://docs.tigera.io/calico/latest/operations/upgrading/kubernetes-upgrade). Un rollback de Helm por sí solo no garantiza que se revierta una migración de CRD o datos almacenados.
 
-| Aspecto          | Security Groups | Política de Calico         |
-| --------------- | --------------- | --------------------- |
-| Alcance           | Instancia/ENI    | Pod/Namespace/Cluster |
-| Granularidad     | IP/puerto         | Labels/Selectors/FQDN |
-| Capa           | L3-L4           | L3-L7                 |
-| Selección de Pod   | Por instancia     | Por Labels             |
-| Actualizaciones dinámicas | Limitadas         | En tiempo real             |
-| Auditoría           | CloudTrail      | Flow Logs             |
-| Entre AZ        | Sí             | Sí                   |
-| Costo            | Gratuito            | Gratuito (OSS)            |
+## Política de red nativa de AWS como alternativa
 
-### Uso conjunto de ambos
+El soporte estándar de NetworkPolicy de AWS VPC CNI comenzó en **VPC CNI 1.14**, no en EKS 1.14. La guía actual de AWS requiere VPC CNI **1.21+ tanto para políticas estándar como de administración**, versiones compatibles de EKS/plataforma y kernel Linux 5.10+. Utilice la guía de compatibilidad actual en lugar de ejemplos antiguos de versiones de lanzamiento.
+
+AWS ahora documenta `networking.k8s.aws/v1alpha1` **ClusterNetworkPolicy**, incluidos niveles Admin y Baseline, junto con NetworkPolicy `networking.k8s.io/v1` con ámbito de namespace. Es una API distinta de GlobalNetworkPolicy de Calico y de los niveles configurables de Calico. No describa la política nativa como limitada permanentemente a reglas con ámbito de namespace.
+
+| Capacidad | Implementación nativa de AWS | Calico OSS en esta guía |
+| --- | --- | --- |
+| Kubernetes NetworkPolicy | Compatible en nodos EC2 Linux elegibles | Compatible en endpoints administrados |
+| Política de clúster | AWS ClusterNetworkPolicy, con sus propias reglas y requisitos previos | Calico GlobalNetworkPolicy y Tier |
+| Observabilidad de políticas | Métricas/registros de eventos del agente; configurar por separado cualquier entrega a CloudWatch | Métricas de Felix/Typha, Goldmane y observabilidad de flujos de Whisker |
+| Política de capa de aplicación | No la infiera de la política de red L3/L4 | Integración independiente de Dikastes/Istio; no habilitada por esta instalación |
+| Política DNS/FQDN en Calico | No es una implementación de API de Calico | La función documentada de política basada en dominios requiere una edición comercial de Calico |
+
+Para la alternativa nativa, configure `enableNetworkPolicy` mediante los ajustes compatibles del complemento/Helm de VPC CNI. Establecer una variable de entorno `ENABLE_NETWORK_POLICY` inventada en `aws-node` es insuficiente. El modo de inicio nativo `standard` permite inicialmente el tráfico mientras se programa la política; `strict` comienza con denegación y requiere las rutas necesarias, incluido DNS. Estos ajustes de AWS no configuran el comportamiento de inicio de Calico.
+
+La aplicación nativa tiene límites documentados: solo EC2 Linux, solo interfaz primaria de Pod, restricciones de familias de IP y funcionamiento fiable con Pods controlados por controladores. Revise los límites de puertos/protocolos y los requisitos de puertos de Service. Mantenga los recursos PolicyEndpoint administrados por AWS bajo control del controlador. Utilice la [guía de VPC CNI mantenida](../01-vpc-cni.md) para conocer la configuración completa y los detalles de migración.
+
+## Tipos de nodos y perfiles de red
+
+| Perfil | Aplicabilidad |
+| --- | --- |
+| Nodos EC2 Linux comunes administrados o autoadministrados + VPC CNI | Instalación base solo de políticas anterior; el modelo de administración por sí solo no decide la capacidad de Calico |
+| Nodos EC2 + CNI Calico completo | Diseño independiente documentado por Tigera; cambian el direccionamiento de Pod, la accesibilidad del plano de control, la propiedad de CNI y los límites de soporte |
+| EKS Fargate | Ni el agente de nodo de Calico ni la política de red nativa de VPC CNI se ejecutan en estos Pods; los grupos de seguridad para Pods son un control compatible independiente |
+| EKS Auto Mode | Redes/política de AWS integradas; los complementos alternativos de CNI y políticas de red no son compatibles |
+| EKS Hybrid Nodes | VPC CNI es incompatible; la guía especializada de CNI lista compilaciones de Cilium 1.17/1.18 mantenidas por AWS; consulte la cualificación de soporte siguiente |
+| Nodos Windows | Procedimiento independiente de Windows/VPC CNI y Calico HNS; sin dataplane eBPF de Calico; consulte las [limitaciones de Windows](07-advanced-topics.md) |
+
+La guía especializada de CNI Hybrid lista compilaciones de Cilium mantenidas por AWS y enlaza ejemplos de Calico en otros lugares, mientras que la [página general de CNI alternativo](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html) sigue describiendo el soporte de Cilium/Calico central para Hybrid Nodes. No infiera la finalización del soporte de Calico a partir del cambio de ejemplo ni trate versiones upstream arbitrarias como compatibles con AWS. Confirme el límite de soporte de distribución/capacidad específico.
+
+Una política de Calico en un endpoint EC2 puede restringir el tráfico de ese endpoint que involucra a un par Fargate; esto no significa que la política se aplique dentro de Fargate. Los clústeres de cómputo mixto necesitan límites explícitos de programación y aplicación, en lugar de etiquetar a cada trabajador como «compatibilidad completa con Calico».
+
+El CNI Calico completo no se habilita estableciendo `enableNetworkPolicy` de VPC CNI en false. El procedimiento de Tigera para clústeres nuevos elimina el CNI en competencia antes de añadir trabajadores. No elimine `aws-node` de un clúster de producción existente como atajo de conversión. El diseño de superposición documentado también necesita una consideración especial para el tráfico de API-server-a-Pod, como los webhooks de admisión; los componentes `hostNetwork` de confianza son una solución alternativa documentada. Revise los CIDR de Pod, las rutas de retorno, MTU, las comprobaciones de IAM/origen-destino de nodos cuando corresponda y el límite de soporte AWS/Tigera antes de adoptar ese perfil.
+
+Para Auto Mode, las variables de entorno de VPC CNI y los ajustes ENIConfig no configuran el servicio de redes administrado. Use NodeClass. Auto Mode ejecuta CoreDNS como servicio de sistema de nodo; un clúster Auto Mode puro no necesita el Deployment CoreDNS tradicional, mientras que los nodos mixtos que no son Auto aún lo requieren. Las consultas DNS iniciales pueden ser locales mientras el reenvío upstream aún sale del nodo.
+
+## IAM, IRSA y Pod Identity
+
+La instalación básica de Calico solo de políticas utiliza RBAC de Kubernetes; no requiere un rol IAM amplio de detección de EC2 o CloudWatch en `calico-node`. VPC CNI necesita sus propios permisos de AWS documentados. Un exportador de registros independiente o una integración comercial de nube puede requerir permisos adicionales en el ServiceAccount **de ese componente**.
+
+IRSA utiliza el proveedor OIDC del clúster y una política de confianza con el alcance adecuado para obtener credenciales de AWS para un ServiceAccount. EKS Pod Identity es otra opción donde el componente, SDK y tipo de cómputo lo admiten. Ni una política IAM ni un valor `Installation.spec.nodeMetadata` inventado conectan credenciales a una carga de trabajo. Siga la configuración del componente propietario y evite competir con ServiceAccounts administrados por el operador. Consulte la [configuración de IAM de VPC CNI](https://docs.aws.amazon.com/eks/latest/userguide/cni-iam-role.html).
+
+## Grupos de seguridad y política de Calico
+
+![Los grupos de seguridad, la política de Calico y la autenticación de aplicaciones proporcionan capas distintas de control de acceso.](../../.gitbook/assets/en-networking-calico-08-eks-integration-3.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-calico-08-eks-integration-3.html)
+
+La figura es un diagrama conceptual de capas, no un orden de evaluación fijo. Calico evalúa políticas por nivel/orden y semántica de reglas; NetworkPolicy no siempre precede a GlobalNetworkPolicy. CloudTrail registra actividad de API de AWS, no decisiones de paquetes. VPC Flow Logs y las herramientas de registro de políticas configuradas proporcionan evidencia de tráfico diferente. mTLS/autorización de aplicaciones debe desplegarse por separado.
+
+Los grupos de seguridad se adjuntan a ENI. **Los grupos de seguridad para Pods** pueden seleccionar cargas de trabajo mediante una SecurityGroupPolicy, por lo que «los grupos de seguridad solo seleccionan instancias» es incorrecto. Para combinar SG-for-Pods con la política de Calico, AWS requiere VPC CNI 1.11+ y `POD_SECURITY_GROUP_ENFORCING_MODE=standard`; en modo strict, el tráfico de esos Pods no está sujeto a la aplicación de Calico. Compruebe el soporte de ENI de rama/instancia y vuelva a crear los Pods afectados después de cambiar el modo. SG-for-Pods no es compatible con Windows ni Auto Mode.
+
+En modo estándar con el SNAT externo habitual de VPC CNI habilitado (`AWS_VPC_K8S_CNI_EXTERNALSNAT=false`), el tráfico que sale de la VPC utiliza la IP de ENI principal y los grupos de seguridad del nodo. No suponga que las reglas de salida del grupo de seguridad de Pod cubren todas las rutas. Consulte las [condiciones exactas de AWS](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html).
+
+### Una política de aplicación con ámbito de namespace
+
+Este ejemplo selecciona solo Pods `app=frontend` en un namespace `calico-eks-demo` preparado. Permite a un **Pod de gateway dentro del clúster** en el mismo namespace acceder a TCP 8080 y permite la salida de frontend a Pods backend del mismo namespace en TCP 8080. El ejemplo supone Pods CoreDNS comunes con `k8s-app=kube-dns`; NodeLocal DNS u otro resolvedor necesita destinos distintos. Otras políticas/niveles pueden cambiar el resultado, por lo que debe inspeccionar todo el conjunto de políticas efectivas.
 
 ```yaml
-# Security Group for node-level protection
-# (Managed via AWS Console or Terraform)
-
-# Calico for pod-level protection
 apiVersion: projectcalico.org/v3
 kind: NetworkPolicy
 metadata:
   name: frontend-policy
-  namespace: production
+  namespace: calico-eks-demo
 spec:
   selector: app == 'frontend'
+  types: [Ingress, Egress]
   ingress:
     - action: Allow
-      source:
-        selector: app == 'load-balancer'
       protocol: TCP
+      source:
+        selector: app == 'gateway'
       destination:
-        ports:
-          - 80
-          - 443
+        ports: [8080]
   egress:
     - action: Allow
-      destination:
-        selector: app == 'backend'
       protocol: TCP
       destination:
-        ports:
-          - 8080
----
-# Security Groups for Pods (EKS feature)
-apiVersion: vpcresources.k8s.aws/v1beta1
-kind: SecurityGroupPolicy
-metadata:
-  name: frontend-sg
-  namespace: production
-spec:
-  podSelector:
-    matchLabels:
-      app: frontend
-  securityGroups:
-    groupIds:
-      - sg-0123456789abcdef0
+        selector: app == 'backend'
+        ports: [8080]
+    - action: Allow
+      protocol: UDP
+      destination:
+        namespaceSelector: projectcalico.org/name == 'kube-system'
+        selector: k8s-app == 'kube-dns'
+        ports: [53]
+    - action: Allow
+      protocol: TCP
+      destination:
+        namespaceSelector: projectcalico.org/name == 'kube-system'
+        selector: k8s-app == 'kube-dns'
+        ports: [53]
 ```
 
-## Consideraciones sobre la actualización de EKS
+Mantenga el selector de destino y el puerto bajo la **misma** asignación `destination`. Las claves YAML duplicadas pueden eliminar silenciosamente el selector y permitir TCP 8080 a endpoints no deseados. Un ALB/NLB no es un Pod de Kubernetes con `app=load-balancer`; tenga en cuenta por separado el modo de destino, las comprobaciones de estado y las direcciones de origen observadas mediante la [guía de balanceador de carga](../03-aws-lb-controller.md).
 
-### Matriz de compatibilidad
+Una GlobalNetworkPolicy vacía para todo el clúster que selecciona `all()` puede interrumpir DNS, la API, la monitorización y el tráfico de aplicaciones. Construya primero el comportamiento de denegación predeterminada dentro de un namespace de prueba seleccionado, con permisos explícitos para dependencias; consulte [política de red](05-network-policy.md).
 
-| Versión de EKS | Calico 3.26 | Calico 3.27 | Calico 3.28 | Calico 3.29 |
-| ----------- | ----------- | ----------- | ----------- | ----------- |
-| 1.27        | Sí         | Sí         | Sí         | Sí         |
-| 1.28        | Sí         | Sí         | Sí         | Sí         |
-| 1.29        | Limitada     | Sí         | Sí         | Sí         |
-| 1.30        | No          | Sí         | Sí         | Sí         |
-| 1.31        | No          | Limitada     | Sí         | Sí         |
+## Actualización y recuperación
 
-### Procedimiento de actualización
+1. Haga inventario de las versiones de plano de control EKS, SO de nodo/kubelet, VPC CNI, kube-proxy, Calico/operador/CRD y calicoctl. Exporte la configuración y las políticas administradas.
+2. Elija una versión de Calico compatible con **ambos lados de la transición planificada**. No hay una regla universal de «actualice siempre Calico primero/al final». Siga el procedimiento específico de la instalación y las notas de migración de CRD.
+3. Revise las recomendaciones de actualización de EKS, las API eliminadas y toda la compatibilidad de complementos. Actualice el plano de control EKS una versión menor a la vez y, después, lleve los nodos y complementos aplicables a versiones compatibles.
+4. Verifique el comportamiento de la política y Service durante la transición gradual, incluidos los casos negativos y los Pods recién creados. Mantenga explícita la propiedad de la configuración y los requisitos previos de rollback.
 
 ```bash
-# 1. Check current versions
-kubectl get pods -n calico-system -o jsonpath='{.items[*].spec.containers[*].image}'
-aws eks describe-cluster --name my-cluster --query 'cluster.version'
-
-# 2. Review release notes for compatibility
-# https://docs.tigera.io/calico/latest/release-notes/
-
-# 3. Upgrade Calico first (before EKS)
-helm upgrade calico projectcalico/tigera-operator \
-  --namespace tigera-operator \
-  --version v3.29.0 \
-  -f eks-values.yaml
-
-# 4. Verify Calico health
+aws eks describe-cluster --name "$EKS_CLUSTER" --region "$EKS_REGION" \
+  --query 'cluster.{version:version,platform:platformVersion,status:status}'
+kubectl get nodes -o wide
+kubectl get daemonset calico-node -n calico-system -o wide
 kubectl get tigerastatus
-calicoctl node status
-
-# 5. Upgrade EKS control plane
-aws eks update-cluster-version \
-  --name my-cluster \
-  --kubernetes-version 1.30
-
-# 6. Upgrade node groups
-eksctl upgrade nodegroup \
-  --cluster my-cluster \
-  --name calico-nodes \
-  --kubernetes-version 1.30
+helm get values calico -n tigera-operator -o yaml
 ```
 
-## Consideraciones de costos
+EKS actual admite **rollback condicional a la versión menor anterior dentro de los siete días de una actualización in situ**. El clúster debe cumplir los requisitos documentados de elegibilidad y preparación; el plazo no es una capacidad general de degradación. Los nodos comunes administrados/autoadministrados/híbridos y los complementos incompatibles necesitan preparación antes del plano de control. Auto Mode controla su rollback de nodo; Fargate necesita su propio tratamiento de cargas de trabajo. Los complementos de Calico y EKS no se revierten automáticamente, y conservar datos de etcd no hace seguros los recursos incompatibles. Siga el [procedimiento de rollback actual](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html), sin utilizar `--force` para ocultar problemas de compatibilidad sin resolver. Fuera del plazo elegible, planifique la migración a otro clúster compatible.
 
-### Factores de costo
+Aplicar un manifiesto de operador más antiguo o ejecutar `helm rollback` no prueba una degradación segura de Calico. Compruebe el soporte y los cambios de esquema/datos de la versión específica antes de elegir los pasos de recuperación. `calicoctl node status` informa el estado BGP local del nodo y no es una prueba de aceptación de EKS solo de políticas.
 
-| Componente    | Factor de costo                   | Optimización           |
-| ------------ | ----------------------------- | ---------------------- |
-| IP de VPC CNI  | Asociación de ENI, asignación de IP | Usar delegación de prefijo  |
-| Calico Typha | Recursos de instancia            | Ajustar el tamaño de las réplicas    |
-| Flow Logs    | Almacenamiento, procesamiento           | Agregar, filtrar      |
-| Entre AZ     | Transferencia de datos                 | Afinidad de zona          |
-| eBPF         | Eficiencia de CPU                | Habilitar donde sea compatible |
+## Coste y rendimiento
 
-### Estrategias de optimización de costos
+| Factor | Qué evaluar |
+| --- | --- |
+| Recursos de trabajo | Mida Felix, Typha, controladores y agregación de flujos bajo la fluctuación real de políticas/endpoints; las solicitudes de CPU no constituyen una tarifa de AWS independiente |
+| Capacidad de IP de VPC | La delegación de prefijos afecta la asignación y densidad de direcciones, no un descuento automático por adjuntar ENI |
+| Registros/métricas | La retención, ingesta, consultas y entrega del exportador tienen costes independientes; las métricas no son registros de flujo |
+| Tráfico entre AZ | Evalúe las rutas reales de origen/destino y los precios de servicio; la localidad también afecta la disponibilidad |
+| Ciclo de vida de EKS | El soporte extendido puede añadir un cargo por clúster; use el calendario de soporte actual |
 
-```yaml
-# 1. Enable VPC CNI prefix delegation (reduce ENI usage)
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: amazon-vpc-cni
-  namespace: kube-system
-data:
-  enable-prefix-delegation: "true"
-  warm-prefix-target: "1"
----
-# 2. Optimize Calico resource allocation
-apiVersion: operator.tigera.io/v1
-kind: Installation
-metadata:
-  name: default
-spec:
-  componentResources:
-    - componentName: Node
-      resourceRequirements:
-        requests:
-          cpu: 50m  # Start low, scale as needed
-          memory: 64Mi
-        limits:
-          cpu: 200m
-          memory: 128Mi
----
-# 3. Reduce flow log storage
-apiVersion: projectcalico.org/v3
-kind: FelixConfiguration
-metadata:
-  name: default
-spec:
-  flowLogsFlushInterval: "60s"  # Less frequent
-  flowLogsFileAggregationKindForAllowed: 2  # Aggregate allowed flows
-```
+Las estimaciones previas de dólares por componente carecían de Region, precios de instancias y supuestos de asignación. No son un modelo de costes utilizable. Utilice la demanda de recursos observada y los precios de AWS pertinentes en lugar de afirmar ahorros mensuales fijos a partir de límites de recursos arbitrarios.
 
-## Optimización del rendimiento de EKS
+### Delegación de prefijos
 
-### Delegación de prefijo
+Para nodos VPC CNI comunes, configure `ENABLE_PREFIX_DELEGATION`, `WARM_PREFIX_TARGET`, `MINIMUM_IP_TARGET` y `WARM_IP_TARGET` en los ajustes **`env`** del complemento o en su configuración propietaria de DaemonSet/Helm. Las entradas en minúsculas `enable-prefix-delegation` de un ConfigMap no configuran IPAMD.
+
+Comience con una estrategia de asignación documentada. `WARM_IP_TARGET` y `MINIMUM_IP_TARGET` anulan `WARM_PREFIX_TARGET`; establecerlos todos no acumula sus efectos. Los prefijos IPv4 necesitan espacio de subred `/28` contiguo e instancias adecuadas. Verifique la fragmentación de subred, las reservas, la configuración de max-Pods/kubelet y el plan de despliegue. Consulte el [procedimiento de prefijos de AWS](https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses-procedure.html).
+
+### Calico eBPF en EKS
+
+Calico documenta EKS y redes VPC CNI compatibles para su dataplane eBPF, pero esto cambia el manejo de Service y necesita una migración independiente. Siga la [Parte 6](06-ebpf-dataplane.md): las comprobaciones de kernel/plataforma, el acceso FQDN directo a API-server y el DNS de arranque, la propiedad de kube-proxy, los puertos de estado y el estado de rollback son importantes.
+
+VPC CNI **no** requiere universalmente que kube-proxy permanezca en ejecución. Si kube-proxy debe coexistir, Calico exige `bpfKubeProxyIptablesCleanupEnabled: false` y `bpfKubeProxyHealthzPort: 0` para evitar los conflictos documentados. Un parche genérico de selector de DaemonSet puede ser conciliado por su propietario y no debe sobrescribir selectores no relacionados. DSR no es una optimización predeterminada de EKS: las comprobaciones de subred/dirección de origen de AWS y las limitaciones de balanceadores de carga externos requieren validación independiente. Esta línea base mantiene Iptables y kube-proxy.
+
+Los preajustes sysctl genéricos, reducir la memoria a un mínimo arbitrario o acortar las duraciones de conntrack no establecen un mejor rendimiento. Evalúe comparativamente la carga de trabajo real y conserve las rutas de retorno, conexiones establecidas y recuperación ante fallos.
+
+## Ejemplo de planificación de clúster con eksctl
+
+Este es un **ejemplo de planificación para nodos Linux administrados comunes**, no una receta probada en producción ni una conversión de Auto Mode. Confirme las compilaciones de complementos compatibles mediante `describe-addon-versions` y fije las compilaciones aprobadas en la configuración antes del aprovisionamiento. Omitir una versión de complemento selecciona un valor predeterminado compatible; no constituye una aprobación de cada versión futura. El acceso privado a API requiere una ruta de administración hacia la VPC. NAT, registros, capacidad de trabajo y rangos de direcciones requieren un diseño específico del entorno.
 
 ```yaml
-# Enable prefix delegation for better IP density
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: amazon-vpc-cni
-  namespace: kube-system
-data:
-  enable-prefix-delegation: "true"
-  warm-prefix-target: "1"
-  minimum-ip-target: "16"
-  warm-ip-target: "4"
-```
-
-### eBPF en EKS
-
-```yaml
-# Enable eBPF dataplane on EKS
-apiVersion: operator.tigera.io/v1
-kind: Installation
-metadata:
-  name: default
-spec:
-  kubernetesProvider: EKS
-  cni:
-    type: AmazonVPC
-  calicoNetwork:
-    bgp: Disabled
-    linuxDataplane: BPF
----
-apiVersion: projectcalico.org/v3
-kind: FelixConfiguration
-metadata:
-  name: default
-spec:
-  bpfEnabled: true
-  bpfExternalServiceMode: "Tunnel"  # or "DSR" for direct server return
-  bpfKubeProxyIptablesCleanupEnabled: false  # Keep kube-proxy on EKS
-  bpfDataIfacePattern: "^(eth.*)"
-```
-
-**Nota:** En EKS, mantenga kube-proxy en ejecución incluso con el modo eBPF, ya que la integración con VPC CNI lo requiere.
-
-## Configuración completa de eksctl
-
-```yaml
-# Full EKS cluster with Calico - production-ready
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
-
 metadata:
-  name: production-calico-cluster
+  name: calico-eks-demo
   region: us-east-1
-  version: "1.30"
-  tags:
-    environment: production
-    networking: calico
-
-# IAM configuration
+  version: "1.36"
 iam:
   withOIDC: true
-  serviceAccounts:
-    - metadata:
-        name: calico-node
-        namespace: calico-system
-      wellKnownPolicies:
-        cloudWatch: true
-      attachPolicy:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Action:
-              - "ec2:DescribeInstances"
-              - "ec2:DescribeNetworkInterfaces"
-            Resource: "*"
-
-# VPC configuration
 vpc:
   cidr: 10.0.0.0/16
-  nat:
-    gateway: HighlyAvailable
   clusterEndpoints:
-    publicAccess: true
+    publicAccess: false
     privateAccess: true
-
-# Add-ons
-addons:
-  - name: vpc-cni
-    version: latest
-    configurationValues: |
-      enableNetworkPolicy: "false"
-      env:
-        ENABLE_PREFIX_DELEGATION: "true"
-        WARM_PREFIX_TARGET: "1"
-  - name: coredns
-    version: latest
-  - name: kube-proxy
-    version: latest
-
-# Managed node groups
 managedNodeGroups:
-  - name: system-nodes
+  - name: linux-workers
     instanceType: m5.large
+    amiFamily: AmazonLinux2023
     desiredCapacity: 3
     minSize: 3
     maxSize: 6
+    privateNetworking: true
+    volumeType: gp3
     volumeSize: 100
-    volumeType: gp3
-    labels:
-      role: system
-      calico: "true"
-    taints:
-      - key: CriticalAddonsOnly
-        effect: NoSchedule
-    iam:
-      withAddonPolicies:
-        cloudWatch: true
-    availabilityZones:
-      - us-east-1a
-      - us-east-1b
-      - us-east-1c
-
-  - name: workload-nodes
-    instanceType: m5.xlarge
-    desiredCapacity: 6
-    minSize: 3
-    maxSize: 20
-    volumeSize: 200
-    volumeType: gp3
-    labels:
-      role: workload
-      calico: "true"
-    iam:
-      withAddonPolicies:
-        cloudWatch: true
-        autoScaler: true
-    availabilityZones:
-      - us-east-1a
-      - us-east-1b
-      - us-east-1c
-
-# Logging
+addons:
+  - name: vpc-cni
+    attachPolicyARNs:
+      - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+    configurationValues: |
+      enableNetworkPolicy: "false"
+      env:
+        ANNOTATE_POD_IP: "true"
+  - name: coredns
+  - name: kube-proxy
 cloudWatch:
   clusterLogging:
-    enableTypes:
-      - api
-      - audit
-      - authenticator
-      - controllerManager
-      - scheduler
+    enableTypes: [api, audit, authenticator, controllerManager, scheduler]
 ```
 
-## Instalación de Helm paso a paso
+La política de IPv4 CNI pertenece a la identidad de VPC CNI, no a Calico. Revise IAM para otras familias de IP y métodos de identidad. Después de que exista el clúster aprobado, realice las comprobaciones de anotación/RBAC y **una** ruta de instalación de Calico anterior.
+
+## Validar el resultado
 
 ```bash
-# Step 1: Create EKS cluster
-eksctl create cluster -f cluster-config.yaml
-
-# Step 2: Verify cluster
-kubectl get nodes
-aws eks describe-cluster --name production-calico-cluster
-
-# Step 3: Add Tigera Helm repo
-helm repo add projectcalico https://docs.tigera.io/calico/charts
-helm repo update
-
-# Step 4: Create namespace
-kubectl create namespace tigera-operator
-
-# Step 5: Create values file
-cat > calico-values.yaml << 'EOF'
-installation:
-  kubernetesProvider: EKS
-  cni:
-    type: AmazonVPC
-  calicoNetwork:
-    bgp: Disabled
-    linuxDataplane: Iptables
-  nodeUpdateStrategy:
-    rollingUpdate:
-      maxUnavailable: 1
-    type: RollingUpdate
-  componentResources:
-    - componentName: Node
-      resourceRequirements:
-        requests:
-          cpu: 100m
-          memory: 128Mi
-        limits:
-          cpu: 500m
-          memory: 256Mi
-    - componentName: Typha
-      resourceRequirements:
-        requests:
-          cpu: 100m
-          memory: 128Mi
-        limits:
-          cpu: 500m
-          memory: 256Mi
-
-typhaDeployment:
-  replicas: 3
-
-apiServer:
-  enabled: false
-EOF
-
-# Step 6: Install Calico
-helm install calico projectcalico/tigera-operator \
-  --namespace tigera-operator \
-  --version v3.29.0 \
-  -f calico-values.yaml
-
-# Step 7: Wait for installation
-kubectl wait --for=condition=Available deployment/calico-typha \
-  -n calico-system --timeout=300s
-
-# Step 8: Verify installation
-kubectl get pods -n calico-system
 kubectl get tigerastatus
-
-# Step 9: Install calicoctl
-curl -L https://github.com/projectcalico/calico/releases/download/v3.29.0/calicoctl-linux-amd64 -o calicoctl
-chmod +x calicoctl
-sudo mv calicoctl /usr/local/bin/
-
-# Step 10: Configure calicoctl
-export DATASTORE_TYPE=kubernetes
-export KUBECONFIG=~/.kube/config
-
-# Step 11: Verify connectivity
-calicoctl node status
-calicoctl get nodes -o wide
-
-# Step 12: Apply default deny policy (optional)
-kubectl apply -f - << 'EOF'
-apiVersion: projectcalico.org/v3
-kind: GlobalNetworkPolicy
-metadata:
-  name: default-deny
-spec:
-  selector: all()
-  types:
-    - Ingress
-    - Egress
-EOF
-
-echo "Calico installation complete!"
+kubectl rollout status daemonset/calico-node -n calico-system --timeout=300s
+kubectl get pods -n calico-system -o wide
+kubectl get pods -n calico-eks-demo -o json \
+  | jq '.items[] | {name: .metadata.name, ip: .status.podIP,
+      annotatedIPs: .metadata.annotations["vpc.amazonaws.com/pod-ips"]}'
+kubectl get networkpolicies.projectcalico.org -n calico-eks-demo
 ```
 
-***
+Utilice cargas de trabajo de prueba administradas por controladores y compruebe conexiones permitidas y denegadas en el mismo nodo, entre nodos/AZ, después de recrear Pod y durante actualizaciones. Incluya DNS, endpoints de API/identidad necesarios para la aplicación, tráfico de Service y comprobaciones de estado de balanceadores de carga. Un Pod Running o nodo Ready no verifica ni la denegación deseada ni la ausencia de una brecha de política durante el inicio. Pruebe IPv6 por separado: la guía actual de EKS de Calico excluye la aplicación de políticas para Pods IPv6 con `ENABLE_V4_EGRESS=true`.
+
+Los ejemplos de este documento se comprobaron con esquemas publicados y charts renderizados; no se crearon clústeres EKS, recursos IAM ni tráfico de producción para validarlos.
 
 ## Referencias
 
-* [Prácticas recomendadas de EKS - Redes](https://aws.github.io/aws-eks-best-practices/networking/)
-* [Documentación de Calico en EKS](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)
-* [Documentación de VPC CNI](https://github.com/aws/amazon-vpc-cni-k8s)
-* [Complementos de EKS](https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html)
-* [Security Groups para Pods](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html)
+- [Calico en EKS](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)
+- [Requisitos de Calico](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements)
+- [Instalación de Calico con Helm](https://docs.tigera.io/calico/latest/getting-started/kubernetes/helm)
+- [Actualizaciones de Calico](https://docs.tigera.io/calico/latest/operations/upgrading/kubernetes-upgrade)
+- [Referencia de configuración de VPC CNI 1.23](https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.0/README.md)
+- [Política de red nativa de EKS](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
+- [Actualizaciones de complementos de EKS](https://docs.aws.amazon.com/eks/latest/userguide/updating-an-add-on.html)
+- [Ciclo de vida de versiones de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
+- [Redes de EKS Auto Mode](https://docs.aws.amazon.com/eks/latest/userguide/auto-networking.html)
+- [CNI de EKS Hybrid Nodes](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-cni.html)
 
-## Cuestionario
+## Siguientes pasos y cuestionario
 
-Para poner a prueba lo que aprendió en este capítulo, intente el [Cuestionario de integración con EKS](../../quizzes/networking/calico/08-eks-integration-quiz.md).
+Continúe con [operaciones](09-operations.md), revise [temas avanzados](07-advanced-topics.md) o el [glosario](glossary.md), y pruebe sus conocimientos con el [cuestionario de integración de EKS](../../quizzes/networking/calico/08-eks-integration-quiz.md).

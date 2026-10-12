@@ -1,7 +1,7 @@
 # ArgoCD 流量管理
 
-> **支持的版本**：Argo Rollouts v1.6+，ArgoCD v2.9+
-> **最后更新**：July 15, 2026
+> **依据版本审阅**：Argo CD 3.5.2、Argo Rollouts 1.10.0、Helm chart 2.43.1；在审阅发布说明后更新至 Argo CD 3.5.4 和 chart 2.43.6（Rollouts 仍为 1.10.0；示例未重新运行）
+> **最后更新**：October 12, 2026
 
 ## 目录
 - [Argo Rollouts 概述](#argo-rollouts-overview)
@@ -14,117 +14,84 @@
 - [实验](#experiments)
 - [通知](#notifications)
 
-<span id="argo-rollouts-overview"></span>
-
 ## Argo Rollouts 概述
 
-Argo Rollouts 是一个 Kubernetes 控制器，提供高级部署功能，包括蓝绿部署、金丝雀部署和渐进式交付功能。
+Argo Rollouts 是一个 Kubernetes controller，提供包括蓝绿部署、金丝雀部署和渐进式交付功能在内的高级部署能力。
 
 ### 为什么选择 Argo Rollouts？
 
-标准 Kubernetes Deployment 仅支持滚动更新。Argo Rollouts 在此基础上扩展了以下功能：
+Kubernetes Deployment 支持 RollingUpdate 和 Recreate，以及暂停/恢复。下表比较原生 controller 的行为；其他模式可通过额外的 controller 或多个 Deployment 实现：
 
 | 功能 | K8s Deployment | Argo Rollouts |
 |---------|----------------|---------------|
 | 滚动更新 | 是 | 是 |
 | 蓝绿 | 否 | 是 |
 | 金丝雀 | 否 | 是 |
-| 流量分割 | 否 | 是 |
+| 流量拆分 | 否 | 是 |
 | 自动回滚 | 否 | 是 |
 | 分析/验证 | 否 | 是 |
-| 暂停/恢复 | 否 | 是 |
+| 暂停/恢复 | 是 | 是 |
 | 实验 | 否 | 是 |
 
 ### 架构
 
-```mermaid
-flowchart TB
-    subgraph ROLLOUTS["Argo Rollouts"]
-        CTRL["Rollouts Controller"]
-        ANALYSIS["Analysis Controller"]
-    end
+![Argo Rollouts controller 执行蓝绿、金丝雀和实验策略，通过 ingress controller 和 service mesh 转移流量，并查询分析提供程序；其结果会推进、中止或暂停 rollout。](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-0.png)
 
-    subgraph TRAFFIC["Traffic Management"]
-        INGRESS["Ingress Controller"]
-        MESH["Service Mesh"]
-    end
-
-    subgraph WORKLOADS["Workloads"]
-        ACTIVE["Active ReplicaSet"]
-        PREVIEW["Preview/Canary ReplicaSet"]
-    end
-
-    subgraph METRICS["Metrics"]
-        PROM["Prometheus"]
-        DD["Datadog"]
-        NR["New Relic"]
-    end
-
-    CTRL --> ACTIVE
-    CTRL --> PREVIEW
-    CTRL --> INGRESS
-    CTRL --> MESH
-    ANALYSIS --> PROM
-    ANALYSIS --> DD
-    ANALYSIS --> NR
-    ANALYSIS -->|"Pass/Fail"| CTRL
-
-    classDef rollouts fill:#EB6E85,stroke:#333,color:white
-    classDef traffic fill:#326CE5,stroke:#333,color:white
-    classDef workload fill:#28a745,stroke:#333,color:white
-    classDef metrics fill:#6c757d,stroke:#333,color:white
-
-    class CTRL,ANALYSIS rollouts
-    class INGRESS,MESH traffic
-    class ACTIVE,PREVIEW workload
-    class PROM,DD,NR metrics
-```
-
-<span id="installation"></span>
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-05-traffic-management-0.html)
 
 ## 安装
 
 ### 安装 Argo Rollouts Controller
 
 ```bash
-# Create namespace
-kubectl create namespace argo-rollouts
-
-# Install controller
-kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
-
-# Verify installation
-kubectl get pods -n argo-rollouts
+set -euo pipefail
+ROLLOUTS_VERSION=v1.10.0
+kubectl create namespace argo-rollouts --dry-run=client -o yaml | kubectl apply -f -
+kubectl apply --server-side -n argo-rollouts \
+  -f "https://github.com/argoproj/argo-rollouts/releases/download/${ROLLOUTS_VERSION}/install.yaml"
+kubectl rollout status deployment/argo-rollouts -n argo-rollouts --timeout=180s
 ```
 
 ### 安装 kubectl 插件
 
 ```bash
-# macOS
-brew install argoproj/tap/kubectl-argo-rollouts
-
-# Linux
-curl -LO https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64
-chmod +x kubectl-argo-rollouts-linux-amd64
-sudo mv kubectl-argo-rollouts-linux-amd64 /usr/local/bin/kubectl-argo-rollouts
-
-# Verify
+set -euo pipefail
+ROLLOUTS_VERSION=v1.10.0
+case "$(uname -s)" in
+  Linux) plugin_os=linux ;;
+  Darwin) plugin_os=darwin ;;
+  *) echo "Use the Windows release asset for Windows" >&2; exit 1 ;;
+esac
+case "$(uname -m)" in
+  x86_64) plugin_arch=amd64 ;;
+  aarch64|arm64) plugin_arch=arm64 ;;
+  *) echo "Unsupported architecture" >&2; exit 1 ;;
+esac
+plugin_asset="kubectl-argo-rollouts-${plugin_os}-${plugin_arch}"
+plugin_dir="$(mktemp -d)"
+trap 'rm -rf "$plugin_dir"' EXIT
+plugin_base="https://github.com/argoproj/argo-rollouts/releases/download/${ROLLOUTS_VERSION}"
+curl --fail --location --retry 3 "$plugin_base/$plugin_asset" -o "$plugin_dir/$plugin_asset"
+curl --fail --location --retry 3 "$plugin_base/argo-rollouts-checksums.txt" -o "$plugin_dir/checksums.txt"
+awk -v artifact="$plugin_asset" '$2 == artifact { print }' "$plugin_dir/checksums.txt" > "$plugin_dir/selected.sha256"
+test -s "$plugin_dir/selected.sha256"
+(
+  cd "$plugin_dir"
+  if [ "$plugin_os" = darwin ]; then
+    shasum -a 256 -c selected.sha256
+  else
+    sha256sum -c selected.sha256
+  fi
+)
+install -d "$HOME/.local/bin"
+install -m 0755 "$plugin_dir/$plugin_asset" "$HOME/.local/bin/kubectl-argo-rollouts"
+export PATH="$HOME/.local/bin:$PATH"
 kubectl argo rollouts version
 ```
 
 ### 通过 Helm 安装
 
-```bash
-helm repo add argo https://argoproj.github.io/argo-helm
-helm repo update
-
-helm install argo-rollouts argo/argo-rollouts \
-  --namespace argo-rollouts \
-  --create-namespace \
-  --set dashboard.enabled=true
-```
-
-### 用于生产环境的 Helm Values
+选择上述 manifest 安装或 Helm 其中之一来管理 controller 所有权。将这些设置保存为 `rollouts-values.yaml`。`AWS_REGION` 属于查询 CloudWatch 的 **Rollouts controller**，未使用该 provider 时可以省略。
 
 ```yaml
 controller:
@@ -132,24 +99,54 @@ controller:
   metrics:
     enabled: true
     serviceMonitor:
-      enabled: true
+      enabled: false  # Enable after installing/configuring Prometheus Operator
+  pdb:
+    enabled: true
+    minAvailable: 1
+  extraEnv:
+    - name: AWS_REGION
+      value: ap-northeast-2
 
 dashboard:
-  enabled: true
-  ingress:
-    enabled: true
-    ingressClassName: nginx
-    hosts:
-      - rollouts.example.com
+  enabled: false
 ```
 
-<span id="blue-green-deployments"></span>
+```bash
+helm repo add argo https://argoproj.github.io/argo-helm
+helm repo update argo
+helm upgrade --install argo-rollouts argo/argo-rollouts \
+  --version 2.43.6 --namespace argo-rollouts --create-namespace \
+  --values rollouts-values.yaml --wait --timeout 5m
+```
+
+仅在配置其 CRD 和 Prometheus selector 后启用 ServiceMonitor。共享 Dashboard 需要单独的身份验证/授权层。1.10.0 CLI 的 `dashboard` 命令绑定所有接口并使用你的 kubeconfig 权限；其打印出的 localhost URL 不会限制访问。
+
+### Dashboard 访问（Helm 安装）
+
+对于 Helm 安装，启用只读 ClusterIP Dashboard 并将端口转发到 loopback 地址：
+
+```bash
+helm upgrade --install argo-rollouts argo/argo-rollouts \
+  --version 2.43.6 --namespace argo-rollouts --create-namespace \
+  --values rollouts-values.yaml \
+  --set dashboard.enabled=true --set dashboard.readonly=true \
+  --set dashboard.service.type=ClusterIP --set dashboard.ingress.enabled=false \
+  --wait --timeout 5m
+kubectl port-forward --address 127.0.0.1 -n argo-rollouts \
+  service/argo-rollouts-dashboard 3100:3100
+```
+
+打开 `http://127.0.0.1:3100/rollouts`。共享访问需要独立的、经过身份验证和授权的 proxy。
 
 ## 蓝绿部署
 
-蓝绿部署维护两个相同的环境，并在它们之间切换流量。
+请将示例 `myapp`/registry 镜像、ECR 账户/tag 和指标名称替换为应用程序的配置。准备 namespace、镜像访问、readiness 响应、指标收集和 AnalysisTemplate；分别独立运行每个场景。初始部署没有先前稳定的 ReplicaSet。先成功部署 v1，然后在 Git 中将镜像改为 v2 以观察 rollout。
 
-### 基础蓝绿 Rollout
+Argo CD 从 Git 应用 Rollout spec；独立的 Rollouts controller 管理 ReplicaSet 和流量。中止并将流量返回稳定版本不会还原 Git commit 或数据库迁移。
+
+蓝绿部署会保留 Rollout 的前一个和新的 ReplicaSet，然后更改活跃 Service selector。它不会复制整个集群环境。数据平面传播和连接排空需要时间。
+
+### 基本蓝绿 Rollout
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -169,39 +166,41 @@ spec:
         app: myapp
     spec:
       containers:
-        - name: myapp
-          image: myregistry/myapp:v1.0.0
-          ports:
-            - containerPort: 8080
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          resources:
-            requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
+      - name: myapp
+        image: myregistry/myapp:v1.0.0
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
   strategy:
     blueGreen:
       activeService: myapp-active
       previewService: myapp-preview
       autoPromotionEnabled: false
-      scaleDownDelaySeconds: 30
       previewReplicaCount: 2
       prePromotionAnalysis:
         templates:
-          - templateName: smoke-tests
+        - templateName: smoke-tests
         args:
-          - name: service-name
-            value: myapp-preview
+        - name: service-name
+          value: myapp-preview
       postPromotionAnalysis:
         templates:
-          - templateName: success-rate
+        - templateName: success-rate
+        args:
+        - name: service-name
+          value: myapp-active
 ---
 apiVersion: v1
 kind: Service
@@ -212,8 +211,8 @@ spec:
   selector:
     app: myapp
   ports:
-    - port: 80
-      targetPort: 8080
+  - port: 80
+    targetPort: 8080
 ---
 apiVersion: v1
 kind: Service
@@ -224,49 +223,19 @@ spec:
   selector:
     app: myapp
   ports:
-    - port: 80
-      targetPort: 8080
+  - port: 80
+    targetPort: 8080
 ```
+
+`previewReplicaCount` 限制预览容量；新的 ReplicaSet 会在晋级前扩容至 `spec.replicas`。当 autoPromotionEnabled 为 false 时，会忽略 `autoPromotionSeconds`。所需的晋级前分析示例也省略了 autoPromotionSeconds，使其与基于时间的自动晋级示例分开。此示例省略 scaleDownDelaySeconds，以免固定的缩容截止时间取消晋级后分析。ALB target 注册/注销和连接排空仍可能导致中断；请验证实际数据平面。
 
 ### 蓝绿流程
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant Rollout
-    participant Active as Active Service
-    participant Preview as Preview Service
-    participant Analysis
+![蓝绿切换前，负载均衡器将流量发送到 Blue v1.0.0，而 Green v2.0.0 作为预览等待；切换后，活跃 Service selector 更改为 Green v2.0.0，先前的 Blue v1.0.0 将根据分析和延迟设置缩容。](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-1.png)
 
-    Note over Rollout: Current: v1 (Blue)
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-05-traffic-management-1.html)
 
-    User->>Rollout: Update image to v2
-    Rollout->>Preview: Create v2 pods (Green)
-    Rollout->>Preview: Route preview traffic
-
-    Note over Preview: v2 receiving preview traffic
-
-    Rollout->>Analysis: Run pre-promotion analysis
-    Analysis-->>Rollout: Analysis passed
-
-    alt Auto-promotion enabled
-        Rollout->>Active: Switch traffic to v2
-    else Manual approval required
-        User->>Rollout: Promote
-        Rollout->>Active: Switch traffic to v2
-    end
-
-    Note over Active: v2 now receiving production traffic
-
-    Rollout->>Analysis: Run post-promotion analysis
-    Analysis-->>Rollout: Analysis passed
-
-    Rollout->>Rollout: Scale down v1 pods
-
-    Note over Rollout: Deployment complete
-```
-
-### 启用自动提升的蓝绿部署
+### 启用自动晋级的蓝绿部署
 
 ```yaml
 strategy:
@@ -278,13 +247,17 @@ strategy:
     previewReplicaCount: 3
 ```
 
-<span id="canary-deployments"></span>
-
 ## 金丝雀部署
+
+配置 trafficRouting 时，`setWeight` 会更改相对路由器权重。未使用路由器时，它通过 ReplicaSet 数量近似该比例；无法保证精确的请求百分比。使用路由器时，稳定副本容量独立于流量权重。
 
 金丝雀部署会逐步将流量转移到新版本。
 
-### 基础金丝雀 Rollout
+默认情况下，流量路由金丝雀会保留 100% 的稳定容量，因此请同时规划稳定和金丝雀容量。maxSurge 控制不带 trafficRouting 的基本金丝雀的期望副本计算；在流量路由模式下，它不是总 Pod 上限。maxUnavailable 仍可能限制旧 ReplicaSet 的缩容。
+
+### 基本金丝雀 Rollout
+
+此示例需要 Gateway API plugin 0.17.0、`myapp-route` HTTPRoute、就绪的 Gateway 以及后文所示的匹配稳定/金丝雀 Service。请检查 HTTPRoute 的 Accepted/ResolvedRefs 和数据平面就绪情况。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -303,48 +276,49 @@ spec:
         app: myapp
     spec:
       containers:
-        - name: myapp
-          image: myregistry/myapp:v1.0.0
-          ports:
-            - containerPort: 8080
+      - name: myapp
+        image: myregistry/myapp:v1.0.0
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
   strategy:
     canary:
       canaryService: myapp-canary
       stableService: myapp-stable
       trafficRouting:
-        nginx:
-          stableIngress: myapp-ingress
+        plugins:
+          argoproj-labs/gatewayAPI:
+            httpRoute: myapp-route
+            namespace: myapp
       steps:
-        # Step 1: 5% traffic to canary
-        - setWeight: 5
-        - pause: {duration: 2m}
-
-        # Step 2: 10% traffic, run analysis
-        - setWeight: 10
-        - analysis:
-            templates:
-              - templateName: success-rate
-            args:
-              - name: service-name
-                value: myapp-canary
-
-        # Step 3: 25% traffic
-        - setWeight: 25
-        - pause: {duration: 5m}
-
-        # Step 4: 50% traffic
-        - setWeight: 50
-        - pause: {duration: 5m}
-
-        # Step 5: 75% traffic
-        - setWeight: 75
-        - analysis:
-            templates:
-              - templateName: success-rate
-              - templateName: latency-check
-
-        # Step 6: 100% traffic (full promotion)
-        - setWeight: 100
+      - setWeight: 5
+      - pause:
+          duration: 2m
+      - setWeight: 10
+      - analysis:
+          templates:
+          - templateName: success-rate
+          args:
+          - name: service-name
+            value: myapp-canary
+      - setWeight: 25
+      - pause:
+          duration: 5m
+      - setWeight: 50
+      - pause:
+          duration: 5m
+      - setWeight: 75
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency-check
+          args:
+          - name: service-name
+            value: myapp-canary
+      - setWeight: 100
 ---
 apiVersion: v1
 kind: Service
@@ -355,8 +329,8 @@ spec:
   selector:
     app: myapp
   ports:
-    - port: 80
-      targetPort: 8080
+  - port: 80
+    targetPort: 8080
 ---
 apiVersion: v1
 kind: Service
@@ -367,19 +341,19 @@ spec:
   selector:
     app: myapp
   ports:
-    - port: 80
-      targetPort: 8080
+  - port: 80
+    targetPort: 8080
 ```
 
 ### 金丝雀步骤说明
 
 | 步骤类型 | 说明 |
 |-----------|-------------|
-| `setWeight` | 将流量百分比设置为金丝雀 |
-| `pause` | 等待指定时长或手动批准 |
+| `setWeight` | 将流量百分比设为金丝雀 |
+| `pause` | 等待一段时间或手动批准 |
 | `analysis` | 运行 AnalysisTemplate |
-| `setCanaryScale` | 设置金丝雀副本数 |
-| `setHeaderRoute` | 按请求头路由（适用于流量路由器） |
+| `setCanaryScale` | 设置金丝雀副本数量 |
+| `setHeaderRoute` | 按 header 路由（适用于流量路由器） |
 
 ### 带手动关卡的金丝雀部署
 
@@ -396,56 +370,30 @@ strategy:
       - setWeight: 100
 ```
 
-手动提升：
+手动晋级：
 
 ```bash
 # Promote to next step
-kubectl argo rollouts promote myapp-canary
+kubectl argo rollouts promote myapp-canary -n myapp
 
 # Promote fully (skip remaining steps)
-kubectl argo rollouts promote myapp-canary --full
+# Deliberate override only: skips remaining steps and analysis gates
+# kubectl argo rollouts promote myapp-canary -n myapp --full
 ```
 
 ### 金丝雀流量流程
 
-```mermaid
-flowchart TB
-    subgraph TRAFFIC["Incoming Traffic (100%)"]
-        REQ["Requests"]
-    end
+![该图展示了客户端请求在负载均衡器处被拆分：在默认流量路由容量策略下，示例的 10% 步骤中，相对 weight90 将流量定向到具有 10 个 Pod 的稳定 Service，而 weight10 将流量定向到具有 1 个 Pod 的金丝雀 Service。](../../.gitbook/assets/en-gitops-argocd-05-traffic-management-2.png)
 
-    subgraph INGRESS["Ingress Controller"]
-        SPLIT["Traffic Split"]
-    end
-
-    subgraph STABLE["Stable Version (v1)"]
-        S1["Pod 1"]
-        S2["Pod 2"]
-        S3["Pod 3"]
-    end
-
-    subgraph CANARY["Canary Version (v2)"]
-        C1["Pod 1"]
-    end
-
-    REQ --> SPLIT
-    SPLIT -->|"90%"| STABLE
-    SPLIT -->|"10%"| CANARY
-
-    classDef traffic fill:#f9f9f9,stroke:#333,color:black
-    classDef stable fill:#28a745,stroke:#333,color:white
-    classDef canary fill:#ffc107,stroke:#333,color:black
-
-    class REQ,SPLIT traffic
-    class S1,S2,S3 stable
-    class C1 canary
-```
-
-<span id="analysis-and-verification"></span>
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-05-traffic-management-2.html)
 
 ## 分析与验证
 
-AnalysisTemplate 定义了如何验证部署健康状况。
+AnalysisTemplate 定义如何验证部署健康状况。
+
+http_requests_total/http_request_duration_seconds_bucket 指标以及 service/version label 需要应用程序埋点和 scrape 配置。请将 prometheus.monitoring.svc.cluster.local:9090 替换为实际 Service。阈值/窗口仅作说明；还应定义最小流量和 SLO 要求。
+
+failureLimit 计数允许的**失败测量**：值为 3 时，第 4 次失败测量将超出限制。provider 错误使用 consecutiveErrorLimit，不确定结果使用 inconclusiveLimit。以下条件可避免缺失值、空向量、NaN 和 Infinity 通过关卡。count 是测量次数，而不是 HTTP 请求数；重叠的查询窗口不是独立样本。
 
 ### Prometheus 分析
 
@@ -457,28 +405,32 @@ metadata:
   namespace: myapp
 spec:
   args:
-    - name: service-name
+  - name: service-name
   metrics:
-    - name: success-rate
-      interval: 1m
-      count: 5
-      successCondition: result[0] >= 0.95
-      failureLimit: 3
-      provider:
-        prometheus:
-          address: http://prometheus.monitoring:9090
-          query: |
-            sum(rate(
-              http_requests_total{
-                service="{{args.service-name}}",
-                status=~"2.."
-              }[5m]
-            )) /
-            sum(rate(
-              http_requests_total{
-                service="{{args.service-name}}"
-              }[5m]
-            ))
+  - name: success-rate
+    interval: 1m
+    count: 5
+    successCondition: result != nil && len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >=
+      0 && result[0] <= 1 && result[0] >= 0.95
+    failureLimit: 3
+    provider:
+      prometheus:
+        address: http://prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          (sum(rate(
+            http_requests_total{
+              service="{{args.service-name}}",
+              status=~"2.."
+            }[5m]
+          )) or vector(0)) /
+          sum(rate(
+            http_requests_total{
+              service="{{args.service-name}}"
+            }[5m]
+          ))
+    failureCondition: result != nil && len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >=
+      0 && result[0] <= 1 && result[0] < 0.95
+    inconclusiveLimit: 0
 ```
 
 ### 延迟分析
@@ -491,27 +443,33 @@ metadata:
   namespace: myapp
 spec:
   args:
-    - name: service-name
+  - name: service-name
   metrics:
-    - name: p99-latency
-      interval: 2m
-      count: 3
-      successCondition: result[0] < 500  # 500ms threshold
-      failureLimit: 2
-      provider:
-        prometheus:
-          address: http://prometheus.monitoring:9090
-          query: |
-            histogram_quantile(0.99,
-              sum(rate(
-                http_request_duration_seconds_bucket{
-                  service="{{args.service-name}}"
-                }[5m]
-              )) by (le)
-            ) * 1000
+  - name: p99-latency
+    interval: 2m
+    count: 3
+    successCondition: result != nil && len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <
+      500
+    failureLimit: 2
+    provider:
+      prometheus:
+        address: http://prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          histogram_quantile(0.99,
+            sum(rate(
+              http_request_duration_seconds_bucket{
+                service="{{args.service-name}}"
+              }[5m]
+            )) by (le)
+          ) * 1000
+    failureCondition: result != nil && len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >=
+      500
+    inconclusiveLimit: 0
 ```
 
-### Web 分析（HTTP 端点）
+### Web 分析（HTTP Endpoint）
+
+Service 必须以 JSON `{"status":"OK"}` 返回成功的 HTTP 响应。jsonPath 会提取状态字符串，因此请比较 result 本身，而非 result.status。请根据实际响应契约调整条件。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -521,21 +479,24 @@ metadata:
   namespace: myapp
 spec:
   args:
-    - name: service-name
+  - name: service-name
   metrics:
-    - name: smoke-test
-      interval: 30s
-      count: 3
-      successCondition: result.status == "healthy"
-      failureLimit: 1
-      provider:
-        web:
-          url: "http://{{args.service-name}}/health"
-          jsonPath: "{$.status}"
-          timeoutSeconds: 10
+  - name: smoke-test
+    interval: 30s
+    count: 3
+    successCondition: result == "OK"
+    failureLimit: 1
+    provider:
+      web:
+        url: http://{{ args.service-name }}.myapp.svc.cluster.local/health
+        jsonPath: '{$.status}'
+        timeoutSeconds: 10
+    failureCondition: result != nil && result != "OK"
 ```
 
 ### Datadog 分析
+
+Datadog v2 formula 使用独立的 query 和 formula field。请通过你的 secret 管理流程，在此 AnalysisTemplate namespace 中为 datadog Secret 配置 address/api-key/app-key。asFloat(default(result, -1)) 将缺失数据与有效的零错误率区分开来，并避免将 nil 传入类型化函数。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -545,20 +506,31 @@ metadata:
   namespace: myapp
 spec:
   args:
-    - name: service-name
+  - name: service-name
   metrics:
-    - name: error-rate
-      interval: 5m
-      count: 3
-      successCondition: result < 0.05
-      failureLimit: 2
-      provider:
-        datadog:
-          apiVersion: v2
-          interval: 5m
-          query: |
-            sum:http.requests{service:{{args.service-name}},status:5xx}.as_count() /
-            sum:http.requests{service:{{args.service-name}}}.as_count()
+  - name: error-rate
+    interval: 5m
+    count: 3
+    successCondition: |
+      let rate = asFloat(default(result, -1));
+      !isNaN(rate) && !isInf(rate) && rate >= 0 && rate <= 1 && rate < 0.05
+    failureLimit: 2
+    provider:
+      datadog:
+        apiVersion: v2
+        interval: 5m
+        aggregator: sum
+        secretRef:
+          name: datadog
+          namespaced: true
+        queries:
+          a: sum:http.requests{service:{{args.service-name}},status:5xx}.as_count()
+          b: sum:http.requests{service:{{args.service-name}}}.as_count()
+        formula: a / b
+    failureCondition: |
+      let rate = asFloat(default(result, -1));
+      !isNaN(rate) && !isInf(rate) && rate >= 0 && rate <= 1 && rate >= 0.05
+    inconclusiveLimit: 0
 ```
 
 ### 基于 Job 的分析
@@ -571,37 +543,33 @@ metadata:
   namespace: myapp
 spec:
   args:
-    - name: service-url
+  - name: service-url
   metrics:
-    - name: integration-tests
-      provider:
-        job:
-          spec:
-            backoffLimit: 1
-            template:
-              spec:
-                restartPolicy: Never
-                containers:
-                  - name: test-runner
-                    image: myregistry/integration-tests:latest
-                    env:
-                      - name: TARGET_URL
-                        value: "{{args.service-url}}"
-                    command:
-                      - /bin/sh
-                      - -c
-                      - |
-                        npm run test:integration
-                        if [ $? -eq 0 ]; then
-                          exit 0
-                        else
-                          exit 1
-                        fi
+  - name: integration-tests
+    provider:
+      job:
+        spec:
+          backoffLimit: 1
+          template:
+            spec:
+              restartPolicy: Never
+              containers:
+              - name: test-runner
+                image: myregistry/integration-tests:v1.0.0
+                env:
+                - name: TARGET_URL
+                  value: '{{args.service-url}}'
+                command:
+                - /bin/sh
+                - -ec
+                - exec npm run test:integration
+              automountServiceAccountToken: false
+          activeDeadlineSeconds: 300
 ```
 
 ### ClusterAnalysisTemplate
 
-在命名空间之间共享分析模板：
+跨 namespace 共享分析模板：
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -610,48 +578,52 @@ metadata:
   name: global-success-rate
 spec:
   args:
-    - name: service-name
-    - name: namespace
+  - name: service-name
+  - name: namespace
   metrics:
-    - name: success-rate
-      interval: 1m
-      count: 5
-      successCondition: result[0] >= 0.95
-      provider:
-        prometheus:
-          address: http://prometheus.monitoring:9090
-          query: |
-            sum(rate(
-              http_requests_total{
-                namespace="{{args.namespace}}",
-                service="{{args.service-name}}",
-                status=~"2.."
-              }[5m]
-            )) /
-            sum(rate(
-              http_requests_total{
-                namespace="{{args.namespace}}",
-                service="{{args.service-name}}"
-              }[5m]
-            ))
+  - name: success-rate
+    interval: 1m
+    count: 5
+    successCondition: result != nil && len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >=
+      0 && result[0] <= 1 && result[0] >= 0.95
+    provider:
+      prometheus:
+        address: http://prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          (sum(rate(
+            http_requests_total{
+              namespace="{{args.namespace}}",
+              service="{{args.service-name}}",
+              status=~"2.."
+            }[5m]
+          )) or vector(0)) /
+          sum(rate(
+            http_requests_total{
+              namespace="{{args.namespace}}",
+              service="{{args.service-name}}"
+            }[5m]
+          ))
+    failureCondition: result != nil && len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >=
+      0 && result[0] <= 1 && result[0] < 0.95
+    inconclusiveLimit: 0
 ```
-
-<span id="ingress-integration"></span>
 
 ## Ingress 集成
 
-Argo Rollouts 支持超过 10 种流量提供商。对于没有原生集成的提供商（例如 Kong），则通过 **Gateway API plugin** 提供支持。
+Argo Rollouts 支持原生流量 provider 和 plugin extension。没有原生集成的 provider，例如 Kong，则改为通过 **Gateway API plugin** 支持。
 
-| 提供商 | 集成 | 说明 |
+| Provider | 集成 | 说明 |
 |---|---|---|
 | NGINX Ingress | 原生（`trafficRouting.nginx`） | 直接操作 `canary-weight` annotation |
-| AWS ALB | 原生（`trafficRouting.alb`） | Ingress backend port 必须为 `use-annotation` —— 请参阅[验证结果 (English)](https://www.atomai.click/kubernetes-docs/en/gitops/argocd/05-traffic-management#verification-results-on-eks) |
+| AWS ALB | 原生（`trafficRouting.alb`） | Ingress backend port 必须为 `use-annotation` — 请参阅[验证结果](#verification-results-on-eks) |
 | Istio | 原生（`trafficRouting.istio`） | 直接操作 VirtualService/DestinationRule |
-| SMI | 原生（`trafficRouting.smi`） | SMI 项目本身实际上已无人维护——不建议新项目采用 |
-| Ambassador、Apache APISIX、Traefik、Google Cloud | 原生 | 本文未涵盖——请参阅[官方文档](https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/) |
-| **Kong** 和其他符合 Gateway API 的实现（kgateway 等） | **Gateway API plugin**（`trafficRouting.plugins`） | 没有原生的 `trafficRouting.kong` 字段 |
+| SMI | 原生（`trafficRouting.smi`） | SMI 项目本身实际上已无人维护 — 不建议新采用 |
+| Ambassador、Apache APISIX、Traefik | 原生 | 本文档未涵盖 — 请参阅[官方文档](https://argo-rollouts.readthedocs.io/en/stable/features/traffic-management/) |
+| **Kong** 和其他符合 Gateway API 的实现（kgateway 等） | **Gateway API plugin**（`trafficRouting.plugins`） | 没有原生的 `trafficRouting.kong` field |
 
-### NGINX Ingress
+### NGINX Ingress（现有安装）
+
+社区 ingress-nginx 已于 2026 年 3 月停止维护；这是面向现有安装的迁移参考。新示例使用 Gateway API 路径。每个路由示例都需要其 namespace 中匹配的稳定/金丝雀 Service。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -669,13 +641,40 @@ spec:
           stableIngress: myapp-ingress
           additionalIngressAnnotations:
             canary-by-header: X-Canary
-            canary-by-header-value: "true"
+            canary-by-header-value: 'true'
       steps:
-        - setWeight: 10
-        - pause: {duration: 5m}
-        - setWeight: 50
-        - pause: {duration: 5m}
-        - setWeight: 100
+      - setWeight: 10
+      - pause:
+          duration: 5m
+      - setWeight: 50
+      - pause:
+          duration: 5m
+      - setWeight: 100
+  replicas: 5
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: app
+        image: myregistry/myapp:v2.0.0
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -687,16 +686,16 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: myapp.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: myapp-stable
-                port:
-                  number: 80
+  - host: myapp.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: myapp-stable
+            port:
+              number: 80
 ```
 
 ### AWS ALB Ingress
@@ -718,11 +717,38 @@ spec:
           rootService: myapp-root
           servicePort: 80
       steps:
-        - setWeight: 10
-        - pause: {duration: 5m}
-        - setWeight: 50
-        - pause: {duration: 5m}
-        - setWeight: 100
+      - setWeight: 10
+      - pause:
+          duration: 5m
+      - setWeight: 50
+      - pause:
+          duration: 5m
+      - setWeight: 100
+  replicas: 5
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: app
+        image: myregistry/myapp:v2.0.0
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -730,8 +756,7 @@ metadata:
   name: myapp-ingress
   namespace: myapp
   annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/scheme: internal
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/actions.myapp-root: |
       {
@@ -753,21 +778,22 @@ metadata:
       }
 spec:
   rules:
-    - host: myapp.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: myapp-root
-                port:
-                  name: use-annotation
+  - host: myapp.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: myapp-root
+            port:
+              name: use-annotation
+  ingressClassName: alb
 ```
 
-> ⚠️ **已在测试中验证**：如果 Ingress backend port 被意外设置为真实端口号（例如 `number: 80`），而不是 `name: use-annotation`，AWS Load Balancer Controller 会**静默忽略** `alb.ingress.kubernetes.io/actions.*` annotation——不会报错，也不会警告。它会保留普通的单 target group 规则，而不是加权转发规则，因此 `kubectl get rollout` 会显示 `SetWeight` 正常递增，但实际 ALB 流量实际上从未转移。务必使用 `aws elbv2 describe-rules` 对照实时 listener rule 的 `ForwardConfig.TargetGroups` 权重。
+> **ALB 配置检查**：Rollout rootService（或省略时的 stableService）、action annotation 名称和 Ingress backend 名称必须匹配。backend port `name: use-annotation` 会选择加权 action。数字端口会改为选择普通 Service backend；取决于该 Service，reconciliation 可能失败或产生不同的路由。请使用 `aws elbv2 describe-rules` 检查 controller event 和实际的 ForwardConfig。
 
-### Istio 流量分割
+### Istio 流量拆分
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -785,59 +811,73 @@ spec:
           virtualService:
             name: myapp-vsvc
             routes:
-              - primary
-          destinationRule:
-            name: myapp-destrule
-            canarySubsetName: canary
-            stableSubsetName: stable
+            - primary
       steps:
-        - setWeight: 10
-        - pause: {duration: 5m}
-        - setWeight: 50
-        - pause: {duration: 5m}
-        - setWeight: 100
+      - setWeight: 10
+      - pause:
+          duration: 5m
+      - setWeight: 50
+      - pause:
+          duration: 5m
+      - setWeight: 100
+  replicas: 5
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: app
+        image: myregistry/myapp:v2.0.0
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: myapp-vsvc
   namespace: myapp
 spec:
   hosts:
-    - myapp.example.com
+  - myapp.example.com
   gateways:
-    - myapp-gateway
+  - myapp-gateway
   http:
-    - name: primary
-      route:
-        - destination:
-            host: myapp-stable
-          weight: 100
-        - destination:
-            host: myapp-canary
-          weight: 0
----
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: myapp-destrule
-  namespace: myapp
-spec:
-  host: myapp
-  subsets:
-    - name: stable
-      labels:
-        app: myapp
-    - name: canary
-      labels:
-        app: myapp
+  - name: primary
+    route:
+    - destination:
+        host: myapp-stable
+        port:
+          number: 80
+      weight: 100
+    - destination:
+        host: myapp-canary
+        port:
+          number: 80
+      weight: 0
 ```
 
-### Gateway API Plugin（通用）
+### Gateway API Plugin（HTTPRoute）
 
-没有原生 Argo Rollouts 集成、但符合 Gateway API 的实现——Kong、Traefik、kgateway 及其他实现——可通过由 argoproj-labs 维护的 [Gateway API plugin](https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi) 获得支持。该 plugin 直接操作标准 `HTTPRoute` 的 `backendRefs[].weight` 字段，因此它同样适用于实现 Gateway API 的任何控制器。它还支持 TLSRoute 和基于请求头的路由；截至 2026 年，最新版本为 v0.16.0。
+Kong、kgateway 和其他兼容实现的 Gateway API 路径使用由 argoproj-labs 维护的 [Gateway API plugin](https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi)。Traefik 也具有原生 TraefikService 集成；其 Gateway API 路径可以使用此 plugin。本章使用于 2026-09-01 发布的 plugin 0.17.0。它会更新 HTTPRoute backend weight。其他 Route 类型和 header 路由取决于已安装的 CRD 和实现能力；请验证 route status 和实际请求分布。
 
-通过在 `argo-rollouts-config` ConfigMap 中注册 plugin 来安装它，以便 Controller 在启动时下载二进制文件：
+下方二进制文件面向运行 controller Pod 的 **Linux amd64 node**。在 arm64 上，请使用 gatewayapi-plugin-linux-arm64 和 SHA256 `5221279f7bf2c9b2c0ff6ed7ff12718ecce1d4892f1ff5e5224bb723cfd0fd92`。对于 Helm，请在 controller.trafficRouterPlugins 下管理相同条目。对于 manifest 安装，请合并到现有 ConfigMap data 并重启 controller。所示 Role 将 HTTPRoute weight 更新限定在一个 namespace；其他 Route 类型/header-route 创建需要额外的权限审查。
+
+通过在 `argo-rollouts-config` ConfigMap 中注册 plugin 来安装它，使 controller 在启动时下载二进制文件：
 
 ```yaml
 apiVersion: v1
@@ -846,34 +886,46 @@ metadata:
   name: argo-rollouts-config
   namespace: argo-rollouts
 data:
-  trafficRouterPlugins: |-
-    - name: "argoproj-labs/gatewayAPI"
-      location: "https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi/releases/download/v0.16.0/gatewayapi-plugin-linux-amd64"
+  trafficRouterPlugins: |
+    - name: argoproj-labs/gatewayAPI
+      location: https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi/releases/download/v0.17.0/gatewayapi-plugin-linux-amd64
+      sha256: 1904ca787d33107c140521899d61fff030ee75d99908bd175fca5a4647759061
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
   name: argo-rollouts-gateway-api-plugin
+  namespace: myapp
 rules:
-  - apiGroups: [""]
-    resources: ["services"]
-    verbs: ["get"]
-  - apiGroups: ["gateway.networking.k8s.io"]
-    resources: ["httproutes", "grpcroutes", "tcproutes", "tlsroutes"]
-    verbs: ["get", "list", "update", "patch"]
+- apiGroups:
+  - ''
+  resources:
+  - services
+  verbs:
+  - get
+- apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - httproutes
+  verbs:
+  - get
+  - list
+  - update
+  - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: RoleBinding
 metadata:
   name: argo-rollouts-gateway-api-plugin
+  namespace: myapp
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
+  kind: Role
   name: argo-rollouts-gateway-api-plugin
 subjects:
-  - kind: ServiceAccount
-    name: argo-rollouts
-    namespace: argo-rollouts
+- kind: ServiceAccount
+  name: argo-rollouts
+  namespace: argo-rollouts
 ```
 
 Rollout 通过 `trafficRouting.plugins` 引用 HTTPRoute：
@@ -895,10 +947,10 @@ spec:
         app: myapp
     spec:
       containers:
-        - name: app
-          image: myapp:v2.0.0
-          ports:
-            - containerPort: 8080
+      - name: app
+        image: myapp:v2.0.0
+        ports:
+        - containerPort: 8080
   strategy:
     canary:
       stableService: myapp-stable
@@ -909,11 +961,13 @@ spec:
             httpRoute: myapp-route
             namespace: myapp
       steps:
-        - setWeight: 20
-        - pause: {duration: 1m}
-        - setWeight: 50
-        - pause: {duration: 1m}
-        - setWeight: 100
+      - setWeight: 20
+      - pause:
+          duration: 1m
+      - setWeight: 50
+      - pause:
+          duration: 1m
+      - setWeight: 100
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
@@ -922,24 +976,24 @@ metadata:
   namespace: myapp
 spec:
   parentRefs:
-    - name: myapp-gateway
+  - name: myapp-gateway
   rules:
-    - backendRefs:
-        - name: myapp-stable
-          kind: Service
-          port: 80
-          weight: 100
-        - name: myapp-canary
-          kind: Service
-          port: 80
-          weight: 0
+  - backendRefs:
+    - name: myapp-stable
+      kind: Service
+      port: 80
+      weight: 100
+    - name: myapp-canary
+      kind: Service
+      port: 80
+      weight: 0
 ```
 
-在每个 `setWeight` 步骤中，plugin 会直接更新这两个 `backendRefs[].weight` 值。
+在每个 `setWeight` 步骤，plugin 都会直接更新这两个 `backendRefs[].weight` 值。
 
 ### Kong（通过 Gateway API Plugin）
 
-Kong Ingress Controller（KIC）没有原生 Argo Rollouts 集成——它使用上面的 Gateway API plugin。在 Gateway API 模式下安装 KIC 后，必须将 GatewayClass 标记为**非托管 Gateway**：
+Kong Ingress Controller (KIC) 没有原生的 Argo Rollouts 集成——它使用上方的 Gateway API plugin。下方配置适用于独立 KIC，用于管理没有 Kong Operator 的现有 Kong Gateway 数据平面。该设置使用 unmanaged annotation；由 Kong Operator 管理的 Gateway 具有不同的生命周期：
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -952,20 +1006,20 @@ spec:
   controllerName: konghq.com/kic-gateway-controller   # note: different from KIC's IngressClass controller string
 ```
 
-接下来，应用与上述相同的 [Gateway API plugin (English)](https://www.atomai.click/kubernetes-docs/en/gitops/argocd/05-traffic-management#gateway-api-plugin-httproute) 配置——Rollout 和 HTTPRoute YAML 完全相同。
+从这里开始，应用与上方相同的 [Gateway API plugin](#gateway-api-plugin-httproute) 配置——Rollout 和 HTTPRoute YAML 完全相同。
 
 ### EKS 上的验证结果
 
-我们在 EKS 1.36 集群（Argo Rollouts v1.9.0、AWS Load Balancer Controller v3.2.1、Istio 1.30、Kong Ingress Controller 3.5 + Gateway API plugin v0.16.0）的隔离测试命名空间中验证了全部四种提供商。验证完成后，所有测试资源（命名空间、Helm release、ALB、GatewayClass）均已拆除。
+上一版文档报告了在 EKS 1.36、Rollouts 1.9.0、AWS Load Balancer Controller 3.2.1、Istio 1.30、KIC 3.5 和 plugin0.16.0 下的这些结果。未附上原始日志、请求数、测量时长和执行的 manifest，因此此静态审阅无法复现该报告。这些是历史观察结果，而不是最新的 1.10.0/0.17.0 结果，也不保证即时、零停机的过渡。
 
-| 提供商 | 检查内容 | 结果 |
+| Provider | 检查内容 | 结果 |
 |---|---|---|
-| NGINX | `canary-weight` annotation 从 20→50→100% 的转换 | ✅ 已确认——实时 curl 流量比例与 annotation 值一致 |
-| Istio | VirtualService weight 从 20→50→100% 的转换，以及执行 `abort` 时立即恢复至 0% | ✅ 已确认——curl 比例与 weight 一致，且中止后流量立即回退到此前的稳定版本 |
-| AWS ALB | listener rule forward weight 转换，并通过 `aws elbv2 describe-rules` 与实时 AWS 状态交叉核对 | ✅ 已确认（但需要注意上述 [`use-annotation` 限制](#aws-alb-ingress)） |
-| Kong（Gateway API plugin） | `HTTPRoute.backendRefs[].weight` 转换，以及通过 Kong data plane 的真实流量 | ✅ 已确认——但 `gatewayclass-unmanaged` annotation 和精确的 `controllerName` 很容易配置错误（见上文） |
+| NGINX | `canary-weight` annotation 从 20→50→100% 的过渡 | ✅ 已确认 — 实时 curl 流量比例与 annotation 值一致 |
+| Istio | VirtualService weight 从 20→50→100% 的过渡，以及在 `abort` 时立即恢复为 0% | ✅ 已确认 — curl 比例与 weight 一致，且在中止后流量立即切回先前的稳定版本 |
+| AWS ALB | Listener rule forward weight 过渡，并使用 `aws elbv2 describe-rules` 与实时 AWS 状态交叉核对 | ✅ 已确认（但需要注意上述 [`use-annotation` 注意事项](#aws-alb-ingress)） |
+| Kong (Gateway API plugin) | `HTTPRoute.backendRefs[].weight` 过渡，以及通过 Kong 数据平面的真实流量 | ✅ 已确认 — 但 `gatewayclass-unmanaged` annotation 和准确的 `controllerName` 很容易配置错误（见上文） |
 
-<span id="rollback-strategies"></span>
+当 Argo CD 管理路由资源时，请审阅针对由 Rollouts 所拥有字段的精细 diff exclusion：相关 ALB action annotation、Istio route weight、HTTPRoute backend weight 和 Service rollouts-pod-template-hash selector。避免忽略整个 spec/manager。要在 sync 期间保留值，还需要 RespectIgnoreDifferences=true 及其现有资源限制。
 
 ## 回滚策略
 
@@ -989,16 +1043,20 @@ strategy:
 
 ```bash
 # Abort current rollout and rollback
-kubectl argo rollouts abort myapp
+kubectl argo rollouts abort myapp -n myapp
 
 # Undo to previous version
-kubectl argo rollouts undo myapp
+kubectl argo rollouts undo myapp -n myapp
 
 # Undo to specific revision
-kubectl argo rollouts undo myapp --to-revision=2
+kubectl argo rollouts undo myapp -n myapp --to-revision=2
 ```
 
+Abort 会将流量返回稳定版本，但保持所需 Pod template 不变。undo 会更改实时 Pod template；由 Argo CD 管理的 workload 还需要经审阅的 Git 更改，以免 self-heal 恢复有问题的 revision。这两个操作都不会回滚数据库影响。不确定的分析会暂停以供调查；它不同于 Failed/Error。
+
 ### 回滚配置
+
+这是具有 trafficRouting 的现有 Rollout 的 spec 片段。dynamicStableScale 会降低稳定容量，并可能要求在 abort 时将其扩容；它以恢复容量换取资源使用量。inline analysis 仅阻塞此步骤，而 background analysis 在 strategy.canary.analysis 下配置。
 
 ```yaml
 spec:
@@ -1007,19 +1065,78 @@ spec:
       abortScaleDownDelaySeconds: 30
       dynamicStableScale: true
       steps:
-        - setWeight: 10
-        - analysis:
-            templates:
-              - templateName: success-rate
-            # Analysis runs continuously
-            # Failure at any point triggers rollback
+      - setWeight: 10
+      - analysis:
+          templates:
+          - templateName: success-rate
+          args:
+          - name: service-name
+            value: myapp-canary
 ```
-
-<span id="experiments"></span>
 
 ## 实验
 
+在 1.10.0 中，所有 `requiredForCompletion: true` 分析成功后，Experiment 可以在 `duration` 前完成。不要将 duration 视为最短验证窗口。请明确验证 experiment 流量隔离的 Service/router selector。有关状态转换和清理延迟，请参阅[深入解析](10-rollouts-experiment.md)。
+
 同时使用多个版本运行 A/B 测试。
+
+> 有关详细行为——资源创建链、命名规则、流量隔离和 AnalysisRun 判定——请参阅 [Rollouts Experiments 深入解析](10-rollouts-experiment.md)。
+
+**前提条件：**Experiment 不会生成用户流量。请提供测试流量和 scrape，并将 Pod 的 `rollouts-pod-template-hash` 公开为指标 label `rollouts_pod_template_hash`。下方比较使用示例性的一个百分点错误率增幅；它不能替代显著性检验或最小样本验证。缺失数据保持为 Inconclusive。`progressDeadlineSeconds` 限制 ReplicaSet 可用性，而不是分析前的延迟。
+
+在同一 namespace 中创建被引用的 AnalysisTemplate：
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: compare-analysis
+  namespace: myapp
+spec:
+  args:
+  - name: baseline-hash
+  - name: canary-hash
+  metrics:
+  - name: canary-error-rate-increase
+    interval: 30s
+    count: 5
+    failureLimit: 0
+    inconclusiveLimit: 0
+    successCondition: result != nil && len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] <=
+      0.01
+    failureCondition: result != nil && len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >
+      0.01
+    provider:
+      prometheus:
+        address: http://prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          (
+            sum(rate(http_requests_total{rollouts_pod_template_hash="{{ args.canary-hash }}",status=~"5.."}[5m]))
+            or vector(0)
+          ) / sum(rate(http_requests_total{rollouts_pod_template_hash="{{ args.canary-hash }}"}[5m]))
+          -
+          (
+            sum(rate(http_requests_total{rollouts_pod_template_hash="{{ args.baseline-hash }}",status=~"5.."}[5m]))
+            or vector(0)
+          ) / sum(rate(http_requests_total{rollouts_pod_template_hash="{{ args.baseline-hash }}"}[5m]))
+  - name: canary-absolute-error-rate
+    interval: 30s
+    count: 5
+    failureLimit: 0
+    inconclusiveLimit: 0
+    successCondition: result != nil && len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >=
+      0 && result[0] < 0.05
+    failureCondition: result != nil && len(result) == 1 && !isNaN(result[0]) && !isInf(result[0]) && result[0] >=
+      0.05
+    provider:
+      prometheus:
+        address: http://prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          (
+            sum(rate(http_requests_total{rollouts_pod_template_hash="{{ args.canary-hash }}",status=~"5.."}[5m]))
+            or vector(0)
+          ) / sum(rate(http_requests_total{rollouts_pod_template_hash="{{ args.canary-hash }}"}[5m]))
+```
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -1031,75 +1148,70 @@ spec:
   duration: 1h
   progressDeadlineSeconds: 300
   templates:
-    - name: baseline
-      replicas: 2
-      selector:
-        matchLabels:
-          app: myapp
+  - name: baseline
+    replicas: 2
+    selector:
+      matchLabels:
+        app: myapp-experiment
+        variant: baseline
+    template:
+      metadata:
+        labels:
+          app: myapp-experiment
           variant: baseline
-      template:
-        metadata:
-          labels:
-            app: myapp
-            variant: baseline
-        spec:
-          containers:
-            - name: myapp
-              image: myregistry/myapp:v1.0.0
-              ports:
-                - containerPort: 8080
-    - name: canary
-      replicas: 2
-      selector:
-        matchLabels:
-          app: myapp
+      spec:
+        containers:
+        - name: myapp
+          image: myregistry/myapp:v1.0.0
+          ports:
+          - containerPort: 8080
+  - name: canary
+    replicas: 2
+    selector:
+      matchLabels:
+        app: myapp-experiment
+        variant: canary
+    template:
+      metadata:
+        labels:
+          app: myapp-experiment
           variant: canary
-      template:
-        metadata:
-          labels:
-            app: myapp
-            variant: canary
-        spec:
-          containers:
-            - name: myapp
-              image: myregistry/myapp:v2.0.0
-              ports:
-                - containerPort: 8080
+      spec:
+        containers:
+        - name: myapp
+          image: myregistry/myapp:v2.0.0
+          ports:
+          - containerPort: 8080
   analyses:
-    - name: compare-metrics
-      templateName: compare-experiment
-      args:
-        - name: baseline-hash
-          valueFrom:
-            podTemplateHashValue: baseline
-        - name: canary-hash
-          valueFrom:
-            podTemplateHashValue: canary
+  - name: compare-metrics
+    templateName: compare-analysis
+    args:
+    - name: baseline-hash
+      value: '{{templates.baseline.podTemplateHash}}'
+    - name: canary-hash
+      value: '{{templates.canary.podTemplateHash}}'
+    requiredForCompletion: true
 ```
-
-<span id="notifications"></span>
 
 ## 通知
 
-将 Rollout 事件与通知系统集成。
+将 rollout event 与通知系统集成。
 
-### 在 Rollout 中配置通知
+### 在现有 Rollout 中配置通知
+
+以下是要合并到现有 Rollout 中的 metadata 片段，而不是完整的资源 manifest。
 
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
 metadata:
-  name: myapp
-  namespace: myapp
   annotations:
     notifications.argoproj.io/subscribe.on-rollout-completed.slack: deployments
     notifications.argoproj.io/subscribe.on-rollout-aborted.slack: deployments
     notifications.argoproj.io/subscribe.on-analysis-run-failed.slack: alerts
-spec:
-  # ...
 ```
 
 ### 通知触发器和模板
+
+通过 secret 管理流程在 controller namespace 中为 argo-rollouts-notification-secret 配置 slack-token。内置 Rollout event 会选择这些 trigger 名称；仅 Degraded 并不能证明 rollout 已被中止。请配置所有引用的 trigger/template，包括分析失败。
 
 ```yaml
 apiVersion: v1
@@ -1110,27 +1222,34 @@ metadata:
 data:
   service.slack: |
     token: $slack-token
-
   trigger.on-rollout-completed: |
-    - when: rollout.status.phase == 'Healthy'
-      send: [rollout-completed]
-
+    - send: [rollout-completed]
   trigger.on-rollout-aborted: |
-    - when: rollout.status.phase == 'Degraded'
-      send: [rollout-aborted]
-
+    - send: [rollout-aborted]
   template.rollout-completed: |
     message: |
       Rollout {{.rollout.metadata.name}} completed successfully!
       Revision: {{.rollout.status.currentPodHash}}
       Image: {{(index .rollout.spec.template.spec.containers 0).image}}
-
   template.rollout-aborted: |
     message: |
       Rollout {{.rollout.metadata.name}} was aborted!
       Reason: {{.rollout.status.message}}
+  trigger.on-analysis-run-failed: |
+    - send: [analysis-run-failed]
+  template.analysis-run-failed: |
+    message: |
+      Analysis failed for Rollout {{.rollout.metadata.name}}. Inspect its AnalysisRun.
 ```
+
+## 参考资料
+
+- [Argo Rollouts 1.10.0](https://github.com/argoproj/argo-rollouts/releases/tag/v1.10.0)
+- [分析语义](https://github.com/argoproj/argo-rollouts/blob/v1.10.0/docs/features/analysis.md)
+- [分析 controller 阈值](https://github.com/argoproj/argo-rollouts/blob/v1.10.0/analysis/analysis.go)
+- [CloudWatch provider 实现](https://github.com/argoproj/argo-rollouts/blob/v1.10.0/metricproviders/cloudwatch/cloudwatch.go)
+- [Gateway API plugin 0.17.0](https://github.com/argoproj-labs/rollouts-plugin-trafficrouter-gatewayapi/releases/tag/v0.17.0)
 
 ## 测验
 
-要测试所学内容，请尝试 [ArgoCD 流量管理测验](../../quizzes/gitops/argocd/05-traffic-management-quiz.md)。
+要测试你的所学内容，请尝试 [ArgoCD 流量管理测验](../../quizzes/gitops/argocd/05-traffic-management-quiz.md)。

@@ -1,25 +1,25 @@
 # Mecanismos de extensión de Kubernetes
 
-> **Última actualización**: September 12, 2026
+> **Última actualización**: October 12, 2026
 
 ## Elegir un punto de extensión
 
-Kubernetes ofrece varias formas de extender las APIs y el comportamiento de las cargas de trabajo. Registrar un CRD es distinto de implementar su comportamiento.
+Kubernetes ofrece varias formas de extender las APIs y el comportamiento de las cargas de trabajo. Registrar una CRD es diferente de implementar su comportamiento.
 
 | Mecanismo | Función | Requisitos operativos |
 | --- | --- | --- |
-| CRD + controller | API personalizada y reconciliación del estado deseado | Esquema, reconciliación, RBAC, status y eliminación |
-| Agregación de API | Delegar peticiones a un API server independiente | APIService, TLS, autenticación/autorización delegadas, discovery/almacenamiento |
-| Política/webhook de admisión | Validar o mutar peticiones a la API | Alcance, gestión de fallos, disponibilidad de CEL o del webhook |
-| Plugin/extender del scheduler | Extender el filtrado, la puntuación o el binding | Binario del scheduler compatible, registro/configuración, gestión de fallos |
+| CRD + controller | API personalizada y reconciliación del estado deseado | Esquema, reconciliación, RBAC, estado y eliminación |
+| Agregación de API | Delegar solicitudes a un servidor de API independiente | APIService, TLS, autenticación/autorización delegadas, descubrimiento/almacenamiento |
+| Política/webhook de admisión | Validar o mutar solicitudes de API | Alcance, manejo de errores, disponibilidad de CEL o webhook |
+| Plugin/extender de Scheduler | Extender el filtrado, la puntuación o el enlace | Binario de Scheduler compatible, registro/configuración, manejo de errores |
 | CNI | Redes de contenedores | Interfaces reales, IPAM, rutas y limpieza |
-| CSI | Ciclo de vida del volumen y montaje en el nodo | RPCs adecuadas a las capacidades y operaciones de backend/nodo |
+| CSI | Ciclo de vida de volúmenes y montaje en nodos | RPC adecuados para las capacidades y operaciones de backend/nodo |
 
-Comprueba la compatibilidad de las APIs, bibliotecas y distribución elegidas. La versión actual de controller-runtime 0.25.0 usa Go 1.26 y los módulos Go de Kubernetes 0.37.0. Las notas sobre la interfaz del scheduler que figuran más abajo se verificaron contra el código fuente de Kubernetes 1.36.2; no asumas que scheduler-plugins 0.35.7 es intercambiable con él.
+Verifique la compatibilidad de las APIs, bibliotecas y distribución elegidas. El go.mod de controller-runtime 0.25.0 revisado usa Go 1.26.0 y módulos Go de Kubernetes 0.37.0 (la versión más reciente v0.25.2 al 12 de octubre de 2026). Las notas sobre la interfaz de Scheduler a continuación se verificaron con el código fuente de Kubernetes 1.36.2; no asuma que scheduler-plugins 0.35.7 es intercambiable con este.
 
-## CRDs e instancias
+## CRD e instancias
 
-Un CRD define una API personalizada con una estructura OpenAPI v3. Los campos obligatorios se aplican en el nivel que los contiene, así que declara explícitamente como obligatorios tanto spec de nivel superior como spec.image. Gestiona status mediante su subrecurso y distingue las replicas reales de availableReplicas para el escalado. Sin un controller, esta API almacena datos pero no crea ningún Deployment.
+Una CRD define una API personalizada con una estructura OpenAPI v3. Los campos obligatorios se aplican en su nivel contenedor, por lo que debe requerir explícitamente tanto spec de nivel superior como spec.image. Gestione status mediante su subrecurso y distinga las réplicas reales de availableReplicas para la escala. Sin un controller, esta API almacena datos, pero no crea ningún Deployment.
 
 ```yaml
 apiVersion: apiextensions.k8s.io/v1
@@ -92,15 +92,15 @@ spec:
   port: 8080
 ```
 
-El controller debe rellenar status.replicas, availableReplicas, selector y observedGeneration a partir del estado observado. Un status ausente u obsoleto no es un éxito. Si se sirven varias versiones de la API, revisa la versión de almacenamiento, status.storedVersions y la conversión. Un webhook de conversión debe implementar las transformaciones necesarias; renombrar una versión no migra los datos.
+El controller debe completar status.replicas, availableReplicas, selector y observedGeneration a partir del estado observado. Un status ausente o desactualizado no es exitoso. Para múltiples versiones de API servidas, revise la versión de almacenamiento, status.storedVersions y la conversión. Un webhook de conversión debe implementar las transformaciones requeridas; cambiar el nombre de una versión no migra los datos.
 
 ## client-go, controller-runtime y Operators
 
-client-go proporciona clientes, informers/cachés y workqueues. Un único List seguido de un Watch no constituye un controller completo: hay que gestionar la continuidad de resourceVersion, el cierre del watch, los 410 Gone, la reconexión y la sincronización de la caché, así como la cancelación del contexto y la limpieza.
+client-go proporciona clientes, informers/cachés y workqueues. Un List de una sola vez seguido de Watch no es un controller completo: gestione la continuidad de resourceVersion, el cierre de Watch, 410 Gone, la reconexión y la sincronización de caché, así como la cancelación de contexto y la limpieza.
 
-controller-runtime aporta managers, caché/clientes, workqueues, elección de líder y patrones de reconciliación. Genera o proporciona los tipos Go personalizados de WebApp y el registro del scheme, y luego compila contra la versión de biblioteca elegida. Las referencias a tipos inexistentes de example.com/api o a appsv1.WebApp no constituyen una implementación ejecutable.
+controller-runtime proporciona managers, caché/clientes, workqueues, elección de líder y patrones de reconciliación. Genere o proporcione los tipos Go personalizados de WebApp y el registro de scheme, luego compile con la versión de biblioteca elegida. Las referencias a tipos inexistentes example.com/api o appsv1.WebApp no constituyen una implementación ejecutable.
 
-Lo siguiente es **pseudocódigo**; sus funciones y su configuración de despliegue deben implementarse por separado.
+Lo siguiente es **pseudocódigo**; sus funciones y configuración de Deployment deben implementarse por separado.
 
 ```text
 Reconcile(namespace, name):
@@ -118,21 +118,21 @@ Reconcile(namespace, name):
   report failure/readiness and requeue when another observation is needed
 ```
 
-Los ownerReferences deben coincidir en UID, namespace y restricciones de alcance, además del nombre. Actualizar a ciegas un Deployment con el mismo nombre puede modificar la carga de trabajo de otro controller. La recolección de basura depende de la propagación, los owners y los finalizers; un ownerReference no limpia datos externos arbitrarios de AWS.
+ownerReferences debe coincidir con las restricciones de UID, namespace y alcance, además del nombre. Actualizar a ciegas un Deployment con el mismo nombre puede mutar la carga de trabajo de otro controller. La recolección de basura depende de la propagación, los propietarios y los finalizers; un ownerReference no limpia datos externos arbitrarios de AWS.
 
-Un Operator implementa conocimiento del dominio; el failover, las actualizaciones progresivas y las copias de seguridad no son seguros de forma automática. Los diseños de bases de datos requieren fencing del primario, quórum, puesta al día de las réplicas, pruebas de restauración de WAL/backup, compatibilidad de esquemas, presupuestos de interrupción y orden de apagado.
+Un Operator implementa conocimiento del dominio; la conmutación por error, las actualizaciones graduales y las copias de seguridad no son seguras automáticamente. Los diseños de bases de datos necesitan fencing del primario, quórum, sincronización de réplicas, pruebas de restauración de WAL/copias de seguridad, compatibilidad de esquema, presupuestos de interrupción y orden de apagado.
 
-Usa las instrucciones oficiales de instalación de Operator SDK 1.42.3 para seleccionar el sistema operativo/arquitectura y las sumas de comprobación. No instales en todas partes el antiguo binario 1.25.0 solo para amd64. Verifica init/create api/make manifests contra el SDK/plugin elegido, compila y prueba el proyecto generado y, por separado, construye/publica las imágenes y despliega.
+Use las instrucciones oficiales de instalación de Operator SDK 1.42.3 para seleccionar SO/arquitectura y sumas de verificación. No instale en todos lados el binario antiguo 1.25.0 solo para amd64. Verifique init/create api/make manifests con el SDK/plugin elegido, compile/pruebe el proyecto generado y, por separado, cree/publique imágenes y realice el despliegue.
 
 ## Agregación de API
 
-APIService dirige una ruta de group/version al Service de un API server de extensión. El servidor necesita TLS, discovery, almacenamiento y comportamientos de API como list/watch. Valida la CA/CN del certificado del front-proxy, preserva el límite de confianza en torno a la identidad de usuario reenviada y configura la autorización delegada.
+APIService enruta una ruta de grupo/versión a un Service de un servidor de API de extensión. El servidor necesita TLS, descubrimiento, almacenamiento y comportamientos de API como list/watch. Valide la CA/CN del certificado de front-proxy, preserve el límite de confianza en torno a la identidad de usuario reenviada y configure la autorización delegada.
 
-Inspecciona el discovery instalado para conocer la versión real de la API de metrics-server. No uses un APIService v1.metrics.k8s.io inventado ni insecureSkipTLSVerify:true como opción por defecto. El group/version, el Service y el caBundle deben coincidir con el servidor real. Un handler HTTP sencillo o un grupo de API vacío no es un API server de Kubernetes completo.
+Inspeccione el descubrimiento instalado para conocer la versión real de API de metrics-server. No use como predeterminado un APIService v1.metrics.k8s.io inventado ni insecureSkipTLSVerify:true. El grupo/versión, Service y caBundle deben coincidir con el servidor real. Un simple controlador HTTP o grupo de API vacío no es un servidor de API de Kubernetes completo.
 
-## Políticas de admisión y webhooks
+## Políticas y Webhooks de admisión
 
-ValidatingAdmissionPolicy es estable desde Kubernetes 1.30 y ejecuta la validación CEL en el propio proceso. Esta política/binding limita replicas a 1–5 para los Deployments y las peticiones deployments/scale en el namespace production. También comprueba las actualizaciones de HPA y de kubectl scale; alinea maxReplicas del HPA con el límite. Los nombres de namespace no equivalen a etiquetas de entorno arbitrarias. Revisa el impacto operativo antes de aplicar una política.
+ValidatingAdmissionPolicy es estable desde Kubernetes 1.30 y ejecuta la validación CEL en proceso. Esta política/enlace limita las réplicas a 1–5 para las solicitudes de Deployments y deployments/scale en el namespace de producción. También verifica las actualizaciones de HPA y kubectl scale; alinee HPA maxReplicas con el límite. Los nombres de namespace no son equivalentes a etiquetas de entorno arbitrarias. Revise el impacto operativo antes de aplicar una política.
 
 ```yaml
 apiVersion: admissionregistration.k8s.io/v1
@@ -164,13 +164,13 @@ spec:
         kubernetes.io/metadata.name: production
 ```
 
-Los webhooks de validación permiten o deniegan peticiones; los de mutación pueden devolver un JSON Patch. Responde usando la misma versión de AdmissionReview y el mismo UID de la petición. patchType es JSONPatch y los bytes del patch van codificados en Base64 dentro del JSON.
+Los webhooks de validación permiten o deniegan solicitudes; los webhooks de mutación pueden devolver JSON Patch. Responda usando la misma versión de AdmissionReview y el UID de la solicitud. patchType es JSONPatch y los bytes de patch están codificados en Base64 en JSON.
 
-Este handler en Go añade una etiqueta ilustrativa al crear un Pod (CREATE). Crea el mapa de labels cuando falta o es null, preserva las etiquetas existentes y omite el patch cuando el valor ya coincide. Comprueba el tamaño, el método, el content type, la versión, el UID y las peticiones/objetos nulos. Esta etiqueta no inyecta realmente un sidecar.
+Este controlador Go añade una etiqueta ilustrativa en Pod CREATE. Crea el mapa de labels cuando falta/es null, conserva las labels existentes y omite un patch cuando el valor ya coincide. Verifica el tamaño, el método, el tipo de contenido, la versión, el UID y las solicitudes/objetos null. Esta label no inserta realmente un sidecar.
 
-### Código del webhook probado
+### Código de Webhook probado
 
-examples/platform/extensions/webhook contiene go.mod, esta implementación y sus pruebas. Solo usa las bibliotecas estándar de Go 1.25. Las structs declaran los campos de AdmissionReview que se consumen e ignoran los demás.
+examples/platform/extensions/webhook contiene go.mod, esta implementación y sus pruebas. Solo utiliza las bibliotecas estándar de Go 1.25. Las structs declaran los campos consumidos de AdmissionReview e ignoran campos adicionales.
 
 ```go
 package main
@@ -317,52 +317,52 @@ cd examples/platform/extensions/webhook
 go test ./...
 ```
 
-Las pruebas invocaron el handler a través de httptest sin abrir un listener TLS. El despliegue sigue requiriendo una imagen, un Service, ficheros de certificado/clave, un bundle de CA real, conectividad con el API server, autenticación del llamante y una network policy. Este servidor TLS no configura la autenticación de cliente por defecto. Haz coincidir los recursos, operaciones y rutas del webhook con el handler.
+Las pruebas invocaron el controlador mediante httptest sin abrir un listener TLS. El Deployment aún requiere una imagen, Service, archivos de certificado/clave, el bundle de CA real, conectividad con el servidor de API, autenticación del llamador y política de red. Este servidor TLS no configura la autenticación de clientes de forma predeterminada. Haga coincidir los recursos, operaciones y rutas del webhook con el controlador.
 
-Revisa failurePolicy, timeoutSeconds, sideEffects/dryRun, reinvocationPolicy y los selectores. Fail puede bloquear peticiones a la API cuando el webhook no está disponible; Ignore puede omitir su comprobación. Declarar None debe reflejar la ausencia real de efectos secundarios externos.
+Revise failurePolicy, timeoutSeconds, sideEffects/dryRun, reinvocationPolicy y los selectores. Fail puede bloquear solicitudes de API cuando un webhook no está disponible; Ignore puede omitir su comprobación. Declarar None debe reflejar la ausencia real de efectos secundarios externos.
 
-La inyección por Pod actual de Istio usa la **label** sidecar.istio.io/inject; los namespaces usan istio-injection o labels de revisión. Verifica la ubicación de la label en la plantilla del Pod y las reglas de inyección propias de cada versión, en lugar de mantener los antiguos ejemplos con annotations como opción por defecto.
+La inyección actual por Pod de Istio usa la **label** sidecar.istio.io/inject; los namespaces usan labels istio-injection o de revisión. Verifique la ubicación de la label de la plantilla de Pod y las reglas de inyección específicas de la versión, en lugar de conservar como predeterminados ejemplos antiguos de annotation.
 
-## Framework del scheduler y extenders
+## Framework y Extenders de Scheduler
 
-Los plugins del framework se compilan y registran dentro de un binario del scheduler. Nombrar CustomFilter en YAML no carga código inexistente. Haz coincidir el schedulerName del perfil con spec.schedulerName del Pod para seleccionar un scheduler independiente.
+Los plugins de Framework se compilan y registran dentro de un binario de Scheduler. Nombrar CustomFilter en YAML no carga código ausente. Haga coincidir schedulerName del perfil con Pod spec.schedulerName para seleccionar un Scheduler independiente.
 
-Filter elimina candidatos y Score clasifica los nodos viables. Ten en cuenta NormalizeScore, los pesos de los plugins y la selección en caso de empate. Reserve/Unreserve mantienen el estado de reserva del plugin, no una API permanente de reserva de capacidad. Permit puede permitir, rechazar o esperar; PreBind/Bind/PostBind gestionan las etapas del binding.
+Filter elimina candidatos y Score clasifica los nodos viables. Considere NormalizeScore, los pesos de plugins y la selección en caso de empate. Reserve/Unreserve mantienen el estado de reserva del plugin, no una API de reserva permanente de capacidad. Permit puede permitir, rechazar o esperar; PreBind/Bind/PostBind gestionan las etapas de enlace.
 
-El framework público de Kubernetes 1.36.2 usa CycleState/NodeInfo de k8s.io/kube-scheduler/framework y pasa NodeInfo a Score. No copies a ciegas las antiguas firmas con nodeName como string o puntero; compila contra la versión menor exacta. scheduler-plugins 0.35.7 no es automáticamente intercambiable con los binarios 1.36/1.37.
+El framework público de Kubernetes 1.36.2 utiliza CycleState/NodeInfo de k8s.io/kube-scheduler/framework y pasa NodeInfo a Score. No copie a ciegas firmas antiguas de nodeName-string/pointer; compile con la versión minor exacta. scheduler-plugins 0.35.7 no es automáticamente intercambiable con binarios 1.36/1.37.
 
-Un extender expone endpoints HTTP(S) independientes. Configura únicamente los handlers de filter/prioritize/bind que estén implementados y da soporte a Nodes frente a NodeNames según nodeCacheCapable. El ejemplo anterior configuraba bindVerb sin implementarlo. Gestiona las entradas nil, los límites de tamaño del cuerpo, los timeouts, TLS/autenticación, la política de fallos y los rangos de puntuación. Para una selección sencilla de zona, considera primero la node affinity integrada.
+Un extender expone endpoints HTTP(S) independientes. Configure únicamente los controladores filter/prioritize/bind implementados y admita Nodes frente a NodeNames según nodeCacheCapable. El ejemplo anterior configuraba bindVerb sin implementarlo. Gestione entradas nil, límites de cuerpo, tiempos de espera, TLS/autenticación, política de errores y rangos de puntuación. Para una selección simple de zona, considere primero la afinidad de nodos integrada.
 
 ## CNI
 
-CNI es el contrato de ejecución entre el runtime y el plugin de red. La biblioteca CNI 1.3.1 es distinta del cniVersion de la configuración. Verifica las versiones compartidas de la especificación y el soporte de operaciones como ADD, DEL, CHECK, STATUS y GC.
+CNI es el contrato de ejecución del runtime/plugin de red. La biblioteca CNI 1.3.1 es distinta de la configuración cniVersion. Verifique las versiones compartidas de la especificación y el soporte de operaciones como ADD, DEL, CHECK, STATUS y GC.
 
-Un ADD correcto debe reflejar la configuración real de la interfaz en el namespace, el IPAM y las rutas. Devolver una IP fija en JSON no crea ninguna conexión y puede provocar colisiones. DEL debe limpiar los fallos parciales o los namespaces inexistentes; CHECK debe inspeccionar el estado real. Copiar la misma subred host-local en varios nodos no proporciona IPAM de clúster.
+Un ADD exitoso debe reflejar la interfaz de namespace, IPAM y configuración de rutas reales. Devolver una IP fija en JSON no crea una conexión y puede causar colisiones. DEL debe limpiar errores parciales o namespaces ausentes; CHECK debe inspeccionar el estado real. Copiar la misma subred host-local en varios nodos no proporciona IPAM de clúster.
 
-Consulta las releases elegidas de Calico, Cilium o Flannel para conocer sus funcionalidades y la compatibilidad con la distribución. El repositorio original de Weave Net está archivado y no se presenta como opción por defecto para nuevas instalaciones. Esta auditoría no modificó la red del host, los veth, las rutas ni la configuración de CNI.
+Compruebe las versiones seleccionadas de Calico, Cilium o Flannel para conocer las funcionalidades y la compatibilidad con la distribución. El repositorio original de Weave Net está archivado y no se presenta como opción predeterminada para instalaciones nuevas. Esta auditoría no modificó redes de host, veth, rutas ni configuración de CNI.
 
 ## CSI
 
-CSI 1.13.0 define los conjuntos de RPC Identity, Controller y Node, y sus capacidades. No todo despliegue tiene que proporcionar los tres en un mismo proceso. Es posible tener plugins solo de nodo; las capacidades anunciadas deben coincidir con el comportamiento real de las RPC.
+CSI 1.13.0 define los conjuntos y capacidades de RPC de Identity, Controller y Node. No todos los despliegues deben proporcionar los tres en un proceso. Los plugins solo de Node son posibles; las capacidades anunciadas deben coincidir con el comportamiento real de RPC.
 
-CreateVolume debe gestionar la idempotencia, los rangos de capacidad, la topología, los IDs del backend y los errores. NodePublishVolume debe montar correctamente con los permisos y el comportamiento de solo lectura solicitados; NodeUnpublish/Delete deben gestionar los reintentos. Devolver siempre vol-123 o informar de éxito sin montar nada no implementa un driver real.
+CreateVolume debe gestionar idempotencia, rangos de capacidad, topología, ID de backend y errores. NodePublishVolume debe montar correctamente con los permisos solicitados/comportamiento de solo lectura; NodeUnpublish/Delete debe gestionar reintentos. Devolver siempre vol-123 o informar éxito sin montar no implementa un driver real.
 
-Un StorageClass/PVC no es un despliegue de driver. El nombre del provisioner debe coincidir con un driver instalado y los parámetros son específicos de cada driver. Revisa los sidecars del controller, el registro del nodo/socket/montajes del host, las credenciales, la topología, volumeBindingMode y reclaimPolicy. Sigue la guía oficial de instalación y soporte de EBS, PD, Azure Disk o Ceph CSI.
+Una StorageClass/PVC no es un despliegue de driver. El nombre del provisioner debe coincidir con un driver instalado y los parámetros son específicos del driver. Compruebe los sidecars de controller, registro/socket/montajes de host de Node, credenciales, topología, volumeBindingMode y reclaimPolicy. Siga la guía oficial de instalación/soporte para EBS, PD, Azure Disk o Ceph CSI.
 
 ## Verificación y referencias
 
-Se leyeron las guías originales de 983 líneas en coreano y 987 líneas en inglés, los dos cuestionarios de 652 líneas y 36 bloques de código únicos. Las comprobaciones cubrieron seis casos de entrada de CRD, seis casos de CEL de políticas, 14 casos del webhook en Go y cuatro aplicaciones reales de patches RFC6902. No se ejecutó ningún controller de clúster completo, API server agregado, scheduler ni driver CNI/CSI. El pseudocódigo explicativo no se presenta como implementación probada.
+Se leyeron las guías originales de 983 líneas en coreano y 987 líneas en inglés, ambos cuestionarios de 652 líneas y 36 bloques de código únicos. Las comprobaciones cubrieron seis casos de entrada de CRD, seis casos de CEL de políticas, 14 casos de webhook Go y cuatro aplicaciones reales de patch RFC6902. No se ejecutó ningún controller de clúster completo, servidor de API agregado, Scheduler ni driver CNI/CSI. El pseudocódigo explicativo no está etiquetado como una implementación probada.
 
-- [CRDs](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/)
-- [Admission webhooks](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
+- [CRD](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/)
+- [Webhooks de admisión](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
 - [ValidatingAdmissionPolicy](https://kubernetes.io/docs/reference/access-authn-authz/validating-admission-policy/)
-- [Aggregation](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/)
-- [Scheduler framework](https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/)
+- [Agregación](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/)
+- [Framework de Scheduler](https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/)
 - [Framework 1.36.2](https://github.com/kubernetes/kubernetes/blob/v1.36.2/staging/src/k8s.io/kube-scheduler/framework/interface.go)
 - [controller-runtime 0.25.0](https://github.com/kubernetes-sigs/controller-runtime/tree/v0.25.0)
 - [Operator SDK](https://sdk.operatorframework.io/docs/installation/)
-- [CNI 1.3.1 source](https://github.com/containernetworking/cni/blob/v1.3.1/SPEC.md)
+- [Código fuente de CNI 1.3.1](https://github.com/containernetworking/cni/blob/v1.3.1/SPEC.md)
 - [CSI 1.13.0](https://github.com/container-storage-interface/spec/blob/v1.13.0/spec.md)
-- [Istio injection](https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/)
+- [Inyección de Istio](https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/)
 
-[Cuestionario sobre mecanismos de extensión](../quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)
+[Cuestionario de mecanismos de extensión](../quizzes/platform-engineering/04-kubernetes-extensions-quiz.md)

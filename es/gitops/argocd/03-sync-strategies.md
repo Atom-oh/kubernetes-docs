@@ -1,21 +1,21 @@
 # Estrategias de sincronización de ArgoCD
 
-> **Versiones compatibles**: ArgoCD v2.9+
-> **Última actualización**: February 22, 2026
+> **Base de la revisión**: Argo CD 3.5.2; actualizado al parche 3.5.4 después de revisar las notas de la versión (los ejemplos no se volvieron a ejecutar)
+> **Última actualización**: October 12, 2026
 
 ## Tabla de contenido
 - [Sincronización manual frente a automatizada](#manual-vs-automated-sync)
 - [Políticas de sincronización automática](#auto-sync-policies)
 - [Opciones de sincronización](#sync-options)
-- [Oleadas y fases de sincronización](#sync-waves-and-phases)
+- [Ondas y fases de sincronización](#sync-waves-and-phases)
 - [Ventanas de sincronización](#sync-windows)
 - [Personalización de diferencias](#diffing-customization)
 - [Políticas de reintento](#retry-policies)
 - [Sincronización selectiva](#selective-sync)
 
-<span id="manual-vs-automated-sync"></span>
-
 ## Sincronización manual frente a automatizada
+
+Los ejemplos son fragmentos de políticas independientes. Conserva el origen/destino/proyecto de una Application real y selecciona únicamente las opciones necesarias. La sincronización aplica cambios; Refresh actualiza la comparación desde las fuentes/caché. Synced es independiente de la salud y de la disponibilidad real del servicio.
 
 ArgoCD admite dos modos de sincronización: manual y automatizado.
 
@@ -41,17 +41,17 @@ spec:
   # No syncPolicy.automated = manual sync
 ```
 
-Activar la sincronización manual:
+Activación de la sincronización manual:
 
 ```bash
 # Via CLI
 argocd app sync my-app
 
 # Sync specific resources only
-argocd app sync my-app --resource ':Deployment:my-deployment'
+argocd app sync my-app --resource 'apps:Deployment:my-deployment'
 
-# Sync with options
-argocd app sync my-app --prune --force
+# Preview changes; pruning and force are separate, potentially destructive decisions
+argocd app sync my-app --dry-run
 ```
 
 ### Sincronización automatizada
@@ -77,47 +77,17 @@ spec:
     automated: {}  # Enable auto-sync with defaults
 ```
 
-```mermaid
-flowchart LR
-    subgraph DETECT["Change Detection"]
-        GIT["Git Repository"]
-        WEBHOOK["Webhook"]
-        POLL["Polling (3min)"]
-    end
+![Argo CD compara continuamente el estado deseado en el repositorio Git con el estado activo del clúster de Kubernetes y, cuando detecta una diferencia OutOfSync, aplica los cambios para que el estado activo vuelva a coincidir con Git.](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-0.png)
 
-    subgraph SYNC["Sync Process"]
-        COMPARE["Compare States"]
-        APPLY["Apply Changes"]
-    end
-
-    subgraph CLUSTER["Target Cluster"]
-        RESOURCES["K8s Resources"]
-    end
-
-    GIT -->|"push"| WEBHOOK
-    GIT -->|"check"| POLL
-    WEBHOOK --> COMPARE
-    POLL --> COMPARE
-    COMPARE -->|"drift detected"| APPLY
-    APPLY --> RESOURCES
-    RESOURCES -->|"status"| COMPARE
-
-    classDef detect fill:#f9f9f9,stroke:#333,color:black
-    classDef sync fill:#EB6E85,stroke:#333,color:white
-    classDef cluster fill:#326CE5,stroke:#333,color:white
-
-    class GIT,WEBHOOK,POLL detect
-    class COMPARE,APPLY sync
-    class RESOURCES cluster
-```
-
-<span id="auto-sync-policies"></span>
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-03-sync-strategies-0.html)
 
 ## Políticas de sincronización automática
 
+automated: {} o una marca enabled omitida/nula habilita la sincronización automática; enabled: false la deshabilita. La corrección de desviaciones solo del estado activo requiere selfHeal, y prune es independiente. Las combinaciones fallidas idénticas de commit/parámetros no se reintentan indefinidamente de forma predeterminada; configura una política de reintento. Cambia la plantilla propietaria para las Applications administradas por ApplicationSet.
+
 ### Prune
 
-Elimina automáticamente los recursos que ya no existen en Git:
+Elimina automáticamente recursos que ya no existen en Git:
 
 ```yaml
 syncPolicy:
@@ -125,9 +95,9 @@ syncPolicy:
     prune: true
 ```
 
-**Caso de uso**: Garantizar que el estado del clúster coincida exactamente con el repositorio de Git. Elimina los recursos huérfanos.
+**Caso de uso**: Garantiza que el estado del clúster coincida exactamente con el repositorio Git. Elimina recursos huérfanos.
 
-**Advertencia**: Ten cuidado con los recursos con ámbito de clúster. Usa la opción `PruneLast` para una poda más segura.
+Prune afecta a los recursos rastreados de la Application, no a todos los huérfanos del clúster. PruneLast cambia el orden; no protege los datos ni reemplaza la revisión de eliminaciones.
 
 ### Self-Heal
 
@@ -139,26 +109,15 @@ syncPolicy:
     selfHeal: true
 ```
 
-**Caso de uso**: Evitar la deriva de configuración causada por cambios manuales con kubectl u otras herramientas.
+**Caso de uso**: Evita la desviación de configuración causada por cambios manuales con kubectl u otras herramientas.
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant K8s as Kubernetes
-    participant ArgoCD
-    participant Git
+![Diagrama de secuencia que muestra a un usuario escalando manualmente un Deployment con kubectl, a Argo CD detectando el cambio de estado, leyendo el número deseado de réplicas desde Git y reaplicándolo para que Kubernetes se autorrepare y vuelva al estado declarado en Git.](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-1.png)
 
-    User->>K8s: kubectl scale deployment --replicas=5
-    K8s-->>ArgoCD: State changed
-    ArgoCD->>Git: Get desired state
-    Git-->>ArgoCD: replicas: 3
-    ArgoCD->>K8s: Apply replicas: 3
-    Note over K8s: Self-healed back to<br/>desired state
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-03-sync-strategies-1.html)
 
 ### Permitir vacío
 
-Permite aplicaciones sin recursos:
+Permite Applications sin recursos:
 
 ```yaml
 syncPolicy:
@@ -166,7 +125,7 @@ syncPolicy:
     allowEmpty: true
 ```
 
-**Caso de uso**: Aplicaciones cuyos recursos se generan de forma condicional o durante la configuración inicial.
+Con prune automatizado habilitado, allowEmpty puede permitir eliminar todos los recursos administrados cuando el renderizado devuelve un conjunto vacío. No es un requisito genérico de arranque.
 
 ### Configuración completa de sincronización automática
 
@@ -189,28 +148,30 @@ spec:
     automated:
       prune: true        # Remove orphaned resources
       selfHeal: true     # Revert manual changes
-      allowEmpty: false  # Fail if no resources
+      allowEmpty: false  # Prevent auto-prune from deleting everything on an empty render
 ```
-
-<span id="sync-options"></span>
 
 ## Opciones de sincronización
 
-Las opciones de sincronización proporcionan control detallado sobre el comportamiento de la sincronización.
+Las opciones de sincronización proporcionan un control detallado del comportamiento de sincronización.
 
 ### Opciones de sincronización disponibles
 
 | Opción | Descripción | Predeterminado |
 |--------|-------------|---------|
-| `Validate` | Validar recursos con respecto al esquema | true |
-| `CreateNamespace` | Crear el namespace si no existe | false |
+| `Validate` | Valida recursos con el esquema | true |
+| `CreateNamespace` | Crea el namespace si no existe | false |
 | `PrunePropagationPolicy` | Política de propagación de eliminación | foreground |
-| `PruneLast` | Podar después de todas las demás sincronizaciones | false |
-| `Replace` | Usar replace en lugar de apply | false |
-| `FailOnSharedResource` | Fallar si el recurso se administra en otro lugar | false |
-| `ApplyOutOfSyncOnly` | Aplicar solo recursos fuera de sincronización | false |
-| `ServerSideApply` | Usar apply del lado del servidor | false |
-| `RespectIgnoreDifferences` | Respetar ignoreDifferences durante la sincronización | false |
+| `PruneLast` | Ejecuta prune después de todas las demás sincronizaciones | false |
+| `Replace` | Usa replace en lugar de apply | false |
+| `FailOnSharedResource` | Falla si otra Application de Argo CD rastrea el recurso | false |
+| `ApplyOutOfSyncOnly` | Aplica solo recursos fuera de sincronización | false |
+| `ServerSideApply` | Usa apply del lado del servidor | false |
+| `RespectIgnoreDifferences` | Respeta ignoreDifferences en la sincronización | false |
+
+`Validate=false` omite la validación del esquema durante apply; no instala un CRD ausente. Argo CD omite automáticamente la ejecución en seco de un CR cuando su CRD se instala en la misma sincronización. Usa `SkipDryRunOnMissingResource=true` solo para un caso justificado, como un CRD creado por otro controlador, y verifica que el CRD esté disponible.
+
+`PruneLast=true` programa prune en una onda implícita final después de que se despliegan y están Healthy los demás recursos. `FailOnSharedResource=true` comprueba el rastreo por otra Application de Argo CD; no detecta todos los conflictos de propiedad con otros controladores de Kubernetes o Flux.
 
 ### Opciones a nivel de Application
 
@@ -221,6 +182,14 @@ metadata:
   name: my-app
   namespace: argocd
 spec:
+  project: default
+  source:
+    repoURL: https://github.com/myorg/myrepo.git
+    targetRevision: main
+    path: manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: my-app
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
@@ -235,17 +204,15 @@ spec:
 Aplica opciones de sincronización a recursos específicos mediante anotaciones:
 
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
+# Merge into an existing complete resource manifest.
 metadata:
-  name: my-deployment
   annotations:
-    argocd.argoproj.io/sync-options: Replace=true,Validate=false
-spec:
-  # ...
+    argocd.argoproj.io/sync-options: ServerSideApply=true
 ```
 
 ### Apply del lado del servidor
+
+Argo CD 3.5.4 invoca --server-side --force-conflicts. Se rastrea la propiedad de los campos, pero esto no garantiza que se rechacen los conflictos; revisa la posible apropiación de propiedad.
 
 Usa Kubernetes server-side apply para una mejor detección de conflictos:
 
@@ -264,13 +231,13 @@ metadata:
 ```
 
 **Beneficios**:
-- Mejor seguimiento de la propiedad de los campos
-- Conflictos de combinación detectados por el servidor de API
+- Mejor rastreo de propiedad de los campos
+- Argo CD puede resolver a la fuerza los conflictos de propiedad; inspecciona los límites previstos de los administradores
 - Funciona bien con CRD y webhooks
 
-### Reemplazo forzado
+### Replace y Force
 
-Fuerza el reemplazo de recursos (útil para campos inmutables):
+Replace selecciona kubectl replace/create. No hace automáticamente editables los campos inmutables. Force=true con Replace=true puede eliminar/recrear objetos y es una decisión destructiva independiente:
 
 ```yaml
 metadata:
@@ -278,275 +245,175 @@ metadata:
     argocd.argoproj.io/sync-options: Replace=true
 ```
 
-**Casos de uso**:
-- Jobs (spec inmutable)
-- Cambiar la clase de almacenamiento de PVC
-- Campos inmutables de ConfigMap/Secret
+Los cambios inmutables necesitan un plan de migración/recreación específico para el recurso. No lo uses como atajo para la migración de la clase de almacenamiento de PVC. Revisa la retención/los datos/la disponibilidad antes de eliminar. Replace tiene prioridad sobre ServerSideApply.
 
-<span id="sync-waves-and-phases"></span>
+## Ondas y fases de sincronización
 
-## Oleadas y fases de sincronización
+Las ondas de sincronización controlan el orden en que se aplican los recursos.
 
-Las oleadas de sincronización controlan el orden en que se aplican los recursos.
+### Cómo funcionan las ondas
 
-### Cómo funcionan las oleadas
+Los recursos se agrupan por número de onda y se sincronizan en orden:
+1. Se ordenan por fase, después por onda, tipo y nombre.
+2. Una onda Sync negativa no se ejecuta antes de la fase PreSync.
+3. El avance de onda sigue el estado de sincronización/salud; no dependas de la concurrencia física dentro de la misma onda para las dependencias. Los recursos personalizados necesitan comprobaciones de salud significativas cuando la preparación deba bloquear el trabajo posterior.
 
-Los recursos se agrupan por número de oleada y se sincronizan en orden:
-1. Primero el número de oleada más bajo (puede ser negativo)
-2. Dentro de una oleada, los hooks se ejecutan primero y luego los recursos
-3. La siguiente oleada comienza solo después de que la anterior finaliza
+![Diagrama de flujo de trabajo de ondas de sincronización de Argo CD aplicadas en orden ascendente: onda -2 CRD, onda -1 Namespaces y ServiceAccounts, onda predeterminada 0 ConfigMaps, Secrets y Deployments, después onda 1 Services e Ingress, y cada onda espera a que la anterior esté saludable.](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-2.png)
 
-```mermaid
-flowchart LR
-    subgraph WAVE_N2["Wave -2"]
-        CRD["CRDs"]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-03-sync-strategies-2.html)
 
-    subgraph WAVE_N1["Wave -1"]
-        NS["Namespaces"]
-        SA["ServiceAccounts"]
-    end
+### Configurar la onda de sincronización
 
-    subgraph WAVE_0["Wave 0 (default)"]
-        CFG["ConfigMaps"]
-        SEC["Secrets"]
-        DEP["Deployments"]
-    end
+Combina este fragmento en los metadatos de un manifiesto de recurso completo. A continuación hay un ejemplo completo.
 
-    subgraph WAVE_1["Wave 1"]
-        SVC["Services"]
-        ING["Ingress"]
-    end
-
-    WAVE_N2 --> WAVE_N1 --> WAVE_0 --> WAVE_1
-
-    classDef wave fill:#f9f9f9,stroke:#333,color:black
-
-    class CRD,NS,SA,CFG,SEC,DEP,SVC,ING wave
+```yaml
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 ```
 
-### Configurar una oleada de sincronización
+### Combinar ondas con hooks
+
+PreSync se ejecuta antes de cada onda Sync ordinaria. El Service, namespace, DB Secret y la imagen de migración existentes a continuación ya deben estar preparados; un PreSync no puede asumir acceso a una base de datos creada en una onda Sync posterior.
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dependency-preflight
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/sync-wave: "-5"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 60
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      containers:
+      - name: check
+        image: curlimages/curl:8.22.0
+        command: ["curl"]
+        args: ["--fail", "--show-error", "--silent", "--connect-timeout", "5", "--max-time", "20", "http://existing-data-service:8080/health"]
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migration
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/sync-wave: "-3"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 300
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: migrate
+        image: myapp/migrations:v1.0.0
+        command: ["./migrate.sh"]
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: existing-db-credentials
+              key: url
+```
+
+Un Job que solo imprime pg_dump en stdout no es un procedimiento de copia de seguridad restaurable. Usa almacenamiento persistente cifrado, verificación de finalización y pruebas de restauración. Valida la idempotencia/el bloqueo/la recuperación de la migración; un fallo de PostSync no implica una reversión automática.
+
+### Ejemplo mínimo de ordenamiento funcional
+
+Este ejemplo mínimo ordena Namespace → ConfigMap → Service → un Deployment con preparación dentro de la misma fase Sync. Un objeto Service Healthy no prueba que haya endpoints preparados; la sonda del Deployment comprueba la preparación de la carga de trabajo. Prepara el acceso a Argo Project/RBAC y al registro de imágenes.
 
 ```yaml
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: my-app
+  name: wave-demo
   annotations:
     argocd.argoproj.io/sync-wave: "-2"
 ---
 apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: my-app
-  namespace: my-app
-  annotations:
-    argocd.argoproj.io/sync-wave: "-1"
----
-apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: my-config
-  namespace: my-app
+  name: wave-demo-config
+  namespace: wave-demo
   annotations:
-    argocd.argoproj.io/sync-wave: "0"
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-app
-  namespace: my-app
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-wave: "-1"
+data:
+  DEMO_ENVIRONMENT: demo
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: my-app
-  namespace: my-app
+  name: wave-demo
+  namespace: wave-demo
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
-```
-
-### Combinar oleadas con hooks
-
-```yaml
-# PreSync hook in wave -5
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: db-init
-  annotations:
-    argocd.argoproj.io/hook: PreSync
-    argocd.argoproj.io/sync-wave: "-5"
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/sync-wave: "0"
 spec:
-  template:
-    spec:
-      containers:
-        - name: init
-          image: myapp/db-init:latest
-          command: ["./init-db.sh"]
-      restartPolicy: Never
+  type: ClusterIP
+  selector:
+    app: wave-demo
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
 ---
-# PreSync hook in wave -3 (runs after db-init)
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: db-migrate
-  annotations:
-    argocd.argoproj.io/hook: PreSync
-    argocd.argoproj.io/sync-wave: "-3"
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
-spec:
-  template:
-    spec:
-      containers:
-        - name: migrate
-          image: myapp/migrations:latest
-          command: ["./migrate.sh"]
-      restartPolicy: Never
-```
-
-### Ejemplo completo de ordenación
-
-```yaml
-# Order: CRDs -> Namespaces -> RBAC -> ConfigMaps -> Deployments -> Services -> Ingress
-
-# Wave -5: Custom Resource Definitions
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: myresources.example.com
-  annotations:
-    argocd.argoproj.io/sync-wave: "-5"
-spec:
-  group: example.com
-  names:
-    kind: MyResource
-    plural: myresources
-  scope: Namespaced
-  versions:
-    - name: v1
-      served: true
-      storage: true
-      schema:
-        openAPIV3Schema:
-          type: object
----
-# Wave -4: Namespace
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: my-app
-  annotations:
-    argocd.argoproj.io/sync-wave: "-4"
----
-# Wave -3: RBAC
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: my-app
-  namespace: my-app
-  annotations:
-    argocd.argoproj.io/sync-wave: "-3"
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: my-app
-  namespace: my-app
-  annotations:
-    argocd.argoproj.io/sync-wave: "-3"
-rules:
-  - apiGroups: [""]
-    resources: ["configmaps", "secrets"]
-    verbs: ["get", "list", "watch"]
----
-# Wave -2: Configuration
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: my-config
-  namespace: my-app
-  annotations:
-    argocd.argoproj.io/sync-wave: "-2"
-data:
-  config.yaml: |
-    server:
-      port: 8080
----
-# Wave 0: Application (default)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-app
-  namespace: my-app
-  # No wave annotation = wave 0
+  name: wave-demo
+  namespace: wave-demo
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels:
-      app: my-app
+      app: wave-demo
   template:
     metadata:
       labels:
-        app: my-app
+        app: wave-demo
     spec:
-      serviceAccountName: my-app
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
-        - name: app
-          image: myapp:v1.0.0
-          ports:
-            - containerPort: 8080
----
-# Wave 1: Networking
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-app
-  namespace: my-app
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
-spec:
-  selector:
-    app: my-app
-  ports:
-    - port: 80
-      targetPort: 8080
----
-# Wave 2: External access
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: my-app
-  namespace: my-app
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"
-spec:
-  ingressClassName: nginx
-  rules:
-    - host: myapp.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: my-app
-                port:
-                  number: 80
+      - name: podinfo
+        image: ghcr.io/stefanprodan/podinfo:6.15.0
+        ports:
+        - name: http
+          containerPort: 9898
+        envFrom:
+        - configMapRef:
+            name: wave-demo-config
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: http
+        resources:
+          requests: {cpu: 100m, memory: 64Mi}
+          limits: {cpu: 500m, memory: 128Mi}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
 ```
 
-<span id="sync-windows"></span>
+Para una base de datos, prepara primero la autenticación, la persistencia, el Service y la preparación real. HPA necesita solicitudes de CPU y disponibilidad de métricas. No coloques un Service/ConfigMap requerido para la preparación en una onda posterior.
 
 ## Ventanas de sincronización
 
-Las ventanas de sincronización restringen cuándo las aplicaciones pueden sincronizarse.
-
-### Ventanas de permiso
-
-Permiten la sincronización solo durante horas específicas:
+Este ejemplo permite las Applications prod-* del proyecto de producción el domingo de 02:00 a 06:00 KST, con una congelación de 03:00 a 04:00. Sustituye el repositorio/destino por el ámbito autorizado real.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -555,178 +422,85 @@ metadata:
   name: production
   namespace: argocd
 spec:
+  sourceRepos:
+  - https://github.com/myorg/myapp.git
+  destinations:
+  - server: https://kubernetes.default.svc
+    namespace: production
   syncWindows:
-    # Allow sync weekdays 9am-5pm UTC
-    - kind: allow
-      schedule: '0 9 * * 1-5'
-      duration: 8h
-      applications:
-        - '*'
-      namespaces:
-        - 'production'
-      clusters:
-        - 'https://production-cluster'
-
-    # Allow emergency sync window (can be manually activated)
-    - kind: allow
-      schedule: '0 0 * * *'
-      duration: 24h
-      applications:
-        - '*'
-      manualSync: true
+  - kind: allow
+    description: Example Sunday maintenance window
+    schedule: '0 2 * * 0'
+    duration: 4h
+    timeZone: Asia/Seoul
+    applications: ['prod-*']
+    namespaces: [production]
+    andOperator: true
+    manualSync: false
+    syncOverrun: false
+  - kind: deny
+    description: Example freeze within the maintenance window
+    schedule: '0 3 * * 0'
+    duration: 1h
+    timeZone: Asia/Seoul
+    applications: ['prod-*']
+    namespaces: [production]
+    andOperator: true
+    manualSync: false
+    syncOverrun: false
 ```
 
-### Ventanas de denegación
+Para una nueva solicitud de sincronización automática:
 
-Bloquean la sincronización durante horas específicas:
+1. Ninguna ventana coincidente significa que no hay restricción de ventana.
+2. Una denegación coincidente activa la bloquea.
+3. De lo contrario, una autorización coincidente activa la permite.
+4. Las ventanas de autorización coincidentes que están todas inactivas la bloquean.
+5. Sin ventana de autorización y solo denegaciones inactivas, se permite.
 
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: AppProject
-metadata:
-  name: production
-  namespace: argocd
-spec:
-  syncWindows:
-    # Deny sync during peak hours
-    - kind: deny
-      schedule: '0 12 * * *'
-      duration: 2h
-      applications:
-        - 'critical-*'
+Los selectores de Application/namespace/clúster usan OR de forma predeterminada; no hay clasificación por especificidad. Usa andOperator: true cuando todos los selectores proporcionados deban coincidir. La zona horaria predeterminada es UTC; un comentario de KST no la cambia.
 
-    # Deny sync during weekends
-    - kind: deny
-      schedule: '0 0 * * 0,6'
-      duration: 24h
-      applications:
-        - '*'
-      namespaces:
-        - 'production'
-```
-
-### Configuración de ventanas
-
-```yaml
-syncWindows:
-  - kind: allow                    # allow or deny
-    schedule: '0 22 * * *'         # Cron expression (UTC)
-    duration: 1h                   # Duration: Ns, Nm, Nh
-    applications:                  # Application name patterns
-      - 'prod-*'
-      - 'frontend'
-    namespaces:                    # Target namespaces
-      - 'production'
-    clusters:                      # Target clusters
-      - 'https://production.k8s'
-    manualSync: false              # Allow manual sync override
-    timeZone: 'America/New_York'   # Optional timezone (default UTC)
-```
-
-### Anular una ventana de sincronización
-
-Para emergencias, la sincronización manual puede anular las ventanas de denegación:
+Las excepciones manuales dependen de que todas las ventanas de bloqueo pertinentes permitan manualSync y de que quien realiza la llamada tenga derechos de sincronización. --force no es una omisión. Una autorización de 24 h siempre activa no es un interruptor de emergencia activado manualmente y también puede permitir la sincronización automática. La ejecución continua más allá del límite de una ventana depende de syncOverrun, la hora de inicio y las ventanas pertinentes; no garantiza la finalización ni la reversión.
 
 ```bash
-# Force sync even in deny window (requires manualSync: true in allow window)
-argocd app sync my-app --force
+argocd proj windows list production -o yaml
+argocd app get my-app
 ```
 
-<span id="diffing-customization"></span>
+
+
+![Flujo de decisión para una nueva sincronización automática, que distingue las ventanas coincidentes, las denegaciones/autorizaciones activas y las autorizaciones inactivas.](../../.gitbook/assets/en-gitops-argocd-03-sync-strategies-4.png)
+
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-03-sync-strategies-4.html)
 
 ## Personalización de diferencias
 
-### Ignorar diferencias
-
-Configura ArgoCD para ignorar campos específicos:
+Ignora solo campos reales propiedad de otro controlador, delimitados por nombre/namespace. Por ejemplo, excluye las réplicas de un Deployment administrado por HPA. No uses de forma predeterminada exclusiones amplias de imágenes, de todas las anotaciones/recursos o de todos los administradores.
 
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: my-app
-  namespace: argocd
 spec:
   ignoreDifferences:
-    # Ignore all annotations
-    - group: ""
-      kind: Service
-      jsonPointers:
-        - /metadata/annotations
-
-    # Ignore specific field by JQ expression
-    - group: apps
-      kind: Deployment
-      jqPathExpressions:
-        - .spec.template.spec.containers[].resources
-
-    # Ignore for specific named resource
-    - group: apps
-      kind: Deployment
-      name: my-deployment
-      namespace: production
-      jsonPointers:
-        - /spec/replicas
-
-    # Ignore managed fields from specific controllers
-    - group: "*"
-      kind: "*"
-      managedFieldsManagers:
-        - kube-controller-manager
-        - cluster-autoscaler
-```
-
-### Configuración global de diferencias
-
-En `argocd-cm`:
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-cm
-  namespace: argocd
-data:
-  # Ignore aggregated cluster roles
-  resource.compareoptions: |
-    ignoreAggregatedRoles: true
-
-  # Global ignore patterns
-  resource.customizations.ignoreDifferences.all: |
-    managedFieldsManagers:
-      - kube-controller-manager
+  - group: apps
+    kind: Deployment
+    name: my-deployment
+    namespace: production
     jsonPointers:
-      - /metadata/annotations/kubectl.kubernetes.io~1last-applied-configuration
-
-  # Ignore for specific resource type
-  resource.customizations.ignoreDifferences.admissionregistration.k8s.io_MutatingWebhookConfiguration: |
-    jqPathExpressions:
-      - .webhooks[]?.clientConfig.caBundle
+    - /spec/replicas
+  syncPolicy:
+    syncOptions: [RespectIgnoreDifferences=true]
 ```
 
-### Ignorar el estado de los recursos
+ignoreDifferences controla la comparación; RespectIgnoreDifferences lo extiende a la sincronización, pero la creación inicial sin un objeto activo sigue usando el manifiesto deseado. Inspecciona los campos realmente administrados antes de seleccionar un administrador. Las exclusiones de comparación globales/de estado no deshabilitan la evaluación de salud y no deben ocultar la manipulación de imágenes.
 
-Ignora todos los campos de estado:
-
-```yaml
-resource.compareoptions: |
-  ignoreResourceStatusField: all
-```
-
-O para tipos específicos:
-
-```yaml
-resource.compareoptions: |
-  ignoreResourceStatusField: crd
-```
-
-<span id="retry-policies"></span>
+Consulta los [ejemplos de ignore-difference de Application](02-applications.md#ignore-differences) para conocer reglas delimitadas.
 
 ## Políticas de reintento
 
+limit: 5 permite cinco reintentos después del intento inicial, hasta seis intentos en total. Los retrasos comienzan en 5s,10s,20s,40s,80s; maxDuration limita un backoff individual, no toda la sincronización ni el hook. El reintento de Application y backoffLimit/activeDeadlineSeconds de Job son capas distintas.
+
 Configura el reintento automático ante fallos de sincronización.
 
-### Configuración básica de reintentos
+### Configuración básica de reintento
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -735,6 +509,14 @@ metadata:
   name: my-app
   namespace: argocd
 spec:
+  project: default
+  source:
+    repoURL: https://github.com/myorg/myrepo.git
+    targetRevision: main
+    path: manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: my-app
   syncPolicy:
     retry:
       limit: 5          # Maximum retry attempts
@@ -746,32 +528,11 @@ spec:
 
 ### Flujo de reintento
 
-```mermaid
-sequenceDiagram
-    participant App as Application
-    participant Ctrl as Controller
-    participant K8s as Kubernetes
+limit: 5 permite hasta cinco reintentos después del intento inicial. Con duration 5s y factor 2, los retrasos comienzan en 5s, 10s, 20s, 40s, 80s. maxDuration limita un retraso backoff individual; no es un tiempo de espera global de sincronización/hook.
 
-    Ctrl->>K8s: Sync attempt 1
-    K8s-->>Ctrl: Failed
-    Note over Ctrl: Wait 5s
+### Comprobación previa de dependencia acotada
 
-    Ctrl->>K8s: Sync attempt 2
-    K8s-->>Ctrl: Failed
-    Note over Ctrl: Wait 10s (5s * 2)
-
-    Ctrl->>K8s: Sync attempt 3
-    K8s-->>Ctrl: Failed
-    Note over Ctrl: Wait 20s (10s * 2)
-
-    Ctrl->>K8s: Sync attempt 4
-    K8s-->>Ctrl: Success
-    Ctrl->>App: Update status: Synced
-```
-
-### Reintentar solo ante errores específicos
-
-Actualmente, ArgoCD reintenta ante todos los fallos de sincronización. Para un control detallado, usa hooks:
+Un hook de comprobación previa puede fallar con un plazo acotado; no añade un filtro de reintentos de Argo por código de error. La dependencia de abajo ya debe existir.
 
 ```yaml
 apiVersion: batch/v1
@@ -780,38 +541,41 @@ metadata:
   name: check-prerequisites
   annotations:
     argocd.argoproj.io/hook: PreSync
-    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
 spec:
-  backoffLimit: 5  # Job-level retries
+  backoffLimit: 0
+  activeDeadlineSeconds: 100
   template:
     spec:
-      containers:
-        - name: check
-          image: busybox
-          command:
-            - sh
-            - -c
-            - |
-              # Check if external dependency is ready
-              until nc -z external-service 443; do
-                echo "Waiting for external-service..."
-                sleep 5
-              done
-              echo "Prerequisites met"
       restartPolicy: Never
+      automountServiceAccountToken: false
+      containers:
+      - name: check
+        image: curlimages/curl:8.22.0
+        command:
+        - sh
+        - -c
+        - |
+          for i in 1 2 3 4 5 6; do
+            if curl --fail --silent --show-error --connect-timeout 3 --max-time 10 http://existing-service:8080/readyz; then
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
 ```
-
-<span id="selective-sync"></span>
 
 ## Sincronización selectiva
 
-Sincroniza solo recursos específicos dentro de una aplicación.
+La selección explícita mediante --resource/--label omite hooks e historial. ApplyOutOfSyncOnly/--apply-out-of-sync-only conserva hooks/historial en 3.5.4. --label selecciona recursos; --selector(-l) selecciona Applications.
 
-### Mediante la CLI
+Sincroniza solo recursos específicos dentro de una Application.
+
+### Mediante CLI
 
 ```bash
 # Sync specific resource by kind and name
-argocd app sync my-app --resource ':Deployment:my-deployment'
+argocd app sync my-app --resource 'apps:Deployment:my-deployment'
 
 # Sync resources by group
 argocd app sync my-app --resource 'apps:Deployment:*'
@@ -826,7 +590,7 @@ argocd app sync my-app \
 argocd app sync my-app --label 'app.kubernetes.io/component=backend'
 ```
 
-### Opciones de sincronización para la sincronización selectiva
+### Opciones de sincronización selectiva
 
 ```bash
 # Apply only out-of-sync resources
@@ -839,7 +603,7 @@ argocd app sync my-app --dry-run
 argocd app sync my-app --prune
 ```
 
-### Formato de la ruta de recursos
+### Formato de ruta de recurso
 
 ```
 <group>:<kind>:<name>
@@ -853,4 +617,12 @@ networking.k8s.io:Ingress:my-ingress # networking.k8s.io group
 
 ## Cuestionario
 
-Para poner a prueba lo que has aprendido, prueba el [cuestionario sobre estrategias de sincronización de ArgoCD](../../quizzes/gitops/argocd/03-sync-strategies-quiz.md).
+Para comprobar lo que has aprendido, prueba el [cuestionario sobre estrategias de sincronización de ArgoCD](../../quizzes/gitops/argocd/03-sync-strategies-quiz.md).
+
+## Fuentes de revisión versionadas
+
+- [opciones de sincronización 3.5.4](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-options.md)
+- [Ventanas de sincronización](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync_windows.md)
+- [Coincidencia de ventanas y CanSync](https://github.com/argoproj/argo-cd/blob/v3.5.4/pkg/apis/application/v1alpha1/types.go)
+- [Fases y ondas](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-waves.md)
+- [Selectores de recursos/app de CLI](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/commands/argocd_app_sync.md)

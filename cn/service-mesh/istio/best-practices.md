@@ -1,6 +1,6 @@
 # Istio 最佳实践
 
-本文档涵盖了在生产环境中成功运行 Istio 的最佳实践和建议。
+本文档涵盖在生产环境中成功运行 Istio 的最佳实践和建议。
 
 ## 目录
 
@@ -8,9 +8,9 @@
 2. [安全加固](#security-hardening)
 3. [运维指南](#operations-guide)
 4. [监控与可观测性](#monitoring-and-observability)
-5. [生产环境检查清单](#production-checklist)
+5. [生产检查清单](#production-checklist)
 
-<span id="performance-optimization"></span>
+已于 2026 年 9 月 11 日针对 Istio 1.31 进行审核。`IstioOperator` 摘录是 `istioctl install -f` 的输入，而不是可使用 kubectl 应用的 Kubernetes 资源。请将其合并到现有安装配置中；对于 Helm，请使用等效的 chart 值。大多数示例描述 Sidecar；对于 ambient，请使用 waypoint/Gateway API 策略。资源设置和滚动更新时间是应在负载下验证的起点。
 
 ## 性能优化
 
@@ -43,9 +43,9 @@ spec:
 ```
 
 **建议**：
-- Istiod 应至少有 2 个副本
+- Istiod 至少应具有 2 个副本
 - CPU：根据集群规模调整
-- 内存：估算每个 Service 约 10KB
+- Memory：衡量 Service/Proxy 数量、配置大小和更新速率；没有固定的每 Service 计算公式
 
 ### 2. Data Plane 资源优化
 
@@ -53,6 +53,9 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
+  name: myapp
+  labels:
+    sidecar.istio.io/inject: "true"
   annotations:
     # Sidecar resource optimization
     sidecar.istio.io/proxyCPU: "100m"
@@ -66,9 +69,9 @@ spec:
 ```
 
 **建议**：
-- 常规工作负载：CPU 100m，内存 128Mi
-- 高流量工作负载：CPU 500m，内存 512Mi
-- Sidecar 并发度：`concurrency: 2`（默认值）
+- 常规工作负载：CPU 100m，Memory 128Mi
+- 高流量工作负载：CPU 500m，Memory 512Mi
+- Sidecar 并发：通常保持未设置，以便 Istio 从 CPU requests/limits 推导工作线程
 
 ### 3. 连接池优化
 
@@ -87,14 +90,14 @@ spec:
       http:
         http1MaxPendingRequests: 50
         http2MaxRequests: 100
-        maxRequestsPerConnection: 2
+        maxRequestsPerConnection: 0
         idleTimeout: 300s
 ```
 
 **建议**：
 - `maxConnections`：考虑工作负载的并发连接数
-- `maxRequestsPerConnection`：HTTP/1.1 使用 1-2，HTTP/2 可使用更高值
-- `idleTimeout`：如果需要长连接，则增加该值
+- `maxRequestsPerConnection`：0 表示无限制；较小的值会增加连接流失和 TLS 握手
+- `idleTimeout`：若需要长生命周期连接，请增大此值
 
 ### 4. 本地性负载均衡
 
@@ -114,14 +117,18 @@ spec:
           to:
             "us-east-1/us-east-1a/*": 80  # Same AZ priority
             "us-east-1/us-east-1b/*": 20
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 5s
+      baseEjectionTime: 30s
 ```
 
 **优势**：
-- 降低跨 AZ 成本（约 85%）
+- 有可能减少跨 AZ 流量；节省程度取决于流量分布和计费
 - 降低网络延迟
-- 自动处理可用区故障
+- 使用异常检测及其他可用区中的健康容量验证故障转移
 
-### 5. 限制 Sidecar 范围
+### 5. Sidecar 作用域限制
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -137,11 +144,9 @@ spec:
 ```
 
 **优势**：
-- 减小 Envoy 配置大小
-- 降低内存使用量
+- 减少 Envoy 配置大小
+- 减少内存使用
 - 加快配置推送
-
-<span id="security-hardening"></span>
 
 ## 安全加固
 
@@ -161,7 +166,7 @@ spec:
 **检查清单**：
 - 对所有 Service 应用 STRICT mTLS
 - 仅在迁移期间使用 PERMISSIVE
-- 对外部 Service 使用 DISABLE（在 ServiceEntry 中处理）
+- PeerAuthentication 控制入站工作负载 mTLS。在 ServiceEntry 以及需要时在 DestinationRule 中配置外部 HTTPS/TLS；请勿全局禁用 mesh mTLS。
 
 ### 2. 授权策略
 
@@ -194,20 +199,24 @@ spec:
 **最佳实践**：
 - 使用默认拒绝策略
 - 应用最小权限原则
-- 基于 Service Account 的认证
+- 基于 Service Account 的身份验证
 - Namespace 隔离
 
 ### 3. 出站流量控制
 
 ```yaml
-# Block external traffic
+# Detect unregistered destinations; not an egress firewall
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
   meshConfig:
     outboundTrafficPolicy:
-      mode: REGISTRY_ONLY  # Allow only explicit ServiceEntries
----
+      mode: REGISTRY_ONLY  # Known Kubernetes services and ServiceEntries
+```
+
+使用 kubectl 单独应用此 ServiceEntry。使用网络控制实施出站隔离；REGISTRY_ONLY 不是安全边界。
+
+```yaml
 # Allowed external services
 apiVersion: networking.istio.io/v1
 kind: ServiceEntry
@@ -224,7 +233,7 @@ spec:
   resolution: DNS
 ```
 
-### 4. JWT 认证
+### 4. JWT 身份验证
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -254,40 +263,21 @@ spec:
       values: ["https://auth.example.com"]
 ```
 
-<span id="operations-guide"></span>
-
 ## 运维指南
 
 ### 1. 部署策略
 
 #### 渐进式采用 Istio
 
-```mermaid
-flowchart LR
-    Start[Start]
-    Phase1[Phase 1<br/>Observability]
-    Phase2[Phase 2<br/>mTLS PERMISSIVE]
-    Phase3[Phase 3<br/>mTLS STRICT]
-    Phase4[Phase 4<br/>Advanced Features]
-    End[Full Adoption]
+![分阶段采用 Istio 路径的工作流程：从仅用于可观测性的 Sidecar 注入开始，依次经过 PERMISSIVE 和 STRICT 双向 TLS，随后是高级流量管理功能，最终实现全面采用。](../../.gitbook/assets/en-service-mesh-istio-best-practices-0.png)
 
-    Start --> Phase1
-    Phase1 --> Phase2
-    Phase2 --> Phase3
-    Phase3 --> Phase4
-    Phase4 --> End
-
-    %% Style definition
-    classDef phase fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    %% Class application
-    class Start,Phase1,Phase2,Phase3,Phase4,End phase;
-```
+[🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-best-practices-0.html)
 
 **阶段 1：可观测性（1-2 周）**
 ```bash
 # Enable sidecar injection only
-kubectl label namespace default istio-injection=enabled
+kubectl label namespace default istio-injection=enabled --overwrite
+kubectl rollout restart deployment -n default
 
 # Verify metrics, logs, traces
 # Evaluate performance impact
@@ -319,29 +309,31 @@ spec:
 
 **阶段 4：高级功能（持续进行）**
 - 流量管理（Canary、Circuit Breaker）
-- Authorization Policy
-- 限流
-
-<span id="upgrade-strategy"></span>
+- 授权策略
+- 速率限制
 
 ### 2. 升级策略
 
 #### Canary 升级
 
+使用安装指南中的目标 1.31.0 istioctl 二进制文件；设置 revision 名称不会选择镜像版本。此示例从 1.30.4 升级，保留现有安装设置，并要求验证每个阶段。Gateway 可以通过默认 profile 原地升级；请明确规划其滚动更新。由 Helm 管理的安装必须使用 Helm 升级工作流。
+
 ```bash
 # 1. Install new version Control Plane
-istioctl install --set revision=1-28-0 -y
+istioctl install --set revision=1-31-0 -f existing-install.yaml
 
 # 2. Move test namespace
-kubectl label namespace test istio.io/rev=1-28-0 --overwrite
+kubectl label namespace test istio-injection- istio.io/rev=1-31-0 --overwrite
 kubectl rollout restart deployment -n test
 
 # 3. Move production after verification
-kubectl label namespace prod istio.io/rev=1-28-0 --overwrite
+kubectl label namespace prod istio-injection- istio.io/rev=1-31-0 --overwrite
 kubectl rollout restart deployment -n prod
 
 # 4. Remove previous version
-istioctl uninstall --revision=1-27-0 -y
+istioctl proxy-status
+# Only after every proxy/gateway has migrated; substitute the actual old revision
+istioctl uninstall --revision=1-30-4
 ```
 
 ### 3. 高可用性
@@ -354,33 +346,39 @@ spec:
   components:
     pilot:
       k8s:
-        replicaCount: 3
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchLabels:
-                app: istiod
-            topologyKey: kubernetes.io/hostname
+        hpaSpec:
+          minReplicas: 3
+          maxReplicas: 5
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: istiod
+                topologyKey: topology.kubernetes.io/zone
 ```
 
 **建议**：
 - Istiod：至少 3 个副本
-- 在各 AZ 之间均匀分布
+- 在各 AZ 间均匀分布
 - 设置 PodDisruptionBudget
 
 ### 4. 备份与恢复
 
 ```bash
-# Backup Istio configuration
-kubectl get istiooperator -A -o yaml > istio-operator-backup.yaml
-kubectl get vs,dr,gw,se,pa,ra,ap -A -o yaml > istio-config-backup.yaml
+# Preserve the versioned installation input in source control
+cp existing-install.yaml istio-install-backup.yaml
+# Snapshot mesh configuration; this does not include Secrets or Gateway API resources
+kubectl get virtualservices.networking.istio.io,destinationrules.networking.istio.io,gateways.networking.istio.io,serviceentries.networking.istio.io,sidecars.networking.istio.io,workloadentries.networking.istio.io,workloadgroups.networking.istio.io,peerauthentications.security.istio.io,requestauthentications.security.istio.io,authorizationpolicies.security.istio.io,telemetries.telemetry.istio.io -A -o yaml > istio-config-backup.yaml
 
-# Recovery
-kubectl apply -f istio-operator-backup.yaml
+# Restore the matching Istio version and CRDs first, then declarative resources
+istioctl install -f istio-install-backup.yaml
 kubectl apply -f istio-config-backup.yaml
 ```
 
-<span id="monitoring-and-observability"></span>
+对于 Helm 安装，请改为保留 chart 版本和 `helm get values <release> -n <namespace> -o yaml`。请安全备份 CA/TLS Secrets，并纳入正在使用的所有 Gateway API、EnvoyFilter 或 WasmPlugin 资源。重新创建必需的 Namespace，并在恢复前审查生成的快照。
 
 ## 监控与可观测性
 
@@ -389,35 +387,37 @@ kubectl apply -f istio-config-backup.yaml
 ```promql
 # 1. Latency (P50, P95, P99)
 histogram_quantile(0.95,
-  sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le)
+  sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])) by (le)
 )
 
 # 2. Traffic (Request count)
-sum(rate(istio_requests_total[5m]))
+sum(rate(istio_requests_total{reporter="destination"}[5m]))
 
 # 3. Errors (Error rate)
-sum(rate(istio_requests_total{response_code=~"5.."}[5m]))
+sum(rate(istio_requests_total{reporter="destination",response_code=~"5.."}[5m]))
 /
-sum(rate(istio_requests_total[5m]))
+sum(rate(istio_requests_total{reporter="destination"}[5m]))
 
 # 4. Saturation (Resource utilization)
-sum(rate(container_cpu_usage_seconds_total{pod=~".*istio-proxy.*"}[5m]))
+sum(rate(container_cpu_usage_seconds_total{container="istio-proxy"}[5m]))
 ```
 
 ### 2. Control Plane 监控
 
 ```promql
 # Pilot configuration push time
-pilot_proxy_convergence_time
+histogram_quantile(0.95, sum(rate(pilot_proxy_convergence_time_bucket[5m])) by (le))
 
 # xDS connection count
-pilot_xds_pushes
+pilot_xds
 
 # Memory usage
-process_resident_memory_bytes{app="istiod"}
+process_resident_memory_bytes{job="istiod"}
 ```
 
 ### 3. Data Plane 监控
+
+确认已在 Proxy stats matcher 中启用这些 Envoy 统计指标。抓取作业标签取决于配置；示例假定 `job="istiod"`。`up` 告警检测抓取可用性，而非所有就绪失败。
 
 ```promql
 # Envoy connection count
@@ -439,9 +439,9 @@ groups:
   # High error rate
   - alert: HighErrorRate
     expr: |
-      (sum(rate(istio_requests_total{response_code=~"5.."}[5m]))
+      (sum(rate(istio_requests_total{reporter="destination",response_code=~"5.."}[5m]))
       /
-      sum(rate(istio_requests_total[5m]))) > 0.05
+      sum(rate(istio_requests_total{reporter="destination"}[5m]))) > 0.05
     for: 5m
     labels:
       severity: warning
@@ -452,7 +452,7 @@ groups:
   - alert: HighLatency
     expr: |
       histogram_quantile(0.95,
-        sum(rate(istio_request_duration_milliseconds_bucket[5m])) by (le)
+        sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])) by (le)
       ) > 1000
     for: 5m
     labels:
@@ -461,22 +461,20 @@ groups:
       summary: "High latency detected (P95 > 1s)"
 
   # Pilot not ready
-  - alert: PilotNotReady
-    expr: up{job="pilot"} == 0
+  - alert: IstiodScrapeUnavailable
+    expr: up{job="istiod"} == 0 or absent(up{job="istiod"})
     for: 5m
     labels:
       severity: critical
     annotations:
-      summary: "Pilot is not ready"
+      summary: "Istiod scrape target is unavailable"
 ```
 
-<span id="production-checklist"></span>
-
-## 生产环境检查清单
+## 生产检查清单
 
 ### 安装前
 
-- [ ] 验证 Kubernetes 版本兼容性（1.28+）
+- [ ] 验证 Istio/Kubernetes/EKS 支持范围的重叠部分（1.31 示例：EKS 1.34–1.37）
 - [ ] 选择 Istio 版本（建议使用稳定版本）
 - [ ] 计算资源需求
 - [ ] 审查网络策略
@@ -484,7 +482,7 @@ groups:
 
 ### 安装
 
-- [ ] 使用生产环境 profile
+- [ ] 使用生产 profile
 - [ ] 配置 Control Plane HA（副本数 >= 3）
 - [ ] 设置资源限制
 - [ ] 设置 PodDisruptionBudget
@@ -495,7 +493,7 @@ groups:
 - [ ] 启用 mTLS STRICT 模式
 - [ ] 应用 Authorization Policy
 - [ ] 控制出站流量
-- [ ] 配置 JWT 认证（如需要）
+- [ ] 配置 JWT 身份验证（如需要）
 - [ ] 集成 Network Policy
 
 ### 流量管理
@@ -504,7 +502,7 @@ groups:
 - [ ] 配置 DestinationRule
 - [ ] 设置 Circuit Breaker
 - [ ] 设置 Retry/Timeout
-- [ ] 配置限流
+- [ ] 配置 Rate Limiting
 
 ### 可观测性
 
@@ -518,16 +516,16 @@ groups:
 
 - [ ] 制定升级计划
 - [ ] 自动化备份
-- [ ] 文档编写
+- [ ] 文档
 - [ ] 编写值班指南
-- [ ] 准备运行手册
+- [ ] 准备 Runbook
 
 ### 性能
 
 - [ ] 优化 Sidecar 资源
-- [ ] 调优连接池
+- [ ] 调优 Connection Pool
 - [ ] 配置本地性负载均衡
-- [ ] 限制 Sidecar 范围
+- [ ] 限制 Sidecar 作用域
 - [ ] 执行性能测试
 
 ### 测试
@@ -542,13 +540,13 @@ groups:
 
 ### 应避免的事项
 
-1. **一次性采用全部功能**
+1. **一次性采用所有功能**
    ```
    Don't enable all Istio features on Day 1
    Do add features gradually (Observability -> Security -> Traffic Management)
    ```
 
-2. **未设置资源限制**
+2. **没有资源限制**
    ```yaml
    Don't leave Sidecar without resource limits
    Do set appropriate requests/limits
@@ -566,40 +564,17 @@ groups:
    Do: hosts: ["myapp.default.svc.cluster.local"]  # Explicit
    ```
 
-5. **未监控即部署**
+5. **未进行监控便部署**
    ```
    Don't deploy to production without checking metrics
    Do require Golden Signals monitoring
    ```
 
-<span id="cost-optimization"></span>
-
 ## 成本优化
 
-### 1. 考虑 Ambient Mode
-
-```yaml
-# Resource usage comparison
-# Sidecar Mode: 100 pods x 50MB = 5GB
-# Ambient Mode: 10 nodes x 50MB = 500MB
-
-# 85%+ reduction possible
-```
-
-### 2. 本地性负载均衡
-
-```yaml
-# Cross-AZ cost savings
-# AWS: $0.01-0.02 per GB
-# Significant savings with 80% same AZ routing
-```
-
-### 3. 限制 Sidecar 范围
-
-```yaml
-# Remove unnecessary configuration
-# 30-50% memory usage reduction possible
-```
+- 将测得的 Sidecar 资源 requests 与 ztunnel 及所需的 waypoint 容量进行比较。仅凭 Pod 数量无法确定固定的节省百分比。
+- 测量跨 AZ 字节数，并针对实际路径使用当前 AWS 区域定价；本地性权重并不直接等同于通用计费降幅。
+- 限制不必要的 Proxy 配置，并在具有代表性的负载下测量内存/推送时间的变化。
 
 ## 参考资料
 
@@ -609,10 +584,19 @@ groups:
 - [安全最佳实践](https://istio.io/latest/docs/ops/best-practices/security/)
 
 ### 社区
-- [Istio Discuss](https://discuss.istio.io/)
-- [Istio Slack](https://istio.slack.com/)
+- [Istio 社区](https://istio.io/latest/get-involved/)
+- [Istio Slack](https://slack.istio.io/)
 - [GitHub Issues](https://github.com/istio/istio/issues)
 
 ### 其他资源
-- [生产环境中的 Istio](https://www.tetrate.io/blog/istio-in-production/)
-- [Service Mesh 模式](https://www.oreilly.com/library/view/service-mesh-patterns/9781492086444/)
+- [Istio 部署最佳实践](https://istio.io/latest/docs/ops/best-practices/deployment/)
+- [Istio 流量管理最佳实践](https://istio.io/latest/docs/ops/best-practices/traffic-management/)
+
+- [Canary 升级](https://istio.io/latest/docs/setup/upgrade/canary/)
+- [IstioOperator 选项](https://istio.io/latest/docs/reference/config/istio.operator.v1alpha1/)
+- [全局 Mesh 选项](https://istio.io/latest/docs/reference/config/istio.mesh.v1alpha1/)
+- [Istio xDS 指标定义 (1.31.0)](https://raw.githubusercontent.com/istio/istio/1.31.0/pilot/pkg/xds/monitoring.go)
+- [本地性故障转移](https://istio.io/latest/docs/tasks/traffic-management/locality-load-balancing/failover/)
+- [Envoy 统计指标](https://istio.io/latest/docs/ops/configuration/telemetry/envoy-stats/)
+- [Sidecar](https://istio.io/latest/docs/reference/config/networking/sidecar/)
+- [支持的版本](https://istio.io/latest/docs/releases/supported-releases/)

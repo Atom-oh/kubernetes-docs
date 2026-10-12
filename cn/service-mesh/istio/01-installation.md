@@ -1,31 +1,35 @@
 # Istio 安装与初始设置
 
-本文介绍如何在 Amazon EKS 集群上安装并初步配置 Istio。
+> **最后更新**: October 12, 2026 · 安装固定版本：Istio 1.31.1
+
+截至 2026 年 10 月 12 日，Istio 1.31.1 是当前的 1.31 补丁版本；它修复了 `BackendTLSPolicy` 明文回退问题。下方 Helm 命令示例已从 1.31.0 更新；早期的 chart 渲染并不能验证所有 1.31.1 值，因此请在应用前渲染并检查所选 chart。
+
+本文档介绍如何在 Amazon EKS 集群上安装和初始配置 Istio。
 
 ## 目录
 
-1. [前置条件](#prerequisites)
+1. [前提条件](#prerequisites)
 2. [选择安装方法](#choosing-an-installation-method)
 3. [使用 istioctl 安装](#installation-using-istioctl)
 4. [使用 Helm 安装](#installation-using-helm)
-5. [使用 Istio Operator 安装](#installation-using-istio-operator)
+5. [使用 istioctl 进行声明式安装](#declarative-installation-with-istioctl)
 6. [安装配置文件](#installation-profiles)
 7. [安装验证](#installation-verification)
-8. [示例应用程序部署](#sample-application-deployment)
-9. [移除 Istio](#istio-removal)
+8. [示例应用部署](#sample-application-deployment)
+9. [Istio 移除](#istio-removal)
 10. [故障排除](#troubleshooting)
 
-<span id="prerequisites"></span>
+## 前提条件
 
-## 前置条件
-
-在安装 Istio 之前，必须满足以下要求：
+在安装 Istio 前，必须满足以下要求：
 
 ### 1. Amazon EKS 集群
 
-- **Kubernetes 版本**：1.28 或更高版本（建议：1.34）
-- **Node 类型**：至少 2 个 worker Node（建议：3 个或更多）
-- **Node 大小**：至少 2 vCPU、4GB RAM（建议：t3.medium 或更大）
+- **Kubernetes 版本**：此 Istio 1.31.1 示例使用 EKS 1.34–1.37（于 2026 年 10 月 12 日审核）。Istio 1.31 支持 1.32–1.37；EKS 1.31–1.33 处于延长支持阶段，1.34–1.37 处于标准支持阶段。请同时查阅 [Istio 矩阵](https://istio.io/latest/docs/releases/supported-releases/) 和 [EKS 生命周期](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)。
+- **节点类型**：至少 2 个 worker node（建议：3 个或更多）
+- **节点规格**：至少 2 vCPU、4GB RAM（建议：t3.medium 或更大）
+
+这些示例面向 Linux EC2 worker node。Fargate 无法运行这些 Istio 安装路径所需的 DaemonSet/特权网络。EKS Auto Mode 使用不同的托管网络/负载均衡模型；请单独验证其前提条件。
 
 ### 2. kubectl 安装与配置
 
@@ -37,31 +41,26 @@ kubectl version --client
 kubectl get nodes
 ```
 
-### 3. 所需工具
+### 3. 必需工具
 
 - **AWS CLI**：2.x 或更高版本
 - **eksctl**：（可选）用于集群管理
-- **Helm**：3.x 或更高版本（如果使用 Helm 安装方法）
+- **Helm**：当前受支持的 Helm 3 或 Helm 4 版本（最低 3.6；请参阅官方安装指南）
 
 ### 4. 集群资源
 
-最低资源要求：
+以下为说明性规划请求，并非通用最低要求；应根据测量到的负载确定规模：
 - **Control Plane**：1 vCPU、1.5GB RAM
-- **Sidecar（每个 Pod）**：0.1 vCPU、128MB RAM
-
-<span id="choosing-an-installation-method"></span>
+- **Sidecar（每个 pod）**：0.1 vCPU、128MB RAM
 
 ## 选择安装方法
 
-Istio 提供三种主要安装方法：
+选择一种受支持的安装路径；不要在同一个 Control Plane 上同时运行 istioctl 和 Helm 安装：
 
 | 方法 | 优点 | 缺点 | 推荐使用场景 |
 |------|------|------|---------------|
-| **istioctl** | 简单快速，提供验证功能 | 难以自动化 | 开发和测试环境 |
-| **Helm** | 对 GitOps 友好，易于版本管理 | 配置可能较复杂 | 生产环境、CI/CD 流水线 |
-| **Istio Operator** | 声明式管理、自动升级 | 需要额外资源 | 大规模生产环境 |
-
-<span id="installation-using-istioctl"></span>
+| **istioctl** | 简单快速，提供验证功能 | 在自动化中需要显式协调 | 开发和生产环境 |
+| **Helm** | 对 GitOps 友好，易于进行版本管理 | 配置可能较复杂 | 生产环境、CI/CD 管道 |
 
 ## 使用 istioctl 安装
 
@@ -70,14 +69,11 @@ istioctl 是 Istio 的官方 CLI 工具，也是最简单的安装方法。
 ### 1. 安装 istioctl
 
 ```bash
-# Download istioctl (latest version)
-curl -L https://istio.io/downloadIstio | sh -
-
-# Or download a specific version
-curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.28.0 sh -
+# Download the current 1.31 patch
+curl -fsSL https://istio.io/downloadIstio | ISTIO_VERSION=1.31.1 sh -
 
 # Add istioctl to PATH
-cd istio-1.28.0
+cd istio-1.31.1
 export PATH=$PWD/bin:$PATH
 
 # Verify installation
@@ -111,9 +107,9 @@ kubectl get all -n istio-system
 kubectl logs -n istio-system -l app=istiod
 ```
 
-<span id="installation-using-helm"></span>
-
 ## 使用 Helm 安装
+
+上次审核期间渲染的 1.31.0 chart 不包含 `eks` 平台 profile。下方 chart 示例现已固定到 1.31.1，但本次审核未渲染该补丁版本的 chart；请在安装前检查所选 chart。这些示例未设置 `global.platform=eks`，而是采用显式的 EKS 前提条件和负载均衡器设置，以避免假定存在某个 profile。
 
 Helm 是适用于 GitOps 工作流的 Kubernetes 包管理器。
 
@@ -121,7 +117,7 @@ Helm 是适用于 GitOps 工作流的 Kubernetes 包管理器。
 
 ```bash
 # Add Istio Helm repository
-helm repo add istio https://istio-release.storage.googleapis.com/charts
+helm repo add istio https://blob.istio.io/istio-release/charts
 helm repo update
 ```
 
@@ -136,7 +132,8 @@ kubectl create namespace istio-system
 # Install istio-base chart
 helm install istio-base istio/base \
   -n istio-system \
-  --version 1.28.0
+  --set defaultRevision=default \
+  --version 1.31.1
 ```
 
 ### 3. 安装 istiod
@@ -147,20 +144,22 @@ istiod 是 Istio Control Plane。
 # Install istiod chart
 helm install istiod istio/istiod \
   -n istio-system \
-  --version 1.28.0 \
+  --version 1.31.1 \
   --wait
 ```
 
 ### 4. 安装 Istio Ingress Gateway（可选）
 
 ```bash
-# Create istio-ingress namespace
-kubectl create namespace istio-ingress
+# Verify the gateway namespace
+kubectl get namespace istio-system
 
 # Install Istio Ingress Gateway
-helm install istio-ingress istio/gateway \
-  -n istio-ingress \
-  --version 1.28.0 \
+helm install istio-ingressgateway istio/gateway \
+  -n istio-system \
+  --set labels.istio=ingressgateway \
+  --set labels.app=istio-ingressgateway \
+  --version 1.31.1 \
   --wait
 ```
 
@@ -170,52 +169,32 @@ helm install istio-ingress istio/gateway \
 # values.yaml
 global:
   hub: docker.io/istio
-  tag: 1.28.0
+  tag: 1.31.1
 
-pilot:
-  autoscaleEnabled: true
-  autoscaleMin: 2
-  autoscaleMax: 5
-  resources:
-    requests:
-      cpu: 500m
-      memory: 2048Mi
+autoscaleEnabled: true
+autoscaleMin: 2
+autoscaleMax: 5
+resources:
+  requests:
+    cpu: 500m
+    memory: 2048Mi
 
-# AWS EKS specific settings
 meshConfig:
   accessLogFile: /dev/stdout
-  enableTracing: true
-  defaultConfig:
-    tracing:
-      sampling: 100.0
 ```
 
 ```bash
 # Install using values.yaml file
-helm install istiod istio/istiod \
+helm upgrade --install istiod istio/istiod \
   -n istio-system \
-  --version 1.28.0 \
+  --version 1.31.1 \
   -f values.yaml \
   --wait
 ```
 
-<span id="installation-using-istio-operator"></span>
+## 使用 istioctl 进行声明式安装
 
-## 使用 Istio Operator 安装
-
-Istio Operator 以声明式方式管理 Istio。
-
-### 1. 安装 Istio Operator
-
-```bash
-# Install Operator
-istioctl operator init
-
-# Verify Operator installation
-kubectl get pods -n istio-operator
-```
-
-### 2. 创建 IstioOperator 资源
+上游集群内 operator 在 1.23 中已弃用，并在 1.24 中移除。`istioctl operator init/remove` 以及向集群应用 IstioOperator 对象已不是当前的安装方法。[IstioOperator 文件格式仍受支持，可作为 istioctl 的输入](https://istio.io/latest/blog/2024/in-cluster-operator-deprecation-announcement/)。
 
 ```yaml
 # istio-operator.yaml
@@ -243,48 +222,39 @@ spec:
           maxReplicas: 5
 ```
 
-### 3. 通过 Operator 安装 Istio
-
 ```bash
-# Apply IstioOperator resource
-kubectl create ns istio-system
-kubectl apply -f istio-operator.yaml
-
-# Check installation progress
-kubectl get istiooperator -n istio-system
+istioctl install -f istio-operator.yaml
+kubectl rollout status deployment/istiod -n istio-system
 ```
-
-<span id="installation-profiles"></span>
 
 ## 安装配置文件
 
-Istio 为不同使用场景提供多种配置文件。
+Istio 为不同使用场景提供多种 profile。
 
-### 可用配置文件
+### 可用 profile
 
-| 配置文件 | 描述 | 组件 | 推荐用途 |
+| Profile | 说明 | 组件 | 推荐使用场景 |
 |-------|------|----------|----------|
-| **default** | 用于生产部署的默认设置 | istiod、Ingress Gateway | 大多数生产环境 |
-| **demo** | 启用所有功能，用于学习 | istiod、Ingress Gateway、Egress Gateway、高追踪采样率 | 开发和演示 |
-| **minimal** | 仅安装最少组件 | 仅 istiod | 资源受限环境 |
+| **default** | 用于生产部署的默认设置 | istiod、ingress gateway | 大多数生产环境 |
+| **demo** | 演示设置，并非所有功能 | istiod、ingress gateway、egress gateway、高追踪采样率 | 开发和演示 |
+| **minimal** | 仅安装最小组件 | 仅 istiod | 资源受限环境 |
 | **remote** | 用于多集群环境中的远程集群 | - | 多集群设置 |
 | **empty** | 无默认配置 | - | 完全自定义设置 |
 | **preview** | 包含实验性功能 | 各种实验性功能 | 测试环境 |
+| **ambient** | 无 Sidecar 的 L4 服务网格 | istiod、CNI、ztunnel；L7 waypoint 单独配置 | Ambient 部署 |
 
-### 检查配置文件
+组件列表适用于 istioctl。Helm 要求分别安装每个 chart；一个 profile 不会安装其他 chart。
+
+### 检查 profile
 
 ```bash
-# List available profiles
-istioctl profile list
-
-# Check specific profile configuration
-istioctl profile dump default
-
-# Compare two profiles
-istioctl profile diff default demo
+helm show values istio/istiod --version 1.31.1
+istioctl manifest generate --set profile=default > default.yaml
+istioctl manifest generate --set profile=demo > demo.yaml
+diff -u default.yaml demo.yaml
 ```
 
-### 按配置文件安装
+### 按 profile 安装
 
 ```bash
 # Install with demo profile
@@ -294,17 +264,15 @@ istioctl install --set profile=demo -y
 istioctl install --set profile=minimal -y
 ```
 
-### 自定义配置文件
+### 自定义 profile
 
 ```bash
 # Modify specific settings based on profile
 istioctl install --set profile=default \
   --set meshConfig.accessLogFile=/dev/stdout \
-  --set values.pilot.resources.requests.memory=2Gi \
+  --set components.pilot.k8s.resources.requests.memory=2Gi \
   -y
 ```
-
-<span id="installation-verification"></span>
 
 ## 安装验证
 
@@ -335,7 +303,8 @@ kubectl get pods -n istio-system -o yaml | grep image:
 
 ```bash
 # Check Istio installation status
-istioctl verify-install
+kubectl rollout status deployment/istiod -n istio-system
+istioctl proxy-status
 
 # Analyze Istio configuration
 istioctl analyze -A
@@ -351,23 +320,25 @@ kubectl get mutatingwebhookconfiguration
 kubectl get validatingwebhookconfiguration
 ```
 
-<span id="sample-application-deployment"></span>
+## 示例应用部署
 
-## 示例应用程序部署
+Istio 包含一个名为 Bookinfo 的示例应用。
 
-Istio 包含一个名为 Bookinfo 的示例应用程序。
+请在解压后的 `istio-1.31.1` 目录中运行这些命令，并选择 default namespace（`kubectl config set-context --current --namespace=default`）。对于 Helm，请先安装上方可选的 gateway。后面的 dashboard 命令需要单独安装 telemetry addon。
 
 ### 1. 为 Namespace 启用自动 Sidecar 注入
 
 ```bash
 # Add label to default namespace
-kubectl label namespace default istio-injection=enabled
+kubectl label namespace default istio-injection=enabled --overwrite
 
 # Verify label
 kubectl get namespace -L istio-injection
 ```
 
-### 2. 部署 Bookinfo 应用程序
+更改注入标签后，现有 pod 需要重新创建。请使用没有冲突 `istio.io/rev` 或 ambient 标签的 namespace。
+
+### 2. 部署 Bookinfo 应用
 
 ```bash
 # Deploy Bookinfo application
@@ -380,7 +351,7 @@ kubectl get pods
 kubectl get services
 ```
 
-### 3. 验证应用程序访问
+### 3. 验证应用访问
 
 ```bash
 # Test productpage service
@@ -392,10 +363,44 @@ kubectl exec "$(kubectl get pod -l app=ratings -o jsonpath='{.items[0].metadata.
 
 ```bash
 # Create Bookinfo Gateway
-kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml
+cat <<'EOF' > bookinfo-gateway.yaml
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: bookinfo-gateway
+  namespace: default
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: bookinfo
+  namespace: default
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - bookinfo-gateway
+  http:
+  - route:
+    - destination:
+        host: productpage
+        port:
+          number: 9080
+EOF
+kubectl apply -f bookinfo-gateway.yaml
 
 # Check Gateway
-kubectl get gateway
+kubectl get gateway.networking.istio.io
 
 # Check VirtualService
 kubectl get virtualservice
@@ -420,16 +425,16 @@ echo "http://$GATEWAY_URL/productpage"
 curl -s "http://$GATEWAY_URL/productpage" | grep -o "<title>.*</title>"
 ```
 
-<span id="istio-removal"></span>
+## Istio 移除
 
-## 移除 Istio
+这些清理命令适用于一次性实验室环境。清除会移除共享服务网格资源；在卸载正在运行的服务网格之前，请移除已注入的工作负载，或在未注入的情况下重启它们。Helm 卸载会保留 CRD。
 
 ### 使用 istioctl 移除
 
 ```bash
 # Remove sample application
 kubectl delete -f samples/bookinfo/platform/kube/bookinfo.yaml
-kubectl delete -f samples/bookinfo/networking/bookinfo-gateway.yaml
+kubectl delete -f bookinfo-gateway.yaml
 
 # Remove Istio
 istioctl uninstall --purge -y
@@ -445,7 +450,7 @@ kubectl label namespace default istio-injection-
 
 ```bash
 # Remove Ingress Gateway
-helm delete istio-ingress -n istio-ingress
+helm delete istio-ingressgateway -n istio-system
 
 # Remove istiod
 helm delete istiod -n istio-system
@@ -455,24 +460,7 @@ helm delete istio-base -n istio-system
 
 # Remove namespaces
 kubectl delete namespace istio-system
-kubectl delete namespace istio-ingress
 ```
-
-### 使用 Istio Operator 移除
-
-```bash
-# Remove IstioOperator resource
-kubectl delete istiooperator istio-control-plane -n istio-system
-
-# Remove Operator
-istioctl operator remove
-
-# Remove namespaces
-kubectl delete namespace istio-system
-kubectl delete namespace istio-operator
-```
-
-<span id="troubleshooting"></span>
 
 ## 故障排除
 
@@ -480,7 +468,7 @@ kubectl delete namespace istio-operator
 
 #### 1. Sidecar 自动注入失败
 
-**症状**：Envoy Sidecar 未注入到 Pod 中
+**症状**：Envoy Sidecar 未注入到 pod 中
 
 **解决方案**：
 ```bash
@@ -488,7 +476,7 @@ kubectl delete namespace istio-operator
 kubectl get namespace -L istio-injection
 
 # Add label if missing
-kubectl label namespace default istio-injection=enabled
+kubectl label namespace default istio-injection=enabled --overwrite
 
 # Check Webhook
 kubectl get mutatingwebhookconfiguration
@@ -496,7 +484,7 @@ kubectl get mutatingwebhookconfiguration
 
 #### 2. istiod Pod 未启动
 
-**症状**：istiod Pod 处于 Pending 或 CrashLoopBackOff 状态
+**症状**：istiod pod 处于 Pending 或 CrashLoopBackOff 状态
 
 **解决方案**：
 ```bash
@@ -514,9 +502,9 @@ kubectl top nodes
 kubectl describe nodes
 ```
 
-#### 3. Ingress Gateway 未获取到外部 IP
+#### 3. Ingress Gateway 未接收外部 IP
 
-**症状**：LoadBalancer 类型的 Service 处于 Pending 状态
+**症状**：LoadBalancer 类型 Service 处于 Pending 状态
 
 **解决方案**：
 ```bash
@@ -590,11 +578,14 @@ Istio 安装已完成！现在请参阅以下文档，开始使用 Istio：
 
 1. **[基本概念](02-basic-concepts.md)**：了解 Istio 核心概念和架构
 2. **[流量管理](traffic-management/README.md)**：学习 Gateway、VirtualService、DestinationRule
-3. **[安全](security/README.md)**：配置 mTLS、认证和授权
+3. **[安全](security/README.md)**：配置 mTLS、认证、授权
 
 ## 参考资料
 
 - [Istio 官方安装指南](https://istio.io/latest/docs/setup/install/)
-- [Istio 配置文件文档](https://istio.io/latest/docs/setup/additional-setup/config-profiles/)
-- [AWS EKS Workshop - Istio](https://www.eksworkshop.com/intermediate/330_servicemesh_using_istio/)
+- [Istio profile 文档](https://istio.io/latest/docs/setup/additional-setup/config-profiles/)
+- [Istio EKS 平台指南](https://istio.io/latest/docs/setup/platform-setup/amazon-eks/)
 - [Istio 故障排除指南](https://istio.io/latest/docs/ops/diagnostic-tools/)
+
+- [EKS Fargate 限制](https://docs.aws.amazon.com/eks/latest/userguide/fargate.html)
+- [Istio 1.31 发布与制品迁移](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/)

@@ -1,805 +1,397 @@
-# EKS Networking Quiz - Part 3
+# EKS ネットワーキングクイズ - パート 3
 
-このクイズでは、service mesh、VPC endpoints、multi-cluster networking、network security など、Amazon EKS における高度な networking 概念についての理解を確認します。
+> **最終更新**: October 12, 2026
 
-## Multiple Choice Questions
+このクイズでは、[パート 3 のトラブルシューティングの概念](../../eks/03-eks-networking-part3.md)、プライベート接続、マルチクラスター設計、メッシュ運用を扱います。現在の例では EKS Kubernetes 1.36 と VPC CNI 1.23.0 を使用しています。歴史的な App Mesh 設定は明示的に識別されています。リソース作成例には、レビュー済みの IAM、ネットワーク、および所有権の前提条件が必要です。この監査ではローカルチェックを実行し、EKS のデプロイは行いません。
 
-### 1. What is the main architectural change that occurs when implementing a service mesh (e.g., AWS App Mesh, Istio) in Amazon EKS?
+### 1. アプリケーションがサイドカー型サービスメッシュに参加すると、何が変わりますか？
 
-A. すべての pod-to-pod 通信が VPC の外部へ routing される B. service-to-service 通信を仲介するため、各 pod に sidecar proxy が追加される C. Kubernetes Service objects が使われなくなる D. すべての network traffic が AWS Transit Gateway を経由して routing される
+- A. すべての Pod トラフィックが VPC を離れる
+- B. プロキシが参加済みサービスのトラフィックを処理する
+- C. Service ディスカバリが削除される
+- D. すべてのトラフィックに Transit Gateway が必要になる
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B. service-to-service 通信を仲介するため、各 pod に sidecar proxy が追加される**
+**回答: B. 注入されたプロキシが、参加済みサービスのトラフィックを処理します。**
 
-**説明:** service mesh を実装する際の最も重要なアーキテクチャ上の変更は、各 pod に sidecar proxy（通常は Envoy）が追加されることです。この sidecar proxy は、pod のすべての inbound および outbound traffic を intercept して処理し、service-to-service 通信を仲介します。
-
-**主な機能:**
-
-1. **Sidecar Pattern**: proxy container が各 application container と並んで deployment されます。この proxy がすべての network communication を処理します。
-2. **Traffic Flow Changes**:
-   * Traditional: Client → Service → Target Pod
-   * Service Mesh: Client → Client Sidecar → Service → Target Sidecar → Target Pod
-3. **Data Plane and Control Plane**:
-   * Data Plane: sidecar proxies の集合
-   * Control Plane: proxy configuration を管理し、policies を適用する中央 component
-4. **No Application Code Changes**: service mesh の主な利点の 1 つは、application code を変更せずに高度な networking features を追加できることです。
-
-**Service Mesh 実装例 (AWS App Mesh):**
-
-```yaml
-# App Mesh sidecar injection example
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: example-app
-  labels:
-    app: example
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: example
-  template:
-    metadata:
-      labels:
-        app: example
-      annotations:
-        appmesh.k8s.aws/mesh: my-mesh  # App Mesh mesh name
-        appmesh.k8s.aws/virtualNode: example-vn  # Virtual node name
-    spec:
-      containers:
-      - name: example
-        image: example:latest
-        ports:
-        - containerPort: 8080
+サイドカーモードでは、アプリケーションとプロキシは 1 つの Pod ネットワーク名前空間および IP を共有します。プロキシはデータプレーンの一部であり、コントロールプレーンはルーティング、セキュリティ、およびアイデンティティ設定を配布します。NetworkPolicy、VPC ルーティング、Service ディスカバリは引き続き重要です。論理パスは次のとおりです。
+```text
+Application → client proxy → Pod network → destination proxy → application
 ```
+インターセプトは参加状況、除外ポート、プロトコル、およびモードに依存します。すべてのパケットが Service VIP を通過する必要はありません。アンビエントメッシュは異なるノードプロキシ/waypoint 設計を使用するため、この質問は明示的にサイドカーモードについてのものです。メッシュはメインのサービス実装を書き換えることなく、リトライ、ルーティング、mTLS、テレメトリを提供できますが、アプリケーションにはトレースコンテキストの伝播、互換性のあるプロトコル、タイムアウト処理が引き続き必要になる場合があります。
 
-**Service Mesh が提供する機能:**
-
-* Traffic management（routing、load balancing、circuit breaking）
-* Security（mTLS、authentication、authorization）
-* Observability（metrics、logs、distributed tracing）
-* Policy enforcement
-
-他の選択肢の問題点:
-
-* **A. すべての pod-to-pod 通信が VPC の外部へ routing される**: Service mesh は通常 cluster 内で動作し、traffic を VPC の外部へ routing しません。
-* **C. Kubernetes Service objects が使われなくなる**: Service mesh は Kubernetes Service objects を置き換えるのではなく補完します。
-* **D. すべての network traffic が AWS Transit Gateway を経由して routing される**: Service mesh は AWS Transit Gateway とは無関係であり、cluster 内の service-to-service 通信を管理します。
+手動で追加した古い Envoy イメージや同時に使用する injector ではなく、選択したメッシュでサポートされる injector/revision を使用してください。AWS App Mesh は歴史的な例です。サポートおよびアクセスは 2026 年 9 月 30 日に終了しました。既存のデプロイは移行する必要があり、新規インストールのデフォルト例ではありません。維持されている実装パスについては、[Istio のインストール](../../service-mesh/istio/01-installation.md)を参照してください。
 
 </details>
 
-### 2. What is the main benefit of using VPC endpoints to privately access AWS services in Amazon EKS?
+### 2. VPC エンドポイントはプライベート EKS ワークロードに何を提供しますか？
 
-A. すべての AWS services に unlimited bandwidth を提供する B. internet gateway なしで AWS services への private access を可能にする C. AWS service usage costs を 50% 削減する D. すべての AWS services への automatic authentication を提供する
+- A. 無制限の帯域幅
+- B. サポートされるサービスへのプライベート接続
+- C. 自動的な 50% 割引
+- D. 自動的な AWS 認証
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B. internet gateway なしで AWS services への private access を可能にする**
+**回答: B. それらのリクエストについて、インターネット/NAT を介さずにサポートされる AWS サービスエンドポイントへのプライベートパスを提供します。**
 
-**説明:** Amazon EKS で VPC endpoints を使用する主な利点は、internet gateway なしで AWS services へ private に access できることです。これにより security が強化され、data transfer costs が削減されます。
+Interface エンドポイントは選択したサブネット/AZ に ENI を作成し、通常は時間単位およびデータ処理の料金がかかります。S3/DynamoDB 用の Gateway エンドポイントはルートテーブルエントリを追加し、エンドポイント料金はかかりません。ただし、サービス/ストレージ/リクエスト料金は引き続き適用されます。エンドポイントは IAM 権限を付与せず、コスト/レイテンシの低下を保証せず、コンプライアンスを自動的に満たすこともありません。
 
-**VPC Endpoint Types:**
+プライベート ECR イメージプルでは、`ecr.api`、`ecr.dkr`、S3 レイヤーダウンロードパス、エンドポイント SG の HTTPS ルール、DNS サポート/プライベート DNS、ルートテーブル、エンドポイント/IAM ポリシーを計画してください。その他に必要なサービスはワークロードに依存します。IRSA 用のリージョナル STS、Pod Identity 用の `eks-auth`、CNI 用の EC2 API、Logs/モニタリングなど、使用するものが対象です。EKS サービスエンドポイントはプライベート Kubernetes API エンドポイントを置き換えません。ECR Public、最初の pull-through-cache リクエスト、Windows の外部レイヤーには、追加の外部接続または準備済みのイメージミラーが必要になることがあります。
 
-1. **Interface Endpoints (AWS PrivateLink)**:
-   * ほとんどの AWS services への private connectivity を提供します
-   * 各 subnet に endpoint network interfaces (ENIs) を作成します
-   * Examples: ECR, CloudWatch, SNS, SQS, etc.
-2. **Gateway Endpoints**:
-   * S3 および DynamoDB への private connectivity を提供します
-   * route tables に routes を追加します
-   * 追加コストはありません
-
-**EKS 向け VPC Endpoint Configuration Example:**
-
+このパラメーター化された CloudFormation の例は、**既存の** VPC に 3 つのエンドポイントのみを追加します。作成前に既存のエンドポイント/プライベート DNS の所有権をレビューしてください。サービス固有のエンドポイントポリシーはセキュリティ所有者が定義するために意図的に残しています。エンドポイントのデフォルトアクセスは IAM をオーバーライドしません。これを完全な分離クラスターのデプロイと想定せず、変更セットを準備してください。
 ```yaml
-# CloudFormation example
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECR API/DKR and S3 endpoints in an existing VPC; not a complete private EKS stack
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  PrivateSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Existing subnets in distinct Availability Zones
+  PrivateRouteTableIds:
+    Type: CommaDelimitedList
+    Description: Route tables used by the image-pulling workloads
+  EndpointSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Existing same-VPC SG permitting HTTPS from the intended nodes/Pods
 Resources:
   S3GatewayEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
-      VpcId: !Ref VPC
-      RouteTableIds:
-        - !Ref PrivateRouteTable
+      VpcId: !Ref VpcId
+      RouteTableIds: !Ref PrivateRouteTableIds
       VpcEndpointType: Gateway
-
   ECRApiEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
-      VpcId: !Ref VPC
-      SubnetIds:
-        - !Ref PrivateSubnet1
-        - !Ref PrivateSubnet2
-      SecurityGroupIds:
-        - !Ref EndpointSecurityGroup
+      VpcId: !Ref VpcId
+      SubnetIds: !Ref PrivateSubnetIds
+      SecurityGroupIds: [!Ref EndpointSecurityGroupId]
+      PrivateDnsEnabled: true
+      VpcEndpointType: Interface
+  ECRDkrEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
+      VpcId: !Ref VpcId
+      SubnetIds: !Ref PrivateSubnetIds
+      SecurityGroupIds: [!Ref EndpointSecurityGroupId]
       PrivateDnsEnabled: true
       VpcEndpointType: Interface
 ```
-
-**EKS に VPC Endpoints が必要となる主な AWS Services:**
-
-* Amazon ECR（container images の pull）
-* Amazon S3（configuration files、backups など）
-* AWS KMS（encryption keys）
-* Amazon CloudWatch（logging and monitoring）
-* AWS STS（IAM roles の assume）
-
-**VPC Endpoints を使用する利点:**
-
-1. **Enhanced Security**: Traffic が public internet を通過しません
-2. **Reduced Network Costs**: AWS services への data transfer costs が減少します
-3. **Reduced Latency**: AWS network 内で直接 routing されます
-4. **Compliance**: data sovereignty や regulatory requirements を満たします
-
-**Private Subnets における EKS Node Configuration:**
-
+新しい node group が必要な場合、`eksctl create nodegroup` は **`--subnet-ids`** を使用します。以前の `--vpc-private-subnets` フラグはこのコマンドでは誤りでした。この例はプライベート API/サービスパスの準備後に課金対象の managed node を作成します。eksctl が意図した所有者であり、既存の `private-ng` がない場合にのみ使用してください。インスタンスサイズは説明用であり、サイジングの指針ではありません。
 ```bash
-# Create node group in private subnets with eksctl
-eksctl create nodegroup \
-  --cluster my-cluster \
-  --name private-ng \
-  --node-private-networking \
-  --vpc-private-subnets subnet-0123456789abcdef0,subnet-0123456789abcdef1
+set -euo pipefail
+: "${CLUSTER_NAME:?Set the existing cluster name}"
+: "${AWS_REGION:?Set its Region}"
+: "${PRIVATE_SUBNET_A:?Set an existing private subnet}"
+: "${PRIVATE_SUBNET_B:?Set another private subnet}"
+eksctl create nodegroup --cluster "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --name private-ng --managed --version auto --node-type m5.large \
+  --nodes 2 --nodes-min 2 --nodes-max 3 --node-private-networking \
+  --subnet-ids "$PRIVATE_SUBNET_A,$PRIVATE_SUBNET_B"
 ```
 
-他の選択肢の問題点:
-
-* **A. すべての AWS services に unlimited bandwidth を提供する**: VPC endpoints は unlimited bandwidth を提供しません。service や region によって bandwidth limits が存在する場合があります。
-* **C. AWS service usage costs を 50% 削減する**: VPC endpoints は data transfer costs を削減できますが、AWS service usage costs を 50% 削減するものではありません。
-* **D. すべての AWS services への automatic authentication を提供する**: VPC endpoints は authentication を自動化しません。適切な IAM permissions が引き続き必要です。
-
 </details>
 
-### 3. What is the most effective method for implementing multi-cluster networking in Amazon EKS?
+### 3. 複数の重複しない VPC 間でハブルーティングを提供する選択肢はどれですか？
 
-A. inter-cluster communication のために各 cluster で public load balancers を使用する B. AWS Transit Gateway を使用して複数の VPCs を接続し、inter-cluster routing を構成する C. network complexity を減らすためにすべての clusters を単一 VPC に deploy する D. inter-cluster communication のために各 cluster で NAT gateways を使用する
-
-<details>
-
-<summary>回答を表示</summary>
-
-**回答: B. AWS Transit Gateway を使用して複数の VPCs を接続し、inter-cluster routing を構成する**
-
-**説明:** Amazon EKS で multi-cluster networking を実装する最も効果的な方法は、AWS Transit Gateway を使用して複数の VPCs を接続し、inter-cluster routing を構成することです。この approach は scalability、security、management の容易さを提供します。
-
-**AWS Transit Gateway を使用した Multi-Cluster Networking:**
-
-1. **Architecture Overview**:
-   * 各 EKS cluster は別々の VPC に deploy されます
-   * Transit Gateway がすべての VPCs を接続します
-   * Inter-cluster communication は Transit Gateway を通じて routing されます
-2.  **Configuration Steps**:
-
-    ```bash
-    # 1. Create Transit Gateway
-    aws ec2 create-transit-gateway --description "EKS Multi-Cluster TGW"
-
-    # 2. Attach VPC to Transit Gateway
-    aws ec2 create-transit-gateway-vpc-attachment \
-      --transit-gateway-id tgw-0123456789abcdef0 \
-      --vpc-id vpc-0123456789abcdef0 \
-      --subnet-ids subnet-0123456789abcdef0 subnet-0123456789abcdef1
-
-    # 3. Update routing tables
-    aws ec2 create-route \
-      --route-table-id rtb-0123456789abcdef0 \
-      --destination-cidr-block 10.1.0.0/16 \
-      --transit-gateway-id tgw-0123456789abcdef0
-    ```
-3. **CIDR Planning**:
-   * 各 cluster/VPC に重複しない CIDR blocks を割り当てます
-   * Example: Cluster1: 10.0.0.0/16, Cluster2: 10.1.0.0/16, Cluster3: 10.2.0.0/16
-
-**Multi-Cluster Service Discovery Options:**
-
-1.  **AWS Cloud Map**:
-
-    ```bash
-    # Create namespace
-    aws servicediscovery create-private-dns-namespace \
-      --name multi-cluster.local \
-      --vpc vpc-0123456789abcdef0
-
-    # Register service
-    aws servicediscovery register-instance \
-      --service-id srv-0123456789abcdef0 \
-      --instance-id api-service-cluster1 \
-      --attributes AWS_INSTANCE_IPV4=10.0.1.123
-    ```
-2.  **Custom CoreDNS Configuration**:
-
-    ```yaml
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      name: coredns
-      namespace: kube-system
-    data:
-      Corefile: |
-        .:53 {
-            errors
-            health
-            kubernetes cluster.local in-addr.arpa ip6.arpa {
-               pods insecure
-               upstream
-               fallthrough in-addr.arpa ip6.arpa
-            }
-            forward . /etc/resolv.conf
-            cache 30
-            loop
-            reload
-            loadbalance
-        }
-        cluster2.svc.local:53 {
-            errors
-            cache 30
-            forward . 10.1.0.2
-        }
-    ```
-
-**Multi-Cluster Networking Security Considerations:**
-
-1. **Inter-VPC Traffic Control**:
-   * Transit Gateway security groups と routing tables を使用して traffic を制限します
-   * 必要な ports と protocols のみを許可します
-2.  **Network Policies**:
-
-    ```yaml
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-cross-cluster
-    spec:
-      podSelector:
-        matchLabels:
-          app: api-service
-      ingress:
-      - from:
-        - ipBlock:
-            cidr: 10.1.0.0/16  # Cluster2's CIDR
-      egress:
-      - to:
-        - ipBlock:
-            cidr: 10.1.0.0/16  # Cluster2's CIDR
-    ```
-
-**Multi-Cluster Service Mesh Options:**
-
-1. **Istio Multi-Cluster**:
-   * 単一の control plane で複数の clusters を管理します
-   * Cross-cluster service discovery and load balancing
-2. **AWS App Mesh**:
-   * 複数の clusters にまたがる mesh を作成します
-   * AWS Cloud Map を通じた service discovery
-
-**Cost Optimization Considerations:**
-
-* Transit Gateway の hourly charges と data processing charges を考慮します
-* cross-cluster data transfer を最小化します
-* 可能な場合は同じ availability zone 内で通信します
-
-他の選択肢の問題点:
-
-* **A. inter-cluster communication のために各 cluster で public load balancers を使用する**: この方法は security risks を高め、internet data transfer costs を発生させ、latency を増加させます。
-* **C. network complexity を減らすためにすべての clusters を単一 VPC に deploy する**: 複数の clusters を単一 VPC に deploy すると、IP address space limitations、security boundaries の欠如、scalability issues につながる可能性があります。
-* **D. inter-cluster communication のために各 cluster で NAT gateways を使用する**: NAT gateways は outbound internet traffic 用であり、inter-cluster communication には適していません。
-
-</details>
-
-### 5. What is the most effective method for optimizing pod networking performance in Amazon EKS?
-
-A. すべての pods に host network mode を使用する B. Amazon VPC CNI の prefix delegation feature を有効にする C. すべての pods に NodePort services を使用する D. すべての intra-cluster communication に AWS Global Accelerator を使用する
+- A. パブリックロードバランサーが必須である
+- B. 完全なルーティングを備えた Transit Gateway
+- C. すべてのクラスターが VPC を共有する必要がある
+- D. NAT gateway が Kubernetes ディスカバリを提供する
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B. Amazon VPC CNI の prefix delegation feature を有効にする**
+**回答: B. AWS Transit Gateway**
 
-**説明:** Amazon EKS で pod networking performance を最適化する最も効果的な方法は、Amazon VPC CNI の prefix delegation feature を有効にすることです。この feature により、各 node に割り当てられる secondary IP addresses の数が大幅に増え、ENI (Elastic Network Interface) の作成頻度が低下し、networking performance と scalability が向上します。
+Transit Gateway は多数の VPC 向けの 1 つの設計であり、常に最も有効なマルチクラスターアーキテクチャとは限りません。信頼境界、スケール、DNS、アドレス重複、コストに照らして、VPC peering、共有 VPC、PrivateLink サービス公開、VPC Lattice、メッシュ gateway を比較してください。NAT にもプライベート接続での用途がありますが、Service ディスカバリは提供しません。
 
-**Prefix Delegation の仕組み:**
+TGW 設計では、重複しないルーティング可能な Pod/VPC CIDR、参加する各 AZ の attachment、TGW ルートテーブルの関連付け/伝播、ワークロードサブネットのルート、戻りルートを計画してください。TGW ルートだけでは不十分です。Kubernetes ClusterIP は仮想サービスアドレスであり、リモートエンドポイントとして自動的にルーティング可能にはなりません。到達可能な Pod エンドポイントまたは gateway/ロードバランサーのサービスアドレスを、明示的なディスカバリ設計を通じて公開してください。変更前に実際のルート状態を読み取ってください。
+```bash
+set -euo pipefail
+: "${AWS_REGION:?Set the transit gateway Region}"
+: "${TGW_ROUTE_TABLE_ID:?Set the intended TGW route table}"
+: "${VPC_ROUTE_TABLE_ID:?Set a workload-subnet route table}"
+aws ec2 search-transit-gateway-routes --region "$AWS_REGION" \
+  --transit-gateway-route-table-id "$TGW_ROUTE_TABLE_ID" \
+  --filters Name=state,Values=active
+aws ec2 describe-route-tables --region "$AWS_REGION" \
+  --route-table-ids "$VPC_ROUTE_TABLE_ID"
+```
+TGW にはアタッチされたファイアウォール SG はありません。必要に応じてエンドポイント/node/Pod SG、NACL、NetworkPolicy、検査済みルーティングを使用してください。VPC 間の SG 参照は、ドキュメント化された attachment/Region の制約下でサポートされる TGW 機能です。これは TGW への SG のアタッチとは異なり、ルーティングを置き換えるものではありません。
 
-1. **Default VPC CNI vs Prefix Delegation**:
-   * Default VPC CNI: 各 ENI に個別の secondary IP addresses を割り当てます
-   * Prefix Delegation: 各 ENI に /28 CIDR blocks（16 IPs）を割り当てます
-2.  **Enabling Method**:
-
-    ```bash
-    # Enable prefix delegation
-    kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-
-    # Verify prefix delegation
-    kubectl describe daemonset aws-node -n kube-system | grep ENABLE_PREFIX_DELEGATION
-    ```
-3.  **Additional Configuration Options**:
-
-    ```bash
-    # Set prefix allocation size (default: /28)
-    kubectl set env daemonset aws-node -n kube-system WARM_PREFIX_TARGET=1
-
-    # Threshold for requesting new prefix when available IPs are low
-    kubectl set env daemonset aws-node -n kube-system WARM_IP_TARGET=5
-    ```
-
-**Prefix Delegation の利点:**
-
-1. **Improved Scalability**:
-   * node あたりの最大 pods 数が増加します（通常 110 から 250+ へ）
-   * ENI creation calls が少なくなることで API throttling が減少します
-2. **Faster Pod Startup Time**:
-   * 新しい pods に IP addresses を割り当てるために必要な API calls が減少します
-   * large-scale pod deployments の performance が向上します
-3. **IP Address Efficiency**:
-   * 同じ数の ENIs でより多くの pods を support します
-   * IP address exhaustion issues を緩和します
-
-**Maximum Pods Per Instance Type Comparison:**
-
-| Instance Type | Default VPC CNI | Prefix Delegation Enabled |
-| ------------- | --------------- | ------------------------- |
-| t3.medium     | 17              | 110                       |
-| m5.large      | 29              | 110                       |
-| c5.xlarge     | 58              | 250                       |
-| r5.2xlarge    | 58              | 250                       |
-
-**Configuration Example (ConfigMap):**
-
+Cloud Map には namespace の完了、Service、登録、ヘルス/登録解除の管理が必要です。TGW はプライベート hosted-zone DNS を自動的に共有しません。承認済みのプライベートゾーン関連付け、または Route 53 Resolver のエンドポイント/ルールを使用してください。別の VPC の `base+2` resolver に、それがそのクラスターの CoreDNS であるかのように転送しないでください。この **Corefile フラグメント**は、エクスポートされた `cluster2.example.internal` レコードをすでに解決する、実在し到達可能な 2 つの inbound resolver を前提としています。DNS 設定所有者を通じてマージし、クラスターのローカルゾーンを保持してください。
+```text
+cluster2.example.internal:53 {
+    errors
+    cache 30
+    forward . 10.1.20.10 10.1.21.10
+}
+```
+次の ingress policy は、NAT/proxy の後に実際に見える送信元アドレスに基づき、リモート送信元 CIDR から 1 つの API ポートを許可します。他に一致する policy が許可範囲を広げることがあります。Egress/DNS 要件は別途設計する必要があります。クラスター間で namespace/Pod ラベルが自動的に共有されることはありません。
 ```yaml
-apiVersion: v1
-kind: ConfigMap
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
 metadata:
-  name: amazon-vpc-cni
-  namespace: kube-system
-data:
-  enable-prefix-delegation: "true"
-  warm-prefix-target: "1"
-  warm-ip-target: "5"
+  name: remote-api-ingress
+  namespace: multicluster-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: api-service
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: 10.1.0.0/16
+    ports:
+    - protocol: TCP
+      port: 8080
 ```
-
-**Considerations and Limitations:**
-
-1. **Subnet Size**:
-   * Prefix delegation には十分に大きな subnets が必要です
-   * 最小 /24 CIDR block が推奨されます
-2. **Security Group Rules**:
-   * prefix delegation により security group rules を簡素化できます
-   * 個別 IPs の代わりに CIDR blocks を参照できます
-3. **Compatibility**:
-   * 一部の legacy EC2 instance types は prefix delegation を support していません
-   * Nitro-based instances が推奨されます
-4. **IP Address Management**:
-   * Prefix delegation は IP addresses をより効率的に使用しますが、適切な CIDR planning は引き続き必要です
-
-**Monitoring and Troubleshooting:**
-
-```bash
-# Check IP address allocation per node
-kubectl exec -n kube-system aws-node-xxxxx -- curl -s http://localhost:61679/v1/enis | jq
-
-# Check prefix delegation status
-kubectl logs -n kube-system aws-node-xxxxx | grep -i prefix
-```
-
-他の選択肢の問題点:
-
-* **A. すべての pods に host network mode を使用する**: Host network mode では pods が node の network namespace を共有するため、port conflicts が発生し、network isolation が失われます。
-* **C. すべての pods に NodePort services を使用する**: NodePort は service exposure mechanism であり、pod networking performance optimization とは無関係です。
-* **D. すべての intra-cluster communication に AWS Global Accelerator を使用する**: AWS Global Accelerator は global traffic management 用であり、intra-cluster communication optimization には適していません。
+Istio multi-primary と primary-remote は異なるコントロールプレーンレイアウトです。サポートされるモデルを選択し、east-west gateway、アイデンティティ信頼、エンドポイントのヘルスを検証してください。既存の App Mesh マルチクラスター利用では、2026 年 9 月の終了を考慮する必要があります。実際のパスを使用して、時間単位、処理、cross-AZ の料金を比較してください。同一 VPC またはパブリックロードバランサーの設計が本質的に無効なわけではありませんが、それぞれ独自のセキュリティ/コスト分析が必要です。
 
 </details>
 
-## Short Answer Questions
+### 4. アドレススロット密度を高めるために、/28 ブロックで IPv4 アドレスを割り当てる VPC CNI 機能はどれですか？
 
-### 7. What is the most commonly used open-source proxy for sidecar proxies when implementing a service mesh in Amazon EKS?
+- A. すべての Pod に対する hostNetwork
+- B. Prefix delegation
+- C. すべての Service に対する NodePort
+- D. Pod 間トラフィックに対する Global Accelerator
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答:** Envoy
+**回答: B. Prefix delegation**
 
-**詳細な説明:**
+委任された IPv4 /28 は 1 つの ENI アドレススロットを消費しながら、16 個の Pod アドレスを供給します。アロケーション API の処理を削減し、Pod の起動/密度を改善できます。これは汎用的なパケットスループット最適化でも、サブネット全体の枯渇の解決策でもありません。IPv6 は異なる prefix サイズを使用します。サポートされる Nitro ハードウェア、連続した空き prefix、kubelet maxPods、リソース容量は、引き続き密度を制約します。
 
-Amazon EKS で service mesh を実装する際に最も一般的に使用される sidecar proxy は Envoy です。Envoy は高 performance な C++ ベースの proxy で、主要な service mesh implementations（Istio、AWS App Mesh、Consul Connect など）のほとんどで data plane proxy として使用されます。
+スキーマ/所有権のレビュー後に、この JSON フラグメントを正確な EKS add-on 設定にマージするか、対応する Helm の `env` 値を使用してください。古い小文字の `amazon-vpc-cni` ConfigMap キーは Linux CNI を設定しません。
+```json
+{
+  "env": {
+    "ENABLE_PREFIX_DELEGATION": "true",
+    "WARM_PREFIX_TARGET": "1"
+  }
+}
+```
+`WARM_PREFIX_TARGET=1` は prefix サイズではなく、予備 prefix を 1 つ意味します。正の `WARM_IP_TARGET`/`MINIMUM_IP_TARGET` は warm-prefix target より優先されます。大きな warm pool はより多くのサブネット空間を予約します。node group の移行と maxPods 設定を計画してください。DaemonSet を切り替えるだけでは、既存 node が任意の密度をサポートできるようにはなりません。
 
-**Envoy の主な機能:**
+| インスタンス | 従来の secondary-IPv4 maxPods の計算式 | これらの小規模インスタンスでの説明用 prefix-mode 上限 |
+|---|---:|---:|
+| t3.medium | 17 | 110 |
+| m5.large | 29 | 110 |
+| c5.xlarge | 58 | 110 |
+| r5.2xlarge | 58 | 110 |
 
-1. **High-Performance Architecture**:
-   * 低 latency と高 throughput のために C++ で記述されています
-   * event-driven、asynchronous networking model
-2. **Rich Traffic Management Features**:
-   * Load balancing（round robin、weighted、least request など）
-   * Circuit breaking and outlier detection
-   * Retry and timeout policies
-   * Traffic splitting and mirroring
-3. **Observability**:
-   * 詳細な metrics and statistics
-   * Distributed tracing integration（Zipkin、Jaeger など）
-   * Access logging
-4. **Security Features**:
-   * TLS/mTLS termination
-   * Authentication and authorization
-   * Rate limiting
+これらは設定上の制限であり、ベンチマーク結果やすべての Pod が収まる保証ではありません。c5.xlarge/r5.2xlarge の以前の 250 エントリは誤りでした。EKS 推奨上限は、30 vCPU 未満では 110、30 vCPU 以上では 250 です。Pod SG branch interface には別の制限があります。prefix の割り当てには、汎用的な最小 /24 サブネットではなく、連続した /28 ブロックが必要であり、SG policy を自動的に単純化することはありません。
+```bash
+set -euo pipefail
+: "${AWS_REGION:?Set the node Region}"
+kubectl get nodes -o 'custom-columns=NAME:.metadata.name,TYPE:.metadata.labels.node\.kubernetes\.io/instance-type,PODS:.status.allocatable.pods'
+kubectl -n kube-system get daemonset aws-node -o yaml
+kubectl -n kube-system logs -l k8s-app=aws-node -c aws-node --tail=200 --prefix=true
+aws ec2 describe-instance-types --region "$AWS_REGION" \
+  --instance-types t3.medium m5.large c5.xlarge r5.2xlarge \
+  --query 'InstanceTypes[].{Type:InstanceType,vCPUs:VCpuInfo.DefaultVCpus,ENIs:NetworkInfo.MaximumNetworkInterfaces,IPv4Slots:NetworkInfo.Ipv4AddressesPerInterface}'
+```
 
-**Service Mesh における Envoy Deployment:**
+</details>
 
-1.  **Sidecar Pattern**:
+### 5. Istio サイドカーモードはどのプロキシを使用し、どのように診断しますか？
 
-    ```yaml
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: example-app
-    spec:
-      template:
-        spec:
-          containers:
-          - name: app
-            image: app:latest
-          - name: envoy-proxy
-            image: envoyproxy/envoy:v1.20.0
-            ports:
-            - containerPort: 15001
-            volumeMounts:
-            - name: envoy-config
-              mountPath: /etc/envoy
-          volumes:
-          - name: envoy-config
-            configMap:
-              name: envoy-config
-    ```
-2. **Automatic Injection**:
-   * Istio: `sidecar.istio.io/inject: "true"` annotation
-   * AWS App Mesh: `appmesh.k8s.aws/sidecarInjectorWebhook: enabled` label
+<details>
+<summary>回答を表示</summary>
 
-**Envoy Configuration Example:**
+**回答: Envoy**
 
+Istio サイドカーモードは Envoy を使用し、istiod がディスカバリ、ルーティング、証明書設定を提供します。古い Pilot/Citadel の機能は istiod に統合され、Mixer は現在必要なコンポーネントではありません。他のメッシュでは異なるプロキシを使用することがあり、Envoy は Kubernetes やすべてのメッシュの要件ではありません。
+
+Envoy は、設定された場合にコネクションプール、HTTP/TCP ルーティング、リトライ、outlier detection、TLS、テレメトリをサポートします。単に Envoy コンテナを追加しても、透過的なトラフィックインターセプト、ワークロードアイデンティティ、xDS、mTLS は構成されません。実際のメッシュでは、サポートされる injector とプロキシビルドを使用してください。古いスタンドアロンの Envoy 1.20 イメージと不完全な Deployment は、有効な現在のインストールではありません。
+
+次の **スタンドアロンリバースプロキシ bootstrap** は、元となる listener/route/cluster の概念を示しています。アップストリーム Envoy 1.39.1 でローカル検証されています。別の HTTP アプリケーションが、同じネットワーク名前空間で `127.0.0.1:8080` をリッスンする必要があります。プロキシと admin listener は loopback にのみ bind します。これは本番または Kubernetes メッシュのデプロイではありません。
 ```yaml
+admin:
+  address:
+    socket_address:
+      address: 127.0.0.1
+      port_value: 9901
 static_resources:
   listeners:
-  - address:
+  - name: local-proxy
+    address:
       socket_address:
-        address: 0.0.0.0
+        address: 127.0.0.1
         port_value: 15001
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
           "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-          stat_prefix: ingress_http
+          stat_prefix: demo_http
           route_config:
-            name: local_route
+            name: local-route
             virtual_hosts:
             - name: backend
               domains: ["*"]
               routes:
               - match:
-                  prefix: "/"
+                  prefix: /
                 route:
-                  cluster: service_backend
+                  cluster: local-app
           http_filters:
           - name: envoy.filters.http.router
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
   clusters:
-  - name: service_backend
+  - name: local-app
     connect_timeout: 0.25s
-    type: STRICT_DNS
+    type: STATIC
     lb_policy: ROUND_ROBIN
     load_assignment:
-      cluster_name: service_backend
+      cluster_name: local-app
       endpoints:
       - lb_endpoints:
         - endpoint:
             address:
               socket_address:
-                address: backend-service
-                port_value: 80
+                address: 127.0.0.1
+                port_value: 8080
 ```
-
-**Service Mesh 別の Envoy Integration:**
-
-1. **Istio**:
-   * Envoy を sidecar proxy として使用します
-   * istiod が Envoy configuration を動的に管理します
-   * Pilot、Mixer、Citadel などの components が Envoy と統合されます
-2. **AWS App Mesh**:
-   * AWS App Mesh controller が Envoy sidecar を inject します
-   * service discovery のために AWS Cloud Map と統合します
-   * Envoy Management Service (EMS) が Envoy configuration を管理します
-3. **Consul Connect**:
-   * Envoy を data plane proxy として使用します
-   * Consul が service discovery と configuration management を提供します
-
-**Envoy Monitoring and Debugging:**
-
+これを `envoy-config.yaml` として保存し、一致するアップストリームバイナリで検証してください。検証では設定を解析しますが、backend またはワークロードアイデンティティが機能することは証明しません。
 ```bash
-# Port forward Envoy admin interface
-kubectl port-forward <pod-name> 19000:19000
-
-# Check configuration and stats
-curl localhost:19000/config_dump
-curl localhost:19000/stats
-
-# Check cluster status
-curl localhost:19000/clusters
+envoy --mode validate --concurrency 1 --config-path envoy-config.yaml
 ```
-
-**Performance Optimization Considerations:**
-
-* Resource allocation: Envoy に十分な CPU と memory を割り当てます
-* Connection pooling: performance 向上のため upstream connection pooling を構成します
-* Buffer size: memory usage optimization のため適切な buffer sizes を設定します
-* Filter chain: overhead を最小化するため必要な filters のみを有効にします
-
-Envoy は modern service mesh architecture の中核 component であり、microservice communication を secure、reliable、observable にするうえで重要な役割を果たします。
+既存の Kubernetes メッシュプロキシでは、19000 を仮定するのではなく、設定済みの admin port とコンテナ名を検出してください。App Mesh のデフォルト admin port は 9901 です。Istio では一般に 15000 を使用しますが、デプロイ設定は異なる場合があります。この port-forward を 1 つのターミナルで実行してください。
+```bash
+set -euo pipefail
+: "${MESH_NAMESPACE:?Set the existing mesh workload namespace}"
+: "${MESH_POD:?Set the existing proxy Pod}"
+: "${ENVOY_ADMIN_PORT:?Use the admin port actually configured by that mesh}"
+kubectl -n "$MESH_NAMESPACE" port-forward --address 127.0.0.1 \
+  "pod/$MESH_POD" "19000:$ENVOY_ADMIN_PORT"
+```
+次に、別のターミナルから境界付きの読み取り専用クエリを実行します。設定ダンプには内部トポロジーまたは機密設定が含まれることがあります。公開したり、admin listener を外部に公開したりしないでください。
+```bash
+curl --fail --show-error --max-time 10 http://127.0.0.1:19000/config_dump
+curl --fail --show-error --max-time 10 http://127.0.0.1:19000/stats
+curl --fail --show-error --max-time 10 http://127.0.0.1:19000/clusters
+```
+アップストリームヘルス、コネクションプール制限、リトライ、filter コスト、メモリ、リクエストレイテンシを併せて調査してください。測定したワークロードの挙動に基づいて調整してください。オーバーヘッドを削減するためだけにセキュリティ filter を削除すると、セキュリティモデルが変わります。
 
 </details>
 
-### 8. What is the name of the Kubernetes add-on responsible for internal DNS resolution in Amazon EKS clusters?
+### 6. 従来の EKS node で DNS を提供するものは何で、どのように設定すべきですか？
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答:** CoreDNS
+**回答: CoreDNS（最初に実際の DNS/add-on 所有者を特定します）。**
 
-**詳細な説明:**
+CoreDNS は従来の EKS compute における通常の DNS add-on です。作成方法/add-on の所有権は異なる場合があります。EKS Auto Mode には管理されたクラスター DNS が含まれ、従来の CoreDNS Deployment が本質的に必要なわけではありません。次の従来型 add-on チェックを適用する前に、compute/DNS 所有者を特定してください。ResourceNotFound の応答では、所有権の調査が必要であり、自動的な再インストールは行いません。
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?Set the existing cluster}"
+: "${AWS_REGION:?Set the cluster Region}"
+aws eks describe-addon --region "$AWS_REGION" --cluster-name "$CLUSTER_NAME" \
+  --addon-name coredns
+kubectl -n kube-system get deployment coredns -o yaml
+kubectl -n kube-system get configmap coredns -o yaml
+kubectl -n kube-system get endpointslices -l kubernetes.io/service-name=kube-dns
+```
+Service DNS は通常、`<service>.<namespace>.svc.<cluster-domain>` に従います。`cluster.local` は一般的なドメインであり、不変のものではありません。Headless/ExternalName レコードは通常の ClusterIP レコードとは異なります。任意の Pod IP すべてに有用な逆引き DNS レコードがあると仮定しないでください。
 
-Amazon EKS clusters における internal DNS resolution を担当する Kubernetes add-on は CoreDNS です。CoreDNS は Kubernetes clusters 内の service discovery のための DNS server として機能し、pods と services の name resolution を処理します。
+これは説明用の **Corefile** であり、無条件に上書きする ConfigMap ではありません。管理対象の設定、実際のクラスター domain、probe、DNS Service を保持してください。`pods insecure` は Pod 検証なしで構文上の Pod-IP DNS 応答を許可します。意図した Kubernetes plugin モードを選択してください。
+```text
+.:53 {
+    errors
+    health {
+        lameduck 5s
+    }
+    ready
+    kubernetes cluster.local in-addr.arpa ip6.arpa {
+        pods insecure
+        fallthrough in-addr.arpa ip6.arpa
+        ttl 30
+    }
+    prometheus :9153
+    forward . /etc/resolv.conf
+    cache 30
+    loop
+    reload
+    loadbalance
+}
+```
+`errors` は失敗を記録します。`health` と `ready` は異なる probe の役割を果たします。`kubernetes` はクラスター レコードに応答し、`forward` はその他の domain を解決し、`prometheus` はメトリクスを公開します。`cache`、`reload`、`loadbalance` はキャッシュ/設定再読み込み/レコード順序に影響します。`loop` plugin は、起動時に特定の単純な forwarding loop を検出しますが、すべての動的 DNS loop を永続的に検出するわけではありません。`loadbalance` は DNS 応答順序を変更しますが、Service のパケット転送は変更しません。
 
-**CoreDNS の主な機能:**
+条件付き転送には、承認済みで到達可能な DNS server を使用し、UDP/TCP53 を許可してください。10.0.0.1 のような VPC サブネットの最初のアドレスは、サンプルの社内 DNS server ではありません。`file` plugin は、有効な SOA/records とともに作成、mount、保守する必要がある権威ゾーンファイルを提供します。これは stub-domain forward の代替ではありません。パブリック resolver には意図的な egress と情報開示ポリシーが必要であり、プライベート hosted zone を魔法のように解決することはできません。
 
-1. **Service Discovery**:
-   * `<service-name>.<namespace>.svc.cluster.local` 形式の DNS names を解決します
-   * pod IP addresses の reverse DNS lookups を support します
-2. **Plugin Architecture**:
-   * さまざまな plugins を通じて functionality を拡張します
-   * Caching、metrics、logging、error handling など
-3. **Configuration Flexibility**:
-   * Corefile による declarative configuration
-   * dynamic reload を support します
+この cache フラグメントは、元の引数順序を修正します: `prefetch AMOUNT DURATION PERCENTAGE`。2 つ目を追加するのではなく、既存の cache directive を置き換えてください。
+```text
+cache 30 {
+    success 10000
+    denial 1024
+    prefetch 10 2m 10%
+}
+```
+アップストリーム CoreDNS 1.14.7 では、`denial1000` は受け入れられますが `1024` に正規化され、`success10000` は `9984` に正規化されます。明示的な `1024` は元の実効 denial 容量を維持します。これらの容量は実装上の挙動であり、測定された DNS サイジング推奨ではありません。
 
-**EKS における CoreDNS Deployment:**
-
-1. **Default Deployment Configuration**:
-   * EKS cluster 作成時に自動的に deploy されます
-   * kube-system namespace で実行されます
-   * 通常 2 つ以上の replicas で deploy されます
-2.  **Verification**:
-
-    ```bash
-    # Check CoreDNS pods
-    kubectl get pods -n kube-system -l k8s-app=kube-dns
-
-    # Check CoreDNS version
-    kubectl describe deployment coredns -n kube-system | grep Image
-    ```
-
-**CoreDNS Configuration (Corefile):**
-
+**単一のスケーリング所有者**を選択してください。正確な add-on バージョン/スキーマでサポートされる場合は EKS 管理の CoreDNS autoscaling を使用するか、別途所有される HPA/cluster-proportional autoscaler を使用します。次の HPA は、metrics-server と CPU request を備えた、意図的に自己管理される Deployment 専用です。別の replica manager と組み合わせないでください。
 ```yaml
-apiVersion: v1
-kind: ConfigMap
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
 metadata:
   name: coredns
   namespace: kube-system
-data:
-  Corefile: |
-    .:53 {
-        errors
-        health {
-            lameduck 5s
-        }
-        ready
-        kubernetes cluster.local in-addr.arpa ip6.arpa {
-            pods insecure
-            fallthrough in-addr.arpa ip6.arpa
-            ttl 30
-        }
-        prometheus :9153
-        forward . /etc/resolv.conf
-        cache 30
-        loop
-        reload
-        loadbalance
-    }
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: coredns
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60
 ```
-
-**主な Plugin Descriptions:**
-
-1. **errors**: errors を logs に記録します
-2. **health**: health check endpoint を提供します
-3. **ready**: readiness check endpoint を提供します
-4. **kubernetes**: Kubernetes service discovery を処理します
-5. **prometheus**: Prometheus metrics を公開します
-6. **forward**: external DNS queries を upstream DNS servers に forward します
-7. **cache**: DNS responses を cache します
-8. **loop**: DNS loops を検出して防止します
-9. **reload**: Corefile changes に応じて自動的に reload します
-10. **loadbalance**: 複数の A/AAAA records 間で load balancing します
-
-**Custom Configuration Examples:**
-
-1.  **Use Specific DNS Server for External Domain**:
-
-    ```
-    example.com {
-        forward . 10.0.0.1
-    }
-    ```
-2.  **Stub Domain Configuration**:
-
-    ```
-    internal.corp {
-        file /etc/coredns/internal.db
-    }
-    ```
-3.  **Conditional Forwarding**:
-
-    ```
-    . {
-        forward . 8.8.8.8 8.8.4.4 {
-            policy sequential
-        }
-    }
-    ```
-
-**Performance Optimization and Scaling:**
-
-1.  **Auto Scaling**:
-
-    ```yaml
-    apiVersion: autoscaling/v2
-    kind: HorizontalPodAutoscaler
-    metadata:
-      name: coredns
-      namespace: kube-system
-    spec:
-      scaleTargetRef:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: coredns
-      minReplicas: 2
-      maxReplicas: 10
-      metrics:
-      - type: Resource
-        resource:
-          name: cpu
-          target:
-            type: Utilization
-            averageUtilization: 60
-    ```
-2.  **Resource Allocation Optimization**:
-
-    ```yaml
-    resources:
-      limits:
-        memory: 170Mi
-      requests:
-        cpu: 100m
-        memory: 70Mi
-    ```
-3.  **Cache Tuning**:
-
-    ```
-    cache {
-        success 10000
-        denial 1000
-        prefetch 10 10% 2m
-    }
-    ```
-
-**Troubleshooting:**
-
-1.  **DNS Resolution Test**:
-
-    ```bash
-    # Create test pod
-    kubectl run dnsutils --image=gcr.io/kubernetes-e2e-test-images/dnsutils:1.3 -- sleep 3600
-
-    # Test DNS lookup
-    kubectl exec -it dnsutils -- nslookup kubernetes.default
-    ```
-2.  **Check CoreDNS Logs**:
-
-    ```bash
-    kubectl logs -n kube-system -l k8s-app=kube-dns
-    ```
-3.  **Check DNS Policy**:
-
-    ```bash
-    kubectl get pods <pod-name> -o jsonpath='{.spec.dnsPolicy}'
-    ```
-
-CoreDNS は EKS clusters の重要な component であり、microservices architecture に core service discovery functionality を提供します。適切な configuration と monitoring によって reliable な DNS service を確保することが不可欠です。
+元のリソース例（100m CPU request、70Mi memory request、170Mi memory limit）は説明用であり、ワークロードで検証されたものではありません。クエリレート、エラー、cache hit/miss の挙動、memory/OOM、応答レイテンシを監視してからサイズを決めてください。診断には、DNS ツールを備えた既存の承認済み診断ワークロードを使用してください。dnsPolicy/dnsConfig/resolv.conf、kube-dns EndpointSlice、policy/SG/upstream パスを確認します。クラスター Service と、承認済みの外部/プライベート name を別々にテストしてください。以前の廃止された dnsutils イメージと所有者のない bare Pod は、DNS 診断の前提条件ではありません。
 
 </details>
 
-## Hands-on Questions
-
-### 10. Explain how to implement a service mesh (e.g., AWS App Mesh) in an Amazon EKS cluster to secure and monitor microservice communication. Include implementation steps, key components, and monitoring methods.
+### 7. 既存の App Mesh デプロイをどのように保護、監視、移行すべきですか？
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答:**
+**回答: 既存の graph、アイデンティティ、テレメトリをレビューし、サポートされる代替を検証します。**
 
-Amazon EKS cluster で microservice communication を secure にし、monitor するために AWS App Mesh を実装する方法は次のとおりです。
-
-### 1. AWS App Mesh Implementation Steps
-
-#### 1.1. Set Up Prerequisites
-
+**歴史的な運用および移行演習:** AWS App Mesh のサポートおよびリソースアクセスは、**2026 年 9 月 30 日**に終了しました。新しい mesh、Private CA、パブリック Grafana をプロビジョニングするために元のレシピに従わないでください。以前の App Mesh デプロイでは、その graph をインベントリ化し、サポートされる mesh/gateway に移行してください。ECS Service Connect は EKS のインストール対象ではありません。実際に使用する機能に対応する、サポートされた Kubernetes mesh/gateway アーキテクチャを評価してください。
 ```bash
-# Set up required IAM permissions
-eksctl create iamserviceaccount \
-  --cluster=my-cluster \
-  --namespace=appmesh-system \
-  --name=appmesh-controller \
-  --attach-policy-arn=arn:aws:iam::aws:policy/AWSCloudMapFullAccess,arn:aws:iam::aws:policy/AWSAppMeshFullAccess \
-  --override-existing-serviceaccounts \
-  --approve
-
-# Add Helm repository
-helm repo add eks https://aws.github.io/eks-charts
-helm repo update
+set -euo pipefail
+: "${MESH_NAMESPACE:?Set the namespace of the existing mesh workloads}"
+kubectl get meshes.appmesh.k8s.aws
+kubectl -n "$MESH_NAMESPACE" get virtualnodes.appmesh.k8s.aws,virtualservices.appmesh.k8s.aws,virtualrouters.appmesh.k8s.aws
+kubectl -n "$MESH_NAMESPACE" get deployments,services
 ```
+**1. 既存の graph をマッピングする。** Mesh namespace selector は参加する namespace を選択し、VirtualNode Pod selector はワークロード、listener、Service ディスカバリを選択します。VirtualService name は VirtualNode または VirtualRouter にルーティングし、router route は重み付けされた VirtualNode を選択します。backend 参照、endpoint DNS、health check、IAM/IRSA、injector 設定、アプリケーションの listening port をインベントリ化してください。元の `service-a:latest` プレースホルダーと欠落した service-b ワークロードは、機能するアプリケーションではありません。既存の ServiceAccount を上書きしたり、トラブルシューティングの手順としてフルアクセス policy をアタッチしたりしないでください。
 
-#### 1.2. Install App Mesh Controller
+**2. TLS と相互認証を区別する。** サーバー証明書のみを持つ STRICT モードの listener は、暗号化された接続を必要としますが、それ自体で client を認証するわけではありません。App Mesh mTLS には client 証明書と server 側の client 信頼に加え、client 側の server 信頼/SAN チェックが必要です。client 証明書および listener validation trust は、ACM client-certificate reference ではなく、file または SDS を使用します。ワークロード内の app-to-Envoy トラフィックは、proxy-to-proxy mTLS によって自動的に暗号化されません。
 
-```bash
-# Create App Mesh controller namespace
-kubectl create ns appmesh-system
-
-# Install App Mesh controller
-helm install appmesh-controller eks/appmesh-controller \
-  --namespace appmesh-system \
-  --set region=${AWS_REGION} \
-  --set serviceAccount.create=false \
-  --set serviceAccount.name=appmesh-controller
-```
-
-#### 1.3. Create Mesh
-
+次は **レガシー設定レビュー例**であり、新規インストールではありません。ファイルはすでに proxy に安全に mount されている必要があり、証明書には必要な identity/usage が必要で、service-b が存在し、一致する namespace が意図した Mesh に属している必要があります。信頼設計で必要に応じて承認済み client SAN 制限を追加してください。CA のみを信頼すると、その適格な client 証明書を受け入れます。
 ```yaml
-# mesh.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: Mesh
-metadata:
-  name: my-mesh
-spec:
-  namespaceSelector:
-    matchLabels:
-      mesh: my-mesh
-```
-
-```bash
-kubectl apply -f mesh.yaml
-```
-
-#### 1.4. Set Up Application Namespace
-
-```bash
-# Create and label application namespace
-kubectl create ns app-namespace
-kubectl label namespace app-namespace mesh=my-mesh
-kubectl label namespace app-namespace appmesh.k8s.aws/sidecarInjectorWebhook=enabled
-```
-
-#### 1.5. Define Virtual Nodes and Services
-
-```yaml
-# virtual-node.yaml
 apiVersion: appmesh.k8s.aws/v1beta2
 kind: VirtualNode
 metadata:
@@ -810,268 +402,79 @@ spec:
     matchLabels:
       app: service-a
   listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
-      healthCheck:
-        protocol: http
-        path: "/health"
-        port: 8080
-        healthyThreshold: 2
-        unhealthyThreshold: 2
-        timeoutMillis: 2000
-        intervalMillis: 5000
+  - portMapping:
+      port: 8080
+      protocol: http
+    tls:
+      mode: STRICT
+      certificate:
+        file:
+          certificateChain: /certs/server.crt
+          privateKey: /certs/server.key
+      validation:
+        trust:
+          file:
+            certificateChain: /certs/trusted-client-ca.pem
+    outlierDetection:
+      baseEjectionDuration:
+        unit: s
+        value: 30
+      interval:
+        unit: s
+        value: 10
+      maxEjectionPercent: 50
+      maxServerErrors: 5
   backends:
-    - virtualService:
-        virtualServiceRef:
-          name: service-b
+  - virtualService:
+      virtualServiceRef:
+        name: service-b
+      clientPolicy:
+        tls:
+          enforce: true
+          ports: [8080]
+          certificate:
+            file:
+              certificateChain: /certs/client.crt
+              privateKey: /certs/client.key
+          validation:
+            trust:
+              file:
+                certificateChain: /certs/trusted-server-ca.pem
+            subjectAlternativeNames:
+              match:
+                exact: [service-b.app-namespace.svc.cluster.local]
   serviceDiscovery:
     dns:
       hostname: service-a.app-namespace.svc.cluster.local
-```
-
-```yaml
-# virtual-service.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualService
-metadata:
-  name: service-a
-  namespace: app-namespace
-spec:
-  awsName: service-a.app-namespace.svc.cluster.local
-  provider:
-    virtualRouter:
-      virtualRouterRef:
-        name: service-a-router
-```
-
-```yaml
-# virtual-router.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualRouter
-metadata:
-  name: service-a-router
-  namespace: app-namespace
-spec:
-  listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
-  routes:
-    - name: service-a-route
-      httpRoute:
-        match:
-          prefix: /
-        action:
-          weightedTargets:
-            - virtualNodeRef:
-                name: service-a
-              weight: 1
-```
-
-#### 1.6. Deploy Application
-
-```yaml
-# deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: service-a
-  namespace: app-namespace
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: service-a
-  template:
-    metadata:
-      labels:
-        app: service-a
-    spec:
-      containers:
-      - name: service-a
-        image: service-a:latest
-        ports:
-        - containerPort: 8080
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-```
-
-### 2. Secure Communication with mTLS Configuration
-
-#### 2.1. Set Up AWS Certificate Manager Private CA
-
-```bash
-# Create private CA
-aws acm-pca create-certificate-authority \
-  --certificate-authority-configuration file://ca-config.json \
-  --certificate-authority-type "ROOT" \
-  --idempotency-token 1234567890 \
-  --tags Key=Name,Value=AppMeshCA
-
-# Save CA ARN
-export CA_ARN=$(aws acm-pca list-certificate-authorities --query 'CertificateAuthorities[?Status==`ACTIVE`].Arn' --output text)
-```
-
-#### 2.2. Add TLS Configuration
-
-```yaml
-# virtual-node-with-tls.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualNode
-metadata:
-  name: service-a
-  namespace: app-namespace
-spec:
-  podSelector:
-    matchLabels:
-      app: service-a
-  listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
-      tls:
-        mode: STRICT  # Enable mTLS
-        certificate:
-          acm:
-            certificateArn: arn:aws:acm:region:account-id:certificate/certificate-id
-  backends:
-    - virtualService:
-        virtualServiceRef:
-          name: service-b
-        clientPolicy:
-          tls:
-            enforce: true
-            ports:
-              - 8080
-            validation:
-              trust:
-                acm:
-                  certificateAuthorityArns:
-                    - ${CA_ARN}
-  serviceDiscovery:
-    dns:
-      hostname: service-a.app-namespace.svc.cluster.local
-```
-
-### 3. Set Up Monitoring and Observability
-
-#### 3.1. AWS X-Ray Integration
-
-```yaml
-# mesh-with-xray.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: Mesh
-metadata:
-  name: my-mesh
-spec:
-  namespaceSelector:
-    matchLabels:
-      mesh: my-mesh
-  egressFilter:
-    type: ALLOW_ALL
-  tracing:
-    awsXRay:
-      logLevel: INFO
-```
-
-```bash
-# Deploy X-Ray daemon
-kubectl apply -f https://github.com/aws/aws-app-mesh-controller-for-k8s/raw/master/config/samples/xray-daemon.yaml
-```
-
-#### 3.2. Amazon CloudWatch Integration
-
-```yaml
-# envoy-config.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: Mesh
-metadata:
-  name: my-mesh
-spec:
-  namespaceSelector:
-    matchLabels:
-      mesh: my-mesh
-  egressFilter:
-    type: ALLOW_ALL
-  serviceDiscovery:
-    ipPreference: IPv4_PREFERRED
   logging:
     accessLog:
       file:
         path: /dev/stdout
-        format:
-          json:
-            - key: "source"
-              value: "%DOWNSTREAM_REMOTE_ADDRESS%"
-            - key: "destination"
-              value: "%UPSTREAM_REMOTE_ADDRESS%"
-            - key: "protocol"
-              value: "%PROTOCOL%"
 ```
+アカウント内のすべての ACTIVE CA を 1 つの変数に選択しないでください。root CA の作成には明示的な設定とアクティベーション/証明書の手順が必要で、料金が発生します。直ちに使用可能な証明書を生成するわけではありません。意図した正確な ARN を保持してください。App Mesh Kubernetes CRD フィールドは大文字小文字を区別します（`certificateARN`、`certificateAuthorityARNs`）。プレーン YAML ファイル内の `${CA_ARN}` は shell interpolation ではありません。表示した file-based の例は、存在しない CA ワークフローが実行済みであるふりを避けます。
 
-```bash
-# Deploy CloudWatch agent
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cloudwatch-namespace.yaml
+既存の plaintext peer では、文書化された PERMISSIVE 移行を段階的に実施し、client/server identity と trust をプロビジョニングし、受け入れられる peer と拒否される peer の両方をテストしてから、STRICT を要求してください。`ssl.handshake`、`ssl.no_certificate`、`ssl.fail_verify_no_cert`、`ssl.fail_verify_san` と実際のリクエスト結果を調査します。server-TLS handshake の成功だけでは、mTLS の十分な証明になりません。
 
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-serviceaccount.yaml
-
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-configmap.yaml
-
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-daemonset.yaml
-```
-
-#### 3.3. Prometheus and Grafana Setup
-
-```bash
-# Create Prometheus namespace
-kubectl create namespace prometheus
-
-# Install Prometheus
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
-helm install prometheus prometheus-community/prometheus \
-  --namespace prometheus \
-  --set alertmanager.persistentVolume.storageClass="gp2" \
-  --set server.persistentVolume.storageClass="gp2"
-
-# Install Grafana
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
-helm install grafana grafana/grafana \
-  --namespace prometheus \
-  --set persistence.storageClassName="gp2" \
-  --set persistence.enabled=true \
-  --set adminPassword='EKS!sAWSome' \
-  --values grafana.yaml \
-  --set service.type=LoadBalancer
-```
-
+**3. 移行中もオブザーバビリティを保持する。** 元のレシピの `Mesh.spec.tracing`、`Mesh.spec.logging`、`Mesh.spec.serviceDiscovery` は、レビュー対象の controller 1.13.1 CRD のフィールドではありません。access logging は VirtualNode（上記のとおり）に属します。App Mesh Envoy image の tracing 設定は別のもので、たとえばこの **コンテナ環境フラグメント**には、2000 上の動作するローカル X-Ray daemon/collector、権限、エンドポイントアクセス、トレースコンテキストの伝播が必要です。
 ```yaml
-# grafana.yaml
+env:
+- name: ENABLE_ENVOY_XRAY_TRACING
+  value: "1"
+- name: XRAY_DAEMON_PORT
+  value: "2000"
+```
+承認済み collector を使用して proxy の実際の `/stats` または Prometheus endpoint を収集してください。CloudWatch には設定済みの scraping/export/EMF が必要です。`AWS/AppMesh` RequestCount/Latency メトリクスが自動的に表示されると仮定しないでください。dashboard を構築する前に、実際の namespace、metric name、dimension、unit をインベントリ化してください。既存の CloudWatch/Prometheus/Grafana の所有者、認証情報、サポートされる StorageClass を保持してください。浮動する manifest、ハードコードされた Grafana admin password、未レビューのパブリック LoadBalancer を避けてください。この任意の Grafana provisioning フラグメントは、既存の Prometheus datasource を識別するだけで、いずれのシステムもインストールまたは保護しません。
+```yaml
+apiVersion: 1
 datasources:
-  datasources.yaml:
-    apiVersion: 1
-    datasources:
-    - name: Prometheus
-      type: prometheus
-      url: http://prometheus-server.prometheus.svc.cluster.local
-      access: proxy
-      isDefault: true
+- name: Prometheus
+  type: prometheus
+  url: http://prometheus-server.prometheus.svc.cluster.local
+  access: proxy
+  isDefault: true
 ```
-
-### 4. Configure Traffic Management and Advanced Features
-
-#### 4.1. Canary Deployment Configuration
-
+**4. トラフィックの挙動を明示的にマッピングする。** このレガシー router の例では、両方のバージョン付き VirtualNode がすでに存在し、健全な endpoint を持つことを前提としています。weight は正確なリクエスト数を保証しません。outlier detection は endpoint ejection であり、コネクションプールの circuit-breaking 制限とは異なります。元の 4 つの HTTP retry event 文字列は有効です。`client-error` は 409 を意味し、`stream-error` は拒否された stream を意味します。全体の timeout budget 内で、idempotent operation に対する retry を選択してください。retry は障害負荷を増幅する可能性があります。
 ```yaml
-# virtual-router-canary.yaml
 apiVersion: appmesh.k8s.aws/v1beta2
 kind: VirtualRouter
 metadata:
@@ -1079,184 +482,167 @@ metadata:
   namespace: app-namespace
 spec:
   listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
+  - portMapping:
+      port: 8080
+      protocol: http
   routes:
-    - name: service-a-route
-      httpRoute:
-        match:
-          prefix: /
-        action:
-          weightedTargets:
-            - virtualNodeRef:
-                name: service-a-v1
-              weight: 90
-            - virtualNodeRef:
-                name: service-a-v2
-              weight: 10
+  - name: service-a-route
+    httpRoute:
+      match:
+        prefix: /
+      action:
+        weightedTargets:
+        - virtualNodeRef:
+            name: service-a-v1
+          weight: 90
+        - virtualNodeRef:
+            name: service-a-v2
+          weight: 10
+      retryPolicy:
+        maxRetries: 3
+        perRetryTimeout:
+          unit: ms
+          value: 2000
+        httpRetryEvents:
+        - gateway-error
 ```
-
-#### 4.2. Circuit Breaker Configuration
-
-```yaml
-# virtual-node-circuit-breaker.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualNode
-metadata:
-  name: service-a
-  namespace: app-namespace
-spec:
-  # ... existing configuration ...
-  listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
-      outlierDetection:
-        baseEjectionDuration:
-          unit: s
-          value: 30
-        interval:
-          unit: s
-          value: 10
-        maxEjectionPercent: 50
-        maxServerErrors: 5
-```
-
-#### 4.3. Retry Policy Configuration
-
-```yaml
-# virtual-router-retry.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualRouter
-metadata:
-  name: service-a-router
-  namespace: app-namespace
-spec:
-  # ... existing configuration ...
-  routes:
-    - name: service-a-route
-      httpRoute:
-        match:
-          prefix: /
-        action:
-          weightedTargets:
-            - virtualNodeRef:
-                name: service-a
-              weight: 1
-        retryPolicy:
-          maxRetries: 3
-          perRetryTimeout:
-            unit: ms
-            value: 2000
-          httpRetryEvents:
-            - server-error
-            - gateway-error
-            - client-error
-            - stream-error
-```
-
-### 5. Monitoring and Troubleshooting
-
-#### 5.1. Check Envoy Proxy Logs
-
-```bash
-# Check Envoy sidecar logs for specific pod
-kubectl logs <pod-name> -c envoy -n app-namespace
-
-# Stream all Envoy logs
-kubectl logs -f -l app=service-a -c envoy -n app-namespace
-```
-
-#### 5.2. Access Envoy Admin Interface
-
-```bash
-# Set up port forwarding
-kubectl port-forward <pod-name> -n app-namespace 9901:9901
-
-# Access in browser
-# http://localhost:9901/
-```
-
-#### 5.3. Check X-Ray Traces
-
-service maps と traces を表示するには、AWS Management Console の X-Ray service に移動します。
-
-#### 5.4. Create CloudWatch Dashboard
-
-```bash
-# Prepare JSON file for CloudWatch dashboard creation
-cat > appmesh-dashboard.json << EOF
-{
-  "widgets": [
-    {
-      "type": "metric",
-      "x": 0,
-      "y": 0,
-      "width": 12,
-      "height": 6,
-      "properties": {
-        "metrics": [
-          [ "AWS/AppMesh", "RequestCount", "MeshName", "my-mesh", "VirtualNodeName", "service-a", { "stat": "Sum" } ]
-        ],
-        "period": 60,
-        "region": "${AWS_REGION}",
-        "title": "Request Count"
-      }
-    },
-    {
-      "type": "metric",
-      "x": 12,
-      "y": 0,
-      "width": 12,
-      "height": 6,
-      "properties": {
-        "metrics": [
-          [ "AWS/AppMesh", "Latency", "MeshName", "my-mesh", "VirtualNodeName", "service-a", { "stat": "Average" } ]
-        ],
-        "period": 60,
-        "region": "${AWS_REGION}",
-        "title": "Latency"
-      }
-    }
-  ]
-}
-EOF
-
-# Create dashboard using AWS CLI
-aws cloudwatch put-dashboard --dashboard-name AppMeshDashboard --dashboard-body file://appmesh-dashboard.json
-```
-
-### 6. Best Practices and Considerations
-
-#### 6.1. Resource Requirements
-
-* Envoy sidecar が各 pod に追加されるため、node resources を計画します
-* 通常、各 Envoy proxy に 100-200m CPU と 128-256Mi memory を割り当てます
-
-#### 6.2. Gradual Implementation Strategy
-
-1. **Phased Approach**:
-   * non-business-critical services から開始します
-   * traffic mirroring で impact を評価します
-   * successful validation の後に段階的に拡大します
-2. **mTLS Implementation**:
-   * PERMISSIVE mode から開始します
-   * すべての services が compatible であることを確認します
-   * STRICT mode に切り替えます
-
-#### 6.3. Performance Optimization
-
-* Envoy resource limits を調整します
-* 適切な health check intervals を設定します
-* 不要な logging and tracing を最小化します
-
-#### 6.4. Security Hardening
-
-* least privilege IAM policies を使用します
-* 定期的な certificate rotation
-* network policies による defense in depth を実装します
-
-AWS App Mesh は、EKS clusters における microservice communication の secure 化と monitoring のための強力な service mesh solution を提供します。適切な configuration と monitoring によって、application reliability、security、observability を大幅に向上できます。
+**5. 段階的に検証して切り替える。** トラフィックを移動する前に、ルーティング、許可済み/未許可 peer、DNS、TLS rotation、retry、障害復旧、trace、metric の継続性を比較してください。残りの製品サポート期間内で rollback path を保持してください。元の 100–200m CPU および 128–256Mi proxy memory 値は、**未検証の例の見積もり**であり、測定値や保証されたサイジングではありません。実際の saturation、memory、latency、error rate を測定してください。この監査では、mesh、CA、collector、cloud dashboard はプロビジョニングされていません。
 
 </details>
+
+### 8. VPC CNI 1.23.0 でアタッチ済み ENI MTU を設定する変数はどれですか？
+
+- A. `ENI_MTU`
+- B. `AWS_VPC_ENI_MTU`
+- C. `VPC_MTU_SIZE`
+- D. `MAX_ENI`
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: B. `AWS_VPC_ENI_MTU`**
+
+`POD_MTU` は Pod virtual interface を設定し、未設定の場合は ENI MTU から導出されます。`ENI_MTU` は誤った名前でした。実際の path MTU と計画済み node/Pod rollout に合わせてください。数値が受け入れられても、gateway/tunnel/remote endpoint がそのパケットサイズを受け入れる保証はありません。SG は MTU 設定デバイスではありません。
+
+</details>
+
+### 9. strict Pod-SG TCP early-demux の回避策はどこに置くべきですか？
+
+- A. アプリケーション Deployment
+- B. CoreDNS ConfigMap
+- C. CNI init container
+- D. LoadBalancer annotation
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: C. `aws-vpc-cni-init`**
+
+ドキュメント化された `DISABLE_TCP_EARLY_DEMUX=true` 設定は、Helm `init.env` で表される init container に属します。メインの `aws-node` container に設定しても、その init-time 変更は適用されません。strict-mode の kubelet-probe 問題を確認してください。標準 Pod-SG モードでは、この回避策は必要ありません。
+
+</details>
+
+### 10. Kubernetes NetworkPolicy が保証するルール順序の最適化はどれですか？
+
+- A. 最も頻繁に使用されるルールを最初に置く
+- B. name をアルファベット順に並べる
+- C. 制限的な policy を最後に作成する
+- D. 順序の保証はない
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: D. ありません。一致する許可は加算されます。**
+
+ポータブルな「最初に一致したものが勝つ」または最新 policy の優先順位はありません。selector/direction と許可の和集合が分離を決定します。vendor の tier/order API は別のものです。必要な制限を維持し、ルール数だけを理由に削除するのではなく、policy のプログラミング/ランタイムコストを測定してください。
+
+</details>
+
+### 11. サブネットが枯渇しています。WARM_IP_TARGET を増やすとアドレス容量は追加されますか？
+
+- A. はい、サブネットを拡張します
+- B. いいえ、予備アドレスの需要を増やします
+- C. はい、ENI 制限を回避します
+- D. はい、すべての ContainerCreating Pod を修復します
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: B. いいえ。より多くの予備アドレスを要求します。**
+
+より大きな warm target は容量が存在する場合にアロケーションレイテンシを低減できますが、アドレスを予約するため、枯渇を悪化させる可能性もあります。サブネット空間、ENI slot、maxPods、API throttling、prefix fragmentation を独立して特定してください。Prefix delegation は IPv4 アドレスの総数を増やしません。
+
+</details>
+
+### 12. 現在の Service backend アドレスと condition を確認するには、どの API を調べるべきですか？
+
+- A. Node event のみ
+- B. Ingress annotation
+- C. EndpointSlice
+- D. Service ClusterIP のみ
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: C. EndpointSlice**
+
+Service namespace で、`kubernetes.io/service-name=<service>` を使用して EndpointSlice をクエリしてください。Service selector と targetPort と合わせて、address、port、ready/serving/terminating condition を確認します。レガシー Endpoints object は大規模な endpoint set を切り詰めることがあります。空の結果は、ロードバランサーの障害ではなく、selector/readiness の問題を示すことがあります。
+
+</details>
+
+### 13. trafficDistribution: PreferSameZone は何を意味しますか？
+
+- A. AZ 境界を決してまたがない
+- B. 同じ zone を優先し、フォールバックする
+- C. 既存の Pod を 1 つの AZ に移動する
+- D. すべての Local traffic policy をオーバーライドする
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: B. 利用可能な同じ zone の endpoint を優先し、フォールバックします。**
+
+これは互換性のある Service proxy のルーティング優先設定であり、AZ 分離 policy ではありません。十分なローカル容量を確保してください。既存の topology-mode Auto annotation が優先されます。Local internal/external traffic policy は、それぞれのトラフィックにより厳しい node-local 要件を課し、ローカル endpoint が存在しない場合はトラフィックをドロップする可能性があります。
+
+</details>
+
+### 14. RTT が 20 ms の仮想的な 10 Gbps フローの帯域幅遅延積を計算してください。
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: 25,000,000 bytes、約 23.84 MiB。**
+
+```text
+10,000,000,000 bits/s × 0.020 s / 8 = 25,000,000 bytes
+```
+これは算術例であり、EKS ベンチマークや、すべての socket buffer をその値に設定する推奨ではありません。実際の EC2 の単一フロー/burst 制限、TCP auto-tuning、window scaling、同時接続、memory pressure を考慮してください。以前の 16 MiB maxima は、測定なしに最適とは言えません。keepalive は有効な idle socket で動作し、HTTP pooling および buffer sizing とは別のものです。
+
+</details>
+
+### 15. DNS、Service 選択、アプリケーション接続の障害をどのように切り分けますか？
+
+<details>
+<summary>回答を表示</summary>
+
+**回答: エビデンスを収集してから、ポジティブコントロールを用いて実際のプロトコルをテストします。**
+
+ContainerCreating をネットワーキングと分類する前に、影響を受けた Pod の event を確認してください。既知のクラスター Service と意図した hostname を解決し、Service/EndpointSlice の selector-port-readiness の一貫性を調査してから、同じ送信元から Pod-IP と Service-URL へのアクセスを比較します。許可されることが既知のパスをテストし、ツールの欠落、DNS の失敗、または停止した backend を policy 拒否と誤認しないようにしてください。ソース chapter の境界付き診断を使用してください。
+```bash
+set -euo pipefail
+: "${APP_NAMESPACE:?Set the affected namespace}"
+: "${APP_POD:?Set the affected Pod}"
+: "${APP_SERVICE:?Set the affected Service}"
+kubectl -n "$APP_NAMESPACE" describe pod "$APP_POD"
+kubectl -n "$APP_NAMESPACE" get events --field-selector "involvedObject.name=$APP_POD" --sort-by=.metadata.creationTimestamp
+kubectl -n "$APP_NAMESPACE" get service "$APP_SERVICE" -o yaml
+kubectl -n "$APP_NAMESPACE" get endpointslices \
+  -l "kubernetes.io/service-name=$APP_SERVICE" -o yaml
+kubectl -n "$APP_NAMESPACE" get networkpolicy
+kubectl -n kube-system logs -l k8s-app=aws-node -c aws-node --tail=200 --prefix=true
+```
+ロードバランサーでは、controller/class、scheme、target type、target-health reason を特定してください。実際の application/health port、SG と route path、TLS/SNI、Host routing を検証します。ICMP の挙動だけでは、TCP/UDP NetworkPolicy の適用を証明できません。確認された原因を 1 つ変更し、所有者の rollback path を保持して、同じチェックを繰り返してください。これらの例では、本番ネットワークテストを実施したとは主張していません。
+
+</details>
+
+公式リファレンス: [Private EKS](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html), [VPC CNI 1.23.0](https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.0/README.md), [CoreDNS cache](https://coredns.io/plugins/cache/), [App Mesh mTLS](https://docs.aws.amazon.com/app-mesh/latest/userguide/mutual-tls.html), [App Mesh metrics](https://docs.aws.amazon.com/app-mesh/latest/userguide/metrics.html), [Envoy 1.39.1](https://github.com/envoyproxy/envoy/releases/tag/v1.39.1).

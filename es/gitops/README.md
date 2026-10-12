@@ -1,8 +1,8 @@
 # GitOps
 
-> **Última actualización**: February 23, 2026
+> **Última actualización**: October 12, 2026
 
-## Tabla de contenido
+## Tabla de contenidos
 - [¿Qué es GitOps?](#what-is-gitops)
 - [Principios fundamentales](#core-principles)
 - [Modelo Push vs Pull](#push-vs-pull-model)
@@ -11,78 +11,44 @@
 - [GitOps en Amazon EKS](#gitops-on-amazon-eks)
 - [Primeros pasos](#getting-started)
 
-<span id="what-is-gitops"></span>
-
 ## ¿Qué es GitOps?
 
-GitOps es un marco operativo que aplica las prácticas recomendadas de DevOps para la automatización de la infraestructura, como el control de versiones, la colaboración, el cumplimiento y CI/CD, a la gestión de infraestructura. El término fue acuñado por Weaveworks en 2017 y desde entonces se ha convertido en una metodología reconocida por CNCF para el despliegue de aplicaciones cloud-native.
+GitOps es un marco operativo que aplica las prácticas recomendadas de DevOps para la automatización de infraestructura —como el control de versiones, la colaboración, el cumplimiento y CI/CD— a la gestión de infraestructura. El término fue acuñado por Weaveworks en 2017 y desde entonces se ha convertido en una metodología reconocida por CNCF para el despliegue de aplicaciones cloud-native.
 
-En esencia, GitOps usa repositorios Git como la única fuente de verdad para las configuraciones declarativas de infraestructura y aplicaciones. Los cambios en el estado deseado se realizan mediante commits de Git, y los procesos automatizados garantizan que el estado real del sistema coincida con el estado declarado.
+En esencia, GitOps utiliza repositorios Git como la única fuente de verdad para las configuraciones declarativas de infraestructura y aplicaciones. Los cambios en el estado deseado se realizan mediante commits de Git, y los procesos automatizados garantizan que el estado real del sistema coincida con el estado declarado.
 
-```mermaid
-flowchart LR
-    subgraph SOURCE["Source of Truth"]
-        GIT[("Git Repository")]
-    end
+![Diagrama de arquitectura que muestra a un desarrollador enviando cambios a Git, que un agente GitOps observa y reconcilia en un clúster de Kubernetes, mientras el clúster informa el estado al agente.](../.gitbook/assets/en-gitops-readme-10.png)
 
-    subgraph GITOPS["GitOps Engine"]
-        AGENT["GitOps Agent"]
-        RECONCILE["Reconciliation Loop"]
-    end
-
-    subgraph TARGET["Target Environment"]
-        K8S["Kubernetes Cluster"]
-        APPS["Applications"]
-    end
-
-    DEV["Developer"] -->|"git push"| GIT
-    GIT -->|"Watch"| AGENT
-    AGENT -->|"Detect Drift"| RECONCILE
-    RECONCILE -->|"Apply Changes"| K8S
-    K8S --> APPS
-    K8S -->|"Report Status"| AGENT
-
-    classDef git fill:#f05033,stroke:#333,color:white
-    classDef agent fill:#326CE5,stroke:#333,color:white
-    classDef target fill:#28a745,stroke:#333,color:white
-
-    class GIT git
-    class AGENT,RECONCILE agent
-    class K8S,APPS target
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-readme-10.html)
 
 ### Historia y evolución
 
-| Año | Hito |
-|------|-----------|
-| 2017 | Weaveworks acuña el término "GitOps" |
-| 2019 | Se lanza Flux v1 y ArgoCD gana popularidad |
-| 2020 | CNCF acepta Flux como proyecto incubado |
-| 2021 | ArgoCD se convierte en un proyecto graduado de CNCF |
-| 2022 | El GitOps Working Group publica los principios |
-| 2023 | El proyecto OpenGitOps formaliza los estándares |
-| 2024 | GitOps se convierte en el patrón dominante de despliegue de K8s |
+| Hito | Historial verificado del proyecto |
+|---|---|
+| Flux | CNCF Sandbox July 2019; Incubating March 2021; Graduated November 30, 2022 |
+| Argo project | CNCF Incubating March 2020; Graduated December 6, 2022 |
+| OpenGitOps | Publishes versioned principles; distinguish released documents from the working main branch |
 
-### Definición de OpenGitOps de CNCF
+### Definición de CNCF OpenGitOps
 
 El proyecto OpenGitOps define GitOps mediante cuatro principios:
 
-1. **Declarativo**: Un sistema gestionado por GitOps debe expresar su estado deseado de forma declarativa
+1. **Declarativo**: Un sistema gestionado por GitOps debe tener su estado deseado expresado de forma declarativa
 2. **Versionado e inmutable**: El estado deseado se almacena de una forma que impone inmutabilidad y versionado, y conserva un historial completo de versiones
-3. **Extraído automáticamente**: Los agentes de software extraen automáticamente las declaraciones del estado deseado desde la fuente
-4. **Conciliado continuamente**: Los agentes de software observan continuamente el estado real del sistema e intentan aplicar el estado deseado
-
-<span id="core-principles"></span>
+3. **Obtenido automáticamente**: Los agentes de software obtienen automáticamente las declaraciones de estado deseado desde la fuente
+4. **Reconciliado continuamente**: Los agentes de software observan continuamente el estado real del sistema e intentan aplicar el estado deseado
 
 ## Principios fundamentales
+
+El historial de Git registra la configuración deseada. Un revert de Git no restaura las migraciones de bases de datos, los datos eliminados ni el estado externo. La sincronización automatizada, prune y selfHeal de Argo CD son configuraciones independientes; GitOps describe un bucle de control que intenta realizar la reconciliación.
 
 ### Configuración declarativa
 
 Todo se define como código: infraestructura, aplicaciones, políticas y configuraciones. Esto permite:
 
-- **Reproducibilidad**: Cualquier entorno puede recrearse a partir del repositorio Git
-- **Auditabilidad**: Historial completo de todos los cambios, con quién, qué, cuándo y por qué
-- **Consistencia**: Configuraciones idénticas en todos los entornos
+- **Reproducibilidad**: La configuración versionada junto con los artefactos, secretos y datos disponibles permite la recreación
+- **Auditabilidad**: Historial de configuración conservado; los registros de auditoría de runtime/API aún deben recopilarse
+- **Coherencia**: Bases compartidas con diferencias explícitas y revisadas entre entornos
 
 ```yaml
 # Example: Declarative application state
@@ -117,89 +83,69 @@ Los repositorios Git almacenan el estado deseado de todo el sistema:
 - **Configuraciones de aplicaciones**
 - **Definiciones de infraestructura**
 - **Políticas de seguridad**
-- **Ajustes específicos del entorno**
+- **Configuraciones específicas del entorno**
 
-### Conciliación automatizada
+### Reconciliación automatizada
 
-Los agentes de GitOps continuamente:
+Los agentes GitOps continuamente:
 
-1. Supervisan el repositorio Git en busca de cambios
+1. Supervisan el repositorio Git para detectar cambios
 2. Comparan el estado deseado con el estado real
-3. Aplican cambios para que los sistemas cumplan con lo definido
-4. Informan el estado y las desviaciones
+3. Aplican cambios para que los sistemas cumplan con lo establecido
+4. Informan el estado y la desviación
 
-### Sistemas con autorreparación
+### Sistemas de autorreparación
 
-Cuando el estado real se desvía del estado deseado (cambios manuales, fallos, etc.), los agentes de GitOps restauran automáticamente el estado correcto.
-
-<span id="push-vs-pull-model"></span>
+Los intentos de reconciliación dependen de la política de sync/self-heal, los permisos y el estado de salud. Por ejemplo, la sincronización automatizada y selfHeal de Argo CD requieren configuración; la instalación por sí sola no revierte todos los cambios manuales ni recupera los datos perdidos.
 
 ## Modelo Push vs Pull
 
-GitOps admite dos modelos de despliegue:
+Compare el despliegue push tradicional con GitOps basado en pull. Una canalización de solo CI con `kubectl apply` no satisface por sí misma los principios de obtención automática y reconciliación continua de OpenGitOps:
 
-```mermaid
-flowchart TB
-    subgraph PUSH["Push Model (Traditional CI/CD)"]
-        direction LR
-        P_CI["CI Pipeline"] -->|"kubectl apply"| P_K8S["Cluster"]
-    end
+![Diagrama de flujo que contrasta CI/CD tradicional basado en push, donde una canalización aplica cambios directamente al clúster, con el modelo pull de GitOps, donde un agente observa Git y aplica los cambios por sí mismo.](../.gitbook/assets/en-gitops-readme-11.png)
 
-    subgraph PULL["Pull Model (GitOps)"]
-        direction LR
-        PULL_GIT[("Git Repo")] -->|"Watch"| PULL_AGENT["GitOps Agent"]
-        PULL_AGENT -->|"Apply"| PULL_K8S["Cluster"]
-    end
-
-    classDef push fill:#dc3545,stroke:#333,color:white
-    classDef pull fill:#28a745,stroke:#333,color:white
-
-    class P_CI,P_K8S push
-    class PULL_GIT,PULL_AGENT,PULL_K8S pull
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-readme-11.html)
 
 ### Modelo Push
 
-En el modelo Push tradicional:
-- El pipeline de CI/CD tiene acceso directo al cluster
-- Las credenciales se almacenan en el sistema de CI
-- Los cambios se envían desde fuera del cluster
+En el modelo push tradicional:
+- La canalización CI/CD tiene acceso directo al clúster
+- Las credenciales se almacenan en el sistema CI
+- Los cambios se envían desde fuera del clúster
 
 **Desventajas:**
-- Requiere credenciales del cluster en el sistema de CI
+- Requiere credenciales del clúster en el sistema CI
 - Es más difícil auditar quién realizó los cambios
 - No hay detección automática de desviaciones
 
-### Modelo Pull (recomendado)
+### Modelo Pull (Recomendado)
 
-En el modelo Pull de GitOps:
-- El agente se ejecuta dentro del cluster
-- El agente extrae los cambios desde Git
-- No se requiere acceso externo al cluster
+En el modelo pull de GitOps:
+- El agente se ejecuta en el clúster de destino o en un clúster de gestión independiente
+- El agente obtiene los cambios desde Git
+- Los agentes del clúster de gestión aún requieren acceso autorizado de red/API a los destinos remotos
 
 **Ventajas:**
-- Mayor seguridad (sin credenciales externas)
-- Registro de auditoría completo en Git
-- Detección y corrección automática de desviaciones
+- Puede reducir las credenciales del clúster de destino en CI; los agentes aún conservan derechos de acceso a la fuente/API
+- Historial de auditoría completo en Git
+- Detección y corrección automáticas de desviaciones
 - Funciona detrás de firewalls
-
-<span id="gitops-tools-overview"></span>
 
 ## Descripción general de las herramientas GitOps
 
 ### ArgoCD
 
-[ArgoCD](argocd/README.md) es una herramienta de entrega continua declarativa basada en GitOps para Kubernetes.
+[ArgoCD](argocd/README.md) es una herramienta declarativa de entrega continua GitOps para Kubernetes.
 
 **Características principales:**
-- UI web para visualización
-- Compatibilidad con múltiples clusters
-- Integración con SSO
+- Web UI para visualización
+- Compatibilidad con múltiples clústeres
+- Integración de SSO
 - Capacidades de rollback
 - Supervisión del estado de salud
 - ApplicationSet para la gestión de flotas
 
-**Ideal para:** Equipos que desean gestión visual, despliegues en múltiples clusters y características empresariales
+**Ideal para:** Equipos que desean gestión visual, despliegues multiclúster y funciones empresariales
 
 ### FluxCD
 
@@ -214,83 +160,54 @@ FluxCD es un conjunto de soluciones de entrega continua para Kubernetes que son 
 
 **Ideal para:** Equipos que prefieren soluciones ligeras centradas en CLI y flujos de trabajo de automatización de imágenes
 
-### Jenkins X
+### Jenkins X / JayeX
 
-Jenkins X proporciona CI/CD para aplicaciones cloud-native en Kubernetes.
+Jenkins X / JayeX proporciona CI/CD para aplicaciones cloud-native en Kubernetes.
 
 **Características principales:**
-- Pipelines de CI/CD automatizados
+- Canalizaciones CI/CD automatizadas
 - Entornos de vista previa
-- Promoción mediante GitOps
-- Pipelines basados en Tekton
+- Promoción GitOps
+- Canalizaciones basadas en Tekton
 
-**Ideal para:** Equipos con una gran inversión en el ecosistema de Jenkins
+**Evaluar para:** Flujos de trabajo integrados de CI/CD y de entornos de vista previa; JayeX/Jenkins X / JayeX no es simplemente Jenkins con GitOps habilitado
 
 ### Matriz de comparación
 
-| Característica | ArgoCD | FluxCD | Jenkins X |
-|---------|--------|--------|-----------|
-| UI web | ✅ Completa | ❌ Solo CLI | ✅ Básica |
-| Múltiples clusters | ✅ Nativo | ✅ Mediante Flux | ✅ Limitado |
-| Compatibilidad con Helm | ✅ Completa | ✅ Completa | ✅ Completa |
-| Kustomize | ✅ Completo | ✅ Completo | ✅ Limitado |
-| Automatización de imágenes | ⚠️ Limitada | ✅ Nativa | ✅ Nativa |
-| RBAC | ✅ Granular | ⚠️ Básico | ⚠️ Básico |
-| Notificaciones | ✅ Completas | ✅ Completas | ✅ Básicas |
-| Curva de aprendizaje | Media | Baja | Alta |
-| Uso de recursos | Medio | Bajo | Alto |
-| Estado en CNCF | Graduado | Graduado | Sandbox |
-
-<span id="tool-selection-guide"></span>
+| Requisito | Argo CD | Flux |
+|---|---|---|
+| UI predeterminada | Web UI y CLI integradas | Controladores/CLI principales; UIs opcionales del ecosistema |
+| Comportamiento de Helm | helm template; Argo CD posee el ciclo de vida de los recursos | Helm Controller posee el ciclo de vida del release de Helm |
+| Actualizaciones de imágenes | Argo CD Image Updater independiente | Controladores opcionales Image Reflector/Automation |
+| Multi-tenancy | AppProjects, RBAC, restricciones de destino/fuente | Kubernetes RBAC, suplantación de ServiceAccount, restricciones entre namespaces |
+| Fuentes OCI | Fuentes OCI/Helm generales; validar capas/tipos de medios | Fuentes OCIRepository/Helm; validar configuración de verificación/capas |
+| Capacidad | Medir el recuento de aplicaciones/clústeres y la carga de reconciliación | Medir los controladores, fuentes y carga de reconciliación instalados |
 
 ## Guía de selección de herramientas
 
-### Elige ArgoCD cuando:
+### Elija ArgoCD cuando:
 
-- Necesites un dashboard visual para las operaciones
-- Se requiera la gestión de múltiples clusters
-- El SSO/RBAC empresarial sea importante
+- Necesite un panel visual para las operaciones
+- Se requiera gestión multiclúster
+- SSO/RBAC empresarial sea importante
 - El equipo prefiera flujos de trabajo basados en UI
-- Necesites ApplicationSet para la gestión de flotas
+- Necesite ApplicationSet para la gestión de flotas
 
-### Elige FluxCD cuando:
+### Elija FluxCD cuando:
 
-- Prefieras una arquitectura ligera y modular
+- Prefiera una arquitectura ligera y modular
 - La automatización de imágenes sea un requisito principal
 - Se prefiera un flujo de trabajo centrado en CLI
 - Las restricciones de recursos sean una preocupación
-- Necesites una integración estrecha con el controlador de Helm
+- Necesite una integración estrecha con el controlador Helm
 
 ### Marco de decisión
 
-```mermaid
-flowchart TD
-    START["Need GitOps Tool"] --> Q1{"Need Web UI?"}
-    Q1 -->|"Yes"| Q2{"Multi-cluster?"}
-    Q1 -->|"No"| Q3{"Image Automation Priority?"}
+El diagrama ilustra preguntas de selección, no capacidades exclusivas. Compare las funciones actuales, los límites de autorización y el costo operativo con la tabla y una prueba representativa.
 
-    Q2 -->|"Yes"| ARGO["ArgoCD"]
-    Q2 -->|"No"| Q4{"Enterprise RBAC?"}
+![Árbol de decisión que guía la elección entre ArgoCD, FluxCD o cualquiera de las dos herramientas según las necesidades de Web UI, el alcance multiclúster, los requisitos de RBAC, la prioridad de automatización de imágenes y la prioridad de una huella ligera.](../.gitbook/assets/en-gitops-readme-12.png)
 
-    Q3 -->|"Yes"| FLUX["FluxCD"]
-    Q3 -->|"No"| Q5{"Lightweight Priority?"}
-
-    Q4 -->|"Yes"| ARGO
-    Q4 -->|"No"| BOTH["Either Works"]
-
-    Q5 -->|"Yes"| FLUX
-    Q5 -->|"No"| BOTH
-
-    classDef argo fill:#EB6E85,stroke:#333,color:white
-    classDef flux fill:#5468FF,stroke:#333,color:white
-    classDef both fill:#28a745,stroke:#333,color:white
-
-    class ARGO argo
-    class FLUX flux
-    class BOTH both
-```
-
-<span id="gitops-on-amazon-eks"></span>
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-readme-12.html)
 
 ## GitOps en Amazon EKS
 
@@ -298,9 +215,11 @@ flowchart TD
 
 Al implementar GitOps en Amazon EKS:
 
-#### Integración con IAM
+#### Integración de IAM
 
-Usa IAM Roles for Service Accounts (IRSA) para un acceso seguro a la API de AWS:
+Una anotación de ServiceAccount por sí sola no establece acceso a IAM. Configure el proveedor OIDC/la política de confianza/la compatibilidad de SDK de IRSA o una asociación de EKS Pod Identity. Los permisos de AWS API y la autenticación/RBAC de Kubernetes API de destino son independientes.
+
+Utilice IAM Roles for Service Accounts (IRSA) para un acceso seguro a AWS API:
 
 ```yaml
 apiVersion: v1
@@ -313,43 +232,16 @@ metadata:
 
 #### Arquitectura multicuenta
 
-```mermaid
-flowchart TB
-    subgraph MGMT["Management Account"]
-        ARGO["ArgoCD"]
-        GIT[("Git Repository")]
-    end
+![Diagrama de arquitectura que muestra ArgoCD en una cuenta de gestión leyendo desde Git y reconciliando clústeres EKS en cuentas independientes de desarrollo, staging y producción mediante conexiones entre cuentas.](../.gitbook/assets/en-gitops-readme-13.png)
 
-    subgraph DEV["Development Account"]
-        DEV_EKS["EKS Dev"]
-    end
-
-    subgraph STAGING["Staging Account"]
-        STG_EKS["EKS Staging"]
-    end
-
-    subgraph PROD["Production Account"]
-        PROD_EKS["EKS Production"]
-    end
-
-    GIT --> ARGO
-    ARGO -->|"Cross-account"| DEV_EKS
-    ARGO -->|"Cross-account"| STG_EKS
-    ARGO -->|"Cross-account"| PROD_EKS
-
-    classDef mgmt fill:#FF9900,stroke:#333,color:white
-    classDef env fill:#326CE5,stroke:#333,color:white
-
-    class ARGO,GIT mgmt
-    class DEV_EKS,STG_EKS,PROD_EKS env
-```
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-readme-13.html)
 
 #### Integración de servicios de AWS
 
 GitOps puede gestionar recursos de AWS mediante:
 
 - **AWS Controllers for Kubernetes (ACK)**: CRDs nativos de K8s para servicios de AWS
-- **Crossplane**: Aprovisionamiento de recursos multi-cloud
+- **Crossplane**: Aprovisionamiento de recursos multicloud
 - **Terraform Controller**: Gestión del estado de Terraform mediante GitOps
 
 ### Arquitectura recomendada
@@ -376,46 +268,50 @@ GitOps puede gestionar recursos de AWS mediante:
     └── security/                # Security policies
 ```
 
-<span id="getting-started"></span>
-
 ## Primeros pasos
 
 ### Inicio rápido de ArgoCD
 
-1. **Instala ArgoCD:**
+Utilice una versión compatible de Kubernetes, un namespace dedicado vacío y permisos de clúster para CRDs/RBAC. Este ejemplo de instalación sin HA fija Argo CD 3.5.4; revise la [guía de instalación](argocd/01-installation.md) completa antes de producción. Las credenciales iniciales de administrador deben cambiarse y el Secret de bootstrap debe eliminarse después de usarlo.
+
+1. **Instale ArgoCD:**
    ```bash
    kubectl create namespace argocd
-   kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+   kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
    ```
 
-2. **Accede a la UI:**
+2. **Acceda a la UI:**
    ```bash
    kubectl port-forward svc/argocd-server -n argocd 8080:443
    ```
 
-3. **Obtén la contraseña inicial:**
+3. **Obtenga la contraseña inicial:**
    ```bash
    kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
    ```
 
-Para la configuración detallada de ArgoCD, consulta la [documentación de ArgoCD](argocd/README.md).
+Para una configuración detallada de ArgoCD, consulte la [documentación de ArgoCD](argocd/README.md).
 
 ### Inicio rápido de FluxCD
 
-1. **Instala Flux CLI:**
+Prepare `GITHUB_ORG`/`GITOPS_REPOSITORY`, la autenticación de GitHub documentada y los permisos de Kubernetes. Bootstrap escribe en Git e instala controladores de clúster. Agregue `--personal` solo para un propietario personal y seleccione explícitamente los controladores opcionales de automatización de imágenes cuando sea necesario.
+
+1. **Instale Flux CLI:**
    ```bash
-   curl -s https://fluxcd.io/install.sh | sudo bash
+   curl --fail --location https://fluxcd.io/install.sh -o install-flux.sh
+   # Review the script and select a supported version before running it.
+   sudo bash install-flux.sh
    ```
 
-2. **Inicializa Flux:**
+2. **Inicialice Flux:**
    ```bash
    flux bootstrap github \
-     --owner=<org> \
-     --repository=<repo> \
+     --owner="$GITHUB_ORG" \
+     --repository="$GITOPS_REPOSITORY" \
      --path=clusters/my-cluster
    ```
 
-Para la configuración detallada de FluxCD, consulta la documentación de FluxCD.
+Para una configuración detallada de FluxCD, consulte la documentación de FluxCD.
 
 ## Navegación por secciones
 
@@ -424,15 +320,26 @@ Para la configuración detallada de FluxCD, consulta la documentación de FluxCD
 | [ArgoCD](argocd/README.md) | Guía completa de ArgoCD con instalación, aplicaciones, estrategias de sincronización y más |
 | [FluxCD](02-fluxcd.md) | Configuración de FluxCD, controladores de fuentes y automatización de imágenes |
 
-## Lecturas adicionales
+## Lectura adicional
 
 - [CNCF GitOps Working Group](https://github.com/cncf/tag-app-delivery/tree/main/gitops-wg)
-- [Proyecto OpenGitOps](https://opengitops.dev/)
-- [Principios de GitOps](https://www.gitops.tech/)
+- [OpenGitOps Project](https://opengitops.dev/)
+- [GitOps Principles](https://www.gitops.tech/)
 
 ## Cuestionario
 
-Para poner a prueba lo que has aprendido, intenta los siguientes cuestionarios:
-- [Cuestionario de ArgoCD](../quizzes/gitops/01-argocd-quiz.md)
-- [Cuestionario de FluxCD](../quizzes/gitops/02-fluxcd-quiz.md)
-- [Cuestionario de comparación de GitOps](../quizzes/gitops/03-gitops-comparison-quiz.md)
+Para comprobar lo que ha aprendido, pruebe los siguientes cuestionarios:
+- [ArgoCD Quiz](../quizzes/gitops/01-argocd-quiz.md)
+- [FluxCD Quiz](../quizzes/gitops/02-fluxcd-quiz.md)
+- [GitOps Comparison Quiz](../quizzes/gitops/03-gitops-comparison-quiz.md)
+
+### Fuentes de revisión
+
+- [OpenGitOps principles](https://github.com/open-gitops/documents/blob/v1.0.0/PRINCIPLES.md)
+- [Argo project maturity](https://www.cncf.io/projects/argo/)
+- [Flux project maturity](https://www.cncf.io/projects/flux/)
+- [Argo CD OCI sources](https://argo-cd.readthedocs.io/en/stable/user-guide/oci/)
+- [Argo CD automated sync](https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/)
+- [Flux multi-tenancy](https://fluxcd.io/flux/installation/configuration/multitenancy/)
+- [Flux ecosystem](https://fluxcd.io/ecosystem/)
+- [JayeX project](https://jayex.io/v3/about/)
