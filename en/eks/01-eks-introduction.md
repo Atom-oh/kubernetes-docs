@@ -1,7 +1,7 @@
 # Introduction to EKS
 
-> **Supported Versions**: Amazon EKS standard support 1.34–1.36; extended support 1.31–1.33
-> **Last Updated**: September 11, 2026
+> **Supported Versions**: Amazon EKS standard support 1.34–1.37; extended support 1.31–1.33 (checked October 12, 2026)
+> **Last Updated**: October 12, 2026
 
 Amazon Elastic Kubernetes Service (EKS) is a managed service for running Kubernetes on AWS. In this chapter, we will explore the basic concepts of EKS, its architecture, and the differences from standard Kubernetes.
 
@@ -104,7 +104,7 @@ EKS integrates with the following AWS services:
 4. **ALB/NLB**: Provides load balancing.
 5. **ECR**: Provides container image registry.
 6. **EBS/EFS/FSx**: Provides persistent storage.
-7. **AWS App Mesh**: Existing integrations need migration planning: AWS ends support on September 30, 2026. Do not select it for a new deployment.
+7. **AWS App Mesh**: AWS ended support on September 30, 2026, and the App Mesh console and resources are no longer accessible. Existing integrations must migrate; do not select it for a new deployment.
 8. **AWS Certificate Manager**: Manages SSL/TLS certificates.
 9. **AWS Secrets Manager**: Securely stores and manages sensitive information.
 10. **AWS SageMaker**: Runs machine learning workloads.

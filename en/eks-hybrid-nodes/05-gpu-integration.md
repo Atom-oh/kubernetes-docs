@@ -3,7 +3,7 @@
 < [Previous: Node Bootstrap](./04-node-bootstrap.md) | [Table of Contents](./README.md) | [Next: Workload Placement](./06-workload-placement.md) >
 
 > **Supported Versions**: DRA GPU examples require Kubernetes 1.34.2+ on a supported EKS version. Reviewed interfaces: GPU Operator 26.7.0, DRA driver 0.5.0, device plugin 0.20.0.
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 12, 2026
 
 This chapter integrates prepared NVIDIA GPU hosts with EKS Hybrid Nodes. It covers allocation, GPU Operator ownership, MIG and time-slicing. **No GPU, driver installation, model download or inference benchmark was executed for this audit.** The examples require an approved OS/kernel/driver/toolkit/runtime/image combination and testing on the actual hardware.
 
@@ -16,7 +16,7 @@ This chapter integrates prepared NVIDIA GPU hosts with EKS Hybrid Nodes. It cove
 | GPU Operator with `ClusterPolicy` | Operator-managed device-plugin workflow; ownership of driver/toolkit/MIG components must match what is already installed |
 | GPU Operator 26.7 with `GPUCluster` | Operator-managed DRA workflow for a new installation; mutually exclusive with `ClusterPolicy` in the cluster |
 
-AWS recommends DRA for new EKS 1.34+ deployments with supported static-capacity provisioning. **EKS Auto Mode does not currently support DRA** and already manages its GPU device plugin. The standalone examples below target only the identified Hybrid GPU nodes; do not install duplicate allocation managers on Auto Mode or other GPU nodes.
+AWS recommends DRA for new EKS 1.34+ deployments with supported static-capacity provisioning. **The NVIDIA DRA driver is not supported with EKS Auto Mode**, which already manages its GPU device plugin; AWS directs Auto Mode and Karpenter dynamic capacity to the NVIDIA device plugin (Kubernetes 1.37 section of the [EKS standard-support release notes](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html), checked October 12, 2026). The standalone examples below target only the identified Hybrid GPU nodes; do not install duplicate allocation managers on Auto Mode or other GPU nodes.
 
 Use disjoint, owner-managed labels such as `workload.example.com/gpu-allocation=device-plugin` or `dra`. Those labels are scheduling inputs, not a security boundary or proof of healthy GPU hardware. Verify that there is no other plugin/Operator publishing the same physical devices before enabling either path.
 
