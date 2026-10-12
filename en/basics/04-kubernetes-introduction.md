@@ -1,6 +1,9 @@
 # Introduction to Kubernetes
 
-> **Supported Versions**: Upstream Kubernetes 1.35, 1.36, 1.37; EKS standard support 1.34–1.36 (2026-09-11) **Last Updated**: September 11, 2026
+> **Supported Versions**: Upstream Kubernetes 1.35–1.37; EKS standard support 1.34–1.37 (as of October 12, 2026)
+> **Last Updated**: October 12, 2026
+
+The Kubernetes project maintains release branches for the three most recent minor releases (1.35–1.37). Upstream 1.34 is in maintenance mode and still receives patch releases until its end of life on **October 27, 2026**; that date is separate from AWS's EKS support end date. Check the [AWS EKS lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) for EKS coverage and dates.
 
 Kubernetes (K8s) is an open-source container orchestration platform that automates the deployment, scaling, and management of containerized applications. This document explains the basic concepts, architecture, main components, and features of Kubernetes.
 
@@ -28,7 +31,7 @@ brew install kubectl
 ```bash
 # Linux: select an explicit compatible version and architecture.
 set -euo pipefail
-: "${KUBECTL_VERSION:?Set a cluster-compatible version, e.g. v1.37.0}"
+: "${KUBECTL_VERSION:?Set a cluster-compatible version, e.g. v1.37.1}"
 case "$(uname -m)" in
   x86_64) KUBECTL_ARCH=amd64 ;;
   aarch64|arm64) KUBECTL_ARCH=arm64 ;;
@@ -986,7 +989,7 @@ A service mesh is an infrastructure layer that manages communication between mic
 
 * **Istio**: Most widely used service mesh
 * **Linkerd**: Lightweight service mesh
-* **AWS App Mesh (support ends 2026-09-30)**: Plan migration; not a new-deployment recommendation.
+* **AWS App Mesh**: Support ended 2026-09-30; AWS says its console and resources are no longer accessible.
 
 **Istio VirtualService Example**:
 
@@ -1520,7 +1523,7 @@ Amazon EKS (Elastic Kubernetes Service) is a managed Kubernetes service provided
 4. **Fargate Profiles**: Serverless Kubernetes pod execution
 5. **VPC CNI Plugin**: Integration with AWS VPC networking
 6. **CloudWatch Container Insights**: Container monitoring and logging
-7. **AWS App Mesh**: Existing integration with support ending 2026-09-30
+7. **AWS App Mesh**: Support ended 2026-09-30; AWS says its console and resources are no longer accessible
 8. **AWS Distro for OpenTelemetry**: Distributed tracing and monitoring
 9. **EKS Console and CLI**: Management interfaces
 10. **EKS Blueprints**: Best practices-based cluster configuration
@@ -1550,7 +1553,7 @@ EKS integrates with the following AWS services:
 9. **AWS WAF**: Attach to supported application front doors such as ALB; not directly to the EKS API endpoint
 10. **AWS Shield**: DDoS protection
 11. **AWS X-Ray**: Distributed tracing
-12. **AWS App Mesh**: Support ends 2026-09-30; existing workloads need migration
+12. **AWS App Mesh**: Support ended 2026-09-30; existing workloads need migration
 13. **AWS SageMaker**: Machine learning workloads
 14. **AWS Bedrock**: Generative AI workloads
 
@@ -1666,7 +1669,7 @@ brew install kubectl
 ```bash
 # Linux: select an explicit compatible version and architecture.
 set -euo pipefail
-: "${KUBECTL_VERSION:?Set a cluster-compatible version, e.g. v1.37.0}"
+: "${KUBECTL_VERSION:?Set a cluster-compatible version, e.g. v1.37.1}"
 case "$(uname -m)" in
   x86_64) KUBECTL_ARCH=amd64 ;;
   aarch64|arm64) KUBECTL_ARCH=arm64 ;;

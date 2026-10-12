@@ -1,6 +1,9 @@
 # Kubernetes 소개
 
-> **지원 버전**: Upstream Kubernetes 1.35, 1.36, 1.37; EKS 표준 지원 1.34–1.36 (2026-09-11) **마지막 업데이트**: 2026년 9월 11일
+> **지원 버전**: Upstream Kubernetes 1.35–1.37; EKS 표준 지원 1.34–1.37 (2026-10-12 기준)
+> **마지막 업데이트**: 2026년 10월 12일
+
+Kubernetes 프로젝트는 최신 세 마이너 버전(1.35–1.37)의 릴리스 브랜치를 유지합니다. upstream 1.34는 유지 관리 모드로 **2026년 10월 27일** 지원 종료(EOL) 전까지 패치 릴리스를 계속 받지만, 해당 날짜는 EKS의 AWS 지원 종료일과 다릅니다. EKS 지원 대상·기간은 [AWS 수명 주기 문서](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)에서 확인하세요.
 
 Kubernetes(K8s)는 컨테이너화된 애플리케이션의 배포, 확장 및 관리를 자동화하는 오픈소스 컨테이너 오케스트레이션 플랫폼입니다. 이 문서에서는 Kubernetes의 기본 개념, 아키텍처, 주요 구성 요소 및 기능에 대해 설명합니다.
 
@@ -28,7 +31,7 @@ brew install kubectl
 ```bash
 # Linux: select an explicit compatible version and architecture.
 set -euo pipefail
-: "${KUBECTL_VERSION:?Set a cluster-compatible version, e.g. v1.37.0}"
+: "${KUBECTL_VERSION:?Set a cluster-compatible version, e.g. v1.37.1}"
 case "$(uname -m)" in
   x86_64) KUBECTL_ARCH=amd64 ;;
   aarch64|arm64) KUBECTL_ARCH=arm64 ;;
@@ -986,7 +989,7 @@ data:
 
 * **Istio**: 가장 널리 사용되는 서비스 메시
 * **Linkerd**: 경량화된 서비스 메시
-* **AWS App Mesh(2026-09-30 지원 종료 예정)**: 마이그레이션이 필요하며 신규 배포 권장 대상은 아님
+* **AWS App Mesh**: 2026-09-30 지원 종료. AWS 안내에 따르면 이후 콘솔과 리소스에 접근할 수 없습니다.
 
 **Istio 가상 서비스 예시**:
 
@@ -1520,7 +1523,7 @@ Amazon EKS(Elastic Kubernetes Service)는 AWS에서 제공하는 관리형 Kuber
 4. **Fargate 프로필**: 서버리스 Kubernetes 파드 실행
 5. **VPC CNI 플러그인**: AWS VPC 네트워킹과의 통합
 6. **CloudWatch Container Insights**: 컨테이너 모니터링 및 로깅
-7. **AWS App Mesh**: 기존 연동; 2026-09-30 지원 종료 예정
+7. **AWS App Mesh**: 지원이 2026-09-30 종료됐으며, AWS 안내상 이후 콘솔과 리소스에 접근할 수 없음
 8. **AWS Distro for OpenTelemetry**: 분산 추적 및 모니터링
 9. **EKS 콘솔 및 CLI**: 관리 인터페이스 제공
 10. **EKS 블루프린트**: 모범 사례 기반 클러스터 구성
@@ -1550,7 +1553,7 @@ EKS는 다음과 같은 AWS 서비스와 통합됩니다:
 9. **AWS WAF**: ALB 등 지원되는 애플리케이션 진입점에 연결하며 EKS API 엔드포인트에 직접 연결하지 않음
 10. **AWS Shield**: DDoS 보호
 11. **AWS X-Ray**: 분산 추적
-12. **AWS App Mesh**: 2026-09-30 지원 종료 예정; 기존 워크로드 마이그레이션 필요
+12. **AWS App Mesh**: 지원이 2026-09-30 종료됐으며, 기존 워크로드의 마이그레이션이 필요
 13. **AWS SageMaker**: 기계 학습 워크로드
 14. **AWS Bedrock**: 생성형 AI 워크로드
 
@@ -1666,7 +1669,7 @@ brew install kubectl
 ```bash
 # Linux: select an explicit compatible version and architecture.
 set -euo pipefail
-: "${KUBECTL_VERSION:?Set a cluster-compatible version, e.g. v1.37.0}"
+: "${KUBECTL_VERSION:?Set a cluster-compatible version, e.g. v1.37.1}"
 case "$(uname -m)" in
   x86_64) KUBECTL_ARCH=amd64 ;;
   aarch64|arm64) KUBECTL_ARCH=arm64 ;;
