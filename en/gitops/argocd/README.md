@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **Supported Versions**: Argo CD 3.5.2, Argo Rollouts 1.10.0 (reviewed baseline)
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 12, 2026
 
 ## Table of Contents
 - [What is ArgoCD?](#what-is-argocd)
@@ -224,6 +224,7 @@ This is the upstream test matrix recorded in the 3.5.2 repository. It differs fr
 - 3.5.0: released **2026-08-04**. Check migration guidance for changes including the server's Helm 4 renderer.
 - 3.5.1: released 2026-08-12.
 - 3.5.2: released 2026-08-27. Check official releases for patch details and current supported lines.
+- 3.5.4: released 2026-10-07. A **security patch release**: it fixes four CRITICAL issues — command execution in the repo-server via a Kustomize remote ref and via a Kustomize Helm config home, repo-server file reads via a Jsonnet import, and AppProject restrictions bypassed by PreDelete/PostDelete hooks (CVE-2026-77459) — with the same fixes backported in v3.4.10/v3.3.15. Behavior changes: Kustomize builds no longer honor `helmGlobals.configHome`, and OCI manifests over 4 MiB are rejected; review the [release notes](https://github.com/argoproj/argo-cd/releases/tag/v3.5.4) before upgrading.
 
 ### Argo Rollouts
 

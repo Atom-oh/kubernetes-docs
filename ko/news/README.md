@@ -1,5 +1,5 @@
 # 소식
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 10월 12일
 
 Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. GitHub Actions는 매주 월요일 09:00 KST에 갱신안을 만들고 품질 검사를 통과하면 PR을 엽니다. 실제 사이트에는 PR 검토·머지와 배포가 완료된 뒤 반영됩니다.
 
@@ -7,6 +7,12 @@ Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. G
 
 ## 갱신 로그
 
+- 2026-W42: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter v1.15.0 릴리스(노드 복구의 자발적 중단 전환·재부팅 복구, KubeletConfiguration CEL 지원, DRA 지원 확대 등) 반영
+- 2026-W42: [gitops/argocd/README.md](../gitops/argocd/README.md) — Argo CD v3.5.4/v3.4.10/v3.3.15 보안 패치 릴리스(repo-server 명령 실행 등 CRITICAL 4건, CVE-2026-77459 포함) 반영
+- 2026-W42: [kernel/01-container-primitives.md](../kernel/01-container-primitives.md) — Kubernetes 블로그의 cgroup v1 지원 중단 현황(v1.35부터 `failCgroupV1` 기본 `true`) 반영
+- 2026-W42: 매칭 문서 없음 — NVMe SSD 기반 Node Swap(v1.34 GA)으로 Kubernetes 워크로드 밀도 높이기, Kubernetes 블로그 ([원문](https://kubernetes.io/blog/2026/10/05/scaling-kubernetes-workloads-with-node-swap/))
+- 2026-W42: 매칭 문서 없음 — Meshery, CNCF 인큐베이팅 프로젝트 승격 ([원문](https://www.cncf.io/blog/2026/10/07/meshery-becomes-a-cncf-incubating-project/))
+- 2026-W42: 매칭 문서 없음 — AWS Batch, Amazon EKS access entry 인증 지원 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/10/aws-batch-access-entries/))
 - 2026-W36: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37 "Garhwal" 정식 릴리스(파드 인증서/ClusterTrustBundle Stable, Metrics API GA, kube-dns·IPVS 모드 사용 중단 등) 반영
 - 2026-W36: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.30.4/1.29.7 보안 패치 릴리스(ISTIO-SECURITY-2026-006, Envoy CVE 13건) 반영
 - 2026-W36: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCD v3.5.2/v3.4.8 패치 릴리스 반영

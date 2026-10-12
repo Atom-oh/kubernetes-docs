@@ -1,7 +1,7 @@
 # ArgoCD
 
 > **지원 버전**: Argo CD 3.5.2, Argo Rollouts 1.10.0 (검토 기준)
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 12일
 
 ## 목차
 
@@ -218,6 +218,7 @@ spec:
 - 3.5.0: **2026-08-04** 공개. 서버가 사용하는 Helm 렌더러의 4.x 전환 등은 업그레이드 가이드를 확인합니다.
 - 3.5.1: 2026-08-12 공개.
 - 3.5.2: 2026-08-27 공개. 패치 내용과 최신 지원 라인은 공식 릴리스 기록으로 확인합니다.
+- 3.5.4: 2026-10-07 공개. **보안 패치 릴리스**입니다. Kustomize remote ref와 Kustomize Helm config home을 통한 repo-server 명령 실행, Jsonnet import를 통한 repo-server 파일 읽기, PreDelete/PostDelete 훅의 AppProject 제한 우회(CVE-2026-77459) 등 CRITICAL 4건을 수정했으며, v3.4.10/v3.3.15에 동일 수정이 백포트되었습니다. Kustomize 빌드가 `helmGlobals.configHome`을 더 이상 적용하지 않고 4MiB를 넘는 OCI 매니페스트를 거부하는 동작 변경이 있으므로 [릴리스 노트](https://github.com/argoproj/argo-cd/releases/tag/v3.5.4)를 확인하고 업그레이드하세요.
 
 ### Argo Rollouts
 
