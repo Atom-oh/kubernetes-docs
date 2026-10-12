@@ -1,6 +1,6 @@
 # Kubernetes 확장 메커니즘
 
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 10월 12일
 
 ## 확장 지점 선택
 
@@ -15,7 +15,7 @@ Kubernetes API와 workload의 동작을 확장하는 여러 방법이 있습니�
 | CNI | container 네트워크 연결 | 실제 interface·IPAM·route·cleanup |
 | CSI | volume lifecycle과 node mount | capability에 맞는 RPC와 backend·node 동작 |
 
-지원 버전은 선택한 API·라이브러리·배포판에 따라 확인합니다. 현재 controller-runtime 0.25.0의 go.mod는 Go 1.26 및 Kubernetes Go module 0.37.0을 사용합니다. 아래 scheduler 인터페이스 설명은 Kubernetes 1.36.2 소스를 대조했으며 scheduler-plugins 0.35.7과 숫자가 다르다는 이유만으로 호환성을 가정하지 않습니다.
+지원 버전은 선택한 API·라이브러리·배포판에 따라 확인합니다. 검토한 controller-runtime 0.25.0의 go.mod는 Go 1.26.0 및 Kubernetes Go module 0.37.0을 사용합니다(2026년 10월 12일 기준 최신 release는 v0.25.2). 아래 scheduler 인터페이스 설명은 Kubernetes 1.36.2 소스를 대조했으며 scheduler-plugins 0.35.7과 숫자가 다르다는 이유만으로 호환성을 가정하지 않습니다.
 
 ## CRD와 인스턴스
 

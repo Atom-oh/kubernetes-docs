@@ -1,6 +1,7 @@
 # Part 5: Operations and Security
 
 > Reviewed: Airflow 3.3.1, Helm chart 1.22.0, Amazon provider 9.34.0 / Kubernetes provider 10.21.0.
+> Latest upstream patch checked: 3.3.2; operational examples remain on 3.3.1 · October 12, 2026.
 
 This chapter covers HA, upgrades, secrets, logs, observability and recovery for the
 self-managed EKS deployment in Part 2. The operating criterion is **recoverable

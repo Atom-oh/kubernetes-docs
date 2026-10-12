@@ -1,6 +1,6 @@
 # Amazon EKS 업그레이드
 
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 10월 12일
 
 Amazon EKS 클러스터를 최신 상태로 유지하는 것은 보안, 안정성 및 새로운 기능을 활용하기 위해 중요합니다. 이 문서에서는 EKS 클러스터를 안전하게 업그레이드하기 위한 전략, 모범 사례 및 단계별 가이드를 제공합니다.
 
@@ -29,6 +29,7 @@ EKS는 Kubernetes 버전 번호를 사용하지만 자체 출시/지원 일정�
 
 ### 최근 EKS 업그레이드 관련 발표 (2026년)
 
+- **Kubernetes 1.37 제공 시작 (2026년 10월 1일)**: EKS 1.37을 지원 대상 버전으로 사용할 수 있습니다. Auto Mode에서는 consolidation 정책이 없는 새 custom NodePool이 `Balanced`를 기본값으로 사용하며 기본 제공 `general-purpose`·`system` pool도 같은 정책을 사용합니다. 지원되는 CSI·Pod 구성에서 SELinux volume mount가 stable이고 기본 활성화됩니다. 업그레이드 전에 의도한 NodePool 동작과 서로 다른 SELinux label로 volume을 공유하는 워크로드의 CSI 요건을 검토하세요. [EKS 표준 지원 릴리스 노트](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html)의 Kubernetes 1.37 항목과 [지원 일정](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)을 참고하세요.
 - **Kubernetes 버전 롤백 지원 (2026-07-01)**: 업그레이드 후 7일 이내라면 컨트롤 플레인을 이전 마이너 버전으로 롤백할 수 있습니다. 롤백 전 API 호환성, version skew, 애드온 호환성, 클러스터 상태를 점검하는 Rollback Readiness 검사가 자동으로 수행되며, 사용자가 롤백을 요청하면 Auto Mode가 해당 워커 노드를 먼저 교체한 뒤 컨트롤 플레인을 되돌립니다. 애플리케이션 장애를 감지해 자동 시작하는 기능은 아니며 자격 조건과 disruption 제어가 적용됩니다. EKS 제공 리전에서 기능 자체의 추가 요금은 없지만 노드·스토리지 및 해당 버전 지원 요금은 계속 적용됩니다. 자세한 절차는 [롤백 절차](#롤백-절차)를 참고하세요. (출처: [Amazon EKS 버전 롤백 발표](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-version-rollback))
 - **99.99% SLA 및 8XL 컨트롤 플레인 티어 (2026-03-20)**: Provisioned Control Plane의 SLA가 99.95%에서 99.99%로 향상되었으며 1분 단위로 측정됩니다. 초대규모 클러스터, AI/ML, HPC 워크로드를 위한 8XL 스케일링 티어가 신규 도입되어 기존 4XL 대비 API 처리 용량이 2배로 늘었습니다. (출처: [Amazon EKS SLA 및 8XL 스케일링 티어 발표](https://aws.amazon.com/about-aws/whats-new/2026/03/amazon-eks-announces-sla-8xl-scaling-tier/))
 

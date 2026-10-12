@@ -1,7 +1,7 @@
 # ArgoCD Projects and RBAC
 
-> **Reviewed Against**: Argo CD 3.5.2
-> **Last Updated**: September 11, 2026
+> **Reviewed Against**: Argo CD 3.5.2; updated to patch 3.5.4 after release-note review (examples not re-run)
+> **Last Updated**: October 12, 2026
 
 ## Table of Contents
 - [AppProject Overview](#appproject-overview)
@@ -290,7 +290,7 @@ spec:
 
 - An AppProject destination matches `(server OR registered name) AND namespace`; specifying both cluster identifiers does not add an AND constraint. These examples use server only. An Application's destination instead requires choosing server or name.
 - ResourceQuota and LimitRange are namespaced; clusterResourceBlacklist cannot block them. Use namespaceResourceBlacklist for the Argo CD deployment path.
-- Omitting namespaceResourceWhitelist permits namespaced kinds by default; explicit allow/deny lists are evaluated together. Cluster-scoped kinds require an allowlist. Argo CD 3.5.2 also supports name patterns in cluster resource lists.
+- Omitting namespaceResourceWhitelist permits namespaced kinds by default; explicit allow/deny lists are evaluated together. Cluster-scoped kinds require an allowlist. Argo CD 3.5.4 also supports name patterns in cluster resource lists.
 - If delegating Namespace management, restrict its name too (group:'', kind:Namespace, name:team-a-*). This still permits Namespace label changes; pre-provisioning and admission controls are safer for tenant boundaries.
 - manualSync permits manual exceptions outside an allow window; it does not disable automated sync or limit the exception to an on-call role. Review overlapping deny windows and explicit time zones in the sync chapter.
 - Move existing Applications to explicit projects and verify access before restricting default.
@@ -536,7 +536,7 @@ argocd proj role create-token my-project ci-deployer \
 # Store this file's value in the approved CI secret store; do not commit or print it.
 ```
 
-Use `--id UNIQUE_ID` when an explicit identifier is needed; --token-id is not a 3.5.2 flag. expires-in accepts a duration such as 24h. The signed token value is returned at issuance, not stored for later retrieval.
+Use `--id UNIQUE_ID` when an explicit identifier is needed; --token-id is not a 3.5.4 flag. expires-in accepts a duration such as 24h. The signed token value is returned at issuance, not stored for later retrieval.
 
 ### Use Token in CI/CD
 
@@ -574,7 +574,7 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
-        ARGOCD_VERSION=v3.5.2
+        ARGOCD_VERSION=v3.5.4
         case "$(uname -m)" in
           x86_64) cli_arch=amd64 ;;
           aarch64|arm64) cli_arch=arm64 ;;
@@ -689,10 +689,10 @@ validate may warn that built-in role:admin is absent from user CSV. can includes
 
 ## References
 
-- [Argo CD 3.5.2 RBAC](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/rbac.md)
-- [Project matching and validation](https://github.com/argoproj/argo-cd/blob/v3.5.2/pkg/apis/application/v1alpha1/app_project_types.go)
-- [Source Integrity](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/source-integrity-git-gpg.md)
-- [Project token CLI](https://github.com/argoproj/argo-cd/blob/v3.5.2/cmd/argocd/commands/project_role.go)
+- [Argo CD 3.5.4 RBAC](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/rbac.md)
+- [Project matching and validation](https://github.com/argoproj/argo-cd/blob/v3.5.4/pkg/apis/application/v1alpha1/app_project_types.go)
+- [Source Integrity](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/source-integrity-git-gpg.md)
+- [Project token CLI](https://github.com/argoproj/argo-cd/blob/v3.5.4/cmd/argocd/commands/project_role.go)
 
 ## Quiz
 

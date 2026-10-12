@@ -102,7 +102,7 @@ Ethereum JSON-RPC 같은 표준 인터페이스는 호환 backend 교체를 쉽�
 
 7. AMB 문서에서 `확인 필요`로 표시된 항목은?
    - A) AMB Query가 API로 데이터를 제공한다는 점
-   - B) AMB의 지원 체인 목록·리전 가용성·프리뷰/GA 상태와, AMB의 향후 로드맵·서비스 지속 계획
+   - B) AMB의 지원 체인 목록·리전 가용성·프리뷰/GA 상태
    - C) QLDB가 2025년 7월 31일 종료되었다는 점
    - D) AMB가 Hyperledger Fabric을 지원한다는 점
 
@@ -110,8 +110,10 @@ Ethereum JSON-RPC 같은 표준 인터페이스는 호환 backend 교체를 쉽�
 
 <summary>정답 보기</summary>
 
-**정답: B) AMB의 지원 체인 목록·리전 가용성·프리뷰/GA 상태와, AMB의 향후 로드맵·서비스 지속 계획**
+**정답: B) AMB의 지원 체인 목록·리전 가용성·프리뷰/GA 상태**
 
 **설명:**
-지원 체인과 상태는 시점에 따라 변합니다 — 확인된 변경으로 Ethereum Goerli 테스트넷 종료(2024년 4월 1일)와 Polygon Mumbai 테스트넷 종료(2024년 4월 15일)가 있고, Polygon PoS 메인넷은 한때 Public Preview였습니다. 또한 조사 시점에 AMB 전체의 지원 종료 발표는 확인되지 않았으나 이는 "종료 계획이 없다"는 증거가 아니라 "발표를 찾지 못했다"는 뜻이므로, 장기 시스템이라면 AWS 계정 담당자에게 로드맵을 직접 확인해야 합니다.
+지원 체인과 상태는 시점에 따라 변합니다. 확인된 변경으로 Ethereum Goerli 테스트넷 종료(2024년 4월 1일)와 Polygon Mumbai 테스트넷 종료(2024년 4월 15일)가 있으며, Polygon PoS 메인넷도 한때 Public Preview였습니다.
+
+AMB의 지원 종료는 더 이상 미확인 항목이 아닙니다. AWS는 2026년 10월 29일부터 AMB 신규 고객을 받지 않으며, 접근은 2027년 9월 29일에 종료됩니다(AMB 마이그레이션 가이드, https://docs.aws.amazon.com/managed-blockchain/latest/ethereum-dev/migrating-node-rpc-workloads.html).
 </details>

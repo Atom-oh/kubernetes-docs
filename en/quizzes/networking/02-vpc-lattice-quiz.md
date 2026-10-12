@@ -35,12 +35,12 @@ B. Listeners and rules belong to individual services. An association enables a p
 - A) Lattice requires an Envoy sidecar per pod
 - B) App Mesh uses Envoy proxies, while Lattice provides a managed data plane without requiring application sidecars
 - C) All other meshes require sidecars
-- D) App Mesh support has already ended on the review date
+- D) App Mesh remains available for new deployments
 
 <details>
 <summary>Show answer</summary>
 
-B. AWS App Mesh support ends on 2026-09-30, which is still upcoming on 2026-09-11. Plan migration rather than a new App Mesh deployment. Sidecar requirements differ among other mesh modes.
+B. App Mesh used Envoy sidecar proxies, while Lattice provides a managed data plane without application sidecars. D is false: AWS App Mesh support ended on 2026-09-30, and its console and resources are no longer accessible, so migrate existing deployments rather than creating a new one. Sidecar requirements differ among other mesh modes.
 
 </details>
 

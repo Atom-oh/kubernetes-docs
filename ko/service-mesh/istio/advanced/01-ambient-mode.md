@@ -1,6 +1,6 @@
 # Ambient Mode
 
-> **마지막 업데이트**: 2026년 9월 11일 · Istio 1.31. 호환 Linux Node·node-agent/CNI 권한·새 실습 namespace를 전제합니다. 감사에서 배포 명령을 실행하지 않았습니다.
+> **마지막 업데이트**: 2026년 10월 12일 · Istio 1.31. 호환 Linux Node·node-agent/CNI 권한·새 실습 namespace를 전제합니다. 감사에서 배포 명령을 실행하지 않았습니다.
 
 Ambient는 2022년 실험적 preview로 소개되어 Istio 1.18에 Alpha로 처음 포함되고 1.22 Beta·1.24 core GA에 도달했습니다. Preview는 정식 1.15 릴리스의 GA 기능이 아니었습니다. 리소스 절감량·전환 안전성은 실제 topology·정책·트래픽에 달려 있습니다.
 
@@ -246,7 +246,7 @@ spec:
 
 호환 Linux Node·Istio CNI/ztunnel DaemonSet이 필요합니다. EKS Fargate는 이 Node DaemonSet을 실행하지 못하므로 지원되는 EC2 기반 배치와 실제 Node/CNI platform을 확인합니다. [사전 요구사항](https://istio.io/latest/docs/ambient/install/platform-prerequisites/)은 CNI 경로·권한·health probe를 설명합니다. VPC CNI Pod ENI trunking·SecurityGroupPolicy에는 standard enforcing mode 또는 적절한 exec probe가 필요할 수 있으므로 정책 영향을 검토합니다. GKE·OpenShift·k3s 등은 다른 설정이 필요할 수 있습니다.
 
-Istio1.31은 Kubernetes1.32–1.36을 지원하며 EKS 범위는 [설치 가이드](../01-installation.md)를 따릅니다. 아래 Gateway API1.6.0은 Istio1.31 의존성·공식 ambient 실습과 맞는 버전입니다. 기존 bundle의 호환성을 확인하며 더 새로운 호환 bundle을 예제에 맞추려고 낮추지 않습니다.
+Istio1.31은 Kubernetes1.32–1.37을 지원하며 EKS 범위는 [설치 가이드](../01-installation.md)를 따릅니다. 아래 Gateway API1.6.0은 Istio1.31 의존성·공식 ambient 실습과 맞는 버전입니다. 기존 bundle의 호환성을 확인하며 더 새로운 호환 bundle을 예제에 맞추려고 낮추지 않습니다.
 
 ### 1. Istio 설치 (Ambient Mode)
 

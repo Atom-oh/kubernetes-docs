@@ -622,7 +622,7 @@ A query may still be Scheduled or Running; an immediate empty result is not proo
 
 ### Choose and Verify the Platform
 
-Istio 1.31 supports Kubernetes 1.32–1.36; use the intersection with the actual managed platform and required proxy mode. There is no built-in production profile, and the old istio.io/injection label does not enable sidecar injection. Follow the [installation guide](../01-installation.md) for current artifacts, revision labels and prerequisites. Demo addons are not a production monitoring/HA stack.
+Istio 1.31 supports Kubernetes 1.32–1.37; use the intersection with the actual managed platform and required proxy mode. There is no built-in production profile, and the old istio.io/injection label does not enable sidecar injection. Follow the [installation guide](../01-installation.md) for current artifacts, revision labels and prerequisites. Demo addons are not a production monitoring/HA stack.
 
 For Lattice, define the service/resource model, actual client association or endpoint path, target lifecycle, listener protocol and authentication boundaries. A service does not have to be a Lambda function, and a meshed EKS application can call Lambda through a separately supported integration. Lambda cannot itself host an Istio sidecar; that is different from declaring every EKS-plus-Lambda architecture incompatible with Istio.
 

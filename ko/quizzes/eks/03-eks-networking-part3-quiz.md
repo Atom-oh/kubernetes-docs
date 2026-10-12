@@ -1,6 +1,6 @@
 # EKS 네트워킹 퀴즈 - Part 3
 
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 12일
 
 퀴즈는 [Part 3 문제 해결 개념](../../eks/03-eks-networking-part3.md), 프라이빗 연결, 멀티클러스터 설계와 메시 운영을 다룹니다. 현재 예제는 EKS Kubernetes 1.36, VPC CNI 1.23.0을 기준으로 하며 과거 App Mesh 구성은 별도로 표시합니다. 리소스 생성 예제에는 검토한 IAM·네트워크·소유권 전제가 필요합니다. 이 감사는 로컬 검증이며 EKS 배포 검증이 아닙니다.
 
@@ -22,7 +22,7 @@ Application → client proxy → Pod network → destination proxy → applicati
 ```
 가로채는 범위는 등록 여부·제외 포트·프로토콜·모드에 따라 달라지며 모든 패킷이 Service VIP를 통과해야 하는 것은 아닙니다. Ambient 메시는 노드 프록시·waypoint 방식이므로 이 문제는 사이드카 모드를 명시합니다. 메시는 주 서비스 구현을 크게 바꾸지 않고 재시도·라우팅·mTLS·텔레메트리를 제공할 수 있지만 애플리케이션의 추적 컨텍스트 전달·프로토콜 호환성·타임아웃 처리는 여전히 필요할 수 있습니다.
 
-이전 Envoy 이미지를 임의 추가하거나 injector를 중복 사용하지 말고 선택한 메시가 지원하는 injector/revision을 사용합니다. AWS App Mesh는 과거 사례이며 2026년 9월 30일 지원·접근이 종료됩니다. 기존 배포는 이전 계획이 필요하고 새 설치의 기본 예제가 아닙니다. 유지 관리되는 구현 절차는 [Istio 설치](../../service-mesh/istio/01-installation.md)를 참고하세요.
+이전 Envoy 이미지를 임의 추가하거나 injector를 중복 사용하지 말고 선택한 메시가 지원하는 injector/revision을 사용합니다. AWS App Mesh는 과거 사례이며 2026년 9월 30일 지원·접근이 종료되었습니다. 기존 배포는 이전해야 하며 새 설치의 기본 예제가 아닙니다. 유지 관리되는 구현 절차는 [Istio 설치](../../service-mesh/istio/01-installation.md)를 참고하세요.
 
 </details>
 
@@ -378,7 +378,7 @@ spec:
 
 **정답: 기존 관계·신원·텔레메트리를 검토하고 지원되는 대체 구성을 검증합니다.**
 
-**기존 운영·이전 실습:** AWS App Mesh의 지원과 리소스 접근은 **2026년9월30일** 종료됩니다. 이전 절차로 새 메시·Private CA·퍼블릭 Grafana를 생성하지 마세요. 기존 배포는 관계를 파악하고 종료 전에 이전합니다. ECS Service Connect는 EKS 설치 대상이 아니므로 실제 사용 기능에 맞는 지원 Kubernetes 메시·게이트웨이 구조를 평가합니다.
+**기존 운영·이전 실습:** AWS App Mesh의 지원과 리소스 접근은 **2026년 9월 30일** 종료되었습니다. 이전 절차로 새 메시·Private CA·퍼블릭 Grafana를 생성하지 마세요. 기존 App Mesh 배포는 관계를 파악해 지원되는 메시·게이트웨이로 이전합니다. ECS Service Connect는 EKS 설치 대상이 아니므로 실제 사용 기능에 맞는 지원 Kubernetes 메시·게이트웨이 구조를 평가합니다.
 ```bash
 set -euo pipefail
 : "${MESH_NAMESPACE:?Set the namespace of the existing mesh workloads}"
