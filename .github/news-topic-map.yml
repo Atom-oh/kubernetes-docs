@@ -115,6 +115,8 @@
 
 - keywords: [llm gateway, ai gateway, inference gateway, gateway api inference extension, inferencepool, litellm, envoy ai gateway, prompt injection, llm 게이트웨이, 추론 게이트웨이]
   docs: [ai-ml/08-llm-gateway.md]
+- keywords: [agent sandbox, agent-sandbox, sandboxclaim, sandboxwarmpool, sandboxtemplate, 에이전트 샌드박스]
+  docs: [ai-ml/09-agent-sandbox.md]
 
 - keywords: [linux kernel, cgroup, cgroup v2, namespace 격리, conntrack, nf_conntrack]
   docs: [kernel/01-container-primitives.md]
