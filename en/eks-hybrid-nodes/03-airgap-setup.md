@@ -3,11 +3,13 @@
 < [Previous: Network Configuration](./02-network-configuration.md) | [Table of Contents](./README.md) | [Next: Node Bootstrap](./04-node-bootstrap.md) >
 
 > **Supported Versions**: EKS Hybrid Nodes; nodeadm v1.0.20 source checked. Select the Kubernetes, OS, runtime and add-on cohort for your cluster.
-> **Last Updated**: September 12, 2026
+> **Last Updated**: September 16, 2026
 
 This chapter prepares Hybrid Nodes whose public internet access is restricted. **Hybrid Nodes still need connectivity to the AWS-hosted EKS control plane and the AWS services used for credentials.** Physical transfer of software does not make Hybrid Nodes a disconnected Kubernetes distribution.
 
 The examples are preparation and review procedures, not a tested production deployment. The audit verified source code, configuration and local failure cases; it did not build an OS image, publish artifacts, register a node or validate a real private network. The public artifact manifest could not be retrieved in the audit environment because TLS hostname verification failed. No certificate check was bypassed, and no current artifact patch or digest is inferred from that failed fetch.
+
+**Security-team companion:** [Hybrid Nodes network-separation review](11-network-separation-security.md) explains new control-plane-to-on-premises connections, endpoint types, permission and data boundaries, and review evidence. Private connectivity alone does not establish compliance.
 
 ## Connectivity and isolation boundaries
 

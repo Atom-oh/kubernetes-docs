@@ -1,6 +1,6 @@
 # GitOps
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 12, 2026
 
 ## Table of Contents
 - [What is GitOps?](#what-is-gitops)
@@ -272,12 +272,12 @@ GitOps can manage AWS resources through:
 
 ### ArgoCD Quick Start
 
-Use a compatible Kubernetes version, an empty dedicated namespace and cluster permissions for CRDs/RBAC. This non-HA installation example pins Argo CD 3.5.2; review the full [installation guide](argocd/01-installation.md) before production. Initial admin credentials must be changed and the bootstrap Secret removed after use.
+Use a compatible Kubernetes version, an empty dedicated namespace and cluster permissions for CRDs/RBAC. This non-HA installation example pins Argo CD 3.5.4; review the full [installation guide](argocd/01-installation.md) before production. Initial admin credentials must be changed and the bootstrap Secret removed after use.
 
 1. **Install ArgoCD:**
    ```bash
    kubectl create namespace argocd
-   kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/install.yaml
+   kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
    ```
 
 2. **Access the UI:**

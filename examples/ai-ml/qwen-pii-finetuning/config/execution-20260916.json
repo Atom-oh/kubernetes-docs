@@ -1,0 +1,44 @@
+{
+  "model_id": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+  "model_revision": "0d7cf23991f47feeb3a57ecb4c9cee8ea4a17bfe",
+  "seed": 42,
+  "runtime": {
+    "image_uri": "763104351884.dkr.ecr.ap-northeast-2.amazonaws.com/pytorch@sha256:ecb2d8361928ee5465c615ae970f32c475ca3fcbfe57fdcb2f9415aac227f84a",
+    "image_tag": "2.11.0-cu130-amzn2023-sagemaker",
+    "patch_end": "2027-04-30",
+    "torch": "2.11.0",
+    "cuda": "13.0",
+    "python": "3.12"
+  },
+  "training": {
+    "quantization": "nf4",
+    "double_quant": true,
+    "compute_dtype": "bfloat16",
+    "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"],
+    "lora_rank": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.05,
+    "max_sequence_length": 1024,
+    "per_device_batch_size": 1,
+    "gradient_accumulation_steps": 8,
+    "learning_rate": 0.0002,
+    "scheduler": "cosine",
+    "warmup_ratio": 0.03,
+    "smoke_steps": 4,
+    "max_steps": 600,
+    "evaluation_interval": 100,
+    "max_new_tokens": 384
+  },
+  "compute": {
+    "instance_type": "ml.g6e.4xlarge",
+    "instance_count": 1,
+    "volume_gb": 200
+  },
+  "budget": {
+    "user_limit_usd": "500",
+    "reservation_limit_usd": "300",
+    "hourly_usd": "4.6169375000",
+    "overhead_seconds_per_job": 7200,
+    "incidental_usd_per_job": "5"
+  }
+}

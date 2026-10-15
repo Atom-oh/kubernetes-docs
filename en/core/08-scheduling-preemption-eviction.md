@@ -1,7 +1,7 @@
 # Kubernetes Scheduling, Preemption, and Eviction
 
 > **Supported Versions**: Kubernetes 1.34 - 1.36 (Descheduler v0.36 example)
-> **Last Updated**: September 9, 2026
+> **Last Updated**: September 17, 2026
 
 In Kubernetes, scheduling is the process of placing pods on appropriate nodes. Preemption is the process of removing lower-priority pods to make room for higher-priority pods, and eviction terminates a Pod; its workload controller may create a replacement that the scheduler places separately. In this chapter, we will learn about Kubernetes scheduling mechanisms, node selection, preemption, eviction, and scheduling optimization methods in Amazon EKS.
 
@@ -183,6 +183,46 @@ The Kubernetes scheduler is designed to be extensible using a plugin architectur
    - ImageLocality: Considers image locality
    - InterPodAffinity: Considers inter-pod affinity
    - NodeAffinity: Considers node affinity
+
+### NodeResourcesFit Scoring Strategy: LeastAllocated vs. MostAllocated
+
+`NodeResourcesFit` is both a filter plugin (does the node have enough allocatable CPU/memory for the pod?) and a score plugin. Its score plugin behavior is controlled by `scoringStrategy.type`, configured through `KubeSchedulerConfiguration`:
+
+- **`LeastAllocated`** (default): scores nodes higher the *less* allocated they already are. New pods are pulled toward the emptiest nodes, spreading load evenly.
+- **`MostAllocated`**: scores nodes higher the *more* allocated they already are (as long as the pod still fits). New pods are packed onto the busiest nodes first, leaving other nodes untouched or empty.
+- **`RequestedToCapacityRatio`**: a configurable curve between the two, useful for extended resources like GPUs where you want a custom shape rather than a pure min/max.
+
+```yaml
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+profiles:
+- schedulerName: most-allocated-scheduler
+  pluginConfig:
+  - name: NodeResourcesFit
+    args:
+      scoringStrategy:
+        type: MostAllocated
+        resources:
+        - name: cpu
+          weight: 1
+        - name: memory
+          weight: 1
+```
+
+Amazon EKS's control plane is fully managed, so you cannot edit the default kube-scheduler's `KubeSchedulerConfiguration` directly. To use `MostAllocated`, run a *second* scheduler (a `Deployment` running the `kube-scheduler` binary with this config, bound to `system:kube-scheduler`/`system:volume-scheduler` via a dedicated `ServiceAccount`) and point specific pods at it with `spec.schedulerName`, as shown in [Multiple Schedulers](#multiple-schedulers) below — the same pattern used in [Building a Custom Scheduler](../scheduling/01-custom-scheduler-part1.md).
+
+**Verified test — spread vs. bin-packing behavior.** To confirm the practical difference, a disposable 3-worker `kind` cluster (`kubectl version` v1.37.0, isolated, torn down after the test — no shared infrastructure was touched) was seeded with uneven baseline load using `nodeName`-pinned filler pods (16 CPU allocatable per node): `worker`=12 pods (75%), `worker2`=6 pods (37%), `worker3`=0 pods (0%). Six identical 1-CPU pods were then scheduled twice — once with the default scheduler (`LeastAllocated`) and once with a second scheduler configured with `MostAllocated` — against the same starting state:
+
+| Scheduler / strategy | Where the 6 new pods landed | Final CPU utilization (worker / worker2 / worker3) |
+|---|---|---|
+| Default (`LeastAllocated`) | All 6 on `worker3` (the emptiest node) | 75% / 37% / 37% — all three nodes now occupied |
+| `MostAllocated` | 3 on `worker`, 3 on `worker2` (the two busiest nodes) | 93% / 56% / 0% — `worker3` stayed completely idle |
+
+`LeastAllocated` leveled `worker3` up until it matched `worker2`, so every node ends up partially used and none of them can be safely scaled down. `MostAllocated` kept concentrating load on the already-busy nodes and left `worker3` untouched — exactly the node a cluster autoscaler or Karpenter consolidation pass would then terminate.
+
+This is why `MostAllocated` is commonly recommended for **batch/short-lived job workloads** running alongside Karpenter or Cluster Autoscaler: bin-packing jobs onto fewer nodes maximizes the number of nodes that go fully idle and become eligible for consolidation, directly reducing compute cost. `LeastAllocated` remains the better default for long-running, latency-sensitive services, since spreading load leaves headroom on every node to absorb traffic bursts or a `kubectl drain` without cascading pressure onto a single packed node.
+
+Reproduce this exact comparison yourself, step by step, in [Scheduler Scoring Strategy Lab](../labs/core/08-scheduling-preemption-eviction-lab.md).
 
 ### Multiple Schedulers
 

@@ -1,15 +1,19 @@
 # EKS Hybrid Nodes
 
 > **지원 버전**: 현재 EKS 지원 버전; 예제 검토 기준 EKS 1.36 / nodeadm 1.0.20
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 10월 12일
 
 Amazon EKS Hybrid Nodes는 고객이 운영하는 온프레미스·엣지 노드를 AWS 관리형 EKS control plane에 연결합니다. Host·OS·연결·workload 운영은 계속 사용자 책임입니다. 이 가이드는 지원 인터페이스와 예제 구성을 구분하며 특정 온프레미스 프로덕션 배포를 검증했다는 증거가 아닙니다.
+
+EKS 1.37은 2026년 10월 1일 제공되기 시작했습니다. 이 가이드의 예제는 EKS 1.36과 nodeadm 1.0.20 기준 검토를 유지합니다.
+
+버전을 선택하기 전에 [현재 EKS 지원 일정](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html), Hybrid Nodes 문서, Host/CNI 지원 정보를 확인하세요.
 
 ## 목차
 
 1. [사전 요구 사항 및 시스템 요구 사항](01-prerequisites.md)
 2. [네트워크 구성](02-network-configuration.md)
-3. [에어갭 환경 구성 (S3 + VPC 엔드포인트)](03-airgap-setup.md)
+3. [인터넷 제한 환경 구성 (S3 + VPC 엔드포인트)](03-airgap-setup.md)
 4. [노드 부트스트랩](04-node-bootstrap.md)
 5. [GPU 서버 통합](05-gpu-integration.md)
 6. [워크로드 배치 전략](06-workload-placement.md)
@@ -17,6 +21,7 @@ Amazon EKS Hybrid Nodes는 고객이 운영하는 온프레미스·엣지 노드
 8. [운영 및 유지보수](08-operations.md)
 9. [베어메탈 서버 OS 설치 및 마이그레이션 가이드](09-bare-metal-os-setup.md)
 10. [Hybrid Nodes Gateway](10-hybrid-nodes-gateway.md)
+11. [보안팀 관점의 망분리 검토](11-network-separation-security.md)
 
 ## Hybrid Nodes 개요
 
@@ -33,6 +38,8 @@ Hybrid Nodes와 일반 AWS compute node는 같은 cluster에 있을 수 있습�
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-eks-hybrid-nodes-prereq-0.html)
 
 그림은 private 연결·라우팅 구조이며 모든 on-prem route/firewall/AWS service endpoint의 자동 생성을 뜻하지 않습니다.
+
+보안팀의 망분리 심사에는 [망분리 검토 가이드](11-network-separation-security.md)를 함께 사용합니다. Private endpoint·EKS ENI·AWS 서비스용 PrivateLink를 구분하고, DX를 거치는 관리 연결과 데이터 경계의 증거를 정리합니다.
 
 ## 사용 사례와 데이터 경계
 
@@ -86,7 +93,7 @@ nodeSelector:
 | 규모/비용 | SSM node 등록·node 수 기준 관리 요금 없음; 기능별 사용 요금 조건은 별도 | IAM Roles Anywhere quota와 PKI 운영 요건 확인 |
 | 일반적인 선택 | 기존 PKI가 없고 간단한 등록이 필요할 때 | 기존 PKI·인증서 수명 관리가 있을 때 |
 
-**요금 확인일: 2026년 9월 13일.** SSM은 2026년 6월 30일부로 Advanced Instances Tier를 폐지했습니다. Session Manager·Run Command 사용 요금 조건은 [현재 SSM 요금표](https://aws.amazon.com/systems-manager/pricing/)를 확인하며, [EKS Hybrid Nodes vCPU 요금](https://aws.amazon.com/eks/pricing/)은 별도입니다.
+**요금 확인일: 2026년 9월 16일.** SSM은 2026년 6월 30일부로 Advanced Instances Tier를 폐지했습니다. Session Manager·Run Command 사용 요금 조건은 [현재 SSM 요금표](https://aws.amazon.com/systems-manager/pricing/)를 확인하며, [EKS Hybrid Nodes vCPU 요금](https://aws.amazon.com/eks/pricing/)은 별도입니다.
 
 Roles Anywhere profile은 custom role session name을 허용해야 하며 trust policy가 그 이름을 선택한 인증서 속성에 연결해야 합니다. Effective session duration은 IAM role maximum을 **초과하면 안 되며**, CreateSession API상 같은 값도 허용됩니다. [사전 요구 사항](01-prerequisites.md)에서 이 계약과 안전한 준비를 설명합니다.
 
@@ -107,7 +114,7 @@ EKS Hybrid Nodes에 대한 이해를 더욱 깊이 하고 실습을 진행하려
 
 * [EKS Hybrid Nodes 사전 요구사항 퀴즈](../quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
 * [EKS Hybrid Nodes 네트워크 구성 퀴즈](../quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
-* [EKS Hybrid Nodes 에어갭 환경 구성 퀴즈](../quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+* [EKS Hybrid Nodes 인터넷 제한 환경 구성 퀴즈](../quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
 * [EKS Hybrid Nodes 노드 부트스트래핑 퀴즈](../quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
 * [EKS Hybrid Nodes GPU 통합 퀴즈](../quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
 * [EKS Hybrid Nodes 워크로드 배치 퀴즈](../quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
@@ -115,6 +122,7 @@ EKS Hybrid Nodes에 대한 이해를 더욱 깊이 하고 실습을 진행하려
 * [EKS Hybrid Nodes 운영 퀴즈](../quizzes/eks-hybrid-nodes/08-operations-quiz.md)
 * [베어메탈 서버 OS 설치 퀴즈](../quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
 * [EKS Hybrid Nodes Gateway 퀴즈](../quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
+* [보안팀 관점의 망분리 검토 퀴즈](../quizzes/eks-hybrid-nodes/11-network-separation-security-quiz.md)
 
 ### 관련 문서
 
@@ -125,6 +133,7 @@ EKS Hybrid Nodes에 대한 이해를 더욱 깊이 하고 실습을 진행하려
 ### 공식 문서
 
 * [AWS EKS Hybrid Nodes 공식 문서](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html)
+* [EKS Kubernetes 버전 지원 일정](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
 * [nodeadm 사용자 가이드](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html)
 * [Harbor 공식 문서](https://goharbor.io/docs/)
 * [NVIDIA GPU Operator 문서](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/overview.html)

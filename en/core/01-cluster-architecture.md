@@ -1,9 +1,13 @@
 # Cluster Architecture
 
 > **Supported Versions**: Kubernetes 1.35, 1.36, 1.37
-> **Last Updated**: September 9, 2026
+> **Last Updated**: October 12, 2026
 
-The version header refers to upstream Kubernetes. As of September 11, 2026, EKS standard support covers 1.34–1.36; check the [EKS lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) before selecting a version. Component commands below illustrate self-managed clusters; EKS manages its control plane. Image tags and infrastructure IDs are examples: select compatible, maintained images and replace placeholders before use.
+The version header refers to upstream Kubernetes. The project maintains release branches for the three most recent minor releases (1.35–1.37). Upstream 1.34 is in maintenance mode and still receives patch releases until its end of life on **October 27, 2026**, separately from its AWS support end date on EKS.
+
+As of October 12, 2026, EKS standard support covers 1.34–1.37; EKS 1.37 became available on October 1, 2026. Check the [Kubernetes release status](https://kubernetes.io/releases/) and [EKS lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) before selecting a version.
+
+Component commands below illustrate self-managed clusters; EKS manages its control plane. Image tags and infrastructure IDs are examples: select compatible, maintained images and replace placeholders before use.
 
 ## Lab Environment Setup
 
@@ -379,7 +383,7 @@ metadata:
 spec:
   containers:
   - name: kube-apiserver
-    image: registry.k8s.io/kube-apiserver:v1.37.0
+    image: registry.k8s.io/kube-apiserver:v1.37.1
     command:
     - kube-apiserver
     - --advertise-address=192.168.1.10

@@ -1,7 +1,7 @@
 # ArgoCD Applications
 
-> **Supported Versions**: Argo CD 3.5.2
-> **Last Updated**: September 11, 2026
+> **Review baseline**: Argo CD 3.5.2; updated to patch 3.5.4 after release-note review (examples not re-run)
+> **Last Updated**: October 12, 2026
 
 ## Table of Contents
 - [Application CRD Overview](#application-crd-overview)
@@ -291,7 +291,7 @@ spec:
     syncOptions: [CreateNamespace=true]
 ```
 
-Argo CD 3.5.2 requires one layer with a supported media type: by default application/vnd.oci.image.layer.v1.tar+gzip or Helm chart content tar+gzip. Validate other types with ARGOCD_REPO_SERVER_OCI_LAYER_MEDIA_TYPES and the artifact structure.
+Argo CD 3.5.4 requires one layer with a supported media type: by default application/vnd.oci.image.layer.v1.tar+gzip or Helm chart content tar+gzip. Validate other types with ARGOCD_REPO_SERVER_OCI_LAYER_MEDIA_TYPES and the artifact structure. OCI manifests larger than 4 MiB are rejected as of 3.5.4 (GHSA-w996-f2wq-x9c6).
 
 The Helm OCI form uses a chart field and a repository URL **without oci://**. This is a source fragment under Application.spec.
 
@@ -409,7 +409,7 @@ Synced describes compared desired/live fields, not proof that the service handle
 
 ### Built-in Health Checks
 
-These summarize important 3.5.2 implementation checks, not complete predicates based on one replica counter.
+These summarize important 3.5.4 implementation checks, not complete predicates based on one replica counter.
 
 | Resource | Important checks |
 |---|---|
@@ -475,7 +475,7 @@ This interprets controller-reported state; it does not query AWS directly. Merge
 
 ## Resource Hooks
 
-PostSync waits for successful Sync and relevant Healthy resources. Explicit resource-selective sync does not run hooks. In 3.5.2, ApplyOutOfSyncOnly still runs hooks and records history. SyncFail handles eligible synchronization failures; do not rely on it as a guaranteed cleanup/backup path for every error, including manifest-generation failures.
+PostSync waits for successful Sync and relevant Healthy resources. Explicit resource-selective sync does not run hooks. In 3.5.4, ApplyOutOfSyncOnly still runs hooks and records history. SyncFail handles eligible synchronization failures; do not rely on it as a guaranteed cleanup/backup path for every error, including manifest-generation failures.
 
 Resource hooks allow running jobs at specific points during sync.
 
@@ -820,10 +820,10 @@ To test what you've learned, try the [ArgoCD applications quiz](../../quizzes/gi
 
 ## Versioned Review Sources
 
-- [3.5.2 sources and Helm](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/helm.md)
-- [Multiple sources](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/multiple_sources.md)
-- [OCI source rules](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/oci.md)
-- [Sync options](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-options.md)
-- [Phases, waves and hooks](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-waves.md)
-- [Service health implementation](https://github.com/argoproj/argo-cd/blob/v3.5.2/gitops-engine/pkg/health/health_service.go)
+- [3.5.4 sources and Helm](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/helm.md)
+- [Multiple sources](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/multiple_sources.md)
+- [OCI source rules](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/oci.md)
+- [Sync options](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-options.md)
+- [Phases, waves and hooks](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-waves.md)
+- [Service health implementation](https://github.com/argoproj/argo-cd/blob/v3.5.4/gitops-engine/pkg/health/health_service.go)
 - [ACK condition definitions](https://github.com/aws-controllers-k8s/runtime/blob/main/apis/core/v1alpha1/conditions.go)

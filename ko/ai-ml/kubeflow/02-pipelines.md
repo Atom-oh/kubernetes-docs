@@ -1,11 +1,14 @@
 # Part 2: Kubeflow Pipelines
 
 > **지원 버전**: Kubeflow Pipelines 2.16.1, Kubeflow Community Distribution 26.03.1
-> **마지막 업데이트**: 2026년 9월 12일
+> **최신 독립 릴리스 확인**: KFP 2.17.2 (2026년 9월 4일; PyPI `kfp` SDK 최신은 2.17.0), 2026년 10월 12일 확인; 예제는 2.16.1 기준
+> **마지막 업데이트**: 2026년 10월 12일
 
 ## 실습 환경 준비
 
-로컬 컴파일에는 Python과 `kfp==2.16.1`이 필요합니다. 이 장은 Python 3.12로 검증했습니다. 컴파일은 클러스터에 접속하지 않으며, 원격 실행에는 호환되는 KFP 백엔드, 인증된 클라이언트와 네임스페이스 권한이 필요합니다. S3를 사용한다면 실제 실행 ServiceAccount와 아티팩트 접근 컴포넌트의 AWS 신원도 구성해야 합니다.
+로컬 컴파일에는 Python과 `kfp==2.16.1`이 필요합니다. 이 장은 Python 3.12로 검증했습니다. upstream KFP 2.17.2가 공개됐지만(PyPI의 최신 `kfp` SDK 패키지는 2.17.0), 이 pin은 Community Distribution 26.03.1과 맞춘 재현 기준입니다. 새 SDK/backend 조합을 검증한 것은 아닙니다.
+
+컴파일은 클러스터에 접속하지 않습니다. 원격 실행에는 호환되는 KFP 백엔드, 인증된 클라이언트와 네임스페이스 권한이 필요합니다. S3를 사용한다면 실제 실행 ServiceAccount와 아티팩트 접근 컴포넌트의 AWS 신원도 구성해야 합니다.
 
 ## Kubeflow Pipelines란
 

@@ -102,7 +102,7 @@ Access control on a self-operated node's RPC endpoint requires building an authe
 
 7. Which item is marked `Needs verification` in the AMB document?
    - A) That AMB Query serves data via API
-   - B) AMB's supported chain list, regional availability, and preview/GA status, plus AMB's forward roadmap and service continuity plans
+   - B) AMB's supported chain list, regional availability, and preview/GA status
    - C) That QLDB ended on July 31, 2025
    - D) That AMB supports Hyperledger Fabric
 
@@ -110,8 +110,10 @@ Access control on a self-operated node's RPC endpoint requires building an authe
 
 <summary>Show Answer</summary>
 
-**Answer: B) AMB's supported chain list, regional availability, and preview/GA status, plus AMB's forward roadmap and service continuity plans**
+**Answer: B) AMB's supported chain list, regional availability, and preview/GA status**
 
 **Explanation:**
-Supported chains and status vary over time — confirmed changes include the Ethereum Goerli testnet ending (April 1, 2024) and the Polygon Mumbai testnet ending (April 15, 2024), and Polygon PoS mainnet was at one point Public Preview. Also, no end-of-support announcement for AMB as a whole was found at the time of research, but that is not evidence of "no plans to discontinue" — it means "no announcement was found," so for a long-lived system confirm the roadmap directly with your AWS account team.
+Supported chains and status vary over time. Confirmed changes include the Ethereum Goerli testnet ending (April 1, 2024) and the Polygon Mumbai testnet ending (April 15, 2024); Polygon PoS mainnet was also at one point Public Preview.
+
+AMB's end of support is no longer an open item: AWS stops accepting new AMB customers on October 29, 2026, and access ends on September 29, 2027 (AMB migration guide, https://docs.aws.amazon.com/managed-blockchain/latest/ethereum-dev/migrating-node-rpc-workloads.html).
 </details>
