@@ -12,6 +12,13 @@ Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. G
 - 2026-W39: [gitops/argocd/README.md](../gitops/argocd/README.md) — Argo CD v3.5.3/v3.4.9 패치 릴리스 및 v3.6.0-rc1 반영
 - 2026-W39: 매칭 문서 없음 — Kubernetes CSI Changed Block Tracking(CBT) API Beta 승격과 Alpha 대비 차이점, Kubernetes 블로그 ([원문](https://kubernetes.io/blog/2026/09/14/csi-changed-block-tracking-beta/))
 - 2026-W39: 매칭 문서 없음 — AWS Resilience Hub 신규 기능 3종(네임스페이스 내 EKS 레이블 기반 서비스 리소스 검색 등) ([원문](https://aws.amazon.com/about-aws/whats-new/2026/09/resilience-hub-eks-dependency-policy/))
+- 2026-W38: [core/08-scheduling-preemption-eviction.md](../core/08-scheduling-preemption-eviction.md) — Kubernetes v1.37 인플레이스 파드 리사이즈용 스케줄러 선점(Alpha)과 워크로드 인지 스케줄링(Workload/PodGroup Beta, CompositePodGroup API) 반영
+- 2026-W38: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37 노드 라이프사이클 컨디션(drain·유지 관리·graceful shutdown 표준 컨디션 5종) 반영
+- 2026-W38: [observability/metrics/01-prometheus.md](../observability/metrics/01-prometheus.md) — Kubernetes v1.37 컴포넌트 메트릭의 Prometheus 네이티브 히스토그램 Beta(기본 활성화) 반영
+- 2026-W38: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.21.0-pre.2 프리릴리스(Gateway API 세션 퍼시스턴스, AWS 관리형 prefix list, BPF 마스커레이딩 기본화) 반영
+- 2026-W38: 매칭 문서 없음 — Karmada, CNCF 졸업(graduated) 프로젝트 승격 ([원문](https://www.cncf.io/announcements/2026/09/07/cloud-native-computing-foundation-announces-karmada-graduation/))
+- 2026-W38: 매칭 문서 없음 — Kubernetes 재해 복구: 재현 가능한 3가지 장애 시나리오 가이드, CNCF 블로그 ([원문](https://www.cncf.io/blog/2026/09/10/kubernetes-disaster-recovery-guidance-from-three-reproducible-failure-scenarios/))
+- 2026-W38: 매칭 문서 없음 — AWS Private CA EKS 애드온과 Connector for AD, AWS GovCloud(US) 제공 시작 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/09/private-ca-eks-addon-ad-govcloud/))
 - 2026-W36: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37 "Garhwal" 정식 릴리스(파드 인증서/ClusterTrustBundle Stable, Metrics API GA, kube-dns·IPVS 모드 사용 중단 등) 반영
 - 2026-W36: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.30.4/1.29.7 보안 패치 릴리스(ISTIO-SECURITY-2026-006, Envoy CVE 13건) 반영
 - 2026-W36: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCD v3.5.2/v3.4.8 패치 릴리스 반영

@@ -1,7 +1,7 @@
 # Amazon EKS 보안
 
-> **지원 버전**: EKS 표준 지원 1.34–1.36; 연장 지원 1.31–1.33 (2026년 9월 11일 확인)
-> **마지막 업데이트**: 2026년 9월 11일
+> **지원 버전**: EKS 표준 지원 1.34–1.37; 연장 지원 1.31–1.33 (2026년 10월 12일 확인)
+> **마지막 업데이트**: 2026년 10월 12일
 
 Amazon EKS(Elastic Kubernetes Service)에서 워크로드를 안전하게 실행하기 위해서는 다양한 보안 계층과 모범 사례를 이해하고 구현해야 합니다. 이 문서에서는 EKS 클러스터의 보안을 강화하기 위한 주요 개념, 구성 요소 및 모범 사례를 다룹니다.
 
@@ -112,7 +112,7 @@ aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
   --query 'cluster.{Name:name,Status:status,Endpoint:endpoint,Access:accessConfig}' --output json
 ```
 
-다음은 승인된 기존 IAM 개발자 역할·access entry가 이미 활성화된 클러스터·플랫폼 운영자의 권한을 전제로 합니다. 소유자를 통해 전용 네임스페이스를 준비합니다. Pod Security Admission 버전은 검토한 EKS1.36 예제에 맞추었으므로 대상 클러스터에 적절한 버전을 선택하세요:
+다음은 승인된 기존 IAM 개발자 역할·access entry가 이미 활성화된 클러스터·플랫폼 운영자의 권한을 전제로 합니다. 소유자를 통해 전용 네임스페이스를 준비합니다. Pod Security Admission 버전은 검토한 EKS 1.36 예제에 맞추었으므로 대상 클러스터에 적절한 버전을 선택하세요:
 
 ```yaml
 apiVersion: v1
@@ -1171,7 +1171,7 @@ Namespace enforce는 위반 Pod 요청을 거부합니다. Audit·warn은 위반
 
 ### 완전한 Linux Security Context 예제
 
-다음은 실제 이미지·쓰기 가능한 앱 runtime 경로가 필요 없는 작은 Linux 신원/security-context 데모이며 nginx 앱 배포가 아닙니다. 실제 클러스터에 맞는 PSS 버전을 사용하세요. 예제는 검토한 EKS1.36 정책에 고정했습니다.
+다음은 실제 이미지·쓰기 가능한 앱 runtime 경로가 필요 없는 작은 Linux 신원/security-context 데모이며 nginx 앱 배포가 아닙니다. 실제 클러스터에 맞는 PSS 버전을 사용하세요. 예제는 검토한 EKS 1.36 정책에 고정했습니다.
 
 ```yaml
 apiVersion: v1
@@ -1308,6 +1308,8 @@ enabled = false
 ### SELinux 및 파일 시스템 무결성
 
 SELinux는 enforcing 모드에서 process·file label에 따라 접근을 제한합니다. 필요한 호스트 서비스에는 여전히 높은 권한이 필요하며 충분한 권한을 가진 사용자는 일부 label을 변경할 수 있습니다. 이 제어는 위험을 줄이지만 모든 컨테이너 탈출 방지를 보장하지는 않습니다.
+
+EKS Kubernetes 1.37에서는 지원되는 구성에서 SELinux volume mount가 stable이며 기본 활성화됩니다. Pod에 `seLinuxOptions`가 있고 CSI driver가 `seLinuxMount: true`를 선언한 경우 적용됩니다. 하나의 mount에는 SELinux label을 하나만 붙일 수 있으므로, 같은 노드의 다른 Pod가 이미 다른 SELinux label·`seLinuxChangePolicy`·권한 수준으로 그 volume을 사용 중이면 Pod가 `ContainerCreating`에 머물 수 있습니다. SELinux가 비활성화된 노드는 영향을 받지 않습니다. 업그레이드 전에 `seLinuxMount: true`인 driver를 찾고 volume을 공유하는 Pod의 `seLinuxOptions.level`과 `seLinuxChangePolicy`를 맞추세요(`Recursive`는 기존 relabeling 동작을 유지합니다). 자세한 내용은 [EKS 표준 지원 릴리스 노트](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html)의 Kubernetes 1.37 항목을 참고하세요.
 
 루트 파일 시스템은 dm-verity를 사용해 보호 블록을 읽을 때 hash tree와 검증합니다. 부팅 시 모든 파일을 이미 검사했다는 뜻은 아닙니다. 로그·컨테이너 이미지·앱 volume·설정에는 변경 가능한 저장 공간이 있으며 `/etc`의 일부는 ephemeral이므로 지원하는 구성 경로를 사용해야 합니다.
 

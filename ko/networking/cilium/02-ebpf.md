@@ -1,7 +1,7 @@
 # eBPF 기술 심층 분석
 
-> **검토 기준**: Cilium 1.20.1, Linux 5.10+ 또는 문서화된 동등 백포트(예: RHEL 8.10의 4.18 커널), 테스트된 Kubernetes 1.33–1.36. 개별 BPF 기능에는 별도 조건이 있습니다.
-> **최종 검토**: 2026년 9월 12일
+> **검토 기준**: Cilium 1.20.2, Linux 5.10+ 또는 문서화된 동등 백포트(예: RHEL 8.10의 4.18 커널), 테스트된 Kubernetes 1.33–1.36. 개별 BPF 기능에는 별도 조건이 있습니다.
+> **최종 검토**: 2026년 10월 15일
 
 ## 실습 환경 설정
 
@@ -235,15 +235,20 @@ struct {
 
 ### Cilium 주요 eBPF 프로그램 상세 설명
 
-| Cilium 1.20.1 소스 | 역할 |
+| Cilium 1.20.2 소스 | 역할 |
 |---|---|
 | `bpf/bpf_lxc.c` | Endpoint 패킷 경로, 정책, conntrack과 전달 |
 | `bpf/bpf_overlay.c` | Overlay 패킷 경로 |
 | `bpf/bpf_host.c` | 호스트·장치 경로와 지원되는 host firewall 처리 |
 | `bpf/bpf_xdp.c` | 설정된 로드밸런서 가속 등을 포함한 XDP 경로 |
-| `bpf/bpf_sock.c` | connect/sendmsg/recvmsg 서비스 변환 등의 socket-address 훅 |
+| `bpf/bpf_sock.c` | cgroup socket-address 훅(IPv4·IPv6): connect, sendmsg, recvmsg, getpeername, bind/post_bind, sock_release. 소켓 수준 Service 변환에 사용 |
+| `bpf/bpf_wireguard.c` | `cilium_wg0` 디바이스 프로그램(`cil_from_wireguard`/`cil_to_wireguard`), WireGuard로 복호화된 트래픽에 마킹 |
+| `bpf/bpf_sock_term.c` | 삭제된 Service backend에 연결된 소켓을 종료하는 BPF iterator(TCP/UDP) |
+| `bpf/bpf_probes.c`, `bpf/bpf_alignchecker.c` | 데이터패스 프로그램이 아님: 에이전트 시작 시 실행되는 커널 기능 probe와 C/Go 구조체 레이아웃 검사 |
 | `bpf/lib/lb.h` | 공통 로드밸런싱 헬퍼 |
 | `bpf/lib/policy.h` | 공통 정책 헬퍼 |
+
+로더·attach 지점·tail call·프로그램별 상세 흐름은 [eBPF 데이터패스 내부](08-ebpf-datapath-internals.md)를 참고하세요.
 
 이 릴리스에는 최상위 `bpf_lb.c`, `bpf_network.c` 파일이 없습니다. 함수명·기능 조건은 변하므로 개념적인 이름을 소스 파일로 가정하지 말고 정확한 버전을 확인합니다.
 
@@ -582,7 +587,7 @@ Profiling에는 metric 이름과 적절한 커널·PMU 지원이 필요합니다
 
 - [Original BPF paper](https://www.tcpdump.org/papers/bpf-usenix93.pdf), [Linux BPF design Q&A](https://docs.kernel.org/bpf/bpf_design_QA.html), [verifier](https://docs.kernel.org/bpf/verifier.html), [ring buffer](https://docs.kernel.org/bpf/ringbuf.html), [licensing](https://docs.kernel.org/bpf/bpf_licensing.html), [seccomp](https://docs.kernel.org/userspace-api/seccomp_filter.html)
 - [Linux 6.12 BPF loading](https://github.com/torvalds/linux/blob/v6.12/kernel/bpf/syscall.c), [exec event placement](https://github.com/torvalds/linux/blob/v6.12/fs/exec.c), [libbpf 1.7](https://github.com/libbpf/libbpf/tree/v1.7.0), [bpftool 7.7](https://github.com/libbpf/bpftool/releases/tag/v7.7.0)
-- [Cilium 1.20.1 BPF source](https://github.com/cilium/cilium/tree/v1.20.1/bpf), [maps](https://github.com/cilium/cilium/tree/v1.20.1/pkg/maps), [load-balancer maps](https://github.com/cilium/cilium/tree/v1.20.1/pkg/loadbalancer/maps), [command reference](https://github.com/cilium/cilium/tree/v1.20.1/Documentation/cmdref)
+- [Cilium 1.20.2 BPF source](https://github.com/cilium/cilium/tree/v1.20.2/bpf), [maps](https://github.com/cilium/cilium/tree/v1.20.2/pkg/maps), [load-balancer maps](https://github.com/cilium/cilium/tree/v1.20.2/pkg/loadbalancer/maps), [command reference](https://github.com/cilium/cilium/tree/v1.20.2/Documentation/cmdref)
 - [Cilium system requirements](https://docs.cilium.io/en/v1.20/operations/system_requirements/), [Kubernetes compatibility](https://docs.cilium.io/en/v1.20/network/kubernetes/compatibility/), [kube-proxy replacement](https://docs.cilium.io/en/v1.20/network/kubernetes/kubeproxy-free/), [encryption](https://docs.cilium.io/en/v1.20/security/network/encryption/)
 
 ## 퀴즈

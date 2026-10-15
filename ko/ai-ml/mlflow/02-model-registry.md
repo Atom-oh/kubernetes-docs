@@ -1,10 +1,12 @@
 # Part 2: MLflow Model Registry
 
-> **검토 기준**: MLflow 3.16.0 · 2026-09-12
+> **검토 기준**: MLflow 3.16.0; 최신 패치 3.16.1 확인 · 2026-10-12
 
 ## 실습 환경 준비
 
-Python 3.10 이상과 `mlflow==3.16.0`을 사용합니다. Registry API는 로컬 SQLite에서도 실습할 수 있으며 별도 HTTP 서버가 필수는 아닙니다. 팀 배포는 [Part 3](03-eks-deployment.md), Tracking 설정은 [Part 1](01-tracking.md)을 참고합니다. 다음 설명은 OSS MLflow 기준이며 Databricks Unity Catalog 같은 관리형 registry의 권한·복사·보존 동작과 구분합니다.
+Python 3.10 이상과 `mlflow==3.16.0`을 사용합니다. Registry API는 로컬 SQLite에서도 실습할 수 있으며 별도 HTTP 서버가 필수는 아닙니다. 3.16.1이 공개됐지만 이 장의 실행 예제는 3.16.0 기준이며 3.16.1에서 재검증하지 않았습니다.
+
+팀 배포는 [Part 3](03-eks-deployment.md), Tracking 설정은 [Part 1](01-tracking.md)을 참고합니다. 다음 설명은 OSS MLflow 기준이며 Databricks Unity Catalog 같은 관리형 registry의 권한·복사·보존 동작과 구분합니다.
 
 ## Model Registry란 무엇인가
 

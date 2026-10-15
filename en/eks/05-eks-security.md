@@ -1,7 +1,7 @@
 # Amazon EKS Security
 
-> **Supported Versions**: EKS standard support 1.34–1.36; extended support 1.31–1.33 (checked September 11, 2026)
-> **Last Updated**: September 11, 2026
+> **Supported Versions**: EKS standard support 1.34–1.37; extended support 1.31–1.33 (checked October 12, 2026)
+> **Last Updated**: October 12, 2026
 
 To securely run workloads on Amazon EKS (Elastic Kubernetes Service), you need to understand and implement various security layers and best practices. This document covers key concepts, components, and best practices for strengthening the security of your EKS cluster.
 
@@ -112,7 +112,7 @@ aws eks describe-cluster --name "$CLUSTER_NAME" --region "$AWS_REGION" \
   --query 'cluster.{Name:name,Status:status,Endpoint:endpoint,Access:accessConfig}' --output json
 ```
 
-The following example assumes a prepared approved IAM developer role, a cluster that already supports access entries, and the platform operator’s permissions. Prepare the dedicated namespace through its owner. Its Pod Security Admission version matches the reviewed EKS1.36 example; select the appropriate version for the target cluster:
+The following example assumes a prepared approved IAM developer role, a cluster that already supports access entries, and the platform operator’s permissions. Prepare the dedicated namespace through its owner. Its Pod Security Admission version matches the reviewed EKS 1.36 example; select the appropriate version for the target cluster:
 
 ```yaml
 apiVersion: v1
@@ -1169,7 +1169,7 @@ Namespace enforce rejects violating Pod requests. Audit and warn record/report v
 
 ### A Complete Linux Security Context Example
 
-The following is a small Linux identity/security-context demonstration using a real image and no writable application runtime paths. It is not an nginx application deployment. Use the PSS version appropriate to the actual cluster; this example is pinned to the reviewed EKS1.36 policy.
+The following is a small Linux identity/security-context demonstration using a real image and no writable application runtime paths. It is not an nginx application deployment. Use the PSS version appropriate to the actual cluster; this example is pinned to the reviewed EKS 1.36 policy.
 
 ```yaml
 apiVersion: v1
@@ -1300,6 +1300,8 @@ enabled = false
 ### SELinux and Filesystem Integrity
 
 SELinux runs in enforcing mode and restricts access according to process and file labels. Intended host services still need privileged access, and sufficiently privileged users can change some labels. These controls reduce risk; they are not proof against every container escape.
+
+On EKS Kubernetes 1.37, SELinux volume mounts are stable and enabled by default for supported configurations. The behavior applies when the Pod sets `seLinuxOptions` and the CSI driver declares `seLinuxMount: true`. Because a mount carries only one SELinux label, a Pod can stay in `ContainerCreating` when another Pod on the same node already uses that volume with a different SELinux label, `seLinuxChangePolicy` or privilege level; nodes without SELinux enabled are not affected. Before upgrading, find drivers with `seLinuxMount: true` and align `seLinuxOptions.level` and `seLinuxChangePolicy` on Pods that share a volume (`Recursive` keeps the previous relabeling behavior). See the Kubernetes 1.37 section of the [EKS standard-support release notes](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html).
 
 The root filesystem uses dm-verity: protected blocks are verified against the hash tree when read. This is not an assertion that every file has been scanned at boot. Logs, container images, application volumes and settings include mutable storage; parts of `/etc` are ephemeral and must be configured through supported mechanisms.
 

@@ -139,6 +139,12 @@
    - [Part 5: L2-L7 네트워킹](./networking/cilium/05-l2-l7-networking.md) | [퀴즈](./quizzes/networking/cilium/05-l2-l7-networking-quiz.md)
    - [Part 6: 보안 및 가시성](./networking/cilium/06-security-visibility.md) | [퀴즈](./quizzes/networking/cilium/06-security-visibility-quiz.md)
    - [Part 7: 고급 주제](./networking/cilium/07-advanced-topics.md) | [퀴즈](./quizzes/networking/cilium/07-advanced-topics-quiz.md)
+   - [Part 8: eBPF 데이터패스 내부](./networking/cilium/08-ebpf-datapath-internals.md) | [퀴즈](./quizzes/networking/cilium/08-ebpf-datapath-internals-quiz.md)
+   - [Part 9: 오버레이와 네이티브 라우팅](./networking/cilium/09-overlay-native-routing.md) | [퀴즈](./quizzes/networking/cilium/09-overlay-native-routing-quiz.md)
+   - [Part 10: IPAM 심화](./networking/cilium/10-ipam-deep-dive.md) | [퀴즈](./quizzes/networking/cilium/10-ipam-deep-dive-quiz.md)
+   - [Part 11: BGP, 로드밸런서 IP, Egress](./networking/cilium/11-bgp-lb-egress-edge.md) | [퀴즈](./quizzes/networking/cilium/11-bgp-lb-egress-edge-quiz.md)
+   - [Part 12: mTLS, 암호화, Identity](./networking/cilium/12-mtls-encryption-identity.md) | [퀴즈](./quizzes/networking/cilium/12-mtls-encryption-identity-quiz.md)
+   - [Part 13: 버전, 설치/업그레이드, Cluster Mesh](./networking/cilium/13-clustermesh-install-upgrade.md) | [퀴즈](./quizzes/networking/cilium/13-clustermesh-install-upgrade-quiz.md)
    - [네트워킹 개념](./networking/cilium/networking-concepts.md) | [퀴즈](./quizzes/networking/cilium/networking-concepts-quiz.md)
    - [용어집](./networking/cilium/glossary.md) | [퀴즈](./quizzes/networking/cilium/glossary-quiz.md)
 8. **Calico 딥다이브**
@@ -276,6 +282,7 @@
    - [Part 4: Unified Studio 거버넌스](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [퀴즈](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
    - [Part 5: 실제 검증 결과](./ai-ml/sagemaker-ai/04-validation-results.md) | [퀴즈](./quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md)
 12. [LLM 게이트웨이(Inference Gateway) 딥다이브](./ai-ml/08-llm-gateway.md) | [퀴즈](./quizzes/ai-ml/08-llm-gateway-quiz.md)
+13. [EKS에서 Agent Sandbox 운영하기](./ai-ml/09-agent-sandbox.md) | [퀴즈](./quizzes/ai-ml/09-agent-sandbox-quiz.md)
 
 ### Security & Policy
 1. [Kyverno를 사용한 정책 관리](./security/01-kyverno-policy-management.md) | [퀴즈](./quizzes/security/01-kyverno-policy-management-quiz.md)
@@ -290,6 +297,10 @@
 10. [cert-manager](./security/10-cert-manager.md) | [퀴즈](./quizzes/security/10-cert-manager-quiz.md)
 11. [Kubescape](./security/11-kubescape.md) | [퀴즈](./quizzes/security/11-kubescape-quiz.md)
 12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [퀴즈](./quizzes/security/12-spiffe-spire-quiz.md)
+13. [사고 기반 다층 방어와 침해 대응](./security/13-defense-in-depth-incident-response.md) | [퀴즈](./quizzes/security/13-defense-in-depth-incident-response-quiz.md)
+14. [WAF·엣지·API 보안과 origin 보호](./security/14-waf-edge-api-security.md) | [퀴즈](./quizzes/security/14-waf-edge-api-security-quiz.md)
+15. [Palo Alto·Fortinet NGFW](./security/15-ngfw-paloalto-fortinet.md) | [퀴즈](./quizzes/security/15-ngfw-paloalto-fortinet-quiz.md)
+16. [GWLB·GENEVE 검사 경로와 장애 검증](./security/16-gwlb-geneve-inspection.md) | [퀴즈](./quizzes/security/16-gwlb-geneve-inspection-quiz.md)
 
 ### GitOps
 1. [GitOps 개요](./gitops/README.md)

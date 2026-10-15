@@ -1,7 +1,7 @@
 # ArgoCD Traffic Management
 
-> **Reviewed Against**: Argo CD 3.5.2, Argo Rollouts 1.10.0, Helm chart 2.43.1
-> **Last Updated**: September 11, 2026
+> **Reviewed Against**: Argo CD 3.5.2, Argo Rollouts 1.10.0, Helm chart 2.43.1; updated to Argo CD 3.5.4 and chart 2.43.6 (still Rollouts 1.10.0) after release-note review (examples not re-run)
+> **Last Updated**: October 12, 2026
 
 ## Table of Contents
 - [Argo Rollouts Overview](#argo-rollouts-overview)
@@ -115,7 +115,7 @@ dashboard:
 helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update argo
 helm upgrade --install argo-rollouts argo/argo-rollouts \
-  --version 2.43.1 --namespace argo-rollouts --create-namespace \
+  --version 2.43.6 --namespace argo-rollouts --create-namespace \
   --values rollouts-values.yaml --wait --timeout 5m
 ```
 
@@ -127,7 +127,7 @@ For Helm installations, enable the read-only ClusterIP Dashboard and port-forwar
 
 ```bash
 helm upgrade --install argo-rollouts argo/argo-rollouts \
-  --version 2.43.1 --namespace argo-rollouts --create-namespace \
+  --version 2.43.6 --namespace argo-rollouts --create-namespace \
   --values rollouts-values.yaml \
   --set dashboard.enabled=true --set dashboard.readonly=true \
   --set dashboard.service.type=ClusterIP --set dashboard.ingress.enabled=false \

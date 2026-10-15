@@ -1,122 +1,117 @@
 # Linux の基礎
 
-> **対応バージョン**: すべての主要な Linux ディストリビューション（Ubuntu 20.04+、CentOS/RHEL 8+、Debian 11+） **最終更新**: February 11, 2026
+> **対応バージョン**: 検証済みの例: Ubuntu 24.04 LTS、Debian 13、Amazon Linux 2023。パッケージ名やサービス名はディストリビューションによって異なります **最終更新**: September 15, 2026
 
-Linux の基礎を理解することは、Kubernetes とコンテナ技術を理解するうえで不可欠です。このドキュメントでは、Kubernetes 環境で特に重要となる Linux の中核概念を扱います。
+Linux の基礎を理解することは、Kubernetes とコンテナ技術を理解するために不可欠です。このドキュメントでは、Kubernetes 環境で特に重要となる Linux の中核的な概念を扱います。
+
+ターミナルやネットワークに初めて触れる場合は、[はじめての Linux ネットワーク](../networking/beginner/README.md) のレッスン 1 から始めてください。このドキュメントは、その後にコンテナやカーネルの概念をより深く参照するためのリファレンスとしても機能します。
 
 ## ラボ環境のセットアップ
 
-このドキュメントの例に沿って操作するには、以下の環境が必要です。
+このドキュメントの例を実際に試すには、次の環境が必要です。
 
 ### 必要な環境
 
-* Linux オペレーティングシステム（Ubuntu 20.04+、CentOS/RHEL 8+、Debian 11+ を推奨）
+* Linux オペレーティングシステム (Ubuntu 24.04 LTS、Debian 13、または Amazon Linux 2023 を推奨)
 * ターミナルへのアクセス
 * sudo 権限
 
-### クラウド環境のセットアップ（任意）
+### クラウド環境のセットアップ (任意)
 
-AWS EC2 インスタンスを使用する場合：
+隔離されたトレーニング用 VM を使用してください。AWS の場合は、正しいアーキテクチャとリージョンの AL2023 を選択します。古いハードコードされた AMI は移植性がありません。AWS は AL2 の標準サポートが 2026 年 6 月 30 日に終了したと公表しています。以下は AMI を検索するだけの操作です。インスタンスの作成と権限を絞ったアクセスは別途用意し、その後に既存のインスタンスへ接続してください。
 
 ```bash
-# Start an Amazon Linux 2 instance
-aws ec2 run-instances \
-  --image-id ami-0c55b159cbfafe1f0 \
-  --instance-type t3.micro \
-  --key-name your-key-pair \
-  --security-group-ids sg-12345678 \
-  --subnet-id subnet-12345678
+# Read-only AMI discovery; select a kernel-specific parameter when reproducibility is required.
+aws ssm get-parameter --region us-east-1 \
+  --name /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64 \
+  --query Parameter.Value --output text
 
 # SSH connection
 ssh -i your-key.pem ec2-user@your-instance-public-ip
 ```
 
-### ローカル環境のセットアップ（任意）
+### ローカル環境のセットアップ (任意)
 
-ローカルで練習するには、次のいずれかを使用できます。
+ローカルで練習する場合は、次のいずれかを利用できます。
 
-* **VirtualBox + Vagrant**: 仮想マシン環境をセットアップする
-* **WSL2**: Windows 上で Linux 環境を使用する
-* **Docker**: コンテナ環境で練習する
+* **VirtualBox + Vagrant**: 仮想マシン環境を構築します
+* **WSL2**: Windows 上で Linux 環境を利用します
+* **Docker**: 基本的なシェル演習には適していますが、通常のコンテナは完全な systemd ホストや、ホストネットワーク/カーネル演習に必要な権限を提供しません。
 
 ## 目次
 
 * [Linux カーネルとユーザー空間](01-linux-basics.md#linux-kernel-and-user-space)
 * [プロセス管理](01-linux-basics.md#process-management)
-* [名前空間](01-linux-basics.md#namespaces)
-* [cgroups（コントロールグループ）](01-linux-basics.md#cgroups-control-groups)
+* [Namespace](01-linux-basics.md#namespaces)
+* [cgroups (Control Groups)](01-linux-basics.md#cgroups-control-groups)
 * [ファイルシステム](01-linux-basics.md#file-system)
 * [ネットワークの基礎](01-linux-basics.md#networking-basics)
 * [セキュリティコンテキスト](01-linux-basics.md#security-context)
 * [systemd とサービス管理](01-linux-basics.md#systemd-and-service-management)
 * [カーネルパラメータとモジュール](01-linux-basics.md#kernel-parameters-and-modules)
-* [システムリソースの制限](01-linux-basics.md#system-resource-limits)
+* [システムリソース制限](01-linux-basics.md#system-resource-limits)
 * [ログ管理](01-linux-basics.md#log-management)
 * [DNS とネットワーク設定](01-linux-basics.md#dns-and-network-configuration)
 * [時刻同期](01-linux-basics.md#time-synchronization)
 * [パッケージ管理](01-linux-basics.md#package-management)
-* [重要な Linux コマンド](01-linux-basics.md#essential-linux-commands)
+* [必須の Linux コマンド](01-linux-basics.md#essential-linux-commands)
 * [コンテナ関連の Linux 機能](01-linux-basics.md#container-related-linux-features)
-
-<span id="linux-kernel-and-user-space"></span>
 
 ## Linux カーネルとユーザー空間
 
 ### カーネルの役割
 
-> **重要な概念**: Linux カーネルはオペレーティングシステムの中核であり、ハードウェアとソフトウェアの仲介役を担います。
+> **重要な概念**: Linux カーネルはオペレーティングシステムの中核であり、ハードウェアとソフトウェアの仲介役として動作します。
 
-Linux カーネルはオペレーティングシステムの中核であり、ハードウェアとソフトウェアの仲介役を担います。主な機能は次のとおりです。
+Linux カーネルはオペレーティングシステムの中核であり、ハードウェアとソフトウェアの仲介役として動作します。主な機能は次のとおりです。
 
-* **プロセス管理**: プロセスの作成、スケジューリング、終了
+* **プロセス管理**: プロセスの生成、スケジューリング、終了
 * **メモリ管理**: 仮想メモリと物理メモリの割り当て
 * **デバイス管理**: ハードウェアデバイスとの通信
-* **システムコールインターフェース**: ユーザー空間プログラムがカーネルサービスにアクセスする方法を提供する
+* **システムコールインターフェイス**: ユーザー空間のプログラムがカーネルのサービスにアクセスする手段を提供
 
 ### ユーザー空間
 
-ユーザー空間は、通常のアプリケーションが実行されるメモリ領域です。ユーザー空間プログラムは、システムコールを通じてカーネルサービスにアクセスします。
+ユーザー空間は、通常のアプリケーションが動作するメモリ領域です。ユーザー空間のプログラムは、システムコールを通じてカーネルのサービスにアクセスします。
 
-![Linux のユーザー空間、カーネル空間、ハードウェアのレイヤー: アプリケーションとシェルはシステムライブラリおよびシステムコールインターフェースを通じてカーネルサブシステムに到達し、デバイスドライバーは CPU、メモリ、ストレージ、ネットワークカードに到達します。](../.gitbook/assets/en-basics-01-linux-basics-0.png)
+![Linux のユーザー空間、カーネル空間、ハードウェアの各層: アプリケーションと Shell はシステムライブラリとシステムコールインターフェイスを介してカーネルのサブシステムに到達し、デバイスドライバーが CPU、メモリ、ストレージ、ネットワークカードに到達します。](../.gitbook/assets/en-basics-01-linux-basics-0.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-0.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-0.html)
 
 ### システムコールの例
 
-| システムコール | 説明           | 関連コマンド    |
+| システムコール | 説明 | 関連コマンド |
 | ----------- | --------------------- | ------------------- |
-| `fork()`    | 新しいプロセスを作成する    | `ps`, `top`         |
-| `exec()`    | プログラムを実行する       | `bash`, `sh`        |
-| `open()`    | ファイルを開く             | `cat`, `less`       |
-| `read()`    | ファイルからデータを読み取る   | `cat`, `grep`       |
-| `write()`   | ファイルにデータを書き込む   | `echo`, `tee`       |
-| `socket()`  | ネットワークソケットを作成する | `netstat`, `ss`     |
-| `clone()`   | 名前空間を作成する          | `unshare`, `docker` |
+| `fork()`    | 新しいプロセスの作成 | `ps`, `top`         |
+| `exec()`    | プログラムの実行 | `bash`, `sh`        |
+| `open()`    | ファイルのオープン | `cat`, `less`       |
+| `read()`    | ファイルからのデータ読み取り | `cat`, `grep`       |
+| `write()`   | ファイルへのデータ書き込み | `echo`, `tee`       |
+| `socket()`  | ネットワークソケットの作成 | `netstat`, `ss`     |
+| `clone()`   | Namespace の作成 | `unshare`, `docker` |
 
 ### Linux カーネルアーキテクチャ
 
-![レイヤー化された Linux カーネルアーキテクチャ: アプリケーションとシェルはシステムライブラリおよびシステムコールインターフェースを通じてカーネルに入り、カーネルサブシステムはデバイスドライバーを通じてハードウェアを駆動します。](../.gitbook/assets/en-basics-01-linux-basics-1.png)
+![層で表した Linux カーネルアーキテクチャ: アプリケーションと Shell はシステムライブラリとシステムコールインターフェイスを介してカーネルに入り、カーネルのサブシステムはデバイスドライバーを介してハードウェアを駆動します。](../.gitbook/assets/en-basics-01-linux-basics-1.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-1.html)
-
-<span id="process-management"></span>
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-1.html)
 
 ## プロセス管理
 
 ### プロセスとスレッド
 
-* **プロセス**: 独立したメモリ空間を持つ、実行中のプログラムのインスタンス
-* **スレッド**: プロセス内で実行される作業単位。同じプロセスのスレッドはメモリ空間を共有する
+* **プロセス**: 実行中のプログラムのインスタンスで、独立したメモリ空間を持ちます
+* **スレッド**: プロセス内で実行される作業単位。同一プロセスのスレッドはメモリ空間を共有します
 
 ### プロセスの状態
 
-* **実行中**: 現在 CPU 上で実行されている
-* **待機中**: I/O の完了またはイベントの発生を待機している
-* **実行可能**: 実行準備はできているが、CPU の割り当てを待機している
-* **ゾンビ**: 終了済みだが、親プロセスが状態を確認していない
-* **停止中**: 一時停止状態
+* **Running**: 現在 CPU 上で実行中
+* **Waiting**: I/O の完了やイベントの発生を待機中
+* **Ready**: 実行可能だが CPU の割り当てを待機中
+* **Zombie**: 終了したが、親プロセスがその状態を確認していない
+* **Stopped**: 一時停止された状態
 
-### 主なプロセス管理コマンド
+### 主要なプロセス管理コマンド
 
 ```bash
 # View process list
@@ -141,34 +136,32 @@ fg %<job-number>
 bg %<job-number>
 ```
 
-<span id="namespaces"></span>
+## Namespace
 
-## 名前空間
+Namespace (名前空間) は、プロセスグループを分離して、それぞれのグループがシステムリソースを独立して認識できるようにする Linux カーネルの機能です。これはコンテナ技術の中核的な要素です。
 
-名前空間は、プロセスグループを分離し、各グループがシステムリソースを独立して認識できるようにする Linux カーネル機能です。これはコンテナ技術の中核要素です。
+### 主な Namespace の種類
 
-### 主な名前空間の種類
+* **PID Namespace**: プロセス ID の分離。コンテナが独自の PID 1 (init) を持てるようにします
+* **Network Namespace**: ネットワークスタックの分離 (インターフェイス、IP アドレス、ルーティングテーブル、ファイアウォールなど)。コンテナネットワークの基盤です
+* **Mount Namespace**: マウントテーブルを分離します。ファイルシステムの内容やコンテナのルート分離には、適切なマウント/ルート設定が必要です
+* **UTS Namespace**: ホスト名と NIS ドメイン名の分離 (DNS ドメインではありません)。各コンテナに固有のホスト識別子を与えます
+* **IPC Namespace**: プロセス間通信リソースの分離 (共有メモリ、セマフォ、メッセージキューなど)。マイクロサービスアーキテクチャにおけるサービス分離で重要です
+* **User Namespace**: ユーザー ID とグループ ID の分離。rootless なコンテナ実行をサポートし、セキュリティを強化します
+* **cgroup Namespace**: cgroup ルートディレクトリの分離。コンテナ内部でリソース制限を確認できるようにします
+* **Time Namespace**: CLOCK_MONOTONIC/CLOCK_BOOTTIME のオフセットを仮想化します (Linux 5.6 以降)。実時間の壁時計は対象外です
 
-* **PID Namespace**: プロセス ID の分離。コンテナが独自の PID 1（init）を持つことを可能にする
-* **Network Namespace**: ネットワークスタックの分離（インターフェース、IP アドレス、ルーティングテーブル、ファイアウォールなど）。コンテナネットワーキングの基盤
-* **Mount Namespace**: ファイルシステムのマウントポイントを分離し、コンテナごとに独立したファイルシステムを提供する
-* **UTS Namespace**: ホスト名とドメイン名を分離し、各コンテナに一意のホスト識別子を付与する
-* **IPC Namespace**: プロセス間通信リソース（共有メモリ、セマフォ、メッセージキューなど）の分離。マイクロサービスアーキテクチャにおけるサービス分離で重要
-* **User Namespace**: ユーザー ID とグループ ID の分離。セキュリティを強化する rootless コンテナ実行をサポートする
-* **cgroup Namespace**: cgroup ルートディレクトリの分離。コンテナ内でリソース制限を可視化できるようにする
-* **Time Namespace**: システムクロックの分離。コンテナごとに独立した時刻設定を可能にする（Linux 5.6+）
-
-### 名前空間関連コマンド
+### Namespace 関連コマンド
 
 ```bash
 # Check process namespaces
 ls -la /proc/<PID>/ns/
 
 # Execute command in new namespace
-unshare --net --pid --fork --mount-proc bash
+sudo unshare --mount --net --pid --fork --mount-proc bash
 
 # Enter existing process's namespace
-nsenter --target <PID> --net --pid bash
+sudo nsenter --target <PID> --net --pid bash
 
 # Create and manage network namespaces
 ip netns add <name>
@@ -178,31 +171,29 @@ ip netns exec <name> <command>
 unshare --user --map-root-user --mount --net bash
 
 # Using time namespace (Linux 5.6+)
-unshare --time bash
+sudo unshare --time --fork bash
 ```
 
-<span id="cgroups-control-groups"></span>
+## cgroups (Control Groups)
 
-## cgroups（コントロールグループ）
-
-cgroups は、プロセスグループのリソース使用量を制限および分離する Linux カーネル機能です。コンテナのリソース制限を実装するために使用されます。これは、クラウドネイティブ環境および Kubernetes におけるリソース管理の中核技術です。
+cgroups は、プロセスグループのリソース使用量を制限・分離する Linux カーネルの機能です。コンテナのリソース制限を実装するために使用されます。クラウドネイティブ環境や Kubernetes におけるリソース管理の中核技術です。
 
 ### cgroups の主な機能
 
-* **CPU 時間の制限**: プロセスグループが利用できる CPU 時間を制限し、CPU コアを割り当てる
-* **メモリの制限**: プロセスグループが利用できるメモリを制限し、OOM（Out of Memory）の動作を制御する
-* **ブロック I/O の制限**: ディスク I/O 帯域幅の制限と優先度設定
-* **ネットワーク帯域幅の制限**: ネットワークトラフィックの制限（tc と組み合わせて使用）
-* **デバイスアクセス制御**: 特定デバイスへのアクセス制御と権限管理
-* **PIDs 制御**: fork bomb を防ぐためにプロセス作成数を制限する
-* **Freezer**: プロセスグループを一時停止および再開する（コンテナの一時停止に使用）
-* **cpuset**: プロセスを特定の CPU コアおよび NUMA ノードにバインドする
+* **CPU 時間の制限**: プロセスグループが使用できる CPU 時間を制限し、CPU コアを割り当てます
+* **メモリの制限**: プロセスグループが使用できるメモリを制限し、OOM (Out of Memory) の挙動を制御します
+* **ブロック I/O の制限**: ディスク I/O 帯域幅の制限と優先度の設定
+* **ネットワークトラフィック制御**: tc/eBPF と cgroup の分類を組み合わせます。cgroup v2 には単独のネットワーク帯域幅設定はありません
+* **デバイスアクセス制御**: 特定デバイスに対するアクセス制御と権限管理
+* **PIDs の制御**: プロセス生成数を制限して fork 爆弾を防ぎます
+* **Freezer**: プロセスグループの一時停止と再開 (コンテナの一時停止に使用)
+* **cpuset**: プロセスを特定の CPU コアや NUMA ノードにバインドします
 
 ### cgroups v1 と v2
 
-* **cgroups v1**: リソースタイプごとに個別の階層を持つ。レガシーシステムでは現在も使用されている
-* **cgroups v2**: より一貫した管理のための統合単一階層。最新のディストリビューションではデフォルト
-* **ハイブリッドモード**: 新機能を活用しつつ互換性を維持するため、v1 と v2 を併用する
+* **cgroups v1**: リソースの種類ごとに独立した階層を持ちます。レガシーシステムで今も使われています
+* **cgroups v2**: 単一の統合された階層でより一貫した管理を行います。最新のディストリビューションではデフォルトです
+* **ハイブリッドモード**: v1 と v2 を併用し、互換性を保ちながら新機能を活用します
 
 ### cgroups 関連コマンド
 
@@ -212,50 +203,48 @@ ls -la /sys/fs/cgroup/                     # cgroups v2
 ls -la /sys/fs/cgroup/cpu /sys/fs/cgroup/memory  # cgroups v1
 
 # cgroups management through systemd (modern approach)
-systemctl set-property <service-name> CPUQuota=20%
-systemctl set-property <service-name> MemoryLimit=1G
-systemctl set-property <service-name> IOWeight=500
+sudo systemctl set-property --runtime <service-name> CPUQuota=20%
+sudo systemctl set-property --runtime <service-name> MemoryMax=1G
+sudo systemctl set-property --runtime <service-name> IOWeight=500
 
 # Check process cgroup
 cat /proc/<PID>/cgroup
 
-# Direct cgroups v2 manipulation (advanced)
-echo $$ > /sys/fs/cgroup/user.slice/cgroup.procs
-echo "max 100000" > /sys/fs/cgroup/user.slice/memory.max
-echo "100000 500000" > /sys/fs/cgroup/user.slice/memory.high
+# Run only the example command inside a transient cgroup managed by systemd.
+sudo systemd-run --scope -p CPUQuota=20% -p MemoryHigh=768M -p MemoryMax=1G sleep 60
+# memory.max/high take one byte count or "max"; cpu.max takes quota and period.
+# Do not move your shell into systemd-owned user.slice or edit its control files.
 
 # Container runtime and cgroups
 podman stats  # Monitor container resource usage
 docker run --cpus=0.5 --memory=512m nginx  # Set resource limits
 ```
 
-<span id="file-system"></span>
-
 ## ファイルシステム
 
 ### ファイルシステム階層
 
-Linux には、単一のルートディレクトリ（`/`）から始まる階層的なファイルシステム構造があります。
+Linux は、単一のルートディレクトリ (`/`) から始まる階層的なファイルシステム構造を持ちます。
 
-主なディレクトリ：
+主要なディレクトリ:
 
-* `/bin`: 基本コマンド
+* `/bin`: 基本的なコマンド
 * `/sbin`: システム管理コマンド
 * `/etc`: システム設定ファイル
 * `/home`: ユーザーのホームディレクトリ
-* `/var`: 可変データ（ログ、キャッシュなど）
+* `/var`: 可変データ (ログ、キャッシュなど)
 * `/tmp`: 一時ファイル
 * `/usr`: ユーザープログラムとデータ
-* `/proc`: プロセスおよびカーネル情報（仮想ファイルシステム）
-* `/sys`: システムおよびハードウェア情報（仮想ファイルシステム）
+* `/proc`: プロセスとカーネルの情報 (仮想ファイルシステム)
+* `/sys`: システムとハードウェアの情報 (仮想ファイルシステム)
 
 ### ファイルシステムの種類
 
-* **ext4**: デフォルトの Linux ファイルシステム
-* **XFS**: 大規模なファイルシステムに適している
-* **Btrfs**: スナップショットや圧縮などの高度な機能を提供する
-* **OverlayFS**: 複数のディレクトリを単一のディレクトリとして表す（コンテナで一般的に使用される）
-* **tmpfs**: メモリベースの一時ファイルシステム
+* **ext4**: 一般的な Linux ファイルシステム。デフォルト設定はディストリビューションによって異なります
+* **XFS**: 大規模なファイルシステムに適しています
+* **Btrfs**: スナップショットや圧縮などの高度な機能を提供します
+* **OverlayFS**: 複数のディレクトリを単一のディレクトリとして表現します (コンテナで広く利用)
+* **tmpfs**: メモリを backing store とする一時ファイルシステム。swap を無効にしていない場合、ページが swap される可能性があります
 
 ### マウントとボリューム
 
@@ -271,15 +260,13 @@ df -h
 umount <mount-point>
 ```
 
-<span id="networking-basics"></span>
-
 ## ネットワークの基礎
 
-### ネットワークインターフェース
+### ネットワークインターフェイス
 
-* **lo**: ループバックインターフェース（127.0.0.1）
-* **eth0, ens3 など**: 物理ネットワークインターフェース
-* **docker0, cni0 など**: 仮想ブリッジインターフェース（コンテナネットワーキング）
+* **lo**: ループバックインターフェイス (127.0.0.1)
+* **eth0、ens3 など**: 物理ネットワークインターフェイス
+* **docker0、cni0 など**: 仮想ブリッジインターフェイス (コンテナネットワーク)
 
 ### ネットワーク設定コマンド
 
@@ -300,7 +287,7 @@ ss -tuln
 tcpdump -i <interface>
 ```
 
-### ネットワーク名前空間と仮想インターフェース
+### Network Namespace と仮想インターフェイス
 
 ```bash
 # Create network namespace
@@ -313,25 +300,23 @@ ip link add <veth1> type veth peer name <veth2>
 ip link set <veth2> netns <namespace-name>
 ```
 
-<span id="security-context"></span>
-
 ## セキュリティコンテキスト
 
 ### ユーザーとグループ
 
-* **UID（User ID）**: ユーザー識別子
-* **GID（Group ID）**: グループ識別子
-* **root（UID 0）**: 管理者権限を持つ特別なユーザー
+* **UID (User ID)**: ユーザー識別子
+* **GID (Group ID)**: グループ識別子
+* **root (UID 0)**: 管理者権限を持つ特別なユーザー
 
-### ファイル権限
+### ファイルパーミッション
 
-Linux のファイル権限は、所有者、グループ、その他のユーザーに対する読み取り（r）、書き込み（w）、実行（x）権限で構成されます。
+Linux のファイルパーミッションは、所有者、グループ、その他のユーザーに対する読み取り (r)、書き込み (w)、実行 (x) の権限で構成されます。
 
-![10 文字の ls -l 権限文字列が、ファイルタイプ文字と所有者、グループ、その他の r w x の組に分かれる仕組み。drwxr-xr-- は、所有者にはすべて、グループには読み取りと実行、その他には読み取り専用アクセスを持つディレクトリを表します。](../.gitbook/assets/en-basics-01-linux-basics-2.png)
+![ls -l の 10 文字のパーミッション文字列が、ファイル種別を表す 1 文字と、所有者・グループ・その他に対する r w x の 3 文字組に分かれる仕組み。drwxr-xr-- はディレクトリで、所有者は全権限、グループは読み取りと実行、その他は読み取りのみのアクセスであることを示します。](../.gitbook/assets/en-basics-01-linux-basics-2.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-2.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-2.html)
 
-### 権限関連コマンド
+### パーミッション関連コマンド
 
 ```bash
 # Change file permissions
@@ -349,16 +334,16 @@ chmod 1755 <filename>  # Set sticky bit
 
 ### SELinux と AppArmor
 
-* **SELinux（Security-Enhanced Linux）**: NSA が開発した強制アクセス制御システム
+* **SELinux (Security-Enhanced Linux)**: NSA が開発した強制アクセス制御システム
 * **AppArmor**: プログラムごとのセキュリティプロファイルを使用するアクセス制御システム
 
 ```bash
 # Check SELinux status
 getenforce
 
-# Change SELinux mode
-setenforce 0  # Permissive mode
-setenforce 1  # Enforcing mode
+# Only in a reviewed isolated lab: permissive disables enforcement system-wide.
+# sudo setenforce 0
+# Restore the original mode after investigation; do not use permissive as a generic fix.
 
 # Check AppArmor status
 aa-status
@@ -368,25 +353,23 @@ aa-enforce /etc/apparmor.d/<profile>
 aa-complain /etc/apparmor.d/<profile>
 ```
 
-<span id="systemd-and-service-management"></span>
-
 ## systemd とサービス管理
 
-systemd は、最新の Linux システムの init システムおよびサービスマネージャーです。Kubernetes ノード上の kubelet や containerd などの中核サービスの管理に使用されます。
+systemd は、現代の Linux システムにおける init システムかつサービスマネージャーです。Kubernetes ノード上の kubelet や containerd といった中核サービスの管理に使用されます。
 
 ### systemd の主な機能
 
-* **サービス管理**: システムサービスの開始、停止、再起動、有効化/無効化
-* **依存関係管理**: サービスの依存関係の自動管理と並列起動
-* **ロギング**: journald による統合ログ管理
-* **タイマー**: cron の代替となるタイマーユニット
-* **リソース管理**: cgroups によるサービスごとのリソース制限
+* **サービス管理**: システムサービスの起動、停止、再起動、有効化/無効化
+* **依存関係管理**: サービス依存関係の自動管理と並列起動
+* **ロギング**: journald による統合的なログ管理
+* **タイマー**: cron を置き換え可能なタイマーユニット
+* **リソース管理**: cgroups によるサービス単位のリソース制限
 
 ### systemd ユニットの種類
 
-* **service**: システムサービス（例: kubelet.service、containerd.service）
+* **service**: システムサービス (例: kubelet.service、containerd.service)
 * **socket**: ソケットベースのアクティベーション
-* **target**: ユニットグループ（runlevel に類似）
+* **target**: ユニットのグループ (ランレベルに類似)
 * **timer**: スケジュールされたタスク
 * **mount**: ファイルシステムのマウント
 * **device**: デバイスユニット
@@ -424,22 +407,21 @@ systemctl --failed
 systemctl daemon-reload
 ```
 
-### systemd ユニットファイルの作成
+### systemd ユニットファイルの記述
 
-Kubernetes 関連サービス用の systemd ユニットファイルの例：
+小さなトレーニング用サービスでユニットの構造を確認します。kubelet は systemctl cat kubelet で確認し、ディストリビューションや kubeadm が管理するユニットとドロップインは置き換えずにそのまま維持してください。
 
 ```ini
-# /etc/systemd/system/kubelet.service
+# /etc/systemd/system/linux-basics-demo.service
 [Unit]
-Description=kubelet: The Kubernetes Node Agent
-Documentation=https://kubernetes.io/docs/
+Description=Linux basics training service
+Documentation=man:systemd.service(5)
 Wants=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/kubelet
-Restart=always
-StartLimitInterval=0
+ExecStart=/usr/bin/sleep infinity
+Restart=on-failure
 RestartSec=10
 
 [Install]
@@ -448,51 +430,53 @@ WantedBy=multi-user.target
 
 ### systemd のリソース制限
 
+以下のコマンドは、上記のトレーニング用ユニットをラボ VM に保存し、daemon-reload を完了していることを前提としています。この学習用の制限を本番の kubelet/containerd に適用しないでください。
+
 ```bash
 # CPU limit (20%)
-systemctl set-property kubelet CPUQuota=20%
+sudo systemctl set-property --runtime linux-basics-demo.service CPUQuota=20%
 
 # Memory limit (1GB)
-systemctl set-property kubelet MemoryLimit=1G
+sudo systemctl set-property --runtime linux-basics-demo.service MemoryMax=1G
 
-# I/O weight setting (100-1000, default 100)
-systemctl set-property kubelet IOWeight=500
+# I/O weight setting (1-10000, default 100)
+sudo systemctl set-property --runtime linux-basics-demo.service IOWeight=500
 
 # Check settings
-systemctl show kubelet | grep -E 'CPUQuota|MemoryLimit|IOWeight'
+systemctl show linux-basics-demo.service | grep -E 'CPUQuota|MemoryMax|IOWeight'
 ```
-
-<span id="kernel-parameters-and-modules"></span>
 
 ## カーネルパラメータとモジュール
 
-### sysctl によるカーネルパラメータの設定
+### sysctl によるカーネルパラメータ設定
 
-sysctl は、実行中のカーネルパラメータを照会および変更するためのツールです。Kubernetes クラスターを構成する際のネットワークおよびシステムパラメータのチューニングに不可欠です。
+sysctl は、実行中のカーネルパラメータを参照・変更するためのツールです。Kubernetes クラスターを構成する際のネットワークおよびシステムパラメータのチューニングに不可欠です。
 
-#### Kubernetes に必要な主な sysctl 設定
+#### CNI 固有の sysctl 設定とチューニング例
+
+これらは、すべての Kubernetes ノードに必須のデフォルト値ではありません。選択した IP ファミリー、CNI、Service プロキシの要件を確認してください。bridge-netfilter の設定は br_netfilter を使用する構成にのみ適用されます。パフォーマンス/ARP/conntrack の値は測定なしに本番へ適用しないでください。既存の値を記録し、隔離されたトレーニング用 VM を使用してください。
 
 ```bash
 # Enable IP forwarding (required for container networking)
-sysctl -w net.ipv4.ip_forward=1
-sysctl -w net.ipv6.conf.all.forwarding=1
+sudo sysctl -w net.ipv4.ip_forward=1
+sudo sysctl -w net.ipv6.conf.all.forwarding=1
 
-# Enable bridge traffic to pass through iptables (required for CNI plugins)
-sysctl -w net.bridge.bridge-nf-call-iptables=1
-sysctl -w net.bridge.bridge-nf-call-ip6tables=1
+# Enable bridge traffic to pass through iptables (only for CNI configurations requiring bridge netfilter)
+sudo sysctl -w net.bridge.bridge-nf-call-iptables=1
+sudo sysctl -w net.bridge.bridge-nf-call-ip6tables=1
 
 # Increase maximum file descriptor count
-sysctl -w fs.file-max=2097152
+sudo sysctl -w fs.file-max=2097152
 
 # Network performance tuning
-sysctl -w net.core.somaxconn=32768
-sysctl -w net.ipv4.tcp_max_syn_backlog=8192
-sysctl -w net.core.netdev_max_backlog=16384
+sudo sysctl -w net.core.somaxconn=32768
+sudo sysctl -w net.ipv4.tcp_max_syn_backlog=8192
+sudo sysctl -w net.core.netdev_max_backlog=16384
 
 # ARP cache settings (for large clusters)
-sysctl -w net.ipv4.neigh.default.gc_thresh1=80000
-sysctl -w net.ipv4.neigh.default.gc_thresh2=90000
-sysctl -w net.ipv4.neigh.default.gc_thresh3=100000
+sudo sysctl -w net.ipv4.neigh.default.gc_thresh1=80000
+sudo sysctl -w net.ipv4.neigh.default.gc_thresh2=90000
+sudo sysctl -w net.ipv4.neigh.default.gc_thresh3=100000
 
 # Check current settings
 sysctl net.ipv4.ip_forward
@@ -506,21 +490,21 @@ net.bridge.bridge-nf-call-ip6tables = 1
 EOF
 
 # Apply settings
-sysctl --system
+sudo sysctl --system
 ```
 
-### カーネルモジュール管理
+### カーネルモジュールの管理
 
-多くの CNI プラグインおよびストレージドライバーには、特定のカーネルモジュールが必要です。
+必要なモジュールは、ランタイム/CNI/ストレージの選択によって異なります。IPVS モードは Kubernetes 1.35 以降で非推奨です。以下の IPVS コマンドは既存の IPVS クラスター専用です。新しいクラスターで、列挙されたすべてのモジュールを事前ロードしないでください。
 
 ```bash
 # Load modules
-modprobe overlay  # OverlayFS (container storage)
-modprobe br_netfilter  # Bridge networking
-modprobe ip_vs  # IPVS load balancing (kube-proxy IPVS mode)
-modprobe ip_vs_rr  # Round Robin algorithm
-modprobe ip_vs_wrr  # Weighted Round Robin
-modprobe ip_vs_sh  # Source Hashing
+sudo modprobe overlay  # OverlayFS (container storage)
+sudo modprobe br_netfilter  # Bridge networking
+sudo modprobe ip_vs  # IPVS load balancing (kube-proxy IPVS mode)
+sudo modprobe ip_vs_rr  # Round Robin algorithm
+sudo modprobe ip_vs_wrr  # Weighted Round Robin
+sudo modprobe ip_vs_sh  # Source Hashing
 
 # Check loaded modules
 lsmod | grep overlay
@@ -532,15 +516,11 @@ modinfo overlay
 # Set auto-load at boot
 cat <<EOF | sudo tee /etc/modules-load.d/kubernetes.conf
 overlay
-br_netfilter
-ip_vs
-ip_vs_rr
-ip_vs_wrr
-ip_vs_sh
+# Add br_netfilter only if required by the chosen CNI.
 EOF
 
 # Unload module
-modprobe -r <module-name>
+sudo modprobe -r <module-name>
 ```
 
 ### カーネルバージョンと機能の確認
@@ -558,13 +538,11 @@ cat /proc/filesystems  # Supported file systems
 cat /proc/sys/net/ipv4/ip_forward  # IP forwarding status
 ```
 
-<span id="system-resource-limits"></span>
+## システムリソース制限
 
-## システムリソースの制限
+### ulimit - ユーザー単位のリソース制限
 
-### ulimit - ユーザーごとのリソース制限
-
-ulimit は、プロセスが使用できるシステムリソースを制限します。十分なリソースを確保するため、Kubernetes ノードでは調整が必要になる場合があります。
+ulimit は、プロセスが使用できるシステムリソースを制限します。Kubernetes ノードで十分なリソースを確保するために調整が必要になる場合があります。
 
 ```bash
 # Check current limits
@@ -573,7 +551,7 @@ ulimit -a
 # Key limit items
 ulimit -n      # Number of open file descriptors
 ulimit -u      # Maximum number of processes
-ulimit -m      # Maximum memory size
+ulimit -m      # RSS limit; not enforced on modern Linux
 ulimit -v      # Virtual memory size
 
 # Change limits (current session)
@@ -598,32 +576,29 @@ EOF
 
 ### PAM の制限設定
 
-```bash
-# Check PAM settings
-cat /etc/pam.d/common-session
-cat /etc/pam.d/common-session-noninteractive
+limits.conf は、pam_limits を使用する新しいログインセッションに適用されます。通常の systemd システムサービスは自動的にこれを継承しないため、LimitNOFILE や TasksMax といったサービスのドロップインを使用してください。既存のセッションやプロセスは変更されません。重複した common-session のエントリを無闇に追記するのではなく、ディストリビューションの PAM チェーンを確認してください。
 
-# Add to PAM settings to apply limits.conf
-echo "session required pam_limits.so" | sudo tee -a /etc/pam.d/common-session
+```bash
+# Inspect the active configuration; PAM file names differ by distribution.
+grep -R pam_limits.so /etc/pam.d
+systemctl show kubelet -p LimitNOFILE -p TasksMax
 ```
 
-### プロセスごとのリソース確認
+### プロセス単位のリソース確認
 
 ```bash
 # Check current resource limits for a process
 cat /proc/<PID>/limits
 
 # Check file descriptors for a specific process
-ls -l /proc/<PID>/fd | wc -l
+find /proc/<PID>/fd -mindepth 1 -maxdepth 1 -printf '%f\n' | wc -l
 ```
-
-<span id="log-management"></span>
 
 ## ログ管理
 
-### journald - systemd 統合ロギング
+### journald - systemd の統合ロギング
 
-journald は systemd のロギングシステムであり、Kubernetes ノード上のシステムサービスログを管理します。
+journald は systemd のロギングシステムで、Kubernetes ノード上のシステムサービスのログを管理します。
 
 ```bash
 # Full system logs
@@ -644,7 +619,7 @@ journalctl --since yesterday
 journalctl --until "2025-11-24 12:00:00"
 
 # Filter by priority
-journalctl -p err        # Errors only
+journalctl -p err        # Error and higher severity (0-3)
 journalctl -p warning    # Warnings and above
 journalctl -p debug      # All including debug
 
@@ -662,8 +637,8 @@ journalctl --list-boots # Boot list
 journalctl --disk-usage
 
 # Clean logs
-journalctl --vacuum-time=7d   # Delete logs older than 7 days
-journalctl --vacuum-size=1G   # Delete logs over 1GB
+journalctl --vacuum-time=7d   # Remove archived journal files older than 7 days
+journalctl --vacuum-size=1G   # Remove oldest archived journals toward 1GiB total
 ```
 
 ### journald の設定
@@ -684,12 +659,12 @@ sudo systemctl restart systemd-journald
 
 ### 従来の syslog
 
-一部のシステムでは、現在も syslog を使用しています。
+一部のシステムでは、今も syslog が使用されています。
 
 ```bash
 # syslog file locations
-/var/log/syslog         # Debian/Ubuntu
-/var/log/messages       # RHEL/CentOS
+# /var/log/syslog         # Debian/Ubuntu
+# /var/log/messages       # RHEL/CentOS
 
 # Real-time log viewing
 tail -f /var/log/syslog
@@ -701,14 +676,17 @@ grep -i "error" /var/log/syslog
 
 ### ログローテーション
 
-ログファイルが無制限に増大しないよう、ログローテーションを設定します。
+通常のアプリケーションのファイルには logrotate を使用します。copytruncate にはコピーと切り詰めの競合があり、レコードが失われる可能性があります。アプリケーションが対応している場合は、ログの再オープンを優先してください。kubelet は CRI コンテナログのローテーションを自身で管理します。
 
 ```bash
 # logrotate configuration
-sudo vi /etc/logrotate.d/kubernetes
+sudo vi /etc/logrotate.d/linux-basics-demo
 
-# Example configuration
-/var/log/kubernetes/*.log {
+# File content (only application text logs not managed by kubelet):
+```
+
+```text
+/var/log/linux-basics-demo/*.log {
     daily
     rotate 7
     missingok
@@ -717,40 +695,40 @@ sudo vi /etc/logrotate.d/kubernetes
     delaycompress
     copytruncate
 }
-
-# Run rotation manually
-sudo logrotate -f /etc/logrotate.d/kubernetes
 ```
 
-<span id="dns-and-network-configuration"></span>
+```bash
+# Run rotation manually
+sudo logrotate -f /etc/logrotate.d/linux-basics-demo
+```
 
 ## DNS とネットワーク設定
 
 ### DNS の設定
 
-DNS は Kubernetes クラスター内のサービスディスカバリーの中核です。
+NetworkManager や systemd-resolved がホストの resolv.conf を管理している場合があるため、まずそれを確認してください。8.8.8.8 のようなパブリックリゾルバーでは cluster.local の Service を解決できません。ClusterFirst の Pod は kubelet が構成したクラスター DNS を使用します。ホストのリゾルバーにクラスターの検索サフィックスを追加しても、クラスター DNS への接続性は得られません。
 
 ```bash
-# DNS configuration file
+# On the Linux host
 cat /etc/resolv.conf
-
-# Example configuration
-nameserver 8.8.8.8
-nameserver 8.8.4.4
-search cluster.local svc.cluster.local
-options ndots:5
-
-# DNS lookup test
-nslookup kubernetes.default.svc.cluster.local
-dig kubernetes.default.svc.cluster.local
-
-# hosts file
 cat /etc/hosts
+# If a cluster is available, inspect its actual DNS Service address.
+kubectl -n kube-system get service kube-dns
+# Run inside an existing Pod with DNS utilities and ClusterFirst policy:
+# nslookup kubernetes.default.svc.cluster.local
+```
+
+以下は **Pod のリゾルバーファイル形式**の例です。IP、namespace、クラスタードメインは実際の値に置き換えてください。ホストの設定にコピーしないでください。
+
+```text
+nameserver <cluster-dns-service-ip>
+search <namespace>.svc.cluster.local svc.cluster.local cluster.local
+options ndots:5
 ```
 
 ### systemd-resolved
 
-最新の Linux ディストリビューションでは systemd-resolved を使用します。
+現代の Linux ディストリビューションは systemd-resolved を使用します。
 
 ```bash
 # Check systemd-resolved status
@@ -768,36 +746,36 @@ resolvectl flush-caches
 
 ### ネットワーク設定ファイル
 
+ディストリビューションが NetworkManager と netplan のどちらを使用しているかを確認してください。netplan の YAML は /etc/netplan 配下のファイル内容であり、シェルコマンドではありません。リモートのアドレス設定やルーティングを変更する前に復旧手段を用意し、netplan try で検証してください。
+
 ```bash
-# NetworkManager (RHEL/CentOS 8+, Ubuntu 18.04+)
 nmcli connection show
 nmcli device status
+# On a netplan-based installation:
+ls /etc/netplan
+```
 
-# netplan (Ubuntu 18.04+)
-cat /etc/netplan/*.yaml
-
-# Example netplan configuration
+```yaml
+# Example netplan file: replace eth0 with the actual interface name.
 network:
   version: 2
   ethernets:
     eth0:
       dhcp4: true
-      nameservers:
-        addresses: [8.8.8.8, 8.8.4.4]
-
-# Apply configuration
-sudo netplan apply
 ```
 
-<span id="time-synchronization"></span>
+```bash
+sudo netplan generate
+sudo netplan try
+```
 
 ## 時刻同期
 
-分散システムでは時刻同期が非常に重要です。Kubernetes クラスター内のすべてのノードは、正確な時刻を維持する必要があります。
+分散システムにおいて時刻同期は非常に重要です。Kubernetes クラスターのすべてのノードは正確な時刻を維持する必要があります。
 
-### chronyd（推奨）
+### chronyd (推奨)
 
-chronyd は ntpd よりも高速に時刻を同期する最新の NTP クライアントです。
+chronyd は、変動するネットワーク条件に適した NTP クライアント/サーバーです。同期性能は、クロック、参照ソース、設定によって左右されます。
 
 ```bash
 # Install chronyd (RHEL/CentOS)
@@ -806,7 +784,7 @@ sudo yum install chrony
 # Install chronyd (Ubuntu/Debian)
 sudo apt install chrony
 
-# Check service status
+# Check the installed unit: chronyd on RHEL/Amazon Linux, chrony on Debian/Ubuntu.
 systemctl status chronyd
 
 # Check time synchronization status
@@ -819,49 +797,48 @@ chronyc sources
 chronyc sourcestats
 
 # Manual time synchronization
-sudo chronyc makestep
+# Only during a reviewed maintenance window; stepping can disrupt time-sensitive workloads.
+# sudo chronyc makestep
 ```
 
 ### chronyd の設定
 
-```bash
-# Configuration file
-sudo vi /etc/chrony.conf
+RHEL 系のシステムでは通常 /etc/chrony.conf を、Debian/Ubuntu では /etc/chrony/chrony.conf を使用します。パブリックサーバーに置き換える前に、ディストリビューションやプロバイダーの設定 (EC2 の Amazon Time Sync Service を含む) を確認してください。以下は設定ファイルの内容です。
 
-# Key settings
-# NTP server configuration
-server 0.pool.ntp.org iburst
-server 1.pool.ntp.org iburst
-server 2.pool.ntp.org iburst
-server 3.pool.ntp.org iburst
-
-# Fast synchronization
+```text
+# Choose an approved reachable time source.
+server <approved-ntp-server> iburst
+# Permit stepping only during the first three clock updates.
 makestep 1.0 3
-
-# Apply configuration
-sudo systemctl restart chronyd
 ```
 
-### timesyncd（Ubuntu のデフォルト）
+```bash
+# Choose the unit actually installed on your distribution:
+systemctl status chronyd.service  # RHEL/Amazon Linux
+systemctl status chrony.service   # Debian/Ubuntu
+chronyc tracking
+chronyc sources
+```
 
-Ubuntu ではデフォルトで systemd-timesyncd を使用します。
+### timesyncd (ディストリビューション固有の選択)
+
+Ubuntu は 25.10 でデフォルトの時刻サービスを chrony に切り替えました。それ以前のリリースやイメージでは systemd-timesyncd が使われている場合があります。有効な時刻サービスは 1 つだけにしてください。show-timesync は timesyncd 固有のコマンドです。chrony は chronyc で確認してください。
 
 ```bash
-# Check status
 timedatectl status
-
-# NTP synchronization status
+# Only for installations using systemd-timesyncd:
 timedatectl show-timesync --all
+systemctl status systemd-timesyncd
+```
 
-# Configuration file
-sudo vi /etc/systemd/timesyncd.conf
-
-# Example configuration
+```ini
+# /etc/systemd/timesyncd.conf: use approved servers for this environment.
 [Time]
-NTP=0.pool.ntp.org 1.pool.ntp.org
-FallbackNTP=time.google.com
+NTP=<approved-ntp-server>
+```
 
-# Restart service
+```bash
+# After editing a timesyncd installation:
 sudo systemctl restart systemd-timesyncd
 ```
 
@@ -878,19 +855,18 @@ timedatectl list-timezones
 sudo timedatectl set-timezone Asia/Seoul
 
 # Manually set time (when NTP is disabled)
-sudo timedatectl set-time "2025-11-24 12:00:00"
+: "${LAB_TIME:?Set an intentional time for an isolated VM with NTP disabled}"
+# sudo timedatectl set-time "$LAB_TIME"
 
 # Enable/disable NTP
 sudo timedatectl set-ntp true
 ```
 
-<span id="package-management"></span>
-
 ## パッケージ管理
 
-Kubernetes および関連ツールをインストール・管理するためのパッケージマネージャーの使用方法です。
+Kubernetes と関連ツールをインストール・管理するためのパッケージマネージャーの使い方です。
 
-### apt（Debian/Ubuntu）
+### apt (Debian/Ubuntu)
 
 ```bash
 # Update package list
@@ -916,11 +892,13 @@ apt show <package-name>
 apt list --installed
 
 # Add repository (Kubernetes example)
-sudo apt install -y apt-transport-https ca-certificates curl
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | \
+set -o pipefail
+: "${KUBERNETES_MINOR:?Choose a supported cluster-compatible minor, for example v1.37}"
+sudo apt install -y ca-certificates curl gnupg
+sudo mkdir -p -m 755 /etc/apt/keyrings
+curl -fsSL "https://pkgs.k8s.io/core:/stable:/${KUBERNETES_MINOR}/deb/Release.key" | \
   sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] \
-  https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | \
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/${KUBERNETES_MINOR}/deb/ /" | \
   sudo tee /etc/apt/sources.list.d/kubernetes.list
 
 # Clean unnecessary packages
@@ -928,7 +906,7 @@ sudo apt autoremove
 sudo apt autoclean
 ```
 
-### yum/dnf（RHEL/CentOS/Fedora）
+### yum/dnf (RHEL/CentOS/Fedora)
 
 ```bash
 # Install package
@@ -956,13 +934,15 @@ yum list installed
 dnf list installed
 
 # Add repository (Kubernetes example)
+: "${KUBERNETES_MINOR:?Choose a supported cluster-compatible minor, for example v1.37}"
 cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
-baseurl=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/
+baseurl=https://pkgs.k8s.io/core:/stable:/${KUBERNETES_MINOR}/rpm/
 enabled=1
 gpgcheck=1
-gpgkey=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key
+gpgkey=https://pkgs.k8s.io/core:/stable:/${KUBERNETES_MINOR}/rpm/repodata/repomd.xml.key
+exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
 EOF
 
 # Clean cache
@@ -972,7 +952,7 @@ sudo dnf clean all
 
 ### パッケージバージョンの固定
 
-Kubernetes コンポーネントにはバージョン互換性の要件があるため、自動更新を防止する必要があります。
+Kubernetes コンポーネントにはバージョン互換性の要件があるため、自動更新を防ぐ必要があります。
 
 ```bash
 # apt (Ubuntu/Debian)
@@ -981,17 +961,15 @@ sudo apt-mark hold kubelet kubeadm kubectl
 # Remove apt hold
 sudo apt-mark unhold kubelet kubeadm kubectl
 
-# yum (RHEL/CentOS)
-sudo yum install yum-plugin-versionlock
-sudo yum versionlock add kubelet kubeadm kubectl
+# DNF: install the distribution-supported versionlock plugin first.
+# Alternatively, use the Kubernetes repository exclusions shown above.
+sudo dnf versionlock add kubelet kubeadm kubectl
 
-# Remove yum versionlock
-sudo yum versionlock delete kubelet kubeadm kubectl
+# Remove the versionlock entry
+sudo dnf versionlock delete kubelet kubeadm kubectl
 ```
 
-<span id="essential-linux-commands"></span>
-
-## 重要な Linux コマンド
+## 必須の Linux コマンド
 
 ### ファイルとディレクトリの管理
 
@@ -1030,52 +1008,52 @@ du -sh <path>    # Directory size
 
 ```bash
 systemctl status <service> # Check service status
-systemctl start/stop/restart <service> # Service control
+systemctl restart <service> # Or use start/stop as separate subcommands
 journalctl -u <service> # View service logs
 ```
-
-<span id="container-related-linux-features"></span>
 
 ## コンテナ関連の Linux 機能
 
 ### OverlayFS
 
-OverlayFS は、複数のディレクトリを単一のディレクトリとして表すユニオンマウントファイルシステムです。Docker などのコンテナランタイムがイメージレイヤーを実装するために使用します。
+OverlayFS は、複数のディレクトリを単一のディレクトリとして表現する union マウントファイルシステムです。Docker などのコンテナランタイムがイメージレイヤーを実装するために使用します。
 
 ### ネットワークブリッジと NAT
 
-コンテナネットワーキングは主にブリッジインターフェースと NAT（Network Address Translation）を使用して実装されます。
+Docker のデフォルトのブリッジネットワークは、外部トラフィックに対してブリッジと NAT を使用します。Kubernetes の CNI 実装はルーティング、オーバーレイ、VPC ネイティブネットワークを使用する場合があり、Pod 間のトラフィックが常に NAT されるわけではありません。
 
-![単一ホスト上の Docker ブリッジネットワーキング](../../assets/diagrams/rendered/docker-bridge-networking.svg)
+![単一ホスト上の Docker ブリッジネットワーク: 2 つのコンテナが veth ペアを介して docker0 ブリッジに接続し、トラフィックは iptables の NAT ルールとホストの eth0 インターフェイスを通過して外部のインターネットに到達します。](../.gitbook/assets/en-basics-01-linux-basics-10.png)
 
-### システムコールフィルタリング（seccomp）
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-01-linux-basics-10.html)
 
-seccomp（Secure Computing Mode）は、プロセスが利用できるシステムコールを制限する Linux カーネル機能です。コンテナのセキュリティを強化するために使用されます。
+### システムコールのフィルタリング (seccomp)
+
+seccomp (Secure Computing Mode) は、プロセスが利用できるシステムコールを制限する Linux カーネルの機能です。コンテナのセキュリティを強化するために使用されます。
 
 ### Capabilities の制限
 
-Linux Capabilities は、従来の root 権限をより小さな権限単位に分割します。コンテナには必要な Capabilities のみが付与され、セキュリティが強化されます。
+Linux の capabilities は、従来の root 権限をより細かい権限単位に分割します。コンテナには必要な capabilities のみを付与し、セキュリティを高めます。
 
-主な Capabilities：
+主要な capabilities:
 
 * `CAP_NET_ADMIN`: ネットワーク設定の変更
-* `CAP_SYS_ADMIN`: システム管理タスク
-* `CAP_CHOWN`: ファイル所有権の変更
-* `CAP_DAC_OVERRIDE`: ファイル権限のバイパス
+* `CAP_SYS_ADMIN`: システム管理作業
+* `CAP_CHOWN`: ファイル所有者の変更
+* `CAP_DAC_OVERRIDE`: ファイルパーミッションのバイパス
 
 ## まとめ
 
-Linux の基礎と機能は、Kubernetes とコンテナ技術を理解するうえで不可欠です。このドキュメントで扱った主なトピックを以下にまとめます。
+Linux の基礎と機能は、Kubernetes とコンテナ技術を理解するために不可欠です。このドキュメントで扱った主なトピックをまとめます。
 
 ### 中核技術
 
-* **Namespaces と cgroups**: コンテナの分離とリソース管理の基盤
-* **OverlayFS**: コンテナイメージのレイヤリングの中核
+* **Namespace と cgroups**: コンテナの分離とリソース管理の基盤
+* **OverlayFS**: コンテナイメージのレイヤー化の中核
 * **systemd**: Kubernetes ノードのサービス管理
 
 ### 必須の運用知識
 
-* **カーネルパラメータのチューニング**: sysctl によるネットワークおよびシステムの最適化
+* **カーネルパラメータのチューニング**: sysctl によるネットワークとシステムの最適化
 * **モジュール管理**: CNI プラグインとストレージドライバーのサポート
 * **ログ管理**: journald によるシステムおよびサービスログの分析
 * **時刻同期**: 分散システムにおける一貫性の維持
@@ -1083,14 +1061,14 @@ Linux の基礎と機能は、Kubernetes とコンテナ技術を理解するう
 ### トラブルシューティング
 
 * **リソース制限**: ulimit と cgroups によるリソース管理
-* **ネットワーキング**: DNS、ブリッジ、iptables の設定
+* **ネットワーク**: DNS、ブリッジ、iptables の設定
 * **パッケージ管理**: Kubernetes コンポーネントのバージョン管理
 
-この Linux の基礎を身につけることで、Kubernetes 環境で問題を効果的にトラブルシューティングし、クラスターを最適化して、信頼性高く運用できます。
+この Linux の基礎があれば、Kubernetes 環境の問題を効果的にトラブルシューティングし、クラスターを最適化して、安定して運用できるようになります。
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[Linux の基礎クイズ](../quizzes/basics/01-linux-basics-quiz.md)に取り組んでください。
+この章で学んだ内容を確認するには、[Linux 基礎クイズ](../quizzes/basics/01-linux-basics-quiz.md) に取り組んでください。
 
 ## 参考資料
 
@@ -1098,3 +1076,24 @@ Linux の基礎と機能は、Kubernetes とコンテナ技術を理解するう
 * [Linux Kernel Documentation](https://www.kernel.org/doc/)
 * [Linux Namespaces](https://man7.org/linux/man-pages/man7/namespaces.7.html)
 * [Control Groups v2](https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html)
+
+## 検証用参考資料
+
+- https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html
+- https://kubernetes.io/docs/concepts/architecture/cgroups/
+- https://man7.org/linux/man-pages/man7/time_namespaces.7.html
+- https://man7.org/linux/man-pages/man2/getrlimit.2.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html
+- https://www.freedesktop.org/software/systemd/man/latest/systemd.unit.html
+- https://www.freedesktop.org/software/systemd/man/latest/journalctl.html
+- https://kubernetes.io/docs/concepts/cluster-administration/logging/
+- https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+- https://ubuntu.com/about/release-cycle
+- https://www.debian.org/releases/
+- https://www.centos.org/centos-linux-eol/
+- https://documentation.ubuntu.com/server/how-to/networking/timedatectl-and-timesyncd/
+- https://aws.amazon.com/amazon-linux-2/faqs/
+- https://docs.aws.amazon.com/linux/al2023/ug/ec2.html
+- https://github.com/logrotate/logrotate/blob/main/logrotate.8.in
+- https://github.com/linux-pam/linux-pam/blob/master/modules/pam_limits/limits.conf.5.xml

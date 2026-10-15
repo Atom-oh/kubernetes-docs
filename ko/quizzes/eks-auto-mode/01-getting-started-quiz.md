@@ -34,7 +34,7 @@ Auto Mode는 AWS가 운영하는 Karpenter 기반 컨트롤러를 사용합니�
 **정답: C) 현재 AWS EKS 지원 일정과 리전별 가용성을 확인한다**
 
 **설명:**
-초기 기능 지원 하한인 1.29+는 현재 지원 보장이 아닙니다. 2026년 9월 12일에는 EKS 1.34–1.36이 표준 지원 대상이며 본문 예제는 1.36을 사용합니다. [AWS 버전 일정](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)과 적용 요금을 확인하세요. 이전 퀴즈의 근거 없는 고정 NodePool·노드 수에 의존하지 말고 실제 서비스 할당량과 서브넷 용량을 확인해야 합니다.
+초기 기능 지원 하한인 1.29+는 현재 지원 보장이 아닙니다. 2026년 10월 12일 기준 EKS 1.34–1.37이 표준 지원 대상이며 본문 예제는 검토한 1.36 기준을 유지합니다. [AWS 버전 일정](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)과 적용 요금을 확인하세요. 이전 퀴즈의 근거 없는 고정 NodePool·노드 수에 의존하지 말고 실제 서비스 할당량과 서브넷 용량을 확인해야 합니다.
 
 </details>
 

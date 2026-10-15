@@ -1,7 +1,7 @@
 # Networking Models and VXLAN
 
-> **Review baseline**: Cilium 1.20.1, tested Kubernetes 1.33–1.36, Linux 5.10+ or documented equivalent backports such as RHEL 8.10's 4.18 kernel.
-> **Last reviewed**: September 12, 2026
+> **Review baseline**: Cilium 1.20.2, tested Kubernetes 1.33–1.36, Linux 5.10+ or documented equivalent backports such as RHEL 8.10's 4.18 kernel.
+> **Last reviewed**: October 15, 2026
 
 ## Lab Environment Setup
 
@@ -74,7 +74,7 @@ For ordinary VXLAN with no additional encapsulation/options, the reduction in th
 
 The outer Ethernet header is outside that underlay IP MTU. Encryption, Geneve options and other paths can change the budget. The effective route MTU and a Pod veth's device MTU need not be identical.
 
-In Cilium 1.20.1, Helm **`MTU` overrides the underlying-network MTU**; Cilium then calculates route overhead. `MTU: 0` selects detection. Setting `MTU: 1450` as if it meant “the final Pod payload MTU” can subtract the tunnel overhead again. Local interface detection also does not prove the smallest MTU across the entire path.
+In Cilium 1.20.2, Helm **`MTU` overrides the underlying-network MTU**; Cilium then calculates route overhead. `MTU: 0` selects detection. Setting `MTU: 1450` as if it meant “the final Pod payload MTU” can subtract the tunnel overhead again. Local interface detection also does not prove the smallest MTU across the entire path.
 
 ### VXLAN vs Other Encapsulations
 
@@ -87,7 +87,7 @@ In Cilium 1.20.1, Helm **`MTU` overrides the underlying-network MTU**; Cilium th
 
 ## Cilium's Overlay Networking
 
-Without an overriding platform/profile configuration, Cilium uses tunnel routing with VXLAN. Cross-node Pod transport needs reachable node addresses, permitted tunnel UDP traffic and a usable MTU. Overlay does not fix overlapping Pod address ranges or make disconnected nodes reachable.
+Without an overriding platform/profile configuration, Cilium uses tunnel routing with VXLAN. Cross-node Pod transport needs reachable node addresses, permitted tunnel UDP traffic and a usable MTU. Overlay does not fix overlapping Pod address ranges or make disconnected nodes reachable. For the packet walk, tunnel devices, MTU budgeting and native-routing variants see [Overlay and native routing](09-overlay-native-routing.md).
 
 ![Cross-node overlay flow: endpoint processing, source VTEP encapsulation, underlay transit, destination decapsulation and endpoint delivery.](../../.gitbook/assets/en-networking-cilium-03-networking-2.png)
 
@@ -112,7 +112,7 @@ The node and underlay must route the Pod addresses, including return traffic. Ro
 
 `autoDirectNodeRoutes: true` installs direct PodCIDR routes for nodes sharing an L2 network. With multiple L2 segments, `directRoutingSkipUnreachable` may skip unreachable direct routes while an independently working routed path handles them. It does not fall back to overlay tunnels.
 
-**Do not combine tunnel routing with `autoDirectNodeRoutes: true`: Cilium 1.20.1 explicitly rejects this combination at startup.** The old “hybrid mode” recipe was invalid. Native routing can still coexist with feature-specific encapsulation, such as a configured Geneve DSR path; that is a separate service feature.
+**Do not combine tunnel routing with `autoDirectNodeRoutes: true`: Cilium 1.20.2 explicitly rejects this combination at startup.** The old “hybrid mode” recipe was invalid. Native routing can still coexist with feature-specific encapsulation, such as a configured Geneve DSR path; that is a separate service feature.
 
 The Cilium BGP Control Plane advertises configured Pod/Service prefixes to peers. It does **not program the local datapath** and must not be treated as the component that automatically supplies missing intra-cluster routes.
 
@@ -199,7 +199,7 @@ For the VXLAN example:
 
 ```bash
 kubectl config current-context
-cilium install --version 1.20.1 --values lab-common.yaml --values mode-vxlan.yaml
+cilium install --version 1.20.2 --values lab-common.yaml --values mode-vxlan.yaml
 cilium status --wait
 ```
 
@@ -217,7 +217,7 @@ cilium connectivity perf --test-namespace cilium-net-perf \
   --report-dir ./cilium-net-perf-results
 ```
 
-The duration is per test case/sample, not a ten-second total run. This creates test workloads and network load. CLI 0.20.0 appends a sequence suffix to the namespace (`cilium-net-perf-1` for the default single suite). Save versions, placement and settings with results; no throughput/latency number is guaranteed.
+The duration is per test case/sample, not a ten-second total run. This creates test workloads and network load. CLI 0.20.1 appends a sequence suffix to the namespace (`cilium-net-perf-1` for the default single suite). Save versions, placement and settings with results; no throughput/latency number is guaranteed.
 
 TCP request/response, connection-rate and stream tests answer different questions. If using an independently prepared iperf3 setup, UDP testing still needs the TCP control connection and a UDP data path; a Service exposing only TCP 5201 is insufficient. Offered UDP rate is not measured achieved throughput.
 
@@ -225,10 +225,10 @@ These examples were checked against current official values, API schemas and CLI
 
 ## Sources
 
-- [Cilium 1.20.1 routing](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/routing.rst), [Helm values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml), [startup validation](https://github.com/cilium/cilium/blob/v1.20.1/daemon/cmd/daemon_main.go), [MTU calculation](https://github.com/cilium/cilium/blob/v1.20.1/pkg/mtu/mtu.go), [MTU option](https://github.com/cilium/cilium/blob/v1.20.1/pkg/mtu/cell.go)
+- [Cilium 1.20.2 routing](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/routing.rst), [Helm values](https://github.com/cilium/cilium/blob/v1.20.2/install/kubernetes/cilium/values.yaml), [startup validation](https://github.com/cilium/cilium/blob/v1.20.2/daemon/cmd/daemon_main.go), [MTU calculation](https://github.com/cilium/cilium/blob/v1.20.2/pkg/mtu/mtu.go), [MTU option](https://github.com/cilium/cilium/blob/v1.20.2/pkg/mtu/cell.go)
 - [VXLAN RFC 7348](https://www.rfc-editor.org/rfc/rfc7348.txt), [Geneve RFC 8926](https://www.rfc-editor.org/rfc/rfc8926.txt), [GRE RFC 2784](https://www.rfc-editor.org/rfc/rfc2784.txt), [NVGRE RFC 7637](https://www.rfc-editor.org/rfc/rfc7637.txt)
-- [BGP Control Plane](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane.rst), [AWS ENI](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/eni.rst), [EKS alternate CNI](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html), [GKE Dataplane V2](https://docs.cloud.google.com/kubernetes-engine/docs/concepts/dataplane-v2), [Azure IPAM](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/azure.rst)
-- [CLI 0.20.0 connectivity/perf options](https://github.com/cilium/cilium-cli/blob/v0.20.0/vendor/github.com/cilium/cilium/cilium-cli/cli/connectivity.go), [iperf3 invocation](https://software.es.net/iperf/invoking.html), [kubectl version skew](https://kubernetes.io/releases/version-skew-policy/)
+- [BGP Control Plane](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/bgp-control-plane/bgp-control-plane.rst), [AWS ENI](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/ipam/eni.rst), [EKS alternate CNI](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html), [GKE Dataplane V2](https://docs.cloud.google.com/kubernetes-engine/docs/concepts/dataplane-v2), [Azure IPAM](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/ipam/azure.rst)
+- [CLI 0.20.1 connectivity/perf options](https://github.com/cilium/cilium-cli/blob/v0.20.1/vendor/github.com/cilium/cilium/cilium-cli/cli/connectivity.go), [iperf3 invocation](https://software.es.net/iperf/invoking.html), [kubectl version skew](https://kubernetes.io/releases/version-skew-policy/)
 
 
 [Return to Main Page](README.md)

@@ -1,7 +1,7 @@
 # L2–L7 네트워킹 및 로드 밸런싱
 
-> **검토 기준**: Cilium 1.20.1, CLI 0.20.0. Istio 예제는 1.31 API를 사용합니다.
-> **최종 검토**: 2026년 9월 12일
+> **검토 기준**: Cilium 1.20.2, CLI 0.20.1. Istio 예제는 1.31 API를 사용합니다.
+> **최종 검토**: 2026년 10월 15일
 
 ## 실습 환경 설정
 
@@ -377,7 +377,7 @@ hubble:
 : "${MAGLEV_SEED:?Set the persisted base64 encoding of 12 random bytes}"
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
-helm install cilium cilium/cilium --version 1.20.1 --namespace kube-system \
+helm install cilium cilium/cilium --version 1.20.2 --namespace kube-system \
   --values lb-values.yaml \
   --set-string k8sServiceHost="$API_SERVER_HOST" \
   --set k8sServicePort="$API_SERVER_PORT" \
@@ -519,10 +519,10 @@ HTTP 정책 거부는 패킷 DROPPED 대신 HTTP 403일 수 있습니다. Timeou
 
 릴리스 소스·schema와 제한된 로컬 fixture로 확인한 예제이며 운영 검증 플랫폼·실제 클러스터 벤치마크가 아닙니다. 이미지 실행, webhook 연결, mTLS 트래픽, DSR 반환, NAT·fragment 동작은 준비한 환경에서 검증해야 합니다. 이번 실행의 label을 가진 애플리케이션 리소스만 정리하고 실습 종료 목적으로 클러스터 CNI를 제거하지 않습니다.
 
-- [Cilium kube-proxy replacement/DSR/Maglev](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst), [masquerading](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/masquerading.rst), [fragment handling](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/fragmentation.rst), [fragment map implementation](https://github.com/cilium/cilium/blob/v1.20.1/pkg/maps/fragmap/fragmap.go)
-- [L2 Announcements](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/l2-announcements.rst), [multicast](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/multicast.rst), [HTTP rule translator](https://github.com/cilium/cilium/blob/v1.20.1/pkg/envoy/policy/envoy_l7_rules_translator.go), [Envoy chart defaults](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/templates/_helpers.tpl)
-- [Cilium/Istio integration](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/istio.rst), [Istio CNI/init-container modes](https://istio.io/latest/docs/setup/additional-setup/cni/), [webhook requirements](https://istio.io/latest/docs/ops/configuration/mesh/webhook/), [Istio 1.31 schemas](https://github.com/istio/istio/blob/1.31.0/manifests/charts/base/files/crd-all.gen.yaml)
-- [Kubernetes Service proxy modes/affinity](https://kubernetes.io/docs/reference/networking/virtual-ips/), [Cilium 1.20.1 values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml)
+- [Cilium kube-proxy replacement/DSR/Maglev](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/kubernetes/kubeproxy-free.rst), [masquerading](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/masquerading.rst), [fragment handling](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/fragmentation.rst), [fragment map implementation](https://github.com/cilium/cilium/blob/v1.20.2/pkg/maps/fragmap/fragmap.go)
+- [L2 Announcements](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/l2-announcements.rst), [multicast](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/multicast.rst), [HTTP rule translator](https://github.com/cilium/cilium/blob/v1.20.2/pkg/envoy/policy/envoy_l7_rules_translator.go), [Envoy chart defaults](https://github.com/cilium/cilium/blob/v1.20.2/install/kubernetes/cilium/templates/_helpers.tpl)
+- [Cilium/Istio integration](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/servicemesh/istio.rst), [Istio CNI/init-container modes](https://istio.io/latest/docs/setup/additional-setup/cni/), [webhook requirements](https://istio.io/latest/docs/ops/configuration/mesh/webhook/), [Istio 1.31 schemas](https://github.com/istio/istio/blob/1.31.0/manifests/charts/base/files/crd-all.gen.yaml)
+- [Kubernetes Service proxy modes/affinity](https://kubernetes.io/docs/reference/networking/virtual-ips/), [Cilium 1.20.2 values](https://github.com/cilium/cilium/blob/v1.20.2/install/kubernetes/cilium/values.yaml)
 
 
 [메인 페이지로 돌아가기](README.md)

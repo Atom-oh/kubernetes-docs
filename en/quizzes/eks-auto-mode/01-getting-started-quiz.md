@@ -34,7 +34,7 @@ Auto Mode uses Karpenter-based controllers operated by AWS. You do not install a
 **Answer: C) Check the current AWS EKS support calendar and regional availability**
 
 **Explanation:**
-The original 1.29+ feature floor is not a current support guarantee. On September 12, 2026, EKS 1.34–1.36 are in standard support and the chapter uses 1.36. Check [AWS's version calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) and applicable fees. Check applied service quotas and subnet capacity instead of relying on the former unsubstantiated fixed NodePool/node counts.
+The original 1.29+ feature floor is not a current support guarantee. On October 12, 2026, EKS 1.34–1.37 are in standard support; the chapter keeps its reviewed 1.36 baseline. Check [AWS's version calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) and applicable fees. Check applied service quotas and subnet capacity instead of relying on the former unsubstantiated fixed NodePool/node counts.
 
 </details>
 

@@ -1,9 +1,13 @@
 # 클러스터 아키텍처
 
 > **지원 버전**: Kubernetes 1.35, 1.36, 1.37
-> **마지막 업데이트**: 2026년 9월 21일
+> **마지막 업데이트**: 2026년 10월 12일
 
-버전 헤더는 업스트림 Kubernetes 기준입니다. 2026년 9월 11일 기준 EKS 표준 지원 버전은 1.34–1.36이므로 버전 선택 전 [EKS 수명 주기](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)를 확인하세요. 아래 구성 요소 명령은 자체 관리형 클러스터 예시이며 EKS 컨트롤 플레인은 AWS가 관리합니다. 이미지 태그와 인프라 ID는 예시이므로 호환되고 유지 관리되는 이미지와 실제 값으로 바꿔 사용하세요.
+버전 헤더는 업스트림 Kubernetes 기준입니다. Kubernetes 프로젝트는 최신 세 마이너 버전(1.35–1.37)의 릴리스 브랜치를 유지합니다. upstream 1.34는 유지 관리 모드로 **2026년 10월 27일** 지원 종료(EOL) 전까지 패치 릴리스를 계속 받으며, 이는 EKS의 AWS 지원 종료일과 별도입니다.
+
+2026년 10월 12일 기준 EKS 표준 지원 버전은 1.34–1.37이고, EKS 1.37은 2026년 10월 1일 제공을 시작했습니다. 버전 선택 전 [Kubernetes 릴리스 상태](https://kubernetes.io/releases/)와 [EKS 수명 주기](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)를 확인하세요.
+
+아래 구성 요소 명령은 자체 관리형 클러스터 예시이며 EKS 컨트롤 플레인은 AWS가 관리합니다. 이미지 태그와 인프라 ID는 예시이므로 호환되고 유지 관리되는 이미지와 실제 값으로 바꿔 사용하세요.
 
 ## 실습 환경 설정
 
@@ -378,7 +382,7 @@ metadata:
 spec:
   containers:
   - name: kube-apiserver
-    image: registry.k8s.io/kube-apiserver:v1.37.0
+    image: registry.k8s.io/kube-apiserver:v1.37.1
     command:
     - kube-apiserver
     - --advertise-address=192.168.1.10

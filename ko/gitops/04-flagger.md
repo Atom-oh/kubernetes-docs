@@ -1,7 +1,7 @@
 # Flagger Progressive Delivery
 
-> **검토 기준**: Flagger/Chart 1.45.0, Loadtester 0.39.0, Flux 2.9.5, Podinfo 6.15.0
-> **마지막 업데이트**: 2026년 9월 11일
+> **검토 기준**: Flagger/Chart 1.45.0, Loadtester 0.39.0, Flux 2.9.5(릴리스 노트 검토 후 패치 2.9.6로 갱신, 예제 재실행 안 함), Podinfo 6.15.0
+> **마지막 업데이트**: 2026년 10월 12일
 
 Flagger는 Canary CRD로 기존 Kubernetes workload의 점진적 배포를 관리합니다. 트래픽과 버전을 제어하지만 데이터베이스 변경이나 외부 부작용을 되돌리는 트랜잭션 관리자는 아닙니다. 아래는 실습 예제이며 실제 네트워크·계측·권한·SLO에 맞게 준비해야 합니다.
 
@@ -81,7 +81,9 @@ Deployment 예제에서 podinfo는 원래 리소스이자 canary workload입니�
 | kubernetes | Service 전환 Blue-Green; L7 가중치/A/B와 구분 |
 | App Mesh / ingress-nginx / OSM | 아래 legacy 수명주기 제한 |
 
-AWS App Mesh 지원 종료 예정일은 **2026-09-30**으로 검토일에는 아직 미래입니다. community ingress-nginx는 2026년 3월 종료되었고 OSM 저장소는 archived 상태입니다. adapter 존재를 신규 운영 플랫폼의 유지보수 보장으로 해석하지 않습니다. A/B, mirroring, session affinity는 provider/구현별 지원을 확인합니다.
+AWS App Mesh 지원은 **2026-09-30 종료**됐으며, AWS는 그 이후 콘솔과 리소스에 접근할 수 없다고 안내합니다. community ingress-nginx는 2026년 3월 종료되었고 OSM 저장소는 archived 상태입니다.
+
+adapter 존재를 신규 운영 플랫폼의 유지보수 보장으로 해석하지 않습니다. A/B, mirroring, session affinity는 provider/구현별 지원을 확인합니다.
 
 ## EKS 설치 및 구성
 
@@ -1403,7 +1405,7 @@ Secret 값은 설명용이며 실제 token을 Git에 저장하지 않습니다. 
 
 severity는 배타적인 채널 분류가 아니라 최소 수준입니다. info는 모든 수준, warn은 warn/error, error는 error를 받습니다. 같은 수신자에 중복 구독하면 중복 알림이 생길 수 있습니다.
 
-Flagger 1.45.0의 native msteams는 아직 MessageCard를 생성합니다. Workflows의 Adaptive Card endpoint로 URL만 바꾸면 된다고 가정하지 않습니다. 호환 변환기 또는 event Webhook 수신자가 인증과 payload 변환을 수행하도록 별도 구성합니다. Flux 2.9.5의 Teams 구현과 혼동하지 않습니다.
+Flagger 1.45.0의 native msteams는 아직 MessageCard를 생성합니다. Workflows의 Adaptive Card endpoint로 URL만 바꾸면 된다고 가정하지 않습니다. 호환 변환기 또는 event Webhook 수신자가 인증과 payload 변환을 수행하도록 별도 구성합니다. Flux 2.9.6의 Teams 구현과 혼동하지 않습니다.
 
 native AlertProvider에 PagerDuty Events API 타입이 있다고 가정하지 않습니다. type: slack을 PagerDuty URL에 연결하면 payload가 맞지 않습니다. 기존 Slack 연동 또는 검증된 이벤트 변환 서비스를 사용합니다.
 
