@@ -1,91 +1,54 @@
 # Notificaciones de ArgoCD
 
-> **Versiones compatibles**: ArgoCD v2.9+, ArgoCD Notifications v1.2+
-> **Última actualización**: February 22, 2026
+> **Revisado con respecto a**: Argo CD 3.5.2 (Notifications Engine incluido 0cff13b8a717); actualizado al parche 3.5.4, que fija el mismo commit de Notifications Engine, tras revisar las notas de la versión (los ejemplos no se ejecutaron de nuevo)
+> **Última actualización**: October 12, 2026
 
-## Tabla de contenidos
+## Índice
+
 - [Descripción general](#overview)
 - [Arquitectura](#architecture)
-- [Servicios de notificaciones](#notification-services)
+- [Servicios de notificación](#notification-services)
 - [Disparadores](#triggers)
 - [Plantillas](#templates)
 - [Suscripciones](#subscriptions)
 - [Configuración avanzada](#advanced-configuration)
 - [Integración con AWS](#aws-integration)
 
-<span id="overview"></span>
-
 ## Descripción general
 
-ArgoCD Notifications es un componente que supervisa las aplicaciones de ArgoCD y envía notificaciones cuando se cumplen determinadas condiciones. Admite múltiples servicios de notificaciones y proporciona plantillas flexibles.
+ArgoCD Notifications es un componente que supervisa las aplicaciones de ArgoCD y envía notificaciones cuando se cumplen ciertas condiciones. Admite varios servicios de notificación y proporciona plantillas flexibles.
 
 ### Características principales
 
 | Característica | Descripción |
 |---------|-------------|
-| Múltiples servicios | Slack, Teams, correo electrónico, Webhook, GitHub y más |
-| Disparadores flexibles | Disparadores de notificaciones basados en condiciones |
-| Plantillas de Go | Sintaxis de plantillas enriquecida para el formato de mensajes |
-| Modelo de suscripción | Suscripciones a notificaciones por aplicación |
-| Disparadores integrados | Disparadores preconfigurados para eventos comunes |
-
-<span id="architecture"></span>
+| Varios servicios | Slack, Teams, correo electrónico, webhook, GitHub y más |
+| Disparadores flexibles | Disparadores de notificación basados en condiciones |
+| Plantillas Go | Sintaxis de plantillas enriquecida para el formato de mensajes |
+| Modelo de suscripción | Suscripciones de notificación por aplicación |
+| Catálogo de ejemplos | Definiciones opcionales de disparadores/plantillas para combinar con su configuración |
 
 ## Arquitectura
 
-```mermaid
-flowchart LR
-    subgraph ARGOCD["ArgoCD"]
-        APPS["Applications"]
-        CTRL["App Controller"]
-    end
+![Diagrama de flujo de las notificaciones de ArgoCD: los eventos de Application llegan al Notifications Controller, que evalúa los disparadores y renderiza las plantillas; después, envía mensajes a las suscripciones configuradas coincidentes.](../../.gitbook/assets/en-gitops-argocd-08-notifications-0.png)
 
-    subgraph NOTIFICATIONS["Notifications Controller"]
-        WATCH["Watch Apps"]
-        EVAL["Evaluate Triggers"]
-        SEND["Send Notifications"]
-    end
+[🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-08-notifications-0.html)
 
-    subgraph SERVICES["Notification Services"]
-        SLACK["Slack"]
-        TEAMS["Teams"]
-        EMAIL["Email"]
-        WEBHOOK["Webhook"]
-        GITHUB["GitHub"]
-    end
+### Controlador y configuración
 
-    APPS --> CTRL
-    CTRL --> WATCH
-    WATCH --> EVAL
-    EVAL -->|"trigger matched"| SEND
-    SEND --> SLACK
-    SEND --> TEAMS
-    SEND --> EMAIL
-    SEND --> WEBHOOK
-    SEND --> GITHUB
-
-    classDef argocd fill:#EB6E85,stroke:#333,color:white
-    classDef notif fill:#6c757d,stroke:#333,color:white
-    classDef service fill:#28a745,stroke:#333,color:white
-
-    class APPS,CTRL argocd
-    class WATCH,EVAL,SEND notif
-    class SLACK,TEAMS,EMAIL,WEBHOOK,GITHUB service
-```
-
-### Instalación
-
-ArgoCD Notifications está incluido en ArgoCD v2.4+. Para versiones anteriores:
+La instalación completa de Argo CD 3.5.4 incluye el controlador de Notifications. Compruebe que esté habilitado en los valores de su instalación/Helm. El archivo notifications_catalog/install.yaml contiene configuración de ejemplo; no es un instalador para un controlador ausente. Combine las entradas seleccionadas del catálogo con su ConfigMap y Secret existentes.
 
 ```bash
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/notifications_catalog/install.yaml
+kubectl get deployment argocd-notifications-controller -n argocd
 ```
 
-<span id="notification-services"></span>
+## Servicios de notificación
 
-## Servicios de notificaciones
+Combine estos fragmentos de datos en una configuración de argocd-notifications-cm; no reemplace el mismo ConfigMap/Secret con cada fragmento independiente. Almacene los tokens, las URL de webhook firmadas y las claves privadas en valores protegidos de argocd-notifications-secret fuera de Git. Los nombres de servicio, plantilla, disparador y suscripción deben coincidir.
 
 ### Slack
+
+Configure chat:write e invite al bot a los canales previstos. chat:write.public solo se necesita para publicar en canales públicos a los que el bot no se ha unido. signingSecret no sustituye una URL de Incoming Webhook.
 
 ```yaml
 apiVersion: v1
@@ -96,7 +59,6 @@ metadata:
 data:
   service.slack: |
     token: $slack-token
-    signingSecret: $slack-signing-secret  # Optional, for verification
 ---
 apiVersion: v1
 kind: Secret
@@ -108,13 +70,15 @@ stringData:
   slack-token: xoxb-your-bot-token
 ```
 
-Configuración del Bot de Slack:
-1. Cree una aplicación de Slack en https://api.slack.com/apps
-2. Agregue los ámbitos de OAuth: `chat:write`, `chat:write.public`
+Configuración de Slack Bot:
+1. Cree una Slack App en https://api.slack.com/apps
+2. Añada `chat:write`; use `chat:write.public` solo si el caso de uso indicado lo requiere
 3. Instale la aplicación en el espacio de trabajo
-4. Copie el token OAuth de usuario del Bot
+4. Copie el Bot User OAuth Token
 
-### Microsoft Teams
+### Microsoft Teams Workflows
+
+Use un endpoint de Workflows con teams-workflows en vez de los conectores heredados de Office365. Verifique la autenticación real del endpoint y el ciclo de vida de propiedad/copropiedad del flujo. Guarde su URL firmada en un Secret; no suponga que un endpoint heredado de MessageCard es intercambiable.
 
 ```yaml
 apiVersion: v1
@@ -123,7 +87,7 @@ metadata:
   name: argocd-notifications-cm
   namespace: argocd
 data:
-  service.teams: |
+  service.teams-workflows: |
     recipientUrls:
       deployments: $teams-webhook-deployments
       alerts: $teams-webhook-alerts
@@ -135,8 +99,8 @@ metadata:
   namespace: argocd
 type: Opaque
 stringData:
-  teams-webhook-deployments: https://outlook.office.com/webhook/xxx
-  teams-webhook-alerts: https://outlook.office.com/webhook/yyy
+  teams-webhook-deployments: REPLACE_WITH_TEAMS_WORKFLOWS_URL
+  teams-webhook-alerts: REPLACE_WITH_TEAMS_WORKFLOWS_URL
 ```
 
 ### Correo electrónico (SMTP)
@@ -154,6 +118,7 @@ data:
     username: $email-username
     password: $email-password
     from: argocd@example.com
+    html: true
 ---
 apiVersion: v1
 kind: Secret
@@ -178,10 +143,10 @@ data:
   service.webhook.custom: |
     url: https://api.example.com/webhooks/argocd
     headers:
-      - name: Authorization
-        value: Bearer $webhook-token
-      - name: Content-Type
-        value: application/json
+    - name: Authorization
+      value: $webhook-authorization
+    - name: Content-Type
+      value: application/json
 ---
 apiVersion: v1
 kind: Secret
@@ -190,10 +155,12 @@ metadata:
   namespace: argocd
 type: Opaque
 stringData:
-  webhook-token: your-api-token
+  webhook-authorization: Bearer REPLACE_WITH_RECEIVER_TOKEN
 ```
 
-### GitHub (estado del commit)
+### GitHub (estado de commit)
+
+Instale la GitHub App en el repositorio objetivo y conceda acceso de escritura a los estados de commit. Sustituya los ID y la clave privada de ejemplo por los valores de esa instalación.
 
 ```yaml
 apiVersion: v1
@@ -222,6 +189,8 @@ stringData:
 
 ### Grafana
 
+Use un token de cuenta de servicio con los permisos necesarios para escribir anotaciones. Este motor espera apiUrl incluido /api y añade anotaciones. Evite establecer de forma predeterminada un token de administrador o una duración innecesariamente larga.
+
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -234,7 +203,7 @@ data:
     apiKey: $grafana-api-key
 ```
 
-### PagerDuty
+### PagerDuty Events API v2
 
 ```yaml
 apiVersion: v1
@@ -243,32 +212,15 @@ metadata:
   name: argocd-notifications-cm
   namespace: argocd
 data:
-  service.pagerduty: |
+  service.pagerdutyv2: |
     serviceKeys:
       production: $pagerduty-key-prod
       staging: $pagerduty-key-staging
 ```
 
-<span id="triggers"></span>
-
 ## Disparadores
 
-Los disparadores definen cuándo enviar notificaciones según el estado de la aplicación.
-
-### Disparadores integrados
-
-| Disparador | Descripción |
-|---------|-------------|
-| `on-created` | La aplicación se crea |
-| `on-deleted` | La aplicación se elimina |
-| `on-deployed` | La aplicación se sincroniza y está en buen estado |
-| `on-health-degraded` | El estado de salud de la aplicación se degrada |
-| `on-sync-failed` | La operación de sincronización falló |
-| `on-sync-running` | Se inició la operación de sincronización |
-| `on-sync-status-unknown` | El estado de sincronización es desconocido |
-| `on-sync-succeeded` | La operación de sincronización tuvo éxito |
-
-### Disparadores personalizados
+Estos son ejemplos definidos explícitamente, no supuestos sobre un catálogo instalado automáticamente. Sus entradas `send` hacen referencia a `template.app-status` a continuación. **Combine los fragmentos en un ConfigMap** junto con la configuración del servicio que haya seleccionado.
 
 ```yaml
 apiVersion: v1
@@ -277,65 +229,128 @@ metadata:
   name: argocd-notifications-cm
   namespace: argocd
 data:
-  # Trigger when app becomes healthy
-  trigger.on-deployed: |
-    - when: app.status.operationState.phase in ['Succeeded'] and app.status.health.status == 'Healthy'
-      send: [app-deployed]
-
-  # Trigger on sync failure
+  context: |
+    argocdUrl: https://argocd.example.com
+  trigger.on-sync-succeeded: |
+    - when: app.status?.operationState?.phase == 'Succeeded'
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
   trigger.on-sync-failed: |
-    - when: app.status.operationState != nil and app.status.operationState.phase in ['Error', 'Failed']
-      send: [app-sync-failed]
-
-  # Trigger on health degradation
+    - when: app.status?.operationState?.phase in ['Failed', 'Error']
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
+  trigger.on-sync-running: |
+    - when: app.status?.operationState?.phase == 'Running'
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
+  trigger.on-sync-status-unknown: |
+    - when: app.status?.sync?.status == 'Unknown'
+      send:
+      - app-status
   trigger.on-health-degraded: |
-    - when: app.status.health.status == 'Degraded'
-      send: [app-health-degraded]
-
-  # Custom trigger: High replica count
-  trigger.on-high-replicas: |
-    - when: app.status.summary.images | length > 5
-      send: [high-image-count]
-
-  # Custom trigger: Production deployment
-  trigger.on-prod-deployed: |
-    - when: app.metadata.labels.environment == 'production' and app.status.operationState.phase == 'Succeeded'
-      send: [prod-deployment-success]
-      oncePer: app.status.sync.revision
-
-  # Trigger with time-based condition
-  trigger.on-long-sync: |
-    - when: time.Now().Sub(time.Parse(app.status.operationState.startedAt)).Minutes() > 10
-      send: [long-sync-warning]
+    - when: app.status?.health?.status == 'Degraded'
+      send:
+      - app-status
+  trigger.on-deployed: |
+    - when: app.status?.operationState?.phase == 'Succeeded' && app.status?.sync?.status == 'Synced' && app.status?.health?.status
+        == 'Healthy'
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
 ```
 
-### Condiciones de los disparadores
+`?.` gestiona las Applications que aún no tienen `status` u `operationState`. El éxito de la sincronización por sí solo no significa que la aplicación esté lista. `on-deployed` requiere una operación realizada correctamente y el estado **Synced + Healthy** actual, lo que excluye un cambio nuevo OutOfSync con una operación realizada correctamente anterior.
 
-Los disparadores usan el lenguaje expr para las condiciones:
+### Condiciones personalizadas
 
 ```yaml
-trigger.custom: |
-  - when: |
-      app.status.health.status == 'Degraded' and
-      app.metadata.labels.tier == 'critical' and
-      time.Now().Hour() >= 9 and time.Now().Hour() < 17
-    send: [critical-alert]
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-notifications-cm
+  namespace: argocd
+data:
+  trigger.on-production-deployed: |
+    - when: app.metadata?.labels?.environment == 'production' && app.status?.operationState?.phase == 'Succeeded' &&
+        app.status?.sync?.status == 'Synced' && app.status?.health?.status == 'Healthy'
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
+  trigger.on-resource-failed: |
+    - when: app.status?.resources != nil && any(app.status.resources, {#.health?.status == 'Degraded'})
+      send:
+      - app-status
+  trigger.on-many-images: |
+    - when: app.status?.summary?.images != nil && len(app.status.summary.images) > 5
+      oncePer: app.metadata.generation
+      send:
+      - app-status
+  trigger.on-long-sync: |
+    - when: app.status?.operationState?.phase == 'Running' && app.status.operationState.startedAt != nil && time.Now().Sub(time.Parse(app.status.operationState.startedAt)).Minutes()
+        > 10
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
+  trigger.on-declared-rollback: |
+    - when: 'app.status?.operationState?.phase == ''Succeeded'' && app.status.operationState.operation?.info != nil
+        && any(app.status.operationState.operation.info, {#.name == ''release-action'' && #.value == ''rollback''})'
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
+  trigger.on-critical-failure: |
+    - when: app.status?.operationState?.phase in ['Failed', 'Error'] && app.metadata?.labels?.tier == 'critical'
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
+  trigger.on-production-namespace-failure: |
+    - when: app.status?.operationState?.phase in ['Failed', 'Error'] && app.spec?.destination?.namespace != nil && app.spec.destination.namespace
+        matches '^prod-.*$'
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
+  trigger.on-utc-window: |
+    - when: app.status?.operationState?.phase == 'Succeeded' && time.Now().UTC().Hour() >= 9 && time.Now().UTC().Hour()
+        < 18
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
 ```
 
-Campos disponibles:
-- `app.metadata.*` - Metadatos de la aplicación
-- `app.spec.*` - Especificación de la aplicación
-- `app.status.*` - Estado de la aplicación
-- `app.operation.*` - Operación actual
-- `time.Now()` - Hora actual
+- `summary.images` cuenta imágenes, no réplicas. Use `any(...)` para matrices de recursos y `matches` para expresiones regulares.
+- Las condiciones de tiempo se ejecutan cuando se evalúa una Application. No son temporizadores precisos de diez minutos y no ponen en cola notificaciones para la próxima ventana laboral UTC.
+- Las diferencias de revisión no demuestran un rollback. `on-declared-rollback` lee información explícita de la operación. Tras revisar un cambio de recuperación en Git, un flujo de trabajo de sincronización manual puede usar `argocd app sync my-app --info release-action=rollback`. La sincronización automática no añade este marcador automáticamente.
 
-<span id="templates"></span>
+### Supervisión sostenida de OutOfSync
+
+El `finishedAt` de la última operación no es la hora a la que comenzó OutOfSync. Para una condición continua de treinta minutos, recopile métricas de Argo CD con Prometheus y use una regla como esta. Requiere Prometheus Operator y etiquetas/namespaces que coincidan con su configuración de `ruleSelector` de Prometheus.
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: argocd-sync-alerts
+  namespace: monitoring
+spec:
+  groups:
+  - name: argocd-sync
+    rules:
+    - alert: ArgoCDApplicationOutOfSync
+      expr: argocd_app_info{sync_status="OutOfSync"} == 1
+      for: 30m
+      labels:
+        severity: warning
+      annotations:
+        summary: Application {{ $labels.name }} has remained OutOfSync for 30 minutes
+```
 
 ## Plantillas
 
-Las plantillas definen el formato de los mensajes de notificación mediante plantillas de Go.
+Esta plantilla común define formatos para Slack, Teams Workflows, correo electrónico HTML, webhook e incidentes. **Las suscripciones seleccionan los destinos**; incluir un formato de servicio no difunde a todos los proveedores. Suscriba PagerDuty/Opsgenie solo a los disparadores de fallo o Degraded. Este ejemplo no resuelve automáticamente los incidentes.
 
-### Plantilla de Slack
+Esta versión del motor usa Go `text/template` con funciones Sprig. Escape los valores JSON con `toJson` y los valores HTML con `html`. Los campos se renderizan independientemente, por lo que las variables locales se declaran en cada campo. La plantilla gestiona la ausencia de estado, una revisión de operación única y `revisions` de múltiples fuentes. No reenvía mensajes de error sin procesar de la operación a canales externos.
 
 ```yaml
 apiVersion: v1
@@ -344,180 +359,111 @@ metadata:
   name: argocd-notifications-cm
   namespace: argocd
 data:
-  template.app-deployed: |
+  template.app-status: |
     message: |
-      :white_check_mark: Application *{{.app.metadata.name}}* is now healthy!
+      {{- $status := default (dict) .app.status -}}
+      {{- $sync := default (dict) $status.sync -}}
+      {{- $health := default (dict) $status.health -}}
+      {{- $op := default (dict) $status.operationState -}}
+      {{- $result := default (dict) $op.syncResult -}}
+      {{- $applied := default (list) $result.revisions -}}
+      {{- if and (not $applied) $result.revision -}}{{- $applied = list $result.revision -}}{{- end -}}
+      {{- $url := printf "%s/applications/%s/%s" (trimSuffix "/" .context.argocdUrl) .app.metadata.namespace .app.metadata.name -}}
+      Application {{.app.metadata.namespace}}/{{.app.metadata.name}}: phase={{default "None" $op.phase}}, sync={{default "Unknown" $sync.status}}, health={{default "Unknown" $health.status}}.
+      Details: {{$url}}
     slack:
       attachments: |
-        [{
-          "color": "#18be52",
-          "title": "{{.app.metadata.name}}",
-          "title_link": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}",
-          "fields": [
-            {
-              "title": "Sync Status",
-              "value": "{{.app.status.sync.status}}",
-              "short": true
-            },
-            {
-              "title": "Health Status",
-              "value": "{{.app.status.health.status}}",
-              "short": true
-            },
-            {
-              "title": "Revision",
-              "value": "{{.app.status.sync.revision | substr 0 7}}",
-              "short": true
-            },
-            {
-              "title": "Repository",
-              "value": "{{.app.spec.source.repoURL}}",
-              "short": true
-            }
-          ]
-        }]
-
-  template.app-sync-failed: |
-    message: |
-      :x: Application *{{.app.metadata.name}}* sync failed!
-    slack:
-      attachments: |
-        [{
-          "color": "#E96D76",
-          "title": "{{.app.metadata.name}} - Sync Failed",
-          "title_link": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}",
-          "fields": [
-            {
-              "title": "Error",
-              "value": "{{.app.status.operationState.message}}",
-              "short": false
-            },
-            {
-              "title": "Revision",
-              "value": "{{.app.status.sync.revision | substr 0 7}}",
-              "short": true
-            }
-          ]
-        }]
-
-  template.app-health-degraded: |
-    message: |
-      :warning: Application *{{.app.metadata.name}}* health is degraded!
-    slack:
-      attachments: |
+        {{- $status := default (dict) .app.status -}}
+        {{- $sync := default (dict) $status.sync -}}
+        {{- $health := default (dict) $status.health -}}
+        {{- $op := default (dict) $status.operationState -}}
+        {{- $result := default (dict) $op.syncResult -}}
+        {{- $applied := default (list) $result.revisions -}}
+        {{- if and (not $applied) $result.revision -}}{{- $applied = list $result.revision -}}{{- end -}}
+        {{- $url := printf "%s/applications/%s/%s" (trimSuffix "/" .context.argocdUrl) .app.metadata.namespace .app.metadata.name -}}
         [{
           "color": "#f4c030",
-          "title": "{{.app.metadata.name}} - Health Degraded",
-          "title_link": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}",
+          "title": {{.app.metadata.name | toJson}},
+          "title_link": {{$url | toJson}},
           "fields": [
-            {
-              "title": "Health Status",
-              "value": "{{.app.status.health.status}}",
-              "short": true
-            },
-            {
-              "title": "Message",
-              "value": "{{.app.status.health.message}}",
-              "short": false
-            }
+            {"title":"Sync","value":{{default "Unknown" $sync.status | toJson}},"short":true},
+            {"title":"Health","value":{{default "Unknown" $health.status | toJson}},"short":true},
+            {"title":"Operation revision(s)","value":{{join ", " $applied | toJson}},"short":false}
           ]
         }]
-```
-
-### Plantilla de Teams
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-notifications-cm
-  namespace: argocd
-data:
-  template.app-deployed-teams: |
-    teams:
-      themeColor: "#18be52"
-      title: "Application Deployed"
-      text: "Application **{{.app.metadata.name}}** has been deployed successfully."
-      sections: |
-        [{
-          "facts": [
-            {
-              "name": "Application",
-              "value": "{{.app.metadata.name}}"
-            },
-            {
-              "name": "Health Status",
-              "value": "{{.app.status.health.status}}"
-            },
-            {
-              "name": "Sync Status",
-              "value": "{{.app.status.sync.status}}"
-            },
-            {
-              "name": "Revision",
-              "value": "{{.app.status.sync.revision | substr 0 7}}"
-            }
-          ]
-        }]
-      potentialAction: |
-        [{
-          "@type": "OpenUri",
-          "name": "View in ArgoCD",
-          "targets": [{
-            "os": "default",
-            "uri": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}"
-          }]
-        }]
-```
-
-### Plantilla de correo electrónico
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-notifications-cm
-  namespace: argocd
-data:
-  template.app-deployed-email: |
+    teams-workflows:
+      title: 'Application status changed: {{.app.metadata.name}}'
+      text: |-
+        {{- $status := default (dict) .app.status -}}
+        {{- $sync := default (dict) $status.sync -}}
+        {{- $health := default (dict) $status.health -}}
+        {{- $op := default (dict) $status.operationState -}}
+        {{- $result := default (dict) $op.syncResult -}}
+        {{- $applied := default (list) $result.revisions -}}
+        {{- if and (not $applied) $result.revision -}}{{- $applied = list $result.revision -}}{{- end -}}
+        {{- $url := printf "%s/applications/%s/%s" (trimSuffix "/" .context.argocdUrl) .app.metadata.namespace .app.metadata.name -}}
+        Application {{.app.metadata.namespace}}/{{.app.metadata.name}}
+        {{$url}}
+      themeColor: Accent
+      facts: |-
+        {{- $status := default (dict) .app.status -}}
+        {{- $sync := default (dict) $status.sync -}}
+        {{- $health := default (dict) $status.health -}}
+        {{- $op := default (dict) $status.operationState -}}
+        {{- $result := default (dict) $op.syncResult -}}
+        {{- $applied := default (list) $result.revisions -}}
+        {{- if and (not $applied) $result.revision -}}{{- $applied = list $result.revision -}}{{- end -}}
+        {{- $url := printf "%s/applications/%s/%s" (trimSuffix "/" .context.argocdUrl) .app.metadata.namespace .app.metadata.name -}}
+        [{"name":"Sync","value":{{default "Unknown" $sync.status | toJson}}},{"name":"Health","value":{{default "Unknown" $health.status | toJson}}}]
     email:
-      subject: "[ArgoCD] Application {{.app.metadata.name}} Deployed"
-    message: |
-      <html>
-      <body>
-        <h2>Application Deployment Successful</h2>
-        <table border="1" cellpadding="5">
-          <tr>
-            <th>Application</th>
-            <td>{{.app.metadata.name}}</td>
-          </tr>
-          <tr>
-            <th>Health Status</th>
-            <td>{{.app.status.health.status}}</td>
-          </tr>
-          <tr>
-            <th>Sync Status</th>
-            <td>{{.app.status.sync.status}}</td>
-          </tr>
-          <tr>
-            <th>Revision</th>
-            <td>{{.app.status.sync.revision}}</td>
-          </tr>
-          <tr>
-            <th>Repository</th>
-            <td>{{.app.spec.source.repoURL}}</td>
-          </tr>
-        </table>
-        <p>
-          <a href="{{.context.argocdUrl}}/applications/{{.app.metadata.name}}">
-            View in ArgoCD
-          </a>
-        </p>
-      </body>
-      </html>
+      subject: '[Argo CD] Application status changed: {{.app.metadata.name}}'
+      body: |-
+        {{- $status := default (dict) .app.status -}}
+        {{- $sync := default (dict) $status.sync -}}
+        {{- $health := default (dict) $status.health -}}
+        {{- $op := default (dict) $status.operationState -}}
+        {{- $result := default (dict) $op.syncResult -}}
+        {{- $applied := default (list) $result.revisions -}}
+        {{- if and (not $applied) $result.revision -}}{{- $applied = list $result.revision -}}{{- end -}}
+        {{- $url := printf "%s/applications/%s/%s" (trimSuffix "/" .context.argocdUrl) .app.metadata.namespace .app.metadata.name -}}
+        <h2>Application status changed</h2><p>Application: {{.app.metadata.namespace | html}}/{{.app.metadata.name | html}}</p><p>Sync: {{default "Unknown" $sync.status | html}}; health: {{default "Unknown" $health.status | html}}</p><a href="{{$url | html}}">View in Argo CD</a>
+    webhook:
+      custom:
+        method: POST
+        body: |
+          {{- $status := default (dict) .app.status -}}
+          {{- $sync := default (dict) $status.sync -}}
+          {{- $health := default (dict) $status.health -}}
+          {{- $op := default (dict) $status.operationState -}}
+          {{- $result := default (dict) $op.syncResult -}}
+          {{- $applied := default (list) $result.revisions -}}
+          {{- if and (not $applied) $result.revision -}}{{- $applied = list $result.revision -}}{{- end -}}
+          {{- $url := printf "%s/applications/%s/%s" (trimSuffix "/" .context.argocdUrl) .app.metadata.namespace .app.metadata.name -}}
+          {{ dict "event" "application-status" "application" .app.metadata.name "namespace" .app.metadata.namespace "uid" (default "" .app.metadata.uid) "project" (default "default" .app.spec.project) "phase" (default "" $op.phase) "syncStatus" (default "Unknown" $sync.status) "healthStatus" (default "Unknown" $health.status) "appliedRevisions" $applied "operationStartedAt" (default "" $op.startedAt) "url" $url | toJson }}
+    pagerdutyv2:
+      summary: 'Application status changed: {{.app.metadata.namespace}}/{{.app.metadata.name}}'
+      severity: error
+      source: argocd
+      dedupKey: argocd/{{.app.metadata.namespace}}/{{.app.metadata.name}}/application-status
+    opsgenie:
+      description: 'Application status changed: {{.app.metadata.namespace}}/{{.app.metadata.name}}'
+      priority: P2
+      alias: argocd/{{.app.metadata.namespace}}/{{.app.metadata.name}}/application-status
 ```
 
-### Plantilla de estado de commit de GitHub
+`service.email.html: true` habilita cuerpos HTML. Teams usa el campo `teams-workflows` y los nombres de color de Adaptive Card. El nombre del servicio para `service.webhook.custom` es **custom**, con su cuerpo en `webhook.custom`; establezca `POST` explícitamente. Grafana usa el `message` común para su anotación.
+
+| Función | Propósito |
+|---|---|
+| `upper`, `lower` | Cambiar mayúsculas y minúsculas |
+| `default`, `dict`, `list` | Valores predeterminados y colecciones |
+| `join`, `splitList` | Unir/dividir listas |
+| `toJson` | Codificar valores JSON |
+| `html` | Escapar caracteres especiales de HTML |
+
+### Estado de commit de GitHub
+
+Use disparadores/plantillas separados para el estado de commit. Este ejemplo está limitado a una fuente HTTPS de GitHub y publica solo cuando el resultado de la operación identifica su repositorio y revisión. Las fuentes múltiples, Helm/OCI y SSH requieren una asignación explícita. Los fallos antes de que se registre una revisión de resultado no se publican. `status.label` proporciona el contexto del estado de GitHub; `context` y `description` no son campos de este esquema de plantilla.
 
 ```yaml
 apiVersion: v1
@@ -526,63 +472,63 @@ metadata:
   name: argocd-notifications-cm
   namespace: argocd
 data:
-  template.github-commit-status: |
+  trigger.on-github-deployed: |
+    - when: app.spec?.source?.repoURL != nil && app.spec.source.repoURL startsWith 'https://github.com/' && app.spec?.sources
+        == nil && app.status?.operationState?.syncResult?.revision != nil && app.status.operationState.syncResult?.source?.repoURL
+        == app.spec.source.repoURL && app.status?.operationState?.phase == 'Succeeded' && app.status?.sync?.status ==
+        'Synced' && app.status?.health?.status == 'Healthy'
+      oncePer: app.status.operationState.startedAt
+      send:
+      - github-deployed
+  trigger.on-github-failed: |
+    - when: app.spec?.source?.repoURL != nil && app.spec.source.repoURL startsWith 'https://github.com/' && app.spec?.sources
+        == nil && app.status?.operationState?.syncResult?.revision != nil && app.status.operationState.syncResult?.source?.repoURL
+        == app.spec.source.repoURL && app.status?.operationState?.phase in ['Failed', 'Error']
+      oncePer: app.status.operationState.startedAt
+      send:
+      - github-failed
+  template.github-deployed: |
     github:
+      repoURLPath: '{{.app.status.operationState.syncResult.source.repoURL}}'
+      revisionPath: '{{.app.status.operationState.syncResult.revision}}'
       status:
-        state: "{{if eq .app.status.sync.status \"Synced\"}}success{{else}}failure{{end}}"
-        context: "argocd/{{.app.metadata.name}}"
-        description: "{{.app.metadata.name}} - {{.app.status.sync.status}}"
-        targetURL: "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}"
-      repoURLPath: "{{.app.spec.source.repoURL}}"
-      revisionPath: "{{.app.status.sync.revision}}"
+        state: success
+        label: argocd/{{.app.metadata.namespace}}/{{.app.metadata.name}}
+        targetURL: '{{.context.argocdUrl}}/applications/{{.app.metadata.namespace}}/{{.app.metadata.name}}'
+  template.github-failed: |
+    github:
+      repoURLPath: '{{.app.status.operationState.syncResult.source.repoURL}}'
+      revisionPath: '{{.app.status.operationState.syncResult.revision}}'
+      status:
+        state: failure
+        label: argocd/{{.app.metadata.namespace}}/{{.app.metadata.name}}
+        targetURL: '{{.context.argocdUrl}}/applications/{{.app.metadata.namespace}}/{{.app.metadata.name}}'
 ```
-
-### Funciones de plantilla
-
-Funciones disponibles en las plantillas:
-
-| Función | Descripción |
-|----------|-------------|
-| `substr start end` | Subcadena |
-| `toUpper` | Convertir a mayúsculas |
-| `toLower` | Convertir a minúsculas |
-| `replace old new` | Reemplazar cadena |
-| `split delimiter` | Dividir cadena |
-| `join delimiter` | Unir arreglo |
-| `first` | Primer elemento |
-| `last` | Último elemento |
-| `default value` | Valor predeterminado si está vacío |
-| `indent spaces` | Aplicar sangría al texto |
-| `nindent spaces` | Nueva línea + sangría |
-
-<span id="subscriptions"></span>
 
 ## Suscripciones
 
-### Suscripciones a nivel de aplicación
+### Anotaciones de Application
 
-Agregue anotaciones a las aplicaciones:
+Combine este **fragmento de metadata en una Application existente**; no es un manifiesto de Application independiente. Haga coincidir los nombres de destinatario configurados por cada servicio y seleccione las suscripciones que necesite. Los destinatarios múltiples se separan por **punto y coma**, no por comas.
 
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
 metadata:
   name: my-app
   namespace: argocd
   annotations:
-    # Subscribe to triggers with service destinations
     notifications.argoproj.io/subscribe.on-sync-succeeded.slack: deployments
-    notifications.argoproj.io/subscribe.on-sync-failed.slack: deployments,alerts
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: deployments;alerts
     notifications.argoproj.io/subscribe.on-health-degraded.slack: alerts
-    notifications.argoproj.io/subscribe.on-deployed.teams: deployments
+    notifications.argoproj.io/subscribe.on-deployed.teams-workflows: deployments
     notifications.argoproj.io/subscribe.on-sync-failed.email: ops@example.com
-spec:
-  # ...
+    notifications.argoproj.io/subscribe.on-deployed.custom: ''
+    notifications.argoproj.io/subscribe.on-github-deployed.github: ''
+    notifications.argoproj.io/subscribe.on-github-failed.github: ''
 ```
 
-### Suscripciones predeterminadas
+### Disparadores predeterminados y suscripciones globales
 
-Configure las suscripciones predeterminadas para todas las aplicaciones:
+`defaultTriggers` proporciona nombres de disparadores para anotaciones como `notifications.argoproj.io/subscribe.slack: alerts`. No crea suscripciones en todas las Applications. Use `subscriptions` para destinatarios administrados centralmente; `selector` coincide con las **etiquetas de Application**.
 
 ```yaml
 apiVersion: v1
@@ -591,119 +537,60 @@ metadata:
   name: argocd-notifications-cm
   namespace: argocd
 data:
-  # Default triggers for all applications
   defaultTriggers: |
     - on-sync-failed
     - on-health-degraded
-
-  # Default subscriptions
   subscriptions: |
     - recipients:
-        - slack:alerts
+      - slack:alerts
       triggers:
-        - on-sync-failed
-        - on-health-degraded
+      - on-sync-failed
+      - on-health-degraded
     - recipients:
-        - email:ops@example.com
+      - email:ops@example.com
       triggers:
-        - on-sync-failed
+      - on-sync-failed
       selector: environment=production
 ```
 
-### Suscripciones a nivel de proyecto
+### Suscripciones de AppProject
+
+Combine este fragmento de metadata en el AppProject existente para cubrir sus Applications, conservando las políticas de fuente/destino/RBAC del capítulo anterior.
 
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: AppProject
 metadata:
   name: production
   namespace: argocd
   annotations:
     notifications.argoproj.io/subscribe.on-sync-failed.slack: production-alerts
-    notifications.argoproj.io/subscribe.on-health-degraded.pagerduty: production
-spec:
-  # ...
+    notifications.argoproj.io/subscribe.on-health-degraded.pagerdutyv2: production
 ```
-
-<span id="advanced-configuration"></span>
 
 ## Configuración avanzada
 
-### Variables de contexto
+### oncePer y gestión de duplicados
 
-Agregue variables de contexto personalizadas:
+`oncePer` reduce las notificaciones duplicadas para una condición mediante el valor de la expresión. No es un límite de solicitudes por segundo ni una garantía de entrega exactamente una vez. Los disparadores de operación aquí usan `operationState.startedAt` para distinguir nuevos intentos de sincronización en la misma revisión. Gestione los límites de velocidad en el servicio/puente receptor y haga idempotentes a los consumidores de webhook/SQS.
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-notifications-cm
-  namespace: argocd
-data:
-  context: |
-    argocdUrl: https://argocd.example.com
-    environment: production
-    team: platform
-    slackChannel: "#deployments"
+### Validación de consola
+
+Guarde el ConfigMap compuesto como `notifications.yaml`. Estos comandos leen Application/AppProject mediante su kubeconfig actual y renderizan explícitamente en `console:stdout`. Los permisos y la entrega reales de Slack/Teams/GitHub/SQS requieren pruebas de integración independientes.
+
+```bash
+kubectl get application my-app -n argocd -o yaml > sample-application.yaml
+argocd admin notifications trigger run on-deployed ./sample-application.yaml \
+  --config-map ./notifications.yaml --secret :empty
+argocd admin notifications template notify app-status ./sample-application.yaml \
+  --config-map ./notifications.yaml --secret :empty --recipient console:stdout
 ```
-
-Úselas en las plantillas:
-
-```yaml
-template.custom: |
-  message: |
-    Environment: {{.context.environment}}
-    Team: {{.context.team}}
-```
-
-### Notificaciones condicionales
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-notifications-cm
-  namespace: argocd
-data:
-  trigger.on-critical-failure: |
-    - when: |
-        app.status.operationState.phase == 'Failed' and
-        app.metadata.labels.tier == 'critical'
-      send: [critical-failure]
-      oncePer: app.status.sync.revision
-
-  template.critical-failure: |
-    message: |
-      :rotating_light: CRITICAL APPLICATION FAILURE :rotating_light:
-      Application *{{.app.metadata.name}}* has failed!
-      {{if .app.status.operationState.message}}
-      Error: {{.app.status.operationState.message}}
-      {{end}}
-    slack:
-      attachments: |
-        [{
-          "color": "#dc3545",
-          "title": "{{.app.metadata.name}} - CRITICAL FAILURE",
-          "title_link": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}"
-        }]
-```
-
-### Limitación de velocidad con oncePer
-
-Evite las notificaciones duplicadas:
-
-```yaml
-trigger.on-sync-status-change: |
-  - when: app.status.sync.status != 'Synced'
-    send: [sync-status-change]
-    oncePer: app.status.sync.revision
-```
-
-<span id="aws-integration"></span>
 
 ## Integración con AWS
 
-### Amazon SNS
+### Servicio SQS nativo
+
+Esta versión proporciona un servicio `awssqs`. Una URL de AWS API o una cadena estática `Authorization: AWS4-HMAC-SHA256 ...` en un webhook genérico no firma una solicitud SigV4. Las credenciales de IRSA/Pod Identity por sí solas no hacen que el webhook genérico reconozca el firmante.
+
+Primero aprovisione una **cola Standard** llamada `argocd-notifications` en la misma cuenta/región y asocie la cuenta de servicio de Notifications Controller con IRSA o EKS Pod Identity. La cadena de credenciales predeterminada del SDK evita aquí las claves de acceso estáticas. Sustituya los valores de cuenta/región/cola y combine la configuración de `context` anterior.
 
 ```yaml
 apiVersion: v1
@@ -712,117 +599,79 @@ metadata:
   name: argocd-notifications-cm
   namespace: argocd
 data:
-  service.webhook.sns: |
-    url: https://sns.us-west-2.amazonaws.com
-    headers:
-      - name: Content-Type
-        value: application/x-www-form-urlencoded
-
-  template.sns-notification: |
-    webhook:
-      sns:
-        method: POST
-        body: |
-          Action=Publish&TopicArn=arn:aws:sns:us-west-2:123456789012:argocd-notifications&Message={{.app.metadata.name}} - {{.app.status.sync.status}}
+  service.awssqs: |
+    queue: argocd-notifications
+    region: ap-northeast-2
+    account: '123456789012'
+  trigger.on-aws-sync-completed: |
+    - when: app.status?.operationState?.phase in ['Succeeded', 'Failed', 'Error']
+      oncePer: app.status.operationState.startedAt
+      send:
+      - aws-app-event
+  template.aws-app-event: |
+    message: |
+      {{- $status := default (dict) .app.status -}}
+      {{- $sync := default (dict) $status.sync -}}
+      {{- $health := default (dict) $status.health -}}
+      {{- $op := default (dict) $status.operationState -}}
+      {{- $result := default (dict) $op.syncResult -}}
+      {{- $applied := default (list) $result.revisions -}}
+      {{- if and (not $applied) $result.revision -}}{{- $applied = list $result.revision -}}{{- end -}}
+      {{- $url := printf "%s/applications/%s/%s" (trimSuffix "/" .context.argocdUrl) .app.metadata.namespace .app.metadata.name -}}
+      {{ dict "event" "sync-completed" "application" .app.metadata.name "namespace" .app.metadata.namespace "uid" (default "" .app.metadata.uid) "project" (default "default" .app.spec.project) "phase" (default "" $op.phase) "syncStatus" (default "Unknown" $sync.status) "healthStatus" (default "Unknown" $health.status) "appliedRevisions" $applied "operationStartedAt" (default "" $op.startedAt) "url" $url | toJson }}
 ```
 
-### Amazon SQS
+Permisos de remitente de ejemplo para el rol del controlador, suponiendo cifrado administrado por SQS. Una clave KMS administrada por el cliente requiere además la política de claves apropiada y permisos de KMS.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sqs:GetQueueUrl",
+        "sqs:SendMessage"
+      ],
+      "Resource": "arn:aws:sqs:ap-northeast-2:123456789012:argocd-notifications"
+    }
+  ]
+}
+```
+
+Añada esta entrada a las anotaciones de una Application existente. El destinatario es un nombre de cola y anula la cola predeterminada del servicio.
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
 metadata:
-  name: argocd-notifications-cm
-  namespace: argocd
-data:
-  service.webhook.sqs: |
-    url: https://sqs.us-west-2.amazonaws.com/123456789012/argocd-notifications
-    headers:
-      - name: Content-Type
-        value: application/x-www-form-urlencoded
-
-  template.sqs-notification: |
-    webhook:
-      sqs:
-        method: POST
-        body: |
-          Action=SendMessage&MessageBody={"app":"{{.app.metadata.name}}","status":"{{.app.status.sync.status}}","revision":"{{.app.status.sync.revision}}"}
+  annotations:
+    notifications.argoproj.io/subscribe.on-aws-sync-completed.awssqs: argocd-notifications
 ```
 
-### Webhook de Lambda
+El motor incluido establece un retraso de diez segundos en `SendMessage`. Las colas FIFO no admiten retraso por mensaje, por lo que no sustituya una cola FIFO en este ejemplo. No suponga que se envían los `messageAttributes` configurados; incluya los metadatos requeridos en el cuerpo del mensaje JSON.
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-notifications-cm
-  namespace: argocd
-data:
-  service.webhook.lambda: |
-    url: https://xxxxx.execute-api.us-west-2.amazonaws.com/prod/argocd-webhook
-    headers:
-      - name: x-api-key
-        value: $lambda-api-key
-      - name: Content-Type
-        value: application/json
+### Integración con Lambda, SNS y EventBridge
 
-  template.lambda-notification: |
-    webhook:
-      lambda:
-        method: POST
-        body: |
-          {
-            "application": "{{.app.metadata.name}}",
-            "project": "{{.app.spec.project}}",
-            "syncStatus": "{{.app.status.sync.status}}",
-            "healthStatus": "{{.app.status.health.status}}",
-            "revision": "{{.app.status.sync.revision}}",
-            "repoURL": "{{.app.spec.source.repoURL}}",
-            "timestamp": "{{.app.status.operationState.finishedAt}}"
-          }
-```
+Una ruta de integración compatible es **Notifications → SQS → Lambda → SNS o EventBridge**. Implemente y despliegue los recursos descendentes por separado; el ConfigMap no los crea.
 
-### Configuración completa de notificaciones de AWS
+| Salto | Configuración requerida |
+|---|---|
+| SQS → Lambda | Asignación de origen de eventos en la misma región; permisos de recibir/eliminar/atributos de cola; tiempo de espera de visibilidad ajustado al procesamiento; reintentos/DLQ |
+| Lambda → SNS | Permiso `sns:Publish` del rol de ejecución en el tema objetivo; llamada firmada de AWS SDK |
+| Lambda → EventBridge | `events:PutEvents` en el bus objetivo; inspeccione `FailedEntryCount` y los errores de las entradas individuales |
+| Consumidor | Validación JSON; clave de idempotencia que considere UID de Application, evento, operationStartedAt y estado actual; configuración de respuesta de fallo parcial por lote de SQS |
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-notifications-cm
-  namespace: argocd
-data:
-  context: |
-    argocdUrl: https://argocd.example.com
-    awsRegion: us-west-2
-    environment: production
+Si se requiere un webhook de API Gateway, cree un puente autenticado por separado. Una API key/usage plan por sí sola no es autenticación. La revisión de este capítulo no aprovisionó recursos de AWS ni envió mensajes reales.
 
-  service.webhook.eventbridge: |
-    url: https://events.us-west-2.amazonaws.com
-    headers:
-      - name: Content-Type
-        value: application/x-amz-json-1.1
-      - name: X-Amz-Target
-        value: AWSEvents.PutEvents
+## Referencias
 
-  trigger.on-sync-completed: |
-    - when: app.status.operationState.phase in ['Succeeded', 'Failed']
-      send: [aws-eventbridge]
-
-  template.aws-eventbridge: |
-    webhook:
-      eventbridge:
-        method: POST
-        body: |
-          {
-            "Entries": [{
-              "Source": "argocd",
-              "DetailType": "Application Sync Event",
-              "Detail": "{\"application\":\"{{.app.metadata.name}}\",\"status\":\"{{.app.status.operationState.phase}}\",\"revision\":\"{{.app.status.sync.revision}}\"}",
-              "EventBusName": "argocd-events"
-            }]
-          }
-```
+- [Notificaciones](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/notifications/)
+- [Disparadores](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/notifications/triggers/)
+- [Suscripciones](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/notifications/subscriptions/)
+- [Teams Workflows](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/notifications/services/teams-workflows/)
+- [Implementación de plantilla del motor](https://github.com/argoproj/notifications-engine/blob/0cff13b8a717/pkg/templates/service.go)
+- [Implementación de SQS del motor](https://github.com/argoproj/notifications-engine/blob/0cff13b8a717/pkg/services/awssqs.go)
+- [Lambda con SQS](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html)
 
 ## Cuestionario
 
-Para comprobar lo que ha aprendido, pruebe el [cuestionario de notificaciones de ArgoCD](../../quizzes/gitops/argocd/08-notifications-quiz.md).
+Ponga a prueba sus conocimientos con el [cuestionario de notificaciones](../../quizzes/gitops/argocd/08-notifications-quiz.md).

@@ -1,10 +1,10 @@
 # EKS 网络测验 - 第 2 部分
 
-本测验检验你对 Amazon EKS 中高级网络概念、AWS Load Balancer Controller、Ingress 资源、Service Mesh 和网络安全的理解。
+> **最后更新**: October 12, 2026
 
-## 选择题
+这些答案使用[第 2 部分](../../eks/03-eks-networking-part2.md)中的控制器所有权和前提条件：LBC 3.5.0 和 Gateway API 1.6.0。命令是运行时会更改资源的示例；本地 schema/mock 测试不构成 EKS 部署。请替换账户/Region/资源占位符，使用预期的 kubeconfig，并保留平台对 IAM/Helm/IaC 的所有权。
 
-### 1. AWS Load Balancer Controller 默认会为 Kubernetes Ingress 资源预置哪种类型的 AWS load balancer？
+### 1. 对于 Kubernetes Ingress 资源，AWS Load Balancer Controller 默认预置哪种类型的 AWS 负载均衡器？
 
 A. Classic Load Balancer (CLB) B. Network Load Balancer (NLB) C. Application Load Balancer (ALB) D. Gateway Load Balancer (GWLB)
 
@@ -12,19 +12,21 @@ A. Classic Load Balancer (CLB) B. Network Load Balancer (NLB) C. Application Loa
 
 <summary>显示答案</summary>
 
-**答案: C. Application Load Balancer (ALB)**
+**答案：C. Application Load Balancer (ALB)**
 
-**解析:** AWS Load Balancer Controller 默认会为 Kubernetes Ingress 资源预置 Application Load Balancer (ALB)。ALB 是第 7 层 load balancer，可处理 HTTP/HTTPS 流量，并提供基于路径的路由、基于主机的路由和 TLS 终止等功能，以满足 Ingress 资源的需求。
+**说明：** 对于 Kubernetes Ingress 资源，AWS Load Balancer Controller 默认预置 Application Load Balancer (ALB)。ALB 是第 7 层负载均衡器，处理 HTTP/HTTPS 流量，并提供基于路径的路由、基于主机的路由和 TLS 终止等功能，以满足 Ingress 资源的要求。
 
-**主要特性:**
+LBC 必须选择 Ingress class；其他控制器可以采用不同方式实现 Ingress。以下 public scheme 要求有经过明确配置的公有子网、客户端 SG 访问权限和就绪的后端 Service。
 
-1. **基于路径的路由**: ALB 可以根据 URL 路径将流量路由到不同 Service，适合在 Ingress 中实现基于路径的路由规则。
-2. **基于主机的路由**: 可以使用单个 ALB 处理多个域名，支持包含多个 host 规则的 Ingress。
-3. **TLS 终止**: ALB 可以管理 SSL/TLS 证书并终止 HTTPS 流量。
-4. **WebSockets 支持**: ALB 支持 WebSockets 协议，适合实时应用。
-5. **身份验证集成**: 可与 Amazon Cognito 或 OIDC 集成，以提供应用级身份验证。
+**主要功能：**
 
-**配置示例:**
+1. **基于路径的路由：** ALB 可以根据 URL 路径将流量路由到不同的服务，因此适合在 Ingress 中实现基于路径的路由规则。
+2. **基于主机的路由：** 单个 ALB 可以处理多个域名，支持具有多个主机规则的 Ingress。
+3. **TLS 终止：** ALB 可以管理 SSL/TLS 证书并终止 HTTPS 流量。
+4. **WebSockets 支持：** ALB 支持 WebSockets 协议，适用于实时应用程序。
+5. **身份验证集成：** 可以与 Amazon Cognito 或 OIDC 集成，提供应用程序级身份验证。
+
+**配置示例：**
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -32,10 +34,10 @@ kind: Ingress
 metadata:
   name: example-ingress
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
 spec:
+  ingressClassName: alb
   rules:
   - host: example.com
     http:
@@ -56,47 +58,47 @@ spec:
               number: 80
 ```
 
-**关键 Annotations:**
+**关键注释：**
 
-* `kubernetes.io/ingress.class: alb`: 指定使用 ALB Ingress Controller
-* `alb.ingress.kubernetes.io/scheme: internet-facing`: 创建面向互联网的 ALB
-* `alb.ingress.kubernetes.io/target-type: ip`: 使用 pod IP 作为目标（而不是 instance）
-* `alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'`: 配置监听器端口
-* `alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:region:account-id:certificate/certificate-id`: 指定 SSL 证书
+* `spec.ingressClassName: alb`：选择控制器为 `ingress.k8s.aws/alb` 的 IngressClass
+* `alb.ingress.kubernetes.io/scheme: internet-facing`：创建面向互联网的 ALB
+* `alb.ingress.kubernetes.io/target-type: ip`：使用 Pod IP 作为目标（而非 instance）
+* `alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'`：配置监听器端口
+* `alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:region:account-id:certificate/certificate-id`：指定 SSL 证书
 
-其他选项的问题:
+其他选项的问题：
 
-* **A. Classic Load Balancer (CLB)**: AWS Load Balancer Controller 不会将 CLB 用于 Ingress 资源。CLB 被视为旧版 load balancer。
-* **B. Network Load Balancer (NLB)**: NLB 主要用于 Service 类型 LoadBalancer，默认不用于 Ingress 资源。
-* **D. Gateway Load Balancer (GWLB)**: GWLB 用于网络虚拟设备，不与 Kubernetes Ingress 资源一起使用。
+* **A. Classic Load Balancer (CLB)：** AWS Load Balancer Controller 不会将 CLB 用于 Ingress 资源。CLB 被视为旧版负载均衡器。
+* **B. Network Load Balancer (NLB)：** NLB 主要用于 Service 类型 LoadBalancer，默认不用于 Ingress 资源。
+* **D. Gateway Load Balancer (GWLB)：** GWLB 用于网络虚拟设备，不与 Kubernetes Ingress 资源配合使用。
 
 </details>
 
-### 2. 在 Amazon EKS 中，使用 AWS Load Balancer Controller 创建内部 Application Load Balancer 时，应向 Ingress 资源添加什么 annotation？
+### 2. 哪个 Ingress 注释用于选择内部 ALB？
 
-A. `service.beta.kubernetes.io/aws-load-balancer-internal: "true"` B. `alb.ingress.kubernetes.io/scheme: internal` C. `kubernetes.io/ingress.class: internal-alb` D. `aws-load-balancer-type: internal`
+- A. Service 注释 `aws-load-balancer-internal`
+- B. Ingress 注释 `alb.ingress.kubernetes.io/scheme: internal`
+- C. 任意名为 `internal-alb` 的 class
+- D. `aws-load-balancer-type: internal`
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案: B. `alb.ingress.kubernetes.io/scheme: internal`**
+**答案：B. `alb.ingress.kubernetes.io/scheme: internal`**
 
-**解析:** 要在 Amazon EKS 中使用 AWS Load Balancer Controller 创建内部 Application Load Balancer，必须向 Ingress 资源添加 `alb.ingress.kubernetes.io/scheme: internal` annotation。此 annotation 会将 ALB 配置为仅可在 VPC 内访问。
-
-**内部 ALB 配置示例:**
-
+内部 ALB 使用私有地址。当路由、DNS 和安全控制允许时，连接的 VPC 或本地网络中的已路由客户端也可访问它；按定义，它并不限于 Pod 或其自身 VPC。
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: internal-ingress
   annotations:
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
 spec:
+  ingressClassName: alb
   rules:
-  - host: internal.example.com
+  - host: app.example.com
     http:
       paths:
       - path: /
@@ -107,82 +109,36 @@ spec:
             port:
               number: 80
 ```
-
-**关键注意事项:**
-
-1.  **Subnet 选择**: 内部 ALB 会创建在私有 subnet 中。可以显式指定 subnet:
-
-    ```yaml
-    alb.ingress.kubernetes.io/subnets: subnet-0123456789abcdef0,subnet-0123456789abcdef1
-    ```
-2.  **Security Groups**: 可以将特定 Security Groups 应用于内部 ALB:
-
-    ```yaml
-    alb.ingress.kubernetes.io/security-groups: sg-0123456789abcdef0
-    ```
-3.  **入站 CIDR 限制**: 可以仅允许来自特定 CIDR blocks 的访问:
-
-    ```yaml
-    alb.ingress.kubernetes.io/inbound-cidrs: 10.0.0.0/16,192.168.0.0/16
-    ```
-4.  **内部 DNS**: 内部 ALB 可以与 VPC 内的 Route 53 private hosted zones 集成:
-
-    ```yaml
-    alb.ingress.kubernetes.io/load-balancer-attributes: routing.http.drop_invalid_header_fields.enabled=true,access_logs.s3.enabled=true
-    ```
-
-**内部 ALB 的使用场景:**
-
-* 微服务之间的内部通信
-* 后端 API Service
-* 管理界面
-* 开发和测试环境
-* 有合规要求的工作负载
-
-**验证 AWS Load Balancer Controller 安装:**
-
-```bash
-kubectl get deployment -n kube-system aws-load-balancer-controller
-```
-
-其他选项的问题:
-
-* **A. `service.beta.kubernetes.io/aws-load-balancer-internal: "true"`**: 此 annotation 用于 Service 类型 LoadBalancer，不适用于 Ingress 资源。
-* **C. `kubernetes.io/ingress.class: internal-alb`**: 正确的 ingress.class 是 'alb'；'internal-alb' 不是有效值。
-* **D. `aws-load-balancer-type: internal`**: 此 annotation 不存在。
+子网发现或显式子网 ID 会选择放置位置；SG 控制访问。`inbound-cidrs` 配置由控制器创建的前端 SG，但在提供自定义 SG 时会被忽略。必须单独创建 Route 53 私有 alias/CNAME；ALB 日志属性不会创建 DNS 记录。当存在实际匹配的 IngressClass/控制器配置时，可以使用如 `internal-alb` 的自定义 IngressClass 名称，但仅凭名称不会选择 scheme。
 
 </details>
 
-### 3. 在 Amazon EKS 中，使用什么 annotation 配置 AWS Load Balancer Controller 直接使用 pod IP 作为目标？
+### 3. 哪个 Ingress 注释用于选择 Pod IP 目标？
 
-A. `alb.ingress.kubernetes.io/target-type: pod` B. `alb.ingress.kubernetes.io/target-type: ip` C. `service.beta.kubernetes.io/aws-load-balancer-target-type: ip` D. `aws-load-balancer-target-node-labels: ip-mode=true`
+- A. `target-type: pod`
+- B. `alb.ingress.kubernetes.io/target-type: ip`
+- C. `service.beta.kubernetes.io/aws-load-balancer-target-type: ip`
+- D. `aws-load-balancer-target-node-labels: ip-mode=true`
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案: B. `alb.ingress.kubernetes.io/target-type: ip`**
+**答案：B. `alb.ingress.kubernetes.io/target-type: ip`**
 
-**解析:** 要在 Amazon EKS 中配置 AWS Load Balancer Controller 直接使用 pod IP 作为目标，必须使用 `alb.ingress.kubernetes.io/target-type: ip` annotation。此设置允许 load balancer 将流量直接路由到 pod IP，而不是 node IP。
-
-**目标类型选项:**
-
-1. **instance**:（默认）使用 node IP 和 NodePort 路由流量。
-2. **ip**: 使用 pod IP 和 container port 将流量直接路由到 pods。
-
-**IP 模式配置示例:**
-
+`ip` 会注册可路由的 Pod IP 和已解析的 Service 目标端口。`instance` 通常注册节点和 NodePort（受控制器/IngressClass 默认值约束）。EKS Fargate 要求使用 IP 目标。选择 IP 目标本身不会创建 Pod security group、消除节点故障或保证更高性能。
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: example-ingress
+  name: ip-ingress
   annotations:
-    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internal
     alb.ingress.kubernetes.io/target-type: ip
 spec:
+  ingressClassName: alb
   rules:
-  - http:
+  - host: app.example.com
+    http:
       paths:
       - path: /
         pathType: Prefix
@@ -192,230 +148,127 @@ spec:
             port:
               number: 80
 ```
+| 属性 | IP 目标 | Instance 目标 |
+|---|---|---|
+| 路径 | LB → Pod 目标 | LB → NodePort → 选定的 endpoint |
+| 节点故障 | 故障节点上的 Pod 会丢失；健康检查/协调将收敛 | 故障节点目标会被移除；其他健康节点可以保留 |
+| Service 类型 | ClusterIP 已足够 | 使用已分配 NodePort 的 NodePort 或 LoadBalancer |
+| Fargate | 支持的路径 | 无 EC2 NodePort 目标 |
 
-**IP 模式的优势:**
-
-1. **Node 故障韧性**: 即使 node 发生故障，流量也会继续路由到其他 node 上的 pods。
-2. **直接路由**: 流量会直接传递到 pods，无需通过 NodePort 进行额外跳转。
-3. **Fargate 兼容性**: 运行在 AWS Fargate 上的 pods 必须使用此模式。
-4. **Security Group 集成**: 可以在 pod 级别应用 Security Groups。
-
-**IP 模式要求:**
-
-1. **VPC CNI**: 需要 Amazon VPC CNI plugin。
-2. **Subnet 配置**: pods 运行所在的 subnets 必须可路由到 load balancer subnets。
-3. **Security Group 规则**: load balancer 的 security group 必须允许到 pod IP 的流量。
-
-**IP 模式与 Instance 模式比较:**
-
-| 特性            | IP 模式            | Instance 模式                      |
-| --------------- | ------------------ | ----------------------------------- |
-| 目标            | Pod IP             | Node IP                             |
-| 端口            | Container port     | NodePort                            |
-| 流量路径        | LB -> Pod          | LB -> Node -> Pod                   |
-| Node 故障时     | 无影响             | 该 node 上的 Pods 不可访问          |
-| 性能            | 性能更好           | 由于额外跳转有轻微开销              |
-| Fargate 支持    | 支持               | 不支持                              |
-
-**其他配置选项:**
-
-```yaml
-# Target group attributes setting
-alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=30,stickiness.enabled=true
-
-# Health check settings
-alb.ingress.kubernetes.io/healthcheck-path: /health
-alb.ingress.kubernetes.io/healthcheck-interval-seconds: '15'
-alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
-alb.ingress.kubernetes.io/success-codes: '200'
-alb.ingress.kubernetes.io/healthy-threshold-count: '2'
-alb.ingress.kubernetes.io/unhealthy-threshold-count: '2'
-```
-
-其他选项的问题:
-
-* **A. `alb.ingress.kubernetes.io/target-type: pod`**: 正确值是 'ip'，不是 'pod'。
-* **C. `service.beta.kubernetes.io/aws-load-balancer-target-type: ip`**: 此 annotation 用于 Service 类型 LoadBalancer，不适用于 Ingress 资源。
-* **D. `aws-load-balancer-target-node-labels: ip-mode=true`**: 此 annotation 不存在。
+使用 VPC 可路由的 Pod 网络，并允许应用程序和健康检查流量。原生 VPC CNI 是常规的 EC2 路径；受支持的混合/网络设计需要自行验证其可达性。`service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip` 是对应的 NLB Service 注释；省略 `nlb` 的选项不是正确注释。
 
 </details>
 
-### 4. 在 Amazon EKS 中，使用什么 annotation 将 Kubernetes Service 与 AWS PrivateLink 集成，以创建 VPC endpoint service？
+### 4. NLB-IP 注释会创建 PrivateLink endpoint service 吗？
 
-A. `service.beta.kubernetes.io/aws-load-balancer-type: nlb` B. `service.beta.kubernetes.io/aws-load-balancer-private-link: "true"` C. `service.beta.kubernetes.io/aws-load-balancer-type: nlb-ip` D. `service.beta.kubernetes.io/aws-vpc-endpoint-service: "true"`
+- A. 任何 `LoadBalancer` Service 都会创建 PrivateLink
+- B. `nlb-ip` 会自动创建并授权它
+- C. 单独配置 NLB、endpoint service 和消费者
+- D. 只有 instance 目标可以使用 PrivateLink
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案: C. `service.beta.kubernetes.io/aws-load-balancer-type: nlb-ip`**
+**答案：C. 不会；请分别创建 NLB、endpoint-service 配置和消费者访问权限。**
 
-**解析:** 要在 Amazon EKS 中将 Kubernetes Service 与 AWS PrivateLink 集成并创建 VPC endpoint service，必须使用 `service.beta.kubernetes.io/aws-load-balancer-type: nlb-ip` annotation。此 annotation 会创建 IP 模式的 Network Load Balancer (NLB)，这是与 AWS PrivateLink 集成的前提条件。
-
-**VPC Endpoint Service 配置步骤:**
-
-1. **使用 NLB-IP 模式创建 Kubernetes Service:**
-
+原先的 `nlb-ip` 答案混淆了目标选择和 PrivateLink 预置。endpoint service 使用 NLB（或用于设备的 GWLB）；它不要求 IP 目标或内部 NLB。此示例刻意选择内部 IP-target NLB 来私有访问 Pod。
 ```yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: privatelink-service
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: nlb-ip
-    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
 spec:
   type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
+  allocateLoadBalancerNodePorts: false
+  selector:
+    app: my-app
   ports:
   - port: 80
     targetPort: 8080
-  selector:
-    app: my-app
 ```
-
-2. **使用 AWS CLI 创建 VPC Endpoint Service:**
-
+在预期的 namespace 中创建此 Service，并确保匹配的 Pod 已就绪后等待 NLB。请按精确 DNSName 识别它，而非按连字符拆分其 hostname：
 ```bash
-# Get NLB ARN
-NLB_ARN=$(aws elbv2 describe-load-balancers --names $(kubectl get svc privatelink-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' | cut -d- -f1) --query 'LoadBalancers[0].LoadBalancerArn' --output text)
-
-# Create VPC endpoint service
+set -euo pipefail
+: "${AWS_REGION:?Set the provider Region}"
+: "${SERVICE_NAMESPACE:?Set the Service namespace}"
+NLB_DNS=$(kubectl -n "$SERVICE_NAMESPACE" get service privatelink-service \
+  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+test -n "$NLB_DNS"
+aws elbv2 describe-load-balancers --region "$AWS_REGION" --output json > privatelink-load-balancers.json
+NLB_ARN=$(python3 - "$NLB_DNS" <<'PY'
+import json, sys
+with open("privatelink-load-balancers.json") as stream:
+    matches = [lb for lb in json.load(stream)["LoadBalancers"]
+               if lb["DNSName"] == sys.argv[1] and lb["Type"] == "network"]
+if len(matches) != 1:
+    raise SystemExit("Expected exactly one matching NLB; check Region, account and readiness")
+print(matches[0]["LoadBalancerArn"])
+PY
+)
+printf '%s\n' "$NLB_ARN"
+```
+以下提供方命令会创建需付费资源，并向一个消费者账户授予 endpoint-service 访问权限。请在经过审查的基础设施所有者身份下运行，记录返回的 ID，并避免把创建操作当作幂等操作反复运行。本示例适用于商业 AWS 分区；对于其他分区，请调整 ARN。
+```bash
+set -euo pipefail
+: "${AWS_REGION:?Set the provider Region}"
+: "${NLB_ARN:?Use the NLB ARN verified above}"
+: "${CONSUMER_ACCOUNT_ID:?Set the allowed consumer account}"
 aws ec2 create-vpc-endpoint-service-configuration \
-  --network-load-balancer-arns $NLB_ARN \
-  --acceptance-required \
-  --private-dns-name service.example.com
-```
-
-3. **配置 VPC Endpoint Service 允许列表:**
-
-```bash
+  --region "$AWS_REGION" --network-load-balancer-arns "$NLB_ARN" \
+  --acceptance-required --output json > endpoint-service-created.json
+SERVICE_ID=$(python3 -c 'import json; print(json.load(open("endpoint-service-created.json"))["ServiceConfiguration"]["ServiceId"])')
+SERVICE_NAME=$(python3 -c 'import json; print(json.load(open("endpoint-service-created.json"))["ServiceConfiguration"]["ServiceName"])')
 aws ec2 modify-vpc-endpoint-service-permissions \
-  --service-id vpce-svc-0123456789abcdef0 \
-  --add-allowed-principals arn:aws:iam::111122223333:root
+  --region "$AWS_REGION" --service-id "$SERVICE_ID" \
+  --add-allowed-principals "arn:aws:iam::$CONSUMER_ACCOUNT_ID:root"
+printf 'Service name: %s\n' "$SERVICE_NAME"
 ```
-
-**关键注意事项:**
-
-1. **内部 NLB 要求**: PrivateLink 要求使用内部 NLB，因此还需要 `service.beta.kubernetes.io/aws-load-balancer-internal: "true"` annotation。
-2. **IP 模式的重要性**: NLB-IP 模式通过直接使用 pod IP 作为目标，提供对 node 故障的韧性。
-3. **Service 名称解析**: 可以配置 Private DNS names，以简化 VPC 内的 service name resolution。
-4. **访问控制**: 可以使用 `acceptance-required` 标志手动批准 endpoint connection requests。
-5. **Network ACLs 和 Security Groups**: 确保配置了适当的 network ACL 和 security group 规则。
-
-**PrivateLink 集成的优势:**
-
-* **增强安全性**: 流量保留在 AWS network 内，不经过公共互联网。
-* **合规性**: 满足数据主权和合规要求。
-* **简化网络**: 无需 VPC peering、Transit Gateway 或 VPN 连接即可访问 Service。
-* **可扩展性**: 可以从数千个 VPC 访问 Service。
-
-**客户端配置:**
-
+在消费者账户中，选择受支持的 AZ（跨账户比较 AZ ID）、允许预期客户端的 endpoint SG，以及精确的返回 service name。这个同 Region 示例不配置跨 Region PrivateLink。
 ```bash
-# Create VPC endpoint
+set -euo pipefail
+: "${CONSUMER_REGION:?Set the consumer Region}"
+: "${CONSUMER_VPC_ID:?Set the consumer VPC}"
+: "${CONSUMER_SUBNET_A:?Set a subnet in an available service AZ}"
+: "${CONSUMER_SUBNET_B:?Set another supported AZ subnet}"
+: "${CONSUMER_SG_ID:?Set the endpoint security group}"
+: "${SERVICE_NAME:?Copy the exact name returned by the provider}"
 aws ec2 create-vpc-endpoint \
-  --vpc-id vpc-0123456789abcdef0 \
-  --service-name com.amazonaws.vpce.us-east-1.vpce-svc-0123456789abcdef0 \
-  --vpc-endpoint-type Interface \
-  --subnet-ids subnet-0123456789abcdef0 subnet-0123456789abcdef1 \
-  --security-group-ids sg-0123456789abcdef0
+  --region "$CONSUMER_REGION" --vpc-id "$CONSUMER_VPC_ID" \
+  --service-name "$SERVICE_NAME" --vpc-endpoint-type Interface \
+  --subnet-ids "$CONSUMER_SUBNET_A" "$CONSUMER_SUBNET_B" \
+  --security-group-ids "$CONSUMER_SG_ID"
 ```
-
-其他选项的问题:
-
-* **A. `service.beta.kubernetes.io/aws-load-balancer-type: nlb`**: 此 annotation 会创建 instance 模式的 NLB，不适合 PrivateLink 集成优化。
-* **B. `service.beta.kubernetes.io/aws-load-balancer-private-link: "true"`**: 此 annotation 不存在。
-* **D. `service.beta.kubernetes.io/aws-vpc-endpoint-service: "true"`**: 此 annotation 不存在。
+由于要求接受，提供方必须接受特定的待处理 endpoint 请求。可选的 private DNS 要求在消费者启用它之前验证域名所有权。验证健康目标、endpoint 状态和应用程序身份验证。目标处的 PrivateLink 源 IP 是 NLB 地址；如果后端理解，Proxy Protocol v2 可以携带消费者元数据。它不会自动满足合规要求，也不会授权应用程序请求。通过各自的所有者停用消费者 endpoint、endpoint-service 关联和 Kubernetes 负载均衡器资源。
 
 </details>
 
-### 5. 可以将哪个附加组件与 Amazon VPC CNI 一起使用，以在 Amazon EKS 中实现 Kubernetes NetworkPolicy 资源？
+### 5. 哪个额外的 policy engine 可以与 Amazon VPC CNI 配合使用？
 
-A. AWS Network Firewall B. Calico C. AWS Security Groups for Pods D. VPC Flow Logs
+- A. AWS Network Firewall
+- B. Calico
+- C. Security Groups for Pods
+- D. VPC Flow Logs
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案: B. Calico**
+**答案：B. Calico**
 
-**解析:** Calico 是可与 Amazon VPC CNI 一起使用、用于在 Amazon EKS 中实现 Kubernetes NetworkPolicy 资源的附加组件。Calico 是一个开源网络和网络安全解决方案，支持 Kubernetes NetworkPolicy API，并与 Amazon VPC CNI 协同工作，在 EKS clusters 中应用细粒度网络策略。
+在 VPC CNI 保留 IPAM/网络功能时，Calico 可以实施策略。它是原生 VPC CNI policy engine 的替代方案，而非必需附加组件。请遵循[官方仅策略 EKS 流程](https://docs.tigera.io/calico/latest/getting-started/kubernetes/managed-public-cloud/eks)，包括受支持版本、`cni.type: AmazonVPC`、`ANNOTATE_POD_IP` 和所需的 Pod patch 权限。不要同时启用两个 engine，也不要对正在运行的集群应用 VXLAN 替换 manifest。
 
-**Calico 安装和配置:**
+Calico API 还提供有序/分层规则、GlobalNetworkPolicy、NetworkSet、service-account selector 和 host-endpoint policy。它们的语义与可叠加的 Kubernetes NetworkPolicy 不同；在 Calico policy 引用 NetworkSet 之前，NetworkSet 不会限制流量。全局 allow-all policy 不是最小权限基线。不要假定每种 VPC CNI 模式都兼容：当前 Calico EKS 指南明确排除了在 `ENABLE_V4_EGRESS=true` 的情况下对 IPv6 Pod 的实施。
 
-1. **安装 Calico:**
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-operator.yaml
-kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/master/config/master/calico-crs.yaml
-```
-
-2. **验证安装:**
-
-```bash
-kubectl get pods -n calico-system
-```
-
-3. **基本 NetworkPolicy 示例:**
-
+对于 namespace 自有的 Kubernetes policy 示例，请创建 `policy-lab` 和一个由控制器管理、标签为 `role=frontend` 的 Pod。此 egress policy 只允许常规 CoreDNS 和已批准的 HTTPS 目标，仍受所有其他可叠加策略约束。请将文档 CIDR 替换为真实目标；针对 NodeLocal DNS 调整 DNS。
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: default-deny
-  namespace: default
-spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
-```
-
-**Calico 的主要特性:**
-
-1. **Kubernetes NetworkPolicy 支持**: 完整实现标准 Kubernetes NetworkPolicy API。
-2. **扩展策略特性**: 通过 Calico 的 GlobalNetworkPolicy 和 NetworkSet 等自定义资源，提供超出 Kubernetes NetworkPolicy 的高级网络策略。
-3. **细粒度控制**: 可根据协议、端口、CIDR blocks、service accounts 等过滤流量。
-4. **日志记录和监控**: 可以记录和监控网络策略违规。
-5. **Host Endpoint 保护**: 可以将网络策略应用到 Kubernetes nodes 本身。
-
-**Calico 高级策略示例:**
-
-```yaml
-# GlobalNetworkPolicy example (cluster-wide policy)
-apiVersion: projectcalico.org/v3
-kind: GlobalNetworkPolicy
-metadata:
-  name: allow-cluster-internal-traffic
-spec:
-  selector: all()
-  types:
-  - Ingress
-  - Egress
-  ingress:
-  - action: Allow
-    source:
-      selector: all()
-  egress:
-  - action: Allow
-    destination:
-      selector: all()
-
-# Restrict access to specific IP ranges
-apiVersion: projectcalico.org/v3
-kind: NetworkSet
-metadata:
-  name: external-services
-spec:
-  nets:
-  - 203.0.113.0/24
-  - 198.51.100.0/24
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-external-services
-  namespace: app
+  name: frontend-egress
+  namespace: policy-lab
 spec:
   podSelector:
     matchLabels:
@@ -427,6 +280,9 @@ spec:
     - namespaceSelector:
         matchLabels:
           kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
     ports:
     - protocol: UDP
       port: 53
@@ -435,453 +291,267 @@ spec:
   - to:
     - ipBlock:
         cidr: 203.0.113.0/24
-    - ipBlock:
-        cidr: 198.51.100.0/24
+    ports:
+    - protocol: TCP
+      port: 443
 ```
-
-**Amazon VPC CNI 与 Calico 的集成:**
-
-1. **网络模式**: 与 Amazon VPC CNI 一起使用时，Calico 以 policy-only 模式运行，而不是 overlay 模式。
-2. **性能**: 在利用 Calico 网络策略功能的同时，保持 Amazon VPC CNI 原生 VPC 网络性能。
-3. **兼容性**: Calico 与所有 Amazon VPC CNI 功能兼容（prefix delegation、custom networking 等）。
-4. **升级**: Calico 和 Amazon VPC CNI 可以独立升级。
-
-**最佳实践:**
-
-* 从默认拒绝策略开始，并仅显式允许必要通信。
-* 为 namespace 之间的通信定义清晰策略。
-* 在应用策略前，先在日志模式下测试策略。
-* 始终允许与 cluster 基础组件通信。
-* 定期审查和更新策略。
-
-其他选项的问题:
-
-* **A. AWS Network Firewall**: AWS Network Firewall 是 VPC 级别的 firewall service，不与 Kubernetes NetworkPolicy 直接集成。
-* **C. AWS Security Groups for Pods**: Security Groups for Pods 是将 AWS security groups 应用到 pods 的功能，但不实现 Kubernetes NetworkPolicy API。
-* **D. VPC Flow Logs**: VPC Flow Logs 是用于监控网络流量的工具，不应用网络策略。
+在依赖实施之前，验证基线连通性以及允许/拒绝的 TCP 路径。NetworkPolicy 没有可移植的仅审计模式。请在可用时使用所选 engine 已记录的日志/暂存功能。SGs for Pods 和 VPC firewall 是独立的控制措施；Flow Logs 观测流量，而不实施此 API。
 
 </details>
 
-## 简答题
-
-### 6. 使用 AWS Load Balancer Controller 在 Amazon EKS 中创建 Application Load Balancer 时，使用什么 annotation 将特定 security groups 分配给该 Application Load Balancer？
+### 6. 自定义 ALB 前端 security group 与后端规则有何不同？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案:** `alb.ingress.kubernetes.io/security-groups: sg-xxxx,sg-yyyy`
+**答案：`alb.ingress.kubernetes.io/security-groups`**
 
-**详细解析:**
-
-使用 AWS Load Balancer Controller 创建 Application Load Balancer (ALB) 时，可以使用 `alb.ingress.kubernetes.io/security-groups` annotation 来分配特定 security groups。此 annotation 指定要附加到 ALB 的 security group IDs，并以逗号分隔。
-
-**实现方法:**
-
-1.  **指定 Security Group IDs:**
-
-    ```yaml
-    apiVersion: networking.k8s.io/v1
-    kind: Ingress
-    metadata:
-      name: example-ingress
-      annotations:
-        kubernetes.io/ingress.class: alb
-        alb.ingress.kubernetes.io/security-groups: sg-0123456789abcdef0,sg-0123456789abcdef1
-    spec:
-      rules:
-      - http:
-          paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: example-service
-                port:
-                  number: 80
-    ```
-2.  **指定 Security Group Names（替代方法）:**
-
-    ```yaml
-    alb.ingress.kubernetes.io/security-groups: my-security-group-name
-    ```
-3.  **自动创建 Security Groups:**
-
-    ```yaml
+将此注释片段合并到预期的 Ingress 中。SG ID 没有歧义；名称查找匹配 AWS `Name` tag，而非 EC2 `groupName` 属性。
+```yaml
+metadata:
+  annotations:
+    alb.ingress.kubernetes.io/security-groups: sg-0123456789abcdef0
     alb.ingress.kubernetes.io/manage-backend-security-group-rules: "true"
-    ```
-
-**关键注意事项:**
-
-1. **Security Group 规则:**
-   * 入站规则: 必须允许客户端流量（通常是 HTTP/80、HTTPS/443）。
-   * 出站规则: 必须允许到 target groups（pods 或 nodes）的流量。
-2. **默认行为:** 未指定 annotation 时，AWS Load Balancer Controller 会自动创建 security group 并配置必要规则。
-3. **权限要求:** AWS Load Balancer Controller 的 IAM role 需要以下权限:
-   * ec2:CreateSecurityGroup
-   * ec2:DeleteSecurityGroup
-   * ec2:DescribeSecurityGroups
-   * ec2:AuthorizeSecurityGroupIngress
-   * ec2:RevokeSecurityGroupIngress
-4.  **Security Group 管理:**
-
-    ```yaml
-    # Set controller to manage security group rules
-    alb.ingress.kubernetes.io/manage-backend-security-group-rules: "true"
-    ```
-5.  **标记:** 可以向创建的 security groups 添加 tags:
-
-    ```yaml
-    alb.ingress.kubernetes.io/tags: Environment=prod,Team=devops
-    ```
-
-**最佳实践:**
-
-1. **最小权限原则:** 使用限制性 security group 规则，只允许必要流量。
-2. **Security Group 复用:** 在多个 Ingress 资源中复用相同 security groups，以简化管理。
-3. **文档化:** 记录所使用的 security groups 及其规则，便于跟踪。
-4. **定期审查:** 定期审查 security group 规则，移除不必要的访问。
-5. **监控:** 监控被拒绝的连接，以评估 security group 规则的有效性。
-
-**相关 Annotations:**
-
-*   **入站 CIDR 限制:**
-
-    ```yaml
-    alb.ingress.kubernetes.io/inbound-cidrs: 10.0.0.0/16,192.168.0.0/16
-    ```
-*   **Security Group Tags:**
-
-    ```yaml
-    alb.ingress.kubernetes.io/load-balancer-attributes: load_balancing.cross_zone.enabled=true
-    ```
-*   **SSL Policy:**
-
-    ```yaml
-    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-2017-01
-    ```
-
-使用 AWS Load Balancer Controller 可以通过 Kubernetes Ingress 资源对 ALB security groups 进行细粒度控制，这有助于增强 cluster 的网络安全态势。
-
-</details>
-
-### 7. 在 Amazon EKS 中，将 Kubernetes Service 资源公开为 Network Load Balancer 时，使用什么 annotation 保留客户端 IP 地址？
-
-<details>
-
-<summary>显示答案</summary>
-
-**答案:** `service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true`
-
-**详细解析:**
-
-在 Amazon EKS 中将 Kubernetes Service 资源公开为 Network Load Balancer (NLB) 时，必须使用 `service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true` annotation 来保留客户端 IP 地址。此设置使 NLB 保持原始客户端 IP 地址。
-
-**实现方法:**
-
-1.  **基本 NLB Service 配置:**
-
-    ```yaml
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: example-service
-      annotations:
-        service.beta.kubernetes.io/aws-load-balancer-type: nlb
-        service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true
-    spec:
-      type: LoadBalancer
-      ports:
-      - port: 80
-        targetPort: 8080
-      selector:
-        app: example
-    ```
-2.  **与 IP 模式 NLB 一起使用:**
-
-    ```yaml
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: example-service
-      annotations:
-        service.beta.kubernetes.io/aws-load-balancer-type: nlb-ip
-        service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true
-    spec:
-      type: LoadBalancer
-      ports:
-      - port: 80
-        targetPort: 8080
-      selector:
-        app: example
-    ```
-
-**保留客户端 IP 的重要性:**
-
-1. **安全和访问控制:**
-   * 实现基于客户端 IP 的访问控制
-   * 阻止可疑 IP 地址
-   * 应用基于 IP 的速率限制
-2. **日志记录和审计:**
-   * 跟踪请求来源
-   * 调查安全事件
-   * 满足合规要求
-3. **基于地理位置的功能:**
-   * 提供区域特定内容
-   * 执行地理分析
-
-**工作原理:**
-
-1. **Instance 模式 (aws-load-balancer-type: nlb):**
-   * 对于 TCP 流量，会自动保留客户端 IP。
-   * 对于 UDP 流量，需要 preserve\_client\_ip.enabled=true 设置。
-2. **IP 模式 (aws-load-balancer-type: nlb-ip):**
-   * TCP 和 UDP 流量都需要 preserve\_client\_ip.enabled=true 设置。
-
-**限制和注意事项:**
-
-1. **Proxy Protocol:** 客户端 IP 保留通过直接数据包路由完成，不使用 proxy protocol。
-2. **Target Group 类型:**
-   * Instance 模式: 使用 node IP 和 NodePort。
-   * IP 模式: 直接使用 pod IP 和 port。
-3. **性能影响:** 客户端 IP 保留可能带来轻微性能开销。
-4. **兼容性:** 某些旧版应用可能不兼容客户端 IP 保留。
-
-**在应用中访问客户端 IP:**
-
-1.  **HTTP 应用:**
-
-    ```python
-    # Python Flask example
-    from flask import Flask, request
-
-    app = Flask(__name__)
-
-    @app.route('/')
-    def index():
-        client_ip = request.remote_addr
-        return f"Your IP address is: {client_ip}"
-    ```
-2.  **TCP/UDP 应用:**
-
-    ```go
-    // Go example
-    package main
-
-    import (
-        "fmt"
-        "net"
-    )
-
-    func handleConnection(conn net.Conn) {
-        addr := conn.RemoteAddr().String()
-        fmt.Printf("Client connected from: %s\n", addr)
-        // ...
-    }
-    ```
-
-**相关 Annotations:**
-
-*   **内部 NLB 配置:**
-
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-internal: "true"
-    ```
-*   **跨区域 Load Balancing:**
-
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: load_balancing.cross_zone.enabled=true
-    ```
-*   **TCP 连接 Keep-Alive:**
-
-    ```yaml
-    service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true,deregistration_delay.timeout_seconds=30
-    ```
-
-客户端 IP 保留对于安全、日志记录和访问控制等多种用途都很重要，并且可以在 EKS clusters 中使用适当 annotation 轻松配置。
-
-</details>
-
-### 8. 在 Amazon EKS 中，使用什么 annotation 将 AWS WAF (Web Application Firewall) 附加到 Kubernetes Ingress 资源？
-
-<details>
-
-<summary>显示答案</summary>
-
-**答案:** `alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:region:account-id:global/webacl/name/id`
-
-**详细解析:**
-
-要在 Amazon EKS 中将 AWS WAF (Web Application Firewall) 附加到 Kubernetes Ingress 资源，必须使用 `alb.ingress.kubernetes.io/wafv2-acl-arn` annotation。此 annotation 会将 AWS WAF WebACL 附加到 AWS Load Balancer Controller 创建的 Application Load Balancer (ALB)。
-
-**实现方法:**
-
-1.  **创建 AWS WAF WebACL:** 首先，使用 AWS Management Console、AWS CLI 或 AWS CloudFormation 创建 WAF WebACL。
-
-    ```bash
-    # AWS CLI example
-    aws wafv2 create-web-acl \
-      --name "eks-ingress-protection" \
-      --scope "REGIONAL" \
-      --default-action Allow={} \
-      --visibility-config SampledRequestsEnabled=true,CloudWatchMetricsEnabled=true,MetricName=eks-ingress-protection \
-      --region us-west-2
-    ```
-2.  **在 Ingress 资源中指定 WAF WebACL ARN:**
-
-    ```yaml
-    apiVersion: networking.k8s.io/v1
-    kind: Ingress
-    metadata:
-      name: example-ingress
-      annotations:
-        kubernetes.io/ingress.class: alb
-        alb.ingress.kubernetes.io/scheme: internet-facing
-        alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:us-west-2:111122223333:regional/webacl/eks-ingress-protection/a1b2c3d4-5678-90ab-cdef
-    spec:
-      rules:
-      - host: example.com
-        http:
-          paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: example-service
-                port:
-                  number: 80
-    ```
-
-**AWS WAF 的主要保护功能:**
-
-1. **常见 Web 漏洞防御:**
-   * SQL injection 攻击
-   * Cross-site scripting (XSS)
-   * Path traversal 攻击
-   * Command injection
-2. **Bot 流量控制:**
-   * 阻止恶意 bots
-   * 防止 scraping
-   * 防止 credential stuffing 攻击
-3. **速率限制:**
-   * 缓解 DDoS 攻击
-   * 防止 brute force 攻击
-4. **地理限制:**
-   * 限制来自特定国家或地区的访问
-5. **IP 声誉过滤:**
-   * 阻止已知恶意 IP 地址
-
-**AWS WAF Rule Group 示例:**
-
-1. **AWS Managed Rules:**
-   * AWS Core rule set (CRS)
-   * SQL database rules
-   * Linux operating system rules
-   * PHP application rules
-2.  **自定义 Rules:**
-
-    ```json
-    {
-      "Name": "block-specific-uri-paths",
-      "Priority": 1,
-      "Action": { "Block": {} },
-      "VisibilityConfig": {
-        "SampledRequestsEnabled": true,
-        "CloudWatchMetricsEnabled": true,
-        "MetricName": "block-specific-uri-paths"
-      },
-      "Statement": {
-        "ByteMatchStatement": {
-          "SearchString": "/admin",
-          "FieldToMatch": { "UriPath": {} },
-          "TextTransformations": [
-            { "Priority": 0, "Type": "NONE" }
-          ],
-          "PositionalConstraint": "STARTS_WITH"
-        }
-      }
-    }
-    ```
-
-**监控和日志记录:**
-
-1.  **启用 CloudWatch Logs:**
-
-    ```yaml
-    alb.ingress.kubernetes.io/load-balancer-attributes: access_logs.s3.enabled=true,access_logs.s3.bucket=my-alb-logs,access_logs.s3.prefix=ingress-logs
-    ```
-2.  **配置 WAF 日志记录:**
-
-    ```bash
-    aws wafv2 put-logging-configuration \
-      --logging-configuration ResourceArn=arn:aws:wafv2:us-west-2:111122223333:regional/webacl/eks-ingress-protection/a1b2c3d4-5678-90ab-cdef,LogDestinationConfigs=arn:aws:firehose:us-west-2:111122223333:deliverystream/aws-waf-logs \
-      --region us-west-2
-    ```
-
-**权限要求:**
-
-AWS Load Balancer Controller 的 IAM role 需要以下权限:
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "wafv2:AssociateWebACL",
-        "wafv2:DisassociateWebACL",
-        "wafv2:GetWebACL",
-        "wafv2:GetWebACLForResource"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
+    alb.ingress.kubernetes.io/tags: Environment=training,Team=platform
 ```
+请自行配置自定义前端 inbound/outbound 规则。对于提供的前端 SG，`inbound-cidrs` 和 prefix-list 注释将被忽略。`manage-backend-security-group-rules: "true"` 授权控制器通过其后端 SG 机制管理目标访问；它不会在自定义前端 SG 中创建限制客户端访问的规则。若没有它，请自行安排节点/Pod SG 访问。允许应用程序和健康检查端口，并在目标 ENI 有多个 SG 时审核 SG-selection tag。
 
-**最佳实践:**
-
-1. **纵深防御:** 将 WAF 与网络安全、身份验证和授权等其他安全控制结合使用。
-2. **定期更新规则:** 定期审查并更新 WAF 规则，以响应新威胁。
-3. **日志记录和监控:** 分析 WAF logs，以识别攻击模式并改进规则。
-4. **测试:** 在应用到生产环境前，在测试环境中验证 WAF 规则。
-5. **Count 模式:** 首次部署新规则时，设置为 count mode 而不是 block，以监控误报。
-
-AWS WAF 与 EKS Ingress 的集成是增强应用安全性的强大方式，并且可以使用适当的 annotation 轻松配置。
+发布版 IAM policy 包含整个控制器所需的 EC2/ELB 权限；简短的 SG action 列表不是完整的 role policy。跨信任域复用 SG 会扩大暴露面并增加变更耦合。审核实际规则和 VPC Flow Log 拒绝记录。`tags` 会添加受支持的资源 tag；`load_balancing.cross_zone.enabled` 是均衡属性，而非 tag。应根据客户端兼容性和要求选择受支持的 TLS security policy，而不要将旧 policy name 作为当前指南照搬。
 
 </details>
 
-## 实践题
-
-### 9. 编写一个 Ingress 资源，在 Amazon EKS cluster 中使用 AWS Load Balancer Controller 创建 Application Load Balancer，并根据特定路径将流量路由到不同 Service。
+### 7. 如何配置 NLB 客户端 IP 保留，其限制是什么？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案:** 以下是一个 Ingress 资源，它使用 AWS Load Balancer Controller 创建 Application Load Balancer，并根据特定路径将流量路由到不同 Service:
+**答案：`service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true`**
 
+对于 TCP/TLS target group，该属性可配置：instance 目标默认启用，IP 目标默认禁用。UDP/TCP_UDP/QUIC/TCP_QUIC target group 始终保留客户端 IP，且无法禁用。此 IPv4 IP-target TCP 示例会更改可配置的情况：
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: preserve_client_ip.enabled=true
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internal
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+spec:
+  type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
+  allocateLoadBalancerNodePorts: false
+  selector:
+    app: my-app
+  ports:
+  - port: 80
+    targetPort: 8080
+```
+应用程序看到的地址仍取决于完整路径。除非本地流量 policy/拓扑保留它，否则 NodePort 转发可能会 SNAT；ALB 使用 HTTP forwarded header；IPv6 到 IPv4 的转换和 PrivateLink 不会保留原始数据包源地址。保留要求支持的直接同 VPC 或同 Region peering 路径，并且无法通过 transit gateway 工作。回到同一已注册目标的内部 NLB hairpin 连接可能失败。
+
+Proxy Protocol v2 可以传递原始地址元数据，但需要兼容的 listener/parser；不要盲目启用它。框架 `remote_addr` 或 TCP `RemoteAddr()` 报告的是直接对等方，而非自动报告原始互联网客户端。只信任来自显式可信 proxy 的 forwarded header。更改保留设置会影响新的 TCP 连接。`deregistration_delay.timeout_seconds` 控制排空，而非 TCP keep-alive。通过测量性能，而不是指定没有支持依据的开销值。
+
+</details>
+
+### 8. AWS WAF 如何附加到由 LBC 管理的 ALB？
+
+<details>
+<summary>显示答案</summary>
+
+**答案：对于同 Region 的 REGIONAL Web ACL，使用 `alb.ingress.kubernetes.io/wafv2-acl-arn`。**
+
+使用真实的 `regional/webacl/...` ARN。CloudFront `global/webacl/...` ARN 无法附加到区域 ALB。关联会保护经过该 ALB 的流量；它不会将 WAF 附加到 Pod、NLB 或 Kubernetes API server。
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: multi-path-ingress
-  namespace: default
+  name: waf-ingress
   annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/scheme: internal
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:region:account-id:certificate/certificate-id
-    alb.ingress.kubernetes.io/ssl-redirect: '443'
-    alb.ingress.kubernetes.io/healthcheck-path: /health
-    alb.ingress.kubernetes.io/success-codes: '200'
-    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '15'
-    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
+    alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:us-west-2:123456789012:regional/webacl/eks-ingress-protection/00000000-0000-4000-8000-000000000000
 spec:
+  ingressClassName: alb
   rules:
-  - host: example.com
+  - host: app.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: example-service
+            port:
+              number: 80
+```
+默认 Allow 的空 Web ACL 不会阻止任何内容。对于隔离的规则开发示例，请将以下数组保存为 `waf-rules.json`。此规则对 `/admin` 前缀进行**计数**而非阻止；它不是身份验证控制，也不是完整的 managed-rule 基线。
+```json
+[
+  {
+    "Name": "count-admin-path",
+    "Priority": 1,
+    "Action": {
+      "Count": {}
+    },
+    "VisibilityConfig": {
+      "SampledRequestsEnabled": true,
+      "CloudWatchMetricsEnabled": true,
+      "MetricName": "count-admin-path"
+    },
+    "Statement": {
+      "ByteMatchStatement": {
+        "SearchString": "/admin",
+        "FieldToMatch": {
+          "UriPath": {}
+        },
+        "TextTransformations": [
+          {
+            "Priority": 0,
+            "Type": "NONE"
+          }
+        ],
+        "PositionalConstraint": "STARTS_WITH"
+      }
+    }
+  }
+]
+```
+安全所有者可以使用以下命令创建该训练 ACL；关联时使用其返回的 ARN。binary-format flag 使 JSON SearchString 在 AWS CLI v2 中成为字面字节。
+```bash
+set -euo pipefail
+: "${AWS_REGION:?Set the ALB Region}"
+aws wafv2 create-web-acl --region "$AWS_REGION" \
+  --name eks-ingress-training --scope REGIONAL \
+  --default-action '{"Allow":{}}' --rules file://waf-rules.json \
+  --cli-binary-format raw-in-base64-out \
+  --visibility-config SampledRequestsEnabled=true,CloudWatchMetricsEnabled=true,MetricName=eks-ingress-training
+```
+Managed SQLi/XSS、bot、reputation、rate-based 和 custom rule 只有在配置和调优后才提供各自的保护；费用/功能各不相同。在启用实施前，于 Count 模式中审查误报。规则计数时，默认 Allow 仍然宽松。
+
+ALB `access_logs.s3.*` 属性配置的是 S3 中的 ALB access log，而非 WAF log 或 CloudWatch Logs。请单独使用已批准的 CloudWatch Logs/S3/Firehose 目标和所需权限配置 WAF logging；sampled request 和 CloudWatch metric 与完整请求日志分开。关联请使用经过审查的发布版 controller IAM policy，ACL 创建/规则/logging 请使用单独的 security-administration role。在受支持的位置限定资源权限；不要粘贴不受约束的独立 wildcard policy 作为完整 controller role。
+
+</details>
+
+### 9. 为三个可区分的后端构建并验证路径路由。
+
+<details>
+<summary>显示答案</summary>
+
+**答案：Ingress + ClusterIP Service + 就绪的 HTTP workload。**
+
+前提条件：具有经过审查的 IAM/子网的 LBC、可路由的私有测试客户端、受你控制的 hostname 的 ACM 证书，以及创建专用 namespace 的权限。此示例创建内部 ALB；`/admin` 只是路由标签，没有身份验证。它是有限的培训练习，不是生产就绪性证据。请在一个 shell 中以 `set -euo pipefail` 运行各代码块；在清理前保留 LAB_NS/LAB_UID。
+```bash
+set -euo pipefail
+LAB_NS="alb-paths-$(date -u +%Y%m%d%H%M%S)-$RANDOM"
+kubectl create namespace "$LAB_NS"
+LAB_UID=$(kubectl get namespace "$LAB_NS" -o jsonpath='{.metadata.uid}')
+test -n "$LAB_UID"
+kubectl label namespace "$LAB_NS" \
+  pod-security.kubernetes.io/enforce=restricted \
+  pod-security.kubernetes.io/enforce-version=v1.36
+printf 'Namespace: %s UID: %s\n' "$LAB_NS" "$LAB_UID"
+```
+HTTP server 确实在 8080 上监听，并通过其后端名称响应 `/health` 及所有请求路径。仅声明 `containerPort: 8080` 不会重新配置默认 nginx server。可变的 Python tag 是示例运行时；为可重复使用，请固定已批准的 image digest。
+```bash
+for APP in api admin frontend; do
+  kubectl -n "$LAB_NS" apply -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $APP
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: $APP
+  template:
+    metadata:
+      labels:
+        app: $APP
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: http
+        image: python:3.13-alpine
+        command: ["python", "-u", "-c"]
+        args:
+        - |
+          import os
+          from http.server import BaseHTTPRequestHandler, HTTPServer
+          class Handler(BaseHTTPRequestHandler):
+              def do_GET(self):
+                  self.send_response(200)
+                  self.end_headers()
+                  self.wfile.write((os.environ["APP_NAME"] + "\\n").encode())
+          HTTPServer(("0.0.0.0", 8080), Handler).serve_forever()
+        env:
+        - name: APP_NAME
+          value: $APP
+        ports:
+        - name: http
+          containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
+          limits:
+            cpu: 200m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: $APP-service
+spec:
+  type: ClusterIP
+  selector:
+    app: $APP
+  ports:
+  - port: 80
+    targetPort: http
+EOF
+  kubectl -n "$LAB_NS" rollout status "deployment/$APP" --timeout=180s
+done
+```
+
+```bash
+set -euo pipefail
+: "${LAB_NS:?Run the namespace setup first}"
+: "${LAB_HOST:?Set a DNS hostname you control, for example app.example.com}"
+: "${ACM_CERT_ARN:?Set a matching certificate ARN in the ALB Region}"
+: "${CLIENT_CIDR:?Set the permitted private client CIDR}"
+kubectl -n "$LAB_NS" apply -f - <<EOF
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: multi-path-ingress
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/inbound-cidrs: "$CLIENT_CIDR"
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: "$ACM_CERT_ARN"
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+spec:
+  ingressClassName: alb
+  rules:
+  - host: "$LAB_HOST"
     http:
       paths:
       - path: /api
@@ -905,597 +575,87 @@ spec:
             name: frontend-service
             port:
               number: 80
+EOF
+kubectl -n "$LAB_NS" get ingress multi-path-ingress
+kubectl -n "$LAB_NS" get endpointslices
 ```
+等待 ALB hostname、健康目标和控制器协调完成。若失败，请检查 Ingress event、controller log、EndpointSlice 和 SG/health-check 路径。从获准的私有客户端发起时，此测试会在直接连接 ALB hostname 的同时保留 Host header 和 TLS SNI；它不要求 DNS 记录，也不会禁用证书验证。
+```bash
+ALB_DNS=$(kubectl -n "$LAB_NS" get ingress multi-path-ingress \
+  -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+test -n "$ALB_DNS"
+for ROUTE in api admin frontend; do
+  URL_PATH="/$ROUTE"
+  test "$ROUTE" != frontend || URL_PATH=/
+  RESPONSE=$(curl --fail --show-error --silent --max-time 15 \
+    --connect-to "$LAB_HOST:443:$ALB_DNS:443" "https://$LAB_HOST$URL_PATH")
+  test "$RESPONSE" = "$ROUTE" || { printf 'Unexpected backend: %s\n' "$RESPONSE"; exit 1; }
+done
+```
+对于持久 DNS，请创建适当的 Route 53 alias；CNAME 可用于子域，但不能用于 zone apex。不要使用 public CA 占位 ARN 或 `curl -k` 来隐藏证书不匹配。
 
-**详细解析:**
-
-1. **Ingress 资源组件说明**:
-   * **metadata.annotations**: 指定 AWS Load Balancer Controller 的配置选项。
-     * `kubernetes.io/ingress.class: alb`: 指定使用 AWS Load Balancer Controller。
-     * `alb.ingress.kubernetes.io/scheme: internet-facing`: 创建可从互联网访问的 ALB。
-     * `alb.ingress.kubernetes.io/target-type: ip`: 使用 pod IP 作为目标。
-     * `alb.ingress.kubernetes.io/listen-ports`: 同时监听 HTTP(80) 和 HTTPS(443) 端口。
-     * `alb.ingress.kubernetes.io/certificate-arn`: 为 HTTPS 指定 ACM 证书。
-     * `alb.ingress.kubernetes.io/ssl-redirect`: 将 HTTP 流量重定向到 HTTPS。
-     * `alb.ingress.kubernetes.io/healthcheck-*`: 配置健康检查设置。
-   * **spec.rules**: 定义基于 host 和 path 的路由规则。
-     * `/api` 路径路由到 `api-service`。
-     * `/admin` 路径路由到 `admin-service`。
-     * `/`（root）路径路由到 `frontend-service`。
-2.  **实现步骤**:
-
-    a. **创建所需 Service**:
-
-    ```yaml
-    # api-service.yaml
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: api-service
-    spec:
-      ports:
-      - port: 80
-        targetPort: 8080
-      selector:
-        app: api
-    ---
-    # admin-service.yaml
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: admin-service
-    spec:
-      ports:
-      - port: 80
-        targetPort: 8080
-      selector:
-        app: admin
-    ---
-    # frontend-service.yaml
-    apiVersion: v1
-    kind: Service
-    metadata:
-      name: frontend-service
-    spec:
-      ports:
-      - port: 80
-        targetPort: 8080
-      selector:
-        app: frontend
-    ```
-
-    b. **为 Service 创建 Deployments**:
-
-    ```yaml
-    # api-deployment.yaml
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: api-deployment
-    spec:
-      replicas: 2
-      selector:
-        matchLabels:
-          app: api
-      template:
-        metadata:
-          labels:
-            app: api
-        spec:
-          containers:
-          - name: api
-            image: nginx
-            ports:
-            - containerPort: 8080
-            readinessProbe:
-              httpGet:
-                path: /health
-                port: 8080
-    ```
-
-    （admin 和 frontend deployments 需要类似配置）
-
-    c. **验证 AWS Load Balancer Controller 安装**:
-
-    ```bash
-    kubectl get deployment -n kube-system aws-load-balancer-controller
-    ```
-
-    d. **应用 Ingress 资源**:
-
-    ```bash
-    kubectl apply -f multi-path-ingress.yaml
-    ```
-
-    e. **检查 Ingress 状态**:
-
-    ```bash
-    kubectl get ingress multi-path-ingress
-    ```
-3.  **测试方法**:
-
-    a. **DNS 设置**: 获取 Ingress 创建的 ALB 的 DNS 名称:
-
-    ```bash
-    kubectl get ingress multi-path-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
-    ```
-
-    将此 DNS 名称设置为 `example.com` 的 CNAME 记录。
-
-    b. **测试基于路径的路由**:
-
-    ```bash
-    # Test API service
-    curl https://example.com/api
-
-    # Test admin service
-    curl https://example.com/admin
-
-    # Test frontend service
-    curl https://example.com/
-    ```
-4.  **说明和注意事项**:
-
-    a. **SSL 证书**: 要使用 HTTPS，需要有效的 SSL 证书。在 AWS Certificate Manager (ACM) 中创建证书，并在 annotation 中指定 ARN。
-
-    b. **IAM 权限**: AWS Load Balancer Controller 需要适当 IAM 权限来创建和管理 ALB 及相关资源。
-
-    c. **健康检查**: 每个 Service 都必须提供健康检查 endpoint（`/health`）。
-
-    d. **Target Group 设置**: 使用 `target-type: ip` 意味着直接使用 pod IP 作为目标。这提供了对 node 故障的韧性，并支持 Fargate pods。
-
-    e. **Security Groups**: 如有需要，可以将特定 security groups 应用于 ALB:
-
-    ```yaml
-    alb.ingress.kubernetes.io/security-groups: sg-0123456789abcdef0
-    ```
-5.  **其他配置选项**:
-
-    a. **启用 Session Stickiness**:
-
-    ```yaml
-    alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=86400
-    ```
-
-    b. **启用 Access Logs**:
-
-    ```yaml
-    alb.ingress.kubernetes.io/load-balancer-attributes: access_logs.s3.enabled=true,access_logs.s3.bucket=my-alb-logs,access_logs.s3.prefix=ingress-logs
-    ```
-
-    c. **基于 IP 的限制**:
-
-    ```yaml
-    alb.ingress.kubernetes.io/inbound-cidrs: 192.168.0.0/16,10.0.0.0/8
-    ```
-
-    d. **加权路由**:
-
-    ```yaml
-    alb.ingress.kubernetes.io/actions.weighted-routing: >
-      {"Type":"forward","ForwardConfig":{"TargetGroups":[{"ServiceName":"service-v1","ServicePort":"80","Weight":80},{"ServiceName":"service-v2","ServicePort":"80","Weight":20}]}}
-    ```
-
-使用 AWS Load Balancer Controller 和 Ingress 资源，可以在 EKS clusters 中实现复杂路由规则，并利用各种 ALB 功能来提高应用可用性、可扩展性和安全性。
+可选的 weighted routing 是一个针对现有 `service-v1`/`service-v2` 后端的独立示例。该 action 必须由 `use-annotation` 后端引用；仅添加 action 注释没有任何效果。请在预期的 namespace 中运行，并避免路由冲突。
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: weighted-ingress
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/actions.weighted-routing: >-
+      {"type":"forward","forwardConfig":{"targetGroups":[{"serviceName":"service-v1","servicePort":"80","weight":80},{"serviceName":"service-v2","servicePort":"80","weight":20}]}}
+spec:
+  ingressClassName: alb
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: weighted-routing
+            port:
+              name: use-annotation
+```
+检查已保存的 UID 后，仅清理本练习的 namespace。在删除 namespace 前，让 LBC 移除 Ingress 负载均衡器。如果终结失败，请诊断 controller/IAM/deletion-protection 状态；不要强制移除 finalizer。此代码块不会删除共享的 certificate、controller role 和 DNS record。
+```bash
+set -euo pipefail
+: "${LAB_NS:?Use the namespace from this exercise}"
+: "${LAB_UID:?Use the UID saved when that namespace was created}"
+case "$LAB_NS" in alb-paths-*) ;; *) echo "Unexpected namespace"; exit 1 ;; esac
+CURRENT_UID=$(kubectl get namespace "$LAB_NS" -o jsonpath='{.metadata.uid}')
+test "$CURRENT_UID" = "$LAB_UID" || { echo "Namespace identity changed"; exit 1; }
+kubectl -n "$LAB_NS" delete ingress multi-path-ingress --ignore-not-found --wait=true --timeout=300s
+kubectl delete namespace "$LAB_NS" --wait=true --timeout=300s
+```
 
 </details>
 
-## 高级题
-
-### 10. 说明在 Amazon EKS cluster 中实现 Service Mesh（例如 Istio、AWS App Mesh）时的关键注意事项和网络架构变化。同时说明 Service Mesh 如何与 EKS 的默认网络模型集成。
+### 10. service mesh 如何改变 EKS 网络，必须验证什么？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案:** 以下说明在 Amazon EKS cluster 中实现 Service Mesh（例如 Istio、AWS App Mesh）时的关键注意事项和网络架构变化，以及 Service Mesh 如何与 EKS 的默认网络模型集成:
+**答案：它会在兼容的 Pod 网络之上增加流量/安全/遥测处理。**
 
-### 1. Service Mesh 概述和关键组件
-
-**什么是 Service Mesh？** Service Mesh 是一个基础设施层，用于管理微服务之间的通信，提供 service discovery、流量管理、安全性和可观测性等功能。
-
-**关键组件:**
-
-1. **Data Plane**:
-   * Sidecar proxies（通常是 Envoy）会注入到每个 pod 中。
-   * 拦截并处理所有入站和出站流量。
-2. **Control Plane**:
-   * 管理策略和配置。
-   * 配置 data plane proxies。
-   * 提供 service discovery 和路由信息。
-
-### 2. EKS 网络架构变化
-
-**默认 EKS 网络模型:**
-
-* 使用 Amazon VPC CNI 为 pods 分配 VPC IP 地址。
-* Pods 在 VPC 内直接通信。
-* Kubernetes Service 资源提供 service discovery 和 load balancing。
-
-**引入 Service Mesh 后的变化:**
-
-1.  **流量路径变化**:
-
-    ```
-    Default EKS: Client -> Service -> Target Pod
-    Service Mesh: Client -> Client Sidecar -> Service -> Target Sidecar -> Target Pod
-    ```
-2. **网络拓扑**:
-   * Sidecar containers 会添加到每个 pod。
-   * 应用和 sidecar 通过 pod 内本地网络通信。
-   * Sidecar 到 sidecar 的通信仍使用 VPC CNI。
-3. **端口分配**:
-   * Sidecar proxies 使用额外端口（管理、metrics、健康检查等）。
-   * 端口重定向发生在 pod 内部。
-
-### 3. 主要 Service Mesh 选项比较
-
-#### Istio
-
-**架构集成:**
-
-```yaml
-# Istio sidecar injection example
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: example-app
-  labels:
-    app: example
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: example
-  template:
-    metadata:
-      labels:
-        app: example
-      annotations:
-        sidecar.istio.io/inject: "true"  # Automatic sidecar injection
-    spec:
-      containers:
-      - name: example
-        image: example:latest
-        ports:
-        - containerPort: 8080
+control plane 分发配置和 workload identity；data-plane proxy 处理已加入的流量。在 sidecar 设计中，应用程序和 proxy 共享**相同的 Pod network namespace/IP**。sidecar 本身不会消耗另一个 VPC IP 或 ENI。额外的 mesh gateway/control-plane Pod 会消耗资源/IP。Ambient 设计改用节点 proxy 和可选的 waypoint，因此“每个 Pod 都有一个 sidecar”并非普遍情况。
+```text
+Client application → client proxy → Pod network → destination proxy → destination application
 ```
+这是一条逻辑 sidecar 路径，并不保证每个数据包都经过 Service virtual IP 或都被拦截。排除的端口、UDP、host-network 流量、namespace 加入和模式都会产生影响。VPC route、SG 和 NetworkPolicy 仍然适用。L3/L4 policy 必须允许所需的 data-plane、DNS、control-plane 和 health path；mTLS 对 mesh peer 进行身份验证/加密，但不能替代应用程序授权。
 
-**网络功能:**
+对于 Istio，请为计算类型选择一种有文档记录的 sidecar/ambient 安装。Fargate 无法运行某些模式所需的节点 DaemonSet/特权组件；请验证支持情况，不要声称通用兼容。不要在一个 namespace 上启用两个 mesh injector。应通过受支持的 Helm/安装/workload 设置配置 proxy 资源，而不是用无关的 `pilot.resources` 覆盖 injector ConfigMap。请将 Prometheus/tracing 部署和 mesh export 配置分开；已移除的 `IstioOperator.addonComponents.prometheus` 和虚构的 App Mesh `Mesh.spec.tracing` 不是可用的安装方案。
 
-* 高级流量管理（加权路由、canary deployments）
-* Circuit breakers 和 fault injection
-* 通过 mTLS 实现 service-to-service 加密
-* 细粒度访问控制
+**历史比较：** AWS 已于 **September 30, 2026** 结束 App Mesh 支持；其 console 和资源不再可用。现有 App Mesh 部署必须迁移；不要将它作为新的 EKS 默认方案引入。其历史 Fargate 集成并不保证未来支持。ECS Service Connect 是 ECS 选项，而非直接的 EKS 替代方案。请使用受支持的 EKS mesh/data-plane 设计，并验证路由、重试、证书、授权、tracing 和故障处理方面的功能对等性。
 
-**EKS 集成注意事项:**
+原先“通常 <10 ms”延迟和“10–15%”CPU/内存开销数字在本文档中没有经过验证的测量来源。它们在此仅保留为**未经验证的历史估计**，而非基准或容量保证。请在加入前后使用相同的请求组合、TLS、遥测采样和负载，测量 p50/p95/p99 延迟、吞吐量、错误和 CPU/内存。包括 proxy rollout、节点丢失、control-plane 丢失、证书轮换和重试放大测试。
 
-* 资源要求高（尤其是 control plane）
-* 与 Fargate 的兼容性有限
-* 设置和管理复杂
-
-#### AWS App Mesh
-
-**架构集成:**
-
-```yaml
-# App Mesh sidecar injection example
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: example-app
-  labels:
-    app: example
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: example
-  template:
-    metadata:
-      labels:
-        app: example
-      annotations:
-        appmesh.k8s.aws/mesh: my-mesh  # App Mesh mesh name
-        appmesh.k8s.aws/virtualNode: example-vn  # Virtual node name
-    spec:
-      containers:
-      - name: example
-        image: example:latest
-        ports:
-        - containerPort: 8080
-```
-
-**网络功能:**
-
-* 与 AWS services 无缝集成
-* 支持跨账户和 hybrid mesh
-* 与 AWS X-Ray 集成
-* 设置相对简单
-
-**EKS 集成注意事项:**
-
-* 与 AWS services 集成优秀
-* 兼容 Fargate
-* 某些高级功能可能受限
-
-### 4. 网络注意事项
-
-#### 性能影响
-
-1. **延迟**:
-   * 由于通过 sidecar proxies 进行额外跳转，延迟略有增加（通常 <10ms）
-   *   优化技术:
-
-       ```yaml
-       # Istio example: Proxy resource optimization
-       apiVersion: v1
-       kind: ConfigMap
-       metadata:
-         name: istio-sidecar-injector
-         namespace: istio-system
-       data:
-         values: |-
-           pilot:
-             resources:
-               requests:
-                 cpu: 500m
-                 memory: 2048Mi
-       ```
-2. **资源使用量**:
-   * 每个 pod 额外 CPU 和 memory 开销（通常 10-15%）
-   * 可能降低 node 密度
-
-#### Network Policy 集成
-
-1. **与 Kubernetes NetworkPolicy 的关系**:
-   * Service Mesh 提供 L7 策略，而 NetworkPolicy 提供 L3/L4 策略。
-   * 两种策略类型可以一起使用，以实现纵深防御。
-2.  **策略示例**:
-
-    ```yaml
-    # Istio authentication policy
-    apiVersion: security.istio.io/v1beta1
-    kind: PeerAuthentication
-    metadata:
-      name: default
-      namespace: istio-system
-    spec:
-      mtls:
-        mode: STRICT
-    ---
-    # Kubernetes NetworkPolicy
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-same-namespace
-    spec:
-      podSelector: {}
-      ingress:
-      - from:
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: default
-    ```
-
-### 5. Service Mesh 实施步骤
-
-#### 1. 验证前提条件
-
-* 检查 cluster 版本兼容性
-* 评估资源需求
-* 审查网络模型
-
-#### 2. 安装 Control Plane
-
-**Istio 示例:**
-
-```bash
-istioctl install --set profile=default
-```
-
-**App Mesh 示例:**
-
-```bash
-helm repo add eks https://aws.github.io/eks-charts
-helm install appmesh-controller eks/appmesh-controller \
-  --namespace appmesh-system \
-  --create-namespace
-```
-
-#### 3. 配置 Sidecar Injection
-
-**自动注入:**
-
-```yaml
-# Add label to namespace
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: my-app
-  labels:
-    istio-injection: enabled  # Istio
-    appmesh.k8s.aws/sidecarInjectorWebhook: enabled  # App Mesh
-```
-
-#### 4. 定义 Service Mesh 资源
-
-**Istio Virtual Service 和 Destination Rule:**
-
-```yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: VirtualService
-metadata:
-  name: reviews
-spec:
-  hosts:
-  - reviews
-  http:
-  - route:
-    - destination:
-        host: reviews
-        subset: v1
-      weight: 90
-    - destination:
-        host: reviews
-        subset: v2
-      weight: 10
----
-apiVersion: networking.istio.io/v1alpha3
-kind: DestinationRule
-metadata:
-  name: reviews
-spec:
-  host: reviews
-  subsets:
-  - name: v1
-    labels:
-      version: v1
-  - name: v2
-    labels:
-      version: v2
-```
-
-**App Mesh Virtual Service 和 Virtual Router:**
-
-```yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualService
-metadata:
-  name: reviews
-  namespace: my-app
-spec:
-  awsName: reviews.my-app.svc.cluster.local
-  provider:
-    virtualRouter:
-      virtualRouterRef:
-        name: reviews-router
----
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualRouter
-metadata:
-  name: reviews-router
-  namespace: my-app
-spec:
-  listeners:
-    - portMapping:
-        port: 9080
-        protocol: http
-  routes:
-    - name: reviews-route
-      httpRoute:
-        match:
-          prefix: /
-        action:
-          weightedTargets:
-            - virtualNodeRef:
-                name: reviews-v1
-              weight: 90
-            - virtualNodeRef:
-                name: reviews-v2
-              weight: 10
-```
-
-### 6. 监控和可观测性
-
-#### Metrics 收集
-
-**Prometheus 集成:**
-
-```yaml
-# Istio Prometheus configuration
-apiVersion: install.istio.io/v1alpha1
-kind: IstioOperator
-spec:
-  addonComponents:
-    prometheus:
-      enabled: true
-```
-
-#### Distributed Tracing
-
-**X-Ray 集成 (App Mesh):**
-
-```yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: Mesh
-metadata:
-  name: my-mesh
-spec:
-  serviceDiscovery:
-    ipPreference: IPv4_PREFERRED
-  egressFilter:
-    type: ALLOW_ALL
-  tracing:
-    awsXRay:
-      logLevel: INFO
-```
-
-### 7. Service Mesh 采用最佳实践
-
-1. **渐进式采用**:
-   * 从非业务关键工作负载开始
-   * 分阶段扩展
-2. **资源规划**:
-   * 考虑增加 node 大小和数量
-   * 为 control plane 使用专用 node groups
-3. **网络优化**:
-   * 避免不必要的 sidecar injection
-   * 配置适当的 timeouts 和 retry policies
-4. **安全增强**:
-   * 渐进式采用 mTLS
-   * 应用最小权限原则
-5. **监控策略**:
-   * 比较采用 Service Mesh 前后的性能
-   * 配置关键 metrics dashboards
-
-### 8. EKS 特定注意事项
-
-1. **Fargate 兼容性**:
-   * Istio: 支持有限（某些功能不可用）
-   * App Mesh: 完全支持
-2. **AWS Load Balancer Controller 集成**:
-   *   Ingress gateway 和 ALB 集成:
-
-       ```yaml
-       apiVersion: networking.k8s.io/v1
-       kind: Ingress
-       metadata:
-         annotations:
-           kubernetes.io/ingress.class: alb
-           alb.ingress.kubernetes.io/scheme: internet-facing
-           alb.ingress.kubernetes.io/target-type: ip
-       ```
-3. **IAM Roles 和权限**:
-   * App Mesh controller 所需 IAM 权限:
-     * appmesh:\*
-     * servicediscovery:\*
-     * cloudmap:\*
-4. **VPC CNI 设置**:
-   * 由于 Service Mesh，需要考虑额外 ENI 和 IP 地址需求
-   *   建议启用 prefix delegation:
-
-       ```bash
-       kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-       ```
-
-### 9. Service Mesh 选择指南
-
-| 因素                  | Istio                   | AWS App Mesh             |
-| --------------------- | ----------------------- | ------------------------ |
-| 功能集                | 非常全面                | 专注于核心功能           |
-| AWS 集成              | 第三方集成              | 原生集成                 |
-| 复杂性                | 高                      | 中                       |
-| 资源要求              | 高                      | 中                       |
-| Fargate 支持          | 有限                    | 完全支持                 |
-| 社区                  | 非常活跃                | 正在增长                 |
-| Hybrid/Multi-cloud    | 支持强                  | 以 AWS 为中心            |
-
-Service Mesh 会给 EKS clusters 的网络架构带来显著变化，但也为管理微服务架构的复杂性提供强大工具。与默认 EKS 网络模型的集成通过 sidecar pattern 完成，可在不更改现有应用代码的情况下添加高级网络功能。采用 Service Mesh 时，应仔细考虑性能影响、运维复杂性和资源需求，并建议采用渐进式方法。
+在专用 namespace 中逐步采用，验证一个 injector、就绪 workload、mTLS 和正向/负向 policy 测试，然后再扩展。对于 mesh ingress gateway 前的 LBC，请公开 gateway Service 并验证目标端口/probe；Ingress API object 是配置，而不是另一个 proxy hop。按需使用范围受限的 controller IAM；`cloudmap:*` 不是 `servicediscovery` IAM service prefix 的有效替代。prefix delegation 是 IP 容量设计选择，而非 sidecar 前提条件。有关实现，请参阅持续维护的 [Istio 安装](../../service-mesh/istio/01-installation.md) 和 [AWS 集成](../../service-mesh/istio/04-aws-integration.md)章节。
 
 </details>
 
-### 11. Kubernetes Gateway API 中用于 L7 load balancing (ALB) 的路由资源是什么？
+### 11. Kubernetes Gateway API 中用于 L7 负载均衡 (ALB) 的路由资源是什么？
 
 A. IngressRoute B. HTTPRoute C. VirtualService D. ServiceRoute
 
@@ -1503,77 +663,69 @@ A. IngressRoute B. HTTPRoute C. VirtualService D. ServiceRoute
 
 <summary>显示答案</summary>
 
-**答案: B. HTTPRoute**
+**答案：B. HTTPRoute**
 
-**解析:** 在 Kubernetes Gateway API 中，HTTPRoute 资源用于 L7 load balancing。HTTPRoute 定义将 HTTP/HTTPS 流量路由到 Service 的规则，并且与 AWS Load Balancer Controller 一起使用时，会通过 ALB 分发流量。
+**说明：** 在 Kubernetes Gateway API 中，HTTPRoute 资源用于 L7 负载均衡。HTTPRoute 定义将 HTTP/HTTPS 流量路由到服务的规则，并且在与 AWS Load Balancer Controller 配合使用时，它会通过 ALB 分配流量。
 
-**Gateway API 资源层级:**
+**Gateway API 资源层次结构：**
 
-1. **GatewayClass**: 定义 load balancer 类型（例如 `amazon-alb`、`amazon-nlb`）
-2. **Gateway**: 实际 load balancer instance（listener ports、TLS settings 等）
-3. **HTTPRoute**: L7 路由规则（host、path、基于 header 的路由）
-4. **TCPRoute**: L4 路由规则（TCP 流量）
+1. **GatewayClass**：定义负载均衡器类型（例如 `amazon-alb`、`amazon-nlb`）
+2. **Gateway**：实际的负载均衡器实例（监听器端口、TLS 设置等）
+3. **HTTPRoute**：L7 路由规则（主机、路径、基于 header 的路由）
+4. **TCPRoute**：L4 路由规则（TCP 流量）
 
-**HTTPRoute 主要特性:**
+LBC 使用独立的 ALB 和 NLB Gateway；controllerName 选择实现，而非任意 GatewayClass object 名称。请在发布版 conformance table 中确认受支持的 filter。
 
-* 基于 path 和 host 的路由
+**HTTPRoute 主要功能：**
+
+* 基于路径和主机的路由
 * 原生基于权重的流量拆分
-* Header 和 query parameter 匹配
-* 路由到多个 backend services
+* header 和 query parameter 匹配
+* 路由到多个后端 Service
 
-其他选项的问题:
+其他选项的问题：
 
-* **A. IngressRoute**: 这不是标准 Gateway API 资源。
-* **C. VirtualService**: 这是 Istio service mesh 中的资源。
-* **D. ServiceRoute**: 此资源不存在。
+* **A. IngressRoute：** 这不是标准 Gateway API 资源。
+* **C. VirtualService：** 这是 Istio service mesh 的资源。
+* **D. ServiceRoute：** 此资源不存在。
 
 </details>
 
-### 12. 在 AWS Load Balancer Controller 中启用 Gateway API 需要什么 feature gate flag？
+### 12. 如何启用 LBC 3.5.0 Gateway controller？
 
-A. `--enable-gateway-api` B. `--feature-gates=EnableGatewayAPI=true` C. `--gateway-api-enabled=true` D. `--enable-feature=gateway-api`
+- A. 始终传递 `--enable-gateway-api`
+- B. 使用真正默认启用的 gate 检测兼容的 CRD
+- C. 使用 `--feature-gates=EnableGatewayAPI=true`
+- D. 仅从 1.2.1 安装 experimental CRD
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案: B. `--feature-gates=EnableGatewayAPI=true`**
+**答案：B. 检测所需 CRD；ALBGatewayAPI/NLBGatewayAPI 默认启用。**
 
-**解析:** 要在 AWS Load Balancer Controller 中启用 Gateway API，必须在部署 controller 时添加 `--feature-gates=EnableGatewayAPI=true` flag。此 feature gate 使 controller 能够 watch 和处理 Gateway API 资源（GatewayClass、Gateway、HTTPRoute、TCPRoute 等）。
-
-**启用 Gateway API 的完整前提条件:**
-
-1. 安装 AWS Load Balancer Controller v2.13.0 或更高版本
-2. 添加 `--feature-gates=EnableGatewayAPI=true` flag
-3. 安装 Gateway API Standard CRDs
-4. 安装 Experimental CRDs（使用 TCPRoute 等时）
-5. 安装 AWS LBC-specific CRDs
-
-其他选项的问题:
-
-* **A, C, D**: 这些 flag 格式不正确，AWS Load Balancer Controller 不使用。
+安装与发布版兼容的 Gateway API 1.6.0 standard CRD 和 LBC 专用 Gateway CRD。默认 gate 是 `ALBGatewayAPI` 和 `NLBGatewayAPI`；`EnableGatewayAPI` 是未知 feature name。TCPRoute/UDPRoute 现在在 standard channel 中以 v1 提供服务。早期控制器发布版有不同的兼容性/gating 要求：L4 支持从 2.13.3 开始，L7 从 2.14.0 开始。在安装 CRD 后检查 controller startup/log；仅有 CRD 不提供 IAM、子网或应用程序后端。
 
 </details>
 
-### 13. Gateway API 中使用什么资源通过 NLB 路由 L4 级别的 TCP 流量？
+### 13. Gateway API 中用于通过 NLB 路由 L4 级 TCP 流量的资源是什么？
 
 A. HTTPRoute B. TLSRoute C. TCPRoute D. GRPCRoute
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案: C. TCPRoute**
+**答案：C. TCPRoute**
 
-**解析:** 在 Gateway API 中，TCPRoute 资源用于路由 L4 级别的 TCP 流量。与 AWS Load Balancer Controller 一起使用时，TCPRoute 会通过 NLB (Network Load Balancer) 将 TCP 流量转发到 backend services。
+**说明：** 在 Gateway API 中，TCPRoute 资源用于路由 L4 级 TCP 流量。与 AWS Load Balancer Controller 配合使用时，TCPRoute 通过 NLB (Network Load Balancer) 将 TCP 流量转发到后端服务。
 
-**TCPRoute 配置示例:**
+**TCPRoute 配置示例：**
 
 ```yaml
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/v1
 kind: TCPRoute
 metadata:
   name: db-route
+  namespace: gateway-demo
 spec:
   parentRefs:
   - name: my-nlb-gateway
@@ -1584,19 +736,54 @@ spec:
       port: 5432
 ```
 
-**Gateway API 路由资源用法:**
+**Gateway API 路由资源用法：**
 
-| 资源      | 协议       | AWS LB 类型 |
+| 资源 | 协议 | AWS LB 类型 |
 | --------- | ---------- | ----------- |
 | HTTPRoute | HTTP/HTTPS | ALB         |
 | TCPRoute  | TCP        | NLB         |
 | TLSRoute  | TLS        | NLB         |
 | GRPCRoute | gRPC       | ALB         |
 
-其他选项的问题:
+其他选项的问题：
 
-* **A. HTTPRoute**: 用于通过 ALB 处理 HTTP/HTTPS L7 流量。
-* **B. TLSRoute**: 用于 TLS 流量路由，但 TCPRoute 更适合 TCP 级别路由。
-* **D. GRPCRoute**: 专门用于 gRPC 协议的路由资源。
+* **A. HTTPRoute：** 与 ALB 配合用于 HTTP/HTTPS L7 流量。
+* **B. TLSRoute：** 用于 TLS 流量路由，但 TCPRoute 适用于 TCP 级路由。
+* **D. GRPCRoute：** 专门用于 gRPC 协议的路由资源。
 
 </details>
+`my-nlb-gateway` listener 和后端 Service 必须存在于 `gateway-demo` 中。此实现中的 TLSRoute 不提供基于 SNI 的 NLB 路由；请使用发布版特定的 TLS 行为，而不要假定所有 Gateway API 实现的行为都相同。
+
+### 14. LBC 3.5.0 如何为 ALB Gateway 配置静态证书？
+
+- A. 创建任意名为 tls-cert 的 Secret
+- B. 在 LoadBalancerConfiguration 中使用 ACM ARN
+- C. 仅添加一个 Route hostname
+- D. 设置后端 Service 端口 443
+
+<details>
+<summary>显示答案</summary>
+
+**答案：B. `LoadBalancerConfiguration.spec.listenerConfigurations[].defaultCertificate`**
+
+为 HTTPS listener 使用有效的同 Region ACM 证书 ARN。此实现不支持 Kubernetes Secret `certificateRefs`。hostname 发现还需要现有的匹配 ACM 证书和安全 listener。仅使用后端端口为 443 的 HTTPRoute 不会配置客户端 HTTPS。
+
+</details>
+
+### 15. 仅前端 ingress policy 会缩小现有的同 namespace allow-all policy 吗？
+
+- A. 会，最新的 policy 获胜
+- B. 会，最具体的 selector 获胜
+- C. 不会，匹配的 allow 会形成并集
+- D. 仅当 policy name 排序最前时
+
+<details>
+<summary>显示答案</summary>
+
+**答案：C. 不会；匹配的 NetworkPolicy allow 是可叠加的。**
+
+两个 policy 都选择后端，因此更宽泛的同 namespace allow 仍允许其他同 namespace 调用方。通过其所有者移除或缩小更宽泛的 policy，然后测试允许和拒绝的连接。Ingress 和 egress 隔离相互独立；DNS egress 和目标 ingress 都可能影响测试结果。
+
+</details>
+
+官方参考资料：[LBC Gateway API](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/gateway/gateway/)、[PrivateLink](https://docs.aws.amazon.com/vpc/latest/privatelink/create-endpoint-service.html)、[NLB 客户端 IP](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/edit-target-group-attributes.html)、[WAF 关联](https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating-aws-resource.html)、[App Mesh 停用](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html)。

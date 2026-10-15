@@ -6,9 +6,9 @@
 
 ## 概要
 
-Gatekeeper は、Kubernetes admission と定期監査の際にポリシーを評価します。ConstraintTemplate はロジックとパラメータスキーマを定義し、Constraint はスコープ、値、enforcementAction を定義します。[完全な例](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/gatekeeper)では、専用の `policy-lab` namespace とローカルテストを使用します。すべてのテストフィクスチャを本番クラスタに適用しないでください。
+Gatekeeper は Kubernetes admission 時および定期 audit 時にポリシーを評価します。ConstraintTemplate はロジックとパラメータスキーマを定義し、Constraint はスコープ、値、enforcementAction を定義します。[完全な例](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/gatekeeper)では、専用の `policy-lab` namespace とローカルテストを使用します。すべてのテストフィクスチャを本番クラスターに適用しないでください。
 
-![Gatekeeper admission と定期監査。Template がロジックを定義し、Constraint がスコープを選択します。](../.gitbook/assets/en-security-09-opa-gatekeeper-0.png)
+![テンプレートがロジックを定義し、Constraint がスコープを選択する Gatekeeper admission と定期 audit。](../.gitbook/assets/en-security-09-opa-gatekeeper-0.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-security-09-opa-gatekeeper-0.html)
 
@@ -16,7 +16,7 @@ Gatekeeper は、Kubernetes admission と定期監査の際にポリシーを評
 
 ## Gatekeeper と Kyverno の選択
 
-要件、テスト、運用モデルに基づいて、Gatekeeper の Rego/Constraint モデルと Kyverno の Kubernetes 指向ポリシーモデルを選択してください。Gatekeeper は任意で CEL ベースの Kubernetes ネイティブ検証もサポートします。サポートされない固定的なリソース使用量ランキングや、別のエンジンが複雑なロジックを表現できないという主張は避けてください。OPA の CNCF 卒業は、Gatekeeper が別個に卒業したプロジェクトであることを示すものではありません。
+要件、テスト、運用モデルに基づいて、Gatekeeper の Rego/Constraint モデルと Kyverno の Kubernetes 指向ポリシーモデルを選択してください。Gatekeeper はオプションで CEL ベースの Kubernetes native validation もサポートします。サポートされていない固定的なリソース使用量の順位付けや、別のエンジンでは複雑なロジックを表現できないという主張は避けてください。OPA の CNCF 卒業は、Gatekeeper が別個に卒業したプロジェクトであることを示すものではありません。
 
 <span id="installation-with-helm"></span>
 
@@ -26,7 +26,7 @@ Gatekeeper は、Kubernetes admission と定期監査の際にポリシーを評
 
 ## Gatekeeper のインストール
 
-例ディレクトリの固定された chart とサポートされている値を使用してください。`auditInterval` と `logLevel` は chart のトップレベルフィールドです。任意の `audit.replicas` や `audit.logLevel` の値が有効になると想定しないでください。このプロファイルでは、3 つの webhook レプリカと 1 つの audit Deployment がレンダリングされます。EKS control plane から webhook へのネットワークパス、証明書、配置、利用可能なリソースを検証してください。
+サンプルディレクトリの固定された chart とサポートされる値を使用してください。`auditInterval` と `logLevel` はトップレベルの chart フィールドです。任意の `audit.replicas` または `audit.logLevel` の値が有効になると想定しないでください。このプロファイルは 3 つの webhook replica と 1 つの audit Deployment をレンダリングします。EKS control plane から webhook へのネットワークパス、証明書、配置、および利用可能なリソースを確認してください。
 
 ```bash
 helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts
@@ -37,11 +37,11 @@ kubectl -n gatekeeper-system rollout status deployment/gatekeeper-controller-man
 kubectl -n gatekeeper-system rollout status deployment/gatekeeper-audit
 ```
 
-段階的なロールアウトでは、`values.yaml` は webhook の `failurePolicy: Ignore` を明示的に維持します。そのため、Constraint が `deny` を指定していても、webhook 呼び出しの失敗によってリクエストが許可される可能性があります。`Fail` は API の可用性、復旧、除外する namespace と合わせて評価してください。webhook のスコープは、個々の Constraint のスコープより広くなることがあります。
+段階的ロールアウトでは、`values.yaml` は webhook の `failurePolicy: Ignore` を明示的に維持しています。そのため、Constraint が `deny` を指定していても、webhook 呼び出しの失敗によりリクエストが許可される可能性があります。`Fail` は、API の可用性、復旧、および除外 namespace と合わせて評価してください。webhook のスコープは、個々の Constraint のスコープより広い場合があります。
 
 ### Template と Constraint の順序
 
-Template は対応する Constraint CRD を生成します。Constraint を適用する前に、Established CRD を待機し、template Pod のステータスを確認してください。すべての例の Constraint は `dryrun` で開始します。対象環境向けにイメージプレフィックス、パラメータ、namespace を確認してください。
+Template は対応する Constraint CRD を生成します。Constraint を適用する前に、Established CRD を待機し、template Pod のステータスを確認してください。すべてのサンプル Constraint は `dryrun` で開始します。対象環境に合わせて image prefix、パラメータ、namespace を確認してください。
 
 ```bash
 kubectl create namespace policy-lab --dry-run=client -o yaml | kubectl apply -f -
@@ -63,9 +63,9 @@ kubectl apply -f constraints/
 
 <span id="rego-operators-and-built-in-functions"></span>
 
-## Rego と入力コントラクト
+## Rego と入力契約
 
-Gatekeeper ポリシーでは、汎用的な OPA AdmissionReview の例にある `input.request` ではなく `input.review` を使用します。`input.parameters` は Constraint の値を提供し、`data.inventory` は同期された Kubernetes オブジェクトを提供します。既存の `targets[].rego` は、デフォルトでサポートされる Rego v0 を使用します。Rego v1 は `code[].source.version: v1` により明示的に選択されます。古い v0 Template が自動的に無効になることはありません。
+Gatekeeper ポリシーは、汎用 OPA AdmissionReview の `input.request` ではなく `input.review` を使用します。`input.parameters` は Constraint の値を提供し、`data.inventory` は同期された Kubernetes オブジェクトを提供します。既存の `targets[].rego` は、デフォルトでサポート対象の Rego v0 を使用します。Rego v1 は `code[].source.version: v1` で明示的に選択されます。古い v0 Template が自動的に無効になることはありません。
 
 ```yaml
 apiVersion: templates.gatekeeper.sh/v1
@@ -101,7 +101,7 @@ spec:
           \  not valid_label(key)\n}\n"
 ```
 
-`violation contains ... if` は v1 の部分集合ルールです。複数の定義がその集合に寄与しますが、これは競合する完全ドキュメントルールが常に OR として結合されることを意味するものではありません。ルール本文内の条件はすべて満たされる必要があります。再帰的なユーザー定義ルールと、`walk` のような JSON トラバーサル組み込み関数を区別してください。
+`violation contains ... if` は v1 の部分集合ルールです。複数の定義がその集合に寄与しますが、これは競合する完全ドキュメントルールが常に OR として結合されることを意味しません。ルール本文内の条件はすべて満たされる必要があります。再帰的なユーザー定義ルールと、`walk` のような JSON 走査 built-in を区別してください。
 
 ```rego
 package examples
@@ -110,7 +110,7 @@ keys := object.keys(object.get(input, "labels", {}))
 missing := {"app", "team"} - keys
 ```
 
-`obj[_]` はオブジェクト値を選択します。ラベルキーが必要な場合は、`object.keys` を使用するか、キーを明示的にバインドしてください。集合差 `-`、積集合 `&`、和集合 `|` は有用なポリシー操作です。
+`obj[_]` はオブジェクトの値を選択します。label key が必要な場合は、`object.keys` を使用するか、key を明示的にバインドしてください。集合差 `-`、積集合 `&`、和集合 `|` は有用なポリシー操作です。
 
 <span id="writing-constraint-templates"></span>
 
@@ -136,23 +136,23 @@ missing := {"app", "team"} - keys
 
 | Template | チェック | スコープと制限 |
 |---|---|---|
-| DocsRequiredLabels | 必須の空でないラベル | Pod メタデータ。Deployment メタデータは Pod template ラベルと異なります |
-| DocsNoPrivileged | privileged=true を拒否 | 通常、init、ephemeral コンテナ。完全な PSS スイートではありません |
-| DocsApprovedImages | 承認済み registry/path プレフィックス | 3 種類すべてのコンテナ。スキーマには末尾の `/` 境界が必要です |
-| K8sContainerLimits | CPU/memory limit の存在と最大値 | 固定された upstream ポリシー。ephemeral コンテナはリソースフィールドを設定できないため、通常/init コンテナが対象です |
-| DocsUniqueIngress | 同期された inventory 内の厳密な host 競合 | 同一オブジェクトの更新を除外。ワイルドカードやアトミックな同時作成の保証はありません |
+| DocsRequiredLabels | 必須の空でない label | Pod metadata。Deployment metadata は Pod template label と異なる |
+| DocsNoPrivileged | privileged=true を拒否 | 通常、init、および ephemeral container。完全な PSS スイートではない |
+| DocsApprovedImages | 承認済み registry/path prefix | 3 種類すべての container。スキーマでは末尾の `/` 境界が必須 |
+| K8sContainerLimits | CPU/memory limit の存在と最大値 | 固定された upstream ポリシー。ephemeral container は resource フィールドを設定できないため、通常/init container が対象 |
+| DocsUniqueIngress | 同期された inventory 内の完全一致 host 競合 | 同一オブジェクトの更新を除外。wildcard またはアトミックな同時作成の保証はない |
 
-### イメージ境界と例外
+### Image 境界と例外
 
-`registry.example.com/team/` は `registry.example.com/team-evil/` および `registry.example.com.evil/` と異なります。プレフィックス一致には区切り境界と完全修飾イメージ名のコントラクトが必要です。この例では、`skip-privileged-check=true` のようなワークロード制御のバイパスラベルは提供しません。namespace の例外には、ラベル変更に対する制御された RBAC、認可、有効期限、監査記録が必要です。
+`registry.example.com/team/` は `registry.example.com/team-evil/` や `registry.example.com.evil/` とは異なります。prefix マッチングには区切り境界と完全修飾された image 名の契約が必要です。この例では、`skip-privileged-check=true` のような workload によって制御可能なバイパス label は提供しません。namespace の例外には、label 変更に対する制御された RBAC、認可、有効期限、および audit 記録が必要です。
 
-### リソース量
+### Resource Quantity
 
-Gi/Mi/Ki 専用のパーサーは、`9G` やプレーンバイトに対して undefined を返し、違反を見逃す可能性があります。この例では、サポートされない文字列を違反として報告する upstream の `K8sContainerLimits` ポリシーを固定しています。Kubernetes が許可するすべての量表現を受け入れるわけではないため、その形式制限を文書化してください。ネイティブテストでは、millicore、10 進数/2 進数 memory、プレーンバイト、数値入力、明示的に引用した指数文字列を区別します。YAML パーサーが `8e9` のような文字列フィクスチャを数値に変換しないように、引用符で囲んでください。
+Gi/Mi/Ki のみのパーサーは、`9G` またはプレーンバイトに対して undefined を返し、違反を見逃す可能性があります。この例では、サポートされない文字列を違反として報告する upstream の `K8sContainerLimits` ポリシーを固定しています。これは Kubernetes が許可するすべての quantity 表現を受け入れるわけではありません。その形式上の制限を文書化してください。native テストでは、millicore、10 進数/2 進数 memory、プレーンバイト、数値入力、および明示的に引用した指数表記文字列を区別します。YAML パーサーが数値に変換しないよう、`8e9` のような文字列フィクスチャは引用してください。
 
-### PSS と Controller リソース
+### PSS と Controller Resource
 
-少数の privileged/runAsNonRoot チェックを完全な Baseline/Restricted の適用と表現しないでください。バージョン化された PSS は、host namespace、seccomp、capability、OS の違い、Pod レベルの継承、ephemeral コンテナも対象とします。[Pod Security Standards ガイド](./03-pod-security-standards.md)を使用してください。これらの例は Pod admission をチェックします。Controller の Pod template をより早く評価するには、別の template または ExpansionTemplate テストを構成してください。
+いくつかの privileged/runAsNonRoot チェックを完全な Baseline/Restricted enforcement としてラベル付けしないでください。バージョン付き PSS は、host namespace、seccomp、capability、OS の区別、Pod レベルの継承、および ephemeral container も対象とします。[Pod Security Standards ガイド](./03-pod-security-standards.md)を使用してください。これらの例は Pod admission をチェックします。controller Pod template をより早期に評価するには、個別の template または ExpansionTemplate テストを設定してください。
 
 <span id="advanced-policy-patterns"></span>
 
@@ -164,7 +164,7 @@ Gi/Mi/Ki 専用のパーサーは、`9G` やプレーンバイトに対して un
 
 ## 同期データと参照ポリシー
 
-`sync.yaml` は `networking.k8s.io/v1` Ingress オブジェクトを inventory に同期します。これは、外部 HTTP provider や任意の OPA bundle に接続することとは異なります。必要なオブジェクトのみを同期し、RBAC、memory、機密データを確認してください。
+`sync.yaml` は `networking.k8s.io/v1` Ingress オブジェクトを inventory に同期します。これは外部 HTTP provider や任意の OPA bundle に接続することとは異なります。必要なオブジェクトだけを同期し、RBAC、memory、および機微なデータを確認してください。
 
 ```yaml
 apiVersion: config.gatekeeper.sh/v1alpha1
@@ -180,7 +180,7 @@ spec:
       kind: Ingress
 ```
 
-同じ namespace 内の異なる名前、または異なる namespace 内の同じ名前でも競合する可能性があります。namespace と名前の両方が異なることを要求すると、そのようなケースを見逃します。この例では、自己更新として同じ namespace/名前のみを除外します。inventory は結果整合性を持つため、同時作成に対する一意性をアトミックに保証することはできません。
+同じ namespace 内の異なる名前、または別の namespace 内の同じ名前でも、競合する可能性があります。namespace と名前の両方が異なることを要求すると、そのようなケースを見逃します。この例では、自己更新として同じ namespace/名前のみを除外します。inventory は結果整合性を持つため、同時作成における一意性をアトミックに保証できません。
 
 <span id="mutation-features"></span>
 
@@ -194,7 +194,7 @@ spec:
 
 ## Mutation
 
-AssignMetadata はサポートされているメタデータの label/annotation を追加します。これは汎用的な上書きメカニズムではありません。Assign はフィールドを設定します。toleration リスト全体を割り当てると既存のエントリが破棄される可能性があるため、この例では ModifySet merge を使用します。この toleration は専用の lab taint を許可しますが、Spot ノードを選択するものではありません。
+AssignMetadata はサポートされている metadata label/annotation を追加します。これは汎用的な上書き機構ではありません。Assign はフィールドを設定します。toleration リスト全体を割り当てると既存エントリが破棄される可能性があるため、この例では ModifySet merge を使用します。この toleration は専用 lab taint を許可しますが、Spot node を選択するものではありません。
 
 ```yaml
 apiVersion: mutations.gatekeeper.sh/v1
@@ -224,7 +224,7 @@ spec:
         effect: NoSchedule
 ```
 
-mutation/defaulting を validation から分離してください。CREATE/UPDATE のスコープ、繰り返し適用、他の mutator との収束、既存オブジェクトへの影響を確認してください。mutator を作成しても、既存のすべてのオブジェクトが自動的に書き換えられるわけではありません。
+mutation/defaulting を validation から分離してください。CREATE/UPDATE のスコープ、繰り返し適用、他の mutator との収束、および既存オブジェクトへの影響を確認してください。mutator を作成しても、既存のすべてのオブジェクトが自動的に書き換えられるわけではありません。
 
 <span id="audit-configuration"></span>
 
@@ -234,9 +234,9 @@ mutation/defaulting を validation から分離してください。CREATE/UPDAT
 
 <span id="grafana-dashboard"></span>
 
-## 監査とモニタリング
+## Audit と Monitoring
 
-監査頻度は chart の `auditInterval` で設定します。Config の `validation.traces` は、監査をスケジュールするためではなく、選択した admission 評価をデバッグするためのものです。admission 入力と Rego print には機密オブジェクトデータが含まれる可能性があります。必要なスコープでのみ有効にしてください。`constraintViolationsLimit` はステータス詳細リストの上限を設定します。これは totalViolations と異なる場合があります。
+chart の `auditInterval` で audit 頻度を設定します。Config の `validation.traces` は、audit のスケジューリングではなく、選択した admission 評価をデバッグするためのものです。admission input と Rego print には機微なオブジェクトデータが含まれることがあります。必要なスコープに対してのみ有効にしてください。`constraintViolationsLimit` はステータス詳細リストを制限します。これは totalViolations と異なる場合があります。
 
 ```bash
 kubectl get constraints
@@ -245,15 +245,15 @@ kubectl get constrainttemplatepodstatuses -n gatekeeper-system
 kubectl get constraintpodstatuses -n gatekeeper-system
 ```
 
-chart の webhook Service は、metrics ではなく HTTPS webhook トラフィックのみを公開します。`podmonitor.yaml` は、audit と webhook の両方の Deployment にある実際の名前付き metrics:8888 container port を選択します。最初に Prometheus Operator CRD をインストールし、PodMonitor の label/namespace selector を整合させてください。
+chart の webhook Service は metrics ではなく HTTPS webhook トラフィックのみを公開します。`podmonitor.yaml` は、audit と webhook の両方の Deployment で実際に名前付けされた metrics:8888 container port を選択します。最初に Prometheus Operator CRD をインストールし、PodMonitor の label/namespace selector を整合させてください。
 
 | Metric | 解釈 |
 |---|---|
-| gatekeeper_validation_request_count | 実際の admission_status ラベルを持つ validation リクエスト |
-| gatekeeper_validation_request_duration_seconds | Validation レイテンシヒストグラム |
-| gatekeeper_violations | enforcement_action 別の監査済み違反。デフォルトの constraint_name ラベルを仮定しないでください |
-| gatekeeper_audit_last_run_end_time | 最後に完了した監査のタイムスタンプ |
-| gatekeeper_constraint_templates | Template ステータス数 |
+| gatekeeper_validation_request_count | 実際の admission_status label を含む validation request |
+| gatekeeper_validation_request_duration_seconds | validation latency histogram |
+| gatekeeper_violations | enforcement_action ごとの audit 済み違反。デフォルトの constraint_name label を想定しない |
+| gatekeeper_audit_last_run_end_time | 最後に完了した audit の timestamp |
+| gatekeeper_constraint_templates | Template status count |
 
 ```promql
 sum by (enforcement_action) (gatekeeper_violations)
@@ -272,7 +272,7 @@ histogram_quantile(0.99, sum by (le) (rate(gatekeeper_validation_request_duratio
 
 ## Gator テストと CI
 
-公式の 3.23.1 リリースアセットをインストールし、公開されている checksum を検証してください。ARM64 バイナリは GitVersion に +dirty を報告します。監査では、このテキストがローカル変更を意味すると想定するのではなく、公開アーカイブの hash を検証しました。バージョンが固定された証拠を、固定されていない @latest CLI 実行で置き換えないでください。
+公式の 3.23.1 release asset をインストールし、公開されている checksum を検証してください。ARM64 binary は GitVersion に +dirty を報告します。この audit では、そのテキストがローカル変更を意味すると想定するのではなく、公開 archive hash を検証しました。バージョンが固定された証拠を、固定されていない @latest CLI 実行で置き換えないでください。
 
 ```bash
 gator version
@@ -282,7 +282,7 @@ gator test -f templates/docsnoprivileged.yaml \
   -f tests/fixtures/tenant-skip-label-no-bypass.yaml --output=json
 ```
 
-`verify` は Suite 内の期待される違反をチェックし、`test -f` は Template/Constraint に対して manifest を評価します。Suite がないディレクトリは verify が無視することがあるため、終了ステータスだけを信頼せず、5 件のテストと 33 件のケースすべてが実行されたことを確認してください。フィクスチャイメージはポリシー入力であり、pull 可能なワークロードではありません。CI は認証情報なしでローカル Suite を実行します。cluster dry-run は、認可されたアクセスを持つ別の信頼できる環境に属します。
+`verify` は Suite 内の期待される違反をチェックします。`test -f` は Template/Constraint に対して manifest を評価します。Suite のない directory は verify が無視する場合があるため、exit status だけを信用せず、5 つすべてのテストと 33 件の case が実行されたことを確認してください。fixture image はポリシー input であり、pull 可能な workload ではありません。CI は credential なしでローカル suite を実行します。cluster dry-run は、認可されたアクセスを持つ別の信頼できる環境に属します。
 
 <span id="best-practices"></span>
 
@@ -300,7 +300,7 @@ gator test -f templates/docsnoprivileged.yaml \
 
 ## ロールアウトとトラブルシューティング
 
-同じ値が設定された Constraint を dryrun→warn→deny と移行し、監査/admission の結果と例外を確認してください。ロールアウトのメカニズムとして、パラメータのない Constraint を 3 つ作成しないでください。Dryrun/warn は Gator テストの終了ステータスがゼロでも違反を返すことがあります。deny 違反は 1 を返します。webhook の可用性障害は、ポリシー違反とは別に監視してください。
+同じ値が設定済みの Constraint を dryrun→warn→deny と移行させ、audit/admission の結果と例外を確認してください。ロールアウト機構として、パラメータのない Constraint を 3 つ作成しないでください。Dryrun/warn は Gator テストの exit status がゼロでも違反を返すことがあり、deny の違反では 1 が返ります。webhook の可用性障害は、ポリシー違反とは別に監視してください。
 
 ```bash
 kubectl get validatingwebhookconfiguration gatekeeper-validating-webhook-configuration -o yaml
@@ -308,7 +308,7 @@ kubectl -n gatekeeper-system logs deployment/gatekeeper-controller-manager --tai
 kubectl -n gatekeeper-system logs deployment/gatekeeper-audit --tail=100
 ```
 
-ポリシー入力、match スコープ、CRD/template エラー、webhook 証明書/ネットワーク、監査タイムスタンプ、inventory の鮮度を確認してください。webhook の適用を変更したり、namespace の例外を広げたりする前に原因を診断してください。
+ポリシー input、match スコープ、CRD/template エラー、webhook の証明書/ネットワーク、audit timestamp、および inventory の鮮度を確認してください。webhook enforcement を変更したり namespace 例外を広げたりする前に、原因を診断してください。
 
 <span id="summary"></span>
 
@@ -316,7 +316,7 @@ kubectl -n gatekeeper-system logs deployment/gatekeeper-audit --tail=100
 
 ## 検証スコープと関連資料
 
-Gator3.23.1 は 33 件のポリシーケースと 3 つの適用モードを実行しました。チェック対象は、固定された Helm render、8 個の Gatekeeper CRD オブジェクト、audit/webhook PodMonitor バインディングです。Kubernetes admission、EKS ネットワーク、ライブの audit-cache 同期、API failover は実行していません。ネイティブ mutation 検証はレビュー報告書に別途記録されています。
+Gator 3.23.1 は、33 のポリシー case と 3 つの enforcement mode を実行しました。チェック対象は、固定された Helm render、8 個の Gatekeeper CRD オブジェクト、および audit/webhook PodMonitor binding でした。Kubernetes admission、EKS networking、live audit-cache synchronization、または API failover は実行していません。個別の native mutation validation はレビュー報告書に記録されています。
 
 - [Gatekeeper クイズ](../quizzes/security/09-opa-gatekeeper-quiz.md)
 - [Kyverno](./01-kyverno-policy-management.md)

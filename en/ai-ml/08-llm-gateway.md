@@ -1,7 +1,7 @@
 # LLM Gateway (Inference Gateway) Deep Dive — Auto Routing, PII Guard, Prompt Integrity, Context Awareness
 
 > **Scope**: Proposed gateway design; the InferencePool example follows `inference.networking.k8s.io/v1`. Pin compatible Kubernetes, Gateway API, controller, EPP and model-server releases before deployment.
-> **Last Updated**: September 13, 2026
+> **Last Updated**: September 28, 2026
 
 Once coding agents (Claude Code, OpenCode, Codex), RAG applications, and autonomous agents in one organization start calling several model providers at once (Anthropic, Amazon Bedrock, self-hosted vLLM), a moment arrives quickly where nobody can answer "who used which model, how much did it cost, and what data left the building on the way." An **LLM gateway** (also called an AI gateway or inference gateway) is the proxy that becomes the **single entry point** for all LLM traffic so that question has an answer.
 
@@ -623,6 +623,10 @@ Semantic similarity is not answer equivalence; temperature 0 guarantees neither 
 | observability | bounded OpenTelemetry/Prometheus metrics and optional traces | pin semantic conventions and exporter name mapping, restrict scrape access, disable prompt capture by default |
 
 This is a topology sketch, not a ready-to-install Helm chart. Use the selected product’s versioned values schema instead of invented common keys. Keep ingress private with TLS and authenticated clients; restrict `/metrics` and admin endpoints. Use workload identity, non-root containers, dropped capabilities, resource limits and network/egress policy. A DaemonSet/hostPort is not automatically node-local isolation: bind and firewall it deliberately, or use a private Service/sidecar. Prevent direct provider bypass. For audit buckets enable Block Public Access, encryption, versioning and approved Object Lock retention. No AWS/IAM resources are created by this chapter.
+
+### September 2026 Update: Amazon SageMaker HyperPod Inference Gateway
+
+On September 24, 2026, AWS launched the [SageMaker HyperPod Inference Gateway](https://aws.amazon.com/about-aws/whats-new/2026/09/sagemaker-hyperpod-inference-gateway/), a managed implementation of the EPP pattern covered in section 4.7 (L7 endpoint selection): a Kubernetes-native, GPU-aware routing system that deploys as a **single EKS managed add-on** on existing HyperPod infrastructure. It has three components: an Envoy endpoint (one private entry point per cluster), a Body-Based Router that reads the model name from each request body and routes it to the right GPU pool, and an Endpoint Picker that scores every model-server pod in real time across six inference signals — KV cache utilization, queue depth, LoRA adapter residency, prefix cache hit rate, predicted latency and running requests. It works with OpenAI-compatible model servers such as vLLM and SGLang with no application code changes; AWS quotes up to 82% lower first-token latency versus round-robin. Cross-cluster/cross-region routing and global rate limiting are announced as coming later.
 
 ---
 

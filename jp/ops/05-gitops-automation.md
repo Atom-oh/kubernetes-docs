@@ -1,947 +1,490 @@
-# GitOps Automation: Atlantis, FluxCD, AIOps
+# GitOps 自動化: Atlantis、HCP Terraform、Flux、AIOps
 
-> **対応バージョン**: EKS 1.28+, Atlantis 0.27+, FluxCD v2.2+, Terraform 1.6+
-> **最終更新**: February 21, 2026
+> **レビュー基準**: Atlantis 0.47.1 / chart 6.15.0、HCP Terraform Provider 0.80.0、Sentinel 0.41.0、Flux 2.9.5（Flux はリリースノート確認後、2026年10月12日にパッチ 2.9.6 へピンを更新。再実行は未実施）\
+> **最終レビュー**: 2026年9月11日。ローカル CLI、chart、schema、テストダブルで確認しました。実際の PR コメント、Terraform apply、HCP リソース作成、クラスターへのデプロイ、外部 AI 呼び出しは実行していません。
 
-< [前へ: ArgoCD Multi-Cluster](./04-gitops-multi-cluster.md) | [目次](./README.md) | [次へ: Scaling Strategies](./06-scaling-strategies.md) >
+< [前へ: マルチクラスター](04-gitops-multi-cluster.md) | [目次](README.md) | [次へ: スケーリング](06-scaling-strategies.md) >
 
----
+インフラストラクチャの実行とアプリケーションの reconciliation を分離してください。Atlantis と HCP Terraform が同じ state に対して同時に実行したり、Flux と Argo CD が同じ Kubernetes フィールドを競合して管理したりしないようにします。
 
-## はじめに
-
-GitOps automation は、application deployment を超えて infrastructure management まで拡張されます。このガイドでは、Terraform PR workflow のための Atlantis、ArgoCD の代替としての FluxCD、そして intelligent automation のために登場しつつある AIOps pattern を扱います。
-
----
+| ツール | 責務 | 分離すべき前提条件 |
+|---|---|---|
+| Atlantis | PR ベースの Terraform plan/apply の実行 | Runtime、認証情報、state、lock、コマンド認可 |
+| HCP Terraform | 管理された workspace/run/state とコラボレーション | VCS 接続、agent、policy、workspace 権限 |
+| Flux | source から Kubernetes/Helm state を reconciliation | Controller identity、テナント RBAC、repository 権限 |
+| AIOps 分析 | 観測結果の要約と対応の提案 | 検証済みデータ、承認、別途制約された executor |
 
 ## 1. EKS 上の Atlantis
 
-Atlantis は Terraform の pull request automation を提供し、code review workflow を通じて infrastructure change を可能にします。
+Atlantis は pull request から Terraform を実行します。**plan は provider、external data source、custom command を実行する場合があります。** apply の承認を要求しても、信頼できない plan が安全になるわけではありません。この例は、fork PR と自動 plan を無効化した、管理対象のプライベートなインフラストラクチャ repository と承認済みの運用チーム向けです。
 
-### 1.1 Architecture Overview
+### Identity とインストールの前提条件
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        GitHub/GitLab                            │
-│                                                                 │
-│  ┌──────────────┐    Webhook     ┌──────────────────────────┐  │
-│  │  Pull Request │ ──────────────▶│      Atlantis Pod       │  │
-│  │  (terraform/) │               │                          │  │
-│  └──────────────┘               │  ┌────────────────────┐  │  │
-│         ▲                        │  │   Plan/Apply       │  │  │
-│         │                        │  │   Execution        │  │  │
-│         │ Comment                │  └─────────┬──────────┘  │  │
-│         │ (plan output)          │            │             │  │
-│         │                        │            ▼             │  │
-│         └────────────────────────│  ┌────────────────────┐  │  │
-│                                  │  │   AWS Provider     │  │  │
-│                                  │  │   (Pod Identity)   │  │  │
-│                                  │  └────────────────────┘  │  │
-│                                  └──────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-```
+- namespace/ServiceAccount `atlantis` 用に EKS Auto Mode Pod Identity association を設定してください。IRSA annotation と混在させないでください。従来型 node には対応する agent と SDK のセットアップが必要です。
+- 正確な state および `.tflock` key、必要な KMS key、管理対象リソースにアクセス範囲を限定してください。state object の read/write と lock object の read/write/delete を区別します。広範な `eks:*`、IAM role 作成、PassRole は汎用的な最小権限 policy ではありません。
+- role assumption を正確な ARN と意図した trust に限定してください。Pod Identity には対応する cluster/namespace/ServiceAccount の request-tag 条件を使用します。
+- PR 出力から認証情報と機密の plan JSON を保護してください。Terraform の `sensitive=true` は値が state に保存されることを防ぎません。
 
-### 1.2 Helm Installation
+Runtime には AWS、Git、provider/module registry、プライベート EKS API へのアクセスが必要です。検証されていないインストール script や image に存在しない tool に依存しないでください。Terraform 1.15.7 は、`defaultTFVersion` 用に存在しているか、許可されたダウンロードパスから取得可能でなければなりません。
+
+### バージョン固定 Helm values
+
+`auto-gp3` がまだ存在しない場合は、以下のような Auto Mode StorageClass を準備してください。その provisioner は従来の EBS CSI とは異なります。異なる cluster mode では適切な代替を使用します。
 
 ```yaml
-# atlantis-values.yaml
-replicaCount: 1
+# fixtures/atlantis-storage.yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: auto-gp3
+provisioner: ebs.csi.eks.amazonaws.com
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+parameters:
+  type: gp3
+  encrypted: "true"
+allowedTopologies:
+  - matchLabelExpressions:
+      - key: eks.amazonaws.com/compute-type
+        values: [auto]
+```
 
+承認済みの secret-management mechanism を使って、namespace `atlantis` にこれらの Secret を準備してください。実際の値を Git や Helm values に入れないでください。
+
+| Secret | 必須 key |
+|---|---|
+| `atlantis-vcs` | `github-token`, `webhook-secret` |
+| `atlantis-web-auth` | `username`, `password` |
+
+GitHub bot/token に必要な repository、PR、team-query 権限を与え、ローテーションしてください。`platform` を実際に認可された organization team に置き換えます。shell hook で username を部分文字列一致させるのではなく、Atlantis の team allowlist を使用してください。
+
+```yaml
+# fixtures/atlantis-values.yaml
+fullnameOverride: atlantis
+replicaCount: 1
 image:
   repository: ghcr.io/runatlantis/atlantis
-  tag: v0.27.3
-
+  tag: v0.47.1
+orgAllowlist: github.com/REPLACE_ORG/eks-infra
+atlantisUrl: https://atlantis.example.com
+defaultTFVersion: 1.15.7
+allowForkPRs: false
+disableApplyAll: true
+basicAuthSecretName: atlantis-web-auth
+service:
+  type: ClusterIP
 ingress:
+  enabled: false
+volumeClaim:
   enabled: true
-  ingressClassName: alb
-  annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:ACCOUNT:certificate/CERT_ID
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: '443'
-    alb.ingress.kubernetes.io/security-groups: sg-atlantis-alb
-  hosts:
-    - host: atlantis.example.com
-      paths:
-        - /
-
-# GitHub Configuration
-github:
-  user: atlantis-bot
-  # Secret reference for token
-  secret:
-    name: atlantis-github-secrets
-    usernameKey: username
-    tokenKey: token
-
-# Webhook Secret
-githubWebhookSecret:
-  secret:
-    name: atlantis-github-secrets
-    key: webhook-secret
-
-# Service Account for Pod Identity
+  dataStorage: 10Gi
+  storageClassName: auto-gp3
+  accessModes:
+  - ReadWriteOnce
 serviceAccount:
   create: true
   name: atlantis
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT:role/atlantis-terraform-role
-
-# Resource Configuration
+  mount: false
+  annotations: {}
 resources:
   requests:
     cpu: 500m
     memory: 1Gi
   limits:
-    cpu: 2000m
+    cpu: '2'
     memory: 4Gi
-
-# Persistent Volume for Locks
-persistence:
-  enabled: true
-  storageClassName: gp3
-  size: 10Gi
-
-# Environment Variables
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
 environment:
-  ATLANTIS_REPO_ALLOWLIST: "github.com/myorg/*"
-  ATLANTIS_ENABLE_DIFF_MARKDOWN_FORMAT: "true"
-  ATLANTIS_PARALLEL_POOL_SIZE: "5"
-  ATLANTIS_DEFAULT_TF_VERSION: "1.6.6"
-
-# Server-side Repository Config
+  ATLANTIS_GH_USER: REPLACE_BOT_USER
+  ATLANTIS_GH_TEAM_ALLOWLIST: platform:plan,platform:apply
+  ATLANTIS_DISABLE_AUTOPLAN: 'true'
+  ATLANTIS_FAIL_ON_PRE_WORKFLOW_HOOK_ERROR: 'true'
+  ATLANTIS_BLOCKED_EXTRA_ARGS: -chdir,--chdir,-plugin-dir,--plugin-dir,-target,--target,-replace,--replace,-out,--out,-var-file,--var-file,-var,--var
+environmentSecrets:
+- name: ATLANTIS_GH_TOKEN
+  secretKeyRef:
+    name: atlantis-vcs
+    key: github-token
+- name: ATLANTIS_GH_WEBHOOK_SECRET
+  secretKeyRef:
+    name: atlantis-vcs
+    key: webhook-secret
 repoConfig: |
-  ---
   repos:
-    - id: github.com/myorg/infrastructure
-      branch: main
-      allowed_overrides: [workflow, apply_requirements]
-      allow_custom_workflows: true
-      delete_source_branch_on_merge: true
-
-volumeMounts:
-  - name: atlantis-config
-    mountPath: /home/atlantis/.atlantis
-    readOnly: true
-
-volumes:
-  - name: atlantis-config
-    configMap:
-      name: atlantis-repo-config
+    - id: github.com/REPLACE_ORG/eks-infra
+      plan_requirements: [approved]
+      apply_requirements: [approved, mergeable, undiverged]
+      import_requirements: [approved, mergeable, undiverged]
+      workflow: reviewed
+      allowed_overrides: []
+      allow_custom_workflows: false
+      repo_locks:
+        mode: on_plan
+  workflows:
+    reviewed:
+      plan:
+        steps:
+          - init:
+              extra_args: [-backend-config=backend.hcl]
+          - run: terraform fmt -check -diff
+          - run: terraform validate
+          - plan:
+              extra_args: [-var-file=terraform.tfvars, -lock-timeout=300s]
+      apply:
+        steps:
+          - apply
 ```
-
-Helm で install します:
 
 ```bash
 helm repo add runatlantis https://runatlantis.github.io/helm-charts
 helm repo update
-
-kubectl create namespace atlantis
-
-# Create secrets
-kubectl create secret generic atlantis-github-secrets \
-  --namespace atlantis \
-  --from-literal=username=atlantis-bot \
-  --from-literal=token=${GITHUB_TOKEN} \
-  --from-literal=webhook-secret=${WEBHOOK_SECRET}
-
-helm install atlantis runatlantis/atlantis \
-  --namespace atlantis \
-  --values atlantis-values.yaml
+helm upgrade --install atlantis runatlantis/atlantis \
+  --version 6.15.0 --namespace atlantis --create-namespace \
+  --kube-context "$ATLANTIS_CONTEXT" --values atlantis-values.yaml
 ```
 
-### 1.3 Repository Configuration (atlantis.yaml)
+これらの values は ClusterIP のみを作成します。承認済みの HTTPS proxy/Ingress を介して `atlantis.example.com` と `/events` を接続し、対応する GitHub webhook secret を設定してください。Webhook の検証と Web UI の認証は別物です。event route を一般的な認証バイパスに拡張しないでください。
+
+Chart 6.15.0 は `orgAllowlist`、`volumeClaim`、`environment` map、`containerSecurityContext` を使用します。書き込み可能な PVC には checkout、plan、server-lock のデータが保持されます。read-only ConfigMap で overlay しないでください。replica を増やすだけでは、単一 RWO PVC/BoltDB のデプロイメントは高可用になりません。retained volume の保持、backup、recovery、最終的な cleanup を管理してください。
+
+### Server policy と repository project
+
+埋め込みの `repoConfig` は server が所有します。`allowed_overrides: []` と `allow_custom_workflows: false` により、PR が承認要件や実行コマンドを変更することを防ぎます。GitHub の branch protection と required check は別途設定してください。`approved` は、最新 commit に対する別個で現在有効な 2 件の承認を本質的に意味するものではありません。
+
+`mergeable` の前提条件として apply 自体を要求すると循環依存が生じることがあります。plan/check/review/apply の依存関係を repository rule と整合させます。この例では明示的な `atlantis plan -p ...` command を使用します。承認後に変更された内容は review し、再度 plan してください。
+
+このファイルを repository root に配置してください。各 project directory は、[chapter 01](01-infrastructure-setup.md) の対応する root を使用し、それぞれ固有の backend/state と、review 済みの `backend.hcl` および `terraform.tfvars` を持ちます。
 
 ```yaml
-# atlantis.yaml at repository root
+# fixtures/atlantis.yaml
 version: 3
 automerge: false
-delete_source_branch_on_merge: true
-parallel_plan: true
+parallel_plan: false
 parallel_apply: false
-
 projects:
-  # Network Layer
-  - name: network-dev
-    dir: terraform/network
-    workspace: dev
-    terraform_version: v1.6.6
-    autoplan:
-      when_modified:
-        - "*.tf"
-        - "*.tfvars"
-        - "../modules/vpc/**/*.tf"
-      enabled: true
-    apply_requirements:
-      - approved
-      - mergeable
-    workflow: network
-
   - name: network-prod
-    dir: terraform/network
-    workspace: prod
-    terraform_version: v1.6.6
+    dir: 01-network
+    workspace: default
+    terraform_version: v1.15.7
     autoplan:
-      when_modified:
-        - "*.tf"
-        - "*.tfvars"
-        - "../modules/vpc/**/*.tf"
-      enabled: true
-    apply_requirements:
-      - approved
-      - mergeable
-    workflow: network-prod
-
-  # EKS Cluster
-  - name: eks-dev
-    dir: terraform/eks
-    workspace: dev
-    terraform_version: v1.6.6
+      enabled: false
+      when_modified: ["*.tf", "*.tfvars", "backend.hcl", ".terraform.lock.hcl", "../modules/**/*.tf"]
+  - name: cluster-prod
+    dir: 02-cluster
+    workspace: default
+    terraform_version: v1.15.7
+    depends_on: [network-prod]
     autoplan:
-      when_modified:
-        - "*.tf"
-        - "environments/dev.tfvars"
-      enabled: true
-    apply_requirements:
-      - approved
-    workflow: eks
-
-  - name: eks-prod
-    dir: terraform/eks
-    workspace: prod
-    terraform_version: v1.6.6
+      enabled: false
+      when_modified: ["*.tf", "*.tfvars", "backend.hcl", ".terraform.lock.hcl", "../modules/**/*.tf"]
+  - name: platform-prod
+    dir: 03-platform
+    workspace: default
+    terraform_version: v1.15.7
+    depends_on: [cluster-prod]
     autoplan:
-      when_modified:
-        - "*.tf"
-        - "environments/prod.tfvars"
-      enabled: true
-    apply_requirements:
-      - approved
-      - mergeable
-    workflow: eks-prod
-
-  # Application Infrastructure
-  - name: app-infra-dev
-    dir: terraform/app-infra
-    workspace: dev
-    autoplan:
-      when_modified:
-        - "**/*.tf"
-      enabled: true
-    workflow: default
-
-workflows:
-  default:
-    plan:
-      steps:
-        - init
-        - plan
-    apply:
-      steps:
-        - apply
-
-  network:
-    plan:
-      steps:
-        - init:
-            extra_args: ["-backend-config=environments/dev-backend.hcl"]
-        - plan:
-            extra_args: ["-var-file=environments/dev.tfvars"]
-    apply:
-      steps:
-        - apply
-
-  network-prod:
-    plan:
-      steps:
-        - init:
-            extra_args: ["-backend-config=environments/prod-backend.hcl"]
-        - plan:
-            extra_args: ["-var-file=environments/prod.tfvars", "-lock-timeout=300s"]
-    apply:
-      steps:
-        - run: echo "Applying production network changes..."
-        - apply
-
-  eks:
-    plan:
-      steps:
-        - init
-        - run: terraform validate
-        - run: tflint --init && tflint
-        - plan:
-            extra_args: ["-var-file=environments/dev.tfvars"]
-    apply:
-      steps:
-        - apply
-        - run: |
-            aws eks update-kubeconfig --name ${PROJECT_NAME} --region ap-northeast-2
-            kubectl get nodes
-
-  eks-prod:
-    plan:
-      steps:
-        - init
-        - run: terraform validate
-        - run: tflint --init && tflint
-        - run: checkov -d . --framework terraform --quiet
-        - plan:
-            extra_args: ["-var-file=environments/prod.tfvars"]
-    apply:
-      steps:
-        - run: |
-            # Require 2 approvals for production
-            APPROVALS=$(gh pr view $PULL_NUM --json reviews -q '[.reviews[] | select(.state=="APPROVED")] | length')
-            if [ "$APPROVALS" -lt 2 ]; then
-              echo "Production requires 2 approvals. Current: $APPROVALS"
-              exit 1
-            fi
-        - apply
-        - run: |
-            # Post-apply validation
-            aws eks update-kubeconfig --name eks-prod --region ap-northeast-2
-            kubectl get nodes
-            kubectl get pods -A | grep -v Running | grep -v Completed && exit 1 || true
+      enabled: false
+      when_modified: ["*.tf", "*.tfvars", "backend.hcl", ".terraform.lock.hcl", "../modules/**/*.tf"]
 ```
 
-### 1.4 Pod Identity IAM Configuration
+cluster と platform の変更を plan/review/apply する前に network の変更を review、apply してください。`depends_on` は remote-state output を伝達せず、以前保存した downstream plan を自動で更新もしません。依存関係が変わったら downstream の変更を再度 plan してください。
+
+```text
+atlantis plan -p network-prod
+atlantis apply -p network-prod
+atlantis plan -p cluster-prod
+atlantis apply -p cluster-prod
+atlantis plan -p platform-prod
+atlantis apply -p platform-prod
+```
+
+これらは PR comment command です。通常の Atlantis flow は **PR 内で plan → 承認要件を満たす → 保存された plan を apply → merge** です。merge だけではインフラストラクチャは apply されません。`automerge` は apply が成功した後に merge する別の option です。
+
+組み込みの `plan`/`apply` stage は Atlantis が管理する plan file を使用します。custom command は `$PLANFILE` を遵守しなければなりません。別の `-out=tfplan` に置き換えたり、保存済み plan を apply するときに新しい `-var-file` 値を渡したりしないでください。plan file と JSON には機密データが含まれる可能性があります。
+
+### Lock、policy、障害処理
+
+Atlantis の PR/project/workspace lock は Terraform backend state lock とは異なります。現在のデフォルト server database は BoltDB です。対応する Redis 構成には別途設計が必要です。DynamoDB をデフォルト Atlantis lock database と呼んだり、存在しない `lock_groups`/`apply_priority` ConfigMap を作ったりしないでください。
+
+`atlantis unlock` は lock を**削除**します。query ではありません。まず active run、saved plan、state lock を確認してください。この例の version では、`atlantis lock`、`atlantis locks`、`unlock --force` は汎用的な PR command ではありません。lock の確認には対応する UI または認証済み API を使用してください。
+
+source code の grep や現在の state に含まれる resource の数は、すべての計画済みインフラストラクチャを検証しません。module、data source、provider、create/update/delete/unknown 値を考慮してください。失敗した fmt/validate/policy/API 操作を warning や `|| true` に変換すると gate がなくなります。
+
+## 2. HCP Terraform
+
+Terraform Cloud は現在 **HCP Terraform** という名称です。workspace/run/state/policy 機能を備えた Atlantis の代替です。機能、価格、concurrency、agent、Sentinel について、現在の plan と契約を確認してください。管理ホスティングでも、VCS、権限、network、承認の慎重な構成が必要です。
+
+### Workspace と動的 AWS 認証情報
+
+この例は、既存の organization/project、VCS OAuth connection、プライベート network にアクセスできる **agent pool** を前提とします。agent 実行には対象となる plan と対応した agent version が必要です。public remote runner がプライベート EKS API に直接到達できると想定しないでください。
 
 ```hcl
-# terraform/iam/atlantis-role.tf
-data "aws_iam_policy_document" "atlantis_assume_role" {
-  statement {
-    effect = "Allow"
-    principals {
-      type        = "Service"
-      identifiers = ["pods.eks.amazonaws.com"]
-    }
-    actions = ["sts:AssumeRole", "sts:TagSession"]
-    condition {
-      test     = "StringEquals"
-      variable = "aws:SourceAccount"
-      values   = [data.aws_caller_identity.current.account_id]
-    }
-    condition {
-      test     = "ArnEquals"
-      variable = "aws:SourceArn"
-      values   = [aws_eks_cluster.main.arn]
-    }
-  }
-}
-
-resource "aws_iam_role" "atlantis" {
-  name               = "atlantis-terraform-role"
-  assume_role_policy = data.aws_iam_policy_document.atlantis_assume_role.json
-}
-
-# Terraform State Access
-resource "aws_iam_role_policy" "atlantis_s3" {
-  name = "atlantis-s3-state"
-  role = aws_iam_role.atlantis.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject",
-          "s3:ListBucket"
-        ]
-        Resource = [
-          "arn:aws:s3:::my-terraform-state-bucket",
-          "arn:aws:s3:::my-terraform-state-bucket/*"
-        ]
-      }
-    ]
-  })
-}
-
-# DynamoDB for State Locking
-resource "aws_iam_role_policy" "atlantis_dynamodb" {
-  name = "atlantis-dynamodb-lock"
-  role = aws_iam_role.atlantis.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "dynamodb:GetItem",
-          "dynamodb:PutItem",
-          "dynamodb:DeleteItem"
-        ]
-        Resource = "arn:aws:dynamodb:ap-northeast-2:*:table/terraform-locks"
-      }
-    ]
-  })
-}
-
-# Infrastructure Management Permissions
-resource "aws_iam_role_policy_attachment" "atlantis_infra" {
-  role       = aws_iam_role.atlantis.name
-  policy_arn = aws_iam_policy.atlantis_infrastructure.arn
-}
-
-resource "aws_iam_policy" "atlantis_infrastructure" {
-  name = "atlantis-infrastructure"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "VPCManagement"
-        Effect = "Allow"
-        Action = [
-          "ec2:*Vpc*",
-          "ec2:*Subnet*",
-          "ec2:*RouteTable*",
-          "ec2:*SecurityGroup*",
-          "ec2:*NetworkAcl*",
-          "ec2:*InternetGateway*",
-          "ec2:*NatGateway*",
-          "ec2:*ElasticIp*"
-        ]
-        Resource = "*"
-        Condition = {
-          StringEquals = {
-            "aws:RequestedRegion" = ["ap-northeast-2", "us-east-1"]
-          }
-        }
-      },
-      {
-        Sid    = "EKSManagement"
-        Effect = "Allow"
-        Action = [
-          "eks:*"
-        ]
-        Resource = "*"
-      },
-      {
-        Sid    = "IAMPassRole"
-        Effect = "Allow"
-        Action = [
-          "iam:PassRole",
-          "iam:GetRole"
-        ]
-        Resource = [
-          "arn:aws:iam::*:role/eks-*",
-          "arn:aws:iam::*:role/karpenter-*"
-        ]
-      }
-    ]
-  })
-}
-
-# Pod Identity Association
-resource "aws_eks_pod_identity_association" "atlantis" {
-  cluster_name    = aws_eks_cluster.main.name
-  namespace       = "atlantis"
-  service_account = "atlantis"
-  role_arn        = aws_iam_role.atlantis.arn
-}
-```
-
-### 1.5 Multi-Repository Configuration
-
-```yaml
-# Server-side repo config for multi-repo setups
-# ConfigMap: atlantis-server-config
-repos:
-  # Main infrastructure repository
-  - id: github.com/myorg/infrastructure
-    branch: main
-    allowed_overrides:
-      - workflow
-      - apply_requirements
-      - delete_source_branch_on_merge
-    allow_custom_workflows: true
-    pre_workflow_hooks:
-      - run: |
-          echo "Repository: $BASE_REPO_NAME"
-          echo "PR: $PULL_NUM"
-          echo "User: $PULL_AUTHOR"
-
-  # Application team repositories
-  - id: github.com/myorg/team-*
-    branch: main
-    allowed_overrides:
-      - workflow
-    allow_custom_workflows: false
-    workflow: restricted
-    apply_requirements:
-      - approved
-      - mergeable
-
-  # Shared modules (no apply allowed)
-  - id: github.com/myorg/terraform-modules
-    branch: main
-    allowed_overrides: []
-    allow_custom_workflows: false
-    workflow: plan-only
-
-workflows:
-  restricted:
-    plan:
-      steps:
-        - init
-        - plan
-    apply:
-      steps:
-        - run: |
-            # Validate resource limits
-            RESOURCE_COUNT=$(terraform state list | wc -l)
-            if [ "$RESOURCE_COUNT" -gt 50 ]; then
-              echo "Error: Team repos limited to 50 resources. Current: $RESOURCE_COUNT"
-              exit 1
-            fi
-        - apply
-
-  plan-only:
-    plan:
-      steps:
-        - init
-        - plan
-    apply:
-      steps:
-        - run: echo "Apply disabled for module repositories"
-        - run: exit 1
-```
-
-### 1.6 Security Restrictions
-
-```yaml
-# atlantis-security-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: atlantis-security-config
-  namespace: atlantis
-data:
-  # Blocked Terraform resources
-  blocked_resources.txt: |
-    aws_iam_user
-    aws_iam_access_key
-    aws_iam_user_policy
-    aws_organizations_*
-    aws_account
-
-  # Pre-workflow hook script
-  security-check.sh: |
-    #!/bin/bash
-    set -e
-
-    BLOCKED_RESOURCES=$(cat /config/blocked_resources.txt)
-
-    # Check for blocked resources in plan
-    for resource in $BLOCKED_RESOURCES; do
-      if grep -r "resource \"$resource\"" *.tf; then
-        echo "ERROR: Blocked resource type detected: $resource"
-        exit 1
-      fi
-    done
-
-    # Check for hardcoded secrets
-    if grep -rE "(aws_access_key|aws_secret_key|password\s*=)" *.tf; then
-      echo "ERROR: Potential hardcoded secrets detected"
-      exit 1
-    fi
-
-    # Validate required tags
-    if ! grep -q "tags\s*=" *.tf; then
-      echo "WARNING: No tags found. All resources should have tags."
-    fi
-
-    echo "Security checks passed"
-```
-
-### 1.7 Locking Mechanism
-
-```yaml
-# atlantis-lock-config.yaml
-# Lock configuration for preventing concurrent applies
-
-# ConfigMap for lock behavior
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: atlantis-lock-config
-  namespace: atlantis
-data:
-  lock_config.yaml: |
-    # Lock timeout (how long a lock is held)
-    lock_timeout: 3600  # 1 hour
-
-    # Projects that share locks (cannot be applied simultaneously)
-    lock_groups:
-      - name: network-layer
-        projects:
-          - network-dev
-          - network-prod
-      - name: eks-cluster
-        projects:
-          - eks-dev
-          - eks-prod
-
-    # Priority queue for applies
-    apply_priority:
-      - network-*
-      - eks-*
-      - app-*
-```
-
-lock management のための PR command:
-
-```bash
-# View current locks
-atlantis unlock
-
-# Force unlock (admin only)
-atlantis unlock --force
-
-# Lock a specific project
-atlantis lock -p eks-prod
-
-# View lock status
-atlantis locks
-```
-
----
-
-## 2. Terraform Cloud Integration
-
-Terraform Cloud は、追加の enterprise feature を備えた、Atlantis に代わる managed な選択肢を提供します。
-
-### 2.1 Workspace Organization
-
-```hcl
-# terraform/tfc-workspaces/main.tf
+# tfe/main.tf
 terraform {
-  cloud {
-    organization = "my-organization"
-    workspaces {
-      tags = ["eks", "infrastructure"]
+  required_version = ">= 1.10, < 2.0"
+  required_providers {
+    tfe = {
+      source  = "hashicorp/tfe"
+      version = "= 0.80.0"
     }
   }
 }
 
-# Workspace definitions
-resource "tfe_workspace" "network" {
-  name              = "eks-network"
-  organization      = var.tfc_organization
-  execution_mode    = "remote"
-  terraform_version = "1.6.6"
-  working_directory = "terraform/network"
-
-  vcs_repo {
-    identifier     = "myorg/infrastructure"
-    branch         = "main"
-    oauth_token_id = var.github_oauth_token_id
-  }
-
-  tag_names = ["network", "production"]
-
-  # Auto-apply after successful plan
-  auto_apply = false
-
-  # Queue all runs
-  queue_all_runs = true
+# Supply a scoped TFE_TOKEN through the approved secret mechanism, not in Git.
+provider "tfe" {
+  hostname = "app.terraform.io"
 }
 
-resource "tfe_workspace" "eks_cluster" {
-  name              = "eks-cluster"
-  organization      = var.tfc_organization
-  execution_mode    = "remote"
-  terraform_version = "1.6.6"
-  working_directory = "terraform/eks"
-
-  vcs_repo {
-    identifier     = "myorg/infrastructure"
-    branch         = "main"
-    oauth_token_id = var.github_oauth_token_id
+locals {
+  layers = {
+    network  = "01-network"
+    cluster  = "02-cluster"
+    platform = "03-platform"
   }
-
-  tag_names = ["eks", "production"]
+  environment_variables = merge([
+    for layer, directory in local.layers : {
+      for key, value in {
+        TFC_AWS_PROVIDER_AUTH  = "true"
+        TFC_AWS_PLAN_ROLE_ARN  = var.workspace_roles[layer].plan
+        TFC_AWS_APPLY_ROLE_ARN = var.workspace_roles[layer].apply
+        AWS_REGION             = var.aws_region
+      } : "${layer}:${key}" => { layer = layer, key = key, value = value }
+    }
+  ]...)
 }
 
-resource "tfe_workspace" "eks_addons" {
-  name              = "eks-addons"
-  organization      = var.tfc_organization
-  execution_mode    = "remote"
-  terraform_version = "1.6.6"
-  working_directory = "terraform/addons"
-
+resource "tfe_workspace" "layer" {
+  for_each               = local.layers
+  name                   = "${each.key}-prod"
+  organization           = var.organization
+  project_id             = var.project_id
+  terraform_version      = "1.15.7"
+  working_directory      = each.value
+  auto_apply             = false
+  auto_apply_run_trigger = false
+  queue_all_runs         = false
+  tag_names              = ["production", each.key]
   vcs_repo {
-    identifier     = "myorg/infrastructure"
+    identifier     = var.repository
     branch         = "main"
-    oauth_token_id = var.github_oauth_token_id
+    oauth_token_id = var.vcs_connection_id
   }
+}
 
-  tag_names = ["eks", "addons", "production"]
+resource "tfe_workspace_settings" "layer" {
+  for_each                  = local.layers
+  workspace_id              = tfe_workspace.layer[each.key].id
+  execution_mode            = "agent"
+  agent_pool_id             = var.agent_pool_id
+  global_remote_state       = false
+  project_remote_state      = false
+  remote_state_consumer_ids = []
+}
+
+resource "tfe_variable" "aws" {
+  for_each     = local.environment_variables
+  workspace_id = tfe_workspace.layer[each.value.layer].id
+  category     = "env"
+  key          = each.value.key
+  value        = each.value.value
+}
+
+resource "tfe_run_trigger" "cluster_after_network" {
+  workspace_id  = tfe_workspace.layer["cluster"].id
+  sourceable_id = tfe_workspace.layer["network"].id
+}
+
+resource "tfe_run_trigger" "platform_after_cluster" {
+  workspace_id  = tfe_workspace.layer["platform"].id
+  sourceable_id = tfe_workspace.layer["cluster"].id
 }
 ```
 
-### 2.2 Run Triggers for Downstream Automation
-
 ```hcl
-# Run triggers - downstream workspace auto-trigger
-resource "tfe_run_trigger" "eks_after_network" {
-  workspace_id  = tfe_workspace.eks_cluster.id
-  sourceable_id = tfe_workspace.network.id
+# tfe/variables.tf
+variable "organization" {
+  type = string
 }
-
-resource "tfe_run_trigger" "addons_after_eks" {
-  workspace_id  = tfe_workspace.eks_addons.id
-  sourceable_id = tfe_workspace.eks_cluster.id
+variable "project_id" {
+  type = string
 }
-
-# Variable sets for shared configuration
-resource "tfe_variable_set" "aws_credentials" {
-  name         = "aws-credentials"
-  organization = var.tfc_organization
-  description  = "AWS credentials for all workspaces"
+variable "agent_pool_id" {
+  type = string
 }
-
-resource "tfe_variable" "aws_region" {
-  key             = "AWS_REGION"
-  value           = "ap-northeast-2"
-  category        = "env"
-  variable_set_id = tfe_variable_set.aws_credentials.id
+variable "repository" {
+  type = string
 }
-
-# Attach variable set to workspaces
-resource "tfe_workspace_variable_set" "network_aws" {
-  workspace_id    = tfe_workspace.network.id
-  variable_set_id = tfe_variable_set.aws_credentials.id
+variable "vcs_connection_id" {
+  type = string
 }
-
-resource "tfe_workspace_variable_set" "eks_aws" {
-  workspace_id    = tfe_workspace.eks_cluster.id
-  variable_set_id = tfe_variable_set.aws_credentials.id
+variable "aws_region" {
+  type    = string
+  default = "ap-northeast-2"
+}
+variable "workspace_roles" {
+  type = map(object({
+    plan  = string
+    apply = string
+  }))
+  validation {
+    condition = alltrue([
+      for layer in ["network", "cluster", "platform"] :
+      can(regex("^arn:aws:iam::[0-9]{12}:role/.+$", var.workspace_roles[layer].plan)) &&
+      can(regex("^arn:aws:iam::[0-9]{12}:role/.+$", var.workspace_roles[layer].apply))
+    ])
+    error_message = "Supply existing scoped plan/apply role ARNs for every layer."
+  }
 }
 ```
 
-### 2.3 Sentinel Policies
+この root は HCP resource を構成します。その backend/state をインフラストラクチャ workspace とは別に保護してください。既存 root に HCP 管理 state を使用する前に、所有権を決定し、元の S3 backend を慎重に移行してください。2 つの実行 system から同じ state を apply しないでください。
 
-```hcl
-# sentinel/enforce-tags.sentinel
+AWS にはすでに `app.terraform.io` OIDC provider と、範囲を限定した plan/apply role が必要です。trust の audience/subject を正確な organization/project/workspace と `run_phase:plan` または `run_phase:apply` に制限してください。`TFC_AWS_*` variable は role identifier であり、保存された長期 access key ではありません。実際の provider と agent version で dynamic credential のサポートを検証してください。
+
+`queue_all_runs=false` は最初の workspace setup 時に VCS-triggered run を保留します。最初の manual run 後に永続的に実行を無効化する switch ではありません。
+
+### Run trigger と output の共有
+
+upstream apply が成功すると downstream run が queue されます。**`auto_apply_run_trigger` は通常の `auto_apply` から独立しています。** ここでは両方とも false であり、apply 前に review が必要です。trigger はすべての依存関係の準備ができた証明でも、output 転送 mechanism でもありません。
+
+この例では workspace state をグローバルに共有しません。output を利用する必要がある場合は、承認済みの consumer/permission を構成し、`tfe_outputs` を検討してください。`terraform_remote_state` を読み取れる認証情報は、data source が表示する output だけでなく完全な機密 state にアクセスできます。実際の設計に従って output access と module input を接続してください。
+
+### Sentinel policy
+
+これらは Sentinel 0.41.0 でテストした 3 つの**例示 policy**であり、Python program ではありません。HCP run を block するには、policy set、対象 workspace、enforcement 構成が必要です。
+
+```text
+# policies/required-tags.sentinel
 import "tfplan/v2" as tfplan
 
-# Required tags for all resources
-required_tags = ["Environment", "Project", "Owner", "CostCenter"]
+required_tags = ["Environment", "Team", "CostCenter"]
+taggable_types = ["aws_instance", "aws_vpc", "aws_subnet",
+                 "aws_security_group", "aws_eks_cluster", "aws_eks_node_group"]
 
-# Find all resources with tags attribute
-tagged_resources = filter tfplan.resource_changes as _, rc {
-    rc.mode is "managed" and
-    rc.change.after is not null and
-    keys(rc.change.after) contains "tags"
+changes = filter tfplan.resource_changes as _, rc {
+  rc.mode is "managed" and rc.type in taggable_types and
+  (rc.change.actions contains "create" or rc.change.actions contains "update")
 }
 
-# Check each resource has required tags
-violations = []
-for tagged_resources as address, rc {
-    tags = rc.change.after.tags else {}
-    for required_tags as tag {
-        if tags[tag] is null {
-            append(violations, {
-                "address": address,
-                "missing_tag": tag,
-            })
-        }
-    }
+valid_tag = func(tags, key) {
+  value = tags[key] else null
+  return value is not null and value is not ""
+}
+
+has_required_tags = func(rc) {
+  tags = rc.change.after.tags_all else {}
+  unknown = rc.change.after_unknown.tags_all else false
+  if tags is null or unknown is true {
+    return false
+  }
+  if unknown is false or unknown is null {
+    unknown = {}
+  }
+  return all required_tags as tag {
+    not (unknown[tag] else false) and valid_tag(tags, tag)
+  }
 }
 
 main = rule {
-    length(violations) is 0
+  all changes as _, rc { has_required_tags(rc) }
 }
-
-# Output violations for debugging
-print("Tag violations:", violations)
 ```
 
-```hcl
-# sentinel/restrict-instance-types.sentinel
+`tags_all` を確認すると AWS Provider の default tag が含まれます。この例は、一覧の resource type に対する create/update action を確認し、deletion を除外します。必須 tag が欠落、空、null、unknown の場合は通過しません。すべての AWS resource type を対象にするものではありません。
+
+```text
+# policies/instance-types.sentinel
 import "tfplan/v2" as tfplan
 
-# Allowed instance types by environment
-allowed_instances = {
-    "dev": ["t3.medium", "t3.large", "m5.large"],
-    "prod": ["m5.large", "m5.xlarge", "m5.2xlarge", "r5.large", "r5.xlarge"],
+# Organization policy example; use a reviewed allowlist for the actual region.
+allowed = ["m7i.large", "m7i.xlarge", "m7g.large", "m7g.xlarge"]
+changes = filter tfplan.resource_changes as _, rc {
+  rc.mode is "managed" and
+  rc.type in ["aws_instance", "aws_eks_node_group"] and
+  (rc.change.actions contains "create" or rc.change.actions contains "update")
 }
 
-# Find EC2 instances and EKS node groups
-ec2_instances = filter tfplan.resource_changes as _, rc {
-    rc.type is "aws_instance" and
-    rc.mode is "managed" and
-    rc.change.after is not null
-}
-
-eks_node_groups = filter tfplan.resource_changes as _, rc {
-    rc.type is "aws_eks_node_group" and
-    rc.mode is "managed" and
-    rc.change.after is not null
-}
-
-# Determine environment from workspace name
-param environment default "dev"
-
-# Validate instance types
-instance_violations = []
-for ec2_instances as address, rc {
-    instance_type = rc.change.after.instance_type
-    if instance_type not in allowed_instances[environment] {
-        append(instance_violations, {
-            "address": address,
-            "instance_type": instance_type,
-            "allowed": allowed_instances[environment],
-        })
-    }
+approved_types = func(rc) {
+  if rc.type is "aws_instance" {
+    return (rc.change.after.instance_type else "") in allowed and
+           not (rc.change.after_unknown.instance_type else false)
+  }
+  types = rc.change.after.instance_types else []
+  return length(types) > 0 and
+         not (rc.change.after_unknown.instance_types else false) and
+         all types as instance_type { instance_type in allowed }
 }
 
 main = rule {
-    length(instance_violations) is 0
+  all changes as _, rc { approved_types(rc) }
 }
 ```
 
-```hcl
-# sentinel/cost-limit.sentinel
-import "tfplan/v2" as tfplan
+これは直接指定された `instance_types` を持つ EC2 instance と managed node group に適用されます。launch-template 専用 group、Auto Mode NodePool、その他の compute service には追加 policy が必要です。空または unknown の type list は、承認済みの空集合として扱われません。
+
+```text
+# policies/cost-limit.sentinel
+import "tfrun"
 import "decimal"
 
-# Monthly cost limits per workspace
-cost_limits = {
-    "eks-network": 500,
-    "eks-cluster": 5000,
-    "eks-addons": 1000,
-}
-
-# Get cost estimate from Terraform Cloud
-param cost_estimate
-
-# Parse estimated monthly cost
-estimated_monthly = decimal.new(cost_estimate.proposed_monthly_cost)
-workspace_limit = decimal.new(cost_limits[tfplan.workspace.name] else 10000)
-
-cost_exceeded = estimated_monthly.greater_than(workspace_limit)
+# This checks HCP's available estimate, not the complete future AWS bill.
+param monthly_limit default "5000"
+estimate = tfrun.cost_estimate.proposed_monthly_cost else null
 
 main = rule {
-    not cost_exceeded
-}
-
-# Soft policy - warn but don't block
-soft_main = rule when cost_exceeded {
-    print("WARNING: Estimated monthly cost", estimated_monthly, "exceeds limit", workspace_limit)
-    true
+  estimate is not null and
+  decimal.new(estimate).greater_than_or_equals(0) and
+  decimal.new(estimate).less_than_or_equals(monthly_limit)
 }
 ```
 
-### 2.4 Atlantis vs Terraform Cloud Comparison
+存在しない `tfplan.workspace` のような path ではなく、`tfrun.cost_estimate` を使用してください。この例は、提供された月額見積もりが 5,000 以下であることを許可し、欠落、負、NaN、無限の値を拒否します。未対応 resource、traffic、既存インフラストラクチャを含む完全な AWS 請求上限を保証することはできません。
 
-| 機能 | Atlantis | Terraform Cloud |
-|---------|----------|-----------------|
-| **Hosting** | EKS 上の Self-hosted | Managed SaaS |
-| **Cost** | Infrastructure のみ | User 単位の pricing |
-| **VCS Integration** | GitHub, GitLab, Bitbucket | 同じ + Azure DevOps |
-| **PR Automation** | Full | Full |
-| **Policy as Code** | External (OPA, Conftest) | Native Sentinel |
-| **Cost Estimation** | External tool が必要 | Built-in |
-| **Private Registry** | External setup | Included |
-| **Run Triggers** | Manual scripting | Native |
-| **State Management** | External S3 + DynamoDB | Built-in |
-| **Audit Logs** | CloudWatch integration | Built-in |
-| **SSO/SAML** | 自分で設定 | Enterprise feature |
-| **Concurrent Runs** | Pod resource による制限 | Plan-based limits |
-| **Air-gapped** | Fully supported | Terraform Enterprise |
+```hcl
+# policies/sentinel.hcl
+policy "required-tags" {
+  source            = "./required-tags.sentinel"
+  enforcement_level = "hard-mandatory"
+}
+policy "instance-types" {
+  source            = "./instance-types.sentinel"
+  enforcement_level = "hard-mandatory"
+}
+policy "cost-limit" {
+  source            = "./cost-limit.sentinel"
+  enforcement_level = "hard-mandatory"
+}
+```
 
-**推奨:**
-- 完全な control が必要な場合、self-hosting の security requirement がある場合、または SaaS cost を最小化したい場合は **Atlantis** を使用します
-- managed infrastructure が欲しい場合、native policy enforcement が必要な場合、または enterprise compliance feature が必要な場合は **Terraform Cloud** を使用します
+policy set を意図した workspace に attach し、policy administration を resource operation から分離してください。単に `soft_main` と名付けた rule では enforcement は soft-mandatory に変わりません。失敗した evaluation や API error を success に変換しないでください。
 
----
+## 3. Flux
 
-## 3. FluxCD
+この section では [Flux 2.9.6 guide](../gitops/02-fluxcd.md) を使用します。Argo CD と Flux はどちらも宣言的 state を reconciliation します。Argo CD にも複数 component があります。Flux が常に軽量またはより分離されているわけではありません。namespace の分離だけでは tenant authorization は完了しません。
 
-FluxCD は Kubernetes-native primitive に重点を置いた GitOps automation を提供します。
-
-### 3.1 ArgoCD vs FluxCD Comparison
-
-| 機能 | ArgoCD | FluxCD |
-|---------|--------|--------|
-| **Architecture** | UI を備えた Monolithic | Modular controllers |
-| **UI** | Built-in web UI | Optional Weave GitOps UI |
-| **Multi-tenancy** | AppProject-based | Namespace-based |
-| **Sync Method** | Pull-based | Pull-based |
-| **Helm Support** | Native | HelmRelease CRD |
-| **Kustomize** | Native | Kustomization CRD |
-| **Image Automation** | Argo Image Updater | Built-in controllers |
-| **Notifications** | Built-in | Notification controller |
-| **Source Types** | Git, Helm, OCI | Git, Helm, S3, OCI |
-| **CRD Complexity** | Application CRD | 複数の specialized CRD |
-| **Learning Curve** | 低め (single CRD) | 高め (multiple CRD) |
-| **Resource Usage** | 高め (UI, Redis) | 低め (minimal) |
-
-**FluxCD を選ぶ場合:**
-- 複数の controller による Kubernetes-native approach を好む
-- built-in の image automation が必要
-- minimal resource footprint を求める
-- source として S3 が必要
-
-### 3.2 FluxCD Installation
+image reflector と automation controller は**任意 component**です。bootstrap は Git に commit し、controller をインストールします。実行前に CLI checksum、対応 Kubernetes version、kubecontext、repository access を検証してください。
 
 ```bash
-# Install Flux CLI
-curl -s https://fluxcd.io/install.sh | sudo bash
-
-# Bootstrap Flux with GitHub
+flux check --pre
 flux bootstrap github \
-  --owner=myorg \
-  --repository=flux-config \
-  --branch=main \
-  --path=clusters/production \
-  --personal=false \
+  --owner=REPLACE_ORG --repository=fleet-infra --branch=main \
+  --path=clusters/production --version=v2.9.6 \
   --components-extra=image-reflector-controller,image-automation-controller
-
-# Verify installation
-flux check
 ```
 
-Bootstrap は次の structure を作成します:
+認可された GitHub 認証情報を安全に提供してください。organization の例に `--personal` を追加しないでください。デフォルトで bootstrap が生成する `flux-system` file と、自分で追加する infrastructure/apps directory を区別してください。
 
-```
-flux-config/
-├── clusters/
-│   └── production/
-│       ├── flux-system/
-│       │   ├── gotk-components.yaml
-│       │   ├── gotk-sync.yaml
-│       │   └── kustomization.yaml
-│       ├── infrastructure/
-│       │   └── kustomization.yaml
-│       └── apps/
-│           └── kustomization.yaml
-```
+### Image automation と Git 承認
 
-### 3.3 Source Controller Configuration
+この例には、準備済みの Git write Secret、Pod Identity/IRSA を通じて image-reflector-controller が使用する ECR read credential、アプリをデプロイする Flux Kustomization/HelmRelease が必要です。これらは node の image-pull role とは別です。`provider: aws` を別の registry-secret authentication path と安易に組み合わせないでください。
 
 ```yaml
-# clusters/production/infrastructure/sources.yaml
----
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: GitRepository
-metadata:
-  name: infrastructure
-  namespace: flux-system
-spec:
-  interval: 1m
-  url: https://github.com/myorg/infrastructure
-  ref:
-    branch: main
-  secretRef:
-    name: github-credentials
----
+# fixtures/flux-images.yaml
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
@@ -949,1329 +492,241 @@ metadata:
   namespace: flux-system
 spec:
   interval: 1m
-  url: https://github.com/myorg/applications
+  url: https://github.com/REPLACE_ORG/app-manifests.git
   ref:
     branch: main
   secretRef:
-    name: github-credentials
+    name: applications-git-auth
 ---
-# Helm Repository Source
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
-metadata:
-  name: bitnami
-  namespace: flux-system
-spec:
-  interval: 30m
-  url: https://charts.bitnami.com/bitnami
----
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
-metadata:
-  name: eks-charts
-  namespace: flux-system
-spec:
-  interval: 30m
-  url: https://aws.github.io/eks-charts
----
-# S3 Bucket Source
-apiVersion: source.toolkit.fluxcd.io/v1beta2
-kind: Bucket
-metadata:
-  name: config-bucket
-  namespace: flux-system
-spec:
-  interval: 5m
-  provider: aws
-  bucketName: my-flux-config-bucket
-  region: ap-northeast-2
-  secretRef:
-    name: aws-credentials
-```
-
-### 3.4 HelmRelease CRD
-
-```yaml
-# clusters/production/infrastructure/aws-load-balancer-controller.yaml
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
-metadata:
-  name: aws-load-balancer-controller
-  namespace: kube-system
-spec:
-  interval: 30m
-  chart:
-    spec:
-      chart: aws-load-balancer-controller
-      version: "1.7.*"
-      sourceRef:
-        kind: HelmRepository
-        name: eks-charts
-        namespace: flux-system
-      interval: 12h
-
-  values:
-    clusterName: production-cluster
-    serviceAccount:
-      create: true
-      name: aws-load-balancer-controller
-      annotations:
-        eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT:role/aws-load-balancer-controller
-
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        cpu: 200m
-        memory: 256Mi
-
-  # Upgrade configuration
-  upgrade:
-    remediation:
-      retries: 3
-      remediateLastFailure: true
-
-  # Rollback configuration
-  rollback:
-    cleanupOnFail: true
-    timeout: 5m
-
-  # Test configuration
-  test:
-    enable: true
-    timeout: 5m
-
----
-# Application HelmRelease with values from ConfigMap
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
-metadata:
-  name: my-application
-  namespace: production
-spec:
-  interval: 5m
-  chart:
-    spec:
-      chart: ./charts/my-application
-      sourceRef:
-        kind: GitRepository
-        name: applications
-        namespace: flux-system
-
-  valuesFrom:
-    - kind: ConfigMap
-      name: my-application-values
-      valuesKey: values.yaml
-    - kind: Secret
-      name: my-application-secrets
-      valuesKey: secrets.yaml
-
-  values:
-    replicaCount: 3
-    image:
-      repository: myregistry.ecr.ap-northeast-2.amazonaws.com/my-app
-      tag: v1.0.0  # Will be updated by Image Automation
-
-  dependsOn:
-    - name: aws-load-balancer-controller
-      namespace: kube-system
-```
-
-### 3.5 Kustomization for Environment Overlays
-
-```yaml
-# clusters/production/apps/kustomization.yaml
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: apps
-  namespace: flux-system
-spec:
-  interval: 10m
-  sourceRef:
-    kind: GitRepository
-    name: applications
-  path: ./apps/overlays/production
-  prune: true
-  targetNamespace: production
-
-  # Health checks
-  healthChecks:
-    - apiVersion: apps/v1
-      kind: Deployment
-      name: my-application
-      namespace: production
-
-  # Timeout for health checks
-  timeout: 5m
-
-  # Patches for production
-  patches:
-    - patch: |
-        - op: replace
-          path: /spec/replicas
-          value: 5
-      target:
-        kind: Deployment
-        name: my-application
-
-  # Substitute variables
-  postBuild:
-    substitute:
-      ENVIRONMENT: production
-      CLUSTER_NAME: production-cluster
-    substituteFrom:
-      - kind: ConfigMap
-        name: cluster-config
-      - kind: Secret
-        name: cluster-secrets
-
----
-# Staging environment
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: apps-staging
-  namespace: flux-system
-spec:
-  interval: 10m
-  sourceRef:
-    kind: GitRepository
-    name: applications
-  path: ./apps/overlays/staging
-  prune: true
-  targetNamespace: staging
-
-  postBuild:
-    substitute:
-      ENVIRONMENT: staging
-      CLUSTER_NAME: staging-cluster
-```
-
-### 3.6 Image Automation Controller
-
-```yaml
-# clusters/production/image-automation/image-repository.yaml
----
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageRepository
 metadata:
-  name: my-application
+  name: application
   namespace: flux-system
 spec:
-  image: myregistry.ecr.ap-northeast-2.amazonaws.com/my-app
-  interval: 1m
-  secretRef:
-    name: ecr-credentials
+  image: REPLACE_ACCOUNT.dkr.ecr.ap-northeast-2.amazonaws.com/docs-ci/application
+  interval: 5m
   provider: aws
 ---
-# Image Policy - select latest semver
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
 metadata:
-  name: my-application
+  name: application
   namespace: flux-system
+  labels:
+    app: application
 spec:
   imageRepositoryRef:
-    name: my-application
+    name: application
   policy:
     semver:
       range: ">=1.0.0 <2.0.0"
+  digestReflectionPolicy: IfNotPresent
 ---
-# Alternative: Latest tag matching pattern
-apiVersion: image.toolkit.fluxcd.io/v1beta2
-kind: ImagePolicy
-metadata:
-  name: my-application-latest
-  namespace: flux-system
-spec:
-  imageRepositoryRef:
-    name: my-application
-  filterTags:
-    pattern: '^main-[a-f0-9]+-(?P<ts>[0-9]+)'
-    extract: '$ts'
-  policy:
-    numerical:
-      order: asc
----
-# Image Update Automation
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageUpdateAutomation
 metadata:
-  name: my-application
+  name: application
   namespace: flux-system
 spec:
   interval: 30m
   sourceRef:
     kind: GitRepository
     name: applications
-
   git:
     checkout:
       ref:
         branch: main
     commit:
       author:
+        name: Flux automation
         email: flux@example.com
-        name: Flux Bot
       messageTemplate: |
-        Automated image update
-
-        Automation: {{ .AutomationObject }}
-
-        Files:
-        {{ range $filename, $_ := .Changed.FileChanges -}}
-        - {{ $filename }}
-        {{ end -}}
-
-        Objects:
-        {{ range $resource, $changes := .Changed.Objects -}}
-        - {{ $resource.Kind }} {{ $resource.Name }}
-          {{- range $_, $change := $changes }}
-            - {{ $change.OldValue }} -> {{ $change.NewValue }}
-          {{- end }}
+        Update approved application image
+        {{ range .Changed.Changes -}}
+        {{ .OldValue }} -> {{ .NewValue }}
         {{ end -}}
     push:
-      branch: main
-
+      branch: flux/image-updates
   update:
-    path: ./apps
+    path: ./apps/production
     strategy: Setters
-```
-
-automation のために manifest 内の image に印を付けます:
-
-```yaml
-# apps/base/deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-application
-spec:
-  template:
-    spec:
-      containers:
-        - name: app
-          image: myregistry.ecr.ap-northeast-2.amazonaws.com/my-app:v1.0.0 # {"$imagepolicy": "flux-system:my-application"}
-```
-
-### 3.7 Notification Controller
-
-```yaml
-# clusters/production/notifications/slack.yaml
----
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
-kind: Provider
-metadata:
-  name: slack
-  namespace: flux-system
-spec:
-  type: slack
-  channel: "#gitops-notifications"
-  secretRef:
-    name: slack-webhook
----
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
-kind: Alert
-metadata:
-  name: on-call-alerts
-  namespace: flux-system
-spec:
-  providerRef:
-    name: slack
-  eventSeverity: error
-  eventSources:
-    - kind: GitRepository
-      name: "*"
-    - kind: Kustomization
-      name: "*"
-    - kind: HelmRelease
-      name: "*"
-  summary: "Flux reconciliation failed"
----
-# Info-level notifications for successful deployments
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
-kind: Alert
-metadata:
-  name: deployment-notifications
-  namespace: flux-system
-spec:
-  providerRef:
-    name: slack
-  eventSeverity: info
-  eventSources:
-    - kind: HelmRelease
-      name: "*"
-      namespace: production
-  exclusionList:
-    - ".*upgrade.*in progress.*"
-  summary: "Deployment update"
----
-# Secret for Slack webhook
-apiVersion: v1
-kind: Secret
-metadata:
-  name: slack-webhook
-  namespace: flux-system
-type: Opaque
-stringData:
-  address: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
-```
-
----
-
-## 4. AIOps Strategy
-
-AIOps は artificial intelligence と operations を組み合わせ、decision-making と response を自動化します。
-
-### 4.1 LLM-Based PR Review
-
-```yaml
-# .github/workflows/ai-review.yaml
-name: AI Code Review
-
-on:
-  pull_request:
-    types: [opened, synchronize]
-
-jobs:
-  ai-review:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get changed files
-        id: changed
-        run: |
-          echo "files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | tr '\n' ' ')" >> $GITHUB_OUTPUT
-
-      - name: AI Review with Claude
-        uses: anthropics/claude-code-review@v1
-        with:
-          api-key: ${{ secrets.ANTHROPIC_API_KEY }}
-          files: ${{ steps.changed.outputs.files }}
-          review-type: security,performance,best-practices
-
-      - name: AI Review for Terraform
-        if: contains(steps.changed.outputs.files, '.tf')
-        run: |
-          # Custom Terraform review prompt
-          cat > review-prompt.txt << 'EOF'
-          Review the following Terraform changes for:
-          1. Security issues (overly permissive IAM, public resources)
-          2. Cost implications (instance sizes, storage)
-          3. Best practices (naming, tagging, modularity)
-          4. Potential blast radius
-
-          Provide specific line-by-line feedback.
-          EOF
-
-          # Call Claude API
-          curl -X POST https://api.anthropic.com/v1/messages \
-            -H "x-api-key: ${{ secrets.ANTHROPIC_API_KEY }}" \
-            -H "content-type: application/json" \
-            -H "anthropic-version: 2023-06-01" \
-            -d @- << EOF > review-output.json
-          {
-            "model": "claude-sonnet-4-20250514",
-            "max_tokens": 4096,
-            "messages": [{
-              "role": "user",
-              "content": "$(cat review-prompt.txt)\n\nChanges:\n$(git diff origin/${{ github.base_ref }}...HEAD -- '*.tf')"
-            }]
-          }
-          EOF
-
-          # Post review as PR comment
-          REVIEW=$(jq -r '.content[0].text' review-output.json)
-          gh pr comment ${{ github.event.pull_request.number }} --body "## AI Terraform Review\n\n${REVIEW}"
-        env:
-          GH_TOKEN: ${{ github.token }}
-```
-
-### 4.2 Metrics-Based YAML Auto-Modification
-
-```python
-#!/usr/bin/env python3
-# scripts/auto-tune-hpa.py
-"""
-Automatically adjusts HPA targets based on historical metrics.
-Runs as a CronJob in the cluster.
-"""
-
-import os
-import yaml
-import requests
-from datetime import datetime, timedelta
-from kubernetes import client, config
-
-PROMETHEUS_URL = os.environ.get('PROMETHEUS_URL', 'http://prometheus:9090')
-ADJUSTMENT_THRESHOLD = 0.15  # 15% deviation triggers adjustment
-MIN_TARGET = 50
-MAX_TARGET = 90
-
-def get_average_utilization(namespace: str, deployment: str, metric: str, hours: int = 24) -> float:
-    """Query Prometheus for average utilization over time period."""
-
-    if metric == 'cpu':
-        query = f'''
-        avg(
-          rate(container_cpu_usage_seconds_total{{
-            namespace="{namespace}",
-            pod=~"{deployment}-.*"
-          }}[5m])
-        ) /
-        avg(
-          kube_pod_container_resource_requests{{
-            namespace="{namespace}",
-            pod=~"{deployment}-.*",
-            resource="cpu"
-          }}
-        ) * 100
-        '''
-    else:  # memory
-        query = f'''
-        avg(
-          container_memory_working_set_bytes{{
-            namespace="{namespace}",
-            pod=~"{deployment}-.*"
-          }}
-        ) /
-        avg(
-          kube_pod_container_resource_requests{{
-            namespace="{namespace}",
-            pod=~"{deployment}-.*",
-            resource="memory"
-          }}
-        ) * 100
-        '''
-
-    end = datetime.now()
-    start = end - timedelta(hours=hours)
-
-    response = requests.get(
-        f'{PROMETHEUS_URL}/api/v1/query_range',
-        params={
-            'query': query,
-            'start': start.isoformat(),
-            'end': end.isoformat(),
-            'step': '1h'
-        }
-    )
-
-    data = response.json()
-    if data['status'] == 'success' and data['data']['result']:
-        values = [float(v[1]) for v in data['data']['result'][0]['values']]
-        return sum(values) / len(values)
-    return -1
-
-
-def calculate_optimal_target(current_target: int, avg_utilization: float) -> int:
-    """Calculate optimal HPA target based on utilization patterns."""
-
-    if avg_utilization < 0:
-        return current_target
-
-    # If utilization is significantly below target, lower the target
-    # If utilization is significantly above target, raise the target
-    deviation = (avg_utilization - current_target) / current_target
-
-    if abs(deviation) < ADJUSTMENT_THRESHOLD:
-        return current_target
-
-    # Adjust target to maintain ~75% of actual utilization as headroom
-    new_target = int(avg_utilization * 0.75)
-
-    # Apply bounds
-    new_target = max(MIN_TARGET, min(MAX_TARGET, new_target))
-
-    return new_target
-
-
-def update_hpa_target(namespace: str, hpa_name: str, new_cpu_target: int, new_memory_target: int):
-    """Update HPA with new target values."""
-
-    config.load_incluster_config()
-    api = client.AutoscalingV2Api()
-
-    hpa = api.read_namespaced_horizontal_pod_autoscaler(hpa_name, namespace)
-
-    updated = False
-    for metric in hpa.spec.metrics:
-        if metric.type == 'Resource':
-            if metric.resource.name == 'cpu' and metric.resource.target.average_utilization != new_cpu_target:
-                metric.resource.target.average_utilization = new_cpu_target
-                updated = True
-            elif metric.resource.name == 'memory' and metric.resource.target.average_utilization != new_memory_target:
-                metric.resource.target.average_utilization = new_memory_target
-                updated = True
-
-    if updated:
-        api.patch_namespaced_horizontal_pod_autoscaler(hpa_name, namespace, hpa)
-        print(f"Updated HPA {namespace}/{hpa_name}: CPU={new_cpu_target}%, Memory={new_memory_target}%")
-
-        # Create annotation for audit
-        hpa.metadata.annotations = hpa.metadata.annotations or {}
-        hpa.metadata.annotations['aiops.last-tuned'] = datetime.now().isoformat()
-        hpa.metadata.annotations['aiops.cpu-target'] = str(new_cpu_target)
-        hpa.metadata.annotations['aiops.memory-target'] = str(new_memory_target)
-        api.patch_namespaced_horizontal_pod_autoscaler(hpa_name, namespace, hpa)
-
-
-def main():
-    # List of HPAs to auto-tune
-    hpas_to_tune = [
-        {'namespace': 'production', 'hpa': 'api-server', 'deployment': 'api-server'},
-        {'namespace': 'production', 'hpa': 'web-frontend', 'deployment': 'web-frontend'},
-    ]
-
-    for item in hpas_to_tune:
-        namespace = item['namespace']
-        deployment = item['deployment']
-        hpa_name = item['hpa']
-
-        # Get current HPA configuration
-        config.load_incluster_config()
-        api = client.AutoscalingV2Api()
-        hpa = api.read_namespaced_horizontal_pod_autoscaler(hpa_name, namespace)
-
-        current_cpu_target = 70
-        current_memory_target = 80
-
-        for metric in hpa.spec.metrics:
-            if metric.type == 'Resource':
-                if metric.resource.name == 'cpu':
-                    current_cpu_target = metric.resource.target.average_utilization
-                elif metric.resource.name == 'memory':
-                    current_memory_target = metric.resource.target.average_utilization
-
-        # Get average utilization
-        avg_cpu = get_average_utilization(namespace, deployment, 'cpu')
-        avg_memory = get_average_utilization(namespace, deployment, 'memory')
-
-        # Calculate optimal targets
-        new_cpu_target = calculate_optimal_target(current_cpu_target, avg_cpu)
-        new_memory_target = calculate_optimal_target(current_memory_target, avg_memory)
-
-        # Update if changed
-        if new_cpu_target != current_cpu_target or new_memory_target != current_memory_target:
-            update_hpa_target(namespace, hpa_name, new_cpu_target, new_memory_target)
-
-
-if __name__ == '__main__':
-    main()
-```
-
-### 4.3 Traffic Anomaly Detection
-
-```yaml
-# aiops/anomaly-detector.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: traffic-anomaly-detector
-  namespace: aiops
-spec:
-  replicas: 1
-  selector:
+  policySelector:
     matchLabels:
-      app: anomaly-detector
-  template:
-    metadata:
-      labels:
-        app: anomaly-detector
-    spec:
-      serviceAccountName: anomaly-detector
-      containers:
-        - name: detector
-          image: myregistry.ecr.ap-northeast-2.amazonaws.com/anomaly-detector:v1.0
-          env:
-            - name: PROMETHEUS_URL
-              value: "http://prometheus-server.monitoring:80"
-            - name: SLACK_WEBHOOK_URL
-              valueFrom:
-                secretKeyRef:
-                  name: slack-webhook
-                  key: url
-            - name: NLB_ARN
-              value: "arn:aws:elasticloadbalancing:ap-northeast-2:ACCOUNT:loadbalancer/net/my-nlb/50dc6c495c0c9188"
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
+      app: application
 ```
 
+policy は**承認後に公開された immutable な semver release**を前提とします。[CI chapter](03-ci-pipelines.md) の一意な SHA/build tag はこれに一致しません。別の promotion process が承認済み index digest を release として tag 付けするか、policy が 1 つの CI system からの review 済みで単調増加する build scheme を使用する必要があります。
+
+```yaml
+# fixtures/flux-values.yaml
+# apps/production/application/values.yaml -- actual Helm values file
+# Replace repository and initial digest with the already approved application.
+image:
+  repository: REPLACE_ACCOUNT.dkr.ecr.ap-northeast-2.amazonaws.com/docs-ci/application # {"$imagepolicy": "flux-system:application:name"}
+  tag: "1.0.0" # {"$imagepolicy": "flux-system:application:tag"}
+  digest: sha256:REPLACE_APPROVED_DIGEST # {"$imagepolicy": "flux-system:application:digest"}
+```
+
+実際の application chart は、container image URI を構築するときに `image.repository`、`tag`、`digest` を使用しなければなりません。digest 値を追加しても、既存 chart がそれを利用するわけではありません。render された manifest が承認済み digest を指すことを確認してください。Setters path、policy marker、GitRepository 名を整合させます。
+
+現在の ImageUpdateAutomation commit template は **`.Changed`** を使用します。削除された `.Updated` に置き換えないでください。automation は専用の `flux/image-updates` branch に push します。main への PR 作成と承認には別の workflow が必要です。Git write permission と branch protection を整合させてください。tag の選択は vulnerability/signature verification の代替ではありません。
+
+### Source、Helm、notification
+
+- 現在の例では v1 の `GitRepository`、`OCIRepository`、`Bucket`、image API を使用します。HelmRelease は v2 です。その現在の CRD は `test.enable` と `test.timeout` の両方をサポートします。chart version/value と CRD を合わせて検証してください。
+- Kustomization の `dependsOn` は、参照する Flux object の Ready condition を待ちます。workload health を観測するために wait/healthChecks を構成してください。これはグローバルな cross-cluster barrier ではありません。
+- Terraform Helm Provider と Flux が同じ Helm release を同時に所有しないようにしてください。Argo CD installation の所有権を移行するには、慎重な state/configuration migration が必要です。
+- Terraform state bucket を通常の Flux manifest source として公開しないでください。prefix access を限定した別の manifest-artifact bucket を使用し、artifact 内の `.git` を含む ignore pattern を避けます。
+- notification webhook は Secret に格納し、実際の receiver type と authentication を検証してください。severity と filter で選択した event をテストします。未インストールの UI や廃止された integration をデフォルト installation の一部として示さないでください。
+
+[Flux guide](../gitops/02-fluxcd.md) には完全な source/Kustomization/HelmRelease/notification の例があります。
+
+## 4. AIOps: 観測からレビュー可能な提案へ
+
+### LLM 支援 PR review
+
+必要な repository permission と利用可能な plan を使用して、対応する reviewer/automatic-review setting を通じて GitHub Copilot code review を構成してください。`api.copilot.example.com` のような架空の endpoint は実行可能な API 例ではありません。
+
+custom LLM integration は、実際の service の現在の API/model/SDK contract、timeout、HTTP-error handling、output validation を実装しなければなりません。diff と filename は信頼できない data です。shell、JavaScript、JSON string に埋め込むのではなく、structured value を渡してください。レビュー対象 content 内の instruction に実行権限はありません。
+
+truncation と API failure を開示してください。外部 fork PR に secret を渡したり、model response だけを approval、merge、apply にしたりしないでください。外部 service を使用する前に、許可する source-code disclosure と cost scope を定義してください。この document のレビュー中に外部 AI service は呼び出されませんでした。
+
+### Metric unit と data quality
+
+CPU counter average は CPU utilization ではありません。`rate(container_cpu_usage_seconds_total[...])` は CPU core を返します。HPA の `averageUtilization` は**CPU request**の percentage です。その percentage を RPS と比較しないでください。HPA と Deployment が同じ name を共有すると仮定するのではなく、HPA の scaleTargetRef と実際の Pod ownership を解決してください。
+
+RPS の時間的 p95 は request-duration histogram quantile とは異なります:
+
+```promql
+# Seven-day p95 of RPS: counter -> rate -> temporal quantile
+quantile_over_time(0.95,
+  (sum(rate(http_requests_total{namespace="production",service="myapp"}[5m])))[7d:5m]
+)
+
+# Request-duration p95 from a classic histogram, in seconds
+histogram_quantile(0.95,
+  sum by (le) (rate(http_request_duration_seconds_bucket{
+    namespace="production",service="myapp"
+  }[5m]))
+)
+```
+
+metric name/label を実際の collection に合わせてください。missing series、zero traffic、NaN、stale observation、collection gap は正常性の証拠ではありません。traffic、error、latency、capacity を組み合わせます。平均 CPU だけでは「最適な HPA target」を確立できません。load test、SLO、scale-down behavior が重要です。
+
+### 実行可能な分析専用の例
+
+この tool は stdin からすでに正規化された単一 metric の JSON series を読み取り、**助言レポートのみ**を出力します。API、HPA、NLB、Git、Slack を変更しません。baseline 内であっても、アプリケーションの正常性が確立されるわけではありません。
+
 ```python
+# fixtures/anomaly-report.py
 #!/usr/bin/env python3
-# anomaly-detector/detector.py
-"""
-Detects traffic anomalies and automatically adjusts NLB target weights.
-"""
-
-import os
-import time
-import numpy as np
-import requests
-import boto3
-from dataclasses import dataclass
-from typing import List, Optional
-
-PROMETHEUS_URL = os.environ['PROMETHEUS_URL']
-NLB_ARN = os.environ['NLB_ARN']
-SLACK_WEBHOOK_URL = os.environ.get('SLACK_WEBHOOK_URL')
-
-@dataclass
-class AnomalyResult:
-    is_anomaly: bool
-    score: float
-    metric_name: str
-    current_value: float
-    expected_range: tuple
-    action_taken: Optional[str] = None
-
-
-def get_metrics(query: str, duration: str = '1h') -> List[float]:
-    """Fetch metrics from Prometheus."""
-    response = requests.get(
-        f'{PROMETHEUS_URL}/api/v1/query_range',
-        params={
-            'query': query,
-            'start': f'now()-{duration}',
-            'end': 'now()',
-            'step': '1m'
-        }
-    )
-    data = response.json()
-    if data['status'] == 'success' and data['data']['result']:
-        return [float(v[1]) for v in data['data']['result'][0]['values']]
-    return []
-
-
-def detect_anomaly(values: List[float], current: float, std_multiplier: float = 3) -> AnomalyResult:
-    """Simple anomaly detection using standard deviation."""
-    if not values:
-        return AnomalyResult(False, 0, '', current, (0, 0))
-
-    mean = np.mean(values)
-    std = np.std(values)
-
-    lower_bound = mean - (std_multiplier * std)
-    upper_bound = mean + (std_multiplier * std)
-
-    is_anomaly = current < lower_bound or current > upper_bound
-    score = abs(current - mean) / std if std > 0 else 0
-
-    return AnomalyResult(
-        is_anomaly=is_anomaly,
-        score=score,
-        metric_name='',
-        current_value=current,
-        expected_range=(lower_bound, upper_bound)
-    )
-
-
-def adjust_nlb_weights(target_group_arns: List[str], weights: List[int]):
-    """Adjust NLB target group weights for traffic shifting."""
-    elbv2 = boto3.client('elbv2')
-
-    # Get current listener
-    listeners = elbv2.describe_listeners(LoadBalancerArn=NLB_ARN)['Listeners']
-
-    for listener in listeners:
-        # Create weighted forward action
-        actions = [{
-            'Type': 'forward',
-            'ForwardConfig': {
-                'TargetGroups': [
-                    {'TargetGroupArn': tg, 'Weight': w}
-                    for tg, w in zip(target_group_arns, weights)
-                ],
-                'TargetGroupStickinessConfig': {
-                    'Enabled': False
-                }
-            }
-        }]
-
-        elbv2.modify_listener(
-            ListenerArn=listener['ListenerArn'],
-            DefaultActions=actions
-        )
-
-
-def send_slack_notification(message: str, severity: str = 'warning'):
-    """Send notification to Slack."""
-    if not SLACK_WEBHOOK_URL:
-        return
-
-    color = '#ff0000' if severity == 'critical' else '#ffcc00'
-
-    requests.post(SLACK_WEBHOOK_URL, json={
-        'attachments': [{
-            'color': color,
-            'title': 'Traffic Anomaly Detected',
-            'text': message,
-            'footer': 'AIOps Anomaly Detector'
-        }]
-    })
-
-
-def main():
-    # Metrics to monitor
-    metrics = {
-        'error_rate': 'sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) * 100',
-        'latency_p99': 'histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))',
-        'request_rate': 'sum(rate(http_requests_total[5m]))'
-    }
-
-    # Target groups for traffic shifting
-    target_groups = {
-        'primary': 'arn:aws:elasticloadbalancing:ap-northeast-2:ACCOUNT:targetgroup/primary/xxx',
-        'canary': 'arn:aws:elasticloadbalancing:ap-northeast-2:ACCOUNT:targetgroup/canary/yyy'
-    }
-
-    while True:
-        anomalies = []
-
-        for metric_name, query in metrics.items():
-            # Get historical data
-            historical = get_metrics(query, duration='24h')
-
-            # Get current value
-            current_response = requests.get(
-                f'{PROMETHEUS_URL}/api/v1/query',
-                params={'query': query}
-            )
-            current_data = current_response.json()
-
-            if current_data['status'] == 'success' and current_data['data']['result']:
-                current_value = float(current_data['data']['result'][0]['value'][1])
-
-                result = detect_anomaly(historical, current_value)
-                result.metric_name = metric_name
-
-                if result.is_anomaly:
-                    anomalies.append(result)
-
-        # Take action on anomalies
-        if anomalies:
-            critical_anomalies = [a for a in anomalies if a.score > 5]
-
-            if critical_anomalies:
-                # Shift traffic away from canary
-                adjust_nlb_weights(
-                    [target_groups['primary'], target_groups['canary']],
-                    [100, 0]
-                )
-
-                message = f"Critical anomalies detected! Traffic shifted to primary.\n"
-                for a in critical_anomalies:
-                    message += f"- {a.metric_name}: {a.current_value:.2f} (expected: {a.expected_range[0]:.2f} - {a.expected_range[1]:.2f})\n"
-
-                send_slack_notification(message, severity='critical')
-            else:
-                message = f"Anomalies detected:\n"
-                for a in anomalies:
-                    message += f"- {a.metric_name}: {a.current_value:.2f} (score: {a.score:.2f})\n"
-
-                send_slack_notification(message, severity='warning')
-
-        time.sleep(60)  # Check every minute
-
-
-if __name__ == '__main__':
-    main()
-```
-
-### 4.4 Progressive Delivery with Argo Rollouts
-
-```yaml
-# rollouts/api-server-rollout.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: api-server
-  namespace: production
-spec:
-  replicas: 10
-  revisionHistoryLimit: 3
-  selector:
-    matchLabels:
-      app: api-server
-  template:
-    metadata:
-      labels:
-        app: api-server
-    spec:
-      containers:
-        - name: api-server
-          image: myregistry.ecr.ap-northeast-2.amazonaws.com/api-server:v1.0.0
-          ports:
-            - containerPort: 8080
-          resources:
-            requests:
-              cpu: 500m
-              memory: 512Mi
-            limits:
-              cpu: 1000m
-              memory: 1Gi
-
-  strategy:
-    canary:
-      # Traffic routing
-      canaryService: api-server-canary
-      stableService: api-server-stable
-
-      trafficRouting:
-        nginx:
-          stableIngress: api-server-ingress
-
-      # Progressive traffic increase
-      steps:
-        - setWeight: 5
-        - pause: {duration: 5m}
-        - analysis:
-            templates:
-              - templateName: success-rate
-              - templateName: latency
-            args:
-              - name: service-name
-                value: api-server-canary
-        - setWeight: 20
-        - pause: {duration: 10m}
-        - analysis:
-            templates:
-              - templateName: success-rate
-              - templateName: latency
-        - setWeight: 50
-        - pause: {duration: 15m}
-        - analysis:
-            templates:
-              - templateName: success-rate
-              - templateName: latency
-              - templateName: resource-usage
-        - setWeight: 80
-        - pause: {duration: 10m}
-        - setWeight: 100
-
-      # Anti-affinity for canary pods
-      antiAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution: {}
-
-      # Auto rollback
-      abortScaleDownDelaySeconds: 30
-
----
-# Analysis Templates
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: success-rate
-  namespace: production
-spec:
-  args:
-    - name: service-name
-  metrics:
-    - name: success-rate
-      interval: 1m
-      count: 5
-      successCondition: result[0] >= 0.99
-      failureCondition: result[0] < 0.95
-      failureLimit: 2
-      provider:
-        prometheus:
-          address: http://prometheus-server.monitoring:80
-          query: |
-            sum(rate(http_requests_total{service="{{args.service-name}}", status!~"5.."}[5m])) /
-            sum(rate(http_requests_total{service="{{args.service-name}}"}[5m]))
-
----
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: latency
-  namespace: production
-spec:
-  args:
-    - name: service-name
-  metrics:
-    - name: latency-p99
-      interval: 1m
-      count: 5
-      successCondition: result[0] <= 0.5
-      failureCondition: result[0] > 1.0
-      failureLimit: 2
-      provider:
-        prometheus:
-          address: http://prometheus-server.monitoring:80
-          query: |
-            histogram_quantile(0.99,
-              sum(rate(http_request_duration_seconds_bucket{service="{{args.service-name}}"}[5m])) by (le)
-            )
-
----
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: resource-usage
-  namespace: production
-spec:
-  metrics:
-    - name: cpu-usage
-      interval: 2m
-      count: 3
-      successCondition: result[0] <= 0.8
-      failureCondition: result[0] > 0.95
-      provider:
-        prometheus:
-          address: http://prometheus-server.monitoring:80
-          query: |
-            avg(
-              rate(container_cpu_usage_seconds_total{
-                namespace="production",
-                pod=~"api-server-.*"
-              }[5m])
-            ) /
-            avg(
-              kube_pod_container_resource_limits{
-                namespace="production",
-                pod=~"api-server-.*",
-                resource="cpu"
-              }
-            )
-```
-
-### 4.5 Production Guardrails and Human-in-the-Loop
-
-```yaml
-# guardrails/production-policy.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: aiops-guardrails
-  namespace: aiops
-data:
-  policy.yaml: |
-    # AIOps Guardrails Configuration
-
-    # Auto-remediation limits
-    auto_remediation:
-      enabled: true
-      max_actions_per_hour: 10
-      cooldown_between_actions: 5m
-
-      # Actions that can be automated
-      allowed_actions:
-        - scale_up_replicas
-        - scale_down_replicas
-        - adjust_hpa_target
-        - shift_traffic_weight
-        - restart_unhealthy_pod
-
-      # Actions requiring approval
-      requires_approval:
-        - scale_to_zero
-        - delete_resource
-        - modify_pdb
-        - change_resource_limits
-        - rollback_deployment
-
-    # Thresholds for auto-action
-    thresholds:
-      # Don't auto-scale below/above these limits
-      min_replicas: 2
-      max_replicas: 100
-
-      # Don't adjust HPA beyond these
-      hpa_target_min: 40
-      hpa_target_max: 90
-
-      # Traffic shift limits
-      max_traffic_shift_percent: 50
-      min_traffic_to_stable: 20
-
-    # Human approval workflow
-    approval:
-      # Slack channel for approval requests
-      slack_channel: "#aiops-approvals"
-
-      # Timeout for approval
-      timeout: 30m
-
-      # Required approvers
-      approvers:
-        - "@oncall-sre"
-        - "@platform-team"
-
-      # Auto-approve in non-prod
-      auto_approve_environments:
-        - dev
-        - staging
-
-    # Rollback triggers
-    auto_rollback:
-      enabled: true
-      triggers:
-        - metric: error_rate
-          threshold: 5  # percent
-          duration: 2m
-        - metric: latency_p99
-          threshold: 2  # seconds
-          duration: 3m
-        - metric: availability
-          threshold: 99  # percent
-          duration: 5m
-```
-
-```python
-# guardrails/approval-controller.py
-"""
-Human-in-the-loop approval controller for AIOps actions.
-"""
-
-import os
-import time
+"""Read an already normalized metric series; emit an advisory report only."""
+import argparse
 import json
-import requests
-from dataclasses import dataclass
-from typing import Optional
-from datetime import datetime, timedelta
-
-SLACK_WEBHOOK_URL = os.environ['SLACK_WEBHOOK_URL']
-SLACK_BOT_TOKEN = os.environ['SLACK_BOT_TOKEN']
-
-@dataclass
-class ApprovalRequest:
-    id: str
-    action: str
-    resource: str
-    namespace: str
-    reason: str
-    requester: str
-    created_at: datetime
-    expires_at: datetime
-    status: str = 'pending'  # pending, approved, rejected, expired
-    approver: Optional[str] = None
+import math
+import statistics
+import sys
+import time
 
 
-def request_approval(action: str, resource: str, namespace: str, reason: str) -> ApprovalRequest:
-    """Send approval request to Slack and wait for response."""
+def number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
-    request = ApprovalRequest(
-        id=f"aiops-{int(time.time())}",
-        action=action,
-        resource=resource,
-        namespace=namespace,
-        reason=reason,
-        requester='aiops-system',
-        created_at=datetime.now(),
-        expires_at=datetime.now() + timedelta(minutes=30)
-    )
 
-    # Send Slack message with approval buttons
-    message = {
-        'channel': '#aiops-approvals',
-        'text': f'AIOps Action Approval Required',
-        'attachments': [{
-            'color': '#ffcc00',
-            'blocks': [
-                {
-                    'type': 'section',
-                    'text': {
-                        'type': 'mrkdwn',
-                        'text': f'*Action Required:* {action}\n*Resource:* {namespace}/{resource}\n*Reason:* {reason}'
-                    }
-                },
-                {
-                    'type': 'actions',
-                    'block_id': request.id,
-                    'elements': [
-                        {
-                            'type': 'button',
-                            'text': {'type': 'plain_text', 'text': 'Approve'},
-                            'style': 'primary',
-                            'action_id': 'approve',
-                            'value': json.dumps({'request_id': request.id})
-                        },
-                        {
-                            'type': 'button',
-                            'text': {'type': 'plain_text', 'text': 'Reject'},
-                            'style': 'danger',
-                            'action_id': 'reject',
-                            'value': json.dumps({'request_id': request.id})
-                        }
-                    ]
-                },
-                {
-                    'type': 'context',
-                    'elements': [{
-                        'type': 'mrkdwn',
-                        'text': f'Request ID: {request.id} | Expires: {request.expires_at.isoformat()}'
-                    }]
-                }
-            ]
-        }]
+def assess(data, now):
+    if not number(now):
+        return {"status": "invalid_data", "reason": "Invalid observation clock"}
+    if not isinstance(data, dict):
+        return {"status": "invalid_data", "reason": "Expected an object"}
+    if data.get("unit") not in {"requests_per_second", "seconds", "ratio"}:
+        return {"status": "invalid_data", "reason": "Declare one supported normalized unit"}
+    period = data.get("periodSeconds")
+    points = data.get("points")
+    if not number(period) or period <= 0 or not isinstance(points, list):
+        return {"status": "invalid_data", "reason": "Invalid period or series"}
+    if len(points) < 31:
+        return {"status": "insufficient_data", "reason": "Need 30 baseline points and one observation"}
+    if any(
+        not isinstance(p, dict)
+        or not number(p.get("timestamp"))
+        or not number(p.get("value"))
+        or p["value"] < 0
+        or (data["unit"] == "ratio" and p["value"] > 1)
+        for p in points
+    ):
+        return {"status": "invalid_data", "reason": "Non-finite, negative or incorrectly normalized point"}
+    ordered = sorted(points, key=lambda p: p["timestamp"])
+    gaps = [b["timestamp"] - a["timestamp"] for a, b in zip(ordered, ordered[1:])]
+    if any(abs(gap - period) > period * 0.1 for gap in gaps):
+        return {"status": "insufficient_data", "reason": "Duplicate or missing collection intervals"}
+    age = now - ordered[-1]["timestamp"]
+    if age < 0 or age > period * 2:
+        return {"status": "insufficient_data", "reason": "Observation is future-dated or stale"}
+
+    # The observation is excluded from the baseline. Use an explicit per-unit
+    # absolute margin; this is a demonstration heuristic, not an SLO or ML model.
+    baseline = [p["value"] for p in ordered[:-1]]
+    center = statistics.median(baseline)
+    mad = statistics.median(abs(value - center) for value in baseline)
+    absolute_margin = {"requests_per_second": 1.0, "seconds": 0.01, "ratio": 0.001}[data["unit"]]
+    margin = max(6 * 1.4826 * mad, abs(center) * 0.2, absolute_margin)
+    latest = ordered[-1]["value"]
+    return {
+        "status": "review_required" if abs(latest - center) > margin else "within_baseline",
+        "unit": data["unit"],
+        "observedAt": ordered[-1]["timestamp"],
+        "observedValue": latest,
+        "baselineMedian": center,
+        "illustrativeMargin": margin,
+        "baselinePoints": len(baseline),
+        "actionTaken": "none",
     }
 
-    requests.post(
-        'https://slack.com/api/chat.postMessage',
-        headers={'Authorization': f'Bearer {SLACK_BOT_TOKEN}'},
-        json=message
-    )
 
-    return request
-
-
-def check_guardrails(action: str, config: dict) -> tuple[bool, str]:
-    """Check if action is allowed by guardrails."""
-
-    guardrails = config.get('auto_remediation', {})
-
-    # Check if action requires approval
-    if action in guardrails.get('requires_approval', []):
-        return False, 'Action requires manual approval'
-
-    # Check if action is allowed
-    if action not in guardrails.get('allowed_actions', []):
-        return False, f'Action {action} is not in allowed list'
-
-    # Check rate limits
-    # (would check action history here)
-
-    return True, 'OK'
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--now", type=float, help="Unix timestamp; omit to use the current clock")
+    args = parser.parse_args()
+    now = args.now if args.now is not None else time.time()
+    try:
+        data = json.load(sys.stdin)
+        result = assess(data, now)
+    except (ValueError, TypeError):
+        result = {"status": "invalid_data", "reason": "Invalid JSON"}
+    print(json.dumps(result, allow_nan=False))
+    return 2 if result["status"] in {"invalid_data", "insufficient_data"} else 0
 
 
-def execute_with_guardrails(action: str, resource: str, namespace: str,
-                            reason: str, config: dict) -> bool:
-    """Execute action with guardrail checks and optional approval."""
-
-    allowed, message = check_guardrails(action, config)
-
-    if allowed:
-        # Execute immediately
-        print(f"Executing {action} on {namespace}/{resource}: {reason}")
-        return True
-
-    if 'requires manual approval' in message:
-        # Request approval
-        request = request_approval(action, resource, namespace, reason)
-
-        # Wait for approval (in production, this would be async)
-        timeout = datetime.now() + timedelta(minutes=30)
-        while datetime.now() < timeout:
-            # Check approval status (would query database/cache)
-            if request.status == 'approved':
-                print(f"Approved by {request.approver}. Executing {action}.")
-                return True
-            elif request.status == 'rejected':
-                print(f"Rejected by {request.approver}. Skipping {action}.")
-                return False
-            time.sleep(30)
-
-        print(f"Approval timeout for {action}. Skipping.")
-        return False
-
-    print(f"Guardrail blocked: {message}")
-    return False
+if __name__ == "__main__":
+    raise SystemExit(main())
 ```
 
-### 4.6 AIOps Limitations and Best Practices
+入力には `unit`、`periodSeconds`、`points` が含まれます。各 point は UTC Unix timestamp と有限の非負値を持ちます。少なくとも 30 個の baseline point と observation を指定してください。ratio は 0–1 です。collector は API error、pagination、partial result を確認し、明確に定義された 1 つの aggregate series を選択しなければなりません。
 
-**現在の制限事項:**
+observation は median/MAD baseline から除外されます。margin は**例示的な threshold**であり、学習済み model や季節予測 system ではありません。tool は point を sort し、gap、duplicate、stale observation を拒否します。`review_required` は実行の許可ではありません。`actionTaken` は `none` のままです。
 
-1. **Context Understanding**: LLM は人間が理解する domain-specific context を見落とすことがあります
-2. **Cascading Failures**: 自動化された action は、適切に制限されていない場合、cascading issue を引き起こす可能性があります
-3. **Novel Situations**: historical data で訓練された ML model は、前例のない scenario では失敗する可能性があります
-4. **Latency**: LLM inference は decision loop に latency を追加します
-5. **Cost**: 頻繁な LLM call は高コストになる可能性があります
+CloudWatch collection を適用するときは、metric の実際の namespace/dimension を使用し、対応する `Timestamps`/`Values` を sort してください。デフォルトの response order で `Values[-1]` が最新であると仮定しないでください。`RequestCount` と target-group 固有の metric には異なる dimension contract があります。NextToken、StatusCode、missing point を処理してください。
 
-**Best Practices:**
+### 承認と実行の境界
 
-```yaml
-# aiops/best-practices-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: aiops-best-practices
-  namespace: aiops
-data:
-  guidelines.md: |
-    # AIOps Best Practices
+proposal には、target ARN/namespace、現在の configuration revision、diff、metric evidence/time、expiry、approver、rollback condition を示す必要があります。実行前に authorization、expiry、revision、capacity、destination health を再確認してください。string allowlist や未使用の guardrail ConfigMap は enforcement mechanism ではありません。
 
-    ## 1. Start with Observability
-    - Ensure comprehensive metrics collection before automation
-    - Establish baselines for normal behavior
-    - Define clear SLOs and error budgets
+approval UI には、実際の request-signature verification、approver authorization、永続 state、replay protection、timeout handling が必要です。Slack button を送信してから変更されない in-memory object の status を待つだけでは、完全な approval system ではありません。未実装の executor が action を実行したと主張しないでください。
 
-    ## 2. Progressive Automation
-    - Level 0: Alert only (no action)
-    - Level 1: Suggest action (human approves)
-    - Level 2: Auto-execute with notification
-    - Level 3: Full automation with audit
+NLB の変更には、[chapter 02 の制約付き proposal/任意の実行 flow](02-infrastructure-advanced.md) を使用してください。anomaly が検出されなかったというだけで、すべての listener を上書きしたり任意の 100/0 split を復元したりしないでください。NLB weight がゼロの場合、通常の非ゼロ weight 調整とは異なり、短時間後に既存 connection が閉じられます。
 
-    ## 3. Guardrails First
-    - Always implement rate limits
-    - Define maximum blast radius
-    - Require approval for destructive actions
-    - Maintain manual override capability
+progressive delivery には、[検証済み Argo Rollouts guide](../gitops/argocd/05-traffic-management.md) の service、routing、AnalysisTemplates を使用してください。canary 固有の metric、argument、namespace、empty/NaN handling、failure condition を整合させます。analysis failure は database change を自動的に rollback しません。また、pause/abort setting はすべての recovery problem を解決しません。
 
-    ## 4. Testing in Non-Production
-    - Chaos engineering to validate responses
-    - Synthetic anomaly injection
-    - Rollback testing
+## 参考資料
 
-    ## 5. Continuous Learning
-    - Review auto-actions weekly
-    - Update models with new patterns
-    - Incorporate human feedback
+- [Atlantis security](https://www.runatlantis.io/docs/security.html)
+- [Atlantis server-side policy](https://www.runatlantis.io/docs/server-side-repo-config.html)
+- [HCP Terraform dynamic AWS credentials](https://developer.hashicorp.com/terraform/cloud-docs/dynamic-provider-credentials/aws-configuration)
+- [HCP Terraform run triggers](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers)
+- [Sentinel tfrun](https://developer.hashicorp.com/terraform/cloud-docs/policy-enforcement/import-reference/tfrun)
+- [Flux ImageUpdateAutomation v1](https://github.com/fluxcd/image-automation-controller/blob/v1.2.5/docs/spec/v1/imageupdateautomations.md)
+- [GitHub Copilot code review](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review)
+- [章のクイズ](../quizzes/ops/05-gitops-automation-quiz.md)
 
-    ## 6. Transparency
-    - Log all automated decisions
-    - Explain reasoning in notifications
-    - Provide audit trail for compliance
-```
-
----
-
-## まとめ
-
-| Tool | Use Case | Key Feature |
-|------|----------|-------------|
-| **Atlantis** | Terraform PR automation | Self-hosted, full control |
-| **Terraform Cloud** | Managed Terraform | Sentinel policies, cost estimation |
-| **FluxCD** | Kubernetes の GitOps | Image automation, modular design |
-| **AIOps** | Intelligent automation | Anomaly detection, auto-remediation |
-
-**推奨 Architecture:**
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        GitOps Architecture                          │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  Infrastructure         Application          Intelligence          │
-│  ┌─────────────┐       ┌─────────────┐      ┌─────────────┐       │
-│  │  Atlantis   │       │   FluxCD    │      │   AIOps     │       │
-│  │  or TFC     │       │  or ArgoCD  │      │  Controller │       │
-│  └──────┬──────┘       └──────┬──────┘      └──────┬──────┘       │
-│         │                     │                     │              │
-│         ▼                     ▼                     ▼              │
-│  ┌─────────────────────────────────────────────────────────────┐  │
-│  │                    Kubernetes Cluster                        │  │
-│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────────────┐ │  │
-│  │  │   VPC   │  │   EKS   │  │  Apps   │  │  Argo Rollouts  │ │  │
-│  │  └─────────┘  └─────────┘  └─────────┘  └─────────────────┘ │  │
-│  └─────────────────────────────────────────────────────────────┘  │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-< [前へ: ArgoCD Multi-Cluster](./04-gitops-multi-cluster.md) | [目次](./README.md) | [次へ: Scaling Strategies](./06-scaling-strategies.md) >
+< [前へ: マルチクラスター](04-gitops-multi-cluster.md) | [目次](README.md) | [次へ: スケーリング](06-scaling-strategies.md) >

@@ -1,284 +1,194 @@
-# Cuestionario sobre integración de GPU en EKS Hybrid Nodes
+# Cuestionario de integración de GPU en EKS Hybrid Nodes
 
-> **Documento relacionado**: [Integración de GPU](../../eks-hybrid-nodes/05-gpu-integration.md)
+> **Documento relacionado**: [GPU Integration](../../eks-hybrid-nodes/05-gpu-integration.md)
+> **Última actualización**: October 12, 2026
 
-## Preguntas de opción múltiple
+### 1. ¿Qué afirmación describe correctamente MIG?
 
-### 1. ¿Cuál es la característica clave de la tecnología Multi-Instance GPU (MIG) de NVIDIA GPU?
+A. Combina varias GPU físicas en una
 
-A. Combina varias GPUs en una sola
-B. Divide una sola GPU en varias instancias físicamente aisladas
-C. Solo comparte memoria de GPU
-D. Time-Slicing a nivel de software
+B. Crea instancias de cómputo/memoria respaldadas por hardware compatibles, mientras persisten las consideraciones de SLO de host/driver y aplicación
 
-<details>
-<summary>Mostrar respuesta</summary>
+C. Garantiza aislamiento completo para cada tenant y cada fallo
 
-**Respuesta: B. Divide una sola GPU en varias instancias físicamente aisladas**
-
-**Explicación:**
-MIG (Multi-Instance GPU) particiona GPUs como NVIDIA A100 y H100 en hasta 7 instancias físicamente aisladas. Cada instancia tiene recursos independientes de memoria, caché y cómputo.
-
-**Comparación entre MIG y Time-Slicing:**
-
-| Característica | MIG | Time-Slicing |
-|---------|-----|--------------|
-| Nivel de aislamiento | Físico (aislamiento completo) | Basado en tiempo (software) |
-| Aislamiento de memoria | Aislamiento completo | Compartida |
-| GPUs compatibles | A100, H100 | Todas las GPUs NVIDIA |
-| Garantía de QoS | Sí | No |
-
-```yaml
-# MIG Resource Request
-apiVersion: v1
-kind: Pod
-metadata:
-  name: gpu-pod
-spec:
-  containers:
-  - name: cuda-app
-    image: nvidia/cuda:12.0-runtime
-    resources:
-      limits:
-        nvidia.com/mig-1g.5gb: 1
-```
-
-</details>
-
-### 2. ¿Qué significa "1g.5gb" en la configuración MIG de NVIDIA GPU?
-
-A. 1 GB de memoria, 5 núcleos de GPU
-B. 1 GPU Instance (1 segmento de cómputo), 5 GB de memoria de GPU
-C. 1 GPU, 5 GB de memoria del sistema
-D. 1 segundo por cada 5 GB de throughput
+D. Es idéntico al time-slicing de software
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. 1 GPU Instance (1 segmento de cómputo), 5 GB de memoria de GPU**
+**Respuesta: B. Crea instancias de cómputo/memoria respaldadas por hardware compatibles, mientras persisten las consideraciones de SLO de host/driver y aplicación**
 
-**Explicación:**
-Formato de nombre de instancia MIG: `<compute-slices>g.<memory-size>gb`
-
-- **1g**: 1 segmento de cómputo
-- **5gb**: 5 GB de memoria de GPU
-
-**Ejemplos de perfiles MIG de A100:**
-- `1g.5gb`: 1 segmento de cómputo, 5 GB de memoria (máx. 7)
-- `2g.10gb`: 2 segmentos de cómputo, 10 GB de memoria (máx. 3)
-- `3g.20gb`: 3 segmentos de cómputo, 20 GB de memoria (máx. 2)
-- `4g.40gb`: 4 segmentos de cómputo, 40 GB de memoria (máx. 1)
-- `7g.40gb`: 7 segmentos de cómputo, 40 GB de memoria (GPU completa)
-
-```bash
-# Check MIG instances
-nvidia-smi mig -lgi
-```
+**Explicación:** MIG proporciona aislamiento de memoria/fallos y recursos en la capa de hardware de la GPU. Los perfiles/límites compatibles dependen de la SKU de GPU y del driver. Esto no establece seguridad completa del host compartido ni una garantía de latencia de la aplicación.
 
 </details>
 
-### 3. ¿Cuál es el comportamiento esperado cuando ocurre sobresuscripción en GPU Time-Slicing?
+### 2. ¿Qué perfil pertenece a la tabla común A10040GB?
 
-A. Fallo completo de la tarea de GPU
-B. Degradación del rendimiento debido al cambio de contexto
-C. Adición automática de GPU
-D. Expansión automática de memoria
+A. 4g.40gb
+
+B. 4g.20gb
+
+C. 4g.80gb
+
+D. 1g significa una GPU física completa
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Degradación del rendimiento debido al cambio de contexto**
+**Respuesta: B. 4g.20gb**
 
-**Explicación:**
-Time-Slicing permite que varias cargas de trabajo compartan una sola GPU mediante división por tiempo. Cuando ocurre sobresuscripción, el cambio de contexto frecuente causa degradación del rendimiento.
-
-```yaml
-# GPU Time-Slicing Configuration
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: device-plugin-config
-  namespace: nvidia-device-plugin
-data:
-  config.yaml: |
-    version: v1
-    sharing:
-      timeSlicing:
-        resources:
-        - name: nvidia.com/gpu
-          replicas: 4  # Split 1 GPU into 4
-```
-
-**Consideraciones de Time-Slicing:**
-- La memoria se comparte, por lo que puede ocurrir OOM
-- Adecuado para cargas de trabajo de inferencia
-- Se recomiendan MIG o GPUs dedicadas para entrenamiento
-- Es importante configurar correctamente el número de réplicas
+**Explicación:** Los ejemplos de A10040GB incluyen1g.5gb,2g.10gb,3g.20gb,4g.20gb y7g.40gb.4g.40gb pertenece al conjunto A10080GB. El componente g cuenta los segmentos de cómputo del perfil; las etiquetas nominales de memoria no son garantías exactas de memoria utilizable.
 
 </details>
 
-### 4. ¿Cuál es la principal ventaja de Dynamic Resource Allocation (DRA)?
+### 3. ¿Qué proporciona time-slicing replicas:4?
 
-A. Solo admite asignación estática de recursos
-B. Admite todos los dispositivos sin plugins específicos del proveedor
-C. Mecanismo flexible de solicitud/asignación para recursos personalizados
-D. Solo gestiona CPU y memoria
+A. Cuatro GPU físicas y cuatro regiones de memoria privadas
+
+B. Cuatro espacios de acceso lógicos por GPU configurada, que comparten su dominio de memoria/fallos
+
+C. Un cuarto de cómputo garantizado para cada Pod
+
+D. Expansión automática de memoria de GPU
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C. Mecanismo flexible de solicitud/asignación para recursos personalizados**
+**Respuesta: B. Cuatro espacios de acceso lógicos por GPU configurada, que comparten su dominio de memoria/fallos**
 
-**Explicación:**
-DRA (Dynamic Resource Allocation), introducido en Kubernetes 1.26, proporciona un mecanismo más flexible de solicitud y asignación para recursos personalizados como GPUs, FPGAs y dispositivos de red.
-
-**Componentes principales de DRA:**
-- **ResourceClass**: Define los tipos de recursos proporcionados por drivers
-- **ResourceClaim**: Solicitud de recursos
-- **ResourceClaimTemplate**: Plantilla de claim reutilizable
-
-```yaml
-# Using DRA in Pod
-apiVersion: v1
-kind: Pod
-metadata:
-  name: gpu-workload
-spec:
-  containers:
-  - name: cuda-app
-    resources:
-      claims:
-      - name: gpu
-  resourceClaims:
-  - name: gpu
-    source:
-      resourceClaimTemplateName: gpu-claim-template
-```
+**Explicación:** La contención y el comportamiento de la carga de trabajo pueden cambiar la latencia/el rendimiento. Solicitar más réplicas no garantiza un cómputo proporcional. renameByDefault:true anuncia nvidia.com/gpu.shared; conecte la configuración al plugin real en lugar de crear un ConfigMap sin usar.
 
 </details>
 
-### 5. ¿Qué condición debe cumplirse para que el estado de ResourceClaim pase a ser "Bound" en DRA (Dynamic Resource Allocation)?
+### 4. ¿Qué añade DRA actual a la asignación de GPU?
 
-A. Solo la creación del claim
-B. El driver asigna recursos y el Pod se programa
-C. El Pod termina
-D. El claim se elimina
+A. Compatibilidad con GPU sin ningún driver de proveedor
+
+B. Solo solicitudes estáticas de CPU y memoria
+
+C. Selección/asignación estructurada de dispositivos mediante DeviceClasses y ResourceClaims
+
+D. Validación automática de producción de todas las aplicaciones de GPU
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. El driver asigna recursos y el Pod se programa**
+**Respuesta: C. Selección/asignación estructurada de dispositivos mediante DeviceClasses y ResourceClaims**
 
-**Explicación:**
-Flujo de estado de ResourceClaim:
-
-1. **Pending**: Claim creado, aún no asignado
-2. **Allocated**: El driver completó la asignación de recursos
-3. **Bound**: Vinculado al Pod y en uso
-
-```yaml
-# Check ResourceClaim Status
-kubectl get resourceclaim gpu-claim -o yaml
-
-# Expected output
-status:
-  allocation:
-    resourceHandles:
-    - driverName: gpu.nvidia.com
-      data: '{"gpu":"GPU-abc123"}'
-  reservedFor:
-  - name: gpu-workload
-    uid: xxx-xxx-xxx
-```
+**Explicación:** Aún se requieren un driver de proveedor, ResourceSlices, kubelets/runtime compatibles y API habilitadas. Los claims v1 actuales usan requests[].exactly, y los resourceClaims de Pod hacen referencia directamente a resourceClaimTemplateName.
 
 </details>
 
-### 6. ¿Cuál es el rol principal de NVIDIA GPU Operator?
+### 5. ¿Cómo se debe evaluar un ResourceClaim actual?
 
-A. Fabricación de hardware de GPU
-B. Gestión automática de drivers, runtimes y plugins de GPU en Kubernetes
-C. Solo pruebas de rendimiento de GPU
-D. Gestión de compra y entrega de GPUs
+A. Esperar un enum universal status.phase:Bound
+
+B. La creación del claim por sí sola demuestra que la GPU se puede usar
+
+C. Inspeccionar allocation.devices.results, las reservas, los eventos de Pod y la preparación del driver
+
+D. Inspeccionar únicamente el campo antiguo resourceHandles
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. Gestión automática de drivers, runtimes y plugins de GPU en Kubernetes**
+**Respuesta: C. Inspeccionar allocation.devices.results, las reservas, los eventos de Pod y la preparación del driver**
 
-**Explicación:**
-NVIDIA GPU Operator gestiona automáticamente la infraestructura de GPU en Kubernetes:
-
-- Instalación/actualizaciones del driver de NVIDIA
-- Instalación de NVIDIA Container Toolkit
-- Despliegue de NVIDIA Device Plugin
-- Monitoreo de GPU (DCGM Exporter)
-- Gestión de MIG
-
-```bash
-# Install GPU Operator (Helm)
-helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
-helm install gpu-operator nvidia/gpu-operator \
-  --namespace gpu-operator \
-  --create-namespace
-```
-
-```yaml
-# GPU Operator Custom Configuration
-apiVersion: nvidia.com/v1
-kind: ClusterPolicy
-metadata:
-  name: cluster-policy
-spec:
-  driver:
-    enabled: true
-    version: "535.104.12"
-  toolkit:
-    enabled: true
-  devicePlugin:
-    enabled: true
-  mig:
-    strategy: mixed
-```
+**Explicación:** No existe una secuencia de fase Pending→Allocated→Bound universal almacenada para los ResourceClaims actuales. Una asignación/reserva no demuestra la inyección correcta del dispositivo ni la ejecución de la aplicación.
 
 </details>
 
-### 7. ¿Cuál es la principal diferencia entre las GPUs H100 y H200?
+### 6. ¿Qué afirmación sobre la propiedad de GPU Operator26.7 es correcta?
 
-A. H200 tiene menor capacidad de memoria que H100
-B. H200 proporciona memoria HBM3e con mayor ancho de banda que H100
+A. GPUCluster y ClusterPolicy siempre deben ejecutarse juntos
+
+B. Elija ClusterPolicy para la administración de device-plugin o un nuevo flujo de trabajo GPUCluster para DRA administrado; no pueden coexistir
+
+C. Establecer driver.enabled:false instala un driver de host ausente
+
+D. El nodeSelector del controlador restringe automáticamente cada operando
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B. Elija ClusterPolicy para la administración de device-plugin o un nuevo flujo de trabajo GPUCluster para DRA administrado; no pueden coexistir**
+
+**Explicación:** GPUCluster es un singleton de ámbito de clúster llamado gpu-cluster. El flujo de trabajo de DRA administrado no es una migración in situ desde ClusterPolicy/DRA independiente. Prepare los componentes adecuados de driver/CDI/detección y revise las etiquetas de los operandos por separado.
+
+</details>
+
+### 7. ¿Qué establece la comparación H100SXM/H200SXM?
+
+A. Cada variante de H100 tiene memoria idéntica
+
+B. NVIDIA enumera80GB/3.35TB/s para H100SXM y141GB/4.8TB/s para H200SXM; los resultados de la aplicación aún requieren medición
+
 C. H200 no admite MIG
-D. H200 no es para centros de datos
+
+D. H200 siempre duplica el rendimiento de cada aplicación
 
 <details>
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B. H200 proporciona memoria HBM3e con mayor ancho de banda que H100**
+**Respuesta: B. NVIDIA enumera80GB/3.35TB/s para H100SXM y141GB/4.8TB/s para H200SXM; los resultados de la aplicación aún requieren medición**
 
-**Explicación:**
-H200 es el sucesor de H100 y proporciona un sistema de memoria mejorado:
+**Explicación:** Estas son especificaciones de SKU del proveedor, no benchmarks de auditoría. Las variantes H100NVL/PCIe difieren. El tamaño del modelo, la precisión, el batching, el software, la interconexión y la contención también afectan al rendimiento real.
 
-| Característica | H100 | H200 |
-|---------|------|------|
-| Tipo de memoria | HBM3 | HBM3e |
-| Capacidad de memoria | 80 GB | 141 GB |
-| Ancho de banda de memoria | 3,35 TB/s | 4,8 TB/s |
-| Soporte de MIG | Sí (hasta 7) | Sí (hasta 7) |
-| Inferencia de LLM | Excelente | Optimizada |
+</details>
 
-```yaml
-# H200 Node Selection
-apiVersion: v1
-kind: Pod
-spec:
-  nodeSelector:
-    nvidia.com/gpu.product: "NVIDIA-H200"
-  containers:
-  - name: llm
-    resources:
-      limits:
-        nvidia.com/gpu: 1
-```
+### 8. ¿Qué límite de implementación de GPU en EKS es correcto?
 
-H200 muestra un rendimiento excelente, especialmente en inferencia de modelos de lenguaje grandes (LLM), gracias a su capacidad de memoria y ancho de banda.
+A. Instale un NVIDIA device plugin adicional en cada nodo de Auto Mode
+
+B. DRA no es compatible con ningún tipo de nodo de EKS
+
+C. Use una cohorte de asignación Hybrid con ámbito definido; el Auto Mode de EKS actual no admite el driver NVIDIA DRA y ya administra su device plugin
+
+D. Publique cada GPU física a través de tantos administradores como sea posible
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C. Use una cohorte de asignación Hybrid con ámbito definido; el Auto Mode de EKS actual no admite el driver NVIDIA DRA y ya administra su device plugin**
+
+**Explicación:** AWS recomienda DRA para implementaciones nuevas compatibles de capacidad estática de EKS 1.34+. Use los prerrequisitos de driver documentados y evite la propiedad duplicada de dispositivos. La madurez de la API de Kubernetes es independiente de los feature gates de cada proveedor.
+
+</details>
+
+### 9. Un contenedor solicita una GPU DRA. ¿Cómo debe establecer CUDA_VISIBLE_DEVICES?
+
+A. Establezca siempre0,1,2,3
+
+B. Establezca cada índice físico detectado en el host
+
+C. Use la variable para solicitar tres GPU adicionales
+
+D. Deje que el administrador de dispositivos/runtime exponga los dispositivos asignados; no lo sobrescriba con índices físicos no relacionados
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: D. Deje que el administrador de dispositivos/runtime exponga los dispositivos asignados; no lo sobrescriba con índices físicos no relacionados**
+
+**Explicación:** Los índices de CUDA visibles para el proceso pueden diferir de los índices físicos de GPU. Una sobrescritura manual puede ocultar o identificar erróneamente dispositivos y no concede GPU adicionales. Varios contenedores que hacen referencia a un claim todavía comparten esa única asignación.
+
+</details>
+
+### 10. ¿Qué demuestran los smoke Jobs suspendidos y las comprobaciones de esquema locales?
+
+A. El driver y el modelo de GPU se han ejecutado correctamente
+
+B. Todas las cargas de trabajo de GPU cumplen sus SLO de latencia
+
+C. Los manifests/la configuración revisados superan comprobaciones locales acotadas; la validación de GPU real requiere aprobación y ejecución del propietario
+
+D. No se necesitará verificación de limpieza
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C. Los manifests/la configuración revisados superan comprobaciones locales acotadas; la validación de GPU real requiere aprobación y ejecución del propietario**
+
+**Explicación:** Reemplace la imagen deliberadamente inutilizable con un digest aprobado y verifique runtime/ubicación/seguridad antes de reanudar un Job. Capture los resultados y verifique la despreparación/liberación del claim durante la limpieza. La visibilidad de nvidia-smi por sí sola no es un benchmark de CUDA/LLM.
 
 </details>

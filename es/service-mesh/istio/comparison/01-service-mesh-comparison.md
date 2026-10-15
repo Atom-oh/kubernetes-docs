@@ -1,1021 +1,216 @@
 # Comparación de soluciones de Service Mesh
 
-> **Última actualización**: February 19, 2026 **Objetivos de comparación**: Istio 1.24, Linkerd 2.15, Kong Mesh 2.8, Consul Connect 1.19
+> **Última actualización**: September 11, 2026
+> **Comprobaciones de API/artefactos**: Istio 1.31.0; Linkerd edge-26.9.1; Kong Mesh/Kuma 2.14.4; Consul/chart 2.0.4
 
-Este documento proporciona una comparación integral de las principales soluciones de Service Mesh disponibles en entornos Kubernetes.
+Las versiones de los artefactos identifican las fuentes usadas para comprobar ejemplos. **No son una matriz compartida de compatibilidad con Kubernetes** ni evidencia de un sistema de producción desplegado. Las cifras originales de rendimiento de Istio 1.24/Linkerd 2.15/Kong Mesh 2.8/Consul 1.19 se conservan a continuación con su estado histórico y no verificado.
 
-## Tabla de contenido
+## Contenido
 
-1. [Descripción general y arquitectura](01-service-mesh-comparison.md#overview-and-architecture)
-2. [Comparación de rendimiento](01-service-mesh-comparison.md#performance-comparison)
-3. [Comparación de funcionalidades](01-service-mesh-comparison.md#feature-comparison)
-4. [Complejidad operativa](01-service-mesh-comparison.md#operational-complexity)
-5. [Funcionalidades de seguridad](01-service-mesh-comparison.md#security-features)
-6. [Funcionalidades de observabilidad](01-service-mesh-comparison.md#observability-features)
-7. [Soporte multi-cluster](01-service-mesh-comparison.md#multi-cluster-support)
-8. [Análisis de costes](01-service-mesh-comparison.md#cost-analysis)
-9. [Recomendaciones de casos de uso](01-service-mesh-comparison.md#use-case-recommendations)
+1. [Arquitectura](#architecture)
+2. [Evidencia de rendimiento](#performance-evidence)
+3. [Gestión de tráfico](#traffic-management)
+4. [Seguridad](#security)
+5. [Observabilidad](#observability)
+6. [Multiclúster](#multicluster)
+7. [Instalación y operaciones](#installation-and-operations)
+8. [Coste y licencias](#cost-and-licensing)
+9. [Selección y validación](#selection-and-validation)
 
-<span id="overview-and-architecture"></span>
+## Arquitectura
 
-## Descripción general y arquitectura
+Un service mesh desplaza funciones de comunicación seleccionadas a componentes de infraestructura. La interceptación del tráfico puede ser transparente para el código de la aplicación, pero la selección de protocolos, propiedad del tráfico, identidad de las cargas de trabajo y políticas aún requieren configuración. El tracing distribuido también necesita propagación/instrumentación de contexto. Un mesh no hace que reintentos arbitrarios de una aplicación sean seguros.
 
-### ¿Qué es un Service Mesh?
+![Patrón conceptual de sidecar: un plano de control configura proxies entre servicios. El texto circundante define la configuración necesaria de políticas y telemetría.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-0.png)
 
-Un Service Mesh es una capa de infraestructura que gestiona la comunicación entre microservicios. Proporciona funcionalidades de gestión del tráfico, seguridad y observabilidad sin modificar el código de la aplicación.
+[Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-comparison-01-service-mesh-comparison-0.html)
 
-#### Conceptos básicos de Service Mesh
+El diagrama ilustra un despliegue de sidecar configurado; no afirma que todas las características estén habilitadas de forma predeterminada ni que ambient/Cilium usen la misma topología por Pod.
 
-```mermaid
-flowchart TB
-    subgraph "Without Service Mesh"
-        direction LR
-        AppA1[Service A] -->|Direct Call| AppB1[Service B]
-        AppB1 -->|Direct Call| AppC1[Service C]
+### Istio
 
-        Note1[Problems:<br/>- Retry logic implemented in each service<br/>- Manual encryption setup between services<br/>- Inconsistent metrics collection<br/>- Difficult traffic control]
-    end
+![Istiod lee la configuración y suministra configuración xDS a sidecars de Envoy, que transportan tráfico entre cargas de trabajo inscritas.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-2.png)
 
-    subgraph "With Service Mesh"
-        direction LR
-        subgraph PodA["Pod A"]
-            AppA2[Service A]
-            ProxyA[Sidecar<br/>Proxy]
-        end
-        subgraph PodB["Pod B"]
-            AppB2[Service B]
-            ProxyB[Sidecar<br/>Proxy]
-        end
-        subgraph PodC["Pod C"]
-            AppC2[Service C]
-            ProxyC[Sidecar<br/>Proxy]
-        end
+[Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-comparison-01-service-mesh-comparison-2.html)
 
-        ControlPlane[Control Plane<br/>Policy Management]
+Istiod combina funciones de configuración/detección y gestión de identidades históricamente asociadas con Pilot, Citadel y Galley; esos nombres no representan tres despliegues actuales adicionales. Los planos de datos sidecar usan Envoy. Ambient usa ztunnel por nodo para L4 y waypoints de Envoy separados para el procesamiento L7 compatible. Los gateways de ingress/egress implementan rutas de frontera seleccionadas explícitamente.
 
-        AppA2 --> ProxyA
-        ProxyA <-->|mTLS<br/>Auto Encryption| ProxyB
-        AppB2 --> ProxyB
-        ProxyB <-->|mTLS| ProxyC
-        AppC2 --> ProxyC
-
-        ControlPlane -.->|Config Distribution| ProxyA
-        ControlPlane -.->|Config Distribution| ProxyB
-        ControlPlane -.->|Config Distribution| ProxyC
-
-        Note2[Benefits:<br/>- Automatic retry and timeout<br/>- Automatic mTLS encryption<br/>- Unified metrics and tracing<br/>- Fine-grained traffic control]
-    end
-
-    classDef problem fill:#FFB74D,stroke:#333,stroke-width:2px,color:black;
-    classDef solution fill:#66BB6A,stroke:#333,stroke-width:2px,color:white;
-    classDef app fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef proxy fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef control fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-
-    class Note1 problem;
-    class Note2 solution;
-    class AppA1,AppB1,AppC1,AppA2,AppB2,AppC2 app;
-    class ProxyA,ProxyB,ProxyC proxy;
-    class ControlPlane control;
-```
-
-#### Comparación de patrones de arquitectura
-
-```mermaid
-flowchart LR
-    subgraph "Istio - Sidecar Pattern"
-        direction TB
-        I_CP[Istiod<br/>Unified Control Plane<br/>1 Process]
-
-        subgraph I_Pod1["Pod"]
-            I_App1[App]
-            I_Envoy1[Envoy<br/>Sidecar]
-        end
-
-        I_CP -->|xDS API| I_Envoy1
-        I_App1 -->|localhost| I_Envoy1
-
-        I_Note[Features:<br/>- Most feature-rich<br/>- Fine-grained L7 control<br/>- High resource usage<br/>- Complex operations]
-    end
-
-    subgraph "Linkerd - Micro-proxy Pattern"
-        direction TB
-        L_CP1[Destination<br/>Service Discovery]
-        L_CP2[Identity<br/>Certificate Management]
-        L_CP3[Proxy Injector<br/>Injection Management]
-
-        subgraph L_Pod1["Pod"]
-            L_App1[App]
-            L_Proxy1[Linkerd2<br/>Rust Proxy]
-        end
-
-        L_CP1 --> L_Proxy1
-        L_CP2 --> L_Proxy1
-        L_CP3 -.-> L_Proxy1
-        L_App1 -->|localhost| L_Proxy1
-
-        L_Note[Features:<br/>- Most lightweight<br/>- Easy operations<br/>- Limited features<br/>- No VM support]
-    end
-
-    subgraph "Consul - Universal Pattern"
-        direction TB
-        C_Server[Consul Servers<br/>Distributed Cluster<br/>Service Catalog]
-
-        subgraph C_Pod1["Pod"]
-            C_App1[App]
-            C_Client1[Consul<br/>Client]
-            C_Envoy1[Envoy<br/>Proxy]
-        end
-
-        subgraph C_VM["VM"]
-            C_App2[Legacy<br/>App]
-            C_Client2[Consul<br/>Client]
-            C_Envoy2[Envoy<br/>Proxy]
-        end
-
-        C_Client1 --> C_Server
-        C_Client2 --> C_Server
-        C_Server -->|Service Discovery| C_Envoy1
-        C_Server -->|Service Discovery| C_Envoy2
-        C_App1 --> C_Envoy1
-        C_App2 --> C_Envoy2
-
-        C_Note[Features:<br/>- VM-first support<br/>- Strong Service Discovery<br/>- Requires Consul infrastructure<br/>- Learning curve]
-    end
-
-    subgraph "Kong Mesh - Multi-zone Pattern"
-        direction TB
-        K_Global[Global CP<br/>Policy Sync]
-        K_Zone1[Zone CP 1<br/>Local Management]
-        K_Zone2[Zone CP 2<br/>Local Management]
-
-        subgraph K_Pod1["K8s Pod"]
-            K_App1[App]
-            K_DP1[Kuma DP<br/>Envoy]
-        end
-
-        subgraph K_VM["VM"]
-            K_App2[App]
-            K_DP2[Kuma DP<br/>Envoy]
-        end
-
-        K_Global --> K_Zone1
-        K_Global --> K_Zone2
-        K_Zone1 --> K_DP1
-        K_Zone2 --> K_DP2
-        K_App1 --> K_DP1
-        K_App2 --> K_DP2
-
-        K_Note[Features:<br/>- Multi-cloud<br/>- K8s + VM equal support<br/>- Enterprise is paid<br/>- Small community]
-    end
-
-    classDef istio fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef linkerd fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef consul fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef kong fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-    classDef note fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class I_CP,I_Envoy1 istio;
-    class L_CP1,L_CP2,L_CP3,L_Proxy1 linkerd;
-    class C_Server,C_Client1,C_Client2,C_Envoy1,C_Envoy2 consul;
-    class K_Global,K_Zone1,K_Zone2,K_DP1,K_DP2 kong;
-    class I_Note,L_Note,C_Note,K_Note note;
-```
-
-### Arquitectura detallada
-
-#### Istio
-
-```mermaid
-flowchart TB
-    subgraph "Control Plane"
-        Istiod[Istiod<br/>Unified Control Plane]
-    end
-
-    subgraph "Data Plane"
-        subgraph "Pod 1"
-            App1[Application]
-            Envoy1[Envoy Proxy]
-        end
-        subgraph "Pod 2"
-            App2[Application]
-            Envoy2[Envoy Proxy]
-        end
-    end
-
-    subgraph "Configuration"
-        VS[VirtualService]
-        DR[DestinationRule]
-        GW[Gateway]
-        PA[PeerAuthentication]
-        AP[AuthorizationPolicy]
-    end
-
-    Configuration -.->|xDS API| Istiod
-    Istiod -->|Configuration| Envoy1
-    Istiod -->|Configuration| Envoy2
-    Envoy1 <-->|mTLS| Envoy2
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef config fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-
-    class Istiod k8sComponent;
-    class App1,App2 userApp;
-    class Envoy1,Envoy2 userApp;
-    class VS,DR,GW,PA,AP config;
-```
-
-**Características**:
-
-* **Proxy**: Envoy (C++)
-* **Arquitectura**: Control Plane unificado (Istiod)
-* **Configuración**: Kubernetes CRD (VirtualService, DestinationRule, etc.)
-* **Fortalezas**: El más completo en funcionalidades, soporte empresarial a gran escala
-* **Debilidades**: Curva de aprendizaje elevada, sobrecarga de recursos
-
-**Componentes principales**:
-
-* **Istiod**: Pilot + Citadel + Galley unificados
-* **Envoy Proxy**: Data Plane
-* **Ingress/Egress Gateway**: Control del tráfico en los límites del cluster
+Se admiten Kubernetes y la integración documentada de VM, con requisitos previos de red/confianza. El GA del núcleo de Ambient no implica paridad de características con los sidecars: la asociación de políticas a waypoint, la compatibilidad con EnvoyFilter y la madurez multiclúster difieren. Seleccione el modo y el comportamiento de API necesario antes de estimar recursos o complejidad.
 
 ### Linkerd
 
-```mermaid
-flowchart TB
-    subgraph "Control Plane"
-        Destination[Destination<br/>Service Discovery]
-        Identity[Identity<br/>Certificate Authority]
-        ProxyInjector[Proxy Injector<br/>Webhook]
-    end
-
-    subgraph "Data Plane"
-        subgraph "Pod 1"
-            App1[Application]
-            LP1[Linkerd2-proxy<br/>Rust]
-        end
-        subgraph "Pod 2"
-            App2[Application]
-            LP2[Linkerd2-proxy<br/>Rust]
-        end
-    end
-
-    ProxyInjector -.->|Inject| LP1
-    ProxyInjector -.->|Inject| LP2
-    Identity -->|Certificates| LP1
-    Identity -->|Certificates| LP2
-    Destination -->|Endpoints| LP1
-    Destination -->|Endpoints| LP2
-    LP1 <-->|mTLS| LP2
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class Destination,Identity,ProxyInjector k8sComponent;
-    class App1,App2,LP1,LP2 userApp;
-```
-
-**Características**:
-
-* **Proxy**: Linkerd2-proxy (Rust, desarrollado a medida)
-* **Arquitectura**: Control Plane de microservicios
-* **Configuración**: Recursos nativos de Kubernetes + Annotations sencillas
-* **Fortalezas**: Ultraligero, instalación y operación sencillas, rendimiento rápido
-* **Debilidades**: Funcionalidades limitadas, sin soporte para VM
-
-**Componentes principales**:
-
-* **Destination**: Service Discovery y políticas de enrutamiento
-* **Identity**: Emisión automática de certificados mTLS
-* **Proxy Injector**: Inyección automática de Sidecar
-
-### Kong Mesh
-
-```mermaid
-flowchart TB
-    subgraph "Global Control Plane (Optional)"
-        KongGlobal[Kong Mesh<br/>Global Control Plane]
-    end
-
-    subgraph "Zone Control Plane"
-        KongZone[Kong Mesh<br/>Zone Control Plane]
-    end
-
-    subgraph "Data Plane"
-        subgraph "Pod 1"
-            App1[Application]
-            Envoy1[Envoy/Kuma DP]
-        end
-        subgraph "Pod 2"
-            App2[Application]
-            Envoy2[Envoy/Kuma DP]
-        end
-        subgraph "VM"
-            AppVM[Legacy App]
-            EnvoyVM[Kuma DP]
-        end
-    end
-
-    KongGlobal -->|Sync Policies| KongZone
-    KongZone -->|Configuration| Envoy1
-    KongZone -->|Configuration| Envoy2
-    KongZone -->|Configuration| EnvoyVM
-    Envoy1 <-->|mTLS| Envoy2
-    Envoy1 <-->|mTLS| EnvoyVM
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef vm fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class KongGlobal,KongZone k8sComponent;
-    class App1,App2,Envoy1,Envoy2 userApp;
-    class AppVM,EnvoyVM vm;
-```
-
-**Características**:
-
-* **Proxy**: Envoy (Kuma Data Plane)
-* **Arquitectura**: Control Plane universal (K8s + VM)
-* **Configuración**: Kuma CRD + Kong Mesh UI
-* **Fortalezas**: Excelente soporte para VM, multi-zone/multi-cloud, funcionalidades empresariales
-* **Debilidades**: Las funcionalidades comerciales son de pago, comunidad relativamente pequeña
-
-**Componentes principales**:
-
-* **Global Control Plane**: Sincronización de políticas multi-zone
-* **Zone Control Plane**: Gestión local del data plane
-* **Kuma DP**: Data plane para Kubernetes y VM
-
-#### Arquitectura detallada de Kong Mesh
-
-Kong Mesh es un Service Mesh universal basado en Kuma que integra múltiples clusters y entornos en una única malla mediante una arquitectura multi-zone.
-
-**Arquitectura de despliegue multi-zone**
-
-```mermaid
-flowchart TB
-    subgraph Global["Global Control Plane (Central Management)"]
-        direction TB
-        GCP[Kong Mesh Global<br/>Policy Store]
-        GDB[(PostgreSQL<br/>Global State)]
-    end
-
-    subgraph Zone1["Zone 1 - AWS EKS"]
-        direction TB
-        ZCP1[Zone Control Plane 1]
-        ZDB1[(Local State)]
-
-        subgraph K8s1["Kubernetes Workloads"]
-            direction LR
-            subgraph Pod1["Pod A"]
-                App1[Frontend]
-                DP1[Kuma DP<br/>Envoy]
-            end
-            subgraph Pod2["Pod B"]
-                App2[Backend]
-                DP2[Kuma DP<br/>Envoy]
-            end
-        end
-    end
-
-    subgraph Zone2["Zone 2 - GCP GKE"]
-        direction TB
-        ZCP2[Zone Control Plane 2]
-        ZDB2[(Local State)]
-
-        subgraph K8s2["Kubernetes Workloads"]
-            direction LR
-            subgraph Pod3["Pod C"]
-                App3[API Service]
-                DP3[Kuma DP<br/>Envoy]
-            end
-        end
-    end
-
-    subgraph Zone3["Zone 3 - On-Premises"]
-        direction TB
-        ZCP3[Zone Control Plane 3]
-        ZDB3[(Local State)]
-
-        subgraph VM["Virtual Machines"]
-            direction LR
-            VM1[Legacy App]
-            DPV[Kuma DP<br/>Envoy]
-        end
-    end
-
-    %% Global to Zone connections
-    GCP <-->|Policy Sync<br/>HTTP/gRPC| ZCP1
-    GCP <-->|Policy Sync<br/>HTTP/gRPC| ZCP2
-    GCP <-->|Policy Sync<br/>HTTP/gRPC| ZCP3
-    GCP --> GDB
-
-    %% Zone internal connections
-    ZCP1 --> ZDB1
-    ZCP1 -->|xDS Config| DP1
-    ZCP1 -->|xDS Config| DP2
-
-    ZCP2 --> ZDB2
-    ZCP2 -->|xDS Config| DP3
-
-    ZCP3 --> ZDB3
-    ZCP3 -->|xDS Config| DPV
-
-    %% App connections
-    App1 --> DP1
-    App2 --> DP2
-    App3 --> DP3
-    VM1 --> DPV
-
-    %% Cross-Zone traffic
-    DP1 <-.->|Cross-Zone mTLS| DP3
-    DP2 <-.->|Cross-Zone mTLS| DPV
-
-    classDef global fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef zone fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef dataplane fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef vm fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-    classDef db fill:#3B48CC,stroke:#333,stroke-width:1px,color:white;
-
-    class GCP global;
-    class ZCP1,ZCP2,ZCP3 zone;
-    class DP1,DP2,DP3,App1,App2,App3 dataplane;
-    class DPV,VM1 vm;
-    class GDB,ZDB1,ZDB2,ZDB3 db;
-```
-
-**Características principales**:
-
-* **Global Control Plane**: Gestiona de forma centralizada las políticas de todas las zonas
-* **Zone Control Plane**: Gestiona de forma independiente el data plane de cada zona
-* **Service Discovery automático**: Descubrimiento automático de servicios entre zonas
-* **mTLS unificado**: La comunicación entre zonas también se cifra automáticamente
-
-**Conexión de servicios y flujo de tráfico**
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant App as Application<br/>(Zone 1)
-    participant DP1 as Kuma DP 1<br/>(Zone 1)
-    participant ZCP1 as Zone CP 1
-    participant GCP as Global CP
-    participant ZCP2 as Zone CP 2
-    participant DP2 as Kuma DP 2<br/>(Zone 2)
-    participant Target as Target Service<br/>(Zone 2)
-
-    Note over App,Target: Initial Setup Phase
-
-    GCP->>ZCP1: Policy Sync<br/>(TrafficRoute, mTLS)
-    GCP->>ZCP2: Policy Sync<br/>(TrafficRoute, mTLS)
-
-    ZCP1->>DP1: xDS Configuration<br/>(Service Endpoints, Policies)
-    ZCP2->>DP2: xDS Configuration<br/>(Service Endpoints, Policies)
-
-    Note over App,Target: Service-to-Service Communication
-
-    App->>DP1: HTTP Request (localhost)
-    DP1->>DP1: Service Discovery<br/>(Check Zone 2 Endpoints)
-    DP1->>DP2: mTLS Encrypted Request<br/>(Cross-Zone)
-    DP2->>Target: Plaintext Request (localhost)
-    Target->>DP2: Response
-    DP2->>DP1: mTLS Encrypted Response
-    DP1->>App: Plaintext Response
-
-    Note over App,Target: Metrics and Tracing
-
-    DP1->>ZCP1: Send Metrics
-    DP2->>ZCP2: Send Metrics
-    ZCP1->>GCP: Global Metrics Aggregation
-    ZCP2->>GCP: Global Metrics Aggregation
-```
-
-**Mecanismo de propagación de políticas**
-
-```mermaid
-flowchart TD
-    Start[Policy Create/Modify]
-    Start --> Apply[kubectl apply -f policy.yaml]
-
-    Apply --> Global{Apply to Global CP?}
-
-    Global -->|Yes| GlobalStore[Global Control Plane<br/>Store Policy]
-    Global -->|No| ZoneStore[Zone Control Plane<br/>Store Local Policy]
-
-    GlobalStore --> Sync[Policy Sync]
-    Sync --> Zone1[Zone CP 1 Receive]
-    Sync --> Zone2[Zone CP 2 Receive]
-    Sync --> Zone3[Zone CP 3 Receive]
-
-    ZoneStore --> Zone1Apply[Apply Policy to<br/>that Zone CP only]
-
-    Zone1 --> DP1[Data Plane 1<br/>xDS Update]
-    Zone2 --> DP2[Data Plane 2<br/>xDS Update]
-    Zone3 --> DP3[Data Plane 3<br/>xDS Update]
-    Zone1Apply --> DP1
-
-    DP1 --> Enforce1[Apply Envoy Config<br/>Real-time Traffic Control]
-    DP2 --> Enforce2[Apply Envoy Config<br/>Real-time Traffic Control]
-    DP3 --> Enforce3[Apply Envoy Config<br/>Real-time Traffic Control]
-
-    classDef input fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef global fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef zone fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef dataplane fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-
-    class Start,Apply input;
-    class GlobalStore,Sync global;
-    class Zone1,Zone2,Zone3,ZoneStore,Zone1Apply zone;
-    class DP1,DP2,DP3,Enforce1,Enforce2,Enforce3 dataplane;
-```
-
-**Ámbito de propagación de políticas por tipo**:
-
-| Tipo de política      | Ámbito | Método de propagación | Caso de uso                         |
-| --------------------- | ------ | --------------------- | ----------------------------------- |
-| **Mesh**              | Global | Todas las zonas       | Configuración global de mTLS        |
-| **TrafficRoute**      | Global | Todas las zonas       | Reglas globales de enrutamiento     |
-| **TrafficPermission** | Global | Todas las zonas       | Control de acceso entre servicios   |
-| **HealthCheck**       | Zone   | Solo zona local       | Comprobaciones de salud por zona    |
-| **ProxyTemplate**     | Zone   | Solo zona local       | Configuración de Envoy por zona     |
-
-**Ciclo de vida del Data Plane**
-
-```mermaid
-flowchart TB
-    subgraph Init["Initialization Phase"]
-        direction TB
-        Start[Kuma DP Start]
-        Start --> Token[Acquire Data Plane Token]
-        Token --> Register[Register with Zone CP]
-    end
-
-    subgraph Config["Configuration Reception"]
-        direction TB
-        Register --> Connect[Establish gRPC Stream<br/>with Zone CP]
-        Connect --> Receive[Receive xDS Configuration:<br/>- Listeners<br/>- Routes<br/>- Clusters<br/>- Endpoints]
-    end
-
-    subgraph Runtime["Runtime Operation"]
-        direction TB
-        Receive --> Proxy[Configure Envoy Proxy]
-        Proxy --> Traffic[Traffic Proxy<br/>- mTLS Encrypt/Decrypt<br/>- Load Balancing<br/>- Health Check]
-        Traffic --> Metrics[Metrics Collection<br/>- Request Count<br/>- Latency<br/>- Error Rate]
-    end
-
-    subgraph Update["Dynamic Update"]
-        direction TB
-        Metrics --> Watch[Detect Zone CP Changes]
-        Watch --> UpdateConfig[Receive Config Update]
-        UpdateConfig --> HotReload[Hot Reload<br/>Zero-downtime Apply]
-        HotReload --> Traffic
-    end
-
-    subgraph Shutdown["Shutdown Phase"]
-        direction TB
-        Signal[SIGTERM Received]
-        Signal --> Drain[Connection Draining<br/>Process Existing Connections]
-        Drain --> Deregister[Deregister from Zone CP]
-        Deregister --> Stop[Process Exit]
-    end
-
-    Metrics -.-> Signal
-
-    classDef init fill:#66BB6A,stroke:#333,stroke-width:2px,color:white;
-    classDef config fill:#42A5F5,stroke:#333,stroke-width:2px,color:white;
-    classDef runtime fill:#FFA726,stroke:#333,stroke-width:2px,color:white;
-    classDef update fill:#AB47BC,stroke:#333,stroke-width:2px,color:white;
-    classDef shutdown fill:#EF5350,stroke:#333,stroke-width:2px,color:white;
-
-    class Start,Token,Register init;
-    class Connect,Receive config;
-    class Proxy,Traffic,Metrics runtime;
-    class Watch,UpdateConfig,HotReload update;
-    class Signal,Drain,Deregister,Stop shutdown;
-```
-
-**Service Discovery entre zonas**
-
-```mermaid
-flowchart LR
-    subgraph Zone1["Zone 1 - AWS"]
-        direction TB
-        Service1[Service: api<br/>Tag: version=v1]
-        ZCP1[Zone CP 1]
-        Service1 -.->|Register| ZCP1
-    end
-
-    subgraph Zone2["Zone 2 - GCP"]
-        direction TB
-        Service2[Service: api<br/>Tag: version=v2]
-        ZCP2[Zone CP 2]
-        Service2 -.->|Register| ZCP2
-    end
-
-    subgraph Zone3["Zone 3 - On-Prem"]
-        direction TB
-        Service3[Service: database<br/>Tag: tier=primary]
-        ZCP3[Zone CP 3]
-        Service3 -.->|Register| ZCP3
-    end
-
-    subgraph Global["Global Control Plane"]
-        direction TB
-        ServiceRegistry["Unified Service Registry<br/>api: [Zone1, Zone2]<br/>database: [Zone3]"]
-    end
-
-    ZCP1 -->|Send Service Info| ServiceRegistry
-    ZCP2 -->|Send Service Info| ServiceRegistry
-    ZCP3 -->|Send Service Info| ServiceRegistry
-
-    ServiceRegistry -->|Distribute Unified Service Map| ZCP1
-    ServiceRegistry -->|Distribute Unified Service Map| ZCP2
-    ServiceRegistry -->|Distribute Unified Service Map| ZCP3
-
-    subgraph Client["Client (Zone 1)"]
-        direction TB
-        App[Application]
-        DP[Kuma DP]
-        App --> DP
-    end
-
-    DP -.->|1. Request api service| ZCP1
-    ZCP1 -.->|2. Return Endpoints<br/>Zone1: 10.0.1.10<br/>Zone2: 10.1.1.10| DP
-    DP -.->|3. Local-first Routing<br/>Zone1: 80%<br/>Zone2: 20%| Service1
-    DP -.->|4. Cross-Zone Routing| Service2
-
-    classDef zone fill:#326CE5,stroke:#333,stroke-width:2px,color:white;
-    classDef service fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef global fill:#E6522C,stroke:#333,stroke-width:2px,color:white;
-    classDef client fill:#FF9900,stroke:#333,stroke-width:2px,color:black;
-
-    class ZCP1,ZCP2,ZCP3 zone;
-    class Service1,Service2,Service3 service;
-    class ServiceRegistry global;
-    class App,DP client;
-```
-
-**Funcionalidades de Service Discovery**:
-
-* **Registro automático**: Los servicios de cada zona se registran automáticamente con Zone CP
-* **Vista global**: Global CP integra los servicios de todas las zonas
-* **Local-first**: Primero enruta a servicios de la misma zona
-* **Failover automático**: Cambia automáticamente a otra zona cuando falla el servicio local
-* **Enrutamiento basado en tags**: Control de enrutamiento detallado mediante tags de servicio
-
-**Ejemplos de configuración de Kong Mesh**
-
-**Recurso Mesh (configuración global de mTLS)**:
+![Los componentes Linkerd Destination, Identity y Proxy Injector suministran descubrimiento, certificados de carga de trabajo e inyección para sidecars Rust linkerd2-proxy.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-3.png)
+
+[Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-comparison-01-service-mesh-comparison-3.html)
+
+Linkerd usa su proxy Rust diseñado específicamente y recursos, anotaciones y CRD de Kubernetes. Las características actuales incluyen enrutamiento de solicitudes de Gateway API, timeouts/reintentos, autorización por ruta y limitación de tasa local. Describirlo como un mesh solo de anotaciones o de «solo características básicas» es inexacto.
+
+La expansión del mesh fuera de Kubernetes está documentada mediante ExternalWorkload, un proxy en la máquina externa, identidad SPIFFE/SPIRE compatible, DNS y acceso de red. No significa «sin soporte de VM», ni registrar una IP externa instala o autentica automáticamente un proxy.
+
+### Kong Mesh y Kuma
+
+![El plano de control de Kong Mesh configura proxies de plano de datos Envoy en cargas de trabajo de Kubernetes y VM. Se usa un plano de control global para el modelo multizona.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-4.png)
+
+[Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-comparison-01-service-mesh-comparison-4.html)
+
+Kong Mesh se basa en Kuma. El modo Kubernetes usa recursos/almacenamiento de Kubernetes; el modo Universal admite entornos de VM/bare-metal y usa su base de datos configurada. Kong ofrece opciones autohospedadas y de plano de control global administrado; las características de edición y los términos de soporte deben verificarse por separado de Kuma upstream.
+
+En un despliegue multizona, los planos de control global y de zona intercambian recursos mediante KDS, mientras que cada zona suministra xDS a sus proxies locales. El tráfico de datos entre zonas usa el ingress de la zona de destino y, cuando está configurado, el egress de la zona local. El plano de control global no es un backend automático de agregación de Prometheus/tracing.
+
+El descubrimiento de un Service no especifica por sí mismo una división 80% local/20% remota. La ponderación de endpoints heredada y la configuración de localidad actual de MeshLoadBalancingStrategy tienen valores predeterminados distintos. Inspeccione la política seleccionada, los endpoints elegibles y la configuración entre zonas/de failover, en lugar de tratar las ponderaciones de un diagrama como comportamiento inherente.
+
+Use políticas actuales como MeshHTTPRoute, MeshTrafficPermission, MeshRetry, MeshTimeout, MeshMetric, MeshTrace y MeshAccessLog cuando corresponda. TrafficRoute y TrafficPermission son interfaces heredadas/obsoletas, no necesariamente API eliminadas en la versión comprobada. Migre las políticas dependientes juntas; no combine TrafficPermission antiguo con MeshTrafficPermission. Un tipo de política por sí solo no establece la propiedad o propagación «global» frente a «solo de zona».
+
+El fallo del plano de control global puede dejar funcionando el tráfico de datos existente mientras se detiene la propagación de cambios de políticas y servicios remotos. El fallo del plano de control de zona puede impedir nuevos proxies, actualizaciones de configuración y renovación de certificados. La configuración retenida no es una garantía de disponibilidad indefinida. Valide el registro, las actualizaciones, el drenaje y la expiración bajo condiciones reales de fallo.
+
+### Consul Service Mesh
+
+Consul proporciona funciones de descubrimiento de servicios, configuración e identidad con soporte de primera clase para Envoy. Las integraciones actuales de Kubernetes normalmente usan consul-dataplane para administrar el sidecar; la imagen antigua de un client-agent-por-nodo no es la única ni la arquitectura predeterminada de Kubernetes.
+
+La descripción general oficial del proxy también describe un proxy L4 integrado para desarrollo/pruebas y desaconseja su uso en producción. No debe presentarse como equivalente al conjunto de características L7 de producción de Envoy, ni describirse incorrectamente como eliminado sin evidencia de una versión. Consul también admite integraciones documentadas de VM y otros runtimes además de Kubernetes.
+
+### Cilium en la misma decisión
+
+Cilium combina un datapath de red eBPF con proxies como Envoy para el análisis/política L7. No es una red L7 completamente libre de proxies. La autenticación mutua fuera de banda de Cilium 1.20.1 es Beta y usa un handshake fuera de banda; el cifrado WireGuard/IPsec es un requisito separado. Consulte la [guía de mesh de Cilium](../../cilium-service-mesh/README.md) para conocer sus características reales y restricciones de Cluster Mesh.
+
+Cilium 1.20.1 también proporciona una [beta independiente de cifrado transparente ztunnel](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst), seleccionada con `encryption.type: ztunnel`. Proporciona mTLS de cargas de trabajo TCP con inscripción por namespace; ambos endpoints deben estar inscritos. Excluye ClusterMesh y Pods con red de host, y la guía publicada advierte que las políticas L4 normales no funcionan en esta ruta salvo al dirigirse al puerto HBONE 15008. Es una elección de despliegue distinta, con sus propios requisitos de CA/bootstrap.
+
+## Evidencia de rendimiento
+
+### Cifras originales: históricas y no verificadas
+
+El texto anterior describía una prueba de **EKS 1.28 de tres nodos, m5.xlarge, 100 servicios y 1.000 RPS** y mencionaba Istio 1.24, Linkerd 2.15, Kong Mesh 2.8 y Consul 1.19. No proporcionaba muestras sin procesar, un harness reproducible, versiones exactas de patch/proxy ni un benchmark de origen. Estos números no pueden establecer una clasificación actual de productos:
+
+| Entrada original | p50 | p95 | p99 | Afirmación de CPU | Afirmación de memoria |
+|---|---:|---:|---:|---:|---:|
+| Línea base |0.1 ms|0.2 ms|0.3 ms|—|—|
+| Linkerd |+0.5 ms|+0.8 ms|+1.2 ms|+3–8%|+20–50 MB|
+| Istio |+1.0 ms|+2.5 ms|+3.5 ms|+5–15%|+50–150 MB|
+| Kong Mesh |+0.8 ms|+2.0 ms|+3.0 ms|+5–12%|+40–120 MB|
+| Consul |+1.0 ms|+2.5 ms|+3.5 ms|+6–14%|+50–140 MB|
+
+Las estimaciones originales del plano de control eran Istio 0.5–1 CPU/1–2 GB, Linkerd 0.1–0.3 CPU/200–500 MB, Kong 0.2–0.5 CPU/500 MB–1 GB y Consul 0.5–1 CPU/1–2 GB. Las estimaciones de CPU por proxy iban desde 20–100m para Linkerd hasta 100–500m para Istio/Consul. Son entradas no verificadas, no valores predeterminados, mediciones ni recomendaciones de capacidad. Contar los distintos componentes de Linkerd tampoco equivale a contar réplicas de un componente.
+
+El gráfico de rendimiento eliminado afirmaba que Linkerd mantenía el 95–98%, Kong el 90–95% e Istio/Consul el 85–92% del rendimiento de la línea base, sin datos de respaldo. No puede justificar «Linkerd es el más rápido», un porcentaje fijo de recursos ni un tamaño mínimo de flota.
+
+### Una comparación reproducible
+
+Mantenga las versiones reales de producto/proxy/Kubernetes, hardware y configuración completa adjuntas a los resultados. Iguale el protocolo/payload/concurrencia de tráfico, TLS/autenticación, política, telemetría y límites de recursos. Informe las distribuciones de latencia absoluta de línea base y con mesh, el rendimiento bajo un límite definido de error/SLO, CPU/memoria por componente y variabilidad de ejecuciones repetidas.
+
+Compare el comportamiento equivalente de HA y fallos, incluidos rollout, drenaje, reutilización de conexiones, telemetría ausente y pérdida del plano de control. Mida los errores sin procesar por separado de los resultados visibles para el cliente tras los reintentos. No adelante las etiquetas de versión históricas sin volver a ejecutar y conservar el experimento.
+
+## Gestión de tráfico
+
+| Capacidad | Qué comparar de forma concreta |
+|---|---|
+| Enrutamiento ponderado/por encabezado | Comportamiento de Istio VirtualService, Linkerd HTTPRoute, Kong MeshHTTPRoute y Consul router/splitter/resolver |
+| Blue/Green o canary | Una ruta es solo una parte; un controlador de rollout o flujo de trabajo de despliegue debe gestionar revisiones, análisis y reversión |
+| Reintentos/timeouts | Alcance de solicitud/protocolo compatible, política predeterminada, presupuestos e idempotencia de la aplicación |
+| Limitación de tasa | Contadores locales frente a compartidos, identidad, política de fallos y alcance real de las réplicas |
+| Fallos/mirroring | API/filtro compatible y configuración generada observada; las escrituras reflejadas pueden tener efectos secundarios |
+
+Linkerd admite limitación de tasa local mediante HTTPLocalRateLimitPolicy, incluidos límites por identidad, y enrutamiento dinámico por propiedades de solicitud. Los límites locales por proxy no son una cuota global de servicio. Las características de Consul y Kong pueden depender de la edición/API seleccionada; una tabla general de «básico/enterprise/no» es insuficiente.
+
+### Ejemplos independientes de enrutamiento de solo lectura
+
+Úselos como **alternativas en el mesh apropiado**, no como controladores superpuestos en una misma carga de trabajo. Asumen Pods `reviews` existentes en `mesh-demo`, etiquetas de versión reales, un listener HTTP en 9080 e inscripción de mesh coincidente. Esta forma de Service proporciona puertos explícitos; no crea las aplicaciones:
 
 ```yaml
-apiVersion: kuma.io/v1alpha1
-kind: Mesh
+apiVersion: v1
+kind: Service
 metadata:
-  name: default
+  name: reviews
+  namespace: mesh-demo
 spec:
-  # Enable global mTLS
-  mtls:
-    enabledBackend: ca-1
-    backends:
-    - name: ca-1
-      type: builtin
-      dpCert:
-        rotation:
-          expiration: 24h
-      conf:
-        caCert:
-          RSAbits: 2048
-          expiration: 10y
-  # Global metrics collection
-  metrics:
-    enabledBackend: prometheus-1
-    backends:
-    - name: prometheus-1
-      type: prometheus
-      conf:
-        port: 5670
-        path: /metrics
-```
-
-**TrafficRoute (enrutamiento entre zonas)**:
-
-```yaml
-apiVersion: kuma.io/v1alpha1
-kind: TrafficRoute
+  selector:
+    app: reviews
+  ports:
+  - name: http
+    port: 9080
+    targetPort: 9080
+    appProtocol: http
+---
+apiVersion: v1
+kind: Service
 metadata:
-  name: api-route
-  namespace: kuma-system
+  name: reviews-v1
+  namespace: mesh-demo
 spec:
-  sources:
-  - match:
-      kuma.io/service: '*'
-  destinations:
-  - match:
-      kuma.io/service: api
-  conf:
-    # Local zone priority (80%)
-    loadBalancer:
-      roundRobin: {}
-    split:
-    - weight: 80
-      destination:
-        kuma.io/service: api
-        kuma.io/zone: zone-1
-    - weight: 20
-      destination:
-        kuma.io/service: api
-        kuma.io/zone: zone-2
-```
-
-**TrafficPermission (control de acceso entre servicios)**:
-
-```yaml
-apiVersion: kuma.io/v1alpha1
-kind: TrafficPermission
+  selector:
+    app: reviews
+    version: v1
+  ports:
+  - name: http
+    port: 9080
+    targetPort: 9080
+    appProtocol: http
+---
+apiVersion: v1
+kind: Service
 metadata:
-  name: api-to-database
-  namespace: kuma-system
+  name: reviews-v2
+  namespace: mesh-demo
 spec:
-  sources:
-  - match:
-      kuma.io/service: api
-      kuma.io/zone: '*'  # api service from all zones
-  destinations:
-  - match:
-      kuma.io/service: database
-      kuma.io/zone: zone-3  # database in Zone 3 only
+  selector:
+    app: reviews
+    version: v2
+  ports:
+  - name: http
+    port: 9080
+    targetPort: 9080
+    appProtocol: http
 ```
 
-**Ventajas de la arquitectura de Kong Mesh**
+Las siguientes comparaciones se refieren a solicitudes de revisión de solo lectura. Antes de enrutar escrituras, audite por separado los reintentos heredados de mesh/cliente y la idempotencia. Un encabezado de enrutamiento es una entrada controlada por el cliente, no autenticación.
 
-**Arquitectura multi-zone**:
-
-* **Service Mesh global**: Integra múltiples clusters y entornos en una única malla
-* **Gestión independiente de zonas**: Cada zona opera de forma independiente; el tráfico local funciona normalmente incluso si falla Global CP
-* **Failover automático**: Cambia automáticamente a otra zona ante el fallo de una zona
-* **Consistencia de políticas**: Las mismas políticas se aplican automáticamente a todas las zonas
-
-**Soporte universal**:
-
-* **Kubernetes + VM**: Soporta por igual K8s y VM
-* **Multi-cloud**: Integra AWS, GCP, Azure y On-Premises
-* **Integración de sistemas heredados**: Añade gradualmente workloads de VM existentes a la malla
-
-**Comodidad operativa**:
-
-* **GUI incluida**: Gestión visual con la GUI de Kong Mesh
-* **Plantillas de políticas**: Se proporcionan plantillas de políticas predefinidas
-* **Service Discovery automático**: Los servicios se descubren automáticamente sin configuración manual
-
-**Funcionalidades empresariales** (de pago):
-
-* **RBAC**: Control de acceso detallado basado en roles
-* **Multi-tenancy**: Aislamiento y gestión a nivel de zona
-* **Soporte 24/7**: Soporte profesional para entornos de producción
-* **Observabilidad avanzada**: Métricas y tracing detallados
-
-### Consul Connect
-
-```mermaid
-flowchart TB
-    subgraph "Consul Servers"
-        ConsulServer[Consul Server Cluster<br/>Service Catalog + KV Store]
-    end
-
-    subgraph "Kubernetes Cluster"
-        subgraph "Pod 1"
-            App1[Application]
-            ConsulClient1[Consul Client]
-            EnvoyProxy1[Envoy Sidecar]
-        end
-        subgraph "Pod 2"
-            App2[Application]
-            ConsulClient2[Consul Client]
-            EnvoyProxy2[Envoy Sidecar]
-        end
-    end
-
-    subgraph "VM Infrastructure"
-        AppVM[Legacy Application]
-        ConsulClientVM[Consul Client]
-        EnvoyVM[Envoy Proxy]
-    end
-
-    ConsulClient1 -->|Service Registration| ConsulServer
-    ConsulClient2 -->|Service Registration| ConsulServer
-    ConsulClientVM -->|Service Registration| ConsulServer
-    ConsulServer -->|Service Discovery| EnvoyProxy1
-    ConsulServer -->|Service Discovery| EnvoyProxy2
-    ConsulServer -->|Service Discovery| EnvoyVM
-    EnvoyProxy1 <-->|mTLS| EnvoyProxy2
-    EnvoyProxy1 <-->|mTLS| EnvoyVM
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-    classDef vm fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class ConsulServer,ConsulClient1,ConsulClient2 k8sComponent;
-    class App1,App2,EnvoyProxy1,EnvoyProxy2 userApp;
-    class AppVM,ConsulClientVM,EnvoyVM vm;
-```
-
-**Características**:
-
-* **Proxy**: Envoy o proxy integrado
-* **Arquitectura**: Consul Server Cluster + Consul Clients
-* **Configuración**: HCL o Kubernetes CRD
-* **Fortalezas**: Service Discovery sólido, diseño VM-first, multi-datacenter
-* **Debilidades**: Requiere gestión de la infraestructura de Consul; la integración con Kubernetes es más compleja que Istio
-
-**Componentes principales**:
-
-* **Consul Server**: Service Catalog, KV Store, gestión de certificados
-* **Consul Client**: Se ejecuta en cada nodo, registro de servicios
-* **Envoy Sidecar**: Proxy de tráfico
-
-<span id="performance-comparison"></span>
-
-## Comparación de rendimiento
-
-### Sobrecarga de latencia
-
-```mermaid
-flowchart LR
-    subgraph "Baseline"
-        B[Direct K8s Service<br/>0.1ms]
-    end
-
-    subgraph "Linkerd"
-        L[Linkerd2-proxy<br/>+0.5-1ms]
-    end
-
-    subgraph "Istio"
-        I[Envoy Proxy<br/>+1-3ms]
-    end
-
-    subgraph "Kong Mesh"
-        K[Kuma DP<br/>+1-2.5ms]
-    end
-
-    subgraph "Consul"
-        C[Envoy/Built-in<br/>+1-3ms]
-    end
-
-    B -.->|Lightweight Proxy| L
-    B -.->|Feature-rich| I
-    B -.->|Medium| K
-    B -.->|Medium| C
-
-    classDef baseline fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
-    classDef fast fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef medium fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    class B baseline;
-    class L fast;
-    class I,K,C medium;
-```
-
-**Resultados de benchmarks** (aumento de latencia P99, 1000 RPS):
-
-| Service Mesh       | P50    | P95    | P99    | Uso de CPU | Uso de memoria |
-| ------------------ | ------ | ------ | ------ | ---------- | -------------- |
-| **Baseline**       | 0.1ms  | 0.2ms  | 0.3ms  | -          | -              |
-| **Linkerd**        | +0.5ms | +0.8ms | +1.2ms | +3-8%      | +20-50MB       |
-| **Istio**          | +1.0ms | +2.5ms | +3.5ms | +5-15%     | +50-150MB      |
-| **Kong Mesh**      | +0.8ms | +2.0ms | +3.0ms | +5-12%     | +40-120MB      |
-| **Consul Connect** | +1.0ms | +2.5ms | +3.5ms | +6-14%     | +50-140MB      |
-
-**Entorno de prueba**: EKS 1.28 de 3 nodos, m5.xlarge, 100 servicios, 1000 RPS
-
-### Comparación de uso de recursos
-
-#### Recursos del Control Plane
-
-| Componente   | Istio      | Linkerd             | Kong Mesh     | Consul Connect       |
-| ------------ | ---------- | ------------------- | ------------- | -------------------- |
-| **CPU**      | 500m-1     | 100m-300m           | 200m-500m     | 500m-1               |
-| **Memoria**  | 1-2GB      | 200-500MB           | 500MB-1GB     | 1-2GB                |
-| **Réplicas** | 1 (Istiod) | 3-5 (microservicios) | 1-2 (Zone CP) | 3-5 (Consul Servers) |
-
-#### Recursos del Data Plane (por Pod)
-
-| Proxy      | Istio Envoy | Linkerd2-proxy | Kuma DP  | Consul Envoy |
-| ---------- | ----------- | -------------- | -------- | ------------ |
-| **CPU**    | 100-500m    | 20-100m        | 100-400m | 100-500m     |
-| **Memoria** | 50-150MB    | 20-50MB        | 40-120MB | 50-140MB     |
-
-### Comparación de throughput
-
-**RPS máximo (solicitudes por segundo)**:
-
-```mermaid
-flowchart LR
-    subgraph Throughput[Throughput Comparison]
-        direction TB
-        L[Linkerd<br/>~95-98% of baseline]
-        K[Kong Mesh<br/>~90-95% of baseline]
-        I[Istio<br/>~85-92% of baseline]
-        C[Consul<br/>~85-92% of baseline]
-    end
-
-    classDef high fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef medium fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-
-    class L high;
-    class I,K,C medium;
-```
-
-**Conclusión**:
-
-* **Linkerd**: Menor sobrecarga, proxy ligero
-* **Istio/Consul**: Sobrecarga ligeramente mayor debido a más funcionalidades
-* **Kong Mesh**: Nivel de rendimiento medio
-
-<span id="feature-comparison"></span>
-
-## Comparación de funcionalidades
-
-### Tabla de comparación integral de funcionalidades
-
-| Área de funcionalidad      | Istio             | Linkerd   | Kong Mesh    | Consul Connect |
-| -------------------------- | ----------------- | --------- | ------------ | -------------- |
-| **Gestión del tráfico**    |                   |           |              |                |
-| División de tráfico (Canary) | Detallada       | Básica    | Detallada    | Básica         |
-| Pruebas A/B                | Basadas en headers | Limitada | Basadas en headers | Limitada   |
-| Blue-Green                 | Sí                | Sí        | Sí           | Sí             |
-| Mirroring de tráfico       | Sí                | No        | Sí           | Enterprise     |
-| Circuit Breaking           | Sí                | Básico    | Sí           | Sí             |
-| Retry                      | Detallado         | Básico    | Detallado    | Básico         |
-| Timeout                    | Sí                | Sí        | Sí           | Sí             |
-| Inyección de fallos        | Sí                | Limitada  | Sí           | Limitada       |
-| **Seguridad**              |                   |           |              |                |
-| Automatización de mTLS     | Sí                | Sí        | Sí           | Sí             |
-| Políticas de autorización  | Muy detalladas    | Básicas   | Detalladas   | Intentions     |
-| Integración con CA externa | Sí                | Sí        | Sí           | Sí             |
-| Autenticación JWT          | Sí                | Limitada  | Sí           | Sí             |
-| Limitación de tasa         | EnvoyFilter       | No        | Sí           | Enterprise     |
-| **Observabilidad**         |                   |           |              |                |
-| Métricas (Prometheus)      | Ricas             | Básicas   | Ricas        | Básicas        |
-| Tracing distribuido        | Todos los backends | Jaeger   | Todos los backends | Jaeger/Zipkin |
-| Logs de acceso             | Muy detallados    | Básicos   | Detallados   | Básicos        |
-| Visualización de topología | Kiali             | Dashboard | GUI          | UI             |
-| OpenTelemetry              | Sí                | Sí        | Sí           | Sí             |
-| **Soporte de plataforma**  |                   |           |              |                |
-| Kubernetes                 | Sí                | Sí        | Sí           | Sí             |
-| Máquinas virtuales         | Limitado          | No        | Excelente    | Excelente      |
-| Multi-cluster              | Excelente         | Compatible | Excelente   | Excelente      |
-| Service Discovery          | Sí                | Sí        | Sí           | Muy sólido     |
-| **Operaciones**            |                   |           |              |                |
-| Complejidad de instalación | Alta              | Baja      | Media        | Media          |
-| Actualización              | Media             | Fácil     | Media        | Media          |
-| Solución de problemas      | Difícil           | Fácil     | Media        | Media          |
-| Herramienta CLI            | istioctl          | linkerd   | kumactl      | consul         |
-
-**Leyenda**:
-
-* Sí = Totalmente compatible
-* Limitado = Soporte limitado o funcionalidad Enterprise
-* No = No compatible
-
-### Comparación detallada de gestión del tráfico
-
-#### Ejemplo de despliegue Canary
-
-**Istio**:
+#### Istio
 
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews
+  namespace: mesh-demo
 spec:
   hosts:
   - reviews
   http:
-  - match:
+  - name: canary-header
+    match:
     - headers:
-        user-agent:
-          regex: ".*Mobile.*"
+        x-release:
+          exact: canary
     route:
     - destination:
         host: reviews
         subset: v2
+        port:
+          number: 9080
       weight: 100
-  - route:
+    retries:
+      attempts: 0
+  - name: weighted
+    route:
     - destination:
         host: reviews
         subset: v1
+        port:
+          number: 9080
       weight: 90
     - destination:
         host: reviews
         subset: v2
+        port:
+          number: 9080
       weight: 10
+    retries:
+      attempts: 0
 ---
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
   name: reviews
+  namespace: mesh-demo
 spec:
   host: reviews
   subsets:
@@ -1027,132 +222,232 @@ spec:
       version: v2
 ```
 
-**Linkerd**:
+Ambas rutas deshabilitan explícitamente los reintentos del mesh. Las etiquetas de subset deben coincidir con endpoints reales; las ponderaciones de tráfico no crean ni escalan las versiones. La exposición de Gateway, si es necesaria, requiere su propia asociación host/TLS.
+
+#### Linkerd
 
 ```yaml
-apiVersion: split.smi-spec.io/v1alpha2
-kind: TrafficSplit
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
-  name: reviews-split
+  name: reviews-outbound
+  namespace: mesh-demo
 spec:
-  service: reviews
-  backends:
-  - service: reviews-v1
-    weight: 90
-  - service: reviews-v2
-    weight: 10
----
-# Requires separate Service creation
-apiVersion: v1
-kind: Service
-metadata:
-  name: reviews-v1
-spec:
-  selector:
-    app: reviews
-    version: v1
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: reviews-v2
-spec:
-  selector:
-    app: reviews
-    version: v2
+  parentRefs:
+  - group: ''
+    kind: Service
+    name: reviews
+    port: 9080
+  rules:
+  - matches:
+    - headers:
+      - name: x-release
+        type: Exact
+        value: canary
+    backendRefs:
+    - group: ''
+      kind: Service
+      name: reviews-v2
+      port: 9080
+      weight: 100
+  - backendRefs:
+    - group: ''
+      kind: Service
+      name: reviews-v1
+      port: 9080
+      weight: 90
+    - group: ''
+      kind: Service
+      name: reviews-v2
+      port: 9080
+      weight: 10
 ```
 
-**Kong Mesh**:
+Esta ruta productora de Gateway API se asocia al Service y configura los **clientes** con mesh. El grupo Service central es la cadena vacía. No requiere la extensión SMI TrafficSplit obsoleta. Los ServiceProfiles existentes tienen prioridad sobre los HTTPRoutes de salida para el mismo Service; resuelva esa propiedad deliberadamente. Inspeccione Accepted/ResolvedRefs y el enrutamiento real antes de depender de él.
+
+#### Kong Mesh
 
 ```yaml
 apiVersion: kuma.io/v1alpha1
-kind: TrafficRoute
+kind: MeshHTTPRoute
 metadata:
-  name: reviews-route
+  name: reviews-weighted
+  namespace: mesh-demo
+  labels:
+    kuma.io/mesh: default
 spec:
-  sources:
-  - match:
-      kuma.io/service: '*'
-  destinations:
-  - match:
-      kuma.io/service: reviews
-  conf:
-    split:
-    - weight: 90
-      destination:
-        kuma.io/service: reviews
-        version: v1
-    - weight: 10
-      destination:
-        kuma.io/service: reviews
-        version: v2
+  targetRef:
+    kind: Dataplane
+    labels:
+      app: productpage
+  to:
+  - targetRef:
+      kind: MeshService
+      name: reviews
+      sectionName: http
+    rules:
+    - matches:
+      - path:
+          type: PathPrefix
+          value: /
+      default:
+        backendRefs:
+        - kind: MeshService
+          name: reviews-v1
+          port: 9080
+          weight: 90
+        - kind: MeshService
+          name: reviews-v2
+          port: 9080
+          weight: 10
 ```
 
-**Consul Connect**:
+Aquí `reviews`, `reviews-v1` y `reviews-v2` denotan **nombres reales de recursos MeshService**, no la suposición de que todo nombre generado es igual al nombre del Service de Kubernetes. Resuelva sus nombres, secciones de namespace/puerto y preparación de backend en el entorno instalado. El Dataplane del llamador seleccionado debe incluir la etiqueta de aplicación, y los puertos HTTP de Service deben declarar el protocolo compatible. El ejemplo cambia ponderaciones, no prioridad de localidad ni capacidad.
 
-```hcl
-Kind = "service-splitter"
-Name = "reviews"
-Splits = [
-  {
-    Weight        = 90
-    ServiceSubset = "v1"
-  },
-  {
-    Weight        = 10
-    ServiceSubset = "v2"
-  },
-]
+#### Consul
+
+```yaml
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceDefaults
+metadata:
+  name: reviews
+  namespace: mesh-demo
+spec:
+  protocol: http
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceResolver
+metadata:
+  name: reviews
+  namespace: mesh-demo
+spec:
+  subsets:
+    v1:
+      filter: Service.Meta.version == v1
+      onlyPassing: true
+    v2:
+      filter: Service.Meta.version == v2
+      onlyPassing: true
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceSplitter
+metadata:
+  name: reviews
+  namespace: mesh-demo
+spec:
+  splits:
+  - weight: 90
+    service: reviews
+    serviceSubset: v1
+  - weight: 10
+    service: reviews
+    serviceSubset: v2
 ```
 
-**Comparación**:
+Estas son las formas CRD de Kubernetes de las entradas de configuración de Consul y requieren el controlador/RBAC de Consul configurado. Los metadatos de Service en el catálogo de Consul deben contener realmente `version=v1/v2`; una etiqueta de Pod de Kubernetes por sí sola no prueba que existan metadatos en el catálogo. El protocolo HTTP y los subsets del resolver completan la definición de división. Revise el mapeo Kubernetes-a-Consul de namespace/Service y los endpoints saludables en lugar de aplicar varios propietarios a la misma entrada de configuración.
 
-* **Istio**: Control más detallado (enrutamiento basado en headers, diversas condiciones de coincidencia)
-* **Linkerd**: Sencillo, pero requiere Services separados
-* **Kong Mesh**: Kuma CRD, intuitivo
-* **Consul**: Configuración HCL, integrada con Service Discovery
 
-<span id="security-features"></span>
+## Seguridad
 
-## Funcionalidades de seguridad
+El cifrado, la identidad de pares, la autorización del llamador y la autenticación de la aplicación son controles independientes. El mTLS automático entre proxies inscritos no significa que se deniegue todo el tráfico sin mesh ni que todos los llamadores estén autorizados.
 
-### Comparación de configuración de mTLS
-
-**Istio**:
+### Istio: mTLS de entrada y autorización de solicitudes
 
 ```yaml
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
-  name: default
-  namespace: istio-system
+  name: reviews-strict
+  namespace: mesh-demo
 spec:
+  selector:
+    matchLabels:
+      app: reviews
   mtls:
     mode: STRICT
 ---
-apiVersion: networking.istio.io/v1
-kind: DestinationRule
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
 metadata:
-  name: default
-  namespace: istio-system
+  name: reviews-read
+  namespace: mesh-demo
 spec:
-  host: "*.local"
-  trafficPolicy:
-    tls:
-      mode: ISTIO_MUTUAL
+  selector:
+    matchLabels:
+      app: reviews
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - cluster.local/ns/mesh-demo/sa/productpage
+    to:
+    - operation:
+        methods:
+        - GET
+        paths:
+        - /reviews/*
 ```
 
-**Linkerd**:
+Este ejemplo de sidecar requiere la identidad ServiceAccount real de productpage y la carga de trabajo reviews. Auto mTLS puede seleccionar el transporte de salida adecuado; no se requiere una DestinationRule ISTIO_MUTUAL global de `*.local` y esta puede romper destinos no relacionados/de texto plano. STRICT es aplicación entrante, mientras que la política ALLOW controla la identidad/método/ruta mostrados.
 
-```bash
-# mTLS enabled automatically (no configuration needed)
-linkerd install | kubectl apply -f -
+La coincidencia de cadenas de AuthorizationPolicy es exacta, por prefijo, sufijo o presencia; `*Mobile*` no es una coincidencia general de substring-regex. User-Agent tampoco es una identidad de carga de trabajo. La asociación L7 de Ambient requiere el modelo de política de waypoint compatible en lugar de copiar sin cambios un selector de sidecar.
 
-# Add annotation to namespace
-kubectl annotate namespace default linkerd.io/inject=enabled
+### Linkerd: política de entrada explícita
+
+```yaml
+apiVersion: policy.linkerd.io/v1beta3
+kind: Server
+metadata:
+  name: reviews-http
+  namespace: mesh-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: reviews
+  port: 9080
+  proxyProtocol: HTTP/1
+  accessPolicy: deny
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: reviews-read
+  namespace: mesh-demo
+spec:
+  parentRefs:
+  - group: policy.linkerd.io
+    kind: Server
+    name: reviews-http
+  rules:
+  - matches:
+    - method: GET
+      path:
+        type: PathPrefix
+        value: /reviews/
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: reviews-read
+  namespace: mesh-demo
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: reviews-read
+  requiredAuthenticationRefs:
+  - kind: ServiceAccount
+    name: productpage
 ```
 
-**Kong Mesh**:
+El Server selecciona un puerto de Pod declarado real y aquí se establece de forma predeterminada para denegar. El HTTPRoute entrante selecciona solicitudes GET bajo `/reviews/`; la AuthorizationPolicy requiere el ServiceAccount productpage. Los grupos de API objetivo son explícitos: omitir un grupo significa el grupo central, no un Server de Linkerd inferido. Una referencia ausente/incorrecta no crea una concesión de autorización.
+
+Los CRD edge comprobados sirven Server v1beta3 y versiones anteriores, incluida v1beta1; no se afirma que la API anterior se haya eliminado. Use las versiones de API admitidas por el artefacto seleccionado. La política de namespace/Pod predeterminada `all-unauthenticated` es distinta del cifrado automático entre pares con mesh y de esta política Server explícita.
+
+### Kong Mesh: habilitar mTLS con permisos deliberados
+
+La instalación básica no cifra automáticamente todo el tráfico de Service. Planifique los permisos antes de habilitar mTLS en cargas de trabajo existentes, porque la comunicación sin permisos coincidentes puede bloquearse. La configuración mínima de Mesh es:
 
 ```yaml
 apiVersion: kuma.io/v1alpha1
@@ -1165,563 +460,124 @@ spec:
     backends:
     - name: ca-1
       type: builtin
-      dpCert:
-        rotation:
-          expiration: 24h
-      conf:
-        caCert:
-          RSAbits: 2048
-          expiration: 10y
 ```
 
-**Consul Connect**:
-
-```hcl
-Kind = "mesh"
-Meta = {
-  "consul.hashicorp.com/gateway-kind" = "mesh-gateway"
-}
-TLS {
-  Incoming {
-    TLSMinVersion = "TLSv1_2"
-  }
-}
-```
-
-### Comparación de políticas de autorización
-
-**Istio** (el más detallado):
-
-```yaml
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: reviews-policy
-spec:
-  selector:
-    matchLabels:
-      app: reviews
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        principals: ["cluster.local/ns/default/sa/productpage"]
-    to:
-    - operation:
-        methods: ["GET"]
-        paths: ["/reviews/*"]
-    when:
-    - key: request.headers[user-agent]
-      values: ["*Mobile*"]
-```
-
-**Linkerd**:
-
-```yaml
-apiVersion: policy.linkerd.io/v1beta1
-kind: Server
-metadata:
-  name: reviews-server
-spec:
-  podSelector:
-    matchLabels:
-      app: reviews
-  port: 9080
-  proxyProtocol: HTTP/1
----
-apiVersion: policy.linkerd.io/v1alpha1
-kind: AuthorizationPolicy
-metadata:
-  name: reviews-policy
-spec:
-  targetRef:
-    kind: Server
-    name: reviews-server
-  requiredAuthenticationRefs:
-  - kind: ServiceAccount
-    name: productpage
-```
-
-**Kong Mesh**:
+Un ejemplo restringido de nivel de servicio es:
 
 ```yaml
 apiVersion: kuma.io/v1alpha1
-kind: TrafficPermission
+kind: MeshTrafficPermission
 metadata:
-  name: reviews-permission
+  name: productpage-to-reviews
+  namespace: mesh-demo
+  labels:
+    kuma.io/mesh: default
 spec:
-  sources:
-  - match:
-      kuma.io/service: productpage
-  destinations:
-  - match:
-      kuma.io/service: reviews
+  targetRef:
+    kind: Dataplane
+    labels:
+      app: reviews
+  from:
+  - targetRef:
+      kind: MeshSubset
+      tags:
+        kuma.io/service: productpage
+    default:
+      action: Allow
 ```
 
-**Consul Connect** (Intentions):
+Reemplace `productpage` por la etiqueta de identidad `kuma.io/service` de origen real y verifique las etiquetas/namespace del Dataplane objetivo. No se garantiza que sea igual a un nombre de Service de Kubernetes simple. Este permiso es autorización a nivel de servicio, no equivalente a las reglas GET/ruta de Istio/Linkerd anteriores. No lo combine con TrafficPermission heredado. Los recursos necesarios de transporte, identidad y política deben estar listos antes de cambiar la aplicación de producción.
 
-```hcl
-Kind = "service-intentions"
-Name = "reviews"
-Sources = [
-  {
-    Name   = "productpage"
-    Action = "allow"
-  }
-]
-```
-
-**Comparación**:
-
-* **Istio**: Control L7 muy detallado (método, Path, Header)
-* **Linkerd**: Basado en Service Account, sencillo
-* **Kong Mesh**: Permisos a nivel de Service
-* **Consul**: Basado en Intentions, intuitivo
-
-<span id="observability-features"></span>
-
-## Funcionalidades de observabilidad
-
-### Recopilación de métricas
-
-**Istio**:
-
-* **Cantidad de métricas**: Más de 50 métricas predeterminadas
-* **Personalización**: Extensión ilimitada con EnvoyFilter
-* **Integración**: Prometheus, Grafana, Kiali
-
-**Linkerd**:
-
-* **Cantidad de métricas**: Más de 20 métricas predeterminadas (centradas en señales doradas)
-* **Personalización**: Limitada
-* **Integración**: Prometheus, Grafana, Linkerd Dashboard
-
-**Kong Mesh**:
-
-* **Cantidad de métricas**: Más de 40 métricas predeterminadas
-* **Personalización**: Datadog, Prometheus
-* **Integración**: GUI de Kong Mesh, Grafana
-
-**Consul Connect**:
-
-* **Cantidad de métricas**: Más de 30 métricas predeterminadas
-* **Personalización**: Integración con Telegraf
-* **Integración**: Consul UI, Prometheus, Grafana
-
-### Tracing distribuido
-
-**Backends compatibles**:
-
-| Service Mesh  | Jaeger | Zipkin | Tempo   | Datadog | AWS X-Ray |
-| ------------- | ------ | ------ | ------- | ------- | --------- |
-| **Istio**     | Sí     | Sí     | Sí      | Sí      | Sí        |
-| **Linkerd**   | Sí     | Sí     | Sí      | Limitado | Limitado |
-| **Kong Mesh** | Sí     | Sí     | Sí      | Sí      | Sí        |
-| **Consul**    | Sí     | Sí     | Limitado | Limitado | Limitado |
-
-### Herramientas de visualización
-
-**Istio + Kiali**:
+### Consul: Intentions L7
 
 ```yaml
-apiVersion: kiali.io/v1alpha1
-kind: Kiali
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceIntentions
 metadata:
-  name: kiali
+  name: reviews
+  namespace: mesh-demo
 spec:
-  deployment:
-    accessible_namespaces: ["**"]
-  external_services:
-    prometheus:
-      url: http://prometheus:9090
-    grafana:
-      url: http://grafana:3000
-    tracing:
-      url: http://jaeger-query:16686
+  destination:
+    name: reviews
+  sources:
+  - name: productpage
+    permissions:
+    - action: allow
+      http:
+        methods:
+        - GET
+        pathPrefix: /reviews/
 ```
 
-**Linkerd Dashboard**:
+Las identidades de Service de Consul y la configuración del protocolo HTTP deben coincidir con el catálogo y los proxies reales. Los permisos L7 demuestran por qué «Consul solo tiene autorización básica a nivel de servicio» es inexacto. No combine la acción L4 de una fuente con sus permisos L7 como si ambas se aplicaran de forma independiente. Revise otras intentions/política predeterminada, namespaces/partitions y el mapeo del controlador.
+
+La versión mínima de TLS de una entrada de configuración de mesh cambia una configuración TLS; no inscribe una aplicación, instala un proxy ni crea una configuración completa de CA/ACL. Las extensiones de Envoy y las API de escape también requieren los permisos de la versión real de Consul; la versión 2.0.4 refuerza los requisitos mesh:write para extensiones que ejecutan código.
+
+## Observabilidad
+
+El recuento de métricas no es una clasificación fija significativa: las estadísticas, dimensiones, política, scraping e instrumentación de aplicación habilitados afectan tanto a la señal como a la sobrecarga. EnvoyFilter no es una API de extensión de telemetría ilimitada, y todos los backends de tracing no son intercambiables sin protocolos/exportadores compatibles.
+
+| Mesh | Configurar y verificar |
+|---|---|
+| Istio | API de Telemetry, métricas reales de proxy/plano de control, formato de access-log, proveedor de tracing y backends; integración opcional de Kiali/Grafana |
+| Linkerd | Métricas golden/por ruta del proxy, configuración de viz o monitorización externa seleccionada y tracing de proxy/aplicación configurado |
+| Kong Mesh | MeshMetric, MeshTrace y MeshAccessLog con backends compatibles; disponibilidad de GUI/plano de control y acceso configurados por separado |
+| Consul | Métricas de proxy/agent, tracing configurado y proveedor de métricas de UI con configuraciones reales de endpoint/autenticación |
+
+Para trazas de extremo a extremo, propague el contexto entre llamadas de aplicación, inicie/muestree trazas según sea necesario y configure la entrega al collector/backend. Linkerd documenta explícitamente esos requisitos; un span de proxy por sí solo no es la traza completa de la aplicación. Un collector OpenTelemetry puede conectar protocolos compatibles, pero su presencia no prueba todas las combinaciones de producto/backend.
+
+Con los componentes pertinentes ya instalados y autorizados, los comandos de inspección útiles incluyen:
 
 ```bash
-linkerd viz install | kubectl apply -f -
+istioctl dashboard kiali -n istio-system
+linkerd viz check
+linkerd viz stat deploy -n mesh-demo
 linkerd viz dashboard
 ```
 
-**Kong Mesh GUI**:
+Estos no instalan dashboards ni backends. La configuración y compatibilidad actuales de Kiali deben verificarse por separado; el ejemplo antiguo accessible_namespaces y los valores heredados de addon incluido de Istio no son una receta de instalación actual. Consulte la [guía de observabilidad](../observability/README.md) para configuraciones mantenidas y límites de validación. La GUI de Kong no se habilita mediante un backend de métricas Mesh vacío, y una URL de métricas de UI de Consul debe resolverse desde el entorno real del servidor.
 
-```yaml
-apiVersion: kuma.io/v1alpha1
-kind: Mesh
-metadata:
-  name: default
-spec:
-  metrics:
-    enabledBackend: prometheus-1
-    backends:
-    - name: prometheus-1
-      type: prometheus
-```
+## Multiclúster
 
-**Consul UI**:
+| Sistema | Ruta de descubrimiento/datos | Límite importante |
+|---|---|---|
+| Istio | Cada primario lee API de Kubernetes autorizadas; el tráfico entre redes usa gateways east-west configurados | Los secretos remotos no copian CRD ni establecen red/confianza. Sidecar y ambient admiten topologías diferentes. |
+| Linkerd | Los Services locales reflejados describen servicios remotos; el modo jerárquico usa el gateway **objetivo**; el modo plano admite rutas directas de Pod | El mirror está en el clúster de origen. Un gateway de origen no es inherentemente necesario. Los Services federados usan el modelo plano y no admiten miembros headless. |
+| Kong Mesh | KDS intercambia recursos de zona/Service; el ingress de zona de destino y el egress opcional de zona de origen transportan tráfico entre zonas | El comportamiento de localidad/failover procede de la política aplicable y los endpoints elegibles; no hay una división 80/20 inherente ni failover incondicional. |
+| Consul | Modelo de peering de clúster o federación WAN compatible con rutas de descubrimiento y mesh-gateway | Elija la topología real y configure confianza, servicios exportados, autorización y enrutamiento; los nombres por sí solos no unen clústeres. |
 
-```hcl
-ui_config {
-  enabled = true
-  metrics_provider = "prometheus"
-  metrics_proxy {
-    base_url = "http://prometheus:9090"
-  }
-}
-```
+![Un esquema de patrón de centro de datos Consul federado por WAN con servidores Consul y mesh gateways. El peering de clúster es un modelo de configuración independiente.](../../../.gitbook/assets/en-service-mesh-istio-comparison-01-service-mesh-comparison-16.png)
 
-<span id="multi-cluster-support"></span>
+[Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-comparison-01-service-mesh-comparison-16.html)
 
-## Soporte multi-cluster
+Los límites originales de «máximo aproximado de diez clústeres de Linkerd» y «docenas» genéricas no tenían fuente de cuota/prueba de carga. La capacidad depende de la topología real del plano de control/datos, el recuento de servicios/endpoints, la tasa de actualización y los recursos. El descubrimiento automático de servicios no es replicación automática de políticas ni recuperación ante desastres de aplicación/datos.
 
-### Comparación de arquitectura
+Compruebe la accesibilidad de API/gateway remota, confianza de certificados, DNS, identidad de namespace/Service, servicios exportados y comportamiento ante fallos en ambas direcciones. Prefiera la [guía mantenida de multiclúster de Istio](../advanced/02-multi-cluster.md) a los dos comandos de instalación anteriores con etiquetas meshID y un secreto: esos comandos no constituían una configuración completa de mesh.
 
-**Istio Multi-Primary**:
+## Instalación y operaciones
 
-```mermaid
-flowchart TB
-    subgraph Cluster1["Cluster 1 (us-west)"]
-        Istiod1[Istiod]
-        App1[Service A v1]
-        App2[Service B]
-    end
+### Las versiones son entradas independientes
 
-    subgraph Cluster2["Cluster 2 (us-east)"]
-        Istiod2[Istiod]
-        App3[Service A v2]
-        App4[Service C]
-    end
+| Fuente/artefacto comprobado | Evidencia y limitación de compatibilidad |
+|---|---|
+| Istio 1.31.0 | Kubernetes 1.32–1.37 compatible; siga sus reglas reales de actualización/skew y requisitos de plataforma |
+| CLI/CRD Linkerd edge-26.9.1 | La guía edge pertenece a ese artefacto. La tabla **2.20** publicada por separado enumera Kubernetes 1.31–1.35 y Gateway API 1.2.1–1.5.1; no los trate como límites automáticos para cada build edge/vendor posterior. |
+| Kong Mesh/chart 2.14.4 | Publicado el 3 de septiembre con Kuma 2.14.4. La tabla de validación de Kubernetes publicada actualmente se detiene en 2.13; no se infiere certificación de compatibilidad de 2.14 a partir de un render de chart. La tabla de soporte enumera por separado 2.13 LTS. |
+| Consul/chart 2.0.4 | Aplicación publicada y artefacto Helm comprobados por separado. El mínimo de Kubernetes del chart es metadatos, no una matriz completa de versiones compatibles ni una evaluación de actualización. |
 
-    Istiod1 <-.->|Service Discovery| Istiod2
-    App1 <-->|Cross-cluster mTLS| App3
-    App2 <-->|Cross-cluster mTLS| App4
+Los CRD de Gateway API son dependencias de todo el clúster compartidas por controladores. No instale a ciegas la versión más reciente del catálogo ni degrade un bundle existente sin comprobar cada consumidor.
 
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
+### Traspaso de revisión de Istio
 
-    class Istiod1,Istiod2 k8sComponent;
-    class App1,App2,App3,App4 userApp;
-```
+Use la CLI coincidente y una ruta de actualización admitida desde la versión instalada. La etiqueta histórica 1.24 de este artículo no es autorización para saltar directamente a 1.31. Conserve los valores de instalación revisados, la configuración de gateway/CNI y la propiedad de la revisión.
 
-**Linkerd Multi-cluster**:
-
-```mermaid
-flowchart TB
-    subgraph Cluster1["Source Cluster"]
-        LinkerdCtl1[Linkerd Control Plane]
-        Gateway1[Gateway]
-        App1[Service A]
-    end
-
-    subgraph Cluster2["Target Cluster"]
-        LinkerdCtl2[Linkerd Control Plane]
-        Gateway2[Gateway]
-        App2[Service A Mirror]
-    end
-
-    App1 -->|Route through| Gateway1
-    Gateway1 <-->|mTLS| Gateway2
-    Gateway2 --> App2
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class LinkerdCtl1,LinkerdCtl2,Gateway1,Gateway2 k8sComponent;
-    class App1,App2 userApp;
-```
-
-**Kong Mesh Multi-zone**:
-
-```mermaid
-flowchart TB
-    subgraph Global["Global Control Plane"]
-        KongGlobal[Kong Mesh Global]
-    end
-
-    subgraph Zone1["Zone 1 (AWS)"]
-        KongZone1[Zone CP]
-        App1[Services]
-    end
-
-    subgraph Zone2["Zone 2 (Azure)"]
-        KongZone2[Zone CP]
-        App2[Services]
-    end
-
-    subgraph Zone3["Zone 3 (On-prem)"]
-        KongZone3[Zone CP]
-        App3[Services]
-    end
-
-    KongGlobal -->|Sync Policies| KongZone1
-    KongGlobal -->|Sync Policies| KongZone2
-    KongGlobal -->|Sync Policies| KongZone3
-    App1 <-->|Cross-zone| App2
-    App1 <-->|Cross-zone| App3
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class KongGlobal,KongZone1,KongZone2,KongZone3 k8sComponent;
-    class App1,App2,App3 userApp;
-```
-
-**Consul Multi-datacenter**:
-
-```mermaid
-flowchart TB
-    subgraph DC1["Datacenter 1"]
-        ConsulServer1[Consul Servers]
-        Gateway1[Mesh Gateway]
-        App1[Services]
-    end
-
-    subgraph DC2["Datacenter 2"]
-        ConsulServer2[Consul Servers]
-        Gateway2[Mesh Gateway]
-        App2[Services]
-    end
-
-    ConsulServer1 <-.->|WAN Gossip| ConsulServer2
-    Gateway1 <-->|Mesh Gateway| Gateway2
-    App1 -.->|Service Discovery| ConsulServer1
-    App2 -.->|Service Discovery| ConsulServer2
-
-    classDef k8sComponent fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef userApp fill:#00C7B7,stroke:#333,stroke-width:1px,color:white;
-
-    class ConsulServer1,ConsulServer2,Gateway1,Gateway2 k8sComponent;
-    class App1,App2 userApp;
-```
-
-### Comparación de funcionalidades multi-cluster
-
-| Funcionalidad              | Istio           | Linkerd          | Kong Mesh       | Consul    |
-| -------------------------- | --------------- | ---------------- | --------------- | --------- |
-| **Complejidad de configuración** | Media     | Baja             | Media           | Media     |
-| **Service Discovery**      | Automático      | Servicios espejo | Automático      | Sólido    |
-| **Failover de tráfico**    | Automático      | Manual           | Automático      | Automático |
-| **mTLS**                   | Automático      | Mediante Gateway | Automático      | Automático |
-| **Requisitos de red**      | Flat o Gateway  | Gateway          | Flat o Gateway  | Gateway   |
-| **Sincronización de políticas** | Sí          | Limitada         | Global CP       | Sí        |
-| **Número máximo de clusters** | Decenas      | \~10            | Decenas         | Decenas   |
-
-<span id="operational-complexity"></span>
-
-## Complejidad operativa
-
-### Instalación y actualización
-
-**Istio**:
-
-```bash
-# Install
-istioctl install --set profile=default
-
-# Upgrade (Canary)
-istioctl install --set profile=default --revision=1-24-0
-
-# Sequential transition per namespace
-kubectl label namespace default istio.io/rev=1-24-0 --overwrite
-kubectl rollout restart deployment -n default
-```
-
-**Linkerd**:
-
-```bash
-# Install
-linkerd install | kubectl apply -f -
-
-# Upgrade (In-place)
-linkerd upgrade | kubectl apply -f -
-
-# Automatic rollout
-```
-
-**Kong Mesh**:
-
-```bash
-# Helm install
-helm install kong-mesh kong-mesh/kong-mesh
-
-# Upgrade
-helm upgrade kong-mesh kong-mesh/kong-mesh
-```
-
-**Consul**:
-
-```bash
-# Helm install
-helm install consul hashicorp/consul -f values.yaml
-
-# Upgrade
-helm upgrade consul hashicorp/consul -f values.yaml
-```
-
-**Comparación**:
-
-* **Linkerd**: Instalación y actualización más sencillas
-* **Istio**: La actualización Canary permite cero tiempo de inactividad, pero es compleja
-* **Kong/Consul**: Basados en Helm, complejidad media
-
-### Herramientas de solución de problemas
-
-**Istio**:
-
-```bash
-# Check proxy status
-istioctl proxy-status
-
-# Validate configuration
-istioctl analyze
-
-# Check proxy configuration
-istioctl proxy-config cluster <pod> -n <namespace>
-
-# Change log level
-istioctl proxy-config log <pod> --level debug
-```
-
-**Linkerd**:
-
-```bash
-# Check status
-linkerd check
-
-# Check statistics
-linkerd stat deploy
-
-# Tap (real-time traffic observation)
-linkerd tap deploy/webapp
-
-# Check profile
-linkerd profile --template deploy/webapp
-```
-
-**Kong Mesh**:
-
-```bash
-# Check status
-kumactl inspect dataplanes
-
-# Check metrics
-kumactl inspect meshes
-
-# Check logs
-kubectl logs -n kong-mesh-system deployment/kong-mesh-control-plane
-```
-
-**Consul**:
-
-```bash
-# Check status
-consul members
-
-# Check services
-consul catalog services
-
-# Check intentions
-consul intention list
-
-# Proxy logs
-kubectl logs <pod> -c consul-connect-envoy-sidecar
-```
-
-### Curva de aprendizaje
-
-```mermaid
-flowchart LR
-    subgraph "Learning Difficulty"
-        direction TB
-        Easy[Easy<br/>Linkerd]
-        Medium[Medium<br/>Kong Mesh<br/>Consul]
-        Hard[Difficult<br/>Istio]
-    end
-
-    Easy -->|Basic features only| Use1[Quick Start]
-    Medium -->|Balanced features| Use2[Medium Scale]
-    Hard -->|All features| Use3[Large Enterprise]
-
-    classDef easy fill:#00C7B7,stroke:#333,stroke-width:2px,color:white;
-    classDef medium fill:#326CE5,stroke:#333,stroke-width:1px,color:white;
-    classDef hard fill:#FF9900,stroke:#333,stroke-width:1px,color:black;
-
-    class Easy easy;
-    class Medium medium;
-    class Hard hard;
-```
-
-<span id="cost-analysis"></span>
-
-## Análisis de costes
-
-### Coste de infraestructura
-
-**Cálculo de costes basado en recursos** (entorno de 100 Pod, EKS m5.xlarge):
-
-| Service Mesh  | CPU de Control Plane | Memoria de Control Plane | CPU de Data Plane (total) | Memoria de Data Plane (total) | Coste mensual (estimado) |
-| ------------- | -------------------- | ------------------------ | ------------------------- | ----------------------------- | ------------------------ |
-| **Baseline**  | -                    | -                        | -                         | -                             | $300                     |
-| **Linkerd**   | 300m                 | 500MB                    | 2 vCPU                    | 5GB                           | +$50 (\~$350)            |
-| **Istio**     | 1 vCPU               | 2GB                      | 10 vCPU                   | 15GB                          | +$150 (\~$450)           |
-| **Kong Mesh** | 500m                 | 1GB                      | 8 vCPU                    | 12GB                          | +$120 (\~$420)           |
-| **Consul**    | 1 vCPU               | 2GB                      | 10 vCPU                   | 14GB                          | +$145 (\~$445)           |
-
-**Nota**: Los costes reales pueden variar significativamente según los patrones de workload, el volumen de tráfico y la configuración.
-
-### Coste operativo
-
-**Tiempo de ingeniería (base mensual)**:
-
-| Tarea                     | Istio      | Linkerd    | Kong Mesh  | Consul     |
-| ------------------------- | ---------- | ---------- | ---------- | ---------- |
-| **Configuración inicial** | 40h        | 8h         | 20h        | 24h        |
-| **Operaciones diarias**   | 20h/mes    | 5h/mes     | 10h/mes    | 12h/mes    |
-| **Solución de problemas** | 15h/mes    | 3h/mes     | 8h/mes     | 10h/mes    |
-| **Actualizaciones**       | 8h/trimestre | 2h/trimestre | 4h/trimestre | 5h/trimestre |
-
-### Coste de licencia
-
-| Producto      | Open Source        | Enterprise                              |
-| ------------- | ------------------ | --------------------------------------- |
-| **Istio**     | Gratis (Apache 2.0) | Google Cloud Service Mesh (según uso)  |
-| **Linkerd**   | Gratis (Apache 2.0) | Buoyant Enterprise (\$$$)              |
-| **Kong Mesh** | Kuma Open Source   | Kong Mesh Enterprise (requiere contacto) |
-| **Consul**    | Gratis (MPL 2.0)   | Consul Enterprise (\$$$)               |
-
-**Ejemplos de funcionalidades Enterprise**:
-
-* **Kong Mesh Enterprise**: GUI multi-zone, RBAC, soporte 24/7
-* **Consul Enterprise**: Registro de auditoría, Namespaces, zonas de redundancia
-* **Buoyant Enterprise**: Control Plane HA, soporte 24/7, SLA
-
-<span id="use-case-recommendations"></span>
-
-## Recomendaciones de casos de uso
-
-### 1. Gran empresa (más de 1000 servicios)
-
-**Recomendado: Istio**
-
-**Motivos**:
-
-* Conjunto de funcionalidades más completo
-* Control de tráfico detallado (pruebas A/B, Canary)
-* Seguridad sólida (autorización L7)
-* Federación multi-cluster
-* Amplia comunidad y ecosistema de herramientas
-
-**Ejemplo de configuración**:
+Una entrada ilustrativa de perfil predeterminado puede establecer los límites de recursos/HPA del plano de control:
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 spec:
-  profile: production
+  profile: default
   components:
     pilot:
       k8s:
@@ -1734,226 +590,120 @@ spec:
             memory: 4Gi
 ```
 
-### 2. Startup pequeña o mediana (10-100 servicios)
-
-**Recomendado: Linkerd**
-
-**Motivos**:
-
-* Instalación rápida (menos de 5 minutos)
-* Baja sobrecarga de recursos
-* Operaciones sencillas
-* mTLS y métricas automáticos
-
-**Ejemplo de configuración**:
+No hay un perfil `production` integrado. Estos números de CPU/memoria/réplicas son entradas de dimensionamiento, no una garantía de capacidad de producción. Instalar otra revisión por sí solo no actualiza los proxies existentes:
 
 ```bash
-linkerd install | kubectl apply -f -
-linkerd viz install | kubectl apply -f -
-
-# Enable per namespace
-kubectl annotate namespace default linkerd.io/inject=enabled
+istioctl install -f reviewed-istio.yaml --revision 1-31-0
+kubectl label namespace mesh-demo istio-injection-
+kubectl label namespace mesh-demo istio.io/rev=1-31-0 --overwrite
+: "${DEPLOYMENT:?Set the actual staged Deployment name}"
+kubectl rollout restart deployment/"$DEPLOYMENT" -n mesh-demo
+kubectl rollout status deployment/"$DEPLOYMENT" -n mesh-demo
 ```
 
-### 3. Cloud híbrida (K8s + VM)
+Revise las anulaciones existentes de namespace y Pod antes del traspaso. Una etiqueta de inyección heredada puede tener prioridad sobre la selección de revisión. Reinicie solo la cohorte de cargas de trabajo prevista; los componentes gateway y ambient tienen sus propios procedimientos de actualización. Las revisiones canary no garantizan cero errores durante cada rollout de aplicación.
 
-**Recomendado: Consul Connect o Kong Mesh**
+### Instalación y actualización de Linkerd
 
-**Motivos**:
-
-* Soporte VM-first para workloads
-* Service Discovery sólido
-* Coherencia multi-plataforma
-
-**Ejemplo de configuración de Consul**:
-
-```hcl
-# In Kubernetes
-service {
-  name = "web"
-  port = 8080
-  connect {
-    sidecar_service {}
-  }
-}
-
-# In VM
-service {
-  name = "database"
-  port = 5432
-  connect {
-    sidecar_service {
-      proxy {
-        upstreams = [
-          {
-            destination_name = "web"
-            local_bind_port  = 8080
-          }
-        ]
-      }
-    }
-  }
-}
-```
-
-### 4. Estrategia multi-cloud
-
-**Recomendado: Istio o Kong Mesh**
-
-**Motivos**:
-
-* Neutral respecto al cloud
-* Políticas y observabilidad coherentes
-* Federación multi-cluster
-
-**Istio multi-cluster**:
+Seleccione primero un artefacto edge o de proveedor explícito y su Gateway API compatible. Para el flujo de trabajo actual de la CLI upstream:
 
 ```bash
-# Cluster 1 (AWS)
-istioctl install --set values.global.meshID=mesh1 \
-  --set values.global.multiCluster.clusterName=aws-cluster \
-  --set values.global.network=aws-network
-
-# Cluster 2 (GCP)
-istioctl install --set values.global.meshID=mesh1 \
-  --set values.global.multiCluster.clusterName=gcp-cluster \
-  --set values.global.network=gcp-network
-
-# Share Service Discovery
-istioctl create-remote-secret \
-  --context=aws-cluster --name=aws-cluster | \
-  kubectl apply -f - --context=gcp-cluster
+linkerd check --pre
+linkerd install --crds > linkerd-crds.yaml
+kubectl apply -f linkerd-crds.yaml
+linkerd install > linkerd-control-plane.yaml
+kubectl apply -f linkerd-control-plane.yaml
+linkerd check
 ```
 
-### 5. Migración de sistemas heredados
+Este es un flujo de CLI orientado a laboratorio; la guía de instalación de producción recomienda Helm para repetibilidad y configuraciones de identidad revisadas. Anotar un namespace habilita la inyección para Pods creados posteriormente, no la inserción inmediata de proxies en Pods en ejecución. Actualice los CRD/plano de control mediante el procedimiento de la versión seleccionada y después haga rollout de las cargas de trabajo deliberadamente para actualizar los proxies de plano de datos; no se implica un rollout automático de cargas de trabajo.
 
-**Recomendado: Kong Mesh o Consul**
+### Inspección de charts de Kong y Consul
 
-**Motivos**:
+Estos comandos obtienen y renderizan los charts exactos comprobados para revisión; no despliegan un sistema de producción:
 
-* Soporte simultáneo de VM y contenedores
-* Migración gradual
-* Integración con Service Discovery existente
-
-**Híbrido de Kong Mesh**:
-
-```yaml
-# Kubernetes Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: legacy-db
-  annotations:
-    kuma.io/mesh: default
-spec:
-  type: ExternalName
-  externalName: legacy-db.vm.local
----
-# Run Kuma DP on VM
-kuma-dp run \
-  --cp-address=https://kong-mesh-cp:5678 \
-  --dataplane-token-file=/tmp/token \
-  --dataplane-file=/etc/kuma/dataplane.yaml
+```bash
+helm repo add kong-mesh https://kong.github.io/kong-mesh-charts
+helm repo add hashicorp https://helm.releases.hashicorp.com
+helm repo update kong-mesh hashicorp
+helm show values kong-mesh/kong-mesh --version 2.14.4 > kong-values.reference.yaml
+helm show values hashicorp/consul --version 2.0.4 > consul-values.reference.yaml
+helm template kong-mesh kong-mesh/kong-mesh --version 2.14.4   --namespace kong-mesh-system --include-crds --values reviewed-kong-values.yaml
+helm template consul hashicorp/consul --version 2.0.4   --namespace consul --include-crds --values reviewed-consul-values.yaml
 ```
 
-### 6. Requisitos sólidos de observabilidad
+Los archivos de valores revisados son entradas específicas del entorno, no archivos proporcionados por esta comparación. Confirme soporte de Kubernetes, edición/licencia, identidad de CA/ACL/bootstrap, almacenamiento, HA, configuración de injector/controlador y notas de actualización antes de seguir la guía de instalación de cada producto. Un render Helm correcto no prueba ni la preparación en runtime ni una actualización in situ segura.
 
-**Recomendado: Istio**
+### Solución de problemas
 
-**Motivos**:
-
-* Más de 50 métricas predeterminadas
-* Logs de acceso detallados
-* Compatibilidad con todos los backends de tracing
-* Integración con Kiali
-
-**Stack de observabilidad**:
-
-```yaml
-# Prometheus + Grafana + Jaeger + Kiali
-istioctl install --set profile=demo \
-  --set values.prometheus.enabled=true \
-  --set values.grafana.enabled=true \
-  --set values.tracing.enabled=true \
-  --set values.kiali.enabled=true
+```bash
+istioctl proxy-status
+istioctl analyze -n mesh-demo
+istioctl proxy-config clusters "$POD" -n mesh-demo
+linkerd check
+linkerd viz stat deploy -n mesh-demo
+kubectl get meshhttproutes,meshtrafficpermissions -n mesh-demo
+kubectl get servicedefaults,serviceresolvers,servicesplitters -n mesh-demo
 ```
 
-## Conclusión final y recomendaciones
+Ejecute comandos específicos de producto solo en el entorno instalado previsto. Inspeccione nombres y logs de componentes reales en lugar de asumir que cada sidecar de Consul tiene un nombre de contenedor histórico fijo. Los logs de tap/debug pueden exponer información de solicitudes; limite y restaure la configuración de diagnóstico temporal. Mida el trabajo del equipo en el flujo de trabajo real en lugar de afirmar una instalación de ocho horas o cinco minutos para cada organización.
 
-### Árbol de decisión
 
-```mermaid
-flowchart TD
-    Start[Service Mesh Selection]
-    Start --> Q1{Team Experience?}
+## Coste y licencias
 
-    Q1 -->|New to Service Mesh| Simple[Simple Solution]
-    Q1 -->|Experienced| Advanced[Advanced Features]
+### Las entradas de coste originales no son un presupuesto
 
-    Simple --> Q2{Resource Constraints?}
-    Q2 -->|Yes, Efficiency Important| Linkerd[Linkerd]
-    Q2 -->|No, Features Needed| KongSimple[Kong Mesh<br/>or Consul]
+La tabla original de 100 Pods/m5.xlarge asignaba una línea base de $300 y estas cantidades mensuales adicionales:
 
-    Advanced --> Q3{Platform?}
-    Q3 -->|K8s Only| Q4{Feature Requirements?}
-    Q3 -->|K8s + VM| Hybrid[Kong/Consul]
+| Entrada de producto original | CPU/memoria del plano de control | CPU/memoria agregada de proxy | Importe mensual extra anterior |
+|---|---|---|---:|
+| Linkerd |300m / 500 MB|2 vCPU / 5 GB|$50|
+| Istio |1 vCPU / 2 GB|10 vCPU / 15 GB|$150|
+| Kong Mesh |500m / 1 GB|8 vCPU / 12 GB|$120|
+| Consul |1 vCPU / 2 GB|10 vCPU / 14 GB|$145|
 
-    Q4 -->|Maximum Features| Istio[Istio]
-    Q4 -->|Balanced| KongAdv[Kong Mesh]
+Ninguna región, recuento de nodos, horas operativas, modelo de compra, fórmula de asignación ni datos de facturación respaldaban esos precios. Las solicitudes de recursos no compran automáticamente nodos EC2 fraccionarios, y el margen liberado no reduce necesariamente una factura. Consérvelos solo como entradas hipotéticas anteriores; no los use para elegir el producto más barato.
 
-    Hybrid --> Q5{VM-centric?}
-    Q5 -->|Yes| Consul[Consul]
-    Q5 -->|No, K8s-centric| Kong[Kong Mesh]
+Las suposiciones anteriores de personal fueron configuración inicial 40/8/20/24 horas, operaciones mensuales 20/5/10/12 horas, solución de problemas mensual 15/3/8/10 horas y actualizaciones trimestrales 8/2/4/5 horas para Istio/Linkerd/Kong/Consul respectivamente. No son productividad de equipo medida, y la configuración inicial no es un gasto mensual recurrente.
 
-    classDef recommended fill:#00C7B7,stroke:#333,stroke-width:3px,color:white;
-    classDef decision fill:#f9f9f9,stroke:#333,stroke-width:1px,color:black;
+Un modelo de costes significativo usa capacidad retenida real, restricciones de HA y autoscaling, balanceadores de carga/transferencia, almacenamiento/telemetría, cargos de plataforma, suscripciones de soporte y esfuerzo de ingeniería observado. Compare el mismo requisito de carga de trabajo, seguridad y disponibilidad y declare cada unidad/tarifa/fecha. Calcule ROI solo a partir de una diferencia fundamentada y el coste de migración.
 
-    class Linkerd,Istio,Consul,Kong recommended;
-    class Start,Q1,Q2,Q3,Q4,Q5 decision;
-```
+### Licencias de artefactos y productos
 
-### Guía rápida de recomendaciones
+| Componente | Distinción que conservar |
+|---|---|
+| Istio | Proyecto upstream con licencia Apache; las distribuciones alojadas/comerciales tienen sus propios términos y costes |
+| Linkerd | Proyecto upstream con licencia Apache; los artefactos edge upstream y las distribuciones estables de proveedores son decisiones diferentes de versión/soporte |
+| Kuma / Kong Mesh | Kuma upstream y el producto comercial Kong Mesh son distintos; verifique la edición y el contrato de soporte elegidos |
+| Consul | La licencia de la **aplicación Consul 2.0.4** comprobada es Business Source License 1.1 con su concesión de uso declarada y condiciones posteriores de cambio a MPL, no simplemente MPL-2.0 actual |
 
-| Situación                  | Primera opción | Segunda opción | Evitar                     |
-| -------------------------- | -------------- | -------------- | -------------------------- |
-| **Primeros pasos**         | Linkerd        | Kong Mesh      | Istio (complejo)           |
-| **Gran empresa**           | Istio          | Kong Mesh      | Linkerd (funcionalidades limitadas) |
-| **Restricciones de recursos** | Linkerd     | -              | Istio (sobrecarga)         |
-| **Workloads de VM**        | Consul         | Kong Mesh      | Linkerd (sin soporte)      |
-| **Multi-cloud**            | Istio          | Consul         | Soluciones de cloud único  |
-| **ROI rápido**             | Linkerd        | -              | Istio (curva de aprendizaje) |
-| **Control detallado**      | Istio          | Kong Mesh      | Linkerd (limitado)         |
+El chart Helm de Consul anuncia una licencia MPL para ese artefacto; no anula la licencia del binario de la aplicación. Revise los términos exactos de artefacto/versión. La configuración HA del plano de control de Linkerd no es inherentemente una característica exclusiva de enterprise; el soporte/SLA de pago y las características del producto deben distinguirse de las capacidades upstream. No infiera soporte de un nombre de proveedor o una clasificación por signos de dólar.
 
-### Recomendaciones finales
+## Selección y validación
 
-**Istio**:
+| Situación | Preguntas que determinan la elección |
+|---|---|
+| Despliegue grande | ¿Qué API exactas de enrutamiento/seguridad, escala de endpoint/actualización y comportamiento de HA se requieren? |
+| Equipo pequeño o inicio rápido | ¿Qué flujo de trabajo de ciclo de vida y solución de problemas puede operar el equipo, incluida identidad y actualizaciones? |
+| Restricciones de recursos | ¿Qué consume realmente una carga de trabajo de política equivalente, incluidos todos los proxies, waypoints, gateways y telemetría? |
+| VM o carga de trabajo heredada | ¿La integración documentada de identidad/red/runtime encaja? Istio y Linkerd también tienen rutas de integración con VM. |
+| Multicloud o multiclúster | ¿Qué límites de confianza, API, plano de datos, distribución de políticas y recuperación ante desastres se necesitan? |
+| Observabilidad sólida | ¿Qué señales de aplicación/proxy, rutas de collector/exporter, retención y controles de acceso se requieren? |
 
-* **Cuándo**: Gran empresa, se necesitan funcionalidades completas, el equipo tiene experiencia con Service Mesh
-* **Ventajas**: Funcionalidades líderes en su categoría, comunidad sólida, orientado al futuro
-* **Desventajas**: Curva de aprendizaje pronunciada, alto uso de recursos
+Un Service ExternalName por sí solo no conecta una VM al mesh ni crea una identidad de proxy. Un binario de plano de datos necesita además registro compatible, credenciales, redirección de red y conectividad real con el plano de control. De modo similar, establecer cadenas meshID/network en dos instalaciones de Istio no es un diseño multiclúster completo.
 
-**Linkerd**:
+Use una prueba de concepto acotada con las cargas de trabajo y políticas requeridas reales, conserve mediciones reproducibles y pruebe el fallo/recuperación. El [índice de comparación](README.md) y la [guía Istio frente a VPC Lattice](02-istio-vs-lattice.md) proporcionan criterios de decisión relacionados. La elección del producto no está determinada por el recuento de servicios, una etiqueta genérica de «más características» ni una afirmación de ROI rápido no respaldada.
 
-* **Cuándo**: Simplicidad ante todo, equipo pequeño, inicio rápido, eficiencia de recursos
-* **Ventajas**: Instalación/operación sencillas, baja sobrecarga, mTLS automático
-* **Desventajas**: Funcionalidades limitadas, sin soporte para VM
+## Referencias oficiales
 
-**Kong Mesh / Consul Connect**:
-
-* **Cuándo**: Entorno híbrido (K8s + VM), multiplataforma, integración de sistemas heredados
-* **Ventajas**: Soporte VM-first, arquitectura flexible, Service Discovery sólido
-* **Desventajas**: Las funcionalidades comerciales son de pago, tamaño de la comunidad
-
-***
-
-**Próximos pasos**:
-
-1. Probar 2-3 soluciones en un entorno PoC
-2. Realizar benchmarks de rendimiento con patrones de workload reales
-3. Recopilar comentarios del equipo
-4. Establecer un plan de rollout a producción
-
-**Documentos relacionados**:
-
-* [Comparación de Istio y VPC Lattice](02-istio-vs-lattice.md)
-* [Arquitectura de Istio](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture)
+- [Arquitectura de Istio](https://istio.io/latest/docs/ops/deployment/architecture/) y [versiones compatibles](https://istio.io/latest/docs/releases/supported-releases/)
+- [Integración de VM de Istio](https://istio.io/latest/docs/setup/install/virtual-machine/) y [multiclúster](https://istio.io/latest/docs/setup/install/multicluster/)
+- [Versiones de Linkerd](https://linkerd.io/releases/), [compatibilidad con Kubernetes](https://linkerd.io/docs/reference/k8s-versions/) y [compatibilidad con Gateway API](https://linkerd.io/docs/features/gateway-api/)
+- [Enrutamiento de solicitudes de Linkerd](https://linkerd.io/docs/features/request-routing/), [HTTPRoute](https://linkerd.io/docs/reference/httproute/), [autorización](https://linkerd.io/docs/reference/authorization-policy/) y [limitación de tasa](https://linkerd.io/docs/features/rate-limiting/)
+- [Multiclúster de Linkerd](https://linkerd.io/docs/features/multicluster/), [expansión de VM](https://linkerd.io/docs/tasks/adding-non-kubernetes-workloads/) y [tracing](https://linkerd.io/docs/features/distributed-tracing/)
+- [Changelog de Kong Mesh](https://developer.konghq.com/mesh/changelog/), [soporte](https://developer.konghq.com/mesh/support-policy/) y [versiones validadas](https://developer.konghq.com/mesh/version-compatibility/)
+- [Kong MeshHTTPRoute](https://developer.konghq.com/mesh/policies/meshhttproute/), [MeshTrafficPermission](https://developer.konghq.com/mesh/policies/meshtrafficpermission/) y [política de balanceo de carga](https://developer.konghq.com/mesh/policies/meshloadbalancingstrategy/)
+- [Despliegue multizona de Kong](https://developer.konghq.com/mesh/mesh-multizone-service-deployment/) e [instalación](https://developer.konghq.com/mesh/deploy-mesh-self-managed/)
+- [Proxies de Consul](https://developer.hashicorp.com/consul/docs/connect/proxy), [valores predeterminados de Service](https://developer.hashicorp.com/consul/docs/reference/config-entry/service-defaults), [resolver](https://developer.hashicorp.com/consul/docs/reference/config-entry/service-resolver), [splitter](https://developer.hashicorp.com/consul/docs/reference/config-entry/service-splitter) e [intentions](https://developer.hashicorp.com/consul/docs/reference/config-entry/service-intentions)
+- [Licencia de la aplicación Consul 2.0.4](https://raw.githubusercontent.com/hashicorp/consul/v2.0.4/LICENSE)
+- [Arquitectura de Istio en esta guía](../03-architecture.md)

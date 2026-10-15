@@ -1,13 +1,13 @@
-# Ambient 模式
+# Ambient Mode
 
-> **最后更新**：2026 年 9 月 11 日 · Istio 1.31。本实验假定兼容 Linux 节点、节点代理/CNI 权限及全新演示命名空间。本次审计未运行部署命令。
+> **最后更新**: October 12, 2026 · Istio 1.31。本实验假定使用兼容的 Linux 节点、具备 node-agent/CNI 权限，并使用全新的演示命名空间。本次审计未运行任何部署命令。
 
-Ambient 于 2022 年作为实验预览引入，首次在 Istio 1.18 中以 Alpha 交付，在 1.22 达到 Beta、1.24 达到核心 GA。该预览不是主线 1.15 版本的正式可用功能。资源节省和迁移安全取决于实际拓扑、策略和流量。
+Ambient 于 2022 年作为实验性预览版推出，首次在 Istio 1.18 中以 Alpha 形式发布，在 1.22 达到 Beta，并在 1.24 实现核心 GA。该预览版并非主版本 1.15 中已正式发布的功能。资源节省和迁移安全性取决于实际拓扑、策略和流量。
 
 ## 目录
 
 1. [概述](#overview)
-2. [Sidecar 模式与 Ambient 模式](#sidecar-mode-vs-ambient-mode)
+2. [Sidecar Mode 与 Ambient Mode](#sidecar-mode-vs-ambient-mode)
 3. [架构](#architecture)
 4. [安装和配置](#installation-and-configuration)
 5. [迁移](#migration)
@@ -15,134 +15,134 @@ Ambient 于 2022 年作为实验预览引入，首次在 Istio 1.18 中以 Alpha
 7. [使用场景](#use-cases)
 8. [故障排除](#troubleshooting)
 
-## 概述 {#overview}
+## 概述
 
 
-Ambient 模式是一种无需向应用 Pod 注入 Sidecar 代理即可提供服务网格功能的新方法。Ambient 模式采用**分层架构**：
+Ambient Mode 是一种无需向应用 Pod 注入 Sidecar 代理即可提供 Service Mesh 功能的新方法。Ambient Mode 采用**分层架构**：
 
 1. **安全覆盖层（L4）**：通过 ztunnel 提供 mTLS 和基本遥测
-2. **L7 处理层**：通过 Waypoint 代理提供高级流量管理
+2. **L7 处理层**：通过 Waypoint Proxy 提供高级流量管理
 
-### 为什么需要 Ambient 模式？
+### 为什么需要 Ambient Mode？
 
-传统 Sidecar 模型的局限：
-- **资源开销高**：每个 Pod 需要 Envoy 代理（应测量实际代理占用）
-- **运维复杂**：Pod 重启、版本管理、滚动更新较复杂
-- **启动协调**：必须协调代理和应用就绪状态
-- **功能过多**：一些工作负载只需要 L4 网格功能
+传统 Sidecar 模型的局限性：
+- **高资源开销**：每个 Pod 都需要一个 Envoy 代理（应测量实际代理资源占用）
+- **运维复杂性**：Pod 重启、版本管理和滚动更新较为复杂
+- **启动协调**：必须协调代理和应用的就绪状态
+- **功能过剩**：某些工作负载仅需要 L4 mesh 功能
 
-Ambient 模式解决方式：
-- 共享节点代理加所需 waypoint：测量总资源用量
-- 纳管未入网格 Pod 可无需重启；移除 Sidecar 和策略变更需要受控发布
-- 渐进采用：按需从 L4 扩展到 L7
-- L4 传输可透明；追踪上下文及应用超时/幂等约定仍重要
+Ambient Mode 的解决方案：
+- 共享节点代理加上所需的 waypoint：测量总体资源使用量
+- 注册可避免重启未加入 mesh 的 Pod；移除 sidecar 和修改策略需要受控发布
+- 渐进式采用：按需从 L4 扩展到 L7
+- L4 传输可以透明；追踪上下文以及应用超时/幂等性约定仍然很重要
 
 ### 核心概念
 
-图中可选 waypoint 由配置/纳管选择。Ztunnel 不会解析每个 HTTP 请求后决定是否绕行 L7。现有连接、就绪状态和策略转换仍需验证。
+这些图中的可选 waypoint 由配置/注册决定。ztunnel 不会解析每个 HTTP 请求并决定是否采用 L7 绕行路径。现有连接、就绪状态和策略转换仍需验证。
 
 
-![Sidecar 模式中每个 Pod 的应用搭配 Envoy Sidecar；Ambient 模式中 Pod 透明地向节点级 ztunnel 发送流量，并可通过配置的可选 Waypoint 路径进行 L7 处理。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-0.png)
+![对比 Sidecar Mode 和 Ambient Mode 的图示：在 Sidecar Mode 中，每个 pod 都将应用与 Envoy sidecar 配对；在 Ambient Mode 中，pod 透明地将流量发送到节点级 ztunnel，并可选地通过已配置的 Waypoint 路径进行 L7 处理。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-0.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-0.html)
 
-### Ambient 模式优势
+### Ambient Mode 的优势
 
-1. **共享资源模型**：节点代理加所需 waypoint 副本
-2. **部署简单**：纳管未入网格 Pod 不必重启；移除 Sidecar 需要重启
-3. **透明 L4 传输**：应用追踪/期限/幂等要求仍然存在
-4. **灵活 L7 功能**：仅在需要时使用 waypoint
+1. **共享资源模型**：节点代理加上所需的 waypoint 副本
+2. **简单部署**：未加入 mesh 的 Pod 注册无需重启 Pod；移除 sidecar 则需要
+3. **透明的 L4 传输**：应用追踪/截止时间/幂等性要求仍然存在
+4. **灵活的 L7 功能**：仅在需要时使用 waypoint
 
-## Sidecar 模式与 Ambient 模式 {#sidecar-mode-vs-ambient-mode}
+## Sidecar Mode 与 Ambient Mode
 
 ### 架构比较
 
-#### Sidecar 模式
+#### Sidecar Mode
 
-![三个 Pod 各自将应用容器与独立 Envoy Sidecar 代理配对，Sidecar 之间直接协商双向 TLS 的架构图。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-1.png)
+![架构图展示三个 pod，每个 pod 都将应用容器与自己的 Envoy sidecar 代理配对，sidecar 之间直接协商双向 TLS。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-1.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-1.html)
 
-**特点**：
-- 每个 Pod 注入 Envoy 代理
-- 成熟 L4/L7 功能；验证所选版本
-- 资源用量高
-- 需要 Pod 重启
+**特性**：
+- Envoy 代理注入到每个 pod
+- 成熟的 L4/L7 功能；验证所选版本
+- 资源使用量高
+- 需要重启 Pod
 
-#### Ambient 模式
+#### Ambient Mode
 
-![多个应用 Pod 透明地向一个节点级 ztunnel 发送流量；L4 流量直接访问目标服务，资源纳管 waypoint 后则使用可选 waypoint 路径。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-2.png)
+![架构图展示许多应用 pod 将流量透明地发送到一个节点级 ztunnel，该 ztunnel 直接为目标服务处理 L4 流量，并在资源注册使用 waypoint 时走可选的 waypoint 路径。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-2.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-2.html)
 
-**特点**：
-- 每节点一个 ztunnel
+**特性**：
+- 每个节点一个 ztunnel
 - 默认提供 L4 功能
 - L7 功能需要 waypoint
-- 纳管未入网格 Pod 不必重启；移除 Sidecar 需要重启
+- 未加入 mesh 的 Pod 注册无需重启 Pod；移除 sidecar 则需要
 
 ### 详细比较表
 
-| 项目 | Sidecar 模式 | Ambient 模式 |
+| 项目 | Sidecar Mode | Ambient Mode |
 |------|-------------|--------------|
-| **部署方式** | 向 Pod 注入 Sidecar | 节点级 ztunnel + 可选 waypoint |
-| **资源核算** | 每 Pod Envoy + 控制平面 | 节点 ztunnel + 全部 waypoint 副本 + 控制平面；在负载下测量 |
-| **Pod 重建** | 添加/移除注入代理时需要 | 未入网格纳管通常不需要；移除 Sidecar 需要 |
-| **启动协调** | 代理/应用生命周期和就绪 | CNI 捕获和 ztunnel 就绪 |
+| **部署方式** | 向 pod 注入 Sidecar | 节点级 ztunnel + 可选 waypoint |
+| **资源核算** | 每个 Pod 的 Envoy + 控制平面 | 节点 ztunnel + 所有 waypoint 副本 + 控制平面；在负载下测量 |
+| **Pod 重建** | 添加/移除注入的代理时需要 | 未加入 mesh 的注册通常不需要；移除 sidecar 时需要 |
+| **启动协调** | 代理/应用生命周期和就绪状态 | CNI 捕获和 ztunnel 就绪状态 |
 | **L4 功能** | 支持 | 支持 |
-| **L7 功能** | 特定版本支持 | 需要 waypoint 和受支持 API；并非每项扩展都 GA |
+| **L7 功能** | 与版本相关的支持 | 需要 waypoint 和受支持的 API；并非每项扩展都是 GA |
 | **mTLS** | 自动 | 自动 |
-| **遥测** | 详细 | 基本（L4），详细（带 waypoint 的 L7） |
-| **断路器** | 支持 | 需要 Waypoint |
+| **遥测** | 详细 | 基本（L4）、详细（使用 waypoint 的 L7） |
+| **熔断器** | 支持 | 需要 Waypoint |
 | **重试/超时** | 支持 | 需要 Waypoint |
 | **标头操作** | 支持 | 需要 Waypoint |
 | **性能开销** | 取决于工作负载/配置 | 取决于路径/身份/waypoint/负载；比较等效策略 |
-| **运维范围** | 每工作负载代理生命周期 | 节点/CNI 和共享 waypoint 生命周期 |
-| **生产就绪** | 成熟 | GA（Istio 1.24+） |
+| **运维范围** | 每个工作负载的代理生命周期 | 节点/CNI 和共享 waypoint 生命周期 |
+| **生产就绪性** | 成熟 | GA（Istio 1.24+） |
 
-### 资源用量比较 {#resource-usage-comparison}
+### 资源使用量比较
 
-下方 100 Pod 计算是假设规划示例，不是官方基准。估算资源或账单节省前，统计全部节点/waypoint 副本，并比较等效安全、遥测和路由要求。
+下面的 100-Pod 计算是假设性的规划示例，并非官方基准测试。估算资源或账单节省前，请计算所有节点/waypoint 副本，并比较等效的安全性、遥测和路由要求。
 
-## 架构 {#architecture}
-
-
-Ambient 模式数据平面由两个核心组件组成：**ztunnel** 和 **Waypoint 代理**。
-
-### ztunnel（零信任隧道）
+## 架构
 
 
-ztunnel 是 Ambient 模式核心组件，是**运行在节点级别的轻量 L4 代理**。它以 DaemonSet 在符合条件 Linux 节点运行，处理已纳管工作负载的受支持流量。这不代表每个 Pod 的全部流量；主机网络/排除工作负载及非 TCP 应用协议需检查当前支持。
+Ambient Mode 数据平面由两个核心组件组成：**ztunnel** 和 **Waypoint Proxy**。
 
-#### ztunnel 如何工作
+### ztunnel（Zero Trust Tunnel）
 
-1. **流量捕获**：通过 Istio CNI 的 Pod 内 netfilter/iptables 规则和网络命名空间移交，透明拦截 Pod 网络流量
-2. **应用 mTLS**：使用基于 SPIFFE 的身份自动应用 mTLS 加密
-3. **负载均衡**：在端点间执行 L4 负载均衡
-4. **遥测采集**：采集连接指标和日志
+
+ztunnel 是 Ambient Mode 的核心组件，是一个**运行在节点级别的轻量级 L4 代理**。它作为 DaemonSet 运行在符合条件的 Linux 节点上，并处理已注册工作负载的受支持流量。这并非来自每个 Pod 的全部流量；需要检查 host-network/排除的工作负载和非 TCP 应用协议的当前支持情况。
+
+#### ztunnel 的工作方式
+
+1. **流量捕获**：通过 Istio CNI 在 pod 内的 netfilter/iptables 规则和网络命名空间交接透明地拦截 pod 网络流量
+2. **mTLS 应用**：使用基于 SPIFFE 的 Identity 自动应用 mTLS 加密
+3. **负载均衡**：在端点之间执行 L4 负载均衡
+4. **遥测收集**：收集连接指标和日志
 5. **转发**：将流量转发到目标 ztunnel 或 Waypoint
 
 **ztunnel 技术栈**：
-- **语言**：Rust（高性能、低内存用量）
-- **协议**：HBONE（基于 HTTP 的覆盖网络环境）
-- **身份**：SPIFFE 工作负载身份；默认 Istiod CA，SPIRE 需独立集成
+- **语言**：Rust（高性能、低内存使用）
+- **协议**：HBONE（HTTP-Based Overlay Network Environment）
+- **身份**：SPIFFE 工作负载身份；默认使用 Istiod CA，SPIRE 需单独集成
 - **CNI**：与 Istio CNI 插件紧密集成
 
-#### ztunnel 作用
+#### ztunnel 的角色
 
-![应用 Pod 的 TCP 连接经过 ztunnel 内置 mTLS 加密、L4 遥测采集、身份验证和 L4 负载均衡后到达目标服务。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-3.png)
+![图示展示一个 TCP 连接从应用 pod 出发，经过 ztunnel 内置的 mTLS 加密、L4 遥测收集、身份验证和 L4 负载均衡，随后到达目标服务。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-3.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-3.html)
 
-**ztunnel 特点**：
+**ztunnel 特性**：
 - 使用 Rust 编写（性能优化）
 - 以 DaemonSet 部署
 - 与 CNI 插件集成
-- 与 Istio CNI 协调 Pod 内 netfilter/iptables 重定向
+- 由 Istio CNI 协调的 pod 内 netfilter/iptables 重定向
 
 #### ztunnel 部署
 
-使用发布的 Ambient 安装/chart。原始最小 DaemonSet 遗漏令牌/CA/套接字挂载，并使用错误 hostNetwork/privileged 设置。1.31 chart 提供特定能力和 Pod 内命名空间访问；不设置 `hostNetwork: true` 或 `privileged: true`。没有完整 chart/平台上下文时，不要复制或削减权限。
+请使用已发布的 ambient 安装方式/charts。原始的最小 DaemonSet 缺少 token/CA/socket 挂载，并使用了错误的 hostNetwork/privileged 设置。1.31 chart 提供特定能力和 pod 内命名空间访问；它不会设置 `hostNetwork: true` 或 `privileged: true`。在未了解完整 chart/平台上下文的情况下，请勿复制或降低权限。
 
 ```bash
 # Offline inspection; use the same reviewed values as the actual installation
@@ -151,37 +151,37 @@ istioctl manifest generate --set profile=ambient > ambient-rendered.yaml
 kubectl get daemonset ztunnel -n istio-system -o yaml
 ```
 
-### Waypoint 代理
+### Waypoint Proxy
 
 
-Waypoint 是**需要 L7 功能时使用的可选代理**。配置后的 waypoint 位于已纳管资源流量路径上，提供高级流量管理功能。
+Waypoint 是一个**在需要 L7 功能时使用的可选代理**。已配置的 waypoint 会放置在已注册资源的流量路径中，以提供高级流量管理功能。
 
-#### Waypoint 关键特点
+#### Waypoint 的关键特性
 
 1. **选择性部署**：仅用于需要 L7 功能的服务，而非所有服务
-2. **共享代理**：多个工作负载共享一个 Waypoint（依据命名空间/Service/Pod 纳管）
-3. **基于 Envoy**：使用与传统 Sidecar 相同的 Envoy 代理，L7 API 支持依版本而异
-4. **按需使用**：可在运行时动态添加/移除
+2. **共享代理**：多个工作负载共享一个 Waypoint（根据 namespace/Service/Pod 注册）
+3. **基于 Envoy**：使用与传统 Sidecar 相同的 Envoy 代理，并提供与版本相关的 L7 API 支持
+4. **按需使用**：可以在运行时动态添加/移除
 
-#### Waypoint 部署单位
+#### Waypoint 部署单元
 
-ServiceAccount 提供工作负载身份；为其加标签**不会**选择 waypoint。在 Namespace、Service 或 Pod 使用 `istio.io/use-waypoint`，并使用 `istio.io/waypoint-for` 流量类型匹配目标流量的 Gateway。
+ServiceAccount 提供工作负载身份；为其添加标签**不会**选择 waypoint。在 Namespace、Service 或 Pod 上使用 `istio.io/use-waypoint`，并使用 Gateway，其 `istio.io/waypoint-for` 流量类型应与预期流量匹配。
 
-| 纳管对象 | 范围 |
+| 注册 | 范围 |
 |---|---|
-| Namespace | 该命名空间中合格资源的默认 waypoint 选择 |
-| Service | 发往该 Service 的流量；默认 waypoint 类型为 `service` |
-| Pod | 使用 `workload` 或 `all` waypoint 的直接工作负载/Pod IP 流量 |
+|Namespace|该 namespace 中符合条件资源的默认 waypoint 选择|
+|Service|到该 Service 的流量；默认 waypoint 类型是 `service`|
+|Pod|使用 `workload` 或 `all` waypoint 的直接工作负载/Pod-IP 流量|
 
-仅 Deployment 标签不会标记现有 Pod；工作负载纳管使用 Pod 模板标签。`service` waypoint 不会自动覆盖直接 Pod IP 流量。
+仅部署标签不会为现有 Pod 添加标签；请使用 Pod-template 标签进行工作负载注册。`service` waypoint 不会自动覆盖直接 Pod-IP 流量。
 
-#### Waypoint 作用
+#### Waypoint 的角色
 
 
-**Waypoint 特点**：
-- 作为 Gateway 部署，再由受支持资源纳管选择
+**Waypoint 特性**：
+- 以 Gateway 部署，随后由受支持的资源注册进行选择
 - 基于 Envoy 代理
-- 验证各 API 支持；任意 EnvoyFilter 补丁不是受支持 waypoint API
+- 验证每个 API 的支持情况；任意 EnvoyFilter 补丁不是受支持的 waypoint API
 - 仅为所需服务选择性使用
 
 #### Waypoint 部署
@@ -202,55 +202,55 @@ spec:
     protocol: HBONE
 ```
 
-默认 `istio-waypoint` 类使用 Envoy。核心 Ambient GA 不意味着每个 API 都 GA：当前文档将 Ambient VirtualService 描述为 Alpha，并禁止与 Gateway API 路由混用。此处使用 HTTPRoute。EnvoyFilter 不是受支持 waypoint 扩展。L7 策略保护到达 waypoint 的流量；强制经过 waypoint 还需文档规定的 ztunnel 授权保护及正确纳管/就绪。
+默认的 `istio-waypoint` class 使用 Envoy。核心 ambient GA 并不意味着所有 API 都是 GA：当前文档将 ambient VirtualService 描述为 Alpha，并禁止将其与 Gateway API routes 混用。此处请使用 HTTPRoute。EnvoyFilter 不是受支持的 waypoint 扩展。L7 策略保护到达 waypoint 的流量；强制经过 waypoint 还需要已记录的 ztunnel 授权防护以及正确的注册/就绪状态。
 
-### 完整流量流程
+### 完整流量流向
 
-下图全面展示 Ambient 模式**没有 Sidecar** 时的流量流程：
+以下是一张综合图，展示 Ambient Mode 中**不使用 Sidecars**时的流量流向：
 
-![请求从无 Sidecar 的客户端应用经客户端和服务器 ztunnel 走纯 L4 路径；可选分支经过 waypoint 代理执行 L7 路由后到达服务器应用的时序图。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-6.png)
+![序列图跟踪一个请求：无 sidecar 的客户端应用通过客户端和服务端 ztunnel 走纯 L4 路径；在可选分支中，请求在到达服务端应用前通过 waypoint 代理进行 L7 路由。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-6.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-6.html)
 
-**流量流程分析**：
+**流量流向分析**：
 
-1. **仅 L4 路径**（只使用 ztunnel）：
-   - 在代表性负载下测量路径延迟
+1. **仅 L4 路径**（仅使用 ztunnel）：
+   - 在具有代表性的负载下测量路径延迟
    - 自动应用 mTLS
    - 基本遥测
-   - 适用于实际需求仅为 L4 的情况
+   - 适用于实际需求仅为 L4 的场景
 
 2. **L7 路径**（ztunnel + Waypoint）：
    - 基于标头的路由
-   - 断路器
+   - 熔断
    - 重试/超时
-   - 用于需要复杂流量策略时
+   - 适用于需要复杂流量策略时
 
 ### HBONE 协议
 
 
-**HBONE（基于 HTTP 的覆盖网络环境）** 是 Ambient 模式使用的隧道协议：
+**HBONE（HTTP-Based Overlay Network Environment）** 是 Ambient Mode 中使用的隧道协议：
 
-- **基于 HTTP/2**：兼容现有基础设施
+- **基于 HTTP/2**：与现有基础设施兼容
 - **内置 mTLS**：安全通信
-- **多路复用**：相同源/目标身份对的 TCP 流共享隧道
-- **网络策略**：HBONE 通常使用 TCP15008；显式允许所需网格路径
+- **多路复用**：TCP 流为相同源/目标身份对共享隧道
+- **网络策略**：HBONE 通常使用 TCP15008；请显式允许所需 mesh 路径
 
-![源 ztunnel 将应用明文 TCP 流量封装为 HTTP/2 mTLS HBONE 隧道，经网络传输后，由目标 ztunnel 解封装回明文 TCP，再到达目标应用。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-7.png)
+![图示展示来自应用的纯 TCP 流量由源 ztunnel 封装进 HTTP/2 mTLS HBONE 隧道，通过网络传输，并由目标 ztunnel 解封装回纯 TCP，随后到达目标应用。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-7.png)
 
 [🔍 查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-7.html)
 
-本指南 HBONE 传输 TCP 流。应用 UDP 不由该隧道承载；DNS 捕获/代理是独立功能。本地应用流可保持明文，代理间网格传输则加密。
+本指南中的 HBONE 传输 TCP 流。应用 UDP 不会由该隧道承载；DNS 捕获/代理是独立功能。本地应用流可以保持明文，而代理之间的 mesh 传输会加密。
 
-## 安装和配置 {#installation-and-configuration}
+## 安装和配置
 
-实验需要兼容 Linux 节点及必需 Istio CNI/ztunnel DaemonSet。EKS Fargate 无法运行这些节点 DaemonSet；使用受支持 EC2 放置并审核实际节点/CNI 平台。[平台前提条件](https://istio.io/latest/docs/ambient/install/platform-prerequisites/)涵盖 CNI 路径、权限和健康探针。VPC CNI Pod ENI trunking 配合 SecurityGroupPolicy 时，可能要求标准执行模式或适当 exec 探针；评估策略影响。GKE、OpenShift、k3s 等平台可能需要不同设置。
+本实验需要兼容的 Linux 节点以及所需的 Istio CNI/ztunnel DaemonSet。EKS Fargate 无法运行这些节点 DaemonSet；请使用受支持的、由 EC2 支撑的部署位置，并审查实际的节点/CNI 平台。[平台先决条件](https://istio.io/latest/docs/ambient/install/platform-prerequisites/)涵盖 CNI 路径、权限和健康检查。使用 SecurityGroupPolicy 的 VPC CNI Pod ENI trunking 可能需要标准 enforcing mode 或适当的 exec probes；请评估策略影响。GKE、OpenShift、k3s 和其他平台可能需要不同设置。
 
-Istio1.31 支持 Kubernetes1.32–1.36；EKS 兼容性参阅[安装指南](../01-installation.md)。下方 Gateway API1.6.0 匹配 Istio1.31 依赖及官方 Ambient 教程。检查现有资源包兼容性；不要仅为复制示例而降级较新兼容资源包。
+Istio1.31 支持 Kubernetes1.32–1.37；请参阅 [安装指南](../01-installation.md)以了解 EKS 兼容性。下方的 Gateway API1.6.0 与 Istio1.31 的依赖项和官方 ambient 教程一致。请检查现有 bundle 的兼容性；不要仅为复制示例而降级较新的兼容 bundle。
 
-### 1. Istio 安装（Ambient 模式）
+### 1. Istio 安装（Ambient Mode）
 
-仅在审核安装器和平台设置后，对全新实验网格使用此安装命令。现有网格应通过迁移流程保留安装方法/values。
+仅在审查安装程序和平台设置后，对全新的实验 mesh 使用此安装命令。对于现有 mesh，请通过迁移流程保留其安装方法/values。
 
 ```bash
 curl -fsSL https://istio.io/downloadIstio -o download-istio.sh
@@ -270,9 +270,9 @@ istioctl install --set profile=ambient -y
 kubectl get pods,daemonsets -n istio-system
 ```
 
-### 2. 启用 Ambient 模式并部署应用
+### 2. 启用 Ambient Mode 并部署应用
 
-使用全新可销毁命名空间，不带 Sidecar 注入/修订覆盖。添加 Ambient 标签不会转换现有 Sidecar Pod。1.31 发行版的完整 Bookinfo 清单提供旧单 Deployment 示例缺失的 reviews Service、版本标签、ServiceAccount 和 ratings 依赖；使用 Bookinfo1.20.3 镜像。
+请使用一个没有 sidecar-injection/revision 覆盖的新一次性 namespace。现有 Sidecar Pod 不会仅因添加 ambient 标签而转换。1.31 发行版中的完整 Bookinfo manifest 提供了旧单 Deployment 示例中缺失的 reviews Service、版本标签、ServiceAccounts 和 ratings 依赖项；它使用 Bookinfo1.20.3 images。
 
 ```bash
 kubectl create namespace ambient-demo
@@ -288,7 +288,7 @@ istioctl ztunnel-config workloads --workload-namespace ambient-demo
 
 ### 3. 部署并选择 Waypoint
 
-当前 CLI 接受 waypoint 名称和流量类型，不接受 ServiceAccount 纳管标志。等待就绪并显式纳管 Service。
+当前 CLI 接受 waypoint 名称和流量类型，而非 ServiceAccount 注册标志。等待就绪，并显式注册 Service。
 
 ```bash
 istioctl waypoint apply --name reviews-waypoint --for service -n ambient-demo --wait
@@ -299,7 +299,7 @@ kubectl get service reviews -n ambient-demo --show-labels
 
 ### 4. 使用 L7 功能
 
-创建版本专属后端 Service，并将 HTTPRoute 附加到已纳管 reviews Service。此处演示 GET/标头路由；标头不是经验证身份。不要将旧 VirtualService 与此 Gateway API 路由组合。直接调用其他 Service/Pod IP 是独立路径。
+创建特定版本的后端 Services，并将 HTTPRoute 附加到已注册的 reviews Service。此示例展示 GET/标头路由；标头不是经过认证的身份。不要将旧 VirtualService 与此 Gateway API route 组合使用。对其他 Service/Pod IP 的直接调用是独立路径。
 
 ```yaml
 apiVersion: v1
@@ -364,21 +364,21 @@ kubectl exec -n ambient-demo deploy/curl -c curl -- \
   curl -sS --max-time 5 -H "end-user: jason" http://reviews:9080/reviews/0
 ```
 
-通过日志/遥测检查 Accepted/ResolvedRefs 条件及所选后端。仅 HTTP 成功既不能证明 mTLS，也不能证明强制经过 waypoint。L7 授权需要适当 `targetRefs`；强制遍历还需文档规定的 ztunnel 授权保护。参阅 [waypoint 策略附加](https://istio.io/latest/docs/ambient/usage/l7-features/)。
+检查 Accepted/ResolvedRefs conditions 以及通过日志/遥测确定的所选后端。仅 HTTP 成功既不能证明 mTLS，也不能证明强制经过 waypoint。L7 授权需要适当的 `targetRefs`；强制经过 waypoint 还需要已记录的 ztunnel 授权防护。请参阅 [waypoint 策略附加](https://istio.io/latest/docs/ambient/usage/l7-features/)。
 
-## 迁移 {#migration}
+## 迁移
 
-### 从 Sidecar 模式迁移到 Ambient 模式
+### 从 Sidecar Mode 迁移到 Ambient Mode
 
-迁移是策略/工作负载发布，不是只改标签。保留已安装修订、CA/信任、网关、CNI 选项和声明式工作负载配置。现有 Sidecar 优先于 Ambient 纳管。对需要 L7 策略的工作负载移除 Sidecar 前，先准备兼容 L7 路由/授权和就绪 waypoint。
+迁移是一项策略/工作负载发布，而非仅修改标签。保留已安装的 revision、CA/trust、gateways、CNI 选项和声明式工作负载配置。现有 sidecar 优先于 ambient 注册。对于需要这些策略的工作负载，请在移除 sidecar 前准备兼容的 L7 路由/授权和就绪的 waypoints。
 
-#### 步骤 1：安装 Ambient 组件
+#### 第 1 步：安装 Ambient 组件
 
-使用现有安装方法和已审核 values，在兼容版本添加 Ambient 支持。不要用无关的裸 `istioctl install --set profile=ambient` 命令覆盖 Helm 管理网格。渲染/比较预期配置并验证 CNI/ztunnel 节点代理。
+使用现有安装方法和已审查的 values，以兼容版本添加 ambient 支持。不要使用无关的裸 `istioctl install --set profile=ambient` 命令覆盖由 Helm 管理的 mesh。渲染/比较预期配置，并验证 CNI/ztunnel 节点代理。
 
-#### 步骤 2：应用到测试命名空间
+#### 第 2 步：应用到测试 Namespace
 
-此独立 Ambient 测试部署 1.31 发行版的客户端和服务器。httpbin Service 暴露 8000，目标端口为 8080。
+此独立 ambient 测试从 1.31 发行版部署客户端和服务端。httpbin Service 暴露8000并目标为8080。
 
 ```bash
 kubectl create namespace test-ambient
@@ -391,9 +391,9 @@ kubectl exec -n test-ambient deploy/curl -c curl -- \
   curl -sS --max-time 5 http://httpbin:8000/headers
 ```
 
-#### 步骤 3：验证
+#### 第 3 步：验证
 
-HBONE 工作负载列展示预期传输。对实际流量，在正确节点 ztunnel 日志中检查预期源/目标身份，或查看带 `connection_security_policy="mutual_tls"` 的 TCP 指标。仅 HTTP 成功不是 mTLS 证明。HBONE 纳管不拒绝所有明文调用方；需要时使用 PeerAuthentication STRICT。参阅 [mTLS 验证](https://istio.io/latest/docs/ambient/usage/verify-mtls-enabled/)。
+HBONE workload 列显示预期传输。对于实际流量，请在正确节点的 ztunnel 日志中检查预期的源/目标身份，或检查带有 `connection_security_policy="mutual_tls"` 的 TCP 指标。仅 HTTP 成功不是 mTLS 的证据。HBONE 注册不会拒绝每个明文调用方；如有需要请使用 PeerAuthentication STRICT。请参阅 [mTLS 验证](https://istio.io/latest/docs/ambient/usage/verify-mtls-enabled/)。
 
 ```bash
 istioctl ztunnel-config workloads --workload-namespace test-ambient
@@ -404,9 +404,9 @@ ztunnel_pod=$(kubectl get pod -n istio-system -l app=ztunnel \
 kubectl logs "$ztunnel_pod" -n istio-system --since=5m
 ```
 
-#### 步骤 4：切换选定工作负载
+#### 第 4 步：切换选定工作负载
 
-下一示例假定已有独立 `migration-demo` 命名空间，只包含已审核、通过命名空间注入且仅需 L4 的 curl/httpbin Deployment。检查 Pod 模板注入覆盖或手动注入代理；这些命令不移除它们。L7 工作负载先验证 waypoint 纳管和策略转换，包括 `targetRefs` 及任何强制遍历保护。规划迁移期间策略共存；由 ztunnel 执行的基于选择器 L7 策略可能以拒绝流量方式失败。
+下一个示例假定存在一个独立的现有 `migration-demo` namespace，其中仅包含经审查、由 namespace 注入的 curl/httpbin Deployments，且只需要 L4。检查 Pod-template 注入覆盖或手动注入的代理；这些命令不会移除它们。对于 L7 工作负载，首先验证 waypoint 注册和策略转换，包括 `targetRefs` 以及任何强制经过的防护。在迁移期间规划策略共存；由 ztunnel 强制执行的基于 selector 的 L7 策略可能会失败关闭。
 
 ```bash
 # Reference snapshots, not manifests to blindly reapply with stale server metadata
@@ -428,13 +428,13 @@ kubectl get pods -n migration-demo -o json | jq -r '
 istioctl ztunnel-config workloads --workload-namespace migration-demo
 ```
 
-#### 步骤 5：验证所选数据路径
+#### 第 5 步：验证所选数据路径
 
-为命名工作负载重复就绪、连接、身份和策略测试。对 L7 工作负载组，检查实际 Namespace/Service/Pod 纳管、Gateway 流量类型/就绪及路由/策略附加；不要为每个 ServiceAccount 创建 waypoint。使用工作负载专属停止/回滚标准。此实验顺序不是生产零停机保证。
+对指定工作负载重复进行就绪状态、连通性、身份和策略测试。对于 L7 队列，请检查实际的 Namespace/Service/Pod 注册、Gateway 流量类型/就绪状态以及 route/策略附加；不要为每个 ServiceAccount 创建一个 waypoint。使用工作负载特定的停止/回滚标准。此实验流程并不保证生产环境零停机。
 
 ### 回滚策略
 
-恢复记录的注入模式及原始 Pod 模板/策略配置。下方代码仅处理上方命名空间注入情况；旧修订必须仍存在且健康。具有 waypoint 的工作负载组需要在审核过的回滚中恢复纳管/路由策略。仅删除明确识别、未被引用且为该组创建的 waypoint——绝不删除命名空间中每个 Gateway。
+恢复记录的注入模式和原始 Pod-template/策略配置。以下代码只处理上述 namespace 注入情形；旧 revision 必须仍然存在且健康。带有 waypoints 的队列需要将其注册/路由策略作为审查后回滚的一部分进行恢复。仅删除为该队列创建、且已明确识别为未被引用的 waypoint——绝不能删除 namespace 中的所有 Gateway。
 
 ```bash
 original_revision=$(jq -r '.metadata.labels["istio.io/rev"] // ""' migration-namespace-before.json)
@@ -456,22 +456,22 @@ for deployment in curl httpbin; do
 done
 ```
 
-## 性能比较 {#performance-comparison}
+## 性能比较
 
 ### 基准测试结果
 
-已移除的 `perf.png` URL 返回 404，未能支撑旧“官方基准”表。没有来源证明其每 Pod CPU/内存、延迟或吞吐量百分比。使用[公布的性能结果](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)时保留原始版本、负载、载荷、硬件和策略条件；不要将历史测量重新标为当前版本测试。
+已移除的 `perf.png` URL 返回404，且无法证实旧的“官方基准测试”表。没有来源能确定其每个 Pod 的 CPU/内存、延迟或吞吐量百分比。请使用[已发布的性能结果](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)，并保留其原始版本、负载、有效负载、硬件和策略条件；不要将历史测量结果重新标示为当前版本测试。
 
-| 测量 | 保持可比的内容 |
+| 衡量项 | 保持可比性 |
 |---|---|
-| 内存/CPU | 应用数、身份/连接、节点数、全部 waypoint 副本和等效策略 |
-| P50/P99 延迟 | 请求大小/速率、连接复用、mTLS、L7 策略、遥测和过载条件 |
-| 吞吐量 | 相同应用/后端容量和错误定义 |
-| 成本 | 实际预置容量、利用率和计费；仅 requests/用量更低不等于账单降低 |
+|内存/CPU|应用数量、身份/连接数、节点数量、所有 waypoint 副本和等效策略|
+|P50/P99 延迟|请求大小/速率、连接复用、mTLS、L7 策略、遥测和过载条件|
+|吞吐量|相同的应用/后端容量和错误定义|
+|成本|实际配置的容量、利用率和计费；仅降低 requests/使用量并不等于账单减少|
 
 ### 资源节省计算
 
-原始 100 Pod 算术仅作为**假设预算模型**保留如下。50MB/0.1CPU 和 waypoint 值是假设输入，不是推荐 requests/limits 或实测成本。实际比较包含每个 waypoint/ztunnel 副本、高可用放置和控制平面资源。额外 waypoint 副本会改变结果。
+原始的 100-Pod 算术仅作为**假设预算模型**保留在下方。其50MB/0.1CPU 和 waypoint 值为假设输入，并非建议的 requests/limits 或测量成本。实际比较中请包含每个 waypoint/ztunnel 副本、HA 部署和控制平面资源。增加 waypoint 副本会改变结果。
 
 ```python
 # Hypothetical planning inputs, not measured resource consumption or billing
@@ -484,27 +484,27 @@ memory_saved = sidecar_memory - ambient_memory  # 4300 MB, 86% of assumed baseli
 cpu_saved = sidecar_cpu - ambient_cpu           # 8.5 vCPU, 85% of assumed baseline
 ```
 
-## 使用场景 {#use-cases}
+## 使用场景
 
-### 何时应选择 Ambient 模式？
+### 何时应选择 Ambient Mode？
 
 
-**Ambient 模式推荐场景**：
-- 数百或更多微服务
-- 资源成本优化很重要
-- 大部分服务仅需简单通信
-- 只有部分服务需要高级路由
-- 尽量降低运维复杂度
+**Ambient Mode 的推荐场景**：
+- 数百个或更多微服务
+- 重视资源成本优化
+- 大多数服务仅需简单通信
+- 仅部分服务需要高级路由
+- 希望最小化运维复杂性
 
-**Sidecar 模式推荐场景**：
-- 所需 API/扩展或平台行为仅由选定 Sidecar 设置支持
-- 需要已验证的成熟方案
-- 需要逐服务细粒度控制
-- 每 Pod 独立管理代理版本
+**Sidecar Mode 的推荐场景**：
+- 所需 API/扩展或平台行为仅由所选 sidecar 设置支持
+- 需要经过验证的成熟解决方案
+- 需要对每个服务进行细粒度控制
+- 每个 pod 独立进行代理版本管理
 
-### 1. 仅需要 L4 功能时
+### 1. 仅需 L4 功能时
 
-对兼容的现有 TCP 工作负载，验证平台、策略和捕获前提条件后再纳管命名空间。此 Namespace 不是完整数据库部署；数据库复制/存储/高可用必须单独设计。
+对于兼容的现有 TCP 工作负载，在验证平台、策略和捕获先决条件后注册 namespace。此 Namespace 并非完整的数据库部署；必须单独设计数据库复制/存储/HA。
 
 ```yaml
 apiVersion: v1
@@ -517,25 +517,25 @@ metadata:
 
 ### 2. 选择性使用 L7 功能
 
-演示在 Service 级选择就绪 reviews waypoint。命名空间和直接工作负载纳管是独立受支持范围；ServiceAccount 标签不是选择器。
+该演示在 Service 级别选择已就绪的 reviews waypoint。Namespace 和直接工作负载注册是独立的受支持范围；ServiceAccount 标签不是选择器。
 
 ```bash
 kubectl label service reviews -n ambient-demo istio.io/use-waypoint=reviews-waypoint --overwrite
 ```
 
-L7 要求不自动意味着需要 Sidecar：比较受支持 waypoint API/扩展与应用实际需求。反之，核心 GA 也不意味着每个高级 API 功能对等。
+L7 要求不会自动要求使用 sidecars：请将受支持的 waypoint API 和扩展与应用的实际需求比较。反之，核心 GA 并不意味着每个高级 API 都具有功能对等性。
 
-### 3. 渐进迁移
+### 3. 渐进式迁移
 
-先清点注入和纳管情况，再按明确就绪/安全/回滚标准迁移已审核工作负载组。不要盲目标记每个 dev/staging/production 命名空间，也不要假定更改会转换现有 Sidecar。
+先清点注入和注册，然后使用明确的就绪状态/安全性/回滚标准迁移经审查的队列。不要盲目为每个 dev/staging/production namespace 添加标签，也不要假定该变更会转换现有 sidecars。
 
 ```bash
 kubectl get namespaces -L istio-injection,istio.io/rev,istio.io/dataplane-mode,istio.io/use-waypoint
 ```
 
-## 故障排除 {#troubleshooting}
+## 故障排除
 
-### ztunnel 不工作
+### ztunnel 未正常工作
 
 ```bash
 # Check ztunnel status
@@ -547,7 +547,7 @@ kubectl get daemonset -n istio-system istio-cni-node
 kubectl logs -n istio-system -l k8s-app=istio-cni-node
 ```
 
-### 流量未经过 Waypoint
+### 流量未发送至 Waypoint
 
 ```bash
 # Check Waypoint status
@@ -567,35 +567,35 @@ istioctl proxy-config clusters <waypoint-pod> -n <namespace>
 
 ### 当前官方文档
 
-- [Ambient 概述](https://istio.io/latest/docs/ambient/overview/)
-- [入门](https://istio.io/latest/docs/ambient/getting-started/)
+- [Ambient 概览](https://istio.io/latest/docs/ambient/overview/)
+- [入门指南](https://istio.io/latest/docs/ambient/getting-started/)
 - [Pod 内流量重定向](https://istio.io/latest/docs/ambient/architecture/traffic-redirection/)
 - [HBONE](https://istio.io/latest/docs/ambient/architecture/hbone/)
-- [Waypoint 纳管](https://istio.io/latest/docs/ambient/usage/waypoint/)
+- [Waypoint 注册](https://istio.io/latest/docs/ambient/usage/waypoint/)
 - [L7 API 支持和策略附加](https://istio.io/latest/docs/ambient/usage/l7-features/)
-- [性能方法/结果](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
-- [ztunnel 源码](https://github.com/istio/ztunnel)
+- [性能方法论/结果](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
+- [ztunnel 源代码](https://github.com/istio/ztunnel)
 - [Istio 社区和 Slack 访问](https://istio.io/latest/get-involved/)
 
 ### 历史介绍
 
-这些 2022 页面描述实验预览，不是当前安装或 ServiceAccount-waypoint 命令。
+这些2022 页面描述的是实验性预览，而非当前安装或 ServiceAccount-waypoint 命令。
 
-- [Ambient mesh 介绍（2022）](https://istio.io/latest/blog/2022/introducing-ambient-mesh/)
+- [Ambient mesh 简介（2022）](https://istio.io/latest/blog/2022/introducing-ambient-mesh/)
 - [实验性安全架构（2022）](https://istio.io/latest/blog/2022/ambient-security/)
-- [实验性入门（2022）](https://istio.io/latest/blog/2022/get-started-ambient/)
+- [实验性入门指南（2022）](https://istio.io/latest/blog/2022/get-started-ambient/)
 
-### 已验证里程碑和当前限制
+### 已验证的里程碑和当前限制
 
 | 里程碑 | 证据 |
 |---|---|
-| 2022 预览 | 宣布实验实现；不是主线 1.15 功能发布 |
-| 1.18 Alpha（2023） | 首个交付 Ambient 的 Istio 版本 |
-| 1.22 Beta（2024） | Beta 里程碑 |
-| 1.24 核心 GA（2024） | 核心 ztunnel/waypoint/API 里程碑；各功能保留自身状态 |
+|2022 预览版|已宣布实验性实现；不是主版本1.15功能发布的一部分|
+|1.18 Alpha（2023）|首个随 Istio 发布 ambient 的版本|
+|1.22 Beta（2024）|Beta 里程碑|
+|1.24 核心 GA（2024）|核心 ztunnel/waypoint/API 里程碑；各项功能仍保留各自状态|
 
-当前 [Ambient 多集群文档](https://istio.io/latest/docs/ambient/install/multicluster/)描述 **Beta 多主、多网络**支持。不支持主/远程模式，单网络部署未测试；必须跨集群协调 waypoint 命名/配置和服务范围。旧 1.26/1.27 路线图和无来源企业节省不是受支持行为或保证降本的证据。
+当前的 [ambient multicluster 文档](https://istio.io/latest/docs/ambient/install/multicluster/)描述**Beta multi-primary、multi-network**支持。Primary/remote 不受支持，且 single-network 部署未经测试；必须跨集群协调 waypoint 命名/配置和服务范围。旧的1.26/1.27 路线图和未署名的企业节省数据，不能作为受支持行为或保证成本降低的证据。
 
 ## 总结
 
-Ambient 将共享 L4 传输与选定 L7 waypoint 处理分离。它可简化未入网格工作负载纳管和代理生命周期管理，但资源节省、策略保留和可用性需要等效策略测量及已验证迁移计划。考虑 Linux/CNI/平台约束、TCP15008 连通性及每个 API 的功能状态。
+Ambient 将共享 L4 传输与选定的 L7 waypoint 处理分离。它可以简化未加入 mesh 的工作负载注册和代理生命周期管理，但资源节省、策略保留和可用性需要等效策略测量及经过验证的迁移计划。请考虑 Linux/CNI/平台约束、TCP15008 连通性以及每个 API 的功能状态。

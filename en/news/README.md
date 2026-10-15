@@ -1,5 +1,5 @@
 # News
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 12, 2026
 
 This page records documentation changes prompted by Kubernetes, Amazon EKS and CNCF news. GitHub Actions prepares updates each Monday at 09:00 KST and opens a PR after its quality gate passes. Changes reach the site after review, merge and deployment.
 
@@ -7,6 +7,38 @@ Week labels identify log-entry weeks and may differ from source publication date
 
 ## Update Log
 
+- 2026-W42: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — applied the Karpenter v1.15.0 release (node repair as a voluntary disruption with reboot support, CEL in KubeletConfiguration, broader DRA support, and more)
+- 2026-W42: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied the Argo CD v3.5.4/v3.4.10/v3.3.15 security patch releases (four CRITICAL issues including repo-server command execution, CVE-2026-77459)
+- 2026-W42: [kernel/01-container-primitives.md](../kernel/01-container-primitives.md) — applied the Kubernetes blog's cgroup v1 deprecation status (`failCgroupV1` defaults to `true` from v1.35)
+- 2026-W42: no matching doc — Scaling Kubernetes workloads with NVMe SSD-backed node swap (GA in v1.34), Kubernetes blog ([source](https://kubernetes.io/blog/2026/10/05/scaling-kubernetes-workloads-with-node-swap/))
+- 2026-W42: no matching doc — Meshery becomes a CNCF incubating project ([source](https://www.cncf.io/blog/2026/10/07/meshery-becomes-a-cncf-incubating-project/))
+- 2026-W42: no matching doc — AWS Batch now supports Amazon EKS access entry authentication ([source](https://aws.amazon.com/about-aws/whats-new/2026/10/aws-batch-access-entries/))
+- 2026-W41: [eks/08-eks-upgrades.md](../eks/08-eks-upgrades.md) — applied Kubernetes 1.37 support on Amazon EKS and EKS Distro (Metrics API GA, DRA device taints GA, HPA scale-to-zero beta)
+- 2026-W41: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied the start of Argo CD 4.0 visioning and ArgoCon North America 2026 news
+- 2026-W41: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — applied Atlassian's incident-detection rebuild on OTel, Kafka, and Flink (CNCF blog)
+- 2026-W41: no matching doc — Amazon ECS adds Amazon VPC Lattice support for blue/green, linear, and canary deployments ([source](https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-ecs-vpc-lattice-blue-green-deployments))
+- 2026-W41: no matching doc — Amazon Managed Grafana now supports creating Grafana 13.2 workspaces ([source](https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-managed-grafana-now-supports-creating-grafana-13-2-workspaces))
+- 2026-W41: no matching doc — Grafana Tempo 3.1 release (new Kafka features, TraceQL metrics updates, trace redaction, and more) ([source](https://grafana.com/blog/tempo-3-1-release-all-the-latest-features))
+- 2026-W41: no matching doc — Guardrails, not gates: rethinking policy in platform teams, CNCF blog ([source](https://www.cncf.io/blog/2026/10/01/guardrails-not-gates-rethinking-policy-in-platform-teams/))
+- 2026-W40: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied the Kubernetes v1.37.1/v1.36.5/v1.35.9/v1.34.12 patch releases and the v1.37 PVC `Unused` condition (Beta) blog post
+- 2026-W40: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — applied the Istio 1.31.1/1.30.5/1.29.8 patch releases (including the BackendTLSPolicy fail-open security fix GHSA-qm8v-g4f9-qhjx)
+- 2026-W40: [eks/04-eks-storage-part1.md](../eks/04-eks-storage-part1.md) — applied the EFS CSI driver mount option injection vulnerability CVE-2026-6437 (fixed in v3.0.1)
+- 2026-W40: [ai-ml/08-llm-gateway.md](../ai-ml/08-llm-gateway.md) — applied the Amazon SageMaker HyperPod Inference Gateway launch (EKS managed add-on, GPU-aware routing)
+- 2026-W40: no matching doc — Amazon EMR on EKS now supports IPv6 Amazon EKS clusters ([source](https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-emr-eks-ipv6-support))
+- 2026-W40: no matching doc — Run interactive workloads on Amazon EMR on EKS with Spark Connect ([source](https://aws.amazon.com/about-aws/whats-new/2026/09/emr-eks-spark-connect-interactive/))
+- 2026-W40: no matching doc — Amazon CloudWatch Omni general availability (AI-first observability experience, OpenTelemetry interoperability) ([source](https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-cloudwatch-omni-ai/))
+- 2026-W39: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied three Kubernetes v1.37 feature deep dives (Memory QoS Beta, Pod-Level Resource Managers Beta, emptyDir permissions and bind mount options)
+- 2026-W39: [networking/cilium/README.md](../networking/cilium/README.md) — applied Cilium 1.20.2/1.19.8/1.18.14 patch releases and the CNCF blog's 1.20 feature recap
+- 2026-W39: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied Argo CD v3.5.3/v3.4.9 patch releases and v3.6.0-rc1
+- 2026-W39: no matching doc — Kubernetes CSI Changed Block Tracking (CBT) API graduates to Beta, with differences from Alpha, Kubernetes blog ([source](https://kubernetes.io/blog/2026/09/14/csi-changed-block-tracking-beta/))
+- 2026-W39: no matching doc — AWS Resilience Hub adds three new capabilities (including EKS-label-based service resource discovery within a namespace) ([source](https://aws.amazon.com/about-aws/whats-new/2026/09/resilience-hub-eks-dependency-policy/))
+- 2026-W38: [core/08-scheduling-preemption-eviction.md](../core/08-scheduling-preemption-eviction.md) — applied Kubernetes v1.37 scheduler preemption for in-place Pod resize (Alpha) and Workload-Aware Scheduling advances (Workload/PodGroup Beta, CompositePodGroup API)
+- 2026-W38: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied Kubernetes v1.37 Node lifecycle conditions (five well-known conditions for drain, maintenance and graceful shutdown)
+- 2026-W38: [observability/metrics/01-prometheus.md](../observability/metrics/01-prometheus.md) — applied Prometheus native histograms for Kubernetes v1.37 component metrics (Beta, enabled by default)
+- 2026-W38: [networking/cilium/README.md](../networking/cilium/README.md) — applied the Cilium 1.21.0-pre.2 prerelease (Gateway API session persistence, AWS managed prefix lists, BPF masquerading by default)
+- 2026-W38: no matching doc — Karmada becomes a CNCF graduated project ([source](https://www.cncf.io/announcements/2026/09/07/cloud-native-computing-foundation-announces-karmada-graduation/))
+- 2026-W38: no matching doc — Kubernetes disaster recovery: guidance from three reproducible failure scenarios, CNCF blog ([source](https://www.cncf.io/blog/2026/09/10/kubernetes-disaster-recovery-guidance-from-three-reproducible-failure-scenarios/))
+- 2026-W38: no matching doc — AWS Private CA EKS add-on and Connector for AD now available in AWS GovCloud (US) ([source](https://aws.amazon.com/about-aws/whats-new/2026/09/private-ca-eks-addon-ad-govcloud/))
 - 2026-W36: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied the Kubernetes v1.37 "Garhwal" release (Pod certificates/ClusterTrustBundles Stable, Metrics API GA, kube-dns and IPVS-mode deprecations, and more)
 - 2026-W36: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — applied the Istio 1.30.4/1.29.7 security patch releases (ISTIO-SECURITY-2026-006, 13 Envoy CVEs)
 - 2026-W36: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied the ArgoCD v3.5.2/v3.4.8 patch releases
