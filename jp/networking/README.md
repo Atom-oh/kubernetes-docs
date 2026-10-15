@@ -1,77 +1,79 @@
 # Kubernetes ネットワーキング
 
-> **最終更新**: September 15, 2026. 機能の参照先には Cilium 1.20.1、Calico Open Source 3.32、Flannel 0.28.9、および AWS VPC CNI 1.23.0 が含まれます。インストール前に各製品の Kubernetes/プラットフォーム互換性マトリクスを確認してください。これらは共同でテストされたクラスター構成ではありません。
+> **最終更新**: September 15, 2026. 機能に関する記述は Cilium 1.20.1、Calico Open Source 3.32、Flannel 0.28.9、AWS VPC CNI 1.23.0 を対象としています。インストール前に各製品の Kubernetes / プラットフォーム対応マトリクスを確認してください。これらは共同でテストされたクラスター構成ではありません。
 
 ## 概要
 
-Kubernetes ネットワーキングは、コンテナ化されたアプリケーション間の通信を可能にする中核インフラストラクチャレイヤーです。このセクションでは、基本的な Kubernetes ネットワーキングの概念から、高度な CNI (Container Network Interface) ソリューション、AWS EKS 環境でのネットワーキングパターンまでを扱います。
+Kubernetes ネットワーキングは、コンテナ化されたアプリケーション間の通信を可能にする中核的なインフラストラクチャ層です。このセクションでは、Kubernetes ネットワーキングの基本概念から、高度な CNI (Container Network Interface) ソリューション、そして AWS EKS 環境におけるネットワーキングパターンまでを扱います。
 
 ## 学習パス {#learning-path}
 
-Linux またはネットワーキングが初めての場合は、[初級コース](beginner/README.md)から始めてください。その 8 つのレッスンでは、CLI、アドレッシング、DNS、SSH、ファイアウォール、モニタリング、そして総合演習を結び付けます。以下のパスでは、その基礎をプロトコル、カーネル、クラスター実装へと拡張します。
+初級コースの後は、[エキスパートネットワーキングパス](expert/README.md) を使って、プロトコルのプロジェクト、ルーティングポリシー、EVPN、Linux パフォーマンス、クラウド設計、自動化の評価をつなげてください。まず各ワークブックの環境、証跡、復旧基準を確認してください。
 
-プロトコルの概念から観測へと積み上げ、それをコンテナ、クラスター、クラウドの責任範囲に結び付けます。前提条件を使用して開始地点を選び、続行前に成果で理解を確認してください。
+Linux やネットワーキングが初めての方は、[初級コース](beginner/README.md) から始めてください。8 つのレッスンで CLI、アドレッシング、DNS、SSH、ファイアウォール、モニタリング、そして総まとめの課題をつなげます。以下のパスは、その基礎をプロトコル、カーネル、クラスター実装へと広げていきます。
 
-| Stage | Role | Prerequisites | Outcome | Read / practice |
+プロトコルの概念から観測へと積み上げ、それをコンテナ、クラスター、クラウドの責務に結び付けてください。前提条件を使って入り口を選び、成果を使って理解度を確認してから次に進んでください。
+
+| 段階 | 役割 | 前提条件 | 成果 | 読む / 練習する |
 |---|---|---|---|---|
-| プロトコル、アドレッシング、HTTP | 用語を確立する | 基本的なコマンドラインの使用 | リクエストを追跡し、アドレッシング、トランスポート、アプリケーションの動作を区別する | ネットワークの基礎 [Part 1](../basics/06-network-fundamentals-part1.md)、[Part 2](../basics/06-network-fundamentals-part2.md)、[Part 3](../basics/06-network-fundamentals-part3.md)、[Part 4](../basics/06-network-fundamentals-part4.md) |
-| Linux ソケット、VFS、パケットパス | API をカーネルに結び付ける | TCP/IP の基礎 | FD、ソケットバッファ、ウィンドウ、キューを区別する | [カーネルネットワーキングスタック](../kernel/02-network-stack.md) |
-| Linux ネットワーク診断 | 根拠を用いて仮説を検証する | ソケットおよびパケットパスの概念 | ソケット、パケット、アプリケーションの観測結果を関連付ける | [診断演習](07-linux-network-diagnostics.md) · [クイズ](../quizzes/networking/07-linux-network-diagnostics-quiz.md) |
-| Docker とコンテナネットワーキング | namespace の境界を特定する | Linux パケットパスと基本的な診断 | ブリッジネットワーキング、公開ポート、コンテナ名解決を説明する | [コンテナテクノロジー](../basics/03-container-technology.md) |
-| Kubernetes Service、DNS、Ingress | クラスター抽象化を対応付ける | コンテナネットワーキング | 名前を Service 経由でその endpoint まで追跡し、Ingress の役割を特定する | [Service とネットワーキング](../core/03-services-networking.md) · [ラボ](../labs/core/03-services-networking-lab.md) |
-| eBPF、CNI、ポリシー | 実装の責任範囲を比較する | Pod と Service のパス | パケット転送、ポリシー適用、可観測性を区別する | [eBPF の基礎](../basics/05-ebpf-fundamentals.md) · [Cilium](cilium/README.md) · [Calico](calico/README.md) |
-| AWS ネットワーク境界とパフォーマンス | モデルをクラウドパスに適用する | CNI の概念と測定スキル | VPC、ノード、AZ の境界を特定し、文脈の中で測定値を解釈する | [VPC CNI](01-vpc-cni.md) · [AWS Load Balancer Controller](03-aws-lb-controller.md) · [Cross-Org VPC Connectivity](05-cross-org-vpc-connectivity.md) · [Pod Network Benchmark](06-pod-network-benchmark.md) |
+| プロトコル、アドレッシング、HTTP | 語彙を確立する | 基本的なコマンドライン操作 | リクエストを追跡し、アドレッシング、トランスポート、アプリケーションの挙動を区別する | ネットワーク基礎 [Part 1](../basics/06-network-fundamentals-part1.md), [Part 2](../basics/06-network-fundamentals-part2.md), [Part 3](../basics/06-network-fundamentals-part3.md), [Part 4](../basics/06-network-fundamentals-part4.md) |
+| Linux ソケット、VFS、パケットパス | API をカーネルに結び付ける | TCP/IP の基礎 | FD、ソケットバッファ、ウィンドウ、キューを区別する | [カーネルネットワークスタック](../kernel/02-network-stack.md) |
+| Linux ネットワーク診断 | 証跡で仮説を検証する | ソケットとパケットパスの概念 | ソケット、パケット、アプリケーションの観測結果を相関付ける | [診断の実践](07-linux-network-diagnostics.md) · [クイズ](../quizzes/networking/07-linux-network-diagnostics-quiz.md) |
+| Docker とコンテナネットワーキング | Namespace の境界を特定する | Linux パケットパスと基本的な診断 | ブリッジネットワーキング、公開ポート、コンテナ名前解決を説明する | [コンテナ技術](../basics/03-container-technology.md) |
+| Kubernetes Service、DNS、Ingress | クラスターの抽象化を対応付ける | コンテナネットワーキング | 名前を Service 経由でそのエンドポイントまで追跡し、Ingress の役割を特定する | [Service とネットワーキング](../core/03-services-networking.md) · [ラボ](../labs/core/03-services-networking-lab.md) |
+| eBPF、CNI、ポリシー | 実装の責務を比較する | Pod と Service のパス | パケット転送、ポリシー適用、可観測性を区別する | [eBPF の基礎](../basics/05-ebpf-fundamentals.md) · [Cilium](cilium/README.md) · [Calico](calico/README.md) |
+| AWS のネットワーク境界とパフォーマンス | モデルをクラウドのパスに適用する | CNI の概念と測定スキル | VPC、ノード、AZ の境界を特定し、測定結果を文脈の中で解釈する | [VPC CNI](01-vpc-cni.md) · [AWS Load Balancer Controller](03-aws-lb-controller.md) · [組織間 VPC 接続](05-cross-org-vpc-connectivity.md) · [Pod ネットワークベンチマーク](06-pod-network-benchmark.md) |
 
 ## Kubernetes ネットワーキングモデル
 
-現在の Kubernetes モデルは、**意図的なネットワーク分離を前提として**、Pod がアドレス変換やプロキシなしでノードをまたいで直接通信できる Pod ネットワークを提供します。kubelet などのノードエージェントは、自身のノード上の Pod に到達できる必要があります。特定の接続が成功するかどうかは、依然として NetworkPolicy、ルーティング、アプリケーションリスナーによって決まります。
+現在の Kubernetes モデルは、**意図的なネットワークセグメンテーションが適用される場合を除き**、Pod がアドレス変換やプロキシーなしでノードを越えて直接通信できる Pod ネットワークを提供します。kubelet などのノードエージェントは、自ノード上の Pod に到達できる必要があります。特定の接続が成功するかどうかは、Network Policy、ルーティング、アプリケーションのリスナーによって決まります。
 
-通常の Pod には独自のネットワーク namespace とクラスター全体で有効なアドレスがあり、1 つの Pod 内のコンテナはその namespace と localhost を共有します。host-network Pod はノードネットワークを共有し、dual-stack または multi-network 構成では、より正確なアドレス処理が必要です。Pod を再作成すると異なる IP が割り当てられることがあります。同じ Pod 内のコンテナを再起動しても、必ずしもそのネットワークサンドボックスが再作成されるわけではありません。
+通常の Pod は独自のネットワーク Namespace とクラスター全体で有効なアドレスを持ち、1 つの Pod 内のコンテナはその Namespace と localhost を共有します。ホストネットワークの Pod はノードのネットワークを共有し、デュアルスタックやマルチネットワーク構成ではより厳密なアドレスの取り扱いが必要になります。Pod を再作成すると別の IP が割り当てられることがありますが、同じ Pod 内のコンテナを再起動しても、そのネットワークサンドボックスが必ず再作成されるわけではありません。
 
-| Component | Role |
+| コンポーネント | 役割 |
 |---|---|
-| Pod ネットワーク | workload のネットワーク namespace 間のアドレッシングと接続性 |
-| Service/ディスカバリー | 変化する endpoint に対する安定した Service 名または仮想アドレス |
-| Ingress/Gateway 実装 | 構成済みの外部エントリーとアプリケーションルーティング |
-| NetworkPolicy エンジン | 選択した実装でサポートされるポリシーを適用する |
+| Pod ネットワーク | ワークロードのネットワーク Namespace 間のアドレッシングと接続性 |
+| Service / ディスカバリー | 変化するエンドポイントの上に安定したサービス名または仮想アドレスを提供 |
+| Ingress / Gateway 実装 | 設定された外部エントリーポイントとアプリケーションルーティング |
+| Network Policy エンジン | 選択した実装がサポートするポリシーを適用 |
 
-これらの役割は、必須の直列パケットパスを構成するものではありません。Service 変換、L7 プロキシ、workload ポリシーにより、特定のリクエストがネットワークを通過する方法は変わる可能性があります。
+これらの役割は、必ず直列につながるパケットパスを形成するわけではありません。Service の変換、L7 プロキシー、ワークロードポリシーによって、特定のリクエストがネットワークをどう通過するかは変わり得ます。
 
 ### Pod ネットワーキング
 
-Pod ネットワーキングは、Pod 通信のためのアドレッシングとルートを提供します。以下の図は通常の IPv4 Pod を示しており、その接続は該当するポリシーとネットワーク制御が許可していることを前提とします。
+Pod ネットワーキングは、Pod 間通信のためのアドレッシングとルートを提供します。以下の図は通常の IPv4 Pod を示しており、その接続は該当するポリシーとネットワーク制御が許可していることを前提としています。
 
-![構成されたポリシーとルーティングに従う、2 つのノードにまたがる直接 IPv4 Pod パスの例。](../.gitbook/assets/en-networking-readme-1.png)
+![2 つのノードにまたがる直接的な IPv4 Pod パスの例。接続性は設定されたポリシーとルーティングに依存します。](../.gitbook/assets/en-networking-readme-1.png)
 
-[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-1.html)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-1.html)
 
-アドレスは例示的な通常の Pod アドレスです。意図的な分離、および host-network または multi-network 構成には、それぞれ固有の解釈が必要です。
+図中のアドレスは、通常の Pod アドレスの例です。意図的な分離や、ホストネットワーク・マルチネットワーク構成については、それぞれ別の解釈が必要です。
 
 #### Pod ネットワーキングの実装方式
 
-| Method | Description | Example CNI |
+| 方式 | 説明 | CNI の例 |
 |--------|-------------|-------------|
-| **Overlay Network** | 既存のネットワーク上でトラフィックをカプセル化する | Flannel VXLAN、Calico VXLAN/IPIP、Cilium VXLAN/Geneve |
-| **Native Routing** | overlay カプセル化なしで、基盤ネットワーク内のルートを使用する | AWS VPC CNI、Calico routing/BGP、Cilium native routing |
-| **Conditional Encapsulation** | 構成済みトポロジーに応じて直接パスまたはカプセル化を使用する | 前提条件が異なる、サポート対象の Calico/Flannel/Cilium モード |
+| **オーバーレイネットワーク** | 既存のネットワーク上でトラフィックをカプセル化する | Flannel VXLAN, Calico VXLAN/IPIP, Cilium VXLAN/Geneve |
+| **ネイティブルーティング** | オーバーレイのカプセル化を行わず、下位ネットワークのルートを使用する | AWS VPC CNI, Calico routing/BGP, Cilium native routing |
+| **条件付きカプセル化** | 設定されたトポロジーに応じて直接パスまたはカプセル化を使用する | 対応する Calico/Flannel/Cilium のモード。前提条件はそれぞれ異なる |
 
 ### Service ネットワーキング
 
-Service は、通常は Pod からなる論理的な endpoint の集合と、その到達方法を記述します。ClusterIP はデフォルトで安定した仮想 IP を提供し、headless Service はその仮想 IP を省略します。ExternalName は DNS CNAME マッピングを使用します。Service は、Pod selector なしで管理される endpoint を持つこともできます。
+Service は、通常は Pod である論理的なエンドポイントの集合と、そこへの到達方法を記述します。ClusterIP はデフォルトで安定した仮想 IP を提供します。headless Service はその仮想 IP を持たず、ExternalName は DNS CNAME マッピングを使用します。Service は Pod セレクターなしで管理されるエンドポイントを持つこともできます。
 
-![ClusterIP、NodePort、LoadBalancer、ExternalName Service の一般的なエントリーメカニズム。DNS マッピングはパケット転送と区別されます。](../.gitbook/assets/en-networking-readme-2.png)
+![ClusterIP、NodePort、LoadBalancer、ExternalName Service の代表的なエントリー機構。DNS マッピングはパケット転送とは区別されます。](../.gitbook/assets/en-networking-readme-2.png)
 
-[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-2.html)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-2.html)
 
-これらは一般的な公開メカニズムであり、セキュリティ保証ではありません。NodePort の範囲とアクセス可能なノードアドレスは構成可能であり、LoadBalancer は internal にできます。ExternalName は DNS エイリアスを返すだけで、転送プロキシは作成しません。
+これらは代表的な公開機構であり、セキュリティの保証ではありません。NodePort の範囲やアクセス可能なノードアドレスは設定可能で、LoadBalancer は内部向けにもできます。ExternalName は DNS エイリアスを返すだけで、転送プロキシーを作成しません。
 
 #### Service タイプの特性
 
-`default` に、表示された target port で listen する一致する `app: my-app` Pod を作成してください。NodePort のデフォルトの割り当て範囲は 30000–32767 であり、構成できます。外部からの到達可能性は依然としてアドレス、ルート、アクセス制御に依存します。
+`default` に `app: my-app` が一致する Pod を作成し、図示された targetPort でリッスンさせてください。NodePort のデフォルト割り当て範囲は 30000〜32767 で、設定可能です。外部からの到達性は、アドレス、ルート、アクセス制御に依存します。
 
-LoadBalancer の例では、EC2 instance target と割り当てられた NodePort を使用する **AWS Load Balancer Controller** を明示的に選択しています。まず、その controller と IAM/subnet の前提条件をインストールおよび構成してください。EKS Auto Mode は異なる controller/class を使用します。ここで port 443 は TCP port を選択しているだけであり、TLS は backend が 8443 で提供するか、load balancer 上で別途構成する必要があります。
+LoadBalancer の例では **AWS Load Balancer Controller** を明示的に選択し、EC2 インスタンスターゲットと割り当て済み NodePort を使用しています。事前にそのコントローラーと IAM / サブネットの前提条件をインストール・設定してください。EKS Auto Mode は別のコントローラー / クラスを使用します。ここでのポート 443 は単に TCP ポートを選んでいるだけであり、TLS はバックエンドが 8443 で提供するか、ロードバランサー側で別途設定する必要があります。
 
-これらのポートマッピングは、一般的な Kubernetes Service API を例示しています。AWS は現在、追加のネイティブ EKS NetworkPolicy 要件を文書化しています。Service port は container port と一致する必要があり、`metadata.ownerReferences` を持つ controller 管理 Pod は信頼性の高い適用を提供します。このポリシー実装をテストする前に、例をそれらの要件に適合させてください。
+これらのポートマッピングは、一般的な Kubernetes Service API を示しています。AWS は現在、EKS ネイティブの Network Policy に関する追加要件を文書化しています。Service のポートはコンテナポートと一致する必要があり、`metadata.ownerReferences` を持つコントローラー管理下の Pod が確実な適用を提供します。そのポリシー実装をテストする前に、例をこれらの要件に合わせて調整してください。
 
 ```yaml
 apiVersion: v1
@@ -125,15 +127,15 @@ spec:
 
 ### Ingress ネットワーキング
 
-Ingress resource には controller とその data plane が必要です。この HTTP の例では、`spec.ingressClassName: alb` と IP target を持つ AWS LBC を使用します。参照される `api-v1`、`api-v2`、`web-frontend` Service は `default` に存在し、port 80 を公開し、ready で VPC-routable な Pod endpoint を持つ必要があります。必要な場合は HTTPS/certificate を別途構成してください。インストールと target の前提条件については、[LBC ガイド](03-aws-lb-controller.md)を参照してください。
+Ingress リソースには、コントローラーとそのデータプレーンが必要です。この HTTP の例では、`spec.ingressClassName: alb` と IP ターゲットを使用した AWS LBC を用いています。参照している `api-v1`、`api-v2`、`web-frontend` Service は `default` に存在し、ポート 80 を公開し、VPC でルーティング可能な Ready 状態の Pod エンドポイントを持っている必要があります。必要に応じて HTTPS / 証明書は別途設定してください。インストールとターゲットの前提条件は [LBC ガイド](03-aws-lb-controller.md) を参照してください。
 
-Ingress は、HTTP/HTTPS トラフィックを内部クラスター Service にルーティングするルールを定義します。
+Ingress は、HTTP/HTTPS トラフィックをクラスター内部の Service にルーティングするルールを定義します。
 
-![Service backend と Pod への論理的な Ingress host/path ルーティング。](../.gitbook/assets/en-networking-readme-3.png)
+![Ingress のホスト / パスによる Service バックエンドと Pod への論理的なルーティング。](../.gitbook/assets/en-networking-readme-3.png)
 
-[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-3.html)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-3.html)
 
-ボックスは Ingress の data-plane 機能を表します。AWS LBC は ALB をプログラムします。アプリケーショントラフィックは controller の reconciliation process を通過しません。target mode に応じて、data plane は Pod IP または NodePort に到達できます。これは Service 仮想 IP を文字どおり追加の hop として通過するのとは異なります。
+図のボックスは Ingress のデータプレーン機能を表します。AWS LBC は ALB を設定するもので、アプリケーショントラフィックがコントローラーの調整 (reconciliation) プロセスを通過することはありません。ターゲットモードによっては、データプレーンは Service の仮想 IP を実際の追加ホップとして経由するのではなく、Pod IP または NodePort に到達できます。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -178,59 +180,59 @@ spec:
 
 ## CNI (Container Network Interface)
 
-CNI は、runtime がコンテナネットワークを構成するためのインターフェイスを標準化します。現在の Kubernetes では、kubelet は CRI 経由で Pod-sandbox 操作を要求し、**container runtime が CNI を管理します**。kubelet の古い直接 CNI 管理フラグは Kubernetes 1.24 で削除されました。
+CNI は、ランタイムがコンテナネットワークを設定するためのインターフェイスを標準化します。現在の Kubernetes では、kubelet は CRI を通じて Pod サンドボックスの操作を要求し、**コンテナランタイムが CNI を管理します**。kubelet が CNI を直接管理していた古いフラグは Kubernetes 1.24 で削除されました。
 
-### Runtime と Plugin の責任範囲
+### ランタイムとプラグインの責務
 
-| Actor | Responsibility |
+| 主体 | 責務 |
 |---|---|
-| kubelet | container runtime interface を通じて sandbox の作成/削除を要求する |
-| Container runtime | ネットワーク構成を選択し、CNI plugin chain を呼び出す |
-| CNI plugin | 構成を受け取り、ADD/DEL とその他のサポートされる操作を実行し、結果を返す |
-| IPAM 実装 | アドレスを割り当て/解放する。委譲された plugin、または provider 固有 agent の一部の場合がある |
-| オプションの node agent | provider 固有のルート、ポリシー、IP pool、または datapath state を維持する |
+| kubelet | コンテナランタイムインターフェイス経由でサンドボックスの作成 / 削除を要求する |
+| コンテナランタイム | ネットワーク設定を選択し、CNI プラグインチェーンを呼び出す |
+| CNI プラグイン | 設定を受け取り、ADD/DEL などのサポートされる操作を実行し、結果を返す |
+| IPAM 実装 | アドレスを割り当て / 解放する。委譲プラグインの場合もあれば、プロバイダー固有のエージェントの一部の場合もある |
+| 任意のノードエージェント | プロバイダー固有のルート、ポリシー、IP プール、データパスの状態を維持する |
 
-runtime は CNI interface 経由で plugin に構成を渡します。個別の長時間実行 agent や IPAM binary は、すべての plugin に必須ではありません。interface type も異なり、veth pair は一般的ですが唯一の実装ではありません。
+ランタイムは CNI インターフェイスを通じてプラグインに設定を渡します。常駐する別のエージェントや IPAM バイナリーは、すべてのプラグインに必須というわけではありません。インターフェイスの種類も異なります。veth ペアは一般的ですが、唯一の実装ではありません。
 
-## CNI 比較
+## CNI の比較
 
-| Project / scope | Networking and policy | Features and limits to distinguish |
+| プロジェクト / 範囲 | ネットワーキングとポリシー | 区別すべき機能と制限 |
 |---|---|---|
-| **Cilium 1.20.1** | eBPF ネットワーキング、該当する L7 機能には Envoy、Cilium NetworkPolicy と Hubble | AMD64/Arm64 要件を持つ Linux worker dataplane。Windows CLI の可用性は Windows CNI のサポートを意味しません。WireGuard/IPsec と Beta ztunnel mTLS は対象範囲が異なります。 |
-| **Calico Open Source 3.32** | routing/encapsulation の選択肢、iptables、nftables、eBPF のオプション、順序付き policy tier と host/workload policy | Windows には Linux eBPF または WireGuard dataplane がないことを含む、別個の制限があります。Whisker/Goldmane のフロー可観測性は Tech Preview として利用できます。有償機能については edition matrix を参照してください。 |
-| **Flannel 0.28.9** | Host subnet 割り当てと node 間 transport、VXLAN、host-gw、その他の backend | `flanneld` 自体は NetworkPolicy を適用しません。chart のオプション `netpol.enabled` は SIGs policy controller をデプロイします。WireGuard は文書化された backend であり、IPsec は実験的です。Windows VXLAN には固有の設定/制限があります。 |
-| **AWS VPC CNI 1.23.0 / EKS** | VPC アドレス割り当てと EC2 ENI/prefix、サポート対象の Linux EC2 node での EKS standard および Admin network policy 機能 | EKS Auto Mode は、追加の DNS policy 機能を備えたマネージドネットワーキング実装です。Windows、Fargate、custom networking、prefix delegation、multi-NIC サポートには個別の条件があります。 |
-| **Original Weave Net project** | 歴史的な overlay networking 実装 | 元の `weaveworks/weave` repository はアーカイブされています。新しいクラスターに対するアクティブでサポートされたデフォルトとして説明しないでください。 |
+| **Cilium 1.20.1** | eBPF ネットワーキング。該当する L7 機能には Envoy を使用。Cilium Network Policy と Hubble | Linux ワーカーのデータプレーンで、AMD64/Arm64 の要件がある。Windows CLI が利用できることは Windows CNI サポートを意味しない。WireGuard/IPsec と Beta の ztunnel mTLS は適用範囲が異なる。 |
+| **Calico Open Source 3.32** | ルーティング / カプセル化の選択肢。iptables、nftables、eBPF のオプション。順序付きポリシー Tier とホスト / ワークロードポリシー | Windows には Linux の eBPF や WireGuard データプレーンが使えないなど、別の制限がある。Whisker/Goldmane のフロー可観測性は Tech Preview として提供。有償機能についてはエディションマトリクスを参照。 |
+| **Flannel 0.28.9** | ホストサブネットの割り当てとノード間トランスポート。VXLAN、host-gw などのバックエンド | `flanneld` 自体は NetworkPolicy を適用しない。Chart の任意設定 `netpol.enabled` が SIGs のポリシーコントローラーをデプロイする。WireGuard は文書化されたバックエンドで、IPsec は実験的。Windows VXLAN には固有の設定 / 制限がある。 |
+| **AWS VPC CNI 1.23.0 / EKS** | VPC アドレスの割り当てと EC2 の ENI / プレフィックス。サポート対象の Linux EC2 ノードで EKS 標準および Admin Network Policy 機能 | EKS Auto Mode はマネージドなネットワーキング実装で、追加の DNS ポリシー機能を持つ。Windows、Fargate、カスタムネットワーキング、プレフィックス委譲、マルチ NIC のサポートにはそれぞれ別の条件がある。 |
+| **オリジナルの Weave Net プロジェクト** | 歴史的なオーバーレイネットワーキング実装 | オリジナルの `weaveworks/weave` リポジトリはアーカイブされている。新しいクラスターにおいてアクティブでサポートされたデフォルトとして説明してはならない。 |
 
-### Policy、Encryption、Observability
+### ポリシー、暗号化、可観測性
 
-- Cilium は、該当する L7 component を通じて HTTP/DNS 対応 policy、および cluster-wide/host policy を提供します。その deny/allow semantics は Calico の順序付き Tier API とは異なります。
-- Calico Open Source には、階層的な policy tier と host policy が含まれます。現在の product matrix は application-layer policy、DNS/FQDN policy、Cluster Mesh を Cloud/Enterprise に割り当てています。これらを open-source edition の機能として暗黙に帰属させてはなりません。Calico の文書化された transit 中の encryption は WireGuard を使用します。
-- Amazon EKS は、Auto Mode とサポート対象の EC2/VPC-CNI インストール用に `ClusterNetworkPolicy` Admin/Baseline control を提供します。AWS が説明する DNS/FQDN `ApplicationNetworkPolicy` 機能は **Auto Mode** 用です。その名前は、現在の HTTP method/body inspection を意味するものではありません。
-- Flannel のオプション policy controller には独自の要件があります。networking backend を選択しただけでは適用は有効になりません。
-- node 間 encryption、認証された workload identity、application mTLS は異なる control です。ネットワークフローの可視性も、application tracing や process/file enforcement とは異なります。
+- Cilium は該当する L7 コンポーネントを通じて HTTP/DNS を認識したポリシーと、クラスター全体 / ホストのポリシーを提供します。その deny/allow のセマンティクスは、Calico の順序付き Tier API とは異なります。
+- Calico Open Source には階層的なポリシー Tier とホストポリシーが含まれます。現在の製品マトリクスでは、アプリケーション層ポリシー、DNS/FQDN ポリシー、Cluster Mesh は Cloud/Enterprise に割り当てられており、これらを暗黙にオープンソース版の機能として扱ってはいけません。Calico が文書化している通信経路の暗号化は WireGuard を使用します。
+- Amazon EKS は、Auto Mode およびサポート対象の EC2/VPC-CNI インストールに対して `ClusterNetworkPolicy` の Admin/Baseline 制御を提供します。AWS が説明している DNS/FQDN の `ApplicationNetworkPolicy` 機能は **Auto Mode** 向けです。その名称は、現時点で HTTP メソッド / ボディの検査を行うことを意味しません。
+- Flannel の任意のポリシーコントローラーには独自の要件があり、ネットワーキングバックエンドを選ぶだけでは適用は有効になりません。
+- ノード間の暗号化、認証されたワークロード ID、アプリケーションの mTLS は、それぞれ異なる制御です。ネットワークフローの可視性も、アプリケーションのトレーシングやプロセス / ファイルの適用とは異なります。
 
-### Routing と Performance
+### ルーティングとパフォーマンス
 
-Calico と Cilium は BGP を使用して route を advertise できますが、それだけで multi-cluster Service discovery、policy synchronization、または encryption が提供されるわけではありません。Flannel host-gw は直接 route を使用し、適切な layer-2 接続性が必要です。overlay は encapsulation と MTU の考慮事項を追加しますが、CNI 名から普遍的な performance ranking を導くことはできません。
+Calico と Cilium は BGP を使ってルートをアドバタイズできますが、それ自体でマルチクラスターのサービスディスカバリー、ポリシー同期、暗号化が提供されるわけではありません。Flannel の host-gw は直接ルートを使用し、適切なレイヤー 2 の接続性が必要です。オーバーレイはカプセル化と MTU の考慮事項を追加しますが、CNI の名前から普遍的なパフォーマンス順位を推論することはできません。
 
-以前の 100/98/95/85/80/75 percent の throughput 数値には、再現可能な workload、version、または measurement source がありませんでした。同等の hardware、kernel、packet/request size、concurrency、encryption/policy 設定、throughput、loss、tail latency を使用してください。個別の [Pod benchmark](06-pod-network-benchmark.md) には、独自の歴史的環境と測定値が残されています。
+かつて記載されていた 100/98/95/85/80/75 パーセントというスループットの数値には、再現可能なワークロード、バージョン、測定元がありませんでした。同等のハードウェア、カーネル、パケット / リクエストサイズ、並列度、暗号化 / ポリシー設定、スループット、損失、テールレイテンシーを用いてください。別ページの [Pod ベンチマーク](06-pod-network-benchmark.md) は、独自の当時の環境と測定値をそのまま保持しています。
 
-## CNI 選定ガイド
+## CNI 選択ガイド
 
-まず必要な routing、policy、operating-system、support model を選択し、その組み合わせをテストしてください。
+まず必要なルーティング、ポリシー、オペレーティングシステム、サポートモデルを決め、その組み合わせをテストしてください。
 
-| Need | Evaluation path |
+| ニーズ | 評価の進め方 |
 |---|---|
-| 標準の EKS VPC アドレッシングとサポート対象の NetworkPolicy | 2 つ目の policy engine を追加する前に、AWS VPC CNI/EKS の機能を評価する。 |
-| 順序付き policy tier、host policy、または infrastructure BGP | 関連する Calico edition/dataplane と routing の前提条件を評価する。 |
-| Cilium policy、Hubble、または選択した mesh 機能 | Linux/kernel/platform の互換性と [Cilium mesh ガイド](../service-mesh/cilium-service-mesh/README.md)を確認する。Envoy は該当する L7 path の一部として残ります。 |
-| 機能セットが限定された小規模ネットワーク | Flannel の backend とオプションの policy controller を実際の要件に照らして評価する。 |
-| Process、syscall、file enforcement | Tetragon などの runtime-security component を NetworkPolicy とは別に評価する。 |
+| 標準的な EKS の VPC アドレッシングとサポート対象の Network Policy | 2 つ目のポリシーエンジンを追加する前に、AWS VPC CNI / EKS の機能を評価する。 |
+| 順序付きポリシー Tier、ホストポリシー、インフラの BGP | 該当する Calico のエディション / データプレーンとルーティングの前提条件を評価する。 |
+| Cilium のポリシー、Hubble、選択したメッシュ機能 | Linux / カーネル / プラットフォームの互換性と [Cilium メッシュガイド](../service-mesh/cilium-service-mesh/README.md) を確認する。Envoy は該当する L7 パスの一部であり続ける。 |
+| 限られた機能セットの小規模ネットワーク | Flannel のバックエンドと任意のポリシーコントローラーを、実際の要件に照らして評価する。 |
+| プロセス、syscall、ファイルの適用 | Tetragon などのランタイムセキュリティコンポーネントを、Network Policy とは切り離して評価する。 |
 
-### EKS Managed Add-on Configuration
+### EKS マネージドアドオンの設定
 
-以下は **configuration payload** の例であり、同じ workload に Calico と VPC CNI policy engine の両方をインストールする手順ではありません。
+以下は**設定ペイロード**の例であり、同一のワークロードに Calico と VPC CNI のポリシーエンジンの両方をインストールするよう指示するものではありません。
 
 ```json
 {
@@ -238,7 +240,7 @@ Calico と Cilium は BGP を使用して route を advertise できますが、
 }
 ```
 
-文字列の `"true"` は、この設定で文書化されている型です。既存の Kubernetes version と互換性がある EKS add-on build を選択し、その build の configuration schema を調べてください。
+この設定において文書化されている型は文字列 `"true"` です。既存の Kubernetes バージョンに対応する EKS アドオンビルドを選択し、そのビルドの設定スキーマを確認してください。
 
 ```bash
 EKS_REGION=ap-northeast-2
@@ -250,44 +252,44 @@ aws eks describe-addon-configuration --region "$EKS_REGION" --addon-name vpc-cni
   --addon-version "$VPC_CNI_ADDON_VERSION"
 ```
 
-upstream の 1.23.0 release number と EKS の `eksbuild` version は異なる識別子です。変更は意図した managed add-on configuration とマージしてください。`latest` を無条件に選択したり、無関係な値を置き換えたりしないでください。third-party policy 実装からの migration には、既存の enforcement state の削除と、テスト済みの node/workload transition plan も必要です。
+アップストリームの 1.23.0 というリリース番号と、EKS の `eksbuild` バージョンは異なる識別子です。変更は意図したマネージドアドオン設定にマージしてください。`latest` を無条件に選んだり、無関係な値を置き換えたりしないでください。サードパーティーのポリシー実装からの移行では、既存の適用状態の削除と、テスト済みのノード / ワークロード移行計画も必要です。
 
 ## EKS ネットワーキングの基礎
 
-### EKS デフォルトネットワーキングアーキテクチャ
+### EKS のデフォルトネットワーキングアーキテクチャ
 
-| Location / component | Responsibility |
+| 場所 / コンポーネント | 責務 |
 |---|---|
-| EKS 管理 VPC | AWS は Availability Zone をまたいでマネージド Kubernetes control plane を実行します。 |
-| Customer cluster VPC | worker ネットワーキング、選択した subnet、および EKS 管理の cross-account ENI が、control plane への構成済みパスを提供します。 |
-| 選択した customer VPC subnet 内の ALB/NLB | 選択した public または internal application entry point を提供します。internet gateway/NAT gateway はその routing configuration の代替ではありません。 |
-| NAT gateway または private service endpoint | workload design が必要とする特定の outbound path を提供します。 |
+| EKS 管理の VPC | AWS がマネージドな Kubernetes コントロールプレーンを複数のアベイラビリティーゾーンにまたがって運用する。 |
+| 顧客のクラスター VPC | ワーカーのネットワーキング、選択したサブネット、EKS 管理のクロスアカウント ENI が、コントロールプレーンへの設定済みパスを提供する。 |
+| 顧客 VPC の選択したサブネット内の ALB/NLB | 選択したパブリックまたは内部のアプリケーションエントリーポイントを提供する。インターネットゲートウェイ / NAT ゲートウェイはそのルーティング設定の代替にはならない。 |
+| NAT ゲートウェイまたはプライベートサービスエンドポイント | ワークロード設計が必要とする特定のアウトバウンドパスを提供する。 |
 
-以前の図では control plane を customer VPC 内、load balancer をその外部に配置していましたが、これらの所有境界に置き換えられました。
+かつての図はコントロールプレーンを顧客 VPC の内側に、ロードバランサーをその外側に描いていました。この所有境界の記述に置き換えられています。
 
-### Compute Mode 別の DNS とネットワーキング
+### コンピュートモード別の DNS とネットワーキング
 
-| Compute mode | DNS / component placement |
+| コンピュートモード | DNS / コンポーネントの配置 |
 |---|---|
-| Standard EC2 node | 通常、構成済みの CoreDNS Deployment とインストール済みの networking component を使用します。置き換える場合は、独自にサポートされた構成が必要です。 |
-| Pure EKS Auto Mode | CoreDNS、VPC CNI、kube-proxy の機能は managed node systemd service として実行されます。これらの node には CoreDNS Deployment/add-on は不要です。 |
-| Auto Mode と non-Auto node の混在 | non-Auto node 用に CoreDNS Deployment を維持します。これらの node は別の node の Auto Mode DNS service を使用できません。 |
+| 標準的な EC2 ノード | 通常は設定済みの CoreDNS Deployment とインストール済みのネットワーキングコンポーネントを使用する。置き換える場合はそれ自体のサポートされた設定が必要。 |
+| 純粋な EKS Auto Mode | CoreDNS、VPC CNI、kube-proxy の機能がマネージドなノードの systemd サービスとして動作する。これらのノードには CoreDNS の Deployment / アドオンは不要。 |
+| Auto Mode と非 Auto ノードの混在 | 非 Auto ノード向けに CoreDNS Deployment を維持する。これらは他ノードの Auto Mode DNS サービスを利用できない。 |
 
-Auto Mode の最初の DNS resolver は node-local です。upstream forwarding と control-plane 通信には依然として network access が必要なことがあり、すべての DNS 関連 packet が node に留まることを保証するものではありません。AWS は Auto Mode 向けに Admin と DNS の両方の policy を文書化していますが、standard EC2 VPC-CNI Admin policy には独自の version/enabling 要件があります。
+Auto Mode の最初の DNS リゾルバーはノードローカルです。上位への転送やコントロールプレーンとの通信ではネットワークアクセスが必要になる場合があり、DNS 関連のすべてのパケットがノード内に留まることを保証するものではありません。AWS は Auto Mode について Admin と DNS の両方のポリシーを文書化しており、標準的な EC2 の VPC-CNI Admin ポリシーには独自のバージョン / 有効化要件があります。
 
 ### VPC CNI の仕組み
 
-AWS VPC CNI は、選択した IPAM mode を使用して、通常の Pod に VPC-routable なアドレスを提供します。secondary IPv4 address、delegated prefix、branch ENI、multi-NIC 構成は異なり、host-network Pod は node network を共有します。
+AWS VPC CNI は、選択した IPAM モードを使って通常の Pod に VPC でルーティング可能なアドレスを付与します。セカンダリー IPv4 アドレス、委譲プレフィックス、ブランチ ENI、マルチ NIC 構成はそれぞれ異なります。ホストネットワークの Pod はノードのネットワークを共有します。
 
-![オプションの warm interface を含む、EC2 ENI から Pod への secondary-IPv4 割り当ての例。](../.gitbook/assets/en-networking-readme-9.png)
+![EC2 ENI から Pod へのセカンダリー IPv4 割り当ての例。任意のウォームインターフェイスを含む。](../.gitbook/assets/en-networking-readme-9.png)
 
-[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-9.html)
+[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-networking-readme-9.html)
 
-これは secondary-IP mode のみを示しています。warm ENI は構成可能な割り当て戦略であり、すべての node が常に 1 つだけ予約しなければならないという要件ではありません。prefix delegation、custom networking、branch ENI には異なる割り当てルールがあります。
+これはセカンダリー IP モードのみを描いたものです。ウォーム ENI は設定可能な割り当て戦略であり、すべてのノードが常にちょうど 1 つを予約するという要件ではありません。プレフィックス委譲、カスタムネットワーキング、ブランチ ENI では割り当てルールが異なります。
 
-#### ENI と IP の制限
+#### ENI と IP の上限
 
-| Instance Type | Max ENIs | IPv4 slots per ENI | Legacy secondary-IP bootstrap value |
+| インスタンスタイプ | 最大 ENI 数 | ENI あたりの IPv4 スロット数 | 従来のセカンダリー IP ブートストラップ値 |
 |---------------|----------|--------------|------------------------|
 | t3.medium | 3 | 6 | 17 |
 | t3.large | 3 | 12 | 35 |
@@ -296,13 +298,13 @@ AWS VPC CNI は、選択した IPAM mode を使用して、通常の Pod に VPC
 | m5.2xlarge | 4 | 15 | 58 |
 | c5.4xlarge | 8 | 30 | 234 |
 
-これらの値は、VPC CNI 1.23.0 の instance limit と legacy max-Pods table に照らして検証されています。歴史的な計算式は `ENIs × (IPv4 slots per ENI − 1) + 2` です。これは現在の普遍的な推奨ではありません。prefix delegation、custom networking、branch ENI、複数の network card により address capacity は変わります。Kubernetes scheduling は kubelet の `maxPods` と resource によっても制限されます。EKS managed node group は、30 vCPU 未満の instance では `maxPods` を 110、それ以外では 250 に制限します。利用可能な IP 数だけではこの上限を上書きできません。
+これらの値は VPC CNI 1.23.0 のインスタンス上限と従来の max-Pods 表に照らして検証済みです。当時の計算式は `ENIs × (IPv4 slots per ENI − 1) + 2` ですが、現在の普遍的な推奨ではありません。プレフィックス委譲、カスタムネットワーキング、ブランチ ENI、複数のネットワークカードはアドレス容量を変えます。Kubernetes のスケジューリングも kubelet の `maxPods` とリソースによって制限されます。EKS マネージドノードグループは、vCPU が 30 未満のインスタンスでは `maxPods` を 110、それ以外では 250 に制限します。利用可能な IP 数だけでこの上限を超えることはできません。
 
 ### EKS ネットワーキングの考慮事項
 
-#### IP Address Management
+#### IP アドレス管理
 
-**Linux VPC CNI** では、選択した add-on/Helm/DaemonSet 管理メカニズムを通じて、文書化された environment variable を構成してください。以下は EKS add-on configuration fragment です。`enable-prefix-delegation` を持つ古い `amazon-vpc-cni` ConfigMap では、この方法で Linux IPAMD は構成されません。変更を適用する際は、他の意図した add-on 値を保持してください。
+**Linux VPC CNI** では、選択したアドオン / Helm / DaemonSet の管理機構を通じて、文書化された環境変数を設定してください。以下は EKS アドオンの設定の断片です。`enable-prefix-delegation` を含む旧来の `amazon-vpc-cni` ConfigMap は、この方法で Linux の IPAMD を設定するものではありません。変更を適用する際は、意図した他のアドオン値を保持してください。
 
 ```json
 {
@@ -313,9 +315,9 @@ AWS VPC CNI は、選択した IPAM mode を使用して、通常の Pod に VPC
 }
 ```
 
-代わりに、総割り当て下限と free-IP target を調整できます。`MINIMUM_IP_TARGET` または `WARM_IP_TARGET` のいずれかが構成されると、`WARM_PREFIX_TARGET` より優先されます。これらは 4 つの独立した加算 target ではなく、代替の policy です。割り当ては引き続き prefix size 単位で行われます。Nitro のサポート、IPv4 のための連続した `/28` space、適切な kubelet Pod limit は別個の前提条件です。
+あるいは、割り当ての下限合計と空き IP のターゲットを調整します。`MINIMUM_IP_TARGET` または `WARM_IP_TARGET` のいずれかが設定されている場合、それが `WARM_PREFIX_TARGET` より優先されます。これらは 4 つの独立した加算的ターゲットではなく、代替的なポリシーです。割り当ては依然としてプレフィックス単位で行われます。Nitro のサポート、IPv4 用の連続した `/28` の空間、適切な kubelet の Pod 上限は、それぞれ別の前提条件です。
 
-Windows prefix allocation は別の構成パスです。AWS は `amazon-vpc-cni` ConfigMap 内の `enable-windows-prefix-delegation` とその warm-target key を文書化しています。Linux の environment-variable 手順を変更せずに Windows へコピーしないでください。
+Windows のプレフィックス割り当ては別の設定経路です。AWS は `amazon-vpc-cni` ConfigMap における `enable-windows-prefix-delegation` とそのウォームターゲットのキーを文書化しています。Linux の環境変数の手順をそのまま Windows にコピーしないでください。
 
 ```json
 {
@@ -327,9 +329,9 @@ Windows prefix allocation は別の構成パスです。AWS は `amazon-vpc-cni`
 }
 ```
 
-#### Custom Networking
+#### カスタムネットワーキング
 
-これらの IPv4 例には、意図した AZ と VPC 内の実際の subnet/security-group ID が必要です。custom networking を有効にし、各 node の ENIConfig をその zone label で選択してください。明示的な ENIConfig node annotation は、その label より優先されます。以下の例の名前は両言語で同じ region を使用しています。実際の node zone に置き換えてください。ENIConfig object をインストールするだけでは custom networking は有効になりません。
+これらの IPv4 の例では、意図した AZ と VPC における実際のサブネット / セキュリティグループ ID が必要です。カスタムネットワーキングを有効にし、各ノードの ENIConfig をゾーンラベルで選択してください。明示的な ENIConfig のノードアノテーションは、そのラベルより優先されます。以下の例の名前はどの言語版でも同じリージョンを使用しています。実際のノードのゾーンに置き換えてください。ENIConfig オブジェクトをインストールするだけでは、カスタムネットワーキングは有効になりません。
 
 ```json
 {
@@ -362,114 +364,118 @@ spec:
 
 ## 高度なネットワーキングの概念
 
-以下の項目は、この概要の他の箇所で簡単に言及されています。完全なセットアップ手順と測定値はリンク先の詳細ページにあります。このセクションでは、これらの要素が layer ごとにどのように異なり、それぞれがどこに位置付くかを整理します。
+以下の項目は、この概要の他の箇所で名前だけ触れられているものです。完全なセットアップ手順と測定値はリンク先の詳細ページにあります。このセクションでは、これらの要素が層ごとにどう異なり、それぞれがどこに位置づけられるかを整理します。
 
-### L2–L7 と Router と Load Balancer の違い
+### L2〜L7 と、ルーターとロードバランサーの違い
 
-「router」と「load balancer」は同じ文でよく登場しますが、答える問いは異なります。router は（一般に）単一の destination への 1 つの path を選び、load balancer は distribution algorithm を使用して複数の同等な candidate から 1 つの target を選びます。
+「ルーター」と「ロードバランサー」は同じ文の中に登場しがちですが、答えている問いが異なります。ルーターは 1 つの宛先に対して (一般的には) 1 つの経路を選びます。ロードバランサーは、同等な複数の候補の中から分散アルゴリズムを使って 1 つのターゲットを選びます。
 
-| Layer | Device/function | Decision basis | Kubernetes/AWS mapping |
+| 層 | デバイス / 機能 | 判断の基準 | Kubernetes/AWS への対応 |
 |---|---|---|---|
-| L2 (link) | Switch、bridge | 宛先 MAC address | CNI が作成する veth pair と Linux bridge、ENI が公開する virtual NIC |
-| L3 (network) | Router または transparent appliance insertion | routing のための destination IP、appliance 選択のための flow identity | VPC の implicit router、TGW。GWLB は appliance 向けに IP packet を encapsulate する |
-| L4 (transport) | L4 load balancer | connection/flow identity、通常は 5-tuple | NLB、kube-proxy (iptables、IPVS、nftables)、個別の eBPF Service 実装 |
-| L7 (application) | L7 load balancer/reverse proxy | request ごとの host、path、header、protocol-aware | ALB、Ingress/Gateway API 実装、service-mesh sidecar (Envoy) |
+| L2 (リンク) | スイッチ、ブリッジ | 宛先 MAC アドレス | CNI が作成する veth ペアと Linux ブリッジ、ENI が公開する仮想 NIC |
+| L3 (ネットワーク) | ルーター、または透過的なアプライアンス挿入 | ルーティングは宛先 IP、アプライアンス選択はフロー識別 | VPC の暗黙のルーター、TGW。GWLB はアプライアンス向けに IP パケットをカプセル化する |
+| L4 (トランスポート) | L4 ロードバランサー | コネクション / フローの識別。一般的には 5 タプル | NLB、kube-proxy (iptables, IPVS, nftables)、独立した eBPF の Service 実装 |
+| L7 (アプリケーション) | L7 ロードバランサー / リバースプロキシー | リクエストごとのホスト、パス、ヘッダー。プロトコルを認識する | ALB、Ingress/Gateway API の実装、サービスメッシュのサイドカー (Envoy) |
 
-主な違いは **分散の単位** です。L4 load balancer は通常、TCP connection または追跡対象の UDP flow に対して target を選択します。L7 proxy は、connection を共有する request を含め、サポートする application request ごとに target を選択できます。GWLB は application request を解析するのではなく、security appliance 間で encapsulated IP flow を分散します。flow stickiness は構成された timeout、health、failover の動作に依存します。flow が再割り当てまたは中断されないことを保証するものではありません。
+決定的な違いは**分散の単位**です。L4 ロードバランサーは通常、TCP コネクションまたは追跡された UDP フローに対してターゲットを選択します。L7 プロキシーは、サポートされるアプリケーションリクエストごとに、コネクションを共有するリクエストであってもターゲットを選択できます。GWLB はアプリケーションリクエストを解析するのではなく、カプセル化された IP フローをセキュリティアプライアンス群に分散します。フローの固定 (stickiness) は、設定されたタイムアウト、ヘルス、フェイルオーバーの挙動に依存し、フローが再割り当てされたり中断されたりすることが絶対にないという保証ではありません。
 
-> 📎 L2/L3 概念のプロトコルレベルの定義は [Network Fundamentals Part 1](../basics/06-network-fundamentals-part1.md) にあります。ALB/NLB の target type と実際の構成は [AWS Load Balancer Controller](03-aws-lb-controller.md) にあります。
+> 📎 L2/L3 の概念のプロトコルレベルの定義は [ネットワーク基礎 Part 1](../basics/06-network-fundamentals-part1.md) にあります。ALB/NLB のターゲットタイプと実際の設定は [AWS Load Balancer Controller](03-aws-lb-controller.md) にあります。
 
-### Cross-Account/VPC Connectivity: TGW、VPC Peering、GWLB、PrivateLink、Lattice
+### アカウント / VPC をまたぐ接続: TGW、VPC Peering、GWLB、PrivateLink、Lattice
 
-これら 5 つの connectivity option は、layer と traffic model が異なります。TGW RAM sharing、VPC Peering、PrivateLink、TGW Peering、VPC Lattice をまたぐ測定済み latency は [Cross-Org VPC Connectivity](05-cross-org-vpc-connectivity.md) にあります。このセクションでは、その比較 table にはない GWLB を追加し、5 つすべてを layer ごとに再構成します。
+これら 5 つの接続オプションは、層とトラフィックモデルが異なります。TGW の RAM 共有、VPC Peering、PrivateLink、TGW Peering、VPC Lattice にまたがる実測レイテンシーは [組織間 VPC 接続](05-cross-org-vpc-connectivity.md) にあります。このセクションでは、その比較表にない GWLB を追加し、5 つすべてを層の観点から捉え直します。
 
-| Connectivity | Layer/model | Characteristics |
+| 接続方式 | 層 / モデル | 特性 |
 |---|---|---|
-| VPC Peering | L3、双方向 IP routing | transitive ではない。overlap する CIDR 間では構成できない |
-| Transit Gateway (TGW) | L3、hub-and-spoke IP routing | 1 つ以上の TGW route table 間で attachment association と propagation を使用する。RAM 経由で cross-account 共有する |
-| Gateway Load Balancer (GWLB) | L3、transparent appliance insertion | 元の packet を GENEVE (UDP 6081) で encapsulate する。VPC endpoint service model が consumer traffic を provider の appliance fleet に接続する |
-| PrivateLink | Private endpoint connectivity | NLB-backed endpoint service は 1 つの model。resource endpoint も存在する。consumer/provider CIDR は overlap 可能 |
-| VPC Lattice | Application および resource networking | HTTP/HTTPS Service は L7 routing とオプションの IAM authorization をサポートする。TLS passthrough と resource configuration には異なる機能がある |
+| VPC Peering | L3、双方向の IP ルーティング | 推移的ではない。CIDR が重複している場合は設定できない |
+| Transit Gateway (TGW) | L3、ハブアンドスポークの IP ルーティング | 1 つ以上の TGW ルートテーブルにまたがるアタッチメントの関連付けと伝播を使用する。RAM 経由でアカウント間で共有される |
+| Gateway Load Balancer (GWLB) | L3、透過的なアプライアンス挿入 | 元のパケットを GENEVE (UDP 6081) でカプセル化する。VPC エンドポイントサービスモデルが、コンシューマーのトラフィックをプロバイダーのアプライアンス群に接続する |
+| PrivateLink | プライベートエンドポイント接続 | NLB をバックエンドとするエンドポイントサービスは 1 つのモデルであり、リソースエンドポイントも存在する。コンシューマー / プロバイダーの CIDR は重複してもよい |
+| VPC Lattice | アプリケーションとリソースのネットワーキング | HTTP/HTTPS サービスは L7 ルーティングと任意の IAM 認可をサポートする。TLS パススルーとリソース設定では機能が異なる |
 
-GWLB は、Gateway Load Balancer endpoint を介した IP path に firewall や IDS/IPS などの inspection appliance を挿入します。デフォルトの flow stickiness は 5 field を使用します。サポートされる構成では、代わりに 2 または 3 field を使用できます。forward と return の route、appliance health、encapsulation MTU、NACL、および実際の workload/appliance の security group を検証してください。GWLB 自体には ALB のような security group はなく、flow stickiness は failure testing の代替ではありません。
+GWLB は、ファイアウォールや IDS/IPS といった検査アプライアンスを、Gateway Load Balancer エンドポイント経由で IP パスに挿入します。デフォルトのフロー固定は 5 つのフィールドを使用し、サポートされる設定では代わりに 2 つまたは 3 つを使用できます。往復のルート、アプライアンスのヘルス、カプセル化の MTU、NACL、そして実際のワークロード / アプライアンスのセキュリティグループを検証してください。GWLB 自体は ALB のようなセキュリティグループを持たず、フロー固定は障害試験の代わりにはなりません。
 
-> 📎 完全な EKS/VPC Lattice integration (Gateway API Controller、IAM authorization、routing) は [VPC Lattice](02-vpc-lattice.md) にあります。
+> 📎 EKS と VPC Lattice の完全な統合 (Gateway API Controller、IAM 認可、ルーティング) は [VPC Lattice](02-vpc-lattice.md) にあります。
 
-### DNS Resolver と Route Table の実際の動作
+### DNS リゾルバーとルートテーブルの実際の挙動
 
-**DNS resolver:** AmazonProvidedDNS **は Route 53 Resolver です**。その address には、primary VPC IPv4 network address に 2 を加えたもの（`10.0.0.0/16` では `10.0.0.2`）と `169.254.169.253` が含まれます。Resolver rule に従って、関連付けられた private zone と public name を解決します。CoreDNS は通常、構成された Kubernetes cluster domain、多くの場合 `cluster.local` を提供します。`kube-dns` はその Service 名であり、namespace や DNS zone ではありません。external forwarding は Corefile と DNS Pod から見える resolver file に従います。node の resolver file が変更なしで使用されると想定せず、それらの設定を確認してください。Resolver endpoint design では、inbound endpoint が on-premises query を受け入れ、outbound endpoint と関連付けられた rule が選択された VPC query を on-premises DNS に転送します。Auto Mode の node-local resolver によって upstream dependency がなくなるわけではありません。
+**DNS リゾルバー:** AmazonProvidedDNS は **Route 53 Resolver そのもの**です。そのアドレスには、VPC のプライマリー IPv4 ネットワークアドレスに 2 を足したもの (`10.0.0.0/16` なら `10.0.0.2`) と `169.254.169.253` が含まれます。Resolver のルールに従って、関連付けられたプライベートゾーンとパブリックな名前を解決します。CoreDNS は通常、設定された Kubernetes クラスタードメイン (多くの場合 `cluster.local`) を提供します。`kube-dns` はその Service 名であり、Namespace や DNS ゾーンではありません。外部への転送は Corefile と、DNS Pod から見えるリゾルバーファイルに従います。ノードのリゾルバーファイルがそのまま使われると仮定せず、これらの設定を確認してください。Resolver エンドポイントを用いた設計では、インバウンドエンドポイントがオンプレミスからのクエリーを受け付け、アウトバウンドエンドポイントと関連ルールが選択された VPC のクエリーをオンプレミスの DNS に転送します。Auto Mode のノードローカルリゾルバーは、上位への依存をなくすものではありません。
 
-**Route table:** VPC の route evaluation は通常、longest-prefix matching を使用します。AWS では、`local` route の target の置換や、appliance routing のためのサポート対象のより specific な subnet route の追加が可能です。`local` は無条件に最も specific な route ではありません。同一 destination の場合、static VPC route は virtual private gateway から propagated された route より優先されます。TGW を target とする VPC route は static です。TGW 内部の propagation は、別個の route table に属します。無効な target は traffic を drop する `blackhole` entry を残すことがあるため、destination だけでなく route state も調べてください。明示的な route-table association がない subnet は、VPC の main route table を使用します。
+**ルートテーブル:** VPC のルート評価は一般に最長プレフィックス一致を使用します。AWS では、アプライアンスルーティングのために `local` ルートのターゲットを置き換えたり、サポートされるより具体的なサブネットルートを追加したりできます。`local` が無条件に最も具体的なルートであるとは限りません。宛先が同一の場合、静的な VPC ルートは仮想プライベートゲートウェイから伝播されたルートより優先されます。TGW をターゲットとする VPC ルートは静的であり、TGW 内部での伝播はその別のルートテーブルに属します。無効なターゲットは `blackhole` エントリーを残してトラフィックを破棄することがあるため、宛先だけでなくルートの状態も確認してください。明示的なルートテーブルの関連付けがないサブネットは、VPC のメインルートテーブルを使用します。
 
-> 📎 TGW/Peering の route priority と static-route configuration の例は、[Cross-Org VPC Connectivity の運用上の知見](05-cross-org-vpc-connectivity.md#operational-findings)にあります。
+> 📎 TGW/Peering のルート優先順位と静的ルートの設定例は [組織間 VPC 接続の運用上の知見](05-cross-org-vpc-connectivity.md#operational-findings) にあります。
 
-### Kernel Data Plane: iptables、IPVS、eBPF、Packet Filtering
+### カーネルのデータプレーン: iptables、IPVS、eBPF、パケットフィルタリング
 
-Linux の Service forwarding と NetworkPolicy enforcement には異なる mechanism を使用できます。Netfilter は、iptables と nftables が使用する packet-path hook を提供します。eBPF 実装は XDP、tc、または socket hook に attach し、そこで Service selection を実行できます。これは、eBPF-enabled cluster 内のすべての packet が Netfilter や connection tracking を bypass することを意味するものではありません。path は CNI、kernel、routing、feature configuration に依存します。
+Linux における Service 転送と Network Policy の適用は、異なる機構を使用できます。Netfilter は、iptables と nftables が使用するパケットパスのフックを提供します。eBPF の実装は XDP、tc、ソケットのフックにアタッチし、そこで Service の選択を行えます。これは、eBPF を有効にしたクラスターのすべてのパケットが Netfilter やコネクション追跡をバイパスすることを意味しません。経路は CNI、カーネル、ルーティング、機能設定に依存します。
 
-| Implementation | Where it sits | Characteristics |
+| 実装 | 位置 | 特性 |
 |---|---|---|
-| iptables | netfilter hook 上の順次 rule chain | evaluation time は rule count に比例する (O(n))。kube-proxy の長年の default mode |
-| IPVS | kernel-native L4 load balancer、netfilter extension | hash-based lookup (ほぼ O(1))。Kubernetes 1.35 から kube-proxy mode として deprecated |
-| nftables | iptables の後継となる netfilter framework | 1.33 以降の kube-proxy stable mode。まず kernel/CNI compatibility を確認する |
-| eBPF (例: Cilium) | 構成済みの XDP、tc、socket hook | kube-proxy の Service handling を置き換えられる。これは個別の実装であり、path 固有の Netfilter/conntrack 動作を持つ |
+| iptables | netfilter フック上の逐次的なルールチェーン | 評価時間がルール数に比例する (O(n))。kube-proxy の長年のデフォルトモード |
+| IPVS | カーネルネイティブの L4 ロードバランサー。netfilter の拡張 | ハッシュベースの参照 (ほぼ O(1))。Kubernetes 1.35 以降、kube-proxy のモードとして非推奨 |
+| nftables | iptables の後継となる netfilter のフレームワーク | 1.33 以降、kube-proxy の安定モード。まずカーネル / CNI の互換性を確認する |
+| eBPF (例: Cilium) | 設定された XDP、tc、ソケットのフック | kube-proxy の Service 処理を置き換えられる。これは別個の実装であり、Netfilter/conntrack の挙動は経路ごとに異なる |
 
-実装を切り替えると、kernel rule と active connection が残る可能性があります。distribution/CNI の migration procedure に従い、必要に応じて workload を drain し、cleanup に必要な node restart を計画してください。kube-proxy を eBPF-based CNI に置き換えるには、実装が同じ Service traffic を競合して処理しないよう、サポートされた cutover order も必要です。
+実装を切り替えると、カーネルのルールやアクティブなコネクションが残る場合があります。ディストリビューション / CNI の移行手順に従い、必要に応じてワークロードを drain し、クリーンアップにノード再起動が必要な場合はそれも計画してください。kube-proxy を eBPF ベースの CNI で置き換える場合も、両実装が同じ Service トラフィックを競合して扱わないよう、サポートされた切り替え順序が必要です。
 
-> 📎 IPVS の deprecation timeline と nftables の stable transition は [Introduction to Kubernetes](../basics/04-kubernetes-introduction.md) で扱われています。Cilium の eBPF kube-proxy replacement は [Cilium eBPF](cilium/02-ebpf.md)、Calico の eBPF data plane と migration procedure は [Calico eBPF](calico/06-ebpf-dataplane.md) にあります。
+> 📎 IPVS の非推奨のタイムラインと nftables の安定版への移行は [Kubernetes 入門](../basics/04-kubernetes-introduction.md) で扱っています。Cilium の eBPF による kube-proxy 置き換えは [Cilium eBPF](cilium/02-ebpf.md)、Calico の eBPF データプレーンとその移行手順は [Calico eBPF](calico/06-ebpf-dataplane.md) にあります。
 
-### Compute-Intensive Networking: ENI、EFA、NVLink、Optical Transceiver
+### 計算集約型ワークロードのネットワーキング: ENI、EFA、NVLink、光トランシーバー
 
-ENI、EFA、NVLink は異なる path に使用されます。**ENI** は 1 つの Availability Zone 内の EC2 instance に attach される virtual network interface です。その通常の IP traffic は、routing と policy が許可すれば、他の AZ や接続された VPC に到達できます（[VPC CNI](01-vpc-cni.md)を参照）。**EFA** は、互換性のある MPI/NCCL software が libfabric 経由で使用する OS-bypass device を提供します。**EFA device traffic は routable ではなく、VPC/AZ 境界を越えることはできません**。EFA-with-ENA interface の ENA device を通る通常の IP traffic は routable のままです。EFA-only interface には ENA device も IP addressing もありません。**NVLink** は、サポート対象の rack-scale NVLink domain を含む、サポート対象 system 内の GPU を接続します。EFA に対する固定の speedup を想定するのではなく、選択した hardware、collective operation、placement を測定してください。
+ENI、EFA、NVLink はそれぞれ異なる経路を担います。**ENI** は 1 つのアベイラビリティーゾーン内の EC2 インスタンスにアタッチされる仮想ネットワークインターフェイスで、その通常の IP トラフィックはルーティングとポリシーが許可すれば他の AZ や接続された VPC に到達できます ([VPC CNI](01-vpc-cni.md) を参照)。**EFA** は、互換性のある MPI/NCCL ソフトウェアが libfabric 経由で使用する OS バイパスデバイスを提供します。**EFA デバイスのトラフィックはルーティング不可であり、VPC/AZ の境界を越えられません**。EFA-with-ENA インターフェイスの ENA デバイスを通る通常の IP トラフィックはルーティング可能なままです。EFA 専用インターフェイスには ENA デバイスも IP アドレッシングもありません。**NVLink** は、サポートされるラックスケールの NVLink ドメインを含む、サポート対象システム内の GPU 同士を接続します。EFA に対して一定の高速化が得られると仮定せず、選択したハードウェア、集団通信、配置を実測してください。
 
-**Optical transceiver** は、一般的な data-center networking の概念です。銅製 DAC (Direct Attach Copper) cable は短距離に適しており、optical module と fiber はその他の到達距離および bandwidth 要件をサポートします。QSFP と OSFP は module form factor を示すものであり、optical media を保証するものではありません。これは一般的な背景情報として扱ってください。特定の AWS workload の物理 cabling を確立するものではありません。
+**光トランシーバー**は、データセンターネットワーキング一般の概念です。銅の DAC (Direct Attach Copper) ケーブルは短距離に適し、光モジュールと光ファイバーはそれ以外の距離と帯域幅の要件に対応します。QSFP と OSFP はモジュールの形状 (フォームファクター) を表すもので、光媒体であることの保証ではありません。これは一般的な背景知識として扱ってください。特定の AWS ワークロードの物理配線を規定するものではありません。
 
-> 📎 NVLink/IMEX の topology-aware scheduling と GPU Pod placement の例は [AI/ML Infrastructure](../ai-ml/06-ai-infrastructure.md) にあります。EFA の VPC/AZ 境界制約と測定値は [Cross-Org VPC Connectivity](05-cross-org-vpc-connectivity.md) にあります。
+> 📎 NVLink/IMEX のトポロジーを考慮したスケジューリングと GPU Pod 配置の例は [AI/ML インフラストラクチャ](../ai-ml/06-ai-infrastructure.md) にあります。EFA の VPC/AZ 境界の制約と測定値は [組織間 VPC 接続](05-cross-org-vpc-connectivity.md) にあります。
 
-### 次世代プロトコルが Kubernetes にとって意味すること: HTTP/3、gRPC、QUIC
+### 次世代プロトコルが Kubernetes にもたらす意味: HTTP/3、gRPC、QUIC
 
-HTTP/3 (RFC 9114) とその QUIC transport (RFC 9000) のプロトコルメカニズムは、[Network Fundamentals Part 2](../basics/06-network-fundamentals-part2.md) と [Part 3](../basics/06-network-fundamentals-part3.md) で扱っています。ここでは、Kubernetes traffic distribution に実際に影響することのみを扱います。
+HTTP/3 (RFC 9114) とそのトランスポートである QUIC (RFC 9000) のプロトコル的な仕組みは、[ネットワーク基礎 Part 2](../basics/06-network-fundamentals-part2.md) と [Part 3](../basics/06-network-fundamentals-part3.md) で扱っています。ここでは、Kubernetes のトラフィック分散に実際に影響する点だけを扱います。
 
-- **gRPC と L4 load balancer:** gRPC は HTTP/2 connection 上で request を multiplex します。L4 balancer は通常、確立された TCP connection を選択済み endpoint に維持します。その endpoint が proxy の場合、さらに routing decision を行うことができます。Pod を追加しても既存の connection は再分散されません。RPC ごとの分散には、互換性のある L7 proxy または client-side policy が必要です。streaming RPC は 1 つの call のままです。その個々の message は独立して balance されません。
-- **Gateway API の GRPCRoute:** Ingress には gRPC 固有の resource はありませんが、Gateway API は `GRPCRoute` によって Service/method-level routing を標準化します。support は実装によって異なります（header match の数、retry policy など）。controller 自体の documentation を確認してください。
-- **HTTP/3/QUIC が実際にクラスター内のどこまで到達するか:** client と edge (CDN、load balancer) 間の HTTP/3 support は、クラスター内または Ingress の backend connection における HTTP/3 support とは別の問題です。多くの Ingress/Gateway 実装は、依然として backend に HTTP/1.1 または HTTP/2 を使用します。end-to-end HTTP/3 がサポートされるかどうかは、実装と version によって異なります。一般化せず、実際に使用する controller の documentation を確認してください。
+- **gRPC と L4 ロードバランサー:** gRPC はリクエストを HTTP/2 コネクション上で多重化します。L4 バランサーは通常、確立済みの TCP コネクションを選択したエンドポイントに保ち続けます。そのエンドポイントがプロキシーであれば、さらにルーティングの判断を行えます。Pod を追加するだけでは既存のコネクションは再分散されません。RPC ごとの分散には、互換性のある L7 プロキシーかクライアント側のポリシーが必要です。ストリーミング RPC は 1 つの呼び出しのままであり、その個々のメッセージが独立に分散されることはありません。
+- **Gateway API の GRPCRoute:** Ingress には gRPC 固有のリソースはありませんが、Gateway API は `GRPCRoute` によってサービス / メソッドレベルのルーティングを標準化します。サポート状況 (ヘッダー一致の数、リトライポリシーなど) は実装ごとに異なるため、コントローラー自身のドキュメントを確認してください。
+- **HTTP/3/QUIC が実際にクラスターのどこまで届くか:** クライアントとエッジ (CDN やロードバランサー) の間で HTTP/3 がサポートされるかどうかは、クラスター内部や Ingress のバックエンド接続で HTTP/3 がサポートされるかどうかとは別の問題です。多くの Ingress/Gateway 実装は、バックエンドに対しては依然として HTTP/1.1 または HTTP/2 で通信し、エンドツーエンドの HTTP/3 がサポートされるかは実装とバージョンによって異なります。一般化せず、実際に使用しているコントローラーのドキュメントを確認してください。
 
 ## ネットワーキングのサブページ
 
 このセクションでは、以下のトピックを詳しく扱います。
 
-### [Linux ネットワーキング入門](beginner/README.md) {#beginner-course}
+### [はじめての Linux ネットワーキング](beginner/README.md) {#beginner-course}
 
-Linux またはネットワーキングが初めての場合は、[初級コース](beginner/README.md)から始めてください。その 8 つのレッスンでは、CLI、アドレッシング、DNS、SSH、ファイアウォール、モニタリング、そして総合演習を結び付けます。以下のパスでは、その基礎をプロトコル、カーネル、クラスター実装へと拡張します。
+Linux やネットワーキングが初めての方は、[初級コース](beginner/README.md) から始めてください。8 つのレッスンで CLI、アドレッシング、DNS、SSH、ファイアウォール、モニタリング、そして総まとめの課題をつなげます。以下のパスは、その基礎をプロトコル、カーネル、クラスター実装へと広げていきます。
 
-### [Linux ネットワーク診断演習](07-linux-network-diagnostics.md) {#linux-network-diagnostics}
+### [エキスパートネットワーキングパス](expert/README.md) {#expert-course}
 
-CNI 実装を学ぶ前に、[カーネルのソケットとパケットパスの概念](../kernel/02-network-stack.md)を観測結果に結び付けてください。[診断クイズ](../quizzes/networking/07-linux-network-diagnostics-quiz.md)を使用して、解釈を確認してください。
+初級コースの後は、[エキスパートネットワーキングパス](expert/README.md) を使って、プロトコルのプロジェクト、ルーティングポリシー、EVPN、Linux パフォーマンス、クラウド設計、自動化の評価をつなげてください。まず各ワークブックの環境、証跡、復旧基準を確認してください。
+
+### [Linux ネットワーク診断の実践](07-linux-network-diagnostics.md) {#linux-network-diagnostics}
+
+CNI の実装を学ぶ前に、[カーネルのソケットとパケットパスの概念](../kernel/02-network-stack.md) を観測結果に結び付けてください。[診断クイズ](../quizzes/networking/07-linux-network-diagnostics-quiz.md) で自分の解釈を確認しましょう。
 
 ### [VPC CNI](01-vpc-cni.md)
-通常の Pod の VPC address を使用する EKS networking と、mode 固有の IPAM/policy 前提条件。
+通常の Pod に VPC アドレスを割り当てる EKS ネットワーキングと、モード別の IPAM / ポリシーの前提条件。
 
-### [Cilium 詳細](cilium/README.md)
-高性能な eBPF-based CNI solution。L7 NetworkPolicy、Service Mesh、observability (Hubble) などの高度な機能を提供します。
+### [Cilium 詳解](cilium/README.md)
+高性能な eBPF ベースの CNI ソリューション。L7 Network Policy、Service Mesh、可観測性 (Hubble) といった高度な機能を提供します。
 
-### [Calico 詳細](calico/README.md)
-最も広く使用されている CNI の 1 つ。強力な NetworkPolicy、BGP support、enterprise feature。intro、architecture、networking mode、BGP 詳細、NetworkPolicy、eBPF、高度なトピック、EKS integration、operations guide を扱います。
+### [Calico 詳解](calico/README.md)
+最も広く使われている CNI の 1 つ。強力な Network Policy、BGP サポート、エンタープライズ機能を備えます。導入、アーキテクチャ、ネットワーキングモード、BGP 詳解、Network Policy、eBPF、高度なトピック、EKS 統合、運用ガイドを扱います。
 
 ### [VPC Lattice](02-vpc-lattice.md)
-AWS managed application networking service。cross-VPC、cross-account の service-to-service communication。
+AWS マネージドのアプリケーションネットワーキングサービス。VPC 間、アカウント間のサービス間通信。
 
 ### [AWS Load Balancer Controller](03-aws-lb-controller.md)
-Kubernetes Service と Ingress を AWS ELB (ALB/NLB) と統合します。
+Kubernetes の Service と Ingress を AWS ELB (ALB/NLB) と統合します。
 
 ### [Gateway API](04-gateway-api.md)
-次世代 Kubernetes ingress API。標準化された resource model と role-based configuration。
+次世代の Kubernetes Ingress API。標準化されたリソースモデルとロールベースの設定。
 
-### [Pod Network Benchmark](06-pod-network-benchmark.md)
-同一 node、同一 AZ、cross-AZ における EKS 上の Pod-to-pod RTT、HTTP latency、throughput と、DNS `ndots:5` query amplification を測定します。
+### [Pod ネットワークベンチマーク](06-pod-network-benchmark.md)
+同一ノード、同一 AZ、AZ 間について EKS 上で測定した Pod 間 RTT、HTTP レイテンシー、スループット。加えて DNS の `ndots:5` によるクエリー増幅。
 
-## ネットワークトラブルシューティング
+## ネットワークのトラブルシューティング
 
-### 一般的な問題と解決策
+### よくある問題と解決策
 
 #### Pod 間通信の失敗
 
@@ -485,7 +491,7 @@ kubectl -n kube-system logs -l k8s-app=aws-node -c aws-node --tail=100
 kubectl -n kube-system logs -l k8s-app=cilium -c cilium-agent --tail=100
 ```
 
-指定した tool を持つ既存の Pod から診断を実行してください。クラスターにインストールされている CNI のみを照会してください。Auto Mode の system service はこれらの DaemonSet ではありません。DNS の成功、TCP reachability、application HTTP response は異なる確認です。ICMP は block されている場合や追加 privilege が必要な場合があるため、ping の失敗だけでは TCP service に到達できないことは証明されません。
+診断は、上記のツールを備えた既存の Pod から実行してください。クラスターにインストールされている CNI だけを対象にクエリーしてください。Auto Mode のシステムサービスはこれらの DaemonSet ではありません。DNS の成功、TCP の到達性、アプリケーションの HTTP レスポンスは、それぞれ別のチェックです。ICMP はブロックされていたり追加の権限を必要とする場合があるため、ping の失敗だけで TCP サービスに到達できないと結論付けることはできません。
 
 #### Service に到達できない
 
@@ -498,9 +504,9 @@ kubectl -n "$NAMESPACE" get endpointslices \
 kubectl -n kube-system logs -l k8s-app=kube-proxy --tail=100
 ```
 
-現在の endpoint 診断には EndpointSlice を使用してください。Service selector、target port、endpoint readiness、address family、該当する policy を確認してください。Service forwarding を実際にその component が所有している場合にのみ kube-proxy log を調べてください。eBPF replacement または Auto Mode には、それぞれ独自の診断が必要です。
+現在のエンドポイントの診断には EndpointSlice を使用してください。Service のセレクター、targetPort、エンドポイントの Ready 状態、アドレスファミリー、該当するポリシーを確認します。kube-proxy のログを調べるのは、そのコンポーネントが実際に Service 転送を担っている場合に限ってください。eBPF による置き換えや Auto Mode では独自の診断が必要です。
 
-#### NetworkPolicy のデバッグ
+#### Network Policy のデバッグ
 
 ```bash
 kubectl get networkpolicies.networking.k8s.io -A
@@ -511,11 +517,11 @@ kubectl get networkpolicies.crd.projectcalico.org -A
 kubectl get globalnetworkpolicies.crd.projectcalico.org
 ```
 
-Cilium command は DaemonSet reference で選択された 1 つの Agent を検査します。incident を追跡する場合は、影響を受けた node の Agent を選択してください。Calico native API installation は異なる API group を公開することがあるため、installation が提供する resource を確認してください。Kubernetes、Calico、AWS の extension policy は別個の resource であり、異なる precedence を持つ場合があります。
+Cilium のコマンドは、DaemonSet 参照によって選択された 1 つの Agent を調べます。インシデントを追跡する際は、影響を受けたノードの Agent を選んでください。Calico のネイティブ API を使うインストールでは異なる API グループが公開されることがあるため、そのインストールで提供されているリソースを確認してください。Kubernetes、Calico、AWS の拡張ポリシーはそれぞれ別のリソースであり、優先順位も異なる場合があります。
 
 ### ネットワークパフォーマンステスト
 
-この制限付き TCP 演習では、Linux AMD64 および Arm64 image を含む publisher の固定された Netshoot v0.16 image index を使用します。その Dockerfile には `iperf3` が含まれています。TCP 5201 が許可されるテスト環境にこれらの Pod を作成してください。これは例示的な workload であり、測定済みの CNI 比較ではありません。
+この範囲を限定した TCP の演習では、publisher がピン留めした Netshoot v0.16 のイメージインデックスを使用します。これには Linux の AMD64 と Arm64 イメージが含まれ、その Dockerfile には `iperf3` が含まれています。これらの Pod は、TCP 5201 が許可されているテスト環境に作成してください。これは例示的なワークロードであり、測定に基づく CNI の比較ではありません。
 
 ```yaml
 apiVersion: v1
@@ -601,25 +607,25 @@ test -n "$IPERF_SERVER_IP"
 kubectl -n default exec iperf-client -- iperf3 -c "$IPERF_SERVER_IP" -t 10 -b 10M
 ```
 
-client は 1 時間 sleep し、この command は提供する traffic を 10 秒間 10 Mbit/s に制限します。これは選択した path をテストするものであり、最大 throughput をテストするものではありません。結果を解釈する前に、実際の Pod/node/AZ placement、resource limit、policy を記録してください。Windows node には Windows 固有の tool を選択してください。完了したら、作成した test resource のみを削除してください。
+クライアントは 1 時間スリープし、コマンドは 10 秒間、送出トラフィックを 10 Mbit/s に制限します。これは選択した経路をテストするもので、最大スループットを測るものではありません。結果を解釈する前に、実際の Pod / ノード / AZ の配置、リソース制限、ポリシーを記録してください。Windows ノードには Windows 向けのツールを選んでください。終了時は、自分が作成したテストリソースのみを削除してください。
 
-これらの standalone diagnostic Pod は connectivity test 用です。ネイティブ EKS NetworkPolicy enforcement test には、Deployment/Job 管理 Pod と文書化された Service/container-port 要件を使用してください。
+これらの単体の診断用 Pod は接続性テスト用です。EKS ネイティブの Network Policy 適用テストには、Deployment/Job が管理する Pod と、文書化された Service / コンテナポートの要件を使用してください。
 
 ## ベストプラクティス
 
-### 1. IP Address Planning
+### 1. IP アドレス設計
 
-- 十分に大きい CIDR block を設計する
-- Pod network と Service network を分離する
-- 将来の拡張を考慮して subnet を設計する
+- 十分に大きな CIDR ブロックを設計する
+- Pod ネットワークと Service ネットワークを分離する
+- 将来の拡張を見込んでサブネットを設計する
 
-### 2. NetworkPolicy の適用
+### 2. Network Policy の適用
 
-この例を使用する前に、分離された `networking-demo` namespace を作成してください。これはそこにあるすべての Pod を選択し、標準 Kubernetes NetworkPolicy semantics の下で ingress と egress の両方を分離します。必要な DNS と application flow には明示的な allow rule が必要です。enforcement には対応する policy engine が必要です。追加の cluster/admin policy API は precedence を変更でき、この 1 つの manifest は完全な zero-trust architecture ではありません。
+この例を使う前に、分離された `networking-demo` Namespace を作成してください。この例はその Namespace のすべての Pod を選択し、標準的な Kubernetes NetworkPolicy のセマンティクスの下で Ingress と Egress の両方を分離します。必要な DNS とアプリケーションの通信には、明示的な許可ルールが必要です。適用にはそれをサポートするポリシーエンジンが必要です。追加のクラスター / 管理者向けポリシー API は優先順位を変えることがあり、このマニフェスト 1 つで完全なゼロトラストアーキテクチャになるわけではありません。
 
-- default deny policy を適用する (Zero Trust)
-- 必要な traffic のみを明示的に許可する
-- namespace を分離する
+- デフォルト拒否ポリシーを適用する (ゼロトラスト)
+- 必要なトラフィックのみを明示的に許可する
+- Namespace を分離する
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -634,36 +640,36 @@ spec:
   - Egress
 ```
 
-### 3. Performance Optimization
+### 3. パフォーマンス最適化
 
-- 適切な CNI を選択する (workload に合わせる)
+- 適切な CNI を選ぶ (ワークロードに合ったもの)
 - MTU の最適化
-- Kernel parameter のチューニング
+- カーネルパラメーターのチューニング
 
-### 4. Security Hardening
+### 4. セキュリティ強化
 
-- サポート対象の transport encryption を選択し、対象となる traffic を検証する。
-- 必要に応じて workload/application identity と mTLS を構成し、これらを DNS/IP-based allowlist とは分離する。
-- policy、certificate、access-control の変更を定期的にレビューする。
+- サポートされているトランスポート暗号化を選択し、どのトラフィックが対象になるかを検証する。
+- 必要に応じてワークロード / アプリケーションの ID と mTLS を設定する。これらは DNS/IP ベースの許可リストとは切り離して扱う。
+- ポリシー、証明書、アクセス制御の変更を定期的にレビューする。
 
-### 5. Observability の確保
+### 5. 可観測性の確保
 
 - ネットワークメトリクスを収集する
-- flow log を有効にする
-- distributed tracing を実装する
+- フローログを有効にする
+- 分散トレーシングを実装する
 
 ## 次のステップ
 
-[初級コース](beginner/README.md)の後は、[カーネルネットワーキングスタック](../kernel/02-network-stack.md)、次に [Linux ネットワーク診断演習](07-linux-network-diagnostics.md)とその[クイズ](../quizzes/networking/07-linux-network-diagnostics-quiz.md)を続けてください。[学習パス](#learning-path)は、以下の CNI と AWS のトピックに進む前に、これらの基礎をコンテナと Service に結び付けます。
+[初級コース](beginner/README.md) の後は、[カーネルネットワークスタック](../kernel/02-network-stack.md)、続いて [Linux ネットワーク診断の実践](07-linux-network-diagnostics.md) とその [クイズ](../quizzes/networking/07-linux-network-diagnostics-quiz.md) に進んでください。[学習パス](#learning-path) は、これらの基礎を以下の CNI と AWS のトピックの前にコンテナと Service へと結び付けます。
 
-1. [VPC CNI](01-vpc-cni.md) - デフォルト EKS CNI
-2. [Cilium 詳細](cilium/README.md) - eBPF-based networking
-3. [Calico 詳細](calico/README.md) - Routing、policy、dataplane
-4. [VPC Lattice](02-vpc-lattice.md) - AWS managed networking
-5. [AWS Load Balancer Controller](03-aws-lb-controller.md) - ELB integration
-6. [Gateway API](04-gateway-api.md) - 次世代 ingress
-7. [Cross-Org VPC Connectivity](05-cross-org-vpc-connectivity.md) - AWS Organizations をまたぐ VPC 接続 (field-verified)
-8. [Pod Network Benchmark](06-pod-network-benchmark.md) - node/AZ 境界ごとの測定済み latency と throughput
+1. [VPC CNI](01-vpc-cni.md) - EKS のデフォルト CNI
+2. [Cilium 詳解](cilium/README.md) - eBPF ベースのネットワーキング
+3. [Calico 詳解](calico/README.md) - ルーティング、ポリシー、データプレーン
+4. [VPC Lattice](02-vpc-lattice.md) - AWS マネージドネットワーキング
+5. [AWS Load Balancer Controller](03-aws-lb-controller.md) - ELB 統合
+6. [Gateway API](04-gateway-api.md) - 次世代の Ingress
+7. [組織間 VPC 接続](05-cross-org-vpc-connectivity.md) - AWS Organizations をまたぐ VPC の接続 (実地検証済み)
+8. [Pod ネットワークベンチマーク](06-pod-network-benchmark.md) - ノード / AZ 境界ごとの実測レイテンシーとスループット
 
 ---
 
