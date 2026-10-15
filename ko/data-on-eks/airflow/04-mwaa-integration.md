@@ -1,6 +1,7 @@
 # Part 4: Amazon MWAA 통합
 
-> 검토 기준: 2026-09-12, MWAA Airflow 3.3.1 / Python 3.12, Kubernetes provider 10.21.0.
+> 검토 기준: 2026-10-12, MWAA Airflow 3.3.1 / Python 3.12, Kubernetes provider 10.21.0.
+> 최신 upstream patch 3.3.2 확인(2026-10-12 기준 MWAA 지원 표에는 없음).
 
 이 장은 **environment를 만드는 provisioned Amazon MWAA**에서 자체 EKS로 작업을
 제출하는 방법을 다룹니다. YAML workflow를 사용하는 **MWAA Serverless**는 별도
@@ -20,6 +21,9 @@ AWS가 기반 서비스를 운영하지만 사용자는 DAG·의존성·IAM·VPC
 
 공식 지원 표에서 Airflow **3.3.1은 2026-09-01**, 3.2.1은 2026-05-19부터
 MWAA에서 제공됩니다. 3.3.1의 upstream 릴리스는 2026-08-12입니다.
+upstream 3.3.2는 2026-09-17 공개됐지만 2026-10-12 기준 MWAA 표의 최신 버전은
+여전히 3.3.1입니다. upstream 패치가 MWAA에서 즉시 사용 가능하다는 뜻은 아닙니다. 현재 지원 버전과 리전 가용성은
+[AWS MWAA 지원 표](https://docs.aws.amazon.com/mwaa/latest/userguide/airflow-versions.html)에서 확인하세요.
 “항상 3개월 뒤처진다”는 고정 지연 모델 대신 필요한 patch·provider·region과
 실제 환경 버전을 확인합니다. 기존 환경은 자동으로 새 Airflow 버전이 되지 않습니다.
 

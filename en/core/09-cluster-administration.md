@@ -1,7 +1,7 @@
 # Kubernetes Cluster Administration
 
-> **Supported Versions**: Kubernetes 1.34 - 1.36 (EKS standard support as of September 11, 2026)
-> **Last Updated**: February 23, 2026
+> **Supported Versions**: EKS standard support for Kubernetes 1.34–1.37 (checked October 12, 2026)
+> **Last Updated**: October 12, 2026
 
 Kubernetes cluster administration is an important task that includes cluster setup, maintenance, monitoring, troubleshooting, and upgrades. In this chapter, we will explore various aspects of Kubernetes cluster administration and best practices for cluster management in Amazon EKS.
 

@@ -1,7 +1,12 @@
 # Calico Deep Dive: Kubernetes Networking and Policy
 
-> **Review baseline**: Calico Open Source 3.32.2 · **Last Updated**: September 12, 2026
-> Calico 3.32 is tested against Kubernetes 1.34–1.36. This is not an open-ended `3.29+ / Kubernetes 1.28+` compatibility guarantee.
+> **Example baseline**: Calico Open Source 3.32.2
+>
+> **Last reviewed**: October 12, 2026
+>
+> **Latest release**: Calico 3.33.0, released October 1, is the latest Open Source release and is tested against Kubernetes 1.35–1.37.
+>
+> Commands in this series remain pinned to 3.32.2, whose tested range is 1.34–1.36. These examples have not been validated against 3.33.0. Review the [3.33.0 release notes](https://github.com/projectcalico/calico/releases/tag/v3.33.0) and [current requirements](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements) before selecting a release. This is not an open-ended `3.29+ / Kubernetes 1.28+` compatibility guarantee.
 
 ## Overview
 
@@ -13,7 +18,7 @@ Tigera's [official announcement](https://www.tigera.io/news/tigera-launches-ebpf
 
 ## Compatibility and feature boundaries
 
-- Calico 3.32.2 was released on August 30, 2026. Its tested Kubernetes minor versions are 1.34, 1.35 and 1.36; Kubernetes 1.37 being available does not establish compatibility.
+- Calico 3.32.2 was released on August 30, 2026 and is tested on Kubernetes 1.34–1.36. The newer 3.33.0 release is tested on Kubernetes 1.35–1.37; Kubernetes 1.37 availability alone does not establish compatibility for the pinned 3.32.2 examples.
 - The general Linux requirement is kernel 5.10 or later with the required modules. Consult the eBPF guide for supported architectures, vendor backports and higher requirements for individual features.
 - Linux data planes include iptables, nftables and eBPF. Defaults depend on installer/platform; current self-managed kubeadm operator installations can default to eBPF. There is no blanket feature-parity guarantee.
 - [Calico for Windows](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations) supports specified IPv4 VXLAN and BGP configurations, but not Linux eBPF, IPIP, IPv6/dual stack, WireGuard or every Linux policy feature.
@@ -296,4 +301,4 @@ Use a matching-version [calicoctl](https://docs.tigera.io/calico/latest/referenc
 | [9](09-operations.md) | Operations and diagnostics |
 | [Glossary](glossary.md) | Terminology |
 
-[Calico introduction quiz](../../quizzes/networking/calico/01-introduction-quiz.md) · [Official documentation](https://docs.tigera.io/calico/latest/about/) · [Release 3.32.2](https://github.com/projectcalico/calico/releases/tag/v3.32.2)
+[Calico introduction quiz](../../quizzes/networking/calico/01-introduction-quiz.md) · [Official documentation](https://docs.tigera.io/calico/latest/about/) · [Latest release 3.33.0](https://github.com/projectcalico/calico/releases/tag/v3.33.0) · [Example baseline 3.32.2](https://github.com/projectcalico/calico/releases/tag/v3.32.2)

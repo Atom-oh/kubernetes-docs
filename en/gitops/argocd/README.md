@@ -1,7 +1,7 @@
 # ArgoCD
 
-> **Supported Versions**: Argo CD 3.5.2, Argo Rollouts 1.10.0 (reviewed baseline)
-> **Last Updated**: September 11, 2026
+> **Review baseline**: Argo CD 3.5.2, Argo Rollouts 1.10.0; Argo CD manifest pins updated to patch 3.5.4 after release-note review (examples not re-run)
+> **Last Updated**: October 12, 2026
 
 ## Table of Contents
 - [What is ArgoCD?](#what-is-argocd)
@@ -129,7 +129,7 @@ This is a self-managed non-HA evaluation example. Prepare a compatible cluster, 
 kubectl create namespace argocd
 
 # Install ArgoCD
-kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
 
 # Wait for pods to be ready
 kubectl wait --for=condition=Ready pods --all -n argocd --timeout=300s
@@ -207,7 +207,7 @@ spec:
 
 ## Version Compatibility
 
-The reviewed baseline is **Argo CD 3.5.2 / Helm chart 10.8.4**. Application and installation-chart versions differ. Argo CD patches the three most recent minor lines; older lines are EOL.
+The reviewed baseline is **Argo CD 3.5.2 / Helm chart 10.8.4**; the manifest examples were updated to patch 3.5.4 after release-note review (not re-run). Chart 10.8.4 still deploys Argo CD v3.5.2; 3.5.4 first ships in chart 10.9.7. Application and installation-chart versions differ. Argo CD patches the three most recent minor lines; older lines are EOL.
 
 ### Tested Kubernetes Combinations
 
@@ -217,13 +217,15 @@ The reviewed baseline is **Argo CD 3.5.2 / Helm chart 10.8.4**. Application and 
 | 3.4 | 1.35, 1.34, 1.33, 1.32 |
 | 3.3 | 1.35, 1.34, 1.33, 1.32 |
 
-This is the upstream test matrix recorded in the 3.5.2 repository. It differs from a chart's minimum kubeVersion constraint, Kubernetes/EKS support windows and the managed Argo CD version policy. There is no one-to-one EKS-minor-to-Argo-CD-minor mapping.
+This is the upstream test matrix recorded in the 3.5.4 repository. It differs from a chart's minimum kubeVersion constraint, Kubernetes/EKS support windows and the managed Argo CD version policy. There is no one-to-one EKS-minor-to-Argo-CD-minor mapping.
 
 ### Recent Releases
 
 - 3.5.0: released **2026-08-04**. Check migration guidance for changes including the server's Helm 4 renderer.
 - 3.5.1: released 2026-08-12.
-- 3.5.2: released 2026-08-27. Check official releases for patch details and current supported lines.
+- 3.5.2: released 2026-08-27.
+- 3.5.3: released 2026-09-14. Bug fixes (health checks, sync retry state, UI).
+- 3.5.4: released 2026-10-06. Security fixes, including four rated CRITICAL in the repo-server and AppProject hook handling. The release notes list two potentially breaking changes: Kustomize builds that render Helm charts no longer honor `helmGlobals.configHome`, and OCI manifests larger than 4 MiB are rejected. Check official releases for current supported lines.
 
 ### Argo Rollouts
 
@@ -252,8 +254,11 @@ To test what you've learned, try the [ArgoCD installation quiz](../../quizzes/gi
 
 ### Versioned Review Sources
 
-- [Argo CD 3.5.2 tested Kubernetes versions](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/tested-kubernetes-versions.md)
-- [Release support policy](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/developer-guide/release-process-and-cadence.md)
+- [Argo CD 3.5.4 tested Kubernetes versions](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/tested-kubernetes-versions.md)
+- [Release support policy](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/developer-guide/release-process-and-cadence.md)
 - [3.5.0 release](https://github.com/argoproj/argo-cd/releases/tag/v3.5.0)
 - [3.5.2 release](https://github.com/argoproj/argo-cd/releases/tag/v3.5.2)
-- [HA component behavior](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/high_availability.md)
+- [3.5.3 release](https://github.com/argoproj/argo-cd/releases/tag/v3.5.3)
+- [3.5.4 release](https://github.com/argoproj/argo-cd/releases/tag/v3.5.4)
+- [Chart 10.9.7 (first chart with Argo CD 3.5.4)](https://github.com/argoproj/argo-helm/releases/tag/argo-cd-10.9.7)
+- [HA component behavior](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/high_availability.md)

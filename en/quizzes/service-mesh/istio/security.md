@@ -1,6 +1,9 @@
 # Security Quiz
 
-> **Last Updated**: September 11, 2026 · Istio 1.31 · Kubernetes 1.32–1.36 (EKS standard support: 1.34–1.36). See the [installation matrix](../../../service-mesh/istio/01-installation.md).
+> **Last Updated**: October 12, 2026
+>
+> **Versions**: Istio 1.31, which supports Kubernetes 1.32–1.37 (EKS standard support: 1.34–1.37).
+> See the [installation matrix](../../../service-mesh/istio/01-installation.md).
 
 This quiz tests Istio security with sidecar examples. Each question is an independent scenario; do not combine every ALLOW policy on the same workload. Ambient requires waypoint `targetRefs` for HTTP/JWT policy, and does not support PeerAuthentication `DISABLE`. Named workloads, ServiceAccounts, ports and identities must match the actual deployment.
 

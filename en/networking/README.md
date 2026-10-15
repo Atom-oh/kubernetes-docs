@@ -1,12 +1,22 @@
 # Kubernetes Networking
 
-> **Last Updated**: September 14, 2026. Feature references include Cilium 1.20.1, Calico Open Source 3.32, Flannel 0.28.9 and AWS VPC CNI 1.23.0. Check each product's Kubernetes/platform matrix before installation; these are not a jointly tested cluster configuration.
+> **Last Updated**: October 15, 2026
+>
+> **Pinned examples**: Cilium 1.20.1, Calico Open Source 3.32.2, Flannel 0.28.9, and upstream AWS VPC CNI/Helm chart 1.23.0.
+>
+> **Current release information**: AWS lists EKS-managed VPC CNI add-on `v1.23.1-eksbuild.1` for Kubernetes 1.31–1.37. Calico 3.33.0 is the latest Open Source release and is tested on Kubernetes 1.35–1.37. Review its release notes before changing the pinned examples.
+>
+> These versions are not a jointly tested cluster configuration. Check each product's Kubernetes/platform matrix before installation.
 
 ## Overview
 
 Kubernetes networking is the core infrastructure layer that enables communication between containerized applications. This section covers everything from basic Kubernetes networking concepts to advanced CNI (Container Network Interface) solutions and networking patterns in AWS EKS environments.
 
 ## Learning Path {#learning-path}
+
+After the beginner course, use the [expert networking path](expert/README.md) to connect protocol projects, routing policy, EVPN, Linux performance, cloud design and automation assessment. Check each workbook's environment, evidence and recovery criteria first.
+
+If you are new to Linux or networking, start with the [beginner course](beginner/README.md). Its eight lessons connect the CLI, addressing, DNS, SSH, firewalls, monitoring and a capstone. The path below extends that foundation into protocols, the kernel and cluster implementations.
 
 Build from protocol concepts to observations, then connect them to container, cluster, and cloud responsibilities. Use the prerequisites to choose an entry point and the outcomes to check understanding before continuing.
 
@@ -195,9 +205,9 @@ The runtime passes configuration to the plugin through the CNI interface; a sepa
 | Project / scope | Networking and policy | Features and limits to distinguish |
 |---|---|---|
 | **Cilium 1.20.1** | eBPF networking; Envoy for relevant L7 functions; Cilium network policies and Hubble | Linux worker dataplane, with AMD64/Arm64 requirements. Windows CLI availability is not Windows CNI support. WireGuard/IPsec and Beta ztunnel mTLS have distinct scopes. |
-| **Calico Open Source 3.32** | Routing/encapsulation choices; iptables, nftables and eBPF options; ordered policy tiers and host/workload policy | Windows has separate limits, including no Linux eBPF or WireGuard dataplane. Whisker/Goldmane flow observability is available as Tech Preview. Consult the edition matrix for paid capabilities. |
+| **Calico Open Source 3.32.2 examples; 3.33.0 current** | Routing/encapsulation choices; iptables, nftables and eBPF options; ordered policy tiers and host/workload policy | Calico 3.33.0 is tested on Kubernetes 1.35–1.37. Review its release notes before upgrading. Windows has separate limits, including no Linux eBPF or WireGuard dataplane. Whisker/Goldmane flow observability is available as Tech Preview. Consult the edition matrix for paid capabilities. |
 | **Flannel 0.28.9** | Host subnet allocation and inter-node transport; VXLAN, host-gw and other backends | `flanneld` itself does not enforce NetworkPolicy; the chart's optional `netpol.enabled` deploys a SIGs policy controller. WireGuard is a documented backend; IPsec is experimental. Windows VXLAN has specific settings/limits. |
-| **AWS VPC CNI 1.23.0 / EKS** | VPC address allocation and EC2 ENIs/prefixes; EKS standard and Admin network policy capabilities on supported Linux EC2 nodes | EKS Auto Mode is a managed networking implementation with additional DNS policy capabilities. Windows, Fargate, custom networking, prefix delegation and multi-NIC support have separate conditions. |
+| **AWS VPC CNI 1.23.0 upstream/Helm examples; EKS add-on `v1.23.1-eksbuild.1`** | VPC address allocation and EC2 ENIs/prefixes; EKS standard and Admin network policy capabilities on supported Linux EC2 nodes | AWS lists this managed add-on build for Kubernetes 1.31–1.37; verify regional availability and the cluster's actual version. EKS Auto Mode is a managed networking implementation with additional DNS policy capabilities. Windows, Fargate, custom networking, prefix delegation and multi-NIC support have separate conditions. |
 | **Original Weave Net project** | Historical overlay networking implementation | The original `weaveworks/weave` repository is archived. Do not describe it as an active, supported default for a new cluster. |
 
 ### Policy, Encryption and Observability
@@ -248,7 +258,7 @@ aws eks describe-addon-configuration --region "$EKS_REGION" --addon-name vpc-cni
   --addon-version "$VPC_CNI_ADDON_VERSION"
 ```
 
-The upstream 1.23.0 release number and an EKS `eksbuild` version are different identifiers. Merge changes with the intended managed add-on configuration; do not blindly select `latest` or replace unrelated values. A migration from a third-party policy implementation also needs removal of its existing enforcement state and a tested node/workload transition plan.
+The upstream 1.23.0 release number and an EKS `eksbuild` version are different identifiers. AWS's current add-on table lists `v1.23.1-eksbuild.1` for Kubernetes 1.31–1.37; use `describe-addon-versions` in the target Region to select a compatible build. Merge changes with the intended managed add-on configuration; do not blindly select `latest` or replace unrelated values. A migration from a third-party policy implementation also needs removal of its existing enforcement state and a tested node/workload transition plan.
 
 ## EKS Networking Fundamentals
 
@@ -391,6 +401,8 @@ These five connectivity options differ in layer and traffic model. Measured late
 
 GWLB inserts inspection appliances such as firewalls and IDS/IPS into an IP path through a Gateway Load Balancer endpoint. Its default flow stickiness uses five fields; supported configurations can instead use two or three. Validate forward and return routes, appliance health, encapsulation MTU, NACLs and the security groups of the actual workloads/appliances. GWLB itself does not have an ALB-style security group, and flow stickiness does not replace failure testing.
 
+For security design see [WAF/origin protection](../security/14-waf-edge-api-security.md), [Palo Alto/Fortinet NGFW](../security/15-ngfw-paloalto-fortinet.md) and [GWLB/GENEVE paths and failures](../security/16-gwlb-geneve-inspection.md). GWLBE also does not support SGs. For all-unhealthy targets AWS describes per-flow target selection and drops until recovery, with no direct appliance bypass. Review reduced-tuple stickiness, cross-zone, NAT and TGW appliance mode together.
+
 > 📎 The full EKS/VPC Lattice integration (Gateway API Controller, IAM authorization, routing) is in [VPC Lattice](02-vpc-lattice.md).
 
 ### How DNS Resolver and Route Tables Actually Behave
@@ -435,6 +447,14 @@ The protocol mechanics of HTTP/3 (RFC 9114) and its QUIC transport (RFC 9000) ar
 ## Networking Sub-pages
 
 This section covers the following topics in detail:
+
+### [Linux Networking from the Beginning](beginner/README.md) {#beginner-course}
+
+If you are new to Linux or networking, start with the [beginner course](beginner/README.md). Its eight lessons connect the CLI, addressing, DNS, SSH, firewalls, monitoring and a capstone. The path below extends that foundation into protocols, the kernel and cluster implementations.
+
+### [Expert Networking Path](expert/README.md) {#expert-course}
+
+After the beginner course, use the [expert networking path](expert/README.md) to connect protocol projects, routing policy, EVPN, Linux performance, cloud design and automation assessment. Check each workbook's environment, evidence and recovery criteria first.
 
 ### [Linux Network Diagnostics Practice](07-linux-network-diagnostics.md) {#linux-network-diagnostics}
 
@@ -648,7 +668,7 @@ spec:
 
 ## Next Steps
 
-Start with the [Kernel Networking Stack](../kernel/02-network-stack.md), then [Linux Network Diagnostics Practice](07-linux-network-diagnostics.md) and its [quiz](../quizzes/networking/07-linux-network-diagnostics-quiz.md). The [learning path](#learning-path) connects these foundations to containers and Services before the CNI and AWS topics below.
+After the [beginner course](beginner/README.md), continue with the [Kernel Networking Stack](../kernel/02-network-stack.md), then [Linux Network Diagnostics Practice](07-linux-network-diagnostics.md) and its [quiz](../quizzes/networking/07-linux-network-diagnostics-quiz.md). The [learning path](#learning-path) connects these foundations to containers and Services before the CNI and AWS topics below.
 
 1. [VPC CNI](01-vpc-cni.md) - Default EKS CNI
 2. [Cilium Deep Dive](cilium/README.md) - eBPF-based networking
@@ -669,6 +689,7 @@ Start with the [Kernel Networking Stack](../kernel/02-network-stack.md), then [L
 - [Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 - [CNI specification](https://raw.githubusercontent.com/containernetworking/cni/main/SPEC.md)
 - [Calico product editions](https://docs.tigera.io/calico/latest/about)
+- [Calico Open Source 3.33.0 release](https://github.com/projectcalico/calico/releases/tag/v3.33.0)
 - [Calico policy tiers](https://docs.tigera.io/calico/latest/network-policy/policy-tiers/tiered-policy)
 - [Calico Whisker flow logs](https://docs.tigera.io/calico/latest/observability/view-flow-logs)
 - [Calico Windows limitations](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations)
@@ -676,6 +697,7 @@ Start with the [Kernel Networking Stack](../kernel/02-network-stack.md), then [L
 - [Flannel backends](https://raw.githubusercontent.com/flannel-io/flannel/v0.28.9/Documentation/backends.md)
 - [Original Weave repository status](https://api.github.com/repos/weaveworks/weave)
 - [AWS VPC CNI 1.23.0](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md)
+- [Amazon EKS latest VPC CNI add-on versions](https://docs.aws.amazon.com/eks/latest/userguide/managing-vpc-cni.html)
 - [EKS network policy configuration](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)
 - [EKS standard and Admin network policies](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
 - [EKS prefix delegation and maxPods](https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses-procedure.html)

@@ -1,7 +1,7 @@
 # L2–L7 Networking and Load Balancing
 
-> **Review baseline**: Cilium 1.20.1, CLI 0.20.0; Istio examples use the 1.31 API.
-> **Last reviewed**: September 12, 2026
+> **Review baseline**: Cilium 1.20.2, CLI 0.20.1; Istio examples use the 1.31 API.
+> **Last reviewed**: October 15, 2026
 
 ## Lab Environment Setup
 
@@ -377,7 +377,7 @@ Supply the real API endpoint and one persisted per-cluster Maglev seed. The seed
 : "${MAGLEV_SEED:?Set the persisted base64 encoding of 12 random bytes}"
 helm repo add cilium https://helm.cilium.io/
 helm repo update cilium
-helm install cilium cilium/cilium --version 1.20.1 --namespace kube-system \
+helm install cilium cilium/cilium --version 1.20.2 --namespace kube-system \
   --values lb-values.yaml \
   --set-string k8sServiceHost="$API_SERVER_HOST" \
   --set k8sServicePort="$API_SERVER_PORT" \
@@ -519,10 +519,10 @@ HTTP policy rejection may appear as HTTP 403 rather than a packet DROPPED verdic
 
 These are release-source/schema-checked examples with bounded local fixtures, not a production-tested platform or live-cluster benchmark. Image execution, webhook reachability, mTLS traffic, DSR return paths, NAT behavior and fragmentation still require validation in the prepared environment. Clean up only this run's labeled application resources; do not remove the cluster CNI as lab cleanup.
 
-- [Cilium kube-proxy replacement/DSR/Maglev](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst), [masquerading](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/masquerading.rst), [fragment handling](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/fragmentation.rst), [fragment map implementation](https://github.com/cilium/cilium/blob/v1.20.1/pkg/maps/fragmap/fragmap.go)
-- [L2 Announcements](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/l2-announcements.rst), [multicast](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/multicast.rst), [HTTP rule translator](https://github.com/cilium/cilium/blob/v1.20.1/pkg/envoy/policy/envoy_l7_rules_translator.go), [Envoy chart defaults](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/templates/_helpers.tpl)
-- [Cilium/Istio integration](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/istio.rst), [Istio CNI/init-container modes](https://istio.io/latest/docs/setup/additional-setup/cni/), [webhook requirements](https://istio.io/latest/docs/ops/configuration/mesh/webhook/), [Istio 1.31 schemas](https://github.com/istio/istio/blob/1.31.0/manifests/charts/base/files/crd-all.gen.yaml)
-- [Kubernetes Service proxy modes/affinity](https://kubernetes.io/docs/reference/networking/virtual-ips/), [Cilium 1.20.1 values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml)
+- [Cilium kube-proxy replacement/DSR/Maglev](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/kubernetes/kubeproxy-free.rst), [masquerading](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/masquerading.rst), [fragment handling](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/fragmentation.rst), [fragment map implementation](https://github.com/cilium/cilium/blob/v1.20.2/pkg/maps/fragmap/fragmap.go)
+- [L2 Announcements](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/l2-announcements.rst), [multicast](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/multicast.rst), [HTTP rule translator](https://github.com/cilium/cilium/blob/v1.20.2/pkg/envoy/policy/envoy_l7_rules_translator.go), [Envoy chart defaults](https://github.com/cilium/cilium/blob/v1.20.2/install/kubernetes/cilium/templates/_helpers.tpl)
+- [Cilium/Istio integration](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/servicemesh/istio.rst), [Istio CNI/init-container modes](https://istio.io/latest/docs/setup/additional-setup/cni/), [webhook requirements](https://istio.io/latest/docs/ops/configuration/mesh/webhook/), [Istio 1.31 schemas](https://github.com/istio/istio/blob/1.31.0/manifests/charts/base/files/crd-all.gen.yaml)
+- [Kubernetes Service proxy modes/affinity](https://kubernetes.io/docs/reference/networking/virtual-ips/), [Cilium 1.20.2 values](https://github.com/cilium/cilium/blob/v1.20.2/install/kubernetes/cilium/values.yaml)
 
 
 [Return to Main Page](README.md)

@@ -1,7 +1,7 @@
 # Istio 용어집
 
 > **검토 버전**: Istio 1.31.0
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 12일
 
 Istio와 Service Mesh 관련 주요 용어들을 주제별 참조 섹션으로 정리한 용어집입니다.
 
@@ -909,7 +909,7 @@ spec:
 - Istio
 - Linkerd
 - Consul Connect
-- AWS App Mesh ([support ends September 30, 2026](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html))
+- AWS App Mesh ([2026년 9월 30일 지원 종료](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html))
 
 ---
 

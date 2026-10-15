@@ -1,14 +1,16 @@
 # Istio
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 12, 2026
 
 A practical guide for utilizing Istio Service Mesh on Amazon EKS.
 
-### September 2026 review: supported releases
+### October 2026 review: supported releases
 
-Istio 1.31.0 is GA; its [release announcement](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/) was published on August 31, 2026. For new installations, this guide uses 1.31.0 with an EKS version in both support windows: Kubernetes 1.34–1.36. Istio 1.31 supports Kubernetes 1.32–1.36; EKS standard support currently covers 1.34–1.36. Recheck the [Istio support matrix](https://istio.io/latest/docs/releases/supported-releases/) and [EKS version lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) before installation.
+Istio 1.31.0 is GA; its [release announcement](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/) was published on August 31, 2026. The current patch is **1.31.1**, published September 21. Its [release announcement](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.1/) documents a fix that prevents an unresolved `BackendTLSPolicy` CA reference from falling back to plaintext backend connections.
 
-Istio 1.30 and 1.29 are also supported as of this review. Existing installations on those branches need at least 1.30.4 or 1.29.7 for [ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/), which covers Envoy vulnerabilities, a BackendTLSPolicy fail-open, and an EnvoyFilter control-plane denial of service. Istio 1.28 is out of support. Istio 1.31 charts use `https://blob.istio.io/istio-release/charts`; the previous Google-hosted repository no longer receives new releases.
+New-install commands in this guide use 1.31.1. Istio 1.31's published Kubernetes support range is 1.32–1.37; EKS standard support currently covers 1.34–1.37. Their standard-support overlap is 1.34–1.37; of the EKS extended-support versions (1.31–1.33), 1.32 and 1.33 are also within Istio 1.31's range. Recheck the [Istio support matrix](https://istio.io/latest/docs/releases/supported-releases/) and [EKS version lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) before installation.
+
+Istio 1.30 and 1.29 remain listed as supported in the matrix at this review; 1.29's expected end-of-life date is today, October 12, 2026. Verify its status before installing or upgrading. Existing installations on those branches need at least 1.30.4 or 1.29.7 for [ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/), which covers Envoy vulnerabilities, a BackendTLSPolicy fail-open, and an EnvoyFilter control-plane denial of service. Istio 1.28 is out of support. Istio 1.31 charts use `https://blob.istio.io/istio-release/charts`; the previous Google-hosted repository no longer receives new releases.
 
 ## Table of Contents
 

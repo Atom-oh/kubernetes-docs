@@ -1,7 +1,7 @@
 # Kubernetes 스케줄링, 선점 및 축출
 
 > **지원 버전**: Kubernetes 1.34 - 1.36 (Descheduler v0.36 예시)
-> **마지막 업데이트**: 2026년 9월 9일
+> **마지막 업데이트**: 2026년 9월 17일
 
 Kubernetes에서 스케줄링은 포드를 적절한 노드에 배치하는 과정입니다. 선점은 우선순위가 높은 포드를 위해 우선순위가 낮은 포드를 제거하는 과정이며, 축출은 파드를 종료하며 워크로드 컨트롤러가 생성한 대체 파드를 스케줄러가 별도로 배치할 수 있습니다. 이 장에서는 Kubernetes의 스케줄링 메커니즘, 노드 선택, 선점, 축출 등의 개념과 Amazon EKS에서의 스케줄링 최적화 방법에 대해 알아보겠습니다.
 
@@ -183,6 +183,46 @@ Kubernetes 스케줄러는 플러그인 아키텍처를 사용하여 확장 가�
    - ImageLocality: 이미지 지역성 고려
    - InterPodAffinity: 포드 간 어피니티 고려
    - NodeAffinity: 노드 어피니티 고려
+
+### NodeResourcesFit 스코어링 전략: LeastAllocated vs. MostAllocated
+
+`NodeResourcesFit`은 필터 플러그인(노드에 포드가 요청한 CPU/메모리를 수용할 여력이 있는지 확인)이자 스코어 플러그인입니다. 스코어 플러그인으로서의 동작은 `KubeSchedulerConfiguration`의 `scoringStrategy.type`으로 제어합니다.
+
+- **`LeastAllocated`** (기본값): 이미 적게 할당된 노드일수록 높은 점수를 줍니다. 새 포드는 가장 비어 있는 노드로 유도되어 부하가 고르게 분산됩니다.
+- **`MostAllocated`**: 포드가 들어갈 여력이 있는 한, 이미 많이 할당된 노드일수록 높은 점수를 줍니다. 새 포드는 가장 바쁜 노드부터 채워지고 다른 노드는 비워둔 채로 남습니다.
+- **`RequestedToCapacityRatio`**: 두 전략 사이를 원하는 곡선으로 설정할 수 있는 구성형 전략으로, GPU 같은 확장 리소스에 단순 최소/최대가 아닌 커스텀 형태가 필요할 때 유용합니다.
+
+```yaml
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+profiles:
+- schedulerName: most-allocated-scheduler
+  pluginConfig:
+  - name: NodeResourcesFit
+    args:
+      scoringStrategy:
+        type: MostAllocated
+        resources:
+        - name: cpu
+          weight: 1
+        - name: memory
+          weight: 1
+```
+
+Amazon EKS는 컨트롤 플레인이 완전관리형이므로 기본 kube-scheduler의 `KubeSchedulerConfiguration`을 직접 수정할 수 없습니다. `MostAllocated`를 쓰려면 해당 설정을 가진 kube-scheduler 바이너리를 **두 번째 스케줄러**(전용 `ServiceAccount`를 `system:kube-scheduler`/`system:volume-scheduler`에 바인딩한 `Deployment`)로 띄우고, 아래 [다중 스케줄러](#다중-스케줄러)에서 설명하는 것처럼 특정 포드에서 `spec.schedulerName`으로 지정해야 합니다. 이는 [커스텀 스케줄러 만들기](../scheduling/01-custom-scheduler-part1.md)에서 사용한 것과 같은 패턴입니다.
+
+**실제 검증 테스트 — 분산 vs. 빈패킹 동작.** 실제 차이를 확인하기 위해 워커 노드 3개짜리 임시 `kind` 클러스터(`kubectl version` v1.37.0, 완전히 격리되어 있으며 테스트 후 즉시 삭제 — 공유 인프라에는 영향 없음)를 만들고, `nodeName`으로 고정한 필러(filler) 포드로 노드별 사전 부하를 불균등하게 만들었습니다(노드당 할당 가능 CPU 16코어): `worker`=12개 포드(75%), `worker2`=6개 포드(37%), `worker3`=0개 포드(0%). 이 상태에서 동일한 1코어 포드 6개를 두 번 스케줄링했습니다 — 한 번은 기본 스케줄러(`LeastAllocated`)로, 한 번은 `MostAllocated`로 설정한 두 번째 스케줄러로.
+
+| 스케줄러 / 전략 | 새 포드 6개가 배치된 곳 | 최종 CPU 사용률 (worker / worker2 / worker3) |
+|---|---|---|
+| 기본값 (`LeastAllocated`) | 가장 비어 있던 `worker3`에 6개 전부 배치 | 75% / 37% / 37% — 세 노드 모두 사용 중 |
+| `MostAllocated` | 가장 바쁜 두 노드에 분산: `worker`에 3개, `worker2`에 3개 | 93% / 56% / 0% — `worker3`는 완전히 그대로 유지 |
+
+`LeastAllocated`는 `worker3`의 사용률을 `worker2`와 같아질 때까지 끌어올려서 결국 세 노드 모두 일부라도 사용 중인 상태가 되어, 어느 노드도 안전하게 스케일 다운할 수 없게 됩니다. 반면 `MostAllocated`는 이미 바쁜 노드에 계속 부하를 집중시켜 `worker3`를 완전히 비워둔 채로 남겼습니다 — 이는 클러스터 오토스케일러나 Karpenter의 통합(consolidation) 로직이 바로 종료 대상으로 삼을 노드입니다.
+
+이런 이유로 Karpenter나 Cluster Autoscaler와 함께 실행되는 **배치/단명 Job 워크로드**에는 `MostAllocated`가 흔히 권장됩니다. Job을 적은 수의 노드에 빈패킹하면 완전히 비게 되는 노드 수가 늘어나 통합(consolidation) 대상이 되기 쉬워지고, 이는 곧바로 컴퓨팅 비용 절감으로 이어집니다. 반면 장시간 실행되는 지연 민감형 서비스에는 여전히 `LeastAllocated`가 더 나은 기본값입니다 — 부하를 분산해 두면 모든 노드에 여유 공간이 남아 트래픽 급증이나 `kubectl drain` 시 한 노드에만 부하가 쏠려 연쇄적인 압박이 생기는 것을 막을 수 있습니다.
+
+이 비교를 직접 단계별로 재현해 보려면 [스케줄러 스코어링 전략 실습](../labs/core/08-scheduling-preemption-eviction-lab.md)을 참고하세요.
 
 ### 다중 스케줄러
 

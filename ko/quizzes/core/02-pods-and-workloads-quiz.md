@@ -229,7 +229,7 @@ Kubernetes 디플로이먼트는 기본적으로 RollingUpdate와 Recreate 두 �
 16. 다음 요구사항을 충족하는 다중 컨테이너 파드 YAML 파일을 작성하세요:
     - 파드 이름: web-app
     - 첫 번째 컨테이너: nginx 웹 서버 (이미지: nginx:1.30.4)
-    - 두 번째 컨테이너: 로그 수집기 (이미지: fluentd:v1.14)
+    - 두 번째 컨테이너: 로그 수집기 (이미지: fluentd:v1.19-debian-1)
     - 두 컨테이너 간에 로그 디렉토리를 공유하는 emptyDir 볼륨
     - nginx 컨테이너는 포트 80 노출
     - 로그 볼륨은 nginx 컨테이너에서는 /var/log/nginx에, fluentd 컨테이너에서는 /fluentd/log에 마운트
@@ -254,7 +254,7 @@ spec:
         - name: log-volume
           mountPath: /var/log/nginx
     - name: log-collector
-      image: fluentd:v1.14
+      image: fluentd:v1.19-debian-1
       volumeMounts:
         - name: log-volume
           mountPath: /fluentd/log

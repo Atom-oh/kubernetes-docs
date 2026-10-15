@@ -1,8 +1,10 @@
 # Linux Basics
 
-> **Supported Versions**: Reviewed examples: Ubuntu 24.04 LTS, Debian 13, Amazon Linux 2023; package/service names vary by distribution **Last Updated**: September 11, 2026
+> **Supported Versions**: Reviewed examples: Ubuntu 24.04 LTS, Debian 13, Amazon Linux 2023; package/service names vary by distribution **Last Updated**: September 15, 2026
 
 Understanding Linux fundamentals is essential for comprehending Kubernetes and container technology. This document covers the core Linux concepts that are particularly important in Kubernetes environments.
+
+If the terminal and networking are new to you, begin at lesson 1 of [Linux Networking from the Beginning](../networking/beginner/README.md). This document also serves as a deeper reference for container and kernel concepts afterward.
 
 ## Lab Environment Setup
 

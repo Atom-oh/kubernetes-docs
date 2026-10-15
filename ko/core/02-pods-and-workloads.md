@@ -1,7 +1,7 @@
 # Kubernetes 파드와 워크로드
 
 > **지원 버전**: Kubernetes 1.35, 1.36, 1.37
-> **마지막 업데이트**: 2026년 2월 23일
+> **마지막 업데이트**: 2026년 10월 12일
 
 이 문서에서는 Kubernetes의 기본 실행 단위인 파드(Pod)와 이를 관리하는 다양한 워크로드 리소스에 대해 자세히 설명합니다. 파드의 개념부터 시작하여 디플로이먼트, 스테이트풀셋, 데몬셋 등 다양한 워크로드 리소스의 특징과 사용 사례를 다룹니다.
 
@@ -157,7 +157,7 @@ spec:
         memory: "256Mi"
         cpu: "500m"
   - name: log-collector
-    image: fluentd:v1.14
+    image: fluentd:v1.19-debian-1
     volumeMounts:
     - name: log-volume
       mountPath: /var/log/nginx
@@ -240,7 +240,7 @@ spec:
     - name: logs
       mountPath: /var/log/nginx
   - name: log-collector
-    image: fluentd:v1.14
+    image: fluentd:v1.19-debian-1
     volumeMounts:
     - name: logs
       mountPath: /var/log/nginx

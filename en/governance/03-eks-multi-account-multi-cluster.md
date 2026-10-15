@@ -1,6 +1,6 @@
 # Multi-Account, Multi-Cluster EKS Architecture
 
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 12, 2026
 
 ## 1. Cluster Consolidation Approaches
 
@@ -71,7 +71,7 @@ Technical constraints to check as well:
 
 - **Doesn't work on EKS Fargate.**
 - Self-managed Karpenter support requires **1.12 or later.**
-- EKS Auto Mode integrates with no additional configuration, automatically handling voluntary disruptions like halting node provisioning and consolidation/drift.
+- EKS Auto Mode needs no additional configuration beyond enabling zonal shift on the cluster. It then stops provisioning new nodes in the impaired AZ, stops voluntary disruption such as consolidation that would affect that AZ, and avoids launching capacity for Pods whose strict scheduling requirements target it.
 - Assess stateful workloads per storage backend. An EBS PV is zonal and cannot attach directly in another AZ. Not all PVCs use EBS; EFS and other backends have different availability and recovery behavior.
 
 > **Design proposal**: Validate N-1 behavior of each service, DNS, and storage before autoshift. Single-AZ endpoints may be retained by the fail-safe, so a practice run does not necessarily stop them. That fail-safe also does not guarantee service from an impaired AZ.
