@@ -1,19 +1,22 @@
 # Cuestionario de seguridad
 
-> **Última actualización**: 11 de septiembre de 2026 · Istio 1.31 · Kubernetes 1.32–1.36 (soporte estándar EKS: 1.34–1.36). Consulte la [matriz de instalación](../../../service-mesh/istio/01-installation.md).
+> **Última actualización**: October 12, 2026
+>
+> **Versiones**: Istio 1.31, que admite Kubernetes 1.32–1.37 (soporte estándar de EKS: 1.34–1.37).
+> Consulta la [matriz de instalación](../../../service-mesh/istio/01-installation.md).
 
-El cuestionario evalúa seguridad Istio con ejemplos sidecar. Cada pregunta es independiente; no combine todas las políticas ALLOW sobre la misma carga. Ambient requiere `targetRefs` de waypoint para HTTP/JWT y no admite PeerAuthentication `DISABLE`. Cargas, ServiceAccounts, puertos e identidades deben coincidir con el despliegue real.
+Este cuestionario evalúa la seguridad de Istio con ejemplos de sidecar. Cada pregunta es un escenario independiente; no combines todas las políticas ALLOW en la misma carga de trabajo. Ambient requiere `targetRefs` de waypoint para políticas HTTP/JWT y no admite PeerAuthentication `DISABLE`. Las cargas de trabajo con nombre, ServiceAccounts, puertos e identidades deben coincidir con el despliegue real.
 
 ## Preguntas de opción múltiple (1-5)
 
 ### Pregunta 1: Modo PeerAuthentication
 
-¿Qué afirmación describe correctamente el modo mTLS **PERMISSIVE**?
+¿Qué afirmación describe correctamente el modo mTLS **PERMISSIVE** en PeerAuthentication?
 
-A. Permite tráfico mTLS y texto plano\
-B. Solo permite mTLS y rechaza texto plano\
+A. Permite tráfico mTLS y de texto sin formato\
+B. Solo permite mTLS y rechaza el texto sin formato\
 C. Rechaza todo el tráfico\
-D. Desactiva mTLS
+D. Deshabilita mTLS
 
 <details>
 
@@ -21,19 +24,19 @@ D. Desactiva mTLS
 
 **Respuesta: A**
 
-PERMISSIVE **permite tanto mTLS como texto plano** para facilitar migraciones graduales.
+El modo PERMISSIVE **permite tráfico mTLS y de texto sin formato** para admitir una migración gradual.
 
 **Explicación:**
 
 **Modos mTLS de PeerAuthentication:**
 
-| Modo | Descripción | Escenario |
+| Modo           | Descripción                    | Escenario de uso                          |
 | -------------- | ------------------------------ | ------------------------------------- |
-| **PERMISSIVE** | Permite mTLS + texto plano | Migración gradual, entornos mixtos |
-| **STRICT** | Solo permite mTLS | Refuerzo de seguridad productiva |
-| **DISABLE** | Desactiva mTLS de malla en el receptor seleccionado | Excepción heredada explícita |
+| **PERMISSIVE** | Permite mTLS y texto sin formato | Migración gradual, entornos mixtos |
+| **STRICT**     | Solo permite mTLS               | Endurecimiento de seguridad de producción         |
+| **DISABLE**    | Deshabilita mTLS de la malla en el receptor seleccionado | Excepción heredada explícita             |
 
-**Ejemplo PERMISSIVE:**
+**Ejemplo de modo PERMISSIVE:**
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -53,7 +56,7 @@ Client A (Istio Sidecar) -> [mTLS] -> Server (PERMISSIVE)  Allowed
 Client B (No Sidecar)    -> [Plaintext] -> Server (PERMISSIVE)  Allowed
 ```
 
-**Comparación con STRICT:**
+**Comparación con el modo STRICT:**
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -90,9 +93,9 @@ Step 3: STRICT (Enforce mTLS)
 
 ***
 
-### Pregunta 2: Acción AuthorizationPolicy
+### Pregunta 2: Acción de AuthorizationPolicy
 
-Si esta es la única AuthorizationPolicy que selecciona las cargas de su namespace, ¿qué significa?
+Si esta es la única AuthorizationPolicy que selecciona las cargas de trabajo de su espacio de nombres, ¿qué significa?
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -104,7 +107,7 @@ spec:
 ```
 
 A. Permite todas las solicitudes\
-B. Rechaza todas las solicitudes\
+B. Deniega todas las solicitudes\
 C. No aplica ninguna política\
 D. Solo permite mTLS
 
@@ -114,17 +117,17 @@ D. Solo permite mTLS
 
 **Respuesta: B**
 
-Un spec vacío usa ALLOW por defecto sin reglas coincidentes, por lo que esta política sola **rechaza todas las solicitudes**. Otras ALLOW coincidentes pueden dar excepciones; un DENY-all explícito no puede anularse con ALLOW.
+Una especificación vacía usa de forma predeterminada ALLOW sin reglas coincidentes, por lo que esta política por sí sola **deniega todas las solicitudes**. Otras políticas ALLOW coincidentes pueden proporcionar excepciones; una política explícita DENY-all no puede ser anulada por ALLOW.
 
 **Explicación:**
 
-**Comportamiento predeterminado:**
+**Comportamiento predeterminado de AuthorizationPolicy:**
 
-1. **No hay política**: Se permiten todas las solicitudes
-2. **Spec vacío, como el ejemplo**: Se rechazan todas
-3. **Con reglas**: Se permite/rechaza según ellas
+1. **No existe ninguna política**: se permiten todas las solicitudes
+2. **Especificación vacía (como el ejemplo)**: se deniegan todas las solicitudes
+3. **Tiene reglas**: permite/deniega según las reglas
 
-**Patrón de denegación por defecto:**
+**Patrón de denegación predeterminada:**
 
 ```yaml
 # Step 1: Deny all requests
@@ -156,7 +159,7 @@ spec:
         methods: ["GET", "POST"]
 ```
 
-**Evaluación:** CUSTOM → DENY → ALLOW. Un proveedor CUSTOM coincidente debe permitir; después cualquier DENY coincidente rechaza. Si hay ALLOW aplicables, debe coincidir al menos una regla. Sin ALLOW aplicable, esta etapa permite. Reglas y políticas ALLOW forman una unión, no una lista ordenada de restricciones adicionales. AUDIT marca solicitudes para un plugin configurado; no es una cuarta etapa de aplicación ni registra por sí solo.
+**Evaluación:** CUSTOM → DENY → ALLOW. Un proveedor CUSTOM coincidente debe permitir la solicitud; después, cualquier DENY coincidente la rechaza. Si existen políticas ALLOW aplicables, al menos una regla debe coincidir. Sin una política ALLOW aplicable, esta etapa permite la solicitud. Las reglas y las políticas ALLOW forman una unión, no una lista ordenada de restricciones adicionales. AUDIT marca las solicitudes coincidentes para un complemento de auditoría configurado; no es una cuarta etapa de aplicación y no registra por sí solo.
 
 **Ejemplo práctico:**
 
@@ -198,7 +201,7 @@ spec:
         methods: ["GET", "POST"]
 ```
 
-**Prueba:** Ejecute desde el frontend mallado con ServiceAccount `frontend`; configure detección de protocolo/puerto HTTP del backend.
+**Prueba:** ejecútala desde la carga de trabajo frontend integrada en la malla mediante ServiceAccount `frontend`; configura la detección de protocolo/puerto HTTP de backend.
 
 ```bash
 # GET request -> Matches ALLOW policy -> Allowed
@@ -224,7 +227,7 @@ curl -X PUT http://backend/api
 
 ### Pregunta 3: Autenticación JWT
 
-¿Qué campos validan tokens JWT en RequestAuthentication?
+¿Qué campos se usan para validar tokens JWT en RequestAuthentication?
 
 A. issuer y audiences\
 B. principals y namespaces\
@@ -237,13 +240,13 @@ D. hosts y ports
 
 **Respuesta: A**
 
-RequestAuthentication usa **issuer** y **audiences** para validar JWT.
+RequestAuthentication utiliza los campos **issuer** y **audiences** para validar tokens JWT.
 
 **Explicación:**
 
-Si hay token, debe superar firma, issuer, audience y tiempo. RequestAuthentication sola acepta ausencia de token; AuthorizationPolicy debe exigir `requestPrincipals`. Los timestamps siguientes son una ilustración histórica caducada, no un token utilizable.
+Un token, cuando está presente, debe superar las comprobaciones de firma, emisor, audiencia y tiempo. RequestAuthentication por sí solo acepta que falte un token; AuthorizationPolicy debe requerir `requestPrincipals`. Los valores de marca de tiempo siguientes son una ilustración histórica expirada, no un token utilizable.
 
-**Estructura JWT:**
+**Estructura de token JWT:**
 
 ```
 Header.Payload.Signature
@@ -258,7 +261,7 @@ Payload example:
 }
 ```
 
-**Configuración RequestAuthentication:**
+**Configuración de RequestAuthentication:**
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -278,13 +281,13 @@ spec:
     forwardOriginalToken: true
 ```
 
-**Proceso de validación JWT:**
+**Proceso de validación de JWT:**
 
-![Un sidecar comprueba sucesivamente issuer, audiences, firma JWKS y caducidad del JWT; rechaza con 401 Unauthorized si falla alguna y permite continuar solo tras superar las cuatro.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-security-0.png)
+![Diagrama de flujo que muestra cómo un sidecar valida un JWT entrante: comprueba secuencialmente el emisor del token, las audiencias, la firma JWKS y la expiración; rechaza la solicitud con 401 Unauthorized si alguna comprobación falla y solo la permite cuando las cuatro comprobaciones se superan.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-security-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-security-0.html)
 
-El diagrama valida un token presente; no describe autorización ni ausencia de token. Los proveedores siguientes son alternativas; configure tipo y audience esperados por la aplicación.
+El diagrama describe la validación de un token presente, no la autorización ni el manejo de tokens ausentes. Los ejemplos de proveedores siguientes son alternativas; configura el tipo de token y la audiencia que espera la aplicación.
 
 **Integración con proveedores OIDC:**
 
@@ -377,7 +380,7 @@ unset TOKEN
 
 ### Pregunta 4: Gestión de certificados mTLS
 
-¿Cuál es la validez predeterminada de certificados mTLS en Istio?
+¿Cuál es el período de validez predeterminado de los certificados mTLS en Istio?
 
 A. 1 hora\
 B. 24 horas\
@@ -390,13 +393,13 @@ D. 90 días
 
 **Respuesta: B**
 
-La validez predeterminada es **24 horas**, con renovación automática.
+El período de validez predeterminado de los certificados mTLS en Istio es de **24 horas** y se renuevan automáticamente.
 
 **Explicación:**
 
-El agente solicita una hoja de 24 horas y renueva alrededor de la mitad de su vida, con jitter (`SECRET_GRACE_PERIOD_RATIO=0.5`). Istiod o la CA externa elegida firma; el agente entrega el resultado a Envoy mediante SDS. Las vidas de raíz/intermedias son independientes. La raíz autofirmada predeterminada firma directamente hojas; usar una jerarquía intermedia es decisión administrativa.
+El agente solicita de forma predeterminada un certificado hoja de 24 horas y lo renueva aproximadamente a la mitad de su vida útil, con fluctuación (`SECRET_GRACE_PERIOD_RATIO=0.5`). Istiod o la CA externa seleccionada firma la solicitud; el agente entrega el resultado a Envoy mediante SDS. Las vidas útiles de raíz/intermedios son independientes. La raíz autofirmada predeterminada firma directamente los certificados hoja de las cargas de trabajo; una jerarquía intermedia es una elección del administrador.
 
-Inspeccione el certificado público sin asumir archivo `/etc/certs` ni orden fijo del array SDS:
+Inspecciona el certificado público sin suponer un archivo `/etc/certs` en disco ni un orden fijo de la matriz SDS:
 
 ```bash
 istioctl proxy-config secret <pod-name> -n <namespace> -o json | \
@@ -404,7 +407,7 @@ istioctl proxy-config secret <pod-name> -n <namespace> -o json | \
   base64 -d | openssl x509 -noout -dates -issuer -ext subjectAltName
 ```
 
-**Personalizar validez:**
+**Personalización del período de validez:**
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -417,22 +420,22 @@ spec:
         SECRET_TTL: "48h"  # Extend to 48 hours
 ```
 
-Es un fragmento de entrada `istioctl install -f`, no un operador dentro del clúster. El issuer puede limitar el TTL solicitado de 48 horas; verifique lo emitido y rote proxies seleccionados al cambiar bootstrap.
+Este es un fragmento de entrada para `istioctl install -f`, no un recurso de operador dentro del clúster. El emisor puede limitar el TTL de 48 horas solicitado; verifica el certificado emitido y rota los proxies seleccionados al cambiar la configuración de bootstrap.
 
-Si falla la renovación, revise logs de agente/istiod, conectividad CA, autenticación de token, reloj y paquetes de confianza antes de reiniciar. Reiniciar no arregla una CA caducada. Integrar cert-manager requiere **istio-csr** y sus requisitos; `EXTERNAL_CA=ISTIOD_RA_KUBERNETES_API` por sí solo no lo configura. Consulte el [ciclo de vida de certificados](../../../service-mesh/istio/security/01-mtls.md).
+Si falla la renovación, inspecciona los registros del agente e istiod, la conectividad de CA, la autenticación de tokens, la sincronización del reloj y los paquetes de confianza antes de reiniciar las cargas de trabajo. Un reinicio por sí solo no corrige una CA expirada. La integración con cert-manager requiere **istio-csr** y sus requisitos previos de instalación; `EXTERNAL_CA=ISTIOD_RA_KUBERNETES_API` por sí solo no es una configuración de cert-manager. Consulta la [guía del ciclo de vida de certificados](../../../service-mesh/istio/security/01-mtls.md).
 
 </details>
 
 ***
 
-### Pregunta 5: Autenticación por ServiceAccount
+### Pregunta 5: Autenticación basada en Service Account
 
-¿Qué identidad se usa para autenticar servicios entre sí?
+¿Qué identidad se utiliza para la autenticación de servicio a servicio en Istio?
 
-A. Nombre Pod\
-B. Nombre Service\
-C. ServiceAccount\
-D. Nombre namespace
+A. Nombre de Pod\
+B. Nombre de Service\
+C. Service Account\
+D. Nombre de Namespace
 
 <details>
 
@@ -440,11 +443,11 @@ D. Nombre namespace
 
 **Respuesta: C**
 
-Istio gestiona identidad entre servicios mediante **ServiceAccount**.
+Istio administra la identidad de servicio a servicio basada en **Service Account**.
 
 **Explicación:**
 
-**Identidad por ServiceAccount:**
+**Identidad basada en Service Account:**
 
 ```yaml
 # 1. Create Service Account
@@ -476,7 +479,7 @@ spec:
         image: registry.example.com/team/frontend:REPLACE_WITH_TESTED_TAG
 ```
 
-**Formato SPIFFE ID:**
+**Formato de ID SPIFFE:**
 
 ```
 spiffe://<trust-domain>/ns/<namespace>/sa/<service-account>
@@ -486,7 +489,7 @@ spiffe://cluster.local/ns/default/sa/frontend
 spiffe://cluster.local/ns/production/sa/backend
 ```
 
-**Uso en AuthorizationPolicy:**
+**Uso de Service Account en AuthorizationPolicy:**
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -517,18 +520,18 @@ spec:
         - "cluster.local/ns/default/sa/admin"
 ```
 
-La imagen anterior es un marcador de aplicación. RBAC Kubernetes gobierna acceso a su API, no concede automáticamente permisos de tráfico de malla. Istio usa por separado la identidad ServiceAccount autenticada. El principal también incluye namespace y dominio de confianza.
+La imagen anterior es un marcador de posición de aplicación. Kubernetes RBAC controla el acceso a la API de Kubernetes; no otorga automáticamente permisos de tráfico de malla. La autorización de Istio usa por separado la identidad autenticada de ServiceAccount. Un principal también incluye el namespace y el dominio de confianza.
 
-**ServiceAccount frente a nombres Pod/Service:**
+**Service Account frente a nombre de Pod/Service:**
 
-| Elemento | ServiceAccount | Nombre Pod | Nombre Service |
+| Elemento                 | Service Account         | Nombre de Pod            | Nombre de Service    |
 | -------------------- | ----------------------- | ------------------- | --------------- |
-| **Estabilidad** | Estable | Cambia dinámicamente | Estable |
-| **Seguridad** | Basada en certificado | No confiable | No confiable |
-| **Integración RBAC** | RBAC Kubernetes | No posible | No posible |
-| **mTLS** | Incluida en certificado | No incluido | No incluido |
+| **Estabilidad**        | Estable                  | Cambia dinámicamente | Estable          |
+| **Seguridad**         | Basada en certificados       | No confiable     | No confiable |
+| **Integración con RBAC** | Kubernetes RBAC         | No posible        | No posible    |
+| **mTLS**             | Incluido en el certificado | No incluido        | No incluido    |
 
-**Ejemplo práctico: aplicación de 3 capas:**
+**Ejemplo práctico: aplicación de 3 niveles:**
 
 ```yaml
 # Frontend -> Backend only allowed
@@ -588,7 +591,7 @@ spec:
         principals: ["cluster.local/ns/app/sa/backend"]
 ```
 
-**Comprobar ServiceAccount:**
+**Comprobación de Service Account:**
 
 ```bash
 # Check pod's Service Account
@@ -629,25 +632,25 @@ spec:
 **Referencia:**
 
 * [mTLS](../../../service-mesh/istio/security/01-mtls.md)
-* [Autorización](../../../service-mesh/istio/security/03-authorization.md)
+* [Política de autorización](../../../service-mesh/istio/security/03-authorization.md)
 
 </details>
 
 ***
 
-## Preguntas breves (6-10)
+## Preguntas de respuesta corta (6-10)
 
-### Pregunta 6: Implementar denegación por defecto
+### Pregunta 6: Implementación de una política de seguridad de denegación predeterminada
 
-Explique paso a paso una política **de denegación por defecto** con Istio en Kubernetes. Incluya **recursos necesarios** (PeerAuthentication, AuthorizationPolicy) y **gestión de excepciones**.
+Explica paso a paso cómo implementar una política de seguridad de **denegación predeterminada** mediante Istio en un clúster de Kubernetes. Incluye los **recursos requeridos** (PeerAuthentication, AuthorizationPolicy) y los métodos de **manejo de excepciones**.
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-1. Inventaríe llamantes, ServiceAccounts, puertos y protocolos reales. Inscriba cargas y aplique `STRICT` al namespace tras verificar compatibilidad. PeerAuthentication sola no autoriza llamantes.
-2. Aplique ALLOW vacía como base y añada reglas del grafo de llamadas necesario. No use `DENY` con `rules: [{}]` si pretende permitir excepciones.
-3. Se supone namespace `app`, frontend/backend/database mallados con etiquetas `app` y ServiceAccounts correspondientes, HTTP 8080, PostgreSQL 5432 y ServiceAccount gateway `istio-ingressgateway` en `istio-system`. Verifique esa identidad en el Pod real. El Service gateway mapea HTTPS 443 al **puerto de carga 8443**, que usa AuthorizationPolicy. Configure aparte terminación TLS y VirtualService para `myapp.example.com/api/*`.
+1. Haz un inventario de los llamadores reales, ServiceAccounts, puertos de cargas de trabajo y protocolos de aplicación. Incorpora las cargas de trabajo a la malla y, después de comprobar la compatibilidad, aplica `STRICT` al namespace. PeerAuthentication por sí solo no autoriza a los llamadores.
+2. Aplica una política ALLOW vacía como línea base del namespace; añade reglas explícitas para el grafo de llamadas requerido. No uses `DENY` con `rules: [{}]` cuando se pretendan excepciones.
+3. El ejemplo supone el namespace `app`, cargas de trabajo frontend/backend/database integradas en la malla con etiquetas `app` y ServiceAccounts coincidentes, puerto HTTP 8080, puerto PostgreSQL 5432 y ServiceAccount de gateway `istio-ingressgateway` en `istio-system`. Verifica esa identidad desde el Pod real del gateway. El Service de gateway asigna HTTPS 443 al **puerto de carga de trabajo 8443**, que es el puerto de AuthorizationPolicy. Configura por separado la terminación TLS y un VirtualService para `myapp.example.com/api/*`.
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -760,9 +763,9 @@ spec:
         - '5432'
 ```
 
-4. Conserve la reescritura predeterminada de probes sidecar: HTTP/TCP/gRPC de kubelet pasan por el agente, normalmente 15020. Una ruta HTTP ALLOW no permite texto plano con STRICT. Si un endpoint heredado necesita excepción, `portLevelMtls` exige selector de carga y puerto real; autorización/red deben seguir restringiéndolo. No desactive mTLS del puerto de negocio como arreglo genérico.
-5. Puertos métricos agente/Envoy 15020/15090 difieren de endpoints de aplicación interceptados. Para métricas protegidas de aplicación, limite ALLOW a carga, puerto/ruta y principal Prometheus autenticado por mTLS. Para métricas de agente, configure scrape y red; una AuthorizationPolicy de aplicación entrante no basta.
-6. Valide configuración efectiva y tráfico permitido/rechazado:
+4. Conserva la reescritura de sondas predeterminada de Istio para sidecars: las sondas HTTP/TCP/gRPC de kubelet se dirigen a través del agente (normalmente 15020). Una ruta HTTP ALLOW no hace que el texto sin formato atraviese STRICT. Si un endpoint de estado heredado necesita una excepción de texto sin formato, `portLevelMtls` requiere un selector de carga de trabajo y el puerto de la carga de trabajo; las restricciones de autorización/red también deben limitar ese endpoint. No deshabilites mTLS en el puerto de la aplicación como solución genérica de estado.
+5. Los puertos de métricas de agente/Envoy (15020/15090) son distintos de los endpoints de métricas de aplicación interceptados. Para un endpoint de métricas de aplicación protegido, limita una política ALLOW a la carga de trabajo, al puerto/ruta real y a un principal de Prometheus autenticado mediante mTLS. Para las métricas del agente, configura el scraping y el acceso de red; una AuthorizationPolicy sobre tráfico entrante de aplicación no es suficiente.
+6. Valida la configuración efectiva y el tráfico permitido/denegado:
 
 ```bash
 istioctl analyze -n app
@@ -775,25 +778,25 @@ kubectl exec <frontend-pod> -n app -c frontend -- pg_isready -h database -p 5432
 kubectl exec <backend-pod> -n app -c backend -- pg_isready -h database -p 5432
 ```
 
-Frontend → backend debe alcanzar la aplicación; frontend → database debe fallar en TCP, no devolver HTTP 403. Backend → database debe alcanzar PostgreSQL, con credenciales DB comprobadas aparte. Rutas ausentes pueden generar 404 antes de llegar al backend previsto para la prueba. Use Pods con namespace, contenedores de aplicación y clientes reales. Consulte [autorización](../../../service-mesh/istio/security/03-authorization.md) y [probes de salud](https://istio.io/latest/docs/ops/configuration/mesh/app-health-check/).
+Frontend → backend debe llegar a la aplicación; frontend → database debe fallar en la capa TCP, no devolver HTTP 403. Backend → database debe llegar a PostgreSQL (las credenciales de database son una comprobación independiente). La falta de enrutamiento puede producir 404 antes de que una prueba de autorización alcance el backend esperado. Usa Pods calificados por namespace, contenedores de aplicación y clientes de prueba reales. Consulta [autorización](../../../service-mesh/istio/security/03-authorization.md) y [comprobaciones de estado](https://istio.io/latest/docs/ops/configuration/mesh/app-health-check/).
 
 </details>
 
 ***
 
-### Pregunta 7: Autenticación doble JWT + mTLS
+### Pregunta 7: Autenticación dual JWT + mTLS
 
-Implemente **autenticación de usuario final (JWT)** junto con **autenticación entre servicios (mTLS)** en Istio. Incluya integración OAuth2/OIDC, por ejemplo Keycloak.
+Implementa un escenario en el que se usen juntos la **autenticación de usuario final (JWT)** y la **autenticación de servicio a servicio (mTLS)** en Istio. Incluye cómo integrarlo con proveedores OAuth2/OIDC (por ejemplo, Keycloak).
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-Configure realm `myrealm`, cliente OIDC y audience API explícita `myapp`. Use authorization code con PKCE y URI HTTPS exactas. El tipo/autenticación del cliente depende de si puede guardar un secreto. Los roles Keycloak suelen estar en `realm_access.roles`; use un mapper de audience/client scope para obtener el `aud` esperado.
+Configura el realm de Keycloak `myrealm`, un cliente OIDC y una audiencia de API explícita `myapp`. Usa el flujo de código de autorización con PKCE y URI de redirección HTTPS exactas. El tipo/autenticación de cliente depende de si la aplicación puede conservar un secreto. Los roles de Keycloak normalmente aparecen en `realm_access.roles`; usa un mapeador de audiencia/ámbito de cliente para que el token de API tenga el `aud` esperado.
 
-Cada proxy que evalúe `requestPrincipals` o `request.auth.claims` necesita RequestAuthentication propia. Verificar JWT en el gateway no establece identidad en frontend/backend. `forwardOriginalToken` conserva el token en esa solicitud reenviada, y **la aplicación frontend debe propagar Authorization a su nueva solicitud backend**.
+Cada proxy que evalúe `requestPrincipals` o `request.auth.claims` necesita su propia RequestAuthentication. Un JWT verificado en el gateway no establece la identidad de la solicitud en frontend ni backend. `forwardOriginalToken` conserva el token en esa solicitud reenviada y **la aplicación frontend debe propagar Authorization a su nueva solicitud de backend**.
 
-Lo siguiente sustituye las políticas relacionadas de la pregunta 6. No conserve una ALLOW más amplia junto a reglas backend restringidas por rol: ALLOW forma una unión. Los requisitos de despliegue/gateway HTTPS son los mismos.
+Lo siguiente reemplaza las políticas relacionadas de la Pregunta 6. No mantengas una política ALLOW más amplia junto a las reglas de backend restringidas por rol: las políticas ALLOW forman una unión. Los requisitos previos de Deployment y gateway HTTPS son los mismos que en la Pregunta 6.
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -967,9 +970,9 @@ spec:
       - admin
 ```
 
-Para enviar un claim escalar como cabecera, RequestAuthentication admite `outputClaimToHeaders` experimental, por ejemplo `header: x-user-id` con `claim: sub`. Autorice usando claims verificados, no cabeceras de identidad suministradas por llamantes. `outputPayloadToHeader` contiene payload codificado y Lua de Envoy no incluye un módulo arbitrario `require("json")`. Los arrays de roles deben compararse como claims, no concatenarse ciegamente en cabeceras.
+Para una aplicación que necesite una reclamación escalar como encabezado, RequestAuthentication admite el campo experimental `outputClaimToHeaders`, por ejemplo, `header: x-user-id` con `claim: sub`. Usa reclamaciones JWT validadas para la autorización; no confíes en encabezados de identidad proporcionados por quien llama. `outputPayloadToHeader` contiene una carga útil codificada y el tiempo de ejecución Lua de Envoy no incluye un módulo arbitrario `require("json")`. Las matrices de roles deben coincidir como reclamaciones en lugar de concatenarse ciegamente en encabezados.
 
-Obtenga un token por el login configurado y pruebe HTTPS. No incruste contraseñas/secretos de cliente en comandos del cuestionario:
+Obtén un token de prueba mediante el flujo de inicio de sesión configurado y después prueba HTTPS. No incluyas contraseñas/secretos de cliente en los comandos del cuestionario:
 
 ```bash
 read -rsp "Test access token: " TOKEN; echo
@@ -981,25 +984,25 @@ curl -i -H "Authorization: Bearer invalid-token" https://myapp.example.com/api/u
 # Invalid JWT: 401 from RequestAuthentication.
 ```
 
-Pruebe también token válido con ServiceAccount incorrecta, audience errónea y rol insuficiente. Cambiar roles JWT no revoca instantáneamente tokens emitidos; importan duración y mecanismos del issuer/aplicación. Consulte [autenticación](../../../service-mesh/istio/security/02-authentication.md) y [grants Keycloak](https://www.keycloak.org/securing-apps/oidc-layers).
+Prueba también un token válido de ServiceAccount incorrecta, audiencia incorrecta y rol insuficiente. Los cambios de roles JWT no revocan instantáneamente los tokens ya emitidos; importan la vida útil del token y los mecanismos de revocación del emisor/aplicación. Consulta [autenticación](../../../service-mesh/istio/security/02-authentication.md) y [tipos de concesión de Keycloak](https://www.keycloak.org/securing-apps/oidc-layers).
 
 </details>
 
 ***
 
-### Pregunta 8: Control de servicios externos
+### Pregunta 8: Control de acceso a servicios externos
 
-Explique cómo controlar **tráfico de salida** en Istio permitiendo solo servicios externos concretos. Incluya ejemplos completos de **ServiceEntry**, **VirtualService** y **AuthorizationPolicy**.
+Explica cómo controlar el **tráfico de Egress** en Istio para permitir el acceso únicamente a servicios externos específicos. Incluye ejemplos completos con **ServiceEntry**, **VirtualService** y **AuthorizationPolicy**.
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-`ALLOW_ANY` reenvía destinos desconocidos; `REGISTRY_ONLY` rechaza destinos desconocidos en el registro del proxy. El registro incluye servicios Kubernetes y ServiceEntry. Ninguno es firewall; sin restricciones de red independientes una aplicación puede evitar el proxy. Aplique ajustes mediante values existentes, sin reemplazar todo `istio` ConfigMap por un campo.
+`ALLOW_ANY` reenvía destinos desconocidos; `REGISTRY_ONLY` rechaza los destinos desconocidos en el registro del proxy. El registro incluye servicios de Kubernetes además de ServiceEntry. Ninguno de los modos es un firewall, y una aplicación puede omitir el proxy sin restricciones de red independientes. Aplica los ajustes de malla mediante los valores de instalación existentes; no reemplaces todo el ConfigMap `istio` por un fragmento de un campo.
 
-AuthorizationPolicy evalúa tráfico recibido por su proxy seleccionado. Una política de namespace sobre sidecars cliente no es ACL saliente. Para controlar identidad/método/ruta, use gateway de salida que termine mTLS de malla, autorice allí y origine TLS al servidor externo. La aplicación envía HTTP al sidecar; HTTPS passthrough ocultaría métodos y rutas.
+AuthorizationPolicy evalúa el tráfico recibido por su proxy seleccionado. Una política de namespace en sidecars de cliente no es una ACL de salida. Para control de identidad/método/ruta, enruta a través de un gateway de egress que termina mTLS de malla, autoriza allí y después origina TLS al servidor externo. La aplicación envía HTTP al sidecar; el paso directo de HTTPS ocultaría las rutas y los métodos HTTP.
 
-Requisitos: clientes mallados en `app`, gateway dedicado etiquetado `istio: egressgateway`, Service `istio-egressgateway.istio-system.svc.cluster.local` mapeando 443 a carga 8443 y ninguna otra ALLOW amplia en gateway. La confianza CA pública del proxy debe validar el certificado GitHub.
+Requisitos previos: clientes integrados en la malla en el namespace `app`, un gateway de egress dedicado con la etiqueta `istio: egressgateway`, Service `istio-egressgateway.istio-system.svc.cluster.local` que asigna 443 al puerto de carga de trabajo 8443 y ninguna otra política ALLOW amplia de gateway. La confianza de CA pública del proxy instalado debe validar el certificado de GitHub.
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1128,7 +1131,7 @@ spec:
         - '8443'
 ```
 
-El cliente llama a `http://api.github.com/users/octocat`. Su sidecar conecta al gateway con ISTIO_MUTUAL. El listener HTTP puede exigir la ServiceAccount backend y GET `/users/*`, después enviar HTTPS a GitHub mediante puerto 80 → targetPort 443. Los reintentos son para ese GET idempotente, no para cualquier API con efectos secundarios.
+El cliente de malla llama a `http://api.github.com/users/octocat`. Su sidecar se conecta al gateway con ISTIO_MUTUAL. El listener HTTP del gateway puede aplicar ServiceAccount de backend y GET `/users/*`; luego envía HTTPS a GitHub mediante el puerto 80 → targetPort 443. Los reintentos mostrados son para este caso de uso GET idempotente, no para API arbitrarias con efectos secundarios.
 
 ```bash
 kubectl exec <backend-pod> -n app -c backend -- curl -i http://api.github.com/users/octocat
@@ -1138,23 +1141,23 @@ istioctl proxy-config clusters <egress-pod> -n istio-system --fqdn api.github.co
 istioctl x authz check <egress-pod>.istio-system
 ```
 
-Para una DB externa privada, use ServiceEntry STATIC con endpoints/dirección explícitos y TCP 5432; diseñe TLS/autenticación para ese protocolo. Un servicio solo HTTP puede usar ServiceEntry HTTP, pero datos sensibles requieren cifrado. Guarde credenciales API en la aplicación o un componente de firma/autenticación admitido respaldado por secretos; valores literales de cabeceras VirtualService son configuración legible, no almacén secreto.
+Para una base de datos externa privada, usa un ServiceEntry STATIC con endpoints/dirección explícitos y puerto TCP 5432; la autenticación TLS/base de datos debe diseñarse para ese protocolo. Un servicio solo HTTP puede usar un ServiceEntry HTTP, pero los datos sensibles requieren cifrado. Almacena las credenciales de API en la aplicación o en un componente de firma/autenticación compatible respaldado por secretos; los literales de encabezado de VirtualService son configuración legible, no almacenamiento de secretos.
 
-Finalmente fuerce la ruta con NetworkPolicy CNI/firewall: clientes pueden alcanzar servicios de malla, DNS, istiod y gateway necesarios, no IP arbitrarias de Internet; el gateway obtiene acceso externo requerido. Considere IPv4/IPv6, puertos excluidos/bypass y cargas privilegiadas. NetworkPolicy estándar no filtra DNS; use control FQDN admitido si se necesita. Pruebe bypass directo por IP/HTTPS además de la ruta permitida. Consulte [control egress](../../../service-mesh/istio/traffic-management/11-egress-control.md) y [originación TLS](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway-tls-origination/).
+Por último, aplica el patrón mediante controles de CNI NetworkPolicy/firewall: los clientes pueden alcanzar los servicios de malla requeridos, DNS, istiod y el gateway de egress, pero no IP de Internet arbitrarias; el gateway obtiene el acceso externo requerido. Considera IPv4/IPv6, puertos de omisión/excluidos y cargas de trabajo privilegiadas. NetworkPolicy estándar no filtra nombres DNS; usa un control compatible con reconocimiento de FQDN cuando sea necesario. Prueba la omisión directa de IP/HTTPS además de la ruta aprobada. Consulta [control de egress](../../../service-mesh/istio/traffic-management/11-egress-control.md) y [originación TLS](https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway-tls-origination/).
 
 </details>
 
 ***
 
-### Pregunta 9: Auditoría y registros de seguridad
+### Pregunta 9: Auditoría y registro de seguridad
 
-Explique cómo **auditar** y registrar eventos de seguridad Istio. Incluya **la acción AUDIT de AuthorizationPolicy** y configuración de **registros de acceso**.
+Explica cómo **auditar** y registrar eventos relacionados con la seguridad en Istio. Incluye la **acción AUDIT de AuthorizationPolicy** y la configuración de **Access Log**.
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-`AUDIT` marca solicitudes para un **plugin de auditoría instalado**. Sin él, la política no registra y no permite ni deniega tráfico. El ejemplo audita una conjunción, DELETE y ruta admin, no dos condiciones ordenadas:
+`AUDIT` marca las solicitudes coincidentes para un **complemento de auditoría instalado**. Sin ese complemento, la política no tiene efecto de registro y no permite ni deniega tráfico. Este ejemplo audita una conjunción (DELETE y ruta de administrador), no dos condiciones ordenadas:
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -1176,7 +1179,7 @@ spec:
         - /api/admin/*
 ```
 
-Los logs de acceso son independientes. Combine este proveedor en la instalación con `istioctl install -f`, conservando otros ajustes/proveedores, y actívelo solo para el backend seleccionado. Se excluyen deliberadamente query strings, bearer tokens y payloads JWT completos.
+El registro de acceso es independiente. Combina este proveedor personalizado con la configuración de instalación de Istio existente mediante `istioctl install -f` (conserva los demás proveedores/ajustes) y habilítalo solo para el backend seleccionado. Las cadenas de consulta, los tokens Bearer y las cargas útiles JWT completas se excluyen deliberadamente del formato.
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -1226,11 +1229,11 @@ spec:
           value: 'request.url_path.startsWith("/api/admin/") ? "admin" : "other"'
 ```
 
-Telemetry añade la dimensión acotada `security_operation` (`admin`/`other`) al contador de solicitudes. `request_method` y ruta URL bruta no son etiquetas estándar Istio. Evite URL completas por cardinalidad y sensibilidad. Errores, DELETE y acceso admin se registran incluso sin plugin AUDIT. Para todas las solicitudes omita filtro; para un namespace omita selector; una política raíz sin selector cubre toda la malla.
+El recurso Telemetry también añade una dimensión `security_operation` acotada (`admin`/`other`) a los recuentos de solicitudes. `request_method` y la ruta URL sin procesar no son etiquetas de métricas predeterminadas de Istio. Evita etiquetas de URL completas debido a la cardinalidad y los datos sensibles. Los errores, solicitudes DELETE y accesos de administrador se registran aunque no haya un complemento AUDIT instalado. Para habilitar todas las solicitudes, omite el filtro; para cubrir un namespace, omite el selector; una política de namespace raíz sin selector abarca toda la malla.
 
-Para CloudWatch, despliegue/configure agente EKS admitido o Fluent Bit DaemonSet con montajes de logs, parsing CRI/containerd, parsing JSON de `log`, IAM y salida CloudWatch. ConfigMap solo no inicia un agente. Elasticsearch/OpenSearch requieren salida de collector configurada; Telemetry con `envoy` escribe stdout, no configura Elasticsearch. Fargate necesita su mecanismo de logs, no un DaemonSet de nodo.
+Para CloudWatch, implementa/configura el agente de registro de EKS compatible o un DaemonSet de Fluent Bit con montajes de registros de nodo, análisis de CRI/containerd, análisis JSON del campo `log`, credenciales IAM y una salida de CloudWatch. Un ConfigMap por sí solo no inicia un agente. Para Elasticsearch/OpenSearch, usa una salida de recopilador configurada para ese destino; Telemetry con el proveedor `envoy` escribe en stdout y no configura Elasticsearch. Fargate necesita su mecanismo de registro compatible en lugar de un DaemonSet de nodo.
 
-Tras ingerir campos JSON estructurados, ejecute cada consulta CloudWatch Logs Insights por separado:
+Después de ingerir los campos JSON estructurados, ejecuta cada consulta de CloudWatch Logs Insights por separado:
 
 ```sql
 fields @timestamp, method, path, response_code, peer
@@ -1246,9 +1249,9 @@ fields @timestamp, path, response_code, response_code_details
 | stats count() by bin(5m), response_code_details
 ```
 
-Un 403 puede venir de la aplicación, autorización JWT o proveedor externo. Inspeccione `response_code_details`, logs RBAC y política efectiva antes de atribuirlo a Istio. No asuma que `envoy_http_rbac_logged_total` sea contador AUDIT integrado. Las estadísticas RBAC/dry-run experimental dependen de configuración y nombres; inspeccione series exportadas.
+Un 403 puede provenir de la aplicación, la autorización JWT o un proveedor externo. Inspecciona `response_code_details`, los registros RBAC del proxy y la política efectiva antes de atribuirlo a Istio. No supongas que `envoy_http_rbac_logged_total` es un contador AUDIT integrado. Las estadísticas reales de RBAC/ejecución en seco experimental dependen de la configuración y nomenclatura del proxy; inspecciona las series exportadas.
 
-Grafana puede representar la tasa 403 del reporter destination y la dimensión admin personalizada. Una PrometheusRule seleccionada por el Operator puede alertar sobre esta última:
+Grafana puede representar la tasa estándar de 403 informada por el destino y la dimensión personalizada de administrador. Un PrometheusRule seleccionado por el Prometheus Operator instalado puede alertar sobre esta última:
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1271,25 +1274,25 @@ spec:
           the cause
 ```
 
-Antes de aplicar una política, la anotación experimental `istio.io/dry-run: "true"` en ALLOW/DENY puede informar decisiones sombra; difiere de AUDIT y su diagnóstico no es API estable. Configure retención, acceso y ocultación de datos sensibles según requisitos organizativos/legales reales; no hay mandato universal de 90 días/un año. Consulte [logs de acceso](https://istio.io/latest/docs/tasks/observability/logs/access-log/) y [dry-run de autorización](https://istio.io/latest/docs/tasks/security/authorization/authz-dry-run/).
+Antes de aplicar una nueva política, la anotación experimental `istio.io/dry-run: "true"` en ALLOW/DENY puede informar decisiones sombra; es distinta de AUDIT y su salida de diagnóstico no es una API estable. Establece la retención, los controles de acceso y el enmascaramiento según los requisitos reales de organización/legales; no existe un mandato universal de retención de 90 días/un año. Consulta [registro de acceso](https://istio.io/latest/docs/tasks/observability/logs/access-log/) y [ejecución en seco de autorización](https://istio.io/latest/docs/tasks/security/authorization/authz-dry-run/).
 
 </details>
 
 ***
 
-### Pregunta 10: Implementar una red zero trust
+### Pregunta 10: Implementación de una red Zero Trust
 
-Explique cómo aplicar principios de **red zero trust** con Istio. Incluya ejemplos completos de **mTLS STRICT**, **denegación por defecto** y **mínimo privilegio**.
+Explica cómo implementar los principios de **red Zero Trust** mediante Istio. Incluye ejemplos completos que apliquen los principios de **mTLS STRICT**, **denegación predeterminada** y **mínimo privilegio**.
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-Zero trust combina identidades autenticadas, autorización explícita de mínimo privilegio y controles que siguen vigentes si una carga se compromete. Istio protege tráfico capturado por su plano; no sustituye RBAC, admisión, aislamiento de red ni autorización de aplicación.
+Zero Trust combina identidades autenticadas, autorización explícita de mínimo privilegio y controles que siguen siendo efectivos cuando una carga de trabajo se ve comprometida. Istio protege el tráfico capturado por su plano de datos; no reemplaza Kubernetes RBAC, la política de admisión, el aislamiento de red ni la autorización de la aplicación.
 
-1. Asigne ServiceAccounts separadas a frontend/backend/database e impida que las cargas adopten libremente cuentas ajenas. Inscriba cargas y verifique dominio de confianza, emisión y renovación.
-2. Aplique STRICT y una ALLOW vacía al namespace objetivo. Una política en `default` no cubre `app` automáticamente; la base raíz tiene mayor alcance y necesita excepciones operativas/gateway explícitas.
-3. Permita solo gateway → frontend → backend → database. Con los mismos requisitos de la pregunta 6, el conjunto completo es:
+1. Asigna ServiceAccounts separadas a frontend/backend/database e impide que las cargas de trabajo asuman libremente las cuentas de las demás. Incorpora las cargas de trabajo a la malla; verifica el dominio de confianza, la emisión y renovación de certificados.
+2. Aplica STRICT al namespace objetivo y una línea base ALLOW vacía allí. Una política en `default` no cubre automáticamente `app`; una línea base de namespace raíz tiene efectos más amplios y requiere excepciones explícitas de gateway/operación.
+3. Permite únicamente gateway → frontend → backend → database. Con los mismos requisitos previos de despliegue que la Pregunta 6, el conjunto completo de políticas de tráfico es:
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -1402,11 +1405,11 @@ spec:
         - '5432'
 ```
 
-4. Para aislamiento de namespaces, compare namespaces/principales autenticados. Un DENY sobre `production` con `notNamespaces: [production, istio-system]` bloquea **otros llamantes hacia production**, no production → staging. Considere gateways y operadores; DENY prevalece sobre ALLOW.
-5. Si depende del horario laboral, use autorización de aplicación o proveedor CUSTOM configurado con zona horaria, reloj y política de fallo explícitos. Un Lua `os.date()` sin punto de inserción/zona definidos no es diseño completo. CUSTOM aún debe superar DENY/ALLOW.
-6. Fuerce egress con el gateway de la pregunta 8 y controles de red; ni REGISTRY_ONLY ni una política sidecar `deny-all-egress` son firewall. Un DENY entrante para todo host bloquearía la aplicación y ALLOW no lo anula.
-7. Conserve reescritura de probes, diseñe scraping para puertos correctos y añada solo excepciones necesarias de la pregunta 6. Use JWT y propagación por salto de la 7 para usuarios. Registre/alerte como en la 9, más caducidad de certificados del capítulo mTLS.
-8. Después de cada cambio, revise política real y pruebe matriz permitida/rechazada, TCP a DB y bypass egress:
+4. Cuando se necesite aislamiento de namespace, haz coincidir namespaces/principals autenticados. Un DENY que selecciona `production` con `notNamespaces: [production, istio-system]` bloquea **a otros llamadores hacia production**, no production → staging. Considera los gateways y operadores; DENY prevalece sobre ALLOW.
+5. Si el acceso depende del horario comercial, usa autorización de aplicación o un proveedor de autorización externa CUSTOM configurado con una zona horaria, fuente de reloj y política de fallo explícitas. Una comprobación Lua `os.date()` con un punto de inserción/zona horaria no especificados no es un diseño de autorización completo. El permiso CUSTOM aún debe superar DENY/ALLOW.
+6. Aplica egress mediante el patrón de gateway de la Pregunta 8 más controles de red; ni REGISTRY_ONLY ni una política de sidecar llamada `deny-all-egress` son un firewall. En cambio, un DENY entrante que coincida con cada host bloquearía el tráfico de aplicación y no puede deshacerse mediante ALLOW.
+7. Conserva la reescritura de sondas, diseña el scraping para los puertos correctos y añade solo las excepciones necesarias como se explica en la Pregunta 6. Usa la validación JWT y la propagación de token por salto de la Pregunta 7 para la autorización de usuario final. Registra y alerta mediante la Pregunta 9, con supervisión de expiración de certificados del capítulo mTLS.
+8. Comprueba la política real y prueba la matriz prevista de permitir/denegar, el acceso TCP a database y la omisión de egress después de cada cambio:
 
 ```bash
 istioctl analyze -n app
@@ -1419,7 +1422,7 @@ kubectl exec <frontend-pod> -n app -c frontend -- pg_isready -h database -p 5432
 kubectl exec <backend-pod> -n app -c backend -- pg_isready -h database -p 5432
 ```
 
-Una puntuación no demuestra preparación productiva. Revise asignación de identidad, bypass de red, confianza del issuer, mínimo privilegio, observabilidad, rollback y permisos de la aplicación en el entorno real. Consulte [conceptos de seguridad](https://istio.io/latest/docs/concepts/security/) y [autorización](../../../service-mesh/istio/security/03-authorization.md).
+Una puntuación del cuestionario no es evidencia de preparación para producción. Revisa la asignación de identidad de cargas de trabajo, las rutas de omisión de red, la confianza del emisor, las reglas de mínimo privilegio, la observabilidad, la reversión y los propios permisos de la aplicación para el entorno real. Consulta [conceptos de seguridad](https://istio.io/latest/docs/concepts/security/) y [autorización](../../../service-mesh/istio/security/03-authorization.md).
 
 </details>
 
@@ -1427,21 +1430,21 @@ Una puntuación no demuestra preparación productiva. Revise asignación de iden
 
 ## Cálculo de puntuación
 
-* Opción múltiple 1-5: 10 puntos cada una (50 en total)
-* Respuesta breve 6-10: 10 puntos cada una (50 en total)
+* Opción múltiple 1-5: 10 puntos cada una (50 puntos en total)
+* Respuesta corta 6-10: 10 puntos cada una (50 puntos en total)
 * **Total: 100 puntos**
 
 **Criterios de evaluación:**
 
-* 90-100 puntos: Excelente comprensión de estos temas
-* 80-89 puntos: Buena comprensión; valide despliegues reales aparte
-* 70-79 puntos: Media (se recomienda más estudio)
-* 60-69 puntos: Por debajo de la media (repasar conceptos básicos)
-* 0-59 puntos: Necesita volver a estudiar
+* 90-100 puntos: comprensión excelente de estos temas del cuestionario
+* 80-89 puntos: buena comprensión; valida los despliegues reales por separado
+* 70-79 puntos: promedio (se recomienda estudio adicional)
+* 60-69 puntos: por debajo del promedio (se necesita revisión de conceptos básicos)
+* 0-59 puntos: necesita volver a estudiar
 
 ## Recursos de aprendizaje
 
 * [mTLS](../../../service-mesh/istio/security/01-mtls.md)
 * [Política de autorización](../../../service-mesh/istio/security/03-authorization.md)
 * [Autenticación de solicitudes](../../../service-mesh/istio/security/02-authentication.md)
-* [Autenticación entre peers](../../../service-mesh/istio/security/01-mtls.md)
+* [Autenticación de pares](../../../service-mesh/istio/security/01-mtls.md)

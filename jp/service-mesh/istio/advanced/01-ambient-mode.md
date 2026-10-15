@@ -1,148 +1,148 @@
-# Ambientモード
+# Ambient Mode
 
-> **最終更新**: September 11, 2026 · Istio 1.31。この演習は互換Linuxノード、ノードエージェント/CNI権限、新規デモ名前空間を前提とします。監査ではデプロイコマンドを実行していません。
+> **最終更新**: October 12, 2026 · Istio 1.31。このラボでは、互換性のある Linux ノード、node-agent/CNI の権限、および新しいデモ namespace を前提としています。この監査ではデプロイコマンドは実行されていません。
 
-Ambientは2022年の実験プレビューとして導入され、Istio 1.18で初めてAlphaとして同梱、1.22でBeta、1.24で中核機能がGAとなりました。プレビューは主流の1.15リリースの一般提供機能ではありませんでした。リソース節約と移行安全性は実トポロジー、ポリシー、通信に依存します。
+Ambient は 2022 年に実験的プレビューとして導入され、Istio 1.18 で初めて Alpha として提供され、1.22 で Beta に到達し、1.24 でコア GA となりました。このプレビューは、メインの 1.15 リリースで一般提供された機能ではありませんでした。リソース削減と移行の安全性は、実際のトポロジー、ポリシー、トラフィックに依存します。
 
 ## 目次
 
 1. [概要](#overview)
-2. [サイドカーモードとAmbientモード](#sidecar-mode-vs-ambient-mode)
+2. [Sidecar Mode と Ambient Mode](#sidecar-mode-vs-ambient-mode)
 3. [アーキテクチャ](#architecture)
 4. [インストールと設定](#installation-and-configuration)
 5. [移行](#migration)
-6. [性能比較](#performance-comparison)
-7. [用途](#use-cases)
+6. [パフォーマンス比較](#performance-comparison)
+7. [ユースケース](#use-cases)
 8. [トラブルシューティング](#troubleshooting)
 
-## 概要 {#overview}
+## 概要
 
 
-AmbientモードはアプリPodにサイドカープロキシを注入せずサービスメッシュ機能を提供する新しい方式です。**階層アーキテクチャ**からなります。
+Ambient Mode は、アプリケーション Pod に Sidecar proxy を注入せずに Service Mesh 機能を提供する新しいアプローチです。Ambient Mode は、**階層型アーキテクチャ**で構成されます。
 
-1. **セキュアオーバーレイ層（L4）**: ztunnelによるmTLSと基本テレメトリー
-2. **L7処理層**: Waypoint Proxyによる高度なトラフィック管理
+1. **セキュアオーバーレイ層（L4）**: ztunnel による mTLS と基本的なテレメトリ
+2. **L7 処理層**: Waypoint Proxy による高度なトラフィック管理
 
-### Ambientモードが必要な理由
+### Ambient Mode が必要な理由
 
-従来サイドカーモデルの制限:
-- **大きなリソース負荷**: 各PodにEnvoyが必要（実プロキシ占有量を測定）
-- **運用の複雑さ**: Pod再起動、版管理、ローリング更新が複雑
-- **起動の調整**: プロキシとアプリの準備状態の調整が必要
-- **過剰な機能**: L4メッシュ機能だけでよいワークロードもある
+従来の Sidecar モデルの制約:
+- **高いリソースオーバーヘッド**: 各 Pod に Envoy proxy が必要（実際の proxy のフットプリントを測定する）
+- **運用の複雑さ**: Pod の再起動、バージョン管理、ローリングアップデートが複雑
+- **起動時の調整**: Proxy とアプリケーションの readiness を調整する必要がある
+- **過剰な機能**: 一部のワークロードには L4 mesh 機能だけが必要
 
-Ambientによる解決:
-- 共有ノードプロキシと必要waypoint。総リソース使用量を測定する
-- 未参加Podの参加は再起動を避けられる。サイドカー除去とポリシー変更には管理されたロールアウトが必要
-- 段階的導入。必要に応じてL4からL7へ拡張
-- L4転送は透過的にできるが、トレースコンテキストとアプリのタイムアウト/冪等性契約は重要なまま
+Ambient Mode の解決策:
+- 共有 node proxy と必要な waypoint: 総リソース使用量を測定する
+- 登録時に mesh 未参加の Pod の再起動を回避できる。sidecar の削除とポリシー変更には管理されたロールアウトが必要
+- 段階的な導入: 必要に応じて L4 から L7 へ拡張
+- L4 トランスポートは透過的にできるが、トレーシングコンテキストおよびアプリケーションの timeout/idempotency 契約は依然として重要
 
-### 中核概念
+### コアコンセプト
 
-図の任意waypointは設定/参加で選択します。ztunnelは各HTTP要求を解析してL7へ迂回するかを決めません。既存接続、準備状態、ポリシー移行は引き続き検証が必要です。
+これらの図における任意の waypoint は、設定または登録によって選択されます。Ztunnel は各 HTTP リクエストを解析し、L7 への迂回が必要かどうかを決定するわけではありません。既存の接続、readiness、ポリシー遷移も引き続き検証が必要です。
 
 
-![各PodでアプリにEnvoyを併設するサイドカーモードと、ノードのztunnelへ透過送信し、L7用に設定した任意waypoint経路を使うAmbientモードの比較。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-0.png)
+![各 Pod がアプリケーションと Envoy sidecar を組み合わせる Sidecar Mode と、Pod がトラフィックを透過的に node レベルの ztunnel へ送信し、L7 処理には設定済みの任意の Waypoint パスを使用する Ambient Mode を対比する図。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-0.png)
 
-[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-0.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-0.html)
 
-### Ambientモードの利点
+### Ambient Mode の利点
 
-1. **共有リソースモデル**: ノードプロキシと必要waypointレプリカ
-2. **簡単なデプロイ**: 未参加Podの参加は再起動不要な場合がある。サイドカー除去は必要
-3. **透過L4転送**: アプリのトレース/期限/冪等性要件は残る
-4. **柔軟なL7機能**: 必要時だけwaypointを使用
+1. **共有リソースモデル**: Node proxy と必要な waypoint replica
+2. **シンプルなデプロイ**: mesh 未参加 Pod の登録では Pod の再起動が不要な場合がある。一方、sidecar の削除では必要
+3. **透過的な L4 トランスポート**: アプリケーションのトレーシング、deadline、idempotency の要件は残る
+4. **柔軟な L7 機能**: 必要な場合にのみ waypoint を使用
 
-## サイドカーモードとAmbientモード {#sidecar-mode-vs-ambient-mode}
+## Sidecar Mode と Ambient Mode
 
-### アーキテクチャ比較
+### アーキテクチャの比較
 
-#### サイドカーモード
+#### Sidecar Mode
 
-![3 Podがそれぞれアプリと専用Envoyサイドカーを持ち、サイドカー間で直接mTLSをネゴシエートする構成。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-1.png)
+![3 つの Pod がそれぞれアプリケーション container と専用の Envoy sidecar proxy を組み合わせ、sidecar 間で直接 mutual TLS をネゴシエートするアーキテクチャ図。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-1.png)
 
-[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-1.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-1.html)
 
-**特性**:
-- 各PodにEnvoyを注入
-- 成熟したL4/L7機能。選択リリースを確認
-- リソース使用量が多い
-- Pod再起動が必要
+**特徴**:
+- 各 Pod に Envoy proxy を注入
+- 成熟した L4/L7 機能。選択したリリースを確認する
+- 高いリソース使用量
+- Pod の再起動が必要
 
-#### Ambientモード
+#### Ambient Mode
 
-![多数のアプリPodがノードのztunnelへ透過送信し、L4では対象サービスへ直接、参加設定したリソースでは任意waypoint経路を使う構成。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-2.png)
+![多数のアプリケーション Pod がトラフィックを透過的に 1 つの node レベル ztunnel へ送信し、その ztunnel が L4 トラフィックでは対象 Service に直接接続し、リソースが登録されている場合は任意の waypoint パスを使用するアーキテクチャ図。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-2.png)
 
-[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-2.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-2.html)
 
-**特性**:
-- ノードごとにztunnel 1つ
-- デフォルトでL4機能を提供
-- L7機能にはwaypointが必要
-- 未参加Podの参加は再起動不要な場合がある。サイドカー除去は必要
+**特徴**:
+- node ごとに 1 つの ztunnel
+- L4 機能をデフォルトで提供
+- L7 機能には waypoint が必要
+- mesh 未参加 Pod の登録では Pod の再起動が不要な場合がある。一方、sidecar の削除では必要
 
 ### 詳細比較表
 
-| 項目 | サイドカーモード | Ambientモード |
+| 項目 | Sidecar Mode | Ambient Mode |
 |------|-------------|--------------|
-| **デプロイ方法** | Podにサイドカー注入 | ノードztunnel + 任意waypoint |
-| **リソース計算** | Pod別Envoy + コントロールプレーン | ノードztunnel + 全waypointレプリカ + コントロールプレーン。負荷下で測定 |
-| **Pod再作成** | 注入プロキシ追加/除去に必要 | 未参加からの参加には通常不要。サイドカー除去には必要 |
-| **起動調整** | プロキシ/アプリのライフサイクルと準備状態 | CNI捕捉とztunnel準備状態 |
-| **L4機能** | 対応 | 対応 |
-| **L7機能** | リリース固有の対応 | waypointと対応APIが必要。全拡張がGAではない |
+| **デプロイ方法** | Pod への Sidecar 注入 | Node レベルの ztunnel + 任意の waypoint |
+| **リソース計上** | Pod ごとの Envoy + control plane | Node ztunnel + すべての waypoint replica + control plane。負荷時に測定する |
+| **Pod の再作成** | 注入済み proxy の追加/削除に必要 | mesh 未参加の登録では通常不要。sidecar の削除には必要 |
+| **起動時の調整** | Proxy/アプリケーションのライフサイクルと readiness | CNI capture と ztunnel readiness |
+| **L4 機能** | サポート | サポート |
+| **L7 機能** | リリース固有のサポート | Waypoint とサポート対象 API が必要。すべての拡張が GA ではない |
 | **mTLS** | 自動 | 自動 |
-| **テレメトリー** | 詳細 | 基本（L4）、詳細（waypoint付きL7） |
-| **サーキットブレーカー** | 対応 | Waypointが必要 |
-| **再試行/タイムアウト** | 対応 | Waypointが必要 |
-| **ヘッダー操作** | 対応 | Waypointが必要 |
-| **性能オーバーヘッド** | ワークロード/設定に依存 | 経路/ID/waypoint/負荷に依存。同等ポリシーで比較 |
-| **運用範囲** | ワークロードごとのプロキシライフサイクル | ノード/CNIと共有waypointのライフサイクル |
-| **本番対応状況** | 成熟 | GA（Istio 1.24+） |
+| **テレメトリ** | 詳細 | 基本（L4）、詳細（waypoint を使用する L7） |
+| **Circuit Breaker** | サポート | Waypoint が必要 |
+| **Retry/Timeout** | サポート | Waypoint が必要 |
+| **Header manipulation** | サポート | Waypoint が必要 |
+| **パフォーマンスオーバーヘッド** | ワークロード/設定に依存 | パス/identity/waypoint/負荷に依存。同等のポリシーを比較する |
+| **運用範囲** | ワークロードごとの proxy ライフサイクル | Node/CNI と共有 waypoint のライフサイクル |
+| **本番環境への対応状況** | 成熟 | GA（Istio 1.24 以降） |
 
-### リソース使用量比較 {#resource-usage-comparison}
+### リソース使用量の比較
 
-以下の100 Pod計算は仮定の計画例で、公式ベンチマークではありません。全ノード/waypointレプリカを数え、同等のセキュリティ、テレメトリー、ルーティング要件を比較してからリソース/請求節約を見積もります。
+以下の 100-Pod の計算は、公式ベンチマークではなく仮説的な計画例です。リソースまたは請求額の削減を見積もる前に、すべての node/waypoint replica を数え、同等のセキュリティ、テレメトリ、ルーティング要件を比較してください。
 
-## アーキテクチャ {#architecture}
+## アーキテクチャ
 
 
-Ambientデータプレーンは**ztunnel**と**Waypoint Proxy**の2つの中核コンポーネントで構成されます。
+Ambient Mode のデータプレーンは、**ztunnel** と **Waypoint Proxy** という 2 つのコアコンポーネントで構成されます。
 
 ### ztunnel（Zero Trust Tunnel）
 
 
-ztunnelはAmbientの中核で、**ノードレベルで動作する軽量L4プロキシ**です。適格LinuxノードでDaemonSetとして動き、参加ワークロードの対応通信を扱います。全Podの全通信ではありません。ホストネットワーク/除外ワークロード、非TCPアプリプロトコルは現サポートを確認します。
+ztunnel は Ambient Mode のコアコンポーネントであり、**node レベルで実行される軽量な L4 proxy** です。対象の Linux node 上で DaemonSet として実行され、登録済みワークロードのサポート対象トラフィックを処理します。これはすべての Pod のすべてのトラフィックではありません。host-network/除外対象のワークロードおよび TCP 以外のアプリケーションプロトコルでは、現在のサポート状況を確認する必要があります。
 
-#### ztunnelの動作
+#### ztunnel の仕組み
 
-1. **通信捕捉**: Istio CNIのPod内netfilter/iptablesルールとネットワーク名前空間の引き渡しでPod通信を透過捕捉
-2. **mTLS適用**: SPIFFEベースIDでmTLS暗号化を自動適用
-3. **負荷分散**: エンドポイント間でL4負荷分散
-4. **テレメトリー収集**: 接続メトリクスとログを収集
-5. **転送**: 宛先ztunnelまたはWaypointへ転送
+1. **トラフィックの capture**: Istio CNI の Pod 内 netfilter/iptables ルールと network-namespace handoff を通じて、Pod のネットワークトラフィックを透過的にインターセプト
+2. **mTLS の適用**: SPIFFE ベースの Identity を使用して mTLS 暗号化を自動的に適用
+3. **ロードバランシング**: endpoint 間で L4 ロードバランシングを実行
+4. **テレメトリの収集**: 接続メトリクスとログを収集
+5. **転送**: トラフィックを宛先 ztunnel または Waypoint に転送
 
-**ztunnel技術スタック**:
-- **言語**: Rust（高性能、低メモリ使用）
+**ztunnel のテクノロジースタック**:
+- **言語**: Rust（高パフォーマンス、低メモリ使用量）
 - **プロトコル**: HBONE（HTTP-Based Overlay Network Environment）
-- **ID**: SPIFFEワークロードID。デフォルトIstiod CA、SPIREには別統合
-- **CNI**: Istio CNIプラグインとの密接な統合
+- **Identity**: SPIFFE workload identity。デフォルトでは Istiod CA、SPIRE 用には別途統合
+- **CNI**: Istio CNI plugin との緊密な統合
 
-#### ztunnelの役割
+#### ztunnel の役割
 
-![アプリPodのTCP接続が、ztunnel内のmTLS暗号化、L4テレメトリー収集、ID検証、L4負荷分散を通り対象サービスへ届く図。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-3.png)
+![アプリケーション Pod からの TCP 接続が、ztunnel に組み込まれた mTLS 暗号化、L4 テレメトリ収集、identity 検証、および L4 ロードバランシングを通過して対象 Service に到達する図。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-3.png)
 
-[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-3.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-3.html)
 
-**ztunnelの特性**:
-- Rustで実装（性能最適化）
-- DaemonSetでデプロイ
-- CNIプラグインと統合
-- Istio CNIと調整したPod内netfilter/iptablesリダイレクト
+**ztunnel の特徴**:
+- Rust で記述（パフォーマンス最適化）
+- DaemonSet としてデプロイ
+- CNI plugin と統合
+- Pod 内 netfilter/iptables リダイレクトを Istio CNI と協調して実行
 
-#### ztunnelのデプロイ
+#### ztunnel のデプロイ
 
-リリースされたambientインストール/チャートを使います。元の最小DaemonSetはトークン/CA/ソケットのマウントが欠け、hostNetwork/privileged設定も不正でした。1.31チャートは特定capabilityとPod内名前空間アクセスを提供し、`hostNetwork: true`や`privileged: true`は設定しません。完全なチャート/プラットフォームの文脈なしに権限をコピー・縮小しないでください。
+リリース済みの ambient インストール/charts を使用してください。元の最小限の DaemonSet には token/CA/socket mount がなく、hostNetwork/privileged の設定も誤っていました。1.31 chart は特定の capability と Pod 内 namespace へのアクセスを提供しますが、`hostNetwork: true` または `privileged: true` は設定しません。完全な chart/platform のコンテキストなしに権限をコピーまたは縮小しないでください。
 
 ```bash
 # Offline inspection; use the same reviewed values as the actual installation
@@ -154,37 +154,37 @@ kubectl get daemonset ztunnel -n istio-system -o yaml
 ### Waypoint Proxy
 
 
-Waypointは**L7機能が必要な場合に使う任意プロキシ**です。設定したwaypointを参加リソースの通信経路に置き、高度なトラフィック管理を提供します。
+Waypoint は、**L7 機能が必要な場合に使用する任意の proxy** です。設定済みの waypoint は、登録済みリソースのトラフィックパスに配置され、高度なトラフィック管理機能を提供します。
 
-#### Waypointの主な特性
+#### Waypoint の主な特徴
 
-1. **選択的デプロイ**: 全サービスでなくL7が必要なサービスだけに使用
-2. **共有プロキシ**: 名前空間/Service/Pod参加に従い、複数ワークロードが1 Waypointを共有
-3. **Envoyベース**: 従来サイドカーと同じEnvoyを使い、L7 API対応はリリース固有
-4. **オンデマンド**: 実行時に動的追加/削除が可能
+1. **選択的なデプロイ**: すべての Service ではなく、L7 機能を必要とする Service にのみ使用
+2. **共有 proxy**: 複数のワークロードが 1 つの Waypoint を共有（namespace/Service/Pod の登録に応じて）
+3. **Envoy ベース**: 従来の Sidecar と同じ Envoy proxy を使用し、リリース固有の L7 API サポートを提供
+4. **オンデマンド**: 実行時に動的に追加/削除可能
 
-#### Waypointのデプロイ単位
+#### Waypoint のデプロイ単位
 
-ServiceAccountはワークロードIDを提供し、ラベルを付けてもwaypointは選択**されません**。Namespace、Service、Podの`istio.io/use-waypoint`と、意図する通信に合う`istio.io/waypoint-for`を持つGatewayを使います。
+ServiceAccount は workload identity を提供しますが、ラベルを付けても waypoint は選択されません。Namespace、Service、または Pod に `istio.io/use-waypoint` を使用し、`istio.io/waypoint-for` のトラフィックタイプが意図したトラフィックと一致する Gateway を使用してください。
 
-| 参加対象 | 範囲 |
+| 登録 | スコープ |
 |---|---|
-|Namespace|名前空間内の適格リソースのデフォルトwaypoint選択|
-|Service|そのServiceへの通信。デフォルトwaypointタイプは`service`|
-|Pod|`workload`または`all` waypointでの直接ワークロード/Pod IP通信|
+|Namespace|その namespace 内の対象リソースに対するデフォルトの waypoint 選択|
+|Service|その Service 宛てのトラフィック。デフォルトの waypoint タイプは `service`|
+|Pod|`workload` または `all` waypoint を用いた直接の workload/Pod-IP トラフィック|
 
-Deploymentラベルだけでは既存Podに付きません。ワークロード参加にはPodテンプレートラベルを使います。`service` waypointは直接Pod IP通信を自動カバーしません。
+Deployment ラベルだけでは既存の Pod にラベルは付与されません。ワークロードを登録するには Pod-template ラベルを使用してください。`service` waypoint は、直接の Pod-IP トラフィックを自動的には対象にしません。
 
-#### Waypointの役割
+#### Waypoint の役割
 
 
-**Waypointの特性**:
-- Gatewayとしてデプロイし、対応リソースの参加で選択
-- Envoyプロキシを使用
-- APIごとの対応を確認。任意EnvoyFilterパッチは対応waypoint APIではない
-- 必要サービスだけで選択使用
+**Waypoint の特徴**:
+- Gateway としてデプロイされ、その後サポート対象リソースの登録によって選択される
+- Envoy proxy に基づく
+- API ごとのサポートを確認する。任意の EnvoyFilter patch はサポート対象の waypoint API ではない
+- 必要な Service にのみ選択的に使用
 
-#### Waypointのデプロイ
+#### Waypoint のデプロイ
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -202,55 +202,55 @@ spec:
     protocol: HBONE
 ```
 
-デフォルト`istio-waypoint`クラスはEnvoyを使います。ambient中核GAは全APIのGAを意味しません。現文書ではambient VirtualServiceはAlphaで、Gateway APIルートとの混在は禁止です。ここではHTTPRouteを使います。EnvoyFilterは対応waypoint拡張ではありません。L7ポリシーはwaypoint到達通信を保護します。経由の強制には文書化されたztunnel認可ガードと正しい参加/準備状態も必要です。
+デフォルトの `istio-waypoint` class は Envoy を使用します。コア ambient GA はすべての API を GA にするわけではありません。現在のドキュメントでは ambient VirtualService は Alpha とされ、Gateway API route との混在は禁止されています。ここでは HTTPRoute を使用してください。EnvoyFilter はサポート対象の waypoint 拡張ではありません。L7 ポリシーは waypoint に到達するトラフィックを保護します。必須の経由には、文書化された ztunnel authorization guard と正しい登録/readiness も必要です。
 
 ### 完全なトラフィックフロー
 
-以下はAmbientで**サイドカーなし**に通信が流れる全体図です。
+以下は、**Sidecar なし**の Ambient Mode でトラフィックがどのように流れるかを示す包括的な図です。
 
-![サイドカーなしクライアントからクライアント/サーバーztunnelを通る通常L4経路と、任意分岐でwaypointのL7ルーティングを経てサーバーアプリへ届く要求のシーケンス。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-6.png)
+![sidecar がない client app からのリクエストが、プレーンな L4 パスでは client と server の ztunnel を通過し、任意の分岐では L7 ルーティングのために waypoint proxy を通過して server app に到達する様子を追跡するシーケンス図。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-6.png)
 
-[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-6.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-6.html)
 
-**フロー分析**:
+**トラフィックフローの分析**:
 
-1. **L4専用経路**（ztunnelのみ）:
-   - 代表負荷で経路レイテンシーを測定
-   - mTLSを自動適用
-   - 基本テレメトリー
-   - 実要件がL4のみの場合に適合
+1. **L4 のみのパス**（ztunnel のみを使用）:
+   - 代表的な負荷の下でパスのレイテンシを測定
+   - mTLS を自動的に適用
+   - 基本的なテレメトリ
+   - 実際の要件が L4 のみの場合に適切
 
-2. **L7経路**（ztunnel + Waypoint）:
-   - ヘッダーベースルーティング
-   - サーキットブレーカー
-   - 再試行/タイムアウト
-   - 複雑な通信ポリシーが必要な場合
+2. **L7 パス**（ztunnel + Waypoint）:
+   - Header ベースのルーティング
+   - Circuit Breaking
+   - Retry/Timeout
+   - 複雑なトラフィックポリシーが必要な場合
 
-### HBONEプロトコル
+### HBONE プロトコル
 
 
-**HBONE（HTTP-Based Overlay Network Environment）** はAmbientのトンネルプロトコルです。
+**HBONE（HTTP-Based Overlay Network Environment）** は、Ambient Mode で使用されるトンネリングプロトコルです。
 
-- **HTTP/2ベース**: 既存インフラとの互換性
-- **組み込みmTLS**: 安全な通信
-- **多重化**: 同じ送信元/宛先ID対でTCPストリームがトンネルを共有
-- **ネットワークポリシー**: 通常TCP15008を使用。必要メッシュ経路を明示許可
+- **HTTP/2 ベース**: 既存のインフラストラクチャとの互換性
+- **組み込み mTLS**: セキュアな通信
+- **多重化**: 同じ送信元/宛先 identity ペアの TCP stream が tunnel を共有
+- **ネットワークポリシー**: HBONE は慣例的に TCP15008 を使用。必要な mesh パスを明示的に許可する
 
-![アプリの平文TCPを送信元ztunnelがHTTP/2 mTLS HBONEに包んでネットワーク越しに送り、宛先ztunnelが平文TCPに戻して対象アプリへ渡す図。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-7.png)
+![アプリケーションからのプレーン TCP トラフィックが、送信元 ztunnel によって HTTP/2 mTLS HBONE tunnel にラップされ、ネットワークを横断して運ばれた後、宛先 ztunnel により再びプレーン TCP にアンラップされて対象 app に到達する図。](../../../.gitbook/assets/en-service-mesh-istio-advanced-01-ambient-mode-7.png)
 
-[🔍 インタラクティブな図を見る](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-7.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-advanced-01-ambient-mode-7.html)
 
-このガイドのHBONEはTCPストリームを運びます。アプリUDPは運ばず、DNS捕捉/プロキシは別機能です。プロキシ間のメッシュ転送が暗号化されても、ローカルアプリストリームは平文の場合があります。
+このガイドの HBONE は TCP stream を転送します。アプリケーション UDP はこの tunnel では転送されません。DNS capture/proxying は別の機能です。ローカルのアプリケーション stream はプレーンテキストのままにできる一方、proxy 間の mesh トランスポートは暗号化されます。
 
-## インストールと設定 {#installation-and-configuration}
+## インストールと設定
 
-演習には互換Linuxノードと必要なIstio CNI/ztunnel DaemonSetが必要です。EKS Fargateはこれらを実行できません。対応EC2配置を使い、実ノード/CNIプラットフォームを確認します。[プラットフォーム前提条件](https://istio.io/latest/docs/ambient/install/platform-prerequisites/)はCNIパス、権限、ヘルスプローブを扱います。SecurityGroupPolicy付きVPC CNI Pod ENIトランキングではstandard enforcingモードか適切なexecプローブが必要な場合があります。ポリシーへの影響を評価してください。GKE、OpenShift、k3sなどは設定が異なる場合があります。
+このラボには、互換性のある Linux node と必要な Istio CNI/ztunnel DaemonSet が必要です。EKS Fargate ではこれらの node DaemonSet を実行できません。サポート対象の EC2 ベース配置を使用し、実際の node/CNI platform を確認してください。[プラットフォームの前提条件](https://istio.io/latest/docs/ambient/install/platform-prerequisites/)には、CNI パス、権限、health probe が記載されています。SecurityGroupPolicy を使用する VPC CNI Pod ENI trunking では、standard enforcing mode または適切な exec probe が必要になる場合があります。ポリシーへの影響を評価してください。GKE、OpenShift、k3s、その他の platform では異なる設定が必要になる場合があります。
 
-Istio1.31はKubernetes1.32–1.36をサポートします。EKS互換性は[インストールガイド](../01-installation.md)を参照してください。以下のGateway API1.6.0はIstio1.31依存と公式ambientチュートリアルに一致します。既存バンドルの互換性を確認し、例をコピーするためだけに新しい互換版を下げないでください。
+Istio1.31 は Kubernetes1.32–1.37 をサポートします。EKS との互換性については[インストールガイド](../01-installation.md)を参照してください。以下の Gateway API1.6.0 は Istio1.31 の依存関係および公式 ambient tutorial に一致します。既存 bundle の互換性を確認してください。例をコピーするためだけに、新しい互換性のある bundle をダウングレードしないでください。
 
-### 1. Istioインストール（Ambientモード）
+### 1. Istio のインストール（Ambient Mode）
 
-インストーラーとプラットフォーム設定を確認した新規演習メッシュにだけこのコマンドを使います。既存メッシュの方法/valuesは移行手順で保持します。
+このインストールコマンドは、installer と platform 設定を確認した後の新しいラボ mesh にのみ使用してください。既存 mesh のインストール方法/values は、移行手順を使用して維持してください。
 
 ```bash
 curl -fsSL https://istio.io/downloadIstio -o download-istio.sh
@@ -270,9 +270,9 @@ istioctl install --set profile=ambient -y
 kubectl get pods,daemonsets -n istio-system
 ```
 
-### 2. Ambientを有効にしてアプリをデプロイ
+### 2. Ambient Mode を有効にしてアプリケーションをデプロイ
 
-サイドカー注入/revision上書きのない新しい使い捨て名前空間を使います。ambientラベル追加では既存サイドカーPodは変換されません。1.31配布の完全Bookinfoマニフェストは、旧単一Deployment例で欠けたreviews Service、版ラベル、ServiceAccount、ratings依存を提供し、Bookinfo1.20.3イメージを使います。
+sidecar-injection/revision override のない、新しく使い捨て可能な namespace を使用してください。既存の sidecar Pod は、ambient ラベルを追加しても変換されません。1.31 distribution の完全な Bookinfo manifest は、古い単一 Deployment の例にはない reviews Service、version ラベル、ServiceAccount、ratings dependency を提供します。これは Bookinfo1.20.3 image を使用します。
 
 ```bash
 kubectl create namespace ambient-demo
@@ -286,9 +286,9 @@ done
 istioctl ztunnel-config workloads --workload-namespace ambient-demo
 ```
 
-### 3. Waypointのデプロイと選択
+### 3. Waypoint をデプロイして選択
 
-現CLIはServiceAccount参加フラグでなくwaypoint名と通信タイプを取ります。準備完了を待ち、Serviceを明示参加させます。
+現在の CLI は ServiceAccount 登録フラグではなく、waypoint 名とトラフィックタイプを取ります。readiness を待機し、Service を明示的に登録してください。
 
 ```bash
 istioctl waypoint apply --name reviews-waypoint --for service -n ambient-demo --wait
@@ -297,9 +297,9 @@ kubectl get gateways.gateway.networking.k8s.io reviews-waypoint -n ambient-demo
 kubectl get service reviews -n ambient-demo --show-labels
 ```
 
-### 4. L7機能の使用
+### 4. L7 機能を使用
 
-版別バックエンドServiceを作り、参加済みreviews ServiceにHTTPRouteを接続します。GET/ヘッダールーティングの例で、ヘッダーは認証済みIDではありません。旧VirtualServiceをこのGateway APIルートと混ぜないでください。別Service/Pod IPへの直接呼び出しは別経路です。
+version 固有の backend Service を作成し、登録済みの reviews Service に HTTPRoute をアタッチします。これは GET/header ルーティングを示します。header は認証済み identity ではありません。この Gateway API route を古い VirtualService と組み合わせないでください。別の Service/Pod IP への直接呼び出しは別のパスです。
 
 ```yaml
 apiVersion: v1
@@ -364,21 +364,21 @@ kubectl exec -n ambient-demo deploy/curl -c curl -- \
   curl -sS --max-time 5 -H "end-user: jason" http://reviews:9080/reviews/0
 ```
 
-Accepted/ResolvedRefs条件と選択バックエンドをログ/テレメトリーで確認します。HTTP成功だけではmTLSも強制waypoint経由も証明できません。L7認可には適切な`targetRefs`、経由強制には文書化されたztunnel認可ガードも必要です。[waypointポリシー接続](https://istio.io/latest/docs/ambient/usage/l7-features/)を参照してください。
+Accepted/ResolvedRefs condition と、ログ/テレメトリを通じて選択された backend を確認してください。HTTP の成功だけでは、mTLS も必須 waypoint 経由も証明されません。L7 authorization には適切な `targetRefs` が必要です。必須の経由には文書化された ztunnel authorization guard も必要です。[waypoint ポリシーのアタッチ](https://istio.io/latest/docs/ambient/usage/l7-features/)を参照してください。
 
-## 移行 {#migration}
+## 移行
 
-### サイドカーモードからAmbientモードへ
+### Sidecar Mode から Ambient Mode へ
 
-移行はポリシー/ワークロードのロールアウトで、ラベルだけの変更ではありません。導入revision、CA/信頼、Gateway、CNIオプション、宣言的ワークロード設定を保持します。既存サイドカーはambient参加に優先します。L7ポリシーが必要なワークロードからサイドカーを外す前に、互換ルーティング/認可と準備済みwaypointを用意します。
+移行はポリシー/ワークロードのロールアウトであり、ラベルのみの変更ではありません。インストール済みの revision、CA/trust、gateway、CNI option、宣言的ワークロード設定を維持してください。既存 sidecar は ambient 登録より優先されます。L7 ルーティング/authorization に対応し、そうしたポリシーを必要とするワークロードから sidecar を削除する前に waypoint の readiness を確保してください。
 
-#### ステップ1: Ambientコンポーネントの導入
+#### ステップ 1: Ambient コンポーネントをインストール
 
-既存の方法とレビュー済みvaluesで互換版のambient対応を追加します。Helm管理メッシュを無関係な単独`istioctl install --set profile=ambient`で上書きしないでください。意図した設定をレンダリング/差分確認し、CNI/ztunnelノードエージェントを検証します。
+既存のインストール方法と確認済み values を使用して、互換性のあるバージョンで ambient サポートを追加します。Helm 管理の mesh を、無関係な素の `istioctl install --set profile=ambient` コマンドで上書きしないでください。意図した設定を render/diff し、CNI/ztunnel node agent を確認してください。
 
-#### ステップ2: テスト名前空間へ適用
+#### ステップ 2: テスト namespace に適用
 
-この独立ambientテストは1.31配布からクライアントとサーバー両方をデプロイします。httpbin Serviceは8000を公開し8080を対象にします。
+この独立した ambient テストでは、1.31 distribution から client と server の両方をデプロイします。httpbin Service は 8000 を公開し、8080 を target にします。
 
 ```bash
 kubectl create namespace test-ambient
@@ -391,9 +391,9 @@ kubectl exec -n test-ambient deploy/curl -c curl -- \
   curl -sS --max-time 5 http://httpbin:8000/headers
 ```
 
-#### ステップ3: 検証
+#### ステップ 3: 検証
 
-HBONEワークロード列は意図した転送を示します。実通信は正しいノードのztunnelログの期待送信元/宛先ID、または`connection_security_policy="mutual_tls"`のTCPメトリクスで確認します。HTTP成功はmTLS証明ではありません。HBONE参加は全平文呼び出し元を拒否しません。必要ならPeerAuthentication STRICTを使います。[mTLS検証](https://istio.io/latest/docs/ambient/usage/verify-mtls-enabled/)を参照してください。
+HBONE workload column は意図したトランスポートを示します。実際のトラフィックについては、正しい node の ztunnel log で想定される送信元/宛先 identity を確認するか、`connection_security_policy="mutual_tls"` を持つ TCP metric を確認してください。HTTP の成功だけでは mTLS の証明になりません。HBONE 登録はすべてのプレーンテキスト caller を拒否するわけではありません。必要な場合は PeerAuthentication STRICT を使用してください。[mTLS 検証](https://istio.io/latest/docs/ambient/usage/verify-mtls-enabled/)を参照してください。
 
 ```bash
 istioctl ztunnel-config workloads --workload-namespace test-ambient
@@ -404,9 +404,9 @@ ztunnel_pod=$(kubectl get pod -n istio-system -l app=ztunnel \
 kubectl logs "$ztunnel_pod" -n istio-system --since=5m
 ```
 
-#### ステップ4: 選択ワークロードの切り替え
+#### ステップ 4: 選択したワークロードを切り替え
 
-次の例は別の既存`migration-demo`名前空間に、レビュー済みで名前空間注入されたL4専用curl/httpbin Deploymentだけがある前提です。Podテンプレートの注入上書きや手動注入プロキシを確認してください。コマンドはそれらを除去しません。L7では先に`targetRefs`と強制経由ガードを含むwaypoint参加/ポリシー変換を検証します。移行中のポリシー共存を計画します。ztunnelが適用するセレクターベースL7ポリシーはfail-closedになる場合があります。
+次の例は、L4 のみの要件を持つ、確認済みで namespace-injected の curl/httpbin Deployment だけを含む、別の既存 `migration-demo` namespace を前提としています。Pod-template injection override または手動注入された proxy を確認してください。これらのコマンドではそれらを削除しません。L7 ワークロードについては、まず `targetRefs` および必須経由 guard を含む waypoint 登録とポリシー変換を検証してください。移行中のポリシー共存を計画してください。ztunnel によって適用される selector ベースの L7 ポリシーは fail closed になる可能性があります。
 
 ```bash
 # Reference snapshots, not manifests to blindly reapply with stale server metadata
@@ -428,13 +428,13 @@ kubectl get pods -n migration-demo -o json | jq -r '
 istioctl ztunnel-config workloads --workload-namespace migration-demo
 ```
 
-#### ステップ5: 選択データ経路の検証
+#### ステップ 5: 選択したデータパスを検証
 
-指定ワークロードの準備、接続、ID、ポリシーテストを繰り返します。L7対象群は実Namespace/Service/Pod参加、Gateway通信タイプ/準備、ルート/ポリシー接続を調べます。ServiceAccountごとにwaypointを作らないでください。ワークロード固有の停止/ロールバック基準を使います。演習手順は本番無停止保証ではありません。
+対象ワークロードについて readiness、connectivity、identity、ポリシーのテストを繰り返してください。L7 cohort については、実際の Namespace/Service/Pod の登録、Gateway のトラフィックタイプ/readiness、および route/policy のアタッチを確認してください。ServiceAccount ごとに 1 つの waypoint を作成しないでください。ワークロード固有の停止/rollback 基準を使用してください。このラボ手順は本番環境でのゼロダウンタイムを保証するものではありません。
 
-### ロールバック戦略
+### Rollback 戦略
 
-記録した注入モードと元のPodテンプレート/ポリシーを戻します。以下のコードは上の名前空間注入だけを扱い、旧revisionが存在して正常である必要があります。waypointを持つ対象群は、レビュー済みロールバックの一部として参加/ルーティングポリシーも戻します。対象群用に作成した、特定済み・未参照のwaypointだけを削除し、名前空間内の全Gatewayは決して削除しないでください。
+記録した injection mode と元の Pod-template/policy 設定を復元してください。以下のコードは上記の namespace-injection のケースのみを扱います。古い revision は引き続き存在し、正常でなければなりません。waypoint を含む cohort では、確認済み rollback の一環として登録/ルーティングポリシーも復元する必要があります。その cohort 用に作成された、特定済みかつ未参照の waypoint だけを削除してください。namespace 内のすべての Gateway を削除してはいけません。
 
 ```bash
 original_revision=$(jq -r '.metadata.labels["istio.io/rev"] // ""' migration-namespace-before.json)
@@ -456,22 +456,22 @@ for deployment in curl httpbin; do
 done
 ```
 
-## 性能比較 {#performance-comparison}
+## パフォーマンス比較
 
 ### ベンチマーク結果
 
-削除した`perf.png` URLは404を返し、旧「公式ベンチマーク」表を裏付けませんでした。Pod別CPU/メモリ、レイテンシー、スループット割合を裏付ける出典はありません。[公表性能結果](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)を元のリリース、負荷、ペイロード、ハードウェア、ポリシー条件で使い、過去測定を現リリーステストに付け替えないでください。
+削除された `perf.png` URL は 404 を返し、以前の「公式ベンチマーク」表を裏付けていませんでした。その Pod ごとの CPU/メモリ、レイテンシ、または throughput の割合を確立するソースはありません。元のリリース、負荷、payload、hardware、ポリシー条件を含む[公開済みパフォーマンス結果](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)を使用してください。過去の測定値を現行リリースのテストとして再ラベル付けしないでください。
 
-| 測定 | 比較条件を合わせる項目 |
+| 測定項目 | 比較可能に保つもの |
 |---|---|
-|メモリ/CPU|アプリ数、ID/接続、ノード数、全waypointレプリカ、同等ポリシー|
-|P50/P99レイテンシー|要求サイズ/レート、接続再利用、mTLS、L7ポリシー、テレメトリー、過負荷条件|
-|スループット|同じアプリ/バックエンド容量とエラー定義|
-|費用|実プロビジョニング容量、利用率、課金。requests/使用量減少だけでは請求減少ではない|
+|Memory/CPU|アプリケーション数、identity/connection、node 数、すべての waypoint replica、および同等のポリシー|
+|P50/P99 レイテンシ|リクエストサイズ/レート、connection reuse、mTLS、L7 ポリシー、テレメトリ、overload 条件|
+|Throughput|同じアプリケーション/backend capacity とエラー定義|
+|コスト|実際にプロビジョニングした capacity、utilization、請求額。request/使用量の削減だけでは請求額の削減ではない|
 
-### リソース節約の計算
+### リソース削減の計算
 
-元の100 Pod計算は**仮定の予算モデル**としてのみ以下に保持します。50MB/0.1CPUとwaypoint値は仮定入力で、推奨requests/limitsや実測費用ではありません。実比較では全waypoint/ztunnelレプリカ、HA配置、コントロールプレーンを含めます。waypoint追加で結果は変わります。
+元の 100-Pod の算術は、**仮定に基づく予算モデル**としてのみ以下に保持されています。50MB/0.1CPU および waypoint の値は、推奨 request/limit や測定済みコストではなく、仮定した入力値です。実際の比較には、すべての waypoint/ztunnel replica、HA 配置、control-plane リソースを含めてください。追加の waypoint replica は結果を変えます。
 
 ```python
 # Hypothetical planning inputs, not measured resource consumption or billing
@@ -484,27 +484,27 @@ memory_saved = sidecar_memory - ambient_memory  # 4300 MB, 86% of assumed baseli
 cpu_saved = sidecar_cpu - ambient_cpu           # 8.5 vCPU, 85% of assumed baseline
 ```
 
-## 用途 {#use-cases}
+## ユースケース
 
-### Ambientモードを選ぶべき場合
+### Ambient Mode を選ぶべき場合
 
 
-**Ambientモードの推奨シナリオ**:
-- 数百以上のマイクロサービス
-- リソース費用最適化が重要
-- 大半のサービスは単純通信のみ必要
-- 一部だけ高度ルーティングが必要
-- 運用の複雑さを最小化したい
+**Ambient Mode を推奨するシナリオ**:
+- 数百以上の microservice
+- リソースコストの最適化が重要
+- ほとんどの Service にはシンプルな通信だけが必要
+- 高度なルーティングを必要とする Service は一部のみ
+- 運用の複雑さを最小化
 
-**サイドカーモードの推奨シナリオ**:
-- 必要API/拡張やプラットフォーム動作が選択サイドカー構成でのみ対応
-- 実績のある成熟した解決策が必要
-- サービスごとの細粒度制御が必要
-- Podごとに独立したプロキシ版管理
+**Sidecar Mode を推奨するシナリオ**:
+- 必要な API/extension または platform の動作が、選択した sidecar setup でのみサポートされる
+- 実証済みで成熟したソリューションが必要
+- Service ごとのきめ細かな制御が必要
+- Pod ごとに独立した proxy バージョン管理が必要
 
-### 1. L4機能だけが必要な場合
+### 1. L4 機能だけが必要な場合
 
-互換性のある既存TCPワークロードは、プラットフォーム、ポリシー、捕捉の前提を確認して名前空間を参加させます。このNamespaceは完全DBデプロイではありません。DB複製/ストレージ/HAは別設計です。
+互換性のある既存 TCP ワークロードでは、platform、ポリシー、capture の前提条件を確認した後に namespace を登録します。この Namespace は完全なデータベースデプロイメントではありません。データベースの replication/storage/HA は別途設計する必要があります。
 
 ```yaml
 apiVersion: v1
@@ -515,27 +515,27 @@ metadata:
     istio.io/dataplane-mode: ambient
 ```
 
-### 2. L7機能の選択使用
+### 2. 選択的な L7 機能の使用
 
-デモは準備済みreviews waypointをService単位で選びます。名前空間と直接ワークロード参加は別の対応範囲で、ServiceAccountラベルはセレクターではありません。
+デモでは、Service レベルで ready 状態の reviews waypoint を選択します。Namespace と直接 workload の登録は、別個のサポート対象スコープです。ServiceAccount ラベルは selector ではありません。
 
 ```bash
 kubectl label service reviews -n ambient-demo istio.io/use-waypoint=reviews-waypoint --overwrite
 ```
 
-L7要件があっても自動的にサイドカー必須ではありません。対応waypoint API/拡張とアプリの実要件を比較します。一方、中核GAは全高度APIの同等機能を意味しません。
+L7 の要件によって sidecar が自動的に必要になるわけではありません。サポート対象の waypoint API および extension を、アプリケーションの実際のニーズと比較してください。逆に、コア GA であっても、すべての高度な API との機能同等性を意味するわけではありません。
 
-### 3. 段階的移行
+### 3. 段階的な移行
 
-先に注入と参加を棚卸しし、明示的な準備/セキュリティ/ロールバック基準でレビュー済み対象群を移行します。全dev/staging/productionに無条件でラベルを付けたり、既存サイドカーが変換されると想定したりしないでください。
+まず injection と登録を棚卸しし、その後に明示的な readiness/security/rollback 基準を備えた確認済み cohort を移行してください。すべての dev/staging/production namespace に無差別にラベルを付けたり、変更によって既存 sidecar が変換されると想定したりしないでください。
 
 ```bash
 kubectl get namespaces -L istio-injection,istio.io/rev,istio.io/dataplane-mode,istio.io/use-waypoint
 ```
 
-## トラブルシューティング {#troubleshooting}
+## トラブルシューティング
 
-### ztunnelが動かない
+### ztunnel が動作しない
 
 ```bash
 # Check ztunnel status
@@ -547,7 +547,7 @@ kubectl get daemonset -n istio-system istio-cni-node
 kubectl logs -n istio-system -l k8s-app=istio-cni-node
 ```
 
-### 通信がWaypointへ向かわない
+### トラフィックが Waypoint に到達しない
 
 ```bash
 # Check Waypoint status
@@ -567,35 +567,35 @@ istioctl proxy-config clusters <waypoint-pod> -n <namespace>
 
 ### 現在の公式ドキュメント
 
-- [Ambient概要](https://istio.io/latest/docs/ambient/overview/)
-- [はじめ方](https://istio.io/latest/docs/ambient/getting-started/)
-- [Pod内通信リダイレクト](https://istio.io/latest/docs/ambient/architecture/traffic-redirection/)
+- [Ambient の概要](https://istio.io/latest/docs/ambient/overview/)
+- [はじめに](https://istio.io/latest/docs/ambient/getting-started/)
+- [Pod 内トラフィックのリダイレクト](https://istio.io/latest/docs/ambient/architecture/traffic-redirection/)
 - [HBONE](https://istio.io/latest/docs/ambient/architecture/hbone/)
-- [Waypoint参加](https://istio.io/latest/docs/ambient/usage/waypoint/)
-- [L7 API対応とポリシー接続](https://istio.io/latest/docs/ambient/usage/l7-features/)
-- [性能測定方法/結果](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
-- [ztunnelソース](https://github.com/istio/ztunnel)
-- [IstioコミュニティとSlackアクセス](https://istio.io/latest/get-involved/)
+- [Waypoint の登録](https://istio.io/latest/docs/ambient/usage/waypoint/)
+- [L7 API サポートとポリシーのアタッチ](https://istio.io/latest/docs/ambient/usage/l7-features/)
+- [パフォーマンスの方法論/結果](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/)
+- [ztunnel ソース](https://github.com/istio/ztunnel)
+- [Istio コミュニティと Slack へのアクセス](https://istio.io/latest/get-involved/)
 
-### 過去の紹介
+### 過去の紹介資料
 
-2022年のこれらのページは実験プレビューを説明し、現在のインストールやServiceAccount-waypointコマンドではありません。
+これらの 2022 年のページは、現在のインストールや ServiceAccount-waypoint コマンドではなく、実験的プレビューについて説明しています。
 
-- [ambient meshの紹介（2022）](https://istio.io/latest/blog/2022/introducing-ambient-mesh/)
+- [ambient mesh の紹介（2022）](https://istio.io/latest/blog/2022/introducing-ambient-mesh/)
 - [実験的セキュリティアーキテクチャ（2022）](https://istio.io/latest/blog/2022/ambient-security/)
-- [実験版のはじめ方（2022）](https://istio.io/latest/blog/2022/get-started-ambient/)
+- [実験的はじめに（2022）](https://istio.io/latest/blog/2022/get-started-ambient/)
 
-### 確認済みの節目と現在の制限
+### 検証済みのマイルストーンと現在の制限
 
-| 節目 | 根拠 |
+| マイルストーン | エビデンス |
 |---|---|
-|2022プレビュー|実験実装を発表。主流1.15の機能リリースではない|
-|1.18 Alpha（2023）|ambientを初めて同梱したIstioリリース|
-|1.22 Beta（2024）|Beta到達|
-|1.24中核GA（2024）|中核ztunnel/waypoint/APIの節目。個別機能には独自状態が残る|
+|2022 プレビュー|実験的実装が発表された。メインの 1.15 機能リリースではない|
+|1.18 Alpha（2023）|ambient を提供した最初の Istio リリース|
+|1.22 Beta（2024）|Beta マイルストーン|
+|1.24 コア GA（2024）|コア ztunnel/waypoint/API のマイルストーン。個々の機能にはそれぞれのステータスがある|
 
-現[ambientマルチクラスター文書](https://istio.io/latest/docs/ambient/install/multicluster/)は**Betaのマルチプライマリ・マルチネットワーク**対応を説明します。プライマリ/リモートは非対応、単一ネットワークは未テストです。waypoint命名/設定とサービス範囲をクラスター間で調整する必要があります。旧1.26/1.27ロードマップや出典のない企業節約は、対応動作や費用削減保証の証拠ではありません。
+現在の[ambient multicluster ドキュメント](https://istio.io/latest/docs/ambient/install/multicluster/)では、**Beta の multi-primary、multi-network** サポートについて説明しています。Primary/remote はサポートされず、single-network デプロイメントは未検証です。waypoint の命名/設定と Service スコープは cluster 間で調整する必要があります。古い 1.26/1.27 の roadmap や出典のないエンタープライズ向け削減額は、サポートされる動作や保証されたコスト削減の根拠にはなりません。
 
 ## まとめ
 
-Ambientは共有L4転送と選択L7 waypoint処理を分離します。未参加ワークロードの参加とプロキシライフサイクル管理を簡素化できますが、リソース節約、ポリシー保持、可用性には同等ポリシーでの測定と検証済み移行計画が必要です。Linux/CNI/プラットフォーム制約、TCP15008接続、各APIの機能状態を考慮します。
+Ambient は共有 L4 トランスポートを、選択した L7 waypoint 処理から分離します。mesh 未参加ワークロードの登録と proxy ライフサイクル管理を簡素化できる一方、リソース削減、ポリシーの維持、可用性には、同等ポリシーでの測定と検証済み移行計画が必要です。Linux/CNI/platform の制約、TCP15008 の接続性、各 API の機能ステータスを考慮してください。

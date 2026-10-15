@@ -1,19 +1,22 @@
 # Cuestionario de observabilidad
 
-> **Última actualización**: 11 de septiembre de 2026 · Istio 1.31 · Kubernetes 1.32–1.36. Consulte instalación y dashboards para límites de compatibilidad EKS/Kiali.
+> **Última actualización**: October 12, 2026
+>
+> **Versiones**: Istio 1.31, que admite Kubernetes 1.32–1.37.
+> Consulta los capítulos de instalación y dashboards para los límites de compatibilidad de EKS y Kiali.
 
-El cuestionario cubre telemetría configurada de sidecars/waypoints. Cada ejemplo es independiente y supone que existen backends, namespaces, permisos y tráfico indicados. Comprobar YAML/API/consultas no equivale a pruebas productivas o de clúster real; ztunnel L4, sidecars nativos y HA necesitan su recogida específica.
+Este cuestionario cubre la telemetría configurada de sidecar/waypoint. Cada ejemplo desarrollado es independiente y presupone que existen los backends, namespaces, permisos y tráfico indicados. Las comprobaciones de YAML/API/consulta no son pruebas de producción ni de clúster en vivo; ztunnel L4, sidecars nativos y despliegues HA necesitan su configuración de recopilación específica.
 
 ## Preguntas de opción múltiple (1-5)
 
-### Pregunta 1: Métricas Prometheus
+### Pregunta 1: Métricas de Prometheus
 
-¿Cuál **no es un nombre/familia de métricas estándar de servicio de Istio**?
+¿Cuál **no es un nombre/familia de métrica de servicio estándar de Istio**?
 
-A. istio\_requests\_total (total de solicitudes)\
-B. istio\_request\_duration\_milliseconds (latencia de solicitud)\
+A. istio\_requests\_total (recuento total de solicitudes)\
+B. istio\_request\_duration\_milliseconds (latencia de solicitudes)\
 C. istio\_request\_bytes (tamaño de solicitud)\
-D. istio\_pod\_cpu\_usage (uso CPU del Pod)
+D. istio\_pod\_cpu\_usage (uso de CPU del Pod)
 
 <details>
 
@@ -21,11 +24,11 @@ D. istio\_pod\_cpu\_usage (uso CPU del Pod)
 
 **Respuesta: D**
 
-Las métricas estándar Istio describen tráfico; Envoy también expone estadísticas internas. Prometheus obtiene CPU de contenedores de kubelet/cAdvisor o del pipeline de recursos del runtime. Metrics Server sirve métricas para autoscaling y `kubectl top`; kube-state-metrics expone estado de objetos y requests/limits configurados, no CPU medida.
+Las métricas de servicio estándar de Istio describen el tráfico; Envoy también expone estadísticas internas del proxy. Prometheus obtiene el uso de CPU de contenedores desde kubelet/cAdvisor (o la canalización de recursos del runtime). Metrics Server proporciona métricas de recursos para el autoescalado y `kubectl top`; kube-state-metrics expone el estado de los objetos y las solicitudes/límites configurados, no el consumo de CPU medido.
 
 **Explicación:**
 
-**Métricas recogidas por Istio:**
+**Métricas recopiladas por Istio:**
 
 1. **istio\_requests\_total (A - O)**
 
@@ -52,20 +55,20 @@ sum(rate(istio_request_bytes_sum{reporter="destination"}[5m])) by (destination_s
 
 4. **istio\_pod\_cpu\_usage (D - X)**
 
-* No es una métrica Istio
-* Métrica Kubernetes: `container_cpu_usage_seconds_total`
-* Recoja kubelet/cAdvisor; kube-state-metrics ayuda a comparar uso y límites configurados
+* Esta no es una métrica de Istio
+* Métrica de Kubernetes: `container_cpu_usage_seconds_total`
+* Realiza scrape de kubelet/cAdvisor; kube-state-metrics es útil al comparar el uso con los límites configurados
 
-**Categorías de métricas Istio:**
+**Categorías de métricas de Istio:**
 
-| Categoría | Métrica de ejemplo | Descripción |
+| Categoría     | Métrica de ejemplo                             | Descripción                   |
 | ------------ | --------------------------------------------- | ----------------------------- |
-| **Solicitud** | istio\_requests\_total | Número de solicitudes, códigos de respuesta |
-| **Duración** | istio\_request\_duration\_milliseconds | Distribución de latencia |
-| **Tamaño** | istio\_request\_bytes, istio\_response\_bytes | Tamaño de tráfico |
-| **TCP** | istio\_tcp\_connections\_opened\_total | Conexiones TCP |
+| **Solicitud**  | istio\_requests\_total                        | Recuento de solicitudes, códigos de respuesta |
+| **Duración** | istio\_request\_duration\_milliseconds        | Distribución de latencia          |
+| **Tamaño**     | istio\_request\_bytes, istio\_response\_bytes | Tamaño del tráfico                  |
+| **TCP**      | istio\_tcp\_connections\_opened\_total        | Conexiones TCP               |
 
-**Ejemplos de señales doradas:**
+**Ejemplos de Golden Signals:**
 
 ```promql
 # 1. Latency
@@ -106,7 +109,7 @@ sum(rate(
 ))
 ```
 
-**Comprobar métricas:**
+**Comprobación de métricas:**
 
 ```bash
 # Check metrics via Envoy Admin API
@@ -127,12 +130,12 @@ kubectl port-forward -n istio-system svc/prometheus 9090:9090
 
 ### Pregunta 2: Trazado distribuido
 
-Con proveedor/backend funcional, ¿qué responsabilidad de la aplicación permite unir spans de proxy entre llamadas de servicios?
+Con un proveedor/backend de trazado operativo, ¿qué responsabilidad de la aplicación se requiere para unir los spans del proxy entre llamadas de servicio?
 
-A. La aplicación debe generar trace IDs\
-B. La aplicación debe propagar cabeceras HTTP\
-C. Debe instalarse cliente Jaeger en todos los servicios\
-D. Envoy lo gestiona todo automáticamente
+A. La aplicación debe generar IDs de traza\
+B. La aplicación debe propagar encabezados HTTP\
+C. El cliente Jaeger debe instalarse en todos los servicios\
+D. Envoy gestiona todo automáticamente
 
 <details>
 
@@ -140,19 +143,19 @@ D. Envoy lo gestiona todo automáticamente
 
 **Respuesta: B**
 
-Los proxies configurados pueden generar spans y trace IDs, pero la aplicación debe propagar contexto a sus llamadas salientes. El SDK debe inyectar contexto activo; los IDs de spans hijos pueden cambiar conservando el trace ID. Aplicaciones transparentes sin spans propios pueden reenviar las cabeceras de propagación seleccionadas.
+Los proxies configurados pueden generar spans e IDs de traza, pero la aplicación debe propagar el contexto de trazado a sus llamadas salientes. Un SDK debe inyectar el contexto activo, por lo que los IDs de span hijos pueden cambiar mientras el ID de traza permanece igual. Las aplicaciones transparentes sin sus propios spans pueden reenviar los encabezados de propagación seleccionados.
 
 **Explicación:**
 
-**Funcionamiento del trazado distribuido:**
+**Cómo funciona el trazado distribuido:**
 
-![El Ingress Gateway genera cabeceras de trazado para una solicitud entrante; cada servicio A, B y C propaga contexto al siguiente salto, y todos envían su span a Jaeger.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-observability-0.png)
+![Diagrama que muestra al Ingress Gateway creando encabezados de traza en una solicitud entrante, a cada servicio descendente (A, B, C) propagando el contexto de trazado al siguiente salto y a cada salto enviando también su span a Jaeger.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-observability-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-observability-0.html)
 
-La figura muestra propagación B3 a Jaeger configurado. También se admiten W3C y un OpenTelemetry Collector intermedio; las aplicaciones instrumentadas inyectan contexto activo, no copian todas las cabeceras sin cambios.
+El diagrama ilustra la propagación B3 hacia un backend Jaeger configurado. También se admiten la propagación W3C y un OpenTelemetry Collector intermedio; las aplicaciones instrumentadas inyectan su contexto de span activo en vez de copiar todos los encabezados sin cambios.
 
-**Cabeceras HTTP que propagar:**
+**Encabezados HTTP que se deben propagar:**
 
 ```text
 W3C: traceparent, tracestate
@@ -217,16 +220,16 @@ app.get('/api/users', async (req, res) => {
 });
 ```
 
-**Análisis de opciones:**
+**Análisis de cada opción:**
 
-* **A (X)**: Envoy genera trace IDs automáticamente
-* **B (O)**: La aplicación debe propagar cabeceras HTTP (obligatorio)
-* **C (X)**: No hace falta cliente Jaeger; Envoy envía spans
-* **D (X)**: Envoy crea/envía spans, pero propagar cabeceras corresponde a la aplicación
+* **A (X)**: Envoy genera automáticamente IDs de traza
+* **B (O)**: La aplicación debe propagar encabezados HTTP (obligatorio)
+* **C (X)**: No se necesita cliente Jaeger, Envoy envía spans
+* **D (X)**: Envoy crea/envía spans, pero la propagación de encabezados es responsabilidad de la aplicación
 
 **Configuración de muestreo:**
 
-Se supone el proveedor `otel-tracing` del capítulo de trazas. `1.0` significa 1%, no 100%; proveedor/exporter y propagación son requisitos separados.
+Esto presupone el proveedor `otel-tracing` del capítulo de trazado. `1.0` significa 1 %, no 100 %; la configuración del proveedor/exportador y la propagación de contexto son requisitos independientes.
 
 ```yaml
 apiVersion: telemetry.istio.io/v1
@@ -255,14 +258,14 @@ kubectl port-forward -n observability svc/jaeger-query 16686:16686
 
 ***
 
-### Pregunta 3: Visualización Kiali
+### Pregunta 3: Visualización de Kiali
 
-¿Qué función **NO** proporciona Kiali?
+¿Qué funcionalidad **NO** proporciona Kiali?
 
 A. Visualización de topología de servicios\
-B. Análisis de flujos de tráfico\
-C. Ejecución automática de despliegues canary\
-D. Validación de configuración Istio
+B. Análisis de flujo de tráfico\
+C. Ejecución automática de despliegue Canary\
+D. Validación de configuración de Istio
 
 <details>
 
@@ -270,13 +273,13 @@ D. Validación de configuración Istio
 
 **Respuesta: C**
 
-Kiali es una **herramienta de observación y análisis**; herramientas como **Argo Rollouts** ejecutan despliegues.
+Kiali es una **herramienta de observación y análisis**, mientras que la ejecución de despliegues la gestionan herramientas como **Argo Rollouts**.
 
 **Explicación:**
 
 **Funciones principales de Kiali:**
 
-**1. Visualización de topología (A - O)**
+**1. Visualización de topología de servicios (A - O)**
 
 ```bash
 # Open Kiali dashboard
@@ -289,7 +292,7 @@ istioctl dashboard kiali
 # - Response time display
 ```
 
-**Ejemplo de vista de grafo:**
+**Ejemplo de vista Graph:**
 
 ```
 Frontend → Backend → Database
@@ -302,36 +305,36 @@ Color codes:
 - Gray: No traffic
 ```
 
-**2. Análisis de tráfico (B - O)**
+**2. Análisis de flujo de tráfico (B - O)**
 
 Kiali muestra:
 
-* Solicitudes (RPS)
+* Recuento de solicitudes (RPS)
 * Tasa de errores (%)
 * Latencia P50/P95/P99
-* Conexiones TCP
+* Recuento de conexiones TCP
 
-**3. Ejecución automática de canary (C - X)**
+**3. Ejecución automática de despliegue Canary (C - X)**
 
-* Kiali muestra tráfico y, con permisos, edita configuración Istio/usa asistentes de tráfico
-* No sustituye un controlador automatizado de entrega progresiva
-* Ejecución de despliegues: Argo Rollouts, Flagger
+* Kiali puede mostrar tráfico y, con permiso, editar la configuración de Istio/usar asistentes de tráfico
+* No sustituye a un controlador automatizado de entrega progresiva
+* Ejecución de despliegue: Argo Rollouts, Flagger
 
-**4. Validación de configuración Istio (D - O)**
+**4. Validación de configuración de Istio (D - O)**
 
-Ejemplos del [catálogo de validaciones Kiali](https://kiali.io/docs/features/validations/):
+Ejemplos del [catálogo de validación de Kiali](https://kiali.io/docs/features/validations/):
 
-- VirtualService: subset indefinido (`KIA1107`).
+- VirtualService: subset no definido (`KIA1107`).
 - DestinationRule: definiciones host/subset superpuestas (`KIA0201`).
-- AuthorizationPolicy: namespace referenciado no encontrado (`KIA0101`) o principal no asociado a una ServiceAccount descubierta (`KIA0106`).
+- AuthorizationPolicy: namespace referenciado no encontrado (`KIA0101`), o principal no asociado a un ServiceAccount de workload detectado (`KIA0106`).
 
-Las comprobaciones dependen de versión, alcance de descubrimiento y acceso. Inspeccione código/mensaje real y política efectiva; Kiali no demuestra conflictos arbitrarios ni que todo certificado y ruta runtime funcione.
+Las comprobaciones dependen de la versión de Kiali, el alcance de detección y el acceso. Inspecciona el código/mensaje real y la política efectiva del proxy; Kiali no demuestra que políticas arbitrarias entren en conflicto ni que todos los certificados y rutas de runtime funcionen.
 
-**Instalación Kiali:**
+**Instalación de Kiali:**
 
-Siga el [capítulo de dashboards](../../../service-mesh/istio/observability/04-dashboards.md) para operador fijado, autenticación y límites actuales. Kiali se instala aparte; los addons de muestra son demos, y Helm sin backend/RBAC no es producción.
+Sigue el [capítulo de dashboards](../../../service-mesh/istio/observability/04-dashboards.md) para el operador fijado, la autenticación y los límites de compatibilidad actuales. Kiali se instala por separado; los addons de ejemplo son demostraciones, y una instalación Helm sin configuración de backend/RBAC no es una configuración de producción.
 
-**Menús principales:**
+**Menús principales de Kiali:**
 
 ```
 1. Overview: Service summary by Namespace
@@ -344,15 +347,15 @@ Siga el [capítulo de dashboards](../../../service-mesh/istio/observability/04-d
 
 **Kiali frente a otras herramientas:**
 
-| Herramienta | Rol | Entrega progresiva automatizada |
+| Herramienta | Función | Entrega progresiva automatizada |
 | ----------------- | ----------------------------------- | -------------------- |
-| **Kiali** | Visualización, análisis, validación | No |
-| **Argo Rollouts** | Entrega progresiva | Sí |
-| **Flagger** | Canary automático | Sí |
-| **Grafana** | Dashboard de métricas | No |
-| **Jaeger** | Trazado distribuido | No |
+| **Kiali**         | Visualización, análisis, validación | No                   |
+| **Argo Rollouts** | Entrega progresiva                | Sí                  |
+| **Flagger**       | Despliegue Canary automático         | Sí                  |
+| **Grafana**       | Dashboard de métricas                   | No                   |
+| **Jaeger**        | Trazado distribuido                 | No                   |
 
-**Ejemplo práctico:**
+**Ejemplo de uso práctico:**
 
 ```bash
 # 1. Check service topology in Kiali
@@ -374,20 +377,20 @@ istioctl dashboard kiali
 **Referencia:**
 
 * [Visualización](../../../service-mesh/istio/observability/04-dashboards.md)
-* [Documentación oficial Kiali](https://kiali.io/docs/)
+* [Documentación oficial de Kiali](https://kiali.io/docs/)
 
 </details>
 
 ***
 
-### Pregunta 4: Configuración de registros de acceso
+### Pregunta 4: Configuración de Access Log
 
-¿Cómo configura salida de acceso en **formato JSON** en Istio?
+¿Cómo se configura la salida de Access Log en formato **JSON** en Istio?
 
-A. Establecer meshConfig.accessLogEncoding a JSON en IstioOperator\
+A. Establecer meshConfig.accessLogEncoding en JSON en IstioOperator\
 B. Modificar directamente Envoy ConfigMap\
-C. Añadir anotación a cada Pod\
-D. Convertir a JSON mediante consulta Prometheus
+C. Añadir una anotación a cada Pod\
+D. Convertir a JSON mediante una consulta de Prometheus
 
 <details>
 
@@ -395,11 +398,11 @@ D. Convertir a JSON mediante consulta Prometheus
 
 **Respuesta: A**
 
-A es un método MeshConfig válido: use `accessLogEncoding: JSON` con logs habilitados en una entrada `istioctl install -f`. No es un recurso operador dentro del clúster. Un proveedor personalizado `envoyFileAccessLog.logFormat.labels` es otra vía admitida descrita en el capítulo de logs.
+A es un método MeshConfig válido: utiliza `accessLogEncoding: JSON` con el logging habilitado en una entrada de `istioctl install -f`. No es un recurso de operador dentro del clúster. Un proveedor personalizado `envoyFileAccessLog.logFormat.labels` es otro método admitido, descrito en el capítulo de logging.
 
 **Explicación:**
 
-**Configuración de acceso JSON:**
+**Configuración de Access Log en formato JSON:**
 
 ```yaml
 apiVersion: install.istio.io/v1alpha1
@@ -471,7 +474,7 @@ spec:
 
 **Configuración por namespace:**
 
-Para esta alternativa, defina primero `mesh-json` como en el capítulo de logs. Telemetry selecciona proveedor/alcance; no cambia por sí mismo el formato.
+Para esta alternativa, define primero `mesh-json` como en el capítulo de logging. Telemetry selecciona el proveedor/alcance; no cambia por sí mismo el formato de un proveedor.
 
 ```yaml
 apiVersion: telemetry.istio.io/v1
@@ -486,7 +489,7 @@ spec:
     # Select the already-defined JSON provider
 ```
 
-**Variables de formato Envoy:**
+**Variables de formato de Envoy:**
 
 ```text
 # Key variables:
@@ -501,9 +504,9 @@ spec:
 %DOWNSTREAM_REMOTE_ADDRESS%: Client address
 ```
 
-**Integración CloudWatch Logs:**
+**Integración de CloudWatch Logs:**
 
-Solo es un fragmento de salida de un agente Fluent Bit ya desplegado con etiquetas de entrada, parsing CRI/JSON, credenciales IAM y montajes coincidentes. Un ConfigMap no recoge logs por sí solo. EKS Fargate necesita su configuración admitida de log-router.
+Esto es solo un fragmento de salida para un agente Fluent Bit ya desplegado con etiquetas de entrada coincidentes, análisis CRI/JSON, credenciales IAM y montajes de logs. Un ConfigMap por sí solo no recopila logs. EKS Fargate necesita su configuración de router de logs admitida.
 
 ```yaml
 apiVersion: v1
@@ -522,7 +525,7 @@ data:
         auto_create_group true
 ```
 
-**Comprobar logs:**
+**Comprobación de logs:**
 
 ```bash
 # Check Pod's Access Log
@@ -536,17 +539,17 @@ kubectl logs <pod-name> -c istio-proxy | \
   jq -R 'fromjson? | select((.response_code | tonumber?) == 500)'
 ```
 
-**Formato TEXT frente a JSON:**
+**Formato TEXT frente a formato JSON:**
 
-| Elemento | TEXT | JSON |
+| Elemento            | TEXT         | JSON            |
 | --------------- | ------------ | --------------- |
-| **Legibilidad** | Alta para humanos | Baja para humanos |
-| **Parsing** | Difícil | Fácil para máquinas |
-| **Tamaño** | Pequeño | Grande |
-| **Estructura** | No estructurado | Estructurado |
-| **Consultas** | Difíciles | Fáciles con jq, etc. |
+| **Legibilidad** | Alta (humana) | Baja (humana)     |
+| **Análisis**     | Difícil    | Fácil (máquina)  |
+| **Tamaño**        | Pequeño        | Grande           |
+| **Estructura**   | No estructurada | Estructurada      |
+| **Consulta**    | Difícil    | Fácil (jq, etc.) |
 
-**Ejemplo TEXT:**
+**Ejemplo de formato TEXT:**
 
 ```
 [2025-01-20T10:30:00.123Z] "GET /api/users HTTP/1.1" 200 - "-" "-" 0 1234 42 40 "192.168.1.100" "Mozilla/5.0" "abc-123-def" "example.com" "10.0.1.20:8080" outbound|8080||backend.default.svc.cluster.local 10.0.1.10:54321 10.0.1.10:8080 10.0.1.5:12345 - default
@@ -554,21 +557,21 @@ kubectl logs <pod-name> -c istio-proxy | \
 
 **Referencia:**
 
-* [Registros](../../../service-mesh/istio/observability/03-logging.md)
-* [Formato de acceso Envoy](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage)
+* [Logging](../../../service-mesh/istio/observability/03-logging.md)
+* [Formato de Access Log de Envoy](https://www.envoyproxy.io/docs/envoy/latest/configuration/observability/access_log/usage)
 
 </details>
 
 ***
 
-### Pregunta 5: Dashboards Grafana
+### Pregunta 5: Dashboards de Grafana
 
-¿Qué dashboard **no** forma parte del conjunto Grafana publicado por Istio?
+¿Qué dashboard **no** forma parte del conjunto publicado de dashboards de Grafana de Istio?
 
-A. Dashboard de servicios Istio\
-B. Dashboard de cargas Istio\
-C. Dashboard de rendimiento Istio\
-D. Dashboard de costes Istio
+A. Istio Service Dashboard\
+B. Istio Workload Dashboard\
+C. Istio Performance Dashboard\
+D. Istio Cost Dashboard
 
 <details>
 
@@ -576,31 +579,31 @@ D. Dashboard de costes Istio
 
 **Respuesta: D**
 
-D. Istio publica dashboards de tráfico/plano de control, pero Grafana es un addon independiente; instalar Istio no instala automáticamente estos dashboards.
+D. Istio publica dashboards de tráfico/control plane, pero Grafana es un addon independiente; instalar Istio no instala automáticamente estos dashboards.
 
 **Explicación:**
 
-El catálogo 1.31 incluye Service7636, Workload7630, Mesh7639, Performance11829, Control Plane7645, Wasm13277 y Ztunnel21306. Performance se centra en recursos/datos; paneles xDS/webhook corresponden principalmente a Control Plane. Mesh incluye tráfico global y versiones, no todos los paneles de latencia antes listados. Seleccione la revisión correspondiente a su Istio.
+El catálogo 1.31 incluye Service7636, Workload7630, Mesh7639, Performance11829, Control Plane7645, Wasm13277 y Ztunnel21306. Performance se centra en el uso de recursos/datos; los paneles xDS/webhook pertenecen principalmente a Control Plane. Mesh incluye tráfico global y versiones de componentes, no todos los paneles de latencia que se enumeraban anteriormente aquí. Selecciona la revisión que coincida con la versión de Istio instalada.
 
-No se calcula coste multiplicando `istio_requests_total` por precio de transferencia GB: solicitudes no son bytes, y `source_cluster`/`destination_cluster` identifican clústeres, no AZ. Memoria de proxy es uso, no factura. Costear red exige bytes facturables y reglas reales de ubicación/servicio origen/destino; asignar recursos exige precios de nodo, tiempo y modelo explícito. Concilie con AWS billing/CUR y precios aplicables, sin afirmar una fórmula fija.
+El coste no se puede calcular multiplicando `istio_requests_total` por un precio de transferencia GB: las solicitudes no son bytes, y `source_cluster`/`destination_cluster` identifican clústeres en lugar de Availability Zones. La memoria del proxy es uso, no una factura. El cálculo de costes de red necesita mediciones de bytes facturables y reglas de ubicación/servicio de origen/destino reales; la asignación de costes de recursos necesita precios de nodos, tiempo y un modelo de asignación explícito. Concilia las estimaciones con los datos de facturación/CUR de AWS y los precios aplicables en vez de afirmar una fórmula fija.
 
-Use el [capítulo de dashboards](../../../service-mesh/istio/observability/04-dashboards.md) para revisiones verificadas y ejemplos completos JSON/provisioning. ConfigMaps y etiquetas no instalan por sí solos un cargador ni resuelven entradas de datasource.
+Usa el [capítulo de dashboards](../../../service-mesh/istio/observability/04-dashboards.md) para revisiones de catálogo verificadas y ejemplos completos de JSON/provisioning personalizados. Los ConfigMaps y las etiquetas por sí solos no instalan un cargador de dashboards ni resuelven las entradas de datasource.
 
 </details>
 
 ***
 
-## Preguntas breves (6-10)
+## Preguntas de respuesta corta (6-10)
 
-### Pregunta 6: Monitorización de señales doradas
+### Pregunta 6: Monitorización de Golden Signals
 
-Explique cómo monitorizar las **señales doradas** de Google SRE (latencia, tráfico, errores, saturación) con Istio y Prometheus. Incluya **consultas Prometheus** y **reglas de alerta** para cada señal.
+Explica cómo monitorizar las **Golden Signals** (Latency, Traffic, Errors, Saturation) de Google SRE utilizando Istio y Prometheus. Incluye **consultas de Prometheus** y **reglas de alerta** para cada señal.
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-Use un reporter por cálculo de salto y conserve namespace de servicio y clúster cuando corresponda. Destination mide solicitudes recibidas; source es necesario para fallos upstream que nunca llegan. HTTP5xx es solo una definición; gRPC requiere `grpc_response_status` y SLI específicos. La latencia siguiente es milisegundos y las tasas por segundo:
+Usa un reporter por cálculo de salto de servicio y conserva el namespace de servicio (más el clúster donde corresponda). Las métricas destination miden las solicitudes recibidas por el servicio; las métricas source se necesitan para los fallos upstream que nunca llegan. HTTP5xx es solo una definición de error; los fallos gRPC requieren `grpc_response_status` y reglas SLI específicas de la aplicación. La siguiente latencia está en milisegundos y las tasas son por segundo:
 
 ```promql
 histogram_quantile(0.95, sum by (destination_service_name, destination_service_namespace, le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m])))
@@ -612,7 +615,7 @@ sum by (destination_service_name, destination_service_namespace) (rate(istio_req
 sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination",response_code=~"5.."}[5m])) / sum by (destination_service_name, destination_service_namespace) (rate(istio_requests_total{reporter="destination"}[5m]))
 ```
 
-En un clúster sidecar clásico, las proporciones uso/limit necesitan kubelet/cAdvisor y kube-state-metrics. Excluya límites ausentes/cero. Sidecars nativos pueden declarar límites en series de recursos init; confirme la familia real antes de usar:
+Para un despliegue clásico de sidecar de un solo clúster, las proporciones de uso/límite requieren kubelet/cAdvisor y kube-state-metrics. Excluye los límites ausentes/cero. Los sidecars nativos pueden informar límites declarados en series de recursos de init-container; confirma la familia de métricas real antes de usar estas expresiones:
 
 ```promql
 sum by (namespace, pod, container) (rate(container_cpu_usage_seconds_total{container="istio-proxy"}[5m])) / on (namespace, pod, container) (max by (namespace, pod, container) (kube_pod_container_resource_limits{container="istio-proxy",resource="cpu",unit="core"}) > 0)
@@ -624,9 +627,9 @@ envoy_cluster_upstream_rq_pending_active
 envoy_cluster_circuit_breakers_default_cx_open
 ```
 
-`_cx_open` es gauge de estado 0/1; dividir conexiones activas por él no da utilización. Inspeccione umbrales configurados del breaker para proporciones de capacidad. CPU rate se mide en núcleos antes de dividir; working set, en bytes. Desglosar por método requiere añadir previamente una etiqueta Telemetry `request_method` acotada.
+La métrica `_cx_open` es un gauge de estado 0/1; dividir las conexiones activas por ella no es utilización. Inspecciona los umbrales de circuit breaker configurados cuando se requieran proporciones de capacidad. La tasa de CPU son cores antes de la división; el working set de memoria son bytes antes de la división. Un desglose por método requiere añadir primero una etiqueta Telemetry `request_method` acotada.
 
-El Prometheus Operator instalado debe seleccionar la PrometheusRule. Umbrales y ventanas son ilustrativos; estacionalidad, no-data, fallos de scrape y volumen mínimo requieren tratamiento propio. La hora anterior no es una base normal aprendida.
+La siguiente PrometheusRule debe ser seleccionada por el Prometheus Operator instalado. Los umbrales y ventanas de comparación son ilustrativos; la estacionalidad del tráfico, la ausencia de datos, el fallo de scrape y una condición de volumen mínimo necesitan un manejo específico del entorno. Una ventana anterior de una hora no es una línea base normal aprendida.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -691,25 +694,25 @@ spec:
         summary: Connection breaker at capacity
 ```
 
-Cree paneles separados para tasa, fracción de errores, latencia y unidades de recursos usando la [plantilla verificada](../../../service-mesh/istio/observability/04-dashboards.md). No comparta una escala sin etiquetas entre núcleos CPU y bytes de memoria.
+Crea paneles separados para tasa de solicitudes, fracción de error, latencia y unidades de recursos utilizando la [plantilla de dashboard comprobada](../../../service-mesh/istio/observability/04-dashboards.md). No coloques cores de CPU y bytes de memoria en una escala compartida sin etiqueta.
 
 </details>
 
 ***
 
-### Pregunta 7: Encontrar cuellos de botella con Jaeger
+### Pregunta 7: Búsqueda de cuellos de botella de rendimiento con Jaeger
 
-Explique cómo usar Jaeger para detectar **cuellos de botella de rendimiento** en microservicios. Incluya **métodos de análisis de trazas** y **escenarios prácticos de depuración**.
+Explica cómo utilizar la herramienta de trazado distribuido Jaeger para encontrar **cuellos de botella de rendimiento** en una arquitectura de microservicios. Incluye **métodos de análisis de Trace** y **escenarios prácticos de depuración**.
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-Comience por [Jaeger2/OTLP](../../../service-mesh/istio/observability/02-tracing.md), proveedor Telemetry configurado y propagación de contexto. No asuma que un addon Jaeger antiguo/puerto Zipkin o una tasa de muestreo despliegan trazas. Los spans de aplicación/DB requieren SDK/agente; los spans de proxy no revelan el interior de una consulta SQL.
+Comienza con la [configuración de trazado Jaeger2/OTLP](../../../service-mesh/istio/observability/02-tracing.md), un proveedor Telemetry configurado y la propagación de contexto de la aplicación. No presupongas que un addon Jaeger/puerto Zipkin antiguo o solo un valor de muestreo despliegan el trazado. Los spans de aplicación/base de datos requieren instrumentación de SDK o agente; los spans de proxy no pueden revelar los detalles internos de una consulta de base de datos.
 
-1. Localice servicio/ventana afectados con una consulta de latencia Prometheus por namespace y busque trazas lentas y normales representativas en Jaeger. Un histograma devuelve estadísticas agregadas, no trace IDs.
-2. Siga el camino crítico y distinga duración padre de tiempo exclusivo. Un padre largo incluye hijos; no es automáticamente la causa.
-3. Compare errores, reintentos, espera de conexión, ejecución de consultas y paralelismo. Tiempos, muestreo y spans ausentes limitan las conclusiones.
+1. Localiza el servicio/ventana de tiempo afectados con una consulta de latencia de Prometheus con alcance de namespace y, después, encuentra trazas lentas y normales representativas en Jaeger. Una consulta de histograma de Prometheus devuelve estadísticas agregadas, no IDs de traza.
+2. Sigue la ruta crítica y distingue la duración padre del tiempo exclusivo. Un padre largo incluye sus hijos; no es automáticamente la causa.
+3. Compara errores, reintentos, espera de conexión, ejecución de consultas y paralelismo. La temporización de trazas, el muestreo y los spans ausentes limitan las conclusiones.
 
 ```promql
 histogram_quantile(0.99, sum by (destination_service_name, destination_service_namespace, le) (rate(istio_request_duration_milliseconds_bucket{reporter="destination"}[5m]))) > 2000
@@ -719,15 +722,15 @@ histogram_quantile(0.99, sum by (destination_service_name, destination_service_n
 kubectl port-forward -n observability svc/jaeger-query 16686:16686
 ```
 
-Son escenarios hipotéticos, no benchmarks ni respuestas literales de la API Jaeger:
+Estos son escenarios hipotéticos de depuración, no resultados de benchmark ni respuestas literales de la API de Jaeger:
 
 | Observación | Qué verificar | Respuesta adecuada |
 |---|---|---|
-| Solicitud de 2.1s con operación DB instrumentada de 1.8s | Separar espera de pool, consulta, bloqueos y red; verificar plan DB | Corregir la causa medida. Un ConfigMap `redis.conf` no añade caché a la aplicación |
-| Solicitud de ~10s con timeout de pool | Inspeccionar pool cliente DB, concurrencia y capacidad | Ajustar pool aplicación/DB y reparar fugas; DestinationRule no configura el pool de aplicación y los ajustes HTTP no afinan PostgreSQL |
-| Llamadas independientes 2s+2s+1s secuenciales | Confirmar dependencias, límites y contexto | Paralelizar solo E/S independiente con clientes async reales o hilos acotados; puede acercarse a la llamada más larga más sobrecarga, no garantiza 2s |
+|Solicitud de2.1s, con operación de base de datos instrumentada de1.8s|Separa la espera de pool, el tiempo de consulta, los bloqueos y el retraso de red; verifica el plan de ejecución de DB|Corrige la causa medida. Un ConfigMap llamado `redis.conf` no añade caché de aplicación|
+|Solicitud de~10s con timeout de pool de conexiones|Inspecciona el pool de cliente DB de la aplicación, la concurrencia y la capacidad de DB|Ajusta el pool de aplicación/DB y corrige fugas; un Envoy DestinationRule no configura el pool de aplicación, y la configuración de pool HTTP no ajusta PostgreSQL|
+|Llamadas independientes2s+2s+1s se ejecutan secuencialmente|Confirma dependencias, límites de carga y contexto de trazado|Paraleliza solo I/O independiente con clientes asíncronos reales o threads acotados; el tiempo esperado puede acercarse a la llamada más larga más overhead, no a2s garantizados|
 
-Para callbacks síncronos existentes, este fragmento Python3.9+ conserva el orden de retorno y usa hilos. La aplicación debe proporcionar callbacks y sus timeouts; cancelar la tarea que espera no detiene un hilo ya activo:
+Para callbacks de I/O síncrono existentes, este fragmento de Python3.9+ conserva el orden de retorno y utiliza threads de trabajo. La aplicación debe proporcionar callbacks y aplicar sus propios timeouts; cancelar la tarea en espera no detiene un thread que ya se está ejecutando:
 
 ```python
 import asyncio
@@ -742,32 +745,32 @@ async def get_user_data(user_id):
     return merge(profile, orders, recommendations)
 ```
 
-Timeouts acotan espera, no reparan una DB lenta; reintentar puede amplificar carga. Al mostrar timeout VirtualService, incluya destino real y use reintentos considerando idempotencia/carga. Los mapas persistentes de dependencias Jaeger pueden necesitar agregación adicional; una cascada de traza y un mapa global son vistas distintas. Valide una posible corrección con tráfico repetido y métricas/trazas, no una sola traza atractiva.
+Los timeouts limitan la espera; no reparan una base de datos lenta, y los reintentos pueden amplificar la carga. Al mostrar un timeout de VirtualService, incluye el destino de ruta real y utiliza reintentos solo teniendo en cuenta la idempotencia/carga. Los mapas de dependencias persistentes de Jaeger pueden requerir agregación adicional; una cascada de una sola traza y un mapa de dependencias global son vistas distintas. Valida una corrección sospechada con tráfico repetido y métricas/trazas, no solo con una traza atractiva.
 
 </details>
 
 ***
 
-### Pregunta 8: Diagnóstico de malla con Kiali
+### Pregunta 8: Solución de problemas de Service Mesh con Kiali
 
-Explique cómo diagnosticar y resolver **problemas comunes** de Istio (errores de configuración, anomalías de tráfico, conflictos de seguridad) con Kiali.
+Explica cómo diagnosticar y resolver **problemas comunes** (errores de configuración, anomalías de tráfico, conflictos de políticas de seguridad) en el service mesh de Istio usando Kiali.
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-Use comprobaciones de configuración, tráfico observado, logs Pod y trazas como evidencia y verifique la configuración efectiva. El capítulo dashboards documenta versión/autenticación. No invente una advertencia por la forma del grafo ni trate un icono verde como garantía runtime.
+Utiliza las comprobaciones de configuración de Kiali, el tráfico observado, los logs de Pod y las trazas como evidencia y, después, verifica la configuración efectiva del proxy. El capítulo de dashboards documenta los requisitos previos de versión/autenticación. No inventes una advertencia de Kiali a partir de la forma de un gráfico ni trates un icono verde como una garantía de runtime.
 
 | Síntoma | Interpretación y comprobaciones correctas |
 |---|---|
-| Servicio/subset ausente | En `default`, `reviews` y `reviews.default.svc.cluster.local` resuelven al mismo host. Acortar el nombre no crea Service. KIA1107 identifica subset indefinido; revise Service/EndpointSlice, DestinationRule y etiquetas Pod |
-| Etiqueta subset no coincide | `1.0` no es intrínsecamente erróneo; haga coincidir etiquetas Deployment y subset. Incluya metadata, host y separadores al escribir DestinationRules completas |
-| Se observa 90/10 en vez de 50/50 | Revise pesos efectivos, reglas, afinidad, reintentos, endpoints/expulsión y ventana. Menos réplicas listas no redefinen pesos ni garantizan un reparto posterior 50/50 |
-| Ciclo A↔B | Un grafo bidireccional no demuestra recursión, deadlock ni alerta automática. Identifique un ciclo real no deseado en trazas antes de rediseñar |
-| HTTP403 | Inspeccione política, identidad y respuesta del proxy que aplica el control. AuthorizationPolicy con spec vacío es ALLOW sin reglas; otra ALLOW puede conceder excepción. No es un DENY dominante |
-| Fallo mTLS | PeerAuthentication describe al receptor. Revise TLS del emisor, política receptora, inscripción, certificado/confianza y protocolo para esa dirección. Modos receptores distintos no son automáticamente conflicto; STRICT general es migración, no arreglo genérico |
+|Servicio/subset ausente|En `default`, `reviews` y `reviews.default.svc.cluster.local` se resuelven al mismo host. Acortar el nombre no crea un Service ausente. KIA1107 identifica un subset no definido; comprueba Service/EndpointSlice, DestinationRule y las etiquetas reales del Pod|
+|Desajuste de etiqueta de subset|El valor de etiqueta`1.0` no es intrínsecamente incorrecto; haz coincidir las etiquetas de Deployment previstas con el subset. Incluye metadata, host y separadores de documentos al escribir DestinationRules completos|
+|Se observa90/10 en vez de50/50 configurado|Comprueba los pesos efectivos, las reglas coincidentes, la afinidad de conexión, los reintentos, el estado de endpoint/ejection y la ventana de tiempo. Menos réplicas listas por sí solas no redefine los pesos de subset de VirtualService ni garantiza una división posterior50/50|
+|Ciclo A↔B|Un gráfico bidireccional no prueba llamadas recursivas, deadlock ni una alerta automática de Kiali. Usa una traza para identificar un ciclo no deseado real antes de rediseñar la aplicación|
+|HTTP403|Inspecciona la política, identidad y detalles de respuesta del proxy que aplica. AuthorizationPolicy con spec vacío es una política ALLOW sin reglas coincidentes; otra ALLOW puede proporcionar una excepción. No es un DENY que anula|
+|Fallo mTLS|PeerAuthentication describe al receptor. Comprueba la configuración TLS del emisor, la política del receptor, la inscripción, el certificado/confianza y el protocolo de puerto para la dirección específica. Los distintos modos de receptor no son automáticamente un conflicto; STRICT generalizado es una decisión de migración, no una corrección genérica|
 
-Una base de denegación por defecto con excepción frontend es válida si mTLS aporta el principal frontend nombrado y ningún CUSTOM/DENY anterior rechaza:
+Una línea base scoped de denegación predeterminada con una excepción frontend es válida, suponiendo que mTLS proporciona el principal frontend nombrado y ningún CUSTOM/DENY anterior rechaza la solicitud:
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -806,9 +809,9 @@ istioctl proxy-config clusters <source-pod> -n default --fqdn reviews.default.sv
 istioctl x authz check <backend-pod>.default
 ```
 
-La animación resume una ventana; no inspecciona paquetes byte a byte. Si falla la hipótesis, repita diagnóstico/configuración/prueba, no reinicie cargas a ciegas.
+La animación de tráfico resume una ventana seleccionada; no es una inspección de paquetes exacta en bytes. Repite el ciclo de diagnóstico/configuración/prueba si falla la hipótesis en vez de reiniciar workloads a ciegas.
 
-![Bucle Kiali: abrir Graph, clasificar ausencia de tráfico, errores, lentitud o rechazo; revisar configuración, logs, trazas o políticas; corregir, probar y repetir si no se resuelve.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-observability-1.png)
+![Bucle de solución de problemas de Kiali que abre la vista Graph, clasifica el síntoma en sin tráfico, errores, respuesta lenta o seguridad denegada, comprueba la configuración de Istio, logs, trazas o política de seguridad, y después corrige y prueba la configuración, repitiendo el diagnóstico si no se resuelve.](../../../.gitbook/assets/en-quizzes-service-mesh-istio-observability-1.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-quizzes-service-mesh-istio-observability-1.html)
 
@@ -816,61 +819,61 @@ La animación resume una ventana; no inspecciona paquetes byte a byte. Si falla 
 
 ***
 
-### Pregunta 9: Stack de observabilidad de producción
+### Pregunta 9: Configuración de la pila de observabilidad de producción
 
-Explique cómo desplegar Prometheus, Grafana, Jaeger y Kiali en **alta disponibilidad (HA)** para Kubernetes de producción. Incluya **almacenamiento persistente**, **escalado** y **copias de seguridad**.
+Explica cómo desplegar la pila de observabilidad de Istio (Prometheus, Grafana, Jaeger, Kiali) en configuración de **High Availability (HA)** para un clúster Kubernetes de producción. Incluye estrategias de **almacenamiento persistente**, **escalado** y **backup**.
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-Un stack HA productivo requiere diseño y verificación propios. Lo siguiente cubre requisitos principales, no un paquete probado en producción. Fije versiones compatibles Kubernetes/Istio/operador/chart/backend, revise values reales y valide fallos/restauración antes del despliegue. El [capítulo dashboards](../../../service-mesh/istio/observability/04-dashboards.md) registra la brecha actual de compatibilidad Kiali; latest no la demuestra.
+Una pila HA de producción es una tarea de diseño y verificación específica del entorno. Lo siguiente cubre los requisitos principales; no es un paquete de despliegue probado en producción. Fija versiones compatibles de Kubernetes/Istio/operator/chart/backend, revisa los valores de chart realmente utilizados y valida el comportamiento de fallo y restauración antes del rollout. El [capítulo de dashboards](../../../service-mesh/istio/observability/04-dashboards.md) registra la brecha actual de compatibilidad de Kiali; no infieras la compatibilidad a partir de las versiones más recientes.
 
-| Componente | Estado y requisitos HA |
+| Componente | Requisitos de estado y HA |
 |---|---|
-| Prometheus | Réplicas independientes con PVC por réplica, misma etiqueta de clúster y etiquetas de réplica distintas; el resto debe coincidir para deduplicar. Distribuya dominios de fallo y dimensione retención por ingesta. Un LB no fusiona historiales |
-| Thanos | Sidecars exponen StoreAPI y opcionalmente suben bloques; Query descubre endpoints reales y deduplica la etiqueta configurada. Store Gateway lee objetos; Compactor compacta/retiene con propiedad adecuada de escritor único/sharding |
-| Grafana | Dos réplicas necesitan PostgreSQL/MySQL compartido HA, provisioning/plugins/secretos coherentes y LB. Compartir SQLite o un EBS ReadWriteOnce entre nodos no es HA |
-| Alertmanager | Réplicas requieren peers/deduplicación de notificaciones, estado persistente y credenciales seguras; un webhook Slack en values no es diseño completo |
-| Jaeger2/collector | Réplicas query/collector sin estado con backend duradero admitido y su HA/TLS/credenciales. Tail sampling necesita afinidad trace ID; Service aleatorio no entrega trazas completas a cada sampler |
-| Kiali | Operador/servidor compatible, configuración/secreto de sesión compartidos y ubicación adecuada. Proteja API backend y permisos de namespaces. Estrategia token es de un clúster; use autenticación multiclúster documentada cuando haga falta |
+|Prometheus|Ejecuta réplicas independientes con un PVC por réplica, etiquetas de clúster compartidas por las réplicas de ese clúster y etiquetas de réplica distintas (las demás etiquetas deben coincidir para la deduplicación). Distribuye los dominios de fallo y dimensiona la retención para la ingesta observada. Un load balancer no fusiona sus historiales|
+|Thanos|Los sidecars exponen StoreAPI y opcionalmente cargan bloques; Query descubre endpoints StoreAPI reales y deduplica la etiqueta de réplica configurada. Store Gateway lee almacenamiento de objetos; Compactor gestiona la compactación/retención de bloques con una propiedad adecuada de escritor único/sharding|
+|Grafana|Dos réplicas requieren una base de datos HA PostgreSQL/MySQL compartida, configuración coherente de provisioning/plugins/secrets y un load balancer. Dos réplicas que comparten SQLite o un volumen EBS ReadWriteOnce entre nodos no son Grafana HA|
+|Alertmanager|Las réplicas necesitan configuración de deduplicación de pares/notificaciones, estado persistente y credenciales de receptor protegidas; colocar un webhook de Slack en valores de chart no es un diseño completo de secrets/notificaciones|
+|Jaeger2/collector|Utiliza réplicas stateless de query/collector con un backend duradero admitido y su propio HA/TLS/credenciales. Los tail samplers necesitan afinidad de trace-ID; múltiples réplicas detrás de un Service aleatorio no reciben trazas completas|
+|Kiali|Utiliza un operator/server compatible, comportamiento compartido de configuración/session-secret y ubicación de Pod adecuada. Protege las API de backend y los permisos de namespace del usuario. La estrategia de token es de un solo clúster; elige autenticación multiclúster documentada cuando sea necesaria|
 
-**Conexión del almacenamiento y object store**:
+**Almacenamiento y conexión de object store**:
 
-- Mantenga persistencia local Prometheus aunque use objetos: head/WAL reciente puede no haberse subido. Para sidecars, siga requisitos de compactación local/duración de bloques de su Thanos.
-- Deben existir bucket S3, endpoint regional, cifrado, retención e IAM. Vincule la ServiceAccount con credenciales a Pods que ejecutan sidecar/Store/Compactor. Un comentario «IRSA» no crea credenciales. Thanos S3 actual puede usar `aws_sdk_auth: true` con su cadena AWS SDK compatible.
-- En kube-prometheus-stack actual, seleccione el Secret existente bajo `prometheus.prometheusSpec.thanos.objectStorageConfig.existingSecret` con nombre/clave reales. Montar `thanos.yaml` no crea `objstore.yaml`. Verifique rutas, puertos gRPC nombrados y destinos DNS-SRV.
-- Thanos Query actual usa `--endpoint` y `--query.replica-label`. No arrastre `--store` antiguo sin verificar versión. Kiali con backend Prometheus compatible puede necesitar `thanos_proxy` documentado.
-- Cada Deployment/StatefulSet necesita selectores/etiquetas y Services coincidentes; los antiguos recursos incompletos no formaban una topología StoreAPI funcional. En EKS, estado EBS requiere ubicación EC2/CSI compatible; Fargate no monta EBS ni ejecuta DaemonSets arbitrarios.
+- Conserva la persistencia local de Prometheus incluso con object storage: los datos recientes de head/WAL pueden no haberse cargado aún. Para las cargas de sidecar, sigue los requisitos de compactación local/duración de bloque de la versión de Thanos instalada.
+- Deben existir bucket S3, endpoint regional, cifrado, retención y permisos IAM. Vincula el ServiceAccount con credenciales a los Pods que ejecutan realmente sidecar/Store/Compactor. Un comentario YAML que dice “IRSA” no crea credenciales. La configuración actual de S3 de Thanos puede usar `aws_sdk_auth: true` con la cadena de credenciales AWS SDK admitida.
+- En los valores actuales de kube-prometheus-stack, un Secret de object store existente se selecciona bajo `prometheus.prometheusSpec.thanos.objectStorageConfig.existingSecret` con el nombre/clave reales. Montar la clave `thanos.yaml` no crea un archivo llamado `objstore.yaml`. Verifica las rutas de archivo, los puertos gRPC de Service nombrados y los destinos DNS-SRV.
+- Thanos Query actual utiliza `--endpoint` y `--query.replica-label` para la configuración de endpoint/deduplicación. No arrastres un ejemplo antiguo de `--store` sin comprobar la versión elegida. Kiali que consulta un backend compatible con Prometheus también puede necesitar los ajustes `thanos_proxy` documentados.
+- Cada Deployment/StatefulSet necesita selectors/etiquetas de Pod y Services coincidentes; los recursos incompletos originales no podían formar una topología StoreAPI funcional. En EKS, el estado respaldado por EBS necesita configuración EC2/CSI y ubicación admitidas; Fargate no monta EBS ni ejecuta DaemonSets arbitrarios.
 
-**Configuración, respaldo y evidencia**:
+**Configuración, backup y demostración**:
 
-1. Configure selectores monitor/reglas y targets reales. En kube-prometheus-stack, `alertmanager.config` es hermano de `alertmanager.alertmanagerSpec`; verifique esquema fijado. Mantenga contraseñas/webhooks en referencias Secret admitidas.
-2. Respalde base/configuración/dashboards/plugins Grafana, estado Prometheus necesario y almacenamiento Jaeger con procedimientos consistentes con la aplicación. Retención de objetos no restaura por sí sola todos los componentes.
-3. Manifiestos PVC/PV Velero no demuestran captura de datos. Configure snapshots CSI/data-mover o backups de archivos admitidos, clases/plugins, credenciales y recursos de restauración. Inspeccione estado y restaure en aislamiento.
-4. Un Job de backup necesita imagen probada con herramientas, URL correcta, identidad limitada, bucket y manejo de errores. El antiguo CronJob con imagen AWS CLI y curl+jq supuestos no era una solución verificada.
-5. Monitorice fallos de receptores/exporters, colas, scrapes y capacidad PVC real. `prometheus_tsdb_storage_blocks_bytes_total` no es denominador válido. Un stack no informa fiablemente de su caída total; use heartbeat/observador independiente y distinga series ausentes/no-data de `up == 0`.
-6. Pruebe pérdida de réplica/nodo/zona, interrupción de almacenamiento, fallo backend/autenticación, rollout y restauración. PDB ayuda con interrupciones planificadas; no crea HA de DB o zona. Registre RPO/RTO y capacidad observada, no los deduzca de réplicas.
+1. Configura los selectors de monitor/reglas y los objetivos de scrape reales. En kube-prometheus-stack, `alertmanager.config` es hermano de `alertmanager.alertmanagerSpec`; verifica el esquema del chart fijado. Conserva contraseñas/webhooks en referencias Secret admitidas.
+2. Haz backup de la base de datos/configuración/dashboards provisionados/plugins de Grafana, del estado de Prometheus según sea necesario y del almacenamiento de Jaeger mediante procedimientos consistentes con la aplicación. La retención de object store por sí sola no es una estrategia de restauración para todos los componentes.
+3. Los manifiestos Velero PVC/PV por sí solos no demuestran que se capturaron datos de volumen. Configura la ruta admitida de snapshot/data-mover CSI o de backup de sistema de archivos, clases/plugins de snapshot, credenciales y los recursos necesarios para restaurar workloads. Inspecciona el estado de backup y realiza restauraciones aisladas.
+4. Un Job de backup debe tener una imagen probada que contenga las herramientas requeridas, URL de origen correcta, identidad con alcance limitado, bucket de destino y gestión de fallos. La antigua imagen AWS CLI/CronJob supuesto con curl+jq/S3 no era una solución de backup verificada.
+5. Monitoriza fallos de receiver/exporter, colas, salud de scrape y métricas reales de capacidad PVC. `prometheus_tsdb_storage_blocks_bytes_total` no es un denominador de capacidad válido. Una pila no puede informar de forma fiable su propia caída total; usa un heartbeat/observador independiente y maneja las series ausentes/sin datos por separado de `up == 0`.
+6. Prueba la pérdida de una réplica/nodo/zona, la interrupción de almacenamiento, el fallo de backend/autenticación, rollout y restauración. Los PDB ayudan con la interrupción planificada; no crean HA de base de datos ni de nivel de zona. Registra RPO/RTO y la capacidad observada en vez de afirmarlos a partir de recuentos de réplicas.
 
-Consulte [Grafana HA](https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/), [Thanos Sidecar](https://thanos.io/tip/components/sidecar.md/), [Thanos Query](https://thanos.io/tip/components/query.md/), [almacenamiento Thanos](https://thanos.io/tip/thanos/storage.md/) y [backup CSI Velero](https://velero.io/docs/main/csi/).
+Consulta [Grafana HA](https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/), [Thanos Sidecar](https://thanos.io/tip/components/sidecar.md/), [Thanos Query](https://thanos.io/tip/components/query.md/), [Thanos storage](https://thanos.io/tip/thanos/storage.md/) y [Velero CSI backup](https://velero.io/docs/main/csi/).
 
 </details>
 
 ***
 
-### Pregunta 10: Métricas personalizadas y dashboards
+### Pregunta 10: Métricas personalizadas y creación de dashboards
 
-Explique cómo recoger **métricas de negocio**, como pedidos o éxito de pagos, además de las predeterminadas de Envoy Istio, y crear un dashboard Grafana.
+Explica cómo recopilar **métricas de negocio** (por ejemplo, recuento de pedidos, tasa de éxito de pago) más allá de las métricas predeterminadas recopiladas por Istio Envoy, y crear un dashboard personalizado de Grafana.
 
 <details>
 
 <summary>Mostrar respuesta</summary>
 
-Defina evento y límite de conteo antes de elegir métricas. Envoy conoce solicitudes, no si se creó un pedido de forma duradera o se liquidó un pago. Los siguientes **fragmentos cuentan intentos de procesamiento completados**, no pedidos únicos ni ingresos contables. La aplicación debe aportar funciones/contrato de errores, idempotencia y validación. Para éxito de pagos real, instrumente resultados en el límite de pago y derive una proporción de contadores; un Gauge sin mantener no es una tasa de éxito.
+Define el evento de negocio y el límite de recuento antes de elegir métricas. Envoy conoce las solicitudes, no si un pedido se creó de forma duradera o un pago se liquidó. Los siguientes **fragmentos de integración cuentan intentos de procesamiento completados**, no pedidos únicos ni ingresos contables. La aplicación debe proporcionar sus funciones de procesamiento/contrato de error, idempotencia y validación. Para una métrica de éxito de pago real, instrumenta los resultados de pago en el límite de pago y deriva una proporción de contadores de resultados; un Gauge sin mantenimiento no es una tasa de éxito.
 
-Use etiquetas de categoría/estado acotadas, Counter para intentos e Histograms para importes/duración no negativos. Observe duración en `finally` para incluir fallos. No etiquete con IDs de pedido/usuario ni URL brutas. Son ejemplos de un proceso; varios workers necesitan la configuración admitida por la biblioteca.
+Usa etiquetas de categoría/estado acotadas, un Counter para intentos e Histograms para importes/duración no negativos. Observa la duración en `finally` para que se incluyan los fallos. No etiquetes métricas con IDs de pedido, IDs de usuario ni URL sin procesar. Estos ejemplos son de proceso único; la agregación multi-worker necesita la configuración admitida por la biblioteca cliente.
 
-**Python/Flask** (la aplicación aporta `process_order` y `PaymentException`):
+**Python/Flask** (la aplicación proporciona `process_order` y `PaymentException`):
 
 ```python
 from flask import Flask, request, jsonify, Response
@@ -918,7 +921,7 @@ def metrics():
 # or process-local counters as a production accounting system.
 ```
 
-**Node.js/Express**: el paquete mantenido es `@prometheus-io/client`, con API comprobada en 0.16.1 sobre Node 22. `prom-client` está obsoleto en su favor; los proyectos existentes deben revisar el changelog de migración. Configure middleware JSON y espere `register.metrics()`:
+**Node.js/Express**: el paquete mantenido es `@prometheus-io/client` (API de ejemplo comprobada con 0.16.1 en Node 22). `prom-client` está obsoleto en favor de este paquete; los proyectos existentes deben revisar el changelog de migración. Configura el middleware JSON y espera `register.metrics()`:
 
 ```javascript
 const express = require('express');
@@ -970,7 +973,7 @@ app.get('/metrics', async (req, res) => {
 // Integrate app.listen/shutdown with the application's server lifecycle.
 ```
 
-**Recogida Kubernetes**: este laboratorio sidecar usa el endpoint fusionado Istio, sin asumir que un scrape de aplicación en texto plano atraviese STRICT mTLS. Combine etiquetas/anotaciones en el Deployment real `order-service` de `default`; su imagen debe incluir la aplicación y exponer `/metrics` en 8080. Debe habilitarse Prometheus merging. El endpoint de agente 15020 es texto plano: restrinja red. Si ya se recogen estas métricas, no añada monitor duplicado.
+**Recopilación de Kubernetes**: este laboratorio sidecar utiliza el endpoint fusionado de Istio para no asumir que un scrape de aplicación de texto plano pasará mTLS STRICT. Fusiona estas etiquetas/anotaciones en el Deployment `order-service` real en `default`; su imagen debe contener la aplicación y exponer `/metrics` en8080. El mesh debe tener habilitada la fusión de Prometheus. El endpoint agent15020 es cleartext, así que restringe el acceso de red. Si un scraper existente ya recopila estas métricas de negocio, no añadas un monitor duplicado.
 
 ```yaml
 spec:
@@ -1029,9 +1032,9 @@ spec:
       action: keep
 ```
 
-Prometheus debe seleccionar ServiceMonitor de `istio-system`, que descubre Service en `default`. Conservar solo familias de negocio evita duplicar métricas de proxy recogidas por otra vía. `targetLabels` añade explícitamente `app` del Service. Es un ejemplo sidecar; scraping ambient/TLS directo requiere otro diseño admitido.
+El recurso Prometheus debe seleccionar el ServiceMonitor en `istio-system`; descubre el Service en `default`. Mantener solo las familias de métricas de negocio evita duplicar métricas de proxy ya recopiladas en otra parte. `targetLabels` añade explícitamente la etiqueta `app` del Service. Este es un ejemplo sidecar; el scraping ambient/TLS directo necesita su propio diseño admitido.
 
-**Consultas** (en orden: intentos del intervalo, intentos/segundo, fracción de éxito, P95 de importe observado, P99 de duración, tasa por categoría, fracción de fallo de pago entre intentos de pedido):
+**Consultas** (en orden: recuento de intentos del intervalo, intentos/segundo, fracción de éxito, P95 de importe observado, P99 de duración, tasa por categoría, fracción de fallos de pago entre intentos de pedido):
 
 ```promql
 sum(increase(orders_total{namespace="default",app="order-service"}[5m]))
@@ -1049,9 +1052,9 @@ sum by (product_category) (rate(orders_total{namespace="default",app="order-serv
 sum(rate(orders_total{namespace="default",app="order-service",status="payment_failed"}[5m])) / sum(rate(orders_total{namespace="default",app="order-service"}[5m]))
 ```
 
-`increase` estima total del intervalo; `rate` es por segundo. Reinicios, reintentos y scrapes perdidos significan que contadores/importes operativos no son un libro contable. Para pedidos únicos confirmados o ingresos, concilie con el sistema duradero, sin asumir telemetría exactamente una vez.
+`increase` estima el total del intervalo; `rate` es por segundo. Los reinicios de proceso, los reintentos y los scrapes perdidos significan que los contadores/sumas de importes operativos no son un libro contable. Para pedidos únicos confirmados o ingresos, concilia con el sistema de negocio duradero en vez de asumir que la telemetría es exactamente una vez.
 
-**Grafana**: el objeto completo espera UID datasource `prometheus` y etiquetas del monitor. Guárdelo sin wrapper API y use el [provisioning documentado de archivos](../../../service-mesh/istio/observability/04-dashboards.md). Una etiqueta ConfigMap no configura por sí sola un proveedor.
+**Grafana**: este objeto de dashboard completo espera el UID de datasource `prometheus` y las etiquetas del monitor anterior. Guárdalo sin un wrapper de API y utiliza el [provisioning documentado de archivos de dashboard](../../../service-mesh/istio/observability/04-dashboards.md). Una etiqueta ConfigMap por sí sola no configura un proveedor.
 
 ```json
 {
@@ -1167,7 +1170,7 @@ sum(rate(orders_total{namespace="default",app="order-service",status="payment_fa
 }
 ```
 
-**Alertas**: seleccione la regla con Prometheus Operator. El mínimo de tráfico evita alertar por proporción sin tráfico; ausencia/fallo de scrape necesita otra señal. Los umbrales son ejemplos, no garantías SLO.
+**Alertas**: selecciona esta regla con el Prometheus Operator instalado. El umbral mínimo de tráfico evita una alerta de proporción sin tráfico; la ausencia/fallo de scrape necesita una señal separada. Los umbrales son ejemplos, no garantías de SLO de negocio.
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1197,7 +1200,7 @@ spec:
         summary: P95 processing attempt duration exceeds2s
 ```
 
-Consulte el [cliente Python](https://prometheus.github.io/client_python/) y el [cliente JavaScript](https://github.com/prometheus/client_js) para tipos, exposición y modelos de proceso.
+Consulta la documentación del [cliente Python](https://prometheus.github.io/client_python/) y del [cliente JavaScript](https://github.com/prometheus/client_js) para tipos de métrica, exposición y modelos de proceso.
 
 </details>
 
@@ -1205,21 +1208,21 @@ Consulte el [cliente Python](https://prometheus.github.io/client_python/) y el [
 
 ## Cálculo de puntuación
 
-* Opción múltiple 1-5: 10 puntos cada una (50 en total)
-* Respuesta breve 6-10: 10 puntos cada una (50 en total)
+* Opción múltiple 1-5: 10 puntos cada una (Total 50 puntos)
+* Respuesta corta 6-10: 10 puntos cada una (Total 50 puntos)
 * **Total: 100 puntos**
 
 **Criterios de evaluación:**
 
 * 90-100 puntos: Excelente comprensión de estos temas
-* 80-89 puntos: Buena comprensión; validar despliegues sigue siendo independiente
-* 70-79 puntos: Media (se recomienda seguir aprendiendo)
-* 60-69 puntos: Por debajo de la media (repasar conceptos básicos)
-* 0-59 puntos: Necesita volver a estudiar
+* 80-89 puntos: Buena comprensión; la validación del despliegue sigue siendo independiente
+* 70-79 puntos: Media (se recomienda aprendizaje adicional)
+* 60-69 puntos: Por debajo de la media (se necesita revisión de conceptos básicos)
+* 0-59 puntos: Se necesita volver a aprender
 
 ## Recursos de aprendizaje
 
 * [Métricas](../../../service-mesh/istio/observability/01-metrics.md)
 * [Trazado distribuido](../../../service-mesh/istio/observability/02-tracing.md)
-* [Registros](../../../service-mesh/istio/observability/03-logging.md)
+* [Logging](../../../service-mesh/istio/observability/03-logging.md)
 * [Visualización](../../../service-mesh/istio/observability/04-dashboards.md)

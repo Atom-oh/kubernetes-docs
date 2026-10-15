@@ -1,367 +1,133 @@
-# Cuestionario sobre la creación de clústeres EKS - Parte 4
+# Cuestionario de creación de clústeres de EKS - Parte 4
 
-Este cuestionario evalúa tu comprensión de temas avanzados de configuración, escalabilidad y operación relacionados con la creación de clústeres de Amazon EKS. Cubre temas como el escalado de clústeres, la automatización, la optimización de costos y las mejores prácticas operativas.
+> **Última actualización**: October 12, 2026
+
+Este cuestionario conecta la guía de clústeres con Terraform con las operaciones de escalado, identidades y ciclo de vida. La sección final verifica conceptos específicos de Terraform. Los ejemplos requieren una cuenta/Region/kubeconfig, IAM y prerrequisitos de red revisados; no se implementaron durante esta auditoría.
 
 ## Preguntas de conceptos básicos
 
-1. ¿Cuál es la principal diferencia entre Cluster Autoscaler y Karpenter en un clúster de Amazon EKS?
-   * A) Cluster Autoscaler es un servicio de AWS, mientras que Karpenter es una herramienta de código abierto
-   * B) Cluster Autoscaler escala a nivel de node group, mientras que Karpenter aprovisiona nodes individuales que coinciden con los requisitos de la carga de trabajo
-   * C) Cluster Autoscaler escala según el uso de CPU/memoria, mientras que Karpenter escala según la cantidad de pods
-   * D) Cluster Autoscaler solo admite escalado horizontal, mientras que Karpenter también admite escalado vertical
+1. ¿Cuál es la principal diferencia de aprovisionamiento entre Cluster Autoscaler y Karpenter?
+   * A) CA es un servicio administrado de AWS
+   * B) CA escala grupos existentes; Karpenter aprovisiona capacidad individual seleccionada
+   * C) CA mide solo CPU y Karpenter solo el recuento de Pods
+   * D) Karpenter reemplaza al programador de Kubernetes
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: B) Cluster Autoscaler escala a nivel de node group, mientras que Karpenter aprovisiona nodes individuales que coinciden con los requisitos de la carga de trabajo**
+**Respuesta: B) CA escala grupos existentes; Karpenter aprovisiona capacidad individual seleccionada**
 
-**Explicación:** La principal diferencia entre Cluster Autoscaler y Karpenter en un clúster de Amazon EKS radica en su enfoque de escalado. Cluster Autoscaler escala a nivel de node group basándose en Auto Scaling Groups (ASG) existentes, mientras que Karpenter aprovisiona directamente nodes individuales que coinciden con los requisitos de la carga de trabajo.
+Cluster Autoscaler ajusta el tamaño de los grupos de nodos/ASG predefinidos y detectados. Karpenter crea NodeClaims y capacidad de EC2 seleccionada mediante NodePools y EC2NodeClasses. Kubernetes programa Pods; Karpenter no reemplaza al programador de Kubernetes.
 
-**Características de Cluster Autoscaler:**
+Ambos consideran las solicitudes de cargas de trabajo no programables y las restricciones de colocación. Ninguno es simplemente «porcentaje de CPU frente a recuento de Pods», y ninguno redimensiona una instancia de EC2 en ejecución en el mismo lugar. Karpenter puede reemplazar capacidad con instancias de distinto tamaño; VPA administra por separado las solicitudes de recursos de Pods.
 
-1. **Escalado basado en Node Group**:
-   * Escala usando Auto Scaling Groups predefinidos
-   * Usa el mismo tipo de instancia o tipos de instancia mixtos dentro de un node group
-   *   Ejemplo:
+**Ejemplo de Cluster Autoscaler:** para EKS 1.36, use una versión secundaria coincidente y una ServiceAccount dedicada con IAM y etiquetas de detección revisados. El chart 9.59.0 necesita la anulación explícita de la imagen v1.36.1. Renderice RBAC, la imagen y los argumentos antes de la instalación:
 
-       ```yaml
-       # Cluster Autoscaler Deployment
-       apiVersion: apps/v1
-       kind: Deployment
-       metadata:
-         name: cluster-autoscaler
-         namespace: kube-system
-       spec:
-         replicas: 1
-         selector:
-           matchLabels:
-             app: cluster-autoscaler
-         template:
-           metadata:
-             labels:
-               app: cluster-autoscaler
-           spec:
-             containers:
-             - image: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.23.0
-               name: cluster-autoscaler
-               command:
-               - ./cluster-autoscaler
-               - --v=4
-               - --stderrthreshold=info
-               - --cloud-provider=aws
-               - --skip-nodes-with-local-storage=false
-               - --expander=least-waste
-               - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/my-cluster
-       ```
-2. **Cómo funciona**:
-   * Escala hacia arriba los node groups cuando hay pods que no se pueden programar
-   * Escala hacia abajo los node groups cuando la utilización de los nodes es baja
-   * Opera dentro de los límites mínimo/máximo de tamaño del ASG
-3. **Limitaciones**:
-   * Velocidad de escalado relativamente lenta (2-10 minutos)
-   * Limitado a tipos de instancia predefinidos
-   * Solo puede escalar a nivel de node group
+```bash
+helm repo add autoscaler https://kubernetes.github.io/autoscaler
+helm repo update autoscaler
+helm template cluster-autoscaler autoscaler/cluster-autoscaler \
+  --version 9.59.0 --namespace kube-system \
+  --set-string autoDiscovery.clusterName="${EXAMPLE_CLUSTER:?}" \
+  --set-string awsRegion="${EXAMPLE_REGION:?}" \
+  --set-string image.tag=v1.36.1 \
+  --set rbac.serviceAccount.create=false \
+  --set-string rbac.serviceAccount.name=cluster-autoscaler \
+  > cluster-autoscaler-reviewed.yaml
+```
+Mantenga las protecciones de almacenamiento local y Pods del sistema, salvo que una política de carga de trabajo/datos revisada requiera lo contrario. Los tipos de instancia mixtos en un grupo administrado por CA deben tener formas comparables de CPU/memoria/GPU.
 
-**Características de Karpenter:**
+**Ejemplo de Karpenter:** instale un controlador/CRD compatibles y configure por separado su IAM, autorización de nodos, etiquetas de detección, manejo de interrupciones y límites de capacidad. Reemplace ambos marcadores de posición de AMI por imágenes AL2023 revisadas que coincidan con la versión del clúster y con cada arquitectura. Las imágenes de las cargas de trabajo deben admitir ambas arquitecturas si ambas están permitidas:
 
-1. **Aprovisionamiento basado en la carga de trabajo**:
-   * Selecciona tipos de instancia óptimos que coinciden con los requisitos de la carga de trabajo
-   * Aprovisiona directamente instancias EC2 sin ASG
-   *   Ejemplo:
+```yaml
+# Karpenter NodePool (karpenter.sh/v1) + EC2NodeClass (karpenter.k8s.aws/v1)
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default
+spec:
+  template:
+    spec:
+      requirements:
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot", "on-demand"]
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64", "arm64"]
+        - key: node.kubernetes.io/instance-type
+          operator: In
+          values: ["m5.large", "m5a.large", "m5d.large", "m5ad.large", "m6g.large"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
+  limits:
+    cpu: 1000
+    memory: 1000Gi
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 30s
+---
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: default
+spec:
+  role: KarpenterNodeRole-my-cluster
+  amiFamily: AL2023
+  amiSelectorTerms:
+    - id: ami-REPLACE_WITH_REVIEWED_AMD64_IMAGE
+    - id: ami-REPLACE_WITH_REVIEWED_ARM64_IMAGE
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: my-cluster
+```
+| Comparación | Cluster Autoscaler | Karpenter |
+| --- | --- | --- |
+| Unidad de escalado | Capacidad de grupo de nodos/ASG existente | NodeClaims y capacidad de EC2 seleccionada |
+| Configuración | Grupos, detección, IAM y controlador | NodePools, EC2NodeClasses, IAM y controlador |
+| Eliminación | Requiere comprobaciones de programación e interrupción | Sujeta a consolidación, presupuestos y controles de interrupción |
+| Afirmación histórica de tiempo en la guía original | 2–10 minutos, sin verificar | Menos de 1 minuto, sin verificar |
 
-       ```yaml
-       # Karpenter Provisioner
-       apiVersion: karpenter.sh/v1alpha5
-       kind: NodePool
-       metadata:
-         name: default
-       spec:
-         template:
-           spec:
-             requirements:
-               - key: karpenter.sh/capacity-type
-                 operator: In
-                 values: ["spot", "on-demand"]
-               - key: kubernetes.io/arch
-                 operator: In
-                 values: ["amd64", "arm64"]
-           - key: node.kubernetes.io/instance-type
-             operator: In
-             values: ["m5.large", "m5a.large", "m5d.large", "m5ad.large", "m6g.large"]
-         limits:
-           resources:
-             cpu: 1000
-             memory: 1000Gi
-         provider:
-           subnetSelector:
-             karpenter.sh/discovery: "true"
-           securityGroupSelector:
-             karpenter.sh/discovery: "true"
-         ttlSecondsAfterEmpty: 30
-       ```
-2. **Cómo funciona**:
-   * Analiza los requisitos de los pods que no se pueden programar
-   * Selecciona tipos de instancia óptimos que coinciden con los requisitos
-   * Aprovisiona directamente instancias y programa pods
-   * Termina automáticamente los nodes cuando están vacíos
-3. **Ventajas**:
-   * Velocidad de escalado rápida (menos de 1 minuto)
-   * Selecciona tipos de instancia optimizados para las cargas de trabajo
-   * Optimización de costos (uso de instancias Spot, dimensionamiento correcto)
-   * Configuración simplificada (no se necesita gestión de ASG)
-
-**Comparación de ambas herramientas:**
-
-| Característica           | Cluster Autoscaler                  | Karpenter                                    |
-| ------------------------ | ----------------------------------- | -------------------------------------------- |
-| Unidad de escalado       | Node Group (ASG)                    | Node individual                              |
-| Selección de instancia   | Tipos de instancia predefinidos     | Instancias óptimas para los requisitos de la carga de trabajo |
-| Velocidad de escalado    | Lenta (2-10 minutos)                | Rápida (menos de 1 minuto)                   |
-| Complejidad de configuración | Media (se requiere configuración de ASG) | Baja (solo se necesita la definición de Provisioner) |
-| Optimización de costos   | Limitada                            | Alta (selección de instancias optimizada para la carga de trabajo) |
-| Madurez                  | Alta (proyecto más antiguo)         | Media (proyecto relativamente nuevo)         |
-
-**Problemas con las otras opciones:**
-
-* **Cluster Autoscaler es un servicio de AWS, mientras que Karpenter es una herramienta de código abierto**: Ambas son herramientas de código abierto. Cluster Autoscaler es gestionado por Kubernetes SIG Autoscaling y, aunque Karpenter fue iniciado por AWS, es un proyecto de código abierto.
-* **Cluster Autoscaler escala según el uso de CPU/memoria, mientras que Karpenter escala según la cantidad de pods**: Ambos escalan fundamentalmente en función de pods que no se pueden programar (estado Pending). El escalado basado en uso de CPU/memoria es la función de Horizontal Pod Autoscaler (HPA).
-* **Cluster Autoscaler solo admite escalado horizontal, mientras que Karpenter también admite escalado vertical**: Ambos solo admiten escalado horizontal (aumento de la cantidad de nodes). El escalado vertical (aumento de recursos de nodes) no es compatible. El escalado vertical a nivel de pod es la función de Vertical Pod Autoscaler (VPA).
-
-Tanto Cluster Autoscaler como Karpenter son herramientas para el escalado automático de clústeres EKS, pero Karpenter proporciona un escalado más rápido y flexible, y puede seleccionar instancias óptimas que coinciden con los requisitos de la carga de trabajo.
+Los números de tiempo originales se conservan como **afirmaciones históricas sin verificar**, no como puntos de referencia reproducidos en esta auditoría ni como rendimiento actual garantizado. El arranque de nodos, las imágenes, las cuotas y las restricciones de las cargas de trabajo afectan a ambas herramientas. No infiera de esa tabla una clasificación universal de coste, simplicidad o latencia.
 
 </details>
 
-2. ¿Cuáles son los tipos de capacidad válidos que se pueden usar al crear un node group en un clúster de Amazon EKS?
+2. ¿Qué tipos de capacidad están en la API actual de EKS CreateNodegroup?
    * A) Reserved, On-Demand, Spot
    * B) On-Demand, Spot, Dedicated
-   * C) On-Demand, Spot
+   * C) ON_DEMAND, SPOT, CAPACITY_BLOCK
    * D) Standard, Burstable, Compute-Optimized
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) On-Demand, Spot**
+**Respuesta: C) ON_DEMAND, SPOT, CAPACITY_BLOCK**
 
-**Explicación:** Al crear un node group de Amazon EKS, los tipos de capacidad disponibles son On-Demand y Spot.
+La API actual de EKS CreateNodegroup incluye **ON_DEMAND, SPOT y CAPACITY_BLOCK**. Un grupo de nodos administrado usa un tipo de capacidad; use grupos separados para grupos de capacidad distintos.
 
-**Tipo de capacidad On-Demand:**
+On-Demand evita la recuperación de Spot, pero no es una garantía de interrupción ni de disponibilidad. Spot usa capacidad sobrante y requiere cargas de trabajo tolerantes a interrupciones; los descuentos anunciados no son ahorros garantizados. Reserved Instances/Savings Plans son acuerdos de facturación, no valores de enumeración adicionales de CreateNodegroup.
 
-* **Características**: Instancias disponibles de forma confiable y sin interrupción
-* **Precios**: Pagas una tarifa fija por hora
-* **Cargas de trabajo adecuadas**:
-  * Aplicaciones de producción sensibles a interrupciones
-  * Cargas de trabajo con estado
-  * Bases de datos
-  * Aplicaciones empresariales críticas
+Los Capacity Blocks son un flujo de trabajo independiente de reserva limitada en el tiempo para instancias/Regions compatibles. Requieren una plantilla de lanzamiento personalizada dirigida a la reserva, una AZ/subred coincidente y escalado consciente de la reserva. EKS crea una reducción de escala programada 40 minutos antes de que finalice la reserva; no modifique ni elimine esa acción. Los ejemplos siguientes son alternativas convencionales de On-Demand/Spot, no aprovisionamiento de Capacity Block.
 
-**Tipo de capacidad Spot:**
-
-* **Características**: Utiliza capacidad sobrante de AWS; puede interrumpirse cuando AWS reclama la capacidad
-* **Precios**: Hasta un 90% de descuento en comparación con On-Demand
-* **Cargas de trabajo adecuadas**:
-  * Aplicaciones tolerantes a fallos
-  * Cargas de trabajo sin estado
-  * Trabajos de procesamiento por lotes
-  * Entornos de desarrollo/prueba
-
-**Ejemplo de especificación del tipo de capacidad al crear un EKS Node Group:**
-
-Ejemplo de AWS CLI:
+**AWS CLI:** use un nombre de grupo de nodos sin utilizar, subredes privadas existentes y un rol de nodo de EC2 aprobado (incluida la ruta de identidad de CNI necesaria). Espere a que el grupo se active y luego verifique la preparación real de Node/carga de trabajo:
 
 ```bash
-aws eks create-nodegroup \
-  --cluster-name my-cluster \
-  --nodegroup-name my-spot-nodegroup \
+set -euo pipefail
+aws eks create-nodegroup --cluster-name "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --nodegroup-name "${NEW_NODEGROUP_NAME:?}" \
   --scaling-config minSize=3,maxSize=10,desiredSize=5 \
-  --subnets subnet-0a1b2c3d4e5f6g7h8 subnet-0a1b2c3d4e5f6g7h9 \
-  --instance-types t3.medium t3a.medium \
-  --capacity-type SPOT \
-  --node-role arn:aws:iam::123456789012:role/EKS-NodeInstanceRole
+  --subnets "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" \
+  --instance-types t3.medium t3a.medium --capacity-type SPOT \
+  --ami-type AL2023_x86_64_STANDARD --node-role "${NODE_ROLE_ARN:?}"
+aws eks wait nodegroup-active --cluster-name "$EXAMPLE_CLUSTER" \
+  --region "$EXAMPLE_REGION" --nodegroup-name "$NEW_NODEGROUP_NAME"
 ```
-
-Ejemplo de eksctl:
-
-```yaml
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-metadata:
-  name: my-cluster
-  region: us-west-2
-nodeGroups:
-  - name: ng-on-demand
-    instanceType: m5.large
-    desiredCapacity: 3
-    capacityType: ON_DEMAND
-  - name: ng-spot
-    instanceType: m5.large
-    desiredCapacity: 2
-    capacityType: SPOT
-    spotInstancePools: 3
-```
-
-**Problemas con las otras opciones:**
-
-* **Reserved, On-Demand, Spot**: "Reserved" se refiere a EC2 Reserved Instances, pero no puede especificarse directamente como tipo de capacidad al crear node groups de EKS. Reserved Instances es un modelo de descuento de facturación y no puede seleccionarse directamente como tipo de capacidad de un node group.
-* **On-Demand, Spot, Dedicated**: "Dedicated" se refiere a EC2 Dedicated Instances, pero no puede especificarse directamente como tipo de capacidad de un node group de EKS. Dedicated Instances puede configurarse mediante ajustes de tenancy separados.
-* **Standard, Burstable, Compute-Optimized**: Estos representan tipos de familias de instancias EC2, no tipos de capacidad. Son características que se consideran al seleccionar tipos de instancia (por ejemplo, t3.medium, m5.large, c5.xlarge).
-
-**Mejores prácticas:**
-
-1. **Usar una estrategia de capacidad mixta**:
-   * Coloca las cargas de trabajo críticas en node groups On-Demand
-   * Coloca las cargas de trabajo tolerantes a fallos en node groups Spot
-   * Controla la ubicación de las cargas de trabajo usando node affinity y tolerations
-2. **Consideraciones al usar instancias Spot**:
-   * Especifica varios tipos de instancia (distribuye el riesgo de interrupción)
-   * Implementa mecanismos adecuados de manejo de interrupciones (Pod Disruption Budgets, hooks de apagado ordenado)
-   * Despliega AWS Node Termination Handler
-3. **Optimización de costos**:
-   * Aplica Savings Plans o Reserved Instances a nodes On-Demand
-   * Considera instancias Graviton (ARM)
-   * Selecciona tamaños de instancia adecuados
-
-</details>
-
-3. ¿Qué se debe especificar obligatoriamente al configurar un perfil de Fargate en un clúster de Amazon EKS?
-   * A) Tipo de instancia y tipo de capacidad
-   * B) Namespace y selector de labels
-   * C) Subnet ID y security group
-   * D) Configuración de autoscaling y número máximo de pods
-
-<details>
-
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: B) Namespace y selector de labels**
-
-**Explicación:** Al configurar un perfil de Fargate de Amazon EKS, los elementos obligatorios que se deben especificar son el namespace y, opcionalmente, el selector de labels. EKS usa esta información para determinar qué pods deben ejecutarse en Fargate.
-
-**Componentes del perfil de Fargate:**
-
-1. **Componentes requeridos**:
-   * **Nombre del perfil**: Identificador único para el perfil de Fargate
-   * **Pod Execution Role**: Rol de IAM requerido para ejecutar pods en la infraestructura de Fargate
-   * **Subnets**: Subnets privadas donde se ejecutarán los pods de Fargate (usa las subnets del clúster de forma predeterminada)
-   * **Selectores**: Array compuesto por namespaces y labels opcionales
-2. **Configuración del selector**:
-   * **Namespace**: Namespace de Kubernetes al que pertenece el pod (requerido)
-   * **Labels**: Labels de Kubernetes en pares clave-valor (opcionales)
-
-**Ejemplos de creación de perfiles de Fargate:**
-
-Ejemplo de AWS CLI:
-
-```bash
-aws eks create-fargate-profile \
-  --cluster-name my-cluster \
-  --fargate-profile-name my-fargate-profile \
-  --pod-execution-role-arn arn:aws:iam::123456789012:role/AmazonEKSFargatePodExecutionRole \
-  --subnets subnet-0a1b2c3d4e5f6g7h8 subnet-0a1b2c3d4e5f6g7h9 \
-  --selectors namespace=default,labels={app=nginx} namespace=kube-system,labels={k8s-app=kube-dns}
-```
-
-Ejemplo de eksctl:
-
-```yaml
-apiVersion: eksctl.io/v1alpha5
-kind: ClusterConfig
-metadata:
-  name: my-cluster
-  region: us-west-2
-fargateProfiles:
-  - name: fp-default
-    selectors:
-      - namespace: default
-        labels:
-          app: nginx
-      - namespace: kube-system
-        labels:
-          k8s-app: kube-dns
-```
-
-**Cómo funcionan los perfiles de Fargate:**
-
-1. Cuando se crea un pod, EKS comprueba el namespace y las labels del pod.
-2. Si el namespace y las labels del pod coinciden con los selectores de un perfil de Fargate, ese pod se ejecuta en la infraestructura de Fargate.
-3. Si no existe un perfil de Fargate coincidente, el pod se programa en nodes EC2 (si están disponibles) o permanece en estado Pending.
-
-**Problemas con las otras opciones:**
-
-* **Tipo de instancia y tipo de capacidad**: Fargate es un servicio de cómputo serverless, por lo que no es necesario especificar tipos de instancia ni tipos de capacidad. AWS aprovisiona automáticamente los recursos de cómputo necesarios.
-* **Subnet ID y security group**: Aunque se necesita el Subnet ID, se pueden usar las subnets del clúster como valores predeterminados. Los security groups son opcionales; si no se especifican, se usan los security groups del clúster.
-* **Configuración de autoscaling y número máximo de pods**: Fargate escala automáticamente por pod, por lo que no se necesita configuración de autoscaling separada. La cantidad de pods se gestiona mediante Kubernetes Deployments o HPA (Horizontal Pod Autoscaler).
-
-**Consideraciones al usar Fargate:**
-
-1. **Costo**: Con Fargate, solo pagas por los recursos de vCPU y memoria que realmente se usan. No hay costo por nodes inactivos.
-2. **Limitaciones**:
-   * Los pods de DaemonSet no son compatibles con Fargate.
-   * Los contenedores privilegiados no son compatibles.
-   * Los modos de red del host como HostNetwork y HostPort no son compatibles.
-   * Para volúmenes persistentes, solo se admite Amazon EFS.
-3. **Casos de uso**:
-   * Trabajos de procesamiento por lotes
-   * Aplicaciones web
-   * Servidores API
-   * Microservices
-   * Entornos de desarrollo/prueba
-
-</details>
-
-4. ¿Cuál de los siguientes NO es un elemento configurable en la "configuración de actualización" al actualizar un node group en un clúster de Amazon EKS?
-   * A) Cantidad máxima de nodes no disponibles
-   * B) Porcentaje máximo de nodes no disponibles
-   * C) Estrategia de reemplazo de nodes
-   * D) Tiempo de espera de actualización del node group
-
-<details>
-
-<summary>Mostrar respuesta</summary>
-
-**Respuesta: C) Estrategia de reemplazo de nodes**
-
-**Explicación:** "Estrategia de reemplazo de nodes" no es un elemento de configuración oficial en la configuración de actualización de node groups de Amazon EKS. Los node groups gestionados de EKS usan un enfoque de rolling update de forma predeterminada, y no existe una opción para cambiar directamente esta estrategia.
-
-**Elementos configurables en la configuración de actualización de EKS Node Group:**
-
-1. **maxUnavailable**:
-   * Número máximo de nodes que pueden no estar disponibles simultáneamente durante la actualización
-   * Puede especificarse como un número absoluto (por ejemplo, 1, 2, 3) o como porcentaje (por ejemplo, 20%)
-   * Predeterminado: 1
-2. **maxUnavailablePercentage**:
-   * Porcentaje máximo de nodes que pueden no estar disponibles simultáneamente durante la actualización
-   * Se especifica como un valor entre 1 y 100
-   * No puede usarse junto con `maxUnavailable`
-3. **force**:
-   * Si se debe forzar la actualización del node group
-   * Predeterminado: false
-4. **Timeout**:
-   * Tiempo máximo de espera para la operación de actualización del node group
-   * Predeterminado: 60 minutos
-
-**Ejemplos de configuración de actualización de Node Group:**
-
-Ejemplo de AWS CLI:
-
-```bash
-aws eks update-nodegroup-config \
-  --cluster-name my-cluster \
-  --nodegroup-name my-nodegroup \
-  --update-config maxUnavailable=2
-```
-
-O especificando un porcentaje:
-
-```bash
-aws eks update-nodegroup-config \
-  --cluster-name my-cluster \
-  --nodegroup-name my-nodegroup \
-  --update-config maxUnavailablePercentage=20
-```
-
-Ejemplo de eksctl:
+**Alternativa con eksctl:** guarde una configuración para el clúster existente y nombres de grupo sin utilizar, y luego use `eksctl create nodegroup -f nodegroups.yaml`. Use `managedNodeGroups` y `spot`, no los campos `capacityType` no compatibles del ejemplo original:
 
 ```yaml
 apiVersion: eksctl.io/v1alpha5
@@ -370,448 +136,469 @@ metadata:
   name: my-cluster
   region: us-west-2
 managedNodeGroups:
-  - name: my-nodegroup
-    updateConfig:
-      maxUnavailable: 2
+- name: ng-on-demand
+  amiFamily: AmazonLinux2023
+  instanceType: m5.large
+  privateNetworking: true
+  desiredCapacity: 3
+  minSize: 2
+  maxSize: 5
+  spot: false
+- name: ng-spot
+  amiFamily: AmazonLinux2023
+  instanceTypes: [m5.large, m5a.large]
+  privateNetworking: true
+  desiredCapacity: 2
+  minSize: 0
+  maxSize: 5
+  spot: true
 ```
-
-**Proceso de actualización de Node Group:**
-
-1. **Inicio de la actualización**: AWS inicia la actualización del node group.
-2. **Node Draining**: Según la configuración de `maxUnavailable`, se aplican cordon y drain al número especificado de nodes.
-3. **Terminación de nodes**: Termina los nodes drenados.
-4. **Creación de nuevos nodes**: Crea nodes con la nueva configuración.
-5. **Repetición**: Repite los pasos 2-4 hasta que todos los nodes estén actualizados.
-
-**Explicación de las otras opciones:**
-
-* **Cantidad máxima de nodes no disponibles (maxUnavailable)**: Configuración válida para especificar el número máximo de nodes que pueden no estar disponibles simultáneamente durante la actualización.
-* **Porcentaje máximo de nodes no disponibles (maxUnavailable)**: Configuración válida para especificar el porcentaje máximo de nodes que pueden no estar disponibles simultáneamente durante la actualización.
-* **Tiempo de espera de actualización del node group**: Configuración válida para especificar el tiempo máximo de espera para la operación de actualización del node group.
-
-**Mejores prácticas de actualización de Node Group:**
-
-1. **Establecer un valor maxUnavailable adecuado**:
-   * Un valor demasiado pequeño prolonga el tiempo de actualización.
-   * Un valor demasiado grande puede afectar la disponibilidad de la aplicación.
-   * Establécelo considerando las características de la carga de trabajo y el tamaño del node group.
-2. **Configurar Pod Disruption Budgets (PDB)**:
-   * Configura PDB para cargas de trabajo críticas a fin de garantizar una disponibilidad mínima.
-   *   Ejemplo:
-
-       ```yaml
-       apiVersion: policy/v1
-       kind: PodDisruptionBudget
-       metadata:
-         name: app-pdb
-       spec:
-         minAvailable: 2  # or maxUnavailable: 1
-         selector:
-           matchLabels:
-             app: my-app
-       ```
-3. **Probar antes de actualizar**:
-   * Valida en un entorno de prueba antes de actualizaciones críticas.
-   * Prepara un plan de rollback.
-4. **Monitoreo**:
-   * Monitorea el estado de la aplicación durante la actualización.
-   * Pausa o revierte la actualización si ocurren problemas.
+Use afinidad/selectores y toleraciones para colocar las cargas de trabajo adecuadas. Los grupos de nodos administrados tienen manejo integrado de reequilibrio/drenaje de Spot; Node Termination Handler no es un requisito adicional universal. Los PDB no pueden impedir que EC2 recupere una instancia de Spot, y no todos los Pods reciben la ventana completa de interrupción. Planifique puntos de control, capacidad de reserva y recuperación ante interrupciones.
 
 </details>
 
-5. ¿Qué afirmación es correcta sobre "omitir" versiones al actualizar versiones de Kubernetes en un clúster EKS?
-   * A) Se pueden omitir versiones menores, pero no versiones mayores
-   * B) Se pueden omitir versiones mayores, pero no versiones menores
-   * C) No se pueden omitir versiones mayores ni menores
-   * D) Se pueden omitir tanto versiones mayores como menores
+3. ¿Qué campo es obligatorio en cada selector de perfil de Fargate?
+   * A) Tipo de instancia
+   * B) Namespace; las etiquetas son opcionales
+   * C) ID de grupo de seguridad
+   * D) Recuento máximo de Pods
 
 <details>
-
 <summary>Mostrar respuesta</summary>
 
-**Respuesta: C) No se pueden omitir versiones mayores ni menores**
+**Respuesta: B) Namespace; las etiquetas son opcionales**
 
-**Explicación:** Al actualizar un clúster de Amazon EKS, tanto las versiones mayores como las menores deben actualizarse secuencialmente. No se admite omitir versiones.
+Cada selector de perfil requiere un **namespace**; las etiquetas son opcionales. Un perfil también necesita un nombre y un rol de ejecución de Pod, y usa subredes privadas aptas. No tiene ningún parámetro de grupo de seguridad. Los grupos de seguridad de Pods son un mecanismo de política compatible independiente, no un campo de perfil de Fargate.
 
-**Reglas de actualización de versiones de EKS:**
+Use un nombre de perfil sin utilizar e ID de subred privada revisados. Este selector se dirige intencionalmente solo a Pods de aplicación, y deja sin cambios la colocación existente de CoreDNS:
 
-1. **Se requiere actualización secuencial**:
-   * Cada versión de Kubernetes debe actualizarse secuencialmente desde la versión anterior.
-   * Ejemplo: 1.22 -> 1.23 -> 1.24 (no se puede actualizar directamente de 1.22 a 1.24)
-2. **Rutas de actualización compatibles**:
-   * Solo se puede actualizar desde la versión actual a la siguiente versión menor
-   * Las versiones mayores también deben actualizarse secuencialmente
-3. **Diferencia de versión entre Control Plane y Node**:
-   * El control plane puede estar hasta 2 versiones menores por delante de los nodes
-   * Los nodes pueden estar hasta 1 versión menor por delante del control plane
+```bash
+set -euo pipefail
+aws eks create-fargate-profile --cluster-name "${EXAMPLE_CLUSTER:?}" \
+  --region "${EXAMPLE_REGION:?}" --fargate-profile-name "${NEW_FARGATE_PROFILE:?}" \
+  --pod-execution-role-arn "${FARGATE_EXECUTION_ROLE_ARN:?}" \
+  --subnets "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" \
+  --selectors '[{"namespace":"fargate-lab","labels":{"app":"nginx"}}]'
+aws eks describe-fargate-profile --cluster-name "$EXAMPLE_CLUSTER" \
+  --region "$EXAMPLE_REGION" --fargate-profile-name "$NEW_FARGATE_PROFILE" \
+  --query 'fargateProfile.{status:status,subnets:subnets,selectors:selectors}'
+```
+Espere a `ACTIVE` antes de iniciar Pods coincidentes. A continuación se muestra una definición de perfil alternativa de eksctl; valide la detección de subred privada y la configuración del rol de ejecución del clúster antes de crearlo:
 
-**Proceso de actualización de versiones de EKS:**
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+fargateProfiles:
+- name: fp-application
+  selectors:
+  - namespace: fargate-lab
+    labels:
+      app: nginx
+```
+El namespace y la carga de trabajo etiquetada aún deben crearse por separado. Si coinciden varios perfiles, EKS usa el orden alfanumérico de nombres de perfil, salvo que el Pod seleccione un perfil coincidente con `eks.amazonaws.com/fargate-profile`. Los perfiles son inmutables; reemplazarlos/eliminarlos afecta a sus Pods.
 
-1. **Establecer un plan de actualización**:
-   * Revisa los cambios entre las versiones actual y objetivo
-   * Verifica la compatibilidad de las aplicaciones
-   * Establece el cronograma de actualización y el plan de rollback
-2. **Orden de actualización recomendado**:
-   * Actualización del control plane
-   * Actualizaciones de add-ons (CoreDNS, kube-proxy, VPC CNI, etc.)
-   * Actualizaciones de node groups
-3.  **Ejemplos de comandos de actualización**:
+El rol de ejecución de Pod sirve a la infraestructura de Fargate, no al acceso de AWS de la aplicación. Use una identidad de carga de trabajo compatible como IRSA; EKS Pod Identity no es compatible con Fargate. Mover CoreDNS a Fargate requiere su configuración de cómputo y un perfil coincidente, no simplemente añadir `kube-system` a un selector.
 
-    Actualización del control plane usando AWS CLI:
+Fargate cobra por la **capacidad aprovisionada**, determinada por los recursos solicitados más sobrecarga/redondeo; no factura solo el uso muestreado de CPU/memoria. Inspeccione `CapacityProvisioned`. EKS Fargate no admite Spot, DaemonSets, contenedores privilegiados, redes de host ni volúmenes de carga de trabajo montados en EBS. EFS persistente usa aprovisionamiento estático; la coincidencia de perfil por sí sola no crea un sistema de archivos/PV/PVC. Tenga en cuenta DNS, extracción de imágenes, STS y otras rutas de red necesarias.
 
-    ```bash
-    aws eks update-cluster-version \
-      --name my-cluster \
-      --kubernetes-version 1.24
-    ```
+</details>
 
-    Actualización del control plane usando eksctl:
+4. ¿Cuál no es un campo de NodegroupUpdateConfig?
+   * A) maxUnavailable
+   * B) maxUnavailablePercentage
+   * C) updateStrategy
+   * D) Tiempo de espera de operación de grupo de nodos
 
-    ```bash
-    eksctl upgrade cluster \
-      --name=my-cluster \
-      --version=1.24 \
-      --approve
-    ```
+<details>
+<summary>Mostrar respuesta</summary>
 
-    Actualización de node group:
+**Respuesta: D) Tiempo de espera de operación de grupo de nodos**
 
-    ```bash
-    aws eks update-nodegroup-version \
-      --cluster-name my-cluster \
-      --nodegroup-name my-nodegroup
-    ```
+`NodegroupUpdateConfig` admite `maxUnavailable` entero, `maxUnavailablePercentage` entero y `updateStrategy` (`DEFAULT` o `MINIMAL`). Establezca el recuento o el porcentaje, no ambos. Un porcentaje no es un valor válido para `maxUnavailable` en sí mismo.
 
-**Política de soporte de versiones de EKS:**
+Un tiempo de espera de operación no es un campo de NodegroupUpdateConfig. `--force` pertenece a una solicitud de actualización de versión y puede omitir la protección de expulsión de Pods; no es un ajuste de configuración de actualización almacenado. Un tiempo de espera de CLI/IaC también es distinto de la operación de servicio.
 
-1. **Período de soporte**:
-   * Cada versión de Kubernetes cuenta con soporte durante aproximadamente 14 meses después de su lanzamiento en EKS.
-   * AWS siempre mantiene soporte para al menos 4 versiones de Kubernetes en producción.
-2. **Aviso de fin de soporte**:
-   * AWS lo anuncia aproximadamente 60 días antes de que finalice el soporte de una versión.
-   * Después de que finaliza el soporte, los clústeres siguen operando, pero no recibirán parches de seguridad ni correcciones de errores.
-3. **Ciclo de lanzamiento de versiones**:
-   * AWS normalmente admite nuevas versiones en EKS dentro de 2-3 meses después del lanzamiento upstream de Kubernetes.
+```bash
+set -euo pipefail
+UPDATE_ID=$(aws eks update-nodegroup-config \
+  --cluster-name "${EXAMPLE_CLUSTER:?}" --region "${EXAMPLE_REGION:?}" \
+  --nodegroup-name "${EXAMPLE_NODEGROUP:?}" \
+  --update-config '{"maxUnavailable":2,"updateStrategy":"DEFAULT"}' \
+  --query update.id --output text)
+aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --nodegroup-name "$EXAMPLE_NODEGROUP" --update-id "$UPDATE_ID" \
+  --query 'update.{status:status,errors:errors}'
+```
+Para la configuración porcentual alternativa, use `{"maxUnavailablePercentage":20,"updateStrategy":"DEFAULT"}`. Siga el ID de actualización devuelto hasta `Successful` antes de iniciar una actualización de versión. `DEFAULT` inicia primero capacidad de reemplazo; `MINIMAL` termina primero los nodos antiguos seleccionados para reducir la capacidad extra temporal.
 
-**Mejores prácticas de actualización:**
+Para un Deployment revisado de tres réplicas en `update-lab`, este PDB restringe la expulsión voluntaria:
 
-1. **Actualizar primero en un entorno de prueba**:
-   * Valida en un clúster de prueba antes de actualizar el entorno de producción
-2. **Hacer backup antes de actualizar**:
-   * Backup de etcd y backup YAML de recursos importantes
-3. **Actualización gradual**:
-   * Avanza gradualmente en lugar de actualizar todos los node groups a la vez
-4. **Verificar después de la actualización**:
-   * Confirma que las cargas de trabajo funcionen normalmente
-   * Revisa los sistemas de monitoreo
-   * Revisa los logs
-5. **Mantener la versión más reciente**:
-   * Establece un cronograma regular de actualización
-   * Haz seguimiento de las fechas de fin de soporte
+```yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: app-pdb
+  namespace: update-lab
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: my-app
+```
+Un PDB no es una garantía general de disponibilidad. Las eliminaciones directas, los fallos y el propio despliegue del controlador de carga de trabajo difieren de la expulsión. Compruebe la capacidad de reserva, la preparación y los volúmenes. No prometa que una actualización de EKS ya en ejecución pueda simplemente pausarse o revertirse; detenga los cambios planificados posteriores y siga el procedimiento de recuperación aplicable.
 
-**Problemas con las otras opciones:**
+</details>
 
-* **Se pueden omitir versiones menores, pero no versiones mayores**: Las versiones menores tampoco pueden omitirse. Debe actualizarse secuencialmente.
-* **Se pueden omitir versiones mayores, pero no versiones menores**: Las versiones mayores tampoco pueden omitirse. Debe actualizarse secuencialmente.
-* **Se pueden omitir tanto versiones mayores como menores**: En EKS no se admite omitir versiones.
+5. ¿Qué paso de actualización del plano de control es compatible con el flujo de trabajo normal de versiones de EKS?
+   * A) Omitir directamente dos versiones secundarias
+   * B) Saltar a cualquier versión upstream
+   * C) Pasar a la siguiente versión secundaria compatible con EKS después de comprobaciones de preparación
+   * D) Actualizar nodos por encima de la versión del plano de control primero
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C) Pasar a la siguiente versión secundaria compatible con EKS después de comprobaciones de preparación**
+
+Las actualizaciones del plano de control de EKS proceden **una versión secundaria a la vez**, como 1.34 → 1.35 → 1.36. Confirme que EKS ofrezca cada destino; una versión upstream de Kubernetes no prueba la disponibilidad de EKS. No infiera una política de actualización futura de versiones principales a partir del flujo de trabajo actual de Kubernetes 1.x.
+
+Antes de actualizar el plano de control, lleve los nodos administrados y Fargate a su versión secundaria actual según lo requerido por el procedimiento de EKS; actualice los nodos autoadministrados/híbridos según lo recomendado. Los kubelets nunca deben ser más recientes que el servidor de API. El límite general de desfase para Kubernetes 1.28+ permite kubelets hasta tres versiones secundarias más antiguos, pero eso no es una recomendación para ignorar los prerrequisitos de actualización de EKS.
+
+Primero revise las perspectivas, las API eliminadas, la compatibilidad de complementos, la capacidad y las copias de seguridad de aplicaciones/datos. EKS no proporciona acceso normal de shell de administrador a su etcd administrado para un comando de snapshot hecho por usted mismo; use procedimientos compatibles de copia de seguridad/restauración de clústeres/recursos y datos persistentes. Este comando solo impone el paso de una versión secundaria; no reemplaza esas comprobaciones:
+
+```bash
+set -euo pipefail
+: "${EXAMPLE_CLUSTER:?}" "${EXAMPLE_REGION:?}" "${NEXT_KUBERNETES_VERSION:?Confirm the next supported EKS minor}"
+CURRENT_KUBERNETES_VERSION=$(aws eks describe-cluster \
+  --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" --query cluster.version --output text)
+if [[ "$CURRENT_KUBERNETES_VERSION" =~ ^1\.([0-9]+)$ ]]; then
+  CURRENT_MINOR="${BASH_REMATCH[1]}"
+else
+  printf '%s\n' 'Unexpected cluster version; stop and inspect.' >&2
+  exit 1
+fi
+EXPECTED_NEXT_VERSION="1.$((CURRENT_MINOR + 1))"
+[ "$NEXT_KUBERNETES_VERSION" = "$EXPECTED_NEXT_VERSION" ] || {
+  printf '%s\n' 'Only the next minor version is allowed in this upgrade example.' >&2
+  exit 1
+}
+CLUSTER_UPDATE_ID=$(aws eks update-cluster-version --name "$EXAMPLE_CLUSTER" \
+  --region "$EXAMPLE_REGION" --kubernetes-version "$NEXT_KUBERNETES_VERSION" \
+  --query update.id --output text)
+aws eks describe-update --name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --update-id "$CLUSTER_UPDATE_ID" --query 'update.{status:status,errors:errors}'
+```
+Espere a que ese ID de actualización tenga éxito, y luego actualice los nodos y los componentes de clúster compatibles en su orden documentado. Haga coincidir la versión secundaria de Cluster Autoscaler con el clúster y kubectl dentro de su desfase compatible.
+
+EKS actual ofrece reversión condicional a la versión secundaria anterior durante siete días después de una actualización in situ completada. No está disponible para un clúster creado en esa versión ni para una actualización automática al final del soporte extendido. Primero prepare nodos/complementos compatibles; Auto Mode administra la reversión de sus nodos. La reversión no retrocede etcd, las cargas de trabajo ni los datos persistentes. Consulte los requisitos oficiales de preparación para la reversión en lugar de tratarla como una deshacer incondicional.
 
 </details>
 
 ## Preguntas de respuesta corta
 
-6. ¿Qué se requiere para cambiar el tipo de instancia de un node group en un clúster EKS?
+6. ¿Cómo se puede cambiar el tipo de instancia de un grupo de nodos administrado de EKS?
 
 <details>
-
 <summary>Respuesta y explicación</summary>
 
-Para cambiar el tipo de instancia de un node group gestionado de EKS, debes crear un nuevo node group y migrar las cargas de trabajo, luego eliminar el node group existente. Los tipos de instancia de los node groups gestionados no se pueden cambiar directamente después de su creación.
+Depende de dónde esté configurado el tipo de instancia:
 
-El procedimiento general es el siguiente:
+* Un tipo establecido en `instanceTypes` del grupo de nodos administrado no es un campo de `UpdateNodegroupConfig`. Cree un grupo de reemplazo, valide la capacidad y migre las cargas de trabajo antes de retirar el antiguo.
+* Si el grupo se creó originalmente con **su plantilla de lanzamiento personalizada**, con el tipo de instancia en esa plantilla en lugar de en el campo de grupo de EKS, puede actualizar a una nueva versión de la **misma plantilla**. EKS recicla los nodos. No modifique la plantilla generada por EKS ni suponga que puede cambiar a ID de plantilla arbitrarios.
+* Para ASG autoadministrados, una actualización de plantilla de lanzamiento/actualización de instancias también necesita un diseño de drenaje y ciclo de vida consciente de Kubernetes; el reemplazo de EC2 por sí solo no es una migración consciente de PDB.
 
-1. Crear un nuevo node group con el tipo de instancia deseado
-2. Configurar Pod Disruption Budgets (PDB) si es necesario
-3. Aplicar cordon y drain a los nodes existentes para migrar las cargas de trabajo a los nuevos nodes
-4. Verificar que todas las cargas de trabajo se hayan movido al nuevo node group
-5. Eliminar el node group existente
-
-Si usas node groups autogestionados, puedes actualizar el launch template del Auto Scaling Group y realizar un instance refresh.
+Revise la arquitectura de AMI, los controladores, los límites de IP de Pod, las etiquetas/toleraciones, la topología de almacenamiento, las cuotas y los PDB. Para recursos propiedad de Terraform, realice el cambio mediante el estado propietario e inspeccione las acciones de reemplazo; no haga un cambio de CLI fuera de banda y suponga que el estado sigue siendo correcto.
 
 </details>
 
-7. ¿Qué ajustes deben cambiarse para deshabilitar el acceso público al servidor de la API de Kubernetes y permitir solo acceso privado en un clúster EKS?
+7. ¿Cómo se permite solo el acceso privado al endpoint de la API de Kubernetes?
 
 <details>
-
 <summary>Respuesta y explicación</summary>
 
-Para deshabilitar el acceso público al servidor de la API de un clúster EKS y permitir solo acceso privado, debes cambiar la configuración de acceso al endpoint del clúster:
+Establezca el acceso privado como verdadero y el acceso público como falso. En el módulo v21 son `endpoint_private_access` y `endpoint_public_access`; cámbielos mediante el estado de Terraform propietario cuando corresponda.
 
-1. Mediante AWS Management Console:
-   * Navega a la consola de EKS
-   * Selecciona el clúster
-   * Selecciona la pestaña "Networking"
-   * Haz clic en "Edit" en la sección "Cluster endpoint access"
-   * Configura como "Private" (deshabilitar el acceso público, habilitar el acceso privado)
-2. Usando AWS CLI:
+Antes de deshabilitar el acceso público, verifique DNS, rutas y reglas de seguridad desde la red conectada del administrador hasta el endpoint privado. Un sistema puede alcanzarlo desde la VPC **u otra red correctamente conectada**; no necesita residir físicamente en la VPC. Esto cambia el endpoint de la API de Kubernetes, no el acceso a la API de servicio AWS EKS independiente.
+
+Para un clúster propiedad de API, la operación de CLI equivalente es:
 
 ```bash
-aws eks update-cluster-config \
-    --region region-code \
-    --name cluster-name \
-    --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true
+set -euo pipefail
+ENDPOINT_UPDATE_ID=$(aws eks update-cluster-config \
+  --region "${EXAMPLE_REGION:?}" --name "${EXAMPLE_CLUSTER:?}" \
+  --resources-vpc-config endpointPublicAccess=false,endpointPrivateAccess=true \
+  --query update.id --output text)
+aws eks describe-update --region "$EXAMPLE_REGION" --name "$EXAMPLE_CLUSTER" \
+  --update-id "$ENDPOINT_UPDATE_ID" --query 'update.{status:status,errors:errors}'
 ```
-
-Después de cambiar esta configuración, solo se puede acceder al servidor de la API de Kubernetes desde dentro de la VPC. Por lo tanto, solo los sistemas dentro de la VPC o las redes conectadas a la VPC pueden gestionar el clúster.
+Siga ese ID de actualización hasta `Successful` y pruebe el acceso autenticado de kubectl desde la ruta de administración prevista. Una única respuesta `InProgress` no es finalización.
 
 </details>
 
-8. ¿Cuál es el período de soporte típico para las versiones de Kubernetes disponibles en un clúster EKS?
+8. ¿Cuál es el ciclo de vida de soporte de versiones de Kubernetes de EKS?
 
 <details>
-
 <summary>Respuesta y explicación</summary>
 
-Cada versión de Kubernetes en Amazon EKS normalmente cuenta con soporte durante aproximadamente 14 meses después de su lanzamiento. AWS se esfuerza por admitir siempre al menos 4 versiones de Kubernetes en producción.
+Una versión secundaria de EKS recibe **14 meses de soporte estándar**, seguidos de **12 meses de soporte extendido** con un coste adicional por hora de clúster. El reloj comienza en su fecha de lanzamiento de EKS, no en la fecha de lanzamiento upstream.
 
-El ciclo de soporte de versiones de EKS es el siguiente:
+El 12 de octubre de 2026, EKS enumera 1.34–1.37 en soporte estándar y 1.31–1.33 en soporte extendido. EKS 1.37 estuvo disponible el 1 de octubre de 2026, después de su lanzamiento upstream del 26 de agosto. Consulte el calendario de lanzamientos actual de EKS antes de seleccionar un destino de implementación/actualización.
 
-1. Lanzamiento inicial: AWS pone a disposición una nueva versión de Kubernetes en EKS
-2. Soporte estándar: Se proporcionan parches de seguridad y correcciones de errores durante aproximadamente 14 meses
-3. Anuncio de fin de soporte: AWS lo anuncia aproximadamente 60 días antes de que finalice el soporte de la versión
-4. Fin de soporte: Los clústeres que ejecutan versiones obsoletas no se actualizan automáticamente, sino que deben actualizarse manualmente
+El soporte extendido está habilitado de forma predeterminada. La política de actualización del clúster determina el comportamiento al final del soporte estándar. Tras finalizar el soporte extendido, EKS actualiza automáticamente el plano de control a la versión extendida compatible más antigua; la versión antigua no se ejecuta indefinidamente sin actualizaciones. Los nodos y complementos administrados/autoadministrados/híbridos requieren sus propias acciones de ciclo de vida, mientras que Auto Mode administra sus capacidades y nodos.
 
-AWS comienza a admitir nuevas versiones un poco después de los lanzamientos de la comunidad de Kubernetes, pero el período de soporte suele ser más largo. El proyecto upstream de Kubernetes admite cada versión durante aproximadamente 9 meses, mientras que EKS la admite durante aproximadamente 14 meses.
+No se base en una regla fija de «cuatro versiones», «aviso de 60 días» o «retraso de lanzamiento de 2–3 meses» del cuestionario anterior. Use las fechas y la política publicadas para el clúster real. Kubernetes upstream tiene su propio calendario de soporte; la antigua comparación de nueve meses no es orientación actual.
 
 </details>
 
 ## Preguntas prácticas
 
-9. Explica cómo configurar los ajustes de Auto Scaling para un node group en un clúster EKS y escribe una configuración que cumpla con los siguientes requisitos:
-
-* Cantidad mínima de nodes: 2
-* Cantidad máxima de nodes: 10
-* Cantidad deseada de nodes: 3
-* Escalar hacia fuera según la utilización de CPU (cuando la utilización de CPU supere el 75%)
-* Escalar hacia fuera según la utilización de memoria (cuando la utilización de memoria supere el 80%)
+9. Diseñe el escalado automático de Pods con objetivos de utilización de CPU de 75 % / memoria de 80 % y un grupo de nodos limitado a 2–10 nodos, inicialmente 3.
 
 <details>
-
 <summary>Respuesta y explicación</summary>
 
-Para configurar los ajustes de Auto Scaling para un node group de EKS, sigue estos pasos:
+Separe el **escalado de demanda de Pods** del **escalado de capacidad de nodos**. Use objetivos de utilización de recursos de HPA de CPU 75 % y memoria 80 %, con Metrics Server y solicitudes de contenedor válidas. HPA elige la mayor recomendación de réplicas de las métricas, sujeta a tolerancia, límites y estabilización; no es una alarma inmediata de «umbral superado».
 
-1. Primero, configura el tamaño básico al crear el node group o en la configuración del Auto Scaling Group del node group existente:
+Luego use Cluster Autoscaler para un grupo de nodos administrado con min=2, max=10 y deseado inicial=3. Los campos equivalentes de grupo de nodos del módulo de Terraform son `min_size`, `max_size` y `desired_size`; revise la configuración propietaria. Esta alternativa completa de eksctl es para un grupo nuevo en el clúster existente revisado:
 
-```bash
-aws eks create-nodegroup \
-    --cluster-name my-cluster \
-    --nodegroup-name my-nodegroup \
-    --scaling-config minSize=2,maxSize=10,desiredSize=3 \
-    # Other required parameters...
+```yaml
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: my-cluster
+  region: us-west-2
+managedNodeGroups:
+- name: autoscaling-workers
+  amiFamily: AmazonLinux2023
+  instanceType: m5.large
+  privateNetworking: true
+  minSize: 2
+  maxSize: 10
+  desiredCapacity: 3
 ```
+Use la configuración dedicada y autorizada de Cluster Autoscaler de la pregunta 1. Los límites por sí solos no ejecutan un escalador automático. CA reacciona a solicitudes de Pod no programables y restricciones de eliminación; no implementa por sí mismo los porcentajes solicitados de CPU/memoria.
 
-2. Para el escalado basado en la utilización de CPU y memoria, puedes configurar Cluster Autoscaler o Karpenter, o agregar políticas basadas en alarmas de CloudWatch directamente al Auto Scaling Group.
-
-**Enfoque con Cluster Autoscaler:**
-
-YAML de Deployment de Cluster Autoscaler:
+En un nuevo namespace `autoscaling-lab`, el siguiente Deployment/HPA demuestra solicitudes y ambas métricas. El rango de réplicas de Pod 2–20 es independiente del rango de nodos 2–10:
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cluster-autoscaler
-  namespace: kube-system
-  labels:
-    app: cluster-autoscaler
+  name: my-app
+  namespace: autoscaling-lab
 spec:
-  replicas: 1
+  replicas: 2
   selector:
-    matchLabels:
-      app: cluster-autoscaler
+    matchLabels: {app: my-app}
   template:
     metadata:
-      labels:
-        app: cluster-autoscaler
+      labels: {app: my-app}
     spec:
-      serviceAccountName: cluster-autoscaler
+      automountServiceAccountToken: false
       containers:
-      - image: k8s.gcr.io/autoscaling/cluster-autoscaler:v1.23.0
-        name: cluster-autoscaler
+      - name: web
+        image: nginx:1.30.4
+        ports:
+        - containerPort: 80
         resources:
-          limits:
-            cpu: 100m
-            memory: 300Mi
-          requests:
-            cpu: 100m
-            memory: 300Mi
-        command:
-        - ./cluster-autoscaler
-        - --v=4
-        - --stderrthreshold=info
-        - --cloud-provider=aws
-        - --skip-nodes-with-local-storage=false
-        - --expander=least-waste
-        - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/my-cluster
-        - --balance-similar-node-groups
-        - --skip-nodes-with-system-pods=false
+          requests: {cpu: 100m, memory: 128Mi}
+          limits: {cpu: 500m, memory: 256Mi}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: my-app-hpa
+  namespace: autoscaling-lab
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: my-app
+  minReplicas: 2
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 75
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
 ```
+Inspeccione las condiciones de HPA, la disponibilidad de métricas, los motivos de Pending y las decisiones del escalador automático bajo una prueba de carga aprobada. El uso de memoria puede no disminuir proporcionalmente al aumentar las réplicas, así que valide esa métrica para la aplicación. Estos valores de solicitud/límite son ejemplos, no dimensionamiento medido.
 
-**Políticas de Auto Scaling basadas en alarmas de CloudWatch:**
-
-Política de scale out basada en la utilización de CPU:
-
-```bash
-aws autoscaling put-scaling-policy \
-    --auto-scaling-group-name my-nodegroup-xxx \
-    --policy-name cpu-scale-out \
-    --policy-type TargetTrackingScaling \
-    --target-tracking-configuration file://cpu-policy.json
-```
-
-cpu-policy.json:
-
-```json
-{
-  "TargetValue": 75.0,
-  "PredefinedMetricSpecification": {
-    "PredefinedMetricType": "ASGAverageCPUUtilization"
-  }
-}
-```
-
-Política de scale out basada en la utilización de memoria (requiere una métrica personalizada de CloudWatch):
-
-```bash
-# First need to set up agent to publish memory utilization as CloudWatch custom metric
-aws autoscaling put-scaling-policy \
-    --auto-scaling-group-name my-nodegroup-xxx \
-    --policy-name memory-scale-out \
-    --policy-type TargetTrackingScaling \
-    --target-tracking-configuration file://memory-policy.json
-```
-
-memory-policy.json:
-
-```json
-{
-  "TargetValue": 80.0,
-  "CustomizedMetricSpecification": {
-    "MetricName": "MemoryUtilization",
-    "Namespace": "AWS/EC2",
-    "Dimensions": [
-      {
-        "Name": "AutoScalingGroupName",
-        "Value": "my-nodegroup-xxx"
-      }
-    ],
-    "Statistic": "Average",
-    "Unit": "Percent"
-  }
-}
-```
-
-En entornos reales, usar Cluster Autoscaler es más adecuado para cargas de trabajo de Kubernetes. Cluster Autoscaler escala los nodes basándose en las solicitudes de recursos de los pods, lo que permite un escalado más eficiente.
+No añada políticas independientes de seguimiento de destino de CPU/memoria de ASG al mismo bucle de capacidad deseada. Pueden competir con CA y tener distinto comportamiento de drenaje. EC2 no proporciona utilización de memoria normal de forma predeterminada; cualquier diseño independiente sin CA necesita una métrica personalizada publicada correctamente y un namespace personalizado, no una métrica de memoria supuesta de `AWS/EC2`. No se requiere tal política de ASG para esta solución HPA+CA.
 
 </details>
 
 ## Preguntas avanzadas
 
-10. Explica la estrategia para actualizar node groups usando un enfoque blue/green en un clúster EKS, y presenta los posibles problemas y soluciones que pueden ocurrir durante este proceso.
+10. Explique una actualización de grupo de nodos blue/green, sus riesgos y un flujo de trabajo de migración con protecciones.
 
 <details>
-
 <summary>Respuesta y explicación</summary>
 
-#### Estrategia de actualización Blue/Green de EKS Node Group
+Cree capacidad de reemplazo, pruébela, migre gradualmente y retire el grupo antiguo solo después de validar la aplicación/los datos. Mantenga la capacidad antigua y el estado compatible mientras siga siendo necesaria la reversión; compartir un clúster no es aislamiento completo ni una garantía de cero tiempo de inactividad.
 
-El despliegue blue/green es un enfoque en el que construyes un nuevo entorno (green) junto al entorno existente (blue) y luego cambias el tráfico al nuevo entorno. Cuando se aplica a node groups de EKS, el proceso avanza de la siguiente manera:
+Revise cuotas, IP de subred, imágenes/arquitectura, etiquetas, toleraciones, sobrecarga de daemon, PDB, datos locales y restricciones de AZ/asociación de volúmenes. La pertenencia a StatefulSet no hace por sí sola que un volumen sea portátil. Investigue los fallos de DNS antes de cambiar TTL o añadir una malla de servicios. Confirme que los recopiladores de monitoreo/registros realmente cubran los nuevos nodos.
 
-**Pasos de actualización Blue/Green:**
-
-1. **Fase de preparación**:
-   * Documentar la configuración actual del node group (labels, taints, tags, etc.)
-   * Identificar el estado actual de las cargas de trabajo y los requisitos de recursos
-2. **Crear el entorno Green**:
-   * Crear un nuevo node group (AMI actualizada, versión de Kubernetes, tipo de instancia, etc.)
-   * Aplicar las mismas labels y taints que el node group existente
-   * Aplicar la configuración adicional necesaria (tags, roles de IAM, etc.)
-3. **Pruebas**:
-   * Desplegar cargas de trabajo de prueba en el nuevo node group
-   * Validar la funcionalidad y el rendimiento
-4. **Transición de tráfico**:
-   * Verificar la configuración de Pod Disruption Budget (PDB)
-   * Aplicar cordon a los nodes existentes (evitar la programación de nuevos pods)
-   * Aplicar drain gradualmente a los nodes existentes (migrar cargas de trabajo a los nuevos nodes)
-   * Monitorear el estado de las cargas de trabajo
-5. **Finalización y limpieza**:
-   * Verificar que todas las cargas de trabajo se hayan movido a los nuevos nodes
-   * Eliminar el node group existente
-   * Actualizar el monitoreo y las alertas si es necesario
-
-**Posibles problemas y soluciones:**
-
-1. **Problema de escasez de recursos**:
-   * **Problema**: Se necesitan el doble de recursos mientras se crea el nuevo node group, lo que podría superar las service quotas
-   * **Solución**: Revisar las service quotas con anticipación y solicitar un aumento si es necesario, o actualizar gradualmente en lotes pequeños
-2. **Migración de cargas de trabajo con estado**:
-   * **Problema**: Las cargas de trabajo con estado que usan volúmenes persistentes pueden tener problemas al moverse entre nodes
-   * **Solución**: Verificar la configuración de PVC/PV, usar StatefulSets, usar storage classes adecuadas, realizar backups
-3. **Node Affinity y Pod Disruption**:
-   * **Problema**: Algunas cargas de trabajo pueden no moverse a los nuevos nodes debido a node affinity o pod anti-affinity
-   * **Solución**: Revisar las reglas de node affinity y anti-affinity en las especificaciones de los pods y ajustarlas si es necesario
-4. **Network Policies y Security Groups**:
-   * **Problema**: Es posible que las network policies o los security groups requeridos no se apliquen al nuevo node group
-   * **Solución**: Revisar y replicar la configuración de red, incluidos security groups, network policies y rangos CIDR
-5. **Retrasos de DNS y Service Discovery**:
-   * **Problema**: Retrasos temporales en la resolución DNS o problemas de service discovery durante la transición de nodes
-   * **Solución**: Optimizar la configuración de CoreDNS, ajustar valores TTL, considerar service mesh
-6. **Brechas de monitoreo y alertas**:
-   * **Problema**: Es posible que los agentes de monitoreo o recolectores de logs no se instalen automáticamente en el nuevo node group
-   * **Solución**: Usar herramientas de monitoreo basadas en DaemonSet, incluir scripts de instalación de agentes en el launch template del node group
-7. **Falta de plan de rollback**:
-   * **Problema**: No hay método de rollback si la actualización falla
-   * **Solución**: No eliminar el node group existente de inmediato, mantenerlo durante un período, crear snapshots de estado, documentar procedimientos de rollback
-
-**Ejemplo de implementación (AWS CLI):**
+El siguiente ejemplo de CLI es para **grupos propiedad de API**, con nombres de grupo green sin utilizar. Para grupos propiedad de Terraform o eksctl/CloudFormation, realice cambios equivalentes mediante ese propietario para evitar desviaciones y stacks huérfanos.
 
 ```bash
-# 1. Check current node group information
-aws eks describe-nodegroup --cluster-name my-cluster --nodegroup-name blue-nodegroup
+set -euo pipefail
+: "${EXAMPLE_CLUSTER:?}" "${EXAMPLE_REGION:?}" "${OLD_NODEGROUP_NAME:?}" "${GREEN_NODEGROUP_NAME:?}"
+[ "$OLD_NODEGROUP_NAME" != "$GREEN_NODEGROUP_NAME" ]
+OLD_NODEGROUP_ARN=$(aws eks describe-nodegroup --cluster-name "$EXAMPLE_CLUSTER" \
+  --region "$EXAMPLE_REGION" --nodegroup-name "$OLD_NODEGROUP_NAME" \
+  --query nodegroup.nodegroupArn --output text)
+aws eks create-nodegroup --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --nodegroup-name "$GREEN_NODEGROUP_NAME" --scaling-config minSize=3,maxSize=10,desiredSize=5 \
+  --subnets "${PRIVATE_SUBNET_A:?}" "${PRIVATE_SUBNET_B:?}" --instance-types t3.large \
+  --ami-type AL2023_x86_64_STANDARD --node-role "${NODE_ROLE_ARN:?}" \
+  --labels audit.example.com/pool=green
+aws eks wait nodegroup-active --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+  --nodegroup-name "$GREEN_NODEGROUP_NAME"
+kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" get nodes \
+  -l "eks.amazonaws.com/nodegroup=$GREEN_NODEGROUP_NAME" -o wide
+```
+Una etiqueta de grupo de nodos no prueba que el ASG subyacente tenga etiquetas de detección de Cluster Autoscaler. Verifique las etiquetas/IAM del ASG real si CA lo administrará. Compruebe la preparación del nuevo Node y una carga de trabajo canary con alcance separado antes de migrar la carga de trabajo principal.
 
-# 2. Create new node group (green)
-aws eks create-nodegroup \
-    --cluster-name my-cluster \
-    --nodegroup-name green-nodegroup \
-    --scaling-config minSize=3,maxSize=10,desiredSize=5 \
-    --subnets subnet-xxxx subnet-yyyy \
-    --instance-types t3.large \
-    --ami-type AL2_x86_64 \
-    --node-role arn:aws:iam::123456789012:role/EKS-NodeInstanceRole \
-    --labels environment=prod,app=myapp \
-    --tags "k8s.io/cluster-autoscaler/enabled=true,k8s.io/cluster-autoscaler/my-cluster=owned"
+Drene un nodo antiguo confirmado cada vez. Esto omite intencionalmente la eliminación automática de emptyDir y la expulsión forzada:
 
-# 3. Check node group status
-aws eks describe-nodegroup --cluster-name my-cluster --nodegroup-name green-nodegroup
+```bash
+# One reviewed node at a time, after validating replacement capacity.
+OLD_NODE_JSON=$(kubectl --kubeconfig "${EXAMPLE_KUBECONFIG:?}" \
+  get node "${OLD_NODE_NAME:?}" -o json) || exit 1
+OLD_NODE_GROUP=$(printf '%s' "$OLD_NODE_JSON" |
+  jq -er '.metadata.labels["eks.amazonaws.com/nodegroup"]') || exit 1
+if [ "$OLD_NODE_GROUP" != "${OLD_NODEGROUP_NAME:?}" ]; then
+  printf '%s\n' 'Node is not in the intended old managed node group.' >&2
+  exit 1
+fi
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" cordon "$OLD_NODE_NAME" &&
+kubectl --kubeconfig "$EXAMPLE_KUBECONFIG" drain "$OLD_NODE_NAME" \
+  --ignore-daemonsets --timeout=15m
+```
+Después de cada paso, verifique la preparación, la salud de la aplicación y los datos persistentes. Deténgase cuando falle el drenaje y resuelva la causa. Una vez validadas todas las cargas de trabajo y cuando el grupo antiguo conservado ya no sea necesario, compare su ARN original antes de esta eliminación final independiente:
 
-# 4. Cordon existing nodes (using kubectl)
-# Get node list
-kubectl get nodes -l eks.amazonaws.com/nodegroup=blue-nodegroup
-
-# Cordon each node
-kubectl cordon <node-name>
-
-# 5. Drain existing nodes
-kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
-
-# 6. Verify all pods have moved to new nodes
-kubectl get pods -o wide
-
-# 7. Delete existing node group
-aws eks delete-nodegroup --cluster-name my-cluster --nodegroup-name blue-nodegroup
+```bash
+# A separate final step for API-owned groups only.
+: "${OLD_NODEGROUP_ARN:?Use the ARN captured before migration}"
+if [ "${MIGRATION_VERIFIED:?Set yes only after application/data checks}" = yes ]; then
+  CURRENT_OLD_GROUP_ARN=$(aws eks describe-nodegroup --cluster-name "${EXAMPLE_CLUSTER:?}" \
+    --region "${EXAMPLE_REGION:?}" --nodegroup-name "${OLD_NODEGROUP_NAME:?}" \
+    --query nodegroup.nodegroupArn --output text) || exit 1
+  [ "$CURRENT_OLD_GROUP_ARN" = "$OLD_NODEGROUP_ARN" ] || {
+    printf '%s\n' 'Node-group identity changed; no deletion attempted.' >&2
+    exit 1
+  }
+  aws eks delete-nodegroup --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+    --nodegroup-name "$OLD_NODEGROUP_NAME" || exit 1
+  aws eks wait nodegroup-deleted --cluster-name "$EXAMPLE_CLUSTER" --region "$EXAMPLE_REGION" \
+    --nodegroup-name "$OLD_NODEGROUP_NAME"
+fi
 ```
 
-Las actualizaciones blue/green minimizan el downtime y proporcionan capacidad de rollback, pero requieren recursos adicionales y aumentan la complejidad. Se necesita una planificación y pruebas exhaustivas, y se recomienda un enfoque gradual, especialmente para entornos de producción a gran escala.
+</details>
+
+
+## Comprobaciones de Terraform
+
+11. ¿A qué puede acceder un lector de terraform_remote_state?
+   * A) Solo a las salidas declaradas en la capa de almacenamiento
+   * B) A la instantánea completa de estado, aunque HCL exponga salidas
+   * C) A ningún valor confidencial bajo ninguna condición
+   * D) Solo a los recursos de su propio módulo
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B) A la instantánea completa de estado, aunque HCL exponga salidas**
+
+El acceso al estado es un límite de autorización. Publique por separado los valores seleccionados cuando los consumidores no deban leer la instantánea completa.
 
 </details>
+
+12. ¿Qué nombres de entrada coinciden con el ejemplo del módulo EKS v21?
+   * A) cluster_name y cluster_version
+   * B) name y kubernetes_version
+   * C) clusterId y versionNumber
+   * D) cluster_addons y cluster_compute_config
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B) name y kubernetes_version**
+
+El módulo v21 cambió el nombre de estas entradas. Los campos de recursos de AWS como aws_eks_addon.cluster_name y las salidas de módulo como cluster_name siguen usando sus propios nombres documentados; no reemplace globalmente cada ocurrencia.
+
+</details>
+
+13. ¿Qué afirmación sobre el ejemplo de backend de S3 es correcta?
+   * A) encrypt=true también habilita el bloqueo de estado
+   * B) DynamoDB es la única opción de bloqueo
+   * C) use_lockfile=true habilita el bloqueo de S3; los clientes y los permisos IAM de archivo de bloqueo deben estar preparados
+   * D) Un bloqueo coordina todas las claves de estado
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C) use_lockfile=true habilita el bloqueo de S3; los clientes y los permisos IAM de archivo de bloqueo deben estar preparados**
+
+Use Terraform 1.10+ para archivos de bloqueo de S3. El bloqueo de DynamoDB está en desuso; migre los clientes coordinados en lugar de eliminar la tabla mientras los clientes antiguos todavía dependan de ella.
+
+</details>
+
+14. ¿Un aws_eks_pod_identity_association crea la Kubernetes ServiceAccount?
+   * A) Sí, con cluster-admin
+   * B) No; el namespace/ServiceAccount y la ruta de agente/SDK compatible son prerrequisitos independientes
+   * C) Sí, e instala Metrics Server
+   * D) Solo en Fargate
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: B) No; el namespace/ServiceAccount y la ruta de agente/SDK compatible son prerrequisitos independientes**
+
+La asociación vincula la identidad de AWS a una identidad existente de Kubernetes. Limite la confianza y los permisos, mantenga habilitadas las etiquetas de sesión necesarias, gestione la propagación y verifique el rol asumido real.
+
+</details>
+
+15. ¿Qué permite la restricción de módulo ~> 21.0?
+   * A) Solo 21.0.0
+   * B) Solo parches en 21.0.x
+   * C) Versiones secundarias y de parche compatibles de 21.x inferiores a 22.0, sin garantizar comportamiento
+   * D) Toda versión principal futura
+
+<details>
+<summary>Mostrar respuesta</summary>
+
+**Respuesta: C) Versiones secundarias y de parche compatibles de 21.x inferiores a 22.0, sin garantizar comportamiento**
+
+~> 21.0.0 restringe el intervalo a 21.0.x. La guía fija explícitamente las versiones de módulo; .terraform.lock.hcl registra las selecciones de proveedor en lugar de las versiones de módulo remotas. Revise los planes guardados antes de aplicar.
+
+</details>
+
+## Referencias
+
+- [API_CreateNodegroup.html](https://docs.aws.amazon.com/eks/latest/APIReference/API_CreateNodegroup.html)
+- [ml-node-groups.html](https://docs.aws.amazon.com/eks/latest/userguide/ml-node-groups.html)
+- [fargate-profile.html](https://docs.aws.amazon.com/eks/latest/userguide/fargate-profile.html)
+- [fargate-pod-configuration.html](https://docs.aws.amazon.com/eks/latest/userguide/fargate-pod-configuration.html)
+- [API_NodegroupUpdateConfig.html](https://docs.aws.amazon.com/eks/latest/APIReference/API_NodegroupUpdateConfig.html)
+- [launch-templates.html](https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html)
+- [kubernetes-versions.html](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
+- [update-cluster.html](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)
+- [rollback-cluster.html](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)
+- [cas.html](https://docs.aws.amazon.com/eks/latest/best-practices/cas.html)
+- [horizontal-pod-autoscale](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+- [s3](https://developer.hashicorp.com/terraform/language/backend/s3)
+- [remote-state-data](https://developer.hashicorp.com/terraform/language/state/remote-state-data)

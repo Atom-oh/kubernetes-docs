@@ -1,17 +1,22 @@
 # Kubernetes の概要
 
-> **対応バージョン**: Kubernetes 1.31, 1.32, 1.33 **最終更新**: February 11, 2026
+> **サポート対象バージョン**: Upstream Kubernetes 1.35–1.37、EKS standard support 1.34–1.37（2026 年 10 月 12 日時点）
+> **最終更新**: October 12, 2026
 
-Kubernetes (K8s) は、コンテナ化されたアプリケーションのデプロイ、スケーリング、管理を自動化するオープンソースのコンテナオーケストレーションプラットフォームです。このドキュメントでは、Kubernetes の基本概念、アーキテクチャ、主要コンポーネント、機能について説明します。
+Kubernetes プロジェクトは、直近 3 つのマイナーリリース（1.35–1.37）のリリースブランチを維持しています。Upstream 1.34 はメンテナンスモードであり、2026 年 10 月 27 日の EOL までパッチリリースを受け取ります。この日は AWS の EKS サポート終了日とは別です。EKS の対象範囲と日付については、[AWS EKS lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) を確認してください。
+
+Kubernetes（K8s）は、コンテナ化されたアプリケーションのデプロイ、スケーリング、管理を自動化するオープンソースのコンテナオーケストレーションプラットフォームです。このドキュメントでは、Kubernetes の基本概念、アーキテクチャ、主要コンポーネント、機能を説明します。
+
+これらの独立した学習用サンプルは、スキーマおよび公式ドキュメントに対して静的にレビューされています。デプロイによって検証された本番設定ではありません。対象環境でカスタムイメージ、名前/ラベル、TLS、IAM/RBAC、CNI、ストレージの前提条件を確認し、プレースホルダーを置き換えてください。
 
 ## ラボ環境のセットアップ
 
-このドキュメントの例に沿って作業するには、次のツールと環境が必要です。
+このドキュメントの例に沿って進めるには、以下のツールと環境が必要です。
 
 ### 必要なツール
 
-* **kubectl**: Kubernetes クラスターとやり取りするためのコマンドラインツール
-* **Container Runtime**: Docker、containerd、CRI-O など
+* **kubectl**: Kubernetes クラスターと対話するためのコマンドラインツール
+* **ローカルクラスタードライバー**: minikube/kind がサポートするコンテナエンジンまたは VM ドライバー。Kubernetes ノードは CRI v1 ランタイムを使用します。
 * **minikube** または **kind**: ローカル Kubernetes クラスター（開発および学習用）
 
 ### インストール方法
@@ -19,35 +24,47 @@ Kubernetes (K8s) は、コンテナ化されたアプリケーションのデプ
 **kubectl のインストール**:
 
 ```bash
-# macOS
+# macOS: use a kubectl version within one minor of the API server.
 brew install kubectl
+```
 
-# Linux
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-chmod +x kubectl
-sudo mv kubectl /usr/local/bin/
+```bash
+# Linux: select an explicit compatible version and architecture.
+set -euo pipefail
+: "${KUBECTL_VERSION:?Set a cluster-compatible version, e.g. v1.37.1}"
+case "$(uname -m)" in
+  x86_64) KUBECTL_ARCH=amd64 ;;
+  aarch64|arm64) KUBECTL_ARCH=arm64 ;;
+  *) echo "Choose a supported kubectl architecture" >&2; exit 1 ;;
+esac
+curl --fail --location --output kubectl "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/$KUBECTL_ARCH/kubectl"
+curl --fail --location --output kubectl.sha256 "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/$KUBECTL_ARCH/kubectl.sha256"
+echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+sudo install -m 0755 kubectl /usr/local/bin/kubectl
+```
 
-# Windows (PowerShell)
-curl -LO "https://dl.k8s.io/release/v1.28.0/bin/windows/amd64/kubectl.exe"
+```powershell
+$ErrorActionPreference = "Stop"
+$KubectlVersion = Read-Host "Cluster-compatible kubectl version (vX.Y.Z)"
+$KubectlArch = Read-Host "Architecture (amd64 or arm64)"
+if ($KubectlVersion -notmatch '^v\d+\.\d+\.\d+$' -or $KubectlArch -notin @('amd64','arm64')) { throw "Invalid version/architecture" }
+$BaseUrl = "https://dl.k8s.io/release/$KubectlVersion/bin/windows/$KubectlArch"
+Invoke-WebRequest "$BaseUrl/kubectl.exe" -OutFile kubectl.exe
+Invoke-WebRequest "$BaseUrl/kubectl.exe.sha256" -OutFile kubectl.exe.sha256
+if ((Get-FileHash kubectl.exe -Algorithm SHA256).Hash -ne (Get-Content kubectl.exe.sha256).Trim()) { throw "Checksum mismatch" }
+# Move the verified binary to a directory included in PATH.
 ```
 
 **minikube のインストール**:
 
+minikube の公式スタートガイドを使用して、OS/アーキテクチャに適したバイナリ、チェックサム、ドライバーを選択してください。Linux と Windows の手順はそれぞれのシェルで実行し、検証済みのバイナリを PATH に追加してください。macOS の場合:
+
 ```bash
-# macOS
 brew install minikube
-
-# Linux
-curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-chmod +x minikube-linux-amd64
-sudo mv minikube-linux-amd64 /usr/local/bin/minikube
-
-# Windows (PowerShell)
-New-Item -Path 'c:\' -Name 'minikube' -ItemType Directory
-Invoke-WebRequest -OutFile 'c:\minikube\minikube.exe' -Uri 'https://github.com/kubernetes/minikube/releases/latest/download/minikube-windows-amd64.exe'
+minikube version
 ```
 
-### ローカルクラスターの起動
+### ローカルクラスターの開始
 
 ```bash
 minikube start
@@ -64,105 +81,96 @@ minikube start
 * [Kubernetes の Service とネットワーキング](04-kubernetes-introduction.md#kubernetes-services-and-networking)
 * [Kubernetes ストレージ](04-kubernetes-introduction.md#kubernetes-storage)
 * [Kubernetes の設定とセキュリティ](04-kubernetes-introduction.md#kubernetes-configuration-and-security)
-* [Kubernetes と Amazon EKS の比較](04-kubernetes-introduction.md#kubernetes-vs-amazon-eks)
+* [Kubernetes と Amazon EKS](04-kubernetes-introduction.md#kubernetes-vs-amazon-eks)
 * [Kubernetes を始める](04-kubernetes-introduction.md#getting-started-with-kubernetes)
-
-<span id="what-is-kubernetes"></span>
 
 ## Kubernetes とは？
 
-Kubernetes はギリシャ語で「舵取り役」または「操縦士」を意味し、コンテナ化されたアプリケーションのデプロイ、スケーリング、運用を自動化するオープンソースシステムです。Google の社内 Borg システムから着想を得ており、2014 年にオープンソースとして公開されました。
+Kubernetes はギリシャ語で「舵取り」または「操縦士」を意味し、コンテナ化されたアプリケーションのデプロイ、スケーリング、運用を自動化するオープンソースシステムです。Google の社内 Borg システムから着想を得て、2014 年にオープンソースとして公開されました。
 
 ### Kubernetes の主な機能
 
-1. **Service Discovery と Load Balancing**: コンテナを外部に公開し、トラフィックを分散する
-2. **Storage Orchestration**: ローカルまたはクラウドストレージシステムを自動的にマウントする
-3. **自動ロールアウトとロールバック**: アプリケーションの状態を段階的に変更し、問題発生時に以前の状態へ復元する
-4. **自動ビンパッキング**: リソース要件に基づいてコンテナを Node に配置する
-5. **自己修復**: 失敗したコンテナを再起動し、応答しないコンテナを置き換える
-6. **Secret と設定の管理**: 機密情報を保存し、設定を更新する
-7. **水平スケーリング**: シンプルなコマンドまたは UI によりアプリケーションをスケールする
-8. **バッチ実行**: バッチおよび CI ワークロードを管理する
+1. **Service Discovery と負荷分散**: コンテナを外部に公開し、トラフィックを分散
+2. **ストレージオーケストレーション**: ローカルまたはクラウドのストレージシステムを自動的にマウント
+3. **ロールアウトとロールバック**: アプリケーションを段階的に更新し、オペレーターまたはツールによるロールバックをサポート。失敗した Deployment が自動的にロールバックされるわけではありません。
+4. **自動ビンパッキング**: リソース要件に基づいてコンテナをノードに配置
+5. **自己修復**: 失敗したコンテナを再起動し、応答しないコンテナを置換
+6. **Secret と設定の管理**: 機密情報を保存し、設定を更新
+7. **水平スケーリング**: 簡単なコマンドまたは UI でアプリケーションをスケール
+8. **バッチ実行**: バッチおよび CI ワークロードを管理
 
 ### Kubernetes が解決する課題
 
-* **コンテナオーケストレーション**: 数百から数千のコンテナを効率的に管理する
-* **高可用性**: アプリケーションの継続的な運用を確保する
-* **スケーラビリティ**: トラフィックの増加に基づく自動スケーリング
-* **災害復旧**: 障害発生時の自動復旧
-* **リソース効率**: ハードウェアリソースを効率的に利用する
-* **宣言的設定**: Infrastructure as Code としてインフラストラクチャを管理する
-* **マルチクラウドとハイブリッドクラウド**: 多様な環境で一貫してデプロイと管理を行う
-
-<span id="history-of-kubernetes"></span>
+* **コンテナオーケストレーション**: 数百または数千のコンテナを効率的に管理
+* **高可用性**: レプリカ、配置、Probe、容量による回復力のあるアプリケーション設計をサポート
+* **スケーラビリティ**: トラフィック増加に基づく自動スケーリング
+* **復旧**: 失敗したワークロードを調整。災害復旧には、テスト済みのバックアップと復元計画も必要です。
+* **リソース効率**: ハードウェアリソースを効率的に活用
+* **宣言的設定**: Infrastructure as Code としてインフラストラクチャを管理
+* **マルチクラウドとハイブリッドクラウド**: さまざまな環境で一貫したデプロイと管理
 
 ## Kubernetes の歴史
 
 ### 背景
 
-* **2003-2013**: Google は Borg と呼ばれるコンテナオーケストレーションシステムを社内で使用
-* **2014 年 6 月**: Google が Kubernetes をオープンソースとして公開
-* **2015 年 7 月**: Kubernetes 1.0 がリリースされ、Cloud Native Computing Foundation (CNCF) に寄贈
+* **2003-2013**: Google は Borg というコンテナオーケストレーションシステムを社内で使用
+* **June 2014**: Google が Kubernetes をオープンソースとして公開
+* **July 2015**: Kubernetes 1.0 がリリースされ、Cloud Native Computing Foundation（CNCF）に寄贈
 * **2016-2017**: 主要クラウドプロバイダーがマネージド Kubernetes サービスを開始
-* **2018 年以降**: コンテナオーケストレーションのデファクトスタンダードとして確立
+* **2018 and beyond**: コンテナオーケストレーションの事実上の標準として確立
 
 ### 名前の由来
 
-Kubernetes (κυβερνήτης) はギリシャ語で「舵取り役」または「操縦士」を意味します。これは、コンテナ化されたアプリケーションを導く役割を象徴しています。略称の K8s は、「K」と「s」の間に 8 文字あることに由来します。
+Kubernetes（κυβερνήτης）はギリシャ語で「舵取り」または「操縦士」を意味します。これはコンテナ化されたアプリケーションを導く役割を象徴しています。「K」と「s」の間に 8 文字あるため、略称として K8s が使用されます。
 
 ### ロゴの意味
 
-Kubernetes のロゴは 7 本のスポークを持つ舵輪を描いており、コンテナ化されたアプリケーションの進路を導く Kubernetes の役割を象徴しています。
-
-<span id="kubernetes-architecture"></span>
+Kubernetes のロゴは 7 本のスポークを持つ舵輪（船の操舵輪）を描いており、コンテナ化されたアプリケーションの進路を導く Kubernetes の役割を象徴しています。
 
 ## Kubernetes アーキテクチャ
 
-Kubernetes はマスター・ノードアーキテクチャに従います。マスターノード（Control Plane）がクラスターを管理し、ワーカーノードが実際のアプリケーションワークロードを実行します。
+Kubernetes はマスター・ノードアーキテクチャに従います。マスターノード（control plane）はクラスターを管理し、ワーカーノードは実際のアプリケーションワークロードを実行します。
 
 ### Control Plane（Master）コンポーネント
 
-![Kubernetes Control Plane: kubectl リクエストは kube-apiserver を経由して etcd に流れ、kube-scheduler、kube-controller-manager、cloud-controller-manager は API server を通じて監視および調整します。](../.gitbook/assets/en-basics-04-kubernetes-introduction-0.png)
+![Kubernetes control plane: kubectl のリクエストは kube-apiserver を経由して etcd に流れ、kube-scheduler、kube-controller-manager、cloud-controller-manager は API server を通じて監視および調整を行います。](../.gitbook/assets/en-basics-04-kubernetes-introduction-0.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-0.html)
 
-1. **kube-apiserver**: Kubernetes API を公開する Control Plane のフロントエンド
-2. **etcd**: すべてのクラスターデータを保存する、一貫性と高可用性を備えたキーバリューストア
-3. **kube-scheduler**: Pod を Node に割り当てるコンポーネント
+1. **kube-apiserver**: Kubernetes API を公開する control plane のフロントエンド
+2. **etcd**: Kubernetes API オブジェクトとクラスター状態を格納する、一貫性と高可用性を備えたキーバリューストア（アプリケーションボリュームの内容は含まない）
+3. **kube-scheduler**: Pod をノードに割り当てるコンポーネント
 4. **kube-controller-manager**: Controller プロセスを実行するコンポーネント
-   * Node Controller: Node がダウンしたときの通知と対応
+   * Node Controller: ノード停止時の通知と応答
    * Replication Controller: 正しい数の Pod レプリカを維持
-   * Endpoints Controller: Service と Pod を接続
-   * Service Account & Token Controller: 新しい Namespace にデフォルトアカウントと API アクセストークンを作成
+   * EndpointSlice Controller: Service のエンドポイントレコードを維持（従来の Endpoints は非推奨）
+   * ServiceAccount controller はデフォルトアカウントを作成。投影された Pod トークンは TokenRequest と kubelet ローテーションを使用
 5. **cloud-controller-manager**: クラウド固有の制御ロジックを含むコンポーネント
-   * Node Controller: Node が削除されたかをクラウドプロバイダーで確認
-   * Route Controller: クラウドインフラストラクチャにルートを設定
-   * Service Controller: クラウドプロバイダーの Load Balancer を作成、更新、削除
-   * Volume Controller: Volume を作成、アタッチ、マウント
+   * Node Controller: クラウドプロバイダーにノードが削除されたかを確認
+   * Route Controller: クラウドインフラストラクチャ内にルートを設定
+   * Service Controller: クラウドプロバイダーのロードバランサーを作成、更新、削除
 
-### Node コンポーネント
+### ノードコンポーネント
 
-![Kubernetes ワーカーノード: kubelet は Control Plane から指示を受け、Pod コンテナを実行する Container Runtime（Docker、containerd、CRI-O）を駆動し、kube-proxy はネットワークルールを維持します。](../.gitbook/assets/en-basics-04-kubernetes-introduction-1.png)
+![Kubernetes worker node: kubelet は control plane から指示を受け、Pod コンテナを実行する CRI runtime（containerd/CRI-O、または外部アダプター経由の Docker Engine）を駆動します。一方、kube-proxy はネットワークルールを維持します。](../.gitbook/assets/en-basics-04-kubernetes-introduction-1.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-1.html)
 
-1. **kubelet**: 各 Node で実行され、Pod 内のコンテナが稼働していることを保証するエージェント
-2. **kube-proxy**: 各 Node で実行され、Kubernetes Service の概念を実装するネットワークプロキシ
-3. **Container Runtime**: コンテナの実行を担うソフトウェア（Docker、containerd、CRI-O など）
+1. **kubelet**: 各ノードで実行され、Pod 内のコンテナが実行中であることを保証するエージェント
+2. **kube-proxy**: Kubernetes Service の概念を実装する、各ノードで実行されるネットワークプロキシ
+3. **Container Runtime**: containerd や CRI-O など、CRI v1 を実装するソフトウェア。Docker Engine には別途 CRI アダプターが必要
 
 ### 完全なアーキテクチャ
 
-![完全な Kubernetes クラスター: kubectl クライアントは kube-apiserver に到達し、これが etcd、kube-scheduler、kube-controller-manager、cloud-controller-manager を調整して、2 台のワーカーノード上の kubelet、Container Runtime、kube-proxy を駆動します。](../.gitbook/assets/en-basics-04-kubernetes-introduction-2.png)
+![完全な Kubernetes クラスター: kubectl クライアントは kube-apiserver に到達し、これが etcd、kube-scheduler、kube-controller-manager、cloud-controller-manager を調整し、2 つのワーカーノード上の kubelet、container runtime、kube-proxy を駆動します。](../.gitbook/assets/en-basics-04-kubernetes-introduction-2.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-2.html)
 
-<span id="kubernetes-main-components"></span>
-
 ## Kubernetes の主要コンポーネント
 
-### API Server (kube-apiserver)
+### API Server（kube-apiserver）
 
-API Server は Kubernetes API を公開する Control Plane のフロントエンドです。すべての内部および外部リクエストは API Server を介して処理されます。
+API server は Kubernetes API を公開する control plane のフロントエンドです。Kubernetes API リクエストはこれを通過しますが、アプリケーショントラフィックとストレージ I/O は API server を通りません。
 
 **主な機能**:
 
@@ -170,109 +178,106 @@ API Server は Kubernetes API を公開する Control Plane のフロントエ�
 * 認証と認可
 * リクエスト検証
 * etcd との通信
-* 水平スケーリングが可能
+* 水平スケーラブル
 
 ### etcd
 
-etcd は、すべてのクラスターデータを保存する、一貫性と高可用性を備えたキーバリューストアです。
+etcd は、Kubernetes API オブジェクトとクラスター状態（アプリケーションボリュームの内容を除く）を格納する、一貫性と高可用性を備えたキーバリューストアです。
 
 **主な特徴**:
 
 * 分散システム
-* 強整合性
+* 強い一貫性
 * 高可用性
-* セキュアなデータストレージ
+* 安全なデータストレージ
 * 変更を監視する Watch 機能
 
-### Scheduler (kube-scheduler)
+### Scheduler（kube-scheduler）
 
-Scheduler は、新しく作成された Pod を実行する Node を選択する Control Plane コンポーネントです。
+Scheduler は、新しく作成された Pod を実行するノードを選択する control plane コンポーネントです。
 
 **スケジューリングプロセス**:
 
-1. **フィルタリング**: Pod を実行できる Node を特定する
-2. **スコアリング**: 適切な Node にスコアを割り当てる
-3. **バインディング**: Pod を最適な Node に割り当てる
+1. **フィルタリング**: Pod を実行可能なノードを特定
+2. **スコアリング**: 適切なノードにスコアを割り当て
+3. **バインディング**: Pod を最適なノードに割り当て
 
 **考慮事項**:
 
 * リソース要件（CPU、メモリ）
-* ハードウェア、ソフトウェア、ポリシーの制約
-* Affinity/Anti-affinity の指定
+* ハードウェア/ソフトウェア/ポリシー制約
+* Affinity/anti-affinity の指定
 * データ局所性
 * ワークロードの干渉
 
-### Controller Manager (kube-controller-manager)
+### Controller Manager（kube-controller-manager）
 
-Controller Manager は、複数の Controller プロセスを実行する Control Plane コンポーネントです。
+Controller Manager は複数の Controller プロセスを実行する control plane コンポーネントです。
 
-**主な Controller**:
+**主要な Controller**:
 
-* **Node Controller**: Node の状態を監視して対応
+* **Node Controller**: ノード状態を監視して応答
 * **Replication Controller**: Pod レプリカ数を維持
-* **Endpoints Controller**: Service と Pod を接続
-* **Service Account & Token Controller**: Namespace のデフォルトアカウントと API トークンを作成
-* **Job Controller**: 一回限りのタスクを管理
+* **EndpointSlice Controller**: Service のエンドポイントレコードを維持（従来の Endpoints は非推奨）
+* **ServiceAccount controller**: デフォルトアカウントを作成。最新の Pod トークンは TokenRequest 経由で要求され、kubelet によりローテーションされます。
+* **Job Controller**: 1 回限りのタスクを管理
 * **CronJob Controller**: スケジュールされたタスクを管理
-* **DaemonSet Controller**: 特定の Pod がすべての Node で実行されることを保証
+* **DaemonSet Controller**: 対象となる各ノード上の Pod を調整
 * **StatefulSet Controller**: ステートフルアプリケーションを管理
 * **PV Controller**: PersistentVolume を管理
 
-### Cloud Controller Manager (cloud-controller-manager)
+### Cloud Controller Manager（cloud-controller-manager）
 
-Cloud Controller Manager は、クラウド固有の制御ロジックを含む Control Plane コンポーネントです。
+Cloud Controller Manager にはクラウド固有の制御ロジックが含まれます。CSI controller sidecar/driver と kubelet/node plugin がストレージのプロビジョニング、アタッチ、マウントを処理します。これは CCM のボリューム Controller ではありません。
 
-**主な Controller**:
+**主要な Controller**:
 
-* **Node Controller**: クラウドプロバイダー API を通じて Node の状態を確認
+* **Node Controller**: クラウドプロバイダー API を通じてノード状態を確認
 * **Route Controller**: クラウド環境にルートを設定
-* **Service Controller**: クラウド Load Balancer を作成、更新、削除
-* **Volume Controller**: クラウドストレージ Volume を作成、アタッチ、マウント
+* **Service Controller**: クラウドロードバランサーを作成、更新、削除
 
 ### kubelet
 
-kubelet は各 Node で実行され、Pod 内のコンテナが稼働していることを保証するエージェントです。
+kubelet は各ノードで実行され、Pod 内のコンテナが実行中であることを保証するエージェントです。
 
 **主な機能**:
 
 * PodSpec に従ってコンテナを実行
-* コンテナの状態を報告
+* コンテナ状態を報告
 * コンテナのヘルスチェックを実行
 * コンテナライフサイクルを管理
-* Node の状態を報告
+* ノード状態を報告
 
 ### kube-proxy
 
-kube-proxy は、Kubernetes Service の概念を実装する、各 Node で実行されるネットワークプロキシです。
+kube-proxy は Kubernetes Service の概念を実装する、各ノードで実行されるネットワークプロキシです。
 
 **主な機能**:
 
 * Service IP とポートのネットワークルールを維持
 * 接続を転送
-* Load Balancing を実装
+* 負荷分散を実装
 
 **動作モード**:
 
-* **userspace mode**: ユーザー空間でプロキシを実行（レガシー）
-* **iptables mode**: Linux iptables を使用した NAT 実装（デフォルト）
-* **IPVS mode**: Linux カーネルの IP Virtual Server を使用（高パフォーマンス）
-
-<span id="kubernetes-basic-objects"></span>
+* **nftables mode**: 1.33 から安定。カーネルおよびネットワークプラグインの互換性を確認
+* **iptables mode**: Linux iptables を使用する NAT 実装（デフォルト）
+* **IPVS mode**: 1.35 から非推奨。移行を計画してください。従来の userspace mode は削除されました。
 
 ## Kubernetes の基本オブジェクト
 
-Kubernetes オブジェクトは、クラスターの状態を表す永続的なエンティティです。これらのオブジェクトは、クラスター内で実行中のアプリケーション、利用可能なリソース、ポリシーなどを記述します。
+Kubernetes オブジェクトは、クラスターの状態を表す永続エンティティです。これらのオブジェクトは、クラスター内で実行されているアプリケーション、利用可能なリソース、ポリシーなどを記述します。
 
 ### Pod
 
-Pod は Kubernetes における最小のデプロイ可能な単位であり、1 つ以上のコンテナのグループを表します。Pod 内のコンテナはストレージとネットワークを共有し、常に同じ Node に一緒にスケジュールされます。
+Pod は Kubernetes でデプロイ可能な最小単位であり、1 つ以上のコンテナのグループを表します。Pod 内のコンテナはネットワーキングを共有し、明示的にマウントされたボリュームを共有できます。同じノードで実行されますが、root filesystem を自動的に共有するわけではありません。
 
 **主な特徴**:
 
 * 一意の IP アドレスを持つ
-* ネットワーク名前空間を共有（同一の IP とポート空間）
+* ネットワーク名前空間を共有（同じ IP とポート空間）
 * IPC 名前空間を共有
-* ホスト名を共有
+* hostname を共有
 * コンテナ間で localhost 通信が可能
 
 **Pod の例**:
@@ -287,15 +292,22 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.21
+    image: nginx:1.30.4
     ports:
     - containerPort: 80
-  - name: log-sidecar
-    image: busybox
-    command: ["/bin/sh", "-c", "tail -f /var/log/nginx/access.log"]
     volumeMounts:
     - name: logs
       mountPath: /var/log/nginx
+  - name: log-sidecar
+    image: busybox:1.37.0
+    command:
+    - /bin/sh
+    - -c
+    - until [ -f /var/log/nginx/access.log ]; do sleep 1; done; tail -F /var/log/nginx/access.log
+    volumeMounts:
+    - name: logs
+      mountPath: /var/log/nginx
+      readOnly: true
   volumes:
   - name: logs
     emptyDir: {}
@@ -303,14 +315,14 @@ spec:
 
 ### Namespace
 
-Namespace は、単一のクラスター内でリソースグループを分離する方法を提供します。これは、複数のチームまたはプロジェクトが同じクラスターを共有する場合に便利です。
+Namespace は、単一クラスター内でリソースグループを分離する方法を提供します。チーム/プロジェクトの整理に役立ちますが、Namespace 単独ではネットワークまたは認可の分離を強制しません。
 
 **デフォルト Namespace**:
 
 * **default**: デフォルト Namespace
-* **kube-system**: Kubernetes システムにより作成されるオブジェクト用の Namespace
-* **kube-public**: すべてのユーザーが読み取り可能なオブジェクト用の Namespace
-* **kube-node-lease**: Node のハートビート用 Namespace
+* **kube-system**: Kubernetes システムにより作成されるオブジェクト用 Namespace
+* **kube-public**: 慣例として公開情報に使用される Namespace。実際のオブジェクトアクセスは引き続き RBAC に依存
+* **kube-node-lease**: ノード heartbeat 用 Namespace
 
 **Namespace の例**:
 
@@ -321,11 +333,11 @@ metadata:
   name: development
 ```
 
-### Label と Selector
+### Labels と Selectors
 
-Label はオブジェクトに付与されるキーと値のペアであり、オブジェクトの識別と選択に使用されます。Selector は、Label に基づいてオブジェクトをフィルタリングする方法を提供します。
+Labels はオブジェクトに付与するキーと値のペアで、オブジェクトの識別および選択に使用します。Selectors は Labels に基づいてオブジェクトをフィルタリングする方法を提供します。
 
-**Label の例**:
+**Labels の例**:
 
 ```yaml
 metadata:
@@ -351,16 +363,16 @@ selector:
     - {key: environment, operator: NotIn, values: [dev]}
 ```
 
-### Annotation
+### Annotations
 
-Annotation は、オブジェクトに関する識別目的以外のメタデータを保存するキーと値のペアです。Annotation は、ツールやライブラリが使用する情報の保存に役立ちます。
+Annotations は、オブジェクトに関する識別以外のメタデータを格納するキーと値のペアです。Annotations はツールやライブラリで使用する情報の格納に役立ちます。
 
-**Annotation の例**:
+**Annotations の例**:
 
 ```yaml
 metadata:
   annotations:
-    kubernetes.io/created-by: "admin"
+    example.com/created-by: "admin"
     example.com/last-modified: "2023-07-01T12:00:00Z"
     prometheus.io/scrape: "true"
     prometheus.io/port: "9090"
@@ -368,16 +380,16 @@ metadata:
 
 ### Node
 
-Node は Pod を実行する Kubernetes クラスター内のワーカーマシンです。Node は物理マシンまたは仮想マシンにできます。
+Node は Pod を実行する Kubernetes クラスター内のワーカーマシンです。Node は物理マシンまたは仮想マシンです。
 
 **Node の状態**:
 
 * **Addresses**: Hostname、Internal IP、External IP
 * **Conditions**: Ready、DiskPressure、MemoryPressure、PIDPressure、NetworkUnavailable
 * **Capacity**: CPU、Memory、最大 Pod 数
-* **Info**: Kernel バージョン、Container Runtime バージョン、kubelet バージョン
+* **Info**: Kernel version、Container runtime version、kubelet version
 
-**Node の例**:
+**説明用の Node 状態（ノードプロビジョニング manifest ではなく、node/controllers により報告されるもの）**:
 
 ```yaml
 apiVersion: v1
@@ -388,8 +400,6 @@ metadata:
     kubernetes.io/hostname: worker-1
     node-role.kubernetes.io/worker: ""
     topology.kubernetes.io/zone: us-east-1a
-spec:
-  # ...
 status:
   capacity:
     cpu: "4"
@@ -401,19 +411,17 @@ status:
   # ...
 ```
 
-<span id="kubernetes-workload-resources"></span>
-
 ## Kubernetes のワークロードリソース
 
-ワークロードリソースは、Pod の管理と実行に使用されるオブジェクトです。これらのリソースは、Pod の作成、スケーリング、更新、終了を管理します。
+ワークロードリソースは Pod を管理および実行するために使用するオブジェクトです。これらのリソースは、Pod の作成、スケーリング、更新、終了を管理します。
 
 ### ReplicaSet
 
-ReplicaSet は、指定された数の Pod レプリカが常に実行されることを保証します。Pod が失敗または削除された場合、ReplicaSet は自動的に置き換えとなる Pod を作成します。
+ReplicaSet は、望ましい数の Pod オブジェクトを調整します。Ready 状態は容量、有効な設定、アプリケーションにも依存します。Pod が失敗または削除されると、ReplicaSet は自動的に置換 Pod を作成します。
 
 **主な機能**:
 
-* 指定された数の Pod レプリカを維持
+* 指定した数の Pod レプリカを維持
 * Pod テンプレートを定義
 * Selector を通じて Pod を識別
 
@@ -438,19 +446,19 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.4
         ports:
         - containerPort: 80
 ```
 
 ### Deployment
 
-Deployment は ReplicaSet をさらに 1 段階抽象化し、アプリケーションの宣言的な更新を提供します。Deployment はローリング更新、ロールバック、スケーリングなどの機能を提供します。
+Deployment は ReplicaSet をさらに 1 層抽象化し、アプリケーションの宣言的更新を提供します。Deployment は rolling update、rollback、scaling などの機能を提供します。
 
 **主な機能**:
 
 * 宣言的なアプリケーション更新
-* ローリング更新とロールバック
+* Rolling update と rollback
 * Deployment 履歴の管理
 * スケーリング
 
@@ -480,7 +488,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.21
+        image: nginx:1.30.4
         ports:
         - containerPort: 80
         resources:
@@ -496,7 +504,15 @@ spec:
             port: 80
           initialDelaySeconds: 30
           periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
 ```
+
+MySQL の例は単一の永続インスタンスです。StatefulSet はデータベースのレプリケーション、フェイルオーバー、バックアップを設定しません。先に mysql-secret/password を用意し、StorageClass のプレースホルダーを置き換えてください。レプリカ数を増やすだけでは独立したデータベースが作成されます。HA にはテスト済みの database operator/replication 設定が必要です。
 
 ### StatefulSet
 
@@ -506,12 +522,25 @@ StatefulSet は、状態の維持を必要とするアプリケーションの�
 
 * 安定かつ一意のネットワーク識別子
 * 安定した永続ストレージ
-* 順次デプロイとスケーリング
+* 順次デプロイおよびスケーリング
 * 順次更新
 
 **StatefulSet の例**:
 
 ```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+spec:
+  clusterIP: None
+  selector:
+    app: mysql
+  ports:
+  - name: mysql
+    port: 3306
+    targetPort: 3306
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -521,15 +550,16 @@ spec:
     matchLabels:
       app: mysql
   serviceName: mysql
-  replicas: 3
+  replicas: 1
   template:
     metadata:
       labels:
         app: mysql
+        role: db
     spec:
       containers:
       - name: mysql
-        image: mysql:8.0
+        image: mysql:8.4
         env:
         - name: MYSQL_ROOT_PASSWORD
           valueFrom:
@@ -542,24 +572,32 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /var/lib/mysql
+        readinessProbe:
+          tcpSocket:
+            port: 3306
+          initialDelaySeconds: 10
+          periodSeconds: 5
   volumeClaimTemplates:
   - metadata:
       name: data
     spec:
-      accessModes: ["ReadWriteOnce"]
-      storageClassName: "standard"
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: replace-with-storage-class
       resources:
         requests:
           storage: 10Gi
 ```
 
+Linux の Fluent Bit 例は、デモンストレーションのために CRI ログを stdout に送信します。フィードバックループを防ぐため自身のログを除外し、その position DB を別に永続化します。同じログを stdout に再公開する別の collector と併用してデプロイしないでください。本番環境では外部送信先と、レビュー済みの host path、権限、PSS 例外が必要です。
+
 ### DaemonSet
 
-DaemonSet は、Pod のコピーがすべての Node（または特定の Node）で実行されることを保証します。Node がクラスターに追加されると Pod は自動的に追加され、Node が削除されると Pod も削除されます。
+DaemonSet は、対象となる各ノードに Pod を作成します。node selector、taint、容量、admission policy は引き続き適用されます。ノードがクラスターに追加されると Pod も自動的に追加され、ノードが削除されると Pod も削除されます。
 
 **主なユースケース**:
 
-* ログコレクター（Fluentd、Logstash）
+* ログ collector（Fluentd、Logstash）
 * 監視エージェント（Prometheus Node Exporter）
 * ネットワークプラグイン（Calico、Cilium）
 * ストレージデーモン（Ceph）
@@ -567,51 +605,101 @@ DaemonSet は、Pod のコピーがすべての Node（または特定の Node�
 **DaemonSet の例**:
 
 ```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: intro-log-agent-config
+  namespace: kube-system
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush 5
+        Parsers_File /fluent-bit/etc/parsers.conf
+    [INPUT]
+        Name tail
+        Path /var/log/containers/*.log
+        Exclude_Path /var/log/containers/intro-log-agent-*_kube-system_fluent-bit-*.log
+        Parser cri
+        Tag kube.*
+        DB /var/lib/fluent-bit/tail.db
+        Mem_Buf_Limit 5MB
+        Skip_Long_Lines On
+    [OUTPUT]
+        Name stdout
+        Match *
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: fluentd
+  name: intro-log-agent
   namespace: kube-system
 spec:
   selector:
     matchLabels:
-      name: fluentd
+      app: intro-log-agent
   template:
     metadata:
       labels:
-        name: fluentd
+        app: intro-log-agent
     spec:
+      automountServiceAccountToken: false
       tolerations:
-      - key: node-role.kubernetes.io/master
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
         effect: NoSchedule
       containers:
-      - name: fluentd
-        image: fluentd:v1.14
+      - name: fluent-bit
+        image: cr.fluentbit.io/fluent/fluent-bit:5.1.2
+        securityContext:
+          runAsUser: 0
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        args:
+        - -c
+        - /fluent-bit/custom/fluent-bit.conf
         resources:
-          limits:
-            memory: 200Mi
           requests:
             cpu: 100m
             memory: 100Mi
+          limits:
+            memory: 200Mi
         volumeMounts:
         - name: varlog
           mountPath: /var/log
+          readOnly: true
+        - name: config
+          mountPath: /fluent-bit/custom
+          readOnly: true
+        - name: state
+          mountPath: /var/lib/fluent-bit
       volumes:
       - name: varlog
         hostPath:
           path: /var/log
+          type: Directory
+      - name: config
+        configMap:
+          name: intro-log-agent-config
+      - name: state
+        hostPath:
+          path: /var/lib/intro-log-agent
+          type: DirectoryOrCreate
+      nodeSelector:
+        kubernetes.io/os: linux
 ```
 
 ### Job
 
-Job は 1 つ以上の Pod を作成し、指定された数の Pod が正常に終了するまで実行を継続します。バッチ処理タスクに適しています。
+Job は 1 つ以上の Pod を作成し、指定数の Pod が正常に終了するまで実行を継続します。バッチ処理タスクに適しています。
 
 **主な機能**:
 
-* 一回限りのタスク実行
+* 1 回限りのタスク実行
 * 並列タスク実行
-* タスク完了を保証
-* 失敗時に再試行
+* 正常完了を追跡。失敗/期限の制限によって Job が失敗する場合もあります。
+* 失敗時の再試行
 
 **Job の例**:
 
@@ -633,16 +721,18 @@ spec:
       restartPolicy: Never
 ```
 
+Job は再試行/期限の制限により失敗する可能性があり、同じ作業を再度実行することもあるため、タスクは冪等であるべきです。CronJob のスケジューリングは厳密に 1 回ではありません。Forbid はその CronJob の重複する Job のみを制御します。
+
 ### CronJob
 
-CronJob は、指定されたスケジュールに従って Job を定期的に実行します。Linux の cron ジョブと同様に動作します。
+CronJob は指定されたスケジュールに従って定期的に Job を実行します。Linux cron job と同様に機能します。
 
 **主な機能**:
 
 * スケジュールに従ったタスク実行
 * Cron 式のサポート
-* 同時実行ポリシーの設定
-* 履歴の上限
+* 同時実行ポリシー設定
+* 履歴制限
 
 **CronJob の例**:
 
@@ -652,6 +742,7 @@ kind: CronJob
 metadata:
   name: database-backup
 spec:
+  timeZone: Etc/UTC
   schedule: "0 2 * * *"  # Run at 02:00 daily
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
@@ -669,24 +760,22 @@ spec:
           restartPolicy: OnFailure
 ```
 
-<span id="kubernetes-services-and-networking"></span>
-
 ## Kubernetes の Service とネットワーキング
 
-Kubernetes のネットワーキングモデルは、すべての Pod が一意の IP アドレスを持ち、特別な設定なしに相互通信できるという前提に基づいています。Service は Pod セットに対して安定したエンドポイントを提供します。
+Kubernetes ネットワーキングモデルは、互換性のある CNI が Pod ネットワーキングを提供するという前提に基づきます。到達可能性は NetworkPolicy、firewall、トポロジーに左右されます。Service は Pod のセットに安定したエンドポイントを提供します。
 
 ### Service
 
-Service は、Pod セットに単一のエンドポイントと Load Balancing を提供します。Pod は動的に作成・削除されるため、Service はこれらの変更があっても安定したネットワークアドレスを提供します。
+Service は一連の Pod に単一のエンドポイントと負荷分散を提供します。Pod は動的に作成および削除されるため、Service はこれらの変更にもかかわらず安定したネットワークアドレスを提供します。
 
 **Service の種類**:
 
 * **ClusterIP**: クラスター内からのみアクセス可能な Service（デフォルト）
-* **NodePort**: 各 Node の IP と特定のポートを通じて外部からアクセス可能
-* **LoadBalancer**: クラウドプロバイダーの Load Balancer を使用して外部からアクセス可能
-* **ExternalName**: 外部 Service 用の CNAME レコードを作成
+* **NodePort**: 各ノードの IP と特定のポートを通じて外部からアクセス可能
+* **LoadBalancer**: クラウドプロバイダーのロードバランサーを使用して外部からアクセス可能
+* **ExternalName**: 外部 Service の CNAME レコードを作成
 
-![外部クライアントは NodePort および LoadBalancer Service を通じてのみクラスターに入り、ClusterIP Service は内部に留まり、3 種類すべての Service がポート 80 のリクエストを同じ Pod（Pod 1、2、3）へ Load Balancing します。](../.gitbook/assets/en-basics-04-kubernetes-introduction-3.png)
+![図は NodePort および LoadBalancer Service 経由の外部アクセスを示しています。Ingress/Gateway などの他のエントリーポイントも可能で、ClusterIP Service は内部に留まり、3 つの Service 種類すべてが同じ Pod（Pod 1、2、3）へのポート 80 リクエストを負荷分散します。](../.gitbook/assets/en-basics-04-kubernetes-introduction-3.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-3.html)
 
@@ -723,6 +812,8 @@ spec:
   type: NodePort
 ```
 
+この AWS の例には AWS Load Balancer Controller と、その IAM/ネットワーク前提条件が必要です。EKS Auto Mode は異なる loadBalancerClass を使用します。ローカルクラスターには独自の LoadBalancer 実装が必要です。
+
 **LoadBalancer Service の例**:
 
 ```yaml
@@ -731,7 +822,8 @@ kind: Service
 metadata:
   name: nginx-lb
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
 spec:
   selector:
     app: nginx
@@ -739,18 +831,21 @@ spec:
   - port: 80
     targetPort: 80
   type: LoadBalancer
+  loadBalancerClass: service.k8s.aws/nlb
 ```
+
+この例には、インストール済みの Traefik、その traefik IngressClass、app1/app2 Service、TLS Secret が必要です。パス /app1 と /app2 は保持され、backend が提供する必要があります。Ingress リソースは Controller をインストールしません。
 
 ### Ingress
 
-Ingress は、クラスター外部から内部 Service への HTTP および HTTPS ルーティングを管理する API オブジェクトです。Ingress は Load Balancing、SSL 終端、名前ベースの仮想ホスティングなどを提供します。
+Ingress は、クラスター外部から内部 Service への HTTP および HTTPS ルーティングを管理する API オブジェクトです。Ingress は負荷分散、SSL termination、名前ベースの virtual hosting などを提供します。
 
 **Ingress Controller**:
 
-* **NGINX Ingress Controller**: NGINX ベースの Ingress Controller
-* **AWS ALB Ingress Controller**: AWS Application Load Balancer ベースの Ingress Controller
-* **Traefik**: クラウドネイティブなエッジルーター
-* **Istio Ingress**: Service Mesh ベースの Ingress
+* **ingress-nginx（2026 年 3 月に終了）**: 過去のコミュニティ Controller。新規インストールには保守されている Controller を選択してください。F5 NGINX Ingress Controller は別プロジェクトです。
+* **AWS Load Balancer Controller**: AWS Application Load Balancer ベースの Ingress Controller
+* **Traefik**: クラウドネイティブな edge router
+* **Istio Ingress**: Service mesh ベースの Ingress
 
 **Ingress の例**:
 
@@ -759,10 +854,8 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: example-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   rules:
   - host: example.com
     http:
@@ -789,9 +882,9 @@ spec:
 
 ### NetworkPolicy
 
-NetworkPolicy は、Pod 間の通信を制御する方法を提供します。デフォルトではすべての Pod が相互に通信できますが、NetworkPolicy を使用してこれを制限できます。&#x20;
+NetworkPolicy は Pod 間の通信を制御する方法を提供します。デフォルトではすべての Pod が相互に通信できますが、ネットワークポリシーを使用して制限できます。&#x20;
 
-![外部リクエストは default Namespace の frontend、API、database Pod を通過し、db-network-policy NetworkPolicy が role=db の Pod を保護し、monitoring Namespace の Prometheus が 3 層すべてをスクレイピングします。](../.gitbook/assets/en-basics-04-kubernetes-introduction-4.png)
+![外部リクエストは default Namespace の frontend、API、database Pod を通過し、db-network-policy NetworkPolicy は role=db Pod を保護します。また、monitoring Namespace の Prometheus は 3 層すべてをスクレイプします。](../.gitbook/assets/en-basics-04-kubernetes-introduction-4.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-4.html)
 
@@ -821,30 +914,47 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          role: frontend
+          role: api
     ports:
     - protocol: TCP
       port: 3306
-  egress:
-  - to:
-    - podSelector:
+  - from:
+    - namespaceSelector:
         matchLabels:
-          role: monitoring
+          kubernetes.io/metadata.name: monitoring
+      podSelector:
+        matchLabels:
+          app: prometheus
     ports:
     - protocol: TCP
-      port: 9090
+      port: 9104
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
 ```
+
+NetworkPolicy の許可は加算的です。このポリシーは、role=api から DB の port3306、および monitoring の app=prometheus から個別にインストールされた DB exporter の port9104 を許可します。DB から Prometheus9090 への接続を可能にするものではありません。実際のクラスター DNS/NodeLocal DNS 設定に合わせて DNS Egress Selector を調整してください。
 
 ### DNS
 
-Kubernetes は、Service Discovery をサポートするためにクラスター内で DNS Service を提供します。デフォルトでは CoreDNS が使用されます。
+Kubernetes ディストリビューションは通常、Service discovery のために CoreDNS をデプロイします。その ConfigMap を編集する際は、ディストリビューションで管理される設定を保持してください。以下の pods insecure mode は Pod の存在を検証せずに従来の IP ベースレコードを提供します。そのレコードが不要な場合は disabled を使用するか、追加の watch/メモリコストを伴う verified を使用してください。
 
 **DNS 名の形式**:
 
 * **Service**: `<service-name>.<namespace>.svc.cluster.local`
-* **Pod**: `<pod-IP-address-dots-replaced>.pod.cluster.local`
+* **Pod**: `<pod-ip-with-dashes>.<namespace>.pod.cluster.local`（IPv4 レコード。CoreDNS の pods mode に依存）
 
-**DNS 設定の例**:
+**DNS 設定例**:
 
 ```yaml
 apiVersion: v1
@@ -857,9 +967,9 @@ data:
     .:53 {
         errors
         health
+        ready
         kubernetes cluster.local in-addr.arpa ip6.arpa {
           pods insecure
-          upstream
           fallthrough in-addr.arpa ip6.arpa
         }
         prometheus :9153
@@ -873,18 +983,18 @@ data:
 
 ### Service Mesh
 
-Service Mesh は、マイクロサービス間の通信を管理するインフラストラクチャレイヤーです。Service Mesh は、トラフィック管理、セキュリティ、可観測性を提供します。
+Service mesh は、マイクロサービス間の通信を管理するインフラストラクチャ層です。Service mesh はトラフィック管理、セキュリティ、可観測性を提供します。
 
 **主な Service Mesh**:
 
-* **Istio**: 最も広く使用されている Service Mesh
-* **Linkerd**: 軽量な Service Mesh
-* **AWS App Mesh**: AWS マネージド Service Mesh
+* **Istio**: 最も広く使用されている Service mesh
+* **Linkerd**: 軽量な Service mesh
+* **AWS App Mesh**: サポートは 2026-09-30 に終了。AWS によると console とリソースにはもうアクセスできません。
 
 **Istio VirtualService の例**:
 
 ```yaml
-apiVersion: networking.istio.io/v1alpha3
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
   name: reviews-route
@@ -904,29 +1014,41 @@ spec:
     - destination:
         host: reviews
         subset: v1
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: reviews-subsets
+spec:
+  host: reviews
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
 ```
-
-<span id="kubernetes-storage"></span>
 
 ## Kubernetes ストレージ
 
-Kubernetes は、コンテナ化されたアプリケーション向けにさまざまなストレージオプションを提供します。Pod が再起動または再スケジュールされた場合でも、データを永続化する方法を提供します。
+Kubernetes はコンテナ化されたアプリケーションにさまざまなストレージオプションを提供します。Pod が再起動または再スケジュールされた場合でもデータを永続化する方法を提供します。
 
-![Kubernetes ストレージ: Pod 1 と Pod 2 は PersistentVolumeClaim（pvc-1、pvc-2）を通じて PersistentVolume（pv-1、pv-3）にバインドされ、standard StorageClass は PV を動的にプロビジョニングし、各 PV は AWS EBS Volume にマッピングされます。](../.gitbook/assets/en-basics-04-kubernetes-introduction-5.png)
+![Kubernetes ストレージ: Pod 1 と Pod 2 は PersistentVolumeClaim（pvc-1、pvc-2）を介して PersistentVolume（pv-1、pv-3）にバインドされ、standard StorageClass は PV を動的にプロビジョニングし、各 PV は AWS EBS volume にマッピングされます。](../.gitbook/assets/en-basics-04-kubernetes-introduction-5.png)
 
 [🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-basics-04-kubernetes-introduction-5.html)
 
 ### Volume
 
-Volume は Pod 内のコンテナにマウントできるディレクトリであり、Pod のライフサイクル中にデータを永続化します。Volume は Pod 内のコンテナ間でデータを共有するためにも使用されます。
+Volume は Pod 内のコンテナにマウントできるディレクトリであり、Pod のライフサイクル中データを永続化します。Volume は Pod 内のコンテナ間でデータを共有するためにも使用されます。
 
-**主な Volume の種類**:
+**主な Volume 種類**:
 
-* **emptyDir**: 空のディレクトリとして開始され、Pod の削除時に削除される
-* **hostPath**: ホスト Node のファイルシステムを Pod にマウントする
-* **configMap**: ConfigMap を Volume としてマウントする
-* **secret**: Secret を Volume としてマウントする
-* **persistentVolumeClaim**: PersistentVolume を Pod にマウントする
+* **emptyDir**: 空のディレクトリとして開始し、Pod の削除時に削除
+* **hostPath**: ホストノードの file system から Pod にマウント
+* **configMap**: ConfigMap を Volume としてマウント
+* **secret**: Secret を Volume としてマウント
+* **persistentVolumeClaim**: PersistentVolume を Pod にマウント
 
 **emptyDir Volume の例**:
 
@@ -938,7 +1060,7 @@ metadata:
 spec:
   containers:
   - name: test-container
-    image: nginx
+    image: nginx:1.30.4
     volumeMounts:
     - mountPath: /cache
       name: cache-volume
@@ -947,15 +1069,18 @@ spec:
     emptyDir: {}
 ```
 
-### PersistentVolume (PV)
+### PersistentVolume（PV）
 
-PersistentVolume は、クラスター内のストレージリソースを表す API オブジェクトです。Pod とは独立して存在し、クラスター管理者によってプロビジョニングされます。
+PersistentVolume は、クラスター内のストレージリソースを表す API オブジェクトです。Pod から独立して存在し、管理者が静的に、またはストレージ provisioner が動的にプロビジョニングします。
 
 **アクセスモード**:
 
-* **ReadWriteOnce (RWO)**: 単一 Node で読み取り/書き込みとしてマウント可能
-* **ReadOnlyMany (ROX)**: 複数 Node で読み取り専用としてマウント可能
-* **ReadWriteMany (RWX)**: 複数 Node で読み取り/書き込みとしてマウント可能
+* **ReadWriteOnce（RWO）**: 単一ノードに read/write でマウント可能
+* **ReadOnlyMany（ROX）**: 複数ノードに read-only でマウント可能
+* **ReadWriteMany（RWX）**: 複数ノードに read/write でマウント可能
+* **ReadWriteOncePod（RWOP）**: 対応する CSI Volume での単一 Pod アクセス。RWO 単独では、同一ノード上の複数 Pod を依然として許可します。
+
+EBS CSI driver と IAM 権限がすでにインストールされている必要があります。既存の volume ID と実際の Availability Zone を使用してください。別の場所でまだ使用中の volume を再利用しないでください。これらのストレージ例は AWS 固有です。ローカルクラスターには独自の provisioner が必要です。
 
 **PersistentVolume の例**:
 
@@ -968,15 +1093,24 @@ spec:
   capacity:
     storage: 10Gi
   accessModes:
-    - ReadWriteOnce
+  - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: standard
-  awsElasticBlockStore:
-    volumeID: vol-0123456789abcdef0
+  storageClassName: ebs-gp3
+  csi:
+    driver: ebs.csi.aws.com
+    volumeHandle: vol-0123456789abcdef0
     fsType: ext4
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: topology.kubernetes.io/zone
+          operator: In
+          values:
+          - replace-with-volume-az
 ```
 
-### PersistentVolumeClaim (PVC)
+### PersistentVolumeClaim（PVC）
 
 PersistentVolumeClaim は、ユーザーのストレージ要求を表す API オブジェクトです。Pod は PVC を通じて PV にアクセスします。
 
@@ -989,11 +1123,11 @@ metadata:
   name: pvc-example
 spec:
   accessModes:
-    - ReadWriteOnce
+  - ReadWriteOnce
   resources:
     requests:
       storage: 5Gi
-  storageClassName: standard
+  storageClassName: ebs-gp3
 ```
 
 **PVC を使用する Pod の例**:
@@ -1006,7 +1140,7 @@ metadata:
 spec:
   containers:
     - name: myfrontend
-      image: nginx
+      image: nginx:1.30.4
       volumeMounts:
       - mountPath: "/var/www/html"
         name: mypd
@@ -1018,7 +1152,7 @@ spec:
 
 ### StorageClass
 
-StorageClass は、管理者が提供するストレージの「クラス」を記述します。異なるサービス品質レベル、バックアップポリシー、またはクラスター管理者が定める任意のポリシーを提供できます。
+StorageClass は、管理者が提供するストレージの「クラス」を記述します。異なるサービス品質レベル、バックアップポリシー、またはクラスター管理者が決定する任意のポリシーを提供できます。
 
 **StorageClass の例**:
 
@@ -1026,18 +1160,20 @@ StorageClass は、管理者が提供するストレージの「クラス」を�
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: standard
-provisioner: kubernetes.io/aws-ebs
+  name: ebs-gp3
+provisioner: ebs.csi.aws.com
 parameters:
   type: gp3
-  fsType: ext4
+  csi.storage.k8s.io/fstype: ext4
+  encrypted: 'true'
 reclaimPolicy: Delete
 allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
 ```
 
 ### 動的プロビジョニング
 
-動的プロビジョニングは、ストレージクラスを使用して PVC が要求されたときに PV を自動的に作成する機能です。
+動的プロビジョニングは、StorageClass を使用して PVC が要求されたときに PV を自動作成する機能です。
 
 **動的プロビジョニングの例**:
 
@@ -1048,26 +1184,26 @@ metadata:
   name: dynamic-pvc
 spec:
   accessModes:
-    - ReadWriteOnce
+  - ReadWriteOnce
   resources:
     requests:
       storage: 10Gi
-  storageClassName: standard  # Storage class for dynamic provisioning
+  storageClassName: ebs-gp3
 ```
 
-### CSI (Container Storage Interface)
+### CSI（Container Storage Interface）
 
-CSI は、Kubernetes とストレージシステム間の標準インターフェイスを提供します。これにより、ストレージプロバイダーは Kubernetes コードを変更せずに独自のストレージドライバーを開発できます。
+CSI は Kubernetes とストレージシステムの間に標準インターフェースを提供します。これにより、ストレージプロバイダーは Kubernetes コードを変更せずに独自のストレージ driver を開発できます。
 
 **主な CSI Driver**:
 
-* **AWS EBS CSI Driver**: Amazon EBS Volume 管理
-* **AWS EFS CSI Driver**: Amazon EFS ファイルシステム管理
-* **AWS FSx for Lustre CSI Driver**: FSx for Lustre ファイルシステム管理
-* **GCE PD CSI Driver**: Google Compute Engine 永続ディスク管理
-* **Azure Disk CSI Driver**: Azure ディスク管理
+* **AWS EBS CSI Driver**: Amazon EBS volume 管理
+* **AWS EFS CSI Driver**: Amazon EFS file system 管理
+* **AWS FSx for Lustre CSI Driver**: FSx for Lustre file system 管理
+* **GCE PD CSI Driver**: Google Compute Engine persistent disk 管理
+* **Azure Disk CSI Driver**: Azure disk 管理
 
-**CSI Driver のデプロイ例**:
+**インストール済み CSI driver を使用する StorageClass**:
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -1077,20 +1213,18 @@ metadata:
 provisioner: ebs.csi.aws.com
 parameters:
   type: gp3
-  fsType: ext4
-  encrypted: "true"
+  encrypted: 'true'
+  csi.storage.k8s.io/fstype: ext4
 volumeBindingMode: WaitForFirstConsumer
 ```
 
-<span id="kubernetes-configuration-and-security"></span>
-
 ## Kubernetes の設定とセキュリティ
 
-Kubernetes は、アプリケーションの設定とセキュリティを管理するためのさまざまなオブジェクトとメカニズムを提供します。
+Kubernetes は、アプリケーション設定とセキュリティを管理するためのさまざまなオブジェクトとメカニズムを提供します。
 
 ### ConfigMap
 
-ConfigMap は、設定データをキーと値のペアとして保存する API オブジェクトです。Pod は ConfigMap データを環境変数、コマンドライン引数、または設定ファイルとして使用できます。
+ConfigMap は、設定データをキーと値のペアとして格納する API オブジェクトです。Pod は ConfigMap データを環境変数、コマンドライン引数、設定ファイルとして使用できます。
 
 **ConfigMap の例**:
 
@@ -1107,6 +1241,8 @@ data:
   log-level: INFO
   max-connections: "100"
 ```
+
+環境変数の値は自動更新されません。変更後に Pod を再作成してください。Volume 更新は結果整合的であり、アプリケーションのリロードが必要です。subPath mount は更新を受け取りません。
 
 **ConfigMap を使用する Pod の例**:
 
@@ -1136,17 +1272,19 @@ spec:
 
 ### Secret
 
-Secret は、パスワード、トークン、キーなどの機密情報を保存する API オブジェクトです。ConfigMap に似ていますが、機密データ向けに設計されています。
+Secret は、password、token、key などの機密情報を格納する API オブジェクトです。ConfigMap に似ていますが、機密データ向けに設計されています。
 
 **Secret の種類**:
 
 * **Opaque**: 任意のユーザー定義データ（デフォルト）
-* **kubernetes.io/service-account-token**: Service Account トークン
+* **kubernetes.io/service-account-token**: 手動で要求する長期間有効な従来 token Secret。TokenRequest/projected token を推奨
 * **kubernetes.io/dockercfg**: シリアル化された \~/.dockercfg ファイル
 * **kubernetes.io/dockerconfigjson**: シリアル化された \~/.docker/config.json ファイル
-* **kubernetes.io/basic-auth**: Basic 認証用の認証情報
-* **kubernetes.io/ssh-auth**: SSH 認証用の認証情報
-* **kubernetes.io/tls**: TLS クライアントまたはサーバー用のデータ
+* **kubernetes.io/basic-auth**: basic authentication 用認証情報
+* **kubernetes.io/ssh-auth**: SSH authentication 用認証情報
+* **kubernetes.io/tls**: TLS client または server 用データ
+
+データフィールドは暗号化ではなく base64 encoding を使用します。クラスターに適した RBAC と保存時の暗号化で Secret を保護してください。EKS は 1.28+ でデフォルトで全 Kubernetes API データを暗号化します。以下の値はデモ専用であり、置き換える必要があります。
 
 **Secret の例**:
 
@@ -1185,16 +1323,16 @@ spec:
           key: password
 ```
 
-### RBAC (Role-Based Access Control)
+### RBAC（Role-Based Access Control）
 
-RBAC は、Kubernetes API へのアクセスを制御するメカニズムです。Role と RoleBinding を使用して、ユーザーまたは Service Account に特定の権限を付与します。
+RBAC は Kubernetes API へのアクセスを制御するメカニズムです。Role および RoleBinding を使用して、ユーザーまたは ServiceAccount に特定の権限を付与します。
 
 **主な RBAC オブジェクト**:
 
 * **Role**: Namespace 内の権限セットを定義
-* **ClusterRole**: クラスター全体の権限セットを定義
-* **RoleBinding**: Role をユーザー、グループ、または Service Account にバインド
-* **ClusterRoleBinding**: ClusterRole をユーザー、グループ、または Service Account にバインド
+* **ClusterRole**: クラスター/Namespace リソースに再利用可能なルール。binding がその有効スコープを決定
+* **RoleBinding**: Role をユーザー、グループ、または ServiceAccount にバインド
+* **ClusterRoleBinding**: ClusterRole をユーザー、グループ、または ServiceAccount にバインド
 
 **Role の例**:
 
@@ -1230,7 +1368,7 @@ roleRef:
 
 ### ServiceAccount
 
-ServiceAccount は、Pod 内部で実行されるプロセスに ID を提供します。Pod は Service Account を使用して Kubernetes API と通信します。
+ServiceAccount は Pod 内で実行されるプロセスに identity を提供します。Pod は ServiceAccount を使用して Kubernetes API と通信します。
 
 **ServiceAccount の例**:
 
@@ -1258,7 +1396,7 @@ spec:
 
 ### NetworkPolicy
 
-NetworkPolicy は、Pod 間の通信を制御する方法を提供します。デフォルトではすべての Pod が相互に通信できますが、NetworkPolicy を使用してこれを制限できます。
+NetworkPolicy は Pod 間の通信を制御する方法を提供します。デフォルトではすべての Pod が相互に通信できますが、ネットワークポリシーを使用して制限できます。
 
 **NetworkPolicy の例**:
 
@@ -1279,23 +1417,38 @@ spec:
   - from:
     - podSelector:
         matchLabels:
-          role: frontend
+          role: api
     ports:
     - protocol: TCP
       port: 3306
-  egress:
-  - to:
-    - podSelector:
+  - from:
+    - namespaceSelector:
         matchLabels:
-          role: monitoring
+          kubernetes.io/metadata.name: monitoring
+      podSelector:
+        matchLabels:
+          app: prometheus
     ports:
     - protocol: TCP
-      port: 9090
+      port: 9104
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
 ```
 
-### PodSecurityPolicy
+### Pod Security Admission と SecurityContext
 
-PodSecurityPolicy は、Pod の作成と更新に関するセキュリティ関連の条件を定義します。これは Kubernetes 1.21 以降で非推奨となり、Pod Security Standards に置き換えられました。
+PodSecurityPolicy は 1.25 で削除されました。Pod Security Admission は Namespace Label を使用して Pod Security Standards を強制します。SecurityContext はワークロード自体を設定しますが、admission enforcement を置き換えるものではありません。
 
 **Pod SecurityContext の例**:
 
@@ -1309,6 +1462,9 @@ spec:
     runAsUser: 1000
     runAsGroup: 3000
     fsGroup: 2000
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
   containers:
   - name: app
     image: myapp:1.0
@@ -1321,11 +1477,11 @@ spec:
 
 ### Pod Security Standards
 
-Pod Security Standards は、Pod のセキュリティ要件を定義する次の 3 つのポリシーレベルを提供します。
+Pod Security Standards は、Pod のセキュリティ要件を定義する 3 つのポリシーレベルを提供します:
 
-1. **Privileged**: 制限なし、すべての機能が許可される
-2. **Baseline**: 既知の特権昇格を防止する
-3. **Restricted**: ベストプラクティスを適用する強力な制限
+1. **Privileged**: 制限なし。すべての機能を許可
+2. **Baseline**: 既知の権限昇格を防止
+3. **Restricted**: ベストプラクティスを適用する強い制限
 
 **Pod Security Standards の適用例**:
 
@@ -1340,82 +1496,78 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
-<span id="kubernetes-vs-amazon-eks"></span>
+## Kubernetes と Amazon EKS
 
-## Kubernetes と Amazon EKS の比較
-
-Amazon EKS (Elastic Kubernetes Service) は、AWS が提供するマネージド Kubernetes サービスです。EKS は Kubernetes のすべての基本機能を提供するとともに、AWS サービスとの統合および管理の利便性を追加します。
+Amazon EKS（Elastic Kubernetes Service）は AWS が提供するマネージド Kubernetes サービスです。EKS は AWS 統合を備えた標準 Kubernetes API を公開します。以下の比較は従来の EC2 node group を前提としています。Auto Mode、Fargate、Hybrid Nodes では責任範囲とサポートされる機能が異なります。
 
 ### 主な違い
 
 | 特性           | 自己管理 Kubernetes                         | Amazon EKS                                                        |
 | ------------------------ | ----------------------------------------------- | ----------------------------------------------------------------- |
 | Control Plane 管理 | ユーザーが直接管理                           | AWS が管理                                                    |
-| 高可用性        | ユーザーが設定する必要がある                             | デフォルトで提供（複数のアベイラビリティーゾーンにデプロイ） |
-| アップグレード                 | ユーザーが直接実施                          | AWS が管理（ユーザーが開始可能）                                |
-| セキュリティパッチ         | ユーザーが直接適用                           | AWS により自動適用                                      |
+| 高可用性        | ユーザーが設定する必要がある                             | デフォルトで提供（複数の Availability Zone にデプロイ） |
+| アップグレード                 | ユーザーが直接実行                          | Control plane のアップグレードは AWS が管理。node/add-on のアップグレードを調整                                |
+| セキュリティパッチ         | ユーザーが直接適用                           | AWS が control plane にパッチを適用。managed-node AMI のロールアウトは引き続きユーザーの責任（Auto Mode は異なる）                                      |
 | 認証           | さまざまなオプションの設定が必要              | AWS IAM と統合                                           |
-| ネットワーキング               | CNI プラグインの選択と設定が必要 | Amazon VPC CNI がデフォルトで提供                                |
-| Load Balancing           | 手動設定が必要                   | AWS Load Balancer Controller 統合                          |
-| ストレージ                  | ストレージドライバーの設定が必要           | EBS、EFS、FSx CSI Driver 統合                              |
+| ネットワーキング               | CNI plugin の選択と設定が必要 | Amazon VPC CNI をデフォルトで提供                                |
+| 負荷分散           | 手動設定が必要                   | AWS Load Balancer Controller 統合                          |
+| ストレージ                  | ストレージ driver の設定が必要           | EBS、EFS、FSx CSI driver 統合                              |
 | 監視               | 手動セットアップが必要                           | CloudWatch Container Insights 統合                         |
-| コスト                     | インフラストラクチャコストのみ                       | Control Plane コスト + インフラストラクチャコスト                         |
+| コスト                     | インフラストラクチャと運用労力                       | Control plane のコスト + インフラストラクチャコスト                         |
 
 ### EKS の追加機能
 
-1. **AWS IAM 統合**: Kubernetes RBAC と AWS IAM の統合
-2. **AWS Load Balancer Controller**: ALB および NLB と Kubernetes Service、Ingress の統合
-3. **EKS Managed Node Groups**: Node ライフサイクル管理の自動化
+1. **AWS IAM Integration**: Kubernetes RBAC と AWS IAM の統合
+2. **AWS Load Balancer Controller**: ALB および NLB と Kubernetes Service/Ingress の統合
+3. **EKS Managed Node Groups**: Node lifecycle 管理の自動化
 4. **Fargate Profiles**: サーバーレス Kubernetes Pod 実行
-5. **VPC CNI Plugin**: AWS VPC ネットワーキングとの統合
-6. **CloudWatch Container Insights**: コンテナの監視とロギング
-7. **AWS App Mesh**: Service Mesh 統合
+5. **VPC CNI Plugin**: AWS VPC networking との統合
+6. **CloudWatch Container Insights**: コンテナの監視とログ記録
+7. **AWS App Mesh**: サポートは 2026-09-30 に終了。AWS によると console とリソースにはもうアクセスできません。
 8. **AWS Distro for OpenTelemetry**: 分散トレーシングと監視
-9. **EKS Console and CLI**: 管理インターフェイス
+9. **EKS Console and CLI**: 管理インターフェース
 10. **EKS Blueprints**: ベストプラクティスに基づくクラスター設定
 
 ### EKS 固有のコンポーネント
 
-1. **EKS Control Plane**: 複数のアベイラビリティーゾーンにまたがる高可用性
-2. **EKS Node AMI**: Kubernetes 用に最適化された Amazon Linux または Ubuntu AMI
-3. **EKS Managed Node Groups**: 自動スケーリングと更新のサポート
+1. **EKS Control Plane**: 複数の Availability Zone にまたがる高可用性
+2. **EKS Node AMI**: AWS 提供の AL2023/Bottlerocket/Windows オプションと、Ubuntu など別途提供される互換 AMI
+3. **EKS Managed Node Groups**: Node group 更新ワークフロー。ワークロード起因の Node scaling には autoscaler が必要
 4. **EKS Fargate**: サーバーレスコンテナ実行環境
-5. **EKS Connector**: 外部 Kubernetes クラスターを AWS コンソールに接続
+5. **EKS Connector**: 外部 Kubernetes クラスターを AWS console に接続
 6. **EKS Anywhere**: オンプレミス環境で EKS 互換クラスターを実行
-7. **EKS Distro**: AWS が管理する Kubernetes ディストリビューション
+7. **EKS Distro**: AWS 管理の Kubernetes ディストリビューション
 
 ### AWS サービス統合
 
-EKS は次の AWS サービスと統合されます。
+EKS は次の AWS サービスと統合します:
 
 1. **Amazon VPC**: ネットワークインフラストラクチャ
 2. **AWS IAM**: 認証と認可
 3. **Amazon ECR**: コンテナイメージリポジトリ
 4. **AWS Load Balancer**: アプリケーショントラフィックの分散
 5. **Amazon EBS/EFS/FSx**: 永続ストレージ
-6. **AWS CloudWatch**: 監視とロギング
-7. **AWS CloudTrail**: 監査とコンプライアンス
+6. **AWS CloudWatch**: 監視とログ記録
+7. **AWS CloudTrail**: AWS API audit。Kubernetes API audit には EKS audit logging が必要
 8. **AWS KMS**: 暗号化キー管理
-9. **AWS WAF**: Web アプリケーションファイアウォール
-10. **AWS Shield**: DDoS 保護
+9. **AWS WAF**: ALB など、サポートされる application front door にアタッチ。EKS API endpoint には直接アタッチ不可
+10. **AWS Shield**: DDoS protection
 11. **AWS X-Ray**: 分散トレーシング
-12. **AWS App Mesh**: Service Mesh
+12. **AWS App Mesh**: サポートは 2026-09-30 に終了。既存ワークロードには移行が必要
 13. **AWS SageMaker**: 機械学習ワークロード
 14. **AWS Bedrock**: 生成 AI ワークロード
 
-<span id="getting-started-with-kubernetes"></span>
-
 ## Kubernetes を始める
 
-Kubernetes を始める方法はいくつかあります。ここでは、ローカル開発環境と AWS EKS で Kubernetes を始める方法を簡単に紹介します。
+Kubernetes を始める方法はいくつかあります。ここでは、ローカル開発環境および AWS EKS で Kubernetes を開始する方法を簡単に紹介します。
 
 ### ローカル開発環境
 
 #### Minikube
 
-Minikube は、ローカルマシン上で単一 Node の Kubernetes クラスターを実行するツールです。
+Minikube はローカル Kubernetes クラスターを実行し、single-node と multi-node の両方の構成をサポートします。
 
-**インストールと起動**:
+**インストールと開始**:
 
 ```bash
 # Install
@@ -1427,15 +1579,15 @@ minikube start
 # Check status
 minikube status
 
-# Open dashboard
-minikube dashboard
+# Inspect workloads; see the maintained Headlamp UI section below.
+kubectl get pods -A
 ```
 
-#### Kind (Kubernetes in Docker)
+#### Kind（Kubernetes in Docker）
 
-Kind は、Docker コンテナを Node として使用して Kubernetes クラスターをローカルで実行するツールです。
+Kind は、コンテナを Node として使用してローカルクラスターを実行し、サポートされる Docker/Podman/nerdctl provider を使用します。
 
-**インストールと起動**:
+**インストールと開始**:
 
 ```bash
 # Install
@@ -1451,42 +1603,40 @@ kubectl cluster-info --context kind-my-cluster
 
 #### Docker Desktop
 
-Docker Desktop は、Mac および Windows 上で Kubernetes を簡単に実行する機能を提供します。
+Docker Desktop は Mac および Windows で Kubernetes を容易に実行する機能を提供します。
 
 **セットアップ**:
 
-1. Docker Desktop をインストールする
-2. Settings > Kubernetes > 「Enable Kubernetes」をチェックする
-3. 「Apply & Restart」をクリックする
+1. Docker Desktop をインストール
+2. Settings > Kubernetes > 「Enable Kubernetes」をチェック
+3. 「Apply & Restart」をクリック
 
 ### AWS EKS
 
 #### eksctl による EKS クラスターの作成
 
-eksctl は、EKS クラスターを作成および管理するためのシンプルな CLI ツールです。
+eksctl は EKS クラスターを作成および管理するためのシンプルな CLI ツールです。
 
 **インストールとクラスター作成**:
 
 ```bash
-# Install eksctl
-brew tap weaveworks/tap
-brew install weaveworks/tap/eksctl
-
-# Configure AWS CLI
-aws configure
-
-# Create EKS cluster
+# Install a reviewed eksctl release from the official eksctl-io GitHub releases,
+# verify eksctl_checksums.txt, and place the binary in PATH.
+eksctl version
+# Use an existing short-lived AWS login/SSO profile with required permissions.
+aws sts get-caller-identity
+# This example provisions real AWS resources. Choose the intended account/Region,
+# supported EKS version, networking and IAM configuration before running it.
+: "${EKS_VERSION:?Set a version supported by EKS, not upstream latest}"
 eksctl create cluster \
   --name my-cluster \
   --region ap-northeast-2 \
+  --version "$EKS_VERSION" \
   --nodegroup-name standard-workers \
   --node-type t3.medium \
-  --nodes 3 \
-  --nodes-min 1 \
-  --nodes-max 4 \
-  --managed
-
-# Check cluster
+  --node-ami-family AmazonLinux2023 \
+  --node-private-networking \
+  --nodes 3 --nodes-min 1 --nodes-max 4 --managed
 kubectl get nodes
 ```
 
@@ -1496,32 +1646,51 @@ AWS Management Console からも EKS クラスターを作成できます。
 
 **手順**:
 
-1. AWS Management Console にログインする
-2. EKS サービスに移動する
-3. 「Create cluster」をクリックする
-4. クラスター名、IAM Role、VPC、サブネットを設定する
-5. セキュリティグループを設定する
-6. ロギングオプションを設定する
-7. クラスターを作成する
-8. Node Group を追加する
+1. AWS Management Console にログイン
+2. EKS service に移動
+3. 「Create cluster」をクリック
+4. クラスター名、IAM role、VPC、subnet を設定
+5. Security group を設定
+6. Logging option を設定
+7. クラスターを作成
+8. Node group を追加
 
 ### kubectl のインストールと設定
 
-kubectl は、Kubernetes クラスターとやり取りするためのコマンドラインツールです。
+kubectl は Kubernetes クラスターと対話するためのコマンドラインツールです。
 
 **インストール**:
 
 ```bash
-# macOS
+# macOS: use a kubectl version within one minor of the API server.
 brew install kubectl
+```
 
-# Linux
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-chmod +x kubectl
-sudo mv kubectl /usr/local/bin/
+```bash
+# Linux: select an explicit compatible version and architecture.
+set -euo pipefail
+: "${KUBECTL_VERSION:?Set a cluster-compatible version, e.g. v1.37.1}"
+case "$(uname -m)" in
+  x86_64) KUBECTL_ARCH=amd64 ;;
+  aarch64|arm64) KUBECTL_ARCH=arm64 ;;
+  *) echo "Choose a supported kubectl architecture" >&2; exit 1 ;;
+esac
+curl --fail --location --output kubectl "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/$KUBECTL_ARCH/kubectl"
+curl --fail --location --output kubectl.sha256 "https://dl.k8s.io/release/$KUBECTL_VERSION/bin/linux/$KUBECTL_ARCH/kubectl.sha256"
+echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+sudo install -m 0755 kubectl /usr/local/bin/kubectl
+```
 
-# Windows (PowerShell)
-curl -LO "https://dl.k8s.io/release/v1.28.0/bin/windows/amd64/kubectl.exe"
+```powershell
+$ErrorActionPreference = "Stop"
+$KubectlVersion = Read-Host "Cluster-compatible kubectl version (vX.Y.Z)"
+$KubectlArch = Read-Host "Architecture (amd64 or arm64)"
+if ($KubectlVersion -notmatch '^v\d+\.\d+\.\d+$' -or $KubectlArch -notin @('amd64','arm64')) { throw "Invalid version/architecture" }
+$BaseUrl = "https://dl.k8s.io/release/$KubectlVersion/bin/windows/$KubectlArch"
+Invoke-WebRequest "$BaseUrl/kubectl.exe" -OutFile kubectl.exe
+Invoke-WebRequest "$BaseUrl/kubectl.exe.sha256" -OutFile kubectl.exe.sha256
+if ((Get-FileHash kubectl.exe -Algorithm SHA256).Hash -ne (Get-Content kubectl.exe.sha256).Trim()) { throw "Checksum mismatch" }
+# Move the verified binary to a directory included in PATH.
 ```
 
 **基本コマンド**:
@@ -1537,10 +1706,12 @@ kubectl get nodes
 kubectl get pods --all-namespaces
 
 # Create deployment
-kubectl create deployment nginx --image=nginx
+kubectl create deployment nginx --image=nginx:1.30.4
 
 # Expose service
-kubectl expose deployment nginx --port=80 --type=LoadBalancer
+kubectl expose deployment nginx --port=80 --type=ClusterIP
+# Run port-forward in a separate terminal; stop it when finished.
+kubectl port-forward service/nginx 8080:80
 
 # Check logs
 kubectl logs <pod-name>
@@ -1549,55 +1720,31 @@ kubectl logs <pod-name>
 kubectl exec -it <pod-name> -- /bin/bash
 ```
 
-### Kubernetes Dashboard のインストール
+### Headlamp UI の使用
 
-Kubernetes Dashboard は、クラスターを管理するための Web ベース UI を提供します。
-
-**インストールとアクセス**:
+Kubernetes Dashboard はアーカイブ済みで保守されていません。既存の RBAC で制限された identity を使用して Headlamp を利用してください。Helm の例では自動 cluster-admin binding を無効化し、安全でない共有 service-account-token mode を有効化していません。管理者は別途、狭いスコープの権限を付与できます。
 
 ```bash
-# Install dashboard
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
-
-# Create admin user
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: admin-user
-  namespace: kubernetes-dashboard
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: admin-user
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-- kind: ServiceAccount
-  name: admin-user
-  namespace: kubernetes-dashboard
-EOF
-
-# Get token
-kubectl -n kubernetes-dashboard create token admin-user
-
-# Access dashboard
-kubectl proxy
+helm repo add headlamp https://kubernetes-sigs.github.io/headlamp/
+helm repo update headlamp
+: "${HEADLAMP_CHART_VERSION:?Set a reviewed chart version}"
+helm upgrade --install headlamp headlamp/headlamp \
+  --namespace kube-system --version "$HEADLAMP_CHART_VERSION" \
+  --set clusterRoleBinding.create=false \
+  --set config.unsafeUseServiceAccountToken=false
+kubectl -n kube-system port-forward service/headlamp 8080:80
 ```
 
-Dashboard には `http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/` でアクセスできます。
+ローカルで `http://localhost:8080` を開き、インストールした Headlamp バージョンのログインフローに従ってください。Public Ingress には別途設定した TLS と認証が必要です。
 
-## まとめ
+## 結論
 
-Kubernetes は、コンテナ化されたアプリケーションのデプロイ、スケーリング、管理を自動化する強力なプラットフォームです。このドキュメントで取り上げた主な内容は次のとおりです。
+Kubernetes は、コンテナ化されたアプリケーションのデプロイ、スケーリング、管理を自動化する強力なプラットフォームです。このドキュメントで扱った主な内容のまとめ:
 
 ### コアアーキテクチャ
 
 * **Control Plane**: クラスターの頭脳（API Server、etcd、Scheduler、Controller Manager）
-* **Worker Nodes**: 実際のアプリケーションを実行する Node（kubelet、kube-proxy、Container Runtime）
+* **Worker Nodes**: 実際のアプリケーションを実行するノード（kubelet、kube-proxy、Container Runtime）
 * **宣言的設定**: 望ましい状態を定義し、Kubernetes が現在の状態を望ましい状態に一致させる
 
 ### 主なオブジェクトとリソース
@@ -1610,60 +1757,86 @@ Kubernetes は、コンテナ化されたアプリケーションのデプロイ
 
 ### 推奨学習パス
 
-**ステップ 1: ローカル環境を構築する**
+**ステップ 1: ローカル環境の構築**
 
-* minikube または kind でローカルクラスターを作成する
-* kubectl コマンドを学ぶ
-* 基本オブジェクト（Pod、Deployment、Service）を練習する
+* minikube または kind でローカルクラスターを作成
+* kubectl コマンドを学習
+* 基本オブジェクト（Pod、Deployment、Service）を練習
 
-**ステップ 2: コアコンセプトを習得する**
+**ステップ 2: コア概念の習得**
 
-* ワークロードリソースを理解し、練習する
+* ワークロードリソースを理解して実践
 * ConfigMap と Secret による設定管理
-* Service と Ingress によるネットワーキングの設定
-* PV と PVC によるストレージの管理
+* Service と Ingress でネットワーキングを設定
+* PV と PVC でストレージを管理
 
-**ステップ 3: 高度な機能を学ぶ**
+**ステップ 3: 高度な機能の学習**
 
 * RBAC とセキュリティポリシー
 * 自動スケーリング（HPA、VPA、Cluster Autoscaler）
-* 監視とロギング（Prometheus、Grafana）
-* Service Mesh（Istio、Linkerd）
+* 監視とログ記録（Prometheus、Grafana）
+* Service mesh（Istio、Linkerd）
 
 **ステップ 4: 本番運用**
 
-* Amazon EKS または他のマネージド Kubernetes を使用する
-* CI/CD パイプライン統合
-* 災害復旧およびバックアップ戦略
+* Amazon EKS またはその他のマネージド Kubernetes を使用
+* CI/CD pipeline 統合
+* 災害復旧とバックアップ戦略
 * コスト最適化とリソース管理
 
 ### 次のステップ
 
-* **EKS Deep Dive**: EKS 固有の機能（Fargate、VPC CNI、ALB Controller）
-* **高度なネットワーキング**: CNI プラグイン（Calico、Cilium）
-* **可観測性**: メトリクス、ログ、トレーシング
+* **EKS の詳細**: EKS 固有の機能（Fargate、VPC CNI、ALB Controller）
+* **高度なネットワーキング**: CNI plugin（Calico、Cilium）
+* **可観測性**: Metrics、logs、tracing
 * **GitOps**: ArgoCD、Flux
 * **セキュリティ強化**: Pod Security Standards、Network Policies、OPA/Gatekeeper
 
-Kubernetes は進化を続けており、クラウドネイティブなアプリケーション開発および運用の中核要素となっています。このドキュメントが Kubernetes の学習を始める助けとなることを願っています。
+Kubernetes は進化を続け、クラウドネイティブなアプリケーション開発および運用の中核要素になっています。このドキュメントが Kubernetes の学習を始める助けになることを願っています。
 
-### 追加学習リソース
+### 追加の学習リソース
 
-* **公式ドキュメント**: [Kubernetes 公式ドキュメント](https://kubernetes.io/docs/) は、最も正確で最新の情報を提供します
-* **インタラクティブチュートリアル**: [Kubernetes Tutorials](https://kubernetes.io/docs/tutorials/) でハンズオン演習を利用できます
+* **公式ドキュメント**: [Kubernetes 公式ドキュメント](https://kubernetes.io/docs/) は最も正確で最新の情報を提供します
+* **インタラクティブチュートリアル**: [Kubernetes Tutorials](https://kubernetes.io/docs/tutorials/) でハンズオン練習を利用可能
 * **コミュニティ**: [Kubernetes Slack](https://slack.k8s.io/)、[Reddit r/kubernetes](https://reddit.com/r/kubernetes)
 * **認定資格**: CKA（Certified Kubernetes Administrator）、CKAD（Certified Kubernetes Application Developer）
 * **韓国コミュニティ**: Kubernetes Korea User Group、AWS Korea User Group
 
 ## クイズ
 
-この章で学んだ内容を確認するには、[Kubernetes 入門クイズ](../quizzes/basics/04-kubernetes-introduction-quiz.md)に挑戦してください。
+この章で学んだ内容をテストするには、[Kubernetes の概要クイズ](../quizzes/basics/04-kubernetes-introduction-quiz.md) を受けてください。
 
 ## 参考資料
 
 * [Kubernetes 公式ドキュメント](https://kubernetes.io/docs/)
 * [Amazon EKS ドキュメント](https://docs.aws.amazon.com/eks/)
 * [Kubernetes GitHub リポジトリ](https://github.com/kubernetes/kubernetes)
-* [CNCF (Cloud Native Computing Foundation)](https://www.cncf.io/)
+* [CNCF（Cloud Native Computing Foundation）](https://www.cncf.io/)
 * [Kubernetes The Hard Way](https://github.com/kelseyhightower/kubernetes-the-hard-way)
 * [Kubernetes Patterns](https://www.oreilly.com/library/view/kubernetes-patterns/9781492050278/)
+
+## 検証用参考資料
+
+- https://kubernetes.io/releases/version-skew-policy/
+- https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/
+- https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+- https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+- https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/
+- https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+- https://kubernetes.io/docs/reference/networking/virtual-ips/
+- https://kubernetes.io/docs/concepts/services-networking/network-policies/
+- https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/
+- https://coredns.io/plugins/kubernetes/
+- https://github.com/fluent/fluent-bit/releases/tag/v5.1.2
+- https://github.com/fluent/fluent-bit/blob/v5.1.2/conf/parsers.conf
+- https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html
+- https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html
+- https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html
+- https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html
+- https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html
+- https://eksctl.io/installation/
+- https://minikube.sigs.k8s.io/docs/tutorials/multi_node/
+- https://kind.sigs.k8s.io/docs/user/quick-start/
+- https://github.com/kubernetes/dashboard/blob/master/README.md
+- https://headlamp.dev/docs/latest/installation/in-cluster/
+- https://github.com/kubernetes-sigs/headlamp/blob/main/charts/headlamp/values.yaml
