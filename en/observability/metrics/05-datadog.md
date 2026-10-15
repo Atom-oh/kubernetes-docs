@@ -1,6 +1,6 @@
 # Datadog
 
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 12, 2026
 > Helm chart 3.244.0; matching Agent/Cluster Agent 7.83.1.
 > Configuration, SDK and local validation limits are stated below; no Datadog tenant was modified.
 
@@ -423,7 +423,7 @@ The admission opt-in label allows mutation/connection-setting injection. To inst
 a tracing library, configure SSI targets or a supported language/version annotation.
 The label alone is not proof that an SDK was installed or traces reached Datadog.
 Java/Python/Node.js local injection requires Cluster Agent 7.40+; .NET/Ruby requires
-7.44+. Current 7.83.1 also excludes `kube-system` and its own namespace from injection.
+7.44+. Cluster Agent 7.83.1 (the version pinned in this guide) also excludes `kube-system` and its own namespace from injection.
 
 For a controlled Java example, merge the following **pod-template fragment** into
 an existing Deployment in an application namespace, preserving its selector,

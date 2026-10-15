@@ -1,7 +1,7 @@
 # ArgoCD Best Practices
 
-> **Supported Versions**: Argo CD 3.5.2 / Helm Chart 10.8.4 / Kustomize 5.8.1
-> **Last Updated**: September 11, 2026
+> **Review baseline**: Argo CD 3.5.2 / Helm Chart 10.8.4 / Kustomize 5.8.1; manifest examples updated to patch 3.5.4 (still bundles Kustomize 5.8.1) after release-note review (examples not re-run)
+> **Last Updated**: October 12, 2026
 
 ## Table of Contents
 
@@ -469,14 +469,14 @@ Recover the needed supplemental ConfigMaps/Secrets and external dependencies, th
 
 ### Version and Installation Ownership
 
-The example targets a reviewed 3.5.x patch update to 3.5.2, not an unconditional jump from 2.x or older minors. Review every intervening minor/major migration note, tested Kubernetes combination, and CRD/RBAC/SSO/CMP change in non-production. Preserve the existing manifest/Helm/GitOps owner. Do not apply this self-managed procedure to the EKS managed Argo CD capability.
+The example targets a reviewed 3.5.x patch update to 3.5.4, not an unconditional jump from 2.x or older minors. Review every intervening minor/major migration note, tested Kubernetes combination, and CRD/RBAC/SSO/CMP change in non-production. Preserve the existing manifest/Helm/GitOps owner. Do not apply this self-managed procedure to the EKS managed Argo CD capability.
 
 ```bash
-# Example: reviewed 3.5.x patch upgrade to 3.5.2, manifest-managed non-HA install.
+# Example: reviewed 3.5.x patch upgrade to 3.5.4, manifest-managed non-HA install.
 kubectl config current-context
 argocd version
 kubectl apply --server-side -n argocd \
-  -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/install.yaml
+  -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
 kubectl rollout status deployment/argocd-server -n argocd --timeout=5m
 kubectl rollout status deployment/argocd-repo-server -n argocd --timeout=5m
 kubectl rollout status statefulset/argocd-application-controller -n argocd --timeout=5m
@@ -489,6 +489,8 @@ argocd app list
 For an HA manifest installation use `manifests/ha/install.yaml`; for custom overlays update and render the pinned base. Server-side apply handles large CRDs. Inspect field-ownership conflicts first; use the official guide’s `--force-conflicts` only for an intended ownership transfer. Successful Pod rollouts do not complete migration, SSO, diff, and sync validation.
 
 ### Alternative for Helm-Managed Installations
+
+The reviewed chart 10.8.4 deploys Argo CD v3.5.2, so this Helm path does not reach the 3.5.4 patch used above. Argo CD 3.5.4 first ships in chart 10.9.7, a chart minor update not reviewed here.
 
 ```bash
 helm repo add argo https://argoproj.github.io/argo-helm
@@ -627,10 +629,10 @@ If holding automatic sync, record the original settings and change their Git/App
 
 - [Best practices](https://argo-cd.readthedocs.io/en/release-3.5/user-guide/best_practices/)
 - [High availability and scaling](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/high_availability/)
-- [Backup implementation and scope](https://github.com/argoproj/argo-cd/blob/v3.5.2/cmd/argocd/commands/admin/backup.go)
+- [Backup implementation and scope](https://github.com/argoproj/argo-cd/blob/v3.5.4/cmd/argocd/commands/admin/backup.go)
 - [Upgrade guide](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/upgrading/overview/)
 - [Chart 10.8.4 values](https://github.com/argoproj/argo-helm/blob/argo-cd-10.8.4/charts/argo-cd/values.yaml)
-- [Kustomize bundled version](https://github.com/argoproj/argo-cd/blob/v3.5.2/hack/tool-versions.sh)
+- [Kustomize bundled version](https://github.com/argoproj/argo-cd/blob/v3.5.4/hack/tool-versions.sh)
 - [Velero schedules](https://velero.io/docs/main/backup-reference/#schedule-a-backup)
 
 ## Quiz

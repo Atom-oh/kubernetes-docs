@@ -1,7 +1,7 @@
 # LLM 서빙을 위한 추론 프레임워크
 
-> **마지막 업데이트**: 2026년 9월 12일
-> **범위**: 공식 릴리스·API·차트와 로컬 검증. GPU/Neuron 모델 실행 결과가 아닙니다.
+> **검토 기준**: 2026년 9월 12일 확인한 공식 릴리스·API·차트와 로컬 검증. GPU/Neuron 모델 실행 결과가 아닙니다.
+> **마지막 업데이트**: 2026년 10월 12일
 
 추론 엔진, 분산 실행 계층, Kubernetes controller와 provider gateway를 구분해 선택해야 합니다. 같은 “OpenAI 호환” 표현도 지원 endpoint·요청 필드·streaming·tool call·인증이 완전히 같다는 뜻은 아닙니다.
 
@@ -22,6 +22,8 @@
 | Ollama | 0.34.0 | 로컬 API 접근, 모델 저장·사전 준비 |
 | LiteLLM | 1.100.1 | provider 변환, 인증·fallback·비용 계측 |
 | Neuron | SDK 2.32.0; Helm 1.10.0 | Inf2/Trn별 plugin·compiler·driver 조건 |
+
+vLLM은 이 표의 기존 로컬 검증 기준인 0.29.0 이후 0.31.0이 2026년 10월 5일 공개됐습니다. 표의 버전은 확인한 조합을 뜻하며 최신 릴리스나 서로 호환되는 전체 조합을 뜻하지 않습니다. vLLM 0.31.0의 요청별 멀티모달 인자 기본 차단 등은 [배포 장의 업데이트](02-vllm-deployment.md)를 확인하세요.
 
 버전별 기능 표를 단순한 지원/미지원으로 고정하지 않습니다. 예를 들어 Dynamo의 planner, vLLM/SGLang의 분리 서빙과 CPU·GGUF 지원은 릴리스·backend·장치에 따라 달라집니다. adapter 로딩이나 model alias는 tenant 인증 경계가 아닙니다.
 

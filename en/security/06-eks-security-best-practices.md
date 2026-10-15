@@ -1,7 +1,7 @@
 # EKS Security Best Practices
 
 > **Review baseline**: Current AWS documentation, Kubernetes 1.35 API schemas, Terraform 1.15.7 / AWS provider 6.64.0. No live cluster deployment was performed.
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 15, 2026
 
 This document covers security best practices for Amazon EKS environments. Learn how to securely operate EKS clusters from IAM integration to network security and runtime protection.
 
@@ -19,6 +19,7 @@ This document covers security best practices for Amazon EKS environments. Learn 
 10. [Node Security](#node-security)
 11. [Private Clusters](#private-clusters)
 12. [Multi-tenancy Patterns](#multi-tenancy-patterns)
+13. [Perimeter Security and Inspection Paths](#perimeter-security-and-inspection-paths)
 
 ---
 
@@ -670,6 +671,21 @@ roleRef:
 The example workload admin cannot directly modify Namespace labels, RoleBindings, NetworkPolicy or Secret API permissions. However, creating Pods/Deployments can indirectly use namespace Secrets, ServiceAccounts and volumes. Excluding Secret get does not prove inability to access a secret. Consider separate clusters/accounts when stronger isolation is required.
 
 For EKS user access, evaluate current access entries with namespace-scoped access policies or Kubernetes groups/RBAC. The aws-auth ConfigMap is a legacy compatibility path, not the only integration mechanism. Authentication-mode changes have irreversible transition constraints; validate administrator/node mappings and recovery paths before migration. EKS access policies and Kubernetes RBAC can independently allow access, so absence of permission in one does not deny an allowance from the other. Do not grant ordinary developers system:masters as a default example.
+
+---
+
+## Perimeter Security and Inspection Paths
+
+Alongside IAM and Pod policies, separately verify public applications, admission webhooks, administrator access, outbound traffic and inter-VPC paths. External WAF does not automatically protect internal webhooks; central TGW inspection covers traffic actually routed through it. Connect existing IAM, CNI and runtime controls to these guides.
+
+| Protection area | Detailed guide |
+|---|---|
+| Incidents, detection and post-patch recovery | [Defense in Depth and Incident Response](./13-defense-in-depth-incident-response.md) |
+| HTTP(S), APIs and origin bypass | [WAF, Edge and API Security](./14-waf-edge-api-security.md) |
+| Management, TLS visibility and appliance selection | [Palo Alto and Fortinet NGFW](./15-ngfw-paloalto-fortinet.md) |
+| Symmetric routing, NAT, AZs and failure | [GWLB and GENEVE](./16-gwlb-geneve-inspection.md) |
+
+These guides include primary sources, inspection limits and approved-environment verification plans, not actual appliance deployment or performance results.
 
 ---
 

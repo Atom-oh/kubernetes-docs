@@ -1,7 +1,7 @@
 # IPAM 및 네트워크 정책
 
-> **검토 기준**: Cilium 1.20.1, 테스트된 Kubernetes 1.33–1.36. 리소스 API 버전과 플랫폼 조건은 별도로 확인합니다.
-> **최종 검토**: 2026년 9월 12일
+> **검토 기준**: Cilium 1.20.2, 테스트된 Kubernetes 1.33–1.36. 리소스 API 버전과 플랫폼 조건은 별도로 확인합니다.
+> **최종 검토**: 2026년 10월 15일
 
 ## 실습 환경 설정
 
@@ -37,7 +37,7 @@ Cilium Pod IPAM은 workload 주소를 할당합니다. Service **ClusterIP**는 
 
 Cluster-pool과 Kubernetes host scope 모두 개별 Pod 주소를 로컬에서 할당합니다. 차이는 **노드 prefix**를 누가 할당하는지입니다. 조정이 없어지거나 사용자가 지정한 풀이 VPC·노드·Service·다른 클러스터와 겹치지 않는다고 보장하지 않습니다.
 
-릴리스된 CRD·타입은 일반 CRD-backed 할당에 `pool`, `used`를 사용합니다. 일부 설명에 남아 있는 `available`/`inuse` 대신 설치된 스키마와 모드별 필드를 기준으로 합니다. 1.20.1의 ENI는 인터페이스·multi-pool 경로를 사용하므로 일반 CRD-backed 필드가 모든 ENI 상태의 기준은 아닙니다.
+릴리스된 CRD·타입은 일반 CRD-backed 할당에 `pool`, `used`를 사용합니다. 일부 설명에 남아 있는 `available`/`inuse` 대신 설치된 스키마와 모드별 필드를 기준으로 합니다. 1.20.2의 ENI는 인터페이스·multi-pool 경로를 사용하므로 일반 CRD-backed 필드가 모든 ENI 상태의 기준은 아닙니다.
 
 ### Kubernetes/CNI 통합
 
@@ -94,11 +94,14 @@ ipv6:
 
 ### Multi-Pool과 CiliumPodIPPool
 
-문서화된 모드는 `multi-pool`이며 리소스 API는 여전히 `cilium.io/v2alpha1`입니다. API 접미사만으로 기능 성숙도를 추론하지 않습니다. 이 모드의 새 클러스터에는 일반 할당용 default pool을 준비합니다.
+문서화된 모드는 `multi-pool`이며 리소스 API는 1.20에서 여전히 `cilium.io/v2alpha1`입니다(**[1.21 pre-release]**에서는 `CiliumPodIPPool`이 `cilium.io/v2`로 제공되어 storage version이 되고 `v2alpha1`은 deprecated이며, `spec.ipv4.pool`/`spec.ipv6.pool`로 CIDR별 `reservedRanges`가 추가되는데 이 필드는 `v2`에만 있습니다). API 접미사만으로 기능 성숙도를 추론하지 않습니다. 업스트림 multi-pool 튜토리얼은 `kubeProxyReplacement=true`와 `bpf.masquerade=true`도 요구하므로(iptables masquerade는 `egressMasqueradeInterfaces` 필요) 아래 예제에 포함했습니다. 할당 내부 동작·풀 크기·마이그레이션은 [IPAM 심층 분석](10-ipam-deep-dive.md)을 참고하세요. 이 모드의 새 클러스터에는 일반 할당용 default pool을 준비합니다.
 
 **`multi-pool-values.yaml`**
 
 ```yaml
+kubeProxyReplacement: true
+bpf:
+  masquerade: true
 ipam:
   mode: multi-pool
   operator:
@@ -194,14 +197,13 @@ eni:
   eniTags:
     team: platform
   awsEnablePrefixDelegation: true
-routingMode: native
-endpointRoutes:
-  enabled: true
 ipv4:
   enabled: true
 ipv6:
   enabled: false
 ```
+
+`eni.enabled=true`이면 차트가 이미 `routingMode`를 `native`로 기본 설정하고 endpoint routes를 활성화하므로 해당 키는 생략했습니다(1.20.2 Helm 템플릿 `cilium-configmap.yaml`).
 
 
 `eni.awsEnablePrefixDelegation`에는 해당 prefix를 지원하는 인스턴스·subnet 구성이 필요합니다. IPv4 `/28`은 주소 16개이며 모든 구성에서 Pod 16개를 추가 스케줄링할 수 있다는 뜻은 아닙니다. 기본값은 비활성입니다. 존재하지 않는 `eni-prefix-delegation-enabled` 키를 추가하지 않습니다.
@@ -691,10 +693,10 @@ Cluster label에는 kubeconfig context가 아니라 설정된 **Cilium cluster �
 
 ## 참고 자료
 
-- [IPAM modes/migration](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/index.rst), [cluster pool](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/cluster-pool.rst), [host scope](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/kubernetes.rst), [multi-pool](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/multi-pool.rst), [migration procedure](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/cluster-pool-to-multi-pool.rst)
-- [PodIPPool schema](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliumpodippools.yaml), [CiliumNode schema](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnodes.yaml), [ENI IPAM](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/eni.rst), [Helm values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml), [EKS CNI boundaries](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html)
-- [Policy rule API](https://github.com/cilium/cilium/blob/v1.20.1/pkg/policy/api/rule.go), [L3 rules](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer3.rst), [L7 rules](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer7.rst), [DNS policies](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/dns.rst), [wildcard implementation](https://github.com/cilium/cilium/blob/v1.20.1/pkg/fqdn/matchpattern/matchpattern.go)
-- [Cluster Mesh setup](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/clustermesh/setup.rst), [architecture](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/clustermesh/intro.rst), [global services](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/clustermesh/global-services.rst), [cross-cluster policy](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/clustermesh/policy.rst)
+- [IPAM modes/migration](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/ipam/index.rst), [cluster pool](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/ipam/cluster-pool.rst), [host scope](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/ipam/kubernetes.rst), [multi-pool](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/ipam/multi-pool.rst), [migration procedure](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/ipam/cluster-pool-to-multi-pool.rst)
+- [PodIPPool schema](https://github.com/cilium/cilium/blob/v1.20.2/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliumpodippools.yaml), [CiliumNode schema](https://github.com/cilium/cilium/blob/v1.20.2/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnodes.yaml), [ENI IPAM](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/ipam/eni.rst), [Helm values](https://github.com/cilium/cilium/blob/v1.20.2/install/kubernetes/cilium/values.yaml), [EKS CNI boundaries](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html)
+- [Policy rule API](https://github.com/cilium/cilium/blob/v1.20.2/pkg/policy/api/rule.go), [L3 rules](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/security/policy/layer3.rst), [L7 rules](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/security/policy/layer7.rst), [DNS policies](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/security/dns.rst), [wildcard implementation](https://github.com/cilium/cilium/blob/v1.20.2/pkg/fqdn/matchpattern/matchpattern.go)
+- [Cluster Mesh setup](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/clustermesh/setup.rst), [architecture](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/clustermesh/intro.rst), [global services](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/clustermesh/global-services.rst), [cross-cluster policy](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/clustermesh/policy.rst)
 
 
 [메인 페이지로 돌아가기](README.md)

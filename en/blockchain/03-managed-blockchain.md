@@ -1,6 +1,6 @@
 # Amazon Managed Blockchain
 
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 12, 2026
 
 ## What This Document Covers
 
@@ -102,7 +102,7 @@ The migration path AWS offered was **Amazon Aurora PostgreSQL.** But there is an
 
 ### What this implies
 
-QLDB and AMB are different services, and **QLDB's end of support does not imply AMB's.** But there are lessons for architecture decisions.
+QLDB and AMB are different services, and **QLDB's end of support did not by itself imply AMB's** — AMB's own end of support was announced separately (see below). The lessons for architecture decisions still apply.
 
 | Lesson | Practical application |
 |---|---|
@@ -111,10 +111,12 @@ QLDB and AMB are different services, and **QLDB's end of support does not imply 
 | **The notice period can be short** | Calculate the time your migration would need in advance |
 | **Standard technology is easier to move off** | Built on an open-source protocol, you can move to self-operation |
 
-::: warning Needs verification
-**AMB's forward roadmap and service continuity plans could not be confirmed in this document.** No end-of-support announcement for AMB as a whole was found at the time of research — but that is not evidence of "no plans to discontinue," it means **"no announcement was found."**
+::: warning End of support announced
+**AWS has announced end of support for Amazon Managed Blockchain (AMB).** It stops accepting new customers on **October 29, 2026**. Existing customers can use it until **September 29, 2027**; access ends after that date.
 
-**If you are designing a long-lived system, confirm the service roadmap directly with your AWS account team or solutions architect.** In environments with long system lifespans, such as financial services, this confirmation may matter more than the technical comparison.
+For AMB Access Ethereum/Bitcoin/Polygon, the [AMB migration guide](https://docs.aws.amazon.com/managed-blockchain/latest/ethereum-dev/migrating-node-rpc-workloads.html) points to self-managed nodes on AWS (AWS Blockchain Node Runners where a blueprint exists) or a third-party RPC provider. The [AMB end-of-support page](https://docs.aws.amazon.com/managed-blockchain/latest/hyperledger-fabric-dev/managed-blockchain-end-of-support.html) lists, for AMB Access Hyperledger Fabric, another managed Fabric network, self-managed Fabric on Amazon EC2 or Amazon EKS, or an AWS database; for AMB Query, a managed blockchain data provider (checked October 12, 2026).
+
+**Any design that depends on AMB now needs a migration plan with a fixed deadline.** In environments with long system lifespans, such as financial services, this affects the technical comparison directly.
 :::
 
 ### Designing to reduce discontinuation risk
@@ -172,7 +174,7 @@ For private connectivity, concepts from the [VPC Lattice section](../service-mes
 - Decision order: **① do you really need a node → ② do you need control → ③ cost → ④ can you mix.** Many cases are filtered out at step 1.
 - **QLDB ended on July 31, 2025**, and its migration path (Aurora PostgreSQL) **does not provide cryptographic verifiability.** It is a case study in managed services being discontinued and replacements not being functionally equivalent.
 - The most effective mitigation is **standard protocols plus an abstraction layer.** Avoid coupling directly to AMB-specific APIs and you can change backends.
-- **For a long-lived system, confirm the service roadmap directly with your AWS account team.** It may matter more than the technical comparison.
+- **AWS has announced AMB's end of support:** no new customers from October 29, 2026, and access ends September 29, 2027. Any AMB-dependent design needs a dated migration plan.
 
 Next: [Financial Services Perspective](./04-financial-services.md) covers regulatory, privacy, and review-board issues.
 

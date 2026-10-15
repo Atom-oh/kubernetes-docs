@@ -1,9 +1,13 @@
 # 클러스터 아키텍처
 
 > **지원 버전**: Kubernetes 1.35, 1.36, 1.37
-> **마지막 업데이트**: 2026년 9월 28일
+> **마지막 업데이트**: 2026년 10월 12일
 
-버전 헤더는 업스트림 Kubernetes 기준입니다. 2026년 9월 11일 기준 EKS 표준 지원 버전은 1.34–1.36이므로 버전 선택 전 [EKS 수명 주기](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)를 확인하세요. 아래 구성 요소 명령은 자체 관리형 클러스터 예시이며 EKS 컨트롤 플레인은 AWS가 관리합니다. 이미지 태그와 인프라 ID는 예시이므로 호환되고 유지 관리되는 이미지와 실제 값으로 바꿔 사용하세요.
+버전 헤더는 업스트림 Kubernetes 기준입니다. Kubernetes 프로젝트는 최신 세 마이너 버전(1.35–1.37)의 릴리스 브랜치를 유지합니다. upstream 1.34는 유지 관리 모드로 **2026년 10월 27일** 지원 종료(EOL) 전까지 패치 릴리스를 계속 받으며, 이는 EKS의 AWS 지원 종료일과 별도입니다.
+
+2026년 10월 12일 기준 EKS 표준 지원 버전은 1.34–1.37이고, EKS 1.37은 2026년 10월 1일 제공을 시작했습니다. 버전 선택 전 [Kubernetes 릴리스 상태](https://kubernetes.io/releases/)와 [EKS 수명 주기](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)를 확인하세요.
+
+아래 구성 요소 명령은 자체 관리형 클러스터 예시이며 EKS 컨트롤 플레인은 AWS가 관리합니다. 이미지 태그와 인프라 ID는 예시이므로 호환되고 유지 관리되는 이미지와 실제 값으로 바꿔 사용하세요.
 
 ## 실습 환경 설정
 
@@ -378,7 +382,7 @@ metadata:
 spec:
   containers:
   - name: kube-apiserver
-    image: registry.k8s.io/kube-apiserver:v1.37.0
+    image: registry.k8s.io/kube-apiserver:v1.37.1
     command:
     - kube-apiserver
     - --advertise-address=192.168.1.10
@@ -1545,6 +1549,13 @@ Kubernetes 클러스터 업그레이드는 새로운 기능, 보안 패치, 버�
 2026년 9월 23일 지원 중인 전체 마이너 버전에 대한 패치 릴리스 [v1.37.1](https://github.com/kubernetes/kubernetes/releases/tag/v1.37.1), v1.36.5, v1.35.9, v1.34.12가 공개되었습니다. v1.37.1은 Go 1.26.8 빌드 전환과 함께 `spec.deviceSelector`가 없는 DeviceTaintRule이 모든 DRA 디바이스를 스케줄 불가로 만들던 버그, Windows kube-proxy(winkernel)가 포트 매핑 없는 HNS 로드 밸런서를 만나면 종료되던 패닉 등을 수정한 일반 버그 픽스 릴리스입니다.
 
 같은 주 공개된 v1.37 기능 심층 글로는 [PVC의 마지막 사용 시점 추적(베타)](https://kubernetes.io/blog/2026/09/21/kubernetes-v1-37-pvc-last-used-time/)이 있습니다. `PersistentVolumeClaimUnusedSinceTime` 기능 게이트가 베타(기본 활성화)로 승격되어, PVC 보호 컨트롤러가 각 PVC에 `Unused` 조건을 추가해 실행 중인 파드가 참조하지 않는 고아 PVC를 별도 도구 없이 식별할 수 있습니다.
+### 2026년 9월 업데이트: v1.37 주요 기능 심층 소개
+
+2026년 9월 14~16일 Kubernetes 블로그에 v1.37 기능을 심층 소개하는 글이 연이어 게시되었습니다:
+
+- **[Memory QoS Beta 승격](https://kubernetes.io/blog/2026/09/14/kubernetes-v1-37-memory-qos-graduates-to-beta/)**: `MemoryQoS` 기능 게이트가 Beta로 승격되어 v1.37 kubelet에서 기본 활성화됩니다. cgroup v2 Linux 노드에서 메모리 컨트롤러를 통해 커널에 컨테이너 메모리 처리 힌트를 제공합니다. 다만 기본 kubelet 설정은 `memory.high`/`memory.min`/`memory.low` 값을 쓰지 않으므로, `memoryThrottlingFactor` 등을 명시적으로 설정하기 전까지 동작 변화는 없습니다.
+- **[파드 수준 리소스 매니저 Beta 승격](https://kubernetes.io/blog/2026/09/15/kubernetes-v1-37-pod-level-resource-managers-beta/)** (기본 비활성화): kubelet의 Topology Manager, CPU Manager, Memory Manager가 파드 수준 리소스 선언(`.spec.resources`)을 직접 사용해 NUMA 정렬 배치를 결정합니다. 주 컨테이너에는 전용 코어를 할당하면서 경량 사이드카는 파드 격리 풀에 배치하는 하이브리드 할당이 가능해집니다.
+- **[컨테이너 스토리지 보안 강화](https://kubernetes.io/blog/2026/09/16/kubernetes-v1-37-hardening-container-storage/)**: `emptyDir` 권한 모드와 바인드 마운트 옵션(`noexec`, `nosuid`, `nodev`)이 도입되어, 쓰기 가능한 볼륨에서 임의 바이너리 실행을 금지하는 등의 보안 정책을 우회 수단 없이 Kubernetes에서 직접 구현할 수 있습니다.
 
 ### 업그레이드 전략
 

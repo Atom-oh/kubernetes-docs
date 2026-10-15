@@ -1,6 +1,7 @@
 # Part 5: 운영과 보안
 
 > 검토 기준: Airflow 3.3.1, Helm chart 1.22.0, Amazon provider 9.34.0 / Kubernetes provider 10.21.0.
+> 최신 upstream patch 3.3.2 확인; 운영 예제는 3.3.1 기준 · 2026-10-12.
 
 Part 2의 자체 EKS 배포를 기준으로 HA·업그레이드·시크릿·로그·관측·복구를 정리합니다.
 운영 기준은 설정 존재 여부보다 **장애 후 실행과 데이터·로그를 복구할 수 있는지**입니다.

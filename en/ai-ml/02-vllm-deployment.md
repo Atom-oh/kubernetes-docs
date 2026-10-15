@@ -1,13 +1,23 @@
 # vLLM Deployment & Optimization
 
 > **Review baseline**: vLLM 0.29.0, CUDA 12.9 image variant; historical 0.6.4.post1 benchmark separated
-> **Last Updated**: September 12, 2026
+> **Latest release checked**: vLLM 0.31.0 (October 5, 2026), checked October 12, 2026
+> **Last Updated**: October 12, 2026
 
 vLLM is an open-source inference engine for generative models and supported multimodal/pooling workloads. It should not be expanded as “Vector Language Model.” This chapter reviews a specific release and EKS operating boundaries without universal speedup or model-support guarantees.
 
 ## Lab Environment Setup
 
-The baseline is [v0.29.0](https://github.com/vllm-project/vllm/releases/tag/v0.29.0), released September 9, 2026. Its default PyPI/Docker path uses CUDA 13.0, with a separate v0.29.0-cu129 image. Some tagged installation text still calls CUDA 12.9 the default; inspect the actual image variant/digest.
+This chapter's manifests and local checks use [v0.29.0](https://github.com/vllm-project/vllm/releases/tag/v0.29.0), released September 9, 2026. Later releases followed: v0.30.0 (September 22, 2026) and [v0.31.0](https://github.com/vllm-project/vllm/releases/tag/v0.31.0) (October 5, 2026).
+
+In v0.31.0:
+
+- Per-request `mm_processor_kwargs` and `media_io_kwargs` are rejected by default. Allow them only with the explicit `--trust-request-mm-kwargs` option.
+- `tokenizer_mode="slow"` was removed.
+
+This chapter's 0.29.0 examples have not been re-run on v0.30.0 or v0.31.0. Review the [release changes](https://github.com/vllm-project/vllm/releases/tag/v0.31.0) and compatibility before upgrading.
+
+The 0.29.0 default PyPI/Docker path uses CUDA 13.0, with a separate v0.29.0-cu129 image. Some tagged installation text still calls CUDA 12.9 the default; inspect the actual image variant/digest.
 
 PyPI requires Python >=3.10, <3.15, while the tagged GPU guide lists 3.10–3.13. This is not a guarantee for every Python/PyTorch/CUDA combination. The NVIDIA path requires compute capability 7.5 or newer, excluding V100 (7.0). Kernels, dtypes and quantization can impose additional device requirements.
 
@@ -424,7 +434,8 @@ Pinned source was inspected for CLI arguments, metrics, authentication and artif
 
 ## References
 
-- [vLLM 0.29.0 release](https://github.com/vllm-project/vllm/releases/tag/v0.29.0)
+- [vLLM 0.29.0 release (review baseline)](https://github.com/vllm-project/vllm/releases/tag/v0.29.0)
+- [vLLM 0.31.0 release (latest checked)](https://github.com/vllm-project/vllm/releases/tag/v0.31.0)
 - [Parallelism and scaling](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/serving/parallelism_scaling.md)
 - [Security boundaries](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/usage/security.md)
 - [Production metrics](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/usage/metrics.md)

@@ -1,7 +1,7 @@
 # 고급 주제 및 실제 사례
 
-> **검토 기준**: Cilium 1.20.1, Cilium CLI 0.20.0, Hubble CLI 1.19.4.
-> **최종 검토**: 2026년 9월 12일. Cilium 1.20의 Kubernetes 호환 범위는 1.33–1.36이며 아래 과거 측정은 원래 환경을 유지합니다.
+> **검토 기준**: Cilium 1.20.2, Cilium CLI 0.20.1, Hubble CLI 1.20.2.
+> **최종 검토**: 2026년 10월 15일. Cilium 1.20의 Kubernetes 호환 범위는 1.33–1.36이며 아래 과거 측정은 원래 환경을 유지합니다.
 
 ## 실습 환경 설정
 
@@ -204,7 +204,7 @@ Egress Gateway는 선택된 트래픽을 예측 가능한 게이트웨이 주소
 
 ### 문서화된 과거 확장성 실험
 
-공식 확장성 보고서는 Google Cloud의 **워커 1,000개**, 컨트롤러 3개와 커널 **5.4.0-1009-gcp**를 설명합니다. 설정 부분에 Cilium 버전이 명시되지 않았으므로 이를 Cilium 1.20.1 벤치마크로 다시 표시하면 안 됩니다. 해당 워크로드의 자원 소비와 수렴을 다루는 보고서이며 현재 지원 행렬이나 용량 보장이 아닙니다.
+공식 확장성 보고서는 Google Cloud의 **워커 1,000개**, 컨트롤러 3개와 커널 **5.4.0-1009-gcp**를 설명합니다. 설정 부분에 Cilium 버전이 명시되지 않았으므로 이를 Cilium 1.20.2 벤치마크로 다시 표시하면 안 됩니다. 해당 워크로드의 자원 소비와 수렴을 다루는 보고서이며 현재 지원 행렬이나 용량 보장이 아닙니다.
 
 상태 점검 변경과 높은 롤아웃 동시성은 그 실험의 선택입니다. 인용할 때 실제 테스트 조건을 유지하고 운영 구성은 따로 검증합니다.
 
@@ -236,7 +236,7 @@ Egress Gateway는 선택된 트래픽을 예측 가능한 게이트웨이 주소
 
 ## 현재 BGP 구성
 
-이전의 `CiliumBGPPeeringPolicy` 예제는 이 검토 버전에서 사용할 수 없습니다. 현재 구성은 클러스터·노드 선택, 피어 설정과 광고할 접두사를 **`cilium.io/v2`** 리소스 3개로 구분합니다.
+이전의 `CiliumBGPPeeringPolicy` 예제는 이 검토 버전에서 사용할 수 없습니다. 현재 구성은 클러스터·노드 선택, 피어 설정과 광고할 접두사를 **`cilium.io/v2`** 리소스 3개로 구분합니다. BGP Control Plane, LoadBalancer IP 광고, Egress Gateway, edge 패턴의 상세 내용은 [BGP, LB, egress, edge](11-bgp-lb-egress-edge.md), 멀티 클러스터는 [ClusterMesh 설치·업그레이드](13-clustermesh-install-upgrade.md)를 참고하세요.
 
 이는 격리된 라우팅 실습용 구성 모델이며 완전한 클라우드 라우터 설정이 아닙니다. `PodCIDR` 광고를 위한 cluster-pool 또는 Kubernetes host-scope IPAM, 접근 가능한 피어 라우터와 그 설정, 의도적으로 `cilium-bgp=lab` 레이블을 지정한 노드를 가정합니다. `192.0.2.1`은 문서용 주소이므로 `/32` 없는 실제 피어 IP로 바꿉니다. Multi-pool IPAM은 다른 광고 유형과 풀 선택을 사용합니다.
 
@@ -323,19 +323,19 @@ kubectl delete namespace "$PERF_NS"
 
 ## 공식 근거
 
-- [Tuning guide](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/performance/tuning.rst)
-- [Chart values](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/values.yaml)
-- [Chart ConfigMap template](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/templates/cilium-configmap.yaml)
-- [Map sizing](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/ebpf/maps.rst)
-- [Map sizing implementation](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/option/config.go)
-- [Upgrade guide](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/upgrade.rst)
-- [Upgrade limitations](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/upgrade-warning.rst)
-- [BGP configuration](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane-configuration.rst)
-- [BGP operation](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane-operation.rst)
-- [Bandwidth Manager](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/bandwidth-manager.rst)
-- [Egress Gateway](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/egress-gateway/egress-gateway.rst)
-- [Historical scalability report](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/operations/performance/scalability/report.rst)
-- [Community roadmap](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/community/roadmap.rst)
+- [Tuning guide](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/operations/performance/tuning.rst)
+- [Chart values](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/install/kubernetes/cilium/values.yaml)
+- [Chart ConfigMap template](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/install/kubernetes/cilium/templates/cilium-configmap.yaml)
+- [Map sizing](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/ebpf/maps.rst)
+- [Map sizing implementation](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/pkg/option/config.go)
+- [Upgrade guide](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/operations/upgrade.rst)
+- [Upgrade limitations](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/operations/upgrade-warning.rst)
+- [BGP configuration](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/bgp-control-plane/bgp-control-plane-configuration.rst)
+- [BGP operation](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/bgp-control-plane/bgp-control-plane-operation.rst)
+- [Bandwidth Manager](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/kubernetes/bandwidth-manager.rst)
+- [Egress Gateway](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/egress-gateway/egress-gateway.rst)
+- [Historical scalability report](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/operations/performance/scalability/report.rst)
+- [Community roadmap](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/community/roadmap.rst)
 - [Linux IP sysctls](https://www.kernel.org/doc/html/latest/networking/ip-sysctl.html)
 
 [메인 페이지로 돌아가기](README.md)

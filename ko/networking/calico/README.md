@@ -1,7 +1,12 @@
 # Calico 딥다이브: Kubernetes 네트워킹과 정책
 
-> **검토 기준**: Calico Open Source 3.32.2 · **마지막 업데이트**: 2026년 9월 12일
-> Calico 3.32의 공식 시험 대상은 Kubernetes 1.34–1.36입니다. `3.29+ / Kubernetes 1.28+` 전체의 호환성을 보장하는 범위가 아닙니다.
+> **예제 기준**: Calico Open Source 3.32.2
+>
+> **마지막 검토**: 2026년 10월 12일
+>
+> **최신 릴리스**: 10월 1일 공개된 Calico 3.33.0은 최신 Open Source 릴리스이며 Kubernetes 1.35–1.37에서 테스트되었습니다.
+>
+> 이 시리즈의 명령은 3.32.2에 고정되어 있고, 공식 시험 범위는 1.34–1.36입니다. 예제를 3.33.0에서 검증하지 않았습니다. 버전을 선택하기 전에 [3.33.0 릴리스 노트](https://github.com/projectcalico/calico/releases/tag/v3.33.0)와 [현재 요구사항](https://docs.tigera.io/calico/latest/getting-started/kubernetes/requirements)을 확인하세요. `3.29+ / Kubernetes 1.28+` 전체의 호환성을 보장하는 범위가 아닙니다.
 
 ## 개요
 
@@ -13,7 +18,7 @@ Tigera의 [공식 발표](https://www.tigera.io/news/tigera-launches-ebpf-powere
 
 ## 호환성과 기능 범위
 
-- Calico 3.32.2는 2026년 8월 30일에 공개되었습니다. 공식 Kubernetes 시험 대상은 1.34·1.35·1.36이며, Kubernetes 1.37이 출시되었다고 호환성이 입증된 것은 아닙니다.
+- Calico 3.32.2는 2026년 8월 30일에 공개되었으며 Kubernetes 1.34–1.36에서 시험되었습니다. 최신 3.33.0은 Kubernetes 1.35–1.37에서 시험되었습니다. Kubernetes 1.37을 사용할 수 있다는 사실만으로 고정된 3.32.2 예제의 호환성이 입증되지는 않습니다.
 - 일반 Linux 요구사항은 필요한 모듈을 포함한 커널 5.10 이상입니다. 지원 아키텍처·벤더 백포트·개별 기능의 더 높은 요구사항은 eBPF 가이드에서 확인합니다.
 - Linux 데이터플레인에는 iptables·nftables·eBPF가 있습니다. 기본값은 설치 방식과 플랫폼에 따라 다르며 현재 자체 관리 kubeadm의 operator 설치는 eBPF가 기본일 수 있습니다. 모든 기능이 동일하다고 보장하지 않습니다.
 - [Calico for Windows](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations)는 명시된 IPv4 VXLAN·BGP 구성을 지원하지만 Linux eBPF·IPIP·IPv6/dual stack·WireGuard와 모든 Linux 정책 기능을 지원하지는 않습니다.
@@ -292,4 +297,4 @@ Operator는 일반적으로 `calico-system`, 직접 매니페스트는 `kube-sys
 | [9](09-operations.md) | 운영·진단 |
 | [용어집](glossary.md) | 용어 정리 |
 
-[Calico 소개 퀴즈](../../quizzes/networking/calico/01-introduction-quiz.md) · [공식 문서](https://docs.tigera.io/calico/latest/about/) · [3.32.2 릴리스](https://github.com/projectcalico/calico/releases/tag/v3.32.2)
+[Calico 소개 퀴즈](../../quizzes/networking/calico/01-introduction-quiz.md) · [공식 문서](https://docs.tigera.io/calico/latest/about/) · [최신 3.33.0 릴리스](https://github.com/projectcalico/calico/releases/tag/v3.33.0) · [예제 기준 3.32.2](https://github.com/projectcalico/calico/releases/tag/v3.32.2)

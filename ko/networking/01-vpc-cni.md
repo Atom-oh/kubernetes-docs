@@ -1,7 +1,11 @@
 # Amazon VPC CNI
 
 > **검토 기준**: VPC CNI / Helm 차트 1.23.0, network policy agent 1.4.1.
-> **최종 검토**: 2026년 9월 11일. 실제 클러스터 버전·리전에 호환되는 EKS add-on build를 선택합니다. 업스트림, Helm, EKS `eksbuild` 버전은 서로 다른 식별자입니다.
+> **최종 검토**: 2026년 10월 12일.
+>
+> **현재 EKS 애드온 표기**: AWS는 Kubernetes 1.31–1.37에 `v1.23.1-eksbuild.1`을 표시합니다.
+>
+> **예제 버전 고정값**: 아래 설정 예제는 업스트림/Helm 1.23.0을 사용합니다. 업스트림·Helm·EKS `eksbuild` 버전은 서로 다른 식별자입니다. 실제 클러스터 버전과 리전의 이용 가능성을 확인하세요.
 
 ## 목차
 
@@ -328,7 +332,7 @@ IPv6에는 지원되는 Linux Nitro/Fargate 경로와 prefix 할당이 필요하
 
 ### 네이티브 정책 강제
 
-표준 네이티브 eBPF 정책은 VPC CNI 1.14에서 처음 도입되었습니다. 현재 EKS 문서의 표준·Admin 정책에는 더 새 전제가 있으며 검토한 1.23도 클러스터·플랫폼에 맞춰야 합니다.
+표준 네이티브 eBPF 정책은 VPC CNI 1.14에서 처음 도입되었습니다. 현재 EKS 문서는 표준 `NetworkPolicy`와 Admin `ClusterNetworkPolicy` 모두에 VPC CNI 1.21.0 이상을 요구하며([EKS 네트워크 정책 요구 사항](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)), 검토한 1.23도 클러스터·플랫폼에 맞춰야 합니다.
 
 ```json
 {

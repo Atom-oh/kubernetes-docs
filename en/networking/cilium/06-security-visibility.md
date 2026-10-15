@@ -1,11 +1,11 @@
 # Security and Visibility
 
-> **Review baseline**: Cilium 1.20.1; Cilium CLI 0.20.0; Hubble CLI 1.19.4.
-> **Last reviewed**: September 12, 2026. Kubernetes 1.33–1.36 is the Cilium 1.20 compatibility range; choose kubectl within the API server's supported version skew.
+> **Review baseline**: Cilium 1.20.2; Cilium CLI 0.20.1; Hubble CLI 1.20.2.
+> **Last reviewed**: October 15, 2026. Kubernetes 1.33–1.36 is the Cilium 1.20 compatibility range; choose kubectl within the API server's supported version skew.
 
 ## Lab Environment Setup
 
-Use an existing Cilium 1.20.1 test cluster with at least two schedulable Linux nodes, working DNS, and policy enforcement enabled. Follow [the installation and platform prerequisites](README.md), including the EKS restrictions and verified CLI downloads. These examples do not install or replace a CNI. They require Helm, kubectl, the Cilium and Hubble CLIs, and jq.
+Use an existing Cilium 1.20.2 test cluster with at least two schedulable Linux nodes, working DNS, and policy enforcement enabled. Follow [the installation and platform prerequisites](README.md), including the EKS restrictions and verified CLI downloads. These examples do not install or replace a CNI. They require Helm, kubectl, the Cilium and Hubble CLIs, and jq.
 
 The lab assumes CoreDNS Pods labeled `k8s-app=kube-dns` in `kube-system`. Verify the actual resolver path; NodeLocal DNS or a different distribution needs different destinations/ports. Policies, proxy configuration and platform controls already present in the cluster can affect the results.
 
@@ -33,7 +33,7 @@ hubble:
 ```
 ```bash
 helm upgrade cilium cilium/cilium --namespace kube-system \
-  --version 1.20.1 --reuse-values --values hubble-values.yaml --wait
+  --version 1.20.2 --reuse-values --values hubble-values.yaml --wait
 cilium status --wait
 # Terminal 1: keep this process running; stop it with Ctrl-C.
 cilium hubble port-forward
@@ -75,7 +75,7 @@ An HTTP rule on port 8443 does not decrypt HTTPS. TLS termination or a separatel
 
 ### Identity, Authentication and Encryption
 
-Cilium's SPIRE-based **mutual authentication remains Beta**: it performs an out-of-band handshake for security identities. That handshake alone does not encrypt application traffic. Its documented limitations include no ClusterMesh support and no interoperability with arbitrary external mTLS systems. The separate **ztunnel workload mTLS feature is also Beta**; it has its own enrollment and certificate prerequisites. Neither feature should be presented as the automatic consequence of an identity selector.
+Cilium's SPIRE-based **mutual authentication is Beta but deprecated in 1.20** (removed in the 1.21 pre-release; the upgrade notes point to ztunnel as the alternative, so do not choose it for new designs): it performs an out-of-band handshake for security identities. That handshake alone does not encrypt application traffic. Its documented limitations include no ClusterMesh support and no interoperability with arbitrary external mTLS systems. The separate **ztunnel workload mTLS feature is also Beta**; it has its own enrollment and certificate prerequisites. Neither feature should be presented as the automatic consequence of an identity selector.
 
 ### Encryption Configuration
 
@@ -100,7 +100,7 @@ encryption:
 
 WireGuard requires kernel support and the node-to-node UDP path on port 51871. IPsec requires a correctly formatted, securely managed `cilium-ipsec-keys` Secret in Cilium's namespace before enabling it; follow the official key creation and rotation procedure. Merely naming a key file in a ConfigMap does not provision that key or its volume.
 
-By default, these modes protect supported Cilium-managed Pod traffic crossing nodes; same-node traffic is not encrypted by these node tunnels. Traffic to arbitrary external destinations is not automatically covered. WireGuard node-to-node encryption is a separate Beta option; control-plane nodes are excluded from that extension by default, while their Cilium-managed cross-node Pod traffic can still be encrypted. Verify the actual packet path and use application TLS where required. Host firewall compatibility also depends on the encryption mode.
+By default, these modes protect supported Cilium-managed Pod traffic crossing nodes; same-node traffic is not encrypted by these node tunnels. Traffic to arbitrary external destinations is not automatically covered. WireGuard node-to-node encryption (`encryption.nodeEncryption`) is a separate Beta option, deprecated in the 1.21 pre-release with removal planned for 1.22; control-plane nodes are excluded from that extension by default, while their Cilium-managed cross-node Pod traffic can still be encrypted. Verify the actual packet path and use application TLS where required. Host firewall compatibility also depends on the encryption mode: host policies do not work together with IPsec (documented in the 1.21 pre-release host-policy known issues).
 
 ## Network Visibility with Hubble
 
@@ -498,19 +498,19 @@ done
 
 ## Primary References
 
-- [Cilium policy enforcement](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/intro.rst)
+- [Cilium policy enforcement](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/security/policy/intro.rst)
 - [Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
-- [HTTP policy](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer7.rst)
-- [DNS policy](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/dns.rst)
-- [Hubble setup](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/observability/hubble/setup.rst)
-- [Metrics](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/observability/metrics.rst)
-- [Flow exporter](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/observability/hubble/configuration/export.rst)
-- [WireGuard](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-wireguard.rst)
-- [IPsec](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-ipsec.rst)
-- [Mutual authentication](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
-- [ztunnel](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-ztunnel.rst)
+- [HTTP policy](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/security/policy/layer7.rst)
+- [DNS policy](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/security/dns.rst)
+- [Hubble setup](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/observability/hubble/setup.rst)
+- [Metrics](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/observability/metrics.rst)
+- [Flow exporter](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/observability/hubble/configuration/export.rst)
+- [WireGuard](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/security/network/encryption-wireguard.rst)
+- [IPsec](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/security/network/encryption-ipsec.rst)
+- [Mutual authentication](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [ztunnel](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/security/network/encryption-ztunnel.rst)
 - [Tetragon](https://raw.githubusercontent.com/cilium/tetragon/main/README.md)
-- [Hubble CLI filters](https://raw.githubusercontent.com/cilium/hubble/v1.19.4/vendor/github.com/cilium/cilium/hubble/cmd/observe/flows.go)
+- [Hubble CLI filters](https://raw.githubusercontent.com/cilium/hubble/v1.20.2/vendor/github.com/cilium/cilium/hubble/cmd/observe/flows.go)
 
 [Return to Main Page](README.md)
 

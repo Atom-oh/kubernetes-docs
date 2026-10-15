@@ -1,6 +1,7 @@
 # Part 2: Helm 배포와 Executor 선택
 
-> **검토 기준**: chart 1.22.0 / Airflow 3.3.1 / KEDA 2.20 · 2026년 9월 12일
+> **검토 기준**: chart 1.22.0 / Airflow 3.3.1 / KEDA 2.20
+> **최신 upstream patch 확인**: Airflow 3.3.2; chart 예제는 3.3.1 기준 · 2026년 10월 12일
 
 ## 1. Chart와 실제 기본값
 

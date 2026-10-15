@@ -1,6 +1,6 @@
 # Istio
 
-> **마지막 업데이트**: 2026년 9월 11일 · Istio 1.31 안내
+> **마지막 업데이트**: 2026년 10월 12일 · Istio 1.31 안내
 
 이 개요는 이전 장 URL을 유지합니다. 상세 절차와 호환성 매트릭스는 유지 관리 중인 [Istio 문서 목차](istio/README.md)와 [설치 가이드](istio/01-installation.md)를 기준으로 확인하세요.
 
@@ -203,7 +203,7 @@ Proxy status는 진단 정보의 일부입니다. Ambient enrollment·ztunnel은
 
 - [Amazon EKS의 Istio](https://istio.io/latest/docs/setup/platform-setup/amazon-eks/)
 - [유지 관리되는 AWS 통합 가이드](istio/04-aws-integration.md)
-- [AWS App Mesh 수명 주기 안내](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html): AWS는 2026년 9월 30일 지원 종료를 안내합니다. 마이그레이션 요구를 검토하며 새 배포 권장으로 해석하지 않습니다.
+- [AWS App Mesh 수명 주기 안내](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html): AWS 지원은 2026년 9월 30일 종료되었습니다. 마이그레이션 요구를 검토하며 새 배포 권장으로 해석하지 않습니다.
 - [Istio 커뮤니티·채널·워킹 그룹](https://istio.io/latest/get-involved/)
 
 ### 추가 자료

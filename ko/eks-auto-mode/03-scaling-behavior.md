@@ -1,7 +1,7 @@
 # 스케일링 동작 이해
 
 > **지원 버전**: EKS Auto Mode GA; 예제 기준 EKS 1.36
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 10월 12일
 
 프로비저닝, consolidation, drift와 expiration을 구분합니다. [시작하기](./01-getting-started.md)에서 확인한 계정·컨텍스트를 사용하세요. Manifest는 구성된 `default` NodeClass를 가정하며 수명 주기 동작에 집중하도록 On-Demand 용량을 사용합니다. 예시 제한값도 상당한 비용을 허용할 수 있습니다.
 
@@ -111,7 +111,7 @@ spec:
 
 ### Balanced
 
-현재 AWS NodePool 참조는 중단 비용과 절감 효과를 함께 평가하는 `Balanced`도 지원합니다. 더 적극적인 정책이 수행할 수 있는 작은 절감 작업을 건너뛸 수 있지만 무중단 보장은 아닙니다.
+EKS 1.37에서 새 custom NodePool이 consolidation 정책을 생략하면 `Balanced`가 기본값입니다. 기본 제공 `general-purpose`·`system` pool도 `Balanced`를 사용하며 정책을 변경할 수 없습니다. 다른 동작이 필요한 custom pool은 정책을 명시하세요. `Balanced`는 중단 비용과 절감 효과를 함께 고려하며 `WhenEmptyOrUnderutilized`가 수행할 수 있는 작은 작업을 건너뛸 수 있습니다. 무중단 보장은 아닙니다. 이 장의 예제는 정책을 명시합니다.
 
 ```yaml
 apiVersion: karpenter.sh/v1

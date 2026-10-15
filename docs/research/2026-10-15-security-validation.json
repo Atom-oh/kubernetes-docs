@@ -1,0 +1,281 @@
+{
+  "status": "passed",
+  "verified_at": "2026-10-15T14:39:51.852988+00:00",
+  "scope": "Documentation and research validation; no live cloud/appliance validation.",
+  "primary_sources": {
+    "count": 43,
+    "http_status_checked": true,
+    "used_claims_cross_checked": true
+  },
+  "repository_checks": {
+    "command": "npm run docs:validate",
+    "status": "passed",
+    "tests_passed": 126,
+    "tests_failed": 0,
+    "local_links": "passed",
+    "image_references": "passed",
+    "ko_en_parity": "passed",
+    "sandbox_note": "Initial restricted subprocess tests failed with EPERM/connection closed; unrestricted rerun passed without repository test changes."
+  },
+  "markdown_vue": {
+    "status": "passed",
+    "diagramsParsed": 6,
+    "pagesCompiled": 16,
+    "pages": [
+      {
+        "file": "ko/security/13-defense-in-depth-incident-response.md",
+        "markdownVue": "passed"
+      },
+      {
+        "file": "ko/security/14-waf-edge-api-security.md",
+        "markdownVue": "passed"
+      },
+      {
+        "file": "ko/security/15-ngfw-paloalto-fortinet.md",
+        "markdownVue": "passed"
+      },
+      {
+        "file": "ko/security/16-gwlb-geneve-inspection.md",
+        "markdownVue": "passed"
+      },
+      {
+        "file": "ko/quizzes/security/13-defense-in-depth-incident-response-quiz.md",
+        "markdownVue": "passed"
+      },
+      {
+        "file": "ko/quizzes/security/14-waf-edge-api-security-quiz.md",
+        "markdownVue": "passed"
+      },
+      {
+        "file": "ko/quizzes/security/15-ngfw-paloalto-fortinet-quiz.md",
+        "markdownVue": "passed"
+      },
+      {
+        "file": "ko/quizzes/security/16-gwlb-geneve-inspection-quiz.md",
+        "markdownVue": "passed"
+      },
+      {
+        "file": "en/security/13-defense-in-depth-incident-response.md",
+        "markdownVue": "passed"
+      },
+      {
+        "file": "en/security/14-waf-edge-api-security.md",
+        "markdownVue": "passed"
+      },
+      {
+        "file": "en/security/15-ngfw-paloalto-fortinet.md",
+        "markdownVue": "passed"
+      },
+      {
+        "file": "en/security/16-gwlb-geneve-inspection.md",
+        "markdownVue": "passed"
+      },
+      {
+        "file": "en/quizzes/security/13-defense-in-depth-incident-response-quiz.md",
+        "markdownVue": "passed"
+      },
+      {
+        "file": "en/quizzes/security/14-waf-edge-api-security-quiz.md",
+        "markdownVue": "passed"
+      },
+      {
+        "file": "en/quizzes/security/15-ngfw-paloalto-fortinet-quiz.md",
+        "markdownVue": "passed"
+      },
+      {
+        "file": "en/quizzes/security/16-gwlb-geneve-inspection-quiz.md",
+        "markdownVue": "passed"
+      }
+    ]
+  },
+  "final_quiz_clarification": {
+    "status": "passed",
+    "files": [
+      "ko/quizzes/security/16-gwlb-geneve-inspection-quiz.md",
+      "en/quizzes/security/16-gwlb-geneve-inspection-quiz.md"
+    ],
+    "reason": "Clarified new flows versus existing draining flows after the full-site build began."
+  },
+  "bilingual_citations_json_and_quiz_structure": "passed: 43 source IDs, matching ko/en references, parsed JSON rules, 8 questions per chapter per locale",
+  "full_site_build": {
+    "command": "NODE_OPTIONS=--max-old-space-size=8192 npm run docs:build",
+    "status": "passed",
+    "locales": [
+      "ko",
+      "en"
+    ],
+    "build_seconds": [
+      177.68,
+      195.9
+    ],
+    "note": "Final quiz wording clarified new flows versus existing drains during the build; both final quiz sources were compiled separately afterward. No structural changes."
+  },
+  "live_cloud_or_appliance_operations": false,
+  "attack_reproduction_or_performance_measurements": false,
+  "deployment": {
+    "performed": false,
+    "content_review_agent_minimum_score_before_deployment": 85,
+    "content_review_gate_executed": true,
+    "content_review_gate_passed": true,
+    "review_iteration_1": {
+      "score": 80.5,
+      "maximum": 90,
+      "verdict": "REVIEW",
+      "critical": 0,
+      "warning": 4,
+      "report": "docs/reviews/2026-10-15/security-content-review-iteration-1.md"
+    },
+    "review_iteration_2": {
+      "score": 90.0,
+      "maximum": 90,
+      "verdict": "PASS",
+      "critical": 0,
+      "warning": 0,
+      "report": "docs/reviews/2026-10-15/security-content-review-iteration-2.md",
+      "visual_testing": "exempt: Markdown source, reviewer browser unavailable"
+    }
+  },
+  "files": [
+    {
+      "path": ".github/news-topic-map.yml",
+      "sha256": "e6451dad7713cb65fa191e0d36d336c97e156b95fc3811e41d5218000a2b7820"
+    },
+    {
+      "path": "docs/research/2026-10-15-security-deep-research.md",
+      "sha256": "12251fb85d8a47c1d555121431b5b41c988fb11bc7db5b8976a8e4f3713e5a90"
+    },
+    {
+      "path": "docs/research/2026-10-15-security-sources.json",
+      "sha256": "559231c654f15e1f3d8ab370c301785872bc99d4ad3ec7ad6cfa547383e4b8f2"
+    },
+    {
+      "path": "en/README.md",
+      "sha256": "c1469a88b5bb51cdd9902e6cf35c0eb4561c30ff9a08d320e238b17869fdd0e3"
+    },
+    {
+      "path": "en/SUMMARY.md",
+      "sha256": "6acd573b44f2179483b079bf3fea96a6aadbbfe228341f67e18d88ee2dc45a12"
+    },
+    {
+      "path": "en/networking/README.md",
+      "sha256": "5476170b53724d1631973a3386b04b7d941502f41306bc14b5c4b87150342b61"
+    },
+    {
+      "path": "en/quizzes/security/13-defense-in-depth-incident-response-quiz.md",
+      "sha256": "5f6f1de3d311a5642c58156671e9e5a67d61c7806bce17ab5af67373cdccf628"
+    },
+    {
+      "path": "en/quizzes/security/14-waf-edge-api-security-quiz.md",
+      "sha256": "359ed4bd209c9be6979a2eec44df447b56e6af2686ebafdd23bb2fe132c8b1a2"
+    },
+    {
+      "path": "en/quizzes/security/15-ngfw-paloalto-fortinet-quiz.md",
+      "sha256": "d691cb8b0de244fc039b8a1a8c395353d4fcdd2832e1669418341e535d592167"
+    },
+    {
+      "path": "en/quizzes/security/16-gwlb-geneve-inspection-quiz.md",
+      "sha256": "3f9afd959ce00432481f892333a3451a173504ea34bbd30fa8f39c90f93a6a6d"
+    },
+    {
+      "path": "en/security/04-network-policies.md",
+      "sha256": "a2752310e1747d743172b1e2c56b7831c24e6c083cd83d998ec842ce9b7be66f"
+    },
+    {
+      "path": "en/security/06-eks-security-best-practices.md",
+      "sha256": "10a667b82bd87fd7cdb68195c2d91988e4f473309397243c4baaa2afcc84db26"
+    },
+    {
+      "path": "en/security/13-defense-in-depth-incident-response.md",
+      "sha256": "d7f92f48365b882132325a5192d12086a487240ae699802fe9cf544c2a64ae79"
+    },
+    {
+      "path": "en/security/14-waf-edge-api-security.md",
+      "sha256": "3563666421c2a436f27ceaae0597a03b4a86e557310cb1ab165c927bd7a78b94"
+    },
+    {
+      "path": "en/security/15-ngfw-paloalto-fortinet.md",
+      "sha256": "190772cb2bd555a96c7667559845a5dd62924e480edce20a661ed6bc23964c22"
+    },
+    {
+      "path": "en/security/16-gwlb-geneve-inspection.md",
+      "sha256": "98f49c8064cb42c70b6e5cad25b17d1e3f3c7c061f991ec7200c26d97e7e37a4"
+    },
+    {
+      "path": "ko/README.md",
+      "sha256": "0179eca3f1541b8ad972862e361c44a11c9f86963e5c964cc87ee6f834b25083"
+    },
+    {
+      "path": "ko/SUMMARY.md",
+      "sha256": "827f69ab616c405ec00152ed225cd5bb620a2ff0e28ec7679643589b6ad2e650"
+    },
+    {
+      "path": "ko/networking/README.md",
+      "sha256": "0c0ed907c5996066b888796a71456fa1373086d21a286d748ac15e8d980afada"
+    },
+    {
+      "path": "ko/quizzes/security/13-defense-in-depth-incident-response-quiz.md",
+      "sha256": "0220dd9159a0b999e1ec529cc5d936169d12e7485fede2f8b0251ede3ddd34bc"
+    },
+    {
+      "path": "ko/quizzes/security/14-waf-edge-api-security-quiz.md",
+      "sha256": "aa00da3c17a67132968f0eb0c4b266989a7e43c72627af6bd24419f16aa61b91"
+    },
+    {
+      "path": "ko/quizzes/security/15-ngfw-paloalto-fortinet-quiz.md",
+      "sha256": "c2d6224a0a61a5d4e5bb8dc4c7948a99f35569d8ea0c536cd17212d2e6058441"
+    },
+    {
+      "path": "ko/quizzes/security/16-gwlb-geneve-inspection-quiz.md",
+      "sha256": "aa5309395540a2df870f3c0e61b898f5edc5d9026ff4f00c808decb4b51dcc54"
+    },
+    {
+      "path": "ko/security/04-network-policies.md",
+      "sha256": "fcf71c88cb0616365622164783963a6642128102437bd5e5226991cff2daca1d"
+    },
+    {
+      "path": "ko/security/06-eks-security-best-practices.md",
+      "sha256": "a647f2593c415eab0249cb17c513b5619923c01dbe4d41a2bf21fb462fb6ce1b"
+    },
+    {
+      "path": "ko/security/13-defense-in-depth-incident-response.md",
+      "sha256": "fa37adcf91f44f6bf9999d82bf32fd2d46af30a0981161bf6c07cbd65c077b23"
+    },
+    {
+      "path": "ko/security/14-waf-edge-api-security.md",
+      "sha256": "274939bb32aa196b1a398570f798280dd8f46dbdc1cdf20d133eacd8f02d9bc3"
+    },
+    {
+      "path": "ko/security/15-ngfw-paloalto-fortinet.md",
+      "sha256": "09b810849c3d1d6bc4a733bef8b41a1f27644127eea7b1a66cd28748360e282a"
+    },
+    {
+      "path": "ko/security/16-gwlb-geneve-inspection.md",
+      "sha256": "6044a366e3ccce526a937fd795539cdb444c10d0d57d7b191752b43f8142a104"
+    },
+    {
+      "path": "docs/reviews/2026-10-15/security-content-review-iteration-1.md",
+      "sha256": "1950b7658df978c2e529ffee5fa2f2efa113e88770c32bfc6e37bb03c4f0802a"
+    },
+    {
+      "path": "docs/reviews/2026-10-15/security-content-review-iteration-2.md",
+      "sha256": "dabda62e4cab326537904723cf4cd242270a3ba9a61cb4b28b27b127ec22276f"
+    }
+  ],
+  "release_example_tests": {
+    "networking": {
+      "passed": 20,
+      "failed": 0
+    },
+    "spot_production": {
+      "passed": 29,
+      "failed": 0
+    }
+  },
+  "review_corrections": [
+    "W-1 forwarded-IP position and NOT caveat",
+    "W-2 documented random-target/drop outcome versus health-only hypothesis",
+    "W-3 TLV/SNAT references and 43-source ledger",
+    "W-4 symmetric flow attachment/AZ selection terminology",
+    "Optional review polish: provenance timestamp/purpose, intrazone all-traffic wording, Korean subject and Pod replacement wording"
+  ]
+}

@@ -474,7 +474,7 @@ groups:
 
 ### Pre-Installation
 
-- [ ] Verify Istio/Kubernetes/EKS support overlap (1.31 example: EKS 1.34–1.36)
+- [ ] Verify Istio/Kubernetes/EKS support overlap (1.31 example: EKS 1.34–1.37)
 - [ ] Select Istio version (stable version recommended)
 - [ ] Calculate resource requirements
 - [ ] Review network policies

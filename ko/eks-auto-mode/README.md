@@ -1,17 +1,27 @@
 # EKS Auto Mode 운영 가이드
 
 > **지원 버전**: EKS Auto Mode GA; 예제 기준 EKS 1.36
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 10월 12일
 
-Amazon EKS Auto Mode는 Kubernetes 노드 관리를 완전히 자동화하는 기능으로, 워크로드 요구 사항에 따라 자동으로 노드를 프로비저닝하고 최적화합니다. 이 가이드는 Auto Mode의 개념, 설정과 운영 시 고려 사항을 다룹니다. AWS가 Auto Mode 인프라를 관리하더라도 애플리케이션의 가용성, resource requests, 보안, 모니터링과 클러스터/VPC 구성은 사용자 책임입니다. 예제는 프로덕션 적용 전에 해당 환경에서 검증해야 합니다.
+Amazon EKS Auto Mode는 워크로드 요구 사항에 맞게 노드를 프로비저닝하고 최적화하여 Kubernetes 노드 관리를 자동화합니다. 이 가이드는 Auto Mode의 개념, 설정과 운영을 다룹니다. AWS가 Auto Mode 인프라를 관리하더라도 애플리케이션 가용성, resource requests, 보안, 모니터링과 클러스터/VPC 구성은 사용자가 책임집니다. 프로덕션에 적용하기 전에 예제를 해당 환경에서 검증하세요.
+
+### 2026년 10월 업데이트: EKS 1.37 기본값
+
+EKS 1.37은 2026년 10월 1일 제공되기 시작했습니다. 새 custom NodePool에서 consolidation 정책을 생략하면 `Balanced`가 기본값입니다. 기본 제공 `general-purpose`·`system` pool도 `Balanced`를 사용하며 정책을 변경할 수 없습니다. Custom pool에서 `WhenEmptyOrUnderutilized` 동작을 원하면 명시적으로 설정하세요. 이 가이드의 NodePool 예제가 모두 이 필드를 지정하지는 않으므로, 해당 예제를 EKS 1.37에서 생성하면 `Balanced`가 적용됩니다. [EKS 표준 지원 릴리스 노트](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html)의 Kubernetes 1.37 항목을 참고하세요.
 
 ### 2026년 7월 업데이트: EFA 및 배치 그룹(Placement Group) 지원
 
-2026년 7월 22일, EKS Auto Mode(및 오픈소스 Karpenter)의 노드 풀에서 Elastic Fabric Adapter(EFA) 네트워크 디바이스 구성과 EC2 배치 그룹을 지원한다고 발표되었습니다. EFA 지원 인스턴스의 네트워크 인터페이스를 EFA 전용 또는 표준 ENI로 구성할 수 있으며 — EFA 전용 인터페이스는 VPC IP 주소를 소비하지 않으면서도 인터커넥트 대역폭을 최대로 활용할 수 있습니다 — cluster, spread, partition 배치 전략을 노드 풀 구성에서 직접 지정해 인스턴스를 시작할 수 있습니다. 최대 처리량이나 장애 격리가 필요한 분산 학습/추론 워크로드를 겨냥한 기능입니다. 자세한 내용은 [발표](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-efa-placement-groups/)를 참고하세요.
+2026년 7월 22일, EKS Auto Mode와 오픈소스 Karpenter 노드 풀이 Elastic Fabric Adapter(EFA) 네트워크 디바이스 구성과 EC2 배치 그룹을 지원한다고 발표되었습니다.
+
+EFA 지원 인스턴스에서는 네트워크 인터페이스를 EFA 전용 또는 표준 ENI로 구성할 수 있습니다. EFA 전용 인터페이스는 VPC IP 주소를 소비하지 않으면서 인터커넥트 대역폭을 최대로 활용할 수 있습니다. 노드 풀 구성에서 cluster, spread, partition 배치 전략도 지정할 수 있습니다. 높은 처리량이나 장애 격리가 필요한 분산 학습·추론 워크로드를 위한 기능입니다. 자세한 내용은 [발표](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-efa-placement-groups/)를 참고하세요.
 
 ### 2026년 7월 업데이트: ARC Zonal Shift 지원
 
-2026년 7월 10일부터 EKS Auto Mode 클러스터에서도 Amazon Application Recovery Controller(ARC) zonal shift와 autoshift를 사용할 수 있습니다. Auto Mode가 컴퓨팅을 대신 관리하므로 별도 플래그 설정이나 Karpenter 버전 관리 없이 클러스터에서 ARC zonal shift만 활성화하면 됩니다. zonal shift가 발동되면 Auto Mode는 장애 AZ에서 신규 용량 프로비저닝을 중단하고, 해당 존 노드에 대한 consolidation·drift 같은 자발적 중단(voluntary disruption)도 함께 중단합니다. 정상 AZ의 자발적 중단도 대체 Pod의 배치가 장애 AZ에 의존하면 막습니다. Auto Mode에 별도의 Karpenter 플래그는 필요하지 않지만, 클러스터 등록 후 ARC zonal autoshift는 별도로 구성해야 합니다. Zonal shift가 단일 AZ 볼륨이나 엄격한 AZ 배치 제약을 자동으로 이동 가능한 상태로 만들지는 않습니다. ARC zonal shift 자체의 추가 요금은 없지만 대체 용량과 일반 인프라 요금은 계속 적용됩니다. 자세한 내용은 [발표](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift)와 [ARC zonal shift 문서](https://docs.aws.amazon.com/eks/latest/userguide/zone-shift-enable.html)를 참고하세요.
+2026년 7월 10일부터 EKS Auto Mode 클러스터에서도 Amazon Application Recovery Controller(ARC) zonal shift와 autoshift를 사용할 수 있습니다. 클러스터에서 ARC zonal shift를 활성화하면 됩니다. 별도 플래그 설정이나 Karpenter 버전 관리는 필요하지 않습니다.
+
+Zonal shift가 발동되면 Auto Mode는 장애 AZ의 신규 용량 프로비저닝을 중단하고, 해당 AZ 노드의 consolidation·drift 같은 자발적 중단(voluntary disruption)도 중단합니다. 대체 Pod 배치가 장애 AZ에 의존하는 경우 정상 AZ의 자발적 중단도 막습니다. ARC zonal autoshift는 클러스터 등록 후 별도로 구성해야 합니다.
+
+Zonal shift가 단일 AZ 볼륨이나 엄격한 AZ 배치 제약을 자동으로 이동 가능한 상태로 만들지는 않습니다. ARC zonal shift 자체에는 추가 요금이 없지만 대체 용량과 일반 인프라 요금은 계속 적용됩니다. 자세한 내용은 [발표](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift)와 [ARC zonal shift 문서](https://docs.aws.amazon.com/eks/latest/userguide/zone-shift-enable.html)를 참고하세요.
 
 ## 목차
 
@@ -93,7 +103,7 @@ Karpenter 기반 컨트롤러는 워커 노드 외부에서 AWS가 운영합니�
 
 [EKS FAQ](https://aws.amazon.com/eks/faqs/)는 중국 리전을 제외한 EKS 리전에서 Auto Mode를 제공하며 GovCloud(US)를 포함한다고 안내합니다. 인스턴스와 개별 기능의 리전별 가용성은 별도로 확인하세요. 이전의 짧은 리전 목록은 전체 목록이 아니었습니다.
 
-FAQ의 초기 기능 지원 하한인 `1.29+`는 그 이후 모든 버전을 현재 생성할 수 있거나 표준 지원 중이라는 뜻이 아닙니다. 2026년 9월 12일 기준 EKS 1.34–1.36이 표준 지원 대상이며 예제는 1.36을 사용합니다. 수명 주기와 확장 지원 요금은 [현재 EKS 버전 일정](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)에서 확인하세요.
+FAQ의 초기 기능 지원 하한인 `1.29+`는 그 이후 모든 버전을 현재 생성할 수 있거나 표준 지원 중이라는 뜻이 아닙니다. 2026년 10월 12일 기준 EKS 1.34–1.37이 표준 지원 대상이며 예제는 검토한 1.36 기준을 유지합니다. 수명 주기와 확장 지원 요금은 [현재 EKS 버전 일정](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)에서 확인하세요.
 
 ### 확인할 제약
 

@@ -1,9 +1,13 @@
 # Cluster Architecture
 
 > **Supported Versions**: Kubernetes 1.35, 1.36, 1.37
-> **Last Updated**: September 28, 2026
+> **Last Updated**: October 12, 2026
 
-The version header refers to upstream Kubernetes. As of September 11, 2026, EKS standard support covers 1.34–1.36; check the [EKS lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) before selecting a version. Component commands below illustrate self-managed clusters; EKS manages its control plane. Image tags and infrastructure IDs are examples: select compatible, maintained images and replace placeholders before use.
+The version header refers to upstream Kubernetes. The project maintains release branches for the three most recent minor releases (1.35–1.37). Upstream 1.34 is in maintenance mode and still receives patch releases until its end of life on **October 27, 2026**, separately from its AWS support end date on EKS.
+
+As of October 12, 2026, EKS standard support covers 1.34–1.37; EKS 1.37 became available on October 1, 2026. Check the [Kubernetes release status](https://kubernetes.io/releases/) and [EKS lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) before selecting a version.
+
+Component commands below illustrate self-managed clusters; EKS manages its control plane. Image tags and infrastructure IDs are examples: select compatible, maintained images and replace placeholders before use.
 
 ## Lab Environment Setup
 
@@ -379,7 +383,7 @@ metadata:
 spec:
   containers:
   - name: kube-apiserver
-    image: registry.k8s.io/kube-apiserver:v1.37.0
+    image: registry.k8s.io/kube-apiserver:v1.37.1
     command:
     - kube-apiserver
     - --advertise-address=192.168.1.10
@@ -1548,6 +1552,13 @@ Before upgrading, be sure to review the deprecations and removals in the [offici
 On September 23, 2026, patch releases shipped for every supported minor version: [v1.37.1](https://github.com/kubernetes/kubernetes/releases/tag/v1.37.1), v1.36.5, v1.35.9 and v1.34.12. v1.37.1 is a routine bug-fix release: it moves the build to Go 1.26.8 and fixes, among others, a bug where a DeviceTaintRule without `spec.deviceSelector` made every DRA device unschedulable, and a panic that could terminate the Windows kube-proxy (winkernel) when it enumerated an HNS load balancer without port mappings.
 
 Also published that week is the v1.37 deep-dive post [Tracking When a PersistentVolumeClaim Was Last Used (Beta)](https://kubernetes.io/blog/2026/09/21/kubernetes-v1-37-pvc-last-used-time/): the `PersistentVolumeClaimUnusedSinceTime` feature gate graduated to Beta (enabled by default), so the PVC protection controller now adds an `Unused` condition to each PVC, letting you identify orphaned PVCs that no running pod references without custom tooling.
+### September 2026 Update: v1.37 Feature Deep Dives
+
+Between September 14–16, 2026, the Kubernetes blog published a series of deep-dive posts on v1.37 features:
+
+- **[Memory QoS graduates to Beta](https://kubernetes.io/blog/2026/09/14/kubernetes-v1-37-memory-qos-graduates-to-beta/)**: the `MemoryQoS` feature gate is now Beta and enabled by default on v1.37 kubelets. On Linux nodes running cgroup v2, it uses the memory controller to give the kernel better guidance on how to treat container memory. The default kubelet configuration writes no `memory.high`/`memory.min`/`memory.low` values, so nothing changes until you explicitly set fields such as `memoryThrottlingFactor`.
+- **[Pod-Level Resource Managers graduate to Beta](https://kubernetes.io/blog/2026/09/15/kubernetes-v1-37-pod-level-resource-managers-beta/)** (disabled by default): the kubelet's Topology Manager, CPU Manager, and Memory Manager can now use pod-level resource declarations (`.spec.resources`) directly for NUMA-aligned placement. This enables hybrid allocation — exclusive cores for primary containers while lightweight sidecars share a pod-isolated pool.
+- **[Hardening container storage](https://kubernetes.io/blog/2026/09/16/kubernetes-v1-37-hardening-container-storage/)**: new `emptyDir` permission modes and bind mount options (`noexec`, `nosuid`, `nodev`) let you enforce security policies — such as prohibiting execution of arbitrary binaries from writable volumes — directly in Kubernetes without workarounds.
 
 ### Upgrade Strategies
 

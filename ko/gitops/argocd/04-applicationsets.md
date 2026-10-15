@@ -1,7 +1,7 @@
 # ArgoCD ApplicationSets
 
-> **검토 기준**: Argo CD 3.5.2 (ApplicationSet 컨트롤러 포함)
-> **마지막 업데이트**: 2026년 9월 11일
+> **검토 기준**: Argo CD 3.5.2 (ApplicationSet 컨트롤러 포함). 릴리스 노트 검토 후 패치 3.5.4로 갱신(예제 재실행 안 함)
+> **마지막 업데이트**: 2026년 10월 12일
 
 ## 목차
 
@@ -741,7 +741,7 @@ Sprig 함수는 `env`, `expandenv`, `getHostByName`을 제외하고 지원합니
 
 ## Progressive Syncs
 
-Progressive Syncs는 3.3부터 Beta이며 3.5.2에서도 명시적으로 활성화해야 합니다. 기존 `argocd-cmd-params-cm.data`에 `applicationsetcontroller.enable.progressive.syncs: "true"`를 병합하고 ApplicationSet 컨트롤러를 재시작합니다. Helm 설치라면 같은 설정을 `configs.params`에 관리합니다.
+Progressive Syncs는 3.3부터 Beta이며 3.5.4에서도 명시적으로 활성화해야 합니다. 기존 `argocd-cmd-params-cm.data`에 `applicationsetcontroller.enable.progressive.syncs: "true"`를 병합하고 ApplicationSet 컨트롤러를 재시작합니다. Helm 설치라면 같은 설정을 `configs.params`에 관리합니다.
 
 RollingSync는 **생성된 Application의 labels**로 단계를 선택하고 앞 단계의 모든 Application이 Healthy가 되어야 다음 단계로 진행합니다. 자식 Application의 자동 동기화는 비활성화하며 ApplicationSet 컨트롤러가 sync를 요청합니다. Sync window와 Application retry 정책은 적용됩니다. 어떤 단계에도 매칭되지 않는 Application은 수동 sync가 필요합니다.
 
@@ -1062,7 +1062,7 @@ ApplicationSet 삭제는 ownerReferences를 통해 생성한 Application도 삭�
 
 ApplicationSet만 제거하고 자식 Application을 남길 때는 `kubectl delete applicationset NAME -n argocd --cascade=orphan`을 사용합니다. 남은 Application의 자동 동기화와 finalizer도 계속 유효하므로 이후 그 Application을 삭제하면 배포 리소스가 삭제될 수 있습니다. `applicationsSync: create-update`는 생성기 재조정에 의한 삭제를 제한할 뿐 부모 삭제에 의한 GC까지 막지 않습니다.
 
-`templatePatch`는 `goTemplate: true`에서만 동작합니다. 3.5.2 구현은 Application 타입에 대한 Kubernetes strategic merge patch를 사용합니다. 병합 태그가 없는 Application spec의 배열(예: Helm valueFiles)은 교체되므로 Pod의 containers처럼 이름 기준으로 병합된다고 가정하면 안 됩니다. 값 없는 `spec:`(null)으로 기존 설정을 지우지 않도록 하고, `spec.project` 변경에는 사용하지 않습니다. 신뢰할 수 없는 문자열을 삽입할 경우 `toJson` 등으로 이스케이프합니다.
+`templatePatch`는 `goTemplate: true`에서만 동작합니다. 3.5.4 구현은 Application 타입에 대한 Kubernetes strategic merge patch를 사용합니다. 병합 태그가 없는 Application spec의 배열(예: Helm valueFiles)은 교체되므로 Pod의 containers처럼 이름 기준으로 병합된다고 가정하면 안 됩니다. 값 없는 `spec:`(null)으로 기존 설정을 지우지 않도록 하고, `spec.project` 변경에는 사용하지 않습니다. 신뢰할 수 없는 문자열을 삽입할 경우 `toJson` 등으로 이스케이프합니다.
 
 ## 다음 단계
 
