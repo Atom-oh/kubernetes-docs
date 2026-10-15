@@ -1,6 +1,6 @@
 # Prometheus
 
-> 검토: 2026년 9월 13일. 아래에 로컬 설정·쿼리 검증 범위를 명시합니다. 클러스터·클라우드 배포는 수행하지 않았습니다.
+> 검토: 2026년 9월 14일. 아래에 로컬 설정·쿼리 검증 범위를 명시합니다. 클러스터·클라우드 배포는 수행하지 않았습니다.
 
 ## 목차
 
@@ -33,6 +33,10 @@ Local 보존 기간은 설정할 수 있으며 30일을 넘길 수도 있습니�
 차트의 `kubeVersion` 조건은 `>=1.25.0-0`입니다. 전체 호환성 표이거나 모든 Kubernetes 1.25 이상 버전이 계속 지원된다는 뜻은 아닙니다. 실제 cluster·컴포넌트 지원·admission 정책·storage driver를 확인합니다.
 
 Profile은 **Linux EC2 worker를 사용하는 EKS** 대상입니다. Fargate는 DaemonSet을 지원하지 않으며 Auto Mode·Hybrid Nodes·Windows는 수집기와 저장소를 별도로 검토해야 합니다.
+
+### 2026년 9월 업데이트
+
+- [9월 11일 Kubernetes 블로그](https://kubernetes.io/blog/2026/09/11/kubernetes-v1-37-native-histograms-beta/)에 따르면 Kubernetes 컴포넌트 메트릭의 [Prometheus 네이티브 히스토그램](https://prometheus.io/docs/specs/native_histograms/) 지원(KEP-5808)이 v1.37에서 Beta로 승격되어 기본 활성화되었습니다. 고정 `le` 버킷 대신 고해상도·저카디널리티 버킷을 사용해 지연 시간 계열의 정확도를 높이고 저장·scrape 오버헤드를 줄입니다. 활용하려면 수집하는 Prometheus 측에도 네이티브 히스토그램 수집 설정이 필요하며 기존 classic 히스토그램 기반 쿼리·대시보드는 별도로 검토해야 합니다.
 
 ### 2026년 7월의 업데이트 기록
 
