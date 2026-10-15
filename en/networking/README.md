@@ -1,6 +1,6 @@
 # Kubernetes Networking
 
-> **Last Updated**: October 12, 2026
+> **Last Updated**: October 15, 2026
 >
 > **Pinned examples**: Cilium 1.20.1, Calico Open Source 3.32.2, Flannel 0.28.9, and upstream AWS VPC CNI/Helm chart 1.23.0.
 >
@@ -400,6 +400,8 @@ These five connectivity options differ in layer and traffic model. Measured late
 | VPC Lattice | Application and resource networking | HTTP/HTTPS services support L7 routing and optional IAM authorization; TLS passthrough and resource configurations have different capabilities |
 
 GWLB inserts inspection appliances such as firewalls and IDS/IPS into an IP path through a Gateway Load Balancer endpoint. Its default flow stickiness uses five fields; supported configurations can instead use two or three. Validate forward and return routes, appliance health, encapsulation MTU, NACLs and the security groups of the actual workloads/appliances. GWLB itself does not have an ALB-style security group, and flow stickiness does not replace failure testing.
+
+For security design see [WAF/origin protection](../security/14-waf-edge-api-security.md), [Palo Alto/Fortinet NGFW](../security/15-ngfw-paloalto-fortinet.md) and [GWLB/GENEVE paths and failures](../security/16-gwlb-geneve-inspection.md). GWLBE also does not support SGs. For all-unhealthy targets AWS describes per-flow target selection and drops until recovery, with no direct appliance bypass. Review reduced-tuple stickiness, cross-zone, NAT and TGW appliance mode together.
 
 > 📎 The full EKS/VPC Lattice integration (Gateway API Controller, IAM authorization, routing) is in [VPC Lattice](02-vpc-lattice.md).
 

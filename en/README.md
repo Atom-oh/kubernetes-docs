@@ -291,6 +291,10 @@ This training content provides quizzes for each topic along with the learning ma
 10. [cert-manager](./security/10-cert-manager.md) | [Quiz](./quizzes/security/10-cert-manager-quiz.md)
 11. [Kubescape](./security/11-kubescape.md) | [Quiz](./quizzes/security/11-kubescape-quiz.md)
 12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [Quiz](./quizzes/security/12-spiffe-spire-quiz.md)
+13. [Incident-driven Defense in Depth and Response](./security/13-defense-in-depth-incident-response.md) | [Quiz](./quizzes/security/13-defense-in-depth-incident-response-quiz.md)
+14. [WAF, Edge, API and Origin Protection](./security/14-waf-edge-api-security.md) | [Quiz](./quizzes/security/14-waf-edge-api-security-quiz.md)
+15. [Palo Alto and Fortinet NGFW](./security/15-ngfw-paloalto-fortinet.md) | [Quiz](./quizzes/security/15-ngfw-paloalto-fortinet-quiz.md)
+16. [GWLB and GENEVE Paths and Failure Validation](./security/16-gwlb-geneve-inspection.md) | [Quiz](./quizzes/security/16-gwlb-geneve-inspection-quiz.md)
 
 ### GitOps
 1. [GitOps Overview](./gitops/README.md)

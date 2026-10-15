@@ -327,6 +327,10 @@
 * [cert-manager](security/10-cert-manager.md)
 * [Kubescape](security/11-kubescape.md)
 * [SPIFFE/SPIRE](security/12-spiffe-spire.md)
+* [사고 기반 다층 방어와 침해 대응](security/13-defense-in-depth-incident-response.md)
+* [WAF·엣지·API 보안과 origin 보호](security/14-waf-edge-api-security.md)
+* [Palo Alto·Fortinet NGFW](security/15-ngfw-paloalto-fortinet.md)
+* [GWLB·GENEVE 검사 경로와 장애 검증](security/16-gwlb-geneve-inspection.md)
 
 ## GitOps
 
@@ -685,6 +689,10 @@
   * [cert-manager 퀴즈](quizzes/security/10-cert-manager-quiz.md)
   * [Kubescape 퀴즈](quizzes/security/11-kubescape-quiz.md)
   * [SPIFFE/SPIRE 퀴즈](quizzes/security/12-spiffe-spire-quiz.md)
+  * [다층 방어와 침해 대응 퀴즈](quizzes/security/13-defense-in-depth-incident-response-quiz.md)
+  * [WAF·origin 보호 퀴즈](quizzes/security/14-waf-edge-api-security-quiz.md)
+  * [Palo Alto·Fortinet NGFW 퀴즈](quizzes/security/15-ngfw-paloalto-fortinet-quiz.md)
+  * [GWLB·GENEVE 퀴즈](quizzes/security/16-gwlb-geneve-inspection-quiz.md)
 * Container Registry
   * [Docker Hub 퀴즈](quizzes/container-registry/01-docker-hub-quiz.md)
   * [Amazon ECR 퀴즈](quizzes/container-registry/02-amazon-ecr-quiz.md)
