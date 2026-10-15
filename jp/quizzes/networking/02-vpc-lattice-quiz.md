@@ -1,356 +1,284 @@
 # VPC Lattice クイズ
 
-このクイズでは、Amazon VPC Lattice の理解度を確認します。
+ガイドを確認し、YAML だけでなく前提条件も説明してください。
 
-## 選択式問題
+## 1. Amazon VPC Lattice の主な目的は何ですか？
 
-1. Amazon VPC Lattice の主な目的は何ですか？
-   - A) インターネットから AWS リソースへの外部トラフィックを管理すること
-   - B) 異なる VPC とアカウント間における Service の内部通信
-   - C) AWS リージョン間のデータレプリケーション
-   - D) DNS ベースのグローバルロードバランシング
+- A) Internet DNS ベースのグローバル負荷分散
+- B) VPC およびアカウント間のプライベートなアプリケーションとリソースの接続
+- C) クロスリージョンのデータベースレプリケーション
+- D) すべての IP ルーティングの置き換え
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) 異なる VPC とアカウント間における Service の内部通信**
+B. Lattice はサービスとリソース構成を接続します。HTTP サービスルーティングとリソースアクセスモデルは別物です。関連付け、ネットワーク制御、認可は引き続き適用されます。
 
-**解説:**
-VPC Lattice は、複数の VPC および AWS アカウントにまたがる Service を安全に接続・管理することを主な目的とする AWS アプリケーションネットワーキングサービスです。Service Network と呼ばれる論理的な境界内で、Service discovery、トラフィックルーティング、認証、認可を提供します。外部トラフィックの管理には API Gateway または ALB を使用し、リージョン間レプリケーションには S3 Cross-Region Replication などの Service を使用します。
 </details>
 
-2. VPC Lattice の Service Network について正しいものはどれですか？
-   - A) 物理ネットワーク機器を接続するレイヤー
-   - B) Service をグループ化し、その通信を管理する論理的な境界
-   - C) VPC 内の subnet を接続するルーティングテーブル
-   - D) Internet Gateway の代替 Service
+## 2. service network は何を表しますか？
+
+- A) 物理ネットワークデバイス
+- B) サービス/リソースとクライアントネットワークの関連付けを持つ論理的なグループ
+- C) サブネットのルートテーブル
+- D) すべてのサービスで共有する 1 つの HTTP リスナー
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) Service をグループ化し、その通信を管理する論理的な境界**
+B. リスナーとルールは個々のサービスに属します。関連付けは、security group と適用されるポリシーに従う経路を有効にしますが、すべてのリクエストを無条件に認可するものではありません。
 
-**解説:**
-Service Network は、複数の Service を論理的にグループ化する VPC Lattice の中核コンポーネントです。VPC を Service Network に関連付けると、その VPC 内のリソースはネットワーク内の Service と通信できます。複数の VPC（異なるアカウントのものを含む）を 1 つの Service Network に接続でき、各 Service の認証ポリシーとアクセス制御を一元管理できます。
 </details>
 
-3. VPC Lattice と AWS App Mesh の違いは何ですか？
-   - A) VPC Lattice には sidecar proxy が必要だが、App Mesh には必要ない
-   - B) App Mesh は sidecar proxy ベースだが、VPC Lattice には sidecar が不要
-   - C) VPC Lattice は TCP のみをサポートし、App Mesh は HTTP のみをサポートする
-   - D) 両 Service は同じアーキテクチャを使用する
+## 3. App Mesh と Lattice に関する正しい記述はどれですか？
+
+- A) Lattice では Pod ごとに Envoy sidecar が必要である
+- B) App Mesh は Envoy proxy を使用する一方、Lattice はアプリケーション sidecar を必要としないマネージドデータプレーンを提供する
+- C) 他のすべての mesh では sidecar が必要である
+- D) App Mesh は新規 Deployment で引き続き利用可能である
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) App Mesh は sidecar proxy ベースだが、VPC Lattice には sidecar が不要**
+B. App Mesh は Envoy sidecar proxy を使用していましたが、Lattice はアプリケーション sidecar を使用しないマネージドデータプレーンを提供します。D は誤りです。AWS App Mesh のサポートは 2026-09-30 に終了し、そのコンソールとリソースにはもはやアクセスできないため、新規作成ではなく既存の Deployment を移行してください。他の mesh モードでの sidecar 要件は異なります。
 
-**解説:**
-AWS App Mesh は、トラフィックを制御するために各 Service pod に Envoy sidecar proxy を注入する Service mesh です。一方、VPC Lattice は、sidecar proxy なしで Service 間通信、ルーティング、認証を提供するフルマネージド AWS Service です。そのため、VPC Lattice は運用上の複雑さとリソースオーバーヘッドが低くなりますが、App Mesh が提供するきめ細かなトラフィック制御機能の一部は制限される場合があります。
 </details>
 
-4. EKS を VPC Lattice と統合する際に使用する Kubernetes API は何ですか？
-   - A) Ingress API
-   - B) Service API
-   - C) Gateway API
-   - D) NetworkPolicy API
+## 4. AWS Gateway API Controller はリソースをどのようにマッピングしますか？
+
+- A) Kubernetes Service ごとに 1 つの service network を作成する
+- B) Gateway は名前でネットワークを選択し、各 HTTPRoute は独自の Lattice service/domain を作成する
+- C) Gateway は常に、すべての Route で共有される 1 つの ingress IP を作成する
+- D) controller は Ingress API のみを使用する
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: C) Gateway API**
+B. GatewayClass は controller を選択します。Gateway は namespace を付けない名前で既存の service network を参照し、バックエンドの Service/endpoints が target group を提供します。Gateway 単体ではネットワークを作成しません。
 
-**解説:**
-AWS Gateway API Controller は、Kubernetes Gateway API リソース（GatewayClass、Gateway、HTTPRoute など）を VPC Lattice リソースに変換します。Gateway API は Kubernetes の次世代 Ingress 仕様であり、Ingress よりも豊富な機能と拡張性を提供します。GatewayClass で amazon-vpc-lattice controller を指定し、Gateway と HTTPRoute を作成すると、controller が VPC Lattice Services と Target Groups を自動的に作成します。
 </details>
 
-5. VPC Lattice Service の正しい DNS 名形式はどれですか？
-   - A) service-name.region.amazonaws.com
-   - B) service-name.vpc-lattice-svcs.region.on.aws
-   - C) service-name.internal.aws
-   - D) service-name.lattice.region.aws
+## 5. クライアントは割り当てられた Lattice service DNS 名をどのように取得すべきですか？
+
+- A) Kubernetes Service 名にリージョンを付加する
+- B) service-network ID を推測したホスト名に入れる
+- C) get-service dnsEntry または Route の lattice-assigned-domain-name annotation を読み取る
+- D) Gateway.status.addresses をすべての Route のアドレスとして再利用する
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) service-name.vpc-lattice-svcs.region.on.aws**
+C. 各 Route には独自の service/domain があります。実際に返された値を使用してください。サービスを再作成すると、割り当てられた名前が変わることがあります。custom domain には独自の DNS と certificate の設定が必要です。
 
-**解説:**
-VPC Lattice Service には DNS 名が自動的に割り当てられます。形式は `<service-name>.<service-network-id>.vpc-lattice-svcs.<region>.on.aws` です。この DNS 名は Service Network に接続されているすべての VPC から解決できます。Client はこの DNS 名を使用して Service にアクセスし、VPC Lattice が内部で適切な target にルーティングします。カスタムドメインを使用するには、Route 53 などで CNAME または Alias レコードを設定できます。
 </details>
 
-6. VPC Lattice がサポートする認証方式は何ですか？
-   - A) API Key のみ
-   - B) OAuth 2.0 のみ
-   - C) AWS IAM または認証なし
-   - D) SAML のみ
+## 6. 認証に関する正しい記述はどれですか？
+
+- A) service の NONE はすべての network policy を無効にする
+- B) AWS_IAM は、クライアントに IAM role があれば署名なしの curl リクエストを受け入れる
+- C) AWS_IAM はサポート対象の署名付きリクエストを使用し、適用されるすべての IAM 認可レイヤーがアクセスを許可する必要がある
+- D) RAM sharing は自動的に Invoke を許可する
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: C) AWS IAM または認証なし**
+C. VPC Lattice は SigV4 と SigV4A をサポートします。署名時には vpc-lattice-svcs と UNSIGNED-PAYLOAD を使用してください。呼び出し元の identity permission と適用される network/service auth policy がアクセスを許可する必要があり、明示的な Deny が優先されます。NONE は自身のレイヤーにのみ影響します。
 
-**解説:**
-VPC Lattice は 2 つの認証モードをサポートします。AWS_IAM モードでは、リクエストに SigV4（Signature Version 4）署名が必要で、IAM ポリシーとリソースポリシーを通じてアクセスを制御します。NONE モードでは、認証なしですべてのリクエストが許可されます。IAM 認証を使用すると、どの IAM role/user がどの Service のどの path にアクセスできるかをきめ細かく制御できます。
 </details>
 
-7. VPC Lattice Target Groups でサポートされていない target type はどれですか？
-   - A) EC2 instance
-   - B) EKS pod（IP type）
-   - C) Lambda function
-   - D) RDS database
+## 7. 名前付き Lattice service target-group type ではないものはどれですか？
+
+- A) INSTANCE
+- B) IP
+- C) LAMBDA
+- D) RDS
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: D) RDS database**
+D. service target-group type には INSTANCE、IP、LAMBDA、ALB があります。これは Lattice が RDS database に接続できないことを意味するものではありません。resource configuration と resource gateway は、別個の TCP resource-access model を提供します。service auth policy はそのリソーストラフィックを管理しません。
 
-**解説:**
-VPC Lattice Target Groups は、EC2 instance、IP address（EKS pod を含む）、Lambda function、ALB を target としてサポートします。RDS database は HTTP/HTTPS ではなくデータベースプロトコルを使用するため、VPC Lattice の target にはできません。EKS pod には IP type の Target Groups を使用し、AWS Gateway API Controller が pod IP を自動的に登録・登録解除します。
 </details>
 
-8. VPC Lattice における weighted routing の主なユースケースは何ですか？
-   - A) ロードバランシングのみ
-   - B) Canary deployment と blue-green deployment
-   - C) 地理的なルーティング
-   - D) Sticky session
+## 8. backendRefs の weight 比率 90:10 は何を意味しますか？
+
+- A) 連続する 10 件のリクエストのうち必ず 1 件が canary に到達する
+- B) 2 つの backend 間の相対的なトラフィック分散
+- C) Pod の replica-count 要件
+- D) Gateway API ではサポートされない annotation
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答: B) Canary deployment と blue-green deployment**
+B. ネイティブの backendRefs.weight は相対分散を設定します。少数のリクエストサンプルが正確に一致する必要はありません。両方の backend が存在し、正常である必要があります。canary の割合を増やす前に、エラーとレイテンシーを確認してください。
 
-**解説:**
-Weighted routing は、複数の Target Groups にトラフィックを比例配分します。Canary deployment では、検証のためにトラフィックの 10% を新しいバージョンに送信し、その後徐々に増加させます。Blue-green deployment では、blue から green へ 100% を一度に切り替えます。例: `service-v1: weight 90, service-v2: weight 10` を設定すると、トラフィックの 10% のみが v2 に送信されます。問題が見つかった場合は、weight を調整して rollback できます。
 </details>
 
-## 短答式問題
-
-9. VPC Lattice Service Network をアカウント間で共有する方法を説明してください。
+## 9. service network のクロスアカウント共有について説明してください。
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答:**
-AWS Resource Access Manager（RAM）を使用して、Service Network を他の AWS アカウントまたは organization と共有します。
+所有者は、network ARN と対象のアカウント、organization、または OU に対して RAM share を作成します。sharing が有効な organization 内の consumer は招待を必要としません。その他の該当する構成では承諾が必要です。consumer は自身の VPC を関連付けるか、適切な service-network endpoint を作成します。sharing は Invoke を許可しません。呼び出し元ポリシー、auth policy、network path、security group もアクセスを許可する必要があります。share を停止しても、既存の関連付けは残ります。
 
-**解説:**
-アカウント間共有の手順:
-1. **所有アカウント**: RAM で Service Network の resource share を作成する
-   ```bash
-   aws ram create-resource-share \
-     --name my-service-network-share \
-     --resource-arns arn:aws:vpc-lattice:region:account:servicenetwork/sn-xxx \
-     --principals 123456789012  # Target account ID
-   ```
-2. **対象アカウント**: RAM の招待を承諾する
-3. **対象アカウント**: 自身の VPC を共有された Service Network に関連付ける
-4. その後、対象アカウントの Service も Service Network に登録できる
-
-Organizations を使用している場合は、organization 全体への自動共有も可能です。
 </details>
 
-10. VPC Lattice で Health Check の設定が重要である理由を説明してください。
+## 10. demo backend 用の Kubernetes health-check policy を作成してください。
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答:**
-Health Checks は、不健全な target をトラフィックルーティングから自動的に除外し、Service の可用性を確保します。
+TargetGroupPolicy を、その対象 Service と同じ namespace で使用します。controller CRD は intervalSeconds/timeoutSeconds/statusMatch を使用しますが、AWS API は healthCheckIntervalSeconds/healthCheckTimeoutSeconds/matcher を使用します。
 
-**解説:**
-VPC Lattice Health Checks の動作:
-1. **定期的なチェック**: 設定した間隔（例: 30 秒）で target の Health Check endpoint にリクエストを送信する
-2. **threshold に基づく判定**: 連続した成功/失敗回数（healthyThresholdCount/unhealthyThresholdCount）によって状態を判定する
-3. **自動的な除外/復旧**: 不健全な target をトラフィックから除外し、復旧すると自動的に復元する
-4. **設定例**:
-   ```yaml
-   healthCheck:
-     enabled: true
-     protocol: HTTP
-     path: /health
-     healthCheckIntervalSeconds: 30
-     healthyThresholdCount: 5
-     unhealthyThresholdCount: 2
-     matcher:
-       httpCode: "200-299"
-   ```
-適切な Health Check の設定により、rolling update 中の downtime を防ぎ、障害が発生した target へのリクエストを防止して user experience を保護します。
-</details>
-
-11. VPC Lattice と Transit Gateway の違いを説明してください。
-
-<details>
-
-<summary>回答を表示</summary>
-
-**回答:**
-Transit Gateway はネットワークレイヤー（L3）で VPC 間の IP routing を提供する一方、VPC Lattice はアプリケーションレイヤー（L7）で Service ベースの通信を提供します。
-
-**解説:**
-主な違い:
-
-| 観点 | Transit Gateway | VPC Lattice |
-|--------|-----------------|-------------|
-| 抽象化レベル | ネットワーク（IP ベース） | Service（名前ベース） |
-| ルーティング | IP routing table | HTTP path/header ベース |
-| プロトコル | すべての IP traffic | HTTP/HTTPS/gRPC |
-| 認証 | Security Groups、NACLs | AWS IAM、resource policies |
-| 可視性 | Network flow logs | アプリケーションレベルの metrics/logs |
-
-Transit Gateway は VPC 間であらゆる IP 通信が必要な場合に使用し、VPC Lattice は microservices 間の HTTP ベース通信に適しています。両 Service は併用できます。
-</details>
-
-12. VPC Lattice における Auth Policy の役割と、適用できるレベルを説明してください。
-
-<details>
-
-<summary>回答を表示</summary>
-
-**回答:**
-Auth Policy は IAM ベースのアクセス制御を定義し、Service Network レベルと個々の Service レベルの両方に適用されます。
-
-**解説:**
-Auth Policy の適用レベル:
-1. **Service Network レベル**: ネットワーク全体に適用されるデフォルトポリシー
-   - どの IAM principal がネットワークに接続できるかを制御する
-2. **Service レベル**: 個々の Service に適用される詳細なポリシー
-   - 特定の Service のどの path にどの principal がアクセスできるかを制御する
-
-ポリシー例:
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [{
-    "Effect": "Allow",
-    "Principal": {
-      "AWS": "arn:aws:iam::123456789012:role/MyAppRole"
-    },
-    "Action": "vpc-lattice-svcs:Invoke",
-    "Resource": "*",
-    "Condition": {
-      "StringEquals": {
-        "vpc-lattice-svcs:RequestPath": "/api/*"
-      }
-    }
-  }]
-}
+```yaml
+apiVersion: application-networking.k8s.aws/v1alpha1
+kind: TargetGroupPolicy
+metadata:
+  name: stable-health
+  namespace: lattice-demo
+spec:
+  targetRef:
+    group: ''
+    kind: Service
+    name: service-stable
+  protocol: HTTP
+  protocolVersion: HTTP1
+  healthCheck:
+    enabled: true
+    protocol: HTTP
+    protocolVersion: HTTP1
+    port: 8080
+    path: /health
+    intervalSeconds: 30
+    timeoutSeconds: 5
+    healthyThresholdCount: 2
+    unhealthyThresholdCount: 2
+    statusMatch: '200'
 ```
-このポリシーは、MyAppRole が /api/* path にのみアクセスできるよう制限します。
+
+backend は実際に 8080 で listen し、/health で 200 を返す必要があります。threshold は readiness の判断に役立ちますが、可用性やダウンタイムゼロを保証するものではありません。target-type と protocol 固有の動作を確認してください。
+
 </details>
 
-## ハンズオン問題
-
-13. EKS に AWS Gateway API Controller をインストールするための IAM policy と IRSA 設定を記述してください。
+## 11. Transit Gateway と VPC Lattice はどのように異なりますか？
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答:**
-```bash
-# 1. Create IAM policy for VPC Lattice permissions
-cat <<EOF > vpc-lattice-controller-policy.json
+Transit Gateway はネットワーク間で IP traffic をルーティングします。Lattice は service と resource configuration を公開します。HTTP service path は L7 routing を使用できますが、TLS/TCP/resource の機能には異なる特性があります。両者は併用できます。service-network VPC endpoint は transit/peering 経由で到着する該当クライアントをサポートします。直接の VPC association だけでは、その transit access は許可されません。
+
+</details>
+
+## 12. auth policy はどのレベルに適用でき、demo API path をどのように制限しますか？
+
+<details>
+<summary>回答を表示</summary>
+
+auth policy は AWS_IAM で構成された service network と個々の service に適用されます。両方の適用レイヤーと呼び出し元の identity policy がリクエストを許可する必要があります。ワイルドカード一致には StringLike を使用し、root path を明示的に含めます。
+
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": [
-        "vpc-lattice:*",
-        "iam:CreateServiceLinkedRole",
-        "ec2:DescribeVpcs",
-        "ec2:DescribeSubnets",
-        "ec2:DescribeSecurityGroups",
-        "ec2:DescribeAvailabilityZones"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "logs:CreateLogDelivery",
-        "logs:GetLogDelivery",
-        "logs:UpdateLogDelivery",
-        "logs:DeleteLogDelivery",
-        "logs:ListLogDeliveries"
-      ],
-      "Resource": "*"
+      "Principal": {
+        "AWS": "arn:aws:iam::123456789012:role/MyAppRole"
+      },
+      "Action": "vpc-lattice-svcs:Invoke",
+      "Resource": "*",
+      "Condition": {
+        "StringLike": {
+          "vpc-lattice-svcs:RequestPath": [
+            "/api",
+            "/api/*"
+          ]
+        }
+      }
     }
   ]
 }
-EOF
-
-aws iam create-policy \
-  --policy-name VPCLatticeControllerPolicy \
-  --policy-document file://vpc-lattice-controller-policy.json
-
-# 2. Create service account using IRSA
-eksctl create iamserviceaccount \
-  --cluster=my-cluster \
-  --namespace=aws-application-networking-system \
-  --name=gateway-api-controller \
-  --attach-policy-arn=arn:aws:iam::123456789012:policy/VPCLatticeControllerPolicy \
-  --override-existing-serviceaccounts \
-  --approve
-
-# 3. Install AWS Gateway API Controller
-kubectl apply -f https://raw.githubusercontent.com/aws/aws-application-networking-k8s/main/files/controller-installation/deploy-v1.0.yaml
 ```
 
-**解説:**
-AWS Gateway API Controller は Kubernetes cluster 内の Gateway API リソースを監視し、VPC Lattice リソースを作成・管理します。IRSA（IAM Roles for Service Accounts）を通じて、controller pod は必要な AWS API を呼び出す権限を取得します。policy には vpc-lattice 操作、VPC/subnet の検索、および log delivery の権限が含まれます。
+StringEquals は /api/* をリテラルとして一致させます。このポリシーは canonical path に関するものです。application normalization と controller path routing は別の動作です。invocation authorization は PutResourcePolicy ではなく PutAuthPolicy で管理します。
+
 </details>
 
-14. VPC Lattice を使用して 2 つの Service 間の weighted routing（90:10）を設定する HTTPRoute を記述してください。
+## 13. AWS Gateway API Controller v2.1.3 の IRSA インストールについて説明してください。
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答:**
+cluster でサポートされる Kubernetes version、Gateway API compatibility、IAM OIDC provider、network/webhook reachability を確認します。対象の account/features 向けにリリースで推奨された policy を確認してください。その広範な upstream permission は least-privilege を保証するものではありません。専用の controller service account とリリース済み OCI chart を使用します。
+
+```bash
+curl --fail --location --output controller-policy-upstream.json \
+  https://raw.githubusercontent.com/aws/aws-application-networking-k8s/v2.1.3/files/controller-installation/recommended-inline-policy.json
+
+# Use the policy reviewed for this account and the enabled controller features.
+export REVIEWED_POLICY_FILE=controller-policy-reviewed.json
+test -s "$REVIEWED_POLICY_FILE"
+export CONTROLLER_POLICY_ARN="$(aws iam create-policy \
+  --policy-name VPCLatticeControllerPolicy \
+  --policy-document "file://$REVIEWED_POLICY_FILE" \
+  --query Policy.Arn --output text)"
+
+# Prerequisite: this cluster's IAM OIDC provider already exists.
+eksctl create iamserviceaccount \
+  --cluster "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --namespace aws-application-networking-system \
+  --name gateway-api-controller \
+  --attach-policy-arn "$CONTROLLER_POLICY_ARN" \
+  --approve
+```
+
+```bash
+curl --fail --location --output gateway-api-v1.5.0.yaml \
+  https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/standard-install.yaml
+# Inspect changes first if any Gateway API controller is already installed.
+kubectl apply --server-side -f gateway-api-v1.5.0.yaml
+
+helm pull oci://public.ecr.aws/aws-application-networking-k8s/aws-gateway-controller-chart \
+  --version v2.1.3
+helm show crds ./aws-gateway-controller-chart-v2.1.3.tgz > lattice-crds.yaml
+kubectl apply --server-side -f lattice-crds.yaml
+
+helm install gateway-api-controller ./aws-gateway-controller-chart-v2.1.3.tgz \
+  --namespace aws-application-networking-system --create-namespace \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=gateway-api-controller \
+  --set-string awsRegion="$AWS_REGION" \
+  --set-string awsAccountId="$AWS_ACCOUNT_ID" \
+  --set-string clusterVpcId="$VPC_ID" \
+  --set-string clusterName="$CLUSTER_NAME" \
+  --wait --timeout 5m
+
+kubectl -n aws-application-networking-system get pods
+kubectl -n aws-application-networking-system logs \
+  -l control-plane=gateway-api-controller -c manager --tail=100
+```
+
+controller role はリソースを管理するものであり、application caller role ではありません。既存の service account/release には ownership を考慮した upgrade が必要です。Helm は CRD を自動的に upgrade しません。個別の service-network/auth-policy 設定についてはガイドを参照してください。
+
+</details>
+
+## 14. 90:10 の stable/canary 分割用 HTTPRoute を作成してください。
+
+<details>
+<summary>回答を表示</summary>
+
+前提条件: lattice-demo 内のガイドの my-network HTTPS Gateway、その既存の service network と有効な auth policy、8080 上の両方の backend Deployment/Service、および target-group health policy。続けて以下を適用します。
+
 ```yaml
-# GatewayClass definition
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: GatewayClass
-metadata:
-  name: amazon-vpc-lattice
-spec:
-  controllerName: application-networking.k8s.aws/gateway-api-controller
----
-# Gateway definition
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: Gateway
-metadata:
-  name: my-gateway
-  namespace: default
-spec:
-  gatewayClassName: amazon-vpc-lattice
-  listeners:
-  - name: http
-    protocol: HTTP
-    port: 80
----
-# Weighted routing HTTPRoute
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: weighted-routing
-  namespace: default
+  name: api
+  namespace: lattice-demo
 spec:
   parentRefs:
-  - name: my-gateway
-    sectionName: http
+  - name: my-network
+    sectionName: https
   rules:
   - matches:
     - path:
@@ -358,161 +286,71 @@ spec:
         value: /api
     backendRefs:
     - name: service-stable
-      port: 80
+      port: 8080
       weight: 90
     - name: service-canary
-      port: 80
+      port: 8080
       weight: 10
----
-# Stable service
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-stable
-spec:
-  selector:
-    app: myapp
-    version: stable
-  ports:
-  - port: 80
-    targetPort: 8080
----
-# Canary service
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-canary
-spec:
-  selector:
-    app: myapp
-    version: canary
-  ports:
-  - port: 80
-    targetPort: 8080
 ```
 
-**解説:**
-この設定では、`/api` path へのトラフィックの 90% が service-stable に、10% が service-canary にルーティングされます。AWS Gateway API Controller がこの HTTPRoute を検出すると、VPC Lattice に 2 つの Target Groups を作成し、指定された weight に従ってトラフィックを分散する listener rule を設定します。Canary deployment の検証後、weight を徐々に調整できます。
+この Route にもガイドの IAMAuthPolicy を適用し、reconciliation を確認してください。weight annotation は不要です。Route に割り当てられた domain と署名付き HTTPS リクエストを使用してください。適用の成功は backend が正常であることの証明にはなりません。
+
 </details>
 
-15. VPC Lattice Service 用の IAM ベース Auth Policy を記述してください。（特定の IAM role のみが /admin path にアクセスできるようにする）
+## 15. 専用の管理 service に対して、AdminRole と DevOpsRole のみが /admin とその subpath を Invoke できるようにしてください。
 
 <details>
-
 <summary>回答を表示</summary>
 
-**回答:**
-```bash
-# Apply Auth Policy to VPC Lattice service
-aws vpc-lattice put-auth-policy \
-  --resource-identifier svc-0123456789abcdef0 \
-  --policy '{
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Sid": "AllowGeneralAccess",
-        "Effect": "Allow",
-        "Principal": "*",
-        "Action": "vpc-lattice-svcs:Invoke",
-        "Resource": "*",
-        "Condition": {
-          "StringNotEquals": {
-            "vpc-lattice-svcs:RequestPath": "/admin/*"
-          }
-        }
-      },
-      {
-        "Sid": "AllowAdminAccess",
-        "Effect": "Allow",
-        "Principal": {
-          "AWS": [
-            "arn:aws:iam::123456789012:role/AdminRole",
-            "arn:aws:iam::123456789012:role/DevOpsRole"
-          ]
-        },
-        "Action": "vpc-lattice-svcs:Invoke",
-        "Resource": "*",
-        "Condition": {
-          "StringLike": {
-            "vpc-lattice-svcs:RequestPath": "/admin/*"
-          }
-        }
-      },
-      {
-        "Sid": "DenyUnauthorizedAdmin",
-        "Effect": "Deny",
-        "Principal": "*",
-        "Action": "vpc-lattice-svcs:Invoke",
-        "Resource": "*",
-        "Condition": {
-          "StringLike": {
-            "vpc-lattice-svcs:RequestPath": "/admin/*"
-          },
-          "StringNotEquals": {
-            "aws:PrincipalArn": [
-              "arn:aws:iam::123456789012:role/AdminRole",
-              "arn:aws:iam::123456789012:role/DevOpsRole"
-            ]
-          }
-        }
-      }
-    ]
-  }'
-```
+実際の account/role ARN を使用して、以下を完全な service auth policy として使用してください。その専用 service を AWS_IAM に設定し、caller identity policy と network auth policy もこれらの role と path を許可することを確認してください。ガイドの API 専用 network policy は、この独立した管理 service のために確認済みの変更が必要です。
 
-**Kubernetes Gateway API の方法:**
-```yaml
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: Gateway
-metadata:
-  name: secure-gateway
-  namespace: default
-  annotations:
-    application-networking.k8s.aws/auth-type: "AWS_IAM"
-spec:
-  gatewayClassName: amazon-vpc-lattice
-  listeners:
-  - name: http
-    protocol: HTTP
-    port: 80
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: vpc-lattice-auth-policy
-  namespace: default
-  annotations:
-    application-networking.k8s.aws/auth-policy: |
-      {
-        "Version": "2012-10-17",
-        "Statement": [
-          {
-            "Effect": "Allow",
-            "Principal": {
-              "AWS": "arn:aws:iam::123456789012:role/AdminRole"
-            },
-            "Action": "vpc-lattice-svcs:Invoke",
-            "Resource": "*"
-          }
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": [
+          "arn:aws:iam::123456789012:role/AdminRole",
+          "arn:aws:iam::123456789012:role/DevOpsRole"
         ]
+      },
+      "Action": "vpc-lattice-svcs:Invoke",
+      "Resource": "*",
+      "Condition": {
+        "StringLike": {
+          "vpc-lattice-svcs:RequestPath": [
+            "/admin",
+            "/admin/*"
+          ]
+        }
       }
-data: {}
+    }
+  ]
+}
 ```
 
-**解説:**
-この Auth Policy は 3 つの rule で構成されます:
-1. **AllowGeneralAccess**: /admin/* を除くすべての path について、すべての principal を許可する
-2. **AllowAdminAccess**: AdminRole と DevOpsRole に /admin/* path へのアクセスを許可する
-3. **DenyUnauthorizedAdmin**: 上記以外の role による /admin/* へのアクセスを明示的に拒否する
+lattice-demo 内で controller が所有する admin という名前の HTTPRoute には、実際の CRD を使用して次のようにアタッチします。
 
-Client は SigV4 でリクエストに署名する必要があります。署名には AWS SDK または aws-sigv4 library を使用できます。
+```yaml
+apiVersion: application-networking.k8s.aws/v1alpha1
+kind: IAMAuthPolicy
+metadata:
+  name: admin-caller
+  namespace: lattice-demo
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: admin
+  policy: '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":["arn:aws:iam::123456789012:role/AdminRole","arn:aws:iam::123456789012:role/DevOpsRole"]},"Action":"vpc-lattice-svcs:Invoke","Resource":"*","Condition":{"StringLike":{"vpc-lattice-svcs:RequestPath":["/admin","/admin/*"]}}}]}'
+```
+
+広範な AllowGeneralAccess statement はありません。このポリシーでは、他の role と path には Allow がなく、/admin/* だけでなく /admin も明示的に含まれます。path normalization/encoding は application security requirement として扱ってください。専用の role 制限 service と application authorization により、path alias への依存を減らせます。direct backend access も保護する必要があります。IAMAuthPolicy を削除すると target auth type は NONE に変わり、deny や安全な rollback の仕組みにはなりません。
+
 </details>
 
----
+スコアが 13～15 はこの章をよく理解していることを示し、10～12 は見落としたトピックの確認を、0～9 はガイドの再読を推奨します。クイズのスコアは、本番運用の経験を証明するものではありません。
 
-**採点:**
-- 13-15 問正解: 優秀（VPC Lattice expert レベル）
-- 10-12 問正解: 良好（実践的な適用が可能）
-- 7-9 問正解: 平均（追加学習を推奨）
-- 4-6 問正解: 基礎（基本概念の復習が必要）
-- 0-3 問正解: 不十分（内容全体の再学習が必要）
+[ガイドに戻る](../../networking/02-vpc-lattice.md)

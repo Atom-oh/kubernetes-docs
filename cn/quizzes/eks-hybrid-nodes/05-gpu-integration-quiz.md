@@ -1,284 +1,194 @@
 # EKS Hybrid Nodes GPU 集成测验
 
 > **相关文档**: [GPU 集成](../../eks-hybrid-nodes/05-gpu-integration.md)
+> **最后更新**: October 12, 2026
 
-## 多项选择题
+### 1. 以下哪项陈述正确描述了 MIG？
 
-### 1. NVIDIA GPU Multi-Instance GPU (MIG) 技术的关键特征是什么？
+A. 它将多个物理 GPU 合并为一个
 
-A. 将多个 GPU 合并为一个
-B. 将单个 GPU 拆分为多个物理隔离的实例
-C. 只共享 GPU 内存
-D. 软件级时间切片
+B. 它创建受支持的、由硬件支持的计算/内存实例，但仍需考虑主机/驱动程序和应用程序 SLO
 
-<details>
-<summary>显示答案</summary>
+C. 它保证每个租户和每种故障的完全隔离
 
-**答案：B. 将单个 GPU 拆分为多个物理隔离的实例**
-
-**解释：**
-MIG (Multi-Instance GPU) 可将 NVIDIA A100 和 H100 等 GPU 分区为最多 7 个物理隔离的实例。每个实例都有独立的内存、缓存和计算资源。
-
-**MIG 与 Time-Slicing 对比：**
-
-| 功能 | MIG | Time-Slicing |
-|---------|-----|--------------|
-| 隔离级别 | 物理（完全隔离） | 基于时间（软件） |
-| 内存隔离 | 完全隔离 | 共享 |
-| 支持的 GPU | A100, H100 | 所有 NVIDIA GPU |
-| QoS 保证 | 是 | 否 |
-
-```yaml
-# MIG Resource Request
-apiVersion: v1
-kind: Pod
-metadata:
-  name: gpu-pod
-spec:
-  containers:
-  - name: cuda-app
-    image: nvidia/cuda:12.0-runtime
-    resources:
-      limits:
-        nvidia.com/mig-1g.5gb: 1
-```
-
-</details>
-
-### 2. NVIDIA GPU MIG 配置中的 "1g.5gb" 表示什么？
-
-A. 1GB 内存，5 个 GPU 核心
-B. 1 个 GPU Instance（1 个计算切片），5GB GPU 内存
-C. 1 个 GPU，5GB 系统内存
-D. 每 5GB 吞吐量 1 秒
+D. 它与软件时间切片完全相同
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 1 个 GPU Instance（1 个计算切片），5GB GPU 内存**
+**答案：B. 它创建受支持的、由硬件支持的计算/内存实例，但仍需考虑主机/驱动程序和应用程序 SLO**
 
-**解释：**
-MIG 实例名称格式：`<compute-slices>g.<memory-size>gb`
-
-- **1g**: 1 个计算切片
-- **5gb**: 5GB GPU 内存
-
-**A100 MIG Profile 示例：**
-- `1g.5gb`: 1 个计算切片，5GB 内存（最多 7 个）
-- `2g.10gb`: 2 个计算切片，10GB 内存（最多 3 个）
-- `3g.20gb`: 3 个计算切片，20GB 内存（最多 2 个）
-- `4g.40gb`: 4 个计算切片，40GB 内存（最多 1 个）
-- `7g.40gb`: 7 个计算切片，40GB 内存（完整 GPU）
-
-```bash
-# Check MIG instances
-nvidia-smi mig -lgi
-```
+**说明：** MIG 在 GPU 硬件层提供内存/故障和资源隔离。受支持的配置文件/限制取决于 GPU SKU 和驱动程序。这并不建立完整的共享主机安全性或应用程序延迟保证。
 
 </details>
 
-### 3. GPU Time-Slicing 中发生超额订阅时的预期行为是什么？
+### 2. 哪个配置文件属于常见的 A10040GB 表？
 
-A. GPU 任务完全失败
-B. 由于上下文切换导致性能下降
-C. 自动添加 GPU
-D. 自动扩展内存
+A. 4g.40gb
+
+B. 4g.20gb
+
+C. 4g.80gb
+
+D. 1g 表示一整块物理 GPU
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 由于上下文切换导致性能下降**
+**答案：B. 4g.20gb**
 
-**解释：**
-Time-Slicing 允许多个工作负载以时间分片方式共享单个 GPU。当发生超额订阅时，频繁的上下文切换会导致性能下降。
-
-```yaml
-# GPU Time-Slicing Configuration
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: device-plugin-config
-  namespace: nvidia-device-plugin
-data:
-  config.yaml: |
-    version: v1
-    sharing:
-      timeSlicing:
-        resources:
-        - name: nvidia.com/gpu
-          replicas: 4  # Split 1 GPU into 4
-```
-
-**Time-Slicing 注意事项：**
-- 内存是共享的，因此可能发生 OOM
-- 适用于推理工作负载
-- 训练建议使用 MIG 或专用 GPU
-- 正确设置 replicas 数量很重要
+**说明：** A10040GB 示例包括1g.5gb、2g.10gb、3g.20gb、4g.20gb 和7g.40gb。4g.40gb 属于 A10080GB 集合。g 组成部分计数配置文件计算切片；标称内存标签并非精确的可用内存保证。
 
 </details>
 
-### 4. Dynamic Resource Allocation (DRA) 的主要优势是什么？
+### 3. 时间切片 replicas:4 提供什么？
 
-A. 仅支持静态资源分配
-B. 无需供应商特定插件即可支持所有设备
-C. 为自定义资源提供灵活的请求/分配机制
-D. 仅管理 CPU 和内存
+A. 四个物理 GPU 和四个私有内存区域
+
+B. 每个已配置 GPU 的四个逻辑访问槽，共享其内存/故障域
+
+C. 为每个 Pod 保证四分之一的计算能力
+
+D. 自动扩展 GPU 内存
 
 <details>
 <summary>显示答案</summary>
 
-**答案：C. 为自定义资源提供灵活的请求/分配机制**
+**答案：B. 每个已配置 GPU 的四个逻辑访问槽，共享其内存/故障域**
 
-**解释：**
-DRA (Dynamic Resource Allocation) 在 Kubernetes 1.26 中引入，为 GPU、FPGA 和网络设备等自定义资源提供更灵活的请求和分配机制。
-
-**DRA 核心组件：**
-- **ResourceClass**: 定义由驱动程序提供的资源类型
-- **ResourceClaim**: 资源请求
-- **ResourceClaimTemplate**: 可复用的 claim 模板
-
-```yaml
-# Using DRA in Pod
-apiVersion: v1
-kind: Pod
-metadata:
-  name: gpu-workload
-spec:
-  containers:
-  - name: cuda-app
-    resources:
-      claims:
-      - name: gpu
-  resourceClaims:
-  - name: gpu
-    source:
-      resourceClaimTemplateName: gpu-claim-template
-```
+**说明：** 争用和工作负载行为可能改变延迟/吞吐量。请求更多副本并不能保证按比例获得计算能力。renameByDefault:true 会通告 nvidia.com/gpu.shared；应将配置连接到实际插件，而不是创建未使用的 ConfigMap。
 
 </details>
 
-### 5. 在 DRA (Dynamic Resource Allocation) 中，ResourceClaim 状态变为 "Bound" 必须满足什么条件？
+### 4. 当前 DRA 为 GPU 分配增加了什么？
 
-A. 仅创建 claim
-B. 驱动程序分配资源且 Pod 已调度
-C. Pod 终止
-D. claim 被删除
+A. 无需任何供应商驱动程序即可支持 GPU
+
+B. 仅静态 CPU 和内存请求
+
+C. 通过 DeviceClasses 和 ResourceClaims 进行结构化设备选择/分配
+
+D. 自动对所有 GPU 应用程序进行生产验证
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 驱动程序分配资源且 Pod 已调度**
+**答案：C. 通过 DeviceClasses 和 ResourceClaims 进行结构化设备选择/分配**
 
-**解释：**
-ResourceClaim 状态流：
-
-1. **Pending**: claim 已创建，尚未分配
-2. **Allocated**: 驱动程序已完成资源分配
-3. **Bound**: 已绑定到 Pod 并正在使用
-
-```yaml
-# Check ResourceClaim Status
-kubectl get resourceclaim gpu-claim -o yaml
-
-# Expected output
-status:
-  allocation:
-    resourceHandles:
-    - driverName: gpu.nvidia.com
-      data: '{"gpu":"GPU-abc123"}'
-  reservedFor:
-  - name: gpu-workload
-    uid: xxx-xxx-xxx
-```
+**说明：** 仍需要供应商驱动程序、ResourceSlices、兼容的 kubelet/runtime 和已启用的 API。当前 v1 声明使用 requests[].exactly，且 Pod resourceClaims 直接引用 resourceClaimTemplateName。
 
 </details>
 
-### 6. NVIDIA GPU Operator 的主要作用是什么？
+### 5. 应如何评估当前的 ResourceClaim？
 
-A. GPU 硬件制造
-B. 在 Kubernetes 中自动管理 GPU 驱动程序、运行时和插件
-C. 仅进行 GPU 性能测试
-D. GPU 采购和交付管理
+A. 等待通用的 status.phase:Bound 枚举
+
+B. 仅创建声明即可证明 GPU 可用
+
+C. 检查 allocation.devices.results、预留、Pod 事件和驱动程序准备情况
+
+D. 只检查旧的 resourceHandles 字段
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. 在 Kubernetes 中自动管理 GPU 驱动程序、运行时和插件**
+**答案：C. 检查 allocation.devices.results、预留、Pod 事件和驱动程序准备情况**
 
-**解释：**
-NVIDIA GPU Operator 会在 Kubernetes 中自动管理 GPU 基础设施：
-
-- NVIDIA driver 安装/更新
-- NVIDIA Container Toolkit 安装
-- NVIDIA Device Plugin 部署
-- GPU 监控（DCGM Exporter）
-- MIG 管理
-
-```bash
-# Install GPU Operator (Helm)
-helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
-helm install gpu-operator nvidia/gpu-operator \
-  --namespace gpu-operator \
-  --create-namespace
-```
-
-```yaml
-# GPU Operator Custom Configuration
-apiVersion: nvidia.com/v1
-kind: ClusterPolicy
-metadata:
-  name: cluster-policy
-spec:
-  driver:
-    enabled: true
-    version: "535.104.12"
-  toolkit:
-    enabled: true
-  devicePlugin:
-    enabled: true
-  mig:
-    strategy: mixed
-```
+**说明：** 对于当前的 ResourceClaims，不存在通用的、已存储的 Pending→Allocated→Bound 阶段序列。分配/预留并不能证明设备注入或应用程序执行成功。
 
 </details>
 
-### 7. H100 和 H200 GPU 之间的主要区别是什么？
+### 6. 以下哪项关于 GPU Operator26.7 所有权的陈述是正确的？
 
-A. H200 的内存容量比 H100 小
-B. H200 提供 HBM3e 内存，带宽高于 H100
+A. GPUCluster 和 ClusterPolicy 应始终一起运行
+
+B. 选择 ClusterPolicy 进行 device-plugin 管理，或选择新的 GPUCluster 工作流进行托管 DRA；二者不能共存
+
+C. 设置 driver.enabled:false 会安装缺失的主机驱动程序
+
+D. 控制器 nodeSelector 会自动限制每个操作数
+
+<details>
+<summary>显示答案</summary>
+
+**答案：B. 选择 ClusterPolicy 进行 device-plugin 管理，或选择新的 GPUCluster 工作流进行托管 DRA；二者不能共存**
+
+**说明：** GPUCluster 是一个名为 gpu-cluster 的集群范围单例。托管 DRA 工作流不是从 ClusterPolicy/独立 DRA 原地迁移而来。准备相应的驱动程序/CDI/发现组件，并单独审查操作数标签。
+
+</details>
+
+### 7. H100SXM/H200SXM 对比确立了什么？
+
+A. 每种 H100 变体都具有相同的内存
+
+B. NVIDIA 列出的 H100SXM 为80GB/3.35TB/s，H200SXM 为141GB/4.8TB/s；应用程序结果仍需测量
+
 C. H200 不支持 MIG
-D. H200 不用于数据中心
+
+D. H200 始终使每个应用程序的吞吐量翻倍
 
 <details>
 <summary>显示答案</summary>
 
-**答案：B. H200 提供 HBM3e 内存，带宽高于 H100**
+**答案：B. NVIDIA 列出的 H100SXM 为80GB/3.35TB/s，H200SXM 为141GB/4.8TB/s；应用程序结果仍需测量**
 
-**解释：**
-H200 是 H100 的后继产品，提供改进的内存系统：
+**说明：** 这些是供应商 SKU 规格，而非审计基准。H100NVL/PCIe 变体有所不同。模型大小、精度、批处理、软件、互连和争用也会影响实际性能。
 
-| 功能 | H100 | H200 |
-|---------|------|------|
-| 内存类型 | HBM3 | HBM3e |
-| 内存容量 | 80GB | 141GB |
-| 内存带宽 | 3.35TB/s | 4.8TB/s |
-| MIG 支持 | 是（最多 7 个） | 是（最多 7 个） |
-| LLM 推理 | 出色 | 已优化 |
+</details>
 
-```yaml
-# H200 Node Selection
-apiVersion: v1
-kind: Pod
-spec:
-  nodeSelector:
-    nvidia.com/gpu.product: "NVIDIA-H200"
-  containers:
-  - name: llm
-    resources:
-      limits:
-        nvidia.com/gpu: 1
-```
+### 8. 以下哪项 EKS GPU 部署边界是正确的？
 
-H200 凭借其内存容量和带宽，尤其在大语言模型 (LLM) 推理方面表现出色。
+A. 在每个 Auto Mode 节点上安装额外的 NVIDIA device plugin
+
+B. 所有类型的 EKS 节点都不支持 DRA
+
+C. 使用范围受限的 Hybrid 分配组；当前 EKS Auto Mode 不支持 NVIDIA DRA driver，并且已管理其 device plugin
+
+D. 尽可能通过多个管理器发布每个物理 GPU
+
+<details>
+<summary>显示答案</summary>
+
+**答案：C. 使用范围受限的 Hybrid 分配组；当前 EKS Auto Mode 不支持 NVIDIA DRA driver，并且已管理其 device plugin**
+
+**说明：** AWS 建议将 DRA 用于新的、受支持的 EKS 1.34+ 静态容量部署。使用文档规定的 driver 先决条件，并防止重复的设备所有权。Kubernetes API 成熟度与各个供应商功能门控是分开的。
+
+</details>
+
+### 9. 一个容器请求一个 DRA GPU。它应如何设置 CUDA_VISIBLE_DEVICES？
+
+A. 始终设置为0,1,2,3
+
+B. 设置主机上发现的每个物理索引
+
+C. 使用该变量请求额外三个 GPU
+
+D. 让设备管理器/runtime 暴露已分配的设备；不要使用无关的物理索引覆盖它
+
+<details>
+<summary>显示答案</summary>
+
+**答案：D. 让设备管理器/runtime 暴露已分配的设备；不要使用无关的物理索引覆盖它**
+
+**说明：** 进程可见的 CUDA 索引可能不同于物理 GPU 索引。手动覆盖可能隐藏或误识别设备，并且不会授予额外的 GPU。引用同一个声明的多个容器仍共享该一个分配。
+
+</details>
+
+### 10. 暂停的冒烟测试 Job 和本地架构检查证明了什么？
+
+A. GPU 驱动程序和模型已成功执行
+
+B. 所有 GPU 工作负载均满足其延迟 SLO
+
+C. 已审查的清单/配置通过了有边界的本地检查；实际 GPU 验证需要所有者批准和执行
+
+D. 无需进行清理验证
+
+<details>
+<summary>显示答案</summary>
+
+**答案：C. 已审查的清单/配置通过了有边界的本地检查；实际 GPU 验证需要所有者批准和执行**
+
+**说明：** 使用已批准的摘要替换故意不可用的镜像，并在取消暂停一个 Job 之前验证 runtime/放置/安全性。捕获结果，并在清理期间验证声明的取消准备/释放。仅 nvidia-smi 可见性不是 CUDA/LLM 基准测试。
 
 </details>

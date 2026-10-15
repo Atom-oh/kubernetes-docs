@@ -1,6 +1,6 @@
 # Kubernetes 네트워킹
 
-> **마지막 업데이트**: 2026년 10월 12일
+> **마지막 업데이트**: 2026년 10월 15일
 >
 > **예제 버전 고정값**: Cilium 1.20.1, Calico Open Source 3.32.2, Flannel 0.28.9, 업스트림 AWS VPC CNI/Helm 차트 1.23.0.
 >
@@ -400,6 +400,8 @@ spec:
 | VPC Lattice | 애플리케이션·리소스 네트워킹 | HTTP/HTTPS service는 L7 라우팅과 선택적 IAM 인가 지원, TLS passthrough·resource configuration은 기능 범위가 다름 |
 
 GWLB는 Gateway Load Balancer endpoint를 통해 방화벽·IDS/IPS 같은 검사 어플라이언스를 IP 경로에 삽입합니다. 기본 흐름 고정성은 5개 필드를 사용하며 지원되는 설정에서는 2개 또는 3개로 바꿀 수 있습니다. 왕복 라우트, 어플라이언스 상태, 캡슐화 MTU, NACL 및 실제 workload·어플라이언스의 security group을 확인합니다. GWLB 자체에는 ALB 형태의 security group이 없으며, 흐름 고정성이 장애 검증을 대신하지 않습니다.
+
+상세 보안 설계는 [WAF·origin 보호](../security/14-waf-edge-api-security.md), [Palo Alto·Fortinet NGFW](../security/15-ngfw-paloalto-fortinet.md), [GWLB·GENEVE 경로·장애 검증](../security/16-gwlb-geneve-inspection.md)을 참고합니다. GWLBE도 SG를 지원하지 않습니다. all-unhealthy일 때 AWS는 flow별 target 선택과 회복 전 drop을 설명하며, GWLB는 장비를 직접 우회하지 않습니다. reduced-tuple stickiness·cross-zone·NAT·TGW appliance mode를 함께 확인합니다.
 
 > 📎 EKS와 VPC Lattice의 전체 연동(Gateway API Controller, IAM 인가, 라우팅)은 [VPC Lattice](02-vpc-lattice.md) 참고.
 

@@ -1,947 +1,490 @@
-# GitOps 自动化：Atlantis、FluxCD、AIOps
+# GitOps 自动化：Atlantis、HCP Terraform、Flux、AIOps
 
-> **支持版本**：EKS 1.28+、Atlantis 0.27+、FluxCD v2.2+、Terraform 1.6+
-> **最后更新**：February 21, 2026
+> **审阅基线**：Atlantis 0.47.1 / chart 6.15.0、HCP Terraform Provider 0.80.0、Sentinel 0.41.0、Flux 2.9.5（在发布说明审阅后，于 2026 年 10 月 12 日将 Flux 固定版本更新至补丁版 2.9.6；未重新运行）\
+> **最后审阅**：2026 年 9 月 11 日。已使用本地 CLI、chart、schema 和测试替身检查。未执行实际 PR 评论、Terraform apply、HCP 资源创建、集群部署或外部 AI 调用。
 
-< [上一篇：ArgoCD 多集群](./04-gitops-multi-cluster.md) | [目录](./README.md) | [下一篇：扩展策略](./06-scaling-strategies.md) >
+< [上一章：多集群](04-gitops-multi-cluster.md) | [目录](README.md) | [下一章：扩缩容](06-scaling-strategies.md) >
 
----
+将基础设施执行与应用程序协调分离。不要让 Atlantis 和 HCP Terraform 同时针对同一个 state 执行，也不要让 Flux 和 Argo CD 竞争同一 Kubernetes 字段。
 
-## 介绍
+| 工具 | 职责 | 独立的前提条件 |
+|---|---|---|
+| Atlantis | 执行基于 PR 的 Terraform plan/apply | 运行时、凭证、state、锁和命令授权 |
+| HCP Terraform | 托管 workspace/run/state 和协作 | VCS 连接、agent、policy 和 workspace 权限 |
+| Flux | 根据 source 协调 Kubernetes/Helm state | Controller identity、租户 RBAC 和仓库权限 |
+| AIOps 分析 | 汇总观测结果并提出响应建议 | 已验证的数据、批准和受独立约束的执行器 |
 
-GitOps 自动化不仅涵盖应用部署，还扩展到基础设施管理。本指南介绍用于 Terraform PR 工作流的 Atlantis、作为 ArgoCD 替代方案的 FluxCD，以及用于智能自动化的新兴 AIOps 模式。
+## 1. 在 EKS 上运行 Atlantis
 
----
+Atlantis 从 pull request 执行 Terraform。**plan 可以执行 provider、外部数据源和自定义命令。** 要求 apply 批准并不会使不受信任的 plan 变得安全。本示例适用于受控的私有基础设施仓库和已批准的运维团队，并禁用了 fork PR 和自动 plan。
 
-## 1. EKS 上的 Atlantis
+### 身份与安装前提条件
 
-Atlantis 为 Terraform 提供 pull request 自动化，使基础设施变更能够通过代码审查工作流完成。
+- 为 namespace/ServiceAccount `atlantis` 配置 EKS Auto Mode Pod Identity association。不要将其与 IRSA annotation 混用。常规节点需要受支持的 agent 和 SDK 设置。
+- 将访问范围限定到精确的 state 和 `.tflock` key、所需的 KMS key 及托管资源。区分 state object 的读/写与 lock object 的读/写/删除。宽泛的 `eks:*`、IAM role 创建和 PassRole 不是通用的最小权限策略。
+- 将 role assumption 限制为精确的 ARN 和预期 trust。对 Pod Identity 使用受支持的 cluster/namespace/ServiceAccount request-tag condition。
+- 保护凭证和 PR 输出中的敏感 plan JSON。Terraform `sensitive=true` 并不能阻止值被存储在 state 中。
 
-### 1.1 架构概览
+运行时需要访问 AWS、Git、provider/module registry 和私有 EKS API。不要依赖未经验证的安装脚本或镜像中缺失的工具。Terraform 1.15.7 必须已存在，或可通过 `defaultTFVersion` 允许的下载路径获得。
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        GitHub/GitLab                            │
-│                                                                 │
-│  ┌──────────────┐    Webhook     ┌──────────────────────────┐  │
-│  │  Pull Request │ ──────────────▶│      Atlantis Pod       │  │
-│  │  (terraform/) │               │                          │  │
-│  └──────────────┘               │  ┌────────────────────┐  │  │
-│         ▲                        │  │   Plan/Apply       │  │  │
-│         │                        │  │   Execution        │  │  │
-│         │ Comment                │  └─────────┬──────────┘  │  │
-│         │ (plan output)          │            │             │  │
-│         │                        │            ▼             │  │
-│         └────────────────────────│  ┌────────────────────┐  │  │
-│                                  │  │   AWS Provider     │  │  │
-│                                  │  │   (Pod Identity)   │  │  │
-│                                  │  └────────────────────┘  │  │
-│                                  └──────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-```
+### 已版本控制的 Helm values
 
-### 1.2 Helm 安装
+如果 `auto-gp3` 尚不存在，请准备如下的 Auto Mode StorageClass。其 provisioner 不同于常规 EBS CSI。在不同的集群模式中使用适当的替代方案。
 
 ```yaml
-# atlantis-values.yaml
-replicaCount: 1
+# fixtures/atlantis-storage.yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: auto-gp3
+provisioner: ebs.csi.eks.amazonaws.com
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+parameters:
+  type: gp3
+  encrypted: "true"
+allowedTopologies:
+  - matchLabelExpressions:
+      - key: eks.amazonaws.com/compute-type
+        values: [auto]
+```
 
+使用已批准的 secret-management mechanism，在 namespace `atlantis` 中准备这些 Secret。不要将真实值放入 Git 或 Helm values。
+
+| Secret | 必需的 key |
+|---|---|
+| `atlantis-vcs` | `github-token`, `webhook-secret` |
+| `atlantis-web-auth` | `username`, `password` |
+
+向 GitHub bot/token 授予所需的 repository、PR 和 team-query 权限，并定期轮换它。将 `platform` 替换为实际获得授权的组织 team。使用 Atlantis 的 team allowlist，而不要在 shell hook 中通过用户名子字符串匹配。
+
+```yaml
+# fixtures/atlantis-values.yaml
+fullnameOverride: atlantis
+replicaCount: 1
 image:
   repository: ghcr.io/runatlantis/atlantis
-  tag: v0.27.3
-
+  tag: v0.47.1
+orgAllowlist: github.com/REPLACE_ORG/eks-infra
+atlantisUrl: https://atlantis.example.com
+defaultTFVersion: 1.15.7
+allowForkPRs: false
+disableApplyAll: true
+basicAuthSecretName: atlantis-web-auth
+service:
+  type: ClusterIP
 ingress:
+  enabled: false
+volumeClaim:
   enabled: true
-  ingressClassName: alb
-  annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:ACCOUNT:certificate/CERT_ID
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: '443'
-    alb.ingress.kubernetes.io/security-groups: sg-atlantis-alb
-  hosts:
-    - host: atlantis.example.com
-      paths:
-        - /
-
-# GitHub Configuration
-github:
-  user: atlantis-bot
-  # Secret reference for token
-  secret:
-    name: atlantis-github-secrets
-    usernameKey: username
-    tokenKey: token
-
-# Webhook Secret
-githubWebhookSecret:
-  secret:
-    name: atlantis-github-secrets
-    key: webhook-secret
-
-# Service Account for Pod Identity
+  dataStorage: 10Gi
+  storageClassName: auto-gp3
+  accessModes:
+  - ReadWriteOnce
 serviceAccount:
   create: true
   name: atlantis
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT:role/atlantis-terraform-role
-
-# Resource Configuration
+  mount: false
+  annotations: {}
 resources:
   requests:
     cpu: 500m
     memory: 1Gi
   limits:
-    cpu: 2000m
+    cpu: '2'
     memory: 4Gi
-
-# Persistent Volume for Locks
-persistence:
-  enabled: true
-  storageClassName: gp3
-  size: 10Gi
-
-# Environment Variables
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
 environment:
-  ATLANTIS_REPO_ALLOWLIST: "github.com/myorg/*"
-  ATLANTIS_ENABLE_DIFF_MARKDOWN_FORMAT: "true"
-  ATLANTIS_PARALLEL_POOL_SIZE: "5"
-  ATLANTIS_DEFAULT_TF_VERSION: "1.6.6"
-
-# Server-side Repository Config
+  ATLANTIS_GH_USER: REPLACE_BOT_USER
+  ATLANTIS_GH_TEAM_ALLOWLIST: platform:plan,platform:apply
+  ATLANTIS_DISABLE_AUTOPLAN: 'true'
+  ATLANTIS_FAIL_ON_PRE_WORKFLOW_HOOK_ERROR: 'true'
+  ATLANTIS_BLOCKED_EXTRA_ARGS: -chdir,--chdir,-plugin-dir,--plugin-dir,-target,--target,-replace,--replace,-out,--out,-var-file,--var-file,-var,--var
+environmentSecrets:
+- name: ATLANTIS_GH_TOKEN
+  secretKeyRef:
+    name: atlantis-vcs
+    key: github-token
+- name: ATLANTIS_GH_WEBHOOK_SECRET
+  secretKeyRef:
+    name: atlantis-vcs
+    key: webhook-secret
 repoConfig: |
-  ---
   repos:
-    - id: github.com/myorg/infrastructure
-      branch: main
-      allowed_overrides: [workflow, apply_requirements]
-      allow_custom_workflows: true
-      delete_source_branch_on_merge: true
-
-volumeMounts:
-  - name: atlantis-config
-    mountPath: /home/atlantis/.atlantis
-    readOnly: true
-
-volumes:
-  - name: atlantis-config
-    configMap:
-      name: atlantis-repo-config
+    - id: github.com/REPLACE_ORG/eks-infra
+      plan_requirements: [approved]
+      apply_requirements: [approved, mergeable, undiverged]
+      import_requirements: [approved, mergeable, undiverged]
+      workflow: reviewed
+      allowed_overrides: []
+      allow_custom_workflows: false
+      repo_locks:
+        mode: on_plan
+  workflows:
+    reviewed:
+      plan:
+        steps:
+          - init:
+              extra_args: [-backend-config=backend.hcl]
+          - run: terraform fmt -check -diff
+          - run: terraform validate
+          - plan:
+              extra_args: [-var-file=terraform.tfvars, -lock-timeout=300s]
+      apply:
+        steps:
+          - apply
 ```
-
-使用 Helm 安装：
 
 ```bash
 helm repo add runatlantis https://runatlantis.github.io/helm-charts
 helm repo update
-
-kubectl create namespace atlantis
-
-# Create secrets
-kubectl create secret generic atlantis-github-secrets \
-  --namespace atlantis \
-  --from-literal=username=atlantis-bot \
-  --from-literal=token=${GITHUB_TOKEN} \
-  --from-literal=webhook-secret=${WEBHOOK_SECRET}
-
-helm install atlantis runatlantis/atlantis \
-  --namespace atlantis \
-  --values atlantis-values.yaml
+helm upgrade --install atlantis runatlantis/atlantis \
+  --version 6.15.0 --namespace atlantis --create-namespace \
+  --kube-context "$ATLANTIS_CONTEXT" --values atlantis-values.yaml
 ```
 
-### 1.3 Repository 配置 (atlantis.yaml)
+这些 values 仅创建 ClusterIP。通过已批准的 HTTPS proxy/Ingress 连接 `atlantis.example.com` 和 `/events`，然后配置匹配的 GitHub webhook secret。webhook verification 和 Web UI authentication 是不同的。不要将 event route 扩展为通用 authentication bypass。
+
+Chart 6.15.0 使用 `orgAllowlist`、`volumeClaim`、`environment` map 和 `containerSecurityContext`。可写 PVC 保存 checkout、plan 和 server-lock 数据；不要用只读 ConfigMap 覆盖它。单纯增加 replica 并不能使单个 RWO-PVC/BoltDB 部署变为高可用。管理保留 volume 的 retention、backup、recovery 以及最终 cleanup。
+
+### Server policy 和 repository project
+
+嵌入的 `repoConfig` 由 server 持有。`allowed_overrides: []` 和 `allow_custom_workflows: false` 可防止 PR 更改 approval requirement 或 execution command。单独配置 GitHub branch protection 和 required check。`approved` 并不天然意味着最新 commit 获得了两个不同的、当前有效的批准。
+
+将 apply 本身作为 `mergeable` 的前提条件，可能会造成循环依赖。使 plan/check/review/apply 依赖关系与 repository rule 一致。本示例使用显式的 `atlantis plan -p ...` 命令；审阅并重新 plan 批准后作出的变更。
+
+将此文件放在 repository root。每个 project directory 都使用[第 01 章](01-infrastructure-setup.md)中相应的 root，并拥有各自的 backend/state 以及经过审阅的 `backend.hcl` 和 `terraform.tfvars`。
 
 ```yaml
-# atlantis.yaml at repository root
+# fixtures/atlantis.yaml
 version: 3
 automerge: false
-delete_source_branch_on_merge: true
-parallel_plan: true
+parallel_plan: false
 parallel_apply: false
-
 projects:
-  # Network Layer
-  - name: network-dev
-    dir: terraform/network
-    workspace: dev
-    terraform_version: v1.6.6
-    autoplan:
-      when_modified:
-        - "*.tf"
-        - "*.tfvars"
-        - "../modules/vpc/**/*.tf"
-      enabled: true
-    apply_requirements:
-      - approved
-      - mergeable
-    workflow: network
-
   - name: network-prod
-    dir: terraform/network
-    workspace: prod
-    terraform_version: v1.6.6
+    dir: 01-network
+    workspace: default
+    terraform_version: v1.15.7
     autoplan:
-      when_modified:
-        - "*.tf"
-        - "*.tfvars"
-        - "../modules/vpc/**/*.tf"
-      enabled: true
-    apply_requirements:
-      - approved
-      - mergeable
-    workflow: network-prod
-
-  # EKS Cluster
-  - name: eks-dev
-    dir: terraform/eks
-    workspace: dev
-    terraform_version: v1.6.6
+      enabled: false
+      when_modified: ["*.tf", "*.tfvars", "backend.hcl", ".terraform.lock.hcl", "../modules/**/*.tf"]
+  - name: cluster-prod
+    dir: 02-cluster
+    workspace: default
+    terraform_version: v1.15.7
+    depends_on: [network-prod]
     autoplan:
-      when_modified:
-        - "*.tf"
-        - "environments/dev.tfvars"
-      enabled: true
-    apply_requirements:
-      - approved
-    workflow: eks
-
-  - name: eks-prod
-    dir: terraform/eks
-    workspace: prod
-    terraform_version: v1.6.6
+      enabled: false
+      when_modified: ["*.tf", "*.tfvars", "backend.hcl", ".terraform.lock.hcl", "../modules/**/*.tf"]
+  - name: platform-prod
+    dir: 03-platform
+    workspace: default
+    terraform_version: v1.15.7
+    depends_on: [cluster-prod]
     autoplan:
-      when_modified:
-        - "*.tf"
-        - "environments/prod.tfvars"
-      enabled: true
-    apply_requirements:
-      - approved
-      - mergeable
-    workflow: eks-prod
-
-  # Application Infrastructure
-  - name: app-infra-dev
-    dir: terraform/app-infra
-    workspace: dev
-    autoplan:
-      when_modified:
-        - "**/*.tf"
-      enabled: true
-    workflow: default
-
-workflows:
-  default:
-    plan:
-      steps:
-        - init
-        - plan
-    apply:
-      steps:
-        - apply
-
-  network:
-    plan:
-      steps:
-        - init:
-            extra_args: ["-backend-config=environments/dev-backend.hcl"]
-        - plan:
-            extra_args: ["-var-file=environments/dev.tfvars"]
-    apply:
-      steps:
-        - apply
-
-  network-prod:
-    plan:
-      steps:
-        - init:
-            extra_args: ["-backend-config=environments/prod-backend.hcl"]
-        - plan:
-            extra_args: ["-var-file=environments/prod.tfvars", "-lock-timeout=300s"]
-    apply:
-      steps:
-        - run: echo "Applying production network changes..."
-        - apply
-
-  eks:
-    plan:
-      steps:
-        - init
-        - run: terraform validate
-        - run: tflint --init && tflint
-        - plan:
-            extra_args: ["-var-file=environments/dev.tfvars"]
-    apply:
-      steps:
-        - apply
-        - run: |
-            aws eks update-kubeconfig --name ${PROJECT_NAME} --region ap-northeast-2
-            kubectl get nodes
-
-  eks-prod:
-    plan:
-      steps:
-        - init
-        - run: terraform validate
-        - run: tflint --init && tflint
-        - run: checkov -d . --framework terraform --quiet
-        - plan:
-            extra_args: ["-var-file=environments/prod.tfvars"]
-    apply:
-      steps:
-        - run: |
-            # Require 2 approvals for production
-            APPROVALS=$(gh pr view $PULL_NUM --json reviews -q '[.reviews[] | select(.state=="APPROVED")] | length')
-            if [ "$APPROVALS" -lt 2 ]; then
-              echo "Production requires 2 approvals. Current: $APPROVALS"
-              exit 1
-            fi
-        - apply
-        - run: |
-            # Post-apply validation
-            aws eks update-kubeconfig --name eks-prod --region ap-northeast-2
-            kubectl get nodes
-            kubectl get pods -A | grep -v Running | grep -v Completed && exit 1 || true
+      enabled: false
+      when_modified: ["*.tf", "*.tfvars", "backend.hcl", ".terraform.lock.hcl", "../modules/**/*.tf"]
 ```
 
-### 1.4 Pod Identity IAM 配置
+在 plan/review/apply cluster 和 platform 变更前，先审阅并 apply network 变更。`depends_on` 不会传输 remote-state output，也不会自动刷新先前保存的下游 plan。依赖项发生变更时，重新 plan 下游变更。
+
+```text
+atlantis plan -p network-prod
+atlantis apply -p network-prod
+atlantis plan -p cluster-prod
+atlantis apply -p cluster-prod
+atlantis plan -p platform-prod
+atlantis apply -p platform-prod
+```
+
+这些是 PR comment command。常规 Atlantis 流程是 **在 PR 中 plan → 满足 approval requirement → apply 该已保存的 plan → merge**。单独 merge 并不会 apply 基础设施。`automerge` 是在 apply 成功后进行 merge 的独立选项。
+
+内置 `plan`/`apply` stage 使用由 Atlantis 管理的 plan file。自定义命令必须遵从 `$PLANFILE`。不要替换为单独的 `-out=tfplan`，也不要在 apply 已保存 plan 时传入新的 `-var-file` 值。plan file 和 JSON 可能包含敏感数据。
+
+### Lock、policy 和故障处理
+
+Atlantis PR/project/workspace lock 与 Terraform backend state lock 不同。当前默认 server database 是 BoltDB；受支持的 Redis configuration 需要单独设计。不要将 DynamoDB 称为默认 Atlantis lock database，也不要虚构 `lock_groups`/`apply_priority` ConfigMap。
+
+`atlantis unlock` 会**移除** lock；它不是查询。首先检查 active run、已保存的 plan 和 state lock。在本示例版本中，`atlantis lock`、`atlantis locks` 和 `unlock --force` 不是通用 PR command。请使用受支持的 UI 或经身份验证的 API 检查 lock。
+
+对 source code 进行 grep 以及对当前 state 中的资源计数，无法验证全部计划内基础设施。应考虑 module、data source、provider 以及 create/update/delete/unknown 值。将失败的 fmt/validate/policy/API operation 转为 warning 或 `|| true` 会移除 gate。
+
+## 2. HCP Terraform
+
+Terraform Cloud 现已更名为 **HCP Terraform**。它是 Atlantis 的替代方案，提供 workspace/run/state/policy 功能。针对 feature、pricing、concurrency、agent 和 Sentinel 检查当前 plan 与 contract。托管 hosting 仍然需要有意识地配置 VCS、权限、network 和 approval。
+
+### Workspace 和动态 AWS 凭证
+
+本示例假定已有 organization/project、VCS OAuth connection，以及具有私有 network 访问权限的 **agent pool**。agent execution 需要合格的 plan 和受支持的 agent version。不要假定公共 remote runner 可以直接访问私有 EKS API。
 
 ```hcl
-# terraform/iam/atlantis-role.tf
-data "aws_iam_policy_document" "atlantis_assume_role" {
-  statement {
-    effect = "Allow"
-    principals {
-      type        = "Service"
-      identifiers = ["pods.eks.amazonaws.com"]
-    }
-    actions = ["sts:AssumeRole", "sts:TagSession"]
-    condition {
-      test     = "StringEquals"
-      variable = "aws:SourceAccount"
-      values   = [data.aws_caller_identity.current.account_id]
-    }
-    condition {
-      test     = "ArnEquals"
-      variable = "aws:SourceArn"
-      values   = [aws_eks_cluster.main.arn]
-    }
-  }
-}
-
-resource "aws_iam_role" "atlantis" {
-  name               = "atlantis-terraform-role"
-  assume_role_policy = data.aws_iam_policy_document.atlantis_assume_role.json
-}
-
-# Terraform State Access
-resource "aws_iam_role_policy" "atlantis_s3" {
-  name = "atlantis-s3-state"
-  role = aws_iam_role.atlantis.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject",
-          "s3:ListBucket"
-        ]
-        Resource = [
-          "arn:aws:s3:::my-terraform-state-bucket",
-          "arn:aws:s3:::my-terraform-state-bucket/*"
-        ]
-      }
-    ]
-  })
-}
-
-# DynamoDB for State Locking
-resource "aws_iam_role_policy" "atlantis_dynamodb" {
-  name = "atlantis-dynamodb-lock"
-  role = aws_iam_role.atlantis.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "dynamodb:GetItem",
-          "dynamodb:PutItem",
-          "dynamodb:DeleteItem"
-        ]
-        Resource = "arn:aws:dynamodb:ap-northeast-2:*:table/terraform-locks"
-      }
-    ]
-  })
-}
-
-# Infrastructure Management Permissions
-resource "aws_iam_role_policy_attachment" "atlantis_infra" {
-  role       = aws_iam_role.atlantis.name
-  policy_arn = aws_iam_policy.atlantis_infrastructure.arn
-}
-
-resource "aws_iam_policy" "atlantis_infrastructure" {
-  name = "atlantis-infrastructure"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "VPCManagement"
-        Effect = "Allow"
-        Action = [
-          "ec2:*Vpc*",
-          "ec2:*Subnet*",
-          "ec2:*RouteTable*",
-          "ec2:*SecurityGroup*",
-          "ec2:*NetworkAcl*",
-          "ec2:*InternetGateway*",
-          "ec2:*NatGateway*",
-          "ec2:*ElasticIp*"
-        ]
-        Resource = "*"
-        Condition = {
-          StringEquals = {
-            "aws:RequestedRegion" = ["ap-northeast-2", "us-east-1"]
-          }
-        }
-      },
-      {
-        Sid    = "EKSManagement"
-        Effect = "Allow"
-        Action = [
-          "eks:*"
-        ]
-        Resource = "*"
-      },
-      {
-        Sid    = "IAMPassRole"
-        Effect = "Allow"
-        Action = [
-          "iam:PassRole",
-          "iam:GetRole"
-        ]
-        Resource = [
-          "arn:aws:iam::*:role/eks-*",
-          "arn:aws:iam::*:role/karpenter-*"
-        ]
-      }
-    ]
-  })
-}
-
-# Pod Identity Association
-resource "aws_eks_pod_identity_association" "atlantis" {
-  cluster_name    = aws_eks_cluster.main.name
-  namespace       = "atlantis"
-  service_account = "atlantis"
-  role_arn        = aws_iam_role.atlantis.arn
-}
-```
-
-### 1.5 多 Repository 配置
-
-```yaml
-# Server-side repo config for multi-repo setups
-# ConfigMap: atlantis-server-config
-repos:
-  # Main infrastructure repository
-  - id: github.com/myorg/infrastructure
-    branch: main
-    allowed_overrides:
-      - workflow
-      - apply_requirements
-      - delete_source_branch_on_merge
-    allow_custom_workflows: true
-    pre_workflow_hooks:
-      - run: |
-          echo "Repository: $BASE_REPO_NAME"
-          echo "PR: $PULL_NUM"
-          echo "User: $PULL_AUTHOR"
-
-  # Application team repositories
-  - id: github.com/myorg/team-*
-    branch: main
-    allowed_overrides:
-      - workflow
-    allow_custom_workflows: false
-    workflow: restricted
-    apply_requirements:
-      - approved
-      - mergeable
-
-  # Shared modules (no apply allowed)
-  - id: github.com/myorg/terraform-modules
-    branch: main
-    allowed_overrides: []
-    allow_custom_workflows: false
-    workflow: plan-only
-
-workflows:
-  restricted:
-    plan:
-      steps:
-        - init
-        - plan
-    apply:
-      steps:
-        - run: |
-            # Validate resource limits
-            RESOURCE_COUNT=$(terraform state list | wc -l)
-            if [ "$RESOURCE_COUNT" -gt 50 ]; then
-              echo "Error: Team repos limited to 50 resources. Current: $RESOURCE_COUNT"
-              exit 1
-            fi
-        - apply
-
-  plan-only:
-    plan:
-      steps:
-        - init
-        - plan
-    apply:
-      steps:
-        - run: echo "Apply disabled for module repositories"
-        - run: exit 1
-```
-
-### 1.6 安全限制
-
-```yaml
-# atlantis-security-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: atlantis-security-config
-  namespace: atlantis
-data:
-  # Blocked Terraform resources
-  blocked_resources.txt: |
-    aws_iam_user
-    aws_iam_access_key
-    aws_iam_user_policy
-    aws_organizations_*
-    aws_account
-
-  # Pre-workflow hook script
-  security-check.sh: |
-    #!/bin/bash
-    set -e
-
-    BLOCKED_RESOURCES=$(cat /config/blocked_resources.txt)
-
-    # Check for blocked resources in plan
-    for resource in $BLOCKED_RESOURCES; do
-      if grep -r "resource \"$resource\"" *.tf; then
-        echo "ERROR: Blocked resource type detected: $resource"
-        exit 1
-      fi
-    done
-
-    # Check for hardcoded secrets
-    if grep -rE "(aws_access_key|aws_secret_key|password\s*=)" *.tf; then
-      echo "ERROR: Potential hardcoded secrets detected"
-      exit 1
-    fi
-
-    # Validate required tags
-    if ! grep -q "tags\s*=" *.tf; then
-      echo "WARNING: No tags found. All resources should have tags."
-    fi
-
-    echo "Security checks passed"
-```
-
-### 1.7 锁定机制
-
-```yaml
-# atlantis-lock-config.yaml
-# Lock configuration for preventing concurrent applies
-
-# ConfigMap for lock behavior
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: atlantis-lock-config
-  namespace: atlantis
-data:
-  lock_config.yaml: |
-    # Lock timeout (how long a lock is held)
-    lock_timeout: 3600  # 1 hour
-
-    # Projects that share locks (cannot be applied simultaneously)
-    lock_groups:
-      - name: network-layer
-        projects:
-          - network-dev
-          - network-prod
-      - name: eks-cluster
-        projects:
-          - eks-dev
-          - eks-prod
-
-    # Priority queue for applies
-    apply_priority:
-      - network-*
-      - eks-*
-      - app-*
-```
-
-用于锁管理的 PR 命令：
-
-```bash
-# View current locks
-atlantis unlock
-
-# Force unlock (admin only)
-atlantis unlock --force
-
-# Lock a specific project
-atlantis lock -p eks-prod
-
-# View lock status
-atlantis locks
-```
-
----
-
-## 2. Terraform Cloud 集成
-
-Terraform Cloud 提供 Atlantis 的托管替代方案，并具备额外的企业功能。
-
-### 2.1 Workspace 组织
-
-```hcl
-# terraform/tfc-workspaces/main.tf
+# tfe/main.tf
 terraform {
-  cloud {
-    organization = "my-organization"
-    workspaces {
-      tags = ["eks", "infrastructure"]
+  required_version = ">= 1.10, < 2.0"
+  required_providers {
+    tfe = {
+      source  = "hashicorp/tfe"
+      version = "= 0.80.0"
     }
   }
 }
 
-# Workspace definitions
-resource "tfe_workspace" "network" {
-  name              = "eks-network"
-  organization      = var.tfc_organization
-  execution_mode    = "remote"
-  terraform_version = "1.6.6"
-  working_directory = "terraform/network"
-
-  vcs_repo {
-    identifier     = "myorg/infrastructure"
-    branch         = "main"
-    oauth_token_id = var.github_oauth_token_id
-  }
-
-  tag_names = ["network", "production"]
-
-  # Auto-apply after successful plan
-  auto_apply = false
-
-  # Queue all runs
-  queue_all_runs = true
+# Supply a scoped TFE_TOKEN through the approved secret mechanism, not in Git.
+provider "tfe" {
+  hostname = "app.terraform.io"
 }
 
-resource "tfe_workspace" "eks_cluster" {
-  name              = "eks-cluster"
-  organization      = var.tfc_organization
-  execution_mode    = "remote"
-  terraform_version = "1.6.6"
-  working_directory = "terraform/eks"
-
-  vcs_repo {
-    identifier     = "myorg/infrastructure"
-    branch         = "main"
-    oauth_token_id = var.github_oauth_token_id
+locals {
+  layers = {
+    network  = "01-network"
+    cluster  = "02-cluster"
+    platform = "03-platform"
   }
-
-  tag_names = ["eks", "production"]
+  environment_variables = merge([
+    for layer, directory in local.layers : {
+      for key, value in {
+        TFC_AWS_PROVIDER_AUTH  = "true"
+        TFC_AWS_PLAN_ROLE_ARN  = var.workspace_roles[layer].plan
+        TFC_AWS_APPLY_ROLE_ARN = var.workspace_roles[layer].apply
+        AWS_REGION             = var.aws_region
+      } : "${layer}:${key}" => { layer = layer, key = key, value = value }
+    }
+  ]...)
 }
 
-resource "tfe_workspace" "eks_addons" {
-  name              = "eks-addons"
-  organization      = var.tfc_organization
-  execution_mode    = "remote"
-  terraform_version = "1.6.6"
-  working_directory = "terraform/addons"
-
+resource "tfe_workspace" "layer" {
+  for_each               = local.layers
+  name                   = "${each.key}-prod"
+  organization           = var.organization
+  project_id             = var.project_id
+  terraform_version      = "1.15.7"
+  working_directory      = each.value
+  auto_apply             = false
+  auto_apply_run_trigger = false
+  queue_all_runs         = false
+  tag_names              = ["production", each.key]
   vcs_repo {
-    identifier     = "myorg/infrastructure"
+    identifier     = var.repository
     branch         = "main"
-    oauth_token_id = var.github_oauth_token_id
+    oauth_token_id = var.vcs_connection_id
   }
+}
 
-  tag_names = ["eks", "addons", "production"]
+resource "tfe_workspace_settings" "layer" {
+  for_each                  = local.layers
+  workspace_id              = tfe_workspace.layer[each.key].id
+  execution_mode            = "agent"
+  agent_pool_id             = var.agent_pool_id
+  global_remote_state       = false
+  project_remote_state      = false
+  remote_state_consumer_ids = []
+}
+
+resource "tfe_variable" "aws" {
+  for_each     = local.environment_variables
+  workspace_id = tfe_workspace.layer[each.value.layer].id
+  category     = "env"
+  key          = each.value.key
+  value        = each.value.value
+}
+
+resource "tfe_run_trigger" "cluster_after_network" {
+  workspace_id  = tfe_workspace.layer["cluster"].id
+  sourceable_id = tfe_workspace.layer["network"].id
+}
+
+resource "tfe_run_trigger" "platform_after_cluster" {
+  workspace_id  = tfe_workspace.layer["platform"].id
+  sourceable_id = tfe_workspace.layer["cluster"].id
 }
 ```
 
-### 2.2 用于下游自动化的 Run Triggers
-
 ```hcl
-# Run triggers - downstream workspace auto-trigger
-resource "tfe_run_trigger" "eks_after_network" {
-  workspace_id  = tfe_workspace.eks_cluster.id
-  sourceable_id = tfe_workspace.network.id
+# tfe/variables.tf
+variable "organization" {
+  type = string
 }
-
-resource "tfe_run_trigger" "addons_after_eks" {
-  workspace_id  = tfe_workspace.eks_addons.id
-  sourceable_id = tfe_workspace.eks_cluster.id
+variable "project_id" {
+  type = string
 }
-
-# Variable sets for shared configuration
-resource "tfe_variable_set" "aws_credentials" {
-  name         = "aws-credentials"
-  organization = var.tfc_organization
-  description  = "AWS credentials for all workspaces"
+variable "agent_pool_id" {
+  type = string
 }
-
-resource "tfe_variable" "aws_region" {
-  key             = "AWS_REGION"
-  value           = "ap-northeast-2"
-  category        = "env"
-  variable_set_id = tfe_variable_set.aws_credentials.id
+variable "repository" {
+  type = string
 }
-
-# Attach variable set to workspaces
-resource "tfe_workspace_variable_set" "network_aws" {
-  workspace_id    = tfe_workspace.network.id
-  variable_set_id = tfe_variable_set.aws_credentials.id
+variable "vcs_connection_id" {
+  type = string
 }
-
-resource "tfe_workspace_variable_set" "eks_aws" {
-  workspace_id    = tfe_workspace.eks_cluster.id
-  variable_set_id = tfe_variable_set.aws_credentials.id
+variable "aws_region" {
+  type    = string
+  default = "ap-northeast-2"
+}
+variable "workspace_roles" {
+  type = map(object({
+    plan  = string
+    apply = string
+  }))
+  validation {
+    condition = alltrue([
+      for layer in ["network", "cluster", "platform"] :
+      can(regex("^arn:aws:iam::[0-9]{12}:role/.+$", var.workspace_roles[layer].plan)) &&
+      can(regex("^arn:aws:iam::[0-9]{12}:role/.+$", var.workspace_roles[layer].apply))
+    ])
+    error_message = "Supply existing scoped plan/apply role ARNs for every layer."
+  }
 }
 ```
 
-### 2.3 Sentinel 策略
+此 root 配置 HCP 资源。将其 backend/state 与基础设施 workspace 分开保护。针对现有 root 使用 HCP 托管 state 前，确定所有权并谨慎迁移其原有 S3 backend。不要从两个执行系统 apply 同一个 state。
 
-```hcl
-# sentinel/enforce-tags.sentinel
+AWS 必须已具备 `app.terraform.io` OIDC provider 和范围受限的 plan/apply role。将 trust audience/subject 限制为精确的 organization/project/workspace 以及 `run_phase:plan` 或 `run_phase:apply`。`TFC_AWS_*` variable 是 role identifier，而不是存储的长期 access key。在实际 provider 和 agent version 中验证 dynamic-credential support。
+
+`queue_all_runs=false` 会在初始 workspace 设置期间保留 VCS-triggered run。它并非在首次手动 run 后永久禁用执行的开关。
+
+### Run trigger 和共享 output
+
+成功的上游 apply 会将下游 run 排入队列。**`auto_apply_run_trigger` 独立于普通的 `auto_apply`。** 这里两者都为 false，要求在 apply 前审阅。trigger 既不是所有依赖项均已就绪的证明，也不是 output-transfer mechanism。
+
+本示例不会全局共享 workspace state。如果必须使用 output，请配置已批准的 consumer/permission，并考虑 `tfe_outputs`。能够读取 `terraform_remote_state` 的凭证可以访问完整的敏感 state，而不仅是 data source 显示的 output。根据实际设计连接 output access 与 module input。
+
+### Sentinel policy
+
+这是三个使用 Sentinel 0.41.0 测试的**示例 policy**，而不是 Python program。在它们可以阻止 HCP run 之前，需要 policy set、target workspace 和 enforcement configuration。
+
+```text
+# policies/required-tags.sentinel
 import "tfplan/v2" as tfplan
 
-# Required tags for all resources
-required_tags = ["Environment", "Project", "Owner", "CostCenter"]
+required_tags = ["Environment", "Team", "CostCenter"]
+taggable_types = ["aws_instance", "aws_vpc", "aws_subnet",
+                 "aws_security_group", "aws_eks_cluster", "aws_eks_node_group"]
 
-# Find all resources with tags attribute
-tagged_resources = filter tfplan.resource_changes as _, rc {
-    rc.mode is "managed" and
-    rc.change.after is not null and
-    keys(rc.change.after) contains "tags"
+changes = filter tfplan.resource_changes as _, rc {
+  rc.mode is "managed" and rc.type in taggable_types and
+  (rc.change.actions contains "create" or rc.change.actions contains "update")
 }
 
-# Check each resource has required tags
-violations = []
-for tagged_resources as address, rc {
-    tags = rc.change.after.tags else {}
-    for required_tags as tag {
-        if tags[tag] is null {
-            append(violations, {
-                "address": address,
-                "missing_tag": tag,
-            })
-        }
-    }
+valid_tag = func(tags, key) {
+  value = tags[key] else null
+  return value is not null and value is not ""
+}
+
+has_required_tags = func(rc) {
+  tags = rc.change.after.tags_all else {}
+  unknown = rc.change.after_unknown.tags_all else false
+  if tags is null or unknown is true {
+    return false
+  }
+  if unknown is false or unknown is null {
+    unknown = {}
+  }
+  return all required_tags as tag {
+    not (unknown[tag] else false) and valid_tag(tags, tag)
+  }
 }
 
 main = rule {
-    length(violations) is 0
+  all changes as _, rc { has_required_tags(rc) }
 }
-
-# Output violations for debugging
-print("Tag violations:", violations)
 ```
 
-```hcl
-# sentinel/restrict-instance-types.sentinel
+检查 `tags_all` 会包含 AWS Provider default tag。本示例检查所列 resource type 的 create/update action，并排除 deletion。缺失、空、null 或 unknown 的必需 tag 均无法通过。它并未涵盖所有 AWS resource type。
+
+```text
+# policies/instance-types.sentinel
 import "tfplan/v2" as tfplan
 
-# Allowed instance types by environment
-allowed_instances = {
-    "dev": ["t3.medium", "t3.large", "m5.large"],
-    "prod": ["m5.large", "m5.xlarge", "m5.2xlarge", "r5.large", "r5.xlarge"],
+# Organization policy example; use a reviewed allowlist for the actual region.
+allowed = ["m7i.large", "m7i.xlarge", "m7g.large", "m7g.xlarge"]
+changes = filter tfplan.resource_changes as _, rc {
+  rc.mode is "managed" and
+  rc.type in ["aws_instance", "aws_eks_node_group"] and
+  (rc.change.actions contains "create" or rc.change.actions contains "update")
 }
 
-# Find EC2 instances and EKS node groups
-ec2_instances = filter tfplan.resource_changes as _, rc {
-    rc.type is "aws_instance" and
-    rc.mode is "managed" and
-    rc.change.after is not null
-}
-
-eks_node_groups = filter tfplan.resource_changes as _, rc {
-    rc.type is "aws_eks_node_group" and
-    rc.mode is "managed" and
-    rc.change.after is not null
-}
-
-# Determine environment from workspace name
-param environment default "dev"
-
-# Validate instance types
-instance_violations = []
-for ec2_instances as address, rc {
-    instance_type = rc.change.after.instance_type
-    if instance_type not in allowed_instances[environment] {
-        append(instance_violations, {
-            "address": address,
-            "instance_type": instance_type,
-            "allowed": allowed_instances[environment],
-        })
-    }
+approved_types = func(rc) {
+  if rc.type is "aws_instance" {
+    return (rc.change.after.instance_type else "") in allowed and
+           not (rc.change.after_unknown.instance_type else false)
+  }
+  types = rc.change.after.instance_types else []
+  return length(types) > 0 and
+         not (rc.change.after_unknown.instance_types else false) and
+         all types as instance_type { instance_type in allowed }
 }
 
 main = rule {
-    length(instance_violations) is 0
+  all changes as _, rc { approved_types(rc) }
 }
 ```
 
-```hcl
-# sentinel/cost-limit.sentinel
-import "tfplan/v2" as tfplan
+这适用于直接指定 `instance_types` 的 EC2 instance 和 managed node group。仅使用 launch template 的 group、Auto Mode NodePool 和其他 compute service 需要额外 policy。空或 unknown type list 不会被视为已批准的空集合。
+
+```text
+# policies/cost-limit.sentinel
+import "tfrun"
 import "decimal"
 
-# Monthly cost limits per workspace
-cost_limits = {
-    "eks-network": 500,
-    "eks-cluster": 5000,
-    "eks-addons": 1000,
-}
-
-# Get cost estimate from Terraform Cloud
-param cost_estimate
-
-# Parse estimated monthly cost
-estimated_monthly = decimal.new(cost_estimate.proposed_monthly_cost)
-workspace_limit = decimal.new(cost_limits[tfplan.workspace.name] else 10000)
-
-cost_exceeded = estimated_monthly.greater_than(workspace_limit)
+# This checks HCP's available estimate, not the complete future AWS bill.
+param monthly_limit default "5000"
+estimate = tfrun.cost_estimate.proposed_monthly_cost else null
 
 main = rule {
-    not cost_exceeded
-}
-
-# Soft policy - warn but don't block
-soft_main = rule when cost_exceeded {
-    print("WARNING: Estimated monthly cost", estimated_monthly, "exceeds limit", workspace_limit)
-    true
+  estimate is not null and
+  decimal.new(estimate).greater_than_or_equals(0) and
+  decimal.new(estimate).less_than_or_equals(monthly_limit)
 }
 ```
 
-### 2.4 Atlantis 与 Terraform Cloud 对比
+使用 `tfrun.cost_estimate`，而不是不存在的路径，例如 `tfplan.workspace`。该示例允许提供的不超过 5,000 的月度估算值，并拒绝缺失、负数、NaN 和无限值。它无法保证涵盖不受支持的资源、流量和现有基础设施的完整 AWS 账单上限。
 
-| 功能 | Atlantis | Terraform Cloud |
-|---------|----------|-----------------|
-| **托管方式** | 自托管在 EKS 上 | 托管 SaaS |
-| **成本** | 仅基础设施 | 按用户定价 |
-| **VCS 集成** | GitHub、GitLab、Bitbucket | 相同 + Azure DevOps |
-| **PR 自动化** | 完整 | 完整 |
-| **Policy as Code** | 外部（OPA、Conftest） | 原生 Sentinel |
-| **成本估算** | 需要外部工具 | 内置 |
-| **私有 Registry** | 外部设置 | 已包含 |
-| **Run Triggers** | 手动脚本 | 原生 |
-| **State 管理** | 外部 S3 + DynamoDB | 内置 |
-| **审计日志** | CloudWatch 集成 | 内置 |
-| **SSO/SAML** | 自行配置 | 企业功能 |
-| **并发 Runs** | 受 Pod 资源限制 | 基于计划的限制 |
-| **Air-gapped** | 完全支持 | Terraform Enterprise |
+```hcl
+# policies/sentinel.hcl
+policy "required-tags" {
+  source            = "./required-tags.sentinel"
+  enforcement_level = "hard-mandatory"
+}
+policy "instance-types" {
+  source            = "./instance-types.sentinel"
+  enforcement_level = "hard-mandatory"
+}
+policy "cost-limit" {
+  source            = "./cost-limit.sentinel"
+  enforcement_level = "hard-mandatory"
+}
+```
 
-**建议：**
-- 如果你需要完全控制、有自托管的安全要求，或希望尽量降低 SaaS 成本，请使用 **Atlantis**
-- 如果你希望使用托管基础设施、需要原生策略执行，或需要企业合规功能，请使用 **Terraform Cloud**
+将 policy set 附加到预期 workspace，并将 policy administration 与 resource operation 分开。仅命名为 `soft_main` 的 rule 不会将 enforcement 更改为 soft-mandatory。不要将 failed evaluation 或 API error 变为 success。
 
----
+## 3. Flux
 
-## 3. FluxCD
+本节使用 [Flux 2.9.6 指南](../gitops/02-fluxcd.md)。Argo CD 和 Flux 都会协调 declarative state。Argo CD 也包含多个 component；Flux 并非在任何情况下都更轻量或更隔离。仅进行 namespace separation 并不能完成 tenant authorization。
 
-FluxCD 提供 GitOps 自动化，重点关注 Kubernetes-native 原语。
-
-### 3.1 ArgoCD 与 FluxCD 对比
-
-| 功能 | ArgoCD | FluxCD |
-|---------|--------|--------|
-| **架构** | 带 UI 的单体架构 | 模块化控制器 |
-| **UI** | 内置 Web UI | 可选 Weave GitOps UI |
-| **多租户** | 基于 AppProject | 基于 Namespace |
-| **同步方式** | Pull-based | Pull-based |
-| **Helm 支持** | 原生 | HelmRelease CRD |
-| **Kustomize** | 原生 | Kustomization CRD |
-| **Image 自动化** | Argo Image Updater | 内置控制器 |
-| **通知** | 内置 | Notification controller |
-| **Source 类型** | Git、Helm、OCI | Git、Helm、S3、OCI |
-| **CRD 复杂度** | Application CRD | 多个专用 CRD |
-| **学习曲线** | 较低（单一 CRD） | 较高（多个 CRD） |
-| **资源使用量** | 较高（UI、Redis） | 较低（最小化） |
-
-**何时选择 FluxCD：**
-- 偏好具有多个控制器的 Kubernetes-native 方法
-- 需要内置 Image 自动化
-- 希望资源占用最小
-- 需要将 S3 作为 source
-
-### 3.2 FluxCD 安装
+Image reflector 和 automation controller 是**可选 component**。bootstrap 会提交到 Git 并安装 controller。运行前验证 CLI checksum、受支持的 Kubernetes version、kubecontext 和 repository access。
 
 ```bash
-# Install Flux CLI
-curl -s https://fluxcd.io/install.sh | sudo bash
-
-# Bootstrap Flux with GitHub
+flux check --pre
 flux bootstrap github \
-  --owner=myorg \
-  --repository=flux-config \
-  --branch=main \
-  --path=clusters/production \
-  --personal=false \
+  --owner=REPLACE_ORG --repository=fleet-infra --branch=main \
+  --path=clusters/production --version=v2.9.6 \
   --components-extra=image-reflector-controller,image-automation-controller
-
-# Verify installation
-flux check
 ```
 
-Bootstrap 会创建以下结构：
+安全地提供已授权的 GitHub credential。不要向 organization 示例添加 `--personal`。区分默认 bootstrap 生成的 `flux-system` 文件与自行添加的 infrastructure/apps directory。
 
-```
-flux-config/
-├── clusters/
-│   └── production/
-│       ├── flux-system/
-│       │   ├── gotk-components.yaml
-│       │   ├── gotk-sync.yaml
-│       │   └── kustomization.yaml
-│       ├── infrastructure/
-│       │   └── kustomization.yaml
-│       └── apps/
-│           └── kustomization.yaml
-```
+### Image automation 和 Git approval
 
-### 3.3 Source Controller 配置
+该示例要求已准备 Git write Secret、通过 Pod Identity/IRSA 在 image-reflector-controller 上提供的 ECR read credential，以及部署 app 的 Flux Kustomization/HelmRelease。这些与节点的 image-pull role 分离。不要随意将 `provider: aws` 与不同的 registry-secret authentication path 组合。
 
 ```yaml
-# clusters/production/infrastructure/sources.yaml
----
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: GitRepository
-metadata:
-  name: infrastructure
-  namespace: flux-system
-spec:
-  interval: 1m
-  url: https://github.com/myorg/infrastructure
-  ref:
-    branch: main
-  secretRef:
-    name: github-credentials
----
+# fixtures/flux-images.yaml
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
@@ -949,1329 +492,241 @@ metadata:
   namespace: flux-system
 spec:
   interval: 1m
-  url: https://github.com/myorg/applications
+  url: https://github.com/REPLACE_ORG/app-manifests.git
   ref:
     branch: main
   secretRef:
-    name: github-credentials
+    name: applications-git-auth
 ---
-# Helm Repository Source
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
-metadata:
-  name: bitnami
-  namespace: flux-system
-spec:
-  interval: 30m
-  url: https://charts.bitnami.com/bitnami
----
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
-metadata:
-  name: eks-charts
-  namespace: flux-system
-spec:
-  interval: 30m
-  url: https://aws.github.io/eks-charts
----
-# S3 Bucket Source
-apiVersion: source.toolkit.fluxcd.io/v1beta2
-kind: Bucket
-metadata:
-  name: config-bucket
-  namespace: flux-system
-spec:
-  interval: 5m
-  provider: aws
-  bucketName: my-flux-config-bucket
-  region: ap-northeast-2
-  secretRef:
-    name: aws-credentials
-```
-
-### 3.4 HelmRelease CRD
-
-```yaml
-# clusters/production/infrastructure/aws-load-balancer-controller.yaml
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
-metadata:
-  name: aws-load-balancer-controller
-  namespace: kube-system
-spec:
-  interval: 30m
-  chart:
-    spec:
-      chart: aws-load-balancer-controller
-      version: "1.7.*"
-      sourceRef:
-        kind: HelmRepository
-        name: eks-charts
-        namespace: flux-system
-      interval: 12h
-
-  values:
-    clusterName: production-cluster
-    serviceAccount:
-      create: true
-      name: aws-load-balancer-controller
-      annotations:
-        eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT:role/aws-load-balancer-controller
-
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-      limits:
-        cpu: 200m
-        memory: 256Mi
-
-  # Upgrade configuration
-  upgrade:
-    remediation:
-      retries: 3
-      remediateLastFailure: true
-
-  # Rollback configuration
-  rollback:
-    cleanupOnFail: true
-    timeout: 5m
-
-  # Test configuration
-  test:
-    enable: true
-    timeout: 5m
-
----
-# Application HelmRelease with values from ConfigMap
-apiVersion: helm.toolkit.fluxcd.io/v2
-kind: HelmRelease
-metadata:
-  name: my-application
-  namespace: production
-spec:
-  interval: 5m
-  chart:
-    spec:
-      chart: ./charts/my-application
-      sourceRef:
-        kind: GitRepository
-        name: applications
-        namespace: flux-system
-
-  valuesFrom:
-    - kind: ConfigMap
-      name: my-application-values
-      valuesKey: values.yaml
-    - kind: Secret
-      name: my-application-secrets
-      valuesKey: secrets.yaml
-
-  values:
-    replicaCount: 3
-    image:
-      repository: myregistry.ecr.ap-northeast-2.amazonaws.com/my-app
-      tag: v1.0.0  # Will be updated by Image Automation
-
-  dependsOn:
-    - name: aws-load-balancer-controller
-      namespace: kube-system
-```
-
-### 3.5 用于环境 Overlays 的 Kustomization
-
-```yaml
-# clusters/production/apps/kustomization.yaml
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: apps
-  namespace: flux-system
-spec:
-  interval: 10m
-  sourceRef:
-    kind: GitRepository
-    name: applications
-  path: ./apps/overlays/production
-  prune: true
-  targetNamespace: production
-
-  # Health checks
-  healthChecks:
-    - apiVersion: apps/v1
-      kind: Deployment
-      name: my-application
-      namespace: production
-
-  # Timeout for health checks
-  timeout: 5m
-
-  # Patches for production
-  patches:
-    - patch: |
-        - op: replace
-          path: /spec/replicas
-          value: 5
-      target:
-        kind: Deployment
-        name: my-application
-
-  # Substitute variables
-  postBuild:
-    substitute:
-      ENVIRONMENT: production
-      CLUSTER_NAME: production-cluster
-    substituteFrom:
-      - kind: ConfigMap
-        name: cluster-config
-      - kind: Secret
-        name: cluster-secrets
-
----
-# Staging environment
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: apps-staging
-  namespace: flux-system
-spec:
-  interval: 10m
-  sourceRef:
-    kind: GitRepository
-    name: applications
-  path: ./apps/overlays/staging
-  prune: true
-  targetNamespace: staging
-
-  postBuild:
-    substitute:
-      ENVIRONMENT: staging
-      CLUSTER_NAME: staging-cluster
-```
-
-### 3.6 Image Automation Controller
-
-```yaml
-# clusters/production/image-automation/image-repository.yaml
----
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageRepository
 metadata:
-  name: my-application
+  name: application
   namespace: flux-system
 spec:
-  image: myregistry.ecr.ap-northeast-2.amazonaws.com/my-app
-  interval: 1m
-  secretRef:
-    name: ecr-credentials
+  image: REPLACE_ACCOUNT.dkr.ecr.ap-northeast-2.amazonaws.com/docs-ci/application
+  interval: 5m
   provider: aws
 ---
-# Image Policy - select latest semver
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
 metadata:
-  name: my-application
+  name: application
   namespace: flux-system
+  labels:
+    app: application
 spec:
   imageRepositoryRef:
-    name: my-application
+    name: application
   policy:
     semver:
       range: ">=1.0.0 <2.0.0"
+  digestReflectionPolicy: IfNotPresent
 ---
-# Alternative: Latest tag matching pattern
-apiVersion: image.toolkit.fluxcd.io/v1beta2
-kind: ImagePolicy
-metadata:
-  name: my-application-latest
-  namespace: flux-system
-spec:
-  imageRepositoryRef:
-    name: my-application
-  filterTags:
-    pattern: '^main-[a-f0-9]+-(?P<ts>[0-9]+)'
-    extract: '$ts'
-  policy:
-    numerical:
-      order: asc
----
-# Image Update Automation
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageUpdateAutomation
 metadata:
-  name: my-application
+  name: application
   namespace: flux-system
 spec:
   interval: 30m
   sourceRef:
     kind: GitRepository
     name: applications
-
   git:
     checkout:
       ref:
         branch: main
     commit:
       author:
+        name: Flux automation
         email: flux@example.com
-        name: Flux Bot
       messageTemplate: |
-        Automated image update
-
-        Automation: {{ .AutomationObject }}
-
-        Files:
-        {{ range $filename, $_ := .Changed.FileChanges -}}
-        - {{ $filename }}
-        {{ end -}}
-
-        Objects:
-        {{ range $resource, $changes := .Changed.Objects -}}
-        - {{ $resource.Kind }} {{ $resource.Name }}
-          {{- range $_, $change := $changes }}
-            - {{ $change.OldValue }} -> {{ $change.NewValue }}
-          {{- end }}
+        Update approved application image
+        {{ range .Changed.Changes -}}
+        {{ .OldValue }} -> {{ .NewValue }}
         {{ end -}}
     push:
-      branch: main
-
+      branch: flux/image-updates
   update:
-    path: ./apps
+    path: ./apps/production
     strategy: Setters
-```
-
-在 manifests 中标记用于自动化的 images：
-
-```yaml
-# apps/base/deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-application
-spec:
-  template:
-    spec:
-      containers:
-        - name: app
-          image: myregistry.ecr.ap-northeast-2.amazonaws.com/my-app:v1.0.0 # {"$imagepolicy": "flux-system:my-application"}
-```
-
-### 3.7 Notification Controller
-
-```yaml
-# clusters/production/notifications/slack.yaml
----
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
-kind: Provider
-metadata:
-  name: slack
-  namespace: flux-system
-spec:
-  type: slack
-  channel: "#gitops-notifications"
-  secretRef:
-    name: slack-webhook
----
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
-kind: Alert
-metadata:
-  name: on-call-alerts
-  namespace: flux-system
-spec:
-  providerRef:
-    name: slack
-  eventSeverity: error
-  eventSources:
-    - kind: GitRepository
-      name: "*"
-    - kind: Kustomization
-      name: "*"
-    - kind: HelmRelease
-      name: "*"
-  summary: "Flux reconciliation failed"
----
-# Info-level notifications for successful deployments
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
-kind: Alert
-metadata:
-  name: deployment-notifications
-  namespace: flux-system
-spec:
-  providerRef:
-    name: slack
-  eventSeverity: info
-  eventSources:
-    - kind: HelmRelease
-      name: "*"
-      namespace: production
-  exclusionList:
-    - ".*upgrade.*in progress.*"
-  summary: "Deployment update"
----
-# Secret for Slack webhook
-apiVersion: v1
-kind: Secret
-metadata:
-  name: slack-webhook
-  namespace: flux-system
-type: Opaque
-stringData:
-  address: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
-```
-
----
-
-## 4. AIOps 策略
-
-AIOps 将人工智能与运维相结合，以自动化决策和响应。
-
-### 4.1 基于 LLM 的 PR 审查
-
-```yaml
-# .github/workflows/ai-review.yaml
-name: AI Code Review
-
-on:
-  pull_request:
-    types: [opened, synchronize]
-
-jobs:
-  ai-review:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Get changed files
-        id: changed
-        run: |
-          echo "files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | tr '\n' ' ')" >> $GITHUB_OUTPUT
-
-      - name: AI Review with Claude
-        uses: anthropics/claude-code-review@v1
-        with:
-          api-key: ${{ secrets.ANTHROPIC_API_KEY }}
-          files: ${{ steps.changed.outputs.files }}
-          review-type: security,performance,best-practices
-
-      - name: AI Review for Terraform
-        if: contains(steps.changed.outputs.files, '.tf')
-        run: |
-          # Custom Terraform review prompt
-          cat > review-prompt.txt << 'EOF'
-          Review the following Terraform changes for:
-          1. Security issues (overly permissive IAM, public resources)
-          2. Cost implications (instance sizes, storage)
-          3. Best practices (naming, tagging, modularity)
-          4. Potential blast radius
-
-          Provide specific line-by-line feedback.
-          EOF
-
-          # Call Claude API
-          curl -X POST https://api.anthropic.com/v1/messages \
-            -H "x-api-key: ${{ secrets.ANTHROPIC_API_KEY }}" \
-            -H "content-type: application/json" \
-            -H "anthropic-version: 2023-06-01" \
-            -d @- << EOF > review-output.json
-          {
-            "model": "claude-sonnet-4-20250514",
-            "max_tokens": 4096,
-            "messages": [{
-              "role": "user",
-              "content": "$(cat review-prompt.txt)\n\nChanges:\n$(git diff origin/${{ github.base_ref }}...HEAD -- '*.tf')"
-            }]
-          }
-          EOF
-
-          # Post review as PR comment
-          REVIEW=$(jq -r '.content[0].text' review-output.json)
-          gh pr comment ${{ github.event.pull_request.number }} --body "## AI Terraform Review\n\n${REVIEW}"
-        env:
-          GH_TOKEN: ${{ github.token }}
-```
-
-### 4.2 基于指标的 YAML 自动修改
-
-```python
-#!/usr/bin/env python3
-# scripts/auto-tune-hpa.py
-"""
-Automatically adjusts HPA targets based on historical metrics.
-Runs as a CronJob in the cluster.
-"""
-
-import os
-import yaml
-import requests
-from datetime import datetime, timedelta
-from kubernetes import client, config
-
-PROMETHEUS_URL = os.environ.get('PROMETHEUS_URL', 'http://prometheus:9090')
-ADJUSTMENT_THRESHOLD = 0.15  # 15% deviation triggers adjustment
-MIN_TARGET = 50
-MAX_TARGET = 90
-
-def get_average_utilization(namespace: str, deployment: str, metric: str, hours: int = 24) -> float:
-    """Query Prometheus for average utilization over time period."""
-
-    if metric == 'cpu':
-        query = f'''
-        avg(
-          rate(container_cpu_usage_seconds_total{{
-            namespace="{namespace}",
-            pod=~"{deployment}-.*"
-          }}[5m])
-        ) /
-        avg(
-          kube_pod_container_resource_requests{{
-            namespace="{namespace}",
-            pod=~"{deployment}-.*",
-            resource="cpu"
-          }}
-        ) * 100
-        '''
-    else:  # memory
-        query = f'''
-        avg(
-          container_memory_working_set_bytes{{
-            namespace="{namespace}",
-            pod=~"{deployment}-.*"
-          }}
-        ) /
-        avg(
-          kube_pod_container_resource_requests{{
-            namespace="{namespace}",
-            pod=~"{deployment}-.*",
-            resource="memory"
-          }}
-        ) * 100
-        '''
-
-    end = datetime.now()
-    start = end - timedelta(hours=hours)
-
-    response = requests.get(
-        f'{PROMETHEUS_URL}/api/v1/query_range',
-        params={
-            'query': query,
-            'start': start.isoformat(),
-            'end': end.isoformat(),
-            'step': '1h'
-        }
-    )
-
-    data = response.json()
-    if data['status'] == 'success' and data['data']['result']:
-        values = [float(v[1]) for v in data['data']['result'][0]['values']]
-        return sum(values) / len(values)
-    return -1
-
-
-def calculate_optimal_target(current_target: int, avg_utilization: float) -> int:
-    """Calculate optimal HPA target based on utilization patterns."""
-
-    if avg_utilization < 0:
-        return current_target
-
-    # If utilization is significantly below target, lower the target
-    # If utilization is significantly above target, raise the target
-    deviation = (avg_utilization - current_target) / current_target
-
-    if abs(deviation) < ADJUSTMENT_THRESHOLD:
-        return current_target
-
-    # Adjust target to maintain ~75% of actual utilization as headroom
-    new_target = int(avg_utilization * 0.75)
-
-    # Apply bounds
-    new_target = max(MIN_TARGET, min(MAX_TARGET, new_target))
-
-    return new_target
-
-
-def update_hpa_target(namespace: str, hpa_name: str, new_cpu_target: int, new_memory_target: int):
-    """Update HPA with new target values."""
-
-    config.load_incluster_config()
-    api = client.AutoscalingV2Api()
-
-    hpa = api.read_namespaced_horizontal_pod_autoscaler(hpa_name, namespace)
-
-    updated = False
-    for metric in hpa.spec.metrics:
-        if metric.type == 'Resource':
-            if metric.resource.name == 'cpu' and metric.resource.target.average_utilization != new_cpu_target:
-                metric.resource.target.average_utilization = new_cpu_target
-                updated = True
-            elif metric.resource.name == 'memory' and metric.resource.target.average_utilization != new_memory_target:
-                metric.resource.target.average_utilization = new_memory_target
-                updated = True
-
-    if updated:
-        api.patch_namespaced_horizontal_pod_autoscaler(hpa_name, namespace, hpa)
-        print(f"Updated HPA {namespace}/{hpa_name}: CPU={new_cpu_target}%, Memory={new_memory_target}%")
-
-        # Create annotation for audit
-        hpa.metadata.annotations = hpa.metadata.annotations or {}
-        hpa.metadata.annotations['aiops.last-tuned'] = datetime.now().isoformat()
-        hpa.metadata.annotations['aiops.cpu-target'] = str(new_cpu_target)
-        hpa.metadata.annotations['aiops.memory-target'] = str(new_memory_target)
-        api.patch_namespaced_horizontal_pod_autoscaler(hpa_name, namespace, hpa)
-
-
-def main():
-    # List of HPAs to auto-tune
-    hpas_to_tune = [
-        {'namespace': 'production', 'hpa': 'api-server', 'deployment': 'api-server'},
-        {'namespace': 'production', 'hpa': 'web-frontend', 'deployment': 'web-frontend'},
-    ]
-
-    for item in hpas_to_tune:
-        namespace = item['namespace']
-        deployment = item['deployment']
-        hpa_name = item['hpa']
-
-        # Get current HPA configuration
-        config.load_incluster_config()
-        api = client.AutoscalingV2Api()
-        hpa = api.read_namespaced_horizontal_pod_autoscaler(hpa_name, namespace)
-
-        current_cpu_target = 70
-        current_memory_target = 80
-
-        for metric in hpa.spec.metrics:
-            if metric.type == 'Resource':
-                if metric.resource.name == 'cpu':
-                    current_cpu_target = metric.resource.target.average_utilization
-                elif metric.resource.name == 'memory':
-                    current_memory_target = metric.resource.target.average_utilization
-
-        # Get average utilization
-        avg_cpu = get_average_utilization(namespace, deployment, 'cpu')
-        avg_memory = get_average_utilization(namespace, deployment, 'memory')
-
-        # Calculate optimal targets
-        new_cpu_target = calculate_optimal_target(current_cpu_target, avg_cpu)
-        new_memory_target = calculate_optimal_target(current_memory_target, avg_memory)
-
-        # Update if changed
-        if new_cpu_target != current_cpu_target or new_memory_target != current_memory_target:
-            update_hpa_target(namespace, hpa_name, new_cpu_target, new_memory_target)
-
-
-if __name__ == '__main__':
-    main()
-```
-
-### 4.3 流量异常检测
-
-```yaml
-# aiops/anomaly-detector.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: traffic-anomaly-detector
-  namespace: aiops
-spec:
-  replicas: 1
-  selector:
+  policySelector:
     matchLabels:
-      app: anomaly-detector
-  template:
-    metadata:
-      labels:
-        app: anomaly-detector
-    spec:
-      serviceAccountName: anomaly-detector
-      containers:
-        - name: detector
-          image: myregistry.ecr.ap-northeast-2.amazonaws.com/anomaly-detector:v1.0
-          env:
-            - name: PROMETHEUS_URL
-              value: "http://prometheus-server.monitoring:80"
-            - name: SLACK_WEBHOOK_URL
-              valueFrom:
-                secretKeyRef:
-                  name: slack-webhook
-                  key: url
-            - name: NLB_ARN
-              value: "arn:aws:elasticloadbalancing:ap-northeast-2:ACCOUNT:loadbalancer/net/my-nlb/50dc6c495c0c9188"
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
+      app: application
 ```
 
+该 policy 假定**在批准后发布不可变 semver release**。[CI 章节](03-ci-pipelines.md)中的唯一 SHA/build tag 并不匹配它。独立的 promotion process 必须将已批准的 index digest 标记为 release，或者该 policy 必须使用来自一个 CI system 的、经过审阅的单调递增 build scheme。
+
+```yaml
+# fixtures/flux-values.yaml
+# apps/production/application/values.yaml -- actual Helm values file
+# Replace repository and initial digest with the already approved application.
+image:
+  repository: REPLACE_ACCOUNT.dkr.ecr.ap-northeast-2.amazonaws.com/docs-ci/application # {"$imagepolicy": "flux-system:application:name"}
+  tag: "1.0.0" # {"$imagepolicy": "flux-system:application:tag"}
+  digest: sha256:REPLACE_APPROVED_DIGEST # {"$imagepolicy": "flux-system:application:digest"}
+```
+
+真实的 application chart 必须在构造 container image URI 时使用 `image.repository`、`tag` 和 `digest`。添加 digest value 并不会让现有 chart 使用它。检查 rendered manifest 是否指向已批准的 digest。对齐 Setters path、policy marker 和 GitRepository name。
+
+当前 ImageUpdateAutomation commit template 使用 **`.Changed`**。不要将其替换为已移除的 `.Updated`。automation 推送至专用的 `flux/image-updates` branch；向 main 创建 PR 和进行 approval 需要另一个 workflow。对齐 Git write permission 和 branch protection。tag selection 不能替代 vulnerability/signature verification。
+
+### Source、Helm 和 notification
+
+- 当前示例使用 v1 `GitRepository`、`OCIRepository`、`Bucket` 和 image API。HelmRelease 是 v2；其当前 CRD 同时支持 `test.enable` 和 `test.timeout`。共同验证 chart version/value 与 CRD。
+- Kustomization `dependsOn` 等待所引用 Flux object 的 Ready condition。配置 wait/healthChecks 以观测 workload health；它不是全局 cross-cluster barrier。
+- 不要让 Terraform Helm Provider 和 Flux 同时拥有同一个 Helm release。迁移 Argo CD installation ownership 需要谨慎的 state/configuration migration。
+- 不要将 Terraform state bucket 作为普通 Flux manifest source 公开。使用具有范围受限 prefix access 的独立 manifest-artifact bucket，并避免在 artifact 中包含 `.git` 的 ignore pattern。
+- 在 Secret 中存储 notification webhook，并验证实际 receiver type 和 authentication。测试由 severity 和 filter 选择的 event。不要将未安装的 UI 或已弃用的 integration 作为默认 installation 的一部分。
+
+[Flux 指南](../gitops/02-fluxcd.md)包含完整的 source/Kustomization/HelmRelease/notification 示例。
+
+## 4. AIOps：从观测到可审阅的提案
+
+### LLM 辅助的 PR 审阅
+
+通过其受支持的 reviewer/automatic-review setting 配置 GitHub Copilot code review，并具备所需 repository permission 和可用 plan。虚构的 endpoint（如 `api.copilot.example.com`）不是可执行的 API 示例。
+
+自定义 LLM integration 必须实现真实服务当前的 API/model/SDK contract、timeout、HTTP-error handling 和 output validation。diff 和 filename 是不受信任的数据。传递结构化 value，而不是将它们插入 shell、JavaScript 或 JSON string。被审阅内容中的 instruction 不授予执行权限。
+
+披露截断和 API failure。不要向外部 fork PR 提供 secret，也不要仅凭 model response 就进行 approval、merge 或 apply。在使用外部 service 前定义允许的 source-code disclosure 和 cost scope。本次文档审阅期间未调用外部 AI service。
+
+### Metric unit 和数据质量
+
+CPU counter average 不是 CPU utilization。`rate(container_cpu_usage_seconds_total[...])` 产生 CPU core；HPA `averageUtilization` 是 **CPU request** 的百分比。不要将该百分比与 RPS 比较。解析 HPA 的 scaleTargetRef 和实际 Pod ownership，而不是假定 HPA 与 Deployment 共享名称。
+
+RPS 的时间 p95 不同于 request-duration histogram quantile：
+
+```promql
+# Seven-day p95 of RPS: counter -> rate -> temporal quantile
+quantile_over_time(0.95,
+  (sum(rate(http_requests_total{namespace="production",service="myapp"}[5m])))[7d:5m]
+)
+
+# Request-duration p95 from a classic histogram, in seconds
+histogram_quantile(0.95,
+  sum by (le) (rate(http_request_duration_seconds_bucket{
+    namespace="production",service="myapp"
+  }[5m]))
+)
+```
+
+将 metric name/label 与实际 collection 匹配。缺失 series、零流量、NaN、stale observation 和 collection gap 不是健康状况的证据。结合流量、error、latency 和 capacity。仅平均 CPU 无法确立“最佳 HPA target”；load test、SLO 和 scale-down behavior 都很重要。
+
+### 仅分析的可执行示例
+
+该工具从 stdin 读取已规范化的单 metric JSON series，并且**仅**输出 advisory report。它不会更改 API、HPA、NLB、Git 或 Slack。处于 baseline 内并不能证明 application health。
+
 ```python
+# fixtures/anomaly-report.py
 #!/usr/bin/env python3
-# anomaly-detector/detector.py
-"""
-Detects traffic anomalies and automatically adjusts NLB target weights.
-"""
-
-import os
-import time
-import numpy as np
-import requests
-import boto3
-from dataclasses import dataclass
-from typing import List, Optional
-
-PROMETHEUS_URL = os.environ['PROMETHEUS_URL']
-NLB_ARN = os.environ['NLB_ARN']
-SLACK_WEBHOOK_URL = os.environ.get('SLACK_WEBHOOK_URL')
-
-@dataclass
-class AnomalyResult:
-    is_anomaly: bool
-    score: float
-    metric_name: str
-    current_value: float
-    expected_range: tuple
-    action_taken: Optional[str] = None
-
-
-def get_metrics(query: str, duration: str = '1h') -> List[float]:
-    """Fetch metrics from Prometheus."""
-    response = requests.get(
-        f'{PROMETHEUS_URL}/api/v1/query_range',
-        params={
-            'query': query,
-            'start': f'now()-{duration}',
-            'end': 'now()',
-            'step': '1m'
-        }
-    )
-    data = response.json()
-    if data['status'] == 'success' and data['data']['result']:
-        return [float(v[1]) for v in data['data']['result'][0]['values']]
-    return []
-
-
-def detect_anomaly(values: List[float], current: float, std_multiplier: float = 3) -> AnomalyResult:
-    """Simple anomaly detection using standard deviation."""
-    if not values:
-        return AnomalyResult(False, 0, '', current, (0, 0))
-
-    mean = np.mean(values)
-    std = np.std(values)
-
-    lower_bound = mean - (std_multiplier * std)
-    upper_bound = mean + (std_multiplier * std)
-
-    is_anomaly = current < lower_bound or current > upper_bound
-    score = abs(current - mean) / std if std > 0 else 0
-
-    return AnomalyResult(
-        is_anomaly=is_anomaly,
-        score=score,
-        metric_name='',
-        current_value=current,
-        expected_range=(lower_bound, upper_bound)
-    )
-
-
-def adjust_nlb_weights(target_group_arns: List[str], weights: List[int]):
-    """Adjust NLB target group weights for traffic shifting."""
-    elbv2 = boto3.client('elbv2')
-
-    # Get current listener
-    listeners = elbv2.describe_listeners(LoadBalancerArn=NLB_ARN)['Listeners']
-
-    for listener in listeners:
-        # Create weighted forward action
-        actions = [{
-            'Type': 'forward',
-            'ForwardConfig': {
-                'TargetGroups': [
-                    {'TargetGroupArn': tg, 'Weight': w}
-                    for tg, w in zip(target_group_arns, weights)
-                ],
-                'TargetGroupStickinessConfig': {
-                    'Enabled': False
-                }
-            }
-        }]
-
-        elbv2.modify_listener(
-            ListenerArn=listener['ListenerArn'],
-            DefaultActions=actions
-        )
-
-
-def send_slack_notification(message: str, severity: str = 'warning'):
-    """Send notification to Slack."""
-    if not SLACK_WEBHOOK_URL:
-        return
-
-    color = '#ff0000' if severity == 'critical' else '#ffcc00'
-
-    requests.post(SLACK_WEBHOOK_URL, json={
-        'attachments': [{
-            'color': color,
-            'title': 'Traffic Anomaly Detected',
-            'text': message,
-            'footer': 'AIOps Anomaly Detector'
-        }]
-    })
-
-
-def main():
-    # Metrics to monitor
-    metrics = {
-        'error_rate': 'sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) * 100',
-        'latency_p99': 'histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))',
-        'request_rate': 'sum(rate(http_requests_total[5m]))'
-    }
-
-    # Target groups for traffic shifting
-    target_groups = {
-        'primary': 'arn:aws:elasticloadbalancing:ap-northeast-2:ACCOUNT:targetgroup/primary/xxx',
-        'canary': 'arn:aws:elasticloadbalancing:ap-northeast-2:ACCOUNT:targetgroup/canary/yyy'
-    }
-
-    while True:
-        anomalies = []
-
-        for metric_name, query in metrics.items():
-            # Get historical data
-            historical = get_metrics(query, duration='24h')
-
-            # Get current value
-            current_response = requests.get(
-                f'{PROMETHEUS_URL}/api/v1/query',
-                params={'query': query}
-            )
-            current_data = current_response.json()
-
-            if current_data['status'] == 'success' and current_data['data']['result']:
-                current_value = float(current_data['data']['result'][0]['value'][1])
-
-                result = detect_anomaly(historical, current_value)
-                result.metric_name = metric_name
-
-                if result.is_anomaly:
-                    anomalies.append(result)
-
-        # Take action on anomalies
-        if anomalies:
-            critical_anomalies = [a for a in anomalies if a.score > 5]
-
-            if critical_anomalies:
-                # Shift traffic away from canary
-                adjust_nlb_weights(
-                    [target_groups['primary'], target_groups['canary']],
-                    [100, 0]
-                )
-
-                message = f"Critical anomalies detected! Traffic shifted to primary.\n"
-                for a in critical_anomalies:
-                    message += f"- {a.metric_name}: {a.current_value:.2f} (expected: {a.expected_range[0]:.2f} - {a.expected_range[1]:.2f})\n"
-
-                send_slack_notification(message, severity='critical')
-            else:
-                message = f"Anomalies detected:\n"
-                for a in anomalies:
-                    message += f"- {a.metric_name}: {a.current_value:.2f} (score: {a.score:.2f})\n"
-
-                send_slack_notification(message, severity='warning')
-
-        time.sleep(60)  # Check every minute
-
-
-if __name__ == '__main__':
-    main()
-```
-
-### 4.4 使用 Argo Rollouts 的渐进式交付
-
-```yaml
-# rollouts/api-server-rollout.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Rollout
-metadata:
-  name: api-server
-  namespace: production
-spec:
-  replicas: 10
-  revisionHistoryLimit: 3
-  selector:
-    matchLabels:
-      app: api-server
-  template:
-    metadata:
-      labels:
-        app: api-server
-    spec:
-      containers:
-        - name: api-server
-          image: myregistry.ecr.ap-northeast-2.amazonaws.com/api-server:v1.0.0
-          ports:
-            - containerPort: 8080
-          resources:
-            requests:
-              cpu: 500m
-              memory: 512Mi
-            limits:
-              cpu: 1000m
-              memory: 1Gi
-
-  strategy:
-    canary:
-      # Traffic routing
-      canaryService: api-server-canary
-      stableService: api-server-stable
-
-      trafficRouting:
-        nginx:
-          stableIngress: api-server-ingress
-
-      # Progressive traffic increase
-      steps:
-        - setWeight: 5
-        - pause: {duration: 5m}
-        - analysis:
-            templates:
-              - templateName: success-rate
-              - templateName: latency
-            args:
-              - name: service-name
-                value: api-server-canary
-        - setWeight: 20
-        - pause: {duration: 10m}
-        - analysis:
-            templates:
-              - templateName: success-rate
-              - templateName: latency
-        - setWeight: 50
-        - pause: {duration: 15m}
-        - analysis:
-            templates:
-              - templateName: success-rate
-              - templateName: latency
-              - templateName: resource-usage
-        - setWeight: 80
-        - pause: {duration: 10m}
-        - setWeight: 100
-
-      # Anti-affinity for canary pods
-      antiAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution: {}
-
-      # Auto rollback
-      abortScaleDownDelaySeconds: 30
-
----
-# Analysis Templates
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: success-rate
-  namespace: production
-spec:
-  args:
-    - name: service-name
-  metrics:
-    - name: success-rate
-      interval: 1m
-      count: 5
-      successCondition: result[0] >= 0.99
-      failureCondition: result[0] < 0.95
-      failureLimit: 2
-      provider:
-        prometheus:
-          address: http://prometheus-server.monitoring:80
-          query: |
-            sum(rate(http_requests_total{service="{{args.service-name}}", status!~"5.."}[5m])) /
-            sum(rate(http_requests_total{service="{{args.service-name}}"}[5m]))
-
----
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: latency
-  namespace: production
-spec:
-  args:
-    - name: service-name
-  metrics:
-    - name: latency-p99
-      interval: 1m
-      count: 5
-      successCondition: result[0] <= 0.5
-      failureCondition: result[0] > 1.0
-      failureLimit: 2
-      provider:
-        prometheus:
-          address: http://prometheus-server.monitoring:80
-          query: |
-            histogram_quantile(0.99,
-              sum(rate(http_request_duration_seconds_bucket{service="{{args.service-name}}"}[5m])) by (le)
-            )
-
----
-apiVersion: argoproj.io/v1alpha1
-kind: AnalysisTemplate
-metadata:
-  name: resource-usage
-  namespace: production
-spec:
-  metrics:
-    - name: cpu-usage
-      interval: 2m
-      count: 3
-      successCondition: result[0] <= 0.8
-      failureCondition: result[0] > 0.95
-      provider:
-        prometheus:
-          address: http://prometheus-server.monitoring:80
-          query: |
-            avg(
-              rate(container_cpu_usage_seconds_total{
-                namespace="production",
-                pod=~"api-server-.*"
-              }[5m])
-            ) /
-            avg(
-              kube_pod_container_resource_limits{
-                namespace="production",
-                pod=~"api-server-.*",
-                resource="cpu"
-              }
-            )
-```
-
-### 4.5 生产环境 Guardrails 与 Human-in-the-Loop
-
-```yaml
-# guardrails/production-policy.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: aiops-guardrails
-  namespace: aiops
-data:
-  policy.yaml: |
-    # AIOps Guardrails Configuration
-
-    # Auto-remediation limits
-    auto_remediation:
-      enabled: true
-      max_actions_per_hour: 10
-      cooldown_between_actions: 5m
-
-      # Actions that can be automated
-      allowed_actions:
-        - scale_up_replicas
-        - scale_down_replicas
-        - adjust_hpa_target
-        - shift_traffic_weight
-        - restart_unhealthy_pod
-
-      # Actions requiring approval
-      requires_approval:
-        - scale_to_zero
-        - delete_resource
-        - modify_pdb
-        - change_resource_limits
-        - rollback_deployment
-
-    # Thresholds for auto-action
-    thresholds:
-      # Don't auto-scale below/above these limits
-      min_replicas: 2
-      max_replicas: 100
-
-      # Don't adjust HPA beyond these
-      hpa_target_min: 40
-      hpa_target_max: 90
-
-      # Traffic shift limits
-      max_traffic_shift_percent: 50
-      min_traffic_to_stable: 20
-
-    # Human approval workflow
-    approval:
-      # Slack channel for approval requests
-      slack_channel: "#aiops-approvals"
-
-      # Timeout for approval
-      timeout: 30m
-
-      # Required approvers
-      approvers:
-        - "@oncall-sre"
-        - "@platform-team"
-
-      # Auto-approve in non-prod
-      auto_approve_environments:
-        - dev
-        - staging
-
-    # Rollback triggers
-    auto_rollback:
-      enabled: true
-      triggers:
-        - metric: error_rate
-          threshold: 5  # percent
-          duration: 2m
-        - metric: latency_p99
-          threshold: 2  # seconds
-          duration: 3m
-        - metric: availability
-          threshold: 99  # percent
-          duration: 5m
-```
-
-```python
-# guardrails/approval-controller.py
-"""
-Human-in-the-loop approval controller for AIOps actions.
-"""
-
-import os
-import time
+"""Read an already normalized metric series; emit an advisory report only."""
+import argparse
 import json
-import requests
-from dataclasses import dataclass
-from typing import Optional
-from datetime import datetime, timedelta
-
-SLACK_WEBHOOK_URL = os.environ['SLACK_WEBHOOK_URL']
-SLACK_BOT_TOKEN = os.environ['SLACK_BOT_TOKEN']
-
-@dataclass
-class ApprovalRequest:
-    id: str
-    action: str
-    resource: str
-    namespace: str
-    reason: str
-    requester: str
-    created_at: datetime
-    expires_at: datetime
-    status: str = 'pending'  # pending, approved, rejected, expired
-    approver: Optional[str] = None
+import math
+import statistics
+import sys
+import time
 
 
-def request_approval(action: str, resource: str, namespace: str, reason: str) -> ApprovalRequest:
-    """Send approval request to Slack and wait for response."""
+def number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
-    request = ApprovalRequest(
-        id=f"aiops-{int(time.time())}",
-        action=action,
-        resource=resource,
-        namespace=namespace,
-        reason=reason,
-        requester='aiops-system',
-        created_at=datetime.now(),
-        expires_at=datetime.now() + timedelta(minutes=30)
-    )
 
-    # Send Slack message with approval buttons
-    message = {
-        'channel': '#aiops-approvals',
-        'text': f'AIOps Action Approval Required',
-        'attachments': [{
-            'color': '#ffcc00',
-            'blocks': [
-                {
-                    'type': 'section',
-                    'text': {
-                        'type': 'mrkdwn',
-                        'text': f'*Action Required:* {action}\n*Resource:* {namespace}/{resource}\n*Reason:* {reason}'
-                    }
-                },
-                {
-                    'type': 'actions',
-                    'block_id': request.id,
-                    'elements': [
-                        {
-                            'type': 'button',
-                            'text': {'type': 'plain_text', 'text': 'Approve'},
-                            'style': 'primary',
-                            'action_id': 'approve',
-                            'value': json.dumps({'request_id': request.id})
-                        },
-                        {
-                            'type': 'button',
-                            'text': {'type': 'plain_text', 'text': 'Reject'},
-                            'style': 'danger',
-                            'action_id': 'reject',
-                            'value': json.dumps({'request_id': request.id})
-                        }
-                    ]
-                },
-                {
-                    'type': 'context',
-                    'elements': [{
-                        'type': 'mrkdwn',
-                        'text': f'Request ID: {request.id} | Expires: {request.expires_at.isoformat()}'
-                    }]
-                }
-            ]
-        }]
+def assess(data, now):
+    if not number(now):
+        return {"status": "invalid_data", "reason": "Invalid observation clock"}
+    if not isinstance(data, dict):
+        return {"status": "invalid_data", "reason": "Expected an object"}
+    if data.get("unit") not in {"requests_per_second", "seconds", "ratio"}:
+        return {"status": "invalid_data", "reason": "Declare one supported normalized unit"}
+    period = data.get("periodSeconds")
+    points = data.get("points")
+    if not number(period) or period <= 0 or not isinstance(points, list):
+        return {"status": "invalid_data", "reason": "Invalid period or series"}
+    if len(points) < 31:
+        return {"status": "insufficient_data", "reason": "Need 30 baseline points and one observation"}
+    if any(
+        not isinstance(p, dict)
+        or not number(p.get("timestamp"))
+        or not number(p.get("value"))
+        or p["value"] < 0
+        or (data["unit"] == "ratio" and p["value"] > 1)
+        for p in points
+    ):
+        return {"status": "invalid_data", "reason": "Non-finite, negative or incorrectly normalized point"}
+    ordered = sorted(points, key=lambda p: p["timestamp"])
+    gaps = [b["timestamp"] - a["timestamp"] for a, b in zip(ordered, ordered[1:])]
+    if any(abs(gap - period) > period * 0.1 for gap in gaps):
+        return {"status": "insufficient_data", "reason": "Duplicate or missing collection intervals"}
+    age = now - ordered[-1]["timestamp"]
+    if age < 0 or age > period * 2:
+        return {"status": "insufficient_data", "reason": "Observation is future-dated or stale"}
+
+    # The observation is excluded from the baseline. Use an explicit per-unit
+    # absolute margin; this is a demonstration heuristic, not an SLO or ML model.
+    baseline = [p["value"] for p in ordered[:-1]]
+    center = statistics.median(baseline)
+    mad = statistics.median(abs(value - center) for value in baseline)
+    absolute_margin = {"requests_per_second": 1.0, "seconds": 0.01, "ratio": 0.001}[data["unit"]]
+    margin = max(6 * 1.4826 * mad, abs(center) * 0.2, absolute_margin)
+    latest = ordered[-1]["value"]
+    return {
+        "status": "review_required" if abs(latest - center) > margin else "within_baseline",
+        "unit": data["unit"],
+        "observedAt": ordered[-1]["timestamp"],
+        "observedValue": latest,
+        "baselineMedian": center,
+        "illustrativeMargin": margin,
+        "baselinePoints": len(baseline),
+        "actionTaken": "none",
     }
 
-    requests.post(
-        'https://slack.com/api/chat.postMessage',
-        headers={'Authorization': f'Bearer {SLACK_BOT_TOKEN}'},
-        json=message
-    )
 
-    return request
-
-
-def check_guardrails(action: str, config: dict) -> tuple[bool, str]:
-    """Check if action is allowed by guardrails."""
-
-    guardrails = config.get('auto_remediation', {})
-
-    # Check if action requires approval
-    if action in guardrails.get('requires_approval', []):
-        return False, 'Action requires manual approval'
-
-    # Check if action is allowed
-    if action not in guardrails.get('allowed_actions', []):
-        return False, f'Action {action} is not in allowed list'
-
-    # Check rate limits
-    # (would check action history here)
-
-    return True, 'OK'
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--now", type=float, help="Unix timestamp; omit to use the current clock")
+    args = parser.parse_args()
+    now = args.now if args.now is not None else time.time()
+    try:
+        data = json.load(sys.stdin)
+        result = assess(data, now)
+    except (ValueError, TypeError):
+        result = {"status": "invalid_data", "reason": "Invalid JSON"}
+    print(json.dumps(result, allow_nan=False))
+    return 2 if result["status"] in {"invalid_data", "insufficient_data"} else 0
 
 
-def execute_with_guardrails(action: str, resource: str, namespace: str,
-                            reason: str, config: dict) -> bool:
-    """Execute action with guardrail checks and optional approval."""
-
-    allowed, message = check_guardrails(action, config)
-
-    if allowed:
-        # Execute immediately
-        print(f"Executing {action} on {namespace}/{resource}: {reason}")
-        return True
-
-    if 'requires manual approval' in message:
-        # Request approval
-        request = request_approval(action, resource, namespace, reason)
-
-        # Wait for approval (in production, this would be async)
-        timeout = datetime.now() + timedelta(minutes=30)
-        while datetime.now() < timeout:
-            # Check approval status (would query database/cache)
-            if request.status == 'approved':
-                print(f"Approved by {request.approver}. Executing {action}.")
-                return True
-            elif request.status == 'rejected':
-                print(f"Rejected by {request.approver}. Skipping {action}.")
-                return False
-            time.sleep(30)
-
-        print(f"Approval timeout for {action}. Skipping.")
-        return False
-
-    print(f"Guardrail blocked: {message}")
-    return False
+if __name__ == "__main__":
+    raise SystemExit(main())
 ```
 
-### 4.6 AIOps 限制与最佳实践
+输入包含 `unit`、`periodSeconds` 和 `points`；每个 point 都有 UTC Unix timestamp 和有限的非负 value。至少提供 30 个 baseline point 加上 observation。ratio 的范围为 0–1。collector 必须检查 API error、pagination 和 partial result，并选择一个明确定义的 aggregate series。
 
-**当前限制：**
+observation 被排除在 median/MAD baseline 之外。这些 margin 是**说明性阈值**，而不是训练出的 model 或季节性 forecasting system。该工具对 point 排序，并拒绝 gap、duplicate 和 stale observation。`review_required` 不是执行许可；`actionTaken` 保持为 `none`。
 
-1. **上下文理解**：LLM 可能会遗漏人类能够理解的领域特定上下文
-2. **级联故障**：如果边界设置不当，自动化操作可能会触发级联问题
-3. **新颖场景**：基于历史数据训练的 ML 模型可能在前所未有的场景中失效
-4. **延迟**：LLM 推理会给决策循环增加延迟
-5. **成本**：频繁调用 LLM 可能成本很高
+调整 CloudWatch collection 时，使用 metric 的实际 namespace/dimension，并对配对的 `Timestamps`/`Values` 排序。不要假定默认 response order 中 `Values[-1]` 最新。`RequestCount` 和 target-group-specific metric 具有不同的 dimension contract；处理 NextToken、StatusCode 和缺失 point。
 
-**最佳实践：**
+### 批准与执行边界
 
-```yaml
-# aiops/best-practices-config.yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: aiops-best-practices
-  namespace: aiops
-data:
-  guidelines.md: |
-    # AIOps Best Practices
+提案应标识 target ARN/namespace、当前 configuration revision、diff、metric evidence/time、expiry、approver 和 rollback condition。执行前，重新检查 authorization、expiry、revision、capacity 和 destination health。string allowlist 或未使用的 guardrail ConfigMap 不是 enforcement mechanism。
 
-    ## 1. Start with Observability
-    - Ensure comprehensive metrics collection before automation
-    - Establish baselines for normal behavior
-    - Define clear SLOs and error budgets
+approval UI 需要实际的 request-signature verification、approver authorization、persistent state、replay protection 和 timeout handling。发送 Slack button 后等待未变更的 in-memory object status 并不是完整的 approval system。不要声称未实现的 executor 已执行 action。
 
-    ## 2. Progressive Automation
-    - Level 0: Alert only (no action)
-    - Level 1: Suggest action (human approves)
-    - Level 2: Auto-execute with notification
-    - Level 3: Full automation with audit
+对 NLB 变更，使用[第 02 章的受约束提案/可选执行流程](02-infrastructure-advanced.md)。不要仅因为未检测到 anomaly 就覆盖每个 listener 或恢复任意的 100/0 split。与普通非零 weight adjustment 不同，NLB weight 为零会在短时间后关闭现有 connection。
 
-    ## 3. Guardrails First
-    - Always implement rate limits
-    - Define maximum blast radius
-    - Require approval for destructive actions
-    - Maintain manual override capability
+对于 progressive delivery，使用[已验证的 Argo Rollouts 指南](../gitops/argocd/05-traffic-management.md)中的 service、routing 和 AnalysisTemplate。对齐 canary-specific metric、argument、namespace、empty/NaN handling 和 failure condition。analysis failure 不会自动 rollback database change，而 pause/abort setting 也不能解决所有 recovery problem。
 
-    ## 4. Testing in Non-Production
-    - Chaos engineering to validate responses
-    - Synthetic anomaly injection
-    - Rollback testing
+## 参考资料
 
-    ## 5. Continuous Learning
-    - Review auto-actions weekly
-    - Update models with new patterns
-    - Incorporate human feedback
+- [Atlantis 安全性](https://www.runatlantis.io/docs/security.html)
+- [Atlantis 服务端 policy](https://www.runatlantis.io/docs/server-side-repo-config.html)
+- [HCP Terraform 动态 AWS 凭证](https://developer.hashicorp.com/terraform/cloud-docs/dynamic-provider-credentials/aws-configuration)
+- [HCP Terraform run trigger](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/settings/run-triggers)
+- [Sentinel tfrun](https://developer.hashicorp.com/terraform/cloud-docs/policy-enforcement/import-reference/tfrun)
+- [Flux ImageUpdateAutomation v1](https://github.com/fluxcd/image-automation-controller/blob/v1.2.5/docs/spec/v1/imageupdateautomations.md)
+- [GitHub Copilot code review](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/request-a-code-review/use-code-review)
+- [章节测验](../quizzes/ops/05-gitops-automation-quiz.md)
 
-    ## 6. Transparency
-    - Log all automated decisions
-    - Explain reasoning in notifications
-    - Provide audit trail for compliance
-```
-
----
-
-## 总结
-
-| 工具 | 使用场景 | 关键特性 |
-|------|----------|-------------|
-| **Atlantis** | Terraform PR 自动化 | 自托管，完全控制 |
-| **Terraform Cloud** | 托管 Terraform | Sentinel 策略，成本估算 |
-| **FluxCD** | 用于 Kubernetes 的 GitOps | Image 自动化，模块化设计 |
-| **AIOps** | 智能自动化 | 异常检测，自动修复 |
-
-**推荐架构：**
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        GitOps Architecture                          │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  Infrastructure         Application          Intelligence          │
-│  ┌─────────────┐       ┌─────────────┐      ┌─────────────┐       │
-│  │  Atlantis   │       │   FluxCD    │      │   AIOps     │       │
-│  │  or TFC     │       │  or ArgoCD  │      │  Controller │       │
-│  └──────┬──────┘       └──────┬──────┘      └──────┬──────┘       │
-│         │                     │                     │              │
-│         ▼                     ▼                     ▼              │
-│  ┌─────────────────────────────────────────────────────────────┐  │
-│  │                    Kubernetes Cluster                        │  │
-│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────────────┐ │  │
-│  │  │   VPC   │  │   EKS   │  │  Apps   │  │  Argo Rollouts  │ │  │
-│  │  └─────────┘  └─────────┘  └─────────┘  └─────────────────┘ │  │
-│  └─────────────────────────────────────────────────────────────┘  │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-< [上一篇：ArgoCD 多集群](./04-gitops-multi-cluster.md) | [目录](./README.md) | [下一篇：扩展策略](./06-scaling-strategies.md) >
+< [上一章：多集群](04-gitops-multi-cluster.md) | [目录](README.md) | [下一章：扩缩容](06-scaling-strategies.md) >

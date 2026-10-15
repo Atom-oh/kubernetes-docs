@@ -1,7 +1,7 @@
 # Karpenter
 
 > **Supported Versions**: Karpenter 1.14 LTS (examples: 1.14.1); select Kubernetes/EKS versions using the compatibility and provider support tables.
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 12, 2026
 
 ## Table of Contents
 - [Introduction](#introduction)
@@ -351,6 +351,17 @@ AWS’s July22,2026 announcement added EFA network-interface and placement-group
 ### August 2026 Update: v1.14.1 Patch Release
 
 [v1.14.1](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.1), the first patch on the v1.14 line, was published on August 21, 2026. It is a maintenance release bumping the upstream `sigs.k8s.io/karpenter` version and cherry-picking fixes made since v1.14.0.
+
+### October 2026 Update: v1.15.0 Released
+
+[v1.15.0](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0) was published on October 10, 2026. Key changes:
+
+- **Node repair becomes a voluntary disruption**: node repair is folded into the disruption machinery, with terminate-first repair when a capacity-constrained NodePool cannot stage a replacement node first. Reboot via `ec2:RebootInstances` is added as a repair action (behind the `RebootForRepair` AWS feature gate), and the previous repair controller remains available through the `--legacy-node-repair` flag.
+- **CEL support in KubeletConfiguration**: `maxPodsExpression`, `kubeReserved` and `systemReserved` accept CEL expressions, and the EC2NodeClass KubeletConfiguration fields were extended.
+- **Broader DRA support**: prioritized alternatives support plus NVIDIA and EFA driver DRA support.
+- Also: an `--aws-feature-gates` flag, default pod topology spread awareness, accounting for instance type volume limits during provisioning, new disruption metrics such as `karpenter_pods_disrupted_total`, and a feature-gated pod deletion cost management controller.
+
+Under the support policy, regular minors are supported only until the next minor, so with v1.15.0 out, v1.14 continues only as an LTS line (through July 2027). See the [v1.15.0 release notes](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0) for details.
 
 ## Node Classes
 

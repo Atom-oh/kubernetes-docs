@@ -1,26 +1,25 @@
 # ArgoCD ベストプラクティス
 
-> **対応バージョン**: ArgoCD v2.9+
-> **最終更新**: February 22, 2026
+> **レビューのベースライン**: Argo CD 3.5.2 / Helm Chart 10.8.4 / Kustomize 5.8.1。リリースノートのレビュー後、マニフェスト例をパッチ 3.5.4（引き続き Kustomize 5.8.1 をバンドル）向けに更新しました（例は再実行していません）。
+> **最終更新**: October 12, 2026
 
 ## 目次
+
 - [リポジトリ構造](#repository-structure)
-- [環境昇格](#environment-promotion)
+- [環境プロモーション](#environment-promotion)
 - [リソース管理](#resource-management)
 - [パフォーマンスチューニング](#performance-tuning)
-- [災害復旧](#disaster-recovery)
+- [障害復旧](#disaster-recovery)
 - [アップグレード戦略](#upgrade-strategies)
 - [トラブルシューティング](#troubleshooting)
-- [EKS ベストプラクティス](#eks-best-practices)
+- [EKS のベストプラクティス](#eks-best-practices)
 - [本番環境チェックリスト](#production-checklist)
-
-<span id="repository-structure"></span>
 
 ## リポジトリ構造
 
-### Monorepo パターン
+### モノレポパターン
 
-すべてのアプリケーションと環境を単一のリポジトリで管理します:
+すべてのアプリケーションと環境を単一のリポジトリで管理します。
 
 ```
 gitops-repo/
@@ -52,20 +51,24 @@ gitops-repo/
     └── production/
 ```
 
-**利点:**
+**長所:**
 - 信頼できる唯一の情報源
 - アプリケーション横断の変更が容易
 - CI/CD を簡素化
-- 複数アプリケーションのアトミックな更新
+- 1 つの原子的な Git コミットで複数アプリを記述できる。ただし、それらのクラスターへのデプロイは単一の原子的トランザクションではない
 
-**欠点:**
-- 大規模になる可能性がある
+**短所:**
+- 大規模になり得る
 - アクセス制御が複雑
 - 単一障害点
 
-### Polyrepo パターン
+![1 つの Git リポジトリに app-a、app-b、infra ディレクトリを保持するモノレポと、同じコンポーネントを app-a-repo、app-b-repo、infra-repo という 3 つの独立した Git リポジトリに分割するポリレポを比較した図。](../../.gitbook/assets/en-gitops-argocd-09-best-practices-0.png)
 
-アプリケーションまたはチームごとにリポジトリを分割します:
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-09-best-practices-0.html)
+
+### ポリレポパターン
+
+アプリケーションまたはチームごとにリポジトリを分離します。
 
 ```
 Organization:
@@ -84,15 +87,15 @@ Organization:
     └── clusters/
 ```
 
-**利点:**
-- 所有権が明確
+**長所:**
+- 明確なオーナーシップ
 - 独立したデプロイ
 - きめ細かなアクセス制御
 - リポジトリサイズが小さい
 
-**欠点:**
+**短所:**
 - 変更の調整がより困難
-- 管理するリポジトリが増加
+- 管理すべきリポジトリが増える
 - 乖離が発生する可能性
 
 ### App of Apps のリポジトリ構造
@@ -125,41 +128,15 @@ gitops-root/
 | Namespace | `{app}` または `{app}-{env}` | `frontend`, `frontend-prod` |
 | リポジトリ | `gitops-{scope}` | `gitops-platform` |
 
-<span id="environment-promotion"></span>
-
-## 環境昇格
+## 環境プロモーション
 
 ### Git ブランチ戦略
 
-```mermaid
-flowchart LR
-    subgraph BRANCHES["Git Branches"]
-        DEV["develop"]
-        STG["staging"]
-        MAIN["main"]
-    end
+長期間存続する環境ブランチも選択肢の 1 つですが、共有の main ブランチ上のディレクトリベースのオーバーレイは、ブランチの乖離を抑えられる場合がよくあります。App of Apps は管理機能です。ルートリポジトリへのアクセスと子 Application の作成を制限してください。手動の本番同期は、レビュー済みの Git 変更とは別のゲートです。
 
-    subgraph ENVS["Environments"]
-        E_DEV["Dev Cluster"]
-        E_STG["Staging Cluster"]
-        E_PROD["Production Cluster"]
-    end
+### ディレクトリベースのプロモーション
 
-    DEV -->|"merge"| STG
-    STG -->|"merge"| MAIN
-
-    DEV -->|"deploy"| E_DEV
-    STG -->|"deploy"| E_STG
-    MAIN -->|"deploy"| E_PROD
-
-    classDef branch fill:#f9f9f9,stroke:#333,color:black
-    classDef env fill:#326CE5,stroke:#333,color:white
-
-    class DEV,STG,MAIN branch
-    class E_DEV,E_STG,E_PROD env
-```
-
-### ディレクトリベースの昇格
+環境ごとに再ビルドせず、同じテスト済みアーティファクトをプロモートします。これらの例は既存の base と、レジストリによって強制されるイミュータブルなタグを前提としています。タグのイミュータビリティが保証されない場合は digest を優先してください。可変タグの内容を変更しても、Git や Deployment の Pod template 自体は更新されません。base のイメージ名は `my-app` です。オーバーレイでは name/tag の変換を一緒に適用してください。以前の名前に一致するオーバーレイでは、base によってすでに名前変更されたイメージは更新されません。
 
 ```yaml
 # overlays/dev/kustomization.yaml
@@ -168,204 +145,206 @@ kind: Kustomization
 resources:
   - ../../base
 images:
-  - name: myapp
-    newTag: dev-abc1234
+  - name: my-app
+    newName: my-registry/my-app
+    newTag: v1.2.3
 
+---
 # overlays/staging/kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../../base
 images:
-  - name: myapp
-    newTag: v1.2.3-rc1
+  - name: my-app
+    newName: my-registry/my-app
+    newTag: v1.2.3
 
+---
 # overlays/production/kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../../base
 images:
-  - name: myapp
+  - name: my-app
+    newName: my-registry/my-app
     newTag: v1.2.3
 ```
 
-### 自動昇格パイプライン
+### 自動プロモーションパイプライン
+
+このワークフローは、**すでにテスト済みの digest** に対する PR を作成します。例のレジストリとオーバーレイパスは適宜変更してください。対象リポジトリへの contents/pull requests の書き込み権限をスコープしたトークン、または GitHub App トークンを使用して `GITOPS_PR_TOKEN` を指定します。デフォルトの GITHUB_TOKEN による変更には、後続ワークフローのトリガー制限があります。必要なチェックを実行できることを確認してください。リポジトリの ruleset/branch protection を通じて、レビュー、テスト、アーティファクトポリシーを強制します。
 
 ```yaml
-# .github/workflows/promote.yaml
-name: Promote to Production
+name: Promote tested image to production
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version to promote'
+      digest:
+        description: 'Tested image digest (sha256: followed by 64 hex characters)'
         required: true
-
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: promote-production
+  cancel-in-progress: false
 jobs:
   promote:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Update production overlay
-        run: |
-          cd overlays/production
-          kustomize edit set image myapp=myregistry/myapp:${{ github.event.inputs.version }}
-
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          title: "Promote ${{ github.event.inputs.version }} to production"
-          branch: promote/${{ github.event.inputs.version }}
-          commit-message: "chore: promote ${{ github.event.inputs.version }} to production"
+          persist-credentials: false
+      - name: Install verified Kustomize
+        shell: bash
+        run: |
+          set -euo pipefail
+          tool_dir="$RUNNER_TEMP/kustomize-bin"
+          mkdir -p "$tool_dir"
+          cd "$tool_dir"
+          curl -fsSL -o kustomize.tar.gz \
+            https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v5.8.1/kustomize_v5.8.1_linux_amd64.tar.gz
+          echo "029a7f0f4e1932c52a0476cf02a0fd855c0bb85694b82c338fc648dcb53a819d  kustomize.tar.gz" | sha256sum -c -
+          tar -xzf kustomize.tar.gz kustomize
+          echo "$tool_dir" >> "$GITHUB_PATH"
+      - name: Update production overlay
+        env:
+          IMAGE_DIGEST: ${{ inputs.digest }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$IMAGE_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]] || exit 1
+          cd overlays/production
+          kustomize edit set image "my-app=my-registry/my-app@${IMAGE_DIGEST}"
+          kustomize build . > /dev/null
+      - name: Create reviewed promotion PR
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.GITOPS_PR_TOKEN }}
+          branch: promote-production
+          title: 'Promote tested image to production'
+          commit-message: 'chore: promote tested image digest'
+          add-paths: overlays/production/kustomization.yaml
+          body: |
+            Promote the already tested image digest: ${{ inputs.digest }}
+            Require the repository's validation and approval checks before merging.
 ```
-
-<span id="resource-management"></span>
 
 ## リソース管理
 
-### ArgoCD コンポーネントのリソース
+### コンポーネントリソース
+
+これらの Chart 10.8.4 の値は、保証されたサイジング表ではなく、**測定の出発点**です。既存の values にマージし、デプロイのオーナーを 1 つに維持してください。Chart は正しいコンテナ名とワークロードタイプを提供します。意図せずコンテナを追加してしまう不完全な Deployment patch は避けてください。
 
 ```yaml
-# Helm values for production
+fullnameOverride: argocd
 controller:
+  replicas: 1
   resources:
     requests:
       cpu: 500m
-      memory: 512Mi
-    limits:
-      cpu: 2000m
-      memory: 2Gi
-
-server:
-  resources:
-    requests:
-      cpu: 250m
-      memory: 256Mi
-    limits:
-      cpu: 1000m
       memory: 1Gi
-
-repoServer:
-  resources:
-    requests:
-      cpu: 500m
-      memory: 512Mi
     limits:
-      cpu: 2000m
-      memory: 2Gi
-
-redis:
+      cpu: '2'
+      memory: 4Gi
+server:
+  replicas: 2
   resources:
     requests:
       cpu: 100m
-      memory: 128Mi
+      memory: 256Mi
     limits:
       cpu: 500m
       memory: 512Mi
+repoServer:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: '1'
+      memory: 2Gi
 ```
 
-### 規模別のリソース制限
+| 測定項目 | チューニングの方向性 |
+|---|---|
+| マニフェスト時間、同時リクエスト、リポジトリサイズ | repo-server の CPU/メモリ、並列度、ディスク |
+| クラスターあたりのリソース数と watch/cache メモリ | Controller のメモリとクラスター分散 |
+| reconciliation/sync キューの遅延と API スロットリング | ターゲット API 容量と併せた processor の同時実行数 |
+| CPU スロットリング、OOM、再起動 | 同時実行と併せた requests/limits |
 
-| 規模 | アプリケーション | Controller CPU | Controller メモリ | Repo Server CPU | Repo Server メモリ |
-|-------|--------------|----------------|-------------------|-----------------|-------------------|
-| 小規模 | < 50 | 500m | 512Mi | 500m | 512Mi |
-| 中規模 | 50-200 | 1000m | 1Gi | 1000m | 1Gi |
-| 大規模 | 200-500 | 2000m | 2Gi | 2000m | 2Gi |
-| 超大規模 | > 500 | 4000m | 4Gi | 4000m | 4Gi |
+Application 数だけでは、100/500 Application での sharding 閾値は決まりません。Redis は再構築可能なキャッシュですが、キャッシュの喪失により再計算の負荷とレイテンシーが生じることがあります。[HA インストールのセクション](01-installation.md#high-availability-setup)にある node/anti-affinity/PDB の前提条件を適用してください。すべてのコンポーネントを無条件にレプリケートしないでください。
 
-### Horizontal Pod Autoscaler
+### 任意の repo-server HPA
+
+これには Metrics Server と CPU requests が必要です。HPA を有効にすると、レプリカ数は HPA が管理します。CPU スケーリングでは、すべてのマニフェスト生成のボトルネックを説明できません。持続的なキャッシュメモリだけに基づくスケーリングは、不要なレプリカを実行し続ける可能性があります。
 
 ```yaml
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: argocd-repo-server
-  namespace: argocd
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: argocd-repo-server
-  minReplicas: 2
-  maxReplicas: 10
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 70
-    - type: Resource
-      resource:
-        name: memory
-        target:
-          type: Utilization
-          averageUtilization: 80
+repoServer:
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: null
+    behavior:
+      scaleDown:
+        stabilizationWindowSeconds: 300
 ```
-
-<span id="performance-tuning"></span>
 
 ## パフォーマンスチューニング
 
-### Controller の最適化
+### 設定の配置場所と意味
+
+これらを同じ Helm values にマージしてください。`configs.params` は `argocd-cmd-params-cm` を、`configs.cm` は `argocd-cm` を生成します。コマンドライン/環境設定を通じて利用される値には、影響を受ける controller/repo-server/server の rollout が必要です。レンダリングされた Pod と起動ログを確認してください。
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-cmd-params-cm
-  namespace: argocd
-data:
-  # Reduce reconciliation frequency
-  controller.status.processors: "50"
-  controller.operation.processors: "25"
-  controller.self.heal.timeout.seconds: "5"
-
-  # Increase cache TTL
-  controller.repo.server.timeout.seconds: "180"
-
-  # Sharding for large deployments
-  controller.sharding.algorithm: round-robin
+configs:
+  params:
+    controller.status.processors: '20'
+    controller.operation.processors: '10'
+    controller.repo.server.timeout.seconds: '180'
+    server.repo.server.timeout.seconds: '180'
+    reposerver.parallelism.limit: '2'
+    reposerver.repo.cache.expiration: 24h
+    reposerver.git.request.timeout: 30s
+    reposerver.git.lsremote.parallelism.limit: '5'
+  cm:
+    timeout.reconciliation: 300s
+    timeout.reconciliation.jitter: 60s
+    application.resourceTrackingMethod: annotation
+repoServer:
+  env:
+  - name: ARGOCD_EXEC_TIMEOUT
+    value: 2m
 ```
 
-### Repo Server の最適化
+- Status/operation processor はポーリング頻度ではなく同時実行数を制御します。20/10 はデフォルトの同時実行値です。
+- 180 秒の repo-server RPC timeout、2 分間のツール実行 timeout、30 秒の Git request timeout は異なる制限です。これらを増やす前に、遅いステージとキャンセルの動作を特定してください。
+- `reposerver.parallelism.limit` はキャッシュ TTL ではなく、同時マニフェスト生成数を制限します。メモリ/process 制限に対して負荷テストしてください。
+- デフォルトの定期 reconciliation は 120 秒に最大 60 秒の jitter を加えたものです。この例では 300 + 60 秒（5～6 分）を使用しています。webhook やその他の refresh 要因は別です。
+- `application.resourceTrackingMethod` は refresh 頻度ではなくリソース追跡を設定します。既存の追跡方式を変更する前に、移行の影響を確認してください。
+
+### 複数の宛先クラスターのシャーディング
+
+デフォルトの sharding 単位は宛先 **cluster** です。レプリカ数を増やしても、1 つの cluster を対象とするすべての Application が均等に分散されるわけではありません。Chart は StatefulSet のレプリカを `ARGOCD_CONTROLLER_REPLICAS` と連携させます。このバージョンでは round-robin/consistent-hashing と動的クラスター分散は experimental です。これらを普遍的な本番デフォルトとして示さないでください。
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-cmd-params-cm
-  namespace: argocd
-data:
-  # Increase parallelism
-  reposerver.parallelism.limit: "10"
-
-  # Cache settings
-  reposerver.repo.cache.expiration: "24h"
-
-  # Git optimization
-  reposerver.git.request.timeout: "60s"
-  reposerver.git.lsremote.parallelism: "5"
+controller:
+  replicas: 3
+configs:
+  params:
+    controller.sharding.algorithm: legacy
 ```
 
-### Redis の最適化
+### Application の境界と HPA
 
-```yaml
-# For high-traffic deployments, use Redis HA
-redis-ha:
-  enabled: true
-  redis:
-    config:
-      maxmemory: "512mb"
-      maxmemory-policy: "allkeys-lru"
-  haproxy:
-    enabled: true
-    replicas: 3
-```
+大規模な Application は、オーナーシップとライフサイクルの境界に沿って分割してください。任意のリソース種別で分割すると、Secret/Service/Deployment の依存関係と削除順序が複雑になります。App of Apps の子 Application は、単一の原子的なデプロイではありません。
 
-### Application レベルの最適化
+この例は既存の `workloads` Project、宛先 Namespace、および Deployment `my-app` を制御する HPA を前提としています。Git から replicas を省略することを推奨します。必要な場合は、diff/apply の除外対象をそのリソースに限定してください。`ignoreDifferences.name` は Kustomize の prefix/suffix 適用後の最終名に一致させます。`ApplyOutOfSyncOnly` は apply 対象を最適化しますが、sync 頻度は変えません。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -374,390 +353,288 @@ metadata:
   name: large-app
   namespace: argocd
 spec:
-  # Reduce sync frequency for stable apps
+  project: workloads
+  source:
+    repoURL: https://github.com/myorg/gitops.git
+    targetRevision: main
+    path: overlays/production
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: my-app-production
   syncPolicy:
     automated:
+      enabled: true
       prune: true
       selfHeal: true
     syncOptions:
-      - ApplyOutOfSyncOnly=true  # Only apply changed resources
-
-  # Ignore frequently changing fields
+    - ApplyOutOfSyncOnly=true
+    - RespectIgnoreDifferences=true
   ignoreDifferences:
-    - group: apps
-      kind: Deployment
-      jsonPointers:
-        - /spec/replicas
-    - group: "*"
-      kind: "*"
-      managedFieldsManagers:
-        - kube-controller-manager
+  - group: apps
+    kind: Deployment
+    name: my-app
+    namespace: my-app-production
+    jsonPointers:
+    - /spec/replicas
 ```
 
-<span id="disaster-recovery"></span>
+## 障害復旧
 
-## 災害復旧
+### バックアップ範囲
 
-### バックアップ戦略
+`argocd admin export` は Applications/AppProjects/ApplicationSets、4 つのコア ConfigMaps、および選択された Argo CD Secrets をエクスポートします。これは**完全な Namespace バックアップではありません**。cmd-params、Notifications/CMP 設定、個別に管理される TLS/notification Secrets のすべてが含まれると想定しないでください。設定済みの追加 Application/ApplicationSet Namespace も確認してください。
+
+一致する CLI バージョン、検証済みの kubecontext、`age` ツール、承認済みの公開 recipient を使用してください。秘密の identity は別に保管し、復号と復旧をテストしてください。補足スナップショットは、Helm release Secrets を含む可能性のある Namespace 内の全 ConfigMaps/Secrets を暗号化します。復旧時に必要なオブジェクトを選択してください。補足スナップショット全体を無条件に apply しないでください。
 
 ```bash
-#!/bin/bash
-# backup-argocd.sh
+#!/usr/bin/env bash
+set -euo pipefail
+umask 077
+: "${ARGO_BACKUP_RECIPIENT:?Set the approved age public recipient}"
+ARGO_BACKUP_DIR="./argocd-backup-$(date -u +%Y%m%dT%H%M%SZ)"
+mkdir -m 700 "$ARGO_BACKUP_DIR"
+kubectl config current-context
+kubectl get configmap argocd-cm -n argocd -o name
 
-BACKUP_DIR="/backups/argocd/$(date +%Y%m%d)"
-mkdir -p $BACKUP_DIR
+argocd admin export -n argocd |
+  age --recipient "$ARGO_BACKUP_RECIPIENT" --output "$ARGO_BACKUP_DIR/data.yaml.age.tmp"
+mv "$ARGO_BACKUP_DIR/data.yaml.age.tmp" "$ARGO_BACKUP_DIR/data.yaml.age"
 
-# Backup Applications
-kubectl get applications -n argocd -o yaml > $BACKUP_DIR/applications.yaml
-
-# Backup AppProjects
-kubectl get appprojects -n argocd -o yaml > $BACKUP_DIR/appprojects.yaml
-
-# Backup Repositories
-kubectl get secrets -n argocd -l argocd.argoproj.io/secret-type=repository -o yaml > $BACKUP_DIR/repositories.yaml
-
-# Backup Repo Credentials
-kubectl get secrets -n argocd -l argocd.argoproj.io/secret-type=repo-creds -o yaml > $BACKUP_DIR/repo-creds.yaml
-
-# Backup Clusters
-kubectl get secrets -n argocd -l argocd.argoproj.io/secret-type=cluster -o yaml > $BACKUP_DIR/clusters.yaml
-
-# Backup ConfigMaps
-kubectl get configmaps -n argocd -o yaml > $BACKUP_DIR/configmaps.yaml
-
-# Backup RBAC
-kubectl get configmap argocd-rbac-cm -n argocd -o yaml > $BACKUP_DIR/rbac.yaml
-
-echo "Backup completed: $BACKUP_DIR"
+# Supplement: all namespace ConfigMaps/Secrets, including custom configuration.
+kubectl get configmaps,secrets -n argocd -o yaml |
+  age --recipient "$ARGO_BACKUP_RECIPIENT" --output "$ARGO_BACKUP_DIR/namespace-config.yaml.age.tmp"
+mv "$ARGO_BACKUP_DIR/namespace-config.yaml.age.tmp" "$ARGO_BACKUP_DIR/namespace-config.yaml.age"
 ```
 
-### 復元手順
+pin されたインストールマニフェスト/Helm values、CRD と extension controller、外部 secrets/KMS、SSO、DNS、証明書の復旧手順も保持してください。Application のデータベース/PV には別途バックアップが必要です。RPO/RTO とアクセスポリシーに基づいて、バックアップ頻度と保持期間を選択してください。
 
-```bash
-#!/bin/bash
-# restore-argocd.sh
+### Velero 設定バックアップの代替手段
 
-BACKUP_DIR=$1
-
-if [ -z "$BACKUP_DIR" ]; then
-  echo "Usage: restore-argocd.sh <backup-dir>"
-  exit 1
-fi
-
-# Ensure ArgoCD is installed
-kubectl get namespace argocd || kubectl create namespace argocd
-
-# Restore in order
-kubectl apply -f $BACKUP_DIR/configmaps.yaml
-kubectl apply -f $BACKUP_DIR/rbac.yaml
-kubectl apply -f $BACKUP_DIR/repo-creds.yaml
-kubectl apply -f $BACKUP_DIR/repositories.yaml
-kubectl apply -f $BACKUP_DIR/clusters.yaml
-kubectl apply -f $BACKUP_DIR/appprojects.yaml
-kubectl apply -f $BACKUP_DIR/applications.yaml
-
-# Restart ArgoCD components
-kubectl rollout restart deployment -n argocd
-
-echo "Restore completed"
-```
-
-### マルチリージョン DR
+この Schedule は Velero がインストール済みで、`aws-s3` BackupStorageLocation が利用可能であることを前提としています。スケジュールのタイムゾーン、暗号化、アクセス制御を確認してください。part-of ラベルセレクターではユーザー作成の Applications が除外される可能性があるため、この例にはそのようなフィルターを設定していません。CRD/インストール/PV の復旧は引き続き DR の別の部分です。
 
 ```yaml
-# Primary region ArgoCD manages secondary
-apiVersion: argoproj.io/v1alpha1
-kind: Application
+apiVersion: velero.io/v1
+kind: Schedule
 metadata:
-  name: argocd-dr
-  namespace: argocd
+  name: argocd-config-backup
+  namespace: velero
 spec:
-  project: platform
-  source:
-    repoURL: https://github.com/myorg/gitops-platform.git
-    targetRevision: HEAD
-    path: argocd
-  destination:
-    server: https://dr-region.k8s.local  # DR cluster
-    namespace: argocd
-  syncPolicy:
-    automated:
-      prune: false  # Don't auto-prune in DR
-      selfHeal: true
+  schedule: 0 2 * * *
+  template:
+    includedNamespaces:
+    - argocd
+    includedResources:
+    - applications.argoproj.io
+    - applicationsets.argoproj.io
+    - appprojects.argoproj.io
+    - secrets
+    - configmaps
+    includeClusterResources: false
+    storageLocation: aws-s3
+    ttl: 720h0m0s
 ```
 
-<span id="upgrade-strategies"></span>
+### 段階的な復旧
+
+まず、元のバージョンとインストール方法で**隔離された復旧用インストール**を準備します。プライマリと復旧インスタンスが同じワークロードを同時に変更しないよう、アクティブな manager を 1 つにしてください。デフォルトの StatefulSet レイアウトでは、import の変更を検査する間は Application と ApplicationSet controller を停止します。動的分散の場合は、ワークロードタイプを適合させてください。
+
+```bash
+set -euo pipefail
+umask 077
+: "${ARGO_BACKUP_FILE:?Set the encrypted data.yaml.age path}"
+: "${ARGO_BACKUP_IDENTITY:?Set the protected age identity file}"
+
+# Fresh, isolated recovery installation: default StatefulSet controller layout.
+kubectl config current-context
+kubectl scale statefulset/argocd-application-controller -n argocd --replicas=0
+kubectl scale deployment/argocd-applicationset-controller -n argocd --replicas=0
+
+ARGO_RESTORE_DIR="$(mktemp -d)"
+trap 'rm -rf "$ARGO_RESTORE_DIR"' EXIT
+age --decrypt --identity "$ARGO_BACKUP_IDENTITY" "$ARGO_BACKUP_FILE" \
+  > "$ARGO_RESTORE_DIR/data.yaml"
+argocd admin import -n argocd --dry-run "$ARGO_RESTORE_DIR/data.yaml"
+# Keep controllers stopped while reviewing the recovery copy and destinations.
+```
+
+同じ shell で保護された復旧ファイルをレビューしてください。宛先 cluster/Namespace、リポジトリ/cluster 認証情報、削除 finalizer、自動 sync ポリシー、保存された `operation` フィールドを確認します。自動 sync を保留するには、Applications と ApplicationSet templates の両方を更新し、復旧コピーから保留中の operation を削除してください。controller を再起動する前に、Git/Helm source がこれらの保留を元に戻さないか確認してください。
+
+```bash
+argocd admin import -n argocd "$ARGO_RESTORE_DIR/data.yaml"
+```
+
+必要な補足 ConfigMaps/Secrets と外部依存関係を復旧した後、レビュー済みのインストール設定から controller のレプリカを復元します。個別にデプロイを再開する前に、代表的な Application の diff/health を検査してください。全 Application の sync、import の `--prune`、または Namespace の削除は、デフォルトの復旧手順ではありません。
 
 ## アップグレード戦略
 
-### アップグレード前チェックリスト
+### バージョンとインストールのオーナーシップ
 
-1. **リリースノートを確認**し、破壊的変更を把握する
-2. **現在の状態をバックアップ**する（applications、projects、secrets）
-3. まず**本番環境以外**でテストする
-4. 必要に応じて**メンテナンス時間帯を設定**する
-5. **関係者に通知**する
-
-### ローリングアップグレード
+この例は、2.x または古い minor からの無条件な移行ではなく、レビュー済みの 3.5.x パッチを 3.5.4 へアップデートすることを対象としています。非本番環境で、間にあるすべての minor/major の移行ノート、テスト済み Kubernetes の組み合わせ、CRD/RBAC/SSO/CMP の変更を確認してください。既存の manifest/Helm/GitOps オーナーを維持してください。この自己管理手順を、EKS managed Argo CD capability に適用しないでください。
 
 ```bash
-# 1. Update ArgoCD manifests
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.13.0/manifests/install.yaml
-
-# 2. Wait for rollout
-kubectl rollout status deployment argocd-server -n argocd
-kubectl rollout status deployment argocd-repo-server -n argocd
-kubectl rollout status deployment argocd-application-controller -n argocd
-
-# 3. Verify
+# Example: reviewed 3.5.x patch upgrade to 3.5.4, manifest-managed non-HA install.
+kubectl config current-context
+argocd version
+kubectl apply --server-side -n argocd \
+  -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
+kubectl rollout status deployment/argocd-server -n argocd --timeout=5m
+kubectl rollout status deployment/argocd-repo-server -n argocd --timeout=5m
+kubectl rollout status statefulset/argocd-application-controller -n argocd --timeout=5m
+kubectl rollout status deployment/argocd-applicationset-controller -n argocd --timeout=5m
+kubectl rollout status deployment/argocd-notifications-controller -n argocd --timeout=5m
 argocd version
 argocd app list
 ```
 
-### Blue-Green アップグレード
+HA manifest インストールには `manifests/ha/install.yaml` を使用します。カスタムオーバーレイでは、pin された base を更新してレンダリングしてください。server-side apply は大きな CRD を処理します。まず field-ownership の競合を検査してください。意図したオーナーシップ移譲に対してのみ、公式ガイドの `--force-conflicts` を使用します。Pod rollout の成功だけでは、移行、SSO、diff、sync の検証は完了しません。
+
+### Helm 管理インストールの代替手段
+
+レビュー済みの Chart 10.8.4 は Argo CD v3.5.2 をデプロイするため、この Helm パスでは上記で使用した 3.5.4 パッチには到達しません。Argo CD 3.5.4 は Chart 10.9.7 で初めて提供されますが、これはここではレビューしていない Chart minor アップデートです。
 
 ```bash
-# 1. Install new version in separate namespace
-kubectl create namespace argocd-new
-kubectl apply -n argocd-new -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.13.0/manifests/install.yaml
-
-# 2. Migrate configuration
-kubectl get configmap argocd-cm -n argocd -o yaml | sed 's/namespace: argocd/namespace: argocd-new/' | kubectl apply -f -
-kubectl get configmap argocd-rbac-cm -n argocd -o yaml | sed 's/namespace: argocd/namespace: argocd-new/' | kubectl apply -f -
-
-# 3. Test new installation
-kubectl port-forward svc/argocd-server -n argocd-new 8081:443
-
-# 4. Switch traffic (update ingress/load balancer)
-# 5. Decommission old installation
-kubectl delete namespace argocd
-kubectl rename namespace argocd-new argocd
+helm repo add argo https://argoproj.github.io/argo-helm
+helm repo update argo
+helm upgrade argocd argo/argo-cd --version 10.8.4 \
+  --namespace argocd -f reviewed-values.yaml --dry-run=server --hide-secret
+# After reviewing the dry run and the version-specific migration notes:
+helm upgrade argocd argo/argo-cd --version 10.8.4 \
+  --namespace argocd -f reviewed-values.yaml --wait --timeout 10m
 ```
 
-<span id="troubleshooting"></span>
+`--hide-secret` は dry-run 出力の Secret manifests を抑制します。ほかの場所に埋め込まれた機密値についても確認してください。CRD、永続データ、統合の変更はイメージのロールバックで元に戻らない可能性があるため、テスト済みのバックアップ/復旧計画を保持してください。
+
+### 並行検証の制約
+
+1 つの cluster 上の 2 つの Namespace は、依然として CRD とその他の cluster スコープのリソースを共有します。インストール Namespace だけを変更しても、ClusterRoleBinding の subject は書き換えられません。Kubernetes には `kubectl rename namespace` コマンドはありません。別の cluster で検証し、認証情報、tracking/instance ID、アクティブな controller、トラフィック切り替えを明示的に計画することを推奨します。古い Namespace を削除すると、Application finalizer を介して管理対象ワークロードにカスケードする可能性があります。
 
 ## トラブルシューティング
 
-### 一般的な問題と解決策
-
-#### Sync の失敗
+### Sync と差分の検査
 
 ```bash
-# Check application events
+argocd app get my-app
+argocd app diff my-app
+argocd app history my-app
+argocd app resources my-app
 kubectl describe application my-app -n argocd
-
-# Check application controller logs
 kubectl logs -n argocd -l app.kubernetes.io/name=argocd-application-controller --tail=100
 
-# Force refresh
+# Re-check desired state after identifying the cause; this does not apply resources.
 argocd app get my-app --refresh
-
-# Hard refresh (clear cache)
+# Invalidates the cached target manifests for this Application; use sparingly.
 argocd app get my-app --hard-refresh
 ```
 
-#### リポジトリ接続の問題
+`--force` は汎用的なトラブルシューティングオプションではなく、リソースを再作成する可能性があります。hard refresh はワークロードを apply またはロールバックしませんが、マニフェストを再生成します。すべての app に対して繰り返し実行することは避けてください。
+
+### リポジトリと Webhook
 
 ```bash
-# Test repository connectivity
 argocd repo list
 argocd repo get https://github.com/myorg/myrepo.git
-
-# Check repo server logs
-kubectl logs -n argocd -l app.kubernetes.io/name=argocd-repo-server --tail=100
-
-# Verify credentials
-kubectl get secret -n argocd -l argocd.argoproj.io/secret-type=repository
+kubectl logs -n argocd deployment/argocd-repo-server --tail=100
+kubectl get secrets -n argocd -l argocd.argoproj.io/secret-type=repository
+kubectl logs -n argocd deployment/argocd-server --tail=100 | grep -i webhook
 ```
 
-#### メモリ不足 (OOM)
+TLS/SSH の信頼、認証情報のスコープ、DNS/egress、プロバイダーの webhook signature、URL、配信ログを確認してください。Secret 名の一覧取得に、認証情報の値を出力する必要はありません。`argocd repo update --repo-cache-expiration` は有効な cache 設定コマンドではありません。
+
+### OOM と処理遅延
 
 ```bash
-# Check current memory usage
 kubectl top pods -n argocd
-
-# Increase limits
-kubectl patch deployment argocd-repo-server -n argocd -p '
-{
-  "spec": {
-    "template": {
-      "spec": {
-        "containers": [{
-          "name": "argocd-repo-server",
-          "resources": {
-            "limits": {"memory": "4Gi"},
-            "requests": {"memory": "2Gi"}
-          }
-        }]
-      }
-    }
-  }
-}'
+kubectl get pods -n argocd
+kubectl describe pods -n argocd -l app.kubernetes.io/name=argocd-repo-server
+argocd app get my-app -o json |
+  jq '.status.operationState | {phase, startedAt, finishedAt}'
 ```
 
-#### Sync が遅い
+OOMKilled を CPU throttling、clone-disk pressure、大規模な manifests、Git timeout、API throttling と区別してください。Helm/Git のオーナーを通じて resources/concurrency を調整します。すべての repo-server Pod を削除しても Redis manifest cache はクリアされず、中断/clone の負荷が増えます。
+
+### 追加の確認
 
 ```bash
-# Check sync duration
-argocd app get my-app -o json | jq '.status.operationState.finishedAt, .status.operationState.startedAt'
-
-# Enable debug logging
-kubectl patch configmap argocd-cmd-params-cm -n argocd -p '{"data":{"controller.log.level":"debug"}}'
-
-# Check for large manifests
-argocd app manifests my-app | wc -l
-```
-
-### デバッグコマンド早見表
-
-```bash
-# Application status
-argocd app get <app-name>
-argocd app get <app-name> -o json | jq '.status'
-
-# Diff between desired and live
-argocd app diff <app-name>
-
-# View manifests
-argocd app manifests <app-name>
-
-# Sync with debug
-argocd app sync <app-name> --debug
-
-# View all applications
+argocd app manifests my-app
 argocd app list -o wide
-
-# Check cluster connectivity
 argocd cluster list
-argocd cluster get <cluster-url>
-
-# View logs
+argocd cluster get https://my-target-cluster.example.com
+kubectl logs -n argocd statefulset/argocd-application-controller --tail=100
 kubectl logs -n argocd deployment/argocd-server --tail=100
 kubectl logs -n argocd deployment/argocd-repo-server --tail=100
-kubectl logs -n argocd deployment/argocd-application-controller --tail=100
-
-# Clear application cache
-argocd app get <app-name> --hard-refresh
-
-# Force reconciliation
-kubectl patch application <app-name> -n argocd -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}' --type merge
 ```
 
-<span id="eks-best-practices"></span>
+レンダリングされた manifests には生成された Secrets が含まれる可能性があります。共有ログに含めないでください。デフォルトの controller は StatefulSet です。動的分散が有効な場合は、実際の Deployment を検査してください。一時的な debug logging は影響を受けるコンポーネントに限定し、その rollout と削除を管理してください。
 
-## EKS ベストプラクティス
+## EKS のベストプラクティス
 
-### IRSA 設定
+### AWS 認証情報
 
-```yaml
-# Service account with IRSA
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: argocd-application-controller
-  namespace: argocd
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ArgoCD-Controller
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: argocd-repo-server
-  namespace: argocd
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/ArgoCD-RepoServer
-```
+ServiceAccount の role ARN だけでは、対象 EKS へのアクセスは完了しません。controller/server の EKS authentication、assume-role permissions、対象 EKS の access entries または legacy auth mapping、Kubernetes RBAC を設定してください。S3/OCI/CMP アクセスで必要な場合にのみ、repo-server には別の最小権限 role を付与してください。IRSA OIDC trust または Pod Identity association も必要です。これは image-pull authorization と同じものではありません。実際の宛先と service accounts については、[EKS インストールのセクション](01-installation.md#argocd-on-amazon-eks)に従ってください。
 
-### WAF を使用する ALB Ingress
+### HTTPS を使用する内部 ALB
+
+これには AWS Load Balancer Controller、VPC への管理者接続、一致する DNS/ACM certificate、制限された security groups、SSO が必要です。certificate ARN と hostname を置き換えてください。backend は `server.insecure=false` で HTTPS のままです。この単一 HTTP target group を介した CLI アクセスでは、`--grpc-web` を使用します。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: argocd-server
+  name: argocd
   namespace: argocd
   annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/scheme: internal
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-2:123456789012:certificate/xxx
-    alb.ingress.kubernetes.io/wafv2-acl-arn: arn:aws:wafv2:us-west-2:123456789012:regional/webacl/argocd/xxx
-    alb.ingress.kubernetes.io/shield-advanced-protection: "true"
-    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-2017-01
+    alb.ingress.kubernetes.io/backend-protocol: HTTPS
+    alb.ingress.kubernetes.io/healthcheck-protocol: HTTPS
+    alb.ingress.kubernetes.io/healthcheck-path: /healthz
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:123456789012:certificate/REPLACE_WITH_CERTIFICATE_ID
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
 spec:
+  ingressClassName: alb
   rules:
-    - host: argocd.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: argocd-server
-                port:
-                  number: 443
+  - host: argocd.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argocd-server
+            port:
+              number: 443
 ```
 
-### EKS クラスターのアップグレード
+レビュー済みのリージョン WAF Web ACL を、同じリージョンの別の annotation を通じてアタッチしてください。ALB access-log bucket policy とリージョンを確認してください。Shield Advanced のようなサブスクリプション/コスト発生オプションを、デフォルトで有効にしないでください。
 
-ArgoCD で管理する EKS クラスターをアップグレードする場合:
+### EKS バージョンアップグレード
 
-1. 変更されている場合は、新しい API エンドポイントで**ArgoCD クラスター Secret を更新**する
-2. アップグレード後に**接続性をテスト**する
-3. **applications を再同期**して互換性を確認する
-4. ハードコードされている場合は、Application manifests の**Kubernetes バージョンを更新**する
+テスト済みの現在/対象 EKS と Argo CD の組み合わせ、add-on/CRD/node/kubelet の互換性、削除された API を確認してください。EKS control plane は一度に 1 minor ずつアップグレードします。node/add-on の更新は別です。インプレースのバージョンアップデートでは、既存の API endpoint を変更する必要はありません。置換 cluster では endpoint/CA/access の更新が必要です。
 
-<span id="production-checklist"></span>
+自動 sync を保留する場合は、元の設定を記録し、その Git/ApplicationSet オーナーを変更してください。CLI のみで子 Application を変更しても、親によって元に戻される可能性があります。connectivity、diff、sample-sync の検証後は、無条件に automation を有効にするのではなく、元の prune/selfHeal/automated ポリシーを復元してください。
 
 ## 本番環境チェックリスト
 
-### セキュリティ
+- [ ] デフォルト admin を無効にする前に、SSO/RBAC/TLS と復旧アクセスを確認する
+- [ ] secrets を暗号化/外部化し、リポジトリ/cluster 認証情報をスコープする
+- [ ] resources、concurrency、cluster sharding が必要かどうかを測定する
+- [ ] HA node/anti-affinity/PDB とコンポーネント固有の replicas/leader election を確認する
+- [ ] metrics/ServiceMonitor の選択と alert 配信を検証し、JSON logs と Kubernetes audit/events を収集する
+- [ ] AppProject の source/destination、sync windows、レビュー済みの promotion PR を強制する
+- [ ] 暗号化バックアップの復号、補足設定の復旧、single-manager DR をテストする
+- [ ] バージョン固有のアップグレード、トラブルシューティング、設定復元の runbook を維持する
 
-- [ ] SSO を設定してテスト済み
-- [ ] RBAC ポリシーを実装済み
-- [ ] すべてのエンドポイントで TLS を有効化
-- [ ] Secrets を外部に保存（Git には保存しない）
-- [ ] NetworkPolicy を適用済み
-- [ ] 監査ログを有効化
-- [ ] リポジトリ認証情報を保護済み
-- [ ] デフォルトの管理者パスワードを変更済み
+## 参考資料
 
-### 高可用性
-
-- [ ] すべてのコンポーネントで複数のレプリカを設定
-- [ ] Redis HA を有効化
-- [ ] Controller sharding を設定（アプリが 100 を超える場合）
-- [ ] リソース制限を適切に設定
-- [ ] repo-server 用の HPA を設定
-- [ ] PodDisruptionBudgets を設定
-
-### モニタリング
-
-- [ ] Prometheus メトリクスを有効化
-- [ ] ServiceMonitor を設定
-- [ ] ダッシュボードを作成（Grafana）
-- [ ] 以下に対するアラートを設定:
-  - [ ] Sync の失敗
-  - [ ] ヘルスの劣化
-  - [ ] メモリ使用量の高騰
-  - [ ] API server エラー
-
-### バックアップと DR
-
-- [ ] バックアップスクリプトを設定
-- [ ] バックアップスケジュールを設定（最低でも毎日）
-- [ ] 復元手順を文書化してテスト済み
-- [ ] DR サイトを設定（必要な場合）
-
-### 運用
-
-- [ ] 通知サービスを設定
-- [ ] 本番環境向けの Sync window を定義
-- [ ] チーム/環境ごとに Project を設定
-- [ ] リポジトリ構造を文書化
-- [ ] アップグレード手順を文書化
-- [ ] 一般的な問題に対応する Runbook を作成
+- [ベストプラクティス](https://argo-cd.readthedocs.io/en/release-3.5/user-guide/best_practices/)
+- [高可用性とスケーリング](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/high_availability/)
+- [バックアップの実装と範囲](https://github.com/argoproj/argo-cd/blob/v3.5.4/cmd/argocd/commands/admin/backup.go)
+- [アップグレードガイド](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/upgrading/overview/)
+- [Chart 10.8.4 の values](https://github.com/argoproj/argo-helm/blob/argo-cd-10.8.4/charts/argo-cd/values.yaml)
+- [Kustomize のバンドルバージョン](https://github.com/argoproj/argo-cd/blob/v3.5.4/hack/tool-versions.sh)
+- [Velero スケジュール](https://velero.io/docs/main/backup-reference/#schedule-a-backup)
 
 ## クイズ
 
-学習内容を確認するには、[ArgoCD ベストプラクティス クイズ](../../quizzes/gitops/argocd/09-best-practices-quiz.md)に挑戦してください。
+[ベストプラクティスのクイズ](../../quizzes/gitops/argocd/09-best-practices-quiz.md)を試してください。

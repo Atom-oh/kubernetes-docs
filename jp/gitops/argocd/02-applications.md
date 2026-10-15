@@ -1,11 +1,11 @@
 # ArgoCD Applications
 
-> **対応バージョン**: ArgoCD v2.9+
-> **最終更新**: February 22, 2026
+> **レビュー基準**: Argo CD 3.5.2。リリースノートの確認後にパッチ 3.5.4 へ更新（例は再実行していません）
+> **最終更新**: October 12, 2026
 
 ## 目次
 - [Application CRD の概要](#application-crd-overview)
-- [ソースタイプ](#source-types)
+- [ソースの種類](#source-types)
 - [複数のソース](#multiple-sources)
 - [宛先設定](#destination-configuration)
 - [ヘルス評価](#health-assessment)
@@ -13,11 +13,11 @@
 - [差分の無視](#ignore-differences)
 - [App of Apps パターン](#app-of-apps-pattern)
 
-<span id="application-crd-overview"></span>
-
 ## Application CRD の概要
 
-Application CRD は、アプリケーションをデプロイする方法と場所を定義する ArgoCD の中核リソースです。ソースリポジトリをターゲット Kubernetes クラスタに接続します。
+例はそれぞれ独立した設定です。myorg/accounts/clusters/paths は実際に認可されたソースに置き換えてください。すべての代替案を一度に有効にするのではなく、シナリオに応じて source/sources、renderer、destination.server/name を選択してください。
+
+Application CRD は、アプリケーションをデプロイする方法と場所を定義する ArgoCD の中核リソースです。ソースリポジトリを対象の Kubernetes cluster に接続します。
 
 ### 完全な仕様
 
@@ -78,27 +78,27 @@ spec:
   revisionHistoryLimit: 10
 ```
 
+Application.status は controller が報告する状態です。control-plane namespace 外に Application を作成するには、管理者が application.namespaces と AppProject の sourceNamespaces、および適切な RBAC を有効にする必要があります。
+
 ### 主要フィールドの説明
 
 | フィールド | 説明 |
 |-------|-------------|
 | `project` | このアプリケーションが属する AppProject |
-| `source` | マニフェストの取得元 |
-| `destination` | ターゲットクラスタと namespace |
-| `syncPolicy` | 自動同期と再試行の動作 |
+| `source` | manifest の取得元 |
+| `destination` | 対象の cluster と namespace |
+| `syncPolicy` | 自動 sync と再試行の動作 |
 | `ignoreDifferences` | 比較時に無視するフィールド |
 | `info` | 表示用のカスタムメタデータ |
-| `revisionHistoryLimit` | 保持するデプロイメントリビジョン数 |
+| `revisionHistoryLimit` | 保持するデプロイ revision の数 |
 
-<span id="source-types"></span>
+## ソースの種類
 
-## ソースタイプ
-
-ArgoCD は Kubernetes マニフェストを取得するために複数のソースタイプをサポートしています。
+ArgoCD は Kubernetes manifest の取得に複数のソースタイプをサポートしています。
 
 ### プレーン YAML/JSON ディレクトリ
 
-最もシンプルなソースタイプは、Kubernetes マニフェストを含むディレクトリです。
+最も単純なソースタイプは、Kubernetes manifest を含むディレクトリです。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -121,7 +121,7 @@ spec:
     namespace: guestbook
 ```
 
-### Helm チャート
+### Helm Chart
 
 #### Git リポジトリから
 
@@ -148,7 +148,7 @@ spec:
           tag: v1.2.3
       parameters:
         - name: service.type
-          value: LoadBalancer
+          value: ClusterIP
         - name: ingress.enabled
           value: "true"
       skipCrds: false
@@ -160,61 +160,68 @@ spec:
 
 #### Helm リポジトリから
 
+固定された小規模な podinfo chart は、ソース形式を示します。parameters が valuesObject を上書きするため、最終的な replicaCount は 3 です。valuesObject は構造化されたインライン値を提供します。environment variable を自動的に読み込むことはありません。
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: prometheus
+  name: podinfo-helm
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: https://prometheus-community.github.io/helm-charts
-    chart: kube-prometheus-stack
-    targetRevision: 55.5.0
+    repoURL: https://stefanprodan.github.io/podinfo
+    chart: podinfo
+    targetRevision: 6.15.0
     helm:
-      releaseName: prometheus
-      values: |
-        prometheus:
-          prometheusSpec:
-            retention: 30d
-            storageSpec:
-              volumeClaimTemplate:
-                spec:
-                  storageClassName: gp3
-                  resources:
-                    requests:
-                      storage: 100Gi
-        grafana:
-          enabled: true
-          adminPassword: admin
-        alertmanager:
-          enabled: true
+      valuesObject:
+        replicaCount: 2
+        service:
+          type: ClusterIP
+        ui:
+          message: "Managed by Argo CD"
+      parameters:
+      - name: replicaCount
+        value: "3"
+      passCredentials: false
+      skipCrds: false
   destination:
     server: https://kubernetes.default.svc
-    namespace: monitoring
+    namespace: podinfo-demo
+  syncPolicy:
+    syncOptions: [CreateNamespace=true]
 ```
+
+優先順位は parameters → valuesObject → values → valueFiles → chart defaults です。インライン表現は 1 つを推奨します。valuesObject が存在する場合は、インライン値を提供します。他の domain に credentials を転送する可能性があるため、passCredentials は必要な場合にのみ有効にしてください。このベースラインは同梱の Helm 4 を使用します。v2/v3 を任意に選択しないでください。
 
 #### 外部ファイルの Values を使用
 
+$values 参照には、spec.sources 内の対応する ref ソースが必要です。values の repository/file は存在し、認可されている必要があります。
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: app-with-external-values
+  name: podinfo-with-values
   namespace: argocd
 spec:
   project: default
-  source:
-    repoURL: https://charts.bitnami.com/bitnami
-    chart: nginx
-    targetRevision: 15.4.0
+  sources:
+  - repoURL: https://stefanprodan.github.io/podinfo
+    chart: podinfo
+    targetRevision: 6.15.0
     helm:
       valueFiles:
-        - $values/production/nginx-values.yaml
+      - $values/environments/production/podinfo-values.yaml
+  - repoURL: https://github.com/myorg/helm-values.git
+    targetRevision: main
+    ref: values
   destination:
     server: https://kubernetes.default.svc
-    namespace: web
+    namespace: podinfo-demo
+  syncPolicy:
+    syncOptions: [CreateNamespace=true]
 ```
 
 ### Kustomize
@@ -235,6 +242,8 @@ spec:
       namePrefix: prod-
       nameSuffix: -v1
       namespace: production
+      labelWithoutSelector: true
+      labelIncludeTemplates: true
       commonLabels:
         environment: production
         team: platform
@@ -242,8 +251,7 @@ spec:
         owner: platform-team@example.com
       images:
         - myregistry/myapp:v1.2.3
-        - name: myregistry/sidecar
-          newTag: v2.0.0
+        - myregistry/sidecar:v2.0.0
       replicas:
         - name: my-deployment
           count: 5
@@ -252,34 +260,52 @@ spec:
             kind: Deployment
             name: my-deployment
           patch: |-
-            - op: replace
-              path: /spec/template/spec/containers/0/resources/limits/memory
-              value: 2Gi
+            - op: add
+              path: /spec/progressDeadlineSeconds
+              value: 600
   destination:
     server: https://kubernetes.default.svc
     namespace: production
 ```
 
-### OCI アーティファクト (v2.8+)
+### OCI Artifact
 
-OCI 準拠レジストリからデプロイします。
+一般的な OCI ソースは oci:// URI と、展開された artifact 内のパスを使用します。この account/repository/tag は公開済み artifact に置き換えてください。通常の container image は自動的に manifest ソースにはなりません。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: oci-app
+  name: oci-manifests
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: 123456789012.dkr.ecr.us-west-2.amazonaws.com/my-manifests
+    repoURL: oci://123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/my-manifests
     targetRevision: v1.0.0
     path: .
   destination:
     server: https://kubernetes.default.svc
     namespace: my-app
+  syncPolicy:
+    syncOptions: [CreateNamespace=true]
 ```
+
+Argo CD 3.5.4 では、サポートされる media type を持つ layer が 1 つ必要です。デフォルトでは application/vnd.oci.image.layer.v1.tar+gzip または Helm chart content tar+gzip です。その他の type は ARGOCD_REPO_SERVER_OCI_LAYER_MEDIA_TYPES および artifact 構造で検証してください。3.5.4 以降、4 MiB を超える OCI manifest は拒否されます（GHSA-w996-f2wq-x9c6）。
+
+Helm OCI 形式では chart フィールドと、**oci:// を含まない** repository URL を使用します。これは Application.spec 配下のソースフラグメントです。
+
+```yaml
+source:
+  repoURL: ghcr.io/stefanprodan/charts
+  chart: podinfo
+  targetRevision: 6.15.0
+  helm:
+    valuesObject:
+      replicaCount: 2
+```
+
+credentials はソースタイプに合わせてください。一般的な OCI は type: oci と oci:// URL を使用します。Helm OCI は type: helm、enableOCI: "true"、および scheme なしの URL を使用します。ECR には registry permissions と 12 時間トークンの更新/application が必要です。IRSA permissions を付与しても、Secret は自動的には更新されません。
 
 ### Jsonnet
 
@@ -302,8 +328,10 @@ spec:
             value: production
           - name: replicas
             value: "3"
+            code: true
         tlas:
           - name: config
+            code: true
             value: |
               {
                 "namespace": "production"
@@ -316,79 +344,40 @@ spec:
     namespace: production
 ```
 
-<span id="multiple-sources"></span>
-
 ## 複数のソース
 
-ArgoCD v2.6+ では、1 つのアプリケーションで複数のソースをサポートしており、複雑なデプロイメントシナリオを実現できます。
-
-### Helm チャートと Git の Values を組み合わせる
+sources が存在する場合、単数形の source は無視されます。chart と values repository など、関連する 1 つの application の設定を組み合わせます。独立して管理される platform stack には ApplicationSet/App of Apps を使用してください。
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: multi-source-app
+  name: podinfo-with-values
   namespace: argocd
 spec:
   project: default
   sources:
-    # Primary source: Helm chart from registry
-    - repoURL: https://charts.bitnami.com/bitnami
-      chart: postgresql
-      targetRevision: 14.0.0
-      helm:
-        valueFiles:
-          - $values/environments/production/postgresql-values.yaml
-
-    # Values source: Git repository
-    - repoURL: https://github.com/myorg/helm-values.git
-      targetRevision: HEAD
-      ref: values
-
+  - repoURL: https://stefanprodan.github.io/podinfo
+    chart: podinfo
+    targetRevision: 6.15.0
+    helm:
+      valueFiles:
+      - $values/environments/production/podinfo-values.yaml
+  - repoURL: https://github.com/myorg/helm-values.git
+    targetRevision: main
+    ref: values
   destination:
     server: https://kubernetes.default.svc
-    namespace: database
+    namespace: podinfo-demo
+  syncPolicy:
+    syncOptions: [CreateNamespace=true]
 ```
 
-### 1 つに複数のアプリケーション
-
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: platform-stack
-  namespace: argocd
-spec:
-  project: default
-  sources:
-    # Monitoring stack
-    - repoURL: https://prometheus-community.github.io/helm-charts
-      chart: kube-prometheus-stack
-      targetRevision: 55.5.0
-      helm:
-        releaseName: monitoring
-
-    # Logging stack
-    - repoURL: https://grafana.github.io/helm-charts
-      chart: loki-stack
-      targetRevision: 2.10.0
-      helm:
-        releaseName: logging
-
-    # Custom dashboards from Git
-    - repoURL: https://github.com/myorg/dashboards.git
-      targetRevision: HEAD
-      path: grafana-dashboards
-
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: observability
-```
-
-<span id="destination-configuration"></span>
+ref: values は $values をその Git repository root にマッピングします。path がない場合は values のみを提供します。path がある場合は、そこでも manifest を生成します。ref ソースに chart を指定することはできません。group/kind/name/namespace が重複するリソースでは最後のソースが使用され、RepeatedResourceWarning が発生します。これはフィールド単位の自動 merge ではありません。
 
 ## 宛先設定
+
+登録済みの宛先には server または name を選択してください。destination.namespace は、独自の namespace を持たない namespaced resource のデフォルトを提供します。CreateNamespace はその宛先のみを作成し、chart に明示的に埋め込まれたすべての namespace を作成するわけではありません。namespace 作成時は managedNamespaceMetadata を使用し、既存 namespace を更新する前に ownership を確認してください。
 
 ### Server URL を使用
 
@@ -398,7 +387,7 @@ destination:
   namespace: my-app
 ```
 
-### クラスタ名を使用
+### Cluster 名を使用
 
 ```yaml
 destination:
@@ -414,31 +403,28 @@ syncPolicy:
     - CreateNamespace=true
 ```
 
-<span id="health-assessment"></span>
-
 ## ヘルス評価
 
-ArgoCD は組み込みおよびカスタムチェックを使用してアプリケーションのヘルスを評価します。
+Synced は、service が request を処理できることの証明ではなく、比較した desired/live field を示します。Healthy は resource ごとに設定された check に従います。check のない custom resource は application health から除外される場合があり、適切な定義が必要です。
 
-### 組み込みヘルスチェック
+### 組み込み Health Check
 
-ArgoCD には標準 Kubernetes リソース用のヘルスチェックが含まれています。
+以下は、単一の replica counter に基づく完全な predicate ではなく、重要な 3.5.4 実装 check の要約です。
 
-| リソース | Healthy となる条件 |
-|----------|--------------|
-| Deployment | すべてのレプリカが利用可能 |
-| StatefulSet | すべてのレプリカが ready |
-| DaemonSet | 希望数とスケジュール数が一致 |
-| ReplicaSet | すべてのレプリカが利用可能 |
-| Service | Endpoints が存在 |
-| Ingress | ロードバランサーが割り当て済み |
-| PersistentVolumeClaim | Bound |
-| Pod | Running かつ ready |
-| Job | 成功済み |
+| Resource | 重要な check |
+|---|---|
+| Deployment | Observed generation、rollout の進行/失敗、更新済み/利用可能な replica |
+| StatefulSet | Generation、update strategy/partition、revision と replica state |
+| DaemonSet | Generation と desired/updated/available Pod 数 |
+| Pod | Phase、readiness、container の終了/失敗 |
+| Service | LoadBalancer は address を待機します。他の type は endpoint を検証しません |
+| Ingress | controller が報告した loadBalancer address の状態 |
+| PVC | Bound 状態 |
+| Job | 未完了は Progressing、失敗は Degraded、完了は Healthy、suspended は Suspended |
 
-### カスタムヘルスチェック (Lua)
+### カスタム Health Check
 
-`argocd-cm` でカスタムヘルスチェックを定義します。
+同梱の Rollout/cert-manager Certificate check を単純な phase 比較に置き換えないでください。Certificate group は cert-manager.io です。同梱 check は Ready の前に Issuing を処理します。以下の ACK 例は、status/conditions がない場合に Progressing を返し、ARN の存在を Healthy と同一視しません。使用している ACK version から提供される Ready/ACK.ResourceSynced および error conditions を検証してください。この例では、Ready が存在する場合はそれを優先し、それ以外は ACK.ResourceSynced にフォールバックします。
 
 ```yaml
 apiVersion: v1
@@ -446,97 +432,74 @@ kind: ConfigMap
 metadata:
   name: argocd-cm
   namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: argocd
 data:
-  resource.customizations.health.certmanager.io_Certificate: |
-    hs = {}
-    if obj.status ~= nil then
-      if obj.status.conditions ~= nil then
-        for i, condition in ipairs(obj.status.conditions) do
-          if condition.type == "Ready" and condition.status == "False" then
-            hs.status = "Degraded"
-            hs.message = condition.message
-            return hs
-          end
-          if condition.type == "Ready" and condition.status == "True" then
-            hs.status = "Healthy"
-            hs.message = "Certificate is ready"
-            return hs
-          end
-        end
-      end
+  resource.customizations.health.s3.services.k8s.aws_Bucket: |
+    local hs = {status = "Progressing", message = "Waiting for ACK reconciliation"}
+    local conditions = {}
+    if obj.status ~= nil and obj.status.conditions ~= nil then
+      conditions = obj.status.conditions
     end
-    hs.status = "Progressing"
-    hs.message = "Waiting for certificate"
-    return hs
-
-  resource.customizations.health.argoproj.io_Rollout: |
-    hs = {}
-    if obj.status ~= nil then
-      if obj.status.phase == "Healthy" then
-        hs.status = "Healthy"
-        hs.message = "Rollout is healthy"
-      elseif obj.status.phase == "Paused" then
-        hs.status = "Suspended"
-        hs.message = "Rollout is paused"
-      elseif obj.status.phase == "Progressing" then
-        hs.status = "Progressing"
-        hs.message = "Rollout in progress"
-      else
+    for _, condition in ipairs(conditions) do
+      if condition.type == "ACK.Terminal" and condition.status == "True" then
         hs.status = "Degraded"
-        hs.message = obj.status.message or "Rollout degraded"
+        hs.message = condition.message or "ACK reported a terminal error"
+        return hs
       end
-    else
-      hs.status = "Progressing"
-      hs.message = "Waiting for rollout status"
+    end
+    for _, condition in ipairs(conditions) do
+      if condition.type == "ACK.Recoverable" and condition.status == "True" then
+        hs.message = condition.message or "ACK is retrying a recoverable error"
+        return hs
+      end
+    end
+    local synchronized = nil
+    local ready = nil
+    for _, condition in ipairs(conditions) do
+      if condition.type == "ACK.ResourceSynced" then synchronized = condition end
+      if condition.type == "Ready" then ready = condition end
+    end
+    local reported = ready or synchronized
+    if reported ~= nil then
+      hs.message = reported.message or hs.message
+      if reported.status == "True" then
+        hs.status = "Healthy"
+        hs.message = reported.message or "ACK reports the resource synchronized"
+      end
     end
     return hs
 ```
 
-### AWS リソース (ACK) のヘルスチェック
-
-```yaml
-resource.customizations.health.s3.services.k8s.aws_Bucket: |
-  hs = {}
-  if obj.status ~= nil then
-    if obj.status.ackResourceMetadata ~= nil and obj.status.ackResourceMetadata.arn ~= nil then
-      hs.status = "Healthy"
-      hs.message = "Bucket created: " .. obj.status.ackResourceMetadata.arn
-    else
-      hs.status = "Progressing"
-      hs.message = "Waiting for bucket creation"
-    end
-  else
-    hs.status = "Progressing"
-    hs.message = "Waiting for status"
-  end
-  return hs
-```
-
-<span id="resource-hooks"></span>
+これは controller が報告した状態を解釈するものであり、AWS を直接 query しません。既存の argocd-cm に key を merge し、実際の CR で missing/waiting/ready/error/new-spec の状態をテストしてください。EKS managed Argo CD は ACK/kro check を提供するため、まず既存の check とサポートされる設定を確認してください。
 
 ## リソースフック
 
-リソースフックを使用すると、同期中の特定の時点で Job を実行できます。
+PostSync は、成功した Sync と関連する Healthy resource を待機します。明示的な resource-selective sync では hook は実行されません。3.5.4 では、ApplyOutOfSyncOnly は引き続き hook を実行し、history を記録します。SyncFail は対象となる synchronization failure を処理します。manifest-generation failure を含むすべての error に対する保証された cleanup/backup path として依存しないでください。
 
-### フックタイプ
+Resource hook を使用すると、sync 中の特定の時点で Job を実行できます。
 
-| フック | 実行タイミング |
+### Hook の種類
+
+| Hook | 実行タイミング |
 |------|---------------|
-| `PreSync` | 同期開始前 |
-| `Sync` | 同期中 (`PreSync` の後) |
-| `PostSync` | 同期成功後 |
-| `SyncFail` | 同期失敗後 |
-| `Skip` | 同期中にスキップ |
+| `PreSync` | sync 開始前 |
+| `Sync` | sync 中（PreSync の後） |
+| `PostSync` | Sync の成功後かつ resource が Healthy のとき |
+| `SyncFail` | sync の失敗後 |
+| `Skip` | Manifest の適用をスキップ |
+| `PreDelete` | Application とともに resource が削除される前 |
+| `PostDelete` | Application resource が削除された後 |
 
-### フック削除ポリシー
+### Hook 削除ポリシー
 
-| ポリシー | 動作 |
+| Policy | 動作 |
 |--------|----------|
-| `HookSucceeded` | フックの成功後に削除 |
-| `HookFailed` | フックの失敗後に削除 |
-| `BeforeHookCreation` | 新しいフックの実行前に削除 |
+| `HookSucceeded` | hook の成功後に削除 |
+| `HookFailed` | hook の失敗後に削除 |
+| `BeforeHookCreation` | 新しい hook の実行前に削除 |
 
-### データベース移行フック
+### データベース移行 Hook
 
 ```yaml
 apiVersion: batch/v1
@@ -545,7 +508,7 @@ metadata:
   name: db-migrate
   annotations:
     argocd.argoproj.io/hook: PreSync
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
     argocd.argoproj.io/sync-wave: "-5"
 spec:
   ttlSecondsAfterFinished: 600
@@ -564,7 +527,7 @@ spec:
                   key: url
 ```
 
-### Slack 通知フック
+### Slack 通知 Hook
 
 ```yaml
 apiVersion: batch/v1
@@ -573,19 +536,19 @@ metadata:
   name: notify-deployment
   annotations:
     argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
 spec:
   template:
     spec:
       restartPolicy: Never
       containers:
         - name: notify
-          image: curlimages/curl:latest
+          image: curlimages/curl:8.22.0
           command:
             - sh
             - -c
             - |
-              curl -X POST $SLACK_WEBHOOK \
+              curl --fail --show-error --silent --connect-timeout 5 --max-time 20 -X POST "$SLACK_WEBHOOK" \
                 -H 'Content-Type: application/json' \
                 -d '{"text":"Deployment completed successfully!"}'
           env:
@@ -596,7 +559,7 @@ spec:
                   key: url
 ```
 
-### ヘルスチェックフック
+### Health Check Hook
 
 ```yaml
 apiVersion: batch/v1
@@ -613,13 +576,13 @@ spec:
       restartPolicy: Never
       containers:
         - name: smoke-test
-          image: curlimages/curl:latest
+          image: curlimages/curl:8.22.0
           command:
             - sh
             - -c
             - |
               for i in $(seq 1 10); do
-                if curl -sf http://my-service:8080/health; then
+                if curl --fail --show-error --silent --connect-timeout 3 --max-time 10 http://my-service:8080/health; then
                   echo "Health check passed"
                   exit 0
                 fi
@@ -630,82 +593,47 @@ spec:
               exit 1
 ```
 
-<span id="ignore-differences"></span>
+固定名の Job では、繰り返し実行のために BeforeHookCreation などの lifecycle rule が必要です。cleanup 前に failure log を外部に保存してください。HookSucceeded cleanup は Argo sync phase/result semantics に従います。migration image、database Secret、ServiceAccount を準備し、idempotence、locking、rollback compatibility を別途検証してください。hook の失敗で database や既存 Deployment が自動的に revert されることはありません。PreDelete/PostDelete は通常の sync pruning ではなく、Application の削除に適用されます。
 
 ## 差分の無視
 
-比較時に特定の差分を無視するよう ArgoCD を設定します。
-
-### JSON Pointer による指定
+既知の別 controller が所有する特定のフィールドのみを除外してください。この Application.spec フラグメントは、production の my-deployment で HPA が管理する replica を無視します。
 
 ```yaml
-ignoreDifferences:
-  - group: apps
-    kind: Deployment
-    jsonPointers:
-      - /spec/replicas
-      - /spec/template/spec/containers/0/image
-```
-
-### JQ パス式による指定
-
-```yaml
-ignoreDifferences:
-  - group: apps
-    kind: Deployment
-    jqPathExpressions:
-      - .spec.template.spec.containers[].resources
-      - .metadata.annotations["kubectl.kubernetes.io/last-applied-configuration"]
-```
-
-### 名前による指定
-
-```yaml
-ignoreDifferences:
+spec:
+  ignoreDifferences:
   - group: apps
     kind: Deployment
     name: my-deployment
     namespace: production
     jsonPointers:
-      - /spec/replicas
+    - /spec/replicas
+  syncPolicy:
+    syncOptions:
+    - RespectIgnoreDifferences=true
 ```
 
-### 管理対象フィールド (Kubernetes Server-Side Apply)
+ignoreDifferences は通常、比較に影響します。RespectIgnoreDifferences=true はその影響を synchronization に拡張しますが、live resource がない初回作成では引き続き desired manifest が適用されます。広範な image、secret、resource 全体、または全 manager の rule は、重要な drift を隠す可能性があります。
+
+webhook array では固定 index ではなく name で選択し、resource name も scope してください。これは、CA-injection controller と webhook identity が既知の場合にのみ使用してください。
 
 ```yaml
-ignoreDifferences:
-  - group: "*"
-    kind: "*"
-    managedFieldsManagers:
-      - kube-controller-manager
-      - cluster-autoscaler
+spec:
+  ignoreDifferences:
+  - group: admissionregistration.k8s.io
+    kind: MutatingWebhookConfiguration
+    name: my-webhook
+    jqPathExpressions:
+    - '.webhooks[]? | select(.name == "admission.example.com") | .clientConfig.caBundle'
 ```
 
-### argocd-cm でのグローバルな無視
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-cm
-  namespace: argocd
-data:
-  resource.compareoptions: |
-    ignoreAggregatedRoles: true
-    ignoreResourceStatusField: all
-
-  resource.customizations.ignoreDifferences.all: |
-    managedFieldsManagers:
-      - kube-controller-manager
-    jsonPointers:
-      - /metadata/annotations/kubectl.kubernetes.io~1last-applied-configuration
-```
-
-<span id="app-of-apps-pattern"></span>
+グローバルな resource.customizations.ignoreDifferences 設定は、すべての Application に影響します。application-scoped rule を優先してください。managedFieldsManagers は、その manager が実際に所有する field を確認してから選択してください。
 
 ## App of Apps パターン
 
-App of Apps パターンを使用すると、単一の親アプリケーションから複数のアプリケーションを管理できます。
+App of Apps は管理用の bootstrap pattern です。親ソースの writer は management namespace 内の強力な Application/AppProject に影響を与えられます。write/review/destination privileges を制限してください。親/子 finalizer と pruning は削除を連鎖させる可能性があります。子 Application を順番に作成しても、それ自体では子 workload の readiness は保証されません。Application health propagation、sync policy、wave behavior を検証してください。
+
+App of Apps パターンを使用すると、単一の親 application から複数の application を管理できます。
 
 ### ディレクトリ構造
 
@@ -721,7 +649,7 @@ App of Apps パターンを使用すると、単一の親アプリケーショ�
 │       └── cert-manager.yaml
 ```
 
-### 親アプリケーション
+### 親 Application
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -750,9 +678,12 @@ spec:
       selfHeal: true
 ```
 
-### 子アプリケーションテンプレート
+### 子 Application テンプレート
+
+この monitoring の子は kube-prometheus-stack 90.0.0 に固定されています。その chart の upgrade/CRD 要件を確認し、monitoring capacity は別途用意してください。namespace monitoring に admin-user/admin-password key を持つ保護済みの grafana-admin Secret を事前に作成してください。admin credentials を親 Git values に入れないでください。
 
 ```yaml
+---
 # apps/templates/monitoring.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -766,7 +697,7 @@ spec:
   source:
     repoURL: https://prometheus-community.github.io/helm-charts
     chart: kube-prometheus-stack
-    targetRevision: 55.5.0
+    targetRevision: 90.0.0
     helm:
       values: |
         prometheus:
@@ -775,6 +706,10 @@ spec:
             replicas: {{ .Values.monitoring.replicas | default 2 }}
         grafana:
           enabled: true
+          admin:
+            existingSecret: grafana-admin
+            userKey: admin-user
+            passwordKey: admin-password
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
@@ -805,61 +740,52 @@ ingress:
   class: alb
 ```
 
-### App of Apps の Sync Waves
+### App of Apps の Sync Wave
 
-子アプリケーションのデプロイ順序を制御します。
+以下は metadata のみのフラグメントです。完全な子 spec と組み合わせてください。子 Application の作成順序は、子 workload の readiness を保証するものではありません。子 Application health propagation と sync policy を設定・検証してください。
 
 ```yaml
-# apps/templates/cert-manager.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
+# Merge into the corresponding complete child Application metadata.
 metadata:
   name: cert-manager
-  namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-3"  # Deploy first
-spec:
-  # ...
-
-# apps/templates/ingress.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
+    argocd.argoproj.io/sync-wave: "-3"
+---
 metadata:
   name: ingress-controller
-  namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "-2"  # Deploy second
-spec:
-  # ...
-
-# apps/templates/monitoring.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
+    argocd.argoproj.io/sync-wave: "-2"
+---
 metadata:
   name: monitoring
-  namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "0"  # Deploy last
-spec:
-  # ...
+    argocd.argoproj.io/sync-wave: "0"
 ```
 
-## リビジョン履歴とロールバック
+## Revision History と Rollback
 
-### 履歴を表示
+automated sync が有効な間は history rollback を使用できません。最初に実際の Git/ApplicationSet owner の policy を確認してください。rollback は Git を更新しないため、後の reconciliation で Git state が復元される可能性があります。意図した変更は承認済みの Git revert/revision change を通じて永続化してください。database/external-state recovery は別の作業です。
+
+### History を表示
 
 ```bash
 # CLI
 argocd app history my-app
 
-# Output
+```
+
+出力例（shell command ではありません）：
+
+```text
 ID  DATE                           REVISION
 0   2024-01-15 10:30:00 +0000 UTC  abc1234
 1   2024-01-16 14:45:00 +0000 UTC  def5678
-2   2024-01-17 09:15:00 +0000 UTC  ghi9012
+2   2024-01-17 09:15:00 +0000 UTC  ab89012
 ```
 
-### ロールバック
+### Rollback
+
+実際の history から ID を選択してください。以前の manifest revision の適用と余分な resource の pruning は別々の判断です。
 
 ```bash
 # Rollback to specific revision
@@ -869,7 +795,7 @@ argocd app rollback my-app 1
 argocd app sync my-app --revision abc1234
 ```
 
-### 宣言的なロールバック
+### 宣言的 Rollback
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -878,6 +804,10 @@ metadata:
   name: my-app
   namespace: argocd
 spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: my-app
   source:
     repoURL: https://github.com/myorg/myrepo.git
     targetRevision: abc1234  # Specific commit for rollback
@@ -886,4 +816,14 @@ spec:
 
 ## クイズ
 
-学習内容を確認するには、[ArgoCD applications クイズ](../../quizzes/gitops/argocd/02-applications-quiz.md)に挑戦してください。
+学んだ内容をテストするには、[ArgoCD applications クイズ](../../quizzes/gitops/argocd/02-applications-quiz.md)を試してください。
+
+## バージョン付きレビューソース
+
+- [3.5.4 のソースと Helm](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/helm.md)
+- [複数のソース](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/multiple_sources.md)
+- [OCI ソースのルール](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/oci.md)
+- [Sync オプション](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-options.md)
+- [フェーズ、wave、hook](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-waves.md)
+- [Service health の実装](https://github.com/argoproj/argo-cd/blob/v3.5.4/gitops-engine/pkg/health/health_service.go)
+- [ACK condition の定義](https://github.com/aws-controllers-k8s/runtime/blob/main/apis/core/v1alpha1/conditions.go)

@@ -1,9 +1,10 @@
 # ArgoCD Notifications
 
-> **サポート対象バージョン**: ArgoCD v2.9+, ArgoCD Notifications v1.2+
-> **最終更新**: February 22, 2026
+> **確認バージョン**: Argo CD 3.5.2（バンドルされた Notifications Engine 0cff13b8a717）。リリースノートのレビュー後、同じ Notifications Engine コミットを固定するパッチ 3.5.4 に更新（例は再実行していません）
+> **最終更新**: October 12, 2026
 
 ## 目次
+
 - [概要](#overview)
 - [アーキテクチャ](#architecture)
 - [通知サービス](#notification-services)
@@ -13,11 +14,9 @@
 - [高度な設定](#advanced-configuration)
 - [AWS 統合](#aws-integration)
 
-<span id="overview"></span>
-
 ## 概要
 
-ArgoCD Notifications は、ArgoCD Application を監視し、特定の条件が満たされたときに通知を送信するコンポーネントです。複数の通知サービスをサポートし、柔軟なテンプレート機能を提供します。
+ArgoCD Notifications は、ArgoCD アプリケーションを監視し、特定の条件が満たされたときに通知を送信するコンポーネントです。複数の通知サービスをサポートし、柔軟なテンプレート機能を提供します。
 
 ### 主な機能
 
@@ -25,67 +24,31 @@ ArgoCD Notifications は、ArgoCD Application を監視し、特定の条件が�
 |---------|-------------|
 | 複数サービス | Slack、Teams、Email、Webhook、GitHub など |
 | 柔軟なトリガー | 条件ベースの通知トリガー |
-| Go Templates | メッセージ整形のための豊富なテンプレート構文 |
-| サブスクリプションモデル | Application ごとの通知サブスクリプション |
-| 組み込みトリガー | 一般的なイベント向けに事前設定されたトリガー |
-
-<span id="architecture"></span>
+| Go Templates | メッセージ書式設定のための豊富なテンプレート構文 |
+| サブスクリプションモデル | アプリケーションごとの通知サブスクリプション |
+| サンプルカタログ | 設定にマージできるオプションのトリガー／テンプレート定義 |
 
 ## アーキテクチャ
 
-```mermaid
-flowchart LR
-    subgraph ARGOCD["ArgoCD"]
-        APPS["Applications"]
-        CTRL["App Controller"]
-    end
+![ArgoCD Notifications のフロー図: Application イベントが Notifications Controller に到達し、トリガーの評価とテンプレートのレンダリング後、一致する設定済みサブスクリプションにメッセージを送信します。](../../.gitbook/assets/en-gitops-argocd-08-notifications-0.png)
 
-    subgraph NOTIFICATIONS["Notifications Controller"]
-        WATCH["Watch Apps"]
-        EVAL["Evaluate Triggers"]
-        SEND["Send Notifications"]
-    end
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-argocd-08-notifications-0.html)
 
-    subgraph SERVICES["Notification Services"]
-        SLACK["Slack"]
-        TEAMS["Teams"]
-        EMAIL["Email"]
-        WEBHOOK["Webhook"]
-        GITHUB["GitHub"]
-    end
+### Controller と設定
 
-    APPS --> CTRL
-    CTRL --> WATCH
-    WATCH --> EVAL
-    EVAL -->|"trigger matched"| SEND
-    SEND --> SLACK
-    SEND --> TEAMS
-    SEND --> EMAIL
-    SEND --> WEBHOOK
-    SEND --> GITHUB
-
-    classDef argocd fill:#EB6E85,stroke:#333,color:white
-    classDef notif fill:#6c757d,stroke:#333,color:white
-    classDef service fill:#28a745,stroke:#333,color:white
-
-    class APPS,CTRL argocd
-    class WATCH,EVAL,SEND notif
-    class SLACK,TEAMS,EMAIL,WEBHOOK,GITHUB service
-```
-
-### インストール
-
-ArgoCD Notifications は ArgoCD v2.4+ に含まれています。古いバージョンの場合:
+完全な Argo CD 3.5.4 インストールには Notifications Controller が含まれます。インストール／Helm values で有効になっていることを確認してください。notifications_catalog/install.yaml ファイルには設定例が含まれています。これは不足している Controller のインストーラーではありません。選択したカタログエントリを既存の ConfigMap と Secret にマージしてください。
 
 ```bash
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/notifications_catalog/install.yaml
+kubectl get deployment argocd-notifications-controller -n argocd
 ```
-
-<span id="notification-services"></span>
 
 ## 通知サービス
 
+これらのデータフラグメントを 1 つの argocd-notifications-cm 設定にまとめてください。個々のスニペットごとに同じ ConfigMap/Secret を置き換えないでください。トークン、署名付き Webhook URL、秘密鍵は、Git 外の保護された argocd-notifications-secret 値に保存してください。サービス、テンプレート、トリガー、サブスクリプションの名前はすべて一致している必要があります。
+
 ### Slack
+
+chat:write を設定し、対象チャンネルにボットを招待してください。chat:write.public は、ボットが参加していないパブリックチャンネルに投稿する場合にのみ必要です。signingSecret は Incoming Webhook URL の代替ではありません。
 
 ```yaml
 apiVersion: v1
@@ -96,7 +59,6 @@ metadata:
 data:
   service.slack: |
     token: $slack-token
-    signingSecret: $slack-signing-secret  # Optional, for verification
 ---
 apiVersion: v1
 kind: Secret
@@ -108,13 +70,15 @@ stringData:
   slack-token: xoxb-your-bot-token
 ```
 
-Slack Bot のセットアップ:
+Slack ボットのセットアップ:
 1. https://api.slack.com/apps で Slack App を作成します
-2. OAuth スコープを追加します: `chat:write`、`chat:write.public`
-3. App をワークスペースにインストールします
+2. `chat:write` を追加します。記載のユースケースで必要な場合にのみ `chat:write.public` を使用します
+3. ワークスペースにアプリをインストールします
 4. Bot User OAuth Token をコピーします
 
-### Microsoft Teams
+### Microsoft Teams Workflows
+
+レガシー Office365 Connectors ではなく、teams-workflows を使用する Workflows エンドポイントを使用してください。実際のエンドポイント認証とフロー所有者／共同所有者のライフサイクルを確認してください。署名付き URL は Secret に保存し、レガシーの MessageCard エンドポイントと互換であると想定しないでください。
 
 ```yaml
 apiVersion: v1
@@ -123,7 +87,7 @@ metadata:
   name: argocd-notifications-cm
   namespace: argocd
 data:
-  service.teams: |
+  service.teams-workflows: |
     recipientUrls:
       deployments: $teams-webhook-deployments
       alerts: $teams-webhook-alerts
@@ -135,8 +99,8 @@ metadata:
   namespace: argocd
 type: Opaque
 stringData:
-  teams-webhook-deployments: https://outlook.office.com/webhook/xxx
-  teams-webhook-alerts: https://outlook.office.com/webhook/yyy
+  teams-webhook-deployments: REPLACE_WITH_TEAMS_WORKFLOWS_URL
+  teams-webhook-alerts: REPLACE_WITH_TEAMS_WORKFLOWS_URL
 ```
 
 ### Email (SMTP)
@@ -154,6 +118,7 @@ data:
     username: $email-username
     password: $email-password
     from: argocd@example.com
+    html: true
 ---
 apiVersion: v1
 kind: Secret
@@ -178,10 +143,10 @@ data:
   service.webhook.custom: |
     url: https://api.example.com/webhooks/argocd
     headers:
-      - name: Authorization
-        value: Bearer $webhook-token
-      - name: Content-Type
-        value: application/json
+    - name: Authorization
+      value: $webhook-authorization
+    - name: Content-Type
+      value: application/json
 ---
 apiVersion: v1
 kind: Secret
@@ -190,10 +155,12 @@ metadata:
   namespace: argocd
 type: Opaque
 stringData:
-  webhook-token: your-api-token
+  webhook-authorization: Bearer REPLACE_WITH_RECEIVER_TOKEN
 ```
 
-### GitHub (Commit Status)
+### GitHub（Commit Status）
+
+GitHub App を対象リポジトリにインストールし、Commit statuses への書き込みアクセスを付与してください。例の ID と秘密鍵を、そのインストールの値に置き換えてください。
 
 ```yaml
 apiVersion: v1
@@ -222,6 +189,8 @@ stringData:
 
 ### Grafana
 
+必要な annotation-write 権限を持つ service-account トークンを使用してください。このエンジンは /api を含む apiUrl を想定し、annotations を追加します。administrator トークンや不必要に長い有効期間をデフォルトにしないでください。
+
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -234,7 +203,7 @@ data:
     apiKey: $grafana-api-key
 ```
 
-### PagerDuty
+### PagerDuty Events API v2
 
 ```yaml
 apiVersion: v1
@@ -243,32 +212,15 @@ metadata:
   name: argocd-notifications-cm
   namespace: argocd
 data:
-  service.pagerduty: |
+  service.pagerdutyv2: |
     serviceKeys:
       production: $pagerduty-key-prod
       staging: $pagerduty-key-staging
 ```
 
-<span id="triggers"></span>
-
 ## トリガー
 
-トリガーは、Application の状態に基づいて通知を送信するタイミングを定義します。
-
-### 組み込みトリガー
-
-| トリガー | 説明 |
-|---------|-------------|
-| `on-created` | Application が作成された |
-| `on-deleted` | Application が削除された |
-| `on-deployed` | Application が同期され、正常な状態である |
-| `on-health-degraded` | Application のヘルスが低下している |
-| `on-sync-failed` | Sync 操作が失敗した |
-| `on-sync-running` | Sync 操作が開始された |
-| `on-sync-status-unknown` | Sync ステータスが不明である |
-| `on-sync-succeeded` | Sync 操作が成功した |
-
-### カスタムトリガー
+これらは明示的に定義した例であり、自動的にインストールされるカタログに関する前提ではありません。`send` エントリは以下の `template.app-status` を参照します。選択したサービス設定とともに、**フラグメントを 1 つの ConfigMap にマージしてください**。
 
 ```yaml
 apiVersion: v1
@@ -277,65 +229,128 @@ metadata:
   name: argocd-notifications-cm
   namespace: argocd
 data:
-  # Trigger when app becomes healthy
-  trigger.on-deployed: |
-    - when: app.status.operationState.phase in ['Succeeded'] and app.status.health.status == 'Healthy'
-      send: [app-deployed]
-
-  # Trigger on sync failure
+  context: |
+    argocdUrl: https://argocd.example.com
+  trigger.on-sync-succeeded: |
+    - when: app.status?.operationState?.phase == 'Succeeded'
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
   trigger.on-sync-failed: |
-    - when: app.status.operationState != nil and app.status.operationState.phase in ['Error', 'Failed']
-      send: [app-sync-failed]
-
-  # Trigger on health degradation
+    - when: app.status?.operationState?.phase in ['Failed', 'Error']
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
+  trigger.on-sync-running: |
+    - when: app.status?.operationState?.phase == 'Running'
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
+  trigger.on-sync-status-unknown: |
+    - when: app.status?.sync?.status == 'Unknown'
+      send:
+      - app-status
   trigger.on-health-degraded: |
-    - when: app.status.health.status == 'Degraded'
-      send: [app-health-degraded]
-
-  # Custom trigger: High replica count
-  trigger.on-high-replicas: |
-    - when: app.status.summary.images | length > 5
-      send: [high-image-count]
-
-  # Custom trigger: Production deployment
-  trigger.on-prod-deployed: |
-    - when: app.metadata.labels.environment == 'production' and app.status.operationState.phase == 'Succeeded'
-      send: [prod-deployment-success]
-      oncePer: app.status.sync.revision
-
-  # Trigger with time-based condition
-  trigger.on-long-sync: |
-    - when: time.Now().Sub(time.Parse(app.status.operationState.startedAt)).Minutes() > 10
-      send: [long-sync-warning]
+    - when: app.status?.health?.status == 'Degraded'
+      send:
+      - app-status
+  trigger.on-deployed: |
+    - when: app.status?.operationState?.phase == 'Succeeded' && app.status?.sync?.status == 'Synced' && app.status?.health?.status
+        == 'Healthy'
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
 ```
 
-### トリガー条件
+`?.` は、まだ `status` または `operationState` を持たない Application を処理します。Sync の成功だけでは、アプリケーションの準備完了を意味しません。`on-deployed` には、成功した operation と**現在の Synced + Healthy**ステータスが必要であり、より古い成功済み operation に新しい OutOfSync 変更が加わった状態を除外します。
 
-トリガーは条件に expr 言語を使用します:
+### カスタム条件
 
 ```yaml
-trigger.custom: |
-  - when: |
-      app.status.health.status == 'Degraded' and
-      app.metadata.labels.tier == 'critical' and
-      time.Now().Hour() >= 9 and time.Now().Hour() < 17
-    send: [critical-alert]
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-notifications-cm
+  namespace: argocd
+data:
+  trigger.on-production-deployed: |
+    - when: app.metadata?.labels?.environment == 'production' && app.status?.operationState?.phase == 'Succeeded' &&
+        app.status?.sync?.status == 'Synced' && app.status?.health?.status == 'Healthy'
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
+  trigger.on-resource-failed: |
+    - when: app.status?.resources != nil && any(app.status.resources, {#.health?.status == 'Degraded'})
+      send:
+      - app-status
+  trigger.on-many-images: |
+    - when: app.status?.summary?.images != nil && len(app.status.summary.images) > 5
+      oncePer: app.metadata.generation
+      send:
+      - app-status
+  trigger.on-long-sync: |
+    - when: app.status?.operationState?.phase == 'Running' && app.status.operationState.startedAt != nil && time.Now().Sub(time.Parse(app.status.operationState.startedAt)).Minutes()
+        > 10
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
+  trigger.on-declared-rollback: |
+    - when: 'app.status?.operationState?.phase == ''Succeeded'' && app.status.operationState.operation?.info != nil
+        && any(app.status.operationState.operation.info, {#.name == ''release-action'' && #.value == ''rollback''})'
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
+  trigger.on-critical-failure: |
+    - when: app.status?.operationState?.phase in ['Failed', 'Error'] && app.metadata?.labels?.tier == 'critical'
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
+  trigger.on-production-namespace-failure: |
+    - when: app.status?.operationState?.phase in ['Failed', 'Error'] && app.spec?.destination?.namespace != nil && app.spec.destination.namespace
+        matches '^prod-.*$'
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
+  trigger.on-utc-window: |
+    - when: app.status?.operationState?.phase == 'Succeeded' && time.Now().UTC().Hour() >= 9 && time.Now().UTC().Hour()
+        < 18
+      oncePer: app.status.operationState.startedAt
+      send:
+      - app-status
 ```
 
-使用可能なフィールド:
-- `app.metadata.*` - Application メタデータ
-- `app.spec.*` - Application spec
-- `app.status.*` - Application ステータス
-- `app.operation.*` - 現在の操作
-- `time.Now()` - 現在時刻
+- `summary.images` は replicas ではなく images を数えます。リソース配列には `any(...)` を、正規表現には `matches` を使用してください。
+- 時間条件は Application が評価されるときに実行されます。厳密な 10 分タイマーではなく、次の UTC 営業時間帯まで通知をキューに入れることもありません。
+- revision の差異は rollback の証明にはなりません。`on-declared-rollback` は明示的な operation 情報を読み取ります。Git で復旧変更をレビューした後、手動 Sync ワークフローでは `argocd app sync my-app --info release-action=rollback` を使用できます。自動 Sync では、このマーカーは自動的に追加されません。
 
-<span id="templates"></span>
+### 継続的な OutOfSync 監視
+
+最後の operation の `finishedAt` は、OutOfSync が始まった時刻ではありません。30 分間継続する条件には、Prometheus で Argo CD metrics をスクレイプし、このようなルールを使用してください。Prometheus Operator と、Prometheus の `ruleSelector` 設定に一致する labels/namespaces が必要です。
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: argocd-sync-alerts
+  namespace: monitoring
+spec:
+  groups:
+  - name: argocd-sync
+    rules:
+    - alert: ArgoCDApplicationOutOfSync
+      expr: argocd_app_info{sync_status="OutOfSync"} == 1
+      for: 30m
+      labels:
+        severity: warning
+      annotations:
+        summary: Application {{ $labels.name }} has remained OutOfSync for 30 minutes
+```
 
 ## テンプレート
 
-テンプレートは、Go templates を使用して通知メッセージの形式を定義します。
+この共通テンプレートは、Slack、Teams Workflows、HTML email、webhook、incident 形式を定義します。**サブスクリプションが宛先を選択します**。サービス形式を含めても、すべてのプロバイダーにブロードキャストされるわけではありません。PagerDuty/Opsgenie は failure または Degraded トリガーにのみサブスクライブしてください。この例では incidents は自動解決されません。
 
-### Slack テンプレート
+このエンジンバージョンは、Sprig 関数を備えた Go `text/template` を使用します。JSON 値は `toJson` で、HTML 値は `html` でエスケープしてください。フィールドは個別にレンダリングされるため、ローカル変数は各フィールドで宣言します。このテンプレートは、欠落した status、単一の operation revision、複数ソースの `revisions` を処理します。生の operation エラーメッセージを外部チャネルに転送しません。
 
 ```yaml
 apiVersion: v1
@@ -344,180 +359,111 @@ metadata:
   name: argocd-notifications-cm
   namespace: argocd
 data:
-  template.app-deployed: |
+  template.app-status: |
     message: |
-      :white_check_mark: Application *{{.app.metadata.name}}* is now healthy!
+      {{- $status := default (dict) .app.status -}}
+      {{- $sync := default (dict) $status.sync -}}
+      {{- $health := default (dict) $status.health -}}
+      {{- $op := default (dict) $status.operationState -}}
+      {{- $result := default (dict) $op.syncResult -}}
+      {{- $applied := default (list) $result.revisions -}}
+      {{- if and (not $applied) $result.revision -}}{{- $applied = list $result.revision -}}{{- end -}}
+      {{- $url := printf "%s/applications/%s/%s" (trimSuffix "/" .context.argocdUrl) .app.metadata.namespace .app.metadata.name -}}
+      Application {{.app.metadata.namespace}}/{{.app.metadata.name}}: phase={{default "None" $op.phase}}, sync={{default "Unknown" $sync.status}}, health={{default "Unknown" $health.status}}.
+      Details: {{$url}}
     slack:
       attachments: |
-        [{
-          "color": "#18be52",
-          "title": "{{.app.metadata.name}}",
-          "title_link": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}",
-          "fields": [
-            {
-              "title": "Sync Status",
-              "value": "{{.app.status.sync.status}}",
-              "short": true
-            },
-            {
-              "title": "Health Status",
-              "value": "{{.app.status.health.status}}",
-              "short": true
-            },
-            {
-              "title": "Revision",
-              "value": "{{.app.status.sync.revision | substr 0 7}}",
-              "short": true
-            },
-            {
-              "title": "Repository",
-              "value": "{{.app.spec.source.repoURL}}",
-              "short": true
-            }
-          ]
-        }]
-
-  template.app-sync-failed: |
-    message: |
-      :x: Application *{{.app.metadata.name}}* sync failed!
-    slack:
-      attachments: |
-        [{
-          "color": "#E96D76",
-          "title": "{{.app.metadata.name}} - Sync Failed",
-          "title_link": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}",
-          "fields": [
-            {
-              "title": "Error",
-              "value": "{{.app.status.operationState.message}}",
-              "short": false
-            },
-            {
-              "title": "Revision",
-              "value": "{{.app.status.sync.revision | substr 0 7}}",
-              "short": true
-            }
-          ]
-        }]
-
-  template.app-health-degraded: |
-    message: |
-      :warning: Application *{{.app.metadata.name}}* health is degraded!
-    slack:
-      attachments: |
+        {{- $status := default (dict) .app.status -}}
+        {{- $sync := default (dict) $status.sync -}}
+        {{- $health := default (dict) $status.health -}}
+        {{- $op := default (dict) $status.operationState -}}
+        {{- $result := default (dict) $op.syncResult -}}
+        {{- $applied := default (list) $result.revisions -}}
+        {{- if and (not $applied) $result.revision -}}{{- $applied = list $result.revision -}}{{- end -}}
+        {{- $url := printf "%s/applications/%s/%s" (trimSuffix "/" .context.argocdUrl) .app.metadata.namespace .app.metadata.name -}}
         [{
           "color": "#f4c030",
-          "title": "{{.app.metadata.name}} - Health Degraded",
-          "title_link": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}",
+          "title": {{.app.metadata.name | toJson}},
+          "title_link": {{$url | toJson}},
           "fields": [
-            {
-              "title": "Health Status",
-              "value": "{{.app.status.health.status}}",
-              "short": true
-            },
-            {
-              "title": "Message",
-              "value": "{{.app.status.health.message}}",
-              "short": false
-            }
+            {"title":"Sync","value":{{default "Unknown" $sync.status | toJson}},"short":true},
+            {"title":"Health","value":{{default "Unknown" $health.status | toJson}},"short":true},
+            {"title":"Operation revision(s)","value":{{join ", " $applied | toJson}},"short":false}
           ]
         }]
-```
-
-### Teams テンプレート
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-notifications-cm
-  namespace: argocd
-data:
-  template.app-deployed-teams: |
-    teams:
-      themeColor: "#18be52"
-      title: "Application Deployed"
-      text: "Application **{{.app.metadata.name}}** has been deployed successfully."
-      sections: |
-        [{
-          "facts": [
-            {
-              "name": "Application",
-              "value": "{{.app.metadata.name}}"
-            },
-            {
-              "name": "Health Status",
-              "value": "{{.app.status.health.status}}"
-            },
-            {
-              "name": "Sync Status",
-              "value": "{{.app.status.sync.status}}"
-            },
-            {
-              "name": "Revision",
-              "value": "{{.app.status.sync.revision | substr 0 7}}"
-            }
-          ]
-        }]
-      potentialAction: |
-        [{
-          "@type": "OpenUri",
-          "name": "View in ArgoCD",
-          "targets": [{
-            "os": "default",
-            "uri": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}"
-          }]
-        }]
-```
-
-### Email テンプレート
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-notifications-cm
-  namespace: argocd
-data:
-  template.app-deployed-email: |
+    teams-workflows:
+      title: 'Application status changed: {{.app.metadata.name}}'
+      text: |-
+        {{- $status := default (dict) .app.status -}}
+        {{- $sync := default (dict) $status.sync -}}
+        {{- $health := default (dict) $status.health -}}
+        {{- $op := default (dict) $status.operationState -}}
+        {{- $result := default (dict) $op.syncResult -}}
+        {{- $applied := default (list) $result.revisions -}}
+        {{- if and (not $applied) $result.revision -}}{{- $applied = list $result.revision -}}{{- end -}}
+        {{- $url := printf "%s/applications/%s/%s" (trimSuffix "/" .context.argocdUrl) .app.metadata.namespace .app.metadata.name -}}
+        Application {{.app.metadata.namespace}}/{{.app.metadata.name}}
+        {{$url}}
+      themeColor: Accent
+      facts: |-
+        {{- $status := default (dict) .app.status -}}
+        {{- $sync := default (dict) $status.sync -}}
+        {{- $health := default (dict) $status.health -}}
+        {{- $op := default (dict) $status.operationState -}}
+        {{- $result := default (dict) $op.syncResult -}}
+        {{- $applied := default (list) $result.revisions -}}
+        {{- if and (not $applied) $result.revision -}}{{- $applied = list $result.revision -}}{{- end -}}
+        {{- $url := printf "%s/applications/%s/%s" (trimSuffix "/" .context.argocdUrl) .app.metadata.namespace .app.metadata.name -}}
+        [{"name":"Sync","value":{{default "Unknown" $sync.status | toJson}}},{"name":"Health","value":{{default "Unknown" $health.status | toJson}}}]
     email:
-      subject: "[ArgoCD] Application {{.app.metadata.name}} Deployed"
-    message: |
-      <html>
-      <body>
-        <h2>Application Deployment Successful</h2>
-        <table border="1" cellpadding="5">
-          <tr>
-            <th>Application</th>
-            <td>{{.app.metadata.name}}</td>
-          </tr>
-          <tr>
-            <th>Health Status</th>
-            <td>{{.app.status.health.status}}</td>
-          </tr>
-          <tr>
-            <th>Sync Status</th>
-            <td>{{.app.status.sync.status}}</td>
-          </tr>
-          <tr>
-            <th>Revision</th>
-            <td>{{.app.status.sync.revision}}</td>
-          </tr>
-          <tr>
-            <th>Repository</th>
-            <td>{{.app.spec.source.repoURL}}</td>
-          </tr>
-        </table>
-        <p>
-          <a href="{{.context.argocdUrl}}/applications/{{.app.metadata.name}}">
-            View in ArgoCD
-          </a>
-        </p>
-      </body>
-      </html>
+      subject: '[Argo CD] Application status changed: {{.app.metadata.name}}'
+      body: |-
+        {{- $status := default (dict) .app.status -}}
+        {{- $sync := default (dict) $status.sync -}}
+        {{- $health := default (dict) $status.health -}}
+        {{- $op := default (dict) $status.operationState -}}
+        {{- $result := default (dict) $op.syncResult -}}
+        {{- $applied := default (list) $result.revisions -}}
+        {{- if and (not $applied) $result.revision -}}{{- $applied = list $result.revision -}}{{- end -}}
+        {{- $url := printf "%s/applications/%s/%s" (trimSuffix "/" .context.argocdUrl) .app.metadata.namespace .app.metadata.name -}}
+        <h2>Application status changed</h2><p>Application: {{.app.metadata.namespace | html}}/{{.app.metadata.name | html}}</p><p>Sync: {{default "Unknown" $sync.status | html}}; health: {{default "Unknown" $health.status | html}}</p><a href="{{$url | html}}">View in Argo CD</a>
+    webhook:
+      custom:
+        method: POST
+        body: |
+          {{- $status := default (dict) .app.status -}}
+          {{- $sync := default (dict) $status.sync -}}
+          {{- $health := default (dict) $status.health -}}
+          {{- $op := default (dict) $status.operationState -}}
+          {{- $result := default (dict) $op.syncResult -}}
+          {{- $applied := default (list) $result.revisions -}}
+          {{- if and (not $applied) $result.revision -}}{{- $applied = list $result.revision -}}{{- end -}}
+          {{- $url := printf "%s/applications/%s/%s" (trimSuffix "/" .context.argocdUrl) .app.metadata.namespace .app.metadata.name -}}
+          {{ dict "event" "application-status" "application" .app.metadata.name "namespace" .app.metadata.namespace "uid" (default "" .app.metadata.uid) "project" (default "default" .app.spec.project) "phase" (default "" $op.phase) "syncStatus" (default "Unknown" $sync.status) "healthStatus" (default "Unknown" $health.status) "appliedRevisions" $applied "operationStartedAt" (default "" $op.startedAt) "url" $url | toJson }}
+    pagerdutyv2:
+      summary: 'Application status changed: {{.app.metadata.namespace}}/{{.app.metadata.name}}'
+      severity: error
+      source: argocd
+      dedupKey: argocd/{{.app.metadata.namespace}}/{{.app.metadata.name}}/application-status
+    opsgenie:
+      description: 'Application status changed: {{.app.metadata.namespace}}/{{.app.metadata.name}}'
+      priority: P2
+      alias: argocd/{{.app.metadata.namespace}}/{{.app.metadata.name}}/application-status
 ```
 
-### GitHub Commit Status テンプレート
+`service.email.html: true` は HTML body を有効にします。Teams は `teams-workflows` フィールドと Adaptive Card の色名を使用します。`service.webhook.custom` のサービス名は **custom** で、その body は `webhook.custom` 配下にあります。`POST` を明示的に設定してください。Grafana は annotation に共通の `message` を使用します。
+
+| 関数 | 用途 |
+|---|---|
+| `upper`, `lower` | 文字の大文字／小文字を変更 |
+| `default`, `dict`, `list` | デフォルト値とコレクション |
+| `join`, `splitList` | リストの結合／分割 |
+| `toJson` | JSON 値をエンコード |
+| `html` | HTML 特殊文字をエスケープ |
+
+### GitHub Commit Status
+
+Commit status には別々のトリガー／テンプレートを使用してください。この例は 1 つの HTTPS GitHub source に限定され、operation result がそのリポジトリと revision を識別した場合にのみ公開します。複数ソース、Helm/OCI、SSH source には明示的なマッピングが必要です。result revision が記録される前の failures は公開されません。`status.label` は GitHub status context を提供します。`context` と `description` はこのテンプレートスキーマのフィールドではありません。
 
 ```yaml
 apiVersion: v1
@@ -526,63 +472,63 @@ metadata:
   name: argocd-notifications-cm
   namespace: argocd
 data:
-  template.github-commit-status: |
+  trigger.on-github-deployed: |
+    - when: app.spec?.source?.repoURL != nil && app.spec.source.repoURL startsWith 'https://github.com/' && app.spec?.sources
+        == nil && app.status?.operationState?.syncResult?.revision != nil && app.status.operationState.syncResult?.source?.repoURL
+        == app.spec.source.repoURL && app.status?.operationState?.phase == 'Succeeded' && app.status?.sync?.status ==
+        'Synced' && app.status?.health?.status == 'Healthy'
+      oncePer: app.status.operationState.startedAt
+      send:
+      - github-deployed
+  trigger.on-github-failed: |
+    - when: app.spec?.source?.repoURL != nil && app.spec.source.repoURL startsWith 'https://github.com/' && app.spec?.sources
+        == nil && app.status?.operationState?.syncResult?.revision != nil && app.status.operationState.syncResult?.source?.repoURL
+        == app.spec.source.repoURL && app.status?.operationState?.phase in ['Failed', 'Error']
+      oncePer: app.status.operationState.startedAt
+      send:
+      - github-failed
+  template.github-deployed: |
     github:
+      repoURLPath: '{{.app.status.operationState.syncResult.source.repoURL}}'
+      revisionPath: '{{.app.status.operationState.syncResult.revision}}'
       status:
-        state: "{{if eq .app.status.sync.status \"Synced\"}}success{{else}}failure{{end}}"
-        context: "argocd/{{.app.metadata.name}}"
-        description: "{{.app.metadata.name}} - {{.app.status.sync.status}}"
-        targetURL: "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}"
-      repoURLPath: "{{.app.spec.source.repoURL}}"
-      revisionPath: "{{.app.status.sync.revision}}"
+        state: success
+        label: argocd/{{.app.metadata.namespace}}/{{.app.metadata.name}}
+        targetURL: '{{.context.argocdUrl}}/applications/{{.app.metadata.namespace}}/{{.app.metadata.name}}'
+  template.github-failed: |
+    github:
+      repoURLPath: '{{.app.status.operationState.syncResult.source.repoURL}}'
+      revisionPath: '{{.app.status.operationState.syncResult.revision}}'
+      status:
+        state: failure
+        label: argocd/{{.app.metadata.namespace}}/{{.app.metadata.name}}
+        targetURL: '{{.context.argocdUrl}}/applications/{{.app.metadata.namespace}}/{{.app.metadata.name}}'
 ```
-
-### テンプレート関数
-
-テンプレートで使用可能な関数:
-
-| 関数 | 説明 |
-|----------|-------------|
-| `substr start end` | 部分文字列 |
-| `toUpper` | 大文字に変換 |
-| `toLower` | 小文字に変換 |
-| `replace old new` | 文字列を置換 |
-| `split delimiter` | 文字列を分割 |
-| `join delimiter` | 配列を結合 |
-| `first` | 最初の要素 |
-| `last` | 最後の要素 |
-| `default value` | 空の場合のデフォルト値 |
-| `indent spaces` | テキストをインデント |
-| `nindent spaces` | 改行してインデント |
-
-<span id="subscriptions"></span>
 
 ## サブスクリプション
 
-### Application レベルのサブスクリプション
+### Application Annotations
 
-Application にアノテーションを追加します:
+この**metadata フラグメントを既存の Application にマージしてください**。これは単独の Application manifest ではありません。各サービスに設定した recipient 名に一致させ、必要なサブスクリプションを選択してください。複数の recipient はカンマではなく**セミコロン**で区切ります。
 
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
 metadata:
   name: my-app
   namespace: argocd
   annotations:
-    # Subscribe to triggers with service destinations
     notifications.argoproj.io/subscribe.on-sync-succeeded.slack: deployments
-    notifications.argoproj.io/subscribe.on-sync-failed.slack: deployments,alerts
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: deployments;alerts
     notifications.argoproj.io/subscribe.on-health-degraded.slack: alerts
-    notifications.argoproj.io/subscribe.on-deployed.teams: deployments
+    notifications.argoproj.io/subscribe.on-deployed.teams-workflows: deployments
     notifications.argoproj.io/subscribe.on-sync-failed.email: ops@example.com
-spec:
-  # ...
+    notifications.argoproj.io/subscribe.on-deployed.custom: ''
+    notifications.argoproj.io/subscribe.on-github-deployed.github: ''
+    notifications.argoproj.io/subscribe.on-github-failed.github: ''
 ```
 
-### デフォルトサブスクリプション
+### デフォルトトリガーとグローバルサブスクリプション
 
-すべての Application のデフォルトサブスクリプションを設定します:
+`defaultTriggers` は、`notifications.argoproj.io/subscribe.slack: alerts` などの annotations にトリガー名を提供します。すべての Application にサブスクリプションを作成するものではありません。中央管理する recipient には `subscriptions` を使用してください。`selector` は**Application labels**に一致します。
 
 ```yaml
 apiVersion: v1
@@ -591,119 +537,60 @@ metadata:
   name: argocd-notifications-cm
   namespace: argocd
 data:
-  # Default triggers for all applications
   defaultTriggers: |
     - on-sync-failed
     - on-health-degraded
-
-  # Default subscriptions
   subscriptions: |
     - recipients:
-        - slack:alerts
+      - slack:alerts
       triggers:
-        - on-sync-failed
-        - on-health-degraded
+      - on-sync-failed
+      - on-health-degraded
     - recipients:
-        - email:ops@example.com
+      - email:ops@example.com
       triggers:
-        - on-sync-failed
+      - on-sync-failed
       selector: environment=production
 ```
 
-### Project レベルのサブスクリプション
+### AppProject サブスクリプション
+
+この metadata フラグメントを既存の AppProject にマージして、その Applications を対象にしてください。前章の source/destination/RBAC policies を保持します。
 
 ```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: AppProject
 metadata:
   name: production
   namespace: argocd
   annotations:
     notifications.argoproj.io/subscribe.on-sync-failed.slack: production-alerts
-    notifications.argoproj.io/subscribe.on-health-degraded.pagerduty: production
-spec:
-  # ...
+    notifications.argoproj.io/subscribe.on-health-degraded.pagerdutyv2: production
 ```
-
-<span id="advanced-configuration"></span>
 
 ## 高度な設定
 
-### コンテキスト変数
+### oncePer と重複処理
 
-カスタムコンテキスト変数を追加します:
+`oncePer` は、式の値を使用して条件に対する重複通知を減らします。これは 1 秒あたりのリクエスト数制限でも、厳密に 1 回だけの配信保証でもありません。ここでの operation トリガーは、同じ revision での新しい Sync 試行を区別するために `operationState.startedAt` を使用します。レート制限は受信側のサービス／bridge で処理し、webhook/SQS consumers を冪等にしてください。
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-notifications-cm
-  namespace: argocd
-data:
-  context: |
-    argocdUrl: https://argocd.example.com
-    environment: production
-    team: platform
-    slackChannel: "#deployments"
+### Console 検証
+
+構成した ConfigMap を `notifications.yaml` として保存します。これらのコマンドは、現在の kubeconfig を通じて Application/AppProject を読み取り、`console:stdout` に明示的にレンダリングします。実際の Slack/Teams/GitHub/SQS 権限と配信には、別途統合テストが必要です。
+
+```bash
+kubectl get application my-app -n argocd -o yaml > sample-application.yaml
+argocd admin notifications trigger run on-deployed ./sample-application.yaml \
+  --config-map ./notifications.yaml --secret :empty
+argocd admin notifications template notify app-status ./sample-application.yaml \
+  --config-map ./notifications.yaml --secret :empty --recipient console:stdout
 ```
-
-テンプレートで使用します:
-
-```yaml
-template.custom: |
-  message: |
-    Environment: {{.context.environment}}
-    Team: {{.context.team}}
-```
-
-### 条件付き通知
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-notifications-cm
-  namespace: argocd
-data:
-  trigger.on-critical-failure: |
-    - when: |
-        app.status.operationState.phase == 'Failed' and
-        app.metadata.labels.tier == 'critical'
-      send: [critical-failure]
-      oncePer: app.status.sync.revision
-
-  template.critical-failure: |
-    message: |
-      :rotating_light: CRITICAL APPLICATION FAILURE :rotating_light:
-      Application *{{.app.metadata.name}}* has failed!
-      {{if .app.status.operationState.message}}
-      Error: {{.app.status.operationState.message}}
-      {{end}}
-    slack:
-      attachments: |
-        [{
-          "color": "#dc3545",
-          "title": "{{.app.metadata.name}} - CRITICAL FAILURE",
-          "title_link": "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}"
-        }]
-```
-
-### oncePer によるレート制限
-
-重複通知を防止します:
-
-```yaml
-trigger.on-sync-status-change: |
-  - when: app.status.sync.status != 'Synced'
-    send: [sync-status-change]
-    oncePer: app.status.sync.revision
-```
-
-<span id="aws-integration"></span>
 
 ## AWS 統合
 
-### Amazon SNS
+### ネイティブ SQS サービス
+
+このバージョンは `awssqs` サービスを提供します。AWS API URL または generic webhook 内の静的な `Authorization: AWS4-HMAC-SHA256 ...` 文字列では、SigV4 リクエストには署名されません。IRSA/Pod Identity credentials だけでは、generic webhook が signer-aware になるわけではありません。
+
+まず、同じ account/region に `argocd-notifications` という名前の**Standard queue**をプロビジョニングし、Notifications Controller service account を IRSA または EKS Pod Identity に関連付けてください。SDK のデフォルト credential chain により、ここでは static access keys を回避できます。account/region/queue の値を置き換え、上記の `context` 設定をマージしてください。
 
 ```yaml
 apiVersion: v1
@@ -712,117 +599,79 @@ metadata:
   name: argocd-notifications-cm
   namespace: argocd
 data:
-  service.webhook.sns: |
-    url: https://sns.us-west-2.amazonaws.com
-    headers:
-      - name: Content-Type
-        value: application/x-www-form-urlencoded
-
-  template.sns-notification: |
-    webhook:
-      sns:
-        method: POST
-        body: |
-          Action=Publish&TopicArn=arn:aws:sns:us-west-2:123456789012:argocd-notifications&Message={{.app.metadata.name}} - {{.app.status.sync.status}}
+  service.awssqs: |
+    queue: argocd-notifications
+    region: ap-northeast-2
+    account: '123456789012'
+  trigger.on-aws-sync-completed: |
+    - when: app.status?.operationState?.phase in ['Succeeded', 'Failed', 'Error']
+      oncePer: app.status.operationState.startedAt
+      send:
+      - aws-app-event
+  template.aws-app-event: |
+    message: |
+      {{- $status := default (dict) .app.status -}}
+      {{- $sync := default (dict) $status.sync -}}
+      {{- $health := default (dict) $status.health -}}
+      {{- $op := default (dict) $status.operationState -}}
+      {{- $result := default (dict) $op.syncResult -}}
+      {{- $applied := default (list) $result.revisions -}}
+      {{- if and (not $applied) $result.revision -}}{{- $applied = list $result.revision -}}{{- end -}}
+      {{- $url := printf "%s/applications/%s/%s" (trimSuffix "/" .context.argocdUrl) .app.metadata.namespace .app.metadata.name -}}
+      {{ dict "event" "sync-completed" "application" .app.metadata.name "namespace" .app.metadata.namespace "uid" (default "" .app.metadata.uid) "project" (default "default" .app.spec.project) "phase" (default "" $op.phase) "syncStatus" (default "Unknown" $sync.status) "healthStatus" (default "Unknown" $health.status) "appliedRevisions" $applied "operationStartedAt" (default "" $op.startedAt) "url" $url | toJson }}
 ```
 
-### Amazon SQS
+SQS 管理の暗号化を前提とした Controller role の送信者権限の例です。customer-managed KMS key には、適切な key policy と KMS permissions も追加で必要です。
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sqs:GetQueueUrl",
+        "sqs:SendMessage"
+      ],
+      "Resource": "arn:aws:sqs:ap-northeast-2:123456789012:argocd-notifications"
+    }
+  ]
+}
+```
+
+このエントリを既存の Application の annotations に追加してください。recipient は queue 名であり、サービスのデフォルト queue を上書きします。
 
 ```yaml
-apiVersion: v1
-kind: ConfigMap
 metadata:
-  name: argocd-notifications-cm
-  namespace: argocd
-data:
-  service.webhook.sqs: |
-    url: https://sqs.us-west-2.amazonaws.com/123456789012/argocd-notifications
-    headers:
-      - name: Content-Type
-        value: application/x-www-form-urlencoded
-
-  template.sqs-notification: |
-    webhook:
-      sqs:
-        method: POST
-        body: |
-          Action=SendMessage&MessageBody={"app":"{{.app.metadata.name}}","status":"{{.app.status.sync.status}}","revision":"{{.app.status.sync.revision}}"}
+  annotations:
+    notifications.argoproj.io/subscribe.on-aws-sync-completed.awssqs: argocd-notifications
 ```
 
-### Lambda Webhook
+バンドルされたエンジンは、`SendMessage` に 10 秒の delay を設定します。FIFO queues はメッセージ単位の delay をサポートしないため、この例で FIFO queue に置き換えないでください。設定した `messageAttributes` が送信されると想定しないでください。必要な metadata は JSON message body に含めてください。
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-notifications-cm
-  namespace: argocd
-data:
-  service.webhook.lambda: |
-    url: https://xxxxx.execute-api.us-west-2.amazonaws.com/prod/argocd-webhook
-    headers:
-      - name: x-api-key
-        value: $lambda-api-key
-      - name: Content-Type
-        value: application/json
+### Lambda、SNS、EventBridge 統合
 
-  template.lambda-notification: |
-    webhook:
-      lambda:
-        method: POST
-        body: |
-          {
-            "application": "{{.app.metadata.name}}",
-            "project": "{{.app.spec.project}}",
-            "syncStatus": "{{.app.status.sync.status}}",
-            "healthStatus": "{{.app.status.health.status}}",
-            "revision": "{{.app.status.sync.revision}}",
-            "repoURL": "{{.app.spec.source.repoURL}}",
-            "timestamp": "{{.app.status.operationState.finishedAt}}"
-          }
-```
+サポートされる統合パスは、**Notifications → SQS → Lambda → SNS または EventBridge**です。下流リソースは個別に実装・デプロイしてください。ConfigMap はそれらを作成しません。
 
-### AWS 通知の完全なセットアップ
+| ホップ | 必要な設定 |
+|---|---|
+| SQS → Lambda | 同一リージョンの event source mapping、receive/delete/queue-attribute 権限、処理に合わせた visibility timeout、retries/DLQ |
+| Lambda → SNS | 対象 topic に対する実行 role の `sns:Publish` 権限、署名付き AWS SDK call |
+| Lambda → EventBridge | 対象 bus の `events:PutEvents`、`FailedEntryCount` と個々のエラーを検査 |
+| Consumer | JSON 検証、Application UID、event、operationStartedAt、現在の status を考慮した idempotency key、SQS partial batch failure response 設定 |
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: argocd-notifications-cm
-  namespace: argocd
-data:
-  context: |
-    argocdUrl: https://argocd.example.com
-    awsRegion: us-west-2
-    environment: production
+API Gateway webhook が必要な場合は、個別に認証された bridge を構築してください。API key/usage plan だけでは認証になりません。この章のレビューでは、AWS リソースのプロビジョニングや実際のメッセージ送信は行っていません。
 
-  service.webhook.eventbridge: |
-    url: https://events.us-west-2.amazonaws.com
-    headers:
-      - name: Content-Type
-        value: application/x-amz-json-1.1
-      - name: X-Amz-Target
-        value: AWSEvents.PutEvents
+## 参考資料
 
-  trigger.on-sync-completed: |
-    - when: app.status.operationState.phase in ['Succeeded', 'Failed']
-      send: [aws-eventbridge]
-
-  template.aws-eventbridge: |
-    webhook:
-      eventbridge:
-        method: POST
-        body: |
-          {
-            "Entries": [{
-              "Source": "argocd",
-              "DetailType": "Application Sync Event",
-              "Detail": "{\"application\":\"{{.app.metadata.name}}\",\"status\":\"{{.app.status.operationState.phase}}\",\"revision\":\"{{.app.status.sync.revision}}\"}",
-              "EventBusName": "argocd-events"
-            }]
-          }
-```
+- [Notifications](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/notifications/)
+- [トリガー](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/notifications/triggers/)
+- [サブスクリプション](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/notifications/subscriptions/)
+- [Teams Workflows](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/notifications/services/teams-workflows/)
+- [Engine template の実装](https://github.com/argoproj/notifications-engine/blob/0cff13b8a717/pkg/templates/service.go)
+- [Engine SQS の実装](https://github.com/argoproj/notifications-engine/blob/0cff13b8a717/pkg/services/awssqs.go)
+- [SQS を使用する Lambda](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html)
 
 ## クイズ
 
-学んだ内容を確認するには、[ArgoCD notifications クイズ](../../quizzes/gitops/argocd/08-notifications-quiz.md)に挑戦してください。
+[notifications クイズ](../../quizzes/gitops/argocd/08-notifications-quiz.md)で理解度を確認してください。

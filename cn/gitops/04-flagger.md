@@ -1,1159 +1,777 @@
 # Flagger 渐进式交付
 
-> **支持的版本**: Flagger v1.38+，Flux v2.4+
-> **最后更新**: June 2025
+> **审查基线**：Flagger/Chart 1.45.0、Loadtester 0.39.0、Flux 2.9.5（发布说明审查后更新至补丁版本 2.9.6；示例未重新运行）、Podinfo 6.15.0
+> **最后更新**：October 12, 2026
 
-Flagger 是 Kubernetes 的渐进式交付 operator，它使用 service mesh 路由、ingress controller 或 Gateway API 进行流量迁移，并使用 Prometheus 指标进行金丝雀分析，从而自动推进金丝雀 Deployment。Flagger 最初由 Weaveworks 创建，现为 Flux 家族旗下的 CNCF 项目；它通过在测量关键性能指标的同时逐步将流量迁移到新版本，并在检测到异常时自动回滚，降低在生产环境引入新软件版本的风险。
+Flagger 通过 Canary CRD 管理 Kubernetes 工作负载的渐进式交付。它控制流量和修订版本，而不负责数据库或外部副作用的事务性回滚。这些实验示例要求网络、监控指标、授权和服务 SLO 相匹配。
+
+代码包含完整的清单以及 spec/Helm-values 片段。请将它们合并到指定的所有者中；同名策略示例是替代方案，而不是需要依次应用的一组代码块。
 
 ## 目录
 
 - [概述和学习目标](#overview-and-learning-objectives)
 - [Flagger 架构](#flagger-architecture)
 - [EKS 安装和配置](#eks-installation-and-configuration)
-- [金丝雀 Deployment 策略 (English)](https://www.atomai.click/kubernetes-docs/en/gitops/04-flagger#canary-deployment-strategy)
-- [蓝绿 Deployment 策略 (English)](https://www.atomai.click/kubernetes-docs/en/gitops/04-flagger#blue-green-deployment-strategy)
+- [Canary 部署策略](#canary-deployment-strategy)
+- [蓝绿部署策略](#blue-green-deployment-strategy)
 - [A/B 测试策略](#ab-testing-strategy)
 - [自定义指标和 Webhook](#custom-metrics-and-webhooks)
 - [GitOps 集成（Flux + Flagger）](#gitops-integration-flux--flagger)
 - [可观测性和告警](#observability-and-alerting)
-- [生产环境最佳实践](#production-best-practices)
-- [参考资料](#references)
-
----
-
-<span id="overview-and-learning-objectives"></span>
+- [生产最佳实践](#production-best-practices)
 
 ## 概述和学习目标
 
-### 学习目标
+Kubernetes Deployment 的 RollingUpdate 已会逐步替换 Pod。Flagger 增加了显式的修订版本流量控制和基于指标/测试的晋升。本章涵盖资源所有权、三种策略、指标/门禁、GitOps 和可观测性。
 
-完成本文档后，您将能够：
+| 策略 | 控制方式 | 检查项 |
+|---|---|---|
+| Canary | 逐步调整权重 | 额外副本、最小流量、失败条件 |
+| 蓝绿 | 验证独立修订版本后切换 | 两个工作负载加上突增资源、数据库兼容性 |
+| A/B | 支持的 header/cookie 匹配 | 队列分配、统计、独立授权 |
 
-1. 说明渐进式交付策略（Canary、Blue-Green、A/B Testing）及各自的适用场景
-2. 在 Amazon EKS 上使用各种 mesh 和 ingress provider 部署并配置 Flagger
-3. 使用自定义指标分析和自动回滚条件定义 Canary 资源
-4. 通过流量镜像和手动门控实现 Blue-Green 部署
-5. 配置基于 header 和 cookie 的 A/B 测试路由
-6. 将 Flagger 与 FluxCD 集成，以实现完全自动化的 GitOps 渐进式交付流水线
-7. 为 Flagger 部署设置可观测性仪表板和告警
+蓝绿并不保证恰好两倍资源、即时回滚或零停机。Flagger 将 primary 更新为新修订版本；之后它不会保留一个完整的旧版本待命实例。
 
-### 什么是渐进式交付？
+### Flagger 和 Argo Rollouts
 
-渐进式交付是高级部署策略的统称，可在将变更提供给全部用户群之前，受控且逐步地向部分用户推出变更。与同时替换所有 Pod 的传统滚动更新不同，渐进式交付提供对流量分配、实时分析和自动回滚的细粒度控制。
+| 方面 | Flagger | Argo Rollouts |
+|---|---|---|
+| 资源 | Canary 引用现有工作负载 | Rollout CRD，包括 Deployment workloadRef |
+| GitOps | Flux 和其他 GitOps 工具 | Argo CD 和其他 GitOps 工具 |
+| 分析 | MetricTemplate、阈值、webhook | AnalysisTemplate/AnalysisRun 以及 Web/Job 提供程序 |
+| 项目家族 | CNCF 已毕业的 Flux | CNCF 已毕业的 Argo |
 
-三种主要的渐进式交付策略是：
-
-| 策略 | 流量控制 | 使用场景 | 复杂度 |
-|----------|----------------|----------|------------|
-| **Canary** | 基于百分比的权重迁移 | 通用的渐进式发布 | 中 |
-| **Blue-Green** | 在两个环境之间完全切换 | 零停机、即时回滚 | 低 |
-| **A/B Testing** | 基于 Header/Cookie 的路由 | 面向特定用户群的功能测试 | 高 |
-
-### Flagger 与 Argo Rollouts
-
-Flagger 和 Argo Rollouts 都解决 Kubernetes 的渐进式交付问题，但它们采用根本不同的方法：
-
-| 特性 | Flagger | Argo Rollouts |
-|---------|---------|---------------|
-| **生态系统** | Flux / CNCF | Argo / CNCF |
-| **资源模型** | 包装原生 Deployment/DaemonSet | 使用 Rollout CRD 替代 Deployment |
-| **流量 Provider** | Istio、Linkerd、Contour、Nginx、Gateway API、AWS App Mesh、Gloo、Traefik | Istio、Nginx、ALB、SMI、Gateway API |
-| **指标分析** | 内置 Prometheus、Datadog、CloudWatch、自定义 Webhook | 内置支持多个 provider 的 AnalysisTemplate |
-| **GitOps 集成** | 原生 Flux 集成 | 原生 Argo CD 集成 |
-| **Webhook 支持** | pre/post-rollout、rollout、confirm-rollout、load-test | pre/post analysis、anti-affinity |
-| **Blue-Green** | 通过 Canary CRD 支持 | 一等 Rollout 策略 |
-| **A/B Testing** | 通过带 Header 的 Canary CRD 支持 | 通过 Experiment CRD 支持 |
-| **CNCF 状态** | 孵化中（Flux 家族） | 已毕业（Argo 家族） |
-| **采用模式** | 增量式（无需更改 Deployment） | 替代式（Rollout 替代 Deployment） |
-
-**关键差异**：Flagger 不要求您更改现有的 Deployment 资源。它会自动创建 primary 和 canary CloneSet 变体，并通过 mesh/ingress 层管理流量迁移。Argo Rollouts 则要求将 `Deployment` kind 替换为 `Rollout` kind。
-
-### Flux 生态系统中的 Flagger
-
-Flagger 被设计为 Flux GitOps 工具包的渐进式交付组件：
-
-```mermaid
-graph TB
-    subgraph "Flux GitOps Toolkit"
-        SC["Source Controller<br/>(Git, Helm, OCI)"]
-        KC["Kustomize Controller"]
-        HC["Helm Controller"]
-        NC["Notification Controller"]
-        IAC["Image Automation<br/>Controller"]
-        FL["Flagger<br/>(Progressive Delivery)"]
-    end
-
-    subgraph "External Systems"
-        GIT[("Git Repository")]
-        PROM["Prometheus"]
-        MESH["Service Mesh /<br/>Ingress Controller"]
-    end
-
-    subgraph "Kubernetes Cluster"
-        DEP["Deployments"]
-        SVC["Services"]
-        VS["VirtualServices /<br/>HTTPRoutes"]
-    end
-
-    GIT --> SC
-    SC --> KC
-    SC --> HC
-    KC --> DEP
-    HC --> DEP
-    IAC --> GIT
-
-    FL -->|"Watches"| DEP
-    FL -->|"Queries"| PROM
-    FL -->|"Manages"| SVC
-    FL -->|"Manages"| VS
-    NC -->|"Alerts"| FL
-
-    classDef flux fill:#5468FF,stroke:#333,color:white
-    classDef ext fill:#FF9900,stroke:#333,color:white
-    classDef k8s fill:#326CE5,stroke:#333,color:white
-
-    class SC,KC,HC,NC,IAC,FL flux
-    class GIT,PROM,MESH ext
-    class DEP,SVC,VS k8s
-```
-
----
-
-<span id="flagger-architecture"></span>
+生态系统集成不代表排他性耦合。不要让两个渐进式交付控制器管理同一工作负载。
 
 ## Flagger 架构
 
-### 控制循环
+![Flagger 观察 Canary/工作负载资源，并连接路由、指标和通知。](../.gitbook/assets/en-gitops-04-flagger-1.png)
 
-Flagger 实现了一个控制循环，通过分析指标、运行一致性测试并管理流量路由，逐步推进应用程序的新版本。其核心协调循环为：
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-1.html)
 
-```mermaid
-stateDiagram-v2
-    [*] --> Initialized: Canary created
-    Initialized --> Progressing: Deployment change detected
-    Progressing --> WaitingPromotion: All steps passed
-    Progressing --> Progressing: Advance step<br/>(increase weight)
-    Progressing --> Failed: Metrics check failed<br/>or threshold exceeded
-    WaitingPromotion --> Promoting: Auto or manual gate
-    WaitingPromotion --> Failed: Timeout exceeded
-    Promoting --> Finalising: Traffic shifted to primary
-    Finalising --> Succeeded: Primary updated, canary scaled down
-    Failed --> Initialized: Rollback complete
-    Succeeded --> Initialized: Waiting for next change
-```
+在 Deployment 示例中，podinfo 是原始资源和 canary 工作负载。新的稳定工作负载是 podinfo-primary。podinfo-canary 是一个 Service 名称，而不是额外的 Deployment 或 CloneSet。
 
-### 控制循环详细步骤
+| 资源 | 所有权/用途 |
+|---|---|
+| podinfo Deployment | Git/Helm Pod 模板，Flagger canary 控制 |
+| podinfo-primary Deployment | 由 Flagger 创建/晋升的稳定工作负载 |
+| podinfo / podinfo-primary / podinfo-canary Services | 由 Flagger 管理的入口/目标选择 |
+| Primary autoscaler | 使用 autoscalerRef 时对应的 autoscaler |
+| VirtualService/DestinationRule/HTTPRoute 等 | 为所选 provider 提供的路由 |
 
-当目标 workload 中检测到变更（例如新的容器镜像）时，Flagger 会执行以下序列：
+![变更会引导至 canary 分析、primary 更新和流量转换。](../.gitbook/assets/en-gitops-04-flagger-2.png)
 
-1. **检测变更**：Flagger 监视目标 Deployment 的 spec 变更（镜像 tag、环境变量、资源等）
-2. **初始化 Canary**：使用新版本扩容 canary Deployment；primary 保留旧版本
-3. **运行 Pre-Rollout Webhook**：执行一致性测试、冒烟测试或其他前置条件
-4. **迁移流量**：根据 `stepWeight` 和 `maxWeight` 逐步增加 canary 流量权重
-5. **分析指标**：查询 Prometheus（或其他 provider）以获取成功率、延迟和自定义指标
-6. **推进或回滚**：如果指标通过阈值，则推进到下一步；否则发起回滚
-7. **确认提升**：可选择通过 webhook 等待手动门控批准
-8. **提升**：将 canary spec 复制到 primary，缩容 canary，并将全部流量路由到 primary
-9. **发送通知**：通过 Slack、Teams 或其他已配置的 provider 发出告警
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-2.html)
 
-### Mesh 和 Ingress Provider 支持
+初始 primary 设置完成后，Pod 模板或受跟踪的 ConfigMap/Secret 变更会准备 canary。经过预发布检查、分析和路由后，晋升会通过就绪的 canary 提供流量，同时 primary 采用新 spec。primary 就绪后，流量回到它，并缩减 canary。
 
-Flagger 支持广泛的流量管理 provider，每个 provider 都具有不同的功能：
+**分析失败**通常会恢复健康的 primary。**更新 primary 时失败**则不同：在 Promoting/Finalising 期间，1.45.0 可以保留/将流量返回至健康的 canary，同时报告失败。仅凭失败状态不能证明旧 primary 正在提供流量。
 
-| Provider | Canary | Blue-Green | A/B Testing | 镜像 | Gateway API |
-|----------|--------|------------|-------------|-----------|-------------|
-| **Istio** | 是 | 是 | 是 | 是 | 是 |
-| **Linkerd** | 是 | 是 | 否 | 否 | 是 |
-| **AWS App Mesh** | 是 | 是 | 否 | 否 | 否 |
-| **Contour** | 是 | 是 | 是 | 否 | 是 |
-| **Nginx Ingress** | 是 | 是 | 是 | 否 | 否 |
-| **Gloo Edge** | 是 | 是 | 否 | 否 | 否 |
-| **Traefik** | 是 | 是 | 否 | 否 | 否 |
-| **Gateway API** | 是 | 是 | 是 | 否 | 是 |
-| **Kuma** | 是 | 是 | 否 | 否 | 否 |
-| **Open Service Mesh** | 是 | 是 | 否 | 否 | 否 |
+### Provider 和生命周期
 
-### Prometheus 指标分析
+| Provider | 检查项 |
+|---|---|
+| Istio | VirtualService/DestinationRule 和 sidecar HTTP 指标 |
+| gatewayapi:v1 | Gateway HTTPRoute 功能和 MetricTemplate |
+| Linkerd/Contour/Gloo/Traefik/Kuma 等 | 已安装版本的功能和指标约定 |
+| kubernetes | Service 切换式蓝绿，而非 L7 加权/A/B 路由 |
+| App Mesh / ingress-nginx / OSM | 以下的遗留生命周期限制 |
 
-Flagger 的指标分析引擎查询 Prometheus，以评估 Canary 发布是否健康。两个内置指标为：
+AWS App Mesh 支持已于 **2026-09-30** 结束；AWS 表示该日期后其控制台和资源将不再可访问。社区 ingress-nginx 已于 2026 年 3 月停止维护，OSM 仓库已归档。
 
-- **request-success-rate**：在分析间隔内成功 HTTP 请求（非 5xx）的百分比
-- **request-duration**：在分析间隔内 HTTP 请求的 P99 延迟
-
-这两个指标均源自 service mesh 或 ingress controller 的 Prometheus 指标（例如 `istio_requests_total`、`istio_request_duration_milliseconds_bucket`）。
-
-```mermaid
-sequenceDiagram
-    participant F as Flagger
-    participant P as Prometheus
-    participant M as Mesh/Ingress
-    participant C as Canary Pod
-
-    F->>M: Set canary weight (e.g., 10%)
-    M->>C: Route 10% traffic to canary
-    Note over C: Handle requests
-    C->>M: Return responses
-    M->>P: Report metrics<br/>(latency, status codes)
-    F->>P: Query: request-success-rate?
-    P-->>F: 99.5% (threshold: 99%)
-    F->>P: Query: request-duration P99?
-    P-->>F: 250ms (threshold: 500ms)
-    F->>F: All checks passed
-    F->>M: Advance: set weight to 20%
-```
-
----
-
-<span id="eks-installation-and-configuration"></span>
+Adapter 可用不代表适合新的生产使用且仍在维护。请按实现验证 A/B、镜像和会话亲和性支持。
 
 ## EKS 安装和配置
 
-### 前提条件
+基线要求受支持的 EKS/Kubernetes、已安装的 Istio sidecar 环境，以及 Prometheus 抓取所需指标。将其 URL 替换为实际的 Service。Flagger 不安装 Istio 或监控埋点。Chart 捆绑的 Prometheus 镜像是旧版 2.41.0，因此将其禁用。
 
-在 Amazon EKS 上安装 Flagger 前，请确保满足以下前提条件：
-
-- 运行 Kubernetes v1.27+ 的 Amazon EKS 集群
-- 已安装 Helm v3.12+
-- 已部署 service mesh（Istio）或 ingress controller（Nginx、Contour）
-- 已部署 Prometheus stack（建议使用 kube-prometheus-stack）
-- 已引导 FluxCD v2.4+（用于 GitOps 集成）
-
-### 使用 Prometheus 进行 Helm 安装
-
-使用 Helm 安装 Flagger，并启用 Prometheus metrics server：
-
-```bash
-# Add Flagger Helm repository
-helm repo add flagger https://flagger.app
-helm repo update
-
-# Install Flagger with Prometheus metrics server
-helm upgrade -i flagger flagger/flagger \
-  --namespace flagger-system \
-  --create-namespace \
-  --set meshProvider=istio \
-  --set metricsServer=http://prometheus-kube-prometheus-prometheus.monitoring:9090 \
-  --set prometheus.install=true
-```
-
-对于使用 IRSA（IAM Roles for Service Accounts）的 EKS，请配置 service account：
+选择一种发布/管理方法。在不同 namespace 安装独立的 Flagger 实例可能使它们都控制同一个 Canary。示例将控制器使用 flagger-system，将工作负载使用 flagger-demo。请根据实际 Istio revision 调整注入标签。
 
 ```yaml
-# flagger-values.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flagger-system
+  labels:
+    istio-injection: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flagger-demo
+  labels:
+    istio-injection: enabled
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flagger-loadtester
+  namespace: flagger-system
+automountServiceAccountToken: false
+```
+
+### Flagger Helm 安装
+
+```yaml
+fullnameOverride: flagger
 meshProvider: istio
-metricsServer: http://prometheus-kube-prometheus-prometheus.monitoring:9090
-
-serviceAccount:
-  create: true
-  name: flagger
-  annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/FlaggerRole
-
+namespace: flagger-demo
+noCrossNamespaceRefs: true
+metricsServer: http://prometheus.monitoring.svc.cluster.local:9090
 prometheus:
-  install: true
-  retention: 2h
-
+  install: false
+leaderElection:
+  enabled: true
+  replicaCount: 2
 resources:
   requests:
     cpu: 100m
     memory: 128Mi
   limits:
-    cpu: 1000m
+    cpu: '1'
     memory: 512Mi
-
-# Enable leader election for HA
-leaderElection:
+podDisruptionBudget:
   enabled: true
-  replicaCount: 2
+  minAvailable: 1
 ```
 
 ```bash
-helm upgrade -i flagger flagger/flagger \
-  --namespace flagger-system \
-  --create-namespace \
-  -f flagger-values.yaml
+helm repo add flagger https://flagger.app
+helm repo update flagger
+helm upgrade --install flagger flagger/flagger --version 1.45.0 \
+  --namespace flagger-system -f flagger-values.yaml --wait --timeout 5m
 ```
 
-### 安装 Flagger Loadtester
-
-Flagger loadtester 是一个配套工具，用于在 canary 分析期间运行自动化负载测试和 Webhook：
+namespace 限制的是监视范围，而不是 Chart 的 ClusterRole 权限。请单独限制租户 RBAC。leaderElection.replicaCount 是实际的 Chart 值。普通 Helm upgrade 不会像初始安装那样更新 crds/；请单独应用审查过的 CRD，或使用 Flux 的 CRD 策略。
 
 ```bash
-helm upgrade -i flagger-loadtester flagger/loadtester \
-  --namespace flagger-system \
-  --set cmd.timeout=1h \
-  --set resources.requests.cpu=100m \
-  --set resources.requests.memory=64Mi
+kubectl apply --server-side -f https://raw.githubusercontent.com/fluxcd/flagger/v1.45.0/artifacts/flagger/crd.yaml
 ```
 
-### Istio Provider 配置
-
-使用 Istio 作为 mesh provider 时，Flagger 会自动管理 VirtualService 和 DestinationRule 资源：
+### Loadtester 和访问范围
 
 ```yaml
-# flagger-values-istio.yaml
-meshProvider: istio
-metricsServer: http://prometheus-kube-prometheus-prometheus.monitoring:9090
-
-# Istio-specific settings
-istio:
-  # The Istio ingress gateway name
-  gateway: istio-system/public-gateway
-
-# Namespace selector for Flagger to watch
-namespace: ""  # Empty means all namespaces
-
-# Log level
-logLevel: info
+fullnameOverride: flagger-loadtester
+replicaCount: 1
+service:
+  type: ClusterIP
+  port: 80
+serviceAccountName: flagger-loadtester
+rbac:
+  create: false
+cmd:
+  timeout: 2m
+  namespaceRegexp: ^flagger-demo$
+resources:
+  requests:
+    cpu: 100m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+securityContext:
+  enabled: true
+  context:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+    runAsUser: 100
+    runAsGroup: 101
+volumes:
+- name: tmp
+  emptyDir: {}
+volumeMounts:
+- name: tmp
+  mountPath: /tmp
 ```
-
-验证是否已为目标 namespace 启用 Istio sidecar 注入：
 
 ```bash
-kubectl label namespace production istio-injection=enabled
-kubectl get namespace production --show-labels
+helm upgrade --install flagger-loadtester flagger/loadtester --version 0.39.0 \
+  --namespace flagger-system -f loadtester-values.yaml --wait --timeout 5m
 ```
 
-### Gateway API Provider 配置
-
-Flagger 支持将 Kubernetes Gateway API 作为 provider，从而无需完整的 service mesh 即可实现渐进式交付：
+Loadtester 从 HTTP 请求执行命令。namespaceRegexp 过滤 body 字符串；它不是调用方认证。请让其保持不暴露于互联网，并通过 CNI policy 将入站限制为 controller Pod。使用 RBAC 控制 operator exec/port-forward。内存门禁实验请使用一个副本。
 
 ```yaml
-# flagger-values-gatewayapi.yaml
-meshProvider: gatewayapi
-metricsServer: http://prometheus-kube-prometheus-prometheus.monitoring:9090
-
-# Gateway API specific configuration
-gatewayApi:
-  # Reference to the Gateway resource
-  gateway: istio-system/main-gateway
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: flagger-loadtester-ingress
+  namespace: flagger-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: loadtester
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: flagger-system
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: flagger
+    ports:
+    - protocol: TCP
+      port: 8080
 ```
 
-```bash
-helm upgrade -i flagger flagger/flagger \
-  --namespace flagger-system \
-  --create-namespace \
-  -f flagger-values-gatewayapi.yaml
-```
+允许所需的 Istio mTLS 和抓取路径。此 loadtester 不执行 API 操作，因此禁用了自动挂载 ServiceAccount token。添加 Helm/kubectl 测试需要显式权限和可写路径。
 
-创建 Flagger 将引用的 Gateway 资源：
+### Gateway API 替代方案
+
+这假定已有 Istio GatewayClass 和兼容的 Gateway API CRD。不要用旧 bundle 覆盖它们。其他实现需要匹配的监控埋点/查询。请为环境配置 Service/LB 暴露、DNS 和 TLS。
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: main-gateway
-  namespace: istio-system
+  name: podinfo-gateway
+  namespace: flagger-demo
 spec:
   gatewayClassName: istio
   listeners:
   - name: http
-    port: 80
     protocol: HTTP
+    port: 80
     allowedRoutes:
       namespaces:
-        from: All
-  - name: https
-    port: 443
-    protocol: HTTPS
-    tls:
-      mode: Terminate
-      certificateRefs:
-      - name: tls-secret
-    allowedRoutes:
-      namespaces:
-        from: All
+        from: Same
 ```
 
-### Slack 和 Teams 通知设置
-
-Flagger 可以使用 AlertProvider CRD 向 Slack、Microsoft Teams 和其他 provider 发送部署通知：
-
-```yaml
-# Slack AlertProvider
-apiVersion: flagger.app/v1beta1
-kind: AlertProvider
-metadata:
-  name: slack
-  namespace: production
-spec:
-  type: slack
-  channel: deployments
-  username: flagger
-  # Webhook URL stored in a Kubernetes Secret
-  secretRef:
-    name: slack-webhook
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: slack-webhook
-  namespace: production
-stringData:
-  address: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
-```
-
-```yaml
-# Microsoft Teams AlertProvider
-apiVersion: flagger.app/v1beta1
-kind: AlertProvider
-metadata:
-  name: msteams
-  namespace: production
-spec:
-  type: msteams
-  secretRef:
-    name: msteams-webhook
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: msteams-webhook
-  namespace: production
-stringData:
-  address: https://outlook.office.com/webhook/XXXXXXXX
-```
-
-可以在 Canary 资源中引用多个 alert provider：
-
-```yaml
-spec:
-  analysis:
-    alerts:
-    - name: "slack-notification"
-      severity: info
-      providerRef:
-        name: slack
-        namespace: production
-    - name: "teams-notification"
-      severity: error
-      providerRef:
-        name: msteams
-        namespace: production
-```
-
----
-
-## Canary Deployment 策略
-
-### Canary CRD 详细说明
-
-Canary CRD 是 Flagger 用于定义渐进式交付策略的主要资源。它引用目标 Deployment，并指定应如何迁移流量、分析哪些指标以及何时回滚。
-
-**Canary 资源的核心结构：**
+请使用 **gatewayapi:v1** 和 Canary service.gatewayRefs，而不是虚构的 Helm gatewayApi.gateway 值。准备以下三个 MetricTemplate，并将此 Canary 作为 Istio 方案的**替代方案**使用。
 
 ```yaml
 apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
-  name: app-name
-  namespace: production
+  name: podinfo
+  namespace: flagger-demo
 spec:
-  # ---- Target Reference ----
-  targetRef:              # The Deployment to manage
-  autoscalerRef:          # Optional HPA/KEDA reference
-  ingressRef:             # Optional Ingress reference
-  
-  # ---- Service Configuration ----
-  service:                # Service mesh / ingress settings
-  
-  # ---- Analysis Configuration ----
-  analysis:               # Metrics, webhooks, alerts
-  
-  # ---- Promotion Policy ----
-  progressDeadlineSeconds: 600
-  skipAnalysis: false
-```
-
-### 分步流量迁移
-
-Flagger 通过两个关键参数管理 canary 流量迁移：
-
-- **`stepWeight`**：每个分析间隔中添加到 canary 的流量百分比
-- **`maxWeight`**：提升前 canary 接收的最大流量百分比
-
-例如，使用 `stepWeight: 10` 和 `maxWeight: 50`：
-
-```
-Step 1: Canary 10%, Primary 90%  ->  Analyze metrics
-Step 2: Canary 20%, Primary 80%  ->  Analyze metrics
-Step 3: Canary 30%, Primary 70%  ->  Analyze metrics
-Step 4: Canary 40%, Primary 60%  ->  Analyze metrics
-Step 5: Canary 50%, Primary 50%  ->  Analyze metrics
-Step 6: Promote -> Canary spec copied to Primary, all traffic to Primary
-```
-
-```mermaid
-graph LR
-    subgraph "Traffic Shifting Progress"
-        S1["Step 1<br/>10%"] --> S2["Step 2<br/>20%"]
-        S2 --> S3["Step 3<br/>30%"]
-        S3 --> S4["Step 4<br/>40%"]
-        S4 --> S5["Step 5<br/>50%"]
-        S5 --> PROMOTE["Promote<br/>100%"]
-    end
-
-    subgraph "At Each Step"
-        METRIC1["Check: request-success-rate<br/>>= 99%"]
-        METRIC2["Check: request-duration P99<br/><= 500ms"]
-        WH["Run: webhooks<br/>(load test, conformance)"]
-    end
-
-    S3 -.->|"Analyze"| METRIC1
-    S3 -.->|"Analyze"| METRIC2
-    S3 -.->|"Execute"| WH
-
-    classDef step fill:#28a745,stroke:#333,color:white
-    classDef check fill:#ffc107,stroke:#333,color:black
-    classDef promote fill:#5468FF,stroke:#333,color:white
-
-    class S1,S2,S3,S4,S5 step
-    class METRIC1,METRIC2,WH check
-    class PROMOTE promote
-```
-
-也可以使用 `stepWeights`（数组）定义非线性的流量步进：
-
-```yaml
-analysis:
-  stepWeights: [1, 2, 5, 10, 25, 50, 80]
-  # Traffic progression: 1% -> 2% -> 5% -> 10% -> 25% -> 50% -> 80% -> promote
-```
-
-### 指标分析
-
-Flagger 的内置指标依赖 service mesh 或 ingress controller 暴露 Prometheus 指标：
-
-```yaml
-analysis:
-  metrics:
-  # Built-in metric: request success rate
-  - name: request-success-rate
-    # Minimum percentage of successful (non-5xx) requests
-    thresholdRange:
-      min: 99
-    interval: 1m
-
-  # Built-in metric: request duration (latency)
-  - name: request-duration
-    # Maximum P99 latency in milliseconds
-    thresholdRange:
-      max: 500
-    interval: 1m
-```
-
-`interval` 字段决定 Flagger 在每个分析步骤期间查询 Prometheus 的频率。`thresholdRange` 指定可接受的边界：
-
-- `min`：指标值必须**大于或等于**此值（例如，成功率 >= 99%）
-- `max`：指标值必须**小于或等于**此值（例如，延迟 <= 500ms）
-
-### 自动回滚条件
-
-在以下情况下，Flagger 会自动回滚 canary Deployment：
-
-1. **超过指标失败阈值**：某个指标检查在一个分析步骤中失败的次数超过 `threshold`
-2. **超过推进截止时间**：canary 未在 `progressDeadlineSeconds` 内推进
-3. **Webhook 失败**：pre-rollout 或 rollout webhook 返回非 2xx 状态
-
-```yaml
-analysis:
-  # Number of consecutive metric check failures before rollback
-  threshold: 5
-  
-  # Maximum number of failed metric checks before rollback
-  # (across all steps, not just consecutive)
-  maxWeight: 50
-  
-  # Analysis interval
-  interval: 1m
-  
-  metrics:
-  - name: request-success-rate
-    thresholdRange:
-      min: 99
-    interval: 1m
-  - name: request-duration
-    thresholdRange:
-      max: 500
-    interval: 1m
-```
-
-发生回滚时，Flagger 会：
-1. 将所有流量路由回 primary（旧版本）
-2. 将 canary 缩容至零
-3. 将 Canary 状态设置为 `Failed`
-4. 发送告警通知
-
-### 完整 Canary YAML 示例
-
-以下是一个生产就绪的 Canary 资源，用于部署在带有 Istio 的 EKS 上的 Web 应用程序：
-
-```yaml
-apiVersion: flagger.app/v1beta1
-kind: Canary
-metadata:
-  name: web-app
-  namespace: production
-spec:
-  # Reference to the target Deployment
+  provider: gatewayapi:v1
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: web-app
-
-  # Reference to the HPA (optional, Flagger will manage scaling)
+    name: podinfo
   autoscalerRef:
     apiVersion: autoscaling/v2
     kind: HorizontalPodAutoscaler
-    name: web-app
-
-  # Maximum time in seconds for the canary to progress
-  progressDeadlineSeconds: 600
-
+    name: podinfo
+  progressDeadlineSeconds: 120
   service:
-    # Container port
-    port: 8080
-    # Port name (must match Istio conventions)
-    portName: http
-    # Target port on the container
-    targetPort: 8080
-    # Istio gateway references
-    gateways:
-    - istio-system/public-gateway
-    # Hostnames
+    port: 9898
+    targetPort: 9898
     hosts:
     - app.example.com
-    # Istio traffic policy
-    trafficPolicy:
-      tls:
-        mode: ISTIO_MUTUAL
-    # Retries
-    retries:
-      attempts: 3
-      perTryTimeout: 1s
-      retryOn: "gateway-error,connect-failure,refused-stream"
-
+    gatewayRefs:
+    - name: podinfo-gateway
+      namespace: flagger-demo
+      sectionName: http
   analysis:
-    # Analysis interval
     interval: 1m
-    # Number of analysis cycles before promotion
-    iterations: 10
-    # Max traffic weight shifted to canary
-    maxWeight: 50
-    # Traffic weight step
-    stepWeight: 10
-    # Number of failed checks before rollback
     threshold: 5
-
-    # Prometheus metrics
+    maxWeight: 50
+    stepWeight: 10
     metrics:
-    - name: request-success-rate
+    - name: error-rate
+      templateRef:
+        name: istio-error-rate
       thresholdRange:
-        min: 99
+        min: 0
+        max: 1
       interval: 1m
-    - name: request-duration
+    - name: latency-p99-ms
+      templateRef:
+        name: istio-latency-ms
       thresholdRange:
+        min: 0
         max: 500
       interval: 1m
-
-    # Webhooks for load testing and conformance
+    - name: request-count
+      templateRef:
+        name: istio-request-count
+      thresholdRange:
+        min: 100
+      interval: 1m
     webhooks:
     - name: smoke-test
       type: pre-rollout
-      url: http://flagger-loadtester.flagger-system/
-      timeout: 60s
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/
+      timeout: 30s
       metadata:
         type: bash
-        cmd: "curl -sd 'test' http://web-app-canary.production:8080/healthz | grep ok"
-
+        cmd: |-
+          set -euo pipefail
+          curl -fsS --max-time 10 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/healthz >/dev/null
+          curl -fsS --max-time 10 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/readyz >/dev/null
     - name: load-test
       type: rollout
-      url: http://flagger-loadtester.flagger-system/
-      timeout: 60s
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/
+      timeout: 5s
       metadata:
         type: cmd
-        cmd: "hey -z 1m -q 10 -c 2 http://web-app-canary.production:8080/"
-
-    # Alert providers
-    alerts:
-    - name: "slack"
-      severity: info
-      providerRef:
-        name: slack
-        namespace: production
+        cmd: hey -z 1m -q 10 -c 2 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/
 ```
-
-此 Canary 资源将：
-1. 监视 `web-app` Deployment 的变更
-2. 创建 `web-app-primary` 和 `web-app-canary` Deployment
-3. 创建 `web-app`、`web-app-primary` 和 `web-app-canary` ClusterIP Service
-4. 创建用于流量路由的 Istio VirtualService
-5. 在开始 rollout 前运行冒烟测试
-6. 每次迁移 10% 流量，直至 50%
-7. 在每个分析步骤中运行负载测试
-8. 检查请求成功率（>= 99%）和 P99 延迟（<= 500ms）
-9. 如果连续 5 次指标检查失败则回滚
-10. 所有步骤通过后，将 canary spec 复制到 primary 以完成提升
-
-**监视 canary Deployment：**
 
 ```bash
-# Watch Canary status
-kubectl get canaries -n production -w
-
-# Describe the Canary for detailed events
-kubectl describe canary web-app -n production
-
-# Check Flagger logs
-kubectl logs -n flagger-system deploy/flagger -f | jq
-
-# Trigger a canary deployment by updating the image
-kubectl set image deployment/web-app web-app=myregistry/web-app:v2.0.0 -n production
+helm upgrade --install flagger flagger/flagger --version 1.45.0 \
+  --namespace flagger-system -f flagger-values.yaml --set meshProvider=gatewayapi:v1
 ```
 
+## Canary 部署策略
+
+以下是基线 Istio 工作负载和 HPA；需要 Metrics Server。请从 Git 中省略 Deployment replicas，以便 HPA/Flagger 拥有扩缩容控制权，并且不要创建竞争的 Service。选择这些清单或后面的 HelmRelease 替代方案。
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: podinfo
+  namespace: flagger-demo
+spec:
+  selector:
+    matchLabels:
+      app: podinfo
+  template:
+    metadata:
+      labels:
+        app: podinfo
+    spec:
+      containers:
+      - name: podinfo
+        image: ghcr.io/stefanprodan/podinfo:6.15.0
+        ports:
+        - name: http
+          containerPort: 9898
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: http
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: http
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
 ---
-
-## Blue-Green Deployment 策略
-
-### Blue-Green Canary CRD
-
-Flagger 通过同一个 Canary CRD 支持 Blue-Green 部署：省略 `stepWeight` 和 `maxWeight`，并使用 `iterations` 定义在将流量从旧（蓝色）版本切换到新（绿色）版本前要运行的分析周期数。
-
-在 Blue-Green 模式中：
-- canary 在分析期间不会接收实时流量（除非启用镜像）
-- Flagger 使用 loadtester 或镜像流量针对 canary 运行指标检查
-- 所有迭代通过后，流量会在一个步骤中从 primary 100% 切换到 canary
-- 如果任何一次迭代失败，canary 将被缩容，不会影响生产流量
-
-```mermaid
-sequenceDiagram
-    participant U as Users
-    participant P as Primary (Blue)
-    participant C as Canary (Green)
-    participant F as Flagger
-    participant LT as Load Tester
-
-    Note over P: Serving 100% traffic
-    F->>C: Deploy new version (Green)
-    F->>LT: Run pre-rollout tests
-    LT->>C: Synthetic traffic
-    LT-->>F: Tests passed
-
-    loop Analysis Iterations
-        F->>LT: Generate test traffic
-        LT->>C: Synthetic requests
-        F->>F: Check metrics (success rate, latency)
-        Note over F: Iteration passed
-    end
-
-    F->>U: Switch: 100% traffic to Green
-    F->>P: Update Primary with Green spec
-    F->>C: Scale down canary
-    Note over P: Now serving new version
-```
-
-### 镜像流量
-
-使用 Istio 时，Flagger 可以在 Blue-Green 分析期间将生产流量镜像到 canary。镜像流量是 fire-and-forget；canary 的响应会被丢弃，确保对用户零影响：
-
-```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: podinfo
+  namespace: flagger-demo
 spec:
-  analysis:
-    # Number of analysis cycles
-    iterations: 10
-    # Enable traffic mirroring (Istio only)
-    mirror: true
-    # Percentage of traffic to mirror (default: 100)
-    mirrorWeight: 100
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
 ```
 
-### 手动门控
+![加权 Canary 在分析后推进，并评估累积失败。](../.gitbook/assets/en-gitops-04-flagger-3.png)
 
-对于高风险部署，您可以要求在 Flagger 提升 canary 前进行手动批准。这通过 confirm-rollout webhook 实现，Flagger 会在每个步骤查询该 webhook：
-
-```yaml
-spec:
-  analysis:
-    webhooks:
-    - name: confirm-promotion
-      type: confirm-promotion
-      url: http://flagger-loadtester.flagger-system/gate/approve
-```
-
-要手动批准或拒绝：
-
-```bash
-# Approve the promotion
-kubectl exec -n flagger-system deploy/flagger-loadtester -- \
-  wget --post-data='{}' -q -O- http://localhost:8080/gate/open/web-app.production
-
-# Reject the promotion (close the gate)
-kubectl exec -n flagger-system deploy/flagger-loadtester -- \
-  wget --post-data='{}' -q -O- http://localhost:8080/gate/close/web-app.production
-
-# Check gate status
-kubectl exec -n flagger-system deploy/flagger-loadtester -- \
-  wget -q -O- http://localhost:8080/gate/check/web-app.production
-```
-
-### 完整 Blue-Green YAML 示例
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-3.html)
 
 ```yaml
 apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
-  name: web-app
-  namespace: production
+  name: podinfo
+  namespace: flagger-demo
 spec:
+  provider: istio
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: web-app
-
+    name: podinfo
   autoscalerRef:
     apiVersion: autoscaling/v2
     kind: HorizontalPodAutoscaler
-    name: web-app
-
-  progressDeadlineSeconds: 600
-
+    name: podinfo
+  progressDeadlineSeconds: 120
   service:
-    port: 8080
+    port: 9898
+    targetPort: 9898
     portName: http
-    targetPort: 8080
     gateways:
-    - istio-system/public-gateway
+    - mesh
     hosts:
-    - app.example.com
-
+    - podinfo
+    trafficPolicy:
+      tls:
+        mode: ISTIO_MUTUAL
   analysis:
-    # Blue-Green: use iterations, no stepWeight/maxWeight
     interval: 1m
-    iterations: 10
-    threshold: 2
-
-    # Mirror production traffic to the canary (Istio only)
-    mirror: true
-    mirrorWeight: 100
-
+    threshold: 5
+    maxWeight: 50
+    stepWeight: 10
     metrics:
     - name: request-success-rate
       thresholdRange:
         min: 99
+        max: 100
       interval: 1m
     - name: request-duration
       thresholdRange:
+        min: 0
         max: 500
       interval: 1m
-
     webhooks:
-    # Pre-rollout conformance test
-    - name: conformance-test
+    - name: smoke-test
       type: pre-rollout
-      url: http://flagger-loadtester.flagger-system/
-      timeout: 120s
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/
+      timeout: 30s
       metadata:
         type: bash
-        cmd: "curl -sd 'test' http://web-app-canary.production:8080/healthz | grep ok"
-
-    # Load test for generating metrics
+        cmd: |-
+          set -euo pipefail
+          curl -fsS --max-time 10 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/healthz >/dev/null
+          curl -fsS --max-time 10 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/readyz >/dev/null
     - name: load-test
       type: rollout
-      url: http://flagger-loadtester.flagger-system/
-      timeout: 60s
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/
+      timeout: 5s
       metadata:
         type: cmd
-        cmd: "hey -z 1m -q 10 -c 2 http://web-app-canary.production:8080/"
-
-    # Manual gate for production approval
-    - name: confirm-promotion
-      type: confirm-promotion
-      url: http://flagger-loadtester.flagger-system/gate/approve
-
-    alerts:
-    - name: "slack"
-      severity: info
-      providerRef:
-        name: slack
-        namespace: production
+        cmd: hey -z 1m -q 10 -c 2 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/
 ```
 
----
+iterations 选择蓝绿，或在存在 match 时选择 A/B；不要将它们混入加权 Canary。stepWeight 10 和 maxWeight 50 描述了晋升前在 10→20→30→40→50% 进行的分析。总时间取决于就绪情况、检查延迟、失败/批准以及 primary rollout。
+
+analysis.interval 调度分析；metric interval 提供其查询/聚合窗口。threshold 5 适用于某个修订版本累积失败的检查，而不是每次成功都会重置的连续计数。达到五次会在后续协调时导致回滚。预发布和 rollout/metric 失败都会进入此路径。progressDeadlineSeconds 限制工作负载进度/就绪，而不是总 rollout 时间的两倍。
+
+对于非线性权重，使用 stepWeights 并移除已有的 stepWeight/maxWeight。连接和路由收敛意味着配置的权重不能保证每一刻都具有精确的请求比例。
+
+```yaml
+spec:
+  analysis:
+    stepWeights:
+    - 1
+    - 2
+    - 5
+    - 10
+    - 25
+    - 50
+```
+
+```bash
+kubectl get canary podinfo -n flagger-demo --watch
+kubectl describe canary podinfo -n flagger-demo
+kubectl logs -n flagger-system -l app.kubernetes.io/name=flagger -c flagger --prefix --tail=100
+```
+
+初始稳定设置后，通过 Git 应用经过审查的 image/tag/digest 或 Pod 模板变更以启动分析。在同一 tag 后替换远程内容不能替代 Git 变更。不要直接编辑生成的 primary、Service 或路由资源。
+
+## 蓝绿部署策略
+
+![蓝绿验证 canary、更新 primary，然后缩减 canary。](../.gitbook/assets/en-gitops-04-flagger-4.png)
+
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-4.html)
+
+```yaml
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: podinfo
+  namespace: flagger-demo
+spec:
+  provider: istio
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: podinfo
+  autoscalerRef:
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    name: podinfo
+  progressDeadlineSeconds: 120
+  service:
+    port: 9898
+    targetPort: 9898
+    portName: http
+    gateways:
+    - mesh
+    hosts:
+    - podinfo
+    trafficPolicy:
+      tls:
+        mode: ISTIO_MUTUAL
+  analysis:
+    interval: 1m
+    threshold: 5
+    metrics:
+    - name: request-success-rate
+      thresholdRange:
+        min: 99
+        max: 100
+      interval: 1m
+    - name: request-duration
+      thresholdRange:
+        min: 0
+        max: 500
+      interval: 1m
+    webhooks:
+    - name: smoke-test
+      type: pre-rollout
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/
+      timeout: 30s
+      metadata:
+        type: bash
+        cmd: |-
+          set -euo pipefail
+          curl -fsS --max-time 10 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/healthz >/dev/null
+          curl -fsS --max-time 10 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/readyz >/dev/null
+    - name: load-test
+      type: rollout
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/
+      timeout: 5s
+      metadata:
+        type: cmd
+        cmd: hey -z 1m -q 10 -c 2 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/
+    iterations: 10
+```
+
+此示例在实时流量保持在 primary 时分析合成流量。通过后，流量移至 canary，同时 primary 更新，然后在 primary 就绪时返回。失败阈值仍然适用；一次失败测量不一定会立即回滚。这不是一个保留完整旧版本待命实例的独立环境。
+
+### 可选流量镜像
+
+```yaml
+spec:
+  analysis:
+    mirror: true
+    mirrorWeight: 10
+```
+
+支持的 provider 可以将流量作为 Canary 预阶段或用于蓝绿进行镜像。请验证 Gateway API 的 RequestMirror 支持。丢弃响应无法阻止数据库写入、付款、消息或负载；请使用经过验证的只读请求或隔离。镜像不是数据库复制或回滚。
 
 <span id="ab-testing-strategy"></span>
 
 ## A/B 测试策略
 
-### 基于 Header 和 Cookie 的路由
-
-Flagger 中的 A/B 测试使用 HTTP header 或 cookie 将特定用户路由到 canary 版本。不同于使用加权路由的 canary Deployment，A/B 测试根据请求属性确保确定性的路由。
-
-此策略非常适合：
-- 面向特定用户群的 feature flag 测试
-- 基于请求 header 的区域性发布
-- 公开发布前的内部测试
-- 针对特定用户群测量业务指标（转化率、参与度）
-
-### Istio VirtualService 集成
-
-使用 Istio 时，Flagger 会生成匹配 HTTP header 或 cookie 的 VirtualService 规则：
-
 ```yaml
 apiVersion: flagger.app/v1beta1
 kind: Canary
 metadata:
-  name: web-app
-  namespace: production
+  name: podinfo
+  namespace: flagger-demo
 spec:
+  provider: istio
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: web-app
-
-  progressDeadlineSeconds: 600
-
+    name: podinfo
+  autoscalerRef:
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    name: podinfo
+  progressDeadlineSeconds: 120
   service:
-    port: 8080
+    port: 9898
+    targetPort: 9898
     portName: http
-    targetPort: 8080
     gateways:
-    - istio-system/public-gateway
+    - mesh
     hosts:
-    - app.example.com
-
+    - podinfo
+    trafficPolicy:
+      tls:
+        mode: ISTIO_MUTUAL
   analysis:
     interval: 1m
-    iterations: 20
     threshold: 5
-
-    # A/B testing match conditions
-    # Users matching ANY of these conditions see the canary
-    match:
-    # Route based on a custom header
-    - headers:
-        x-canary:
-          exact: "insider"
-    # Route based on a cookie value
-    - headers:
-        cookie:
-          regex: "^(.*?;)?(canary=always)(;.*)?$"
-
     metrics:
     - name: request-success-rate
       thresholdRange:
         min: 99
+        max: 100
       interval: 1m
     - name: request-duration
       thresholdRange:
+        min: 0
         max: 500
       interval: 1m
-
     webhooks:
+    - name: smoke-test
+      type: pre-rollout
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/
+      timeout: 30s
+      metadata:
+        type: bash
+        cmd: |-
+          set -euo pipefail
+          curl -fsS --max-time 10 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/healthz >/dev/null
+          curl -fsS --max-time 10 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/readyz >/dev/null
     - name: load-test
       type: rollout
-      url: http://flagger-loadtester.flagger-system/
-      timeout: 60s
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/
+      timeout: 5s
       metadata:
         type: cmd
-        cmd: "hey -z 1m -q 5 -c 2 -H 'x-canary: insider' http://web-app-canary.production:8080/"
-
-    alerts:
-    - name: "slack"
-      severity: info
-      providerRef:
-        name: slack
-        namespace: production
-```
-
-生成的 Istio VirtualService 将如下所示：
-
-```yaml
-# Auto-generated by Flagger
-apiVersion: networking.istio.io/v1
-kind: VirtualService
-metadata:
-  name: web-app
-  namespace: production
-spec:
-  gateways:
-  - istio-system/public-gateway
-  hosts:
-  - app.example.com
-  http:
-  # A/B test route: matched users go to canary
-  - match:
+        cmd: hey -z 1m -q 10 -c 2 http://podinfo-canary.flagger-demo.svc.cluster.local:9898/
+    iterations: 10
+    match:
     - headers:
         x-canary:
-          exact: "insider"
+          exact: insider
     - headers:
         cookie:
-          regex: "^(.*?;)?(canary=always)(;.*)?$"
-    route:
-    - destination:
-        host: web-app-canary
-  # Default route: everyone else goes to primary
-  - route:
-    - destination:
-        host: web-app-primary
+          regex: (^|.*;\s*)canary=always(;.*|$)
 ```
 
-### 基于指标的自动提升
+match 条目是 OR 替代项；条目内条件遵循 provider 规则。cookie regex 处理分号后的空格。Istio sourceLabels 描述工作负载标签，而不是源 IP。请按 Gateway 实现/版本验证 matcher 支持。
 
-在 A/B 测试期间，Flagger 仍会对 canary 流量执行指标分析。配置数量的 `iterations` 在所有指标都处于阈值范围内的情况下通过后，Flagger 会自动提升 canary：
+路由既不是授权，也不是完整的统计实验。不要将客户端控制的标记视为员工权限。在可信边缘分配队列并在服务端授权；有意义的 A/B 结论还需要样本、分配设计和统计测试。
+
+从已注入的 loadtester Pod 验证基线 mesh 路由。通过实际 host/TLS/ingress 测试外部 Gateway 路径。直接调用 -canary 不能验证路由匹配。
 
 ```bash
-# Test A/B routing with header
-curl -H "x-canary: insider" http://app.example.com/
-
-# Test A/B routing with cookie
-curl -b "canary=always" http://app.example.com/
-
-# Verify routing (should return the canary version)
-for i in $(seq 1 10); do
-  curl -s -H "x-canary: insider" http://app.example.com/version
-done
+kubectl exec -n flagger-system deployment/flagger-loadtester -- \
+  curl -fsS http://podinfo.flagger-demo.svc.cluster.local:9898/
+kubectl exec -n flagger-system deployment/flagger-loadtester -- \
+  curl -fsS -H 'x-canary: insider' http://podinfo.flagger-demo.svc.cluster.local:9898/
+kubectl exec -n flagger-system deployment/flagger-loadtester -- \
+  curl -fsS -b 'canary=always' http://podinfo.flagger-demo.svc.cluster.local:9898/
 ```
-
----
-
-<span id="custom-metrics-and-webhooks"></span>
 
 ## 自定义指标和 Webhook
 
-### Prometheus 自定义指标查询
+### Prometheus MetricTemplate
 
-除两个内置指标外，Flagger 还通过 MetricTemplate CRD 支持自定义 Prometheus 查询。这允许您在 canary Deployment 期间分析任意 Prometheus 指标：
+这些查询使用 Istio sidecar 指标约定。请验证 namespace/workload 标签、reporter 和抓取。缺失的 5xx series 会成为零分子；不存在的流量或零分母不会成为成功。最小 100 个请求和其他边界只是示例；请从 SLO 和样本要求中选择值。
 
 ```yaml
 apiVersion: flagger.app/v1beta1
 kind: MetricTemplate
 metadata:
-  name: error-rate
-  namespace: production
+  name: istio-error-rate
+  namespace: flagger-demo
 spec:
   provider:
     type: prometheus
-    address: http://prometheus-kube-prometheus-prometheus.monitoring:9090
+    address: http://prometheus.monitoring.svc.cluster.local:9090
   query: |
-    100 - sum(
-      rate(
-        http_requests_total{
-          namespace="{{ namespace }}",
-          job="{{ target }}-canary",
-          status!~"5.*"
-        }[{{ interval }}]
-      )
-    )
-    /
-    sum(
-      rate(
-        http_requests_total{
-          namespace="{{ namespace }}",
-          job="{{ target }}-canary"
-        }[{{ interval }}]
-      )
-    ) * 100
-```
-
-```yaml
+    (sum(rate(istio_requests_total{reporter="destination", destination_workload_namespace="{{ namespace }}", destination_workload="{{ target }}", response_code=~"5.."}[{{ interval }}])) or vector(0)) / sum(rate(istio_requests_total{reporter="destination", destination_workload_namespace="{{ namespace }}", destination_workload="{{ target }}"}[{{ interval }}])) * 100
+---
 apiVersion: flagger.app/v1beta1
 kind: MetricTemplate
 metadata:
-  name: latency-p95
-  namespace: production
+  name: istio-latency-ms
+  namespace: flagger-demo
 spec:
   provider:
     type: prometheus
-    address: http://prometheus-kube-prometheus-prometheus.monitoring:9090
+    address: http://prometheus.monitoring.svc.cluster.local:9090
   query: |
-    histogram_quantile(0.95,
-      sum(
-        rate(
-          http_request_duration_seconds_bucket{
-            namespace="{{ namespace }}",
-            job="{{ target }}-canary"
-          }[{{ interval }}]
-        )
-      ) by (le)
-    )
+    histogram_quantile(0.99, sum(rate(istio_request_duration_milliseconds_bucket{reporter="destination", destination_workload_namespace="{{ namespace }}", destination_workload="{{ target }}"}[{{ interval }}])) by (le))
+---
+apiVersion: flagger.app/v1beta1
+kind: MetricTemplate
+metadata:
+  name: istio-request-count
+  namespace: flagger-demo
+spec:
+  provider:
+    type: prometheus
+    address: http://prometheus.monitoring.svc.cluster.local:9090
+  query: |
+    sum(increase(istio_requests_total{reporter="destination", destination_workload_namespace="{{ namespace }}", destination_workload="{{ target }}"}[{{ interval }}]))
+---
+spec:
+  analysis:
+    metrics:
+    - name: error-rate
+      templateRef:
+        name: istio-error-rate
+      thresholdRange:
+        min: 0
+        max: 1
+      interval: 1m
+    - name: latency-p99-ms
+      templateRef:
+        name: istio-latency-ms
+      thresholdRange:
+        min: 0
+        max: 500
+      interval: 1m
+    - name: request-count
+      templateRef:
+        name: istio-request-count
+      thresholdRange:
+        min: 100
+      interval: 1m
 ```
 
-在 Canary 分析中引用自定义指标：
+MetricTemplate 必须返回一个数值。Prometheus provider 拒绝空结果/NaN。将百分比边界限定为有限的 0–100 范围，并对齐自定义延迟单位。边界是包含式的。具有重叠查询窗口的测量不是独立样本。
 
-```yaml
-analysis:
-  metrics:
-  - name: error-rate
-    templateRef:
-      name: error-rate
-      namespace: production
-    thresholdRange:
-      max: 1
-    interval: 1m
-  - name: latency-p95
-    templateRef:
-      name: latency-p95
-      namespace: production
-    thresholdRange:
-      max: 0.5
-    interval: 1m
-```
-
-### Datadog 指标 Provider
-
-Flagger 支持将 Datadog 作为外部指标 provider：
+### Datadog 单位和所选数据点
 
 ```yaml
 apiVersion: flagger.app/v1beta1
 kind: MetricTemplate
 metadata:
-  name: dd-request-duration
-  namespace: production
+  name: datadog-average-latency-ms
+  namespace: flagger-demo
 spec:
   provider:
     type: datadog
+    address: https://api.datadoghq.com
     secretRef:
       name: datadog-api
   query: |
-    avg:trace.http.request.duration{
-      service:{{ target }}-canary,
-      kube_namespace:{{ namespace }}
-    }.rollup(avg, 60)
+    avg:myapp.request_duration_ms{kube_deployment:{{ target }},kube_namespace:{{ namespace }}}.rollup(avg, 60)
 ---
 apiVersion: v1
 kind: Secret
 metadata:
   name: datadog-api
-  namespace: production
+  namespace: flagger-demo
+type: Opaque
 stringData:
-  datadog_api_key: YOUR_DATADOG_API_KEY
-  datadog_application_key: YOUR_DATADOG_APP_KEY
-  datadog_site: datadoghq.com
+  datadog_api_key: REPLACE_WITH_API_KEY
+  datadog_application_key: REPLACE_WITH_APPLICATION_KEY
 ```
 
-### CloudWatch 指标 Provider
+myapp.request_duration_ms 是你必须发布的自定义平均毫秒延迟；它不是 P99。通过 provider.address 选择站点。客户端读取所示的两个 Secret key，而不是 datadog_site。它查询指标 interval 的十倍，并返回第一个 series 中最旧的第一个点。不要仅凭它证明当前 canary 的健康；请将其与新鲜的、修订版本特定的测量配对。
 
-对于 EKS 上的 Amazon CloudWatch 指标：
+对原始客户端进行本地 mock-response 测试还确认，第一个数据点为 null 时会解码为零。因此，接受零毫秒的延迟门禁可能具有误导性。请使用验证时间戳/缺失值的桥接组件或新鲜的 Prometheus 测量。
+
+### CloudWatch 字段和限制
 
 ```yaml
 apiVersion: flagger.app/v1beta1
 kind: MetricTemplate
 metadata:
-  name: cw-error-rate
-  namespace: production
+  name: cloudwatch-error-percent
+  namespace: flagger-demo
 spec:
   provider:
     type: cloudwatch
-    region: us-west-2
+    region: ap-northeast-2
   query: |
     [
       {
-        "Id": "e1",
-        "Expression": "m1 / m2 * 100",
-        "Label": "ErrorRate"
+        "Id": "errorrate",
+        "Expression": "IF(FILL(requests,0)>=100,100*FILL(errors,0)/FILL(requests,0),-1)",
+        "Label": "CanaryErrorPercent",
+        "ReturnData": true
       },
       {
-        "Id": "m1",
+        "Id": "errors",
         "MetricStat": {
           "Metric": {
             "Namespace": "MyApp",
@@ -1161,7 +779,11 @@ spec:
             "Dimensions": [
               {
                 "Name": "Service",
-                "Value": "{{ target }}-canary"
+                "Value": "{{ target }}"
+              },
+              {
+                "Name": "Namespace",
+                "Value": "{{ namespace }}"
               }
             ]
           },
@@ -1171,7 +793,7 @@ spec:
         "ReturnData": false
       },
       {
-        "Id": "m2",
+        "Id": "requests",
         "MetricStat": {
           "Metric": {
             "Namespace": "MyApp",
@@ -1179,7 +801,11 @@ spec:
             "Dimensions": [
               {
                 "Name": "Service",
-                "Value": "{{ target }}-canary"
+                "Value": "{{ target }}"
+              },
+              {
+                "Name": "Namespace",
+                "Value": "{{ namespace }}"
               }
             ]
           },
@@ -1189,9 +815,22 @@ spec:
         "ReturnData": false
       }
     ]
+---
+spec:
+  analysis:
+    metrics:
+    - name: cw-error-percent
+      templateRef:
+        name: cloudwatch-error-percent
+      thresholdRange:
+        min: 0
+        max: 1
+      interval: 1m
 ```
 
-确保 Flagger service account 具有查询 CloudWatch 所需的适当 IAM 权限：
+Provider.region 受支持且必需。请单独发布 MyApp 指标和 Service/Namespace 维度。该 expression 会对缺失/低流量周期返回 -1，使其不满足 0–1% 边界。摄取延迟可能拒绝 rollout；请验证实际的发布和聚合/查询窗口。
+
+原生 provider 查询指标 interval 的十倍，并选择第一个结果的第一个值，而不会单独验证 timestamp/StatusCode。请使用当前修订版本的 Prometheus 请求/健康检查加以补充，以免将较旧点或聚合 ALB 指标误认为当前 canary 健康状态。其 AWS API 权限是 GetMetricData。
 
 ```json
 {
@@ -1199,533 +838,498 @@ spec:
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": [
-        "cloudwatch:GetMetricData",
-        "cloudwatch:ListMetrics"
-      ],
-      "Resource": "*"
+      "Action": "cloudwatch:GetMetricData",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "ap-northeast-2"
+        }
+      }
     }
   ]
 }
 ```
 
-### Pre/Post Rollout Webhook
+使用 CloudWatch 时，请配置 Flagger ServiceAccount 认证和 role trust，并匹配 region 条件。本次审查未调用 AWS API 或部署 role。
 
-Flagger 支持多种 Webhook 类型，它们会在 rollout 的不同阶段执行：
+### Webhook 契约
 
-| Webhook 类型 | 执行时间 | 使用场景 |
-|-------------|---------------|----------|
-| `confirm-rollout` | 流量迁移开始前 | 门控：要求外部批准 |
-| `pre-rollout` | 每个分析步骤前 | 冒烟测试、一致性测试 |
-| `rollout` | 每个分析步骤期间 | 负载测试、合成流量 |
-| `confirm-promotion` | 最终提升前 | 手动门控、业务批准 |
-| `post-rollout` | 提升或回滚后 | 清理、通知、审计 |
-| `rollback` | rollout 失败后 | 事件通知、清理 |
-| `event` | 每个 Flagger 事件发生时 | 审计日志 |
+| 类型 | 含义 / 拒绝行为 |
+|---|---|
+| confirm-rollout | 等待启动批准 |
+| pre-rollout | 初始流量转移前检查；增加失败计数 |
+| rollout | 在分析期间调用；增加失败计数 |
+| confirm-traffic-increase | 增加权重前等待 |
+| confirm-promotion | 晋升前等待 |
+| post-rollout | 在 Succeeded 或 Failed 后通知/清理；不会逆转结果 |
+| rollback | 分析/批准等待期间成功会请求回滚 |
+| event | 转发与状态相关的事件 |
 
-### Webhook YAML 示例
-
-**使用 hey 的负载测试 Webhook：**
-
-```yaml
-webhooks:
-- name: load-test-hey
-  type: rollout
-  url: http://flagger-loadtester.flagger-system/
-  timeout: 60s
-  metadata:
-    type: cmd
-    cmd: "hey -z 1m -q 10 -c 2 http://web-app-canary.production:8080/"
-    logCmdOutput: "true"
-```
-
-**使用 bash 的一致性测试：**
+通常返回 HTTP 200。版本 1.45.0 将大于 202 的状态码视为错误，因此不要假定 204 会成功。metadata 按字面复制；`{{ .Version }}` 不会插值。请使用 payload 中的 name/namespace/phase/checksum。非成功 body 可能进入 logs/events，因此不要返回敏感值。
 
 ```yaml
-webhooks:
-- name: smoke-test
-  type: pre-rollout
-  url: http://flagger-loadtester.flagger-system/
-  timeout: 120s
-  metadata:
-    type: bash
-    cmd: |
-      set -e
-      # Check health endpoint
-      curl -sf http://web-app-canary.production:8080/healthz
-
-      # Check readiness
-      curl -sf http://web-app-canary.production:8080/readyz
-
-      # Verify API response
-      response=$(curl -sf http://web-app-canary.production:8080/api/v1/status)
-      echo "$response" | jq -e '.status == "ok"'
+name: podinfo
+namespace: flagger-demo
+phase: Progressing
+checksum: example-revision-checksum
+metadata:
+  gate: promotion
 ```
 
-**使用 Grafana k6 进行负载测试：**
+Webhook 配置不提供任意 Authorization header。请通过经过审查的 mTLS/internal-proxy 边界实现所需认证；不要将 secret 放入公开 Git URL/metadata 中，也不要默认禁用 TLS 验证。
+
+cmd 负载测试会异步接受；HTTP 成功不是负载测试质量的判定。Bash 会阻塞至完成，且必须符合其 timeout。镜像 0.39.0 包含 curl/jq/hey/wrk/bash，但不包含 k6。k6 需要单独验证的镜像和阈值，因为仅 check() 不会建立失败的退出状态。
+
+此脚本适用于安装了 k6 的专用测试镜像，而不是可在默认 loadtester 镜像中运行的命令。
+
+```javascript
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+
+export const options = {
+  vus: 2,
+  duration: '20s',
+  thresholds: {
+    checks: ['rate==1'],
+    http_req_failed: ['rate<0.01'],
+    http_req_duration: ['p(99)<500'],
+  },
+};
+export default function () {
+  const result = http.get('http://podinfo-canary.flagger-demo.svc.cluster.local:9898/');
+  check(result, { 'HTTP 200': (response) => response.status === 200 });
+  sleep(0.5);
+}
+```
+
+### 手动门禁
 
 ```yaml
-webhooks:
-- name: load-test-k6
-  type: rollout
-  url: http://flagger-loadtester.flagger-system/
-  timeout: 120s
-  metadata:
-    type: bash
-    cmd: |
-      k6 run --vus 5 --duration 1m - <<'EOF'
-      import http from 'k6/http';
-      import { check, sleep } from 'k6';
-
-      export default function () {
-        const res = http.get('http://web-app-canary.production:8080/');
-        check(res, {
-          'status is 200': (r) => r.status === 200,
-          'duration < 500ms': (r) => r.timings.duration < 500,
-        });
-        sleep(0.5);
-      }
-      EOF
+spec:
+  analysis:
+    webhooks:
+    - name: promotion-approval
+      type: confirm-promotion
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/gate/check
+      timeout: 5s
+      metadata:
+        gate: promotion
 ```
 
-**Post-rollout 清理 Webhook：**
+将此条目合并到现有 Canary webhook 列表中。/gate/approve 始终会批准；它不是手动门禁。/gate/check 读取内存中的 name.namespace 状态。使用相同 JSON body 进行 open/close/check。关闭会阻止晋升，而非回滚。
+
+```bash
+# Close before starting a new revision.
+kubectl exec -n flagger-system deployment/flagger-loadtester -- \
+  curl -fsS -X POST -H 'Content-Type: application/json' \
+  -d '{"name":"podinfo","namespace":"flagger-demo"}' http://localhost:8080/gate/close
+# Approve the reviewed revision.
+kubectl exec -n flagger-system deployment/flagger-loadtester -- \
+  curl -fsS -X POST -H 'Content-Type: application/json' \
+  -d '{"name":"podinfo","namespace":"flagger-demo"}' http://localhost:8080/gate/open
+# A closed gate returns 403.
+kubectl exec -n flagger-system deployment/flagger-loadtester -- \
+  curl -sS -o /dev/null -w '%{http_code}\n' -X POST -H 'Content-Type: application/json' \
+  -d '{"name":"podinfo","namespace":"flagger-demo"}' http://localhost:8080/gate/check
+```
+
+内置 gate 不针对 checksum，会在 Pod 重启时重置，且不会在副本间共享。请在下一个修订版本前关闭它。生产批准需要认证、审计、过期以及按 name/namespace/checksum/gate 键控的状态。一个由启动和晋升共享的 memory gate 并不是两个独立批准。
+
+### 手动回滚和暂停
 
 ```yaml
-webhooks:
-- name: post-deploy-cleanup
-  type: post-rollout
-  url: http://flagger-loadtester.flagger-system/
-  timeout: 60s
-  metadata:
-    type: bash
-    cmd: |
-      # Notify external system of deployment
-      curl -X POST https://api.internal.example.com/deployments \
-        -H 'Content-Type: application/json' \
-        -d '{"service": "web-app", "status": "promoted", "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+spec:
+  analysis:
+    webhooks:
+    - name: operator-rollback
+      type: rollback
+      url: http://flagger-loadtester.flagger-system.svc.cluster.local/rollback/check
+      timeout: 5s
 ```
 
-**用于手动门控的外部 Webhook：**
+rollback endpoint 在没有信号时通常返回 403，并在请求时返回 200。通知接收方在此处的成功响应可能导致意外回滚。以下请求会在正常协调的分析/晋升批准等待期间请求回滚；它不是适用于每个阶段的即时恢复开关。
+
+```bash
+kubectl get canary podinfo -n flagger-demo -o jsonpath='{.status.phase}{"\n"}'
+kubectl exec -n flagger-system deployment/flagger-loadtester -- \
+  curl -fsS -X POST -H 'Content-Type: application/json' \
+  -d '{"name":"podinfo","namespace":"flagger-demo"}' http://localhost:8080/rollback/open
+kubectl get canary podinfo -n flagger-demo --watch
+# Reset the request after observing the operation.
+kubectl exec -n flagger-system deployment/flagger-loadtester -- \
+  curl -fsS -X POST -H 'Content-Type: application/json' \
+  -d '{"name":"podinfo","namespace":"flagger-demo"}' http://localhost:8080/rollback/close
+```
+
+Controller/就绪失败或关闭的 confirm-rollout gate 可能在此 hook 之前停止协调。在 Promoting/Finalising 期间的 primary 失败需要前文所述的单独恢复处理。完成后保持 rollback 打开可能影响下一个修订版本。
+
+不要将 flagger.app/rollback、flagger.app/suspend 或 flagger.app/skipAnalysis annotation 视为控制 API。Suspend/skipAnalysis 是 spec 字段。Suspend 停止协调（包括 rollback hook），而不会将流量返回 primary。SkipAnalysis 会在不分析的情况下晋升；它不是回滚。也请更新 Git 所有者。
 
 ```yaml
-webhooks:
-- name: manual-gate
-  type: confirm-promotion
-  url: https://deploy-approval.internal.example.com/api/approve
-  timeout: 30s
-  metadata:
-    service: web-app
-    environment: production
+spec:
+  suspend: true
 ```
-
----
 
 <span id="gitops-integration-flux--flagger"></span>
 
 ## GitOps 集成（Flux + Flagger）
 
-### FluxCD HelmRelease + Flagger Canary 工作流
+![Flux 应用所需工作负载；Flagger 单独管理渐进式交付。](../.gitbook/assets/en-gitops-04-flagger-0.png)
 
-最强大的模式是将用于应用程序部署的 Flux HelmRelease 与用于渐进式交付的 Flagger Canary 结合使用。Flux 从 Git 管理期望状态，而 Flagger 管理变更的 rollout 方式。
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-0.html)
 
-```mermaid
-sequenceDiagram
-    participant D as Developer
-    participant G as Git Repository
-    participant FC as Flux Controllers
-    participant FL as Flagger
-    participant K as Kubernetes
+![Flux 应用所需工作负载，而 Flagger 控制 Canary 分析。](../.gitbook/assets/en-gitops-04-flagger-5.png)
 
-    D->>G: Push new image tag
-    G->>FC: Source Controller detects change
-    FC->>K: Helm Controller updates HelmRelease
-    K->>FL: Deployment spec changed
-    FL->>FL: Initialize canary
-    FL->>K: Create canary pods
-    FL->>FL: Run analysis (metrics + webhooks)
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-5.html)
 
-    alt Metrics Pass
-        FL->>K: Promote canary to primary
-        FL->>D: Notify: deployment succeeded
-    else Metrics Fail
-        FL->>K: Rollback to primary
-        FL->>D: Notify: deployment failed
-    end
-```
-
-**Flux + Flagger 的仓库结构：**
-
-```
-fleet-infra/
-├── clusters/
-│   └── production/
-│       ├── flux-system/         # Flux bootstrap
-│       │   ├── gotk-components.yaml
-│       │   └── gotk-sync.yaml
-│       ├── infrastructure.yaml  # Infrastructure Kustomization
-│       └── apps.yaml            # Apps Kustomization
-├── infrastructure/
-│   ├── flagger/
-│   │   ├── kustomization.yaml
-│   │   ├── namespace.yaml
-│   │   ├── helmrepository.yaml
-│   │   └── helmrelease.yaml
-│   └── istio/
-│       └── ...
-└── apps/
-    └── web-app/
-        ├── kustomization.yaml
-        ├── deployment.yaml
-        ├── hpa.yaml
-        ├── canary.yaml          # Flagger Canary resource
-        └── alerts.yaml          # Flagger AlertProviders
-```
-
-**应用程序的 Flux HelmRelease：**
+Flux bootstrap 不会将 Flagger 作为内置 controller 安装。请通过 HelmRelease 或 Kustomization 单独安装它。不要同时通过 Helm CLI 管理同一 release。还要在 Git 中管理前面的 namespace、ServiceAccount 和 NetworkPolicy。
 
 ```yaml
-# apps/web-app/helmrelease.yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: flagger
+  namespace: flagger-system
+spec:
+  interval: 1h
+  url: https://flagger.app
+---
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: web-app
-  namespace: production
+  name: flagger
+  namespace: flagger-system
 spec:
-  interval: 5m
+  interval: 1h
+  releaseName: flagger
   chart:
     spec:
-      chart: web-app
-      version: "1.x"
+      chart: flagger
+      version: 1.45.0
       sourceRef:
         kind: HelmRepository
-        name: internal-charts
-        namespace: flux-system
+        name: flagger
+  install:
+    crds: Create
+  upgrade:
+    crds: CreateReplace
   values:
-    image:
-      repository: 123456789012.dkr.ecr.us-west-2.amazonaws.com/web-app
-      tag: v2.0.0
-    replicaCount: 3
+    fullnameOverride: flagger
+    meshProvider: istio
+    namespace: flagger-demo
+    noCrossNamespaceRefs: true
+    metricsServer: http://prometheus.monitoring.svc.cluster.local:9090
+    prometheus:
+      install: false
+    leaderElection:
+      enabled: true
+      replicaCount: 2
     resources:
       requests:
         cpu: 100m
         memory: 128Mi
       limits:
+        cpu: '1'
+        memory: 512Mi
+    podDisruptionBudget:
+      enabled: true
+      minAvailable: 1
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: loadtester
+  namespace: flagger-system
+spec:
+  interval: 1h
+  releaseName: flagger-loadtester
+  chart:
+    spec:
+      chart: loadtester
+      version: 0.39.0
+      sourceRef:
+        kind: HelmRepository
+        name: flagger
+  values:
+    fullnameOverride: flagger-loadtester
+    replicaCount: 1
+    service:
+      type: ClusterIP
+      port: 80
+    serviceAccountName: flagger-loadtester
+    rbac:
+      create: false
+    cmd:
+      timeout: 2m
+      namespaceRegexp: ^flagger-demo$
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+    securityContext:
+      enabled: true
+      context:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        readOnlyRootFilesystem: true
+        runAsUser: 100
+        runAsGroup: 101
+    volumes:
+    - name: tmp
+      emptyDir: {}
+    volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+```
+
+Flux CreateReplace CRD 处理不保证安全迁移。请在升级前审查 CRD 变更和已存储对象。在 source 和 provider 安装就绪后再应用 Canary 对象。
+
+### 应用 HelmRelease 替代方案
+
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: podinfo
+  namespace: flagger-demo
+spec:
+  interval: 1h
+  url: https://stefanprodan.github.io/podinfo
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: podinfo
+  namespace: flagger-demo
+spec:
+  interval: 5m
+  releaseName: podinfo
+  chart:
+    spec:
+      chart: podinfo
+      version: 6.15.0
+      sourceRef:
+        kind: HelmRepository
+        name: podinfo
+  values:
+    service:
+      enabled: false
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 4
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
         cpu: 500m
         memory: 256Mi
 ```
 
-**与 HelmRelease 一同使用的 Flagger Canary 资源：**
+Podinfo 6.15.0 的 service.enabled=false 避免竞争性的 Service 所有权。使用 hpa.enabled=true 时，Chart 不会固定 Deployment replicas。不要将此 HelmRelease 与原生工作负载清单一同应用。请通过渲染其他 Chart 验证等效行为，而不要假定值名称相同。
+
+将前述 Canary 与应用一起管理。Flux/Helm Ready 关注资源应用/就绪；它不会自动证明 Flagger 已晋升当前修订版本。请根据 Canary state/checksum 以及部署版本与预期变更的匹配情况，决定下一个环境的门禁。
+
+### Kustomization 替代方案
 
 ```yaml
-# apps/web-app/canary.yaml
-apiVersion: flagger.app/v1beta1
-kind: Canary
-metadata:
-  name: web-app
-  namespace: production
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: web-app
-  autoscalerRef:
-    apiVersion: autoscaling/v2
-    kind: HorizontalPodAutoscaler
-    name: web-app
-  progressDeadlineSeconds: 600
-  service:
-    port: 8080
-    portName: http
-    gateways:
-    - istio-system/public-gateway
-    hosts:
-    - app.example.com
-  analysis:
-    interval: 1m
-    maxWeight: 50
-    stepWeight: 10
-    threshold: 5
-    metrics:
-    - name: request-success-rate
-      thresholdRange:
-        min: 99
-      interval: 1m
-    - name: request-duration
-      thresholdRange:
-        max: 500
-      interval: 1m
-    webhooks:
-    - name: load-test
-      type: rollout
-      url: http://flagger-loadtester.flagger-system/
-      timeout: 60s
-      metadata:
-        type: cmd
-        cmd: "hey -z 1m -q 10 -c 2 http://web-app-canary.production:8080/"
-```
-
-### 基于 Kustomization 的部署
-
-对于使用 Flux Kustomization 而非 HelmRelease 的团队：
-
-```yaml
-# clusters/production/apps.yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: web-app
+  name: podinfo
   namespace: flux-system
 spec:
   interval: 10m
-  targetNamespace: production
+  targetNamespace: flagger-demo
   sourceRef:
     kind: GitRepository
-    name: fleet-infra
-  path: ./apps/web-app
+    name: flux-system
+  path: ./apps/podinfo
   prune: true
-  healthChecks:
-  - apiVersion: apps/v1
-    kind: Deployment
-    name: web-app
-    namespace: production
   timeout: 5m
 ```
 
 ```yaml
-# apps/web-app/kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: production
+namespace: flagger-demo
 resources:
 - deployment.yaml
-- service.yaml
 - hpa.yaml
 - canary.yaml
-- alert-providers.yaml
-
-images:
-- name: web-app
-  newName: 123456789012.dkr.ecr.us-west-2.amazonaws.com/web-app
-  newTag: v2.0.0
 ```
 
-### Image Automation + Canary 自动化流水线
+sourceRef 使用默认 bootstrap GitRepository 名称。将原生清单存储在 apps/podinfo 下，并省略由 Flagger 拥有的 Services/primary 资源。Kustomization 应用成功不代表晋升完成。
 
-全自动流水线使用 Flux Image Automation 检测新的容器镜像，将更新后的 tag 提交到 Git，并让 Flagger 处理渐进式 rollout：
-
-```mermaid
-flowchart LR
-    subgraph CI["CI Pipeline"]
-        BUILD["Build & Push<br/>Image"]
-    end
-
-    subgraph ECR["Amazon ECR"]
-        IMG["web-app:v2.0.0"]
-    end
-
-    subgraph GIT["Git Repository"]
-        MANIFEST["deployment.yaml<br/>image: web-app:v2.0.0"]
-    end
-
-    subgraph FLUX["Flux Controllers"]
-        IR["Image Repository<br/>(scan ECR)"]
-        IP["Image Policy<br/>(semver filter)"]
-        IU["Image Update<br/>Automation"]
-        KC["Kustomize<br/>Controller"]
-    end
-
-    subgraph FLAGGER["Flagger"]
-        CANARY["Canary<br/>Controller"]
-        ANALYSIS["Metrics<br/>Analysis"]
-    end
-
-    subgraph K8S["Kubernetes"]
-        PRIMARY["Primary<br/>Deployment"]
-        CANARY_DEP["Canary<br/>Deployment"]
-    end
-
-    BUILD --> IMG
-    IMG --> IR
-    IR --> IP
-    IP --> IU
-    IU -->|"git commit"| MANIFEST
-    MANIFEST --> KC
-    KC --> PRIMARY
-    PRIMARY --> CANARY
-    CANARY --> CANARY_DEP
-    CANARY_DEP --> ANALYSIS
-    ANALYSIS -->|"Promote"| PRIMARY
-
-    classDef ci fill:#dc3545,stroke:#333,color:white
-    classDef ecr fill:#FF9900,stroke:#333,color:white
-    classDef git fill:#f05033,stroke:#333,color:white
-    classDef flux fill:#5468FF,stroke:#333,color:white
-    classDef flagger fill:#28a745,stroke:#333,color:white
-    classDef k8s fill:#326CE5,stroke:#333,color:white
-
-    class BUILD ci
-    class IMG ecr
-    class MANIFEST git
-    class IR,IP,IU,KC flux
-    class CANARY,ANALYSIS flagger
-    class PRIMARY,CANARY_DEP k8s
-```
-
-**Flux Image Automation 资源：**
+环境 overlay 可以显式 patch 标量设置。这些是示例选择，而非通用生产标准。对 CRD 打 patch 时也请检查 array-replacement 行为。
 
 ```yaml
-# Image repository: scan ECR for new tags
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../base
+patches:
+- target:
+    group: flagger.app
+    version: v1beta1
+    kind: Canary
+    name: podinfo
+  patch: |
+    - op: replace
+      path: /spec/analysis/threshold
+      value: 3
+    - op: replace
+      path: /spec/analysis/maxWeight
+      value: 30
+    - op: replace
+      path: /spec/analysis/stepWeight
+      value: 5
+```
+
+### 镜像自动化和晋升分支
+
+![选定的镜像在 Canary 分析之前通过专用分支/PR 进入 Git。](../.gitbook/assets/en-gitops-04-flagger-6.png)
+
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-6.html)
+
+```yaml
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageRepository
 metadata:
-  name: web-app
+  name: podinfo
   namespace: flux-system
 spec:
-  image: 123456789012.dkr.ecr.us-west-2.amazonaws.com/web-app
+  image: ghcr.io/stefanprodan/podinfo
   interval: 5m
-  provider: aws
 ---
-# Image policy: select the latest semver tag
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
 metadata:
-  name: web-app
+  name: podinfo
   namespace: flux-system
+  labels:
+    app: podinfo
 spec:
   imageRepositoryRef:
-    name: web-app
+    name: podinfo
   policy:
     semver:
-      range: ">=1.0.0"
+      range: '>=6.15.0 <7.0.0'
+  digestReflectionPolicy: IfNotPresent
 ---
-# Image update automation: commit new tag to Git
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImageUpdateAutomation
 metadata:
-  name: web-app
+  name: podinfo
   namespace: flux-system
 spec:
   interval: 5m
   sourceRef:
     kind: GitRepository
-    name: fleet-infra
+    name: flux-system
+  policySelector:
+    matchLabels:
+      app: podinfo
   git:
     checkout:
       ref:
         branch: main
     commit:
       author:
+        name: Flux
         email: flux@example.com
-        name: flux
-      messageTemplate: |
-        Automated image update
-
-        Automation: {{ .AutomationObject }}
-
-        Files:
-        {{ range $filename, $_ := .Changed.FileChanges -}}
-        - {{ $filename }}
-        {{ end -}}
-
-        Objects:
-        {{ range $resource, $_ := .Changed.Objects -}}
-        - {{ $resource.Kind }} {{ $resource.Name }}
-        {{ end -}}
+      messageTemplate: |-
+        Update podinfo image
+        {{ range .Changed.Changes }}{{ .OldValue }} -> {{ .NewValue }}
+        {{ end }}
     push:
-      branch: main
+      branch: flux/podinfo-updates
   update:
-    path: ./apps/web-app
+    path: ./apps/podinfo
     strategy: Setters
 ```
 
-使用 setter 注释标记 Deployment 中的镜像字段：
+这需要 image-reflector/image-automation controller、policy marker 和 Git 写入权限。它推送到专用分支，因此 PR 创建/检查/合并是独立步骤。请调整 repository/paths，并为自动化保留该分支。请使用当前的 .Changed commit-template 模型，而不是不存在的 .NewTag field。
 
 ```yaml
-# apps/web-app/deployment.yaml
+# Native Deployment Pod-template fragment.
 spec:
   template:
     spec:
       containers:
-      - name: web-app
-        image: 123456789012.dkr.ecr.us-west-2.amazonaws.com/web-app:v1.0.0 # {"$imagepolicy": "flux-system:web-app"}
+      - name: podinfo
+        image: ghcr.io/stefanprodan/podinfo:6.15.0 # {"$imagepolicy": "flux-system:podinfo"}
 ```
 
-当新的镜像（例如 `v2.0.0`）被推送到 ECR 时：
-1. Flux Image Repository 扫描 ECR 并检测新 tag
-2. Flux Image Policy 根据 semver 范围选择 `v2.0.0`
-3. Flux Image Update Automation 将新 tag 提交到 Git
-4. Flux Kustomize Controller 应用更新后的 Deployment
-5. Flagger 检测 Deployment 变更并开始 canary rollout
-6. Flagger 逐步迁移流量，分析指标，并进行提升或回滚
+```yaml
+# Alternative: merge into HelmRelease.spec.values.
+image:
+  repository: ghcr.io/stefanprodan/podinfo
+  tag: "6.15.0" # {"$imagepolicy": "flux-system:podinfo:tag"}
+```
 
----
-
-<span id="observability-and-alerting"></span>
+仅 tag 的 marker 不会固定 digest。请验证 Chart 的 digest 支持或 registry tag 不可变性和验证。不要同时通过 Kustomize images 和 Deployment marker 不一致地覆盖同一 image。ECR 需要独立的 image-reflector AWS 认证以及实际 Pod image-pull 授权。
 
 ## 可观测性和告警
 
-### Grafana 仪表板（Flagger 指标）
+Flagger 指标和 Istio/应用指标是不同的抓取目标。annotation 不会使每个 Prometheus 安装都自动抓取。对于 Prometheus Operator，请使 Chart 的 serviceMonitor.enabled 与实际 selector、namespace 和 mTLS 访问保持一致。
 
-Flagger 导出可在 Grafana 中可视化的 Prometheus 指标。关键指标如下：
+```yaml
+serviceMonitor:
+  enabled: true
+  labels:
+    release: prometheus
+```
 
-| 指标 | 类型 | 描述 |
-|--------|------|-------------|
-| `flagger_canary_status` | Gauge | Canary 状态（0=Initialized、1=Progressing、2=WaitingPromotion、3=Promoting、4=Finalising、5=Succeeded、6=Failed） |
-| `flagger_canary_weight` | Gauge | 当前 canary 流量权重 |
-| `flagger_canary_total` | Counter | canary 分析总次数 |
-| `flagger_canary_duration_seconds` | Histogram | canary 分析持续时间（秒） |
-| `flagger_canary_metric_analysis` | Gauge | 最近一次指标分析的结果（1=通过、0=失败） |
+release label 仅作示例，必须匹配 Prometheus serviceMonitorSelector。已安装的 Operator CRD 是先决条件。
 
-**导入官方 Flagger Grafana 仪表板：**
+| 指标 | 类型 / 实际含义 |
+|---|---|
+| flagger_info | Gauge，version/mesh_provider |
+| flagger_canary_total | Gauge，每个 namespace 的 Canary 对象数量 |
+| flagger_canary_status | Gauge，0=Progressing、2=Failed，其他 phase 映射为 1 |
+| flagger_canary_weight | Gauge，按 workload/namespace 的流量权重 |
+| flagger_canary_metric_analysis | Gauge，实际指标值，而非通用的通过/失败 boolean |
+| flagger_canary_duration_seconds | Histogram，分析协调处理时间，而非总 rollout 时长 |
+| flagger_canary_successes_total / failures_total | Counter，带 strategy/analysis_status label 的结果 |
+
+不要从 status 值 1 推断 Succeeded；批准/晋升和其他 phase 可能共享该值。请检查 Canary.status.phase 和预期修订版本。name label 是 targetRef.name，不一定是 Canary 对象名称。weight 使用 workload 而不是 name。读取 status.iterations，而不要假定存在导出的 iterations 指标。
+
+### Grafana Dashboard
+
+在当前 Grafana Stat/Time series panel 中使用以下查询。集中聚合时请过滤外部 cluster label。Flagger clusterName 影响 alerts；它不会自动向 Prometheus 指标添加 cluster label。
+
+```promql
+flagger_canary_status{namespace="flagger-demo"}
+flagger_canary_weight{namespace="flagger-demo",workload="podinfo"}
+flagger_canary_metric_analysis{namespace="flagger-demo",name="podinfo",metric="request-success-rate"}
+increase(flagger_canary_successes_total{namespace="flagger-demo",analysis_status="completed"}[7d])
+increase(flagger_canary_failures_total{namespace="flagger-demo",analysis_status="completed"}[7d])
+```
+
+官方 Istio dashboard JSON 是参考；请在当前 Grafana 中验证其 datasource 名称和 panel/schema 兼容性，然后再导出。Dashboard JSON 不是 Kubernetes manifest。请提供导出的 dashboard model，而不是 HTTP API `{"dashboard": ...}` envelope。
 
 ```bash
-# The official Flagger dashboard ID for Grafana is 16527
-# Import via Grafana UI: Dashboards > Import > Enter 16527
+curl -fsSL -o flagger-istio-reference.json \
+  https://raw.githubusercontent.com/fluxcd/flagger/v1.45.0/charts/grafana/dashboards/istio.json
+# After reviewing/exporting flagger-dashboard.json in Grafana:
+jq -e '.title and (.panels | type == "array")' flagger-dashboard.json >/dev/null
+kubectl create configmap flagger-dashboard -n monitoring \
+  --from-file=flagger-dashboard.json=./flagger-dashboard.json \
+  --dry-run=client -o yaml > flagger-dashboard-cm.yaml
+kubectl label --local -f flagger-dashboard-cm.yaml grafana_dashboard=1 \
+  -o yaml > flagger-dashboard-ready.yaml
 ```
 
-**自定义 Grafana 仪表板 JSON 模型（简化版）：**
+审查生成的 ConfigMap 并将其置于 GitOps 下。配置 Grafana sidecar/provisioner 监视其 label 和 namespace。不要依赖未经验证的 dashboard ID 作为安装指南。
 
-```json
-{
-  "title": "Flagger Canary Deployments",
-  "panels": [
-    {
-      "title": "Canary Status",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "flagger_canary_status{namespace=\"production\"}",
-          "legendFormat": "{{ name }}"
-        }
-      ]
-    },
-    {
-      "title": "Canary Traffic Weight",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "flagger_canary_weight{namespace=\"production\"}",
-          "legendFormat": "{{ name }}"
-        }
-      ]
-    },
-    {
-      "title": "Request Success Rate",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "flagger_canary_metric_analysis{namespace=\"production\", metric=\"request-success-rate\"}",
-          "legendFormat": "{{ name }}"
-        }
-      ]
-    }
-  ]
-}
-```
-
-### Prometheus 告警规则
-
-为 Flagger canary 失败配置 Prometheus 告警规则：
+### Prometheus 告警
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -1737,423 +1341,166 @@ spec:
   groups:
   - name: flagger
     rules:
-    # Alert when a canary deployment fails
-    - alert: CanaryDeploymentFailed
-      expr: flagger_canary_status == 6
+    - alert: FlaggerAnalysisFailed
+      expr: flagger_canary_status == 2
       for: 1m
       labels:
-        severity: critical
+        severity: warning
       annotations:
-        summary: "Canary deployment failed for {{ $labels.name }}"
-        description: >
-          The canary deployment for {{ $labels.name }} in namespace
-          {{ $labels.namespace }} has failed. Flagger has rolled back
-          to the previous version.
-
-    # Alert when a canary is stuck progressing
-    - alert: CanaryProgressStalled
-      expr: flagger_canary_status == 1 and flagger_canary_weight == flagger_canary_weight offset 10m
-      for: 15m
+        summary: Flagger analysis failed for {{ $labels.namespace }}/{{ $labels.name }}
+        description: Inspect Canary phase, events, and actual routing before assuming the old primary is serving
+          traffic.
+    - alert: FlaggerAnalysisLongRunning
+      expr: flagger_canary_status == 0
+      for: 1h
       labels:
         severity: warning
       annotations:
-        summary: "Canary progress stalled for {{ $labels.name }}"
-        description: >
-          The canary weight for {{ $labels.name }} has not changed in
-          the last 15 minutes. Check Flagger logs for analysis failures.
-
-    # Alert when canary metric analysis fails
-    - alert: CanaryMetricCheckFailed
-      expr: flagger_canary_metric_analysis == 0
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "Canary metric check failing for {{ $labels.name }}"
-        description: >
-          The {{ $labels.metric }} metric check for {{ $labels.name }}
-          is failing. If this continues, Flagger will rollback.
-
-    # Alert on high canary analysis duration
-    - alert: CanaryAnalysisSlow
-      expr: histogram_quantile(0.99, rate(flagger_canary_duration_seconds_bucket[1h])) > 600
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "Canary analysis taking too long for {{ $labels.name }}"
-        description: >
-          The canary analysis P99 duration exceeds 10 minutes.
-          Consider tuning the analysis interval or metrics thresholds.
+        summary: Flagger analysis remains active for {{ $labels.namespace }}/{{ $labels.name }}
+        description: Check approval gates, failed checks and workload readiness; this is not a measurement of rollout
+          duration.
 ```
 
-### Slack 和 Teams 通知配置
+这些规则假定使用 cluster-local Prometheus。具有 for:1h 的 ==0 条件衡量持续观测到的 Progressing 条件，而不是每个活跃 phase 或 rollout 开始时间戳。请单独评估有意的 gate 等待。Histogram bucket 代表短暂的协调处理时间；不要使用 time()-duration 或 600 秒 rollout P99 告警。
 
-配置基于严重性路由的全面告警：
+### Slack、Teams 和外部通知
 
 ```yaml
-# Alert provider for informational messages (deployments started, promoted)
 apiVersion: flagger.app/v1beta1
 kind: AlertProvider
 metadata:
-  name: slack-info
-  namespace: production
+  name: slack
+  namespace: flagger-demo
 spec:
   type: slack
-  channel: deploy-notifications
+  channel: C0123456789
   username: flagger
   secretRef:
-    name: slack-webhook
+    name: slack-bot
 ---
-# Alert provider for critical messages (failures, rollbacks)
-apiVersion: flagger.app/v1beta1
-kind: AlertProvider
+apiVersion: v1
+kind: Secret
 metadata:
-  name: slack-critical
-  namespace: production
-spec:
-  type: slack
-  channel: deploy-incidents
-  username: flagger
-  secretRef:
-    name: slack-webhook
+  name: slack-bot
+  namespace: flagger-demo
+type: Opaque
+stringData:
+  address: https://slack.com/api/chat.postMessage
+  token: REPLACE_WITH_SLACK_BOT_TOKEN
 ---
-# Alert provider for PagerDuty integration
-apiVersion: flagger.app/v1beta1
-kind: AlertProvider
-metadata:
-  name: pagerduty
-  namespace: production
 spec:
-  type: slack
-  # PagerDuty Slack integration or Events API v2
-  secretRef:
-    name: pagerduty-webhook
+  analysis:
+    alerts:
+    - name: deployment-alerts
+      severity: info
+      providerRef:
+        name: slack
 ```
 
-在 Canary 中引用具有不同严重性的多个 provider：
+Secret 值是占位符；请将实际 token 保留在 Git 外部。此版本中 AlertProvider secretRef 需要 address，Slack Bot API 还需要 token。请配置 chat:write 和 channel membership，并以实际 ID 替换 channel。对于 Incoming Webhooks，请验证绑定的 channel 和允许的覆盖。
+
+severity 是最低级别，而不是排他路由：info 接收所有级别，warn 接收 warn/error，error 接收 errors。重复订阅可能导致重复通知。
+
+Flagger 1.45.0 原生 msteams 仍发送 MessageCard。不要认为仅将其 URL 换为 Workflows Adaptive Card endpoint 就足够。请配置兼容的 converter 或带认证和 payload 转换的 event receiver。这不同于 Flux 2.9.6 Teams 行为。
+
+不要假定存在原生 PagerDuty Events API AlertProvider。将 type: slack 直接发送至 PagerDuty URL 会产生错误 payload。请使用已建立的 Slack integration 或经过验证的 event adapter。
+
+### 部署历史和事件
 
 ```yaml
 spec:
   analysis:
-    alerts:
-    - name: "info-slack"
-      severity: info
-      providerRef:
-        name: slack-info
-    - name: "error-slack"
-      severity: error
-      providerRef:
-        name: slack-critical
-    - name: "critical-pagerduty"
-      severity: error
-      providerRef:
-        name: pagerduty
+    webhooks:
+    - name: deployment-events
+      type: event
+      url: http://deployment-events.flagger-system.svc.cluster.local/events
+      timeout: 5s
+      metadata:
+        environment: demo
 ```
 
-### Deployment 历史记录跟踪
-
-通过 Flagger event 和 Kubernetes event 跟踪 Deployment 历史记录：
+Deployment-events 是你必须单独提供的内部 receiver。请验证/存储 name/namespace/phase/checksum 和 eventMessage/eventType/timestamp。post-rollout 会在成功和失败时运行；不要总是记录为已晋升。Flux Notification Alert eventSources 不支持 Canary，也不会自动收集任意 Kubernetes events。
 
 ```bash
-# View Flagger events for a canary
-kubectl describe canary web-app -n production
-
-# Query Flagger events via kubectl
-kubectl get events -n production \
-  --field-selector involvedObject.kind=Canary,involvedObject.name=web-app \
+kubectl get events -n flagger-demo \
+  --field-selector involvedObject.kind=Canary,involvedObject.name=podinfo \
   --sort-by='.lastTimestamp'
-
-# Export deployment history from Prometheus
-# Query: changes(flagger_canary_status{name="web-app"}[7d])
+kubectl get canaries -A -o custom-columns=\
+NAME:.metadata.name,NAMESPACE:.metadata.namespace,PHASE:.status.phase,WEIGHT:.status.canaryWeight,LAST:.status.lastTransitionTime
 ```
 
-对于长期 Deployment 历史记录，请与 Flux Notification Controller 集成，以将 event 转发到外部系统：
+Kubernetes events 有保留限制；请在外部保留持久化历史。changes(status[7d]) 计算的是转换，而不是部署。请结合 skipped/completed 和实际修订版本解读结果 counter。
+
+## 生产最佳实践
+
+从非关键/实验工作负载开始，并测试成功、失败、缺失数据、等待批准和 primary 晋升失败。更高的失败阈值可能延迟回滚，而不是提高安全性。更大的 stepWeight 会暴露更多用户；更长的分析 interval 可能延迟检测。
+
+| 决策 | 依据 |
+|---|---|
+| 错误/延迟边界 | 服务 SLO、真实单位和正常分布 |
+| 最小请求数 / 查询窗口 | 低流量、摄取延迟、样本量 |
+| 失败阈值 | 允许的暴露时间和误报 |
+| 权重步长 | 爆炸半径和备用副本/nodes |
+| 进度截止时间 | Pod 启动、就绪、rolling-update 进度 |
+| 批准 / 回滚 | 认证、修订版本身份、恢复流程 |
+
+不要仅从环境/行业标签推导出 99.9%、200ms 或精确的 rollout 时长。应测量、调优并定期验证失败/恢复行为。
+
+### 配置跟踪和自动扩缩容
+
+默认启用 ConfigMap/Secret 跟踪，引用的配置变更可触发分析。使用该资源上的此 annotation 排除选定的 ConfigMap/Secret。也可使用全局 configTracking.enabled=false，但请审查其对检测和 primary 配置副本的影响。
 
 ```yaml
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
-kind: Provider
 metadata:
-  name: deployment-tracker
-  namespace: flux-system
-spec:
-  type: generic
-  address: https://deploy-tracker.internal.example.com/api/events
----
-apiVersion: notification.toolkit.fluxcd.io/v1beta3
-kind: Alert
-metadata:
-  name: flagger-events
-  namespace: flux-system
-spec:
-  providerRef:
-    name: deployment-tracker
-  eventSources:
-  - kind: Canary
-    name: "*"
-    namespace: production
-  eventSeverity: info
+  annotations:
+    flagger.app/config-tracking: disabled
 ```
 
----
-
-<span id="production-best-practices"></span>
-
-## 生产环境最佳实践
-
-### 渐进式采用策略
-
-在整个组织中逐步采用 Flagger：
-
-**阶段 1：非关键服务**
-- 从内部工具或 staging 环境开始
-- 使用保守的分析设置（较高阈值、更多迭代）
-- 验证指标收集和 Webhook 集成
-
-**阶段 2：低风险生产服务**
-- 应用于影响范围较小的生产服务
-- 配置告警和通知渠道
-- 建立用于手动干预的运行手册
-
-**阶段 3：关键任务服务**
-- 应用于高流量、面向客户的服务
-- 使用手动门控来增强安全性
-- 实施特定于业务 KPI 的自定义指标
-
-**阶段 4：全组织 rollout**
-- 跨团队标准化 Canary 模板
-- 使用 Flux + Flagger 构建自助服务平台
-- 自动化从镜像到生产环境的端到端流水线
-
-### 指标阈值调优
-
-选择合适的指标阈值对于平衡部署速度与安全性至关重要：
-
-```yaml
-# Conservative (recommended for initial rollout)
-analysis:
-  interval: 2m
-  maxWeight: 30
-  stepWeight: 5
-  threshold: 3
-  iterations: 15
-  metrics:
-  - name: request-success-rate
-    thresholdRange:
-      min: 99.9
-    interval: 2m
-  - name: request-duration
-    thresholdRange:
-      max: 200
-    interval: 2m
-
-# Balanced (recommended for most production services)
-analysis:
-  interval: 1m
-  maxWeight: 50
-  stepWeight: 10
-  threshold: 5
-  metrics:
-  - name: request-success-rate
-    thresholdRange:
-      min: 99
-    interval: 1m
-  - name: request-duration
-    thresholdRange:
-      max: 500
-    interval: 1m
-
-# Aggressive (for high-confidence, frequently deployed services)
-analysis:
-  interval: 30s
-  maxWeight: 80
-  stepWeight: 20
-  threshold: 10
-  metrics:
-  - name: request-success-rate
-    thresholdRange:
-      min: 95
-    interval: 30s
-  - name: request-duration
-    thresholdRange:
-      max: 1000
-    interval: 30s
-```
-
-**阈值调优指南：**
-
-| 参数 | 保守 | 平衡 | 激进 |
-|-----------|-------------|----------|------------|
-| `interval` | 2m | 1m | 30s |
-| `stepWeight` | 5 | 10 | 20 |
-| `maxWeight` | 30 | 50 | 80 |
-| `threshold`（失败次数） | 3 | 5 | 10 |
-| 最低成功率 | 99.9% | 99% | 95% |
-| 最大 P99 延迟 | 200ms | 500ms | 1000ms |
-| 总 rollout 时间 | ~20 分钟 | ~10 分钟 | ~4 分钟 |
-
-### 回滚策略
-
-了解回滚行为对于生产环境操作至关重要：
-
-**自动回滚**（默认行为）：
-- Flagger 检测到超过阈值的指标失败
-- 所有流量立即路由回 primary
-- Canary Pod 缩容至零
-- 状态设置为 `Failed`
-
-**手动回滚**：
-```bash
-# Force a rollback by setting the skipAnalysis annotation
-kubectl annotate canary web-app -n production \
-  flagger.app/rollback="true"
-
-# Skip analysis for emergency deploys (not recommended for production)
-kubectl annotate canary web-app -n production \
-  flagger.app/skipAnalysis="true"
-```
-
-**用于自动化事件响应的回滚 Webhook：**
-
-```yaml
-webhooks:
-- name: rollback-handler
-  type: rollback
-  url: http://incident-handler.production:8080/api/rollback
-  timeout: 30s
-  metadata:
-    service: web-app
-    team: platform
-    pagerduty_service: web-app-prod
-```
+HPA/受支持的 KEDA scaler 需要正确的 autoscalerRef 和 Metrics Server/metric provider。请验证 Flux/Helm 不会持续覆盖 Flagger 的扩缩容/Service 控制。PDB 主要管理自愿驱逐，而不保证防止 controller 缩容或 Deployment rolling update。请单独配置工作负载 rollout 策略和就绪。
 
 ### 多集群 Flagger
 
-对于运行多个 EKS 集群的组织，可以采用 hub-and-spoke 模式部署 Flagger：
+![中央 Flux 模式需要显式的远程 Kustomization 授权；Flagger 在每个集群中运行。](../.gitbook/assets/en-gitops-04-flagger-8.png)
 
-```mermaid
-graph TB
-    subgraph HUB["Management Cluster"]
-        FLUX_HUB["Flux Controllers"]
-        GIT[("Git Repository")]
-    end
+[查看交互式图表](https://www.atomai.click/kubernetes-docs/archmaps/en-gitops-04-flagger-8.html)
 
-    subgraph SPOKE1["Production Cluster - us-east-1"]
-        FL1["Flagger"]
-        ISTIO1["Istio"]
-        APP1["web-app"]
-    end
-
-    subgraph SPOKE2["Production Cluster - us-west-2"]
-        FL2["Flagger"]
-        ISTIO2["Istio"]
-        APP2["web-app"]
-    end
-
-    subgraph SPOKE3["Production Cluster - eu-west-1"]
-        FL3["Flagger"]
-        ISTIO3["Istio"]
-        APP3["web-app"]
-    end
-
-    GIT --> FLUX_HUB
-    FLUX_HUB -->|"Kustomization"| SPOKE1
-    FLUX_HUB -->|"Kustomization"| SPOKE2
-    FLUX_HUB -->|"Kustomization"| SPOKE3
-
-    classDef hub fill:#FF9900,stroke:#333,color:white
-    classDef spoke fill:#326CE5,stroke:#333,color:white
-
-    class FLUX_HUB,GIT hub
-    class FL1,FL2,FL3,ISTIO1,ISTIO2,ISTIO3,APP1,APP2,APP3 spoke
-```
-
-**多集群 Flagger 的关键注意事项：**
-
-1. **独立的 Flagger 实例**：在每个集群中部署 Flagger；它仅管理本地资源
-2. **共享 Canary 定义**：使用带 overlay 的 Flux Kustomization 进行特定于集群的配置
-3. **顺序 rollout**：使用 Flux dependency 在生产集群之前发布到 staging
-4. **集中式可观测性**：将所有集群的 Flagger 指标聚合到中央 Prometheus/Thanos/Mimir
+要么为每个集群使用不同 Git 路径 bootstrap Flux，要么配置中央 Flux，以使用显式 kubeConfig/工作负载身份进行远程协调。共享 Git repository 不会授予远程访问。Flagger 在每个集群本地控制工作负载。
 
 ```yaml
-# clusters/production-us-east-1/apps.yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: web-app
+  name: podinfo-production-a
   namespace: flux-system
 spec:
-  # Deploy to us-east-1 only after staging succeeds
-  dependsOn:
-  - name: web-app
-    namespace: flux-system
-  # This refers to the staging cluster Kustomization
+  interval: 10m
+  targetNamespace: flagger-demo
   sourceRef:
     kind: GitRepository
-    name: fleet-infra
-  path: ./apps/web-app/overlays/production-us-east-1
-  interval: 10m
+    name: flux-system
+  path: ./apps/podinfo/overlays/production-a
   prune: true
 ```
 
-### 其他最佳实践
+此对象在目标集群的 Flux 中运行。不要让它依赖自身，也不要期望 dependsOn 能在独立集群中找到同名对象。即使一个 control plane 中存在不同的远程 Kustomization，也不会自动使 Ready 证明当前修订版本已晋升；请以实际发布结果作为下一个环境 Git 变更的门禁。
 
-1. **始终在 canary 分析期间运行负载测试。** 如果没有流量进入 canary，Prometheus 就没有可分析的指标。请使用 Flagger loadtester 或生成合成流量。
-
-2. **适当设置 `progressDeadlineSeconds`。** 这是您的安全网。如果 canary 无法在此时间内推进，将自动回滚。应将其设置为至少是预期总 rollout 时间的 2 倍。
-
-3. **谨慎使用 `skipAnalysis`。** 虽然它允许紧急部署，但会绕过所有安全检查。对于仍需基本验证的紧急变更，优先使用手动门控。
-
-4. **固定 Flagger 和 provider 版本。** 在 Flux HelmRelease 中使用特定 Helm chart 版本，以避免自动升级导致的意外行为。
-
-5. **定期测试回滚行为。** 在 staging 中部署已知错误的版本，以验证 Flagger 能够正确检测失败并回滚。
-
-6. **在 Git 中将 Canary 定义与 Deployment 分离。** 这使 Deployment 资源保持整洁且可移植，并将渐进式交付相关内容隔离在 Canary 资源中。
-
-7. **使用 namespace 作用域的 AlertProvider。** 这可防止 Webhook 凭证跨 namespace 泄露，并支持多租户环境。
-
-8. **监控 Flagger controller 健康状况。** 为 Flagger Pod 重启、高内存使用率和协调错误设置告警。
-
----
-
-<span id="references"></span>
+为集中式可观测性配置集群标签和保留期。仅 namespaced alerts/MetricTemplates 无法完成租户隔离；还要限制 RBAC、跨 namespace 引用、网络和 Secret 访问。
 
 ## 参考资料
 
-### 官方文档
+- [Flagger 1.45.0 源码](https://github.com/fluxcd/flagger/tree/v1.45.0)
+- [部署策略](https://github.com/fluxcd/flagger/blob/v1.45.0/docs/gitbook/usage/deployment-strategies.md)
+- [Webhook 契约](https://github.com/fluxcd/flagger/blob/v1.45.0/docs/gitbook/usage/webhooks.md)
+- [实际指标记录器](https://github.com/fluxcd/flagger/blob/v1.45.0/pkg/metrics/recorder.go)
+- [调度器 / 回滚行为](https://github.com/fluxcd/flagger/blob/v1.45.0/pkg/controller/scheduler.go)
+- [Gateway API 示例](https://github.com/fluxcd/flagger/blob/v1.45.0/docs/gitbook/tutorials/gatewayapi-progressive-delivery.md)
+- [AWS App Mesh 支持终止](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html)
+- [Kubernetes disruptions / PDB](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)
+- [FluxCD](02-fluxcd.md)
+- [Argo Rollouts 流量管理](argocd/05-traffic-management.md)
 
-- [Flagger 官方文档](https://docs.flagger.app/)
-- [Flagger GitHub 仓库](https://github.com/fluxcd/flagger)
-- [Flagger Helm Chart](https://artifacthub.io/packages/helm/flagger/flagger)
-- [FluxCD 官方文档](https://fluxcd.io/docs/)
-- [Flagger FAQ](https://docs.flagger.app/faq)
+[上一页：GitOps 比较](03-gitops-comparison.md) · [下一页：功能开关](05-feature-flags.md) · [概述](README.md)
 
-### 相关内部文档
+## 测验
 
-| 主题 | 链接 |
-|-------|------|
-| FluxCD | [FluxCD GitOps](./02-fluxcd.md) |
-| GitOps 工具对比 | [ArgoCD vs FluxCD vs 其他](./03-gitops-comparison.md) |
-| ArgoCD | [ArgoCD 文档](./argocd/README.md) |
-| Istio 流量拆分 | [流量拆分](../service-mesh/istio/traffic-management/04-traffic-splitting.md) |
-| Argo Rollouts + Istio | [Argo Rollouts 集成](../service-mesh/istio/advanced/08-argo-rollouts.md) |
-| Prometheus | [Prometheus 监控](../observability/metrics/01-prometheus.md) |
-| Grafana | [Grafana 仪表板](../observability/grafana/README.md) |
-| Gateway API | [Gateway API](../networking/04-gateway-api.md) |
-| KEDA 自动扩缩容 | [KEDA](../autoscaling/01-keda.md) |
-
-### 外部资源
-
-- [使用 Flagger 进行渐进式交付（CNCF Webinar）](https://www.cncf.io/online-programs/progressive-delivery-with-flagger/)
-- [使用 Flux 和 Flagger 实现 GitOps 与渐进式交付](https://fluxcd.io/blog/)
-- [使用 Flagger 和 Istio 进行 Canary Deployment](https://docs.flagger.app/tutorials/istio-progressive-delivery)
-- [AWS App Mesh 上的 Flagger](https://docs.flagger.app/tutorials/appmesh-progressive-delivery)
-- [Gateway API Canary Deployment](https://docs.flagger.app/tutorials/gatewayapi-progressive-delivery)
-
----
-
-## 导航
-
-| 上一篇 | 上级 | 下一篇 |
-|----------|----|----- |
-| [GitOps 工具对比](./03-gitops-comparison.md) | [GitOps 概述](./README.md) | 无 |
+使用 [Flagger 测验](../quizzes/gitops/04-flagger-quiz.md) 测试你的理解。

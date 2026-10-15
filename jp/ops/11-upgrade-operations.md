@@ -1,21 +1,23 @@
-# EKSアップグレード: Auto Mode、ロールバック、ブルー/グリーン
+# EKS アップグレード: Auto Mode、ロールバック、ブルー/グリーン
 
-> **最終更新**: September 12, 2026。コマンドはAWS CLI 2.36.44、Pluto 5.24.3、Velero 1.18.2で確認しました。
-> 移行例は1.35 → 1.36です。実際のリージョンでの提供状況を確認してください。
+> **最終更新**: October 12, 2026. コマンドは AWS CLI 2.36.44、Pluto 5.24.3、Velero 1.18.2 を使用して September 12, 2026 に確認しました。
+> 例の移行は 1.35 → 1.36 です。実際のリージョンでの提供状況を確認してください。
 
-コントロールプレーン、ノード、アドオン、アプリケーション、データを一緒に計画します。
-Auto ModeとPDBだけでは無停止サービスは保証されません。可用性目標に対して予備容量、
-準備状態、再接続動作、セッション、状態、復旧を検証してください。
+コントロールプレーン、ノード、アドオン、アプリケーション、データをまとめて計画します。
+Auto Mode と PDB だけでは中断のないサービスを保証できません。可用性目標に照らして、予備容量、
+readiness、再接続動作、セッション、状態、復旧を検証してください。
 
 ## 1. バージョンと管理責任
 
-上流Kubernetesが保守するのは最新3マイナーリリースであり、現行に過去3バージョンを加えたものではありません。
-EKSは別のライフサイクルを持ち、一般に標準サポート14か月と延長サポート12か月です。
-正確な日付、方針、リージョンでの提供状況を確認します。
+Upstream Kubernetes は、現在のリリースに加えて過去 3 バージョンではなく、直近 3 つのマイナーリリースの
+リリースブランチを維持します（October 12, 2026 時点で 1.35–1.37）。各マイナーリリースにはおよそ 14 か月の
+パッチが提供され、その最後の 2 か月はメンテナンスモードです。1.34 は October 27, 2026 の EOL まで
+メンテナンスモードです。EKS には別のライフサイクルがあり、通常は 14 か月の標準サポートと
+12 か月の延長サポートです。正確な日付、ポリシー、リージョンでの提供状況を確認してください。
 
-通常のEKS基本コントロールプレーン料金は標準サポートで$0.10/時間、延長サポートで合計
-$0.60/時間（$0.10 + $0.50）です。追加料金が$0.60ではありません。
-Auto Mode、コンピュート、ストレージ、ネットワーク、別途プロビジョニングするコントロールプレーン容量は追加です。
+通常の EKS ベースコントロールプレーン料金は、標準サポートでは $0.10/hour、延長サポートでは合計
+$0.60/hour（$0.10 + $0.50）です。追加料金は $0.60 ではありません。
+Auto Mode、コンピュート、ストレージ、ネットワーキング、別途プロビジョニングされたコントロールプレーン容量には追加料金がかかります。
 
 ```bash
 DOCS_CLUSTER="my-cluster"
@@ -29,41 +31,41 @@ aws eks describe-cluster-versions --region "$DOCS_REGION" \
 kubectl --context "$DOCS_CONTEXT" get nodes -o wide
 ```
 
-`describe-addon-versions`はアドオン互換性を確認し、クラスターのサポート日付は確認しません。
-EKSコントロールプレーンは中間を飛ばさず1マイナーずつ進めます。
-現在の対応バージョンではkubeletはAPIサーバーより新しくできず、上流ポリシーは条件付きで最大3マイナー古い版を許します。
-ノードを古いままにする推奨ではありません。次のアップグレード前に現コントロールプレーンと揃える計画を立て、
-EKSマネージドノード、Fargate、自己管理、Hybridの要件を別々に確認します。
-kubectlはコントロールプレーンから1マイナー以内を使います。
+`describe-addon-versions` はアドオンの互換性を確認するものであり、クラスターのサポート日付を確認するものではありません。
+EKS コントロールプレーンは、中間バージョンをスキップせずに一度に 1 マイナーバージョン進めます。
+現在サポートされているバージョンでは、kubelet は API server より新しくできず、Upstream ポリシーはその条件下で
+最大 3 マイナー古いバージョンを許容します。これはノードを遅れたままにする推奨ではありません。次のアップグレード前に
+ノードを現在のコントロールプレーンに合わせるよう計画し、EKS managed-node、Fargate、self-managed、Hybrid の要件をそれぞれ確認してください。
+kubectl はコントロールプレーンから 1 マイナー以内のバージョンを使用してください。
 
-| デプロイ | 更新責任 |
+| デプロイメント | 更新責任 |
 |---|---|
-| Auto Modeのみ | サービス管理のノード、ネットワーク、ブロックストレージ、LB機能 |
-| 通常/自己管理/Hybridノード | ノード、CNI、DNS、プロキシ、ドライバー、コントローラー更新を計画 |
-| 混在クラスター | 非Autoノードに必要なアドオンを保持 |
-| アプリ、自己管理コントローラー、EKSアドオン | インストール済みバージョン、設定、CRDを検証 |
+| Pure Auto Mode | サービス管理のノード、ネットワーキング、ブロックストレージ、LB 機能 |
+| 通常/self-managed/Hybrid ノード | ノード、CNI、DNS、proxy、driver、controller の更新を計画 |
+| 混在クラスター | 非 Auto ノードに必要なアドオンを維持 |
+| アプリ、self-managed controller、EKS アドオン | インストール済みバージョン、設定、CRD を検証 |
 
-Auto ModeのみではCoreDNSをノードシステムサービスとして使います。CoreDNS Deploymentがないだけでは
-障害ではありません。混在クラスターは他ノードに必要なDNS Deploymentを保持します。
-Auto Modeで通常ノード用aws-node/kube-proxy/Pod Identity agent Podを無条件にインストールしたり探したりしないでください。
-互換性のためコントロールプレーン更新前に作業が必要な場合があり、
-「コントロールプレーン → 全アドオン → ノード」は普遍的な順序ではありません。
+Pure Auto Mode は CoreDNS をノードシステムサービスとして使用します。CoreDNS Deployment が存在しないことだけで
+障害とはいえません。混在クラスターでは、他のノードに必要な DNS Deployment を保持する必要があります。
+Auto Mode で通常ノード用の aws-node/kube-proxy/Pod Identity agent
+Pod を無条件にインストールまたは検索しないでください。コントロールプレーンのアップグレード前に互換性対応が必要になることがあるため、
+「コントロールプレーン → すべてのアドオン → ノード」は普遍的ではありません。
 
-| APIの安定性 | 非推奨化ポリシー |
+| API 安定性 | 非推奨化ポリシー |
 |---|---|
-| GA | 非推奨化可能だが同じKubernetesメジャー内では削除されない |
-| Beta | 非推奨化から最低9か月または3マイナーの長い方を経て提供を削除 |
-| Alpha | 事前の非推奨通知なしに削除可能 |
+| GA | 非推奨にすることはできますが、同一 Kubernetes メジャーバージョン内では削除されません |
+| Beta | 非推奨化後、少なくとも 9 か月または 3 マイナーのうち長い方を経過してから Serving を削除 |
+| Alpha | 事前の非推奨通知なしで削除される可能性があります |
 
-CLIフラグとメトリクスのポリシーは異なります。古い互換表をコピーせず、移行ガイドと実際の
-インストール済みバージョン、アーキテクチャ、プラットフォームバージョン、コンピュートタイプを比較します。
+CLI フラグとメトリクスのポリシーは異なります。古い互換性表をコピーするのではなく、
+移行ガイド、実際にインストールされているバージョン、アーキテクチャ、platform version、コンピュートタイプを比較してください。
 
-## 2. アップグレード前のレビュー
+## 2. アップグレード前レビュー
 
-アップグレードインサイトにはタイミングと範囲の制限があります。公式ガイドには、一部のインサイト問題で
-`--force`を要求することを一時停止中との記載がまだあります。
-後述のロールバック準備状態ERROR/UNKNOWNによるブロックと区別してください。
-APIが受け入れたことは準備状況レビューの完了ではありません。
+アップグレードインサイトにはタイミングとカバレッジの制限があります。公式アップグレードガイドでは、
+特定のアップグレードインサイト問題で `--force` を必須とする要件が一時的に停止されていることが引き続き記されています。
+これを、後述のロールバック準備状況で ERROR/UNKNOWN がブロックすることと混同しないでください。
+API が受け付けたことは readiness レビューの完了ではありません。
 
 ```bash
 aws eks list-insights --cluster-name "$DOCS_CLUSTER" --region "$DOCS_REGION" \
@@ -73,18 +75,18 @@ pluto detect-helm --target-versions "k8s=v${DOCS_TARGET}.0" -o wide
 pluto detect-api-resources --target-versions "k8s=v${DOCS_TARGET}.0" -o wide
 ```
 
-Pluto 5.24.3は終了0（問題なし）、2（非推奨）、3（削除済み）を区別します。
-すべての非ゼロを「未インストール」に変えたり、`|| true`で隠したりしないでください。
-JSONはオブジェクトです。`.items // []`を数えます。問題のない応答ではitemsが省略される場合があります。
-`detect-all-in-cluster`も有効です。公式リリースのアーキテクチャとチェックサムを確認します。
+Pluto 5.24.3 では、終了コード 0（正常）、2（非推奨）、3（削除済み）が区別されます。
+ゼロ以外のすべての結果を「未インストール」に変換したり、`|| true` で隠したりしないでください。
+JSON はオブジェクトです。`.items // []` を数えてください。正常なレスポンスでは items が省略されることがあります。
+`detect-all-in-cluster` も有効です。公式リリースのアーキテクチャとチェックサムを確認してください。
 
-APIサーバーがオブジェクトを変換するため、ライブ検出では元のAPIバージョンを見逃すことがあります。
-Git、Helm/Kustomizeのレンダリング結果、リリースメタデータ、API警告/監査、実際のクライアントを確認します。
-Plutoの他コンポーネント対象も、デプロイ済みIstio/cert-managerバージョンに合わせてください。
+API server がオブジェクトを変換するため、ライブ検出では元の API バージョンを見逃す可能性があります。
+Git、レンダリング済み Helm/Kustomize、リリースメタデータ、API 警告/audit、実際のクライアントをレビューしてください。
+Pluto の他のコンポーネントターゲットも、デプロイ済みの Istio/cert-manager バージョンに合わせてください。
 
-この読み取り専用ツールはEKSとkubecontextのエンドポイントを比較してから、Node/Pod準備状態、
-Deploymentのgeneration/ロールアウト、PDB、実際にインストールされたアドオンを確認します。
-プロキシkubeconfigは直接EKSエンドポイントと異なる場合があり、別レビューが必要です。
+この読み取り専用ツールは、EKS と kubecontext のエンドポイントを比較してから、Node/Pod の readiness、
+Deployment generation/rollout、PDB、実際にインストールされているアドオンを確認します。
+proxy kubeconfig は直接の EKS エンドポイントと異なる場合があり、別途レビューが必要です。
 
 ```python
 # preflight.py
@@ -262,12 +264,12 @@ python3 preflight.py --cluster "$DOCS_CLUSTER" --region "$DOCS_REGION" \
   --context "$DOCS_CONTEXT" --target "$DOCS_TARGET" > preflight-report.json
 ```
 
-終了0は列挙された確認を収集済み、2は指摘あり、1はエラーによる不明な結果です。
-0は自動アップグレード承認やアプリケーション全体の健全性の証明ではありません。
-提示されたアドオンバージョンにも、アーキテクチャ/プラットフォーム/コンピュートタイプと設定の確認が必要です。
+終了コード 0 は列挙したチェックが収集されたこと、2 は検出事項、1 はエラーによる不明な結果を意味します。
+ゼロは自動的なアップグレード承認や完全なアプリケーション健全性の証明ではありません。
+提供されているアドオンバージョンにも、アーキテクチャ/platform/コンピュートタイプと設定のレビューが必要です。
 
-maxUnavailable 1のPDBでも、異常Podや重複PDBにより許可中断数が0になる場合があります。
-AlwaysAllowは異常Podの退避動作を変えますが、可用性は保証しません。
+maxUnavailable 1 の PDB でも、不健全な Pod や重複する PDB により、許容される中断がゼロになる場合があります。
+AlwaysAllow は不健全な Pod の eviction 動作を変更しますが、可用性を保証するものではありません。
 
 ```yaml
 # pdb.yaml
@@ -284,17 +286,16 @@ spec:
       app: api
 ```
 
-NodeフェーズやPod Runningだけから健全性を推測しないでください。0レプリカDeployment、完了Job、
-空のPDBセレクターを区別します。EndpointSliceのready/serving/terminating条件とServiceセレクターを調べます。
-セレクターなし/ExternalName Serviceには通常のPodエンドポイントは不要です。
+Node の phase や Pod の Running だけから健全性を推測しないでください。レプリカ数ゼロの Deployment、
+完了した Job、空の PDB selector を区別してください。EndpointSlice の ready/serving/terminating 条件と
+Service selector を検査してください。selector のない Service/ExternalName Service には通常の Pod endpoint は不要です。
 
-## 3. バックアップと復元の検証
+## 3. バックアップとリストアの検証
 
-マネージドEKSのバックアップは、顧客が任意のetcdスナップショットから復元を制御できる意味ではありません。
-Git/IaC、Kubernetesオブジェクト、PVデータ、外部DB、権限、暗号化キー、復旧手順を分けて扱います。
-先にVelero BackupStorageLocation、プラグイン/CSIスナップショット設定、IAMを準備します。
-このScheduleはproductionを明示的に選びます。
-デフォルトBackup CLIは`*`名前空間を含み、velero全体を自動除外しません。
+Managed EKS バックアップは、任意の etcd snapshot から顧客が制御してリストアできることを意味しません。
+Git/IaC、Kubernetes オブジェクト、PV データ、外部データベース、権限、暗号化キー、復旧手順を分離してください。
+まず Velero BackupStorageLocation、plugin/CSI snapshot 設定、IAM を準備します。この Schedule は production を明示的に選択します。
+デフォルトの Backup CLI は `*` namespace を含みます。velero のすべてを自動的に除外するわけではありません。
 
 ```yaml
 # backup-schedule.yaml
@@ -322,14 +323,14 @@ velero --kubecontext "$DOCS_CONTEXT" backup describe "$DOCS_BACKUP" --details
 velero --kubecontext "$DOCS_CONTEXT" backup logs "$DOCS_BACKUP"
 ```
 
-Completedはアプリケーション整合性や全ボリュームの復旧を証明しません。
-エラー/警告、スナップショット/データムーバー結果、除外ボリューム、DB静止化/レプリケーションを確認します。
-PVC/PVオブジェクトだけでは完全なアプリケーション/Secret/Service/データのバックアップではありません。
-ファイルシステムバックアップには別途node-agentとボリューム設定が必要です。
+Completed は、アプリケーションの整合性やすべてのボリュームの復旧を証明しません。
+エラー/警告、snapshot/data-mover の結果、除外されたボリューム、DB の quiescing/replication をレビューしてください。
+PVC/PV オブジェクトだけでは、完全なアプリケーション/Secret/Service/データのバックアップにはなりません。
+Filesystem backup には別途 node-agent とボリューム設定が必要です。
 
-Velero 1.18.2のrestore createには`--dry-run`がありません。
-`-o yaml/json`はRestoreを作らず表示しますが、検出/Backup読み取りを実行します。
-完全なオフライン動作でも復旧テストでもありません。
+Velero 1.18.2 の restore create には `--dry-run` がありません。
+`-o yaml/json` は Restore を作成せずに出力しますが、discovery/Backup の読み取りは実行します。
+これは完全なオフラインでも、復旧テストでもありません。
 
 ```bash
 velero --kubecontext "$DOCS_CONTEXT" restore create review-restore \
@@ -337,20 +338,20 @@ velero --kubecontext "$DOCS_CONTEXT" restore create review-restore \
   --namespace-mappings production:restore-test -o yaml > restore-plan.yaml
 ```
 
-隔離テスト環境で実際に復元します。名前空間マッピングだけではCronJob、コンシューマー、外部DB、
-DNS/LB変更は分離されません。
-テストクラスター用のバックアップストレージ書き込み所有権、スナップショットのリージョン/AZ、KMS/IAMを確認します。
-適切なら同期に読み取り専用BackupStorageLocationを使用します。
-復元作成、Pod起動、ボリューム接続、整合性、アプリケーション動作を別々にテストします。
-テストのクリーンアップで元のバックアップを削除しないでください。
+実際のリストアは隔離されたテスト環境で実行してください。namespace mapping だけでは
+CronJob、consumer、外部 DB、DNS/LB の変更は隔離されません。
+テストクラスターの backup-storage 書き込み所有権、snapshot の region/AZ、KMS/IAM をレビューしてください。
+適切な場合は同期に読み取り専用の BackupStorageLocation を使用してください。
+リストア作成、Pod の起動、volume attachment、整合性、アプリケーション動作をそれぞれテストしてください。
+テストのクリーンアップ中に元のバックアップを削除しないでください。
 
 ## 4. コントロールプレーンとノードの更新
 
-[インフラの章](./01-infrastructure-setup.md)の既存クラスター層を使います。
-新しいstateに重複クラスターを作ったり、VPC/IAMを再構築したりしないでください。
-モジュール/プロバイダーのメジャー変更とKubernetesマイナー変更を分けて確認します。
-古いEKSモジュールv20の入力を現モジュールに混ぜないでください。
-tfvarsは実際の絶対ファイルパスに置き換えます。
+これは [infrastructure chapter](./01-infrastructure-setup.md) の既存クラスター層を使用します。
+新しい state に重複クラスターを作成したり、VPC/IAM を再構築したりしないでください。
+Kubernetes のマイナー変更とは別に、module/provider のメジャー変更をレビューしてください。
+古い EKS module v20 の input を現在の module に混在させないでください。
+tfvars は実際の絶対ファイルパスに置き換えてください。
 
 ```bash
 DOCS_TFVARS="/absolute/path/to/production.cluster.tfvars.json"
@@ -361,8 +362,8 @@ terraform -chdir=terraform/02-cluster show upgrade.tfplan
 terraform -chdir=terraform/02-cluster apply upgrade.tfplan
 ```
 
-CLI変更を選ぶ場合、同じ設定へのIaC変更を同時に行わないでください。
-次のコマンドは準備状況レビュー後に実際の変更を行います。更新IDを記録します。
+CLI による変更を選ぶ場合、同じ設定に対する IaC の変更を同時に行わないでください。
+次のコマンドは readiness レビュー後に実際の変更を実行します。update ID を記録してください。
 
 ```bash
 DOCS_UPDATE_ID=$(aws eks update-cluster-version \
@@ -437,56 +438,56 @@ python3 wait_update.py --cluster "$DOCS_CLUSTER" --region "$DOCS_REGION" \
   --update-id "$DOCS_UPDATE_ID" --timeout-seconds 5400
 ```
 
-終了0はSuccessful、1は失敗/キャンセル/照会エラー、2はクライアントタイムアウトです。
-タイムアウトはAWS操作をキャンセルしません。同じIDの観察を再開してください。
-開始後のコントロールプレーン更新を任意に一時停止/停止することはできません。
-cluster-activeだけではノード置換の完了は示されません。
-その後に実バージョン、ノード、アプリケーションを再確認します。
+終了コード 0 は Successful、1 は失敗/キャンセル/クエリエラー、2 はクライアントのタイムアウトを意味します。
+タイムアウトで AWS はキャンセルされません。同じ ID の監視を再開してください。
+コントロールプレーンのアップグレードは、開始後に任意で pause/stop できません。
+cluster-active だけではノード置換の完了を確認できません。
+その後、実際のバージョン、ノード、アプリケーションを再確認してください。
 
-Auto Modeはコントロールプレーン更新後にノードを段階的に置き換えます。
-顧客はEC2NodeClass al2023@latestでAuto Mode AMIを選びません。
-通常のマネージド/自己管理/Hybridノードと既存Fargate Podは別対応が必要です。
-EKSアドオンがすべて自動更新されるわけではありません。describe-addon-configurationでバージョンと
-設定スキーマを確認し、OVERWRITEを無差別に適用しないでください。
+Auto Mode はコントロールプレーン更新後にノードを段階的に置き換えます。
+顧客は EC2NodeClass al2023@latest を通じて Auto Mode AMI を選択しません。
+通常の managed/self-managed/Hybrid ノードと既存の Fargate Pod には別個の対応が必要です。
+すべての EKS アドオンが自動更新されるわけではありません。describe-addon-configuration の
+バージョンと設定 schema をレビューし、無差別に OVERWRITE を適用しないでください。
 
 ### 中断制約
 
-適用されるNodePool予算は最も厳しい制約として組み合わされます。
-10%と1は「最低1つ」を意味しません。丸め、削除中/NotReadyノード、UTCスケジュールを考慮します。
-スケジュール付き予算だけでは有効時間外の中断を禁止しません。
+適用可能な NodePool budget は、最も厳しい制約によって組み合わされます。
+10% と 1 は「少なくとも 1」を意味しません。丸め、削除中/NotReady ノード、UTC schedule を考慮してください。
+schedule 済みの budget だけでは、その有効ウィンドウ外の中断は禁止されません。
 
-自発的ドリフトを一時停止するには既存予算を保持・確認し、
-`nodes: "0", reasons: [Drifted]`のようなポリシーを追加してから元に戻します。
-NodePoolメタデータのdo-not-disruptアノテーションはこの停止手段ではありません。
-Node/Podアノテーションと予算は、全中断、有効期限、終了猶予経路を防ぎません。
+任意の drift を pause するには、既存の budget を保持/レビューし、
+`nodes: "0", reasons: [Drifted]` などのポリシーを追加してから、元のポリシーに戻します。
+NodePool metadata の do-not-disrupt annotation は、その pause メカニズムではありません。
+Node/Pod annotation と budget は、すべての interruption、expiry、termination-grace 経路を防止するものではありません。
 
-| 手動drainオプション | 意味 |
+| 手動 drain オプション | 意味 |
 |---|---|
-| `--ignore-daemonsets` | DaemonSet Podを削除せず除外 |
-| `--delete-emptydir-data` | emptyDirのデータ損失を許可 |
-| `--disable-eviction` | Evictionを使わず削除し、PDB保護を迂回 |
+| `--ignore-daemonsets` | DaemonSet Pod を削除せずに除外 |
+| `--delete-emptydir-data` | emptyDir データの損失を許可 |
+| `--disable-eviction` | Eviction を使わずに削除し、PDB 保護をバイパス |
 
-DaemonSetは適格ノード上で動作します。汎用対処として強制削除/PDB迂回を自動化しないでください。
+DaemonSet は適格なノードで実行されます。一般的な対処として force-deletion/PDB バイパスを自動化しないでください。
 
-## 5. ネイティブのKubernetesバージョンロールバック
+## 5. Native Kubernetes バージョンロールバック
 
-EKSはアップグレード完了から7日以内に、直前のマイナーへのロールバック開始をサポートします。
+EKS は、アップグレード完了から 7 日以内であれば、直前のマイナーバージョンへのロールバック開始をサポートします。
 「コントロールプレーンは決してロールバックできない」はもはや正しくありません。
-制約には現バージョンで作成したクラスター、期限切れ、延長サポート終了時の自動更新、
-対象と互換性のないEKS機能があります。連続更新後は直前のマイナーだけが対象です。
-延長サポートの対象版には対応する方針と費用条件が必要です。
+制約には、現在のバージョンで作成されたクラスター、期限切れのウィンドウ、延長サポート終了時の自動アップグレード、
+ターゲットと互換性のない EKS 機能が含まれます。連続アップグレード後に対象となるのは直前のマイナーだけです。
+延長サポートのターゲットには、対応するポリシーとコスト条件が必要です。
 
-| コンポーネント | 対応 |
+| コンポーネント | 処理 |
 |---|---|
-| APIサーバー/コントロールプレーン | 直前のKubernetesマイナーとその最新プラットフォーム版 |
-| Auto Modeノード | サービスが先にノードを調整し、その後コントロールプレーンを戻す |
-| 通常のマネージドノードグループ | 利用者が先にUpdateNodegroupVersionで調整 |
-| 自己管理/Hybridノード | 利用者が先に互換ノードへ置換 |
-| Fargate | 既存Pod kubeletの直接ダウングレードなし。別途置換/互換性を計画 |
-| アドオン、アプリ、etcdオブジェクト、PVデータ | 過去スナップショットから復元されない |
+| API server/control plane | 前の Kubernetes マイナーとその最新 platform version |
+| Auto Mode ノード | サービスが最初にノードを調整し、その後コントロールプレーンをロールバック |
+| 通常の managed node group | User が最初に UpdateNodegroupVersion で調整 |
+| Self-managed/Hybrid ノード | User が最初に互換性のあるノードで置換 |
+| Fargate | 既存 Pod kubelet の直接ダウングレードはなし。別個の置換/互換性を計画 |
+| アドオン、アプリ、etcd オブジェクト、PV データ | 履歴 snapshot からはリストアされない |
 
-データ復元や即時のトラフィック切り戻しではありません。
-新API/フィールド、コントローラー、DBスキーマと前バージョンの互換性を検証します。
+これはデータリストアや即時のトラフィックフェイルバックではありません。
+新しい API/field、controller、DB schema と前のバージョンとの互換性を検証してください。
 
 ```bash
 aws eks list-insights --cluster-name "$DOCS_CLUSTER" --region "$DOCS_REGION" \
@@ -500,48 +501,49 @@ python3 wait_update.py --cluster "$DOCS_CLUSTER" --region "$DOCS_REGION" \
   --update-id "$DOCS_ROLLBACK_ID" --timeout-seconds 5400
 ```
 
-テストしたCLI 2.36.44はrollback-configをサポートし、環境の旧2.35.11は非対応でした。
-古いCLIの不明オプションをEKS機能の不在と混同しないでください。
-公式更新済みCLIまたは対応API/SDKを使います。別のaws eks rollback-clusterコマンドはありません。
+テストした CLI 2.36.44 は rollback-config をサポートしていますが、環境の古い 2.35.11 はサポートしていませんでした。
+古い CLI の不明なオプションと EKS 機能の不在を混同しないでください。
+公式の更新済み CLI またはサポート対象の API/SDK を使用してください。個別の aws eks rollback-cluster コマンドはありません。
 
-ロールバック準備状態ERROR/UNKNOWNは操作をブロックし、WARNINGは助言です。
-Forceはインサイト確認を迂回できますが、適格条件やAuto Mode中断制御は迂回できません。
-基準設定はforceを使いません。
+ロールバック readiness の ERROR/UNKNOWN は操作をブロックします。WARNING は助言です。
+force は insight チェックをバイパスできますが、適格性や Auto Mode の中断制御はバイパスできません。
+ベースラインでは force を使用しません。
 
-### Auto Modeの観察とキャンセル
+### Auto Mode の監視とキャンセル
 
-ノードのロールバック中、コントロールプレーンは新バージョンを提供し続け、クラスター状態はACTIVEです。
-ノードが対象スキュー要件を満たすとEKSはインサイトを再確認し、その後CPをロールバックします。
-更新IDを観察します。ノードタイムアウトはデフォルト720分、範囲120–10,080分です。
-正確なタイマーではなく最小境界です。7日間の開始期限と、開始済みノード段階のタイムアウトを区別します。
-タイムアウト時はCPが現バージョンに留まり、ノードはそれに向けて戻り、更新はFailedになります。
+ノードロールバック中、コントロールプレーンは新しいバージョンを引き続き提供し、クラスター status は
+ACTIVE のままです。ノードがターゲットの skew 要件を満たすと EKS が insight を再確認し、その後 CP をロールバックします。
+update ID を監視してください。Node の timeout はデフォルトで 720 分で、範囲は 120–10,080 分です。
+これは最小境界であり、正確なタイマーではありません。7 日間の開始ウィンドウと、すでに開始済みのノードフェーズの
+タイムアウトを区別してください。timeout 時、CP は現在のバージョンのまま、ノードはその方向へ drift し戻り、
+update は Failed になります。
 
-Drift予算0やノードのdo-not-disruptは進行をブロックし得ます。PDB/Podアノテーションは
-TerminationGracePeriodまで中断を遅らせられますが、永久に防ぎません。
-ノード段階ではベストエフォートのキャンセルが可能ですが、開始済みの個別中断は完了する場合があります。
-CPロールバック開始後はキャンセルできません。
+ゼロの Drift budget や node do-not-disrupt は進行をブロックする場合があります。PDB/Pod annotation は
+TerminationGracePeriod まで中断を遅延させることができますが、恒久的に防止することはできません。
+個々の中断がすでに進行中の場合は完了することがありますが、ノードフェーズ中はベストエフォートの
+キャンセルが可能です。CP のロールバック開始後はキャンセルできません。
 
 ```bash
 aws eks cancel-update --name "$DOCS_CLUSTER" --region "$DOCS_REGION" \
   --update-id "$DOCS_ROLLBACK_ID"
 ```
 
-キャンセル後、ノードは現在のCPバージョンに向けて戻ります。
-IaCタイムアウトはAWS操作を止めず、CloudFormationスタックのロールバックは自動的なKubernetesバージョン
-ロールバックではありません。CLI/API変更後はIaCの実際と期待のバージョンを整合させます。
+キャンセル後、ノードは現在の CP バージョンへ drift します。
+IaC timeout は AWS 操作を停止せず、CloudFormation stack rollback は自動的な
+Kubernetes バージョンロールバックではありません。CLI/API 変更後に実際と意図した IaC バージョンを照合してください。
 
 ## 6. ブルー/グリーン
 
-Greenには別のstate/IDを使い、共有DNS/NLB/DB所有権をBlueの削除範囲外に置きます。
-実エンドポイント/CA、ワークロードID、assume-role、EKSアクセスエントリ、Kubernetes RBACは
-[マルチクラスターGitOps](./04-gitops-multi-cluster.md)の手順で登録します。
-クラスターSecretはGreenでなくHubコンテキストに適用します。
+Green には別個の state/identity を使用し、共有 DNS/NLB/database の所有権は Blue の
+削除スコープ外に保ちます。実際の endpoint/CA、workload identity、assume-role、EKS access entry、
+Kubernetes RBAC について、[multi-cluster GitOps](./04-gitops-multi-cluster.md) の手順を通じて登録してください。
+cluster Secret は Green ではなく Hub context に適用してください。
 
-このApplicationSetは自動同期なしでGreenだけを選びます。
-本番AppProject/名前空間、リポジトリ、承認済みリビジョンを準備します。
-URL/SHAプレースホルダーを置き換え、ワーカー、コンシューマー、CronJobの同時有効化を制御します。
-preserveResourcesOnDeletionは、セレクター変更で生成Applicationが削除された場合にワークロードを保護します。
-保持は管理の引き継ぎではありません。色/セレクター変更前に定常状態のGitOps所有権を計画してください。
+この ApplicationSet は自動 sync なしで Green のみを選択します。
+production の AppProject/namespace、repository、承認済み revision を準備してください。
+URL/SHA の placeholder を置き換え、worker、consumer、CronJob の同時アクティブ化を制御してください。
+preserveResourcesOnDeletion は、selector の変更により生成された Application が削除される場合に workload を保護します。
+Preservation は管理の引き渡しではありません。color/selector を変更する前に、定常状態の GitOps 所有権を計画してください。
 
 ```yaml
 # applicationset.yaml
@@ -593,22 +595,22 @@ argocd app sync api-my-cluster-green
 argocd app wait api-my-cluster-green --sync --health --timeout 300
 ```
 
-Gitリビジョンを戻すには、承認済みGit状態を復元して同期します。
-argocd app rollbackはSHAでなくデプロイ履歴IDを取ります。
-そうしないと自動同期/ApplicationSetの期待状態により再び変更される場合があります。
+Git revision をロールバックするには、承認済みの Git state を復元して sync します。
+argocd app rollback は SHA ではなく deployment history ID を受け取ります。
+そうしないと、自動 sync/ApplicationSet の desired state によって再び変更されることがあります。
 
-### Greenを直接テスト
+### Green を直接テストする
 
-PodのRunningやTCP接続はDB/メッセージ/準備状態の動作を証明しません。
-Greenへの直接経路を使い、サービスホスト名のSNI/Hostと証明書検証を維持します。
-NLBのAWSホスト名はアプリケーションTLSホスト名ではありません。
-443で実際にHTTPSを提供するServiceには、別ターミナルで次を使います。
+実行中の Pod と TCP 接続は、DB/message/readiness の動作を証明しません。
+Green への直接パスを使用し、Service hostname の SNI/Host と certificate validation を保持してください。
+NLB の AWS hostname はアプリケーションの TLS hostname ではありません。
+実際に 443 で HTTPS を提供する Service の場合は、別の terminal を使用してください。
 
 ```bash
 kubectl --context green -n production port-forward --address 127.0.0.1 svc/api 18443:443
 ```
 
-別のターミナルでは、実ホスト名、パス、応答契約を使います。
+別の terminal で、実際の hostname、path、response contract を使用します。
 
 ```bash
 DOCS_SERVICE_HOST="api.example.com"
@@ -619,21 +621,21 @@ DOCS_HTTP_CODE=$(curl --silent --show-error --fail --connect-timeout 5 --max-tim
 test "$DOCS_HTTP_CODE" = "200" || exit 1
 ```
 
-### NLBの重み
+### NLB weight
 
-NLBの重み付きターゲットグループはサポートされています。相対重みは0–999で、合計100でなくても構いません。
-新規接続の期待比率を表し、正確なリクエスト、バイト、既存セッションの比率ではありません。
-クラスターごとに別TGへ正常ターゲットを登録します。
-TGB、ターゲットタイプ、ネットワーク/セキュリティグループは[高度なインフラ](./02-infrastructure-advanced.md)を参照してください。
+NLB の weighted target group はサポートされています。相対 weight は 0–999 の範囲で、合計を 100 にする必要はありません。
+これは新規接続の予想シェアを表すものであり、正確なリクエスト、bytes、既存 session を表すものではありません。
+クラスターごとに別々の TG に正常な target を登録してください。
+TGB、target type、network/security group については [advanced infrastructure](./02-infrastructure-advanced.md) を参照してください。
 
-通常の重み変更は新規接続に影響しますが、0にすると短時間後に既存接続が閉じられる場合があります。
-無中断のドレインではありません。接続寿命、再試行、セッションをテストします。
-TCP/UDP/TCP_UDPはターゲットグループのスティッキネスをサポートし、TLSリスナーはしません。
-TCP転送のスティッキネスはALB専用機能ではありません。
-APIはALBのDurationSecondsを文書化しています。その期間保証をNLBにコピーしないでください。
+通常の weight 変更は新規接続に影響しますが、weight をゼロにすると短時間後に既存の
+接続を閉じる場合があります。これは中断のない drain ではありません。lifetime、retry、session をテストしてください。
+TCP/UDP/TCP_UDP は target-group stickiness をサポートしますが、TLS listener はサポートしません。
+TCP forward stickiness は ALB 専用機能ではありません。
+API は ALB の DurationSeconds を文書化しています。NLB にこの期間保証をコピーしないでください。
 
-このツールはJSONを生成するだけです。先に実リスナープロトコルとターゲットグループのVPC、
-プロトコル/IPファミリー、健全性、既存スティッキネスを確認します。
+このツールは JSON のみを生成します。実際の listener protocol と target-group VPC、
+protocol/IP family、health、既存の stickiness を最初に検証してください。
 
 ```python
 # traffic_action.py
@@ -701,35 +703,35 @@ aws elbv2 describe-listeners --region "$DOCS_REGION" \
   --listener-arns "$DOCS_LISTENER_ARN" --output json
 ```
 
-先に3つのARN変数を設定します。タイマーだけで割合を進めないでください。
-各段階でSLO、新規/既存接続、エラー、セッションを観察します。
-別TGへのフェイルオーバーを想定せず、重み0、異常ターゲット、クロスゾーン動作をテストします。
-共有NLB背後のGreen検証には別の直接Service経路を使います。
+最初に 3 つの ARN 変数を設定してください。タイマーだけに基づいて比率を進めないでください。
+各段階で SLO、新規/既存接続、エラー、session を監視してください。
+別の TG への failover を想定するのではなく、ゼロ weight、不健全な target、cross-zone 動作をテストしてください。
+共有 NLB の背後で Green を検証する際は、別個の直接 Service パスを使用してください。
 
 ### データとクリーンアップ
 
-外部RDS/ElastiCacheや共有EFSでも、スキーマ、権限、キャッシュ形式、同時書き込み/コンシューマー移行作業はなくなりません。
-共有ファイルシステムや1つのSQL件数確認だけでは整合性は成立しません。
-スナップショットのリージョン/AZ、ストレージクラス、KMS、最後の書き込みからのRPOを確認します。
+外部 RDS/ElastiCache または共有 EFS があっても、schema、権限、cache-format、
+concurrent writer/consumer の移行作業は不要になりません。共有 filesystem や単一の SQL count では
+整合性を確立できません。最後の書き込み以降の snapshot region/AZ、storage class、KMS、RPO を確認してください。
 
-合意した観察/復旧期間とデータ互換性検証が終わるまでBlueを保持します。
-重み0のTGもリスナーから参照されている場合があります。
-Auto ModeのTGB/クラスター削除は関連TGのライフサイクルに影響します。共有リスナーからBlue TG参照を
-削除し、所有権、IaC、削除順序を確認してからクリーンアップします。
-自己管理LB Controllerの外部TG所有権とは区別してください。
-トラフィック移行直後にterraform destroyを自動実行しないでください。
+合意した監視/復旧期間とデータ互換性の検証が終わるまで Blue を保持してください。
+ゼロ weight の TG も listener に参照されている場合があります。
+Auto Mode の TGB/cluster 削除は、関連 TG のライフサイクルに影響します。共有 listener から Blue TG の参照を
+削除してから、クリーンアップ前に所有権、IaC、削除順序をレビューしてください。
+これを self-managed LB Controller の external-TG 所有権と区別してください。
+トラフィック移行直後に自動で terraform destroy しないでください。
 
-ワーカーがすでにAZごとに分離したクラスターで動く場合、1クラスターずつ更新する選択肢があります。
-各EKSコントロールプレーンが単一AZになるわけではありません。
-他クラスターの予備容量/状態互換性と、ネイティブロールバック適格条件/期間を検証します。
-7日間の期限はBlueへの即時切り戻しを保証しません。
+worker がすでに AZ 分離されたクラスターで実行されている場合、クラスターを一度に 1 つずつアップグレードする選択肢があります。
+それでも各 EKS コントロールプレーンが single-AZ になるわけではありません。
+他のクラスターの予備容量/状態互換性と native rollback の適格性/期間を検証してください。
+7 日間のウィンドウは即時の Blue failback を保証しません。
 
 ## 7. アップグレード後の検証
 
-更新Successful後、実バージョン、Node/Pod Ready、コントローラーgeneration、DNS/ネットワーク経路、
-ストレージ、権限、アプリケーション動作、スケジュール済み処理を検証します。
-countはゼロ値の条件/フェーズサンプルも数えます。以下のように値を集約し、観測欠損を正常なゼロに変えないでください。
-複数クラスターでは収集に実際のclusterラベルが必要です。
+update が Successful になった後、実際のバージョン、Node/Pod Ready、controller generation、
+DNS/network path、storage、権限、アプリケーション動作、schedule 済みの作業を検証してください。
+count はゼロ値の condition/phase sample も数えます。以下のように値を集約し、
+欠落した観測を健全なゼロに変換しないでください。複数クラスターでは、収集に実際の cluster label が必要です。
 
 ```promql
 count by (cluster, kubelet_version) (
@@ -751,11 +753,11 @@ sum by (cluster) (
 )
 ```
 
-Pod再起動数は再スケジュール数ではありません。Auto Modeコントローラーメトリクスが
-自己管理Karpenter Podからスクレイプされると想定しないでください。
-以下には実際のservice=apiラベル/メトリクス契約が必要です。
-トラフィック0は正常なエラー率0ではありません。総トラフィック系列が存在してrateが正の場合だけ、
-欠けたエラー系列を0で埋めます。
+Pod restart count は rescheduling count ではありません。Auto Mode controller metric が
+self-managed Karpenter Pod から scrape されていると想定しないでください。
+以下には実際の service=api label/metric contract が必要です。
+トラフィックゼロは健全なゼロ error rate ではありません。total-traffic series が存在し、その rate が正の場合にのみ、
+欠落した error series をゼロで補完してください。
 
 ```promql
 (
@@ -777,32 +779,34 @@ histogram_quantile(0.99,
 )
 ```
 
-過去との比較では分子、分母、バケットに同じoffsetを使います。
-[30m] offset 1hは現在の90–60分前を対象とし、60–30分前ではありません。
-同等の集団を比較します。blue/greenは通信、経路、サンプル数、負荷が異なる場合があります。
-72時間では1週間の全パターンをカバーしません。ワークロード周期とロールバック適格期間から観察期間を選びます。
+履歴を比較する際は、numerator、denominator、bucket に同じ offset を使用してください。
+[30m] offset 1h は現在の 60–30 分前ではなく、90–60 分前を対象とします。
+等価な cohort を比較してください。blue/green は traffic、route、sample count、load が異なる場合があります。
+72 時間では完全な週次パターンをカバーしません。workload cycle とロールバック適格性ウィンドウから監視期間を選んでください。
 
-[スタックの章](./09-observability-stack.md)の明示的UIDと完全なダッシュボードプロビジョニングを使います。
-部分パネルYAML/JSONを完全なインポート可能ダッシュボードとして提示しないでください。
-前後のバージョン、更新ID、計画/実際の時間、失敗、復旧結果を記録します。
+[stack chapter's](./09-observability-stack.md) 明示的な UID と完全な dashboard provisioning を使用してください。
+部分的な panel YAML/JSON を完全にインポート可能な dashboard として提示しないでください。
+前後のバージョン、update ID、計画/実際の時刻、障害、復旧結果を記録してください。
 
-このレビューは合成の事前確認/待機/ルーティングケース、公式CLIパーサー、VeleroのGET専用出力動作、
-マニフェスト/クエリを確認しました。実際のEKS更新/ロールバック、NLB変更、
-スナップショット/復元、アプリケーション負荷テストは実行していません。
+このレビューでは、synthetic preflight/wait/routing ケース、公式 CLI parser、Velero の GET-only
+出力動作、manifest/query を確認しました。実際の EKS アップグレード/ロールバック、NLB の変更、
+snapshot/restore、アプリケーション load test は実行していません。
 
-## 公式参考資料
+## 公式リファレンス
 
-- [EKS更新](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)
-- [EKSロールバック](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)
-- [Auto Modeロールバック](https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html)
-- [Auto Modeアップグレード](https://docs.aws.amazon.com/eks/latest/userguide/auto-upgrade.html)
-- [EKS料金](https://aws.amazon.com/eks/pricing/)
-- [Kubernetesバージョンスキュー](https://kubernetes.io/releases/version-skew-policy/)
-- [Kubernetes非推奨化ポリシー](https://kubernetes.io/docs/reference/using-api/deprecation-policy/)
+- [EKS update](https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html)
+- [EKS rollback](https://docs.aws.amazon.com/eks/latest/userguide/rollback-cluster.html)
+- [Auto Mode rollback](https://docs.aws.amazon.com/eks/latest/userguide/rollback-automode.html)
+- [Auto Mode upgrades](https://docs.aws.amazon.com/eks/latest/userguide/auto-upgrade.html)
+- [EKS pricing](https://aws.amazon.com/eks/pricing/)
+- [Kubernetes version skew](https://kubernetes.io/releases/version-skew-policy/)
+- [Kubernetes release history](https://kubernetes.io/releases/)
+- [Kubernetes patch releases and support period](https://kubernetes.io/releases/patch-releases/)
+- [Kubernetes deprecation policy](https://kubernetes.io/docs/reference/using-api/deprecation-policy/)
 - [Pluto 5.24.3](https://github.com/FairwindsOps/pluto/releases/tag/v5.24.3)
 - [Velero 1.18.2](https://github.com/velero-io/velero/releases/tag/v1.18.2)
-- [NLBリスナー](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
+- [NLB listeners](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
 
 ---
 
-< [前: リソース最適化](./10-resource-optimization.md) | [目次](./README.md) | [次: イベント容量計画](./12-event-capacity-planning.md) >
+< [前へ: Resource optimization](./10-resource-optimization.md) | [目次](./README.md) | [次へ: Event capacity planning](./12-event-capacity-planning.md) >

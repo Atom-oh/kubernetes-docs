@@ -1,99 +1,91 @@
 # Datadog
 
-> **最終更新**: September 13, 2026
-> Helm chart 3.244.0; 対応する Agent/Cluster Agent 7.83.1。
-> 設定、SDK、ローカル検証の制限は以下に記載します。Datadog テナントは変更していません。
+> **最終更新**: October 12, 2026
+> Helm chart 3.244.0、対応する Agent/Cluster Agent 7.83.1。
+> 構成、SDK、およびローカル検証の制限は以下に記載します。Datadog テナントは変更していません。
 
 ## はじめに
 
-Datadog は SaaS の observability バックエンドを提供します。チームは引き続き collector、identity、
-network access、instrumentation、データ開示、retention、monitor、cost を管理します。
+Datadog は SaaS のオブザーバビリティバックエンドを提供します。チームは引き続き、collector、identity、
+ネットワークアクセス、instrumentation、データ開示、保持、monitor、およびコストを管理します。
 Infrastructure Monitoring、APM、profiling、logs、その他の製品には、それぞれ異なる
-entitlement と課金単位があります。Agent をインストールしてもすべての製品が含まれるわけではありません。
+利用資格と課金ディメンションがあります。Agent をインストールしても、すべての製品が含まれるわけではありません。
 
-| トピック | Datadog | CloudWatch | Self-managed Prometheus / Grafana |
+| トピック | Datadog | CloudWatch | 自己管理 Prometheus / Grafana |
 | --- | --- | --- | --- |
-| バックエンド | site 固有の可用性を持つ Datadog SaaS | AWS 管理サービス | 運用する storage、query、visualization |
-| 収集 | Agent/Cluster Agent、library、サポート対象の OTel path | AWS service metrics、agents/SDKs/OTLP | Exporter、scraping、agent、remote write |
-| APM/logs | 必要な製品を選択して設定 | Application Signals、tracing、Logs integration | 関連する backend と collector を設定 |
-| 運用 | collector/configuration と application の責任は引き続き残る | collection/configuration と response の責任は引き続き残る | backend と collection の責任は引き続き残る |
-| コスト | Host およびその他の製品固有の usage/retention 単位 | Metric/observation/OTLP/log/query/alarm 単位 | Infrastructure と運用労力 |
+| バックエンド | サイト固有の可用性を持つ Datadog SaaS | AWS 管理サービス | 運用するストレージ、クエリ、可視化 |
+| 収集 | Agent/Cluster Agent、ライブラリ、サポート対象の OTel パス | AWS サービスメトリクス、agents/SDKs/OTLP | Exporters、scraping、agents、remote write |
+| APM/logs | 必要な製品を選択して構成 | Application Signals、tracing、Logs integrations | 関連するバックエンドと collectors を構成 |
+| 運用 | collector/構成およびアプリケーションの責任は引き続き必要 | 収集/構成および対応の責任は引き続き必要 | バックエンドおよび収集の責任は引き続き必要 |
+| コスト | Host およびその他の製品固有の使用量/保持単位 | Metric/observation/OTLP/log/query/alarm 単位 | インフラストラクチャと運用労力 |
 
-組織とその credential に正しい Datadog **site** を選択してください。
-API endpoint、data residency、利用可能な製品、pricing terms は site 間で
-交換可能ではありません。固定的な integration 数の主張や、普遍的な「easy/advanced/cheap」ランキングではなく、
-integration catalogue を使用してください。
+組織とその認証情報に適した Datadog **site** を選択してください。API endpoint、データ所在地、
+利用可能な製品、料金条件は site 間で交換可能ではありません。固定の integration 数の主張や
+普遍的な「簡単/高度/安価」の順位付けではなく、integration catalogue を使用してください。
 
 ## EKS integration architecture
 
-| コンポーネント | 責任範囲 / 境界 |
+| コンポーネント | 責任 / 境界 |
 | --- | --- |
-| Node Agent | Host/container check。通常はサポート対象 EC2 node 上の DaemonSet |
+| Node Agent | Host/container の check。通常はサポート対象 EC2 node 上の DaemonSet |
 | Cluster Agent | 共有 Kubernetes metadata/check、event coordination、任意の admission/external-metric 機能 |
-| Trace Agent | application trace payload を受信して転送 |
-| Process collection / system-probe | 独自の OS、privilege、製品要件を持つ任意の process/network/security 機能 |
-| Admission Controller | connection setting を注入し、設定時はサポート対象 client library を新規 Pod に注入 |
+| Trace Agent | アプリケーションの trace payload を受信して転送 |
+| Process collection / system-probe | 独自の OS、権限、製品要件を持つ任意の process/network/security 機能 |
+| Admission Controller | connection settings と、構成時にはサポート対象 client library を新しい Pod に inject |
 
-application instrumentation は trace/profile を生成します。Agent listener または Pod
-label だけでは instrumentation を証明できません。Cluster Agent は通常の
-application-log や trace の転送経路ではありません。
+アプリケーション instrumentation は traces/profiles を生成します。Agent listener または Pod
+label だけでは instrumentation を証明できません。Cluster Agent は通常の application-log や trace
+forwarding path ではありません。
 
-この章のインストール対象は **Linux EC2-backed EKS nodes** です。EKS Fargate
-では、この host DaemonSet ではなく、文書化された Pod 単位/sidecar の collection model を使用します。
-UDS は host ローカルであり、Windows ではサポートされません。Windows、Bottlerocket、
-Auto Mode、mixed compute では、それぞれの distribution/feature 固有の設定と
-サポート対象 host access が必要です。TLS verification を無効にしたり、すべての eBPF/process
-機能がどこでも動作すると主張したりしないでください。
+この章のインストール対象は **Linux EC2-backed EKS nodes** です。EKS Fargate はこの host DaemonSet
+ではなく、文書化された Pod 単位/sidecar の collection model を使用します。UDS は host にローカルであり、
+Windows ではサポートされません。Windows、Bottlerocket、Auto Mode、mixed compute には、それぞれの
+配布/機能固有の設定とサポート対象 host access が必要です。TLS verification を無効にしたり、すべての
+eBPF/process 機能があらゆる場所で動作すると主張したりしないでください。
 
-Datadog は、`AllocatedResources` を含む Kubernetes 1.33+ との互換性のために Agent と Cluster Agent
-7.67+ を文書化しており、それらの version を一致させるよう推奨しています。このような最低限の
-feature 要件は、現在の EKS support matrix ではありません。
+Datadog は、`AllocatedResources` を伴う Kubernetes 1.33+ 互換性について Agent および Cluster Agent
+7.67+ を文書化し、両者のバージョンを一致させることを推奨しています。このような最小機能要件は、
+現在の EKS support matrix ではありません。
 
-この概要は可能な collection path を示します。trace/profile には application instrumentation と選択した製品が必要です。Watchdog の notification routing を設定する必要があります。
+概要は可能な collection path を示します。traces/profiles には application instrumentation と選択した製品が必要です。Watchdog notification routing は構成する必要があります。
 
-![Datadog node Agent telemetry と Cluster Agent metadata は、設定済みの SaaS 製品に到達します。](../../.gitbook/assets/en-observability-metrics-05-datadog-1.png)
+![Datadog node Agent telemetry と Cluster Agent metadata は、構成された SaaS 製品に到達します。](../../.gitbook/assets/en-observability-metrics-05-datadog-1.png)
 
-[インタラクティブ図](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-05-datadog-1.html)
+[インタラクティブな図](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-metrics-05-datadog-1.html)
 
-## Datadog Agent installation
+## Datadog Agent のインストール
 
-Datadog は上位レベルの lifecycle configuration に Operator を推奨し、Helm installation も
-サポートしています。この例では、**Datadog Agent Helm chart** により node/Cluster Agent を管理します。
-Chart 3.244.0 は任意の Operator dependency を bundle しています。
-`datadog.operator.enabled: false` は、この追加 controller をこの例から除外します。
-これは Operator が廃止されたことを意味しません。
+Datadog は上位レベルの lifecycle configuration に Operator を推奨し、Helm インストールも
+サポートしています。この例では、**Datadog Agent Helm chart** で node/Cluster Agents を管理します。
+Chart 3.244.0 には任意の Operator dependency が含まれています。`datadog.operator.enabled: false` は
+この例から追加の controller を除外しますが、Operator が廃止されたことを意味しません。
 
-chart のデフォルトは Agent/Cluster Agent 7.82.3 です。この例では両方を
-**7.83.1** と検証済み image-index digest に明示的に固定します。この release には network-test
-billing、containerd snapshot cleanup、Cluster Agent leader-lock shutdown の修正が含まれます。
-Agent/Cluster Agent image index には Linux amd64/arm64 が含まれます。template render が成功しても、
-Kubernetes deployment や runtime compatibility の test にはなりません。
+chart のデフォルトは Agent/Cluster Agent 7.82.3 です。この例では両方を **7.83.1** と検証済みの
+image-index digest に明示的に固定します。release には network-test billing、containerd snapshot cleanup、
+Cluster Agent leader-lock shutdown の修正が含まれます。Agent/Cluster Agent image index には Linux
+amd64/arm64 が含まれます。template render の成功は Kubernetes deployment や runtime compatibility test ではありません。
 
-### Credentials と installation ownership
+### 認証情報とインストールの所有権
 
-この profile は、native `aws.secrets` backend を使用して AWS Secrets Manager から
-Datadog API key と共有 Cluster Agent token を取得します。baseline ingestion に application key は
-不要です。external metrics は無効のままです。
+この profile は native `aws.secrets` backend を使用して、Datadog API key と共有 Cluster Agent token を
+AWS Secrets Manager から取得します。baseline ingestion に application key は不要です。external metrics は無効のままです。
 
-`ap-northeast-2` の `observability/datadog` を、JSON string key `api-key`
-および `cluster-token` で準備してください。token は cryptographically random で、少なくとも
-32 文字でなければなりません。API key は Datadog site と一致する必要があります。namespace `datadog` の
-両方の ServiceAccount、`datadog` と `datadog-cluster-agent` には、scope を限定した IRSA
-role、regional STS/Secrets Manager connectivity、および該当する場合は KMS permission が必要です。
-2 つの例の role ARN を置き換えてください。EC2 metadata credential fallback は無効です。
-[完全な prerequisite と再利用可能な profile](https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md)を参照してください。
+`ap-northeast-2` に JSON string key `api-key` と `cluster-token` を含む `observability/datadog` を準備してください。
+token は暗号学的にランダムで、少なくとも 32 文字でなければなりません。API key は Datadog site に一致する必要があります。
+namespace `datadog` の両方の ServiceAccounts、`datadog` と `datadog-cluster-agent` には、スコープを限定した
+IRSA roles、リージョンの STS/Secrets Manager 接続、および該当する場合は KMS permission が必要です。2 つの
+例の role ARN を置き換えてください。EC2 metadata credential fallback は無効です。
+[完全な前提条件と再利用可能な profiles](https://github.com/Atom-oh/kubernetes-docs/blob/5ff787faed758902c12a74e8429466f434bb26ae/examples/observability/secret-profiles/README.md) を参照してください。
 
-Python 3/PyYAML 6.0.3 と、その repository directory にある executable pinned-chart postrenderer を使用します。
-これは 7 個の hardcoded SecretKeyRef entry を、node、trace、init、Cluster Agent の consumer を維持したまま、
-**literal `ENC[...]` handle** に正確に置換します。native resolution は in-memory configuration を更新し、
-environment は更新しません。init script には空でない `DD_API_KEY` が必要なため、有効な置き換えなしに削除すると
-startup が失敗します。`must-use-secret-postrenderer` Secret は意図的に存在しません。省略した renderer を
-bypass するために作成しないでください。すべての install/upgrade で renderer を維持し、pinned chart、image、
-profile contract の変更をレビューしてください。
+その repository directory から Python 3/PyYAML 6.0.3 と実行可能な pinned-chart postrenderer を使用します。
+これは、7 つの hardcoded SecretKeyRef entry を **literal `ENC[...]` handles** に正確に置き換え、node、trace、init、
+Cluster Agent consumer を維持します。native resolution は environment ではなく in-memory configuration を更新します。
+init script には空でない `DD_API_KEY` が必要なため、有効な replacement なしに削除すると startup が壊れます。
+`must-use-secret-postrenderer` Secret は意図的に存在しません。省略された renderer を回避するために作成しないでください。
+すべての install/upgrade で renderer を維持し、pinned chart、images、profile contract の変更をレビューしてください。
 
-これらの command は installation 時にのみ cluster を変更します。audit 中には deployment を実行していません。
-IAM/secret prerequisite を準備した後、repository root から、既存の `datadog` namespace 内で、
-管理対象の release を使用して実行してください。
+これらのコマンドが cluster を変更するのは installation 時のみです。IAM/secret 前提条件を準備した後、repository root の
+既存の `datadog` namespace 内で、管理対象の release に対して実行してください。監査では deployment は実行していません。
 
 ```bash
 PROFILE=examples/observability/secret-profiles
@@ -110,12 +102,10 @@ helm upgrade --install datadog datadog/datadog --version 3.244.0 \
 
 ### レビュー済み values
 
-以下は再利用可能な `datadog-values.yaml` と一致します。logs は container
-configuration による opt-in、APM/DogStatsD は UDS を使用し、cluster-wide automatic library injection、
-external HPA metrics、discovery network statistics、および任意の process/network
-collection はここでは有効にしていません。
-application namespace は Agent namespace と分離する必要があります。SSI は Agent 自身の namespace の
-Pod を instrument しません。
+以下は再利用可能な `datadog-values.yaml` と一致します。logs は container configuration による opt-in で、
+APM/DogStatsD は UDS を使用します。cluster-wide automatic library injection、external HPA metrics、discovery network statistics、
+任意の process/network collection はここでは有効にしていません。application namespace は Agent namespace と分離する必要があります。
+SSI は Agent 自身の namespace 内の Pod を instrument しません。
 
 ```yaml
 # datadog 3.244.0: postrenderer required; replace example IRSA role ARNs.
@@ -206,79 +196,66 @@ agents:
       eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/datadog-agent-secrets
 ```
 
-postrendering 後の credential 関連 environment value は
-`ENC[observability/datadog;api-key]` と `ENC[observability/datadog;cluster-token]` のみです。
-`DD_SECRET_BACKEND_TYPE`/`CONFIG` は backend type と region のみを保持します。shell から resolved value を
-export せず、実際の key を Helm values に置かず、profile に Kubernetes credential Secret は不要です。
-2 つの init-volume container は image configuration を copy するだけです。init-config は bootstrap
-check に API-key handle を使用します。実際の native backend authorization と Datadog ingestion には、
-引き続き runtime verification が必要です。
+postrendering 後の credential 関連 environment value は、`ENC[observability/datadog;api-key]` と
+`ENC[observability/datadog;cluster-token]` のみです。`DD_SECRET_BACKEND_TYPE`/`CONFIG` が含むのは backend type と region のみです。
+shell が resolved value を export することはなく、実際の key は Helm values に置かれず、profile に Kubernetes credential Secret は不要です。
+2 つの init-volume container は image configuration をコピーするだけです。init-config は bootstrap check に API-key handle を使用します。
+実際の native backend authorization と Datadog ingestion には、引き続き runtime verification が必要です。
 
-Scheduled および API-failure secret refresh は明示的に無効です。node/trace と Cluster Agent Pod の
-承認済み coordinated restart を通じて rotate してください。fleet が新しい key を使用するまで、古い
-API key を有効に保ってください。cluster-token の変更は mixed-version rollout 中に node/Cluster Agent
-authentication を中断する可能性があるため、maintenance window または個別に検証した transition を計画してください。
-zero-downtime rotation は主張していません。[Datadog secret backends](https://docs.datadoghq.com/agent/guide/secrets-management/)を参照してください。
+Scheduled および API-failure secret refresh は明示的に無効です。node/trace と Cluster Agent Pod を承認済みの協調 restart で
+rotate してください。fleet が新しい key を使用するまで、古い API key を有効に保ってください。cluster-token の変更は、mixed-version rollout
+中に node/Cluster Agent authentication を中断する可能性があるため、maintenance window または別途検証済みの transition を計画してください。
+zero-downtime rotation は主張していません。[Datadog secret backends](https://docs.datadoghq.com/agent/guide/secrets-management/) を参照してください。
 
-`processAgent.enabled` は deprecated です。個別の collection option を使用してください。
-chart は該当する場合にすでに `/etc/passwd` を mount するため、重複する手動の `passwd` volume/mount を
-追加しないでください。resource override は `agents.containers.agent.resources` など component 単位です。
-負荷下で実際に render された container を sizing してください。2 つの Cluster Agent replica は placement、
-disruption、failure test の代わりにはなりません。
+`processAgent.enabled` は非推奨です。個別の collection options を使用してください。chart は該当する場合すでに `/etc/passwd` を mount するため、
+重複する手動の `passwd` volumes/mounts を追加しないでください。resource overrides は `agents.containers.agent.resources` など component ごとです。
+実際に render された containers を load 下でサイジングしてください。2 つの Cluster Agent replicas は placement、disruption、failure testing の代替にはなりません。
 
-元の top-level `kubeStateMetricsEnabled` と `prometheus.enabled` entry は、主張している integration を
-設定しません。legacy KSM option は `datadog` の下に nested されています。この例では
-`datadog.kubeStateMetricsCore.enabled` を使用し、重複する legacy collection を回避しています。明示的な
-Datadog Autodiscovery check は annotation-wide `prometheusScrape` を有効にすることとは別です。
+元の top-level `kubeStateMetricsEnabled` および `prometheus.enabled` entries は、主張された integrations を構成しません。
+legacy KSM option は `datadog` の下にネストされます。この例では `datadog.kubeStateMetricsCore.enabled` を使用し、重複する legacy collection を避けています。
+明示的な Datadog Autodiscovery checks は annotation-wide `prometheusScrape` を有効にすることとは別です。
 
-`datadog.profiling.enabled` は**有効です**。これは eligible Pod に `DD_PROFILING_ENABLED` を注入し、
-インストール済み client library と Cluster Agent 7.57+ を必要とします。任意の uninstrumented application に
-profiler を install するものではありません。`null`/`false`/`auto`/`true` の動作を意図して選択してください。
-同様に、external HPA metrics を有効にするには application key、API permission、service/CRD、および実際の
-metric availability が必要です。network monitoring にはサポート対象の system-probe access が必要です。
+`datadog.profiling.enabled` **は有効です**。これは eligible Pod に `DD_PROFILING_ENABLED` を inject し、installed client libraries と Cluster Agent 7.57+ を必要とします。
+任意の uninstrumented application に profiler を install するものではありません。`null`/`false`/`auto`/`true` の動作を意図的に選択してください。
+同様に、external HPA metrics を有効にするには application key、API permissions、service/CRDs、実際の metric availability が必要です。network monitoring にはサポート対象の system-probe access が必要です。
 
-### AWS account integration は別の path です
+### AWS account integration は別経路です
 
-SaaS AWS account integration は、選択した integration に必要な permission を持つ、許可済みの
-cross-account role と Datadog 提供の external ID を使用します。node Agent SA に attach した任意の IRSA role は、
-その SaaS integration を設定しません。通常の Kubernetes Agent collection には、ここで以前に示した広範な
-CloudWatch/EC2/tag policy は不要です。
+SaaS AWS account integration は、選択した integrations に必要な permissions を備えた authorized cross-account role と
+Datadog 提供の external ID を使用します。node Agent SA に付与された任意の IRSA role は、その SaaS integration を構成しません。
+通常の Kubernetes Agent collection に、ここで以前示した広範な CloudWatch/EC2/tag policy は不要です。
 
-実際に AWS を呼び出す Agent/check にのみ Pod Identity または IRSA を使用し、その固有の role、trust、
-permission を設定してください。**render 済みの** service-account 名を解決してください。推測した
-`datadog-agent` SA の IAM association を作成しても、Helm release が使用する別の SA には bind されません。
-ローカルの STS caller check を workload の identity の証明として扱わないでください。
+実際に AWS を呼び出す Agent/check に対してのみ、Pod Identity または IRSA を、その固有の role、trust、permissions とともに使用してください。
+**render された** service-account name を解決してください。推測した `datadog-agent` SA に IAM association を作成しても、Helm release が使用する
+異なる SA は bind されません。local STS caller check を workload の identity の証明として扱わないでください。
 
 ## Infrastructure Monitoring
 
-### metric の collector、unit、tag を確認する
+### metric の collector、unit、tags を確認する
 
 | Metric / source | 意味 |
 | --- | --- |
 | `system.cpu.idle` / System check | CPU idle **percent**。percentage-based node threshold に適切 |
-| `system.mem.total`, `system.mem.used`, `system.mem.free` | Memory measurement。free は usable/reclaimable memory と同義ではない |
-| `kubernetes.cpu.usage.total` / Kubelet | **Nanocores** であり、percent ではない。1 core は 1,000,000,000 nanocores |
-| `kubernetes.memory.usage`, `kubernetes.memory.limits` | Bytes。usage と limit の比較には同じ entity/tag set の一致が必要 |
-| `kubernetes.pods.running`, `kubernetes.containers.restarts` | 有効な Kubelet gauge。running Pod と累積 container restart |
+| `system.mem.total`, `system.mem.used`, `system.mem.free` | Memory measurements。free は usable/reclaimable memory と交換可能ではない |
+| `kubernetes.cpu.usage.total` / Kubelet | **Nanocores** であり percent ではない。1 core は 1,000,000,000 nanocores |
+| `kubernetes.memory.usage`, `kubernetes.memory.limits` | Bytes。usage と limit の比較には同一 entity/tag set の一致が必要 |
+| `kubernetes.pods.running`, `kubernetes.containers.restarts` | 有効な Kubelet gauges: running pods と累積 container restarts |
 | `kubernetes_state.deployment.replicas_available`, `kubernetes_state.deployment.replicas_desired` | Kubernetes State Metrics Core の Deployment state |
-| `kubernetes_state.pod.status_phase`, `kubernetes_state.service.count` | Pod phase/service inventory。文書化された grouping tag を確認すること |
-| `kubernetes_state.container.restarts` | namespace/pod/container tag を持つ State Core の restart gauge |
+| `kubernetes_state.pod.status_phase`, `kubernetes_state.service.count` | Pod phase/service inventory。文書化された grouping tags を確認 |
+| `kubernetes_state.container.restarts` | namespace/pod/container tags を持つ State Core の restart gauge |
 
-legacy Kubernetes integration、Kubelet check、State Core にはそれぞれ異なる catalogue があります。
-ある catalogue に metric がないからといって、必ずしも Agent から削除されたわけではありません。有効な Kubelet
-metric を無造作に rename しないでください。filesystem/network availability と rate unit は collector/runtime に
-依存します。その metric の実際の定義を確認してください。
+legacy Kubernetes integration、Kubelet check、State Core には異なる catalogues があります。ある catalogue に metric がないことは、
+必ずしも Agent から削除されたことを意味しません。有効な Kubelet metrics を無闇に rename しないでください。filesystem/network の可用性と rate units は
+collector/runtime に依存します。その metric の実際の definition を読んでください。
 
-この Kubernetes installation には標準の `kube_cluster_name` tag を使用し、grouping 前に実際の metric tag を
-確認してください。cluster-centric State Core metric が常に `host` tag を持つとは限りません。
-`cluster_name` と `kube_cluster_name` は交換可能ではありません。raw nanocore value を 80 と比較しても、
-80% CPU を意味しません。
+この Kubernetes installation には標準の `kube_cluster_name` tag を使用し、grouping 前に実際の metric tags を確認してください。
+cluster-centric State Core metrics が常に `host` tag を持つとは限りません。`cluster_name` と `kube_cluster_name` は交換可能ではありません。
+raw nanocore value を 80 と比較しても、80% CPU を意味しません。
 
 ### OpenMetrics Autodiscovery
 
-次の**metadata fragment**を、container 名が `app` で、port 9464 で gauge `queue_depth` を提供する
-workload に merge してください。これはその application や endpoint を作成しません。annotation の container
-identifier は一致する必要があります。endpoint を保護し、必要に応じて TLS/authentication を設定してください。
+container 名が `app` で、port 9464 上に gauge `queue_depth` を提供する workload に、次の **metadata fragment** を merge してください。
+これは application や endpoint を作成しません。annotation の container identifier は一致する必要があります。endpoint を保護し、必要に応じて TLS/authentication を構成してください。
 
 ```yaml
 metadata:
@@ -290,22 +267,20 @@ metadata:
       \  }\n    ]\n  }\n}"
 ```
 
-現在の `openmetrics` check は `openmetrics_endpoint` を使用します。これらの Datadog
-Autodiscovery annotation には、別の Prometheus server や chart の広範な `prometheusScrape` discovery は不要です。
-選択した metric/label を制限してください。counter と histogram では、Prometheus name が最終的な Datadog name
-でもあると仮定せず、name normalization、emitted `.count`/bucket series、check-version behavior を確認してください。
+現在の `openmetrics` check は `openmetrics_endpoint` を使用します。これらの Datadog Autodiscovery annotations には、
+別の Prometheus server や chart の広範な `prometheusScrape` discovery は必要ありません。選択する metrics/labels を制限してください。
+counters と histograms では、Prometheus name が最終的な Datadog name でもあると仮定せず、name normalization、emitted `.count`/bucket
+series、check-version behavior を検証してください。
 
-### DogStatsD: application から到達可能な endpoint を使用する
+### DogStatsD: application から到達できる endpoint を使用する
 
-application Pod の `localhost` は node Agent ではありません。この Linux の例では host-local UDS directory を使用します。
-Admission Controller の `socket` mode は、`DD_DOGSTATSD_URL`、`DD_TRACE_AGENT_URL`、volume を注入できます。
-それ以外の場合は、対応する mount と permission を明示的に設定してください。Pod 固有の
-`admission.datadoghq.com/config.mode` は annotation ではなく**label**です。Agent restart 後の socket replacement が
-見え続けるよう、親 directory を mount してください。
+application Pod の `localhost` は node Agent ではありません。Linux の例では host-local UDS directory を使用します。Admission Controller の
+`socket` mode は `DD_DOGSTATSD_URL`、`DD_TRACE_AGENT_URL`、volume を inject できます。それ以外の場合は、対応する mounts と permissions を
+明示的に構成してください。Pod 固有の `admission.datadoghq.com/config.mode` は annotation ではなく **label** です。Agent restart 後の socket replacement が
+引き続き見えるように parent directory を mount してください。
 
-Python helper は `datadog==0.53.0` で確認しました。`socket_path` には、
-`/var/run/datadog/dsd.socket` など実際の filesystem path を渡してください。他の SDK/environment setting で使用する
-`unix://` URL は同じ argument format ではありません。zero の good/error value も含め、実際の interval count で
+Python helper は `datadog==0.53.0` で確認しました。`socket_path` には `/var/run/datadog/dsd.socket` のような実際の filesystem path を渡してください。
+他の SDKs/environment settings で使用する `unix://` URL は同じ argument format ではありません。zero の good/error values を含め、実際の interval counts で
 `emit_batch` を呼び出してください。
 
 ```python
@@ -335,9 +310,8 @@ def make_metrics_client(socket_path):
     )
 ```
 
-Go helper は datadog-go/v5 を使用します。`WithNamespace("my_app.")` と同じ
-`env:demo,service:orders` tag で client を作成してください。constructor、send、close の error を確認し、
-`statsd.New` error を破棄しないでください。この helper は caller から渡された shared client を close しません。
+Go helper は datadog-go/v5 を使用します。`WithNamespace("my_app.")` と同じ `env:demo,service:orders` tags で client を作成してください。
+constructor、send、close の errors を確認し、`statsd.New` error を破棄しないでください。この helper は caller から提供された shared client を close しません。
 
 ```go
 package metrics
@@ -372,22 +346,20 @@ func EmitBatch(client *statsd.Client, total, errors int64) error {
 
 | DogStatsD type | 解釈 |
 | --- | --- |
-| Counter | Interval count。Datadog は rate として保存する場合がある。`.as_count()` は query window の count を再構築する |
-| Gauge | queue depth などの snapshot。snapshot の合計は処理済み request count ではない |
-| Histogram | 受信 Agent により集計される。host 単位 percentile の平均では global percentile は作られない |
-| Distribution | backend distribution aggregation をサポート。有効な percentile、tag、billing を確認すること |
-| Service check | 実際の health check の status。0 OK、1 warning、2 critical、3 unknown |
+| Counter | Interval count。Datadog は rate として保存する場合がある。`.as_count()` は query window の counts を再構成する |
+| Gauge | queue depth のような snapshot。snapshots の合計は processed-request count ではない |
+| Histogram | 受信する Agent により集約される。host ごとの percentiles を平均しても global percentile にはならない |
+| Distribution | backend distribution aggregation をサポートする。enabled percentiles、tags、billing を確認 |
+| Service check | 実際の health check の status: 0 OK、1 warning、2 critical、3 unknown |
 
-ローカル datagram delivery は SaaS ingestion を acknowledge しません。UDP は packet を失う可能性があります。
-UDS/client buffering と Agent queue も monitoring が必要です。sample helper は DogStatsD client telemetry を
-有効にしないため、deployment 用に別の collection-health signal を選択してください。counter retry/duplicate send は
-exactly-once business ledger ではありません。
+local datagram delivery は SaaS ingestion を acknowledge しません。UDP は packet を失う可能性があり、UDS/client buffering と Agent queues も
+monitoring が必要です。sample helper は DogStatsD client telemetry を有効にしないため、deployment には別の collection-health signal を選択してください。
+Counter retries/duplicate sends は exactly-once business ledger ではありません。
 
 ### File-based Autodiscovery configuration
 
-Helm 管理の configuration では、`datadog.confd` が check file を作成して mount します。`datadog-checks` という
-standalone ConfigMap は、存在するだけで自動検出されるわけではありません。次の NGINX fragment には、
-一致する image identity と設定済みで認可された `stub_status` endpoint が必要です。
+Helm 管理の configuration では、`datadog.confd` が check files を作成して mount します。`datadog-checks` という名前の standalone ConfigMap は、
+存在するだけでは自動的に discovered されません。次の NGINX fragment には、一致する image identity と構成済みで authorized な `stub_status` endpoint が必要です。
 
 ```yaml
 datadog:
@@ -396,24 +368,22 @@ datadog:
       \ http://%%host%%:80/nginx_status\n"
 ```
 
-authenticated Redis check にはさらに正しい port/TLS と credential delivery が必要です。
-`%%env_REDIS_PASSWORD%%` は Redis application Pod の environment ではなく、**Agent の** environment を読み取ります。
-設定済みの Datadog secret backend または、必要な特定の permission を持つ保護された file delivery を優先してください。
-public check の例で password を公開したり、discovery のためだけに cluster-wide Secret read を許可したりしないでください。
+authenticated Redis check には、正しい port/TLS と credential delivery も必要です。`%%env_REDIS_PASSWORD%%` が読むのは Redis
+application Pod の environment ではなく **Agent の** environment です。構成済みの Datadog secret backend または必要な特定の permissions を持つ
+保護された file delivery を優先してください。public check examples に passwords を露出したり、discovery のためだけに cluster-wide Secret reads を付与したりしないでください。
 
 ## APM と Distributed Tracing
 
 ### Local SDK injection と SSI は明示的な選択です
 
-admission opt-in label により mutation/connection-setting injection が許可されます。tracing library を install するには、
-SSI target またはサポート対象 language/version annotation を設定してください。label だけでは SDK が install されたことや
-trace が Datadog に到達したことの証明にはなりません。Java/Python/Node.js の local injection には Cluster Agent 7.40+、
-.NET/Ruby には 7.44+ が必要です。現在の 7.83.1 も `kube-system` と自身の namespace を injection から除外します。
+admission opt-in label は mutation/connection-setting injection を許可します。tracing library を install するには、SSI targets または
+サポート対象の language/version annotation を構成してください。label だけでは SDK が install されたことや traces が Datadog に到達したことの証明にはなりません。
+Java/Python/Node.js local injection には Cluster Agent 7.40+、.NET/Ruby には 7.44+ が必要です。このガイドで固定する Cluster Agent 7.83.1 は、
+`kube-system` と自身の namespace も injection から除外します。
 
-制御された Java の例では、既存の Deployment の selector、container、security setting を維持したまま、次の
-**pod-template fragment**を application namespace に merge してください。これは単体で apply する完全な Deployment ではありません。
-Java init image `gcr.io/datadoghq/dd-lib-java-init:v1.66.0` は Linux amd64/arm64 で検証されています。
-実際の application の JVM/framework/image compatibility を検証してください。
+制御された Java の例では、既存の Deployment の selector、containers、security settings を維持したまま、application namespace の Deployment に
+次の **pod-template fragment** を merge してください。単独で apply する完全な Deployment ではありません。Java init image
+`gcr.io/datadoghq/dd-lib-java-init:v1.66.0` は Linux amd64/arm64 で検証済みです。実際の application's JVM/framework/image compatibility を確認してください。
 
 ```yaml
 spec:
@@ -429,22 +399,20 @@ spec:
         admission.datadoghq.com/java-lib.version: v1.66.0
 ```
 
-`tags.datadoghq.com/*` label は unified service/environment/version tagging を提供します。
-label を Deployment metadata のみに置き、Pod が継承すると期待しないでください。injection は**新しい Pod**が
-admit されたときに行われます。注入された init container、library file、UDS mount/permission、non-secret
-connectivity setting を確認し、実際の traffic/trace を検証してください。namespace exclusion、webhook failure、
-security policy、unsupported image により instrumentation が妨げられる場合があります。
+`tags.datadoghq.com/*` labels は unified service/environment/version tagging を提供します。label を Deployment metadata のみに置いて、
+その Pod が継承すると期待しないでください。injection は **new pods** が admitted されたときに行われます。injected init containers、library files、
+UDS mounts/permissions、non-secret connectivity settings を確認してから、実際の traffic/traces を検証してください。namespace exclusions、webhook failures、
+security policies、unsupported images により instrumentation が妨げられる可能性があります。
 
-cluster-wide SSI は、レビュー済みの namespace/Pod target と library version を持つ
-`datadog.apm.instrumentation` で設定する代替手段です。manual tracer と injected tracer を意図せず組み合わせないでください。
-injected library は手動で install した library より優先される場合があります。profiler の有効化には、引き続き
-サポート対象の client library と独自の product/runtime 条件が必要です。
+cluster-wide SSI は、レビュー済みの namespace/pod targets と library versions を伴う `datadog.apm.instrumentation` で構成する代替手段です。
+manual と injected tracers を意図せず組み合わせないでください。injected library は manually installed なものより優先されることがあります。
+Profiler enablement には、引き続きサポート対象 client library と独自の product/runtime conditions が必要です。
 
 ### Manual Java instrumentation
 
-application JVM の起動時には、stage 化および version 管理した `dd-java-agent.jar`、または上記の検証済み injection route を
-使用してください。`dd-trace-api` を追加するだけでは annotation/API への access が得られるだけで、runtime bytecode
-instrumentation は開始しません。以下の Maven dependency と Java source は別の file です。
+application JVM の起動時には、staged で versioned な `dd-java-agent.jar`、または上記の validated injection route を使用してください。
+単に `dd-trace-api` を追加しても annotation/API にはアクセスできますが、runtime bytecode instrumentation は開始しません。
+以下の Maven dependency と Java source は別の files です。
 
 ```xml
 <dependency>
@@ -467,17 +435,15 @@ public final class TraceMethods {
 }
 ```
 
-handler は caller により提供される application code を表します。bounded な operation/resource name を使用してください。
-以前の例の order/customer identifier ごとの tag はこのデモには不要であり、disclosure/cardinality risk を作る可能性があります。
-manual span API には対応するサポート対象 bridge/library が必要です。annotation API しかない project に
-OpenTracing import を追加しないでください。
+handler は caller から提供される application code を表します。operation/resource names は bounded にしてください。古い例の order/customer identifier
+ごとの tags は、このデモには不要であり、disclosure/cardinality risks を生み出す可能性があります。manual span APIs には対応するサポート対象 bridge/library が必要です。
+annotation API しかない project に OpenTracing imports を追加しないでください。
 
 ### Manual Python instrumentation
 
-この検証済み 4.14.0 の例には、現在の `ddtrace.trace` import を使用します。dependency declaration は
-Python code block ではなく `requirements.txt` に保持してください。framework auto-instrumentation については、
-application import の前に、選択した `ddtrace-run`/SSI setup に従ってください。この helper が framework 全体を
-patch すると想定しないでください。
+この確認済みの 4.14.0 の例には、現在の `ddtrace.trace` import を使用してください。dependency declaration は Python code block 内ではなく
+`requirements.txt` に置いてください。framework auto-instrumentation では、application imports の前に選択した `ddtrace-run`/SSI setup に従ってください。
+この helper が framework 全体を patch すると仮定しないでください。
 
 ```text
 ddtrace==4.14.0
@@ -492,23 +458,20 @@ def process_order(handler):
         return handler()
 ```
 
-同等の `tracer.wrap` decorator は method tracing に使用できます。handler からの exception は propagate する必要があります。
-span を記録しても application の retry や success は保証されません。正しい service/env/version tag と、
-サポート対象 HTTP/message integration をまたぐ context propagation を使用してください。service map は観測された
-instrumented relationship から作られるものであり、任意の `DD_TAGS` だけから作られるものではありません。
+同等の `tracer.wrap` decorator は method tracing に使用できます。handler からの exceptions は propagate する必要があります。span の記録は
+application retry や成功の保証ではありません。サポート対象 HTTP/message integrations をまたぐ正しい service/env/version tags と context propagation を使用してください。
+Service maps は観測された instrumented relationships から作られ、任意の `DD_TAGS` だけからは作られません。
 
-raw customer/order identifier、token、request body をデフォルトで tag しないでください。実際の application に対して
-instrumentation capture、error message、sampling/redaction rule をレビューしてください。auto-instrumentation は
-完全な PII removal を保証しません。
+raw customer/order identifiers、tokens、request bodies をデフォルトで tag しないでください。実際の application について instrumentation capture、
+error messages、sampling/redaction rules をレビューしてください。auto-instrumentation は完全な PII removal を保証しません。
 
 ## Log Management
 
-### collection と parsing を意図して選択する
+### collection と parsing を意図的に選択する
 
-installation は log collection を有効にしますが、`containerCollectAll: false` のままにします。
-container 名が `app` の pod template にこの metadata を merge してください。multiline rule は**date で始まる
-plain-text Java record**に適用されます。これは一般的な JSON-log parser ではありません。container runtime framing と
-application message parsing は別の stage です。実際に収集した record を確認してください。
+installation は log collection を有効にしますが、`containerCollectAll: false` のままにします。container 名が `app` の pod template に
+この metadata を merge してください。multiline rule は **date で始まる plain-text Java records** に適用されます。一般的な JSON-log parser ではありません。
+container runtime framing と application message parsing は別々の stages です。実際に collected records を確認してください。
 
 ```yaml
 metadata:
@@ -519,17 +482,15 @@ metadata:
       : \"^\\\\d{4}-\\\\d{2}-\\\\d{2}\"\n      }\n    ]\n  }\n]"
 ```
 
-1 行につき 1 JSON event の application では、この rule で無関係な JSON event を結合するのではなく、
-サポート対象の JSON path を使用してください。file access、runtime path、annotation matching、exclusion setting、
-backend pipeline filter はすべて collection に影響します。matching application と excluded application の両方で
-selective collection を確認してください。
+1 行につき 1 JSON event の applications では、この rule で無関係な JSON events を join するのではなく、サポート対象の JSON path を使用してください。
+file access、runtime paths、annotation matching、exclusion settings、backend pipeline filters はすべて collection に影響します。
+matching application と excluded one の両方で selective collection を確認してください。
 
 ### Pipeline request structure
 
-この request は実際の API field **`match_rules` と `support_rules`**を使用します。
-以前の camelCase field は Logs API model ではありません。sample message は期待される line format を定義しています。
-application の実際の format/timezone を使用し、unmatched/multiline/error case を test してください。有効な request model は、
-Datadog tenant における Grok parsing や ingestion/indexing を証明しません。
+この request は実際の API fields **`match_rules` と `support_rules`** を使用します。古い camelCase fields は Logs API model ではありません。
+sample message は期待する line format を定義しています。application の実際の format/timezone を使用し、unmatched/multiline/error cases を test してください。
+valid request model は Datadog tenant における Grok parsing や ingestion/indexing を証明しません。
 
 ```json
 {
@@ -572,18 +533,17 @@ Datadog tenant における Grok parsing や ingestion/indexing を証明しま�
 }
 ```
 
-Pipeline の作成/並び替えは、matching log の processing を変更します。正しい site、scope を限定した API permission、
-既存 pipeline ownership の下で設定してください。この audit 中に pipeline request は送信していません。
+Pipeline の creation/reordering は matching logs の processing を変更します。正しい site、scoped API permissions、既存の pipeline ownership の下で構成してください。
+この監査では pipeline request は送信していません。
 
 ### Trace-log correlation と MDC ownership
 
-可能な場合はサポート対象の automatic log injection を使用し、structured log 内で trace/span ID を string として保持してください。
-正しい service/env/version、timestamp、parsing、利用可能な trace data も必要です。2 つの ID field だけでは correlation は
-保証されません。process が instrument されていない場合、有用な active trace ID はありません。
+可能な場合はサポート対象の automatic log injection を使用し、structured logs では trace/span IDs を strings として保持してください。
+正しい service/env/version、timestamps、parsing、利用可能な trace data も必要です。2 つの ID fields だけでは correlation を保証しません。
+process が instrumented されていない場合に有用な active trace ID はありません。
 
-SLF4J MDC を明示的に管理する application では、この helper は caller の**以前の context 全体**を success と failure の
-両方で復元します。以前の無条件な `MDC.clear()` は無関係な caller field を失わせていました。これは synchronous helper であり、
-async context propagation mechanism や完全な servlet filter ではありません。
+SLF4J MDC を明示的に管理する applications では、この helper は success と failure の両方で caller の **previous context 全体** を復元します。
+古い無条件の `MDC.clear()` は無関係な caller fields を失っていました。これは synchronous helper であり、async context propagation mechanism や完全な servlet filter ではありません。
 
 ```java
 import java.util.Map;
@@ -611,18 +571,17 @@ public final class TraceLogContext {
 }
 ```
 
-これには `dd-trace-api` と application と互換性のある SLF4J API/provider が必要です。logging pattern または JSON encoder は
-MDC value を含める必要があります。servlet API、import、checked-exception contract なしに servlet の例を copy しないでください。
+これには `dd-trace-api` と application に対応する SLF4J API/provider が必要です。logging pattern または JSON encoder に MDC values を含める必要があります。
+servlet API、imports、checked-exception contract がないまま servlet example をコピーしないでください。
 
-## Dashboard と Alert
+## Dashboards と Alerts
 
 <span id="dashboard-creation-api"></span>
 
 ### Dashboard request construction
 
-この helper は `datadog-api-client==2.60.0` を使用して request body を構築します。cluster と namespace の
-template variable は実際に query から参照されています。host widget は percent metric を使用し、pod widget は
-memory bytes とその namespace filter を使用します。選択した data が実際に grouping tag を持つことを確認してください。
+この helper は request body の構築に `datadog-api-client==2.60.0` を使用します。cluster と namespace template variables は実際に queries から参照されます。
+host widget は percent metric を使用し、pod widget は memory bytes とその namespace filter を使用します。選択した data が本当に grouping tags を持つことを確認してください。
 
 ```python
 from datadog_api_client.v1.model.dashboard import Dashboard
@@ -652,18 +611,17 @@ def build_dashboard(cluster_name):
     )
 ```
 
-caller は正しく設定した `ApiClient` を提供し、`DashboardsApi` を使用して目的の dashboard を作成または更新します。
-返された ID を記録/reconcile してください。title で繰り返し作成すると duplicate が発生する可能性があります。site と
-scope を限定した automation credential は node Agent API key とは別です。この audit では dashboard API を呼び出していません。
+caller は正しく構成された `ApiClient` を提供し、意図した dashboard を create または update するために `DashboardsApi` を使用します。
+返された ID を記録/reconcile してください。title による繰り返し作成では duplicates が生じる可能性があります。site と scoped automation credentials は node Agent API key とは別です。
+この監査では dashboard API は呼び出していません。
 
 <span id="monitor-alert-configuration"></span>
 
-### Monitor query と unit
+### Monitor queries と units
 
-設定済みの Datadog Terraform provider と project version constraint/lock file を使用してください。
-これらは resource fragment であり、完全な provider/credential setup ではありません。threshold は例です。実際の metric unit、
-tag、window、application objective を確認してください。最初の monitor は nanocore を 80 と比較して結果を「CPU percent」と
-呼ぶのではなく、idle percent を直接評価します。
+構成済みの Datadog Terraform provider と project version constraints/lock file を使用してください。これらは resource fragments であり、完全な provider/credential setup ではありません。
+thresholds は例です。実際の metric units、tags、windows、application objectives を確認してください。最初の monitor は nanocores を 80 と比較して結果を「CPU percent」と呼ぶのではなく、
+idle percent を直接評価します。
 
 ```hcl
 # Fragments for a configured, version-pinned Datadog Terraform provider.
@@ -711,33 +669,27 @@ resource "datadog_monitor" "request_error_rate" {
 }
 ```
 
-restart gauge は**total**です。2 つの window で繰り返された gauge sample の sum を比較しても、特に reset、
-Pod replacement、不均等な sampling がある場合に新規 restart を信頼して count できません。recent-restart monitor には
-検証済みの delta/reset design が必要です。この例では代わりに total に明示的に alert します。
+restart gauge は **total** です。2 つの windows の repeated gauge samples の sums を比較しても、特に resets、replacement pods、不均等な sampling がある場合、
+新しい restarts を信頼性高く数えられません。recent-restart monitor には検証済みの delta/reset design が必要です。この例では代わりに total について明示的に alert します。
 
-error monitor は、error/good request の明示的な zero value を含め、`emit_batch` が出力する 3 つの counter を使用します。
-`.as_count()` evaluation では、time aggregation は**division の前に**実行されます。すなわち、各 time bucket の ratio の
-sum ではなく sum(errors)/sum(total) です。この path では sum aggregator を使用してください。
+error monitor は explicit zero values を含め、`emit_batch` が出力する 3 つの counters を使用します。`.as_count()` evaluation では、
+time aggregation は division **より前に**行われます。各 time bucket の ratio の sum ではなく sum(errors)/sum(total) です。この path では sum aggregator を使用してください。
 
-zero traffic、missing telemetry、実際に error-free の traffic は異なります。minimum traffic/collection-health condition を
-定義し、monitor の no-data behavior を検証してください。`notify_no_data: false` は health を確立しません。これらの fragment で
-missing data を通知しないだけです。
+zero traffic、missing telemetry、実際に error-free な traffic は異なります。minimum traffic/collection-health conditions を定義し、monitor の no-data behavior を検証してください。
+`notify_no_data: false` は health を確立するものではなく、これらの fragments で missing data を通知しないだけです。
 
-built-in APM metric には、選択した integration が生成する実際の `trace.<operation>.hits/errors` name と tag を使用してください。
-Java、Python、その他の integration がすべて `trace.http.request.*` を出力するわけではありません。trace analytics、
-generated trace metric、custom DogStatsD metric は異なる source です。
+built-in APM metrics では、選択した integration が生成した実際の `trace.<operation>.hits/errors` names と tags を使用してください。
+Java、Python、その他の integrations がすべて `trace.http.request.*` を出力するわけではありません。Trace analytics、generated trace metrics、custom DogStatsD metrics は異なる sources です。
 
 <span id="watchdog-ai"></span>
 
 ### Watchdog と notification delivery
 
-Watchdog は、すべての threshold を手動で選択せずに検出された anomaly/insight を提示できます。insight は notification が
-deliver された証明ではありません。サポート対象の Watchdog/monitor workflow を使用し、意図した site で event source、
-product availability、notification routing を検証してください。
+Watchdog はすべての threshold を手動で選ばずに、detected anomalies/insights を表示できます。insight は notification が delivered された証明ではありません。
+サポート対象の Watchdog/monitor workflow を使用し、意図した site で event source、product availability、notification routing を確認してください。
 
-次の event-monitor fragment は、その organization に `source:watchdog` に一致する実際の event が存在することを前提とします。
-これは `story_category` group tag を作り出すものでも、すべての Watchdog result がこの stream に現れることを保証するものでもありません。
-notification を有効にする前に、実際の event に対して filter を検証してください。
+次の event-monitor fragment は、その organization に `source:watchdog` と一致する actual events が存在することを前提とします。
+`story_category` group tag を作り出したり、すべての Watchdog result がこの stream に現れることを保証したりはしません。notifications を有効にする前に real events に対して filter を検証してください。
 
 ```hcl
 resource "datadog_monitor" "watchdog_events" {
@@ -753,9 +705,9 @@ resource "datadog_monitor" "watchdog_events" {
 
 ### SLO request construction
 
-Metric-based SLO には明確に定義した good/total count が必要です。次の helper は上記の明示的な counter を使用します。
-「Good」は application の SLI policy と一致する必要があります。HTTP 2xx だけを count することは普遍的な availability 定義ではありません。
-不在を 100% success として扱うのではなく、zero-traffic と missing-data behavior を検証してください。
+metric-based SLOs には、明確に定義された good/total counts が必要です。以下の helper は上記の explicit counters を使用します。
+「Good」は application's SLI policy に一致する必要があります。HTTP 2xx だけを数えることは普遍的な availability definition ではありません。
+absence を 100% success と扱うのではなく、zero-traffic と missing-data behavior を検証してください。
 
 ```python
 from datadog_api_client.v1.model.service_level_objective_request import ServiceLevelObjectiveRequest
@@ -775,33 +727,33 @@ def build_success_slo():
     )
 ```
 
-これは request を構築するものであり、live SLO ではありません。設定済みの caller は ownership、data、permission を
-検証した後に `ServiceLevelObjectivesApi.create_slo` へ渡せます。Datadog は monitor-based と time-slice SLO も
-サポートしています。gauge/restart total を good-event count に無理に当てはめるのではなく、SLI に一致する model を選択してください。
+これは request を構築するもので、live SLO ではありません。ownership、data、permissions を検証した後、構成済みの caller はこれを
+`ServiceLevelObjectivesApi.create_slo` に渡せます。Datadog は monitor-based および time-slice SLOs もサポートします。gauge/restart total を
+good-event count に無理に当てはめるのではなく、SLI に一致する model を選択してください。
 
 ## Cost Structure
 
 <span id="pricing-overview"></span>
 
-### 実際の製品と contract unit を使用する
+### 実際の product と contract units を使用する
 
 | コンポーネント | 見積もりの入力 |
 | --- | --- |
-| Infrastructure | Billable host/container または該当する platform model、plan、commitment terms |
-| APM | Billable APM host と選択した plan/model、included allotment、ingested/indexed span |
+| Infrastructure | 課金対象 hosts/containers または該当する platform model、plan、commitment terms |
+| APM | 課金対象 APM hosts と選択した plan/model、included allotments、ingested および indexed spans |
 | Logs | Ingested volume に加え indexing/retention/search/archive の選択 |
-| Custom metrics / distributions | 異なる metric/tag combination、有効な aggregation、該当する included volume |
-| Additional products | Profiling、network/security、serverless、その他有効な製品の charge |
+| Custom metrics / distributions | 異なる metric/tag combinations、enabled aggregations、該当する included volumes |
+| Additional products | Profiling、network/security、serverless、その他の enabled product charges |
 
-すべての製品を普遍的な Free/Pro/Enterprise table にまとめないでください。pricing page は製品、annual/on-demand term、
-attached と standalone の offering を区別しています。infrastructure metric、searchable trace、indexed log の retention は
-単一の共通「15-month」設定ではありません。
+すべての product を普遍的な Free/Pro/Enterprise table にまとめないでください。pricing page は products、annual/on-demand terms、
+attached versus standalone offerings を区別しています。infrastructure metrics、searchable traces、indexed logs の retention は、
+共通の「15-month」設定ではありません。
 
 <span id="cost-calculation-example"></span>
 
-以前の 100-node の例では、**50 service は 50 APM host を意味しません**。host-priced agreement では、まず実際の
-billable Infrastructure と APM host count を決定してください。30 日間で 100 GB/day の場合、log ingestion は 3,000 GB ですが、
-ingestion だけでは log bill の合計にはなりません。
+以前の 100-node の例では、**50 services は 50 APM hosts を意味しません**。host-priced agreement では、まず実際の課金対象
+Infrastructure と APM host counts を決定してください。30 日間で 100 GB/day の場合、log ingestion は 3,000 GB ですが、ingestion
+だけが total log bill ではありません。
 
 ```text
 Estimated cost =
@@ -813,46 +765,40 @@ Estimated cost =
   + custom-metric and other enabled-product charges
 ```
 
-以前の約 $3,350 の合計は不一致な APM unit を使用し、billable dimension を省略していました。これは測定済みの
-production bill ではありません。その見積もりを budget guarantee として扱うのではなく、現在の site/product quote と
-測定済み usage を使用してください。
+以前の約 $3,350 の total は不一致の APM units を使用し、課金対象 dimensions を省略していました。これは測定された production bill ではありません。
+その見積もりを budget guarantee として扱うのではなく、現在の site/product quote と測定された usage を使用してください。
 
 <span id="cost-optimization-strategies"></span>
 
-### Metric、log、trace control は異なることを行う
+### Metrics、logs、trace controls は異なることを行う
 
 <span id="_1-metric-optimization"></span>
 
-- `dogstatsd.nonLocalTraffic` は receiver reachability を制御します。custom-metric quota ではありません。
-  receiver を閉じると、単に telemetry を失う可能性があります。
-- `ignoreAutoConfig` は選択した automatic check を無効にします。container exclusion filter は container を選択します。
-  どちらも一般的な tag-cardinality limiter ではありません。
-- collection owner で許可する metric と tag value をレビューしてください。origin tag cardinality を変更すると利用可能な
-  grouping tag が変わるため、monitor/SLO を再確認してください。
+- `dogstatsd.nonLocalTraffic` は receiver reachability を制御します。custom-metric quota ではありません。receiver を閉じると telemetry を失うだけの場合があります。
+- `ignoreAutoConfig` は選択した automatic checks を無効にします。container exclusion filters は containers を選択します。どちらも一般的な tag-cardinality limiter ではありません。
+- collection owner で allowed metrics と tag values をレビューしてください。origin tag cardinality を変更すると利用可能な grouping tags が変わる可能性があるため、monitors/SLOs を再確認してください。
 <span id="_2-log-optimization"></span>
 
-- source-side log exclusion は選択した record の送信を回避します。index exclusion は後で行われ、ingestion cost を消去しません。
-  incident evidence と failure を維持してください。結果にかかわらずすべての health-check line を drop しないでください。
+- source-side log exclusion は選択した records の送信を回避します。index exclusion は後で行われ、ingestion costs を消去しません。incident evidence と failures を保持してください。結果にかかわらずすべての health-check line を drop しないでください。
 <span id="_3-apm-sampling"></span>
 
-- sampling と indexing/retention は別です。`DD_TRACE_SAMPLE_RATE` または sampling rule は library/version と
-  matching scope に依存します。文書化された Python の `DD_TRACE_RATE_LIMIT` は process ごとであり、設定された
-  sampling rule/rate とともに適用されます。cluster-wide や dollar cap ではありません。10% trace rate は Datadog bill 全体が
-  90% 削減されることを意味しません。
+- sampling と indexing/retention は別です。`DD_TRACE_SAMPLE_RATE` または sampling rules は library/version と matching scope に依存します。
+  文書化された Python `DD_TRACE_RATE_LIMIT` は process ごとで、構成された sampling rules/rate とともに適用されます。cluster-wide や dollar cap ではありません。
+  10% trace rate は Datadog bill 全体の 90% reduction を意味しません。
 
 ## Best Practices
 
 <span id="_1-tagging-strategy"></span>
 
-一貫した service/env/version label と bounded tag を使用し、API-key ingestion と application-key automation permission を
-分離してください。すべての log、process argument、profile を収集する前に、application capture と secret/redaction path を
-レビューしてください。collector queue/drop を monitor し、filter の変更後に実際の output を検証してください。
+一貫した service/env/version labels と bounded tags を使用し、API-key ingestion と application-key automation permissions を分離してください。
+すべての logs、process arguments、profiles を収集する前に application capture と secret/redaction paths をレビューしてください。
+collector queues/drops を monitor し、filters を変更した後に real outputs を検証してください。
 
 <span id="_2-alert-layering"></span>
 
-運用チームと alert severity、ownership、response target について合意してください。runbook の P1/P2 label は運用 policy であり、
-独立した Datadog resource definition ではありません。実際の destination、missing data、recovery notification を test してください。
-sample にあるという理由だけで threshold を選ぶのではなく、文書化した SLI/SLO と traffic context を使用してください。
+operating team と alert severity、ownership、response targets について合意してください。runbook 内の P1/P2 labels は operational policy であり、
+単独の Datadog resource definitions ではありません。actual destinations、missing data、recovery notifications を test してください。
+sample に現れるという理由だけで thresholds を選ぶのではなく、文書化された SLI/SLO と traffic context を使用してください。
 
 <span id="common-issues"></span>
 
@@ -860,11 +806,9 @@ sample にあるという理由だけで threshold を選ぶのではなく、�
 
 <span id="_1-agent-not-sending-metrics"></span>
 
-installation owner、実際の pod/container 名、意図した site から開始してください。literal native-backend handle、
-Secrets Manager IRSA、必要な postrenderer、Agent/Cluster Agent health、Kubelet/RBAC access、
-scrape configuration、queue/drop telemetry を確認してください。この release で render された node
-Agent Pod には `agent` と `trace-agent` container があります。以前の `app=datadog` selector は、現在の label を
-確認する代替として信頼できません。
+installation owner、actual pod/container names、intended site から始めてください。literal native-backend handles、Secrets Manager IRSA、必要な postrenderer、
+Agent/Cluster Agent health、Kubelet/RBAC access、scrape configuration、queued/dropped telemetry を確認してください。この release の render 済み node
+Agent pod には `agent` と `trace-agent` containers があります。古い `app=datadog` selector は current labels を確認する信頼できる代替ではありません。
 
 <span id="debugging-commands"></span>
 
@@ -892,52 +836,47 @@ kubectl exec -n datadog "$DD_AGENT_POD" -c agent -- agent flare --local
 
 <span id="_2-missing-apm-traces"></span>
 
-trace については、実際の library injection/startup、socket または host endpoint、permission、一貫した tag を検証してください。
-TCP check の成功は UDS path を検証するものでも、受理された trace payload を証明するものでもありません。
-`env | grep DD_` を使用しないでください。API/application key や proxy credential を開示する可能性があります。
+traces では、実際の library injection/startup、socket または host endpoint、permissions、一貫した tags を検証してください。
+successful TCP check は UDS path を検証せず、accepted trace payloads を証明しません。`env | grep DD_` を使用しないでください。API/application keys や proxy credentials を開示する可能性があります。
 
 <span id="_3-logs-not-collected"></span>
 
-log については、実際の annotation/container identifier と file access、続いて collection exclusion、parsing、index filter を
-確認してください。`agent configcheck`、status、log、archive は configuration や application data を公開する可能性があります。
-共有する前に output を確認して機密情報をマスキングしてください。
+logs では、actual annotation/container identifier と file access、次に collection exclusions、parsing、index filters を確認してください。
+`agent configcheck`、status、logs、archives は configuration や application data を露出する可能性があります。共有する前に outputs を確認し、機密データを隠してください。
 
-`agent flare --local` は確認用の local bundle を作成します。upload または remote flare collection は、別途認可された
-support action です。組み込みのマスキングは有用ですが、application が収集した data について archive をレビューすることの
-代わりにはなりません。
+`agent flare --local` は inspection 用の local bundle を作成します。upload または remote flare collection は、別の authorized support action です。
+built-in redaction は有用ですが、application が収集したデータについて archive をレビューすることの代わりにはなりません。
 
-## Validation scope
+## 検証範囲
 
-この audit では、chart rendering と official schema/source inspection、local
-DogStatsD Unix datagram、export/telemetry を無効にした Python 3.12 での ddtrace 4.14.0 manual span、Java 17 の
- dd-trace-api 1.66.0 compilation と synchronous MDC test、API client 2.60.0 request
-model/serialization を使用しました。これらの check では Datadog tenant の呼び出し、EKS への install、admission webhook の
-実行、SaaS への trace/log 送信、dashboard/monitor/SLO の作成、cost 測定を行っていません。
+この監査では、chart rendering と official schema/source inspection、local DogStatsD Unix datagrams、export/telemetry を無効にした Python 3.12 上の
+ddtrace 4.14.0 manual spans、Java 17 向け dd-trace-api 1.66.0 compilation と synchronous MDC tests、API client 2.60.0 request
+models/serialization を使用しました。これらの checks は Datadog tenant の呼び出し、EKS へのインストール、admission webhook の実行、SaaS への traces/logs の送信、
+dashboards/monitors/SLOs の作成、costs の測定を行っていません。
 
-monitor query の意味は、文書化された metric unit と aggregation rule に対して確認しました。Datadog query engine や
-Terraform provider plan は呼び出していません。Grok request schema は live parsing とは異なります。application、credential、
-traffic、runtime support、destination ownership は引き続き deployment prerequisite です。
+monitor query の意味は文書化された metric units と aggregation rules に照らして確認しました。Datadog query engine や Terraform provider plan は呼び出していません。
+Grok request schema は live parsing とは別です。applications、credentials、traffic、runtime support、destination ownership は deployment prerequisites のままです。
 
-## References
+## 参考資料
 
-- [Kubernetes installation と version prerequisite](https://docs.datadoghq.com/containers/kubernetes/installation.md)
+- [Kubernetes installation and version prerequisites](https://docs.datadoghq.com/containers/kubernetes/installation.md)
 - [Helm chart 3.244.0](https://github.com/DataDog/helm-charts/releases/tag/datadog-3.244.0)
 - [Agent 7.83.1 release](https://github.com/DataDog/datadog-agent/releases/tag/7.83.1)
-- [Kubernetes distribution](https://docs.datadoghq.com/containers/kubernetes/distributions.md)
+- [Kubernetes distributions](https://docs.datadoghq.com/containers/kubernetes/distributions.md)
 - [Kubelet metrics](https://docs.datadoghq.com/integrations/kubelet.md)
 - [Kubernetes State Metrics Core](https://docs.datadoghq.com/integrations/kubernetes_state_core.md)
 - [System metrics](https://docs.datadoghq.com/integrations/system.md)
 - [AWS account integration](https://docs.datadoghq.com/integrations/amazon-web-services.md)
 - [Admission Controller](https://docs.datadoghq.com/containers/cluster_agent/admission_controller.md)
 - [Local SDK injection](https://docs.datadoghq.com/tracing/guide/local_sdk_injection.md)
-- [Kubernetes 上の OpenMetrics](https://docs.datadoghq.com/containers/kubernetes/prometheus.md)
+- [OpenMetrics on Kubernetes](https://docs.datadoghq.com/containers/kubernetes/prometheus.md)
 - [DogStatsD UDS](https://docs.datadoghq.com/extend/dogstatsd/unix_socket.md)
 - [Python tracing configuration](https://docs.datadoghq.com/tracing/trace_collection/library_config/python.md)
 - [Custom instrumentation](https://docs.datadoghq.com/tracing/trace_collection/custom_instrumentation/server-side.md)
 - [Log parsing](https://docs.datadoghq.com/logs/log_configuration/parsing.md)
 - [as_count monitor evaluation](https://docs.datadoghq.com/monitors/guide/as-count-in-monitor-evaluations.md)
-- [Metric-based SLO](https://docs.datadoghq.com/service_level_objectives/metric.md)
-- [Datadog pricing と billing FAQ](https://www.datadoghq.com/pricing/)
+- [Metric-based SLOs](https://docs.datadoghq.com/service_level_objectives/metric.md)
+- [Datadog pricing and billing FAQs](https://www.datadoghq.com/pricing/)
 - [Agent flare handling](https://docs.datadoghq.com/agent/troubleshooting/send_a_flare.md)
 
 <span id="quiz"></span>

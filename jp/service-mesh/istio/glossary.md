@@ -1,11 +1,11 @@
 # Istio 用語集
 
-> **レビュー対象バージョン**: Istio 1.31.0
-> **最終更新**: September 13, 2026
+> **レビュー済みバージョン**: Istio 1.31.0
+> **最終更新**: October 12, 2026
 
-この用語集では、Istio と Service Mesh に関連する主要な用語を、グループ化したリファレンスセクションとして整理しています。
+この用語集では、Istio と Service Mesh に関連する主要な用語を、グループ化した参照セクションで整理しています。
 
-> **参照言語:** 以下の Architecture および DestinationRule セクションのリンクは、メンテナンスされている英語版ガイドを使用しています。これらのリンクは、各ロケールの翻訳がまだ同期されていない箇所について、最新のリファレンスを提供します。
+> **参照言語:** 以下の Architecture および DestinationRule セクションのリンクでは、メンテナンスされている英語ガイドを使用しています。ロケール翻訳がまだ同期されていない場合、これらのリンクから最新の参照情報を確認できます。
 
 ## 目次
 
@@ -24,21 +24,21 @@
 
 ### AuthorizationPolicy
 
-選択したワークロードまたは対象リソースに対して、ALLOW、DENY、CUSTOM、AUDIT の動作を定義する Istio のセキュリティポリシーです。認証と認可は別個のものであり、waypoint のポリシーでは targetRefs を使用します。
+選択した workload または対象リソースに対し、ALLOW、DENY、CUSTOM、または AUDIT の動作を定義する Istio のセキュリティポリシーです。Authentication と authorization は別個のものであり、waypoint のポリシーでは targetRefs を使用します。
 
 ### Control Plane
 
-設定、ディスカバリー、アイデンティティ管理を担うレイヤーで、istiod として実装されています。アプリケーションのペイロードは istiod を経由するのではなく、データプレーンのプロキシを流れます。
+istiod により実装される、設定、検出、アイデンティティ管理のレイヤーです。アプリケーションのペイロードは istiod ではなく Data Plane の proxy を通過します。
 
 ### Ambient Mode
 
-Istio 1.18 で alpha として初めて提供され、Istio 1.24 以降で一般提供 (GA) となったデータプレーンモードで、Sidecar Proxy なしで Service Mesh の機能を提供します。
+Sidecar Proxy を使用せずに Service Mesh 機能を提供する Data Plane モードです。Istio 1.18 で alpha として初めて導入され、Istio 1.24 以降は一般提供されています。
 
-**特徴**:
-- Sidecar コンテナが不要
-- ノードレベルで ztunnel を使用
+**機能**:
+- Sidecar container は不要
+- node レベルで ztunnel を使用
 - リソース効率の向上
-- L4 機能と L7 機能の分離
+- L4 と L7 機能の分離
 
 **関連ドキュメント**: [Ambient Mode](advanced/01-ambient-mode.md)
 
@@ -46,12 +46,12 @@ Istio 1.18 で alpha として初めて提供され、Istio 1.24 以降で一般
 
 ### Certificate Authority (CA)
 
-サービス間の mTLS 通信に使用する証明書を発行・管理する機関です。
+サービス間の mTLS 通信のために証明書を発行および管理する認証局です。
 
-**Istio における役割**:
-- Istiod の Citadel 機能が CA の役割を担う
+**Istio での役割**:
+- Istiod の Citadel 機能が CA の役割を果たす
 - SPIFFE ID に基づいて証明書を発行
-- 証明書の自動更新 (デフォルト TTL: 24 時間)
+- 証明書の自動更新（デフォルト TTL: 24 時間）
 
 **関連用語**: [Citadel](#citadel), [SPIFFE](#spiffe-secure-production-identity-framework-for-everyone), [mTLS](#mtls-mutual-tls)
 
@@ -59,14 +59,14 @@ Istio 1.18 で alpha として初めて提供され、Istio 1.24 以降で一般
 
 ### Circuit Breaker
 
-障害が発生したサービスへのリクエストを遮断し、障害がシステム全体に伝播することを防ぐパターンです。
+システム全体への障害伝播を防ぐため、障害が発生したサービスへのリクエストを遮断するパターンです。
 
-**動作の仕組み**:
-1. **Closed**: 正常動作
-2. **Open**: 連続した失敗の後にリクエストを遮断
-3. **Half-Open**: 一定時間の経過後に一部のリクエストを許可
+**仕組み**:
+1. **Closed**: 通常動作
+2. **Open**: 連続した障害の後にリクエストを遮断
+3. **Half-Open**: 一定時間後に一部のリクエストを許可
 
-**Istio での実装**: コネクションプールのサーキットブレイキングとエンドポイント単位の outlier ejection は、この 3 状態のステートマシンをそのまま公開するものではありません。
+**Istio 実装**: Connection Pool の Circuit Breaker と endpoint ごとの outlier ejection では、この文字どおりの 3 状態マシンは公開されません。
 ```yaml
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
@@ -94,7 +94,7 @@ Istio 1.4 まで独立して存在していたセキュリティコンポーネ�
 - SPIFFE ID の発行と管理
 - X.509 証明書の生成と更新
 
-**現在の状況**: Istio 1.5 以降では Istiod 内部の機能として存在します
+**現在の状態**: Istio 1.5+ では Istiod 内の内部機能として存在
 
 **関連用語**: [Istiod](#istiod), [Certificate Authority](#certificate-authority-ca)
 
@@ -102,12 +102,12 @@ Istio 1.4 まで独立して存在していたセキュリティコンポーネ�
 
 ### CDS (Cluster Discovery Service)
 
-Envoy がアップストリームサービス (クラスター) の設定を動的に受け取るための xDS API の 1 つです。
+Envoy が upstream service（cluster）の設定を動的に受け取れるようにする xDS API の 1 つです。
 
 **提供される情報**:
-- クラスター名と種別
-- ロードバランシングポリシー
-- ヘルスチェック設定
+- Cluster 名とタイプ
+- Load Balancing ポリシー
+- Health Check 設定
 - Circuit Breaker 設定
 - TLS 設定
 
@@ -119,13 +119,13 @@ Envoy がアップストリームサービス (クラスター) の設定を動�
 
 ### Data Plane
 
-Service Mesh において実際のトラフィックを処理するレイヤーです。
+Service Mesh 内で実際のトラフィックを処理するレイヤーです。
 
 **Istio の Data Plane**:
-- Envoy サイドカー、または ambient の ztunnel と任意の L7 waypoint
-- メッシュに参加させたトラフィックを処理する。除外設定やプロトコルの制限が適用される
+- Envoy Sidecar、または ambient の ztunnel と任意の L7 waypoint
+- mesh に登録されたトラフィックを処理します。除外対象およびプロトコル上の制限が適用されます
 - mTLS の暗号化/復号
-- メトリクスの収集
+- metric の収集
 
 **関連用語**: [Control Plane](#control-plane), [Envoy](#envoy-proxy)
 
@@ -133,13 +133,13 @@ Service Mesh において実際のトラフィックを処理するレイヤー�
 
 ### DestinationRule
 
-VirtualService によってルーティングされたトラフィックに対するポリシーを定義する Istio の CRD です。
+VirtualService によってルーティングされるトラフィックのポリシーを定義する Istio CRD です。
 
 **主な機能**:
-- Subset の定義 (バージョン、リージョンなど)
-- ロードバランシングポリシー
-- Connection Pool の設定
-- Circuit Breaker の設定
+- Subset の定義（version、region など）
+- Load Balancing ポリシー
+- Connection Pool 設定
+- Circuit Breaker 設定
 - TLS 設定
 
 ```yaml
@@ -164,14 +164,14 @@ spec:
 
 ### eBPF (Extended Berkeley Packet Filter)
 
-Linux カーネル内でプログラムを安全に実行できるようにする技術です。
+Linux kernel 内でプログラムを安全に実行できるようにする技術です。
 
-Istio は、Cilium のような eBPF ベースのプライマリ CNI と共存できます。Istio CNI はリダイレクトを設定する別個のチェーン型プラグイン/ノードエージェントであり、ambient は eBPF を必要とせず、プライマリ CNI を置き換えるものでもありません。
+Istio は、Cilium などの eBPF ベースの primary CNI と共存できます。Istio CNI はリダイレクトを設定する別個の chained plugin/node agent です。ambient は eBPF を必要とせず、primary CNI を置き換えません。
 
 **利点**:
-- 低いオーバーヘッド
-- カーネルレベルでの処理
-- 動的なプログラミングが可能
+- 低オーバーヘッド
+- kernel レベルの処理
+- 動的なプログラミング機能
 
 **関連用語**: [Ambient Mode](#ambient-mode), [iptables](#iptables)
 
@@ -179,13 +179,13 @@ Istio は、Cilium のような eBPF ベースのプライマリ CNI と共存�
 
 ### EDS (Endpoint Discovery Service)
 
-クラスター内の実際のエンドポイント (Pod IP) を動的に提供する xDS API の 1 つです。
+cluster 内の実際の endpoint（Pod IP）を動的に提供する xDS API の 1 つです。
 
 **提供される情報**:
-- エンドポイントの IP アドレスとポート
-- ヘルス状態
-- ロードバランシングの重み
-- ローカリティ情報
+- Endpoint IP アドレスと port
+- Health Status
+- Load Balancing の weight
+- locality 情報
 
 **例**:
 ```json
@@ -208,24 +208,24 @@ Istio は、Cilium のような eBPF ベースのプライマリ CNI と共存�
 
 ### Envoy Proxy
 
-Istio の Data Plane を構成する高性能な L7 プロキシです。
+Istio の Data Plane を構成する高性能な L7 proxy です。
 
-**歴史**:
-- 2016 年に Lyft の Matt Klein によって開発
-- 2017 年に CNCF Incubating プロジェクト
-- 2018 年に CNCF Graduated プロジェクト
+**沿革**:
+- 2016 年に Lyft の Matt Klein が開発
+- 2017 年に CNCF Incubating project へ
+- 2018 年に CNCF Graduated project へ
 
-**主な特徴**:
-- C++ で書かれた高性能プロキシ
-- xDS API による動的な設定
+**主な機能**:
+- C++ で書かれた高性能 proxy
+- xDS API による動的設定
 - HTTP/1.1、HTTP/2、gRPC のサポート
-- 豊富なオブザーバビリティ
+- 豊富な observability
 
 **コンポーネント**:
-- Listeners: ポートのリスニング
-- Filters: リクエスト/レスポンスの処理
-- Routers: ルーティングの決定
-- Clusters: アップストリームサービス
+- Listener: Port の listen
+- Filter: request/response の処理
+- Router: routing の決定
+- Cluster: upstream service
 
 **関連ドキュメント**: [Architecture - Envoy Proxy](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture#data-plane-envoy-proxy)
 
@@ -239,10 +239,10 @@ Istio 1.4 まで独立して存在していた設定検証コンポーネント�
 
 **主な機能**:
 - Istio 設定の検証
-- Kubernetes リソースの処理
-- 設定のデプロイ前のエラーチェック
+- Kubernetes resource の処理
+- 設定デプロイ前のエラーチェック
 
-**現在の状況**: Istio 1.5 以降では Istiod 内部の機能として存在します
+**現在の状態**: Istio 1.5+ では Istiod 内の内部機能として存在
 
 **関連用語**: [Istiod](#istiod)
 
@@ -250,7 +250,7 @@ Istio 1.4 まで独立して存在していた設定検証コンポーネント�
 
 ### Gateway
 
-Service Mesh に入ってくる外部トラフィックのエントリーポイントを定義する Istio の CRD です。
+Service Mesh に流入する外部トラフィックの entry point を定義する Istio CRD です。
 
 **種類**:
 1. **Ingress Gateway**: 外部から内部へのトラフィック
@@ -279,16 +279,16 @@ spec:
 
 ### gRPC
 
-Google が開発した高性能な RPC (Remote Procedure Call) フレームワークです。
+Google が開発した高性能 RPC（Remote Procedure Call）framework です。
 
 **Istio との関係**:
 - xDS API は gRPC ベース
-- Istiod と Envoy 間の通信に使用
-- HTTP/2 ベース (多重化をサポート)
+- Istiod から Envoy への通信に使用
+- HTTP/2 ベース（multiplexing をサポート）
 
 **利点**:
-- 双方向ストリーミング
-- 低レイテンシー
+- 双方向 streaming
+- 低レイテンシ
 - Protocol Buffers を使用
 
 **関連用語**: [xDS](#xds-discovery-service)
@@ -297,12 +297,12 @@ Google が開発した高性能な RPC (Remote Procedure Call) フレームワ�
 
 ### Identity
 
-Service Mesh 内におけるワークロードのアイデンティティ (識別情報) を表します。
+Service Mesh 内における workload のアイデンティティを表します。
 
 **Istio の Identity**:
 - SPIFFE ID 形式を使用
 - Kubernetes ServiceAccount に基づく
-- X.509 証明書によって証明される
+- X.509 証明書によって証明
 
 **例**:
 ```
@@ -315,14 +315,14 @@ spiffe://cluster.local/ns/default/sa/reviews
 
 ### iptables
 
-Linux でネットワークトラフィックを制御するファイアウォールツールです。
+Linux でネットワークトラフィックを制御する firewall tool です。
 
-**Istio における役割**:
-- istio-init または Istio CNI ノードエージェントがトラフィックのリダイレクトを設定
-- Pod のすべてのトラフィックを Envoy にリダイレクト
-- NAT テーブル (PREROUTING、OUTPUT チェーン) を使用
+**Istio での役割**:
+- istio-init または Istio CNI node agent がトラフィックのリダイレクトを設定
+- すべての Pod トラフィックを Envoy にリダイレクト
+- NAT table（PREROUTING、OUTPUT chain）を使用
 
-**簡略化したルール (説明用であり、インストールスクリプトではありません)**:
+**簡略化したルール（説明用であり、インストールスクリプトではありません）**:
 ```bash
 # Outbound: All traffic except Envoy -> 15001
 iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner 1337 -j REDIRECT --to-port 15001
@@ -331,7 +331,7 @@ iptables -t nat -A OUTPUT -p tcp -m owner ! --uid-owner 1337 -j REDIRECT --to-po
 iptables -t nat -A PREROUTING -p tcp -j REDIRECT --to-port 15006
 ```
 
-**セットアップの代替手段**: Istio CNI はノードレベルで特権的なネットワーク設定を行います。
+**セットアップの代替手段**: Istio CNI は node レベルで特権的なネットワークセットアップを実行します。
 
 **関連ドキュメント**: [Architecture - iptables](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture#iptables-and-traffic-interception)
 
@@ -339,20 +339,20 @@ iptables -t nat -A PREROUTING -p tcp -j REDIRECT --to-port 15006
 
 ### Istiod
 
-Istio 1.5 以降における統合された Control Plane コンポーネントです。
+Istio 1.5+ における統合された Control Plane コンポーネントです。
 
 **統合された機能**:
 - **Pilot**: Service Discovery、Traffic Management
 - **Citadel**: Certificate Authority、Identity
-- **Galley**: 設定の検証
+- **Galley**: Configuration Validation
 
-**実行方式**:
-- 単一の Go バイナリ: `pilot-discovery`
-- すべての機能が単一プロセス内で動作
-- デフォルトポート: 15012 (xDS)、15017 (Webhook)
+**実行方法**:
+- 単一の Go binary: `pilot-discovery`
+- すべての機能が単一 process 内で実行
+- デフォルト port: 15012（xDS）、15017（Webhook）
 
 **利点**:
-- 複雑さの低減
+- 複雑さの削減
 - 運用の簡素化
 - リソース効率
 
@@ -364,19 +364,19 @@ Istio 1.5 以降における統合された Control Plane コンポーネント�
 
 ### LDS (Listener Discovery Service)
 
-Envoy がリスニングするポートとフィルターチェーンを動的に受け取るための xDS API の 1 つです。
+Envoy が listen する port と filter chain を動的に受け取れるようにする xDS API の 1 つです。
 
 **提供される情報**:
-- Listener のアドレスとポート
-- プロトコル (HTTP、TCP)
-- フィルターチェーンの構成
+- Listener の address と port
+- Protocol（HTTP、TCP）
+- Filter chain 設定
 - TLS 設定
 
 **Istio のデフォルト Listener**:
-- `0.0.0.0:15001`: Outbound TCP
-- `0.0.0.0:15006`: Inbound TCP
-- `0.0.0.0:15021`: ヘルスチェック
-- `0.0.0.0:15090`: Prometheus メトリクス
+- `0.0.0.0:15001`: outbound TCP
+- `0.0.0.0:15006`: inbound TCP
+- `0.0.0.0:15021`: Health Check
+- `0.0.0.0:15090`: Prometheus metric
 
 **関連用語**: [xDS](#xds-discovery-service), [Envoy](#envoy-proxy)
 
@@ -384,12 +384,12 @@ Envoy がリスニングするポートとフィルターチェーンを動的�
 
 ### Locality-aware Load Balancing
 
-ローカリティ (Region、Zone) の情報を考慮するロードバランシング方式です。
+locality（Region、Zone）情報を考慮する Load Balancing 手法です。
 
 **優先順位**:
-1. 同一 Zone のエンドポイント
-2. 同一 Region 内の別 Zone
-3. 別 Region
+1. 同じ Zone 内の endpoint
+2. 同じ Region 内の異なる Zone
+3. 異なる Region
 
 **設定例**:
 ```yaml
@@ -418,17 +418,17 @@ spec:
 
 ### Mixer
 
-Istio 1.4 まで存在していたポリシーとテレメトリーのコンポーネントです。
+Istio 1.4 まで存在していた policy および telemetry コンポーネントです。
 
 **主な機能**:
-- ポリシーの適用 (Rate Limiting、Access Control)
-- テレメトリーの収集
+- policy enforcement（Rate Limiting、Access Control）
+- telemetry の収集
 
 **削除された理由**:
-- パフォーマンスのオーバーヘッド (リクエストごとに Mixer を呼び出す)
-- 複雑なアーキテクチャ
+- パフォーマンスのオーバーヘッド（リクエストごとに Mixer 呼び出し）
+- 複雑な architecture
 
-**現在の状況**: 1.5 への移行時に非推奨となり、残っていた Mixer の機能は 1.8 で削除されました
+**現在の状態**: 1.5 への移行中に非推奨となり、残っていた Mixer 機能は 1.8 で削除
 
 **関連用語**: [Istiod](#istiod)
 
@@ -436,17 +436,17 @@ Istio 1.4 まで存在していたポリシーとテレメトリーのコンポ�
 
 ### mTLS (Mutual TLS)
 
-クライアントとサーバーが相互に認証を行う双方向の TLS 通信方式です。
+client と server が相互に認証する双方向 TLS 通信方式です。
 
 **Istio の mTLS**:
 - 証明書の自動発行と更新
-- SPIFFE ID ベースの認証
-- TLS の暗号スイートはネゴシエートされ、AES-256-GCM に固定されているわけではありません
+- SPIFFE ID ベースの authentication
+- TLS cipher はネゴシエートされ、AES-256-GCM に固定されません
 
 **モード**:
 1. **STRICT**: mTLS のみ許可
-2. **PERMISSIVE**: mTLS + 平文を許可 (移行用)
-3. **DISABLE**: サイドカーモードで Istio のトランスポート mTLS を無効化。ambient では未サポート
+2. **PERMISSIVE**: mTLS + plaintext を許可（移行用）
+3. **DISABLE**: sidecar mode で Istio transport mTLS を無効化。ambient では未サポート
 
 ```yaml
 apiVersion: security.istio.io/v1
@@ -464,12 +464,12 @@ spec:
 
 ### Outlier Detection
 
-異常な挙動を示すエンドポイントを自動的に除外する機能です。
+異常な動作を示す endpoint を自動的に除外する機能です。
 
 **検出条件**:
 - 連続エラー数
 - エラー率
-- 接続の失敗/タイムアウト。レイテンシーのみでは outlier ejection のしきい値になりません
+- 接続障害/timeout。latency 単独は outlier ejection のしきい値ではありません
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -494,12 +494,12 @@ spec:
 
 ### Downstream
 
-Envoy の観点では、**リクエストを送る側**を指します。すなわち、Envoy への接続を開始するクライアントです。
+Envoy の観点では、**リクエストを送信する側**を指します。つまり、Envoy への接続を開始する client です。
 
 **Envoy の Downstream**:
-- Envoy に入ってくる接続 (Inbound)
-- リクエストを送信するクライアント
-- Listener が受け付ける接続
+- Envoy に入ってくる connection（inbound）
+- リクエストを送信する client
+- Listener が受信する connection
 
 **トラフィックフロー**:
 ```
@@ -508,21 +508,21 @@ Downstream (Client)  ->  Envoy Proxy  ->  Upstream (Backend)
 
 **シナリオ例**:
 
-#### 1. Sidecar モード - Outbound リクエスト
+#### 1. Sidecar Mode - Outbound Request
 
-![Sidecar モードでは、アプリケーション (Downstream) が同じ Pod 内の Envoy sidecar にリクエストを送り、Envoy がそれをバックエンドサービス (Upstream) に転送する様子を示しています。](../../.gitbook/assets/en-service-mesh-istio-glossary-0.png)
+![Sidecar mode では、アプリケーション（downstream）が同じ Pod 内の Envoy sidecar にリクエストを送信し、Envoy が backend service（upstream）に転送します。](../../.gitbook/assets/en-service-mesh-istio-glossary-0.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-glossary-0.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-glossary-0.html)
 
 **観点**:
-- **Envoy から見ると**: アプリケーションが Downstream (リクエストの送信側)
-- **Envoy から見ると**: バックエンドサービスが Upstream (リクエストの受信側)
+- **Envoy の観点**: アプリケーションは Downstream（リクエストを送信）
+- **Envoy の観点**: backend service は Upstream（リクエストを受信）
 
-#### 2. Ingress Gateway - 外部からのリクエスト
+#### 2. Ingress Gateway - External Request
 
-![Ingress Gateway の Envoy から見ると、外部クライアントが Downstream 側であり、ルーティング先の内部サービスが Upstream 側になることを示しています。](../../.gitbook/assets/en-service-mesh-istio-glossary-1.png)
+![Ingress Gateway の Envoy の観点では、外部 client は downstream 側であり、ルーティング先の内部 service は upstream 側です。](../../.gitbook/assets/en-service-mesh-istio-glossary-1.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-glossary-1.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-glossary-1.html)
 
 **Downstream 関連の Envoy 設定**:
 
@@ -547,7 +547,7 @@ spec:
         per_connection_buffer_limit_bytes: 32768  # Downstream buffer
 ```
 
-**Downstream のメトリクス**:
+**Downstream Metrics**:
 ```bash
 # Downstream connection count
 envoy_listener_downstream_cx_active
@@ -565,21 +565,21 @@ envoy_http_downstream_rq_time
 
 ### Upstream
 
-Envoy の観点では、**リクエストを受け取る側**を指します。すなわち、Envoy が接続を開始する先のバックエンドサービスです。
+Envoy の観点では、**リクエストを受信する側**を指します。つまり、Envoy が接続を開始する backend service です。
 
 **Envoy の Upstream**:
-- Envoy から出ていく接続 (Outbound)
-- リクエストを処理するバックエンドサービス
-- Cluster が管理するエンドポイント
+- Envoy から出ていく connection（outbound）
+- リクエストを処理する backend service
+- Cluster によって管理される endpoint
 
 **トラフィックフロー**:
 ```
 Downstream (Client)  ->  Envoy Proxy  ->  Upstream (Backend)
 ```
 
-**Upstream の構成要素**:
+**Upstream コンポーネント**:
 
-#### 1. Cluster (Upstream のグループ)
+#### 1. Cluster (Upstream Group)
 
 ```yaml
 # Define Upstream Cluster with DestinationRule
@@ -603,7 +603,7 @@ spec:
       interval: 30s
 ```
 
-#### 2. Endpoint (実際の Upstream インスタンス)
+#### 2. Endpoint (Actual Upstream Instance)
 
 ```bash
 # Check upstream endpoints
@@ -616,7 +616,7 @@ istioctl proxy-config endpoints <pod-name> | grep reviews
 # 10.244.3.12:9080      UNHEALTHY   outbound|9080||reviews.default.svc.cluster.local
 ```
 
-**Upstream のトラフィックポリシー**:
+**Upstream Traffic Policy**:
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -654,15 +654,15 @@ spec:
 
 | 項目 | Downstream | Upstream |
 |------|-----------|----------|
-| **方向** | Envoy に入ってくる (Inbound) | Envoy から出ていく (Outbound) |
-| **役割** | リクエストの送信 (Client) | リクエストの受信 (Server) |
-| **Envoy の設定** | Listener、Filter Chain | Cluster、Endpoint |
-| **例** | 外部ユーザー、他のサービス | バックエンド API、データベース |
-| **メトリクス** | `downstream_cx_*`, `downstream_rq_*` | `upstream_cx_*`, `upstream_rq_*` |
+| **方向** | Envoy に入る（Inbound） | Envoy から出る（Outbound） |
+| **役割** | リクエストを送信（Client） | リクエストを受信（Server） |
+| **Envoy 設定** | Listener、Filter Chain | Cluster、Endpoint |
+| **例** | 外部ユーザー、他の service | Backend API、Database |
+| **Metrics** | `downstream_cx_*`, `downstream_rq_*` | `upstream_cx_*`, `upstream_rq_*` |
 
-**実際の例**:
+**実際の使用例**:
 
-#### シナリオ 1: Service A -> Service B の呼び出し
+#### シナリオ 1: Service A -> Service B Call
 
 ```
 +---------------------------------------------------------+
@@ -685,13 +685,13 @@ spec:
 +---------------------------------------------------------+
 ```
 
-**Service A の Envoy から見た場合**:
-- Downstream: Service A のアプリケーション
+**Service A の Envoy 観点**:
+- Downstream: Service A の application
 - Upstream: Service B
 
-**Service B の Envoy から見た場合**:
+**Service B の Envoy 観点**:
 - Downstream: Service A の Envoy
-- Upstream: Service B のアプリケーション (ローカル)
+- Upstream: Service B の application（local）
 
 #### シナリオ 2: Ingress Gateway
 
@@ -703,7 +703,7 @@ Ingress Gateway (Envoy)
 Internal Service (Upstream)
 ```
 
-**Upstream のメトリクス**:
+**Upstream Metrics**:
 
 ```bash
 # Upstream connection count
@@ -722,7 +722,7 @@ envoy_cluster_health_check_success
 envoy_cluster_circuit_breakers_default_remaining_rq
 ```
 
-**Upstream のパッシブなヘルス検出**: アクティブなヘルスチェックの統計情報には別途設定が必要です。
+**Passive Upstream Health Detection**: active Health Check の統計情報には別途設定が必要です。
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -765,14 +765,14 @@ istioctl proxy-config all <pod-name> -o json | \
 
 ### Pilot
 
-Istio 1.4 まで独立して存在していたトラフィック管理コンポーネントです。現在は Istiod に統合されています。
+Istio 1.4 まで独立して存在していた traffic management コンポーネントです。現在は Istiod に統合されています。
 
 **主な機能**:
 - Service Discovery
-- Traffic Management (VirtualService、DestinationRule の処理)
+- Traffic Management（VirtualService、DestinationRule の処理）
 - xDS Server
 
-**現在の状況**: Istio 1.5 以降では Istiod 内部の機能として存在します
+**現在の状態**: Istio 1.5+ では Istiod 内の内部機能として存在
 
 **関連用語**: [Istiod](#istiod), [xDS](#xds-discovery-service)
 
@@ -780,16 +780,16 @@ Istio 1.4 まで独立して存在していたトラフィック管理コンポ�
 
 ### RDS (Route Discovery Service)
 
-HTTP のルーティングルールを動的に提供する xDS API の 1 つです。
+HTTP routing rule を動的に提供する xDS API の 1 つです。
 
 **提供される情報**:
-- ルートのマッチングルール (パス、ヘッダーなど)
-- 重みベースのルーティング
-- リダイレクトとリライトのルール
-- Timeout と Retry の設定
+- Route の matching rule（path、header など）
+- weight ベースの routing
+- redirect および rewrite rule
+- timeout および Retry 設定
 
 **VirtualService との関係**:
-- VirtualService -> Istiod が変換 -> RDS の設定
+- VirtualService -> Istiod により変換 -> RDS 設定
 
 **関連用語**: [xDS](#xds-discovery-service), [VirtualService](#virtualservice)
 
@@ -799,9 +799,9 @@ HTTP のルーティングルールを動的に提供する xDS API の 1 つで
 
 単位時間あたりに許可するリクエスト数を制限する機能です。
 
-**実装方式**:
+**実装方法**:
 1. **Local Rate Limiting**: Envoy がローカルで処理
-2. **Global Rate Limiting**: 外部の Rate Limit サービスを使用
+2. **Global Rate Limiting**: 外部の Rate Limit service を使用
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -852,15 +852,15 @@ spec:
 
 ### SDS (Secret Discovery Service)
 
-TLS 証明書と鍵を動的に提供する xDS API の 1 つです。
+TLS 証明書と key を動的に提供する xDS API の 1 つです。
 
 **提供される情報**:
 - X.509 証明書
 - Private Key
-- CA ルート証明書
+- CA Root Certificate
 
 **利点**:
-- ファイルシステムが不要
+- file system が不要
 - 証明書の自動更新
 - ダウンタイムなしの更新
 
@@ -870,12 +870,12 @@ TLS 証明書と鍵を動的に提供する xDS API の 1 つです。
 
 ### Service Entry
 
-Service Mesh の外部にあるサービスをメッシュに登録する Istio の CRD です。
+Service Mesh の外部にある service を mesh に登録する Istio CRD です。
 
 **ユースケース**:
-- 外部 API へのアクセス制御
-- 外部サービスへの Istio 機能の適用 (Retry、Timeout など)
-- Egress Gateway との連携
+- 外部 API の access control
+- 外部 service への Istio 機能の適用（Retry、Timeout など）
+- Egress Gateway との統合
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -899,48 +899,48 @@ spec:
 
 ### Service Mesh
 
-マイクロサービス間の通信を管理するインフラストラクチャレイヤーです。
+microservice 間の通信を管理する infrastructure layer です。
 
-**主要機能**:
-- トラフィック管理 (ルーティング、ロードバランシング)
-- セキュリティ (mTLS、認証/認可)
-- オブザーバビリティ (メトリクス、ログ、トレーシング)
-- 回復性 (Retry、Circuit Breaker)
+**コア機能**:
+- Traffic Management（routing、Load Balancing）
+- Security（mTLS、authentication/authorization）
+- Observability（metric、log、tracing）
+- Resilience（Retry、Circuit Breaker）
 
 **主な実装**:
 - Istio
 - Linkerd
 - Consul Connect
-- AWS App Mesh ([サポートは 2026 年 9 月 30 日に終了](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html))
+- AWS App Mesh（[サポート終了: 2026 年 9 月 30 日](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html)）
 
 ---
 
 ### SigV4 (AWS Signature Version 4)
 
-AWS API リクエストを認証するための署名プロトコルです。
+AWS API request を認証するための signature protocol です。
 
-**動作の仕組み**:
+**仕組み**:
 
-![Envoy が送信元クライアントのリクエストに AWS SigV4 の認証情報で透過的に署名し、AWS サービスへ転送してレスポンスを返すまでを示すシーケンス図。](../../.gitbook/assets/en-service-mesh-istio-glossary-2.png)
+![Envoy が outbound client request に AWS SigV4 credential で透過的に署名してから AWS service に転送し、response を返す sequence diagram。](../../.gitbook/assets/en-service-mesh-istio-glossary-2.png)
 
-[🔍 インタラクティブ図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-glossary-2.html)
+[🔍 インタラクティブな図を表示](https://www.atomai.click/kubernetes-docs/archmaps/en-service-mesh-istio-glossary-2.html)
 
-**署名の構成要素**:
+**署名コンポーネント**:
 
-1. **Canonical Request**: リクエストを標準化した形式
-   - HTTP メソッド
-   - URI パス
-   - クエリ文字列
-   - ヘッダー
-   - ペイロードのハッシュ
+1. **Canonical Request**: request の標準化された形式
+   - HTTP method
+   - URI path
+   - Query string
+   - Header
+   - Payload hash
 
 2. **String to Sign**: 署名対象の文字列
-   - アルゴリズム: `AWS4-HMAC-SHA256`
-   - タイムスタンプ
+   - Algorithm: `AWS4-HMAC-SHA256`
+   - Timestamp
    - Credential Scope
-   - Canonical Request のハッシュ
+   - Canonical Request hash
 
-3. **Signing Key**: 署名鍵の計算
+3. **Signing Key**: signing key の計算
    ```
    HMAC(HMAC(HMAC(HMAC("AWS4" + SecretKey, Date), Region), Service), "aws4_request")
    ```
@@ -952,17 +952,17 @@ AWS API リクエストを認証するための署名プロトコルです。
 
 **Istio との統合**:
 
-AWS SDK および AWS CLI は、IRSA または EKS Pod Identity から提供される一時的な認証情報を使用して HTTPS リクエストに署名します。これにより、署名はワークロードの AWS 権限に紐付いた状態が保たれます。Istio の mTLS アイデンティティと AWS IAM のアイデンティティは別個のものです。
+AWS SDK と AWS CLI は、IRSA または EKS Pod Identity により供給される一時 credential を使用して HTTPS request に署名します。これにより、署名は workload の AWS permission と関連付けられた状態に維持されます。Istio mTLS identity と AWS IAM identity は別個です。
 
-Envoy の `aws_request_signing` HTTP フィルターは、上級者向けの代替手段です。この拡張を含む Envoy ビルド、**プロキシコンテナ**が利用できる認証情報、正しい AWS サービス/リージョン、そして意図した AWS 宛先に限定したフィルターのマッチ条件が必要です。フィルターは router の前、かつ署名に影響するヘッダー/パスのリライトの後に挿入します。アプリケーション由来の HTTPS はこの HTTP フィルターからは不透明です。Envoy は暗号化された TLS の内部に署名を追加できません。プロキシ署名の設計では、署名プロキシに対して HTTP を提示し、アップストリームへは検証済みの TLS を確立する必要があります。二重の TLS 確立や、意図したローカルプロキシ経路を超えて未署名の HTTP を露出することは避けてください。
+Envoy の `aws_request_signing` HTTP filter は高度な代替手段です。この filter には extension を含む Envoy build、**proxy container** から利用可能な credential、正しい AWS service/region、および意図した AWS destination に限定された filter match が必要です。署名に影響する header/path rewrite の後、router の前に挿入してください。application が生成した HTTPS はこの HTTP filter では暗号化された TLS 内部に署名を追加できないため、不透明です。proxy による署名の設計では、signing proxy に HTTP を提示し、upstream では検証済み TLS を開始する必要があります。二重の TLS origination や、意図した local proxy path を超えて署名されていない HTTP を公開することは避けてください。
 
-上の図は、明示的に設定した署名プロキシ経路を説明したものであり、Istio のデフォルト機能ではありません。アプリケーションの ServiceAccount に IRSA のアノテーションを付けただけでは、Gateway やサイドカーが必要とする認証情報の環境やトークンのマウントが備わっている証明にはなりません。
+上の図は、この明示的に設定された signing-proxy path を説明しており、デフォルトの Istio 機能ではありません。application ServiceAccount の IRSA annotation だけでは、gateway や sidecar に必要な credential environment と token mount があることは証明されません。
 
-**認証は JWT の検証ではありません**:
+**Authentication は JWT validation ではありません**:
 
-SigV4 は HMAC によるリクエスト署名であり、JWT ではありません。`https://sts.amazonaws.com/.well-known/jwks` は、AWS API の署名を検証するための JWT 発行者エンドポイントではありません。Istio の RequestAuthentication は、実在する OIDC 発行者からの JWT を検証します。CUSTOM の AuthorizationPolicy には、さらに外部認可を実装する `extensionProviders` サービスの設定が必要であり、その実装なしに SigV4 を検証することはできません。AWS API へのアクセスには、IAM 認証された AWS エンドポイントまたは AWS SDK の利用を推奨します。
+SigV4 は JWT ではなく HMAC request signature です。`https://sts.amazonaws.com/.well-known/jwks` は AWS API signature を検証する JWT issuer endpoint ではありません。Istio RequestAuthentication は実際の OIDC issuer が発行する JWT を検証します。CUSTOM AuthorizationPolicy には、external authorization を実装する設定済みの `extensionProviders` service が追加で必要です。その実装なしに SigV4 を検証することはできません。AWS API access には IAM authentication 済みの AWS endpoint または AWS SDK を優先してください。
 
-**読み取り専用の検証例** (ワークロードに AWS CLI がインストールされ、意図した IAM ロールが付与されている場合):
+**読み取り専用の検証例**（workload 内に AWS CLI がインストールされ、意図した IAM role が設定されている場合）:
 
 ```bash
 aws sts get-caller-identity
@@ -971,11 +971,11 @@ aws s3api head-object --bucket my-bucket --key object.txt --region us-west-2
 
 **運用上の考慮事項**:
 
-- ワークロードには必要な AWS のアクションとリソースのみを付与してください。共有のノードインスタンスロールに依存しないようにします。
-- 選択した認証情報プロバイダーが一時的な認証情報と更新をサポートしていることを確認してください。セッション期間は設定可能であり、一律で 1 時間というわけではありません。
-- CloudTrail の管理イベントとデータイベントではカバー範囲が異なり、S3 のオブジェクトアクセスには適切なデータイベントの設定が必要です。
-- プロキシの設定を確認して、フィルターの配置位置を検証してください。config dump は個々のライブリクエストの Authorization ヘッダーを表示しませんし、HTTPS 越しの未署名 curl は SigV4 のテストにはなりません。
-- 実際のリクエストサイズに対する署名/バッファリング/認証情報取得のオーバーヘッドを測定してください。固定のミリ秒単位のオーバーヘッドが保証されるわけではありません。
+- workload には必要な AWS action と resource のみを付与します。共有 node instance role への依存は避けてください。
+- 選択した credential provider が temporary credential と refresh をサポートすることを確認します。session duration は設定可能であり、一律に 1 時間ではありません。
+- CloudTrail management event と data event では coverage が異なります。S3 object access には適切な data-event 設定が必要です。
+- proxy 設定を検査して filter の配置を確認します。config dump には個々の live request の Authorization header は表示されず、HTTPS 経由の署名なし curl は SigV4 test ではありません。
+- 実際の request size に対する signing/buffering/credential-fetch のオーバーヘッドを測定します。固定のミリ秒単位のオーバーヘッドは保証されません。
 
 **関連用語**: [AuthorizationPolicy](#authorizationpolicy), [ServiceEntry](#service-entry), [EnvoyFilter](advanced/03-envoy-filter.md)
 
@@ -988,16 +988,16 @@ aws s3api head-object --bucket my-bucket --key object.txt --region us-west-2
 
 ### Sidecar
 
-アプリケーションコンテナと並べてデプロイされる補助コンテナのパターンです。
+application container と並行してデプロイされる helper container のパターンです。
 
 **Istio の Sidecar**:
-- コンテナ名: `istio-proxy`
-- イメージ: `istio/proxyv2`
+- Container 名: `istio-proxy`
+- Image: `istio/proxyv2`
 - Envoy Proxy を実行
-- init コンテナまたは Istio CNI のリダイレクトにより、設定されたトラフィックをインターセプト
+- init-container または Istio CNI のリダイレクトを通じて設定済みトラフィックを intercept
 
-**インジェクション方式**:
-1. **自動**: Namespace のラベル
+**Injection 方法**:
+1. **自動**: Namespace label
 2. **手動**: `istioctl kube-inject`
 
 ```yaml
@@ -1013,14 +1013,14 @@ metadata:
 
 ---
 
-### Sidecar リソース
+### Sidecar Resource
 
-Envoy が受け取るサービス情報を制限する Istio の CRD です。
+Envoy が受け取る service 情報を制限する Istio CRD です。
 
 **目的**:
-- メモリ使用量の削減
-- 設定のプッシュ時間の短縮
-- 設定のスコープ制御。ネットワークのセキュリティ境界ではありません
+- memory 使用量の削減
+- 設定 push 時間の短縮
+- 設定のスコープ制限。network security boundary ではありません
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1036,7 +1036,7 @@ spec:
 ```
 
 **効果**:
-- インポートするサービスを減らすことでメモリと設定処理を削減できる可能性があります。実際の削減量は測定してください。
+- import する service を減らすと memory 使用量と設定処理を削減できる場合があります。実際の削減量を測定してください。
 
 **関連ドキュメント**: [Architecture - Sidecar Resource](https://www.atomai.click/kubernetes-docs/en/service-mesh/istio/03-architecture#optimization-with-sidecar-resource)
 
@@ -1044,14 +1044,14 @@ spec:
 
 ### SPIFFE (Secure Production Identity Framework for Everyone)
 
-クラウドネイティブ環境においてワークロードのアイデンティティを証明するための標準です。
+cloud-native 環境で workload identity を証明するための標準です。
 
-**SPIFFE ID の形式**:
+**SPIFFE ID 形式**:
 ```
 spiffe://trust-domain/path
 ```
 
-**Istio での例**:
+**Istio の例**:
 ```
 spiffe://cluster.local/ns/default/sa/reviews
   |         |           |     |      |    |
@@ -1063,9 +1063,9 @@ spiffe://cluster.local/ns/default/sa/reviews
   +---------------------------------------- Protocol
 ```
 
-**構成要素**:
-- **SPIFFE ID**: ワークロードの識別子
-- **SVID (SPIFFE Verifiable Identity Document)**: X.509-SVID または JWT-SVID。Istio の mTLS は X.509-SVID を使用します
+**コンポーネント**:
+- **SPIFFE ID**: workload identifier
+- **SVID (SPIFFE Verifiable Identity Document)**: X.509-SVID または JWT-SVID。Istio mTLS は X.509-SVID を使用
 
 **関連用語**: [Identity](#identity), [mTLS](#mtls-mutual-tls)
 
@@ -1073,12 +1073,12 @@ spiffe://cluster.local/ns/default/sa/reviews
 
 ### Subset
 
-DestinationRule で定義する、サービスの論理的なグループです。
+DestinationRule で定義する service の論理グループです。
 
 **一般的な用途**:
-- バージョン別: `v1`, `v2`, `v3`
-- デプロイ段階別: `stable`, `canary`, `test`
-- リージョン別: `us-west`, `us-east`, `eu-central`
+- version 別: `v1`、`v2`、`v3`
+- deployment stage 別: `stable`、`canary`、`test`
+- region 別: `us-west`、`us-east`、`eu-central`
 
 ```yaml
 apiVersion: networking.istio.io/v1
@@ -1104,20 +1104,20 @@ spec:
 
 ### Waypoint Proxy
 
-Ambient Mode で L7 機能を提供する任意のプロキシです。
+Ambient Mode で L7 機能を提供する任意の proxy です。
 
 **役割**:
-- namespace、Service、または Pod のラベルで選択されます。ServiceAccount ごとに自動で作られるわけではありません
-- Envoy Proxy をベースとする
-- L7 トラフィック管理機能に特化
-- ztunnel と連携して動作
+- Namespace、Service、または Pod label で選択され、ServiceAccount ごとに自動選択されるわけではありません
+- Envoy Proxy に基づく
+- L7 traffic management 機能専用
+- ztunnel と連携
 
 **提供される機能**:
-- L7 ルーティング (Path、Header ベース)
-- Retry と Timeout
+- L7 routing（Path、Header ベース）
+- Retry および Timeout
 - Circuit Breaker
 - Fault Injection
-- ヘッダーの操作
+- Header manipulation
 
 **デプロイ例**:
 ```yaml
@@ -1134,26 +1134,26 @@ spec:
     protocol: HBONE
 ```
 
-**特徴**:
-- ztunnel は L4 のみを処理し、waypoint が L7 を処理
-- 必要なサービスに対してのみ選択的に利用
-- Sidecar よりリソース効率が高い (共有型のアプローチ)
-- namespace、Service、または Pod のラベルで選択されます。ServiceAccount ごとに自動で作られるわけではありません
+**機能**:
+- ztunnel は L4 のみを処理し、waypoint は L7 を処理
+- 必要な service に対してのみ選択的に使用
+- Sidecar よりリソース効率が高い（共有アプローチ）
+- Namespace、Service、または Pod label で選択され、ServiceAccount ごとに自動選択されるわけではありません
 
 **関連用語**: [Ambient Mode](#ambient-mode), [ztunnel](#ztunnel-zero-trust-tunnel)
 
 ---
 
-waypoint を作成した後は、対象のサービスを参加させます。例: `kubectl label service reviews istio.io/use-waypoint=reviews-waypoint --overwrite`。Gateway をデプロイするだけでは、トラフィックはそこを経由しません。
+waypoint の作成後、対象の service を登録します。例: `kubectl label service reviews istio.io/use-waypoint=reviews-waypoint --overwrite`。Gateway をデプロイするだけでは、トラフィックはそこを通ってルーティングされません。
 
 ### VirtualService
 
-Service Mesh 内でトラフィックをどのようにルーティングするかを定義する Istio の CRD です。
+Service Mesh 内でトラフィックをどのようにルーティングするかを定義する Istio CRD です。
 
 **主な機能**:
-- URI、ヘッダー、クエリパラメーターに基づくルーティング
-- 重みベースのトラフィック分配
-- Retry と Timeout の設定
+- URI、header、query parameter に基づく routing
+- weight ベースのトラフィック分散
+- Retry および Timeout 設定
 - Fault Injection
 
 ```yaml
@@ -1184,23 +1184,23 @@ spec:
 
 ### WASM (WebAssembly)
 
-Web ブラウザーで実行することを目的に設計されたバイナリ命令形式です。Istio では、Envoy プロキシの機能を拡張するために使用されます。
+web browser で実行するために設計された binary instruction format です。Istio では、Envoy proxy の機能を拡張するために使用されます。
 
-**Istio での用途**:
-- Envoy Filter としてカスタムロジックを追加
+**Istio での使用**:
+- Envoy Filter として custom logic を追加
 - 再デプロイなしで機能を動的に拡張
-- さまざまな言語で記述可能 (Rust、C++、Go など)
-- サンドボックス環境で安全に実行
+- さまざまな言語（Rust、C++、Go など）で記述可能
+- sandbox 環境で安全に実行
 
 **主なユースケース**:
-1. **カスタム認証/認可**: 複雑なビジネスロジックの実装
-2. **リクエスト/レスポンスの変換**: ヘッダーの操作、ペイロードの変換
-3. **高度なルーティング**: カスタムのルーティングロジック
-4. **メトリクスの収集**: 特化したテレメトリー
+1. **Custom Authentication/Authorization**: 複雑な business logic を実装
+2. **Request/Response Transformation**: Header manipulation、payload transformation
+3. **Advanced Routing**: custom routing logic
+4. **Metric Collection**: 特殊な telemetry
 
-以下のレジストリ URL、ダイジェスト、認証情報、pluginConfig のフィールドは、自分でビルドしたプラグイン用のプレースホルダーです。Istio はこれらの例のイメージを提供しませんし、プラグイン固有のオプションを解釈することもありません。file:// のモジュールはプロキシコンテナ内に存在する必要があります。
+以下の registry URL、digest、credential、pluginConfig field は、独自に build した plugin 用の placeholder です。Istio はこれらの例の image を提供せず、plugin 固有の option を解釈しません。file:// module は proxy container 内に存在する必要があります。
 
-**WASM プラグインの例**:
+**WASM Plugin の例**:
 ```yaml
 apiVersion: extensions.istio.io/v1alpha1
 kind: WasmPlugin
@@ -1218,9 +1218,9 @@ spec:
     validate_endpoint: "https://auth.example.com/validate"
 ```
 
-**デプロイ方式**:
+**デプロイ方法**:
 
-#### 1. OCI レジストリ経由のデプロイ (推奨)
+#### 1. OCI Registry によるデプロイ（推奨）
 
 ```yaml
 apiVersion: extensions.istio.io/v1alpha1
@@ -1233,7 +1233,7 @@ spec:
   imagePullSecret: registry-credential
 ```
 
-#### 2. HTTP URL 経由のデプロイ
+#### 2. HTTP URL によるデプロイ
 
 ```yaml
 apiVersion: extensions.istio.io/v1alpha1
@@ -1245,7 +1245,7 @@ spec:
   # Add sha256: with the actual 64-character module digest before deployment
 ```
 
-#### 3. ローカルファイルによるデプロイ
+#### 3. Local File のデプロイ
 
 ```yaml
 apiVersion: extensions.istio.io/v1alpha1
@@ -1256,7 +1256,7 @@ spec:
   url: file:///etc/istio/filters/custom.wasm
 ```
 
-**WASM 開発例 (Rust)**:
+**WASM 開発例（Rust）**:
 
 ```rust
 use proxy_wasm::traits::*;
@@ -1280,16 +1280,16 @@ impl HttpContext for CustomFilter {
 }
 ```
 
-**ビルドとデプロイの前提条件**:
+**build とデプロイの前提条件**:
 
-Rust の `cdylib` クレートと、互換性のある `proxy-wasm` 依存関係、そして固定した依存バージョンを使用します。上記のコールバックは[公式 Rust SDK の例](https://github.com/proxy-wasm/proxy-wasm-rust-sdk/tree/main/examples/http_headers)に従っています。`wasm32-unknown-unknown` ターゲットをインストールしてモジュールをビルドし、生成された `.wasm` をサポートされている OCI Wasm イメージにパッケージ化したうえで、WasmPlugin から参照してください。Dockerfile のない一般的な `docker build` では、そのパッケージ化は行われません。
+互換性のある `proxy-wasm` dependency と固定された dependency version を使う Rust `cdylib` crate を使用してください。上の callback は[公式 Rust SDK の例](https://github.com/proxy-wasm/proxy-wasm-rust-sdk/tree/main/examples/http_headers)に従っています。`wasm32-unknown-unknown` target をインストールし、module を build して、生成された `.wasm` をサポート対象の OCI Wasm image に package してから WasmPlugin で参照します。Dockerfile を指定しない汎用的な `docker build` では、その package は実行されません。
 
 ```bash
 rustup target add wasm32-unknown-unknown
 cargo build --target wasm32-unknown-unknown --release
 ```
 
-対象のプラグインについて、起動時間、メモリ、リクエストごとのオーバーヘッドを測定してください。Wasm はプロキシプロセス内のランタイムサンドボックスで実行されます。別プロセスではなく、また無条件のセキュリティ/パフォーマンスの保証でもありません。
+特定の plugin について、startup time、memory、request ごとのオーバーヘッドを測定してください。Wasm は proxy process 内の runtime sandbox で実行されます。別 process ではなく、無条件の security/performance 保証でもありません。
 
 **Ambient Mode のサポート**:
 
@@ -1321,22 +1321,22 @@ istioctl proxy-config all <pod-name> -o json | jq '.. | objects | select(has("@t
 ```
 
 **セキュリティ上の考慮事項**:
-1. **サンドボックスによる分離**: Envoy 内部のランタイムサンドボックス。プラグインの信頼性とリソース使用量を確認してください
-2. **リソース制限**: CPU とメモリの制限を設定可能
-3. **完全性の検証**: SHA256 はコンテンツを検証しますが、公開者を認証するものではありません
-4. **最小権限**: 必要な権限のみを付与
+1. **Sandbox Isolation**: Envoy 内の runtime sandbox。plugin の信頼性と resource 使用量をレビュー
+2. **Resource Limits**: CPU と memory の limit を設定可能
+3. **Integrity Verification**: SHA256 は content を検査しますが、publisher を認証するものではありません
+4. **Least Privilege**: 必要な permission のみを付与
 
 **利点**:
-- 高いパフォーマンス (ネイティブコードレベル)
-- 安全なサンドボックス実行
+- 高性能（native code レベル）
+- 安全な sandbox 実行
 - 再デプロイなしで更新可能
 - 複数言語のサポート
-- 標準的な OCI イメージ形式
+- 標準 OCI image format
 
 **制限事項**:
-- 一部のシステムコールが制限される
-- ファイル I/O が限定的
-- ネットワーク呼び出しは Envoy API 経由のみ
+- 一部の system call が制限される
+- file I/O が限定的
+- network call は Envoy API 経由のみ
 
 **関連用語**: [Envoy](#envoy-proxy), [Waypoint Proxy](#waypoint-proxy), [Ambient Mode](#ambient-mode)
 
@@ -1353,23 +1353,23 @@ istioctl proxy-config all <pod-name> -o json | jq '.. | objects | select(has("@t
 Envoy Proxy を動的に設定するための API 群です。
 
 **「xDS」の意味**:
-- `x`: さまざまな種別を表す変数
+- `x`: さまざまな種類を表す変数
 - `DS`: Discovery Service
 
 **xDS API の種類**:
 
-| API | 名称 | 役割 |
+| API | 名前 | 役割 |
 |-----|------|------|
-| **LDS** | Listener Discovery Service | リスニングポートとフィルターチェーン |
-| **RDS** | Route Discovery Service | HTTP のルーティングルール |
-| **CDS** | Cluster Discovery Service | アップストリームサービスの設定 |
-| **EDS** | Endpoint Discovery Service | 実際の Pod IP の一覧 |
-| **SDS** | Secret Discovery Service | TLS 証明書と鍵 |
+| **LDS** | Listener Discovery Service | listen する port と filter chain |
+| **RDS** | Route Discovery Service | HTTP routing rule |
+| **CDS** | Cluster Discovery Service | upstream service 設定 |
+| **EDS** | Endpoint Discovery Service | 実際の Pod IP 一覧 |
+| **SDS** | Secret Discovery Service | TLS 証明書と key |
 
-**通信方式**:
-- プロトコル: gRPC
-- ポート: 15012 (Istiod)
-- 双方向ストリーミング
+**通信方法**:
+- Protocol: gRPC
+- Port: 15012（Istiod）
+- 双方向 streaming
 
 **順序**:
 ```
@@ -1383,17 +1383,17 @@ Istiod pushes LDS/CDS/EDS/RDS updates; local agent serves SDS certificates
 
 ### Zone
 
-Kubernetes の Availability Zone を表します。
+Kubernetes Availability Zone を表します。
 
-**ラベルの形式**:
+**label 形式**:
 ```yaml
 topology.kubernetes.io/zone: us-west-1a
 ```
 
-**Istio での用途**:
+**Istio での使用**:
 - Locality-aware Load Balancing
 - Zone Aware Routing
-- 同一 Zone を優先するルーティング
+- 同一 Zone 優先 routing
 
 **関連用語**: [Locality-aware Load Balancing](#locality-aware-load-balancing)
 
@@ -1401,25 +1401,25 @@ topology.kubernetes.io/zone: us-west-1a
 
 ### ztunnel (Zero Trust Tunnel)
 
-Ambient Mode のコアコンポーネントで、ノードレベルで動作する軽量な L4 プロキシです。
+Ambient Mode の中核コンポーネントであり、node レベルで実行される軽量な L4 proxy です。
 
 **役割**:
-- 各ノードに DaemonSet としてデプロイ
+- 各 node に DaemonSet としてデプロイ
 - すべての Pod の L4 トラフィックを処理
-- Sidecar なしで Service Mesh の機能を提供
-- CNI プラグインと統合
+- Sidecar なしで Service Mesh 機能を提供
+- CNI plugin と統合
 
 **提供される機能**:
-- **mTLS**: 自動的な暗号化/復号
-- **L4 テレメトリー**: メトリクスの収集
-- **Identity**: Service Account ベースの認証
-- **L4 ロードバランシング**: 基本的なロードバランシング
+- **mTLS**: 自動暗号化/復号
+- **L4 Telemetry**: metric の収集
+- **Identity**: Service Account ベースの authentication
+- **L4 Load Balancing**: 基本的な Load Balancing
 
-**技術的な特徴**:
-- Rust で記述 (高性能)
-- Istio CNI が管理するトラフィックのリダイレクト
-- Init Container が不要
-- L4 プロキシのリソースを共有。ノードの実測ワークロードに基づいてサイジングしてください
+**技術的特徴**:
+- Rust で記述（高性能）
+- Istio CNI 管理のトラフィックリダイレクト
+- Init Container は不要
+- 共有 L4 proxy resource。サイズは測定した node workload に基づいて決定
 
 **デプロイ例**:
 ```bash
@@ -1428,7 +1428,7 @@ istioctl install --set profile=ambient
 kubectl rollout status daemonset/ztunnel -n istio-system
 ```
 
-既存のサイドカーワークロードでは、ambient に参加させる前に、インジェクション/revision のラベルを削除して Pod を再起動し、サイドカーを取り除いてください。新規のサイドカーなしのワークロードでは再起動は不要です。
+既存の sidecar workload では、ambient 登録前に injection/revision label を削除して Pod を再起動し、sidecar を削除します。新しい sidecar のない workload は再起動不要です。
 
 **Namespace の有効化**:
 ```bash
@@ -1438,14 +1438,14 @@ kubectl label namespace default istio.io/dataplane-mode=ambient --overwrite
 ```
 
 **利点**:
-- メモリ削減の可能性は、ノード/ワークロードおよび waypoint のキャパシティに依存します
-- Pod の再起動が不要
-- アプリケーションに対して透過的
-- 初期レイテンシーの最小化
+- memory 削減の可能性は node/workload と waypoint capacity に依存
+- Pod の再起動は不要
+- application の透過性
+- 初期 latency の最小化
 
 **制限事項**:
 - L7 機能には Waypoint Proxy が必要
-- サポートされている Linux の Kubernetes プラットフォーム、プライマリ CNI、Istio CNI の前提条件が必要
+- サポートされる Linux Kubernetes platform、primary CNI、および Istio CNI の前提条件が必要
 
 **関連用語**: [Ambient Mode](#ambient-mode), [Waypoint Proxy](#waypoint-proxy), [eBPF](#ebpf-extended-berkeley-packet-filter)
 

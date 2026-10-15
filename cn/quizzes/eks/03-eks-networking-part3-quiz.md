@@ -1,805 +1,397 @@
 # EKS 网络测验 - 第 3 部分
 
-本测验测试你对 Amazon EKS 中高级网络概念的理解，包括 service mesh、VPC endpoints、多集群网络和网络安全。
+> **最后更新**: October 12, 2026
 
-## 多项选择题
+本测验涵盖[第 3 部分故障排除概念](../../eks/03-eks-networking-part3.md)、私有连接、多集群设计和网格运维。当前示例使用 EKS Kubernetes 1.36 和 VPC CNI 1.23.0；历史 App Mesh 配置会被明确标识。资源创建示例需要经过审查的 IAM、网络和所有权前提条件。本审计执行本地检查，并不部署 EKS。
 
-### 1. 在 Amazon EKS 中实施 service mesh（例如 AWS App Mesh、Istio）时，会发生的主要架构变化是什么？
+### 1. 当应用程序加入基于 sidecar 的服务网格时，会发生什么变化？
 
-A. 所有 pod-to-pod 通信都会路由到 VPC 外部 B. 会向每个 pod 添加 sidecar proxy，以调解 service-to-service 通信 C. 不再使用 Kubernetes Service objects D. 所有网络流量都会通过 AWS Transit Gateway 路由
+- A. 所有 Pod 流量离开 VPC
+- B. 代理处理已加入服务的流量
+- C. 移除服务发现
+- D. 所有流量都需要 Transit Gateway
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B. 会向每个 pod 添加 sidecar proxy，以调解 service-to-service 通信**
+**答案：B. 注入的代理处理已加入服务的流量。**
 
-**解释：** 实施 service mesh 时最重要的架构变化是会向每个 pod 添加一个 sidecar proxy（通常是 Envoy）。这个 sidecar proxy 会拦截并处理该 pod 的所有入站和出站流量，从而调解 service-to-service 通信。
-
-**主要特性：**
-
-1. **Sidecar Pattern**：一个 proxy container 会与每个 application container 一起部署。该 proxy 处理所有网络通信。
-2. **流量流向变化**：
-   * 传统方式：Client → Service → Target Pod
-   * Service Mesh：Client → Client Sidecar → Service → Target Sidecar → Target Pod
-3. **Data Plane 和 Control Plane**：
-   * Data Plane：sidecar proxies 的集合
-   * Control Plane：管理 proxy 配置并应用策略的中央组件
-4. **无需更改 Application Code**：service mesh 的主要优势之一，是无需更改 application code 即可添加高级网络功能。
-
-**Service Mesh 实施示例 (AWS App Mesh)：**
-
-```yaml
-# App Mesh sidecar injection example
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: example-app
-  labels:
-    app: example
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: example
-  template:
-    metadata:
-      labels:
-        app: example
-      annotations:
-        appmesh.k8s.aws/mesh: my-mesh  # App Mesh mesh name
-        appmesh.k8s.aws/virtualNode: example-vn  # Virtual node name
-    spec:
-      containers:
-      - name: example
-        image: example:latest
-        ports:
-        - containerPort: 8080
+在 sidecar 模式中，应用程序与代理共享一个 Pod 网络命名空间和 IP。代理是数据平面的一部分；控制平面分发路由、安全和身份配置。NetworkPolicy、VPC 路由和 Service 发现仍然重要。逻辑路径如下：
+```text
+Application → client proxy → Pod network → destination proxy → application
 ```
+拦截取决于加入状态、排除的端口、协议和模式；并非每个数据包都必须经过 Service VIP。Ambient 网格使用不同的节点代理/waypoint 设计，因此此问题明确针对 sidecar 模式。网格可提供重试、路由、mTLS 和遥测，而无需重写主要服务实现，但应用程序仍可能需要追踪上下文传播、兼容的协议和超时处理。
 
-**Service Mesh 提供的功能：**
-
-* 流量管理（路由、负载均衡、circuit breaking）
-* 安全性（mTLS、authentication、authorization）
-* 可观测性（metrics、logs、distributed tracing）
-* 策略执行
-
-其他选项的问题：
-
-* **A. 所有 pod-to-pod 通信都会路由到 VPC 外部**：Service mesh 通常在 cluster 内运行，不会将流量路由到 VPC 外部。
-* **C. 不再使用 Kubernetes Service objects**：Service mesh 是对 Kubernetes Service objects 的补充，而不是替代。
-* **D. 所有网络流量都会通过 AWS Transit Gateway 路由**：Service mesh 与 AWS Transit Gateway 无关，它管理 cluster 内的 service-to-service 通信。
+请使用所选网格支持的注入器/revision，而非手动添加旧 Envoy 镜像或同时使用多个注入器。AWS App Mesh 是一个历史示例：支持和访问于 2026 年 9 月 30 日结束。现有部署必须迁移；它不是默认的新安装示例。请参阅 [Istio 安装](../../service-mesh/istio/01-installation.md)，了解维护中的实现路径。
 
 </details>
 
-### 2. 在 Amazon EKS 中使用 VPC endpoints 私有访问 AWS services 的主要好处是什么？
+### 2. VPC endpoints 为私有 EKS 工作负载提供什么？
 
-A. 为所有 AWS services 提供无限带宽 B. 无需 internet gateway 即可私有访问 AWS services C. 将 AWS service 使用成本降低 50% D. 为所有 AWS services 提供自动 authentication
+- A. 无限带宽
+- B. 到受支持服务的私有连接
+- C. 自动享受 50% 折扣
+- D. 自动 AWS 身份验证
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B. 无需 internet gateway 即可私有访问 AWS services**
+**答案：B. 对于这些请求，无需互联网/NAT 即可通过私有路径访问受支持的 AWS 服务 endpoint。**
 
-**解释：** 在 Amazon EKS 中使用 VPC endpoints 的主要好处，是能够在没有 internet gateway 的情况下私有访问 AWS services。这可以增强安全性并降低数据传输成本。
+Interface endpoint 会在选定的子网/AZ 中创建 ENI，通常会产生按小时/数据处理费用。用于 S3/DynamoDB 的 Gateway endpoint 会添加路由表条目，且不收取 endpoint 费用；服务/存储/请求费用仍然适用。Endpoint 不会授予 IAM 权限、不保证更低成本/延迟，也不会自动满足合规要求。
 
-**VPC Endpoint 类型：**
+对于私有 ECR 镜像拉取，请规划 `ecr.api`、`ecr.dkr` 和 S3 层下载路径、endpoint SG HTTPS 规则、DNS 支持/私有 DNS、路由表和 endpoint/IAM policy。其他必需服务取决于工作负载：用于 IRSA 的区域性 STS、用于 Pod Identity 的 `eks-auth`、用于 CNI 的 EC2 API、Logs/监控以及其他实际使用的服务。EKS 服务 endpoint 不会取代私有 Kubernetes API endpoint。ECR Public、首次 pull-through-cache 请求/Windows foreign layer 可能需要额外外部连接或准备好的镜像镜像仓库。
 
-1. **Interface Endpoints (AWS PrivateLink)**：
-   * 为大多数 AWS services 提供私有连接
-   * 在每个 subnet 中创建 endpoint network interfaces (ENIs)
-   * 示例：ECR、CloudWatch、SNS、SQS 等
-2. **Gateway Endpoints**：
-   * 为 S3 和 DynamoDB 提供私有连接
-   * 向 route tables 添加路由
-   * 无额外成本
-
-**EKS 的 VPC Endpoint 配置示例：**
-
+此参数化 CloudFormation 示例仅向**现有** VPC 添加三个 endpoint。创建前请审查现有 endpoint/私有 DNS 所有权。它特意将特定服务的 endpoint policy 留给安全负责人定义；endpoint 默认访问不会覆盖 IAM。请准备 change set，而非假定这是一套完整的隔离集群部署：
 ```yaml
-# CloudFormation example
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECR API/DKR and S3 endpoints in an existing VPC; not a complete private EKS stack
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  PrivateSubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Existing subnets in distinct Availability Zones
+  PrivateRouteTableIds:
+    Type: CommaDelimitedList
+    Description: Route tables used by the image-pulling workloads
+  EndpointSecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Existing same-VPC SG permitting HTTPS from the intended nodes/Pods
 Resources:
   S3GatewayEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
-      VpcId: !Ref VPC
-      RouteTableIds:
-        - !Ref PrivateRouteTable
+      VpcId: !Ref VpcId
+      RouteTableIds: !Ref PrivateRouteTableIds
       VpcEndpointType: Gateway
-
   ECRApiEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.api
-      VpcId: !Ref VPC
-      SubnetIds:
-        - !Ref PrivateSubnet1
-        - !Ref PrivateSubnet2
-      SecurityGroupIds:
-        - !Ref EndpointSecurityGroup
+      VpcId: !Ref VpcId
+      SubnetIds: !Ref PrivateSubnetIds
+      SecurityGroupIds: [!Ref EndpointSecurityGroupId]
+      PrivateDnsEnabled: true
+      VpcEndpointType: Interface
+  ECRDkrEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ecr.dkr
+      VpcId: !Ref VpcId
+      SubnetIds: !Ref PrivateSubnetIds
+      SecurityGroupIds: [!Ref EndpointSecurityGroupId]
       PrivateDnsEnabled: true
       VpcEndpointType: Interface
 ```
-
-**EKS 需要 VPC Endpoints 的关键 AWS Services：**
-
-* Amazon ECR（拉取 container images）
-* Amazon S3（configuration files、backups 等）
-* AWS KMS（encryption keys）
-* Amazon CloudWatch（logging 和 monitoring）
-* AWS STS（assume IAM roles）
-
-**使用 VPC Endpoints 的好处：**
-
-1. **增强安全性**：流量不会经过 public internet
-2. **降低网络成本**：减少到 AWS services 的数据传输成本
-3. **降低延迟**：在 AWS network 内直接路由
-4. **合规性**：满足数据主权和监管要求
-
-**Private Subnets 中的 EKS Node 配置：**
-
+当需要新的 node group 时，`eksctl create nodegroup` 使用 **`--subnet-ids`**；之前的 `--vpc-private-subnets` 标志不适用于此命令。该示例会在私有 API/服务路径就绪后创建会产生费用的托管节点；仅当 eksctl 是预期所有者且不存在 `private-ng` 时使用。实例大小仅用于说明，并非容量规划建议。
 ```bash
-# Create node group in private subnets with eksctl
-eksctl create nodegroup \
-  --cluster my-cluster \
-  --name private-ng \
-  --node-private-networking \
-  --vpc-private-subnets subnet-0123456789abcdef0,subnet-0123456789abcdef1
+set -euo pipefail
+: "${CLUSTER_NAME:?Set the existing cluster name}"
+: "${AWS_REGION:?Set its Region}"
+: "${PRIVATE_SUBNET_A:?Set an existing private subnet}"
+: "${PRIVATE_SUBNET_B:?Set another private subnet}"
+eksctl create nodegroup --cluster "$CLUSTER_NAME" --region "$AWS_REGION" \
+  --name private-ng --managed --version auto --node-type m5.large \
+  --nodes 2 --nodes-min 2 --nodes-max 3 --node-private-networking \
+  --subnet-ids "$PRIVATE_SUBNET_A,$PRIVATE_SUBNET_B"
 ```
 
-其他选项的问题：
-
-* **A. 为所有 AWS services 提供无限带宽**：VPC endpoints 不提供无限带宽；根据 service 和 region，可能存在带宽限制。
-* **C. 将 AWS service 使用成本降低 50%**：VPC endpoints 可以降低数据传输成本，但不会将 AWS service 使用成本降低 50%。
-* **D. 为所有 AWS services 提供自动 authentication**：VPC endpoints 不会自动化 authentication；仍然需要适当的 IAM permissions。
-
 </details>
 
-### 3. 在 Amazon EKS 中实施多集群网络的最有效方法是什么？
+### 3. 哪个选项可在多个不重叠的 VPC 之间提供中心路由？
 
-A. 在每个 cluster 上使用 public load balancers 进行 inter-cluster communication B. 使用 AWS Transit Gateway 连接多个 VPCs 并配置 inter-cluster routing C. 将所有 clusters 部署在单个 VPC 中以降低网络复杂度 D. 在每个 cluster 上使用 NAT gateways 进行 inter-cluster communication
-
-<details>
-
-<summary>显示答案</summary>
-
-**答案：B. 使用 AWS Transit Gateway 连接多个 VPCs 并配置 inter-cluster routing**
-
-**解释：** 在 Amazon EKS 中实施多集群网络的最有效方法，是使用 AWS Transit Gateway 连接多个 VPCs，并配置 inter-cluster routing。此方法提供可扩展性、安全性和易管理性。
-
-**使用 AWS Transit Gateway 的多集群网络：**
-
-1. **架构概述**：
-   * 每个 EKS cluster 部署在单独的 VPC 中
-   * Transit Gateway 连接所有 VPCs
-   * Inter-cluster communication 通过 Transit Gateway 路由
-2.  **配置步骤**：
-
-    ```bash
-    # 1. Create Transit Gateway
-    aws ec2 create-transit-gateway --description "EKS Multi-Cluster TGW"
-
-    # 2. Attach VPC to Transit Gateway
-    aws ec2 create-transit-gateway-vpc-attachment \
-      --transit-gateway-id tgw-0123456789abcdef0 \
-      --vpc-id vpc-0123456789abcdef0 \
-      --subnet-ids subnet-0123456789abcdef0 subnet-0123456789abcdef1
-
-    # 3. Update routing tables
-    aws ec2 create-route \
-      --route-table-id rtb-0123456789abcdef0 \
-      --destination-cidr-block 10.1.0.0/16 \
-      --transit-gateway-id tgw-0123456789abcdef0
-    ```
-3. **CIDR 规划**：
-   * 为每个 cluster/VPC 分配不重叠的 CIDR blocks
-   * 示例：Cluster1: 10.0.0.0/16, Cluster2: 10.1.0.0/16, Cluster3: 10.2.0.0/16
-
-**多集群 Service Discovery 选项：**
-
-1.  **AWS Cloud Map**：
-
-    ```bash
-    # Create namespace
-    aws servicediscovery create-private-dns-namespace \
-      --name multi-cluster.local \
-      --vpc vpc-0123456789abcdef0
-
-    # Register service
-    aws servicediscovery register-instance \
-      --service-id srv-0123456789abcdef0 \
-      --instance-id api-service-cluster1 \
-      --attributes AWS_INSTANCE_IPV4=10.0.1.123
-    ```
-2.  **Custom CoreDNS Configuration**：
-
-    ```yaml
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      name: coredns
-      namespace: kube-system
-    data:
-      Corefile: |
-        .:53 {
-            errors
-            health
-            kubernetes cluster.local in-addr.arpa ip6.arpa {
-               pods insecure
-               upstream
-               fallthrough in-addr.arpa ip6.arpa
-            }
-            forward . /etc/resolv.conf
-            cache 30
-            loop
-            reload
-            loadbalance
-        }
-        cluster2.svc.local:53 {
-            errors
-            cache 30
-            forward . 10.1.0.2
-        }
-    ```
-
-**多集群网络安全注意事项：**
-
-1. **Inter-VPC Traffic Control**：
-   * 使用 Transit Gateway security groups 和 routing tables 限制流量
-   * 仅允许必要的 ports 和 protocols
-2.  **Network Policies**：
-
-    ```yaml
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      name: allow-cross-cluster
-    spec:
-      podSelector:
-        matchLabels:
-          app: api-service
-      ingress:
-      - from:
-        - ipBlock:
-            cidr: 10.1.0.0/16  # Cluster2's CIDR
-      egress:
-      - to:
-        - ipBlock:
-            cidr: 10.1.0.0/16  # Cluster2's CIDR
-    ```
-
-**多集群 Service Mesh 选项：**
-
-1. **Istio Multi-Cluster**：
-   * 使用单个 control plane 管理多个 clusters
-   * 跨 cluster service discovery 和 load balancing
-2. **AWS App Mesh**：
-   * 创建跨多个 clusters 的 mesh
-   * 通过 AWS Cloud Map 进行 service discovery
-
-**成本优化注意事项：**
-
-* 考虑 Transit Gateway 的小时费用和数据处理费用
-* 尽量减少跨 cluster 数据传输
-* 尽可能在同一个 availability zone 内通信
-
-其他选项的问题：
-
-* **A. 在每个 cluster 上使用 public load balancers 进行 inter-cluster communication**：此方法会增加安全风险、产生 internet data transfer costs，并增加延迟。
-* **C. 将所有 clusters 部署在单个 VPC 中以降低网络复杂度**：在单个 VPC 中部署多个 clusters 可能导致 IP address space 限制、缺乏安全边界以及可扩展性问题。
-* **D. 在每个 cluster 上使用 NAT gateways 进行 inter-cluster communication**：NAT gateways 用于 outbound internet traffic，不适合 inter-cluster communication。
-
-</details>
-
-### 5. 在 Amazon EKS 中优化 pod 网络性能的最有效方法是什么？
-
-A. 对所有 pods 使用 host network mode B. 启用 Amazon VPC CNI 的 prefix delegation 功能 C. 对所有 pods 使用 NodePort services D. 对所有 intra-cluster communication 使用 AWS Global Accelerator
+- A. 必须使用公网负载均衡器
+- B. Transit Gateway 和完整路由
+- C. 每个集群必须共享一个 VPC
+- D. NAT gateway 提供 Kubernetes 发现
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：B. 启用 Amazon VPC CNI 的 prefix delegation 功能**
+**答案：B. AWS Transit Gateway**
 
-**解释：** 在 Amazon EKS 中优化 pod 网络性能的最有效方法，是启用 Amazon VPC CNI 的 prefix delegation 功能。该功能会显著增加分配给每个 node 的 secondary IP addresses 数量，并减少 ENI (Elastic Network Interface) 创建频率，从而提升网络性能和可扩展性。
+Transit Gateway 是适用于众多 VPC 的一种设计；它并非在所有情况下都是最有效的多集群架构。请针对信任边界、规模、DNS、地址重叠和成本，比较 VPC peering、shared VPC、PrivateLink 服务暴露、VPC Lattice 和 mesh gateway。NAT 也有私有连接用途；它不提供服务发现。
 
-**Prefix Delegation 的工作原理：**
+对于 TGW 设计，请规划不重叠且可路由的 Pod/VPC CIDR、每个参与 AZ 中的 attachment、TGW 路由表关联/传播、工作负载子网路由和返回路由。仅有 TGW 路由并不足够。Kubernetes ClusterIP 是虚拟服务地址，并非自动可路由的远程 endpoint。通过明确的发现设计导出可达的 Pod endpoint 或 gateway/load-balancer 服务地址。更改前请读取实际路由状态：
+```bash
+set -euo pipefail
+: "${AWS_REGION:?Set the transit gateway Region}"
+: "${TGW_ROUTE_TABLE_ID:?Set the intended TGW route table}"
+: "${VPC_ROUTE_TABLE_ID:?Set a workload-subnet route table}"
+aws ec2 search-transit-gateway-routes --region "$AWS_REGION" \
+  --transit-gateway-route-table-id "$TGW_ROUTE_TABLE_ID" \
+  --filters Name=state,Values=active
+aws ec2 describe-route-tables --region "$AWS_REGION" \
+  --route-table-ids "$VPC_ROUTE_TABLE_ID"
+```
+TGW 没有附加到其上的防火墙 SG。请酌情使用 endpoint/node/Pod SG、NACL、NetworkPolicy 和经检查的路由。跨 VPC 的 SG 引用是 TGW 在已记录 attachment/Region 限制下支持的功能；它不同于将 SG 附加到 TGW，且不能取代路由。
 
-1. **Default VPC CNI vs Prefix Delegation**：
-   * Default VPC CNI：为每个 ENI 分配单独的 secondary IP addresses
-   * Prefix Delegation：为每个 ENI 分配 /28 CIDR blocks（16 个 IPs）
-2.  **启用方法**：
-
-    ```bash
-    # Enable prefix delegation
-    kubectl set env daemonset aws-node -n kube-system ENABLE_PREFIX_DELEGATION=true
-
-    # Verify prefix delegation
-    kubectl describe daemonset aws-node -n kube-system | grep ENABLE_PREFIX_DELEGATION
-    ```
-3.  **其他配置选项**：
-
-    ```bash
-    # Set prefix allocation size (default: /28)
-    kubectl set env daemonset aws-node -n kube-system WARM_PREFIX_TARGET=1
-
-    # Threshold for requesting new prefix when available IPs are low
-    kubectl set env daemonset aws-node -n kube-system WARM_IP_TARGET=5
-    ```
-
-**Prefix Delegation 的好处：**
-
-1. **提升可扩展性**：
-   * 增加每个 node 的最大 pods 数量（通常从 110 增加到 250+）
-   * 因 ENI 创建调用减少而降低 API throttling
-2. **更快的 Pod 启动时间**：
-   * 减少为新 pods 分配 IP addresses 所需的 API calls
-   * 改善大规模 pod deployments 的性能
-3. **IP 地址效率**：
-   * 用相同数量的 ENIs 支持更多 pods
-   * 缓解 IP address exhaustion 问题
-
-**每种 Instance Type 的最大 Pods 数量对比：**
-
-| Instance Type | Default VPC CNI | Prefix Delegation Enabled |
-| ------------- | --------------- | ------------------------- |
-| t3.medium     | 17              | 110                       |
-| m5.large      | 29              | 110                       |
-| c5.xlarge     | 58              | 250                       |
-| r5.2xlarge    | 58              | 250                       |
-
-**配置示例 (ConfigMap)：**
-
+Cloud Map 需要完成 namespace、Service、注册以及健康检查/取消注册管理。TGW 不会自动共享私有 hosted-zone DNS。请使用经批准的私有 zone 关联或 Route 53 Resolver endpoint/rule。不要将请求转发到另一个 VPC 的 `base+2` resolver，并把它当作该集群的 CoreDNS。此 **Corefile 片段**假设有两个真实、可达的 inbound resolver，且它们已能解析导出的 `cluster2.example.internal` 记录。请通过 DNS 配置所有者合并它，并保留集群本地区域：
+```text
+cluster2.example.internal:53 {
+    errors
+    cache 30
+    forward . 10.1.20.10 10.1.21.10
+}
+```
+以下 ingress policy 基于 NAT/proxy 后实际可见的源地址，允许远程源 CIDR 访问一个 API 端口。其他匹配 policy 可能会扩大允许范围。必须分别设计 Egress/DNS 要求；跨集群的 namespace/Pod label 不会自动共享。
 ```yaml
-apiVersion: v1
-kind: ConfigMap
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
 metadata:
-  name: amazon-vpc-cni
-  namespace: kube-system
-data:
-  enable-prefix-delegation: "true"
-  warm-prefix-target: "1"
-  warm-ip-target: "5"
+  name: remote-api-ingress
+  namespace: multicluster-demo
+spec:
+  podSelector:
+    matchLabels:
+      app: api-service
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: 10.1.0.0/16
+    ports:
+    - protocol: TCP
+      port: 8080
 ```
-
-**注意事项和限制：**
-
-1. **Subnet Size**：
-   * Prefix delegation 需要足够大的 subnets
-   * 建议最小使用 /24 CIDR block
-2. **Security Group Rules**：
-   * 使用 prefix delegation 可以简化 security group rules
-   * 可以引用 CIDR blocks，而不是单独的 IPs
-3. **兼容性**：
-   * 一些旧版 EC2 instance types 不支持 prefix delegation
-   * 建议使用 Nitro-based instances
-4. **IP Address Management**：
-   * Prefix delegation 会更高效地使用 IP addresses，但仍然需要适当的 CIDR 规划
-
-**监控和故障排查：**
-
-```bash
-# Check IP address allocation per node
-kubectl exec -n kube-system aws-node-xxxxx -- curl -s http://localhost:61679/v1/enis | jq
-
-# Check prefix delegation status
-kubectl logs -n kube-system aws-node-xxxxx | grep -i prefix
-```
-
-其他选项的问题：
-
-* **A. 对所有 pods 使用 host network mode**：Host network mode 会导致 pods 共享 node 的 network namespace，从而造成端口冲突并移除网络隔离。
-* **C. 对所有 pods 使用 NodePort services**：NodePort 是一种 service 暴露机制，与 pod 网络性能优化无关。
-* **D. 对所有 intra-cluster communication 使用 AWS Global Accelerator**：AWS Global Accelerator 用于 global traffic management，不适合 intra-cluster communication 优化。
+Istio multi-primary 和 primary-remote 是不同的控制平面布局；请选择受支持的模型，并验证 east-west gateway、身份信任和 endpoint 健康状况。现有 App Mesh 多集群使用必须考虑其在 2026 年 9 月的退役。请根据实际路径比较按小时、处理和跨 AZ 费用；same-VPC 或公网负载均衡器设计并非本身无效，但需要各自的安全/成本分析。
 
 </details>
 
-## 简答题
+### 4. VPC CNI 的哪项功能以 /28 块分配 IPv4 地址来提高地址槽密度？
 
-### 7. 在 Amazon EKS 中实施 service mesh 时，最常用作 sidecar proxies 的开源 proxy 是什么？
+- A. 对所有 Pod 使用 hostNetwork
+- B. Prefix delegation
+- C. 对每个 Service 使用 NodePort
+- D. 对 Pod 到 Pod 流量使用 Global Accelerator
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：** Envoy
+**答案：B. Prefix delegation**
 
-**详细解释：**
+一个委派的 IPv4 /28 提供 16 个 Pod 地址，同时占用一个 ENI 地址槽。它可以减少分配 API 工作并提高 Pod 启动速度/密度；它不是通用的数据包吞吐优化，也不能解决子网总耗尽问题。IPv6 使用不同的 prefix 大小。受支持的 Nitro 硬件、连续空闲 prefix、kubelet maxPods 和资源容量仍会限制密度。
 
-在 Amazon EKS 中实施 service mesh 时，最常用的 sidecar proxy 是 Envoy。Envoy 是一个基于 C++ 的高性能 proxy，在大多数主流 service mesh 实现（Istio、AWS App Mesh、Consul Connect 等）中用作 data plane proxy。
+请在审查 schema/所有权后，将此 JSON 片段合并到精确的 EKS add-on 配置中，或使用相应的 Helm `env` 值。旧的小写 `amazon-vpc-cni` ConfigMap key 不会配置 Linux CNI：
+```json
+{
+  "env": {
+    "ENABLE_PREFIX_DELEGATION": "true",
+    "WARM_PREFIX_TARGET": "1"
+  }
+}
+```
+`WARM_PREFIX_TARGET=1` 表示一个备用 prefix，而非 prefix 大小。正数 `WARM_IP_TARGET`/`MINIMUM_IP_TARGET` 优先于 warm-prefix target。较大的 warm pool 会预留更多子网空间。请规划 node-group 迁移和 maxPods 设置；仅切换 DaemonSet 并不能使现有节点支持任意密度。
 
-**Envoy 的主要特性：**
+| 实例 | 传统的 secondary-IPv4 maxPods 公式 | 这些小型实例的示例 prefix-mode 上限 |
+|---|---:|---:|
+| t3.medium | 17 | 110 |
+| m5.large | 29 | 110 |
+| c5.xlarge | 58 | 110 |
+| r5.2xlarge | 58 | 110 |
 
-1. **高性能架构**：
-   * 使用 C++ 编写，具备低延迟和高吞吐
-   * Event-driven、asynchronous networking model
-2. **丰富的流量管理功能**：
-   * Load balancing（round robin、weighted、least request 等）
-   * Circuit breaking 和 outlier detection
-   * Retry 和 timeout policies
-   * Traffic splitting 和 mirroring
-3. **可观测性**：
-   * 详细的 metrics 和 statistics
-   * Distributed tracing integration（Zipkin、Jaeger 等）
-   * Access logging
-4. **安全功能**：
-   * TLS/mTLS termination
-   * Authentication 和 authorization
-   * Rate limiting
+这些是配置限制，并非基准测试结果，也不保证每个 Pod 都能容纳。之前 c5.xlarge/r5.2xlarge 的 250 条目不正确：EKS 的建议上限是在少于 30 个 vCPU 时为 110，在 30 个或更多 vCPU 时为 250。Pod SG branch interface 有单独的限制。Prefix 分配需要连续的 /28 块，而非通用的最小 /24 子网，并且不会自动简化 SG policy。
+```bash
+set -euo pipefail
+: "${AWS_REGION:?Set the node Region}"
+kubectl get nodes -o 'custom-columns=NAME:.metadata.name,TYPE:.metadata.labels.node\.kubernetes\.io/instance-type,PODS:.status.allocatable.pods'
+kubectl -n kube-system get daemonset aws-node -o yaml
+kubectl -n kube-system logs -l k8s-app=aws-node -c aws-node --tail=200 --prefix=true
+aws ec2 describe-instance-types --region "$AWS_REGION" \
+  --instance-types t3.medium m5.large c5.xlarge r5.2xlarge \
+  --query 'InstanceTypes[].{Type:InstanceType,vCPUs:VCpuInfo.DefaultVCpus,ENIs:NetworkInfo.MaximumNetworkInterfaces,IPv4Slots:NetworkInfo.Ipv4AddressesPerInterface}'
+```
 
-**Service Mesh 中的 Envoy 部署：**
+</details>
 
-1.  **Sidecar Pattern**：
+### 5. Istio sidecar 模式使用哪个代理，以及如何诊断？
 
-    ```yaml
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: example-app
-    spec:
-      template:
-        spec:
-          containers:
-          - name: app
-            image: app:latest
-          - name: envoy-proxy
-            image: envoyproxy/envoy:v1.20.0
-            ports:
-            - containerPort: 15001
-            volumeMounts:
-            - name: envoy-config
-              mountPath: /etc/envoy
-          volumes:
-          - name: envoy-config
-            configMap:
-              name: envoy-config
-    ```
-2. **Automatic Injection**：
-   * Istio: `sidecar.istio.io/inject: "true"` annotation
-   * AWS App Mesh: `appmesh.k8s.aws/sidecarInjectorWebhook: enabled` label
+<details>
+<summary>显示答案</summary>
 
-**Envoy 配置示例：**
+**答案：Envoy**
 
+Istio sidecar 模式使用 Envoy，其中 istiod 提供发现、路由和证书配置。旧的 Pilot/Citadel 功能已合并至 istiod，Mixer 不是当前必需的组件。其他网格可以使用不同代理；Envoy 并非 Kubernetes 或每个网格的要求。
+
+配置后，Envoy 支持连接池、HTTP/TCP 路由、重试、outlier detection、TLS 和遥测。仅添加 Envoy 容器并不能配置透明流量拦截、工作负载身份、xDS 或 mTLS。对于真实网格，请使用其受支持的注入器和代理构建。旧的独立 Envoy 1.20 镜像和不完整的 Deployment 不是有效的当前安装。
+
+以下**独立 reverse-proxy bootstrap**展示了原始 listener/route/cluster 概念。它已使用上游 Envoy 1.39.1 在本地验证。独立 HTTP 应用程序必须在同一网络命名空间的 `127.0.0.1:8080` 上监听。代理和 admin listener 仅绑定 loopback；这不是生产环境或 Kubernetes 网格部署：
 ```yaml
+admin:
+  address:
+    socket_address:
+      address: 127.0.0.1
+      port_value: 9901
 static_resources:
   listeners:
-  - address:
+  - name: local-proxy
+    address:
       socket_address:
-        address: 0.0.0.0
+        address: 127.0.0.1
         port_value: 15001
     filter_chains:
     - filters:
       - name: envoy.filters.network.http_connection_manager
         typed_config:
           "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-          stat_prefix: ingress_http
+          stat_prefix: demo_http
           route_config:
-            name: local_route
+            name: local-route
             virtual_hosts:
             - name: backend
               domains: ["*"]
               routes:
               - match:
-                  prefix: "/"
+                  prefix: /
                 route:
-                  cluster: service_backend
+                  cluster: local-app
           http_filters:
           - name: envoy.filters.http.router
             typed_config:
               "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
   clusters:
-  - name: service_backend
+  - name: local-app
     connect_timeout: 0.25s
-    type: STRICT_DNS
+    type: STATIC
     lb_policy: ROUND_ROBIN
     load_assignment:
-      cluster_name: service_backend
+      cluster_name: local-app
       endpoints:
       - lb_endpoints:
         - endpoint:
             address:
               socket_address:
-                address: backend-service
-                port_value: 80
+                address: 127.0.0.1
+                port_value: 8080
 ```
-
-**Service Mesh 中的 Envoy 集成：**
-
-1. **Istio**：
-   * 使用 Envoy 作为 sidecar proxy
-   * istiod 动态管理 Envoy 配置
-   * Pilot、Mixer、Citadel 等组件与 Envoy 集成
-2. **AWS App Mesh**：
-   * AWS App Mesh controller 注入 Envoy sidecar
-   * 与 AWS Cloud Map 集成以进行 service discovery
-   * Envoy Management Service (EMS) 管理 Envoy 配置
-3. **Consul Connect**：
-   * 使用 Envoy 作为 data plane proxy
-   * Consul 提供 service discovery 和 configuration management
-
-**Envoy 监控和调试：**
-
+将其保存为 `envoy-config.yaml`，并使用匹配的上游二进制文件验证。验证会解析配置；它不证明 backend 或工作负载身份正常工作。
 ```bash
-# Port forward Envoy admin interface
-kubectl port-forward <pod-name> 19000:19000
-
-# Check configuration and stats
-curl localhost:19000/config_dump
-curl localhost:19000/stats
-
-# Check cluster status
-curl localhost:19000/clusters
+envoy --mode validate --concurrency 1 --config-path envoy-config.yaml
 ```
-
-**性能优化注意事项：**
-
-* Resource allocation：为 Envoy 分配足够的 CPU 和 memory
-* Connection pooling：配置 upstream connection pooling 以提升性能
-* Buffer size：设置适当的 buffer sizes 以优化 memory usage
-* Filter chain：仅启用必要的 filters，以尽量减少 overhead
-
-Envoy 是现代 service mesh 架构的核心组件，在让 microservice 通信变得安全、可靠且可观测方面发挥关键作用。
+对于现有 Kubernetes 网格代理，请发现已配置的 admin port 和容器名称，而非假设为 19000。App Mesh 的默认 admin port 是 9901；Istio 通常使用 15000，部署设置可能不同。请在一个终端中运行此 port-forward：
+```bash
+set -euo pipefail
+: "${MESH_NAMESPACE:?Set the existing mesh workload namespace}"
+: "${MESH_POD:?Set the existing proxy Pod}"
+: "${ENVOY_ADMIN_PORT:?Use the admin port actually configured by that mesh}"
+kubectl -n "$MESH_NAMESPACE" port-forward --address 127.0.0.1 \
+  "pod/$MESH_POD" "19000:$ENVOY_ADMIN_PORT"
+```
+然后从另一个终端发出有界的只读查询。配置转储可能包含内部拓扑或敏感配置；请勿发布它们或将 admin listener 暴露到外部。
+```bash
+curl --fail --show-error --max-time 10 http://127.0.0.1:19000/config_dump
+curl --fail --show-error --max-time 10 http://127.0.0.1:19000/stats
+curl --fail --show-error --max-time 10 http://127.0.0.1:19000/clusters
+```
+请一并检查上游健康状态、连接池限制、重试、filter 成本、内存和请求延迟。请根据测量到的工作负载行为调优；仅为了降低开销而删除安全 filter 会改变安全模型。
 
 </details>
 
-### 8. 在 Amazon EKS clusters 中负责内部 DNS resolution 的 Kubernetes add-on 名称是什么？
+### 6. 常规 EKS 节点上的 DNS 由什么提供，以及应如何配置？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：** CoreDNS
+**答案：CoreDNS（首先识别实际的 DNS/add-on 所有者）。**
 
-**详细解释：**
+CoreDNS 是常规 EKS 计算环境中通常使用的 DNS add-on。创建方法/add-on 所有权可能不同；EKS Auto Mode 包含托管的集群 DNS，并非固有地需要传统 CoreDNS Deployment。在应用以下常规 add-on 检查前，请识别计算/DNS 所有者。ResourceNotFound 响应需要调查所有权，而不是自动重新安装：
+```bash
+set -euo pipefail
+: "${CLUSTER_NAME:?Set the existing cluster}"
+: "${AWS_REGION:?Set the cluster Region}"
+aws eks describe-addon --region "$AWS_REGION" --cluster-name "$CLUSTER_NAME" \
+  --addon-name coredns
+kubectl -n kube-system get deployment coredns -o yaml
+kubectl -n kube-system get configmap coredns -o yaml
+kubectl -n kube-system get endpointslices -l kubernetes.io/service-name=kube-dns
+```
+Service DNS 通常遵循 `<service>.<namespace>.svc.<cluster-domain>`；`cluster.local` 是常见 domain，而非不可变的 domain。Headless/ExternalName 记录不同于普通 ClusterIP 记录。不要假定每个任意 Pod IP 都有有用的 reverse-DNS 记录。
 
-在 Amazon EKS clusters 中负责内部 DNS resolution 的 Kubernetes add-on 是 CoreDNS。CoreDNS 是 Kubernetes clusters 内用于 service discovery 的 DNS server，负责处理 pods 和 services 的名称解析。
+这是示例 **Corefile**，而不是可以盲目覆盖的 ConfigMap。请保留托管配置、实际 cluster domain、probe 和 DNS Service。`pods insecure` 允许语法上有效的 Pod-IP DNS 响应而不验证 Pod；请选择预期的 Kubernetes plugin 模式。
+```text
+.:53 {
+    errors
+    health {
+        lameduck 5s
+    }
+    ready
+    kubernetes cluster.local in-addr.arpa ip6.arpa {
+        pods insecure
+        fallthrough in-addr.arpa ip6.arpa
+        ttl 30
+    }
+    prometheus :9153
+    forward . /etc/resolv.conf
+    cache 30
+    loop
+    reload
+    loadbalance
+}
+```
+`errors` 记录失败；`health` 和 `ready` 提供不同的 probe 角色；`kubernetes` 回答集群记录；`forward` 解析其他 domain；`prometheus` 暴露指标；`cache`、`reload` 和 `loadbalance` 会影响缓存/配置重新加载/记录顺序。`loop` plugin 在启动期间检测某些简单的转发循环，并不会永久检测所有动态 DNS 循环。`loadbalance` 改变 DNS 答案排序，而不是 Service 数据包转发。
 
-**CoreDNS 的主要特性：**
+对于条件转发，请使用已批准且可达的 DNS server，并允许 UDP/TCP53。VPC 子网的第一个地址，例如 10.0.0.1，并不是示例公司 DNS server。`file` plugin 提供权威 zone file，必须创建/挂载并使用有效的 SOA/记录维护；它不能替代 stub-domain forward。公网 resolver 需要有意设计 Egress 和披露 policy；它们不能凭空解析私有 hosted zone。
 
-1. **Service Discovery**：
-   * 解析格式为 `<service-name>.<namespace>.svc.cluster.local` 的 DNS names
-   * 支持对 pod IP addresses 进行 reverse DNS lookups
-2. **Plugin Architecture**：
-   * 通过各种 plugins 扩展功能
-   * Caching、metrics、logging、error handling 等
-3. **配置灵活性**：
-   * 通过 Corefile 进行 declarative configuration
-   * 支持 dynamic reload
+此 cache 片段修复了原始参数顺序：`prefetch AMOUNT DURATION PERCENTAGE`。请替换现有的 cache directive，而不是添加第二个：
+```text
+cache 30 {
+    success 10000
+    denial 1024
+    prefetch 10 2m 10%
+}
+```
+在上游 CoreDNS 1.14.7 中，`denial1000` 可被接受，但会规范化为 `1024`；`success10000` 会规范化为 `9984`。显式使用 `1024` 可保留原始的有效 denial 容量。这些容量是实现行为，并非经测量的 DNS 容量规划建议。
 
-**EKS 中的 CoreDNS 部署：**
-
-1. **Default Deployment Configuration**：
-   * 创建 EKS cluster 时自动部署
-   * 在 kube-system namespace 中运行
-   * 通常部署 2 个或更多 replicas
-2.  **验证**：
-
-    ```bash
-    # Check CoreDNS pods
-    kubectl get pods -n kube-system -l k8s-app=kube-dns
-
-    # Check CoreDNS version
-    kubectl describe deployment coredns -n kube-system | grep Image
-    ```
-
-**CoreDNS 配置 (Corefile)：**
-
+请选择**单一扩缩容所有者**。在精确的 add-on 版本/schema 支持时使用 EKS 托管的 CoreDNS autoscaling，或使用单独拥有的 HPA/cluster-proportional autoscaler。以下 HPA 仅适用于有 metrics-server 和 CPU request 的、特意自我管理的 Deployment；请勿将其与另一个 replica manager 结合使用：
 ```yaml
-apiVersion: v1
-kind: ConfigMap
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
 metadata:
   name: coredns
   namespace: kube-system
-data:
-  Corefile: |
-    .:53 {
-        errors
-        health {
-            lameduck 5s
-        }
-        ready
-        kubernetes cluster.local in-addr.arpa ip6.arpa {
-            pods insecure
-            fallthrough in-addr.arpa ip6.arpa
-            ttl 30
-        }
-        prometheus :9153
-        forward . /etc/resolv.conf
-        cache 30
-        loop
-        reload
-        loadbalance
-    }
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: coredns
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60
 ```
-
-**关键 Plugin 说明：**
-
-1. **errors**：记录 errors
-2. **health**：提供 health check endpoint
-3. **ready**：提供 readiness check endpoint
-4. **kubernetes**：处理 Kubernetes service discovery
-5. **prometheus**：暴露 Prometheus metrics
-6. **forward**：将 external DNS queries 转发到 upstream DNS servers
-7. **cache**：缓存 DNS responses
-8. **loop**：检测并防止 DNS loops
-9. **reload**：Corefile 发生变化时自动重新加载
-10. **loadbalance**：在多个 A/AAAA records 之间进行 load balancing
-
-**自定义配置示例：**
-
-1.  **为 External Domain 使用特定 DNS Server**：
-
-    ```
-    example.com {
-        forward . 10.0.0.1
-    }
-    ```
-2.  **Stub Domain Configuration**：
-
-    ```
-    internal.corp {
-        file /etc/coredns/internal.db
-    }
-    ```
-3.  **Conditional Forwarding**：
-
-    ```
-    . {
-        forward . 8.8.8.8 8.8.4.4 {
-            policy sequential
-        }
-    }
-    ```
-
-**性能优化和扩展：**
-
-1.  **Auto Scaling**：
-
-    ```yaml
-    apiVersion: autoscaling/v2
-    kind: HorizontalPodAutoscaler
-    metadata:
-      name: coredns
-      namespace: kube-system
-    spec:
-      scaleTargetRef:
-        apiVersion: apps/v1
-        kind: Deployment
-        name: coredns
-      minReplicas: 2
-      maxReplicas: 10
-      metrics:
-      - type: Resource
-        resource:
-          name: cpu
-          target:
-            type: Utilization
-            averageUtilization: 60
-    ```
-2.  **Resource Allocation Optimization**：
-
-    ```yaml
-    resources:
-      limits:
-        memory: 170Mi
-      requests:
-        cpu: 100m
-        memory: 70Mi
-    ```
-3.  **Cache Tuning**：
-
-    ```
-    cache {
-        success 10000
-        denial 1000
-        prefetch 10 10% 2m
-    }
-    ```
-
-**故障排查：**
-
-1.  **DNS Resolution Test**：
-
-    ```bash
-    # Create test pod
-    kubectl run dnsutils --image=gcr.io/kubernetes-e2e-test-images/dnsutils:1.3 -- sleep 3600
-
-    # Test DNS lookup
-    kubectl exec -it dnsutils -- nslookup kubernetes.default
-    ```
-2.  **Check CoreDNS Logs**：
-
-    ```bash
-    kubectl logs -n kube-system -l k8s-app=kube-dns
-    ```
-3.  **Check DNS Policy**：
-
-    ```bash
-    kubectl get pods <pod-name> -o jsonpath='{.spec.dnsPolicy}'
-    ```
-
-CoreDNS 是 EKS clusters 的关键组件，为 microservices 架构提供核心 service discovery 功能。通过适当的配置和监控来确保可靠的 DNS service 至关重要。
+原始资源示例（100m CPU request、70Mi memory request、170Mi memory limit）仅用于说明，并未经过工作负载验证。请监控查询速率、错误、cache 命中/未命中行为、内存/OOM 和响应延迟，再确定大小。诊断时，请使用包含 DNS 工具的现有、已批准的诊断工作负载；检查 dnsPolicy/dnsConfig/resolv.conf、kube-dns EndpointSlice 以及 policy/SG/upstream 路径。请分别测试集群 Service 和已批准的外部/私有名称。之前过时的 dnsutils 镜像和无所有者的裸 Pod 并非 DNS 诊断的前提条件。
 
 </details>
 
-## 动手实践题
-
-### 10. 说明如何在 Amazon EKS cluster 中实施 service mesh（例如 AWS App Mesh），以保护和监控 microservice 通信。请包括实施步骤、关键组件和监控方法。
+### 7. 应如何保护、观察并迁移现有 App Mesh 部署？
 
 <details>
-
 <summary>显示答案</summary>
 
-**答案：**
+**答案：审查现有图、身份和遥测，然后验证受支持的替代方案。**
 
-以下是在 Amazon EKS cluster 中实施 AWS App Mesh，以保护和监控 microservice 通信的方法：
-
-### 1. AWS App Mesh 实施步骤
-
-#### 1.1. 设置先决条件
-
+**历史运维和迁移练习：** AWS App Mesh 支持和资源访问于 **2026 年 9 月 30 日**结束。不要按照原始配方预置新网格、Private CA 和公网 Grafana。对于以前的 App Mesh 部署，请盘点其图并将其迁移到受支持的 mesh/gateway。ECS Service Connect 不是 EKS 安装目标；请针对实际使用的功能评估受支持的 Kubernetes mesh/gateway 架构。
 ```bash
-# Set up required IAM permissions
-eksctl create iamserviceaccount \
-  --cluster=my-cluster \
-  --namespace=appmesh-system \
-  --name=appmesh-controller \
-  --attach-policy-arn=arn:aws:iam::aws:policy/AWSCloudMapFullAccess,arn:aws:iam::aws:policy/AWSAppMeshFullAccess \
-  --override-existing-serviceaccounts \
-  --approve
-
-# Add Helm repository
-helm repo add eks https://aws.github.io/eks-charts
-helm repo update
+set -euo pipefail
+: "${MESH_NAMESPACE:?Set the namespace of the existing mesh workloads}"
+kubectl get meshes.appmesh.k8s.aws
+kubectl -n "$MESH_NAMESPACE" get virtualnodes.appmesh.k8s.aws,virtualservices.appmesh.k8s.aws,virtualrouters.appmesh.k8s.aws
+kubectl -n "$MESH_NAMESPACE" get deployments,services
 ```
+**1. 绘制现有图。** Mesh namespace selector 选择参与的 namespace；VirtualNode Pod selector 选择工作负载、listener 和服务发现。VirtualService 名称路由到 VirtualNode 或 VirtualRouter；router route 选择加权 VirtualNode。请盘点 backend 引用、endpoint DNS、健康检查、IAM/IRSA、注入器设置和应用程序监听端口。原始 `service-a:latest` 占位符和缺少的 service-b 工作负载不是可工作的应用程序。不要覆盖现有 ServiceAccount，也不要将 full-access policy 作为故障排除步骤附加。
 
-#### 1.2. 安装 App Mesh Controller
+**2. 区分 TLS 和双向身份验证。** STRICT 模式下仅有 server certificate 的 listener 要求加密连接，但自身不验证 client。App Mesh mTLS 需要 client certificate 和服务端 client trust，以及客户端 server trust/SAN 检查。Client certificate 和 listener validation trust 使用文件或 SDS，而非 ACM client-certificate 引用。工作负载内 App-to-Envoy 流量不会因 proxy-to-proxy mTLS 自动加密。
 
-```bash
-# Create App Mesh controller namespace
-kubectl create ns appmesh-system
-
-# Install App Mesh controller
-helm install appmesh-controller eks/appmesh-controller \
-  --namespace appmesh-system \
-  --set region=${AWS_REGION} \
-  --set serviceAccount.create=false \
-  --set serviceAccount.name=appmesh-controller
-```
-
-#### 1.3. 创建 Mesh
-
+以下是**旧配置审查示例**，而非新安装。其文件必须已安全地挂载到 proxy，certificate 必须具有所需身份/用途，service-b 必须存在，且匹配的 namespace 必须属于预期 Mesh。请按照信任设计的要求添加已批准的 client SAN 限制；仅信任 CA 会接受其符合条件的 client certificate：
 ```yaml
-# mesh.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: Mesh
-metadata:
-  name: my-mesh
-spec:
-  namespaceSelector:
-    matchLabels:
-      mesh: my-mesh
-```
-
-```bash
-kubectl apply -f mesh.yaml
-```
-
-#### 1.4. 设置 Application Namespace
-
-```bash
-# Create and label application namespace
-kubectl create ns app-namespace
-kubectl label namespace app-namespace mesh=my-mesh
-kubectl label namespace app-namespace appmesh.k8s.aws/sidecarInjectorWebhook=enabled
-```
-
-#### 1.5. 定义 Virtual Nodes 和 Services
-
-```yaml
-# virtual-node.yaml
 apiVersion: appmesh.k8s.aws/v1beta2
 kind: VirtualNode
 metadata:
@@ -810,268 +402,79 @@ spec:
     matchLabels:
       app: service-a
   listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
-      healthCheck:
-        protocol: http
-        path: "/health"
-        port: 8080
-        healthyThreshold: 2
-        unhealthyThreshold: 2
-        timeoutMillis: 2000
-        intervalMillis: 5000
+  - portMapping:
+      port: 8080
+      protocol: http
+    tls:
+      mode: STRICT
+      certificate:
+        file:
+          certificateChain: /certs/server.crt
+          privateKey: /certs/server.key
+      validation:
+        trust:
+          file:
+            certificateChain: /certs/trusted-client-ca.pem
+    outlierDetection:
+      baseEjectionDuration:
+        unit: s
+        value: 30
+      interval:
+        unit: s
+        value: 10
+      maxEjectionPercent: 50
+      maxServerErrors: 5
   backends:
-    - virtualService:
-        virtualServiceRef:
-          name: service-b
+  - virtualService:
+      virtualServiceRef:
+        name: service-b
+      clientPolicy:
+        tls:
+          enforce: true
+          ports: [8080]
+          certificate:
+            file:
+              certificateChain: /certs/client.crt
+              privateKey: /certs/client.key
+          validation:
+            trust:
+              file:
+                certificateChain: /certs/trusted-server-ca.pem
+            subjectAlternativeNames:
+              match:
+                exact: [service-b.app-namespace.svc.cluster.local]
   serviceDiscovery:
     dns:
       hostname: service-a.app-namespace.svc.cluster.local
-```
-
-```yaml
-# virtual-service.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualService
-metadata:
-  name: service-a
-  namespace: app-namespace
-spec:
-  awsName: service-a.app-namespace.svc.cluster.local
-  provider:
-    virtualRouter:
-      virtualRouterRef:
-        name: service-a-router
-```
-
-```yaml
-# virtual-router.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualRouter
-metadata:
-  name: service-a-router
-  namespace: app-namespace
-spec:
-  listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
-  routes:
-    - name: service-a-route
-      httpRoute:
-        match:
-          prefix: /
-        action:
-          weightedTargets:
-            - virtualNodeRef:
-                name: service-a
-              weight: 1
-```
-
-#### 1.6. 部署 Application
-
-```yaml
-# deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: service-a
-  namespace: app-namespace
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: service-a
-  template:
-    metadata:
-      labels:
-        app: service-a
-    spec:
-      containers:
-      - name: service-a
-        image: service-a:latest
-        ports:
-        - containerPort: 8080
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-```
-
-### 2. 使用 mTLS 配置保护通信
-
-#### 2.1. 设置 AWS Certificate Manager Private CA
-
-```bash
-# Create private CA
-aws acm-pca create-certificate-authority \
-  --certificate-authority-configuration file://ca-config.json \
-  --certificate-authority-type "ROOT" \
-  --idempotency-token 1234567890 \
-  --tags Key=Name,Value=AppMeshCA
-
-# Save CA ARN
-export CA_ARN=$(aws acm-pca list-certificate-authorities --query 'CertificateAuthorities[?Status==`ACTIVE`].Arn' --output text)
-```
-
-#### 2.2. 添加 TLS 配置
-
-```yaml
-# virtual-node-with-tls.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualNode
-metadata:
-  name: service-a
-  namespace: app-namespace
-spec:
-  podSelector:
-    matchLabels:
-      app: service-a
-  listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
-      tls:
-        mode: STRICT  # Enable mTLS
-        certificate:
-          acm:
-            certificateArn: arn:aws:acm:region:account-id:certificate/certificate-id
-  backends:
-    - virtualService:
-        virtualServiceRef:
-          name: service-b
-        clientPolicy:
-          tls:
-            enforce: true
-            ports:
-              - 8080
-            validation:
-              trust:
-                acm:
-                  certificateAuthorityArns:
-                    - ${CA_ARN}
-  serviceDiscovery:
-    dns:
-      hostname: service-a.app-namespace.svc.cluster.local
-```
-
-### 3. 设置 Monitoring 和 Observability
-
-#### 3.1. AWS X-Ray 集成
-
-```yaml
-# mesh-with-xray.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: Mesh
-metadata:
-  name: my-mesh
-spec:
-  namespaceSelector:
-    matchLabels:
-      mesh: my-mesh
-  egressFilter:
-    type: ALLOW_ALL
-  tracing:
-    awsXRay:
-      logLevel: INFO
-```
-
-```bash
-# Deploy X-Ray daemon
-kubectl apply -f https://github.com/aws/aws-app-mesh-controller-for-k8s/raw/master/config/samples/xray-daemon.yaml
-```
-
-#### 3.2. Amazon CloudWatch 集成
-
-```yaml
-# envoy-config.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: Mesh
-metadata:
-  name: my-mesh
-spec:
-  namespaceSelector:
-    matchLabels:
-      mesh: my-mesh
-  egressFilter:
-    type: ALLOW_ALL
-  serviceDiscovery:
-    ipPreference: IPv4_PREFERRED
   logging:
     accessLog:
       file:
         path: /dev/stdout
-        format:
-          json:
-            - key: "source"
-              value: "%DOWNSTREAM_REMOTE_ADDRESS%"
-            - key: "destination"
-              value: "%UPSTREAM_REMOTE_ADDRESS%"
-            - key: "protocol"
-              value: "%PROTOCOL%"
 ```
+不要将账户中的所有 ACTIVE CA 选择到一个变量中。创建 root CA 需要显式配置以及激活/certificate 步骤，并会产生费用；它不会立即生成可用 certificate。请保留精确的预期 ARN。App Mesh Kubernetes CRD 字段区分大小写（`certificateARN`、`certificateAuthorityARNs`）；纯 YAML 文件中的 `${CA_ARN}` 不是 shell 插值。所示基于文件的示例避免假装缺失的 CA 工作流程已运行。
 
-```bash
-# Deploy CloudWatch agent
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cloudwatch-namespace.yaml
+对于现有 plaintext peer，请分阶段进行有文档记录的 PERMISSIVE 迁移，预置 client/server identity 和 trust，测试接受和拒绝的 peer，然后要求 STRICT。检查 `ssl.handshake`、`ssl.no_certificate`、`ssl.fail_verify_no_cert` 和 `ssl.fail_verify_san` 以及真实请求结果。仅成功的 server-TLS handshake 并不足以证明 mTLS。
 
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-serviceaccount.yaml
-
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-configmap.yaml
-
-kubectl apply -f https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/cwagent/cwagent-daemonset.yaml
-```
-
-#### 3.3. Prometheus 和 Grafana 设置
-
-```bash
-# Create Prometheus namespace
-kubectl create namespace prometheus
-
-# Install Prometheus
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
-helm install prometheus prometheus-community/prometheus \
-  --namespace prometheus \
-  --set alertmanager.persistentVolume.storageClass="gp2" \
-  --set server.persistentVolume.storageClass="gp2"
-
-# Install Grafana
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
-helm install grafana grafana/grafana \
-  --namespace prometheus \
-  --set persistence.storageClassName="gp2" \
-  --set persistence.enabled=true \
-  --set adminPassword='EKS!sAWSome' \
-  --values grafana.yaml \
-  --set service.type=LoadBalancer
-```
-
+**3. 在迁移期间保留可观测性。** 原始配方中的 `Mesh.spec.tracing`、`Mesh.spec.logging` 和 `Mesh.spec.serviceDiscovery` 并非已审查 controller 1.13.1 CRD 中的字段。access logging 属于 VirtualNode（如上）。App Mesh Envoy image tracing 设置是独立的，例如此**容器环境片段**需要在 2000 上运行的本地 X-Ray daemon/collector、权限、endpoint 访问和 trace-context 传播：
 ```yaml
-# grafana.yaml
+env:
+- name: ENABLE_ENVOY_XRAY_TRACING
+  value: "1"
+- name: XRAY_DAEMON_PORT
+  value: "2000"
+```
+请使用已批准的 collector 收集 proxy 实际的 `/stats` 或 Prometheus endpoint。CloudWatch 需要配置 scraping/export/EMF；不要假定 `AWS/AppMesh` RequestCount/Latency metric 会自动出现。构建 dashboard 前，请盘点实际 namespace、metric 名称、dimension 和单位。保留现有的 CloudWatch/Prometheus/Grafana 所有者、credential 和受支持的 StorageClass。避免浮动 manifest、硬编码的 Grafana admin 密码和未经审查的公网 LoadBalancer。此可选 Grafana provisioning 片段仅标识现有 Prometheus datasource；它不会安装或保护任一系统：
+```yaml
+apiVersion: 1
 datasources:
-  datasources.yaml:
-    apiVersion: 1
-    datasources:
-    - name: Prometheus
-      type: prometheus
-      url: http://prometheus-server.prometheus.svc.cluster.local
-      access: proxy
-      isDefault: true
+- name: Prometheus
+  type: prometheus
+  url: http://prometheus-server.prometheus.svc.cluster.local
+  access: proxy
+  isDefault: true
 ```
-
-### 4. 配置 Traffic Management 和高级功能
-
-#### 4.1. Canary Deployment 配置
-
+**4. 明确映射流量行为。** 此旧 router 示例假设两个带版本的 VirtualNode 均已存在且具有健康 endpoint。权重不是精确请求计数的保证。Outlier detection 是 endpoint 驱逐，不同于 connection-pool circuit-breaking 限制。原始的四个 HTTP retry event 字符串均有效：`client-error` 表示 409，`stream-error` 表示拒绝的流。请为总体 timeout 预算内的幂等操作选择 retry；retry 可能放大失败负载。
 ```yaml
-# virtual-router-canary.yaml
 apiVersion: appmesh.k8s.aws/v1beta2
 kind: VirtualRouter
 metadata:
@@ -1079,184 +482,167 @@ metadata:
   namespace: app-namespace
 spec:
   listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
+  - portMapping:
+      port: 8080
+      protocol: http
   routes:
-    - name: service-a-route
-      httpRoute:
-        match:
-          prefix: /
-        action:
-          weightedTargets:
-            - virtualNodeRef:
-                name: service-a-v1
-              weight: 90
-            - virtualNodeRef:
-                name: service-a-v2
-              weight: 10
+  - name: service-a-route
+    httpRoute:
+      match:
+        prefix: /
+      action:
+        weightedTargets:
+        - virtualNodeRef:
+            name: service-a-v1
+          weight: 90
+        - virtualNodeRef:
+            name: service-a-v2
+          weight: 10
+      retryPolicy:
+        maxRetries: 3
+        perRetryTimeout:
+          unit: ms
+          value: 2000
+        httpRetryEvents:
+        - gateway-error
 ```
-
-#### 4.2. Circuit Breaker 配置
-
-```yaml
-# virtual-node-circuit-breaker.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualNode
-metadata:
-  name: service-a
-  namespace: app-namespace
-spec:
-  # ... existing configuration ...
-  listeners:
-    - portMapping:
-        port: 8080
-        protocol: http
-      outlierDetection:
-        baseEjectionDuration:
-          unit: s
-          value: 30
-        interval:
-          unit: s
-          value: 10
-        maxEjectionPercent: 50
-        maxServerErrors: 5
-```
-
-#### 4.3. Retry Policy 配置
-
-```yaml
-# virtual-router-retry.yaml
-apiVersion: appmesh.k8s.aws/v1beta2
-kind: VirtualRouter
-metadata:
-  name: service-a-router
-  namespace: app-namespace
-spec:
-  # ... existing configuration ...
-  routes:
-    - name: service-a-route
-      httpRoute:
-        match:
-          prefix: /
-        action:
-          weightedTargets:
-            - virtualNodeRef:
-                name: service-a
-              weight: 1
-        retryPolicy:
-          maxRetries: 3
-          perRetryTimeout:
-            unit: ms
-            value: 2000
-          httpRetryEvents:
-            - server-error
-            - gateway-error
-            - client-error
-            - stream-error
-```
-
-### 5. Monitoring 和 Troubleshooting
-
-#### 5.1. 检查 Envoy Proxy Logs
-
-```bash
-# Check Envoy sidecar logs for specific pod
-kubectl logs <pod-name> -c envoy -n app-namespace
-
-# Stream all Envoy logs
-kubectl logs -f -l app=service-a -c envoy -n app-namespace
-```
-
-#### 5.2. 访问 Envoy Admin Interface
-
-```bash
-# Set up port forwarding
-kubectl port-forward <pod-name> -n app-namespace 9901:9901
-
-# Access in browser
-# http://localhost:9901/
-```
-
-#### 5.3. 检查 X-Ray Traces
-
-导航到 AWS Management Console 中的 X-Ray service，以查看 service maps 和 traces。
-
-#### 5.4. 创建 CloudWatch Dashboard
-
-```bash
-# Prepare JSON file for CloudWatch dashboard creation
-cat > appmesh-dashboard.json << EOF
-{
-  "widgets": [
-    {
-      "type": "metric",
-      "x": 0,
-      "y": 0,
-      "width": 12,
-      "height": 6,
-      "properties": {
-        "metrics": [
-          [ "AWS/AppMesh", "RequestCount", "MeshName", "my-mesh", "VirtualNodeName", "service-a", { "stat": "Sum" } ]
-        ],
-        "period": 60,
-        "region": "${AWS_REGION}",
-        "title": "Request Count"
-      }
-    },
-    {
-      "type": "metric",
-      "x": 12,
-      "y": 0,
-      "width": 12,
-      "height": 6,
-      "properties": {
-        "metrics": [
-          [ "AWS/AppMesh", "Latency", "MeshName", "my-mesh", "VirtualNodeName", "service-a", { "stat": "Average" } ]
-        ],
-        "period": 60,
-        "region": "${AWS_REGION}",
-        "title": "Latency"
-      }
-    }
-  ]
-}
-EOF
-
-# Create dashboard using AWS CLI
-aws cloudwatch put-dashboard --dashboard-name AppMeshDashboard --dashboard-body file://appmesh-dashboard.json
-```
-
-### 6. Best Practices 和注意事项
-
-#### 6.1. Resource Requirements
-
-* 由于每个 pod 都会添加 Envoy sidecar，因此需要规划 node resources
-* 通常为每个 Envoy proxy 分配 100-200m CPU 和 128-256Mi memory
-
-#### 6.2. 渐进式实施策略
-
-1. **Phased Approach**：
-   * 从非业务关键 services 开始
-   * 使用 traffic mirroring 评估影响
-   * 成功验证后逐步扩大范围
-2. **mTLS Implementation**：
-   * 从 PERMISSIVE mode 开始
-   * 验证所有 services 都兼容
-   * 切换到 STRICT mode
-
-#### 6.3. Performance Optimization
-
-* 调整 Envoy resource limits
-* 设置适当的 health check intervals
-* 尽量减少不必要的 logging 和 tracing
-
-#### 6.4. Security Hardening
-
-* 使用 least privilege IAM policies
-* 定期轮换 certificates
-* 通过 network policies 实施 defense in depth
-
-AWS App Mesh 为在 EKS clusters 中保护和监控 microservice 通信提供了强大的 service mesh 解决方案。适当的配置和监控可以显著提升 application 的可靠性、安全性和可观测性。
+**5. 逐步验证和切换。** 在迁移流量前，比较路由、已授权/未授权 peer、DNS、TLS 轮换、重试、故障恢复、trace 和 metric 连续性。在剩余产品支持窗口内保留 rollback 路径。原始的 100–200m CPU 和 128–256Mi proxy memory 值是**未经验证的示例估计**，不是测量值或有保证的容量。请测量真实饱和度、内存、延迟和错误率。本审计未预置任何 mesh、CA、collector 或云 dashboard。
 
 </details>
+
+### 8. VPC CNI 1.23.0 中哪个变量配置附加的 ENI MTU？
+
+- A. `ENI_MTU`
+- B. `AWS_VPC_ENI_MTU`
+- C. `VPC_MTU_SIZE`
+- D. `MAX_ENI`
+
+<details>
+<summary>显示答案</summary>
+
+**答案：B. `AWS_VPC_ENI_MTU`**
+
+`POD_MTU` 配置 Pod 虚拟接口，并在未设置时从 ENI MTU 派生。`ENI_MTU` 是错误的名称。请匹配实际路径 MTU 和规划的 node/Pod rollout；可接受的数值不保证 gateway/tunnel/远程 endpoint 接受该数据包大小。SG 不是 MTU 设置设备。
+
+</details>
+
+### 9. 严格 Pod-SG TCP early-demux workaround 应放在哪里？
+
+- A. 应用程序 Deployment
+- B. CoreDNS ConfigMap
+- C. CNI init container
+- D. LoadBalancer annotation
+
+<details>
+<summary>显示答案</summary>
+
+**答案：C. `aws-vpc-cni-init`**
+
+文档记录的 `DISABLE_TCP_EARLY_DEMUX=true` 设置属于 init container，由 Helm `init.env` 表示。在主 `aws-node` container 上设置它不会应用此初始化时更改。请确认 strict-mode kubelet-probe 问题；标准 Pod-SG 模式不需要此 workaround。
+
+</details>
+
+### 10. Kubernetes NetworkPolicy 保证哪种规则顺序优化？
+
+- A. 将最常用的规则放在最前面
+- B. 按名称字母顺序排序
+- C. 最后创建限制性 policy
+- D. 不保证顺序
+
+<details>
+<summary>显示答案</summary>
+
+**答案：D. 无；匹配的允许规则是累加的。**
+
+没有可移植的“第一个匹配即生效”或最新 policy 优先级。selector/direction 和允许规则的并集决定隔离。供应商的 tier/order API 是独立的。请保留所需限制，并测量 policy 编程/运行时成本，而不是仅根据数量删除规则。
+
+</details>
+
+### 11. 子网已耗尽。增加 WARM_IP_TARGET 会增加地址容量吗？
+
+- A. 会，它会扩展子网
+- B. 不会，它会增加备用地址需求
+- C. 会，它会绕过 ENI 限制
+- D. 会，它会修复每个 ContainerCreating Pod
+
+<details>
+<summary>显示答案</summary>
+
+**答案：B. 不会；它会请求更多备用地址。**
+
+在容量存在时，较大的 warm target 可以减少分配延迟，但也会预留地址并可能加剧耗尽。请独立识别子网空间、ENI 槽、maxPods、API 节流和 prefix 碎片化。Prefix delegation 不会创建更多 IPv4 地址总量。
+
+</details>
+
+### 12. 应检查哪个 API 以获取当前 Service backend 地址和条件？
+
+- A. 仅 Node event
+- B. Ingress annotation
+- C. EndpointSlice
+- D. 仅 Service ClusterIP
+
+<details>
+<summary>显示答案</summary>
+
+**答案：C. EndpointSlice**
+
+使用 `kubernetes.io/service-name=<service>` 在 Service namespace 中查询 EndpointSlice。请结合 Service selector 和 targetPort 检查地址、端口以及 ready/serving/terminating 条件。旧版 Endpoints 对象可能会截断大型 endpoint 集；空结果可能表明 selector/readiness 问题，而不是 load-balancer 故障。
+
+</details>
+
+### 13. trafficDistribution: PreferSameZone 表示什么？
+
+- A. 永不跨越 AZ 边界
+- B. 优先同一 zone，并允许回退
+- C. 将现有 Pod 移至一个 AZ
+- D. 覆盖所有 Local 流量 policy
+
+<details>
+<summary>显示答案</summary>
+
+**答案：B. 优先使用可用的同一区域 endpoint，并允许回退。**
+
+它是兼容 Service proxy 的路由偏好，而非 AZ 隔离 policy。请确保有足够的本地容量。现有 topology-mode Auto annotation 具有优先级。Local internal/external 流量 policy 对各自流量施加更严格的 node-local 要求，并且在没有本地 endpoint 时可能会丢弃流量。
+
+</details>
+
+### 14. 计算假设的 10 Gbps 流量、20 ms RTT 的带宽延迟积。
+
+<details>
+<summary>显示答案</summary>
+
+**答案：25,000,000 字节，约 23.84 MiB。**
+
+```text
+10,000,000,000 bits/s × 0.020 s / 8 = 25,000,000 bytes
+```
+这是算术示例，并非 EKS benchmark，也不是建议将每个 socket buffer 设置为该值。请考虑实际 EC2 单流/burst 限制、TCP auto-tuning、window scaling、并发连接和内存压力。若无测量，先前的 16 MiB 最大值不能称为最优。Keepalive 在已启用的空闲 socket 上运行；它不同于 HTTP pooling 和 buffer sizing。
+
+</details>
+
+### 15. 如何区分 DNS、Service 选择和应用程序连接故障？
+
+<details>
+<summary>显示答案</summary>
+
+**答案：收集证据，然后使用正向对照测试实际协议。**
+
+在将 ContainerCreating 分类为网络问题之前，请检查受影响 Pod 的 event。解析已知的集群 Service 和预期 hostname，检查 Service/EndpointSlice selector-port-readiness 一致性，然后从同一源比较 Pod-IP 和 Service-URL 访问。测试已知允许的路径，以免将缺少工具、DNS 失败或 backend 停止误判为 policy 拒绝。请使用源章节中有界的诊断：
+```bash
+set -euo pipefail
+: "${APP_NAMESPACE:?Set the affected namespace}"
+: "${APP_POD:?Set the affected Pod}"
+: "${APP_SERVICE:?Set the affected Service}"
+kubectl -n "$APP_NAMESPACE" describe pod "$APP_POD"
+kubectl -n "$APP_NAMESPACE" get events --field-selector "involvedObject.name=$APP_POD" --sort-by=.metadata.creationTimestamp
+kubectl -n "$APP_NAMESPACE" get service "$APP_SERVICE" -o yaml
+kubectl -n "$APP_NAMESPACE" get endpointslices \
+  -l "kubernetes.io/service-name=$APP_SERVICE" -o yaml
+kubectl -n "$APP_NAMESPACE" get networkpolicy
+kubectl -n kube-system logs -l k8s-app=aws-node -c aws-node --tail=200 --prefix=true
+```
+对于 load balancer，请识别 controller/class、scheme、target type 和 target-health 原因。验证实际应用程序/health port、SG 和路由路径、TLS/SNI 以及 Host 路由。仅 ICMP 行为不能证明 TCP/UDP NetworkPolicy 强制执行。更改一个已确认的原因，保留所有者的 rollback 路径，并重复相同检查。这些示例不声称执行生产网络测试。
+
+</details>
+
+官方参考：[Private EKS](https://docs.aws.amazon.com/eks/latest/userguide/private-clusters.html)、[VPC CNI 1.23.0](https://github.com/aws/amazon-vpc-cni-k8s/blob/v1.23.0/README.md)、[CoreDNS cache](https://coredns.io/plugins/cache/)、[App Mesh mTLS](https://docs.aws.amazon.com/app-mesh/latest/userguide/mutual-tls.html)、[App Mesh metrics](https://docs.aws.amazon.com/app-mesh/latest/userguide/metrics.html)、[Envoy 1.39.1](https://github.com/envoyproxy/envoy/releases/tag/v1.39.1)。

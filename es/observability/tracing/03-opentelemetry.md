@@ -1,70 +1,70 @@
 # OpenTelemetry
 
-> **Base de revisión**: Collector Contrib 0.160.0; Operator 0.158.0; versiones de lenguajes más abajo
-> **Última actualización**: September 13, 2026
+> **Base de revisión**: Collector Contrib 0.160.0; Operator 0.158.0; versiones de lenguajes a continuación
+> **Última actualización**: October 12, 2026
 
 ## Introducción
 
-OpenTelemetry (OTel) es un framework de observabilidad para software nativo de la nube. Proporciona estándares neutrales respecto al proveedor para generar, recopilar y gestionar tres señales: trazas (traces), métricas (metrics) y logs. La retrospectiva de la CNCF con fecha del 24 de julio de 2026 lo describió como el segundo proyecto después de Kubernetes en velocidad de contribución. La madurez del proyecto y la estabilidad de cada SDK o componente son cuestiones distintas.
+OpenTelemetry (OTel) es un marco de observabilidad para software cloud-native. Proporciona estándares independientes de proveedores para generar, recopilar y administrar tres señales: Traces, Metrics y Logs. La retrospectiva de la CNCF del 24 de julio de 2026 lo describió como el segundo tras Kubernetes en velocidad de contribución. La madurez del proyecto y la estabilidad de SDK/componentes individuales son aspectos separados.
 
-### Actualización de julio de 2026: graduación en la CNCF
+### Actualización de julio de 2026: graduación de la CNCF
 
-OpenTelemetry alcanzó el estado de proyecto **graduado** (graduated) en la CNCF en **mayo de 2026**; el artículo del 24 de julio es una retrospectiva. Este es el nivel de madurez más alto de la fundación, que también ostentan proyectos como Kubernetes y Prometheus. La graduación indica que el gobierno, las prácticas de seguridad y la adopción del proyecto han sido evaluados para uso en producción. La retrospectiva aborda las convenciones semánticas de GenAI, la observabilidad en navegador y móvil, y el gobierno de esquemas junto con las herramientas de despliegue. Consulte la entrada del blog de la CNCF ["OpenTelemetry has graduated… Now what?"](https://www.cncf.io/blog/2026/07/24/opentelemetry-has-graduated-now-what/) para conocer los antecedentes y la hoja de ruta.
+OpenTelemetry alcanzó el estado **graduated** de la CNCF en **mayo de 2026**; el artículo del 24 de julio es una retrospectiva. Este es el nivel de madurez más alto de la fundación, que también tienen proyectos como Kubernetes y Prometheus. La graduación indica que la gobernanza, las prácticas de seguridad y la adopción del proyecto han sido evaluadas para uso en producción. La retrospectiva trata las convenciones semánticas de GenAI, la observabilidad de navegador/móvil, la gobernanza de esquemas y las herramientas de despliegue. Consulta la publicación del blog de la CNCF ["OpenTelemetry has graduated… Now what?"](https://www.cncf.io/blog/2026/07/24/opentelemetry-has-graduated-now-what/) para conocer el contexto y la hoja de ruta.
 
 ## ¿Qué es OpenTelemetry?
 
 OpenTelemetry nació de la fusión de los proyectos OpenTracing y OpenCensus:
 
-![Historical milestones include OpenTracing joining CNCF (2016), the OpenCensus Go repository (2017), and the OpenTelemetry merger (2019), followed by Specification, SDKs, Collector and Protocol.](../../.gitbook/assets/en-observability-tracing-03-opentelemetry-0.png)
+![Los hitos históricos incluyen la incorporación de OpenTracing a la CNCF (2016), el repositorio Go de OpenCensus (2017) y la fusión de OpenTelemetry (2019), seguidos por Specification, SDKs, Collector y Protocol.](../../.gitbook/assets/en-observability-tracing-03-opentelemetry-0.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-03-opentelemetry-0.html)
 
 ## Conceptos fundamentales
 
-### Las tres señales
+### Tres señales
 
-Este capítulo se centra en trazas, métricas y logs. El profiling es otra señal en evolución; el soporte y la estabilidad varían según la implementación. Los IDs de traza/log y los exemplars de métricas requieren la instrumentación adecuada y la configuración correspondiente en el backend.
+Este capítulo se centra en traces, metrics y logs. El profiling es otra señal en evolución; la compatibilidad y la estabilidad varían según la implementación. Los ID de trace/log y los ejemplares de métricas requieren la instrumentación y la configuración de backend adecuadas.
 
 | Señal | Descripción | Casos de uso |
 |--------|-------------|-----------|
-| **Trazas** | Trazado distribuido de peticiones | Análisis de latencia, mapeo de dependencias |
-| **Métricas** | Mediciones numéricas | Uso de recursos, SLI/SLO |
+| **Traces** | Trazado distribuido de solicitudes | Análisis de latencia, mapeo de dependencias |
+| **Metrics** | Mediciones numéricas | Uso de recursos, SLI/SLO |
 | **Logs** | Registros de eventos | Depuración, auditoría |
 
-### Componentes principales
+### Componentes fundamentales
 
-![Application code emits telemetry through the OTel API and SDK into a receive-process-export pipeline that fans out to five observability backends: Tempo, Prometheus, Loki, X-Ray, and Datadog.](../../.gitbook/assets/en-observability-tracing-03-opentelemetry-2.png)
+![El código de la aplicación emite telemetría mediante la API y el SDK de OTel hacia un flujo de recepción-procesamiento-exportación que se distribuye a cinco backends de observabilidad: Tempo, Prometheus, Loki, X-Ray y Datadog.](../../.gitbook/assets/en-observability-tracing-03-opentelemetry-2.png)
 
 [🔍 Ver diagrama interactivo](https://www.atomai.click/kubernetes-docs/archmaps/en-observability-tracing-03-opentelemetry-2.html)
 
-La figura enumera las opciones de backend por señal. Solo están activos los exporters configurados; el ejemplo base que aparece más abajo no habilita automáticamente todos los proveedores.
+La figura enumera las opciones de backend por señal. Solo están activos los exporters configurados; el ejemplo base siguiente no habilita automáticamente todos los proveedores.
 
 
 ## SDK de OpenTelemetry
 
-El Collector, el Operator, el agente de Java y los SDK de cada lenguaje tienen números de versión independientes. Estas plantillas de cargas de trabajo Linux se han comprobado contra los esquemas de Kubernetes 1.35: las imágenes de aplicación, los namespaces, los certificados y los servicios de destino deben prepararlos sus responsables. La matriz general del Operator no elimina los requisitos específicos de cada receta, como los sidecars nativos. Las comprobaciones locales no acreditan una aplicación desplegada en EKS.
+Collector, Operator, Java agent y los SDK de lenguaje tienen números de versión independientes. Estas plantillas de cargas de trabajo Linux se comprueban con los esquemas de Kubernetes 1.35: los propietarios deben preparar las imágenes de aplicación, namespaces, certificados y Services de destino. La matriz más amplia de Operator no elimina requisitos específicos de la receta, como los sidecars nativos. Las comprobaciones locales no establecen una aplicación EKS desplegada.
 
-| Componente | Base y límites |
+| Componente | Base y límite |
 |---|---|
-| Collector Contrib independiente | 0.160.0; componentes y esquemas comprobados con su binario real |
-| Operator | 0.158.0; su tabla de compatibilidad indica Kubernetes 1.25–1.36 y cert-manager v1 |
-| Agente de Java | 2.31.1, dirigido al SDK 1.65.0; no es la misma versión que la imagen Java predeterminada del Operator |
+| Standalone Collector Contrib | 0.160.0; componentes y esquemas comprobados con su binario real |
+| Operator | 0.158.0; su tabla de compatibilidad enumera Kubernetes 1.25–1.36 y cert-manager v1 |
+| Java agent | 2.31.1, orientado al SDK 1.65.0; no es la misma versión que la imagen Java predeterminada de Operator |
 | Python | SDK/exporter 1.44.0 e instrumentation/distro 0.65b0; Python ≥3.10 |
-| Ejemplo CommonJS de Node.js | SDK-node 0.220.0, auto-instrumentations-node 0.78.0, resources 2.9.0, API 1.9.1 |
+| Ejemplo Node.js CommonJS | SDK-node 0.220.0, auto-instrumentations-node 0.78.0, resources 2.9.0, API 1.9.1 |
 
-El Operator usa por defecto el Collector 0.158.0. Las cargas de trabajo independientes 0.160.0 que aparecen más abajo no constituyen una actualización de un Collector gestionado por el Operator. Compruebe la intersección con las versiones de EKS soportadas; la versión más reciente de Kubernetes no entra automáticamente en la matriz del Operator.
+Operator usa Collector 0.158.0 de forma predeterminada. Las cargas de trabajo standalone 0.160.0 siguientes no son una actualización de Collector administrada por Operator. Comprueba la intersección con las versiones compatibles de EKS; la versión más reciente de Kubernetes no está automáticamente dentro de la matriz de Operator.
 
 ### Instrumentación automática
 
-A fecha del 13 de septiembre de 2026, la página del ciclo de vida de EKS indica 1.34, 1.35 y 1.36 en soporte estándar. La base de esquemas 1.35 se encuentra dentro de esa lista y de la matriz del Operator; aun así, esto no sustituye a las comprobaciones de aceptación en vivo de la plataforma y los add-ons.
+A fecha de 12 de octubre de 2026, la compatibilidad estándar de EKS incluye 1.34–1.37. La base de esquema 1.35 se encuentra dentro de esta lista y de la matriz de Operator; esto aún no reemplaza las comprobaciones de aceptación reales de la plataforma/add-on.
 
-La instrumentación sin código (zero-code) engancha las librerías soportadas; no descubre operaciones de negocio arbitrarias. Elija para cada proceso una única vía: un agente/lanzador preparado directamente o la inyección del Operator. No inicialice un segundo SDK sobre un provider ya configurado. Las siguientes imágenes de aplicación son marcadores de posición para sus propias compilaciones, incluidos sus comandos de arranque y sus dependencias.
+La instrumentación sin código conecta bibliotecas compatibles; no descubre operaciones de negocio arbitrarias. Elige un agent/launcher preparado directamente o la inyección mediante Operator para un proceso. No inicialices un segundo SDK sobre un provider ya configurado. Las siguientes imágenes de aplicación son marcadores de posición para tus propias compilaciones, incluidos sus comandos de inicio y dependencias.
 
-Prepare un namespace `ecommerce` y, en él, un Secret `otel-client-tls` que contenga `ca.crt`, `tls.crt` y `tls.key`. El certificado de cliente debe ser aceptado por el Collector, cuyo certificado debe coincidir con `otel-collector.otel.svc.cluster.local`. Los archivos del Secret se montan en modo solo lectura; adapte el acceso por UID/GID a su imagen. En las variables de entorno solo aparecen **rutas** de certificados, nunca el contenido de las claves ni tokens de portador. Estas plantillas usan OTLP HTTP/protobuf sobre TLS en el puerto 4318.
+Prepara un namespace `ecommerce` y un Secret `otel-client-tls` allí que contenga `ca.crt`, `tls.crt` y `tls.key`. El certificado de cliente debe ser aceptado por el Collector, cuyo certificado debe coincidir con `otel-collector.otel.svc.cluster.local`. Los archivos de Secret se montan como de solo lectura; adapta el acceso de UID/GID a tu imagen. En las variables de entorno solo aparecen las **rutas** de certificados, no el contenido de claves ni tokens bearer. Estas plantillas usan OTLP HTTP/protobuf en el puerto TLS 4318.
 
 #### Instrumentación automática de Java
 
-Descargue el agente con versión fijada en la compilación de su aplicación y verifique la suma de comprobación del artefacto de la release. El JAR de la versión 2.31.1 pesa 25.107.554 bytes, lo que excede el límite de 1 MiB de los ConfigMap de Kubernetes. Inclúyalo en la imagen o utilice la inyección del Operator; un ConfigMap no es un mecanismo de distribución de binarios de agente.
+Descarga el agent fijado en la compilación de tu aplicación y verifica la suma de comprobación del recurso de lanzamiento. El JAR 2.31.1 tiene 25,107,554 bytes, por encima del límite de 1 MiB de ConfigMap de Kubernetes. Inclúyelo en la imagen o usa la inyección de Operator; un ConfigMap no es un mecanismo de distribución de binarios de agent.
 
 
 ```bash
@@ -79,7 +79,7 @@ printf '%s  %s\n' \
 # Add to the application's existing Dockerfile; not a complete image build.
 COPY opentelemetry-javaagent.jar /opt/otel/opentelemetry-javaagent.jar
 ```
-Combine la opción del agente con cualquier valor existente de `JAVA_TOOL_OPTIONS`; no descarte las opciones de JVM de la aplicación. El selector del Deployment y las etiquetas del Pod deben coincidir.
+Combina la opción de agent con cualquier `JAVA_TOOL_OPTIONS` existente; no descartes las opciones JVM de la aplicación. El selector de Deployment y las etiquetas de Pod deben coincidir.
 
 
 ```yaml
@@ -143,7 +143,7 @@ spec:
 ```
 #### Instrumentación automática de Python
 
-Para una aplicación Flask, instale los paquetes correspondientes en su entorno de compilación y fije las dependencias resueltas de la aplicación. Otros frameworks necesitan su paquete de instrumentación correspondiente. Este ejemplo selecciona explícitamente el exporter HTTP, en lugar de enviar el valor predeterminado HTTP de Python al puerto gRPC 4317.
+Para una aplicación Flask, instala paquetes coincidentes en su entorno de compilación y bloquea las dependencias resueltas de la aplicación. Otros frameworks necesitan su paquete de instrumentación correspondiente. Este ejemplo selecciona explícitamente el exporter HTTP, en lugar de enviar el valor predeterminado HTTP de Python al puerto gRPC 4317.
 
 
 ```bash
@@ -225,7 +225,7 @@ npm install --save-exact \
   @opentelemetry/auto-instrumentations-node@0.78.0
 # Commit package-lock.json and use npm ci for subsequent application builds.
 ```
-Guárdelo como `tracing.cjs`, cargado antes de los módulos de la aplicación y del framework. Este es un ejemplo CommonJS; la carga con ESM requiere la configuración específica de la guía del lenguaje. El SDK lee las variables de entorno explícitas de OTEL para exporter y TLS que se indican más abajo. Para lectores de métricas programáticos, la configuración actual usa `metricReaders`, que sustituye a la opción singular obsoleta. Integre `shutdownTelemetry()` después del paso de drenaje de peticiones propio de la aplicación.
+Guarda como `tracing.cjs`, cargado antes de los módulos de aplicación/framework. Este es un ejemplo CommonJS; la carga ESM necesita la configuración independiente de la guía de lenguaje. El SDK lee las variables de entorno explícitas de exporter/TLS siguientes. Para lectores de métricas programáticos, la configuración actual usa `metricReaders`, que reemplaza la opción singular obsoleta. Integra `shutdownTelemetry()` después del paso propio de la aplicación de drenaje de solicitudes.
 
 
 ```javascript
@@ -316,15 +316,15 @@ spec:
           secretName: otel-client-tls
           defaultMode: 288
 ```
-Estos ejemplos establecen `OTEL_LOGS_EXPORTER=none` de forma deliberada. Habilitar un exporter de logs no hace que se recoja la salida estándar de la aplicación: instale el bridge/handler de logging adecuado o un recolector de logs, y revise antes la exposición de la carga útil. El sampler `parentbased_always_on` sigue respetando un padre no muestreado. Si en su lugar opta por un muestreo en cabecera (head sampling) del 10 %, el Collector de cola no podrá recuperar los spans descartados.
+Estos ejemplos establecen `OTEL_LOGS_EXPORTER=none` deliberadamente. Habilitar un exporter de logs no sigue la salida estándar de la aplicación: instala el bridge/handler de logging apropiado o un recopilador de logs, y revisa primero la exposición de la carga útil. El sampler `parentbased_always_on` aún respeta un padre sin muestreo. Si en cambio eliges un head sampling del 10 %, el Collector tail no puede recuperar los spans descartados.
 
 ### Instrumentación manual
 
-Reutilice la instancia o el provider de OpenTelemetry inicializado por el agente o por la aplicación. Sin un provider del SDK, las llamadas a la API pueden no hacer nada. Estos spans de flujos de trabajo de negocio son INTERNAL: los clientes HTTP y de base de datos instrumentados crean sus propios spans CLIENT y propagan el contexto. Crear manualmente un span CLIENT por sí solo no envía una petición ni inyecta contexto de traza.
+Reutiliza la instancia/provider de OpenTelemetry inicializada por el agent o la aplicación. Sin un provider de SDK, las llamadas a la API pueden no realizar ninguna operación. Estos spans de flujo de trabajo de negocio son INTERNAL: los clientes HTTP/base de datos instrumentados crean sus propios spans CLIENT y propagan el contexto. Crear manualmente solo un span CLIENT no envía una solicitud ni inyecta el contexto de trace.
 
 #### Instrumentación manual de Java
 
-La aplicación proporciona las callbacks de inventario y de pago. No se registran IDs de pedido o de cliente, importes, IDs de transacción ni mensajes de excepción sin procesar. Estas son operaciones de aplicación, no una implementación de un servicio de pagos ni un despliegue de Spring probado.
+La aplicación proporciona los callbacks de inventario/pago. No se registran ID de pedido/cliente, importes, ID de transacción ni mensajes de excepción sin procesar. Estas son operaciones de aplicación, no una implementación de payment-service ni un despliegue Spring probado.
 
 
 ```java
@@ -375,7 +375,7 @@ public final class OrderTelemetry {
 ```
 #### Instrumentación manual de Python
 
-El decorador síncrono preserva los resultados y los errores mientras finaliza los spans anidados. Registra únicamente el tipo de error, evitando eventos duplicados con la excepción sin procesar. Una función asíncrona requiere un wrapper compatible con async. Aporte sus propias callbacks de consulta parametrizada a base de datos, validación, persistencia y publicación de eventos; la validación local utilizó callbacks sintéticas y un exporter en memoria.
+El decorador síncrono preserva resultados y errores mientras finaliza spans anidados. Registra solo el tipo de error, evitando eventos de excepción sin procesar duplicados. Una función async requiere un wrapper compatible con async. Proporciona tus propios callbacks de búsqueda en base de datos parametrizada, validación, persistencia y publicación de eventos; la validación local usó callbacks sintéticos y un exporter en memoria.
 
 
 ```python
@@ -430,7 +430,7 @@ def create_user(user_data, validate, save, publish):
         publish(result)
     return result
 ```
-Para una instrumentación real de bases de datos o mensajería, siga la versión de la convención implementada, como `db.system.name`, `db.operation.name` y `messaging.destination.name`. No copie IDs de usuario en cadenas de telemetría SQL ni utilice consultas sin procesar como etiquetas de métricas. Las callbacks de negocio anteriores no son prueba de una ejecución en PostgreSQL ni en Kafka.
+Para la instrumentación real de base de datos/mensajería, sigue la versión de convención implementada, como `db.system.name`, `db.operation.name` y `messaging.destination.name`. No copies ID de usuario en cadenas de telemetría SQL ni uses consultas sin procesar como etiquetas de métricas. Los callbacks de negocio anteriores no prueban la ejecución de PostgreSQL ni Kafka.
 
 ## OTEL Collector
 
@@ -452,15 +452,15 @@ flowchart TD
     L --> K["Loki native OTLP HTTP / mTLS"]
 ```
 
-Rutas de señal para la configuración que aparece a continuación. El bloque de preprocesamiento de trazas resume un procesamiento equivalente en dos pipelines de trazas separados. Las métricas de spans se derivan antes del muestreo de cola; las métricas y los logs entrantes usan sus propios pipelines.
+Rutas de señal para la configuración siguiente. El cuadro de preprocesamiento de traces resume el procesamiento equivalente en dos pipelines de traces separados. Las métricas de spans se ramifican antes del tail sampling; las métricas y logs entrantes usan sus propios pipelines.
 
-### Configuración del Collector
+### Configuración de Collector
 
-Guárdelo como `otel-collector-config.yaml`. Se trata de una única instancia activa con estado para muestreo y agregación en un laboratorio, no de una garantía de alta disponibilidad o capacidad. Un pipeline de trazas independiente deriva métricas **antes del muestreo de cola**. Los spans descartados por muestreo en cabecera o por filtrado siguen estando ausentes de esas métricas. Estos contadores cuentan spans observados, no peticiones únicas de usuario final; seleccione tipos de span adecuados y dimensiones acotadas para los SLI de peticiones. Los contadores acumulativos de métricas de spans exportan inicialmente cero en la versión 0.160.0; evalúe los volcados posteriores antes de interpretar el primer valor como ausencia de tráfico.
+Guarda como `otel-collector-config.yaml`. Esta es una instancia única activa de muestreo/agregación con estado para un laboratorio, no una garantía de HA/capacidad. Un pipeline de traces independiente deriva métricas **antes del tail sampling**. Los spans muestreados en origen o filtrados siguen ausentes de esas métricas. Estos contadores cuentan spans observados, no solicitudes únicas de usuarios finales; selecciona tipos de span y dimensiones acotadas adecuados para los SLI de solicitudes. Los contadores acumulativos de métricas de spans exportan inicialmente cero en 0.160.0; evalúa los vaciados posteriores antes de interpretar el primer valor como ausencia de tráfico.
 
-Prepare Tempo con OTLP habilitado, un receptor de remote write compatible con Prometheus y la ingesta OTLP nativa de Loki, con pasarelas de TLS y autenticación proporcionadas por sus responsables. Los nombres de pasarela de los ejemplos siguientes no son servicios creados por esta guía. Prometheus necesita su receptor de remote write habilitado (`--web.enable-remote-write-receiver` si se usa Prometheus directamente). La base del exporter de Loki termina en `/otlp`; el exporter HTTP añade `/v1/logs`. Configure los metadatos estructurados de Loki y la asignación de tenants de confianza según sea necesario; una cabecera de tenant no es autenticación.
+Prepara Tempo con OTLP habilitado, un receptor compatible con remote-write de Prometheus y la ingesta OTLP nativa de Loki, con gateways TLS/autenticación proporcionados por el operador. Los nombres de gateway de ejemplo siguientes no son Services creados por esta guía. Prometheus necesita tener habilitado su receptor remote-write (`--web.enable-remote-write-receiver` al usar Prometheus directamente). La base del exporter de Loki termina en `/otlp`; el exporter HTTP agrega `/v1/logs`. Configura los metadatos estructurados de Loki y el mapeo de tenant de confianza según sea necesario; un encabezado de tenant no es autenticación.
 
-Las variables de entorno identifican certificados y endpoints existentes. Todos los receivers configurados usan TLS mutuo; no se habilita CORS con comodín para navegadores ni un endpoint público de profiling. Las eliminaciones de atributos nombrados son controles limitados, no un enmascaramiento completo de los cuerpos de los logs, los eventos de span, los atributos de recurso o cargas útiles arbitrarias. Minimice también los datos en el SDK.
+Las variables de entorno identifican certificados y endpoints existentes. Todos los receivers configurados usan TLS mutuo; no se habilita CORS de navegador con comodín ni un endpoint público de profiling. Las eliminaciones de atributos nombradas son controles limitados, no un enmascaramiento completo de cuerpos de logs, eventos de span, atributos de recursos o cargas útiles arbitrarias. Minimiza también los datos en el SDK.
 
 
 ```yaml
@@ -608,13 +608,13 @@ service:
                 host: 127.0.0.1
                 port: 8888
 ```
-Las políticas de muestreo positivas son condiciones OR, no una escala ordenada de prioridades. Los servicios seleccionados pueden conservarse independientemente de la probabilidad de base. La latencia usa una comparación estricta `>1000 ms`. Las decisiones basadas en temporizador no demuestran que la traza esté completa, y el filtro de health elimina deliberadamente los spans coincidentes incluso si contienen errores; filtrar spans individuales puede dejar trazas parciales.
+Las políticas de muestreo positivas son condiciones OR, no una escalera de prioridad ordenada. Los servicios seleccionados se pueden retener independientemente de la probabilidad de referencia. La latencia usa una comparación estricta `>1000 ms`. Las decisiones basadas en temporizador no prueban la finalización del trace, y el filtro de salud elimina deliberadamente los spans coincidentes aunque tengan errores; filtrar spans individuales puede dejar traces parciales.
 
-El límite duro de memoria es de 384 MiB y el límite blando de 288 MiB, dejando margen por debajo del límite de 512 MiB del contenedor en la plantilla. Los rechazos, los reintentos, las colas y las ráfagas siguen requiriendo medición. Los límites de batch, trazas y cardinalidad aquí son valores de demostración, no resultados de benchmark.
+El límite duro de memoria es 384 MiB y el límite suave es 288 MiB, dejando margen por debajo del límite de contenedor de 512 MiB de la plantilla. El rechazo, reintentos, colas y ráfagas aún necesitan medición. Los límites de batch/trace/cardinalidad aquí son configuraciones de demostración, no resultados de benchmark.
 
 ### Carga de trabajo y configuración de instancia única
 
-Prepare el namespace `otel` y los Secrets `otel-ingest-tls` / `otel-backend-tls` con `tls.crt`, `tls.key` y `ca.crt`. Use SAN de certificado que coincidan con los nombres del Service o de la pasarela correspondientes, un bundle de confianza adecuado y certificados con los usos de servidor/cliente correctos. Adapte el acceso a archivos con UID/GID 10001. El ConfigMap contiene configuración en texto, no claves privadas. `Recreate` evita el solapamiento habitual del surge en despliegues progresivos para este sampler de instancia única, a costa de tiempo de indisponibilidad; no preserva las trazas en memoria entre reinicios.
+Prepara el namespace `otel` y los Secrets `otel-ingest-tls` / `otel-backend-tls` con `tls.crt`, `tls.key`, `ca.crt`. Usa SAN de certificado que coincidan con los nombres relevantes de Service/gateway, un paquete de confianza apropiado y certificados con los usos correctos de servidor/cliente. Adapta el acceso a archivos de UID/GID 10001. El mapa de configuración contiene configuración de texto, no claves privadas. `Recreate` evita la superposición normal de rolling-surge para este sampler de instancia única, a costa de tiempo de inactividad; no conserva los traces en memoria entre reinicios.
 
 
 ```bash
@@ -756,24 +756,24 @@ spec:
     port: 4318
     targetPort: otlp-http
 ```
-### Recolección y enriquecimiento opcionales
+### Recopilación y enriquecimiento opcionales
 
-| Requisito | Configuración adicional necesaria |
+| Requisito | Configuración independiente necesaria |
 |---|---|
-| Clientes heredados de Jaeger/Zipkin | Sus componentes receiver siguen disponibles; habilite solo los protocolos y puertos necesarios y haga coincidir los IDs de receiver en un pipeline. Exporte a Jaeger por OTLP, no con el exporter de Jaeger eliminado. |
-| Métricas propias del Collector | `service.telemetry.metrics.readers` configura el lector de Prometheus actual. El antiguo campo `address` se ha eliminado. Haga scraping del endpoint de loopback mediante una ruta de monitorización diseñada de forma deliberada. |
-| Métricas del clúster de Kubernetes | Ejecute un único receiver `k8s_cluster` activo, o configure su extensión de elección de líder. Aporte credenciales de API y RBAC revisado, y luego conéctelo a un pipeline de métricas. Las cargas de trabajo predeterminadas sin token que aparecen arriba no proporcionan esos prerrequisitos. |
-| Logs de nodo/contenedor o métricas de host | Añada el receiver, los montajes y los permisos adecuados; un DaemonSet por sí solo no los recopila. |
-| Detección de recursos EC2/EKS | Configure de forma deliberada el detector deseado y su acceso a metadatos/API; no sustituya la identidad de la carga de trabajo por la identidad del host del Collector. |
-| Métricas derivadas de spans | Use el connector `span_metrics`, con una unidad de duración explícita y dimensiones acotadas. El antiguo processor spanmetrics se ha eliminado. |
+| Clientes Jaeger/Zipkin heredados | Sus componentes receiver siguen disponibles; habilita solo los protocolos/puertos necesarios y haz coincidir los ID de receiver en un pipeline. Exporta a Jaeger mediante OTLP, no mediante el exporter Jaeger eliminado. |
+| Métricas propias de Collector | `service.telemetry.metrics.readers` configura el lector Prometheus actual. El campo antiguo `address` se eliminó. Obtén métricas del endpoint de loopback mediante una ruta de monitor diseñada deliberadamente. |
+| Métricas de clúster de Kubernetes | Ejecuta un receiver `k8s_cluster` activo, o configura su extensión de elección de líder. Proporciona credenciales de API y RBAC revisado, y luego conéctalo a un pipeline de métricas. Las cargas de trabajo sin token predeterminadas anteriores no proporcionan esos requisitos previos. |
+| Logs de nodo/contenedor o métricas de host | Agrega el receiver, los montajes y los permisos adecuados; un DaemonSet por sí solo no los recopila. |
+| Detección de recursos EC2/EKS | Configura deliberadamente el detector deseado y su acceso a metadatos/API; no sustituyas la identidad de carga de trabajo por la identidad del host de Collector. |
+| Métricas derivadas de spans | Usa el conector `span_metrics`, con una unidad de duración explícita y dimensiones acotadas. El processor spanmetrics antiguo se eliminó. |
 
-Consulte la [guía del collector](../logging/05-collectors.md) y el [receiver de clúster de Kubernetes](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/receiver/k8sclusterreceiver). No declare un receiver o processor sin usar y dé por sentado que está activo.
+Consulta la [guía de collector](../logging/05-collectors.md) y el [receiver de clúster de Kubernetes](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/receiver/k8sclusterreceiver). No declares un receiver/processor sin usar y supongas que está activo.
 
-## Patrones de despliegue en EKS
+## Patrones de despliegue de EKS
 
-Estos son patrones de despliegue alternativos, no una pila para aplicar indiscriminadamente. Un relay sin estado reenvía las tres señales al nivel único de muestreo descrito arriba. Mantenga el muestreo de cola y la agregación de spans fuera de un nivel de nodo/sidecar/HPA con balanceo de carga arbitrario. Varias instancias de muestreo requieren enrutamiento basado en el ID de traza y un plan para los cambios de endpoint, las trazas en curso, los reinicios y el almacenamiento; un Service o un HPA por sí solos no aportan nada de eso.
+Estos son patrones de despliegue alternativos, no una pila que aplicar indiscriminadamente. Un relay sin estado reenvía las tres señales al nivel de muestreo único anterior. Mantén el tail sampling y la agregación de spans fuera de un nivel de node/sidecar/HPA con equilibrio de carga arbitrario. Varias instancias de muestreo requieren enrutamiento consciente del ID de trace y un plan para cambios de endpoint, traces en curso, reinicios y almacenamiento; un Service o HPA por sí solo no proporciona nada de ello.
 
-Guarde `otel-relay-config.yaml` y cree `otel-relay-config` con el mismo procedimiento de generación de ConfigMap en el lado del cliente. `OTEL_UPSTREAM_ENDPOINT` y el certificado de cliente identifican el Collector aguas arriba preparado por separado. El relay no mantiene estado respecto a las decisiones de muestreo; sus colas de batching y exportación en memoria siguen teniendo límites ante fallos y apagados.
+Guarda `otel-relay-config.yaml` y crea `otel-relay-config` mediante el mismo procedimiento de generación de ConfigMap en el cliente. `OTEL_UPSTREAM_ENDPOINT` y el certificado de cliente identifican el Collector ascendente preparado por separado. El relay no tiene estado con respecto a las decisiones de muestreo; sus colas de exportación/batching en memoria siguen teniendo límites de fallos y apagado.
 
 
 ```yaml
@@ -855,7 +855,7 @@ service:
 ```
 ### Patrón DaemonSet
 
-Un DaemonSet se ejecuta en los nodos Linux elegibles, no en EKS Fargate. Configure selectores y tolerations para los nodos aprobados; aquí no hay ninguna toleration general ni reserva de hostPort. `internalTrafficPolicy: Local` enruta este Service únicamente a un endpoint listo en el nodo del llamante y descarta el tráfico si no existe ninguno. No es un mecanismo de reserva para clientes en Fargate. Las aplicaciones deben enviar la telemetría explícitamente a este endpoint.
+Un DaemonSet se ejecuta en nodos Linux aptos, no en EKS Fargate. Configura selectores/tolerations para nodos aprobados; aquí no hay una toleration general ni reserva de hostPort. `internalTrafficPolicy: Local` enruta este Service solo a un endpoint listo en el nodo del llamador y descarta el tráfico si no existe ninguno. No es un mecanismo de respaldo para clientes Fargate. Las aplicaciones deben enviar explícitamente la telemetría a este endpoint.
 
 
 ```yaml
@@ -973,9 +973,9 @@ spec:
     targetPort: otlp-http
   internalTrafficPolicy: Local
 ```
-### Patrón sidecar
+### Patrón Sidecar
 
-Use un ConfigMap `otel-sidecar-config` separado con la configuración siguiente. Solo el propio Pod utiliza su receiver OTLP en loopback y sin cifrar; el tráfico aguas arriba usa TLS mutuo. Este perfil tiene un límite duro de 192 MiB y blando de 144 MiB para un sidecar de 256 MiB. La imagen de la aplicación debe incluir el SDK o agente elegido; una variable de endpoint no añade instrumentación por sí sola. Este ejemplo con esquema de Kubernetes 1.35 usa un sidecar nativo (`initContainers` con `restartPolicy: Always`, GA en 1.33). Su startup probe precede al arranque de la aplicación, y un apagado normal detiene los contenedores de aplicación antes que el sidecar. La entrega al backend y la recuperación ante fallos abruptos siguen siendo comprobaciones aparte.
+Usa un ConfigMap `otel-sidecar-config` independiente con la configuración siguiente. Solo el mismo Pod usa su receiver OTLP de texto sin cifrar en loopback; el tráfico ascendente usa TLS mutuo. Este perfil tiene un límite duro de 192 MiB / suave de 144 MiB para un sidecar de 256 MiB. La imagen de la aplicación debe incluir el SDK/agent elegido; una variable de endpoint no agrega instrumentación por sí misma. Este ejemplo de esquema de Kubernetes 1.35 usa un sidecar nativo (`initContainers` con `restartPolicy: Always`, GA en 1.33). Su startup probe precede al inicio de la aplicación, y el apagado normal detiene los contenedores de aplicación antes que el sidecar. La entrega al backend y la recuperación ante fallos abruptos siguen siendo comprobaciones independientes.
 
 
 ```yaml
@@ -1149,9 +1149,9 @@ spec:
           failureThreshold: 30
   replicas: 1
 ```
-### Patrón gateway
+### Patrón Gateway
 
-Este HPA escala el **relay** sin estado, no el sampler con estado. Metrics Server y unas requests y capacidad adecuadas son prerrequisitos. Tres réplicas, la anti-afinidad preferida y el rango 3–10 son opciones ilustrativas, no una prueba de alta disponibilidad o de rendimiento. Los collectors basados en Deployment pueden considerarse para Fargate o Auto Mode solo después de comprobar sus requisitos de ejecución, almacenamiento, red y receivers.
+Este HPA escala el **relay** sin estado, no el sampler con estado. Metrics Server y solicitudes/capacidad adecuadas son requisitos previos. Tres réplicas, anti-affinity preferida y el rango 3–10 son opciones ilustrativas, no una prueba de HA ni rendimiento. Los collectors basados en Deployment pueden considerarse para Fargate o Auto Mode solo después de comprobar sus requisitos de ejecución, almacenamiento, redes y receiver.
 
 
 ```yaml
@@ -1305,11 +1305,11 @@ spec:
         averageUtilization: 80
 ```
 
-## Operator de Kubernetes
+## Kubernetes Operator
 
-El Operator 0.158.0 tiene su propia matriz de compatibilidad. Su manifiesto de release da por supuesta una instalación preparada de cert-manager v1; utilice una release compatible y mantenida siguiendo la [guía de cert-manager](../../security/10-cert-manager.md), en lugar de instalar el obsoleto ejemplo 1.13.3. Revise los cambios en las CRD y las políticas de red predeterminadas de la versión 0.158.0 antes de actualizar una instalación existente gestionada por su responsable.
+Operator 0.158.0 tiene una matriz de compatibilidad independiente. Su manifiesto de lanzamiento presupone una instalación preparada de cert-manager v1; usa una versión compatible mantenida de la [guía de cert-manager](../../security/10-cert-manager.md), en lugar de instalar el ejemplo obsoleto 1.13.3. Revisa los cambios de CRD y las políticas de red predeterminadas de 0.158.0 antes de actualizar una instalación existente administrada por el propietario.
 
-### Instalación del Operator
+### Instalación de Operator
 
 
 ```bash
@@ -1322,9 +1322,9 @@ printf '%s  %s\n' \
 : "${KUBE_CONTEXT:?Set the reviewed cluster context}"
 kubectl --context "$KUBE_CONTEXT" apply -f opentelemetry-operator.yaml
 ```
-### CR Instrumentation
+### CR de Instrumentation
 
-Tanto el recurso como la aplicación de ejemplo están en `ecommerce`. El Operator con versión fijada proporciona sus imágenes de instrumentación predeterminadas versionadas; inspeccione las imágenes inyectadas y no las sustituya todas por `latest`. Sus valores predeterminados para Java y Python no son las versiones instaladas directamente más arriba. Use una sola vía de instrumentación por proceso. El montaje de los Secrets de TLS sigue siendo responsabilidad de la aplicación.
+El recurso y la aplicación de ejemplo están ambos en `ecommerce`. El Operator fijado proporciona sus imágenes de instrumentación predeterminadas versionadas; inspecciona las imágenes inyectadas y no las sustituyas todas por `latest`. Sus valores predeterminados de Java/Python no son las versiones instaladas directamente anteriores. Usa una ruta de instrumentación por proceso. Los montajes TLS de Secret siguen siendo responsabilidad de la aplicación.
 
 
 ```yaml
@@ -1361,11 +1361,11 @@ spec:
   - name: OTEL_METRIC_EXPORT_INTERVAL
     value: '60000'
 ```
-Aquí se seleccionan W3C Trace Context y baggage. B3 es una opción de interoperabilidad opcional únicamente cuando el paquete de propagator del lenguaje y los servicios pares lo soportan. No incluya credenciales ni datos personales en el baggage; la propagación puede cruzar límites de servicio y de confianza.
+Aquí se seleccionan W3C Trace Context y baggage. B3 es una opción de interoperabilidad opcional solo cuando el paquete de propagator del lenguaje y los pares lo admiten. No coloques credenciales ni datos personales en baggage; la propagación puede cruzar límites de Service y de confianza.
 
 ### Inyección de instrumentación automática
 
-La anotación va en la plantilla del Pod, no solo en los metadatos del Deployment. `otel-instrumentation` selecciona el recurso con ese nombre en el namespace del Pod; `namespace/name` permite seleccionar explícitamente otro namespace. Existen anotaciones a nivel de namespace, pero no habilite Java, Python y Node.js indiscriminadamente para todos los Pods. La inyección se produce cuando se admiten nuevos Pods, no de forma retroactiva sobre los Pods en ejecución.
+La anotación pertenece a la plantilla de Pod, no solo a los metadatos de Deployment. `otel-instrumentation` selecciona el recurso nombrado en el namespace del Pod; `namespace/name` puede seleccionar explícitamente otro namespace. Existen anotaciones para todo el namespace, pero no habilites Java, Python y Node.js indiscriminadamente para cada Pod. La inyección se produce cuando se admiten Pods nuevos, no de forma retroactiva en Pods en ejecución.
 
 
 ```yaml
@@ -1427,11 +1427,11 @@ spec:
           secretName: otel-client-tls
           defaultMode: 288
 ```
-Java, Python, Node.js, .NET, Go, Apache HTTPD y Nginx tienen prerrequisitos distintos. En esta release, la instrumentación automática de Go necesita la ruta del ejecutable de destino e inyecta un componente privilegiado con UID 0; no es una receta general para PSS Restricted ni para Fargate. Verifique la configuración de las features del operator y la guía de cada lenguaje. Los valores predeterminados HTTP de Python, .NET y Go no deben apuntarse a un endpoint gRPC sin la configuración de protocolo correspondiente.
+Java, Python, Node.js, .NET, Go, Apache HTTPD y Nginx tienen requisitos previos distintos. En esta versión, la instrumentación automática de Go necesita la ruta del ejecutable de destino e inyecta un componente privilegiado UID-0; no es una receta general para Restricted-PSS/Fargate. Verifica los ajustes de características de Operator y la guía por lenguaje. Los valores predeterminados HTTP de Python/.NET/Go no deben apuntar a un endpoint gRPC sin una configuración de protocolo coincidente.
 
-## Configuración multibackend
+## Configuración multi-backend
 
-Fusione este fragmento en la configuración base ya revisada; no es autónomo. Cada backend necesita su propio endpoint, confianza y autorización. AWS X-Ray usa la Región configurada y la identidad de la carga de trabajo; siga la [guía de X-Ray](./02-xray.md) para conocer las relaciones de confianza y permisos exactos de IAM. Desactivar la indexación de atributos no es enmascaramiento. El objeto api de Datadog proviene de un api.yaml gestionado como Secret que contiene key (una cadena entre comillas) y site. Añada su montaje de Secret en modo solo lectura a la carga de trabajo; la carga de trabajo base no lo monta. No se coloca ninguna clave en variables de entorno. En esta auditoría no se ejecutó ninguna llamada a servicios de AWS, Datadog o Jaeger.
+Fusiona este fragmento en la configuración base revisada; no es autónomo. Cada backend necesita su propio endpoint, confianza y autorización. AWS X-Ray usa la Region configurada y la identidad de carga de trabajo; sigue la [guía de X-Ray](./02-xray.md) para conocer la confianza/permisos IAM exactos. Deshabilitar la indexación de atributos no es enmascaramiento. El objeto api de Datadog procede de un api.yaml administrado por Secret que contiene key (una cadena entre comillas) y site. Agrega su montaje de Secret de solo lectura a la carga de trabajo; la carga de trabajo base no lo monta. No se coloca ninguna clave en variables de entorno. No se ejecutó ninguna llamada de servicio AWS/Datadog/Jaeger en esta auditoría.
 
 
 ```yaml
@@ -1458,32 +1458,32 @@ service:
       - datadog
       - otlp_grpc/jaeger
 ```
-La distribución en abanico (fan-out) no garantiza una entrega atómica ni una retención idéntica en todos los backends.
+La distribución no proporciona entrega atómica ni retención idéntica entre backends.
 
-### Actualización de julio de 2026: observar un límite de red para el tráfico de agentes de IA
+### Actualización de julio de 2026: observación de un límite de red para tráfico de AI Agent
 
-El [artículo de la CNCF del 8 de julio](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/) describe un prototipo de un solo nodo con NGINX y OTel. Su límite depende de reglas de red que bloqueen rutas de salida alternativas, no solo de establecer una variable de proxy. Los spans describen el tráfico visible para el proxy configurado; el tratamiento de TLS, el muestreo, la retención en el collector y la seguridad del proxy siguen siendo relevantes. Esta es una capa de control de red y no demuestra que las decisiones de un agente sean correctas ni seguras.
+El [artículo de la CNCF del 8 de julio](https://www.cncf.io/blog/2026/07/08/network-boundary-for-ai-agents-using-nginx-and-opentelemetry/) informa de un prototipo de un solo nodo que usa NGINX y OTel. Su límite depende de reglas de red que bloquean rutas de salida alternativas, no solo de configurar una variable de proxy. Los spans describen el tráfico visible para el proxy configurado; la gestión de TLS, el muestreo, la retención del collector y la seguridad del proxy aún son importantes. Esta es una capa de control de red y no establece que las decisiones de un agent sean correctas o seguras.
 
-### Actualización de agosto de 2026: destilar consultas SQL lentas en métricas de fiabilidad
+### Actualización de agosto de 2026: convertir consultas SQL lentas en métricas de fiabilidad
 
-El [artículo de la CNCF del 21 de agosto](https://www.cncf.io/blog/2026/08/21/how-to-turn-slow-queries-into-actionable-reliability-metrics-with-opentelemetry/) y su [laboratorio](https://github.com/causely-oss/slow-query-lab) comparan la duración de las consultas, el impacto ponderado por tráfico y las métricas derivadas de spans frente a líneas base de anomalías. Conserve los ejemplos históricos del artículo como ejemplos, no como mediciones de capacidad para su clúster. El propio artículo advierte sobre el SQL sin procesar en las etiquetas de métricas, los parámetros sensibles, la cardinalidad y el calentamiento de la línea base. Depure y acote las dimensiones antes de adoptar una configuración de laboratorio; una anomalía de latencia es un síntoma, no la prueba de una causa raíz.
+El [artículo de la CNCF del 21 de agosto](https://www.cncf.io/blog/2026/08/21/how-to-turn-slow-queries-into-actionable-reliability-metrics-with-opentelemetry/) y su [laboratorio](https://github.com/causely-oss/slow-query-lab) comparan la duración de consultas, el impacto ponderado por tráfico y las métricas derivadas de spans con líneas base de anomalías. Conserva los ejemplos históricos del artículo como ejemplos, no como mediciones de capacidad para tu clúster. El propio artículo advierte sobre SQL sin procesar en etiquetas de métricas, parámetros sensibles, cardinalidad y calentamiento de la línea base. Sanitiza y acota las dimensiones antes de adoptar una configuración de laboratorio; una anomalía de latencia es un síntoma, no una prueba de causa raíz.
 
-## Buenas prácticas
+## Prácticas recomendadas
 
-### 1. Estandarizar los atributos de recurso
+### 1. Estandariza los atributos de recursos
 
 | Atributo | Ejemplo / origen |
 |---|---|
 | `service.name`, `service.version`, `service.namespace` | `order-service`, `1.2.3`, `ecommerce`; configuración de la aplicación |
-| `deployment.environment.name` | `demo`; sustituye al obsoleto `deployment.environment` |
-| `cloud.provider`, `cloud.region`, `cloud.availability_zone` | Metadatos de despliegue verificados, no conjeturas a partir del host del Collector |
-| `k8s.cluster.name`, `k8s.namespace.name`, `k8s.pod.name`, `k8s.deployment.name` | Enriquecimiento de Kubernetes correctamente configurado o metadatos de la carga de trabajo |
+| `deployment.environment.name` | `demo`; reemplaza el obsoleto `deployment.environment` |
+| `cloud.provider`, `cloud.region`, `cloud.availability_zone` | Metadatos de despliegue verificados, no suposiciones del host de Collector |
+| `k8s.cluster.name`, `k8s.namespace.name`, `k8s.pod.name`, `k8s.deployment.name` | Enriquecimiento de Kubernetes o metadatos de carga de trabajo correctamente configurados |
 
-Este es un inventario de atributos, no YAML de processors del Collector. Un Resource identifica al productor. Evite copiar todos los atributos de recurso a las etiquetas de métricas; los nombres de Pod, los IDs de usuario y el texto de consultas sin procesar pueden provocar cardinalidad alta. Los profiles son una señal adicional en evolución; esta guía se centra en trazas, métricas y logs, sin afirmar que exista una estabilidad uniforme entre SDK.
+Este es un inventario de atributos, no YAML de processor de Collector. Un Resource identifica al productor. Evita copiar cada atributo de recurso en etiquetas de métricas; los nombres de Pod, los ID de usuario y el texto de consultas sin procesar pueden causar cardinalidad alta. Los perfiles son una señal adicional en evolución; esta guía se centra en traces, metrics y logs, sin afirmar estabilidad uniforme de SDK.
 
 ### 2. Estrategia de muestreo
 
-Para un ejemplo avanzado —errores, latencia superior a 2 segundos, una condición del 50 % para servicios críticos y un 5 % de base— trate cada regla positiva como una condición OR, no como una prioridad por primera coincidencia ni como una cuota reservada. Otra regla puede conservar una traza. Si se requieren clases exclusivas o un presupuesto de tasa de spans, diseñe y pruebe esa política de forma explícita. El muestreo en cabecera, los spans descartados, los cambios de shard y las llegadas tardías siguen siendo límites aparte.
+Para un ejemplo avanzado —errores, latencia >2 segundos, una condición del 50 % para servicios críticos y una referencia del 5 %— trata cada regla positiva como una condición OR, no como prioridad de primera coincidencia o cuota reservada. Otra regla puede retener un trace. Si se requieren clases exclusivas o un presupuesto de tasa de spans, diseña y prueba esa política explícitamente. El head sampling, los spans descartados, los cambios de shard y la llegada tardía siguen siendo límites independientes.
 
 
 ```yaml
@@ -1522,32 +1522,32 @@ processors:
 ```
 ### 3. Consideraciones de seguridad
 
-TLS de servidor sin `client_ca_file` no equivale a exigir certificados de cliente. Proteja ambas direcciones, valide los nombres y el ciclo de vida de los certificados y restrinja el acceso al Service, a la red y al backend. El tráfico sin cifrar por loopback dentro del mismo Pod en el ejemplo del sidecar es un límite de confianza distinto. La telemetría de navegador necesita su propio diseño de origen, autenticación y límites de tasa, no CORS con comodín.
+El TLS de servidor sin `client_ca_file` no es lo mismo que exigir certificados de cliente. Protege ambas direcciones, valida los nombres y el ciclo de vida de los certificados, y restringe el acceso a Service/red/backend. El texto sin cifrar en loopback del mismo Pod del ejemplo de sidecar es un límite de confianza separado. La telemetría de navegador necesita su propio diseño de origen/autenticación/límite de tasa, no CORS con comodín.
 
-La acción `hash` del processor de attributes usa SHA-1. Aplicar hash a IDs predecibles o a texto SQL no es anonimización; siguen siendo posibles la recuperación por diccionario y la vinculación. Es preferible no recopilar valores sensibles y, después, eliminar explícitamente los campos identificados antes de la exportación. Revise por separado los cuerpos de los logs, los eventos de span y los atributos de recurso. Los exporters de depuración detallados o los endpoints de profiling pueden exponer datos y deberían ser diagnósticos temporales y controlados.
+La acción `hash` del processor de atributos usa SHA-1. Aplicar hash a ID predecibles o texto SQL no es anonimización; la recuperación mediante diccionario y la vinculabilidad siguen siendo posibles. Es preferible no recopilar valores sensibles y luego eliminar campos identificados explícitamente antes de exportar. Revisa por separado los cuerpos de logs, eventos de span y atributos de recursos. Los exporters de depuración detallada o endpoints de profiling pueden exponer datos y deben ser diagnósticos temporales y controlados.
 
 ### Validación y límites
 
-La validación local utilizó el Collector 0.160.0 real con tráfico OTLP sintético y endpoints mTLS en loopback, incluidos el tratamiento de trazas y logs y las métricas de spans previas al muestreo de cola. La comprobación de remote write acreditó la entrega por HTTPS a un sumidero de pruebas, no un resultado de ingesta en un Prometheus real. Los spans manuales de Python usaron el SDK 1.44.0 y un exporter en memoria. Se comprobaron los esquemas de Kubernetes/Instrumentation y la sintaxis de Node.js; no se ejecutaron el arranque de las aplicaciones Java/Node, la inyección sin código, los productos de backend reales, EKS, IAM ni el autoescalado.
+La validación local usó el Collector real 0.160.0 con tráfico OTLP sintético y endpoints de loopback mTLS, incluidos el manejo de trace/log y las métricas de spans previas al tail. La comprobación de remote-write estableció entrega HTTPS a un destino de prueba, no un resultado de ingesta de Prometheus en vivo. Los spans manuales de Python usaron SDK 1.44.0 y un exporter en memoria. Se comprobaron los esquemas de Kubernetes/Instrumentation y la sintaxis de Node.js; no se ejecutaron el inicio de aplicación Java/Node, la inyección sin código, productos backend reales, EKS, IAM ni el escalado automático.
 
 ### Referencias oficiales
 
-- [Collector 0.160.0 components](https://github.com/open-telemetry/opentelemetry-collector-releases/blob/v0.160.0/distributions/otelcol-contrib/manifest.yaml)
-- [Operator 0.158.0 compatibility](https://github.com/open-telemetry/opentelemetry-operator/blob/v0.158.0/docs/getting-started/compatibility.md)
-- [Operator auto-instrumentation](https://github.com/open-telemetry/opentelemetry-operator/blob/v0.158.0/docs/auto-instrumentation/README.md)
+- [Componentes de Collector 0.160.0](https://github.com/open-telemetry/opentelemetry-collector-releases/blob/v0.160.0/distributions/otelcol-contrib/manifest.yaml)
+- [Compatibilidad de Operator 0.158.0](https://github.com/open-telemetry/opentelemetry-operator/blob/v0.158.0/docs/getting-started/compatibility.md)
+- [Instrumentación automática de Operator](https://github.com/open-telemetry/opentelemetry-operator/blob/v0.158.0/docs/auto-instrumentation/README.md)
 - [Java agent 2.31.1](https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/tag/v2.31.1)
-- [OTLP exporter configuration](https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/)
-- [Collector scaling](https://opentelemetry.io/docs/collector/scaling/)
+- [Configuración de exporter OTLP](https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/)
+- [Escalado de Collector](https://opentelemetry.io/docs/collector/scaling/)
 - [Tail sampling](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/processor/tailsamplingprocessor)
-- [Span metrics connector](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/connector/spanmetricsconnector)
-- [Memory limiter](https://github.com/open-telemetry/opentelemetry-collector/tree/v0.160.0/processor/memorylimiterprocessor)
-- [Loki native OTLP](https://grafana.com/docs/loki/latest/send-data/otel/)
+- [Conector de métricas de spans](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/connector/spanmetricsconnector)
+- [Limitador de memoria](https://github.com/open-telemetry/opentelemetry-collector/tree/v0.160.0/processor/memorylimiterprocessor)
+- [OTLP nativo de Loki](https://grafana.com/docs/loki/latest/send-data/otel/)
 - [W3C Trace Context](https://www.w3.org/TR/trace-context/)
-- [Kubernetes native sidecars](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/)
-- [EKS Kubernetes lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
-- [OpenTracing CNCF milestones](https://www.cncf.io/projects/opentracing/)
-- [OpenCensus Go repository](https://github.com/census-instrumentation/opencensus-go)
+- [Sidecars nativos de Kubernetes](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/)
+- [Ciclo de vida de Kubernetes de EKS](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
+- [Hitos de OpenTracing de la CNCF](https://www.cncf.io/projects/opentracing/)
+- [Repositorio Go de OpenCensus](https://github.com/census-instrumentation/opencensus-go)
 
 ## Cuestionario
 
-Ponga a prueba sus conocimientos con el [Cuestionario de OpenTelemetry](../../quizzes/observability/tracing/03-opentelemetry-quiz.md).
+Pon a prueba tus conocimientos con el [Cuestionario de OpenTelemetry](../../quizzes/observability/tracing/03-opentelemetry-quiz.md).
