@@ -139,6 +139,12 @@
    - [Part 5: L2-L7 네트워킹](./networking/cilium/05-l2-l7-networking.md) | [퀴즈](./quizzes/networking/cilium/05-l2-l7-networking-quiz.md)
    - [Part 6: 보안 및 가시성](./networking/cilium/06-security-visibility.md) | [퀴즈](./quizzes/networking/cilium/06-security-visibility-quiz.md)
    - [Part 7: 고급 주제](./networking/cilium/07-advanced-topics.md) | [퀴즈](./quizzes/networking/cilium/07-advanced-topics-quiz.md)
+   - [Part 8: eBPF 데이터패스 내부](./networking/cilium/08-ebpf-datapath-internals.md) | [퀴즈](./quizzes/networking/cilium/08-ebpf-datapath-internals-quiz.md)
+   - [Part 9: 오버레이와 네이티브 라우팅](./networking/cilium/09-overlay-native-routing.md) | [퀴즈](./quizzes/networking/cilium/09-overlay-native-routing-quiz.md)
+   - [Part 10: IPAM 심화](./networking/cilium/10-ipam-deep-dive.md) | [퀴즈](./quizzes/networking/cilium/10-ipam-deep-dive-quiz.md)
+   - [Part 11: BGP, 로드밸런서 IP, Egress](./networking/cilium/11-bgp-lb-egress-edge.md) | [퀴즈](./quizzes/networking/cilium/11-bgp-lb-egress-edge-quiz.md)
+   - [Part 12: mTLS, 암호화, Identity](./networking/cilium/12-mtls-encryption-identity.md) | [퀴즈](./quizzes/networking/cilium/12-mtls-encryption-identity-quiz.md)
+   - [Part 13: 버전, 설치/업그레이드, Cluster Mesh](./networking/cilium/13-clustermesh-install-upgrade.md) | [퀴즈](./quizzes/networking/cilium/13-clustermesh-install-upgrade-quiz.md)
    - [네트워킹 개념](./networking/cilium/networking-concepts.md) | [퀴즈](./quizzes/networking/cilium/networking-concepts-quiz.md)
    - [용어집](./networking/cilium/glossary.md) | [퀴즈](./quizzes/networking/cilium/glossary-quiz.md)
 8. **Calico 딥다이브**
