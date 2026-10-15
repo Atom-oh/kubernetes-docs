@@ -113,3 +113,51 @@
 **Explanation:** A long healthy tail can lower the overall error rate. Match the assessment window to the actual business SLO, and do not generalize one synthetic run to every configuration.
 
 </details>
+
+## 8. A Pod is Guaranteed from creation. Its target regular container's CPU request and limit both decrease from 200m to 50m. Memory request=limit stays at 64Mi, and all other containers retain Guaranteed resource settings. What follows?
+
+- A) Reducing CPU necessarily changes the Pod to Burstable
+- B) The Pod preserves its original Guaranteed class, with equal CPU and memory requests and limits after downscale
+- C) The same resize can also turn a Pod created as Burstable into Guaranteed
+- D) Equal CPU values preserve Guaranteed even when the memory request and limit differ
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) The Pod preserves its original Guaranteed class, with equal CPU and memory requests and limits after downscale**
+
+**Explanation:** QoS class is determined at creation and cannot change through resize. This container-level design keeps each applicable container's CPU and memory requests equal to their corresponding positive limits, reducing the target CPU request and limit together. Preserving Guaranteed neither proves application SLOs after downscale nor prevents Spot reclamation.
+
+</details>
+
+## 9. What evidence establishes initialization completion, applied CPU downscale, and service quality after downscale in E10?
+
+- A) A Running Pod satisfies all three conditions
+- B) A successful pods/resize PATCH proves initialization, completed downscale, and SLO compliance
+- C) Verify a real startupProbe and started=true, desired versus reported resources, generations and resize status, plus application SLOs after downscale
+- D) An unchanged containerID and Guaranteed class make request-error and latency checks unnecessary
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: C) Verify a real startupProbe and started=true, desired versus reported resources, generations and resize status, plus application SLOs after downscale**
+
+**Explanation:** Running or the started value alone does not establish initialization completion; every target needs a startupProbe that checks actual initialization. PATCH success is request acceptance, so check kubelet-reported resources, observed generations, PodResizePending, and PodResizeInProgress. Once the resize has been applied, assess quality separately using readiness/LB status and application SLO evidence, including errors, p99, throughput, and throttling.
+
+</details>
+
+## 10. What can the 2026-09-12 Spot measurements and published initial template establish about phase-aware CPU resize?
+
+- A) E2's low overall p99 proves the benefit of increased startup CPU
+- B) The initial template and measurements lack the phase-aware configuration and required evidence, so E10 remains NOT RUN
+- C) The initial template alone establishes observed Pod resources and QoS after admission
+- D) The roadmap's historical report and local prototype checks also complete the combined Spot experiment
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) The initial template and measurements lack the phase-aware configuration and required evidence, so E10 remains NOT RUN**
+
+**Explanation:** The three initial Deployments request 50m/64Mi with limits of 500m/256Mi; those settings themselves do not meet Guaranteed requirements. They lack phase-aware resize opt-in, resizePolicy, and startupProbe, and there is no before/after evidence of actual resources, QoS, or comparative warmup performance. The initial template is not a Pod observation after admission. Keep the historical roadmap report, local prototype checks, and Spot measurements distinct, and run E10 separately.
+
+</details>

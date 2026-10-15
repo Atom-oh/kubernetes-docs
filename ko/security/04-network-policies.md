@@ -1,7 +1,7 @@
 # 네트워크 정책 (Network Policies)
 
 > **검토 기준**: Kubernetes 1.35 OpenAPI, Cilium 1.20.1, Calico 3.32.2와 현재 AWS 문서. 오프라인 검사는 클러스터 호환성 검증이 아닙니다.
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 10월 15일
 
 Kubernetes 네트워크 정책은 Pod 간 트래픽을 제어하는 방화벽 규칙입니다. 이 문서에서는 기본 NetworkPolicy부터 Cilium과 Calico의 확장 기능까지 상세히 다룹니다.
 
@@ -1857,6 +1857,12 @@ jq -n --slurpfile ns "$work/namespaces.json" --slurpfile np "$work/policies.json
   }
 '
 ```
+
+## NetworkPolicy와 경계 검사를 연결하기
+
+NetworkPolicy는 지원 CNI가 Pod 연결을 집행하는 통제이며, WAF나 중앙 방화벽의 전체 검사 경로를 생성하지 않습니다. 동일 노드·VPC local·PrivateLink·peering·IPv6 경로를 중앙 TGW 검사에 자동 포함한다고 가정하지 않습니다.
+
+공개 웹에는 [WAF·origin 보호](./14-waf-edge-api-security.md), 반출·VPC 간 검사에는 [Palo Alto·Fortinet](./15-ngfw-paloalto-fortinet.md)과 [GWLB·GENEVE](./16-gwlb-geneve-inspection.md)를 연결합니다. Pod·노드 SNAT와 실제 request/response tuple을 확인하고, 정책의 허용/거부와 장비 경유 여부를 각각 검증합니다. 사고에서 webhook·Secret 권한까지 확장하는 검토는 [다층 방어와 침해 대응](./13-defense-in-depth-incident-response.md)을 참고합니다.
 
 ## 요약
 

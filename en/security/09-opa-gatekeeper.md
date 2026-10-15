@@ -282,7 +282,7 @@ gator test -f templates/docsnoprivileged.yaml \
   -f tests/fixtures/tenant-skip-label-no-bypass.yaml --output=json
 ```
 
-`verify` checks expected violations in Suites; `test -f` evaluates manifests against Templates/Constraints. Verify can ignore a directory with no Suites, so check that all five tests and33 cases ran instead of trusting exit status alone. Fixture images are policy inputs, not pullable workloads. CI runs the local suite without credentials; any cluster dry-run belongs in a separate trusted environment with authorized access.
+`verify` checks expected violations in Suites; `test -f` evaluates manifests against Templates/Constraints. Verify can ignore a directory with no Suites, so check that all five tests and 33 cases ran instead of trusting exit status alone. Fixture images are policy inputs, not pullable workloads. CI runs the local suite without credentials; any cluster dry-run belongs in a separate trusted environment with authorized access.
 
 <span id="best-practices"></span>
 
@@ -316,7 +316,7 @@ Check policy input, match scope, CRD/template errors, webhook certificates/netwo
 
 ## Validation Scope and Related Reading
 
-Gator3.23.1 executed33 policy cases and three enforcement modes. Checks covered the pinned Helm render, eight Gatekeeper CRD objects and audit/webhook PodMonitor bindings. They did not execute Kubernetes admission, EKS networking, live audit-cache synchronization or API failover. Separate native mutation validation is recorded in the review report.
+Gator 3.23.1 executed 33 policy cases and three enforcement modes. Checks covered the pinned Helm render, eight Gatekeeper CRD objects and audit/webhook PodMonitor bindings. They did not execute Kubernetes admission, EKS networking, live audit-cache synchronization or API failover. Separate native mutation validation is recorded in the review report.
 
 - [Gatekeeper quiz](../quizzes/security/09-opa-gatekeeper-quiz.md)
 - [Kyverno](./01-kyverno-policy-management.md)

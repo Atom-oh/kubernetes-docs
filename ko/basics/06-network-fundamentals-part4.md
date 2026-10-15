@@ -1,6 +1,6 @@
 # 네트워크 기초 Part 4 — 요청의 여정과 클라우드 매핑
 
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 12일
 
 ::: tip 4부작 시리즈입니다
 [Part 1: 계층 모델과 링크·라우팅](./06-network-fundamentals-part1.md) ·
@@ -53,7 +53,7 @@
 | SSH 접속 | Systems Manager Session Manager |
 | 내부 구간 암호화 | 애플리케이션·프록시의 TLS/mTLS; 네트워크 계층 암호화는 별도의 설계 선택 |
 
-AWS App Mesh는 기존 설계의 예이며 신규 설계 기본값으로 제시하지 않습니다. AWS가 발표한 지원 종료일은 **2026년 9월 30일**입니다. 기존 배포는 마이그레이션을 계획해야 합니다.
+AWS App Mesh는 지원이 **2026년 9월 30일 종료**됐습니다. AWS는 그 날짜 이후 App Mesh 콘솔과 리소스에 접근할 수 없다고 안내합니다. 기존 배포의 제어·운영 경로가 끊긴 상태이므로 공식 종료 안내와 마이그레이션 지침을 확인하세요.
 
 **설계 시 먼저 결정해야 하는 항목 세 가지**를 꼽자면 이렇습니다.
 
@@ -94,8 +94,10 @@ TCP는 복구·순서 유지 비용으로 신뢰성 있는 순차 전달을 제�
 
 ## 다음 문서
 
-이 기초 위에서 클러스터 네트워킹으로 넘어갑니다.
+먼저 프로토콜 기초를 Linux 관측에 연결한 뒤, [네트워킹 학습 경로](../networking/README.md#learning-path)를 따라 컨테이너·Service에서 CNI 구현으로 나아갑니다.
 
+- [커널 네트워킹 스택](../kernel/02-network-stack.md) — 소켓/VFS 진입 경로, 버퍼, 패킷 처리
+- [Linux 네트워크 진단 실습](../networking/07-linux-network-diagnostics.md) — 관측값 해석과 가설 확인 | [퀴즈](../quizzes/networking/07-linux-network-diagnostics-quiz.md)
 - [eBPF 기초](./05-ebpf-fundamentals.md) — 커널에서 패킷을 처리하는 방식
 - [Cilium 네트워킹](../networking/cilium/03-networking.md) — eBPF 기반 CNI
 - [Calico BGP 심화](../networking/calico/04-bgp-deep-dive.md) — 클러스터 내 BGP 라우팅

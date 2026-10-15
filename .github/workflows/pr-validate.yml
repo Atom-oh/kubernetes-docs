@@ -14,6 +14,7 @@ on:
       - 'examples/ai-ml/qwen-pii-finetuning/**'
       - 'examples/eks/spot-production/**'
       - 'examples/observability/secret-profiles/**'
+      - 'examples/networking/foundations/**'
       - 'examples/platform/**'
       - '.vitepress/**'
       - '.github/workflows/pr-validate.yml'
@@ -96,6 +97,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run docs:validate
+      - name: Validate networking learning examples
+        run: python3 -B -m unittest discover -s examples/networking/foundations -p 'test_*.py' -v
       - name: Validate Spot experiment measurement tools
         run: python3 -B -m unittest discover -s examples/eks/spot-production -p 'test_*.py'
 

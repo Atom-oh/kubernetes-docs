@@ -1,6 +1,6 @@
 # Istio
 
-> **Last Updated**: September 11, 2026 · Istio 1.31 guidance
+> **Last Updated**: October 12, 2026 · Istio 1.31 guidance
 
 This overview keeps the earlier chapter URL usable. The maintained [Istio documentation index](istio/README.md) and [installation guide](istio/01-installation.md) own the detailed procedures and compatibility matrix; use them for current setup.
 
@@ -203,7 +203,7 @@ Proxy status is only one diagnostic input. Ambient enrollment and ztunnel need t
 
 - [Istio on Amazon EKS](https://istio.io/latest/docs/setup/platform-setup/amazon-eks/)
 - [Maintained AWS integration guide](istio/04-aws-integration.md)
-- [AWS App Mesh lifecycle notice](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html): AWS states support ends September 30, 2026. Evaluate migration requirements; this is not a new-deployment recommendation.
+- [AWS App Mesh lifecycle notice](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html): AWS ended support on September 30, 2026. Evaluate migration requirements; this is not a new-deployment recommendation.
 - [Istio community, channels and working groups](https://istio.io/latest/get-involved/)
 
 ### Additional Resources

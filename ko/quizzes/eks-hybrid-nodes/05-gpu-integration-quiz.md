@@ -1,7 +1,7 @@
 # EKS Hybrid Nodes GPU 통합 퀴즈
 
 > **관련 문서**: [GPU 통합](../../eks-hybrid-nodes/05-gpu-integration.md)
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 10월 12일
 
 ### 1. MIG를 올바르게 설명한 것은?
 
@@ -142,16 +142,16 @@ A. 모든 Auto Mode 노드에 추가 NVIDIA device plugin 설치
 
 B. 모든 EKS 노드에서 DRA 미지원
 
-C. 한정된 Hybrid 할당 집합 사용; 현재 Auto Mode는 DRA 미지원이며 자체 device plugin 관리
+C. 한정된 Hybrid 할당 집합 사용; 현재 Auto Mode는 NVIDIA DRA 드라이버를 지원하지 않으며 자체 device plugin 관리
 
 D. 물리 GPU마다 최대한 많은 관리자로 중복 게시
 
 <details>
 <summary>정답 보기</summary>
 
-**정답: C. 한정된 Hybrid 할당 집합 사용; 현재 Auto Mode는 DRA 미지원이며 자체 device plugin 관리**
+**정답: C. 한정된 Hybrid 할당 집합 사용; 현재 Auto Mode는 NVIDIA DRA 드라이버를 지원하지 않으며 자체 device plugin 관리**
 
-**설명:** AWS는 지원되는 신규 EKS1.34 이상 정적 용량 배포에 DRA를 권고합니다. 문서화된 드라이버 요구 사항을 따르고 중복 장치 소유를 막습니다. Kubernetes API 성숙도와 공급자별 feature gate는 별개입니다.
+**설명:** AWS는 지원되는 신규 EKS 1.34 이상 정적 용량 배포에 DRA를 권고합니다. 문서화된 드라이버 요구 사항을 따르고 중복 장치 소유를 막습니다. Kubernetes API 성숙도와 공급자별 feature gate는 별개입니다.
 
 </details>
 

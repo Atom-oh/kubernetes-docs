@@ -1,6 +1,6 @@
 # GitOps Automation: Atlantis, HCP Terraform, Flux, AIOps
 
-> **Review baseline**: Atlantis 0.47.1 / chart 6.15.0, HCP Terraform Provider 0.80.0, Sentinel 0.41.0, Flux 2.9.5\
+> **Review baseline**: Atlantis 0.47.1 / chart 6.15.0, HCP Terraform Provider 0.80.0, Sentinel 0.41.0, Flux 2.9.5 (Flux pin updated to patch 2.9.6 on October 12, 2026 after release-note review; not re-run)\
 > **Last reviewed**: September 11, 2026. Checked with local CLIs, charts, schemas and test doubles. No actual PR comments, Terraform apply, HCP resource creation, cluster deployment or external AI calls were performed.
 
 < [Previous: Multi-Cluster](04-gitops-multi-cluster.md) | [Contents](README.md) | [Next: Scaling](06-scaling-strategies.md) >
@@ -465,7 +465,7 @@ Attach the policy set to the intended workspaces and separate policy administrat
 
 ## 3. Flux
 
-This section uses the reviewed [Flux 2.9.5 guide](../gitops/02-fluxcd.md). Argo CD and Flux both reconcile declarative state. Argo CD also has multiple components; Flux is not universally lighter or more isolated. Namespace separation alone does not complete tenant authorization.
+This section uses the [Flux 2.9.6 guide](../gitops/02-fluxcd.md). Argo CD and Flux both reconcile declarative state. Argo CD also has multiple components; Flux is not universally lighter or more isolated. Namespace separation alone does not complete tenant authorization.
 
 Image reflector and automation controllers are **optional components**. Bootstrap commits to Git and installs controllers. Verify the CLI checksum, supported Kubernetes version, kubecontext and repository access before running it.
 
@@ -473,7 +473,7 @@ Image reflector and automation controllers are **optional components**. Bootstra
 flux check --pre
 flux bootstrap github \
   --owner=REPLACE_ORG --repository=fleet-infra --branch=main \
-  --path=clusters/production --version=v2.9.5 \
+  --path=clusters/production --version=v2.9.6 \
   --components-extra=image-reflector-controller,image-automation-controller
 ```
 

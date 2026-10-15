@@ -113,3 +113,51 @@
 **설명:** 긴 정상 구간은 전체 오류율을 낮출 수 있습니다. 판정 창과 실제 업무 SLO를 맞추고, 이번 단일 합성 실험을 다른 구성의 보편적 결과로 확대 해석하지 않습니다.
 
 </details>
+
+## 8. 생성 때부터 Guaranteed인 Pod에서 대상 regular container의 CPU request와 limit를 함께 200m에서 50m으로 줄입니다. 메모리 request=limit는 64Mi로 유지하고 다른 container의 Guaranteed 조건도 유지했다면?
+
+- A) CPU를 줄였으므로 반드시 Burstable로 바뀐다
+- B) 생성 시 Guaranteed를 유지하며 축소 후에도 CPU·메모리 request=limit 조건을 충족한다
+- C) Burstable로 생성한 Pod도 같은 resize로 Guaranteed로 바꿀 수 있다
+- D) CPU만 같으면 메모리 request와 limit가 달라도 Guaranteed를 유지할 수 있다
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B) 생성 시 Guaranteed를 유지하며 축소 후에도 CPU·메모리 request=limit 조건을 충족한다**
+
+**설명:** QoS class는 생성 시 결정되며 resize로 변경할 수 없습니다. 이 container-level 설계는 모든 해당 container의 CPU·메모리 request와 limit를 같은 양수로 유지하고 대상 CPU의 request와 limit를 함께 줄입니다. Guaranteed 유지가 축소 후 앱 SLO 충족이나 Spot 회수 방지를 보장하지는 않습니다.
+
+</details>
+
+## 9. E10에서 초기화 완료, CPU 축소 적용, 축소 후 서비스 품질을 판정할 때 필요한 증거는?
+
+- A) Pod가 Running이면 세 조건 모두 충족한다
+- B) pods/resize PATCH가 성공하면 초기화와 축소가 완료되고 SLO도 충족한다
+- C) 실제 startupProbe와 started=true, 원하는 값과 실제 보고 리소스·generation·resize 상태, 축소 후 앱 SLO를 함께 확인한다
+- D) containerID와 Guaranteed가 유지되면 요청 오류와 지연은 확인하지 않아도 된다
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: C) 실제 startupProbe와 started=true, 원하는 값과 실제 보고 리소스·generation·resize 상태, 축소 후 앱 SLO를 함께 확인한다**
+
+**설명:** Running이나 started 값만으로 초기화 완료를 입증하지 못하며, 대상마다 실제 초기화를 확인하는 startupProbe가 필요합니다. PATCH 성공은 요청 접수이므로 kubelet 보고 리소스와 관측 generation, PodResizePending·PodResizeInProgress를 확인합니다. 적용 후에도 readiness/LB 상태, 오류율·p99·처리량·throttling 등 앱 SLO 증거로 품질을 별도 판정합니다.
+
+</details>
+
+## 10. 2026-09-12 Spot 실측과 공개 초기 템플릿으로 단계별 CPU resize에 대해 내릴 수 있는 결론은?
+
+- A) 당시 E2의 전체 p99가 낮으므로 시작 CPU 확대 효과가 입증됐다
+- B) 초기 템플릿에 단계별 구성이 없고 실측에도 필요한 증거가 없어 E10은 미실행으로 남긴다
+- C) 초기 템플릿만으로 admission 이후 실제 Pod의 리소스와 QoS까지 관측했다고 볼 수 있다
+- D) 로드맵의 과거 보고와 로컬 prototype 검사가 있으므로 Spot 결합 시험도 완료됐다
+
+<details>
+<summary>정답 보기</summary>
+
+**정답: B) 초기 템플릿에 단계별 구성이 없고 실측에도 필요한 증거가 없어 E10은 미실행으로 남긴다**
+
+**설명:** 초기 세 Deployment의 requests는 50m/64Mi, limits는 500m/256Mi이며 설정 자체가 Guaranteed 조건을 충족하지 못합니다. 단계별 resize opt-in·resizePolicy·startupProbe가 없고 실제 resize 전후 리소스·QoS·warmup 비교 증거도 없습니다. 초기 템플릿을 admission 이후 Pod 관측으로 해석하지 않으며, 과거 로드맵 보고·로컬 prototype 검사·Spot 실측을 구분해 E10을 별도로 실행해야 합니다.
+
+</details>

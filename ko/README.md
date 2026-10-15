@@ -40,7 +40,7 @@
 6. [구성](./core/05-configuration-secrets.md) | [퀴즈](./quizzes/core/05-configuration-secrets-quiz.md)
 7. [보안](./core/06-security.md) | [퀴즈](./quizzes/core/06-security-quiz.md)
 8. [정책](./core/07-policies.md) | [퀴즈](./quizzes/core/07-policies-quiz.md)
-9. [스케줄링, 선점 및 축출](./core/08-scheduling-preemption-eviction.md) | [퀴즈](./quizzes/core/08-scheduling-preemption-eviction-quiz.md)
+9. [스케줄링, 선점 및 축출](./core/08-scheduling-preemption-eviction.md) | [퀴즈](./quizzes/core/08-scheduling-preemption-eviction-quiz.md) | [실습](./labs/core/08-scheduling-preemption-eviction-lab.md)
 10. [클러스터 관리](./core/09-cluster-administration.md) | [퀴즈](./quizzes/core/09-cluster-administration-quiz.md)
 11. [Windows in Kubernetes](./core/10-windows-in-kubernetes.md) | [퀴즈](./quizzes/core/10-windows-in-kubernetes-quiz.md)
 12. [Kubernetes 확장](./core/11-extending-kubernetes.md) | [퀴즈](./quizzes/core/11-extending-kubernetes-quiz.md)
@@ -82,7 +82,7 @@
 1. [EKS Hybrid Nodes 소개](./eks-hybrid-nodes/README.md)
 2. [사전 요구 사항](./eks-hybrid-nodes/01-prerequisites.md) | [퀴즈](./quizzes/eks-hybrid-nodes/01-prerequisites-quiz.md)
 3. [네트워크 구성](./eks-hybrid-nodes/02-network-configuration.md) | [퀴즈](./quizzes/eks-hybrid-nodes/02-network-configuration-quiz.md)
-4. [에어갭 환경 구성](./eks-hybrid-nodes/03-airgap-setup.md) | [퀴즈](./quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
+4. [인터넷 제한 환경 구성](./eks-hybrid-nodes/03-airgap-setup.md) | [퀴즈](./quizzes/eks-hybrid-nodes/03-airgap-setup-quiz.md)
 5. [노드 부트스트랩](./eks-hybrid-nodes/04-node-bootstrap.md) | [퀴즈](./quizzes/eks-hybrid-nodes/04-node-bootstrap-quiz.md)
 6. [GPU 서버 통합](./eks-hybrid-nodes/05-gpu-integration.md) | [퀴즈](./quizzes/eks-hybrid-nodes/05-gpu-integration-quiz.md)
 7. [워크로드 배치 전략](./eks-hybrid-nodes/06-workload-placement.md) | [퀴즈](./quizzes/eks-hybrid-nodes/06-workload-placement-quiz.md)
@@ -90,6 +90,7 @@
 9. [운영 및 유지보수](./eks-hybrid-nodes/08-operations.md) | [퀴즈](./quizzes/eks-hybrid-nodes/08-operations-quiz.md)
 10. [베어메탈 서버 OS 설치](./eks-hybrid-nodes/09-bare-metal-os-setup.md) | [퀴즈](./quizzes/eks-hybrid-nodes/09-bare-metal-os-setup-quiz.md)
 11. [Hybrid Nodes Gateway](./eks-hybrid-nodes/10-hybrid-nodes-gateway.md) | [퀴즈](./quizzes/eks-hybrid-nodes/10-hybrid-nodes-gateway-quiz.md)
+12. [보안팀 관점의 망분리 검토](./eks-hybrid-nodes/11-network-separation-security.md) | [퀴즈](./quizzes/eks-hybrid-nodes/11-network-separation-security-quiz.md)
 
 ### EKS Auto Mode
 1. [EKS Auto Mode 소개](./eks-auto-mode/README.md)
@@ -104,14 +105,32 @@
 10. [마이그레이션 가이드](./eks-auto-mode/09-migration-guide.md) | [퀴즈](./quizzes/eks-auto-mode/09-migration-guide-quiz.md)
 
 ### Networking
-1. [Networking 개요](./networking/README.md) | [퀴즈](./quizzes/networking/00-networking-overview-quiz.md)
-2. [네트워크 기초 — 프로토콜 25개](./basics/06-network-fundamentals-part1.md)
+
+1. [처음부터 배우는 Linux 네트워크](./networking/beginner/README.md)
+   - [1. Linux와 CLI](./networking/beginner/01-linux-cli.md) | [퀴즈](./quizzes/networking/beginner/01-linux-cli-quiz.md)
+   - [2. 주소와 인터페이스](./networking/beginner/02-addressing-interfaces.md) | [퀴즈](./quizzes/networking/beginner/02-addressing-interfaces-quiz.md)
+   - [3. 영구 네트워크 설정](./networking/beginner/03-persistent-configuration.md) | [퀴즈](./quizzes/networking/beginner/03-persistent-configuration-quiz.md)
+   - [4. DNS와 연결 진단](./networking/beginner/04-dns-connectivity.md) | [퀴즈](./quizzes/networking/beginner/04-dns-connectivity-quiz.md)
+   - [5. SSH 원격 접속](./networking/beginner/05-ssh-access.md) | [퀴즈](./quizzes/networking/beginner/05-ssh-access-quiz.md)
+   - [6. 방화벽과 호스트 보안](./networking/beginner/06-firewalls-host-security.md) | [퀴즈](./quizzes/networking/beginner/06-firewalls-host-security-quiz.md)
+   - [7. 관측과 성능](./networking/beginner/07-monitoring-performance.md) | [퀴즈](./quizzes/networking/beginner/07-monitoring-performance-quiz.md)
+   - [8. 종합 실습과 클라우드 연결](./networking/beginner/08-container-cloud-capstone.md) | [퀴즈](./quizzes/networking/beginner/08-container-cloud-capstone-quiz.md)
+2. [네트워크 전문가 과정](./networking/expert/README.md)
+   - [1. 프로토콜·구현 프로젝트](./networking/expert/01-protocol-projects.md) | [퀴즈](./quizzes/networking/expert/01-protocol-projects-quiz.md)
+   - [2. 라우팅 정책과 장애 수렴](./networking/expert/02-routing-policy-convergence.md) | [퀴즈](./quizzes/networking/expert/02-routing-policy-convergence-quiz.md)
+   - [3. 데이터센터 EVPN/VXLAN](./networking/expert/03-datacenter-evpn.md) | [퀴즈](./quizzes/networking/expert/03-datacenter-evpn-quiz.md)
+   - [4. Linux 패킷 경로와 성능](./networking/expert/04-linux-performance.md) | [퀴즈](./quizzes/networking/expert/04-linux-performance-quiz.md)
+   - [5. 클라우드·CNI 설계](./networking/expert/05-cloud-cni-design.md) | [퀴즈](./quizzes/networking/expert/05-cloud-cni-design-quiz.md)
+   - [6. 자동화와 종합 평가](./networking/expert/06-automation-capstone.md) | [퀴즈](./quizzes/networking/expert/06-automation-capstone-quiz.md)
+3. [Kubernetes 네트워킹 개요](./networking/README.md) | [퀴즈](./quizzes/networking/00-networking-overview-quiz.md)
+4. [네트워크 기초 — 프로토콜 25개](./basics/06-network-fundamentals-part1.md)
    - [Part 1: 계층 모델과 링크·라우팅](./basics/06-network-fundamentals-part1.md) | [퀴즈](./quizzes/basics/06-network-fundamentals-part1-quiz.md)
    - [Part 2: 전송 계층과 TLS](./basics/06-network-fundamentals-part2.md) | [퀴즈](./quizzes/basics/06-network-fundamentals-part2-quiz.md)
    - [Part 3: 애플리케이션 프로토콜](./basics/06-network-fundamentals-part3.md) | [퀴즈](./quizzes/basics/06-network-fundamentals-part3-quiz.md)
    - [Part 4: 요청의 여정과 클라우드](./basics/06-network-fundamentals-part4.md) | [퀴즈](./quizzes/basics/06-network-fundamentals-part4-quiz.md)
-3. [VPC CNI](./networking/01-vpc-cni.md) | [퀴즈](./quizzes/networking/01-vpc-cni-quiz.md)
-4. **Cilium 딥다이브**
+5. [Linux 네트워크 진단 실습](./networking/07-linux-network-diagnostics.md) | [퀴즈](./quizzes/networking/07-linux-network-diagnostics-quiz.md)
+6. [VPC CNI](./networking/01-vpc-cni.md) | [퀴즈](./quizzes/networking/01-vpc-cni-quiz.md)
+7. **Cilium 딥다이브**
    - [Cilium 소개](./networking/cilium/README.md)
    - [Part 1: 소개](./networking/cilium/01-introduction.md) | [퀴즈](./quizzes/networking/cilium/01-introduction-quiz.md)
    - [Part 2: eBPF](./networking/cilium/02-ebpf.md) | [퀴즈](./quizzes/networking/cilium/02-ebpf-quiz.md)
@@ -120,9 +139,15 @@
    - [Part 5: L2-L7 네트워킹](./networking/cilium/05-l2-l7-networking.md) | [퀴즈](./quizzes/networking/cilium/05-l2-l7-networking-quiz.md)
    - [Part 6: 보안 및 가시성](./networking/cilium/06-security-visibility.md) | [퀴즈](./quizzes/networking/cilium/06-security-visibility-quiz.md)
    - [Part 7: 고급 주제](./networking/cilium/07-advanced-topics.md) | [퀴즈](./quizzes/networking/cilium/07-advanced-topics-quiz.md)
+   - [Part 8: eBPF 데이터패스 내부](./networking/cilium/08-ebpf-datapath-internals.md) | [퀴즈](./quizzes/networking/cilium/08-ebpf-datapath-internals-quiz.md)
+   - [Part 9: 오버레이와 네이티브 라우팅](./networking/cilium/09-overlay-native-routing.md) | [퀴즈](./quizzes/networking/cilium/09-overlay-native-routing-quiz.md)
+   - [Part 10: IPAM 심화](./networking/cilium/10-ipam-deep-dive.md) | [퀴즈](./quizzes/networking/cilium/10-ipam-deep-dive-quiz.md)
+   - [Part 11: BGP, 로드밸런서 IP, Egress](./networking/cilium/11-bgp-lb-egress-edge.md) | [퀴즈](./quizzes/networking/cilium/11-bgp-lb-egress-edge-quiz.md)
+   - [Part 12: mTLS, 암호화, Identity](./networking/cilium/12-mtls-encryption-identity.md) | [퀴즈](./quizzes/networking/cilium/12-mtls-encryption-identity-quiz.md)
+   - [Part 13: 버전, 설치/업그레이드, Cluster Mesh](./networking/cilium/13-clustermesh-install-upgrade.md) | [퀴즈](./quizzes/networking/cilium/13-clustermesh-install-upgrade-quiz.md)
    - [네트워킹 개념](./networking/cilium/networking-concepts.md) | [퀴즈](./quizzes/networking/cilium/networking-concepts-quiz.md)
    - [용어집](./networking/cilium/glossary.md) | [퀴즈](./quizzes/networking/cilium/glossary-quiz.md)
-5. **Calico 딥다이브**
+8. **Calico 딥다이브**
    - [Calico 소개](./networking/calico/README.md)
    - [Part 1: 소개](./networking/calico/01-introduction.md) | [퀴즈](./quizzes/networking/calico/01-introduction-quiz.md)
    - [Part 2: 아키텍처](./networking/calico/02-architecture.md) | [퀴즈](./quizzes/networking/calico/02-architecture-quiz.md)
@@ -134,11 +159,11 @@
    - [Part 8: EKS 통합](./networking/calico/08-eks-integration.md) | [퀴즈](./quizzes/networking/calico/08-eks-integration-quiz.md)
    - [Part 9: 운영](./networking/calico/09-operations.md) | [퀴즈](./quizzes/networking/calico/09-operations-quiz.md)
    - [용어집](./networking/calico/glossary.md) | [퀴즈](./quizzes/networking/calico/glossary-quiz.md)
-6. [VPC Lattice](./networking/02-vpc-lattice.md) | [퀴즈](./quizzes/networking/02-vpc-lattice-quiz.md)
-7. [AWS Load Balancer Controller](./networking/03-aws-lb-controller.md) | [퀴즈](./quizzes/networking/03-aws-lb-controller-quiz.md)
-8. [Gateway API](./networking/04-gateway-api.md) | [퀴즈](./quizzes/networking/04-gateway-api-quiz.md)
-9. [Cross-Org VPC 연결](./networking/05-cross-org-vpc-connectivity.md) | [퀴즈](./quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
-10. [Pod 네트워크 실측 벤치마크](./networking/06-pod-network-benchmark.md) | [퀴즈](./quizzes/networking/06-pod-network-benchmark-quiz.md)
+9. [VPC Lattice](./networking/02-vpc-lattice.md) | [퀴즈](./quizzes/networking/02-vpc-lattice-quiz.md)
+10. [AWS Load Balancer Controller](./networking/03-aws-lb-controller.md) | [퀴즈](./quizzes/networking/03-aws-lb-controller-quiz.md)
+11. [Gateway API](./networking/04-gateway-api.md) | [퀴즈](./quizzes/networking/04-gateway-api-quiz.md)
+12. [Cross-Org VPC 연결](./networking/05-cross-org-vpc-connectivity.md) | [퀴즈](./quizzes/networking/05-cross-org-vpc-connectivity-quiz.md)
+13. [Pod 네트워크 실측 벤치마크](./networking/06-pod-network-benchmark.md) | [퀴즈](./quizzes/networking/06-pod-network-benchmark-quiz.md)
 
 ### Service Mesh
 1. [Istio](./service-mesh/istio/README.md) | [퀴즈](./quizzes/service-mesh/02-istio-quiz.md)
@@ -257,6 +282,7 @@
    - [Part 4: Unified Studio 거버넌스](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [퀴즈](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
    - [Part 5: 실제 검증 결과](./ai-ml/sagemaker-ai/04-validation-results.md) | [퀴즈](./quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md)
 12. [LLM 게이트웨이(Inference Gateway) 딥다이브](./ai-ml/08-llm-gateway.md) | [퀴즈](./quizzes/ai-ml/08-llm-gateway-quiz.md)
+13. [EKS에서 Agent Sandbox 운영하기](./ai-ml/09-agent-sandbox.md) | [퀴즈](./quizzes/ai-ml/09-agent-sandbox-quiz.md)
 
 ### Security & Policy
 1. [Kyverno를 사용한 정책 관리](./security/01-kyverno-policy-management.md) | [퀴즈](./quizzes/security/01-kyverno-policy-management-quiz.md)
@@ -271,6 +297,10 @@
 10. [cert-manager](./security/10-cert-manager.md) | [퀴즈](./quizzes/security/10-cert-manager-quiz.md)
 11. [Kubescape](./security/11-kubescape.md) | [퀴즈](./quizzes/security/11-kubescape-quiz.md)
 12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [퀴즈](./quizzes/security/12-spiffe-spire-quiz.md)
+13. [사고 기반 다층 방어와 침해 대응](./security/13-defense-in-depth-incident-response.md) | [퀴즈](./quizzes/security/13-defense-in-depth-incident-response-quiz.md)
+14. [WAF·엣지·API 보안과 origin 보호](./security/14-waf-edge-api-security.md) | [퀴즈](./quizzes/security/14-waf-edge-api-security-quiz.md)
+15. [Palo Alto·Fortinet NGFW](./security/15-ngfw-paloalto-fortinet.md) | [퀴즈](./quizzes/security/15-ngfw-paloalto-fortinet-quiz.md)
+16. [GWLB·GENEVE 검사 경로와 장애 검증](./security/16-gwlb-geneve-inspection.md) | [퀴즈](./quizzes/security/16-gwlb-geneve-inspection-quiz.md)
 
 ### GitOps
 1. [GitOps 개요](./gitops/README.md)

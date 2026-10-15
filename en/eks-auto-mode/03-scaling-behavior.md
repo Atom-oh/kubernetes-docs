@@ -1,7 +1,7 @@
 # Understanding Scaling Behavior
 
 > **Supported Versions**: EKS Auto Mode GA; example baseline EKS 1.36
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 12, 2026
 
 This chapter separates provisioning, consolidation, drift and expiration. Use the reviewed account/context from [Getting Started](./01-getting-started.md). The manifests assume a configured `default` NodeClass and use On-Demand capacity to focus on lifecycle behavior. Limits are illustrative and can still permit substantial cost.
 
@@ -111,7 +111,7 @@ spec:
 
 ### Balanced
 
-The current AWS NodePool reference also supports `Balanced`, which weighs disruption cost against savings. It can skip marginal consolidation actions that the more aggressive policy would take; it is not a no-disruption guarantee.
+On EKS 1.37, a newly created custom NodePool that omits its consolidation policy defaults to `Balanced`. The built-in `general-purpose` and `system` pools also use `Balanced`, and their policies cannot be changed. Set a custom pool's policy explicitly when another behavior is intended. `Balanced` considers disruption cost alongside savings and may skip marginal actions that `WhenEmptyOrUnderutilized` would take; it is not a no-disruption guarantee. The examples in this chapter set the policy explicitly.
 
 ```yaml
 apiVersion: karpenter.sh/v1

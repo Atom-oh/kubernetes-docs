@@ -1,6 +1,6 @@
 # Ambient Mode
 
-> **Last Updated**: September 11, 2026 · Istio 1.31. This lab assumes compatible Linux nodes, node-agent/CNI permissions and a fresh demo namespace. No deployment commands were run by this audit.
+> **Last Updated**: October 12, 2026 · Istio 1.31. This lab assumes compatible Linux nodes, node-agent/CNI permissions and a fresh demo namespace. No deployment commands were run by this audit.
 
 Ambient was introduced as a 2022 experimental preview, first shipped in Istio 1.18 as Alpha, reached Beta in 1.22 and core GA in 1.24. The preview was not a generally available feature of the main 1.15 release. Resource savings and migration safety depend on actual topology, policies and traffic.
 
@@ -246,7 +246,7 @@ HBONE in this guide transports TCP streams. Application UDP is not carried by th
 
 The lab needs compatible Linux nodes and the required Istio CNI/ztunnel DaemonSets. EKS Fargate cannot run these node DaemonSets; use supported EC2-backed placement and review the actual node/CNI platform. [Platform prerequisites](https://istio.io/latest/docs/ambient/install/platform-prerequisites/) cover CNI paths, permissions and health probes. VPC CNI Pod ENI trunking with SecurityGroupPolicy can require standard enforcing mode or appropriate exec probes; assess the policy implications. GKE, OpenShift, k3s and other platforms may need different settings.
 
-Istio1.31 supports Kubernetes1.32–1.36; see the [installation guide](../01-installation.md) for EKS compatibility. Gateway API1.6.0 below matches Istio1.31’s dependency and official ambient tutorial. Check an existing bundle's compatibility; do not downgrade a newer compatible bundle merely to copy the example.
+Istio1.31 supports Kubernetes1.32–1.37; see the [installation guide](../01-installation.md) for EKS compatibility. Gateway API1.6.0 below matches Istio1.31’s dependency and official ambient tutorial. Check an existing bundle's compatibility; do not downgrade a newer compatible bundle merely to copy the example.
 
 ### 1. Istio Installation (Ambient Mode)
 

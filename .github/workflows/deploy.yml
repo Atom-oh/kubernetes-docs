@@ -37,6 +37,8 @@ jobs:
       - uses: actions/configure-pages@v4
       - run: npm ci
       - run: npm run docs:validate
+      - name: Validate networking learning examples
+        run: python3 -B -m unittest discover -s examples/networking/foundations -p 'test_*.py' -v
       - run: npm run docs:build
       - run: mkdir -p .vitepress/dist/assets && cp assets/*.html .vitepress/dist/assets/
       - uses: actions/upload-pages-artifact@v3

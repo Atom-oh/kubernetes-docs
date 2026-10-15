@@ -1,6 +1,6 @@
 # EKS 업그레이드: Auto Mode, 롤백과 Blue/Green
 
-> 검토: 2026-09-12. 명령 검증: AWS CLI 2.36.44, Pluto 5.24.3, Velero 1.18.2.
+> 검토: 2026-10-12. 명령 검증(2026-09-12): AWS CLI 2.36.44, Pluto 5.24.3, Velero 1.18.2.
 > 예시 전환은 1.35 → 1.36이며 실제 대상은 리전에서 조회합니다.
 
 컨트롤 플레인·노드·애드온·앱·데이터를 함께 계획합니다.
@@ -9,8 +9,9 @@ Auto Mode와 PDB만으로 무중단을 보장하지 않습니다. 여유 용량,
 
 ## 1. 버전과 관리 주체
 
-상류 Kubernetes는 최근 **세 minor release**를 유지합니다.
+상류 Kubernetes는 최근 **세 minor release**의 릴리스 브랜치를 유지합니다(2026년 10월 12일 기준 1.35~1.37).
 “현재 버전 + 세 개 이전 버전”이라는 설명과 다릅니다.
+각 minor는 약 14개월 동안 패치되며 마지막 2개월은 유지보수 모드입니다. 1.34는 2026년 10월 27일 EOL까지 유지보수 모드입니다.
 EKS 수명은 별도이며 일반적으로 EKS 출시 후 표준 지원 14개월, 연장 지원 12개월입니다.
 정확한 날짜·지원 정책·리전 가용성은 조회 시점의 API와 공식 수명주기를 확인합니다.
 
@@ -802,6 +803,8 @@ Grafana는 [스택 장](./09-observability-stack.md)의 명시적 UID와 완전�
 - [Auto Mode upgrades](https://docs.aws.amazon.com/eks/latest/userguide/auto-upgrade.html)
 - [EKS pricing](https://aws.amazon.com/eks/pricing/)
 - [Kubernetes version skew](https://kubernetes.io/releases/version-skew-policy/)
+- [Kubernetes release history](https://kubernetes.io/releases/)
+- [Kubernetes patch releases and support period](https://kubernetes.io/releases/patch-releases/)
 - [Kubernetes deprecation policy](https://kubernetes.io/docs/reference/using-api/deprecation-policy/)
 - [Pluto 5.24.3](https://github.com/FairwindsOps/pluto/releases/tag/v5.24.3)
 - [Velero 1.18.2](https://github.com/velero-io/velero/releases/tag/v1.18.2)

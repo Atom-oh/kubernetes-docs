@@ -1,6 +1,6 @@
 # Network Fundamentals Part 3 — Ten Application Protocols
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: September 14, 2026
 
 ::: tip This is a four-part series
 [Part 1: The Layer Model, Link and Routing Layers](./06-network-fundamentals-part1.md) ·
@@ -102,6 +102,54 @@ Independent delivery and integrated handshakes can help on lossy or high-latency
 | Encryption | Optional (HTTPS) | TLS for HTTPS; cleartext HTTP/2 also exists | TLS 1.3 integrated into QUIC |
 
 Multiplexing changes where ordering dependencies arise; HTTP/3 reduces one source of blocking without eliminating all scheduling, flow-control or application dependencies.
+
+#### Reading HTTP/1.1 requests and responses {#http11-message-structure}
+
+HTTP versions share methods, status codes and field semantics. HTTP/1.1 makes those concepts visible as a **start line → header field lines → blank line → optional body**. A body can contain text or binary data; “textual HTTP/1.1” describes its start line and headers, not every payload.
+
+These are **illustrative HTTP/1.1 messages, not captured output or a command recipe**. For readability, the display uses LF line breaks. On the wire, the start line and each header line end in **CRLF (`\r\n`)**, and an additional CRLF ends the header section. Each body below is exactly **5 ASCII bytes**, `hello`, with **no trailing newline**; the display newline before the closing fence is not part of the body.
+
+Client → server:
+
+```http
+POST /echo HTTP/1.1
+Host: example.test
+Content-Type: text/plain; charset=utf-8
+Content-Length: 5
+
+hello
+```
+
+Server → client:
+
+```http
+HTTP/1.1 200 OK
+Date: Mon, 14 Sep 2026 00:00:00 GMT
+Content-Type: text/plain; charset=utf-8
+Content-Length: 5
+
+hello
+```
+
+| Element | How to read it |
+|---|---|
+| Request line | `POST` is the method, `/echo` the request target (here a path), and `HTTP/1.1` the version. The required `Host` field supplies the target hostname and optional port (authority). |
+| Status line | `HTTP/1.1` is the version, `200` the status code and `OK` an optional reason phrase. Use the code to interpret the result. |
+| Header fields | `Name: value` lines carry metadata; field names are case-insensitive. `Content-Type` describes the representation's media type and, here, its charset. |
+| Blank line | Ends the header section. It does not specify where a following body ends. |
+| Body | The content bytes. Here, `Content-Length: 5` delimits five bytes, excluding the start line, headers and separator. Count bytes, not Unicode characters. |
+
+**Meaning and framing answer different questions.** A method expresses the requested action: GET retrieves a representation, HEAD requests corresponding response metadata without response content, and POST asks the target to process supplied content. Status classes summarize the result: 1xx informational, 2xx success, 3xx redirection, 4xx client error and 5xx server error. `Content-Type` explains how to interpret content; it does not delimit it. See [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html) for these shared semantics.
+
+HTTP/1.1 framing determines how many bytes belong to this message on a reusable TCP stream. For an ordinary body-bearing message, a valid `Content-Length` without `Transfer-Encoding` gives its length. With `Transfer-Encoding: chunked`, chunk sizes and the terminating zero-size chunk, followed by any trailers and the final blank line, delimit the body instead. A sender must not send both fields. Some responses use connection close as their delimiter; TCP packet boundaries never delimit HTTP messages.
+
+Method/status rules come first: responses to HEAD and responses with 1xx, 204 or 304 status have no message body, even if permitted metadata describes a representation. A successful CONNECT response starts a tunnel. A request with neither length nor transfer coding has no body. These distinctions prevent reading the next message as content ([RFC 9112 §§2–6](https://www.rfc-editor.org/rfc/rfc9112.html)).
+
+**HTTP/2 and HTTP/3 preserve the meaning, but use binary framing**, including HEADERS and DATA frames, rather than these textual start lines and CRLF boundaries. HTTP/2 uses TCP; HTTP/3 maps messages onto QUIC streams. Neither uses HTTP/1.1 chunked transfer coding. A tool can present decoded fields as readable text without showing their actual wire encoding ([RFC 9113](https://www.rfc-editor.org/rfc/rfc9113.html), [RFC 9114](https://www.rfc-editor.org/rfc/rfc9114.html)).
+
+With HTTPS, TLS protects HTTP headers and bodies in transit; a passive capture without session secrets does not expose this plaintext ([RFC 8446 §5](https://www.rfc-editor.org/rfc/rfc8446.html#section-5)). QUIC likewise protects HTTP/3 application data. Inspect decoded messages at an authorized endpoint or TLS termination point, and identify which connection leg is being observed.
+
+> 📎 Continue with the [Linux HTTP message lab](../networking/07-linux-network-diagnostics.md#http-message-lab) before applying the same distinctions to container services, Kubernetes Ingress or AWS load balancers.
 
 ### WebSocket
 

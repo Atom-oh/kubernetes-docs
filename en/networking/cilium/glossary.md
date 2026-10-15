@@ -1,7 +1,7 @@
 # Glossary and Abbreviations
 
-> **Review baseline**: Cilium 1.20.1.
-> **Last reviewed**: September 12, 2026.
+> **Review baseline**: Cilium 1.20.2.
+> **Last reviewed**: October 15, 2026.
 
 An alphabetical reference for Cilium, eBPF, Kubernetes and networking. Repeated entries are consolidated.
 
@@ -320,12 +320,12 @@ An alphabetical reference for Cilium, eBPF, Kubernetes and networking. Repeated 
 
 ## Primary References
 
-- [Cilium identities](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/internals/security-identities.rst)
-- [CiliumIdentity schema](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumidentities.yaml)
-- [Cilium Operator](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/internals/cilium_operator.rst)
-- [Identity management modes](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/identity-management-mode.rst)
-- [WireGuard](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-wireguard.rst)
-- [BGP](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane.rst)
+- [Cilium identities](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/internals/security-identities.rst)
+- [CiliumIdentity schema](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumidentities.yaml)
+- [Cilium Operator](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/internals/cilium_operator.rst)
+- [Identity management modes](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/kubernetes/identity-management-mode.rst)
+- [WireGuard](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/security/network/encryption-wireguard.rst)
+- [BGP](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/bgp-control-plane/bgp-control-plane.rst)
 - [Kubernetes CNI/CRI](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/)
 - [Kubernetes Services](https://kubernetes.io/docs/concepts/services-networking/service/)
 - [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/)

@@ -1,10 +1,34 @@
 # Kubernetes 네트워킹
 
-> **마지막 업데이트**: 2026년 9월 13일. 기능 근거는 Cilium 1.20.1, Calico Open Source 3.32, Flannel 0.28.9, AWS VPC CNI 1.23.0을 포함합니다. 설치 전 제품별 Kubernetes·플랫폼 지원 범위를 확인합니다. 이 버전들을 하나의 클러스터에서 함께 검증했다는 의미는 아닙니다.
+> **마지막 업데이트**: 2026년 10월 15일
+>
+> **예제 버전 고정값**: Cilium 1.20.1, Calico Open Source 3.32.2, Flannel 0.28.9, 업스트림 AWS VPC CNI/Helm 차트 1.23.0.
+>
+> **현재 릴리스 정보**: AWS의 EKS 관리형 VPC CNI 애드온 표는 Kubernetes 1.31–1.37에 `v1.23.1-eksbuild.1`을 표시합니다. Calico Open Source 3.33.0은 최신 릴리스이며 Kubernetes 1.35–1.37에서 테스트되었습니다. 고정 예제를 변경하기 전에 릴리스 노트를 확인하세요.
+>
+> 이 버전들을 하나의 클러스터에서 함께 검증했다는 의미는 아닙니다. 설치 전 제품별 Kubernetes·플랫폼 지원 범위를 확인합니다.
 
 ## 개요
 
 Kubernetes 네트워킹은 컨테이너화된 애플리케이션 간의 통신을 가능하게 하는 핵심 인프라 계층입니다. 이 섹션에서는 Kubernetes 네트워킹의 기본 개념부터 고급 CNI(Container Network Interface) 솔루션, 그리고 AWS EKS 환경에서의 네트워킹 패턴까지 다룹니다.
+
+## 학습 경로 {#learning-path}
+
+입문 과정 다음에는 [네트워크 전문가 과정](expert/README.md)에서 프로토콜 프로젝트·라우팅 정책·EVPN·Linux 성능·클라우드 설계·자동화 평가를 연결합니다. 각 장의 실습 환경과 관측·복구 기준을 먼저 확인하세요.
+
+Linux나 네트워크를 처음 접한다면 [입문 과정](beginner/README.md)부터 시작하세요. CLI·주소 설정·DNS·SSH·방화벽·성능 관측·종합 실습을 8개 장으로 연결합니다. 아래 경로는 입문 과정 이후 프로토콜·커널·클러스터 구현으로 확장하는 순서입니다.
+
+프로토콜 개념에서 관측으로 나아간 뒤 컨테이너·클러스터·클라우드의 역할에 연결합니다. 선수 지식에 맞는 진입점을 고르고, 학습 결과를 확인한 다음 단계로 넘어갑니다.
+
+| 단계 | 역할 | 선수 지식 | 학습 결과 | 읽기 / 실습 |
+|---|---|---|---|---|
+| 프로토콜·주소·HTTP | 기본 용어 정립 | 기본 명령줄 사용 | 요청의 흐름을 따라가며 주소·전송·애플리케이션 동작 구분 | 네트워크 기초 [Part 1](../basics/06-network-fundamentals-part1.md), [Part 2](../basics/06-network-fundamentals-part2.md), [Part 3](../basics/06-network-fundamentals-part3.md), [Part 4](../basics/06-network-fundamentals-part4.md) |
+| Linux 소켓·VFS·패킷 경로 | API와 커널 연결 | TCP/IP 기초 | FD·소켓 버퍼·윈도·큐 구분 | [커널 네트워킹 스택](../kernel/02-network-stack.md) |
+| Linux 네트워크 진단 | 증거로 가설 확인 | 소켓과 패킷 경로 개념 | 소켓·패킷·애플리케이션 관측값 대조 | [진단 실습](07-linux-network-diagnostics.md) · [퀴즈](../quizzes/networking/07-linux-network-diagnostics-quiz.md) |
+| Docker·컨테이너 네트워킹 | 네임스페이스 경계 파악 | Linux 패킷 경로와 기본 진단 | 브리지 네트워킹·포트 게시·컨테이너 이름 해석 설명 | [컨테이너 기술](../basics/03-container-technology.md) |
+| Kubernetes Service·DNS·Ingress | 클러스터 추상화 연결 | 컨테이너 네트워킹 | 이름에서 Service와 엔드포인트까지 추적하고 진입점 역할 구분 | [Service와 네트워킹](../core/03-services-networking.md) · [실습](../labs/core/03-services-networking-lab.md) |
+| eBPF·CNI·정책 | 구현별 역할 비교 | Pod와 Service 경로 | 패킷 전달·정책 강제·관측성 구분 | [eBPF 기초](../basics/05-ebpf-fundamentals.md) · [Cilium](cilium/README.md) · [Calico](calico/README.md) |
+| AWS 네트워크 경계·성능 | 클라우드 경로에 모델 적용 | CNI 개념과 측정 방법 | VPC·노드·AZ 경계를 구분하고 측정 조건에 맞게 결과 해석 | [VPC CNI](01-vpc-cni.md) · [AWS Load Balancer Controller](03-aws-lb-controller.md) · [Cross-Org VPC 연결](05-cross-org-vpc-connectivity.md) · [Pod 네트워크 실측 벤치마크](06-pod-network-benchmark.md) |
 
 ## Kubernetes 네트워킹 모델
 
@@ -181,9 +205,9 @@ CNI는 런타임이 컨테이너 네트워크를 설정하는 인터페이스를
 | 프로젝트·범위 | 네트워킹과 정책 | 구분할 기능·제약 |
 |---|---|---|
 | **Cilium 1.20.1** | eBPF 네트워킹, 해당 L7 기능에 Envoy 사용, Cilium 네트워크 정책·Hubble | Linux 워커 데이터 플레인과 AMD64/Arm64 전제. Windows CLI 제공은 Windows CNI 지원이 아님. WireGuard/IPsec과 Beta ztunnel mTLS의 범위가 다름. |
-| **Calico Open Source 3.32** | 라우팅·캡슐화 선택, iptables·nftables·eBPF 옵션, 순서 있는 정책 tier와 호스트·워크로드 정책 | Windows에는 Linux eBPF·WireGuard 데이터 플레인 미지원 등 별도 제약이 있음. Whisker/Goldmane 흐름 관측은 Tech Preview. 유료 기능은 제품 edition 표 확인. |
+| **Calico Open Source 3.32.2 예제, 3.33.0 최신** | 라우팅·캡슐화 선택, iptables·nftables·eBPF 옵션, 순서 있는 정책 tier와 호스트·워크로드 정책 | Calico 3.33.0은 Kubernetes 1.35–1.37에서 테스트되었습니다. 업그레이드 전 릴리스 노트를 확인하세요. Windows에는 Linux eBPF·WireGuard 데이터 플레인 미지원 등 별도 제약이 있음. Whisker/Goldmane 흐름 관측은 Tech Preview. 유료 기능은 제품 edition 표 확인. |
 | **Flannel 0.28.9** | 호스트 subnet 할당과 노드 간 전달, VXLAN·host-gw 등 백엔드 | `flanneld` 자체는 NetworkPolicy를 강제하지 않지만 차트의 선택적 `netpol.enabled`가 SIGs 정책 컨트롤러를 배포함. WireGuard 백엔드가 문서화되어 있고 IPsec은 실험 기능. Windows VXLAN은 별도 설정·제약 적용. |
-| **AWS VPC CNI 1.23.0 / EKS** | VPC 주소·EC2 ENI/prefix 할당, 지원되는 Linux EC2 노드에서 EKS 표준·Admin 정책 | EKS Auto Mode는 DNS 정책 기능도 가진 관리형 네트워킹 구현. Windows, Fargate, custom networking, prefix delegation, multi-NIC는 각각 조건이 다름. |
+| **AWS VPC CNI 업스트림/Helm 1.23.0 예제, EKS 애드온 `v1.23.1-eksbuild.1`** | VPC 주소·EC2 ENI/prefix 할당, 지원되는 Linux EC2 노드에서 EKS 표준·Admin 정책 | AWS는 Kubernetes 1.31–1.37에 이 관리형 애드온 빌드를 표시합니다. 실제 버전과 리전별 이용 가능성을 확인하세요. EKS Auto Mode는 DNS 정책 기능도 가진 관리형 네트워킹 구현. Windows, Fargate, custom networking, prefix delegation, multi-NIC는 각각 조건이 다름. |
 | **원래 Weave Net 프로젝트** | 과거 overlay 네트워킹 구현 | 원래 `weaveworks/weave` 저장소가 archived 상태이므로 신규 클러스터의 활성·지원 기본 선택으로 설명하지 않음. |
 
 ### 정책·암호화·관측성
@@ -234,7 +258,7 @@ aws eks describe-addon-configuration --region "$EKS_REGION" --addon-name vpc-cni
   --addon-version "$VPC_CNI_ADDON_VERSION"
 ```
 
-업스트림 1.23.0 릴리스 번호와 EKS `eksbuild` 버전은 다른 식별자입니다. 의도한 기존 add-on 설정과 변경을 합치고, 무조건 `latest`를 선택하거나 다른 값을 덮어쓰지 않습니다. 기존 타사 정책 구현에서 전환한다면 남아 있는 정책 적용 상태 제거와 검증한 노드·워크로드 전환 계획도 필요합니다.
+업스트림 1.23.0 릴리스 번호와 EKS `eksbuild` 버전은 다른 식별자입니다. AWS 현재 애드온 표는 Kubernetes 1.31–1.37에 `v1.23.1-eksbuild.1`을 표시합니다. 대상 리전에서 `describe-addon-versions`를 실행해 호환 빌드를 선택하세요. 의도한 기존 add-on 설정과 변경을 합치고, 무조건 `latest`를 선택하거나 다른 값을 덮어쓰지 않습니다. 기존 타사 정책 구현에서 전환한다면 남아 있는 정책 적용 상태 제거와 검증한 노드·워크로드 전환 계획도 필요합니다.
 
 ## EKS 네트워킹 기본 사항
 
@@ -377,6 +401,8 @@ spec:
 
 GWLB는 Gateway Load Balancer endpoint를 통해 방화벽·IDS/IPS 같은 검사 어플라이언스를 IP 경로에 삽입합니다. 기본 흐름 고정성은 5개 필드를 사용하며 지원되는 설정에서는 2개 또는 3개로 바꿀 수 있습니다. 왕복 라우트, 어플라이언스 상태, 캡슐화 MTU, NACL 및 실제 workload·어플라이언스의 security group을 확인합니다. GWLB 자체에는 ALB 형태의 security group이 없으며, 흐름 고정성이 장애 검증을 대신하지 않습니다.
 
+상세 보안 설계는 [WAF·origin 보호](../security/14-waf-edge-api-security.md), [Palo Alto·Fortinet NGFW](../security/15-ngfw-paloalto-fortinet.md), [GWLB·GENEVE 경로·장애 검증](../security/16-gwlb-geneve-inspection.md)을 참고합니다. GWLBE도 SG를 지원하지 않습니다. all-unhealthy일 때 AWS는 flow별 target 선택과 회복 전 drop을 설명하며, GWLB는 장비를 직접 우회하지 않습니다. reduced-tuple stickiness·cross-zone·NAT·TGW appliance mode를 함께 확인합니다.
+
 > 📎 EKS와 VPC Lattice의 전체 연동(Gateway API Controller, IAM 인가, 라우팅)은 [VPC Lattice](02-vpc-lattice.md) 참고.
 
 ### DNS resolver와 Route Table의 실제 동작
@@ -421,6 +447,18 @@ HTTP/3(RFC 9114)와 그 전송 기반인 QUIC(RFC 9000)의 프로토콜 동작 �
 ## 네트워킹 하위 페이지
 
 이 섹션에서는 다음 주제들을 상세히 다룹니다:
+
+### [처음부터 배우는 Linux 네트워크](beginner/README.md) {#beginner-course}
+
+Linux나 네트워크를 처음 접한다면 [입문 과정](beginner/README.md)부터 시작하세요. CLI·주소 설정·DNS·SSH·방화벽·성능 관측·종합 실습을 8개 장으로 연결합니다. 아래 경로는 입문 과정 이후 프로토콜·커널·클러스터 구현으로 확장하는 순서입니다.
+
+### [네트워크 전문가 과정](expert/README.md) {#expert-course}
+
+입문 과정 다음에는 [네트워크 전문가 과정](expert/README.md)에서 프로토콜 프로젝트·라우팅 정책·EVPN·Linux 성능·클라우드 설계·자동화 평가를 연결합니다. 각 장의 실습 환경과 관측·복구 기준을 먼저 확인하세요.
+
+### [Linux 네트워크 진단 실습](07-linux-network-diagnostics.md) {#linux-network-diagnostics}
+
+CNI 구현을 살펴보기 전에 [커널 소켓·패킷 경로 개념](../kernel/02-network-stack.md)을 관측에 연결합니다. [진단 퀴즈](../quizzes/networking/07-linux-network-diagnostics-quiz.md)로 해석을 확인합니다.
 
 ### [VPC CNI](01-vpc-cni.md)
 일반 Pod의 VPC 주소와 모드별 IPAM·정책 전제를 다루는 EKS 네트워킹.
@@ -630,6 +668,8 @@ spec:
 
 ## 다음 단계
 
+[입문 과정](beginner/README.md)을 마친 뒤 [커널 네트워킹 스택](../kernel/02-network-stack.md)과 [Linux 네트워크 진단 실습](07-linux-network-diagnostics.md)과 [퀴즈](../quizzes/networking/07-linux-network-diagnostics-quiz.md)로 이어갑니다. [학습 경로](#learning-path)는 이 기초를 컨테이너·Service에 연결한 뒤 아래 CNI·AWS 주제로 안내합니다.
+
 1. [VPC CNI](01-vpc-cni.md) - EKS 기본 CNI
 2. [Cilium 딥다이브](cilium/README.md) - eBPF 기반 네트워킹
 3. [Calico 딥다이브](calico/README.md) - 라우팅·정책·데이터 플레인
@@ -649,6 +689,7 @@ spec:
 - [Kubernetes NetworkPolicy](https://kubernetes.io/docs/concepts/services-networking/network-policies/)
 - [CNI specification](https://raw.githubusercontent.com/containernetworking/cni/main/SPEC.md)
 - [Calico product editions](https://docs.tigera.io/calico/latest/about)
+- [Calico Open Source 3.33.0 release](https://github.com/projectcalico/calico/releases/tag/v3.33.0)
 - [Calico policy tiers](https://docs.tigera.io/calico/latest/network-policy/policy-tiers/tiered-policy)
 - [Calico Whisker flow logs](https://docs.tigera.io/calico/latest/observability/view-flow-logs)
 - [Calico Windows limitations](https://docs.tigera.io/calico/latest/getting-started/kubernetes/windows-calico/limitations)
@@ -656,6 +697,7 @@ spec:
 - [Flannel backends](https://raw.githubusercontent.com/flannel-io/flannel/v0.28.9/Documentation/backends.md)
 - [Original Weave repository status](https://api.github.com/repos/weaveworks/weave)
 - [AWS VPC CNI 1.23.0](https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/v1.23.0/README.md)
+- [Amazon EKS 최신 VPC CNI add-on 버전](https://docs.aws.amazon.com/eks/latest/userguide/managing-vpc-cni.html)
 - [EKS network policy configuration](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html)
 - [EKS standard and Admin network policies](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)
 - [EKS prefix delegation and maxPods](https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses-procedure.html)

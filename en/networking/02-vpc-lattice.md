@@ -34,7 +34,7 @@ Typical uses include cross-account application APIs, communication between EKS a
 |---|---|---|
 | VPC Lattice | Private application and resource connectivity | HTTP/HTTPS/gRPC service routing and separate TLS/TCP resource capabilities; not an Internet API front door |
 | API Gateway | Managed API endpoints and API management | REST, HTTP, or WebSocket APIs have different features; GraphQL is not a separate API Gateway API type |
-| AWS App Mesh | Envoy-based service mesh | AWS will end support on **2026-09-30**; as of this review that date is upcoming. Plan migration instead of a new installation |
+| AWS App Mesh | Envoy-based service mesh | AWS support ended on **2026-09-30**; the console and resources are no longer accessible. Migrate existing deployments; not for new installations |
 | Transit Gateway | Network connectivity using IP routing | Connects networks; it does not replace per-service HTTP routing and authorization |
 | Istio / Linkerd / Cilium | Mesh capabilities implemented with their respective data planes | Features and operating costs differ. Sidecars are not mandatory in every mesh architecture |
 

@@ -1,6 +1,6 @@
 # Network Fundamentals Part 4 — A Request's Journey and the Cloud Mapping
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 12, 2026
 
 ::: tip This is a four-part series
 [Part 1: The Layer Model, Link and Routing Layers](./06-network-fundamentals-part1.md) ·
@@ -53,7 +53,7 @@ Cloud networking retains addressing, routing, filtering and transport responsibi
 | SSH access | Systems Manager Session Manager |
 | Internal-segment encryption | TLS/mTLS in applications or proxies; network-layer encryption is a separate design option |
 
-AWS App Mesh is a historical example, not a new-design default: AWS has announced support ends on **September 30, 2026**. Plan migration for existing deployments.
+AWS App Mesh support **ended on September 30, 2026**. AWS says the App Mesh console and resources are no longer accessible after that date. Existing deployments have lost their control and management path; consult the official end-of-support notice and migration guidance.
 
 **Three decisions to make first** when designing:
 
@@ -94,8 +94,10 @@ When investigating a failure, use each layer’s actual guarantees and observabl
 
 ## Next Documents
 
-From this foundation, move on to cluster networking:
+Connect these protocol fundamentals to Linux observations first, then follow the [networking learning path](../networking/README.md#learning-path) through containers and Services to CNI implementations:
 
+- [Kernel Networking Stack](../kernel/02-network-stack.md) — socket/VFS entry paths, buffers, and packet processing
+- [Linux Network Diagnostics Practice](../networking/07-linux-network-diagnostics.md) — interpret observations and test hypotheses | [Quiz](../quizzes/networking/07-linux-network-diagnostics-quiz.md)
 - [eBPF Fundamentals](./05-ebpf-fundamentals.md) — how packets are processed in the kernel
 - [Cilium Networking](../networking/cilium/03-networking.md) — the eBPF-based CNI
 - [Calico BGP Deep Dive](../networking/calico/04-bgp-deep-dive.md) — BGP routing inside the cluster

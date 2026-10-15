@@ -1,13 +1,15 @@
 # Network Configuration
 
 > **Supported Versions**: EKS 1.36 examples; AWS-maintained Cilium 1.18.3-0 reference, compatible host/kernel required
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 15, 2026
 
 Validate routing, DNS, TLS, credentials and application traffic separately. These examples were checked with local schemas and fixtures, including a mocked Terraform provider; no AWS resources, routers, firewalls or live clusters were changed. The diagrams are repository illustrations based on AWS concepts, not AWS-published validation of this configuration.
 
 ![Hybrid prerequisites and bidirectional routing.](../.gitbook/assets/en-eks-hybrid-nodes-prereq-0.png)
 
 [🔍 View interactive diagram](https://www.atomai.click/kubernetes-docs/archmaps/en-eks-hybrid-nodes-prereq-0.html)
+
+**Security-team companion:** [Hybrid Nodes network-separation review](11-network-separation-security.md) explains new control-plane-to-on-premises connections, endpoint types, permission and data boundaries, and review evidence. Private connectivity alone does not establish compliance.
 
 ## Network Architecture Overview
 
@@ -112,7 +114,7 @@ S3 **interface endpoints support private DNS**. The inbound-Resolver-only option
 
 Private DNS is not a TLS rewrite. A PHZ/CNAME mapping `hybrid-assets.eks.amazonaws.com` to an S3 endpoint does not give S3 the CloudFront hostname's certificate or object/Host routing behavior. Do not disable TLS verification to make such a mirror work. Use a supported artifact-preparation/client configuration path, an approved mirror with its own hostname/certificate, or preinstalled dependencies in a validated image.
 
-## VPC Private Endpoints (Air-Gap / Private Connectivity)
+## VPC Private Endpoints (Restricted-Internet Connectivity) {#vpc-private-endpoints-air-gap-private-connectivity}
 
 Here “air-gap” means restricted internet access with required AWS connectivity, not a disconnected cluster.
 
@@ -669,7 +671,7 @@ operator:
   rollOutPods: true
 ```
 
-The AWS-style `v2alpha1` APIs remain served in the reviewed 1.18.3 CRDs (which also serve `v2`). There is no need to replace CRDs simply to use this example.
+The AWS-style `v2alpha1` APIs remain served in the reviewed 1.18.3 CRDs (which also serve `v2`). There is no need to replace CRDs simply to use this example. On Cilium 1.19+ use the `cilium.io/v2` BGP CRDs instead (the `v2alpha1` BGP CRDs are deprecated), and the legacy `CiliumBGPPeeringPolicy` was removed in 1.19.
 
 The following selects hybrid nodes, links the peer's advertisement selector to the advertisement labels, and advertises only their Pod CIDRs:
 
