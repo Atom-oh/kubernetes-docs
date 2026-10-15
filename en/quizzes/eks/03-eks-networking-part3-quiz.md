@@ -1,6 +1,6 @@
 # EKS Networking Quiz - Part 3
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 12, 2026
 
 This quiz covers the [Part 3 troubleshooting concepts](../../eks/03-eks-networking-part3.md), private connectivity, multi-cluster design and mesh operations. Current examples use EKS Kubernetes 1.36 and VPC CNI 1.23.0; historical App Mesh configuration is explicitly identified. Resource-creation examples require reviewed IAM, network and ownership prerequisites. This audit performs local checks, not an EKS deployment.
 
@@ -22,7 +22,7 @@ Application → client proxy → Pod network → destination proxy → applicati
 ```
 Interception depends on enrollment, excluded ports, protocol and mode; not every packet must traverse a Service VIP. Ambient meshes use a different node-proxy/waypoint design, so the question is explicitly about sidecar mode. Meshes can provide retries, routing, mTLS and telemetry without rewriting the main service implementation, but applications may still need trace-context propagation, compatible protocols and timeout handling.
 
-Use the selected mesh’s supported injector/revision, not a hand-added old Envoy image or simultaneous injectors. AWS App Mesh is a historical example: support and access end September 30, 2026. Existing deployments need migration planning; it is not the default new-installation example. See [Istio installation](../../service-mesh/istio/01-installation.md) for the maintained implementation path.
+Use the selected mesh’s supported injector/revision, not a hand-added old Envoy image or simultaneous injectors. AWS App Mesh is a historical example: support and access ended September 30, 2026. Existing deployments must migrate; it is not the default new-installation example. See [Istio installation](../../service-mesh/istio/01-installation.md) for the maintained implementation path.
 
 </details>
 
@@ -378,7 +378,7 @@ The original resource example (100m CPU request, 70Mi memory request, 170Mi memo
 
 **Answer: Review the existing graph, identity and telemetry, then validate a supported replacement.**
 
-**Historical operations and migration exercise:** AWS App Mesh support and resource access end on **September 30, 2026**. Do not follow the original recipe to provision a new mesh, Private CA and public Grafana. For an existing deployment, inventory its graph and plan migration before the cutoff. ECS Service Connect is not an EKS installation target; evaluate a supported Kubernetes mesh/gateway architecture for the features actually used.
+**Historical operations and migration exercise:** AWS App Mesh support and resource access ended on **September 30, 2026**. Do not follow the original recipe to provision a new mesh, Private CA and public Grafana. For a former App Mesh deployment, inventory its graph and migrate it to a supported mesh/gateway. ECS Service Connect is not an EKS installation target; evaluate a supported Kubernetes mesh/gateway architecture for the features actually used.
 ```bash
 set -euo pipefail
 : "${MESH_NAMESPACE:?Set the namespace of the existing mesh workloads}"

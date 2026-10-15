@@ -622,7 +622,7 @@ Query가 Scheduled/Running일 수 있으므로 즉시 빈 결과가 나왔다고
 
 ### 플랫폼 선택과 검증
 
-Istio 1.31은 Kubernetes 1.32–1.36을 지원합니다. 실제 관리형 플랫폼과 필요한 proxy mode의 지원 교집합을 사용하세요. 내장 production profile은 없으며 istio.io/injection label도 sidecar 주입을 활성화하지 않습니다. 현재 artifact, revision label과 전제조건은 [설치 가이드](../01-installation.md)를 참고하세요. Demo addon은 운영 monitoring/HA stack이 아닙니다.
+Istio 1.31은 Kubernetes 1.32–1.37을 지원합니다. 실제 관리형 플랫폼과 필요한 proxy mode의 지원 교집합을 사용하세요. 내장 production profile은 없으며 istio.io/injection label도 sidecar 주입을 활성화하지 않습니다. 현재 artifact, revision label과 전제조건은 [설치 가이드](../01-installation.md)를 참고하세요. Demo addon은 운영 monitoring/HA stack이 아닙니다.
 
 Lattice에서는 service/resource 모델, 실제 client association/endpoint 경로, target lifecycle, listener protocol과 인증 경계를 정의합니다. Service가 반드시 Lambda일 필요는 없으며 meshed EKS 앱도 별도로 지원되는 통합으로 Lambda를 호출할 수 있습니다. Lambda 자체에 Istio sidecar를 둘 수 없다는 것과 EKS+Lambda 구조 전체가 Istio와 호환되지 않는다는 것은 다릅니다.
 

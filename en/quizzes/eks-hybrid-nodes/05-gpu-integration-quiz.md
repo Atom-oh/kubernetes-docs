@@ -1,7 +1,7 @@
 # EKS Hybrid Nodes GPU Integration Quiz
 
 > **Related Document**: [GPU Integration](../../eks-hybrid-nodes/05-gpu-integration.md)
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 12, 2026
 
 ### 1. Which statement correctly describes MIG?
 
@@ -142,16 +142,16 @@ A. Install an extra NVIDIA device plugin on every Auto Mode node
 
 B. DRA is unsupported on every kind of EKS node
 
-C. Use a scoped Hybrid allocation cohort; current EKS Auto Mode does not support DRA and already manages its device plugin
+C. Use a scoped Hybrid allocation cohort; current EKS Auto Mode does not support the NVIDIA DRA driver and already manages its device plugin
 
 D. Publish each physical GPU through as many managers as possible
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: C. Use a scoped Hybrid allocation cohort; current EKS Auto Mode does not support DRA and already manages its device plugin**
+**Answer: C. Use a scoped Hybrid allocation cohort; current EKS Auto Mode does not support the NVIDIA DRA driver and already manages its device plugin**
 
-**Explanation:** AWS recommends DRA for new supported EKS1.34+ static-capacity deployments. Use the documented driver prerequisites and prevent duplicate device ownership. Kubernetes API maturity is separate from individual vendor feature gates.
+**Explanation:** AWS recommends DRA for new supported EKS 1.34+ static-capacity deployments. Use the documented driver prerequisites and prevent duplicate device ownership. Kubernetes API maturity is separate from individual vendor feature gates.
 
 </details>
 

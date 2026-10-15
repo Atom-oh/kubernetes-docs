@@ -1,7 +1,7 @@
 # ClickHouse on EKS 실측 벤치마크
 
 > **기존 측정 환경**: ClickHouse 24.8 (측정 당시 버전 — 24.x 계열은 현재 지원 종료, 테스트 환경의 버전 안내 참고), Kubernetes 1.36 (Amazon EKS)
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 12일
 
 "ClickHouse는 빠르다"는 말은 벤치마크 보고서마다 나오지만, **EKS의 평범한 노드 하나와 기본 gp3 볼륨**에서 어느 정도인지 직접 잰 숫자는 찾기 어렵습니다. 이 문서는 4 vCPU 노드 + 기본 설정 gp3 100 GiB라는 의도적으로 소박한 환경에 Kubernetes 로그 1억 행을 넣고 측정한 결과입니다. 수치는 기존 실행의 보고값입니다. 원시 query_log와 당시의 모든 쿼리·캐시 상태가 이 문서에 포함된 것은 아니므로 동일한 숫자의 재현을 보장하지 않습니다. 아래 새 실행 예제에서는 실제 SQL·설정·버전·원시 결과를 함께 보관합니다.
 
@@ -32,7 +32,7 @@
 | ClickHouse | 공식 이미지 `clickhouse/clickhouse-server:24.8` (24.8.14.39), 설정 기본값 |
 | 시간당 비용 | m5.xlarge 온디맨드 $0.236/h + gp3 100 GiB $0.0912/GB-월 (서울 리전, 2026-09 Pricing API 조회) |
 
-> **버전 안내.** 측정은 당시 LTS였던 24.8에서 했지만, ClickHouse [보안 정책](https://github.com/ClickHouse/ClickHouse/blob/master/SECURITY.md)의 지원 버전 목록에는 이제 24.x가 없습니다(2026년 9월 기준 지원 라인은 26.8 LTS, 26.7, 26.6, 26.3 LTS). 새로 배포한다면 현행 LTS 태그를 쓰세요. 아래에서 측정한 메커니즘 — primary key 프루닝, LZ4/ZSTD 코덱, bloom filter skip index — 은 현행 릴리스에도 모두 있지만, 용량 산정에 쓰려면 실제 배포할 버전에서 다시 재보는 것이 맞습니다.
+> **버전 안내.** 측정은 당시 LTS였던 24.8에서 했지만, ClickHouse [보안 정책](https://github.com/ClickHouse/ClickHouse/blob/master/SECURITY.md)의 지원 버전 목록에는 이제 24.x가 없습니다(2026년 10월 12일 기준 지원 라인은 26.9, 26.8 LTS, 26.7, 26.3 LTS). 새로 배포한다면 현행 LTS 태그를 쓰세요. 아래에서 측정한 메커니즘 — primary key 프루닝, LZ4/ZSTD 코덱, bloom filter skip index — 은 현행 릴리스에도 모두 있지만, 용량 산정에 쓰려면 실제 배포할 버전에서 다시 재보는 것이 맞습니다.
 
 일부러 "화려하지 않은" 환경입니다. 전용 i-계열 NVMe 인스턴스가 아니라, 여러분 클러스터에 이미 있을 법한 범용 노드와 기본 gp3에서 어디까지 되는지가 이 벤치마크의 질문입니다.
 

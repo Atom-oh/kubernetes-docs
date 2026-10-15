@@ -1,7 +1,7 @@
 # ArgoCD 모범 사례
 
-> **지원 버전**: Argo CD 3.5.2 / Helm Chart 10.8.4 / Kustomize 5.8.1
-> **마지막 업데이트**: 2026년 9월 11일
+> **검토 기준**: Argo CD 3.5.2 / Helm Chart 10.8.4 / Kustomize 5.8.1. 매니페스트 예제는 릴리스 노트 검토 후 패치 3.5.4(Kustomize 5.8.1 동일)로 갱신(예제 재실행 안 함)
+> **마지막 업데이트**: 2026년 10월 12일
 
 ## 목차
 
@@ -532,14 +532,14 @@ argocd admin import -n argocd "$ARGO_RESTORE_DIR/data.yaml"
 
 ### 버전과 설치 주체
 
-아래는 3.5.x patch 수준에서 3.5.2로 가는 예시입니다. 2.x/이전 minor에서 바로 안전하게 전환된다는 뜻이 아닙니다. 지나가는 모든 minor/major migration note, 지원 Kubernetes 조합, CRD·RBAC·SSO·CMP 변경을 검토하고 비프로덕션에서 검증합니다. manifest/Helm/GitOps 중 기존 관리 방식을 유지하며 EKS 관리형 Argo CD capability에 이 절차를 겹치지 않습니다.
+아래는 3.5.x patch 수준에서 3.5.4로 가는 예시입니다. 2.x/이전 minor에서 바로 안전하게 전환된다는 뜻이 아닙니다. 지나가는 모든 minor/major migration note, 지원 Kubernetes 조합, CRD·RBAC·SSO·CMP 변경을 검토하고 비프로덕션에서 검증합니다. manifest/Helm/GitOps 중 기존 관리 방식을 유지하며 EKS 관리형 Argo CD capability에 이 절차를 겹치지 않습니다.
 
 ```bash
-# Example: reviewed 3.5.x patch upgrade to 3.5.2, manifest-managed non-HA install.
+# Example: reviewed 3.5.x patch upgrade to 3.5.4, manifest-managed non-HA install.
 kubectl config current-context
 argocd version
 kubectl apply --server-side -n argocd \
-  -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/install.yaml
+  -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
 kubectl rollout status deployment/argocd-server -n argocd --timeout=5m
 kubectl rollout status deployment/argocd-repo-server -n argocd --timeout=5m
 kubectl rollout status statefulset/argocd-application-controller -n argocd --timeout=5m
@@ -552,6 +552,8 @@ argocd app list
 HA manifest 설치는 `manifests/ha/install.yaml`을 사용하고, 사용자 overlay는 고정한 base를 갱신해 렌더링합니다. CRD 크기 때문에 server-side apply를 사용합니다. field ownership 충돌을 먼저 검토하며, 공식 업그레이드 안내의 `--force-conflicts`는 의도한 ownership 이전에만 사용합니다. Pod rollout 성공만으로 migration·SSO·diff·동기화 검증이 완료되지는 않습니다.
 
 ### Helm 설치의 대안 절차
+
+검토한 chart 10.8.4는 Argo CD v3.5.2를 배포하므로 이 Helm 절차로는 위의 패치 3.5.4에 도달하지 않습니다. Argo CD 3.5.4는 chart 10.9.7부터 포함되며, 이 문서는 그 chart minor 업데이트를 검토하지 않았습니다.
 
 ```bash
 helm repo add argo https://argoproj.github.io/argo-helm
@@ -696,10 +698,10 @@ WAF는 같은 리전의 검토된 regional Web ACL ARN을 별도 annotation으�
 
 - [Best practices](https://argo-cd.readthedocs.io/en/release-3.5/user-guide/best_practices/)
 - [High availability and scaling](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/high_availability/)
-- [Backup implementation and scope](https://github.com/argoproj/argo-cd/blob/v3.5.2/cmd/argocd/commands/admin/backup.go)
+- [Backup implementation and scope](https://github.com/argoproj/argo-cd/blob/v3.5.4/cmd/argocd/commands/admin/backup.go)
 - [Upgrade guide](https://argo-cd.readthedocs.io/en/release-3.5/operator-manual/upgrading/overview/)
 - [Chart 10.8.4 values](https://github.com/argoproj/argo-helm/blob/argo-cd-10.8.4/charts/argo-cd/values.yaml)
-- [Kustomize bundled version](https://github.com/argoproj/argo-cd/blob/v3.5.2/hack/tool-versions.sh)
+- [Kustomize bundled version](https://github.com/argoproj/argo-cd/blob/v3.5.4/hack/tool-versions.sh)
 - [Velero schedules](https://velero.io/docs/main/backup-reference/#schedule-a-backup)
 
 ## 퀴즈

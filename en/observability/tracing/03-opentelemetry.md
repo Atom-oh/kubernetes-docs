@@ -1,7 +1,7 @@
 # OpenTelemetry
 
 > **Review baseline**: Collector Contrib 0.160.0; Operator 0.158.0; language versions below
-> **Last Updated**: October 5, 2026
+> **Last Updated**: October 12, 2026
 
 ## Introduction
 
@@ -56,7 +56,7 @@ The Operator defaults to Collector 0.158.0. The standalone 0.160.0 workloads bel
 
 ### Auto-instrumentation
 
-As of September 13, 2026, the EKS lifecycle page lists 1.34, 1.35 and 1.36 in standard support. The 1.35 schema baseline falls within that list and the Operator matrix; this still does not replace live platform/add-on acceptance checks.
+As of October 12, 2026, EKS standard support includes 1.34–1.37. The 1.35 schema baseline falls within this list and the Operator matrix; this still does not replace live platform/add-on acceptance checks.
 
 Zero-code instrumentation hooks supported libraries; it does not discover arbitrary business operations. Choose either a directly prepared agent/launcher or Operator injection for a process. Do not initialize a second SDK over an already configured provider. The following application images are placeholders for your own builds, including their startup commands and dependencies.
 

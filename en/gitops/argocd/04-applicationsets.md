@@ -1,7 +1,7 @@
 # ArgoCD ApplicationSets
 
-> **Reviewed Against**: Argo CD 3.5.2, including its bundled ApplicationSet controller
-> **Last Updated**: September 11, 2026
+> **Reviewed Against**: Argo CD 3.5.2, including its bundled ApplicationSet controller; updated to patch 3.5.4 after release-note review (examples not re-run)
+> **Last Updated**: October 12, 2026
 
 ## Table of Contents
 - [ApplicationSet Overview](#applicationset-overview)
@@ -692,7 +692,7 @@ The ConfigMap does not execute code. A separately deployed HTTP service must han
 
 ## Go Templating
 
-Set `spec.goTemplate: true` to use Go templates; the default engine in 3.5.2 remains fasttemplate. The examples on this page explicitly enable Go templates with `missingkey=error`. Each string field is rendered independently: control statements cannot span YAML fields, and booleans/objects/lists require `templatePatch`. Use `dig` for optional keys because direct access to a missing key fails before `default` can run.
+Set `spec.goTemplate: true` to use Go templates; the default engine in 3.5.4 remains fasttemplate. The examples on this page explicitly enable Go templates with `missingkey=error`. Each string field is rendered independently: control statements cannot span YAML fields, and booleans/objects/lists require `templatePatch`. Use `dig` for optional keys because direct access to a missing key fails before `default` can run.
 
 ### Basic Syntax
 
@@ -764,7 +764,7 @@ spec:
 
 ## Progressive Sync
 
-Progressive Syncs is Beta since 3.3 and must still be explicitly enabled in 3.5.2. Merge `applicationsetcontroller.enable.progressive.syncs: "true"` into the existing `argocd-cmd-params-cm.data`, then restart the ApplicationSet controller. For Helm, manage the corresponding key under `configs.params`.
+Progressive Syncs is Beta since 3.3 and must still be explicitly enabled in 3.5.4. Merge `applicationsetcontroller.enable.progressive.syncs: "true"` into the existing `argocd-cmd-params-cm.data`, then restart the ApplicationSet controller. For Helm, manage the corresponding key under `configs.params`.
 
 RollingSync selects **labels on generated Applications** and waits for every Application in a group to become Healthy before proceeding. It disables child autosync and requests syncs through the ApplicationSet controller, respecting sync windows and Application retry settings. Applications matching no step require manual sync.
 
@@ -1078,15 +1078,15 @@ Deleting an ApplicationSet normally garbage-collects its generated Applications 
 
 To remove only the parent, use `kubectl delete applicationset NAME -n argocd --cascade=orphan`. Orphaned Applications retain autosync and any existing finalizer; deleting one later may still delete its deployed resources. `applicationsSync: create-update` restricts reconciliation-driven deletions, not owner-reference garbage collection when the parent is removed.
 
-`templatePatch` requires `goTemplate: true`. In 3.5.2 it uses Kubernetes strategic merge patch with the Application type. Arrays without merge tags in the Application spec, such as Helm valueFiles, are replaced; do not assume the name-based merging used for Pod containers. Avoid a value-less `spec:` (null) that clears existing configuration, do not patch `spec.project`, and escape untrusted inserted strings with functions such as `toJson`.
+`templatePatch` requires `goTemplate: true`. In 3.5.4 it uses Kubernetes strategic merge patch with the Application type. Arrays without merge tags in the Application spec, such as Helm valueFiles, are replaced; do not assume the name-based merging used for Pod containers. Avoid a value-less `spec:` (null) that clears existing configuration, do not patch `spec.project`, and escape untrusted inserted strings with functions such as `toJson`.
 
 ## References
 
-- [ApplicationSet generators (3.5.2)](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Generators.md)
-- [Go template rules](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/GoTemplate.md)
-- [Progressive Syncs](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Progressive-Syncs.md)
-- [Application deletion](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/applicationset/Application-Deletion.md)
-- [Template patch implementation](https://github.com/argoproj/argo-cd/blob/v3.5.2/applicationset/controllers/template/patch.go)
+- [ApplicationSet generators (3.5.4)](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/applicationset/Generators.md)
+- [Go template rules](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/applicationset/GoTemplate.md)
+- [Progressive Syncs](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/applicationset/Progressive-Syncs.md)
+- [Application deletion](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/applicationset/Application-Deletion.md)
+- [Template patch implementation](https://github.com/argoproj/argo-cd/blob/v3.5.4/applicationset/controllers/template/patch.go)
 
 ## Quiz
 

@@ -1,7 +1,7 @@
 # ArgoCD Sync Strategies
 
-> **Supported Versions**: Argo CD 3.5.2
-> **Last Updated**: September 11, 2026
+> **Review baseline**: Argo CD 3.5.2; updated to patch 3.5.4 after release-note review (examples not re-run)
+> **Last Updated**: October 12, 2026
 
 ## Table of Contents
 - [Manual vs Automated Sync](#manual-vs-automated-sync)
@@ -212,7 +212,7 @@ metadata:
 
 ### Server-Side Apply
 
-Argo CD 3.5.2 invokes --server-side --force-conflicts. Field ownership is tracked, but this is not a guarantee that conflicts will be rejected; review possible ownership takeover.
+Argo CD 3.5.4 invokes --server-side --force-conflicts. Field ownership is tracked, but this is not a guarantee that conflicts will be rejected; review possible ownership takeover.
 
 Use Kubernetes server-side apply for better conflict detection:
 
@@ -567,7 +567,7 @@ spec:
 
 ## Selective Sync
 
-Explicit --resource/--label selection skips hooks and history. ApplyOutOfSyncOnly/--apply-out-of-sync-only keeps hooks/history in3.5.2. --label selects resources; --selector(-l) selects Applications.
+Explicit --resource/--label selection skips hooks and history. ApplyOutOfSyncOnly/--apply-out-of-sync-only keeps hooks/history in 3.5.4. --label selects resources; --selector(-l) selects Applications.
 
 Sync only specific resources within an application.
 
@@ -621,8 +621,8 @@ To test what you've learned, try the [ArgoCD sync strategies quiz](../../quizzes
 
 ## Versioned Review Sources
 
-- [3.5.2 sync options](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-options.md)
-- [Sync windows](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync_windows.md)
-- [Window matching and CanSync](https://github.com/argoproj/argo-cd/blob/v3.5.2/pkg/apis/application/v1alpha1/types.go)
-- [Phases and waves](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-waves.md)
-- [CLI resource/app selectors](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/commands/argocd_app_sync.md)
+- [3.5.4 sync options](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-options.md)
+- [Sync windows](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync_windows.md)
+- [Window matching and CanSync](https://github.com/argoproj/argo-cd/blob/v3.5.4/pkg/apis/application/v1alpha1/types.go)
+- [Phases and waves](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-waves.md)
+- [CLI resource/app selectors](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/commands/argocd_app_sync.md)

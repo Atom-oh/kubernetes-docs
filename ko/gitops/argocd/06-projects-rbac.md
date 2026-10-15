@@ -1,7 +1,7 @@
 # ArgoCD 프로젝트와 RBAC
 
-> **검토 기준**: Argo CD 3.5.2
-> **마지막 업데이트**: 2026년 9월 11일
+> **검토 기준**: Argo CD 3.5.2. 릴리스 노트 검토 후 패치 3.5.4로 갱신(예제 재실행 안 함)
+> **마지막 업데이트**: 2026년 10월 12일
 
 ## 목차
 
@@ -248,7 +248,7 @@ spec:
 
 - AppProject destination은 `(server 또는 등록된 name) + namespace` 조합을 검사합니다. 두 식별자를 함께 쓰면 추가 AND 제한이 되지 않습니다. 위 예제는 server만 사용합니다. Application 리소스의 destination에서는 server와 name을 동시에 지정할 수 없습니다.
 - ResourceQuota와 LimitRange는 네임스페이스 범위입니다. clusterResourceBlacklist에 넣어도 차단하지 못하므로 namespaceResourceBlacklist에 둡니다. 이 거부는 Argo CD 경로에만 적용됩니다.
-- namespaceResourceWhitelist를 생략하면 기본적으로 모든 namespaced kind가 허용되며, 명시적 허용 목록과 거부 목록을 함께 평가합니다. clusterResourceWhitelist는 허용한 종류만 관리합니다. Argo CD 3.5.2는 이 클러스터 목록에 `name` 패턴도 지원합니다.
+- namespaceResourceWhitelist를 생략하면 기본적으로 모든 namespaced kind가 허용되며, 명시적 허용 목록과 거부 목록을 함께 평가합니다. clusterResourceWhitelist는 허용한 종류만 관리합니다. Argo CD 3.5.4는 이 클러스터 목록에 `name` 패턴도 지원합니다.
 - Namespace 관리를 위임해야 한다면 `group: ''`, `kind: Namespace`, `name: team-a-*`처럼 이름도 제한합니다. 그래도 Namespace 보안 레이블을 바꿀 권한이 생기므로, 강한 테넌트 경계에서는 사전 생성과 admission 정책을 유지합니다.
 - manualSync는 허용 창 밖 수동 동기화 예외이며 자동 동기화를 끄지 않습니다. sync 권한이 있는 사용자에게 적용되며 on-call 역할만 선별하는 옵션은 아닙니다. 겹치는 deny와 시간대 의미는 동기화 전략 장을 참고합니다.
 - 기본 프로젝트를 제한하기 전에 기존 Application을 명시적 프로젝트로 옮기고 권한을 확인합니다.
@@ -348,7 +348,7 @@ Argo CD API RBAC은 Kubernetes RBAC과 별개입니다. object의 project/app은
 
 3.x 기본 설정에서 application의 update/delete 권한은 하위 Kubernetes 리소스 작업으로 자동 상속되지 않습니다. 하위 작업은 `update/<group>/<kind>/<namespace>/<name>` 또는 `delete/...`로 명시합니다. `server.rbac.disableApplicationFineGrainedRBACInheritance` 설정에 따라 달라질 수 있습니다.
 
-sync는 실제 배포 리소스를 생성·변경하고 prune으로 삭제할 수 있습니다. Application 객체 delete 권한을 주지 않았다고 해서 배포 리소스 삭제도 막는 것은 아닙니다. Rollback API도 sync 권한을 검사하므로 별도의 action/rollback 또는 'rollback-only' 권한은 없습니다. override는 강제 sync가 아니라 로컬 매니페스트 등의 소스 대체 권한입니다. 3.5.2의 application.sync.requireOverridePrivilegeForRevisionSync 설정은 revision 지정 sync에도 override를 요구할 수 있습니다.
+sync는 실제 배포 리소스를 생성·변경하고 prune으로 삭제할 수 있습니다. Application 객체 delete 권한을 주지 않았다고 해서 배포 리소스 삭제도 막는 것은 아닙니다. Rollback API도 sync 권한을 검사하므로 별도의 action/rollback 또는 'rollback-only' 권한은 없습니다. override는 강제 sync가 아니라 로컬 매니페스트 등의 소스 대체 권한입니다. 3.5.4의 application.sync.requireOverridePrivilegeForRevisionSync 설정은 revision 지정 sync에도 override를 요구할 수 있습니다.
 
 ### 세분화된 RBAC 예시
 
@@ -519,7 +519,7 @@ data:
 
 Entra 앱 등록에서 groups claim과 사용자/그룹 할당을 설정하고 실제 Object ID를 사용합니다. requestedIDTokenClaims만으로 그룹 설정이 생성되지는 않습니다. clientSecret 참조는 argocd-secret의 해당 키를 별도로 준비합니다. direct OIDC callback은 /auth/callback이며 Dex SAML의 /api/dex/callback과 다릅니다.
 
-200개 초과 그룹에서는 overage claim이 올 수 있습니다. 3.5.2의 azure.enableUserGroupOverageClaim은 기본 false이며, 필요한 경우 User.Read 위임 권한과 Graph 연결을 준비해 명시적으로 활성화합니다. Graph 실패가 로그인 실패로 이어질 수 있으므로 아래 단순 예제와 별도로 검토합니다.
+200개 초과 그룹에서는 overage claim이 올 수 있습니다. 3.5.4의 azure.enableUserGroupOverageClaim은 기본 false이며, 필요한 경우 User.Read 위임 권한과 Graph 연결을 준비해 명시적으로 활성화합니다. Graph 실패가 로그인 실패로 이어질 수 있으므로 아래 단순 예제와 별도로 검토합니다.
 
 ```yaml
 apiVersion: v1
@@ -575,7 +575,7 @@ argocd proj role create-token my-project ci-deployer \
 # Store this file's value in the approved CI secret store; do not commit or print it.
 ```
 
-식별자를 지정할 때는 `--id UNIQUE_ID`를 사용합니다. `--token-id`는 3.5.2의 옵션이 아닙니다. expires-in은 24h 같은 기간 문자열을 받습니다. 토큰 값은 발급 시 한 번만 받으며 서버에 원문 토큰이 저장되는 것은 아닙니다.
+식별자를 지정할 때는 `--id UNIQUE_ID`를 사용합니다. `--token-id`는 3.5.4의 옵션이 아닙니다. expires-in은 24h 같은 기간 문자열을 받습니다. 토큰 값은 발급 시 한 번만 받으며 서버에 원문 토큰이 저장되는 것은 아닙니다.
 
 ### 토큰 메타데이터와 회수
 
@@ -589,7 +589,7 @@ argocd proj role list-tokens my-project ci-deployer --unixtime
 argocd proj role delete-token my-project ci-deployer "$SELECTED_ISSUED_AT"
 ```
 
-3.5.2의 delete-token 위치 인자는 ID 문자열이 아니라 ISSUED AT Unix 정수입니다. 목록의 ID와 혼동하지 않습니다.
+3.5.4의 delete-token 위치 인자는 ID 문자열이 아니라 ISSUED AT Unix 정수입니다. 목록의 ID와 혼동하지 않습니다.
 
 ### GitHub Actions에서 사용
 
@@ -616,7 +616,7 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
-        ARGOCD_VERSION=v3.5.2
+        ARGOCD_VERSION=v3.5.4
         case "$(uname -m)" in
           x86_64) cli_arch=amd64 ;;
           aarch64|arm64) cli_arch=arm64 ;;
@@ -897,10 +897,10 @@ validate는 내장 role:admin이 사용자 CSV에 없다는 경고를 낼 수 �
 
 ## 참고 자료
 
-- [Argo CD 3.5.2 RBAC](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/rbac.md)
-- [Project matching and validation](https://github.com/argoproj/argo-cd/blob/v3.5.2/pkg/apis/application/v1alpha1/app_project_types.go)
-- [Source Integrity](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/source-integrity-git-gpg.md)
-- [Project token CLI](https://github.com/argoproj/argo-cd/blob/v3.5.2/cmd/argocd/commands/project_role.go)
+- [Argo CD 3.5.4 RBAC](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/rbac.md)
+- [Project matching and validation](https://github.com/argoproj/argo-cd/blob/v3.5.4/pkg/apis/application/v1alpha1/app_project_types.go)
+- [Source Integrity](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/source-integrity-git-gpg.md)
+- [Project token CLI](https://github.com/argoproj/argo-cd/blob/v3.5.4/cmd/argocd/commands/project_role.go)
 
 - [ArgoCD RBAC](https://argo-cd.readthedocs.io/en/stable/operator-manual/rbac/)
 - [프로젝트 문서](https://argo-cd.readthedocs.io/en/stable/user-guide/projects/)

@@ -1,7 +1,7 @@
 # Kernel Datapath — How Link-Local Interception Actually Works
 
 > **Scope**: VPC Lattice service/resource APIs and AWS Gateway API Controller; verify the selected release and installed CRDs.
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 12, 2026
 
 ## What This Document Covers
 
@@ -217,7 +217,7 @@ The order in which Istio's `istio-iptables` (`tools/istio-iptables/pkg/capture/r
 And the **proxy UID `RETURN` (3) comes even before the excluded CIDRs** — meaning Istio itself uses the same UID-based loop prevention described in this document.
 
 ::: warning Needs verification
-The order above was confirmed from **Istio's** source. **The actual rule order App Mesh's init container installs has not been validated** — it is a separate implementation, and App Mesh reaches end of support on September 30, 2026.
+The order above was confirmed from **Istio's** source. **The actual rule order App Mesh's init container installs has not been validated** — it is a separate implementation, and App Mesh support ended on September 30, 2026.
 
 Also, a configuration that **adds a signing proxy init container** has two init containers each installing rules, so ordering depends on the `initContainers` array order. For that combination, **dump the real rules with `iptables -t nat -L -n -v` in your target environment** and verify.
 :::

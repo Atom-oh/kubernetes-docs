@@ -1,6 +1,6 @@
 # Introduction to EKS Quiz
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 12, 2026
 
 This quiz tests your understanding of the basic concepts and features of Amazon Elastic Kubernetes Service (EKS). It covers topics such as EKS architecture, components, management methods, and pricing models.
 
@@ -1211,7 +1211,7 @@ kubectl --context "${EXAMPLE_CONTEXT:?}" -n kube-system get daemonset aws-node \
 
 To implement network traffic encryption between pods, consider the following alternatives:
 
-* Existing App Mesh users need migration before its September 30, 2026 end of support.
+* App Mesh support ended on September 30, 2026; existing users must migrate.
 * Implementing Istio service mesh
 * Using Cilium's transparent encryption feature
 * Implementing TLS/mTLS at the application level
@@ -1299,7 +1299,7 @@ Alternatively, associate a namespace-scoped EKS access policy with the entry. Ac
 
 An EKS minor version receives **14 months of standard support from its EKS release date**, followed by **12 months of paid extended support**. The clock does not start at the upstream release date.
 
-* Official list on September 11, 2026: standard support **1.34–1.36**, extended support **1.31–1.33**. Upstream 1.37 release does not imply EKS availability.
+* Official list on October 12, 2026: standard support **1.34–1.37**, extended support **1.31–1.33**. EKS 1.37 became available on October 1, 2026, after its upstream release on August 26.
 * Extended support is enabled by default. Selecting the `STANDARD` upgrade policy opts out and makes the cluster subject to automatic upgrade after standard support ends.
 * After extended support ends, AWS automatically upgrades the control plane to a supported version. Exact execution time is not guaranteed, so operators should plan upgrades proactively.
 * Managed/self-managed/Hybrid Nodes do not update solely because the control plane automatically upgraded. Plan Fargate Pod replacement and add-on updates separately; Auto Mode nodes follow managed updates.
