@@ -1,6 +1,6 @@
 # EKS Storage
 
-> **Last Updated**: September 12, 2026
+> **Last Updated**: September 28, 2026
 
 When running applications on Amazon EKS, there are various storage options for storing and managing data. This document covers the basic concepts of EKS storage and how to use Amazon EBS (Elastic Block Store) and Amazon EFS (Elastic File System).
 
@@ -366,6 +366,10 @@ Amazon EFS is a fully managed NFS file system that can be accessed simultaneousl
 ### Installing EFS CSI Driver
 
 On supported Linux EC2 compute, use the earlier add-on workflow with `CSI_ADDON_NAME=aws-efs-csi-driver`, the compatible EFS add-on version and a prepared role for `kube-system/efs-csi-controller-sa`. Review `AmazonEFSCSIDriverPolicy` or a scoped equivalent. Fargate mounts EFS through its managed integration and supports static, not dynamic, provisioning. The managed EFS CSI support matrix excludes Windows/Hybrid Nodes. S3 Files uses EFS CSI 3.0+ but has separate controller **and node** IAM requirements and does not support Fargate.
+
+### September 2026 Update: EFS CSI Driver Mount Option Injection (CVE-2026-6437)
+
+On September 25, 2026, AWS published a security bulletin for [CVE-2026-6437](https://aws.amazon.com/security/security-bulletins/2026-016-aws/), a mount option injection in the EFS CSI driver. An actor with PersistentVolume creation privileges can inject arbitrary mount options through two unsanitized fields — the access point ID in `volumeHandle` and the `mounttargetip` volumeAttribute — because appending comma-separated values makes the mount utility parse them as separate mount options. EFS CSI driver **v3.0.0 and earlier** are affected; the issue is fixed in **v3.0.1**. Update the driver (including the EKS managed add-on) to v3.0.1 or later, and restrict PersistentVolume and StorageClass creation to cluster administrators using Kubernetes RBAC so untrusted users cannot supply arbitrary field values.
 
 ### Creating EFS File System
 

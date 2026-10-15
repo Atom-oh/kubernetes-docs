@@ -1,7 +1,7 @@
 # 네트워크 구성
 
 > **지원 버전**: EKS 1.36 예제; AWS-maintained Cilium 1.18.3-0 기준, 호환 host/kernel 필요
-> **마지막 업데이트**: 2026년 9월 16일
+> **마지막 업데이트**: 2026년 10월 15일
 
 Routing·DNS·TLS·credential·앱 트래픽을 별도로 검증합니다. 아래는 Terraform mock provider 등을 사용해 로컬 schema/fixture로 확인한 예제이며 AWS 리소스·router·firewall·실제 cluster를 변경하지 않았습니다. 그림은 AWS 개념을 바탕으로 이 저장소에서 제작했으며 AWS가 이 구성을 검증한 결과물이 아닙니다.
 
@@ -671,7 +671,7 @@ operator:
   rollOutPods: true
 ```
 
-AWS 예제의 `v2alpha1`은 검토한 1.18.3 CRD에서 계속 served 상태이며 `v2`도 지원됩니다. 이 예제 때문에 CRD를 교체할 필요는 없습니다.
+AWS 예제의 `v2alpha1`은 검토한 1.18.3 CRD에서 계속 served 상태이며 `v2`도 지원됩니다. 이 예제 때문에 CRD를 교체할 필요는 없습니다. Cilium 1.19 이상에서는 `cilium.io/v2` BGP CRD를 사용하세요(`v2alpha1` BGP CRD는 deprecated). 레거시 `CiliumBGPPeeringPolicy`는 1.19에서 제거되었습니다.
 
 아래는 hybrid node를 선택하고 peer advertisement selector와 advertisement label을 연결하며 Pod CIDR만 광고합니다.
 

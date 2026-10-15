@@ -1,7 +1,7 @@
 # 컨테이너를 지탱하는 커널 기능
 
 > **지원 버전**: Linux 6.1 / 6.12 / 6.18 (Amazon Linux 2023), Kubernetes 1.25+ (cgroup v2)
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 10월 12일
 
 ## 이 문서에서 다루는 것
 
@@ -94,6 +94,10 @@ cgroup(control group)은 프로세스 그룹의 **자원 사용을 측정하고 
 | **AL2023 EKS AMI** | — | **기본값** |
 
 v1의 "컨트롤러마다 별개 트리"가 실제로 문제였던 지점은 **메모리 회수와 IO의 연계**입니다. 메모리가 부족해 page cache를 비워야 할 때, 그 회수 작업 자체가 디스크 IO를 유발하는데 v1에서는 두 컨트롤러가 서로를 몰랐습니다. v2의 통합 트리는 이를 같은 계층에서 다룹니다.
+
+### 2026년 10월 업데이트: cgroup v1 지원 중단 진행
+
+Kubernetes 블로그가 cgroup v1→v2 전환 현황을 정리했습니다([The Shift to cgroup v2 in Kubernetes](https://kubernetes.io/blog/2026/10/06/kubernetes-cgroups-v2-shift/), 2026-10-06). cgroup v2 관리는 v1.25부터 stable이고 cgroup v1 지원은 v1.31부터 유지 보수 모드였는데, **v1.35부터는 kubelet의 `failCgroupV1` 기본값이 `true`가 되어 cgroup v1 노드에서 kubelet이 기본적으로 시작되지 않습니다.** kubelet 설정에 `failCgroupV1: false`를 지정해 임시로 우회할 수 있지만, 완전 제거가 KEP-5573으로 진행 중입니다. kubeadm 클러스터는 v1.35 이상 kubelet에서 SystemVerification preflight 검사가 cgroup v1을 오류로 처리합니다(이전 버전은 경고). v1.35 이전 버전을 쓰고 있다면 업그레이드 전에 모든 Linux 노드를 cgroup v2로 전환하세요.
 
 ### 운영에서 가장 크게 달라진 것 — OOM 진단
 
