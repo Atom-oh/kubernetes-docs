@@ -1,13 +1,23 @@
 # vLLM 배포 및 최적화
 
 > **검토 기준**: vLLM 0.29.0; CUDA 12.9 이미지 변형; 과거 0.6.4.post1 벤치마크 별도 표기
-> **마지막 업데이트**: 2026년 9월 12일
+> **최신 릴리스 확인**: vLLM 0.31.0 (2026년 10월 5일), 2026년 10월 12일 확인
+> **마지막 업데이트**: 2026년 10월 12일
 
 vLLM은 생성형 모델과 지원되는 멀티모달·pooling 모델을 서빙하는 오픈소스 추론 엔진입니다. `Vector Language Model`이라는 풀네임을 사용하지 않습니다. 이 장은 특정 릴리스의 구성과 EKS 운영 경계를 검토하며, 성능 배수나 지원 여부를 모든 모델에 일반화하지 않습니다.
 
 ## 실습 환경 설정
 
-2026년 9월 9일 공개된 [v0.29.0 릴리스](https://github.com/vllm-project/vllm/releases/tag/v0.29.0)를 기준으로 합니다. 릴리스의 기본 PyPI/Docker 경로는 CUDA 13.0이고 별도 `v0.29.0-cu129` 이미지가 있습니다. 같은 태그의 일부 설치 문서는 아직 CUDA 12.9를 기본값으로 설명하므로 실제 이미지 변형·digest를 확인해야 합니다.
+이 장의 manifest와 로컬 검증 기준은 2026년 9월 9일 공개된 [v0.29.0 릴리스](https://github.com/vllm-project/vllm/releases/tag/v0.29.0)입니다. 이후 v0.30.0(2026년 9월 22일)과 [v0.31.0](https://github.com/vllm-project/vllm/releases/tag/v0.31.0)(2026년 10월 5일)이 공개됐습니다.
+
+v0.31.0에서는 다음이 변경됐습니다.
+
+- 요청별 `mm_processor_kwargs`와 `media_io_kwargs`는 기본 거부됩니다. 사용하려면 명시적 `--trust-request-mm-kwargs` 옵션이 필요합니다.
+- `tokenizer_mode="slow"`가 제거됐습니다.
+
+이 장의 0.29.0 예제는 v0.30.0이나 v0.31.0에서 다시 실행하지 않았습니다. 업그레이드 전 [릴리스 변경 사항](https://github.com/vllm-project/vllm/releases/tag/v0.31.0)과 호환성을 검토하세요.
+
+0.29.0의 기본 PyPI/Docker 경로는 CUDA 13.0이고 별도 `v0.29.0-cu129` 이미지가 있습니다. 같은 태그의 일부 설치 문서는 아직 CUDA 12.9를 기본값으로 설명하므로 실제 이미지 변형·digest를 확인해야 합니다.
 
 PyPI 패키지 조건은 Python >=3.10, <3.15이지만 태그의 GPU 설치 가이드는 3.10–3.13을 안내합니다. 이것을 모든 Python·PyTorch·CUDA 조합의 호환성 보장으로 해석하지 마세요. NVIDIA 경로의 최소 compute capability는 7.5이며 V100 (7.0)을 현재 지원 예시로 사용해서는 안 됩니다. 선택한 kernel·dtype·양자화 방식은 더 높은 장치 조건을 요구할 수 있습니다.
 
@@ -424,7 +434,8 @@ print(result["choices"][0]["message"]["content"])
 
 ## 참고 자료
 
-- [vLLM 0.29.0 release](https://github.com/vllm-project/vllm/releases/tag/v0.29.0)
+- [vLLM 0.29.0 release (review baseline)](https://github.com/vllm-project/vllm/releases/tag/v0.29.0)
+- [vLLM 0.31.0 release (latest checked)](https://github.com/vllm-project/vllm/releases/tag/v0.31.0)
 - [Parallelism and scaling](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/serving/parallelism_scaling.md)
 - [Security boundaries](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/usage/security.md)
 - [Production metrics](https://github.com/vllm-project/vllm/blob/v0.29.0/docs/usage/metrics.md)

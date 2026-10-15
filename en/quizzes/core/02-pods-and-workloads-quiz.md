@@ -231,7 +231,7 @@ The `Forbid` concurrency policy in CronJob skips new jobs if previous jobs are s
 16. Write a multi-container pod YAML file that meets the following requirements:
     - Pod name: web-app
     - First container: nginx web server (image: nginx:1.30.4)
-    - Second container: log collector (image: fluentd:v1.14)
+    - Second container: log collector (image: fluentd:v1.19-debian-1)
     - emptyDir volume for sharing log directory between the two containers
     - nginx container exposes port 80
     - Log volume mounted at /var/log/nginx in the nginx container and /fluentd/log in the fluentd container
@@ -256,7 +256,7 @@ spec:
         - name: log-volume
           mountPath: /var/log/nginx
     - name: log-collector
-      image: fluentd:v1.14
+      image: fluentd:v1.19-debian-1
       volumeMounts:
         - name: log-volume
           mountPath: /fluentd/log

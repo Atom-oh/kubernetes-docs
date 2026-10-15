@@ -1,7 +1,7 @@
 # Inference Frameworks for LLM Serving
 
-> **Last Updated**: September 12, 2026
-> **Scope**: Official releases, APIs, charts and local checks; no GPU/Neuron model execution.
+> **Review baseline**: Official releases, APIs, charts and local checks inspected September 12, 2026; no GPU/Neuron model execution.
+> **Last Updated**: October 12, 2026
 
 Select inference engines, distributed execution layers, Kubernetes controllers and provider gateways separately. “OpenAI-compatible” does not mean identical endpoints, fields, streaming, tool calls or authentication.
 
@@ -22,6 +22,8 @@ Select inference engines, distributed execution layers, Kubernetes controllers a
 | Ollama | 0.34.0 | Local API access, model storage and preparation |
 | LiteLLM | 1.100.1 | Provider adaptation, authentication, fallback and cost instrumentation |
 | Neuron | SDK 2.32.0; Helm 1.10.0 | Instance-specific plugin/compiler/driver compatibility |
+
+vLLM 0.31.0 was released on October 5, 2026, after the table's existing 0.29.0 local-validation baseline. Table versions identify checked combinations; they do not claim to be the latest releases or a mutually compatible set. See the [deployment chapter update](02-vllm-deployment.md) for the 0.31.0 change that gates per-request multimodal arguments by default.
 
 Avoid a universal yes/no feature matrix. Dynamo planning and vLLM/SGLang disaggregation, CPU and GGUF support depend on release, backend and hardware. Adapter loading and model aliases are not tenant authentication boundaries.
 

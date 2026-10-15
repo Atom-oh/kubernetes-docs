@@ -268,6 +268,8 @@ Docker의 **bridge**는 같은 호스트에서 연결하는 흔한 방식이고,
 
 ## 후속 실습 순서 {#next-path}
 
+체계적인 다음 단계는 [네트워크 전문가 과정](../expert/README.md)입니다. 아래 개별 가이드를 전문가 워크북의 읽기·실험·평가 흐름에 맞춰 연결할 수 있습니다.
+
 1. [컨테이너 기술](../../basics/03-container-technology.md)에서 네임스페이스·bridge·포트 게시를 확인합니다.
 2. [Linux 네트워크 진단](../07-linux-network-diagnostics.md)으로 다음 홉·ICMP·PMTU를 측정합니다. 해당 문서의 Docker 준비·범위·정리 절차를 먼저 읽습니다.
 3. [Kubernetes 소개](../../basics/04-kubernetes-introduction.md)와 [Pod와 워크로드](../../core/02-pods-and-workloads.md)를 배운 뒤 [Service·DNS 실습](../../labs/core/03-services-networking-lab.md)을 수행합니다.

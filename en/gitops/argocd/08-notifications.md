@@ -1,7 +1,7 @@
 # ArgoCD Notifications
 
-> **Reviewed Against**: Argo CD 3.5.2 (bundled Notifications Engine 0cff13b8a717)
-> **Last Updated**: September 11, 2026
+> **Reviewed Against**: Argo CD 3.5.2 (bundled Notifications Engine 0cff13b8a717); updated to patch 3.5.4, which pins the same Notifications Engine commit, after release-note review (examples not re-run)
+> **Last Updated**: October 12, 2026
 
 ## Table of Contents
 
@@ -36,7 +36,7 @@ ArgoCD Notifications is a component that monitors ArgoCD applications and sends 
 
 ### Controller and Configuration
 
-The full Argo CD 3.5.2 installation includes the Notifications controller. Check that it is enabled in your installation/Helm values. The notifications_catalog/install.yaml file contains example configuration; it is not an installer for a missing controller. Merge selected catalog entries with your existing ConfigMap and Secret.
+The full Argo CD 3.5.4 installation includes the Notifications controller. Check that it is enabled in your installation/Helm values. The notifications_catalog/install.yaml file contains example configuration; it is not an installer for a missing controller. Merge selected catalog entries with your existing ConfigMap and Secret.
 
 ```bash
 kubectl get deployment argocd-notifications-controller -n argocd

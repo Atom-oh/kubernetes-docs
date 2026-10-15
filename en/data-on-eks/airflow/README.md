@@ -1,6 +1,7 @@
 # Airflow on EKS Deep Dive
 
-> **Review baseline**: Airflow 3.3.1 · official Helm chart 1.22.0 · September 12, 2026
+> **Review baseline**: Airflow 3.3.1 · official Helm chart 1.22.0
+> **Latest upstream patch checked**: Airflow 3.3.2 (September 17, 2026); examples remain on 3.3.1 · October 12, 2026
 
 Apache Airflow defines workflow dependencies as DAGs and schedules, runs and
 observes their tasks. On EKS, per-task pod behavior depends on the **executor and
@@ -10,6 +11,14 @@ Airflow 2 reached EOL on April 22, 2026. Use a maintained 3.x release for new
 deployments. Chart 1.22.0 defaults to **Airflow 3.2.2**, so verify chart, image and
 Airflow configuration versions separately. This series reviews 3.3.1 behavior and
 renders the chart with that version override.
+
+Upstream 3.3.2 was released on September 17, 2026. An explicit Bearer token takes
+precedence over a session cookie, and an invalid Bearer token rejects the request
+even when a valid cookie is also present. This can affect API clients that mix
+browser cookies with service credentials.
+
+This series' examples and Helm checks remain on 3.3.1 and have not been
+revalidated on 3.3.2.
 
 ## Core architecture
 
@@ -41,6 +50,7 @@ not eliminate all latency, database bottlenecks or HA concerns.
 
 
 - [Airflow 3.3.1 architecture](https://airflow.apache.org/docs/apache-airflow/3.3.1/core-concepts/overview.html)
+- [Airflow 3.3.2 release notes](https://airflow.apache.org/docs/apache-airflow/3.3.2/release_notes.html)
 - [Supported versions and lifecycle](https://airflow.apache.org/docs/apache-airflow/3.3.1/installation/supported-versions.html)
 - [Airflow prerequisites](https://airflow.apache.org/docs/apache-airflow/3.3.1/installation/prerequisites.html)
 - [Executor configuration and history](https://airflow.apache.org/docs/apache-airflow/3.3.1/core-concepts/executor/index.html)

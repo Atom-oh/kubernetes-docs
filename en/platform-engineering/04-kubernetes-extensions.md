@@ -1,6 +1,6 @@
 # Kubernetes Extension Mechanisms
 
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 12, 2026
 
 ## Choosing an Extension Point
 
@@ -15,7 +15,7 @@ Kubernetes offers several ways to extend APIs and workload behavior. Registering
 | CNI | Container networking | Actual interfaces, IPAM, routes and cleanup |
 | CSI | Volume lifecycle and node mounting | Capability-appropriate RPCs and backend/node operations |
 
-Check compatibility for the chosen APIs, libraries and distribution. Current controller-runtime 0.25.0 uses Go 1.26 and Kubernetes Go modules 0.37.0. Scheduler interface notes below were checked against Kubernetes 1.36.2 source; do not assume scheduler-plugins 0.35.7 is interchangeable with it.
+Check compatibility for the chosen APIs, libraries and distribution. The reviewed controller-runtime 0.25.0 go.mod uses Go 1.26.0 and Kubernetes Go modules 0.37.0 (latest release v0.25.2 as of October 12, 2026). Scheduler interface notes below were checked against Kubernetes 1.36.2 source; do not assume scheduler-plugins 0.35.7 is interchangeable with it.
 
 ## CRDs and Instances
 

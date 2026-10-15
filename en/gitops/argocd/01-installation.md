@@ -1,7 +1,7 @@
 # ArgoCD Installation
 
-> **Supported Versions**: Argo CD 3.5.2 / Helm Chart 10.8.4
-> **Last Updated**: September 11, 2026
+> **Review baseline**: Argo CD 3.5.2 / Helm Chart 10.8.4; manifest and CLI pins updated to patch 3.5.4 after release-note review (examples not re-run)
+> **Last Updated**: October 12, 2026
 
 ## Table of Contents
 - [Prerequisites](#prerequisites)
@@ -40,7 +40,7 @@ The simplest installation method using official manifests:
 kubectl create namespace argocd
 
 # Install ArgoCD (non-HA)
-kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
 
 ```
 
@@ -48,7 +48,7 @@ For high availability:
 
 ```bash
 # Install HA manifests
-kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/ha/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/ha/install.yaml
 ```
 
 ### Method 2: Helm Chart (Recommended for Production)
@@ -71,6 +71,8 @@ helm install argocd argo/argo-cd --version 10.8.4 \
   --create-namespace \
   --values values.yaml
 ```
+
+Chart 10.8.4 deploys Argo CD v3.5.2 (its `appVersion`), not the 3.5.4 patch pinned by the manifest examples, so it lacks the 3.5.4 security fixes. Argo CD 3.5.4 first ships in chart 10.9.7, a chart minor update this guide has not reviewed; read the chart changelog before moving the pin.
 
 Example `values.yaml` for production:
 
@@ -158,7 +160,7 @@ kind: Kustomization
 namespace: argocd
 
 resources:
-  - https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/install.yaml
+  - https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
 
 patches:
   - patch: |-
@@ -197,7 +199,7 @@ Save the following as a script and run it. Match CPU architecture/server version
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-ARGOCD_VERSION=v3.5.2
+ARGOCD_VERSION=v3.5.4
 case "$(uname -s)" in
   Linux) ARGOCD_OS=linux ;;
   Darwin) ARGOCD_OS=darwin ;;
@@ -230,7 +232,7 @@ argocd version --client
 
 ### Windows
 
-Download `argocd-windows-amd64.exe` and `cli_checksums.txt` from the v3.5.2 release. Compare `Get-FileHash -Algorithm SHA256` with the matching checksum entry. Install in a user-owned directory and add it to the user PATH instead of using System32 as the default.
+Download `argocd-windows-amd64.exe` and `cli_checksums.txt` from the v3.5.4 release. Compare `Get-FileHash -Algorithm SHA256` with the matching checksum entry. Install in a user-owned directory and add it to the user PATH instead of using System32 as the default.
 
 ### Completion
 
@@ -490,7 +492,7 @@ Review every relevant breaking-change guide from the installed version to the ta
 
 ```bash
 # Apply new version manifests
-kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.2/manifests/install.yaml
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.4/manifests/install.yaml
 
 # Wait for rollout
 kubectl rollout status deployment argocd-server -n argocd
@@ -563,9 +565,9 @@ To test what you've learned, try the [ArgoCD installation quiz](../../quizzes/gi
 
 ### Review Sources
 
-- [Argo CD 3.5.2 installation](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/installation.md)
-- [Argo CD HA](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/high_availability.md)
-- [EKS and repository setup](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/declarative-setup.md)
-- [Ingress and gRPC](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/operator-manual/ingress.md)
+- [Argo CD 3.5.4 installation](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/installation.md)
+- [Argo CD HA](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/high_availability.md)
+- [EKS and repository setup](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/declarative-setup.md)
+- [Ingress and gRPC](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/operator-manual/ingress.md)
 - [Chart 10.8.4](https://github.com/argoproj/argo-helm/releases/tag/argo-cd-10.8.4)
 - [Ingress NGINX retirement](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/)

@@ -1,7 +1,7 @@
 # Kubernetes Version Features and Roadmap
 
 > **Historical coverage**: Kubernetes 1.29–1.36; current EKS support is listed separately
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 12, 2026
 
 Kubernetes evolves rapidly, with three releases per year introducing new features, graduating existing ones, and deprecating old APIs. For enterprise teams running Amazon EKS, understanding the version landscape is essential for planning upgrades, adopting new capabilities at the right time, and avoiding disruptions from deprecations. This document provides a comprehensive, version-by-version reference covering Kubernetes 1.29 through 1.36, with EKS-specific guidance for each release.
 
@@ -133,7 +133,7 @@ SIGs own related areas: Node (runtime/lifecycle), Auth (authentication/authoriza
 
 These are the published version-support fees, not total cluster operating costs. Provisioned Control Plane tiers, compute, Auto Mode/Hybrid Nodes, other capabilities, storage and networking can add charges. At a constant rate for 365 days, the corresponding fees are $876 and $5,256 per cluster: an additional $4,380. A 730-hour monthly illustration gives $73 and $438. These are arithmetic examples, not measured bills.
 
-### Verified support calendar — September 12, 2026 (UTC)
+### Verified support calendar — October 12, 2026 (UTC)
 
 | Version | Upstream release | EKS release | Standard support ends | Extended support ends | Status on review date |
 |---|---|---|---|---|---|
@@ -143,10 +143,15 @@ These are the published version-support fees, not total cluster operating costs.
 | 1.34 | 2025-08-27 | 2025-10-02 | 2026-12-02 | 2027-12-02 | Standard |
 | 1.35 | 2025-12-17 | 2026-01-27 | 2027-03-27 | 2028-03-27 | Standard |
 | 1.36 | 2026-04-22 | 2026-06-02 | 2027-08-02 | 2028-08-02 | Standard |
+| 1.37 | 2026-08-26 | 2026-10-01 | 2027-12-01 | 2028-12-01 | Standard |
 
-The current AWS calendar offers 1.31–1.36; 1.29 and 1.30 are retained in this chapter only as historical feature coverage, not supported deployment targets. Upstream 1.37 availability does not establish EKS support. Billing for extended support starts at the beginning of the listed standard-support end date in UTC. Recheck the live calendar/API before a scheduled change; month-only dates in future AWS calendars are estimates.
+The current AWS calendar offers EKS 1.31–1.37. Versions 1.29 and 1.30 appear here as historical feature coverage, not supported deployment targets.
 
-The calendar dates EKS 1.35 availability to **January 27, 2026**, and 1.36 to **June 2, 2026**. An EKS Distro announcement date is a separate release event, so the earlier January 28 combined label should not replace the EKS calendar. Feature details belong to the corresponding version sections below and retain their runtime/admission prerequisites. EKS version rollback and control-plane scaling/SLA topics are covered in [EKS Upgrades](08-eks-upgrades.md).
+Extended-support billing starts at 00:00 UTC on the listed standard-support end date. Recheck the live calendar or API before a scheduled change; future dates that AWS lists by month only are estimates.
+
+EKS 1.35 became available on **January 27, 2026**, 1.36 on **June 2, 2026**, and 1.37 on **October 1, 2026**. EKS Distro announcements are separate release events; the earlier January 28 combined label does not replace the EKS calendar.
+
+The version sections below retain their runtime and admission prerequisites. EKS rollback and control-plane scaling/SLA topics are covered in [EKS Upgrades](08-eks-upgrades.md).
 
 ```bash
 # Read-only when executed with your normal authorized AWS identity.
@@ -2713,7 +2718,16 @@ resolve_conflicts_on_update = "PRESERVE"
 
 ### Separate released upstream changes from EKS availability
 
-As of September12,2026, upstream Kubernetes **1.37.0 was already released on August26**. It is not a future 1.37 promise, and its release does not establish EKS availability; the verified EKS calendar in section3 still governs EKS planning. This chapter’s examples were primarily checked against 1.36.2, not silently upgraded to1.37.
+As of October 12, 2026, Kubernetes **1.37 is available on EKS**. AWS made it available on October 1, after the upstream release on August 26.
+
+Detailed version-by-version coverage in this chapter ends at 1.36. The examples were primarily checked against 1.36.2 and have not been silently upgraded to 1.37.
+
+Before upgrading, read the EKS release notes and verify add-on, node image, CSI driver and workload compatibility.
+
+| EKS 1.37 change | Current behavior | Upgrade implication |
+|---|---|---|
+| Auto Mode NodePool consolidation | New custom NodePools that omit `spec.disruption.consolidationPolicy` default to `Balanced`. Built-in `general-purpose` and `system` pools use `Balanced`, which cannot be changed. | Set an explicit policy on custom pools when another behavior is intended. |
+| SELinux volume mounts | Stable and enabled by default for supported CSI and Pod configurations. | Check driver support and workloads that share volumes across different SELinux labels before upgrading nodes. |
 
 | Verified upstream 1.37 item | Interpretation |
 |---|---|

@@ -1,7 +1,7 @@
 # Extending Kubernetes
 
 > **Upstream Kubernetes versions reviewed**: Kubernetes 1.35, 1.36, 1.37
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 12, 2026
 
 Kubernetes is a platform designed with extensibility in mind, allowing you to extend its functionality in various ways. In this chapter, we will explore the various methods to extend Kubernetes and how to leverage extension features in Amazon EKS.
 
@@ -1127,7 +1127,7 @@ spec:
 
 ## Extension Features in Amazon EKS
 
-EKS version support differs from upstream. As of 2026-09-11, EKS standard support covers 1.34–1.36; check each add-on/controller compatibility matrix too.
+EKS version support differs from upstream. As of 2026-10-12, EKS standard support covers 1.34–1.37; check each add-on/controller compatibility matrix too.
 
 Amazon EKS supports various extension features to extend Kubernetes cluster functionality.
 

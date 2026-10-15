@@ -540,12 +540,14 @@ ingressController:
     allocateLoadBalancerNodePorts: true
     externalTrafficPolicy: Cluster
     annotations:
-      service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+      service.beta.kubernetes.io/aws-load-balancer-scheme: internal
       service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: instance
       service.beta.kubernetes.io/aws-load-balancer-attributes: load_balancing.cross_zone.enabled=true
       service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol: TCP
       service.beta.kubernetes.io/aws-load-balancer-healthcheck-port: traffic-port
 ```
+
+이 NLB는 의도적으로 **internal**입니다. 공개 진입점은 CloudFront뿐이며, CloudFront VPC origin을 통해 NLB에 접근합니다. NLB의 보안 그룹은 VPC origin 보안 그룹(또는 CloudFront 관리형 prefix list)만 허용하고 공개 CIDR은 허용하지 않아야 합니다.
 
 **AWS LBC가 관리하는 NLB → EC2 NodePort → Cilium Ingress Envoy** 구성의 오버라이드입니다. AWS LBC 3.5.0과 IAM·서브넷·보안 그룹 전제, 적격 EC2 노드, Cilium이 지원하는 EKS/CNI 구성, 할당된 NodePort가 필요합니다. EKS Auto Mode나 Fargate에 Cilium을 설치하는 예제가 아닙니다. `service.k8s.aws/nlb`는 AWS LBC 소유를 명시합니다. 과거 `aws-load-balancer-type: nlb` 어노테이션은 이 소유 관계를 표현하지 않습니다.
 

@@ -1,6 +1,6 @@
 # Decision Framework and PoC Design
 
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 12, 2026
 
 The Landing Zone, Account/IAM, EKS, VPC, and Data/Security boundaries covered so far should each be judged independently — but in practice, they all need to be reproducible from a single decision matrix. This document covers how to design that matrix, and how to validate the parts that require real measurement through PoCs.
 
@@ -126,7 +126,7 @@ This framework isn't limited to topology choices like Account/VPC/EKS — it can
 
 For each execution path, define controls appropriate to its risk: machine-readable intent, a pre-execution snapshot, a plan, deterministic policy checks, approval, a scoped temporary identity, a post-check, CloudTrail logging, actual state reconciliation, and a recovery contract.
 
-> **AWS MCP Server scope**: The current endpoint table lists us-east-1 and eu-central-1. Endpoint location differs from the Region of a managed resource. API execution uses IAM and downstream permissions, with CloudTrail records available for review. Assess endpoint, authentication, logging, and data paths against organizational requirements; absence of a Seoul endpoint alone does not establish a regulatory violation.
+> **AWS MCP Server scope**: As checked on October 12, 2026, the endpoint table lists eight Regions (us-east-1, us-west-2, ap-northeast-1, ap-southeast-1/2, eu-central-1, and eu-west-1/2) and no Seoul (ap-northeast-2) endpoint. Endpoint location differs from the Region of a managed resource. API execution uses IAM and downstream permissions, with CloudTrail records available for review. Assess endpoint, authentication, logging, and data paths against organizational requirements; absence of a Seoul endpoint alone does not establish a regulatory violation.
 
 ## Related documents
 

@@ -1,6 +1,6 @@
 # Part 1: 소개
 
-> **검토 기준**: Cilium 1.20.1 / Cilium CLI 0.20.0 / Hubble CLI 1.19.4. **마지막 업데이트**: 2026년 9월 12일
+> **검토 기준**: Cilium 1.20.2 / Cilium CLI 0.20.1 / Hubble CLI 1.20.2. **마지막 업데이트**: 2026년 10월 15일
 
 ## 실습 환경 설정
 
@@ -50,7 +50,7 @@ kubectl --context "$CILIUM_LAB_CONTEXT" get nodes -o wide
 cilium version --client
 
 # 클러스터/CNI 소유권과 values를 준비한 새 설치에만 적용합니다.
-cilium install --context "$CILIUM_LAB_CONTEXT" --version 1.20.1 \
+cilium install --context "$CILIUM_LAB_CONTEXT" --version 1.20.2 \
   --values cilium-lab-values.yaml
 cilium status --context "$CILIUM_LAB_CONTEXT" --wait
 ```
@@ -169,7 +169,7 @@ kubectl --context "$CILIUM_LAB_CONTEXT" get cnp -n cilium-intro-demo
 - [CNI 프로젝트](https://github.com/containernetworking/cni)
 - [Kubernetes network plugin과 runtime 소유권](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/)
 - [Kubernetes client version skew](https://kubernetes.io/releases/version-skew-policy/)
-- [Cilium identity와 용어](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/gettingstarted/terminology.rst)
+- [Cilium identity와 용어](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/gettingstarted/terminology.rst)
 - [원래 Weave 저장소 metadata](https://api.github.com/repos/weaveworks/weave)
 
 [eBPF](02-ebpf.md)로 진행하거나 [소개 퀴즈](../../quizzes/networking/cilium/01-introduction-quiz.md)로 이해를 확인하세요.

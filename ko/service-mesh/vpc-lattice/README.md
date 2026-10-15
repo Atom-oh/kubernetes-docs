@@ -1,7 +1,7 @@
 # VPC Lattice 딥다이브 개요
 
 > **범위**: VPC Lattice service/resource API와 AWS Gateway API Controller. 선택한 release와 설치 CRD를 확인합니다.
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 10월 12일
 
 ## 이 섹션에서 다루는 것
 
@@ -13,7 +13,7 @@
 
 이 섹션은 **개념 이해**를 목적으로 합니다. Lattice 리소스를 만드는 방법이나 AWS Gateway API Controller 설치 절차는 [VPC Lattice](../../networking/02-vpc-lattice.md) 문서에 이미 있고, Istio와의 기능 대비는 [Istio vs VPC Lattice](../istio/comparison/02-istio-vs-lattice.md)에 있습니다. 여기서는 그 두 문서가 다루지 않는 것 — **"왜 그렇게 설계되었는가"와 "그 설계에서 무엇이 파생되는가"**를 다룹니다.
 
-배경에는 시급성이 있습니다. **AWS App Mesh는 2026년 9월 30일 지원이 종료**되며, 그 이후에는 App Mesh 콘솔과 App Mesh 리소스에 접근할 수 없습니다. 신규 고객 온보딩은 2024년 9월 24일부터 이미 중단되었습니다. 즉 App Mesh를 운영 중인 조직에게 이 전환은 선택이 아니라 기한이 정해진 과제입니다.
+배경에는 시급성이 있습니다. **AWS App Mesh는 2026년 9월 30일 지원이 종료**되었으며, 이제 App Mesh 콘솔과 App Mesh 리소스에 접근할 수 없습니다. 신규 고객 온보딩은 2024년 9월 24일부터 이미 중단되어 있었습니다. 즉 App Mesh를 운영하던 조직에게 이 전환은 선택이 아니며 기한은 이미 지났습니다.
 
 그런데 App Mesh와 Lattice는 **같은 문제를 푸는 두 개의 구현이 아닙니다.** 데이터플레인이 있는 위치가 다르고(Pod 안 vs AWS 인프라), 신원을 증명하는 단위가 다르며(connection vs 요청), 신뢰 근원을 소유한 주체가 다릅니다(고객 CA vs AWS IAM/STS). 리소스 이름을 하나씩 갈아끼우는 식으로 접근하면 전환 후반에 기능 공백과 심의 반려를 만나게 됩니다. 이 섹션은 그 공백들을 **먼저** 드러내는 것이 목적입니다.
 
