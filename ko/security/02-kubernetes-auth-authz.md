@@ -1,7 +1,7 @@
 # Kubernetes 인증 및 권한 부여 시스템
 
 > **범위**: Kubernetes 안정 API와 Amazon EKS 사용자 접근 관리
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 10월 12일
 
 ## 개요
 
@@ -400,7 +400,7 @@ RBAC 객체를 적용한 뒤 역할의 실제 자격 증명으로 접근을 확�
 
 | 경로 | 인증 대상과 구성 |
 |---|---|
-| 외부 OIDC 사용자 → Kubernetes API | EKS `AssociateIdentityProviderConfig`로 외부 IdP를 연결하고 사용자·그룹에 RBAC를 바인딩합니다. issuer는 EKS에서 공개 HTTPS로 접근 가능해야 하며 자체 서명 인증서는 지원하지 않습니다. IAM 인증을 끄는 기능은 아닙니다. |
+| 외부 OIDC 사용자 → Kubernetes API | EKS `AssociateIdentityProviderConfig`로 외부 IdP를 연결하고 사용자·그룹에 RBAC를 바인딩합니다. issuer는 EKS에서 공개 HTTPS로 접근 가능해야 하며, 고객 라우팅 control plane egress(`controlPlaneEgressMode=CUSTOMER_ROUTED`)를 쓰는 클러스터라면 VPC에 구성한 egress 경로로도 issuer에 도달할 수 있어야 합니다. 자체 서명 인증서는 지원하지 않습니다. IAM 인증을 끄는 기능은 아닙니다. |
 | Pod → AWS API, IRSA | 클러스터의 ServiceAccount OIDC issuer를 IAM이 신뢰하도록 연결하고, 특정 네임스페이스/ServiceAccount의 역할 trust 및 필요한 AWS 리소스만 허용합니다. `eksctl utils associate-iam-oidc-provider`는 이 경로에 해당하며 외부 사용자 로그인 구성이 아닙니다. |
 | Pod → AWS API, EKS Pod Identity | 지원되는 실행 환경에서 Pod Identity Agent와 역할 association을 사용합니다. IRSA의 IAM OIDC provider 생성 절차와 다릅니다. |
 

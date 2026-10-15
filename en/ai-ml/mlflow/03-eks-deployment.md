@@ -1,6 +1,6 @@
 # Part 3: Deploying MLflow on EKS
 
-> **Review baseline**: MLflow 3.16.0 · community chart 1.11.7 · 2026-09-12
+> **Review baseline**: MLflow 3.16.0 · community chart 1.11.7; latest patch 3.16.1 checked · 2026-10-12
 
 ## Lab Environment Setup
 
@@ -78,7 +78,9 @@ An IAM role for S3 does not automatically authorize PostgreSQL login. Verify dat
 
 ClusterIP, private ALBs, and TLS provide networking or transport controls; they do not replace per-user MLflow permissions. Use the organization's protected ingress architecture rather than assuming direct public ALB exposure.
 
-Configure MLflow 3.16.0 `allowed_hosts` and CORS origins for actual callers. In this community chart, the corresponding CLI arguments can be set through `extraArgs.allowedHosts` and `extraArgs.corsAllowedOrigins`. Host/CORS restrictions do not replace login or authorization. Basic-auth changed to fail-closed authorization by default in 3.16.0, so validate existing auth plugins and endpoint compatibility.
+Configure MLflow 3.16.0 `allowed_hosts` and CORS origins for actual callers. In this community chart, set the corresponding CLI arguments through `extraArgs.allowedHosts` and `extraArgs.corsAllowedOrigins`. Host/CORS restrictions do not replace login or authorization.
+
+Basic-auth changed to fail-closed authorization by default in 3.16.0. Version 3.16.1 removed the shipped default administrator password, so do not rely on default credentials. Explicitly configure an approved administrator password and auth settings before startup. This chapter's chart and MLflow 3.16.0 combination was not revalidated on 3.16.1.
 
 The verified health endpoint is **`/health`**, implemented as a return of `"OK", 200`. It checks HTTP process responsiveness, not continuous RDS/S3 connectivity or user authorization. This release exempts health endpoints from host validation. Check actual service paths when using `static-prefix`, ingress rewrites, or plugins.
 
@@ -94,7 +96,8 @@ Back up metadata/auth databases and artifacts together and test restoration. Rev
 
 ## Primary Sources
 
-- [MLflow 3.16.0 release](https://github.com/mlflow/mlflow/releases/tag/v3.16.0)
+- [MLflow 3.16.1 patch release](https://github.com/mlflow/mlflow/releases/tag/v3.16.1)
+- [MLflow 3.16.0 review baseline](https://github.com/mlflow/mlflow/releases/tag/v3.16.0)
 - [Tracking server architecture](https://mlflow.org/docs/3.16.0/self-hosting/architecture/tracking-server/)
 - [Community chart](https://github.com/community-charts/helm-charts/tree/main/charts/mlflow)
 - [MLflow repository chart](https://github.com/mlflow/mlflow/tree/v3.16.0/charts)

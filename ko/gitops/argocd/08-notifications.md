@@ -1,7 +1,7 @@
 # ArgoCD 알림
 
-> **검토 기준**: Argo CD 3.5.2 (포함된 Notifications Engine 0cff13b8a717)
-> **마지막 업데이트**: 2026년 9월 11일
+> **검토 기준**: Argo CD 3.5.2 (포함된 Notifications Engine 0cff13b8a717). 릴리스 노트 검토 후 같은 Notifications Engine 커밋을 쓰는 패치 3.5.4로 갱신(예제 재실행 안 함)
+> **마지막 업데이트**: 2026년 10월 12일
 
 ## 목차
 

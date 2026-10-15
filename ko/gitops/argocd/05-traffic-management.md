@@ -1,7 +1,7 @@
 # ArgoCD 트래픽 관리
 
-> **검토 기준**: Argo CD 3.5.2, Argo Rollouts 1.10.0, Helm chart 2.43.1
-> **마지막 업데이트**: 2026년 9월 11일
+> **검토 기준**: Argo CD 3.5.2, Argo Rollouts 1.10.0, Helm chart 2.43.1. 릴리스 노트 검토 후 Argo CD 3.5.4와 chart 2.43.6(Rollouts는 1.10.0 유지)으로 갱신(예제 재실행 안 함)
+> **마지막 업데이트**: 2026년 10월 12일
 
 ## 목차
 
@@ -108,7 +108,7 @@ dashboard:
 helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update argo
 helm upgrade --install argo-rollouts argo/argo-rollouts \
-  --version 2.43.1 --namespace argo-rollouts --create-namespace \
+  --version 2.43.6 --namespace argo-rollouts --create-namespace \
   --values rollouts-values.yaml --wait --timeout 5m
 ```
 
@@ -120,7 +120,7 @@ Helm 설치를 선택한 경우 읽기 전용 ClusterIP Dashboard를 활성화�
 
 ```bash
 helm upgrade --install argo-rollouts argo/argo-rollouts \
-  --version 2.43.1 --namespace argo-rollouts --create-namespace \
+  --version 2.43.6 --namespace argo-rollouts --create-namespace \
   --values rollouts-values.yaml \
   --set dashboard.enabled=true --set dashboard.readonly=true \
   --set dashboard.service.type=ClusterIP --set dashboard.ingress.enabled=false \

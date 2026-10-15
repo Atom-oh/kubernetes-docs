@@ -1,7 +1,7 @@
 # ArgoCD Application 심층 분석
 
-> **지원 버전**: Argo CD 3.5.2
-> **마지막 업데이트**: 2026년 9월 11일
+> **검토 기준**: Argo CD 3.5.2. 릴리스 노트 검토 후 패치 3.5.4로 갱신(예제 재실행 안 함)
+> **마지막 업데이트**: 2026년 10월 12일
 
 ## 목차
 
@@ -382,7 +382,7 @@ spec:
     syncOptions: [CreateNamespace=true]
 ```
 
-Argo CD 3.5.2는 하나의 layer와 지원 media type을 요구합니다. 기본 layer type은 application/vnd.oci.image.layer.v1.tar+gzip 또는 Helm chart content tar+gzip입니다. 다른 타입은 Repo Server의 ARGOCD_REPO_SERVER_OCI_LAYER_MEDIA_TYPES 설정과 아티팩트 구조를 함께 검증합니다.
+Argo CD 3.5.4는 하나의 layer와 지원 media type을 요구합니다. 기본 layer type은 application/vnd.oci.image.layer.v1.tar+gzip 또는 Helm chart content tar+gzip입니다. 다른 타입은 Repo Server의 ARGOCD_REPO_SERVER_OCI_LAYER_MEDIA_TYPES 설정과 아티팩트 구조를 함께 검증합니다. 3.5.4부터 4 MiB를 초과하는 OCI manifest는 거부됩니다(GHSA-w996-f2wq-x9c6).
 
 기존 Helm OCI 방식은 chart 필드와 **oci://를 제외한** repository URL을 사용합니다. 아래는 Application.spec에 넣을 source 조각입니다.
 
@@ -546,7 +546,7 @@ Synced는 비교 대상 필드가 원하는 상태와 맞는다는 뜻이며 서
 
 ### 내장 헬스 체크
 
-아래는 3.5.2 구현의 주요 기준을 요약한 것으로, replica 수 하나만 비교하는 완전한 판정식이 아닙니다.
+아래는 3.5.4 구현의 주요 기준을 요약한 것으로, replica 수 하나만 비교하는 완전한 판정식이 아닙니다.
 
 | 리소스 | 주요 판정 |
 |---|---|
@@ -612,7 +612,7 @@ data:
 
 ## 리소스 훅
 
-PostSync는 Sync 성공과 관련 리소스의 Healthy 상태를 기다립니다. 명시적으로 일부 리소스만 고르는 selective sync에서는 훅이 실행되지 않습니다. 반면 3.5.2의 ApplyOutOfSyncOnly 옵션은 훅을 실행하고 이력도 남깁니다. SyncFail은 실행 가능한 동기화 실패 경로의 정리 수단이며, manifest 해석 오류를 포함한 모든 오류에서 반드시 실행되는 백업 수단으로 취급하지 않습니다.
+PostSync는 Sync 성공과 관련 리소스의 Healthy 상태를 기다립니다. 명시적으로 일부 리소스만 고르는 selective sync에서는 훅이 실행되지 않습니다. 반면 3.5.4의 ApplyOutOfSyncOnly 옵션은 훅을 실행하고 이력도 남깁니다. SyncFail은 실행 가능한 동기화 실패 경로의 정리 수단이며, manifest 해석 오류를 포함한 모든 오류에서 반드시 실행되는 백업 수단으로 취급하지 않습니다.
 
 리소스 훅은 동기화 과정의 특정 시점에 실행되는 작업입니다:
 
@@ -991,10 +991,10 @@ spec:
 
 ### 버전별 검토 근거
 
-- [3.5.2 sources and Helm](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/helm.md)
-- [Multiple sources](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/multiple_sources.md)
-- [OCI source rules](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/oci.md)
-- [Sync options](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-options.md)
-- [Phases, waves and hooks](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-waves.md)
-- [Service health implementation](https://github.com/argoproj/argo-cd/blob/v3.5.2/gitops-engine/pkg/health/health_service.go)
+- [3.5.4 sources and Helm](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/helm.md)
+- [Multiple sources](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/multiple_sources.md)
+- [OCI source rules](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/oci.md)
+- [Sync options](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-options.md)
+- [Phases, waves and hooks](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-waves.md)
+- [Service health implementation](https://github.com/argoproj/argo-cd/blob/v3.5.4/gitops-engine/pkg/health/health_service.go)
 - [ACK condition definitions](https://github.com/aws-controllers-k8s/runtime/blob/main/apis/core/v1alpha1/conditions.go)

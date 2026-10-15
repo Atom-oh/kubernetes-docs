@@ -22,14 +22,14 @@ Full Kubeflow and the Models Web Application are not prerequisites for every KSe
 2. Which versions does this chapter review?
 
    - A) Only the web app at 0.16.1
-   - B) KServe and web app 0.18.0 in Community 26.03.1; latest inspected KServe is 0.20.0
+   - B) KServe and web app 0.18.0 in Community 26.03.1; latest KServe checked on 2026-10-12 is 0.21.0
    - C) All components must have different versions
    - D) The web-app label determines all installed CRDs
 
 <details>
 <summary>Show Answer</summary>
 
-**Answer: B) KServe and web app 0.18.0 in Community 26.03.1; latest inspected KServe is 0.20.0**
+**Answer: B) KServe and web app 0.18.0 in Community 26.03.1; latest KServe checked on 2026-10-12 is 0.21.0**
 
 Controller, CRDs and web app are separate artifacts. Their actual compatibility and revisions must be recorded.
 </details>

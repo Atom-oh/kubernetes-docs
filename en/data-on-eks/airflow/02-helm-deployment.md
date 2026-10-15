@@ -1,6 +1,7 @@
 # Part 2: Helm Deployment and Executor Choice
 
-> **Review baseline**: chart 1.22.0 / Airflow 3.3.1 / KEDA 2.20 · September 12, 2026
+> **Review baseline**: chart 1.22.0 / Airflow 3.3.1 / KEDA 2.20
+> **Latest upstream patch checked**: Airflow 3.3.2; chart examples remain on 3.3.1 · October 12, 2026
 
 ## 1. Chart identity and actual defaults
 

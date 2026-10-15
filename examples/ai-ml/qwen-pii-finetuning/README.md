@@ -1,6 +1,6 @@
 # Qwen PII Fine-Tuning Experiment
 
-This package defines the same QLoRA experiment for two execution paths:
+The historical package defines the same QLoRA experiment for two execution paths:
 
 1. Amazon SageMaker AI Training with SageMaker managed MLflow.
 2. An ephemeral Amazon EKS GPU Job with MLflow running inside the cluster.
@@ -12,11 +12,69 @@ document.
 Replacement and round-trip tests do not prove complete PII detection or
 anonymity. Neither GPU execution path completed in the recorded AWS validation.
 
-**Resource creation and GPU execution are currently blocked.** The pinned
+**Those historical resource-creation and GPU paths remain blocked.** The pinned
 PyTorch 2.8 SageMaker DLC reached end of patch on **2026-08-06** according to
 the upstream `aws/deep-learning-containers` image catalog. Upgrade the DLC,
 torch/dependencies, and MLflow pairing together and validate GPU smoke behavior
 before re-enabling execution. Do not remove the support check alone.
+
+## Recorded GPU execution: September 16, 2026
+
+The separate `src/train_execution.py` path completed a real SageMaker GPU smoke
+job with the same Qwen model, pinned model revision, and a supported PyTorch 2.11
+AL2023/CUDA 13 image. Its [configuration](config/execution-20260916.json) uses
+NF4, BF16 computation, and rank-16 LoRA on `q_proj`, `k_proj`, `v_proj`, and
+`o_proj`: 13,369,344 trainable attention parameters. It uses SageMaker Training
+Jobs directly, with no Studio project, EKS cluster, or managed MLflow dependency.
+This is a separate execution path; the historical seven-module configuration
+and runtime support guard are unchanged.
+
+The [aggregate smoke receipt](results/execution-smoke-20260916.json) records
+four optimizer steps on 32 training records, validation loss on eight records,
+and paired generation on four validation records. All 384 adapter tensors
+changed; saved/reloaded state hashes matched exactly. The final adapter weights
+are 53,528,920 bytes and remain private. Peak PyTorch allocated memory through
+training was 21.39 GiB. AWS reported 1,140 billable seconds, an estimated
+USD 1.46 of GPU compute at the recorded Seoul price; this excludes storage,
+logging, taxes, and billing adjustments.
+
+This smoke run **does not demonstrate better extraction quality**. Across two
+positive and two negative validation documents, baseline entity F1 was 1.0000
+with only 2/4 correctly formatted responses. The tuned adapter had F1 0.8125 and
+4/4 formatted responses, but added six false-positive entity pairs on the
+negative documents. Format, omissions, and excessive masking need separate
+interpretation; four documents are not a representative performance benchmark.
+
+The new `data/execution_dataset.py` creates a separate 1,600/200/400 corpus
+covering all nine entity types in Korean and English. It splits source families
+before augmentation, augments training only, and audits exact NFC-source
+separation. Names and templates are partly shared across splits, so the corpus
+does not establish unseen-domain generalization. The 40-family CPU lab and
+historical generator remain separate.
+
+At 11:12 UTC on September 16, a 600-step full job was submitted with a 36-hour
+server runtime limit. This is a **submission record**, not a full-training result.
+The job selects a checkpoint using validation loss, then evaluates the base model
+and selected adapter on the 400 test documents and writes aggregate JSON plus
+`final_adapter/` to its private SageMaker model output. It does not deploy an endpoint.
+The smoke and full reservations total USD 199.2944375 against the user's USD 500
+authorization; reservations include a two-hour overhead and USD 5 incidental
+allowance per job and are not actual spending.
+
+The dated launcher is restricted to `samples-atomoh` and one canonical ledger
+under the primary checkout's `.vitepress/cache/qlora-execution-20260916/evidence/run`.
+It is this account owner's execution record, not an unrestricted deployment
+script for another account. A different evidence path cannot reset the budget.
+The launcher refuses to replace submitted inputs or launch full training without
+verified smoke evidence. Private inventories, generated data, adapters, and
+observer logs must not be committed. The dedicated S3 bucket expires objects
+after 30 days; training instances terminate with their jobs.
+
+Direct training versions are pinned and the complete installed package inventory
+is saved in SageMaker's separate `output.tar.gz`. An unused preinstalled S3FS
+package reported an FSSpec version conflict; the reviewed execution uses local
+File channels and in-memory datasets, not that optional backend. Do not infer a
+fully locked dependency closure or working S3FS integration from this run.
 
 ## Safety and reproducibility
 

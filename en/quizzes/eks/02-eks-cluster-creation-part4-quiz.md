@@ -1,6 +1,6 @@
 # EKS Cluster Creation Quiz - Part 4
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 12, 2026
 
 This quiz connects the Terraform cluster guide to scaling, identities and lifecycle operations. The final section checks Terraform-specific concepts. Examples require reviewed account/Region/kubeconfig, IAM and network prerequisites; they were not deployed during this audit.
 
@@ -345,7 +345,7 @@ Track that update ID to `Successful` and test authenticated kubectl access from 
 
 An EKS minor version receives **14 months of standard support**, followed by **12 months of extended support** at an additional cluster-hour cost. The clock starts at its EKS release date, not the upstream release date.
 
-On September 11, 2026, EKS lists 1.34–1.36 in standard support and 1.31–1.33 in extended support. Check the current EKS release calendar before selecting a deployment/upgrade target; upstream 1.37 alone does not make it an EKS target.
+On October 12, 2026, EKS lists 1.34–1.37 in standard support and 1.31–1.33 in extended support. EKS 1.37 became available on October 1, 2026, after its upstream release on August 26. Check the current EKS release calendar before selecting a deployment/upgrade target.
 
 Extended support is enabled by default. The cluster upgrade policy determines behavior at the end of standard support. After extended support ends, EKS automatically upgrades the control plane to the oldest supported extended version; the old version does not run indefinitely without updates. Managed/self-managed/hybrid nodes and add-ons require their own lifecycle actions, while Auto Mode manages its capabilities and nodes.
 

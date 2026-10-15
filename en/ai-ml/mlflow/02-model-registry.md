@@ -1,10 +1,12 @@
 # Part 2: MLflow Model Registry
 
-> **Review baseline**: MLflow 3.16.0 · 2026-09-12
+> **Review baseline**: MLflow 3.16.0; latest patch 3.16.1 checked · 2026-10-12
 
 ## Lab Environment Setup
 
-Use Python 3.10 or later and `mlflow==3.16.0`. Registry APIs also work with local SQLite; a separate HTTP server is not mandatory. See [Part 3](03-eks-deployment.md) for team deployment and [Part 1](01-tracking.md) for Tracking setup. This chapter describes OSS MLflow. Managed registries such as Databricks Unity Catalog can have different permission, copying, and retention behavior.
+Use Python 3.10 or later and `mlflow==3.16.0`. Registry APIs also work with local SQLite; a separate HTTP server is not mandatory. Patch 3.16.1 is available, but this chapter's examples use 3.16.0 and were not rerun on 3.16.1.
+
+See [Part 3](03-eks-deployment.md) for team deployment and [Part 1](01-tracking.md) for Tracking setup. This chapter describes OSS MLflow. Managed registries such as Databricks Unity Catalog can have different permission, copying, and retention behavior.
 
 ## What the Model Registry Is
 
