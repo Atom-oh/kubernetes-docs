@@ -1,7 +1,7 @@
 # ArgoCD 동기화 전략
 
-> **지원 버전**: Argo CD 3.5.2
-> **마지막 업데이트**: 2026년 9월 11일
+> **검토 기준**: Argo CD 3.5.2. 릴리스 노트 검토 후 패치 3.5.4로 갱신(예제 재실행 안 함)
+> **마지막 업데이트**: 2026년 10월 12일
 
 ## 목차
 
@@ -273,7 +273,7 @@ syncOptions:
 
 ### ServerSideApply
 
-Argo CD 3.5.2는 --server-side --force-conflicts로 적용합니다. 필드 소유권을 추적하지만 충돌을 무조건 거부하는 안전장치는 아니며, 다른 controller가 소유한 필드를 인수할 수 있어 소유권을 검토합니다.
+Argo CD 3.5.4는 --server-side --force-conflicts로 적용합니다. 필드 소유권을 추적하지만 충돌을 무조건 거부하는 안전장치는 아니며, 다른 controller가 소유한 필드를 인수할 수 있어 소유권을 검토합니다.
 
 Kubernetes Server-Side Apply를 사용합니다:
 
@@ -597,7 +597,7 @@ syncPolicy:
 
 ## 선택적 동기화
 
---resource/--label로 일부 리소스를 명시 선택하는 sync는 훅을 실행하지 않고 이력도 남기지 않습니다. ApplyOutOfSyncOnly/--apply-out-of-sync-only는 3.5.2에서 훅·이력을 유지합니다. --label은 리소스 선택, --selector(-l)는 Application 선택이므로 혼동하지 않습니다.
+--resource/--label로 일부 리소스를 명시 선택하는 sync는 훅을 실행하지 않고 이력도 남기지 않습니다. ApplyOutOfSyncOnly/--apply-out-of-sync-only는 3.5.4에서 훅·이력을 유지합니다. --label은 리소스 선택, --selector(-l)는 Application 선택이므로 혼동하지 않습니다.
 
 ### 특정 리소스만 동기화
 
@@ -665,8 +665,8 @@ metadata:
 
 ### 버전별 검토 근거
 
-- [3.5.2 sync options](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-options.md)
-- [Sync windows](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync_windows.md)
-- [Window matching and CanSync](https://github.com/argoproj/argo-cd/blob/v3.5.2/pkg/apis/application/v1alpha1/types.go)
-- [Phases and waves](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/sync-waves.md)
-- [CLI resource/app selectors](https://github.com/argoproj/argo-cd/blob/v3.5.2/docs/user-guide/commands/argocd_app_sync.md)
+- [3.5.4 sync options](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-options.md)
+- [Sync windows](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync_windows.md)
+- [Window matching and CanSync](https://github.com/argoproj/argo-cd/blob/v3.5.4/pkg/apis/application/v1alpha1/types.go)
+- [Phases and waves](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/sync-waves.md)
+- [CLI resource/app selectors](https://github.com/argoproj/argo-cd/blob/v3.5.4/docs/user-guide/commands/argocd_app_sync.md)

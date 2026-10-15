@@ -1,7 +1,7 @@
 # 커널 데이터패스 — link-local 인터셉트의 실제
 
 > **범위**: VPC Lattice service/resource API와 AWS Gateway API Controller. 선택한 release와 설치 CRD를 확인합니다.
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 10월 12일
 
 ## 이 문서에서 다루는 것
 
@@ -217,7 +217,7 @@ Istio의 `istio-iptables`(`tools/istio-iptables/pkg/capture/run.go`)가 `ISTIO_O
 그리고 **프록시 UID `RETURN`(3)이 제외 CIDR보다도 먼저**입니다. 즉 Istio 자신도 이 문서에서 설명한 UID 기반 루프 방지를 같은 방식으로 쓰고 있습니다.
 
 ::: warning 확인 필요
-위 순서는 **Istio** 소스에서 확인한 것입니다. **App Mesh의 init container가 심는 실제 규칙 순서는 검증하지 못했습니다** — 별개 구현이며, App Mesh는 2026년 9월 30일 지원이 종료됩니다.
+위 순서는 **Istio** 소스에서 확인한 것입니다. **App Mesh의 init container가 심는 실제 규칙 순서는 검증하지 못했습니다** — 별개 구현이며, App Mesh는 2026년 9월 30일 지원이 종료되었습니다.
 
 또한 **서명 프록시 init container를 함께 쓰는 구성**은 두 init container가 각자 규칙을 심으므로 순서가 `initContainers` 배열 순서에 의존합니다. 이 조합은 **대상 환경에서 `iptables -t nat -L -n -v`로 실제 규칙을 덤프해 확인**하십시오.
 :::

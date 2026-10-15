@@ -1,6 +1,7 @@
 # Part 3: DAG Patterns and KubernetesPodOperator
 
-> **Review baseline**: Airflow 3.3.1 / cncf-kubernetes provider 10.21.0 · September 12, 2026
+> **Review baseline**: Airflow 3.3.1 / cncf-kubernetes provider 10.21.0
+> **Latest upstream patch checked**: Airflow 3.3.2; examples remain on 3.3.1 · October 12, 2026
 
 ## 1. Executors, KPO and physical pod count
 

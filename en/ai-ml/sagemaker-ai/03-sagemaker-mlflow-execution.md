@@ -1,5 +1,7 @@
 # Part 3: SageMaker AI and MLflow Execution
 
+For a hands-on learning path, start with the [QLoRA training workshop](05-qlora-finetuning-workshop.md). This chapter documents the existing implementation and operational contract.
+
 > **Last Updated**: September 12, 2026
 
 ## Execution Notice

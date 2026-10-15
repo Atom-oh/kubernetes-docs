@@ -1,7 +1,7 @@
 # Certificate Management with cert-manager
 
-> **Last Updated**: September 13, 2026
-> **Validation baseline**: cert-manager 1.21.2, cmctl 2.5.0, trust-manager 0.25.0, istio-csr 0.17.0, aws-privateca-issuer 1.9.2, ACK ACM 1.8.1. The official supported/tested Kubernetes range for cert-manager 1.21 is 1.33–1.36.
+> **Last Updated**: October 12, 2026
+> **Validation baseline**: cert-manager 1.21.2, cmctl 2.5.0, trust-manager 0.25.0, istio-csr 0.17.0, aws-privateca-issuer 1.9.2, ACK ACM 1.8.1. cert-manager 1.21's published supported/tested Kubernetes range is 1.33–1.36; Kubernetes 1.37 is outside that range, so this guide does not assert compatibility with it.
 
 cert-manager manages certificate issuance and renewal as Kubernetes resources. **CA trust distribution, application reload, revocation, and CRL/OCSP operations remain separate responsibilities.** Examples were checked with local schemas, configuration, and libraries; they are not evidence of external CA issuance or AWS/Kubernetes deployment. A separate ephemeral local Vault 2.1.0 test used a synthetic CA for sixteen issuance/CSR-signing acceptance/rejection cases.
 
@@ -362,7 +362,7 @@ This Gateway uses lab-ca, which ordinary browsers do not trust. Real public issu
 
 ### ACM RequestCertificate and ACK export
 
-ACK ACM is itself an installed, operated open-source controller. The 1.8.1 [example](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/ack-acm.yaml) explicitly configures options.export:ENABLED, exportTo, and the output Secret. Defining an issuance request alone does not create a TLS Secret. The current CRD has no validationMethod field; do not copy that field from old examples.
+ACK ACM is itself an installed, operated open-source controller. The 1.8.1 [example](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/ack-acm.yaml) explicitly configures options.export:ENABLED, exportTo, and the output Secret. Defining an issuance request alone does not create a TLS Secret. In the 1.8.1 CRD (unchanged in v1.10.0), validationMethod appears only in read-only status domainValidations fields, not in spec; do not copy it into a request from old examples.
 
 ```yaml
 apiVersion: v1
@@ -560,6 +560,7 @@ Selecting recursive DNS resolvers is not increasing propagation wait time. Inspe
 Local checks include pinned Helm/CRD schemas, controller-config decoding, 6 renewal cases, real CSR generation/signature checking, 5 Prometheus cases / 20 assertions, 24 diagram browser cases, and sixteen synthetic issuance/CSR-signing cases in ephemeral local Vault. No external CA/ACME issuance, AWS resource creation, deployed Vault login, mesh installation, or runtime mTLS was executed.
 
 - [cert-manager releases](https://cert-manager.io/docs/releases/)
+- [cert-manager 1.21.2 release](https://github.com/cert-manager/cert-manager/releases/tag/v1.21.2)
 - [CNCF project history](https://www.cncf.io/projects/cert-manager/)
 - [Certificate renewal and rotation](https://cert-manager.io/docs/usage/certificate/)
 - [CA issuer limitations](https://cert-manager.io/docs/configuration/ca/)

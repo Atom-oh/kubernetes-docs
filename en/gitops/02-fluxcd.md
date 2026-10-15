@@ -1,11 +1,11 @@
 # FluxCD
 
-> **Supported Versions**: Flux 2.9.5
-> **Last Updated**: September 11, 2026
+> **Review baseline**: Self-managed Flux 2.9.5; updated to patch 2.9.6 after release-note review (examples not re-run)
+> **Last Updated**: October 12, 2026
 
 FluxCD is a set of continuous and progressive delivery solutions for Kubernetes that are open and extensible. FluxCD graduated from the CNCF in November 2022, making it one of the most mature GitOps tools in the cloud-native ecosystem.
 
-This chapter targets **self-managed Flux 2.9.5**. The CLI precheck requires at least Kubernetes 1.33; also check the distribution’s actual support window. Review the 2.7+ API migration procedure before upgrading from 2.6 or earlier. OCIRepository/Bucket/image APIs below use v1; Notification Provider/Alert remain v1beta3.
+This chapter targets **self-managed Flux 2.9.6**. The CLI precheck requires at least Kubernetes 1.33; also check the distribution’s actual support window. Review the 2.7+ API migration procedure before upgrading from 2.6 or earlier. OCIRepository/Bucket/image APIs below use v1; Notification Provider/Alert remain v1beta3.
 
 Examples use platform-owned, trusted `flux-system` resources. Repeated Kustomizations are alternatives/fragments to compose, not a sequence of replacements. Prepare actual repository URLs, paths, namespaces, and Secrets. Tenant use requires dedicated namespaces, RBAC/impersonation through `spec.serviceAccountName`, and cross-namespace reference restrictions.
 
@@ -151,7 +151,7 @@ spec:
 
 #### Variable Substitution
 
-`substituteFrom` entries override earlier entries; inline `substitute` takes precedence. Secret substitutions enter rendered manifests, so control their output/access. The bundled kustomize-controller 1.9.5 enables `StrictPostBuildSubstitutions` by default, failing on missing variables without defaults. Check whether an existing deployment explicitly disables that gate. Numeric fields must still render as Kubernetes numeric values.
+`substituteFrom` entries override earlier entries; inline `substitute` takes precedence. Secret substitutions enter rendered manifests, so control their output/access. The kustomize-controller 1.9.6 bundled with Flux 2.9.6 enables `StrictPostBuildSubstitutions` by default, failing on missing variables without defaults. Check whether an existing deployment explicitly disables that gate. Numeric fields must still render as Kubernetes numeric values.
 
 FluxCD supports variable substitution using `postBuild`:
 
@@ -469,7 +469,7 @@ Example installation of the verified Linux amd64/arm64 release. For other operat
 
 ```bash
 set -euo pipefail
-FLUX_VERSION=2.9.5
+FLUX_VERSION=2.9.6
 case "$(uname -m)" in
   x86_64)
     flux_arch=amd64
@@ -505,7 +505,7 @@ flux bootstrap github \
   --repository=fleet-infra \
   --branch=main \
   --path=clusters/production \
-  --version=v2.9.5 \
+  --version=v2.9.6 \
   --components-extra=image-reflector-controller,image-automation-controller
 
 # Alternative B: GitLab group; provide authorized GITLAB_TOKEN securely.
@@ -514,7 +514,7 @@ flux bootstrap gitlab \
   --repository=fleet-infra \
   --branch=main \
   --path=clusters/production \
-  --version=v2.9.5 \
+  --version=v2.9.6 \
   --components-extra=image-reflector-controller,image-automation-controller
 ```
 
@@ -575,7 +575,9 @@ fleet-infra/
 
 ### Kustomization Dependencies in One Control Plane
 
-dependsOn waits for the Ready condition of Kustomization objects observed by this Flux control plane. These are two objects in one cluster, not a cross-cluster barrier. wait: true makes infrastructure readiness include workload health. The default bootstrap GitRepository is named flux-system, used by sourceRef here. Bootstrap each independent cluster with its own context/path, or explicitly configure remote kubeConfig and authorization. In 2.9.5, Secret kubeconfigs reject local file references in certificate-authority/tokenFile/client-certificate/client-key. Supply the required credentials/certificates as protected inline data or use a supported workload identity configuration.
+`dependsOn` waits for the Ready condition of Kustomization objects observed by this Flux control plane. These are two objects in one cluster, not a cross-cluster barrier. `wait: true` makes infrastructure readiness include workload health. The default bootstrap GitRepository is named `flux-system`, which this example uses as its `sourceRef`.
+
+Bootstrap each independent cluster with its own context/path, or explicitly configure remote `kubeConfig` and authorization. Since Flux 2.9.5, Secret kubeconfigs reject local file references in `certificate-authority`, `tokenFile`, `client-certificate` and `client-key`. Supply required credentials/certificates as protected inline data or use a supported workload identity configuration.
 
 ```yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -736,7 +738,7 @@ spec:
 
 ### CodeCommit HTTPS Source
 
-This is a **source integration for an existing Flux installation**, not a bootstrap or IAM-credential creation procedure. source-controller 1.9.5 supports provider: aws with a CodeCommit HTTPS endpoint and IRSA/Pod Identity. Add the read permission to its role and reference this GitRepository from the desired Kustomization.
+This is a **source integration for an existing Flux installation**, not a bootstrap or IAM-credential creation procedure. source-controller 1.9.6 (bundled with Flux 2.9.6) supports provider: aws with a CodeCommit HTTPS endpoint and IRSA/Pod Identity. Add the read permission to its role and reference this GitRepository from the desired Kustomization.
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1
@@ -795,7 +797,8 @@ If ImageUpdateAutomation pushes to CodeCommit, its controller/object identity al
 
 ## References
 
-- [Flux 2.9.5 release and migration notice](https://github.com/fluxcd/flux2/releases/tag/v2.9.5)
+- [Flux 2.9.5 release and kubeconfig hardening notice](https://github.com/fluxcd/flux2/releases/tag/v2.9.5)
+- [Flux 2.9.6 release notes](https://github.com/fluxcd/flux2/releases/tag/v2.9.6)
 - [Flux installation](https://fluxcd.io/flux/installation/)
 - [AWS integration](https://fluxcd.io/flux/integrations/aws/)
 - [GitRepository v1](https://github.com/fluxcd/source-controller/blob/v1.9.5/docs/spec/v1/gitrepositories.md)

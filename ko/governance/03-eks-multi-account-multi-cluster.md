@@ -1,6 +1,6 @@
 # EKS 멀티 계정·멀티 클러스터 아키텍처
 
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 10월 12일
 
 ## 1. 클러스터 수용 방식
 
@@ -71,7 +71,7 @@ AWS 문서가 명시적으로 경고하는 부분입니다. zonal shift가 발�
 
 - **EKS Fargate에서는 동작하지 않습니다.**
 - Self-managed Karpenter는 **1.12 이상**에서 지원합니다.
-- EKS Auto Mode는 추가 설정 없이 연동되며, node provisioning 중단과 consolidation/drift 같은 voluntary disruption까지 자동으로 처리합니다.
+- EKS Auto Mode는 클러스터에 zonal shift를 활성화하는 것 외에 추가 설정이 필요 없습니다. 이후 장애 AZ의 신규 node provisioning을 멈추고, 그 AZ에 영향을 주는 consolidation 같은 voluntary disruption을 중단하며, 해당 AZ를 엄격하게 지정한 scheduling 요구가 있는 Pod용 capacity도 띄우지 않습니다.
 - Stateful 워크로드는 storage별로 검토합니다. EBS PV는 AZ에 종속되어 다른 AZ에 직접 attach할 수 없습니다. 모든 PVC가 EBS인 것은 아니며 EFS 등 다른 저장소는 가용성·복구 특성이 다릅니다.
 
 > **설계 제안**: autoshift 전에 각 서비스와 DNS·스토리지의 N-1 동작을 검증하세요. single-AZ endpoint는 fail-safe로 남을 수 있으므로 practice run이 항상 중단시킨다고 단정하지 않습니다. 이 동작은 장애 AZ가 정상 서비스를 제공한다는 보장도 아닙니다.

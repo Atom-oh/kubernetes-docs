@@ -2,8 +2,8 @@
 
 # cert-manager를 활용한 인증서 관리
 
-> **마지막 업데이트**: 2026년 9월 13일
-> **검증 기준**: cert-manager 1.21.2, cmctl 2.5.0, trust-manager 0.25.0, istio-csr 0.17.0, aws-privateca-issuer 1.9.2, ACK ACM 1.8.1. cert-manager 1.21의 공식 Kubernetes 지원·시험 범위는 1.33–1.36입니다.
+> **마지막 업데이트**: 2026년 10월 12일
+> **검증 기준**: cert-manager 1.21.2, cmctl 2.5.0, trust-manager 0.25.0, istio-csr 0.17.0, aws-privateca-issuer 1.9.2, ACK ACM 1.8.1. cert-manager 1.21의 공개 지원·시험 범위는 Kubernetes 1.33–1.36입니다. Kubernetes 1.37은 이 범위 밖이므로 이 가이드가 호환성을 보장하지 않습니다.
 
 cert-manager는 인증서 발급·갱신을 Kubernetes 리소스로 관리합니다. **CA 신뢰 배포, 애플리케이션 reload, 인증서 폐기·CRL/OCSP 운영은 별도 책임**입니다. 아래 예제는 로컬 schema·설정·라이브러리 검증을 거쳤으며 외부 CA 발급이나 AWS/Kubernetes 배포 결과가 아닙니다. 별도로 로컬 임시 Vault 2.1.0에서 합성 CA를 사용해 SAN 허용·거부 16개 사례를 시험했습니다.
 
@@ -367,7 +367,7 @@ spec:
 
 ### ACM RequestCertificate와 ACK export
 
-ACK ACM도 설치·운영하는 오픈소스 controller입니다. 1.8.1의 [예제](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/ack-acm.yaml)는 `options.export: ENABLED`, `exportTo`와 실제 출력 Secret을 명시합니다. 발급 요청만 정의한다고 자동으로 TLS Secret이 만들어지는 것은 아닙니다. 현재 CRD에는 `validationMethod`가 없으므로 이전 예제의 필드를 그대로 복사하지 않습니다.
+ACK ACM도 설치·운영하는 오픈소스 controller입니다. 1.8.1의 [예제](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/cert-manager/ack-acm.yaml)는 `options.export: ENABLED`, `exportTo`와 실제 출력 Secret을 명시합니다. 발급 요청만 정의한다고 자동으로 TLS Secret이 만들어지는 것은 아닙니다. 1.8.1 CRD(v1.10.0에서도 동일)에서 `validationMethod`는 spec이 아니라 읽기 전용 status의 `domainValidations` 필드에만 있으므로, 이전 예제의 필드를 요청에 그대로 복사하지 않습니다.
 
 ```yaml
 apiVersion: v1
@@ -565,6 +565,7 @@ DNS resolver 선택은 propagation 대기 시간을 늘리는 옵션과 다릅�
 로컬 검증은 pinned Helm/CRD, controller config decoder, 갱신 계산 6개 사례, 실제 CSR 생성·서명 확인, Prometheus 5개 사례·20개 assertion, 다이어그램 브라우저 24개 사례와 로컬 임시 Vault의 합성 인증서 발급·거부 16개 사례를 포함합니다. 외부 CA/ACME 발급, AWS 리소스 생성, 운영 Vault 로그인, mesh 설치·mTLS runtime은 실행하지 않았습니다.
 
 - [cert-manager releases](https://cert-manager.io/docs/releases/)
+- [cert-manager 1.21.2 release](https://github.com/cert-manager/cert-manager/releases/tag/v1.21.2)
 - [CNCF project history](https://www.cncf.io/projects/cert-manager/)
 - [Certificate renewal and rotation](https://cert-manager.io/docs/usage/certificate/)
 - [CA issuer limitations](https://cert-manager.io/docs/configuration/ca/)

@@ -1,7 +1,7 @@
 # IPAM and Network Policies
 
-> **Review baseline**: Cilium 1.20.1; tested Kubernetes 1.33–1.36. Resource API versions and platform requirements are checked separately.
-> **Last reviewed**: September 12, 2026
+> **Review baseline**: Cilium 1.20.2; tested Kubernetes 1.33–1.36. Resource API versions and platform requirements are checked separately.
+> **Last reviewed**: October 15, 2026
 
 ## Lab Environment Setup
 
@@ -37,7 +37,7 @@ Cilium Pod IPAM allocates workload addresses. Kubernetes allocates Service **Clu
 
 Both cluster-pool and Kubernetes host scope allocate individual Pod addresses locally. The difference is who allocates the **node prefixes**. Neither eliminates coordination or guarantees that a user-supplied pool cannot overlap a VPC, node network, Service range or another cluster.
 
-The released CRD/type definitions use `pool` and `used` for generic CRD-backed allocation. Some explanatory documentation still says `available`/`inuse`; use the installed schema and mode-specific fields rather than copying those older names. ENI in 1.20.1 uses the interface/multi-pool path, so generic CRD-backed fields are not its universal source of truth.
+The released CRD/type definitions use `pool` and `used` for generic CRD-backed allocation. Some explanatory documentation still says `available`/`inuse`; use the installed schema and mode-specific fields rather than copying those older names. ENI in 1.20.2 uses the interface/multi-pool path, so generic CRD-backed fields are not its universal source of truth.
 
 ### Kubernetes/CNI Integration
 
@@ -94,11 +94,14 @@ Enabling these two Cilium address-family flags does not configure Kubernetes Ser
 
 ### Multi-Pool and CiliumPodIPPool
 
-The documented mode is `multi-pool`; the resource API remains `cilium.io/v2alpha1`. Do not infer a feature's maturity solely from that API suffix. On a fresh cluster using this mode, provide a default pool for ordinary allocations:
+The documented mode is `multi-pool`; the resource API is still `cilium.io/v2alpha1` in 1.20 (in the **[1.21 pre-release]** `CiliumPodIPPool` is served as `cilium.io/v2`, which becomes the storage version, `v2alpha1` is deprecated, and `spec.ipv4.pool`/`spec.ipv6.pool` add per-CIDR `reservedRanges`; those fields exist only in `v2`). Do not infer a feature's maturity solely from that API suffix. The upstream multi-pool tutorial also requires `kubeProxyReplacement=true` and `bpf.masquerade=true` (iptables masquerade would need `egressMasqueradeInterfaces`); the example below includes them. For allocation internals, pool sizing and migration, see [IPAM deep dive](10-ipam-deep-dive.md). On a fresh cluster using this mode, provide a default pool for ordinary allocations:
 
 **`multi-pool-values.yaml`**
 
 ```yaml
+kubeProxyReplacement: true
+bpf:
+  masquerade: true
 ipam:
   mode: multi-pool
   operator:
@@ -194,14 +197,13 @@ eni:
   eniTags:
     team: platform
   awsEnablePrefixDelegation: true
-routingMode: native
-endpointRoutes:
-  enabled: true
 ipv4:
   enabled: true
 ipv6:
   enabled: false
 ```
+
+`eni.enabled=true` already makes the chart default `routingMode` to `native` and enable endpoint routes, so those keys are omitted here (Helm template `cilium-configmap.yaml` in 1.20.2).
 
 
 `eni.awsEnablePrefixDelegation` requires the instance/subnet setup to support the requested prefixes. An IPv4 `/28` contains 16 addresses, not a guarantee of 16 additional schedulable Pods in every configuration. The default is disabled. Do not add the invented `eni-prefix-delegation-enabled` key.
@@ -689,10 +691,10 @@ Inspect desired and realized state, verify a successful baseline, then correlate
 
 ## Sources
 
-- [IPAM modes/migration](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/index.rst), [cluster pool](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/cluster-pool.rst), [host scope](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/kubernetes.rst), [multi-pool](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/multi-pool.rst), [migration procedure](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/cluster-pool-to-multi-pool.rst)
-- [PodIPPool schema](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliumpodippools.yaml), [CiliumNode schema](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnodes.yaml), [ENI IPAM](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/eni.rst), [Helm values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml), [EKS CNI boundaries](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html)
-- [Policy rule API](https://github.com/cilium/cilium/blob/v1.20.1/pkg/policy/api/rule.go), [L3 rules](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer3.rst), [L7 rules](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer7.rst), [DNS policies](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/dns.rst), [wildcard implementation](https://github.com/cilium/cilium/blob/v1.20.1/pkg/fqdn/matchpattern/matchpattern.go)
-- [Cluster Mesh setup](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/clustermesh/setup.rst), [architecture](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/clustermesh/intro.rst), [global services](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/clustermesh/global-services.rst), [cross-cluster policy](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/clustermesh/policy.rst)
+- [IPAM modes/migration](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/ipam/index.rst), [cluster pool](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/ipam/cluster-pool.rst), [host scope](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/ipam/kubernetes.rst), [multi-pool](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/ipam/multi-pool.rst), [migration procedure](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/ipam/cluster-pool-to-multi-pool.rst)
+- [PodIPPool schema](https://github.com/cilium/cilium/blob/v1.20.2/pkg/k8s/apis/cilium.io/client/crds/v2alpha1/ciliumpodippools.yaml), [CiliumNode schema](https://github.com/cilium/cilium/blob/v1.20.2/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnodes.yaml), [ENI IPAM](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/concepts/ipam/eni.rst), [Helm values](https://github.com/cilium/cilium/blob/v1.20.2/install/kubernetes/cilium/values.yaml), [EKS CNI boundaries](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html)
+- [Policy rule API](https://github.com/cilium/cilium/blob/v1.20.2/pkg/policy/api/rule.go), [L3 rules](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/security/policy/layer3.rst), [L7 rules](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/security/policy/layer7.rst), [DNS policies](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/security/dns.rst), [wildcard implementation](https://github.com/cilium/cilium/blob/v1.20.2/pkg/fqdn/matchpattern/matchpattern.go)
+- [Cluster Mesh setup](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/clustermesh/setup.rst), [architecture](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/clustermesh/intro.rst), [global services](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/clustermesh/global-services.rst), [cross-cluster policy](https://github.com/cilium/cilium/blob/v1.20.2/Documentation/network/clustermesh/policy.rst)
 
 
 [Return to Main Page](README.md)

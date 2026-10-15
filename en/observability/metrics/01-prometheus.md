@@ -1,6 +1,6 @@
 # Prometheus
 
-> **Last Updated**: September 13, 2026. Local configuration/query checks are described below; no cluster or cloud deployment was performed.
+> **Last Updated**: September 14, 2026. Local configuration/query checks are described below; no cluster or cloud deployment was performed.
 
 ## Contents
 
@@ -33,6 +33,10 @@ This chapter uses the official **kube-prometheus-stack 90.0.0** package, release
 The chart's `kubeVersion` guard is `>=1.25.0-0`. This is not a complete compatibility matrix or a statement that every Kubernetes 1.25+ version remains supported. Check the actual cluster, component support, admission policy and storage driver.
 
 The profile targets **Linux EC2-backed EKS workers**. Fargate has no DaemonSets; Auto Mode, Hybrid Nodes and Windows require platform-specific collector/storage checks.
+
+### September 2026 update
+
+- Per the [September 11 Kubernetes blog](https://kubernetes.io/blog/2026/09/11/kubernetes-v1-37-native-histograms-beta/), [Prometheus native histogram](https://prometheus.io/docs/specs/native_histograms/) support for Kubernetes component metrics (KEP-5808) graduates to Beta and is enabled by default in v1.37. High-resolution, low-cardinality buckets replace fixed `le` buckets, improving latency-metric accuracy while reducing storage and scrape overhead. Benefiting from this also requires the scraping Prometheus to be configured to ingest native histograms, and existing classic-histogram queries/dashboards need separate review.
 
 ### Historical July 2026 updates
 

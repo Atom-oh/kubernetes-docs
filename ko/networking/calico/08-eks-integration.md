@@ -1,12 +1,12 @@
 # Part 8: EKS 통합
 
-> **검토 기준**: Calico 3.32.2 / Tigera Operator 1.42.6 / Calico의 Kubernetes 공식 테스트 범위 1.34–1.36. **마지막 업데이트**: 2026년 9월 12일
+> **검토 기준**: Calico 3.32.2 / Tigera Operator 1.42.6 / Calico의 Kubernetes 공식 테스트 범위 1.34–1.36. **마지막 업데이트**: 2026년 10월 12일
 
 ## 개요
 
 이 문서는 **Amazon VPC CNI를 사용하는 일반 Linux EC2 워커 노드**에 Calico 정책을 적용하는 구성을 다룹니다. VPC CNI가 Pod IP 할당과 VPC 네트워킹을 담당하고, Calico는 노드 데이터플레인에 정책을 설정합니다. 아래 설치 예제는 Iptables 데이터플레인과 kube-proxy를 유지합니다. Calico CNI와 eBPF는 추가 전제가 필요한 별도 배포 선택입니다.
 
-검토일 기준 EKS의 표준 지원 버전은 1.34–1.36, 연장 지원 버전은 1.31–1.33입니다. Calico 3.32가 공개한 Kubernetes 테스트 범위는 1.34–1.36입니다. EKS 제공 여부, 업스트림 Kubernetes 릴리스, Calico 호환성은 각각 확인해야 합니다. 업스트림 1.37 출시만으로 이 호환 범위가 늘어나지는 않습니다. 설치 전 대상 리전의 EKS 및 애드온 버전을 확인하세요.
+검토일 기준 EKS의 표준 지원 버전은 1.34–1.37, 연장 지원 버전은 1.31–1.33입니다([EKS Kubernetes 버전 수명 주기](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)). Calico 3.32가 공개한 Kubernetes 테스트 범위는 1.34–1.36입니다. EKS 제공 여부, 업스트림 Kubernetes 릴리스, Calico 호환성은 각각 확인해야 합니다. EKS가 1.37을 제공한다고 해서 1.37이 Calico 3.32의 테스트 범위에 포함되는 것은 아닙니다. 설치 전 대상 리전의 EKS 및 애드온 버전을 확인하세요.
 
 ## VPC CNI + Calico 아키텍처
 
