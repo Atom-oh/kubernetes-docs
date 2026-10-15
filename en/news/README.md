@@ -1,5 +1,5 @@
 # News
-> **Last Updated**: October 5, 2026
+> **Last Updated**: October 12, 2026
 
 This page records documentation changes prompted by Kubernetes, Amazon EKS and CNCF news. GitHub Actions prepares updates each Monday at 09:00 KST and opens a PR after its quality gate passes. Changes reach the site after review, merge and deployment.
 
@@ -7,6 +7,12 @@ Week labels identify log-entry weeks and may differ from source publication date
 
 ## Update Log
 
+- 2026-W42: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — applied the Karpenter v1.15.0 release (node repair as a voluntary disruption with reboot support, CEL in KubeletConfiguration, broader DRA support, and more)
+- 2026-W42: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied the Argo CD v3.5.4/v3.4.10/v3.3.15 security patch releases (four CRITICAL issues including repo-server command execution, CVE-2026-77459)
+- 2026-W42: [kernel/01-container-primitives.md](../kernel/01-container-primitives.md) — applied the Kubernetes blog's cgroup v1 deprecation status (`failCgroupV1` defaults to `true` from v1.35)
+- 2026-W42: no matching doc — Scaling Kubernetes workloads with NVMe SSD-backed node swap (GA in v1.34), Kubernetes blog ([source](https://kubernetes.io/blog/2026/10/05/scaling-kubernetes-workloads-with-node-swap/))
+- 2026-W42: no matching doc — Meshery becomes a CNCF incubating project ([source](https://www.cncf.io/blog/2026/10/07/meshery-becomes-a-cncf-incubating-project/))
+- 2026-W42: no matching doc — AWS Batch now supports Amazon EKS access entry authentication ([source](https://aws.amazon.com/about-aws/whats-new/2026/10/aws-batch-access-entries/))
 - 2026-W41: [eks/08-eks-upgrades.md](../eks/08-eks-upgrades.md) — applied Kubernetes 1.37 support on Amazon EKS and EKS Distro (Metrics API GA, DRA device taints GA, HPA scale-to-zero beta)
 - 2026-W41: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied the start of Argo CD 4.0 visioning and ArgoCon North America 2026 news
 - 2026-W41: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — applied Atlassian's incident-detection rebuild on OTel, Kafka, and Flink (CNCF blog)

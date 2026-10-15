@@ -1,7 +1,7 @@
 # Karpenter
 
 > **지원 버전**: Karpenter 1.14 LTS(예제: 1.14.1); Kubernetes/EKS는 호환성 표와 공급자 지원 범위로 선택하세요.
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 12일
 
 ## 목차
 - [소개](#소개)
@@ -351,6 +351,17 @@ AWS의2026년7월22일 발표는 Karpenter/EKS Auto Mode의 EFA 인터페이스�
 ### 2026년 8월 업데이트: v1.14.1 패치 릴리스
 
 2026년 8월 21일 v1.14 라인의 첫 패치인 [v1.14.1](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.1)이 공개되었습니다. 업스트림 `sigs.k8s.io/karpenter` 버전 갱신과 v1.14.0 이후 수정 사항의 체리픽을 담은 유지 보수 릴리스입니다.
+
+### 2026년 10월 업데이트: v1.15.0 릴리스
+
+2026년 10월 10일 [v1.15.0](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0)이 공개되었습니다. 주요 변경:
+
+- **노드 복구(node repair)의 자발적 중단(voluntary disruption) 전환**: 노드 복구가 중단 메커니즘의 하나로 통합되고, 용량 제약이 있는 NodePool에는 교체 노드를 먼저 확보하지 못하면 terminate-first로 처리합니다. `ec2:RebootInstances` 기반 재부팅이 복구 동작으로 추가되었고(`RebootForRepair` AWS 기능 게이트), 기존 복구 컨트롤러는 `--legacy-node-repair` 플래그로 유지할 수 있습니다.
+- **KubeletConfiguration CEL 지원**: `maxPodsExpression`, `kubeReserved`, `systemReserved`를 CEL 표현식으로 지정할 수 있고, EC2NodeClass의 KubeletConfiguration 필드가 확장되었습니다.
+- **DRA 지원 확대**: prioritized alternatives 지원과 NVIDIA·EFA 드라이버 DRA 지원이 추가되었습니다.
+- 기타: `--aws-feature-gates` 플래그, 기본 파드 토폴로지 분산 인식, 프로비저닝 시 인스턴스 타입 볼륨 한도 반영, `karpenter_pods_disrupted_total` 등 중단 관련 메트릭 추가, 기능 게이트 기반 파드 삭제 비용(pod deletion cost) 관리 컨트롤러.
+
+지원 정책상 일반 마이너는 다음 마이너까지만 지원되므로 v1.15.0 공개로 v1.14는 LTS 라인(2027년 7월까지)으로서만 유지됩니다. 자세한 내용은 [v1.15.0 릴리스 노트](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0)를 참고하세요.
 
 ## 노드 클래스
 
