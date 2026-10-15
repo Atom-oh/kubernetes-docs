@@ -226,6 +226,7 @@ This is the upstream test matrix recorded in the 3.5.4 repository. It differs fr
 - 3.5.2: released 2026-08-27.
 - 3.5.3: released 2026-09-14. Bug fixes (health checks, sync retry state, UI).
 - 3.5.4: released 2026-10-06. Security fixes, including four rated CRITICAL in the repo-server and AppProject hook handling. The release notes list two potentially breaking changes: Kustomize builds that render Helm charts no longer honor `helmGlobals.configHome`, and OCI manifests larger than 4 MiB are rejected. Check official releases for current supported lines.
+- [3.6.0-rc1](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc1): first release candidate of the 3.6 line, published 2026-09-15. Not a production baseline.
 
 ### Argo Rollouts
 

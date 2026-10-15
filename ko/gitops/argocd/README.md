@@ -220,6 +220,7 @@ spec:
 - 3.5.2: 2026-08-27 공개.
 - 3.5.3: 2026-09-14 공개. 버그 수정(헬스 체크, sync 재시도 상태, UI 등).
 - 3.5.4: 2026-10-06 공개. repo-server와 AppProject 훅 처리 관련 CRITICAL 4건을 포함한 보안 수정이 들어 있습니다. 릴리스 노트는 잠재적 호환성 변경 두 가지를 명시합니다. Helm 차트를 렌더링하는 Kustomize 빌드가 더 이상 `helmGlobals.configHome`을 적용하지 않고, 4 MiB를 초과하는 OCI manifest는 거부됩니다. 최신 지원 라인은 공식 릴리스 기록으로 확인합니다.
+- [3.6.0-rc1](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc1): 2026-09-15 공개된 3.6 라인 첫 release candidate. 프로덕션 기준 버전이 아닙니다.
 
 ### Argo Rollouts
 

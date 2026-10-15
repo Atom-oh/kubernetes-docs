@@ -1,5 +1,5 @@
 # News
-> **Last Updated**: September 14, 2026
+> **Last Updated**: September 21, 2026
 
 This page records documentation changes prompted by Kubernetes, Amazon EKS and CNCF news. GitHub Actions prepares updates each Monday at 09:00 KST and opens a PR after its quality gate passes. Changes reach the site after review, merge and deployment.
 
@@ -7,6 +7,11 @@ Week labels identify log-entry weeks and may differ from source publication date
 
 ## Update Log
 
+- 2026-W39: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied three Kubernetes v1.37 feature deep dives (Memory QoS Beta, Pod-Level Resource Managers Beta, emptyDir permissions and bind mount options)
+- 2026-W39: [networking/cilium/README.md](../networking/cilium/README.md) — applied Cilium 1.20.2/1.19.8/1.18.14 patch releases and the CNCF blog's 1.20 feature recap
+- 2026-W39: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied Argo CD v3.5.3/v3.4.9 patch releases and v3.6.0-rc1
+- 2026-W39: no matching doc — Kubernetes CSI Changed Block Tracking (CBT) API graduates to Beta, with differences from Alpha, Kubernetes blog ([source](https://kubernetes.io/blog/2026/09/14/csi-changed-block-tracking-beta/))
+- 2026-W39: no matching doc — AWS Resilience Hub adds three new capabilities (including EKS-label-based service resource discovery within a namespace) ([source](https://aws.amazon.com/about-aws/whats-new/2026/09/resilience-hub-eks-dependency-policy/))
 - 2026-W38: [core/08-scheduling-preemption-eviction.md](../core/08-scheduling-preemption-eviction.md) — applied Kubernetes v1.37 scheduler preemption for in-place Pod resize (Alpha) and Workload-Aware Scheduling advances (Workload/PodGroup Beta, CompositePodGroup API)
 - 2026-W38: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied Kubernetes v1.37 Node lifecycle conditions (five well-known conditions for drain, maintenance and graceful shutdown)
 - 2026-W38: [observability/metrics/01-prometheus.md](../observability/metrics/01-prometheus.md) — applied Prometheus native histograms for Kubernetes v1.37 component metrics (Beta, enabled by default)

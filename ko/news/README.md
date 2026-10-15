@@ -1,5 +1,5 @@
 # 소식
-> **마지막 업데이트**: 2026년 9월 14일
+> **마지막 업데이트**: 2026년 9월 21일
 
 Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. GitHub Actions는 매주 월요일 09:00 KST에 갱신안을 만들고 품질 검사를 통과하면 PR을 엽니다. 실제 사이트에는 PR 검토·머지와 배포가 완료된 뒤 반영됩니다.
 
@@ -7,6 +7,11 @@ Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. G
 
 ## 갱신 로그
 
+- 2026-W39: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37 기능 심층 소개 3건(Memory QoS Beta, 파드 수준 리소스 매니저 Beta, emptyDir 권한·바인드 마운트 옵션) 반영
+- 2026-W39: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.20.2/1.19.8/1.18.14 패치 릴리스 및 CNCF 블로그 1.20 기능 정리 글 반영
+- 2026-W39: [gitops/argocd/README.md](../gitops/argocd/README.md) — Argo CD v3.5.3/v3.4.9 패치 릴리스 및 v3.6.0-rc1 반영
+- 2026-W39: 매칭 문서 없음 — Kubernetes CSI Changed Block Tracking(CBT) API Beta 승격과 Alpha 대비 차이점, Kubernetes 블로그 ([원문](https://kubernetes.io/blog/2026/09/14/csi-changed-block-tracking-beta/))
+- 2026-W39: 매칭 문서 없음 — AWS Resilience Hub 신규 기능 3종(네임스페이스 내 EKS 레이블 기반 서비스 리소스 검색 등) ([원문](https://aws.amazon.com/about-aws/whats-new/2026/09/resilience-hub-eks-dependency-policy/))
 - 2026-W38: [core/08-scheduling-preemption-eviction.md](../core/08-scheduling-preemption-eviction.md) — Kubernetes v1.37 인플레이스 파드 리사이즈용 스케줄러 선점(Alpha)과 워크로드 인지 스케줄링(Workload/PodGroup Beta, CompositePodGroup API) 반영
 - 2026-W38: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37 노드 라이프사이클 컨디션(drain·유지 관리·graceful shutdown 표준 컨디션 5종) 반영
 - 2026-W38: [observability/metrics/01-prometheus.md](../observability/metrics/01-prometheus.md) — Kubernetes v1.37 컴포넌트 메트릭의 Prometheus 네이티브 히스토그램 Beta(기본 활성화) 반영

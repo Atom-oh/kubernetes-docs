@@ -25,6 +25,8 @@ Cilium 네트워킹, 정책, 관측성을 다룹니다. 예제 검토 기준은 
 | 2026-09-16 | [1.19.8](https://github.com/cilium/cilium/releases/tag/v1.19.8), [1.18.14](https://github.com/cilium/cilium/releases/tag/v1.18.14) | 이전 지원 라인의 패치 릴리스 |
 | 2026-10-02 | [1.21.0-pre.3](https://github.com/cilium/cilium/releases/tag/v1.21.0-pre.3) | 최신 1.21 pre-release. **1.21은 pre-release만 있으며 GA 전**이므로 이 가이드의 1.21 항목은 변경될 수 있음 |
 
+2026년 9월 14일 CNCF 블로그에 [Cilium 1.20 기능 정리 글](https://www.cncf.io/blog/2026/09/14/cilium-1-20-gateway-api-externalauth-tcproute-udproute-eni-ipam-for-ipv6-and-more/)(Gateway API ExternalAuth, TCPRoute/UDPRoute, IPv6 ENI IPAM 등)이 게시되었습니다. 내용은 아래 1.20.0 발표 요약과 같은 범위입니다.
+
 1.20.0 발표는 **2,660개 이상의 새 커밋**과 **1,100명 이상 기여자의 커뮤니티**를 소개합니다. 후자는 해당 릴리스 작성자 수가 아닌 커뮤니티 규모입니다. 주요 변경은 다음과 같습니다.
 
 - Gateway API **1.6.1**, TCPRoute/UDPRoute, BackendTLSPolicy, ListenerSets, ExternalAuth, CORS 지원이며 각각의 설정과 API 성숙도를 확인해야 합니다.
