@@ -1,10 +1,14 @@
 # EKS Cluster Creation
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 12, 2026
 
 There are several ways to create an Amazon EKS cluster. In this chapter, we will learn in detail how to create an EKS cluster using various tools and methods.
 
 The creation methods in this chapter are alternatives. Choose one for a new dedicated cluster, and do not manage the same resources with several tools simultaneously. Replace example names, accounts, roles, VPCs, subnets and CIDRs with approved actual values. Shell examples use Bash unless stated otherwise; stop on prerequisite failures. No AWS provisioning or workload measurement was performed during this audit.
+
+**Current release:** EKS 1.37 became available on October 1, 2026.
+
+**Example baseline:** The examples below retain the reviewed EKS 1.36 baseline. When selecting another version, consult the [current EKS version calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) and component compatibility documentation.
 
 ## Table of Contents
 
@@ -286,7 +290,7 @@ eksctl create nodegroup -f nodegroup.yaml
 
 ### Creating an EKS Auto Mode Cluster
 
-EKS Auto Mode is a new feature released in 2024 that automates Kubernetes cluster infrastructure to significantly reduce operational overhead. Auto Mode automatically handles infrastructure management including compute, networking, and storage.
+EKS Auto Mode became generally available in 2024 and automates Kubernetes cluster infrastructure to reduce operational overhead. AWS manages its compute, networking and storage capabilities.
 
 #### Key Features of EKS Auto Mode
 

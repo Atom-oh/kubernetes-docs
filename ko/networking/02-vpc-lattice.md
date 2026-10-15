@@ -34,7 +34,7 @@ VPC Lattice는 각 애플리케이션 옆에 프록시를 배치하지 않아도
 |---|---|---|
 | VPC Lattice | 프라이빗 애플리케이션 및 리소스 연결 | HTTP/HTTPS/gRPC 서비스 라우팅과 별도의 TLS/TCP 리소스 기능. 인터넷 API 진입점은 아님 |
 | API Gateway | 관리형 API 엔드포인트와 API 관리 | REST, HTTP, WebSocket API의 기능이 다름. GraphQL은 API Gateway의 별도 API 유형이 아님 |
-| AWS App Mesh | Envoy 기반 서비스 메시 | **2026-09-30** 지원 종료 예정. 검토일에는 아직 종료 전이며, 신규 설치보다 마이그레이션을 계획 |
+| AWS App Mesh | Envoy 기반 서비스 메시 | **2026-09-30** 지원 종료. 콘솔과 리소스에 더 이상 접근할 수 없으므로 기존 배포는 마이그레이션하고 신규 설치 대상에서 제외 |
 | Transit Gateway | IP 라우팅을 통한 네트워크 연결 | 네트워크를 연결하며 서비스별 HTTP 라우팅과 인가를 대체하지 않음 |
 | Istio / Linkerd / Cilium | 각 데이터 플레인으로 메시 기능 구현 | 기능과 운영 비용이 다르며, 모든 메시 아키텍처에 사이드카가 필수인 것은 아님 |
 

@@ -1,7 +1,7 @@
 # Kubernetes Authentication and Authorization System
 
 > **Scope**: Kubernetes stable APIs and Amazon EKS user access management
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 12, 2026
 
 ## Overview
 
@@ -400,7 +400,7 @@ These three paths have different directions and purposes.
 
 | Path | Authentication target and configuration |
 |---|---|
-| External OIDC user → Kubernetes API | Associate the external IdP through EKS `AssociateIdentityProviderConfig`, then bind its users/groups to RBAC. EKS must reach the issuer over public HTTPS; self-signed issuer certificates are unsupported. This does not disable IAM authentication. |
+| External OIDC user → Kubernetes API | Associate the external IdP through EKS `AssociateIdentityProviderConfig`, then bind its users/groups to RBAC. EKS must reach the issuer over public HTTPS; with customer-routed control-plane egress (`controlPlaneEgressMode=CUSTOMER_ROUTED`), the issuer must also be reachable through the egress path you configure in the VPC. Self-signed issuer certificates are unsupported. This does not disable IAM authentication. |
 | Pod → AWS API through IRSA | Establish IAM trust in the cluster's ServiceAccount OIDC issuer, restrict role trust to the intended namespace/ServiceAccount, and grant only the required AWS resources. `eksctl utils associate-iam-oidc-provider` serves this path, not external user login. |
 | Pod → AWS API through EKS Pod Identity | Use the Pod Identity Agent and a role association on supported execution environments. This differs from IRSA's IAM OIDC provider setup. |
 

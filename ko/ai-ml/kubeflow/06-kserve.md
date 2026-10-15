@@ -1,7 +1,7 @@
 # Part 6: KServe — Kubernetes 위에서의 모델 서빙
 
 > **검토 기준**: KServe 0.18.0 / Models Web Application 0.18.0 / Community Distribution 26.03.1
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 10월 12일
 
 ## 실습 환경 준비
 
@@ -9,7 +9,9 @@
 
 ## KServe와 Kubeflow의 관계
 
-KServe는 KFServing에서 발전한 독립 서빙 프로젝트입니다. 이 장은 Community Distribution 26.03.1에 포함된 **KServe와 Models Web Application 0.18.0**을 기준으로 검토했습니다. 확인한 최신 KServe 공개 릴리스는 **0.20.0(2026년 8월 6일)**이며, 배포판의 0.18.0과 혼동하지 마세요.
+KServe는 KFServing에서 발전한 독립 서빙 프로젝트입니다. 이 장은 Community Distribution 26.03.1에 포함된 **KServe와 Models Web Application 0.18.0**을 기준으로 검토했습니다.
+
+2026년 10월 12일 기준 확인한 최신 KServe 공개 릴리스는 **0.21.0(2026년 9월 25일)**입니다. 0.20.0(2026년 8월 6일)이 그보다 앞서 공개됐습니다. 두 릴리스 모두 배포판의 0.18.0 기준과 다릅니다.
 
 컨트롤러·CRD·웹앱은 별도 산출물이므로 호환성을 확인해야 합니다. 숫자가 항상 같아야 하는 것도, 반드시 달라야 하는 것도 아닙니다. 실제 이미지·CRD 스키마·웹앱 리비전을 기록하세요.
 
@@ -72,6 +74,7 @@ Karpenter는 적합한 Pending Pod, NodePool, 할당량과 가용 용량 조건�
 - [KEDA ScaledObject 처리](https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/keda/keda_reconciler.go)
 - [Knative traffic 처리](https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/knative/ksvc_reconciler.go)
 - [0.20.0 릴리스](https://github.com/kserve/kserve/releases/tag/v0.20.0)
+- [0.21.0 릴리스 (확인한 최신)](https://github.com/kserve/kserve/releases/tag/v0.21.0)
 
 ## 다음 단계
 

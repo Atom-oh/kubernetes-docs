@@ -1,6 +1,6 @@
 # GitOps 자동화: Atlantis, HCP Terraform, Flux, AIOps
 
-> **검토 기준**: Atlantis 0.47.1 / chart 6.15.0, HCP Terraform Provider 0.80.0, Sentinel 0.41.0, Flux 2.9.5\
+> **검토 기준**: Atlantis 0.47.1 / chart 6.15.0, HCP Terraform Provider 0.80.0, Sentinel 0.41.0, Flux 2.9.5(2026년 10월 12일 릴리스 노트 검토 후 Flux 고정 버전을 패치 2.9.6로 갱신, 재실행 안 함)\
 > **마지막 검토**: 2026년 9월 11일. 로컬 CLI·차트·스키마와 테스트 대역으로 확인했습니다. 실제 PR 댓글·Terraform apply·HCP 생성·클러스터 배포·외부 AI 호출은 실행하지 않았습니다.
 
 < [이전: 멀티클러스터](04-gitops-multi-cluster.md) | [목차](README.md) | [다음: 스케일링](06-scaling-strategies.md) >
@@ -465,7 +465,7 @@ Policy set을 지정 workspace에 연결하고 권한을 분리합니다. 코드
 
 ## 3. Flux
 
-이 절은 검토된 [Flux 2.9.5 가이드](../gitops/02-fluxcd.md)의 구성을 사용합니다. Argo CD와 Flux는 모두 선언적인 reconciliation 도구입니다. Argo CD도 여러 컴포넌트로 구성되며, Flux가 모든 환경에서 더 가볍거나 더 강한 격리를 제공한다고 단정하지 않습니다. namespace만 나누면 tenant 권한이 완성되는 것도 아닙니다.
+이 절은 [Flux 2.9.6 가이드](../gitops/02-fluxcd.md)의 구성을 사용합니다. Argo CD와 Flux는 모두 선언적인 reconciliation 도구입니다. Argo CD도 여러 컴포넌트로 구성되며, Flux가 모든 환경에서 더 가볍거나 더 강한 격리를 제공한다고 단정하지 않습니다. namespace만 나누면 tenant 권한이 완성되는 것도 아닙니다.
 
 이미지 reflector와 automation controller는 **선택 설치**합니다. Bootstrap은 Git에 commit하고 클러스터에 설치하는 작업입니다. CLI의 checksum·호환 Kubernetes 버전·kubecontext·저장소 권한을 확인한 뒤 수행합니다.
 
@@ -473,7 +473,7 @@ Policy set을 지정 workspace에 연결하고 권한을 분리합니다. 코드
 flux check --pre
 flux bootstrap github \
   --owner=REPLACE_ORG --repository=fleet-infra --branch=main \
-  --path=clusters/production --version=v2.9.5 \
+  --path=clusters/production --version=v2.9.6 \
   --components-extra=image-reflector-controller,image-automation-controller
 ```
 

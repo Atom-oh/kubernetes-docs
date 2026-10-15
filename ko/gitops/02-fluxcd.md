@@ -1,11 +1,11 @@
 # FluxCD
 
-> **지원 버전**: Flux 2.9.5
-> **마지막 업데이트**: 2026년 9월 11일
+> **검토 기준**: 자체 관리 Flux 2.9.5. 릴리스 노트 검토 후 패치 2.9.6로 갱신(예제 재실행 안 함)
+> **마지막 업데이트**: 2026년 10월 12일
 
 FluxCD는 Kubernetes를 위한 개방적이고 확장 가능한 지속적 배포 및 점진적 배포 솔루션 세트입니다. FluxCD는 2022년 11월에 CNCF를 졸업하여 클라우드 네이티브 생태계에서 가장 성숙한 GitOps 도구 중 하나가 되었습니다.
 
-이 장은 **자체 관리 Flux 2.9.5** 기준입니다. CLI 사전 검사의 최소 Kubernetes 버전은 1.33이며 실제 운영에서는 배포판의 지원 기간도 확인합니다. 2.6 이하에서 올릴 때는 2.7+ API migration 절차를 먼저 확인합니다. 아래 `OCIRepository`/`Bucket`/image API는 v1이고 Notification Provider/Alert는 v1beta3입니다.
+이 장은 **자체 관리 Flux 2.9.6** 기준입니다. CLI 사전 검사의 최소 Kubernetes 버전은 1.33이며 실제 운영에서는 배포판의 지원 기간도 확인합니다. 2.6 이하에서 올릴 때는 2.7+ API migration 절차를 먼저 확인합니다. 아래 `OCIRepository`/`Bucket`/image API는 v1이고 Notification Provider/Alert는 v1beta3입니다.
 
 예제는 신뢰하는 플랫폼 팀이 관리하는 `flux-system` 객체입니다. 같은 이름의 Kustomization 예제는 대안/병합 조각이며 순서대로 교체 적용하는 절차가 아닙니다. 저장소 URL·경로·namespace·Secret은 실제 환경에 맞춰 준비합니다. 테넌트에게 적용하려면 별도 namespace, `spec.serviceAccountName`에 대한 RBAC/impersonation, cross-namespace 참조 제한을 설계해야 합니다.
 
@@ -151,7 +151,7 @@ spec:
 
 #### 변수 치환
 
-`substituteFrom`은 뒤의 항목이 앞의 값을 덮어쓰고 inline `substitute`가 우선합니다. Secret 치환값은 렌더링된 manifest에 들어가므로 출력/권한을 관리합니다. 이 버전에 포함된 kustomize-controller 1.9.5는 `StrictPostBuildSubstitutions`가 기본 true여서 기본값 없는 누락 변수에 실패합니다. 기존 배포에서 이 gate를 false로 지정했는지도 확인합니다. 숫자 필드는 치환 후에도 Kubernetes가 기대하는 숫자 타입이어야 합니다.
+`substituteFrom`은 뒤의 항목이 앞의 값을 덮어쓰고 inline `substitute`가 우선합니다. Secret 치환값은 렌더링된 manifest에 들어가므로 출력/권한을 관리합니다. 이 버전(Flux 2.9.6)에 포함된 kustomize-controller 1.9.6은 `StrictPostBuildSubstitutions`가 기본 true여서 기본값 없는 누락 변수에 실패합니다. 기존 배포에서 이 gate를 false로 지정했는지도 확인합니다. 숫자 필드는 치환 후에도 Kubernetes가 기대하는 숫자 타입이어야 합니다.
 
 FluxCD는 `postBuild`를 사용한 변수 치환을 지원합니다:
 
@@ -469,7 +469,7 @@ spec:
 
 ```bash
 set -euo pipefail
-FLUX_VERSION=2.9.5
+FLUX_VERSION=2.9.6
 case "$(uname -m)" in
   x86_64)
     flux_arch=amd64
@@ -505,7 +505,7 @@ flux bootstrap github \
   --repository=fleet-infra \
   --branch=main \
   --path=clusters/production \
-  --version=v2.9.5 \
+  --version=v2.9.6 \
   --components-extra=image-reflector-controller,image-automation-controller
 
 # Alternative B: GitLab group; provide authorized GITLAB_TOKEN securely.
@@ -514,7 +514,7 @@ flux bootstrap gitlab \
   --repository=fleet-infra \
   --branch=main \
   --path=clusters/production \
-  --version=v2.9.5 \
+  --version=v2.9.6 \
   --components-extra=image-reflector-controller,image-automation-controller
 ```
 
@@ -575,7 +575,9 @@ fleet-infra/
 
 ### 같은 control plane의 Kustomization 의존성
 
-dependsOn은 Flux가 관찰하는 Kustomization 객체의 Ready 상태를 기다립니다. 아래는 같은 클러스터의 두 객체이며 cross-cluster barrier가 아닙니다. infrastructure의 wait: true가 워크로드 헬스까지 기다리게 합니다. bootstrap이 만든 기본 GitRepository 이름은 flux-system이므로 이를 sourceRef로 사용합니다. 독립 클러스터마다 해당 kubecontext/경로로 bootstrap하거나, 명시적인 remote kubeConfig/권한을 구성해야 합니다. 2.9.5의 Secret kubeconfig는 certificate-authority/tokenFile/client-certificate/client-key의 로컬 파일 참조를 거부합니다. 필요한 인증서·키·토큰은 보호된 kubeconfig 안에 inline data로 제공하거나 지원되는 workload identity 구성을 사용합니다.
+`dependsOn`은 Flux가 관찰하는 Kustomization 객체의 Ready 상태를 기다립니다. 아래는 같은 클러스터의 두 객체이며 cross-cluster barrier가 아닙니다. `wait: true`를 설정하면 infrastructure readiness에 워크로드 헬스가 포함됩니다. bootstrap이 만든 기본 GitRepository 이름은 `flux-system`이며, 이 예제의 `sourceRef`입니다.
+
+독립 클러스터마다 해당 kubecontext/경로로 bootstrap하거나 명시적인 remote `kubeConfig`와 권한을 구성해야 합니다. Flux 2.9.5부터 Secret kubeconfig는 `certificate-authority`, `tokenFile`, `client-certificate`, `client-key`의 로컬 파일 참조를 거부합니다. 필요한 인증서·키·토큰은 보호된 kubeconfig 안에 inline data로 제공하거나 지원되는 workload identity 구성을 사용합니다.
 
 ```yaml
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -736,7 +738,7 @@ spec:
 
 ### CodeCommit HTTPS 소스
 
-이는 **이미 설치된 Flux의 Source 연동**입니다. bootstrap이나 IAM 자격 증명 생성을 대신하지 않습니다. source-controller 1.9.5는 provider: aws와 CodeCommit HTTPS endpoint로 IRSA/Pod Identity 인증을 사용할 수 있습니다. 아래 읽기 권한을 controller 역할에 추가하고 Kustomization의 sourceRef가 이 GitRepository 이름을 참조하도록 연결합니다.
+이는 **이미 설치된 Flux의 Source 연동**입니다. bootstrap이나 IAM 자격 증명 생성을 대신하지 않습니다. Flux 2.9.6에 포함된 source-controller 1.9.6은 provider: aws와 CodeCommit HTTPS endpoint로 IRSA/Pod Identity 인증을 사용할 수 있습니다. 아래 읽기 권한을 controller 역할에 추가하고 Kustomization의 sourceRef가 이 GitRepository 이름을 참조하도록 연결합니다.
 
 ```yaml
 apiVersion: source.toolkit.fluxcd.io/v1
@@ -795,7 +797,8 @@ ImageUpdateAutomation이 CodeCommit에 push한다면 그 controller/객체 ident
 
 ## 참고 자료
 
-- [Flux 2.9.5 release and migration notice](https://github.com/fluxcd/flux2/releases/tag/v2.9.5)
+- [Flux 2.9.5 release and kubeconfig hardening notice](https://github.com/fluxcd/flux2/releases/tag/v2.9.5)
+- [Flux 2.9.6 release notes](https://github.com/fluxcd/flux2/releases/tag/v2.9.6)
 - [Flux installation](https://fluxcd.io/flux/installation/)
 - [AWS integration](https://fluxcd.io/flux/integrations/aws/)
 - [GitRepository v1](https://github.com/fluxcd/source-controller/blob/v1.9.5/docs/spec/v1/gitrepositories.md)

@@ -1,11 +1,14 @@
 # Part 2: Kubeflow Pipelines
 
 > **Supported Versions**: Kubeflow Pipelines 2.16.1, Kubeflow Community Distribution 26.03.1
-> **Last Updated**: September 12, 2026
+> **Latest independent release checked**: KFP 2.17.2 (September 4, 2026; latest `kfp` SDK on PyPI: 2.17.0), checked October 12, 2026; examples use 2.16.1
+> **Last Updated**: October 12, 2026
 
 ## Lab Environment Setup
 
-Local compilation requires Python and `kfp==2.16.1`; this chapter was checked with Python 3.12. Compilation does not contact a cluster. Remote execution needs a compatible KFP backend, authenticated client and namespace permissions. S3 additionally requires workload identity for the actual execution ServiceAccount and artifact-accessing components.
+Local compilation requires Python and `kfp==2.16.1`; this chapter was checked with Python 3.12. Upstream KFP 2.17.2 is available (the latest `kfp` SDK package on PyPI is 2.17.0), but this pin matches Community Distribution 26.03.1. It does not validate a new SDK/backend combination.
+
+Compilation does not contact a cluster. Remote execution needs a compatible KFP backend, an authenticated client, and namespace permissions. S3 also requires workload identity for the execution ServiceAccount and components that access artifacts.
 
 ## What Kubeflow Pipelines Is
 

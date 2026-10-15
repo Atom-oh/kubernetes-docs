@@ -40,7 +40,7 @@ This training content provides quizzes for each topic along with the learning ma
 6. [Configuration](./core/05-configuration-secrets.md) | [Quiz](./quizzes/core/05-configuration-secrets-quiz.md)
 7. [Security](./core/06-security.md) | [Quiz](./quizzes/core/06-security-quiz.md)
 8. [Policies](./core/07-policies.md) | [Quiz](./quizzes/core/07-policies-quiz.md)
-9. [Scheduling, Preemption and Eviction](./core/08-scheduling-preemption-eviction.md) | [Quiz](./quizzes/core/08-scheduling-preemption-eviction-quiz.md)
+9. [Scheduling, Preemption and Eviction](./core/08-scheduling-preemption-eviction.md) | [Quiz](./quizzes/core/08-scheduling-preemption-eviction-quiz.md) | [Lab](./labs/core/08-scheduling-preemption-eviction-lab.md)
 10. [Cluster Administration](./core/09-cluster-administration.md) | [Quiz](./quizzes/core/09-cluster-administration-quiz.md)
 11. [Windows in Kubernetes](./core/10-windows-in-kubernetes.md) | [Quiz](./quizzes/core/10-windows-in-kubernetes-quiz.md)
 12. [Extending Kubernetes](./core/11-extending-kubernetes.md) | [Quiz](./quizzes/core/11-extending-kubernetes-quiz.md)
@@ -139,6 +139,12 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 5: L2-L7 Networking](./networking/cilium/05-l2-l7-networking.md) | [Quiz](./quizzes/networking/cilium/05-l2-l7-networking-quiz.md)
    - [Part 6: Security and Visibility](./networking/cilium/06-security-visibility.md) | [Quiz](./quizzes/networking/cilium/06-security-visibility-quiz.md)
    - [Part 7: Advanced Topics](./networking/cilium/07-advanced-topics.md) | [Quiz](./quizzes/networking/cilium/07-advanced-topics-quiz.md)
+   - [Part 8: eBPF Datapath Internals](./networking/cilium/08-ebpf-datapath-internals.md) | [Quiz](./quizzes/networking/cilium/08-ebpf-datapath-internals-quiz.md)
+   - [Part 9: Overlay and Native Routing](./networking/cilium/09-overlay-native-routing.md) | [Quiz](./quizzes/networking/cilium/09-overlay-native-routing-quiz.md)
+   - [Part 10: IPAM Deep Dive](./networking/cilium/10-ipam-deep-dive.md) | [Quiz](./quizzes/networking/cilium/10-ipam-deep-dive-quiz.md)
+   - [Part 11: BGP, Load Balancer IPs and Egress](./networking/cilium/11-bgp-lb-egress-edge.md) | [Quiz](./quizzes/networking/cilium/11-bgp-lb-egress-edge-quiz.md)
+   - [Part 12: mTLS, Encryption and Identity](./networking/cilium/12-mtls-encryption-identity.md) | [Quiz](./quizzes/networking/cilium/12-mtls-encryption-identity-quiz.md)
+   - [Part 13: Versions, Install/Upgrade and Cluster Mesh](./networking/cilium/13-clustermesh-install-upgrade.md) | [Quiz](./quizzes/networking/cilium/13-clustermesh-install-upgrade-quiz.md)
    - [Networking Concepts](./networking/cilium/networking-concepts.md) | [Quiz](./quizzes/networking/cilium/networking-concepts-quiz.md)
    - [Glossary](./networking/cilium/glossary.md) | [Quiz](./quizzes/networking/cilium/glossary-quiz.md)
 8. **Calico Deep Dive**
@@ -276,6 +282,7 @@ This training content provides quizzes for each topic along with the learning ma
    - [Part 4: Unified Studio Governance](./data-on-eks/sagemaker-unified-studio/01-domains-projects-governance.md) | [Quiz](./quizzes/data-on-eks/sagemaker-unified-studio/01-domains-projects-governance-quiz.md)
    - [Part 5: Factual Validation Results](./ai-ml/sagemaker-ai/04-validation-results.md) | [Quiz](./quizzes/ai-ml/sagemaker-ai/04-validation-results-quiz.md)
 12. [LLM Gateway (Inference Gateway) Deep Dive](./ai-ml/08-llm-gateway.md) | [Quiz](./quizzes/ai-ml/08-llm-gateway-quiz.md)
+13. [Agent Sandbox on EKS](./ai-ml/09-agent-sandbox.md) | [Quiz](./quizzes/ai-ml/09-agent-sandbox-quiz.md)
 
 ### Security & Policy
 1. [Policy Management with Kyverno](./security/01-kyverno-policy-management.md) | [Quiz](./quizzes/security/01-kyverno-policy-management-quiz.md)
@@ -290,6 +297,10 @@ This training content provides quizzes for each topic along with the learning ma
 10. [cert-manager](./security/10-cert-manager.md) | [Quiz](./quizzes/security/10-cert-manager-quiz.md)
 11. [Kubescape](./security/11-kubescape.md) | [Quiz](./quizzes/security/11-kubescape-quiz.md)
 12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [Quiz](./quizzes/security/12-spiffe-spire-quiz.md)
+13. [Incident-driven Defense in Depth and Response](./security/13-defense-in-depth-incident-response.md) | [Quiz](./quizzes/security/13-defense-in-depth-incident-response-quiz.md)
+14. [WAF, Edge, API and Origin Protection](./security/14-waf-edge-api-security.md) | [Quiz](./quizzes/security/14-waf-edge-api-security-quiz.md)
+15. [Palo Alto and Fortinet NGFW](./security/15-ngfw-paloalto-fortinet.md) | [Quiz](./quizzes/security/15-ngfw-paloalto-fortinet-quiz.md)
+16. [GWLB and GENEVE Paths and Failure Validation](./security/16-gwlb-geneve-inspection.md) | [Quiz](./quizzes/security/16-gwlb-geneve-inspection-quiz.md)
 
 ### GitOps
 1. [GitOps Overview](./gitops/README.md)

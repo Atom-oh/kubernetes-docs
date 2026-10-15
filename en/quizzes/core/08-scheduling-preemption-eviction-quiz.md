@@ -566,4 +566,19 @@ spec:
 Kubelet does not use QoS as a strict eviction sequence. It ranks usage above requests, priority, and usage relative to requests; disk pressure has different accounting. Guaranteed Pods can still be evicted or lost during failures. QoS is derived from resources, not directly assigned as a Pod field.
 </details>
 
+6. A batch-job workload runs alongside Karpenter/Cluster Autoscaler and should maximize the number of nodes that go fully idle for consolidation. Which `NodeResourcesFit` scoring strategy fits best, and why?
+   - A) `LeastAllocated`, because it evens out CPU/memory usage across every node
+   - B) `MostAllocated`, because it packs new pods onto the already-busiest nodes and leaves others empty
+   - C) `RequestedToCapacityRatio` with a linear curve identical to `LeastAllocated`
+   - D) Neither strategy matters since EKS lets you edit the default scheduler's config directly
+
+<details>
+<summary>Show Answer</summary>
+
+**Answer: B) `MostAllocated`, because it packs new pods onto the already-busiest nodes and leaves others empty**
+
+**Explanation:**
+A disposable 3-worker `kind` test with uneven baseline load (75%/37%/0% CPU) confirmed this: the default `LeastAllocated` scheduler routed 6 new pods to the emptiest node, bringing all three nodes to 75%/37%/37% (none scalable down). A second scheduler configured with `scoringStrategy.type: MostAllocated` routed the same 6 pods to the two busiest nodes (93%/56%/0%), leaving the idle node untouched and eligible for consolidation. Amazon EKS's control plane is managed, so applying `MostAllocated` requires running an additional scheduler `Deployment` and targeting pods at it with `schedulerName`, not editing the default scheduler directly.
+</details>
+
 [Return to Learning Materials](../../core/08-scheduling-preemption-eviction.md)

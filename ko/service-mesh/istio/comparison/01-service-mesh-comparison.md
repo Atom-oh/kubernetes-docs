@@ -560,7 +560,7 @@ Remote API/gateway 접근, certificate trust, DNS, namespace/service identity, e
 
 | 검증한 출처/artifact | 호환성 근거와 한계 |
 |---|---|
-| Istio 1.31.0 | Kubernetes 1.32–1.36 지원; 실제 upgrade/skew 규칙과 platform 요구사항 준수 |
+| Istio 1.31.0 | Kubernetes 1.32–1.37 지원; 실제 upgrade/skew 규칙과 platform 요구사항 준수 |
 | Linkerd edge-26.9.1 CLI/CRD | 해당 edge의 권고 확인. 별도 **2.20** 표는 Kubernetes 1.31–1.35, Gateway API 1.2.1–1.5.1이며 모든 후속 edge/vendor build의 범위로 자동 대입하지 않음 |
 | Kong Mesh/chart 2.14.4 | 9월 3일 Kuma 2.14.4와 공개됨. 공개 Kubernetes 검증 표는 현재 2.13까지만 있어 render로 2.14 호환성을 인증하지 않음. Support 표는 별도로 2.13 LTS를 명시 |
 | Consul/chart 2.0.4 | 앱과 Helm artifact 별도 확인. Chart 최소 Kubernetes metadata가 전체 지원 표나 upgrade 검토를 대체하지 않음 |

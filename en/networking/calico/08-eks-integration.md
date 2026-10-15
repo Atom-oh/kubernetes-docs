@@ -1,12 +1,12 @@
 # Part 8: EKS Integration
 
-> **Reviewed baseline**: Calico 3.32.2 / Tigera Operator 1.42.6 / Kubernetes 1.34–1.36 tested by Calico. **Last Updated**: September 12, 2026
+> **Reviewed baseline**: Calico 3.32.2 / Tigera Operator 1.42.6 / Kubernetes 1.34–1.36 tested by Calico. **Last Updated**: October 12, 2026
 
 ## Overview
 
 This guide uses Calico to enforce policy on **ordinary Linux EC2 worker nodes with Amazon VPC CNI**. VPC CNI allocates Pod IPs and configures VPC networking; Calico programs policy in the node's dataplane. The installation below keeps the Iptables dataplane and kube-proxy. Calico networking and eBPF are separate deployment choices with additional prerequisites.
 
-As of this review, EKS lists 1.34–1.36 in standard support and 1.31–1.33 in extended support. Calico 3.32's published Kubernetes test range is 1.34–1.36. EKS availability, upstream Kubernetes releases, and Calico compatibility are separate checks; an upstream 1.37 release does not extend this matrix. Confirm the target Region's EKS and add-on versions before installation.
+As of this review, EKS lists 1.34–1.37 in standard support and 1.31–1.33 in extended support ([EKS Kubernetes version lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)). Calico 3.32's published Kubernetes test range is 1.34–1.36. EKS availability, upstream Kubernetes releases, and Calico compatibility are separate checks; EKS offering 1.37 does not make 1.37 part of Calico 3.32's tested matrix. Confirm the target Region's EKS and add-on versions before installation.
 
 ## VPC CNI + Calico Architecture
 

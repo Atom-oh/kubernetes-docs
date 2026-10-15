@@ -1,9 +1,13 @@
 # EKS Hybrid Nodes
 
 > **Supported Versions**: Current EKS-supported versions; examples reviewed for EKS 1.36 / nodeadm 1.0.20
-> **Last Updated**: September 16, 2026
+> **Last Updated**: October 12, 2026
 
 Amazon EKS Hybrid Nodes connects customer-operated on-premises or edge nodes to an AWS-managed EKS control plane. You continue to operate the hosts, operating systems, connectivity and workloads. This guide distinguishes supported interfaces from example configurations; it is not evidence that a particular on-premises production deployment has been tested.
+
+EKS 1.37 became available on October 1, 2026. The examples in this guide remain reviewed against EKS 1.36 and nodeadm 1.0.20.
+
+Before choosing a version, check the [EKS version calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html), Hybrid Nodes documentation, and host/CNI support information.
 
 ## Table of Contents
 
@@ -129,6 +133,7 @@ To test your understanding of EKS Hybrid Nodes, try the following quiz:
 ## Official Documentation
 
 * [AWS EKS Hybrid Nodes Official Documentation](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html)
+* [EKS Kubernetes version calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
 * [nodeadm User Guide](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html)
 * [Harbor Official Documentation](https://goharbor.io/docs/)
 * [NVIDIA GPU Operator Documentation](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/overview.html)

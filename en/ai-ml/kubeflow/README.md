@@ -1,11 +1,16 @@
 # Kubeflow on EKS Deep Dive
 
 > **Review baseline**: Kubeflow Community Distribution 26.03.1
-> **Last reviewed**: September 12, 2026
+> **Latest distribution checked**: Community Distribution 26.03.1; component releases tracked separately
+> **Last reviewed**: October 12, 2026
 
 ## Overview
 
 Kubeflow provides Kubernetes-based tools for ML pipelines, notebooks, tuning, training, and serving. The Community Distribution assembles component revisions, shared services, and a dashboard; individual projects also have their own releases and installation requirements.
+
+This series uses the distribution's KFP 2.16.1 and KServe 0.18.0 as reproduction baselines.
+
+KFP 2.17.2 and KServe 0.21.0 are later, independent releases. They are not bundled in Community Distribution 26.03.1, and this guide does not establish that they are compatible with each other. Check the distribution's pinned inventory alongside current component releases.
 
 CNCF [announced Kubeflow's graduation on August 17, 2026](https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/). This recognizes project maturity and governance, including an independent security audit. It does not certify the security or regulatory compliance of a particular EKS deployment.
 
@@ -43,4 +48,4 @@ The team remains responsible for component/CRD upgrades, tenant authorization, p
 5. [Part 5: Trainer](05-training-operator.md) — legacy Training Operator and Trainer v2 APIs.
 6. [Part 6: KServe](06-kserve.md) — inference resources, deployment modes, and rollouts.
 
-Use each chapter's component baseline. Check the [26.03.1 release](https://github.com/kubeflow/community-distribution/releases/tag/26.03.1) and [pinned inventory](https://github.com/kubeflow/community-distribution/blob/26.03.1/README.md) before selecting an installation.
+Use each chapter's component baseline. Check the [26.03.1 release](https://github.com/kubeflow/community-distribution/releases/tag/26.03.1), [pinned inventory](https://github.com/kubeflow/community-distribution/blob/26.03.1/README.md), [KFP 2.17.2](https://github.com/kubeflow/pipelines/releases/tag/2.17.2), and [KServe 0.21.0](https://github.com/kserve/kserve/releases/tag/v0.21.0) before selecting an installation.

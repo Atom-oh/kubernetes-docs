@@ -1,6 +1,6 @@
 # Gatekeeper policy examples
 
-Validated with Gatekeeper/Gator3.23.1. The templates apply to a dedicated
+Validated with Gatekeeper/Gator 3.23.1. The templates apply to a dedicated
 `policy-lab` namespace, and the example Constraints start in `dryrun` mode.
 They are synthetic policy examples, not a complete Pod Security Standards suite.
 The `registry.example.com` images are test inputs, not deployable application images.
@@ -16,14 +16,14 @@ gator test -f templates/docsnoprivileged.yaml \
   -f tests/fixtures/tenant-skip-label-no-bypass.yaml --output=json
 ```
 
-The suite must run five tests and33 cases. `gator verify` can ignore a directory
+The suite must run five tests and 33 cases. `gator verify` can ignore a directory
 containing no Suite files; a successful exit without the expected cases is not
 coverage. `gator test` returns violation data for dryrun/warn but those modes do
 not make its exit status nonzero. A deny Constraint does. Gator is local policy
 execution and does not prove webhook reachability, Kubernetes admission order,
 RBAC or live audit/cache consistency.
 
-`values.yaml` pins chart3.23.1's supported fields, three webhook replicas and a
+`values.yaml` pins chart 3.23.1's supported fields, three webhook replicas and a
 60-second audit interval. It explicitly retains the chart's validating webhook
 `Ignore` failure policy for a staged rollout. That means webhook availability
 failures can allow requests, regardless of a Constraint's `deny` setting. Evaluate

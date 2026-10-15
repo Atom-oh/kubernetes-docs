@@ -1,7 +1,7 @@
 # Flagger Progressive Delivery
 
-> **Review baseline**: Flagger/Chart 1.45.0, Loadtester 0.39.0, Flux 2.9.5, Podinfo 6.15.0
-> **Last updated**: September 11, 2026
+> **Review baseline**: Flagger/Chart 1.45.0, Loadtester 0.39.0, Flux 2.9.5 (updated to patch 2.9.6 after release-note review; examples not re-run), Podinfo 6.15.0
+> **Last updated**: October 12, 2026
 
 Flagger manages progressive delivery of Kubernetes workloads through the Canary CRD. It controls traffic and revisions, not transactional rollback of databases or external side effects. These lab examples require matching networking, instrumentation, authorization, and service SLOs.
 
@@ -77,7 +77,9 @@ After initial primary setup, Pod-template or tracked ConfigMap/Secret changes pr
 | kubernetes | Service-switching Blue-Green, not L7 weighted/A/B routing |
 | App Mesh / ingress-nginx / OSM | Legacy lifecycle limits below |
 
-AWS App Mesh support is scheduled to end **2026-09-30**, still future at this review date. Community ingress-nginx retired in March 2026, and the OSM repository is archived. Adapter availability is not a maintenance guarantee for new production use. Verify A/B, mirroring, and session-affinity support per implementation.
+AWS App Mesh support **ended 2026-09-30**; AWS says its console and resources are no longer accessible after that date. Community ingress-nginx retired in March 2026, and the OSM repository is archived.
+
+Adapter availability is not a maintenance guarantee for new production use. Verify A/B, mirroring, and session-affinity support per implementation.
 
 ## EKS Installation and Configuration
 
@@ -1399,7 +1401,7 @@ Secret values are placeholders; keep actual tokens out of Git. AlertProvider sec
 
 Severity is a minimum level, not exclusive routing: info receives all levels, warn receives warn/error, and error receives errors. Duplicate subscriptions can duplicate notifications.
 
-Flagger 1.45.0 native msteams still emits MessageCard. Do not assume swapping its URL for a Workflows Adaptive Card endpoint is sufficient. Configure a compatible converter or event receiver with authentication and payload conversion. This differs from Flux 2.9.5 Teams behavior.
+Flagger 1.45.0 native msteams still emits MessageCard. Do not assume swapping its URL for a Workflows Adaptive Card endpoint is sufficient. Configure a compatible converter or event receiver with authentication and payload conversion. This differs from Flux 2.9.6 Teams behavior.
 
 Do not assume a native PagerDuty Events API AlertProvider. Sending type: slack directly to a PagerDuty URL produces the wrong payload. Use an established Slack integration or a verified event adapter.
 

@@ -1,7 +1,7 @@
 # ClickHouse on EKS Measured Benchmark
 
 > **Recorded Test Environment**: ClickHouse 24.8 (as measured — the 24.x series is now end-of-life, see the version note under Test environment), Kubernetes 1.36 (Amazon EKS)
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 12, 2026
 
 Every benchmark report says "ClickHouse is fast" — but it's surprisingly hard to find numbers measured on **an ordinary EKS node with a default gp3 volume**. This document loads 100 million Kubernetes log rows into a deliberately modest environment — a 4 vCPU node and a default-configuration gp3 100 GiB volume — and measures what happens. These are reported historical results. This page does not include the complete original query_log, every exact query or cache state, so identical numbers are not guaranteed. Preserve exact SQL, settings, versions and raw results for the new-run examples below.
 
@@ -32,7 +32,7 @@ Every benchmark report says "ClickHouse is fast" — but it's surprisingly hard 
 | ClickHouse | official image `clickhouse/clickhouse-server:24.8` (24.8.14.39), default configuration |
 | Hourly cost | m5.xlarge on-demand $0.236/h + gp3 100 GiB at $0.0912/GB-month (Seoul region, queried via the Pricing API, 2026-09) |
 
-> **Version note.** 24.8 was the LTS release the measurement was taken on, but ClickHouse's [security policy](https://github.com/ClickHouse/ClickHouse/blob/master/SECURITY.md) no longer lists any 24.x release as supported (as of September 2026 the supported lines are 26.8 LTS, 26.7, 26.6, and 26.3 LTS). Use a current LTS tag for anything new. The mechanisms measured below — primary-key pruning, LZ4/ZSTD codecs, bloom filter skip indexes — are all present in current releases, but re-run the numbers on the version you deploy before using them for sizing.
+> **Version note.** 24.8 was the LTS release the measurement was taken on, but ClickHouse's [security policy](https://github.com/ClickHouse/ClickHouse/blob/master/SECURITY.md) no longer lists any 24.x release as supported (as of October 12, 2026 the supported lines are 26.9, 26.8 LTS, 26.7, and 26.3 LTS). Use a current LTS tag for anything new. The mechanisms measured below — primary-key pruning, LZ4/ZSTD codecs, bloom filter skip indexes — are all present in current releases, but re-run the numbers on the version you deploy before using them for sizing.
 
 The environment is intentionally unglamorous. The question this benchmark asks is not "how fast is ClickHouse on a dedicated i-family NVMe box" but "how far do you get on the kind of general-purpose node and default gp3 volume your cluster already has."
 

@@ -1,7 +1,7 @@
 # 네트워킹 개념 심층 분석
 
-> **검토 기준**: Cilium 1.20.1.
-> **최종 검토**: 2026년 9월 12일.
+> **검토 기준**: Cilium 1.20.2.
+> **최종 검토**: 2026년 10월 15일.
 
 이 문서는 Cilium을 이해하는 데 필요한 핵심 네트워킹 개념에 대한 심층적인 설명을 제공합니다. 컨테이너 네트워킹, 오버레이, NAT, 라우팅, DNS, 로드 밸런싱과 정책을 다룹니다. 예제는 준비된 테스트 환경의 개념·부분 Helm/API 구성이며 완전한 설치나 마이그레이션 절차가 아닙니다. 관리형 플랫폼마다 허용하는 CNI 기능이 다르므로 [Cilium 개요](README.md)의 플랫폼·버전 전제 조건을 확인합니다.
 
@@ -304,7 +304,7 @@ IPsec은 IP 패킷 수준에서 보안 서비스를 제공하는 프로토콜 �
 
 Cilium은 VXLAN 및 Geneve와 같은 오버레이 프로토콜을 지원하며, eBPF를 활용하여 효율적인 패킷 처리를 제공합니다.
 
-- **eBPF 기반 VXLAN 처리**: 커널 내에서 직접 패킷 캡슐화 및 디캡슐화
+- **eBPF 보조 VXLAN 처리**: BPF 프로그램이 VXLAN 헤더를 직접 만들지는 않고, 터널 메타데이터(`bpf_skb_set_tunnel_key`)를 설정한 뒤 flow-based `cilium_vxlan`(또는 `cilium_geneve`) 디바이스로 redirect하면 커널의 VXLAN/Geneve 드라이버가 캡슐화·역캡슐화합니다. [오버레이와 네이티브 라우팅](09-overlay-native-routing.md) 참고
 - **효율적인 라우팅**: 최적화된 경로를 통한 패킷 전달
 - **암호화 옵션**: IPsec 또는 WireGuard를 통한 암호화된 오버레이
 - **모드 선택**: 지원되는 라우팅 모드를 선택; 터널 모드와 자동 직접 노드 라우트를 함께 켜면 거부되며 fallback 수단이 아님
@@ -1278,16 +1278,16 @@ spec:
 
 ## 공식 근거
 
-- [Cilium routing](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/routing.rst)
-- [Cilium chart values](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/install/kubernetes/cilium/values.yaml)
-- [Kube-proxy replacement](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst)
-- [Masquerading](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/concepts/masquerading.rst)
-- [BGP Control Plane](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/bgp-control-plane/bgp-control-plane.rst)
-- [Global Services](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/network/clustermesh/global-services.rst)
-- [Policy language](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/policy/layer3.rst)
-- [DNS policy](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/dns.rst)
-- [IPsec](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-ipsec.rst)
-- [WireGuard](https://raw.githubusercontent.com/cilium/cilium/v1.20.1/Documentation/security/network/encryption-wireguard.rst)
+- [Cilium routing](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/concepts/routing.rst)
+- [Cilium chart values](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/install/kubernetes/cilium/values.yaml)
+- [Kube-proxy replacement](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/kubernetes/kubeproxy-free.rst)
+- [Masquerading](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/concepts/masquerading.rst)
+- [BGP Control Plane](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/bgp-control-plane/bgp-control-plane.rst)
+- [Global Services](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/network/clustermesh/global-services.rst)
+- [Policy language](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/security/policy/layer3.rst)
+- [DNS policy](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/security/dns.rst)
+- [IPsec](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/security/network/encryption-ipsec.rst)
+- [WireGuard](https://raw.githubusercontent.com/cilium/cilium/v1.20.2/Documentation/security/network/encryption-wireguard.rst)
 - [Kubernetes network model](https://kubernetes.io/docs/concepts/services-networking/)
 - [Services](https://kubernetes.io/docs/concepts/services-networking/service/)
 - [DNS for Services and Pods](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)

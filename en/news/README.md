@@ -1,5 +1,5 @@
 # News
-> **Last Updated**: September 12, 2026
+> **Last Updated**: September 14, 2026
 
 This page records documentation changes prompted by Kubernetes, Amazon EKS and CNCF news. GitHub Actions prepares updates each Monday at 09:00 KST and opens a PR after its quality gate passes. Changes reach the site after review, merge and deployment.
 
@@ -7,6 +7,13 @@ Week labels identify log-entry weeks and may differ from source publication date
 
 ## Update Log
 
+- 2026-W38: [core/08-scheduling-preemption-eviction.md](../core/08-scheduling-preemption-eviction.md) — applied Kubernetes v1.37 scheduler preemption for in-place Pod resize (Alpha) and Workload-Aware Scheduling advances (Workload/PodGroup Beta, CompositePodGroup API)
+- 2026-W38: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied Kubernetes v1.37 Node lifecycle conditions (five well-known conditions for drain, maintenance and graceful shutdown)
+- 2026-W38: [observability/metrics/01-prometheus.md](../observability/metrics/01-prometheus.md) — applied Prometheus native histograms for Kubernetes v1.37 component metrics (Beta, enabled by default)
+- 2026-W38: [networking/cilium/README.md](../networking/cilium/README.md) — applied the Cilium 1.21.0-pre.2 prerelease (Gateway API session persistence, AWS managed prefix lists, BPF masquerading by default)
+- 2026-W38: no matching doc — Karmada becomes a CNCF graduated project ([source](https://www.cncf.io/announcements/2026/09/07/cloud-native-computing-foundation-announces-karmada-graduation/))
+- 2026-W38: no matching doc — Kubernetes disaster recovery: guidance from three reproducible failure scenarios, CNCF blog ([source](https://www.cncf.io/blog/2026/09/10/kubernetes-disaster-recovery-guidance-from-three-reproducible-failure-scenarios/))
+- 2026-W38: no matching doc — AWS Private CA EKS add-on and Connector for AD now available in AWS GovCloud (US) ([source](https://aws.amazon.com/about-aws/whats-new/2026/09/private-ca-eks-addon-ad-govcloud/))
 - 2026-W36: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — applied the Kubernetes v1.37 "Garhwal" release (Pod certificates/ClusterTrustBundles Stable, Metrics API GA, kube-dns and IPVS-mode deprecations, and more)
 - 2026-W36: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — applied the Istio 1.30.4/1.29.7 security patch releases (ISTIO-SECURITY-2026-006, 13 Envoy CVEs)
 - 2026-W36: [gitops/argocd/README.md](../gitops/argocd/README.md) — applied the ArgoCD v3.5.2/v3.4.8 patch releases
