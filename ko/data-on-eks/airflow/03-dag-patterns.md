@@ -1,6 +1,7 @@
 # Part 3: DAG 패턴과 KubernetesPodOperator
 
-> **검토 기준**: Airflow 3.3.1 / cncf-kubernetes provider 10.21.0 · 2026년 9월 12일
+> **검토 기준**: Airflow 3.3.1 / cncf-kubernetes provider 10.21.0
+> **최신 upstream patch 확인**: Airflow 3.3.2; 예제는 3.3.1 기준 · 2026년 10월 12일
 
 ## 1. Executor, KPO와 실제 Pod 수
 

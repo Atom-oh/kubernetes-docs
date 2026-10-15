@@ -1,9 +1,13 @@
 # EKS Hybrid Nodes
 
 > **지원 버전**: 현재 EKS 지원 버전; 예제 검토 기준 EKS 1.36 / nodeadm 1.0.20
-> **마지막 업데이트**: 2026년 9월 16일
+> **마지막 업데이트**: 2026년 10월 12일
 
 Amazon EKS Hybrid Nodes는 고객이 운영하는 온프레미스·엣지 노드를 AWS 관리형 EKS control plane에 연결합니다. Host·OS·연결·workload 운영은 계속 사용자 책임입니다. 이 가이드는 지원 인터페이스와 예제 구성을 구분하며 특정 온프레미스 프로덕션 배포를 검증했다는 증거가 아닙니다.
+
+EKS 1.37은 2026년 10월 1일 제공되기 시작했습니다. 이 가이드의 예제는 EKS 1.36과 nodeadm 1.0.20 기준 검토를 유지합니다.
+
+버전을 선택하기 전에 [현재 EKS 지원 일정](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html), Hybrid Nodes 문서, Host/CNI 지원 정보를 확인하세요.
 
 ## 목차
 
@@ -129,6 +133,7 @@ EKS Hybrid Nodes에 대한 이해를 더욱 깊이 하고 실습을 진행하려
 ### 공식 문서
 
 * [AWS EKS Hybrid Nodes 공식 문서](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-overview.html)
+* [EKS Kubernetes 버전 지원 일정](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
 * [nodeadm 사용자 가이드](https://docs.aws.amazon.com/eks/latest/userguide/hybrid-nodes-nodeadm.html)
 * [Harbor 공식 문서](https://goharbor.io/docs/)
 * [NVIDIA GPU Operator 문서](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/overview.html)

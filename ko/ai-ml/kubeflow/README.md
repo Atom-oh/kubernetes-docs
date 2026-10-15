@@ -1,11 +1,16 @@
 # Kubeflow on EKS 딥다이브
 
 > **검토 기준**: Kubeflow Community Distribution 26.03.1
-> **마지막 검토**: 2026년 9월 12일
+> **최신 배포판 확인**: Community Distribution 26.03.1; 구성 요소의 독립 릴리스는 별도 확인
+> **마지막 검토**: 2026년 10월 12일
 
 ## 개요
 
 Kubeflow는 ML 파이프라인, 노트북, 튜닝, 학습, 서빙을 위한 Kubernetes 기반 도구를 제공합니다. Community Distribution은 컴포넌트 리비전, 공통 서비스, 대시보드를 묶으며, 개별 프로젝트에도 자체 릴리스와 설치 조건이 있습니다.
+
+이 시리즈는 배포판 26.03.1에 포함된 KFP 2.16.1과 KServe 0.18.0을 재현 기준으로 사용합니다.
+
+KFP 2.17.2와 KServe 0.21.0은 이후 공개된 독립 릴리스입니다. Community Distribution 26.03.1에 포함된 버전이 아니며, 두 버전이 서로 호환된다고 이 가이드에서 확인한 것도 아닙니다. 현재 컴포넌트 릴리스와 배포판의 고정 목록을 함께 확인하세요.
 
 CNCF는 [2026년 8월 17일 Kubeflow의 졸업을 발표했습니다](https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/). 이는 독립 보안 감사를 포함한 프로젝트 성숙도와 거버넌스를 인정한 것입니다. 특정 EKS 배포의 보안이나 규제 준수를 인증하는 것은 아닙니다.
 
@@ -43,4 +48,4 @@ CNCF는 [2026년 8월 17일 Kubeflow의 졸업을 발표했습니다](https://ww
 5. [Part 5: Trainer](05-training-operator.md) — 레거시 Training Operator와 Trainer v2 API.
 6. [Part 6: KServe](06-kserve.md) — 추론 리소스, 배포 모드, 롤아웃.
 
-각 장의 컴포넌트 기준 버전을 확인하세요. 설치를 선택하기 전 [26.03.1 릴리스](https://github.com/kubeflow/community-distribution/releases/tag/26.03.1)와 [고정된 목록](https://github.com/kubeflow/community-distribution/blob/26.03.1/README.md)을 확인해야 합니다.
+각 장의 컴포넌트 기준 버전을 확인하세요. 설치를 선택하기 전 [26.03.1 릴리스](https://github.com/kubeflow/community-distribution/releases/tag/26.03.1)와 [고정된 목록](https://github.com/kubeflow/community-distribution/blob/26.03.1/README.md), [KFP 2.17.2](https://github.com/kubeflow/pipelines/releases/tag/2.17.2), [KServe 0.21.0](https://github.com/kserve/kserve/releases/tag/v0.21.0)을 확인해야 합니다.

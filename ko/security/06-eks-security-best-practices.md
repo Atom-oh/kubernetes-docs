@@ -1,7 +1,7 @@
 # EKS 보안 모범 사례
 
 > **검토 기준**: 현재 AWS 문서, Kubernetes 1.35 API 스키마, Terraform 1.15.7 / AWS provider 6.64.0. 실제 클러스터 배포는 실행하지 않았습니다.
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 10월 15일
 
 Amazon EKS 환경에서의 보안 모범 사례를 다룹니다. IAM 통합부터 네트워크 보안, 런타임 보호까지 EKS 클러스터를 안전하게 운영하는 방법을 상세히 알아봅니다.
 
@@ -19,6 +19,7 @@ Amazon EKS 환경에서의 보안 모범 사례를 다룹니다. IAM 통합부�
 10. [노드 보안](#노드-보안)
 11. [프라이빗 클러스터](#프라이빗-클러스터)
 12. [멀티테넌시 패턴](#멀티테넌시-패턴)
+13. [경계 보안과 검사 경로](#경계-보안과-검사-경로)
 
 ---
 
@@ -670,6 +671,21 @@ roleRef:
 예제 workload admin은 Namespace 레이블·RoleBinding·NetworkPolicy·Secret API 권한을 직접 변경하지 못합니다. 하지만 Pod/Deployment 생성 권한은 namespace의 Secret·ServiceAccount·볼륨을 간접 사용하게 할 수 있습니다. “Secret get을 제외했으므로 시크릿에 접근 불가”라고 판단하지 않습니다. 강한 격리가 필요하면 별도 클러스터/계정 등 더 넓은 경계를 검토합니다.
 
 EKS 사용자 접근은 현재 access entry와 namespace 범위 access policy 또는 Kubernetes 그룹/RBAC를 검토합니다. `aws-auth` ConfigMap은 기존 호환 경로이며 항상 유일한 통합 방법이 아닙니다. API 인증 mode 변경에는 되돌릴 수 없는 전환 제약이 있으므로 기존 관리자·노드 매핑·복구 경로를 검증한 뒤 이전합니다. EKS access policy와 Kubernetes RBAC는 각각 허용할 수 있으므로 한쪽의 권한 부재가 다른 쪽 허용을 거부하는 것은 아닙니다. 일반 개발자에게 `system:masters`를 예시 기본값으로 부여하지 않습니다.
+
+---
+
+## 경계 보안과 검사 경로
+
+IAM·Pod 정책 외에 공개 웹, admission webhook, 관리자 접근, 외부 반출과 VPC 간 경로를 나눠 검증합니다. 외부 WAF는 내부 webhook을 자동 보호하지 않으며, 중앙 TGW 검사는 실제 그 경로로 라우팅한 트래픽에 적용됩니다. 기존 IAM·CNI·runtime 통제에 다음 가이드를 연결합니다.
+
+| 보호 영역 | 상세 가이드 |
+|---|---|
+| 사고 사례·탐지·패치 이후 복구 | [다층 방어와 침해 대응](./13-defense-in-depth-incident-response.md) |
+| HTTP(S)·API·origin 우회 | [WAF·엣지·API 보안](./14-waf-edge-api-security.md) |
+| 관리면·TLS 가시성·장비 선택 | [Palo Alto·Fortinet NGFW](./15-ngfw-paloalto-fortinet.md) |
+| 대칭 라우팅·NAT·AZ·장애 | [GWLB·GENEVE](./16-gwlb-geneve-inspection.md) |
+
+위 가이드에는 공식 출처와 검사 한계, 승인 환경의 검증 계획을 포함합니다. 실제 장비 배포나 성능 측정 결과는 아닙니다.
 
 ---
 

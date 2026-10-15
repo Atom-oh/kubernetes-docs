@@ -3,7 +3,7 @@
 < [이전: 노드 부트스트랩](./04-node-bootstrap.md) | [목차](./README.md) | [다음: 워크로드 배치 전략](./06-workload-placement.md) >
 
 > **지원 버전**: DRA GPU 예제는 지원되는 EKS 버전의 Kubernetes 1.34.2 이상 필요. 확인한 인터페이스: GPU Operator 26.7.0, DRA driver 0.5.0, device plugin 0.20.0.
-> **마지막 업데이트**: 2026년 9월 12일
+> **마지막 업데이트**: 2026년 10월 12일
 
 이 문서는 준비한 NVIDIA GPU 호스트를 EKS Hybrid Nodes에 통합하며 할당, GPU Operator 소유권, MIG와 time-slicing을 다룹니다. **이번 감사에서 GPU 실행, 드라이버 설치, 모델 다운로드, 추론 벤치마크를 수행하지 않았습니다.** 예제에는 승인한 OS·커널·드라이버·toolkit·런타임·이미지 조합과 실제 하드웨어 시험이 필요합니다.
 
@@ -16,7 +16,7 @@
 | `ClusterPolicy`를 사용하는 GPU Operator | Operator가 관리하는 device-plugin 방식. 기존 드라이버·toolkit·MIG 구성과 소유권을 맞춤 |
 | `GPUCluster`를 사용하는 GPU Operator 26.7 | 신규 설치용 Operator 관리 DRA 방식. 같은 클러스터의 `ClusterPolicy`와 상호 배타적 |
 
-AWS는 지원되는 정적 용량 프로비저닝을 사용하는 신규 EKS 1.34 이상 배포에 DRA를 권고합니다. **EKS Auto Mode는 현재 DRA를 지원하지 않으며** GPU device plugin을 자체 관리합니다. 아래 독립 설치 예제는 식별한 Hybrid GPU 노드만 대상으로 하며 Auto Mode나 다른 GPU 노드에 중복 할당 관리자를 설치하지 않습니다.
+AWS는 지원되는 정적 용량 프로비저닝을 사용하는 신규 EKS 1.34 이상 배포에 DRA를 권고합니다. **EKS Auto Mode에서는 NVIDIA DRA 드라이버를 지원하지 않으며**, Auto Mode가 GPU device plugin을 자체 관리합니다. AWS는 Auto Mode와 Karpenter 동적 용량 프로비저닝에 NVIDIA device plugin을 사용하도록 안내합니다([EKS 표준 지원 릴리스 노트](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html)의 Kubernetes 1.37 항목, 2026년 10월 12일 확인). 아래 독립 설치 예제는 식별한 Hybrid GPU 노드만 대상으로 하며 Auto Mode나 다른 GPU 노드에 중복 할당 관리자를 설치하지 않습니다.
 
 `workload.example.com/gpu-allocation=device-plugin` 또는 `dra`처럼 소유자가 관리하는 배타적인 label을 사용합니다. 이는 스케줄링 입력이며 보안 경계나 GPU 정상 상태의 증거가 아닙니다. 어느 경로든 활성화 전에 같은 물리 장치를 게시하는 다른 plugin·Operator가 없는지 확인합니다.
 

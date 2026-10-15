@@ -1,7 +1,7 @@
 # Network Policies
 
 > **Review baseline**: Kubernetes 1.35 OpenAPI, Cilium 1.20.1, Calico 3.32.2 and current AWS documentation. Offline checks do not establish cluster compatibility.
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 15, 2026
 
 Kubernetes Network Policies are firewall rules that control traffic between Pods. This document covers basic NetworkPolicy and Cilium/Calico extensions. Sections are independent examples; merging every policy would change the effective permissions. No cluster/cloud deployment or live connectivity test was performed.
 
@@ -1828,6 +1828,12 @@ jq -n --slurpfile ns "$work/namespaces.json" --slurpfile np "$work/policies.json
   }
 '
 ```
+
+## Connecting NetworkPolicy to Perimeter Inspection
+
+NetworkPolicy enforces Pod connections through a supported CNI; it does not create every WAF or central-firewall path. Do not assume same-node, VPC-local, PrivateLink, peering or IPv6 traffic automatically traverses central TGW inspection.
+
+Connect public applications to [WAF/origin protection](./14-waf-edge-api-security.md) and outbound/inter-VPC traffic to [Palo Alto/Fortinet](./15-ngfw-paloalto-fortinet.md) and [GWLB/GENEVE](./16-gwlb-geneve-inspection.md). Verify Pod/node SNAT and request/response tuples, and test policy outcomes separately from appliance traversal. See [Defense in Depth and Incident Response](./13-defense-in-depth-incident-response.md) for webhook and Secret-permission investigation.
 
 ## Summary
 

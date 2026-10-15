@@ -1,6 +1,6 @@
 # EKS Networking Quiz - Part 2
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 12, 2026
 
 These answers use the controller ownership and prerequisites in [Part 2](../../eks/03-eks-networking-part2.md): LBC 3.5.0 and Gateway API 1.6.0. Commands are examples that change resources when run; local schema/mock tests do not constitute an EKS deployment. Replace account/Region/resource placeholders, use the intended kubeconfig and preserve the platform’s IAM/Helm/IaC ownership.
 
@@ -647,7 +647,7 @@ This is a logical sidecar path, not a promise that every packet traverses a Serv
 
 For Istio, choose one documented sidecar/ambient installation for the compute type. Fargate cannot run the node DaemonSets/privileged components required by some modes; verify support instead of claiming universal compatibility. Do not enable two mesh injectors on one namespace. Configure proxy resources through supported Helm/install/workload settings, not by overwriting an injector ConfigMap with unrelated `pilot.resources`. Keep Prometheus/tracing deployment and mesh export configuration separate; the removed `IstioOperator.addonComponents.prometheus` and invented App Mesh `Mesh.spec.tracing` are not usable installation recipes.
 
-**Historical comparison:** AWS will discontinue App Mesh support on **September 30, 2026**, after which console/resources are unavailable. As of this audit date, an existing App Mesh deployment needs a migration plan; do not introduce it as a new EKS default. Its historical Fargate integration is not a future support guarantee. ECS Service Connect is an ECS option, not a direct EKS replacement. Use a supported EKS mesh/data-plane design and verify feature parity for routing, retries, certificates, authorization, tracing and failure handling.
+**Historical comparison:** AWS ended App Mesh support on **September 30, 2026**; its console and resources are no longer available. An existing App Mesh deployment must migrate; do not introduce it as a new EKS default. Its historical Fargate integration is not a future support guarantee. ECS Service Connect is an ECS option, not a direct EKS replacement. Use a supported EKS mesh/data-plane design and verify feature parity for routing, retries, certificates, authorization, tracing and failure handling.
 
 The original “typically <10 ms” latency and “10–15%” CPU/memory overhead figures have no verified measurement source in this document. They are retained here as **unverified historical estimates**, not benchmarks or sizing guarantees. Measure p50/p95/p99 latency, throughput, errors and CPU/memory with the same request mix, TLS, telemetry sampling and load before/after enrollment. Include proxy rollout, node loss, control-plane loss, certificate rotation and retry amplification tests.
 

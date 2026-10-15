@@ -1,7 +1,7 @@
 # Kubernetes Pods and Workloads
 
 > **Supported Versions**: Kubernetes 1.35, 1.36, 1.37
-> **Last Updated**: February 23, 2026
+> **Last Updated**: October 12, 2026
 
 This document provides a detailed explanation of Pods, the basic execution unit in Kubernetes, and the various workload resources that manage them. Starting from the concept of Pods, we'll cover the characteristics and use cases of various workload resources including Deployments, StatefulSets, DaemonSets, and more.
 
@@ -157,7 +157,7 @@ spec:
         memory: "256Mi"
         cpu: "500m"
   - name: log-collector
-    image: fluentd:v1.14
+    image: fluentd:v1.19-debian-1
     volumeMounts:
     - name: log-volume
       mountPath: /var/log/nginx
@@ -240,7 +240,7 @@ spec:
     - name: logs
       mountPath: /var/log/nginx
   - name: log-collector
-    image: fluentd:v1.14
+    image: fluentd:v1.19-debian-1
     volumeMounts:
     - name: logs
       mountPath: /var/log/nginx
