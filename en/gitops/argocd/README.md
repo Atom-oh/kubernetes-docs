@@ -228,6 +228,10 @@ This is the upstream test matrix recorded in the 3.5.4 repository. It differs fr
 - 3.5.4: released 2026-10-06. Security fixes, including four rated CRITICAL in the repo-server and AppProject hook handling. The release notes list two potentially breaking changes: Kustomize builds that render Helm charts no longer honor `helmGlobals.configHome`, and OCI manifests larger than 4 MiB are rejected. Check official releases for current supported lines.
 - [3.6.0-rc1](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc1): first release candidate of the 3.6 line, published 2026-09-15. Not a production baseline.
 
+### October 2026 Update: Argo CD 4.0 Visioning Begins
+
+Per the [September 30 CNCF post](https://www.cncf.io/blog/2026/09/30/argocon-north-america-2026-what-to-expect-as-the-argo-community-looks-toward-cd-4-0/), the Argo community has begun the visioning process for Argo CD 4.0, and ArgoCon North America 2026 (a full-day, two-track event co-located with KubeCon NA) will open with maintainer keynotes covering recent developments and upcoming versions. This is early roadmap direction-setting; 4.0 features and timing are not yet committed.
+
 ### Argo Rollouts
 
 Rollouts is a separate controller and can be used without Argo CD. This review uses its 1.10.0 documentation. Validate Rollouts CRDs/controller, traffic plugins, Kubernetes and Argo CD health-check integration instead of mapping unrelated product version numbers.

@@ -222,6 +222,10 @@ spec:
 - 3.5.4: 2026-10-06 공개. repo-server와 AppProject 훅 처리 관련 CRITICAL 4건을 포함한 보안 수정이 들어 있습니다. 릴리스 노트는 잠재적 호환성 변경 두 가지를 명시합니다. Helm 차트를 렌더링하는 Kustomize 빌드가 더 이상 `helmGlobals.configHome`을 적용하지 않고, 4 MiB를 초과하는 OCI manifest는 거부됩니다. 최신 지원 라인은 공식 릴리스 기록으로 확인합니다.
 - [3.6.0-rc1](https://github.com/argoproj/argo-cd/releases/tag/v3.6.0-rc1): 2026-09-15 공개된 3.6 라인 첫 release candidate. 프로덕션 기준 버전이 아닙니다.
 
+### 2026년 10월 업데이트: Argo CD 4.0 비저닝 시작
+
+[9월 30일 CNCF 글](https://www.cncf.io/blog/2026/09/30/argocon-north-america-2026-what-to-expect-as-the-argo-community-looks-toward-cd-4-0/)에 따르면 Argo 커뮤니티가 Argo CD 4.0의 비저닝(visioning) 프로세스를 시작했으며, ArgoCon North America 2026(KubeCon NA 병행, 2트랙 전일 행사)에서 메인테이너 키노트로 최근 개발 현황과 다음 버전 방향을 공유할 예정입니다. 아직 로드맵 초기 단계의 방향 논의이며 4.0의 기능·일정이 확정된 것은 아닙니다.
+
 ### Argo Rollouts
 
 Rollouts는 별도 컨트롤러이며 Argo CD 없이도 사용할 수 있습니다. 여기서는 1.10.0 문서를 기준으로 확인했습니다. Argo CD·Rollouts의 버전 숫자를 대응시킨 호환성 표 대신 Rollouts CRD/컨트롤러, 트래픽 관리 플러그인, Kubernetes 버전과 Argo CD 헬스 체크의 실제 조합을 검증합니다.
