@@ -13,6 +13,32 @@ Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. G
 - 2026-W42: 매칭 문서 없음 — NVMe SSD 기반 Node Swap(v1.34 GA)으로 Kubernetes 워크로드 밀도 높이기, Kubernetes 블로그 ([원문](https://kubernetes.io/blog/2026/10/05/scaling-kubernetes-workloads-with-node-swap/))
 - 2026-W42: 매칭 문서 없음 — Meshery, CNCF 인큐베이팅 프로젝트 승격 ([원문](https://www.cncf.io/blog/2026/10/07/meshery-becomes-a-cncf-incubating-project/))
 - 2026-W42: 매칭 문서 없음 — AWS Batch, Amazon EKS access entry 인증 지원 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/10/aws-batch-access-entries/))
+- 2026-W41: [eks/08-eks-upgrades.md](../eks/08-eks-upgrades.md) — Amazon EKS·EKS Distro의 Kubernetes 1.37 지원(Metrics API GA, DRA 디바이스 taint GA, HPA scale-to-zero 베타) 반영
+- 2026-W41: [gitops/argocd/README.md](../gitops/argocd/README.md) — Argo CD 4.0 비저닝 시작 및 ArgoCon North America 2026 소식 반영
+- 2026-W41: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — Atlassian의 OTel·Kafka·Flink 기반 사고 감지 재구축 사례(CNCF 블로그) 반영
+- 2026-W41: 매칭 문서 없음 — Amazon ECS, VPC Lattice 블루/그린·선형·카나리 배포 지원 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-ecs-vpc-lattice-blue-green-deployments))
+- 2026-W41: 매칭 문서 없음 — Amazon Managed Grafana, Grafana 13.2 워크스페이스 생성 지원 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-managed-grafana-now-supports-creating-grafana-13-2-workspaces))
+- 2026-W41: 매칭 문서 없음 — Grafana Tempo 3.1 릴리스(Kafka 신기능, TraceQL 메트릭 개선, 트레이스 레드액션 등) ([원문](https://grafana.com/blog/tempo-3-1-release-all-the-latest-features))
+- 2026-W41: 매칭 문서 없음 — 게이트가 아닌 가드레일: 플랫폼 팀의 정책 다시 생각하기, CNCF 블로그 ([원문](https://www.cncf.io/blog/2026/10/01/guardrails-not-gates-rethinking-policy-in-platform-teams/))
+- 2026-W40: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37.1/v1.36.5/v1.35.9/v1.34.12 패치 릴리스 및 v1.37 PVC `Unused` 조건(베타) 블로그 반영
+- 2026-W40: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.31.1/1.30.5/1.29.8 패치 릴리스(BackendTLSPolicy fail-open 보안 수정 GHSA-qm8v-g4f9-qhjx 포함) 반영
+- 2026-W40: [eks/04-eks-storage-part1.md](../eks/04-eks-storage-part1.md) — EFS CSI 드라이버 마운트 옵션 주입 취약점 CVE-2026-6437(v3.0.1에서 수정) 반영
+- 2026-W40: [ai-ml/08-llm-gateway.md](../ai-ml/08-llm-gateway.md) — Amazon SageMaker HyperPod Inference Gateway 출시(EKS 관리형 add-on, GPU 인지 라우팅) 반영
+- 2026-W40: 매칭 문서 없음 — Amazon EMR on EKS, IPv6 EKS 클러스터 지원 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-emr-eks-ipv6-support))
+- 2026-W40: 매칭 문서 없음 — Amazon EMR on EKS, Spark Connect 대화형 워크로드 지원 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/09/emr-eks-spark-connect-interactive/))
+- 2026-W40: 매칭 문서 없음 — Amazon CloudWatch Omni 정식 출시(AI 기반 관측성 경험, OpenTelemetry 통합) ([원문](https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-cloudwatch-omni-ai/))
+- 2026-W39: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37 기능 심층 소개 3건(Memory QoS Beta, 파드 수준 리소스 매니저 Beta, emptyDir 권한·바인드 마운트 옵션) 반영
+- 2026-W39: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.20.2/1.19.8/1.18.14 패치 릴리스 및 CNCF 블로그 1.20 기능 정리 글 반영
+- 2026-W39: [gitops/argocd/README.md](../gitops/argocd/README.md) — Argo CD v3.5.3/v3.4.9 패치 릴리스 및 v3.6.0-rc1 반영
+- 2026-W39: 매칭 문서 없음 — Kubernetes CSI Changed Block Tracking(CBT) API Beta 승격과 Alpha 대비 차이점, Kubernetes 블로그 ([원문](https://kubernetes.io/blog/2026/09/14/csi-changed-block-tracking-beta/))
+- 2026-W39: 매칭 문서 없음 — AWS Resilience Hub 신규 기능 3종(네임스페이스 내 EKS 레이블 기반 서비스 리소스 검색 등) ([원문](https://aws.amazon.com/about-aws/whats-new/2026/09/resilience-hub-eks-dependency-policy/))
+- 2026-W38: [core/08-scheduling-preemption-eviction.md](../core/08-scheduling-preemption-eviction.md) — Kubernetes v1.37 인플레이스 파드 리사이즈용 스케줄러 선점(Alpha)과 워크로드 인지 스케줄링(Workload/PodGroup Beta, CompositePodGroup API) 반영
+- 2026-W38: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37 노드 라이프사이클 컨디션(drain·유지 관리·graceful shutdown 표준 컨디션 5종) 반영
+- 2026-W38: [observability/metrics/01-prometheus.md](../observability/metrics/01-prometheus.md) — Kubernetes v1.37 컴포넌트 메트릭의 Prometheus 네이티브 히스토그램 Beta(기본 활성화) 반영
+- 2026-W38: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.21.0-pre.2 프리릴리스(Gateway API 세션 퍼시스턴스, AWS 관리형 prefix list, BPF 마스커레이딩 기본화) 반영
+- 2026-W38: 매칭 문서 없음 — Karmada, CNCF 졸업(graduated) 프로젝트 승격 ([원문](https://www.cncf.io/announcements/2026/09/07/cloud-native-computing-foundation-announces-karmada-graduation/))
+- 2026-W38: 매칭 문서 없음 — Kubernetes 재해 복구: 재현 가능한 3가지 장애 시나리오 가이드, CNCF 블로그 ([원문](https://www.cncf.io/blog/2026/09/10/kubernetes-disaster-recovery-guidance-from-three-reproducible-failure-scenarios/))
+- 2026-W38: 매칭 문서 없음 — AWS Private CA EKS 애드온과 Connector for AD, AWS GovCloud(US) 제공 시작 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/09/private-ca-eks-addon-ad-govcloud/))
 - 2026-W36: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37 "Garhwal" 정식 릴리스(파드 인증서/ClusterTrustBundle Stable, Metrics API GA, kube-dns·IPVS 모드 사용 중단 등) 반영
 - 2026-W36: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.30.4/1.29.7 보안 패치 릴리스(ISTIO-SECURITY-2026-006, Envoy CVE 13건) 반영
 - 2026-W36: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCD v3.5.2/v3.4.8 패치 릴리스 반영

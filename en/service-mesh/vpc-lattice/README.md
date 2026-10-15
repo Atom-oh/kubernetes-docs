@@ -1,7 +1,7 @@
 # VPC Lattice Deep Dive Overview
 
 > **Scope**: VPC Lattice service/resource APIs and AWS Gateway API Controller; verify the selected release and installed CRDs.
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 12, 2026
 
 ## What This Section Covers
 
@@ -13,7 +13,7 @@
 
 This section is about **understanding concepts**. How to create Lattice resources and install the AWS Gateway API Controller is already covered in [VPC Lattice](../../networking/02-vpc-lattice.md), and the feature-by-feature comparison with Istio lives in [Istio vs VPC Lattice](../istio/comparison/02-istio-vs-lattice.md). What those two documents do not cover is what this section addresses: **"why was it designed this way" and "what follows from that design."**
 
-There is urgency behind it. **AWS App Mesh reaches end of support on September 30, 2026**, and after that date you can no longer access the App Mesh console or App Mesh resources. New customer onboarding has already been closed since September 24, 2024. For any organization running App Mesh, this migration is not a choice — it is a task with a deadline.
+There is urgency behind it. **AWS App Mesh support ended on September 30, 2026**, and the App Mesh console and App Mesh resources are no longer accessible. New customer onboarding had been closed since September 24, 2024. For any organization that ran App Mesh, this migration is no longer optional — the deadline has passed.
 
 But App Mesh and Lattice are **not two implementations of the same thing.** The data plane sits in a different place (inside the Pod vs. AWS infrastructure), identity is proven at a different granularity (connection vs. request), and the root of trust is owned by a different party (customer CA vs. AWS IAM/STS). If you approach it by swapping resource names one at a time, you will discover functional gaps and failed security reviews late in the migration. The purpose of this section is to surface those gaps **first**.
 

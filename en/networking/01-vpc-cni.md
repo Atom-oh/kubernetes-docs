@@ -1,7 +1,11 @@
 # Amazon VPC CNI
 
 > **Review baseline**: VPC CNI / Helm chart 1.23.0; network policy agent 1.4.1.
-> **Last reviewed**: September 11, 2026. Select an EKS add-on build compatible with the actual cluster version and Region. Upstream, Helm and EKS `eksbuild` versions are separate identifiers.
+> **Last reviewed**: October 12, 2026.
+>
+> **Current EKS add-on listing**: AWS lists `v1.23.1-eksbuild.1` for Kubernetes 1.31–1.37.
+>
+> **Example pin**: Configuration examples below use upstream/Helm 1.23.0. Upstream, Helm and EKS `eksbuild` versions are separate identifiers. Check availability for the actual cluster version and Region.
 
 ## Table of Contents
 
@@ -328,7 +332,7 @@ IPv6 requires supported Linux Nitro/Fargate paths and prefix allocation; Windows
 
 ### Native Enforcement
 
-Standard native eBPF policy support was introduced in VPC CNI 1.14. Current EKS documentation lists newer prerequisites for standard/Admin policies; the reviewed 1.23 baseline must still be matched to the cluster and platform.
+Standard native eBPF policy support was introduced in VPC CNI 1.14. Current EKS documentation lists VPC CNI 1.21.0 or later for both standard `NetworkPolicy` and Admin `ClusterNetworkPolicy` ([EKS network policy requirements](https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html)); the reviewed 1.23 baseline must still be matched to the cluster and platform.
 
 ```json
 {

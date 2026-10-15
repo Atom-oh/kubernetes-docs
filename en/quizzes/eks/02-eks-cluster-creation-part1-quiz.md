@@ -1,6 +1,6 @@
 # EKS Cluster Creation Quiz - Part 1
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 12, 2026
 
 > Commands are independent examples, not a script to run from top to bottom. Use a dedicated training account/cluster, reviewed IAM permissions and a private temporary kubeconfig (`EXAMPLE_KUBECONFIG`). Replace example IDs and required variables. Creation commands incur charges. This audit checked sources, syntax and local fixtures; it did not provision AWS resources or verify application availability.
 
@@ -314,7 +314,7 @@ eksctl provides various commands for EKS cluster management:
 
 **Answer: C) Versions offered in EKS standard or extended support in the target region**
 
-An EKS minor receives **14 months of standard support from its EKS release date**, followed by **12 months of paid extended support**. The official list on September 11, 2026 is standard **1.34–1.36** and extended **1.31–1.33**. Upstream 1.37 release alone does not imply EKS support. Query the target region for versions available for new clusters.
+An EKS minor receives **14 months of standard support from its EKS release date**, followed by **12 months of paid extended support**. The official list on October 12, 2026 is standard **1.34–1.37** and extended **1.31–1.33**. EKS 1.37 became available on October 1, 2026, after its August 26 upstream release. Query the target region for versions available for new clusters.
 
 Extended support is enabled by default; the upgrade policy and end-of-support dates can trigger automatic control plane upgrades. Plan node/add-on updates separately. Follow AWS support-date notices rather than treating the maximum support window as a reason to delay upgrades.
 

@@ -1,6 +1,6 @@
 # Amazon EKS Upgrades
 
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 12, 2026
 
 Keeping your Amazon EKS cluster up to date is important for security, stability, and leveraging new features. This document provides strategies, best practices, and step-by-step guides for safely upgrading EKS clusters.
 
@@ -29,6 +29,7 @@ EKS uses Kubernetes version numbering, with its own release/support calendar. Ea
 
 ### Recent EKS Upgrade Announcements (2026)
 
+- **Kubernetes 1.37 available (October 1, 2026)**: EKS 1.37 is now a supported target. On Auto Mode, newly created custom NodePools that omit a consolidation policy default to `Balanced`; the built-in `general-purpose` and `system` pools also use `Balanced`. SELinux volume mounts are stable and enabled by default for supported CSI and Pod configurations. Before upgrading, review intended NodePool behavior and the SELinux/CSI requirements for workloads sharing volumes under different labels. See the Kubernetes 1.37 section of the [EKS standard-support release notes](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html) and [support calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html).
 - **Kubernetes version rollback support (July 1, 2026)**: If an upgrade causes problems, you can now roll the control plane back to the previous minor version within 7 days. EKS runs an automated Rollback Readiness check beforehand, covering API compatibility, version skew, add-on compatibility, and cluster health. For a user-initiated rollback, Auto Mode replaces eligible worker nodes before reverting the control plane; this is not an automatic reaction to application failures. Eligibility and disruption controls still apply. The feature has no additional charge in Regions offering EKS; node/storage and applicable version-support charges still apply. See [Rollback Procedure](#rollback-procedure) below for details. (Source: [Amazon EKS announces Kubernetes version rollback](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-version-rollback))
 - **99.99% SLA and 8XL control plane tier (March 20, 2026)**: The SLA for Provisioned Control Plane clusters increased from 99.95% to 99.99%, measured at one-minute granularity. A new 8XL scaling tier doubles the API request-handling capacity of the previous 4XL tier, targeting very large clusters and AI/ML/HPC workloads. (Source: [Amazon EKS announces SLA and 8XL scaling tier](https://aws.amazon.com/about-aws/whats-new/2026/03/amazon-eks-announces-sla-8xl-scaling-tier/))
 

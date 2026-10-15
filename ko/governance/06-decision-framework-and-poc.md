@@ -1,6 +1,6 @@
 # 의사결정 프레임워크와 POC 설계
 
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 10월 12일
 
 지금까지 다룬 Landing Zone, Account/IAM, EKS, VPC, Data/Security 경계는 각각 독립적으로 판정하되, 실제로는 하나의 판정표로 재현 가능해야 합니다. 이 문서는 그 판정표를 어떻게 설계하고, 실측이 필요한 항목을 어떻게 POC로 검증할지 다룹니다.
 
@@ -126,7 +126,7 @@ cross-AZ 비용 귀속은 Flow Logs·ENI/IP·Kubernetes workload identity와 CUR
 
 어떤 실행 경로를 택하든 작업 위험에 맞춰 다음 조건을 정의합니다: machine-readable intent, 실행 직전 snapshot, plan, deterministic policy 검사, 승인, 제한된 임시 identity, post-check, CloudTrail 기록, 실제 상태 대조, 복구 contract.
 
-> **AWS MCP Server 확인 범위**: 현재 endpoint 목록은 us-east-1과 eu-central-1을 제시합니다. endpoint 위치와 조작 대상 resource Region은 구분합니다. API 실행은 IAM 및 downstream permission으로 제한되고 CloudTrail 기록을 검토할 수 있습니다. endpoint·인증·로그 범위·데이터 경로는 조직 요구에 맞게 확인하며, 서울 endpoint 부재만으로 규제 위반 여부를 결론내리지 않습니다.
+> **AWS MCP Server 확인 범위**: 2026년 10월 12일 확인 기준 endpoint 목록은 us-east-1, us-west-2, ap-northeast-1, ap-southeast-1·2, eu-central-1, eu-west-1·2의 8개 Region을 제시하며, 서울(ap-northeast-2) endpoint는 없습니다. endpoint 위치와 조작 대상 resource Region은 구분합니다. API 실행은 IAM 및 downstream permission으로 제한되고 CloudTrail 기록을 검토할 수 있습니다. endpoint·인증·로그 범위·데이터 경로는 조직 요구에 맞게 확인하며, 서울 endpoint 부재만으로 규제 위반 여부를 결론내리지 않습니다.
 
 ## 관련 문서
 

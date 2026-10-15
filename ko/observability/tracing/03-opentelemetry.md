@@ -1,7 +1,7 @@
 # OpenTelemetry
 
 > **검토 기준**: Collector Contrib 0.160.0, Operator 0.158.0, 언어별 버전은 아래 참조
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 10월 12일
 
 ## 소개
 
@@ -60,7 +60,7 @@ Operator의 기본 Collector는 0.158.0입니다. 아래 독립 0.160.0 워크�
 
 ### Auto-instrumentation (자동 계측)
 
-2026년 9월 13일 EKS 수명주기 문서는 1.34·1.35·1.36을 standard support로 명시합니다. 1.35 schema 기준은 그 목록과 Operator 범위에 포함되지만 실제 플랫폼·애드온 인수 검증을 대신하지는 않습니다.
+2026년 10월 12일 기준 EKS 표준 지원 버전에는 1.34–1.37이 포함됩니다. 1.35 schema 기준은 이 목록과 Operator 범위에 포함되지만 실제 플랫폼·애드온 인수 검증을 대신하지는 않습니다.
 
 자동 계측은 지원되는 라이브러리를 연결하며 임의의 비즈니스 동작을 모두 알아내지는 않습니다. 한 프로세스에는 직접 준비한 agent/launcher 또는 Operator 주입 중 한 경로를 선택합니다. 이미 구성한 provider 위에 두 번째 SDK를 초기화하지 않습니다. 다음 이미지 이름은 시작 명령·의존성까지 포함해 직접 빌드할 앱의 예시입니다.
 
@@ -1471,6 +1471,10 @@ Fan-out은 backend 사이의 원자적 전달이나 동일한 보존 결과를 �
 ### 2026년 8월 업데이트: 느린 SQL 쿼리를 신뢰성 메트릭으로 정제하기
 
 [8월 21일 CNCF 글](https://www.cncf.io/blog/2026/08/21/how-to-turn-slow-queries-into-actionable-reliability-metrics-with-opentelemetry/)과 [lab](https://github.com/causely-oss/slow-query-lab)은 query duration·트래픽 가중 영향·span 파생 메트릭과 anomaly baseline을 비교합니다. 글의 과거 예시는 현재 클러스터 용량 측정치가 아닙니다. 글 자체도 원문 SQL label·민감 parameter·cardinality·baseline 준비 시간을 경고합니다. Lab 설정을 도입하기 전에 데이터를 정제하고 dimension을 제한하며 latency anomaly를 근본 원인의 증명으로 해석하지 않습니다.
+
+### 2026년 10월 업데이트: OTel 스트림 기반 사고 감지 재구축 사례
+
+[9월 30일 CNCF 글](https://www.cncf.io/blog/2026/09/30/from-40-seconds-to-under-10-rebuilding-incident-detection-on-opentelemetry-apache-kafka-and-apache-flink-on-kubernetes/)에서 Atlassian은 자동 사고 생성 플랫폼을 OpenTelemetry·Apache Kafka·Kubernetes 위의 Apache Flink로 재구축해 이벤트-메트릭 지연을 40초 이상에서 10초 미만으로 줄인 18개월 운영 경험을 공유합니다. 글 자체가 밝히듯 recall이 60%→86% 상승 후 64%로 떨어진 달도 있고 precision은 목표에 미달합니다. 수치는 해당 조직의 측정이지 아키텍처 채택만으로 재현되는 결과가 아니며, 공유 큐의 noisy neighbor 분리와 비용 같은 트레이드오프 판단의 참고 사례로 읽습니다.
 
 ## Best Practices
 

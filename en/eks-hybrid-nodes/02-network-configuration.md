@@ -1,7 +1,7 @@
 # Network Configuration
 
 > **Supported Versions**: EKS 1.36 examples; AWS-maintained Cilium 1.18.3-0 reference, compatible host/kernel required
-> **Last Updated**: September 16, 2026
+> **Last Updated**: October 15, 2026
 
 Validate routing, DNS, TLS, credentials and application traffic separately. These examples were checked with local schemas and fixtures, including a mocked Terraform provider; no AWS resources, routers, firewalls or live clusters were changed. The diagrams are repository illustrations based on AWS concepts, not AWS-published validation of this configuration.
 
@@ -671,7 +671,7 @@ operator:
   rollOutPods: true
 ```
 
-The AWS-style `v2alpha1` APIs remain served in the reviewed 1.18.3 CRDs (which also serve `v2`). There is no need to replace CRDs simply to use this example.
+The AWS-style `v2alpha1` APIs remain served in the reviewed 1.18.3 CRDs (which also serve `v2`). There is no need to replace CRDs simply to use this example. On Cilium 1.19+ use the `cilium.io/v2` BGP CRDs instead (the `v2alpha1` BGP CRDs are deprecated), and the legacy `CiliumBGPPeeringPolicy` was removed in 1.19.
 
 The following selects hybrid nodes, links the peer's advertisement selector to the advertisement labels, and advertises only their Pod CIDRs:
 

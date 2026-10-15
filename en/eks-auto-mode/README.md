@@ -1,17 +1,27 @@
 # EKS Auto Mode Operations Guide
 
 > **Supported Versions**: EKS Auto Mode GA; example baseline EKS 1.36
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 12, 2026
 
-Amazon EKS Auto Mode is a feature that fully automates Kubernetes node management, automatically provisioning and optimizing nodes based on workload requirements. This guide covers Auto Mode concepts, configuration and operational considerations. AWS manages the Auto Mode infrastructure; you still own application availability, resource requests, security, monitoring and cluster/VPC configuration. Examples require validation in your environment before production use.
+Amazon EKS Auto Mode automates Kubernetes node management, including provisioning and optimization for workload requirements. This guide covers Auto Mode concepts, configuration and operations. AWS manages the Auto Mode infrastructure; you remain responsible for application availability, resource requests, security, monitoring and cluster/VPC configuration. Validate examples in your environment before production use.
+
+### October 2026 Update: EKS 1.37 Defaults
+
+EKS 1.37 became available on October 1, 2026. A newly created custom NodePool that omits its consolidation policy defaults to `Balanced`; the built-in `general-purpose` and `system` pools also use `Balanced`, and their policies cannot be changed. Set `WhenEmptyOrUnderutilized` explicitly on a custom pool when that behavior is intended. Not every NodePool example in this guide sets the field, so on EKS 1.37 those examples get `Balanced` when created. See the Kubernetes 1.37 section of the [EKS standard-support release notes](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html).
 
 ### July 2026 Update: EFA and Placement Group Support
 
-On July 22, 2026, AWS announced that EKS Auto Mode (and open-source Karpenter) node pools now support Elastic Fabric Adapter (EFA) network device configuration and EC2 placement groups. Network interfaces on EFA-capable instances can be configured as EFA-only or standard ENI — EFA-only interfaces do not consume VPC IP addresses while still delivering full interconnect bandwidth — and instances can be launched with cluster, spread, or partition placement strategies directly from the node pool configuration. This is aimed at distributed training/inference workloads that need maximum throughput or fault isolation. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-efa-placement-groups/) for details.
+On July 22, 2026, AWS announced that EKS Auto Mode and open-source Karpenter node pools support Elastic Fabric Adapter (EFA) network-device configuration and EC2 placement groups.
+
+On EFA-capable instances, network interfaces can be configured as EFA-only or standard ENI. EFA-only interfaces do not consume VPC IP addresses while still delivering full interconnect bandwidth. Node pool configuration can also specify cluster, spread or partition placement strategies. These options target distributed training and inference workloads that need high throughput or fault isolation. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-eks-efa-placement-groups/) for details.
 
 ### July 2026 Update: ARC Zonal Shift Support
 
-As of July 10, 2026, EKS Auto Mode clusters support Amazon Application Recovery Controller (ARC) zonal shift and autoshift. Because Auto Mode manages compute on your behalf, you get zonal shift support without setting flags or managing Karpenter versions — simply enable ARC zonal shift on the cluster. When a zonal shift is activated, Auto Mode stops provisioning new capacity in the impaired AZ and halts voluntary disruptions such as consolidation and drift for nodes in that zone. It also prevents voluntary disruptions in healthy AZs when replacement scheduling would depend on the impaired AZ. Auto Mode needs no additional Karpenter flag, but ARC zonal autoshift must be separately configured after cluster registration. Zonal shift does not make a zonal volume or strict AZ-bound workload portable. ARC has no additional zonal-shift charge; replacement capacity and normal infrastructure charges still apply. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift) and the [ARC zonal shift documentation](https://docs.aws.amazon.com/eks/latest/userguide/zone-shift-enable.html) for details.
+As of July 10, 2026, EKS Auto Mode clusters support Amazon Application Recovery Controller (ARC) zonal shift and autoshift. Enable ARC zonal shift on the cluster; Auto Mode needs no additional flag or Karpenter version management.
+
+During a zonal shift, Auto Mode stops provisioning capacity in the impaired AZ and halts voluntary disruptions such as consolidation and drift for nodes there. It also blocks voluntary disruptions in healthy AZs when replacement scheduling would depend on the impaired AZ. Configure ARC zonal autoshift separately after cluster registration.
+
+Zonal shift does not make zonal volumes or strict AZ-bound workloads portable. ARC adds no zonal-shift charge; replacement capacity and normal infrastructure charges still apply. See the [announcement](https://aws.amazon.com/about-aws/whats-new/2026/07/eks-auto-mode-arc-zonal-shift) and the [ARC zonal shift documentation](https://docs.aws.amazon.com/eks/latest/userguide/zone-shift-enable.html) for details.
 
 ## Table of Contents
 
@@ -95,7 +105,7 @@ The Karpenter-based controller is operated by AWS, outside your worker nodes. Th
 
 The [EKS FAQ](https://aws.amazon.com/eks/faqs/) lists Auto Mode in EKS regions, including GovCloud (US), except China regions. Check regional instance/feature availability separately. The earlier short region list was not exhaustive.
 
-The FAQ's original `1.29+` feature floor does not mean that every such version can still be created or is in standard support. On September 12, 2026, EKS 1.34–1.36 are in standard support; the examples use 1.36. Consult the [current EKS version calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) for lifecycle dates and extended-support charges.
+The FAQ's original `1.29+` feature floor does not mean that every such version can still be created or is in standard support. On October 12, 2026, EKS 1.34–1.37 are in standard support; the examples retain their reviewed 1.36 baseline. Consult the [current EKS version calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html) for lifecycle dates and extended-support charges.
 
 #### Constraints to check
 

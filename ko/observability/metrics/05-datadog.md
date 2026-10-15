@@ -1,6 +1,6 @@
 # Datadog
 
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 10월 12일
 > Helm chart 3.244.0; Agent/Cluster Agent 7.83.1을 같은 버전으로 사용합니다.
 > 설정·SDK·로컬 검증의 한계는 아래에 명시합니다. Datadog tenant를 변경하지 않았습니다.
 
@@ -411,7 +411,7 @@ Admission opt-in label은 mutation과 연결 설정 주입을 허용합니다.
 Tracing library를 설치하려면 SSI target 또는 지원 언어/version annotation을
 설정합니다. Label만으로 SDK 설치나 Datadog까지의 trace 전달이 증명되지는 않습니다.
 Local injection은 Java/Python/Node.js에 Cluster Agent 7.40+, .NET/Ruby에 7.44+가
-필요합니다. 현재 7.83.1은 `kube-system`과 자신의 namespace도 주입에서 제외합니다.
+필요합니다. Cluster Agent 7.83.1(이 가이드에서 고정한 버전)은 `kube-system`과 자신의 namespace도 주입에서 제외합니다.
 
 제한된 Java 예제는 다음 **pod-template fragment**를 application namespace의
 기존 Deployment에 병합합니다. Selector·container·security 설정을 보존하며,

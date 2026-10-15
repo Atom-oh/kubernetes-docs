@@ -1,7 +1,7 @@
 # Part 6: KServe — Model Serving on Kubernetes
 
 > **Review baseline**: KServe 0.18.0 / Models Web Application 0.18.0 / Community Distribution 26.03.1
-> **Last Updated**: September 12, 2026
+> **Last Updated**: October 12, 2026
 
 ## Lab Environment Setup
 
@@ -9,7 +9,9 @@ Use compatible Kubernetes, KServe controller/CRDs, ServingRuntime, storage acces
 
 ## KServe and Kubeflow
 
-KServe evolved from KFServing into an independent serving project. This chapter reviews **KServe and Models Web Application 0.18.0** bundled in Community Distribution 26.03.1. The latest public KServe release inspected was **0.20.0 (August 6, 2026)**; it is not the same as the distribution's 0.18.0 baseline.
+KServe evolved from KFServing into an independent serving project. This chapter reviews **KServe and Models Web Application 0.18.0**, bundled in Community Distribution 26.03.1.
+
+The latest public KServe release checked on October 12, 2026 is **0.21.0 (September 25, 2026)**. Version 0.20.0 (August 6, 2026) came earlier. Neither release is the distribution's 0.18.0 baseline.
 
 Controller, CRDs and web app are separate artifacts requiring compatibility checks. Their version numbers need not always match or always differ. Record actual images, CRD schemas and web-app revisions.
 
@@ -72,6 +74,7 @@ Official 0.18.0 OCI CRD/resource/runtime-config charts were pulled and rendered 
 - [KEDA ScaledObject handling](https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/keda/keda_reconciler.go)
 - [Knative traffic handling](https://github.com/kserve/kserve/blob/v0.18.0/pkg/controller/v1beta1/inferenceservice/reconcilers/knative/ksvc_reconciler.go)
 - [0.20.0 release](https://github.com/kserve/kserve/releases/tag/v0.20.0)
+- [0.21.0 release (latest checked)](https://github.com/kserve/kserve/releases/tag/v0.21.0)
 
 ## Next Steps
 

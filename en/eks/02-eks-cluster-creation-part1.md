@@ -1,8 +1,12 @@
 # Part 1: Prerequisites
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 12, 2026
 
 There are several ways to create an Amazon EKS cluster. In this chapter, we will learn how to create an EKS cluster using various tools and methods.
+
+**Current release:** EKS 1.37 became available on October 1, 2026.
+
+**Example baseline:** The cluster-creation chapters use the reviewed EKS 1.36 baseline. Before choosing another supported version, check compatibility with its tools, node images and add-ons.
 
 ## Table of Contents
 
