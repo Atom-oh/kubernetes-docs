@@ -1,7 +1,7 @@
 # LLM 게이트웨이(Inference Gateway) 딥다이브 — 자동 라우팅, PII 가드, 프롬프트 무결성, 컨텍스트 인식
 
 > **범위**: 게이트웨이 제안 설계이며 InferencePool 예시는 `inference.networking.k8s.io/v1`을 따릅니다. 배포 전 Kubernetes·Gateway API·컨트롤러·EPP·모델 서버의 호환 릴리스를 고정하세요.
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 9월 28일
 
 코딩 에이전트(Claude Code, OpenCode, Codex), RAG 애플리케이션, 자율 에이전트가 한 조직 안에서 동시에 여러 모델 제공자(Anthropic, Amazon Bedrock, 자체 호스팅 vLLM)를 호출하기 시작하면, "누가 어떤 모델을 얼마나 썼고, 그 과정에서 어떤 데이터가 밖으로 나갔는가"라는 질문에 아무도 답할 수 없는 상태가 금방 찾아옵니다. **LLM 게이트웨이**(AI 게이트웨이, Inference Gateway라고도 부릅니다)는 이 질문에 답하기 위해 모든 LLM 트래픽이 지나가는 **단일 진입점**으로 자리 잡는 프록시입니다.
 
@@ -623,6 +623,10 @@ EPP 폴링·플러그인을 고정한 모델 서버에 맞춥니다. 현재 [vLL
 | 관측성 | 제한된 OpenTelemetry·Prometheus 메트릭, 선택적 추적 | 의미 규약·내보내기 이름 매핑 고정, 수집 접근 제한, 기본 프롬프트 캡처 비활성화 |
 
 이 그림은 즉시 설치하는 Helm 차트가 아닌 토폴로지 스케치입니다. 가상의 공통 키 대신 선택 제품의 버전별 values 스키마를 사용하세요. 인그레스는 TLS·인증을 적용해 비공개로 유지하고 `/metrics`·관리 엔드포인트를 제한합니다. 워크로드 ID, non-root 컨테이너, capability 제거, 리소스 제한, 네트워크·송신 정책을 적용합니다. DaemonSet·hostPort가 자동으로 노드 격리를 제공하지 않으므로 바인딩·방화벽을 명시하거나 비공개 Service·사이드카를 사용합니다. 제공자 직접 호출을 막고 감사 버킷은 Block Public Access·암호화·버전 관리·승인 Object Lock 보존을 설정합니다. 이 문서는 AWS·IAM 리소스를 생성하지 않습니다.
+
+### 2026년 9월 업데이트: Amazon SageMaker HyperPod Inference Gateway
+
+2026년 9월 24일 AWS가 [SageMaker HyperPod Inference Gateway](https://aws.amazon.com/about-aws/whats-new/2026/09/sagemaker-hyperpod-inference-gateway/)를 출시했습니다. 위 4.7절(L7 엔드포인트 선택)에서 다룬 EPP 패턴을 관리형으로 구현한 사례로, 기존 HyperPod 인프라에 **단일 EKS 관리형 add-on**으로 배포되는 Kubernetes 네이티브 GPU 인지 라우팅 시스템입니다. Envoy 엔드포인트(클러스터당 단일 비공개 진입점), 요청 본문에서 모델 이름을 읽어 GPU 풀로 보내는 Body-Based Router, 그리고 KV 캐시 사용률·큐 깊이·LoRA 어댑터 상주 여부·프리픽스 캐시 적중률·예측 지연·실행 중 요청 수의 6가지 추론 신호로 모든 모델 서버 파드를 실시간 채점하는 Endpoint Picker의 3개 구성 요소로 이루어집니다. vLLM, SGLang 등 OpenAI 호환 모델 서버와 애플리케이션 코드 변경 없이 동작하며, AWS는 라운드 로빈 대비 첫 토큰 지연 최대 82% 감소를 제시합니다. 교차 클러스터·교차 리전 라우팅과 전역 속도 제한은 예고 단계입니다.
 
 ---
 

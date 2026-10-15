@@ -1,5 +1,5 @@
 # 소식
-> **마지막 업데이트**: 2026년 9월 21일
+> **마지막 업데이트**: 2026년 9월 28일
 
 Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. GitHub Actions는 매주 월요일 09:00 KST에 갱신안을 만들고 품질 검사를 통과하면 PR을 엽니다. 실제 사이트에는 PR 검토·머지와 배포가 완료된 뒤 반영됩니다.
 
@@ -7,6 +7,13 @@ Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. G
 
 ## 갱신 로그
 
+- 2026-W40: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37.1/v1.36.5/v1.35.9/v1.34.12 패치 릴리스 및 v1.37 PVC `Unused` 조건(베타) 블로그 반영
+- 2026-W40: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.31.1/1.30.5/1.29.8 패치 릴리스(BackendTLSPolicy fail-open 보안 수정 GHSA-qm8v-g4f9-qhjx 포함) 반영
+- 2026-W40: [eks/04-eks-storage-part1.md](../eks/04-eks-storage-part1.md) — EFS CSI 드라이버 마운트 옵션 주입 취약점 CVE-2026-6437(v3.0.1에서 수정) 반영
+- 2026-W40: [ai-ml/08-llm-gateway.md](../ai-ml/08-llm-gateway.md) — Amazon SageMaker HyperPod Inference Gateway 출시(EKS 관리형 add-on, GPU 인지 라우팅) 반영
+- 2026-W40: 매칭 문서 없음 — Amazon EMR on EKS, IPv6 EKS 클러스터 지원 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-emr-eks-ipv6-support))
+- 2026-W40: 매칭 문서 없음 — Amazon EMR on EKS, Spark Connect 대화형 워크로드 지원 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/09/emr-eks-spark-connect-interactive/))
+- 2026-W40: 매칭 문서 없음 — Amazon CloudWatch Omni 정식 출시(AI 기반 관측성 경험, OpenTelemetry 통합) ([원문](https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-cloudwatch-omni-ai/))
 - 2026-W39: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37 기능 심층 소개 3건(Memory QoS Beta, 파드 수준 리소스 매니저 Beta, emptyDir 권한·바인드 마운트 옵션) 반영
 - 2026-W39: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.20.2/1.19.8/1.18.14 패치 릴리스 및 CNCF 블로그 1.20 기능 정리 글 반영
 - 2026-W39: [gitops/argocd/README.md](../gitops/argocd/README.md) — Argo CD v3.5.3/v3.4.9 패치 릴리스 및 v3.6.0-rc1 반영

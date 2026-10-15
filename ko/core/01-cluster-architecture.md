@@ -1544,6 +1544,11 @@ Kubernetes 클러스터 업그레이드는 새로운 기능, 보안 패치, 버�
 
 업그레이드 전에는 [공식 릴리스 노트](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.37.md)에서 사용 중단·제거 항목을 반드시 확인하세요.
 
+### 2026년 9월 업데이트: v1.37.1 등 정기 패치 릴리스
+
+2026년 9월 23일 지원 중인 전체 마이너 버전에 대한 패치 릴리스 [v1.37.1](https://github.com/kubernetes/kubernetes/releases/tag/v1.37.1), v1.36.5, v1.35.9, v1.34.12가 공개되었습니다. v1.37.1은 Go 1.26.8 빌드 전환과 함께 `spec.deviceSelector`가 없는 DeviceTaintRule이 모든 DRA 디바이스를 스케줄 불가로 만들던 버그, Windows kube-proxy(winkernel)가 포트 매핑 없는 HNS 로드 밸런서를 만나면 종료되던 패닉 등을 수정한 일반 버그 픽스 릴리스입니다.
+
+같은 주 공개된 v1.37 기능 심층 글로는 [PVC의 마지막 사용 시점 추적(베타)](https://kubernetes.io/blog/2026/09/21/kubernetes-v1-37-pvc-last-used-time/)이 있습니다. `PersistentVolumeClaimUnusedSinceTime` 기능 게이트가 베타(기본 활성화)로 승격되어, PVC 보호 컨트롤러가 각 PVC에 `Unused` 조건을 추가해 실행 중인 파드가 참조하지 않는 고아 PVC를 별도 도구 없이 식별할 수 있습니다.
 ### 2026년 9월 업데이트: v1.37 주요 기능 심층 소개
 
 2026년 9월 14~16일 Kubernetes 블로그에 v1.37 기능을 심층 소개하는 글이 연이어 게시되었습니다:
