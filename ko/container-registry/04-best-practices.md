@@ -1,6 +1,6 @@
 # 컨테이너 레지스트리 모범 사례
 
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 개요
 
@@ -76,7 +76,7 @@ image: nginx:latest
 image: myapp:latest
 
 # ✅ 명시적 버전 사용
-image: nginx:1.30.4
+image: nginx:1.30.6
 image: myapp:v1.2.3
 
 # ✅ 또는 다이제스트 사용
@@ -290,11 +290,11 @@ aws ecr create-pull-through-cache-rule --region "$AWS_REGION" \
   --credential-arn "$SECRET_ARN"
 ```
 
-사용 URI: `ACCOUNT.dkr.ecr.REGION.amazonaws.com/docker-hub/library/nginx:1.30.4`. 캐시 미스와 갱신은 업스트림에 의존합니다.
+사용 URI: `ACCOUNT.dkr.ecr.REGION.amazonaws.com/docker-hub/library/nginx:1.30.6`. 캐시 미스와 갱신은 업스트림에 의존합니다.
 
 ### Harbor Proxy Cache
 
-Harbor에 upstream endpoint와 Proxy Cache 프로젝트를 만들고 `harbor.example.com/docker-hub-cache/library/nginx:1.30.4`처럼 프로젝트가 포함된 URI를 사용합니다. [Harbor](03-harbor.md)의 TLS·Robot·캐시 설정 절차를 따릅니다. 임의의 `/v2/<project>` endpoint를 containerd mirror로 넣는 것만으로는 경로·인증이 올바르게 변환되지 않습니다.
+Harbor에 upstream endpoint와 Proxy Cache 프로젝트를 만들고 `harbor.example.com/docker-hub-cache/library/nginx:1.30.6`처럼 프로젝트가 포함된 URI를 사용합니다. [Harbor](03-harbor.md)의 TLS·Robot·캐시 설정 절차를 따릅니다. 임의의 `/v2/<project>` endpoint를 containerd mirror로 넣는 것만으로는 경로·인증이 올바르게 변환되지 않습니다.
 
 ### 외부 의존성 최소화
 
@@ -302,17 +302,17 @@ Harbor에 upstream endpoint와 Proxy Cache 프로젝트를 만들고 `harbor.exa
 # 외부 레지스트리 직접 참조 (비권장)
 containers:
 - name: app
-  image: docker.io/library/nginx:1.30.4
+  image: docker.io/library/nginx:1.30.6
 - name: sidecar
-  image: quay.io/prometheus/prometheus:v3.14.0
+  image: quay.io/prometheus/prometheus:v3.15.0
 
 ---
 # 내부 캐시/미러 사용 (권장)
 containers:
 - name: app
-  image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/docker-hub/library/nginx:1.30.4
+  image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/docker-hub/library/nginx:1.30.6
 - name: sidecar
-  image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/quay/prometheus/prometheus:v3.14.0
+  image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/quay/prometheus/prometheus:v3.15.0
 ```
 
 ---
@@ -439,19 +439,19 @@ Harbor 보존 정책은 보존 조건의 OR 합집합이며 ECR과 다른 문법
 다음 Node.js 예제는 빌드에 필요한 devDependencies를 builder에 설치하고 런타임에는 production 의존성만 복사합니다. `npm ci --omit=dev`를 빌드 전에 실행하면 TypeScript·번들러 등이 없어 빌드가 실패할 수 있습니다. 소스의 build 스크립트, lockfile, dist 경로를 확인하고 `.dockerignore`에 node_modules·비밀 파일을 제외합니다.
 
 ```dockerfile
-FROM node:24.21.0-alpine3.23 AS builder
+FROM node:24.22.0-alpine3.23 AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM node:24.21.0-alpine3.23 AS production-deps
+FROM node:24.22.0-alpine3.23 AS production-deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
-FROM node:24.21.0-alpine3.23
+FROM node:24.22.0-alpine3.23
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=production-deps --chown=node:node /app/node_modules ./node_modules
@@ -570,14 +570,14 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-    - uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # v6.2.4
+    - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
       with:
         role-to-assume: arn:aws:iam::123456789012:role/github-actions-ecr
         aws-region: ${{ env.AWS_REGION }}
     - uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
       id: login
-    - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
-    - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+    - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+    - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
       with:
         context: .
         platforms: linux/amd64
@@ -588,7 +588,7 @@ jobs:
         cache-to: type=gha,mode=max
     - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
-        version: v0.74.0
+        version: v0.76.0
         image-ref: ${{ steps.login.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
         scan-type: image
         scanners: vuln
@@ -632,9 +632,9 @@ variables:
   DOCKER_TLS_VERIFY: "1"
   DOCKER_CERT_PATH: /certs/client
 .docker:
-  image: docker:29.8.0-cli
+  image: docker:29.9.0-cli
   services:
-    - name: docker:29.8.0-dind
+    - name: docker:29.9.0-dind
       alias: docker
 build:
   extends: .docker
@@ -648,7 +648,7 @@ build:
 scan:
   stage: scan
   image:
-    name: aquasec/trivy:0.74.0
+    name: aquasec/trivy:0.76.0
     entrypoint: [""]
   needs:
     - job: build
@@ -700,16 +700,16 @@ brew install skopeo
 
 ```bash
 # Docker Hub 이미지 검사
-skopeo inspect docker://docker.io/library/nginx:1.30.4
+skopeo inspect docker://docker.io/library/nginx:1.30.6
 
 # ECR 이미지 검사 (AWS 인증 필요)
 skopeo inspect docker://123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/myapp:v1.0.0
 
 # 원시 매니페스트 확인
-skopeo inspect --raw docker://docker.io/library/nginx:1.30.4 | jq .
+skopeo inspect --raw docker://docker.io/library/nginx:1.30.6 | jq .
 
 # 특정 아키텍처 매니페스트 확인
-skopeo --override-arch arm64 inspect docker://docker.io/library/nginx:1.30.4
+skopeo --override-arch arm64 inspect docker://docker.io/library/nginx:1.30.6
 ```
 
 ### skopeo copy — 레지스트리 간 이미지 복사
@@ -719,8 +719,8 @@ skopeo --override-arch arm64 inspect docker://docker.io/library/nginx:1.30.4
 ```bash
 # Docker Hub → ECR 복사
 skopeo copy --all \
-  docker://docker.io/library/nginx:1.30.4 \
-  docker://123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/nginx:1.30.4
+  docker://docker.io/library/nginx:1.30.6 \
+  docker://123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/nginx:1.30.6
 
 # ECR → Harbor 복사
 skopeo copy --all \
@@ -729,13 +729,13 @@ skopeo copy --all \
 
 # 포맷 변환 (Docker → OCI)
 skopeo copy --all \
-  docker://docker.io/library/nginx:1.30.4 \
-  oci:nginx-oci:1.30.4
+  docker://docker.io/library/nginx:1.30.6 \
+  oci:nginx-oci:1.30.6
 
 # OCI archive로 저장
 skopeo copy --all \
-  docker://docker.io/library/nginx:1.30.4 \
-  oci-archive:nginx-1.30.4.tar
+  docker://docker.io/library/nginx:1.30.6 \
+  oci-archive:nginx-1.30.6.tar
 ```
 
 ### skopeo sync — 대량 레지스트리 동기화
@@ -747,9 +747,9 @@ cat > sync-manifest.yaml <<'YAML'
 docker.io:
   images:
     library/nginx:
-      - "1.30.4"
+      - "1.30.6"
   images-by-tag-regex:
-    library/busybox: '^1\.37\.0$'
+    library/busybox: '^1\.38\.0$'
 YAML
 # Preview exact source/destination paths before creating target repositories.
 skopeo sync --all --scoped --dry-run --src yaml --dest docker \
@@ -763,15 +763,15 @@ skopeo는 에어갭 환경으로의 이미지 전송에 최적화되어 있습�
 
 ```bash
 # 1단계: 온라인 환경에서 이미지를 tar로 내보내기
-skopeo copy --all docker://docker.io/library/nginx:1.30.4 oci-archive:nginx-1.30.4.tar
+skopeo copy --all docker://docker.io/library/nginx:1.30.6 oci-archive:nginx-1.30.6.tar
 skopeo copy --all docker://docker.io/library/redis:7-alpine oci-archive:redis-7.tar
 skopeo copy --all docker://registry.k8s.io/pause:3.10 oci-archive:pause-3.10.tar
 
 # 2단계: USB/보안 전송으로 에어갭 환경에 전달
 
 # 3단계: 에어갭 환경에서 Harbor로 import
-skopeo copy --all oci-archive:nginx-1.30.4.tar \
-  docker://harbor.internal/library/nginx:1.30.4
+skopeo copy --all oci-archive:nginx-1.30.6.tar \
+  docker://harbor.internal/library/nginx:1.30.6
 skopeo copy --all oci-archive:redis-7.tar \
   docker://harbor.internal/library/redis:7-alpine
 skopeo copy --all oci-archive:pause-3.10.tar \
@@ -822,7 +822,7 @@ skopeo copy --all oci-archive:pause-3.10.tar \
 - [Skopeo copy](https://github.com/containers/skopeo/blob/main/docs/skopeo-copy.1.md)
 - [Skopeo sync](https://github.com/containers/skopeo/blob/main/docs/skopeo-sync.1.md)
 - [External Secrets Docker config](https://external-secrets.io/latest/guides/common-k8s-secret-types/)
-- [Argo CD Image Updater 1.3 image configuration](https://github.com/argoproj-labs/argocd-image-updater/blob/v1.3.0/docs/configuration/images.md)
-- [Docker build-push action](https://github.com/docker/build-push-action/tree/v7.3.0)
+- [Argo CD Image Updater 1.3 image configuration](https://github.com/argoproj-labs/argocd-image-updater/blob/v1.3.1/docs/configuration/images.md)
+- [Docker build-push action](https://github.com/docker/build-push-action/tree/v7.4.0)
 - [Trivy action](https://github.com/aquasecurity/trivy-action/tree/v0.36.0)
 - [GitLab Docker-in-Docker TLS](https://docs.gitlab.com/ci/docker/using_docker_build/)

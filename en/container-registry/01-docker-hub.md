@@ -283,7 +283,7 @@ spec:
     spec:
       initContainers:
       - name: prepull-nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         command: ['sh', '-c', 'echo Image pulled']
       - name: prepull-redis
         image: redis:7
@@ -455,19 +455,19 @@ Signature policies need trusted keys/identities and digest verification. Vulnera
    image: nginx:latest
 
    # Better
-   image: nginx:1.30.4
+   image: nginx:1.30.6
 
    ```
 
-   Obtain the complete value with `docker image inspect nginx:1.30.4 --format='{{index .RepoDigests 0}}'` after pulling it, then use the printed `repository@sha256:...` in the workload. A shortened example hash is not an applicable image reference.
+   Obtain the complete value with `docker image inspect nginx:1.30.6 --format='{{index .RepoDigests 0}}'` after pulling it, then use the printed `repository@sha256:...` in the workload. A shortened example hash is not an applicable image reference.
 
 2. **Mirror to Private Registry**:
    ```bash
    # Pull, scan, and push to your private registry
-   docker pull nginx:1.30.4
-   trivy image nginx:1.30.4 --exit-code 1
-   docker tag nginx:1.30.4 myregistry.com/library/nginx:1.30.4
-   docker push myregistry.com/library/nginx:1.30.4
+   docker pull nginx:1.30.6
+   trivy image nginx:1.30.6 --exit-code 1
+   docker tag nginx:1.30.6 myregistry.com/library/nginx:1.30.6
+   docker push myregistry.com/library/nginx:1.30.6
    ```
 
 3. **Use Distroless or Minimal Base Images**:
@@ -543,7 +543,7 @@ jq -s 'sort_by(.last_updated // "") | reverse | .[] | {name, last_updated}' "$re
 ```bash
 # Check Scout access against the account, plan and repository configuration.
 # Use the documented CLI instead of assuming a /tags/TAG/vulnerabilities endpoint.
-docker scout cves nginx:1.30.4
+docker scout cves nginx:1.30.6
 ```
 
 ### Create a Private Repository

@@ -1,7 +1,7 @@
 # Custom Scheduler 퀴즈 (Part 1)
 
-> **예제 기준 버전**: Kubernetes 1.35.8, Go 1.27.1
-> **마지막 업데이트**: 2026년 9월 11일
+> **예제 기준 버전**: Kubernetes 1.35.8, Go 1.27.2
+> **마지막 업데이트**: 2026년 10월 16일
 
 이 퀴즈는 Kubernetes에서 Custom Scheduler를 구현하고 사용하는 방법에 대한 이해를 테스트합니다.
 
@@ -146,7 +146,7 @@ spec:
   schedulerName: custom-scheduler  # 사용자 정의 스케줄러 지정
   containers:
   - name: main-container
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     resources:
       requests:
         memory: "64Mi"
@@ -325,7 +325,7 @@ spec:
             values: [us-east-1a, us-east-1b]
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     resources:
       requests:
         cpu: 100m
@@ -656,7 +656,7 @@ spec:
   priorityClassName: high-priority  # PriorityClass 이름 참조
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 **우선순위 및 선점 동작:**

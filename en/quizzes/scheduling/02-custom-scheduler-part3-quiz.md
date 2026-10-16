@@ -1,7 +1,7 @@
 # Custom Scheduler Quiz (Part 3)
 
-> **Example Baseline**: Kubernetes 1.35.8, Go 1.27.1; native 1.37 features noted separately
-> **Last Updated**: September 11, 2026
+> **Example Baseline**: Kubernetes 1.35.8, Go 1.27.2; native 1.37 features noted separately
+> **Last Updated**: October 16, 2026
 
 This quiz tests your advanced understanding of implementing and using Custom Schedulers in Kubernetes.
 
@@ -34,7 +34,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     resources:
       requests:
         cpu: 100m
@@ -53,7 +53,7 @@ spec:
     effect: NoSchedule
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     resources:
       requests:
         cpu: 100m
@@ -326,7 +326,7 @@ spec:
         restartPolicy: Never
         containers:
         - name: worker
-          image: busybox:1.37.0
+          image: busybox:1.38.0
           command:
           - sh
           - -c
@@ -810,7 +810,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     resources:
       requests:
         cpu: "500m"
@@ -881,7 +881,7 @@ spec:
           topologyKey: kubernetes.io/hostname
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 **InterPodAffinity plugin configuration:**
@@ -982,7 +982,7 @@ spec:
   nodeName: worker-node-1  # Direct assignment to specific node
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 **Considerations when using nodeName:**
@@ -1022,7 +1022,7 @@ The `kubernetes.io/hostname` label is not required to equal the Node object name
        kubernetes.io/hostname: worker-node-1
      containers:
      - name: nginx
-       image: nginx:1.30.4
+       image: nginx:1.30.6
    ```
 
 2. **Using nodeAffinity**:
@@ -1043,7 +1043,7 @@ The `kubernetes.io/hostname` label is not required to equal the Node object name
                - worker-node-1
      containers:
      - name: nginx
-       image: nginx:1.30.4
+       image: nginx:1.30.6
    ```
 
 **Issues with other options:**

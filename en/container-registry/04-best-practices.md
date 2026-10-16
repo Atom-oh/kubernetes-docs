@@ -1,6 +1,6 @@
 # Container Registry Best Practices
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 16, 2026
 
 ## Introduction
 
@@ -122,7 +122,7 @@ skopeo copy --all --preserve-digests \
 [REGISTRY/]NAMESPACE/REPOSITORY:TAG[@DIGEST]
 
 Examples:
-  nginx:1.30.4                                    # Docker Hub official
+  nginx:1.30.6                                    # Docker Hub official
   myuser/myapp:v1.0.0                          # Docker Hub user
   123456789012.dkr.ecr.us-east-1.amazonaws.com/myapp:v1.0.0  # ECR
   harbor.example.com/production/myapp:v1.0.0   # Harbor
@@ -231,7 +231,7 @@ aws ecr create-pull-through-cache-rule --region "$AWS_REGION" \
   --credential-arn "$SECRET_ARN"
 ```
 
-Pull URI: `ACCOUNT.dkr.ecr.REGION.amazonaws.com/docker-hub/library/nginx:1.30.4`. Cache misses and refreshes still depend on upstream access.
+Pull URI: `ACCOUNT.dkr.ecr.REGION.amazonaws.com/docker-hub/library/nginx:1.30.6`. Cache misses and refreshes still depend on upstream access.
 
 ### Containerd Mirror Configuration
 
@@ -558,14 +558,14 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-    - uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # v6.2.4
+    - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
       with:
         role-to-assume: arn:aws:iam::123456789012:role/github-actions-ecr
         aws-region: ${{ env.AWS_REGION }}
     - uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
       id: login
-    - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
-    - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+    - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+    - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
       with:
         context: .
         platforms: linux/amd64
@@ -576,7 +576,7 @@ jobs:
         cache-to: type=gha,mode=max
     - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
-        version: v0.74.0
+        version: v0.76.0
         image-ref: ${{ steps.login.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
         scan-type: image
         scanners: vuln
@@ -620,9 +620,9 @@ variables:
   DOCKER_TLS_VERIFY: "1"
   DOCKER_CERT_PATH: /certs/client
 .docker:
-  image: docker:29.8.0-cli
+  image: docker:29.9.0-cli
   services:
-    - name: docker:29.8.0-dind
+    - name: docker:29.9.0-dind
       alias: docker
 build:
   extends: .docker
@@ -636,7 +636,7 @@ build:
 scan:
   stage: scan
   image:
-    name: aquasec/trivy:0.74.0
+    name: aquasec/trivy:0.76.0
     entrypoint: [""]
   needs:
     - job: build
@@ -684,16 +684,16 @@ Inspect image metadata without pulling the image:
 
 ```bash
 # Inspect Docker Hub image
-skopeo inspect docker://docker.io/library/nginx:1.30.4
+skopeo inspect docker://docker.io/library/nginx:1.30.6
 
 # Inspect ECR image (requires AWS auth)
 skopeo inspect docker://123456789012.dkr.ecr.us-east-1.amazonaws.com/myapp:v1.0.0
 
 # View raw manifest
-skopeo inspect --raw docker://docker.io/library/nginx:1.30.4 | jq .
+skopeo inspect --raw docker://docker.io/library/nginx:1.30.6 | jq .
 
 # Inspect specific architecture
-skopeo --override-arch arm64 inspect docker://docker.io/library/nginx:1.30.4
+skopeo --override-arch arm64 inspect docker://docker.io/library/nginx:1.30.6
 ```
 
 ### skopeo copy — Cross-Registry Image Copy
@@ -703,8 +703,8 @@ Copy images directly between registries without pulling locally:
 ```bash
 # Docker Hub → ECR
 skopeo copy --all \
-  docker://docker.io/library/nginx:1.30.4 \
-  docker://123456789012.dkr.ecr.us-east-1.amazonaws.com/nginx:1.30.4
+  docker://docker.io/library/nginx:1.30.6 \
+  docker://123456789012.dkr.ecr.us-east-1.amazonaws.com/nginx:1.30.6
 
 # ECR → Harbor
 skopeo copy --all \
@@ -713,13 +713,13 @@ skopeo copy --all \
 
 # Format conversion (Docker → OCI)
 skopeo copy --all \
-  docker://docker.io/library/nginx:1.30.4 \
-  oci:nginx-oci:1.30.4
+  docker://docker.io/library/nginx:1.30.6 \
+  oci:nginx-oci:1.30.6
 
 # Save as OCI archive
 skopeo copy --all \
-  docker://docker.io/library/nginx:1.30.4 \
-  oci-archive:nginx-1.30.4.tar
+  docker://docker.io/library/nginx:1.30.6 \
+  oci-archive:nginx-1.30.6.tar
 ```
 
 ### skopeo sync — Bulk Registry Synchronization
@@ -731,9 +731,9 @@ cat > sync-manifest.yaml <<'YAML'
 docker.io:
   images:
     library/nginx:
-      - "1.30.4"
+      - "1.30.6"
   images-by-tag-regex:
-    library/busybox: '^1\.37\.0$'
+    library/busybox: '^1\.38\.0$'
 YAML
 # Preview exact source/destination paths before creating target repositories.
 skopeo sync --all --scoped --dry-run --src yaml --dest docker \
@@ -747,15 +747,15 @@ skopeo excels at transferring images to disconnected environments:
 
 ```bash
 # Step 1: Export images to tar on connected environment
-skopeo copy --all docker://docker.io/library/nginx:1.30.4 oci-archive:nginx-1.30.4.tar
+skopeo copy --all docker://docker.io/library/nginx:1.30.6 oci-archive:nginx-1.30.6.tar
 skopeo copy --all docker://docker.io/library/redis:7-alpine oci-archive:redis-7.tar
 skopeo copy --all docker://registry.k8s.io/pause:3.10 oci-archive:pause-3.10.tar
 
 # Step 2: Transfer via USB/secure file transfer to air-gapped environment
 
 # Step 3: Import into Harbor on air-gapped environment
-skopeo copy --all oci-archive:nginx-1.30.4.tar \
-  docker://harbor.internal/library/nginx:1.30.4
+skopeo copy --all oci-archive:nginx-1.30.6.tar \
+  docker://harbor.internal/library/nginx:1.30.6
 skopeo copy --all oci-archive:redis-7.tar \
   docker://harbor.internal/library/redis:7-alpine
 skopeo copy --all oci-archive:pause-3.10.tar \
@@ -849,7 +849,7 @@ skopeo copy --all oci-archive:pause-3.10.tar \
 - [Skopeo copy](https://github.com/containers/skopeo/blob/main/docs/skopeo-copy.1.md)
 - [Skopeo sync](https://github.com/containers/skopeo/blob/main/docs/skopeo-sync.1.md)
 - [External Secrets Docker config](https://external-secrets.io/latest/guides/common-k8s-secret-types/)
-- [Argo CD Image Updater 1.3 image configuration](https://github.com/argoproj-labs/argocd-image-updater/blob/v1.3.0/docs/configuration/images.md)
-- [Docker build-push action](https://github.com/docker/build-push-action/tree/v7.3.0)
+- [Argo CD Image Updater 1.3 image configuration](https://github.com/argoproj-labs/argocd-image-updater/blob/v1.3.1/docs/configuration/images.md)
+- [Docker build-push action](https://github.com/docker/build-push-action/tree/v7.4.0)
 - [Trivy action](https://github.com/aquasecurity/trivy-action/tree/v0.36.0)
 - [GitLab Docker-in-Docker TLS](https://docs.gitlab.com/ci/docker/using_docker_build/)

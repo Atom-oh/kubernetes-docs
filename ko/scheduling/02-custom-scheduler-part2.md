@@ -1,7 +1,7 @@
 # Part 2: 구현
 
-> **예제 기준 버전**: Kubernetes 1.35.8, Go 1.27.1
-> **마지막 업데이트**: 2026년 9월 11일
+> **예제 기준 버전**: Kubernetes 1.35.8, Go 1.27.2
+> **마지막 업데이트**: 2026년 10월 16일
 
 [Part1의 모듈 설정과 전체 보조 스케줄러 RBAC/Deployment](01-custom-scheduler-part1.md)를 사용합니다. 아래는 해당 스케줄러의 서로 다른 두 확장 방법입니다. 예제는 로컬에서 확인하며 EKS 배포·GPU 실행·TLS 롤아웃·운영 장애 전환은 검증하지 않았습니다. 다른 Kubernetes 마이너 버전의 Go 인터페이스 호환성을 가정하지 말고 다시 검증하세요.
 
@@ -665,7 +665,7 @@ func main() {
 2. **이미지 빌드**. 공통 정책과 플러그인을 저장하고 `go mod tidy`를 실행합니다. 이미지 아키텍처를 스케줄러의 Linux 워커와 맞추고 릴리스 절차에서는 기반 이미지를 digest로 고정하세요.
 
 ```dockerfile
-FROM golang:1.27.1 AS builder
+FROM golang:1.27.2 AS builder
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
@@ -758,7 +758,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: gpu-reservation-smoke
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command: ["sh", "-c", "sleep 60"]
     resources:
       requests:

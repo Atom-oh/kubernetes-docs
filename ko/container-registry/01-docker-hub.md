@@ -1,6 +1,6 @@
 # Docker Hub
 
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 개요
 
@@ -216,7 +216,7 @@ spec:
       containers:
       - name: nginx
         # ECR pull-through cache 사용
-        image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/docker-hub/library/nginx:1.30.4
+        image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/docker-hub/library/nginx:1.30.6
 ```
 
 ### 전략 3: Harbor Pull Replication
@@ -388,8 +388,8 @@ docker pull "$VERIFIED_VENDOR_IMAGE"
 
 ```bash
 # 이미지 다이제스트 확인
-docker pull nginx:1.30.4
-docker image inspect nginx:1.30.4 --format='{{index .RepoDigests 0}}'
+docker pull nginx:1.30.6
+docker image inspect nginx:1.30.6 --format='{{index .RepoDigests 0}}'
 # 출력된 전체 repository@sha256:... 값을 workload의 image에 사용
 ```
 
@@ -505,7 +505,7 @@ jq -s 'sort_by(.last_updated // "") | reverse | .[] | {name, last_updated}' "$re
 ```bash
 # Docker Scout 사용 가능 범위는 계정/플랜/리포지터리 설정을 확인
 # 이 예제는 문서화된 CLI를 사용하며 임의의 /tags/TAG/vulnerabilities API를 가정하지 않음
-docker scout cves nginx:1.30.4
+docker scout cves nginx:1.30.6
 ```
 
 ### 프라이빗 리포지터리 생성
@@ -544,9 +544,9 @@ variables:
 
 build:
   stage: build
-  image: docker:29.8.0-cli
+  image: docker:29.9.0-cli
   services:
-    - name: docker:29.8.0-dind
+    - name: docker:29.9.0-dind
       alias: docker
   script:
     - docker build -t "$DOCKER_IMAGE" .
@@ -565,9 +565,9 @@ scan:
 
 push:
   stage: push
-  image: docker:29.8.0-cli
+  image: docker:29.9.0-cli
   services:
-    - name: docker:29.8.0-dind
+    - name: docker:29.9.0-dind
       alias: docker
   script:
     - docker load < image.tar

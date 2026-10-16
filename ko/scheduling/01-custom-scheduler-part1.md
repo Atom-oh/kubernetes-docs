@@ -1,7 +1,7 @@
 # Custom Scheduler
 
-> **예제 기준 버전**: Kubernetes 1.35.8, Go 1.27.1
-> **마지막 업데이트**: 2026년 9월 11일
+> **예제 기준 버전**: Kubernetes 1.35.8, Go 1.27.2
+> **마지막 업데이트**: 2026년 10월 16일
 
 Kubernetes 스케줄러는 포드를 어떤 노드에 배치할지 결정하는 중요한 구성 요소입니다. 기본 스케줄러는 대부분의 경우 잘 작동하지만, 특정 요구 사항이 있는 경우 커스텀 스케줄러를 구현할 수 있습니다. 이 장에서는 EKS에서 커스텀 스케줄러를 구현하는 방법을 알아보겠습니다.
 
@@ -12,7 +12,7 @@ Kubernetes 스케줄러는 포드를 어떤 노드에 배치할지 결정하는 
 ### 필수 도구
 
 * 클러스터 API 서버와 마이너 버전 차이가 1 이내인 kubectl
-* 아래 재현 예제용 Go 1.27.1 및 Python 3
+* 아래 재현 예제용 Go 1.27.2 및 Python 3
 * Linux 워커 노드가 있는 폐기 가능한 Kubernetes 1.35 실습 클러스터. EKS는 먼저 [AWS 버전 일정](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)을 확인
 
 이 문서의 프레임워크 인터페이스와 설정은 Kubernetes **1.35.8**을 기준으로 확인했습니다. 예제 기준 버전이며, 최신 Kubernetes 또는 EKS 버전이라는 뜻이 아닙니다. 스케줄러를 클러스터 마이너 버전에 맞추고 업그레이드 시 플러그인·기능 게이트·RBAC를 다시 검증하세요. Kubernetes 모듈의 staging 의존성은 `v0.0.0`을 사용하므로 `go get k8s.io/kubernetes`만으로는 독립 모듈의 의존성을 해결할 수 없습니다.
@@ -37,7 +37,7 @@ with urlopen(url, timeout=30) as response:
 modules = re.findall(r"^\s*(k8s\.io/[\w-]+) => \./staging/src/\1\s*$", upstream, re.M)
 if not modules:
     raise RuntimeError("No staging modules found; review upstream go.mod")
-text = f"module example.com/custom-scheduler\n\ngo 1.27.1\n\nrequire k8s.io/kubernetes {version}\n\nreplace (\n"
+text = f"module example.com/custom-scheduler\n\ngo 1.27.2\n\nrequire k8s.io/kubernetes {version}\n\nreplace (\n"
 text += "".join(f"\t{m} => {m} {staging_version}\n" for m in modules)
 Path("go.mod").write_text(text + ")\n")
 PY
@@ -347,7 +347,7 @@ spec:
   schedulerName: custom-scheduler
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     resources:
       requests:
         cpu: 100m

@@ -1,7 +1,7 @@
 # KEDA (Kubernetes Event-driven Autoscaling)
 
-> **예제 버전**: KEDA/Helm 차트 2.20.2; Kubernetes 테스트 호환 범위는 아래 참고.
-> **마지막 업데이트**: 2026년 9월 11일
+> **예제 버전**: KEDA/Helm 차트 2.21.0; Kubernetes 테스트 호환 범위는 아래 참고.
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 목차
 - [소개](#소개)
@@ -71,11 +71,12 @@ KEDA는 Kubernetes 오퍼레이터 패턴을 기반으로 하며, 외부 메트�
 
 예제는 대안이며 한꺼번에 적용할 매니페스트 묶음이 아닙니다. 참조하는 워크로드·Service·Secret·이미지를 준비하고 계정·큐·URL·이미지 자리표시자를 교체하세요. 같은 대상에 여러 ScaledObject/HPA를 붙이지 마세요. 자동 확장이 복제본을 관리하면 GitOps/apply의 `spec.replicas` 소유권도 조정해야 합니다. 이 레시피는 운영 환경에 배포하거나 실측하지 않았습니다.
 
-Kubernetes 1.37은 object/external 메트릭의 HPA 제로 스케일링을 beta로 도입했고 `HPAScaleToZero`가 기본 활성화됩니다. CPU·메모리만으로는 0에서 활성화할 수 없습니다. 이것이 KEDA 2.20의 오퍼레이터/HPA 역할을 바꾸거나 Kubernetes 1.37 호환성을 입증하지는 않습니다.
+Kubernetes 1.37은 object/external 메트릭의 HPA 제로 스케일링을 beta로 도입했고 `HPAScaleToZero`가 기본 활성화됩니다. CPU·메모리만으로는 0에서 활성화할 수 없습니다. 이것이 KEDA 2.21의 오퍼레이터/HPA 역할을 바꾸거나 Kubernetes 1.37 호환성을 입증하지는 않습니다.
 
 ### 사전 요구 사항
 
-- 공급자와 선택한 KEDA 릴리스가 지원하는 Kubernetes를 선택하세요. KEDA 2.20 설치 문서의 최소 버전은 1.30이지만 공개된 **테스트 호환 범위는 1.33–1.35**입니다. 이 표가 1.36·1.37 호환성을 입증하지는 않으므로 별도 검증이 필요합니다.
+- 공급자와 선택한 KEDA 릴리스가 지원하는 Kubernetes를 선택하세요. KEDA 2.21 설치 문서가 밝힌 **테스트 호환 범위는 1.34–1.36**입니다. 이 표가 1.37 호환성을 입증하지는 않으므로 별도 검증이 필요합니다.
+- KEDA 2.20에서 업그레이드한다면 [2.21 마이그레이션 가이드](https://keda.sh/docs/2.21/migration/#upgrading-from-keda-220-to-221)를 먼저 검토하세요. 2.21은 CVE-2026-77524 수정으로 Vault Kubernetes 인증과 `boundServiceAccountToken`에 서비스 계정 토큰 audience를 기본 강제(`operator.serviceAccountTokens.mode: enforce-audience`)하며, Temporal 스케일러의 폐기 설정 제거와 Azure Pipelines `scaleOnInFlight` 기본값 변경도 포함합니다. 이 장의 예제는 해당 인증·스케일러를 사용하지 않습니다.
 - kubectl 설정
 - Helm (선택 사항)
 
@@ -86,13 +87,13 @@ Kubernetes 1.37은 object/external 메트릭의 HPA 제로 스케일링을 beta�
 ```bash
 helm repo add kedacore https://kedacore.github.io/charts
 helm repo update
-helm install keda kedacore/keda --version 2.20.2 --namespace keda --create-namespace
+helm install keda kedacore/keda --version 2.21.0 --namespace keda --create-namespace
 ```
 
 #### 2. YAML 매니페스트를 사용한 설치
 
 ```bash
-kubectl apply --server-side -f https://github.com/kedacore/keda/releases/download/v2.20.2/keda-2.20.2.yaml
+kubectl apply --server-side -f https://github.com/kedacore/keda/releases/download/v2.21.0/keda-2.21.0.yaml
 ```
 
 #### 3. 설치 확인
@@ -115,7 +116,7 @@ keda-admission-webhooks-<hash>-<id>        1/1     Running   0          1m
 
 뒤의 IRSA 값은 같은 고정 버전 Helm 값에 병합한 뒤 업그레이드에 적용해야 합니다. 결과 ServiceAccount 주석을 확인하고 인증을 변경하면 정상 롤아웃 절차로 오퍼레이터 Pod를 재생성하세요.
 
-다음 값은 Helm 차트 2.20.2에 맞습니다. 오퍼레이터 2개는 리더 선출 대기 복제본을 제공하며 동시에 두 조정자가 활성화되는 것은 아닙니다. 메트릭 서버 이중화도 API 집계 라우팅에 영향을 받으며 전체 경로의 완전한 고가용성을 보장하지 않습니다. 리소스 값은 출발점이며 실측 사이징 결과가 아닙니다.
+다음 값은 Helm 차트 2.21.0에 맞습니다. 오퍼레이터 2개는 리더 선출 대기 복제본을 제공하며 동시에 두 조정자가 활성화되는 것은 아닙니다. 메트릭 서버 이중화도 API 집계 라우팅에 영향을 받으며 전체 경로의 완전한 고가용성을 보장하지 않습니다. 리소스 값은 출발점이며 실측 사이징 결과가 아닙니다.
 
 #### Helm 값 파일을 사용한 사용자 정의 구성
 
@@ -154,7 +155,7 @@ logging:
 ```
 
 ```bash
-helm upgrade --install keda kedacore/keda --version 2.20.2 --namespace keda --create-namespace -f values.yaml
+helm upgrade --install keda kedacore/keda --version 2.21.0 --namespace keda --create-namespace -f values.yaml
 ```
 
 ## 스케일러
@@ -871,7 +872,7 @@ spec:
     spec:
       containers:
       - name: sample-app
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
 ---
@@ -1241,7 +1242,7 @@ spec:
 
 1. **다중 트리거 이해**: HPA는 보통 가장 큰 복제본 제안을 선택하며 값을 합산하지 않습니다. 메트릭 오류가 축소를 막을 수도 있습니다.
 2. **적절한 최소 및 최대 복제본 설정**: 워크로드 요구사항에 맞는 범위 설정
-3. **장애 처리 전략**: KEDA 2.20 fallback은 CPU·메모리를 제외한 Value·AverageValue 트리거를 지원하며 ScaledObject용이고 ScaledJob용은 아닙니다. 통신·인증 장애 동작을 시험하세요.
+3. **장애 처리 전략**: KEDA 2.21 fallback은 CPU·메모리를 제외한 Value·AverageValue 트리거를 지원하며 ScaledObject용이고 ScaledJob용은 아닙니다. 통신·인증 장애 동작을 시험하세요.
 4. **모니터링 및 알림 설정**: KEDA 작동 상태 모니터링
 
 ```yaml
@@ -1417,4 +1418,4 @@ KEDA를 사용하면 애플리케이션을 더 효율적으로 스케일링하�
 
 이 장에서 배운 내용을 테스트하려면 [주제 퀴즈](../quizzes/autoscaling/05-keda-quiz.md)를 풀어보세요.
 
-이번 수정에서 확인한 공식 자료: [KEDA compatibility](https://keda.sh/docs/2.20/operate/cluster/), [ScaledObject](https://keda.sh/docs/2.20/reference/scaledobject-spec/), [ScaledJob](https://keda.sh/docs/2.20/reference/scaledjob-spec/), [AWS authentication](https://keda.sh/docs/2.20/authentication-providers/aws/), [External scaler gRPC](https://keda.sh/docs/2.20/concepts/external-scalers/), [X counts](https://docs.x.com/x-api/posts/counts/quickstart), [Calendar events](https://developers.google.com/workspace/calendar/api/v3/reference/events/list), [HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/).
+이번 수정에서 확인한 공식 자료: [KEDA compatibility](https://keda.sh/docs/2.21/operate/cluster/), [ScaledObject](https://keda.sh/docs/2.21/reference/scaledobject-spec/), [ScaledJob](https://keda.sh/docs/2.21/reference/scaledjob-spec/), [AWS authentication](https://keda.sh/docs/2.21/authentication-providers/aws/), [External scaler gRPC](https://keda.sh/docs/2.21/concepts/external-scalers/), [X counts](https://docs.x.com/x-api/posts/counts/quickstart), [Calendar events](https://developers.google.com/workspace/calendar/api/v3/reference/events/list), [HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/).

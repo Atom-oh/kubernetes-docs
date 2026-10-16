@@ -1,6 +1,6 @@
 # KEDA Quiz
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 16, 2026
 
 This quiz tests your understanding of KEDA (Kubernetes Event-driven Autoscaling).
 
@@ -20,7 +20,7 @@ KEDA (Kubernetes Event-driven Autoscaling) is an open source project that enable
 5. **Cloud Agnostic**: Runs in compatible Kubernetes environments with required APIs, identity and connectivity.
 6. **Deployment Model**: Standard installation includes an operator, metrics API server and admission webhooks.
 
-KEDA2.20 examples use its published Kubernetes1.33–1.35 tested window. Kubernetes1.37 HPA also supports beta scale-to-zero for object/external metrics; zero is not uniquely possible with KEDA.
+KEDA2.21 examples use its published Kubernetes1.34–1.36 tested window. Kubernetes1.37 HPA also supports beta scale-to-zero for object/external metrics; zero is not uniquely possible with KEDA.
 </details>
 
 ## Question 2: KEDA Architecture

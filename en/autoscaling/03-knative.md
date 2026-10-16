@@ -1,7 +1,7 @@
 # Knative
 
 > **Example Versions**: Serving/Eventing/Kourier 1.23.0; Operator 1.23.1. Verify Kubernetes/EKS compatibility before installation.
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 16, 2026
 
 ## Table of Contents
 
@@ -865,14 +865,14 @@ def emit_order_event(order_id, event_type, data, event_id):
 
 #### KafkaSource
 
-KafkaSource/KafkaChannel require the matching Kafka extension and an existing configured Kafka cluster (including bootstrap/TLS/SASL and sufficient brokers for the requested replication factor). Merge these1.23.1 addon URLs with any existing additionalManifests in the KnativeEventing resource; do not simultaneously enable another management path for the same addon. Save as eventing-kafka.patch.yaml:
+KafkaSource/KafkaChannel require the matching Kafka extension and an existing configured Kafka cluster (including bootstrap/TLS/SASL and sufficient brokers for the requested replication factor). Merge these1.23.2 addon URLs with any existing additionalManifests in the KnativeEventing resource; do not simultaneously enable another management path for the same addon. Save as eventing-kafka.patch.yaml:
 
 ```yaml
 spec:
   additionalManifests:
-  - URL: https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.23.1/eventing-kafka-controller.yaml
-  - URL: https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.23.1/eventing-kafka-source.yaml
-  - URL: https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.23.1/eventing-kafka-channel.yaml
+  - URL: https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.23.2/eventing-kafka-controller.yaml
+  - URL: https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.23.2/eventing-kafka-source.yaml
+  - URL: https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.23.2/eventing-kafka-channel.yaml
 ```
 
 ```bash

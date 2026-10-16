@@ -1,7 +1,7 @@
 # Part 3: Advanced Features
 
-> **Example Baseline**: Kubernetes 1.35.8, Go 1.27.1; Python client API 35.0.0
-> **Last Updated**: September 11, 2026
+> **Example Baseline**: Kubernetes 1.35.8, Go 1.27.2; Python client API 35.0.0
+> **Last Updated**: October 16, 2026
 
 These are illustrative implementation patterns using the [Part1 secondary scheduler](01-custom-scheduler-part1.md) and [Part2 framework interfaces](02-custom-scheduler-part2.md). They are not reports of a production deployment or measured optimization. Local code/schema checks do not establish GPU execution, application readiness, certificate provisioning or production availability.
 
@@ -173,7 +173,7 @@ spec:
             - '40959'
   containers:
   - name: reservation
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sh
     - -c

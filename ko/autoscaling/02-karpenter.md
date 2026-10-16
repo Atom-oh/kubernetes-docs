@@ -1,7 +1,7 @@
 # Karpenter
 
 > **지원 버전**: Karpenter 1.14 LTS(예제: 1.14.1); Kubernetes/EKS는 호환성 표와 공급자 지원 범위로 선택하세요.
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 목차
 - [소개](#소개)
@@ -85,7 +85,7 @@ apiVersion/kind가 없는 YAML은 설명 중인 NodePool·EC2NodeClass spec의 �
 
 ### 사전 요구 사항
 
-- 플랫폼 지원 버전과 Karpenter 호환성 표를 함께 확인하세요. 공개 표의 최소 Karpenter 버전은 Kubernetes1.34에1.6, 1.35에1.9, 1.36에1.13입니다. 최소 버전이라고 모든 구형 마이너가 계속 유지 보수된다는 뜻은 아닙니다. 현재 표는1.37 호환성을 입증하지 않습니다. EKS 제공·지원 버전은 별도로 확인해야 합니다.
+- 플랫폼 지원 버전과 Karpenter 호환성 표를 함께 확인하세요. 공개 표의 최소 Karpenter 버전은 Kubernetes1.34에1.6, 1.35에1.9, 1.36에1.13입니다. 최소 버전이라고 모든 구형 마이너가 계속 유지 보수된다는 뜻은 아닙니다. v1.14 표는1.37을 포함하지 않으며, v1.15 표는 Kubernetes1.37에 Karpenter1.15.x를 요구합니다. EKS 제공·지원 버전은 별도로 확인해야 합니다.
 - kubectl 설정
 - 클라우드 제공업체 자격 증명 및 권한
 - Helm (선택 사항)
@@ -352,6 +352,10 @@ AWS의2026년7월22일 발표는 Karpenter/EKS Auto Mode의 EFA 인터페이스�
 
 2026년 8월 21일 v1.14 라인의 첫 패치인 [v1.14.1](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.14.1)이 공개되었습니다. 업스트림 `sigs.k8s.io/karpenter` 버전 갱신과 v1.14.0 이후 수정 사항의 체리픽을 담은 유지 보수 릴리스입니다.
 
+### 2026년 10월 업데이트: v1.15.0 일반 릴리스
+
+2026년 10월 10일 일반(비 LTS) 마이너 [v1.15.0](https://github.com/aws/karpenter-provider-aws/releases/tag/v1.15.0)이 공개되었습니다. 일반 릴리스는 다음 마이너가 나올 때까지만 지원되므로 이 장의 예제는 1.14 LTS(1.14.1)를 유지합니다. Kubernetes1.37이 필요하거나 1.15로 올린다면 [v1.15 호환성](https://karpenter.sh/v1.15/upgrading/compatibility/)과 업그레이드 지침을 먼저 확인하세요.
+
 ## 노드 클래스
 
 노드 클래스는 Karpenter가 프로비저닝하는 노드의 구성을 정의합니다. AWS에서는 EC2NodeClass CRD를 사용합니다.
@@ -611,7 +615,7 @@ spec:
             app: web-server
       containers:
       - name: web-server
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         resources:
@@ -654,7 +658,7 @@ spec:
             topologyKey: kubernetes.io/hostname
       containers:
       - name: web-server
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         resources:
@@ -717,7 +721,7 @@ spec:
         karpenter.sh/nodepool: gpu
       containers:
       - name: gpu-allocation-demo
-        image: busybox:1.37.0
+        image: busybox:1.38.0
         command:
         - sh
         - -c

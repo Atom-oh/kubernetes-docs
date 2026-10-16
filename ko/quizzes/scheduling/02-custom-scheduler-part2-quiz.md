@@ -1,7 +1,7 @@
 # Custom Scheduler 퀴즈 (Part 2)
 
-> **예제 기준 버전**: Kubernetes 1.35.8, Go 1.27.1
-> **마지막 업데이트**: 2026년 9월 11일
+> **예제 기준 버전**: Kubernetes 1.35.8, Go 1.27.2
+> **마지막 업데이트**: 2026년 10월 16일
 
 이 퀴즈는 Kubernetes에서 Custom Scheduler를 구현하고 사용하는 방법에 대한 심화 이해를 테스트합니다.
 
@@ -139,7 +139,7 @@ spec:
             operator: Exists
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 **노드 어피니티 유형:**
@@ -266,7 +266,7 @@ spec:
         app: web
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 예제에서는 후보 배치가 두 제약을 모두 충족해야 합니다. `DoNotSchedule`은 다음과 같이 계산합니다:
@@ -342,7 +342,7 @@ spec:
     effect: NoSchedule
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 **Toleration 필드:**
@@ -483,7 +483,7 @@ Go 타입은 대문자로 시작하는 필드명을 직렬화합니다. `nodeCac
       "containers": [
         {
           "name": "worker",
-          "image": "busybox:1.37.0",
+          "image": "busybox:1.38.0",
           "resources": {
             "requests": {
               "nvidia.com/gpu": "1"
@@ -661,7 +661,7 @@ spec:
           topologyKey: kubernetes.io/hostname
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 이 예시에서:
@@ -878,7 +878,7 @@ spec:
   priorityClassName: high-priority  # PriorityClass 이름 참조
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 **선점 정책:**
@@ -1156,7 +1156,7 @@ spec:
     tolerationSeconds: 600  # 10분 동안 톨러레이션
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 **노드 컨트롤러와 축출 시간:**

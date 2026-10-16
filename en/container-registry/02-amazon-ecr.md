@@ -1,6 +1,6 @@
 # Amazon ECR (Elastic Container Registry)
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 16, 2026
 
 ## ECR Overview
 
@@ -1094,7 +1094,7 @@ This example covers cache pull/import callers; rule-creation administration is s
 aws ecr describe-pull-through-cache-rules
 
 # Test pull (Docker Hub nginx)
-docker pull 123456789012.dkr.ecr.us-east-1.amazonaws.com/docker-hub/library/nginx:1.30.4
+docker pull 123456789012.dkr.ecr.us-east-1.amazonaws.com/docker-hub/library/nginx:1.30.6
 
 # Verify cached repository was created
 aws ecr describe-repositories \
@@ -1261,7 +1261,7 @@ aws ecr describe-images --repository-name myapp \
 
 ```dockerfile
 # Multi-stage build to reduce image size
-FROM golang:1.27.1 AS builder
+FROM golang:1.27.2 AS builder
 WORKDIR /app
 COPY . .
 RUN CGO_ENABLED=0 go build -o /app/server

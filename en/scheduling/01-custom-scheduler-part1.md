@@ -1,7 +1,7 @@
 # Custom Scheduler
 
-> **Example Baseline**: Kubernetes 1.35.8, Go 1.27.1
-> **Last Updated**: September 11, 2026
+> **Example Baseline**: Kubernetes 1.35.8, Go 1.27.2
+> **Last Updated**: October 16, 2026
 
 The Kubernetes scheduler is a critical component that decides which node a pod should be placed on. While the default scheduler works well in most cases, you can implement a custom scheduler for specific requirements. In this chapter, we will learn how to implement a custom scheduler in EKS.
 
@@ -12,7 +12,7 @@ To follow along with the examples in this document, you will need the following 
 ### Required Tools
 
 * kubectl within one minor version of the cluster's API server
-* Go 1.27.1 and Python 3 for the reproducible example below
+* Go 1.27.2 and Python 3 for the reproducible example below
 * A disposable Kubernetes 1.35 cluster with Linux worker nodes; for EKS, first check the [AWS version calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)
 
 The framework interfaces and configuration here were checked against Kubernetes **1.35.8**. This is an example baseline, not a claim that it is the latest Kubernetes or EKS release. Match the scheduler to the cluster minor and revalidate plugins, feature gates and RBAC when upgrading. The Kubernetes module uses staging dependencies; a lone `go get k8s.io/kubernetes` does not resolve its `v0.0.0` staging requirements.
@@ -37,7 +37,7 @@ with urlopen(url, timeout=30) as response:
 modules = re.findall(r"^\s*(k8s\.io/[\w-]+) => \./staging/src/\1\s*$", upstream, re.M)
 if not modules:
     raise RuntimeError("No staging modules found; review upstream go.mod")
-text = f"module example.com/custom-scheduler\n\ngo 1.27.1\n\nrequire k8s.io/kubernetes {version}\n\nreplace (\n"
+text = f"module example.com/custom-scheduler\n\ngo 1.27.2\n\nrequire k8s.io/kubernetes {version}\n\nreplace (\n"
 text += "".join(f"\t{m} => {m} {staging_version}\n" for m in modules)
 Path("go.mod").write_text(text + ")\n")
 PY
@@ -339,7 +339,7 @@ spec:
   schedulerName: custom-scheduler
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     resources:
       requests:
         cpu: 100m

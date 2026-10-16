@@ -1,6 +1,6 @@
 # KEDA 퀴즈
 
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 16일
 
 이 퀴즈는 KEDA (Kubernetes Event-driven Autoscaling)에 대한 이해도를 테스트합니다.
 
@@ -20,7 +20,7 @@ KEDA(Kubernetes Event-driven Autoscaling)는 Kubernetes 애플리케이션을 �
 5. **클라우드 중립적**: 필요한 API·인증·통신 경로를 갖춘 호환 Kubernetes 환경에서 실행합니다.
 6. **배포 모델**: 기본 설치는 오퍼레이터·메트릭 API 서버·어드미션 웹훅을 포함합니다.
 
-KEDA2.20 예제의 공개 Kubernetes 테스트 범위는1.33–1.35입니다. Kubernetes1.37 HPA도 object/external 메트릭의 제로 스케일링을 beta로 지원하므로 KEDA만 가능한 기능은 아닙니다.
+KEDA2.21 예제의 공개 Kubernetes 테스트 범위는1.34–1.36입니다. Kubernetes1.37 HPA도 object/external 메트릭의 제로 스케일링을 beta로 지원하므로 KEDA만 가능한 기능은 아닙니다.
 </details>
 
 ## 문제 2: KEDA 아키텍처

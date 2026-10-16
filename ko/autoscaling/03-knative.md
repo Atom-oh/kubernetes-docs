@@ -1,7 +1,7 @@
 # Knative
 
 > **예제 버전**: Serving/Eventing/Kourier 1.23.0, Operator 1.23.1. 설치 전 Kubernetes/EKS 호환성을 확인하세요.
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 16일
 
 < [이전: Karpenter](02-karpenter.md) | 다음: 없음 >
 
@@ -728,7 +728,7 @@ spec:
           failureThreshold: 3
 ```
 
-사전 풀 DaemonSet 예시는 셸을 포함하는 NGINX1.30.4를 캐시합니다. 실제 앱에는 그 이미지에 유효한 명령·동일 다이제스트·아키텍처가 필요합니다. Distroless에 셸이 있다고 가정하지 마세요. Fargate는 DaemonSet 미지원이며 노드 교체·이미지 GC로 캐시가 사라질 수 있습니다.
+사전 풀 DaemonSet 예시는 셸을 포함하는 NGINX1.30.6를 캐시합니다. 실제 앱에는 그 이미지에 유효한 명령·동일 다이제스트·아키텍처가 필요합니다. Distroless에 셸이 있다고 가정하지 마세요. Fargate는 DaemonSet 미지원이며 노드 교체·이미지 GC로 캐시가 사라질 수 있습니다.
 
 **콜드 스타트 최적화 전략:**
 
@@ -950,14 +950,14 @@ def emit_order_event(order_id, event_type, data, event_id):
 
 #### KafkaSource
 
-KafkaSource·KafkaChannel에는 해당 Kafka 확장과 설정된 기존 Kafka 클러스터가 필요합니다(bootstrap/TLS/SASL과 복제 계수에 충분한 브로커 포함). 다음1.23.1 URL을 기존 additionalManifests와 합쳐 KnativeEventing으로 관리하고 같은 확장을 다른 경로에서 동시에 관리하지 마세요. eventing-kafka.patch.yaml로 저장합니다:
+KafkaSource·KafkaChannel에는 해당 Kafka 확장과 설정된 기존 Kafka 클러스터가 필요합니다(bootstrap/TLS/SASL과 복제 계수에 충분한 브로커 포함). 다음1.23.2 URL을 기존 additionalManifests와 합쳐 KnativeEventing으로 관리하고 같은 확장을 다른 경로에서 동시에 관리하지 마세요. eventing-kafka.patch.yaml로 저장합니다:
 
 ```yaml
 spec:
   additionalManifests:
-  - URL: https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.23.1/eventing-kafka-controller.yaml
-  - URL: https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.23.1/eventing-kafka-source.yaml
-  - URL: https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.23.1/eventing-kafka-channel.yaml
+  - URL: https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.23.2/eventing-kafka-controller.yaml
+  - URL: https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.23.2/eventing-kafka-source.yaml
+  - URL: https://github.com/knative-extensions/eventing-kafka-broker/releases/download/knative-v1.23.2/eventing-kafka-channel.yaml
 ```
 
 ```bash
@@ -2004,7 +2004,7 @@ spec:
         kubernetes.io/os: linux
       initContainers:
         - name: cache-demo-image
-          image: nginx:1.30.4
+          image: nginx:1.30.6
           command: ["sh", "-c", "echo cached"]
       containers:
         - name: pause
@@ -2122,7 +2122,7 @@ curl --fail --show-error --request POST http://127.0.0.1:8081/knative-demo/defau
 
 ```dockerfile
 # 권장: 멀티 스테이지 빌드로 이미지 크기 최소화
-FROM golang:1.27.1 AS builder
+FROM golang:1.27.2 AS builder
 WORKDIR /app
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o server .
