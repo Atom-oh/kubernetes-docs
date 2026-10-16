@@ -1,6 +1,6 @@
 # Linkerd Best Practices
 
-> **Last Updated**: September 11, 2026 · Linkerd edge-26.9.1 / charts 2026.9.1
+> **Last Updated**: October 16, 2026 · Linkerd edge-26.10.1 / charts 2026.10.1
 
 Use the [installation](01-installation.md), [security](04-security.md), [observability](05-observability.md) and [multicluster](06-multi-cluster.md) guides for the selected versions and prerequisites. This chapter connects those procedures into an operational review; it does not certify an environment as production-ready.
 
@@ -109,10 +109,10 @@ set -euo pipefail
 umask 077
 # Use the same reviewed chart version for the profile and render.
 curl --fail --show-error --location \
-  https://raw.githubusercontent.com/linkerd/linkerd2/edge-26.9.1/charts/linkerd-control-plane/values-ha.yaml \
+  https://raw.githubusercontent.com/linkerd/linkerd2/edge-26.10.1/charts/linkerd-control-plane/values-ha.yaml \
   -o values-ha.yaml
 helm template linkerd-control-plane linkerd-edge/linkerd-control-plane \
-  --version 2026.9.1 -n linkerd \
+  --version 2026.10.1 -n linkerd \
   -f reviewed-core-values.yaml -f values-ha.yaml > reviewed-ha.yaml
 ```
 
@@ -188,7 +188,7 @@ For multicluster, retain the desired Helm `controllers` list and current Link/cr
 
 ### Helm-owned installation
 
-The example target below is 2026.9.1; it is usable only after verifying the path from the actual installed release:
+The example target below is 2026.10.1; it is usable only after verifying the path from the actual installed release:
 
 ```bash
 set -euo pipefail
@@ -197,13 +197,13 @@ helm get values linkerd-control-plane -n linkerd > current-core-values.yaml
 helm get values linkerd-viz -n linkerd-viz > current-viz-values.yaml
 # Prepare reviewed target values and approved migration steps before these changes.
 helm upgrade linkerd-crds linkerd-edge/linkerd-crds \
-  --version 2026.9.1 -n linkerd --wait --timeout 10m
+  --version 2026.10.1 -n linkerd --wait --timeout 10m
 helm upgrade linkerd-control-plane linkerd-edge/linkerd-control-plane \
-  --version 2026.9.1 -n linkerd -f reviewed-core-values.yaml \
+  --version 2026.10.1 -n linkerd -f reviewed-core-values.yaml \
   --wait --timeout 10m
 linkerd check
 helm upgrade linkerd-viz linkerd-edge/linkerd-viz \
-  --version 2026.9.1 -n linkerd-viz -f reviewed-viz-values.yaml \
+  --version 2026.10.1 -n linkerd-viz -f reviewed-viz-values.yaml \
   --wait --timeout 10m
 linkerd viz check
 ```
@@ -357,9 +357,9 @@ This replaces the unconditional namespace-label/restart/uninstall recipe and the
 
 ## References
 
-- [Selected HA profile](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/charts/linkerd-control-plane/values-ha.yaml)
+- [Selected HA profile](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/charts/linkerd-control-plane/values-ha.yaml)
 - [Proxy configuration](https://linkerd.io/docs/reference/proxy-configuration/)
-- [Released proxy runtime template](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/charts/partials/templates/_proxy.tpl)
+- [Released proxy runtime template](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/charts/partials/templates/_proxy.tpl)
 - [Upgrade guidance](https://linkerd.io/docs/tasks/upgrade/)
 - [Authorization policy](https://linkerd.io/docs/reference/authorization-policy/)
 - [Istio injection](../istio/advanced/07-sidecar-injection.md) and [ambient mode](../istio/advanced/01-ambient-mode.md)

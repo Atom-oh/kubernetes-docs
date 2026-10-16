@@ -1,7 +1,7 @@
 # Cilium Service Mesh 인그레스 & 게이트웨이
 
-> **검토 기준**: Cilium 1.20.1, Gateway API 1.6.1, AWS Load Balancer Controller 3.5.0.
-> **최종 검토**: 2026년 9월 11일. Kubernetes/EKS 지원 범위는 [설치 전제](./README.md)를 확인합니다. 최신 릴리스라는 이유만으로 호환성을 보장하지 않습니다.
+> **검토 기준**: Cilium 1.20.3, Gateway API 1.6.3, AWS Load Balancer Controller 3.6.0.
+> **최종 검토**: 2026년 10월 16일. Kubernetes/EKS 지원 범위는 [설치 전제](./README.md)를 확인합니다. 최신 릴리스라는 이유만으로 호환성을 보장하지 않습니다.
 
 ## 개요
 
@@ -32,7 +32,7 @@ ingressController:
     type: LoadBalancer
 ```
 
-이미 계획한 Cilium 설치에 합치는 Helm **오버라이드**입니다. 설치 가이드의 플랫폼별 CNI/IPAM과 접근 가능한 API 서버 설정을 유지해야 합니다. 실행 중인 클러스터의 kube-proxy replacement 변경은 단순 기능 토글이 아닌 마이그레이션입니다. 적용 전에 고정한 1.20.1 차트를 렌더링하여 검토합니다.
+이미 계획한 Cilium 설치에 합치는 Helm **오버라이드**입니다. 설치 가이드의 플랫폼별 CNI/IPAM과 접근 가능한 API 서버 설정을 유지해야 합니다. 실행 중인 클러스터의 kube-proxy replacement 변경은 단순 기능 토글이 아닌 마이그레이션입니다. 적용 전에 고정한 1.20.3 차트를 렌더링하여 검토합니다.
 
 `ingressController.default`는 `cilium`을 **기본 IngressClass**로 지정하며, 기본 백엔드를 설정하지 않습니다. 차트는 `cilium` 클래스를 생성합니다. `ingressController.ingressClassName`은 지원되는 값이 아닙니다. 각 Ingress에 `spec.ingressClassName`을 명시하면 클러스터 기본값에 의존하지 않습니다.
 
@@ -202,7 +202,7 @@ gatewayAPI:
     sync: true
 ```
 
-컨트롤러를 활성화하기 전에 **Gateway API 1.6.1 Standard CRD**를 설치합니다. Cilium 1.20.1 설치 문서가 사용하는 버전입니다. CRD를 공유하는 모든 컨트롤러의 업그레이드 영향을 확인합니다. 이 조각은 앞선 kube-proxy replacement/L7 전제를 보완하며 전체 Cilium values 파일을 대체하지 않습니다.
+컨트롤러를 활성화하기 전에 **Gateway API 1.6.3 Standard CRD**를 설치합니다. Cilium 1.20.3 설치 문서가 사용하는 버전입니다. CRD를 공유하는 모든 컨트롤러의 업그레이드 영향을 확인합니다. 이 조각은 앞선 kube-proxy replacement/L7 전제를 보완하며 전체 Cilium values 파일을 대체하지 않습니다.
 
 실제 키는 `gatewayAPI.gatewayClass.create`와 `gatewayAPI.secretsNamespace`입니다. 이전 위치의 `secretNamespace`, `gatewayClassName`은 무시됩니다. 인증서 참조는 기본적으로 Gateway와 같은 네임스페이스의 Secret을 지정합니다. 컨트롤러의 동기화용 Secret 네임스페이스가 사용자 참조의 위치를 바꾸지는 않습니다.
 
@@ -481,7 +481,7 @@ spec:
       port: 9000
 ```
 
-Gateway API 1.6.1의 TCPRoute는 **v1**으로 제공되며 이전 `v1alpha2`는 제공되지 않습니다. TCPRoute는 불투명한 TCP 스트림을 전달하고 HTTP 경로를 검사하지 않습니다. TCP 내부에 HTTP나 TLS가 있어도 이 Route가 HTTP 라우팅·TLS 종료를 수행하는 것은 아닙니다. Cilium 1.20.1 L4 Gateway 변환은 백엔드 EndpointSlice를 사용하므로 L7 Envoy 프런트엔드와 엔드포인트 구현이 같다고 가정하지 않습니다.
+Gateway API 1.6.3의 TCPRoute는 **v1**으로 제공되며 이전 `v1alpha2`는 제공되지 않습니다. TCPRoute는 불투명한 TCP 스트림을 전달하고 HTTP 경로를 검사하지 않습니다. TCP 내부에 HTTP나 TLS가 있어도 이 Route가 HTTP 라우팅·TLS 종료를 수행하는 것은 아닙니다. Cilium 1.20.3 L4 Gateway 변환은 백엔드 EndpointSlice를 사용하므로 L7 Envoy 프런트엔드와 엔드포인트 구현이 같다고 가정하지 않습니다.
 
 ### TLSRoute
 
@@ -547,9 +547,9 @@ ingressController:
       service.beta.kubernetes.io/aws-load-balancer-healthcheck-port: traffic-port
 ```
 
-**AWS LBC가 관리하는 NLB → EC2 NodePort → Cilium Ingress Envoy** 구성의 오버라이드입니다. AWS LBC 3.5.0과 IAM·서브넷·보안 그룹 전제, 적격 EC2 노드, Cilium이 지원하는 EKS/CNI 구성, 할당된 NodePort가 필요합니다. EKS Auto Mode나 Fargate에 Cilium을 설치하는 예제가 아닙니다. `service.k8s.aws/nlb`는 AWS LBC 소유를 명시합니다. 과거 `aws-load-balancer-type: nlb` 어노테이션은 이 소유 관계를 표현하지 않습니다.
+**AWS LBC가 관리하는 NLB → EC2 NodePort → Cilium Ingress Envoy** 구성의 오버라이드입니다. AWS LBC 3.6.0과 IAM·서브넷·보안 그룹 전제, 적격 EC2 노드, Cilium이 지원하는 EKS/CNI 구성, 할당된 NodePort가 필요합니다. EKS Auto Mode나 Fargate에 Cilium을 설치하는 예제가 아닙니다. `service.k8s.aws/nlb`는 AWS LBC 소유를 명시합니다. 과거 `aws-load-balancer-type: nlb` 어노테이션은 이 소유 관계를 표현하지 않습니다.
 
-이 L7 프런트엔드에는 instance 대상을 사용합니다. Cilium 1.20.1 shared Ingress Service는 Pod 대상 참조가 없는 합성 EndpointSlice(`192.192.192.192:9999`)를 가집니다. AWS LBC의 IP 대상 해석기는 Pod 참조가 필요하므로 이 엔드포인트를 건너뜁니다. Service를 단순히 `ip`로 바꿔도 노드 로컬 Envoy 프로세스가 자동으로 발견되지 않습니다. 이는 Cilium L7 프런트엔드의 특성이며 일반 워크로드 Service나 현재 L4 Gateway EndpointSlice와 구분해야 합니다.
+이 L7 프런트엔드에는 instance 대상을 사용합니다. Cilium 1.20.3 shared Ingress Service는 Pod 대상 참조가 없는 합성 EndpointSlice(`192.192.192.192:9999`)를 가집니다. AWS LBC의 IP 대상 해석기는 Pod 참조가 필요하므로 이 엔드포인트를 건너뜁니다. Service를 단순히 `ip`로 바꿔도 노드 로컬 Envoy 프로세스가 자동으로 발견되지 않습니다. 이는 Cilium L7 프런트엔드의 특성이며 일반 워크로드 Service나 현재 L4 Gateway EndpointSlice와 구분해야 합니다.
 
 TCP 상태 검사는 NodePort의 전송 계층 도달성을 확인하며 애플리케이션 `/healthz`, TLS 유효성, 호스트별 HTTP 경로를 검사하지 않습니다. 교차 영역 분산은 현재 load-balancer attributes 어노테이션을 사용하고 비용·트래픽 영향을 검토합니다. 기존 Service의 컨트롤러 소유나 LB 종류 변경을 무중단 전환으로 가정하지 않습니다.
 
@@ -739,7 +739,7 @@ spec:
       port: 80
 ```
 
-이 대안을 사용하기 전에 Service 포트 80의 `backend-team/shared-api`를 생성합니다. 네임스페이스가 다른 Route → Gateway 연결은 `allowedRoutes`, Route → 백엔드 Service 참조는 `ReferenceGrant`로 허용합니다. 서로 다른 권한 검사입니다. 1.6.1에서는 ReferenceGrant v1이 제공되며 v1beta1도 아직 제공됩니다.
+이 대안을 사용하기 전에 Service 포트 80의 `backend-team/shared-api`를 생성합니다. 네임스페이스가 다른 Route → Gateway 연결은 `allowedRoutes`, Route → 백엔드 Service 참조는 `ReferenceGrant`로 허용합니다. 서로 다른 권한 검사입니다. 1.6.3에서는 ReferenceGrant v1이 제공되며 v1beta1도 아직 제공됩니다.
 
 ## 로드 밸런싱 고급 설정
 
@@ -879,7 +879,7 @@ spec:
 
 ## AWS Load Balancer Controller 비교
 
-| 기능 | Cilium Ingress/Gateway | AWS Load Balancer Controller 3.5 |
+| 기능 | Cilium Ingress/Gateway | AWS Load Balancer Controller 3.6 |
 |---|---|---|
 | 데이터 플레인 | eBPF Service/L4 전달, HTTP/TLS에는 Envoy | AWS ALB 또는 NLB |
 | Gateway API | 고정한 Cilium 버전의 기능·적합성 표 확인 | HTTPRoute/GRPCRoute는 ALB, TCPRoute/UDPRoute/TLSRoute는 NLB에 대응하며 한 Gateway에 L4/L7 혼합 불가 |
@@ -888,7 +888,7 @@ spec:
 | 사용자 설정 | 지원하는 Gateway API 기능과 독립 CEC, 생성 객체는 컨트롤러 소유 | LBC API·어노테이션으로 노출한 AWS 리스너·규칙·대상 그룹 기능 |
 | 성능 | 실제 토폴로지·암호화·워크로드 측정 | 같은 워크로드와 서비스 제약을 측정하며 보편적인 지연 순위는 없음 |
 
-LBC 3.5 문서의 Gateway API 검증 기준은 **1.6.0**, Cilium 설치 문서는 **1.6.1**입니다. CRD를 공유하는 클러스터에서는 최신 카탈로그 버전만 보고 모든 컨트롤러가 지원한다고 가정하지 말고 호환성을 검증합니다.
+LBC 3.6 문서의 Gateway API 검증 기준은 **1.6.0**, Cilium 설치 문서는 **1.6.3**입니다. CRD를 공유하는 클러스터에서는 최신 카탈로그 버전만 보고 모든 컨트롤러가 지원한다고 가정하지 말고 호환성을 검증합니다.
 
 필요한 AWS L7 연동에는 ALB, 전송·대상 특성에는 NLB, 클러스터 내부 라우팅·정책에는 해당 Cilium 기능을 선택합니다. 현재 NLB는 새 흐름을 대상으로 **0–999** 가중치의 대상 그룹을 지원합니다. 컨트롤러의 기능 노출과 특정 Route의 의미는 별도 확인 사항입니다. 일반적인 가중치 변경은 기존 연결을 유지하지만 AWS 문서상 가중치를 **0**으로 설정하면 짧은 시간 뒤 해당 대상 그룹의 기존 연결도 종료됩니다. 이를 연결을 보존하는 drain으로 설명하지 않습니다.
 
@@ -953,14 +953,14 @@ histogram_quantile(
 
 ## 참고 자료
 
-- [Cilium 1.20.1 Ingress](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/ingress.rst)
-- [Cilium traffic, source IP and policy](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/ingress-reference.rst)
-- [Cilium Gateway API installation](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/gateway-api/gateway-api.rst)
-- [Cilium 1.20.1 Helm values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml)
-- [Gateway API 1.6.1 CRDs](https://github.com/kubernetes-sigs/gateway-api/tree/v1.6.1/config/crd/standard)
-- [AWS LBC 3.5 NLB configuration](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/nlb.md)
-- [AWS LBC 3.5 annotations](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/service/annotations.md)
-- [AWS LBC 3.5 Gateway API](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/gateway/gateway.md)
+- [Cilium 1.20.3 Ingress](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/ingress.rst)
+- [Cilium traffic, source IP and policy](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/ingress-reference.rst)
+- [Cilium Gateway API installation](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/gateway-api/gateway-api.rst)
+- [Cilium 1.20.3 Helm values](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/values.yaml)
+- [Gateway API 1.6.3 CRDs](https://github.com/kubernetes-sigs/gateway-api/tree/v1.6.3/config/crd/standard)
+- [AWS LBC 3.6 NLB configuration](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/service/nlb.md)
+- [AWS LBC 3.6 annotations](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/service/annotations.md)
+- [AWS LBC 3.6 Gateway API](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/gateway/gateway.md)
 - [NLB target group attributes](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/edit-target-group-attributes.html)
 - [NLB listener weights](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
-- [Envoy 1.37 request statistics](https://www.envoyproxy.io/docs/envoy/v1.37.5/configuration/http/http_conn_man/stats)
+- [Envoy 1.38 request statistics](https://www.envoyproxy.io/docs/envoy/v1.38.6/configuration/http/http_conn_man/stats)

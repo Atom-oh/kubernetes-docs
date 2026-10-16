@@ -1,6 +1,6 @@
 # Cilium Service Mesh 트래픽 관리 퀴즈
 
-Cilium1.20.1/Gateway API1.6.1 기준입니다. 완전한 예시와 공식 근거는 [트래픽 관리 본문](../../../service-mesh/cilium-service-mesh/02-traffic-management.md)을 참고하세요.
+Cilium1.20.3/Gateway API1.6.3 기준입니다. 완전한 예시와 공식 근거는 [트래픽 관리 본문](../../../service-mesh/cilium-service-mesh/02-traffic-management.md)을 참고하세요.
 
 ### 1. CiliumEnvoyConfig에서 HTTP 라우팅 규칙을 정의할 때 사용하는 Envoy 필터는?
 
@@ -34,7 +34,7 @@ HTTP 정책은 method, path, headers와 구조화된 headerMatches를 검사할 
 
 </details>
 
-### 3. Cilium1.20.1에서 Kafka 토픽 접근 권한은 어떻게 제어해야 하나요?
+### 3. Cilium1.20.3에서 Kafka 토픽 접근 권한은 어떻게 제어해야 하나요?
 
 - **A.** 기존 Cilium rules.kafka를 그대로 사용
 - **B.** HTTP 본문 규칙으로 Kafka 메시지를 검사
@@ -46,7 +46,7 @@ HTTP 정책은 method, path, headers와 구조화된 headerMatches를 검사할 
 
 **정답: C. Kafka 브로커 ACL을 사용하고 접근 가능 여부는 별도 L4 정책으로 제어**
 
-Cilium1.20.1의 L7 규칙 스키마는 HTTP와 DNS를 지원하고 기존 rules.kafka 객체를 거부합니다. 브로커 접근은 L4 정책, 토픽·그룹·작업 권한은 Kafka TLS/SASL과 브로커 ACL로 제어하세요. 폐기된 Kafka 규칙을 제거하는 것만으로 토픽 권한 제어가 유지되지는 않습니다.
+Cilium1.20.3의 L7 규칙 스키마는 HTTP와 DNS를 지원하고 기존 rules.kafka 객체를 거부합니다. 브로커 접근은 L4 정책, 토픽·그룹·작업 권한은 Kafka TLS/SASL과 브로커 ACL로 제어하세요. 폐기된 Kafka 규칙을 제거하는 것만으로 토픽 권한 제어가 유지되지는 않습니다.
 
 </details>
 

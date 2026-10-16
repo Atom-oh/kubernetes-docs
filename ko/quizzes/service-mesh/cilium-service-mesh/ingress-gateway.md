@@ -1,6 +1,6 @@
 # Cilium Service Mesh 인그레스 & 게이트웨이 퀴즈
 
-검토 기준: Cilium 1.20.1, Gateway API 1.6.1, AWS LBC 3.5.0. [본문](../../../service-mesh/cilium-service-mesh/05-ingress-gateway.md)과 공식 근거를 함께 확인합니다.
+검토 기준: Cilium 1.20.3, Gateway API 1.6.3, AWS LBC 3.6.0. [본문](../../../service-mesh/cilium-service-mesh/05-ingress-gateway.md)과 공식 근거를 함께 확인합니다.
 
 ## 퀴즈 문제
 
@@ -64,7 +64,7 @@ section 이름은 실제 리스너와 일치해야 하고 `allowedRoutes`가 연
 
 **정답: B. `listeners`**
 
-리스너별로 프로토콜·포트와 해당 호스트·TLS·연결 설정을 정의합니다. 실제 프로토콜 조합은 컨트롤러에 따라 다릅니다. 예를 들어 LBC 3.5는 하나의 Gateway에 L4/NLB와 L7/ALB 리스너를 혼합할 수 없습니다.
+리스너별로 프로토콜·포트와 해당 호스트·TLS·연결 설정을 정의합니다. 실제 프로토콜 조합은 컨트롤러에 따라 다릅니다. 예를 들어 LBC 3.6은 하나의 Gateway에 L4/NLB와 L7/ALB 리스너를 혼합할 수 없습니다.
 
 </details>
 
@@ -160,11 +160,11 @@ All도 교차 네임스페이스 연결을 허용하지만 레이블로 제한�
 
 **정답: C. Cilium 노드·프록시 비용과 클라우드 LB 비용이 함께 발생할 수 있으며 버전별 기능 비교가 필요함**
 
-Cilium 앞에 ALB/NLB를 두면 해당 비용도 발생합니다. LBC 3.5는 HTTP/GRPC Route를 ALB, TCP/UDP/TLS Route를 NLB로 구성합니다. 워크로드 mTLS와 ACM 서버 인증서는 다른 메커니즘이며 성능은 동등 조건에서 측정해야 합니다.
+Cilium 앞에 ALB/NLB를 두면 해당 비용도 발생합니다. LBC 3.6은 HTTP/GRPC Route를 ALB, TCP/UDP/TLS Route를 NLB로 구성합니다. 워크로드 mTLS와 ACM 서버 인증서는 다른 메커니즘이며 성능은 동등 조건에서 측정해야 합니다.
 
 </details>
 
-### 11. 본문의 Gateway API 1.6.1 기준에서 TCPRoute가 하는 일은?
+### 11. 본문의 Gateway API 1.6.3 기준에서 TCPRoute가 하는 일은?
 
 - A. HTTP 경로 검사
 - B. 기본 TLS 종료

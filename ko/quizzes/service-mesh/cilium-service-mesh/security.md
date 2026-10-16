@@ -1,6 +1,6 @@
 # Cilium Service Mesh 보안 퀴즈
 
-Cilium 1.20.1 기준입니다. [보안 본문](../../../service-mesh/cilium-service-mesh/03-security.md)에서 out-of-band 인증, 전송 암호화와 ztunnel 베타의 구분 및 공식 근거를 확인하세요.
+Cilium 1.20.3 기준입니다. [보안 본문](../../../service-mesh/cilium-service-mesh/03-security.md)에서 out-of-band 인증, 전송 암호화와 ztunnel 베타의 구분 및 공식 근거를 확인하세요.
 
 ### 1. Cilium out-of-band 상호 인증에서 SPIRE가 제공하는 것은?
 
@@ -14,7 +14,7 @@ Cilium 1.20.1 기준입니다. [보안 본문](../../../service-mesh/cilium-serv
 
 **정답: B. Agent 인증 메커니즘에 사용할 SVID 신원 증명**
 
-Out-of-band 베타 방식에서 SPIRE는 SVID 신원 증명을 제공하고 Cilium Agent는 애플리케이션 연결과 별개로 상대를 인증합니다. WireGuard/IPsec 암호화는 별도 선택입니다. Cilium 1.20.1에는 자체 CA·bootstrap·등록·정책 제약을 가진 별도의 ztunnel mTLS 베타도 있습니다.
+Out-of-band 베타 방식에서 SPIRE는 SVID 신원 증명을 제공하고 Cilium Agent는 애플리케이션 연결과 별개로 상대를 인증합니다. WireGuard/IPsec 암호화는 별도 선택입니다. Cilium 1.20.3에는 자체 CA·bootstrap·등록·정책 제약을 가진 별도의 ztunnel mTLS 베타도 있습니다.
 
 </details>
 

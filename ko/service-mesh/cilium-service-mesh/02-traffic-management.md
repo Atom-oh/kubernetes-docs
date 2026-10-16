@@ -1,6 +1,6 @@
 # Cilium Service Mesh 트래픽 관리
 
-> **검토 기준**: Cilium 1.20.1, Gateway API 1.6.1, 2026년 9월 11일. Kubernetes/EKS 테스트 범위와 플랫폼 요건은 [개요](./README.md)를 참고하세요.
+> **검토 기준**: Cilium 1.20.3, Gateway API 1.6.3, 2026년 10월 16일. Kubernetes/EKS 테스트 범위와 플랫폼 요건은 [개요](./README.md)를 참고하세요.
 
 ## 개요
 
@@ -404,7 +404,7 @@ spec:
         protocol: TCP
 ```
 
-Cilium 1.20.1 L7 정책 API에는 HTTP와 DNS가 있고 기존 `rules.kafka` API는 없습니다. 해당 릴리스의 CRD는 이 Kafka 규칙 객체를 거부합니다. L7 규칙만 제거하면 토픽 권한 제어가 아니라 L4 허용만 남습니다. 대체 예시는 지정 클라이언트의 미리 구성된 브로커 TCP 9092 접근만 허용합니다. 토픽·컨슈머 그룹·작업 권한은 Kafka TLS/SASL과 브로커 ACL로 별도 구성하세요. 여기의 네트워크 정책은 produce와 fetch를 구분하지 못합니다.
+Cilium 1.20.3 L7 정책 API에는 HTTP와 DNS가 있고 기존 `rules.kafka` API는 없습니다. 해당 릴리스의 CRD는 이 Kafka 규칙 객체를 거부합니다. L7 규칙만 제거하면 토픽 권한 제어가 아니라 L4 허용만 남습니다. 대체 예시는 지정 클라이언트의 미리 구성된 브로커 TCP 9092 접근만 허용합니다. 토픽·컨슈머 그룹·작업 권한은 Kafka TLS/SASL과 브로커 ACL로 별도 구성하세요. 여기의 네트워크 정책은 produce와 fetch를 구분하지 못합니다.
 
 #### DNS L7 정책
 
@@ -494,7 +494,7 @@ API 엔드포인트는 bootstrap 중에도 접근할 수 있어야 하며 실제
 
 Maglev는 해당 외부 트래픽의 흐름 키를 조회 테이블을 통해 백엔드에 매핑합니다. 백엔드 집합 변경 시 재할당을 줄이지만, 제거된 백엔드의 세션 유지나 `Service.spec.sessionAffinity: ClientIP`를 대체하지 않습니다.
 
-Cilium 1.20.1 eBPF Maglev 테이블의 기본 크기는 **16,381**입니다. 지원 크기에는 **65,521**이 있으며, **65,537**은 아래의 별도 Envoy MAGLEV 예시 값으로 Cilium `maglev.tableSize` 지원값이 아닙니다. 노드 전체에서 설정이 일관되어야 합니다. 소켓 수준 east–west Service 변환에는 이 Maglev 경로가 적용되지 않습니다.
+Cilium 1.20.3 eBPF Maglev 테이블의 기본 크기는 **16,381**입니다. 지원 크기에는 **65,521**이 있으며, **65,537**은 아래의 별도 Envoy MAGLEV 예시 값으로 Cilium `maglev.tableSize` 지원값이 아닙니다. 노드 전체에서 설정이 일관되어야 합니다. 소켓 수준 east–west Service 변환에는 이 Maglev 경로가 적용되지 않습니다.
 
 ### L7 로드 밸런싱 (Envoy)
 
@@ -821,7 +821,7 @@ spec:
 
 GET만 재시도하며 **최대 2회의 추가 시도**, 시도당 2초와 전체 경로 타임아웃 7초를 설정합니다. 시도당 타임아웃에는 첫 시도도 포함되며 재시도 사이의 대기 시간이 아닙니다. Backoff는 별도로 설정합니다. GET 이외의 기본 경로는 `num_retries: 0`을 명시합니다.
 
-초기 헤더 변경 확장은 라우팅·타임아웃 계산 전에 Envoy 재시도·타임아웃 제어 헤더를 제거합니다. Cilium 1.20.1 프록시 이미지에는 이 확장이 포함되어 있지만 일반 HTTP `header_mutation`과 Lua 필터는 활성화되어 있지 않습니다. 기존 예시의 `previous_priorities` 재시도 우선순위 확장도 이 이미지에는 없습니다. 모든 upstream Envoy 확장을 사용할 수 있다고 가정하면 안 됩니다.
+초기 헤더 변경 확장은 라우팅·타임아웃 계산 전에 Envoy 재시도·타임아웃 제어 헤더를 제거합니다. Cilium 1.20.3 프록시 이미지에는 이 확장이 포함되어 있지만 일반 HTTP `header_mutation`과 Lua 필터는 활성화되어 있지 않습니다. 기존 예시의 `previous_priorities` 재시도 우선순위 확장도 이 이미지에는 없습니다. 모든 upstream Envoy 확장을 사용할 수 있다고 가정하면 안 됩니다.
 
 반복해도 안전한 GET을 구현한 HTTP 엔드포인트에 사용하세요. 애플리케이션·클라이언트나 다른 프록시는 독립적으로 재시도할 수 있습니다. 검토된 멱등성 메커니즘이 없다면 쓰기는 한 번만 시도하세요. `retriable_headers`는 **upstream 응답** 헤더이며 `retry_on: retriable-headers`와 함께 사용합니다. `retriable_request_headers`는 재시도할 요청을 제한하는 별도 필드입니다. `retriable-4xx`도 모든 4xx 응답 재시도를 뜻하지 않습니다.
 
@@ -1292,7 +1292,7 @@ spec:
         from: Same
 ```
 
-Gateway API 1.6.1 CRD와 Cilium의 `gatewayAPI.enabled: true`, `kubeProxyReplacement: true`, `l7Proxy: true`가 필요합니다. GatewayClass는 컨트롤러 연결을 설명합니다. 설치 도구가 이미 `cilium`을 소유한다면 별도 소유자를 만들지 말고 재사용하세요. `default`에 호스트 이름에 맞는 인증서가 담긴 유효한 TLS Secret `api-gateway-tls`를 준비해야 합니다. LoadBalancer 노출·주소 할당은 플랫폼별로 다릅니다. GatewayClass/Gateway의 Accepted·Programmed 조건과 Listener 참조를 확인하세요. 이 매니페스트가 완전한 EKS 노출 구성을 제공하지는 않습니다.
+Gateway API 1.6.3 CRD와 Cilium의 `gatewayAPI.enabled: true`, `kubeProxyReplacement: true`, `l7Proxy: true`가 필요합니다. GatewayClass는 컨트롤러 연결을 설명합니다. 설치 도구가 이미 `cilium`을 소유한다면 별도 소유자를 만들지 말고 재사용하세요. `default`에 호스트 이름에 맞는 인증서가 담긴 유효한 TLS Secret `api-gateway-tls`를 준비해야 합니다. LoadBalancer 노출·주소 할당은 플랫폼별로 다릅니다. GatewayClass/Gateway의 Accepted·Programmed 조건과 Listener 참조를 확인하세요. 이 매니페스트가 완전한 EKS 노출 구성을 제공하지는 않습니다.
 
 ### HTTPRoute
 
@@ -1491,19 +1491,19 @@ spec:
 
 ## 참고 자료
 
-- [Cilium 1.20.1 L7 policy](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer7.rst)
-- [Cilium L3/FQDN policy](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/policy/layer3.rst)
-- [Cilium CEC example](https://github.com/cilium/cilium/blob/v1.20.1/examples/kubernetes/servicemesh/envoy/envoy-traffic-management-test.yaml)
-- [Cilium Envoy parser](https://github.com/cilium/cilium/blob/v1.20.1/pkg/ciliumenvoyconfig/cec_resource_parser.go)
-- [Cilium kube-proxy replacement](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst)
-- [Cilium Gateway API installation](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/gateway-api/installation.rst)
-- [Cilium 1.20.1 chart values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml)
+- [Cilium 1.20.3 L7 policy](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/policy/layer7.rst)
+- [Cilium L3/FQDN policy](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/policy/layer3.rst)
+- [Cilium CEC example](https://github.com/cilium/cilium/blob/v1.20.3/examples/kubernetes/servicemesh/envoy/envoy-traffic-management-test.yaml)
+- [Cilium Envoy parser](https://github.com/cilium/cilium/blob/v1.20.3/pkg/ciliumenvoyconfig/cec_resource_parser.go)
+- [Cilium kube-proxy replacement](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/kubernetes/kubeproxy-free.rst)
+- [Cilium Gateway API installation](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/gateway-api/installation.rst)
+- [Cilium 1.20.3 chart values](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/values.yaml)
 - [Cilium proxy image extension list](https://github.com/cilium/proxy/blob/766ccfb37260a43e9d228837aa84ce3faf9f64e7/envoy_build_config/extensions_build_config.bzl)
-- [Envoy 1.37.5 routing API](https://github.com/envoyproxy/envoy/blob/v1.37.5/api/envoy/config/route/v3/route_components.proto)
-- [Envoy retry implementation](https://github.com/envoyproxy/envoy/blob/v1.37.5/source/common/router/retry_state_impl.cc)
-- [Envoy router timing and header processing](https://github.com/envoyproxy/envoy/blob/v1.37.5/source/common/router/router.cc)
-- [Envoy early header mutation](https://github.com/envoyproxy/envoy/blob/v1.37.5/api/envoy/extensions/http/early_header_mutation/header_mutation/v3/header_mutation.proto)
-- [Envoy local rate limiting](https://github.com/envoyproxy/envoy/blob/v1.37.5/api/envoy/extensions/filters/http/local_ratelimit/v3/local_rate_limit.proto)
-- [Envoy timeout definitions](https://github.com/envoyproxy/envoy/blob/v1.37.5/docs/root/faq/configuration/timeouts.rst)
-- [Gateway API 1.6.1 HTTPRoute specification](https://github.com/kubernetes-sigs/gateway-api/blob/v1.6.1/apis/v1/httproute_types.go)
+- [Envoy 1.38.6 routing API](https://github.com/envoyproxy/envoy/blob/v1.38.6/api/envoy/config/route/v3/route_components.proto)
+- [Envoy retry implementation](https://github.com/envoyproxy/envoy/blob/v1.38.6/source/common/router/retry_state_impl.cc)
+- [Envoy router timing and header processing](https://github.com/envoyproxy/envoy/blob/v1.38.6/source/common/router/router.cc)
+- [Envoy early header mutation](https://github.com/envoyproxy/envoy/blob/v1.38.6/api/envoy/extensions/http/early_header_mutation/header_mutation/v3/header_mutation.proto)
+- [Envoy local rate limiting](https://github.com/envoyproxy/envoy/blob/v1.38.6/api/envoy/extensions/filters/http/local_ratelimit/v3/local_rate_limit.proto)
+- [Envoy timeout definitions](https://github.com/envoyproxy/envoy/blob/v1.38.6/docs/root/faq/configuration/timeouts.rst)
+- [Gateway API 1.6.3 HTTPRoute specification](https://github.com/kubernetes-sigs/gateway-api/blob/v1.6.3/apis/v1/httproute_types.go)
 - [Kafka broker ACLs](https://kafka.apache.org/41/security/authorization-and-acls/)

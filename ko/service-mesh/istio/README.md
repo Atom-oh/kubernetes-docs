@@ -1,16 +1,16 @@
 # Istio
 
-> **마지막 업데이트**: 2026년 10월 12일
+> **마지막 업데이트**: 2026년 10월 16일
 
 Amazon EKS에서 Istio Service Mesh를 활용한 실용적인 가이드입니다.
 
 ### 2026년 10월 검토: 지원 릴리스
 
-Istio 1.31.0은 GA이며 [릴리스 발표](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/)는 2026년 8월 31일 게시되었습니다. 현재 patch는 9월 21일 공개된 **1.31.1**입니다. [릴리스 발표](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.1/)에 따르면 해석되지 않은 `BackendTLSPolicy` CA 참조가 backend의 평문 연결로 fallback하던 동작을 수정했습니다.
+Istio 1.31.0은 GA이며 [릴리스 발표](https://istio.io/latest/news/releases/1.31.x/announcing-1.31/)는 2026년 8월 31일 게시되었습니다. 현재 patch는 10월 15일 공개된 **1.31.2**이며 [ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/) 보안 수정을 포함합니다([릴리스 발표](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.2/)). 9월 21일 공개된 1.31.1은 [릴리스 발표](https://istio.io/latest/news/releases/1.31.x/announcing-1.31.1/)에 따르면 해석되지 않은 `BackendTLSPolicy` CA 참조가 backend의 평문 연결로 fallback하던 동작을 수정했습니다.
 
-이 가이드의 신규 설치 명령은 1.31.1을 사용합니다. Istio 1.31의 공개 Kubernetes 지원 범위는 1.32–1.37이고, EKS 표준 지원은 현재 1.34–1.37입니다. EKS 표준 지원과의 교집합은 1.34–1.37이며, EKS 연장 지원 버전(1.31–1.33) 중 1.32와 1.33도 Istio 1.31 지원 범위에 포함됩니다. 설치 전에 [Istio 지원 매트릭스](https://istio.io/latest/docs/releases/supported-releases/)와 [EKS 버전 수명 주기](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)를 다시 확인하세요.
+이 가이드의 신규 설치 명령은 1.31.2를 사용합니다. Istio 1.31의 공개 Kubernetes 지원 범위는 1.32–1.37이고, EKS 표준 지원은 현재 1.34–1.37입니다. EKS 표준 지원과의 교집합은 1.34–1.37이며, EKS 연장 지원 버전(1.31–1.33) 중 1.32와 1.33도 Istio 1.31 지원 범위에 포함됩니다. 설치 전에 [Istio 지원 매트릭스](https://istio.io/latest/docs/releases/supported-releases/)와 [EKS 버전 수명 주기](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html)를 다시 확인하세요.
 
-이번 검토에서 매트릭스는 Istio 1.30과 1.29를 여전히 지원 중으로 표시합니다. 1.29의 예정 지원 종료일은 오늘인 2026년 10월 12일입니다. 설치나 업그레이드 전 현재 상태를 확인하세요. 해당 브랜치는 Envoy 취약점, BackendTLSPolicy의 fail-open, EnvoyFilter의 Control Plane 서비스 거부를 수정한 [ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/)을 적용하려면 최소 1.30.4 또는 1.29.7이 필요합니다. Istio 1.28은 지원이 종료되었습니다. Istio 1.31 차트는 `https://blob.istio.io/istio-release/charts`를 사용하며 기존 Google 호스팅 저장소에는 신규 릴리스가 게시되지 않습니다.
+이번 검토에서 매트릭스는 Istio 1.30과 1.29를 여전히 지원 중으로 표시합니다. 1.29의 예정 지원 종료일은 2026년 10월 12일(예상)로 표시되어 있습니다. 설치나 업그레이드 전 현재 상태를 확인하세요. 해당 브랜치는 Envoy 취약점, BackendTLSPolicy의 fail-open, EnvoyFilter의 Control Plane 서비스 거부를 수정한 [ISTIO-SECURITY-2026-006](https://istio.io/latest/news/security/istio-security-2026-006/)을 적용하려면 최소 1.30.4 또는 1.29.7이 필요합니다. 10월 15일 공개된 [ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/)은 1.31.0–1.31.1, 1.30.0–1.30.5, 1.29.0–1.29.8에 영향을 주며, 매트릭스의 알려진 CVE가 없는 버전은 1.31.2, 1.30.6, 1.29.9 이상입니다. Istio 1.28은 지원이 종료되었습니다. Istio 1.31 차트는 `https://blob.istio.io/istio-release/charts`를 사용하며 기존 Google 호스팅 저장소에는 신규 릴리스가 게시되지 않습니다.
 
 ## 목차
 

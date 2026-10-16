@@ -1,6 +1,6 @@
 # Linkerd Architecture Quiz
 
-Reviewed September 11, 2026 for edge-26.9.1. Read the [architecture guide](../../../service-mesh/linkerd/02-architecture.md) for the source-backed model and limitations.
+Reviewed October 16, 2026 for edge-26.10.1. Read the [architecture guide](../../../service-mesh/linkerd/02-architecture.md) for the source-backed model and limitations.
 
 ### 1. Which is not a Linkerd control-plane component?
 

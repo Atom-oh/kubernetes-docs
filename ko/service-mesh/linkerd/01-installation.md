@@ -1,6 +1,6 @@
 # Linkerd 설치 및 설정
 
-> **마지막 업데이트**: 2026년 9월 11일 · 공개 CLI: edge-26.9.1 · 대응 chart: 2026.9.1
+> **마지막 업데이트**: 2026년 10월 16일 · 공개 CLI: edge-26.10.1 · 대응 chart: 2026.10.1
 
 통제된 Kubernetes 설치, Helm/CLI 소유권, HA, 선택적 확장, EKS 고려사항, 업그레이드와 제거를 다룹니다. Upstream은 edge 산출물을 배포하며 stable 배포판의 설치·지원은 vendor 안내를 따라야 합니다. 2.20 같은 milestone이 upstream stable-2.20.0 다운로드를 뜻하지는 않습니다.
 
@@ -13,7 +13,7 @@ PowerShell 표시 외의 명령은 Bash입니다. 의도한 kubeconfig/context�
 | 구분·버전 | Kubernetes 근거 | Gateway API 근거 |
 |---|---|---|
 | Linkerd 2.20 milestone/배포판 | 공개 matrix 1.31–1.35. Vendor 지원도 확인 | 공개 matrix 1.2.1–1.5.1 |
-| 이 문서의 edge-26.9.1 | 릴리스 CLI 최소 1.31.0. Edge-26.8.2에서 테스트 상한을 1.36으로 올림 | 1.5.1 지원. 이 문서는 해당 standard bundle 사용 |
+| 이 문서의 edge-26.10.1 | 릴리스 CLI 최소 1.31.0. Edge-26.8.2에서 테스트 상한을 1.36으로 올림 | 1.5.1 지원. 이 문서는 해당 standard bundle 사용 |
 | 과거 2.16 | 공개 matrix 1.22–1.29 | 현재 설치 권장이 아님 |
 | 과거 2.15 / 2.14 | 공개 범위 1.22–1.29 / 1.21–1.28 | 해당 릴리스 확인. 이후 모든 Kubernetes를 지원한다고 해석하면 안 됨 |
 
@@ -40,7 +40,7 @@ CLI 최소 버전 검사는 지원 상한 검사가 아닙니다. check --pre �
 이는 구성 요소 포트이며 무제한 security-group 규칙이 아닙니다. DNS, Kubernetes API와 선택한 CNI·NetworkPolicy 동작도 고려하고 실제 Service targetPort와 webhook 설정을 확인하세요.
 
 ```bash
-LINKERD_CHART_VERSION=2026.9.1
+LINKERD_CHART_VERSION=2026.10.1
 CNI_ENABLED=false  # Set true only after installing/verifying Linkerd CNI.
 kubectl config current-context
 kubectl version
@@ -62,12 +62,12 @@ Gateway API bundle은 필요할 때 기존 CRD 소유권과 모든 사용 contro
 
 ```bash
 set -euo pipefail
-LINKERD_VERSION=edge-26.9.1
+LINKERD_VERSION=edge-26.10.1
 case "$(uname -s)/$(uname -m)" in
-  Linux/x86_64) suffix=linux-amd64; expected=094e1de06215fbe76fc011cf62c96214f8dae0cd5a58135fb40307be88b6b176 ;;
-  Linux/aarch64|Linux/arm64) suffix=linux-arm64; expected=f92eddc52dc1f3089b65fd16014cdb1bc6b07c3fd177091c365cf3d8c0ea1a8b ;;
-  Darwin/x86_64) suffix=darwin; expected=acff9471f26552dd0ebb9560925a98d5ca1213a13dfc81464a2b815c9201664d ;;
-  Darwin/arm64) suffix=darwin-arm64; expected=5050da9d974e0c2f548a2e9f145540ec035582cfd67f47c58c37411ae3008913 ;;
+  Linux/x86_64) suffix=linux-amd64; expected=66d634f5318c8016f0b5face246a688964b6e2c86d6c3be34be68ab9fcd2a8cc ;;
+  Linux/aarch64|Linux/arm64) suffix=linux-arm64; expected=431989b15b48acfd6e344ff16a0d3505574c0cce551a2d4aeae82246ce65a5cc ;;
+  Darwin/x86_64) suffix=darwin; expected=bcf7acaf8a946cffd262d075dcaa50e9b583d8191bfa6e1c20fd3593fe6db524 ;;
+  Darwin/arm64) suffix=darwin-arm64; expected=abaaaeba9334feae7c1f16dd43a6f85b6051eadf49425f0ae30cbf16eba29f70 ;;
   *) echo "No verified asset for this OS/architecture in this example" >&2; exit 1 ;;
 esac
 CLI_DIR="$PWD/linkerd-cli/$LINKERD_VERSION"
@@ -96,7 +96,7 @@ linkerd version --client
 ```bash
 curl --proto '=https' --tlsv1.2 -fsSL https://run.linkerd.io/install-edge -o install-linkerd.sh
 # Inspect the downloaded script before execution.
-LINKERD2_VERSION=edge-26.9.1 INSTALLROOT="$PWD/linkerd-installer" sh ./install-linkerd.sh
+LINKERD2_VERSION=edge-26.10.1 INSTALLROOT="$PWD/linkerd-installer" sh ./install-linkerd.sh
 export PATH="$PWD/linkerd-installer/bin:$PATH"
 linkerd version --client
 ```
@@ -109,8 +109,8 @@ linkerd version --client
 
 ```powershell
 $ErrorActionPreference = "Stop"
-$LinkerdVersion = "edge-26.9.1"
-$ExpectedSha256 = "d50119c635a0052bfcc7e0b96dcc985676b237ebc87464380677c413344d99a9"
+$LinkerdVersion = "edge-26.10.1"
+$ExpectedSha256 = "7f6d3b1183bfed8d555e55fbb4934695e1376c8a3fab77a5d3f8954ec0306dc7"
 $Download = Join-Path (Get-Location) "linkerd.download.exe"
 $Url = "https://github.com/linkerd/linkerd2/releases/download/$LinkerdVersion/linkerd2-cli-$LinkerdVersion-windows.exe"
 Invoke-WebRequest -Uri $Url -OutFile $Download
@@ -150,7 +150,7 @@ helm repo update linkerd-edge
 helm show chart linkerd-edge/linkerd-control-plane --version "$LINKERD_CHART_VERSION"
 ```
 
-공개 대응 chart는 linkerd-crds, linkerd-control-plane, linkerd-viz, linkerd-multicluster, linkerd2-cni의 2026.9.1입니다. Core chart appVersion은 edge-26.9.1입니다. 과거 stable 저장소의 버전 없는 chart가 이 CLI와 일치한다고 가정하면 안 됩니다.
+공개 대응 chart는 linkerd-crds, linkerd-control-plane, linkerd-viz, linkerd-multicluster, linkerd2-cni의 2026.10.1입니다. Core chart appVersion은 edge-26.10.1입니다. 과거 stable 저장소의 버전 없는 chart가 이 CLI와 일치한다고 가정하면 안 됩니다.
 
 #### Trust anchor와 issuer
 
@@ -332,7 +332,7 @@ linkerd viz check
 
 선택한 chart는 persistence **map이 있으면** 영속 볼륨을 사용하며 persistence.enabled를 스위치로 사용하지 않습니다. PVC template에는 accessMode가 필요합니다. 이전 예시는 이를 빠뜨려 null access mode를 생성했습니다. Map을 생략하면 emptyDir를 사용합니다. gp3 StorageClass는 사전 조건의 예시이며 Viz가 만들지 않습니다. EKS에서는 EBS CSI driver, 권한과 볼륨 topology를 확인하세요.
 
-기본 Prometheus는 replica 1개이며 persistence를 사용하면 Deployment strategy는 Recreate입니다. PVC는 적절한 Pod 교체에서 데이터를 유지하지만 metrics storage를 HA로 만들거나 무중단을 보장하지 않습니다. Chart 2026.9.1의 기본값은 Prometheus v2.55.1과 6시간 보존입니다. Backend 유지 관리, 보존과 가용성 요구를 명확히 선택하세요.
+기본 Prometheus는 replica 1개이며 persistence를 사용하면 Deployment strategy는 Recreate입니다. PVC는 적절한 Pod 교체에서 데이터를 유지하지만 metrics storage를 HA로 만들거나 무중단을 보장하지 않습니다. Chart 2026.10.1의 기본값은 Prometheus v2.55.1과 6시간 보존입니다. Backend 유지 관리, 보존과 가용성 요구를 명확히 선택하세요.
 
 이미 구성한 외부 Prometheus를 사용하면 다음은 **대안** values입니다:
 
@@ -348,7 +348,7 @@ prometheusUrl: http://prometheus.monitoring.svc.cluster.local:9090
 
 ### 분산 추적
 
-edge-26.9.1에는 linkerd jaeger 하위 명령이 없습니다. 공개 linkerd-jaeger chart 이력은 2025.9.4에서 끝나므로 2026.9.1에 대응하는 확장이 아닙니다. 기존 install/check/upgrade/uninstall 명령 대신 별도로 관리하는 collector/backend와 선택한 proxy tracing 구성을 사용합니다.
+edge-26.10.1에는 linkerd jaeger 하위 명령이 없습니다. 공개 linkerd-jaeger chart 이력은 2025.9.4에서 끝나므로 2026.10.1에 대응하는 확장이 아닙니다. 기존 install/check/upgrade/uninstall 명령 대신 별도로 관리하는 collector/backend와 선택한 proxy tracing 구성을 사용합니다.
 
 Tracing에는 들어오는 trace context, 앱의 전파와 호환 collector/export protocol이 필요합니다. Viz topology·metric graph는 distributed trace가 아닙니다. 전체 경로는 [관측성 가이드](05-observability.md)와 [공식 tracing 문서](https://linkerd.io/docs/features/distributed-tracing/)를 확인하세요. 이번 설치 감사가 미검증 collector/Jaeger의 종단 동작을 입증하지는 않습니다. 기존 설치에 linkerd-jaeger release가 있다면 데이터·리소스를 조사하고 마이그레이션한 뒤 원래 소유 도구로 정리하세요. 현재 CLI로 제거된 확장을 관리할 수는 없습니다.
 
@@ -635,7 +635,7 @@ Linkerd CNI를 설치했다면 의존 workload가 없어진 뒤 node-plugin clea
 
 ## 참고 자료
 
-- [릴리스 모델](https://linkerd.io/releases/)과 [edge-26.9.1 asset](https://github.com/linkerd/linkerd2/releases/tag/edge-26.9.1)
+- [릴리스 모델](https://linkerd.io/releases/)과 [edge-26.10.1 asset](https://github.com/linkerd/linkerd2/releases/tag/edge-26.10.1)
 - [Kubernetes matrix](https://linkerd.io/docs/reference/k8s-versions/)와 [Gateway API 호환성](https://linkerd.io/docs/features/gateway-api/)
 - [Helm 설치](https://linkerd.io/docs/tasks/install-helm/)와 [공식 edge chart index](https://helm.linkerd.io/edge/index.yaml)
 - [HA 동작](https://linkerd.io/docs/features/ha/)과 [cluster/Cilium 설정](https://linkerd.io/docs/reference/cluster-configuration/)

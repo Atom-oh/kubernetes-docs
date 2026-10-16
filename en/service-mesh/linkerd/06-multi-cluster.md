@@ -1,6 +1,6 @@
 # Linkerd Multi-cluster
 
-> **Last Updated**: September 11, 2026 · Linkerd edge-26.9.1 / charts 2026.9.1 · Gateway API 1.5.1
+> **Last Updated**: October 16, 2026 · Linkerd edge-26.10.1 / charts 2026.10.1 · Gateway API 1.5.1
 
 Linkerd mirrors selected service information across cluster boundaries. This requires both a working control-plane discovery path and the appropriate data-plane network path. It does not merge clusters, replicate application data or duplicate every request for shadow testing.
 
@@ -100,11 +100,11 @@ helm repo add linkerd-edge https://helm.linkerd.io/edge
 helm repo update linkerd-edge
 # Initially install gateway/remote-access prerequisites, without peer controllers.
 helm --kube-context west upgrade --install linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster --create-namespace -f mc-base-values.yaml \
   --wait --timeout 10m
 helm --kube-context east upgrade --install linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster --create-namespace -f mc-base-values.yaml \
   --wait --timeout 10m
 kubectl --context west -n linkerd-multicluster get svc linkerd-gateway -o yaml
@@ -132,7 +132,7 @@ linkerd --context west multicluster link-gen --cluster-name west > west-link.yam
 # Review public metadata and target endpoint without printing credential values.
 kubectl --context east apply -f west-link.yaml
 helm --kube-context east upgrade linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster -f mc-base-values.yaml -f mc-east-links.yaml \
   --wait --timeout 10m
 kubectl --context east -n linkerd-multicluster get links.multicluster.linkerd.io
@@ -163,7 +163,7 @@ umask 077
 linkerd --context east multicluster link-gen --cluster-name east > east-link.yaml
 kubectl --context west apply -f east-link.yaml
 helm --kube-context west upgrade linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster -f mc-base-values.yaml -f mc-west-links.yaml \
   --wait --timeout 10m
 linkerd --context west multicluster check
@@ -360,7 +360,7 @@ linkerd --context west multicluster link-gen --cluster-name west \
   --gateway=false > west-flat-link.yaml
 kubectl --context east apply -f west-flat-link.yaml
 helm --kube-context east upgrade linkerd-multicluster \
-  linkerd-edge/linkerd-multicluster --version 2026.9.1 \
+  linkerd-edge/linkerd-multicluster --version 2026.10.1 \
   -n linkerd-multicluster -f flat-base-values.yaml -f flat-east-links.yaml \
   --wait --timeout 10m
 kubectl --context west -n mc-demo label service/web \
@@ -554,8 +554,8 @@ Inspect every certificate and its validity/issuer chain. PEM order/format alone 
 - [Multicluster reference](https://linkerd.io/docs/reference/multicluster/) and [installation](https://linkerd.io/docs/tasks/installing-multicluster/)
 - [Pod-to-Pod mode](https://linkerd.io/docs/tasks/pod-to-pod-multicluster/) and [federated services](https://linkerd.io/docs/tasks/federated-services/)
 - [Deprecated failover extension](https://linkerd.io/docs/tasks/automatic-failover/)
-- [Released link-gen implementation](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/multicluster/cmd/link-gen.go)
-- [Released service-mirror endpoint handling](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/multicluster/service-mirror/cluster_watcher.go)
+- [Released link-gen implementation](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/multicluster/cmd/link-gen.go)
+- [Released service-mirror endpoint handling](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/multicluster/service-mirror/cluster_watcher.go)
 - [AWS Load Balancer Controller annotations](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/)
 - [EKS Auto Mode NLB](https://docs.aws.amazon.com/eks/latest/userguide/auto-configure-nlb.html)
 - [VPC peering](https://docs.aws.amazon.com/vpc/latest/peering/what-is-vpc-peering.html) and [AWS PrivateLink](https://docs.aws.amazon.com/vpc/latest/privatelink/what-is-privatelink.html)

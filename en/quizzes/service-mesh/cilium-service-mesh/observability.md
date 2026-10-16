@@ -1,6 +1,6 @@
 # Cilium Service Mesh Observability Quiz
 
-Reviewed against Cilium 1.20.1/Hubble CLI 1.19.4. See the [observability guide](../../../service-mesh/cilium-service-mesh/04-observability.md) for tested commands, metric definitions and limitations.
+Reviewed against Cilium 1.20.3/Hubble CLI 1.20.2. See the [observability guide](../../../service-mesh/cilium-service-mesh/04-observability.md) for tested commands, metric definitions and limitations.
 
 ### 1. Which is NOT a main component of Hubble?
 
@@ -190,6 +190,6 @@ json is an alias for jsonpb. Protobuf JSON encodes 64-bit values such as latency
 
 **Answer: B. Use Hubble file export and a filelog receiver, then a supported log exporter**
 
-Cilium 1.20.1 documents file export for flow logs. A filelog receiver can collect those files and send logs through a supported exporter such as OTLP/HTTP to Loki. Metrics and application traces use their own collection paths; the old Hubble opentelemetry values and removed Collector jaeger/loki exporters are not the replacement.
+Cilium 1.20.3 documents file export for flow logs. A filelog receiver can collect those files and send logs through a supported exporter such as OTLP/HTTP to Loki. Metrics and application traces use their own collection paths; the old Hubble opentelemetry values and removed Collector jaeger/loki exporters are not the replacement.
 
 </details>

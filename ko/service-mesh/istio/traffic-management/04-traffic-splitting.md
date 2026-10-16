@@ -16,7 +16,7 @@
 
 ## 트래픽 분할 개요
 
-Istio 1.31.0 및 Argo Rollouts 1.10.0 기준으로 검토했습니다. 각 예제는 독립적인 테스트 네임스페이스용 대안입니다. 같은 selector를 가진 여러 Rollout을 동시에 실행하거나 수동 스크립트/GitOps로 Rollouts가 관리하는 가중치와 subset 해시를 덮어쓰지 마세요. 참조하는 Service, DestinationRule, AnalysisTemplate, 게이트웨이, Prometheus를 먼저 준비하세요. 최초 배포는 안정 ReplicaSet을 만들며 이후 업데이트에서 Canary 단계와 분석을 실행합니다. Weight는 요청 분포이며 고정된 사용자 비율을 뜻하지 않습니다.
+Istio 1.31.0 및 Argo Rollouts 1.10.1 기준으로 검토했습니다. 각 예제는 독립적인 테스트 네임스페이스용 대안입니다. 같은 selector를 가진 여러 Rollout을 동시에 실행하거나 수동 스크립트/GitOps로 Rollouts가 관리하는 가중치와 subset 해시를 덮어쓰지 마세요. 참조하는 Service, DestinationRule, AnalysisTemplate, 게이트웨이, Prometheus를 먼저 준비하세요. 최초 배포는 안정 ReplicaSet을 만들며 이후 업데이트에서 Canary 단계와 분석을 실행합니다. Weight는 요청 분포이며 고정된 사용자 비율을 뜻하지 않습니다.
 
 트래픽 분할은 VirtualService의 `weight` 필드를 사용하여 여러 서비스 버전 간에 트래픽을 비율로 분배합니다.
 
@@ -67,10 +67,10 @@ Canary 배포는 새 버전을 소수의 사용자에게만 먼저 배포하여 
 ```bash
 # Argo Rollouts 설치
 kubectl create namespace argo-rollouts
-kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/download/v1.10.0/install.yaml
+kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/download/v1.10.1/install.yaml
 
 # Argo Rollouts CLI 설치 (선택사항)
-curl -LO https://github.com/argoproj/argo-rollouts/releases/download/v1.10.0/kubectl-argo-rollouts-linux-amd64
+curl -LO https://github.com/argoproj/argo-rollouts/releases/download/v1.10.1/kubectl-argo-rollouts-linux-amd64
 chmod +x kubectl-argo-rollouts-linux-amd64
 sudo mv kubectl-argo-rollouts-linux-amd64 /usr/local/bin/kubectl-argo-rollouts
 
@@ -1939,13 +1939,13 @@ metadata:
 
 ### Progressive Delivery
 - [Progressive Delivery](https://www.weave.works/blog/what-is-progressive-delivery-all-about)
-- [Argo Rollouts progressive delivery concepts](https://github.com/argoproj/argo-rollouts/blob/v1.10.0/docs/concepts.md)
+- [Argo Rollouts progressive delivery concepts](https://github.com/argoproj/argo-rollouts/blob/v1.10.1/docs/concepts.md)
 
-- [Primary reference 1](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/traffic-management/istio.md)
-- [Primary reference 2](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/analysis/prometheus.md)
-- [Primary reference 3](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/analysis/job.md)
-- [Primary reference 4](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/analysis.md)
-- [Primary reference 5](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/bluegreen.md)
+- [Primary reference 1](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/features/traffic-management/istio.md)
+- [Primary reference 2](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/analysis/prometheus.md)
+- [Primary reference 3](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/analysis/job.md)
+- [Primary reference 4](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/features/analysis.md)
+- [Primary reference 5](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/features/bluegreen.md)
 - [Primary reference 6](https://raw.githubusercontent.com/istio/istio/1.31.0/samples/bookinfo/platform/kube/bookinfo.yaml)
 - [Primary reference 7](https://raw.githubusercontent.com/istio/istio/1.31.0/samples/curl/curl.yaml)
 - [Primary reference 8](https://istio.io/latest/docs/reference/config/annotations/)

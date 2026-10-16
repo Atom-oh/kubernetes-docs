@@ -1,7 +1,7 @@
 # Istio Advanced Topics Quiz
 
-> **Verification baseline**: Istio 1.31.0, Kubernetes 1.32–1.36, Argo Rollouts 1.10.0
-> **Last reviewed**: September 11, 2026
+> **Verification baseline**: Istio 1.31.0, Kubernetes 1.32–1.37, Argo Rollouts 1.10.1
+> **Last reviewed**: October 16, 2026
 
 The questions distinguish configuration, runtime behavior and evidence. Examples are independent; select the relevant topology and retain the prerequisites in the linked guide. Historical arithmetic inputs below are not current pricing or new benchmark results.
 

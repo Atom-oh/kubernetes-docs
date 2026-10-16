@@ -1,8 +1,8 @@
 # Linkerd
 
-> **Last Updated**: September 11, 2026 · Public CLI examples checked with edge-26.9.1
+> **Last Updated**: October 16, 2026 · Public CLI examples checked with edge-26.10.1
 
-The upstream project publishes edge artifacts; stable distributions and their support lifecycle come from vendors. Linkerd 2.20 is a feature milestone, not a universal version string for the downloaded CLI. Choose an exact distribution/release and check its Kubernetes and Gateway API compatibility. The current public example here is edge-26.9.1, published September 4, 2026; it fixes remote-credential exec-auth-provider acceptance in multicluster and retryable destination-IP conflict handling. See the [release](https://github.com/linkerd/linkerd2/releases/tag/edge-26.9.1) and [release model](https://linkerd.io/releases/).
+The upstream project publishes edge artifacts; stable distributions and their support lifecycle come from vendors. Linkerd 2.20 is a feature milestone, not a universal version string for the downloaded CLI. Choose an exact distribution/release and check its Kubernetes and Gateway API compatibility. The current public example here is edge-26.10.1 (proxy v2.370.0), published October 5, 2026. Remote-credential exec-auth-provider acceptance in multicluster and retryable destination-IP conflict handling were fixed in edge-26.9.1. See the [release](https://github.com/linkerd/linkerd2/releases/tag/edge-26.10.1) and [release model](https://linkerd.io/releases/).
 
 The following entries preserve historical release context. The edge-26.8.2 tested Kubernetes maximum does not automatically extend a stable vendor distribution's support matrix.
 

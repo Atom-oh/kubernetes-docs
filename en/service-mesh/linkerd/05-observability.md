@@ -1,6 +1,6 @@
 # Linkerd Observability
 
-> **Last Updated**: September 11, 2026 · Linkerd edge-26.9.1 / charts 2026.9.1 · Prometheus Operator examples checked against 0.93.1
+> **Last Updated**: October 16, 2026 · Linkerd edge-26.10.1 / charts 2026.10.1 · Prometheus Operator examples checked against 0.94.1
 
 Linkerd exposes proxy and protocol metrics; Viz adds Prometheus, metrics-api, tap, tap-injector and the web dashboard. The current Viz chart does **not** install Grafana. Distributed tracing additionally needs a configured collector/backend, trace context and sampling; it is not enabled by installing a metrics dashboard.
 
@@ -839,7 +839,7 @@ Start an investigation by validating scrape health and the selected traffic scop
 - [Proxy metrics](https://linkerd.io/docs/reference/proxy-metrics/) and [proxy configuration](https://linkerd.io/docs/reference/proxy-configuration/)
 - [Tracing](https://linkerd.io/docs/tasks/distributed-tracing/)
 - [Released metric timing implementation](https://github.com/linkerd/linkerd2-proxy/blob/a66af8117769df060adda6233302a2d1c4142229/linkerd/http/metrics/src/requests/service.rs)
-- [Released Viz scrape configuration](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/viz/charts/linkerd-viz/templates/prometheus.yaml)
-- [Released Grafana dashboard collection](https://github.com/linkerd/linkerd2/tree/edge-26.9.1/grafana/dashboards)
+- [Released Viz scrape configuration](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/viz/charts/linkerd-viz/templates/prometheus.yaml)
+- [Released Grafana dashboard collection](https://github.com/linkerd/linkerd2/tree/edge-26.10.1/grafana/dashboards)
 - [kube-state-metrics Pod metrics](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/workload/pod-metrics.md)
 - [W3C trace context](https://www.w3.org/TR/trace-context/)

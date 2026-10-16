@@ -1,7 +1,7 @@
 # Argo Rollouts와 Istio 통합
 
-> **검증 기준**: Argo Rollouts 1.10.0, Istio 1.31.0, Kubernetes 1.32–1.36
-> **마지막 검토**: 2026년 9월 11일
+> **검증 기준**: Argo Rollouts 1.10.1, Istio 1.31.0, Kubernetes 1.32–1.37
+> **마지막 검토**: 2026년 10월 16일
 > **난이도**: 고급
 
 Argo Rollouts는 progressive delivery 중 replica 선택과 Istio traffic weight를 조정합니다. Analysis를 명시적으로 설정하고 신뢰할 수 있는 관측값을 공급해야 합니다. 두 controller를 설치하는 것만으로 자동 품질 검증이나 가용성이 보장되지는 않습니다.
@@ -546,7 +546,7 @@ spec:
 
 아래 과거 upstream 화면은 Service-level 구분 예시이며 통합 아키텍처나 현재 benchmark가 아닙니다.
 
-![Stable과 canary Service 메트릭을 구분하는 과거 Istio Service 대시보드](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/traffic-management/istio-service-metrics.png)
+![Stable과 canary Service 메트릭을 구분하는 과거 Istio Service 대시보드](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/features/traffic-management/istio-service-metrics.png)
 
 ### 1. Inline Analysis
 
@@ -1003,8 +1003,8 @@ Update 전에는 controller/CRD·주입·DNS·image platform·Service/route·pro
 - [Experiment](https://argoproj.github.io/argo-rollouts/features/experiment/)
 - [Rollout specification](https://argoproj.github.io/argo-rollouts/features/specification/)
 - [Rollouts FAQ](https://argoproj.github.io/argo-rollouts/FAQ/)
-- [Released1.10 Istio reconciler](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/rollout/trafficrouting/istio/istio.go)
-- [Released1.10 Analysis 실패 판정](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/analysis/analysis.go)
+- [Released1.10 Istio reconciler](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/rollout/trafficrouting/istio/istio.go)
+- [Released1.10 Analysis 실패 판정](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/analysis/analysis.go)
 - [Argo CD sync options source](https://raw.githubusercontent.com/argoproj/argo-cd/master/docs/user-guide/sync-options.md)
 - [트래픽 분할](../traffic-management/04-traffic-splitting.md)
 - [VirtualService](../traffic-management/01-gateway-virtualservice.md)

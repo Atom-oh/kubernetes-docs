@@ -1,7 +1,7 @@
 # KEDA를 활용한 Istio 메트릭 기반 오토스케일링
 
-> **검증 기준**: KEDA/chart 2.20.2, Istio 1.31.0, Kubernetes 1.32–1.36
-> **마지막 검토**: 2026년 9월 11일
+> **검증 기준**: KEDA/chart 2.20.2, Istio 1.31.0, Kubernetes 1.32–1.37
+> **마지막 검토**: 2026년 10월 16일
 
 이 가이드는 scaling signal과 제약을 설명하며 기존 workload·검증된 metric·충분한 cluster 용량을 가정합니다. 같은 Deployment를 대상으로 하는 예제는 **대안 관계**입니다. 모든 객체를 적용하지 말고 target마다 하나의 ScaledObject/HPA 관리자를 선택하세요.
 
@@ -1172,7 +1172,7 @@ CloudWatch는 반환 timestamp, 모든 dimension, statistic/unit, 수집 창, of
 
 ### 고정 Chart와 실제 호환성
 
-KEDA 2.20의 공개 배포 요구사항은 Kubernetes 1.30 이상이며 chart metadata의 1.23 최소값보다 높습니다. Helm이 버전을 허용한다고 runtime 지원이 증명되지는 않습니다. Istio 1.31의 Kubernetes 1.32–1.36 지원 범위와 관리형 플랫폼의 지원 버전이 겹치는 구간을 사용하세요.
+KEDA 2.20의 공개 배포 요구사항은 Kubernetes 1.30 이상이며 chart metadata의 1.23 최소값보다 높습니다. Helm이 버전을 허용한다고 runtime 지원이 증명되지는 않습니다. Istio 1.31의 Kubernetes 1.32–1.37 지원 범위와 관리형 플랫폼의 지원 버전이 겹치는 구간을 사용하세요.
 
 새 설치 또는 기존 값을 보존하는 검토된 업그레이드에는 다음 값을 사용합니다. 업그레이드는 해당 release의 변경사항과 CRD ownership/migration 절차도 먼저 확인해야 합니다.
 

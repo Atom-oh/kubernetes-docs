@@ -1,6 +1,6 @@
 # Linkerd 관찰성
 
-> **검토 기준**: 2026년 9월 11일 · Linkerd edge-26.9.1 / chart 2026.9.1 · Prometheus Operator 예제는 0.93.1 기준 검증
+> **검토 기준**: 2026년 10월 16일 · Linkerd edge-26.10.1 / chart 2026.10.1 · Prometheus Operator 예제는 0.94.1 기준 검증
 
 Linkerd는 proxy/protocol 지표를 노출하며 Viz는 Prometheus, metrics-api, tap, tap-injector, web dashboard를 추가합니다. 현재 Viz chart는 Grafana를 설치하지 **않습니다**. 분산 추적에는 별도로 구성한 collector/backend, trace context, sampling이 필요하며 지표 대시보드 설치만으로 활성화되지 않습니다.
 
@@ -839,7 +839,7 @@ Proxy 알림은 단순 injection 여부가 아니라 **proxy가 정상 실행 �
 - [Proxy metrics](https://linkerd.io/docs/reference/proxy-metrics/)와 [proxy 설정](https://linkerd.io/docs/reference/proxy-configuration/)
 - [Tracing](https://linkerd.io/docs/tasks/distributed-tracing/)
 - [해당 버전의 지표 기록 시점](https://github.com/linkerd/linkerd2-proxy/blob/a66af8117769df060adda6233302a2d1c4142229/linkerd/http/metrics/src/requests/service.rs)
-- [해당 버전 Viz scrape 설정](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/viz/charts/linkerd-viz/templates/prometheus.yaml)
-- [해당 버전 Grafana dashboard 모음](https://github.com/linkerd/linkerd2/tree/edge-26.9.1/grafana/dashboards)
+- [해당 버전 Viz scrape 설정](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/viz/charts/linkerd-viz/templates/prometheus.yaml)
+- [해당 버전 Grafana dashboard 모음](https://github.com/linkerd/linkerd2/tree/edge-26.10.1/grafana/dashboards)
 - [Kube-state-metrics Pod 지표](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/workload/pod-metrics.md)
 - [W3C trace context](https://www.w3.org/TR/trace-context/)

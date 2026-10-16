@@ -1,7 +1,7 @@
 # EnvoyFilter
 
-> **Verification baseline**: Istio 1.31.0, Kubernetes 1.32–1.36; sidecars and Istio Envoy gateways
-> **Last reviewed**: September 11, 2026
+> **Verification baseline**: Istio 1.31.0, Kubernetes 1.32–1.37; sidecars and Istio Envoy gateways
+> **Last reviewed**: October 16, 2026
 
 EnvoyFilter is an advanced feature that allows you to directly customize Envoy proxy configurations.
 

@@ -1,7 +1,7 @@
 # EnvoyFilter
 
-> **검증 기준**: Istio 1.31.0, Kubernetes 1.32–1.36; Sidecar와 Istio ingress gateway
-> **마지막 검토**: 2026년 9월 11일
+> **검증 기준**: Istio 1.31.0, Kubernetes 1.32–1.37; Sidecar와 Istio ingress gateway
+> **마지막 검토**: 2026년 10월 16일
 
 EnvoyFilter는 Envoy 프록시의 구성을 직접 커스터마이즈할 수 있는 고급 기능입니다.
 

@@ -1,6 +1,6 @@
 # Cilium Service Mesh 관측성
 
-> **마지막 업데이트**: 2026년 9월 11일 · Cilium/chart 1.20.1 · Hubble CLI 1.19.4 · Collector Contrib 0.160.0 · Loki 3.7.7. Kubernetes/EKS와 플랫폼 요건은 [개요](./README.md)를 참고하세요.
+> **마지막 업데이트**: 2026년 10월 16일 · Cilium/chart 1.20.3 · Hubble CLI 1.20.2 · Collector Contrib 0.162.0 · Loki 3.7.8. Kubernetes/EKS와 플랫폼 요건은 [개요](./README.md)를 참고하세요.
 
 ## 개요
 
@@ -30,7 +30,7 @@ Hubble은 Cilium이 처리한 트래픽의 관찰 결과를 제공합니다. L3/
 
 ### Helm을 통한 설치
 
-Cilium 1.20.1의 검토된 설치 values에 다음 오버레이를 병합하세요. 메트릭과 Relay/UI를 활성화하고 포트 포워딩으로 접근합니다. Prometheus·Grafana·Collector·Loki를 설치하는 설정은 아닙니다.
+Cilium 1.20.3의 검토된 설치 values에 다음 오버레이를 병합하세요. 메트릭과 Relay/UI를 활성화하고 포트 포워딩으로 접근합니다. Prometheus·Grafana·Collector·Loki를 설치하는 설정은 아닙니다.
 
 ```yaml
 prometheus:
@@ -82,7 +82,7 @@ Hubble Server↔Relay mTLS는 관찰 데이터 전송을 보호합니다. UI ing
 
 ```bash
 set -eu
-HUBBLE_VERSION=v1.19.4
+HUBBLE_VERSION=v1.20.2
 case "$(uname -s)" in
   Linux) HUBBLE_RELEASE_OS=linux ;;
   Darwin) HUBBLE_RELEASE_OS=darwin ;;
@@ -203,7 +203,7 @@ JSON 매핑은 64비트 `latency_ns`를 **문자열**로 인코딩합니다. 숫
 
 HTTP 응답 레코드에는 상태 코드가 있지만 요청 레코드에는 아직 없을 수 있습니다. gRPC 메서드는 HTTP 경로로 선택할 수 있지만 HTTP 200이 애플리케이션 수준 gRPC 성공을 뜻하지는 않습니다. 필요한 RPC 결과는 별도로 수집하세요.
 
-선택한 CLI에는 `--dns-rcode` 플래그가 없습니다. JSON의 숫자 응답 코드를 확인하며 3은 NXDOMAIN입니다. `kafka` CLI 필터는 호환되는 과거 데이터를 읽을 수 있지만 Cilium 1.20.1에서 제거한 Kafka L7 처리를 복구하지는 않습니다. 9092 포트 필터는 토픽·작업 검사가 아니라 L4 관찰을 제공합니다.
+선택한 CLI에는 `--dns-rcode` 플래그가 없습니다. JSON의 숫자 응답 코드를 확인하며 3은 NXDOMAIN입니다. `kafka` CLI 필터는 호환되는 과거 데이터를 읽을 수 있지만 Cilium 1.20에서 제거한 Kafka L7 처리를 복구하지는 않습니다. 9092 포트 필터는 토픽·작업 검사가 아니라 L4 관찰을 제공합니다.
 
 ## Prometheus 메트릭
 
@@ -664,7 +664,7 @@ hubble:
 
 ### Collector 설정
 
-다음은 Collector Contrib 0.160.0의 **설정**이며 Deployment가 아닙니다. 노드별 Collector DaemonSet에 해당 호스트 로그 디렉터리의 읽기 권한, 쓰기 가능한 영구 checkpoint 저장소와 downward API의 `K8S_NODE_NAME`을 제공해야 합니다.
+다음은 Collector Contrib 0.162.0의 **설정**이며 Deployment가 아닙니다. 노드별 Collector DaemonSet에 해당 호스트 로그 디렉터리의 읽기 권한, 쓰기 가능한 영구 checkpoint 저장소와 downward API의 `K8S_NODE_NAME`을 제공해야 합니다.
 
 ```yaml
 extensions:
@@ -726,7 +726,7 @@ service:
 
 Filelog receiver는 JSON body와 timestamp를 파싱합니다. 영구 `file_storage` checkpoint는 읽기 위치를 보존하며 임시 볼륨은 재시작 동작을 바꿀 수 있습니다. 저장된 위치가 없을 때 `start_at: end`는 기존 내용을 건너뛰므로 replay·import 설정이 아닙니다.
 
-Loki 3.7.7은 `/otlp/v1/logs`로 OTLP/HTTP 로그를 받으며 exporter는 `/otlp` base endpoint 뒤에 `/v1/logs`를 붙입니다. Loki에 structured metadata와 호환되는 저장소 설정이 필요합니다. 제거된 Collector `loki` exporter를 사용하면 안 됩니다. Resource attribute `service.name`은 Loki의 `service_name` 레이블이 되고 구조화한 body는 로그 내용으로 남습니다.
+Loki 3.7.8은 `/otlp/v1/logs`로 OTLP/HTTP 로그를 받으며 exporter는 `/otlp` base endpoint 뒤에 `/v1/logs`를 붙입니다. Loki에 structured metadata와 호환되는 저장소 설정이 필요합니다. 제거된 Collector `loki` exporter를 사용하면 안 됩니다. Resource attribute `service.name`은 Loki의 `service_name` 레이블이 되고 구조화한 body는 로그 내용으로 남습니다.
 
 Flow 로그, Prometheus 메트릭과 애플리케이션 trace는 서로 다른 신호입니다.
 
@@ -778,19 +778,19 @@ kubectl -n kube-system logs deployment/hubble-relay --since=10m
 
 ## 참고 자료
 
-- [Cilium1.20.1 Hubble setup](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/setup.rst)
-- [Hubble TLS and renewal](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/configuration/tls.rst)
-- [Hubble export](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/configuration/export.rst)
-- [Hubble CLI](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/hubble-cli.rst)
-- [Hubble CLI1.19.4 release](https://github.com/cilium/hubble/releases/tag/v1.19.4)
-- [Hubble UI](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/hubble-ui.rst)
-- [Metric definitions](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/metrics.rst)
-- [HTTP metric implementation](https://github.com/cilium/cilium/blob/v1.20.1/pkg/hubble/metrics/http/handler.go)
-- [Metric context labels](https://github.com/cilium/cilium/blob/v1.20.1/pkg/hubble/metrics/api/context.go)
-- [Released HTTP workload dashboard](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/files/hubble/dashboards/hubble-l7-http-metrics-by-workload.json)
-- [Released general Hubble dashboard](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/files/hubble/dashboards/hubble-dashboard.json)
-- [Collector0.160 filelog receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/receiver/filelogreceiver/README.md)
-- [Loki3.7.7 OTLP ingestion](https://github.com/grafana/loki/blob/v3.7.7/docs/sources/send-data/otel/_index.md)
-- [Loki3.7.7 OTLP mapping and endpoint](https://github.com/grafana/loki/blob/v3.7.7/docs/sources/shared/otel.md)
-- [Collector JSON parser](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/pkg/stanza/docs/operators/json_parser.md)
+- [Cilium1.20.3 Hubble setup](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/setup.rst)
+- [Hubble TLS and renewal](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/configuration/tls.rst)
+- [Hubble export](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/configuration/export.rst)
+- [Hubble CLI](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/hubble-cli.rst)
+- [Hubble CLI1.20.2 release](https://github.com/cilium/hubble/releases/tag/v1.20.2)
+- [Hubble UI](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/hubble-ui.rst)
+- [Metric definitions](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/metrics.rst)
+- [HTTP metric implementation](https://github.com/cilium/cilium/blob/v1.20.3/pkg/hubble/metrics/http/handler.go)
+- [Metric context labels](https://github.com/cilium/cilium/blob/v1.20.3/pkg/hubble/metrics/api/context.go)
+- [Released HTTP workload dashboard](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/files/hubble/dashboards/hubble-l7-http-metrics-by-workload.json)
+- [Released general Hubble dashboard](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/files/hubble/dashboards/hubble-dashboard.json)
+- [Collector0.162 filelog receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.162.0/receiver/filelogreceiver/README.md)
+- [Loki3.7.8 OTLP ingestion](https://github.com/grafana/loki/blob/v3.7.8/docs/sources/send-data/otel/_index.md)
+- [Loki3.7.8 OTLP mapping and endpoint](https://github.com/grafana/loki/blob/v3.7.8/docs/sources/shared/otel.md)
+- [Collector JSON parser](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.162.0/pkg/stanza/docs/operators/json_parser.md)
 - [Google SRE Golden Signals](https://sre.google/sre-book/monitoring-distributed-systems/)

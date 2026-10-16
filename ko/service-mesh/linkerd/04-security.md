@@ -1,6 +1,6 @@
 # Linkerd 보안
 
-> **검토 기준**: 2026년 9월 11일 · Linkerd edge-26.9.1 · cert-manager 예제는 1.21.1 기준 검증
+> **검토 기준**: 2026년 10월 16일 · Linkerd edge-26.10.1 · cert-manager 예제는 1.21.2 기준 검증
 
 Linkerd는 proxy가 처리하는 트래픽에 workload 인증, 전송 암호화, inbound 인가를 제공합니다. Mesh 등록, 정책, 인증서 수명주기, 애플리케이션 보안은 별도로 설계해야 합니다. 지원되는 Kubernetes/Gateway API 조합은 [설치 가이드](01-installation.md)를 따르며 아래 예제는 해당 설치와 기존 애플리케이션을 전제로 합니다.
 
@@ -403,7 +403,7 @@ identity:
 # Merge into the complete reviewed values from the installation guide.
 # In this option, Helm owns the public trust bundle; cert-manager owns the issuer.
 helm template linkerd-control-plane linkerd-edge/linkerd-control-plane \
-  --version 2026.9.1 -n linkerd \
+  --version 2026.10.1 -n linkerd \
   -f reviewed-values.yaml -f managed-issuer-values.yaml \
   --set-file identityTrustAnchorsPEM=ca.crt > reviewed-control-plane.yaml
 ```
@@ -505,7 +505,7 @@ HTTP 인가 거부 counter는 애플리케이션 로그인 실패와 다릅니�
 - [수동 credential 교체](https://linkerd.io/docs/tasks/manually-rotating-control-plane-tls-credentials/)
 - [관리되는 credential 교체](https://linkerd.io/docs/tasks/automatically-rotating-control-plane-tls-credentials/)
 - [Proxy metrics](https://linkerd.io/docs/reference/proxy-metrics/)
-- [해당 버전 Identity reload/issuer 지표 구현](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/pkg/identity/service.go)
-- [해당 버전 chart의 credential 소유권](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/charts/linkerd-control-plane/templates/identity.yaml)
+- [해당 버전 Identity reload/issuer 지표 구현](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/pkg/identity/service.go)
+- [해당 버전 chart의 credential 소유권](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/charts/linkerd-control-plane/templates/identity.yaml)
 - [Cert-manager CA Issuer](https://cert-manager.io/docs/configuration/ca/)와 [Vault 인증](https://cert-manager.io/docs/configuration/vault/)
 - [Vault intermediate 서명](https://developer.hashicorp.com/vault/api-docs/secret/pki#sign-intermediate)

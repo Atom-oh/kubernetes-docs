@@ -1,7 +1,7 @@
 # gRPC Support
 
-> **Verification baseline**: Istio 1.31.0, Kubernetes 1.32–1.36
-> **Last reviewed**: September 11, 2026
+> **Verification baseline**: Istio 1.31.0, Kubernetes 1.32–1.37
+> **Last reviewed**: October 16, 2026
 
 Istio can route plaintext gRPC HTTP/2 requests by RPC path and metadata, and load-balance new RPCs across eligible endpoints. A long-lived stream stays with its selected backend; scaling replicas does not migrate an existing stream.
 

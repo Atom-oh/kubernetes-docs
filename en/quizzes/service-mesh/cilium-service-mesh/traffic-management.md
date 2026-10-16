@@ -1,6 +1,6 @@
 # Cilium Service Mesh Traffic Management Quiz
 
-Reviewed against Cilium 1.20.1/Gateway API 1.6.1. See the [traffic guide](../../../service-mesh/cilium-service-mesh/02-traffic-management.md) for complete examples and primary references.
+Reviewed against Cilium 1.20.3/Gateway API 1.6.3. See the [traffic guide](../../../service-mesh/cilium-service-mesh/02-traffic-management.md) for complete examples and primary references.
 
 ### 1. Which Envoy filter is used to define HTTP routing rules in CiliumEnvoyConfig?
 
@@ -34,7 +34,7 @@ HTTP policy can match method, path and headers, including structured headerMatch
 
 </details>
 
-### 3. How should Kafka topic-level access be controlled with Cilium 1.20.1?
+### 3. How should Kafka topic-level access be controlled with Cilium 1.20.3?
 
 - **A.** Use Cilium rules.kafka unchanged
 - **B.** Use an HTTP body rule to inspect Kafka messages
@@ -46,7 +46,7 @@ HTTP policy can match method, path and headers, including structured headerMatch
 
 **Answer: C. Use Kafka broker ACLs, with L4 policy separately controlling reachability**
 
-Cilium 1.20.1's L7 rules schema supports HTTP and DNS, and rejects the old rules.kafka object. Use L4 network policy for broker reachability and Kafka TLS/SASL plus broker ACLs for topics, groups and operations. Removing obsolete Kafka rules does not preserve topic-level authorization.
+Cilium 1.20.3's L7 rules schema supports HTTP and DNS, and rejects the old rules.kafka object. Use L4 network policy for broker reachability and Kafka TLS/SASL plus broker ACLs for topics, groups and operations. Removing obsolete Kafka rules does not preserve topic-level authorization.
 
 </details>
 

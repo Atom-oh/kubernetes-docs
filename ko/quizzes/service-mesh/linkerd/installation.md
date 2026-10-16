@@ -1,12 +1,12 @@
 # Linkerd 설치 퀴즈
 
-2026년 9월 11일 edge-26.9.1·chart 2026.9.1 기준으로 검토했습니다. 전체 전제와 검증 경계는 [설치 가이드](../../../service-mesh/linkerd/01-installation.md)를 확인하세요.
+2026년 10월 16일 edge-26.10.1·chart 2026.10.1 기준으로 검토했습니다. 전체 전제와 검증 경계는 [설치 가이드](../../../service-mesh/linkerd/01-installation.md)를 확인하세요.
 
 ### 1. 이 가이드의 정확한 공개 CLI를 어떻게 확보하나요?
 
 A. linkerd라는 package는 모두 같은 버전이라고 가정한다
 
-B. OS/architecture에 맞는 공식 edge-26.9.1 asset을 선택하고 checksum·client version을 확인한다
+B. OS/architecture에 맞는 공식 edge-26.10.1 asset을 선택하고 checksum·client version을 확인한다
 
 C. kubectl install linkerd를 사용한다
 
@@ -154,7 +154,7 @@ D. 기존 모든 앱 Pod에 proxy 주입
 
 </details>
 
-### 9. edge-26.9.1의 tracing에는 어떤 접근이 맞나요?
+### 9. edge-26.10.1의 tracing에는 어떤 접근이 맞나요?
 
 A. 모든 확장이 CLI에 있으므로 linkerd jaeger install 실행
 

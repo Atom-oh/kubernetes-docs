@@ -1,7 +1,7 @@
 # Cilium Service Mesh 모범 사례
 
-> **검토 기준**: Cilium 1.20.1, Cilium CLI 0.20.0.
-> **최종 검토**: 2026년 9월 11일. Kubernetes, EKS, 선택 구성 요소의 호환성은 [설치 가이드](./README.md)에서 각각 확인합니다.
+> **검토 기준**: Cilium 1.20.3, Cilium CLI 0.20.1.
+> **최종 검토**: 2026년 10월 16일. Kubernetes, EKS, 선택 구성 요소의 호환성은 [설치 가이드](./README.md)에서 각각 확인합니다.
 
 ## 개요
 
@@ -108,7 +108,7 @@ authentication:
 
 [보안 가이드](./03-security.md)의 커널·포트·SPIRE 저장소·신원·정책 전제를 충족한 뒤 사용합니다. SPIRE 설정 외에 `authentication.enabled`가 필요하며 정책 규칙도 인증을 요구해야 실제로 강제됩니다. WireGuard는 적용 대상인 노드 간 트래픽을 보호합니다. SPIRE out-of-band 인증이 각 애플리케이션 연결을 Istio 방식의 mTLS 세션으로 바꾸지는 않습니다. `nodeEncryption`은 별도 조건을 확인해야 하므로 예제에서는 false를 유지합니다.
 
-Cilium 1.20.1에는 보안 가이드에서 별도로 다루는 **Beta ztunnel 워크로드 mTLS**도 있습니다. 기본 내부 CA, 네임스페이스 등록, TCP/HBONE·정책 제약은 SPIRE out-of-band 경로와 다릅니다. 명시적인 설계를 선택해야 하며 체크박스 문구나 Helm 플래그만으로 동등한 보안 범위가 입증되지는 않습니다.
+Cilium 1.20.3에는 보안 가이드에서 별도로 다루는 **Beta ztunnel 워크로드 mTLS**도 있습니다. 기본 내부 CA, 네임스페이스 등록, TCP/HBONE·정책 제약은 SPIRE out-of-band 경로와 다릅니다. 명시적인 설계를 선택해야 하며 체크박스 문구나 Helm 플래그만으로 동등한 보안 범위가 입증되지는 않습니다.
 
 ## 사이징 가이드라인
 
@@ -695,14 +695,14 @@ Grafana UI에 가져오는 독립 classic dashboard JSON이며 HTTP API wrapper�
 
 ### 롤아웃 전 검토
 
-Cilium이 시험한 업그레이드·롤백 경로는 **인접한 minor 릴리스 사이**입니다. 현재 minor의 최신 patch로 먼저 올리고 거치는 각 릴리스의 필수 변경을 읽습니다. 아래 대상은 1.20.1이며 과거 1.16/1.17 예제에서 직접 건너뛰는 지원 경로가 아닙니다.
+Cilium이 시험한 업그레이드·롤백 경로는 **인접한 minor 릴리스 사이**입니다. 현재 minor의 최신 patch로 먼저 올리고 거치는 각 릴리스의 필수 변경을 읽습니다. 아래 대상은 1.20.3이며 과거 1.16/1.17 예제에서 직접 건너뛰는 지원 경로가 아닙니다.
 
 `upgradeCompatibility`에는 임의의 현재·대상 버전이 아닌 **최초 설치 minor**를 기록합니다. 기존 사용자 values를 내보내고 이름 변경·제거된 키를 검토한 후 `reviewed-values.yaml`로 저장합니다. 민감한 내용이 포함될 수 있으므로 해당 파일과 내보낸 값을 보호합니다.
 
 ```bash
 set -eu
 umask 077
-CILIUM_TARGET_VERSION=1.20.1
+CILIUM_TARGET_VERSION=1.20.3
 : "${INITIAL_CILIUM_MINOR:?Set the initial installed Cilium minor, for example 1.19}"
 helm get values cilium -n kube-system -o yaml > old-values.yaml
 helm history cilium -n kube-system
@@ -822,7 +822,7 @@ cluster:
 
 `enableAWSSecurityGroups`는 차트 값이 아닙니다. ENI 보안 그룹은 지원되는 `eni.nodeSpec.securityGroups`/`securityGroupTags`나 문서화된 상속 동작으로 정합니다. Kubernetes 정책을 AWS SecurityGroupPolicy로 자동 변환하는 기능이 아닙니다.
 
-**일반 ENI IPAM 문서는 IPv6를 Beta로 설명**하며 dual-stack 서브넷·prefix·IAM 전제를 제공합니다. 반면 1.20.1 EKS 설치 페이지에는 IPv4 전용 문구가 남아 있습니다. 여기서는 IPv4 예제를 사용하고 이 근거 차이를 기록합니다. Beta 기능을 없다고 하거나 일반 문서만으로 완전히 검증한 EKS IPv6 절차라고 주장하지 않습니다.
+**일반 ENI IPAM 문서는 IPv6를 Beta로 설명**하며 dual-stack 서브넷·prefix·IAM 전제를 제공합니다. 반면 1.20.3 EKS 설치 페이지에는 IPv4 전용 문구가 남아 있습니다. 여기서는 IPv4 예제를 사용하고 이 근거 차이를 기록합니다. Beta 기능을 없다고 하거나 일반 문서만으로 완전히 검증한 EKS IPv6 절차라고 주장하지 않습니다.
 
 EKS Auto Mode와 Fargate에는 이 대체 CNI DaemonSet 설치 경로를 적용할 수 없습니다. EKS Hybrid Nodes는 별도 AWS 지원 Cilium 안내·호환성 범위를 따르며, 그 지원 주장을 임의의 자체 관리 EC2 Cilium 릴리스로 확장하지 않습니다.
 
@@ -842,19 +842,19 @@ EKS는 **2025년 11월 26일** EKS 최적화 AL2 AMI 공개를 종료했고 마�
 
 완전한 전제와 예제는 [보안](./03-security.md), [관측성](./04-observability.md), [Ingress/Gateway](./05-ingress-gateway.md) 가이드를 이어서 확인합니다.
 
-- [Cilium 1.20.1 Helm values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml)
-- [System requirements](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/system_requirements.rst)
-- [Performance tuning](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/performance/tuning.rst)
-- [Upgrade procedure](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/upgrade.rst)
-- [Upgrade and rollback restrictions](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/upgrade-warning.rst)
-- [Istio integration](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/istio.rst)
-- [CNI migration](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/k8s-install-migration.rst)
-- [CEC resource parser](https://github.com/cilium/cilium/blob/v1.20.1/pkg/ciliumenvoyconfig/cec_resource_parser.go)
-- [ENI allocation, security groups and permissions](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/eni.rst)
-- [EKS installation caveats](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/requirements-eks.rst)
+- [Cilium 1.20.3 Helm values](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/values.yaml)
+- [System requirements](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/operations/system_requirements.rst)
+- [Performance tuning](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/operations/performance/tuning.rst)
+- [Upgrade procedure](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/operations/upgrade.rst)
+- [Upgrade and rollback restrictions](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/operations/upgrade-warning.rst)
+- [Istio integration](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/istio.rst)
+- [CNI migration](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/installation/k8s-install-migration.rst)
+- [CEC resource parser](https://github.com/cilium/cilium/blob/v1.20.3/pkg/ciliumenvoyconfig/cec_resource_parser.go)
+- [ENI allocation, security groups and permissions](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/ipam/eni.rst)
+- [EKS installation caveats](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/installation/requirements-eks.rst)
 - [EKS AL2 AMI retirement](https://docs.aws.amazon.com/eks/latest/userguide/eks-ami-deprecation-faqs.html)
 - [EKS alternate CNI support](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html)
-- [Cilium Envoy diagnostics](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/cmdref/cilium-dbg_envoy_admin_config.md)
+- [Cilium Envoy diagnostics](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/cmdref/cilium-dbg_envoy_admin_config.md)
 - [Linux TCP sysctls](https://docs.kernel.org/networking/ip-sysctl.html)
 - [Kubernetes disruption budgets](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)
 - [IAM resource-level permission troubleshooting](https://docs.aws.amazon.com/IAM/latest/UserGuide/troubleshoot_policies.html)

@@ -1,6 +1,6 @@
 # Linkerd Traffic Management
 
-> **Last Updated**: September 11, 2026 · Linkerd edge-26.9.1 · Gateway API 1.5.1 · Flagger 1.45.0
+> **Last Updated**: October 16, 2026 · Linkerd edge-26.10.1 · Gateway API 1.5.1 · Flagger 1.45.0
 
 Current Linkerd routing uses Gateway API resources and supported annotations. ServiceProfiles remain a compatibility interface, while TrafficSplit/linkerd-smi is deprecated. These paths are not interchangeable: an existing ServiceProfile takes precedence over outbound HTTPRoutes for the same Service and prevents the newer retry/timeout/failure-accrual configuration from taking effect.
 
@@ -247,7 +247,7 @@ This example requires **no retry annotations on the parent Service**, no conflic
 
 The annotations configure at most two retries (up to three attempts), a 400ms retry timeout and a 2s whole-request timeout. The request deadline includes the attempt budget and can terminate the operation before all retries occur. In the current reference, requests with bodies larger than 64KiB are not retried.
 
-**Do not use retry.linkerd.io/limit:"0" as a disable switch in edge-26.9.1.** See the [released parser](https://github.com/linkerd/linkerd2/blob/edge-26.9.1/policy-controller/k8s/index/src/outbound/index/http.rs). The released parser filters zero into an unspecified value; with retry conditions present it falls back to one retry. An empty HTTP retry-condition string is also not a supported no-retry policy. Keep mixed-method Service defaults free of retry configuration and attach opt-in policy only to the intended read routes.
+**Do not use retry.linkerd.io/limit:"0" as a disable switch in edge-26.10.1.** See the [released parser](https://github.com/linkerd/linkerd2/blob/edge-26.10.1/policy-controller/k8s/index/src/outbound/index/http.rs). The released parser filters zero into an unspecified value; with retry conditions present it falls back to one retry. An empty HTTP retry-condition string is also not a supported no-retry policy. Keep mixed-method Service defaults free of retry configuration and attach opt-in policy only to the intended read routes.
 
 Route retry annotations override the Service retry configuration as a group, and route timeout annotations similarly override Service timeout annotations. ServiceProfiles supersede these annotations. Linkerd can optionally honor l5d-* per-request headers when explicitly enabled; do not accept policy overrides from untrusted clients or treat those headers as authentication.
 

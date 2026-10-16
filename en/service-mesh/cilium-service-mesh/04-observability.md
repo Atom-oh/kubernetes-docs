@@ -1,6 +1,6 @@
 # Cilium Service Mesh Observability
 
-> **Last Updated**: September 11, 2026 · Cilium/chart 1.20.1 · Hubble CLI 1.19.4 · Collector Contrib 0.160.0 · Loki 3.7.7. See the [overview](./README.md) for Kubernetes/EKS and platform requirements.
+> **Last Updated**: October 16, 2026 · Cilium/chart 1.20.3 · Hubble CLI 1.20.2 · Collector Contrib 0.162.0 · Loki 3.7.8. See the [overview](./README.md) for Kubernetes/EKS and platform requirements.
 
 ## Overview
 
@@ -30,7 +30,7 @@ An observation buffer is not a long-term log store. Full buffers, missing nodes,
 
 ### Installation via Helm
 
-Merge this overlay with the installation's reviewed values for Cilium 1.20.1. It exposes metrics and enables Relay/UI with port-forward access. It does not install Prometheus, Grafana, Collector or Loki:
+Merge this overlay with the installation's reviewed values for Cilium 1.20.3. It exposes metrics and enables Relay/UI with port-forward access. It does not install Prometheus, Grafana, Collector or Loki:
 
 ```yaml
 prometheus:
@@ -82,7 +82,7 @@ This Unix example pins the release, selects Linux/macOS and amd64/arm64, and sto
 
 ```bash
 set -eu
-HUBBLE_VERSION=v1.19.4
+HUBBLE_VERSION=v1.20.2
 case "$(uname -s)" in
   Linux) HUBBLE_RELEASE_OS=linux ;;
   Darwin) HUBBLE_RELEASE_OS=darwin ;;
@@ -203,7 +203,7 @@ The JSON mapping encodes the 64-bit `latency_ns` value as a **string**. Convert 
 
 HTTP response records carry response status, while request records may have no status yet. A gRPC method can be selected through its HTTP path, but HTTP 200 does not imply application-level gRPC success. Collect RPC outcomes separately where needed.
 
-There is no `--dns-rcode` flag in the selected CLI. Inspect the numeric DNS response code in JSON; 3 denotes NXDOMAIN. The `kafka` CLI filter can read compatible historical data, but it does not restore Kafka L7 processing removed from Cilium 1.20.1. Port 9092 filtering provides L4 observations, not topic/operation inspection.
+There is no `--dns-rcode` flag in the selected CLI. Inspect the numeric DNS response code in JSON; 3 denotes NXDOMAIN. The `kafka` CLI filter can read compatible historical data, but it does not restore Kafka L7 processing removed in Cilium 1.20. Port 9092 filtering provides L4 observations, not topic/operation inspection.
 
 ## Prometheus Metrics
 
@@ -664,7 +664,7 @@ Rotation is local file retention, not durable central storage. Confirm the file 
 
 ### Collector Configuration
 
-The following is a Collector Contrib 0.160.0 **configuration**, not a Deployment. A node-local Collector DaemonSet must be provided with read access to the corresponding host log directory, writable persistent checkpoint storage and `K8S_NODE_NAME` from the downward API.
+The following is a Collector Contrib 0.162.0 **configuration**, not a Deployment. A node-local Collector DaemonSet must be provided with read access to the corresponding host log directory, writable persistent checkpoint storage and `K8S_NODE_NAME` from the downward API.
 
 ```yaml
 extensions:
@@ -726,7 +726,7 @@ Replace the illustrative backend address, tenant and CA path with the actual Lok
 
 The filelog receiver parses the JSON log body and timestamp. Persistent `file_storage` checkpoints retain read offsets; an ephemeral checkpoint volume can change restart behavior. `start_at: end` skips pre-existing content when there is no saved position. It is not a replay/import setting.
 
-Loki 3.7.7 accepts OTLP/HTTP logs at `/otlp/v1/logs`; the exporter appends `/v1/logs` to its `/otlp` base endpoint. Loki must support/enable structured metadata and compatible storage settings. Do not use the removed Collector `loki` exporter. Resource attribute `service.name` becomes the Loki label `service_name`; the structured body remains log content.
+Loki 3.7.8 accepts OTLP/HTTP logs at `/otlp/v1/logs`; the exporter appends `/v1/logs` to its `/otlp` base endpoint. Loki must support/enable structured metadata and compatible storage settings. Do not use the removed Collector `loki` exporter. Resource attribute `service.name` becomes the Loki label `service_name`; the structured body remains log content.
 
 Flow logs, Prometheus metrics and application traces are different signals:
 
@@ -778,19 +778,19 @@ Do not run an unbounded connectivity-test loop merely to populate a graph. Use c
 
 ## References
 
-- [Cilium1.20.1 Hubble setup](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/setup.rst)
-- [Hubble TLS and renewal](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/configuration/tls.rst)
-- [Hubble export](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/configuration/export.rst)
-- [Hubble CLI](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/hubble-cli.rst)
-- [Hubble CLI1.19.4 release](https://github.com/cilium/hubble/releases/tag/v1.19.4)
-- [Hubble UI](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/hubble/hubble-ui.rst)
-- [Metric definitions](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/observability/metrics.rst)
-- [HTTP metric implementation](https://github.com/cilium/cilium/blob/v1.20.1/pkg/hubble/metrics/http/handler.go)
-- [Metric context labels](https://github.com/cilium/cilium/blob/v1.20.1/pkg/hubble/metrics/api/context.go)
-- [Released HTTP workload dashboard](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/files/hubble/dashboards/hubble-l7-http-metrics-by-workload.json)
-- [Released general Hubble dashboard](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/files/hubble/dashboards/hubble-dashboard.json)
-- [Collector0.160 filelog receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/receiver/filelogreceiver/README.md)
-- [Loki3.7.7 OTLP ingestion](https://github.com/grafana/loki/blob/v3.7.7/docs/sources/send-data/otel/_index.md)
-- [Loki3.7.7 OTLP mapping and endpoint](https://github.com/grafana/loki/blob/v3.7.7/docs/sources/shared/otel.md)
-- [Collector JSON parser](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.160.0/pkg/stanza/docs/operators/json_parser.md)
+- [Cilium1.20.3 Hubble setup](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/setup.rst)
+- [Hubble TLS and renewal](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/configuration/tls.rst)
+- [Hubble export](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/configuration/export.rst)
+- [Hubble CLI](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/hubble-cli.rst)
+- [Hubble CLI1.20.2 release](https://github.com/cilium/hubble/releases/tag/v1.20.2)
+- [Hubble UI](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/hubble/hubble-ui.rst)
+- [Metric definitions](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/observability/metrics.rst)
+- [HTTP metric implementation](https://github.com/cilium/cilium/blob/v1.20.3/pkg/hubble/metrics/http/handler.go)
+- [Metric context labels](https://github.com/cilium/cilium/blob/v1.20.3/pkg/hubble/metrics/api/context.go)
+- [Released HTTP workload dashboard](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/files/hubble/dashboards/hubble-l7-http-metrics-by-workload.json)
+- [Released general Hubble dashboard](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/files/hubble/dashboards/hubble-dashboard.json)
+- [Collector0.162 filelog receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.162.0/receiver/filelogreceiver/README.md)
+- [Loki3.7.8 OTLP ingestion](https://github.com/grafana/loki/blob/v3.7.8/docs/sources/send-data/otel/_index.md)
+- [Loki3.7.8 OTLP mapping and endpoint](https://github.com/grafana/loki/blob/v3.7.8/docs/sources/shared/otel.md)
+- [Collector JSON parser](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/v0.162.0/pkg/stanza/docs/operators/json_parser.md)
 - [Google SRE Golden Signals](https://sre.google/sre-book/monitoring-distributed-systems/)

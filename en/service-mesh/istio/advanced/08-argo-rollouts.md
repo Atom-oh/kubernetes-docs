@@ -1,7 +1,7 @@
 # Argo Rollouts and Istio Integration
 
-> **Verification baseline**: Argo Rollouts 1.10.0, Istio 1.31.0, Kubernetes 1.32–1.36
-> **Last reviewed**: September 11, 2026
+> **Verification baseline**: Argo Rollouts 1.10.1, Istio 1.31.0, Kubernetes 1.32–1.37
+> **Last reviewed**: October 16, 2026
 > **Difficulty**: Advanced
 
 Argo Rollouts reconciles replica selection and Istio traffic weights during progressive delivery. Analysis must be configured and supplied with trustworthy observations; installing both controllers alone does not provide an automatic quality gate or guarantee availability.
@@ -546,7 +546,7 @@ Both named routes use the same canary target weight. Match boundaries protect `/
 
 The upstream historical screenshot illustrates Service-level separation, not an integration architecture or a current benchmark:
 
-![Historical Istio Service dashboard showing stable and canary Service metrics](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/traffic-management/istio-service-metrics.png)
+![Historical Istio Service dashboard showing stable and canary Service metrics](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/features/traffic-management/istio-service-metrics.png)
 
 ### 1. Inline Analysis
 
@@ -1003,8 +1003,8 @@ Before an update, verify controllers/CRDs, injection, DNS, image platform, Servi
 - [Experiments](https://argoproj.github.io/argo-rollouts/features/experiment/)
 - [Rollout specification](https://argoproj.github.io/argo-rollouts/features/specification/)
 - [Rollouts FAQ](https://argoproj.github.io/argo-rollouts/FAQ/)
-- [Released 1.10 Istio reconciler](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/rollout/trafficrouting/istio/istio.go)
-- [Released 1.10 analysis failure evaluation](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/analysis/analysis.go)
+- [Released 1.10 Istio reconciler](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/rollout/trafficrouting/istio/istio.go)
+- [Released 1.10 analysis failure evaluation](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/analysis/analysis.go)
 - [Argo CD sync options source](https://raw.githubusercontent.com/argoproj/argo-cd/master/docs/user-guide/sync-options.md)
 - [Traffic Splitting](../traffic-management/04-traffic-splitting.md)
 - [VirtualService](../traffic-management/01-gateway-virtualservice.md)

@@ -1,12 +1,12 @@
 # Linkerd Installation Quiz
 
-Reviewed September 11, 2026 against edge-26.9.1 and charts 2026.9.1. See the [installation guide](../../../service-mesh/linkerd/01-installation.md) for complete prerequisites and validation boundaries.
+Reviewed October 16, 2026 against edge-26.10.1 and charts 2026.10.1. See the [installation guide](../../../service-mesh/linkerd/01-installation.md) for complete prerequisites and validation boundaries.
 
 ### 1. How should you obtain the exact public CLI used in this guide?
 
 A. Assume any package named linkerd is the same version
 
-B. Select the official edge-26.9.1 asset for the OS/architecture, verify its checksum and client version
+B. Select the official edge-26.10.1 asset for the OS/architecture, verify its checksum and client version
 
 C. Use kubectl install linkerd
 
@@ -154,7 +154,7 @@ The command outputs manifests. kubectl apply or the chosen deployment owner perf
 
 </details>
 
-### 9. Which tracing approach applies to edge-26.9.1?
+### 9. Which tracing approach applies to edge-26.10.1?
 
 A. Run linkerd jaeger install because every extension still ships in the CLI
 

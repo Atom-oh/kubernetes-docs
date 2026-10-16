@@ -1,8 +1,8 @@
 # Istio Installation and Initial Setup
 
-> **Last Updated**: October 12, 2026 · Install pin: Istio 1.31.1
+> **Last Updated**: October 16, 2026 · Install pin: Istio 1.31.2
 
-As of October 12, 2026, Istio 1.31.1 is the current 1.31 patch; it fixes a `BackendTLSPolicy` plaintext fallback. The Helm command examples below have been advanced from 1.31.0; that earlier chart render is not a validation of every 1.31.1 value, so render and inspect the selected chart before applying it.
+As of October 16, 2026, Istio 1.31.2 is the current 1.31 patch; it includes the [ISTIO-SECURITY-2026-007](https://istio.io/latest/news/security/istio-security-2026-007/) security fixes as well as the 1.31.1 `BackendTLSPolicy` plaintext fallback fix. The command examples below have been advanced from 1.31.1; an earlier chart render is not a validation of every 1.31.2 value, so render and inspect the selected chart before applying it.
 
 This document covers how to install and initially configure Istio on an Amazon EKS cluster.
 
@@ -25,7 +25,7 @@ Before installing Istio, the following requirements must be met:
 
 ### 1. Amazon EKS Cluster
 
-- **Kubernetes version**: EKS 1.34–1.37 for this Istio 1.31.1 example (reviewed October 12, 2026). Istio 1.31 supports 1.32–1.37; EKS 1.31–1.33 are in extended support and 1.34–1.37 in standard support. Check both the [Istio matrix](https://istio.io/latest/docs/releases/supported-releases/) and [EKS lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html).
+- **Kubernetes version**: EKS 1.34–1.37 for this Istio 1.31.2 example (reviewed October 16, 2026). Istio 1.31 supports 1.32–1.37; EKS 1.31–1.33 are in extended support and 1.34–1.37 in standard support. Check both the [Istio matrix](https://istio.io/latest/docs/releases/supported-releases/) and [EKS lifecycle](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html).
 - **Node type**: Minimum 2 worker nodes (recommended: 3 or more)
 - **Node size**: Minimum 2 vCPU, 4GB RAM (recommended: t3.medium or larger)
 
@@ -70,10 +70,10 @@ istioctl is Istio's official CLI tool and the simplest installation method.
 
 ```bash
 # Download the current 1.31 patch
-curl -fsSL https://istio.io/downloadIstio | ISTIO_VERSION=1.31.1 sh -
+curl -fsSL https://istio.io/downloadIstio | ISTIO_VERSION=1.31.2 sh -
 
 # Add istioctl to PATH
-cd istio-1.31.1
+cd istio-1.31.2
 export PATH=$PWD/bin:$PATH
 
 # Verify installation
@@ -109,7 +109,7 @@ kubectl logs -n istio-system -l app=istiod
 
 ## Installation Using Helm
 
-The 1.31.0 charts rendered during the previous review did not contain an `eks` platform profile. The chart examples below now pin 1.31.1, but this review did not render that patch's chart; inspect the selected chart before install. These examples omit `global.platform=eks` rather than assume a profile exists, and use explicit EKS prerequisites and load-balancer settings.
+The istiod 1.31.0 and 1.31.2 chart archives contain no `eks` platform profile (`files/profile-platform-eks.yaml`; checked October 16, 2026). The chart examples below now pin 1.31.2, but this review did not render that chart; inspect the selected chart before install. These examples omit `global.platform=eks` rather than assume a profile exists, and use explicit EKS prerequisites and load-balancer settings.
 
 Helm is a Kubernetes package manager suitable for GitOps workflows.
 
@@ -133,7 +133,7 @@ kubectl create namespace istio-system
 helm install istio-base istio/base \
   -n istio-system \
   --set defaultRevision=default \
-  --version 1.31.1
+  --version 1.31.2
 ```
 
 ### 3. Install istiod
@@ -144,7 +144,7 @@ istiod is the Istio Control Plane.
 # Install istiod chart
 helm install istiod istio/istiod \
   -n istio-system \
-  --version 1.31.1 \
+  --version 1.31.2 \
   --wait
 ```
 
@@ -159,7 +159,7 @@ helm install istio-ingressgateway istio/gateway \
   -n istio-system \
   --set labels.istio=ingressgateway \
   --set labels.app=istio-ingressgateway \
-  --version 1.31.1 \
+  --version 1.31.2 \
   --wait
 ```
 
@@ -169,7 +169,7 @@ helm install istio-ingressgateway istio/gateway \
 # values.yaml
 global:
   hub: docker.io/istio
-  tag: 1.31.1
+  tag: 1.31.2
 
 autoscaleEnabled: true
 autoscaleMin: 2
@@ -187,7 +187,7 @@ meshConfig:
 # Install using values.yaml file
 helm upgrade --install istiod istio/istiod \
   -n istio-system \
-  --version 1.31.1 \
+  --version 1.31.2 \
   -f values.yaml \
   --wait
 ```
@@ -248,7 +248,7 @@ The component list applies to istioctl. Helm requires installing each chart sepa
 ### Check Profiles
 
 ```bash
-helm show values istio/istiod --version 1.31.1
+helm show values istio/istiod --version 1.31.2
 istioctl manifest generate --set profile=default > default.yaml
 istioctl manifest generate --set profile=demo > demo.yaml
 diff -u default.yaml demo.yaml
@@ -324,7 +324,7 @@ kubectl get validatingwebhookconfiguration
 
 Istio includes a sample application called Bookinfo.
 
-Run these commands from the extracted `istio-1.31.1` directory with the default namespace selected (`kubectl config set-context --current --namespace=default`). For Helm, install the optional gateway above first. The dashboard commands later require separately installed telemetry addons.
+Run these commands from the extracted `istio-1.31.2` directory with the default namespace selected (`kubectl config set-context --current --namespace=default`). For Helm, install the optional gateway above first. The dashboard commands later require separately installed telemetry addons.
 
 ### 1. Enable Automatic Sidecar Injection for Namespace
 

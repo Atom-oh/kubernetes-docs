@@ -16,7 +16,7 @@ Traffic Splitting is one of Istio's most powerful features, enabling Canary depl
 
 ## Traffic Splitting Overview
 
-Reviewed against Istio 1.31.0 and Argo Rollouts 1.10.0. These are alternative examples for a disposable test namespace; do not run several Rollouts with the same selector or let manual scripts/GitOps overwrite Rollouts-managed weights and subset hashes. Install the referenced Services, DestinationRules, AnalysisTemplates, gateway and Prometheus before rollout. The first deployment establishes a stable ReplicaSet; canary steps/analysis exercise a subsequent update. Weight controls request distribution, not a stable percentage of users.
+Reviewed against Istio 1.31.0 and Argo Rollouts 1.10.1. These are alternative examples for a disposable test namespace; do not run several Rollouts with the same selector or let manual scripts/GitOps overwrite Rollouts-managed weights and subset hashes. Install the referenced Services, DestinationRules, AnalysisTemplates, gateway and Prometheus before rollout. The first deployment establishes a stable ReplicaSet; canary steps/analysis exercise a subsequent update. Weight controls request distribution, not a stable percentage of users.
 
 Traffic Splitting uses the `weight` field in VirtualService to distribute traffic between multiple service versions by ratio.
 
@@ -67,10 +67,10 @@ Canary deployment is a strategy that safely validates a new version by deploying
 ```bash
 # Install Argo Rollouts
 kubectl create namespace argo-rollouts
-kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/download/v1.10.0/install.yaml
+kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/download/v1.10.1/install.yaml
 
 # Install Argo Rollouts CLI (optional)
-curl -LO https://github.com/argoproj/argo-rollouts/releases/download/v1.10.0/kubectl-argo-rollouts-linux-amd64
+curl -LO https://github.com/argoproj/argo-rollouts/releases/download/v1.10.1/kubectl-argo-rollouts-linux-amd64
 chmod +x kubectl-argo-rollouts-linux-amd64
 sudo mv kubectl-argo-rollouts-linux-amd64 /usr/local/bin/kubectl-argo-rollouts
 
@@ -1939,13 +1939,13 @@ metadata:
 
 ### Progressive Delivery
 - [Progressive Delivery](https://www.weave.works/blog/what-is-progressive-delivery-all-about)
-- [Argo Rollouts progressive delivery concepts](https://github.com/argoproj/argo-rollouts/blob/v1.10.0/docs/concepts.md)
+- [Argo Rollouts progressive delivery concepts](https://github.com/argoproj/argo-rollouts/blob/v1.10.1/docs/concepts.md)
 
-- [Primary reference 1](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/traffic-management/istio.md)
-- [Primary reference 2](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/analysis/prometheus.md)
-- [Primary reference 3](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/analysis/job.md)
-- [Primary reference 4](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/analysis.md)
-- [Primary reference 5](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.0/docs/features/bluegreen.md)
+- [Primary reference 1](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/features/traffic-management/istio.md)
+- [Primary reference 2](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/analysis/prometheus.md)
+- [Primary reference 3](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/analysis/job.md)
+- [Primary reference 4](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/features/analysis.md)
+- [Primary reference 5](https://raw.githubusercontent.com/argoproj/argo-rollouts/v1.10.1/docs/features/bluegreen.md)
 - [Primary reference 6](https://raw.githubusercontent.com/istio/istio/1.31.0/samples/bookinfo/platform/kube/bookinfo.yaml)
 - [Primary reference 7](https://raw.githubusercontent.com/istio/istio/1.31.0/samples/curl/curl.yaml)
 - [Primary reference 8](https://istio.io/latest/docs/reference/config/annotations/)

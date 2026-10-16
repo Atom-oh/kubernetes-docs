@@ -1,7 +1,7 @@
 # Cilium Service Mesh Best Practices
 
-> **Review baseline**: Cilium 1.20.1 and Cilium CLI 0.20.0.
-> **Last reviewed**: September 11, 2026. Use the [installation guide](./README.md) for the separate Kubernetes, EKS and optional component compatibility checks.
+> **Review baseline**: Cilium 1.20.3 and Cilium CLI 0.20.1.
+> **Last reviewed**: October 16, 2026. Use the [installation guide](./README.md) for the separate Kubernetes, EKS and optional component compatibility checks.
 
 ## Overview
 
@@ -108,7 +108,7 @@ authentication:
 
 Enable it only with the [security guide's](./03-security.md) kernel, ports, SPIRE storage/identity and policy prerequisites. `authentication.enabled` is required in addition to the SPIRE settings. A rule must require authentication to enforce it. WireGuard protects eligible node-to-node traffic; SPIRE-based out-of-band authentication does not turn each application connection into an Istio-style mTLS session. `nodeEncryption` is separately gated and remains false in this example.
 
-Cilium 1.20.1 also has **Beta ztunnel workload mTLS**, documented separately in the security guide. Its default internal CA, namespace enrollment and TCP/HBONE/policy limitations differ from the SPIRE out-of-band path. Choose an explicit design; neither checkbox wording nor a Helm feature flag proves equivalent security coverage.
+Cilium 1.20.3 also has **Beta ztunnel workload mTLS**, documented separately in the security guide. Its default internal CA, namespace enrollment and TCP/HBONE/policy limitations differ from the SPIRE out-of-band path. Choose an explicit design; neither checkbox wording nor a Helm feature flag proves equivalent security coverage.
 
 ## Sizing Guidelines
 
@@ -695,14 +695,14 @@ The health panel counts successfully scraped agent targets, not “healthy Pods.
 
 ### Review Before Rolling Out
 
-Cilium tests upgrades and rollbacks **between consecutive minor releases only**. First update the current minor to its latest patch and read every intervening release's required changes. The target below is 1.20.1; it is not a supported direct jump from the old 1.16/1.17 examples.
+Cilium tests upgrades and rollbacks **between consecutive minor releases only**. First update the current minor to its latest patch and read every intervening release's required changes. The target below is 1.20.3; it is not a supported direct jump from the old 1.16/1.17 examples.
 
 Record the **initially installed minor** for `upgradeCompatibility`, not an arbitrarily selected target/current version. Export existing user values, review renamed/removed keys and save the revised configuration as `reviewed-values.yaml`. Keep this file and exported values private if they contain sensitive material:
 
 ```bash
 set -eu
 umask 077
-CILIUM_TARGET_VERSION=1.20.1
+CILIUM_TARGET_VERSION=1.20.3
 : "${INITIAL_CILIUM_MINOR:?Set the initial installed Cilium minor, for example 1.19}"
 helm get values cilium -n kube-system -o yaml > old-values.yaml
 helm history cilium -n kube-system
@@ -822,7 +822,7 @@ cluster:
 
 `enableAWSSecurityGroups` is not a chart value. ENI security groups come from the supported `eni.nodeSpec.securityGroups`/`securityGroupTags` or the documented inheritance behavior. This is not automatic translation of Kubernetes policies into AWS SecurityGroupPolicy objects.
 
-The **general ENI IPAM reference documents IPv6 as Beta**, including dual-stack subnet/prefix and IAM prerequisites, while the 1.20.1 EKS installation page still says IPv4-only. This example deliberately uses IPv4 and records that source discrepancy. Do not erase the Beta feature or claim a fully validated EKS IPv6 recipe from the general reference alone.
+The **general ENI IPAM reference documents IPv6 as Beta**, including dual-stack subnet/prefix and IAM prerequisites, while the 1.20.3 EKS installation page still says IPv4-only. This example deliberately uses IPv4 and records that source discrepancy. Do not erase the Beta feature or claim a fully validated EKS IPv6 recipe from the general reference alone.
 
 EKS Auto Mode and Fargate do not support this alternate-CNI DaemonSet installation path. EKS Hybrid Nodes use their own AWS-supported Cilium guidance and matrix; do not transfer that support claim to an arbitrary self-managed EC2 Cilium release.
 
@@ -842,19 +842,19 @@ The versioned ENI reference lists base and conditional API permissions. Account 
 
 Continue with the [security](./03-security.md), [observability](./04-observability.md) and [Ingress/Gateway](./05-ingress-gateway.md) guides for their complete prerequisites and examples.
 
-- [Cilium 1.20.1 Helm values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml)
-- [System requirements](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/system_requirements.rst)
-- [Performance tuning](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/performance/tuning.rst)
-- [Upgrade procedure](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/upgrade.rst)
-- [Upgrade and rollback restrictions](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/upgrade-warning.rst)
-- [Istio integration](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/istio.rst)
-- [CNI migration](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/k8s-install-migration.rst)
-- [CEC resource parser](https://github.com/cilium/cilium/blob/v1.20.1/pkg/ciliumenvoyconfig/cec_resource_parser.go)
-- [ENI allocation, security groups and permissions](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/ipam/eni.rst)
-- [EKS installation caveats](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/installation/requirements-eks.rst)
+- [Cilium 1.20.3 Helm values](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/values.yaml)
+- [System requirements](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/operations/system_requirements.rst)
+- [Performance tuning](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/operations/performance/tuning.rst)
+- [Upgrade procedure](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/operations/upgrade.rst)
+- [Upgrade and rollback restrictions](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/operations/upgrade-warning.rst)
+- [Istio integration](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/istio.rst)
+- [CNI migration](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/installation/k8s-install-migration.rst)
+- [CEC resource parser](https://github.com/cilium/cilium/blob/v1.20.3/pkg/ciliumenvoyconfig/cec_resource_parser.go)
+- [ENI allocation, security groups and permissions](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/ipam/eni.rst)
+- [EKS installation caveats](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/installation/requirements-eks.rst)
 - [EKS AL2 AMI retirement](https://docs.aws.amazon.com/eks/latest/userguide/eks-ami-deprecation-faqs.html)
 - [EKS alternate CNI support](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html)
-- [Cilium Envoy diagnostics](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/cmdref/cilium-dbg_envoy_admin_config.md)
+- [Cilium Envoy diagnostics](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/cmdref/cilium-dbg_envoy_admin_config.md)
 - [Linux TCP sysctls](https://docs.kernel.org/networking/ip-sysctl.html)
 - [Kubernetes disruption budgets](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/)
 - [IAM resource-level permission troubleshooting](https://docs.aws.amazon.com/IAM/latest/UserGuide/troubleshoot_policies.html)

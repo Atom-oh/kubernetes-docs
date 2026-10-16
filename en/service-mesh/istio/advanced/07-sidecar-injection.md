@@ -1,7 +1,7 @@
 # Sidecar Injection
 
-> **Verification baseline**: Istio 1.31.0, Kubernetes 1.32–1.36
-> **Last reviewed**: September 11, 2026
+> **Verification baseline**: Istio 1.31.0, Kubernetes 1.32–1.37
+> **Last reviewed**: October 16, 2026
 
 Automatic injection is an admission webhook that modifies newly created Pods. It does not add a running sidecar to existing Pods or edit the Deployment template itself. Manual `istioctl kube-inject` renders an application manifest with the proxy configuration included.
 

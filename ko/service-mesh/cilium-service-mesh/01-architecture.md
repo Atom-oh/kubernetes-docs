@@ -1,6 +1,6 @@
 # Cilium Service Mesh 아키텍처
 
-> **검토 기준**: Cilium 1.20.1, 2026년 9월 11일. 일반 Kubernetes 테스트 범위는 1.33–1.36이며, 해당 릴리스의 EKS CI 범위는 1.33–1.35입니다. 플랫폼·커널·설치 모드별 요건은 별도로 확인해야 합니다. [개요](./README.md)를 참고하세요.
+> **검토 기준**: Cilium 1.20.3, 2026년 10월 16일. 일반 Kubernetes 테스트 범위는 1.33–1.36이며, 해당 릴리스의 EKS CI 범위는 1.33–1.35입니다. 플랫폼·커널·설치 모드별 요건은 별도로 확인해야 합니다. [개요](./README.md)를 참고하세요.
 
 ## 개요
 
@@ -77,7 +77,7 @@ loadBalancer:
 | DSR | `loadBalancer.mode: dsr`로 백엔드가 Service 주소를 사용해 직접 응답할 수 있음. 지원되는 dispatch·라우팅 조합, MTU와 클라우드 네트워크 확인 필요 |
 | 성능 | 알고리즘 조회 특성만으로 전체 요청 지연·처리량·CPU 사용량을 단정할 수 없음 |
 
-Cilium 1.20.1의 DSR option dispatch에는 native routing이 필요합니다. Geneve dispatch는 native 또는 Geneve tunnel routing을 지원하며, VXLAN tunnel routing은 지원되는 DSR 조합이 아닙니다. AWS의 source/destination check도 영향을 줄 수 있습니다. [모드별 요건](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst)을 확인하지 않고 임의의 EKS 설치에 `mode: dsr`를 추가하면 안 됩니다.
+Cilium 1.20.3의 DSR option dispatch에는 native routing이 필요합니다. Geneve dispatch는 native 또는 Geneve tunnel routing을 지원하며, VXLAN tunnel routing은 지원되는 DSR 조합이 아닙니다. AWS의 source/destination check도 영향을 줄 수 있습니다. [모드별 요건](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/kubernetes/kubeproxy-free.rst)을 확인하지 않고 임의의 EKS 설치에 `mode: dsr`를 추가하면 안 됩니다.
 
 ## 공유 Envoy 프록시
 
@@ -130,7 +130,7 @@ kubectl -n kube-system get configmap cilium-config -o yaml
 kubectl -n kube-system logs "$CILIUM_POD" -c cilium-agent --since=10m
 ```
 
-Chart 1.20.1은 `envoy.connectTimeoutSeconds`, `envoy.clusterMaxConnections`, `envoy.clusterMaxPendingRequests`, `envoy.clusterMaxRequests`를 사용합니다. `envoy.connectTimeout`, `maxConnectionsPerHost`, `envoy.cluster.*`, `envoy.proxy.protocol.*` 같은 키로는 해당 기능이 설정되지 않습니다. HTTP/2와 TLS는 임의의 Helm 스위치가 아니라 지원되는 컨트롤러·Envoy API로 구성합니다.
+Chart 1.20.3은 `envoy.connectTimeoutSeconds`, `envoy.clusterMaxConnections`, `envoy.clusterMaxPendingRequests`, `envoy.clusterMaxRequests`를 사용합니다. `envoy.connectTimeout`, `maxConnectionsPerHost`, `envoy.cluster.*`, `envoy.proxy.protocol.*` 같은 키로는 해당 기능이 설정되지 않습니다. HTTP/2와 TLS는 임의의 Helm 스위치가 아니라 지원되는 컨트롤러·Envoy API로 구성합니다.
 
 ## CRD 모델
 
@@ -385,7 +385,7 @@ authentication:
 
 ### 별도의 ztunnel 암호화 베타
 
-Cilium 1.20.1에는 `encryption.type: ztunnel`로 선택하는 별도의 [ztunnel 투명 암호화 베타](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/encryption-ztunnel.rst)도 있습니다. Namespace 등록으로 TCP 워크로드 mTLS를 제공하며 양쪽 엔드포인트가 모두 등록되어야 합니다. ClusterMesh와 hostNetwork Pod는 지원하지 않고, 릴리스 문서는 이 경로에서 HBONE 포트 15008을 대상으로 하는 경우 외에는 일반 L4 정책이 동작하지 않는다고 명시합니다. 별도의 CA·bootstrap 요건을 가진 배포 선택지입니다.
+Cilium 1.20.3에는 `encryption.type: ztunnel`로 선택하는 별도의 [ztunnel 투명 암호화 베타](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/encryption-ztunnel.rst)도 있습니다. Namespace 등록으로 TCP 워크로드 mTLS를 제공하며 양쪽 엔드포인트가 모두 등록되어야 합니다. ClusterMesh와 hostNetwork Pod는 지원하지 않고, 릴리스 문서는 이 경로에서 HBONE 포트 15008을 대상으로 하는 경우 외에는 일반 L4 정책이 동작하지 않는다고 명시합니다. 별도의 CA·bootstrap 요건을 가진 배포 선택지입니다.
 
 위 숫자 SPIFFE Identity 예시는 out-of-band 인증에 해당합니다. Ztunnel 통합은 별도의 namespace/service-account 워크로드 Identity 모델을 사용하고 기본 CA 선택지는 Cilium 내부 CA이므로 이 기본 구성에 SPIRE가 필수인 것은 아닙니다.
 
@@ -458,7 +458,7 @@ envoy:
   clusterMaxRequests: 10000
 ```
 
-Requests/limits와 worker 4개는 예시이며 노드 용량과 측정 부하에 맞춰야 합니다. `envoy.extraArgs`는 별도 Envoy 프로세스에 worker 옵션을 전달합니다. `envoy.concurrency`는 chart 1.20.1 설정이 아닙니다. Agent 관리 Envoy는 수명 주기가 다릅니다. Cluster 연결·대기 요청 제한은 circuit breaker 설정이며 메시 전체의 글로벌 요청 쿼터가 아닙니다. Listener별 버퍼링은 해당 Envoy 리소스에서 설정하며 `envoy.perConnectionBufferLimitBytes`로 설정하지 않습니다.
+Requests/limits와 worker 4개는 예시이며 노드 용량과 측정 부하에 맞춰야 합니다. `envoy.extraArgs`는 별도 Envoy 프로세스에 worker 옵션을 전달합니다. `envoy.concurrency`는 chart 1.20.3 설정이 아닙니다. Agent 관리 Envoy는 수명 주기가 다릅니다. Cluster 연결·대기 요청 제한은 circuit breaker 설정이며 메시 전체의 글로벌 요청 쿼터가 아닙니다. Listener별 버퍼링은 해당 Envoy 리소스에서 설정하며 `envoy.perConnectionBufferLimitBytes`로 설정하지 않습니다.
 
 ## 다음 단계
 
@@ -469,19 +469,19 @@ Requests/limits와 worker 4개는 예시이며 노드 용량과 측정 부하에
 
 ## 참고 자료
 
-- [Cilium 1.20.1 architecture and Envoy](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/proxy/envoy.rst)
-- [kube-proxy replacement, Maglev, DSR and socket LB](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/kubernetes/kubeproxy-free.rst)
-- [Released datapath policy checks](https://github.com/cilium/cilium/blob/v1.20.1/bpf/bpf_lxc.c)
-- [Routing and encapsulation](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/concepts/routing.rst)
-- [eBPF performance options and limitations](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/operations/performance/tuning.rst)
-- [BPF map capacity](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/ebpf/maps.rst)
-- [Cilium Operator](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/internals/cilium_operator.rst)
-- [Envoy traffic-management example](https://github.com/cilium/cilium/blob/v1.20.1/examples/kubernetes/servicemesh/envoy/envoy-traffic-management-test.yaml)
-- [CEC resource parser](https://github.com/cilium/cilium/blob/v1.20.1/pkg/ciliumenvoyconfig/cec_resource_parser.go)
-- [CEC schema](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumenvoyconfigs.yaml)
-- [CNP schema](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
-- [Helm 1.20.1 values](https://github.com/cilium/cilium/blob/v1.20.1/install/kubernetes/cilium/values.yaml)
-- [Identity-based security](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/security/network/identity.rst)
-- [SPIFFE ID construction](https://github.com/cilium/cilium/blob/v1.20.1/pkg/auth/spire/certificate_provider.go)
-- [Mutual authentication status and limitations](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
-- [Envoy 1.37.5 local rate-limit API](https://github.com/envoyproxy/envoy/blob/v1.37.5/api/envoy/extensions/filters/http/local_ratelimit/v3/local_rate_limit.proto)
+- [Cilium 1.20.3 architecture and Envoy](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/proxy/envoy.rst)
+- [kube-proxy replacement, Maglev, DSR and socket LB](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/kubernetes/kubeproxy-free.rst)
+- [Released datapath policy checks](https://github.com/cilium/cilium/blob/v1.20.3/bpf/bpf_lxc.c)
+- [Routing and encapsulation](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/concepts/routing.rst)
+- [eBPF performance options and limitations](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/operations/performance/tuning.rst)
+- [BPF map capacity](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/ebpf/maps.rst)
+- [Cilium Operator](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/internals/cilium_operator.rst)
+- [Envoy traffic-management example](https://github.com/cilium/cilium/blob/v1.20.3/examples/kubernetes/servicemesh/envoy/envoy-traffic-management-test.yaml)
+- [CEC resource parser](https://github.com/cilium/cilium/blob/v1.20.3/pkg/ciliumenvoyconfig/cec_resource_parser.go)
+- [CEC schema](https://github.com/cilium/cilium/blob/v1.20.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumenvoyconfigs.yaml)
+- [CNP schema](https://github.com/cilium/cilium/blob/v1.20.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
+- [Helm 1.20.3 values](https://github.com/cilium/cilium/blob/v1.20.3/install/kubernetes/cilium/values.yaml)
+- [Identity-based security](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/security/network/identity.rst)
+- [SPIFFE ID construction](https://github.com/cilium/cilium/blob/v1.20.3/pkg/auth/spire/certificate_provider.go)
+- [Mutual authentication status and limitations](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [Envoy 1.38.6 local rate-limit API](https://github.com/envoyproxy/envoy/blob/v1.38.6/api/envoy/extensions/filters/http/local_ratelimit/v3/local_rate_limit.proto)

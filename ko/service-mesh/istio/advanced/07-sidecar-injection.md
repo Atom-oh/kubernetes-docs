@@ -1,7 +1,7 @@
 # Sidecar Injection
 
-> **검증 기준**: Istio 1.31.0, Kubernetes 1.32–1.36
-> **마지막 검토**: 2026년 9월 11일
+> **검증 기준**: Istio 1.31.0, Kubernetes 1.32–1.37
+> **마지막 검토**: 2026년 10월 16일
 
 자동 주입은 새로 생성되는 Pod를 수정하는 admission webhook입니다. 기존 실행 중인 Pod에 sidecar를 추가하거나 Deployment template 자체를 수정하지 않습니다. 수동 `istioctl kube-inject`는 프록시 구성이 포함된 애플리케이션 manifest를 렌더링합니다.
 

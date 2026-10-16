@@ -1,6 +1,6 @@
 # Cilium Service Mesh 관측성 퀴즈
 
-Cilium 1.20.1/Hubble CLI 1.19.4 기준입니다. 검증한 명령, 메트릭 정의와 제한은 [관측성 본문](../../../service-mesh/cilium-service-mesh/04-observability.md)을 참고하세요.
+Cilium 1.20.3/Hubble CLI 1.20.2 기준입니다. 검증한 명령, 메트릭 정의와 제한은 [관측성 본문](../../../service-mesh/cilium-service-mesh/04-observability.md)을 참고하세요.
 
 ### 1. Hubble의 주요 구성 요소가 아닌 것은?
 
@@ -190,6 +190,6 @@ json과 jsonpb는 별칭입니다. Protobuf JSON은 latency_ns 같은 64비트 �
 
 **정답: B. Hubble 파일 내보내기와 filelog receiver를 사용한 뒤 지원 log exporter로 전달**
 
-Cilium 1.20.1은 flow 로그의 파일 내보내기를 문서화합니다. Filelog receiver로 해당 파일을 수집하고 OTLP/HTTP 등의 지원 exporter로 Loki에 로그를 보낼 수 있습니다. 메트릭·애플리케이션 trace는 별도 수집 경로를 사용하며 기존 Hubble opentelemetry values나 제거된 Collector jaeger/loki exporter로 대체되는 것은 아닙니다.
+Cilium 1.20.3은 flow 로그의 파일 내보내기를 문서화합니다. Filelog receiver로 해당 파일을 수집하고 OTLP/HTTP 등의 지원 exporter로 Loki에 로그를 보낼 수 있습니다. 메트릭·애플리케이션 trace는 별도 수집 경로를 사용하며 기존 Hubble opentelemetry values나 제거된 Collector jaeger/loki exporter로 대체되는 것은 아닙니다.
 
 </details>

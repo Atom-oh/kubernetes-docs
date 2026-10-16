@@ -1,7 +1,7 @@
 # Zone-Aware Argo Rollouts
 
-> **검증 기준**: Istio 1.31.0, Argo Rollouts 1.10.0, Kubernetes 1.32–1.36
-> **마지막 검토**: 2026년 9월 11일
+> **검증 기준**: Istio 1.31.0, Argo Rollouts 1.10.1, Kubernetes 1.32–1.37
+> **마지막 검토**: 2026년 10월 16일
 > **난이도**: 고급
 
 이 가이드는 AZ별 독립 canary와 cross-AZ failover를 구분합니다. 본문은 client cohort가 한 zone의 stable/canary Service를 선택하는 **zone 라우팅·격리 설계 예제**입니다. 해당 endpoint가 사라졌을 때 다른 zone으로 자동 failover하는 기능은 구현하지 않습니다.

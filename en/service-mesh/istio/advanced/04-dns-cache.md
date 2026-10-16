@@ -1,7 +1,7 @@
 # DNS Proxy and DNS Caching
 
-> **Verification baseline**: Istio 1.31.0, Kubernetes 1.32–1.36
-> **Last reviewed**: September 11, 2026
+> **Verification baseline**: Istio 1.31.0, Kubernetes 1.32–1.37
+> **Last reviewed**: October 16, 2026
 
 Optimize external service access performance and control DNS lookups through Istio's DNS management features.
 
