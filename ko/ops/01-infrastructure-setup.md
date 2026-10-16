@@ -1,7 +1,7 @@
 # 인프라 구성 기초
 
-> **검증 환경**: Terraform 1.15.7, AWS Provider 6.64.0, EKS module 21.25.0, VPC module 6.7.2, Pod Identity module 2.9.0
-> **마지막 검토**: 2026년 9월 11일. 로컬 schema/mock-plan 검증이며 실제 AWS 배포를 수행한 결과는 아닙니다.
+> **검증 환경**: Terraform 1.16.6, AWS Provider 6.69.1, EKS module 21.29.0, VPC module 6.7.3, Pod Identity module 2.9.0
+> **마지막 검토**: 2026년 10월 16일. 로컬 schema/mock-plan 검증이며 실제 AWS 배포를 수행한 결과는 아닙니다.
 
 < [이전: 목차](./README.md) | [목차](./README.md) | [다음: NLB 가중치 라우팅](02-infrastructure-advanced.md) >
 
@@ -126,7 +126,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -300,7 +300,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -401,7 +401,7 @@ locals {
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "6.7.2"
+  version = "6.7.3"
 
   name = "${var.project_name}-${var.environment}-vpc"
   cidr = var.vpc_cidr
@@ -497,7 +497,7 @@ module "vpc" {
 # VPC Endpoints (프라이빗 EKS 통신용)
 module "vpc_endpoints" {
   source  = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
-  version = "6.7.2"
+  version = "6.7.3"
 
   vpc_id = module.vpc.vpc_id
 
@@ -684,7 +684,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -834,7 +834,7 @@ variable "cluster_endpoint_public_access_cidrs" {
 # Blue deployment, multi-AZ baseline
 module "eks_blue" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "21.25.0"
+  version = "21.29.0"
 
   count = var.enable_blue_cluster ? 1 : 0
 
@@ -905,7 +905,7 @@ module "eks_blue" {
 # Green deployment, multi-AZ baseline
 module "eks_green" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "21.25.0"
+  version = "21.29.0"
 
   count = var.enable_green_cluster ? 1 : 0
 
@@ -1117,7 +1117,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }

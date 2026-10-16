@@ -102,7 +102,7 @@ The signed annotation is not cryptographic verification or approval. ArgoCD sync
 
 ---
 
-7. Which controller ServiceMonitor port and counter apply in Pipelines 1.16?
+7. Which controller ServiceMonitor port and counter apply in Pipelines 1.17?
    - A) metrics / pipelinerun_count
    - B) http-metrics / tekton_pipelines_controller_pipelinerun_total
    - C) http / automatic counters for every namespace

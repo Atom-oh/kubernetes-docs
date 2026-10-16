@@ -1,8 +1,8 @@
 # Resource optimization: requests, limits and language runtimes
 
-> **Last Updated**: September 11, 2026. Examples were checked with Kubernetes 1.36 schemas,
+> **Last Updated**: October 16, 2026. Examples were checked with Kubernetes 1.36 schemas,
 > Java 21 / Spring Boot 4.1.1, Python 3.12 / Gunicorn 26.2.0,
-> Node.js 24.21, Go 1.27.1 and Rust 1.98 / Tokio 1.53.1.
+> Node.js 24.22, Go 1.27.2 and Rust 1.98 / Tokio 1.53.1.
 
 Do not size workloads from a language name or fixed percentage alone. Measure throughput and
 latency SLOs under representative load, startup, restart, GC and failure conditions. Tune requests,
@@ -179,7 +179,7 @@ recommendation range. Do not directly treat upperBound as the memory limit or un
 the applied value. `RequestsAndLimits` can adjust limits while preserving an existing ratio;
 it does not copy upperBound into limits.
 
-In VPA 1.7.1, deprecated `Auto` behaves as `Recreate`. Check the prerequisites for
+In VPA 1.8.0, deprecated `Auto` behaves as `Recreate`. Check the prerequisites for
 `InPlaceOrRecreate`/`InPlace` and Kubernetes in-place support. `Initial` still changes requests
 on new pods and therefore the denominator of request-based HPA utilization.
 It is not automatically conflict-free with HPA.
@@ -654,7 +654,7 @@ shutdown. Combining Pod replicas and process replicas multiplies worker and memo
 
 Go 1.25 introduced cgroup-aware default GOMAXPROCS on Linux.
 The `go.mod` language version and GODEBUG compatibility defaults matter; use `go 1.25.0` or newer
-for these defaults. This example was tested with Go 1.27.1.
+for these defaults. This example was tested with Go 1.27.2.
 Setting GOMAXPROCS explicitly in the environment or calling positive `runtime.GOMAXPROCS(n)`
 disables automatic updates. Querying with `runtime.GOMAXPROCS(0)` does not change it.
 
@@ -1019,7 +1019,7 @@ This did not deploy EKS, mutate cgroup quotas, force OOM or benchmark performanc
 - [JMX exporter 1.6.0](https://github.com/prometheus/jmx_exporter/releases/tag/1.6.0)
 - [Gunicorn settings](https://gunicorn.org/reference/settings/)
 - [Flask changelog](https://flask.palletsprojects.com/en/stable/changes/)
-- [Node.js 24 CLI](https://nodejs.org/download/release/v24.21.0/docs/api/cli.html)
+- [Node.js 24 CLI](https://nodejs.org/download/release/v24.22.0/docs/api/cli.html)
 - [Tokio runtime builder](https://docs.rs/tokio/1.53.1/tokio/runtime/struct.Builder.html)
 
 ---

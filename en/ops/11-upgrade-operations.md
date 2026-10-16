@@ -1,6 +1,6 @@
 # EKS upgrades: Auto Mode, rollback and blue/green
 
-> **Last Updated**: October 12, 2026. Commands checked on September 12, 2026 with AWS CLI 2.36.44, Pluto 5.24.3 and Velero 1.18.2.
+> **Last Updated**: October 16, 2026. Commands checked on September 12, 2026 (Pluto and Velero on October 16, 2026) with AWS CLI 2.36.44, Pluto 5.24.4 and Velero 1.18.4.
 > The example transition is 1.35 → 1.36; discover actual regional availability.
 
 Plan the control plane, nodes, add-ons, applications and data together.
@@ -77,7 +77,7 @@ pluto detect-helm --target-versions "k8s=v${DOCS_TARGET}.0" -o wide
 pluto detect-api-resources --target-versions "k8s=v${DOCS_TARGET}.0" -o wide
 ```
 
-Pluto 5.24.3 distinguishes exit 0 (clean), 2 (deprecated) and 3 (removed).
+Pluto 5.24.4 distinguishes exit 0 (clean), 2 (deprecated), 3 (removed) and 4 (replacement API unavailable in the target version).
 Do not turn every nonzero result into “not installed” or hide it with `|| true`.
 Its JSON is an object: count `.items // []`; a clean response may omit items.
 `detect-all-in-cluster` is also valid. Check the official release architecture and checksum.
@@ -331,7 +331,7 @@ Review errors/warnings, snapshot/data-mover results, excluded volumes and DB qui
 PVC/PV objects alone are not a complete application/Secret/Service/data backup.
 Filesystem backup requires separate node-agent and volume configuration.
 
-Velero 1.18.2 restore create has no `--dry-run`.
+Velero 1.18.4 restore create has no `--dry-run`.
 `-o yaml/json` prints the Restore without creating it, but performs discovery/Backup reads.
 It is neither completely offline nor a recovery test.
 
@@ -808,8 +808,8 @@ snapshots/restores or application load tests.
 - [Kubernetes release history](https://kubernetes.io/releases/)
 - [Kubernetes patch releases and support period](https://kubernetes.io/releases/patch-releases/)
 - [Kubernetes deprecation policy](https://kubernetes.io/docs/reference/using-api/deprecation-policy/)
-- [Pluto 5.24.3](https://github.com/FairwindsOps/pluto/releases/tag/v5.24.3)
-- [Velero 1.18.2](https://github.com/velero-io/velero/releases/tag/v1.18.2)
+- [Pluto 5.24.4](https://github.com/FairwindsOps/pluto/releases/tag/v5.24.4)
+- [Velero 1.18.4](https://github.com/velero-io/velero/releases/tag/v1.18.4)
 - [NLB listeners](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-listeners.html)
 
 ---

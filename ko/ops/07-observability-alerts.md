@@ -1,7 +1,7 @@
 # Observability 알림 설정
 
-> **검토 기준**: Prometheus 3.14.0, Alertmanager 0.34.0, kube-prometheus-stack 90.1.1 / Prometheus Operator 0.93.1\
-> **마지막 검토**: 2026년 9월 11일. 규칙 평가·템플릿·라우팅·억제 범위와 차트 연결을 로컬에서 검증했습니다. 실제 클러스터 알림 설정이나 Slack·PagerDuty 발송은 실행하지 않았습니다.
+> **검토 기준**: Prometheus 3.15.0, Alertmanager 0.34.1, kube-prometheus-stack 92.9.0 / Prometheus Operator 0.94.1\
+> **마지막 검토**: 2026년 10월 16일. 규칙 평가·템플릿·라우팅·억제 범위와 차트 연결을 로컬에서 검증했습니다. 실제 클러스터 알림 설정이나 Slack·PagerDuty 발송은 실행하지 않았습니다.
 
 < [이전: 스케일링](06-scaling-strategies.md) | [목차](README.md) | [다음: 관측성 분석](08-observability-analysis.md) >
 
@@ -352,7 +352,7 @@ rate(awscni_no_available_ip_addresses[5m])
 
 ### 네트워크 정책 거부
 
-Cilium 1.20.1 Hubble의 drop handler는 drop metrics가 활성화된 경우 `hubble_drop_total`과 reason/protocol 및 선택한 context label을 제공합니다.
+Cilium 1.20.3 Hubble의 drop handler는 drop metrics가 활성화된 경우 `hubble_drop_total`과 reason/protocol 및 선택한 context label을 제공합니다.
 
 ```promql
 sum by (cluster, reason) (
@@ -577,11 +577,11 @@ prometheus:
         regex: prometheus_replica
 ```
 
-기존 release의 **전체 values에 병합**하고 cluster 이름과 실제 접근 URL을 바꿉니다. 이것만으로 기존 설치를 덮어쓰지 않습니다. Chart 90.1.1은 추가 alert relabel 설정을 별도 Secret으로 만들고 Prometheus가 참조하게 합니다.
+기존 release의 **전체 values에 병합**하고 cluster 이름과 실제 접근 URL을 바꿉니다. 이것만으로 기존 설치를 덮어쓰지 않습니다. Chart 92.9.0은 추가 alert relabel 설정을 별도 Secret으로 만들고 Prometheus가 참조하게 합니다.
 
 ```bash
 helm template monitoring prometheus-community/kube-prometheus-stack \
-  --version 90.1.1 --namespace monitoring \
+  --version 92.9.0 --namespace monitoring \
   --values monitoring-values.yaml --values alerting-values.yaml \
   > rendered-monitoring.yaml
 ```

@@ -1,7 +1,7 @@
 # GitOps 자동화: Atlantis, HCP Terraform, Flux, AIOps
 
-> **검토 기준**: Atlantis 0.47.1 / chart 6.15.0, HCP Terraform Provider 0.80.0, Sentinel 0.41.0, Flux 2.9.5(2026년 10월 12일 릴리스 노트 검토 후 Flux 고정 버전을 패치 2.9.6로 갱신, 재실행 안 함)\
-> **마지막 검토**: 2026년 9월 11일. 로컬 CLI·차트·스키마와 테스트 대역으로 확인했습니다. 실제 PR 댓글·Terraform apply·HCP 생성·클러스터 배포·외부 AI 호출은 실행하지 않았습니다.
+> **검토 기준**: Atlantis 0.48.1 / chart 6.16.1, HCP Terraform Provider 0.80.0, Sentinel 0.41.0, Flux 2.9.6(2.9.5 검증 후 패치만 갱신, 재실행 안 함)\
+> **마지막 검토**: 2026년 10월 16일. 로컬 CLI·차트·스키마와 테스트 대역으로 확인했습니다. 실제 PR 댓글·Terraform apply·HCP 생성·클러스터 배포·외부 AI 호출은 실행하지 않았습니다.
 
 < [이전: 멀티클러스터](04-gitops-multi-cluster.md) | [목차](README.md) | [다음: 스케일링](06-scaling-strategies.md) >
 
@@ -65,7 +65,7 @@ fullnameOverride: atlantis
 replicaCount: 1
 image:
   repository: ghcr.io/runatlantis/atlantis
-  tag: v0.47.1
+  tag: v0.48.1
 orgAllowlist: github.com/REPLACE_ORG/eks-infra
 atlantisUrl: https://atlantis.example.com
 defaultTFVersion: 1.15.7
@@ -144,13 +144,13 @@ repoConfig: |
 helm repo add runatlantis https://runatlantis.github.io/helm-charts
 helm repo update
 helm upgrade --install atlantis runatlantis/atlantis \
-  --version 6.15.0 --namespace atlantis --create-namespace \
+  --version 6.16.1 --namespace atlantis --create-namespace \
   --kube-context "$ATLANTIS_CONTEXT" --values atlantis-values.yaml
 ```
 
 이 values는 ClusterIP만 만듭니다. 기존 승인된 HTTPS 프록시/Ingress로 `atlantis.example.com`과 `/events`를 연결한 뒤 GitHub webhook에 동일한 secret을 설정합니다. Webhook 서명 검증과 Web UI 인증은 서로 다른 기능입니다. 이벤트 경로를 임의 인증 우회 경로로 확장하지 않습니다.
 
-차트 6.15.0에서는 `orgAllowlist`, `volumeClaim`, `environment` map, `containerSecurityContext`가 실제 key입니다. PVC에는 checkout·계획·서버 잠금 데이터가 있으므로 ConfigMap을 같은 경로에 read-only로 겹쳐 마운트하지 않습니다. 단일 RWO PVC와 BoltDB 구성에서 replica만 늘려 HA가 된다고 가정하지 않습니다. `Retain` 볼륨의 백업·복구·정리도 따로 관리합니다.
+차트 6.16.1에서는 `orgAllowlist`, `volumeClaim`, `environment` map, `containerSecurityContext`가 실제 key입니다. PVC에는 checkout·계획·서버 잠금 데이터가 있으므로 ConfigMap을 같은 경로에 read-only로 겹쳐 마운트하지 않습니다. 단일 RWO PVC와 BoltDB 구성에서 replica만 늘려 HA가 된다고 가정하지 않습니다. `Retain` 볼륨의 백업·복구·정리도 따로 관리합니다.
 
 ### 서버 정책과 저장소 프로젝트
 

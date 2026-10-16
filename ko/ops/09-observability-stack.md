@@ -1,7 +1,7 @@
 # Observability 스택 구성과 운영
 
-> 검토 기준: 2026-09-11. Loki 3.7.7, Tempo 3.0.3, Alloy 1.19.2,
-> OpenTelemetry Collector Contrib 0.160.0, kube-prometheus-stack 90.1.1.
+> 검토 기준: 2026-10-16. Loki 3.7.8, Tempo 3.0.3, Alloy 1.20.1,
+> OpenTelemetry Collector Contrib 0.162.0, kube-prometheus-stack 92.9.0.
 
 이 장은 로그·트레이스·메트릭의 **수집 경로, 저장, 권한, 보존, 조회 연결**을
 구성합니다. 애플리케이션의 Go/Python 계측과 Java JSON 로그는
@@ -66,7 +66,7 @@ Loki는 스트림 레이블을 인덱싱하고 로그를 청크로 저장합니�
 deploymentMode: Distributed
 loki:
   image:
-    tag: 3.7.7
+    tag: 3.7.8
   auth_enabled: false
   commonConfig:
     replication_factor: 3
@@ -322,7 +322,7 @@ crds:
 
 ```bash
 kubectl apply -f alloy-rbac.yaml
-helm upgrade --install alloy grafana/alloy --version 1.12.1   --namespace observability -f alloy-values.yaml   --set-file alloy.configMap.content=logs.alloy
+helm upgrade --install alloy grafana/alloy --version 1.13.1   --namespace observability -f alloy-values.yaml   --set-file alloy.configMap.content=logs.alloy
 ```
 
 `namespace`·`service_name`·`container`처럼 범위가 제한된 레이블을 우선 사용합니다.
@@ -664,7 +664,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: collector
-          image: otel/opentelemetry-collector-contrib:0.160.0
+          image: otel/opentelemetry-collector-contrib:0.162.0
           args: ["--config=/etc/otel/collector.yaml"]
           resources:
             requests:
@@ -711,7 +711,7 @@ kubectl create configmap otel-collector --namespace observability   --from-file=
 kubectl apply -f collector-deployment.yaml
 ```
 
-Collector Contrib 0.160.0의 자체 메트릭은 `service.telemetry.metrics.readers`로 설정합니다.
+Collector Contrib 0.162.0의 자체 메트릭은 `service.telemetry.metrics.readers`로 설정합니다.
 과거 `metrics.address`, 독립 `rate_limiting` processor와 구형 `loki` exporter를 그대로 사용하지 않습니다.
 배포 파일은 ConfigMap·Service·포트가 연결되어 있으며, 단일 인스턴스 실습이라 `Recreate`를
 사용합니다. 업데이트는 buffer와 인메모리 queue를 잃을 수 있습니다.
@@ -869,7 +869,7 @@ grafana:
 ```
 
 ```bash
-helm upgrade --install prometheus prometheus-community/kube-prometheus-stack   --version 90.1.1 --namespace observability -f prometheus-values.yaml
+helm upgrade --install prometheus prometheus-community/kube-prometheus-stack   --version 92.9.0 --namespace observability -f prometheus-values.yaml
 ```
 
 Exemplar에는 계측 라이브러리의 trace/span 연결, OpenMetrics 노출, Prometheus 저장 기능,
@@ -896,7 +896,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.64.0"
+      version = "6.69.1"
     }
   }
 }
@@ -1053,7 +1053,7 @@ Path("amp-values.yaml").write_text(yaml.safe_dump(overlay, sort_keys=False))
 ```
 
 ```bash
-helm template prometheus prometheus-community/kube-prometheus-stack   --version 90.1.1 --namespace observability   -f prometheus-values.yaml -f amp-values.yaml > amp-rendered.yaml
+helm template prometheus prometheus-community/kube-prometheus-stack   --version 92.9.0 --namespace observability   -f prometheus-values.yaml -f amp-values.yaml > amp-rendered.yaml
 ```
 
 ### HA·queue·보존
@@ -1107,8 +1107,8 @@ Amazon Managed Grafana와 자체 설치 Grafana의 역할 연결 절차도 구�
 - [Promtail lifecycle](https://grafana.com/docs/loki/latest/send-data/promtail/)
 - [Tempo 3 migration](https://grafana.com/docs/tempo/latest/set-up-for-tracing/setup-tempo/migrate-to-3/)
 - [Tempo 3.0.3 Kafka configuration](https://github.com/grafana/tempo/blob/v3.0.3/pkg/ingest/config.go)
-- [Collector tail sampling](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.160.0/processor/tailsamplingprocessor)
-- [Collector batch processor](https://github.com/open-telemetry/opentelemetry-collector/tree/v0.160.0/processor/batchprocessor)
+- [Collector tail sampling](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/v0.162.0/processor/tailsamplingprocessor)
+- [Collector batch processor](https://github.com/open-telemetry/opentelemetry-collector/tree/v0.162.0/processor/batchprocessor)
 - [AMP workspace configuration](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-workspace-configuration.html)
 - [AMP high availability](https://docs.aws.amazon.com/prometheus/latest/userguide/Send-high-availability-data.html)
 

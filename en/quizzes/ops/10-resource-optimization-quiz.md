@@ -94,7 +94,7 @@ Distinguish target, lowerBound, upperBound and uncappedTarget. Initial mode can 
 
 **Answer: B**
 
-The example was tested with Go 1.27.1 and go.mod 1.25+. Quota rounding and minimum-value conditions matter.
+The example was tested with Go 1.27.2 and go.mod 1.25+. Quota rounding and minimum-value conditions matter.
 
 </details>
 

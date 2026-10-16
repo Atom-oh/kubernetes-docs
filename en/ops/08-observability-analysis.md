@@ -1,7 +1,7 @@
 # Observability Analysis: Logs, Metrics and Traces
 
-> **Review baseline**: OTel Go 1.46.0 / otelhttp 0.71.0, Python SDK 1.44.0 / instrumentation 0.65b0, Collector 0.160.0, Alloy 1.19.2, Loki 3.7.7, Tempo 3.0.3, Grafana 13.2.1\
-> **Last reviewed**: September 11, 2026. SDK/log/exemplar behavior was tested with in-memory exporters and HTTP test doubles; LogQL was exercised against synthetic logs in local Loki. No data was exported to a real cluster or external telemetry backend.
+> **Review baseline**: OTel Go 1.46.0 / otelhttp 0.71.0, Python SDK 1.44.0 / instrumentation 0.65b0, Collector 0.162.0, Alloy 1.20.1, Loki 3.7.8, Tempo 3.0.3, Grafana 13.2.4\
+> **Last reviewed**: October 16, 2026. SDK/log/exemplar behavior was tested with in-memory exporters and HTTP test doubles; LogQL was exercised against synthetic logs in local Loki. No data was exported to a real cluster or external telemetry backend.
 
 < [Previous: Operational Alerts](07-observability-alerts.md) | [Contents](README.md) | [Next: Stack Operations](09-observability-stack.md) >
 
@@ -620,7 +620,7 @@ storage:
     max_exemplars: 10000
 ```
 
-Prometheus 3.14 also requires the exemplar-storage feature setting. `enable_http2` does not enable it.
+Prometheus 3.15 also requires the exemplar-storage feature setting. `enable_http2` does not enable it.
 
 ```bash
 prometheus --config.file=prometheus.yaml --enable-feature=exemplar-storage
@@ -658,7 +658,7 @@ quantile_over_time(0.95, {service_name="correlation-api"} | json | latency_ms>=0
 avg_over_time({service_name="correlation-api"} | json | latency_ms>=0 | __error__="" | unwrap latency_ms | __error__="" [5m]) by (route)
 ```
 
-JSON parsing, numeric comparison and unwrap can introduce errors, requiring correctly placed `__error__=""` filters. These queries first validate `latency_ms>=0`. Against Loki 3.7.7 with valid 10ms/800ms values, a nonnumeric value and malformed JSON, the corrected queries returned mean 405ms and P95 760.5ms.
+JSON parsing, numeric comparison and unwrap can introduce errors, requiring correctly placed `__error__=""` filters. These queries first validate `latency_ms>=0`. Against Loki 3.7.8 with valid 10ms/800ms values, a nonnumeric value and malformed JSON, the corrected queries returned mean 405ms and P95 760.5ms.
 
 These are range aggregations of unwrapped values, not Prometheus histogram buckets. Grouping by unrestricted messages or raw URLs can also cause high query-result cardinality.
 

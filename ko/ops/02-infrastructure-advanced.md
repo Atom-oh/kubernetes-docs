@@ -1,7 +1,7 @@
 # 인프라 구성 고급
 
-> **검토 기준**: Terraform 1.15.7, AWS Provider 6.64.0, AWS Load Balancer Controller 3.5.0, Boto3 1.43.92
-> **마지막 검토**: 2026년 9월 11일. 로컬 스키마·테스트 대역으로 검증했으며 실제 AWS 트래픽 전환은 수행하지 않았습니다.
+> **검토 기준**: Terraform 1.15.7, AWS Provider 6.69.1, AWS Load Balancer Controller 3.5.0, Boto3 1.43.92
+> **마지막 검토**: 2026년 10월 16일. 로컬 스키마·테스트 대역으로 검증했으며 실제 AWS 트래픽 전환은 수행하지 않았습니다.
 
 < [이전: Terraform 인프라](01-infrastructure-setup.md) | [목차](README.md) | [다음: CI 파이프라인](03-ci-pipelines.md) >
 
@@ -41,7 +41,7 @@ terraform {
   required_version = ">= 1.10.0"
   backend "s3" {}
   required_providers {
-    aws = { source = "hashicorp/aws", version = "6.64.0" }
+    aws = { source = "hashicorp/aws", version = "6.69.1" }
   }
 }
 provider "aws" { region = var.region }
@@ -272,7 +272,7 @@ terraform {
   required_version = ">= 1.10.0"
   backend "s3" {}
   required_providers {
-    aws = { source = "hashicorp/aws", version = "6.64.0" }
+    aws = { source = "hashicorp/aws", version = "6.69.1" }
   }
 }
 provider "aws" { region = var.region }

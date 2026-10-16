@@ -2,14 +2,14 @@
 
 > **운영 적용 검증**: Spot 도입 전 [EKS Spot 운영 적용 실험과 결과 판정](./17-spot-production-experiments.md)에서 실제 회수·폴백·정합성·비용을 검증합니다. 구성 예시나 예상 절감률은 실측 결과가 아닙니다.
 
-> **검토 기준**: Prometheus Adapter 0.12.0 / chart 5.3.0, KEDA 2.20.2, VPA 1.7.1 / 공식 chart 0.12.0, Goldilocks 4.16.1 / chart 11.1.0\
-> **마지막 검토**: 2026년 9월 11일. 버전별 차트·CRD·Kubernetes OpenAPI와 로컬 렌더링을 검증했습니다. 실제 클러스터 설치·부하 시험·SQS/DB 조회·Pod resize는 실행하지 않았습니다.
+> **검토 기준**: Prometheus Adapter 0.12.0 / chart 5.3.0, KEDA 2.21.0, VPA 1.8.0 / 공식 chart 0.14.0, Goldilocks 4.16.2 / chart 11.2.0\
+> **마지막 검토**: 2026년 10월 16일. 버전별 차트·CRD·Kubernetes OpenAPI와 로컬 렌더링을 검증했습니다. 실제 클러스터 설치·부하 시험·SQS/DB 조회·Pod resize는 실행하지 않았습니다.
 
 < [이전: GitOps 자동화](05-gitops-automation.md) | [목차](README.md) | [다음: 운영 알림](07-observability-alerts.md) >
 
 이 장은 커스텀 메트릭 HPA, KEDA, VPA와 Spot 배치를 구분합니다. **한 워크로드의 replicas는 하나의 autoscaler가 소유**해야 합니다. 같은 `podinfo`를 대상으로 한 HPA·RPS ScaledObject·Cron ScaledObject는 대안이며 동시에 적용하지 않습니다.
 
-KEDA 2.20의 최소 설치 버전과 공개 테스트 범위는 다릅니다. 공식 배포 문서의 최소 Kubernetes 1.30 및 테스트 범위 1.33–1.35를 확인하고, 더 새로운 배포판은 별도로 검증합니다. 이 장의 native 객체 검증은 Kubernetes 1.36.2 OpenAPI를 사용했으며 실제 클러스터 호환성 시험을 대신하지 않습니다.
+KEDA 2.21 공식 배포 문서는 Kubernetes 테스트 범위 1.34–1.36을 명시합니다. 이 범위를 확인하고, 더 새로운 배포판은 별도로 검증합니다. 이 장의 native 객체 검증은 Kubernetes 1.36.2 OpenAPI를 사용했으며 실제 클러스터 호환성 시험을 대신하지 않습니다.
 
 ## 1. HPA와 커스텀 메트릭
 
@@ -273,7 +273,7 @@ podIdentity:
 helm repo add kedacore https://kedacore.github.io/charts
 helm repo update
 helm upgrade --install keda kedacore/keda \
-  --version 2.20.2 --namespace keda --create-namespace \
+  --version 2.21.0 --namespace keda --create-namespace \
   --kube-context "$TARGET_CONTEXT" --values keda-values.yaml
 ```
 
@@ -559,7 +559,7 @@ VPA는 주로 **resource requests 추천**을 생성합니다. limits는 선택�
 
 ### 공식 차트와 추천 모드
 
-VPA 1.7.1의 공식 chart 0.12.0을 사용합니다. 기존 VPA 설치가 있으면 또 설치하지 말고 CRD·RBAC·설정 이행을 먼저 확인합니다. 아래 구성은 cert-manager가 webhook 인증서를 관리하므로 cert-manager와 cainjector가 필요합니다.
+VPA 1.8.0의 공식 chart 0.14.0을 사용합니다. 기존 VPA 설치가 있으면 또 설치하지 말고 CRD·RBAC·설정 이행을 먼저 확인합니다. 아래 구성은 cert-manager가 webhook 인증서를 관리하므로 cert-manager와 cainjector가 필요합니다.
 
 ```yaml
 # fixtures/vpa-values.yaml
@@ -581,7 +581,7 @@ updater:
 
 ```bash
 helm upgrade --install vpa \
-  https://github.com/kubernetes/autoscaler/releases/download/vertical-pod-autoscaler-chart-0.12.0/vertical-pod-autoscaler-0.12.0.tgz \
+  https://github.com/kubernetes/autoscaler/releases/download/vertical-pod-autoscaler-chart-0.14.0/vertical-pod-autoscaler-0.14.0.tgz \
   --namespace vpa --create-namespace --kube-context "$TARGET_CONTEXT" \
   --values vpa-values.yaml
 ```
@@ -617,7 +617,7 @@ spec:
 
 `Off`는 추천을 계산하되 Pod에 적용하지 않습니다. 실제 적용 전 request/limit, namespace quota와 노드 용량을 검토합니다. 같은 Deployment에 여러 VPA 예제를 동시에 적용하지 않습니다.
 
-| 모드 | VPA 1.7.1의 의미 |
+| 모드 | VPA 1.8.0의 의미 |
 |---|---|
 | `Off` | 추천만 생성 |
 | `Initial` | 새 Pod 생성 시 적용 |
@@ -626,7 +626,7 @@ spec:
 | `InPlace` | eviction fallback 없이 in-place 재시도; 별도 feature gate 필요 |
 | `Auto` | deprecated이며 현재 Recreate와 같은 동작; 명시적 모드 사용 |
 
-VPA 1.7.1의 in-place 모드는 Kubernetes 1.33 이상 등 요구 조건을 확인해야 합니다. `InPlaceOrRecreate`의 이전 VPA feature gate는 1.7에서 제거됐지만 `InPlace`에는 `--feature-gates=InPlace=true`가 필요합니다. `minReplicas`는 updater의 적용 조건이지 항상 그만큼 가용 Pod를 보장하는 PDB가 아닙니다.
+VPA 1.8.0의 in-place 모드는 Kubernetes 1.33 이상 등 요구 조건을 확인해야 합니다. `InPlaceOrRecreate`의 이전 VPA feature gate는 1.7에서 제거됐지만 `InPlace`에는 `--feature-gates=InPlace=true`가 필요합니다. `minReplicas`는 updater의 적용 조건이지 항상 그만큼 가용 Pod를 보장하는 PDB가 아닙니다.
 
 ### Kubernetes resize
 
@@ -688,7 +688,7 @@ dashboard:
 helm repo add fairwinds-stable https://charts.fairwinds.com/stable
 helm repo update
 helm upgrade --install goldilocks fairwinds-stable/goldilocks \
-  --version 11.1.0 --namespace goldilocks --create-namespace \
+  --version 11.2.0 --namespace goldilocks --create-namespace \
   --kube-context "$TARGET_CONTEXT" --values goldilocks-values.yaml
 ```
 
@@ -896,9 +896,9 @@ Capacity Reservation도 생성만으로 targeted 예약이 NodePool에서 사용
 ## 참고 자료
 
 - [HPA 동작](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
-- [KEDA 2.20 ScaledObject](https://keda.sh/docs/2.20/reference/scaledobject-spec/)
-- [KEDA 2.20 ScaledJob](https://keda.sh/docs/2.20/reference/scaledjob-spec/)
-- [VPA 1.7.1 기능](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.7.1/vertical-pod-autoscaler/docs/features.md)
+- [KEDA 2.21 ScaledObject](https://keda.sh/docs/2.21/reference/scaledobject-spec/)
+- [KEDA 2.21 ScaledJob](https://keda.sh/docs/2.21/reference/scaledjob-spec/)
+- [VPA 1.8.0 기능](https://github.com/kubernetes/autoscaler/blob/vertical-pod-autoscaler-1.8.0/vertical-pod-autoscaler/docs/features.md)
 - [Pod resize](https://kubernetes.io/docs/tasks/configure-pod-container/resize-container-resources/)
 - [ReplicaSet deletion cost](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/#pod-deletion-cost)
 - [이 장의 퀴즈](../quizzes/ops/06-scaling-strategies-quiz.md)

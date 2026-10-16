@@ -1,6 +1,6 @@
 # Tekton Pipelines: Kubernetes 네이티브 CI
 
-> **마지막 업데이트**: 2026년 9월 12일. Pipelines 1.16.0, Triggers 0.37.0, Chains 0.29.0, Dashboard 0.72.0, tkn 0.46.0.
+> **마지막 업데이트**: 2026년 10월 16일. Pipelines 1.17.0, Triggers 0.37.1, Chains 0.29.0, Dashboard 0.73.0, tkn 0.46.1.
 > **검증 범위**: 릴리스 CRD 스키마·Task 의존 관계·로컬 스크립트와 모의 도구 실행. 실제 EKS 설치, 이미지 빌드·게시, KMS 서명, 외부 Webhook/알림은 실행하지 않았습니다.
 
 < [이전: FinOps](./13-finops-cost-platform.md) | [목차](./README.md) | [다음: 가용 영역 운영](./15-zonal-operations-guide.md) >
@@ -34,7 +34,7 @@ Task 정의 자체가 Pod는 아닙니다. TaskRun이 실행되면서 Pod가 생
 
 ### 2.1 버전과 설치 경로
 
-공식 설치 문서의 최소 Kubernetes 버전은 1.28이지만, 이 장의 보안 필드와 검증 기준은 Kubernetes 1.36입니다. 최소 버전 표기는 EKS의 현재 지원 버전 추천이 아닙니다. Dashboard 0.72.0 릴리스는 Pipelines 1.15 LTS/1.16, Triggers 0.37 LTS 조합을 명시합니다.
+공식 설치 문서의 최소 Kubernetes 버전은 1.28이지만, 이 장의 보안 필드와 검증 기준은 Kubernetes 1.36입니다. 최소 버전 표기는 EKS의 현재 지원 버전 추천이 아닙니다. Dashboard 0.73.0 릴리스는 Pipelines 1.15 LTS/1.17, Triggers 0.37 LTS 조합을 명시합니다.
 
 다음은 버전이 고정된 수동 설치 예제입니다. 공식 가이드는 운영 수명 주기 관리에 Tekton Operator도 안내합니다. 기존 Operator·배포 도구가 관리하는 객체에 수동 apply를 섞지 말고 관리 주체를 먼저 결정하십시오. 아래 명령은 실제 클러스터를 변경하며, 충돌이 나면 소유권을 검토합니다.
 
@@ -43,7 +43,7 @@ kubectl version -o yaml
 kubectl get storageclass
 
 curl --fail --location \
-  https://infra.tekton.dev/tekton-releases/pipeline/previous/v1.16.0/release.yaml \
+  https://infra.tekton.dev/tekton-releases/pipeline/previous/v1.17.0/release.yaml \
   -o pipelines-release.yaml
 kubectl apply --server-side --field-manager=tekton-install -f pipelines-release.yaml
 kubectl wait --for=condition=Established --timeout=120s \
@@ -53,13 +53,13 @@ kubectl -n tekton-pipelines wait deployment --all \
   --for=condition=Available --timeout=300s
 
 kubectl apply --server-side -f \
-  https://infra.tekton.dev/tekton-releases/triggers/previous/v0.37.0/release.yaml
+  https://infra.tekton.dev/tekton-releases/triggers/previous/v0.37.1/release.yaml
 kubectl apply --server-side -f \
-  https://infra.tekton.dev/tekton-releases/triggers/previous/v0.37.0/interceptors.yaml
+  https://infra.tekton.dev/tekton-releases/triggers/previous/v0.37.1/interceptors.yaml
 kubectl apply --server-side -f \
   https://infra.tekton.dev/tekton-releases/chains/previous/v0.29.0/release.yaml
 kubectl apply --server-side -f \
-  https://infra.tekton.dev/tekton-releases/dashboard/previous/v0.72.0/release.yaml
+  https://infra.tekton.dev/tekton-releases/dashboard/previous/v0.73.0/release.yaml
 kubectl -n tekton-pipelines port-forward service/tekton-dashboard 9097:9097
 ```
 
@@ -73,7 +73,7 @@ kubectl -n tekton-pipelines port-forward service/tekton-dashboard 9097:9097
 | --- | --- |
 | `feature-flags.coschedule: workspaces` | 같은 PVC Workspace를 쓰는 TaskRun의 배치. RWO 예제에서 유지 |
 | `disable-affinity-assistant` | v0.68 이후 제거된 예전 플래그 |
-| `set-security-context: true` | 1.16 기본값. Tekton 주입 컨테이너에 적용하며 사용자 Step의 정책 적합성은 별도 |
+| `set-security-context: true` | 1.17 기본값. Tekton 주입 컨테이너에 적용하며 사용자 Step의 정책 적합성은 별도 |
 | `results-from: termination-message` | 기본 경로. Kubernetes 종료 메시지 크기의 제한을 받음 |
 | `max-result-size` | `sidecar-logs` 결과 경로에 관한 설정. 기본 종료 메시지 한도를 이 값만으로 늘리지 않음 |
 | 기본 timeout | `config-defaults`에서 관리. 이 예제는 PipelineRun에 명시 |
@@ -273,7 +273,7 @@ spec:
     type: string
   steps:
   - name: checkout
-    image: golang:1.27.1
+    image: golang:1.27.2
     script: |
       #!/usr/bin/env bash
       set -euo pipefail
@@ -324,7 +324,7 @@ spec:
   results: []
   steps:
   - name: vet
-    image: golang:1.27.1
+    image: golang:1.27.2
     script: |
       #!/usr/bin/env bash
       set -euo pipefail
@@ -360,7 +360,7 @@ spec:
   results: []
   steps:
   - name: test
-    image: golang:1.27.1
+    image: golang:1.27.2
     script: |
       #!/usr/bin/env bash
       set -euo pipefail
@@ -614,7 +614,7 @@ spec:
     - name: auth
       mountPath: /auth
   - name: scan
-    image: aquasec/trivy:0.74.0
+    image: aquasec/trivy:0.76.0
     script: |
       #!/bin/sh
       set -eu
@@ -1114,7 +1114,7 @@ ArgoCD는 Git의 manifest를 동기화하고, 실제 애플리케이션 이미�
 
 ### 8.1 실행 기록과 PVC
 
-`keep`, `keep-since`는 tkn 삭제 명령 등의 옵션이며 PipelineRun에 기본 TTL을 부여하는 필드가 아닙니다. tkn 0.46.0의 `pipelinerun delete`에는 `--dry-run`이 없습니다. 삭제 전에 로그·스캔 보고서·서명/provenance 보관과 감사 기간을 확인합니다. 성공 Pod 전체를 나이 조건 없이 삭제하지 않습니다.
+`keep`, `keep-since`는 tkn 삭제 명령 등의 옵션이며 PipelineRun에 기본 TTL을 부여하는 필드가 아닙니다. tkn 0.46.1의 `pipelinerun delete`에는 `--dry-run`이 없습니다. 삭제 전에 로그·스캔 보고서·서명/provenance 보관과 감사 기간을 확인합니다. 성공 Pod 전체를 나이 조건 없이 삭제하지 않습니다.
 
 다음 도구는 선택한 namespace에서 성공 7일·실패 14일이 지난 **검토 후보만** 출력합니다. 생성 시각 대신 완료 시각을 사용하며, Chains와 외부 아카이브의 완료 표시를 요구합니다. `ci.example.com/archive-complete`는 자동 제공되는 Tekton 필드가 아니라 실제 아카이브 성공 후 운영 절차가 기록할 annotation입니다. 스크립트는 Kubernetes API를 호출하거나 삭제하지 않습니다.
 
@@ -1194,7 +1194,7 @@ PVC 생명 주기는 `coschedule` 모드별로 다릅니다.
 
 ### 8.2 모니터링
 
-Pipelines 1.16의 메트릭은 OpenTelemetry로 내보냅니다. `config-observability`의 `metrics-protocol: prometheus`에서 controller Service의 포트 이름은 **`http-metrics`**입니다. 실제 ServiceMonitor selector와 Prometheus selector를 모두 맞춥니다.
+Pipelines 1.17의 메트릭은 OpenTelemetry로 내보냅니다. `config-observability`의 `metrics-protocol: prometheus`에서 controller Service의 포트 이름은 **`http-metrics`**입니다. 실제 ServiceMonitor selector와 Prometheus selector를 모두 맞춥니다.
 
 **`servicemonitor.yaml`**
 
@@ -1281,7 +1281,7 @@ kubectl -n tekton-chains logs deployment/tekton-chains-controller --tail=100
 ## 9. 재사용과 운영 선택
 
 - **Sidecar**: DB readiness probe와 실제 연결 확인을 사용합니다. 단순 sleep은 준비 완료의 증거가 아닙니다. native sidecar 지원 설정과 종료 동작을 설치 버전에 맞춰 확인합니다.
-- **StepAction**: 1.16에서 기능은 안정화되어 있지만 릴리스의 저장 API는 `tekton.dev/v1beta1`입니다. 재사용 Step의 실행 도구·credentials·결과 경로를 실제 Task와 연결합니다.
+- **StepAction**: 1.17에서 기능은 안정화되어 있지만 릴리스의 저장 API는 `tekton.dev/v1beta1`입니다. 재사용 Step의 실행 도구·credentials·결과 경로를 실제 Task와 연결합니다.
 - **Task 카탈로그**: Hub 서비스 폐기와 CLI 내부화는 별개입니다. tkn 0.46의 Hub 명령 존재를 서비스의 장기 가용성으로 해석하지 않습니다. 승인한 정의를 고정 commit 또는 검증된 OCI bundle digest로 관리하고 resolver 접근 범위를 제한합니다.
 - **네트워크**: NetworkPolicy의 `to: []`와 TCP 443 허용은 모든 대상의 해당 포트를 허용합니다. ECR/GitHub 도메인 allowlist가 아닙니다. 필요한 DNS·STS/ECR/S3·레지스트리·API 경로를 CNI/프록시/VPC 설계에 맞춰 제한합니다.
 - **Spot과 비용**: Karpenter는 `karpenter.sh/capacity-type: spot`, EKS Managed Node Group은 실제 `eks.amazonaws.com/capacityType` label을 확인합니다. 중단·재시도·quota·스토리지 비용을 고려합니다. 실행 Pod가 없다고 모든 비용이 0이 되지는 않습니다.
@@ -1289,13 +1289,13 @@ kubectl -n tekton-chains logs deployment/tekton-chains-controller --tail=100
 
 ## 10. 참고 자료
 
-- [Pipelines 1.16.0](https://github.com/tektoncd/pipeline/releases/tag/v1.16.0)
-- [Triggers 0.37.0](https://github.com/tektoncd/triggers/releases/tag/v0.37.0)
+- [Pipelines 1.17.0](https://github.com/tektoncd/pipeline/releases/tag/v1.17.0)
+- [Triggers 0.37.1](https://github.com/tektoncd/triggers/releases/tag/v0.37.1)
 - [Chains 0.29.0](https://github.com/tektoncd/chains/releases/tag/v0.29.0)
-- [Dashboard 0.72.0](https://github.com/tektoncd/dashboard/releases/tag/v0.72.0)
-- [Pipelines security model](https://github.com/tektoncd/pipeline/blob/v1.16.0/docs/security/README.md)
-- [Affinity and PVC lifecycle](https://github.com/tektoncd/pipeline/blob/v1.16.0/docs/affinityassistants.md)
-- [Pipelines metrics](https://github.com/tektoncd/pipeline/blob/v1.16.0/docs/metrics.md)
+- [Dashboard 0.73.0](https://github.com/tektoncd/dashboard/releases/tag/v0.73.0)
+- [Pipelines security model](https://github.com/tektoncd/pipeline/blob/v1.17.0/docs/security/README.md)
+- [Affinity and PVC lifecycle](https://github.com/tektoncd/pipeline/blob/v1.17.0/docs/affinityassistants.md)
+- [Pipelines metrics](https://github.com/tektoncd/pipeline/blob/v1.17.0/docs/metrics.md)
 - [Chains configuration](https://github.com/tektoncd/chains/blob/v0.29.0/docs/config.md)
 - [SLSA formatter and type hints](https://github.com/tektoncd/chains/blob/v0.29.0/docs/slsa-provenance.md)
 - [BuildKit rootless requirements](https://github.com/moby/buildkit/blob/v0.33.0/docs/rootless.md)
