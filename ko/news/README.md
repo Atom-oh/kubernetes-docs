@@ -5,6 +5,11 @@ Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. G
 
 아래 주차는 로그에 기록한 주차이며 원문의 발표일과 다를 수 있습니다. 당시의 변경 기록이므로 현재 지원 버전·보안 패치·운영 조건은 연결된 문서와 공식 자료에서 확인하세요. “매칭 문서 없음”도 당시 자동 매칭 결과입니다.
 
+<!-- news-dashboard -->
+
+<details class="news-log">
+<summary>전체 갱신 로그 펼치기</summary>
+
 ## 갱신 로그
 
 - 2026-W42: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter v1.15.0 릴리스(노드 복구의 자발적 중단 전환·재부팅 복구, KubeletConfiguration CEL 지원, DRA 지원 확대 등) 반영
@@ -101,3 +106,5 @@ Kubernetes, Amazon EKS와 CNCF 소식에 따른 문서 변경 이력입니다. G
 - 2026-07-11: 매칭 문서 없음 — CNCF 클라우드 네이티브 AI 데이터 스토리지 백서 공개 ([원문](https://www.cncf.io/report-whitepaper/2026/07/08/the-cncf-data-storage-in-cloud-native-ai-white-paper/))
 - 2026-07-11: 매칭 문서 없음 — Amazon EMR on EKS, Apache Spark 트러블슈팅 에이전트 지원 ([원문](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-emr-eks-spark-troubleshooting/))
 - 2026-07-11: 매칭 문서 없음 — AWS Systems Manager 하이브리드/멀티클라우드 노드 요금제 개편(Advanced Instances Tier 폐지) ([원문](https://aws.amazon.com/about-aws/whats-new/2026/06/aws-systems-manager-multicloud-vm/))
+
+</details>

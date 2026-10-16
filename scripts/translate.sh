@@ -39,6 +39,8 @@ Rules:
   blocks, YAML, shell commands, and link/image paths EXACTLY as in the
   source (do not translate inside code fences, do not change any file path
   or URL).
+- Preserve HTML comments (including the news-dashboard marker), HTML tag
+  names and attributes exactly. Translate visible details/summary text only.
 - Keep Kubernetes/AWS technical terms in English (Pod, Deployment, Service,
   EKS, etc.); you may add the local-language term in parentheses on first
   use only.

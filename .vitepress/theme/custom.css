@@ -8,6 +8,20 @@
     'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+.vp-doc .news-log {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 28px 0;
+  font-size: 13px;
+}
+
+.vp-doc .news-log > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--vp-c-text-2);
+}
+
 /* Some devices only have a regular Korean face. Preserve emphasis there,
    too; VitePress otherwise permits synthetic italics but not bold. */
 body:lang(ko) {

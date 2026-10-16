@@ -19,6 +19,7 @@ on:
       - '.vitepress/**'
       - '.github/workflows/pr-validate.yml'
       - '.github/workflows/deploy.yml'
+      - '.github/workflows/weekly-news-digest.yml'
 
 permissions:
   contents: read

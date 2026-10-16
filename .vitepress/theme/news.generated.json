@@ -1,0 +1,2459 @@
+{
+  "version": 1,
+  "locales": {
+    "ko": {
+      "entries": [
+        {
+          "id": "f36c8c35ad236185",
+          "period": "2026-W42",
+          "week": "2026-W42",
+          "documents": [
+            "autoscaling/02-karpenter.md"
+          ],
+          "sources": [],
+          "title": "Karpenter v1.15.0 릴리스",
+          "summary": "Karpenter v1.15.0 릴리스(노드 복구의 자발적 중단 전환·재부팅 복구, KubeletConfiguration CEL 지원, DRA 지원 확대 등) 반영",
+          "topic": "autoscaling",
+          "category": "release"
+        },
+        {
+          "id": "0c52b34184b23fa4",
+          "period": "2026-W42",
+          "week": "2026-W42",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [],
+          "title": "Argo CD v3.5.4/v3.4.10/v3.3.15 보안 패치 릴리스",
+          "summary": "Argo CD v3.5.4/v3.4.10/v3.3.15 보안 패치 릴리스(repo-server 명령 실행 등 CRITICAL 4건, CVE-2026-77459 포함) 반영",
+          "topic": "gitops",
+          "category": "security"
+        },
+        {
+          "id": "48b1de0f3f433ff4",
+          "period": "2026-W42",
+          "week": "2026-W42",
+          "documents": [
+            "kernel/01-container-primitives.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes 블로그의 cgroup v1 지원 중단 현황",
+          "summary": "Kubernetes 블로그의 cgroup v1 지원 중단 현황(v1.35부터 failCgroupV1 기본 true) 반영",
+          "topic": "kubernetes",
+          "category": "breaking"
+        },
+        {
+          "id": "7f9bfd6a7f160424",
+          "period": "2026-W42",
+          "week": "2026-W42",
+          "documents": [],
+          "sources": [
+            "https://kubernetes.io/blog/2026/10/05/scaling-kubernetes-workloads-with-node-swap/"
+          ],
+          "title": "NVMe SSD 기반 Node Swap",
+          "summary": "NVMe SSD 기반 Node Swap(v1.34 GA)으로 Kubernetes 워크로드 밀도 높이기, Kubernetes 블로그",
+          "topic": "kubernetes",
+          "category": "release"
+        },
+        {
+          "id": "80cde4e850d74fcd",
+          "period": "2026-W42",
+          "week": "2026-W42",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/10/07/meshery-becomes-a-cncf-incubating-project/"
+          ],
+          "title": "Meshery, CNCF 인큐베이팅 프로젝트 승격",
+          "summary": "Meshery, CNCF 인큐베이팅 프로젝트 승격",
+          "topic": "ecosystem",
+          "category": "community"
+        },
+        {
+          "id": "d8450bcbf8768d82",
+          "period": "2026-W42",
+          "week": "2026-W42",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/10/aws-batch-access-entries/"
+          ],
+          "title": "AWS Batch, Amazon EKS access entry 인증 지원",
+          "summary": "AWS Batch, Amazon EKS access entry 인증 지원",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "093c696b4e05b092",
+          "period": "2026-W41",
+          "week": "2026-W41",
+          "documents": [
+            "eks/08-eks-upgrades.md"
+          ],
+          "sources": [],
+          "title": "Amazon EKS·EKS Distro의 Kubernetes 1.37 지원",
+          "summary": "Amazon EKS·EKS Distro의 Kubernetes 1.37 지원(Metrics API GA, DRA 디바이스 taint GA, HPA scale-to-zero 베타) 반영",
+          "topic": "eks",
+          "category": "release"
+        },
+        {
+          "id": "14180ed2de9676b2",
+          "period": "2026-W41",
+          "week": "2026-W41",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [],
+          "title": "Argo CD 4.0 비저닝 시작 및 ArgoCon North America 2026 소식",
+          "summary": "Argo CD 4.0 비저닝 시작 및 ArgoCon North America 2026 소식 반영",
+          "topic": "gitops",
+          "category": "community"
+        },
+        {
+          "id": "01b5f7812ed6def2",
+          "period": "2026-W41",
+          "week": "2026-W41",
+          "documents": [
+            "observability/tracing/03-opentelemetry.md"
+          ],
+          "sources": [],
+          "title": "Atlassian의 OTel·Kafka·Flink 기반 사고 감지 재구축 사례",
+          "summary": "Atlassian의 OTel·Kafka·Flink 기반 사고 감지 재구축 사례(CNCF 블로그) 반영",
+          "topic": "observability",
+          "category": "guide"
+        },
+        {
+          "id": "fb77714165bf9427",
+          "period": "2026-W41",
+          "week": "2026-W41",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-ecs-vpc-lattice-blue-green-deployments"
+          ],
+          "title": "Amazon ECS, VPC Lattice 블루/그린·선형·카나리 배포 지원",
+          "summary": "Amazon ECS, VPC Lattice 블루/그린·선형·카나리 배포 지원",
+          "topic": "ecosystem",
+          "category": "feature"
+        },
+        {
+          "id": "1affbade44f3f437",
+          "period": "2026-W41",
+          "week": "2026-W41",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-managed-grafana-now-supports-creating-grafana-13-2-workspaces"
+          ],
+          "title": "Amazon Managed Grafana, Grafana 13.2 워크스페이스 생성 지원",
+          "summary": "Amazon Managed Grafana, Grafana 13.2 워크스페이스 생성 지원",
+          "topic": "observability",
+          "category": "feature"
+        },
+        {
+          "id": "f3ee2f4c3aea3c71",
+          "period": "2026-W41",
+          "week": "2026-W41",
+          "documents": [],
+          "sources": [
+            "https://grafana.com/blog/tempo-3-1-release-all-the-latest-features"
+          ],
+          "title": "Grafana Tempo 3.1 릴리스",
+          "summary": "Grafana Tempo 3.1 릴리스(Kafka 신기능, TraceQL 메트릭 개선, 트레이스 레드액션 등)",
+          "topic": "observability",
+          "category": "release"
+        },
+        {
+          "id": "2f19cfbbb4ffd701",
+          "period": "2026-W41",
+          "week": "2026-W41",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/10/01/guardrails-not-gates-rethinking-policy-in-platform-teams/"
+          ],
+          "title": "게이트가 아닌 가드레일: 플랫폼 팀의 정책 다시 생각하기, CNCF 블로그",
+          "summary": "게이트가 아닌 가드레일: 플랫폼 팀의 정책 다시 생각하기, CNCF 블로그",
+          "topic": "ecosystem",
+          "category": "guide"
+        },
+        {
+          "id": "e9a7d0c41e9372af",
+          "period": "2026-W40",
+          "week": "2026-W40",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes v1.37.1/v1.36.5/v1.35.9/v1.34.12 패치 릴리스 및 v1.37 PVC Unused 조건",
+          "summary": "Kubernetes v1.37.1/v1.36.5/v1.35.9/v1.34.12 패치 릴리스 및 v1.37 PVC Unused 조건(베타) 블로그 반영",
+          "topic": "kubernetes",
+          "category": "release"
+        },
+        {
+          "id": "c6bab082ddae81c1",
+          "period": "2026-W40",
+          "week": "2026-W40",
+          "documents": [
+            "service-mesh/istio/README.md"
+          ],
+          "sources": [],
+          "title": "Istio 1.31.1/1.30.5/1.29.8 패치 릴리스",
+          "summary": "Istio 1.31.1/1.30.5/1.29.8 패치 릴리스(BackendTLSPolicy fail-open 보안 수정 GHSA-qm8v-g4f9-qhjx 포함) 반영",
+          "topic": "mesh",
+          "category": "release"
+        },
+        {
+          "id": "a315dfcc12d9e865",
+          "period": "2026-W40",
+          "week": "2026-W40",
+          "documents": [
+            "eks/04-eks-storage-part1.md"
+          ],
+          "sources": [],
+          "title": "EFS CSI 드라이버 마운트 옵션 주입 취약점 CVE-2026-6437",
+          "summary": "EFS CSI 드라이버 마운트 옵션 주입 취약점 CVE-2026-6437(v3.0.1에서 수정) 반영",
+          "topic": "eks",
+          "category": "security"
+        },
+        {
+          "id": "0e487c7a59342387",
+          "period": "2026-W40",
+          "week": "2026-W40",
+          "documents": [
+            "ai-ml/08-llm-gateway.md"
+          ],
+          "sources": [],
+          "title": "Amazon SageMaker HyperPod Inference Gateway 출시",
+          "summary": "Amazon SageMaker HyperPod Inference Gateway 출시(EKS 관리형 add-on, GPU 인지 라우팅) 반영",
+          "topic": "ai",
+          "category": "feature"
+        },
+        {
+          "id": "91008ed006e84887",
+          "period": "2026-W40",
+          "week": "2026-W40",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-emr-eks-ipv6-support"
+          ],
+          "title": "Amazon EMR on EKS, IPv6 EKS 클러스터 지원",
+          "summary": "Amazon EMR on EKS, IPv6 EKS 클러스터 지원",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "48fb4effee7898bb",
+          "period": "2026-W40",
+          "week": "2026-W40",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/09/emr-eks-spark-connect-interactive/"
+          ],
+          "title": "Amazon EMR on EKS, Spark Connect 대화형 워크로드 지원",
+          "summary": "Amazon EMR on EKS, Spark Connect 대화형 워크로드 지원",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "04a14c403fcb4377",
+          "period": "2026-W40",
+          "week": "2026-W40",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-cloudwatch-omni-ai/"
+          ],
+          "title": "Amazon CloudWatch Omni 정식 출시",
+          "summary": "Amazon CloudWatch Omni 정식 출시(AI 기반 관측성 경험, OpenTelemetry 통합)",
+          "topic": "ai",
+          "category": "feature"
+        },
+        {
+          "id": "103ae4202c36a0b8",
+          "period": "2026-W39",
+          "week": "2026-W39",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes v1.37 기능 심층 소개 3건",
+          "summary": "Kubernetes v1.37 기능 심층 소개 3건(Memory QoS Beta, 파드 수준 리소스 매니저 Beta, emptyDir 권한·바인드 마운트 옵션) 반영",
+          "topic": "kubernetes",
+          "category": "feature"
+        },
+        {
+          "id": "1e55d06762e5daad",
+          "period": "2026-W39",
+          "week": "2026-W39",
+          "documents": [
+            "networking/cilium/README.md"
+          ],
+          "sources": [],
+          "title": "Cilium 1.20.2/1.19.8/1.18.14 패치 릴리스 및 CNCF 블로그 1.20 기능 정리 글",
+          "summary": "Cilium 1.20.2/1.19.8/1.18.14 패치 릴리스 및 CNCF 블로그 1.20 기능 정리 글 반영",
+          "topic": "networking",
+          "category": "release"
+        },
+        {
+          "id": "46712b3391200313",
+          "period": "2026-W39",
+          "week": "2026-W39",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [],
+          "title": "Argo CD v3.5.3/v3.4.9 패치 릴리스 및 v3.6.0-rc1",
+          "summary": "Argo CD v3.5.3/v3.4.9 패치 릴리스 및 v3.6.0-rc1 반영",
+          "topic": "gitops",
+          "category": "release"
+        },
+        {
+          "id": "7bbbe2e02227cedb",
+          "period": "2026-W39",
+          "week": "2026-W39",
+          "documents": [],
+          "sources": [
+            "https://kubernetes.io/blog/2026/09/14/csi-changed-block-tracking-beta/"
+          ],
+          "title": "Kubernetes CSI Changed Block Tracking",
+          "summary": "Kubernetes CSI Changed Block Tracking(CBT) API Beta 승격과 Alpha 대비 차이점, Kubernetes 블로그",
+          "topic": "kubernetes",
+          "category": "community"
+        },
+        {
+          "id": "008452d13576b469",
+          "period": "2026-W39",
+          "week": "2026-W39",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/09/resilience-hub-eks-dependency-policy/"
+          ],
+          "title": "AWS Resilience Hub 신규 기능 3종",
+          "summary": "AWS Resilience Hub 신규 기능 3종(네임스페이스 내 EKS 레이블 기반 서비스 리소스 검색 등)",
+          "topic": "ecosystem",
+          "category": "feature"
+        },
+        {
+          "id": "2b6d633eb221b89d",
+          "period": "2026-W38",
+          "week": "2026-W38",
+          "documents": [
+            "core/08-scheduling-preemption-eviction.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes v1.37 인플레이스 파드 리사이즈용 스케줄러 선점",
+          "summary": "Kubernetes v1.37 인플레이스 파드 리사이즈용 스케줄러 선점(Alpha)과 워크로드 인지 스케줄링(Workload/PodGroup Beta, CompositePodGroup API) 반영",
+          "topic": "kubernetes",
+          "category": "feature"
+        },
+        {
+          "id": "62dbb8446f697fff",
+          "period": "2026-W38",
+          "week": "2026-W38",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes v1.37 노드 라이프사이클 컨디션",
+          "summary": "Kubernetes v1.37 노드 라이프사이클 컨디션(drain·유지 관리·graceful shutdown 표준 컨디션 5종) 반영",
+          "topic": "kubernetes",
+          "category": "feature"
+        },
+        {
+          "id": "3a09aa6f450ccc7a",
+          "period": "2026-W38",
+          "week": "2026-W38",
+          "documents": [
+            "observability/metrics/01-prometheus.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes v1.37 컴포넌트 메트릭의 Prometheus 네이티브 히스토그램 Beta",
+          "summary": "Kubernetes v1.37 컴포넌트 메트릭의 Prometheus 네이티브 히스토그램 Beta(기본 활성화) 반영",
+          "topic": "observability",
+          "category": "feature"
+        },
+        {
+          "id": "e8084f235321a5e6",
+          "period": "2026-W38",
+          "week": "2026-W38",
+          "documents": [
+            "networking/cilium/README.md"
+          ],
+          "sources": [],
+          "title": "Cilium 1.21.0-pre.2 프리릴리스",
+          "summary": "Cilium 1.21.0-pre.2 프리릴리스(Gateway API 세션 퍼시스턴스, AWS 관리형 prefix list, BPF 마스커레이딩 기본화) 반영",
+          "topic": "networking",
+          "category": "release"
+        },
+        {
+          "id": "c7a6e46aa337198a",
+          "period": "2026-W38",
+          "week": "2026-W38",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/announcements/2026/09/07/cloud-native-computing-foundation-announces-karmada-graduation/"
+          ],
+          "title": "Karmada, CNCF 졸업",
+          "summary": "Karmada, CNCF 졸업(graduated) 프로젝트 승격",
+          "topic": "ecosystem",
+          "category": "community"
+        },
+        {
+          "id": "1c4795d9c1495e79",
+          "period": "2026-W38",
+          "week": "2026-W38",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/09/10/kubernetes-disaster-recovery-guidance-from-three-reproducible-failure-scenarios/"
+          ],
+          "title": "Kubernetes 재해 복구: 재현 가능한 3가지 장애 시나리오 가이드, CNCF 블로그",
+          "summary": "Kubernetes 재해 복구: 재현 가능한 3가지 장애 시나리오 가이드, CNCF 블로그",
+          "topic": "kubernetes",
+          "category": "guide"
+        },
+        {
+          "id": "9cc0058fd5407847",
+          "period": "2026-W38",
+          "week": "2026-W38",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/09/private-ca-eks-addon-ad-govcloud/"
+          ],
+          "title": "AWS Private CA EKS 애드온과 Connector for AD, AWS GovCloud",
+          "summary": "AWS Private CA EKS 애드온과 Connector for AD, AWS GovCloud(US) 제공 시작",
+          "topic": "ecosystem",
+          "category": "feature"
+        },
+        {
+          "id": "2bd04eb1130f1923",
+          "period": "2026-W36",
+          "week": "2026-W36",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes v1.37 \"Garhwal\" 정식 릴리스",
+          "summary": "Kubernetes v1.37 \"Garhwal\" 정식 릴리스(파드 인증서/ClusterTrustBundle Stable, Metrics API GA, kube-dns·IPVS 모드 사용 중단 등) 반영",
+          "topic": "kubernetes",
+          "category": "breaking"
+        },
+        {
+          "id": "a182c5e364156319",
+          "period": "2026-W36",
+          "week": "2026-W36",
+          "documents": [
+            "service-mesh/istio/README.md"
+          ],
+          "sources": [],
+          "title": "Istio 1.30.4/1.29.7 보안 패치 릴리스",
+          "summary": "Istio 1.30.4/1.29.7 보안 패치 릴리스(ISTIO-SECURITY-2026-006, Envoy CVE 13건) 반영",
+          "topic": "mesh",
+          "category": "security"
+        },
+        {
+          "id": "567ced94fa5c20dc",
+          "period": "2026-W36",
+          "week": "2026-W36",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [],
+          "title": "ArgoCD v3.5.2/v3.4.8 패치 릴리스",
+          "summary": "ArgoCD v3.5.2/v3.4.8 패치 릴리스 반영",
+          "topic": "gitops",
+          "category": "release"
+        },
+        {
+          "id": "00554e9bbf811f51",
+          "period": "2026-W36",
+          "week": "2026-W36",
+          "documents": [
+            "service-mesh/linkerd/README.md"
+          ],
+          "sources": [],
+          "title": "Linkerd edge-26.8.4",
+          "summary": "Linkerd edge-26.8.4(TLSRoute API 버전 협상 등) 반영",
+          "topic": "mesh",
+          "category": "preview"
+        },
+        {
+          "id": "92860eb4cbdf581a",
+          "period": "2026-W36",
+          "week": "2026-W36",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-multiple-oidc-providers"
+          ],
+          "title": "Amazon EKS, 클러스터당 최대 10개의 외부 OIDC 자격 증명 공급자 연결 지원",
+          "summary": "Amazon EKS, 클러스터당 최대 10개의 외부 OIDC 자격 증명 공급자 연결 지원",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "df144fdb6e43d73d",
+          "period": "2026-W36",
+          "week": "2026-W36",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/08/28/scale-before-the-spike-predictive-autoscaling-for-gpu-workloads-on-kubernetes/"
+          ],
+          "title": "Kubernetes GPU 워크로드를 위한 예측형",
+          "summary": "Kubernetes GPU 워크로드를 위한 예측형(predictive) 오토스케일링, CNCF 블로그",
+          "topic": "ai",
+          "category": "guide"
+        },
+        {
+          "id": "ff7a8c884f73b859",
+          "period": "2026-W36",
+          "week": "2026-W36",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/08/27/building-an-ai-factory-on-kubernetes/"
+          ],
+          "title": "Kubernetes 위에 AI 팩토리 구축하기, CNCF 블로그",
+          "summary": "Kubernetes 위에 AI 팩토리 구축하기, CNCF 블로그",
+          "topic": "ai",
+          "category": "guide"
+        },
+        {
+          "id": "0c5bdb04754618bb",
+          "period": "2026-W35",
+          "week": "2026-W35",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [],
+          "title": "Amazon EKS 관리형 Argo CD 기능의 argocd-cm ConfigMap 기반 사용자 지정 구성 지원",
+          "summary": "Amazon EKS 관리형 Argo CD 기능의 argocd-cm ConfigMap 기반 사용자 지정 구성 지원 반영",
+          "topic": "gitops",
+          "category": "feature"
+        },
+        {
+          "id": "b4fee122ee788d2b",
+          "period": "2026-W35",
+          "week": "2026-W35",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes v1.36.4/v1.35.8/v1.34.11 패치 릴리스 및 v1.37.0-rc.1",
+          "summary": "Kubernetes v1.36.4/v1.35.8/v1.34.11 패치 릴리스 및 v1.37.0-rc.1 반영",
+          "topic": "kubernetes",
+          "category": "preview"
+        },
+        {
+          "id": "f6abee59c9dac908",
+          "period": "2026-W35",
+          "week": "2026-W35",
+          "documents": [
+            "networking/cilium/README.md"
+          ],
+          "sources": [],
+          "title": "Cilium 1.20.1/1.19.7/1.18.13 패치 릴리스",
+          "summary": "Cilium 1.20.1/1.19.7/1.18.13 패치 릴리스 반영",
+          "topic": "networking",
+          "category": "release"
+        },
+        {
+          "id": "2683c2734ac2b558",
+          "period": "2026-W35",
+          "week": "2026-W35",
+          "documents": [
+            "autoscaling/02-karpenter.md"
+          ],
+          "sources": [],
+          "title": "Karpenter v1.14.1 패치 릴리스",
+          "summary": "Karpenter v1.14.1 패치 릴리스 반영",
+          "topic": "autoscaling",
+          "category": "release"
+        },
+        {
+          "id": "3316480189d22d53",
+          "period": "2026-W35",
+          "week": "2026-W35",
+          "documents": [
+            "service-mesh/istio/README.md"
+          ],
+          "sources": [],
+          "title": "Istio 1.31.0-rc.0 릴리스",
+          "summary": "Istio 1.31.0-rc.0 릴리스(1.31 RC 단계 진입) 반영",
+          "topic": "mesh",
+          "category": "preview"
+        },
+        {
+          "id": "099564d5cc60129b",
+          "period": "2026-W35",
+          "week": "2026-W35",
+          "documents": [
+            "observability/tracing/03-opentelemetry.md"
+          ],
+          "sources": [],
+          "title": "느린 SQL 쿼리를 OTel 스팬 파생 메트릭으로 정제하는 CNCF 블로그 가이드",
+          "summary": "느린 SQL 쿼리를 OTel 스팬 파생 메트릭으로 정제하는 CNCF 블로그 가이드 반영",
+          "topic": "observability",
+          "category": "guide"
+        },
+        {
+          "id": "a1ff74c7218bd4d8",
+          "period": "2026-W35",
+          "week": "2026-W35",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-certificate-authority-ca-rotation-automated-lifecycle-management"
+          ],
+          "title": "Amazon EKS, 클러스터 인증 기관",
+          "summary": "Amazon EKS, 클러스터 인증 기관(CA) 로테이션 및 자동 수명 주기 관리 지원",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "1c8539ff1cea558e",
+          "period": "2026-W35",
+          "week": "2026-W35",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/"
+          ],
+          "title": "Kubeflow, CNCF 졸업",
+          "summary": "Kubeflow, CNCF 졸업(graduated) 프로젝트 승격",
+          "topic": "ai",
+          "category": "community"
+        },
+        {
+          "id": "6a43c96a0097c220",
+          "period": "2026-W34",
+          "week": "2026-W34",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [],
+          "title": "ArgoCD v3.5.0 정식 릴리스 및 v3.5.1/v3.4.7/v3.3.14 패치 릴리스",
+          "summary": "ArgoCD v3.5.0 정식 릴리스 및 v3.5.1/v3.4.7/v3.3.14 패치 릴리스 반영",
+          "topic": "gitops",
+          "category": "release"
+        },
+        {
+          "id": "f076e28cddd8be3d",
+          "period": "2026-W34",
+          "week": "2026-W34",
+          "documents": [
+            "service-mesh/istio/README.md"
+          ],
+          "sources": [],
+          "title": "Istio 1.31.0-beta.1 릴리스",
+          "summary": "Istio 1.31.0-beta.1 릴리스(1.31 베타 단계 진입) 반영",
+          "topic": "mesh",
+          "category": "preview"
+        },
+        {
+          "id": "baa65fe9cd7ee050",
+          "period": "2026-W34",
+          "week": "2026-W34",
+          "documents": [
+            "service-mesh/linkerd/README.md"
+          ],
+          "sources": [],
+          "title": "Linkerd edge-26.8.2",
+          "summary": "Linkerd edge-26.8.2(Gateway API 1.5.1 지원, 테스트 최대 k8s 1.36) 반영",
+          "topic": "mesh",
+          "category": "preview"
+        },
+        {
+          "id": "5b6e1be0fe316879",
+          "period": "2026-W34",
+          "week": "2026-W34",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-control-plane-configuration-parameters"
+          ],
+          "title": "Amazon EKS, Kubernetes 컨트롤 플레인 구성 파라미터",
+          "summary": "Amazon EKS, Kubernetes 컨트롤 플레인 구성 파라미터(스케줄러/컨트롤러 매니저/API 서버 튜닝) 지원",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "aeb8ce71e757fece",
+          "period": "2026-W34",
+          "week": "2026-W34",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/announcements/2026/08/11/cncf-announces-graduation-of-cloud-native-buildpacks-advancing-the-standard-for-container-builds/"
+          ],
+          "title": "Cloud Native Buildpacks, CNCF 졸업",
+          "summary": "Cloud Native Buildpacks, CNCF 졸업(graduated) 프로젝트 승격",
+          "topic": "ecosystem",
+          "category": "community"
+        },
+        {
+          "id": "79d50a79d88cc732",
+          "period": "2026-W34",
+          "week": "2026-W34",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/announcements/2026/08/10/cncf-reveals-kubecon-cloudnativecon-north-america-2026-schedule-adds-new-ai-inference-agentic-track/"
+          ],
+          "title": "KubeCon + CloudNativeCon North America 2026 일정 공개, AI Inference + Agentic 트랙 신설",
+          "summary": "KubeCon + CloudNativeCon North America 2026 일정 공개, AI Inference + Agentic 트랙 신설",
+          "topic": "ai",
+          "category": "community"
+        },
+        {
+          "id": "ef5e05daf8c9552a",
+          "period": "2026-W34",
+          "week": "2026-W34",
+          "documents": [],
+          "sources": [
+            "https://kubernetes.io/blog/2026/08/11/how-to-pretty-print-kubernetes-yaml-as-kyaml/"
+          ],
+          "title": "Kubernetes YAML을 KYAML로 예쁘게 출력하기, Kubernetes 블로그",
+          "summary": "Kubernetes YAML을 KYAML로 예쁘게 출력하기, Kubernetes 블로그",
+          "topic": "kubernetes",
+          "category": "guide"
+        },
+        {
+          "id": "06ddb20f37593164",
+          "period": "2026-W33",
+          "week": "2026-W33",
+          "documents": [
+            "networking/04-gateway-api.md"
+          ],
+          "sources": [],
+          "title": "Gateway API v1.6",
+          "summary": "Gateway API v1.6(TCPRoute/UDPRoute Standard v1 승격, 채널별 deprecated API 제공 여부 변경) 반영",
+          "topic": "networking",
+          "category": "breaking"
+        },
+        {
+          "id": "a7c6d94100975102",
+          "period": "2026-W33",
+          "week": "2026-W33",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [],
+          "title": "ArgoCD v3.5.0 GA",
+          "summary": "ArgoCD v3.5.0 GA(Helm 4 마이그레이션, 소스 무결성 검증 알파, ApplicationSet 개선) 반영",
+          "topic": "gitops",
+          "category": "release"
+        },
+        {
+          "id": "9881446ba6474f58",
+          "period": "2026-W33",
+          "week": "2026-W33",
+          "documents": [
+            "networking/cilium/README.md"
+          ],
+          "sources": [],
+          "title": "Cilium 1.20.0 GA",
+          "summary": "Cilium 1.20.0 GA(Gateway API v1.6.1, KCNP, multi-pool IPAM 마이그레이션) 및 1.21.0-pre.0 반영",
+          "topic": "networking",
+          "category": "release"
+        },
+        {
+          "id": "e86be628e1db6c01",
+          "period": "2026-W33",
+          "week": "2026-W33",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes v1.37 스니크 픽, 문서 프리즈 발효, v1.38.0-alpha.0 태그",
+          "summary": "Kubernetes v1.37 스니크 픽, 문서 프리즈 발효, v1.38.0-alpha.0 태그 반영",
+          "topic": "kubernetes",
+          "category": "preview"
+        },
+        {
+          "id": "1b48b82ed445832c",
+          "period": "2026-W33",
+          "week": "2026-W33",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-ecr-image-layers/"
+          ],
+          "title": "Amazon ECR, Docker push 이미지 레이어 최대 200GB 지원",
+          "summary": "Amazon ECR, Docker push 이미지 레이어 최대 200GB 지원",
+          "topic": "ecosystem",
+          "category": "feature"
+        },
+        {
+          "id": "d7f2bf6d1947d8b8",
+          "period": "2026-W33",
+          "week": "2026-W33",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/announcements/2026/08/05/k8gb-becomes-a-cncf-incubating-project/"
+          ],
+          "title": "K8gb, CNCF 인큐베이팅 프로젝트 승격",
+          "summary": "K8gb, CNCF 인큐베이팅 프로젝트 승격",
+          "topic": "networking",
+          "category": "community"
+        },
+        {
+          "id": "a95bee0c17a1253f",
+          "period": "2026-W33",
+          "week": "2026-W33",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/08/05/opencost-1-121-0-first-of-a-kind-kubernetes-inference-cost-tracking/"
+          ],
+          "title": "OpenCost 1.121.0, Kubernetes 추론",
+          "summary": "OpenCost 1.121.0, Kubernetes 추론(inference) 비용 추적 기능 추가",
+          "topic": "ai",
+          "category": "feature"
+        },
+        {
+          "id": "96a4ba33f6aecdcd",
+          "period": "2026-W33",
+          "week": "2026-W33",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/08/07/does-kubernetes-dra-replace-hami/"
+          ],
+          "title": "Kubernetes DRA가 HAMi를 대체할까?, CNCF 블로그",
+          "summary": "Kubernetes DRA가 HAMi를 대체할까?, CNCF 블로그",
+          "topic": "ai",
+          "category": "guide"
+        },
+        {
+          "id": "fd17d3f6a65fdb92",
+          "period": "2026-W31",
+          "week": "2026-W31",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes v1.36.3/v1.35.7/v1.34.10 패치 릴리스 및 v1.37 코드 프리즈 발효",
+          "summary": "Kubernetes v1.36.3/v1.35.7/v1.34.10 패치 릴리스 및 v1.37 코드 프리즈 발효 반영",
+          "topic": "kubernetes",
+          "category": "preview"
+        },
+        {
+          "id": "c16e7be1bec9e69b",
+          "period": "2026-W31",
+          "week": "2026-W31",
+          "documents": [
+            "eks-auto-mode/README.md"
+          ],
+          "sources": [],
+          "title": "EKS Auto Mode 노드 풀의 EFA·EC2 배치 그룹 지원",
+          "summary": "EKS Auto Mode 노드 풀의 EFA·EC2 배치 그룹 지원 반영",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "9e06331e0f8ca41c",
+          "period": "2026-W31",
+          "week": "2026-W31",
+          "documents": [
+            "autoscaling/02-karpenter.md"
+          ],
+          "sources": [],
+          "title": "Karpenter 노드 풀의 EFA·EC2 배치 그룹 지원",
+          "summary": "Karpenter 노드 풀의 EFA·EC2 배치 그룹 지원 반영",
+          "topic": "autoscaling",
+          "category": "feature"
+        },
+        {
+          "id": "6698747830f17680",
+          "period": "2026-W31",
+          "week": "2026-W31",
+          "documents": [
+            "observability/metrics/01-prometheus.md"
+          ],
+          "sources": [],
+          "title": "AMP 워크스페이스 한도 상향",
+          "summary": "AMP 워크스페이스 한도 상향(활성 시계열 15억 개, 규칙 20만 개) 반영",
+          "topic": "observability",
+          "category": "feature"
+        },
+        {
+          "id": "a5d9de9b3f27d7b7",
+          "period": "2026-W31",
+          "week": "2026-W31",
+          "documents": [
+            "observability/tracing/03-opentelemetry.md"
+          ],
+          "sources": [],
+          "title": "OpenTelemetry CNCF 졸업",
+          "summary": "OpenTelemetry CNCF 졸업(graduation) 반영",
+          "topic": "observability",
+          "category": "community"
+        },
+        {
+          "id": "2bbc0db53116190f",
+          "period": "2026-W31",
+          "week": "2026-W31",
+          "documents": [
+            "networking/calico/README.md"
+          ],
+          "sources": [],
+          "title": "Tigera의 Calico for VMs on Kubernetes 출시",
+          "summary": "Tigera의 Calico for VMs on Kubernetes 출시(eBPF 기반 VM+컨테이너 통합 네트워킹) 반영",
+          "topic": "networking",
+          "category": "feature"
+        },
+        {
+          "id": "42ccc00f9ef91695",
+          "period": "2026-W31",
+          "week": "2026-W31",
+          "documents": [
+            "networking/cilium/README.md"
+          ],
+          "sources": [],
+          "title": "Cilium 1.20.0-rc.1 릴리스 후보",
+          "summary": "Cilium 1.20.0-rc.1 릴리스 후보 반영",
+          "topic": "networking",
+          "category": "preview"
+        },
+        {
+          "id": "ad81f394804898d0",
+          "period": "2026-W31",
+          "week": "2026-W31",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/07/22/confidential-containers-becomes-a-cncf-incubating-project/"
+          ],
+          "title": "Confidential Containers, CNCF 인큐베이팅 프로젝트 승격",
+          "summary": "Confidential Containers, CNCF 인큐베이팅 프로젝트 승격",
+          "topic": "ecosystem",
+          "category": "community"
+        },
+        {
+          "id": "bd40613b27c5e0ec",
+          "period": "2026-W31",
+          "week": "2026-W31",
+          "documents": [],
+          "sources": [
+            "https://www.sentinelone.com/blog/mount-here-read-there-twin-path-traversal-cves-in-kubernetes-storage/"
+          ],
+          "title": "Kubernetes CSI 드라이버 경로 순회",
+          "summary": "Kubernetes CSI 드라이버 경로 순회(path traversal) CVE 2건 (CVE-2026-3864 NFS / CVE-2026-3865 SMB; csi-driver-nfs v4.13.1, csi-driver-smb v1.20.1에서 수정)",
+          "topic": "security",
+          "category": "security"
+        },
+        {
+          "id": "91fab9f120ca7341",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [
+            "networking/cilium/README.md"
+          ],
+          "sources": [],
+          "title": "Cilium 1.19.6/1.18.12/1.17.18 패치 릴리스 및 CVE-2026-56743",
+          "summary": "Cilium 1.19.6/1.18.12/1.17.18 패치 릴리스 및 CVE-2026-56743(ipBlock NetworkPolicy 이슈) 반영",
+          "topic": "networking",
+          "category": "security"
+        },
+        {
+          "id": "7cc04f3de1d163fb",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [
+            "service-mesh/istio/README.md"
+          ],
+          "sources": [],
+          "title": "Istio 1.30.3/1.29.6 패치 릴리스",
+          "summary": "Istio 1.30.3/1.29.6 패치 릴리스 반영",
+          "topic": "mesh",
+          "category": "release"
+        },
+        {
+          "id": "42890aa334dfb02d",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [
+            "service-mesh/linkerd/README.md"
+          ],
+          "sources": [],
+          "title": "Linkerd edge-26.7.1",
+          "summary": "Linkerd edge-26.7.1(미정의 서비스 포트 요청 차단, breaking) 반영",
+          "topic": "mesh",
+          "category": "breaking"
+        },
+        {
+          "id": "ea79af44eab48439",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [
+            "eks-auto-mode/README.md"
+          ],
+          "sources": [],
+          "title": "EKS Auto Mode의 ARC zonal shift/autoshift 지원",
+          "summary": "EKS Auto Mode의 ARC zonal shift/autoshift 지원 반영",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "5588b933afc1853e",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [
+            "ops/15-zonal-operations-guide.md"
+          ],
+          "sources": [],
+          "title": "EKS Auto Mode의 ARC zonal shift 지원",
+          "summary": "EKS Auto Mode의 ARC zonal shift 지원 반영",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "52a7be4042e32aef",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [
+            "autoscaling/02-karpenter.md"
+          ],
+          "sources": [],
+          "title": "Karpenter 구버전 라인의 패치 릴리스",
+          "summary": "Karpenter 구버전 라인의 패치 릴리스(v1.3.8~v1.11.3) 반영",
+          "topic": "autoscaling",
+          "category": "release"
+        },
+        {
+          "id": "6c873c67c9ec5a32",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes v1.37.0-beta.0 및 v1.37 릴리스 일정",
+          "summary": "Kubernetes v1.37.0-beta.0 및 v1.37 릴리스 일정 반영",
+          "topic": "kubernetes",
+          "category": "preview"
+        },
+        {
+          "id": "e602bd7e1a1f52e0",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [],
+          "title": "ArgoCon Japan 2026과 Argo CD 3.5 로드맵 공유 예정 소식",
+          "summary": "ArgoCon Japan 2026과 Argo CD 3.5 로드맵 공유 예정 소식 반영",
+          "topic": "gitops",
+          "category": "community"
+        },
+        {
+          "id": "04dc0eb2d03601ed",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [
+            "observability/metrics/01-prometheus.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes 블로그의 커스텀 메트릭 익스포터 작성 가이드",
+          "summary": "Kubernetes 블로그의 커스텀 메트릭 익스포터 작성 가이드 반영",
+          "topic": "observability",
+          "category": "guide"
+        },
+        {
+          "id": "6e21c84312259fe5",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/07/15/hami-becomes-a-cncf-incubating-project/"
+          ],
+          "title": "HAMi, CNCF 인큐베이팅 프로젝트로 승격",
+          "summary": "HAMi, CNCF 인큐베이팅 프로젝트로 승격",
+          "topic": "ai",
+          "category": "community"
+        },
+        {
+          "id": "4f8d2578b74abefa",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/07/16/running-a-self-hosted-llm-in-kubernetes-with-vllm/"
+          ],
+          "title": "Kubernetes에서 vLLM으로 셀프 호스팅 LLM 운영하기, CNCF 블로그",
+          "summary": "Kubernetes에서 vLLM으로 셀프 호스팅 LLM 운영하기, CNCF 블로그",
+          "topic": "ai",
+          "category": "guide"
+        },
+        {
+          "id": "b1584503b4a69323",
+          "period": "2026-W29",
+          "week": "2026-W29",
+          "documents": [
+            "security/10-cert-manager.md"
+          ],
+          "sources": [],
+          "title": "ACM의 ACME 프로토콜 지원",
+          "summary": "ACM의 ACME 프로토콜 지원(cert-manager에서 ACM 퍼블릭 인증서 발급 가능) 반영",
+          "topic": "security",
+          "category": "feature"
+        },
+        {
+          "id": "cc6a9d310fb0d9a1",
+          "period": "2026-W29",
+          "week": "2026-W29",
+          "documents": [
+            "observability/tracing/03-opentelemetry.md"
+          ],
+          "sources": [],
+          "title": "NGINX + OpenTelemetry 기반 AI 에이전트 네트워크 경계 관측 패턴",
+          "summary": "NGINX + OpenTelemetry 기반 AI 에이전트 네트워크 경계 관측 패턴 반영",
+          "topic": "observability",
+          "category": "feature"
+        },
+        {
+          "id": "2fab9da7e3a29141",
+          "period": "2026-W29",
+          "week": "2026-W29",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/07/06/evolving-platform-engineering-for-ai-native-workloads/"
+          ],
+          "title": "AI 네이티브 워크로드를 위한 플랫폼 엔지니어링의 진화, CNCF 블로그",
+          "summary": "AI 네이티브 워크로드를 위한 플랫폼 엔지니어링의 진화, CNCF 블로그",
+          "topic": "ai",
+          "category": "guide"
+        },
+        {
+          "id": "4865b719fcf484ba",
+          "period": "2026-07-11",
+          "week": "2026-W28",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [],
+          "title": "etcd v3.7.0 릴리스",
+          "summary": "etcd v3.7.0 릴리스(RangeStream 등) 반영",
+          "topic": "kubernetes",
+          "category": "release"
+        },
+        {
+          "id": "3e7ed5929507681f",
+          "period": "2026-07-11",
+          "week": "2026-W28",
+          "documents": [
+            "eks-auto-mode/06-cost-management.md"
+          ],
+          "sources": [],
+          "title": "EKS Auto Mode GPU 관리 요금 최대 60% 인하",
+          "summary": "EKS Auto Mode GPU 관리 요금 최대 60% 인하 반영",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "1a77c1da00499488",
+          "period": "2026-07-11",
+          "week": "2026-W28",
+          "documents": [
+            "autoscaling/02-karpenter.md"
+          ],
+          "sources": [],
+          "title": "Karpenter v1.14.0 릴리스",
+          "summary": "Karpenter v1.14.0 릴리스(CapacityBuffers API 등) 반영",
+          "topic": "autoscaling",
+          "category": "release"
+        },
+        {
+          "id": "679c011f9f93667b",
+          "period": "2026-07-11",
+          "week": "2026-W28",
+          "documents": [
+            "observability/metrics/04-cloudwatch-metrics.md"
+          ],
+          "sources": [],
+          "title": "CloudWatch Application Signals Service Events",
+          "summary": "CloudWatch Application Signals Service Events 반영",
+          "topic": "observability",
+          "category": "feature"
+        },
+        {
+          "id": "ba4eee429ee70978",
+          "period": "2026-07-11",
+          "week": "2026-W28",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [],
+          "title": "ArgoCD v3.4.5 패치 릴리스",
+          "summary": "ArgoCD v3.4.5 패치 릴리스 반영",
+          "topic": "gitops",
+          "category": "release"
+        },
+        {
+          "id": "ed3a6b8fc2f63075",
+          "period": "2026-07-11",
+          "week": "2026-W28",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/07/09/navigating-the-ingress-nginx-retirement/"
+          ],
+          "title": "ingress-nginx 컨트롤러 은퇴",
+          "summary": "ingress-nginx 컨트롤러 은퇴(2026년 3월) 이후 대응 가이드, CNCF 블로그",
+          "topic": "ecosystem",
+          "category": "breaking"
+        },
+        {
+          "id": "38ea5464fcfc9655",
+          "period": "2026-07-11",
+          "week": "2026-W28",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/report-whitepaper/2026/07/08/the-cncf-data-storage-in-cloud-native-ai-white-paper/"
+          ],
+          "title": "CNCF 클라우드 네이티브 AI 데이터 스토리지 백서 공개",
+          "summary": "CNCF 클라우드 네이티브 AI 데이터 스토리지 백서 공개",
+          "topic": "ai",
+          "category": "guide"
+        },
+        {
+          "id": "faf70df0e059eacf",
+          "period": "2026-07-11",
+          "week": "2026-W28",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-emr-eks-spark-troubleshooting/"
+          ],
+          "title": "Amazon EMR on EKS, Apache Spark 트러블슈팅 에이전트 지원",
+          "summary": "Amazon EMR on EKS, Apache Spark 트러블슈팅 에이전트 지원",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "fdea6d9069027c23",
+          "period": "2026-07-11",
+          "week": "2026-W28",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/06/aws-systems-manager-multicloud-vm/"
+          ],
+          "title": "AWS Systems Manager 하이브리드/멀티클라우드 노드 요금제 개편",
+          "summary": "AWS Systems Manager 하이브리드/멀티클라우드 노드 요금제 개편(Advanced Instances Tier 폐지)",
+          "topic": "ecosystem",
+          "category": "breaking"
+        }
+      ],
+      "updated": "2026-10-12"
+    },
+    "en": {
+      "entries": [
+        {
+          "id": "f36c8c35ad236185",
+          "period": "2026-W42",
+          "week": "2026-W42",
+          "documents": [
+            "autoscaling/02-karpenter.md"
+          ],
+          "sources": [],
+          "title": "Karpenter v1.15.0 release",
+          "summary": "applied the Karpenter v1.15.0 release (node repair as a voluntary disruption with reboot support, CEL in KubeletConfiguration, broader DRA support, and more)",
+          "topic": "autoscaling",
+          "category": "release"
+        },
+        {
+          "id": "0c52b34184b23fa4",
+          "period": "2026-W42",
+          "week": "2026-W42",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [],
+          "title": "Argo CD v3.5.4/v3.4.10/v3.3.15 security patch releases",
+          "summary": "applied the Argo CD v3.5.4/v3.4.10/v3.3.15 security patch releases (four CRITICAL issues including repo-server command execution, CVE-2026-77459)",
+          "topic": "gitops",
+          "category": "security"
+        },
+        {
+          "id": "48b1de0f3f433ff4",
+          "period": "2026-W42",
+          "week": "2026-W42",
+          "documents": [
+            "kernel/01-container-primitives.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes blog's cgroup v1 deprecation status",
+          "summary": "applied the Kubernetes blog's cgroup v1 deprecation status (failCgroupV1 defaults to true from v1.35)",
+          "topic": "kubernetes",
+          "category": "breaking"
+        },
+        {
+          "id": "7f9bfd6a7f160424",
+          "period": "2026-W42",
+          "week": "2026-W42",
+          "documents": [],
+          "sources": [
+            "https://kubernetes.io/blog/2026/10/05/scaling-kubernetes-workloads-with-node-swap/"
+          ],
+          "title": "Scaling Kubernetes workloads with NVMe SSD-backed node swap",
+          "summary": "Scaling Kubernetes workloads with NVMe SSD-backed node swap (GA in v1.34), Kubernetes blog",
+          "topic": "kubernetes",
+          "category": "release"
+        },
+        {
+          "id": "80cde4e850d74fcd",
+          "period": "2026-W42",
+          "week": "2026-W42",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/10/07/meshery-becomes-a-cncf-incubating-project/"
+          ],
+          "title": "Meshery becomes a CNCF incubating project",
+          "summary": "Meshery becomes a CNCF incubating project",
+          "topic": "ecosystem",
+          "category": "community"
+        },
+        {
+          "id": "d8450bcbf8768d82",
+          "period": "2026-W42",
+          "week": "2026-W42",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/10/aws-batch-access-entries/"
+          ],
+          "title": "AWS Batch now supports Amazon EKS access entry authentication",
+          "summary": "AWS Batch now supports Amazon EKS access entry authentication",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "093c696b4e05b092",
+          "period": "2026-W41",
+          "week": "2026-W41",
+          "documents": [
+            "eks/08-eks-upgrades.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes 1.37 support on Amazon EKS and EKS Distro",
+          "summary": "applied Kubernetes 1.37 support on Amazon EKS and EKS Distro (Metrics API GA, DRA device taints GA, HPA scale-to-zero beta)",
+          "topic": "eks",
+          "category": "release"
+        },
+        {
+          "id": "14180ed2de9676b2",
+          "period": "2026-W41",
+          "week": "2026-W41",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [],
+          "title": "start of Argo CD 4.0 visioning and ArgoCon North America 2026 news",
+          "summary": "applied the start of Argo CD 4.0 visioning and ArgoCon North America 2026 news",
+          "topic": "gitops",
+          "category": "community"
+        },
+        {
+          "id": "01b5f7812ed6def2",
+          "period": "2026-W41",
+          "week": "2026-W41",
+          "documents": [
+            "observability/tracing/03-opentelemetry.md"
+          ],
+          "sources": [],
+          "title": "Atlassian's incident-detection rebuild on OTel, Kafka, and Flink",
+          "summary": "applied Atlassian's incident-detection rebuild on OTel, Kafka, and Flink (CNCF blog)",
+          "topic": "observability",
+          "category": "guide"
+        },
+        {
+          "id": "fb77714165bf9427",
+          "period": "2026-W41",
+          "week": "2026-W41",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-ecs-vpc-lattice-blue-green-deployments"
+          ],
+          "title": "Amazon ECS adds Amazon VPC Lattice support for blue/green, linear, and canary deployments",
+          "summary": "Amazon ECS adds Amazon VPC Lattice support for blue/green, linear, and canary deployments",
+          "topic": "ecosystem",
+          "category": "feature"
+        },
+        {
+          "id": "1affbade44f3f437",
+          "period": "2026-W41",
+          "week": "2026-W41",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-managed-grafana-now-supports-creating-grafana-13-2-workspaces"
+          ],
+          "title": "Amazon Managed Grafana now supports creating Grafana 13.2 workspaces",
+          "summary": "Amazon Managed Grafana now supports creating Grafana 13.2 workspaces",
+          "topic": "observability",
+          "category": "feature"
+        },
+        {
+          "id": "f3ee2f4c3aea3c71",
+          "period": "2026-W41",
+          "week": "2026-W41",
+          "documents": [],
+          "sources": [
+            "https://grafana.com/blog/tempo-3-1-release-all-the-latest-features"
+          ],
+          "title": "Grafana Tempo 3.1 release",
+          "summary": "Grafana Tempo 3.1 release (new Kafka features, TraceQL metrics updates, trace redaction, and more)",
+          "topic": "observability",
+          "category": "release"
+        },
+        {
+          "id": "2f19cfbbb4ffd701",
+          "period": "2026-W41",
+          "week": "2026-W41",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/10/01/guardrails-not-gates-rethinking-policy-in-platform-teams/"
+          ],
+          "title": "Guardrails, not gates: rethinking policy in platform teams, CNCF blog",
+          "summary": "Guardrails, not gates: rethinking policy in platform teams, CNCF blog",
+          "topic": "ecosystem",
+          "category": "guide"
+        },
+        {
+          "id": "e9a7d0c41e9372af",
+          "period": "2026-W40",
+          "week": "2026-W40",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes v1.37.1/v1.36.5/v1.35.9/v1.34.12 patch releases and the v1.37 PVC Unused condition",
+          "summary": "applied the Kubernetes v1.37.1/v1.36.5/v1.35.9/v1.34.12 patch releases and the v1.37 PVC Unused condition (Beta) blog post",
+          "topic": "kubernetes",
+          "category": "release"
+        },
+        {
+          "id": "c6bab082ddae81c1",
+          "period": "2026-W40",
+          "week": "2026-W40",
+          "documents": [
+            "service-mesh/istio/README.md"
+          ],
+          "sources": [],
+          "title": "Istio 1.31.1/1.30.5/1.29.8 patch releases",
+          "summary": "applied the Istio 1.31.1/1.30.5/1.29.8 patch releases (including the BackendTLSPolicy fail-open security fix GHSA-qm8v-g4f9-qhjx)",
+          "topic": "mesh",
+          "category": "release"
+        },
+        {
+          "id": "a315dfcc12d9e865",
+          "period": "2026-W40",
+          "week": "2026-W40",
+          "documents": [
+            "eks/04-eks-storage-part1.md"
+          ],
+          "sources": [],
+          "title": "EFS CSI driver mount option injection vulnerability CVE-2026-6437",
+          "summary": "applied the EFS CSI driver mount option injection vulnerability CVE-2026-6437 (fixed in v3.0.1)",
+          "topic": "eks",
+          "category": "security"
+        },
+        {
+          "id": "0e487c7a59342387",
+          "period": "2026-W40",
+          "week": "2026-W40",
+          "documents": [
+            "ai-ml/08-llm-gateway.md"
+          ],
+          "sources": [],
+          "title": "Amazon SageMaker HyperPod Inference Gateway launch",
+          "summary": "applied the Amazon SageMaker HyperPod Inference Gateway launch (EKS managed add-on, GPU-aware routing)",
+          "topic": "ai",
+          "category": "feature"
+        },
+        {
+          "id": "91008ed006e84887",
+          "period": "2026-W40",
+          "week": "2026-W40",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-emr-eks-ipv6-support"
+          ],
+          "title": "Amazon EMR on EKS now supports IPv6 Amazon EKS clusters",
+          "summary": "Amazon EMR on EKS now supports IPv6 Amazon EKS clusters",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "48fb4effee7898bb",
+          "period": "2026-W40",
+          "week": "2026-W40",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/09/emr-eks-spark-connect-interactive/"
+          ],
+          "title": "Run interactive workloads on Amazon EMR on EKS with Spark Connect",
+          "summary": "Run interactive workloads on Amazon EMR on EKS with Spark Connect",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "04a14c403fcb4377",
+          "period": "2026-W40",
+          "week": "2026-W40",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-cloudwatch-omni-ai/"
+          ],
+          "title": "Amazon CloudWatch Omni general availability",
+          "summary": "Amazon CloudWatch Omni general availability (AI-first observability experience, OpenTelemetry interoperability)",
+          "topic": "ai",
+          "category": "feature"
+        },
+        {
+          "id": "103ae4202c36a0b8",
+          "period": "2026-W39",
+          "week": "2026-W39",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [],
+          "title": "three Kubernetes v1.37 feature deep dives",
+          "summary": "applied three Kubernetes v1.37 feature deep dives (Memory QoS Beta, Pod-Level Resource Managers Beta, emptyDir permissions and bind mount options)",
+          "topic": "kubernetes",
+          "category": "feature"
+        },
+        {
+          "id": "1e55d06762e5daad",
+          "period": "2026-W39",
+          "week": "2026-W39",
+          "documents": [
+            "networking/cilium/README.md"
+          ],
+          "sources": [],
+          "title": "Cilium 1.20.2/1.19.8/1.18.14 patch releases and the CNCF blog's 1.20 feature recap",
+          "summary": "applied Cilium 1.20.2/1.19.8/1.18.14 patch releases and the CNCF blog's 1.20 feature recap",
+          "topic": "networking",
+          "category": "release"
+        },
+        {
+          "id": "46712b3391200313",
+          "period": "2026-W39",
+          "week": "2026-W39",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [],
+          "title": "Argo CD v3.5.3/v3.4.9 patch releases and v3.6.0-rc1",
+          "summary": "applied Argo CD v3.5.3/v3.4.9 patch releases and v3.6.0-rc1",
+          "topic": "gitops",
+          "category": "release"
+        },
+        {
+          "id": "7bbbe2e02227cedb",
+          "period": "2026-W39",
+          "week": "2026-W39",
+          "documents": [],
+          "sources": [
+            "https://kubernetes.io/blog/2026/09/14/csi-changed-block-tracking-beta/"
+          ],
+          "title": "Kubernetes CSI Changed Block Tracking",
+          "summary": "Kubernetes CSI Changed Block Tracking (CBT) API graduates to Beta, with differences from Alpha, Kubernetes blog",
+          "topic": "kubernetes",
+          "category": "community"
+        },
+        {
+          "id": "008452d13576b469",
+          "period": "2026-W39",
+          "week": "2026-W39",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/09/resilience-hub-eks-dependency-policy/"
+          ],
+          "title": "AWS Resilience Hub adds three new capabilities",
+          "summary": "AWS Resilience Hub adds three new capabilities (including EKS-label-based service resource discovery within a namespace)",
+          "topic": "ecosystem",
+          "category": "feature"
+        },
+        {
+          "id": "2b6d633eb221b89d",
+          "period": "2026-W38",
+          "week": "2026-W38",
+          "documents": [
+            "core/08-scheduling-preemption-eviction.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes v1.37 scheduler preemption for in-place Pod resize",
+          "summary": "applied Kubernetes v1.37 scheduler preemption for in-place Pod resize (Alpha) and Workload-Aware Scheduling advances (Workload/PodGroup Beta, CompositePodGroup API)",
+          "topic": "kubernetes",
+          "category": "feature"
+        },
+        {
+          "id": "62dbb8446f697fff",
+          "period": "2026-W38",
+          "week": "2026-W38",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes v1.37 Node lifecycle conditions",
+          "summary": "applied Kubernetes v1.37 Node lifecycle conditions (five well-known conditions for drain, maintenance and graceful shutdown)",
+          "topic": "kubernetes",
+          "category": "feature"
+        },
+        {
+          "id": "3a09aa6f450ccc7a",
+          "period": "2026-W38",
+          "week": "2026-W38",
+          "documents": [
+            "observability/metrics/01-prometheus.md"
+          ],
+          "sources": [],
+          "title": "Prometheus native histograms for Kubernetes v1.37 component metrics",
+          "summary": "applied Prometheus native histograms for Kubernetes v1.37 component metrics (Beta, enabled by default)",
+          "topic": "observability",
+          "category": "feature"
+        },
+        {
+          "id": "e8084f235321a5e6",
+          "period": "2026-W38",
+          "week": "2026-W38",
+          "documents": [
+            "networking/cilium/README.md"
+          ],
+          "sources": [],
+          "title": "Cilium 1.21.0-pre.2 prerelease",
+          "summary": "applied the Cilium 1.21.0-pre.2 prerelease (Gateway API session persistence, AWS managed prefix lists, BPF masquerading by default)",
+          "topic": "networking",
+          "category": "release"
+        },
+        {
+          "id": "c7a6e46aa337198a",
+          "period": "2026-W38",
+          "week": "2026-W38",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/announcements/2026/09/07/cloud-native-computing-foundation-announces-karmada-graduation/"
+          ],
+          "title": "Karmada becomes a CNCF graduated project",
+          "summary": "Karmada becomes a CNCF graduated project",
+          "topic": "ecosystem",
+          "category": "community"
+        },
+        {
+          "id": "1c4795d9c1495e79",
+          "period": "2026-W38",
+          "week": "2026-W38",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/09/10/kubernetes-disaster-recovery-guidance-from-three-reproducible-failure-scenarios/"
+          ],
+          "title": "Kubernetes disaster recovery: guidance from three reproducible failure scenarios, CNCF blog",
+          "summary": "Kubernetes disaster recovery: guidance from three reproducible failure scenarios, CNCF blog",
+          "topic": "kubernetes",
+          "category": "guide"
+        },
+        {
+          "id": "9cc0058fd5407847",
+          "period": "2026-W38",
+          "week": "2026-W38",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/09/private-ca-eks-addon-ad-govcloud/"
+          ],
+          "title": "AWS Private CA EKS add-on and Connector for AD now available in AWS GovCloud",
+          "summary": "AWS Private CA EKS add-on and Connector for AD now available in AWS GovCloud (US)",
+          "topic": "ecosystem",
+          "category": "feature"
+        },
+        {
+          "id": "2bd04eb1130f1923",
+          "period": "2026-W36",
+          "week": "2026-W36",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes v1.37 \"Garhwal\" release",
+          "summary": "applied the Kubernetes v1.37 \"Garhwal\" release (Pod certificates/ClusterTrustBundles Stable, Metrics API GA, kube-dns and IPVS-mode deprecations, and more)",
+          "topic": "kubernetes",
+          "category": "breaking"
+        },
+        {
+          "id": "a182c5e364156319",
+          "period": "2026-W36",
+          "week": "2026-W36",
+          "documents": [
+            "service-mesh/istio/README.md"
+          ],
+          "sources": [],
+          "title": "Istio 1.30.4/1.29.7 security patch releases",
+          "summary": "applied the Istio 1.30.4/1.29.7 security patch releases (ISTIO-SECURITY-2026-006, 13 Envoy CVEs)",
+          "topic": "mesh",
+          "category": "security"
+        },
+        {
+          "id": "567ced94fa5c20dc",
+          "period": "2026-W36",
+          "week": "2026-W36",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [],
+          "title": "ArgoCD v3.5.2/v3.4.8 patch releases",
+          "summary": "applied the ArgoCD v3.5.2/v3.4.8 patch releases",
+          "topic": "gitops",
+          "category": "release"
+        },
+        {
+          "id": "00554e9bbf811f51",
+          "period": "2026-W36",
+          "week": "2026-W36",
+          "documents": [
+            "service-mesh/linkerd/README.md"
+          ],
+          "sources": [],
+          "title": "Linkerd edge-26.8.4",
+          "summary": "applied Linkerd edge-26.8.4 (TLSRoute API version negotiation, and more)",
+          "topic": "mesh",
+          "category": "preview"
+        },
+        {
+          "id": "92860eb4cbdf581a",
+          "period": "2026-W36",
+          "week": "2026-W36",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-multiple-oidc-providers"
+          ],
+          "title": "Amazon EKS now supports up to 10 external OIDC identity providers per cluster",
+          "summary": "Amazon EKS now supports up to 10 external OIDC identity providers per cluster",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "df144fdb6e43d73d",
+          "period": "2026-W36",
+          "week": "2026-W36",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/08/28/scale-before-the-spike-predictive-autoscaling-for-gpu-workloads-on-kubernetes/"
+          ],
+          "title": "Scale before the spike: predictive autoscaling for GPU workloads on Kubernetes, CNCF blog",
+          "summary": "Scale before the spike: predictive autoscaling for GPU workloads on Kubernetes, CNCF blog",
+          "topic": "ai",
+          "category": "guide"
+        },
+        {
+          "id": "ff7a8c884f73b859",
+          "period": "2026-W36",
+          "week": "2026-W36",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/08/27/building-an-ai-factory-on-kubernetes/"
+          ],
+          "title": "Building an AI factory on Kubernetes, CNCF blog",
+          "summary": "Building an AI factory on Kubernetes, CNCF blog",
+          "topic": "ai",
+          "category": "guide"
+        },
+        {
+          "id": "0c5bdb04754618bb",
+          "period": "2026-W35",
+          "week": "2026-W35",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [],
+          "title": "custom configuration support",
+          "summary": "applied custom configuration support (via the argocd-cm ConfigMap) for the Amazon EKS managed Argo CD capability",
+          "topic": "gitops",
+          "category": "feature"
+        },
+        {
+          "id": "b4fee122ee788d2b",
+          "period": "2026-W35",
+          "week": "2026-W35",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes v1.36.4/v1.35.8/v1.34.11 patch releases and v1.37.0-rc.1",
+          "summary": "applied Kubernetes v1.36.4/v1.35.8/v1.34.11 patch releases and v1.37.0-rc.1",
+          "topic": "kubernetes",
+          "category": "preview"
+        },
+        {
+          "id": "f6abee59c9dac908",
+          "period": "2026-W35",
+          "week": "2026-W35",
+          "documents": [
+            "networking/cilium/README.md"
+          ],
+          "sources": [],
+          "title": "Cilium 1.20.1/1.19.7/1.18.13 patch releases",
+          "summary": "applied Cilium 1.20.1/1.19.7/1.18.13 patch releases",
+          "topic": "networking",
+          "category": "release"
+        },
+        {
+          "id": "2683c2734ac2b558",
+          "period": "2026-W35",
+          "week": "2026-W35",
+          "documents": [
+            "autoscaling/02-karpenter.md"
+          ],
+          "sources": [],
+          "title": "Karpenter v1.14.1 patch release",
+          "summary": "applied the Karpenter v1.14.1 patch release",
+          "topic": "autoscaling",
+          "category": "release"
+        },
+        {
+          "id": "3316480189d22d53",
+          "period": "2026-W35",
+          "week": "2026-W35",
+          "documents": [
+            "service-mesh/istio/README.md"
+          ],
+          "sources": [],
+          "title": "Istio 1.31.0-rc.0 release",
+          "summary": "applied the Istio 1.31.0-rc.0 release (1.31 entering RC)",
+          "topic": "mesh",
+          "category": "preview"
+        },
+        {
+          "id": "099564d5cc60129b",
+          "period": "2026-W35",
+          "week": "2026-W35",
+          "documents": [
+            "observability/tracing/03-opentelemetry.md"
+          ],
+          "sources": [],
+          "title": "CNCF blog guide on distilling slow SQL queries into OTel span-derived metrics",
+          "summary": "applied the CNCF blog guide on distilling slow SQL queries into OTel span-derived metrics",
+          "topic": "observability",
+          "category": "guide"
+        },
+        {
+          "id": "a1ff74c7218bd4d8",
+          "period": "2026-W35",
+          "week": "2026-W35",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-certificate-authority-ca-rotation-automated-lifecycle-management"
+          ],
+          "title": "Amazon EKS now supports certificate authority",
+          "summary": "Amazon EKS now supports certificate authority (CA) rotation with automated lifecycle management",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "1c8539ff1cea558e",
+          "period": "2026-W35",
+          "week": "2026-W35",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/"
+          ],
+          "title": "Kubeflow graduates within the CNCF",
+          "summary": "Kubeflow graduates within the CNCF",
+          "topic": "ai",
+          "category": "community"
+        },
+        {
+          "id": "6a43c96a0097c220",
+          "period": "2026-W34",
+          "week": "2026-W34",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [],
+          "title": "ArgoCD v3.5.0 GA release and the v3.5.1/v3.4.7/v3.3.14 patch releases",
+          "summary": "applied the ArgoCD v3.5.0 GA release and the v3.5.1/v3.4.7/v3.3.14 patch releases",
+          "topic": "gitops",
+          "category": "release"
+        },
+        {
+          "id": "f076e28cddd8be3d",
+          "period": "2026-W34",
+          "week": "2026-W34",
+          "documents": [
+            "service-mesh/istio/README.md"
+          ],
+          "sources": [],
+          "title": "Istio 1.31.0-beta.1 release",
+          "summary": "applied the Istio 1.31.0-beta.1 release (1.31 entering beta)",
+          "topic": "mesh",
+          "category": "preview"
+        },
+        {
+          "id": "baa65fe9cd7ee050",
+          "period": "2026-W34",
+          "week": "2026-W34",
+          "documents": [
+            "service-mesh/linkerd/README.md"
+          ],
+          "sources": [],
+          "title": "Linkerd edge-26.8.2",
+          "summary": "applied Linkerd edge-26.8.2 (Gateway API 1.5.1 support, tested max k8s 1.36)",
+          "topic": "mesh",
+          "category": "preview"
+        },
+        {
+          "id": "5b6e1be0fe316879",
+          "period": "2026-W34",
+          "week": "2026-W34",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-control-plane-configuration-parameters"
+          ],
+          "title": "Amazon EKS now supports advanced Kubernetes control plane configuration parameters",
+          "summary": "Amazon EKS now supports advanced Kubernetes control plane configuration parameters (scheduler/controller manager/API server tuning)",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "aeb8ce71e757fece",
+          "period": "2026-W34",
+          "week": "2026-W34",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/announcements/2026/08/11/cncf-announces-graduation-of-cloud-native-buildpacks-advancing-the-standard-for-container-builds/"
+          ],
+          "title": "Cloud Native Buildpacks becomes a CNCF graduated project",
+          "summary": "Cloud Native Buildpacks becomes a CNCF graduated project",
+          "topic": "ecosystem",
+          "category": "community"
+        },
+        {
+          "id": "79d50a79d88cc732",
+          "period": "2026-W34",
+          "week": "2026-W34",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/announcements/2026/08/10/cncf-reveals-kubecon-cloudnativecon-north-america-2026-schedule-adds-new-ai-inference-agentic-track/"
+          ],
+          "title": "KubeCon + CloudNativeCon North America 2026 schedule revealed, new AI Inference + Agentic track added",
+          "summary": "KubeCon + CloudNativeCon North America 2026 schedule revealed, new AI Inference + Agentic track added",
+          "topic": "ai",
+          "category": "community"
+        },
+        {
+          "id": "ef5e05daf8c9552a",
+          "period": "2026-W34",
+          "week": "2026-W34",
+          "documents": [],
+          "sources": [
+            "https://kubernetes.io/blog/2026/08/11/how-to-pretty-print-kubernetes-yaml-as-kyaml/"
+          ],
+          "title": "How to pretty-print your Kubernetes YAML as KYAML, Kubernetes blog",
+          "summary": "How to pretty-print your Kubernetes YAML as KYAML, Kubernetes blog",
+          "topic": "kubernetes",
+          "category": "guide"
+        },
+        {
+          "id": "06ddb20f37593164",
+          "period": "2026-W33",
+          "week": "2026-W33",
+          "documents": [
+            "networking/04-gateway-api.md"
+          ],
+          "sources": [],
+          "title": "Gateway API v1.6",
+          "summary": "applied Gateway API v1.6 (TCPRoute/UDPRoute graduated to Standard v1, channel-specific deprecated API serving changes)",
+          "topic": "networking",
+          "category": "breaking"
+        },
+        {
+          "id": "a7c6d94100975102",
+          "period": "2026-W33",
+          "week": "2026-W33",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [],
+          "title": "ArgoCD v3.5.0 GA",
+          "summary": "applied ArgoCD v3.5.0 GA (Helm 4 migration, source integrity verification alpha, ApplicationSet improvements)",
+          "topic": "gitops",
+          "category": "release"
+        },
+        {
+          "id": "9881446ba6474f58",
+          "period": "2026-W33",
+          "week": "2026-W33",
+          "documents": [
+            "networking/cilium/README.md"
+          ],
+          "sources": [],
+          "title": "Cilium 1.20.0 GA",
+          "summary": "applied Cilium 1.20.0 GA (Gateway API v1.6.1, KCNP, multi-pool IPAM migration) and 1.21.0-pre.0",
+          "topic": "networking",
+          "category": "release"
+        },
+        {
+          "id": "e86be628e1db6c01",
+          "period": "2026-W33",
+          "week": "2026-W33",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes v1.37 sneak peek, Docs Freeze taking effect, and the v1.38.0-alpha.0 tag",
+          "summary": "applied the Kubernetes v1.37 sneak peek, Docs Freeze taking effect, and the v1.38.0-alpha.0 tag",
+          "topic": "kubernetes",
+          "category": "preview"
+        },
+        {
+          "id": "1b48b82ed445832c",
+          "period": "2026-W33",
+          "week": "2026-W33",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-ecr-image-layers/"
+          ],
+          "title": "Amazon ECR now supports image layers up to 200 GB for Docker push",
+          "summary": "Amazon ECR now supports image layers up to 200 GB for Docker push",
+          "topic": "ecosystem",
+          "category": "feature"
+        },
+        {
+          "id": "d7f2bf6d1947d8b8",
+          "period": "2026-W33",
+          "week": "2026-W33",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/announcements/2026/08/05/k8gb-becomes-a-cncf-incubating-project/"
+          ],
+          "title": "K8gb becomes a CNCF incubating project",
+          "summary": "K8gb becomes a CNCF incubating project",
+          "topic": "networking",
+          "category": "community"
+        },
+        {
+          "id": "a95bee0c17a1253f",
+          "period": "2026-W33",
+          "week": "2026-W33",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/08/05/opencost-1-121-0-first-of-a-kind-kubernetes-inference-cost-tracking/"
+          ],
+          "title": "OpenCost 1.121.0 adds Kubernetes inference cost tracking",
+          "summary": "OpenCost 1.121.0 adds Kubernetes inference cost tracking",
+          "topic": "ai",
+          "category": "feature"
+        },
+        {
+          "id": "96a4ba33f6aecdcd",
+          "period": "2026-W33",
+          "week": "2026-W33",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/08/07/does-kubernetes-dra-replace-hami/"
+          ],
+          "title": "Does Kubernetes DRA Replace HAMi?, CNCF blog",
+          "summary": "Does Kubernetes DRA Replace HAMi?, CNCF blog",
+          "topic": "ai",
+          "category": "guide"
+        },
+        {
+          "id": "fd17d3f6a65fdb92",
+          "period": "2026-W31",
+          "week": "2026-W31",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes v1.36.3/v1.35.7/v1.34.10 patch releases and the v1.37 Code Freeze taking effect",
+          "summary": "applied Kubernetes v1.36.3/v1.35.7/v1.34.10 patch releases and the v1.37 Code Freeze taking effect",
+          "topic": "kubernetes",
+          "category": "preview"
+        },
+        {
+          "id": "c16e7be1bec9e69b",
+          "period": "2026-W31",
+          "week": "2026-W31",
+          "documents": [
+            "eks-auto-mode/README.md"
+          ],
+          "sources": [],
+          "title": "EFA and EC2 placement group support for EKS Auto Mode node pools",
+          "summary": "applied EFA and EC2 placement group support for EKS Auto Mode node pools",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "9e06331e0f8ca41c",
+          "period": "2026-W31",
+          "week": "2026-W31",
+          "documents": [
+            "autoscaling/02-karpenter.md"
+          ],
+          "sources": [],
+          "title": "EFA and EC2 placement group support for Karpenter node pools",
+          "summary": "applied EFA and EC2 placement group support for Karpenter node pools",
+          "topic": "autoscaling",
+          "category": "feature"
+        },
+        {
+          "id": "6698747830f17680",
+          "period": "2026-W31",
+          "week": "2026-W31",
+          "documents": [
+            "observability/metrics/01-prometheus.md"
+          ],
+          "sources": [],
+          "title": "AMP limit increases",
+          "summary": "applied AMP limit increases (1.5B active series, 200K rules per workspace)",
+          "topic": "observability",
+          "category": "feature"
+        },
+        {
+          "id": "a5d9de9b3f27d7b7",
+          "period": "2026-W31",
+          "week": "2026-W31",
+          "documents": [
+            "observability/tracing/03-opentelemetry.md"
+          ],
+          "sources": [],
+          "title": "OpenTelemetry's CNCF graduation",
+          "summary": "applied OpenTelemetry's CNCF graduation",
+          "topic": "observability",
+          "category": "community"
+        },
+        {
+          "id": "2bbc0db53116190f",
+          "period": "2026-W31",
+          "week": "2026-W31",
+          "documents": [
+            "networking/calico/README.md"
+          ],
+          "sources": [],
+          "title": "Tigera's Calico for VMs on Kubernetes launch",
+          "summary": "applied Tigera's Calico for VMs on Kubernetes launch (eBPF-based VM+container unified networking)",
+          "topic": "networking",
+          "category": "feature"
+        },
+        {
+          "id": "42ccc00f9ef91695",
+          "period": "2026-W31",
+          "week": "2026-W31",
+          "documents": [
+            "networking/cilium/README.md"
+          ],
+          "sources": [],
+          "title": "Cilium 1.20.0-rc.1 release candidate",
+          "summary": "applied Cilium 1.20.0-rc.1 release candidate",
+          "topic": "networking",
+          "category": "preview"
+        },
+        {
+          "id": "ad81f394804898d0",
+          "period": "2026-W31",
+          "week": "2026-W31",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/07/22/confidential-containers-becomes-a-cncf-incubating-project/"
+          ],
+          "title": "Confidential Containers becomes a CNCF incubating project",
+          "summary": "Confidential Containers becomes a CNCF incubating project",
+          "topic": "ecosystem",
+          "category": "community"
+        },
+        {
+          "id": "bd40613b27c5e0ec",
+          "period": "2026-W31",
+          "week": "2026-W31",
+          "documents": [],
+          "sources": [
+            "https://www.sentinelone.com/blog/mount-here-read-there-twin-path-traversal-cves-in-kubernetes-storage/"
+          ],
+          "title": "Twin path traversal CVEs in Kubernetes CSI drivers",
+          "summary": "Twin path traversal CVEs in Kubernetes CSI drivers (CVE-2026-3864 NFS / CVE-2026-3865 SMB; fixed in csi-driver-nfs v4.13.1, csi-driver-smb v1.20.1)",
+          "topic": "security",
+          "category": "security"
+        },
+        {
+          "id": "91fab9f120ca7341",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [
+            "networking/cilium/README.md"
+          ],
+          "sources": [],
+          "title": "Cilium 1.19.6/1.18.12/1.17.18 patch releases and CVE-2026-56743",
+          "summary": "applied Cilium 1.19.6/1.18.12/1.17.18 patch releases and CVE-2026-56743 (ipBlock NetworkPolicy issue)",
+          "topic": "networking",
+          "category": "security"
+        },
+        {
+          "id": "7cc04f3de1d163fb",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [
+            "service-mesh/istio/README.md"
+          ],
+          "sources": [],
+          "title": "Istio 1.30.3/1.29.6 patch releases",
+          "summary": "applied Istio 1.30.3/1.29.6 patch releases",
+          "topic": "mesh",
+          "category": "release"
+        },
+        {
+          "id": "42890aa334dfb02d",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [
+            "service-mesh/linkerd/README.md"
+          ],
+          "sources": [],
+          "title": "Linkerd edge-26.7.1",
+          "summary": "applied Linkerd edge-26.7.1 (requests to undefined service ports disallowed, breaking)",
+          "topic": "mesh",
+          "category": "breaking"
+        },
+        {
+          "id": "ea79af44eab48439",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [
+            "eks-auto-mode/README.md"
+          ],
+          "sources": [],
+          "title": "ARC zonal shift/autoshift support for EKS Auto Mode",
+          "summary": "applied ARC zonal shift/autoshift support for EKS Auto Mode",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "5588b933afc1853e",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [
+            "ops/15-zonal-operations-guide.md"
+          ],
+          "sources": [],
+          "title": "ARC zonal shift support for EKS Auto Mode",
+          "summary": "applied ARC zonal shift support for EKS Auto Mode",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "52a7be4042e32aef",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [
+            "autoscaling/02-karpenter.md"
+          ],
+          "sources": [],
+          "title": "Karpenter patch releases for older lines",
+          "summary": "applied Karpenter patch releases for older lines (v1.3.8–v1.11.3)",
+          "topic": "autoscaling",
+          "category": "release"
+        },
+        {
+          "id": "6c873c67c9ec5a32",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes v1.37.0-beta.0 and the v1.37 release schedule",
+          "summary": "applied Kubernetes v1.37.0-beta.0 and the v1.37 release schedule",
+          "topic": "kubernetes",
+          "category": "preview"
+        },
+        {
+          "id": "e602bd7e1a1f52e0",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [],
+          "title": "ArgoCon Japan 2026 and the upcoming Argo CD 3.5 roadmap session",
+          "summary": "applied ArgoCon Japan 2026 and the upcoming Argo CD 3.5 roadmap session",
+          "topic": "gitops",
+          "category": "community"
+        },
+        {
+          "id": "04dc0eb2d03601ed",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [
+            "observability/metrics/01-prometheus.md"
+          ],
+          "sources": [],
+          "title": "Kubernetes blog's custom metrics exporter guide",
+          "summary": "applied the Kubernetes blog's custom metrics exporter guide",
+          "topic": "observability",
+          "category": "guide"
+        },
+        {
+          "id": "6e21c84312259fe5",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/07/15/hami-becomes-a-cncf-incubating-project/"
+          ],
+          "title": "HAMi becomes a CNCF incubating project",
+          "summary": "HAMi becomes a CNCF incubating project",
+          "topic": "ai",
+          "category": "community"
+        },
+        {
+          "id": "4f8d2578b74abefa",
+          "period": "2026-W30",
+          "week": "2026-W30",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/07/16/running-a-self-hosted-llm-in-kubernetes-with-vllm/"
+          ],
+          "title": "Running a self-hosted LLM in Kubernetes with vLLM, CNCF blog",
+          "summary": "Running a self-hosted LLM in Kubernetes with vLLM, CNCF blog",
+          "topic": "ai",
+          "category": "guide"
+        },
+        {
+          "id": "b1584503b4a69323",
+          "period": "2026-W29",
+          "week": "2026-W29",
+          "documents": [
+            "security/10-cert-manager.md"
+          ],
+          "sources": [],
+          "title": "ACM support for the ACME protocol",
+          "summary": "applied ACM support for the ACME protocol (ACM public certificates now consumable from cert-manager)",
+          "topic": "security",
+          "category": "feature"
+        },
+        {
+          "id": "cc6a9d310fb0d9a1",
+          "period": "2026-W29",
+          "week": "2026-W29",
+          "documents": [
+            "observability/tracing/03-opentelemetry.md"
+          ],
+          "sources": [],
+          "title": "NGINX + OpenTelemetry network-boundary observability pattern for AI agents",
+          "summary": "applied NGINX + OpenTelemetry network-boundary observability pattern for AI agents",
+          "topic": "observability",
+          "category": "feature"
+        },
+        {
+          "id": "2fab9da7e3a29141",
+          "period": "2026-W29",
+          "week": "2026-W29",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/07/06/evolving-platform-engineering-for-ai-native-workloads/"
+          ],
+          "title": "Evolving platform engineering for AI-native workloads, CNCF blog",
+          "summary": "Evolving platform engineering for AI-native workloads, CNCF blog",
+          "topic": "ai",
+          "category": "guide"
+        },
+        {
+          "id": "4865b719fcf484ba",
+          "period": "2026-07-11",
+          "week": "2026-W28",
+          "documents": [
+            "core/01-cluster-architecture.md"
+          ],
+          "sources": [],
+          "title": "etcd v3.7.0 release",
+          "summary": "applied etcd v3.7.0 release (RangeStream and more)",
+          "topic": "kubernetes",
+          "category": "release"
+        },
+        {
+          "id": "3e7ed5929507681f",
+          "period": "2026-07-11",
+          "week": "2026-W28",
+          "documents": [
+            "eks-auto-mode/06-cost-management.md"
+          ],
+          "sources": [],
+          "title": "EKS Auto Mode GPU management fee reduction of up to 60%",
+          "summary": "applied EKS Auto Mode GPU management fee reduction of up to 60%",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "1a77c1da00499488",
+          "period": "2026-07-11",
+          "week": "2026-W28",
+          "documents": [
+            "autoscaling/02-karpenter.md"
+          ],
+          "sources": [],
+          "title": "Karpenter v1.14.0 release",
+          "summary": "applied Karpenter v1.14.0 release (CapacityBuffers API and more)",
+          "topic": "autoscaling",
+          "category": "release"
+        },
+        {
+          "id": "679c011f9f93667b",
+          "period": "2026-07-11",
+          "week": "2026-W28",
+          "documents": [
+            "observability/metrics/04-cloudwatch-metrics.md"
+          ],
+          "sources": [],
+          "title": "CloudWatch Application Signals Service Events",
+          "summary": "applied CloudWatch Application Signals Service Events",
+          "topic": "observability",
+          "category": "feature"
+        },
+        {
+          "id": "ba4eee429ee70978",
+          "period": "2026-07-11",
+          "week": "2026-W28",
+          "documents": [
+            "gitops/argocd/README.md"
+          ],
+          "sources": [],
+          "title": "ArgoCD v3.4.5 patch release",
+          "summary": "applied ArgoCD v3.4.5 patch release",
+          "topic": "gitops",
+          "category": "release"
+        },
+        {
+          "id": "ed3a6b8fc2f63075",
+          "period": "2026-07-11",
+          "week": "2026-W28",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/blog/2026/07/09/navigating-the-ingress-nginx-retirement/"
+          ],
+          "title": "Navigating the ingress-nginx retirement",
+          "summary": "Navigating the ingress-nginx retirement (March 2026), CNCF blog",
+          "topic": "ecosystem",
+          "category": "breaking"
+        },
+        {
+          "id": "38ea5464fcfc9655",
+          "period": "2026-07-11",
+          "week": "2026-W28",
+          "documents": [],
+          "sources": [
+            "https://www.cncf.io/report-whitepaper/2026/07/08/the-cncf-data-storage-in-cloud-native-ai-white-paper/"
+          ],
+          "title": "CNCF Data Storage in Cloud Native AI white paper published",
+          "summary": "CNCF Data Storage in Cloud Native AI white paper published",
+          "topic": "ai",
+          "category": "guide"
+        },
+        {
+          "id": "faf70df0e059eacf",
+          "period": "2026-07-11",
+          "week": "2026-W28",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-emr-eks-spark-troubleshooting/"
+          ],
+          "title": "Amazon EMR on EKS now supports an Apache Spark troubleshooting agent",
+          "summary": "Amazon EMR on EKS now supports an Apache Spark troubleshooting agent",
+          "topic": "eks",
+          "category": "feature"
+        },
+        {
+          "id": "fdea6d9069027c23",
+          "period": "2026-07-11",
+          "week": "2026-W28",
+          "documents": [],
+          "sources": [
+            "https://aws.amazon.com/about-aws/whats-new/2026/06/aws-systems-manager-multicloud-vm/"
+          ],
+          "title": "AWS Systems Manager hybrid/multicloud node pricing overhaul",
+          "summary": "AWS Systems Manager hybrid/multicloud node pricing overhaul (Advanced Instances Tier eliminated)",
+          "topic": "ecosystem",
+          "category": "breaking"
+        }
+      ],
+      "updated": "2026-10-12"
+    }
+  }
+}
