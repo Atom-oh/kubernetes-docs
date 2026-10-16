@@ -81,7 +81,7 @@ spec:
     scope: Namespaced
     spec:
       replicas: integer | default=2 minimum=1 maximum=5
-      image: string | default="nginxinc/nginx-unprivileged:1.30.4-alpine"
+      image: string | default="nginxinc/nginx-unprivileged:1.30.6-alpine"
       ingress:
         enabled: boolean | default=false
         className: string | default="internal"
@@ -206,7 +206,7 @@ metadata:
   namespace: example
 spec:
   replicas: 2
-  image: nginxinc/nginx-unprivileged:1.30.4-alpine
+  image: nginxinc/nginx-unprivileged:1.30.6-alpine
   ingress:
     enabled: false
     className: internal

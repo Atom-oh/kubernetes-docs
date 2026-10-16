@@ -1,6 +1,6 @@
 # Backstage as an Internal Developer Portal
 
-> **Last Updated**: September 12, 2026 · Backstage 1.54.7 / Helm chart 2.10.0
+> **Last Updated**: October 16, 2026 · Backstage 1.54.7 / Helm chart 2.10.2
 
 ## Role and Adoption Scope
 
@@ -192,10 +192,10 @@ ingress:
 examples/platform/backstage/app-config-configmap.yaml stores that configuration under data.app-config.production.yaml. It matches extraAppConfig's filename/configMapRef and contains file references rather than secret values.
 
 ```bash
-helm template backstage backstage/backstage   --version 2.10.0 --namespace backstage   -f examples/platform/backstage/helm-values.yaml
+helm template backstage backstage/backstage   --version 2.10.2 --namespace backstage   -f examples/platform/backstage/helm-values.yaml
 ```
 
-Register the official backstage.github.io/charts repository first. This audit downloaded and rendered that chart locally. serviceAccount is a top-level chart value, not backstage.serviceAccount. The former backstage.podDisruptionBudget value does not create a PDB in chart 2.10.0; prepare this resource separately.
+Register the official backstage.github.io/charts repository first. This audit downloaded and rendered that chart locally. serviceAccount is a top-level chart value, not backstage.serviceAccount. The former backstage.podDisruptionBudget value does not create a PDB in chart 2.10.2; prepare this resource separately.
 
 ```yaml
 apiVersion: policy/v1
@@ -523,7 +523,7 @@ Both original guides—2,279 Korean and 2,226 English lines—their 143-line qui
 No full Backstage app/image, PostgreSQL/OIDC, GitHub/ArgoCD/Kubernetes/AWS API, real template action, deployment, load or HA test was performed. Placeholders and operator prerequisites are explicit.
 
 - [Backstage 1.54.7](https://github.com/backstage/backstage/tree/v1.54.7)
-- [Helm chart 2.10.0](https://github.com/backstage/charts/releases/tag/backstage-2.10.0)
+- [Helm chart 2.10.2](https://github.com/backstage/charts/releases/tag/backstage-2.10.2)
 - [Configuration](https://backstage.io/docs/conf/writing/)
 - [Kubernetes authentication](https://backstage.io/docs/features/kubernetes/authentication/)
 - [Permission policy](https://backstage.io/docs/permissions/writing-a-policy/)

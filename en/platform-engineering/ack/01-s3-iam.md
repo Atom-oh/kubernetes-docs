@@ -2,7 +2,7 @@
 
 [ACK](../02-ack.md)
 
-Examples use S3 1.12.1 / IAM 1.9.0 CRDs. Prepare infra, controllers, ServiceAccounts and IAM permissions first. Replace bucket name, account, region and ARNs with approved values. Synchronize the IAM Policy and Role before applying the bucket policy that references that Role; S3 can reject nonexistent principals.
+Examples use S3 1.13.1 / IAM 1.10.1 CRDs. Prepare infra, controllers, ServiceAccounts and IAM permissions first. Replace bucket name, account, region and ARNs with approved values. Synchronize the IAM Policy and Role before applying the bucket policy that references that Role; S3 can reject nonexistent principals.
 
 These versions do not use separate BucketPolicy or RolePolicyAttachment CRDs. Use Bucket.spec.policy and Role.spec.policyRefs. All four S3 Block Public Access settings are enabled and AES256 is explicit. Match object/bucket ARNs to the policy actions.
 
@@ -87,5 +87,5 @@ spec:
 
 Fields were checked against official versioned CRDs. Schema success does not establish IAM permissions, AWS service constraints, creation, connectivity or recovery. Assign ownership, costs, cleanup and backup responsibilities for retained resources before applying.
 
-- [s3 v1.12.1 CRDs](https://github.com/aws-controllers-k8s/s3-controller/tree/v1.12.1/config/crd/bases)
-- [iam v1.9.0 CRDs](https://github.com/aws-controllers-k8s/iam-controller/tree/v1.9.0/config/crd/bases)
+- [s3 v1.13.1 CRDs](https://github.com/aws-controllers-k8s/s3-controller/tree/v1.13.1/config/crd/bases)
+- [iam v1.10.1 CRDs](https://github.com/aws-controllers-k8s/iam-controller/tree/v1.10.1/config/crd/bases)

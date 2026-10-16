@@ -5,5 +5,5 @@ metadata:
   namespace: example
 spec:
   replicas: 2
-  image: nginxinc/nginx-unprivileged:1.30.4-alpine
+  image: nginxinc/nginx-unprivileged:1.30.6-alpine
   port: 8080

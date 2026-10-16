@@ -162,7 +162,7 @@ The command renders a pinned OCI chart offline. Prepare infra, its ServiceAccoun
 ```bash
 helm template ack-s3 \
   oci://public.ecr.aws/aws-controllers-k8s/s3-chart \
-  --version 1.12.1 --namespace infra \
+  --version 1.13.1 --namespace infra \
   --set aws.region=us-west-2 \
   --set installScope=namespace --set watchNamespace=infra \
   --set enableCARM=false --set enableCrossNamespace=false \

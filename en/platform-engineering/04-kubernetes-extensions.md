@@ -1,6 +1,6 @@
 # Kubernetes Extension Mechanisms
 
-> **Last Updated**: October 12, 2026
+> **Last Updated**: October 16, 2026
 
 ## Choosing an Extension Point
 
@@ -15,7 +15,7 @@ Kubernetes offers several ways to extend APIs and workload behavior. Registering
 | CNI | Container networking | Actual interfaces, IPAM, routes and cleanup |
 | CSI | Volume lifecycle and node mounting | Capability-appropriate RPCs and backend/node operations |
 
-Check compatibility for the chosen APIs, libraries and distribution. The reviewed controller-runtime 0.25.0 go.mod uses Go 1.26.0 and Kubernetes Go modules 0.37.0 (latest release v0.25.2 as of October 12, 2026). Scheduler interface notes below were checked against Kubernetes 1.36.2 source; do not assume scheduler-plugins 0.35.7 is interchangeable with it.
+Check compatibility for the chosen APIs, libraries and distribution. The reviewed controller-runtime 0.25.2 (latest release as of October 16, 2026) go.mod uses Go 1.26.0 and Kubernetes Go modules 0.37.0. Scheduler interface notes below were checked against Kubernetes 1.36.2 source; do not assume scheduler-plugins 0.35.7 is interchangeable with it.
 
 ## CRDs and Instances
 
@@ -88,7 +88,7 @@ metadata:
   namespace: example
 spec:
   replicas: 2
-  image: nginxinc/nginx-unprivileged:1.30.4-alpine
+  image: nginxinc/nginx-unprivileged:1.30.6-alpine
   port: 8080
 ```
 
@@ -359,7 +359,7 @@ The original 983-line Korean and 987-line English guides, both 652-line quizzes 
 - [Aggregation](https://kubernetes.io/docs/tasks/extend-kubernetes/configure-aggregation-layer/)
 - [Scheduler framework](https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/)
 - [Framework 1.36.2](https://github.com/kubernetes/kubernetes/blob/v1.36.2/staging/src/k8s.io/kube-scheduler/framework/interface.go)
-- [controller-runtime 0.25.0](https://github.com/kubernetes-sigs/controller-runtime/tree/v0.25.0)
+- [controller-runtime 0.25.2](https://github.com/kubernetes-sigs/controller-runtime/tree/v0.25.2)
 - [Operator SDK](https://sdk.operatorframework.io/docs/installation/)
 - [CNI 1.3.1 source](https://github.com/containernetworking/cni/blob/v1.3.1/SPEC.md)
 - [CSI 1.13.0](https://github.com/container-storage-interface/spec/blob/v1.13.0/spec.md)

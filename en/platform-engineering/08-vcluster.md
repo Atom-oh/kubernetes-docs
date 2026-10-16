@@ -1,6 +1,6 @@
 # vCluster
 
-> **Last Updated**: September 13, 2026 · Reviewed baseline: vCluster 0.37.0
+> **Last Updated**: October 16, 2026 · Reviewed baseline: vCluster 0.37.3
 
 ## Concepts and Isolation Boundaries
 
@@ -24,7 +24,7 @@ Do not promise sub-30-second creation, 100–200MiB overhead, hundreds of cluste
 
 ## Current Version and Baseline
 
-During review, GitHub's latest endpoint returned 0.36.1, but an explicit stable 0.37.0 release dated September 8, 2026 was verified. This example therefore targets CLI/chart 0.37.0 and the verified ghcr.io/loft-sh/kubernetes:v1.36.3 image. Image execution and full runtime compatibility remain separate checks.
+As of October 16, 2026, GitHub's latest endpoint returns stable release 0.37.3, published October 5, 2026. This example therefore targets CLI/chart 0.37.3 and the verified ghcr.io/loft-sh/kubernetes:v1.36.3 image. Image execution and full runtime compatibility remain separate checks.
 
 The current schema has no old k3s/k0s distro settings. Distinguish k8s configuration, backing store and exact versions. The default chart image is vcluster-pro; its name alone does not determine source licensing or free-use entitlements.
 
@@ -114,10 +114,10 @@ Select CLI artifacts for the correct OS/architecture and verify official checksu
 ```bash
 helm repo add loft-sh https://charts.loft.sh
 helm repo update
-helm template team-alpha loft-sh/vcluster   --version 0.37.0 --namespace vcluster-team-alpha   -f examples/platform/vcluster/vcluster.yaml
+helm template team-alpha loft-sh/vcluster   --version 0.37.3 --namespace vcluster-team-alpha   -f examples/platform/vcluster/vcluster.yaml
 
 # After the reviewed host prerequisites are ready:
-vcluster create team-alpha --driver helm --context HOST_CONTEXT   --namespace vcluster-team-alpha --chart-version 0.37.0   --values examples/platform/vcluster/vcluster.yaml --connect=false
+vcluster create team-alpha --driver helm --context HOST_CONTEXT   --namespace vcluster-team-alpha --chart-version 0.37.3   --values examples/platform/vcluster/vcluster.yaml --connect=false
 
 # Keep the forwarding lifetime tied to the child command:
 vcluster connect team-alpha --driver helm --context HOST_CONTEXT   --namespace vcluster-team-alpha --background-proxy=false --   kubectl get namespaces
@@ -277,7 +277,7 @@ spec:
       sources:
         - repoURL: https://charts.loft.sh
           chart: vcluster
-          targetRevision: "0.37.0"
+          targetRevision: "0.37.3"
           helm:
             releaseName: "{{ .name }}"
             valueFiles:
@@ -324,9 +324,9 @@ The 1,998-line Korean and 2,171-line English guides, both 143-line quizzes and 1
 
 Two 0.36.1 attempts to inspect deprecated connection flags queried the existing cluster read-only and failed Unauthorized. No resources changed; subsequent 0.37 checks were restricted to version/help/source and offline charts. No vCluster creation, image execution, sleep/deletion/snapshot/restore, network isolation, IAM authentication, load or cost savings was validated.
 
-- [vCluster 0.37.0](https://github.com/loft-sh/vcluster/releases/tag/v0.37.0)
-- [Versioned configuration](https://github.com/loft-sh/vcluster/blob/v0.37.0/config/values.yaml)
-- [Versioned schema](https://github.com/loft-sh/vcluster/blob/v0.37.0/chart/values.schema.json)
+- [vCluster 0.37.3](https://github.com/loft-sh/vcluster/releases/tag/v0.37.3)
+- [Versioned configuration](https://github.com/loft-sh/vcluster/blob/v0.37.3/config/values.yaml)
+- [Versioned schema](https://github.com/loft-sh/vcluster/blob/v0.37.3/chart/values.schema.json)
 - [Architecture](https://www.vcluster.com/docs/vcluster/introduction/architecture)
 - [Sleep configuration](https://www.vcluster.com/docs/vcluster/configure/vcluster-yaml/sleep)
 

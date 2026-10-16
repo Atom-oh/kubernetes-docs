@@ -2,7 +2,7 @@
 
 [ACK](../02-ack.md)
 
-ELBv2 1.7.0 / Route 53 1.6.0 / RDS 1.12.0의 독립된 schema 예제입니다. NLB가 Aurora 앞단에 놓인다는 뜻은 아닙니다. app용 내부 NLB/DNS와 app이 연결할 Aurora를 별도로 준비하는 구성입니다. 전체 서비스가 연결된 실습으로 검증하지 않았습니다.
+ELBv2 1.8.2 / Route 53 1.7.1 / RDS 1.13.3의 독립된 schema 예제입니다. NLB가 Aurora 앞단에 놓인다는 뜻은 아닙니다. app용 내부 NLB/DNS와 app이 연결할 Aurora를 별도로 준비하는 구성입니다. 전체 서비스가 연결된 실습으로 검증하지 않았습니다.
 
 infra namespace와 세 controller의 인증·권한을 준비하고 승인된 VPC, private subnet, security group, hosted zone으로 치환하세요. NLB용과 DB용 security group은 필요한 source/port만 허용해야 합니다. 내부 NLB라고 IAM/RBAC 또는 네트워크 접근 제어가 대체되지는 않습니다.
 
@@ -234,8 +234,8 @@ spec:
 
 표시한 필드는 공식 versioned CRD로 검사했습니다. 스키마 통과는 IAM, AWS 서비스 제약, 실제 생성·연결·복구를 증명하지 않습니다. retain으로 남긴 리소스의 운영·비용·삭제 책임과 백업 계획을 정한 뒤 적용하세요.
 
-- [elbv2 v1.7.0 CRDs](https://github.com/aws-controllers-k8s/elbv2-controller/tree/v1.7.0/config/crd/bases)
-- [route53 v1.6.0 CRDs](https://github.com/aws-controllers-k8s/route53-controller/tree/v1.6.0/config/crd/bases)
-- [rds v1.12.0 CRDs](https://github.com/aws-controllers-k8s/rds-controller/tree/v1.12.0/config/crd/bases)
+- [elbv2 v1.8.2 CRDs](https://github.com/aws-controllers-k8s/elbv2-controller/tree/v1.8.2/config/crd/bases)
+- [route53 v1.7.1 CRDs](https://github.com/aws-controllers-k8s/route53-controller/tree/v1.7.1/config/crd/bases)
+- [rds v1.13.3 CRDs](https://github.com/aws-controllers-k8s/rds-controller/tree/v1.13.3/config/crd/bases)
 - [Aurora PostgreSQL minor versions](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-aurora-postgresql-18-4-17-10-16-14-15-18-14-23/)
 - [Aurora custom endpoints](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Aurora.Endpoints.Custom.html)

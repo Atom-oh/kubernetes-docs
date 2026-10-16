@@ -1,6 +1,6 @@
 # Crossplane
 
-> **Last Updated**: September 13, 2026 · Crossplane 2.4.0 / AWS provider 2.7.0
+> **Last Updated**: October 16, 2026 · Crossplane 2.4.2 / AWS provider 2.9.0
 
 ## Concepts and v2 Changes
 
@@ -25,12 +25,12 @@ Terraform also uses declarative desired state and can automate plan/apply in CI.
 
 ## Core, Providers and Permissions
 
-The reviewed Helm chart is 2.4.0. This command inspects it offline without installing into a cluster.
+The reviewed Helm chart is 2.4.2. This command inspects it offline without installing into a cluster.
 
 ```bash
 helm repo add crossplane-stable https://charts.crossplane.io/stable
 helm repo update
-helm template crossplane crossplane-stable/crossplane   --version 2.4.0 --namespace crossplane-system   --set metrics.enabled=true
+helm template crossplane crossplane-stable/crossplane   --version 2.4.2 --namespace crossplane-system   --set metrics.enabled=true
 ```
 
 Current provider.defaultActivations defaults to ["*"]. Review MRDs, ManagedResourceActivationPolicies and installed service scope when deciding which APIs to activate. Installed Providers do not establish successful AWS authentication or resource readiness.
@@ -74,7 +74,7 @@ kind: Provider
 metadata:
   name: provider-aws-s3
 spec:
-  package: xpkg.crossplane.io/crossplane-contrib/provider-aws-s3:v2.7.0
+  package: xpkg.crossplane.io/crossplane-contrib/provider-aws-s3:v2.9.0
   packagePullPolicy: IfNotPresent
   revisionActivationPolicy: Manual
   revisionHistoryLimit: 2
@@ -84,9 +84,9 @@ spec:
 
 Do not configure several Providers to own the same fixed ServiceAccount. packagePullPolicy governs fetching; revisionActivationPolicy governs activation. With Manual, inspect ProviderRevisions and explicitly activate the reviewed version as required.
 
-The 2.7.0 S3 manifests were accessible from community and Upbound registries, but their digests differed. Matching version strings do not imply identical artifacts. Pin the selected distribution, registry/digest and support expectations.
+The 2.9.0 S3 manifests were accessible from community and Upbound registries, but their digests differed. Matching version strings do not imply identical artifacts. Pin the selected distribution, registry/digest and support expectations.
 
-This example uses a namespaced ProviderConfig with IRSA. Schema 2.7.0 also supports PodIdentity, requiring its actual association/SDK/runtime setup. Per-namespace ProviderConfigs alone do not separate AWS permissions; constrain configuration writes, references and role-assumption boundaries.
+This example uses a namespaced ProviderConfig with IRSA. Schema 2.9.0 also supports PodIdentity, requiring its actual association/SDK/runtime setup. Per-namespace ProviderConfigs alone do not separate AWS permissions; constrain configuration writes, references and role-assumption boundaries.
 
 ```yaml
 apiVersion: aws.m.upbound.io/v1beta1
@@ -688,7 +688,7 @@ No AWS/Kubernetes resources, real RDS/network/IAM authentication, backup/restore
 - [Crossplane 2.4](https://docs.crossplane.io/v2.4/)
 - [Upgrade to v2](https://docs.crossplane.io/latest/guides/upgrade-to-crossplane-v2/)
 - [Connection details](https://docs.crossplane.io/v2.4/guides/connection-details-composition/)
-- [AWS provider 2.7.0](https://github.com/crossplane-contrib/provider-upjet-aws/tree/v2.7.0)
+- [AWS provider 2.9.0](https://github.com/crossplane-contrib/provider-upjet-aws/tree/v2.9.0)
 - [Patch and Transform 0.10.10](https://github.com/crossplane-contrib/function-patch-and-transform/tree/v0.10.10)
 - [CNCF](https://www.cncf.io/projects/crossplane/)
 

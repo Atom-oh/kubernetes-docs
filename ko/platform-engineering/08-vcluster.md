@@ -1,6 +1,6 @@
 # vCluster
 
-> **마지막 업데이트**: 2026년 9월 13일 · 검토 기준 vCluster 0.37.0
+> **마지막 업데이트**: 2026년 10월 16일 · 검토 기준 vCluster 0.37.3
 
 ## 개념과 격리 범위
 
@@ -24,7 +24,7 @@ vCluster는 팀별 Kubernetes API와 controller·데이터 저장소를 제공�
 
 ## 현재 버전과 기본 구성
 
-검토 중 GitHub의 latest endpoint는 0.36.1을 반환했지만 0.37.0이 2026년 9월 8일 stable release로 공개된 것을 별도로 확인했습니다. 따라서 이 예제는 CLI/chart 0.37.0을 기준으로 합니다. 배포판 Kubernetes image는 존재를 확인한 ghcr.io/loft-sh/kubernetes:v1.36.3을 사용합니다. image 실행·전체 조합의 runtime 호환성은 별도 검증 대상입니다.
+2026년 10월 16일 기준 GitHub의 latest endpoint는 2026년 10월 5일 공개된 stable release 0.37.3을 반환합니다. 따라서 이 예제는 CLI/chart 0.37.3을 기준으로 합니다. 배포판 Kubernetes image는 존재를 확인한 ghcr.io/loft-sh/kubernetes:v1.36.3을 사용합니다. image 실행·전체 조합의 runtime 호환성은 별도 검증 대상입니다.
 
 현재 schema에는 과거 k3s/k0s distro 설정이 없습니다. k8s 설정, backing store와 정확한 version을 구분하고 예전 키를 복사하지 않습니다. 기본 chart image는 vcluster-pro이며 image 이름만으로 소스 라이선스나 무료 사용 범위를 판단하지 않습니다.
 
@@ -114,10 +114,10 @@ CLI artifact는 OS/architecture와 공식 checksum을 확인합니다. 예제 �
 ```bash
 helm repo add loft-sh https://charts.loft.sh
 helm repo update
-helm template team-alpha loft-sh/vcluster   --version 0.37.0 --namespace vcluster-team-alpha   -f examples/platform/vcluster/vcluster.yaml
+helm template team-alpha loft-sh/vcluster   --version 0.37.3 --namespace vcluster-team-alpha   -f examples/platform/vcluster/vcluster.yaml
 
 # After the reviewed host prerequisites are ready:
-vcluster create team-alpha --driver helm --context HOST_CONTEXT   --namespace vcluster-team-alpha --chart-version 0.37.0   --values examples/platform/vcluster/vcluster.yaml --connect=false
+vcluster create team-alpha --driver helm --context HOST_CONTEXT   --namespace vcluster-team-alpha --chart-version 0.37.3   --values examples/platform/vcluster/vcluster.yaml --connect=false
 
 # Keep the forwarding lifetime tied to the child command:
 vcluster connect team-alpha --driver helm --context HOST_CONTEXT   --namespace vcluster-team-alpha --background-proxy=false --   kubectl get namespaces
@@ -277,7 +277,7 @@ spec:
       sources:
         - repoURL: https://charts.loft.sh
           chart: vcluster
-          targetRevision: "0.37.0"
+          targetRevision: "0.37.3"
           helm:
             releaseName: "{{ .name }}"
             valueFiles:
@@ -324,9 +324,9 @@ EKS의 API server/etcd replica나 instance type을 사용자가 직접 조정할
 
 0.36.1에서 deprecated 연결 옵션을 확인하려던 두 시도는 기존 cluster에 read-only 조회를 시도했으나 Unauthorized로 실패했습니다. 리소스 변경은 없었고 이후 0.37 검증은 version/help/source와 오프라인 chart로 제한했습니다. 실제 vCluster 생성, image 실행, sleep/delete/snapshot/restore, 네트워크 격리·IAM 인증·부하·비용 절감은 검증하지 않았습니다.
 
-- [vCluster 0.37.0](https://github.com/loft-sh/vcluster/releases/tag/v0.37.0)
-- [Versioned configuration](https://github.com/loft-sh/vcluster/blob/v0.37.0/config/values.yaml)
-- [Versioned schema](https://github.com/loft-sh/vcluster/blob/v0.37.0/chart/values.schema.json)
+- [vCluster 0.37.3](https://github.com/loft-sh/vcluster/releases/tag/v0.37.3)
+- [Versioned configuration](https://github.com/loft-sh/vcluster/blob/v0.37.3/config/values.yaml)
+- [Versioned schema](https://github.com/loft-sh/vcluster/blob/v0.37.3/chart/values.schema.json)
 - [Architecture](https://www.vcluster.com/docs/vcluster/introduction/architecture)
 - [Sleep configuration](https://www.vcluster.com/docs/vcluster/configure/vcluster-yaml/sleep)
 

@@ -1,6 +1,6 @@
 # Crossplane
 
-> **마지막 업데이트**: 2026년 9월 13일 · Crossplane 2.4.0 / AWS provider 2.7.0
+> **마지막 업데이트**: 2026년 10월 16일 · Crossplane 2.4.2 / AWS provider 2.9.0
 
 ## 개념과 v2 변경
 
@@ -25,12 +25,12 @@ Terraform도 선언적 desired state를 사용하는 도구이며 plan/apply를 
 
 ## Core 설치·Provider·권한
 
-검토한 Helm chart는 2.4.0입니다. 아래는 cluster에 설치하지 않는 오프라인 검사 명령입니다.
+검토한 Helm chart는 2.4.2입니다. 아래는 cluster에 설치하지 않는 오프라인 검사 명령입니다.
 
 ```bash
 helm repo add crossplane-stable https://charts.crossplane.io/stable
 helm repo update
-helm template crossplane crossplane-stable/crossplane   --version 2.4.0 --namespace crossplane-system   --set metrics.enabled=true
+helm template crossplane crossplane-stable/crossplane   --version 2.4.2 --namespace crossplane-system   --set metrics.enabled=true
 ```
 
 현재 chart의 provider.defaultActivations 기본값은 ["*"]입니다. MRD/ManagedResourceActivationPolicy와 설치한 서비스 범위를 확인하고 필요한 API만 활성화하는 전략을 검토합니다. Provider가 Installed라고 실제 AWS 인증·리소스 readiness가 검증되는 것은 아닙니다.
@@ -74,7 +74,7 @@ kind: Provider
 metadata:
   name: provider-aws-s3
 spec:
-  package: xpkg.crossplane.io/crossplane-contrib/provider-aws-s3:v2.7.0
+  package: xpkg.crossplane.io/crossplane-contrib/provider-aws-s3:v2.9.0
   packagePullPolicy: IfNotPresent
   revisionActivationPolicy: Manual
   revisionHistoryLimit: 2
@@ -84,9 +84,9 @@ spec:
 
 여러 Provider가 같은 고정 ServiceAccount를 소유하도록 설정하지 않습니다. packagePullPolicy는 다운로드 정책이고 revisionActivationPolicy는 revision 활성화 정책입니다. Manual을 사용하면 ProviderRevision 상태와 승인된 버전의 활성화를 별도로 확인합니다.
 
-community와 Upbound registry에서 2.7.0 S3 package manifest 접근을 확인했지만 digest는 서로 달랐습니다. 같은 version 문자열이 같은 artifact라는 뜻은 아닙니다. 선택한 배포판·registry·digest·지원 조건을 고정하세요.
+community와 Upbound registry에서 2.9.0 S3 package manifest 접근을 확인했지만 digest는 서로 달랐습니다. 같은 version 문자열이 같은 artifact라는 뜻은 아닙니다. 선택한 배포판·registry·digest·지원 조건을 고정하세요.
 
-예제는 namespace ProviderConfig와 IRSA를 사용합니다. 2.7.0 schema는 PodIdentity도 지원하지만 실제 association/SDK/runtime을 구성해야 합니다. ProviderConfig를 namespace마다 만드는 것만으로 AWS 권한이 분리되지는 않으며 작성·참조 권한과 role assumption 경계를 제한해야 합니다.
+예제는 namespace ProviderConfig와 IRSA를 사용합니다. 2.9.0 schema는 PodIdentity도 지원하지만 실제 association/SDK/runtime을 구성해야 합니다. ProviderConfig를 namespace마다 만드는 것만으로 AWS 권한이 분리되지는 않으며 작성·참조 권한과 role assumption 경계를 제한해야 합니다.
 
 ```yaml
 apiVersion: aws.m.upbound.io/v1beta1
@@ -688,7 +688,7 @@ AWS/Kubernetes 자원 생성, 실제 RDS·network·IAM 인증, backup/restore·H
 - [Crossplane 2.4](https://docs.crossplane.io/v2.4/)
 - [Upgrade to v2](https://docs.crossplane.io/latest/guides/upgrade-to-crossplane-v2/)
 - [Connection details](https://docs.crossplane.io/v2.4/guides/connection-details-composition/)
-- [AWS provider 2.7.0](https://github.com/crossplane-contrib/provider-upjet-aws/tree/v2.7.0)
+- [AWS provider 2.9.0](https://github.com/crossplane-contrib/provider-upjet-aws/tree/v2.9.0)
 - [Patch and Transform 0.10.10](https://github.com/crossplane-contrib/function-patch-and-transform/tree/v0.10.10)
 - [CNCF](https://www.cncf.io/projects/crossplane/)
 

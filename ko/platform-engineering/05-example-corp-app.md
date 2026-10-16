@@ -1,6 +1,6 @@
 # ExampleCorp 주문 시스템: ACK + kro 통합 구성
 
-> **마지막 업데이트**: 2026년 9월 12일 · kro 0.9.4 / AWS Load Balancer Controller 3.5.0
+> **마지막 업데이트**: 2026년 10월 16일 · kro 0.9.4 / AWS Load Balancer Controller 3.6.0
 
 ## 시나리오와 검증 범위
 
@@ -16,7 +16,7 @@ ACK는 NLB·TargetGroup·Listener, Route 53 record와 Aurora를 관리합니다.
 
 [ACK 리소스 예제](ack/03-elbv2-route53-rds.md)의 현재 schema와 lifecycle 설명을 먼저 확인합니다. 승인된 VPC/private subnet/security group, 내부 NLB와 Listener, ip TargetGroup, DNS, Aurora DB cluster/instance를 준비해야 합니다. `.status.ackResourceMetadata.arn`에서 TargetGroup ARN을 확인하며 예전 `.status.targetGroupARN`을 사용하지 않습니다.
 
-AWS LBC의 버전과 CRD, IAM·ServiceAccount와 webhook을 별도로 준비합니다. 여기서는 OSS LBC 3.5.0의 elbv2.k8s.aws/v1beta1 TGB를 검증했으며 EKS Auto Mode의 별도 load-balancing API와 혼용하지 않습니다. TGB 작성자는 controller IAM 범위의 TargetGroup을 참조할 수 있으므로 허용 ARN·namespace와 작성 권한을 제한해야 합니다.
+AWS LBC의 버전과 CRD, IAM·ServiceAccount와 webhook을 별도로 준비합니다. 여기서는 OSS LBC 3.6.0의 elbv2.k8s.aws/v1beta1 TGB를 검증했으며 EKS Auto Mode의 별도 load-balancing API와 혼용하지 않습니다. TGB 작성자는 controller IAM 범위의 TargetGroup을 참조할 수 있으므로 허용 ARN·namespace와 작성 권한을 제한해야 합니다.
 
 Order API image는 운영자가 제공해야 하며 다음 계약을 충족해야 합니다.
 
@@ -234,5 +234,5 @@ Deployment image 갱신은 보통 RollingUpdate이며 Blue/Green이나 무중단
 
 - [ACK](02-ack.md)
 - [kro](03-kro.md)
-- [AWS LBC 3.5.0 TGB](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/guide/targetgroupbinding/targetgroupbinding.md)
-- [Pod readiness gates](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.5.0/docs/deploy/pod_readiness_gate.md)
+- [AWS LBC 3.6.0 TGB](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/guide/targetgroupbinding/targetgroupbinding.md)
+- [Pod readiness gates](https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/v3.6.0/docs/deploy/pod_readiness_gate.md)
