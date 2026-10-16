@@ -1,7 +1,7 @@
 # 컨테이너를 지탱하는 커널 기능
 
 > **지원 버전**: Linux 6.1 / 6.12 / 6.18 (Amazon Linux 2023), Kubernetes 1.25+ (cgroup v2)
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 10월 16일
 
 ## 이 문서에서 다루는 것
 
@@ -63,12 +63,12 @@ User namespace는 컨테이너 UID/GID를 다른 host 범위로 매핑합니다.
 
 ### Kubernetes의 user namespace 지원 현황
 
-[KEP-127](https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/127-user-namespaces/kep.yaml) 기준으로 성숙 단계는 다음과 같습니다.
+[Kubernetes feature gate 문서](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/)와 [v1.36 GA 발표](https://kubernetes.io/blog/2026/04/23/kubernetes-v1-36-userns-ga/) 기준으로 성숙 단계는 다음과 같습니다(설계: [KEP-127](https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/127-user-namespaces/kep.yaml)).
 
 | 단계 | 버전 |
 |---|---|
 | alpha | v1.25 |
-| beta | v1.35 |
+| beta | v1.30 (v1.33부터 기본 활성화) |
 | **stable (GA)** | **v1.36** |
 
 feature gate는 `UserNamespacesSupport`이며 kubelet과 kube-apiserver에 적용됩니다. **1.36부터는 GA이므로 feature gate를 켜지 않아도 `hostUsers: false`를 쓸 수 있습니다.**

@@ -1,7 +1,7 @@
 # Kernel Features Behind Containers
 
 > **Supported Versions**: Linux 6.1 / 6.12 / 6.18 (Amazon Linux 2023), Kubernetes 1.25+ (cgroup v2)
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 16, 2026
 
 ## What This Document Covers
 
@@ -63,12 +63,12 @@ Yet it was not the default for a long time. The reason is **file ownership.** Fi
 
 ### Kubernetes user namespace support status
 
-Per [KEP-127](https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/127-user-namespaces/kep.yaml), the maturity stages are:
+Per the [Kubernetes feature gates reference](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) and the [v1.36 GA announcement](https://kubernetes.io/blog/2026/04/23/kubernetes-v1-36-userns-ga/), the maturity stages are (design: [KEP-127](https://github.com/kubernetes/enhancements/blob/master/keps/sig-node/127-user-namespaces/kep.yaml)):
 
 | Stage | Version |
 |---|---|
 | alpha | v1.25 |
-| beta | v1.35 |
+| beta | v1.30 (enabled by default since v1.33) |
 | **stable (GA)** | **v1.36** |
 
 The feature gate is `UserNamespacesSupport`, applying to kubelet and kube-apiserver. **From 1.36 it is GA, so `hostUsers: false` works without enabling a feature gate.**

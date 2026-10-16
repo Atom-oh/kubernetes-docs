@@ -2,7 +2,7 @@
 
 > **Difficulty**: Beginner
 > **Estimated Time**: 45 minutes
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 16, 2026
 
 ## Learning Objectives
 - Write a Dockerfile and build an image
@@ -65,7 +65,7 @@ SSI reads the documented NGINX `hostname` variable; it is not arbitrary environm
 **Step 1.2: Write Dockerfile**
 ```bash
 cat > Dockerfile << 'EOF'
-FROM nginx:1.30.4-alpine
+FROM nginx:1.30.6-alpine
 ARG LAB_ID
 LABEL io.kubernetes-docs.lab=$LAB_ID
 COPY nginx.conf /etc/nginx/conf.d/default.conf
@@ -216,7 +216,7 @@ This standard-library Go program is built with `CGO_ENABLED=0`, so the scratch r
 
 ```bash
 cat > Dockerfile.multi << 'EOF'
-FROM golang:1.27.1 AS build
+FROM golang:1.27.2 AS build
 ARG LAB_ID
 LABEL io.kubernetes-docs.lab=$LAB_ID
 WORKDIR /src

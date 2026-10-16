@@ -1,7 +1,7 @@
 # eBPF Fundamentals and Kubernetes Applications
 
 > **Supported versions**: Feature-specific kernel/BTF/helper requirements; match tool and Kubernetes compatibility matrices
-> **Last updated**: September 11, 2026
+> **Last updated**: October 16, 2026
 
 eBPF is a revolutionary technology that allows sandboxed programs to run within the Linux kernel. This document covers everything from basic eBPF concepts to practical applications in Kubernetes environments.
 
@@ -1057,7 +1057,7 @@ spec:
       type: RuntimeDefault  # or Localhost
   containers:
     - name: app
-      image: nginx:1.30.4
+      image: nginx:1.30.6
 ```
 
 **Custom seccomp Profile**:

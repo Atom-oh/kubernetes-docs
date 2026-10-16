@@ -382,7 +382,7 @@ COPY . .
 RUN npm run build
 
 # 실행 단계
-FROM nginx:1.30.4-alpine
+FROM nginx:1.30.6-alpine
 
 # 빌드 결과물을 nginx의 서비스 디렉토리로 복사
 COPY --from=build /app/build /usr/share/nginx/html
@@ -410,7 +410,7 @@ CMD ["nginx", "-g", "daemon off;"]
 
 **정답:**
 ```dockerfile
-FROM nginx:1.30.4-alpine
+FROM nginx:1.30.6-alpine
 
 # 애플리케이션 복사 (예시)
 COPY ./html /usr/share/nginx/html

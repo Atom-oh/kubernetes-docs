@@ -233,7 +233,7 @@ Secret은 암호, 토큰, 키와 같은 민감한 정보를 저장하는 API 객
     - 이름: nginx-deployment
     - 레이블: app=nginx
     - 복제본 수: 3
-    - 컨테이너 이미지: nginx:1.30.4
+    - 컨테이너 이미지: nginx:1.30.6
     - 컨테이너 포트: 80
     - 리소스 요청: CPU 100m, 메모리 128Mi
     - 리소스 제한: CPU 200m, 메모리 256Mi
@@ -262,7 +262,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         resources:
@@ -275,7 +275,7 @@ spec:
 ```
 
 **설명:**
-이 YAML 파일은 nginx:1.30.4 이미지를 사용하는 3개의 복제본을 가진 Deployment를 정의합니다. 각 컨테이너는 포트 80을 노출하고, CPU 요청 100m, 메모리 요청 128Mi, CPU 제한 200m, 메모리 제한 256Mi의 리소스 제약을 가집니다. selector 필드는 Deployment가 관리할 파드를 식별하는 방법을 정의합니다.
+이 YAML 파일은 nginx:1.30.6 이미지를 사용하는 3개의 복제본을 가진 Deployment를 정의합니다. 각 컨테이너는 포트 80을 노출하고, CPU 요청 100m, 메모리 요청 128Mi, CPU 제한 200m, 메모리 제한 256Mi의 리소스 제약을 가집니다. selector 필드는 Deployment가 관리할 파드를 식별하는 방법을 정의합니다.
 위 Deployment에는 애플리케이션 준비 검사도 환경에 맞게 추가합니다.
 </details>
 
@@ -469,8 +469,8 @@ production 네임스페이스와 NetworkPolicy를 실제로 적용하는 네트�
 - https://kubernetes.io/docs/concepts/services-networking/network-policies/
 - https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/
 - https://coredns.io/plugins/kubernetes/
-- https://github.com/fluent/fluent-bit/releases/tag/v5.1.2
-- https://github.com/fluent/fluent-bit/blob/v5.1.2/conf/parsers.conf
+- https://github.com/fluent/fluent-bit/releases/tag/v5.1.3
+- https://github.com/fluent/fluent-bit/blob/v5.1.3/conf/parsers.conf
 - https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html
 - https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html
 - https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions-standard.html

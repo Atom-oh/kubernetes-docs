@@ -1,6 +1,6 @@
 # Linux Operations Skills
 
-> **Supported Versions**: Bash on maintained Linux distributions; commands assume the named tools are installed **Last Updated**: September 11, 2026
+> **Supported Versions**: Bash on maintained Linux distributions; commands assume the named tools are installed **Last Updated**: October 16, 2026
 
 This document covers essential Linux operations skills for working effectively in Kubernetes environments.
 
@@ -154,7 +154,7 @@ metadata:
 spec:
   initContainers:
   - name: wait-for-db-dns
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sh
     - -c
