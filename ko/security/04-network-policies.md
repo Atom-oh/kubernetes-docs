@@ -1,7 +1,7 @@
 # 네트워크 정책 (Network Policies)
 
-> **검토 기준**: Kubernetes 1.35 OpenAPI, Cilium 1.20.1, Calico 3.32.2와 현재 AWS 문서. 오프라인 검사는 클러스터 호환성 검증이 아닙니다.
-> **마지막 업데이트**: 2026년 9월 13일
+> **검토 기준**: Kubernetes 1.35 OpenAPI, Cilium 1.20.3, Calico 3.32.2와 현재 AWS 문서. 오프라인 검사는 클러스터 호환성 검증이 아닙니다.
+> **마지막 업데이트**: 2026년 10월 16일
 
 Kubernetes 네트워크 정책은 Pod 간 트래픽을 제어하는 방화벽 규칙입니다. 이 문서에서는 기본 NetworkPolicy부터 Cilium과 Calico의 확장 기능까지 상세히 다룹니다.
 
@@ -592,7 +592,7 @@ NetworkPolicy에는 우선순위 개념이 없습니다. 모든 정책은 동등
 
 ## Cilium 네트워크 정책 확장 {#cilium-network-policy-extensions}
 
-예제는 릴리스된 Cilium 1.20.1 정책 스키마 기준이며 모든 클러스터의 업그레이드 지시가 아닙니다. HTTP 규칙에는 지원되는 L7 proxy 경로가 필요합니다. AWS VPC CNI chaining에는 L7 정책 등 고급 기능의 제한이 문서화되어 있으므로 이 HTTP 예제가 그대로 동작한다고 가정하지 않습니다. 숫자 security identity는 레이블 집합에 할당된 값이며 영구 앱 ID가 아닙니다.
+예제는 릴리스된 Cilium 1.20.3 정책 스키마 기준이며 모든 클러스터의 업그레이드 지시가 아닙니다. HTTP 규칙에는 지원되는 L7 proxy 경로가 필요합니다. AWS VPC CNI chaining에는 L7 정책 등 고급 기능의 제한이 문서화되어 있으므로 이 HTTP 예제가 그대로 동작한다고 가정하지 않습니다. 숫자 security identity는 레이블 집합에 할당된 값이며 영구 앱 ID가 아닙니다.
 
 ### CiliumNetworkPolicy
 
@@ -665,11 +665,11 @@ spec:
             value: application/json
 ```
 
-[HTTP API — Cilium 1.20.1](https://github.com/cilium/cilium/blob/v1.20.1/pkg/policy/api/http.go)
+[HTTP API — Cilium 1.20.3](https://github.com/cilium/cilium/blob/v1.20.3/pkg/policy/api/http.go)
 
 ### L7 Kafka 정책
 
-배포된 Cilium 1.20.1 CNP 스키마는 HTTP·DNS L7 규칙을 지원하지만 `rules.kafka`는 없습니다. 기존 `role`·`topic`·`clientID` 예제는 현재 배포 가능한 API가 아닙니다. 네트워크 정책으로 broker 연결을 제한하고 `orders`·`events` 토픽의 producer/consumer 권한은 Kafka 인증과 ACL로 구성합니다. client ID 자체는 인증된 주체가 아닙니다.
+배포된 Cilium 1.20.3 CNP 스키마는 HTTP·DNS L7 규칙을 지원하지만 `rules.kafka`는 없습니다. 기존 `role`·`topic`·`clientID` 예제는 현재 배포 가능한 API가 아닙니다. 네트워크 정책으로 broker 연결을 제한하고 `orders`·`events` 토픽의 producer/consumer 권한은 Kafka 인증과 ACL로 구성합니다. client ID 자체는 인증된 주체가 아닙니다.
 
 다음 L4 예제는 TCP 9093 TLS broker listener가 이미 구성되어 있고, 같은 네임스페이스 client의 egress·DNS가 별도로 허용됐다고 가정합니다. TLS·broker ACL·토픽 권한을 구성하지는 않습니다.
 
@@ -695,7 +695,7 @@ spec:
         protocol: TCP
 ```
 
-[CNP schema — Cilium 1.20.1](https://github.com/cilium/cilium/blob/v1.20.1/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
+[CNP schema — Cilium 1.20.3](https://github.com/cilium/cilium/blob/v1.20.3/pkg/k8s/apis/cilium.io/client/crds/v2/ciliumnetworkpolicies.yaml)
 
 ### L7 DNS 정책
 
@@ -1686,12 +1686,12 @@ resource "aws_network_acl_rule" "database_return" {
 
 **AWS VPC CNI chaining**과 별도 설계가 필요한 전체 CNI/IPAM 이전을 구분합니다. chaining에서는 AWS VPC CNI가 ENI/IPAM을 유지하고 Cilium이 datapath를 연결하므로 `aws-node`를 삭제하지 않습니다. 기존 애드온/Helm 소유자와 정책 집행 엔진의 중복을 검토합니다. 기존 Pod에는 chaining 정책이 자동 적용되지 않아 중단·롤백 계획에 따른 재생성이 필요합니다.
 
-공식1.20.1 chaining 가이드의 values에는 L7/IPsec 제한도 함께 적용됩니다. 문서의 오래된 예시 출력이 현재 EKS 검증 결과는 아닙니다. 차트 저장소·패키지 출처를 확인하고 먼저 렌더링합니다:
+공식1.20.3 chaining 가이드의 values에는 L7/IPsec 제한도 함께 적용됩니다. 문서의 오래된 예시 출력이 현재 EKS 검증 결과는 아닙니다. 차트 저장소·패키지 출처를 확인하고 먼저 렌더링합니다:
 
 ```bash
 # Render locally after verifying the official chart/package provenance.
 # Rendering alone does not change a cluster or validate a migration.
-helm template cilium cilium/cilium --version 1.20.1 \
+helm template cilium cilium/cilium --version 1.20.3 \
   --namespace kube-system \
   --set cni.chainingMode=aws-cni \
   --set cni.exclusive=false \
@@ -1699,7 +1699,7 @@ helm template cilium cilium/cilium --version 1.20.1 \
   --set routingMode=native > cilium-reviewed.yaml
 ```
 
-[AWS VPC CNI chaining — Cilium 1.20.1](https://docs.cilium.io/en/stable/installation/cni-chaining-aws-cni/)
+[AWS VPC CNI chaining — Cilium 1.20.3](https://docs.cilium.io/en/stable/installation/cni-chaining-aws-cni/)
 
 <span id="시각화-도구"></span>
 
@@ -1857,6 +1857,12 @@ jq -n --slurpfile ns "$work/namespaces.json" --slurpfile np "$work/policies.json
   }
 '
 ```
+
+## NetworkPolicy와 경계 검사를 연결하기
+
+NetworkPolicy는 지원 CNI가 Pod 연결을 집행하는 통제이며, WAF나 중앙 방화벽의 전체 검사 경로를 생성하지 않습니다. 동일 노드·VPC local·PrivateLink·peering·IPv6 경로를 중앙 TGW 검사에 자동 포함한다고 가정하지 않습니다.
+
+공개 웹에는 [WAF·origin 보호](./14-waf-edge-api-security.md), 반출·VPC 간 검사에는 [Palo Alto·Fortinet](./15-ngfw-paloalto-fortinet.md)과 [GWLB·GENEVE](./16-gwlb-geneve-inspection.md)를 연결합니다. Pod·노드 SNAT와 실제 request/response tuple을 확인하고, 정책의 허용/거부와 장비 경유 여부를 각각 검증합니다. 사고에서 webhook·Secret 권한까지 확장하는 검토는 [다층 방어와 침해 대응](./13-defense-in-depth-incident-response.md)을 참고합니다.
 
 ## 요약
 

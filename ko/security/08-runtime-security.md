@@ -2,8 +2,8 @@
 
 # 런타임 보안 (Runtime Security)
 
-> **마지막 업데이트**: 2026년 9월 13일
-> **검증 기준**: Falco 0.44.1 / chart 9.1.0, Falcosidekick 2.35.0 / chart 0.14.0, Tetragon 1.7.1. 커널·OS·노드 종류에 따른 지원 범위를 별도로 확인합니다.
+> **마지막 업데이트**: 2026년 10월 16일
+> **검증 기준**: Falco 0.45.0 / chart 9.2.0, Falcosidekick 2.35.0 / chart 0.14.0, Tetragon 1.7.1. 커널·OS·노드 종류에 따른 지원 범위를 별도로 확인합니다.
 
 런타임 보안은 실행 중인 프로세스·파일·네트워크 활동을 관찰하고, 검증된 정책으로 일부 동작을 제한하는 일입니다. **경보는 침해의 확정 증거가 아니며, 탐지 성공과 차단 성공은 별도로 시험**해야 합니다. 이 문서는 로컬 CLI·schema·Helm·합성 이벤트로 확인했습니다. 실제 클러스터, 커널 BPF 프로그램, 알림 채널에는 연결하지 않았습니다.
 
@@ -29,11 +29,11 @@ eBPF라는 이유만으로 비용이 항상 낮거나 안전성이 보장되는 
 
 Falco는 event source의 데이터를 규칙으로 평가합니다. 일반적인 syscall 경로는 `Linux event → modern eBPF/kmod capture → Falco filter/rule → JSON output → Falcosidekick → 알림/저장소`입니다. Slack·PagerDuty는 별도 출력 연동이며 Falco 엔진의 내장 Slack 전송 기능으로 설명하지 않습니다.
 
-0.44.1 배포에는 container plugin 0.7.1이 포함됩니다. container.id 등의 필드는 이 plugin에서 제공하므로 plugin을 모두 비활성화하면 해당 규칙을 검증·실행할 수 없습니다. 실제 runtime socket·Kubernetes metadata 수집과 권한을 확인합니다.
+0.45.0 배포에는 container plugin 0.7.4가 포함됩니다. container.id 등의 필드는 이 plugin에서 제공하므로 plugin을 모두 비활성화하면 해당 규칙을 검증·실행할 수 없습니다. 실제 runtime socket·Kubernetes metadata 수집과 권한을 확인합니다.
 
 ### Falco 설치 (EKS)
 
-관리 가능한 Linux EC2 노드에 설치하는 예제입니다. Fargate나 호스트 접근이 제한된 노드에 DaemonSet을 배치할 수 있다고 가정하지 않습니다. modern eBPF의 커널·BTF·capability 요구사항과 사용 OS를 확인합니다. chart 9.1.0의 명시적 driver 종류는 `modern_ebpf` 또는 `kmod`이며 예전 `ebpf` 값을 그대로 사용하지 않습니다.
+관리 가능한 Linux EC2 노드에 설치하는 예제입니다. Fargate나 호스트 접근이 제한된 노드에 DaemonSet을 배치할 수 있다고 가정하지 않습니다. modern eBPF의 커널·BTF·capability 요구사항과 사용 OS를 확인합니다. chart 9.2.0의 명시적 driver 종류는 `modern_ebpf` 또는 `kmod`이며 예전 `ebpf` 값을 그대로 사용하지 않습니다.
 
 아래 명령은 [예제 디렉터리](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/runtime-security)를 내려받고 `examples/security/runtime-security`에서 실행합니다. 세 values 파일과 규칙 파일의 역할은 [예제 README](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/runtime-security/README.md)에 정리되어 있습니다.
 
@@ -44,7 +44,7 @@ helm upgrade --install falcosidekick falcosecurity/falcosidekick \
   --version 0.14.0 --namespace falco --create-namespace \
   --values falcosidekick-values.yaml
 helm upgrade --install falco falcosecurity/falco \
-  --version 9.1.0 --namespace falco \
+  --version 9.2.0 --namespace falco \
   --values falco-values.yaml
 ```
 
@@ -92,7 +92,7 @@ customRules:
 ```
 
 
-이 구성은 별도 릴리스 `falcosidekick`의 ClusterIP Service에 HTTP로 전송합니다. 같은 namespace라는 사실만으로 통신이 인증되거나 암호화되지 않습니다. 실제 위협 모델에 따라 접근 정책·TLS/mTLS를 구성하고, 해당 endpoint에 노드/Falco가 접근 가능한지 확인합니다. Falco 설정은 json_output·http_output 같은 snake_case입니다. 예전 jsonOutput·httpOutput과 제거된 grpc 설정은 0.44.1 schema를 통과하지 못합니다.
+이 구성은 별도 릴리스 `falcosidekick`의 ClusterIP Service에 HTTP로 전송합니다. 같은 namespace라는 사실만으로 통신이 인증되거나 암호화되지 않습니다. 실제 위협 모델에 따라 접근 정책·TLS/mTLS를 구성하고, 해당 endpoint에 노드/Falco가 접근 가능한지 확인합니다. Falco 설정은 json_output·http_output 같은 snake_case입니다. 예전 jsonOutput·httpOutput과 제거된 grpc 설정은 0.45.0 schema를 통과하지 못합니다.
 
 ### Falco 규칙 구조
 
@@ -124,7 +124,7 @@ customRules:
 ```
 
 
-Falco 0.44.1은 enter event 제거 이후 evt.dir 조건을 deprecated로 경고합니다. 위 예제는 성공한 exec와 읽기 이벤트를 직접 조건으로 사용합니다. 서비스 계정 token 읽기는 정상 Kubernetes client에서도 발생하므로 “무단 접근”으로 단정하지 않습니다. 애플리케이션별 baseline·승인된 binary·Pod identity와 함께 판단합니다.
+Falco 0.45.0은 enter event 제거 이후 evt.dir 조건을 deprecated로 경고합니다. 위 예제는 성공한 exec와 읽기 이벤트를 직접 조건으로 사용합니다. 서비스 계정 token 읽기는 정상 Kubernetes client에서도 발생하므로 “무단 접근”으로 단정하지 않습니다. 애플리케이션별 baseline·승인된 binary·Pod identity와 함께 판단합니다.
 
 ### 커스텀 규칙 작성
 
@@ -477,7 +477,7 @@ sum by (priority) (rate(falcosecurity_falcosidekick_falco_events_total[5m]))
 ## 참고 자료
 
 - [Falco Kubernetes installation](https://falco.org/docs/setup/kubernetes/)
-- [Falco 0.44.1 configuration](https://github.com/falcosecurity/falco/blob/0.44.1/falco.yaml)
+- [Falco 0.45.0 configuration](https://github.com/falcosecurity/falco/blob/0.45.0/falco.yaml)
 - [Falcosidekick 2.35.0 configuration](https://github.com/falcosecurity/falcosidekick/blob/2.35.0/config_example.yaml)
 - [Tetragon tracing policies](https://tetragon.io/docs/concepts/tracing-policy/)
 - [Tetragon enforcement](https://tetragon.io/docs/concepts/enforcement/)

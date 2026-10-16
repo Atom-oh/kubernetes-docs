@@ -1,6 +1,6 @@
 # 런타임 보안 퀴즈
 
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 10월 16일
 
 이 퀴즈는 Falco, Seccomp, AppArmor, eBPF 기반 보안, EKS 런타임 보안에 대한 이해를 테스트합니다.
 
@@ -19,7 +19,7 @@
 **정답: B. 시스템 호출(syscall) 모니터링**
 
 **설명:**
-Falco의 대표적인 Linux runtime 경로는 syscall 이벤트를 규칙으로 평가합니다. Plugin으로 다른 event source도 처리할 수 있습니다. 0.44.1의 container 필드는 container plugin이 제공하며, modern_ebpf driver의 커널·BTF 요구사항과 metadata 수집을 확인합니다.
+Falco의 대표적인 Linux runtime 경로는 syscall 이벤트를 규칙으로 평가합니다. Plugin으로 다른 event source도 처리할 수 있습니다. 0.45.0의 container 필드는 container plugin이 제공하며, modern_ebpf driver의 커널·BTF 요구사항과 metadata 수집을 확인합니다.
 
 </details>
 

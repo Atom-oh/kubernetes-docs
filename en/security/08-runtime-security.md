@@ -1,7 +1,7 @@
 # Runtime Security
 
-> **Last Updated**: September 13, 2026
-> **Validation baseline**: Falco 0.44.1 / chart 9.1.0, Falcosidekick 2.35.0 / chart 0.14.0, Tetragon 1.7.1. Verify support for the actual kernel, OS, and node type.
+> **Last Updated**: October 16, 2026
+> **Validation baseline**: Falco 0.45.0 / chart 9.2.0, Falcosidekick 2.35.0 / chart 0.14.0, Tetragon 1.7.1. Verify support for the actual kernel, OS, and node type.
 
 Runtime security observes process, file, and network activity and restricts selected operations through tested policies. **An alert is not proof of compromise; detection and prevention require separate tests.** This guide was checked with local CLIs, schemas, Helm, and synthetic events. No real cluster, kernel BPF program, or notification channel was used.
 
@@ -27,11 +27,11 @@ eBPF alone does not guarantee low overhead or safety. Measure hooks, event volum
 
 Falco evaluates events against rules. A typical syscall path is `Linux event → modern eBPF/kmod capture → Falco filter/rule → JSON output → Falcosidekick → notification/storage`. Slack and PagerDuty are downstream integrations, not native Slack clients inside the Falco rule engine.
 
-The 0.44.1 distribution bundles container plugin 0.7.1. It supplies fields such as container.id, so disabling every plugin prevents rules using those fields from compiling/running. Verify runtime sockets, Kubernetes metadata collection, and access permissions.
+The 0.45.0 distribution bundles container plugin 0.7.4. It supplies fields such as container.id, so disabling every plugin prevents rules using those fields from compiling/running. Verify runtime sockets, Kubernetes metadata collection, and access permissions.
 
 ### Falco Installation (EKS)
 
-This example targets Linux EC2 nodes whose host access you manage. Do not assume that a DaemonSet can run on Fargate or other restricted hosts. Verify modern eBPF kernel/BTF/capability requirements. Chart 9.1.0 supports explicit driver kinds `modern_ebpf` and `kmod`; do not retain the old `ebpf` setting.
+This example targets Linux EC2 nodes whose host access you manage. Do not assume that a DaemonSet can run on Fargate or other restricted hosts. Verify modern eBPF kernel/BTF/capability requirements. Chart 9.2.0 supports explicit driver kinds `modern_ebpf` and `kmod`; do not retain the old `ebpf` setting.
 
 Download the [example directory](https://github.com/Atom-oh/kubernetes-docs/tree/main/examples/security/runtime-security) and run these commands from `examples/security/runtime-security`. The [example README](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/runtime-security/README.md) describes the three values files and rules.
 
@@ -42,7 +42,7 @@ helm upgrade --install falcosidekick falcosecurity/falcosidekick \
   --version 0.14.0 --namespace falco --create-namespace \
   --values falcosidekick-values.yaml
 helm upgrade --install falco falcosecurity/falco \
-  --version 9.1.0 --namespace falco \
+  --version 9.2.0 --namespace falco \
   --values falco-values.yaml
 ```
 
@@ -90,7 +90,7 @@ customRules:
 ```
 
 
-The configuration sends HTTP to the separately installed falcosidekick ClusterIP Service. Sharing a namespace does not authenticate or encrypt traffic. Configure access policy and TLS/mTLS according to the actual trust boundary and verify node/Falco connectivity. Falco uses snake_case fields such as json_output and http_output. Old jsonOutput/httpOutput and removed grpc settings fail the 0.44.1 schema.
+The configuration sends HTTP to the separately installed falcosidekick ClusterIP Service. Sharing a namespace does not authenticate or encrypt traffic. Configure access policy and TLS/mTLS according to the actual trust boundary and verify node/Falco connectivity. Falco uses snake_case fields such as json_output and http_output. Old jsonOutput/httpOutput and removed grpc settings fail the 0.45.0 schema.
 
 ### Falco Rule Structure
 
@@ -122,7 +122,7 @@ These rules define their own required macros and avoid replacing default rule na
 ```
 
 
-After removal of enter events, Falco 0.44.1 warns that evt.dir is deprecated. These examples select successful exec and read events directly. Legitimate Kubernetes clients read service account tokens, so the read signal alone is not “unauthorized access.” Combine it with workload baselines, approved binaries, and Pod identity.
+After removal of enter events, Falco 0.45.0 warns that evt.dir is deprecated. These examples select successful exec and read events directly. Legitimate Kubernetes clients read service account tokens, so the read signal alone is not “unauthorized access.” Combine it with workload baselines, approved binaries, and Pod identity.
 
 ### Writing Custom Rules
 
@@ -476,7 +476,7 @@ Local checks covered two Falco rules, four configuration-schema cases, three Tet
 ## References
 
 - [Falco Kubernetes installation](https://falco.org/docs/setup/kubernetes/)
-- [Falco 0.44.1 configuration](https://github.com/falcosecurity/falco/blob/0.44.1/falco.yaml)
+- [Falco 0.45.0 configuration](https://github.com/falcosecurity/falco/blob/0.45.0/falco.yaml)
 - [Falcosidekick 2.35.0 configuration](https://github.com/falcosecurity/falcosidekick/blob/2.35.0/config_example.yaml)
 - [Tetragon tracing policies](https://tetragon.io/docs/concepts/tracing-policy/)
 - [Tetragon enforcement](https://tetragon.io/docs/concepts/enforcement/)

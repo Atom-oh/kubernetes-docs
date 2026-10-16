@@ -1,7 +1,7 @@
 # Certificate Management with cert-manager
 
-> **Last Updated**: October 12, 2026
-> **Validation baseline**: cert-manager 1.21.2, cmctl 2.5.0, trust-manager 0.25.0, istio-csr 0.17.0, aws-privateca-issuer 1.9.2, ACK ACM 1.8.1. cert-manager 1.21's published supported/tested Kubernetes range is 1.33–1.36; Kubernetes 1.37 is outside that range, so this guide does not assert compatibility with it.
+> **Last Updated**: October 16, 2026
+> **Validation baseline**: cert-manager 1.21.2, cmctl 2.6.1, trust-manager 0.25.0, istio-csr 0.18.0, aws-privateca-issuer 1.9.2, ACK ACM 1.8.1. cert-manager 1.21's published supported/tested Kubernetes range is 1.33–1.36; Kubernetes 1.37 is outside that range, so this guide does not assert compatibility with it.
 
 cert-manager manages certificate issuance and renewal as Kubernetes resources. **CA trust distribution, application reload, revocation, and CRL/OCSP operations remain separate responsibilities.** Examples were checked with local schemas, configuration, and libraries; they are not evidence of external CA issuance or AWS/Kubernetes deployment. A separate ephemeral local Vault 2.1.0 test used a synthetic CA for sixteen issuance/CSR-signing acceptance/rejection cases.
 
@@ -438,7 +438,7 @@ The [istio-csr values](https://github.com/Atom-oh/kubernetes-docs/blob/main/exam
 
 ```bash
 helm upgrade --install cert-manager-istio-csr jetstack/cert-manager-istio-csr \
-  --version v0.17.0 --namespace cert-manager --values istio-csr-values.yaml
+  --version v0.18.0 --namespace cert-manager --values istio-csr-values.yaml
 ```
 
 ### Linkerd and trust-manager

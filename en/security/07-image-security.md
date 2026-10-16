@@ -1,7 +1,7 @@
 # Container Image Security
 
-> **Last Updated**: September 13, 2026
-> **Validation baseline**: Trivy 0.74.0, Trivy Operator 0.34.0/chart 0.36.0, Cosign 3.1.3, Kyverno 1.19.1, Connaisseur 3.12.0/chart 2.12.0. These are CLI/configuration baselines, not a claim of deployment testing across all Kubernetes versions.
+> **Last Updated**: October 16, 2026
+> **Validation baseline**: Trivy 0.76.0, Trivy Operator 0.35.0/chart 0.37.0, Cosign 3.1.3, Kyverno 1.19.1, Connaisseur 3.13.0/chart 2.13.0. These are CLI/configuration baselines, not a claim of deployment testing across all Kubernetes versions.
 
 Image security starts by confirming that **the built, scanned, and deployed artifact is the same**. Scanning identifies known vulnerabilities and configuration issues; signatures connect a signer to a digest. Neither guarantees application safety.
 
@@ -90,11 +90,11 @@ This is an image/filesystem scanning baseline. Do not add unsupported vulnerabil
 ```bash
 helm repo add aqua https://aquasecurity.github.io/helm-charts/
 helm repo update aqua
-helm upgrade --install trivy-operator aqua/trivy-operator   --version 0.36.0 --namespace trivy-system --create-namespace   --values trivy-operator-values.yaml
+helm upgrade --install trivy-operator aqua/trivy-operator   --version 0.37.0 --namespace trivy-system --create-namespace   --values trivy-operator-values.yaml
 kubectl get vulnerabilityreports -A
 ```
 
-Chart 0.36.0 deploys application 0.34.0. The [values file](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/trivy-operator-values.yaml) explicitly sets ignoreUnfixed:false. Reports are operator-generated results; do not apply a fabricated CVE/package-version manifest as scan evidence. Check the actual report schema, watched namespaces, registry credentials, scan-Job privileges, and resources. This audit rendered the chart only.
+Chart 0.37.0 deploys application 0.35.0. The [values file](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/trivy-operator-values.yaml) explicitly sets ignoreUnfixed:false. Reports are operator-generated results; do not apply a fabricated CVE/package-version manifest as scan evidence. Check the actual report schema, watched namespaces, registry credentials, scan-Job privileges, and resources. This audit rendered the chart only.
 
 <span id="basic-scanning-vs-enhanced-scanning"></span>
 <span id="enabling-enhanced-scanning"></span>
@@ -257,13 +257,13 @@ Images outside matchImageReferences can be skipped by image verification, so app
 
 ### Connaisseur alternative — legacy signature path
 
-**Connaisseur 3.12.0 is not a consumer of default Cosign 3 bundles.** It uses the cosign/v2 verification path with legacy signature tags and SimpleSigning payloads. Use a separate compatibility producer. The [legacy signing script](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh) explicitly sets Cosign 3.1.3 `--new-bundle-format=false --registry-referrers-mode=legacy` while retaining transparency upload/verification. The accompanying signing config explicitly selects Rekor v1 for the legacy verifier’s log format. Supply real approved keys and a digest. This path is separate from secure-build.yaml’s default bundle format; do not feed that workflow’s default output directly to Connaisseur. Legacy flags are deprecated, so plan a coordinated producer/verifier migration. CLI options and both source contracts were checked; registry/signature integration was not executed.
+**Connaisseur 3.13.0 is not a consumer of default Cosign 3 bundles.** It uses the cosign/v2 verification path with legacy signature tags and SimpleSigning payloads. Use a separate compatibility producer. The [legacy signing script](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh) explicitly sets Cosign 3.1.3 `--new-bundle-format=false --registry-referrers-mode=legacy` while retaining transparency upload/verification. The accompanying signing config explicitly selects Rekor v1 for the legacy verifier’s log format. Supply real approved keys and a digest. This path is separate from secure-build.yaml’s default bundle format; do not feed that workflow’s default output directly to Connaisseur. Legacy flags are deprecated, so plan a coordinated producer/verifier migration. CLI options and both source contracts were checked; registry/signature integration was not executed.
 
-Connaisseur 3.12.0/chart 2.12.0 is another option. In the [values example](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-values.yaml), validators and policy belong under application, and deny is an explicitly defined static validator. The included public key is a synthetic test key that must be replaced with the real trust key.
+Connaisseur 3.13.0/chart 2.13.0 is another option. In the [values example](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-values.yaml), validators and policy belong under application, and deny is an explicitly defined static validator. The included public key is a synthetic test key that must be replaced with the real trust key.
 
 ```bash
 helm repo add connaisseur https://sse-secure-systems.github.io/connaisseur/charts
-helm upgrade --install connaisseur connaisseur/connaisseur   --version 2.12.0 --namespace connaisseur --create-namespace   --values connaisseur-values.yaml
+helm upgrade --install connaisseur connaisseur/connaisseur   --version 2.13.0 --namespace connaisseur --create-namespace   --values connaisseur-values.yaml
 kubectl label namespace production securesystemsengineering.connaisseur/webhook=validate
 ```
 
@@ -319,7 +319,7 @@ The [complete build context](https://github.com/Atom-oh/kubernetes-docs/tree/mai
 **Dockerfile.distroless**
 
 ```dockerfile
-FROM golang:1.27.1@sha256:f44f6e88636cfb311f9ebace870ded69d943f227bb3cb27d32ffd84ea18c43ea AS builder
+FROM golang:1.27.2@sha256:820153096fda4de6ac1b7194d12e416b7dd8f4e9a33d17e0345b111b945162d8 AS builder
 WORKDIR /src
 COPY go.mod main.go ./
 RUN CGO_ENABLED=0 go build -trimpath -o /out/app .
@@ -409,7 +409,7 @@ jobs:
           tags: local/audit-app:${{ github.sha }}
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          version: v0.74.0
+          version: v0.76.0
           scan-type: image
           image-ref: local/audit-app:${{ github.sha }}
           scanners: vuln,secret
@@ -445,7 +445,7 @@ jobs:
       - name: Scan the exact local artifact that will be pushed
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          version: v0.74.0
+          version: v0.76.0
           scan-type: image
           image-ref: ${{ steps.image.outputs.tag }}
           scanners: vuln,secret
@@ -511,7 +511,7 @@ Configure GHCR package permissions, Actions OIDC, attestation-plan support, and 
 
 ## Checks Performed and Limits
 
-- Trivy 0.74: two synthetic secret cases and two Dockerfile non-root checks. No actual CVE database or remote-image scan.
+- Trivy 0.76: two synthetic secret cases and two Dockerfile non-root checks. No actual CVE database or remote-image scan.
 - Cosign 3.1.3: valid/tampered synthetic local key/blob verification. Omitting transparency in that private fixture is not evidence of production registry/OIDC verification.
 - Kyverno 1.19.1: six CEL registry/digest object cases including init/ephemeral containers, plus two pinned CRD schemas. No live admission or network signature verification.
 - Trivy Operator/Connaisseur Helm rendering, synthetic ECR API-model/JMESPath fixtures, CloudFormation lint, and actionlint were run. No AWS resources, notifications, or registry pushes were executed.
@@ -521,9 +521,9 @@ Configure GHCR package permissions, Actions OIDC, attestation-plan support, and 
 
 ## References
 
-- [Trivy releases](https://github.com/aquasecurity/trivy/releases/tag/v0.74.0)
+- [Trivy releases](https://github.com/aquasecurity/trivy/releases/tag/v0.76.0)
 - [Trivy documentation](https://aquasecurity.github.io/trivy/)
-- [Trivy Operator chart](https://github.com/aquasecurity/trivy-operator/tree/v0.34.0/deploy/helm)
+- [Trivy Operator chart](https://github.com/aquasecurity/trivy-operator/tree/v0.35.0/deploy/helm)
 - [ECR scanning](https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html)
 - [Inspector event schemas](https://docs.aws.amazon.com/inspector/latest/user/eventbridge-integration.html)
 - [EventBridge target authorization](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html)
@@ -532,7 +532,7 @@ Configure GHCR package permissions, Actions OIDC, attestation-plan support, and 
 - [Sigstore verification](https://docs.sigstore.dev/cosign/verifying/verify/)
 - [Kyverno CEL migration](https://kyverno.io/docs/guides/migration-to-cel/)
 - [Kyverno ImageValidatingPolicy](https://kyverno.io/docs/policy-types/image-validating-policy/)
-- [Connaisseur namespaced validation](https://github.com/sse-secure-systems/connaisseur/blob/v3.12.0/docs/features/namespaced_validation.md)
+- [Connaisseur namespaced validation](https://github.com/sse-secure-systems/connaisseur/blob/v3.13.0/docs/features/namespaced_validation.md)
 - [SLSA requirements](https://slsa.dev/spec/v1.2/build-requirements)
 - [GitHub attest action](https://github.com/actions/attest/tree/v4.2.2)
 - [Distroless](https://github.com/GoogleContainerTools/distroless)

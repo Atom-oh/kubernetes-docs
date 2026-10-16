@@ -1,7 +1,7 @@
 # 컨테이너 이미지 보안
 
-> **마지막 업데이트**: 2026년 9월 13일
-> **검증 기준**: Trivy 0.74.0, Trivy Operator 0.34.0/chart 0.36.0, Cosign 3.1.3, Kyverno 1.19.1, Connaisseur 3.12.0/chart 2.12.0. CLI·설정 검증 기준이며 모든 Kubernetes 버전에서 배포를 시험했다는 뜻은 아닙니다.
+> **마지막 업데이트**: 2026년 10월 16일
+> **검증 기준**: Trivy 0.76.0, Trivy Operator 0.35.0/chart 0.37.0, Cosign 3.1.3, Kyverno 1.19.1, Connaisseur 3.13.0/chart 2.13.0. CLI·설정 검증 기준이며 모든 Kubernetes 버전에서 배포를 시험했다는 뜻은 아닙니다.
 
 이미지 보안은 **빌드한 이미지, 검사한 이미지, 배포하는 이미지가 같은 artifact인지** 확인하는 데서 시작합니다. 스캔은 알려진 취약점과 구성 문제를 찾고, 서명은 서명자와 digest의 연결을 검증합니다. 어느 하나도 애플리케이션이 안전하다는 보증은 아닙니다.
 
@@ -90,11 +90,11 @@ vulnerability:
 ```bash
 helm repo add aqua https://aquasecurity.github.io/helm-charts/
 helm repo update aqua
-helm upgrade --install trivy-operator aqua/trivy-operator   --version 0.36.0 --namespace trivy-system --create-namespace   --values trivy-operator-values.yaml
+helm upgrade --install trivy-operator aqua/trivy-operator   --version 0.37.0 --namespace trivy-system --create-namespace   --values trivy-operator-values.yaml
 kubectl get vulnerabilityreports -A
 ```
 
-chart 0.36.0의 application 버전은 0.34.0입니다. [values 파일](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/trivy-operator-values.yaml)은 `ignoreUnfixed: false`를 명시합니다. Report는 operator가 생성하는 결과이며 가짜 CVE·package version을 넣은 매니페스트를 배포하지 않습니다. 실제 report schema, 대상 namespace, registry credential, scan Job 권한과 자원을 확인하세요. 이 감사에서는 Helm 렌더링만 수행했습니다.
+chart 0.37.0의 application 버전은 0.35.0입니다. [values 파일](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/trivy-operator-values.yaml)은 `ignoreUnfixed: false`를 명시합니다. Report는 operator가 생성하는 결과이며 가짜 CVE·package version을 넣은 매니페스트를 배포하지 않습니다. 실제 report schema, 대상 namespace, registry credential, scan Job 권한과 자원을 확인하세요. 이 감사에서는 Helm 렌더링만 수행했습니다.
 
 <span id="기본-스캐닝-vs-향상된-스캐닝"></span>
 <span id="향상된-스캐닝-활성화"></span>
@@ -257,13 +257,13 @@ spec:
 
 ### Connaisseur 대안 — legacy 서명 경로
 
-**Connaisseur 3.12.0은 기본 Cosign 3 bundle을 소비하는 대안이 아닙니다.** 이 버전은 cosign/v2 검증 경로와 legacy signature tag·SimpleSigning payload를 사용합니다. 별도 compatibility producer가 필요합니다. [legacy 서명 스크립트](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh)는 Cosign 3.1.3에 `--new-bundle-format=false --registry-referrers-mode=legacy`를 명시하고 transparency upload/검증을 유지합니다. 동봉한 signing config는 Rekor v1을 명시하며 legacy verifier가 소비하는 로그 형식을 유지합니다. 실제 승인 key와 digest를 제공해야 합니다. 이 경로는 아래 secure-build.yaml의 기본 bundle 경로와 별도이며, 해당 기본 workflow의 결과를 그대로 Connaisseur에 넣으면 안 됩니다. Legacy 옵션은 deprecated이므로 verifier와 producer를 함께 업그레이드하는 마이그레이션 계획이 필요합니다. CLI 옵션과 양쪽 소스 계약은 확인했지만 실제 registry/signature 연동을 실행하지 않았습니다.
+**Connaisseur 3.13.0은 기본 Cosign 3 bundle을 소비하는 대안이 아닙니다.** 이 버전은 cosign/v2 검증 경로와 legacy signature tag·SimpleSigning payload를 사용합니다. 별도 compatibility producer가 필요합니다. [legacy 서명 스크립트](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-sign-legacy.sh)는 Cosign 3.1.3에 `--new-bundle-format=false --registry-referrers-mode=legacy`를 명시하고 transparency upload/검증을 유지합니다. 동봉한 signing config는 Rekor v1을 명시하며 legacy verifier가 소비하는 로그 형식을 유지합니다. 실제 승인 key와 digest를 제공해야 합니다. 이 경로는 아래 secure-build.yaml의 기본 bundle 경로와 별도이며, 해당 기본 workflow의 결과를 그대로 Connaisseur에 넣으면 안 됩니다. Legacy 옵션은 deprecated이므로 verifier와 producer를 함께 업그레이드하는 마이그레이션 계획이 필요합니다. CLI 옵션과 양쪽 소스 계약은 확인했지만 실제 registry/signature 연동을 실행하지 않았습니다.
 
-Connaisseur 3.12.0/chart 2.12.0을 사용할 수도 있습니다. [values 예제](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-values.yaml)에서 `validators`와 `policy`는 `application` 아래에 있고, `deny`는 명시적으로 정의한 static validator입니다. 포함된 public key는 합성 검사 key이므로 실제 신뢰 key로 교체해야 합니다.
+Connaisseur 3.13.0/chart 2.13.0을 사용할 수도 있습니다. [values 예제](https://github.com/Atom-oh/kubernetes-docs/blob/main/examples/security/image-security/connaisseur-values.yaml)에서 `validators`와 `policy`는 `application` 아래에 있고, `deny`는 명시적으로 정의한 static validator입니다. 포함된 public key는 합성 검사 key이므로 실제 신뢰 key로 교체해야 합니다.
 
 ```bash
 helm repo add connaisseur https://sse-secure-systems.github.io/connaisseur/charts
-helm upgrade --install connaisseur connaisseur/connaisseur   --version 2.12.0 --namespace connaisseur --create-namespace   --values connaisseur-values.yaml
+helm upgrade --install connaisseur connaisseur/connaisseur   --version 2.13.0 --namespace connaisseur --create-namespace   --values connaisseur-values.yaml
 kubectl label namespace production securesystemsengineering.connaisseur/webhook=validate
 ```
 
@@ -319,7 +319,7 @@ SLSA provenance는 build 입력·builder·artifact 사이의 관계를 기록합
 **Dockerfile.distroless**
 
 ```dockerfile
-FROM golang:1.27.1@sha256:f44f6e88636cfb311f9ebace870ded69d943f227bb3cb27d32ffd84ea18c43ea AS builder
+FROM golang:1.27.2@sha256:820153096fda4de6ac1b7194d12e416b7dd8f4e9a33d17e0345b111b945162d8 AS builder
 WORKDIR /src
 COPY go.mod main.go ./
 RUN CGO_ENABLED=0 go build -trimpath -o /out/app .
@@ -409,7 +409,7 @@ jobs:
           tags: local/audit-app:${{ github.sha }}
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          version: v0.74.0
+          version: v0.76.0
           scan-type: image
           image-ref: local/audit-app:${{ github.sha }}
           scanners: vuln,secret
@@ -445,7 +445,7 @@ jobs:
       - name: Scan the exact local artifact that will be pushed
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          version: v0.74.0
+          version: v0.76.0
           scan-type: image
           image-ref: ${{ steps.image.outputs.tag }}
           scanners: vuln,secret
@@ -511,7 +511,7 @@ GHCR package 권한, Actions OIDC, attestation plan, registry connectivity를 �
 
 ## 수행한 검증과 한계
 
-- Trivy0.74: 합성 시크릿 탐지/비탐지2건, Dockerfile 비루트 검사2건. 실제 CVE DB 또는 원격 이미지는 스캔하지 않았습니다.
+- Trivy0.76: 합성 시크릿 탐지/비탐지2건, Dockerfile 비루트 검사2건. 실제 CVE DB 또는 원격 이미지는 스캔하지 않았습니다.
 - Cosign3.1.3: 로컬 합성 key/blob의 정상 서명과 변조 거부. private fixture의 transparency 생략은 registry/OIDC production 검증의 증거가 아닙니다.
 - Kyverno1.19.1: CEL registry/digest 정책6건(일반·init·ephemeral 포함), 두 정책의 pinned CRD schema. Live admission과 image signature network verification은 미실행입니다.
 - Trivy Operator/Connaisseur Helm 렌더링, ECR API model/JMESPath 합성 fixture, CloudFormation lint, actionlint를 수행했습니다. 실제 AWS 리소스·알림·registry push는 실행하지 않았습니다.
@@ -521,9 +521,9 @@ GHCR package 권한, Actions OIDC, attestation plan, registry connectivity를 �
 
 ## 참고 자료
 
-- [Trivy releases](https://github.com/aquasecurity/trivy/releases/tag/v0.74.0)
+- [Trivy releases](https://github.com/aquasecurity/trivy/releases/tag/v0.76.0)
 - [Trivy documentation](https://aquasecurity.github.io/trivy/)
-- [Trivy Operator chart](https://github.com/aquasecurity/trivy-operator/tree/v0.34.0/deploy/helm)
+- [Trivy Operator chart](https://github.com/aquasecurity/trivy-operator/tree/v0.35.0/deploy/helm)
 - [ECR scanning](https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html)
 - [Inspector event schemas](https://docs.aws.amazon.com/inspector/latest/user/eventbridge-integration.html)
 - [EventBridge target authorization](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-use-resource-based.html)
@@ -532,7 +532,7 @@ GHCR package 권한, Actions OIDC, attestation plan, registry connectivity를 �
 - [Sigstore verification](https://docs.sigstore.dev/cosign/verifying/verify/)
 - [Kyverno CEL migration](https://kyverno.io/docs/guides/migration-to-cel/)
 - [Kyverno ImageValidatingPolicy](https://kyverno.io/docs/policy-types/image-validating-policy/)
-- [Connaisseur namespaced validation](https://github.com/sse-secure-systems/connaisseur/blob/v3.12.0/docs/features/namespaced_validation.md)
+- [Connaisseur namespaced validation](https://github.com/sse-secure-systems/connaisseur/blob/v3.13.0/docs/features/namespaced_validation.md)
 - [SLSA requirements](https://slsa.dev/spec/v1.2/build-requirements)
 - [GitHub attest action](https://github.com/actions/attest/tree/v4.2.2)
 - [Distroless](https://github.com/GoogleContainerTools/distroless)

@@ -1,7 +1,7 @@
 # Security Posture Management with Kubescape
 
-> **Last Updated**: September 13, 2026
-> **Validation baseline**: CLI 4.0.14 and Operator chart 1.40.4. The chart's scanner image is 4.0.13, separate from the CLI. Policy hashes are recorded in the example directory.
+> **Last Updated**: October 16, 2026
+> **Validation baseline**: CLI 4.0.16 and Operator chart 1.40.4. The chart's scanner image is 4.0.13, separate from the CLI. Policy hashes are recorded in the example directory.
 
 Kubescape evaluates Kubernetes configuration and selected image/runtime data. **Passing a scan is not a security guarantee or compliance certification; unavailable coverage must be identified separately.** This guide was checked with local YAML, policy bundles, the actual CLI, and chart rendering. No live cluster scan, node-agent installation, registry image/DB scan, or SaaS submission was performed.
 
@@ -32,13 +32,13 @@ The CLI performs explicit file or cluster scans; the Operator provides continuou
 
 ### CLI Installation
 
-Download the matching OS/CPU asset from the [official 4.0.14 release](https://github.com/kubescape/kubescape/releases/tag/v4.0.14) and verify its checksum. This Linux AMD64 example pins the reviewed archive hash; ARM64 needs a different archive/hash.
+Download the matching OS/CPU asset from the [official 4.0.16 release](https://github.com/kubescape/kubescape/releases/tag/v4.0.16) and verify its checksum. This Linux AMD64 example pins the reviewed archive hash; ARM64 needs a different archive/hash.
 
 ```bash
 curl --fail --location \
-  https://github.com/kubescape/kubescape/releases/download/v4.0.14/kubescape_4.0.14_linux_amd64.tar.gz \
+  https://github.com/kubescape/kubescape/releases/download/v4.0.16/kubescape_4.0.16_linux_amd64.tar.gz \
   --output kubescape.tgz
-printf '%s  %s\n' '1d253b70f88e80b74f68af73ccd422f897381468300be7cc486fdd656d907a40' kubescape.tgz | sha256sum --check
+printf '%s  %s\n' '71ed716b13487a6fa57500af6b191ee7fd51eb0b31809ea5994a696b1f36f874' kubescape.tgz | sha256sum --check
 tar -xzf kubescape.tgz kubescape
 ./kubescape version
 ./kubescape scan --help
@@ -158,7 +158,7 @@ kubescape scan framework nsa secure-pod.yaml \
   --format json --output report.json
 ```
 
---format/-f selects the format; --output/-o names the file. `-o json > report.json` does not select JSON output. Version 4.0.14 supports JSON/SARIF/HTML/PDF/JUnit/gitlab-sast and other formats; choose the one the receiving tool expects.
+--format/-f selects the format; --output/-o names the file. `-o json > report.json` does not select JSON output. Version 4.0.16 supports JSON/SARIF/HTML/PDF/JUnit/gitlab-sast and other formats; choose the one the receiving tool expects.
 
 Render Helm/Kustomize locally before scanning to make effective values explicit. Local checks do not reproduce API defaulting, admission, IAM authorization, or network behavior. --include-api-audit, --custom-framework, and --sort-by were unknown in the reviewed CLI. Do not present scan rbac as a separate current subcommand.
 
@@ -175,7 +175,7 @@ These values apply to the attached policy snapshot and one local Pod. They do no
 
 ### Image and RBAC Analysis
 
-Request image scanning explicitly with kubescape scan image IMAGE. CLI 4.0.14 uses Grype 0.104.1 and Syft 1.42.3 in its source dependencies; the Operator kubevuln component is separately versioned. Verify registry credentials, platform, database freshness, and scan errors. Host scanning differs from image scanning and can require additional host access/resource creation.
+Request image scanning explicitly with kubescape scan image IMAGE. CLI 4.0.16 uses Grype 0.104.1 and Syft 1.42.3 in its source dependencies; the Operator kubevuln component is separately versioned. Verify registry credentials, platform, database freshness, and scan errors. Host scanning differs from image scanning and can require additional host access/resource creation.
 
 RBAC controls evaluate collected Roles/Bindings within authorized API scope. A RoleBinding grants access within its namespace, not every namespace. Static analysis does not by itself establish unused permissions, external IAM authorization, or every effective access path.
 
@@ -221,7 +221,7 @@ jq '{compliance: .summaryDetails.complianceScore, risk: .summaryDetails.score,
 
 Use --compliance-threshold as a **minimum compliance score**, and --severity-threshold for failed-control severity. A local score of 55 returned exit 0 at threshold 55 and exit 1 at 56. --min-severity filters output; it does not replace current gate calculations.
 
-**Version 4.0.14 accepts --fail-threshold as a deprecated compatibility flag but ignores its value.** The test returned exit 0 with failed findings when only --fail-threshold 0 was supplied. Distinguish that inert flag from still-processed options such as --scan-images/--skip-controls and genuinely unknown flags.
+**Version 4.0.16 accepts --fail-threshold as a deprecated compatibility flag but ignores its value.** The test returned exit 0 with failed findings when only --fail-threshold 0 was supplied. Distinguish that inert flag from still-processed options such as --scan-images/--skip-controls and genuinely unknown flags.
 
 <span id="ci-cd-integration-workflow"></span>
 <span id="github-actions-workflow"></span>
@@ -434,8 +434,8 @@ Local validation covered binary/checksum, policy snapshot, threshold boundaries/
 - [Kubescape documentation](https://kubescape.io/docs/)
 - [Frameworks and controls](https://kubescape.io/docs/frameworks-and-controls/)
 - [Operator documentation](https://kubescape.io/docs/operator/)
-- [CLI 4.0.14](https://github.com/kubescape/kubescape/releases/tag/v4.0.14)
-- [Pinned CLI flags](https://github.com/kubescape/kubescape/blob/v4.0.14/cmd/scan/scan.go)
+- [CLI 4.0.16](https://github.com/kubescape/kubescape/releases/tag/v4.0.16)
+- [Pinned CLI flags](https://github.com/kubescape/kubescape/blob/v4.0.16/cmd/scan/scan.go)
 - [Operator chart 1.40.4](https://github.com/kubescape/helm-charts/releases/tag/kubescape-operator-1.40.4)
 - [Policy library](https://github.com/kubescape/regolibrary)
 - [Exporter metrics 0.2.23](https://github.com/kubescape/prometheus-exporter/blob/v0.2.23/metrics/metrics.go)

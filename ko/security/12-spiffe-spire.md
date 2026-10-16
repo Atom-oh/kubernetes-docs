@@ -2,7 +2,7 @@
 
 # SPIFFE/SPIRE를 활용한 워크로드 아이덴티티
 
-> **마지막 업데이트**: 2026년 9월 13일
+> **마지막 업데이트**: 2026년 10월 16일
 > **검증 기준**: SPIRE 1.15.3, hardened chart 0.30.2 / CRD chart 0.6.1, Controller Manager 0.7.0, chart의 SPIFFE CSI image 0.2.7(별도 최신 CSI 0.2.13 문서도 확인), go-spiffe 2.8.1. chart와 실제 image 버전은 렌더링 결과로 확인합니다.
 
 SPIFFE는 워크로드 신원과 자격 증명·전달·신뢰 형식을 정의하고 SPIRE는 이를 구현합니다. **신원 발급만으로 트래픽 암호화나 서비스 권한 부여가 자동 구현되지는 않습니다.** 이 문서는 로컬 설정·schema·라이브러리·차트·다이어그램을 검증했으며 실제 클러스터·AWS CA·SPIRE attestation·서비스 메시 설치는 실행하지 않았습니다.
@@ -280,9 +280,9 @@ Kubernetes native sidecar를 사용하면 istio-proxy가 initContainers에 있�
 
 ### Cilium
 
-Cilium 1.20.1의 mutual authentication은 **beta이며 일반 연결과 별도로 수행되는 out-of-band 인증**입니다. traffic 암호화는 WireGuard/IPsec 등 별도 구성이 필요합니다. SPIFFE ID 문자열을 임의 label로 붙이면 자동 인증 정책이 된다는 예제는 삭제했습니다.
+Cilium 1.20.3의 mutual authentication은 **beta이며 일반 연결과 별도로 수행되는 out-of-band 인증**입니다. traffic 암호화는 WireGuard/IPsec 등 별도 구성이 필요합니다. SPIFFE ID 문자열을 임의 label로 붙이면 자동 인증 정책이 된다는 예제는 삭제했습니다.
 
-공식 설정은 `authentication.mutual.spire.enabled`와 bundled SPIRE를 쓰는 경우 `authentication.mutual.spire.install.enabled`를 사용합니다. 외부 SPIRE와 bundled 설치를 혼합하지 말고 해당 버전의 [설치 원문](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/installation.rst)을 확인합니다. NetworkPolicy의 endpoint selector·authentication mode와 신원 발급/암호화의 책임을 구분합니다.
+공식 설정은 `authentication.mutual.spire.enabled`와 bundled SPIRE를 쓰는 경우 `authentication.mutual.spire.install.enabled`를 사용합니다. 외부 SPIRE와 bundled 설치를 혼합하지 말고 해당 버전의 [설치 원문](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/mutual-authentication/installation.rst)을 확인합니다. NetworkPolicy의 endpoint selector·authentication mode와 신원 발급/암호화의 책임을 구분합니다.
 
 ### Linkerd
 
@@ -387,4 +387,4 @@ Workload API 문제를 조사할 때 Agent Pod 안에서 fetch하면 그 호출 
 - [SPIRE 1.15.3](https://github.com/spiffe/spire/releases/tag/v1.15.3)
 - [SPIFFE CSI 0.2.13](https://github.com/spiffe/spiffe-csi/blob/v0.2.13/README.md)
 - [Hardened Helm charts](https://github.com/spiffe/helm-charts-hardened)
-- [Cilium 1.20.1 mutual authentication](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [Cilium 1.20.3 mutual authentication](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)

@@ -1,6 +1,6 @@
 # Workload Identity with SPIFFE/SPIRE
 
-> **Last Updated**: September 13, 2026
+> **Last Updated**: October 16, 2026
 > **Validation baseline**: SPIRE 1.15.3, hardened chart 0.30.2 / CRD chart 0.6.1, Controller Manager 0.7.0, chart CSI image 0.2.7 (also checked against current CSI 0.2.13 documentation), go-spiffe 2.8.1. Inspect chart-rendered image versions separately.
 
 SPIFFE defines workload identity, credential, delivery, and trust formats; SPIRE implements them. **Issuing an identity does not automatically encrypt traffic or authorize service access.** This guide validates local configuration, schemas, libraries, charts, and diagrams. No live cluster, AWS CA, SPIRE attestation, or mesh installation was performed.
@@ -265,9 +265,9 @@ With native sidecars, istio-proxy is an initContainer and must be patched there.
 
 ### Cilium
 
-Cilium 1.20.1 mutual authentication is **beta and out-of-band from ordinary connections**. Traffic encryption requires separate WireGuard/IPsec configuration. An arbitrary label containing a SPIFFE ID is not an authenticated identity policy.
+Cilium 1.20.3 mutual authentication is **beta and out-of-band from ordinary connections**. Traffic encryption requires separate WireGuard/IPsec configuration. An arbitrary label containing a SPIFFE ID is not an authenticated identity policy.
 
-The official setup uses authentication.mutual.spire.enabled and, for its bundled installation, authentication.mutual.spire.install.enabled. Keep bundled and external SPIRE configurations distinct and consult the [pinned installation source](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/installation.rst). Endpoint selectors/authentication modes, identity issuance, and encryption have separate responsibilities.
+The official setup uses authentication.mutual.spire.enabled and, for its bundled installation, authentication.mutual.spire.install.enabled. Keep bundled and external SPIRE configurations distinct and consult the [pinned installation source](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/mutual-authentication/installation.rst). Endpoint selectors/authentication modes, identity issuance, and encryption have separate responsibilities.
 
 ### Linkerd
 
@@ -371,4 +371,4 @@ Local validation covered server/agent configuration, nine ID cases, five X.509 c
 - [SPIRE 1.15.3](https://github.com/spiffe/spire/releases/tag/v1.15.3)
 - [SPIFFE CSI 0.2.13](https://github.com/spiffe/spiffe-csi/blob/v0.2.13/README.md)
 - [Hardened Helm charts](https://github.com/spiffe/helm-charts-hardened)
-- [Cilium 1.20.1 mutual authentication](https://github.com/cilium/cilium/blob/v1.20.1/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
+- [Cilium 1.20.3 mutual authentication](https://github.com/cilium/cilium/blob/v1.20.3/Documentation/network/servicemesh/mutual-authentication/mutual-authentication.rst)
