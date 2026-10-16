@@ -1,6 +1,6 @@
 # Reading with LLMs — llms.txt and MCP
 
-> **Last Updated**: September 11, 2026
+> **Last Updated**: October 16, 2026
 
 This guidebook provides the [proposed llms.txt format](https://llmstxt.org/) and per-document Markdown. Give the index to an AI tool that can fetch URLs, ingest the catalog and source text into an LLM Wiki or RAG pipeline, or connect the search and retrieval tools to a local MCP client. Publishing `llms.txt` does not guarantee automatic discovery or search by every AI. The consuming tool needs web retrieval or an MCP connection.
 
@@ -67,7 +67,7 @@ This is **keyword search** across titles, descriptions, headings, and full text.
 
 The server reads the local `ko/`, `en/`, and `SUMMARY.md` files at startup. **It does not fetch the live site.** Update your checkout and restart the MCP server to refresh search. Only cataloged document IDs are readable; arbitrary paths and external URLs cannot be fetched. Citation URLs point to the public site, so unpublished local edits may differ from published content.
 
-GitHub Pages serves static files, so this site's URL cannot be registered as a remote MCP endpoint. A remote web connection requires a separate runtime implementing [Streamable HTTP transport](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports), with access control and operating policies. The included server uses local stdio.
+GitHub Pages serves static files, so this site's URL cannot be registered as a remote MCP endpoint. A remote web connection requires a separate runtime implementing [Streamable HTTP transport](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http), with access control and operating policies. The included server uses local stdio.
 
 ## Examples
 

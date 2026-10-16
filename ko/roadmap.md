@@ -1,6 +1,6 @@
 # 가이드북 로드맵
 
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 16일
 
 이 가이드북은 Linux 커널에서 시작해 컨테이너, Kubernetes, Amazon EKS, 네트워킹, 서비스 메시, 스토리지, 데이터베이스, 데이터 파이프라인, AI/ML, 그리고 보안·GitOps·플랫폼 엔지니어링·컨테이너 레지스트리·옵저버빌리티·운영까지 — 클라우드 네이티브 스택 전체를 하나의 서사로 다룹니다. 이 페이지는 전체 지도이자 추천 학습 경로입니다.
 
@@ -19,7 +19,7 @@
 | 연결 | Service Mesh | [Istio](service-mesh/istio/README.md) | Istio/Linkerd/Cilium Mesh — mTLS 레이턴시 실측 포함 |
 | 상태 | Storage | [Storage 개요](storage/README.md) | EBS gp2 vs gp3 fio 실측 벤치마크 |
 | 상태 | Database | [Database 개요](database/README.md) | Operator 지형과 ClickHouse 1억 행 실측 |
-| 데이터·AI | Data Pipeline | [Data on EKS 개요](data-on-eks/README.md) | Kafka·Spark·Airflow·Flink 딥다이브 — Kafka RF3/gp3 ingest 상한 실측 포함 |
+| 데이터·AI | Data Pipeline | [Data on EKS 개요](data-on-eks/README.md) | Kafka·Spark·Airflow·Flink 딥다이브 — Kafka 단일 실행 벤치마크 기록 포함 |
 | 데이터·AI | AI/ML | [AI/ML 워크로드](ai-ml/01-ai-ml-workloads.md) | vLLM·Ray·Kubeflow·MLflow on EKS |
 | 횡단 | Security & Policy | [Kyverno](security/01-kyverno-policy-management.md) | 인증/인가, 정책, 런타임 보안, 공급망 |
 | 횡단 | GitOps | [GitOps](gitops/README.md) | ArgoCD·Flux·Progressive Delivery |
@@ -35,7 +35,7 @@
 - [Istio sidecar vs ambient 실측](service-mesh/istio/comparison/03-sidecar-vs-ambient.md) — mTLS 데이터플레인별 P50/P99 레이턴시와 rollout 중 503 비율
 - [EBS gp2 vs gp3 실측 벤치마크](storage/01-ebs-gp2-gp3-benchmark.md) — 같은 100GiB에서 IOPS 10배 차이와 gp2 버스트 크레딧 절벽
 - [ClickHouse on EKS 실측 벤치마크](database/01-clickhouse-on-eks.md) — 1억 행 ingest 처리량, 압축률, 쿼리 레이턴시
-- [Kafka on EKS 실측 벤치마크](data-on-eks/kafka/09-kafka-benchmark.md) — RF3 클러스터 ingest 상한 ≈130–135 MiB/s(= gp3 볼륨 1개 쓰기 캡)과 RF1 338 MiB/s, acks별 p99, 콜드 컨슈머가 프로듀서 처리량을 약 45% 깎는 현상
+- [Kafka on EKS 실측 벤치마크](data-on-eks/kafka/09-kafka-benchmark.md) — 단일 실행에서 기록한 RF3/acks=all 134.74 MiB/s와 RF1/acks=1 337.81 MiB/s(RF3 지속 상한으로 확정하지 않음), acks별 p99, 리플레이 소비 중 프로듀서 처리량 44.49% 감소 기록
 - [Pod 네트워크 실측 벤치마크](networking/06-pod-network-benchmark.md) — 같은 노드 0.040 ms → 같은 AZ 0.339 ms → 다른 AZ 0.544 ms RTT 사다리, AZ와 무관한 단일 TCP 플로우 4.96 Gbps 상한과 8플로우 9.94 Gbps, `ndots:5`의 10쿼리/8 NXDOMAIN 증폭
 
 ## 다이어그램 공유하기 — LinkedIn·발표용 내보내기

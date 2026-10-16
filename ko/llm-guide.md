@@ -1,6 +1,6 @@
 # LLM과 함께 읽기 — llms.txt와 MCP
 
-> **마지막 업데이트**: 2026년 9월 11일
+> **마지막 업데이트**: 2026년 10월 16일
 
 이 가이드북은 [llms.txt 제안 형식](https://llmstxt.org/)과 문서별 Markdown을 제공합니다. URL을 읽을 수 있는 AI 도구에는 색인을 전달하고, LLM Wiki나 RAG에는 문서 목록과 원문을 수집하며, 로컬 MCP 클라이언트에는 검색·본문 조회 도구를 연결할 수 있습니다. `llms.txt`가 존재한다고 모든 AI가 자동으로 발견하거나 검색하는 것은 아닙니다. 사용하는 도구에 웹 가져오기 기능이나 MCP 연결이 필요합니다.
 
@@ -67,7 +67,7 @@ node scripts/docs-mcp.mjs
 
 서버는 시작할 때 로컬 `ko/`, `en/`과 `SUMMARY.md`를 읽습니다. **사이트를 실시간으로 가져오지는 않습니다.** 저장소 갱신 후 MCP 서버를 재시작해야 변경이 검색에 반영됩니다. 검색에 등록된 ID만 읽으며 임의의 파일 경로나 외부 URL은 조회하지 않습니다. 원문 URL은 공개 사이트를 가리키므로 아직 배포하지 않은 로컬 편집과 공개 문서에는 차이가 있을 수 있습니다.
 
-GitHub Pages는 정적 파일을 제공하므로 이 사이트의 URL을 원격 MCP 주소로 등록할 수는 없습니다. 웹에서 연결하는 원격 MCP가 필요하면 별도 실행 환경에 [Streamable HTTP 전송](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports)을 구현하고 접근 제어와 운영 정책을 정해야 합니다. 이 저장소에 포함된 것은 로컬 stdio 서버입니다.
+GitHub Pages는 정적 파일을 제공하므로 이 사이트의 URL을 원격 MCP 주소로 등록할 수는 없습니다. 웹에서 연결하는 원격 MCP가 필요하면 별도 실행 환경에 [Streamable HTTP 전송](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http)을 구현하고 접근 제어와 운영 정책을 정해야 합니다. 이 저장소에 포함된 것은 로컬 stdio 서버입니다.
 
 ## 활용 예시
 

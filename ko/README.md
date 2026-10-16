@@ -291,6 +291,10 @@
 10. [cert-manager](./security/10-cert-manager.md) | [퀴즈](./quizzes/security/10-cert-manager-quiz.md)
 11. [Kubescape](./security/11-kubescape.md) | [퀴즈](./quizzes/security/11-kubescape-quiz.md)
 12. [SPIFFE/SPIRE](./security/12-spiffe-spire.md) | [퀴즈](./quizzes/security/12-spiffe-spire-quiz.md)
+13. [사고 기반 다층 방어와 침해 대응](./security/13-defense-in-depth-incident-response.md) | [퀴즈](./quizzes/security/13-defense-in-depth-incident-response-quiz.md)
+14. [WAF·엣지·API 보안과 origin 보호](./security/14-waf-edge-api-security.md) | [퀴즈](./quizzes/security/14-waf-edge-api-security-quiz.md)
+15. [Palo Alto·Fortinet NGFW](./security/15-ngfw-paloalto-fortinet.md) | [퀴즈](./quizzes/security/15-ngfw-paloalto-fortinet-quiz.md)
+16. [GWLB·GENEVE 검사 경로와 장애 검증](./security/16-gwlb-geneve-inspection.md) | [퀴즈](./quizzes/security/16-gwlb-geneve-inspection-quiz.md)
 
 ### GitOps
 1. [GitOps 개요](./gitops/README.md)

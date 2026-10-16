@@ -327,6 +327,10 @@
 * [cert-manager](security/10-cert-manager.md)
 * [Kubescape](security/11-kubescape.md)
 * [SPIFFE/SPIRE](security/12-spiffe-spire.md)
+* [Incident-driven Defense in Depth and Response](security/13-defense-in-depth-incident-response.md)
+* [WAF, Edge, API and Origin Protection](security/14-waf-edge-api-security.md)
+* [Palo Alto and Fortinet NGFW](security/15-ngfw-paloalto-fortinet.md)
+* [GWLB and GENEVE Paths and Failure Validation](security/16-gwlb-geneve-inspection.md)
 
 ## GitOps
 
@@ -685,6 +689,10 @@
   * [cert-manager Quiz](quizzes/security/10-cert-manager-quiz.md)
   * [Kubescape Quiz](quizzes/security/11-kubescape-quiz.md)
   * [SPIFFE/SPIRE Quiz](quizzes/security/12-spiffe-spire-quiz.md)
+  * [Defense in Depth and Incident Response Quiz](quizzes/security/13-defense-in-depth-incident-response-quiz.md)
+  * [WAF and Origin Protection Quiz](quizzes/security/14-waf-edge-api-security-quiz.md)
+  * [Palo Alto and Fortinet NGFW Quiz](quizzes/security/15-ngfw-paloalto-fortinet-quiz.md)
+  * [GWLB and GENEVE Quiz](quizzes/security/16-gwlb-geneve-inspection-quiz.md)
 * Container Registry
   * [Docker Hub Quiz](quizzes/container-registry/01-docker-hub-quiz.md)
   * [Amazon ECR Quiz](quizzes/container-registry/02-amazon-ecr-quiz.md)
