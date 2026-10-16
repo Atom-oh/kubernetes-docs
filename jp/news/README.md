@@ -1,71 +1,103 @@
 # ニュース
-> **最終更新**: September 12, 2026
+> **最終更新**: October 12, 2026
 
-Kubernetes、Amazon EKS、CNCFニュースを契機とした文書変更を記録します。GitHub Actionsは毎週月曜09:00 KSTに更新を準備し、品質判定通過後にPRを作成します。レビュー、マージ、デプロイ後にサイトへ反映されます。
+このページは、Kubernetes、Amazon EKS、CNCF のニュースを受けて行ったドキュメント変更を記録します。GitHub Actions は毎週月曜日の 09:00 KST に更新を準備し、品質ゲートを通過した後に PR を作成します。変更はレビュー、マージ、デプロイ後にサイトへ反映されます。
 
-週ラベルは記録週を示し、出典公開日と異なる場合があります。過去の記録です。現在のサポート、セキュリティパッチ、運用要件はリンク先ガイドと公式出典を確認してください。「該当文書なし」は当時の自動照合結果です。
+週ラベルはログエントリの週を示すものであり、ソースの公開日と異なる場合があります。これらは履歴記録です。現在のサポート、セキュリティパッチ、運用要件については、リンク先のガイドと公式ソースを参照してください。「該当するドキュメントなし」は、その時点における自動マッチを示します。
 
-## 更新履歴
+## 更新ログ
 
-- 2026-W36: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37「Garhwal」リリースを反映（Pod証明書/ClusterTrustBundleの安定化、Metrics API GA、kube-dnsとIPVSモードの非推奨化など）
-- 2026-W36: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.30.4/1.29.7セキュリティパッチを反映（ISTIO-SECURITY-2026-006、Envoy CVE 13件）
-- 2026-W36: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCD v3.5.2/v3.4.8パッチを反映
-- 2026-W36: [service-mesh/linkerd/README.md](../service-mesh/linkerd/README.md) — Linkerd edge-26.8.4を反映（TLSRoute API版のネゴシエーションなど）
-- 2026-W36: 該当文書なし — Amazon EKSがクラスターあたり最大10外部OIDC identity providerをサポート（[出典](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-multiple-oidc-providers)）
-- 2026-W36: 該当文書なし — 急増前にスケール: Kubernetes GPUワークロードの予測自動スケーリング、CNCFブログ（[出典](https://www.cncf.io/blog/2026/08/28/scale-before-the-spike-predictive-autoscaling-for-gpu-workloads-on-kubernetes/)）
-- 2026-W36: 該当文書なし — Kubernetes上でAIファクトリーを構築、CNCFブログ（[出典](https://www.cncf.io/blog/2026/08/27/building-an-ai-factory-on-kubernetes/)）
-- 2026-W35: [gitops/argocd/README.md](../gitops/argocd/README.md) — Amazon EKSのマネージドArgo CD機能のカスタム設定対応を反映（`argocd-cm` ConfigMap経由）
-- 2026-W35: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.36.4/v1.35.8/v1.34.11パッチとv1.37.0-rc.1を反映
-- 2026-W35: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.20.1/1.19.7/1.18.13パッチを反映
-- 2026-W35: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter v1.14.1パッチを反映
-- 2026-W35: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.31.0-rc.0を反映（1.31がRC段階へ）
-- 2026-W35: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — 遅いSQLクエリをOTelスパン由来メトリクスにまとめるCNCFブログガイドを反映
-- 2026-W35: 該当文書なし — Amazon EKSが自動ライフサイクル管理による認証局（CA）ローテーションをサポート（[出典](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-certificate-authority-ca-rotation-automated-lifecycle-management)）
-- 2026-W35: 該当文書なし — KubeflowがCNCFを卒業（[出典](https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/)）
-- 2026-W34: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCD v3.5.0 GAとv3.5.1/v3.4.7/v3.3.14パッチを反映
-- 2026-W34: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.31.0-beta.1を反映（1.31がベータ段階へ）
-- 2026-W34: [service-mesh/linkerd/README.md](../service-mesh/linkerd/README.md) — Linkerd edge-26.8.2を反映（Gateway API 1.5.1対応、テスト最大k8s 1.36）
-- 2026-W34: 該当文書なし — Amazon EKSが高度なKubernetes control-plane設定パラメーターをサポート（scheduler/controller manager/API server調整）（[出典](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-control-plane-configuration-parameters)）
-- 2026-W34: 該当文書なし — Cloud Native BuildpacksがCNCF卒業プロジェクトに（[出典](https://www.cncf.io/announcements/2026/08/11/cncf-announces-graduation-of-cloud-native-buildpacks-advancing-the-standard-for-container-builds/)）
-- 2026-W34: 該当文書なし — KubeCon + CloudNativeCon North America 2026の予定公開、新AI Inference + Agenticトラック追加（[出典](https://www.cncf.io/announcements/2026/08/10/cncf-reveals-kubecon-cloudnativecon-north-america-2026-schedule-adds-new-ai-inference-agentic-track/)）
-- 2026-W34: 該当文書なし — Kubernetes YAMLをKYAMLできれいに整形する方法、Kubernetesブログ（[出典](https://kubernetes.io/blog/2026/08/11/how-to-pretty-print-kubernetes-yaml-as-kyaml/)）
-- 2026-W33: [networking/04-gateway-api.md](../networking/04-gateway-api.md) — Gateway API v1.6を反映（TCPRoute/UDPRouteがStandard v1へ昇格、チャネル別の非推奨API提供変更）
-- 2026-W33: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCD v3.5.0 GAを反映（Helm 4移行、source整合性検証alpha、ApplicationSet改善）
-- 2026-W33: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.20.0 GA（Gateway API v1.6.1、KCNP、multi-pool IPAM移行）と1.21.0-pre.0を反映
-- 2026-W33: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37の先行紹介、Docs Freeze開始、v1.38.0-alpha.0タグを反映
-- 2026-W33: 該当文書なし — Amazon ECRがDocker pushで最大200 GBのimage layerをサポート（[出典](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-ecr-image-layers/)）
-- 2026-W33: 該当文書なし — K8gbがCNCFインキュベーションプロジェクトに（[出典](https://www.cncf.io/announcements/2026/08/05/k8gb-becomes-a-cncf-incubating-project/)）
-- 2026-W33: 該当文書なし — OpenCost 1.121.0がKubernetes推論費用追跡を追加（[出典](https://www.cncf.io/blog/2026/08/05/opencost-1-121-0-first-of-a-kind-kubernetes-inference-cost-tracking/)）
-- 2026-W33: 該当文書なし — Kubernetes DRAはHAMiを置き換えるのか、CNCFブログ（[出典](https://www.cncf.io/blog/2026/08/07/does-kubernetes-dra-replace-hami/)）
-- 2026-W31: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.36.3/v1.35.7/v1.34.10パッチとv1.37 Code Freeze開始を反映
-- 2026-W31: [eks-auto-mode/README.md](../eks-auto-mode/README.md) — EKS Auto Mode node poolのEFA/EC2配置グループ対応を反映
-- 2026-W31: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter node poolのEFA/EC2配置グループ対応を反映
-- 2026-W31: [observability/metrics/01-prometheus.md](../observability/metrics/01-prometheus.md) — AMP上限引き上げを反映（1ワークスペースあたり1.5B active series、200Kルール）
-- 2026-W31: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — OpenTelemetryのCNCF卒業を反映
-- 2026-W31: [networking/calico/README.md](../networking/calico/README.md) — TigeraのKubernetes上VM向けCalico公開を反映（eBPFベースのVM+container統合network）
-- 2026-W31: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.20.0-rc.1リリース候補を反映
-- 2026-W31: 該当文書なし — Confidential ContainersがCNCFインキュベーションプロジェクトに（[出典](https://www.cncf.io/blog/2026/07/22/confidential-containers-becomes-a-cncf-incubating-project/)）
-- 2026-W31: 該当文書なし — Kubernetes CSI driverの2つのpath traversal CVE（CVE-2026-3864 NFS / CVE-2026-3865 SMB。csi-driver-nfs v4.13.1、csi-driver-smb v1.20.1で修正）（[出典](https://www.sentinelone.com/blog/mount-here-read-there-twin-path-traversal-cves-in-kubernetes-storage/)）
-- 2026-W30: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.19.6/1.18.12/1.17.18パッチとCVE-2026-56743を反映（ipBlock NetworkPolicy問題）
-- 2026-W30: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.30.3/1.29.6パッチを反映
-- 2026-W30: [service-mesh/linkerd/README.md](../service-mesh/linkerd/README.md) — Linkerd edge-26.7.1を反映（未定義Service portへの要求禁止、破壊的変更）
-- 2026-W30: [eks-auto-mode/README.md](../eks-auto-mode/README.md) — EKS Auto ModeのARC zonal shift/autoshift対応を反映
-- 2026-W30: [ops/15-zonal-operations-guide.md](../ops/15-zonal-operations-guide.md) — EKS Auto ModeのARC zonal shift対応を反映
-- 2026-W30: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter旧系列のパッチを反映（v1.3.8–v1.11.3）
-- 2026-W30: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37.0-beta.0とv1.37リリース予定を反映
-- 2026-W30: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCon Japan 2026と今後のArgo CD 3.5 roadmapセッションを反映
-- 2026-W30: [observability/metrics/01-prometheus.md](../observability/metrics/01-prometheus.md) — Kubernetesブログのカスタムmetrics exporterガイドを反映
-- 2026-W30: 該当文書なし — HAMiがCNCFインキュベーションプロジェクトに（[出典](https://www.cncf.io/blog/2026/07/15/hami-becomes-a-cncf-incubating-project/)）
-- 2026-W30: 該当文書なし — vLLMでKubernetesに自己ホストLLMを実行、CNCFブログ（[出典](https://www.cncf.io/blog/2026/07/16/running-a-self-hosted-llm-in-kubernetes-with-vllm/)）
-- 2026-W29: [security/10-cert-manager.md](../security/10-cert-manager.md) — ACMのACMEプロトコル対応を反映（cert-managerからACM公開証明書を利用可能）
-- 2026-W29: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — AI agent向けNGINX + OpenTelemetryのnetwork境界可観測性パターンを反映
-- 2026-W29: 該当文書なし — AIネイティブworkloadに向けたplatform engineeringの進化、CNCFブログ（[出典](https://www.cncf.io/blog/2026/07/06/evolving-platform-engineering-for-ai-native-workloads/)）
-- 2026-07-11: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — etcd v3.7.0を反映（RangeStreamなど）
-- 2026-07-11: [eks-auto-mode/06-cost-management.md](../eks-auto-mode/06-cost-management.md) — EKS Auto Mode GPU管理料の最大60%削減を反映
-- 2026-07-11: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter v1.14.0を反映（CapacityBuffers APIなど）
-- 2026-07-11: [observability/metrics/04-cloudwatch-metrics.md](../observability/metrics/04-cloudwatch-metrics.md) — CloudWatch Application Signals Service Eventsを反映
-- 2026-07-11: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCD v3.4.5パッチを反映
-- 2026-07-11: 該当文書なし — ingress-nginx終了（March 2026）への対応、CNCFブログ（[出典](https://www.cncf.io/blog/2026/07/09/navigating-the-ingress-nginx-retirement/)）
-- 2026-07-11: 該当文書なし — CNCF「クラウドネイティブAIにおけるデータストレージ」白書公開（[出典](https://www.cncf.io/report-whitepaper/2026/07/08/the-cncf-data-storage-in-cloud-native-ai-white-paper/)）
-- 2026-07-11: 該当文書なし — Amazon EMR on EKSがApache Sparkトラブルシューティングagentをサポート（[出典](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-emr-eks-spark-troubleshooting/)）
-- 2026-07-11: 該当文書なし — AWS Systems Managerのhybrid/multicloud node料金体系刷新（Advanced Instances Tier廃止）（[出典](https://aws.amazon.com/about-aws/whats-new/2026/06/aws-systems-manager-multicloud-vm/)）
+- 2026-W42: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter v1.15.0 リリースを適用（ノード修復を再起動サポート付きの任意の中断として扱う機能、KubeletConfiguration での CEL、より広範な DRA サポートなど）
+- 2026-W42: [gitops/argocd/README.md](../gitops/argocd/README.md) — Argo CD v3.5.4/v3.4.10/v3.3.15 のセキュリティパッチリリースを適用（repo-server コマンド実行、CVE-2026-77459 を含む 4 件の CRITICAL 問題）
+- 2026-W42: [kernel/01-container-primitives.md](../kernel/01-container-primitives.md) — Kubernetes ブログの cgroup v1 非推奨ステータスを適用（v1.35 から `failCgroupV1` のデフォルトが `true`）
+- 2026-W42: 該当するドキュメントなし — NVMe SSD バックのノードスワップで Kubernetes ワークロードをスケーリング（v1.34 で GA）、Kubernetes ブログ（[出典](https://kubernetes.io/blog/2026/10/05/scaling-kubernetes-workloads-with-node-swap/)）
+- 2026-W42: 該当するドキュメントなし — Meshery が CNCF インキュベーティングプロジェクトに（[出典](https://www.cncf.io/blog/2026/10/07/meshery-becomes-a-cncf-incubating-project/)）
+- 2026-W42: 該当するドキュメントなし — AWS Batch が Amazon EKS アクセスエントリ認証をサポート開始（[出典](https://aws.amazon.com/about-aws/whats-new/2026/10/aws-batch-access-entries/)）
+- 2026-W41: [eks/08-eks-upgrades.md](../eks/08-eks-upgrades.md) — Amazon EKS と EKS Distro での Kubernetes 1.37 サポートを適用（Metrics API GA、DRA デバイス taint GA、HPA scale-to-zero ベータ）
+- 2026-W41: [gitops/argocd/README.md](../gitops/argocd/README.md) — Argo CD 4.0 のビジョン策定開始および ArgoCon North America 2026 のニュースを適用
+- 2026-W41: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — OTel、Kafka、Flink を用いた Atlassian のインシデント検知再構築を適用（CNCF ブログ）
+- 2026-W41: 該当するドキュメントなし — Amazon ECS がブルー/グリーン、リニア、カナリアデプロイメント向けの Amazon VPC Lattice サポートを追加（[出典](https://aws.amazon.com/about-aws/whats-new/2026/10/amazon-ecs-vpc-lattice-blue-green-deployments)）
+- 2026-W41: 該当するドキュメントなし — Amazon Managed Grafana が Grafana 13.2 ワークスペースの作成をサポート開始（[出典](https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-managed-grafana-now-supports-creating-grafana-13-2-workspaces)）
+- 2026-W41: 該当するドキュメントなし — Grafana Tempo 3.1 リリース（新しい Kafka 機能、TraceQL メトリクスの更新、トレースのマスキングなど）（[出典](https://grafana.com/blog/tempo-3-1-release-all-the-latest-features)）
+- 2026-W41: 該当するドキュメントなし — ガードレールであってゲートではない：プラットフォームチームにおけるポリシーの再考、CNCF ブログ（[出典](https://www.cncf.io/blog/2026/10/01/guardrails-not-gates-rethinking-policy-in-platform-teams/)）
+- 2026-W40: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37.1/v1.36.5/v1.35.9/v1.34.12 パッチリリースおよび v1.37 PVC `Unused` condition（ベータ）のブログ記事を適用
+- 2026-W40: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.31.1/1.30.5/1.29.8 パッチリリースを適用（BackendTLSPolicy の fail-open セキュリティ修正 GHSA-qm8v-g4f9-qhjx を含む）
+- 2026-W40: [eks/04-eks-storage-part1.md](../eks/04-eks-storage-part1.md) — EFS CSI driver の mount option injection 脆弱性 CVE-2026-6437 を適用（v3.0.1 で修正）
+- 2026-W40: [ai-ml/08-llm-gateway.md](../ai-ml/08-llm-gateway.md) — Amazon SageMaker HyperPod Inference Gateway のローンチを適用（EKS マネージドアドオン、GPU 対応ルーティング）
+- 2026-W40: 該当するドキュメントなし — Amazon EMR on EKS が IPv6 Amazon EKS クラスターをサポート開始（[出典](https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-emr-eks-ipv6-support)）
+- 2026-W40: 該当するドキュメントなし — Spark Connect を使用して Amazon EMR on EKS でインタラクティブワークロードを実行（[出典](https://aws.amazon.com/about-aws/whats-new/2026/09/emr-eks-spark-connect-interactive/)）
+- 2026-W40: 該当するドキュメントなし — Amazon CloudWatch Omni の一般提供開始（AI-first オブザーバビリティ体験、OpenTelemetry 相互運用性）（[出典](https://aws.amazon.com/about-aws/whats-new/2026/09/amazon-cloudwatch-omni-ai/)）
+- 2026-W39: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37 の 3 件の機能詳細解説を適用（Memory QoS ベータ、Pod-Level Resource Managers ベータ、emptyDir パーミッションおよび bind mount オプション）
+- 2026-W39: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.20.2/1.19.8/1.18.14 パッチリリースおよび CNCF ブログの 1.20 機能概要を適用
+- 2026-W39: [gitops/argocd/README.md](../gitops/argocd/README.md) — Argo CD v3.5.3/v3.4.9 パッチリリースおよび v3.6.0-rc1 を適用
+- 2026-W39: 該当するドキュメントなし — Kubernetes CSI Changed Block Tracking（CBT）API が Alpha からの差異とともにベータへ昇格、Kubernetes ブログ（[出典](https://kubernetes.io/blog/2026/09/14/csi-changed-block-tracking-beta/)）
+- 2026-W39: 該当するドキュメントなし — AWS Resilience Hub が 3 つの新機能を追加（namespace 内での EKS ラベルベースのサービスリソース検出を含む）（[出典](https://aws.amazon.com/about-aws/whats-new/2026/09/resilience-hub-eks-dependency-policy/)）
+- 2026-W38: [core/08-scheduling-preemption-eviction.md](../core/08-scheduling-preemption-eviction.md) — in-place Pod resize のための Kubernetes v1.37 scheduler preemption（Alpha）および Workload-Aware Scheduling の進展（Workload/PodGroup ベータ、CompositePodGroup API）を適用
+- 2026-W38: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37 Node lifecycle conditions を適用（drain、maintenance、graceful shutdown のための 5 つの既知 condition）
+- 2026-W38: [observability/metrics/01-prometheus.md](../observability/metrics/01-prometheus.md) — Kubernetes v1.37 component metrics 向けの Prometheus native histograms を適用（ベータ、デフォルトで有効）
+- 2026-W38: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.21.0-pre.2 プレリリースを適用（Gateway API session persistence、AWS managed prefix lists、デフォルトでの BPF masquerading）
+- 2026-W38: 該当するドキュメントなし — Karmada が CNCF 卒業プロジェクトに（[出典](https://www.cncf.io/announcements/2026/09/07/cloud-native-computing-foundation-announces-karmada-graduation/)）
+- 2026-W38: 該当するドキュメントなし — Kubernetes 災害復旧：3 つの再現可能な障害シナリオからのガイダンス、CNCF ブログ（[出典](https://www.cncf.io/blog/2026/09/10/kubernetes-disaster-recovery-guidance-from-three-reproducible-failure-scenarios/)）
+- 2026-W38: 該当するドキュメントなし — AWS Private CA EKS add-on および Connector for AD が AWS GovCloud（US）で利用可能に（[出典](https://aws.amazon.com/about-aws/whats-new/2026/09/private-ca-eks-addon-ad-govcloud/)）
+- 2026-W36: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37 "Garhwal" リリースを適用（Pod certificates/ClusterTrustBundles Stable、Metrics API GA、kube-dns および IPVS-mode の非推奨化など）
+- 2026-W36: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.30.4/1.29.7 セキュリティパッチリリースを適用（ISTIO-SECURITY-2026-006、13 件の Envoy CVE）
+- 2026-W36: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCD v3.5.2/v3.4.8 パッチリリースを適用
+- 2026-W36: [service-mesh/linkerd/README.md](../service-mesh/linkerd/README.md) — Linkerd edge-26.8.4 を適用（TLSRoute API version negotiation など）
+- 2026-W36: 該当するドキュメントなし — Amazon EKS がクラスターごとに最大 10 個の外部 OIDC identity provider をサポート開始（[出典](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-multiple-oidc-providers)）
+- 2026-W36: 該当するドキュメントなし — スパイク前にスケーリング：Kubernetes 上の GPU ワークロード向け予測オートスケーリング、CNCF ブログ（[出典](https://www.cncf.io/blog/2026/08/28/scale-before-the-spike-predictive-autoscaling-for-gpu-workloads-on-kubernetes/)）
+- 2026-W36: 該当するドキュメントなし — Kubernetes 上で AI factory を構築、CNCF ブログ（[出典](https://www.cncf.io/blog/2026/08/27/building-an-ai-factory-on-kubernetes/)）
+- 2026-W35: [gitops/argocd/README.md](../gitops/argocd/README.md) — Amazon EKS managed Argo CD capability 向けのカスタム設定サポート（`argocd-cm` ConfigMap 経由）を適用
+- 2026-W35: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.36.4/v1.35.8/v1.34.11 パッチリリースおよび v1.37.0-rc.1 を適用
+- 2026-W35: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.20.1/1.19.7/1.18.13 パッチリリースを適用
+- 2026-W35: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter v1.14.1 パッチリリースを適用
+- 2026-W35: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.31.0-rc.0 リリースを適用（1.31 が RC に移行）
+- 2026-W35: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — 低速 SQL クエリを OTel span 由来メトリクスに要約する CNCF ブログガイドを適用
+- 2026-W35: 該当するドキュメントなし — Amazon EKS が自動ライフサイクル管理による certificate authority（CA）ローテーションをサポート開始（[出典](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-certificate-authority-ca-rotation-automated-lifecycle-management)）
+- 2026-W35: 該当するドキュメントなし — Kubeflow が CNCF 内で卒業（[出典](https://www.cncf.io/announcements/2026/08/17/cncf-announces-kubeflows-graduation-solidifying-the-standard-for-cloud-native-ai-operations/)）
+- 2026-W34: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCD v3.5.0 GA リリースおよび v3.5.1/v3.4.7/v3.3.14 パッチリリースを適用
+- 2026-W34: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.31.0-beta.1 リリースを適用（1.31 がベータに移行）
+- 2026-W34: [service-mesh/linkerd/README.md](../service-mesh/linkerd/README.md) — Linkerd edge-26.8.2 を適用（Gateway API 1.5.1 サポート、テスト済み最大 k8s 1.36）
+- 2026-W34: 該当するドキュメントなし — Amazon EKS が高度な Kubernetes control plane 設定パラメータをサポート開始（scheduler/controller manager/API server チューニング）（[出典](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-eks-control-plane-configuration-parameters)）
+- 2026-W34: 該当するドキュメントなし — Cloud Native Buildpacks が CNCF 卒業プロジェクトに（[出典](https://www.cncf.io/announcements/2026/08/11/cncf-announces-graduation-of-cloud-native-buildpacks-advancing-the-standard-for-container-builds/)）
+- 2026-W34: 該当するドキュメントなし — KubeCon + CloudNativeCon North America 2026 のスケジュールを公開、新しい AI Inference + Agentic トラックを追加（[出典](https://www.cncf.io/announcements/2026/08/10/cncf-reveals-kubecon-cloudnativecon-north-america-2026-schedule-adds-new-ai-inference-agentic-track/)）
+- 2026-W34: 該当するドキュメントなし — Kubernetes YAML を KYAML として整形出力する方法、Kubernetes ブログ（[出典](https://kubernetes.io/blog/2026/08/11/how-to-pretty-print-kubernetes-yaml-as-kyaml/)）
+- 2026-W33: [networking/04-gateway-api.md](../networking/04-gateway-api.md) — Gateway API v1.6 を適用（TCPRoute/UDPRoute が Standard v1 に卒業、チャネル固有の非推奨 API 提供変更）
+- 2026-W33: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCD v3.5.0 GA を適用（Helm 4 migration、source integrity verification alpha、ApplicationSet の改善）
+- 2026-W33: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.20.0 GA（Gateway API v1.6.1、KCNP、multi-pool IPAM migration）および 1.21.0-pre.0 を適用
+- 2026-W33: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37 の先行紹介、Docs Freeze の発効、および v1.38.0-alpha.0 タグを適用
+- 2026-W33: 該当するドキュメントなし — Amazon ECR が Docker push 向けに最大 200 GB のイメージレイヤーをサポート開始（[出典](https://aws.amazon.com/about-aws/whats-new/2026/08/amazon-ecr-image-layers/)）
+- 2026-W33: 該当するドキュメントなし — K8gb が CNCF インキュベーティングプロジェクトに（[出典](https://www.cncf.io/announcements/2026/08/05/k8gb-becomes-a-cncf-incubating-project/)）
+- 2026-W33: 該当するドキュメントなし — OpenCost 1.121.0 が Kubernetes inference cost tracking を追加（[出典](https://www.cncf.io/blog/2026/08/05/opencost-1-121-0-first-of-a-kind-kubernetes-inference-cost-tracking/)）
+- 2026-W33: 該当するドキュメントなし — Kubernetes DRA は HAMi を置き換えるか？、CNCF ブログ（[出典](https://www.cncf.io/blog/2026/08/07/does-kubernetes-dra-replace-hami/)）
+- 2026-W31: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.36.3/v1.35.7/v1.34.10 パッチリリースおよび v1.37 Code Freeze の発効を適用
+- 2026-W31: [eks-auto-mode/README.md](../eks-auto-mode/README.md) — EKS Auto Mode node pool 向けの EFA および EC2 placement group サポートを適用
+- 2026-W31: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter node pool 向けの EFA および EC2 placement group サポートを適用
+- 2026-W31: [observability/metrics/01-prometheus.md](../observability/metrics/01-prometheus.md) — AMP 制限引き上げを適用（15 億アクティブ series、ワークスペースあたり 20 万 rules）
+- 2026-W31: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — OpenTelemetry の CNCF 卒業を適用
+- 2026-W31: [networking/calico/README.md](../networking/calico/README.md) — Kubernetes 向け Tigera の Calico for VMs ローンチを適用（eBPF ベースの VM+container 統合ネットワーキング）
+- 2026-W31: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.20.0-rc.1 リリース候補を適用
+- 2026-W31: 該当するドキュメントなし — Confidential Containers が CNCF インキュベーティングプロジェクトに（[出典](https://www.cncf.io/blog/2026/07/22/confidential-containers-becomes-a-cncf-incubating-project/)）
+- 2026-W31: 該当するドキュメントなし — Kubernetes CSI drivers の twin path traversal CVE（CVE-2026-3864 NFS / CVE-2026-3865 SMB、csi-driver-nfs v4.13.1、csi-driver-smb v1.20.1 で修正）（[出典](https://www.sentinelone.com/blog/mount-here-read-there-twin-path-traversal-cves-in-kubernetes-storage/)）
+- 2026-W30: [networking/cilium/README.md](../networking/cilium/README.md) — Cilium 1.19.6/1.18.12/1.17.18 パッチリリースおよび CVE-2026-56743（ipBlock NetworkPolicy 問題）を適用
+- 2026-W30: [service-mesh/istio/README.md](../service-mesh/istio/README.md) — Istio 1.30.3/1.29.6 パッチリリースを適用
+- 2026-W30: [service-mesh/linkerd/README.md](../service-mesh/linkerd/README.md) — Linkerd edge-26.7.1 を適用（未定義の Service port へのリクエストを禁止、破壊的変更）
+- 2026-W30: [eks-auto-mode/README.md](../eks-auto-mode/README.md) — EKS Auto Mode 向けの ARC zonal shift/autoshift サポートを適用
+- 2026-W30: [ops/15-zonal-operations-guide.md](../ops/15-zonal-operations-guide.md) — EKS Auto Mode 向けの ARC zonal shift サポートを適用
+- 2026-W30: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — 旧ライン向け Karpenter パッチリリース（v1.3.8–v1.11.3）を適用
+- 2026-W30: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — Kubernetes v1.37.0-beta.0 および v1.37 リリーススケジュールを適用
+- 2026-W30: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCon Japan 2026 および近日公開の Argo CD 3.5 ロードマップセッションを適用
+- 2026-W30: [observability/metrics/01-prometheus.md](../observability/metrics/01-prometheus.md) — Kubernetes ブログの custom metrics exporter ガイドを適用
+- 2026-W30: 該当するドキュメントなし — HAMi が CNCF インキュベーティングプロジェクトに（[出典](https://www.cncf.io/blog/2026/07/15/hami-becomes-a-cncf-incubating-project/)）
+- 2026-W30: 該当するドキュメントなし — vLLM を使用して Kubernetes で self-hosted LLM を実行、CNCF ブログ（[出典](https://www.cncf.io/blog/2026/07/16/running-a-self-hosted-llm-in-kubernetes-with-vllm/)）
+- 2026-W29: [security/10-cert-manager.md](../security/10-cert-manager.md) — ACME protocol の ACM サポートを適用（ACM public certificates が cert-manager から利用可能に）
+- 2026-W29: [observability/tracing/03-opentelemetry.md](../observability/tracing/03-opentelemetry.md) — AI agent 向けの NGINX + OpenTelemetry network-boundary observability pattern を適用
+- 2026-W29: 該当するドキュメントなし — AI-native ワークロードに向けた platform engineering の進化、CNCF ブログ（[出典](https://www.cncf.io/blog/2026/07/06/evolving-platform-engineering-for-ai-native-workloads/)）
+- 2026-07-11: [core/01-cluster-architecture.md](../core/01-cluster-architecture.md) — etcd v3.7.0 リリースを適用（RangeStream など）
+- 2026-07-11: [eks-auto-mode/06-cost-management.md](../eks-auto-mode/06-cost-management.md) — EKS Auto Mode の GPU 管理料金を最大 60% 削減を適用
+- 2026-07-11: [autoscaling/02-karpenter.md](../autoscaling/02-karpenter.md) — Karpenter v1.14.0 リリースを適用（CapacityBuffers API など）
+- 2026-07-11: [observability/metrics/04-cloudwatch-metrics.md](../observability/metrics/04-cloudwatch-metrics.md) — CloudWatch Application Signals Service Events を適用
+- 2026-07-11: [gitops/argocd/README.md](../gitops/argocd/README.md) — ArgoCD v3.4.5 パッチリリースを適用
+- 2026-07-11: 該当するドキュメントなし — ingress-nginx 廃止への対応（2026 年 3 月）、CNCF ブログ（[出典](https://www.cncf.io/blog/2026/07/09/navigating-the-ingress-nginx-retirement/)）
+- 2026-07-11: 該当するドキュメントなし — CNCF Data Storage in Cloud Native AI ホワイトペーパーを公開（[出典](https://www.cncf.io/report-whitepaper/2026/07/08/the-cncf-data-storage-in-cloud-native-ai-white-paper/)）
+- 2026-07-11: 該当するドキュメントなし — Amazon EMR on EKS が Apache Spark troubleshooting agent をサポート開始（[出典](https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-emr-eks-spark-troubleshooting/)）
+- 2026-07-11: 該当するドキュメントなし — AWS Systems Manager の hybrid/multicloud node 料金を刷新（Advanced Instances Tier を廃止）（[出典](https://aws.amazon.com/about-aws/whats-new/2026/06/aws-systems-manager-multicloud-vm/)）
