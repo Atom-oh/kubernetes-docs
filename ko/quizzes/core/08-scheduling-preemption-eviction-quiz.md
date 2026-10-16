@@ -443,7 +443,7 @@ kubelet에 의해 관리되며, 노드의 리소스 부족 상황에 대응하�
 
 1. 다음 요구 사항에 맞는 노드 어피니티(Node Affinity) 설정을 포함한 포드 매니페스트를 작성하세요:
    - 포드 이름: web-server
-   - 이미지: nginx:1.30.4
+   - 이미지: nginx:1.30.6
    - 가용 영역(zone)이 "us-east-1a" 또는 "us-east-1b"인 노드에만 스케줄링
    - 인스턴스 타입(instance-type)이 "m5.large"인 노드 선호
 
@@ -460,7 +460,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -539,7 +539,7 @@ spec:
 
 3. 다음 요구 사항에 맞는 포드 어피니티(Pod Affinity) 및 안티-어피니티(Anti-Affinity) 설정을 포함한 디플로이먼트 매니페스트를 작성하세요:
    - 디플로이먼트 이름: web-frontend
-   - 이미지: nginx:1.30.4
+   - 이미지: nginx:1.30.6
    - 레플리카: 3
    - app=cache 레이블이 있는 포드와 같은 노드에 배치(어피니티)
    - 같은 디플로이먼트의 다른 포드와는 다른 노드에 배치(안티-어피니티)
@@ -585,7 +585,7 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
 ```
 
 이 디플로이먼트 매니페스트는 다음과 같은 어피니티 규칙을 설정합니다:
@@ -607,7 +607,7 @@ spec:
    - PriorityClass 이름: high-priority
    - 우선순위 값: 100000
    - 포드 이름: critical-service
-   - 이미지: nginx:1.30.4
+   - 이미지: nginx:1.30.6
    - QoS 클래스: Guaranteed (CPU 요청 및 제한: 500m, 메모리 요청 및 제한: 512Mi)
 
 <details>
@@ -636,7 +636,7 @@ spec:
   priorityClassName: high-priority
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     resources:
       requests:
         cpu: 500m

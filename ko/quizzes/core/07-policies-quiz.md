@@ -843,7 +843,7 @@ kubectl label namespace restricted-ns \
 3. **RBAC와 External Authorization 통합**:
    - RBAC를 기본 권한 부여 메커니즘으로 사용
    - 복잡한 정책이나 외부 시스템과의 통합이 필요한 경우 External Authorization으로 위임
-   - `Node,RBAC,Webhook`은 앞선 인증기가 의견이 없을 때만 다음으로 진행합니다. RBAC가 허용하면 뒤의 Webhook은 호출되지 않으며 이를 거부할 수 없습니다. 반드시 거부권이 필요한 외부 정책은 Webhook 순서·명시적 deny·장애 정책을 설계하거나 적절한 admission 집행을 사용해야 합니다. EKS에서는 임의의 API 서버 인가 플래그를 설정할 수 없습니다.
+   - `Node,RBAC,Webhook`은 앞선 권한 부여 모듈이 의견이 없을 때만 다음으로 진행합니다. RBAC가 허용하면 뒤의 Webhook은 호출되지 않으며 이를 거부할 수 없습니다. 반드시 거부권이 필요한 외부 정책은 Webhook 순서·명시적 deny·장애 정책을 설계하거나 적절한 admission 집행을 사용해야 합니다. EKS에서는 임의의 API 서버 인가 플래그를 설정할 수 없습니다.
 
 4. **이점**:
    - **세밀한 접근 제어**: 사용자 속성, 리소스 상태, 시간 기반 조건 등 복잡한 조건에 기반한 권한 부여 가능

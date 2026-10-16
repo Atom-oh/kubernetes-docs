@@ -1,7 +1,7 @@
 # Configuration and Secrets
 
 > **Supported Versions**: Kubernetes 1.35, 1.36, 1.37
-> **Last Updated**: February 22, 2026
+> **Last Updated**: October 16, 2026
 
 In Kubernetes, configuration management is an important part of managing application settings separately from code. In this chapter, we'll explore Kubernetes configuration management methods in detail, including ConfigMaps, Secrets, environment variables, and mounting configuration through volumes.
 

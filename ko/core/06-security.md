@@ -1,7 +1,7 @@
 # Kubernetes 보안
 
 > **지원 버전**: Kubernetes 1.35, 1.36, 1.37
-> **마지막 업데이트**: 2026년 2월 11일
+> **마지막 업데이트**: 2026년 10월 16일
 
 Kubernetes에서 보안은 클러스터와 애플리케이션을 보호하기 위한 핵심 요소입니다. 이 장에서는 Kubernetes의 보안 개념, 인증 및 권한 부여 메커니즘, 네트워크 정책, 보안 컨텍스트, 그리고 Amazon EKS에서의 보안 강화 방법에 대해 알아보겠습니다.
 
@@ -157,7 +157,7 @@ spec:
   automountServiceAccountToken: false
   containers:
   - name: my-container
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 ### OpenID Connect (OIDC)
@@ -614,9 +614,7 @@ Kubernetes 클러스터와 워크로드의 보안을 강화하기 위한 모범 
 4. **신뢰할 수 있는 레지스트리**: 신뢰할 수 있는 레지스트리에서만 이미지를 가져옵니다.
 5. **최신 이미지 사용**: 이미지를 정기적으로 업데이트하여 알려진 취약점을 패치합니다.
 
-#이 podSelector는 `default`의 파드를 선택합니다. 정책은 허용 규칙의 합집합이므로 다른 정책이 더 많은 트래픽을 허용할 수 있으며 출발지 egress와 목적지 ingress 양쪽이 허용해야 합니다. 이 예시는 DNS를 포함하지 않으므로 Service 이름 조회가 필요하면 실제 클러스터 DNS의 TCP/UDP 53도 허용하세요.
-
-## 시크릿 관리
+### 시크릿 관리
 
 1. **외부 시크릿 관리**: 외부 시크릿 관리 시스템을 사용하여 시크릿을 안전하게 관리합니다.
 2. **시크릿 암호화**: etcd에 저장된 시크릿을 암호화합니다.
@@ -646,7 +644,7 @@ Amazon EKS를 사용하는 경우, AWS의 다양한 보안 서비스와 통합�
 - [Kubernetes 공식 문서 - 보안 컨텍스트](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/)
 - [Kubernetes 공식 문서 - 포드 보안 표준](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
 - [Kubernetes 공식 문서 - 시크릿](https://kubernetes.io/docs/concepts/configuration/secret/)
-- [Kubernetes 공식 문서 - 감사](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/)
+- [Kubernetes 공식 문서 - 감사](https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/)
 - [Amazon EKS 공식 문서 - 보안](https://docs.aws.amazon.com/eks/latest/userguide/security.html)
 - [Amazon EKS 공식 문서 - IAM 역할 및 서비스 계정](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html)
 - [Amazon EKS 공식 문서 - 시크릿 암호화](https://docs.aws.amazon.com/eks/latest/userguide/enable-kms.html)

@@ -1,7 +1,7 @@
 # Kubernetes 클러스터 관리
 
 > **버전 정보**: EKS 표준 지원 Kubernetes 1.34–1.37 (2026년 10월 12일 확인)
-> **마지막 업데이트**: 2026년 10월 12일
+> **마지막 업데이트**: 2026년 10월 16일
 
 Kubernetes 클러스터 관리는 클러스터의 설정, 유지 관리, 모니터링, 문제 해결 및 업그레이드를 포함하는 중요한 작업입니다. 이 장에서는 Kubernetes 클러스터 관리의 다양한 측면과 Amazon EKS에서의 클러스터 관리 모범 사례에 대해 알아보겠습니다.
 
@@ -230,7 +230,7 @@ spec:
     - --service-cluster-ip-range=10.96.0.0/12
     - --tls-cert-file=/etc/kubernetes/pki/apiserver.crt
     - --tls-private-key-file=/etc/kubernetes/pki/apiserver.key
-    image: registry.k8s.io/kube-apiserver:v1.36.4
+    image: registry.k8s.io/kube-apiserver:v1.36.5
     name: kube-apiserver
 ```
 
@@ -2092,7 +2092,7 @@ Kubernetes 클러스터 관리는 다양한 측면을 포함하는 복잡한 작
 > - [Kubernetes 공식 문서: 클러스터 관리](https://kubernetes.io/docs/tasks/administer-cluster/)
 > - [Amazon EKS 사용 설명서](https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html)
 > - [Kubernetes 모범 사례: 클러스터 관리](https://kubernetes.io/docs/setup/best-practices/)
-> - [etcd 문서: 백업 및 복구](https://etcd.io/docs/v3.5/op-guide/recovery/)
+> - [etcd 문서: 백업 및 복구](https://etcd.io/docs/v3.6/op-guide/recovery/)
 > - [Prometheus 문서](https://prometheus.io/docs/introduction/overview/)
 
 ## 퀴즈

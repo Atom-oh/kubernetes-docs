@@ -1,7 +1,7 @@
 # 스토리지
 
 > **지원 버전**: Kubernetes 1.35, 1.36, 1.37
-> **마지막 업데이트**: 2026년 2월 19일
+> **마지막 업데이트**: 2026년 10월 16일
 
 Kubernetes에서 스토리지는 컨테이너화된 애플리케이션의 데이터를 저장하고 관리하는 중요한 부분입니다. 이 장에서는 볼륨, 퍼시스턴트 볼륨, 퍼시스턴트 볼륨 클레임, 스토리지 클래스 등 Kubernetes의 스토리지 개념에 대해 자세히 알아보겠습니다.
 
@@ -833,8 +833,6 @@ Volume Cloning은 기존 PVC의 데이터를 새 PVC로 복제하는 기능입�
 
 [🔍 인터랙티브 다이어그램 보기](https://www.atomai.click/kubernetes-docs/archmaps/ko-core-04-storage-7.html)
 
-#정적 EBS 볼륨 ID와 nodeAffinity의 영역은 실제 볼륨과 해당 가용 영역으로 바꾸세요. `custom-database` 이미지는 원시 블록 장치를 지원하는 소프트웨어의 자리 표시자입니다.
-
 ## Volume Cloning 예제
 
 ```yaml
@@ -870,7 +868,7 @@ spec:
 
 ### CSI 드라이버 지원과 제약
 
-EBS CSI 드라이버는 v1.51.0부터 PVC 복제를 지원합니다([버전 고정 예제](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/v1.66.0/examples/kubernetes/clone/README.md)). 설치 버전과 IAM 권한을 확인하세요. `kubectl get csidriver`는 CSI RPC의 `CLONE_VOLUME` capability를 표시하지 않습니다. 해당 드라이버의 공식 기능 문서와 CSI `ControllerGetCapabilities`가 근거입니다.
+EBS CSI 드라이버는 v1.51.0부터 PVC 복제를 지원합니다([버전 고정 예제](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/v1.67.0/examples/kubernetes/clone/README.md)). 설치 버전과 IAM 권한을 확인하세요. `kubectl get csidriver`는 CSI RPC의 `CLONE_VOLUME` capability를 표시하지 않습니다. 해당 드라이버의 공식 기능 문서와 CSI `ControllerGetCapabilities`가 근거입니다.
 
 FSx for Lustre CSI 드라이버는 현재 `CLONE_VOLUME`을 제공하지 않으며 EFS도 PVC 복제 지원을 가정하면 안 됩니다. 소스·대상은 같은 네임스페이스와 volumeMode를 사용해야 하고 대상 용량은 소스 이상이어야 합니다. StorageClass는 드라이버 호환 범위에서 달라도 됩니다. 소스는 바인딩되고 사용 중이 아닌 상태로 준비하고 DB 일관성을 확보하세요.
 

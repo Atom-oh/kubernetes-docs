@@ -1,7 +1,7 @@
 # Kubernetes 스케줄링, 선점 및 축출
 
-> **지원 버전**: Kubernetes 1.34 - 1.36 (Descheduler v0.36 예시)
-> **마지막 업데이트**: 2026년 9월 17일
+> **지원 버전**: Kubernetes 1.34 - 1.37 (Descheduler v0.37 예시)
+> **마지막 업데이트**: 2026년 10월 16일
 
 Kubernetes에서 스케줄링은 포드를 적절한 노드에 배치하는 과정입니다. 선점은 우선순위가 높은 포드를 위해 우선순위가 낮은 포드를 제거하는 과정이며, 축출은 파드를 종료하며 워크로드 컨트롤러가 생성한 대체 파드를 스케줄러가 별도로 배치할 수 있습니다. 이 장에서는 Kubernetes의 스케줄링 메커니즘, 노드 선택, 선점, 축출 등의 개념과 Amazon EKS에서의 스케줄링 최적화 방법에 대해 알아보겠습니다.
 
@@ -88,7 +88,7 @@ EOF
 | **포드 안티-어피니티** | 다른 포드와 멀리 배치 | 고가용성 보장 | 1.6+ |
 | **테인트와 톨러레이션** | 특정 포드만 노드에 배치 허용 | 전용 노드, 노드 격리 | 1.6+ |
 | **토폴로지 분배 제약** | 토폴로지 도메인 간 포드 분산 | 가용 영역 간 분산 | 1.16+ (1.19에서 GA) |
-| **우선순위 및 선점** | 중요 워크로드 우선 배치 | 중요 서비스 보장 | 1.8+ (1.11에서 GA) |
+| **우선순위 및 선점** | 중요 워크로드 우선 배치 | 중요 서비스 보장 | 1.8+ (1.14에서 GA) |
 | **포드 중단 예산** | 동시에 중단되는 포드 수 제한 | 고가용성 보장 | 1.4+ (1.21에서 GA) |
 
 ## 스케줄링 기본 개념
@@ -779,7 +779,7 @@ spec:
             app: web
       containers:
       - name: web
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         resources:
           requests:
             cpu: 100m
@@ -984,12 +984,12 @@ Descheduler는 실행 중인 클러스터에서 포드를 재분산시키는 도
 
 ### Helm을 사용한 설치
 
-검증한 예시 릴리스는 Descheduler v0.36.0이며 Kubernetes v1.36과 이전 두 마이너 버전이 테스트 범위입니다. 다른 릴리스에는 호환성 표를 확인하세요. 검토한 `schedule`과 아래 정책의 `profiles`를 `deschedulerPolicy.profiles` 아래 넣어 `descheduler-values.yaml`로 저장합니다. 이전 `strategies.*.enabled` 값은 이 API를 구성하지 않습니다.
+검증한 예시 릴리스는 Descheduler v0.37.0이며 Kubernetes v1.37과 이전 두 마이너 버전이 테스트 범위입니다. 다른 릴리스에는 호환성 표를 확인하세요. 검토한 `schedule`과 아래 정책의 `profiles`를 `deschedulerPolicy.profiles` 아래 넣어 `descheduler-values.yaml`로 저장합니다. 이전 `strategies.*.enabled` 값은 이 API를 구성하지 않습니다.
 
 ```bash
 helm repo add descheduler https://kubernetes-sigs.github.io/descheduler/
 helm upgrade --install descheduler descheduler/descheduler \
-  --version 0.36.0 --namespace kube-system \
+  --version 0.37.0 --namespace kube-system \
   --values descheduler-values.yaml
 ```
 
@@ -1066,7 +1066,7 @@ spec:
           serviceAccountName: descheduler
           containers:
           - name: descheduler
-            image: registry.k8s.io/descheduler/descheduler:v0.36.0
+            image: registry.k8s.io/descheduler/descheduler:v0.37.0
             args:
             - --policy-config-file=/policy-dir/policy.yaml
             - --v=3

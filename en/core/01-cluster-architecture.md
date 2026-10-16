@@ -1,7 +1,7 @@
 # Cluster Architecture
 
 > **Supported Versions**: Kubernetes 1.35, 1.36, 1.37
-> **Last Updated**: October 12, 2026
+> **Last Updated**: October 16, 2026
 
 The version header refers to upstream Kubernetes. The project maintains release branches for the three most recent minor releases (1.35–1.37). Upstream 1.34 is in maintenance mode and still receives patch releases until its end of life on **October 27, 2026**, separately from its AWS support end date on EKS.
 
@@ -794,7 +794,7 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
       - name: web-server
-        image: nginx:1.30.4
+        image: nginx:1.30.6
 ```
 
 **PodDisruptionBudget Example**:
@@ -1235,7 +1235,7 @@ spec:
     spec:
       containers:
       - name: cluster-autoscaler
-        image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.36.0
+        image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.36.1
         command:
         - ./cluster-autoscaler
         - --cloud-provider=aws
@@ -1538,12 +1538,12 @@ Kubernetes cluster upgrades are necessary to apply new features, security patche
 
 ### August 2026 Update: Kubernetes v1.37 "Garhwal" Released
 
-[Kubernetes v1.37 "Garhwal"](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/) was released on schedule on August 26, 2026. The release consists of 67 enhancements: 16 graduated to Stable, 23 graduated to Beta, and the rest entered as Alpha. Highlights:
+[Kubernetes v1.37 "Garhwal"](https://kubernetes.io/blog/2026/08/26/kubernetes-v1-37-release/) was released on schedule on August 26, 2026. The release consists of 67 enhancements: 16 graduated to Stable, 23 graduated to Beta, 27 entered as Alpha, and 1 is a deprecation/removal. Highlights:
 
 - **Pod certificates and ClusterTrustBundles graduate to Stable**: the PodCertificate feature, which automatically issues and rotates X.509 certificates for workloads as an alternative to service account tokens, and the ClusterTrustBundle resource for distributing trust anchors are now standard features ([detailed post](https://kubernetes.io/blog/2026/08/28/kubernetes-v1-37-pod-certificates-and-cluster-trust-bundles/))
 - **Metrics API (metrics.k8s.io) goes GA**: the resource metrics API used by `kubectl top` and the HPA has graduated to stable ([detailed post](https://kubernetes.io/blog/2026/08/27/kubernetes-v1-37-metrics-api-ga/))
 - Also **Stable**: several DRA (Dynamic Resource Allocation) features, resilient watchcache initialization, and more / **Beta**: HPA scale-to-zero, manifest-based admission control configuration, and more / **Alpha**: pod-level checkpoint and restore, and more
-- **Deprecations**: kube-dns and `kubectl run --filename/-f` are deprecated; `ipvs` was already deprecated in v1.35, and static Pods can no longer reference Secrets or ConfigMaps. The removal of cgroup v1 support also continues to progress.
+- **Deprecations**: kube-dns and `kubectl run --filename/-f` are deprecated; kube-proxy `ipvs` mode, already deprecated in v1.35, now has a schedule of default disablement in v1.40 and removal in v1.43 ([KEP-5495](https://kep.k8s.io/5495)); and static Pods can no longer reference Secrets or ConfigMaps. The removal of cgroup v1 support also continues to progress.
 
 Before upgrading, be sure to review the deprecations and removals in the [official release notes](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.37.md).
 
@@ -1754,7 +1754,7 @@ spec:
     spec:
       containers:
       - name: cloudwatch-agent
-        image: amazon/cloudwatch-agent:1.247347.6b250880
+        image: amazon/cloudwatch-agent:1.300073.0b1828
         # ... additional configuration
 ```
 

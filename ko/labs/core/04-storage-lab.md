@@ -58,7 +58,7 @@ spec:
   automountServiceAccountToken: false
   initContainers:
   - name: initialize-file
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sh
     - -c
@@ -74,7 +74,7 @@ spec:
         memory: 64Mi
   containers:
   - name: writer
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sh
     - -c
@@ -88,7 +88,7 @@ spec:
         - -c
         - test -s /data/log.txt
   - name: reader
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - tail
     - -f
@@ -205,7 +205,7 @@ spec:
   automountServiceAccountToken: false
   containers:
   - name: app
-    image: busybox:1.37.0
+    image: busybox:1.38.0
     command:
     - sleep
     - '3600'

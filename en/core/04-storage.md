@@ -1,7 +1,7 @@
 # Storage
 
 > **Supported Versions**: Kubernetes 1.35, 1.36, 1.37
-> **Last Updated**: February 19, 2026
+> **Last Updated**: October 16, 2026
 
 In Kubernetes, storage is an important part of storing and managing data for containerized applications. In this chapter, we'll explore Kubernetes storage concepts in detail, including Volumes, Persistent Volumes, Persistent Volume Claims, and Storage Classes.
 
@@ -870,7 +870,7 @@ Volume cloning creates a new PVC with the contents of an existing PVC. This is u
 
 ### Prerequisites
 
-EBS CSI supports PVC cloning from v1.51.0 ([versioned example](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/v1.66.0/examples/kubernetes/clone/README.md)); verify the installed driver and IAM permissions. FSx for Lustre CSI does not advertise `CLONE_VOLUME`; do not infer EFS support either. `kubectl get csidriver` does not expose CSI RPC capabilities.
+EBS CSI supports PVC cloning from v1.51.0 ([versioned example](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/v1.67.0/examples/kubernetes/clone/README.md)); verify the installed driver and IAM permissions. FSx for Lustre CSI does not advertise `CLONE_VOLUME`; do not infer EFS support either. `kubectl get csidriver` does not expose CSI RPC capabilities.
 
 - CSI driver must support volume cloning
 - Source and destination PVCs must be in the same namespace

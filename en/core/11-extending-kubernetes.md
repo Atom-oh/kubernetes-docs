@@ -723,7 +723,7 @@ spec:
   schedulerName: custom-scheduler
   containers:
   - name: container
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 ## Cloud Controller Manager

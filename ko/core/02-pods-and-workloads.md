@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         resources:
@@ -105,7 +105,7 @@ metadata:
 spec:
   containers:
   - name: web
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     ports:
     - containerPort: 80
     volumeMounts:
@@ -143,7 +143,7 @@ metadata:
 spec:
   containers:
   - name: web-application
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     volumeMounts:
     - name: log-volume
       mountPath: /var/log/nginx
@@ -197,7 +197,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     ports:
     - containerPort: 80
     resources:
@@ -235,7 +235,7 @@ metadata:
 spec:
   containers:
   - name: web
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     volumeMounts:
     - name: logs
       mountPath: /var/log/nginx
@@ -509,7 +509,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
   # 파드 템플릿 끝
@@ -551,7 +551,7 @@ spec:
           topologyKey: "kubernetes.io/hostname"
   containers:
   - name: web
-    image: nginx:1.30.4
+    image: nginx:1.30.6
 ```
 
 ### 노드 어피니티
@@ -803,7 +803,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
         resources:
@@ -876,7 +876,7 @@ kubectl apply -f deployment.yaml
 kubectl -n workloads-demo rollout pause deployment/nginx-deployment
 
 # 여러 변경 사항 적용
-kubectl -n workloads-demo set image deployment/nginx-deployment nginx=nginx:1.30.4-alpine
+kubectl -n workloads-demo set image deployment/nginx-deployment nginx=nginx:1.30.6-alpine
 kubectl -n workloads-demo set resources deployment/nginx-deployment -c=nginx --limits=cpu=200m,memory=256Mi
 
 # 롤아웃 재개
@@ -921,7 +921,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - containerPort: 80
           name: web

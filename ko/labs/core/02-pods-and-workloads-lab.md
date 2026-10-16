@@ -54,7 +54,7 @@ spec:
   automountServiceAccountToken: false
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     ports:
     - name: http
       containerPort: 80
@@ -134,7 +134,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
         ports:
         - name: http
           containerPort: 80
@@ -194,9 +194,9 @@ printf 'Ready replicas: %s\n' "$READY"
 
 ```bash
 workload_kubectl annotate deployment/nginx-deploy \
-  kubernetes.io/change-cause="NGINX 1.30.4 Debian to Alpine variant" --overwrite
+  kubernetes.io/change-cause="NGINX 1.30.6 Debian to Alpine variant" --overwrite
 unset WORKLOADS_LAB_GOOD_REVISION
-if workload_kubectl set image deployment/nginx-deploy nginx=nginx:1.30.4-alpine &&
+if workload_kubectl set image deployment/nginx-deploy nginx=nginx:1.30.6-alpine &&
    workload_kubectl rollout status deployment/nginx-deploy --timeout=120s; then
   WORKLOADS_LAB_GOOD_REVISION=$(workload_kubectl get deployment nginx-deploy \
     -o jsonpath='{.metadata.annotations.deployment\.kubernetes\.io/revision}')
@@ -215,7 +215,7 @@ workload_kubectl get replicasets -l app=nginx-deploy -o wide
 ### 검증
 ```bash
 workload_kubectl get deployment nginx-deploy -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
-# Expected configured image: nginx:1.30.4-alpine
+# Expected configured image: nginx:1.30.6-alpine
 ```
 
 ---
@@ -252,7 +252,7 @@ workload_kubectl rollout status deployment/nginx-deploy --timeout=120s
 ```bash
 IMAGE=$(workload_kubectl get deployment nginx-deploy -o jsonpath='{.spec.template.spec.containers[0].image}')
 printf 'Current image: %s\n' "$IMAGE"
-[ "$IMAGE" = "nginx:1.30.4-alpine" ]
+[ "$IMAGE" = "nginx:1.30.6-alpine" ]
 workload_kubectl rollout status deployment/nginx-deploy --timeout=120s
 ```
 

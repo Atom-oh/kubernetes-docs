@@ -199,7 +199,7 @@ etcd는 Raft 합의 알고리즘을 사용하여 분산 시스템에서 데이�
 **정답: iptables**
 
 **설명:**
-kube-proxy의 기본 작동 모드는 iptables 모드입니다. 이 모드에서 kube-proxy는 리눅스 iptables를 사용하여 NAT를 구현하고 서비스 IP에 대한 트래픽을 파드로 라우팅합니다. nftables도 Linux에서 사용할 수 있으며 v1.33부터 Stable입니다. 전환 전 커널·CNI 호환성을 확인하세요. IPVS는 v1.35부터 사용 중단되었고 userspace는 제거되었습니다. Windows는 kernelspace 모드를 사용합니다.
+kube-proxy의 기본 작동 모드는 iptables 모드입니다. 이 모드에서 kube-proxy는 리눅스 iptables를 사용하여 NAT를 구현하고 서비스 IP에 대한 트래픽을 파드로 라우팅합니다. nftables도 Linux에서 사용할 수 있으며 v1.33부터 Stable입니다. 전환 전 커널·CNI 호환성을 확인하세요. IPVS는 v1.35부터 사용 중단되었고(v1.40 기본 비활성화·v1.43 제거 예정) userspace는 제거되었습니다. Windows는 kernelspace 모드를 사용합니다.
 </details>
 
 14. Kubernetes 클러스터에서 API 서버와 통신하기 위한 구성 파일의 이름은 무엇인가요?

@@ -230,7 +230,7 @@ The `Forbid` concurrency policy in CronJob skips new jobs if previous jobs are s
 
 16. Write a multi-container pod YAML file that meets the following requirements:
     - Pod name: web-app
-    - First container: nginx web server (image: nginx:1.30.4)
+    - First container: nginx web server (image: nginx:1.30.6)
     - Second container: log collector (image: fluentd:v1.19-debian-1)
     - emptyDir volume for sharing log directory between the two containers
     - nginx container exposes port 80
@@ -249,7 +249,7 @@ metadata:
 spec:
   containers:
     - name: nginx
-      image: nginx:1.30.4
+      image: nginx:1.30.6
       ports:
         - containerPort: 80
       volumeMounts:
@@ -274,7 +274,7 @@ This YAML file defines a multi-container pod containing an nginx web server and 
     - Labels: app=nginx, tier=frontend
     - Replica count: 3
     - Rolling update strategy: max surge 1, max unavailable 0
-    - Container image: nginx:1.30.4
+    - Container image: nginx:1.30.6
     - Container port: 80
     - Resource requests: CPU 100m, memory 128Mi
     - Resource limits: CPU 200m, memory 256Mi
@@ -312,7 +312,7 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: nginx:1.30.4
+          image: nginx:1.30.6
           ports:
             - containerPort: 80
           resources:
@@ -337,7 +337,7 @@ spec:
 ```
 
 **Explanation:**
-This YAML file defines a Deployment with 3 replicas using the nginx:1.30.4 image. The rolling update strategy is configured with max surge 1 (maximum number of pods that can be created beyond the desired number) and max unavailable 0 (maximum number of pods that can be unavailable during the update), enabling updates without downtime. Each container exposes port 80 and has resource constraints of CPU request 100m, memory request 128Mi, CPU limit 200m, and memory limit 256Mi. Liveness and readiness probes verify container status through HTTP GET requests.
+This YAML file defines a Deployment with 3 replicas using the nginx:1.30.6 image. The rolling update strategy is configured with max surge 1 (maximum number of pods that can be created beyond the desired number) and max unavailable 0 (maximum number of pods that can be unavailable during the update), enabling updates without downtime. Each container exposes port 80 and has resource constraints of CPU request 100m, memory request 128Mi, CPU limit 200m, and memory limit 256Mi. Liveness and readiness probes verify container status through HTTP GET requests.
 </details>
 
 18. Write a CronJob YAML file that meets the following requirements:

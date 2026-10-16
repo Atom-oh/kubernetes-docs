@@ -113,7 +113,7 @@ NetworkPolicy는 포드 간의 통신을 제어하는 방법을 제공합니다.
 **정답: B) CoreDNS**
 
 **설명:**
-CoreDNS는 Kubernetes 클러스터의 DNS 서버로 사용되는 유연하고 확장 가능한 DNS 서버입니다. Kubernetes 1.11부터 CoreDNS가 기본 DNS 서버로 사용되고 있습니다.
+CoreDNS는 Kubernetes 클러스터의 DNS 서버로 사용되는 유연하고 확장 가능한 DNS 서버입니다. CoreDNS는 Kubernetes 1.11에서 GA가 되었고 1.13부터 기본 DNS 서버로 사용되고 있습니다.
 </details>
 
 8. 다음 중 Cilium이 활용하는 Linux 커널 기술은 무엇인가요?

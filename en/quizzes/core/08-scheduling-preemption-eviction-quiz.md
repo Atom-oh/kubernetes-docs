@@ -260,7 +260,7 @@ DaemonSets get several automatic tolerations for node conditions, including inde
 
 ## Hands-on Questions
 
-1. Create a Pod named web-server using nginx:1.30.4 that requires us-east-1a or us-east-1b and prefers m5.large nodes.
+1. Create a Pod named web-server using nginx:1.30.6 that requires us-east-1a or us-east-1b and prefers m5.large nodes.
 
 <details>
 <summary>Show Answer</summary>
@@ -275,7 +275,7 @@ metadata:
 spec:
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -335,7 +335,7 @@ spec:
 Create postgres-credentials with a password key in the same namespace first. The example demonstrates scheduling and has no persistent database storage; add a PVC for durable use. A toleration permits worker-1 but does not force placement there.
 </details>
 
-3. Create a three-replica web-frontend Deployment using nginx:1.30.4, co-located with app=cache Pods but separated from its own replicas.
+3. Create a three-replica web-frontend Deployment using nginx:1.30.6, co-located with app=cache Pods but separated from its own replicas.
 
 <details>
 <summary>Show Answer</summary>
@@ -378,7 +378,7 @@ spec:
             topologyKey: "kubernetes.io/hostname"
       containers:
       - name: nginx
-        image: nginx:1.30.4
+        image: nginx:1.30.6
 ```
 
 Required Pod affinity and anti-affinity apply in the namespace. To schedule all three replicas, matching cache Pods must be present on at least three eligible nodes. Otherwise replicas can remain Pending. These rules do not automatically move existing Pods after labels change.
@@ -410,7 +410,7 @@ spec:
   priorityClassName: high-priority
   containers:
   - name: nginx
-    image: nginx:1.30.4
+    image: nginx:1.30.6
     resources:
       requests:
         cpu: 500m
