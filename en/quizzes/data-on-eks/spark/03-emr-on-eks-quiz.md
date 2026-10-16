@@ -1,6 +1,6 @@
 # Amazon EMR on EKS Quiz
 
-Based on the September 2026 reviewed guide.
+Based on the guide reviewed October 16, 2026.
 
 ## 1. What is a virtual cluster?
 
@@ -43,7 +43,7 @@ EMR 6.10.0+. Install the documented EMR chart and compatible runtime, then submi
 <details>
 <summary>Show answer</summary>
 
-4.0.2-amzn-0. This April 2026 release provides Spark 4.x GA; 8.0.0 names the EMR runtime release.
+4.0.2-amzn-0. This May 2026 release provides Spark 4.x GA; 8.0.0 names the EMR runtime release.
 
 </details>
 

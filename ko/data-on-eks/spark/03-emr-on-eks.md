@@ -1,6 +1,6 @@
 # Part 3: Amazon EMR on EKS
 
-> **최종 검토**: 2026년 9월 12일 · API 예제는 `emr-spark-8.0.0-20260421` 기준
+> **최종 검토**: 2026년 10월 16일 · API 예제는 `emr-spark-8.0.0-20260421` 기준
 
 ## EMR 런타임과 제출 경로
 
@@ -25,8 +25,9 @@ EMR용 chart를 Part 2의 최신 Kubeflow/Apache chart와 동일하다고 가정
 
 | EMR on EKS 릴리스 | Spark 런타임 |
 | --- | --- |
-| emr-7.13.0 | 3.5.6-amzn-2 |
-| emr-spark-8.0.0 | 4.0.2-amzn-0; Spark 4.x GA, 2026년 4월 출시 |
+| emr-7.14.0 | 3.5.8-amzn-0 |
+| emr-spark-8.1.0 | 4.1.1-amzn-0; LTS, 2026년 9월 출시 |
+| emr-spark-8.0.0 | 4.0.2-amzn-0; Spark 4.x GA, 2026년 5월 출시 |
 
 Spark 4는 예정 기능이 아닙니다. 8.0.0은 EMR 런타임 릴리스 이름이며 Apache Spark
 버전 8을 뜻하지 않습니다. 다른 EMR 배포 방식의 세부 버전·기능도 각각 확인합니다.

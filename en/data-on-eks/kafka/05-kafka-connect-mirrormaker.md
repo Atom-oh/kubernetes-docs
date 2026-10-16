@@ -1,7 +1,7 @@
 # Part 5: Kafka Connect and MirrorMaker
 
-> **Review baseline**: Strimzi 1.2.0, Kafka 4.3.1, Debezium PostgreSQL 3.6.2.Final, Aiven S3 sink 3.4.3\
-> **Last reviewed**: September 12, 2026
+> **Review baseline**: Strimzi 1.3.0, Kafka 4.3.1, Debezium PostgreSQL 3.6.3.Final, Aiven S3 sink 3.4.3\
+> **Last reviewed**: October 16, 2026
 
 ## Connect workers and connectors
 
@@ -32,7 +32,7 @@ source-offset storage topic.
 
 ## Strimzi v1 is more than an apiVersion change
 
-Strimzi 1.2.0 serves the `kafka.strimzi.io/v1` API. Convert older resources with the
+Strimzi 1.3.0 serves the `kafka.strimzi.io/v1` API. Convert older resources with the
 release's migration procedure before upgrading; do not merely rename `v1beta2`.
 
 | Resource | Current v1 field |
@@ -63,8 +63,8 @@ names before deployment. Prepare these additional dependencies:
 
 ECR authorization tokens expire after 12 hours. Maintain/refresh the push Secret
 before builds. Merely assigning an IRSA role does not establish that the selected
-image builder can log in to ECR. Strimzi 1.2 enables its Buildah build feature by
-default; check build-pod requirements on the actual nodes.
+image builder can log in to ECR. Strimzi 1.3 builds Connect images with Buildah
+only; check build-pod requirements on the actual nodes.
 
 Save the following as `create-topics.py`, run it, and apply `connect-topics.json`.
 The seven-day data retention is a lab choice; size retention for outage and
@@ -208,14 +208,14 @@ spec:
   build:
     output:
       type: docker
-      image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/connect-cluster:kafka4.3.1-deb3.6.2-s3-3.4.3
+      image: 123456789012.dkr.ecr.ap-northeast-2.amazonaws.com/connect-cluster:kafka4.3.1-deb3.6.3-s3-3.4.3
       pushSecret: ecr-registry-credentials
     plugins:
       - name: debezium-postgres
         artifacts:
           - type: tgz
-            url: https://repo.maven.apache.org/maven2/io/debezium/debezium-connector-postgres/3.6.2.Final/debezium-connector-postgres-3.6.2.Final-plugin.tar.gz
-            sha512sum: eabc5416446a32c3c763749262cd03115fbc2804bf48018348184f660222e9e5c8395306d9e795c9d52cbe246a5386142bdae376d418f6cf1bd5233e83e8ffe7
+            url: https://repo.maven.apache.org/maven2/io/debezium/debezium-connector-postgres/3.6.3.Final/debezium-connector-postgres-3.6.3.Final-plugin.tar.gz
+            sha512sum: 400495c485a1da532c5d7e2dcc3bbb1b7f7dcdbcdc74c82529309cb89a2c37298319ea45ea00414b3ce750a51ad01084e104725e810c55c1a7c1981baff201a0
       - name: aiven-s3
         artifacts:
           - type: zip
@@ -494,8 +494,8 @@ configuration definitions. Local MM2 behavior checks do not establish actual
 cross-region connectivity, database privileges, ECR builds, S3 delivery or a
 successful disaster-recovery cutover.
 
-- [Strimzi 1.2.0 CRDs: authoritative resource fields](https://github.com/strimzi/strimzi-kafka-operator/tree/1.2.0/install/cluster-operator)
-- [Strimzi 1.2.0 deployment guide](https://strimzi.io/docs/operators/1.2.0/deploying.html)
+- [Strimzi 1.3.0 CRDs: authoritative resource fields](https://github.com/strimzi/strimzi-kafka-operator/tree/1.3.0/install/cluster-operator)
+- [Strimzi 1.3.0 deployment guide](https://strimzi.io/docs/operators/1.3.0/deploying.html)
 - [Debezium 3.6 PostgreSQL connector](https://debezium.io/documentation/reference/3.6/connectors/postgresql.html)
 - [Aiven S3 connector 3.4.3](https://github.com/Aiven-Open/cloud-storage-connectors-for-apache-kafka/blob/v3.4.3/s3-sink-connector/README.md)
 - [ECR authorization token lifetime](https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_GetAuthorizationToken.html)

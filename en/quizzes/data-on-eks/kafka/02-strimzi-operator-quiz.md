@@ -1,6 +1,6 @@
 # Strimzi Operator Quiz
 
-> **Last Updated**: September 12, 2026, Strimzi 1.2.0 / Kafka 4.3.1.
+> **Last Updated**: October 16, 2026, Strimzi 1.3.0 / Kafka 4.3.1.
 
 This quiz tests your understanding of Strimzi Operator fundamentals, installation methods, core CRDs, KRaft node roles, and EKS deployment considerations.
 
@@ -19,7 +19,7 @@ This quiz tests your understanding of Strimzi Operator fundamentals, installatio
 **Answer: B) An Operator for running Apache Kafka on Kubernetes**
 
 **Explanation:**
-Strimzi 1.2 is a CNCF incubating project that reconciles desired state in custom resources. Current Kafka Pod management uses StrimziPodSet. An Operator does not automatically complete every operating policy or availability guarantee.
+Strimzi 1.3 is a CNCF incubating project that reconciles desired state in custom resources. Current Kafka Pod management uses StrimziPodSet. An Operator does not automatically complete every operating policy or availability guarantee.
 </details>
 
 2. Which of the following is LEAST accurate as a challenge of running Kafka directly as a StatefulSet without Strimzi?
@@ -51,7 +51,7 @@ Direct operation is possible but requires implementing upgrade, certificate, sto
 **Answer: A) `helm repo add strimzi https://strimzi.io/charts/`**
 
 **Explanation:**
-Add the official chart repository and pin 1.2.0 for a new installation. Existing beta APIs/CRDs require the official migration procedure first; a new namespace does not avoid cluster-scoped CRD conflicts.
+Add the official chart repository and pin 1.3.0 for a new installation. Existing beta APIs/CRDs require the official migration procedure first; a new namespace does not avoid cluster-scoped CRD conflicts.
 </details>
 
 4. What namespace scope does the Strimzi Cluster Operator watch by default?
@@ -67,10 +67,10 @@ Add the official chart repository and pin 1.2.0 for a new installation. Existing
 **Answer: C) Only the namespace it is deployed into**
 
 **Explanation:**
-The default chart watches its release namespace. Chart 1.2 includes/deduplicates that namespace alongside additional watchNamespaces and creates RoleBindings. Changing the environment variable alone can leave missing RBAC.
+The default chart watches its release namespace. Chart 1.3 includes/deduplicates that namespace alongside additional watchNamespaces and creates RoleBindings. Changing the environment variable alone can leave missing RBAC.
 </details>
 
-5. Which block is unsupported in current Strimzi 1.2 KRaft deployments?
+5. Which block is unsupported in current Strimzi 1.3 KRaft deployments?
    - A) `Kafka.spec.kafka.listeners`
    - B) `Kafka.spec.zookeeper`
    - C) `Kafka.spec.entityOperator`
@@ -83,7 +83,7 @@ The default chart watches its release namespace. Chart 1.2 includes/deduplicates
 **Answer: B) `Kafka.spec.zookeeper`**
 
 **Explanation:**
-Current Strimzi 1.2 uses KRaft and does not support the ZooKeeper block. KafkaNodePool defines controller and broker roles; legacy activation annotations are not needed.
+Current Strimzi 1.3 uses KRaft and does not support the ZooKeeper block. KafkaNodePool defines controller and broker roles; legacy activation annotations are not needed.
 </details>
 
 6. Which value is NOT a valid entry for `KafkaNodePool.spec.roles`?
@@ -230,7 +230,7 @@ KafkaConnect defines Connect workers and KafkaConnector represents individual co
 
 ## Hands-on Questions
 
-16. Using the article's operator-values.yaml, install Strimzi 1.2.0 into a new kafka namespace.
+16. Using the article's operator-values.yaml, install Strimzi 1.3.0 into a new kafka namespace.
 
 <details>
 
@@ -241,7 +241,7 @@ KafkaConnect defines Connect workers and KafkaConnector represents individual co
 helm repo add strimzi https://strimzi.io/charts/
 helm repo update strimzi
 helm install strimzi-kafka-operator strimzi/strimzi-kafka-operator \
-  --version 1.2.0 --namespace kafka --create-namespace \
+  --version 1.3.0 --namespace kafka --create-namespace \
   -f operator-values.yaml --wait --timeout 10m
 kubectl -n kafka rollout status deployment/strimzi-cluster-operator --timeout=300s
 kubectl get crd kafkas.kafka.strimzi.io kafkanodepools.kafka.strimzi.io

@@ -1,6 +1,6 @@
 # Part 3: Amazon EMR on EKS
 
-> **Last reviewed**: September 12, 2026 · API example: `emr-spark-8.0.0-20260421`
+> **Last reviewed**: October 16, 2026 · API example: `emr-spark-8.0.0-20260421`
 
 ## Runtime and submission paths
 
@@ -25,8 +25,9 @@ the chosen path. The EMR chart is also distinct from Part 2's current upstream c
 
 | EMR on EKS release | Spark runtime |
 | --- | --- |
-| emr-7.13.0 | 3.5.6-amzn-2 |
-| emr-spark-8.0.0 | 4.0.2-amzn-0; Spark 4.x GA, released April 2026 |
+| emr-7.14.0 | 3.5.8-amzn-0 |
+| emr-spark-8.1.0 | 4.1.1-amzn-0; LTS, released September 2026 |
+| emr-spark-8.0.0 | 4.0.2-amzn-0; Spark 4.x GA, released May 2026 |
 
 Spark 4 is already available. The 8.0.0 number names an EMR runtime release, not
 Apache Spark 8. Check versions and capabilities separately for other EMR deployment

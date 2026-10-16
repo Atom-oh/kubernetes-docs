@@ -1,7 +1,7 @@
 # Part 4: 스키마 레지스트리
 
-> **검토 기준**: Karapace 6.2.3, Apicurio Registry 3.3.3, Strimzi 1.2.0 / Kafka 4.3.1\
-> **최종 검토**: 2026년 9월 12일
+> **검토 기준**: Karapace 6.2.4, Apicurio Registry 3.3.3, Strimzi 1.3.0 / Kafka 4.3.1\
+> **최종 검토**: 2026년 10월 16일
 
 ## 스키마 레지스트리가 필요한 이유
 
@@ -33,7 +33,7 @@ message index도 들어갑니다. JSON Schema 직렬화기의 값은 여전히 J
 
 | 구현체 | 관련 스키마 형식 | API와 저장 방식 |
 | --- | --- | --- |
-| Karapace 6.2.3 | Avro, JSON Schema, **Protobuf** | Confluent 호환 REST API, Kafka 기반 스키마 저장, REST Proxy도 제공 |
+| Karapace 6.2.4 | Avro, JSON Schema, **Protobuf** | Confluent 호환 REST API, Kafka 기반 스키마 저장, REST Proxy도 제공 |
 | Apicurio Registry 3.3.3 | Avro, Protobuf, JSON Schema 및 추가 artifact 유형 | 네이티브 API와 `/apis/ccompat/v7`, `/apis/ccompat/v8`; KafkaSQL·SQL 저장 방식 |
 | Confluent Schema Registry | Avro, Protobuf, JSON Schema | Confluent API, 자체 관리 배포에서 Kafka 기반 저장 |
 
@@ -511,7 +511,7 @@ HTTP 상태 검사의 성공만으로 직렬화가 검증되는 것은 아닙니
 - [Protocol Buffers: updating a message type](https://protobuf.dev/programming-guides/proto3/#updating)
 - [Confluent compatibility rules](https://docs.confluent.io/platform/current/schema-registry/fundamentals/schema-evolution.html)
 - [Confluent serializers and wire format](https://docs.confluent.io/platform/current/schema-registry/fundamentals/serdes-develop/index.html)
-- [Karapace 6.2.3](https://github.com/Aiven-Open/karapace/tree/6.2.3)
+- [Karapace 6.2.4](https://github.com/Aiven-Open/karapace/tree/6.2.4)
 - [Apicurio Registry 3.3.3](https://github.com/Apicurio/apicurio-registry/tree/3.3.3)
 - [Apicurio compatibility API support matrix](https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/ccompat/rest/README.md)
 - [Apicurio KafkaSQL configuration](https://github.com/Apicurio/apicurio-registry/blob/3.3.3/app/src/main/java/io/apicurio/registry/storage/impl/kafkasql/KafkaSqlConfiguration.java)

@@ -1,6 +1,6 @@
 # Part 2: Strimzi Operator
 
-> **검토 기준**: 2026-09-12. Strimzi 1.2.0, Kafka 4.3.1. Strimzi의 최소 Kubernetes 버전은 1.30이며 로컬 스키마 검증은 1.36.2를 사용했습니다.
+> **검토 기준**: 2026-10-16. Strimzi 1.3.0, Kafka 4.3.1. Strimzi의 최소 Kubernetes 버전은 1.32이며 로컬 스키마 검증은 1.36.2를 사용했습니다.
 > **검증 범위**: Helm 두 구성, Kubernetes/CRD 객체 67개, Kafka의 실제 JAAS 파서를 사용한 인증 파일 5개 사례. 실제 EKS 설치·TLS 접속·ACL 집행·EBS/NLB 생성을 수행한 결과는 아닙니다.
 
 ## 1. 범위와 준비
@@ -11,7 +11,7 @@ Strimzi는 CNCF incubating 프로젝트이며 Kubernetes Operator로 Kafka 리�
 
 필요한 환경은 다음과 같습니다.
 
-- Kubernetes 1.30 이상과 해당 클러스터에 지원되는 kubectl 버전. “kubectl 1.28 이상이면 모든 새 클러스터에 충분”한 것은 아닙니다.
+- Kubernetes 1.32 이상과 해당 클러스터에 지원되는 kubectl 버전. “kubectl 1.28 이상이면 모든 새 클러스터에 충분”한 것은 아닙니다.
 - Helm 3. 이 예제는 Helm 3.21.3으로 렌더링했습니다.
 - 표준 EBS CSI 경로 또는 EKS Auto Mode에 맞는 볼륨 프로비저너와 IAM 구성.
 - 세 AZ의 스케줄 가능한 노드·용량, ECR/Quay/Docker Hub 등 필요한 이미지 저장소 접근.
@@ -35,7 +35,7 @@ kubectl config current-context
 helm repo add strimzi https://strimzi.io/charts/
 helm repo update strimzi
 helm install strimzi-kafka-operator strimzi/strimzi-kafka-operator \
-  --version 1.2.0 --namespace kafka --create-namespace \
+  --version 1.3.0 --namespace kafka --create-namespace \
   -f operator-values.yaml --wait --timeout 10m
 kubectl -n kafka rollout status deployment/strimzi-cluster-operator --timeout=300s
 kubectl wait --for=condition=Established --timeout=120s \
@@ -43,7 +43,7 @@ kubectl wait --for=condition=Established --timeout=120s \
   crd/kafkatopics.kafka.strimzi.io crd/kafkausers.kafka.strimzi.io
 ```
 
-기본 chart는 배포된 namespace를 감시합니다. 추가 namespace가 필요하면 먼저 namespace를 만들고 Helm values에 `watchNamespaces: [kafka-staging]`처럼 지정합니다. 1.2 chart는 이 목록에 release namespace를 추가·중복 제거하고 대응 RoleBinding도 렌더링합니다. `kubectl set env`로 감시 범위만 바꾸는 방식은 RBAC 누락과 Helm drift를 만들 수 있습니다.
+기본 chart는 배포된 namespace를 감시합니다. 추가 namespace가 필요하면 먼저 namespace를 만들고 Helm values에 `watchNamespaces: [kafka-staging]`처럼 지정합니다. 1.3 chart는 이 목록에 release namespace를 추가·중복 제거하고 대응 RoleBinding도 렌더링합니다. `kubectl set env`로 감시 범위만 바꾸는 방식은 RBAC 누락과 Helm drift를 만들 수 있습니다.
 
 다른 배포 도구가 관리하는 설치에 Helm·OLM·수동 YAML을 중복 적용하지 않습니다. `watchAnyNamespace: true`는 명시적인 cluster-wide 선택이며 이 예제에서는 사용하지 않습니다.
 
@@ -245,7 +245,7 @@ spec:
     userOperator: {}
 ```
 
-Strimzi 1.2는 KRaft와 node pool을 사용하므로 예전 KRaft/node-pools 활성화 annotation이나 ZooKeeper 블록을 추가하지 않습니다. `rack.topologyKey`는 새 replica 배치 시 AZ 정보를 제공하지만 기존 파티션 배치를 자동으로 모두 재배치하는 명령은 아닙니다.
+Strimzi 1.3은 KRaft와 node pool을 사용하므로 예전 KRaft/node-pools 활성화 annotation이나 ZooKeeper 블록을 추가하지 않습니다. `rack.topologyKey`는 새 replica 배치 시 AZ 정보를 제공하지만 기존 파티션 배치를 자동으로 모두 재배치하는 명령은 아닙니다.
 
 버전과 metadataVersion은 호환되는 값을 사용합니다. 이 예제는 4.3.1 / 4.3-IV0이며, 과거 이미지 override를 남겨둔 채 버전 필드만 바꾸지 않습니다. node ID는 클러스터 전체에서 할당되므로 모든 풀에 `-0` Pod가 존재한다고 가정하지 않습니다.
 
@@ -565,7 +565,7 @@ kubectl -n kafka get kafka my-cluster -o jsonpath='{.status.listeners}'
 - [Kafka operations](./03-kafka-operations.md)
 - [Kafka overview](./README.md)
 - [Quiz](../../quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
-- [Strimzi 1.2.0 deployment](https://strimzi.io/docs/operators/1.2.0/deploying.html)
+- [Strimzi 1.3.0 deployment](https://strimzi.io/docs/operators/1.3.0/deploying.html)
 - [Strimzi v1 API conversion](https://strimzi.io/docs/operators/1.0.0/deploying.html#assembly-api-conversion-str)
-- [Strimzi 1.2.0 release](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.2.0)
+- [Strimzi 1.3.0 release](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.3.0)
 - [EBS gp3 performance](https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html)

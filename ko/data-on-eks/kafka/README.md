@@ -4,10 +4,10 @@
 
 이 가이드는 Apache Kafka를 EKS에서 직접 운영하는 선택지로 Strimzi Operator를 사용합니다. Operator는 Pod, 스토리지, listener, 인증서와 업그레이드를 조정하지만 데이터·가용성·보안 정책의 운영 책임을 모두 대신하지 않습니다. Amazon MSK 같은 관리형 선택지는 Part 6에서 비교합니다.
 
-> **검토 기준**: 2026-09-12. Strimzi 1.2.0 / Kafka 4.3.1.
+> **검토 기준**: 2026-10-16. Strimzi 1.3.0 / Kafka 4.3.1.
 > **업그레이드 주의**: Strimzi 1.0 이상은 CRD API `v1`만 지원합니다. 기존 `v1beta2`/`v1beta1`/`v1alpha1` 리소스는 공식 전환 절차로 변환하고 CRD를 준비한 뒤 Operator를 업그레이드해야 합니다. 버전 번호만 교체하는 업그레이드가 아닙니다.
 
-Strimzi 1.2.0의 지원 Kafka 버전은 4.2.0, 4.2.1, 4.3.0, 4.3.1이며 기본값은 4.3.1입니다. 이 문서에서는 호환되는 조합을 고정하며, 설치 시 배포판·Kubernetes 버전과 업그레이드 경로를 함께 확인합니다.
+Strimzi 1.3.0의 지원 Kafka 버전은 4.2.0, 4.2.1, 4.2.2, 4.3.0, 4.3.1이며 기본값은 4.3.1입니다. 이 문서에서는 호환되는 조합을 고정하며, 설치 시 배포판·Kubernetes 버전과 업그레이드 경로를 함께 확인합니다.
 
 ## 핵심 아키텍처 개념
 
@@ -74,9 +74,9 @@ KRaft는 2.8에서 early access로 도입되어 3.3에서 production-ready가 �
 
 ## 참고 자료
 
-- [Strimzi 1.2.0 release](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.2.0)
+- [Strimzi 1.3.0 release](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.3.0)
 
-- [Strimzi 공식 문서](https://strimzi.io/docs/operators/1.2.0/overview.html)
+- [Strimzi 공식 문서](https://strimzi.io/docs/operators/1.3.0/overview.html)
 - [Apache Kafka 공식 문서](https://kafka.apache.org/43/design/design/)
 - [KRaft 운영 가이드](https://kafka.apache.org/43/operations/kraft/)
 - [AWS Data on EKS 프로젝트](https://awslabs.github.io/data-on-eks/)

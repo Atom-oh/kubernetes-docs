@@ -1,6 +1,6 @@
 # Kafka 운영 퀴즈
 
-> **검토 기준**: 2026-09-12, Strimzi 1.2.0 / Kafka 4.3.1.
+> **검토 기준**: 2026-10-16, Strimzi 1.3.0 / Kafka 4.3.1.
 
 이 퀴즈는 EKS 위에서 Strimzi로 운영되는 Kafka 클러스터의 스토리지 설계, 브로커 스케일링, Cruise Control 리밸런싱, 롤링 업그레이드, 장애 대응에 대한 이해도를 테스트합니다.
 
@@ -83,7 +83,7 @@ Strimzi와 시작 스크립트가 필요한 새 storage metadata 초기화를 �
 **정답: B) 새 브로커가 클러스터에 합류하지만, 기존 토픽 파티션은 자동으로 재분배되지 않는다**
 
 **설명:**
-해당 autoRebalance 모드가 없을 때의 설명입니다. Strimzi 1.2에서 add-brokers autoRebalance를 구성하면 기존 pool의 replicas 증가에 따라 자동 재배치를 조정합니다. pool 생성/삭제는 같은 자동 트리거가 아닙니다.
+해당 autoRebalance 모드가 없을 때의 설명입니다. Strimzi 1.3에서 add-brokers autoRebalance를 구성하면 기존 pool의 replicas 증가에 따라 자동 재배치를 조정합니다. pool 생성/삭제는 같은 자동 트리거가 아닙니다.
 </details>
 
 6. broker를 제거하기 전에 만족해야 할 데이터 상태는?
@@ -163,7 +163,7 @@ add-brokers는 지정된 새 broker를 대상으로 하며 실제 broker ID 목�
 **정답: C) PodDisruptionBudget**
 
 **설명:**
-Strimzi 1.2의 기본 Kafka PDB는 Kafka 클러스터 하나에 하나이며 모든 node pool의 Kafka Pod를 포함합니다. voluntary eviction에만 적용되며 node/AZ 장애나 강제 삭제를 막지는 않습니다.
+Strimzi 1.3의 기본 Kafka PDB는 Kafka 클러스터 하나에 하나이며 모든 node pool의 Kafka Pod를 포함합니다. voluntary eviction에만 적용되며 node/AZ 장애나 강제 삭제를 막지는 않습니다.
 </details>
 
 ## 단답형 문제

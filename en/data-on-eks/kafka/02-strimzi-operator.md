@@ -1,6 +1,6 @@
 # Part 2: Strimzi Operator
 
-> **Last Updated**: September 12, 2026. Strimzi 1.2.0, Kafka 4.3.1. Strimzi requires Kubernetes 1.30 or later; local schema validation used 1.36.2.
+> **Last Updated**: October 16, 2026. Strimzi 1.3.0, Kafka 4.3.1. Strimzi requires Kubernetes 1.32 or later; local schema validation used 1.36.2.
 > **Validation**: Two Helm configurations, 67 Kubernetes/CRD objects and five credential-file cases through Kafka's native JAAS parser. No live EKS installation, TLS connection, broker ACL enforcement, EBS or NLB provisioning was performed.
 
 ## 1. Scope and Prerequisites
@@ -11,7 +11,7 @@ Strimzi is a CNCF incubating project that reconciles Kafka resources through Kub
 
 Prerequisites:
 
-- Kubernetes 1.30 or later and a kubectl version supported for that cluster. “Any kubectl version above 1.28” is not sufficient for every newer cluster.
+- Kubernetes 1.32 or later and a kubectl version supported for that cluster. “Any kubectl version above 1.28” is not sufficient for every newer cluster.
 - Helm 3; rendering here used Helm 3.21.3.
 - The volume provisioner and IAM setup appropriate to standard EBS CSI or EKS Auto Mode.
 - Schedulable nodes/capacity across three AZs and access to required image registries.
@@ -35,7 +35,7 @@ kubectl config current-context
 helm repo add strimzi https://strimzi.io/charts/
 helm repo update strimzi
 helm install strimzi-kafka-operator strimzi/strimzi-kafka-operator \
-  --version 1.2.0 --namespace kafka --create-namespace \
+  --version 1.3.0 --namespace kafka --create-namespace \
   -f operator-values.yaml --wait --timeout 10m
 kubectl -n kafka rollout status deployment/strimzi-cluster-operator --timeout=300s
 kubectl wait --for=condition=Established --timeout=120s \
@@ -43,7 +43,7 @@ kubectl wait --for=condition=Established --timeout=120s \
   crd/kafkatopics.kafka.strimzi.io crd/kafkausers.kafka.strimzi.io
 ```
 
-The default chart watches its own namespace. For additional namespaces, create them first and set values such as `watchNamespaces: [kafka-staging]`. Chart 1.2 adds/deduplicates the release namespace and renders corresponding RoleBindings. Changing only the watch environment variable with kubectl set env can leave missing RBAC and Helm drift.
+The default chart watches its own namespace. For additional namespaces, create them first and set values such as `watchNamespaces: [kafka-staging]`. Chart 1.3 adds/deduplicates the release namespace and renders corresponding RoleBindings. Changing only the watch environment variable with kubectl set env can leave missing RBAC and Helm drift.
 
 Do not overlap Helm, OLM and manual ownership of the same installation. `watchAnyNamespace: true` is an explicit cluster-wide choice, disabled in this example.
 
@@ -245,7 +245,7 @@ spec:
     userOperator: {}
 ```
 
-Strimzi 1.2 uses KRaft and node pools; do not add legacy activation annotations or ZooKeeper blocks. `rack.topologyKey` supplies AZ information for replica placement; it does not automatically reassign all existing partitions.
+Strimzi 1.3 uses KRaft and node pools; do not add legacy activation annotations or ZooKeeper blocks. `rack.topologyKey` supplies AZ information for replica placement; it does not automatically reassign all existing partitions.
 
 Keep Kafka version and metadataVersion compatible: this example uses 4.3.1 / 4.3-IV0. Do not change the version field while retaining an old image override. Node IDs are allocated across the cluster; do not assume every pool has a Pod ending in -0.
 
@@ -565,7 +565,7 @@ This option creates bootstrap and per-broker LoadBalancer Services with correspo
 - [Kafka operations](./03-kafka-operations.md)
 - [Kafka overview](./README.md)
 - [Quiz](../../quizzes/data-on-eks/kafka/02-strimzi-operator-quiz.md)
-- [Strimzi 1.2.0 deployment](https://strimzi.io/docs/operators/1.2.0/deploying.html)
+- [Strimzi 1.3.0 deployment](https://strimzi.io/docs/operators/1.3.0/deploying.html)
 - [Strimzi v1 API conversion](https://strimzi.io/docs/operators/1.0.0/deploying.html#assembly-api-conversion-str)
-- [Strimzi 1.2.0 release](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.2.0)
+- [Strimzi 1.3.0 release](https://github.com/strimzi/strimzi-kafka-operator/releases/tag/1.3.0)
 - [EBS gp3 performance](https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html)
